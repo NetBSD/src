@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.7 2011/06/23 05:42:27 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.8 2011/06/23 07:58:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.7 2011/06/23 05:42:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.8 2011/06/23 07:58:19 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -368,7 +368,9 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 		 * allocate a new ASID.
 		 */
 #if !defined(MULTIPROCESSOR) || defined(PMAP_NEED_TLB_SHOOTDOWN)
+		pmap_tlb_asid_check();
 		const u_int asids_found = tlb_record_asids(ti->ti_asid_bitmap);
+		pmap_tlb_asid_check();
 		KASSERT(asids_found == pmap_tlb_asid_count(ti));
 		if (__predict_false(asids_found >= ti->ti_asid_max / 2)) {
 			tlb_invalidate_asids(KERNEL_PID + 1, ti->ti_asid_max);
@@ -465,7 +467,9 @@ pmap_tlb_shootdown_process(void)
 			 * invalidate its TLB entries.
 			 */
 			KASSERT(pai->pai_asid > KERNEL_PID);
+			pmap_tlb_asid_check();
 			tlb_invalidate_asids(pai->pai_asid, pai->pai_asid);
+			pmap_tlb_asid_check();
 		} else if (pai->pai_asid) {
 			/*
 			 * The victim is no longer an active pmap for this TLB.
@@ -488,7 +492,9 @@ pmap_tlb_shootdown_process(void)
 		/*
 		 * We need to invalidate all global TLB entries.
 		 */
+		pmap_tlb_asid_check();
 		tlb_invalidate_globals();
+		pmap_tlb_asid_check();
 		break;
 	case TLBINV_ALL:
 		/*
@@ -629,8 +635,10 @@ pmap_tlb_update_addr(pmap_t pm, vaddr_t va, pt_entry_t pt_entry, u_int flags)
 
 	TLBINFO_LOCK(ti);
 	if (pm == pmap_kernel() || PMAP_PAI_ASIDVALID_P(pai, ti)) {
+		pmap_tlb_asid_check();
 		rv = tlb_update_addr(va, pai->pai_asid, pt_entry,
 		    (flags & PMAP_TLB_INSERT) != 0);
+		pmap_tlb_asid_check();
 	}
 #if defined(MULTIPROCESSOR) && defined(PMAP_NEED_TLB_SHOOTDOWN)
 	pm->pm_shootdown_pending = (flags & PMAP_TLB_NEED_IPI) != 0;
@@ -650,7 +658,9 @@ pmap_tlb_invalidate_addr(pmap_t pm, vaddr_t va)
 
 	TLBINFO_LOCK(ti);
 	if (pm == pmap_kernel() || PMAP_PAI_ASIDVALID_P(pai, ti)) {
+		pmap_tlb_asid_check();
 		tlb_invalidate_addr(va, pai->pai_asid);
+		pmap_tlb_asid_check();
 	}
 #if defined(MULTIPROCESSOR) && defined(PMAP_NEED_TLB_SHOOTDOWN)
 	pm->pm_shootdown_pending = 1;
@@ -782,6 +792,9 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 #endif
 		ci->ci_pmap_asid_cur = pai->pai_asid;
 		tlb_set_asid(pai->pai_asid);
+		pmap_tlb_asid_check();
+	} else {
+		printf("%s: l (%p) != curlwp %p\n", __func__, l, curlwp);
 	}
 	TLBINFO_UNLOCK(ti);
 }
@@ -813,6 +826,7 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 #elif defined(DEBUG)
 	curcpu()->ci_pmap_asid_cur = 0;
 	tlb_set_asid(0);
+	pmap_tlb_asid_check();
 #endif
 }
 
@@ -846,6 +860,19 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 	}
 	TLBINFO_UNLOCK(ti);
 #endif /* MULTIPROCESSOR */
+}
+
+void
+pmap_tlb_asid_check(void)
+{
+#ifdef DEBUG
+	kpreempt_disable();
+	const tlb_asid_t asid = tlb_get_asid();
+	KDASSERTMSG(asid == curcpu()->ci_pmap_asid_cur,
+	   ("%s: asid (%#x) != current asid (%#x)",
+	    __func__, asid, curcpu()->ci_pmap_asid_cur));
+	kpreempt_enable();
+#endif
 }
 
 #ifdef DEBUG
