@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.4 2011/06/23 01:27:20 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.5 2011/06/23 20:46:15 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -162,9 +162,15 @@ pte_cached_change(pt_entry_t pt_entry, bool cached)
 }
 
 static inline pt_entry_t
-pte_wired_entry(void)
+pte_wire_entry(pt_entry_t pt_entry)
 {
-	return PTE_WIRED;
+	return pt_entry | PTE_WIRED;
+}
+
+static inline pt_entry_t
+pte_unwire_entry(pt_entry_t pt_entry)
+{
+	return pt_entry & ~PTE_WIRED;
 }
 
 static inline pt_entry_t
@@ -245,6 +251,7 @@ pte_make_kenter_pa(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 {
 	pt_entry_t pt_entry = (pt_entry_t) pa & PTE_RPN_MASK;
 
+	pt_entry |= PTE_WIRED;
 	pt_entry |= pte_flag_bits(mdpg, flags);
 	pt_entry |= pte_prot_bits(NULL, prot); /* pretend unmanaged */
 

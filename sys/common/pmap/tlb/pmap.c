@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 2011/06/23 02:33:44 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 2011/06/23 20:46:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2011/06/23 02:33:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8 2011/06/23 20:46:15 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1007,7 +1007,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 */
 	if (wired) {
 		pmap->pm_stats.wired_count++;
-		npte |= pte_wired_entry();
+		npte = pte_wire_entry(npte);
 	}
 
 	UVMHIST_LOG(*histp, "new pte %#x (pa %#"PRIxPADDR")", npte, pa, 0,0);
@@ -1094,8 +1094,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if ((flags & PMAP_NOCACHE) == 0 && !PMAP_PAGE_COLOROK_P(pa, va))
 		PMAP_COUNT(kenter_pa_bad);
 
-	const pt_entry_t npte = pte_make_kenter_pa(pa, mdpg, prot, flags)
-	    | pte_wired_entry();
+	const pt_entry_t npte = pte_make_kenter_pa(pa, mdpg, prot, flags);
 	kpreempt_disable();
 	pt_entry_t * const ptep = pmap_pte_reserve(pmap_kernel(), va, 0);
 	KASSERT(ptep != NULL);
@@ -1220,7 +1219,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 #endif
 
 	if (pte_wired_p(pt_entry)) {
-		*ptep &= ~pte_wired_entry();
+		*ptep = pte_unwire_entry(*ptep);
 		pmap->pm_stats.wired_count--;
 	}
 #ifdef DIAGNOSTIC
