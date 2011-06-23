@@ -1,4 +1,4 @@
-.\"	$NetBSD: aibs.4,v 1.6 2010/03/06 19:53:33 cnst Exp $
+.\"	$NetBSD: aibs.4,v 1.6.6.1 2011/06/23 14:18:44 cherry Exp $
 .\"	$OpenBSD: aibs.4,v 1.4 2009/07/30 06:30:45 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Constantine A. Murenin <cnst+netbsd@bugmail.mojo.ru>
@@ -15,24 +15,21 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd February 8, 2010
+.Dd June 12, 2011
 .Dt AIBS 4
 .Os
 .Sh NAME
 .Nm aibs
-.Nd ASUSTeK AI Booster ACPI ATK0110 voltage, temperature, and fan sensor
+.Nd ASUSTeK AI Booster voltage, temperature, and fan sensor
 .Sh SYNOPSIS
 .Cd "aibs* at acpi?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the voltage, temperature and fan sensors
-available through the
-.Tn ATK0110
-.Tn ASOC
+driver provides support for voltage, temperature, and fan sensors
+available as an
 .Tn ACPI
-device
-on
+device on
 .Tn ASUSTeK
 motherboards.
 The number of sensors of each type,
@@ -53,43 +50,43 @@ sensor states as follows:
 .Bl -bullet
 .It
 Voltage sensors can have a state of
-.Dv valid ,
-.Dv critunder ,
+.Sq valid ,
+.Sq critunder ,
 or
-.Dv critover ;
+.Sq critover ;
 temperature sensors can have a state of
-.Dv valid ,
-.Dv warnover ,
-.Dv critover ,
+.Sq valid ,
+.Sq warnover ,
+.Sq critover ,
 or
-.Dv invalid ;
+.Sq invalid ;
 and fan sensors can have a state of
-.Dv valid ,
-.Dv warnunder ,
+.Sq valid ,
+.Sq warnunder ,
 or
-.Dv warnover .
+.Sq warnover .
 .It
 Temperature sensors that have a reading of 0
 are marked
-.Dv invalid ,
+.Sq invalid ,
 whereas all other sensors are always assumed valid.
 .It
-Voltage sensors have a lower and an upper limit
-.Dv ( critunder
+Voltage sensors have a lower and an upper limit,
+.Sq critunder
 and
-.Dv critover ) ,
-temperature sensors have two upper limits
-.Dv ( warnover
+.Sq critover ,
+temperature sensors have two upper limits,
+.Sq warnover
 and
-.Dv critover ) ,
+.Sq critover ,
 whereas fan sensors may either have only the lower limit
-.Dv ( warnunder ) ,
-or, depending on the
-.Tn DSDT ,
-one lower and one upper limit
-.Dv ( warnunder
+.Sq warnunder ,
+or, depending on the vendor's
+.Tn ACPI
+implementation, one lower and one upper limit,
+.Sq warnunder
 and
-.Dv warnover ) .
+.Sq warnover .
 .El
 .Pp
 Sensor values and limits are made available through the
@@ -189,6 +186,7 @@ is configured and the system potentially supports
 the hardware monitoring chip through
 .Tn ACPI .
 .Sh SEE ALSO
+.Xr acpi 4 ,
 .Xr envsys 4 ,
 .Xr envstat 8
 .Sh HISTORY
@@ -199,8 +197,7 @@ driver first appeared in
 DragonFly 2.4.1
 and
 .Nx 6.0 .
-.Pp
-An earlier version of the driver,
+An earlier version of the driver, named
 .Nm aiboost ,
 first appeared in
 .Fx 7.0
@@ -212,16 +209,19 @@ The
 .Nm
 driver was written for
 .Ox ,
-DragonFly
-and
+DragonFly BSD, and
 .Nx
 by
 .An Constantine A. Murenin Aq http://cnst.su/ ,
 Raouf Boutaba Research Group,
 David R. Cheriton School of Computer Science,
 University of Waterloo.
-.Pp
-An earlier version of the driver, named
+.An Jukka Ruohonen
+.Aq jruohonen@iki.fi
+later reworked and adjusted the driver to support new
+.Tn ASUSTeK
+motherboards.
+The earlier version of the driver,
 .Nm aiboost ,
 was written for
 .Fx

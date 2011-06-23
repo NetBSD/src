@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.73 2011/04/25 22:20:59 yamt Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.73.2.1 2011/06/23 14:20:25 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,13 +65,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.73 2011/04/25 22:20:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.73.2.1 2011/06/23 14:20:25 cherry Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_iso.h"
 #include "opt_ipx.h"
 #include "opt_mbuftrace.h"
+#include "opt_mpls.h"
 
 
 #include <sys/param.h>
@@ -115,6 +116,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.73 2011/04/25 22:20:59 yamt Exp $");
 #ifdef ISO
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
+#endif
+
+#ifdef MPLS
+#include <netmpls/mpls.h>
+#include <netmpls/mpls_var.h>
 #endif
 
 #ifdef NETATALK
@@ -211,7 +217,7 @@ int
 looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rt)
 {
-	int s, isr;
+	int s, isr = -1;
 	struct ifqueue *ifq = NULL;
 	int csum_flags;
 
@@ -262,6 +268,19 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	m_tag_delete_nonpersistent(m);
 
+#ifdef MPLS
+	if (rt != NULL && rt_gettag(rt) != NULL &&
+	    rt_gettag(rt)->sa_family == AF_MPLS &&
+	    (m->m_flags & (M_MCAST | M_BCAST)) == 0) {
+		union mpls_shim msh;
+		msh.s_addr = MPLS_GETSADDR(rt);
+		if (msh.shim.label != MPLS_LABEL_IMPLNULL) {
+			ifq = &mplsintrq;
+			isr = NETISR_MPLS;
+		}
+	}
+	if (isr != NETISR_MPLS)
+#endif
 	switch (dst->sa_family) {
 
 #ifdef INET

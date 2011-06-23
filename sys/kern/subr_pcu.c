@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.6 2011/05/02 06:33:16 matt Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.6.2.1 2011/06/23 14:20:20 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.6 2011/05/02 06:33:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.6.2.1 2011/06/23 14:20:20 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -66,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.6 2011/05/02 06:33:16 matt Exp $");
 #include <sys/xcall.h>
 
 #if PCU_UNIT_COUNT > 0
+
+static void pcu_lwp_op(const pcu_ops_t *, lwp_t *, int);
 
 #define	PCU_SAVE		0x01	/* Save PCU state to the LWP. */
 #define	PCU_RELEASE		0x02	/* Release PCU state on the CPU. */
@@ -101,6 +103,74 @@ pcu_switchpoint(lwp_t *l)
 	/* splx(s); */
 }
 
+void
+pcu_discard_all(lwp_t *l)
+{
+	const uint32_t pcu_inuse = l->l_pcu_used;
+
+	KASSERT(l == curlwp || ((l->l_flag & LW_SYSTEM) && pcu_inuse == 0));
+
+	if (__predict_true(pcu_inuse == 0)) {
+		/* PCUs are not in use. */
+		return;
+	}
+	const int s = splsoftclock();
+	for (u_int id = 0; id < PCU_UNIT_COUNT; id++) {
+		if ((pcu_inuse & (1 << id)) == 0) {
+			continue;
+		}
+		if (__predict_true(l->l_pcu_cpu[id] == NULL)) {
+			continue;
+		}
+		const pcu_ops_t * const pcu = pcu_ops_md_defs[id];
+		/*
+		 * We aren't releasing since this LWP isn't giving up PCU,
+		 * just saving it.
+		 */
+		pcu_lwp_op(pcu, l, PCU_RELEASE);
+	}
+	l->l_pcu_used = 0;
+	splx(s);
+}
+
+void
+pcu_save_all(lwp_t *l)
+{
+	const uint32_t pcu_inuse = l->l_pcu_used;
+	const int flags = PCU_SAVE | (l->l_flag & LW_WCORE ? PCU_RELEASE : 0);
+
+	/*
+	 * Normally we save for the current LWP, but sometimes we get called
+	 * with a different LWP (forking a system LWP or doing a coredump of
+	 * a process with multiple threads) and we need to deal with that.
+	 */
+	KASSERT(l == curlwp
+	    || (((l->l_flag & LW_SYSTEM)
+		 || (curlwp->l_proc == l->l_proc && l->l_stat == LSSUSPENDED))
+	        && pcu_inuse == 0));
+
+	if (__predict_true(pcu_inuse == 0)) {
+		/* PCUs are not in use. */
+		return;
+	}
+	const int s = splsoftclock();
+	for (u_int id = 0; id < PCU_UNIT_COUNT; id++) {
+		if ((pcu_inuse & (1 << id)) == 0) {
+			continue;
+		}
+		if (__predict_true(l->l_pcu_cpu[id] == NULL)) {
+			continue;
+		}
+		const pcu_ops_t * const pcu = pcu_ops_md_defs[id];
+		/*
+		 * We aren't releasing since this LWP isn't giving up PCU,
+		 * just saving it.
+		 */
+		pcu_lwp_op(pcu, l, flags);
+	}
+	splx(s);
+}
+
 /*
  * pcu_do_op: save/release PCU state on the current CPU.
  *
@@ -112,7 +182,7 @@ pcu_do_op(const pcu_ops_t *pcu, lwp_t * const l, const int flags)
 	struct cpu_info * const ci = curcpu();
 	const u_int id = pcu->pcu_id;
 
-	KASSERT(l->l_cpu == ci);
+	KASSERT(l->l_pcu_cpu[id] == ci);
 
 	if (flags & PCU_SAVE) {
 		pcu->pcu_state_save(l);

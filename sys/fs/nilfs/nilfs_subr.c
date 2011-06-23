@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.7 2010/08/11 11:43:13 pgoyette Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.7.6.1 2011/06/23 14:20:15 cherry Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.7 2010/08/11 11:43:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.7.6.1 2011/06/23 14:20:15 cherry Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -782,7 +782,7 @@ loop:
 		if (node->ino == ino) {
 			vp = node->vnode;
 			assert(vp);
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			mutex_exit(&ump->ihash_lock);
 			if (vget(vp, LK_EXCLUSIVE))
 				goto loop;
@@ -813,7 +813,7 @@ nilfs_get_node_raw(struct nilfs_device *nilfsdev, struct nilfs_mount *ump,
 
 	/* associate with mountpoint if present*/
 	mp = ump? ump->vfs_mountp : NULL;
-	error = getnewvnode(VT_NILFS, mp, vnodeops, &nvp);
+	error = getnewvnode(VT_NILFS, mp, vnodeops, NULL, &nvp);
 	if (error)
 		return error;
 

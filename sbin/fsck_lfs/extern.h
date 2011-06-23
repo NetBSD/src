@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.8 2005/06/27 02:48:28 christos Exp $	 */
+/* $NetBSD: extern.h,v 1.8.42.1 2011/06/23 14:18:43 cherry Exp $	 */
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -69,6 +69,3 @@ void propagate(void);
 int reply(const char *);
 void resetinodebuf(void);
 int setup(const char *);
-void catch(int);
-void catchquit(int);
-void voidquit(int);

@@ -198,13 +198,9 @@ static int enc_read(BIO *b, char *out, int outl)
 			}
 		else
 			{
-			if (!EVP_CipherUpdate(&(ctx->cipher),
+			EVP_CipherUpdate(&(ctx->cipher),
 				(unsigned char *)ctx->buf,&ctx->buf_len,
-				(unsigned char *)&(ctx->buf[BUF_OFFSET]),i))
-				{
-				BIO_clear_retry_flags(b);
-				return 0;
-				}	
+				(unsigned char *)&(ctx->buf[BUF_OFFSET]),i);
 			ctx->cont=1;
 			/* Note: it is possible for EVP_CipherUpdate to
 			 * decrypt zero bytes because this is or looks like
@@ -261,13 +257,9 @@ static int enc_write(BIO *b, const char *in, int inl)
 	while (inl > 0)
 		{
 		n=(inl > ENC_BLOCK_SIZE)?ENC_BLOCK_SIZE:inl;
-		if (!EVP_CipherUpdate(&(ctx->cipher),
+		EVP_CipherUpdate(&(ctx->cipher),
 			(unsigned char *)ctx->buf,&ctx->buf_len,
-			(unsigned char *)in,n))
-			{
-			BIO_clear_retry_flags(b);
-			return 0;
-			}
+			(unsigned char *)in,n);
 		inl-=n;
 		in+=n;
 
@@ -306,9 +298,8 @@ static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
 	case BIO_CTRL_RESET:
 		ctx->ok=1;
 		ctx->finished=0;
-		if (!EVP_CipherInit_ex(&(ctx->cipher),NULL,NULL,NULL,NULL,
-			ctx->cipher.encrypt))
-			return 0;
+		EVP_CipherInit_ex(&(ctx->cipher),NULL,NULL,NULL,NULL,
+			ctx->cipher.encrypt);
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 		break;
 	case BIO_CTRL_EOF:	/* More to read */
@@ -370,8 +361,10 @@ again:
 	case BIO_CTRL_DUP:
 		dbio=(BIO *)ptr;
 		dctx=(BIO_ENC_CTX *)dbio->ptr;
-		memcpy(&(dctx->cipher),&(ctx->cipher),sizeof(ctx->cipher));
-		dbio->init=1;
+		EVP_CIPHER_CTX_init(&dctx->cipher);
+		ret = EVP_CIPHER_CTX_copy(&dctx->cipher,&ctx->cipher);
+		if (ret)
+			dbio->init=1;
 		break;
 	default:
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
@@ -414,24 +407,22 @@ EVP_CIPHER_ctx *c;
 	}
 */
 
-int BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,
+void BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,
 	     const unsigned char *i, int e)
 	{
 	BIO_ENC_CTX *ctx;
 
-	if (b == NULL) return 0;
+	if (b == NULL) return;
 
 	if ((b->callback != NULL) &&
 		(b->callback(b,BIO_CB_CTRL,(const char *)c,BIO_CTRL_SET,e,0L) <= 0))
-		return 0;
+		return;
 
 	b->init=1;
 	ctx=(BIO_ENC_CTX *)b->ptr;
-	if (!EVP_CipherInit_ex(&(ctx->cipher),c,NULL, k,i,e))
-		return 0;
+	EVP_CipherInit_ex(&(ctx->cipher),c,NULL, k,i,e);
 	
 	if (b->callback != NULL)
-		return b->callback(b,BIO_CB_CTRL,(const char *)c,BIO_CTRL_SET,e,1L);
-	return 1;
+		b->callback(b,BIO_CB_CTRL,(const char *)c,BIO_CTRL_SET,e,1L);
 	}
 

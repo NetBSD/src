@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.47 2011/05/24 01:17:36 mrg Exp $	*/
+/*	$NetBSD: sab.c,v 1.47.2.1 2011/06/23 14:19:42 cherry Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.47 2011/05/24 01:17:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.47.2.1 2011/06/23 14:19:42 cherry Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.47 2011/05/24 01:17:36 mrg Exp $");
 #define	SABTTY_RBUF_SIZE	1024	/* must be divisible by 2 */
 
 struct sab_softc {
-	struct device		sc_dv;
+	device_t		sc_dev;
 	struct intrhand *	sc_ih;
 	bus_space_tag_t		sc_bt;
 	bus_space_handle_t	sc_bh;
@@ -92,7 +92,7 @@ struct sabtty_attach_args {
 };
 
 struct sabtty_softc {
-	struct device		sc_dv;
+	device_t		sc_dev;
 	struct sab_softc *	sc_parent;
 	bus_space_tag_t		sc_bt;
 	bus_space_handle_t	sc_bh;
@@ -128,8 +128,8 @@ struct sabtty_softc *sabtty_cons_output;
 #define	SAB_WRITE_BLOCK(sc,r,p,c)	\
     bus_space_write_region_1((sc)->sc_bt, (sc)->sc_bh, (r), (p), (c))
 
-int sab_match(struct device *, struct cfdata *, void *);
-void sab_attach(struct device *, struct device *, void *);
+int sab_match(device_t, cfdata_t, void *);
+void sab_attach(device_t, device_t, void *);
 int sab_print(void *, const char *);
 int sab_intr(void *);
 
@@ -138,8 +138,8 @@ void sab_cnputc(dev_t, int);
 int sab_cngetc(dev_t);
 void sab_cnpollc(dev_t, int);
 
-int sabtty_match(struct device *, struct cfdata *, void *);
-void sabtty_attach(struct device *, struct device *, void *);
+int sabtty_match(device_t, cfdata_t, void *);
+void sabtty_attach(device_t, device_t, void *);
 void sabtty_start(struct tty *);
 int sabtty_param(struct tty *, struct termios *);
 int sabtty_intr(struct sabtty_softc *, int *);
@@ -163,12 +163,12 @@ void sab_kgdb_init(struct sabtty_softc *);
 void sabtty_cnputc(struct sabtty_softc *, int);
 int sabtty_cngetc(struct sabtty_softc *);
 
-CFATTACH_DECL(sab, sizeof(struct sab_softc),
+CFATTACH_DECL_NEW(sab, sizeof(struct sab_softc),
     sab_match, sab_attach, NULL, NULL);
 
 extern struct cfdriver sab_cd;
 
-CFATTACH_DECL(sabtty, sizeof(struct sabtty_softc),
+CFATTACH_DECL_NEW(sabtty, sizeof(struct sabtty_softc),
     sabtty_match, sabtty_attach, NULL, NULL);
 
 extern struct cfdriver sabtty_cd;
@@ -222,7 +222,7 @@ struct sabtty_rate sabtty_baudtable[] = {
 };
 
 int
-sab_match(struct device *parent, struct cfdata *match, void *aux)
+sab_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 	char *compat;
@@ -239,14 +239,15 @@ sab_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-sab_attach(struct device *parent, struct device *self, void *aux)
+sab_attach(device_t parent, device_t self, void *aux)
 {
-	struct sab_softc *sc = (struct sab_softc *)self;
+	struct sab_softc *sc = device_private(self);
 	struct ebus_attach_args *ea = aux;
 	uint8_t r;
 	u_int i;
 	int locs[SABCF_NLOCS];
 
+	sc->sc_dev = self;
 	sc->sc_bt = ea->ea_bustag;
 	sc->sc_node = ea->ea_node;
 
@@ -309,9 +310,8 @@ sab_attach(struct device *parent, struct device *self, void *aux)
 
 		locs[SABCF_CHANNEL] = i;
 
-		sc->sc_child[i] =
-		    (struct sabtty_softc *)config_found_sm_loc(self,
-		     "sab", locs, &stax, sab_print, config_stdsubmatch);
+		sc->sc_child[i] = device_private(config_found_sm_loc(self,
+		     "sab", locs, &stax, sab_print, config_stdsubmatch));
 		if (sc->sc_child[i] != NULL)
 			sc->sc_nchild++;
 	}
@@ -365,21 +365,22 @@ sab_softintr(void *vsc)
 }
 
 int
-sabtty_match(struct device *parent, struct cfdata *match, void *aux)
+sabtty_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return (1);
 }
 
 void
-sabtty_attach(struct device *parent, struct device *self, void *aux)
+sabtty_attach(device_t parent, device_t self, void *aux)
 {
-	struct sabtty_softc *sc = (struct sabtty_softc *)self;
+	struct sabtty_softc *sc = device_private(self);
 	struct sabtty_attach_args *sa = aux;
 	int r;
 	int maj;
 	int is_kgdb = 0;
 
+	sc->sc_dev = self;
 #ifdef KGDB
 	is_kgdb = sab_kgdb_check(sc);
 #endif
@@ -395,7 +396,7 @@ sabtty_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_tty->t_param = sabtty_param;
 	}
 
-	sc->sc_parent = (struct sab_softc *)parent;
+	sc->sc_parent = device_private(parent);
 	sc->sc_bt = sc->sc_parent->sc_bt;
 	sc->sc_portno = sa->sbt_portno;
 	sc->sc_rend = sc->sc_rbuf + SABTTY_RBUF_SIZE;
@@ -647,7 +648,7 @@ sabtty_softintr(struct sabtty_softc *sc)
 
 	if (flags & SABTTYF_RINGOVERFLOW)
 		log(LOG_WARNING, "%s: ring overflow\n",
-		    device_xname(&sc->sc_dv));
+		    device_xname(sc->sc_dev));
 
 	if (flags & SABTTYF_DONE) {
 		ndflush(&tp->t_outq, sc->sc_txp - tp->t_outq.c_cf);
@@ -1349,7 +1350,7 @@ sab_kgdb_putc(void *arg, int c)
 int
 sab_kgdb_check(struct sabtty_softc *sc)
 {
-	return strcmp(device_xname(&sc->sc_dv), KGDB_DEVNAME) == 0;
+	return strcmp(device_xname(sc->sc_dev), KGDB_DEVNAME) == 0;
 }
 
 void

@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.118.2.1 2011/06/03 13:27:39 cherry Exp $
+#	$NetBSD: files.xen,v 1.118.2.2 2011/06/23 14:19:49 cherry Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -51,7 +51,6 @@ file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/longrun.c
-file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/trap.c
@@ -78,7 +77,6 @@ file	arch/amd64/amd64/kgdb_machdep.c	 kgdb
 file	arch/amd64/amd64/kobj_machdep.c	 	modular
 file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
-file	arch/amd64/amd64/mem.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/trap.c
 file	arch/amd64/amd64/fpu.c
@@ -131,6 +129,7 @@ file	arch/x86/x86/identcpu.c
 file	arch/xen/x86/intr.c
 file	arch/xen/x86/xen_ipi.c
 file	arch/x86/x86/pmap.c
+file	arch/x86/x86/pmap_tlb.c
 file	arch/x86/x86/procfs_machdep.c	procfs
 file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/tsc.c
@@ -257,7 +256,6 @@ include "dev/apm/files.apm"
 include "dev/acpi/files.acpi"
 file	arch/xen/xen/xen_acpi_machdep.c	acpi
 file	arch/x86/x86/mpacpi.c		acpi
-file	arch/x86/x86/acpi_machdep.c	acpi
 file	arch/x86/x86/i8259.c
 
 # Stubs for x86 routines not included in the system
@@ -274,6 +272,9 @@ file	arch/x86/pci/pci_addr_fixup.c	pci_addr_fixup
 
 file	arch/x86/x86/apic.c		ioapic
 file	arch/x86/x86/nmi.c
+
+file	arch/x86/acpi/acpi_machdep.c	acpi
+file	arch/x86/acpi/acpi_pdc.c	acpi
 
 device ioapic
 attach ioapic at ioapicbus

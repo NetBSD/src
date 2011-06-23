@@ -1,6 +1,6 @@
-#	$NetBSD: list,v 1.17 2011/01/14 10:26:34 tsutsui Exp $
+#	$NetBSD: list,v 1.17.4.1 2011/06/23 14:18:19 cherry Exp $
 
-SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
+SRCDIRS	bin sbin usr.bin usr.sbin
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -54,12 +54,13 @@ PROG	usr/sbin/chroot
 # init invokes the shell as -sh
 ARGVLN	sh -sh
 
+SPECIAL	gzip		srcdir	distrib/utils/x_gzip
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 
 # we have not switched to MI usr.sbin/installboot yet.
 SPECIAL	installboot	srcdir	sys/arch/${MACHINE}/stand/installboot
 
-LIBS	libhack.o -ledit -lbz2 -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lz -lprop
+LIBS	libhack.o -ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lz -lprop
 
 # we need the boot blocks /usr/mdec
 COPY	${DESTDIR}/usr/mdec/boot	usr/mdec/boot

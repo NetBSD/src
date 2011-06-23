@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.44 2011/05/26 04:51:57 uebayasi Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.44.2.1 2011/06/23 14:20:22 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.44 2011/05/26 04:51:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.44.2.1 2011/06/23 14:20:22 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -734,9 +734,9 @@ wapbl_doio(void *data, size_t len, struct vnode *devvp, daddr_t pbn, int flags)
 	KASSERT(devvp->v_type == VBLK);
 
 	if ((flags & (B_WRITE | B_READ)) == B_WRITE) {
-		mutex_enter(&devvp->v_interlock);
+		mutex_enter(devvp->v_interlock);
 		devvp->v_numoutput++;
-		mutex_exit(&devvp->v_interlock);
+		mutex_exit(devvp->v_interlock);
 		pstats->p_ru.ru_oublock++;
 	} else {
 		pstats->p_ru.ru_inblock++;

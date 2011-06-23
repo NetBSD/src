@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_autoconf.c,v 1.5 2010/03/18 14:04:07 kiyohara Exp $	*/
+/*	$NetBSD: obs266_autoconf.c,v 1.5.6.1 2011/06/23 14:19:09 cherry Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,10 +33,11 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.5 2010/03/18 14:04:07 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.5.6.1 2011/06/23 14:19:09 cherry Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <machine/obs266.h>
 
@@ -44,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.5 2010/03/18 14:04:07 kiyohara
 #include <powerpc/ibm4xx/dcr4xx.h>
 
 #include <dev/ic/comreg.h>
-
 
 /*
  * Determine device configuration for a machine.
@@ -62,9 +62,6 @@ cpu_configure(void)
 	if (config_rootfound("plb", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
-
 	(void)spl0();
 
 	/*
@@ -73,7 +70,8 @@ cpu_configure(void)
 	__asm volatile ("wrteei 1");
 }
 
-void device_register(struct device *dev, void *aux)
+void
+device_register(device_t dev, void *aux)
 {
 
 	obs405_device_register(dev, aux, OBS266_COM_FREQ);

@@ -33,6 +33,7 @@
 
 extern "C" {
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -66,6 +67,12 @@ extern "C" {
 #include "test-program.hpp"
 
 namespace impl = atf::atf_run;
+
+#if defined(MAXCOMLEN)
+static const std::string::size_type max_core_name_length = MAXCOMLEN;
+#else
+static const std::string::size_type max_core_name_length = std::string::npos;
+#endif
 
 class atf_run : public atf::application::app {
     static const char* m_description;
@@ -119,7 +126,8 @@ dump_stacktrace(const atf::fs::path& tp, const atf::process::status& s,
 
     w.stderr_tc("Test program crashed; attempting to get stack trace");
 
-    const atf::fs::path corename = workdir / (tp.leaf_name() + ".core");
+    const atf::fs::path corename = workdir /
+        (tp.leaf_name().substr(0, max_core_name_length) + ".core");
     if (!atf::fs::exists(corename)) {
         w.stderr_tc("Expected file " + corename.str() + " not found");
         return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_getcwd.c,v 1.1 2011/04/10 06:27:21 jruoho Exp $ */
+/*	$NetBSD: t_getcwd.c,v 1.1.2.1 2011/06/23 14:20:39 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getcwd.c,v 1.1 2011/04/10 06:27:21 jruoho Exp $");
+__RCSID("$NetBSD: t_getcwd.c,v 1.1.2.1 2011/06/23 14:20:39 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -133,7 +133,7 @@ out:
 		(void)fts_close(fts);
 
 	if (str != NULL)
-		atf_tc_fail(str);
+		atf_tc_fail("%s", str);
 }
 
 ATF_TP_ADD_TCS(tp)

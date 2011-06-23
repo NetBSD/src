@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/11/22 22:19:53 christos Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2011/06/23 14:17:50 cherry Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
 	roaming_common.c roaming_client.c
 
 COPTS.sshconnect1.c=	-fno-strict-aliasing
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.mux.c=		-Wno-pointer-sign
 COPTS.sshconnect2.c=	-Wno-pointer-sign
 .endif
@@ -25,8 +25,11 @@ SRCS +=	gss-genr.c
 LDADD+=	-lgssapi -lheimntlm
 DPADD+=	${LIBGSSAPI} ${LIBHEIMNTLM}
 
-LDADD+=	-lkrb5 -lhx509 -lkafs -lasn1 -lcrypt
-DPADD+=	${LIBKRB5} ${LIBHX509} ${LIBKAFS} ${LIBASN1} ${LIBCRYPT}
+LDADD+=	-lkrb5 -lhx509 -lheimbase -lwind
+DPADD+=	${LIBKRB5} ${LIBHX509} ${LIBHEIMBASE} ${LIBWIND}
+
+LDADD+=	-lkafs -lasn1 -lcrypt
+DPADD+=	${LIBKAFS} ${LIBASN1} ${LIBCRYPT}
 
 LDADD+=	-lcom_err -lroken -lutil
 DPADD+=	${LIBCOM_ERR} ${LIBROKEN} ${LIBUTIL}

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.54 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.54.4.1 2011/06/23 14:19:34 cherry Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.54 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.54.4.1 2011/06/23 14:19:34 cherry Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.54 2011/01/18 01:02:55 matt Exp $");
 #include <machine/pmap.h>
 
 #include <powerpc/pcb.h>
+#include <powerpc/psl.h>
 #include <powerpc/spr.h>
 #if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/oea/spr.h>
@@ -124,8 +125,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	bool lwpaddr = false;
 	extern int trapexit[], sctrapexit[];
 #ifdef PPC_BOOKE
-	extern int extintr_call[], fitintr_call[], decrintr_call[];
-	extern int critintr_call[], wdogintr_call[];
+	extern int intrcall[];
 #endif
 	bool full = false;
 	bool in_kernel = true;
@@ -192,11 +192,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		(*pr)("0x%08lx: ", frame);
 		if (lr + 4 == (db_addr_t) trapexit ||
 #ifdef PPC_BOOKE
-		    lr == (db_addr_t) wdogintr_call ||
-		    lr == (db_addr_t) extintr_call ||
-		    lr == (db_addr_t) critintr_call ||
-		    lr == (db_addr_t) decrintr_call ||
-		    lr == (db_addr_t) fitintr_call ||
+		    lr + 4 == (db_addr_t) intrcall ||
 #endif
 		    lr + 4 == (db_addr_t) sctrapexit) {
 			const char *trapstr;

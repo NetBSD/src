@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2010/02/03 15:34:46 roy Exp $
+# $NetBSD: Makefile,v 1.5.4.1 2011/06/23 14:20:47 cherry Exp $
 
 WARNS?=	2	# XXX -Wextra -Wsign-compare
 NOLINT= # defined
@@ -26,7 +26,7 @@ CPPFLAGS+= -I.					\
 CPPFLAGS+=-DHAVE_IPV6
 .endif
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
+.if defined(HAVE_GCC)
 COPTS.mit_dump.c+=	-Wno-pointer-sign
 .endif
 

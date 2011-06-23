@@ -37,12 +37,13 @@
  */
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_cache.c,v 1.2 2011/01/18 01:02:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_cache.c,v 1.2.6.1 2011/06/23 14:19:27 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 
-#include <uvm/uvm_extern.h>
+enum cache_op { OP_DCBF, OP_DCBST, OP_DCBI, OP_DCBZ, OP_DCBA, OP_ICBI };
 
 static void inline
 dcbf(vaddr_t va, vsize_t off)
@@ -81,8 +82,7 @@ icbi(vaddr_t va, vsize_t off)
 }
 
 static inline void
-cache_op(vaddr_t va, vsize_t len, vsize_t line_size,
-	void (*op)(vaddr_t, vsize_t))
+cache_op(vaddr_t va, vsize_t len, vsize_t line_size, enum cache_op op)
 {
 	KASSERT(line_size > 0);
 
@@ -93,66 +93,75 @@ cache_op(vaddr_t va, vsize_t len, vsize_t line_size,
 	len += va & (line_size - 1);
 	va &= -line_size;
 
-	for (vsize_t i = 0; i < len; i += line_size)
-		(*op)(va, i);
-	__asm volatile("mbar 0");
+	for (vsize_t i = 0; i < len; i += line_size) {
+		switch (op) {
+		case OP_DCBF: dcbf(va, i); break;
+		case OP_DCBST: dcbst(va, i); break;
+		case OP_DCBI: dcbi(va, i); break;
+		case OP_DCBZ: dcbz(va, i); break;
+		case OP_DCBA: dcba(va, i); break;
+		case OP_ICBI: icbi(va, i); break;
+		}
+	}
+	if (op != OP_ICBI)
+		membar_producer();
 }
 
 void
 dcache_wb_page(vaddr_t va)
 {
-	cache_op(va, PAGE_SIZE, curcpu()->ci_ci.dcache_line_size, dcbst);
+	cache_op(va, PAGE_SIZE, curcpu()->ci_ci.dcache_line_size, OP_DCBST);
 }
 
 void
 dcache_wbinv_page(vaddr_t va)
 {
-	cache_op(va, PAGE_SIZE, curcpu()->ci_ci.dcache_line_size, dcbf);
+	cache_op(va, PAGE_SIZE, curcpu()->ci_ci.dcache_line_size, OP_DCBF);
 }
 
 void
 dcache_inv_page(vaddr_t va)
 {
-	cache_op(va, PAGE_SIZE, curcpu()->ci_ci.dcache_line_size, dcbi);
+	cache_op(va, PAGE_SIZE, curcpu()->ci_ci.dcache_line_size, OP_DCBI);
 }
 
 void
 dcache_zero_page(vaddr_t va)
 {
-	cache_op(va, PAGE_SIZE, curcpu()->ci_ci.dcache_line_size, dcbz);
+	cache_op(va, PAGE_SIZE, curcpu()->ci_ci.dcache_line_size, OP_DCBZ);
 }
 
 void
 icache_inv_page(vaddr_t va)
 {
-	__asm("msync");
-	cache_op(va, PAGE_SIZE, curcpu()->ci_ci.icache_line_size, icbi);
-	__asm("msync");
+	membar_sync();
+	cache_op(va, PAGE_SIZE, curcpu()->ci_ci.icache_line_size, OP_ICBI);
+	membar_sync();
 	/* synchronizing instruction will be the rfi to user mode */
 }
 
 void
 dcache_wb(vaddr_t va, vsize_t len)
 {
-	cache_op(va, len, curcpu()->ci_ci.dcache_line_size, dcbst);
+	cache_op(va, len, curcpu()->ci_ci.dcache_line_size, OP_DCBST);
 }
 
 void
 dcache_wbinv(vaddr_t va, vsize_t len)
 {
-	cache_op(va, len, curcpu()->ci_ci.dcache_line_size, dcbf);
+	cache_op(va, len, curcpu()->ci_ci.dcache_line_size, OP_DCBF);
 }
 
 void
 dcache_inv(vaddr_t va, vsize_t len)
 {
-	cache_op(va, len, curcpu()->ci_ci.dcache_line_size, dcbi);
+	cache_op(va, len, curcpu()->ci_ci.dcache_line_size, OP_DCBI);
 }
 
 void
 icache_inv(vaddr_t va, vsize_t len)
 {
-	__asm volatile("msync");
-	cache_op(va, len, curcpu()->ci_ci.icache_line_size, icbi);
-	__asm volatile("msync");
+	membar_sync();
+	cache_op(va, len, curcpu()->ci_ci.icache_line_size, OP_ICBI);
+	membar_sync();
 }

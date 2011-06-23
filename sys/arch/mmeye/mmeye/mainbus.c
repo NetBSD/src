@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2011/02/19 10:46:29 kiyohara Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8.2.1 2011/06/23 14:19:23 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2011/02/19 10:46:29 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8.2.1 2011/06/23 14:19:23 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,16 +36,16 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2011/02/19 10:46:29 kiyohara Exp $")
 
 #include "locators.h"
 
-static int mainbus_match(device_t, struct cfdata *, void *);
+static int mainbus_match(device_t, cfdata_t, void *);
 static void mainbus_attach(device_t, device_t, void *);
 static int mainbus_search(device_t, cfdata_t, const int *, void *);
 static int mainbus_print(void *, const char *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 static int
-mainbus_match(device_t parent, struct cfdata *cf, void *aux)
+mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;

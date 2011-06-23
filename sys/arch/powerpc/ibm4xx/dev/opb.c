@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.25 2010/03/18 13:47:04 kiyohara Exp $ */
+/* $NetBSD: opb.c,v 1.25.6.1 2011/06/23 14:19:30 cherry Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.25 2010/03/18 13:47:04 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.25.6.1 2011/06/23 14:19:30 cherry Exp $");
 
 #include "locators.h"
 #include "opt_emac.h"
@@ -75,16 +75,19 @@ __KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.25 2010/03/18 13:47:04 kiyohara Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/extent.h>
+#include <sys/cpu.h>
 
 #include <powerpc/ibm4xx/cpu.h>
+#include <powerpc/ibm4xx/dcr4xx.h>
+
 #include <powerpc/ibm4xx/dev/opbreg.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
 #include <powerpc/ibm4xx/dev/rgmiireg.h>
 #include <powerpc/ibm4xx/dev/zmiireg.h>
-#include <powerpc/ibm4xx/dcr4xx.h>
-#include <powerpc/ibm4xx/spr.h>
+
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 
 #include <powerpc/ibm4xx/ibm405gp.h>
 #include <powerpc/ibm4xx/amcc405ex.h>

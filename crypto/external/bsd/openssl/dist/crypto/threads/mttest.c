@@ -152,17 +152,17 @@ static void print_stats(FILE *fp, SSL_CTX *ctx)
 {
 	fprintf(fp,"%4ld items in the session cache\n",
 		SSL_CTX_sess_number(ctx));
-	fprintf(fp,"%4d client connects (SSL_connect())\n",
+	fprintf(fp,"%4ld client connects (SSL_connect())\n",
 		SSL_CTX_sess_connect(ctx));
-	fprintf(fp,"%4d client connects that finished\n",
+	fprintf(fp,"%4ld client connects that finished\n",
 		SSL_CTX_sess_connect_good(ctx));
-	fprintf(fp,"%4d server connects (SSL_accept())\n",
+	fprintf(fp,"%4ld server connects (SSL_accept())\n",
 		SSL_CTX_sess_accept(ctx));
-	fprintf(fp,"%4d server connects that finished\n",
+	fprintf(fp,"%4ld server connects that finished\n",
 		SSL_CTX_sess_accept_good(ctx));
-	fprintf(fp,"%4d session cache hits\n",SSL_CTX_sess_hits(ctx));
-	fprintf(fp,"%4d session cache misses\n",SSL_CTX_sess_misses(ctx));
-	fprintf(fp,"%4d session cache timeouts\n",SSL_CTX_sess_timeouts(ctx));
+	fprintf(fp,"%4ld session cache hits\n",SSL_CTX_sess_hits(ctx));
+	fprintf(fp,"%4ld session cache misses\n",SSL_CTX_sess_misses(ctx));
+	fprintf(fp,"%4ld session cache timeouts\n",SSL_CTX_sess_timeouts(ctx));
 	}
 
 static void sv_usage(void)
@@ -192,8 +192,8 @@ int main(int argc, char *argv[])
 	int server_auth=0;
 	SSL_CTX *s_ctx=NULL;
 	SSL_CTX *c_ctx=NULL;
-	char *scert=TEST_SERVER_CERT;
-	char *ccert=TEST_CLIENT_CERT;
+	const char *scert=TEST_SERVER_CERT;
+	const char *ccert=TEST_CLIENT_CERT;
 	const SSL_METHOD *ssl_method=SSLv23_method();
 
 	RAND_seed(rnd_seed, sizeof rnd_seed);
@@ -367,7 +367,7 @@ end:
 #define C_DONE	1
 #define S_DONE	2
 
-int ndoit(SSL_CTX *ssl_ctx[2])
+static int ndoit(SSL_CTX *ssl_ctx[2])
 	{
 	int i;
 	int ret;
@@ -831,8 +831,8 @@ void thread_setup(void)
 		mutex_init(&(lock_cs[i]),USYNC_THREAD,NULL);
 		}
 
-	CRYPTO_set_id_callback((unsigned long (*)())solaris_thread_id);
-	CRYPTO_set_locking_callback((void (*)())solaris_locking_callback);
+	CRYPTO_set_id_callback((unsigned long (*)(void))solaris_thread_id);
+	CRYPTO_set_locking_callback((void (*)(void))solaris_locking_callback);
 	}
 
 void thread_cleanup(void)
@@ -953,8 +953,8 @@ void thread_setup(void)
 		lock_cs[i]=usnewsema(arena,1);
 		}
 
-	CRYPTO_set_id_callback((unsigned long (*)())irix_thread_id);
-	CRYPTO_set_locking_callback((void (*)())irix_locking_callback);
+	CRYPTO_set_id_callback((unsigned long (*)(void))irix_thread_id);
+	CRYPTO_set_locking_callback((void (*)(void))irix_locking_callback);
 	}
 
 void thread_cleanup(void)
@@ -1038,8 +1038,8 @@ void thread_setup(void)
 		pthread_mutex_init(&(lock_cs[i]),NULL);
 		}
 
-	CRYPTO_set_id_callback((unsigned long (*)())pthreads_thread_id);
-	CRYPTO_set_locking_callback((void (*)())pthreads_locking_callback);
+	CRYPTO_set_id_callback((unsigned long (*)(void))pthreads_thread_id);
+	CRYPTO_set_locking_callback((void (*)(int, int, const char *, int))pthreads_locking_callback);
 	}
 
 void thread_cleanup(void)
@@ -1101,7 +1101,7 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
 	for (i=0; i<thread_number; i++)
 		{
 		pthread_create(&(thread_ctx[i]), NULL,
-			(void *(*)())ndoit, (void *)ssl_ctx);
+			(void *(*)(void *))ndoit, (void *)ssl_ctx);
 		}
 
 	printf("reaping\n");
@@ -1142,8 +1142,8 @@ void thread_setup(void)
 
    ThreadSem = MPKSemaphoreAlloc("OpenSSL mttest semaphore", 0 );
 
-   CRYPTO_set_id_callback((unsigned long (*)())netware_thread_id);
-   CRYPTO_set_locking_callback((void (*)())netware_locking_callback);
+   CRYPTO_set_id_callback((unsigned long (*)(void))netware_thread_id);
+   CRYPTO_set_locking_callback((void (*)(void))netware_locking_callback);
 }
 
 void thread_cleanup(void)
@@ -1231,7 +1231,7 @@ void thread_setup(void)
 		lock_cs[i] = new BLocker(CRYPTO_get_lock_name(i));
 		}
 
-	CRYPTO_set_id_callback((unsigned long (*)())beos_thread_id);
+	CRYPTO_set_id_callback((unsigned long (*)(void))beos_thread_id);
 	CRYPTO_set_locking_callback(beos_locking_callback);
 	}
 

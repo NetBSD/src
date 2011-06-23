@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.71 2011/02/10 14:46:47 pooka Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.71.2.1 2011/06/23 14:19:39 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.71 2011/02/10 14:46:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.71.2.1 2011/06/23 14:19:39 cherry Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -95,9 +95,13 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.71 2011/02/10 14:46:47 pooka Exp $"
 #include <sys/exec.h>
 #include <sys/ptrace.h>
 #include <sys/syscall.h>
+#include <sys/kauth.h>
 #include <sys/ktrace.h>
 
+#include <dev/mm.h>
+
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_page.h>
 
 #include <sh3/locore.h>
 #include <sh3/cpu.h>
@@ -109,7 +113,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.71 2011/02/10 14:46:47 pooka Exp $"
 extern void lwp_trampoline(void);
 
 static void sh3_setup_uarea(struct lwp *);
-
 
 /*
  * Finish a fork operation, with lwp l2 nearly set up.  Copy and
@@ -390,4 +393,53 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	uvm_km_free(phys_map, addr, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	if (atop(pa) < vm_physmem[0].start || PHYS_TO_VM_PAGE(pa) != NULL) {
+		return 0;
+	}
+	return EFAULT;
+}
+
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+	const vaddr_t va = (vaddr_t)ptr;
+
+	if (va < SH3_P1SEG_BASE) {
+		return EFAULT;
+	}
+	if (va < SH3_P2SEG_BASE) {
+		*handled = true;
+		return 0;
+	}
+	if (va < SH3_P3SEG_BASE) {
+		return EFAULT;
+	}
+	*handled = false;
+	return 0;
+}
+
+bool
+mm_md_direct_mapped_io(void *ptr, paddr_t *paddr)
+{
+	vaddr_t va = (vaddr_t)ptr;
+
+	if (va >= SH3_P1SEG_BASE && va < SH3_P2SEG_BASE) {
+		*paddr = SH3_P1SEG_TO_PHYS(va);
+		return true;
+	}
+	return false;
+}
+
+bool
+mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
+{
+
+	*vaddr = SH3_PHYS_TO_P1SEG(paddr);
+	return true;
 }

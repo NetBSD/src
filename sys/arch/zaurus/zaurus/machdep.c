@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2011/02/13 05:36:34 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22.2.1 2011/06/23 14:19:52 cherry Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2011/02/13 05:36:34 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.2.1 2011/06/23 14:19:52 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -167,6 +167,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2011/02/13 05:36:34 nonaka Exp $");
 #include <arch/zaurus/zaurus/zaurus_var.h>
 
 #include <zaurus/dev/scoopreg.h>
+#include <zaurus/dev/zlcdvar.h>
 
 #include <dev/ic/comreg.h>
 
@@ -584,6 +585,43 @@ irda_on(int virt)
 	*p &= ~(1 << SCOOP1_IR_ON);
 }
 
+int hw_isc1000(int virt);
+int hw_isc1000(int virt)
+{
+	u_long baseaddr;
+	uint16_t mcr, cdr, csr, cpr, ccr, irr, irm, imr, isr;
+	uint16_t gpcr, gpwr, gprr;
+
+	if (virt) {
+		/* XXX scoop1 registers are not page-aligned! */
+		int ofs = C3000_SCOOP1_BASE - trunc_page(C3000_SCOOP1_BASE);
+		baseaddr = ZAURUS_SCOOP1_VBASE + ofs;
+	} else {
+		baseaddr = C3000_SCOOP1_BASE;
+	}
+
+	mcr = *(volatile uint16_t *)(baseaddr + SCOOP_MCR);
+	cdr = *(volatile uint16_t *)(baseaddr + SCOOP_CDR);
+	csr = *(volatile uint16_t *)(baseaddr + SCOOP_CSR);
+	cpr = *(volatile uint16_t *)(baseaddr + SCOOP_CPR);
+	ccr = *(volatile uint16_t *)(baseaddr + SCOOP_CCR);
+	irr = *(volatile uint16_t *)(baseaddr + SCOOP_IRR);
+	irm = *(volatile uint16_t *)(baseaddr + SCOOP_IRM);
+	imr = *(volatile uint16_t *)(baseaddr + SCOOP_IMR);
+	isr = *(volatile uint16_t *)(baseaddr + SCOOP_ISR);
+	gpcr = *(volatile uint16_t *)(baseaddr + SCOOP_GPCR);
+	gpwr = *(volatile uint16_t *)(baseaddr + SCOOP_GPWR);
+	gprr = *(volatile uint16_t *)(baseaddr + SCOOP_GPRR);
+
+	if (mcr == 0 && cdr == 0 && csr == 0 && cpr == 0 && ccr == 0 &&
+	    irr == 0 && irm == 0 && imr == 0 && isr == 0 &&
+	    gpcr == 0 && gpwr == 0 && gprr == 0) {
+	    /* scoop1 isn't found: hardware is SL-C1000 */
+	    return 1;
+	}
+	return 0;
+}
+
 /*
  * u_int initarm(...)
  *
@@ -667,7 +705,11 @@ initarm(void *arg)
 	 * for other models is added.
 	 */
 	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X) {
-		zaurusmod = ZAURUS_C3000;
+		if (hw_isc1000(1)) {
+			zaurusmod = ZAURUS_C1000;
+		} else {
+			zaurusmod = ZAURUS_C3000;
+		}
 		zaurus_gpioconf = pxa27x_zaurus_gpioconf;
 	} else {
 		zaurusmod = ZAURUS_C860;
@@ -1200,7 +1242,6 @@ parseopts(const char *opts, int *howto)
 #include <dev/ic/comvar.h>
 #endif
 
-#include "lcd.h"
 #include "wsdisplay.h"
 
 #ifndef CONSPEED
@@ -1260,8 +1301,6 @@ consinit(void)
 #endif
 	if (strcmp(console, "glass") == 0) {
 #if (NLCD > 0) && (NWSDISPLAY > 0)
-		extern void lcd_cnattach(void);
-
 		glass_console = 1;
 		lcd_cnattach();
 #endif

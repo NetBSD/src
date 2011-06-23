@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 2011/05/02 01:49:23 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79.2.1 2011/06/23 14:19:32 cherry Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2011/05/02 01:49:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79.2.1 2011/06/23 14:19:32 cherry Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -83,10 +83,11 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2011/05/02 01:49:23 matt Exp $");
 
 #include <uvm/uvm.h>
 
-#include <machine/pcb.h>
 #include <machine/powerpc.h>
-#include <powerpc/spr.h>
 #include <powerpc/bat.h>
+#include <powerpc/pcb.h>
+#include <powerpc/psl.h>
+#include <powerpc/spr.h>
 #include <powerpc/stdarg.h>
 #include <powerpc/oea/spr.h>
 #include <powerpc/oea/sr_601.h>
@@ -3416,7 +3417,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		      :: "r"((uintptr_t)pmap_pteg_table | (pmap_pteg_mask >> 10)));
 #elif defined (PMAP_OEA64) || defined (PMAP_OEA64_BRIDGE)
  	__asm __volatile ("sync; mtsdr1 %0; isync"
- 		      :: "r"((uintptr_t)pmap_pteg_table | (32 - cntlzw(pmap_pteg_mask >> 11))));
+ 		      :: "r"((uintptr_t)pmap_pteg_table | (32 - __builtin_clz(pmap_pteg_mask >> 11))));
 #endif
 	tlbia();
 

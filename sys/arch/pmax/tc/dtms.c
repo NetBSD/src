@@ -1,4 +1,4 @@
-/*	$NetBSD: dtms.c,v 1.9 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: dtms.c,v 1.9.32.1 2011/06/23 14:19:27 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.9 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.9.32.1 2011/06/23 14:19:27 cherry Exp $");
 
 #include "locators.h"
 
@@ -49,20 +49,20 @@ __KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.9 2008/04/28 20:23:32 martin Exp $");
 #include <dev/wscons/wsmousevar.h>
 
 struct dtms_softc {
-	struct device	sc_dv;
-	struct device	*sc_wsmousedev;
+	device_t	sc_dev;
+	device_t	sc_wsmousedev;
 	int		sc_enabled;
 };
 
-int	dtms_match(struct device *, struct cfdata *, void *);
-void	dtms_attach(struct device *, struct device *, void *);
+int	dtms_match(device_t, cfdata_t, void *);
+void	dtms_attach(device_t, device_t, void *);
 int	dtms_input(void *, int);
 int	dtms_enable(void *);
 int	dtms_ioctl(void *, u_long, void *, int, struct lwp *);
 void	dtms_disable(void *);
 void	dtms_handler(void *, struct dt_msg *);
 
-CFATTACH_DECL(dtms, sizeof(struct dtms_softc),
+CFATTACH_DECL_NEW(dtms, sizeof(struct dtms_softc),
     dtms_match, dtms_attach, NULL, NULL);
 
 const struct wsmouse_accessops dtms_accessops = {
@@ -72,7 +72,7 @@ const struct wsmouse_accessops dtms_accessops = {
 };
 
 int
-dtms_match(struct device *parent, struct cfdata *cf, void *aux)
+dtms_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct dt_attach_args *dta;
 
@@ -81,19 +81,20 @@ dtms_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-dtms_attach(struct device *parent, struct device *self, void *aux)
+dtms_attach(device_t parent, device_t self, void *aux)
 {
 	struct wsmousedev_attach_args a;
 	struct dtms_softc *sc;
 	struct dt_softc *dt;
 
-	dt = (struct dt_softc *)parent;
-	sc = (struct dtms_softc *)self;
+	dt = device_private(parent);
+	sc = device_private(self);
+	sc->sc_dev = self;
 
 	printf("\n");
 
-	if (dt_establish_handler(dt, &dt_ms_dv, self, dtms_handler)) {
-		printf("%s: unable to establish handler\n", self->dv_xname);
+	if (dt_establish_handler(dt, &dt_ms_dv, sc, dtms_handler)) {
+		printf("%s: unable to establish handler\n", device_xname(self));
 		return;
 	}
 

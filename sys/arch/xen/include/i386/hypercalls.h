@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.11 2011/03/30 22:57:24 jym Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.11.2.1 2011/06/23 14:19:50 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -226,7 +226,6 @@ HYPERVISOR_mmuext_op(struct mmuext_op *op, int count, int *success_count,
     return ret;
 }
 
-#if 0
 static __inline int
 HYPERVISOR_fpu_taskswitch(int set)
 {
@@ -238,19 +237,6 @@ HYPERVISOR_fpu_taskswitch(int set)
 
     return ret;
 }
-#else /* 0 */
-/* Xen2 compat: always i38HYPERVISOR_fpu_taskswitch(1) */
-static __inline int
-HYPERVISOR_fpu_taskswitch(void)
-{
-    long ret;
-    long ign1;
-    _hypercall(__HYPERVISOR_fpu_taskswitch, _harg("1" (1)),
-	_harg("=a" (ret), "=b" (ign1)));
-
-    return ret;
-}
-#endif /* 0 */
 
 static __inline int
 HYPERVISOR_update_descriptor(uint64_t ma, uint32_t word1, uint32_t word2)

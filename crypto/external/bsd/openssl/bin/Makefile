@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/07/19 23:33:34 christos Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2011/06/23 14:17:50 cherry Exp $
 
 WARNS?=	2	# XXX -Wcast-qual
 
@@ -10,7 +10,7 @@ BINDIR=/usr/bin
 USE_FORT?= yes	# cryptographic software
 
 # RCSid:
-#	$Id: Makefile,v 1.2 2009/07/19 23:33:34 christos Exp $
+#	$Id: Makefile,v 1.2.4.1 2011/06/23 14:17:50 cherry Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -35,7 +35,7 @@ SRCS+=	verify.c asn1pars.c req.c dgst.c dh.c dhparam.c enc.c passwd.c gendh.c er
 	pkcs7.c crl2p7.c crl.c \
 	rsa.c rsautl.c dsa.c dsaparam.c \
 	x509.c genrsa.c gendsa.c prime.c s_server.c s_client.c speed.c \
-	s_time.c version.c sess_id.c \
+	s_time.c version.c sess_id.c srp.c \
 	ciphers.c nseq.c pkcs12.c pkcs8.c spkac.c smime.c rand.c engine.c ocsp.c
 
 CPPFLAGS+= -DMONOLITH -DUSE_SSL -I${OPENSSLSRC}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssn.c,v 1.8 2005/12/11 12:16:04 christos Exp $	*/
+/*	$NetBSD: ssn.c,v 1.8.110.1 2011/06/23 14:18:47 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssn.c,v 1.8 2005/12/11 12:16:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssn.c,v 1.8.110.1 2011/06/23 14:18:47 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,12 +44,12 @@ __KERNEL_RCSID(0, "$NetBSD: ssn.c,v 1.8 2005/12/11 12:16:04 christos Exp $");
 struct ssn_softc {
 	struct device sc_dev;
 	struct ds_handle sc_dsh;
-	struct device *sc_ioc;
+	device_t sc_ioc;
 	int sc_timebase;
 };
 
-static int ssn_match(struct device *, struct cfdata *, void *);
-static void ssn_attach(struct device *, struct device *, void *);
+static int ssn_match(device_t, cfdata_t, void *);
+static void ssn_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(ssn, sizeof(struct ssn_softc),
     ssn_match, ssn_attach, NULL, NULL);
@@ -61,16 +61,16 @@ static void ds_ioc_reset(void *);
 static int ds_crc(const u_int8_t *data, size_t len);
 
 static int
-ssn_match(struct device *parent, struct cfdata *cf, void *aux)
+ssn_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);
 }
 
 static void
-ssn_attach(struct device *parent, struct device *self, void *aux)
+ssn_attach(device_t parent, device_t self, void *aux)
 {
-	struct ssn_softc *sc = (void *)self;
+	struct ssn_softc *sc = device_private(self);
 	int i;
 	u_int8_t rombuf[8];
 

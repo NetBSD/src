@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.15 2011/04/04 20:37:53 dyoung Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.15.2.1 2011/06/23 14:19:33 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.15 2011/04/04 20:37:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.15.2.1 2011/06/23 14:19:33 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,14 +43,13 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.15 2011/04/04 20:37:53 dyoung 
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
-
 #include <machine/autoconf.h>
 #include <machine/pio.h>
-#include <machine/intr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

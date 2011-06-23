@@ -1,4 +1,4 @@
-/* $NetBSD: ioebvar.h,v 1.2 2002/03/24 23:37:44 bjh21 Exp $ */
+/* $NetBSD: ioebvar.h,v 1.2.152.1 2011/06/23 14:18:47 cherry Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -34,5 +34,5 @@
 
 extern void ioeb_irq_clear(int mask);
 
-extern struct device *the_ioeb;
+extern device_t the_ioeb;
 #endif

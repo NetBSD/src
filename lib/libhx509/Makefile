@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2009/07/20 12:16:37 skrll Exp $
+# $NetBSD: Makefile,v 1.6.4.1 2011/06/23 14:18:38 cherry Exp $
 
 USE_FORT?= yes	# cryptographic software
 
@@ -140,10 +140,8 @@ CPPFLAGS+= -I.					\
 CPPFLAGS+=-DHAVE_IPV6
 .endif
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
-.for f in mkey
-COPTS.${f}.c+=  -Wno-pointer-sign
-.endfor
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
+COPTS.mkey.c+=  -Wno-pointer-sign
 .endif
 
 ${gen_files_ocsp} ocsp_asn1.hx: ocsp_asn1_files

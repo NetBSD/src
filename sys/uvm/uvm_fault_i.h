@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.26 2011/02/02 15:13:34 chuck Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.26.2.1 2011/06/23 14:20:35 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -65,13 +65,11 @@ uvmfault_unlockmaps(struct uvm_faultinfo *ufi, bool write_locked)
 
 static inline void
 uvmfault_unlockall(struct uvm_faultinfo *ufi, struct vm_amap *amap,
-    struct uvm_object *uobj, struct vm_anon *anon)
+    struct uvm_object *uobj)
 {
 
-	if (anon)
-		mutex_exit(&anon->an_lock);
 	if (uobj)
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 	if (amap)
 		amap_unlock(amap);
 	uvmfault_unlockmaps(ufi, false);
@@ -132,7 +130,7 @@ uvmfault_lookup(struct uvm_faultinfo *ufi, bool write_lock)
 		 * lookup
 		 */
 		if (!uvm_map_lookup_entry(ufi->map, ufi->orig_rvaddr,
-								&ufi->entry)) {
+		    &ufi->entry)) {
 			uvmfault_unlockmaps(ufi, write_lock);
 			return(false);
 		}

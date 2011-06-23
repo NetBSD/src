@@ -1,4 +1,4 @@
-/*	$NetBSD: zlcd.c,v 1.11 2010/02/24 22:37:56 dyoung Exp $	*/
+/*	$NetBSD: zlcd.c,v 1.11.8.1 2011/06/23 14:19:51 cherry Exp $	*/
 /*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp */
 
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.11 2010/02/24 22:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.11.8.1 2011/06/23 14:19:51 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,11 @@ __KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.11 2010/02/24 22:37:56 dyoung Exp $");
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0_lcd.h>
 
-#include <zaurus/dev/scoopvar.h>
-#include <zaurus/dev/zsspvar.h>
 #include <zaurus/zaurus/zaurus_var.h>
+#include <zaurus/dev/zlcdvar.h>
+#include <zaurus/dev/zsspvar.h>
+#include <zaurus/dev/scoopvar.h>
+#include <zaurus/dev/ioexpvar.h>
 
 /*
  * wsdisplay glue
@@ -154,23 +156,27 @@ static void	lcd_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(zlcd, sizeof(struct pxa2x0_lcd_softc),
 	lcd_match, lcd_attach, NULL, NULL);
 
-static bool	lcd_suspend(device_t dv, const pmf_qual_t *);
-static bool	lcd_resume(device_t dv, const pmf_qual_t *);
+static bool	lcd_suspend(device_t, const pmf_qual_t *);
+static bool	lcd_resume(device_t, const pmf_qual_t *);
+static void	lcd_brightness_up(device_t);
+static void	lcd_brightness_down(device_t);
+static void	lcd_display_on(device_t);
+static void	lcd_display_off(device_t);
 
-void	lcd_cnattach(void);
-int	lcd_max_brightness(void);
-int	lcd_get_brightness(void);
-void	lcd_set_brightness(int);
-void	lcd_set_brightness_internal(int);
-int	lcd_get_backlight(void);
-void	lcd_set_backlight(int);
-void	lcd_blank(int);
+static int	lcd_max_brightness(void);
+static int	lcd_get_brightness(void);
+static void	lcd_set_brightness(int);
+static void	lcd_set_brightness_internal(int);
+static int	lcd_get_backlight(void);
+static void	lcd_set_backlight(int);
 
 static int
 lcd_match(device_t parent, cfdata_t cf, void *aux)
 {
 
-	return 1;
+	if (ZAURUS_ISC1000 || ZAURUS_ISC3000)
+		return 1;
+	return 0;
 }
 
 static void
@@ -193,8 +199,20 @@ lcd_attach(device_t parent, device_t self, void *aux)
 	/* Start with approximately 40% of full brightness. */
 	lcd_set_brightness(3);
 
-	if (!pmf_device_register(sc->dev, lcd_suspend, lcd_resume))
-		aprint_error_dev(sc->dev, "couldn't establish power handler\n");
+	if (!pmf_device_register(self, lcd_suspend, lcd_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	if (!pmf_event_register(self, PMFE_DISPLAY_BRIGHTNESS_UP,
+	    lcd_brightness_up, true))
+		aprint_error_dev(self, "couldn't register event handler\n");
+	if (!pmf_event_register(self, PMFE_DISPLAY_BRIGHTNESS_DOWN,
+	    lcd_brightness_down, true))
+		aprint_error_dev(self, "couldn't register event handler\n");
+	if (!pmf_event_register(self, PMFE_DISPLAY_ON,
+	    lcd_display_on, true))
+		aprint_error_dev(self, "couldn't register event handler\n");
+	if (!pmf_event_register(self, PMFE_DISPLAY_OFF,
+	    lcd_display_off, true))
+		aprint_error_dev(self, "couldn't register event handler\n");
 }
 
 void
@@ -227,6 +245,36 @@ lcd_resume(device_t dv, const pmf_qual_t *qual)
 	lcd_set_brightness(lcd_get_brightness());
 
 	return true;
+}
+
+static void
+lcd_brightness_up(device_t dv)
+{
+
+	lcd_set_brightness(lcd_get_brightness() + 1);
+}
+
+static void
+lcd_brightness_down(device_t dv)
+{
+
+	lcd_set_brightness(lcd_get_brightness() - 1);
+}
+
+static void
+lcd_display_on(device_t dv)
+{
+
+	lcd_blank(0);
+	lcd_set_backlight(1);
+}
+
+static void
+lcd_display_off(device_t dv)
+{
+
+	lcd_set_backlight(0);
+	lcd_blank(1);
 }
 
 /*
@@ -425,7 +473,7 @@ static	int lcdbrightnesscurval = 1;
 static	int lcdislit = 1;
 static	int lcdisblank = 0;
 
-int
+static int
 lcd_max_brightness(void)
 {
 	int i;
@@ -435,14 +483,14 @@ lcd_max_brightness(void)
 	return i - 1;
 }
 
-int
+static int
 lcd_get_brightness(void)
 {
 
 	return lcdbrightnesscurval;
 }
 
-void
+static void
 lcd_set_brightness(int newval)
 {
 	int maxval;
@@ -460,7 +508,7 @@ lcd_set_brightness(int newval)
 		lcdbrightnesscurval = newval;
 }
 
-void
+static void
 lcd_set_brightness_internal(int newval)
 {
 	static int curval = 1;
@@ -475,28 +523,36 @@ lcd_set_brightness_internal(int newval)
 		for (i = curval + 1; i <= newval; i++) {
 			(void)zssp_ic_send(ZSSP_IC_LZ9JG18,
 			    CURRENT_BACKLIGHT[i].duty);
-			scoop_set_backlight(CURRENT_BACKLIGHT[i].on,
-			    CURRENT_BACKLIGHT[i].cont);
+			if (ZAURUS_ISC1000)
+				ioexp_set_backlight(CURRENT_BACKLIGHT[i].on,
+				    CURRENT_BACKLIGHT[i].cont);
+			else
+				scoop_set_backlight(CURRENT_BACKLIGHT[i].on,
+				    CURRENT_BACKLIGHT[i].cont);
 			delay(5000);
 		}
 	} else {
 		(void)zssp_ic_send(ZSSP_IC_LZ9JG18,
 		    CURRENT_BACKLIGHT[newval].duty);
-		scoop_set_backlight(CURRENT_BACKLIGHT[newval].on,
-		    CURRENT_BACKLIGHT[newval].cont);
+		if (ZAURUS_ISC1000)
+			ioexp_set_backlight(CURRENT_BACKLIGHT[newval].on,
+			    CURRENT_BACKLIGHT[newval].cont);
+		else
+			scoop_set_backlight(CURRENT_BACKLIGHT[newval].on,
+			    CURRENT_BACKLIGHT[newval].cont);
 	}
 
 	curval = newval;
 }
 
-int
+static int
 lcd_get_backlight(void)
 {
 
 	return lcdislit;
 }
 
-void
+static void
 lcd_set_backlight(int onoff)
 {
 

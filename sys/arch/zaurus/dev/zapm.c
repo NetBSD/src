@@ -1,4 +1,4 @@
-/*	$NetBSD: zapm.c,v 1.10 2010/11/13 15:35:50 uebayasi Exp $	*/
+/*	$NetBSD: zapm.c,v 1.10.6.1 2011/06/23 14:19:51 cherry Exp $	*/
 /*	$OpenBSD: zaurus_apm.c,v 1.13 2006/12/12 23:14:28 dim Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.10 2010/11/13 15:35:50 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.10.6.1 2011/06/23 14:19:51 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,9 +124,9 @@ static int
 zapm_match(device_t parent, cfdata_t cf, void *aux)
 {
 
-	if (!ZAURUS_ISC3000)
-		return 0;
-	return 1;
+	if (ZAURUS_ISC1000 || ZAURUS_ISC3000)
+		return 1;
+	return 0;
 }
 
 static void
@@ -147,7 +147,7 @@ zapm_attach(device_t parent, device_t self, void *aux)
 	callout_setfunc(&sc->sc_discharge_poll, zapm_poll, sc);
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
-	if (ZAURUS_ISC3000) {
+	if (ZAURUS_ISC1000 || ZAURUS_ISC3000) {
 		sc->sc_ac_detect_pin = GPIO_AC_IN_C3000;
 		sc->sc_batt_cover_pin = GPIO_BATT_COVER_C3000;
 		sc->sc_charge_comp_pin = GPIO_CHRG_CO_C3000;

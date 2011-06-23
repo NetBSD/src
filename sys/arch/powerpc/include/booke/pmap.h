@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 2011/02/17 13:55:45 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4.4.1 2011/06/23 14:19:31 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,15 +40,22 @@
 #error use assym.h instead
 #endif
 
+#if defined(_MODULE)
+#error this file should not be included by loadable kernel modules
+#endif
+
 #include <sys/cpu.h>
 #include <sys/kcore.h>
 #include <uvm/uvm_page.h>
-#ifdef _PMAP_PRIVATE
+#ifdef __PMAP_PRIVATE
 #include <powerpc/booke/cpuvar.h>
+#include <powerpc/cpuset.h>
 #endif
 
 #define	PMAP_MD_NOCACHE		0x01000000
 #define	PMAP_NEED_PROCWR
+
+#include <common/pmap/tlb/vmpagemd.h>
 
 #include <powerpc/booke/pte.h>
 
@@ -63,7 +70,6 @@
 #define	PMAP_TLB_NUM_PIDS		256
 #define	PMAP_INVALID_SEGTAB_ADDRESS	((struct pmap_segtab *)0xfeeddead)
 
-#ifndef _LOCORE
 #define	pmap_phys_address(x)		(x)
 
 void	pmap_procwr(struct proc *, vaddr_t, size_t);
@@ -78,7 +84,7 @@ paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
 vaddr_t	pmap_md_direct_map_paddr(paddr_t);
 void	pmap_md_init(void);
 
-void	pmap_md_page_syncicache(struct vm_page *);
+void	pmap_md_page_syncicache(struct vm_page *, __cpuset_t);
 void	pmap_bootstrap(vaddr_t, vaddr_t, const phys_ram_seg_t *, size_t);
 bool	pmap_extract(struct pmap *, vaddr_t, paddr_t *);
 
@@ -119,6 +125,5 @@ pmap_md_vca_clean(struct vm_page *pg, vaddr_t va, int op)
 #define	POOL_PHYSTOV(pa)	((vaddr_t)(paddr_t)(pa))
 
 #include <common/pmap/tlb/pmap.h>
-#endif /* _LOCORE */
 
 #endif /* !_POWERPC_BOOKE_PMAP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -1209,7 +1209,7 @@ static int eflash_validate(struct eflash_softc *sc, daddr_t start, size_t *pSize
         error = ioaccess((vaddr_t)sc->sc_sector,
                          secstart + sc->sc_base,
                          secsize);   
-        DBGME(DEBUG_FUNCS,printf("%s: mapped %p %zx -> %lx %d\n",
+        DBGME(DEBUG_FUNCS,printf("%s: mapped %p %zx -> %zx %d\n",
 	    device_xname(sc->sc_dev),
 	    sc->sc_sector, secsize, secstart + sc->sc_base,error));
         if (error) return error;
@@ -1306,7 +1306,7 @@ static int eflash_write_at (struct eflash_softc *sc,
 /* Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: flash_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $ */
+/*	$NetBSD: flash_ebus.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1870,7 +1870,7 @@ eflashopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	struct eflash_softc *sc;
 	int part, error;
 
-	DEBUG_PRINT(("eflashopen %zx\n", dev), DEBUG_FUNCS);
+	DEBUG_PRINT(("eflashopen %" PRIx64 "\n", dev), DEBUG_FUNCS);
 	sc = device_lookup_private(&eflash_cd, EFLASHUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
@@ -1945,7 +1945,7 @@ eflashclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	struct eflash_softc *sc = device_lookup_private(&eflash_cd, EFLASHUNIT(dev));
 	int part = EFLASHPART(dev);
 
-	DEBUG_PRINT(("eflashclose %zx\n", dev), DEBUG_FUNCS);
+	DEBUG_PRINT(("eflashclose %" PRIx64 "\n", dev), DEBUG_FUNCS);
 
 	mutex_enter(&sc->sc_dk.dk_openlock);
 

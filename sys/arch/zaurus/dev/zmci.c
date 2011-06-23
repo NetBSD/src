@@ -1,4 +1,4 @@
-/*	$NetBSD: zmci.c,v 1.2 2010/04/06 15:56:14 nonaka Exp $	*/
+/*	$NetBSD: zmci.c,v 1.2.6.1 2011/06/23 14:19:51 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zmci.c,v 1.2 2010/04/06 15:56:14 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zmci.c,v 1.2.6.1 2011/06/23 14:19:51 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -82,9 +82,9 @@ static int
 pxamci_match(device_t parent, cfdata_t cf, void *aux)
 {
 
-	if (!ZAURUS_ISC3000)
-		return 0;
-	return 1;
+	if (ZAURUS_ISC1000 || ZAURUS_ISC3000)
+		return 1;
+	return 0;
 }
 
 static void
@@ -95,7 +95,7 @@ pxamci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc.sc_dev = self;
 
-	if (ZAURUS_ISC3000) {
+	if (ZAURUS_ISC1000 || ZAURUS_ISC3000) {
 		sc->sc_detect_pin = C3000_GPIO_SD_DETECT_PIN;
 		sc->sc_wp_pin = C3000_GPIO_SD_WP_PIN;
 		pxa2x0_gpio_set_function(sc->sc_detect_pin, GPIO_IN);

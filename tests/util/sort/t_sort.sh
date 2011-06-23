@@ -1,4 +1,4 @@
-# $NetBSD: t_sort.sh,v 1.3 2010/12/18 12:47:21 pooka Exp $
+# $NetBSD: t_sort.sh,v 1.3.4.1 2011/06/23 14:20:42 cherry Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -938,12 +938,12 @@ plus_rflag_invalid_body()
 }
 
 atf_test_case plus_tflag
-plus_tflag()
+plus_tflag_head()
 {
 	atf_set "descr" "Tests +- addressing: using -T caused a 'No such file" \
 	    "or directory' error"
 }
-plus_tflag()
+plus_tflag_body()
 {
 	mkdir ./+
 	yes | sed 200000q | sort -T + >/dev/null || atf_fail "program failed"

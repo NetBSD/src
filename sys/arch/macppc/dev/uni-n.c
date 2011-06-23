@@ -1,4 +1,4 @@
-/*	$NetBSD: uni-n.c,v 1.4 2009/03/14 21:04:11 dsl Exp $	*/
+/*	$NetBSD: uni-n.c,v 1.4.10.1 2011/06/23 14:19:21 cherry Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.4 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.4.10.1 2011/06/23 14:19:21 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.4 2009/03/14 21:04:11 dsl Exp $");
 
 #include <machine/autoconf.h>
 
-static void uni_n_attach(struct device *, struct device *, void *);
-static int uni_n_match(struct device *, struct cfdata *, void *);
+static void uni_n_attach(device_t, device_t, void *);
+static int uni_n_match(device_t, cfdata_t, void *);
 static int uni_n_print(void *, const char *);
 
 struct uni_n_softc {
@@ -55,7 +55,7 @@ CFATTACH_DECL(uni_n, sizeof(struct uni_n_softc),
     uni_n_match, uni_n_attach, NULL, NULL);
 
 int
-uni_n_match(struct device *parent, struct cfdata *cf, void *aux)
+uni_n_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char compat[32];
@@ -74,9 +74,9 @@ uni_n_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach all the sub-devices we can find
  */
 void
-uni_n_attach(struct device *parent, struct device *self, void *aux)
+uni_n_attach(device_t parent, device_t self, void *aux)
 {
-	struct uni_n_softc *sc = (struct uni_n_softc *)self;
+	struct uni_n_softc *sc = device_private(self);
 	struct confargs *our_ca = aux;
 	struct confargs ca;
 	int node, child, namelen;

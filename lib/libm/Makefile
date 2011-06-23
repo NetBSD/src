@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.110 2011/05/20 21:42:48 nakayama Exp $
+#  $NetBSD: Makefile,v 1.110.2.1 2011/06/23 14:18:39 cherry Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -158,7 +158,7 @@ COMMON_SRCS+= e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 .PATH:	${.CURDIR}/compat
 COMMON_SRCS+= compat_cabs.c compat_cabsf.c
 # XXX our compatibility cabs() is different!
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
+.if defined(HAVE_GCC)
 COPTS.compat_cabs.c=	-fno-builtin-cabs
 COPTS.compat_cabsf.c=	-fno-builtin-cabsf
 .endif

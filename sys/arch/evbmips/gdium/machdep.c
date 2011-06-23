@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2011/02/20 07:48:34 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13.2.1 2011/06/23 14:19:07 cherry Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2011/02/20 07:48:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.2.1 2011/06/23 14:19:07 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -106,6 +106,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2011/02/20 07:48:34 matt Exp $");
 #include <machine/cpu.h>
 #include <machine/psl.h>
 
+#include <mips/locore.h>
+
 #include <mips/bonito/bonitoreg.h>
 #include <evbmips/gdium/gdiumvar.h>
 
@@ -125,9 +127,6 @@ struct gdium_config gdium_configuration = {
 
 /* For sysctl_hw. */
 extern char cpu_model[];
-
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
@@ -200,9 +199,6 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 {
 	struct gdium_config *gc = &gdium_configuration;
 	void *kernend;
-	u_long first, last;
-	struct pcb *pcb0;
-	vaddr_t v;
 #ifdef NOTYET
 	char *cp;
 	int howto;
@@ -225,7 +221,7 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 	 * first printf() after that is called).
 	 * Also clears the I+D caches.
 	 */
-	mips_vector_init(NULL, bool);
+	mips_vector_init(NULL, false);
 
 	/* set the VM page size */
 	uvm_setpagesize();
@@ -261,7 +257,7 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 		}
 	}
 	
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
+	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
 		curcpu()->ci_cpu_freq /= 2;
 
 	/* Compute the number of ticks for hz. */
@@ -275,7 +271,7 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 	 * Get correct cpu frequency if the CPU runs at twice the
 	 * external/cp0-count frequency.
 	 */
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
+	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
 		curcpu()->ci_cpu_freq *= 2;
 
 #ifdef DEBUG
@@ -330,10 +326,8 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 	/*
 	 * Load the rest of the available pages into the VM system.
 	 */
-	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
-	last = mem_clusters[0].start + mem_clusters[0].size;
-	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-		VM_FREELIST_DEFAULT);
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t)kernend,
+	    mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -345,13 +339,7 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 	/*
 	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = uvm_pageboot_alloc(USPACE); 
-	uvm_lwp_setuarea(&lwp0, v);
-
-	pcb0 = lwp_getpcb(&lwp0);
-	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
@@ -378,15 +366,10 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-
 	/*
-	 * Good {morning,afternoon,evening,night}.
+	 *  Do the common startup items.
 	 */
-	printf("%s%s", copyright, version);
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
+	cpu_startup_common();
 
 	/*
 	 * Virtual memory is bootstrapped -- notify the bus spaces
@@ -394,21 +377,6 @@ cpu_startup(void)
 	 */
 	gdium_configuration.gc_mallocsafe = 1;
 
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio.
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				    VM_PHYS_SIZE, 0, FALSE, NULL);
-
-	/*
-	 * (No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use KSEG to
-	 * map those pages.)
-	 */
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
 }
 
 int	waittime = -1;
@@ -418,8 +386,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curproc)
-		savectx(curpcb);
+	savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;

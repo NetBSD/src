@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.220 2010/11/06 11:00:29 uebayasi Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.220.6.1 2011/06/23 14:20:27 cherry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.220 2010/11/06 11:00:29 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.220.6.1 2011/06/23 14:20:27 cherry Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1152,7 +1152,7 @@ nfs_dirhash(off_t off)
 	return sum;
 }
 
-#define	_NFSDC_MTX(np)		(&NFSTOV(np)->v_interlock)
+#define	_NFSDC_MTX(np)		(NFSTOV(np)->v_interlock)
 #define	NFSDC_LOCK(np)		mutex_enter(_NFSDC_MTX(np))
 #define	NFSDC_UNLOCK(np)	mutex_exit(_NFSDC_MTX(np))
 #define	NFSDC_ASSERT_LOCKED(np) KASSERT(mutex_owned(_NFSDC_MTX(np)))
@@ -1748,9 +1748,9 @@ nfs_clearcommit(struct mount *mp)
 		KASSERT(vp->v_mount == mp);
 		if (vp->v_type != VREG)
 			continue;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		if (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		np = VTONFS(vp);
@@ -1761,7 +1761,7 @@ nfs_clearcommit(struct mount *mp)
 		TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq.queue) {
 			pg->flags &= ~PG_NEEDCOMMIT;
 		}
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 	mutex_exit(&mntvnode_lock);
 	mutex_enter(&nmp->nm_lock);

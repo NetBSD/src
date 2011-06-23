@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.266 2011/04/27 07:24:53 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.266.2.1 2011/06/23 14:20:30 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.266 2011/04/27 07:24:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.266.2.1 2011/06/23 14:20:30 cherry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -181,6 +181,9 @@ ffs_modcmd(modcmd_t cmd, void *arg)
 #if 0
 	extern int doasyncfree;
 #endif
+#ifdef UFS_EXTATTR
+	extern int ufs_extattr_autocreate;
+#endif
 	extern int ffs_log_changeopt;
 
 	switch (cmd) {
@@ -200,7 +203,6 @@ ffs_modcmd(modcmd_t cmd, void *arg)
 			       SYSCTL_DESCR("Berkeley Fast File System"),
 			       NULL, 0, NULL, 0,
 			       CTL_VFS, 1, CTL_EOL);
-
 		/*
 		 * @@@ should we even bother with these first three?
 		 */
@@ -233,6 +235,17 @@ ffs_modcmd(modcmd_t cmd, void *arg)
 			       SYSCTL_DESCR("Log changes in optimization strategy"),
 			       NULL, 0, &ffs_log_changeopt, 0,
 			       CTL_VFS, 1, FFS_LOG_CHANGEOPT, CTL_EOL);
+#ifdef UFS_EXTATTR
+		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			       CTLTYPE_INT, "extattr_autocreate",
+			       SYSCTL_DESCR("Size of attribute for "
+					    "backing file autocreation"),
+			       NULL, 0, &ufs_extattr_autocreate, 0,
+			       CTL_VFS, 1, FFS_EXTATTR_AUTOCREATE, CTL_EOL);
+		
+#endif /* UFS_EXTATTR */
+
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&ffs_vfsops);
@@ -795,7 +808,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		/*
 		 * Step 5: invalidate all cached file data.
 		 */
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		mutex_exit(&mntvnode_lock);
 		if (vget(vp, LK_EXCLUSIVE)) {
 			(void)vunmark(mvp);
@@ -1255,24 +1268,16 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			}
 		}
 #endif
-	}
-
+	 }
 #ifdef UFS_EXTATTR
 	/*
 	 * Initialize file-backed extended attributes on UFS1 file
 	 * systems.
 	 */
-	if (ump->um_fstype == UFS1) {
-		ufs_extattr_uepm_init(&ump->um_extattr);
-#ifdef UFS_EXTATTR_AUTOSTART
-		/*
-		 * XXX Just ignore errors.  Not clear that we should
-		 * XXX fail the mount in this case.
-		 */
-		(void) ufs_extattr_autostart(mp, l);
-#endif
-	}
+	if (ump->um_fstype == UFS1)
+		ufs_extattr_uepm_init(&ump->um_extattr);	
 #endif /* UFS_EXTATTR */
+
 	return (0);
 out:
 #ifdef WAPBL
@@ -1620,7 +1625,7 @@ loop:
 		 */
 		if (vismarker(vp))
 			continue;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		ip = VTOI(vp);
 
 		/*
@@ -1628,7 +1633,7 @@ loop:
 		 */
 		if (ip == NULL || (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0 ||
 		    vp->v_type == VNON) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 
@@ -1651,11 +1656,11 @@ loop:
 		    IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) == 0 &&
 		    (waitfor == MNT_LAZY || (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		    UVM_OBJ_IS_CLEAN(&vp->v_uobj)))) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		if (vp->v_type == VBLK && is_suspending) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		vmark(mvp, vp);
@@ -1760,7 +1765,8 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		return (0);
 
 	/* Allocate a new vnode/inode. */
-	if ((error = getnewvnode(VT_UFS, mp, ffs_vnodeop_p, &vp)) != 0) {
+	error = getnewvnode(VT_UFS, mp, ffs_vnodeop_p, NULL, &vp);
+	if (error) {
 		*vpp = NULL;
 		return (error);
 	}
@@ -2090,7 +2096,7 @@ ffs_vfs_fsync(vnode_t *vp, int flags)
 	pflags = PGO_ALLPAGES | PGO_CLEANIT;
 	if ((flags & FSYNC_WAIT) != 0)
 		pflags |= PGO_SYNCIO;
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	error = VOP_PUTPAGES(vp, 0, 0, pflags);
 	if (error)
 		return error;
@@ -2118,10 +2124,10 @@ ffs_vfs_fsync(vnode_t *vp, int flags)
 		}
 
 		if ((flags & FSYNC_WAIT) != 0) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			while (vp->v_numoutput)
-				cv_wait(&vp->v_cv, &vp->v_interlock);
-			mutex_exit(&vp->v_interlock);
+				cv_wait(&vp->v_cv, vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 		}
 
 		return 0;

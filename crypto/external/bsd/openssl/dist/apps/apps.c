@@ -257,6 +257,8 @@ int args_from_file(char *file, int *argc, char **argv[])
 
 int str2fmt(char *s)
 	{
+	if (s == NULL)
+		return FORMAT_UNDEF;
 	if 	((*s == 'D') || (*s == 'd'))
 		return(FORMAT_ASN1);
 	else if ((*s == 'T') || (*s == 't'))
@@ -377,13 +379,12 @@ void program_name(char *in, char *out, int size)
 
 int chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
 	{
-	int num,len,i;
+	int num,i;
 	char *p;
 
 	*argc=0;
 	*argv=NULL;
 
-	len=strlen(buf);
 	i=0;
 	if (arg->count == 0)
 		{
@@ -797,7 +798,9 @@ X509 *load_cert(BIO *err, const char *file, int format,
 	if (file == NULL)
 		{
 #ifdef _IONBF
+# ifndef OPENSSL_NO_SETVBUF_IONBF
 		setvbuf(stdin, NULL, _IONBF, 0);
+# endif /* ndef OPENSSL_NO_SETVBUF_IONBF */
 #endif
 		BIO_set_fp(cert,stdin,BIO_NOCLOSE);
 		}
@@ -875,10 +878,17 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 	if (format == FORMAT_ENGINE)
 		{
 		if (!e)
-			BIO_printf(bio_err,"no engine specified\n");
+			BIO_printf(err,"no engine specified\n");
 		else
+			{
 			pkey = ENGINE_load_private_key(e, file,
 				ui_method, &cb_data);
+			if (!pkey) 
+				{
+				BIO_printf(err,"cannot load %s from engine\n",key_descrip);
+				ERR_print_errors(err);
+				}	
+			}
 		goto end;
 		}
 #endif
@@ -891,7 +901,9 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 	if (file == NULL && maybe_stdin)
 		{
 #ifdef _IONBF
+# ifndef OPENSSL_NO_SETVBUF_IONBF
 		setvbuf(stdin, NULL, _IONBF, 0);
+# endif /* ndef OPENSSL_NO_SETVBUF_IONBF */
 #endif
 		BIO_set_fp(key,stdin,BIO_NOCLOSE);
 		}
@@ -923,7 +935,7 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 				&pkey, NULL, NULL))
 			goto end;
 		}
-#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
+#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA) && !defined (OPENSSL_NO_RC4)
 	else if (format == FORMAT_MSBLOB)
 		pkey = b2i_PrivateKey_bio(key);
 	else if (format == FORMAT_PVK)
@@ -937,8 +949,11 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 		}
  end:
 	if (key != NULL) BIO_free(key);
-	if (pkey == NULL)
+	if (pkey == NULL) 
+		{
 		BIO_printf(err,"unable to load %s\n", key_descrip);
+		ERR_print_errors(err);
+		}	
 	return(pkey);
 	}
 
@@ -977,7 +992,9 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 	if (file == NULL && maybe_stdin)
 		{
 #ifdef _IONBF
+# ifndef OPENSSL_NO_SETVBUF_IONBF
 		setvbuf(stdin, NULL, _IONBF, 0);
+# endif /* ndef OPENSSL_NO_SETVBUF_IONBF */
 #endif
 		BIO_set_fp(key,stdin,BIO_NOCLOSE);
 		}

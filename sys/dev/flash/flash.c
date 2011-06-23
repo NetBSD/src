@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.4 2011/04/26 17:42:20 ahoka Exp $	*/
+/*	$NetBSD: flash.c,v 1.4.2.1 2011/06/23 14:19:58 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.4 2011/04/26 17:42:20 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.4.2.1 2011/06/23 14:19:58 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -168,7 +168,7 @@ flash_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal_dev(sc->sc_dev,
-	    "size: 0x%jx, offset: 0x%jx",
+	    "size: %#jx, offset: %#jx",
 	    (uintmax_t )sc->flash_if->partition.part_size,
 	    (uintmax_t )sc->flash_if->partition.part_offset);
 

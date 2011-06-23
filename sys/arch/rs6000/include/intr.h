@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2010/11/13 14:07:08 uebayasi Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.6.1 2011/06/23 14:19:37 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,13 +32,12 @@
 #ifndef _RS6000_INTR_H_
 #define _RS6000_INTR_H_
 
-#include <powerpc/intr.h>
-
 #ifndef _LOCORE
-#include <machine/cpu.h>
 
 #define	ICU_LEN			16
 
 #endif /* _LOCORE */
+
+#include <powerpc/intr.h>
 
 #endif /* _RS6000_INTR_H_ */

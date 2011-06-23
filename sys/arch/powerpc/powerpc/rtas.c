@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.9 2010/11/09 06:47:24 uebayasi Exp $ */
+/*	$NetBSD: rtas.c,v 1.9.6.1 2011/06/23 14:19:35 cherry Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.9 2010/11/09 06:47:24 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.9.6.1 2011/06/23 14:19:35 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -19,16 +19,18 @@ __KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.9 2010/11/09 06:47:24 uebayasi Exp $");
 
 #include <dev/clock_subr.h>
 #include <dev/ofw/openfirm.h>
-#include <machine/autoconf.h>
-#include <machine/stdarg.h>
-#include <powerpc/rtas.h>
 
-int machine_has_rtas = 0;
+#include <powerpc/stdarg.h>
+#include <powerpc/rtas.h>
+#include <powerpc/psl.h>
+
+#include <machine/autoconf.h>
+
+bool machine_has_rtas;
 
 struct rtas_softc *rtas0_softc;
 
 struct rtas_softc {
-	struct device ra_dev;
 	int ra_phandle;
 	int ra_version;
 
@@ -69,20 +71,20 @@ static struct {
 	{ "thaw-time-base", RTAS_FUNC_THAW_TIME_BASE },
 };
 
-static int rtas_match(struct device *, struct cfdata *, void *);
-static void rtas_attach(struct device *, struct device *, void *);
-static int rtas_detach(struct device *, int);
-static int rtas_activate(struct device *, enum devact);
+static int rtas_match(device_t, cfdata_t, void *);
+static void rtas_attach(device_t, device_t, void *);
+static int rtas_detach(device_t, int);
+static int rtas_activate(device_t, enum devact);
 static int rtas_todr_gettime_ymdhms(struct todr_chip_handle *,
     struct clock_ymdhms *);
 static int rtas_todr_settime_ymdhms(struct todr_chip_handle *,
     struct clock_ymdhms *);
 
-CFATTACH_DECL(rtas, sizeof (struct rtas_softc),
+CFATTACH_DECL_NEW(rtas, sizeof (struct rtas_softc),
     rtas_match, rtas_attach, rtas_detach, rtas_activate);
 
 static int
-rtas_match(struct device *parent, struct cfdata *match, void *aux)
+rtas_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -93,10 +95,10 @@ rtas_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-rtas_attach(struct device *parent, struct device *self, void *aux)
+rtas_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
-	struct rtas_softc *sc = (struct rtas_softc *) self;
+	struct rtas_softc *sc = device_private(self);
 	int ph = ca->ca_node;
 	int ih;
 	int rtas_size;
@@ -105,7 +107,7 @@ rtas_attach(struct device *parent, struct device *self, void *aux)
 	char buf[4];
 	int i;
 
-	machine_has_rtas = 1;
+	machine_has_rtas = true;
 	
 	sc->ra_phandle = ph;
 	if (OF_getprop(ph, "rtas-version", buf, sizeof buf) != sizeof buf)
@@ -180,13 +182,13 @@ fail:
 }
 
 static int
-rtas_detach(struct device *self, int flags)
+rtas_detach(device_t self, int flags)
 {
 	return EOPNOTSUPP;
 }
 
 static int
-rtas_activate(struct device *self, enum devact act)
+rtas_activate(device_t self, enum devact act)
 {
 	return EOPNOTSUPP;
 }

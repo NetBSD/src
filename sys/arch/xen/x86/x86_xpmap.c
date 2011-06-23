@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.26.2.1 2011/06/03 13:27:41 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.26.2.2 2011/06/23 14:19:50 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.1 2011/06/03 13:27:41 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.2 2011/06/23 14:19:50 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -354,7 +354,7 @@ xpq_queue_invlpg(vaddr_t va)
 		panic("xpq_queue_invlpg");
 }
 
-static void
+void
 xen_mcast_invlpg(vaddr_t va, uint32_t cpumask)
 {
 	mmuext_op_t op;
@@ -375,7 +375,7 @@ xen_mcast_invlpg(vaddr_t va, uint32_t cpumask)
 	return;
 }
 
-static void
+void
 xen_bcast_invlpg(vaddr_t va)
 {
 	mmuext_op_t op;
@@ -656,6 +656,10 @@ bootstrap_again:
 	/* zero out free space after tables */
 	memset((void *)(init_tables + ((count + l2_4_count) * PAGE_SIZE)), 0,
 	    (UPAGES + 1) * NBPG);
+
+	/* Finally, flush TLB. */
+	xpq_queue_tlb_flush();
+
 	return (init_tables + ((count + l2_4_count) * PAGE_SIZE));
 }
 
@@ -666,8 +670,6 @@ bootstrap_again:
  * new_count is # of new tables (PTE only)
  * we assume areas don't overlap
  */
-
-
 static void
 xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	int old_count, int new_count, int final)

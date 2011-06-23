@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.38 2009/03/29 01:02:49 mrg Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.38.4.1 2011/06/23 14:17:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.38 2009/03/29 01:02:49 mrg Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.38.4.1 2011/06/23 14:17:48 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: miscbltin.c,v 1.38 2009/03/29 01:02:49 mrg Exp $");
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
-#include "miscbltin.h"
+#include "builtins.h"
 #include "mystring.h"
 
 #undef rflag

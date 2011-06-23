@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.41 2009/01/18 00:30:54 lukem Exp $	*/
+/*	$NetBSD: options.c,v 1.41.6.1 2011/06/23 14:17:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.41 2009/01/18 00:30:54 lukem Exp $");
+__RCSID("$NetBSD: options.c,v 1.41.6.1 2011/06/23 14:17:48 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: options.c,v 1.41 2009/01/18 00:30:54 lukem Exp $");
 #define DEFINE_OPTIONS
 #include "options.h"
 #undef DEFINE_OPTIONS
+#include "builtins.h"
 #include "nodes.h"	/* for other header files */
 #include "eval.h"
 #include "jobs.h"

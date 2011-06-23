@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.72 2011/05/19 09:57:20 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.72.2.1 2011/06/23 14:20:36 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -286,6 +286,7 @@ void uvm_pageunwire(struct vm_page *);
 void uvm_pagewire(struct vm_page *);
 void uvm_pagezero(struct vm_page *);
 bool uvm_pageismanaged(paddr_t);
+bool uvm_page_locked_p(struct vm_page *);
 
 int uvm_page_lookup_freelist(struct vm_page *);
 

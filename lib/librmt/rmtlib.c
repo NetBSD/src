@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.24 2011/05/31 12:24:33 christos Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.24.2.1 2011/06/23 14:18:40 cherry Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rmtlib.c,v 1.24 2011/05/31 12:24:33 christos Exp $");
+__RCSID("$NetBSD: rmtlib.c,v 1.24.2.1 2011/06/23 14:18:40 cherry Exp $");
 
 #define RMTIOCTL	1
 /* #define USE_REXEC	1 */	/* rexec code courtesy of Dan Kegel, srs!dan */
@@ -224,7 +224,7 @@ _rmt_rexec(const char *host, const char *user)
 
 	rexecserv = getservbyname("exec", "tcp");
 	if (rexecserv == NULL)
-		errx(1, exec/tcp: service not available.");
+		errx(1, "exec/tcp: service not available.");
 	if ((user != NULL) && *user == '\0')
 		user = NULL;
 	return rexec(&host, rexecserv->s_port, user, NULL,

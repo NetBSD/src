@@ -1,4 +1,4 @@
-/* $NetBSD: tc_conf.h,v 1.11 2009/03/14 14:45:54 dsl Exp $ */
+/* $NetBSD: tc_conf.h,v 1.11.10.1 2011/06/23 14:18:55 cherry Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -41,10 +41,10 @@ extern void	tc_3000_500_intr_setup(void);
 extern void	tc_3000_500_iointr(void *, unsigned long);
 
 extern const struct evcnt *
-		tc_3000_500_intr_evcnt(struct device *, void *);
-extern void	tc_3000_500_intr_establish(struct device *, void *,
+		tc_3000_500_intr_evcnt(device_t, void *);
+extern void	tc_3000_500_intr_establish(device_t, void *,
 		    tc_intrlevel_t, int (*)(void *), void *);
-extern void	tc_3000_500_intr_disestablish(struct device *, void *);
+extern void	tc_3000_500_intr_disestablish(device_t, void *);
 
 extern int	tc_3000_500_nslots;
 extern struct tc_slotdesc tc_3000_500_slots[];
@@ -61,10 +61,10 @@ extern void	tc_3000_300_intr_setup(void);
 extern void	tc_3000_300_iointr(void *, unsigned long);
 
 extern const struct evcnt *
-		tc_3000_300_intr_evcnt(struct device *, void *);
-extern void	tc_3000_300_intr_establish(struct device *, void *,
+		tc_3000_300_intr_evcnt(device_t, void *);
+extern void	tc_3000_300_intr_establish(device_t, void *,
 		    tc_intrlevel_t, int (*)(void *), void *);
-extern void	tc_3000_300_intr_disestablish(struct device *, void *);
+extern void	tc_3000_300_intr_disestablish(device_t, void *);
 
 extern int	tc_3000_300_nslots;
 extern struct tc_slotdesc tc_3000_300_slots[];

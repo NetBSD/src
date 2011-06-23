@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.109 2010/08/31 03:16:06 enami Exp $	*/
+/*	$NetBSD: options.c,v 1.109.4.1 2011/06/23 14:17:47 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.109 2010/08/31 03:16:06 enami Exp $");
+__RCSID("$NetBSD: options.c,v 1.109.4.1 2011/06/23 14:17:47 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,7 @@ static int get_line_error;
 
 #define BZIP2_CMD	"bzip2"		/* command to run as bzip2 */
 #define GZIP_CMD	"gzip"		/* command to run as gzip */
+#define XZ_CMD		"xz"		/* command to run as xz */
 #define COMPRESS_CMD	"compress"	/* command to run as compress */
 
 /*
@@ -124,8 +125,9 @@ static int get_line_error;
 #define	OPT_INSECURE			14
 #define	OPT_STRICT			15
 #define	OPT_SPARSE			16
+#define OPT_XZ				17
 #if !HAVE_NBTOOL_CONFIG_H
-#define	OPT_CHROOT			17
+#define	OPT_CHROOT			18
 #endif
 
 /*
@@ -242,6 +244,8 @@ struct option pax_longopts[] = {
 						OPT_FORCE_LOCAL },
 	{ "use-compress-program", required_argument,	0,
 						OPT_USE_COMPRESS_PROGRAM },
+	{ "xz",			no_argument,		0,
+						OPT_XZ },
 	{ 0,			0,			0,
 						0 },
 };
@@ -320,7 +324,6 @@ pax_options(int argc, char **argv)
 			/*
 			 * pass through bzip2
 			 */
-			jflag = 1;
 			gzip_program = BZIP2_CMD;
 			break;
 		case 'k':
@@ -476,7 +479,6 @@ pax_options(int argc, char **argv)
 			/*
 			 * use gzip.  Non standard option.
 			 */
-			zflag = 1;
 			gzip_program = GZIP_CMD;
 			break;
 		case 'A':
@@ -646,8 +648,10 @@ pax_options(int argc, char **argv)
 			forcelocal = 1;
 			break;
 		case OPT_USE_COMPRESS_PROGRAM:
-			zflag = 1;
 			gzip_program = optarg;
+			break;
+		case OPT_XZ:
+			gzip_program = XZ_CMD;
 			break;
 		case '?':
 		default:
@@ -786,6 +790,8 @@ struct option tar_longopts[] = {
 						OPT_EXCLUDE },
 	{ "no-recursion",	no_argument,		0,
 						OPT_NORECURSE },
+	{ "xz",			no_argument,		0,
+						OPT_XZ },
 #if !HAVE_NBTOOL_CONFIG_H
 	{ "chroot",		no_argument,		0,
 						OPT_CHROOT },
@@ -914,7 +920,6 @@ tar_options(int argc, char **argv)
 			/*
 			 * pass through bzip2. not a standard option
 			 */
-			jflag = 1;
 			gzip_program = BZIP2_CMD;
 			break;
 		case 'k':
@@ -1019,7 +1024,6 @@ tar_options(int argc, char **argv)
 			/*
 			 * use gzip.  Non standard option.
 			 */
-			zflag = 1;
 			gzip_program = GZIP_CMD;
 			break;
 		case 'B':
@@ -1079,7 +1083,6 @@ tar_options(int argc, char **argv)
 			/*
 			 * use compress.
 			 */
-			zflag = 1;
 			gzip_program = COMPRESS_CMD;
 			break;
 		case '0':
@@ -1107,7 +1110,6 @@ tar_options(int argc, char **argv)
 			/* Just ignore -- we always unlink first. */
 			break;
 		case OPT_USE_COMPRESS_PROGRAM:
-			zflag = 1;
 			gzip_program = optarg;
 			break;
 		case OPT_FORCE_LOCAL:
@@ -1132,6 +1134,9 @@ tar_options(int argc, char **argv)
 			do_chroot = 1;
 			break;
 #endif
+		case OPT_XZ:
+			gzip_program = XZ_CMD;
+			break;
 		default:
 			tar_usage();
 			break;
@@ -1431,6 +1436,8 @@ struct option cpio_longopts[] = {
 						OPT_INSECURE },
 	{ "sparse",		no_argument,		0,
 						OPT_SPARSE },
+	{ "xz",			no_argument,		0,
+						OPT_XZ },
 
 #ifdef notyet
 /* Not implemented */
@@ -1744,6 +1751,9 @@ cpio_options(int argc, char **argv)
 			break;
 		case OPT_SPARSE:
 			/* do nothing; we already generate sparse files */
+			break;
+		case OPT_XZ:
+			gzip_program = XZ_CMD;
 			break;
 		default:
 			cpio_usage();

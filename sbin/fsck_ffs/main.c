@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.78 2011/03/06 17:08:16 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.78.2.1 2011/06/23 14:18:42 cherry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.78 2011/03/06 17:08:16 bouyer Exp $");
+__RCSID("$NetBSD: main.c,v 1.78.2.1 2011/06/23 14:18:42 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,6 +85,8 @@ main(int argc, char *argv[])
 	int ret = FSCK_EXIT_OK;
 	char *snap_backup = NULL;
 	int snap_internal = 0;
+
+	ckfinish = ckfini;
 
 	if (getrlimit(RLIMIT_DATA, &r) == 0) {
 		r.rlim_cur = r.rlim_max;
@@ -445,7 +447,7 @@ checkfilesys(const char *filesys, const char *origfs, int child)
 		markclean = 0;
 #if LITE2BORKEN
 	if (!hotroot()) {
-		ckfini();
+		ckfini(1);
 	} else {
 		struct statvfs stfs_buf;
 		/*
@@ -457,10 +459,10 @@ checkfilesys(const char *filesys, const char *origfs, int child)
 			flags = 0;
 		if (markclean)
 			markclean = flags & MNT_RDONLY;
-		ckfini();
+		ckfini(1);
 	}
 #else
-	ckfini();
+	ckfini(1);
 #endif
 	for (cylno = 0; cylno < sblock->fs_ncg; cylno++)
 		if (inostathead[cylno].il_stat != NULL)

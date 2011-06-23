@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.33 2008/11/14 13:05:34 ad Exp $	*/
+/*	$NetBSD: frame.h,v 1.33.14.1 2011/06/23 14:19:15 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,10 +77,14 @@
  * Exception/Trap Stack Frame
  */
 struct trapframe {
-	int	tf_gs;
-	int	tf_fs;
-	int	tf_es;
-	int	tf_ds;
+	uint16_t	tf_gs;
+	uint16_t	tf_gs_pad;
+	uint16_t	tf_fs;
+	uint16_t	tf_fs_pad;
+	uint16_t	tf_es;
+	uint16_t	tf_es_pad;
+	uint16_t	tf_ds;
+	uint16_t	tf_ds_pad;
 	int	tf_edi;
 	int	tf_esi;
 	int	tf_ebp;

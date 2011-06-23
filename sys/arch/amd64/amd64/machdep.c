@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.160.2.1 2011/06/03 13:27:37 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.160.2.2 2011/06/23 14:18:56 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160.2.1 2011/06/03 13:27:37 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160.2.2 2011/06/23 14:18:56 cherry Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -156,6 +156,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160.2.1 2011/06/03 13:27:37 cherry Exp
 #endif
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
@@ -1837,6 +1838,27 @@ int
 valid_user_selector(struct lwp *l, uint64_t seg, char *ldtp, int len)
 {
 	return memseg_baseaddr(l, seg, ldtp, len, NULL);
+}
+
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+	extern int start, __data_start;
+	const vaddr_t v = (vaddr_t)ptr;
+
+	if (v >= (vaddr_t)&start && v < (vaddr_t)kern_end) {
+		*handled = true;
+		if (v < (vaddr_t)&__data_start && (prot & VM_PROT_WRITE))
+			return EFAULT;
+
+	} else if (v >= module_start && v < module_end) {
+		*handled = true;
+		if (!uvm_map_checkprot(module_map, v, v + 1, prot))
+			return EFAULT;
+	} else {
+		*handled = false;
+	}
+	return 0;
 }
 
 /*

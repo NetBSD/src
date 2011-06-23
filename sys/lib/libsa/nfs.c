@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.45 2009/01/17 14:00:36 tsutsui Exp $	*/
+/*	$NetBSD: nfs.c,v 1.45.12.1 2011/06/23 14:20:23 cherry Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -382,7 +382,7 @@ nfs_mount(int sock, struct in_addr ip, char *path)
  * Open a file.
  * return zero or error number
  */
-int
+__compactcall int
 nfs_open(const char *path, struct open_file *f)
 {
 	struct nfs_iodesc *newfd, *currfd;
@@ -537,7 +537,7 @@ out:
 	return error;
 }
 
-int
+__compactcall int
 nfs_close(struct open_file *f)
 {
 	struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
@@ -557,7 +557,7 @@ nfs_close(struct open_file *f)
 /*
  * read a portion of a file
  */
-int
+__compactcall int
 nfs_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
 	struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
@@ -604,13 +604,13 @@ ret:
 /*
  * Not implemented.
  */
-int
+__compactcall int
 nfs_write(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
 	return EROFS;
 }
 
-off_t
+__compactcall off_t
 nfs_seek(struct open_file *f, off_t offset, int where)
 {
 	struct nfs_iodesc *d = (struct nfs_iodesc *)f->f_fsdata;
@@ -637,7 +637,7 @@ nfs_seek(struct open_file *f, off_t offset, int where)
 const int nfs_stat_types[8] = {
 	0, S_IFREG, S_IFDIR, S_IFBLK, S_IFCHR, S_IFLNK, 0 };
 
-int
+__compactcall int
 nfs_stat(struct open_file *f, struct stat *sb)
 {
 	struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;

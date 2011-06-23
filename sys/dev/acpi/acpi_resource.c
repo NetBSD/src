@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.32 2010/03/05 14:00:17 jruoho Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.32.8.1 2011/06/23 14:19:56 cherry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.32 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.32.8.1 2011/06/23 14:19:56 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -604,6 +604,23 @@ static void	acpi_res_parse_end_dep(device_t, void *);
 const struct acpi_resource_parse_ops acpi_resource_parse_ops_default = {
 	.init = acpi_res_parse_init,
 	.fini = acpi_res_parse_fini,
+
+	.ioport = acpi_res_parse_ioport,
+	.iorange = acpi_res_parse_iorange,
+
+	.memory = acpi_res_parse_memory,
+	.memrange = acpi_res_parse_memrange,
+
+	.irq = acpi_res_parse_irq,
+	.drq = acpi_res_parse_drq,
+
+	.start_dep = acpi_res_parse_start_dep,
+	.end_dep = acpi_res_parse_end_dep,
+};
+
+const struct acpi_resource_parse_ops acpi_resource_parse_ops_quiet = {
+	.init = acpi_res_parse_init,
+	.fini = NULL,
 
 	.ioport = acpi_res_parse_ioport,
 	.iorange = acpi_res_parse_iorange,

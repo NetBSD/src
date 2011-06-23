@@ -1,4 +1,4 @@
-#	$NetBSD: list.ramdisk,v 1.18 2011/02/13 04:14:58 jym Exp $
+#	$NetBSD: list.ramdisk,v 1.18.2.1 2011/06/23 14:18:18 cherry Exp $
 
 SRCDIRS	usr.bin/less
 SRCDIRS	bin sbin usr.bin usr.sbin libexec
@@ -62,13 +62,13 @@ SPECIAL	route		srcdir	distrib/utils/x_route
 ARGVLN	sh -sh
 
 # libhack.o is built by Makefile & included Makefile.inc
-LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lz -lprop
+LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lz -llzma -lprop
 
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${DISTRIBDIR}/common/protocols	etc/protocols
+COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
 
 # we need the boot block in /usr/mdec + the MBR copy

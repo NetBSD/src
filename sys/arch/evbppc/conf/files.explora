@@ -1,4 +1,4 @@
-#	$NetBSD: files.explora,v 1.8 2008/02/20 21:43:34 drochner Exp $
+#	$NetBSD: files.explora,v 1.8.42.1 2011/06/23 14:19:08 cherry Exp $
 
 # maxpartitions must be first item in files.${ARCH}
 
@@ -10,11 +10,13 @@ defflag		opt_explora.h	COM_IS_CONSOLE
 defparam	opt_explora.h	COM_CONSOLE_SPEED
 
 include		"arch/powerpc/fpu/files.fpu"
+include		"arch/powerpc/pic/files.pic"
 
 file	arch/evbppc/explora/autoconf.c
 file	arch/evbppc/explora/consinit.c
 file	arch/evbppc/explora/machdep.c
-file	arch/powerpc/ibm4xx/intr.c
+file	arch/powerpc/ibm4xx/ibm4xx_machdep.c
+file	arch/powerpc/ibm4xx/pic_uic.c
 file	dev/md_root.c				memory_disk_hooks
 
 # Explora local bus

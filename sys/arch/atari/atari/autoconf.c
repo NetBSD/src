@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.59 2010/04/10 17:40:36 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.59.6.1 2011/06/23 14:19:01 cherry Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59 2010/04/10 17:40:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59.6.1 2011/06/23 14:19:01 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,8 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59 2010/04/10 17:40:36 tsutsui Exp $"
 #include <atari/atari/device.h>
 
 static void findroot(void);
-int mbmatch(struct device *, struct cfdata *, void *);
-void mbattach(struct device *, struct device *, void *);
+int mbmatch(device_t, cfdata_t, void *);
+void mbattach(device_t, device_t, void *);
 #if 0
 int mbprint(void *, const char *);
 #endif
@@ -93,11 +93,10 @@ simple_devprint(void *auxp, const char *pnp)
  * by checking for NULL.
  */
 int
-atari_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp,
-    cfprint_t pfn)
+atari_config_found(cfdata_t pcfp, device_t pdp, void *auxp, cfprint_t pfn)
 {
 	struct device temp;
-	struct cfdata *cf;
+	cfdata_t cf;
 	const struct cfattach *ca;
 
 	if (atari_realconfig)
@@ -131,7 +130,7 @@ atari_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp,
 void
 config_console(void)
 {	
-	struct cfdata *cf;
+	cfdata_t cf;
 
 	config_init();
 
@@ -188,7 +187,7 @@ findroot(void)
 {
 	struct disk *dkp;
 	struct partition *pp;
-	struct device **devs;
+	device_t *devs;
 	const struct bdevsw *bdev;
 	int i, maj, unit;
 
@@ -204,7 +203,7 @@ findroot(void)
 			 * Find the disk structure corresponding to the
 			 * current device.
 			 */
-			devs = (struct device **)genericconf[i]->cd_devs;
+			devs = (device_t *)genericconf[i]->cd_devs;
 			if ((dkp = disk_find(devs[unit]->dv_xname)) == NULL)
 				continue;
 
@@ -243,13 +242,13 @@ findroot(void)
 /* 
  * mainbus driver 
  */
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mbmatch, mbattach, NULL, NULL);
 
 static int mb_attached;
 
 int
-mbmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+mbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (mb_attached)
@@ -264,35 +263,35 @@ mbmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * "find" all the things that should be there.
  */
 void
-mbattach(struct device *pdp, struct device *dp, void *auxp)
+mbattach(device_t parent, device_t self, void *aux)
 {
 
 	mb_attached = 1;
 
 	printf ("\n");
-	config_found(dp, __UNCONST("clock")   , simple_devprint);
-	config_found(dp, __UNCONST("grfbus")  , simple_devprint);
-	config_found(dp, __UNCONST("kbd")     , simple_devprint);
-	config_found(dp, __UNCONST("fdc")     , simple_devprint);
-	config_found(dp, __UNCONST("ser")     , simple_devprint);
-	config_found(dp, __UNCONST("zs")      , simple_devprint);
-	config_found(dp, __UNCONST("ncrscsi") , simple_devprint);
-	config_found(dp, __UNCONST("nvr")     , simple_devprint);
-	config_found(dp, __UNCONST("lpt")     , simple_devprint);
-	config_found(dp, __UNCONST("wdc")     , simple_devprint);
-	config_found(dp, __UNCONST("ne")      , simple_devprint);
-	config_found(dp, __UNCONST("isab")    , simple_devprint);
-	config_found(dp, __UNCONST("pcib")    , simple_devprint);
-	config_found(dp, __UNCONST("avmebus") , simple_devprint);
+	config_found(self, __UNCONST("clock")   , simple_devprint);
+	config_found(self, __UNCONST("grfbus")  , simple_devprint);
+	config_found(self, __UNCONST("kbd")     , simple_devprint);
+	config_found(self, __UNCONST("fdc")     , simple_devprint);
+	config_found(self, __UNCONST("ser")     , simple_devprint);
+	config_found(self, __UNCONST("zs")      , simple_devprint);
+	config_found(self, __UNCONST("ncrscsi") , simple_devprint);
+	config_found(self, __UNCONST("nvr")     , simple_devprint);
+	config_found(self, __UNCONST("lpt")     , simple_devprint);
+	config_found(self, __UNCONST("wdc")     , simple_devprint);
+	config_found(self, __UNCONST("ne")      , simple_devprint);
+	config_found(self, __UNCONST("isab")    , simple_devprint);
+	config_found(self, __UNCONST("pcib")    , simple_devprint);
+	config_found(self, __UNCONST("avmebus") , simple_devprint);
 }
 
 #if 0
 int
-mbprint(void *auxp, const char *pnp)
+mbprint(void *aux, const char *pnp)
 {
 
 	if (pnp)
-		aprint_normal("%s at %s", (char *)auxp, pnp);
+		aprint_normal("%s at %s", (char *)aux, pnp);
 	return UNCONF;
 }
 #endif

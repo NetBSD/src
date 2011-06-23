@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.226 2011/01/17 13:43:02 jdc Exp $
+# $NetBSD: GENERIC,v 1.226.4.1 2011/06/23 14:19:40 cherry Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.226 $"
+#ident 		"GENERIC-$Revision: 1.226.4.1 $"
 
 maxusers	32
 
@@ -92,7 +92,7 @@ options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
-## Loadable kernel module support; still under development.
+options 	MODULAR		# new style module(7) framework
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.47 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.47.32.1 2011/06/23 14:19:15 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.47 2008/04/28 20:23:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.47.32.1 2011/06/23 14:19:15 cherry Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -148,7 +148,7 @@ const struct pciintr_icu_table {
 	  ich_init, NULL },			/* ICH3M */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801DB_LPC,
 	  ich_init, NULL },			/* ICH4 */
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801DB_ISA,
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801DBM_LPC,
 	  ich_init, NULL },			/* ICH4M */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801EB_LPC,
 	  ich_init, NULL },			/* ICH5 */

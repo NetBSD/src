@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_iocc.c,v 1.2 2008/04/28 20:23:34 martin Exp $	*/
+/*	$NetBSD: pic_iocc.c,v 1.2.32.1 2011/06/23 14:19:37 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_iocc.c,v 1.2 2008/04/28 20:23:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_iocc.c,v 1.2.32.1 2011/06/23 14:19:37 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -93,7 +93,7 @@ iocc_get_irq(struct pic_ops *pic, int mode)
         if (rv == 0)
                 return 255;
 
-        irq = 31 - cntlzw(rv);
+        irq = 31 - __builtin_clz(rv);
         if (irq >= 0 && irq < 16)
                 return irq;
         return 255;

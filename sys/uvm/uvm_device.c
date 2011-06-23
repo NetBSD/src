@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.61 2011/04/23 18:14:12 rmind Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.61.2.1 2011/06/23 14:20:34 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.61 2011/04/23 18:14:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.61.2.1 2011/06/23 14:20:34 cherry Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -197,9 +197,9 @@ udv_attach(void *arg, vm_prot_t accessprot,
 			 * bump reference count, unhold, return.
 			 */
 
-			mutex_enter(&lcv->u_obj.vmobjlock);
+			mutex_enter(lcv->u_obj.vmobjlock);
 			lcv->u_obj.uo_refs++;
-			mutex_exit(&lcv->u_obj.vmobjlock);
+			mutex_exit(lcv->u_obj.vmobjlock);
 
 			mutex_enter(&udv_lock);
 			if (lcv->u_flags & UVM_DEVICE_WANTED)
@@ -214,8 +214,11 @@ udv_attach(void *arg, vm_prot_t accessprot,
 		 */
 
 		mutex_exit(&udv_lock);
-		/* NOTE: we could sleep in the following malloc() */
+
+		/* Note: both calls may allocate memory and sleep. */
 		udv = malloc(sizeof(*udv), M_TEMP, M_WAITOK);
+		uvm_obj_init(&udv->u_obj, &uvm_deviceops, true, 1);
+
 		mutex_enter(&udv_lock);
 
 		/*
@@ -235,6 +238,7 @@ udv_attach(void *arg, vm_prot_t accessprot,
 
 		if (lcv) {
 			mutex_exit(&udv_lock);
+			uvm_obj_destroy(&udv->u_obj, true);
 			free(udv, M_TEMP);
 			continue;
 		}
@@ -244,7 +248,6 @@ udv_attach(void *arg, vm_prot_t accessprot,
 		 * and return.
 		 */
 
-		UVM_OBJ_INIT(&udv->u_obj, &uvm_deviceops, 1);
 		udv->u_flags = 0;
 		udv->u_device = device;
 		LIST_INSERT_HEAD(&udv_list, udv, u_list);
@@ -269,11 +272,11 @@ udv_reference(struct uvm_object *uobj)
 {
 	UVMHIST_FUNC("udv_reference"); UVMHIST_CALLED(maphist);
 
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	uobj->uo_refs++;
 	UVMHIST_LOG(maphist, "<- done (uobj=0x%x, ref = %d)",
 		    uobj, uobj->uo_refs,0,0);
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 }
 
 /*
@@ -294,10 +297,10 @@ udv_detach(struct uvm_object *uobj)
 	 * loop until done
 	 */
 again:
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	if (uobj->uo_refs > 1) {
 		uobj->uo_refs--;
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 		UVMHIST_LOG(maphist," <- done, uobj=0x%x, ref=%d",
 			  uobj,uobj->uo_refs,0,0);
 		return;
@@ -310,7 +313,7 @@ again:
 	mutex_enter(&udv_lock);
 	if (udv->u_flags & UVM_DEVICE_HOLD) {
 		udv->u_flags |= UVM_DEVICE_WANTED;
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 		UVM_UNLOCK_AND_WAIT(udv, &udv_lock, false, "udv_detach",0);
 		goto again;
 	}
@@ -323,8 +326,9 @@ again:
 	if (udv->u_flags & UVM_DEVICE_WANTED)
 		wakeup(udv);
 	mutex_exit(&udv_lock);
-	mutex_exit(&uobj->vmobjlock);
-	UVM_OBJ_DESTROY(uobj);
+	mutex_exit(uobj->vmobjlock);
+
+	uvm_obj_destroy(uobj, true);
 	free(udv, M_TEMP);
 	UVMHIST_LOG(maphist," <- done, freed uobj=0x%x", uobj,0,0,0);
 }
@@ -371,7 +375,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	if (UVM_ET_ISCOPYONWRITE(entry)) {
 		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%x)",
 		entry->etype, 0,0,0);
-		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 		return(EIO);
 	}
 
@@ -382,7 +386,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	device = udv->u_device;
 	if (cdevsw_lookup(device) == NULL) {
 		/* XXX This should not happen */
-		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 		return (EIO);
 	}
 
@@ -436,13 +440,13 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			 */
 			pmap_update(ufi->orig_map->pmap);	/* sync what we have so far */
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
-			    uobj, NULL);
+			    uobj);
 			uvm_wait("udv_fault");
 			return (ERESTART);
 		}
 	}
 
 	pmap_update(ufi->orig_map->pmap);
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 	return (retval);
 }

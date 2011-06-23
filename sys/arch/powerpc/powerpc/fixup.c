@@ -1,4 +1,4 @@
-/*	$NetBSD: fixup.c,v 1.3 2011/02/12 18:23:10 matt Exp $	*/
+/*	$NetBSD: fixup.c,v 1.3.4.1 2011/06/23 14:19:34 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fixup.c,v 1.3 2011/02/12 18:23:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixup.c,v 1.3.4.1 2011/06/23 14:19:34 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -208,4 +208,13 @@ powerpc_fixup_stubs(uint32_t *start, uint32_t *end,
 	    fixups_done, fixups_done == 1 ? "" : "s",
 	    cycles);
 #endif
+}
+
+void
+cpu_fixup_stubs(void)
+{
+	extern uint32_t _ftext[];
+	extern uint32_t _etext[];
+
+	powerpc_fixup_stubs(_ftext, _etext, NULL, NULL);
 }

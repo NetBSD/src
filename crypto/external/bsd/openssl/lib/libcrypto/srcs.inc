@@ -1,14 +1,14 @@
-#	$NetBSD: srcs.inc,v 1.2 2010/03/30 07:23:51 mrg Exp $
+#	$NetBSD: srcs.inc,v 1.2.4.1 2011/06/23 14:18:09 cherry Exp $
 
 CRYPTOINCS= \
-	aes.inc asn1.inc bf.inc bio.inc bn.inc buffer.inc cast.inc \
+	aes.inc asn1.inc bf.inc bio.inc bn.inc buffer.inc cast.inc cmac.inc \
 	cms.inc comp.inc conf.inc crypto.inc des.inc dh.inc dsa.inc dso.inc \
 	ec.inc ecdh.inc ecdsa.inc engine.inc err.inc evp.inc hmac.inc \
 	krb5.inc lhash.inc modes.inc camellia.inc \
 	md2.inc md4.inc md5.inc objects.inc ocsp.inc pem.inc \
 	pkcs12.inc pkcs7.inc pqueue.inc rand.inc rc2.inc rc4.inc ripemd.inc \
-	rsa.inc sha.inc stack.inc store.inc txt_db.inc ts.inc ui.inc x509.inc \
-	x509v3.inc
+	rsa.inc sha.inc srp.inc stack.inc store.inc txt_db.inc ts.inc \
+	ui.inc x509.inc x509v3.inc
 
 # patented algorithms - see ../libcrypto_*
 CRYPTOINCS+=	idea.inc

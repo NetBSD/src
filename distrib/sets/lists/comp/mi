@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1627 2011/06/01 02:22:19 rmind Exp $
+#	$NetBSD: mi,v 1.1627.2.1 2011/06/23 14:18:21 cherry Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1787,6 +1787,7 @@
 ./usr/include/openssl/buffer.h			comp-c-include		crypto
 ./usr/include/openssl/camellia.h		comp-c-include		crypto
 ./usr/include/openssl/cast.h			comp-c-include		crypto
+./usr/include/openssl/cmac.h			comp-c-include		crypto
 ./usr/include/openssl/cms.h			comp-c-include		crypto
 ./usr/include/openssl/comp.h			comp-c-include		crypto
 ./usr/include/openssl/conf.h			comp-c-include		crypto
@@ -1839,6 +1840,7 @@
 ./usr/include/openssl/rsaref.h			comp-obsolete		obsolete
 ./usr/include/openssl/safestack.h		comp-c-include		crypto
 ./usr/include/openssl/sha.h			comp-c-include		crypto
+./usr/include/openssl/srp.h			comp-c-include		crypto
 ./usr/include/openssl/ssl.h			comp-c-include		crypto
 ./usr/include/openssl/ssl2.h			comp-c-include		crypto
 ./usr/include/openssl/ssl23.h			comp-c-include		crypto
@@ -2981,6 +2983,7 @@
 ./usr/lib/pkgconfig				comp-c-lib
 ./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib		atf,share
 ./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib		atf,share
+./usr/lib/pkgconfig/atf-sh.pc			comp-atf-lib		atf,share
 ./usr/lib/pkgconfig/atf.pc			comp-obsolete		obsolete
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
@@ -10195,7 +10198,7 @@
 ./usr/share/man/cat9/uvm_scheduler.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_setpagesize.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_swap_init.0		comp-sys-catman		.cat
-./usr/share/man/cat9/uvm_swapin.0		comp-sys-catman		.cat
+./usr/share/man/cat9/uvm_swapin.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/uvm_sysctl.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/uvm_unloan.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_unmap.0		comp-sys-catman		.cat
@@ -16127,7 +16130,7 @@
 ./usr/share/man/html9/uvm_scheduler.html	comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_setpagesize.html	comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_swap_init.html	comp-sys-htmlman	html
-./usr/share/man/html9/uvm_swapin.html		comp-sys-htmlman	html
+./usr/share/man/html9/uvm_swapin.html		comp-obsolete		obsolete
 ./usr/share/man/html9/uvm_unloan.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_unmap.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_vnp_setsize.html	comp-sys-htmlman	html
@@ -22287,7 +22290,7 @@
 ./usr/share/man/man9/uvm_scheduler.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_setpagesize.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_swap_init.9		comp-sys-man		.man
-./usr/share/man/man9/uvm_swapin.9		comp-sys-man		.man
+./usr/share/man/man9/uvm_swapin.9		comp-obsolete		obsolete
 ./usr/share/man/man9/uvm_sysctl.9		comp-obsolete		obsolete
 ./usr/share/man/man9/uvm_unloan.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_unmap.9		comp-sys-man		.man

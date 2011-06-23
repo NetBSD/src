@@ -31,6 +31,7 @@ extern "C" {
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
 }
@@ -220,6 +221,17 @@ config_to_args(const atf::tests::vars_map& config)
 
 static
 void
+silence_stdin(void)
+{
+    ::close(STDIN_FILENO);
+    int fd = ::open("/dev/null", O_RDONLY);
+    if (fd == -1)
+        throw std::runtime_error("Could not open /dev/null");
+    INV(fd == STDIN_FILENO);
+}
+
+static
+void
 prepare_child(const atf::fs::path& workdir)
 {
     const int ret = ::setpgid(::getpid(), 0);
@@ -239,9 +251,13 @@ prepare_child(const atf::fs::path& workdir)
     atf::env::unset("LC_MONETARY");
     atf::env::unset("LC_NUMERIC");
     atf::env::unset("LC_TIME");
-    atf::env::unset("TZ");
+    atf::env::set("TZ", "UTC");
+
+    atf::env::set("__RUNNING_INSIDE_ATF_RUN", "internal-yes-value");
 
     impl::change_directory(workdir);
+
+    silence_stdin();
 }
 
 static
@@ -418,6 +434,7 @@ detail::atf_tp_reader::validate_and_insert(const std::string& name,
                               ident_regex + "; was '" + value + "'");
     } else if (name == "require.arch") {
     } else if (name == "require.config") {
+    } else if (name == "require.files") {
     } else if (name == "require.machine") {
     } else if (name == "require.progs") {
     } else if (name == "require.user") {

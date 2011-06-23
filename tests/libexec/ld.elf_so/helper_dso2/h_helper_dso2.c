@@ -34,7 +34,7 @@ extern int sleep_init;
 extern int sleep_fini;
 extern int dlopen_cookie;
 
-void __attribute__((__constructor__))
+static void __attribute__((__constructor__))
 init2(void)
 {
 	dlopen_cookie = 2;
@@ -46,7 +46,7 @@ init2(void)
 
 extern int dlclose_cookie;
 
-void __attribute__((__destructor__))
+static void __attribute__((__destructor__))
 fini2(void)
 {
 	dlclose_cookie = 2;

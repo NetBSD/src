@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.60 2011/01/22 22:26:10 matt Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.60.2.1 2011/06/23 14:19:53 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.60 2011/01/22 22:26:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.60.2.1 2011/06/23 14:19:53 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -759,7 +759,7 @@ out:
 
 int
 netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
-	register_t *retval) 
+	register_t *retval)
 {
 	/* {
 		syscallarg(netbsd32_charp) type;

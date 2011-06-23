@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.4 2011/05/15 23:56:28 christos Exp $	*/
+/*	$NetBSD: director.c,v 1.4.2.1 2011/06/23 14:20:40 cherry Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -29,6 +29,9 @@
  *
  */
 
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <ctype.h>
@@ -46,8 +49,8 @@ void yyparse(void);
 #define DEF_TERM "atf"
 #define DEF_SLAVE "./slave"
 
-char *def_check_path = "./"; /* default check path */
-char *def_include_path = "./"; /* default include path */
+const char *def_check_path = "./"; /* default check path */
+const char *def_include_path = "./"; /* default include path */
 
 extern size_t nvars;	/* In testlang_conf.y */
 saved_data_t  saved_output;	/* In testlang_conf.y */
@@ -55,9 +58,9 @@ int cmdpipe[2];		/* command pipe between director and slave */
 int slvpipe[2];		/* reply pipe back from slave */
 int master;		/* pty to the slave */
 int verbose;		/* control verbosity of tests */
-char *check_path;	/* path to prepend to check files for output
+const char *check_path;	/* path to prepend to check files for output
 			   validation */
-char *include_path;	/* path to prepend to include files */
+const char *include_path;	/* path to prepend to include files */
 char *cur_file;		/* name of file currently being read */
 
 void init_parse_variables(int); /* in testlang_parse.y */
@@ -66,17 +69,17 @@ void init_parse_variables(int); /* in testlang_parse.y */
  * Handle the slave exiting unexpectedly, try to recover the exit message
  * and print it out.
  */
-void
+static void
 slave_died(int param)
 {
 	char last_words[256];
-	int count;
+	size_t count;
 
 	fprintf(stderr, "ERROR: Slave has exited\n");
 	if (saved_output.count > 0) {
 		fprintf(stderr, "output from slave: ");
 		for (count = 0; count < saved_output.count; count ++) {
-			if (isprint(saved_output.data[count]))
+			if (isprint((unsigned char)saved_output.data[count]))
 			    fprintf(stderr, "%c", saved_output.data[count]);
 		}
 		fprintf(stderr, "\n");
@@ -93,19 +96,21 @@ slave_died(int param)
 
 
 static void
-usage(char *name)
+usage(void)
 {
-	fprintf(stderr, "Curses automated test director\n");
-	fprintf(stderr, "%s [-v] [-p termcappath] [-s pathtoslave] [-t term]"
-		" commandfile\n", name);
+	fprintf(stderr, "Usage: %s [-v] [-I include-path] [-C check-path] "
+	    "[-T terminfo-file] [-s pathtoslave] [-t term] "
+	    "commandfile\n", getprogname());
 	fprintf(stderr, " where:\n");
 	fprintf(stderr, "    -v enables verbose test output\n");
-	fprintf(stderr, "    termcappath is the path to the directory"
-		"holding the termpcap file\n");
-	fprintf(stderr, "    pathtoslave is the path to the slave exectuable\n");
-	fprintf(stderr, "    term is value to set TERM to for the test\n");
+	fprintf(stderr, "    -T is a directory containing the terminfo.db "
+	    "file, or a file holding the terminfo description n");
+	fprintf(stderr, "    -s is the path to the slave executable\n");
+	fprintf(stderr, "    -t is value to set TERM to for the test\n");
+	fprintf(stderr, "    -I is the directory to include files\n");
+	fprintf(stderr, "    -C is the directory for config files\n");
 	fprintf(stderr, "    commandfile is a file of test directives\n");
-	exit(2);
+	exit(1);
 }
 
 
@@ -114,85 +119,113 @@ main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
-	char *termpath, *term, *slave;
+	const char *termpath, *term, *slave;
 	int ch;
 	pid_t slave_pid;
 	extern FILE *yyin;
 	char *arg1, *arg2, *arg3, *arg4;
 	struct termios term_attr;
-	int slavefd, on;
+	struct stat st;
 
 	termpath = term = slave = NULL;
 	verbose = 0;
 
-	while ((ch = getopt(argc, argv, "vp:s:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "vC:I:p:s:t:T:")) != -1) {
 		switch(ch) {
+		case 'I':
+			include_path = optarg;
+			break;
+		case 'C':
+			check_path = optarg;
+			break;
+		case 'T':
+			termpath = optarg;
+			break;
 		case 'p':
-			asprintf(&termpath, "%s", optarg);
+			termpath = optarg;
 			break;
 		case 's':
-			asprintf(&slave, "%s", optarg);
+			slave = optarg;
 			break;
 		case 't':
-			asprintf(&term, "%s", optarg);
+			term = optarg;
 			break;
 		case 'v':
 			verbose = 1;
 			break;
 		case '?':
 		default:
-			usage(argv[0]);
+			usage();
 			break;
 		}
 	}
 
+	argc -= optind;
+	argv += optind;
+	if (argc < 1)
+		usage();
+
 	if (termpath == NULL)
-		asprintf(&termpath, "%s", DEF_TERMPATH);
+		termpath = DEF_TERMPATH;
 
 	if (slave == NULL)
-		asprintf(&slave, "%s", DEF_SLAVE);
+		slave = DEF_SLAVE;
 
 	if (term == NULL)
-		asprintf(&term, "%s", DEF_TERM);
+		term = DEF_TERM;
 
-	argc -= optind;
-	if (argc < 1)
-		usage(argv[0]);
-
-	signal(SIGCHLD, slave_died);
-
-	argv += optind;
-
-	if (setenv("TERM", term, 1) != 0)
-		err(2, "Failed to set TERM variable");
-
-	check_path = getenv("CHECK_PATH");
+	if (check_path == NULL)
+		check_path = getenv("CHECK_PATH");
 	if ((check_path == NULL) || (check_path[0] == '\0')) {
-		fprintf(stderr,
-			"WARNING: CHECK_PATH not set, defaulting to %s\n",
-			def_check_path);
+		warn("$CHECK_PATH not set, defaulting to %s", def_check_path);
 		check_path = def_check_path;
 	}
 
-	include_path = getenv("INCLUDE_PATH");
+	if (include_path == NULL)
+		include_path = getenv("INCLUDE_PATH");
 	if ((include_path == NULL) || (include_path[0] == '\0')) {
-		fprintf(stderr,
-			"WARNING: INCLUDE_PATH not set, defaulting to %s\n",
+		warn("$INCLUDE_PATH not set, defaulting to %s",
 			def_include_path);
 		include_path = def_include_path;
 	}
 
-	if (pipe(cmdpipe) < 0) {
-		fprintf(stderr, "Command pipe creation failed: ");
-		perror(NULL);
-		exit(2);
+	signal(SIGCHLD, slave_died);
+
+	if (setenv("TERM", term, 1) != 0)
+		err(2, "Failed to set TERM variable");
+
+	if (stat(termpath, &st) == -1)
+		err(1, "Cannot stat %s", termpath);
+
+	if (S_ISDIR(st.st_mode)) {
+		char tinfo[MAXPATHLEN];
+		int l = snprintf(tinfo, sizeof(tinfo), "%s/%s", termpath,
+		    "terminfo.db");
+		if (stat(tinfo, &st) == -1)
+			err(1, "Cannot stat `%s'", tinfo);
+		if (l >= 3)
+			tinfo[l - 3] = '\0';
+		if (setenv("TERMINFO", tinfo, 1) != 0)
+			err(1, "Failed to set TERMINFO variable");
+	} else {
+		int fd;
+		char *tinfo;
+		if ((fd = open(termpath, O_RDONLY)) == -1)
+			err(1, "Cannot open `%s'", termpath);
+		if ((tinfo = mmap(NULL, (size_t)st.st_size, PROT_READ, MAP_FILE,
+			fd, 0)) == MAP_FAILED)
+			err(1, "Cannot map `%s'", termpath);
+		if (setenv("TERMINFO", tinfo, 1) != 0)
+			err(1, "Failed to set TERMINFO variable");
+		close(fd);
+		munmap(tinfo, (size_t)st.st_size);
 	}
 
-	if (pipe(slvpipe) < 0) {
-		fprintf(stderr, "Slave pipe creation failed: ");
-		perror(NULL);
-		exit(2);
-	}
+	if (pipe(cmdpipe) < 0)
+		err(1, "Command pipe creation failed");
+
+	if (pipe(slvpipe) < 0)
+		err(1, "Slave pipe creation failed");
 
 	/*
 	 * Create default termios settings for later use
@@ -204,10 +237,8 @@ main(int argc, char *argv[])
 	term_attr.c_lflag = TTYDEF_LFLAG;
 	cfsetspeed(&term_attr, TTYDEF_SPEED);
 
-	if ((slave_pid = forkpty(&master, NULL, &term_attr, NULL)) < 0) {
-		fprintf(stderr, "Fork of pty for slave failed\n");
-		exit(2);
-	}
+	if ((slave_pid = forkpty(&master, NULL, &term_attr, NULL)) < 0)
+		err(1, "Fork of pty for slave failed\n");
 
 	if (slave_pid == 0) {
 		/* slave side, just exec the slave process */
@@ -223,22 +254,16 @@ main(int argc, char *argv[])
 		if (asprintf(&arg4, "%d", slvpipe[1]) < 0)
 			err(1, "arg4 conversion failed");
 
-		if (execl(slave, slave, arg1, arg2, arg3, arg4, NULL) < 0) {
-			fprintf(stderr, "Exec of slave %s failed: ", slave);
-			perror(NULL);
-			exit(2);
-		}
+		if (execl(slave, slave, arg1, arg2, arg3, arg4, NULL) < 0)
+			err(1, "Exec of slave %s failed", slave);
 
 		/* NOT REACHED */
 	}
 
 	fcntl(master, F_SETFL, O_NONBLOCK);
 
-	if ((yyin = fopen(argv[0], "r")) == NULL) {
-		fprintf(stderr, "Cannot open command file %s: ", argv[0]);
-		perror(NULL);
-		exit(2);
-	}
+	if ((yyin = fopen(argv[0], "r")) == NULL)
+		err(1, "Cannot open command file %s", argv[0]);
 
 	if ((cur_file = malloc(strlen(argv[0]) + 1)) == NULL)
 		err(2, "Failed to alloc memory for test file name");

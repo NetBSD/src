@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.42 2010/01/07 01:39:56 christos Exp $	 */
+/* $NetBSD: main.c,v 1.42.4.1 2011/06/23 14:18:43 cherry Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -76,6 +76,7 @@ main(int argc, char **argv)
 	int ret = FSCK_EXIT_OK;
 	const char *optstring = "b:dfi:m:npPqUy";
 
+	ckfinish = ckfini;
 	skipclean = 1;
 	exitonfail = 0;
 	idaddr = 0x0;

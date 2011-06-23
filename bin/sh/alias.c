@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.13 2010/10/29 17:04:48 stacktic Exp $	*/
+/*	$NetBSD: alias.c,v 1.13.4.1 2011/06/23 14:17:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: alias.c,v 1.13 2010/10/29 17:04:48 stacktic Exp $");
+__RCSID("$NetBSD: alias.c,v 1.13.4.1 2011/06/23 14:17:48 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: alias.c,v 1.13 2010/10/29 17:04:48 stacktic Exp $");
 #include "mystring.h"
 #include "alias.h"
 #include "options.h"	/* XXX for argptr (should remove?) */
+#include "builtins.h"
 #include "var.h"
 
 #define ATABSIZE 39

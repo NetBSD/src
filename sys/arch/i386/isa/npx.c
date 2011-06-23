@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.139 2010/12/20 00:25:35 matt Exp $	*/
+/*	$NetBSD: npx.c,v 1.139.6.1 2011/06/23 14:19:15 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.139 2010/12/20 00:25:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.139.6.1 2011/06/23 14:19:15 cherry Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -159,8 +159,8 @@ static int	x86fpflags_to_ksiginfo(uint32_t flags);
 static int	npxdna(struct cpu_info *);
 
 #ifdef XEN
-#define	clts()
-#define	stts()
+#define	clts() HYPERVISOR_fpu_taskswitch(0)
+#define	stts() HYPERVISOR_fpu_taskswitch(1)
 #endif
 
 static	enum npx_type		npx_type;
@@ -190,9 +190,7 @@ static int
 npxdna_empty(struct cpu_info *ci)
 {
 
-#ifndef XEN
 	panic("npxdna vector not initialized");
-#endif
 	return 0;
 }
 
@@ -507,7 +505,9 @@ npxintr(void *arg, struct intrframe *frame)
 		 * Currently, we treat this like an asynchronous interrupt, but
 		 * this has disadvantages.
 		 */
+		mutex_enter(proc_lock);
 		psignal(l->l_proc, SIGFPE);
+		mutex_exit(proc_lock);
 	}
 
 	kpreempt_enable();

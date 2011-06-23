@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/02/08 18:26:25 plunky Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2011/06/23 14:18:33 cherry Exp $
 
 WARNS?=	2
 
@@ -15,6 +15,8 @@ SRCS=	cc.c
 MAN=	pcc.1
 
 CPPFLAGS+=	-DTARGMACH=${TARGMACH}
+CPPFLAGS+=	-DLIBEXECDIR=\"/usr/libexec/\"
+CPPFLAGS+=	-DINCLUDEDIR=\"/usr/include/\"
 CPPFLAGS+=	-I${PCC_DIST}/mip
 CPPFLAGS+=	-I${PCC_DIST}/os/${TARGOS}
 CPPFLAGS+=	-I${PCC_DIST}/arch/${TARGMACH}

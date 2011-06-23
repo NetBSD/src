@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_locore.S,v 1.3 2011/01/17 08:23:54 matt Exp $	*/
+/*	$NetBSD: obs600_locore.S,v 1.3.4.1 2011/06/23 14:19:09 cherry Exp $	*/
 
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
@@ -40,7 +40,6 @@
 #include <machine/asm.h>
 
 #include <powerpc/ibm4xx/spr.h>
-#include <powerpc/ibm4xx/pmap.h>
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to

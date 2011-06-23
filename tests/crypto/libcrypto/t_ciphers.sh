@@ -1,4 +1,4 @@
-# $NetBSD: t_ciphers.sh,v 1.2 2010/11/08 19:06:12 pooka Exp $
+# $NetBSD: t_ciphers.sh,v 1.2.4.1 2011/06/23 14:20:38 cherry Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -56,6 +56,16 @@ des_body()
 	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_destest"
 }
 
+atf_test_case evp
+evp_head()
+{
+	atf_set "descr" "Checks EVP cipher"
+}
+evp_body()
+{
+	atf_check -o ignore -e ignore $(atf_get_srcdir)/h_evp_test $(atf_get_srcdir)/evptests.txt
+}
+
 atf_test_case rc2
 rc2_head()
 {
@@ -107,6 +117,7 @@ atf_init_test_cases()
 	atf_add_test_case bf
 	atf_add_test_case cast
 	atf_add_test_case des
+	atf_add_test_case evp
 	atf_add_test_case rc2
 	atf_add_test_case rc4
 	atf_add_test_case idea

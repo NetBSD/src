@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.47 2011/03/04 22:25:31 joerg Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.47.2.1 2011/06/23 14:19:53 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.47 2011/03/04 22:25:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.47.2.1 2011/06/23 14:19:53 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,8 @@ setup_linux_rt_sigframe(struct trapframe *tf, int sig, const sigset_t *mask)
 	frametoreg(tf, (struct reg *)sigframe.uc.uc_mcontext.sc_regs);
 	sigframe.uc.uc_mcontext.sc_regs[R_SP] = alpha_pal_rdusp();
 
-	alpha_enable_fp(l, 1);
+	fpu_load();
+	alpha_pal_wrfen(1);
 	sigframe.uc.uc_mcontext.sc_fpcr = alpha_read_fpcr();
 	sigframe.uc.uc_mcontext.sc_fp_control = alpha_read_fp_c(l);
 	alpha_pal_wrfen(0);

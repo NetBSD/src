@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.29 2009/03/16 23:11:09 dsl Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.29.10.1 2011/06/23 14:18:55 cherry Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.29 2009/03/16 23:11:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.29.10.1 2011/06/23 14:18:55 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,9 +52,9 @@ extern int	sfb_cnattach(tc_addr_t);
 #endif
 
 void	tc_3000_500_intr_setup(void);
-void	tc_3000_500_intr_establish(struct device *, void *,
+void	tc_3000_500_intr_establish(device_t, void *,
 	    tc_intrlevel_t, int (*)(void *), void *);
-void	tc_3000_500_intr_disestablish(struct device *, void *);
+void	tc_3000_500_intr_disestablish(device_t, void *);
 void	tc_3000_500_iointr(void *, unsigned long);
 
 int	tc_3000_500_intrnull(void *);
@@ -144,7 +144,7 @@ tc_3000_500_intr_setup()
 }
 
 const struct evcnt *
-tc_3000_500_intr_evcnt(struct device *tcadev, void *cookie)
+tc_3000_500_intr_evcnt(device_t tcadev, void *cookie)
 {
 	u_long dev = (u_long)cookie;
 
@@ -156,7 +156,7 @@ tc_3000_500_intr_evcnt(struct device *tcadev, void *cookie)
 }
 
 void
-tc_3000_500_intr_establish(struct device *tcadev, void *cookie, tc_intrlevel_t level, int (*func)(void *), void *arg)
+tc_3000_500_intr_establish(device_t tcadev, void *cookie, tc_intrlevel_t level, int (*func)(void *), void *arg)
 {
 	u_long dev = (u_long)cookie;
 
@@ -176,7 +176,7 @@ tc_3000_500_intr_establish(struct device *tcadev, void *cookie, tc_intrlevel_t l
 }
 
 void
-tc_3000_500_intr_disestablish(struct device *tcadev, void *cookie)
+tc_3000_500_intr_disestablish(device_t tcadev, void *cookie)
 {
 	u_long dev = (u_long)cookie;
 

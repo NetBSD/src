@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.93 2010/07/21 17:52:11 hannken Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.93.6.1 2011/06/23 14:20:16 cherry Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.93 2010/07/21 17:52:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.93.6.1 2011/06/23 14:20:16 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,7 @@ smbfs_setroot(struct mount *mp)
 
 	/*
 	 * Someone might have already set sm_root while we slept
-	 * in smb_lookup or malloc/getnewvnode.
+	 * in smb_lookup or vnode allocation.
 	 */
 	if (smp->sm_root)
 		vput(vp);
@@ -433,16 +433,16 @@ loop:
 		 */
 		if (vp->v_mount != mp || vismarker(vp))
 			continue;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		np = VTOSMB(vp);
 		if (np == NULL) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		if ((vp->v_type == VNON || (np->n_flag & NMODIFIED) == 0) &&
 		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);

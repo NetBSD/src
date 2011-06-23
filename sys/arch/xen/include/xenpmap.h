@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.27.2.1 2011/06/03 13:27:40 cherry Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.27.2.2 2011/06/23 14:19:49 cherry Exp $	*/
 
 /*
  *
@@ -52,6 +52,9 @@ void xen_vcpu_mcast_invlpg(vaddr_t, vaddr_t, uint32_t);
 void xen_vcpu_bcast_invlpg(vaddr_t, vaddr_t);
 void xen_mcast_tlbflush(uint32_t);
 void xen_bcast_tlbflush(void);
+void xen_mcast_invlpg(vaddr_t, uint32_t);
+void xen_bcast_invlpg(vaddr_t);
+
 
 #define xpq_queue_pin_l1_table(pa)	\
 	xpq_queue_pin_table(pa, MMUEXT_PIN_L1_TABLE)

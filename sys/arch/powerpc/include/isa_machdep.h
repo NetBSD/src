@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.6 2009/08/20 14:21:12 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.6.10.1 2011/06/23 14:19:31 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -99,12 +99,11 @@ struct pic_ops;			/* XXX */
 /*
  * Functions provided to machine-independent ISA code.
  */
-void	genppc_isa_attach_hook(struct device *, struct device *,
-	    struct isabus_attach_args *);
+void	genppc_isa_attach_hook(device_t, device_t, struct isabus_attach_args *);
 void	genppc_isa_detach_hook(isa_chipset_tag_t, device_t);
 const struct evcnt *genppc_isa_intr_evcnt(isa_chipset_tag_t, int);
 void	*genppc_isa_intr_establish(isa_chipset_tag_t, int /*irq*/, int /*type*/,
-	    int /*level*/, int (*ih_fun)(void *), void *);
+	    int /*level*/, int (* /*ih_fun*/)(void *), void *);
 void	genppc_isa_intr_disestablish(isa_chipset_tag_t, void *);
 int	genppc_isa_intr_alloc(isa_chipset_tag_t, struct pic_ops *, int,
 	    int, int *);

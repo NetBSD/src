@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsrvar.h,v 1.13 2008/09/23 22:22:41 christos Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.13.26.1 2011/06/23 14:20:03 cherry Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -407,6 +407,12 @@ struct arc_fw_sysinfo {
 struct arc_ccb;
 TAILQ_HEAD(arc_ccb_list, arc_ccb);
 
+typedef struct arc_edata {
+	envsys_data_t	arc_sensor;
+	int		arc_diskid;
+	int		arc_volid;
+} arc_edata_t;
+
 struct arc_softc {
 	struct scsipi_channel	sc_chan;
 	struct scsipi_adapter	sc_adapter;
@@ -434,7 +440,7 @@ struct arc_softc {
 	krwlock_t		sc_rwlock;
 
 	struct sysmon_envsys	*sc_sme;
-	envsys_data_t		*sc_sensors;
+	arc_edata_t		*sc_arc_sensors;
 	int			sc_nsensors;
 
 	size_t			sc_maxraidset;	/* max raid sets */

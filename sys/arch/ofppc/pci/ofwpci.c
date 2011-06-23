@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.9 2011/05/17 17:34:51 dyoung Exp $ */
+/* $NetBSD: ofwpci.c,v 1.9.2.1 2011/06/23 14:19:26 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.9 2011/05/17 17:34:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.9.2.1 2011/06/23 14:19:26 cherry Exp $");
 
 #include "opt_pci.h"
 
@@ -50,16 +50,16 @@ __KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.9 2011/05/17 17:34:51 dyoung Exp $");
 #include <machine/pio.h>
 
 struct ofwpci_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct genppc_pci_chipset sc_pc;
 	struct powerpc_bus_space sc_iot;
 	struct powerpc_bus_space sc_memt;
 };
 
-static void ofwpci_attach(struct device *, struct device *, void *);
-static int ofwpci_match(struct device *, struct cfdata *, void *);
+static void ofwpci_attach(device_t, device_t, void *);
+static int ofwpci_match(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(ofwpci, sizeof(struct ofwpci_softc),
+CFATTACH_DECL_NEW(ofwpci, sizeof(struct ofwpci_softc),
     ofwpci_match, ofwpci_attach, NULL, NULL);
 
 extern struct genppc_pci_chipset *genppc_pct;
@@ -98,7 +98,7 @@ ofwpci_get_chipset_tag(pci_chipset_tag_t pc)
 }
 
 static int
-ofwpci_match(struct device *parent, struct cfdata *cf, void *aux)
+ofwpci_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char name[32];
@@ -115,9 +115,9 @@ ofwpci_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-ofwpci_attach(struct device *parent, struct device *self, void *aux)
+ofwpci_attach(device_t parent, device_t self, void *aux)
 {
-	struct ofwpci_softc *sc = (void *)self;
+	struct ofwpci_softc *sc = device_private(self);
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	struct confargs *ca = aux;
 	struct pcibus_attach_args pba;
@@ -131,6 +131,8 @@ ofwpci_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	aprint_normal("\n");
+
+	sc->sc_dev = self;
 
 	/* PCI bus number */
 	if (OF_getprop(node, "bus-range", busrange, sizeof(busrange)) != 8)

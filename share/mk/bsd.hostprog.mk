@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.62 2011/03/24 17:05:44 bouyer Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.62.2.1 2011/06/23 14:18:46 cherry Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -25,6 +25,7 @@ LIBEVENT?=	/usr/lib/libevent.a
 LIBFETCH?=	/usr/lib/libfetch.a
 LIBFORM?=	/usr/lib/libform.a
 LIBGCC?=	/usr/lib/libgcc.a
+LIBGCC_PIC?=	/usr/lib/libgcc_pic.a
 LIBGNUMALLOC?=	/usr/lib/libgnumalloc.a
 LIBINTL?=	/usr/lib/libintl.a
 LIBIPSEC?=	/usr/lib/libipsec.a

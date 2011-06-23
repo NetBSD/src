@@ -1,4 +1,4 @@
-/* $NetBSD: u3.c,v 1.3 2011/05/17 17:34:50 dyoung Exp $ */
+/* $NetBSD: u3.c,v 1.3.2.1 2011/06/23 14:19:22 cherry Exp $ */
 
 /*
  * Copyright 2006 Kyma Systems LLC.
@@ -55,8 +55,8 @@ struct ibmcpc_softc
 	struct powerpc_bus_space sc_memt;
 };
 
-static void ibmcpc_attach(struct device *, struct device *, void *);
-static int ibmcpc_match(struct device *, struct cfdata *, void *);
+static void ibmcpc_attach(device_t, device_t, void *);
+static int ibmcpc_match(device_t, cfdata_t, void *);
 
 static pcireg_t ibmcpc_conf_read(void *, pcitag_t, int);
 static void ibmcpc_conf_write(void *, pcitag_t, int, pcireg_t);
@@ -67,7 +67,7 @@ CFATTACH_DECL(ibmcpc, sizeof(struct ibmcpc_softc),
 #define PCI_DEVFN(slot,func)    ((((slot) & 0x1f) << 3) | ((func) & 0x07))
 
 static int
-ibmcpc_match(struct device *parent, struct cfdata *cf, void *aux)
+ibmcpc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char compat[32];
@@ -85,7 +85,7 @@ ibmcpc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-ibmcpc_attach(struct device *parent, struct device *self, void *aux)
+ibmcpc_attach(device_t parent, device_t self, void *aux)
 {
 	struct ibmcpc_softc *sc = (void *) self;
 	pci_chipset_tag_t pc = sc->sc_pc;

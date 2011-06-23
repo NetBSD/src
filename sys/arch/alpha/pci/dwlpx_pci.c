@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_pci.c,v 1.16 2010/12/15 01:27:18 matt Exp $ */
+/* $NetBSD: dwlpx_pci.c,v 1.16.6.1 2011/06/23 14:18:54 cherry Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.16 2010/12/15 01:27:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.16.6.1 2011/06/23 14:18:54 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.16 2010/12/15 01:27:18 matt Exp $");
 
 #define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
-void		dwlpx_attach_hook(struct device *, struct device *,
+void		dwlpx_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 int		dwlpx_bus_maxdevs(void *, int);
 pcitag_t	dwlpx_make_tag(void *, int, int, int);
@@ -69,11 +69,11 @@ dwlpx_pci_init(pci_chipset_tag_t pc, void *v)
 }
 
 void
-dwlpx_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
+dwlpx_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 #if	0
 	struct dwlpx_config *ccp = pba->pba_pc->pc_conf_v;
-	printf("dwlpx_attach_hook for %s\n", ccp->cc_sc->dwlpx_dev.dv_xname);
+	printf("dwlpx_attach_hook for %s\n", device_xname(ccp->cc_sc->dwlpx_dev));
 #endif
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: cpuvar.h,v 1.4 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: cpuvar.h,v 1.4.32.1 2011/06/23 14:18:52 cherry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 struct cpu_softc {
-	struct device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	struct evcnt sc_evcnt_clock;	/* clock interrupts */
 	struct evcnt sc_evcnt_device;	/* device interrupts */
 #if defined(MULTIPROCESSOR)

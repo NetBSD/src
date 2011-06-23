@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppcvar.h,v 1.4 2011/01/25 12:21:04 tsutsui Exp $ */
+/* $NetBSD: pi1ppcvar.h,v 1.4.2.1 2011/06/23 14:19:39 cherry Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -40,17 +40,11 @@
 
 #include <dev/ppbus/ppbus_conf.h>
 
-
 /* Maximum time to wait for device response */
 #define MAXBUSYWAIT	(5 * (hz))
 
 /* Poll interval when wating for device to become ready */
 #define PI1PPC_POLL	((hz)/10)
-
-/* Interrupt priority level for pi1ppc device */
-#define IPL_PI1PPC	IPL_TTY
-#define splpi1ppc	spltty
-
 
 /* Diagnostic and verbose printing macros */
 
@@ -68,30 +62,18 @@ extern int pi1ppc_verbose;
 #define PI1PPC_VPRINTF(arg)
 #endif
 
-
 /* Flag used in DMA transfer */
 #define PI1PPC_DMA_MODE_READ 0x0
 #define PI1PPC_DMA_MODE_WRITE 0x1
-
 
 /* Flags passed via config */
 #define PI1PPC_FLAG_DISABLE_INTR	0x01
 #define PI1PPC_FLAG_DISABLE_DMA	0x02
 
-
 /* Locking for pi1ppc device */
-#if defined(MULTIPROCESSOR) || defined (LOCKDEBUG)
-#include <sys/lock.h>
-#define PI1PPC_SC_LOCK(sc) (&((sc)->sc_lock))
-#define PI1PPC_LOCK_INIT(sc) simple_lock_init(PI1PPC_SC_LOCK((sc)))
-#define PI1PPC_LOCK(sc) simple_lock(PI1PPC_SC_LOCK((sc)))
-#define PI1PPC_UNLOCK(sc) simple_unlock(PI1PPC_SC_LOCK((sc)))
-#else /* !(MULTIPROCESSOR) && !(LOCKDEBUG) */
-#define PI1PPC_LOCK_INIT(sc)
-#define PI1PPC_LOCK(sc)
-#define PI1PPC_UNLOCK(sc)
-#define PI1PPC_SC_LOCK(sc) NULL
-#endif /* MULTIPROCESSOR || LOCKDEBUG */
+#define PI1PPC_SC_LOCK(sc)	(&((sc)->sc_lock))
+#define PI1PPC_LOCK(sc)		mutex_enter(&sc->sc_lock)
+#define PI1PPC_UNLOCK(sc)	mutex_exit(&sc->sc_lock)
 
 /* Single softintr callback entry */
 struct pi1ppc_handler_node {
@@ -103,12 +85,11 @@ struct pi1ppc_handler_node {
 /* Generic structure to hold parallel port chipset info. */
 struct pi1ppc_softc {
 	/* Generic device attributes */
-        device_t sc_dev;
+	device_t sc_dev;
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	/* Simple lock */
-	struct simplelock sc_lock;
-#endif
+	kmutex_t sc_lock;
+	kcondvar_t sc_in_cv;
+	kcondvar_t sc_out_cv;
 
 	/* Machine independent bus infrastructure */
 	bus_space_tag_t sc_iot;
@@ -219,8 +200,6 @@ struct pi1ppc_softc {
 	uint8_t sc_wthr;	/* writeIntrThresold */
 	uint8_t sc_rthr;	/* readIntrThresold */
 };
-
-
 
 #ifdef _KERNEL
 

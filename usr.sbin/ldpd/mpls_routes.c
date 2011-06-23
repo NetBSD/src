@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.5 2011/02/14 11:43:59 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.5.2.1 2011/06/23 14:20:48 cherry Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -58,11 +58,13 @@
 extern int      route_socket;
 int             rt_seq = 0;
 int		dont_catch = 0;
+extern int	no_default_route;
+extern int	debug_f, warn_f;
 
 struct rt_msg   replay_rt[REPLAY_MAX];
 int             replay_index = 0;
 
-int	read_route_socket(char *, int);
+static int read_route_socket(char *, int);
 void	mask_addr(union sockunion *);
 int	compare_sockunion(union sockunion *, union sockunion *);
 char *	mpls_ntoa(union mpls_shim);
@@ -78,7 +80,7 @@ extern struct sockaddr mplssockaddr;
 #define GETNEXT(sunion) \
 	(union sockunion *) ((char *) (sunion)  + RT_ROUNDUP((sunion)->sa.sa_len))
 
-int 
+static int 
 read_route_socket(char *s, int max)
 {
 	int             rv, to_read;
@@ -206,11 +208,7 @@ union sockunion *
 from_cidr_to_union(uint8_t prefixlen)
 {
 	union sockunion *u;
-	int32_t n = -1;
-	uint32_t *m = (uint32_t*)&n;
-
-	*m = (*m >> (32 - prefixlen) ) << (32 - prefixlen);
-	*m = ntohl(*m);
+	uint32_t m = 0xFFFFFFFF;
 
 	u = calloc(1, sizeof(*u));
 
@@ -220,10 +218,12 @@ from_cidr_to_union(uint8_t prefixlen)
 	}
 	u->sin.sin_len = sizeof(struct sockaddr_in);
 	u->sin.sin_family = AF_INET;
-	u->sin.sin_addr.s_addr = *m;
-
+	if (prefixlen != 0) {
+		m = (m >> (32 - prefixlen) ) << (32 - prefixlen);
+		m = ntohl(m);
+		u->sin.sin_addr.s_addr = m;
+	}
 	return u;
-
 }
 
 uint8_t 
@@ -508,7 +508,7 @@ get_route(struct rt_msg * rg, union sockunion * so_dest,
 		    rlen, l, strerror(errno));
 		return LDP_E_NO_SUCH_ROUTE;
 	} else
-		do {
+		for ( ; ; ) {
 			rlen = read_route_socket((char *) rg,
 			    sizeof(struct rt_msg));
 			if (rlen < 1)
@@ -518,27 +518,20 @@ get_route(struct rt_msg * rg, union sockunion * so_dest,
 			 * For now I just try to save this messages and replay
 			 * them later
 			 */
-			if ((rg->m_rtm.rtm_pid != getpid()) ||
-			    (rg->m_rtm.rtm_seq != myseq)) {
-				/*
-				 * Shortcut: my pid but not
-				 * the expected sequence
-				 */
-				if (rg->m_rtm.rtm_pid == getpid())
-					continue;
+			if (rg->m_rtm.rtm_pid == getpid() &&
+			    rg->m_rtm.rtm_seq == myseq)
+				break;
+			debugp("Added to replay PID: %d, SEQ: %d\n",
+			    rg->m_rtm.rtm_pid, rg->m_rtm.rtm_seq);
+			memcpy(&replay_rt[replay_index], rg,
+			    sizeof(struct rt_msg));
+			if (replay_index < REPLAY_MAX - 1)
+				replay_index++;
+			else
+				fatalp("Replay index is full\n");
+		}
 
-				debugp("Added to replay PID: %d, SEQ: %d\n",
-				    rg->m_rtm.rtm_pid, rg->m_rtm.rtm_seq);
-				memcpy(&replay_rt[replay_index], rg,
-				    sizeof(struct rt_msg));
-				if (replay_index < REPLAY_MAX - 1)
-					replay_index++;
-				continue;
-			}
-		} while ((rg->m_rtm.rtm_seq != myseq) ||
-			(rg->m_rtm.rtm_pid != getpid()));
-
-	if ((uint)rlen <= sizeof(struct rt_msghdr)) {
+	if (rlen <= (int)sizeof(struct rt_msghdr)) {
 		debugp("Got only %d bytes, expecting at least %u\n", rlen,
 		    sizeof(struct rt_msghdr));
 		return LDP_E_ROUTE_ERROR;
@@ -625,7 +618,13 @@ check_route(struct rt_msg * rg, uint rlen)
 
 	switch (rg->m_rtm.rtm_type) {
 	case RTM_CHANGE:
-		warnp("XXX: RTM_CHANGE\n");
+		lab = label_get(so_dest, so_pref);
+		if (lab) {
+			send_withdraw_tlv_to_all(&so_dest->sin.sin_addr,
+			    prefixlen);
+			label_reattach_route(lab, LDP_READD_NODEL);
+			label_del(lab);
+		}
 	/* Fallthrough */
 	case RTM_ADD:
 		/*
@@ -668,10 +667,16 @@ check_route(struct rt_msg * rg, uint rlen)
 		if (!lab)
 			break;
 		send_withdraw_tlv_to_all(&so_dest->sin.sin_addr, prefixlen);
-		/* No readd as IPv4. Also don't even try to delete it */
+		/* No readd or delete IP route. Just delete the MPLS route */
 		label_reattach_route(lab, LDP_READD_NODEL);
 		label_del(lab);
 		break;
+	}
+
+	if (!debug_f && !warn_f) {
+		if(so_pref_allocated)
+			free(so_pref);
+		return LDP_E_OK;
 	}
 
 	/* Rest is just for debug */
@@ -775,7 +780,7 @@ bind_current_routes()
 		}
 
 		/* Check if it's the default gateway */
-		if (so_dst->sin.sin_addr.s_addr == 0)
+		if (so_dst->sin.sin_addr.s_addr == 0 && no_default_route != 0)
 			continue;
 
 		/* XXX: Check if it's loopback */
@@ -873,8 +878,9 @@ flush_mpls_routes()
 			so_pref = GETNEXT(so_dst);
 
 		if (so_gate->sa.sa_family == AF_MPLS) {
-			debugp("MPLS route to %s deleted.\n",
-			    inet_ntoa(so_dst->sin.sin_addr));
+			if (so_dst->sa.sa_family == AF_INET)
+				debugp("MPLS route to %s deleted.\n",
+				    inet_ntoa(so_dst->sin.sin_addr));
 			delete_route(so_dst, so_pref, NO_FREESO);
 			continue;
 		}

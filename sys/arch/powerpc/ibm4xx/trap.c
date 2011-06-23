@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.58 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.58.4.1 2011/06/23 14:19:29 cherry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58 2011/01/18 01:02:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58.4.1 2011/06/23 14:19:29 cherry Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58 2011/01/18 01:02:54 matt Exp $");
 #include <sys/savar.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
-#include <sys/kmem.h>
+#include <sys/cpu.h>
 
 #if defined(KGDB)
 #include <sys/kgdb.h>
@@ -92,18 +92,20 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58 2011/01/18 01:02:54 matt Exp $");
 
 #include <dev/cons.h>
 
-#include <machine/cpu.h>
-#include <machine/db_machdep.h>
 #include <machine/fpu.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
 
+#include <powerpc/db_machdep.h>
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
+
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/pmap.h>
 #include <powerpc/ibm4xx/tlb.h>
+
 #include <powerpc/fpu/fpu_extern.h>
 
 /* These definitions should probably be somewhere else			XXX */
@@ -295,17 +297,8 @@ trap(struct trapframe *tf)
 		break;
 
 	case EXC_AST|EXC_USER:
-		curcpu()->ci_astpending = 0;	/* we are about to do it */
-		//curcpu()->ci_data.cpu_nast++;
-		if (l->l_pflag & LP_OWEUPC) {
-			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(l);
-		}
-		/* Check whether we are being preempted. */
-		if (curcpu()->ci_want_resched)
-			preempt();
+		cpu_ast(l, curcpu());
 		break;
-
 
 	case EXC_ALI|EXC_USER:
 		if (fix_unaligned(l, tf) != 0) {
@@ -706,32 +699,4 @@ fix_unaligned(struct lwp *l, struct trapframe *tf)
 {
 
 	return -1;
-}
-
-/* 
- * Start a new LWP
- */
-void
-startlwp(void *arg)
-{
-	ucontext_t *uc = arg;
-	lwp_t *l = curlwp;
-	int error;
-
-	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-	KASSERT(error == 0);
-
-	kmem_free(uc, sizeof(ucontext_t));
-	upcallret(l);
-}
-
-/*
- * XXX This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
-
-	/* Invoke MI userret code */
-	mi_userret(l);
 }

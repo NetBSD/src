@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.333 2011/05/12 05:43:54 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.333.2.1 2011/06/23 14:19:43 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -75,6 +75,7 @@
 
 #include "assym.h"
 #include <machine/param.h>
+#include <machine/types.h>
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
 #include <machine/ctlreg.h>
@@ -1171,11 +1172,16 @@ intr_setup_msg:
 	xor	%g7, WSTATE_KERN, %g3;				/* Are we on the user stack ? */ \
 	\
 	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
-	or	%g3, %g4, %g4;					/* Definitely not off the interrupt stack */ \
+	orcc	%g3, %g4, %g0;					/* Definitely not off the interrupt stack */ \
 	\
-	movrz	%g4, %sp, %g6; \
+	sethi	%hi(CPUINFO_VA + CI_EINTSTACK), %g4; \
+	bz,a,pt	%xcc, 1f; \
+	 mov	%sp, %g6; \
 	\
-	add	%g6, %g5, %g5;					/* Allocate a stack frame */ \
+	ldx	[%g4 + %lo(CPUINFO_VA + CI_EINTSTACK)], %g4; \
+	movrnz	%g4, %g4, %g6;					/* Use saved intr stack if exists */ \
+	\
+1:	add	%g6, %g5, %g5;					/* Allocate a stack frame */ \
 	btst	1, %g6; \
 	bnz,pt	%icc, 1f; \
 \
@@ -1275,8 +1281,11 @@ intr_setup_msg:
 	or	%g5, %lo((stackspace)), %g5; \
 	sub	%g1, %g6, %g2;					/* Determine if we need to switch to intr stack or not */ \
 	dec	%g7;						/* Make it into a mask */ \
+	sethi	%hi(CPUINFO_VA + CI_EINTSTACK), %g3; \
 	andncc	%g2, %g7, %g0;					/* XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
+	LDPTR	[%g3 + %lo(CPUINFO_VA + CI_EINTSTACK)], %g3; \
 	rdpr	%wstate, %g7;					/* Find if we're from user mode */ \
+	movrnz	%g3, %g3, %g1;					/* Use saved intr stack if exists */ \
 	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
 	movnz	%xcc, %g1, %g6;					/* Stay on interrupt stack? */ \
 	cmp	%g7, WSTATE_KERN;				/* User or kernel sp? */ \
@@ -3375,11 +3384,32 @@ sparc_intr_retry:
 	CASPTR	[%l4] ASI_N, %l2, %l7	! Grab the entire list
 	cmp	%l7, %l2
 	bne,pn	CCCR, 1b
-	 .empty
+	 add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
+	LDPTR	[%l2 + IH_PEND], %l7
+	cmp	%l7, -1			! Last slot?
+	be,pt	CCCR, 3f
+	 membar	#LoadStore
+
+	/*
+	 * Reverse a pending list since setup_sparcintr/send_softint
+	 * makes it in a LIFO order.
+	 */
+	mov	-1, %o0			! prev = -1
+1:	STPTR	%o0, [%l2 + IH_PEND]	! ih->ih_pending = prev
+	mov	%l2, %o0		! prev = ih
+	mov	%l7, %l2		! ih = ih->ih_pending
+	LDPTR	[%l2 + IH_PEND], %l7
+	cmp	%l7, -1			! Last slot?
+	bne,pn	CCCR, 1b
+	 membar	#LoadStore
+	ba,pt	CCCR, 3f
+	 mov	%o0, %l7		! save ih->ih_pending
+
 2:
 	add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
 	LDPTR	[%l2 + IH_PEND], %l7	! save ih->ih_pending
 	membar	#LoadStore
+3:
 	STPTR	%g0, [%l2 + IH_PEND]	! Clear pending flag
 	membar	#Sync
 	LDPTR	[%l2 + IH_FUN], %o4	! ih->ih_fun
@@ -5075,6 +5105,7 @@ ENTRY(cpu_idle)
  * Arguments:
  *	i0	'struct lwp *' of the current LWP
  *	i1	'struct lwp *' of the LWP to switch to
+ *	i2	'bool' of the flag returning to a softint LWP or not
  * Returns:
  *	the old lwp switched away from
  */
@@ -5090,6 +5121,7 @@ ENTRY(cpu_switchto)
 	 *	%l7 = %hi(CURLWP)
 	 *	%i0 = oldlwp
 	 *	%i1 = lwp
+	 *	%i2 = returning
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -5136,7 +5168,9 @@ ENTRY(cpu_switchto)
 	and	%o3, CWP, %o3
 	wrpr	%g0, %o3, %cleanwin
 	dec	1, %o3					! NWINDOWS-1-1
-	wrpr	%o3, %cansave
+	/* Skip the rest if returning to a interrupted LWP. */
+	brnz,pn	%i2, Lsw_noras
+	 wrpr	%o3, %cansave
 
 	/* finally, enable traps */
 	wrpr	%g0, PSTATE_INTR, %pstate
@@ -5172,6 +5206,107 @@ Lsw_noras:
 	!wrpr	%g0, PSTATE_INTR, %pstate
 	ret
 	 restore %i0, %g0, %o0				! return old curlwp
+
+#ifdef __HAVE_FAST_SOFTINTS
+/*
+ * Switch to the LWP assigned to handle interrupts from the given
+ * source.  We borrow the VM context from the interrupted LWP.
+ *
+ * int softint_fastintr(void *l)
+ *
+ * Arguments:
+ *	i0	softint lwp
+ */
+ENTRY(softint_fastintr)
+	save	%sp, -CC64FSZ, %sp
+	set	CPUINFO_VA, %l0			! l0 = curcpu()
+	rdpr	%pil, %l7			! l7 = splhigh()
+	wrpr	%g0, PIL_HIGH, %pil
+	ld	[%l0 + CI_IDEPTH], %l1
+	LDPTR	[%l0 + CI_EINTSTACK], %l6	! l6 = ci_eintstack
+	dec	%l1
+	add	%sp, -CC64FSZ, %l2		! ci_eintstack = sp - CC64FSZ
+	st	%l1, [%l0 + CI_IDEPTH]		! adjust ci_idepth
+	STPTR	%l2, [%l0 + CI_EINTSTACK]	! save intstack for nexted intr
+
+	mov	%i0, %o0			! o0/i0 = softint lwp
+	mov	%l7, %o1			! o1/i1 = ipl
+	save	%sp, -CC64FSZ, %sp		! make one more register window
+	flushw					! and save all
+
+	sethi	%hi(CURLWP), %l7
+	sethi	%hi(CPCB), %l6
+	LDPTR	[%l7 + %lo(CURLWP)], %l0	! l0 = interrupted lwp (curlwp)
+
+	/* save interrupted lwp/pcb info */
+	sethi	%hi(softint_fastintr_ret - 8), %o0	! trampoline function
+	LDPTR	[%l0 + L_PCB], %l5		! l5 = interrupted pcb
+	or	%o0, %lo(softint_fastintr_ret - 8), %o0
+	stx	%i6, [%l5 + PCB_SP]
+	stx	%o0, [%l5 + PCB_PC]
+	rdpr	%pstate, %o1
+	rdpr	%cwp, %o2
+	sth	%o1, [%l5 + PCB_PSTATE]
+	stb	%o2, [%l5 + PCB_CWP]
+
+	/* switch to softint lwp */
+	sethi	%hi(USPACE - TF_SIZE - CC64FSZ - STKB), %o3
+	LDPTR	[%i0 + L_PCB], %l1		! l1 = softint pcb
+	or	%o3, %lo(USPACE - TF_SIZE - CC64FSZ - STKB), %o3
+	STPTR	%i0, [%l7 + %lo(CURLWP)]
+	add	%l1, %o3, %i6
+	STPTR	%l1, [%l6 + %lo(CPCB)]
+	stx	%i6, [%l1 + PCB_SP]
+	add	%i6, -CC64FSZ, %sp		! new stack
+
+	/* now switched, then invoke MI dispatcher */
+	mov	%i1, %o1
+	call	_C_LABEL(softint_dispatch)
+	 mov	%l0, %o0
+
+	/* switch back to interrupted lwp */
+	ldx	[%l5 + PCB_SP], %i6
+	STPTR	%l0, [%l7 + %lo(CURLWP)]
+	STPTR	%l5, [%l6 + %lo(CPCB)]
+
+	restore					! rewind register window
+
+	ld	[%l0 + CI_IDEPTH], %l1
+	STPTR	%l6, [%l0 + CI_EINTSTACK]	! restore ci_eintstack
+	inc	%l1
+	st	%l1, [%l0 + CI_IDEPTH]		! re-adjust ci_idepth
+	wrpr	%g0, %l7, %pil			! restore ipl
+	ret
+	 restore	%g0, 1, %o0
+
+/*
+ * Trampoline function that gets returned to by cpu_switchto() when
+ * an interrupt handler blocks.
+ *
+ * Arguments:
+ *	o0	old lwp from cpu_switchto()
+ *
+ * from softint_fastintr():
+ *	l0	CPUINFO_VA
+ *	l6	saved ci_eintstack
+ *	l7	saved ipl
+ */
+softint_fastintr_ret:
+	/* re-adjust after mi_switch() */
+	ld	[%l0 + CI_MTX_COUNT], %o1
+	inc	%o1				! ci_mtx_count++
+	st	%o1, [%l0 + CI_MTX_COUNT]
+	st	%g0, [%o0 + L_CTXSWTCH]		! prev->l_ctxswtch = 0
+
+	ld	[%l0 + CI_IDEPTH], %l1
+	STPTR	%l6, [%l0 + CI_EINTSTACK]	! restore ci_eintstack
+	inc	%l1
+	st	%l1, [%l0 + CI_IDEPTH]		! re-adjust ci_idepth
+	wrpr	%g0, %l7, %pil			! restore ipl
+	ret
+	 restore	%g0, 1, %o0
+
+#endif /* __HAVE_FAST_SOFTINTS */
 
 /*
  * Snapshot the current process so that stack frames are up to date.

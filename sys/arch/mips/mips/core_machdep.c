@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.5 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.5.2.1 2011/06/23 14:19:23 cherry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5 2011/02/20 07:45:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5.2.1 2011/06/23 14:19:23 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,6 @@ int
 cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 {
 	int error;
-	struct pcb *pcb;
 	struct coreseg cseg;
 	struct cpustate {
 		struct trapframe tf;
@@ -83,10 +82,9 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 		return 0;
 	}
 
-	fpu_save();
-	pcb = lwp_getpcb(l);
+	pcu_save_all(l);
 	cpustate.tf = *l->l_md.md_utf;
-	cpustate.fpregs = pcb->pcb_fpregs;
+	cpustate.fpregs = ((struct pcb *)lwp_getpcb(l))->pcb_fpregs;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;

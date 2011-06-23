@@ -1,4 +1,4 @@
-/* 	$NetBSD: pstwo.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $ */
+/* 	$NetBSD: pstwo.c,v 1.2.78.1 2011/06/23 14:19:10 cherry Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pstwo.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pstwo.c,v 1.2.78.1 2011/06/23 14:19:10 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: pstwo.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $");
 #define NEXT(idx) 		(void)((idx) = ((idx) + 1) % PSTWO_RXBUF_SIZE)
 
 struct pstwo_softc {
-	struct device 		sc_dev;
+	device_t 		sc_dev;
 	void 			*sc_ih;
 
 	bus_space_tag_t 	sc_iot;
@@ -82,9 +82,9 @@ static void 	pstwo_intr_establish(void *, pckbport_slot_t);
 static void 	pstwo_set_poll(void *, pckbport_slot_t, int);
 
 /* Generic device. */
-static void 	pstwo_attach(struct device *, struct device *, void *);
+static void 	pstwo_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pstwo, sizeof(struct pstwo_softc),
+CFATTACH_DECL_NEW(pstwo, sizeof(struct pstwo_softc),
     xcvbus_child_match, pstwo_attach, NULL, NULL);
 
 static struct pckbport_accessops pstwo_ops = {
@@ -97,26 +97,26 @@ static struct pckbport_accessops pstwo_ops = {
 };
 
 static void
-pstwo_attach(struct device *parent, struct device *self, void *aux)
+pstwo_attach(device_t parent, device_t self, void *aux)
 {
 	struct xcvbus_attach_args 	*vaa = aux;
 	struct pstwo_softc 		*sc = device_private(self);
 	int 				i;
 
-	printf(": PS2 port\n");
+	aprint_normal(": PS2 port\n");
 
 	if ((sc->sc_ih = intr_establish(vaa->vaa_intr, IST_LEVEL, IPL_TTY,
 	    pstwo_intr, sc)) == NULL) {
-		printf("%s: could not establish interrupt\n",
-		    device_xname(self));
-		return ;
+		aprint_error_dev(self, "could not establish interrupt\n");
+		return;
 	}
 
+	sc->sc_dev = self;
 	sc->sc_iot = vaa->vaa_iot;
 
 	if (bus_space_map(vaa->vaa_iot, vaa->vaa_addr, PSTWO_SIZE, 0,
 	    &sc->sc_ioh) != 0) {
-		printf("%s: could not map registers\n", device_xname(self));
+		aprint_error_dev(self, "could not map registers\n");
 		return ;
 	}
 

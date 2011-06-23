@@ -1733,38 +1733,53 @@ unionfs_seek(void *v)
 static int
 unionfs_putpages(void *v)
 {
-	struct vop_putpages_args *ap = v;
+	struct vop_putpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offlo;
+		voff_t a_offhi;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp, *tvp;
 	struct unionfs_node *unp;
-	struct vnode   *tvp;
 
-	unp = VTOUNIONFS(ap->a_vp);
+	KASSERT(mutex_owned(vp->v_interlock));
+
+	unp = VTOUNIONFS(vp);
 	tvp = (unp->un_uppervp != NULLVP ? unp->un_uppervp : unp->un_lowervp);
+	KASSERT(tvp->v_interlock == vp->v_interlock);
 
-	mutex_exit(&ap->a_vp->v_interlock);
 	if (ap->a_flags & PGO_RECLAIM) {
+		mutex_exit(vp->v_interlock);
 		return 0;
 	}
-	mutex_enter(&tvp->v_interlock);
-
 	return VOP_PUTPAGES(tvp, ap->a_offlo, ap->a_offhi, ap->a_flags);
 }
 
 static int
 unionfs_getpages(void *v)
 {
-	struct vop_getpages_args *ap = v;
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offset;
+		struct vm_page **a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp, *tvp;
 	struct unionfs_node *unp;
-	struct vnode   *tvp;
 
-	unp = VTOUNIONFS(ap->a_vp);
+	KASSERT(mutex_owned(vp->v_interlock));
+
+	unp = VTOUNIONFS(vp);
 	tvp = (unp->un_uppervp != NULLVP ? unp->un_uppervp : unp->un_lowervp);
+	KASSERT(tvp->v_interlock == vp->v_interlock);
 
 	if (ap->a_flags & PGO_LOCKED) {
 		return EBUSY;
 	}
-	mutex_exit(&ap->a_vp->v_interlock);
-	mutex_enter(&tvp->v_interlock);
-
 	return VOP_GETPAGES(tvp, ap->a_offset, ap->a_m, ap->a_count,
 	    ap->a_centeridx, ap->a_access_type, ap->a_advice, ap->a_flags);
 }

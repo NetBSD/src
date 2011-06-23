@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_kernel.c,v 1.7 2011/02/27 09:01:56 rjs Exp $	*/
+/*	$NetBSD: pmap_kernel.c,v 1.7.2.1 2011/06/23 14:19:33 cherry Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.7 2011/02/27 09:01:56 rjs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.7.2.1 2011/06/23 14:19:33 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap.h"
@@ -58,18 +58,7 @@ powerpc_mmap_flags(paddr_t pa)
 
 const struct pmap_ops *pmapops;
 
-void
-pmap_fixup_stubs(const struct pmap_ops *ops)
-{
-	extern uint32_t _ftext[], _etext[];
-	extern uint32_t __stub_pmap_start[], __stub_pmap_end[];
-
-	pmapops = ops;
-
-	powerpc_fixup_stubs(_ftext, _etext, __stub_pmap_start, __stub_pmap_end);
-}
-
-#define	__stub	__section(".stub.pmap") __noprofile
+#define	__stub	__section(".stub") __noprofile
 
 int	pmap_pte_spill(struct pmap *, vaddr_t, bool)		__stub;
 void	pmap_real_memory(paddr_t *, psize_t *)			__stub;

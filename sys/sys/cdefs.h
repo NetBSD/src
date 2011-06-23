@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.84 2011/02/19 02:21:21 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.84.2.1 2011/06/23 14:20:29 cherry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -61,6 +61,13 @@
 #include <sys/cdefs_elf.h>
 #else
 #include <sys/cdefs_aout.h>
+#endif
+
+/*
+ * Optional marker for size-optimised MD calling convention.
+ */
+#ifndef __compactcall
+#define	__compactcall
 #endif
 
 /*

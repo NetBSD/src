@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2007/12/17 19:09:10 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.1.50.1 2011/06/23 14:19:37 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -30,14 +30,14 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_CPU_H_
-#define	_MACHINE_CPU_H_
+#ifndef	_RS6000_CPU_H_
+#define	_RS6000_CPU_H_
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) && !defined(_MODULE)
 #define	CPU_MAXNUM	1
 extern char bootpath[];
 #endif
 
 #include <powerpc/cpu.h>
 
-#endif	/* _MACHINE_CPU_H_ */
+#endif	/* _RS6000_CPU_H_ */

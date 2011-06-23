@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.67 2011/05/03 16:12:23 jruoho Exp $
+#	$NetBSD: Makefile,v 1.67.2.1 2011/06/23 14:18:45 cherry Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # missing: dump.5 plot.5
 
 MAN=	a.out.5 acct.5 ar.5 boot.cfg.5 \
 	core.5 daily.5 disktab.5 elf.5 \
-	ethers.5 forward.5 \
+	ethers.5 floppytab.5 forward.5 \
 	fs.5 fstab.5 genassym.cf.5 gpio.conf.5 group.5 hesiod.conf.5 \
 	hosts.5 hosts.equiv.5 ifaliases.5 ifconfig.if.5 intro.5 \
 	ipsec.conf.5 ld.so.conf.5 link.5 locale.alias.5 \

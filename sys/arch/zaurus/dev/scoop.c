@@ -1,4 +1,4 @@
-/*	$NetBSD: scoop.c,v 1.7 2009/04/18 05:20:21 nonaka Exp $	*/
+/*	$NetBSD: scoop.c,v 1.7.10.1 2011/06/23 14:19:51 cherry Exp $	*/
 /*	$OpenBSD: zaurus_scoop.c,v 1.12 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.7 2009/04/18 05:20:21 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.7.10.1 2011/06/23 14:19:51 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,11 +109,10 @@ scoopattach(device_t parent, device_t self, void *aux)
 	if (ZAURUS_ISC3000 && sc->sc_dev->dv_unit == 1) {
 		scoop_gpio_pin_ctl(sc, SCOOP1_AKIN_PULLUP, GPIO_PIN_OUTPUT);
 		scoop_gpio_pin_write(sc, SCOOP1_AKIN_PULLUP, GPIO_PIN_LOW);
-	} else if (!ZAURUS_ISC3000) {
+	} else if (ZAURUS_ISC860) {
 		scoop_gpio_pin_ctl(sc, SCOOP0_AKIN_PULLUP, GPIO_PIN_OUTPUT);
 		scoop_gpio_pin_write(sc, SCOOP0_AKIN_PULLUP, GPIO_PIN_LOW);
 	}
-
 }
 
 #if 0
@@ -173,10 +172,8 @@ scoop_set_backlight(int on, int cont)
 	sc = device_lookup_private(&scoop_cd, 1);
 	if (sc != NULL) {
 		/* C3000 */
-		scoop_gpio_pin_write(sc,
-		    SCOOP1_BACKLIGHT_CONT, !cont);
-		scoop_gpio_pin_write(sc,
-		    SCOOP1_BACKLIGHT_ON, on);
+		scoop_gpio_pin_write(sc, SCOOP1_BACKLIGHT_CONT, !cont);
+		scoop_gpio_pin_write(sc, SCOOP1_BACKLIGHT_ON, on);
 	}
 #if 0
 	else if (sc0 != NULL) {
@@ -197,8 +194,7 @@ scoop_set_irled(int on)
 	sc = device_lookup_private(&scoop_cd, 1);
 	if (sc != NULL) {
 		/* IR_ON is inverted */
-		scoop_gpio_pin_write(sc,
-		    SCOOP1_IR_ON, !on);
+		scoop_gpio_pin_write(sc, SCOOP1_IR_ON, !on);
 	}
 }
 
@@ -215,12 +211,10 @@ scoop_led_set(int led, int on)
 	sc = device_lookup_private(&scoop_cd, 0);
 	if (sc != NULL) {
 		if ((led & SCOOP_LED_GREEN) != 0) {
-			scoop_gpio_pin_write(sc,
-			    SCOOP0_LED_GREEN, on);
+			scoop_gpio_pin_write(sc, SCOOP0_LED_GREEN, on);
 		}
 		if (scoop_cd.cd_ndevs > 1 && (led & SCOOP_LED_ORANGE) != 0) {
-			scoop_gpio_pin_write(sc,
-			    SCOOP0_LED_ORANGE_C3000, on);
+			scoop_gpio_pin_write(sc, SCOOP0_LED_ORANGE_C3000, on);
 		}
 	}
 }
@@ -237,21 +231,15 @@ scoop_set_headphone(int on)
 	if (sc == NULL)
 		return;
 
-	scoop_gpio_pin_ctl(sc, SCOOP0_MUTE_L,
-	    GPIO_PIN_OUTPUT);
-	scoop_gpio_pin_ctl(sc, SCOOP0_MUTE_R,
-	    GPIO_PIN_OUTPUT);
+	scoop_gpio_pin_ctl(sc, SCOOP0_MUTE_L, GPIO_PIN_OUTPUT);
+	scoop_gpio_pin_ctl(sc, SCOOP0_MUTE_R, GPIO_PIN_OUTPUT);
 
 	if (on) {
-		scoop_gpio_pin_write(sc, SCOOP0_MUTE_L,
-		    GPIO_PIN_HIGH);
-		scoop_gpio_pin_write(sc, SCOOP0_MUTE_R,
-		    GPIO_PIN_HIGH);
+		scoop_gpio_pin_write(sc, SCOOP0_MUTE_L, GPIO_PIN_HIGH);
+		scoop_gpio_pin_write(sc, SCOOP0_MUTE_R, GPIO_PIN_HIGH);
 	} else {
-		scoop_gpio_pin_write(sc, SCOOP0_MUTE_L,
-		    GPIO_PIN_LOW);
-		scoop_gpio_pin_write(sc, SCOOP0_MUTE_R,
-		    GPIO_PIN_LOW);
+		scoop_gpio_pin_write(sc, SCOOP0_MUTE_L, GPIO_PIN_LOW);
+		scoop_gpio_pin_write(sc, SCOOP0_MUTE_R, GPIO_PIN_LOW);
 	}
 }
 
@@ -281,11 +269,9 @@ scoop_akin_pullup(int enable)
 	sc1 = device_lookup_private(&scoop_cd, 1);
 
 	if (sc1 != NULL) {
-		scoop_gpio_pin_write(sc1,
-		    SCOOP1_AKIN_PULLUP, enable);
+		scoop_gpio_pin_write(sc1, SCOOP1_AKIN_PULLUP, enable);
 	} else if (sc0 != NULL) {
-		scoop_gpio_pin_write(sc0,
-		    SCOOP0_AKIN_PULLUP, enable);
+		scoop_gpio_pin_write(sc0, SCOOP0_AKIN_PULLUP, enable);
 	}
 }
 
@@ -297,8 +283,7 @@ scoop_battery_temp_adc(int enable)
 	sc = device_lookup_private(&scoop_cd, 0);
 
 	if (sc != NULL) {
-		scoop_gpio_pin_write(sc,
-		    SCOOP0_ADC_TEMP_ON_C3000, enable);
+		scoop_gpio_pin_write(sc, SCOOP0_ADC_TEMP_ON_C3000, enable);
 	}
 }
 
@@ -310,10 +295,8 @@ scoop_charge_battery(int enable, int voltage_high)
 	sc = device_lookup_private(&scoop_cd, 0);
 
 	if (sc != NULL) {
-		scoop_gpio_pin_write(sc,
-		    SCOOP0_JK_B_C3000, voltage_high);
-		scoop_gpio_pin_write(sc,
-		    SCOOP0_CHARGE_OFF_C3000, !enable);
+		scoop_gpio_pin_write(sc, SCOOP0_JK_B_C3000, voltage_high);
+		scoop_gpio_pin_write(sc, SCOOP0_CHARGE_OFF_C3000, !enable);
 	}
 }
 
@@ -325,8 +308,7 @@ scoop_discharge_battery(int enable)
 	sc = device_lookup_private(&scoop_cd, 0);
 
 	if (sc != NULL) {
-		scoop_gpio_pin_write(sc,
-		    SCOOP0_JK_A_C3000, enable);
+		scoop_gpio_pin_write(sc, SCOOP0_JK_A_C3000, enable);
 	}
 }
 

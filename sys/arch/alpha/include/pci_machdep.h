@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.13 2011/04/04 20:37:44 dyoung Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.13.2.1 2011/06/23 14:18:53 cherry Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -50,8 +50,8 @@ struct pci_attach_args;
  */
 struct alpha_pci_chipset {
 	void		*pc_conf_v;
-	void		(*pc_attach_hook)(struct device *,
-			    struct device *, struct pcibus_attach_args *);
+	void		(*pc_attach_hook)(device_t, device_t,
+			    struct pcibus_attach_args *);
 	int		(*pc_bus_maxdevs)(void *, int);
 	pcitag_t	(*pc_make_tag)(void *, int, int, int);
 	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
@@ -68,9 +68,9 @@ struct alpha_pci_chipset {
 			    int, int (*)(void *), void *);
 	void		(*pc_intr_disestablish)(void *, void *);
 
-	void		*(*pc_pciide_compat_intr_establish)(void *,
-			    struct device *, const struct pci_attach_args *,
-			    int, int (*)(void *), void *);
+	void		*(*pc_pciide_compat_intr_establish)(void *, device_t,
+			    const struct pci_attach_args *, int,
+			    int (*)(void *), void *);
 };
 
 /*

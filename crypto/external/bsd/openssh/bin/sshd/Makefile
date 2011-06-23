@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/12/02 10:21:28 he Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2011/06/23 14:17:50 cherry Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	kexdhs.c kexgexs.c sftp-server.c sftp-common.c auth2-jpake.c \
 	roaming_common.c roaming_serv.c
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.auth-options.c=	-Wno-pointer-sign
 .endif
 

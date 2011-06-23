@@ -57,17 +57,15 @@
  *
  */
 
-#ifndef HEADER_DTLS1_H
-#define HEADER_DTLS1_H
-
-/* Unless _XOPEN_SOURCE_EXTENDED is defined, struct timeval will not be
-   properly defined with DEC C, at least on VMS */
-#if defined(__DECC) || defined(__DECCXX)
-#define _XOPEN_SOURCE_EXTENDED
-#endif
+#ifndef HEADER_DTLS1_H 
+#define HEADER_DTLS1_H 
 
 #include <openssl/buffer.h>
 #include <openssl/pqueue.h>
+#ifdef OPENSSL_SYS_VMS
+#include <resource.h>
+#include <sys/timeb.h>
+#endif
 #ifdef OPENSSL_SYS_WIN32
 /* Needed for struct timeval */
 #include <winsock.h>
@@ -106,6 +104,8 @@ extern "C" {
 #else
 #define DTLS1_AL_HEADER_LENGTH                   2
 #endif
+
+#ifndef OPENSSL_NO_SSL_INTERN
 
 
 typedef struct dtls1_bitmap_st
@@ -169,6 +169,7 @@ typedef struct hm_fragment_st
 	{
 	struct hm_header_st msg_header;
 	unsigned char *fragment;
+	unsigned char *reassembly;
 	} hm_fragment;
 
 typedef struct dtls1_state_st
@@ -254,6 +255,7 @@ typedef struct dtls1_record_data_st
 	SSL3_RECORD    rrec;
 	} DTLS1_RECORD_DATA;
 
+#endif
 
 /* Timeout multipliers (timeout slice is defined in apps/timeouts.h */
 #define DTLS1_TMO_READ_COUNT                      2

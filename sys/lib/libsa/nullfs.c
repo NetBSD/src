@@ -1,4 +1,4 @@
-/*	$NetBSD: nullfs.c,v 1.9 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: nullfs.c,v 1.9.108.1 2011/06/23 14:20:23 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -66,7 +66,7 @@
  * Null filesystem
  */
 
-int
+__compactcall int
 null_open(const char *path, struct open_file *f)
 {
 
@@ -74,7 +74,7 @@ null_open(const char *path, struct open_file *f)
 }
 
 #ifndef LIBSA_NO_FS_CLOSE
-int
+__compactcall int
 null_close(struct open_file *f)
 {
 
@@ -82,7 +82,7 @@ null_close(struct open_file *f)
 }
 #endif
 
-int
+__compactcall int
 null_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
 
@@ -90,7 +90,7 @@ null_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 }
 
 #ifndef LIBSA_NO_FS_WRITE
-int
+__compactcall int
 null_write(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
 
@@ -99,7 +99,7 @@ null_write(struct open_file *f, void *buf, size_t size, size_t *resid)
 #endif
 
 #ifndef LIBSA_NO_FS_SEEK
-off_t
+__compactcall off_t
 null_seek(struct open_file *f, off_t offset, int where)
 {
 
@@ -107,7 +107,7 @@ null_seek(struct open_file *f, off_t offset, int where)
 }
 #endif
 
-int
+__compactcall int
 null_stat(struct open_file *f, struct stat *sb)
 {
 

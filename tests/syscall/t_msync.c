@@ -1,4 +1,4 @@
-/* $NetBSD: t_msync.c,v 1.3 2011/04/25 22:29:35 njoly Exp $ */
+/* $NetBSD: t_msync.c,v 1.3.2.1 2011/06/23 14:20:41 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_msync.c,v 1.3 2011/04/25 22:29:35 njoly Exp $");
+__RCSID("$NetBSD: t_msync.c,v 1.3.2.1 2011/06/23 14:20:41 cherry Exp $");
 
 #include <sys/mman.h>
 
@@ -153,7 +153,7 @@ ATF_TC_BODY(msync_async, tc)
 	str = msync_sync("garbage", MS_ASYNC);
 
 	if (str != NULL)
-		atf_tc_fail(str);
+		atf_tc_fail("%s", str);
 }
 
 ATF_TC(msync_err);
@@ -190,7 +190,7 @@ ATF_TC_BODY(msync_invalidate, tc)
 	str = msync_sync("garbage", MS_INVALIDATE);
 
 	if (str != NULL)
-		atf_tc_fail(str);
+		atf_tc_fail("%s", str);
 }
 
 ATF_TC(msync_sync);
@@ -206,7 +206,7 @@ ATF_TC_BODY(msync_sync, tc)
 	str = msync_sync("garbage", MS_SYNC);
 
 	if (str != NULL)
-		atf_tc_fail(str);
+		atf_tc_fail("%s", str);
 }
 
 ATF_TP_ADD_TCS(tp)

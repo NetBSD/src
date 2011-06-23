@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3.4.1 2011/06/23 14:19:31 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -100,97 +100,12 @@
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) 0xe4000000)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xfefff000)
 
-/*
- * The address to which unspecified mapping requests default
- * Put the stack in it's own segment and start mmaping at the
- * top of the next lower segment.
- */
-#ifdef _KERNEL_OPT
-#include "opt_uvm.h"
-#endif
-#define	__USE_TOPDOWN_VM
-#define	VM_DEFAULT_ADDRESS(da, sz) \
-	((VM_MAXUSER_ADDRESS - MAXSSIZ) - round_page(sz))
-
-#ifndef VM_PHYSSEG_MAX
-#define	VM_PHYSSEG_MAX		16
-#endif
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 
 #ifndef VM_PHYS_SIZE
 #define	VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
 #endif
 
-#define	VM_NFREELIST		2	/* 16 distinct memory segments */
-#define	VM_FREELIST_DEFAULT	0
-#define	VM_FREELIST_FIRST16	1
-#define	VM_FREELIST_MAX		2
-
-#ifndef VM_NFREELIST
-#define	VM_NFREELIST		16	/* 16 distinct memory segments */
-#define VM_FREELIST_DEFAULT	0
-#define VM_FREELIST_MAX		1
-#endif
-
-#define	__HAVE_VM_PAGE_MD
-#ifndef _LOCORE
-
-typedef struct pv_entry {
-	struct pv_entry *pv_next;
-	struct pmap *pv_pmap;
-	vaddr_t pv_va;
-} *pv_entry_t;
-
-#define	VM_PAGE_MD_REFERENCED	0x0001	/* page has been recently referenced */
-#define	VM_PAGE_MD_MODIFIED	0x0002	/* page has been modified */
-#define	VM_PAGE_MD_POOLPAGE	0x0004	/* page is used as a poolpage */
-#define	VM_PAGE_MD_EXECPAGE	0x0008	/* page is exec mapped */
-#if 0
-#define	VM_PAGE_MD_UNCACHED	0x0010	/* page is mapped uncached */
-#endif
-
-#ifdef VM_PAGE_MD_UNCACHED
-#define	VM_PAGE_MD_CACHED_P(pg)	(((pg)->mdpage.mdpg_attrs & VM_PAGE_MD_UNCACHED) == 0)
-#define	VM_PAGE_MD_UNCACHED_P(pg)	(((pg)->mdpage.mdpg_attrs & VM_PAGE_MD_UNCACHED) != 0)
-#endif
-#define	VM_PAGE_MD_MODIFIED_P(pg)	(((pg)->mdpage.mdpg_attrs & VM_PAGE_MD_MODIFIED) != 0)
-#define	VM_PAGE_MD_REFERENCED_P(pg)	(((pg)->mdpage.mdpg_attrs & VM_PAGE_MD_REFERENCED) != 0)
-#define	VM_PAGE_MD_POOLPAGE_P(pg)	(((pg)->mdpage.mdpg_attrs & VM_PAGE_MD_POOLPAGE) != 0)
-#define	VM_PAGE_MD_EXECPAGE_P(pg)	(((pg)->mdpage.mdpg_attrs & VM_PAGE_MD_EXECPAGE) != 0)
-
-struct vm_page_md {
-	struct pv_entry mdpg_first;	/* pv_entry first */
-#ifdef MULTIPROCESSOR
-	volatile u_int mdpg_attrs;	/* page attributes */
-	kmutex_t *mdpg_lock;		/* pv list lock */
-#define	VM_PAGE_PVLIST_LOCK_INIT(pg) 		\
-	(pg)->mdpage.mdpg_lock = NULL
-#define	VM_PAGE_PVLIST_LOCKED_P(pg)		\
-	(mutex_owner((pg)->mdpage.mdpg_lock) != 0)
-#define	VM_PAGE_PVLIST_LOCK(pg, list_change)	\
-	pmap_pvlist_lock(pg, list_change)
-#define	VM_PAGE_PVLIST_UNLOCK(pg)		\
-	mutex_spin_exit((pg)->mdpage.mdpg_lock);
-#define	VM_PAGE_PVLIST_GEN(pg)		((uint16_t)(pg->mdpage.mdpg_attrs >> 16))
-#else
-	u_int mdpg_attrs;		/* page attributes */
-#define	VM_PAGE_PVLIST_LOCK_INIT(pg)	do { } while (/*CONSTCOND*/ 0)
-#define	VM_PAGE_PVLIST_LOCKED_P(pg)	true
-#define	VM_PAGE_PVLIST_LOCK(pg, lc)	(mutex_spin_enter(&pmap_pvlist_mutex), 0)
-#define	VM_PAGE_PVLIST_UNLOCK(pg)	mutex_spin_exit(&pmap_pvlist_mutex)
-#define	VM_PAGE_PVLIST_GEN(pg)		(0)
-#endif
-};
-
-#define VM_MDPAGE_INIT(pg)						\
-do {									\
-	(pg)->mdpage.mdpg_first.pv_next = NULL;				\
-	(pg)->mdpage.mdpg_first.pv_pmap = NULL;				\
-	(pg)->mdpage.mdpg_first.pv_va = (pg)->phys_addr;			\
-	VM_PAGE_PVLIST_LOCK_INIT(pg);					\
-	(pg)->mdpage.mdpg_attrs = 0;					\
-} while (/* CONSTCOND */ 0)
-
-#endif /* _LOCORE */
+#include <common/pmap/tlb/vmpagemd.h>
 
 #endif /* _POWERPC_BOOKE_VMPARAM_H_ */

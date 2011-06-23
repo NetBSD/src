@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.112 2010/07/21 17:52:12 hannken Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.112.6.1 2011/06/23 14:20:23 cherry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.112 2010/07/21 17:52:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.112.6.1 2011/06/23 14:20:23 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ loop:
 	mutex_enter(&fdcache_lock);
 	LIST_FOREACH(fd, fc, fd_hash) {
 		if (fd->fd_ix == ix && fd->fd_vnode->v_mount == mp) {
-			mutex_enter(&fd->fd_vnode->v_interlock);
+			mutex_enter(fd->fd_vnode->v_interlock);
 			mutex_exit(&fdcache_lock);
 			if (vget(fd->fd_vnode, LK_EXCLUSIVE))
 				goto loop;
@@ -224,7 +224,7 @@ loop:
 	}
 	mutex_exit(&fdcache_lock);
 
-	error = getnewvnode(VT_FDESC, mp, fdesc_vnodeop_p, vpp);
+	error = getnewvnode(VT_FDESC, mp, fdesc_vnodeop_p, NULL, vpp);
 	if (error)
 		return error;
 

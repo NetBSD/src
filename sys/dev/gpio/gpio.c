@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.33 2010/04/25 11:23:34 ad Exp $ */
+/* $NetBSD: gpio.c,v 1.33.6.1 2011/06/23 14:19:58 cherry Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.33 2010/04/25 11:23:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.33.6.1 2011/06/23 14:19:58 cherry Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -362,7 +362,7 @@ gpioclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	sc = device_lookup_private(&gpio_cd, minor(dev));
 	DPRINTF(("%s: closing\n", device_xname(sc->sc_dev)));
-	gpiobus_close(sc->sc_gc, sc->sc_dev);
+	(void)gpiobus_close(sc->sc_gc, sc->sc_dev);
 	sc->sc_opened = 0;
 
 	return 0;

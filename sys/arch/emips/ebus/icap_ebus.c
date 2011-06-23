@@ -1,4 +1,4 @@
-/*	$NetBSD: icap_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $	*/
+/*	$NetBSD: icap_ebus.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: icap_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icap_ebus.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ icapstrategy(struct buf *bp)
 	/* Do we know you.  */
 	sc = device_lookup_private(&icap_cd, minor(bp->b_dev));
 	if (sc == NULL) {
-		DEBUG_PRINT(("icapstrategy: nodev %x\n",bp->b_dev),
+		DEBUG_PRINT(("icapstrategy: nodev %" PRIx64 "\n",bp->b_dev),
 		    DEBUG_ERRORS);
 		bp->b_error = ENXIO;
 		biodone(bp);
@@ -335,7 +335,7 @@ icapstart(struct icap_softc *sc)
 
         /* Ship it
          */
-        DEBUG_PRINT(("icapship %lx %d\n",phys,count), DEBUG_XFERS);
+        DEBUG_PRINT(("icapship %" PRIxPADDR " %d\n",phys,count), DEBUG_XFERS);
         sc->sc_dp->SizeAndFlags = fl | count;
         sc->sc_dp->BufferAddressHi32 = 0; /* BUGBUG 64bit */
         sc->sc_dp->BufferAddressLo32 = phys; /* this pushes the fifo */

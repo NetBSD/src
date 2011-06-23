@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2010/05/21 12:52:14 phx Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3.6.1 2011/06/23 14:18:59 cherry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2010/05/21 12:52:14 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.6.1 2011/06/23 14:18:59 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2010/05/21 12:52:14 phx Exp $");
 #include <sys/disk.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/device.h>
@@ -126,11 +125,10 @@ matchname(const char *fp, const char *sp)
  * by checking for NULL.
  */
 int
-amiga_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp,
-    cfprint_t pfn)
+amiga_config_found(cfdata_t pcfp, device_t pdp, void *auxp, cfprint_t pfn)
 {
 	struct device temp;
-	struct cfdata *cf;
+	cfdata_t cf;
 	const struct cfattach *ca;
 
 	if (amiga_realconfig)
@@ -165,7 +163,7 @@ amiga_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp,
 void
 config_console(void)
 {
-	struct cfdata *cf;
+	cfdata_t cf;
 
 	config_init();
 
@@ -241,7 +239,7 @@ findroot(void)
 {
 	struct disk *dkp;
 	struct partition *pp;
-	struct device **devs;
+	device_t*devs;
 	int i, maj, unit;
 	const struct bdevsw *bdp;
 
@@ -266,7 +264,7 @@ findroot(void)
 			 * Find the disk corresponding to the current
 			 * device.
 			 */
-			devs = (struct device **)sd_cd.cd_devs;
+			devs = (device_t*)sd_cd.cd_devs;
 			if ((dkp = disk_find(devs[unit]->dv_xname)) == NULL)
 				continue;
 
@@ -315,7 +313,7 @@ findroot(void)
 			 * Find the disk structure corresponding to the
 			 * current device.
 			 */
-			devs = (struct device **)genericconf[i]->cd_devs;
+			devs = (device_t*)genericconf[i]->cd_devs;
 			if ((dkp = disk_find(devs[unit]->dv_xname)) == NULL)
 				continue;
 

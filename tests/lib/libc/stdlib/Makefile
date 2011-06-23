@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2011/05/09 07:31:51 jruoho Exp $
+# $NetBSD: Makefile,v 1.12.2.1 2011/06/23 14:20:40 cherry Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ TESTS_C+=	t_hsearch
 TESTS_C+=	t_mi_vector_hash
 TESTS_C+=	t_posix_memalign
 TESTS_C+=	t_strtod
+TESTS_C+=	t_strtol
 
 TESTS_SH+=	t_atexit
 TESTS_SH+=	t_getopt
@@ -25,5 +26,7 @@ PROGS+=		h_getopt h_getopt_long
 
 LDADD.t_strtod=			-lm
 LDADD.t_environment_pth=	-pthread
+
+COPTS+=				-ffloat-store
 
 .include <bsd.test.mk>

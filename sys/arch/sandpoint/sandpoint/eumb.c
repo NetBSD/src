@@ -1,4 +1,4 @@
-/* $NetBSD: eumb.c,v 1.3 2008/04/28 20:23:34 martin Exp $ */
+/* $NetBSD: eumb.c,v 1.3.32.1 2011/06/23 14:19:38 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eumb.c,v 1.3 2008/04/28 20:23:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eumb.c,v 1.3.32.1 2011/06/23 14:19:38 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,18 +43,18 @@ __KERNEL_RCSID(0, "$NetBSD: eumb.c,v 1.3 2008/04/28 20:23:34 martin Exp $");
 #include <sandpoint/sandpoint/eumbvar.h>
 #include "locators.h"
 
-static int  eumb_match(struct device *, struct cfdata *, void *);
-static void eumb_attach(struct device *, struct device *, void *);
+static int  eumb_match(device_t, cfdata_t, void *);
+static void eumb_attach(device_t, device_t, void *);
 static int  eumb_print(void *, const char *);
-static int  eumb_search(struct device *, struct cfdata *, const int *, void *);
+static int  eumb_search(device_t, cfdata_t, const int *, void *);
 
-CFATTACH_DECL(eumb, sizeof(struct device),
+CFATTACH_DECL_NEW(eumb, 0,
     eumb_match, eumb_attach, NULL, NULL);
 
 extern struct cfdriver eumb_cd;
 
 static int
-eumb_match(struct device *parent, struct cfdata *cf, void *aux)
+eumb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const char **ca_name = aux; /* XXX */
 
@@ -64,7 +64,7 @@ eumb_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-eumb_attach(struct device *parent, struct device *self, void *aux)
+eumb_attach(device_t parent, device_t self, void *aux)
 {
 
 	printf("\n");
@@ -72,8 +72,7 @@ eumb_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-eumb_search(struct device *parent, struct cfdata *cf,
-    const int *ldesc, void *aux)
+eumb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct eumb_attach_args eaa;
 

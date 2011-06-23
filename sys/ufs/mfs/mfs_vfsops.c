@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.102 2010/03/02 17:20:02 pooka Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.102.8.1 2011/06/23 14:20:32 cherry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.102 2010/03/02 17:20:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.102.8.1 2011/06/23 14:20:32 cherry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -314,7 +314,7 @@ mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			return EINVAL;
 		return (0);
 	}
-	error = getnewvnode(VT_MFS, (struct mount *)0, mfs_vnodeop_p, &devvp);
+	error = getnewvnode(VT_MFS, NULL, mfs_vnodeop_p, NULL, &devvp);
 	if (error)
 		return (error);
 	devvp->v_vflag |= VV_MPSAFE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.59 2011/03/06 17:08:16 bouyer Exp $	*/
+/*	$NetBSD: utilities.c,v 1.59.2.1 2011/06/23 14:18:42 cherry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.59 2011/03/06 17:08:16 bouyer Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.59.2.1 2011/06/23 14:18:42 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,6 @@ __RCSID("$NetBSD: utilities.c,v 1.59 2011/03/06 17:08:16 bouyer Exp $");
 long	diskreads, totalreads;	/* Disk cache statistics */
 
 static void rwerror(const char *, daddr_t);
-
-extern volatile sig_atomic_t returntosingle;
 
 int
 ftypeok(union dinode *dp)
@@ -262,10 +260,16 @@ rwerror(const char *mesg, daddr_t blk)
 }
 
 void
-ckfini(void)
+ckfini(int noint)
 {
 	struct bufarea *bp, *nbp;
 	int ofsmodified, cnt = 0;
+
+	if (!noint) {
+		if (doinglevel2)
+			return;
+		markclean = 0;
+	}
 
 	if (fswritefd < 0) {
 		(void)close(fsreadfd);
@@ -509,49 +513,6 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 	if (ino != ROOTINO)
 		*--cp = '?';
 	memmove(namebuf, cp, (size_t)(&namebuf[MAXPATHLEN] - cp));
-}
-
-void
-catch(int sig)
-{
-	if (!doinglevel2) {
-		markclean = 0;
-		ckfini();
-	}
-	_exit(FSCK_EXIT_SIGNALLED);
-}
-
-/*
- * When preening, allow a single quit to signal
- * a special exit after filesystem checks complete
- * so that reboot sequence may be interrupted.
- */
-void
-catchquit(int sig)
-{
-	static const char msg[] = 
-	    "returning to single-user after file system check\n";
-	int serrno = errno;
-
-	(void)write(STDOUT_FILENO, msg, sizeof(msg) - 1);
-	returntosingle = 1;
-	(void)signal(SIGQUIT, SIG_DFL);
-	errno = serrno;
-}
-
-/*
- * Ignore a single quit signal; wait and flush just in case.
- * Used by child processes in preen.
- */
-void
-voidquit(int sig)
-{
-	int serrno = errno;
-
-	sleep(1);
-	(void)signal(SIGQUIT, SIG_IGN);
-	(void)signal(SIGQUIT, SIG_DFL);
-	errno = serrno;
 }
 
 /*

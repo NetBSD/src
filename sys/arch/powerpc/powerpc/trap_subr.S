@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.68 2011/04/07 02:05:02 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.68.2.1 2011/06/23 14:19:35 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -236,7 +236,7 @@ _C_LABEL(dsitrap):
 	mtsprg2	%r30			/* in SPRG2 */
 	mfsrr1	%r31			/* test kernel mode */
 	mtcr	%r31
-	bt	17,1f			/* branch if PSL_PR is set */
+	bt	MSR_PR,1f		/* branch if PSL_PR is set */
 	mfdar	%r31			/* get fault address */
 	rlwinm	%r31,%r31,7,25,28	/* get segment * 8 */
 
@@ -304,7 +304,7 @@ _C_LABEL(dsi601trap):
 	mtsprg2	%r30			/* in SPRG2 */
 	mfsrr1	%r31			/* test kernel mode */
 	mtcr	%r31
-	bt	17,1f			/* branch if PSL_PR is set */
+	bt	MSR_PR,1f		/* branch if PSL_PR is set */
 	mfdar	%r31			/* get fault address */
 	rlwinm	%r31,%r31,12,20,28	/* get "segment" battable offset */
 
@@ -371,7 +371,7 @@ _C_LABEL(extint):
 	mtcr	%r31
 	mr	%r30,%r1
 	mfsprg1	%r1			/* get old SP */
-	bf	17,1f			/* branch if PSL_PR is true */
+	bf	MSR_PR,1f		/* branch if PSL_PR is true */
 	ldptr	%r1,CI_CURPCB(%r30)	/* get kernel stack */
 	addi	%r1,%r1,USPACE-CALLFRAMELEN /* stack is top of user struct */
 	RESTORE_KERN_SRS(%r30, %r31)
@@ -404,7 +404,7 @@ _C_LABEL(decrint):
 	mtcr	%r31
 	mr	%r30,%r1
 	mfsprg1	%r1			/* yes, get old SP */
-	bf	17,1f			/* branch if PSL_PR is true */
+	bf	MSR_PR,1f		/* branch if PSL_PR is true */
 	ldptr	%r1,CI_CURPCB(%r30)	/* get kernel stack */
 	addi	%r1,%r1,USPACE-CALLFRAMELEN /* stack is top of user struct */
 	RESTORE_KERN_SRS(%r30, %r31)
@@ -641,7 +641,7 @@ _C_LABEL(ddblow):
 	mfsrr1	%r1
 	mtcr	%r1
 	GET_CPUINFO(%r1)
-	bf	17,1f			/* branch if privileged */
+	bf	MSR_PR,1f		/* branch if privileged */
 	streg	%r28,(CI_TEMPSAVE+CPUSAVE_R28)(%r1)	/* free r28 */
 	mfsprg2	%r28
 	streg	%r28,(CI_TEMPSAVE+CPUSAVE_R29)(%r1)	/* free r29 */
@@ -779,10 +779,11 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	ldreg	%r29,(savearea+CPUSAVE_DSISR)(%r2); /* get saved DSISR */ \
 	ldreg	%r30,(savearea+CPUSAVE_SRR0)(%r2); /* get saved SRR0 */	\
 	ldreg	%r31,(savearea+CPUSAVE_SRR1)(%r2); /* get saved SRR1 */	\
-	mfxer	%r3;							\
-	mfctr	%r4;							\
-	mflr	%r5;							\
-	andi.	%r5,%r5,0xff00;						\
+	ldptr	%r13,CI_CURLWP(%r2);	/* get curlwp */	\
+	mfxer	%r3;						\
+	mfctr	%r4;						\
+	mflr	%r5;						\
+	andi.	%r5,%r5,0xff00;					\
 	stint	%r3,FRAME_XER(%r1);				\
 	streg	%r4,FRAME_CTR(%r1);				\
 	streg	%r30,FRAME_SRR0(%r1);			\
@@ -811,8 +812,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	ldreg	%r17,FRAME_R17(%r1);	/* restore r17 */	\
 	ldreg	%r16,FRAME_R16(%r1);	/* restore r16 */	\
 	ldreg	%r15,FRAME_R15(%r1);	/* restore r15 */	\
-	ldreg	%r14,FRAME_R14(%r1);	/* restore r14 */	\
-	ldreg	%r13,FRAME_R13(%r1);	/* restore r13 */
+	ldreg	%r14,FRAME_R14(%r1);	/* restore r14 */
 
 #define	FRAME_LEAVE(savearea)					\
 /* Now restore regs: */						\
@@ -831,6 +831,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtxer	%r5;							\
 	mtlr	%r6;							\
 	mtsprg1	%r7;			/* save cr */			\
+	ldreg	%r13,FRAME_R13(%r1);	/* restore r13 */	\
 	ldreg	%r12,FRAME_R12(%r1);	/* restore r12 */	\
 	ldreg	%r11,FRAME_R11(%r1);	/* restore r11 */	\
 	ldreg	%r10,FRAME_R10(%r1);	/* restore r10 */	\
@@ -856,7 +857,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	GET_CPUINFO(%r2);						\
 	ldreg	%r3,(savearea+CPUSAVE_SRR1)(%r2);			\
 	mtcr	%r3;							\
-	bf	17,1f;			/* branch if PSL_PR is false */	\
+	bf	MSR_PR,1f;		/* branch if PSL_PR is false */	\
 /* Restore user SRs */							\
 	RESTORE_USER_SRS(%r2,%r3);					\
 1:	mfsprg1	%r2;			/* restore cr */		\
@@ -890,7 +891,7 @@ disitrap:
 #ifdef DDB
 	mfsrr1	%r31
 	mtcr	%r31
-	bt	17,trapstart		/* branch is user mode */
+	bt	MSR_PR,trapstart	/* branch is user mode */
 	mfsprg1	%r31			/* get old SP */
 #if 0
 	subf	%r30,%r30,%r31		/* subtract DAR from it */
@@ -926,7 +927,7 @@ realtrap:
 	mfsprg1	%r1			/* restore SP (might have been
 					   overwritten) */
 s_trap:
-	bf	17,k_trap		/* branch if PSL_PR is false */
+	bf	MSR_PR,k_trap		/* branch if PSL_PR is false */
 	GET_CPUINFO(%r1)		/* get cpu_info for this cpu */
 u_trap:
 	ldptr	%r1,CI_CURPCB(%r1)
@@ -960,9 +961,8 @@ trapexit:
 	mtmsr	%r3
 /* Test AST pending: */
 	mtcr	%r31
-	bf	17,trapleave			/* branch if PSL_PR is false */
-	GET_CPUINFO(%r3)
-	ldint	%r4,CI_ASTPENDING(%r3)
+	bf	MSR_PR,trapleave	/* branch if PSL_PR is false */
+	ldint	%r4,L_MD_ASTPENDING(%r13)
 	andi.	%r4,%r4,1
 	beq	trapleave
 
@@ -1013,9 +1013,13 @@ s_sctrap:
 	isync
 	addi	%r3,%r1,FRAME_TF
 /* Call the appropriate syscall handler: */
+#if 0
 	GET_CPUINFO(%r4)
 	ldptr	%r4,CI_CURLWP(%r4)
 	ldptr	%r4,L_PROC(%r4)
+#else
+	ldptr	%r4,L_PROC(%r13)
+#endif
 	ldptr	%r4,P_MD_SYSCALL(%r4)
 	mtctr	%r4
 	bctrl
@@ -1069,11 +1073,11 @@ _C_LABEL(sctrapexit):
 	streg	%r10,FRAME_R10(%r1);	/* save r10 */		\
 	streg	%r11,FRAME_R11(%r1);	/* save r11 */		\
 	streg	%r12,FRAME_R12(%r1);	/* save r12 */		\
+	streg	%r13,FRAME_R13(%r1);	/* save r13 */		\
 	ldreg	%r11,(savearea+CPUSAVE_SRR0)(%r2); /* get saved SRR0 */	\
 	ldreg	%r12,(savearea+CPUSAVE_SRR1)(%r2); /* get saved SRR1 */	\
+	ldptr	%r13,CI_CURLWP(%r2);	/* get curlwp */	\
 	ldint	%r3,CI_IDEPTH(%r2);					\
-	addi	%r4,%r3,1;						\
-	stint	%r4,CI_IDEPTH(%r2);					\
 	stint	%r3,FRAME_IDEPTH(%r1);					\
 	mfxer	%r3;							\
 	mfctr	%r4;							\
@@ -1105,17 +1109,12 @@ intr_exit:
 	mtmsr	%r3
 	isync
 
-	GET_CPUINFO(%r5)
-	ldint	%r4,CI_IDEPTH(%r5)
-	addi	%r4,%r4,-1		/* adjust reentrancy count */
-	stint	%r4,CI_IDEPTH(%r5)
-
 /* Returning to user mode? */
-	ldreg	%r5,FRAME_SRR1(%r1)
-	mtcr	%r5			/* saved SRR1 */
-	bf	17,intrleave		/* branch if PSL_PR is false */
+	ldreg	%r4,FRAME_SRR1(%r1)
+	mtcr	%r4			/* saved SRR1 */
+	bf	MSR_PR,intrleave	/* branch if PSL_PR is false */
 
-	ldint	%r3,CI_ASTPENDING(%r5)	/* Test AST pending */
+	ldint	%r3,L_MD_ASTPENDING(%r13) /* Test AST pending */
 	andi.	%r3,%r3,1
 	beq	intrleave		/* common frame exit */
 
@@ -1124,7 +1123,6 @@ intr_exit:
  * process the AST is finish filling the trapframe with the rest of the fixed
  * registers and let trap deal with it.
  */
-	streg	%r13,FRAME_R13(%r1)
 	streg	%r14,FRAME_R14(%r1)
 	streg	%r15,FRAME_R15(%r1)
 	streg	%r16,FRAME_R16(%r1)
@@ -1150,7 +1148,7 @@ intr_exit:
 	li	%r6,EXC_AST
 	stint	%r6,FRAME_EXC(%r1)
 
-	mr	%r31, %r5		/* trapagain wants SRR1 in %r31 */
+	mr	%r31, %r4		/* trapagain wants SRR1 in %r31 */
 	b	trapagain
 
 /*

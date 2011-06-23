@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.59 2011/04/10 15:45:33 christos Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.59.2.1 2011/06/23 14:20:29 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -193,6 +193,7 @@ void	fd_share(proc_t *);
 void	fd_hold(lwp_t *);
 void	fd_free(void);
 void	fd_closeexec(void);
+void	fd_ktrexecfd(void);
 int	fd_checkstd(void);
 file_t	*fd_getfile(unsigned);
 file_t	*fd_getfile2(proc_t *, unsigned);

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.54 2011/02/08 20:20:08 rmind Exp $ */
+/*	$NetBSD: grf.c,v 1.54.2.1 2011/06/23 14:18:58 cherry Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.54 2011/02/08 20:20:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.54.2.1 2011/06/23 14:18:58 cherry Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -82,15 +82,15 @@ int grfon(dev_t);
 int grfoff(dev_t);
 int grfsinfo(dev_t, struct grfdyninfo *);
 
-void grfattach(struct device *, struct device *, void *);
-int grfmatch(struct device *, struct cfdata *, void *);
+void grfattach(device_t, device_t, void *);
+int grfmatch(device_t, cfdata_t, void *);
 int grfprint(void *, const char *);
 /*
  * pointers to grf drivers device structs
  */
 struct grf_softc *grfsp[NGRF];
 
-CFATTACH_DECL(grf, sizeof(struct device),
+CFATTACH_DECL_NEW(grf, 0,
     grfmatch, grfattach, NULL, NULL);
 
 dev_type_open(grfopen);
@@ -106,14 +106,14 @@ const struct cdevsw grf_cdevsw = {
 /*
  * only used in console init.
  */
-static struct cfdata *cfdata;
+static cfdata_t cfdata;
 
 /*
  * match if the unit of grf matches its perspective
  * low level board driver.
  */
 int
-grfmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+grfmatch(device_t pdp, cfdata_t cfp, void *auxp)
 {
 
 	if (cfp->cf_unit != ((struct grf_softc *)pdp)->g_unit)
@@ -128,7 +128,7 @@ grfmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * durring console init.
  */
 void
-grfattach(struct device *pdp, struct device *dp, void *auxp)
+grfattach(device_t pdp, device_t dp, void *auxp)
 {
 	struct grf_softc *gp;
 	int maj;

@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.2 2010/03/18 13:47:04 kiyohara Exp $	*/
+/*	$NetBSD: spr.h,v 1.2.10.1 2011/06/23 14:19:31 cherry Exp $	*/
 
 #ifndef _POWERPC_IBM4XX_SPR_H_
 #define	_POWERPC_IBM4XX_SPR_H_
@@ -33,6 +33,30 @@
 #define	  IBM405GPR		  0x5091
 #define   IBM405EP		  0x5121
 #define   IBMSTB25		  0x5151
+
+/* PVRs for different IBM CPUs */
+#define	PVR_401A1		0x00210000
+#define	PVR_401B2		0x00220000
+#define	PVR_401C2		0x00230000
+#define	PVR_401D2		0x00240000
+#define	PVR_401E2		0x00250000
+#define	PVR_401F2		0x00260000
+#define	PVR_401G2		0x00270000
+
+#define	PVR_403			0x00200000
+
+#define PVR_405GP		0x40110000
+#define PVR_405GP_PASS1 	0x40110000	/* RevA */
+#define PVR_405GP_PASS2 	0x40110040	/* RevB */
+#define PVR_405GP_PASS2_1 	0x40110082	/* RevC */
+#define PVR_405GP_PASS3 	0x401100c4	/* RevD */
+#define PVR_405GPR		0x50910000
+#define PVR_405GPR_REVB		0x50910951
+
+#define	PVR_405D5X1 		0x20010000 	/* Virtex II Pro */
+#define	PVR_405D5X2 		0x20011000 	/* Virtex 4 FX */
+
+#define PVR_405EX		0x12910000
 
 #define	SPR_ZPR			0x3b0	/* .4.. Zone Protection Register */
 #define	SPR_PID			0x3b1	/* .4.. Process ID */

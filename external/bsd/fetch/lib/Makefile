@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2009/10/20 01:21:28 joerg Exp $
+# $NetBSD: Makefile,v 1.5.4.1 2011/06/23 14:18:29 cherry Exp $
 
 LIB=		fetch
 SRCS=		fetch.c common.c ftp.c http.c file.c
@@ -37,3 +37,8 @@ httperr.h: ${LIBFETCHDIR}/http.errors ${LIBFETCHDIR}/errlist.sh
 	    ${LIBFETCHDIR}/http.errors > ${.TARGET}
 
 .include <bsd.lib.mk>
+
+.if ${HAVE_GCC} == 45
+# XXX
+COPTS.ftp.c+=	-Wno-array-bounds
+.endif

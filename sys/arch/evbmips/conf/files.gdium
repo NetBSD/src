@@ -1,4 +1,4 @@
-#	$NetBSD: files.gdium,v 1.1 2009/08/06 00:50:25 matt Exp $
+#	$NetBSD: files.gdium,v 1.1.12.1 2011/06/23 14:19:07 cherry Exp $
 
 file	arch/evbmips/gdium/gdium_bus_io.c
 file	arch/evbmips/gdium/gdium_bus_mem.c
@@ -15,7 +15,6 @@ file	arch/evbmips/evbmips/interrupt.c
 
 file	arch/mips/mips/mips3_clock.c
 file	arch/mips/mips/mips3_clockintr.c
-file	arch/mips/mips/softintr.c
 
 # The autoconfiguration root.
 device	mainbus { [addr = -1] }

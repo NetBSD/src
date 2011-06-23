@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.16 2009/03/14 21:04:08 dsl Exp $	*/
+/*	$NetBSD: vme.c,v 1.16.10.1 2011/06/23 14:19:03 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.16 2009/03/14 21:04:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.16.10.1 2011/06/23 14:19:03 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,18 +40,17 @@ __KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.16 2009/03/14 21:04:08 dsl Exp $");
 
 #include <atari/vme/vmevar.h>
 
-int vmematch(struct device *, struct cfdata *, void *);
-void vmeattach(struct device *, struct device *, void *);
+int vmematch(device_t, cfdata_t, void *);
+void vmeattach(device_t, device_t, void *);
 int vmeprint(void *, const char *);
 
-CFATTACH_DECL(vme, sizeof(struct vme_softc),
+CFATTACH_DECL_NEW(vme, sizeof(struct vme_softc),
     vmematch, vmeattach, NULL, NULL);
 
-int	vmesearch(struct device *, struct cfdata *,
-		       const int *, void *);
+int	vmesearch(device_t, cfdata_t, const int *, void *);
 
 int
-vmematch(struct device *parent, struct cfdata *cf, void *aux)
+vmematch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vmebus_attach_args *vba = aux;
 
@@ -62,13 +61,14 @@ vmematch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-vmeattach(struct device *parent, struct device *self, void *aux)
+vmeattach(device_t parent, device_t self, void *aux)
 {
-	struct vme_softc *sc = (struct vme_softc *)self;
+	struct vme_softc *sc = device_private(self);
 	struct vmebus_attach_args *vba = aux;
 
 	printf("\n");
 
+	sc->sc_dev = self;
 	sc->sc_iot  = vba->vba_iot;
 	sc->sc_memt = vba->vba_memt;
 	sc->sc_vc   = vba->vba_vc;
@@ -95,9 +95,9 @@ vmeprint(void *aux, const char *vme)
 }
 
 int
-vmesearch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
+vmesearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct vme_softc *sc = (struct vme_softc *)parent;
+	struct vme_softc *sc = device_private(parent);
 	struct vme_attach_args va;
 
 	va.va_iot    = sc->sc_iot;

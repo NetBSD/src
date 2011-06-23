@@ -1,6 +1,6 @@
 /// notes about altboot ///
 
-$NetBSD: README.altboot,v 1.4 2011/04/19 14:12:54 phx Exp $
+$NetBSD: README.altboot,v 1.4.2.1 2011/06/23 14:19:38 cherry Exp $
 
 Altboot is a functional bridge to fill the gap between a NAS product
 custom bootloader and the NetBSD kernel startup environment.  Altboot
@@ -27,6 +27,10 @@ Altboot is known working on at least these models:
 - Synology 101g+ with vendor custom PPCboot
 
    PPCBoot 2.0.0 (Mar  1 2005 - 15:31:41)
+
+- Synology 207, 407e with vendor custom PPCboot
+
+   PPCBoot 2.0.0 (Jan 30 2007 - xx:xx:xx)
 
 - D-Link DSM-G600 with heavily restricted vendor custom U-Boot
 

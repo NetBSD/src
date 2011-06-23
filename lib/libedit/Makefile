@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2010/02/03 15:34:43 roy Exp $
+#	$NetBSD: Makefile,v 1.41.4.1 2011/06/23 14:18:38 cherry Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -113,10 +113,17 @@ historyn.c: makelist Makefile
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 tc1.o:	${LIBEDITDIR}/TEST/tc1.c
-	
+
 tc1:	libedit.a tc1.o 
 	${_MKTARGET_LINK}
 	${CC} ${LDFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -ltermlib
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
+
+# XXX
+.if ${HAVE_GCC} >= 45
+COPTS.editline.c+=	-Wno-cast-qual
+COPTS.tokenizer.c+=	-Wno-cast-qual
+COPTS.tokenizern.c+=	-Wno-cast-qual
+.endif

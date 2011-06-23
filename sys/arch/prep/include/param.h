@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2010/07/12 07:54:13 kiyohara Exp $	*/
+/*	$NetBSD: param.h,v 1.5.6.1 2011/06/23 14:19:36 cherry Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,22 +31,18 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef	_KERNEL
-#ifndef	_LOCORE
-#include <machine/cpu.h>
-#endif	/* _LOCORE */
-#endif
-
 /*
  * Machine dependent constants for PowerPC (32-bit only currently)
  */
-#define	MACHINE		"prep"
+#if defined(_KERNEL) && !defined(_MODULE)
 
+#define	MACHINE			"prep"
+#define	KERNBASE		0x100000
 #define	__NO_FIXED_MSGBUF
-
-#define	KERNBASE	0x100000
-
-#include <powerpc/param.h>
 
 /* at this offset we mmap() the PCI IO range in display drivers */
 #define PCI_MAGIC_IO_RANGE	0xf2000000
+
+#endif /* _KERNEL && !_MODULE */
+
+#include <powerpc/param.h>

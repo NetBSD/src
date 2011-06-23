@@ -1,4 +1,4 @@
-.text
+.text	
 
 .globl	sha256_block_data_order
 .type	sha256_block_data_order,@function
@@ -10,7 +10,7 @@ sha256_block_data_order:
 	pushq	%r13
 	pushq	%r14
 	pushq	%r15
-	movq	%rsp,%rbp
+	movq	%rsp,%r11
 	shlq	$4,%rdx
 	subq	$64+32,%rsp
 	leaq	(%rsi,%rdx,4),%rdx
@@ -18,10 +18,10 @@ sha256_block_data_order:
 	movq	%rdi,64+0(%rsp)
 	movq	%rsi,64+8(%rsp)
 	movq	%rdx,64+16(%rsp)
-	movq	%rbp,64+24(%rsp)
+	movq	%r11,64+24(%rsp)
+.Lprologue:
 
-	.long	0x12d8d48,0x90000000
-	leaq	K256-.(%rbp),%rbp
+	leaq	K256@GOTPCREL(%rip),%rbp
 
 	movl	0(%rdi),%eax
 	movl	4(%rdi),%ebx
@@ -1938,14 +1938,15 @@ sha256_block_data_order:
 	movl	%r11d,28(%rdi)
 	jb	.Lloop
 
-	movq	64+24(%rsp),%rsp
-	popq	%r15
-	popq	%r14
-	popq	%r13
-	popq	%r12
-	popq	%rbp
-	popq	%rbx
-
+	movq	64+24(%rsp),%rsi
+	movq	(%rsi),%r15
+	movq	8(%rsi),%r14
+	movq	16(%rsi),%r13
+	movq	24(%rsi),%r12
+	movq	32(%rsi),%rbp
+	movq	40(%rsi),%rbx
+	leaq	48(%rsi),%rsp
+.Lepilogue:
 	.byte	0xf3,0xc3
 .size	sha256_block_data_order,.-sha256_block_data_order
 .align	64

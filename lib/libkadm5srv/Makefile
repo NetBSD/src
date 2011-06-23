@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28 2008/08/29 00:02:22 gmcgarry Exp $
+# $NetBSD: Makefile,v 1.28.18.1 2011/06/23 14:18:38 cherry Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -102,7 +102,7 @@ CPPFLAGS+=-DHAVE_IPV6
 CPPFLAGS+=	-DNO_DLOPEN
 .endif
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.marshall.c+=	-Wno-pointer-sign
 .endif
 

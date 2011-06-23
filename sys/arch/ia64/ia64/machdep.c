@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2011/03/04 22:25:26 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28.2.1 2011/06/23 14:19:17 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -118,6 +118,7 @@
 #include <uvm/uvm.h>
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -791,4 +792,11 @@ int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	return EINVAL;
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return 0; /* TODO: Implement. */
 }

@@ -64,15 +64,15 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 
-int PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type)
+void PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type)
 	{
-	return EVP_DigestInit_ex(ctx, type, NULL);
+	EVP_DigestInit_ex(ctx, type, NULL);
 	}
 
-int PEM_SignUpdate(EVP_MD_CTX *ctx, unsigned char *data,
+void PEM_SignUpdate(EVP_MD_CTX *ctx, unsigned char *data,
 	     unsigned int count)
 	{
-	return EVP_DigestUpdate(ctx,data,count);
+	EVP_DigestUpdate(ctx,data,count);
 	}
 
 int PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,

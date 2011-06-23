@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.3 2008/04/28 20:23:33 martin Exp $	*/
+/*	$NetBSD: pceb.c,v 1.3.32.1 2011/06/23 14:19:36 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.3 2008/04/28 20:23:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.3.32.1 2011/06/23 14:19:36 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,13 +50,13 @@ __KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.3 2008/04/28 20:23:33 martin Exp $");
 #include "eisa.h"
 #include "isa.h"
 
-int	pcebmatch(struct device *, struct cfdata *, void *);
-void	pcebattach(struct device *, struct device *, void *);
+int	pcebmatch(device_t, cfdata_t, void *);
+void	pcebattach(device_t, device_t, void *);
 
-CFATTACH_DECL(pceb, sizeof(struct device),
+CFATTACH_DECL_NEW(pceb, 0,
     pcebmatch, pcebattach, NULL, NULL);
 
-void	pceb_callback(struct device *);
+void	pceb_callback(device_t);
 
 union pceb_attach_args {
 	const char *ea_name;			/* XXX should be common */
@@ -65,7 +65,7 @@ union pceb_attach_args {
 };
 
 int
-pcebmatch(struct device *parent, struct cfdata *match, void *aux)
+pcebmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -94,7 +94,7 @@ pcebmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-pcebattach(struct device *parent, struct device *self, void *aux)
+pcebattach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
@@ -107,7 +107,7 @@ pcebattach(struct device *parent, struct device *self, void *aux)
 	 * until all PCI devices have been attached.
 	 */
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
+	aprint_normal_dev(self, "%s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	prep_eisa_io_space_tag.pbs_extent = prep_io_space_tag.pbs_extent;
@@ -124,7 +124,7 @@ pcebattach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-pceb_callback(struct device *self)
+pceb_callback(device_t self)
 {
 	union pceb_attach_args ea;
 

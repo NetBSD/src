@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.422 2011/04/26 11:32:39 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.422.2.1 2011/06/23 14:20:21 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.422 2011/04/26 11:32:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.422.2.1 2011/06/23 14:20:21 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -150,7 +150,7 @@ vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
 	    (flags & V_SAVE ? PGO_CLEANIT | PGO_RECLAIM : 0);
 
 	/* XXXUBC this doesn't look at flags or slp* */
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	error = VOP_PUTPAGES(vp, 0, 0, flushflags);
 	if (error) {
 		return error;
@@ -227,7 +227,7 @@ vtruncbuf(struct vnode *vp, daddr_t lbn, bool catch, int slptimeo)
 	voff_t off;
 
 	off = round_page((voff_t)lbn << vp->v_mount->mnt_fs_bshift);
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	error = VOP_PUTPAGES(vp, off, 0, PGO_FREE | PGO_SYNCIO);
 	if (error) {
 		return error;
@@ -279,7 +279,7 @@ vflushbuf(struct vnode *vp, int sync)
 	int error, flags = PGO_CLEANIT | PGO_ALLPAGES | (sync ? PGO_SYNCIO : 0);
 	bool dirty;
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	(void) VOP_PUTPAGES(vp, 0, 0, flags);
 
 loop:
@@ -310,11 +310,11 @@ loop:
 	if (sync == 0)
 		return 0;
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	while (vp->v_numoutput != 0)
-		cv_wait(&vp->v_cv, &vp->v_interlock);
+		cv_wait(&vp->v_cv, vp->v_interlock);
 	dirty = !LIST_EMPTY(&vp->v_dirtyblkhd);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	if (dirty) {
 		vprint("vflushbuf: dirty", vp);
@@ -357,7 +357,7 @@ bgetvp(struct vnode *vp, struct buf *bp)
 
 	KASSERT(bp->b_vp == NULL);
 	KASSERT(bp->b_objlock == &buffer_lock);
-	KASSERT(mutex_owned(&vp->v_interlock));
+	KASSERT(mutex_owned(vp->v_interlock));
 	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT((bp->b_cflags & BC_BUSY) != 0);
 	KASSERT(!cv_has_waiters(&bp->b_done));
@@ -373,7 +373,7 @@ bgetvp(struct vnode *vp, struct buf *bp)
 	 * Insert onto list for new vnode.
 	 */
 	bufinsvn(bp, &vp->v_cleanblkhd);
-	bp->b_objlock = &vp->v_interlock;
+	bp->b_objlock = vp->v_interlock;
 }
 
 /*
@@ -385,8 +385,8 @@ brelvp(struct buf *bp)
 	struct vnode *vp = bp->b_vp;
 
 	KASSERT(vp != NULL);
-	KASSERT(bp->b_objlock == &vp->v_interlock);
-	KASSERT(mutex_owned(&vp->v_interlock));
+	KASSERT(bp->b_objlock == vp->v_interlock);
+	KASSERT(mutex_owned(vp->v_interlock));
 	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT((bp->b_cflags & BC_BUSY) != 0);
 	KASSERT(!cv_has_waiters(&bp->b_done));
@@ -421,8 +421,8 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 	int delayx;
 
 	KASSERT(mutex_owned(&bufcache_lock));
-	KASSERT(bp->b_objlock == &vp->v_interlock);
-	KASSERT(mutex_owned(&vp->v_interlock));
+	KASSERT(bp->b_objlock == vp->v_interlock);
+	KASSERT(mutex_owned(vp->v_interlock));
 	KASSERT((bp->b_cflags & BC_BUSY) != 0);
 
 	/*
@@ -484,7 +484,7 @@ getdevvp(dev_t dev, vnode_t **vpp, enum vtype type)
 		*vpp = NULL;
 		return (0);
 	}
-	error = getnewvnode(VT_NON, NULL, spec_vnodeop_p, &nvp);
+	error = getnewvnode(VT_NON, NULL, spec_vnodeop_p, NULL, &nvp);
 	if (error) {
 		*vpp = NULL;
 		return (error);
@@ -515,7 +515,7 @@ vfinddev(dev_t dev, enum vtype type, vnode_t **vpp)
 		mutex_exit(&device_lock);
 		return 0;
 	}
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	mutex_exit(&device_lock);
 	if (vget(vp, 0) != 0)
 		return 0;
@@ -541,10 +541,10 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 		dev = makedev(maj, mn);
 		vpp = &specfs_hash[SPECHASH(dev)];
 		for (vp = *vpp; vp != NULL;) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			if ((vp->v_iflag & VI_CLEAN) != 0 ||
 			    dev != vp->v_rdev || type != vp->v_type) {
-				mutex_exit(&vp->v_interlock);
+				mutex_exit(vp->v_interlock);
 				vp = vp->v_specnext;
 				continue;
 			}

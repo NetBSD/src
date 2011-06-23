@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.1 2011/01/26 01:18:44 pooka Exp $
+# $NetBSD: dot.profile,v 1.1.4.1 2011/06/23 14:18:17 cherry Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -58,9 +58,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# mount the ramdisk read write
 	mount -u $ROOTDEV /
-
-	# mount the kern_fs so that we can examine the dmesg state
-	mount -t kernfs /kern /kern
 
 	# run the installation program
 	sysinst

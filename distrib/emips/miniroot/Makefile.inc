@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2011/01/26 01:18:44 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.1.4.1 2011/06/23 14:18:17 cherry Exp $
 
 DBG=		-Os
 
@@ -11,8 +11,6 @@ MTREECONF+=	${.CURDIR}/mtree.usr.install
 IMAGEDEPENDS+=	${ARCHDIR}/dot.profile \
 		${DESTDIR}/.profile ${DESTDIR}/boot.emips \
 		${DESTDIR}/etc/disktab \
-		${KERNOBJDIR}/GENERIC/netbsd \
-		${KERNOBJDIR}/GENERIC/netbsd.ecoff \
-		${KERNOBJDIR}/INSTALL/nfsnetbsd.ecoff
+		${KERNOBJDIR}/GENERIC/netbsd
 
 IMAGEPOSTBUILD=	${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${IMAGE} ${DESTDIR}/usr/mdec/bootxx_ffs

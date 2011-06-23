@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2008/04/28 20:23:34 martin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.32.1 2011/06/23 14:19:37 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2008/04/28 20:23:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.32.1 2011/06/23 14:19:37 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ extern char bootpath[256];
 
 /* STUB */
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	return;
 }
@@ -76,7 +76,7 @@ void
 cpu_rootconf(void)
 {
 	aprint_normal("boot device: %s\n",
-	    booted_device ? booted_device->dv_xname : "<unknown>");
+	    booted_device ? device_xname(booted_device) : "<unknown>");
 
 	setroot(booted_device, booted_partition);
 }

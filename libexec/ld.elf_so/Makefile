@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.106 2011/05/30 16:30:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.106.2.1 2011/06/23 14:18:41 cherry Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -98,6 +98,7 @@ DBG=		-O3 -fomit-frame-pointer
 DBG+=		-mno-3dnow -mno-mmx -mno-sse -mno-sse2 -mno-sse3
 .endif
 
+
 .if ${SHLIBDIR} != ${LIBDIR}
 CPPFLAGS+=	-DRTLD_DEFAULT_LIBRARY_PATH=\"${SHLIBDIR}:${LIBDIR}\"
 .endif
@@ -116,6 +117,12 @@ DPADD+=		${CLIBOBJ}/libc_pic.a
 .else
 LDADD+=		-lc
 DPADD+=		${CLIBOBJ}/libc.a
+.endif
+
+.if ${MACHINE_CPU} == "hppa"
+# for $$divU, $$remU etc. (millicode)
+LDADD+=		-lgcc_pic
+DPADD+=		${LIBGCC_PIC}
 .endif
 
 STRIPFLAG=

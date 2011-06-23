@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.103 2011/05/12 05:43:06 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.103.2.1 2011/06/23 14:19:43 cherry Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.103 2011/05/12 05:43:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.103.2.1 2011/06/23 14:19:43 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -123,12 +123,12 @@ static struct intrhand level14 = { .ih_fun = statintr };
 static struct intrhand *schedint;
 #endif
 
-static int	timermatch(struct device *, struct cfdata *, void *);
-static void	timerattach(struct device *, struct device *, void *);
+static int	timermatch(device_t, cfdata_t, void *);
+static void	timerattach(device_t, device_t, void *);
 
 struct timerreg_4u	timerreg_4u;	/* XXX - need more cleanup */
 
-CFATTACH_DECL(timer, sizeof(struct device),
+CFATTACH_DECL_NEW(timer, 0,
     timermatch, timerattach, NULL, NULL);
 
 struct chiptime;
@@ -196,7 +196,7 @@ counter_get_timecount(struct timecounter *tc)
  * the lame UltraSPARC IIi PCI machines that don't have them.
  */
 static int
-timermatch(struct device *parent, struct cfdata *cf, void *aux)
+timermatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -204,7 +204,7 @@ timermatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-timerattach(struct device *parent, struct device *self, void *aux)
+timerattach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	u_int *va = ma->ma_address;

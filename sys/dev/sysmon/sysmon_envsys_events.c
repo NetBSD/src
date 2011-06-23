@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.97 2010/12/30 03:59:59 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.97.6.1 2011/06/23 14:20:09 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.97 2010/12/30 03:59:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.97.6.1 2011/06/23 14:20:09 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -101,7 +101,8 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	/*
 	 * Some validation first for limit-checking events
 	 *
-	 * 1. Limits are not permitted if the units is ENVSYS_INDICATOR.
+	 * 1. Limits are not permitted if the units is ENVSYS_INDICATOR
+	 *    or ENVSYS_BATTERY_CHARGE.
 	 *
 	 * 2. Capacity limits are permitted only if the sensor has the
 	 *    ENVSYS_FPERCENT flag set and value_max is set.
@@ -117,8 +118,10 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		" edata-flags 0x%04x\n", __func__, edata->units, props,
 		edata->upropset, edata->value_max, edata->flags));
 
-	if (props && edata->units == ENVSYS_INDICATOR)
-		return ENOTSUP;
+	if (props)
+		if (edata->units == ENVSYS_INDICATOR ||
+		    edata->units == ENVSYS_BATTERY_CHARGE)
+			return ENOTSUP;
 
 	if ((props & PROP_CAP_LIMITS) &&
 	    ((edata->value_max == 0) ||

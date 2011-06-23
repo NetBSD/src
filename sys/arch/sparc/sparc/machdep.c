@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.309 2011/05/16 18:08:04 rmind Exp $ */
+/*	$NetBSD: machdep.c,v 1.309.2.1 2011/06/23 14:19:40 cherry Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.309 2011/05/16 18:08:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.309.2.1 2011/06/23 14:19:40 cherry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -105,6 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.309 2011/05/16 18:08:04 rmind Exp $");
 #include <sys/module.h>
 #include <sys/mutex.h>
 
+#include <dev/mm.h>
+
 #include <uvm/uvm.h>		/* we use uvm.kernel_object */
 
 #include <sys/sysctl.h>
@@ -124,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.309 2011/05/16 18:08:04 rmind Exp $");
 #include <machine/oldmon.h>
 #include <machine/bsd_openprom.h>
 #include <machine/bootinfo.h>
+#include <machine/eeprom.h>
 
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cache.h>
@@ -306,10 +309,10 @@ cpu_startup(void)
 
 		/* Clip max data & stack to avoid running into the MMU hole */
 #if MAXDSIZ > 256*1024*1024
-		*(rlim_t*)__UNCONST(&maxdmap) = 256*1024*1024;
+		maxdmap = 256*1024*1024;
 #endif
 #if MAXSSIZ > 256*1024*1024
-		*(rlim_t*)__UNCONST(&maxsmap) = 256*1024*1024;
+		maxsmap = 256*1024*1024;
 #endif
 	}
 
@@ -2191,3 +2194,39 @@ struct sparc_bus_space_tag mainbus_space_tag = {
 	sparc_bus_space_write_4,	/* bus_space_write_4 */
 	sparc_bus_space_write_8		/* bus_space_write_8 */
 };
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return pmap_pa_exists(pa) ? 0 : EFAULT;
+}
+
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+	extern vaddr_t prom_vstart;
+	extern vaddr_t prom_vend;
+	const vaddr_t v = (vaddr_t)ptr;
+
+	*handled = (v >= MSGBUF_VA && v < MSGBUF_VA + PAGE_SIZE) ||
+	    (v >= prom_vstart && v < prom_vend && (prot & VM_PROT_WRITE) == 0);
+	return 0;
+}
+
+int
+mm_md_readwrite(dev_t dev, struct uio *uio)
+{
+
+	switch (minor(dev)) {
+#if defined(SUN4)
+	case DEV_EEPROM:
+		if (cputyp == CPU_SUN4)
+			return eeprom_uio(uio);
+		else
+#endif
+		return ENXIO;
+	default:
+		return ENXIO;
+	}
+}

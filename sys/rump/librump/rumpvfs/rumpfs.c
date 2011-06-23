@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.94 2011/03/27 21:16:52 riz Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.94.2.1 2011/06/23 14:20:29 cherry Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.94 2011/03/27 21:16:52 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.94.2.1 2011/06/23 14:20:29 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -489,7 +489,7 @@ rump_etfs_remove(const char *key)
 
 		mutex_enter(&reclock);
 		if ((vp = et->et_rn->rn_vp) != NULL)
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 		mutex_exit(&reclock);
 		if (vp && vget(vp, 0) == 0)
 			vgone(vp);
@@ -575,7 +575,7 @@ makevnode(struct mount *mp, struct rumpfs_node *rn, struct vnode **vpp)
 		vpops = rump_vnodeop_p;
 	}
 
-	rv = getnewvnode(VT_RUMP, mp, vpops, &vp);
+	rv = getnewvnode(VT_RUMP, mp, vpops, NULL, &vp);
 	if (rv)
 		return rv;
 
@@ -767,7 +767,7 @@ rump_vop_lookup(void *v)
 		VOP_UNLOCK(dvp);
 	mutex_enter(&reclock);
 	if ((vp = rn->rn_vp)) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		mutex_exit(&reclock);
 		if (vget(vp, LK_EXCLUSIVE)) {
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
@@ -1260,7 +1260,7 @@ rump_vop_read(void *v)
 		if (chunk == 0)
 			break;
 		error = ubc_uiomove(&vp->v_uobj, uio, chunk, advice,
-		    UBC_READ | UBC_PARTIALOK | UBC_WANT_UNMAP(vp)?UBC_UNMAP:0);
+		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 		if (error)
 			break;
 	}
@@ -1353,7 +1353,7 @@ rump_vop_write(void *v)
 		if (chunk == 0)
 			break;
 		error = ubc_uiomove(&vp->v_uobj, uio, chunk, advice,
-		    UBC_WRITE | UBC_PARTIALOK | UBC_WANT_UNMAP(vp)?UBC_UNMAP:0);
+		    UBC_WRITE | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 		if (error)
 			break;
 	}

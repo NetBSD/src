@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2010/12/17 09:54:28 jruoho Exp $	
+#	$NetBSD: Makefile,v 1.51.4.1 2011/06/23 14:20:50 cherry Exp $	
 
 WARNS?=	1	# XXX: out of date third-party program 
 
@@ -93,7 +93,7 @@ LDADD+=	-lcrypto -lcrypt
 DPADD+=	${LIBCRYPTO} ${LIBCRYPT}
 .endif
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS+=	-fno-strict-aliasing
 .for f in print-802_11 print-esp print-fr print-radius print-telnet tcpdump util
 COPTS.${f}.c+=  -Wno-pointer-sign

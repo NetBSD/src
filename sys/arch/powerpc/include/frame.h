@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.22 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.22.4.1 2011/06/23 14:19:30 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -84,9 +84,11 @@ struct trapframe {
 	uint32_t tf_exc;
 #if defined(PPC_OEA) || defined(PPC_OEA64) || defined(PPC_OEA64_BRIDGE)
 	register_t tf_dar;
+	register_t tf_pad0[2];
 	uint32_t tf_dsisr;
 	uint32_t tf_vrsave;
 	uint32_t tf_mq;
+	uint32_t tf_pad1[1];
 #endif
 #if defined(PPC_BOOKE) || defined(PPC_IBM4XX)
 	register_t tf_dear;

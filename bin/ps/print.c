@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.117 2011/01/22 21:09:51 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.117.2.1 2011/06/23 14:17:48 cherry Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.117 2011/01/22 21:09:51 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.117.2.1 2011/06/23 14:17:48 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -967,7 +967,7 @@ wchan(void *arg, VARENT *ve, int mode)
 	}
 }
 
-#define	pgtok(a)        (((a)*getpagesize())/1024)
+#define	pgtok(a)        (((a)*(size_t)getpagesize())/1024)
 
 void
 vsize(void *arg, VARENT *ve, int mode)

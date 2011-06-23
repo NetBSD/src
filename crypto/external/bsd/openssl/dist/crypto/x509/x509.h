@@ -258,6 +258,7 @@ typedef struct x509_cinf_st
 	ASN1_BIT_STRING *issuerUID;		/* [ 1 ] optional in v2 */
 	ASN1_BIT_STRING *subjectUID;		/* [ 2 ] optional in v2 */
 	STACK_OF(X509_EXTENSION) *extensions;	/* [ 3 ] optional in v3 */
+	ASN1_ENCODING enc;
 	} X509_CINF;
 
 /* This stuff is certificate "auxiliary info"
@@ -585,6 +586,7 @@ struct pkcs8_priv_key_info_st
 #define PKCS8_NO_OCTET		1
 #define PKCS8_EMBEDDED_PARAM	2
 #define PKCS8_NS_DB		3
+#define PKCS8_NEG_PRIVKEY	4
         ASN1_INTEGER *version;
         X509_ALGOR *pkeyalg;
         ASN1_TYPE *pkey; /* Should be OCTET STRING but some are broken */
@@ -761,6 +763,7 @@ X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *xn);
 int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval);
 void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
 						X509_ALGOR *algor);
+void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md);
 
 X509_NAME *X509_NAME_dup(X509_NAME *xn);
 X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne);
@@ -961,6 +964,11 @@ unsigned long	X509_issuer_name_hash(X509 *a);
 int		X509_subject_name_cmp(const X509 *a, const X509 *b);
 unsigned long	X509_subject_name_hash(X509 *x);
 
+#ifndef OPENSSL_NO_MD5
+unsigned long	X509_issuer_name_hash_old(X509 *a);
+unsigned long	X509_subject_name_hash_old(X509 *x);
+#endif
+
 int		X509_cmp(const X509 *a, const X509 *b);
 int		X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b);
 unsigned long	X509_NAME_hash(X509_NAME *x);
@@ -1153,9 +1161,6 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 				 unsigned char *salt, int saltlen,
 				 unsigned char *aiv, int prf_nid);
-
-X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
-				int prf_nid, int keylen);
 
 /* PKCS#8 utilities */
 

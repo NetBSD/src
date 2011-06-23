@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool_cache.9,v 1.17 2010/12/02 12:54:13 wiz Exp $
+.\"	$NetBSD: pool_cache.9,v 1.17.4.1 2011/06/23 14:18:45 cherry Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd October 15, 2009
+.Dd June 1, 2011
 .Dt POOL_CACHE 9
 .Os
 .\" ------------------------------------------------------------
@@ -188,12 +188,23 @@ need not provide additional synchronization for access to it.
 Specifies a constructor used to initialize newly allocated objects.
 If no constructor is required, specify
 .Dv NULL .
+The first argument to
+.Fa ctor
+is
+.Fa arg ,
+the second is the new object, and the third is
+.Fa flags .
 .It Fa dtor
 .Pp
 Specifies a destructor used to destroy cached objects prior to
 their release to backing store.
 If no destructor is required, specify
 .Dv NULL .
+The first argument to
+.Fa dtor
+is
+.Fa arg ,
+and the second is the object.
 .It Fa arg
 .Pp
 This value of this argument will be passed to both the constructor

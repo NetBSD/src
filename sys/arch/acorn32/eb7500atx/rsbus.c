@@ -1,4 +1,4 @@
-/* $NetBSD: rsbus.c,v 1.7 2009/10/21 16:16:24 rmind Exp $ */
+/* $NetBSD: rsbus.c,v 1.7.10.1 2011/06/23 14:18:48 cherry Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rsbus.c,v 1.7 2009/10/21 16:16:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsbus.c,v 1.7.10.1 2011/06/23 14:18:48 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,25 +45,25 @@ extern struct bus_space rsbus_bs_tag;
 
 /* Declare prototypes */
 
-static int	rsbus_match(struct device *, struct cfdata *, void *);
-static void	rsbus_attach(struct device *, struct device *, void *);
+static int	rsbus_match(device_t, cfdata_t, void *);
+static void	rsbus_attach(device_t, device_t, void *);
 static int	rsbus_print(void *, const char *);
-static int	rsbus_search(struct device *, struct cfdata *,
+static int	rsbus_search(device_t, cfdata_t,
 			     const int *, void *);
 
 CFATTACH_DECL(rsbus, sizeof(struct rsbus_softc),
     rsbus_match, rsbus_attach, NULL, NULL);
  
 static int
-rsbus_match(struct device *parent, struct cfdata *cf, void *aux)
+rsbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return(1);
 }
 
 static void
-rsbus_attach(struct device *parent, struct device *self, void *aux)
+rsbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct rsbus_softc *sc = (void *) self;
+	struct rsbus_softc *sc = device_private(self);
 	sc->sc_iot = &rsbus_bs_tag;
 
 	printf("\n");
@@ -75,9 +75,9 @@ rsbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-rsbus_search(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
+rsbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct rsbus_softc *sc = (struct rsbus_softc *)parent;
+	struct rsbus_softc *sc = device_private(parent);
 	struct rsbus_attach_args sa;
 
 	sa.sa_iot = sc->sc_iot;
@@ -94,7 +94,7 @@ rsbus_search(struct device *parent, struct cfdata *cf, const int *ldesc, void *a
 static int
 rsbus_print(void *aux, const char *name)
 {
-        struct rsbus_attach_args *sa = (struct rsbus_attach_args*)aux;
+        struct rsbus_attach_args *sa = aux;
 
 	if (sa->sa_size)
 		aprint_normal(" addr 0x%lx", sa->sa_addr);
@@ -105,4 +105,3 @@ rsbus_print(void *aux, const char *name)
 
 	return (UNCONF);
 }
-

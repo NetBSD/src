@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a500.c,v 1.19 2009/09/14 02:46:29 mhitch Exp $ */
+/* $NetBSD: dec_2100_a500.c,v 1.19.10.1 2011/06/23 14:18:50 cherry Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.19 2009/09/14 02:46:29 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.19.10.1 2011/06/23 14:18:50 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ static int comcnrate = CONSPEED;
 
 void _dec_2100_a500_init(void);
 static void dec_2100_a500_cons_init(void);
-static void dec_2100_a500_device_register(struct device *, void *);
+static void dec_2100_a500_device_register(device_t, void *);
 static void dec_2100_a500_machine_check(unsigned long, struct trapframe *,
 	unsigned long, unsigned long);
 
@@ -235,12 +235,12 @@ dec_2100_a500_cons_init(void)
 }
 
 static void
-dec_2100_a500_device_register(struct device *dev, void *aux)
+dec_2100_a500_device_register(device_t dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
-	static struct device *pcidev, *ctrlrdev;
+	static device_t pcidev, ctrlrdev;
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = device_parent(dev);
+	device_t parent = device_parent(dev);
 
 	if (found)
 		return;
@@ -267,7 +267,7 @@ dec_2100_a500_device_register(struct device *dev, void *aux)
 	
 			pcidev = dev;
 #if 0
-			printf("\npcidev = %s\n", dev->dv_xname);
+			printf("\npcidev = %s\n", device_xname(dev));
 #endif
 			return;
 		}
@@ -288,13 +288,13 @@ dec_2100_a500_device_register(struct device *dev, void *aux)
 			if (netboot) {
 				booted_device = dev;
 #if 0
-				printf("\nbooted_device = %s\n", dev->dv_xname);
+				printf("\nbooted_device = %s\n", device_xname(dev));
 #endif
 				found = 1;
 			} else {
 				ctrlrdev = dev;
 #if 0
-				printf("\nctrlrdev = %s\n", dev->dv_xname);
+				printf("\nctrlrdev = %s\n", device_xname(dev));
 #endif
 			}
 			return;
@@ -323,7 +323,7 @@ dec_2100_a500_device_register(struct device *dev, void *aux)
 		/* we've found it! */
 		booted_device = dev;
 #if 0
-		printf("\nbooted_device = %s\n", dev->dv_xname);
+		printf("\nbooted_device = %s\n", device_xname(dev));
 #endif
 		found = 1;
 	}
@@ -344,7 +344,7 @@ dec_2100_a500_device_register(struct device *dev, void *aux)
 		/* we've found it! */
 		booted_device = dev;
 #if 0
-		printf("\nbooted_device = %s\n", dev->dv_xname);
+		printf("\nbooted_device = %s\n", device_xname(dev));
 #endif
 		found = 1;
 	}

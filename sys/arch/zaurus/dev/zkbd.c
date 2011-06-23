@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.11 2010/02/24 22:37:56 dyoung Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.11.8.1 2011/06/23 14:19:51 cherry Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,10 +18,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.11 2010/02/24 22:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.11.8.1 2011/06/23 14:19:51 cherry Exp $");
 
 #include "opt_wsdisplay_compat.h"
-#include "lcd.h"
 #if 0	/* XXX */
 #include "apm.h"
 #endif
@@ -43,8 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.11 2010/02/24 22:37:56 dyoung Exp $");
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 
-#include <zaurus/dev/zkbdmap.h>
 #include <zaurus/zaurus/zaurus_var.h>
+#include <zaurus/dev/zkbdmap.h>
+#include <zaurus/dev/zlcdvar.h>
 
 static const int gpio_sense_pins_c3000[] = {
 	12,
@@ -196,7 +196,7 @@ zkbd_attach(device_t parent, device_t self, void *aux)
 	callout_setfunc(&sc->sc_rawrepeat_ch, zkbd_rawrepeat, sc);
 #endif
 
-	if (ZAURUS_ISC3000) {
+	if (ZAURUS_ISC1000 || ZAURUS_ISC3000) {
 		sc->sc_sense_array = gpio_sense_pins_c3000;
 		sc->sc_strobe_array = gpio_strobe_pins_c3000;
 		sc->sc_nsense = __arraycount(gpio_sense_pins_c3000);
@@ -505,9 +505,6 @@ zkbd_hinge(void *v)
 	struct zkbd_softc *sc = (struct zkbd_softc *)v;
 	int a = pxa2x0_gpio_get_bit(sc->sc_swa_pin) ? 1 : 0;
 	int b = pxa2x0_gpio_get_bit(sc->sc_swb_pin) ? 2 : 0;
-#if NLCD > 0
-	extern void lcd_blank(int);
-#endif
 
 	sc->sc_hinge = a | b;
 
@@ -516,13 +513,9 @@ zkbd_hinge(void *v)
 		if (lid_suspend)
 			apm_suspends++;
 #endif
-#if NLCD > 0
 		lcd_blank(1);
-#endif
 	} else {
-#if NLCD > 0
 		lcd_blank(0);
-#endif
 	}
 
 	return 1;

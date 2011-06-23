@@ -1,4 +1,4 @@
-.\" $NetBSD: cpio.1,v 1.11 2007/12/02 21:16:02 wiz Exp $
+.\" $NetBSD: cpio.1,v 1.11.26.1 2011/06/23 14:17:47 cherry Exp $
 .\"
 .\" Copyright (c) 1997 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\"
 .\"	OpenBSD: cpio.1,v 1.14 2000/11/10 17:52:02 aaron Exp
 .\"
-.Dd April 23, 2007
+.Dd June 18, 2011
 .Dt CPIO 1
 .Os
 .Sh NAME
@@ -69,16 +69,16 @@ then the archive will be processed using
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl o , -create
+.It Fl o , Fl Fl create
 Create an archive.
 Reads the list of files to store in the
 archive from standard input, and writes the archive on standard
 output.
 .Bl -tag -width Ds
-.It Fl a , -reset-access-time
+.It Fl a , Fl Fl reset-access-time
 Reset the access times on files that have been copied to the
 archive.
-.It Fl A , -append
+.It Fl A , Fl Fl append
 Append to the specified archive.
 .It Fl B
 Set block size of output to 5120 bytes.
@@ -119,16 +119,20 @@ Follow symbolic links.
 .It Fl v
 Be verbose about operations.
 List filenames as they are written to the archive.
-.It Fl z
-Compress archive using
-.Xr gzip 1
+.It Fl Fl xz
+Compress/decompress archive using
+.Xr xz 1
 format.
 .It Fl Z
 Compress archive using
 .Xr compress 1
 format.
+.It Fl z
+Compress/decompress archive using
+.Xr gzip 1
+format.
 .El
-.It Fl i , -extract
+.It Fl i , Fl Fl extract
 Restore files from an archive.
 Reads the archive file from
 standard input and extracts files matching the
@@ -146,20 +150,20 @@ Expect the archive headers to be in ASCII format.
 .It Fl C Ar bytes
 Read archive written with a block size of
 .Ar bytes .
-.It Fl d , -make-directories
+.It Fl d , Fl Fl make-directories
 Create any intermediate directories as needed during
 restore.
-.It Fl E Ar file , Fl -pattern-file Ar file
+.It Fl E Ar file , Fl Fl pattern-file Ar file
 Read list of file name patterns to extract or list from
 .Ar file .
-.It Fl f , -nonmatching
+.It Fl f , Fl Fl nonmatching
 Restore all files except those matching the
 .Ar patterns
 given on the command line.
-.It Fl F Ar archive , Fl -file Ar archive
+.It Fl F Ar archive , Fl Fl file Ar archive
 .It Fl I Ar archive
 Use the specified file as the input for the archive.
-.It Fl H Ar format , Fl -format Ar format
+.It Fl H Ar format , Fl Fl format Ar format
 Read an archive of the specified format.
 Recognized formats are:
 .Pp
@@ -183,19 +187,19 @@ POSIX ustar format.
 .El
 .It Fl m
 Restore modification times on files.
-.It Fl r , -rename
+.It Fl r , Fl Fl rename
 Rename restored files interactively.
 .It Fl s
 Swap bytes after reading data from the archive.
-.It Fl S , -swap-halfwords
+.It Fl S , Fl Fl swap-halfwords
 Swap words after reading data from the archive.
-.It Fl t , -list
+.It Fl t , Fl Fl list
 Only list the contents of the archive, no files or
 directories will be created.
-.It Fl u , -unconditional
+.It Fl u , Fl Fl unconditional
 Overwrite files even when the file in the archive is
 older than the one that will be overwritten.
-.It Fl v , -verbose
+.It Fl v , Fl Fl verbose
 Be verbose about operations.
 List filenames as they are copied in from the archive.
 .It Fl z
@@ -211,7 +215,7 @@ Process old-style
 .Nm
 format archives.
 .El
-.It Fl p , -pass-through
+.It Fl p , Fl Fl pass-through
 Copy files from one location to another in a single pass.
 The list of files to copy are read from standard input and
 written out to a directory relative to the specified
@@ -223,24 +227,24 @@ Reset the access times on files that have been copied.
 .It Fl d
 Create any intermediate directories as needed to write
 the files at the new location.
-.It Fl l , -link
+.It Fl l , Fl Fl link
 When possible, link files rather than creating an
 extra copy.
-.It Fl L , -dereference
+.It Fl L , Fl Fl dereference
 Follow symbolic links.
-.It Fl m , -preserve-modification-time
+.It Fl m , Fl Fl preserve-modification-time
 Restore modification times on files.
-.It Fl u , -unconditional
+.It Fl u , Fl Fl unconditional
 Overwrite files even when the original file being copied is
 older than the one that will be overwritten.
-.It Fl v , -verbose
+.It Fl v , Fl Fl verbose
 Be verbose about operations.
 List filenames as they are copied.
-.It Fl -force-local
+.It Fl Fl force-local
 Do not interpret filenames that contain a
 .Sq \&:
 as remote files.
-.It Fl -insecure
+.It Fl Fl insecure
 Normally
 .Nm
 ignores filenames that contain

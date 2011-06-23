@@ -1,4 +1,4 @@
-/*	$NetBSD: t_quota2_remount.c,v 1.2 2011/03/06 17:08:40 bouyer Exp $	*/
+/*	$NetBSD: t_quota2_remount.c,v 1.2.2.1 2011/06/23 14:20:38 cherry Exp $	*/
 
 /*
  * Basic tests for quota2
@@ -95,10 +95,8 @@ do_quota(const atf_tc_t *tc, int n, const char *newfs_opts, int log)
 	}
 	snprintf(buf, 1024, "fsck_ffs -fn -F %s",  FSTEST_IMGNAME);
 	res = system(buf);
-	if (res != 0) {
-		snprintf(buf, sizeof(buf), "fsck returned %d", res);
-		atf_tc_fail(buf);
-	}
+	if (res != 0)
+		atf_tc_fail("fsck returned %d", res);
 }
 
 #define DECL_TEST(nent, newops, name, descr, log) \

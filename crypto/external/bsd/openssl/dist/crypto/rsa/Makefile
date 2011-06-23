@@ -20,11 +20,11 @@ LIB=$(TOP)/libcrypto.a
 LIBSRC= rsa_eay.c rsa_gen.c rsa_lib.c rsa_sign.c rsa_saos.c rsa_err.c \
 	rsa_pk1.c rsa_ssl.c rsa_none.c rsa_oaep.c rsa_chk.c rsa_null.c \
 	rsa_pss.c rsa_x931.c rsa_asn1.c rsa_depr.c rsa_ameth.c rsa_prn.c \
-	rsa_pmeth.c
+	rsa_pmeth.c rsa_crpt.c
 LIBOBJ= rsa_eay.o rsa_gen.o rsa_lib.o rsa_sign.o rsa_saos.o rsa_err.o \
 	rsa_pk1.o rsa_ssl.o rsa_none.o rsa_oaep.o rsa_chk.o rsa_null.o \
 	rsa_pss.o rsa_x931.o rsa_asn1.o rsa_depr.o rsa_ameth.o rsa_prn.o \
-	rsa_pmeth.o
+	rsa_pmeth.o rsa_crpt.o
 
 SRC= $(LIBSRC)
 
@@ -114,6 +114,21 @@ rsa_chk.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rsa_chk.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 rsa_chk.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 rsa_chk.o: rsa_chk.c
+rsa_crpt.o: ../../e_os.h ../../include/openssl/asn1.h
+rsa_crpt.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+rsa_crpt.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+rsa_crpt.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+rsa_crpt.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+rsa_crpt.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+rsa_crpt.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+rsa_crpt.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+rsa_crpt.o: ../../include/openssl/opensslconf.h
+rsa_crpt.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+rsa_crpt.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
+rsa_crpt.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+rsa_crpt.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+rsa_crpt.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+rsa_crpt.o: ../../include/openssl/x509_vfy.h ../cryptlib.h rsa_crpt.c
 rsa_depr.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_depr.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_depr.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h

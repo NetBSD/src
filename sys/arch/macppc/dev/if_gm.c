@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.38 2010/04/05 07:19:30 joerg Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.38.6.1 2011/06/23 14:19:20 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.38 2010/04/05 07:19:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.38.6.1 2011/06/23 14:19:20 cherry Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.38 2010/04/05 07:19:30 joerg Exp $");
 #define NRXBUF 32
 
 struct gmac_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct ethercom sc_ethercom;
 	vaddr_t sc_reg;
 	struct gmac_dma *sc_txlist;
@@ -93,8 +93,8 @@ struct gmac_softc {
 
 #define sc_if sc_ethercom.ec_if
 
-int gmac_match(struct device *, struct cfdata *, void *);
-void gmac_attach(struct device *, struct device *, void *);
+int gmac_match(device_t, cfdata_t, void *);
+void gmac_attach(device_t, device_t, void *);
 
 static inline u_int gmac_read_reg(struct gmac_softc *, int);
 static inline void gmac_write_reg(struct gmac_softc *, int, u_int);
@@ -120,16 +120,16 @@ void gmac_setladrf(struct gmac_softc *);
 int gmac_ioctl(struct ifnet *, u_long, void *);
 void gmac_watchdog(struct ifnet *);
 
-int gmac_mii_readreg(struct device *, int, int);
-void gmac_mii_writereg(struct device *, int, int, int);
-void gmac_mii_statchg(struct device *);
+int gmac_mii_readreg(device_t, int, int);
+void gmac_mii_writereg(device_t, int, int, int);
+void gmac_mii_statchg(device_t);
 void gmac_mii_tick(void *);
 
-CFATTACH_DECL(gm, sizeof(struct gmac_softc),
+CFATTACH_DECL_NEW(gm, sizeof(struct gmac_softc),
     gmac_match, gmac_attach, NULL, NULL);
 
 int
-gmac_match(struct device *parent, struct cfdata *match, void *aux)
+gmac_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -143,19 +143,22 @@ gmac_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-gmac_attach(struct device *parent, struct device *self, void *aux)
+gmac_attach(device_t parent, device_t self, void *aux)
 {
-	struct gmac_softc *sc = (void *)self;
-	struct pci_attach_args *pa = aux;
-	struct ifnet *ifp = &sc->sc_if;
-	struct mii_data *mii = &sc->sc_mii;
+	struct gmac_softc * const sc = device_private(self);
+	struct pci_attach_args * const pa = aux;
+	struct ifnet * const ifp = &sc->sc_if;
+	struct mii_data * const mii = &sc->sc_mii;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	const char * const xname = device_xname(self);
 	int node, i;
 	char *p;
 	struct gmac_dma *dp;
 	u_int32_t reg[10];
 	u_char laddr[6];
+
+	sc->sc_dev = self;
 
 	node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 	if (node == 0) {
@@ -214,15 +217,15 @@ gmac_attach(struct device *parent, struct device *self, void *aux)
 		p += 2048;
 	}
 
-	printf(": Ethernet address %s\n", ether_sprintf(laddr));
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal(": Ethernet address %s\n", ether_sprintf(laddr));
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	callout_init(&sc->sc_tick_ch, 0);
 
 	gmac_reset(sc);
 	gmac_init_mac(sc);
 
-	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = gmac_ioctl;
 	ifp->if_start = gmac_start;
@@ -250,8 +253,7 @@ gmac_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, laddr);
 #if NRND > 0 
-	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
-	    RND_TYPE_NET, 0); 
+	rnd_attach_source(&sc->sc_rnd_source, xname, RND_TYPE_NET, 0); 
 #endif
 }
 
@@ -524,7 +526,7 @@ gmac_put(struct gmac_softc *sc, void *buff, struct mbuf *m)
 		tlen += len;
 	}
 	if (tlen > 2048)
-		panic("%s: gmac_put packet overflow", sc->sc_dev.dv_xname);
+		panic("%s: gmac_put packet overflow", device_xname(sc->sc_dev));
 
 	return tlen;
 }
@@ -546,7 +548,7 @@ gmac_reset(struct gmac_softc *sc)
 			break;
 	}
 	if (i == 0)
-		printf("%s: reset timeout\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "reset timeout\n");
 
 	sc->sc_txnext = 0;
 	sc->sc_rxlast = 0;
@@ -850,9 +852,9 @@ gmac_watchdog(struct ifnet *ifp)
 }
 
 int
-gmac_mii_readreg(struct device *dev, int phy, int reg)
+gmac_mii_readreg(device_t self, int phy, int reg)
 {
-	struct gmac_softc *sc = (void *)dev;
+	struct gmac_softc *sc = device_private(self);
 	int i;
 
 	gmac_write_reg(sc, GMAC_MIFFRAMEOUTPUT,
@@ -864,7 +866,7 @@ gmac_mii_readreg(struct device *dev, int phy, int reg)
 		delay(10);
 	}
 	if (i < 0) {
-		printf("%s: gmac_mii_readreg: timeout\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "gmac_mii_readreg: timeout\n");
 		return 0;
 	}
 
@@ -872,9 +874,9 @@ gmac_mii_readreg(struct device *dev, int phy, int reg)
 }
 
 void
-gmac_mii_writereg(struct device *dev, int phy, int reg, int val)
+gmac_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct gmac_softc *sc = (void *)dev;
+	struct gmac_softc *sc = device_private(self);
 	int i;
 
 	gmac_write_reg(sc, GMAC_MIFFRAMEOUTPUT,
@@ -886,13 +888,13 @@ gmac_mii_writereg(struct device *dev, int phy, int reg, int val)
 		delay(10);
 	}
 	if (i < 0)
-		printf("%s: gmac_mii_writereg: timeout\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "gmac_mii_writereg: timeout\n");
 }
 
 void
-gmac_mii_statchg(struct device *dev)
+gmac_mii_statchg(device_t self)
 {
-	struct gmac_softc *sc = (void *)dev;
+	struct gmac_softc *sc = device_private(self);
 
 	gmac_stop_txdma(sc);
 	gmac_stop_rxdma(sc);

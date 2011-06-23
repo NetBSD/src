@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.72 2011/04/10 20:36:49 christos Exp $
+#	$NetBSD: files.amd64,v 1.72.2.1 2011/06/23 14:18:56 cherry Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -42,7 +42,6 @@ file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	kern/subr_disk_mbr.c			disk
 file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
-file	arch/amd64/amd64/mem.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/trap.c
 file	arch/amd64/amd64/fpu.c

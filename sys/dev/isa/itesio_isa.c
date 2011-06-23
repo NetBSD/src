@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.21 2010/08/13 19:28:26 jakllsch Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.21.6.1 2011/06/23 14:20:01 cherry Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.21 2010/08/13 19:28:26 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.21.6.1 2011/06/23 14:20:01 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -409,6 +409,10 @@ itesio_setup_sensors(struct itesio_softc *sc)
 	COPYDESCR(sc->sc_sensor[12].desc, "CPU Fan");
 	COPYDESCR(sc->sc_sensor[13].desc, "System Fan");
 	COPYDESCR(sc->sc_sensor[14].desc, "Aux Fan");
+
+	/* all */
+	for (i = 0; i < IT_NUM_SENSORS; i++)
+		sc->sc_sensor[i].state = ENVSYS_SINVALID;
 }
 #undef COPYDESCR
 

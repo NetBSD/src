@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.7 2006/06/27 06:37:26 he Exp $
+#	$NetBSD: Makefile.inc,v 1.7.94.1 2011/06/23 14:19:12 cherry Exp $
 
 BINDIR=		/usr/mdec
 
 .include <bsd.own.mk>
 
-.if ${HAVE_GCC} > 3
 COPTS+=		-Wno-pointer-sign
-.endif
 COPTS+=		-fno-strict-aliasing

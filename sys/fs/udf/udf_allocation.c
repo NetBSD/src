@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.31 2011/01/14 09:09:18 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.31.6.1 2011/06/23 14:20:17 cherry Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.31 2011/01/14 09:09:18 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.31.6.1 2011/06/23 14:20:17 cherry Exp $");
 #endif /* not lint */
 
 
@@ -2711,7 +2711,8 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 
 #if 0
 			/* zero append space in buffer */
-			uvm_vnp_zerorange(vp, old_size, new_size - old_size);
+			ubc_zerorange(&vp->v_uobj, old_size,
+			    new_size - old_size, UBC_UNMAP_FLAG(vp));
 #endif
 	
 			udf_node_sanity_check(udf_node, &new_inflen, &new_lbrec);
@@ -2817,7 +2818,8 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 		c_ad.len = udf_rw32(len | flags);
 
 		/* TODO zero appened space in buffer! */
-		/* using uvm_vnp_zerorange(vp, old_size, new_size - old_size); ? */
+		/* using ubc_zerorange(&vp->v_uobj, old_size, */
+		/*    new_size - old_size, UBC_UNMAP_FLAG(vp)); ? */
 	}
 	memset(&s_ad, 0, sizeof(struct long_ad));
 
@@ -2987,7 +2989,8 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 		memset(data_pos + new_size, 0, old_size - new_size);
 
 		/* TODO zero appened space in buffer! */
-		/* using uvm_vnp_zerorange(vp, old_size, old_size - new_size); ? */
+		/* using ubc_zerorange(&vp->v_uobj, old_size, */
+		/*    old_size - new_size, UBC_UNMAP_FLAG(vp)); ? */
 
 		/* set new size for uvm */
 		uvm_vnp_setsize(vp, new_size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isapnp.c,v 1.25 2009/05/12 10:16:35 cegger Exp $	*/
+/*	$NetBSD: wss_isapnp.c,v 1.25.10.1 2011/06/23 14:20:02 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isapnp.c,v 1.25 2009/05/12 10:16:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isapnp.c,v 1.25.10.1 2011/06/23 14:20:02 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: wss_isapnp.c,v 1.25 2009/05/12 10:16:35 cegger Exp $
 int	wss_isapnp_match(device_t, cfdata_t, void *);
 void	wss_isapnp_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(wss_isapnp, sizeof(struct wss_softc),
+CFATTACH_DECL_NEW(wss_isapnp, sizeof(struct wss_softc),
     wss_isapnp_match, wss_isapnp_attach, NULL, NULL);
 
 /*
@@ -93,6 +93,7 @@ wss_isapnp_attach(device_t parent, device_t self, void *aux)
 
 	sc = device_private(self);
 	ac = &sc->sc_ad1848.sc_ad1848;
+	ac->sc_dev = self;
 	ipa = aux;
 	printf("\n");
 
@@ -172,6 +173,6 @@ wss_isapnp_attach(device_t parent, device_t self, void *aux)
 		arg.type = AUDIODEV_TYPE_OPL;
 		arg.hwif = 0;
 		arg.hdl = 0;
-		(void)config_found(&ac->sc_dev, &arg, audioprint);
+		(void)config_found(self, &arg, audioprint);
 	}
 }

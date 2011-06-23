@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.108 2011/02/02 15:25:27 chuck Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.108.2.1 2011/06/23 14:20:35 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.108 2011/02/02 15:25:27 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.108.2.1 2011/06/23 14:20:35 cherry Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -405,16 +405,16 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 	KASSERT(startva < endva);
 	KASSERT(endva <= VM_MAX_KERNEL_ADDRESS);
 
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 
 	for (curoff = start; curoff < end; curoff = nextoff) {
 		nextoff = curoff + PAGE_SIZE;
 		pg = uvm_pagelookup(uobj, curoff);
 		if (pg != NULL && pg->flags & PG_BUSY) {
 			pg->flags |= PG_WANTED;
-			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
+			UVM_UNLOCK_AND_WAIT(pg, uobj->vmobjlock, 0,
 				    "km_pgrm", 0);
-			mutex_enter(&uobj->vmobjlock);
+			mutex_enter(uobj->vmobjlock);
 			nextoff = curoff;
 			continue;
 		}
@@ -434,7 +434,7 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 			mutex_exit(&uvm_pageqlock);
 		}
 	}
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 
 	if (swpgonlydelta > 0) {
 		mutex_enter(&uvm_swap_data_lock);
@@ -497,10 +497,10 @@ uvm_km_check_empty(struct vm_map *map, vaddr_t start, vaddr_t end)
 			    (void *)va, (long long)pa);
 		}
 		if ((map->flags & VM_MAP_INTRSAFE) == 0) {
-			mutex_enter(&uvm_kernel_object->vmobjlock);
+			mutex_enter(uvm_kernel_object->vmobjlock);
 			pg = uvm_pagelookup(uvm_kernel_object,
 			    va - vm_map_min(kernel_map));
-			mutex_exit(&uvm_kernel_object->vmobjlock);
+			mutex_exit(uvm_kernel_object->vmobjlock);
 			if (pg) {
 				panic("uvm_km_check_empty: "
 				    "has page hashed at %p", (const void *)va);
@@ -655,16 +655,27 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size, uvm_flag_t flags)
 
 	size = round_page(size);
 
+
 	if (flags & UVM_KMF_PAGEABLE) {
+		/*
+		 * No need to lock for pmap, since the kernel is always
+		 * self-consistent.  The pages cannot be in use elsewhere.
+		 */
 		uvm_km_pgremove(addr, addr + size);
 		pmap_remove(pmap_kernel(), addr, addr + size);
+
 	} else if (flags & UVM_KMF_WIRED) {
+		/*
+		 * Note: uvm_km_pgremove_intrsafe() extracts mapping, thus
+		 * remove it after.  See comment below about KVA visibility.
+		 */
 		uvm_km_pgremove_intrsafe(map, addr, addr + size);
 		pmap_kremove(addr, size);
 	}
 
 	/*
-	 * uvm_unmap_remove calls pmap_update for us.
+	 * Note: uvm_unmap_remove() calls pmap_update() for us, before
+	 * KVA becomes globally available.
 	 */
 
 	uvm_unmap1(map, addr, addr + size, UVM_FLAG_QUANTUM|UVM_FLAG_VAONLY);

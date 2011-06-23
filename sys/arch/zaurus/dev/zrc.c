@@ -1,4 +1,4 @@
-/*	$NetBSD: zrc.c,v 1.6 2009/01/29 12:28:15 nonaka Exp $	*/
+/*	$NetBSD: zrc.c,v 1.6.12.1 2011/06/23 14:19:51 cherry Exp $	*/
 /*	$OpenBSD: zaurus_remote.c,v 1.1 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.6 2009/01/29 12:28:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.6.12.1 2011/06/23 14:19:51 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -36,10 +36,11 @@ __KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.6 2009/01/29 12:28:15 nonaka Exp $");
 
 #include <machine/intr.h>
 
-#include <zaurus/dev/scoopvar.h>
-#include <zaurus/dev/zsspvar.h>
 #include <zaurus/zaurus/zaurus_reg.h>
 #include <zaurus/zaurus/zaurus_var.h>
+#include <zaurus/dev/zsspvar.h>
+#include <zaurus/dev/scoopvar.h>
+#include <zaurus/dev/ioexpvar.h>
 
 #define RESCAN_INTERVAL		(hz/100)
 
@@ -119,10 +120,10 @@ struct wskbd_accessops zrc_accessops = {
 
 /* XXX what keys should be generated in translated mode? */
 static const keysym_t zrc_keydesc[] = {
-	KC(KEY_VOL_DOWN),	KS_minus,
-	KC(KEY_MUTE),		KS_m,
+	KC(KEY_VOL_DOWN),	KS_Cmd_VolumeUp,
+	KC(KEY_MUTE),		KS_Cmd_VolumeToggle,
 	KC(KEY_REWIND),		KS_b,
-	KC(KEY_VOL_UP),		KS_plus,
+	KC(KEY_VOL_UP),		KS_Cmd_VolumeDown,
 	KC(KEY_FORWARD),	KS_f,
 	KC(KEY_PLAY),		KS_p,
 	KC(KEY_STOP),		KS_s,
@@ -160,7 +161,7 @@ static int
 zrc_match(device_t parent, cfdata_t cf, void *aux)
 {
 
-	if (ZAURUS_ISC3000)
+	if (ZAURUS_ISC1000 || ZAURUS_ISC3000)
 		return 1;
 	return 0;
 }
@@ -190,7 +191,10 @@ zrc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Enable the pullup while waiting for an interrupt. */
-	scoop_akin_pullup(1);
+	if (ZAURUS_ISC1000)
+		ioexp_akin_pullup(1);
+	else
+		scoop_akin_pullup(1);
 
 	sc->sc_keydown = KEY_RELEASE;
 
@@ -210,7 +214,10 @@ zrc_intr(void *v)
 	/* just return if remote control isn't present */
 
 	pxa2x0_gpio_intr_mask(sc->sc_ih);
-	scoop_akin_pullup(0);
+	if (ZAURUS_ISC1000)
+		ioexp_akin_pullup(0);
+	else
+		scoop_akin_pullup(0);
 	sc->sc_key = zrc_scan();
 	sc->sc_scans = 0;
 	sc->sc_noise = 0;
@@ -292,7 +299,10 @@ zrc_timeout(void *v)
 		/* unmask interrupt again */
 		callout_stop(&sc->sc_to);
 		sc->sc_scans = 7;
-		scoop_akin_pullup(1);
+		if (ZAURUS_ISC1000)
+			ioexp_akin_pullup(1);
+		else
+			scoop_akin_pullup(1);
 		pxa2x0_gpio_intr_unmask(sc->sc_ih);
 	}
 }

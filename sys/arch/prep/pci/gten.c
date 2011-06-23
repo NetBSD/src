@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.18 2008/12/17 20:51:32 cegger Exp $	*/
+/*	$NetBSD: gten.c,v 1.18.12.1 2011/06/23 14:19:36 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.18 2008/12/17 20:51:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.18.12.1 2011/06/23 14:19:36 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -54,11 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.18 2008/12/17 20:51:32 cegger Exp $");
 #include <machine/bus.h>
 #include <machine/gtenvar.h>
 
-static	int	gten_match(struct device *, struct cfdata *, void *);
-static	void	gten_attach(struct device *, struct device *, void *);
+static	int	gten_match(device_t, cfdata_t, void *);
+static	void	gten_attach(device_t, device_t, void *);
 static	int	gten_print(void *, const char *);
 
-CFATTACH_DECL(gten, sizeof(struct gten_softc),
+CFATTACH_DECL_NEW(gten, sizeof(struct gten_softc),
     gten_match, gten_attach, NULL, NULL);
 
 static struct rasops_info gten_console_ri;
@@ -105,7 +105,7 @@ static int gten_putcmap(struct gten_softc *, struct wsdisplay_cmap *);
 #define	GTEN_VRAM_OFFSET	0xf00000
 
 static int
-gten_match(struct device *parent, struct cfdata *match, void *aux)
+gten_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -117,9 +117,9 @@ gten_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-gten_attach(struct device *parent, struct device *self, void *aux)
+gten_attach(device_t parent, device_t self, void *aux)
 {
-	struct gten_softc *gt = (struct gten_softc *)self;
+	struct gten_softc *gt = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct wsemuldisplaydev_attach_args a;
 	int console = (pa->pa_tag == gten_console_pcitag);
@@ -134,6 +134,7 @@ gten_attach(struct device *parent, struct device *self, void *aux)
 			error);
 		return;
 	}
+	gt->gt_dev = self;
 	if (console) {
 		gt->gt_ri = &gten_console_ri;
 		gt->gt_nscreens = 1;
@@ -174,11 +175,11 @@ gten_attach(struct device *parent, struct device *self, void *aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s\n", devinfo);
 	format_bytes(pbuf, sizeof(pbuf), gt->gt_psize);
-	aprint_normal("%s: %s, %dx%d, %dbpp\n", self->dv_xname, pbuf,
+	aprint_normal_dev(self, "%s: %s, %dx%d, %dbpp\n", pbuf,
 	       gt->gt_ri->ri_width, gt->gt_ri->ri_height,
 	       gt->gt_ri->ri_depth);
 #if defined(DEBUG)
-	aprint_debug("%s: text %dx%d, =+%d+%d\n", self->dv_xname,
+	aprint_debug_dev(self, "%s: text %dx%d, =+%d+%d\n",
 	       gt->gt_ri->ri_cols, gt->gt_ri->ri_rows,
 	       gt->gt_ri->ri_xorigin, gt->gt_ri->ri_yorigin);
 

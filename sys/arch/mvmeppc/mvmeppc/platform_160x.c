@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_160x.c,v 1.7 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: platform_160x.c,v 1.7.32.1 2011/06/23 14:19:24 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.7 2008/04/28 20:23:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.7.32.1 2011/06/23 14:19:24 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.7 2008/04/28 20:23:29 martin Exp
 
 static int	p160x_match(struct platform *);
 static void	p160x_pci_intr_fixup(int, int, int *);
-static void	p160x_cpu_setup(struct device *);
+static void	p160x_cpu_setup(device_t);
 static void	p160x_reset(void);
 static void	p160x_pic_setup(void);
 
@@ -132,7 +132,7 @@ p160x_pci_intr_fixup(int bus, int dev, int *line)
 }
 
 static void
-p160x_cpu_setup(struct device *dev)
+p160x_cpu_setup(device_t dev)
 {
 }
 

@@ -39,7 +39,7 @@ static ASN1_STRING  *encode_gost_algor_params(const EVP_PKEY *key)
 	ASN1_STRING *params = ASN1_STRING_new();
 	GOST_KEY_PARAMS *gkp = GOST_KEY_PARAMS_new();
 	int pkey_param_nid = NID_undef;
-	int cipher_param_nid = NID_undef;
+
 	if (!params || !gkp) 
 		{
 		GOSTerr(GOST_F_ENCODE_GOST_ALGOR_PARAMS,
@@ -52,7 +52,6 @@ static ASN1_STRING  *encode_gost_algor_params(const EVP_PKEY *key)
 		{
 		case NID_id_GostR3410_2001:
 			pkey_param_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(EVP_PKEY_get0((EVP_PKEY *)key)));
-			cipher_param_nid = get_encryption_params(NULL)->nid;
 			break;
 		case NID_id_GostR3410_94:
 			pkey_param_nid = (int) gost94_nid_by_params(EVP_PKEY_get0((EVP_PKEY *)key));
@@ -64,7 +63,6 @@ static ASN1_STRING  *encode_gost_algor_params(const EVP_PKEY *key)
 				params=NULL;
 				goto err;
 				}	
-			cipher_param_nid = get_encryption_params(NULL)->nid;
 			break;
 		}	
 	gkp->key_params = OBJ_nid2obj(pkey_param_nid);
@@ -801,7 +799,7 @@ static int mac_ctrl_gost(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 	switch (op)
 		{
 		case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
-			*(int *)arg2 = NID_undef;
+			*(int *)arg2 = NID_id_Gost28147_89_MAC;
 			return 2;
 		}
 	return -2;

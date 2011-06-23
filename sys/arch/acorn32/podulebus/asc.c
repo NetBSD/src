@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.16 2009/05/12 06:54:10 cegger Exp $	*/
+/*	$NetBSD: asc.c,v 1.16.10.1 2011/06/23 14:18:48 cherry Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -98,7 +98,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.16 2009/05/12 06:54:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.16.10.1 2011/06/23 14:18:48 cherry Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -126,8 +126,8 @@ __KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.16 2009/05/12 06:54:10 cegger Exp $");
 #include <acorn32/podulebus/ascreg.h>
 #include <acorn32/podulebus/ascvar.h>
 
-void ascattach		(struct device *, struct device *, void *);
-int  ascmatch		(struct device *, struct cfdata *, void *);
+void ascattach		(device_t, device_t, void *);
+int  ascmatch		(device_t, cfdata_t, void *);
 
 void asc_enintr		(struct sbic_softc *);
 
@@ -160,7 +160,7 @@ int asc_poll = 0;
 #endif
 
 int
-ascmatch(struct device *pdp, struct cfdata *cf, void *auxp)
+ascmatch(device_t pdp, cfdata_t cf, void *auxp)
 {
 	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
 
@@ -181,7 +181,7 @@ ascmatch(struct device *pdp, struct cfdata *cf, void *auxp)
 }
 
 void
-ascattach(struct device *pdp, struct device *dp, void *auxp)
+ascattach(device_t pdp, device_t dp, void *auxp)
 {
 	/* volatile struct sdmac *rp;*/
 	struct asc_softc *sc;

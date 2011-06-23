@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.12 2010/06/09 04:41:43 kiyohara Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.12.6.1 2011/06/23 14:19:32 cherry Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.12 2010/06/09 04:41:43 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.12.6.1 2011/06/23 14:19:32 cherry Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -205,9 +205,9 @@ canonicalize_bootpath(void)
  * known OF boot device.
  */
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
-	static struct device *parent;
+	static device_t parent;
 	static char *bp = bootpath + 1, *cp = cbootpath;
 	unsigned long addr, addr2;
 	char *p;
@@ -474,7 +474,7 @@ void
 cpu_rootconf(void)
 {
 	printf("boot device: %s\n",
-	    booted_device ? booted_device->dv_xname : "<unknown>");
+	    booted_device ? device_xname(booted_device) : "<unknown>");
 
 	setroot(booted_device, booted_partition);
 }

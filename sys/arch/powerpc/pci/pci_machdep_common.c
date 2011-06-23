@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.10 2011/04/04 20:37:53 dyoung Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.10.2.1 2011/06/23 14:19:33 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.10 2011/04/04 20:37:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.10.2.1 2011/06/23 14:19:33 cherry Exp $");
+
+#define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,12 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.10 2011/04/04 20:37:53 dyou
 #include <sys/extent.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
-
-#define _POWERPC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -206,11 +206,11 @@ bad:
 #include <machine/isa_machdep.h>
 #include "isa.h"
 
-void *genppc_pciide_machdep_compat_intr_establish(struct device *,
+void *genppc_pciide_machdep_compat_intr_establish(device_t,
     struct pci_attach_args *, int, int (*)(void *), void *);
 
 void *
-genppc_pciide_machdep_compat_intr_establish(struct device *dev,
+genppc_pciide_machdep_compat_intr_establish(device_t dev,
     struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 #if NISA > 0
@@ -221,7 +221,7 @@ genppc_pciide_machdep_compat_intr_establish(struct device *dev,
 	cookie = isa_intr_establish(NULL, irq, IST_LEVEL, IPL_BIO, func, arg);
 	if (cookie == NULL)
 		return (NULL);
-	printf("%s: %s channel interrupting at irq %d\n", dev->dv_xname,
+	aprint_normal_dev(dev, "%s channel interrupting at irq %d\n",
 	    PCIIDE_CHANNEL_NAME(chan), irq);
 	return (cookie);
 #else

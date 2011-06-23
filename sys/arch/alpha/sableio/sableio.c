@@ -1,4 +1,4 @@
-/* $NetBSD: sableio.c,v 1.12 2008/04/28 20:23:12 martin Exp $ */
+/* $NetBSD: sableio.c,v 1.12.32.1 2011/06/23 14:18:55 cherry Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.12 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.12.32.1 2011/06/23 14:18:55 cherry Exp $");
 
 #include "isadma.h"
 
@@ -87,7 +87,7 @@ const struct sableio_dev {
 };
 
 struct sableio_softc {
-	struct device	sc_dev;		/* base device */
+	device_t	sc_dev;		/* base device */
 
 	/*
 	 * We have to deal with ISA DMA, so that means we have to
@@ -97,10 +97,10 @@ struct sableio_softc {
 	struct alpha_isa_chipset sc_isa_chipset;
 };
 
-int	sableio_match(struct device *, struct cfdata *, void *);
-void	sableio_attach(struct device *, struct device *, void *);
+int	sableio_match(device_t, cfdata_t, void *);
+void	sableio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(sableio, sizeof(struct sableio_softc),
+CFATTACH_DECL_NEW(sableio, sizeof(struct sableio_softc),
     sableio_match, sableio_attach, NULL, NULL);
 
 int	sableio_print(void *, const char *);
@@ -108,7 +108,7 @@ int	sableio_print(void *, const char *);
 struct sableio_softc *sableio_attached;
 
 int
-sableio_match(struct device *parent, struct cfdata *cf, void *aux)
+sableio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
 
@@ -132,18 +132,19 @@ sableio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-sableio_attach(struct device *parent, struct device *self, void *aux)
+sableio_attach(device_t parent, device_t self, void *aux)
 {
-	struct sableio_softc *sc = (void *) self;
+	struct sableio_softc *sc = device_private(self);
 	struct pcibus_attach_args *pba = aux;
 	struct sableio_attach_args sa;
 	bus_dma_tag_t dmat;
 	int i;
 	int locs[SABLEIOCF_NLOCS];
 
-	printf(": Sable STDIO module\n");
+	aprint_normal(": Sable STDIO module\n");
 
 	sableio_attached = sc;
+	sc->sc_dev = self;
 
 	dmat = alphabus_dma_get_tag(pba->pba_dmat, ALPHA_BUS_ISA);
 

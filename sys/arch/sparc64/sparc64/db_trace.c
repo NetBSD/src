@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.47 2011/04/15 08:43:12 mrg Exp $ */
+/*	$NetBSD: db_trace.c,v 1.47.2.1 2011/06/23 14:19:43 cherry Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.47 2011/04/15 08:43:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.47.2.1 2011/06/23 14:19:43 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -67,7 +67,6 @@ kload(db_addr_t addr)
 	return val;
 }
 #define	KLOAD(x)	kload((db_addr_t)(u_long)&(x))
-#define frame32 frame	/* XXX */
 #endif
 
 void
@@ -278,7 +277,7 @@ db_print_window(uint64_t frame)
 				  f->fr_local[4], f->fr_local[5], f->fr_local[6], f->fr_local[7]);
 			db_printf("%8x %8x %8x %8x %8x %8x %8x=sp %8x=pc:",
 				  f->fr_arg[0], f->fr_arg[1], f->fr_arg[2], f->fr_arg[3],
-				  f->fr_arg[4], f->fr_arg[5], (unsigned)(uintptr_t)f->fr_fp, f->fr_pc);
+				  f->fr_arg[4], f->fr_arg[5], f->fr_fp, f->fr_pc);
 			db_printsym(f->fr_pc, DB_STGY_PROC, db_printf);
 			db_printf("\n");
 		} else {
@@ -295,7 +294,7 @@ db_print_window(uint64_t frame)
 				  f->fr_arg[0], f->fr_arg[1], 
 				  f->fr_arg[2], f->fr_arg[3],
 				  f->fr_arg[4], f->fr_arg[5], 
-				  (unsigned)(uintptr_t)f->fr_fp, f->fr_pc);
+				  f->fr_fp, f->fr_pc);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.288 2011/03/06 17:08:39 bouyer Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.288.2.1 2011/06/23 14:20:32 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.288 2011/03/06 17:08:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.288.2.1 2011/06/23 14:20:32 cherry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1131,10 +1131,10 @@ lfs_unmount(struct mount *mp, int mntflags)
 	if ((error = VFS_SYNC(mp, 1, l->l_cred)) != 0)
 		return (error);
 	vp = fs->lfs_ivnode;
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	if (LIST_FIRST(&vp->v_dirtyblkhd))
 		panic("lfs_unmount: still dirty blocks on ifile vnode");
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	/* Explicitly write the superblock, to update serial and pflags */
 	fs->lfs_pflags |= LFS_PF_CLEAN;
@@ -1305,7 +1305,8 @@ retry:
 	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 		return (0);
 
-	if ((error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, &vp)) != 0) {
+	error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, NULL, &vp);
+	if (error) {
 		*vpp = NULL;
 		 return (error);
 	}
@@ -1755,9 +1756,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			 * recieves.  However this buffer needs one extra to
 			 * account for aiodone.
 			 */
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			vp->v_numoutput++;
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 		} else {
 			bp = getiobuf(NULL, true);
 			UVMHIST_LOG(ubchist, "vp %p bp %p num now %d",
@@ -1774,9 +1775,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 
 		/* XXX This is silly ... is this necessary? */
 		mutex_enter(&bufcache_lock);
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		bgetvp(vp, bp);
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		mutex_exit(&bufcache_lock);
 
 		bp->b_lblkno = lblkno(fs, offset);
@@ -1809,7 +1810,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	 * We can't write the pages, for whatever reason.
 	 * Clean up after ourselves, and make the caller try again.
 	 */
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 
 	/* Tell why we're here, if we know */
 	if (ip->i_lfs_iflags & LFSI_NO_GOP_WRITE) {
@@ -1851,7 +1852,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	/* uvm_pageunbusy takes care of PG_BUSY, PG_WANTED */
 	uvm_page_unbusy(pgs, npages);
 	mutex_exit(&uvm_pageqlock);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 	return EAGAIN;
 }
 

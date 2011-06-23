@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99 2011/03/04 22:25:26 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99.2.1 2011/06/23 14:19:12 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2011/03/04 22:25:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99.2.1 2011/06/23 14:19:12 cherry Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2011/03/04 22:25:26 joerg Exp $");
 #include <uvm/uvm.h>
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <machine/pdc.h>
 #include <machine/iomod.h>
@@ -256,9 +257,6 @@ static long hp700_io_extent_store[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
 struct pool hppa_fppl;
 struct fpreg lwp0_fpregs;
 
-/* Virtual page frame for /dev/mem (see mem.c) */
-vaddr_t vmmap;
-
 /* Our exported CPU info */
 struct cpu_info cpus[HPPA_MAXCPUS] = {
 	{
@@ -414,8 +412,6 @@ const struct hppa_cpu_info cpu_types[] = {
 #endif
 	{ "" }
 };
-
-extern kmutex_t vmmap_lock;
 
 void
 hppa_init(paddr_t start, void *bi)
@@ -934,16 +930,6 @@ cpu_startup(void)
 #endif
 	format_bytes(pbuf[0], sizeof(pbuf[0]), ptoa(uvmexp.free));
 	printf("avail mem = %s\n", pbuf[0]);
-
-	/*
-	 * Allocate a virtual page (for use by /dev/mem)
-	 * This page is handed to pmap_enter() therefore
-	 * it has to be in the normal kernel VA range.
-	 */
-	vmmap = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-
-	mutex_init(&vmmap_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -2097,3 +2083,30 @@ module_init_md(void)
 {
 }
 #endif /* MODULAR */
+
+bool
+mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
+{
+
+	if (atop(paddr) > physmem) {
+		return false;
+	}
+	*vaddr = paddr;
+
+	return true;
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return (atop(pa) > physmem) ? EFAULT : 0;
+}
+
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+
+	*handled = false;
+	return mm_md_physacc((paddr_t)ptr, prot);
+}

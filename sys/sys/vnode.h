@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.230 2011/04/27 09:46:27 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.230.2.1 2011/06/23 14:20:29 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -208,6 +208,7 @@ typedef struct vnode vnode_t;
 #define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
 #define	VI_MARKER	0x00008000	/* Dummy marker vnode */
 #define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
+#define	VI_LOCKSHARE	0x00040000	/* v_interlock is shared */
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
 #define	VI_INACTPEND	0x00100000	/* inactivation is pending */
 #define	VI_INACTREDO	0x00200000	/* need to redo VOP_INACTIVE() */
@@ -356,9 +357,9 @@ static __inline void
 holdrele(struct vnode *vp)
 {
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	holdrelel(vp);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 }
 
 /*
@@ -368,9 +369,9 @@ static __inline void
 vhold(struct vnode *vp)
 {
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	vholdl(vp);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 }
 
 static __inline bool
@@ -386,9 +387,9 @@ static __inline void
 VN_KNOTE(struct vnode *vp, long hint)
 {
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	KNOTE(&vp->v_klist, hint);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 }
 
 /*
@@ -544,7 +545,7 @@ void	vfs_vnode_sysinit(void);
 int 	bdevvp(dev_t, struct vnode **);
 int 	cdevvp(dev_t, struct vnode **);
 int 	getnewvnode(enum vtagtype, struct mount *, int (**)(void *),
-	    struct vnode **);
+	    kmutex_t *, struct vnode **);
 void	ungetnewvnode(struct vnode *);
 int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, kauth_cred_t);
 void 	vattr_null(struct vattr *);

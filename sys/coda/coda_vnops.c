@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.79 2011/05/19 03:11:55 rmind Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.79.2.1 2011/06/23 14:19:52 cherry Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.79 2011/05/19 03:11:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.79.2.1 2011/06/23 14:19:52 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1914,7 +1914,7 @@ make_coda_node(CodaFid *fid, struct mount *vfsp, short type)
 	cp = coda_alloc();
 	cp->c_fid = *fid;
 
-	err = getnewvnode(VT_CODA, vfsp, coda_vnodeop_p, &vp);
+	err = getnewvnode(VT_CODA, vfsp, coda_vnodeop_p, NULL, &vp);
 	if (err) {
 	    panic("coda: getnewvnode returned error %d", err);
 	}
@@ -1971,7 +1971,7 @@ coda_getpages(void *v)
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
 		printf("coda_getpages: control object %p\n", vp);
-		mutex_exit(&vp->v_uobj.vmobjlock);
+		mutex_exit(vp->v_uobj.vmobjlock);
 		return(EINVAL);
 	}
 
@@ -1987,7 +1987,7 @@ coda_getpages(void *v)
 	waslocked = VOP_ISLOCKED(vp);
 
 	/* Drop the vmobject lock. */
-	mutex_exit(&vp->v_uobj.vmobjlock);
+	mutex_exit(vp->v_uobj.vmobjlock);
 
 	/* Get container file if not already present. */
 	if (cp->c_ovp == NULL) {
@@ -2035,7 +2035,7 @@ coda_getpages(void *v)
 	ap->a_vp = cp->c_ovp;
 
 	/* Get the lock on the container vnode, and call getpages on it. */
-	mutex_enter(&ap->a_vp->v_uobj.vmobjlock);
+	mutex_enter(ap->a_vp->v_uobj.vmobjlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
 
 	/* If we opened the vnode, we must close it. */
@@ -2076,7 +2076,7 @@ coda_putpages(void *v)
 	int error;
 
 	/* Drop the vmobject lock. */
-	mutex_exit(&vp->v_uobj.vmobjlock);
+	mutex_exit(vp->v_uobj.vmobjlock);
 
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
@@ -2097,7 +2097,7 @@ coda_putpages(void *v)
 	ap->a_vp = cp->c_ovp;
 
 	/* Get the lock on the container vnode, and call putpages on it. */
-	mutex_enter(&ap->a_vp->v_uobj.vmobjlock);
+	mutex_enter(ap->a_vp->v_uobj.vmobjlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 
 	return error;

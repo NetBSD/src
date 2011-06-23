@@ -7,7 +7,7 @@
 
 #include "abi.h"
 
-RCSID("$NetBSD: s_ceil.S,v 1.7 2003/07/26 19:25:00 salo Exp $")
+RCSID("$NetBSD: s_ceil.S,v 1.7.52.1 2011/06/23 14:18:39 cherry Exp $")
 
 ENTRY(ceil)
 #ifdef __i386__
@@ -22,7 +22,7 @@ ENTRY(ceil)
 	movw	%dx,-8(%ebp)
 	fldcw	-8(%ebp)		/* load modfied control word */
 
-	fldl	8(%ebp);		/* round */
+	fldl	8(%ebp)			/* round */
 	frndint
 
 	fldcw	-4(%ebp)		/* restore original control word */

@@ -186,6 +186,9 @@ typedef unsigned int u_int;
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
+#ifndef OPENSSL_NO_SRP
+#include <openssl/srp.h>
+#endif
 #include "s_apps.h"
 #include "timeouts.h"
 
@@ -369,6 +372,40 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
         }
 #endif
 
+#ifndef OPENSSL_NO_SRP
+/* This is a context that we pass to callbacks */
+typedef struct srpsrvparm_st
+	{
+	int verbose;
+	char *login;
+	SRP_VBASE *vb;
+	} srpsrvparm;
+
+static int MS_CALLBACK ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
+	{
+	srpsrvparm *p = (srpsrvparm *) arg;
+	SRP_user_pwd *user;
+
+	p->login = BUF_strdup(SSL_get_srp_username(s));
+	BIO_printf(bio_err, "SRP username = \"%s\"\n", p->login);
+
+	user = SRP_VBASE_get_by_user(p->vb, p->login);
+	if (user == NULL)
+		{
+		BIO_printf(bio_err, "User %s doesn't exist\n", p->login);
+		return SSL3_AL_FATAL;
+		}
+	if (SSL_set_srp_server_param(s, user->N, user->g, user->s, user->v,
+				     user->info) < 0)
+		{
+		*ad = SSL_AD_INTERNAL_ERROR;
+		return SSL3_AL_FATAL;
+		}
+	return SSL_ERROR_NONE;
+	}
+
+#endif
+
 #ifdef MONOLITH
 static void s_server_init(void)
 	{
@@ -456,9 +493,14 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -jpake arg    - JPAKE secret to use\n");
 # endif
 #endif
+#ifndef OPENSSL_NO_SRP
+	BIO_printf(bio_err," -srpvfile file      - The verifier file for SRP\n");
+	BIO_printf(bio_err," -srpuserseed string - A seed string for a default user salt.\n");
+#endif
 	BIO_printf(bio_err," -ssl2         - Just talk SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - Just talk SSLv3\n");
-	BIO_printf(bio_err," -tls1_1       - Just talk TLSv1_1\n");
+	BIO_printf(bio_err," -tls1_2       - Just talk TLSv1.2\n");
+	BIO_printf(bio_err," -tls1_1       - Just talk TLSv1.1\n");
 	BIO_printf(bio_err," -tls1         - Just talk TLSv1\n");
 	BIO_printf(bio_err," -dtls1        - Just talk DTLSv1\n");
 	BIO_printf(bio_err," -timeout      - Enable timeouts\n");
@@ -468,6 +510,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -no_ssl3      - Just disable SSLv3\n");
 	BIO_printf(bio_err," -no_tls1      - Just disable TLSv1\n");
 	BIO_printf(bio_err," -no_tls1_1    - Just disable TLSv1.1\n");
+	BIO_printf(bio_err," -no_tls1_2    - Just disable TLSv1.2\n");
 #ifndef OPENSSL_NO_DH
 	BIO_printf(bio_err," -no_dhe       - Disable ephemeral DH\n");
 #endif
@@ -874,12 +917,21 @@ int MAIN(int argc, char *argv[])
 	/* by default do not send a PSK identity hint */
 	static char *psk_identity_hint=NULL;
 #endif
+#ifndef OPENSSL_NO_SRP
+	char *srpuserseed = NULL;
+	char *srp_verifier_file = NULL;
+	srpsrvparm p;
+#endif
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	meth=SSLv23_server_method();
 #elif !defined(OPENSSL_NO_SSL3)
 	meth=SSLv3_server_method();
 #elif !defined(OPENSSL_NO_SSL2)
 	meth=SSLv2_server_method();
+#elif !defined(OPENSSL_NO_TLS1)
+	meth=TLSv1_server_method();
+#else
+  /*  #error no SSL version enabled */
 #endif
 
 	local_argc=argc;
@@ -1112,6 +1164,20 @@ int MAIN(int argc, char *argv[])
 				}
 			}
 #endif
+#ifndef OPENSSL_NO_SRP
+		else if (strcmp(*argv, "-srpvfile") == 0)
+			{
+			if (--argc < 1) goto bad;
+			srp_verifier_file = *(++argv);
+			meth=TLSv1_server_method();
+			}
+		else if (strcmp(*argv, "-srpuserseed") == 0)
+			{
+			if (--argc < 1) goto bad;
+			srpuserseed = *(++argv);
+			meth=TLSv1_server_method();
+			}
+#endif
 		else if	(strcmp(*argv,"-www") == 0)
 			{ www=1; }
 		else if	(strcmp(*argv,"-WWW") == 0)
@@ -1122,10 +1188,12 @@ int MAIN(int argc, char *argv[])
 			{ off|=SSL_OP_NO_SSLv2; }
 		else if	(strcmp(*argv,"-no_ssl3") == 0)
 			{ off|=SSL_OP_NO_SSLv3; }
-		else if	(strcmp(*argv,"-no_tls1_1") == 0)
-			{ off|=SSL_OP_NO_TLSv1_1; }
 		else if	(strcmp(*argv,"-no_tls1") == 0)
 			{ off|=SSL_OP_NO_TLSv1; }
+		else if	(strcmp(*argv,"-no_tls1_1") == 0)
+			{ off|=SSL_OP_NO_TLSv1_1; }
+		else if	(strcmp(*argv,"-no_tls1_2") == 0)
+			{ off|=SSL_OP_NO_TLSv1_2; }
 		else if	(strcmp(*argv,"-no_comp") == 0)
 			{ off|=SSL_OP_NO_COMPRESSION; }
 #ifndef OPENSSL_NO_TLSEXT
@@ -1141,10 +1209,12 @@ int MAIN(int argc, char *argv[])
 			{ meth=SSLv3_server_method(); }
 #endif
 #ifndef OPENSSL_NO_TLS1
-		else if	(strcmp(*argv,"-tls1_1") == 0)
-			{ meth=TLSv1_1_server_method(); }
 		else if	(strcmp(*argv,"-tls1") == 0)
 			{ meth=TLSv1_server_method(); }
+		else if	(strcmp(*argv,"-tls1_1") == 0)
+			{ meth=TLSv1_1_server_method(); }
+		else if	(strcmp(*argv,"-tls1_2") == 0)
+			{ meth=TLSv1_2_server_method(); }
 #endif
 #ifndef OPENSSL_NO_DTLS1
 		else if	(strcmp(*argv,"-dtls1") == 0)
@@ -1393,6 +1463,9 @@ bad:
 	SSL_CTX_set_quiet_shutdown(ctx,1);
 	if (bugs) SSL_CTX_set_options(ctx,SSL_OP_ALL);
 	if (hack) SSL_CTX_set_options(ctx,SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
+	/* HACK while TLS v1.2 is disabled by default */
+	if (!(off & SSL_OP_NO_TLSv1_2))
+		SSL_CTX_clear_options(ctx, SSL_OP_NO_TLSv1_2);
 	SSL_CTX_set_options(ctx,off);
 	/* DTLS: partial reads end up discarding unread UDP bytes :-( 
 	 * Setting read ahead solves this problem.
@@ -1690,6 +1763,23 @@ bad:
 		}
 #endif
 
+#ifndef OPENSSL_NO_SRP
+	if (srp_verifier_file != NULL)
+		{
+		p.vb = SRP_VBASE_new(srpuserseed);
+		if ((ret = SRP_VBASE_init(p.vb, srp_verifier_file)) != SRP_NO_ERROR)
+			{
+			BIO_printf(bio_err,
+				   "Cannot initialize SRP verifier file \"%s\":ret=%d\n",
+				   srp_verifier_file, ret);
+				goto end;
+			}
+		SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE,verify_callback);
+		SSL_CTX_set_srp_cb_arg(ctx, &p);  			
+		SSL_CTX_set_srp_username_callback(ctx, ssl_srp_server_param_cb);
+		}
+	else
+#endif
 	if (CAfile != NULL)
 		{
 		SSL_CTX_set_client_CA_list(ctx,SSL_load_client_CA_file(CAfile));
@@ -1771,6 +1861,9 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	unsigned long l;
 	SSL *con=NULL;
 	BIO *sbio;
+#ifndef OPENSSL_NO_KRB5
+	KSSL_CTX *kctx;
+#endif
 	struct timeval timeout;
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS_R5)
 	struct timeval tv;
@@ -1811,12 +1904,11 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		}
 #endif
 #ifndef OPENSSL_NO_KRB5
-		if ((con->kssl_ctx = kssl_ctx_new()) != NULL)
+		if ((kctx = kssl_ctx_new()) != NULL)
                         {
-                        kssl_ctx_setstring(con->kssl_ctx, KSSL_SERVICE,
-								KRB5SVC);
-                        kssl_ctx_setstring(con->kssl_ctx, KSSL_KEYTAB,
-								KRB5KEYTAB);
+			SSL_set0_kssl_ctx(con, kctx);
+                        kssl_ctx_setstring(kctx, KSSL_SERVICE, KRB5SVC);
+                        kssl_ctx_setstring(kctx, KSSL_KEYTAB, KRB5KEYTAB);
                         }
 #endif	/* OPENSSL_NO_KRB5 */
 		if(context)
@@ -1879,7 +1971,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 
 	if (s_debug)
 		{
-		con->debug=1;
+		SSL_set_debug(con, 1);
 		BIO_set_callback(SSL_get_rbio(con),bio_dump_callback);
 		BIO_set_callback_arg(SSL_get_rbio(con),(char *)bio_s_out);
 		}
@@ -2165,6 +2257,9 @@ static int init_ssl_connection(SSL *con)
 	X509 *peer;
 	long verify_error;
 	MS_STATIC char buf[BUFSIZ];
+#ifndef OPENSSL_NO_KRB5
+	char *client_princ;
+#endif
 
 	if ((i=SSL_accept(con)) <= 0)
 		{
@@ -2204,15 +2299,16 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out,"Shared ciphers:%s\n",buf);
 	str=SSL_CIPHER_get_name(SSL_get_current_cipher(con));
 	BIO_printf(bio_s_out,"CIPHER is %s\n",(str != NULL)?str:"(NONE)");
-	if (con->hit) BIO_printf(bio_s_out,"Reused session-id\n");
+	if (SSL_cache_hit(con)) BIO_printf(bio_s_out,"Reused session-id\n");
 	if (SSL_ctrl(con,SSL_CTRL_GET_FLAGS,0,NULL) &
 		TLS1_FLAGS_TLS_PADDING_BUG)
 		BIO_printf(bio_s_out,"Peer has incorrect TLSv1 block padding\n");
 #ifndef OPENSSL_NO_KRB5
-	if (con->kssl_ctx->client_princ != NULL)
+	client_princ = kssl_ctx_get0_client_princ(SSL_get0_kssl_ctx(con));
+	if (client_princ != NULL)
 		{
 		BIO_printf(bio_s_out,"Kerberos peer principal is %s\n",
-			con->kssl_ctx->client_princ);
+								client_princ);
 		}
 #endif /* OPENSSL_NO_KRB5 */
 	BIO_printf(bio_s_out, "Secure Renegotiation IS%s supported\n",
@@ -2233,6 +2329,9 @@ err:
 	if (bio != NULL) BIO_free(bio);
 	return(ret);
 	}
+#endif
+#ifndef OPENSSL_NO_KRB5
+	char *client_princ;
 #endif
 
 #if 0
@@ -2260,11 +2359,13 @@ static int www_body(char *hostname, int s, unsigned char *context)
 	{
 	char *buf=NULL;
 	int ret=1;
-	int i,j,k,blank,dot;
+	int i,j,k,dot;
 	SSL *con;
 	const SSL_CIPHER *c;
 	BIO *io,*ssl_bio,*sbio;
-	long total_bytes;
+#ifndef OPENSSL_NO_KRB5
+	KSSL_CTX *kctx;
+#endif
 
 	buf=OPENSSL_malloc(bufsize);
 	if (buf == NULL) return(0);
@@ -2296,10 +2397,10 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			}
 #endif
 #ifndef OPENSSL_NO_KRB5
-	if ((con->kssl_ctx = kssl_ctx_new()) != NULL)
+	if ((kctx = kssl_ctx_new()) != NULL)
 		{
-		kssl_ctx_setstring(con->kssl_ctx, KSSL_SERVICE, KRB5SVC);
-		kssl_ctx_setstring(con->kssl_ctx, KSSL_KEYTAB, KRB5KEYTAB);
+		kssl_ctx_setstring(kctx, KSSL_SERVICE, KRB5SVC);
+		kssl_ctx_setstring(kctx, KSSL_KEYTAB, KRB5KEYTAB);
 		}
 #endif	/* OPENSSL_NO_KRB5 */
 	if(context) SSL_set_session_id_context(con, context,
@@ -2325,7 +2426,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 
 	if (s_debug)
 		{
-		con->debug=1;
+		SSL_set_debug(con, 1);
 		BIO_set_callback(SSL_get_rbio(con),bio_dump_callback);
 		BIO_set_callback_arg(SSL_get_rbio(con),(char *)bio_s_out);
 		}
@@ -2335,7 +2436,6 @@ static int www_body(char *hostname, int s, unsigned char *context)
 		SSL_set_msg_callback_arg(con, bio_s_out);
 		}
 
-	blank=0;
 	for (;;)
 		{
 		if (hack)
@@ -2447,7 +2547,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 					}
 				BIO_puts(io,"\n");
 				}
-			BIO_printf(io,((con->hit)
+			BIO_printf(io,(SSL_cache_hit(con)
 				?"---\nReused, "
 				:"---\nNew, "));
 			c=SSL_get_current_cipher(con);
@@ -2565,7 +2665,6 @@ static int www_body(char *hostname, int s, unsigned char *context)
                                         BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/plain\r\n\r\n");
                                 }
 			/* send the file */
-			total_bytes=0;
 			for (;;)
 				{
 				i=BIO_read(file,buf,bufsize);

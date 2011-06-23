@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.21 2008/02/28 00:18:08 macallan Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.21.36.1 2011/06/23 14:19:21 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@ extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 /*
  * Functions provided to machine-independent PCI code.
  */
-void	macppc_pci_attach_hook(struct device *, struct device *,
+void	macppc_pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 
 /*

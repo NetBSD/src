@@ -1,11 +1,11 @@
-# $NetBSD: md.mvmeppc,v 1.12 2010/03/02 21:54:06 matt Exp $
+# $NetBSD: md.mvmeppc,v 1.12.4.1 2011/06/23 14:18:21 cherry Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mvmeppc				comp-c-include
 ./usr/include/mvmeppc/_G_config.h		comp-obsolete		obsolete
 ./usr/include/mvmeppc/ansi.h			comp-c-include
 ./usr/include/mvmeppc/aout_machdep.h		comp-c-include
 ./usr/include/mvmeppc/asm.h			comp-c-include
-./usr/include/mvmeppc/atomic.h			comp-c-include
+./usr/include/mvmeppc/atomic.h			comp-obsolete		obsolete
 ./usr/include/mvmeppc/bat.h			comp-obsolete		obsolete
 ./usr/include/mvmeppc/bootinfo.h		comp-c-include
 ./usr/include/mvmeppc/bswap.h			comp-c-include
