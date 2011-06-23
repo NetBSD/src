@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_machdep.c,v 1.1 2011/06/21 15:23:57 kiyohara Exp $	*/
+/*	$NetBSD: wzero3_machdep.c,v 1.2 2011/06/23 12:40:32 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_machdep.c,v 1.1 2011/06/21 15:23:57 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_machdep.c,v 1.2 2011/06/23 12:40:32 nonaka Exp $");
 
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -231,16 +231,9 @@ consinit(void)
 	} else {
 #if (NLCD > 0)
 #if NWZERO3LCD > 0
-		if (platid_match(&platid,&platid_mask_MACH_SHARP_WZERO3_WS003SH)
-		 || platid_match(&platid,&platid_mask_MACH_SHARP_WZERO3_WS004SH)
-		 || platid_match(&platid,&platid_mask_MACH_SHARP_WZERO3_WS007SH)
-		 || platid_match(&platid,&platid_mask_MACH_SHARP_WZERO3_WS011SH)
-		 || platid_match(&platid,&platid_mask_MACH_SHARP_WZERO3_WS020SH)) {
-			extern void wzero3lcd_cnattach(void);
-
-			wzero3lcd_cnattach();
-			return;
-		}
+		extern void wzero3lcd_cnattach(void);
+		wzero3lcd_cnattach();
+		return;
 #endif
 #endif
 	}
