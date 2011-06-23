@@ -707,7 +707,7 @@ alc_attach(device_t parent, device_t self, void *aux)
 		printf("\n");
 		goto fail;
 	}
-	aprint_normal_dev(self, "%s\n", intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 	
 	/* Set PHY address. */
 	sc->alc_phyaddr = ALC_PHY_ADDR;
