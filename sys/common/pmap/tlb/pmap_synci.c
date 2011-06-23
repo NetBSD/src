@@ -29,9 +29,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_synci.c,v 1.1 2011/06/23 07:43:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_synci.c,v 1.2 2011/06/23 08:11:56 matt Exp $");
 
 #define __PMAP_PRIVATE
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
