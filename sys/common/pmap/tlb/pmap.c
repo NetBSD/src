@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 2011/06/20 20:24:29 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7 2011/06/23 02:33:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2011/06/20 20:24:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2011/06/23 02:33:44 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -591,7 +591,7 @@ pmap_update(struct pmap *pmap)
 		PMAP_COUNT(shootdown_ipis);
 #endif
 #ifdef DEBUG
-	pmap_tlb_check(pmap);
+	pmap_tlb_check(pmap, pmap_md_tlb_check_entry);
 #endif /* DEBUG */
 
 	/*
