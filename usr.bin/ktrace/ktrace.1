@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.1,v 1.40 2011/04/27 00:00:47 joerg Exp $
+.\"	$NetBSD: ktrace.1,v 1.40.2.1 2011/06/23 14:20:43 cherry Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd April 27, 2011
+.Dd June 1, 2011
 .Dt KTRACE 1
 .Os
 .Sh NAME
@@ -181,6 +181,8 @@ trace exec arguments
 trace system calls
 .It Cm e
 trace emulation changes
+.It Cm f
+trace open file descriptors after exec
 .It Cm i
 trace
 .Tn I/O

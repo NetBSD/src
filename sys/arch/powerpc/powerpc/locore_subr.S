@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.41 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.41.4.1 2011/06/23 14:19:34 cherry Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,6 +77,7 @@
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
+#include "opt_modular.h"
 
 #ifdef DDB
 #define	CFRAME_LRSAVE(t0)					\
@@ -98,7 +99,7 @@
 	streg	%r10,(SFRAME_USER_SR)(t0);	/* USER_SR */	\
 	streg	%r11,(SFRAME_CR)(t0);		/* CR */	\
 	streg	%r12,(SFRAME_R2)(t0);		/* R2 */	\
-	streg	%r13,(SFRAME_R13)(t0);		/* volatile */	\
+     /* streg	%r13,(SFRAME_R13)(t0); */	/* volatile */	\
 	streg	%r14,(SFRAME_R14)(t0);				\
 	streg	%r15,(SFRAME_R15)(t0);				\
 	streg	%r16,(SFRAME_R16)(t0);				\
@@ -120,7 +121,7 @@
 	ldreg	%r10,(SFRAME_USER_SR)(t0);	/* USER_SR */	\
 	ldreg	%r11,(SFRAME_CR)(t0);		/* CR */	\
 	ldreg	%r12,(SFRAME_R2)(t0);		/* R2 */	\
-	ldreg	%r13,(SFRAME_R13)(t0);		/* volatile */	\
+     /* ldreg	%r13,(SFRAME_R13)(t0); */	/* volatile */	\
 	ldreg	%r14,(SFRAME_R14)(t0);				\
 	ldreg	%r15,(SFRAME_R15)(t0);				\
 	ldreg	%r16,(SFRAME_R16)(t0);				\
@@ -141,6 +142,13 @@
 	.data
 GLOBAL(powersave)
 	.long	-1
+
+#ifdef MODULAR
+	.global	__USRSTACK
+	.equ	__USRSTACK, USRSTACK
+	.global	__CPU_MAXNUM
+	.equ	__CPU_MAXNUM, CPU_MAXNUM
+#endif
 
 	.text
 	.align 2
@@ -189,7 +197,7 @@ ENTRY(cpu_switchto)
 	SWITCHFRAME_SAVE(%r1)		/* save USER_SR, CR, R2, non-volatile */
 	ldptr	%r4,L_PCB(%r30)		/* put PCB addr in r4 */
 	streg	%r1,PCB_SP(%r4)		/* store old lwp's SP */
-#ifdef PCB_USPRG0
+#if defined(PPC_BOOKE)
 	mfspr	%r9,SPR_USPRG0
 	streg	%r9,PCB_USPRG0(%r4)	/* save in PCB, not switchframe. */
 #endif
@@ -217,6 +225,7 @@ switchto_restore:
 
 	GET_CPUINFO(%r7)
 	stptr	%r31,CI_CURLWP(%r7)
+	mr	%r13,%r31
 #ifdef PPC_BOOKE
 	mtsprg2	%r31			/* save curlwp in sprg2 */
 #endif
@@ -233,7 +242,7 @@ switchto_restore:
 	 */
 	ldreg	%r1,PCB_SP(%r4)		/* get new lwp's SP */
 	SWITCHFRAME_RESTORE(%r1)	/* get non-volatile, CR, R2, USER_SR */
-#ifdef PCB_USPRG0
+#if defined(PPC_BOOKE)
 	ldreg	%r9,PCB_USPRG0(%r4)
 	mtspr	SPR_USPRG0,%r9
 #endif
@@ -313,7 +322,8 @@ _ENTRY(softint_cleanup)
 	ldreg	%r0, CFRAME_LR(%r1)
 	mtlr	%r0
 #if IPL_SCHED != IPL_HIGH
-	b	_C_LABEL(splhigh)
+	li	%r3, IPL_HIGH
+	b	_C_LABEL(splraise)
 #else
 	blr
 #endif /* IPL SCHED != IPL_HIGH */
@@ -359,7 +369,7 @@ _ENTRY(softint_fast_dispatch)
 	mr	%r31, %r1
 	ldptr	%r5, L_PCB(%r30)	/* put PCB addr in r5 */
 	streg	%r1, PCB_SP(%r5)	/* store old lwp's SP */
-#ifdef PCB_USPRG0
+#if defined(PPC_BOOKE)
 	mfspr	%r9,SPR_USPRG0
 	streg	%r9,PCB_USPRG0(%r5)	/* save in PCB, not switchframe. */
 #endif
@@ -381,6 +391,7 @@ _ENTRY(softint_fast_dispatch)
 	 */
 
 	stptr	%r3, CI_CURLWP(%r7)
+	mr	%r13, %r3
 #ifdef PPC_BOOKE
 	mtsprg2	%r3
 #endif
@@ -414,6 +425,7 @@ _ENTRY(softint_fast_dispatch)
 
 	GET_CPUINFO(%r7)
 	stptr	%r30, CI_CURLWP(%r7)
+	mr	%r13, %r30
 #ifdef PPC_BOOKE
 	mtsprg2	%r30
 #endif
@@ -484,6 +496,7 @@ _ENTRY(cpu_lwp_bootstrap)
 	 * r3 (old lwp) and r4 (new lwp) are setup in cpu_switchto.
 	 */
 	bl	_C_LABEL(lwp_startup)
+
 	/*
 	 * Fall through into setfunc_trampoline
 	 */
@@ -504,8 +517,7 @@ _ENTRY(setfunc_trampoline)
 	tweqi	%r0,0
 #endif
 	li	%r4, 1			/* make sure userret gets called */
-	GET_CPUINFO(%r3)
-	stint	%r4, CI_ASTPENDING(%r3)
+	stint	%r4, L_MD_ASTPENDING(%r13)
 	b	trapexit
 
 #if defined(MULTIPROCESSOR) && (defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE))

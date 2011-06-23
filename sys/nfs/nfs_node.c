@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.115 2011/05/19 03:11:59 rmind Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.115.2.1 2011/06/23 14:20:27 cherry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.115 2011/05/19 03:11:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.115.2.1 2011/06/23 14:20:27 cherry Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -174,7 +174,7 @@ loop:
 	np = rb_tree_find_node(&nmp->nm_rbtree, &fhm);
 	if (np != NULL) {
 		vp = NFSTOV(np);
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		rw_exit(&nmp->nm_rbtlock);
 		error = vget(vp, LK_EXCLUSIVE | lkflags);
 		if (error == EBUSY)
@@ -186,7 +186,7 @@ loop:
 	}
 	rw_exit(&nmp->nm_rbtlock);
 
-	error = getnewvnode(VT_NFS, mntp, nfsv2_vnodeop_p, &vp);
+	error = getnewvnode(VT_NFS, mntp, nfsv2_vnodeop_p, NULL, &vp);
 	if (error) {
 		*npp = 0;
 		return (error);
@@ -345,9 +345,12 @@ nfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 {
 	int i;
 
+	mutex_enter(vp->v_interlock);
 	for (i = 0; i < npages; i++) {
 		pmap_page_protect(pgs[i], VM_PROT_READ);
 	}
+	mutex_exit(vp->v_interlock);
+
 	return genfs_gop_write(vp, pgs, npages, flags);
 }
 

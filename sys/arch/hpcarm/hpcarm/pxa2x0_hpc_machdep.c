@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.8 2010/06/26 00:25:02 tsutsui Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.8.8.1 2011/06/23 14:19:12 cherry Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.8 2010/06/26 00:25:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.8.8.1 2011/06/23 14:19:12 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -434,8 +434,6 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	set_cpufuncs();
 	IRQdisable;
 
-	pxa2x0_memctl_bootstrap(PXA2X0_MEMCTL_BASE);
-	pxa2x0_intr_bootstrap(PXA2X0_INTCTL_BASE);
 	pmap_devmap_bootstrap((vaddr_t)read_ttb(), pxa2x0_devmap);
 	pxa2x0_memctl_bootstrap(PXA2X0_MEMCTL_VBASE);
 	pxa2x0_intr_bootstrap(PXA2X0_INTCTL_VBASE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10.32.1 2011/06/23 14:19:25 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2008/04/28 20:23:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10.32.1 2011/06/23 14:19:25 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -39,12 +39,12 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2008/04/28 20:23:30 martin Exp $");
 #define _M68K_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
 
-static int	mainbus_match(struct device *, struct cfdata *, void *);
-static void	mainbus_attach(struct device *, struct device *, void *);
-static int	mainbus_search(struct device *, struct cfdata *,
+static int	mainbus_match(device_t, cfdata_t, void *);
+static void	mainbus_attach(device_t, device_t, void *);
+static int	mainbus_search(device_t, cfdata_t,
 			       const int *, void *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 struct m68k_bus_dma_tag next68k_bus_dma_tag = {
@@ -71,7 +71,7 @@ struct m68k_bus_dma_tag next68k_bus_dma_tag = {
 static int mainbus_attached = 0;
 
 static int
-mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	/* Allow only one instance. */
 	if (mainbus_attached)
@@ -81,7 +81,7 @@ mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args	mba;
 
@@ -96,7 +96,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-mainbus_search(struct device *parent, struct cfdata *cf,
+mainbus_search(device_t parent, cfdata_t cf,
 	       const int *ldesc, void *aux)
 {
 	if (config_match(parent, cf, aux) > 0)

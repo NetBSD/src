@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.341 2011/05/30 18:14:11 njoly Exp $
+# $NetBSD: mi,v 1.341.2.1 2011/06/23 14:18:23 cherry Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -193,6 +193,7 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ecdsatest.debug	tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ectest.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_enginetest.debug	tests-crypto-debug	debug,crypto
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_evp_test.debug	tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_exptest.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ideatest.debug		tests-crypto-debug	debug,crypto_idea,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_hmactest.debug		tests-crypto-debug	debug,crypto
@@ -209,6 +210,7 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rsatest.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_sha1test.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_shatest.debug		tests-crypto-debug	debug,crypto
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_srptest.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_threadstest.debug	tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_x509v3test.debug	tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/fs					tests-fs-debug
@@ -351,6 +353,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/db/h_db.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_alarm.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_assert.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_basedirname.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_closefrom.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_dir.debug			tests-lib-debug		debug,atf
@@ -365,8 +368,10 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_raise.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_randomid.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_rbstress.debug		tests-obsolete		obsolete
-./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog_pthread.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_setdomainname.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_sethostname.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_siginfo.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog_pthread.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_ttyname.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_vis.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo			tests-obsolete		obsolete
@@ -412,7 +417,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memcpy.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memmove.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memset.debug		tests-lib-debug		debug,atf,ssp
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_raw.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_raw.debug			tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_read.debug			tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_readlink.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_snprintf.debug		tests-lib-debug		debug,atf,ssp
@@ -440,10 +445,12 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_posix_memalign.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtod.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtol.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtox.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/string				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_memcpy.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_memmem.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/string/t_memset.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_popcount.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_strerror.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_stresep.debug		tests-lib-debug		debug,atf
@@ -611,21 +618,26 @@
 ./usr/libdata/debug/usr/tests/syscall/t_dup.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_fsync.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_getgroups.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall/t_getlogin.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_getpid.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_getrusage.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_getsid.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_gettimeofday.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_itimer.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_kill.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall/t_mincore.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_mmap.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_mprotect.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_msync.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_nanosleep.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall/t_poll.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_pollts.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_pselect.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_setrlimit.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_setuid.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall/t_stat.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_timer.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall/t_truncate.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_umask.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/usr.bin					tests-sbin-tests
 ./usr/libdata/debug/usr/tests/usr.sbin					tests-sbin-tests
@@ -1207,6 +1219,8 @@
 ./usr/tests/crypto/libcrypto/h_ecdsatest	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_ectest		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_enginetest	tests-crypto-tests	crypto
+./usr/tests/crypto/libcrypto/h_evp_test		tests-crypto-tests	crypto
+./usr/tests/crypto/libcrypto/evptests.txt	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_exptest		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_hmactest		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_ideatest		tests-crypto-tests	crypto_idea,crypto
@@ -1223,6 +1237,7 @@
 ./usr/tests/crypto/libcrypto/h_rsatest		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_sha1test		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_shatest		tests-crypto-tests	crypto
+./usr/tests/crypto/libcrypto/h_srptest		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_threadstest	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_x509v3test	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/t_certs		tests-crypto-tests	crypto
@@ -1784,6 +1799,7 @@
 ./usr/tests/lib/libc/gen			tests-lib-tests
 ./usr/tests/lib/libc/gen/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_alarm		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_assert		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_basedirname		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_closefrom		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_dir			tests-lib-tests		atf
@@ -1798,8 +1814,10 @@
 ./usr/tests/lib/libc/gen/t_raise		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_randomid		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_rbstress		tests-obsolete		obsolete
-./usr/tests/lib/libc/gen/t_syslog_pthread	tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_setdomainname	tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_sethostname		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_siginfo		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_syslog_pthread	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_ttyname		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_vis			tests-lib-tests		atf
 ./usr/tests/lib/libc/getaddrinfo		tests-obsolete		obsolete
@@ -1916,7 +1934,7 @@
 ./usr/tests/lib/libc/ssp/h_memcpy		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_memmove		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_memset		tests-lib-tests		atf,ssp
-./usr/tests/lib/libc/ssp/h_raw			tests-obsolete		obsolete
+./usr/tests/lib/libc/ssp/h_raw			tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_read			tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_readlink		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_snprintf		tests-lib-tests		atf,ssp
@@ -1949,11 +1967,13 @@
 ./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_posix_memalign	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_strtod		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_strtol		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_strtox		tests-obsolete		obsolete
 ./usr/tests/lib/libc/string			tests-lib-tests
 ./usr/tests/lib/libc/string/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_memcpy		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_memmem		tests-lib-tests		atf
+./usr/tests/lib/libc/string/t_memset		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_popcount		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_strerror		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_stresep		tests-lib-tests		atf
@@ -1992,7 +2012,8 @@
 ./usr/tests/lib/libc/t_strptime			tests-obsolete		obsolete
 ./usr/tests/lib/libc/time			tests-lib-tests
 ./usr/tests/lib/libcurses			tests-lib-tests
-./usr/tests/lib/libcurses/.terminfo.db		tests-lib-tests		atf
+./usr/tests/lib/libcurses/.terminfo.db		tests-obsolete		obsolete
+./usr/tests/lib/libcurses/terminfo.db		tests-lib-tests		atf
 ./usr/tests/lib/libcurses/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libcurses/check_files			tests-lib-tests
 ./usr/tests/lib/libcurses/check_files/addch.chk		tests-lib-tests		atf
@@ -2316,21 +2337,26 @@
 ./usr/tests/syscall/t_dup			tests-syscall-tests	atf
 ./usr/tests/syscall/t_fsync			tests-syscall-tests	atf
 ./usr/tests/syscall/t_getgroups			tests-syscall-tests	atf
+./usr/tests/syscall/t_getlogin			tests-syscall-tests	atf
 ./usr/tests/syscall/t_getpid			tests-syscall-tests	atf
 ./usr/tests/syscall/t_getrusage			tests-syscall-tests	atf
 ./usr/tests/syscall/t_getsid			tests-syscall-tests	atf
 ./usr/tests/syscall/t_gettimeofday		tests-syscall-tests	atf
 ./usr/tests/syscall/t_itimer			tests-syscall-tests	atf
 ./usr/tests/syscall/t_kill			tests-syscall-tests	atf
+./usr/tests/syscall/t_mincore			tests-syscall-tests	atf
 ./usr/tests/syscall/t_mmap			tests-syscall-tests	atf
 ./usr/tests/syscall/t_mprotect			tests-syscall-tests	atf
 ./usr/tests/syscall/t_msync			tests-syscall-tests	atf
 ./usr/tests/syscall/t_nanosleep			tests-syscall-tests	atf
+./usr/tests/syscall/t_poll			tests-syscall-tests	atf
 ./usr/tests/syscall/t_pollts			tests-syscall-tests	atf
 ./usr/tests/syscall/t_pselect			tests-syscall-tests	atf
 ./usr/tests/syscall/t_setrlimit			tests-syscall-tests	atf
 ./usr/tests/syscall/t_setuid			tests-syscall-tests	atf
+./usr/tests/syscall/t_stat			tests-syscall-tests	atf
 ./usr/tests/syscall/t_timer			tests-syscall-tests	atf
+./usr/tests/syscall/t_truncate			tests-syscall-tests	atf
 ./usr/tests/syscall/t_umask			tests-syscall-tests	atf
 ./usr/tests/toolchain				tests-syscall-tests	atf
 ./usr/tests/toolchain/Atffile			tests-syscall-tests	atf

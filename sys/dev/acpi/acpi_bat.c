@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.109 2011/02/16 09:05:12 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.109.2.1 2011/06/23 14:19:55 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.109 2011/02/16 09:05:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.109.2.1 2011/06/23 14:19:55 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -728,6 +728,9 @@ acpibat_init_envsys(device_t dv)
 	INITDATA(ACPIBAT_CHARGE_STATE, ENVSYS_BATTERY_CAPACITY, "charge state");
 
 #undef INITDATA
+
+	sc->sc_sensor[ACPIBAT_CHARGE_STATE].value_cur =
+		ENVSYS_BATTERY_CAPACITY_NORMAL;
 
 	sc->sc_sensor[ACPIBAT_CAPACITY].flags |=
 	    ENVSYS_FPERCENT | ENVSYS_FVALID_MAX | ENVSYS_FMONLIMITS;

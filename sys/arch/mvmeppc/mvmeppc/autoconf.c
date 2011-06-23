@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2009/03/18 10:22:33 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11.10.1 2011/06/23 14:19:24 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2009/03/18 10:22:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11.10.1 2011/06/23 14:19:24 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ cpu_rootconf(void)
 	findroot();
 
 	aprint_normal("boot device: %s\n",
-	    booted_device ? booted_device->dv_xname : "<unknown>");
+	    booted_device ? device_xname(booted_device) : "<unknown>");
 
 	setroot(booted_device, booted_partition);
 }
@@ -118,7 +118,7 @@ findroot(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	/* do nothing */
 }

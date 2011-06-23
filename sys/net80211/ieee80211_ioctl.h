@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.19 2008/07/28 17:54:02 christos Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.19.26.1 2011/06/23 14:20:25 cherry Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -413,7 +413,7 @@ struct ieee80211req {
 	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
 	u_int16_t	i_type;			/* req type */
 	int16_t		i_val;			/* Index or simple value */
-	int16_t		i_len;			/* Index or simple value */
+	u_int16_t	i_len;			/* Index or simple value */
 	void		*i_data;		/* Extra data */
 };
 

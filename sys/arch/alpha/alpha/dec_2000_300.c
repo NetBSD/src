@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2000_300.c,v 1.16 2008/04/28 20:23:10 martin Exp $ */
+/* $NetBSD: dec_2000_300.c,v 1.16.32.1 2011/06/23 14:18:50 cherry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.16 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.16.32.1 2011/06/23 14:18:50 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.16 2008/04/28 20:23:10 martin Exp
 
 void dec_2000_300_init(void);
 static void dec_2000_300_cons_init(void);
-static void dec_2000_300_device_register(struct device *, void *);
+static void dec_2000_300_device_register(device_t, void *);
 
 #ifdef KGDB
 #include <machine/db_machdep.h>
@@ -196,12 +196,12 @@ dec_2000_300_cons_init(void)
 }
 
 static void
-dec_2000_300_device_register(struct device *dev, void *aux)
+dec_2000_300_device_register(device_t dev, void *aux)
 {
 	static int found, initted, scsiboot, netboot;
-	static struct device *eisadev, *isadev, *scsidev;
+	static device_t eisadev, isadev, scsidev;
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = device_parent(dev);
+	device_t parent = device_parent(dev);
 
 	if (found)
 		return;
@@ -232,7 +232,7 @@ dec_2000_300_device_register(struct device *dev, void *aux)
 
 			scsidev = dev;
 #if 0
-			printf("\nscsidev = %s\n", scsidev->dv_xname);
+			printf("\nscsidev = %s\n", device_xname(scsidev));
 #endif
 			return;
 		}
@@ -269,7 +269,7 @@ dec_2000_300_device_register(struct device *dev, void *aux)
 		/* we've found it! */
 		booted_device = dev;
 #if 0
-		printf("\nbooted_device = %s\n", booted_device->dv_xname);
+		printf("\nbooted_device = %s\n", device_xname(booted_device));
 #endif
 		found = 1;
 		return;
@@ -289,7 +289,7 @@ dec_2000_300_device_register(struct device *dev, void *aux)
 
 			booted_device = dev;
 #if 0
-			printf("\nbooted_device = %s\n", booted_device->dv_xname);
+			printf("\nbooted_device = %s\n", device_xname(booted_device));
 #endif
 			found = 1;
 			return;

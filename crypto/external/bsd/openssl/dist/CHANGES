@@ -2,7 +2,117 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
+ Changes between 1.0.0d and 1.0.1  [xx XXX xxxx]
+
+  *) Backport libcrypto audit of return value checking from HEAD, not
+     all cases can be covered as some introduce binary incompatibilities.
+     [Steve Henson]
+
+  *) Redirect RSA operations to FIPS module including keygen,
+     encrypt, decrypt, sign and verify. Block use of non FIPS RSA methods.
+     [Steve Henson]
+
+  *) Add similar low level API blocking to ciphers.
+     [Steve Henson]
+
+  *) Low level digest APIs are not approved in FIPS mode: any attempt
+     to use these will cause a fatal error. Applications that *really* want
+     to use them can use the private_* version instead.
+     [Steve Henson]
+
+  *) Redirect cipher operations to FIPS module for FIPS builds. 
+     [Steve Henson]
+
+  *) Redirect digest operations to FIPS module for FIPS builds. 
+     [Steve Henson]
+
+  *) Update build system to add "fips" flag which will link in fipscanister.o
+     for static and shared library builds embedding a signature if needed.
+     [Steve Henson]
+
+  *) Output TLS supported curves in preference order instead of numerical
+     order. This is currently hardcoded for the highest order curves first.
+     This should be configurable so applications can judge speed vs strength.
+     [Steve Henson]
+
+  *) Add protection against ECDSA timing attacks as mentioned in the paper
+     by Billy Bob Brumley and Nicola Tuveri, see:
+
+	http://eprint.iacr.org/2011/232.pdf
+
+     [Billy Bob Brumley and Nicola Tuveri]
+
+  *) Add TLS v1.2 server support for client authentication. 
+     [Steve Henson]
+
+  *) Add support for FIPS mode in ssl library: disable SSLv3, non-FIPS ciphers
+     and enable MD5.
+     [Steve Henson]
+
+  *) Functions FIPS_mode_set() and FIPS_mode() which call the underlying
+     FIPS modules versions.
+     [Steve Henson]
+
+  *) Add TLS v1.2 client side support for client authentication. Keep cache
+     of handshake records longer as we don't know the hash algorithm to use
+     until after the certificate request message is received.
+     [Steve Henson]
+
+  *) Initial TLS v1.2 client support. Add a default signature algorithms
+     extension including all the algorithms we support. Parse new signature
+     format in client key exchange. Relax some ECC signing restrictions for
+     TLS v1.2 as indicated in RFC5246.
+     [Steve Henson]
+
+  *) Add server support for TLS v1.2 signature algorithms extension. Switch
+     to new signature format when needed using client digest preference.
+     All server ciphersuites should now work correctly in TLS v1.2. No client
+     support yet and no support for client certificates.
+     [Steve Henson]
+
+  *) Initial TLS v1.2 support. Add new SHA256 digest to ssl code, switch
+     to SHA256 for PRF when using TLS v1.2 and later. Add new SHA256 based
+     ciphersuites. At present only RSA key exchange ciphersuites work with
+     TLS v1.2. Add new option for TLS v1.2 replacing the old and obsolete
+     SSL_OP_PKCS1_CHECK flags with SSL_OP_NO_TLSv1_2. New TLSv1.2 methods
+     and version checking.
+     [Steve Henson]
+ 
+  *) New option OPENSSL_NO_SSL_INTERN. If an application can be compiled
+     with this defined it will not be affected by any changes to ssl internal
+     structures. Add several utility functions to allow openssl application
+     to work with OPENSSL_NO_SSL_INTERN defined.
+     [Steve Henson]
+
+  *) Add SRP support.
+     [Tom Wu <tjw@cs.stanford.edu> and Ben Laurie]
+
+  *) Add functions to copy EVP_PKEY_METHOD and retrieve flags and id.
+     [Steve Henson]
+
+  *) Add EC_GFp_nistp224_method(), a 64-bit optimized implementation for
+     elliptic curve NIST-P224 with constant-time single point multiplication on
+     typical inputs.  EC_GROUP_new_by_curve_name() will automatically use this
+     (while EC_GROUP_new_curve_GFp() currently won't and prefers the more
+     flexible implementations).
+
+     The implementation requires support for the nonstandard type __uint128_t,
+     and so is disabled by default.  To include this in your build of OpenSSL,
+     use -DEC_NISTP224_64_GCC_128 on the Configure (or config) command line,
+     and run "make depend" (or "make update").
+     [Emilia Käsper <emilia.kasper@esat.kuleuven.be> (Google)]
+
+  *) Permit abbreviated handshakes when renegotiating using the function
+     SSL_renegotiate_abbreviated().
+     [Robin Seggelmann <seggelmann@fh-muenster.de>]
+
+  *) Add call to ENGINE_register_all_complete() to
+     ENGINE_load_builtin_engines(), so some implementations get used
+     automatically instead of needing explicit application support.
+     [Steve Henson]
+
+  *) Add support for TLS key exporter as described in RFC5705.
+     [Robin Seggelmann <seggelmann@fh-muenster.de>, Steve Henson]
 
   *) Initial TLSv1.1 support. Since TLSv1.1 is very similar to TLS v1.0 only
      a few changes are required:
@@ -14,34 +124,63 @@
        Add command line options to s_client/s_server.
      [Steve Henson]
 
-  *) Experiemental password based recipient info support for CMS library:
-     implementing RFC3211.
+ Changes between 1.0.0c and 1.0.0d [8 Feb 2011]
+
+  *) Fix parsing of OCSP stapling ClientHello extension. CVE-2011-0014
+     [Neel Mehta, Adam Langley, Bodo Moeller (Google)]
+
+  *) Fix bug in string printing code: if *any* escaping is enabled we must
+     escape the escape character (backslash) or the resulting string is
+     ambiguous.
      [Steve Henson]
 
-  *) Split password based encryption into PBES2 and PBKDF2 functions. This
-     neatly separates the code into cipher and PBE sections and is required
-     for some algorithms that split PBES2 into separate pieces (such as
-     password based CMS).
+ Changes between 1.0.0b and 1.0.0c  [2 Dec 2010]
+
+  *) Disable code workaround for ancient and obsolete Netscape browsers
+     and servers: an attacker can use it in a ciphersuite downgrade attack.
+     Thanks to Martin Rex for discovering this bug. CVE-2010-4180
      [Steve Henson]
 
-  *) Extensive audit of libcrypto with DEBUG_UNUSED. Fix many cases where
-     return value is ignored. NB. The functions RAND_add(), RAND_seed(),
-     BIO_set_cipher() and some obscure PEM functions were changed so they
-     can now return an error. The RAND changes required a change to the
-     RAND_METHOD structure.
+  *) Fixed J-PAKE implementation error, originally discovered by
+     Sebastien Martini, further info and confirmation from Stefan
+     Arentz and Feng Hao. Note that this fix is a security fix. CVE-2010-4252
+     [Ben Laurie]
+
+ Changes between 1.0.0a and 1.0.0b  [16 Nov 2010]
+
+  *) Fix extension code to avoid race conditions which can result in a buffer
+     overrun vulnerability: resumed sessions must not be modified as they can
+     be shared by multiple threads. CVE-2010-3864
      [Steve Henson]
 
-  *) New macro __owur for "OpenSSL Warn Unused Result". This makes use of
-     a gcc attribute to warn if the result of a function is ignored. This
-     is enable if DEBUG_UNUSED is set. Add to several functions in evp.h
-     whose return value is often ignored. 
+  *) Fix WIN32 build system to correctly link an ENGINE directory into
+     a DLL. 
      [Steve Henson]
 
- Changes between 0.9.8m (?) and 1.0.0  [xx XXX xxxx]
+ Changes between 1.0.0 and 1.0.0a  [01 Jun 2010]
 
-  *) Constify crypto/cast (i.e., <openssl/cast.h>): a CAST_KEY doesn't
-     change when encrypting or decrypting.
-     [Bodo Moeller]
+  *) Check return value of int_rsa_verify in pkey_rsa_verifyrecover 
+     (CVE-2010-1633)
+     [Steve Henson, Peter-Michael Hager <hager@dortmund.net>]
+
+ Changes between 0.9.8n and 1.0.0  [29 Mar 2010]
+
+  *) Add "missing" function EVP_CIPHER_CTX_copy(). This copies a cipher
+     context. The operation can be customised via the ctrl mechanism in
+     case ENGINEs want to include additional functionality.
+     [Steve Henson]
+
+  *) Tolerate yet another broken PKCS#8 key format: private key value negative.
+     [Steve Henson]
+
+  *) Add new -subject_hash_old and -issuer_hash_old options to x509 utility to
+     output hashes compatible with older versions of OpenSSL.
+     [Willy Weisz <weisz@vcpc.univie.ac.at>]
+
+  *) Fix compression algorithm handling: if resuming a session use the
+     compression algorithm of the resumed session instead of determining
+     it from client hello again. Don't allow server to change algorithm.
+     [Steve Henson]
 
   *) Add load_crls() function to apps tidying load_certs() too. Add option
      to verify utility to allow additional CRLs to be included.
@@ -864,11 +1003,131 @@
 
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
+  
+ Changes between 0.9.8q and 0.9.8r [8 Feb 2011]
 
- Changes between 0.9.8l (?) and 0.9.8m (?)  [xx XXX xxxx]
+  *) Fix parsing of OCSP stapling ClientHello extension. CVE-2011-0014
+     [Neel Mehta, Adam Langley, Bodo Moeller (Google)]
+
+  *) Fix bug in string printing code: if *any* escaping is enabled we must
+     escape the escape character (backslash) or the resulting string is
+     ambiguous.
+     [Steve Henson]
+
+ Changes between 0.9.8p and 0.9.8q [2 Dec 2010]
+
+  *) Disable code workaround for ancient and obsolete Netscape browsers
+     and servers: an attacker can use it in a ciphersuite downgrade attack.
+     Thanks to Martin Rex for discovering this bug. CVE-2010-4180
+     [Steve Henson]
+
+  *) Fixed J-PAKE implementation error, originally discovered by
+     Sebastien Martini, further info and confirmation from Stefan
+     Arentz and Feng Hao. Note that this fix is a security fix. CVE-2010-4252
+     [Ben Laurie]
+
+ Changes between 0.9.8o and 0.9.8p [16 Nov 2010]
+
+  *) Fix extension code to avoid race conditions which can result in a buffer
+     overrun vulnerability: resumed sessions must not be modified as they can
+     be shared by multiple threads. CVE-2010-3864
+     [Steve Henson]
+
+  *) Fix for double free bug in ssl/s3_clnt.c CVE-2010-2939
+     [Steve Henson]
+
+  *) Don't reencode certificate when calculating signature: cache and use
+     the original encoding instead. This makes signature verification of
+     some broken encodings work correctly.
+     [Steve Henson]
+
+  *) ec2_GF2m_simple_mul bugfix: compute correct result if the output EC_POINT
+     is also one of the inputs.
+     [Emilia Käsper <emilia.kasper@esat.kuleuven.be> (Google)]
+
+  *) Don't repeatedly append PBE algorithms to table if they already exist.
+     Sort table on each new add. This effectively makes the table read only
+     after all algorithms are added and subsequent calls to PKCS12_pbe_add
+     etc are non-op.
+     [Steve Henson]
+
+ Changes between 0.9.8n and 0.9.8o [01 Jun 2010]
+
+  [NB: OpenSSL 0.9.8o and later 0.9.8 patch levels were released after
+  OpenSSL 1.0.0.]
+
+  *) Correct a typo in the CMS ASN1 module which can result in invalid memory
+     access or freeing data twice (CVE-2010-0742)
+     [Steve Henson, Ronald Moesbergen <intercommit@gmail.com>]
+
+  *) Add SHA2 algorithms to SSL_library_init(). SHA2 is becoming far more
+     common in certificates and some applications which only call
+     SSL_library_init and not OpenSSL_add_all_algorithms() will fail.
+     [Steve Henson]
+
+  *) VMS fixes: 
+     Reduce copying into .apps and .test in makevms.com
+     Don't try to use blank CA certificate in CA.com
+     Allow use of C files from original directories in maketests.com
+     [Steven M. Schweda" <sms@antinode.info>]
+
+ Changes between 0.9.8m and 0.9.8n [24 Mar 2010]
+
+  *) When rejecting SSL/TLS records due to an incorrect version number, never
+     update s->server with a new major version number.  As of
+     - OpenSSL 0.9.8m if 'short' is a 16-bit type,
+     - OpenSSL 0.9.8f if 'short' is longer than 16 bits,
+     the previous behavior could result in a read attempt at NULL when
+     receiving specific incorrect SSL/TLS records once record payload
+     protection is active.  (CVE-2010-0740)
+     [Bodo Moeller, Adam Langley <agl@chromium.org>]
+
+  *) Fix for CVE-2010-0433 where some kerberos enabled versions of OpenSSL 
+     could be crashed if the relevant tables were not present (e.g. chrooted).
+     [Tomas Hoger <thoger@redhat.com>]
+
+ Changes between 0.9.8l and 0.9.8m [25 Feb 2010]
+
+  *) Always check bn_wexpend() return values for failure.  (CVE-2009-3245)
+     [Martin Olsson, Neel Mehta]
+
+  *) Fix X509_STORE locking: Every 'objs' access requires a lock (to
+     accommodate for stack sorting, always a write lock!).
+     [Bodo Moeller]
+
+  *) On some versions of WIN32 Heap32Next is very slow. This can cause
+     excessive delays in the RAND_poll(): over a minute. As a workaround
+     include a time check in the inner Heap32Next loop too.
+     [Steve Henson]
+
+  *) The code that handled flushing of data in SSL/TLS originally used the
+     BIO_CTRL_INFO ctrl to see if any data was pending first. This caused
+     the problem outlined in PR#1949. The fix suggested there however can
+     trigger problems with buggy BIO_CTRL_WPENDING (e.g. some versions
+     of Apache). So instead simplify the code to flush unconditionally.
+     This should be fine since flushing with no data to flush is a no op.
+     [Steve Henson]
+
+  *) Handle TLS versions 2.0 and later properly and correctly use the
+     highest version of TLS/SSL supported. Although TLS >= 2.0 is some way
+     off ancient servers have a habit of sticking around for a while...
+     [Steve Henson]
+
+  *) Modify compression code so it frees up structures without using the
+     ex_data callbacks. This works around a problem where some applications
+     call CRYPTO_cleanup_all_ex_data() before application exit (e.g. when
+     restarting) then use compression (e.g. SSL with compression) later.
+     This results in significant per-connection memory leaks and
+     has caused some security issues including CVE-2008-1678 and
+     CVE-2009-4355.
+     [Steve Henson]
+
+  *) Constify crypto/cast (i.e., <openssl/cast.h>): a CAST_KEY doesn't
+     change when encrypting or decrypting.
+     [Bodo Moeller]
 
   *) Add option SSL_OP_LEGACY_SERVER_CONNECT which will allow clients to
-     connect (but not renegotiate) with servers which do not support RI.
+     connect and renegotiate with servers which do not support RI.
      Until RI is more widely deployed this option is enabled by default.
      [Steve Henson]
 
@@ -876,14 +1135,14 @@
      [Steve Henson]
 
   *) If client attempts to renegotiate and doesn't support RI respond with
-     a no_renegotiation alert as required by draft-ietf-tls-renegotiation.
-     Some renegotiating TLS clients will continue a connection gracefully
-     when they receive the alert. Unfortunately OpenSSL mishandled
-     this alert and would hang waiting for a server hello which it will never
-     receive. Now we treat a received no_renegotiation alert as a fatal 
-     error. This is because applications requesting a renegotiation might well
-     expect it to succeed and would have no code in place to handle the server
-     denying it so the only safe thing to do is to terminate the connection.
+     a no_renegotiation alert as required by RFC5746.  Some renegotiating
+     TLS clients will continue a connection gracefully when they receive
+     the alert. Unfortunately OpenSSL mishandled this alert and would hang
+     waiting for a server hello which it will never receive. Now we treat a
+     received no_renegotiation alert as a fatal error. This is because
+     applications requesting a renegotiation might well expect it to succeed
+     and would have no code in place to handle the server denying it so the
+     only safe thing to do is to terminate the connection.
      [Steve Henson]
 
   *) Add ctrl macro SSL_get_secure_renegotiation_support() which returns 1 if
@@ -895,10 +1154,9 @@
      the updated NID creation version. This should correctly handle UTF8.
      [Steve Henson]
 
-  *) Implement draft-ietf-tls-renegotiation. Re-enable
-     renegotiation but require the extension as needed. Unfortunately,
-     SSL3_FLAGS_ALLOW_UNSAFE_LEGACY_RENEGOTIATION turns out to be a
-     bad idea. It has been replaced by
+  *) Implement RFC5746. Re-enable renegotiation but require the extension
+     as needed. Unfortunately, SSL3_FLAGS_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
+     turns out to be a bad idea. It has been replaced by
      SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION which can be set with
      SSL_CTX_set_options(). This is really not recommended unless you
      know what you are doing.

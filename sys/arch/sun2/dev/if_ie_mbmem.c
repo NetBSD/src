@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mbmem.c,v 1.10 2011/02/01 20:19:31 chuck Exp $	*/
+/*	$NetBSD: if_ie_mbmem.c,v 1.10.2.1 2011/06/23 14:19:44 cherry Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_mbmem.c,v 1.10 2011/02/01 20:19:31 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_mbmem.c,v 1.10.2.1 2011/06/23 14:19:44 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,8 +232,8 @@ static void ie_mbmemattend(struct ie_softc *, int);
 static void ie_mbmemrun(struct ie_softc *);
 static int  ie_mbmemintr(struct ie_softc *, int);
 
-int ie_mbmem_match(struct device *, struct cfdata *, void *);
-void ie_mbmem_attach(struct device *, struct device *, void *);
+int ie_mbmem_match(device_t, cfdata_t, void *);
+void ie_mbmem_attach(device_t, device_t, void *);
 
 struct ie_mbmem_softc {
 	struct ie_softc ie;
@@ -241,7 +241,7 @@ struct ie_mbmem_softc {
 	bus_space_handle_t ievh;
 };
 
-CFATTACH_DECL(ie_mbmem, sizeof(struct ie_mbmem_softc),
+CFATTACH_DECL_NEW(ie_mbmem, sizeof(struct ie_mbmem_softc),
     ie_mbmem_match, ie_mbmem_attach, NULL, NULL);
 
 #define read_iev(sc, reg) \
@@ -294,7 +294,7 @@ ie_mbmemintr(struct ie_softc *sc, int where)
          */
 	if (read_iev(vsc, status) & IEMBMEM_PERR) {
 		printf("%s: parity error (ctrl 0x%x @ 0x%02x%04x)\n",
-		       sc->sc_dev.dv_xname, read_iev(vsc, pectrl),
+		       device_xname(sc->sc_dev), read_iev(vsc, pectrl),
 		       read_iev(vsc, pectrl) & IEMBMEM_HADDR,
 		       read_iev(vsc, peaddr));
 		write_iev(vsc, pectrl, read_iev(vsc, pectrl) | IEMBMEM_PARACK);
@@ -367,7 +367,7 @@ ie_mbmem_write24(struct ie_softc *sc, int offset, int addr)
 }
 
 int 
-ie_mbmem_match(struct device *parent, struct cfdata *cf, void *aux)
+ie_mbmem_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mbmem_attach_args *mbma = aux;
 	bus_space_handle_t bh;
@@ -394,10 +394,10 @@ ie_mbmem_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void 
-ie_mbmem_attach(struct device *parent, struct device *self, void *aux)
+ie_mbmem_attach(device_t parent, device_t self, void *aux)
 {
 	uint8_t myaddr[ETHER_ADDR_LEN];
-	struct ie_mbmem_softc *vsc = (void *) self;
+	struct ie_mbmem_softc *vsc = device_private(self);
 	struct mbmem_attach_args *mbma = aux;
 	struct ie_softc *sc;
 	bus_size_t memsize;
@@ -405,6 +405,7 @@ ie_mbmem_attach(struct device *parent, struct device *self, void *aux)
 	int lcv;
 
 	sc = &vsc->ie;
+	sc->sc_dev = self;
 
 	sc->hwreset = ie_mbmemreset;
 	sc->hwinit = ie_mbmemrun;
@@ -486,7 +487,7 @@ ie_mbmem_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->do_xmitnopchain = 0;
 
-	printf("\n%s:", self->dv_xname);
+	printf("\n%s:", device_xname(self));
 
 	/* Set the ethernet address. */
 	idprom_etheraddr(myaddr);

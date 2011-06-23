@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.669 2011/05/27 17:06:54 drochner Exp $
+#	$NetBSD: bsd.own.mk,v 1.669.2.1 2011/06/23 14:18:46 cherry Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -46,7 +46,7 @@ NEED_OWN_INSTALL_TARGET?=	yes
 #
 TOOLCHAIN_MISSING?=	no
 
-# default to GCC4
+# default to GCC4.1
 .if !defined(HAVE_GCC) && !defined(HAVE_PCC)
 HAVE_GCC=	4
 .endif
@@ -574,7 +574,7 @@ NOPIC=		# defined
 MKISCSI=	no
 # XXX GCC 4 outputs mcount() calling sequences that try to load values
 # from over 64KB away and this fails to assemble.
-.if defined(HAVE_GCC) && (${HAVE_GCC} == 4)
+.if defined(HAVE_GCC)
 NOPROFILE=	# defined
 .endif
 .endif
@@ -725,6 +725,14 @@ MKCOMPAT?=	yes
 MKCOMPAT:=	no
 .endif
 
+#.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386" || \
+
+.if ${MACHINE} == "evbppc"
+MKCOMPATMODULES?=	yes
+.else
+MKCOMPATMODULES:=	no
+.endif
+
 #
 # Default mips64 to softfloat now.
 # emips is always softfloat.
@@ -783,9 +791,9 @@ ${var}?=	yes
 #
 # Exceptions to the above:
 #
-.if ${MACHINE} == "evbppc"
-MKKMOD=		no
-.endif
+#.if ${MACHINE} == "evbppc"
+#MKKMOD=		no
+#.endif
 
 #
 # MK* options which default to "no".  Note that MKZFS has a different

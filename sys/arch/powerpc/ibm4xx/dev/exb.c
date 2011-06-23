@@ -1,4 +1,4 @@
-/*	$Id: exb.c,v 1.2 2010/11/06 16:30:15 uebayasi Exp $	*/
+/*	$Id: exb.c,v 1.2.10.1 2011/06/23 14:19:29 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exb.c,v 1.2 2010/11/06 16:30:15 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exb.c,v 1.2.10.1 2011/06/23 14:19:29 cherry Exp $");
 
 #include "locators.h"
 
@@ -48,8 +48,8 @@ struct exb_softc {
 
 extern const struct exb_conf exb_confs[];
 
-static int exb_match(device_t, struct cfdata *, void *);
-static void exb_attach(device_t, struct device *, void *);
+static int exb_match(device_t, cfdata_t, void *);
+static void exb_attach(device_t, device_t, void *);
 static int exb_print(void *, const char *);
 
 CFATTACH_DECL_NEW(exb, sizeof(struct exb_softc), exb_match, exb_attach,
@@ -59,7 +59,7 @@ static struct powerpc_bus_space exb_bus_space_tag =
     { _BUS_SPACE_BIG_ENDIAN | _BUS_SPACE_MEM_TYPE, 0 };
 
 static int
-exb_match(device_t parent, struct cfdata *cf, void *aux)
+exb_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;

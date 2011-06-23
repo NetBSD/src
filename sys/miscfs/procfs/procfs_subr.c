@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.98 2010/07/21 17:52:12 hannken Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.98.6.1 2011/06/23 14:20:24 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.98 2010/07/21 17:52:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.98.6.1 2011/06/23 14:20:24 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,8 @@ kmutex_t pfs_ihash_lock;
  * the vnode free list.
  */
 int
-procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid, pfstype pfs_type, int fd, struct proc *p)
+procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid,
+    pfstype pfs_type, int fd, struct proc *p)
 {
 	struct pfsnode *pfs;
 	struct vnode *vp;
@@ -169,7 +170,8 @@ procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid, pfstype pfs_type
 	if (*vpp != NULL)
 		return (0);
 
-	if ((error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, &vp)) != 0) {
+	error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, NULL, &vp);
+	if (error) {
 		*vpp = NULL;
 		return (error);
 	}
@@ -599,7 +601,7 @@ loop:
 		    	if (flags == 0) {
 				mutex_exit(&pfs_ihash_lock);
 			} else {
-				mutex_enter(&vp->v_interlock);
+				mutex_enter(vp->v_interlock);
 				mutex_exit(&pfs_ihash_lock);
 				if (vget(vp, flags))
 					goto loop;
@@ -655,17 +657,17 @@ procfs_revoke_vnodes(struct proc *p, void *arg)
 	for (pfs = LIST_FIRST(ppp); pfs; pfs = pnext) {
 		vp = PFSTOV(pfs);
 		pnext = LIST_NEXT(pfs, pfs_hash);
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		if (vp->v_usecount > 0 && pfs->pfs_pid == p->p_pid &&
 		    vp->v_mount == mp) {
 		    	vp->v_usecount++;
-		    	mutex_exit(&vp->v_interlock);
+		    	mutex_exit(vp->v_interlock);
 			mutex_exit(&pfs_ihash_lock);
 			VOP_REVOKE(vp, REVOKEALL);
 			vrele(vp);
 			mutex_enter(&pfs_ihash_lock);
 		} else {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 		}
 	}
 	mutex_exit(&pfs_ihash_lock);

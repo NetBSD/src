@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.43 2010/12/06 14:50:34 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.43.4.1 2011/06/23 14:18:39 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -114,7 +114,7 @@ struct puffs_usermount {
 #define PU_SETSTATE(pu, s) (pu->pu_state = (s) | (pu->pu_state & ~PU_STATEMASK))
 #define PU_SETSFLAG(pu, s) (pu->pu_state |= (s))
 #define PU_CLRSFLAG(pu, s) \
-    (pu->pu_state = ((pu->pu_state &= ~(s)) | (pu->pu_state & PU_STATEMASK)))
+    (pu->pu_state = ((pu->pu_state & ~(s)) | (pu->pu_state & PU_STATEMASK)))
 	int			pu_dpipe[2];
 
 	struct puffs_node	*pu_pn_root;

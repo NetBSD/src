@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.25 2009/11/01 01:51:35 snj Exp $	*/
+/*	$NetBSD: aed.c,v 1.25.10.1 2011/06/23 14:19:19 cherry Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.25 2009/11/01 01:51:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.25.10.1 2011/06/23 14:19:19 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.25 2009/11/01 01:51:35 snj Exp $");
 /*
  * Function declarations.
  */
-static int	aedmatch(struct device *, struct cfdata *, void *);
-static void	aedattach(struct device *, struct device *, void *);
+static int	aedmatch(device_t, cfdata_t, void *);
+static void	aedattach(device_t, device_t, void *);
 static void	aed_emulate_mouse(adb_event_t *event);
 static void	aed_kbdrpt(void *kstate);
 static void	aed_dokeyupdown(adb_event_t *event);
@@ -89,7 +89,7 @@ const struct cdevsw aed_cdevsw = {
 };
 
 static int
-aedmatch(struct device *parent, struct cfdata *cf, void *aux)
+aedmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 	static int aed_matched = 0;
@@ -103,10 +103,10 @@ aedmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-aedattach(struct device *parent, struct device *self, void *aux)
+aedattach(device_t parent, device_t self, void *aux)
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
-	struct aed_softc *sc = (struct aed_softc *)self;
+	struct aed_softc *sc = device_private(self);
 
 	callout_init(&sc->sc_repeat_ch, 0);
 	selinit(&sc->sc_selinfo);

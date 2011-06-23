@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.21 2010/01/07 01:39:56 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.21.4.1 2011/06/23 14:18:42 cherry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.21 2010/01/07 01:39:56 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.21.4.1 2011/06/23 14:18:42 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,8 +84,6 @@ __RCSID("$NetBSD: utilities.c,v 1.21 2010/01/07 01:39:56 christos Exp $");
 long	diskreads, totalreads;	/* Disk cache statistics */
 
 static void rwerror(const char *, daddr_t);
-
-extern volatile sig_atomic_t returntosingle;
 
 int
 ftypeok(struct ext2fs_dinode *dp)
@@ -459,46 +457,6 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 	if (ino != EXT2_ROOTINO)
 		*--cp = '?';
 	memcpy(namebuf, cp, (size_t)(&namebuf[MAXPATHLEN] - cp));
-}
-
-void
-catch(int n)
-{
-	ckfini(0);
-	_exit(FSCK_EXIT_SIGNALLED);
-}
-
-/*
- * When preening, allow a single quit to signal
- * a special exit after filesystem checks complete
- * so that reboot sequence may be interrupted.
- */
-void
-catchquit(int n)
-{
-	static const char msg[] =
-	    "returning to single-user after filesystem check\n";
-	int serrno = errno;
-
-	(void)write(STDOUT_FILENO, msg, sizeof(msg) - 1);
-	returntosingle = 1;
-	(void)signal(SIGQUIT, SIG_DFL);
-	errno = serrno;
-}
-
-/*
- * Ignore a single quit signal; wait and flush just in case.
- * Used by child processes in preen.
- */
-void
-voidquit(int n)
-{
-	int serrno = errno;
-
-	sleep(1);
-	(void)signal(SIGQUIT, SIG_IGN);
-	(void)signal(SIGQUIT, SIG_DFL);
-	errno = serrno;
 }
 
 /*

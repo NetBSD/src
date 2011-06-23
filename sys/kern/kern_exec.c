@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.314 2011/04/26 16:36:42 joerg Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.314.2.1 2011/06/23 14:20:18 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.314 2011/04/26 16:36:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.314.2.1 2011/06/23 14:20:18 cherry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -979,6 +979,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	cwdexec(p);
 	fd_closeexec();		/* handle close on exec */
+
+	if (__predict_false(ktrace_on))
+		fd_ktrexecfd();
+
 	execsigs(p);		/* reset catched signals */
 
 	l->l_ctxlink = NULL;	/* reset ucontext link */
@@ -1104,6 +1108,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* Provide a consistent LWP private setting */
 	(void)lwp_setprivate(l, NULL);
+
+	/* Discard all PCU state; need to start fresh */
+	pcu_discard_all(l);
 
 	/* map the process's signal trampoline code */
 	if ((error = exec_sigcode_map(p, pack.ep_esch->es_emul)) != 0) {

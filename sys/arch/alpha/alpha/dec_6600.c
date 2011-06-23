@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.30 2010/10/07 19:55:02 hans Exp $ */
+/* $NetBSD: dec_6600.c,v 1.30.6.1 2011/06/23 14:18:50 cherry Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.30 2010/10/07 19:55:02 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.30.6.1 2011/06/23 14:18:50 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ static int comcnrate __attribute__((unused)) = CONSPEED;
 
 void dec_6600_init(void);
 static void dec_6600_cons_init(void);
-static void dec_6600_device_register(struct device *, void *);
+static void dec_6600_device_register(device_t, void *);
 static void dec_6600_mcheck(unsigned long, struct ev6_logout_area *);
 static void dec_6600_mcheck_sys(unsigned int, struct ev6_logout_area *);
 static void dec_6600_mcheck_handler(unsigned long, struct trapframe *,
@@ -194,12 +194,12 @@ dec_6600_cons_init()
 }
 
 static void
-dec_6600_device_register(struct device *dev, void *aux)
+dec_6600_device_register(device_t dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
-	static struct device *primarydev, *pcidev, *ctrlrdev;
+	static device_t primarydev, pcidev, ctrlrdev;
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = device_parent(dev);
+	device_t parent = device_parent(dev);
 
 	if (found)
 		return;
@@ -226,7 +226,7 @@ dec_6600_device_register(struct device *dev, void *aux)
 				return;
 			primarydev = dev;
 			DR_VERBOSE(printf("\nprimarydev = %s\n",
-			    dev->dv_xname));
+			    device_xname(dev)));
 			return;
 		}
 	}
@@ -252,7 +252,7 @@ dec_6600_device_register(struct device *dev, void *aux)
 				return;
 	
 			pcidev = dev;
-			DR_VERBOSE(printf("\npcidev = %s\n", dev->dv_xname));
+			DR_VERBOSE(printf("\npcidev = %s\n", device_xname(dev)));
 			return;
 		}
 	}
@@ -272,12 +272,12 @@ dec_6600_device_register(struct device *dev, void *aux)
 			if (netboot) {
 				booted_device = dev;
 				DR_VERBOSE(printf("\nbooted_device = %s\n",
-				    dev->dv_xname));
+				    device_xname(dev)));
 				found = 1;
 			} else {
 				ctrlrdev = dev;
 				DR_VERBOSE(printf("\nctrlrdev = %s\n",
-				    dev->dv_xname));
+				    device_xname(dev)));
 			}
 			return;
 		}
@@ -304,7 +304,7 @@ dec_6600_device_register(struct device *dev, void *aux)
 
 		/* we've found it! */
 		booted_device = dev;
-		DR_VERBOSE(printf("\nbooted_device = %s\n", dev->dv_xname));
+		DR_VERBOSE(printf("\nbooted_device = %s\n", device_xname(dev)));
 		found = 1;
 	}
 
@@ -323,7 +323,7 @@ dec_6600_device_register(struct device *dev, void *aux)
 			return;
 		/* we've found it! */
 		booted_device = dev;
-		DR_VERBOSE(printf("\nbooted_device = %s\n", dev->dv_xname));
+		DR_VERBOSE(printf("\nbooted_device = %s\n", device_xname(dev)));
 		found = 1;
 	}
 
@@ -342,7 +342,7 @@ dec_6600_device_register(struct device *dev, void *aux)
 			return;
 		/* we've found it! */
 		booted_device = dev;
-		DR_VERBOSE(printf("\nbooted_device = %s\n", dev->dv_xname));
+		DR_VERBOSE(printf("\nbooted_device = %s\n", device_xname(dev)));
 		found = 1;
 	}
 
@@ -367,7 +367,7 @@ dec_6600_device_register(struct device *dev, void *aux)
 
 		/* we've found it! */
 		booted_device = dev;
-		DR_VERBOSE(printf("booted_device = %s\n", dev->dv_xname));
+		DR_VERBOSE(printf("booted_device = %s\n", device_xname(dev)));
 		found = 1;
 	}
 }

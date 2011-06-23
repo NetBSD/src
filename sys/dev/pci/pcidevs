@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1083 2011/05/28 22:53:23 phx Exp $
+$NetBSD: pcidevs,v 1.1083.2.1 2011/06/23 14:20:04 cherry Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1405,6 +1405,7 @@ product ATI RADEON_R423_5D57	0x5d57	Radeon X800XT (R423) 5D57
 product ATI RADEON_X850XT_S	0x5d72	Radeon X850 XT Secondary
 product ATI RADEON_X700		0x5e4b	Radeon X700 Pro
 product ATI RADEON_X700_S	0x5e6b	Radeon X700 Pro Secondary
+product ATI RADEON_HD5870	0x6898	Radeon HD 5870 Cypress
 product ATI RADEON_HD5600_RD	0x68c1	Redwood
 product ATI RADEON_X1300	0x7146	Radeon X1300 Series (RV515)
 product ATI RADEON_X1300_S	0x7166	Radeon X1300 Series (RV515) Secondary
@@ -2608,7 +2609,7 @@ product INTEL 82801DB_MOD	0x24C6	82801DB AC97 Modem Controller
 product INTEL 82801DB_USB_3	0x24C7	82801DB USB UHCI Controller
 product INTEL 82801DBM_IDE	0x24CA	82801DBM IDE Controller
 product INTEL 82801DB_IDE	0x24CB	82801DB IDE Controller (UltraATA/100)
-product INTEL 82801DB_ISA	0x24CC	82801DB ISA Bridge
+product INTEL 82801DBM_LPC	0x24CC	82801DB LPC Interface Bridge
 product INTEL 82801DB_USBC	0x24CD	82801DB USB EHCI Controller
 product INTEL 82801EB_LPC	0x24D0	82801EB LPC Interface Bridge
 product INTEL 82801EB_SATA	0x24D1	82801EB Serial ATA Controller
@@ -3172,6 +3173,7 @@ product LUCENT OR3TP12		0x5401	ORCA FPGA w/ 64-bit PCI ASIC Core
 product LUCENT USBHC		0x5801	USB Host Controller
 product LUCENT USBHC2		0x5802	2-port USB Host Controller
 product LUCENT FW322_323	0x5811	FW322/323 IEEE 1394 Host Controller
+product LUCENT FW643_PCIE	0x5901	FW643 PCIE IEEE 1394b Host Controller
 product LUCENT ET1310		0xed00	ET1310 10/100/1000 Ethernet
 product LUCENT ET1301		0xed01	ET1301 10/100 Ethernet
 

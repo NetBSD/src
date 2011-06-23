@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2010/12/10 20:06:17 joerg Exp $
+# $NetBSD: Makefile,v 1.11.4.1 2011/06/23 14:18:39 cherry Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -191,3 +191,8 @@ openpam_static_modules.o: openpam_static.o ${STATIC_MODULE_LIBS}
 .PATH.h: ${DIST}/include
 .PATH.c: ${DIST}/lib
 .PATH.3: ${DIST}/doc/man
+
+# XXX
+.if ${HAVE_GCC} >= 45
+COPTS.openpam_dispatch.c+=	-Wno-cast-qual
+.endif

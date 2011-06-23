@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2008/08/29 00:02:22 gmcgarry Exp $
+# $NetBSD: Makefile,v 1.24.18.1 2011/06/23 14:18:38 cherry Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -92,10 +92,8 @@ CPPFLAGS+= -I.					\
 CPPFLAGS+=-DHAVE_IPV6
 .endif
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
-.for f in mkey
-COPTS.${f}.c+=  -Wno-pointer-sign
-.endfor
+.if defined(HAVE_GCC)
+COPTS.mkey.c+=  -Wno-pointer-sign
 .endif
 
 ${gen_files} hdb_asn1.hx: hdb_asn1_files

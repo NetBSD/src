@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2011/04/03 23:07:19 dyoung Exp $
+# $NetBSD: Makefile,v 1.14.2.1 2011/06/23 14:18:49 cherry Exp $
 
 # Makefile for alpha tags file and boot blocks
 
@@ -13,7 +13,7 @@ SALPHA=	${SYSDIR}/arch/alpha/alpha/*.[ch] ${SYSDIR}/arch/alpha/common/*.[ch] \
 AALPHA=	${SYSDIR}/arch/alpha/alpha/*.s ${SYSDIR}/arch/alpha/pci/*.s
 
 # Directories in which to place tags links
-DALPHA=	a12 common eisa include isa jensenio mcbus pci sableio tc tlsb
+DALPHA=	common eisa include isa jensenio mcbus pci sableio tc tlsb
 
 .include "../../kern/Make.tags.inc"
 

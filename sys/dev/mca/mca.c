@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.30 2009/05/12 14:31:00 cegger Exp $	*/
+/*	$NetBSD: mca.c,v 1.30.10.1 2011/06/23 14:20:02 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.30 2009/05/12 14:31:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.30.10.1 2011/06/23 14:20:02 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.30 2009/05/12 14:31:00 cegger Exp $");
 int	mca_match(device_t, cfdata_t, void *);
 void	mca_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mca, sizeof(struct device),
+CFATTACH_DECL_NEW(mca, 0,
     mca_match, mca_attach, NULL, NULL);
 
 int	mca_print(void *, const char *);

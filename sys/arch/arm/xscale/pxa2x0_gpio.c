@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.13 2009/08/04 12:11:33 kiyohara Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.13.10.1 2011/06/23 14:19:01 cherry Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.13 2009/08/04 12:11:33 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.13.10.1 2011/06/23 14:19:01 cherry Exp $");
 
 #include "opt_pxa2x0_gpio.h"
 
@@ -65,7 +65,7 @@ struct gpio_irq_handler {
 };
 
 struct pxagpio_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_bust;
 	bus_space_handle_t sc_bush;
 	void *sc_irqcookie[4];
@@ -77,10 +77,10 @@ struct pxagpio_softc {
 #endif
 };
 
-static int	pxagpio_match(struct device *, struct cfdata *, void *);
-static void	pxagpio_attach(struct device *, struct device *, void *);
+static int	pxagpio_match(device_t, cfdata_t, void *);
+static void	pxagpio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pxagpio, sizeof(struct pxagpio_softc),
+CFATTACH_DECL_NEW(pxagpio, sizeof(struct pxagpio_softc),
     pxagpio_match, pxagpio_attach, NULL, NULL);
 
 static struct pxagpio_softc *pxagpio_softc;
@@ -120,7 +120,7 @@ pxagpio_reg_write(struct pxagpio_softc *sc, int reg, u_int32_t val)
 }
 
 static int
-pxagpio_match(struct device *parent, struct cfdata *cf, void *aux)
+pxagpio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pxaip_attach_args *pxa = aux;
 
@@ -133,18 +133,19 @@ pxagpio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-pxagpio_attach(struct device *parent, struct device *self, void *aux)
+pxagpio_attach(device_t parent, device_t self, void *aux)
 {
-	struct pxagpio_softc *sc = (struct pxagpio_softc *)self;
+	struct pxagpio_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = aux;
 
+	sc->sc_dev = self;
 	sc->sc_bust = pxa->pxa_iot;
 
 	aprint_normal(": GPIO Controller\n");
 
 	if (bus_space_map(sc->sc_bust, pxa->pxa_addr, pxa->pxa_size, 0,
 	    &sc->sc_bush)) {
-		aprint_error("%s: Can't map registers!\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "Can't map registers!\n");
 		return;
 	}
 
@@ -176,8 +177,7 @@ pxagpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_irqcookie[2] = pxa2x0_intr_establish(PXA2X0_INT_GPION, IPL_BIO,
 	    gpio_intrN, sc);
 	if (sc->sc_irqcookie[2] == NULL) {
-		aprint_error("%s: failed to hook main GPIO interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "failed to hook main GPIO interrupt\n");
 		return;
 	}
 #endif
@@ -323,8 +323,7 @@ gpio_intr0(void *arg)
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_handlers[0] == NULL) {
-		printf("%s: stray GPIO#0 edge interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "stray GPIO#0 edge interrupt\n");
 		return (0);
 	}
 #endif
@@ -342,8 +341,7 @@ gpio_intr1(void *arg)
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_handlers[1] == NULL) {
-		printf("%s: stray GPIO#1 edge interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "stray GPIO#1 edge interrupt\n");
 		return (0);
 	}
 #endif
@@ -385,8 +383,9 @@ gpio_dispatch(struct pxagpio_softc *sc, int gpio_base)
 	 */
 #ifdef DEBUG
 	if ((gedr & sc->sc_mask[bank]) == 0) {
-		printf("%s: stray GPIO interrupt. Bank %d, GEDR 0x%08x, mask 0x%08x\n",
-		    sc->sc_dev.dv_xname, bank, gedr, sc->sc_mask[bank]);
+		aprint_error_dev(sc->sc_dev,
+		    "stray GPIO interrupt. Bank %d, GEDR 0x%08x, mask 0x%08x\n",
+		    bank, gedr, sc->sc_mask[bank]);
 		return (1);	/* XXX: Pretend we dealt with it */
 	}
 #endif
@@ -405,8 +404,9 @@ gpio_dispatch(struct pxagpio_softc *sc, int gpio_base)
 		gedr &= ~mask;
 
 		if ((gh = *ghp) == NULL) {
-			printf("%s: unhandled GPIO interrupt. GPIO#%d\n",
-			    sc->sc_dev.dv_xname, gpio_base + i);
+			aprint_error_dev(sc->sc_dev,
+			    "unhandled GPIO interrupt. GPIO#%d\n",
+			    gpio_base + i);
 			continue;
 		}
 

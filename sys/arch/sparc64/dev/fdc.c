@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.34 2011/03/12 11:43:38 nakayama Exp $	*/
+/*	$NetBSD: fdc.c,v 1.34.2.1 2011/06/23 14:19:41 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.34 2011/03/12 11:43:38 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.34.2.1 2011/06/23 14:19:41 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -187,7 +187,7 @@ enum fdc_state {
 
 /* software state, per controller */
 struct fdc_softc {
-	struct device	sc_dev;		/* boilerplate */
+	device_t	sc_dev;		/* boilerplate */
 	bus_space_tag_t	sc_bustag;
 
 	struct callout sc_timo_ch;	/* timeout callout */
@@ -230,30 +230,30 @@ extern	struct fdcio	*fdciop;	/* I/O descriptor used in fdintr.s */
 
 /* controller driver configuration */
 #ifdef SUN4
-int	fdcmatch_mainbus(struct device *, struct cfdata *, void*);
-int	fdcmatch_obio(struct device *, struct cfdata *, void *);
-void	fdcattach_mainbus(struct device *, struct device *, void *);
-void	fdcattach_obio(struct device *, struct device *, void *);
+int	fdcmatch_mainbus(device_t, cfdata_t, void*);
+int	fdcmatch_obio(device_t, cfdata_t, void *);
+void	fdcattach_mainbus(device_t, device_t, void *);
+void	fdcattach_obio(device_t, device_t, void *);
 #elif SUN4U
-int	fdcmatch_sbus(struct device *, struct cfdata *, void *);
-int	fdcmatch_ebus(struct device *, struct cfdata *, void *);
-void	fdcattach_sbus(struct device *, struct device *, void *);
-void	fdcattach_ebus(struct device *, struct device *, void *);
+int	fdcmatch_sbus(device_t, cfdata_t, void *);
+int	fdcmatch_ebus(device_t, cfdata_t, void *);
+void	fdcattach_sbus(device_t, device_t, void *);
+void	fdcattach_ebus(device_t, device_t, void *);
 #endif
 
 int	fdcattach(struct fdc_softc *, int);
 
 #ifdef SUN4
-CFATTACH_DECL(fdc_mainbus, sizeof(struct fdc_softc),
+CFATTACH_DECL_NEW(fdc_mainbus, sizeof(struct fdc_softc),
     fdcmatch_mainbus, fdcattach_mainbus, NULL, NULL);
 
-CFATTACH_DECL(fdc_obio, sizeof(struct fdc_softc),
+CFATTACH_DECL_NEW(fdc_obio, sizeof(struct fdc_softc),
     fdcmatch_obio, fdcattach_obio, NULL, NULL);
 #elif SUN4U
-CFATTACH_DECL(fdc_sbus, sizeof(struct fdc_softc),
+CFATTACH_DECL_NEW(fdc_sbus, sizeof(struct fdc_softc),
     fdcmatch_sbus, fdcattach_sbus, NULL, NULL);
 
-CFATTACH_DECL(fdc_ebus, sizeof(struct fdc_softc),
+CFATTACH_DECL_NEW(fdc_ebus, sizeof(struct fdc_softc),
     fdcmatch_ebus, fdcattach_ebus, NULL, NULL);
 #endif
 
@@ -291,7 +291,7 @@ struct fd_type fd_types[] = {
 
 /* software state, per disk (with up to 4 disks per ctlr) */
 struct fd_softc {
-	struct device	sc_dv;		/* generic device info */
+	device_t	sc_dev;		/* generic device info */
 	struct disk	sc_dk;		/* generic disk info */
 
 	struct fd_type *sc_deftype;	/* default type descriptor */
@@ -321,12 +321,12 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-int	fdmatch(struct device *, struct cfdata *, void *);
-void	fdattach(struct device *, struct device *, void *);
+int	fdmatch(device_t, cfdata_t, void *);
+void	fdattach(device_t, device_t, void *);
 bool	fdshutdown(device_t, int);
 bool	fdsuspend(device_t, const pmf_qual_t *);
 
-CFATTACH_DECL(fd, sizeof(struct fd_softc),
+CFATTACH_DECL_NEW(fd, sizeof(struct fd_softc),
     fdmatch, fdattach, NULL, NULL);
 
 extern struct cfdriver fd_cd;
@@ -375,7 +375,7 @@ void	fdcretry(struct fdc_softc *);
 void	fdfinish(struct fd_softc *, struct buf *);
 int	fdformat(dev_t, struct ne7_fd_formb *, struct proc *);
 void	fd_do_eject(struct fd_softc *);
-void	fd_mountroot_hook(struct device *);
+void	fd_mountroot_hook(device_t );
 static int fdconf(struct fdc_softc *);
 static void establish_chip_type(
 		struct fdc_softc *,
@@ -393,7 +393,7 @@ int	fd_read_md_image(size_t *, void **);
 #define OBP_FDNAME	(CPU_ISSUN4M ? "SUNW,fdtwo" : "fd")
 
 int
-fdcmatch_mainbus(struct device *parent, struct cfdata *match, void *aux)
+fdcmatch_mainbus(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -416,7 +416,7 @@ fdcmatch_mainbus(struct device *parent, struct cfdata *match, void *aux)
 }
 
 int
-fdcmatch_obio(struct device *parent, struct cfdata *match, void *aux)
+fdcmatch_obio(device_t parent, cfdata_t match, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa;
@@ -445,7 +445,7 @@ fdcmatch_obio(struct device *parent, struct cfdata *match, void *aux)
 #elif SUN4U
 
 int
-fdcmatch_sbus(struct device *parent, struct cfdata *match, void *aux)
+fdcmatch_sbus(device_t parent, cfdata_t match, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -453,7 +453,7 @@ fdcmatch_sbus(struct device *parent, struct cfdata *match, void *aux)
 }
 
 int
-fdcmatch_ebus(struct device *parent, struct cfdata *match, void *aux)
+fdcmatch_ebus(device_t parent, cfdata_t match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -590,11 +590,12 @@ fdconf(struct fdc_softc *fdc)
 
 #ifdef SUN4
 void
-fdcattach_mainbus(struct device *parent, struct device *self, void *aux)
+fdcattach_mainbus(device_t parent, device_t self, void *aux)
 {
-	struct fdc_softc *fdc = (void *)self;
+	struct fdc_softc *fdc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 
+	fdc->sc_dev = self;
 	fdc->sc_bustag = ma->ma_bustag;
 
 	if (bus_space_map(
@@ -618,9 +619,9 @@ fdcattach_mainbus(struct device *parent, struct device *self, void *aux)
 }
 
 void
-fdcattach_obio(struct device *parent, struct device *self, void *aux)
+fdcattach_obio(device_t parent, device_t self, void *aux)
 {
-	struct fdc_softc *fdc = (void *)self;
+	struct fdc_softc *fdc = device_private(self);
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
 
@@ -629,6 +630,7 @@ fdcattach_obio(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	fdc->sc_dev = self;
 	fdc->sc_bustag = sa->sa_bustag;
 
 	if (sbus_bus_map(sa->sa_bustag,
@@ -656,9 +658,9 @@ fdcattach_obio(struct device *parent, struct device *self, void *aux)
 #elif SUN4U
 
 void
-fdcattach_sbus(struct device *parent, struct device *self, void *aux)
+fdcattach_sbus(device_t parent, device_t self, void *aux)
 {
-	struct fdc_softc *fdc = (void *)self;
+	struct fdc_softc *fdc = device_private(self);
 	struct sbus_attach_args *sa = aux;
 
 	if (sa->sa_nintr == 0) {
@@ -671,6 +673,7 @@ fdcattach_sbus(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	fdc->sc_dev = self;
 	fdc->sc_bustag = sa->sa_bustag;
 
 	if (bus_space_map(sa->sa_bustag, BUS_ADDR(sa->sa_slot, sa->sa_offset),
@@ -699,9 +702,9 @@ fdcattach_sbus(struct device *parent, struct device *self, void *aux)
 }
 
 void
-fdcattach_ebus(struct device *parent, struct device *self, void *aux)
+fdcattach_ebus(device_t parent, device_t self, void *aux)
 {
-	struct fdc_softc *fdc = (void *)self;
+	struct fdc_softc *fdc = device_private(self);
 	struct ebus_attach_args *ea = aux;
 	int map_vaddr;
 
@@ -716,6 +719,7 @@ fdcattach_ebus(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	fdc->sc_dev = self;
 	fdc->sc_bustag = ea->ea_bustag;
 
 	if (ea->ea_nvaddr > 0) {
@@ -793,7 +797,8 @@ fdcattach(struct fdc_softc *fdc, int pri)
 	fdc->sc_sicookie = softint_establish(SOFTINT_BIO, fdcswintr, fdc);
 	if (fdc->sc_sicookie == NULL) {
 		aprint_normal("\n");
-		aprint_error_dev(&fdc->sc_dev, "cannot register soft interrupt handler\n");
+		aprint_error_dev(fdc->sc_dev,
+		    "cannot register soft interrupt handler\n");
 		callout_stop(&fdc->sc_timo_ch);
 		callout_stop(&fdc->sc_intr_ch);
 		return -1;
@@ -816,7 +821,8 @@ fdcattach(struct fdc_softc *fdc, int pri)
 				fdc_c_hwintr, fdc) == NULL) {
 #endif
 		aprint_normal("\n");
-		aprint_error_dev(&fdc->sc_dev, "cannot register interrupt handler\n");
+		aprint_error_dev(fdc->sc_dev,
+		    "cannot register interrupt handler\n");
 		callout_stop(&fdc->sc_timo_ch);
 		callout_stop(&fdc->sc_intr_ch);
 		softint_disestablish(fdc->sc_sicookie);
@@ -824,14 +830,14 @@ fdcattach(struct fdc_softc *fdc, int pri)
 	}
 
 	evcnt_attach_dynamic(&fdc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    device_xname(&fdc->sc_dev), "intr");
+	    device_xname(fdc->sc_dev), "intr");
 
 	/* physical limit: four drives per controller. */
 	drive_attached = 0;
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
 		fa.fa_deftype = NULL;		/* unknown */
 		fa.fa_deftype = &fd_types[0];	/* XXX */
-		if (config_found(&fdc->sc_dev, (void *)&fa, fdprint) != NULL)
+		if (config_found(fdc->sc_dev, (void *)&fa, fdprint) != NULL)
 			drive_attached = 1;
 	}
 
@@ -844,9 +850,9 @@ fdcattach(struct fdc_softc *fdc, int pri)
 }
 
 int
-fdmatch(struct device *parent, struct cfdata *match, void *aux)
+fdmatch(device_t parent, cfdata_t match, void *aux)
 {
-	struct fdc_softc *fdc = (void *)parent;
+	struct fdc_softc *fdc = device_private(parent);
 	bus_space_tag_t t = fdc->sc_bustag;
 	bus_space_handle_t h = fdc->sc_handle;
 	struct fdc_attach_args *fa = aux;
@@ -922,14 +928,15 @@ fdmatch(struct device *parent, struct cfdata *match, void *aux)
  * Controller is working, and drive responded.  Attach it.
  */
 void
-fdattach(struct device *parent, struct device *self, void *aux)
+fdattach(device_t parent, device_t self, void *aux)
 {
-	struct fdc_softc *fdc = (void *)parent;
-	struct fd_softc *fd = (void *)self;
+	struct fdc_softc *fdc = device_private(parent);
+	struct fd_softc *fd = device_private(self);
 	struct fdc_attach_args *fa = aux;
 	struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
 
+	fd->sc_dev = self;
 	callout_init(&fd->sc_motoron_ch, 0);
 	callout_init(&fd->sc_motoroff_ch, 0);
 
@@ -955,14 +962,14 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&fd->sc_dk, device_xname(&fd->sc_dv), &fddkdriver);
+	disk_init(&fd->sc_dk, device_xname(fd->sc_dev), &fddkdriver);
 	disk_attach(&fd->sc_dk);
 
 	/*
 	 * Establish a mountroot_hook anyway in case we booted
 	 * with RB_ASKNAME and get selected as the boot device.
 	 */
-	mountroothook_establish(fd_mountroot_hook, &fd->sc_dv);
+	mountroothook_establish(fd_mountroot_hook, fd->sc_dev);
 
 	fd_set_properties(fd);
 
@@ -1060,7 +1067,8 @@ fdstrategy(struct buf *bp)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
 	else {
-		struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dv);
+		struct fdc_softc *fdc = device_private(
+		    device_parent(fd->sc_dev));
 		if (fdc->sc_state == DEVIDLE) {
 			printf("fdstrategy: controller inactive\n");
 			fdcstart(fdc);
@@ -1078,7 +1086,7 @@ done:
 void
 fdstart(struct fd_softc *fd)
 {
-	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dv);
+	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
 	int active = fdc->sc_drives.tqh_first != 0;
 
 	/* Link into controller queue. */
@@ -1093,7 +1101,7 @@ fdstart(struct fd_softc *fd)
 void
 fdfinish(struct fd_softc *fd, struct buf *bp)
 {
-	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dv);
+	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
 
 	/*
 	 * Move this drive to the end of the queue to give others a `fair'
@@ -1184,7 +1192,7 @@ fd_motor_off(void *arg)
 
 	s = splbio();
 	fd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
-	fd_set_motor((struct fdc_softc *)device_parent(&fd->sc_dv));
+	fd_set_motor(device_private(device_parent(fd->sc_dev)));
 	splx(s);
 }
 
@@ -1192,7 +1200,7 @@ void
 fd_motor_on(void *arg)
 {
 	struct fd_softc *fd = arg;
-	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dv);
+	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
 	int s;
 
 	s = splbio();
@@ -1412,7 +1420,7 @@ fdcstatus(struct fdc_softc *fdc, const char *s)
 #endif
 
 	printf("%s: %s: state %d",
-		fd ? device_xname(&fd->sc_dv) : "fdc", s, fdc->sc_state);
+		fd ? device_xname(fd->sc_dev) : "fdc", s, fdc->sc_state);
 
 	switch (n) {
 	case 0:
@@ -1443,7 +1451,7 @@ fdctimeout(void *arg)
 	s = splbio();
 	fd = fdc->sc_drives.tqh_first;
 	if (fd == NULL) {
-		aprint_error_dev(&fdc->sc_dev, "timeout but no I/O pending: state %d, istatus=%d\n",
+		aprint_error_dev(fdc->sc_dev, "timeout but no I/O pending: state %d, istatus=%d\n",
 			fdc->sc_state, fdc->sc_istatus);
 		fdc->sc_state = DEVIDLE;
 		goto out;
@@ -1731,7 +1739,8 @@ loop:
 			fdc->sc_state = DORECAL;
 
 		if (fdc_diskchange(fdc)) {
-			aprint_error_dev(&fdc->sc_dev, "cannot clear disk change status\n");
+			aprint_error_dev(fdc->sc_dev,
+			    "cannot clear disk change status\n");
 			fdc->sc_state = DORESET;
 		}
 		goto loop;
@@ -2048,7 +2057,7 @@ fdcretry(struct fdc_softc *fdc)
 		if (fdc->sc_nstat == 7 &&
 		    (fdc->sc_status[0] & 0xd8) == 0x40 &&
 		    (fdc->sc_status[1] & 0x2) == 0x2) {
-			aprint_error_dev(&fdc->sc_dev, "read-only medium\n");
+			aprint_error_dev(fdc->sc_dev, "read-only medium\n");
 			error = EROFS;
 			goto failsilent;
 		}
@@ -2073,7 +2082,7 @@ fdcretry(struct fdc_softc *fdc)
 			 * are zero.  Assume this condition is the
 			 * result of no disk loaded into the drive.
 			 */
-			aprint_error_dev(&fdc->sc_dev, "no medium?\n");
+			aprint_error_dev(fdc->sc_dev, "no medium?\n");
 			error = ENODEV;
 			goto failsilent;
 		}
@@ -2117,7 +2126,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return ENXIO;
 
 	fd = device_lookup_private(&fd_cd, FDUNIT(dev));
-	fdc = device_private(device_parent(&fd->sc_dv));
+	fdc = device_private(device_parent(fd->sc_dev));
 
 	switch (cmd) {
 	case DIOCGDINFO:
@@ -2461,7 +2470,7 @@ fdgetdisklabel(dev_t dev)
 void
 fd_do_eject(struct fd_softc *fd)
 {
-	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dv);
+	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
 
 #ifdef SUN4
 	if (CPU_ISSUN4C) {
@@ -2487,7 +2496,7 @@ fd_do_eject(struct fd_softc *fd)
 
 /* ARGSUSED */
 void
-fd_mountroot_hook(struct device *dev)
+fd_mountroot_hook(device_t dev)
 {
 	int c;
 
@@ -2596,7 +2605,7 @@ fd_set_properties(struct fd_softc *fd)
 	prop_dictionary_set(disk_info, "geometry", geom);
 	prop_object_release(geom);
 
-	prop_dictionary_set(device_properties(&fd->sc_dv),
+	prop_dictionary_set(device_properties(fd->sc_dev),
 	    "disk-info", disk_info);
 
 	/*

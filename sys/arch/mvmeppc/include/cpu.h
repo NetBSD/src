@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2002/02/27 21:02:14 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.1.158.1 2011/06/23 14:19:24 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -30,15 +30,12 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_CPU_H_
-#define	_MACHINE_CPU_H_
+#ifndef	_MVMEPPC_CPU_H_
+#define	_MVMEPPC_CPU_H_
 
-#ifdef _KERNEL
-#define	CPU_MAXNUM	1
+#if defined(_KERNEL) && !defined(_MODULE)
+#define	CPU_MAXNUM		1
 extern char *bootpath;
-#endif
-
-#include <powerpc/cpu.h>
 
 #define	MVMEPPC_FAMILY(m)	((m) & 0xfff0)
 
@@ -47,5 +44,8 @@ extern char *bootpath;
 #define	MVMEPPC_FAMILY_230x	0x2300
 #define	MVMEPPC_FAMILY_240x	0x2400
 #define	MVMEPPC_FAMILY_360x	0x3600
+#endif /* _KERNEL && !_MODULE */
 
-#endif	/* _MACHINE_CPU_H_ */
+#include <powerpc/cpu.h>
+
+#endif	/* _MVMEPPC_CPU_H_ */

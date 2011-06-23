@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.2 2011/05/15 23:59:03 christos Exp $	*/
+/*	$NetBSD: commands.c,v 1.2.2.1 2011/06/23 14:20:40 cherry Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <err.h>
 #include <sys/types.h>
 #include "returns.h"
 #include "slave.h"
@@ -43,7 +44,7 @@ extern int cmdpipe[2];
 extern int slvpipe[2];
 
 static void report_type(returns_enum_t);
-static void report_message(int, char *);
+static void report_message(int, const char *);
 
 /*
  * Match the passed command string and execute the associated test
@@ -75,7 +76,7 @@ report_ptr(void *ptr)
 {
 	char *string;
 
-	asprintf(&string, "%td", ptr);
+	asprintf(&string, "%p", ptr);
 	report_status(string);
 	free(string);
 }
@@ -116,10 +117,8 @@ report_type(returns_enum_t return_type)
 	int type;
 
 	type = return_type;
-	if (write(slvpipe[WRITE_PIPE], &type, sizeof(int)) < 0) {
-		perror("command pipe write for status type failed");
-		exit(1);
-	}
+	if (write(slvpipe[WRITE_PIPE], &type, sizeof(int)) < 0)
+		err(1, "command pipe write for status type failed");
 
 }
 
@@ -132,22 +131,18 @@ report_count(int count)
 	int type;
 
 	type = ret_count;
-	if (write(slvpipe[WRITE_PIPE], &type, sizeof(int)) < 0) {
-		perror("command pipe write for count type failed");
-		exit(1);
-	}
+	if (write(slvpipe[WRITE_PIPE], &type, sizeof(int)) < 0)
+		err(1, "command pipe write for count type failed");
 
-	if (write(slvpipe[WRITE_PIPE], &count, sizeof(int)) < 0) {
-		perror("command pipe write for count");
-		exit(1);
-	}
+	if (write(slvpipe[WRITE_PIPE], &count, sizeof(int)) < 0)
+		err(1, "command pipe write for count");
 }
 
 /*
  * Report the status back to the director via the command pipe
  */
 void
-report_status(char *status)
+report_status(const char *status)
 {
 	report_message(ret_string, status);
 }
@@ -156,7 +151,7 @@ report_status(char *status)
  * Report an error message back to the director via the command pipe.
  */
 void
-report_error(char *status)
+report_error(const char *status)
 {
 	report_message(ret_slave_error, status);
 }
@@ -166,26 +161,20 @@ report_error(char *status)
  * command pipe.
  */
 static void
-report_message(int type, char *status)
+report_message(int type, const char *status)
 {
 	int len;
 
 	len = strlen(status);
 
-	if (write(slvpipe[WRITE_PIPE], &type, sizeof(int)) < 0) {
-		perror("command pipe write for message type failed");
-		exit(1);
-	}
+	if (write(slvpipe[WRITE_PIPE], &type, sizeof(int)) < 0)
+		err(1, "command pipe write for message type failed");
 
-	if (write(slvpipe[WRITE_PIPE], &len, sizeof(int)) < 0) {
-		perror("command pipe write for message length failed");
-		exit(1);
-	}
+	if (write(slvpipe[WRITE_PIPE], &len, sizeof(int)) < 0)
+		err(1, "command pipe write for message length failed");
 
-	if (write(slvpipe[WRITE_PIPE], status, len) < 0) {
-		perror("command pipe write of message data failed");
-		exit(1);
-	}
+	if (write(slvpipe[WRITE_PIPE], status, len) < 0)
+		err(1, "command pipe write of message data failed");
 }
 
 /*
@@ -205,20 +194,17 @@ report_nstr(chtype *string)
 	}
 
 	type = ret_byte;
-	if (write(slvpipe[WRITE_PIPE], &type, sizeof(int)) < 0) {
-		perror("report_nstr: command pipe write for status type failed");
-		exit(1);
-	}
+	if (write(slvpipe[WRITE_PIPE], &type, sizeof(int)) < 0)
+		err(1, "%s: command pipe write for status type failed",
+		    __func__);
 
-	if (write(slvpipe[WRITE_PIPE], &len, sizeof(int)) < 0) {
-		perror("report_nstr: command pipe write for status length failed");
-		exit(1);
-	}
+	if (write(slvpipe[WRITE_PIPE], &len, sizeof(int)) < 0)
+		err(1, "%s: command pipe write for status length failed",
+		    __func__);
 
-	if (write(slvpipe[WRITE_PIPE], string, len) < 0) {
-		perror("report_nstr: command pipe write of status data failed");
-		exit(1);
-	}
+	if (write(slvpipe[WRITE_PIPE], string, len) < 0)
+		err(1, "%s: command pipe write of status data failed",
+		    __func__);
 }
 
 /*

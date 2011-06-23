@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.44 2011/05/19 03:11:56 rmind Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.44.2.1 2011/06/23 14:20:14 cherry Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.44 2011/05/19 03:11:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.44.2.1 2011/06/23 14:20:14 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ loop:
 			if (flags == 0) {
 				mutex_exit(&msdosfs_ihash_lock);
 			} else {
-				mutex_enter(&vp->v_interlock);
+				mutex_enter(vp->v_interlock);
 				mutex_exit(&msdosfs_ihash_lock);
 				if (vget(vp, flags))
 					goto loop;
@@ -320,9 +320,8 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct denode
 	 * Directory entry was not in cache, have to create a vnode and
 	 * copy it from the passed disk buffer.
 	 */
-	/* getnewvnode() does a VREF() on the vnode */
-	error = getnewvnode(VT_MSDOSFS, pmp->pm_mountp,
-			    msdosfs_vnodeop_p, &nvp);
+	error = getnewvnode(VT_MSDOSFS, pmp->pm_mountp, msdosfs_vnodeop_p,
+	    NULL, &nvp);
 	if (error) {
 		*depp = 0;
 		return (error);
@@ -538,8 +537,9 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
 			else
 				bdwrite(bp);
 		} else {
-			uvm_vnp_zerorange(DETOV(dep), length,
-					  pmp->pm_bpcluster - boff);
+			ubc_zerorange(&DETOV(dep)->v_uobj, length,
+				      pmp->pm_bpcluster - boff,
+				      UBC_UNMAP_FLAG(DETOV(dep)));
 		}
 	}
 
@@ -627,7 +627,7 @@ deextend(struct denode *dep, u_long length, kauth_cred_t cred)
 	}
 
 	/*
-	 * Zero extend file range; uvm_vnp_zerorange() uses ubc_alloc() and a
+	 * Zero extend file range; ubc_zerorange() uses ubc_alloc() and a
 	 * memset(); we set the write size so ubc won't read in file data that
 	 * is zero'd later.
 	 */
@@ -635,8 +635,9 @@ deextend(struct denode *dep, u_long length, kauth_cred_t cred)
 	dep->de_FileSize = length;
 	uvm_vnp_setwritesize(DETOV(dep), (voff_t)dep->de_FileSize);
 	dep->de_flag |= DE_UPDATE|DE_MODIFIED;
-	uvm_vnp_zerorange(DETOV(dep), (off_t)osize,
-	    (size_t)(round_page(dep->de_FileSize) - osize));
+	ubc_zerorange(&DETOV(dep)->v_uobj, (off_t)osize,
+	    (size_t)(round_page(dep->de_FileSize) - osize),
+	    UBC_UNMAP_FLAG(DETOV(dep)));
 	uvm_vnp_setsize(DETOV(dep), (voff_t)dep->de_FileSize);
 	return (deupdat(dep, 1));
 }

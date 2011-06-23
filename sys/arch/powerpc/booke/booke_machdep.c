@@ -38,6 +38,8 @@
 
 #include <sys/cdefs.h>
 
+#include "opt_modular.h"
+
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
@@ -60,6 +62,12 @@
 paddr_t msgbuf_paddr;
 psize_t pmemsize;
 struct vm_map *phys_map;
+
+#ifdef MODULAR
+register_t cpu_psluserset = PSL_USERSET;
+register_t cpu_pslusermod = PSL_USERMOD;
+register_t cpu_pslusermask = PSL_USERMASK;
+#endif
 
 static bus_addr_t booke_dma_phys_to_bus_mem(bus_dma_tag_t, bus_addr_t);
 static bus_addr_t booke_dma_bus_mem_to_phys(bus_dma_tag_t, bus_addr_t);
@@ -95,56 +103,33 @@ booke_dma_bus_mem_to_phys(bus_dma_tag_t t, bus_addr_t a)
 	return a;
 }
 
-static int
-null_splraise(int ipl)
-{
-	int cpl = curcpu()->ci_cpl;
-	curcpu()->ci_cpl = ipl;
-	return cpl;
-}
-
-static void
-null_splx(int ipl)
-{
-	curcpu()->ci_cpl = ipl;
-}
-
-static const struct intrsw null_intrsw = {
-	.intrsw_splraise = null_splraise,
-	.intrsw_splx = null_splx,
-};
-
-const struct intrsw *powerpc_intrsw = &null_intrsw;
 struct cpu_md_ops cpu_md_ops;
-extern struct cpu_info cpu_info[1];
 
-#if 0
-pt_entry_t ptp0[NPTEPG] = {
-	[(0x20000 & SEGOFSET) >> PGSHIFT] = 0x00020000|PTE_xR|PTE_xX|PTE_M,
-};
-
-struct pmap_segtab pmap_kern_segtab = {
-	.seg_tab[0x20000 >> SEGSHIFT] = ptp0,
-};
-#endif
-
-struct cpu_softc cpu_softc[1] = {
+struct cpu_softc cpu_softc[] = {
 	[0] = {
-		.cpu_ci = cpu_info,
+		.cpu_ci = &cpu_info[0],
 	},
+#ifdef MULTIPROCESSOR
+	[CPU_MAXNUM-1] = {
+		.cpu_ci = &cpu_info[CPU_MAXNUM-1],
+	},
+#endif
 };
-struct cpu_info cpu_info[1] = {
+struct cpu_info cpu_info[] = {
 	[0] = {
 		.ci_curlwp = &lwp0,
 		.ci_tlb_info = &pmap_tlb0_info,
-		.ci_softc = cpu_softc,
+		.ci_softc = &cpu_softc[0],
 		.ci_cpl = IPL_HIGH,
-		.ci_fpulwp = &lwp0,
-		.ci_veclwp = &lwp0,
-#if 0
-		.ci_pmap_kern_segtab = &pmap_kern_segtab,
-#endif
 	},
+#ifdef MULTIPROCESSOR
+	[CPU_MAXNUM-1] = {
+		.ci_curlwp = NULL,
+		.ci_tlb_info = &pmap_tlb0_info,
+		.ci_softc = &cpu_softc[CPU_MAXNUM-1],
+		.ci_cpl = IPL_HIGH,
+	},
+#endif
 };
 
 /*
@@ -161,8 +146,6 @@ void *startsym, *endsym;
 #endif
 
 int fake_mapiodev = 1;
-
-void lcsplx(int);
 
 void
 booke_cpu_startup(const char *model)
@@ -289,11 +272,6 @@ cpu_reboot(int howto, char *what)
 		/* nothing */;
 #endif
 }
-void
-lcsplx(int spl)
-{
-	splx(spl);
-}
 
 /*
  * mapiodev:
@@ -363,14 +341,6 @@ cpu_evcnt_attach(struct cpu_info *ci)
 		NULL, xname, "late clock");
 	evcnt_attach_dynamic_nozero(&cpu->cpu_ev_exec_trap_sync, EVCNT_TYPE_TRAP,
 		NULL, xname, "exec pages synced (trap)");
-#ifndef __HAVE_FAST_SOFTINTS
-	evcnt_attach_dynamic_nozero(&ci->ci_ev_softclock, EVCNT_TYPE_INTR,
-		NULL, xname, "soft clock");
-	evcnt_attach_dynamic_nozero(&ci->ci_ev_softnet, EVCNT_TYPE_INTR,
-		NULL, xname, "soft net");
-	evcnt_attach_dynamic_nozero(&ci->ci_ev_softserial, EVCNT_TYPE_INTR,
-		NULL, xname, "soft serial");
-#endif
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_traps, EVCNT_TYPE_TRAP,
 		NULL, xname, "traps");
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_kdsi, EVCNT_TYPE_TRAP,

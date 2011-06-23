@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2008/10/27 07:26:55 mrg Exp $
+# $NetBSD: Makefile,v 1.3.16.1 2011/06/23 14:18:38 cherry Exp $
 
 USE_FORT?= yes	# cryptographic software
 
@@ -42,7 +42,7 @@ CPPFLAGS+= -I.					\
 CPPFLAGS+=-DHAVE_IPV6
 .endif          
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS+= -Wno-pointer-sign
 .endif
 

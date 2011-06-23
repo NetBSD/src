@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.58 2011/04/14 16:04:12 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.58.2.1 2011/06/23 14:19:14 cherry Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.58 2011/04/14 16:04:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.58.2.1 2011/06/23 14:19:14 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -184,156 +184,16 @@ IDTVEC(resume_lapic_ipi)
 IDTVEC_END(resume_lapic_ipi)
 
 /*
- * Multicast TLB shootdown handler for !kernel_pmap.
+ * TLB shootdown handler.
  */
-IDTVEC(intr_lapic_tlb_mcast)
-	/* Save state. */
-	pushl	%eax
-	pushl	%ebx
-	pushl	%ecx
-	pushl	%edx
-	pushl	%ds
-	pushl	%fs
-	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
-	movl	$GSEL(GCPU_SEL, SEL_KPL), %edx
-	movl	%eax, %ds
-	movl	%edx, %fs
-	/* Count it. */
-	addl	$1, CPUVAR(TLB_EVCNT)+EV_COUNT
-	adcl	$0, CPUVAR(TLB_EVCNT)+EV_COUNT+4
-	/* Find out what we need to invalidate. */
-	movl	CPUVAR(PMAP_CPU), %ecx
-	movl	MB_ADDR1(%ecx), %eax
-	movl	MB_ADDR2(%ecx), %edx
-	xorl	%ebx, %ebx
-	xchgl	MB_POINTER(%ecx), %ebx
+IDTVEC(intr_lapic_tlb)
+	pushl	$0
+	pushl	$T_ASTFLT
+	INTRENTRY
 	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
-	cmpl	$-1, %eax
-	je	4f
-1:
-	/* Invalidate a single page or a range of pages. */
-	invlpg	(%eax)
-	addl	$PAGE_SIZE, %eax
-	cmpl	%edx, %eax
-	jb	1b
-2:
-	/* Ack the request. */
-	lock
-	incl	(%ebx)
-	/*
-	 * Check the current TLB state.  If we don't want further
-	 * invalidations for this pmap, then take the CPU out of
-	 * the pmap's bitmask.
-	 */
-	cmpl	$TLBSTATE_LAZY, CPUVAR(TLBSTATE)
-	jne	3f
-	movl	CPUVAR(PMAP), %edx
-	movl	CPUVAR(CPUMASK), %ecx
-	notl	%ecx
-	lock
-	andl	%ecx, PM_CPUS(%edx)
-	movl	$TLBSTATE_STALE, CPUVAR(TLBSTATE)
-3:
-	/* Restore state and return. */
-	popl	%fs
-	popl	%ds
-	popl	%edx
-	popl	%ecx
-	popl	%ebx
-	popl	%eax
-	iret
-4:
-	/*
-	 * Get the emap generation number.  Invalidate user TLB entries.
-	 * Perform emap update, pass the generation number.  Note that
-	 * caller-save registers might be modified (all saved in the
-	 * beginning).  Only %ebx value is used by 2b context.
-	 */
-	call	_C_LABEL(uvm_emap_gen_return)
-	movl	%eax, %edx
-	movl	%cr3, %eax
-	movl	%eax, %cr3
-	pushl	%edx
-	call	_C_LABEL(uvm_emap_update)
-	addl	$4, %esp
-	jmp	2b
-IDTVEC_END(intr_lapic_tlb_mcast)
-
-/*
- * Broadcast TLB shootdown handler for kernel_pmap.
- */
-IDTVEC(intr_lapic_tlb_bcast)
-	/* Save state and ack the interrupt. */
-	pushl	%eax
-	pushl	%ebx
-	pushl	%ecx
-	pushl	%edx
-	pushl	%ds
-	pushl	%fs
-	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
-	movl	$GSEL(GCPU_SEL, SEL_KPL), %edx
-	movl	%eax, %ds
-	movl	%edx, %fs
-	/* Find out what we need to invalidate. */
-	movl	%ss:_C_LABEL(pmap_mbox)+MB_ADDR1, %eax
-	movl	%ss:_C_LABEL(pmap_mbox)+MB_ADDR2, %edx
-	movl	%ss:_C_LABEL(pmap_mbox)+MB_GLOBAL, %ebx
-	movl	$0, %ss:_C_LABEL(local_apic)+LAPIC_EOI
-	cmpl	$-1, %eax
-	je	3f
-1:
-	/* Invalidate a single page or a range of pages. */
-	invlpg	%ss:(%eax)
-	addl	$PAGE_SIZE, %eax
-	cmpl	%edx, %eax
-	jb	1b
-2:
-	/* Ack the request, restore state & return. */
-	lock
-	incl	%ss:_C_LABEL(pmap_mbox)+MB_TAIL
-	popl	%fs
-	popl	%ds
-	popl	%edx
-	popl	%ecx
-	popl	%ebx
-	popl	%eax
-	iret
-3:
-	testl	%ebx, %ebx
-	jz	4f
-	/*
-	 * If we have been asked to invalidate the entire TLB we arrive here.
-	 * Get the emap generation before flush, and use it after for update.
-	 * Note that caller-save registers might be modified, though no
-	 * registers need to be preserved for 2b context.
-	 */
-	call	_C_LABEL(uvm_emap_gen_return)
-	movl	%eax, %ebx
-	movl	%cr4, %eax
-	movl	%eax, %edx
-	andl	$~CR4_PGE, %edx
-	movl	%edx, %cr4
-	movl	%eax, %cr4
-	pushl	%ebx
-	call	_C_LABEL(uvm_emap_update)
-	addl	$4, %esp
-	jmp	2b
-4:
-	/*
-	 * Get the emap generation number.  Invalidate user TLB entries.
-	 * Perform emap update, pass the generation number.  Note that
-	 * caller-save registers might be modified, though no registers
-	 * need to be preserved for 2b context.
-	 */
-	call	_C_LABEL(uvm_emap_gen_return)
-	movl	%eax, %ebx
-	movl	%cr3, %eax
-	movl	%eax, %cr3
-	pushl	%ebx
-	call	_C_LABEL(uvm_emap_update)
-	addl	$4, %esp
-	jmp	2b
-IDTVEC_END(intr_lapic_tlb_bcast)
+	call	_C_LABEL(pmap_tlb_intr)
+	INTRFASTEXIT
+IDTVEC_END(intr_lapic_tlb)
 
 #if defined(DDB)
 IDTVEC(intrddbipi)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.24 2011/04/28 12:18:30 wiz Exp $
+.\"	$NetBSD: login.conf.5,v 1.24.2.1 2011/06/23 14:18:45 cherry Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -164,7 +164,7 @@ Number of login attempts after which to start random back-off.
 .\"
 .sp
 .It Sy maxproc Ta number Ta "" Ta
-Maximum number of process.
+Maximum number of processes.
 .\"
 .sp
 .It Sy memorylocked Ta size Ta "" Ta
@@ -305,7 +305,7 @@ and
 will never define capabilities which start with
 .Li x-
 or
-.Li X- ,
+.Li X- ;
 these are reserved for external use (unless included through contributed
 software).
 .Pp

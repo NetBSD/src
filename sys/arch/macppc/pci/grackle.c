@@ -1,4 +1,4 @@
-/*	$NetBSD: grackle.c,v 1.12 2011/05/17 17:34:50 dyoung Exp $	*/
+/*	$NetBSD: grackle.c,v 1.12.2.1 2011/06/23 14:19:22 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grackle.c,v 1.12 2011/05/17 17:34:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grackle.c,v 1.12.2.1 2011/06/23 14:19:22 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,8 +47,8 @@ struct grackle_softc {
 	struct powerpc_bus_space sc_memt;
 };
 
-static void grackle_attach(struct device *, struct device *, void *);
-static int grackle_match(struct device *, struct cfdata *, void *);
+static void grackle_attach(device_t, device_t, void *);
+static int grackle_match(device_t, cfdata_t, void *);
 
 static pcireg_t grackle_conf_read(void *, pcitag_t, int);
 static void grackle_conf_write(void *, pcitag_t, int, pcireg_t);
@@ -57,7 +57,7 @@ CFATTACH_DECL(grackle, sizeof(struct grackle_softc),
     grackle_match, grackle_attach, NULL, NULL);
 
 static int
-grackle_match(struct device *parent, struct cfdata *cf, void *aux)
+grackle_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char compat[32];
@@ -77,9 +77,9 @@ grackle_match(struct device *parent, struct cfdata *cf, void *aux)
 #define GRACKLE_DATA 0xfee00000
 
 static void
-grackle_attach(struct device *parent, struct device *self, void *aux)
+grackle_attach(device_t parent, device_t self, void *aux)
 {
-	struct grackle_softc *sc = (void *)self;
+	struct grackle_softc *sc = device_private(self);
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	struct confargs *ca = aux;
 	struct pcibus_attach_args pba;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $	*/
+/*	$NetBSD: ebus.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,13 +44,11 @@ __KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $");
 #include "locators.h"
 
 void
-ebusattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ebusattach(device_t parent, device_t self, void *aux)
 {
 	struct ebus_dev_attach_args *ida = aux;
 	struct ebus_attach_args *ia;
-    void *addr;
+	void *addr;
 	int i;
 	int locs[EBUSCF_NLOCS];
 
@@ -65,38 +63,38 @@ ebusattach(parent, self, aux)
 		ia = &ida->ida_devs[i];
 
 #if 0 // DEBUG
-        printf("PROBING %s %d@%x i=%d\n", ia->ia_name, ia->ia_basz, ia->ia_paddr, ia->ia_cookie);
+		printf("PROBING %s %d@%x i=%d\n",
+		    ia->ia_name, ia->ia_basz, ia->ia_paddr, ia->ia_cookie);
 #endif
 		if (ia->ia_basz != 0) {
-            addr = (void *) mips_map_physmem(ia->ia_paddr, ia->ia_basz);
-            if (addr == NULL){
-                printf("Failed to map %s: phys %x size %d\n",
-                       ia->ia_name, ia->ia_paddr, ia->ia_basz);
-                continue;
-            }
-            ia->ia_vaddr = addr;
+			addr = (void *)mips_map_physmem(ia->ia_paddr,
+			    ia->ia_basz);
+			if (addr == NULL) {
+				printf("Failed to map %s: phys %x size %d\n",
+				    ia->ia_name, ia->ia_paddr, ia->ia_basz);
+				continue;
+			}
+			ia->ia_vaddr = addr;
 #if 0 // DEBUG
-            printf("MAPPED at %p\n", ia->ia_vaddr);
+			printf("MAPPED at %p\n", ia->ia_vaddr);
 #endif
-        }
-
+		}
 
 		locs[EBUSCF_ADDR] = ia->ia_paddr;
 
 		if (NULL == config_found_sm_loc(self, "ebus", locs, ia,
-                                        ebusprint, config_stdsubmatch)) {
-            /* do we need to say anything? */
-            if (ia->ia_basz != 0) {
-                mips_unmap_physmem((vaddr_t)ia->ia_vaddr, ia->ia_basz);
-            }            
-        }
+		    ebusprint, config_stdsubmatch)) {
+			/* do we need to say anything? */
+			if (ia->ia_basz != 0) {
+				mips_unmap_physmem((vaddr_t)ia->ia_vaddr,
+				    ia->ia_basz);
+			}
+		}
 	}
 }
 
 int
-ebusprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+ebusprint(void *aux, const char *pnp)
 {
 	struct ebus_attach_args *ia = aux;
 
@@ -105,16 +103,13 @@ ebusprint(aux, pnp)
 
 	aprint_normal(" addr 0x%x", ia->ia_paddr);
 
-	return (UNCONF);
+	return UNCONF;
 }
 
 void
-ebus_intr_establish(dev, cookie, level, handler, arg)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler) (void *, void *);
-	void *arg;
+ebus_intr_establish(device_t dev, void *cookie, int level,
+    int (*handler)(void *, void *), void *arg)
 {
+
 	(*platform.intr_establish)(dev, cookie, level, handler, arg);
 }

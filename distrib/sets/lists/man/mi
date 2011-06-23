@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1317 2011/05/20 16:02:22 plunky Exp $
+# $NetBSD: mi,v 1.1317.2.1 2011/06/23 14:18:22 cherry Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1792,6 +1792,7 @@
 ./usr/share/man/cat4/x68k/pow.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x68k/vs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/amdpcib.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/apic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/balloon.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/coretemp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/est.0			man-sys-catman		.cat
@@ -1799,6 +1800,7 @@
 ./usr/share/man/cat4/x86/hpet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/ichlpcib.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/ioapic.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/lapic.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/odcm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/powernow.0		man-sys-catman		.cat
 ./usr/share/man/cat4/xbd.0			man-sys-catman		.cat
@@ -1857,6 +1859,7 @@
 ./usr/share/man/cat5/envsys.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/ethers.0			man-net-catman		.cat
 ./usr/share/man/cat5/exports.0			man-nfsserver-catman	.cat
+./usr/share/man/cat5/floppytab.0		man-sys-catman		.cat
 ./usr/share/man/cat5/forward.0			man-sys-catman		.cat
 ./usr/share/man/cat5/fs.0			man-sys-catman		.cat
 ./usr/share/man/cat5/fstab.0			man-sys-catman		.cat
@@ -4498,6 +4501,7 @@
 ./usr/share/man/html4/x68k/pow.html		man-sys-htmlman		html
 ./usr/share/man/html4/x68k/vs.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/amdpcib.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/apic.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/balloon.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/coretemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/est.html		man-sys-htmlman		html
@@ -4505,6 +4509,7 @@
 ./usr/share/man/html4/x86/hpet.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/ichlpcib.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/ioapic.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/lapic.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/odcm.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/powernow.html		man-sys-htmlman		html
 ./usr/share/man/html4/xbd.html			man-sys-htmlman		html
@@ -4562,6 +4567,7 @@
 ./usr/share/man/html5/envsys.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/ethers.html		man-net-htmlman		html
 ./usr/share/man/html5/exports.html		man-nfsserver-htmlman	html
+./usr/share/man/html5/floppytab.html		man-sys-htmlman		html
 ./usr/share/man/html5/forward.html		man-sys-htmlman		html
 ./usr/share/man/html5/fs.html			man-sys-htmlman		html
 ./usr/share/man/html5/fstab.html		man-sys-htmlman		html
@@ -7139,6 +7145,7 @@
 ./usr/share/man/man4/x68k/pow.4			man-sys-man		.man
 ./usr/share/man/man4/x68k/vs.4			man-sys-man		.man
 ./usr/share/man/man4/x86/amdpcib.4		man-sys-man		.man
+./usr/share/man/man4/x86/apic.4			man-sys-man		.man
 ./usr/share/man/man4/x86/balloon.4		man-sys-man		.man
 ./usr/share/man/man4/x86/coretemp.4		man-sys-man		.man
 ./usr/share/man/man4/x86/est.4			man-sys-man		.man
@@ -7146,6 +7153,7 @@
 ./usr/share/man/man4/x86/hpet.4			man-sys-man		.man
 ./usr/share/man/man4/x86/ichlpcib.4		man-sys-man		.man
 ./usr/share/man/man4/x86/ioapic.4		man-sys-man		.man
+./usr/share/man/man4/x86/lapic.4		man-sys-man		.man
 ./usr/share/man/man4/x86/odcm.4			man-sys-man		.man
 ./usr/share/man/man4/x86/powernow.4		man-sys-man		.man
 ./usr/share/man/man4/xbd.4			man-sys-man		.man
@@ -7204,6 +7212,7 @@
 ./usr/share/man/man5/envsys.conf.5		man-sys-man		.man
 ./usr/share/man/man5/ethers.5			man-net-man		.man
 ./usr/share/man/man5/exports.5			man-nfsserver-man	.man
+./usr/share/man/man5/floppytab.5		man-sys-man		.man
 ./usr/share/man/man5/forward.5			man-sys-man		.man
 ./usr/share/man/man5/fs.5			man-sys-man		.man
 ./usr/share/man/man5/fstab.5			man-sys-man		.man

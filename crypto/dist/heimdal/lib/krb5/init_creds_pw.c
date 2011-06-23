@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 
 __RCSID("$Heimdal: init_creds_pw.c 21931 2007-08-27 14:11:55Z lha $"
-        "$NetBSD: init_creds_pw.c,v 1.2 2008/03/22 08:37:13 mlelstv Exp $");
+        "$NetBSD: init_creds_pw.c,v 1.2.22.1 2011/06/23 14:17:49 cherry Exp $");
 
 typedef struct krb5_get_init_creds_ctx {
     KDCOptions flags;
@@ -806,7 +806,7 @@ pa_pw_or_afs3_salt(krb5_context context,
 		   heim_octet_string *data)
 {
     krb5_error_code ret;
-    if (paid->etype == ENCTYPE_NULL)
+    if (paid->etype == (krb5_enctype)ENCTYPE_NULL)
 	return NULL;
     ret = set_paid(paid, context, 
 		   paid->etype,

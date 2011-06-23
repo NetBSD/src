@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.24 2011/05/25 05:42:37 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.24.2.1 2011/06/23 14:19:32 cherry Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.24 2011/05/25 05:42:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.24.2.1 2011/06/23 14:19:32 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -76,6 +76,11 @@ void
 vec_state_load(lwp_t *l, bool used)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
+
+	if (__predict_false(!vec_used_p(l))) {
+		memset(&pcb->pcb_vr, 0, sizeof(pcb->pcb_vr));
+		vec_mark_used(l);
+	}
 
 	/*
 	 * Enable AltiVec temporarily (and disable interrupts).

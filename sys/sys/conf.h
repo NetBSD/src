@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.139 2011/02/10 11:00:45 pooka Exp $	*/
+/*	$NetBSD: conf.h,v 1.139.2.1 2011/06/23 14:20:29 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -258,6 +258,8 @@ devmajor_t devsw_name2blk(const char *, char *, size_t);
 devmajor_t devsw_name2chr(const char *, char *, size_t);
 dev_t devsw_chr2blk(dev_t);
 dev_t devsw_blk2chr(dev_t);
+
+void mm_init(void);
 #endif /* _KERNEL */
 
 #ifdef _KERNEL

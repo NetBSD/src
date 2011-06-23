@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.52 2011/02/20 08:26:09 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.52.2.1 2011/06/23 14:18:24 cherry Exp $
 #
 # Makefile for sysinst
 
@@ -46,7 +46,7 @@ CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 CPPFLAGS+=-DINET6
 .endif
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.label.c+=	-Wno-pointer-sign
 .endif
 

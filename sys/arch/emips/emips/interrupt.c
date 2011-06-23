@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.3 2011/03/10 17:22:51 tsutsui Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.3.2.1 2011/06/23 14:19:05 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.3 2011/03/10 17:22:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.3.2.1 2011/06/23 14:19:05 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,33 +67,28 @@ static const char * const intrnames[MAX_DEV_NCOOKIES] = {
 };
 
 void
-intr_init(int phase)
+intr_init(void)
 {
 	int i;
 
-	if (phase == 0) {
-		for (i = 0; i < MAX_DEV_NCOOKIES; i++) {
-			evcnt_attach_dynamic(&intrtab[i].ih_count,
-			    EVCNT_TYPE_INTR, NULL, "emips", intrnames[i]);
-		}
-		return;
+	for (i = 0; i < MAX_DEV_NCOOKIES; i++) {
+		evcnt_attach_dynamic(&intrtab[i].ih_count,
+		    EVCNT_TYPE_INTR, NULL, "emips", intrnames[i]);
 	}
 
-	if (phase == 1) {
-		/* I am trying to make this standard so its here. Bah. */
-		struct tlbmask tlb;
+	/* I am trying to make this standard so its here. Bah. */
+	struct tlbmask tlb;
 
-    /* This is ugly but efficient. Sigh. */
+	/* This is ugly but efficient. Sigh. */
 #define TheAic ((struct _Aic *)INTERRUPT_CONTROLLER_DEFAULT_ADDRESS)
 
-		tlb.tlb_hi = INTERRUPT_CONTROLLER_DEFAULT_ADDRESS;
-		tlb.tlb_lo0 = INTERRUPT_CONTROLLER_DEFAULT_ADDRESS | 0xf02;
-		tlb_write_indexed(4, &tlb);
+	tlb.tlb_hi = INTERRUPT_CONTROLLER_DEFAULT_ADDRESS;
+	tlb.tlb_lo0 = INTERRUPT_CONTROLLER_DEFAULT_ADDRESS | 0xf02;
+	tlb_write_indexed(4, &tlb);
 
-		tlb.tlb_hi = TIMER_DEFAULT_ADDRESS;
-		tlb.tlb_lo0 = TIMER_DEFAULT_ADDRESS | 0xf02;
-		tlb_write_indexed(5, &tlb);
-	}
+	tlb.tlb_hi = TIMER_DEFAULT_ADDRESS;
+	tlb.tlb_lo0 = TIMER_DEFAULT_ADDRESS | 0xf02;
+	tlb_write_indexed(5, &tlb);
 }
 
 /*

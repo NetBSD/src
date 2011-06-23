@@ -247,7 +247,8 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 		if (i <= 0)
 			{
 			rb->left = left;
-			if (s->mode & SSL_MODE_RELEASE_BUFFERS)
+			if (s->mode & SSL_MODE_RELEASE_BUFFERS &&
+			    SSL_version(s) != DTLS1_VERSION && SSL_version(s) != DTLS1_BAD_VER)
 				if (len+left == 0)
 					ssl3_release_read_buffer(s);
 			return(i);
@@ -742,7 +743,8 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	plen=p; 
 	p+=2;
 	/* Explicit IV length, block ciphers and TLS version 1.1 or later */
-	if (s->enc_write_ctx && s->version >= TLS1_1_VERSION)
+	if (s->enc_write_ctx && s->version >= TLS1_1_VERSION
+		&& EVP_CIPHER_CTX_mode(s->enc_write_ctx) == EVP_CIPH_CBC_MODE)
 		{
 		eivlen = EVP_CIPHER_CTX_iv_length(s->enc_write_ctx);
 		if (eivlen <= 1)
@@ -866,7 +868,8 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 			{
 			wb->left=0;
 			wb->offset+=i;
-			if (s->mode & SSL_MODE_RELEASE_BUFFERS)
+			if (s->mode & SSL_MODE_RELEASE_BUFFERS &&
+			    SSL_version(s) != DTLS1_VERSION && SSL_version(s) != DTLS1_BAD_VER)
 				ssl3_release_write_buffer(s);
 			s->rwstate=SSL_NOTHING;
 			return(s->s3->wpend_ret);
@@ -1204,6 +1207,10 @@ start:
 				SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_NO_RENEGOTIATION);
 				goto f_err;
 				}
+#ifdef SSL_AD_MISSING_SRP_USERNAME
+			if (alert_descr == SSL_AD_MISSING_SRP_USERNAME)
+				return(0);
+#endif
 			}
 		else if (alert_level == 2) /* fatal */
 			{
@@ -1283,6 +1290,7 @@ start:
 #else
 			s->state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
 #endif
+			s->renegotiate=1;
 			s->new_session=1;
 			}
 		i=s->handshake_func(s);
@@ -1316,7 +1324,9 @@ start:
 		{
 	default:
 #ifndef OPENSSL_NO_TLS
-		/* TLS just ignores unknown message types */
+		/* TLS up to v1.1 just ignores unknown message types:
+		 * TLS v1.2 give an unexpected message alert.
+		 */
 		if (s->version >= TLS1_VERSION && s->version <= TLS1_1_VERSION)
 			{
 			rr->length = 0;

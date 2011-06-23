@@ -1,4 +1,4 @@
-/* $NetBSD: pic_amiga.c,v 1.2 2010/02/02 19:15:33 phx Exp $ */
+/* $NetBSD: pic_amiga.c,v 1.2.10.1 2011/06/23 14:18:59 cherry Exp $ */
 
 /*-
  * Copyright (c) 2008,2009,2010 Frank Wille.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_amiga.c,v 1.2 2010/02/02 19:15:33 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_amiga.c,v 1.2.10.1 2011/06/23 14:18:59 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -104,7 +104,7 @@ amiga_enable_irq(struct pic_ops *pic, int ipl, int type)
 		if (!(dmask & ~(iplmask - 1))) {
 
 			/* Lower the emulated PPC IPL to the next highest */
-			newipl = 31 - cntlzw(dmask);
+			newipl = 31 - __builtin_clz(dmask);
 			P5write(P5_IPL_EMU, P5_SET_CLEAR | P5_DISABLE_INT |
 			    (newipl ^ P5_IPL_MASK));
 			P5write(P5_IPL_EMU, P5_DISABLE_INT | newipl);

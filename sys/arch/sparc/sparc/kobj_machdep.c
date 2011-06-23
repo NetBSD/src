@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.2 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.2.32.1 2011/06/23 14:19:40 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		addr = kobj_sym_lookup(ko, symidx);
 		if (addr == 0)
 			return -1;
-		value += (Elf_Word)(relocbase + addr);
+		value += addr;
 	}
 
 	if (RELOC_PC_RELATIVE(type)) {

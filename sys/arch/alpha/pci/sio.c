@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.49 2010/01/12 20:24:45 mhitch Exp $ */
+/* $NetBSD: sio.c,v 1.49.10.1 2011/06/23 14:18:55 cherry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.49 2010/01/12 20:24:45 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.49.10.1 2011/06/23 14:18:55 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.49 2010/01/12 20:24:45 mhitch Exp $");
 #endif
 
 struct sio_softc {
-	struct device	sc_dv;
+	device_t	sc_dev;
 
 	pci_chipset_tag_t sc_pc;
 
@@ -105,16 +105,16 @@ struct sio_softc {
 	isa_chipset_tag_t sc_ic;
 };
 
-int	siomatch(struct device *, struct cfdata *, void *);
-void	sioattach(struct device *, struct device *, void *);
+int	siomatch(device_t, cfdata_t, void *);
+void	sioattach(device_t, device_t, void *);
 
-CFATTACH_DECL(sio, sizeof(struct sio_softc),
+CFATTACH_DECL_NEW(sio, sizeof(struct sio_softc),
     siomatch, sioattach, NULL, NULL);
 
 #if NPCEB > 0
-int	pcebmatch(struct device *, struct cfdata *, void *);
+int	pcebmatch(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(pceb, sizeof(struct sio_softc),
+CFATTACH_DECL_NEW(pceb, sizeof(struct sio_softc),
     pcebmatch, sioattach, NULL, NULL);
 #endif
 
@@ -123,20 +123,20 @@ union sio_attach_args {
 	struct eisabus_attach_args sa_eba;
 };
 
-void	sio_isa_attach_hook(struct device *, struct device *,
+void	sio_isa_attach_hook(device_t, device_t,
 	    struct isabus_attach_args *);
 void	sio_isa_detach_hook(isa_chipset_tag_t, device_t);
 #if NPCEB > 0
-void	sio_eisa_attach_hook(struct device *, struct device *,
+void	sio_eisa_attach_hook(device_t, device_t,
 	    struct eisabus_attach_args *);
 int	sio_eisa_maxslots(void *);
 int	sio_eisa_intr_map(void *, u_int, eisa_intr_handle_t *);
 #endif
 
-void	sio_bridge_callback(struct device *);
+void	sio_bridge_callback(device_t);
 
 int
-siomatch(struct device *parent, struct cfdata *match, void *aux)
+siomatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -163,7 +163,7 @@ siomatch(struct device *parent, struct cfdata *match, void *aux)
 
 #if NPCEB > 0
 int
-pcebmatch(struct device *parent, struct cfdata *match, void *aux)
+pcebmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -176,16 +176,17 @@ pcebmatch(struct device *parent, struct cfdata *match, void *aux)
 #endif
 
 void
-sioattach(struct device *parent, struct device *self, void *aux)
+sioattach(device_t parent, device_t self, void *aux)
 {
-	struct sio_softc *sc = (struct sio_softc *)self;
+	struct sio_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo,
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
+	sc->sc_dev = self;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_memt = pa->pa_memt;
@@ -201,9 +202,9 @@ sioattach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-sio_bridge_callback(struct device *self)
+sio_bridge_callback(device_t self)
 {
-	struct sio_softc *sc = (struct sio_softc *)self;
+	struct sio_softc *sc = device_private(self);
 	union sio_attach_args sa;
 #if NPCEB > 0
 	struct alpha_eisa_chipset ec;
@@ -237,7 +238,7 @@ sio_bridge_callback(struct device *self)
 		sa.sa_eba.eba_dmat =
 		    alphabus_dma_get_tag(sc->sc_parent_dmat, ALPHA_BUS_EISA);
 		sa.sa_eba.eba_ec = &ec;
-		config_found_ia(&sc->sc_dv, "eisabus", &sa.sa_eba,
+		config_found_ia(sc->sc_dev, "eisabus", &sa.sa_eba,
 				eisabusprint);
 	}
 #endif /* NPCEB */
@@ -283,11 +284,11 @@ sio_bridge_callback(struct device *self)
 	sa.sa_iba.iba_dmat =
 	    alphabus_dma_get_tag(sc->sc_parent_dmat, ALPHA_BUS_ISA);
 	sa.sa_iba.iba_ic = sc->sc_ic;
-	config_found_ia(&sc->sc_dv, "isabus", &sa.sa_iba, isabusprint);
+	config_found_ia(sc->sc_dev, "isabus", &sa.sa_iba, isabusprint);
 }
 
 void
-sio_isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach_args *iba)
+sio_isa_attach_hook(device_t parent, device_t self, struct isabus_attach_args *iba)
 {
 
 	/* Nothing to do. */
@@ -303,7 +304,7 @@ sio_isa_detach_hook(isa_chipset_tag_t ic, device_t self)
 #if NPCEB > 0
 
 void
-sio_eisa_attach_hook(struct device *parent, struct device *self, struct eisabus_attach_args *eba)
+sio_eisa_attach_hook(device_t parent, device_t self, struct eisabus_attach_args *eba)
 {
 
 #if NEISA > 0

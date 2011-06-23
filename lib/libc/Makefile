@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.145 2011/05/27 17:06:55 drochner Exp $
+#	$NetBSD: Makefile,v 1.145.2.1 2011/06/23 14:18:35 cherry Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -75,7 +75,7 @@ COMPATDIR=${.CURDIR}/compat
 .include "${.CURDIR}/net/Makefile.inc"
 .include "${.CURDIR}/nameser/Makefile.inc"
 .include "${.CURDIR}/nls/Makefile.inc"
-.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "sparc64")
+.if (${MACHINE_ARCH} != "alpha") && (${ARCHSUBDIR} != "sparc64")
 .include "${.CURDIR}/quad/Makefile.inc"
 .endif
 .if (${USE_LIBTRE} == "yes")
@@ -147,3 +147,10 @@ CSHLIBFLAGS+=	-D_I18N_DYNAMIC
 # force the dynamic linker to initialize libc first
 SHLIB_SHFLAGS+=	-Wl,-z,initfirst
 
+# XXX
+.if ${HAVE_GCC} >= 45
+COPTS.res_comp.c+= -Wno-cast-qual
+COPTS.vfwprintf.c+= -Wno-cast-qual
+COPTS.vfprintf.c+= -Wno-cast-qual
+COPTS.vswprintf.c+= -Wno-cast-qual
+.endif

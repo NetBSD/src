@@ -33,16 +33,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	__INTR_PRIVATE
-#define	__INTR_NOINLINE
-
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.4 2011/02/18 21:08:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.4.4.1 2011/06/23 14:19:27 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
-#include <sys/intr.h>
 
 #include <powerpc/instr.h>
 #include <powerpc/booke/cpuvar.h>
@@ -168,107 +164,4 @@ void
 tlb_walk(void *ctx, bool (*func)(void *, vaddr_t, uint32_t, uint32_t))
 {
 	(*cpu_md_ops.md_tlb_ops->md_tlb_walk)(ctx, func);
-}
-
-void *intr_establish(int, int, int, int (*)(void *), void *) __stub;
-
-void *
-intr_establish(int irq, int ipl, int ist, int (*func)(void *), void *arg)
-{
-	return (*powerpc_intrsw->intrsw_establish)(irq, ipl, ist, func, arg);
-}
-
-void intr_disestablish(void *) __stub;
-
-void
-intr_disestablish(void *ih)
-{
-	(*powerpc_intrsw->intrsw_disestablish)(ih);
-}
-
-const char *intr_string(int, int) __stub;
-
-const char *
-intr_string(int irq, int ist)
-{
-	return (*powerpc_intrsw->intrsw_string)(irq, ist);
-}
-
-void spl0(void) __stub;
-
-void
-spl0(void)
-{
-	(*powerpc_intrsw->intrsw_spl0)();
-}
-
-int splraise(int) __stub;
-
-int 
-splraise(int ipl)
-{
-	return (*powerpc_intrsw->intrsw_splraise)(ipl);
-}
-
-#if 0
-int splhigh(void) __stub;
-#endif
-
-/*
- * This is called by softint_cleanup and can't be a stub but it can call
- * a stub.
- */
-int 
-splhigh(void)
-{
-	return splraise(IPL_HIGH);
-}
-
-void splx(int) __stub;
-
-void
-splx(int ipl)
-{
-	return (*powerpc_intrsw->intrsw_splx)(ipl);
-}
-
-void softint_init_md(struct lwp *, u_int, uintptr_t *) __stub;
-
-void
-softint_init_md(struct lwp *l, u_int level, uintptr_t *machdep_p)
-{
-	(*powerpc_intrsw->intrsw_softint_init_md)(l, level, machdep_p);
-}
-
-void softint_trigger(uintptr_t) __stub;
-
-void
-softint_trigger(uintptr_t machdep)
-{
-	(*powerpc_intrsw->intrsw_softint_trigger)(machdep);
-}
-
-void intr_cpu_init(struct cpu_info *) __stub;
-
-void
-intr_cpu_init(struct cpu_info *ci)
-{
-	(*powerpc_intrsw->intrsw_cpu_init)(ci);
-}
-
-void intr_init(void) __stub;
-
-void
-intr_init(void)
-{
-	(*powerpc_intrsw->intrsw_init)();
-}
-
-void
-booke_fixup_stubs(void)
-{
-	extern uint32_t _ftext[];
-	extern uint32_t _etext[];
-
-	powerpc_fixup_stubs(_ftext, _etext, NULL, NULL);
 }

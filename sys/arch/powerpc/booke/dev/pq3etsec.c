@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.3 2011/03/16 05:31:03 matt Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.3.2.1 2011/06/23 14:19:28 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -458,6 +458,7 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	struct pq3etsec_softc * const sc = device_private(self);
 	struct cpunode_attach_args * const cna = aux;
 	struct cpunode_locators * const cnl = &cna->cna_locs;
+	cfdata_t cf = device_cfdata(self);
 	int error;
 
 	psc->sc_children |= cna->cna_childmask;
@@ -468,15 +469,13 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * If we have a common MDIO bus, if all off instance 1.
 	 */
-	device_t miiself = (self->dv_cfdata->cf_flags & 0x100)
-	    ? tsec_cd.cd_devs[0]
-	    : self;
+	device_t miiself = (cf->cf_flags & 0x100) ? tsec_cd.cd_devs[0] : self;
 
 	/*
 	 * See if the phy is in the config file...
 	 */
-	if (self->dv_cfdata->cf_flags & 0x3f) {
-		sc->sc_phy_addr = (self->dv_cfdata->cf_flags & 0x3f) - 1;
+	if (cf->cf_flags & 0x3f) {
+		sc->sc_phy_addr = (cf->cf_flags & 0x3f) - 1;
 	} else {
 		unsigned char prop_name[20];
 		snprintf(prop_name, sizeof(prop_name), "tsec%u-phy-addr",
@@ -587,6 +586,9 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal("\n");
+
+	etsec_write(sc, ATTR, ATTR_DEFAULT);
+	etsec_write(sc, ATTRELI, ATTRELI_DEFAULT);
 
 	sc->sc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
 
@@ -1458,6 +1460,7 @@ pq3etsec_rxq_consume(
 		if (consumer == rxq->rxq_producer) {
 			rxq->rxq_consumer = consumer;
 			rxq->rxq_inuse -= rxconsumed;
+			KASSERT(rxq->rxq_inuse == 0);
 			return;
 		}
 		pq3etsec_rxq_desc_postsync(sc, rxq, consumer, 1);
@@ -2382,6 +2385,8 @@ pq3etsec_mii_tick(void *arg)
 		softint_schedule(sc->sc_soft_ih);
 	splx(s);
 	callout_schedule(&sc->sc_mii_callout, hz);
+#ifdef DEBUG
 	sc->sc_mii_last_tick = now;
+#endif
 	mutex_exit(sc->sc_lock);
 }

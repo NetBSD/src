@@ -1,4 +1,4 @@
-/* $NetBSD: t_dir.c,v 1.2 2011/04/07 18:14:08 jruoho Exp $ */
+/* $NetBSD: t_dir.c,v 1.2.2.1 2011/06/23 14:20:39 cherry Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -75,6 +75,8 @@ ATF_TC_BODY(seekdir, tc)
 	/* get second entry */
 	entry = readdir(dp);
 	wasname = strdup(entry->d_name);
+	if (wasname == NULL)
+		atf_tc_fail("cannot allocate memory");
 
 	/* get third entry */
 	entry = readdir(dp);
@@ -83,6 +85,8 @@ ATF_TC_BODY(seekdir, tc)
 	seekdir(dp, here);
 	entry = readdir(dp);
 
+	if (entry == NULL)
+		atf_tc_fail("entry 1 not found");
 	if (strcmp(entry->d_name, wasname) != 0)
 		atf_tc_fail("1st seekdir found wrong name");
 
@@ -91,6 +95,8 @@ ATF_TC_BODY(seekdir, tc)
 	here = telldir(dp);
 	entry = readdir(dp);
 
+	if (entry == NULL)
+		atf_tc_fail("entry 2 not found");
 	if (strcmp(entry->d_name, wasname) != 0)
 		atf_tc_fail("2nd seekdir found wrong name");
 
@@ -98,6 +104,8 @@ ATF_TC_BODY(seekdir, tc)
 	seekdir(dp, here);
 	entry = readdir(dp);
 
+	if (entry == NULL)
+		atf_tc_fail("entry 3 not found");
 	if (strcmp(entry->d_name, wasname) != 0)
 		atf_tc_fail("3rd seekdir found wrong name");
 
@@ -129,7 +137,7 @@ ATF_TC_BODY(telldir_leak, tc)
 	memused = sbrk(0);
 	closedir(dp);
 
-	for (i=0; i<1000; i++) {
+	for (i = 0; i < 1000; i++) {
 		dp = opendir(".");
 		if (dp == NULL)
 			atf_tc_fail("Could not open current directory");
@@ -137,14 +145,14 @@ ATF_TC_BODY(telldir_leak, tc)
 		loc = telldir(dp);
 		closedir(dp);
 
-		if ((char *)(sbrk(0)) - memused > oktouse) {
+		if ((char *)sbrk(0) - memused > oktouse) {
 			(void)printf("Used %td extra bytes for %d telldir "
-			    "calls", ((char *)(sbrk(0)) - memused), i);
-			oktouse = (char *)(sbrk(0)) - memused;
+			    "calls", ((char *)sbrk(0) - memused), i);
+			oktouse = (char *)sbrk(0) - memused;
 		}
 	}
 	if (oktouse > 4096) {
-		atf_tc_fail("Failure: leaked %td bytes", oktouse);
+		atf_tc_fail("Failure: leaked %d bytes", oktouse);
 	} else {
 		(void)printf("OK: used %td bytes\n", (char *)(sbrk(0))-memused);
 	}

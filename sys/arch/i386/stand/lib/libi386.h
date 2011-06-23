@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.36 2011/05/26 04:25:27 uebayasi Exp $	*/
+/*	$NetBSD: libi386.h,v 1.36.2.1 2011/06/23 14:19:16 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -98,30 +98,30 @@ void command_help(char *);
 extern const struct bootblk_command commands[];
 
 /* asm bios/dos calls */
-int biosdisk_extread(int, void *);
+__compactcall int biosdisk_extread(int, void *);
 int biosdisk_read(int, int, int, int, int, void *);
-int biosdisk_reset(int);
+__compactcall int biosdisk_reset(int);
 
-int biosgetrtc(u_long *);
+__compactcall int biosgetrtc(u_long *);
 int biosgetsystime(void);
 int comgetc(int);
 void cominit(int);
-int computc(int, int);
+__compactcall int computc(int, int);
 int comstatus(int);
 int congetc(void);
 int conisshift(void);
 int coniskey(void);
-void conputc(int);
+__compactcall void conputc(int);
 void conclr(void);
 
 int getextmem2(int *);
-int getextmemps2(void *);
+__compactcall int getextmemps2(void *);
 int getmementry(int *, int *);
 
-int biosdisk_int13ext(int);
-int biosdisk_getinfo(int);
+__compactcall int biosdisk_int13ext(int);
+__compactcall int biosdisk_getinfo(int);
 struct biosdisk_extinfo;
-int biosdisk_getextinfo(int, struct biosdisk_extinfo *);
+__compactcall int biosdisk_getextinfo(int, struct biosdisk_extinfo *);
 int get_harddrives(void);
 void biosdisk_probe(void);
 

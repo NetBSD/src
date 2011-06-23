@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.201 2011/05/07 14:37:46 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.201.2.1 2011/06/23 14:19:23 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.201 2011/05/07 14:37:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.201.2.1 2011/06/23 14:19:23 cherry Exp $");
 
 /*
  *	Manages physical address maps.
@@ -555,12 +555,12 @@ pmap_bootstrap(void)
 
 #ifndef _LP64
 	/* Need space for I/O (not in K1SEG) ? */
-	mips_virtual_end += iospace_size;
 
 	if (mips_virtual_end > VM_MAX_KERNEL_ADDRESS) {
 		mips_virtual_end = VM_MAX_KERNEL_ADDRESS;
 		Sysmapsize =
-		    (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / NBPG;
+		    (VM_MAX_KERNEL_ADDRESS -
+		     (VM_MIN_KERNEL_ADDRESS + iospace_size)) / NBPG;
 	}
 
 	if (iospace_size) {

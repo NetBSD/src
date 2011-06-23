@@ -1,4 +1,4 @@
-/*	$NetBSD: obs405_machdep.c,v 1.5 2010/02/08 19:02:28 joerg Exp $	*/
+/*	$NetBSD: obs405_machdep.c,v 1.5.8.1 2011/06/23 14:19:09 cherry Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,15 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs405_machdep.c,v 1.5 2010/02/08 19:02:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs405_machdep.c,v 1.5.8.1 2011/06/23 14:19:09 cherry Exp $");
 
 #include <sys/param.h>
-
-#include <uvm/uvm_extern.h>
-
-#include <net/netisr.h>
-
-#include <machine/cpu.h>
 
 /*
  * Machine-dependent global variables

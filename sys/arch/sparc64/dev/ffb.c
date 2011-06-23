@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.42 2011/05/19 04:43:45 macallan Exp $	*/
+/*	$NetBSD: ffb.c,v 1.42.2.1 2011/06/23 14:19:41 cherry Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.42 2011/05/19 04:43:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.42.2.1 2011/06/23 14:19:41 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,7 +137,7 @@ void	ffb_putchar(void *, int, int, u_int, long);
 void	ffb_cursor(void *, int, int, int);
 
 /* frame buffer generic driver */   
-static void ffbfb_unblank(struct device*);
+static void ffbfb_unblank(device_t);
 dev_type_open(ffbfb_open);
 dev_type_close(ffbfb_close);
 dev_type_ioctl(ffbfb_ioctl);
@@ -255,7 +255,7 @@ ffb_attach(struct ffb_softc *sc)
 	printf(", model %s, dac %u\n", model, sc->sc_dacrev);
 	if (sc->sc_needredraw) 
 		printf("%s: found old DAC, enabling redraw on unblank\n", 
-		    device_xname(&sc->sc_dv));
+		    device_xname(sc->sc_dev));
 
 	/* Check if a console resolution "<device>:r<res>" is set. */
 	if (sc->sc_console) {
@@ -289,7 +289,7 @@ ffb_attach(struct ffb_softc *sc)
 		sort_modes(sc->sc_edid_info.edid_modes,
 		    &sc->sc_edid_info.edid_preferred_mode,
 		    sc->sc_edid_info.edid_nmodes);
-		DPRINTF(("%s: EDID data:\n  ", device_xname(&sc->sc_dv)));
+		DPRINTF(("%s: EDID data:\n  ", device_xname(sc->sc_dev)));
 		for (i = 0; i < EDID_DATA_LEN; i++) {
 			if (i && !(i % 32))
 				DPRINTF(("\n "));
@@ -309,14 +309,14 @@ ffb_attach(struct ffb_softc *sc)
 					break;
 			}
 	} else {
-		DPRINTF(("%s: No EDID data.\n", device_xname(&sc->sc_dv)));
+		DPRINTF(("%s: No EDID data.\n", device_xname(sc->sc_dev)));
 	}
 		
 	ffb_ras_init(sc);
 
 	ffb_blank(sc, WSDISPLAYIO_SVIDEO, &blank);
 
-	sc->sc_accel = ((device_cfdata(&sc->sc_dv)->cf_flags &
+	sc->sc_accel = ((device_cfdata(sc->sc_dev)->cf_flags &
 	    FFB_CFFLAG_NOACCEL) == 0);
 		
 	wsfont_init();
@@ -354,7 +354,7 @@ ffb_attach(struct ffb_softc *sc)
 	sc->sc_fb.fb_type.fb_width = sc->sc_width;
 	sc->sc_fb.fb_type.fb_depth = sc->sc_depth;
 	sc->sc_fb.fb_type.fb_height = sc->sc_height;
-	sc->sc_fb.fb_device = &sc->sc_dv;
+	sc->sc_fb.fb_device = sc->sc_dev;
 	fb_attach(&sc->sc_fb, sc->sc_console);
 
 	ffb_clearscreen(sc);
@@ -368,7 +368,7 @@ ffb_attach(struct ffb_softc *sc)
 	waa.scrdata = &ffb_screenlist;
 	waa.accessops = &ffb_accessops;
 	waa.accesscookie = &sc->vd;
-	config_found(&sc->sc_dv, &waa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &waa, wsemuldisplaydevprint);
 }
 
 void
@@ -396,7 +396,7 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 	struct vcons_screen *ms = vd->active;
 
 	DPRINTF(("ffb_ioctl: %s cmd _IO%s%s('%c', %lu)\n",
-	       device_xname(&sc->sc_dv),
+	       device_xname(sc->sc_dev),
 	       (cmd & IOC_IN) ? "W" : "", (cmd & IOC_OUT) ? "R" : "",
 	       (char)IOCGROUP(cmd), cmd & 0xff));
 
@@ -432,13 +432,16 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 		/* the console driver is not using the hardware cursor */
 		break;
 	case FBIOGCURPOS:
-		printf("%s: FBIOGCURPOS not implemented\n", device_xname(&sc->sc_dv));
+		printf("%s: FBIOGCURPOS not implemented\n",
+		    device_xname(sc->sc_dev));
 		return EIO;
 	case FBIOSCURPOS:
-		printf("%s: FBIOSCURPOS not implemented\n", device_xname(&sc->sc_dv));
+		printf("%s: FBIOSCURPOS not implemented\n",
+		    device_xname(sc->sc_dev));
 		return EIO;
 	case FBIOGCURMAX:
-		printf("%s: FBIOGCURMAX not implemented\n", device_xname(&sc->sc_dv));
+		printf("%s: FBIOGCURMAX not implemented\n",
+		    device_xname(sc->sc_dev));
 		return EIO;
 
 	case WSDISPLAYIO_GTYPE:
@@ -764,7 +767,7 @@ ffb_ras_setbg(struct ffb_softc *sc, int32_t bg)
 
 /* frame buffer generic driver support functions */   
 static void
-ffbfb_unblank(struct device *dev)
+ffbfb_unblank(device_t dev)
 {
 	struct ffb_softc *sc = device_private(dev);
 	struct vcons_screen *ms = sc->vd.active;
@@ -1448,7 +1451,7 @@ ffb_set_vmode(struct ffb_softc *sc, struct videomode *mode, int btype,
 	*vres = mode->vdisplay;
 
 	printf("%s: video mode set to %d x %d @ %dHz\n",
-	    device_xname(&sc->sc_dv),
+	    device_xname(sc->sc_dev),
 	    mode->hdisplay, mode->vdisplay,
 	    DIVIDE(DIVIDE(mode->dot_clock * 1000,
 	    mode->htotal), mode->vtotal));

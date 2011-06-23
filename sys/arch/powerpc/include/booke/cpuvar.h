@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.5 2011/02/17 13:53:32 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.5.4.1 2011/06/23 14:19:31 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,8 +37,9 @@
 #ifndef _POWERPC_BOOKE_CPUVAR_H_
 #define _POWERPC_BOOKE_CPUVAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <prop/proplib.h>
+#include <powerpc/psl.h>
 
 struct cpunode_softc {
 	device_t sc_dev;
@@ -57,7 +58,6 @@ struct cpu_softc {
 
 	u_int cpu_pcpls[5];
 	struct evcnt cpu_evcnt_spurious_intr;
-	struct lwp *cpu_softlwps[SOFTINT_COUNT];
 
 	struct evcnt cpu_ev_late_clock;
 	u_long cpu_ticks_per_clock_intr;
@@ -162,9 +162,10 @@ uint32_t ufetch_32(const void *);
 struct trapframe;
 void	booke_sstep(struct trapframe *);
 
-void	booke_fixup_stubs(void);
 void	booke_cpu_startup(const char *);	/* model name */
 struct powerpc_bus_dma_tag booke_bus_dma_tag;
+
+extern struct cpu_info cpu_info[];
 
 void	cpu_evcnt_attach(struct cpu_info *);
 uint32_t cpu_read_4(bus_size_t);

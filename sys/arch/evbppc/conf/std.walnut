@@ -1,4 +1,4 @@
-#	$NetBSD: std.walnut,v 1.6 2005/12/11 12:17:11 christos Exp $
+#	$NetBSD: std.walnut,v 1.6.110.1 2011/06/23 14:19:08 cherry Exp $
 #
 # Standard/required options for NetBSD/walnut.
 
@@ -17,7 +17,7 @@ makeoptions	TEXTADDR=0x25000
 makeoptions	BOARDTYPE="walnut"
 makeoptions	PPCDIR="ibm4xx"
 
-options 	PPC_INTR_IMPL="<powerpc/ibm4xx/ibm4xx_intr.h>"
+options 	PPC_INTR_IMPL="<powerpc/intr.h>"
 options 	PPC_PCI_MACHDEP_IMPL="<powerpc/ibm4xx/pci_machdep.h>"
 options 	KERNBASE=0x25000
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.233 2011/05/16 13:22:51 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.233.2.1 2011/06/23 14:18:57 cherry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.233 2011/05/16 13:22:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.233.2.1 2011/06/23 14:18:57 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.233 2011/05/16 13:22:51 tsutsui Exp $"
 #include <machine/pte.h>
 #include <machine/kcore.h>
 #include <dev/cons.h>
+#include <dev/mm.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/amiga/custom.h>
 #ifdef DRACO
@@ -1229,3 +1230,10 @@ int ipl2spl_table[_NIPL] = {
 	[IPL_HIGH] = PSL_IPL7|PSL_S,
 #endif /* defined(LEV6_DEFER) */
 };
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return (pa >= 0xfffffffc || pa < lowram) ? EFAULT : 0;
+}

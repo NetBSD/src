@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fccache.in,v 1.1 2011/02/18 00:42:20 jmcneill Exp $
+# $NetBSD: fccache.in,v 1.1.4.1 2011/06/23 14:18:26 cherry Exp $
 #
 
 # PROVIDE: fccache 
@@ -19,7 +19,7 @@ fccache_start()
 {
 	if [ -x "${command}" ]; then
 		echo -n "Updating fontconfig cache:"
-		${command} -q
+		${command}
 		echo " done"
 	fi
 }

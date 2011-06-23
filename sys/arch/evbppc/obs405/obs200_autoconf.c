@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_autoconf.c,v 1.5 2010/03/18 13:47:04 kiyohara Exp $	*/
+/*	$NetBSD: obs200_autoconf.c,v 1.5.6.1 2011/06/23 14:19:09 cherry Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,10 +33,11 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_autoconf.c,v 1.5 2010/03/18 13:47:04 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_autoconf.c,v 1.5.6.1 2011/06/23 14:19:09 cherry Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <machine/obs200.h>
 
@@ -73,7 +74,7 @@ cpu_configure(void)
 	__asm volatile ("wrteei 1");
 }
 
-void device_register(struct device *dev, void *aux)
+void device_register(device_t dev, void *aux)
 {
 
 	obs405_device_register(dev, aux, OBS200_COM_FREQ);

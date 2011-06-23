@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.27 2011/05/17 17:34:47 dyoung Exp $ */
+/* $NetBSD: mcpcia.c,v 1.27.2.1 2011/06/23 14:18:54 cherry Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.27 2011/05/17 17:34:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.27.2.1 2011/06/23 14:18:54 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,9 +96,10 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.27 2011/05/17 17:34:47 dyoung Exp $");
 	 (MCBUS_IOSPACE) | MCPCIA_PCI_BRIDGE | _MCPCIA_PCI_REV)), \
 	sizeof(u_int32_t))
 
-static int	mcpciamatch(struct device *, struct cfdata *, void *);
-static void	mcpciaattach(struct device *, struct device *, void *);
-CFATTACH_DECL(mcpcia, sizeof(struct mcpcia_softc),
+static int	mcpciamatch(device_t, cfdata_t, void *);
+static void	mcpciaattach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(mcpcia, sizeof(struct mcpcia_softc),
     mcpciamatch, mcpciaattach, NULL, NULL);
 
 void	mcpcia_init0(struct mcpcia_config *, int);
@@ -114,7 +115,7 @@ int	mcpcia_bus_get_window(int, int,
 	    struct alpha_bus_space_translation *abst);
 
 static int
-mcpciamatch(struct device *parent, struct cfdata *cf, void *aux)
+mcpciamatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mcbus_dev_attach_args *ma = aux;
 	if (ma->ma_type == MCBUS_TYPE_PCI)
@@ -123,11 +124,11 @@ mcpciamatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-mcpciaattach(struct device *parent, struct device *self, void *aux)
+mcpciaattach(device_t parent, device_t self, void *aux)
 {
 	static int first = 1;
 	struct mcbus_dev_attach_args *ma = aux;
-	struct mcpcia_softc *mcp = (struct mcpcia_softc *)self;
+	struct mcpcia_softc *mcp = device_private(self);
 	struct mcpcia_config *ccp;
 	struct pcibus_attach_args pba;
 	u_int32_t ctl;
@@ -156,6 +157,7 @@ mcpciaattach(struct device *parent, struct device *self, void *aux)
 		ccp->cc_gid = ma->ma_gid;
 	}
 
+	mcp->mcpcia_dev = self;
 	mcp->mcpcia_cc = ccp;
 	ccp->cc_sc = mcp;
 
@@ -163,8 +165,9 @@ mcpciaattach(struct device *parent, struct device *self, void *aux)
 	mcpcia_init0(ccp, 1);
 
 	ctl = REGVAL(MCPCIA_PCI_REV(ccp));
-	printf("%s: Horse Revision %d, %s Handed Saddle Revision %d,"
-	    " CAP Revision %d\n", mcp->mcpcia_dev.dv_xname, HORSE_REV(ctl),
+	aprint_normal_dev(self,
+	    "Horse Revision %d, %s Handed Saddle Revision %d,"
+	    " CAP Revision %d\n", HORSE_REV(ctl),
 	    (SADDLE_TYPE(ctl) & 1)? "Right": "Left", SADDLE_REV(ctl),
 	    CAP_REV(ctl));
 

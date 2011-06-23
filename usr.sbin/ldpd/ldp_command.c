@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_command.c,v 1.4 2010/12/31 11:29:33 kefren Exp $ */
+/* $NetBSD: ldp_command.c,v 1.4.4.1 2011/06/23 14:20:48 cherry Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -60,9 +60,33 @@ extern int ldp_hello_time, ldp_keepalive_time, ldp_holddown_time,
 #define	MAXSEND 1024
 char sendspace[MAXSEND];
 
+static void send_prompt(int);
+static void send_pwd_prompt(int);
+static int command_match(struct com_func*, int, char*, char*);
+
 static int	verify_root_pwd(char *);
 static void	echo_on(int s);
 static void	echo_off(int s);
+
+/* Main functions */
+static int show_func(int, char *);
+static int set_func(int, char *);
+static int exit_func(int, char *);
+ 
+/* Show functions */
+static int show_neighbours(int, char *);
+static int show_bindings(int, char *);
+static int show_debug(int, char *);
+static int show_hellos(int, char *);
+static int show_labels(int, char *);
+static int show_parameters(int, char *);
+static int show_version(int, char *);
+static int show_warning(int, char *);
+
+/* Set functions */
+static int set_hello_time(int, char *);
+static int set_debug(int, char *);
+static int set_warning(int, char *);
 
 static struct com_func main_commands[] = {
 	{ "show", show_func },
@@ -77,6 +101,7 @@ static struct com_func show_commands[] = {
 	{ "bindings", show_bindings },
 	{ "debug", show_debug },
 	{ "hellos", show_hellos },
+	{ "labels", show_labels },
 	{ "parameters", show_parameters },
 	{ "version", show_version },
 	{ "warning", show_warning },
@@ -90,7 +115,7 @@ struct com_func set_commands[] = {
 	{ "", NULL }
 };
 
-int
+static int
 verify_root_pwd(char *pw)
 {
 	struct passwd *p;
@@ -254,25 +279,27 @@ command_close(int s)
 		}
 }
 
-void
+static void
 send_prompt(int s) {
 	writestr(s, "LDP> ");
 }
 
-void
+static void
 send_pwd_prompt(int s) {
 	echo_off(s);
 	writestr(s, "Password: ");
 }
 
-static void echo_off(int s)
+static void
+echo_off(int s)
 {
 	char iac_will_echo[3] = { 0xff, 0xfb, 0x01 }, bf[32];
 	write(s, iac_will_echo, sizeof(iac_will_echo));
 	read(s, bf, sizeof(bf));
 }
 
-static void echo_on(int s)
+static void
+echo_on(int s)
 {
 	char iac_wont_echo[3] = { 0xff, 0xfc, 0x01 }, bf[32];
 	write(s, iac_wont_echo, sizeof(iac_wont_echo));
@@ -283,7 +310,7 @@ static void echo_on(int s)
  * Matching function
  * Returns 1 if matched anything
  */
-int
+static int
 command_match(struct com_func *cf, int s, char *orig, char *next)
 {
 	size_t i, len;
@@ -332,7 +359,7 @@ out:
 /*
  * Main CLI functions
  */
-int
+static int
 set_func(int s, char *recvspace)
 {
 	char *nextc = recvspace;
@@ -348,7 +375,7 @@ set_func(int s, char *recvspace)
 	return 0;
 }
 
-int
+static int
 show_func(int s, char *recvspace)
 {
 	char *nextc = recvspace;
@@ -364,7 +391,7 @@ show_func(int s, char *recvspace)
 	return 0;
 }
 
-int
+static int
 exit_func(int s, char *recvspace)
 {
 	command_close(s);
@@ -374,7 +401,7 @@ exit_func(int s, char *recvspace)
 /*
  * Show functions
  */
-int
+static int
 show_neighbours(int s, char *recvspace)
 {
 	struct ldp_peer *p;
@@ -448,7 +475,28 @@ show_neighbours(int s, char *recvspace)
 	return 1;
 }
 
-int
+/* Shows labels grabbed from unsolicited label maps */
+static int
+show_labels(int s, char *recvspace)
+{
+	struct ldp_peer *p;
+	struct label_mapping *lm;
+
+	SLIST_FOREACH(p, &ldp_peer_head, peers) {
+		if (p->state != LDP_PEER_ESTABLISHED)
+			continue;
+		SLIST_FOREACH(lm, &p->label_mapping_head, mappings) {
+			snprintf(sendspace, MAXSEND, "%s:%d",
+			    inet_ntoa(p->ldp_id), lm->label);
+			snprintf(sendspace, MAXSEND, "%s\t%s/%d\n",
+			    sendspace, inet_ntoa(lm->address), lm->prefix);
+			writestr(s, sendspace);
+		}
+	}
+	return 1;
+}
+
+static int
 show_bindings(int s, char *recvspace)
 {
 	struct label *l;
@@ -471,7 +519,7 @@ show_bindings(int s, char *recvspace)
 	return 1;
 }
 
-int
+static int
 show_debug(int s, char *recvspace)
 {
 	if (recvspace) {
@@ -485,7 +533,7 @@ show_debug(int s, char *recvspace)
 	return 1;
 }
 
-int
+static int
 show_hellos(int s, char *recvspace)
 {
 	struct hello_info *hi;
@@ -498,7 +546,7 @@ show_hellos(int s, char *recvspace)
 	return 1;
 }
 
-int
+static int
 show_parameters(int s, char *recvspace)
 {
 	snprintf(sendspace, MAXSEND, "LDP ID: %s\nProtocol version: %d\n"
@@ -515,7 +563,7 @@ show_parameters(int s, char *recvspace)
 	return 1;
 }
 
-int
+static int
 show_version(int s, char *recvspace)
 {
 	if (recvspace) {	/* Nothing more after this */
@@ -529,7 +577,7 @@ show_version(int s, char *recvspace)
 	return 1;
 }
 
-int
+static int
 show_warning(int s, char *recvspace)
 {
 	if (recvspace) {
@@ -544,7 +592,7 @@ show_warning(int s, char *recvspace)
 }
 
 /* Set commands */
-int
+static int
 set_hello_time(int s, char *recvspace)
 {
 	if (!recvspace || atoi(recvspace) < 1) {
@@ -556,7 +604,7 @@ set_hello_time(int s, char *recvspace)
 	return 1;
 }
 
-int
+static int
 set_debug(int s, char *recvspace)
 {
 	if (!recvspace || atoi(recvspace) < 0) {
@@ -568,7 +616,7 @@ set_debug(int s, char *recvspace)
 	return 1;
 }
 
-int
+static int
 set_warning(int s, char *recvspace)
 {
 	if (!recvspace || atoi(recvspace) < 0) {

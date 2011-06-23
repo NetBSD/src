@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.14 2008/04/28 20:23:33 martin Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.14.32.1 2011/06/23 14:19:36 cherry Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.14 2008/04/28 20:23:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.14.32.1 2011/06/23 14:19:36 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,8 +72,8 @@ extern RESIDUAL resdata;
 
 #define NVRAM_STD_DEV 0
 
-static int	nvram_pnpbus_probe(struct device *, struct cfdata *, void *);
-static void	nvram_pnpbus_attach(struct device *, struct device *, void *);
+static int	nvram_pnpbus_probe(device_t, cfdata_t, void *);
+static void	nvram_pnpbus_attach(device_t, device_t, void *);
 uint8_t		prep_nvram_read_val(int);
 char		*prep_nvram_next_var(char *);
 char		*prep_nvram_find_var(const char *);
@@ -100,7 +100,7 @@ const struct cdevsw nvram_cdevsw = {
 extern struct cfdriver nvram_cd;
 
 static int
-nvram_pnpbus_probe(struct device *parent, struct cfdata *match, void *aux)
+nvram_pnpbus_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pnpbus_dev_attach_args *pna = aux;
 	int ret = 0;
@@ -115,9 +115,9 @@ nvram_pnpbus_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-nvram_pnpbus_attach(struct device *parent, struct device *self, void *aux)
+nvram_pnpbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct nvram_pnpbus_softc *sc = (void *)self;
+	struct nvram_pnpbus_softc *sc = device_private(self);
 	struct pnpbus_dev_attach_args *pna = aux;
 	int as_iobase, as_len, data_iobase, data_len, i, nvlen, cur;
 	uint8_t *p;

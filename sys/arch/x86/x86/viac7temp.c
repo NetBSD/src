@@ -1,4 +1,4 @@
-/* $NetBSD: viac7temp.c,v 1.5 2011/02/24 15:42:17 jruoho Exp $ */
+/* $NetBSD: viac7temp.c,v 1.5.2.1 2011/06/23 14:19:49 cherry Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viac7temp.c,v 1.5 2011/02/24 15:42:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viac7temp.c,v 1.5.2.1 2011/06/23 14:19:49 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -97,6 +97,7 @@ viac7temp_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_sensor.units = ENVSYS_STEMP;
 	sc->sc_sensor.flags = ENVSYS_FMONLIMITS;
+	sc->sc_sensor.state = ENVSYS_SINVALID;
 
 	(void)strlcpy(sc->sc_sensor.desc, "temperature",
 	    sizeof(sc->sc_sensor.desc));

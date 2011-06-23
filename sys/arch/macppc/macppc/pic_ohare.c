@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_ohare.c,v 1.8 2010/12/20 00:25:37 matt Exp $ */
+/*	$NetBSD: pic_ohare.c,v 1.8.6.1 2011/06/23 14:19:21 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.8 2010/12/20 00:25:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.8.6.1 2011/06/23 14:19:21 cherry Exp $");
 
 #include "opt_interrupt.h"
 
@@ -236,7 +236,7 @@ ohare_get_irq(struct pic_ops *pic, int mode)
 	if (ohare->pending_events == 0)
 		return 255;
 
-	bit = 31 - cntlzw(ohare->pending_events);
+	bit = 31 - __builtin_clz(ohare->pending_events);
 	mask = 1 << bit;
 	if ((ohare->pending_events & ~mask) == 0) {
 
@@ -252,7 +252,7 @@ ohare_get_irq(struct pic_ops *pic, int mode)
 	evt = ohare->pending_events & ~mask;
 	prio = ohare->priority_masks[bit];
 	while (evt != 0) {
-		bit = 31 - cntlzw(evt);
+		bit = 31 - __builtin_clz(evt);
 		prio |= ohare->priority_masks[bit];
 		evt &= ~(1 << bit);
 #ifdef OHARE_DEBUG
@@ -261,7 +261,7 @@ ohare_get_irq(struct pic_ops *pic, int mode)
 			panic("hanging in ohare_get_irq");
 #endif
 	}
-	lvl = 31 - cntlzw(prio);
+	lvl = 31 - __builtin_clz(prio);
 	evt = ohare->pending_events & ohare->irqs[lvl];
 
 	if (evt == 0) {
@@ -270,7 +270,7 @@ ohare_get_irq(struct pic_ops *pic, int mode)
 		evt = ohare->pending_events;
 	}
 
-	bit = 31 - cntlzw(evt);
+	bit = 31 - __builtin_clz(evt);
 	mask = 1 << bit;
 	ohare->pending_events &= ~mask;
 	return bit;	
@@ -306,7 +306,7 @@ ohare_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 	for (i = 0; i < OHARE_NIRQ; i++) {
 		if (ohare->priority_masks[i] == 0)
 			continue;
-		level = 31 - cntlzw(ohare->priority_masks[i]);
+		level = 31 - __builtin_clz(ohare->priority_masks[i]);
 		ohare->irqs[level] |= (1 << i);
 	}
 }

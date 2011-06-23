@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/05/12 14:56:24 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2011/06/23 14:18:31 cherry Exp $
 
 LIB=	clangFrontend
 
@@ -15,7 +15,6 @@ SRCS+=	ASTConsumers.cpp \
 	CompilerInvocation.cpp \
 	CreateInvocationFromCommandLine.cpp \
 	DependencyFile.cpp \
-	DiagChecker.cpp \
 	FrontendAction.cpp \
 	FrontendActions.cpp \
 	FrontendOptions.cpp \

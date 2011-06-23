@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.23 2009/03/14 21:04:11 dsl Exp $	*/
+/*	$NetBSD: apm.c,v 1.23.10.1 2011/06/23 14:19:19 cherry Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.23 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.23.10.1 2011/06/23 14:19:19 cherry Exp $");
 
 #include "apm.h"
 
@@ -102,8 +102,8 @@ struct apm_softc {
 #define APM_UNLOCK(apmsc)
 #endif
 
-int apmmatch(struct device *, struct cfdata *, void *);
-void apmattach(struct device *, struct device *, void *);
+int apmmatch(device_t, cfdata_t, void *);
+void apmattach(device_t, device_t, void *);
 
 #ifdef __NetBSD__
 #if 0
@@ -160,7 +160,7 @@ int	apm_evindex;
 
 
 int
-apmmatch(struct device *parent, struct cfdata *match, void *aux)
+apmmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct adb_attach_args *aa = (void *)aux;		
 	if (aa->origaddr != ADBADDR_APM ||
@@ -175,7 +175,7 @@ apmmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-apmattach(struct device *parent, struct device *self, void *aux)
+apmattach(device_t parent, device_t self, void *aux)
 {
 	struct apm_softc *sc = (struct apm_softc *) self;
 	struct pmu_battery_info info;

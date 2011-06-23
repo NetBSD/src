@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmemps2.S,v 1.5 2011/02/20 05:45:48 jakllsch Exp $	*/
+/*	$NetBSD: biosmemps2.S,v 1.5.2.1 2011/06/23 14:19:16 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,15 +40,9 @@
 */
 ENTRY(getextmemps2)
 	.code32
-	pushl	%ebp
-	movl	%esp,%ebp
-	pushl	%ebx
-	pushl	%ecx
-	pushl	%edx
-	push	%esi
-	push	%edi
-
-	movl	8(%ebp), %edx	# parameter
+	movl	%eax, %edx
+	xorl	%eax, %eax
+	pusha
 
 	call	_C_LABEL(prot_to_real)
 	.code16
@@ -88,12 +82,6 @@ out:
 	calll	_C_LABEL(real_to_prot)
 	.code32
 
-	movzbl	%cl, %eax	# return value in %eax
-
-	pop	%edi
-	pop	%esi
-	popl	%edx
-	popl	%ecx
-	popl	%ebx
-	popl	%ebp
+	movb	%cl, 28(%esp)
+	popa
 	ret

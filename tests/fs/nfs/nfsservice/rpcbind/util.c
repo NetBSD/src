@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1 2010/07/26 15:53:01 pooka Exp $	*/
+/*	$NetBSD: util.c,v 1.1.4.1 2011/06/23 14:20:38 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -378,7 +378,7 @@ network_init()
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq6,
 		    sizeof mreq6) < 0)
 			if (debugging)
-				perror("setsockopt v6 multicast");
+				warn("setsockopt v6 multicast");
 	}
 #endif
 

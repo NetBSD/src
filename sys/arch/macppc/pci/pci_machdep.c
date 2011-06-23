@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.38 2010/12/20 00:25:38 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.38.6.1 2011/06/23 14:19:22 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.38 2010/12/20 00:25:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.38.6.1 2011/06/23 14:19:22 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,7 @@ pcitag_t genppc_pci_indirect_make_tag(void *, int, int, int);
 void genppc_pci_indirect_decompose_tag(void *, pcitag_t, int *, int *, int *);
 
 void
-macppc_pci_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
+macppc_pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 	pci_chipset_tag_t pc = pba->pba_pc;
 	int bus = pba->pba_bus;

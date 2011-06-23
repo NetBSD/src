@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.27 2009/05/12 09:10:16 cegger Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.27.10.1 2011/06/23 14:20:01 cherry Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.27 2009/05/12 09:10:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.27.10.1 2011/06/23 14:20:01 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ static int	detect_mad16(struct wss_softc *, int);
 int		wss_isa_probe(device_t, cfdata_t, void *);
 void		wss_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(wss_isa, sizeof(struct wss_softc),
+CFATTACH_DECL_NEW(wss_isa, sizeof(struct wss_softc),
     wss_isa_probe, wss_isa_attach, NULL, NULL);
 
 /*
@@ -91,12 +91,11 @@ int
 wss_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia;
+	struct device probedev;
 	struct wss_softc probesc, *sc;
 	struct ad1848_softc *ac;
 
 	ia = aux;
-	sc = &probesc;
-	ac = (struct ad1848_softc *)&sc->sc_ad1848;
 	if (ia->ia_nio < 1)
 		return 0;
 	if (ia->ia_nirq < 1)
@@ -107,8 +106,12 @@ wss_isa_probe(device_t parent, cfdata_t match, void *aux)
 	if (ISA_DIRECT_CONFIG(ia))
 		return 0;
 
-	memset(sc, 0, sizeof *sc);
-	ac->sc_dev.dv_cfdata = match;
+	memset(&probedev, 0, sizeof probedev);
+	memset(&probesc, 0, sizeof probesc);
+	sc = &probesc;
+	ac = &sc->sc_ad1848.sc_ad1848;
+	ac->sc_dev = &probedev;
+	ac->sc_dev->dv_cfdata = match;
 	if (wssfind(parent, sc, 1, aux)) {
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, WSS_CODEC);
 		ad1848_isa_unmap(&sc->sc_ad1848);
@@ -132,7 +135,7 @@ wssfind(device_t parent, struct wss_softc *sc, int probing,
 
 	ac = &sc->sc_ad1848.sc_ad1848;
 	sc->sc_iot = ia->ia_iot;
-	if (device_cfdata(&ac->sc_dev)->cf_flags & 1)
+	if (device_cfdata(ac->sc_dev)->cf_flags & 1)
 		madprobe(sc, ia->ia_io[0].ir_addr);
 	else
 		sc->mad_chip_type = MAD_NONE;
@@ -238,11 +241,12 @@ wss_isa_attach(device_t parent, device_t self, void *aux)
 	struct ad1848_softc *ac;
 	struct isa_attach_args *ia;
 
-	sc = (struct wss_softc *)self;
-	ac = (struct ad1848_softc *)&sc->sc_ad1848;
-	ia = (struct isa_attach_args *)aux;
+	sc = device_private(self);
+	ac = &sc->sc_ad1848.sc_ad1848;
+	ac->sc_dev = self;
+	ia = aux;
 	if (!wssfind(parent, sc, 0, ia)) {
-		aprint_error_dev(&ac->sc_dev, "wssfind failed\n");
+		aprint_error_dev(self, "wssfind failed\n");
 		return;
 	}
 

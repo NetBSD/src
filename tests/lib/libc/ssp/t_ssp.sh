@@ -1,4 +1,4 @@
-# $NetBSD: t_ssp.sh,v 1.4 2011/02/26 02:41:33 pgoyette Exp $
+# $NetBSD: t_ssp.sh,v 1.4.2.1 2011/06/23 14:20:39 cherry Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -206,6 +206,19 @@ strncat_body()
 	h_fail "$prog 9"
 }
 
+atf_test_case raw
+raw_head()
+{
+	atf_set "descr" "Checks raw array overflow"
+}
+raw_body()
+{
+	prog="$(atf_get_srcdir)/h_raw"
+
+	h_pass "$prog 9"
+	h_fail "$prog 10"
+}
+
 atf_test_case read
 read_head()
 {
@@ -260,6 +273,7 @@ atf_init_test_cases()
 	atf_add_test_case strcpy
 	atf_add_test_case strncat
 	atf_add_test_case strncpy
+	atf_add_test_case raw
 	atf_add_test_case read
 	atf_add_test_case readlink
 	atf_add_test_case getcwd

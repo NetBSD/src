@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm_map.9,v 1.1 2011/06/01 02:22:19 rmind Exp $
+.\"	$NetBSD: uvm_map.9,v 1.1.2.1 2011/06/23 14:18:45 cherry Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 1, 2011
+.Dd June 3, 2011
 .Dt UVM_MAP 9
 .Os
 .Sh NAME
@@ -51,21 +51,25 @@ virtual address space management interface
 .Ft int
 .Fn uvm_deallocate "struct vm_map *map" "vaddr_t start" "vsize_t size"
 .Ft struct vmspace *
-.Fn uvmspace_alloc "vaddr_t min" "vaddr_t max" "int pageable"
+.Fn uvmspace_alloc "vaddr_t min" "vaddr_t max"
 .Ft void
 .Fn uvmspace_exec "struct lwp *l" "vaddr_t start" "vaddr_t end"
 .Ft struct vmspace *
 .Fn uvmspace_fork "struct vmspace *vm"
 .Ft void
-.Fn uvmspace_free "struct vmspace *vm1"
+.Fn uvmspace_free "struct vmspace *vm"
 .Ft void
 .Fn uvmspace_share "struct proc *p1" "struct proc *p2"
-.Ft void
-.Fn uvmspace_unshare "struct lwp *l"
-.Ft bool
-.Fn uvm_uarea_alloc "vaddr_t *uaddrp"
+.\" .Ft void
+.\" .Fn uvmspace_unshare "struct lwp *l"
+.Ft vaddr_t
+.Fn uvm_uarea_alloc "void"
 .Ft void
 .Fn uvm_uarea_free "vaddr_t uaddr"
+.Ft vaddr_t
+.Fn uvm_uarea_system_alloc "void"
+.Ft void
+.Fn uvm_uarea_system_free "vaddr_t uaddr"
 .Sh DESCRIPTION
 The UVM facility for virtual address space management.
 .Sh FUNCTIONS
@@ -111,7 +115,7 @@ finds the offset based upon the virtual address, passed as
 .Fa startp .
 If
 .Fa uoffset
-is any other value, we are doing a normal mapping at this offset.
+is any other value, then a regular mapping is performed at this offset.
 The start address of the map will be returned in
 .Fa startp .
 .Pp
@@ -127,69 +131,99 @@ must be a power of 2.
 passed to
 .Fn uvm_map
 are typically created using the
-.Fn UVM_MAPFLAG "vm_prot_t prot" "vm_prot_t maxprot" "vm_inherit_t inh" "int advice" "int flags"
+.Fn UVM_MAPFLAG "vm_prot_t prot" "vm_prot_t maxprot" "vm_inherit_t inh" \
+"int advice" "int flags"
 macro, which uses the following values.
 The
 .Fa prot
 and
 .Fa maxprot
 can take are:
-.Bd -literal
-#define UVM_PROT_MASK   0x07    /* protection mask */
-#define UVM_PROT_NONE   0x00    /* protection none */
-#define UVM_PROT_ALL    0x07    /* everything */
-#define UVM_PROT_READ   0x01    /* read */
-#define UVM_PROT_WRITE  0x02    /* write */
-#define UVM_PROT_EXEC   0x04    /* exec */
-#define UVM_PROT_R      0x01    /* read */
-#define UVM_PROT_W      0x02    /* write */
-#define UVM_PROT_RW     0x03    /* read-write */
-#define UVM_PROT_X      0x04    /* exec */
-#define UVM_PROT_RX     0x05    /* read-exec */
-#define UVM_PROT_WX     0x06    /* write-exec */
-#define UVM_PROT_RWX    0x07    /* read-write-exec */
-.Ed
+.Bl -tag -width UVM_ADV_SEQUENTIAL
+.It UVM_PROT_NONE
+No protection bits.
+.It UVM_PROT_R
+Read.
+.It UVM_PROT_W
+Write.
+.It UVM_PROT_X
+Exec.
+.It UVM_PROT_MASK
+Mask to extraction the protection bits.
+.El
+.Pp
+Additionally, the following constants for ORed values are available:
+.Dv UVM_PROT_RW ,
+.Dv UVM_PROT_RX ,
+.Dv UVM_PROT_WX
+and
+.Dv UVM_PROT_RWX .
 .Pp
 The values that
 .Fa inh
 can take are:
-.Bd -literal
-#define UVM_INH_MASK    0x30    /* inherit mask */
-#define UVM_INH_SHARE   0x00    /* "share" */
-#define UVM_INH_COPY    0x10    /* "copy" */
-#define UVM_INH_NONE    0x20    /* "none" */
-#define UVM_INH_DONATE  0x30    /* "donate" \*[Lt]\*[Lt] not used */
-.Ed
+.Bl -tag -width UVM_ADV_SEQUENTIAL
+.It UVM_INH_SHARE
+Share the map.
+.It UVM_INH_COPY
+Copy the map.
+.It UVM_INH_NONE
+No inheritance.
+.It UVM_INH_MASK
+Mark to extract inherit flags.
+.El
 .Pp
 The values that
 .Fa advice
 can take are:
-.Bd -literal
-#define UVM_ADV_NORMAL     0x0  /* 'normal' */
-#define UVM_ADV_RANDOM     0x1  /* 'random' */
-#define UVM_ADV_SEQUENTIAL 0x2  /* 'sequential' */
-#define UVM_ADV_MASK       0x7  /* mask */
-.Ed
+.Bl -tag -width UVM_ADV_SEQUENTIAL
+.It UVM_ADV_NORMAL
+"Normal" use.
+.It UVM_ADV_RANDOM
+"Random" access likelyhood.
+.It UVM_ADV_SEQUENTIAL
+"Sequential" access likelyhood.
+.It UVM_ADV_MASK
+Mask to extract the advice flags.
+.El
 .Pp
 The values that
 .Fa flags
 can take are:
-.Bd -literal
-#define UVM_FLAG_FIXED   0x010000 /* find space */
-#define UVM_FLAG_OVERLAY 0x020000 /* establish overlay */
-#define UVM_FLAG_NOMERGE 0x040000 /* don't merge map entries */
-#define UVM_FLAG_COPYONW 0x080000 /* set copy_on_write flag */
-#define UVM_FLAG_AMAPPAD 0x100000 /* for bss: pad amap to reduce malloc() */
-#define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
-.Ed
+.Bl -tag -width UVM_ADV_SEQUENTIAL
+.It UVM_FLAG_FIXED
+Attempt to map on the address specified by
+.Fa startp .
+Otherwise, it is used just as a hint.
+.It UVM_FLAG_OVERLAY
+Establish overlay.
+.It UVM_FLAG_NOMERGE
+Do not merge map entries, if such merge is possible.
+.It UVM_FLAG_COPYONW
+Use copy-on-write i.e. do not fault in the pages immediately.
+.It UVM_FLAG_AMAPPAD
+User for BSS: alocate larger amap, if extending is likely.
+.It UVM_FLAG_TRYLOCK
+Fail if cannot acquire the lock immediately.
+.It UVM_FLAG_NOWAIT
+Not allowed to sleep.
+Fail, in such case.
+.It UVM_FLAG_QUANTUM
+Indicates that map entry cannot be split once mapped.
+.It UVM_FLAG_WAITVA
+Sleep until VA space is available, if it is not.
+.It UVM_FLAG_VAONLY
+Unmap only VA space.
+Used by
+.Fn uvm_unmap .
+.El
 .Pp
 The
 .Dv UVM_MAPFLAG
 macro arguments can be combined with an or operator.
 There are several special purpose macros for checking protection
 combinations, e.g., the
-.Dv UVM_PROT_WX
-macro.
+.Dv UVM_PROT_WX .
 There are also some additional macros to extract bits from the flags.
 The
 .Dv UVM_PROTECTION ,
@@ -200,7 +234,7 @@ and
 macros return the protection, inheritance, maximum protection and advice,
 respectively.
 .Fn uvm_map
-returns a standard UVM return value.
+returns zero on success or error number otherwise.
 .Pp
 .Fn uvm_unmap
 removes a valid mapping,
@@ -222,7 +256,7 @@ in map
 to
 .Fa new_pageable .
 .Fn uvm_map_pageable
-returns a standard UVM return value.
+returns zero on success or error number otherwise.
 .Pp
 .Fn uvm_map_checkprot
 checks the protection of the range from
@@ -266,14 +300,12 @@ to
 allocates and returns a new address space, with ranges from
 .Fa min
 to
-.Fa max ,
-setting the pageability of the address space to
-.Fa pageable .
+.Fa max .
 .Pp
 .Fn uvmspace_exec
-either reuses the address space of lwp
+either reuses the address space of thread
 .Fa l
-if there are no other references to it, or creates
+(its process) if there are no other references to it, or creates
 a new one with
 .Fn uvmspace_alloc .
 The range of valid addresses in the address space is reset to
@@ -283,7 +315,7 @@ through
 .Pp
 .Fn uvmspace_fork
 creates and returns a new address space based upon the
-.Fa vm1
+.Fa vm
 address space, typically used when allocating an address space for a
 child process.
 .Pp
@@ -297,28 +329,26 @@ causes process
 .Pa p2
 to share the address space of
 .Fa p1 .
-.Pp
-.Fn uvmspace_unshare
-ensures that lwp
-.Fa l
-has its own, unshared address space, by creating a new one if
-necessary by calling
-.Fn uvmspace_fork .
+.\" .Pp
+.\" .Fn uvmspace_unshare
+.\" ensures that thread
+.\" .Fa l
+.\" has its own, unshared address space, by creating a new one if
+.\" necessary by calling
+.\" .Fn uvmspace_fork .
 .Pp
 .Fn uvm_uarea_alloc
-allocates virtual space for a u-area (i.e., a kernel stack) and stores
-its virtual address in
-.Fa *uaddrp .
-The return value is
-.Dv true
-if the u-area is already backed by wired physical memory, otherwise
-.Dv false .
+allocates memory for a u-area (i.e. kernel stack, PCB, etc) and returns
+the address.
 .Pp
 .Fn uvm_uarea_free
 frees a u-area allocated with
-.Fn uvm_uarea_alloc ,
-freeing both the virtual space and any physical pages which may have been
-allocated to back that virtual space later.
+.Fn uvm_uarea_alloc .
+.Pp
+.Fn uvm_uarea_system_alloc
+and
+.Fn uvm_uarea_system_free
+are optimised routines, which are used for kernel threads.
 .Sh SEE ALSO
 .Xr pmap 9 ,
 .Xr uvm 9 ,

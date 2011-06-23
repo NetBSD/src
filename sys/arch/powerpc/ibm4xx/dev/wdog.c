@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.10 2010/02/25 23:31:47 matt Exp $ */
+/* $NetBSD: wdog.c,v 1.10.8.1 2011/06/23 14:19:30 cherry Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,40 +40,42 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.10 2010/02/25 23:31:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.10.8.1 2011/06/23 14:19:30 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 #include <sys/wdog.h>
 
 #include <prop/proplib.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
-static int wdog_match(struct device *, struct cfdata *, void *);
-static void wdog_attach(struct device *, struct device *, void *);
+static int wdog_match(device_t, cfdata_t, void *);
+static void wdog_attach(device_t, device_t, void *);
 static int wdog_tickle(struct sysmon_wdog *);
 static int wdog_setmode(struct sysmon_wdog *);
 
 struct wdog_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct sysmon_wdog sc_smw;
-	int sc_wdog_armed;
+	bool sc_wdog_armed;
 	int sc_wdog_period;
 };
 
-CFATTACH_DECL(wdog, sizeof(struct wdog_softc),
+CFATTACH_DECL_NEW(wdog, sizeof(struct wdog_softc),
     wdog_match, wdog_attach, NULL, NULL);
 
 static int
-wdog_match(struct device *parent, struct cfdata *cf, void *aux)
+wdog_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct opb_attach_args *oaa = aux;
+	struct opb_attach_args * const oaa = aux;
 
 	/* match only watchdog devices */
 	if (strcmp(oaa->opb_name, cf->cf_name) != 0)
@@ -83,9 +85,9 @@ wdog_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-wdog_attach(struct device *parent, struct device *self, void *aux)
+wdog_attach(device_t parent, device_t self, void *aux)
 {
-	struct wdog_softc *sc = (void *)self;
+	struct wdog_softc * const sc = device_private(self);
 	unsigned int processor_freq;
 	prop_number_t freq;
 
@@ -94,18 +96,17 @@ wdog_attach(struct device *parent, struct device *self, void *aux)
 	processor_freq = (unsigned int) prop_number_integer_value(freq);
 
 	sc->sc_wdog_period = (2LL << 29) / processor_freq;
-	printf(": %d second period\n", sc->sc_wdog_period);
+	aprint_normal(": %d second period\n", sc->sc_wdog_period);
 
-	sc->sc_smw.smw_name = sc->sc_dev.dv_xname;
+	sc->sc_dev = self;
+	sc->sc_smw.smw_name = device_xname(self);
 	sc->sc_smw.smw_cookie = sc;
 	sc->sc_smw.smw_setmode = wdog_setmode;
 	sc->sc_smw.smw_tickle = wdog_tickle;
 	sc->sc_smw.smw_period = sc->sc_wdog_period;
 
 	if (sysmon_wdog_register(&sc->sc_smw) != 0)
-		printf("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
-
+		aprint_error_dev(self, "unable to register with sysmon\n");
 }
 
 static int
@@ -122,14 +123,14 @@ wdog_tickle(struct sysmon_wdog *smw)
 static int
 wdog_setmode(struct sysmon_wdog *smw)
 {
-	struct wdog_softc *sc = smw->smw_cookie;
-	uint32_t tcr, tsr;
+	struct wdog_softc * const sc = smw->smw_cookie;
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
 		if (sc->sc_wdog_armed) {
-			tsr = mfspr(SPR_TSR);
+			uint32_t tsr = mfspr(SPR_TSR);
 			tsr &= ~(TSR_ENW | TSR_WIS);
 			mtspr(SPR_TSR, tsr);
+			sc->sc_wdog_armed = false;
 		}
 	} else {
 		if (smw->smw_period == WDOG_PERIOD_DEFAULT)
@@ -142,9 +143,9 @@ wdog_setmode(struct sysmon_wdog *smw)
 			 */
 			return (EOPNOTSUPP);
 		}
-		sc->sc_wdog_armed = 1;
+		sc->sc_wdog_armed = true;
 
-		tcr = mfspr(SPR_TCR);
+		uint32_t tcr = mfspr(SPR_TCR);
 		tcr |= TCR_WP_2_29 | TCR_WRC_SYSTEM;
 		mtspr(SPR_TCR, tcr);
 

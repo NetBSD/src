@@ -1,4 +1,4 @@
-/*	$NetBSD: setfault.S,v 1.8 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: setfault.S,v 1.8.4.1 2011/06/23 14:19:35 cherry Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -68,6 +68,7 @@
 #include "opt_ppcarch.h"
 #include "assym.h"
 #include <machine/asm.h>
+#include <machine/psl.h>
 
 /* LINTSTUB: include <sys/param.h> */
 /* LINTSTUB: include <sys/types.h> */

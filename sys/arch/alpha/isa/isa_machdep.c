@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.c,v 1.19 2010/12/15 01:29:37 matt Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.19.6.1 2011/06/23 14:18:53 cherry Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.19 2010/12/15 01:29:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.19.6.1 2011/06/23 14:18:53 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,10 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.19 2010/12/15 01:29:37 matt Exp $"
 #if (NPCPPI > 0)
 #include <dev/isa/pcppivar.h>
 
-int isabeepmatch(struct device *, struct cfdata *, void *);
-void isabeepattach(struct device *, struct device *, void *);
+int isabeepmatch(device_t, cfdata_t, void *);
+void isabeepattach(device_t, device_t, void *);
 
-CFATTACH_DECL(isabeep, sizeof(struct device),
+CFATTACH_DECL_NEW(isabeep, 0,
     isabeepmatch, isabeepattach, NULL, NULL);
 
 static int ppi_attached;
@@ -79,13 +79,13 @@ isa_display_console(bus_space_tag_t iot, bus_space_tag_t memt)
 
 #if (NPCPPI > 0)
 int
-isabeepmatch(struct device *parent, struct cfdata *match, void *aux)
+isabeepmatch(device_t parent, cfdata_t match, void *aux)
 {
 	return (!ppi_attached);
 }
 
 void
-isabeepattach(struct device *parent, struct device *self, void *aux)
+isabeepattach(device_t parent, device_t self, void *aux)
 {
 	printf("\n");
 

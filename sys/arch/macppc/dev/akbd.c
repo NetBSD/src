@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.43 2009/03/18 10:22:31 cegger Exp $	*/
+/*	$NetBSD: akbd.c,v 1.43.10.1 2011/06/23 14:19:19 cherry Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.43 2009/03/18 10:22:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.43.10.1 2011/06/23 14:19:19 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.43 2009/03/18 10:22:31 cegger Exp $");
 /*
  * Function declarations.
  */
-static int	akbdmatch(struct device *, struct cfdata *, void *);
-static void	akbdattach(struct device *, struct device *, void *);
+static int	akbdmatch(device_t, cfdata_t, void *);
+static void	akbdattach(device_t, device_t, void *);
 static void	kbd_processevent(adb_event_t *event, struct akbd_softc *);
 #ifdef notyet
 static u_char	getleds(int);
@@ -111,7 +111,7 @@ static int akbd_console_attached;
 static int pcmcia_soft_eject;
 
 static int
-akbdmatch(struct device *parent, struct cfdata *cf, void *aux)
+akbdmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct adb_attach_args *aa_args = aux;
 
@@ -122,10 +122,10 @@ akbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-akbdattach(struct device *parent, struct device *self, void *aux)
+akbdattach(device_t parent, device_t self, void *aux)
 {
 	ADBSetInfoBlock adbinfo;
-	struct akbd_softc *sc = (struct akbd_softc *)self;
+	struct akbd_softc *sc = device_private(self);
 	struct adb_attach_args *aa_args = aux;
 	int error, kbd_done;
 	short cmd;

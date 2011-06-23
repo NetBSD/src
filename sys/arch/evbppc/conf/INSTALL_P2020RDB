@@ -1,0 +1,9 @@
+# 	$NetBSD: INSTALL_P2020RDB,v 1.1.4.2 2011/06/23 14:19:08 cherry Exp $
+
+include "arch/evbppc/conf/P2020RDB"
+
+#ident 		"INSTALL_P2020RDB-$Revision: 1.1.4.2 $"
+
+include "arch/evbppc/conf/INSTALL.inc"
+
+no config nfsnetbsd

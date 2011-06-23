@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 2011/02/15 19:39:12 macallan Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22.2.1 2011/06/23 14:19:32 cherry Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,12 +34,19 @@
 #ifndef	_POWERPC_OEA_PMAP_H_
 #define	_POWERPC_OEA_PMAP_H_
 
+#ifdef _LOCORE          
+#error use assym.h instead
+#endif
+
+#if defined(_LKM) || defined(_MODULE)
+#error this file should not be included by loadable kernel modules
+#endif
+
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
 #endif
 #include <powerpc/oea/pte.h>
 
-#ifndef _LOCORE
 /*
  * Pmap stuff
  */
@@ -181,24 +188,22 @@ extern const struct pmap_ops pmap32_ops;
 extern const struct pmap_ops pmap64_ops;
 extern const struct pmap_ops pmap64bridge_ops;
 
-void	pmap_fixup_stubs(const struct pmap_ops *);
-
 static inline void
 pmap_setup32(void)
 {
-	pmap_fixup_stubs(&pmap32_ops);
+	pmapops = &pmap32_ops;
 }
 
 static inline void
 pmap_setup64(void)
 {
-	pmap_fixup_stubs(&pmap64_ops);
+	pmapops = &pmap64_ops;
 }
 
 static inline void
 pmap_setup64bridge(void)
 {
-	pmap_fixup_stubs(&pmap64bridge_ops);
+	pmapops = &pmap64bridge_ops;
 }
 #endif
 
@@ -226,17 +231,19 @@ LIST_HEAD(pvo_head, pvo_entry);
 #define	__HAVE_VM_PAGE_MD
 
 struct vm_page_md {
-	struct pvo_head mdpg_pvoh;
 	unsigned int mdpg_attrs; 
+	struct pvo_head mdpg_pvoh;
+#ifdef MODULAR
+	uintptr_t mdpg_dummy[3];
+#endif
 };
 
 #define	VM_MDPAGE_INIT(pg) do {			\
-	LIST_INIT(&(pg)->mdpage.mdpg_pvoh);	\
 	(pg)->mdpage.mdpg_attrs = 0;		\
+	LIST_INIT(&(pg)->mdpage.mdpg_pvoh);	\
 } while (/*CONSTCOND*/0)
 
 __END_DECLS
 #endif	/* _KERNEL */
-#endif	/* _LOCORE */
 
 #endif	/* _POWERPC_OEA_PMAP_H_ */

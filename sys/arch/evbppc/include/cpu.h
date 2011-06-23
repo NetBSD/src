@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4.110.1 2011/06/23 14:19:09 cherry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,26 +35,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHINE_CPU_H_
-#define	_MACHINE_CPU_H_
+#ifndef	_EVBPPC_CPU_H_
+#define	_EVBPPC_CPU_H_
 
+#if defined(_KERNEL) && !defined(_MODULE)
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
 #include "opt_multiprocessor.h"
 #endif
 
 #ifdef PPC_IBM4XX
-#include <powerpc/ibm4xx/cpu.h>
-#ifdef _KERNEL
 extern int fake_mapiodev;
 #endif
-#else
+
 #ifdef MULTIPROCESSOR
 #define CPU_MAXNUM 2
 #else
 #define CPU_MAXNUM 1
 #endif
-#include <powerpc/cpu.h>
-#endif
 
-#endif	/* _MACHINE_CPU_H_ */
+#endif	/* _KERNEL && !_MODULE */
+
+#include <powerpc/cpu.h>
+
+#if defined(_KERNEL)
+extern char module_machine_booke[];
+extern char module_machine_ibm4xx[];
+#endif	/* _KERNEL */
+
+#endif	/* _EVBPPC_CPU_H_ */

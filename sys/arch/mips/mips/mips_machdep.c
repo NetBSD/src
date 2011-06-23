@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.240 2011/04/29 22:04:42 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.240.2.1 2011/06/23 14:19:23 cherry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.240 2011/04/29 22:04:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.240.2.1 2011/06/23 14:19:23 cherry Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -150,6 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.240 2011/04/29 22:04:42 matt Exp 
 #include <uvm/uvm.h>
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <mips/pcb.h>
 #include <mips/cache.h>
@@ -1451,7 +1452,6 @@ void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
-	struct pcb * const pcb = lwp_getpcb(l);
 	struct proc * const p = l->l_proc;
 
 	memset(tf, 0, sizeof(struct trapframe));
@@ -1498,8 +1498,6 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_regs[_R_A2] = 0;
 	tf->tf_regs[_R_A3] = p->p_psstrp;
 
-	fpu_discard();
-	memset(&pcb->pcb_fpregs, 0, sizeof(struct fpreg));
 	l->l_md.md_ss_addr = 0;
 }
 
@@ -2204,7 +2202,68 @@ std_splsw_test(void)
 	KASSERT(status == MIPS_INT_MASK);
 	KASSERT(ci->ci_cpl == IPL_NONE);
 }
+
 #endif /* PARANOIA */
+
+bool
+mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
+{
+#ifdef _LP64
+	if (MIPS_XKSEG_P(pa)) {
+		*vap = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
+		return true;
+	}
+#endif
+	if (MIPS_KSEG0_P(pa)) {
+		*vap = MIPS_PHYS_TO_KSEG0(pa);
+		return true;
+	}
+	return false;
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return (pa < ctob(physmem)) ? 0 : EFAULT;
+}
+
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+	const vaddr_t v = (vaddr_t)ptr;
+
+#ifdef _LP64
+	if (v < MIPS_XKPHYS_START) {
+		return EFAULT;
+	}
+	if (MIPS_XKPHYS_P(v) && v > MIPS_PHYS_TO_XKPHYS_CACHED(mips_avail_end +
+	    mips_round_page(MSGBUFSIZE))) {
+		return EFAULT;
+	}
+	if (MIPS_XKSEG_P(v) && v < MIPS_KSEG0_START) {
+		*handled = true;
+		return 0;
+	}
+	if (MIPS_KSEG1_P(v) || MIPS_KSEG2_P(v)) {
+		return EFAULT;
+	}
+#else
+	if (v < MIPS_KSEG0_START) {
+		return EFAULT;
+	}
+	if (v < MIPS_PHYS_TO_KSEG0(mips_avail_end +
+	    mips_round_page(MSGBUFSIZE))) {
+		*handled = true;
+		return 0;
+	}
+	if (v < MIPS_KSEG2_START) {
+		return EFAULT;
+	}
+#endif
+	*handled = false;
+	return 0;
+}
 
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 static void

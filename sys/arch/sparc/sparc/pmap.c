@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.341 2011/02/15 09:56:32 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.341.2.1 2011/06/23 14:19:41 cherry Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.341 2011/02/15 09:56:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.341.2.1 2011/06/23 14:19:41 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -350,7 +350,6 @@ int	ncontext;			/* sizeof ctx_freelist */
 void	ctx_alloc(struct pmap *);
 void	ctx_free(struct pmap *);
 
-void *	vmmap;			/* one reserved MI vpage for /dev/mem */
 /*void *	vdumppages;	-* 32KB worth of reserved dump pages */
 
 smeg_t		tregion;	/* [4/3mmu] Region for temporary mappings */
@@ -3223,7 +3222,6 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 	i = p;
 	cpuinfo.vpage[0] = (void *)p, p += NBPG;
 	cpuinfo.vpage[1] = (void *)p, p += NBPG;
-	vmmap = (void *)p, p += NBPG;
 	p = (vaddr_t)reserve_dumppages((void *)p);
 
 	virtual_avail = p;
@@ -3735,7 +3733,6 @@ pmap_bootstrap4m(void *top)
 	q = p;
 	cpuinfo.vpage[0] = (void *)p, p += NBPG;
 	cpuinfo.vpage[1] = (void *)p, p += NBPG;
-	vmmap = (void *)p, p += NBPG;
 	p = (vaddr_t)reserve_dumppages((void *)p);
 
 	/* Find PTE locations of vpage[] to optimize zero_fill() et.al. */
@@ -3862,7 +3859,6 @@ pmap_bootstrap4m(void *top)
 	/*
 	 * Setup the cpus[] array and the ci_self links.
 	 */
-	prom_printf("setting cpus self reference\n");
 	for (i = 0; i < sparc_ncpus; i++) {
 		sva = (vaddr_t) (cpuinfo_data + (cpuinfo_len * i));
 		cpuinfo_va = sva +
@@ -3879,8 +3875,6 @@ pmap_bootstrap4m(void *top)
 				paddr_t pa =
 				    PMAP_BOOTSTRAP_VA2PA(CPUINFO_VA + off);
 
-				prom_printf("going to pmap_kenter_pa"
-					    "(va=%p, pa=%p)\n", va, pa);
 				pmap_kremove(va, NBPG);
 				pmap_kenter_pa(va, pa,
 					       VM_PROT_READ | VM_PROT_WRITE, 0);
@@ -3891,7 +3885,6 @@ pmap_bootstrap4m(void *top)
 
 		cpus[i] = (struct cpu_info *)cpuinfo_va;
 		cpus[i]->ci_self = cpus[i];
-		prom_printf("set cpu%d ci_self address: %p\n", i, cpus[i]);
 
 		/* Unmap and prepare to return unused pages */
 		if (cpuinfo_va != sva) {
@@ -3923,8 +3916,6 @@ pmap_bootstrap4m(void *top)
 		panic("cpuinfo inconsistent");
 	}
 #endif
-
-	prom_printf("pmap_bootstrap4m done\n");
 }
 
 static u_long prom_ctxreg;

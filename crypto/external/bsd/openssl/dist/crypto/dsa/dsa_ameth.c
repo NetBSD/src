@@ -209,7 +209,7 @@ static int dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 	if (*p == (V_ASN1_SEQUENCE|V_ASN1_CONSTRUCTED))
 		{
 		ASN1_TYPE *t1, *t2;
-	    	if(!(ndsa = d2i_ASN1_SEQUENCE_ANY(NULL, &p, pklen)));
+	    	if(!(ndsa = d2i_ASN1_SEQUENCE_ANY(NULL, &p, pklen)))
 			goto decerr;
 		if (sk_ASN1_TYPE_num(ndsa) != 2)
 			goto decerr;
@@ -237,8 +237,16 @@ static int dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 		}
 	else
 		{
+		const unsigned char *q = p;
 		if (!(privkey=d2i_ASN1_INTEGER(NULL, &p, pklen)))
 			goto decerr;
+		if (privkey->type == V_ASN1_NEG_INTEGER)
+			{
+			p8->broken = PKCS8_NEG_PRIVKEY;
+			ASN1_INTEGER_free(privkey);
+			if (!(privkey=d2i_ASN1_UINTEGER(NULL, &q, pklen)))
+				goto decerr;
+			}
 		if (ptype != V_ASN1_SEQUENCE)
 			goto decerr;
 		}

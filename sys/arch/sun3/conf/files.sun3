@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.78 2008/02/20 21:43:35 drochner Exp $
+#	$NetBSD: files.sun3,v 1.78.42.1 2011/06/23 14:19:44 cherry Exp $
 
 #
 # sun3-specific configuration info
@@ -17,7 +17,7 @@ file arch/sun3/sun3/dvma.c			_sun3_
 file arch/sun3/sun3/enable.c			_sun3_
 file arch/sun3/sun3/locore2.c			_sun3_
 file arch/sun3/sun3/machdep.c			_sun3_
-file arch/sun3/sun3/mem.c			_sun3_
+file arch/sun3/sun3/mm_md.c			_sun3_
 file arch/sun3/sun3/pmap.c			_sun3_
 
 # Standard stuff (Sun3X-specific)
@@ -26,7 +26,7 @@ file arch/sun3/sun3x/dvma.c			_sun3x_
 file arch/sun3/sun3x/enable.c			_sun3x_
 file arch/sun3/sun3x/locore2.c			_sun3x_
 file arch/sun3/sun3x/machdep.c			_sun3x_
-file arch/sun3/sun3x/mem.c			_sun3x_
+file arch/sun3/sun3x/mm_md.c			_sun3x_
 file arch/sun3/sun3x/pmap.c			_sun3x_
 
 # Standard stuff (common to Sun3 and Sun3X)

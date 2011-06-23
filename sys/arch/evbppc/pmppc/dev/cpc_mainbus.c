@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc_mainbus.c,v 1.3 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: cpc_mainbus.c,v 1.3.32.1 2011/06/23 14:19:10 cherry Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpc_mainbus.c,v 1.3 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpc_mainbus.c,v 1.3.32.1 2011/06/23 14:19:10 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -55,18 +55,18 @@ __KERNEL_RCSID(0, "$NetBSD: cpc_mainbus.c,v 1.3 2008/04/28 20:23:17 martin Exp $
 struct genppc_pci_chipset *genppc_pct;
 
 void
-cpc_attach(struct device *self, pci_chipset_tag_t pc, bus_space_tag_t mem,
+cpc_attach(device_t self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 	   bus_space_tag_t pciio, bus_dma_tag_t tag, int attachpci,
 	   uint freq);
 
-static int	cpc_mainbus_match(struct device *, struct cfdata *, void *);
-static void	cpc_mainbus_attach(struct device *, struct device *, void *);
+static int	cpc_mainbus_match(device_t, cfdata_t, void *);
+static void	cpc_mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cpc_mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(cpc_mainbus, 0,
     cpc_mainbus_match, cpc_mainbus_attach, NULL, NULL);
 
 int
-cpc_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+cpc_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
 
@@ -74,7 +74,7 @@ cpc_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-cpc_mainbus_attach(struct device *parent, struct device *self, void *aux)
+cpc_mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct genppc_pci_chipset_businfo *pbi;
 
@@ -94,5 +94,5 @@ cpc_mainbus_attach(struct device *parent, struct device *self, void *aux)
 		   a_config.a_bus_freq);
 
 	if (!a_config.a_is_monarch)
-		printf("%s: not Monarch, pci not attached\n", self->dv_xname);
+		aprint_error_dev(self, "not Monarch, pci not attached\n");
 }

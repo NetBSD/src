@@ -179,6 +179,31 @@ static const SSL_METHOD *ssl3_get_server_method(int ver)
 		return(NULL);
 	}
 
+#ifndef OPENSSL_NO_SRP
+static int SSL_check_srp_ext_ClientHello(SSL *s, int *ad)
+	{
+	int ret = SSL_ERROR_NONE;
+
+	*ad = SSL_AD_UNRECOGNIZED_NAME;
+
+	if ((s->s3->tmp.new_cipher->algorithm_mkey & SSL_kSRP) &&
+	    (s->srp_ctx.TLS_ext_srp_username_callback != NULL))
+		{
+		if(s->srp_ctx.login == NULL)
+			{
+			/* There isn't any srp login extension !!! */
+			ret = SSL3_AL_WARNING;
+			*ad = SSL_AD_MISSING_SRP_USERNAME;
+			}
+		else
+			{
+			ret = SSL_srp_server_param_with_username(s,ad);
+			}
+		}
+	return ret;
+	}
+#endif
+
 IMPLEMENT_ssl3_meth_func(SSLv3_server_method,
 			ssl3_accept,
 			ssl_undefined_function,
@@ -189,9 +214,12 @@ int ssl3_accept(SSL *s)
 	BUF_MEM *buf;
 	unsigned long alg_k,Time=(unsigned long)time(NULL);
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
-	long num1;
 	int ret= -1;
 	int new_state,state,skip=0;
+#ifndef OPENSSL_NO_SRP
+	int srp_no_username=0;
+	int extension_error,al;
+#endif
 
 	RAND_add(&Time,sizeof(Time),0);
 	ERR_clear_error();
@@ -219,7 +247,7 @@ int ssl3_accept(SSL *s)
 		switch (s->state)
 			{
 		case SSL_ST_RENEGOTIATE:
-			s->new_session=1;
+			s->renegotiate=1;
 			/* s->state=SSL_ST_ACCEPT; */
 
 		case SSL_ST_BEFORE:
@@ -271,6 +299,18 @@ int ssl3_accept(SSL *s)
 				s->state=SSL3_ST_SR_CLNT_HELLO_A;
 				s->ctx->stats.sess_accept++;
 				}
+			else if (!s->s3->send_connection_binding &&
+				!(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
+				{
+				/* Server attempting to renegotiate with
+				 * client that doesn't support secure
+				 * renegotiation.
+				 */
+				SSLerr(SSL_F_SSL3_ACCEPT, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_HANDSHAKE_FAILURE);
+				ret = -1;
+				goto end;
+				}
 			else
 				{
 				/* s->state == SSL_ST_RENEGOTIATE,
@@ -300,12 +340,36 @@ int ssl3_accept(SSL *s)
 		case SSL3_ST_SR_CLNT_HELLO_A:
 		case SSL3_ST_SR_CLNT_HELLO_B:
 		case SSL3_ST_SR_CLNT_HELLO_C:
+#ifndef OPENSSL_NO_SRP
+		case SSL3_ST_SR_CLNT_HELLO_SRP_USERNAME:
+#endif
 
 			s->shutdown=0;
 			ret=ssl3_get_client_hello(s);
 			if (ret <= 0) goto end;
+#ifndef OPENSSL_NO_SRP
+			extension_error = 0;
+			if ((al = SSL_check_srp_ext_ClientHello(s,&extension_error)) != SSL_ERROR_NONE)
+				{
+				ssl3_send_alert(s,al,extension_error);
+				if (extension_error == SSL_AD_MISSING_SRP_USERNAME)
+					{
+					if (srp_no_username) goto end;
+					ERR_clear_error();
+					srp_no_username = 1;
+					s->state=SSL3_ST_SR_CLNT_HELLO_SRP_USERNAME;
+					if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
+					if ((ret=BIO_flush(s->wbio)) <= 0) goto end;
+					s->init_num=0;
+					break;
+					}
+				ret = -1;
+				SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_CLIENTHELLO_TLSEXT);
+				goto end;
+				}
+#endif
 			
-			s->new_session = 2;
+			s->renegotiate = 2;
 			s->state=SSL3_ST_SW_SRVR_HELLO_A;
 			s->init_num=0;
 			break;
@@ -334,7 +398,7 @@ int ssl3_accept(SSL *s)
 		case SSL3_ST_SW_CERT_A:
 		case SSL3_ST_SW_CERT_B:
 			/* Check if it is anon DH or anon ECDH, */
-			/* normal PSK or KRB5 */
+			/* normal PSK or KRB5 or SRP */
 			if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)
 				&& !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK)
 				&& !(s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5))
@@ -399,6 +463,10 @@ int ssl3_accept(SSL *s)
 #ifndef OPENSSL_NO_PSK
 			    || ((alg_k & SSL_kPSK) && s->ctx->psk_identity_hint)
 #endif
+#ifndef OPENSSL_NO_SRP
+			    /* SRP: send ServerKeyExchange */
+			    || (alg_k & SSL_kSRP)
+#endif
 			    || (alg_k & (SSL_kDHr|SSL_kDHd|SSL_kEDH))
 			    || (alg_k & SSL_kEECDH)
 			    || ((alg_k & SSL_kRSA)
@@ -445,6 +513,9 @@ int ssl3_accept(SSL *s)
 				skip=1;
 				s->s3->tmp.cert_request=0;
 				s->state=SSL3_ST_SW_SRVR_DONE_A;
+				if (s->s3->handshake_buffer)
+					if (!ssl3_digest_cached_records(s))
+						return -1;
 				}
 			else
 				{
@@ -471,15 +542,24 @@ int ssl3_accept(SSL *s)
 			break;
 		
 		case SSL3_ST_SW_FLUSH:
-			/* number of bytes to be flushed */
-			num1=BIO_ctrl(s->wbio,BIO_CTRL_WPENDING,0,NULL);
-			if (num1 > 0)
+
+			/* This code originally checked to see if
+			 * any data was pending using BIO_CTRL_INFO
+			 * and then flushed. This caused problems
+			 * as documented in PR#1939. The proposed
+			 * fix doesn't completely resolve this issue
+			 * as buggy implementations of BIO_CTRL_PENDING
+			 * still exist. So instead we just flush
+			 * unconditionally.
+			 */
+
+			s->rwstate=SSL_WRITING;
+			if (BIO_flush(s->wbio) <= 0)
 				{
-				s->rwstate=SSL_WRITING;
-				num1=BIO_flush(s->wbio);
-				if (num1 <= 0) { ret= -1; goto end; }
-				s->rwstate=SSL_NOTHING;
+				ret= -1;
+				goto end;
 				}
+			s->rwstate=SSL_NOTHING;
 
 			s->state=s->s3->tmp.next_state;
 			break;
@@ -520,6 +600,24 @@ int ssl3_accept(SSL *s)
 				 */
 				s->state=SSL3_ST_SR_FINISHED_A;
 				s->init_num = 0;
+				}
+			else if (TLS1_get_version(s) >= TLS1_2_VERSION)
+				{
+				s->state=SSL3_ST_SR_CERT_VRFY_A;
+				s->init_num=0;
+				if (!s->session->peer)
+					break;
+				/* For TLS v1.2 freeze the handshake buffer
+				 * at this point and digest cached records.
+				 */
+				if (!s->s3->handshake_buffer)
+					{
+					SSLerr(SSL_F_SSL3_ACCEPT,ERR_R_INTERNAL_ERROR);
+					return -1;
+					}
+				s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
+				if (!ssl3_digest_cached_records(s))
+					return -1;
 				}
 			else
 				{
@@ -655,11 +753,12 @@ int ssl3_accept(SSL *s)
 
 			s->init_num=0;
 
-			if (s->new_session == 2) /* skipped if we just sent a HelloRequest */
+			if (s->renegotiate == 2) /* skipped if we just sent a HelloRequest */
 				{
 				/* actually not necessarily a 'new' session unless
 				 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is set */
 				
+				s->renegotiate=0;
 				s->new_session=0;
 				
 				ssl_update_cache(s,SSL_SESS_CACHE_SERVER);
@@ -792,7 +891,11 @@ int ssl3_get_client_hello(SSL *s)
 	 * If we are SSLv3, we will respond with SSLv3, even if prompted with
 	 * TLSv1.
 	 */
-	if (s->state == SSL3_ST_SR_CLNT_HELLO_A)
+	if (s->state == SSL3_ST_SR_CLNT_HELLO_A
+#ifndef OPENSSL_NO_SRP
+		|| (s->state == SSL3_ST_SR_CLNT_HELLO_SRP_USERNAME)
+#endif
+		)
 		{
 		s->state=SSL3_ST_SR_CLNT_HELLO_B;
 		}
@@ -1103,7 +1206,50 @@ int ssl3_get_client_hello(SSL *s)
 	 * algorithms from the client, starting at q. */
 	s->s3->tmp.new_compression=NULL;
 #ifndef OPENSSL_NO_COMP
-	if (!(s->options & SSL_OP_NO_COMPRESSION) && s->ctx->comp_methods)
+	/* This only happens if we have a cache hit */
+	if (s->session->compress_meth != 0)
+		{
+		int m, comp_id = s->session->compress_meth;
+		/* Perform sanity checks on resumed compression algorithm */
+		/* Can't disable compression */
+		if (s->options & SSL_OP_NO_COMPRESSION)
+			{
+			al=SSL_AD_INTERNAL_ERROR;
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_INCONSISTENT_COMPRESSION);
+			goto f_err;
+			}
+		/* Look for resumed compression method */
+		for (m = 0; m < sk_SSL_COMP_num(s->ctx->comp_methods); m++)
+			{
+			comp=sk_SSL_COMP_value(s->ctx->comp_methods,m);
+			if (comp_id == comp->id)
+				{
+				s->s3->tmp.new_compression=comp;
+				break;
+				}
+			}
+		if (s->s3->tmp.new_compression == NULL)
+			{
+			al=SSL_AD_INTERNAL_ERROR;
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_INVALID_COMPRESSION_ALGORITHM);
+			goto f_err;
+			}
+		/* Look for resumed method in compression list */
+		for (m = 0; m < i; m++)
+			{
+			if (q[m] == comp_id)
+				break;
+			}
+		if (m >= i)
+			{
+			al=SSL_AD_ILLEGAL_PARAMETER;
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_REQUIRED_COMPRESSSION_ALGORITHM_MISSING);
+			goto f_err;
+			}
+		}
+	else if (s->hit)
+		comp = NULL;
+	else if (!(s->options & SSL_OP_NO_COMPRESSION) && s->ctx->comp_methods)
 		{ /* See if we have a match */
 		int m,nn,o,v,done=0;
 
@@ -1126,6 +1272,16 @@ int ssl3_get_client_hello(SSL *s)
 			s->s3->tmp.new_compression=comp;
 		else
 			comp=NULL;
+		}
+#else
+	/* If compression is disabled we'd better not try to resume a session
+	 * using compression.
+	 */
+	if (s->session->compress_meth != 0)
+		{
+		al=SSL_AD_INTERNAL_ERROR;
+		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_INCONSISTENT_COMPRESSION);
+		goto f_err;
 		}
 #endif
 
@@ -1191,8 +1347,11 @@ int ssl3_get_client_hello(SSL *s)
 		s->s3->tmp.new_cipher=s->session->cipher;
 		}
 
-	if (!ssl3_digest_cached_records(s))
-		goto f_err;
+	if (TLS1_get_version(s) < TLS1_2_VERSION || !(s->verify_mode & SSL_VERIFY_PEER))
+		{
+		if (!ssl3_digest_cached_records(s))
+			goto f_err;
+		}
 	
 	/* we now have the following setup. 
 	 * client_random
@@ -1361,6 +1520,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 	BN_CTX *bn_ctx = NULL; 
 #endif
 	EVP_PKEY *pkey;
+	const EVP_MD *md = NULL;
 	unsigned char *p,*d;
 	int al,i;
 	unsigned long type;
@@ -1604,21 +1764,44 @@ int ssl3_send_server_key_exchange(SSL *s)
 				}
 			else
 #endif /* !OPENSSL_NO_PSK */
+#ifndef OPENSSL_NO_SRP
+		if (type & SSL_kSRP)
+			{
+			if ((s->srp_ctx.N == NULL) ||
+				(s->srp_ctx.g == NULL) ||
+				(s->srp_ctx.s == NULL) ||
+				(s->srp_ctx.B == NULL))
+				{
+				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,SSL_R_MISSING_SRP_PARAM);
+				goto err;
+				}
+			r[0]=s->srp_ctx.N;
+			r[1]=s->srp_ctx.g;
+			r[2]=s->srp_ctx.s;
+			r[3]=s->srp_ctx.B;
+			}
+		else 
+#endif
 			{
 			al=SSL_AD_HANDSHAKE_FAILURE;
 			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE);
 			goto f_err;
 			}
-		for (i=0; r[i] != NULL; i++)
+		for (i=0; r[i] != NULL && i<4; i++)
 			{
 			nr[i]=BN_num_bytes(r[i]);
+#ifndef OPENSSL_NO_SRP
+			if ((i == 2) && (type & SSL_kSRP))
+				n+=1+nr[i];
+			else
+#endif
 			n+=2+nr[i];
 			}
 
 		if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)
 			&& !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK))
 			{
-			if ((pkey=ssl_get_sign_pkey(s,s->s3->tmp.new_cipher))
+			if ((pkey=ssl_get_sign_pkey(s,s->s3->tmp.new_cipher,&md))
 				== NULL)
 				{
 				al=SSL_AD_DECODE_ERROR;
@@ -1640,8 +1823,16 @@ int ssl3_send_server_key_exchange(SSL *s)
 		d=(unsigned char *)s->init_buf->data;
 		p= &(d[4]);
 
-		for (i=0; r[i] != NULL; i++)
+		for (i=0; r[i] != NULL && i<4; i++)
 			{
+#ifndef OPENSSL_NO_SRP
+			if ((i == 2) && (type & SSL_kSRP))
+				{
+				*p = nr[i];
+				p++;
+				}
+			else
+#endif
 			s2n(nr[i],p);
 			BN_bn2bin(r[i],p);
 			p+=nr[i];
@@ -1668,6 +1859,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 			    (unsigned char *)encodedPoint, 
 			    encodedlen);
 			OPENSSL_free(encodedPoint);
+			encodedPoint = NULL;
 			p += encodedlen;
 			}
 #endif
@@ -1688,7 +1880,8 @@ int ssl3_send_server_key_exchange(SSL *s)
 			/* n is the length of the params, they start at &(d[4])
 			 * and p points to the space at the end. */
 #ifndef OPENSSL_NO_RSA
-			if (pkey->type == EVP_PKEY_RSA)
+			if (pkey->type == EVP_PKEY_RSA
+					&& TLS1_get_version(s) < TLS1_2_VERSION)
 				{
 				q=md_buf;
 				j=0;
@@ -1696,6 +1889,8 @@ int ssl3_send_server_key_exchange(SSL *s)
 					{
 					EVP_DigestInit_ex(&md_ctx,(num == 2)
 						?s->ctx->md5:s->ctx->sha1, NULL);
+					EVP_MD_CTX_set_flags(&md_ctx,
+						EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 					EVP_DigestUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
 					EVP_DigestUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
 					EVP_DigestUpdate(&md_ctx,&(d[4]),n);
@@ -1715,44 +1910,41 @@ int ssl3_send_server_key_exchange(SSL *s)
 				}
 			else
 #endif
-#if !defined(OPENSSL_NO_DSA)
-				if (pkey->type == EVP_PKEY_DSA)
+			if (md)
 				{
-				/* lets do DSS */
-				EVP_SignInit_ex(&md_ctx,EVP_dss1(), NULL);
+				/* For TLS1.2 and later send signature
+				 * algorithm */
+				if (TLS1_get_version(s) >= TLS1_2_VERSION)
+					{
+					if (!tls12_get_sigandhash(p, pkey, md))
+						{
+						/* Should never happen */
+						al=SSL_AD_INTERNAL_ERROR;
+						SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+						goto f_err;
+						}
+					p+=2;
+					}
+#ifdef SSL_DEBUG
+				fprintf(stderr, "Using hash %s\n",
+							EVP_MD_name(md));
+#endif
+				EVP_SignInit_ex(&md_ctx, md, NULL);
 				EVP_SignUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
 				EVP_SignUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
 				EVP_SignUpdate(&md_ctx,&(d[4]),n);
 				if (!EVP_SignFinal(&md_ctx,&(p[2]),
 					(unsigned int *)&i,pkey))
 					{
-					SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_DSA);
+					SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_EVP);
 					goto err;
 					}
 				s2n(i,p);
 				n+=i+2;
+				if (TLS1_get_version(s) >= TLS1_2_VERSION)
+					n+= 2;
 				}
 			else
-#endif
-#if !defined(OPENSSL_NO_ECDSA)
-				if (pkey->type == EVP_PKEY_EC)
-				{
-				/* let's do ECDSA */
-				EVP_SignInit_ex(&md_ctx,EVP_ecdsa(), NULL);
-				EVP_SignUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
-				EVP_SignUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
-				EVP_SignUpdate(&md_ctx,&(d[4]),n);
-				if (!EVP_SignFinal(&md_ctx,&(p[2]),
-					(unsigned int *)&i,pkey))
-					{
-					SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_ECDSA);
-					goto err;
-					}
-				s2n(i,p);
-				n+=i+2;
-				}
-			else
-#endif
 				{
 				/* Is this error check actually needed? */
 				al=SSL_AD_HANDSHAKE_FAILURE;
@@ -1804,6 +1996,14 @@ int ssl3_send_certificate_request(SSL *s)
 		d[0]=n;
 		p+=n;
 		n++;
+
+		if (TLS1_get_version(s) >= TLS1_2_VERSION)
+			{
+			nl = tls12_get_req_sig_algs(s, p + 2);
+			s2n(nl, p);
+			p += nl + 2;
+			n += nl + 2;
+			}
 
 		off=n;
 		p+=2;
@@ -2228,7 +2428,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 				SSL_R_DATA_LENGTH_TOO_LONG);
 			goto err;
 			}
-		if (!((p[0] == (s->client_version>>8)) && (p[1] == (s->client_version & 0xff))))
+		if (!((pms[0] == (s->client_version>>8)) && (pms[1] == (s->client_version & 0xff))))
 		    {
 		    /* The premaster secret must contain the same version number as the
 		     * ClientHello to detect version rollback attacks (strangely, the
@@ -2238,8 +2438,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 		     * If SSL_OP_TLS_ROLLBACK_BUG is set, tolerate such clients. 
 		     * (Perhaps we should have a separate BUG value for the Kerberos cipher)
 		     */
-		    if (!((s->options & SSL_OP_TLS_ROLLBACK_BUG) &&
-			   (p[0] == (s->version>>8)) && (p[1] == (s->version & 0xff))))
+		    if (!(s->options & SSL_OP_TLS_ROLLBACK_BUG))
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
 			       SSL_AD_DECODE_ERROR);
@@ -2518,16 +2717,61 @@ int ssl3_get_client_key_exchange(SSL *s)
 			}
 		else
 #endif
+#ifndef OPENSSL_NO_SRP
+		if (alg_k & SSL_kSRP)
+			{
+			int param_len;
+
+			n2s(p,i);
+			param_len=i+2;
+			if (param_len > n)
+				{
+				al=SSL_AD_DECODE_ERROR;
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_BAD_SRP_A_LENGTH);
+				goto f_err;
+				}
+			if (!(s->srp_ctx.A=BN_bin2bn(p,i,NULL)))
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,ERR_R_BN_LIB);
+				goto err;
+				}
+			if (s->session->srp_username != NULL)
+				OPENSSL_free(s->session->srp_username);
+			s->session->srp_username = BUF_strdup(s->srp_ctx.login);
+			if (s->session->srp_username == NULL)
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+					ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
+
+			if ((s->session->master_key_length = SRP_generate_server_master_secret(s,s->session->master_key))<0)
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+				goto err;
+				}
+
+			p+=i;
+			}
+		else
+#endif	/* OPENSSL_NO_SRP */
 		if (alg_k & SSL_kGOST) 
 			{
 			int ret = 0;
 			EVP_PKEY_CTX *pkey_ctx;
-			EVP_PKEY *client_pub_pkey = NULL;
+			EVP_PKEY *client_pub_pkey = NULL, *pk = NULL;
 			unsigned char premaster_secret[32], *start;
-			size_t outlen=32, inlen;			
+			size_t outlen=32, inlen;
+			unsigned long alg_a;
 
 			/* Get our certificate private key*/
-			pkey_ctx = EVP_PKEY_CTX_new(s->cert->key->privatekey,NULL);	
+			alg_a = s->s3->tmp.new_cipher->algorithm_auth;
+			if (alg_a & SSL_aGOST94)
+				pk = s->cert->pkeys[SSL_PKEY_GOST94].privatekey;
+			else if (alg_a & SSL_aGOST01)
+				pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
+
+			pkey_ctx = EVP_PKEY_CTX_new(pk,NULL);
 			EVP_PKEY_decrypt_init(pkey_ctx);
 			/* If client certificate is present and is of the same type, maybe
 			 * use it for key exchange.  Don't mind errors from
@@ -2594,7 +2838,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 	return(1);
 f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_ECDH)
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_ECDH) || defined(OPENSSL_NO_SRP)
 err:
 #endif
 #ifndef OPENSSL_NO_ECDH
@@ -2615,6 +2859,9 @@ int ssl3_get_cert_verify(SSL *s)
 	long n;
 	int type=0,i,j;
 	X509 *peer;
+	const EVP_MD *md = NULL;
+	EVP_MD_CTX mctx;
+	EVP_MD_CTX_init(&mctx);
 
 	n=s->method->ssl_get_message(s,
 		SSL3_ST_SR_CERT_VRFY_A,
@@ -2683,6 +2930,36 @@ int ssl3_get_cert_verify(SSL *s)
 		} 
 	else 
 		{	
+		if (TLS1_get_version(s) >= TLS1_2_VERSION)
+			{
+			int sigalg = tls12_get_sigid(pkey);
+			/* Should never happen */
+			if (sigalg == -1)
+				{
+				SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,ERR_R_INTERNAL_ERROR);
+				al=SSL_AD_INTERNAL_ERROR;
+				goto f_err;
+				}
+			/* Check key type is consistent with signature */
+			if (sigalg != (int)p[1])
+				{
+				SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_WRONG_SIGNATURE_TYPE);
+				al=SSL_AD_DECODE_ERROR;
+				goto f_err;
+				}
+			md = tls12_get_hash(p[0]);
+			if (md == NULL)
+				{
+				SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_UNKNOWN_DIGEST);
+				al=SSL_AD_DECODE_ERROR;
+				goto f_err;
+				}
+#ifdef SSL_DEBUG
+fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
+#endif
+			p += 2;
+			n -= 2;
+			}
 		n2s(p,i);
 		n-=2;
 		if (i > n)
@@ -2700,6 +2977,37 @@ int ssl3_get_cert_verify(SSL *s)
 		goto f_err;
 		}
 
+	if (TLS1_get_version(s) >= TLS1_2_VERSION)
+		{
+		long hdatalen = 0;
+		void *hdata;
+		hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
+		if (hdatalen <= 0)
+			{
+			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+			al=SSL_AD_INTERNAL_ERROR;
+			goto f_err;
+			}
+#ifdef SSL_DEBUG
+		fprintf(stderr, "Using TLS 1.2 with client verify alg %s\n",
+							EVP_MD_name(md));
+#endif
+		if (!EVP_VerifyInit_ex(&mctx, md, NULL)
+			|| !EVP_VerifyUpdate(&mctx, hdata, hdatalen))
+			{
+			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, ERR_R_EVP_LIB);
+			al=SSL_AD_INTERNAL_ERROR;
+			goto f_err;
+			}
+
+		if (EVP_VerifyFinal(&mctx, p , i, pkey) <= 0)
+			{
+			al=SSL_AD_DECRYPT_ERROR;
+			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_BAD_SIGNATURE);
+			goto f_err;
+			}
+		}
+	else
 #ifndef OPENSSL_NO_RSA 
 	if (pkey->type == EVP_PKEY_RSA)
 		{
@@ -2790,6 +3098,13 @@ f_err:
 		ssl3_send_alert(s,SSL3_AL_FATAL,al);
 		}
 end:
+	if (s->s3->handshake_buffer)
+		{
+		BIO_free(s->s3->handshake_buffer);
+		s->s3->handshake_buffer = NULL;
+		s->s3->flags &= ~TLS1_FLAGS_KEEP_HANDSHAKE;
+		}
+	EVP_MD_CTX_cleanup(&mctx);
 	EVP_PKEY_free(pkey);
 	return(ret);
 	}
@@ -2900,6 +3215,12 @@ int ssl3_get_client_certificate(SSL *s)
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
 			al=SSL_AD_HANDSHAKE_FAILURE;
+			goto f_err;
+			}
+		/* No client certificate so digest cached records */
+		if (s->s3->handshake_buffer && !ssl3_digest_cached_records(s))
+			{
+			al=SSL_AD_INTERNAL_ERROR;
 			goto f_err;
 			}
 		}

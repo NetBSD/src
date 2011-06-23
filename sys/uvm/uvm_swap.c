@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.155 2011/04/27 00:35:52 rmind Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.155.2.1 2011/06/23 14:20:37 cherry Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.155 2011/04/27 00:35:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.155.2.1 2011/06/23 14:20:37 cherry Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1179,16 +1179,16 @@ swstrategy(struct buf *bp)
 			mutex_enter(bp->b_objlock);
 			vwakeup(bp);	/* kills one 'v_numoutput' on drum */
 			mutex_exit(bp->b_objlock);
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			vp->v_numoutput++;	/* put it on swapdev */
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 		}
 
 		/*
 		 * finally plug in swapdev vnode and start I/O
 		 */
 		bp->b_vp = vp;
-		bp->b_objlock = &vp->v_interlock;
+		bp->b_objlock = vp->v_interlock;
 		VOP_STRATEGY(vp, bp);
 		return;
 
@@ -1344,7 +1344,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		nbp->vb_buf.b_rawblkno = nbp->vb_buf.b_blkno;
 		nbp->vb_buf.b_iodone   = sw_reg_biodone;
 		nbp->vb_buf.b_vp       = vp;
-		nbp->vb_buf.b_objlock  = &vp->v_interlock;
+		nbp->vb_buf.b_objlock  = vp->v_interlock;
 		if (vp->v_type == VBLK) {
 			nbp->vb_buf.b_dev = vp->v_rdev;
 		}
@@ -1416,11 +1416,11 @@ sw_reg_start(struct swapdev *sdp)
 		    "sw_reg_start:  bp %p vp %p blkno %p cnt %lx",
 		    bp, bp->b_vp, bp->b_blkno, bp->b_bcount);
 		vp = bp->b_vp;
-		KASSERT(bp->b_objlock == &vp->v_interlock);
+		KASSERT(bp->b_objlock == vp->v_interlock);
 		if ((bp->b_flags & B_READ) == 0) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			vp->v_numoutput++;
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 		}
 		VOP_STRATEGY(vp, bp);
 	}
@@ -1786,9 +1786,9 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 */
 
 	if (write) {
-		mutex_enter(&swapdev_vp->v_interlock);
+		mutex_enter(swapdev_vp->v_interlock);
 		swapdev_vp->v_numoutput++;
-		mutex_exit(&swapdev_vp->v_interlock);
+		mutex_exit(swapdev_vp->v_interlock);
 	}
 
 	/*
@@ -1835,9 +1835,9 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 */
 
 	if (write) {
-		mutex_enter(&swapdev_vp->v_interlock);
+		mutex_enter(swapdev_vp->v_interlock);
 		vwakeup(bp);
-		mutex_exit(&swapdev_vp->v_interlock);
+		mutex_exit(swapdev_vp->v_interlock);
 	}
 	putiobuf(bp);
 	UVMHIST_LOG(pdhist, "<- done (sync)  error=%d", error, 0, 0, 0);

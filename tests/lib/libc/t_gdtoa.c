@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_gdtoa.c,v 1.1 2010/12/31 04:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: t_gdtoa.c,v 1.1.4.1 2011/06/23 14:20:39 cherry Exp $");
 
 #include <atf-c.h>
 
@@ -47,7 +47,7 @@ ATF_TC(long_format);
 ATF_TC_HEAD(long_format, tc)
 {
 
-	atf_tc_set_md_var(tc, "descr", "Test printf with %1.262159f format");
+	atf_tc_set_md_var(tc, "descr", "Test printf with %%1.262159f format");
 }
 
 ATF_TC_BODY(long_format, tc)

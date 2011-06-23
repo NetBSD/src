@@ -80,10 +80,10 @@ extern "C" {
 
 struct rand_meth_st
 	{
-	int (*seed)(const void *buf, int num);
+	void (*seed)(const void *buf, int num);
 	int (*bytes)(unsigned char *buf, int num);
 	void (*cleanup)(void);
-	int (*add)(const void *buf, int num, double entropy);
+	void (*add)(const void *buf, int num, double entropy);
 	int (*pseudorand)(unsigned char *buf, int num);
 	int (*status)(void);
 	};
@@ -117,6 +117,10 @@ int RAND_poll(void);
 void RAND_screen(void);
 int RAND_event(UINT, WPARAM, LPARAM);
 
+#endif
+
+#ifdef OPENSSL_FIPS
+int RAND_init_fips(void);
 #endif
 
 /* BEGIN ERROR CODES */

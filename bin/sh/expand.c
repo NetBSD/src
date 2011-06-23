@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.83 2009/11/27 10:50:04 tsutsui Exp $	*/
+/*	$NetBSD: expand.c,v 1.83.4.1 2011/06/23 14:17:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.83 2009/11/27 10:50:04 tsutsui Exp $");
+__RCSID("$NetBSD: expand.c,v 1.83.4.1 2011/06/23 14:17:48 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: expand.c,v 1.83 2009/11/27 10:50:04 tsutsui Exp $");
 #include "parser.h"
 #include "jobs.h"
 #include "options.h"
+#include "builtins.h"
 #include "var.h"
 #include "input.h"
 #include "output.h"

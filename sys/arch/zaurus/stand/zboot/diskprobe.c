@@ -1,4 +1,4 @@
-/*	$NetBSD: diskprobe.c,v 1.1 2009/03/02 09:33:02 nonaka Exp $	*/
+/*	$NetBSD: diskprobe.c,v 1.1.16.1 2011/06/23 14:19:52 cherry Exp $	*/
 /*	$OpenBSD: diskprobe.c,v 1.3 2006/10/13 00:00:55 krw Exp $	*/
 
 /*
@@ -40,13 +40,19 @@
 #include "boot.h"
 #include "disk.h"
 #include "unixdev.h"
+#include "pathnames.h"
 #include "compat_linux.h"
+
+/* All the info on /proc/partitions */
+struct partinfo {
+	char devname[MAXDEVNAME];
+	TAILQ_ENTRY(partinfo) list;
+};
+TAILQ_HEAD(partlist_lh, partinfo);
+struct partlist_lh partlist;
 
 /* Disk spin-up wait timeout. */
 static u_int timeout = 10;
-
-/* Local Prototypes */
-static void hardprobe(char *buf, size_t bufsiz);
 
 /* List of disk devices we found/probed */
 struct disklist_lh disklist;
@@ -129,10 +135,129 @@ hardprobe(char *buf, size_t bufsiz)
 		strlcat(buf, "none...", bufsiz);
 }
 
+static void
+getpartitions(void)
+{
+	struct linux_stat sb;
+	struct partinfo *pip;
+	char *bc, *top, *next, *p, *q;
+	int fd, off, len;
+
+	fd = uopen(_PATH_PARTITIONS, LINUX_O_RDONLY);
+	if (fd == -1)
+		return;
+
+	if (ufstat(fd, &sb) < 0) {
+		uclose(fd);
+		return;
+	}
+
+	bc = alloc(sb.lst_size + 1);
+	if (bc == NULL) {
+		printf("Could not allocate memory for %s\n", _PATH_PARTITIONS);
+		uclose(fd);
+		return;
+	}
+
+	off = 0;
+	do {
+		len = uread(fd, bc + off, 1024);
+		if (len <= 0)
+			break;
+		off += len;
+	} while (len > 0);
+	bc[off] = '\0';
+
+	uclose(fd);
+
+	/* bc now contains the whole /proc/partitions */
+	for (p = bc; *p != '\0'; p = next) {
+		top = p;
+
+		/* readline */
+		for (; *p != '\0' && *p != '\r' && *p != '\n'; p++)
+			continue;
+		if (*p == '\r') {
+			*p++ = '\0';
+			if (*p == '\n')
+				*p++ = '\0';
+		} else if (*p == '\n')
+			*p++ = '\0';
+		next = p;
+
+		/*
+		 * /proc/partitions format:
+		 * major minor  #blocks  name
+		 *
+		 *   %d    %d         %d %s
+		 *
+		 * e.g.:
+		 * major minor  #blocks  name
+		 *
+		 *   22     0    7962192 hdc
+		 *   22     1      10079 hdc1
+		 *   60     0     965120 mmcda
+		 *   60     1      43312 mmcda1
+		 */
+
+		/* trailing space */
+		for (p = top; *p == ' ' || *p == '\t'; p++)
+			continue;
+
+		/* major */
+		for (; isdigit(*p); p++)
+			continue;
+		if (*p != ' ' && *p != '\t')
+			continue;	/* next line */
+		for (; *p == ' ' || *p == '\t'; p++)
+			continue;
+
+		/* minor */
+		for (; isdigit(*p); p++)
+			continue;
+		if (*p != ' ' && *p != '\t')
+			continue;	/* next line */
+		for (; *p == ' ' || *p == '\t'; p++)
+			continue;
+
+		/* #blocks */
+		for (; isdigit(*p); p++)
+			continue;
+		if (*p != ' ' && *p != '\t')
+			continue;	/* next line */
+		for (; *p == ' ' || *p == '\t'; p++)
+			continue;
+
+		/* name */
+		for (q = p; isalpha(*p) || isdigit(*p); p++)
+			continue;
+		if (*p != ' ' && *p != '\t' && *p != '\0')
+			continue;	/* next line */
+		if (isdigit(p[-1]))
+			continue;	/* next line */
+		*p = '\0';
+
+		pip = alloc(sizeof(*pip));
+		if (pip == NULL) {
+			printf("Could not allocate memory for partition\n");
+			continue;	/* next line */
+		}
+		memset(pip, 0, sizeof(*pip));
+		snprintf(pip->devname, sizeof(pip->devname), "/dev/%s", q);
+		TAILQ_INSERT_TAIL(&partlist, pip, list);
+	}
+
+	dealloc(bc, 0);
+}
+
 /* Probe for all BIOS supported disks */
 void
 diskprobe(char *buf, size_t bufsiz)
 {
+
+	/* get available disk list from /proc/partitions */
+	TAILQ_INIT(&partlist);
+	getpartitions();
 
 	/* Init stuff */
 	TAILQ_INIT(&disklist);
@@ -207,11 +332,21 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *bdi)
 {
 	static char path[PATH_MAX];
 	struct linux_stat sb;
+	struct partinfo *pip;
 
 	memset(bdi, 0, sizeof *bdi);
 	bdi->bios_number = -1;
 
 	bios_devpath(dev, -1, path);
+
+	/* Check device name in /proc/partitions */
+	for (pip = TAILQ_FIRST(&partlist); pip != NULL;
+	     pip = TAILQ_NEXT(pip, list)) {
+		if (!strcmp(path, pip->devname))
+			break;
+	}
+	if (pip == NULL)
+		return "no device node";
 
 	if (ustat(path, &sb) != 0)
 		return "no device node";

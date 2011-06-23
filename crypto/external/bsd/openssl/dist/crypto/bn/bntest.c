@@ -127,7 +127,7 @@ static unsigned char lst[]="\xC6\x4F\x43\x04\x2A\xEA\xCA\x6E\x58\x36\x80\x5B\xE8
 
 static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 
-static void message(BIO *out, char *m)
+static void message(BIO *out, const char *m)
 	{
 	fprintf(stderr, "test %s\n", m);
 	BIO_puts(out, "print \"test ");

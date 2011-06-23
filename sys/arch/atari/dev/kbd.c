@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.41 2010/04/13 11:31:11 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.41.6.1 2011/06/23 14:19:02 cherry Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.41 2010/04/13 11:31:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.41.6.1 2011/06/23 14:19:02 cherry Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -117,15 +117,15 @@ dev_type_kqfilter(kbdkqfilter);
 void	kbdintr(int);
 
 static void kbdsoft(void *);
-static void kbdattach(struct device *, struct device *, void *);
-static int  kbdmatch(struct device *, struct cfdata *, void *);
+static void kbdattach(device_t, device_t, void *);
+static int  kbdmatch(device_t, cfdata_t, void *);
 #if NITE>0
 static int  kbd_do_modifier(uint8_t);
 #endif
 static int  kbd_write_poll(const uint8_t *, int);
 static void kbd_pkg_start(struct kbd_softc *, uint8_t);
 
-CFATTACH_DECL(kbd, sizeof(struct device),
+CFATTACH_DECL_NEW(kbd, 0,
     kbdmatch, kbdattach, NULL, NULL);
 
 const struct cdevsw kbd_cdevsw = {
@@ -165,17 +165,17 @@ static struct wskbd_mapdata kbd_mapdata = {
 
 /*ARGSUSED*/
 static	int
-kbdmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+kbdmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
-	if (!strcmp((char *)auxp, "kbd"))
+	if (!strcmp((char *)aux, "kbd"))
 		return 1;
 	return 0;
 }
 
 /*ARGSUSED*/
 static void
-kbdattach(struct device *pdp, struct device *dp, void *auxp)
+kbdattach(device_t parent, device_t self, void *aux)
 {
 	int timeout;
 	const uint8_t kbd_rst[]  = { 0x80, 0x01 };
@@ -222,7 +222,7 @@ kbdattach(struct device *pdp, struct device *dp, void *auxp)
 	kbd_softc.k_sicookie = softint_establish(SOFTINT_SERIAL, kbdsoft, NULL);
 
 #if NWSKBD>0
-	if (dp != NULL) {
+	if (self != NULL) {
 		/*
 		 * Try to attach the wskbd.
 		 */
@@ -235,7 +235,7 @@ kbdattach(struct device *pdp, struct device *dp, void *auxp)
 		waa.keymap = &kbd_mapdata;
 		waa.accessops = &kbd_accessops;
 		waa.accesscookie = NULL;
-		kbd_softc.k_wskbddev = config_found(dp, &waa, wskbddevprint);
+		kbd_softc.k_wskbddev = config_found(self, &waa, wskbddevprint);
 
 		kbd_softc.k_pollingmode = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.2 2011/01/18 01:02:52 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.2.6.1 2011/06/23 14:19:28 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,13 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: trap_subr.S,v 1.2 2011/01/18 01:02:52 matt Exp $")
-
-	.globl	_C_LABEL(critintr_call)
-	.globl	_C_LABEL(extintr_call)
-	.globl	_C_LABEL(decrintr_call)
-	.globl	_C_LABEL(fitintr_call)
-	.globl	_C_LABEL(wdogintr_call)
+RCSID("$NetBSD: trap_subr.S,v 1.2.6.1 2011/06/23 14:19:28 cherry Exp $")
 
 	.globl	_C_LABEL(sctrapexit), _C_LABEL(trapexit), _C_LABEL(intrcall)
 
@@ -183,9 +177,9 @@ RCSID("$NetBSD: trap_subr.S,v 1.2 2011/01/18 01:02:52 matt Exp $")
 1:									\
 	stw	%r30, CFRAME_LR(%r1);	/* save in previous callframe */ \
 	stwu	%r31, -FRAMELEN(%r1);	/* get space for trapframe */	\
-	stw	%r0, FRAME_0(%r1);	/* save r0 */			\
-	stw	%r31, FRAME_1(%r1);	/* save (saved) r1 */		\
-	stw	%r26, FRAME_2(%r1);	/* save (saved) r2 */		\
+	stw	%r0, FRAME_R0(%r1);	/* save r0 */			\
+	stw	%r31, FRAME_R1(%r1);	/* save (saved) r1 */		\
+	stw	%r26, FRAME_R2(%r1);	/* save (saved) r2 */		\
 	save_prologue;			/* save SPRG1/ESR/DEAR */	\
 	/* At this point, r26, r29, and r31 have been saved so we */	\
 	/* can use them for LR, CTR, and SRR1.			  */	\
@@ -199,9 +193,10 @@ RCSID("$NetBSD: trap_subr.S,v 1.2 2011/01/18 01:02:52 matt Exp $")
 	addi	%r2,%r2,-4*(32-start);	/* find our save area */	\
 	lmw	%r##start,0(%r2);	/* get start-r31 */		\
 	mtsprg3	%r2;			/* save updated pointer */	\
-	stmw	%r3, FRAME_3(%r1);	/* save r2-r31 */		\
+	stmw	%r3, FRAME_R3(%r1);	/* save r2-r31 */		\
 	/* Now everything has been saved */				\
 	mr	%r31, %r0;		/* move SRR1 back to r31 */	\
+	mfsprg2	%r13;			/* put curlwp in r13 */		\
 	FRAME_SAVE_SPEFSCR;						\
 	li	%r7, exc;		/* load EXC_* */		\
 	stw	%r7, FRAME_EXC(%r1);	/* save into trapframe */	\
@@ -217,9 +212,9 @@ RCSID("$NetBSD: trap_subr.S,v 1.2 2011/01/18 01:02:52 matt Exp $")
 	mtxer	%r28;			/* restore XER */		\
 	mtcr	%r27;			/* restore CR */		\
 	mtlr	%r26;			/* restore LR */		\
-	lmw	%r2, FRAME_2(%r1);	/* restore r2-r31 */		\
-	lwz	%r0, FRAME_0(%r1);	/* restore r0 */		\
-	lwz	%r1, FRAME_1(%r1);	/* restore r1 */		\
+	lmw	%r2, FRAME_R2(%r1);	/* restore r2-r31 */		\
+	lwz	%r0, FRAME_R0(%r1);	/* restore r0 */		\
+	lwz	%r1, FRAME_R1(%r1);	/* restore r1 */		\
 	rfi				/* return from interrupt */
 
 
@@ -269,30 +264,31 @@ RCSID("$NetBSD: trap_subr.S,v 1.2 2011/01/18 01:02:52 matt Exp $")
 	get_intr_sp;			/* get kernel stack pointer */	\
 	stw	%r30, CFRAME_LR(%r1);	/* save in .. */		\
 	stwu	%r31, -FRAMELEN(%r1);	/* get space for trapframe */	\
-	stw	%r0, FRAME_0(%r1);	/* save r0 */			\
-	stw	%r31, FRAME_1(%r1);	/* save (saved) r1 */		\
-	stw	%r26, FRAME_2(%r1);	/* save (saved) r2 */		\
+	stw	%r0, FRAME_R0(%r1);	/* save r0 */			\
+	stw	%r31, FRAME_R1(%r1);	/* save (saved) r1 */		\
+	stw	%r26, FRAME_R2(%r1);	/* save (saved) r2 */		\
 	save_prologue;			/* save SPRG1 (maybe) */	\
 	mflr	%r26;			/* get LR */			\
 	mfctr	%r29;			/* get CTR */			\
 	mfcr	%r31;			/* get SRR1 */			\
 	stmw	%r26, FRAME_LR(%r1);	/* save LR CR XER CTR SRR0/1 */	\
 	FRAME_SAVE_SRR0_FOR_DDB;					\
-	stw	%r3, FRAME_3(%r1);	/* save r3 */			\
-	stw	%r4, FRAME_4(%r1);	/* save r4 */			\
-	stw	%r5, FRAME_5(%r1);	/* save r5 */			\
-	stw	%r6, FRAME_6(%r1);	/* save r6 */			\
-	stw	%r7, FRAME_7(%r1);	/* save r7 */			\
-	stw	%r8, FRAME_8(%r1);	/* save r8 */			\
-	stw	%r9, FRAME_9(%r1);	/* save r9 */			\
-	stw	%r10, FRAME_10(%r1);	/* save r10 */			\
-	stw	%r11, FRAME_11(%r1);	/* save r11 */			\
-	stw	%r12, FRAME_12(%r1);	/* save r12 */			\
-	stw	%r13, FRAME_13(%r1);	/* save r13 */			\
+	stw	%r3, FRAME_R3(%r1);	/* save r3 */			\
+	stw	%r4, FRAME_R4(%r1);	/* save r4 */			\
+	stw	%r5, FRAME_R5(%r1);	/* save r5 */			\
+	stw	%r6, FRAME_R6(%r1);	/* save r6 */			\
+	stw	%r7, FRAME_R7(%r1);	/* save r7 */			\
+	stw	%r8, FRAME_R8(%r1);	/* save r8 */			\
+	stw	%r9, FRAME_R9(%r1);	/* save r9 */			\
+	stw	%r10, FRAME_R10(%r1);	/* save r10 */			\
+	stw	%r11, FRAME_R11(%r1);	/* save r11 */			\
+	stw	%r12, FRAME_R12(%r1);	/* save r12 */			\
+	stw	%r13, FRAME_R13(%r1);	/* save r13 */			\
 	mfsprg3	%r2;			/* get save_area pointer */	\
 	addi	%r2,%r2,-4*(32-start);	/* find our save area */	\
 	lmw	%r##start,0(%r2);	/* get start-r31 */		\
 	mtsprg3	%r2;			/* save updated pointer */	\
+	mfsprg2	%r13;			/* put curlwp into r13 */	\
 	li	%r7, exc;		/* load EXC_* */		\
 	stw	%r7, FRAME_EXC(%r1);	/* save into trapframe */	\
 	addi	%r3, %r1, FRAME_TF	/* only argument is trapframe */
@@ -310,20 +306,20 @@ RCSID("$NetBSD: trap_subr.S,v 1.2 2011/01/18 01:02:52 matt Exp $")
 	mtxer	%r10;			/* restore XER */		\
 	mtcr	%r9;			/* restore CR */		\
 	mtlr	%r8;			/* restore LR */		\
-	lwz	%r13, FRAME_13(%r1);	/* restore r13 */		\
-	lwz	%r12, FRAME_12(%r1);	/* restore r12 */		\
-	lwz	%r11, FRAME_11(%r1);	/* restore r11 */		\
-	lwz	%r10, FRAME_10(%r1);	/* restore r10 */		\
-	lwz	%r9, FRAME_9(%r1);	/* restore r9 */		\
-	lwz	%r8, FRAME_8(%r1);	/* restore r8 */		\
-	lwz	%r7, FRAME_7(%r1);	/* restore r7 */		\
-	lwz	%r6, FRAME_6(%r1);	/* restore r6 */		\
-	lwz	%r5, FRAME_5(%r1);	/* restore r5 */		\
-	lwz	%r4, FRAME_4(%r1);	/* restore r4 */		\
-	lwz	%r3, FRAME_3(%r1);	/* restore r3 */		\
-	lwz	%r2, FRAME_2(%r1);	/* restore r2 */		\
-	lwz	%r0, FRAME_0(%r1);	/* restore r0 */		\
-	lwz	%r1, FRAME_1(%r1);	/* restore r1 */		\
+	lwz	%r13, FRAME_R13(%r1);	/* restore r13 */		\
+	lwz	%r12, FRAME_R12(%r1);	/* restore r12 */		\
+	lwz	%r11, FRAME_R11(%r1);	/* restore r11 */		\
+	lwz	%r10, FRAME_R10(%r1);	/* restore r10 */		\
+	lwz	%r9, FRAME_R9(%r1);	/* restore r9 */		\
+	lwz	%r8, FRAME_R8(%r1);	/* restore r8 */		\
+	lwz	%r7, FRAME_R7(%r1);	/* restore r7 */		\
+	lwz	%r6, FRAME_R6(%r1);	/* restore r6 */		\
+	lwz	%r5, FRAME_R5(%r1);	/* restore r5 */		\
+	lwz	%r4, FRAME_R4(%r1);	/* restore r4 */		\
+	lwz	%r3, FRAME_R3(%r1);	/* restore r3 */		\
+	lwz	%r2, FRAME_R2(%r1);	/* restore r2 */		\
+	lwz	%r0, FRAME_R0(%r1);	/* restore r0 */		\
+	lwz	%r1, FRAME_R1(%r1);	/* restore r1 */		\
 	rfi				/* return from interrupt */
 
 #define	FRAME_INTR_ENTER(exc)	\
@@ -346,8 +342,7 @@ _C_LABEL(critical_input_vector):
 	/* MSR[ME] is unchanged, all others cleared */
 	FRAME_CRIT_PROLOGUE			/* save SP r26-31 CR LR XER */
 	FRAME_CRIT_ENTER(EXC_CII)
-_C_LABEL(critintr_call):
-	bl	_C_LABEL(critintr_call)		/* critintr(tf) */
+	bl	_C_LABEL(intr_critintr)		/* critintr(tf) */
 	FRAME_CRIT_EXIT
 
 	.p2align 4
@@ -385,8 +380,7 @@ _C_LABEL(trapexit):
 #	tweqi	%r0, 0
 	andi.	%r4, %r31, PSL_PR		/* lets look at PSL_PR */
 	beq	trapdone			/* if clear, skip to exit  */
-	GET_CPUINFO(%r3)			/* get curcpu() */
-	lwz	%r4, CI_ASTPENDING(%r3)		/* get ast pending */
+	lwz	%r4, L_MD_ASTPENDING(%r13)	/* get ast pending */
 	cmplwi	%r4, 0				/* is there an ast pending */
 	beq+	trapdone			/*    nope, proceed to exit */
 	li	%r6, EXC_AST			/* yes. */
@@ -411,8 +405,7 @@ _ENTRY(external_input_vector)
 	FRAME_INTR_PROLOGUE			/* save SP r25-31 CR LR XER */
 	FRAME_INTR_ENTER(EXC_EXI)
 
-_C_LABEL(extintr_call):
-	bl	_C_LABEL(extintr_call)
+	bl	_C_LABEL(intr_extintr)
 _C_LABEL(intrcall):
 	GET_CPUINFO(%r6)			/* get curcpu() */
 	lwz	%r5, FRAME_SRR1(%r1)		/* get saved SRR1 */
@@ -420,10 +413,10 @@ _C_LABEL(intrcall):
 #	tweqi	%r0, 0
 	andi.	%r4, %r5, PSL_PR		/* lets look at PSL_PR */
 	beq	intrexit			/* if clear, skip to exit  */
-	lwz	%r4, CI_ASTPENDING(%r6)		/* get ast pending */
+	lwz	%r4, L_MD_ASTPENDING(%r13)	/* get ast pending */
 	cmplwi	%r4, 0				/* is there an ast pending */
 	beq+	intrexit			/*    nope, proceed to exit */
-	stmw	%r14, FRAME_14(%r1)		/* save rest of registers */
+	stmw	%r14, FRAME_R14(%r1)		/* save rest of registers */
 	FRAME_SAVE_SPEFSCR
 	mr	%r31, %r5			/* needed for trapagain */
 	li	%r4, EXC_AST			/* */
@@ -467,15 +460,13 @@ _C_LABEL(system_call_vector):
 	FRAME_ENTER(EXC_SC, %r3)
 
 	wrteei	1				/* enable interrupts */
-	mfspr	%r6, SPR_SPRG2			/* get curlwp */
-	lwz	%r7, L_PROC(%r6)		/* get proc for lwp */
+	lwz	%r7, L_PROC(%r13)		/* get proc for lwp */
 	lwz	%r8, P_MD_SYSCALL(%r7)		/* get syscall */
-	mtctr	%r8				/* need to call indirect */
-	bctrl					/* syscall(tf) */
+	mtlr	%r8				/* need to call indirect */
+	blrl					/* syscall(tf) */
 _C_LABEL(sctrapexit):
 	wrteei	0				/* disable interrupts */
-	GET_CPUINFO(%r3)			/* get curcpu() */
-	lwz	%r4, CI_ASTPENDING(%r3)		/* get ast pending */
+	lwz	%r4, L_MD_ASTPENDING(%r13)	/* get ast pending */
 	cmplwi	%r4, 0				/* is there an ast pending */
 	beq+	trapdone			/*    nope, proceed to exit */
 	li	%r0, EXC_AST			/* yes. */
@@ -500,8 +491,7 @@ _C_LABEL(decrementer_vector):
 	FRAME_INTR_PROLOGUE			/* save SP r25-31 CR LR XER */
 	FRAME_INTR_ENTER(EXC_DECR)
 
-_C_LABEL(decrintr_call):
-	bl	_C_LABEL(decrintr_call)
+	bl	_C_LABEL(intr_decrintr)
 	b	intrexit
 
 	.p2align 4
@@ -510,8 +500,7 @@ _C_LABEL(fixed_interval_timer_vector):
 	FRAME_PROLOGUE				/* save SP r25-31 CR LR XER */
 	FRAME_INTR_ENTER(EXC_FIT)
 
-_C_LABEL(fitintr_call):
-	bl	_C_LABEL(fitintr_call)
+	bl	_C_LABEL(intr_fitintr)
 	b	intrexit
 
 	.data
@@ -528,8 +517,7 @@ _C_LABEL(watchdog_timer_vector):
 	stb	%r11,-65(%r11)
 #endif
 
-_C_LABEL(wdogintr_call):
-	bl	_C_LABEL(wdogintr_call)
+	bl	_C_LABEL(intr_wdogintr)
 	FRAME_CRIT_EXIT
 
 	.p2align 4
@@ -859,50 +847,9 @@ _C_LABEL(exception_init):
 	ori	%r5,%r6,_C_LABEL(perfmon_vector)@l
 	mtspr	SPR_IVOR35, %r5
 
-	lis	%r5,_C_LABEL(critintr_call)@ha
-	lwzu	%r6,_C_LABEL(critintr_call)@l(%r5)
-	lwz	%r7,INTRSW_CRITINTR(%r3)
-	sub	%r8,%r7,%r5
-	add	%r0,%r8,%r6
-	stw	%r0,0(%r5)
-	dcbf	0,%r5	
-	icbi	0,%r5
-
-	lis	%r5,_C_LABEL(decrintr_call)@ha
-	lwzu	%r6,_C_LABEL(decrintr_call)@l(%r5)
-	lwz	%r7,INTRSW_DECRINTR(%r3)
-	sub	%r8,%r7,%r5
-	add	%r0,%r8,%r6
-	stw	%r0,0(%r5)
-	dcbf	0,%r5	
-	icbi	0,%r5
-
-	lis	%r5,_C_LABEL(fitintr_call)@ha
-	lwzu	%r6,_C_LABEL(fitintr_call)@l(%r5)
-	lwz	%r7,INTRSW_FITINTR(%r3)
-	sub	%r8,%r7,%r5
-	add	%r0,%r8,%r6
-	stw	%r0,0(%r5)
-	dcbf	0,%r5	
-	icbi	0,%r5
-
-	lis	%r5,_C_LABEL(wdogintr_call)@ha
-	lwzu	%r6,_C_LABEL(wdogintr_call)@l(%r5)
-	lwz	%r7,INTRSW_WDOGINTR(%r3)
-	sub	%r8,%r7,%r5
-	add	%r0,%r8,%r6
-	stw	%r0,0(%r5)
-	dcbf	0,%r5	
-	icbi	0,%r5
-
-	lis	%r5,_C_LABEL(extintr_call)@ha
-	lwzu	%r6,_C_LABEL(extintr_call)@l(%r5)
-	lwz	%r7,INTRSW_EXTINTR(%r3)
-	sub	%r8,%r7,%r5
-	add	%r0,%r8,%r6
-	stw	%r0,0(%r5)
-	dcbf	0,%r5	
-	icbi	0,%r5
+	mfpir	%r5		/* get Process ID register */
+	cmplwi	%r5,0
+	bnelr			/* return if non-0 (non-primary) */
 
 	lis	%r5,_C_LABEL(powerpc_intrsw)@ha
 	stw	%r3,_C_LABEL(powerpc_intrsw)@l(%r5)
@@ -929,8 +876,8 @@ _ENTRY(cpu_Debugger)
 	addi	%r1,%r10,4096-CALLFRAMELEN
 1:
 	stwu	%r4,-FRAMELEN(%r1)
-	stw	%r4,FRAME_1(%r1)
-	stmw	%r13,FRAME_13(%r1)
+	stw	%r4,FRAME_R1(%r1)
+	stmw	%r13,FRAME_R13(%r1)
 	mr	%r26,%r0
 	mfcr	%r27
 	mfxer	%r28
@@ -951,8 +898,8 @@ _ENTRY(cpu_Debugger)
 	mtxer	%r28
 	mtctr	%r29
 	mr	%r0,%r31
-	lmw	%r13,FRAME_13(%r1)
-	lwz	%r1,FRAME_1(%r1)
+	lmw	%r13,FRAME_R13(%r1)
+	lwz	%r1,FRAME_R1(%r1)
 	wrtee	%r0
 	blr
 #endif /* notyet */

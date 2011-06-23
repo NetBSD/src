@@ -1,4 +1,4 @@
-/* $NetBSD: mcpciavar.h,v 1.5 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: mcpciavar.h,v 1.5.10.1 2011/06/23 14:18:55 cherry Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -64,7 +64,7 @@ struct mcpcia_config {
 };
 
 struct mcpcia_softc {
-	struct device		mcpcia_dev;
+	device_t		mcpcia_dev;
 	struct mcpcia_config	*mcpcia_cc;	/* config info */
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.42 2011/04/04 20:37:44 dyoung Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.42.2.1 2011/06/23 14:18:55 cherry Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.42 2011/04/04 20:37:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.42.2.1 2011/06/23 14:18:55 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -326,7 +326,7 @@ dec_eb164_pciide_compat_intr_establish(void *v, device_t dev,
 	    func, arg);
 	if (cookie == NULL)
 		return (NULL);
-	printf("%s: %s channel interrupting at %s\n", dev->dv_xname,
+	aprint_normal_dev(dev, "%s channel interrupting at %s\n",
 	    PCIIDE_CHANNEL_NAME(chan), sio_intr_string(NULL /*XXX*/, irq));
 #endif
 	return (cookie);

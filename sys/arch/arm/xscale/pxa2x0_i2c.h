@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2c.h,v 1.2 2009/04/20 12:55:02 pgoyette Exp $	*/
+/*	$NetBSD: pxa2x0_i2c.h,v 1.2.10.1 2011/06/23 14:19:01 cherry Exp $	*/
 /*	$OpenBSD: pxa2x0_i2c.h,v 1.2 2005/05/26 03:52:07 pascoe Exp $	*/
 
 /*
@@ -20,13 +20,19 @@
 #ifndef _PXA2X0_I2C_H_
 #define _PXA2X0_I2C_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct pxa2x0_i2c_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+
 	bus_size_t sc_size;
+
+	uint32_t sc_icr;
+
+	uint32_t sc_flags;
+#define	PI2CF_FAST_MODE		(1U << 0)
 };
 
 int	pxa2x0_i2c_attach_sub(struct pxa2x0_i2c_softc *);
@@ -37,6 +43,15 @@ void	pxa2x0_i2c_close(struct pxa2x0_i2c_softc *);
 int	pxa2x0_i2c_read(struct pxa2x0_i2c_softc *sc, u_char, u_char *);
 int	pxa2x0_i2c_write(struct pxa2x0_i2c_softc *, u_char, u_char);
 int	pxa2x0_i2c_write_2(struct pxa2x0_i2c_softc *, u_char, u_short);
-int	pxa2x0_i2c_quick(struct pxa2x0_i2c_softc *sc, u_char slave, u_char rw);
+int	pxa2x0_i2c_quick(struct pxa2x0_i2c_softc *sc, u_char, u_char);
 
-#endif
+int	pxa2x0_i2c_send_start(struct pxa2x0_i2c_softc *, int flags);
+int	pxa2x0_i2c_send_stop(struct pxa2x0_i2c_softc *, int flags);
+int	pxa2x0_i2c_initiate_xfer(struct pxa2x0_i2c_softc *, uint16_t, int);
+int	pxa2x0_i2c_read_byte(struct pxa2x0_i2c_softc *, uint8_t *, int);
+int	pxa2x0_i2c_write_byte(struct pxa2x0_i2c_softc *, uint8_t, int);
+
+void	pxa2x0_i2c_reset(struct pxa2x0_i2c_softc *);
+int	pxa2x0_i2c_wait(struct pxa2x0_i2c_softc *, int, int);
+
+#endif	/* _PXA2X0_I2C_H_ */

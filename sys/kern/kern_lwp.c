@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.157 2011/03/20 23:19:16 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.157.2.1 2011/06/23 14:20:19 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.157 2011/03/20 23:19:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.157.2.1 2011/06/23 14:20:19 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -762,6 +762,12 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	if (rnewlwpp != NULL)
 		*rnewlwpp = l2;
 
+	/*
+	 * PCU state needs to be saved before calling uvm_lwp_fork() so that
+	 * the MD cpu_lwp_fork() can copy the saved state to the new LWP.
+	 */
+	pcu_save_all(l1);
+
 	uvm_lwp_setuarea(l2, uaddr);
 	uvm_lwp_fork(l1, l2, stack, stacksize, func,
 	    (arg != NULL) ? arg : l2);
@@ -968,6 +974,11 @@ lwp_exit(struct lwp *l)
 			lwp_unlock(l2);
 		}
 	}
+
+	/*
+	 * Release any PCU resources before becoming a zombie.
+	 */
+	pcu_discard_all(l);
 
 	lwp_lock(l);
 	l->l_stat = LSZOMB;
@@ -1384,14 +1395,16 @@ lwp_userret(struct lwp *l)
 		/*
 		 * Core-dump or suspend pending.
 		 *
-		 * In case of core dump, suspend ourselves, so that the
-		 * kernel stack and therefore the userland registers saved
-		 * in the trapframe are around for coredump() to write them
-		 * out.  We issue a wakeup on p->p_lwpcv so that sigexit()
-		 * will write the core file out once all other LWPs are
-		 * suspended.
+		 * In case of core dump, suspend ourselves, so that the kernel
+		 * stack and therefore the userland registers saved in the
+		 * trapframe are around for coredump() to write them out.
+		 * We also need to save any PCU resources that we have so that
+		 * they accessible for coredump().  We issue a wakeup on
+		 * p->p_lwpcv so that sigexit() will write the core file out
+		 * once all other LWPs are suspended.  
 		 */
 		if ((l->l_flag & LW_WSUSPEND) != 0) {
+			pcu_save_all(l);
 			mutex_enter(p->p_lock);
 			p->p_nrlwps--;
 			cv_broadcast(&p->p_lwpcv);

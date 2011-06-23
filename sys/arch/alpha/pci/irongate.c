@@ -1,4 +1,4 @@
-/* $NetBSD: irongate.c,v 1.15 2011/05/17 17:34:47 dyoung Exp $ */
+/* $NetBSD: irongate.c,v 1.15.2.1 2011/06/23 14:18:54 cherry Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.15 2011/05/17 17:34:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.15.2.1 2011/06/23 14:18:54 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,10 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.15 2011/05/17 17:34:47 dyoung Exp $")
 #include <alpha/pci/pci_up1000.h>
 #endif
 
-int	irongate_match(struct device *, struct cfdata *, void *);
-void	irongate_attach(struct device *, struct device *, void *);
+int	irongate_match(device_t, cfdata_t, void *);
+void	irongate_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(irongate, sizeof(struct irongate_softc),
+CFATTACH_DECL_NEW(irongate, sizeof(struct irongate_softc),
     irongate_match, irongate_attach, NULL, NULL);
 
 extern struct cfdriver irongate_cd;
@@ -69,8 +69,7 @@ extern struct cfdriver irongate_cd;
 struct irongate_config irongate_configuration;
 int	irongate_found;
 
-int	irongate_bus_get_window(int, int,
-	    struct alpha_bus_space_translation *);
+int	irongate_bus_get_window(int, int, struct alpha_bus_space_translation *);
 
 /*
  * Set up the chipset's function pointers.
@@ -112,7 +111,7 @@ irongate_init(struct irongate_config *icp, int mallocsafe)
 }
 
 int
-irongate_match(struct device *parent, struct cfdata *match, void *aux)
+irongate_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -127,9 +126,9 @@ irongate_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-irongate_attach(struct device *parent, struct device *self, void *aux)
+irongate_attach(device_t parent, device_t self, void *aux)
 {
-	struct irongate_softc *sc = (void *) self;
+	struct irongate_softc *sc = device_private(self);
 	struct irongate_config *icp;
 	struct pcibus_attach_args pba;
 	struct agpbus_attach_args apa;
@@ -137,6 +136,7 @@ irongate_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Note that we've attached the chipset; can't have 2 Irongates. */
 	irongate_found = 1;
+	sc->sc_dev = self;
 
 	/*
 	 * Set up the chipset's info; done once at console init time

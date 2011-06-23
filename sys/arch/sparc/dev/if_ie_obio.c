@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.38 2011/02/01 20:19:31 chuck Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.38.2.1 2011/06/23 14:19:40 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.38 2011/02/01 20:19:31 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.38.2.1 2011/06/23 14:19:40 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ static void ie_obrun(struct ie_softc *);
 int ie_obio_match(device_t, cfdata_t, void *);
 void ie_obio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ie_obio, sizeof(struct ie_softc),
+CFATTACH_DECL_NEW(ie_obio, sizeof(struct ie_softc),
     ie_obio_match, ie_obio_attach, NULL, NULL);
 
 /* Supported media */
@@ -259,6 +259,7 @@ ie_obio_attach(device_t parent, device_t self, void *aux)
 	u_long iebase;
 	uint8_t myaddr[ETHER_ADDR_LEN];
 
+	sc->sc_dev = self;
 	sc->bt = oba->oba_bustag;
 
 	sc->hwreset = ie_obreset;

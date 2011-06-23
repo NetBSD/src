@@ -147,10 +147,10 @@ int dtls1_accept(SSL *s)
 	BUF_MEM *buf;
 	unsigned long Time=(unsigned long)time(NULL);
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
-	long num1;
 	unsigned long alg_k;
 	int ret= -1;
 	int new_state,state,skip=0;
+	int listen;
 
 	RAND_add(&Time,sizeof(Time),0);
 	ERR_clear_error();
@@ -160,6 +160,8 @@ int dtls1_accept(SSL *s)
 		cb=s->info_callback;
 	else if (s->ctx->info_callback != NULL)
 		cb=s->ctx->info_callback;
+	
+	listen = s->d1->listen;
 
 	/* init things to blank */
 	s->in_handshake++;
@@ -178,7 +180,7 @@ int dtls1_accept(SSL *s)
 		switch (s->state)
 			{
 		case SSL_ST_RENEGOTIATE:
-			s->new_session=1;
+			s->renegotiate=1;
 			/* s->state=SSL_ST_ACCEPT; */
 
 		case SSL_ST_BEFORE:
@@ -266,7 +268,6 @@ int dtls1_accept(SSL *s)
 			ret=ssl3_get_client_hello(s);
 			if (ret <= 0) goto end;
 			dtls1_stop_timer(s);
-			s->new_session = 2;
 
 			if (ret == 1 && (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE))
 				s->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A;
@@ -276,10 +277,16 @@ int dtls1_accept(SSL *s)
 			s->init_num=0;
 
 			/* If we're just listening, stop here */
-			if (s->d1->listen && s->state == SSL3_ST_SW_SRVR_HELLO_A)
+			if (listen && s->state == SSL3_ST_SW_SRVR_HELLO_A)
 				{
 				ret = 2;
 				s->d1->listen = 0;
+				/* Set expected sequence numbers
+				 * to continue the handshake.
+				 */
+				s->d1->handshake_read_seq = 2;
+				s->d1->handshake_write_seq = 1;
+				s->d1->next_handshake_write_seq = 1;
 				goto end;
 				}
 			
@@ -301,6 +308,7 @@ int dtls1_accept(SSL *s)
 			
 		case SSL3_ST_SW_SRVR_HELLO_A:
 		case SSL3_ST_SW_SRVR_HELLO_B:
+			s->renegotiate = 2;
 			dtls1_start_timer(s);
 			ret=dtls1_send_server_hello(s);
 			if (ret <= 0) goto end;
@@ -454,16 +462,13 @@ int dtls1_accept(SSL *s)
 			break;
 		
 		case SSL3_ST_SW_FLUSH:
-			/* number of bytes to be flushed */
-			num1=BIO_ctrl(s->wbio,BIO_CTRL_INFO,0,NULL);
-			if (num1 > 0)
+			s->rwstate=SSL_WRITING;
+			if (BIO_flush(s->wbio) <= 0)
 				{
-				s->rwstate=SSL_WRITING;
-				num1=BIO_flush(s->wbio);
-				if (num1 <= 0) { ret= -1; goto end; }
-				s->rwstate=SSL_NOTHING;
+				ret= -1;
+				goto end;
 				}
-
+			s->rwstate=SSL_NOTHING;
 			s->state=s->s3->tmp.next_state;
 			break;
 
@@ -624,11 +629,12 @@ int dtls1_accept(SSL *s)
 
 			s->init_num=0;
 
-			if (s->new_session == 2) /* skipped if we just sent a HelloRequest */
+			if (s->renegotiate == 2) /* skipped if we just sent a HelloRequest */
 				{
 				/* actually not necessarily a 'new' session unless
 				 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is set */
 				
+				s->renegotiate=0;
 				s->new_session=0;
 				
 				ssl_update_cache(s,SSL_SESS_CACHE_SERVER);
@@ -740,9 +746,6 @@ int dtls1_send_hello_verify_request(SSL *s)
 		/* number of bytes to write */
 		s->init_num=p-buf;
 		s->init_off=0;
-
-		/* buffer the message to handle re-xmits */
-		dtls1_buffer_message(s, 0);
 		}
 
 	/* s->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B */
@@ -1139,7 +1142,7 @@ int dtls1_send_server_key_exchange(SSL *s)
 		if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)
 			&& !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK))
 			{
-			if ((pkey=ssl_get_sign_pkey(s,s->s3->tmp.new_cipher))
+			if ((pkey=ssl_get_sign_pkey(s,s->s3->tmp.new_cipher, NULL))
 				== NULL)
 				{
 				al=SSL_AD_DECODE_ERROR;
@@ -1529,9 +1532,10 @@ int dtls1_send_newsession_ticket(SSL *s)
 		p += hlen;
 		/* Now write out lengths: p points to end of data written */
 		/* Total length */
-		len = p - (unsigned char *)&(s->init_buf->data[DTLS1_HM_HEADER_LENGTH]);
+		len = p - (unsigned char *)(s->init_buf->data);
+		/* Ticket length */
 		p=(unsigned char *)&(s->init_buf->data[DTLS1_HM_HEADER_LENGTH]) + 4;
-		s2n(len - 18, p);  /* Ticket length */
+		s2n(len - DTLS1_HM_HEADER_LENGTH - 6, p);
 
 		/* number of bytes to write */
 		s->init_num= len;

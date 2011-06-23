@@ -1,6 +1,6 @@
-#	$NetBSD: list,v 1.24 2011/01/14 10:26:29 tsutsui Exp $
+#	$NetBSD: list,v 1.24.4.1 2011/06/23 14:18:16 cherry Exp $
 
-SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
+SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -54,9 +54,10 @@ PROG	usr/sbin/chroot
 # init invokes the shell as -sh
 ARGVLN	sh -sh
 
+SPECIAL	gzip	srcdir distrib/utils/x_gzip
 SPECIAL	ping	srcdir distrib/utils/x_ping
 
-LIBS	-lbz2 -ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lz -lprop
+LIBS	-ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lz -lprop
 
 # we need the boot blocks /usr/mdec
 #COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
@@ -65,7 +66,7 @@ LIBS	-lbz2 -ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lz -lprop
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${DISTRIBDIR}/common/protocols	etc/protocols
+COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
 
 #COPY	${CURDIR}/inst.sh			usr/local/sbin/inst	555

@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3ehci.c,v 1.3 2011/02/16 18:46:37 matt Exp $	*/
+/*	$NetBSD: pq3ehci.c,v 1.3.4.1 2011/06/23 14:19:28 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.3 2011/02/16 18:46:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.3.4.1 2011/06/23 14:19:28 cherry Exp $");
+
+#include "opt_usb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +121,7 @@ pq3ehci_attach(device_t parent, device_t self, void *aux)
 	 */
 	cpu_write_4(cnl->cnl_addr + USB_SNOOP1,
 	    SNOOP_2GB - __builtin_clz(curcpu()->ci_softc->cpu_highmem * 2 - 1));
+	cpu_write_4(cnl->cnl_addr + USB_CONTROL, USB_EN);
 
 	sc->sc_ih = intr_establish(cnl->cnl_intrs[0], IPL_USB, IST_ONCHIP,
 	    ehci_intr, sc);

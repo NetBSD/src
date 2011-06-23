@@ -33,17 +33,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define _PMAP_PRIVATE
+#define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.3 2011/02/17 13:55:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.3.4.1 2011/06/23 14:19:27 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
 #include <sys/buf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/pmap.h>
 
@@ -87,8 +87,15 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 }
 
 void
-pmap_md_page_syncicache(struct vm_page *pg)
+pmap_md_page_syncicache(struct vm_page *pg, __cpuset_t onproc)
 {
+	/*
+	 * If onproc is empty, we could do a
+	 * pmap_page_protect(pg, VM_PROT_NONE) and remove all
+	 * mappings of the page and clear its execness.  Then
+	 * the next time page is faulted, it will get icache
+	 * synched.  But this is easier. :)
+	 */
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	dcache_wb_page(pa);
 	icache_inv_page(pa);
@@ -256,8 +263,9 @@ pmap_md_alloc_poolpage(int flags)
 void
 pmap_zero_page(paddr_t pa)
 {
-//	printf("%s(%#lx): calling dcache_zero_page(%#lx)\n", __func__, pa, pa);
 	dcache_zero_page(pa);
+
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(pa))));
 }
 
 void
@@ -282,6 +290,8 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 			      "r28", "r29", "r30", "r31");
 		}
 	}
+
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(dst - PAGE_SIZE))));
 }
 
 void

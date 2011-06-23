@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $	*/
+/*	$NetBSD: clock_ebus.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,64 +49,67 @@ __KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $")
  * Device softc
  */
 struct eclock_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct _Tc *sc_dp;
-    uint32_t reload;
-    struct timecounter sc_tc;
-#ifdef __HAVE_GENERIC_TODR
-    struct todr_chip_handle sc_todr;
-#endif
+	uint32_t sc_reload;
+	struct timecounter sc_tc;
+	struct todr_chip_handle sc_todr;
 };
 
-static int	eclock_ebus_match (struct device *, struct cfdata *, void *);
-static void	eclock_ebus_attach (struct device *, struct device *, void *);
+static int	eclock_ebus_match(device_t, cfdata_t, void *);
+static void	eclock_ebus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(eclock_ebus, sizeof (struct eclock_softc),
+CFATTACH_DECL_NEW(eclock_ebus, sizeof (struct eclock_softc),
     eclock_ebus_match, eclock_ebus_attach, NULL, NULL);
 
-       void	eclock_init(struct device *);
-static void	__eclock_init(struct device *);
-static int	eclock_gettime(struct todr_chip_handle *,
-                           struct timeval *);
-static int	eclock_settime(struct todr_chip_handle *,
-                           struct timeval *);
-static int  eclock_ebus_intr(void *cookie, void *f);
-static u_int eclock_counter(struct timecounter *tc);
+void	eclock_init(device_t);
 
-struct device *clockdev = NULL; /* BUGBUG resolve the gap between cpu_initclocks() and eclock_init(x) */
+static void	__eclock_init(device_t);
+static int	eclock_gettime(struct todr_chip_handle *, struct timeval *);
+static int	eclock_settime(struct todr_chip_handle *, struct timeval *);
+static int	eclock_ebus_intr(void *, void *);
+static u_int	eclock_counter(struct timecounter *);
+
+/* BUGBUG resolve the gap between cpu_initclocks() and eclock_init(x) */
+device_t clockdev = NULL;
 
 void
-eclock_init(struct device *dev)
+eclock_init(device_t dev)
 {
-    if (dev == NULL)
-        dev = clockdev;
-    if (dev == NULL)
-        panic("eclock_init");
-    __eclock_init(dev);
+
+	if (dev == NULL)
+		dev = clockdev;
+	if (dev == NULL)
+		panic("eclock_init");
+	__eclock_init(dev);
 }
 
 static void
-__eclock_init(struct device *dev)
+__eclock_init(device_t dev)
 {
-	struct eclock_softc *sc = (struct eclock_softc *)dev;
-    struct _Tc *tc = sc->sc_dp;
-    uint32_t reload = 10*1000000; /* 1sec in 100ns units (10MHz clock) */
+	struct eclock_softc *sc = device_private(dev);
+	struct _Tc *tc = sc->sc_dp;
+	uint32_t reload = 10 * 1000000; /* 1sec in 100ns units (10MHz clock) */
 
-    /* Compute reload according to whatever value passed in, Warn if fractional */
-    if (hz > 1) {
-        uint32_t r = reload / hz;
-        if ((r * hz) != reload)
-            printf("%s: %d Hz clock will cause roundoffs with 10MHz xtal (%d)\n",
-                   sc->sc_dev.dv_xname, hz, reload - (r * hz));
+	/*
+	 * Compute reload according to whatever value passed in,
+	 * Warn if fractional
+	 */
+	if (hz > 1) {
+		uint32_t r = reload / hz;
+		if ((r * hz) != reload)
+			printf("%s: %d Hz clock will cause roundoffs"
+			    " with 10MHz xtal (%d)\n",
+			    device_xname(sc->sc_dev), hz, reload - (r * hz));
 		reload = r;
 	}
 
-    sc->reload = reload;
+	sc->sc_reload = reload;
 
-    /* Start the counter */
-    tc->DownCounterHigh = 0;
-    tc->DownCounter = sc->reload;
-    tc->Control = TCCT_ENABLE | TCCT_INT_ENABLE;
+	/* Start the counter */
+	tc->DownCounterHigh = 0;
+	tc->DownCounter = sc->sc_reload;
+	tc->Control = TCCT_ENABLE | TCCT_INT_ENABLE;
 }
 
 /*
@@ -120,48 +123,61 @@ extern u_quad_t __qdivrem(u_quad_t uq, u_quad_t vq, u_quad_t *arq);
 static int
 eclock_gettime(struct todr_chip_handle *todr, struct timeval *tv)
 {
-	struct eclock_softc *sc = (struct eclock_softc *) todr->cookie;
-    struct _Tc *tc = sc->sc_dp;
-    uint64_t free;
-    int s;
+	struct eclock_softc *sc = todr->cookie;
+	struct _Tc *tc = sc->sc_dp;
+	uint64_t free;
+	int s;
 
-    /* 32bit processor, guard against interrupts in the middle of reading this 64bit entity
-     * BUGBUG Should read it "twice" to guard against rollover too.
-     */
+	/*
+	 * 32bit processor, guard against interrupts in the middle of
+	 * reading this 64bit entity
+	 */
+	/* BUGBUG Should read it "twice" to guard against rollover too. */
 	s = splhigh();
-    free = tc->FreeRunning;
+	free = tc->FreeRunning;
 	splx(s);
 
-    /* Big fight with the compiler here, it gets very confused by 64bits.
-     */
+	/*
+	 * Big fight with the compiler here, it gets very confused by 64bits.
+	 */
 #if 0
-    /* This is in C: 
-     */
-    {
-        uint64_t freeS, freeU;
-        freeS = free / (10*1000*1000);
-        freeU = free % (10*1000*1000);
-        tv->tv_sec  = freeS;
-        tv->tv_usec = freeU / 10;
-        //printf("egt: s x%lx u x%lx (fs %lld fu %lld f %lld)\n",tv->tv_sec,tv->tv_usec,freeS,freeU,free);
-    }
+	/*
+	 * This is in C: 
+	 */
+	{
+		uint64_t freeS, freeU;
+		freeS = free / (10 * 1000 * 1000);
+		freeU = free % (10 * 1000 * 1000);
+		tv->tv_sec  = freeS;
+		tv->tv_usec = freeU / 10;
+#if 0
+		printf("egt: s x%" PRIx64 " u x%lx (fs %" PRId64
+		    " fu %" PRId64 " f %" PRId64 ")\n",
+		    tv->tv_sec, tv->tv_usec, freeS, freeU, free);
+#endif
+	}
 #else
-    /* And this is in assembly :-)
-     */
-    {
-        u_quad_t r;
-        u_quad_t d = __qdivrem(free,(u_quad_t)10000000,&r);
-        uint32_t su, uu;
-        su = (uint32_t) d;
-        uu = (uint32_t) r;
-        uu = uu / 10; /* in usecs */
-        tv->tv_sec  = su;
-        tv->tv_usec = uu;
-        //printf("egt: s x%lx u x%lx  (d %lld r %lld  f %lld)\n",tv->tv_sec,tv->tv_usec,d,r,free);
-    }
+	/*
+	 * And this is in assembly :-)
+	 */
+	{
+		u_quad_t r;
+		u_quad_t d = __qdivrem(free,(u_quad_t)10000000,&r);
+		uint32_t su, uu;
+		su = (uint32_t)d;
+		uu = (uint32_t)r;
+		uu = uu / 10;	/* in usecs */
+		tv->tv_sec  = su;
+		tv->tv_usec = uu;
+#if 0
+		printf("egt: s x%" PRIx64 " u x%lx (fs %" PRId64
+		    " fu %" PRId64 " f %" PRId64 ")\n",
+		    tv->tv_sec, tv->tv_usec, d, r, free);
+#endif
+	}
 #endif
 
-    return 0;
+	return 0;
 }
 
 /*
@@ -170,26 +186,27 @@ eclock_gettime(struct todr_chip_handle *todr, struct timeval *tv)
 static int
 eclock_settime(struct todr_chip_handle *todr, struct timeval *tv)
 {
-	struct eclock_softc *sc = (struct eclock_softc *) todr->cookie;
-    struct _Tc *tc = sc->sc_dp;
-    uint64_t free;
-    uint32_t su, uu;
-    int s;
+	struct eclock_softc *sc = todr->cookie;
+	struct _Tc *tc = sc->sc_dp;
+	uint64_t free, su;
+	uint32_t uu;
+	int s;
 
-    /* Careful with what we do here, else the compilerbugs hit hard */
+	/* Careful with what we do here, else the compilerbugs hit hard */
 	s = splhigh();
 
-    su = (uint32_t) tv->tv_sec;  //0(tv)
-    uu = (uint32_t) tv->tv_usec; //4(tv)
+	su = (uint64_t)tv->tv_sec;	/* 0(tv) */
+	uu = (uint32_t)tv->tv_usec;	/* 8(tv) */
 
 
-    free  = 10*1000*1000 * (uint64_t)su;
-    free += uu * 10;
+	free  = su * 10 * 1000 * 1000;
+	free += uu * 10;
 
-    tc->FreeRunning = free;
+	tc->FreeRunning = free;
 	splx(s);
 
 #if 0
+/* 
 Should compile to something like this:
 80260c84 <eclock_settime>:
 80260c84:	27bdffc0 	addiu	sp,sp,-64
@@ -226,98 +243,101 @@ Should compile to something like this:
 80260d00:	aeb00008 	sw	s0,8(s5)
 80260d04:	0c00413f 	jal	800104fc <_splset>
 80260d08:	00000000 	nop
-
+*/
 #endif
 
-    //printf("est: s x%lx u x%lx (%d %d), free %lld\n",tv->tv_sec,tv->tv_usec,su,uu,free);
+#if 0
+	printf("est: s x%" PRIx64 " u x%lx (%d %d), free %" PRId64 "\n",
+	    tv->tv_sec, tv->tv_usec, su, uu, free);
+#endif
 
-    return 0;
+	return 0;
 }
 
 static int
 eclock_ebus_intr(void *cookie, void *f)
 {
 	struct eclock_softc *sc = cookie;
-    struct _Tc *tc = sc->sc_dp;
-    struct clockframe *cf = f;
-    volatile uint32_t x;
+	struct _Tc *tc = sc->sc_dp;
+	struct clockframe *cf = f;
+	volatile uint32_t x;
 
-    x = tc->Control;
-    tc->DownCounterHigh = 0;
-    tc->DownCounter = sc->reload;
+	x = tc->Control;
+	tc->DownCounterHigh = 0;
+	tc->DownCounter = sc->sc_reload;
 
-    hardclock(cf);
-    emips_clock_evcnt.ev_count++;
+	hardclock(cf);
+	emips_clock_evcnt.ev_count++;
 
-	return (0);
+	return 0;
 }
 
 static u_int
 eclock_counter(struct timecounter *tc)
 {
 	struct eclock_softc *sc = tc->tc_priv;
-    struct _Tc *Tc = sc->sc_dp;
-    return (u_int)Tc->FreeRunning; /* NB: chops to 32bits */
+	struct _Tc *Tc = sc->sc_dp;
+
+	return (u_int)Tc->FreeRunning; /* NB: chops to 32bits */
 }    
 
 
 static int
-eclock_ebus_match(struct device *parent, struct cfdata *match, void *aux)
+eclock_ebus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ebus_attach_args *ia = aux;
-    struct _Tc *mc = (struct _Tc *)ia->ia_vaddr;
+	struct _Tc *mc = (struct _Tc *)ia->ia_vaddr;
 
 	if (strcmp("eclock", ia->ia_name) != 0)
-		return (0);
-    if ((mc == NULL) ||
-        (mc->Tag != PMTTAG_TIMER))
-		return (0);
+		return 0;
+	if ((mc == NULL) ||
+	    (mc->Tag != PMTTAG_TIMER))
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 static void
-eclock_ebus_attach(struct device *parent, struct device *self, void *aux)
+eclock_ebus_attach(device_t parent, device_t self, void *aux)
 {
-	struct ebus_attach_args *ia =aux;
-	struct eclock_softc *sc = (struct eclock_softc *)self;
+	struct eclock_softc *sc = device_private(self);
+	struct ebus_attach_args *ia = aux;
 
-	sc->sc_dp = (struct _Tc*)ia->ia_vaddr;
+	sc->sc_dev = self;
+	sc->sc_dp = (struct _Tc *)ia->ia_vaddr;
 
-    /* NB: We are chopping our 64bit free-running  down to 32bits */
-    sc->sc_tc.tc_get_timecount = eclock_counter;
-    sc->sc_tc.tc_poll_pps = 0;
-    sc->sc_tc.tc_counter_mask = 0xffffffff;
-    sc->sc_tc.tc_frequency = 10*1000*1000; /* 10 MHz */
-    sc->sc_tc.tc_name = "eclock"; /* BUGBUG is it unique per instance?? */
-    sc->sc_tc.tc_quality = 2000; /* uhu? */
-    sc->sc_tc.tc_priv = sc;
-    sc->sc_tc.tc_next = NULL;
+	/* NB: We are chopping our 64bit free-running down to 32bits */
+	sc->sc_tc.tc_get_timecount = eclock_counter;
+	sc->sc_tc.tc_poll_pps = 0;
+	sc->sc_tc.tc_counter_mask = 0xffffffff;
+	sc->sc_tc.tc_frequency = 10 * 1000 * 1000; /* 10 MHz */
+	sc->sc_tc.tc_name = "eclock"; /* BUGBUG is it unique per instance?? */
+	sc->sc_tc.tc_quality = 2000; /* uhu? */
+	sc->sc_tc.tc_priv = sc;
+	sc->sc_tc.tc_next = NULL;
 
 #if DEBUG
-    printf(" virt=%p ", (void*)sc->sc_dp);
+	printf(" virt=%p ", (void *)sc->sc_dp);
 #endif
 	printf(": eMIPS clock\n");
 
 	/* Turn interrupts off, just in case. */
-    sc->sc_dp->Control &= ~(TCCT_INT_ENABLE|TCCT_INTERRUPT);
+	sc->sc_dp->Control &= ~(TCCT_INT_ENABLE|TCCT_INTERRUPT);
 
 	ebus_intr_establish(parent, (void *)ia->ia_cookie, IPL_CLOCK,
 	    eclock_ebus_intr, sc);
 
 #ifdef EVCNT_COUNTERS
 	evcnt_attach_dynamic(&clock_intr_evcnt, EVCNT_TYPE_INTR, NULL,
-	    sc->sc_dev->dv_xname, "intr");
+	    device_xname(self), "intr");
 #endif
 
-#ifdef __HAVE_GENERIC_TODR
-    clockdev = self;
-    memset(&sc->sc_todr,0,sizeof sc->sc_todr);
-    sc->sc_todr.cookie = sc;
-    sc->sc_todr.todr_gettime = eclock_gettime;
-    sc->sc_todr.todr_settime = eclock_settime;
-    todr_attach(&sc->sc_todr);
-#endif
+	clockdev = self;
+	memset(&sc->sc_todr, 0, sizeof sc->sc_todr);
+	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_gettime = eclock_gettime;
+	sc->sc_todr.todr_settime = eclock_settime;
+	todr_attach(&sc->sc_todr);
 
-    tc_init(&sc->sc_tc);
+	tc_init(&sc->sc_tc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.35 2010/07/25 10:00:48 hannken Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.35.6.1 2011/06/23 14:20:16 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.35 2010/07/25 10:00:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.35.6.1 2011/06/23 14:20:16 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -312,7 +312,7 @@ sysvbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	for (bnode = LIST_FIRST(&bmp->bnode_head); bnode != NULL;
 	    bnode = LIST_NEXT(bnode, link)) {
 		v = bnode->vnode;
-	    	mutex_enter(&v->v_interlock);
+	    	mutex_enter(v->v_interlock);
 		mutex_exit(&mntvnode_lock);
 		err = vget(v, LK_EXCLUSIVE | LK_NOWAIT);
 		if (err == 0) {
@@ -351,7 +351,7 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	    bnode = LIST_NEXT(bnode, link)) {
 		if (bnode->inode->number == ino) {
 			vp = bnode->vnode;
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			mutex_exit(&mntvnode_lock);
 			if (vget(vp, LK_EXCLUSIVE) == 0) {
 				*vpp = vp;
@@ -364,8 +364,8 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	mutex_exit(&mntvnode_lock);
 
 	/* Allocate v-node. */
-	if ((error = getnewvnode(VT_SYSVBFS, mp, sysvbfs_vnodeop_p, &vp)) !=
-	    0) {
+	error = getnewvnode(VT_SYSVBFS, mp, sysvbfs_vnodeop_p, NULL, &vp);
+	if (error) {
 		DPRINTF("%s: getnewvnode error.\n", __func__);
 		return error;
 	}

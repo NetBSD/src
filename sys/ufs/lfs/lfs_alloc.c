@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.110 2010/06/24 13:03:19 hannken Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.110.6.1 2011/06/23 14:20:31 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.110 2010/06/24 13:03:19 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.110.6.1 2011/06/23 14:20:31 cherry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -433,11 +433,11 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	DLOG((DLOG_ALLOC, "lfs_vfree: free ino %lld\n", (long long)ino));
 
 	/* Drain of pending writes */
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	while (fs->lfs_version > 1 && WRITEINPROG(vp)) {
-		cv_wait(&vp->v_cv, &vp->v_interlock);
+		cv_wait(&vp->v_cv, vp->v_interlock);
 	}
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	lfs_seglock(fs, SEGM_PROT);
 	vn_lock(fs->lfs_ivnode, LK_EXCLUSIVE);

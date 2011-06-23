@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.37 2010/01/14 17:49:32 drochner Exp $	*/
+/*	$NetBSD: installboot.h,v 1.37.4.1 2011/06/23 14:20:47 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ struct bbinfo_params {
 	bbinfo_endian	endian;
 };
 
-extern struct ib_mach	*machines[];
+extern struct ib_mach	* const machines[];
 extern struct ib_fs	fstypes[];
 
 	/* installboot.c */

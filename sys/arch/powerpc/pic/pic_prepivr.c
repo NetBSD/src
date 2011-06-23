@@ -1,4 +1,4 @@
-/* $NetBSD: pic_prepivr.c,v 1.4 2008/04/28 20:23:32 martin Exp $ */
+/* $NetBSD: pic_prepivr.c,v 1.4.32.1 2011/06/23 14:19:34 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,18 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.4 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.4.32.1 2011/06/23 14:19:34 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/pio.h>
-#include <machine/intr.h>
 
-#include <arch/powerpc/pic/picvar.h>
+#include <powerpc/pic/picvar.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

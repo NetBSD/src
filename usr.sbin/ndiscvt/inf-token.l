@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/inf-token.l,v 1.3 2004/01/11 21:10:35 mdodd Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: inf-token.l,v 1.8 2009/10/29 14:49:03 christos Exp $");
+__RCSID("$NetBSD: inf-token.l,v 1.8.4.1 2011/06/23 14:20:48 cherry Exp $");
 #endif
 
 #include <regex.h>
@@ -71,7 +71,7 @@ update_lineno(const char *cp)
 
 %}
 
-%option nounput
+%option nounput noinput
 
 %%
 

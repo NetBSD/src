@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2010/12/20 00:25:32 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10.6.1 2011/06/23 14:19:10 cherry Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2010/12/20 00:25:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.6.1 2011/06/23 14:19:10 cherry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -74,12 +74,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2010/12/20 00:25:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/extent.h>
+#include <sys/intr.h>
 #include <sys/kernel.h>
 #include <sys/kgdb.h>
+#include <sys/ksyms.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
@@ -87,26 +90,22 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2010/12/20 00:25:32 matt Exp $");
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/syscallargs.h>
-#include <sys/syslog.h>
 #include <sys/sysctl.h>
+#include <sys/syslog.h>
 #include <sys/systm.h>
-#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <net/netisr.h>
-
-#include <machine/bus.h>
-#include <machine/db_machdep.h>
-#include <machine/intr.h>
-#include <machine/pio.h>
-#include <machine/pmap.h>
 #include <machine/powerpc.h>
-#include <machine/trap.h>
 #include <machine/pmppc.h>
 
+#include <powerpc/db_machdep.h>
+#include <powerpc/pio.h>
+#include <powerpc/pmap.h>
+#include <powerpc/trap.h>
+
 #include <powerpc/oea/bat.h>
-#include <arch/powerpc/pic/picvar.h>
+#include <powerpc/pic/picvar.h>
 
 #include <ddb/db_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.115 2011/05/08 18:37:15 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.115.2.1 2011/06/23 14:20:30 cherry Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.115 2011/05/08 18:37:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.115.2.1 2011/06/23 14:20:30 cherry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -332,7 +332,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	 * Invalidate and free all pages on the snapshot vnode.
 	 * We will read and write through the buffercache.
 	 */
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	error = VOP_PUTPAGES(vp, 0, 0,
 		    PGO_ALLPAGES | PGO_CLEANIT | PGO_SYNCIO | PGO_FREE);
 	if (error)
@@ -651,12 +651,12 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 		 */
 		if (xvp->v_mount != mp || vismarker(xvp))
 			continue;
-		mutex_enter(&xvp->v_interlock);
+		mutex_enter(xvp->v_interlock);
 		if ((xvp->v_iflag & VI_XLOCK) ||
 		    xvp->v_usecount == 0 || xvp->v_type == VNON ||
 		    VTOI(xvp) == NULL ||
 		    (VTOI(xvp)->i_flags & SF_SNAPSHOT)) {
-			mutex_exit(&xvp->v_interlock);
+			mutex_exit(xvp->v_interlock);
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
@@ -664,7 +664,7 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 		 * XXXAD should increase vnode ref count to prevent it
 		 * disappearing or being recycled.
 		 */
-		mutex_exit(&xvp->v_interlock);
+		mutex_exit(xvp->v_interlock);
 #ifdef DEBUG
 		if (snapdebug)
 			vprint("ffs_snapshot: busy vnode", xvp);

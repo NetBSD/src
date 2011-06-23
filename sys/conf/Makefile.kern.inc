@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.138 2011/05/30 03:12:43 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.138.2.1 2011/06/23 14:19:53 cherry Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -68,7 +68,7 @@ CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
 CWARNFLAGS+=	-Wswitch -Wshadow
 CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 CWARNFLAGS+=	-Wno-unreachable-code
-. if (defined(HAVE_GCC) && ${HAVE_GCC} > 3) || defined(HAVE_PCC)
+. if defined(HAVE_GCC) || defined(HAVE_PCC)
 CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
 .  if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
 	${MACHINE_ARCH} == "sparc64" || ${MACHINE} == "prep"
@@ -88,7 +88,7 @@ CFLAGS+=	${DEBUG} ${COPTS}
 AFLAGS+=	-D_LOCORE -Wa,--fatal-warnings
 
 # XXX
-.if defined(HAVE_GCC) && ${HAVE_GCC} > 3
+.if defined(HAVE_GCC)
 CFLAGS+=	-fno-strict-aliasing
 .endif
 
@@ -99,8 +99,7 @@ COPTS.kern_ssp.c+=	-fno-stack-protector -D__SSP__
 # If we want the bpendtsleep: label in kern_synch.c, we need to use
 # -fno-reorder-blocks.  Don't make this a config(1) defflag without
 # making sure this fragment remains valid.
-.if defined(HAVE_GCC) && ${HAVE_GCC} > 3 && \
-	!empty(${CFLAGS:M-DKERN_SYNCH_BPENDTSLEEP_LABEL})
+.if defined(HAVE_GCC) && !empty(${CFLAGS:M-DKERN_SYNCH_BPENDTSLEEP_LABEL})
 COPTS.kern_synch.c+=	-fno-reorder-blocks
 .endif
 
@@ -250,7 +249,7 @@ CTFFLAGS+=	-g
 SYSTEM_LD_TAIL+=; \
 	if grep '^\#define.*SYMTAB_SPACE' opt_ddbparam.h > /dev/null; then \
 		echo "${DBSYM} $@.gdb"; \
-		${DBSYM} $@.gdb || exit 1; \
+		${DBSYM} $@.gdb || (rm -f $@ ; exit 1) || exit 1; \
 	fi
 
 .elifndef PROF
@@ -260,7 +259,7 @@ LINKFLAGS+=	${LINKFLAGS_NORMAL}
 SYSTEM_LD_TAIL+=; \
 	if grep '^\#define.*SYMTAB_SPACE' opt_ddbparam.h > /dev/null; then \
 		echo "${DBSYM} $@"; \
-		${DBSYM} $@ || exit 1; \
+		${DBSYM} $@ || (rm -f $@ ; exit 1) || exit 1; \
 	fi
 
 SYSTEM_LD_HEAD+=${SYSTEM_LD_HEAD_EXTRA}
@@ -511,7 +510,7 @@ VARSTACK=kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
     uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c \
     dev/ofw/ofw_subr.c
 
-. if (defined(HAVE_GCC) && ${HAVE_GCC} > 3) || defined(HAVE_PCC)
+. if defined(HAVE_GCC) || defined(HAVE_PCC)
 .for __varstack in ${VARSTACK}
 COPTS.${__varstack:T} += -Wno-stack-protector
 .endfor

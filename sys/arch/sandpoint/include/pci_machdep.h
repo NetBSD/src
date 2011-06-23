@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.7 2011/04/04 20:37:53 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.7.2.1 2011/06/23 14:19:38 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -59,7 +59,7 @@ extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 /*
  * Functions provided to machine-independent PCI code.
  */
-void		pci_attach_hook(struct device *, struct device *,
+void		pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);

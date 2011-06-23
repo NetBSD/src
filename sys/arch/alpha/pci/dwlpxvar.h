@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxvar.h,v 1.9 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: dwlpxvar.h,v 1.9.10.1 2011/06/23 14:18:54 cherry Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -59,7 +59,7 @@ struct dwlpx_config {
 };
 
 struct dwlpx_softc {
-	struct device		dwlpx_dev;
+	device_t		dwlpx_dev;
 	struct dwlpx_config	dwlpx_cc;	/* config info */
 	u_int16_t		dwlpx_dtype;	/* Node Type */
 	u_int8_t		dwlpx_node;	/* TurboLaser Node */

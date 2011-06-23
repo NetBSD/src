@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.77 2011/04/27 07:24:52 hannken Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.77.2.1 2011/06/23 14:20:30 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,8 @@
 #define FFS_REALLOCBLKS		3	/* block reallocation enabled */
 #define FFS_ASYNCFREE		4	/* asynchronous block freeing enabled */
 #define FFS_LOG_CHANGEOPT	5	/* log optimalization strategy change */
-#define FFS_MAXID		6	/* number of valid ffs ids */
+#define FFS_EXTATTR_AUTOCREATE	6	/* size for backing file autocreation */
+#define FFS_MAXID		7	/* number of valid ffs ids */
 
 struct buf;
 struct fid;

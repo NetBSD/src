@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.20 2009/03/14 21:04:12 dsl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.20.10.1 2011/06/23 14:19:21 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2009/03/14 21:04:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20.10.1 2011/06/23 14:19:21 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,17 +44,17 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2009/03/14 21:04:12 dsl Exp $");
 
 #include <powerpc/pic/picvar.h>
 
-int	mainbus_match(struct device *, struct cfdata *, void *);
-void	mainbus_attach(struct device *, struct device *, void *);
+int	mainbus_match(device_t, cfdata_t, void *);
+void	mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 /*
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 1;
 }
@@ -63,7 +63,7 @@ mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach the mainbus.
  */
 void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct ofbus_attach_args oba;
 	struct confargs ca;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_intr.c,v 1.2 2009/08/07 01:27:14 matt Exp $	*/
+/*	$NetBSD: gdium_intr.c,v 1.2.12.1 2011/06/23 14:19:07 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.2 2009/08/07 01:27:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.2.12.1 2011/06/23 14:19:07 cherry Exp $");
+
+#define __INTR_PRIVATE
+
 
 #include "opt_ddb.h"
 
@@ -129,7 +132,7 @@ struct gdium_cpuintr {
 };
 
 struct gdium_cpuintr gdium_cpuintrs[NINTRS];
-const char *gdium_cpuintrnames[NINTRS] = {
+const char * const gdium_cpuintrnames[NINTRS] = {
 	"int 0 (pci)",
 	"int 1 (errors)",
 };
@@ -138,20 +141,11 @@ const char *gdium_cpuintrnames[NINTRS] = {
  * This is a mask of bits to clear in the SR when we go to a
  * given hardware interrupt priority level.
  */
-const uint32_t ipl_sr_bits[_IPL_N] = {
-	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] =
-	    MIPS_SOFT_INT_MASK_0,
-#if IPL_SOFTCLOCK != IPL_SOFTBIO
-	[IPL_SOFTBIO] =
-	    MIPS_SOFT_INT_MASK_0,
-#endif
-	[IPL_SOFTNET] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-#if IPL_SOFTNET != IPL_SOFTSERIAL
-	[IPL_SOFTSERIAL] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-#endif
+static const struct ipl_sr_map gdium_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
 	[IPL_VM] =
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0 |
@@ -167,25 +161,12 @@ const uint32_t ipl_sr_bits[_IPL_N] = {
 	    MIPS_INT_MASK_3 |
 	    MIPS_INT_MASK_4 |
 	    MIPS_INT_MASK_5,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =            MIPS_INT_MASK,
+    },
 };
 
-/*
- * This is a mask of bits to clear in the SR when we go to a
- * given software interrupt priority level.
- * Hardware ipls are port/board specific.
- */
-const uint32_t mips_ipl_si_to_sr[] = {
-	[IPL_SOFTCLOCK-IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
-#if IPL_SOFTCLOCK != IPL_SOFTBIO
-	[IPL_SOFTBIO-IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
-#endif
-	[IPL_SOFTNET-IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_1,
-#if IPL_SOFTNET != IPL_SOFTSERIAL
-	[IPL_SOFTSERIAL-IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_1,
-#endif
-};
-
-int	gdium_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int	gdium_pci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 const char *gdium_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *gdium_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*gdium_pci_intr_establish(void *, pci_intr_handle_t, int,
@@ -196,11 +177,13 @@ void	gdium_pci_conf_interrupt(void *, int, int, int, int, int *);
 void
 evbmips_intr_init(void)
 {
-	struct gdium_config *gc = &gdium_configuration;
+	struct gdium_config * const gc = &gdium_configuration;
 	struct bonito_config *bc = &gc->gc_bonito;
 	const struct gdium_irqmap *irqmap;
 	uint32_t intbit;
-	int i;
+	size_t i;
+
+	ipl_sr_map = gdium_ipl_sr_map;
 
 	for (i = 0; i < NINTRS; i++) {
 		LIST_INIT(&gdium_cpuintrs[i].cintr_list);
@@ -316,8 +299,7 @@ evbmips_intr_disestablish(void *cookie)
 }
 
 void
-evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc,
-	uint32_t ipending)
+evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 {
 	const struct gdium_irqmap *irqmap;
 	struct evbmips_intrhand *ih;
@@ -341,11 +323,7 @@ evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc,
 				(*ih->ih_func)(ih->ih_arg);
 			}
 		}
-		cause &= ~(MIPS_INT_MASK_0 << level);
 	}
-
-	/* Re-enable anything that we have processed. */
-	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
 }
 
 /*****************************************************************************
@@ -353,7 +331,7 @@ evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc,
  *****************************************************************************/
 
 int
-gdium_pci_intr_map(struct pci_attach_args *pa,
+gdium_pci_intr_map(const struct pci_attach_args *pa,
     pci_intr_handle_t *ihp)
 {
 	static const int8_t pciirqmap[5/*device*/] = {

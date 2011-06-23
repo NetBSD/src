@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.50.2.1 2011/06/03 13:27:39 cherry Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.50.2.2 2011/06/23 14:19:49 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.50.2.1 2011/06/03 13:27:39 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.50.2.2 2011/06/23 14:19:49 cherry Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.50.2.1 2011/06/03 13:27:39 cherry 
 #include <dev/splash/splash.h>
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8042reg.h>
+#include <dev/mm.h>
 
 #include <machine/bootinfo.h>
 #include <machine/vmparam.h>
@@ -69,8 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.50.2.1 2011/06/03 13:27:39 cherry 
 void (*x86_cpu_idle)(void);
 static bool x86_cpu_idle_ipi;
 static char x86_cpu_idle_text[16];
-
-int check_pa_acc(paddr_t, vm_prot_t);
 
 /* --------------------------------------------------------------------- */
 
@@ -111,10 +110,10 @@ lookup_bootinfo(int type)
 }
 
 /*
- * check_pa_acc: check if given pa is accessible.
+ * mm_md_physacc: check if given pa is accessible.
  */
 int
-check_pa_acc(paddr_t pa, vm_prot_t prot)
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
 	extern phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 	extern int mem_cluster_cnt;
@@ -128,7 +127,6 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 			return 0;
 		}
 	}
-
 	return kauth_authorize_machdep(kauth_cred_get(),
 	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.9 2011/01/02 21:37:01 jakllsch Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.9.6.1 2011/06/23 14:20:23 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -485,7 +485,7 @@ read_gdblock(struct open_file *f, struct m_ext2fs *fs)
 /*
  * Open a file.
  */
-int
+__compactcall int
 ext2fs_open(const char *path, struct open_file *f)
 {
 #ifndef LIBSA_FS_SINGLECOMPONENT
@@ -695,7 +695,7 @@ out:
 	return rc;
 }
 
-int
+__compactcall int
 ext2fs_close(struct open_file *f)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
@@ -718,7 +718,7 @@ ext2fs_close(struct open_file *f)
  * Copy a portion of a file into kernel memory.
  * Cross block boundaries when necessary.
  */
-int
+__compactcall int
 ext2fs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
@@ -756,7 +756,7 @@ ext2fs_read(struct open_file *f, void *start, size_t size, size_t *resid)
  * Not implemented.
  */
 #ifndef LIBSA_NO_FS_WRITE
-int
+__compactcall int
 ext2fs_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 
@@ -765,7 +765,7 @@ ext2fs_write(struct open_file *f, void *start, size_t size, size_t *resid)
 #endif /* !LIBSA_NO_FS_WRITE */
 
 #ifndef LIBSA_NO_FS_SEEK
-off_t
+__compactcall off_t
 ext2fs_seek(struct open_file *f, off_t offset, int where)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
@@ -788,7 +788,7 @@ ext2fs_seek(struct open_file *f, off_t offset, int where)
 }
 #endif /* !LIBSA_NO_FS_SEEK */
 
-int
+__compactcall int
 ext2fs_stat(struct open_file *f, struct stat *sb)
 {
 	struct file *fp = (struct file *)f->f_fsdata;

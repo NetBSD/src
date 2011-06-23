@@ -1,4 +1,4 @@
-/*	$NetBSD: ka6400.c,v 1.15 2010/12/14 23:44:49 matt Exp $	*/
+/*	$NetBSD: ka6400.c,v 1.15.6.1 2011/06/23 14:19:46 cherry Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.15 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.15.6.1 2011/06/23 14:19:46 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -194,7 +194,7 @@ static int ms6400_match(device_t , cfdata_t, void *);
 static void ms6400_attach(device_t , device_t , void*);
 
 struct mem_xmi_softc {
-	struct device *sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };

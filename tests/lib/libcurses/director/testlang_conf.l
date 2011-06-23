@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.3 2011/05/15 23:56:28 christos Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.3.2.1 2011/06/23 14:20:40 cherry Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -55,11 +55,11 @@ static int include_ptr = 0;
 static char *
 dequote(const char *s, size_t *len)
 {
-	const char *p;
-	char *buf, *q, c;
+	const unsigned char *p;
+	char *buf, *q;
 
 	*len = 0;
-	p = s;
+	p = (const unsigned char *)s;
 	while (*p) {
 		if (*p == '\\' && *(p+1)) {
 			if (isdigit(*(p+1)) && *(p+2) && isdigit(*(p+2)) &&
@@ -76,7 +76,7 @@ dequote(const char *s, size_t *len)
 	if (buf == NULL)
 		return NULL;
 
-	p = s;
+	p = (const unsigned char *)s;
 	q = buf;
 	while (*p) {
 		if (*p == '\\' && *(p+1)) {
@@ -155,6 +155,7 @@ LHB		\(
 RHB		\)
 
 %x incl
+%option noinput nounput
 
 %%
 
@@ -167,7 +168,7 @@ include		BEGIN(incl);
 		if (include_ptr > MAX_INCLUDES) {
 			fprintf(stderr,
 				"Maximum number of nested includes exceeded "
-				"at line %d of file %s\n", line, cur_file);
+				"at line %zu of file %s\n", line, cur_file);
 				exit(2);
 		}
 
@@ -189,11 +190,8 @@ include		BEGIN(incl);
 
 		yyin = fopen(inc_file, "r" );
 
-		if (!yyin) {
-			fprintf(stderr, "Error opening %s: ", inc_file);
-			perror(NULL);
-			exit(2);
-		}
+		if (!yyin)
+			err(1, "Error opening %s", inc_file);
 
 		yypush_buffer_state(yy_create_buffer(yyin, YY_BUF_SIZE));
 
@@ -357,7 +355,7 @@ include		BEGIN(incl);
 \`{STRING}\` 	{
 			char *p, *str;
 			size_t len, chlen;
-			int i;
+			size_t i;
 			chtype *rv;
 
 			if ((yylval.retval = malloc(sizeof(returns_t))) == NULL)

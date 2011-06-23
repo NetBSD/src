@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.167 2011/05/09 08:51:18 manu Exp $
+#	$NetBSD: Makefile,v 1.167.2.1 2011/06/23 14:18:34 cherry Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -64,7 +64,15 @@ SUBDIR+=	../external/public-domain/xz/lib
 SUBDIR+=	../gnu/lib/libmalloc
 
 .if (${MKGCC} != "no")
+. if ${HAVE_GCC} == 4
 SUBDIR+=	../gnu/lib/libobjc4
+. endif
+.endif
+
+. if ${HAVE_GCC} >= 45
+SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
+SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
+SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
 .endif
 
 #
@@ -107,8 +115,10 @@ SUBDIR+=	../external/gpl3/binutils/lib	# libbfd depends on libz
 .endif
 
 .if (${MKGCC} != "no" && ${MKCXX} != "no")
+. if ${HAVE_GCC} == 4
 SUBDIR+=	../gnu/lib/libstdc++-v3_4	# depends on libm
 SUBDIR+=	../gnu/lib/libsupc++4
+. endif
 .endif
 
 #==================== 2nd library dependency barrier ====================

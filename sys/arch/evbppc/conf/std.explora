@@ -1,4 +1,4 @@
-#	$NetBSD: std.explora,v 1.4 2005/12/11 12:17:11 christos Exp $
+#	$NetBSD: std.explora,v 1.4.110.1 2011/06/23 14:19:08 cherry Exp $
 #
 # Standard/required options for NetBSD/explora.
 
@@ -18,7 +18,7 @@ makeoptions	TEXTADDR=0x10000
 makeoptions	BOARDTYPE="explora"
 makeoptions	PPCDIR="ibm4xx"
 
-options 	PPC_INTR_IMPL="<powerpc/ibm4xx/ibm4xx_intr.h>"
+options 	PPC_INTR_IMPL="<powerpc/intr.h>"
 
 options 	INTSTK=8192
 

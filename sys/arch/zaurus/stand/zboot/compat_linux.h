@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_linux.h,v 1.1 2009/03/02 09:33:02 nonaka Exp $	*/
+/*	$NetBSD: compat_linux.h,v 1.1.16.1 2011/06/23 14:19:52 cherry Exp $	*/
 /*	$OpenBSD: compat_linux.h,v 1.8 2007/06/16 00:26:33 deraadt Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ struct vnode;
 #define __NR_ioctl		(__NR_SYSCALL_BASE + LINUX_SYS_ioctl)
 #define __NR_select		(__NR_SYSCALL_BASE + LINUX_SYS_select)
 #define __NR_stat		(__NR_SYSCALL_BASE + LINUX_SYS_stat)
+#define __NR_fstat		(__NR_SYSCALL_BASE + LINUX_SYS_fstat)
 #define __NR_syscall		(__NR_SYSCALL_BASE + 113)
 
 #undef	SYS_select

@@ -1,4 +1,4 @@
-/*	$NetBSD: zaurus_var.h,v 1.2 2006/12/17 16:07:11 peter Exp $ */
+/*	$NetBSD: zaurus_var.h,v 1.2.86.1 2011/06/23 14:19:52 cherry Exp $ */
 /*	$OpenBSD: zaurus_var.h,v 1.4 2005/07/01 23:56:47 uwe Exp $	*/
 /*	NetBSD: lubbock_var.h,v 1.1 2003/06/18 10:51:15 bsh Exp */
 
@@ -37,9 +37,11 @@
 #ifdef _KERNEL
 
 #define ZAURUS_C860		0xC0860
+#define ZAURUS_C1000		0xC1000
 #define ZAURUS_C3000		0xC3000
 
 #define ZAURUS_ISC860		(zaurusmod == ZAURUS_C860)
+#define ZAURUS_ISC1000		(zaurusmod == ZAURUS_C1000)
 #define ZAURUS_ISC3000		(zaurusmod == ZAURUS_C3000)
 
 extern int zaurusmod;

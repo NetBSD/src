@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mremap.c,v 1.16 2010/08/16 01:21:10 yamt Exp $	*/
+/*	$NetBSD: uvm_mremap.c,v 1.16.6.1 2011/06/23 14:20:36 cherry Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.16 2010/08/16 01:21:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.16.6.1 2011/06/23 14:20:36 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -80,10 +80,10 @@ uvm_mapent_extend(struct vm_map *map, vaddr_t endva, vsize_t size)
 			error = E2BIG; /* XXX */
 			goto done;
 		}
-		mutex_enter(&uobj->vmobjlock);
+		mutex_enter(uobj->vmobjlock);
 		KASSERT(uobj->uo_refs > 0);
 		atomic_inc_uint(&uobj->uo_refs);
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 		reserved_entry->object.uvm_obj = uobj;
 		reserved_entry->offset = newoffset;
 	}

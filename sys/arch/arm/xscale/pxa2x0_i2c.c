@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2c.c,v 1.4 2009/04/20 12:55:02 pgoyette Exp $	*/
+/*	$NetBSD: pxa2x0_i2c.c,v 1.4.10.1 2011/06/23 14:19:01 cherry Exp $	*/
 /*	$OpenBSD: pxa2x0_i2c.c,v 1.2 2005/05/26 03:52:07 pascoe Exp $	*/
 
 /*
@@ -18,32 +18,50 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2c.c,v 1.4 2009/04/20 12:55:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2c.c,v 1.4.10.1 2011/06/23 14:19:01 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
+#include <dev/i2c/i2cvar.h>
 
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_i2c.h>
-#include <arm/xscale/pxa2x0_gpio.h>
+
+#ifdef PXAIIC_DEBUG
+#define	DPRINTF(s)	printf s
+#else
+#define	DPRINTF(s)	do { } while (/*CONSTCOND*/0)
+#endif
 
 #define I2C_RETRY_COUNT	10
 
 int
 pxa2x0_i2c_attach_sub(struct pxa2x0_i2c_softc *sc)
 {
+	int error;
 
-	if (bus_space_map(sc->sc_iot, PXA2X0_I2C_BASE,
-	    PXA2X0_I2C_SIZE, 0, &sc->sc_ioh)) {
+	error = bus_space_map(sc->sc_iot, PXA2X0_I2C_BASE, sc->sc_size, 0,
+	    &sc->sc_ioh);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "unable to map register\n");
 		sc->sc_size = 0;
-		return EIO;
+		return error;
 	}
+
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, 0, sc->sc_size,
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
+
+	sc->sc_icr = ICR_GCD | ICR_SCLE | ICR_IUE;
+#if 0
+	if (ISSET(sc->sc_flags, PI2CF_ENABLE_INTR))
+		sc->sc_icr |= ICR_BEIE | ICR_DRFIE | ICR_ITEIE;
+#endif
+	if (ISSET(sc->sc_flags, PI2CF_FAST_MODE))
+		sc->sc_icr |= ICR_FM;
 
 	pxa2x0_i2c_init(sc);
 
@@ -54,12 +72,11 @@ int
 pxa2x0_i2c_detach_sub(struct pxa2x0_i2c_softc *sc)
 {
 
-	if (sc->sc_size) {
+	if (sc->sc_size != 0) {
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
 		sc->sc_size = 0;
 	}
 	pxa2x0_clkman_config(CKEN_I2C, 0);
-
 	return 0;
 }
 
@@ -381,4 +398,134 @@ err:
 	bus_space_write_4(iot, ioh, I2C_ICR, ICR_IUE | ICR_SCLE);
 
 	return EIO;
+}
+
+/* ----------------------------------------------------------------------------
+ * for i2c_controller
+ */
+
+#define	CSR_READ_4(sc,r)	bus_space_read_4(sc->sc_iot, sc->sc_ioh, r)
+#define	CSR_WRITE_4(sc,r,v)	bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v)
+
+#define	ISR_ALL			(ISR_RWM | ISR_ACKNAK | ISR_UE | ISR_IBB \
+				 | ISR_SSD | ISR_ALD | ISR_ITE | ISR_IRF \
+				 | ISR_GCAD | ISR_SAD | ISR_BED)
+
+#define	I2C_TIMEOUT		100	/* protocol timeout, in uSecs */
+
+void
+pxa2x0_i2c_reset(struct pxa2x0_i2c_softc *sc)
+{
+
+	CSR_WRITE_4(sc, I2C_ICR, ICR_UR);
+	CSR_WRITE_4(sc, I2C_ISAR, 0);
+	CSR_WRITE_4(sc, I2C_ISR, ISR_ALL);
+	while (CSR_READ_4(sc, I2C_ICR) & ~ICR_UR)
+		continue;
+	CSR_WRITE_4(sc, I2C_ICR, sc->sc_icr);
+}
+
+int
+pxa2x0_i2c_wait(struct pxa2x0_i2c_softc *sc, int bit, int flags)
+{
+	uint32_t isr;
+	int error;
+	int i;
+
+	for (i = I2C_TIMEOUT; i >= 0; --i) {
+		isr = CSR_READ_4(sc, I2C_ISR);
+		if (isr & (bit | ISR_BED))
+			break;
+		delay(1);
+	}
+
+	if (isr & (ISR_BED | (bit & ISR_ALD)))
+		error = EIO;
+	else if (isr & (bit & ~ISR_ALD))
+		error = 0;
+	else
+		error = ETIMEDOUT;
+
+	CSR_WRITE_4(sc, I2C_ISR, isr);
+
+	return error;
+}
+
+int
+pxa2x0_i2c_send_start(struct pxa2x0_i2c_softc *sc, int flags)
+{
+
+	CSR_WRITE_4(sc, I2C_ICR, sc->sc_icr | ICR_START);
+	delay(I2C_TIMEOUT);
+	return 0;
+}
+
+int
+pxa2x0_i2c_send_stop(struct pxa2x0_i2c_softc *sc, int flags)
+{
+
+	CSR_WRITE_4(sc, I2C_ICR, sc->sc_icr | ICR_STOP);
+	delay(I2C_TIMEOUT);
+	return 0;
+}
+
+int
+pxa2x0_i2c_initiate_xfer(struct pxa2x0_i2c_softc *sc, uint16_t addr, int flags)
+{
+	int rd_req = (flags & I2C_F_READ) ? 1 : 0;
+	int error;
+
+	if ((addr & ~0x7f) != 0) {
+		error = EINVAL;
+		goto error;
+	}
+
+	CSR_WRITE_4(sc, I2C_IDBR, (addr << 1) | rd_req);
+	CSR_WRITE_4(sc, I2C_ICR, sc->sc_icr | ICR_START | ICR_TB);
+
+	error = pxa2x0_i2c_wait(sc, ISR_ITE, flags);
+error:
+	if (error) {
+		DPRINTF(("%s: failed to initiate %s xfer (error=%d)\n",
+		    device_xname(sc->sc_dev),
+		    rd_req ? "read" : "write", error));
+		return error;
+	}
+	return 0;
+}
+
+int
+pxa2x0_i2c_read_byte(struct pxa2x0_i2c_softc *sc, uint8_t *bytep, int flags)
+{
+	int last_byte = flags & I2C_F_LAST;
+	int send_stop = flags & I2C_F_STOP;
+	int error;
+
+	CSR_WRITE_4(sc, I2C_ICR, sc->sc_icr | ICR_TB
+	    | (last_byte ? ICR_ACKNAK : 0) | (send_stop ? ICR_STOP : 0));
+	error = pxa2x0_i2c_wait(sc, ISR_IRF | ISR_ALD, flags);
+	if (error) {
+		DPRINTF(("%s: read byte failed\n", device_xname(sc->sc_dev)));
+		return error;
+	}
+
+	*bytep = CSR_READ_4(sc, I2C_IDBR);
+	return 0;
+}
+
+int
+pxa2x0_i2c_write_byte(struct pxa2x0_i2c_softc *sc, uint8_t byte, int flags)
+{
+	int send_stop = flags & I2C_F_STOP;
+	int error;
+
+	CSR_WRITE_4(sc, I2C_IDBR, byte);
+	CSR_WRITE_4(sc, I2C_ICR, sc->sc_icr | ICR_TB
+	    | (send_stop ? ICR_STOP : 0));
+	error = pxa2x0_i2c_wait(sc, ISR_ITE | ISR_ALD, flags);
+	if (error) {
+		DPRINTF(("%s: write byte failed\n", device_xname(sc->sc_dev)));
+		return error;
+	}
+	return 0;
 }

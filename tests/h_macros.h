@@ -1,4 +1,4 @@
-/* $NetBSD: h_macros.h,v 1.6 2010/08/31 17:21:14 pooka Exp $ */
+/* $NetBSD: h_macros.h,v 1.6.4.1 2011/06/23 14:20:38 cherry Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ atf_tc_fail_errno(const char *fmt, ...)
 	strlcat(buf, ": ", sizeof(buf));
 	strlcat(buf, strerror(sverrno), sizeof(buf));
 
-	atf_tc_fail(buf);
+	atf_tc_fail("%s", buf);
 }
 
 static __inline void

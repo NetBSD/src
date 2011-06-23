@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.26 2011/03/06 17:08:16 bouyer Exp $	*/
+/*	$NetBSD: extern.h,v 1.26.2.1 2011/06/23 14:18:42 cherry Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -33,11 +33,9 @@ int		bread(int, char *, daddr_t, long);
 void		bufinit(void);
 void		bwrite(int, char *, daddr_t, long);
 void		cacheino(union dinode *, ino_t);
-void		catch(int);
-void		catchquit(int);
 int		changeino(ino_t, const char *, ino_t);
 int		chkrange(daddr_t, int);
-void		ckfini(void);
+void		ckfini(int);
 int		ckinode(union dinode *, struct inodesc *);
 int		clearentry(struct inodesc *);
 void		clri(struct inodesc *, const char *, int);
@@ -81,7 +79,6 @@ void		propagate(ino_t);
 int		reply(const char *);
 void		setinodebuf(ino_t);
 int		setup(const char *, const char *);
-void		voidquit(int);
 ssize_t		readblk(union dinode *, off_t, struct bufarea **);
 struct bufarea *expandfile(union dinode *);
 

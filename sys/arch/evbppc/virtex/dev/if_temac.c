@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.7 2010/04/05 07:19:30 joerg Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.7.6.1 2011/06/23 14:19:10 cherry Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.7 2010/04/05 07:19:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.7.6.1 2011/06/23 14:19:10 cherry Exp $");
 
 
 #include <sys/param.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.7 2010/04/05 07:19:30 joerg Exp $");
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -60,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.7 2010/04/05 07:19:30 joerg Exp $");
 
 #include <net/bpf.h>
 
-#include <machine/bus.h>
+#include <powerpc/ibm4xx/cpu.h>
 
 #include <evbppc/virtex/idcr.h>
 #include <evbppc/virtex/dev/xcvbusvar.h>
@@ -136,7 +138,7 @@ struct temac_rxsoft {
 };
 
 struct temac_softc {
-	struct device 		sc_dev;
+	device_t 		sc_dev;
 	struct ethercom 	sc_ec;
 #define sc_if 			sc_ec.ec_if
 
@@ -193,7 +195,7 @@ struct temac_softc {
 };
 
 /* Device interface. */
-static void 	temac_attach(struct device *, struct device *, void *);
+static void 	temac_attach(device_t, device_t, void *);
 
 /* Ifnet interface. */
 static int 	temac_init(struct ifnet *);
@@ -202,10 +204,10 @@ static void 	temac_start(struct ifnet *);
 static void 	temac_stop(struct ifnet *, int);
 
 /* Media management. */
-static int	temac_mii_readreg(struct device *, int, int);
-static void	temac_mii_statchg(struct device *);
+static int	temac_mii_readreg(device_t, int, int);
+static void	temac_mii_statchg(device_t);
 static void	temac_mii_tick(void *);
-static void	temac_mii_writereg(struct device *, int, int, int);
+static void	temac_mii_writereg(device_t, int, int, int);
 
 /* Indirect hooks. */
 static void 	temac_shutdown(void *);
@@ -249,7 +251,7 @@ static inline void 	hif_wait_stat(uint32_t);
     bus_space_write_4((sc)->sc_dma_txt, (sc)->sc_dma_txh, CDMAC_CURDESC, (val))
 
 
-CFATTACH_DECL(temac, sizeof(struct temac_softc),
+CFATTACH_DECL_NEW(temac, sizeof(struct temac_softc),
     xcvbus_child_match, temac_attach, NULL, NULL);
 
 
@@ -314,23 +316,25 @@ gmi_read_4(uint32_t addr)
  * Generic device.
  */
 static void
-temac_attach(struct device *parent, struct device *self, void *aux)
+temac_attach(device_t parent, device_t self, void *aux)
 {
 	struct xcvbus_attach_args *vaa = aux;
 	struct ll_dmac 		*rx = vaa->vaa_rx_dmac;
 	struct ll_dmac 		*tx = vaa->vaa_tx_dmac;
-	struct temac_softc 	*sc = (struct temac_softc *)self;
+	struct temac_softc 	*sc = device_private(self);
 	struct ifnet 		*ifp = &sc->sc_if;
 	struct mii_data 	*mii = &sc->sc_mii;
 	uint8_t 		enaddr[ETHER_ADDR_LEN];
 	bus_dma_segment_t 	seg;
 	int 			error, nseg, i;
+	const char * const xname = device_xname(self);
 
-	printf(": TEMAC\n"); 	/* XXX will be LL_TEMAC, PLB_TEMAC */
+	aprint_normal(": TEMAC\n"); 	/* XXX will be LL_TEMAC, PLB_TEMAC */
 
 	KASSERT(rx);
 	KASSERT(tx);
 
+	sc->sc_dev = self;
 	sc->sc_dmat = vaa->vaa_dmat;
 	sc->sc_dead = 0;
 	sc->sc_rx_drained = 1;
@@ -344,33 +348,29 @@ temac_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if ((error = bus_space_map(vaa->vaa_iot, vaa->vaa_addr, TEMAC_SIZE, 0,
 	    &sc->sc_ioh)) != 0) {
-		printf("%s: could not map registers\n", device_xname(self));
+		aprint_error_dev(self, "could not map registers\n");
 		goto fail_0;
 	}
 
 	if ((error = bus_space_map(sc->sc_dma_rxt, rx->dmac_ctrl_addr,
 	    CDMAC_CTRL_SIZE, 0, &sc->sc_dma_rxh)) != 0) {
-		printf("%s: could not map Rx control registers\n",
-		    device_xname(self));
+		aprint_error_dev(self, "could not map Rx control registers\n");
 		goto fail_0;
 	}
 	if ((error = bus_space_map(sc->sc_dma_rxt, rx->dmac_stat_addr,
 	    CDMAC_STAT_SIZE, 0, &sc->sc_dma_rsh)) != 0) {
-		printf("%s: could not map Rx status register\n",
-		    device_xname(self));
+		aprint_error_dev(self, "could not map Rx status register\n");
 		goto fail_0;
 	}
 
 	if ((error = bus_space_map(sc->sc_dma_txt, tx->dmac_ctrl_addr,
 	    CDMAC_CTRL_SIZE, 0, &sc->sc_dma_txh)) != 0) {
-		printf("%s: could not map Tx control registers\n",
-		    device_xname(self));
+		aprint_error_dev(self, "could not map Tx control registers\n");
 		goto fail_0;
 	}
 	if ((error = bus_space_map(sc->sc_dma_txt, tx->dmac_stat_addr,
 	    CDMAC_STAT_SIZE, 0, &sc->sc_dma_tsh)) != 0) {
-		printf("%s: could not map Tx status register\n",
-		    device_xname(self));
+		aprint_error_dev(self, "could not map Tx status register\n");
 		goto fail_0;
 	}
 
@@ -379,31 +379,28 @@ temac_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct temac_control), 8, 0, &seg, 1, &nseg, 0)) != 0) {
-	    	printf("%s: could not allocate control data\n",
-	    	    sc->sc_dev.dv_xname);
+	    	aprint_error_dev(self, "could not allocate control data\n");
 		goto fail_0;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, nseg,
 	    sizeof(struct temac_control),
 	    (void **)&sc->sc_control_data, BUS_DMA_COHERENT)) != 0) {
-	    	printf("%s: could not map control data\n",
-	    	    sc->sc_dev.dv_xname);
+	    	aprint_error_dev(self, "could not map control data\n");
 		goto fail_1;
 	}
 
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct temac_control), 1,
 	    sizeof(struct temac_control), 0, 0, &sc->sc_control_dmap)) != 0) {
-	    	printf("%s: could not create control data DMA map\n",
-	    	    sc->sc_dev.dv_xname);
+	    	aprint_error_dev(self,
+		    "could not create control data DMA map\n");
 		goto fail_2;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_control_dmap,
 	    sc->sc_control_data, sizeof(struct temac_control), NULL, 0)) != 0) {
-	    	printf("%s: could not load control data DMA map\n",
-	    	    sc->sc_dev.dv_xname);
+	    	aprint_error_dev(self, "could not load control data DMA map\n");
 		goto fail_3;
 	}
 
@@ -434,8 +431,9 @@ temac_attach(struct device *parent, struct device *self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat,
 		    ETHER_MAX_LEN_JUMBO, TEMAC_NTXSEG, ETHER_MAX_LEN_JUMBO,
 		    0, 0, &sc->sc_txsoft[i].txs_dmap)) != 0) {
-		    	printf("%s: could not create Tx DMA map %d\n",
-		    	    sc->sc_dev.dv_xname, i);
+		    	aprint_error_dev(self,
+			    "could not create Tx DMA map %d\n",
+		    	    i);
 			goto fail_4;
 		}
 		sc->sc_txsoft[i].txs_mbuf = NULL;
@@ -446,8 +444,8 @@ temac_attach(struct device *parent, struct device *self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat,
 		    MCLBYTES, TEMAC_NRXSEG, MCLBYTES, 0, 0,
 		    &sc->sc_rxsoft[i].rxs_dmap)) != 0) {
-		    	printf("%s: could not create Rx DMA map %d\n",
-		    	    sc->sc_dev.dv_xname, i);
+		    	aprint_error_dev(self,
+			    "could not create Rx DMA map %d\n", i);
 			goto fail_5;
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
@@ -461,16 +459,14 @@ temac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rx_ih = ll_dmac_intr_establish(rx->dmac_chan,
 	    temac_rx_intr, sc);
 	if (sc->sc_rx_ih == NULL) {
-		printf("%s: could not establish Rx interrupt\n",
-		    device_xname(self));
+		aprint_error_dev(self, "could not establish Rx interrupt\n");
 		goto fail_5;
 	}
 
 	sc->sc_tx_ih = ll_dmac_intr_establish(tx->dmac_chan,
 	    temac_tx_intr, sc);
 	if (sc->sc_tx_ih == NULL) {
-		printf("%s: could not establish Tx interrupt\n",
-		    device_xname(self));
+		aprint_error_dev(self, "could not establish Tx interrupt\n");
 		goto fail_6;
 	}
 
@@ -498,7 +494,7 @@ temac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ec.ec_mii = mii;
 	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 
-	mii_attach(&sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
@@ -526,7 +522,7 @@ temac_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Hook up with network stack.
 	 */
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strcpy(ifp->if_xname, xname);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = temac_ioctl;
@@ -544,8 +540,8 @@ temac_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_sdhook = shutdownhook_establish(temac_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    device_xname(self));
+		aprint_error_dev(self,
+		    "WARNING: unable to establish shutdown hook\n");
 
 	callout_setfunc(&sc->sc_mii_tick, temac_mii_tick, sc);
 	callout_setfunc(&sc->sc_rx_timo, temac_rxtimo, sc);
@@ -570,7 +566,7 @@ temac_attach(struct device *parent, struct device *self, void *aux)
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, nseg);
  fail_0:
- 	printf("%s: error = %d\n", device_xname(self), error);
+ 	aprint_error_dev(self, "error = %d\n", error);
 }
 
 /*
@@ -621,10 +617,9 @@ temac_init(struct ifnet *ifp)
 	if (sc->sc_rx_drained) {
 		for (i = 0; i < TEMAC_NRXDESC; i++) {
 			if ((error = temac_rxalloc(sc, i, 1)) != 0) {
-				printf("%s: failed to allocate Rx "
-				    "descriptor %d\n",
-				    sc->sc_dev.dv_xname, i);
-
+				aprint_error_dev(sc->sc_dev,
+				    "failed to allocate Rx descriptor %d\n",
+				    i);
 				temac_rxdrain(sc);
 				return (error);
 			}
@@ -707,14 +702,14 @@ temac_start(struct ifnet *ifp)
 		if ((error = bus_dmamap_load_mbuf(sc->sc_dmat, dmap, m,
 		    BUS_DMA_WRITE | BUS_DMA_NOWAIT)) != 0) {
 		    	if (error == EFBIG) {
-		    		printf("%s: Tx consumes too many segments, "
-		    		    "dropped\n", sc->sc_dev.dv_xname);
+		    		aprint_error_dev(sc->sc_dev,
+				    "Tx consumes too many segments, dropped\n");
 				IFQ_DEQUEUE(&ifp->if_snd, m);
 				m_freem(m);
 				continue;
 		    	} else {
-		    		printf("%s: Tx stall due to resource "
-		    		    "shortage\n", sc->sc_dev.dv_xname);
+		    		aprint_debug_dev(sc->sc_dev,
+				    "Tx stall due to resource shortage\n");
 		    		break;
 			}
 		}
@@ -781,8 +776,9 @@ temac_start(struct ifnet *ifp)
 
 		temac_txkick(sc);
 #if TEMAC_TXDEBUG > 0
-		printf("%s: start:  txcur  %03d -> %03d, nseg %03d\n",
-		    sc->sc_dev.dv_xname, head, sc->sc_txcur, nsegs);
+		aprint_debug_dev(sc->sc_dev,
+		    "start:  txcur  %03d -> %03d, nseg %03d\n",
+		    head, sc->sc_txcur, nsegs);
 #endif
 	}
 }
@@ -795,7 +791,7 @@ temac_stop(struct ifnet *ifp, int disable)
 	int 			i;
 
 #if TEMAC_DEBUG > 0
-	printf("%s: stop\n", device_xname(&sc->sc_dev));
+	aprint_debug_dev(sc->sc_dev, "stop\n");
 #endif
 
 	/* Down the MII. */
@@ -825,7 +821,7 @@ temac_stop(struct ifnet *ifp, int disable)
 }
 
 static int
-temac_mii_readreg(struct device *self, int phy, int reg)
+temac_mii_readreg(device_t self, int phy, int reg)
 {
 	mtidcr(IDCR_HIF_ARG0, (phy << 5) | reg);
 	mtidcr(IDCR_HIF_CTRL, TEMAC_GMI_MII_ADDR);
@@ -835,7 +831,7 @@ temac_mii_readreg(struct device *self, int phy, int reg)
 }
 
 static void
-temac_mii_writereg(struct device *self, int phy, int reg, int val)
+temac_mii_writereg(device_t self, int phy, int reg, int val)
 {
 	mtidcr(IDCR_HIF_ARG0, val);
 	mtidcr(IDCR_HIF_CTRL, TEMAC_GMI_MII_WRVAL | HIF_CTRL_WRITE);
@@ -845,9 +841,9 @@ temac_mii_writereg(struct device *self, int phy, int reg, int val)
 }
 
 static void
-temac_mii_statchg(struct device *self)
+temac_mii_statchg(device_t self)
 {
-	struct temac_softc 	*sc = (struct temac_softc *)self;
+	struct temac_softc 	*sc = device_private(self);
 	uint32_t 		rcf, tcf, mmc;
 
 	/* Full/half duplex link. */
@@ -891,7 +887,7 @@ temac_mii_tick(void *arg)
 	struct temac_softc 	*sc = (struct temac_softc *)arg;
 	int 			s;
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return;
 
 	s = splnet();
@@ -921,8 +917,9 @@ temac_tx_intr(void *arg)
 	/* XXX: We may need to splnet() here if cdmac(4) changes. */
 
 	if ((stat = cdmac_tx_stat(sc)) & CDMAC_STAT_ERROR) {
-		printf("%s: transmit DMA is toast (%#08x), halted!\n",
-		    sc->sc_dev.dv_xname, stat);
+		aprint_error_dev(sc->sc_dev,
+		    "transmit DMA is toast (%#08x), halted!\n",
+		    stat);
 
 		/* XXXFreza: how to signal this upstream? */
 		temac_stop(&sc->sc_if, 1);
@@ -930,7 +927,7 @@ temac_tx_intr(void *arg)
 	}
 
 #if TEMAC_DEBUG > 0
-	printf("%s: tx intr 0x%08x\n", device_xname(&sc->sc_dev), stat);
+	aprint_debug_dev(sc->sc_dev, "tx intr 0x%08x\n", stat);
 #endif
 	temac_txreap(sc);
 }
@@ -944,8 +941,9 @@ temac_rx_intr(void *arg)
 	/* XXX: We may need to splnet() here if cdmac(4) changes. */
 
 	if ((stat = cdmac_rx_stat(sc)) & CDMAC_STAT_ERROR) {
-		printf("%s: receive DMA is toast (%#08x), halted!\n",
-		    sc->sc_dev.dv_xname, stat);
+		aprint_error_dev(sc->sc_dev,
+		    "receive DMA is toast (%#08x), halted!\n",
+		    stat);
 
 		/* XXXFreza: how to signal this upstream? */
 		temac_stop(&sc->sc_if, 1);
@@ -953,7 +951,7 @@ temac_rx_intr(void *arg)
 	}
 
 #if TEMAC_DEBUG > 0
-	printf("%s: rx intr 0x%08x\n", device_xname(&sc->sc_dev), stat);
+	aprint_debug_dev(sc->sc_dev, "rx intr 0x%08x\n", stat);
 #endif
 	temac_rxreap(sc);
 }
@@ -1071,8 +1069,8 @@ temac_rxalloc(struct temac_softc *sc, int which, int verbose)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
 		if (verbose)
-			printf("%s: out of Rx header mbufs\n",
-			    sc->sc_dev.dv_xname);
+			aprint_debug_dev(sc->sc_dev,
+			    "out of Rx header mbufs\n");
 		return (ENOBUFS);
 	}
 	MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
@@ -1080,8 +1078,8 @@ temac_rxalloc(struct temac_softc *sc, int which, int verbose)
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		if (verbose)
-			printf("%s: out of Rx cluster mbufs\n",
-			    sc->sc_dev.dv_xname);
+			aprint_debug_dev(sc->sc_dev,
+			    "out of Rx cluster mbufs\n");
 		m_freem(m);
 		return (ENOBUFS);
 	}
@@ -1096,8 +1094,9 @@ temac_rxalloc(struct temac_softc *sc, int which, int verbose)
 	    BUS_DMA_NOWAIT);
 	if (error) {
 		if (verbose)
-			printf("%s: could not map Rx descriptor %d, "
-			    "error = %d\n", sc->sc_dev.dv_xname, which, error);
+			aprint_debug_dev(sc->sc_dev,
+			    "could not map Rx descriptor %d, error = %d\n",
+			    which, error);
 
 		rxs->rxs_mbuf = NULL;
 		m_freem(m);
@@ -1105,7 +1104,7 @@ temac_rxalloc(struct temac_softc *sc, int which, int verbose)
 		return (error);
 	}
 
-	stat = \
+	stat =
 	    (TEMAC_ISINTR(which) ? CDMAC_STAT_INTR : 0) |
 	    (TEMAC_ISLAST(which) ? CDMAC_STAT_STOP : 0);
 
@@ -1165,9 +1164,9 @@ temac_rxreap(struct temac_softc *sc)
 
 		if ((stat & (CDMAC_STAT_EOP | CDMAC_STAT_SOP)) !=
 		    (CDMAC_STAT_EOP | CDMAC_STAT_SOP)) {
-		    	printf("%s: Rx packet doesn't fit in "
-		    	    "one descriptor, stat = %#08x\n",
-		    	    sc->sc_dev.dv_xname, stat);
+		    	aprint_error_dev(sc->sc_dev,
+			    "Rx packet doesn't fit in one descriptor, "
+			    "stat = %#08x\n", stat);
 			goto badframe;
 		}
 
@@ -1178,8 +1177,9 @@ temac_rxreap(struct temac_softc *sc)
 
 		if ((rxstat & RXSTAT_GOOD) == 0 ||
 		    (rxstat & RXSTAT_SICK) != 0) {
-		    	printf("%s: corrupt Rx packet, rxstat = %#08x\n",
-		    	    sc->sc_dev.dv_xname, rxstat);
+		    	aprint_error_dev(sc->sc_dev,
+			    "corrupt Rx packet, rxstat = %#08x\n",
+		    	    rxstat);
 			goto badframe;
 		}
 
@@ -1216,7 +1216,7 @@ temac_rxreap(struct temac_softc *sc)
 		/* Refresh descriptor, bail out if we're out of buffers. */
 		if (temac_rxalloc(sc, tail, 1) != 0) {
  			sc->sc_rxreap = TEMAC_RXINC(sc->sc_rxreap, -1);
- 			printf("%s: Rx give up for now\n", sc->sc_dev.dv_xname);
+ 			aprint_error_dev(sc->sc_dev, "Rx give up for now\n");
 			break;
 		}
 	}
@@ -1224,8 +1224,9 @@ temac_rxreap(struct temac_softc *sc)
 	/* We may now have a contiguous ready-to-go chunk of descriptors. */
 	if (nseg > 0) {
 #if TEMAC_RXDEBUG > 0
-		printf("%s: rxreap: rxreap %03d -> %03d, nseg %03d\n",
-		    sc->sc_dev.dv_xname, head, sc->sc_rxreap, nseg);
+		aprint_debug_dev(sc->sc_dev,
+		    "rxreap: rxreap %03d -> %03d, nseg %03d\n",
+		    head, sc->sc_rxreap, nseg);
 #endif
 		temac_rxcdsync(sc, head, nseg,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);

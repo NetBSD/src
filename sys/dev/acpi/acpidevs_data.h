@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.24 2011/01/10 17:04:55 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.24.6.1 2011/06/23 14:19:56 cherry Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.33 2011/01/10 17:04:22 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.34 2011/06/20 15:56:07 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -1431,6 +1431,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "ACPI000E",
 	    "Wake Alarm Device",
+	},
+	{
+	    "ENE0100",
+	    "KB3924-based CIR Port Reciever",
 	},
 	{
 	    "HPQ0004",

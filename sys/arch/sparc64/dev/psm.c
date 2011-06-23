@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.7 2008/04/05 13:40:05 cegger Exp $ */
+/* $NetBSD: psm.c,v 1.7.36.1 2011/06/23 14:19:42 cherry Exp $ */
 /*
  * Copyright (c) 2006 Itronix Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  * time with APM at this point, and some of sysmon seems "lacking".
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.7 2008/04/05 13:40:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.7.36.1 2011/06/23 14:19:42 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.7 2008/04/05 13:40:05 cegger Exp $");
 #include <sparc64/dev/psmreg.h>
 
 struct psm_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_memt;
 	bus_space_handle_t	sc_memh;
 
@@ -120,15 +120,15 @@ STATIC int psm_ecmd_rd8(struct psm_softc *, uint8_t *, uint8_t, uint8_t,
     uint8_t);
 STATIC int psm_ecmd_wr8(struct psm_softc *, uint8_t, uint8_t, uint8_t,
     uint8_t);
-STATIC int psm_match(struct device *, struct cfdata *, void *);
-STATIC void psm_attach(struct device *, struct device *, void *);
+STATIC int psm_match(device_t, cfdata_t, void *);
+STATIC void psm_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(psm, sizeof(struct psm_softc),
+CFATTACH_DECL_NEW(psm, sizeof(struct psm_softc),
     psm_match, psm_attach, NULL, NULL);
 
 
 int
-psm_match(struct device *parent, struct cfdata *cf, void *aux)
+psm_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -140,16 +140,17 @@ psm_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 psm_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct psm_softc	*sc = (struct psm_softc *)self;
+	struct psm_softc	*sc = device_private(self);
 	struct ebus_attach_args	*ea = aux;
 	bus_addr_t		devaddr;
 	const char		*xname;
 
-	xname = device_xname(&sc->sc_dev);
 
+	sc->sc_dev = self;
 	sc->sc_memt = ea->ea_bustag;
 	devaddr = EBUS_ADDR_FROM_REG(&ea->ea_reg[0]);
 
+	xname = device_xname(sc->sc_dev);
 	if (bus_space_map(sc->sc_memt, devaddr, ea->ea_reg[0].size,
 		0, &sc->sc_memh) != 0) {
 		printf(": unable to map device registers\n");
@@ -165,8 +166,8 @@ psm_attach(struct device *parent, struct device *self, void *aux)
 	psm_sysmon_setup(sc);
 
 	if (kthread_create(PRI_NONE, 0, NULL, psm_event_thread, sc,
-	    &sc->sc_thread, "%s", device_xname(&sc->sc_dev)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to create event kthread\n");
+	    &sc->sc_thread, "%s", xname) != 0) {
+		aprint_error_dev(sc->sc_dev, "unable to create event kthread\n");
 	}
 
 	/*
@@ -175,7 +176,7 @@ psm_attach(struct device *parent, struct device *self, void *aux)
 	(void) bus_intr_establish(sc->sc_memt, ea->ea_intr[0], IPL_HIGH,
 	    psm_intr, sc);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    device_xname(&sc->sc_dev), "intr");
+	    xname, "intr");
 }
 
 /*
@@ -184,7 +185,7 @@ psm_attach(struct device *parent, struct device *self, void *aux)
 void
 psm_sysmon_setup(struct psm_softc *sc)
 {
-	const char	*xname	= device_xname(&sc->sc_dev);
+	const char	*xname	= device_xname(sc->sc_dev);
 
 
 	/*
@@ -271,7 +272,7 @@ psm_init(struct psm_softc *sc)
 	/* make sure that UPS battery is reasonable */
 	if (psm_misc_rd(sc, PSM_MISC_UPS, &batt) || (batt > PSM_MAX_BATTERIES))
 		if (psm_misc_wr(sc, PSM_MISC_UPS, batt))
-			aprint_error_dev(&sc->sc_dev, "cannot set UPS battery");
+			aprint_error_dev(sc->sc_dev, "cannot set UPS battery");
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.29 2011/04/04 20:37:55 dyoung Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.29.2.1 2011/06/23 14:19:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.29 2011/04/04 20:37:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.29.2.1 2011/06/23 14:19:48 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,10 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.29 2011/04/04 20:37:55 dyoung Exp $")
 
 #include <dev/ic/acpipmtimer.h>
 #include <dev/ic/i82801lpcreg.h>
+#include <dev/ic/i82801lpcvar.h>
 #include <dev/ic/hpetreg.h>
 #include <dev/ic/hpetvar.h>
 
-#include "hpet.h"
 #include "pcibvar.h"
 #include "gpio.h"
 #include "fwhrng.h"
@@ -88,10 +88,8 @@ struct lpcib_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_iosize;
 
-#if NHPET > 0
 	/* HPET variables. */
 	uint32_t		sc_hpet_reg;
-#endif
 
 #if NGPIO > 0
 	device_t		sc_gpiobus;
@@ -148,10 +146,8 @@ static void speedstep_configure(device_t);
 static void speedstep_unconfigure(device_t);
 static int speedstep_sysctl_helper(SYSCTLFN_ARGS);
 
-#if NHPET > 0
 static void lpcib_hpet_configure(device_t);
 static int lpcib_hpet_unconfigure(device_t, int);
-#endif
 
 #if NGPIO > 0
 static void lpcib_gpio_configure(device_t);
@@ -183,7 +179,7 @@ static struct lpcib_device {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_LPC, 0, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CAM_LPC, 0, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LPC, 0, 0 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_ISA, 0, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DBM_LPC, 0, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_LPC, 0, 1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LPC, 1, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FBM_LPC, 1, 0 },
@@ -292,10 +288,8 @@ lpcibattach(device_t parent, device_t self, void *aux)
 	/* Set up SpeedStep. */
 	speedstep_configure(self);
 
-#if NHPET > 0
 	/* Set up HPET. */
 	lpcib_hpet_configure(self);
-#endif
 
 #if NGPIO > 0
 	/* Set up GPIO */
@@ -371,19 +365,15 @@ lpcibchilddet(device_t self, device_t child)
 static int
 lpcibrescan(device_t self, const char *ifattr, const int *locators)
 {
-#if NHPET > 0 || NGPIO > 0 || NFWHRNG > 0
 	struct lpcib_softc *sc = device_private(self);
-#endif
 
 #if NFWHRNG > 0
 	if (ifattr_match(ifattr, "fwhichbus") && sc->sc_fwhbus == NULL)
 		lpcib_fwh_configure(self);
 #endif
 
-#if NHPET > 0
 	if (ifattr_match(ifattr, "hpetichbus") && sc->sc_hpetbus == NULL)
 		lpcib_hpet_configure(self);
-#endif
 
 #if NGPIO > 0
 	if (ifattr_match(ifattr, "gpiobus") && sc->sc_gpiobus == NULL)
@@ -406,10 +396,8 @@ lpcibdetach(device_t self, int flags)
 		return rc;
 #endif
 
-#if NHPET > 0
 	if ((rc = lpcib_hpet_unconfigure(self, flags)) != 0)
 		return rc;
-#endif
 
 #if NGPIO > 0
 	if ((rc = lpcib_gpio_unconfigure(self, flags)) != 0)
@@ -460,14 +448,10 @@ lpcib_suspend(device_t dv, const pmf_qual_t *qual)
 
 	if (sc->sc_has_rcba) {
 		sc->sc_rcba_reg = pci_conf_read(pc, tag, LPCIB_RCBA);
-#if NHPET > 0
 		sc->sc_hpet_reg = bus_space_read_4(sc->sc_rcbat, sc->sc_rcbah,
 		    LPCIB_RCBA_HPTC);
-#endif
 	} else if (sc->sc_has_ich5_hpet) {
-#if NHPET > 0
 		sc->sc_hpet_reg = pci_conf_read(pc, tag, LPCIB_PCI_GEN_CNTL);
-#endif
 	}
 
 	return true;
@@ -489,14 +473,10 @@ lpcib_resume(device_t dv, const pmf_qual_t *qual)
 
 	if (sc->sc_has_rcba) {
 		pci_conf_write(pc, tag, LPCIB_RCBA, sc->sc_rcba_reg);
-#if NHPET > 0
 		bus_space_write_4(sc->sc_rcbat, sc->sc_rcbah, LPCIB_RCBA_HPTC,
 		    sc->sc_hpet_reg);
-#endif
 	} else if (sc->sc_has_ich5_hpet) {
-#if NHPET > 0
 		pci_conf_write(pc, tag, LPCIB_PCI_GEN_CNTL, sc->sc_hpet_reg);
-#endif
 	}
 
 	return true;
@@ -805,7 +785,7 @@ speedstep_configure(device_t self)
 	int rv;
 
 	/* Supported on ICH2-M, ICH3-M and ICH4-M.  */
-	if (PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801DB_ISA ||
+	if (PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801DBM_LPC ||
 	    PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801CAM_LPC ||
 	    (PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801BAM_LPC &&
 	     pci_find_device(&sc->sc_pa, speedstep_bad_hb_check) == 0)) {
@@ -920,73 +900,11 @@ out:
 	return error;
 }
 
-#if NHPET > 0
-struct lpcib_hpet_attach_arg {
-	bus_space_tag_t hpet_mem_t;
-	uint32_t hpet_reg;
-};
-
-static int
-lpcib_hpet_match(device_t parent, cfdata_t match, void *aux)
-{
-	struct lpcib_hpet_attach_arg *arg = aux;
-	bus_space_tag_t tag;
-	bus_space_handle_t handle;
-
-	tag = arg->hpet_mem_t;
-
-	if (bus_space_map(tag, arg->hpet_reg, HPET_WINDOW_SIZE, 0, &handle)) {
-		aprint_verbose_dev(parent, "HPET window not mapped, skipping\n");
-		return 0;
-	}
-	bus_space_unmap(tag, handle, HPET_WINDOW_SIZE);
-
-	return 1;
-}
-
-static int
-lpcib_hpet_detach(device_t self, int flags)
-{
-	struct hpet_softc *sc = device_private(self);
-	int rc;
-
-	if ((rc = hpet_detach(self, flags)) != 0)
-		return rc;
-
-	bus_space_unmap(sc->sc_memt, sc->sc_memh, HPET_WINDOW_SIZE);
-
-	return 0;
-}
-
-static void
-lpcib_hpet_attach(device_t parent, device_t self, void *aux)
-{
-	struct hpet_softc *sc = device_private(self);
-	struct lpcib_hpet_attach_arg *arg = aux;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
-
-	sc->sc_memt = arg->hpet_mem_t;
-
-	if (bus_space_map(sc->sc_memt, arg->hpet_reg, HPET_WINDOW_SIZE, 0,
-			  &sc->sc_memh)) {
-		aprint_error_dev(self,
-		    "HPET memory window could not be mapped");
-		return;
-	}
-
-	hpet_attach_subr(self);
-}
-
-CFATTACH_DECL_NEW(ichlpcib_hpet, sizeof(struct hpet_softc), lpcib_hpet_match,
-    lpcib_hpet_attach, lpcib_hpet_detach, NULL);
-
 static void
 lpcib_hpet_configure(device_t self)
 {
 	struct lpcib_softc *sc = device_private(self);
-	struct lpcib_hpet_attach_arg arg;
+	struct lpcib_hpet_attach_args arg;
 	uint32_t hpet_reg, val;
 
 	if (sc->sc_has_ich5_hpet) {
@@ -1056,7 +974,6 @@ lpcib_hpet_unconfigure(device_t self, int flags)
 
 	return 0;
 }
-#endif
 
 #if NGPIO > 0
 static void

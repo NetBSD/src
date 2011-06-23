@@ -1,6 +1,6 @@
-#	$NetBSD: list,v 1.2 2011/01/14 10:26:31 tsutsui Exp $
+#	$NetBSD: list,v 1.2.4.1 2011/06/23 14:18:18 cherry Exp $
 
-SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
+SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -55,12 +55,13 @@ PROG	usr/bin/tset
 PROG	usr/sbin/chroot
 
 SPECIAL	ed		srcdir	distrib/utils/x_ed
+SPECIAL	gzip		srcdir	distrib/utils/x_gzip
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount
 
-LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lz -lprop
+LIBS	libhack.o -ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lz -lprop
 
 # init invokes the shell as -sh
 ARGVLN	sh -sh
@@ -69,8 +70,8 @@ ARGVLN	sh -sh
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
-COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
+COPY	${DISTRIBDIR}/common/protocols		etc/protocols
+COPY	${DISTRIBDIR}/common/services		etc/services
 
 # the disktab explanation file
 COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall

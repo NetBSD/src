@@ -1,4 +1,4 @@
-/* 	$NetBSD: tft_ll.c,v 1.2 2007/03/04 05:59:46 christos Exp $ */
+/* 	$NetBSD: tft_ll.c,v 1.2.76.1 2011/06/23 14:19:10 cherry Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tft_ll.c,v 1.2 2007/03/04 05:59:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tft_ll.c,v 1.2.76.1 2011/06/23 14:19:10 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,11 +75,11 @@ struct ll_tft_softc {
 	bus_dma_segment_t 	lsc_seg;
 };
 
-static void 	ll_tft_attach(struct device *, struct device *, void *);
+static void 	ll_tft_attach(device_t, device_t, void *);
 static paddr_t 	ll_tft_mmap(void *, void *, off_t, int);
 static void 	ll_tft_shutdown(void *);
 
-CFATTACH_DECL(ll_tft, sizeof(struct ll_tft_softc),
+CFATTACH_DECL_NEW(ll_tft, sizeof(struct ll_tft_softc),
     xcvbus_child_match, ll_tft_attach, NULL, NULL);
 
 
@@ -89,11 +89,11 @@ static struct wsdisplay_accessops ll_tft_accessops = {
 
 
 static void
-ll_tft_attach(struct device *parent, struct device *self, void *aux)
+ll_tft_attach(device_t parent, device_t self, void *aux)
 {
 	struct xcvbus_attach_args *vaa = aux;
 	struct ll_dmac 		*tx = vaa->vaa_tx_dmac;
-	struct ll_tft_softc 	*lsc = (struct ll_tft_softc *)self;
+	struct ll_tft_softc 	*lsc = device_private(self);
 	struct tft_softc 	*sc = &lsc->lsc_sc;
 	int 			nseg, error;
 
@@ -102,52 +102,47 @@ ll_tft_attach(struct device *parent, struct device *self, void *aux)
 	lsc->lsc_dma_iot 	= tx->dmac_iot;
 	lsc->lsc_dmat 		= vaa->vaa_dmat;
 	sc->sc_iot 		= vaa->vaa_iot;
+	sc->sc_dev		= self;
 
-	printf(": LL_TFT\n");
+	aprint_normal(": LL_TFT\n");
 
 	if ((error = bus_space_map(sc->sc_iot, vaa->vaa_addr, TFT_SIZE,
 	    0, &sc->sc_ioh)) != 0) {
-	    	printf("%s: could not map device registers\n",
-		    device_xname(self));
+	    	aprint_error_dev(self, "could not map device registers\n");
 	    	goto fail_0;
 	}
 	if ((error = bus_space_map(lsc->lsc_dma_iot, tx->dmac_ctrl_addr,
 	    CDMAC_CTRL_SIZE, 0, &lsc->lsc_dma_ioh)) != 0) {
-		printf("%s: could not map dmac registers\n",
-		    device_xname(self));
+		aprint_error_dev(self, "could not map dmac registers\n");
 		goto fail_1;
 	}
 
 	/* Fill in resolution, depth, size. */
-	tft_mode(&sc->sc_dev);
+	tft_mode(sc->sc_dev);
 
 	/* Allocate and map framebuffer control data. */
 	if ((error = bus_dmamem_alloc(lsc->lsc_dmat,
 	    sizeof(struct ll_tft_control) + sc->sc_size, 8, 0,
 	    &lsc->lsc_seg, 1, &nseg, 0)) != 0) {
-	    	printf("%s: could not allocate framebuffer\n",
-		    device_xname(self));
+	    	aprint_error_dev(self, "could not allocate framebuffer\n");
 		goto fail_2;
 	}
 	if ((error = bus_dmamem_map(lsc->lsc_dmat, &lsc->lsc_seg, nseg,
 	    sizeof(struct ll_tft_control) + sc->sc_size,
 	    (void **)&lsc->lsc_cd, BUS_DMA_COHERENT)) != 0) {
-	    	printf("%s: could not map framebuffer\n",
-		    device_xname(self));
+	    	aprint_error_dev(self, "could not map framebuffer\n");
 		goto fail_3;
 	}
 	if ((error = bus_dmamap_create(lsc->lsc_dmat,
 	    sizeof(struct ll_tft_control) + sc->sc_size, 1,
 	    sizeof(struct ll_tft_control) + sc->sc_size, 0, 0,
 	    &lsc->lsc_dmap)) != 0) {
-	    	printf("%s: could not create framebuffer DMA map\n",
-		    device_xname(self));
+	    	aprint_error_dev(self, "could not create framebuffer DMA map\n");
 		goto fail_4;
 	}
 	if ((error = bus_dmamap_load(lsc->lsc_dmat, lsc->lsc_dmap, lsc->lsc_cd,
 	    sizeof(struct ll_tft_control) + sc->sc_size, NULL, 0)) != 0) {
-	    	printf("%s: could not load framebuffer DMA map\n",
-		    device_xname(self));
+	    	aprint_error_dev(self, "could not load framebuffer DMA map\n");
 		goto fail_5;
 	}
 
@@ -167,12 +162,12 @@ ll_tft_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_sdhook = shutdownhook_establish(ll_tft_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    device_xname(self));
+		aprint_error_dev(self,
+		    "WARNING: unable to establish shutdown hook\n");
 
 	tft_attach(self, &ll_tft_accessops);
 
-	printf("%s: video memory pa 0x%08x\n", device_xname(self),
+	aprint_normal_dev(self, "video memory pa 0x%08x\n",
 	    (uint32_t)lsc->lsc_cd->cd_dsc.desc_addr);
 
 	/* Timing sensitive... */
@@ -195,7 +190,7 @@ ll_tft_attach(struct device *parent, struct device *self, void *aux)
  fail_1:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, TFT_SIZE);
  fail_0:
-	printf("%s: error %d\n", device_xname(self), error);
+	aprint_error_dev(self, "error %d\n", error);
 }
 
 static paddr_t

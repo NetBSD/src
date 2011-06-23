@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.17 2010/04/13 09:51:07 tsutsui Exp $	*/
+/*	$NetBSD: leo.c,v 1.17.6.1 2011/06/23 14:19:03 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.17 2010/04/13 09:51:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.17.6.1 2011/06/23 14:19:03 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ static struct leo_addresses {
 #define NLEOSTD (sizeof(leostd) / sizeof(leostd[0]))
 
 struct leo_softc {
-	struct device sc_dev;		/* XXX what goes here? */
+	device_t sc_dev;		/* XXX what goes here? */
 	bus_space_tag_t sc_iot;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_ioh;
@@ -90,15 +90,15 @@ struct leo_softc {
 
 #define LEO_SC_FLAGS_INUSE 1
 
-static int leo_match(struct device *, struct cfdata *, void *);
-static void leo_attach(struct device *, struct device *, void *);
+static int leo_match(device_t, cfdata_t, void *);
+static void leo_attach(device_t, device_t, void *);
 static int leo_probe(bus_space_tag_t *, bus_space_tag_t *,
 			  bus_space_handle_t *, bus_space_handle_t *,
 			  u_int, u_int);
 static int leo_init(struct leo_softc *, int);
 static int leo_scroll(struct leo_softc *, int);
 
-CFATTACH_DECL(leo, sizeof(struct leo_softc),
+CFATTACH_DECL_NEW(leo, sizeof(struct leo_softc),
     leo_match, leo_attach, NULL, NULL);
 
 dev_type_open(leoopen);
@@ -113,7 +113,7 @@ const struct cdevsw leo_cdevsw = {
 };
 
 static int
-leo_match(struct device *parent, struct cfdata *cfp, void *aux)
+leo_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vme_attach_args *va = aux;
 	int i;
@@ -205,15 +205,17 @@ leo_probe(bus_space_tag_t *iot, bus_space_tag_t *memt, bus_space_handle_t *ioh, 
 }
 
 static void
-leo_attach(struct device *parent, struct device *self, void *aux)
+leo_attach(device_t parent, device_t self, void *aux)
 {
-	struct leo_softc *sc = (struct leo_softc *)self;
+	struct leo_softc *sc = device_private(self);
 	struct vme_attach_args *va = aux;
 	bus_space_handle_t ioh;
 	bus_space_handle_t memh;
 #ifndef SET_REGION
 	int i;
 #endif
+
+	sc->sc_dev = self;
 
 	printf("\n");
 	if (bus_space_map(va->va_iot, va->va_iobase, va->va_iosize, 0, &ioh))
@@ -239,7 +241,7 @@ leo_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-leoopen(dev_t dev, int flags, int devtype, struct proc *p)
+leoopen(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct leo_softc *sc;
 	int r;
@@ -328,7 +330,7 @@ leo_scroll(struct leo_softc *sc, int scroll)
 }
 
 int
-leoclose(dev_t dev, int flags, int devtype, struct proc *p)
+leoclose(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct leo_softc *sc;
 
@@ -372,7 +374,7 @@ leomove(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-leoioctl(dev_t dev, u_long cmd, void *data, int flags, struct proc *p)
+leoioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct leo_softc *sc;
 

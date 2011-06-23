@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.6 2011/02/26 20:03:09 phx Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.6.4.1 2011/06/23 14:20:44 cherry Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.6 2011/02/26 20:03:09 phx Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.6.4.1 2011/06/23 14:20:44 cherry Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -84,6 +84,19 @@ get_os(const char *name)
 	return IH_OS_UNKNOWN;
 }
 
+static const char *
+get_os_name(enum uboot_image_os os)
+{
+	unsigned int i;
+
+	for (i = 0; i < __arraycount(uboot_os); i++) {
+		if (uboot_os[i].os == os)
+			return uboot_os[i].name;
+	}
+
+	return "Unknown";
+}
+
 struct uboot_arch {
 	enum uboot_image_arch arch;
 	const char *name;
@@ -105,6 +118,19 @@ get_arch(const char *name)
 	}
 
 	return IH_ARCH_UNKNOWN;
+}
+
+static const char * 
+get_arch_name(enum uboot_image_arch arch)
+{
+	unsigned int i;
+
+	for (i = 0; i < __arraycount(uboot_arch); i++) {
+		if (uboot_arch[i].arch == arch)
+			return uboot_arch[i].name;
+	}
+
+	return "Unknown";
 }
 
 struct uboot_type {
@@ -130,6 +156,19 @@ get_type(const char *name)
 	return IH_TYPE_UNKNOWN;
 }
 
+static const char *
+get_type_name(enum uboot_image_type type)
+{
+	unsigned int i;
+
+	for (i = 0; i < __arraycount(uboot_type); i++) {
+		if (uboot_type[i].type == type)
+			return uboot_type[i].name;
+	}
+
+	return "Unknown";
+}
+
 struct uboot_comp {
 	enum uboot_image_comp comp;
 	const char *name;
@@ -150,6 +189,19 @@ get_comp(const char *name)
 	}
 
 	return IH_TYPE_UNKNOWN;
+}
+
+static const char *
+get_comp_name(enum uboot_image_comp comp)
+{
+	unsigned int i;
+
+	for (i = 0; i < __arraycount(uboot_comp); i++) {
+		if (uboot_comp[i].comp == comp)
+			return uboot_comp[i].name;
+	}
+
+	return "Unknown";
 }
 
 static void
@@ -176,10 +228,14 @@ dump_header(struct uboot_image_header *hdr)
 	printf(" load addr:   0x%08x\n", ntohl(hdr->ih_load));
 	printf(" entry point: 0x%08x\n", ntohl(hdr->ih_ep));
 	printf(" data crc:    0x%08x\n", ntohl(hdr->ih_dcrc));
-	printf(" os:          %d\n", hdr->ih_os);
-	printf(" arch:        %d\n", hdr->ih_arch);
-	printf(" type:        %d\n", hdr->ih_type);
-	printf(" comp:        %d\n", hdr->ih_comp);
+	printf(" os:          %d (%s)\n", hdr->ih_os,
+	    get_os_name(hdr->ih_os));
+	printf(" arch:        %d (%s)\n", hdr->ih_arch,
+	    get_arch_name(hdr->ih_arch));
+	printf(" type:        %d (%s)\n", hdr->ih_type,
+	    get_type_name(hdr->ih_type));
+	printf(" comp:        %d (%s)\n", hdr->ih_comp,
+	    get_comp_name(hdr->ih_comp));
 	printf(" name:        %s\n", hdr->ih_name);
 	printf(" header crc:  0x%08x\n", hdr->ih_hcrc);
 }
@@ -222,7 +278,7 @@ generate_header(struct uboot_image_header *hdr, int kernel_fd)
 	hdr->ih_arch = image_arch;
 	hdr->ih_type = image_type;
 	hdr->ih_comp = image_comp;
-	strncpy((char *)hdr->ih_name, image_name, sizeof(hdr->ih_name));
+	strlcpy((char *)hdr->ih_name, image_name, sizeof(hdr->ih_name));
 	crc = crc32((void *)hdr, sizeof(*hdr));
 	hdr->ih_hcrc = htonl(crc);
 

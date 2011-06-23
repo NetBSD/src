@@ -1803,6 +1803,9 @@ kssl_ctx_show(KSSL_CTX *kssl_ctx)
                                      kssl_ctx->service_name ? kssl_ctx->service_name: KRB5SVC,
                                      KRB5_NT_SRV_HST, &princ);
 
+    if (krb5rc)
+	goto exit;
+
     krb5rc = krb5_kt_get_entry(krb5context, krb5keytab, 
                                 princ,
                                 0 /* IGNORE_VNO */,
@@ -2090,9 +2093,12 @@ krb5_error_code  kssl_check_authent(
         EVP_CIPHER_CTX_cleanup(&ciph_ctx);
 
 #ifdef KSSL_DEBUG
+	{
+	int padl;
 	printf("kssl_check_authent: decrypted authenticator[%d] =\n", outl);
 	for (padl=0; padl < outl; padl++) printf("%02x ",unenc_authent[padl]);
 	printf("\n");
+	}
 #endif	/* KSSL_DEBUG */
 
 	if ((p = kssl_skip_confound(enctype, unenc_authent)) == NULL)
@@ -2188,6 +2194,22 @@ krb5_error_code  kssl_build_principal_2(
 	return ENOMEM;
 	}
 
+void SSL_set0_kssl_ctx(SSL *s, KSSL_CTX *kctx)
+	{
+	s->kssl_ctx = kctx;
+	} 
+
+KSSL_CTX * SSL_get0_kssl_ctx(SSL *s)
+	{
+	return s->kssl_ctx;
+	}
+
+char *kssl_ctx_get0_client_princ(KSSL_CTX *kctx)
+	{
+	if (kctx)
+		return kctx->client_princ;
+	return NULL;
+	}
 
 #else /* !OPENSSL_NO_KRB5 */
 

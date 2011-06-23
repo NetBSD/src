@@ -1,4 +1,4 @@
-/*	$NetBSD: zssp.c,v 1.9 2010/02/24 22:37:56 dyoung Exp $	*/
+/*	$NetBSD: zssp.c,v 1.9.8.1 2011/06/23 14:19:51 cherry Exp $	*/
 /*	$OpenBSD: zaurus_ssp.c,v 1.6 2005/04/08 21:58:49 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.9 2010/02/24 22:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.9.8.1 2011/06/23 14:19:51 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ zssp_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (zssp_sc != NULL)
 		return 0;
-
 	return 1;
 }
 
@@ -296,7 +295,7 @@ zssp_read_ads7846(uint32_t cmd)
 
 	s = splhigh();
 
-	if (ZAURUS_ISC3000) {
+	if (ZAURUS_ISC1000 || ZAURUS_ISC3000) {
 		cr0 = SSCR0_ADS7846_C3000;
 	} else {
 		cr0 = 0x00ab;
@@ -342,7 +341,7 @@ zssp_write_lz9jg18(uint32_t data)
 	/* XXX this creates a DAC command from a backlight duty value. */
 	data = 0x40 | (data & 0x1f);
 
-	if (ZAURUS_ISC3000) {
+	if (ZAURUS_ISC1000 || ZAURUS_ISC3000) {
 		sclk_pin = 19;
 		sfrm_pin = 14;
 		txd_pin = 87;

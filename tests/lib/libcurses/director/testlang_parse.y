@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.3 2011/05/15 23:56:28 christos Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.3.2.1 2011/06/23 14:20:40 cherry Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -40,6 +40,7 @@
 #include <string.h>
 #include <sys/syslimits.h>
 #include <time.h>
+#include <vis.h>
 #include "returns.h"
 
 #define YYDEBUG 1
@@ -69,7 +70,7 @@ static bool no_input;	/* don't need more input */
 #define READ_PIPE  0
 #define WRITE_PIPE 1
 
-char *returns_enum_names[] = {
+const char *returns_enum_names[] = {
 	"unused", "numeric", "string", "byte", "ERR", "OK", "NULL", "not NULL",
 	"variable", "reference", "returns count", "slave error"
 };
@@ -81,7 +82,7 @@ typedef enum {
 	arg_null
 } args_state_t;
 
-static char *args_enum_names[] = {
+static const char *args_enum_names[] = {
 	"static", "byte", "var", "NULL"
 };
 
@@ -113,26 +114,26 @@ static size_t nvars; 		/* Number of declared variables */
 static var_t *vars; 		/* Variables defined during the test. */
 
 static int	check_function_table(char *, const char *[], int);
-static int	find_var_index(char *);
+static int	find_var_index(const char *);
 static void 	assign_arg(args_state_t, void *);
 static int	assign_var(char *);
 void		init_parse_variables(int);
 static void	validate(int, void *);
-static void	validate_return(char *, char *, int);
-static void	validate_variable(int, returns_enum_t, void *, int, int);
+static void	validate_return(const char *, const char *, int);
+static void	validate_variable(int, returns_enum_t, const void *, int, int);
 static void	validate_byte(returns_t *, returns_t *, int);
 static void	write_cmd_pipe(char *);
 static void	write_cmd_pipe_args(args_state_t, void *);
 static void	read_cmd_pipe(returns_t *);
-static void	write_func_and_args();
+static void	write_func_and_args(void);
 static void	compare_streams(char *, bool);
-static void	do_function_call(int);
+static void	do_function_call(size_t);
 static void	save_slave_output(bool);
 static void	validate_type(returns_enum_t, returns_t *, int);
 static void	set_var(returns_enum_t, char *, void *);
 static void	validate_reference(int, void *);
 static char	*numeric_or(char *, char *);
-static char	*get_numeric_var(char *);
+static char	*get_numeric_var(const char *);
 
 static const char *input_functions[] = {
 	"inch", "getch", "getnstr", "getstr", "innstr", "instr", "mvgetnstr",
@@ -219,16 +220,16 @@ call4		: CALL4 result result result result fn_name args eol {
 		;
 
 check		: CHECK var returns eol {
-	returns_t ret_var;
+	returns_t retvar;
 	var_t *vptr;
 	if (command.returns[0].return_index == -1)
-		err(1, "Undefined variable in check statement, line %d"
+		err(1, "Undefined variable in check statement, line %zu"
 		    " of file %s", line, cur_file);
 
 	if (verbose)
 		fprintf(stderr, "Checking contents of variable %s for %s\n",
-			vars[command.returns[0].return_index].name,
-			returns_enum_names[command.returns[1].return_type]);
+		    vars[command.returns[0].return_index].name,
+		    returns_enum_names[command.returns[1].return_type]);
 
 	if (((command.returns[1].return_type == arg_byte) &&
 	     (vars[command.returns[0].return_index].type != ret_byte)) ||
@@ -265,23 +266,24 @@ check		: CHECK var returns eol {
 	case ret_number:
 		if (verbose)
 			fprintf(stderr, " %s == returned %s\n",
-				command.returns[1].return_value,
-				vars[command.returns[0].return_index].value);
+			    (const char *)command.returns[1].return_value,
+			    (const char *)
+			    vars[command.returns[0].return_index].value);
 		validate_variable(0, ret_string,
-				  command.returns[1].return_value,
-				  command.returns[0].return_index, 0);
+		    command.returns[1].return_value,
+		    command.returns[0].return_index, 0);
 		break;
 
 	case ret_byte:
 		vptr = &vars[command.returns[0].return_index];
-		ret_var.return_len = vptr->len;
-		ret_var.return_type = vptr->type;
-		ret_var.return_value = vptr->value;
-		validate_byte(&ret_var, &command.returns[1], 0);
+		retvar.return_len = vptr->len;
+		retvar.return_type = vptr->type;
+		retvar.return_value = vptr->value;
+		validate_byte(&retvar, &command.returns[1], 0);
 		break;
 
 	default:
-		err(1, "Malformed check statement at line %d "
+		err(1, "Malformed check statement at line %zu "
 		    "of file %s", line, cur_file);
 		break;
 	}
@@ -294,7 +296,7 @@ delay		: DELAY numeric eol {
 	/* set the inter-character delay */
 	if (sscanf($2, "%d", &input_delay) == 0)
 		err(1, "delay specification %s could not be converted to "
-		    "numeric at line %d of file %s", $2, line, cur_file);
+		    "numeric at line %zu of file %s", $2, line, cur_file);
 	if (verbose)
 		fprintf(stderr, "Set input delay to %d ms\n", input_delay);
 
@@ -314,8 +316,8 @@ delay		: DELAY numeric eol {
 
 input		: INPUT STRING eol {
 	if (input_str != NULL) {
-		fprintf(stderr, "WARNING: Discarding unused input string at "
-			"line %d of file %s\n", line, cur_file);
+		warnx("%s, %zu: Discarding unused input string",
+		    cur_file, line);
 		free(input_str);
 	}
 
@@ -329,8 +331,8 @@ input		: INPUT STRING eol {
 
 noinput		: NOINPUT eol {
 	if (input_str != NULL) {
-		fprintf(stderr, "WARNING: Discarding unused input string at "
-			"line %d of file %s\n", line, cur_file);
+		warnx("%s, %zu: Discarding unused input string",
+		    cur_file, line);
 		free(input_str);
 	}
 
@@ -412,22 +414,40 @@ eol		: EOL
 
 %%
 
+static void
+excess(const char *fname, size_t lineno, const char *func, const char *comment,
+    const void *data, size_t datalen)
+{
+	size_t dstlen = datalen * 4 + 1;
+	char *dst = malloc(dstlen);
+
+	if (dst == NULL)
+		err(1, "malloc");
+
+	if (strnvisx(dst, dstlen, data, datalen, VIS_WHITE | VIS_OCTAL) == -1)
+		err(1, "strnvisx");
+
+	warnx("%s, %zu: [%s] Excess %zu bytes%s [%s]",
+	    fname, lineno, func, datalen, comment, dst);
+	free(dst);
+}
+
 /*
  * Get the value of a variable, error if the variable has not been set or
  * is not a numeric type.
  */
 static char *
-get_numeric_var(char *var)
+get_numeric_var(const char *var)
 {
-	int index;
+	int i;
 
-	if ((index = find_var_index(var)) < 0)
+	if ((i = find_var_index(var)) < 0)
 		err(1, "Variable %s is undefined", var);
 
-	if (vars[index].type != ret_number)
-		err(1, "Variable %s is not a numeric type");
+	if (vars[i].type != ret_number)
+		err(1, "Variable %s is not a numeric type", var);
 
-	return vars[index].value;
+	return vars[i].value;
 }
 
 /*
@@ -446,10 +466,9 @@ numeric_or(char *n1, char *n2)
 	asprintf(&ret, "%lu", result);
 
 	if (verbose)
-		fprintf(stderr,
-			"numeric or of 0x%lx (%s) and 0x%lx (%s) results"
-			" in 0x%lx (%s)\n",
-			i1, n1, i2, n2, result, ret);
+		fprintf(stderr, "numeric or of 0x%lx (%s) and 0x%lx (%s)"
+		    " results in 0x%lx (%s)\n",
+		    i1, n1, i2, n2, result, ret);
 
 	return ret;
 }
@@ -460,30 +479,30 @@ numeric_or(char *n1, char *n2)
 static void
 set_var(returns_enum_t type, char *name, void *value)
 {
-	int index;
+	int i;
 	char *number;
 	returns_t *ret;
 
-	index = find_var_index(name);
-	if (index < 0)
-		index = assign_var(name);
+	i = find_var_index(name);
+	if (i < 0)
+		i = assign_var(name);
 
-	vars[index].type = type;
+	vars[i].type = type;
 	if ((type == ret_number) || (type == ret_string)) {
 		number = value;
-		vars[index].len = strlen(number) + 1;
-		vars[index].value = malloc(vars[index].len + 1);
-		if (vars[index].value == NULL)
+		vars[i].len = strlen(number) + 1;
+		vars[i].value = malloc(vars[i].len + 1);
+		if (vars[i].value == NULL)
 			err(1, "Could not malloc memory for assign string");
-		strcpy(vars[index].value, number);
+		strcpy(vars[i].value, number);
 	} else {
 		/* can only be a byte value */
 		ret = value;
-		vars[index].len = ret->return_len;
-		vars[index].value = malloc(vars[index].len);
-		if (vars[index].value == NULL)
+		vars[i].len = ret->return_len;
+		vars[i].value = malloc(vars[i].len);
+		if (vars[i].value == NULL)
 			err(1, "Could not malloc memory to assign byte string");
-		memcpy(vars[index].value, ret->return_value, vars[index].len);
+		memcpy(vars[i].value, ret->return_value, vars[i].len);
 	}
 }
 
@@ -523,20 +542,20 @@ static void
 assign_arg(args_state_t arg_type, void *arg)
 {
 	args_t *temp, cur;
-	char *str;
+	char *str = arg;
 	returns_t *ret;
 
 	if (verbose)
 		printf("function is >%s<, adding arg >%s< type %s\n",
-		       command.function, arg, args_enum_names[arg_type]);
+		       command.function, str, args_enum_names[arg_type]);
 
 	cur.arg_type = arg_type;
 	switch (arg_type) {
 	case arg_var:
 		cur.var_index = find_var_index(arg);
 		if (cur.var_index < 0)
-			err(1, "Invalid variable %s at line %d of file %s",
-			    arg, line, cur_file);
+			err(1, "Invalid variable %s at line %zu of file %s",
+			    str, line, cur_file);
 		cur.arg_type = ret_string;
 		break;
 
@@ -555,7 +574,6 @@ assign_arg(args_state_t arg_type, void *arg)
 		break;
 
 	default:
-		str = arg;
 		cur.arg_len = strlen(str);
 		cur.arg_string = malloc(cur.arg_len + 1);
 		if (cur.arg_string == NULL)
@@ -620,13 +638,14 @@ assign_rets(returns_enum_t ret_type, void *ret)
 }
 
 /*
- * Find the given variable name in the var array and return the index
+ * Find the given variable name in the var array and return the i
  * return -1 if var is not found.
  */
 static int
-find_var_index(char *var_name)
+find_var_index(const char *var_name)
 {
-	int result, i;
+	int result;
+	size_t i;
 
 	result = -1;
 
@@ -665,9 +684,10 @@ static int check_function_table(char *function, const char *table[],
 static void
 compare_streams(char *filename, bool discard)
 {
-	char check_file[PATH_MAX], drain, ref, data;
+	char check_file[PATH_MAX], drain[100], ref, data;
 	struct pollfd fds[2];
-	int nfd, check_fd, result;
+	int nfd, check_fd;
+	ssize_t result;
 
 	/*
 	 * Don't prepend check path iff check file has an absolute
@@ -690,7 +710,7 @@ compare_streams(char *filename, bool discard)
 		err(2, "Path to check file path overflowed");
 
 	if ((check_fd = open(check_file, O_RDONLY, 0)) < 0)
-		err(2, "failed to open file %s line %d of file %s",
+		err(2, "failed to open file %s line %zu of file %s",
 		    check_file, line, cur_file);
 
 	fds[0].fd = check_fd;
@@ -711,9 +731,7 @@ compare_streams(char *filename, bool discard)
 	while (poll(&fds[0], nfd, 500) == nfd) {
 		if ((result = read(check_fd, &ref, 1)) < 1) {
 			if (result != 0) {
-				fprintf(stderr, "Bad read on file %s\n",
-					check_file);
-				exit(2);
+				err(2, "Bad read on file %s", check_file);
 			} else {
 				break;
 			}
@@ -739,10 +757,9 @@ compare_streams(char *filename, bool discard)
 		}
 
 		if (ref != data) {
-			fprintf(stderr, "refresh data from slave does "
-				"not match expected from file %s, "
-				"line %d of file %s\n",
-				check_file, line, cur_file);
+			warnx("%s, %zu: refresh data from slave does "
+			    "not match expected from file %s",
+			    cur_file, line, check_file);
 
 			if (!verbose)
 				exit(2);
@@ -754,8 +771,8 @@ compare_streams(char *filename, bool discard)
 
 
 	if (saved_output.count > 0)
-		fprintf(stderr, "Warning: excess saved data from "
-			"slave at line %d of file %s\n", line, cur_file);
+		excess(cur_file, line, __func__, " from slave",
+		    &saved_output.data[saved_output.readp], saved_output.count);
 
 	/* discard any excess saved output if required */
 	if (discard) {
@@ -769,7 +786,7 @@ compare_streams(char *filename, bool discard)
 		if (result == -1)
 			err(2, "poll of file descriptors failed");
 
-		if ((fds[1].revents && POLLIN) == POLLIN) {
+		if ((fds[1].revents & POLLIN) == POLLIN) {
 			save_slave_output(true);
 		} else {
 			/*
@@ -779,13 +796,13 @@ compare_streams(char *filename, bool discard)
 			 * the file really has more data than the
 			 * slave produced so flag this as a warning.
 			 */
-			result = read(check_fd, &drain, 1);
+			result = read(check_fd, drain, sizeof(drain));
 			if (result == -1)
 				err(1, "read of data file failed");
 
 			if (result > 0) {
-				fprintf(stderr, "Error: excess data "
-					"in file %s\n", check_file);
+				excess(check_file, 0, __func__, "", drain,
+				    result);
 				if (!verbose)
 					exit(2);
 			}
@@ -802,18 +819,19 @@ compare_streams(char *filename, bool discard)
  * expected returns or assigned to variables.
  */
 static void
-do_function_call(int nresults)
+do_function_call(size_t nresults)
 {
 #define MAX_RESULTS 4
 	char *p;
-	int i, do_input, nfd;
+	int do_input;
+	size_t i;
 	struct pollfd fds[3];
 	returns_t response[MAX_RESULTS], returns_count;
 
 	assert(nresults <= MAX_RESULTS);
 
 	do_input = check_function_table(command.function, input_functions,
-					ninput_functions);
+	    ninput_functions);
 
 	write_func_and_args();
 
@@ -822,25 +840,22 @@ do_function_call(int nresults)
 	 * doing input otherwise it will confuse the input poll
 	 */
 	read_cmd_pipe(&returns_count);
-	if (returns_count.return_type != ret_count )
+	if (returns_count.return_type != ret_count)
 		err(2, "expected return type of ret_count but received %s",
 		    returns_enum_names[returns_count.return_type]);
 
 	if (verbose)
-		fprintf(stderr, "Expect %d results from slave, slave "
-			"reported %d\n", nresults, returns_count.return_len);
+		fprintf(stderr, "Expect %zu results from slave, slave "
+			"reported %zu\n", nresults, returns_count.return_len);
 
 	if ((no_input == false) && (do_input == 1)) {
 		if (verbose)
 			fprintf(stderr, "doing input with inputstr >%s<\n",
 				input_str);
 
-		if (input_str == NULL) {
-			fprintf(stderr, "Error: Call to input function at "
-				" line %d of file %s but no input defined",
-				line, cur_file);
-			exit(2);
-		}
+		if (input_str == NULL)
+			errx(2, "%s, %zu: Call to input function "
+			    "but no input defined", cur_file, line);
 
 		fds[0].fd = slvpipe[READ_PIPE];
 		fds[0].events = POLLIN;
@@ -863,10 +878,9 @@ do_function_call(int nresults)
 
 			/* check for slave function returning unexpectedly */
 			if ((poll(&fds[0], 1, 10) > 0) && (*p != '\0')) {
-				fprintf(stderr, "Warning: slave function "
-					"returned before end of input string"
-					" at line %d of file %s\n",
-					line, cur_file);
+				warnx("%s, %zu: Slave function "
+				    "returned before end of input string",
+				    cur_file, line);
 				break;
 			}
 		}
@@ -894,9 +908,9 @@ do_function_call(int nresults)
 		fds[2].revents = 0;
 
 		i = poll(&fds[0], 3, 1000);
-		fprintf(stderr, "Poll returned %d\n", i);
+		fprintf(stderr, "Poll returned %zu\n", i);
 		for (i = 0; i < 3; i++) {
-			fprintf(stderr, "revents for fd[%d] = 0x%x\n",
+			fprintf(stderr, "revents for fd[%zu] = 0x%x\n",
 				i, fds[i].revents);
 		}
 	}
@@ -916,11 +930,12 @@ do_function_call(int nresults)
 	 */
 	if ((returns_count.return_len > 0) &&
 	    (response[0].return_type == ret_slave_error))
-		err(2, "Slave returned error: %s", response[0].return_value);
+		err(2, "Slave returned error: %s",
+		    (const char *)response[0].return_value);
 
 	if (returns_count.return_len != nresults)
-		err(2, "Incorrect number of returns from slave, expected %d "
-		    "but received %d", nresults, returns_count.return_len);
+		err(2, "Incorrect number of returns from slave, expected %zu "
+		    "but received %zu", nresults, returns_count.return_len);
 
 	if (verbose) {
 		for (i = 0; i < nresults; i++) {
@@ -929,12 +944,13 @@ do_function_call(int nresults)
 			    (response[i].return_type != ret_ok))
 				fprintf(stderr,
 					"received response >%s< "
-					"expected", response[i].return_value);
+					"expected",
+					(const char *)response[i].return_value);
 			else
 				fprintf(stderr, "received");
 
 			fprintf(stderr, " return_type %s\n",
-				returns_enum_names[command.returns[i].return_type]);
+			    returns_enum_names[command.returns[i].return_type]);
 		}
 	}
 
@@ -950,10 +966,11 @@ do_function_call(int nresults)
 				response[i].return_type;
 		}
 	}
-
+#if 0
 	if (saved_output.count > 0)
-		fprintf(stderr, "Warning: excess data from slave at line %d"
-			" of file %s\n", line, cur_file);
+		excess(cur_file, line, __func__, " from slave",
+		    &saved_output.data[saved_output.readp], saved_output.count);
+#endif
 
 	init_parse_variables(0);
 }
@@ -962,7 +979,7 @@ do_function_call(int nresults)
  * Write the function and command arguments to the command pipe.
  */
 static void
-write_func_and_args()
+write_func_and_args(void)
 {
 	int i;
 
@@ -1040,29 +1057,26 @@ init_parse_variables(int initial)
 	if (result < 0)
 		err(2, "Poll of slave pty failed");
 	else if (result > 0)
-		fprintf(stderr,
-			"Warning: unexpected data from slave at line %d"
-			" of file %s\n",
-			line, cur_file);
+		warnx("%s, %zu: Unexpected data from slave", cur_file, line);
 }
 
 /*
  * Validate the response against the expected return.  The variable
- * index is the index into the rets array in command.
+ * i is the i into the rets array in command.
  */
 static void
-validate(int index, void *data)
+validate(int i, void *data)
 {
 	char *response;
 	returns_t *byte_response;
 
 	byte_response = data;
-	if ((command.returns[index].return_type != ret_byte) &&
-	    (command.returns[index].return_type != ret_err) &&
-	    (command.returns[index].return_type != ret_ok))
+	if ((command.returns[i].return_type != ret_byte) &&
+	    (command.returns[i].return_type != ret_err) &&
+	    (command.returns[i].return_type != ret_ok))
 		response = byte_response->return_value;
 
-	switch (command.returns[index].return_type) {
+	switch (command.returns[i].return_type) {
 	case ret_err:
 		validate_type(ret_err, byte_response, 0);
 		break;
@@ -1081,20 +1095,20 @@ validate(int index, void *data)
 
 	case ret_string:
 	case ret_number:
-		validate_return(command.returns[index].return_value,
+		validate_return(command.returns[i].return_value,
 				response, 0);
 		break;
 
 	case ret_ref:
-		validate_reference(index, response);
+		validate_reference(i, response);
 		break;
 
 	case ret_byte:
-		validate_byte(&command.returns[index], byte_response, 0);
+		validate_byte(&command.returns[i], byte_response, 0);
 		break;
 
 	default:
-		err(1, "Malformed statement at line %d of file %s",
+		err(1, "Malformed statement at line %zu of file %s",
 		    line, cur_file);
 		break;
 	}
@@ -1104,22 +1118,23 @@ validate(int index, void *data)
  * Validate the return against the contents of a variable.
  */
 static void
-validate_reference(int index, void *data)
+validate_reference(int i, void *data)
 {
 	char *response;
 	returns_t *byte_response;
 	var_t *varp;
 
-	varp = &vars[command.returns[index].return_index];
+	varp = &vars[command.returns[i].return_index];
 
 	byte_response = data;
-	if (command.returns[index].return_type != ret_byte)
+	if (command.returns[i].return_type != ret_byte)
 		response = data;
 
 	if (verbose)
 		fprintf(stderr,
 			"validate_reference: return type of %s, value %s \n",
-			returns_enum_names[varp->type], varp->value);
+			returns_enum_names[varp->type],
+			(const char *)varp->value);
 
 	switch (varp->type) {
 	case ret_string:
@@ -1133,7 +1148,7 @@ validate_reference(int index, void *data)
 
 	default:
 		err(1,
-		    "Invalid return type for reference at line %d of file %s",
+		    "Invalid return type for reference at line %zu of file %s",
 		    line, cur_file);
 		break;
 	}
@@ -1148,13 +1163,13 @@ validate_type(returns_enum_t expected, returns_t *value, int check)
 {
 	if (((check == 0) && (expected != value->return_type)) ||
 	    ((check == 1) && (expected == value->return_type)))
-		err(1, "Validate expected type %s %s %s line %d of file %s",
+		err(1, "Validate expected type %s %s %s line %zu of file %s",
 		    returns_enum_names[expected],
 		    (check == 0)? "matching" : "not matching",
 		    returns_enum_names[value->return_type], line, cur_file);
 
 	if (verbose)
-		fprintf(stderr, "Validate expected type %s %s %s line %d"
+		fprintf(stderr, "Validate expected type %s %s %s line %zu"
 			" of file %s\n",
 			returns_enum_names[expected],
 			(check == 0)? "matching" : "not matching",
@@ -1166,17 +1181,17 @@ validate_type(returns_enum_t expected, returns_t *value, int check)
  * if they don't match.
  */
 static void
-validate_return(char *expected, char *value, int check)
+validate_return(const char *expected, const char *value, int check)
 {
 	if (((check == 0) && strcmp(expected, value) != 0) ||
 	    ((check == 1) && strcmp(expected, value) == 0))
-		err(1, "Validate expected %s %s %s line %d of file %s",
+		err(1, "Validate expected %s %s %s line %zu of file %s",
 		    expected,
 		    (check == 0)? "matching" : "not matching", value,
 		    line, cur_file);
 	if (verbose)
 		fprintf(stderr, "Validated expected value %s %s %s "
-			"at line %d of file %s\n", expected,
+			"at line %zu of file %s\n", expected,
 			(check == 0)? "matches" : "does not match",
 			value, line, cur_file);
 }
@@ -1204,51 +1219,53 @@ validate_byte(returns_t *expected, returns_t *value, int check)
 	    ((check == 1) && (expected->return_len == value->return_len) &&
 	     memcmp(expected->return_value, value->return_value,
 		    value->return_len) == 0))
-		err(1, "Validate expected %s byte stream at line %d"
+		err(1, "Validate expected %s byte stream at line %zu"
 		    "of file %s",
 		    (check == 0)? "matching" : "not matching", line, cur_file);
 	if (verbose)
 		fprintf(stderr, "Validated expected %s byte stream "
-			"at line %d of file %s\n",
+			"at line %zu of file %s\n",
 			(check == 0)? "matching" : "not matching",
 			line, cur_file);
 }
 
 /*
- * Validate the variable at index against the expected value, throw an
+ * Validate the variable at i against the expected value, throw an
  * error if they don't match, if check is non-zero then the match is
  * negated.
  */
 static void
-validate_variable(int ret, returns_enum_t type, void *value, int index, int check)
+validate_variable(int ret, returns_enum_t type, const void *value, int i,
+    int check)
 {
-	char *str;
 	returns_t *retval;
 	var_t *varptr;
 
+	retval = &command.returns[ret];
 	varptr = &vars[command.returns[ret].return_index];
 
 	if (varptr->value == NULL)
-		err(1, "Variable %s has no value assigned to it");
+		err(1, "Variable %s has no value assigned to it", varptr->name);
 
 
 	if (varptr->type != type)
-		err(1, "Variable %s is not the expected type");
+		err(1, "Variable %s is not the expected type", varptr->name);
 
 	if (type != ret_byte) {
 		if ((((check == 0) && strcmp(value, varptr->value) != 0))
 		    || ((check == 1) && strcmp(value, varptr->value) == 0))
 			err(1, "Variable %s contains %s instead of %s"
-			    " value %s at line %d of file %s",
-			    varptr->name,varptr->value,
-			    (check == 0)? "expected" : "not matching", value,
+			    " value %s at line %zu of file %s",
+			    varptr->name, (const char *)varptr->value,
+			    (check == 0)? "expected" : "not matching",
+			    (const char *)value,
 			    line, cur_file);
 		if (verbose)
 			fprintf(stderr, "Variable %s contains %s value "
-				"%s at line %d of file %s\n",
+				"%s at line %zu of file %s\n",
 				varptr->name,
 				(check == 0)? "expected" : "not matching",
-				varptr->value, line, cur_file);
+				(const char *)varptr->value, line, cur_file);
 	} else {
 		if ((check == 0) && (retval->return_len != varptr->len))
 			err(1, "Byte validation failed, length mismatch");
@@ -1263,13 +1280,13 @@ validate_variable(int ret, returns_enum_t type, void *value, int index, int chec
 		    ((check == 1) && (retval->return_len == varptr->len) &&
 		     memcmp(retval->return_value, varptr->value,
 			    varptr->len) == 0))
-			err(1, "Validate expected %s byte stream at line %d"
+			err(1, "Validate expected %s byte stream at line %zu"
 			    " of file %s",
 			    (check == 0)? "matching" : "not matching",
 			    line, cur_file);
 		if (verbose)
 			fprintf(stderr, "Validated expected %s byte stream "
-				"at line %d of file %s\n",
+				"at line %zu of file %s\n",
 				(check == 0)? "matching" : "not matching",
 				line, cur_file);
 	}
@@ -1339,27 +1356,21 @@ write_cmd_pipe_args(args_state_t type, void *data)
 		fprintf(stderr, "Writing type %s to command pipe\n",
 			returns_enum_names[send_type]);
 
-	if (write(cmdpipe[WRITE_PIPE], &send_type, sizeof(int)) < 0) {
-		perror("command pipe write for type failed");
-		exit(1);
-	}
+	if (write(cmdpipe[WRITE_PIPE], &send_type, sizeof(int)) < 0)
+		err(1, "command pipe write for type failed");
 
 	if (verbose)
 		fprintf(stderr, "Writing length %d to command pipe\n", len);
 
-	if (write(cmdpipe[WRITE_PIPE], &len, sizeof(int)) < 0) {
-		perror("command pipe write for length failed");
-		exit(1);
-	}
+	if (write(cmdpipe[WRITE_PIPE], &len, sizeof(int)) < 0)
+		err(1, "command pipe write for length failed");
 
 	if (len > 0) {
 		if (verbose)
 			fprintf(stderr, "Writing data >%s< to command pipe\n",
-				cmd);
-		if (write(cmdpipe[WRITE_PIPE], cmd, len) < 0) {
-			perror("command pipe write of data failed");
-			exit(1);
-		}
+				(const char *)cmd);
+		if (write(cmdpipe[WRITE_PIPE], cmd, len) < 0)
+			err(1, "command pipe write of data failed");
 	}
 }
 
@@ -1371,7 +1382,7 @@ static void
 read_cmd_pipe(returns_t *response)
 {
 	int len, type;
-	struct pollfd readfd[2];
+	struct pollfd rfd[2];
 	char *str;
 
 	/*
@@ -1380,43 +1391,35 @@ read_cmd_pipe(returns_t *response)
 	 * output from the slave because the slave may be blocked waiting
 	 * for a flush on its stdout.
 	 */
-	readfd[0].fd = slvpipe[READ_PIPE];
-	readfd[0].events = POLLIN;
-	readfd[1].fd = master;
-	readfd[1].events = POLLIN;
+	rfd[0].fd = slvpipe[READ_PIPE];
+	rfd[0].events = POLLIN;
+	rfd[1].fd = master;
+	rfd[1].events = POLLIN;
 
 	do {
-		readfd[0].revents = 0;
-		readfd[1].revents = 0;
+		rfd[0].revents = 0;
+		rfd[1].revents = 0;
 
-		if (poll(readfd, 2, 4000) == 0) {
-			fprintf(stderr,
-				"command pipe read timeout on line %d"
-				" of file %s\n",
-				line, cur_file);
-			exit(2);
-		}
+		if (poll(rfd, 2, 4000) == 0)
+			errx(2, "%s, %zu: Command pipe read timeout",
+			    cur_file, line);
 
-		if ((readfd[1].revents & POLLIN) == POLLIN) {
+		if ((rfd[1].revents & POLLIN) == POLLIN) {
 			if (verbose)
 				fprintf(stderr,
 					"draining output from slave\n");
 			save_slave_output(false);
 		}
 	}
-	while((readfd[1].revents & POLLIN) == POLLIN);
+	while((rfd[1].revents & POLLIN) == POLLIN);
 
-	if (read(slvpipe[READ_PIPE], &type, sizeof(int)) < 0) {
-		perror("command pipe read for type failed");
-		exit(1);
-	}
+	if (read(slvpipe[READ_PIPE], &type, sizeof(int)) < 0)
+		err(1, "command pipe read for type failed");
 	response->return_type = type;
 
 	if ((type != ret_ok) && (type != ret_err) && (type != ret_count)) {
-		if (read(slvpipe[READ_PIPE], &len, sizeof(int)) < 0) {
-			perror("command pipe read for length failed");
-			exit(1);
-		}
+		if (read(slvpipe[READ_PIPE], &len, sizeof(int)) < 0)
+			err(1, "command pipe read for length failed");
 		response->return_len = len;
 
 		if (verbose)
@@ -1426,10 +1429,8 @@ read_cmd_pipe(returns_t *response)
 		if ((response->return_value = malloc(len + 1)) == NULL)
 			err(1, "Failed to alloc memory for cmd pipe read");
 
-		if (read(slvpipe[READ_PIPE], response->return_value, len) < 0) {
-			perror("command pipe read of data failed");
-			exit(1);
-		}
+		if (read(slvpipe[READ_PIPE], response->return_value, len) < 0)
+			err(1, "command pipe read of data failed");
 
 		if (response->return_type != ret_byte) {
 			str = response->return_value;
@@ -1437,16 +1438,14 @@ read_cmd_pipe(returns_t *response)
 
 			if (verbose)
 				fprintf(stderr, "Read data >%s< from pipe\n",
-					response->return_value);
+					(const char *)response->return_value);
 		}
 	} else {
 		response->return_value = NULL;
 		if (type == ret_count) {
-			if (read(slvpipe[READ_PIPE], &len, sizeof(int)) < 0) {
-				perror("command pipe read for number of "
+			if (read(slvpipe[READ_PIPE], &len, sizeof(int)) < 0)
+				err(1, "command pipe read for number of "
 				       "returns failed");
-				exit(1);
-			}
 			response->return_len = len;
 		}
 
@@ -1468,7 +1467,8 @@ save_slave_output(bool discard)
 	struct pollfd fd;
 	char *new_data, drain[MAX_DRAIN];
 	size_t to_allocate;
-	int result, i;
+	ssize_t result;
+	size_t i;
 
 	fd.fd = master;
 	fd.events = POLLIN;
@@ -1487,8 +1487,8 @@ save_slave_output(bool discard)
 		}
 
 		fd.revents = 0;
-		if (discard != true) {
-			if (result >
+		if (!discard) {
+			if ((size_t)result >
 			    (saved_output.allocated - saved_output.count)) {
 				to_allocate = 1024 * ((result / 1024) + 1);
 
@@ -1501,13 +1501,13 @@ save_slave_output(bool discard)
 			}
 
 			if (verbose) {
-				fprintf(stderr, "count = %d, allocated = %d\n",
-					saved_output.count,
-					saved_output.allocated);
-				for (i = 0; i < result; i++) {
+				fprintf(stderr, "count = %zu, "
+				    "allocated = %zu\n", saved_output.count,
+				    saved_output.allocated);
+				for (i = 0; i < (size_t)result; i++) {
 					fprintf(stderr, "Saving slave output "
-						"0x%x (%c)\n", drain[i],
-						(drain[i] >= ' ')? drain[i] : '-');
+					    "0x%x (%c)\n", drain[i],
+					    (drain[i] >= ' ')? drain[i] : '-');
 				}
 			}
 
@@ -1516,17 +1516,17 @@ save_slave_output(bool discard)
 			saved_output.count += result;
 
 			if (verbose) {
-				fprintf(stderr, "count = %d, allocated = %d\n",
-					saved_output.count,
-					saved_output.allocated);
+				fprintf(stderr, "count = %zu, "
+				    "allocated = %zu\n", saved_output.count,
+				    saved_output.allocated);
 			}
 		} else {
 			if (verbose) {
-				for (i=0; i < result; i++) {
+				for (i=0; i < (size_t)result; i++) {
 					fprintf(stderr, "Discarding slave "
-						"output 0x%x (%c)\n",
-						drain[i],
-						(drain[i] >= ' ')? drain[i] : '-');
+					    "output 0x%x (%c)\n",
+					    drain[i],
+					    (drain[i] >= ' ')? drain[i] : '-');
 				}
 			}
 		}

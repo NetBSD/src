@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.86 2011/05/30 19:22:44 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.86.2.1 2011/06/23 14:20:17 cherry Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.86 2011/05/30 19:22:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.86.2.1 2011/06/23 14:20:17 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1389,7 +1389,7 @@ tmpfs_getpages(void *v)
 	struct uvm_object *uobj;
 
 	KASSERT(vp->v_type == VREG);
-	KASSERT(mutex_owned(&vp->v_interlock));
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	node = VP_TO_TMPFS_NODE(vp);
 	uobj = node->tn_spec.tn_reg.tn_aobj;
@@ -1399,7 +1399,7 @@ tmpfs_getpages(void *v)
 	 */
 	if (vp->v_size <= offset + (centeridx << PAGE_SHIFT)) {
 		if ((flags & PGO_LOCKED) == 0)
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 		return EINVAL;
 	}
 
@@ -1418,8 +1418,6 @@ tmpfs_getpages(void *v)
 			node->tn_status |= TMPFS_NODE_MODIFIED;
 	}
 
-	mutex_exit(&vp->v_interlock);
-
 	/*
 	 * Invoke the pager.
 	 *
@@ -1429,7 +1427,8 @@ tmpfs_getpages(void *v)
 	if (pgs) {
 		memset(pgs, 0, sizeof(struct vm_pages *) * npages);
 	}
-	mutex_enter(&uobj->vmobjlock);
+	KASSERT(vp->v_interlock == uobj->vmobjlock);
+
 	error = (*uobj->pgops->pgo_get)(uobj, offset, pgs, &npages, centeridx,
 	    access_type, advice, flags | PGO_ALLPAGES);
 
@@ -1460,19 +1459,17 @@ tmpfs_putpages(void *v)
 	struct uvm_object *uobj;
 	int error;
 
-	KASSERT(mutex_owned(&vp->v_interlock));
-
-	node = VP_TO_TMPFS_NODE(vp);
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	if (vp->v_type != VREG) {
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		return 0;
 	}
 
+	node = VP_TO_TMPFS_NODE(vp);
 	uobj = node->tn_spec.tn_reg.tn_aobj;
-	mutex_exit(&vp->v_interlock);
 
-	mutex_enter(&uobj->vmobjlock);
+	KASSERT(vp->v_interlock == uobj->vmobjlock);
 	error = (*uobj->pgops->pgo_put)(uobj, offlo, offhi, flags);
 
 	/* XXX mtime */

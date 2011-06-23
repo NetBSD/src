@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.87 2011/02/26 14:43:18 jruoho Exp $	*/
+/*	$NetBSD: cpu.c,v 1.87.2.1 2011/06/23 14:19:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.87 2011/02/26 14:43:18 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.87.2.1 2011/06/23 14:19:48 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -155,6 +155,7 @@ struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
 	.ci_curldt = -1,
+	.ci_cpumask = 1,
 #ifdef TRAPLOG
 	.ci_tlog_base = &tlog_primary,
 #endif /* !TRAPLOG */
@@ -171,7 +172,7 @@ static void	tss_init(struct i386tss *, void *, void *);
 static void	cpu_init_idle_lwp(struct cpu_info *);
 
 uint32_t cpus_attached = 0;
-uint32_t cpus_running = 0;
+uint32_t cpus_running = 1;
 
 uint32_t cpu_feature[5]; /* X86 CPUID feature bits
 			  *	[0] basic features %edx
@@ -407,7 +408,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
 		cpu_set_tss_gates(ci);
-		pmap_cpu_init_early(ci);
 		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
@@ -776,6 +776,7 @@ cpu_hatch(void *v)
 	/* Because the text may have been patched in x86_patch(). */
 	wbinvd();
 	x86_flush();
+	tlbflushg();
 
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 

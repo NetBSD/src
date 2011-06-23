@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.15 2011/04/04 20:37:50 dyoung Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.15.2.1 2011/06/23 14:19:09 cherry Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,12 +68,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.15 2011/04/04 20:37:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.15.2.1 2011/06/23 14:19:09 cherry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
-#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -82,17 +81,21 @@ __KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.15 2011/04/04 20:37:50 dyoung E
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/module.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
-#include <machine/cpu.h>
 #include <machine/obs266.h>
-#include <powerpc/spr.h>
+
 #include <powerpc/ibm4xx/dcr4xx.h>
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dev/comopbvar.h>
 #include <powerpc/ibm4xx/ibm405gp.h>
 #include <powerpc/ibm4xx/openbios.h>
+
+#include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
 
 #include <dev/ic/comreg.h>
@@ -126,16 +129,10 @@ char bootpath[256];
 
 extern paddr_t msgbuf_paddr;
 
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-void *startsym, *endsym;
-#endif
-
-void initppc(u_int, u_int, char *, void *);
-int lcsplx(int);
-
+void initppc(vaddr_t, vaddr_t, char *, void *);
 
 void
-initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
+initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 {
 	vaddr_t va;
 	u_int memsize;
@@ -154,25 +151,12 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 
 	/* Initialize IBM405GPr CPU */
 	ibm40x_memsize_init(memsize, startkernel);
-	ibm4xx_init((void (*)(void))ext_intr);
-
-	/*
-	 * Set the page size.
-	 */
-	uvm_setpagesize();
-
-	/*
-	 * Initialize pmap module.
-	 */
-	pmap_bootstrap(startkernel, endkernel);
+	ibm4xx_init(startkernel, endkernel, pic_ext_intr);
 
 #ifdef DEBUG
 	openbios_board_print();
 #endif
 
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
-#endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -185,6 +169,11 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
 #endif
+
+	/*
+	 * Look for the ibm4xx modules in the right place.
+	 */
+	module_machine = module_machine_ibm4xx;
 }
 
 void
@@ -195,14 +184,6 @@ consinit(void)
 	com_opb_cnattach(OBS266_COM_FREQ, CONADDR, CONSPEED, CONMODE);
 #endif
 }
-
-int
-lcsplx(int ipl)
-{
-
-	return spllower(ipl); 	/* XXX */
-}
-
 
 /*
  * Machine dependent startup code.

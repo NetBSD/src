@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.26 2011/03/05 15:25:52 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.26.2.1 2011/06/23 14:19:34 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26 2011/03/05 15:25:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26.2.1 2011/06/23 14:19:34 cherry Exp $");
+
+#define _POWERPC_BUS_SPACE_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,11 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26 2011/03/05 15:25:52 matt Exp $");
 #include <sys/endian.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm.h>
-
-#define _POWERPC_BUS_SPACE_PRIVATE
-#include <machine/bus.h>
 
 #if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/spr.h>
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26 2011/03/05 15:25:52 matt Exp $");
 #include <powerpc/oea/pte.h>
 #include <powerpc/oea/spr.h>
 #include <powerpc/oea/sr_601.h>
-
-extern unsigned long oeacpufeat;
 #endif
 
 /* read_N */

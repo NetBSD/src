@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.84 2011/05/02 02:01:33 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.84.2.1 2011/06/23 14:19:35 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.84 2011/05/02 02:01:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.84.2.1 2011/06/23 14:19:35 cherry Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -46,13 +46,14 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.84 2011/05/02 02:01:33 matt Exp $")
 #include <sys/vnode.h>
 #include <sys/buf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
 #include <powerpc/altivec.h>
 #endif
 #include <machine/fpu.h>
 #include <machine/pcb.h>
+#include <machine/psl.h>
 
 #ifdef PPC_IBM4XX
 vaddr_t vmaprange(struct proc *, vaddr_t, vsize_t, int);
@@ -91,13 +92,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	struct pcb * const pcb1 = lwp_getpcb(l1);
 	struct pcb * const pcb2 = lwp_getpcb(l2);
-
-#ifdef PPC_HAVE_FPU
-	fpu_save();
-#endif
-#if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
-	vec_save();
-#endif
 
 	/* Copy MD part of lwp and set up user trapframe pointer.  */
 	l2->l_md = l1->l_md;
@@ -167,16 +161,8 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-	KASSERT(l == curlwp);
-#ifdef PPC_HAVE_FPU
-	/* release the FPU */
-	fpu_discard();
-#endif
-#if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
-	/* release the vector unit */
-	vec_discard();
-#endif
 
+	(void)l;
 }
 
 void
@@ -296,3 +282,66 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
+
+#ifdef __HAVE_CPU_UAREA_ROUTINES
+void *
+cpu_uarea_alloc(bool system)
+{
+#ifdef PMAP_MAP_POOLPAGE
+	struct pglist pglist;
+	int error;
+
+	/*
+	 * Allocate a new physically contiguous uarea which can be
+	 * direct-mapped.
+	 */
+	error = uvm_pglistalloc(USPACE, 0, ptoa(physmem), 0, 0, &pglist, 1, 1);
+	if (error) {
+		if (!system)
+			return NULL;
+		panic("%s: uvm_pglistalloc failed: %d", __func__, error);
+	}
+
+	/*
+	 * Get the physical address from the first page.
+	 */
+	const struct vm_page * const pg = TAILQ_FIRST(&pglist);
+	KASSERT(pg != NULL);
+	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
+	/*
+	 * We need to return a direct-mapped VA for the pa.
+	 */
+
+	return (void *)(uintptr_t)PMAP_MAP_POOLPAGE(pa);
+#else
+	return NULL;
+#endif
+}
+
+/*
+ * Return true if we freed it, false if we didn't.
+ */
+bool
+cpu_uarea_free(void *vva)
+{
+#ifdef PMAP_UNMAP_POOLPAGE
+	vaddr_t va = (vaddr_t) vva;
+	if (va >= VM_MIN_KERNEL_ADDRESS && va < VM_MAX_KERNEL_ADDRESS)
+		return false;
+
+	/*
+	 * Since the pages are physically contiguous, the vm_page structurs
+	 * will be as well.
+	 */
+	struct vm_page *pg = PHYS_TO_VM_PAGE(PMAP_UNMAP_POOLPAGE(va));
+	KASSERT(pg != NULL);
+	for (size_t i = 0; i < UPAGES; i++, pg++) {
+		uvm_pagefree(pg);
+	}
+	return true;
+#else
+	return false;
+#endif
+}
+#endif /* __HAVE_CPU_UAREA_ROUTINES */

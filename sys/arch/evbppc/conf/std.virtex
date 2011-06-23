@@ -1,4 +1,4 @@
-#	$NetBSD: std.virtex,v 1.2 2010/03/18 13:47:04 kiyohara Exp $
+#	$NetBSD: std.virtex,v 1.2.6.1 2011/06/23 14:19:08 cherry Exp $
 #
 # Standard/required options for NetBSD/virtex.
 
@@ -17,7 +17,7 @@ makeoptions	TEXTADDR=0x25000
 makeoptions	BOARDTYPE="virtex"
 makeoptions	PPCDIR="ibm4xx"
 
-options 	PPC_INTR_IMPL="<powerpc/ibm4xx/ibm4xx_intr.h>"
+options 	PPC_INTR_IMPL="<powerpc/intr.h>"
 options 	KERNBASE=0x25000
 options 	INTSTK=16384
 

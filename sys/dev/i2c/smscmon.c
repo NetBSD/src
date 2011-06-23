@@ -1,4 +1,4 @@
-/* $NetBSD: smscmon.c,v 1.1 2010/02/22 03:50:56 pgoyette Exp $ */
+/* $NetBSD: smscmon.c,v 1.1.12.1 2011/06/23 14:19:59 cherry Exp $ */
 
 /*
  * Copyright (c) 2009 Takahiro Hayashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smscmon.c,v 1.1 2010/02/22 03:50:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smscmon.c,v 1.1.12.1 2011/06/23 14:19:59 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,6 +285,7 @@ smscmon_sensors_setup(struct smscmon_sc *sc, struct smscmon_sensor *sens)
 		strlcpy(sc->sensors[i].desc, sens[i].desc,
 		    sizeof(sc->sensors[i].desc));
 		sc->sensors[i].units = sens[i].type;
+		sc->sensors[i].state = ENVSYS_SINVALID;
 		sc->numsensors++;
 	}
 	sc->smscmon_sensors = sens;

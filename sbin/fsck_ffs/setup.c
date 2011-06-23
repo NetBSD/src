@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.92 2011/03/20 11:41:24 bouyer Exp $	*/
+/*	$NetBSD: setup.c,v 1.92.2.1 2011/06/23 14:18:42 cherry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.92 2011/03/20 11:41:24 bouyer Exp $");
+__RCSID("$NetBSD: setup.c,v 1.92.2.1 2011/06/23 14:18:42 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -577,7 +577,7 @@ setup(const char *dev, const char *origdev)
 	return (1);
 badsblabel:
 	markclean=0;
-	ckfini();
+	ckfini(1);
 	return (0);
 }
 

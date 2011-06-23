@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 2009/11/07 07:27:42 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24.10.1 2011/06/23 14:19:04 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2009/11/07 07:27:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24.10.1 2011/06/23 14:19:04 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,29 +57,28 @@ u_int	bootdev;
 
 struct evcnt evcnt_fpsp_unimp, evcnt_fpsp_unsupp;
 
-int	mainbusmatch(struct device *, struct cfdata *, void *);
-void	mainbusattach(struct device *, struct device *, void *);
-int	mainbussearch(struct device *, struct cfdata *,
-			   const int *, void *);
+int	mainbusmatch(device_t, cfdata_t, void *);
+void	mainbusattach(device_t, device_t, void *);
+int	mainbussearch(device_t, cfdata_t, const int *, void *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbusmatch, mainbusattach, NULL, NULL);
 
 int
-mainbusmatch(struct device *parent, struct cfdata *match, void *aux)
+mainbusmatch(device_t parent, cfdata_t match, void *aux)
 {
-	static int mainbus_matched = 0;
+	static bool mainbus_matched;
 
 	/* Allow only one instance. */
 	if (mainbus_matched)
 		return (0);
 
-	mainbus_matched = 1;
+	mainbus_matched = true;
 	return (1);
 }
 
 void
-mainbusattach(struct device *parent, struct device *self, void *aux)
+mainbusattach(device_t parent, device_t self, void *aux)
 {
 
 	printf("\n");
@@ -94,7 +93,7 @@ mainbusattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-mainbussearch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
+mainbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 
 	if (config_match(parent, cf, NULL) > 0)

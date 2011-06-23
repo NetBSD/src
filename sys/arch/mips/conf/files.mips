@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.69 2011/04/26 16:36:40 joerg Exp $
+#	$NetBSD: files.mips,v 1.69.2.1 2011/06/23 14:19:22 cherry Exp $
 #
 
 defflag	opt_cputype.h		NOFPU FPEMUL
@@ -41,7 +41,6 @@ file	arch/mips/mips/db_interface.c		ddb | kgdb
 file	arch/mips/mips/db_trace.c		ddb
 file	arch/mips/mips/ipifuncs.c		multiprocessor
 file	arch/mips/mips/kgdb_machdep.c		kgdb
-file	arch/mips/mips/mem.c
 file	arch/mips/mips/pmap.c
 file	arch/mips/mips/pmap_segtab.c
 file	arch/mips/mips/pmap_tlb.c

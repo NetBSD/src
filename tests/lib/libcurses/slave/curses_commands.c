@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.3 2011/04/11 09:06:24 blymn Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.3.2.1 2011/06/23 14:20:40 cherry Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -811,7 +811,7 @@ cmd_waddbytes(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -836,7 +836,7 @@ cmd_waddstr(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1335,7 +1335,7 @@ cmd_mvwaddbytes(int nargs, char **args)
 	if (check_arg_count(nargs, 5) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1373,7 +1373,7 @@ cmd_mvwaddch(int nargs, char **args)
 	if (check_arg_count(nargs, 4) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1405,7 +1405,7 @@ cmd_mvwaddchnstr(int nargs, char **args)
 	if (check_arg_count(nargs, 5) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1443,7 +1443,7 @@ cmd_mvwaddchstr(int nargs, char **args)
 	if (check_arg_count(nargs, 4) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1475,7 +1475,7 @@ cmd_mvwaddnstr(int nargs, char **args)
 	if (check_arg_count(nargs, 5) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1513,7 +1513,7 @@ cmd_mvwaddstr(int nargs, char **args)
 	if (check_arg_count(nargs, 4) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1545,7 +1545,7 @@ cmd_mvwdelch(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1577,7 +1577,7 @@ cmd_mvwgetch(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1611,7 +1611,7 @@ cmd_mvwgetnstr(int nargs, char **args)
 	if (check_arg_count(nargs, 4) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1659,7 +1659,7 @@ cmd_mvwgetstr(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1693,7 +1693,7 @@ cmd_mvwinch(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1725,7 +1725,7 @@ cmd_mvwinsch(int nargs, char **args)
 	if (check_arg_count(nargs, 4) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1804,7 +1804,7 @@ cmd_box(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1848,7 +1848,7 @@ cmd_clearok(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1891,19 +1891,19 @@ cmd_color_content(int nargs, char **args)
 void
 cmd_copywin(int nargs, char **args)
 {
-	int sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol, overlay;
+	int sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol, ovlay;
 	WINDOW *source, *destination;
 
 	if (check_arg_count(nargs, 9) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &source) == 0) {
+	if (sscanf(args[0], "%p", &source) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
 	}
 
-	if (sscanf(args[1], "%td", &destination) == 0) {
+	if (sscanf(args[1], "%p", &destination) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1945,7 +1945,7 @@ cmd_copywin(int nargs, char **args)
 		return;
 	}
 
-	if (sscanf(args[8], "%d", &overlay) == 0) {
+	if (sscanf(args[8], "%d", &ovlay) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -1953,7 +1953,7 @@ cmd_copywin(int nargs, char **args)
 
 	report_count(1);
 	report_return(copywin(source, destination, sminrow, smincol, dminrow,
-			      dmincol, dmaxrow, dmaxcol, overlay));
+			      dmincol, dmaxrow, dmaxcol, ovlay));
 }
 
 
@@ -2044,7 +2044,7 @@ cmd_delscreen(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &scrn) == 0) {
+	if (sscanf(args[0], "%p", &scrn) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2064,7 +2064,7 @@ cmd_delwin(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2084,7 +2084,7 @@ cmd_derwin(int nargs, char **args)
 	if (check_arg_count(nargs, 5) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2127,7 +2127,7 @@ cmd_dupwin(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2214,7 +2214,7 @@ cmd_flushok(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2254,7 +2254,7 @@ cmd_getattrs(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2273,7 +2273,7 @@ cmd_getbkgd(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2292,7 +2292,7 @@ cmd_getcury(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2311,7 +2311,7 @@ cmd_getcurx(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2330,7 +2330,7 @@ cmd_getbegy(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2349,7 +2349,7 @@ cmd_getbegx(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2368,7 +2368,7 @@ cmd_getmaxy(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2387,7 +2387,7 @@ cmd_getmaxx(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2406,7 +2406,7 @@ cmd_getpary(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2425,7 +2425,7 @@ cmd_getparx(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2553,7 +2553,7 @@ cmd_idcok(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 	report_error("BAD ARGUMENT");
 		return;
@@ -2579,7 +2579,7 @@ cmd_idlok(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2684,7 +2684,7 @@ cmd_intrflush(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2721,7 +2721,7 @@ cmd_is_linetouched(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2746,7 +2746,7 @@ cmd_is_wintouched(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2791,7 +2791,7 @@ cmd_keypad(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2847,7 +2847,7 @@ cmd_leaveok(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2873,7 +2873,7 @@ cmd_meta(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -2936,7 +2936,7 @@ cmd_mvderwin(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3095,7 +3095,7 @@ cmd_mvwhline(int nargs, char **args)
 	if (check_arg_count(nargs, 5) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3139,7 +3139,7 @@ cmd_mvwvline(int nargs, char **args)
 	if (check_arg_count(nargs, 5) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3183,7 +3183,7 @@ cmd_mvwin(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3216,7 +3216,7 @@ cmd_mvwinchnstr(int nargs, char **args)
 	if (check_arg_count(nargs, 4) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3264,7 +3264,7 @@ cmd_mvwinchstr(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3299,7 +3299,7 @@ cmd_mvwinnstr(int nargs, char **args)
 	if (check_arg_count(nargs, 4) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3347,7 +3347,7 @@ cmd_mvwinstr(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3381,7 +3381,7 @@ cmd_mvwprintw(int nargs, char **args)
 	if (check_arg_count(nargs, 5) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3414,7 +3414,7 @@ cmd_mvwscanw(int nargs, char **args)
 	if (check_arg_count(nargs, 4) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3588,7 +3588,7 @@ cmd_nodelay(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3659,7 +3659,7 @@ cmd_notimeout(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3684,13 +3684,13 @@ cmd_overlay(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &source) == 0) {
+	if (sscanf(args[0], "%p", &source) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
 	}
 
-	if (sscanf(args[1], "%td", &dest) == 0) {
+	if (sscanf(args[1], "%p", &dest) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3709,13 +3709,13 @@ cmd_overwrite(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &source) == 0) {
+	if (sscanf(args[0], "%p", &source) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
 	}
 
-	if (sscanf(args[1], "%td", &dest) == 0) {
+	if (sscanf(args[1], "%p", &dest) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3734,7 +3734,7 @@ cmd_pair_content(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%d", &pair) == 0) {
+	if (sscanf(args[0], "%hd", &pair) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3757,7 +3757,7 @@ cmd_pechochar(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &pad) == 0) {
+	if (sscanf(args[0], "%p", &pad) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3783,7 +3783,7 @@ cmd_pnoutrefresh(int nargs, char **args)
 	if (check_arg_count(nargs, 7) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &pad) == 0) {
+	if (sscanf(args[0], "%p", &pad) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3840,7 +3840,7 @@ cmd_prefresh(int nargs, char **args)
 	if (check_arg_count(nargs, 7) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &pad) == 0) {
+	if (sscanf(args[0], "%p", &pad) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3911,7 +3911,7 @@ cmd_putwin(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -3959,7 +3959,7 @@ cmd_redrawwin(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4049,7 +4049,7 @@ cmd_scanw(int nargs, char **args)
 
 	/* XXX call2 */
 	report_count(2);
-	report_return(scanw("%s", &string));
+	report_return(scanw("%s", string));
 	report_status(string);
 }
 
@@ -4062,7 +4062,7 @@ cmd_scroll(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4082,7 +4082,7 @@ cmd_scrollok(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4118,7 +4118,7 @@ cmd_set_term(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &scrn) == 0) {
+	if (sscanf(args[0], "%p", &scrn) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4149,7 +4149,7 @@ cmd_subpad(int nargs, char **args)
 	if (check_arg_count(nargs, 5) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &pad) == 0) {
+	if (sscanf(args[0], "%p", &pad) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4193,7 +4193,7 @@ cmd_subwin(int nargs, char **args)
 	if (check_arg_count(nargs, 5) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4259,7 +4259,7 @@ cmd_touchline(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4290,13 +4290,13 @@ cmd_touchoverlap(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win1) == 0) {
+	if (sscanf(args[0], "%p", &win1) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
 	}
 
-	if (sscanf(args[1], "%td", &win2) == 0) {
+	if (sscanf(args[1], "%p", &win2) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4315,7 +4315,7 @@ cmd_touchwin(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4353,7 +4353,7 @@ cmd_untouchwin(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4421,7 +4421,7 @@ cmd_vw_printw(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4454,7 +4454,7 @@ cmd_vw_scanw(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4490,7 +4490,7 @@ cmd_waddch(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4516,7 +4516,7 @@ cmd_waddchnstr(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4541,7 +4541,7 @@ cmd_waddchstr(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4561,7 +4561,7 @@ cmd_waddnstr(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 3)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4589,7 +4589,7 @@ cmd_wattr_get(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4612,7 +4612,7 @@ cmd_wattr_off(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4638,7 +4638,7 @@ cmd_wattr_on(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4665,7 +4665,7 @@ cmd_wattr_set(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4697,7 +4697,7 @@ cmd_wattroff(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4723,7 +4723,7 @@ cmd_wattron(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4749,7 +4749,7 @@ cmd_wattrset(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4775,7 +4775,7 @@ cmd_wbkgd(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4796,7 +4796,7 @@ cmd_wbkgdset(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4823,7 +4823,7 @@ cmd_wborder(int nargs, char **args)
 	if (check_arg_count(nargs, 9) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4890,7 +4890,7 @@ cmd_wclear(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4909,7 +4909,7 @@ cmd_wclrtobot(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4928,7 +4928,7 @@ cmd_wclrtoeol(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4949,7 +4949,7 @@ cmd_wcolor_set(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4974,7 +4974,7 @@ cmd_wdelch(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4993,7 +4993,7 @@ cmd_wdeleteln(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5014,7 +5014,7 @@ cmd_wechochar(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5039,7 +5039,7 @@ cmd_werase(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5058,7 +5058,7 @@ cmd_wgetch(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5079,7 +5079,7 @@ cmd_wgetnstr(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5103,14 +5103,12 @@ cmd_wgetstr(int nargs, char **args)
 {
 	WINDOW *win;
 	char string[256];
-	int err, i;
-	struct termios attrs;
 
 
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5133,7 +5131,7 @@ cmd_whline(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5164,7 +5162,7 @@ cmd_winch(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5185,7 +5183,7 @@ cmd_winchnstr(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5213,7 +5211,7 @@ cmd_winchstr(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5236,7 +5234,7 @@ cmd_winnstr(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5264,7 +5262,7 @@ cmd_winsch(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5290,7 +5288,7 @@ cmd_winsdelln(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5315,7 +5313,7 @@ cmd_winsertln(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5335,7 +5333,7 @@ cmd_winstr(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5357,7 +5355,7 @@ cmd_wmove(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5388,7 +5386,7 @@ cmd_wnoutrefresh(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5407,7 +5405,7 @@ cmd_wprintw(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5427,7 +5425,7 @@ cmd_wredrawln(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5458,7 +5456,7 @@ cmd_wrefresh(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5479,7 +5477,7 @@ cmd_wresize(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5511,7 +5509,7 @@ cmd_wscanw(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5531,7 +5529,7 @@ cmd_wscrl(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5557,7 +5555,7 @@ cmd_wsetscrreg(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5588,7 +5586,7 @@ cmd_wstandend(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5607,7 +5605,7 @@ cmd_wstandout(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5627,7 +5625,7 @@ cmd_wtimeout(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5654,7 +5652,7 @@ cmd_wtouchln(int nargs, char **args)
 	if (check_arg_count(nargs, 4) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5691,7 +5689,7 @@ cmd_wunderend(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5710,7 +5708,7 @@ cmd_wunderscore(int nargs, char **args)
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5730,7 +5728,7 @@ cmd_wvline(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5848,7 +5846,7 @@ cmd_mvwinsnstr(int nargs, char **args)
 	if (check_arg_count(nargs, 5) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5882,12 +5880,12 @@ void
 cmd_mvwinsstr(int nargs, char **args)
 {
 	WINDOW *win;
-	int y, x, n;
+	int y, x;
 
 	if (check_arg_count(nargs, 4) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5919,7 +5917,7 @@ cmd_winsnstr(int nargs, char **args)
 	if (check_arg_count(nargs, 3) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5944,7 +5942,7 @@ cmd_winsstr(int nargs, char **args)
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5997,7 +5995,7 @@ cmd_wchgat(int nargs, char **args)
 	if (check_arg_count(nargs, 4) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -6081,7 +6079,7 @@ cmd_mvwchgat(int nargs, char **args)
 	if (check_arg_count(nargs, 6) == 1)
 		return;
 
-	if (sscanf(args[0], "%td", &win) == 0) {
+	if (sscanf(args[0], "%p", &win) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;

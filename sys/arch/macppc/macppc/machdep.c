@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.155 2010/12/20 00:25:37 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.155.6.1 2011/06/23 14:19:21 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2010/12/20 00:25:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155.6.1 2011/06/23 14:19:21 cherry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -45,7 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2010/12/20 00:25:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/boot_flag.h>
+#include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/exec.h>
+#include <sys/kernel.h>
+#include <sys/ksyms.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
@@ -55,16 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2010/12/20 00:25:37 matt Exp $");
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/boot_flag.h>
-#include <sys/ksyms.h>
-#include <sys/conf.h>
-#include <sys/device.h>
-
-#include <net/netisr.h>
 
 #ifdef DDB
-#include <machine/db_machdep.h>
+#include <powerpc/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 
@@ -81,9 +80,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2010/12/20 00:25:37 matt Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/powerpc.h>
-#include <machine/trap.h>
-#include <machine/bus.h>
-#include <machine/fpu.h>
+
+#include <powerpc/trap.h>
+#include <powerpc/fpu.h>
 #include <powerpc/oea/bat.h>
 #include <powerpc/spr.h>
 #ifdef ALTIVEC
@@ -91,7 +90,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2010/12/20 00:25:37 matt Exp $");
 #endif
 #include <powerpc/ofw_cons.h>
 
-#include <arch/powerpc/pic/picvar.h>
+#include <powerpc/pic/picvar.h>
+#ifdef MULTIPROCESSOR
+#include <powerpc/pic/ipivar.h>
+#endif
+
 #include <macppc/dev/adbvar.h>
 #include <macppc/dev/pmuvar.h>
 #include <macppc/dev/cudavar.h>
@@ -99,10 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2010/12/20 00:25:37 matt Exp $");
 #include "ksyms.h"
 #include "pmu.h"
 #include "cuda.h"
-
-#ifdef MULTIPROCESSOR
-#include <arch/powerpc/pic/ipivar.h>
-#endif
 
 struct genfb_colormap_callback gfb_cb;
 struct genfb_parameter_callback gpc;
@@ -180,7 +179,7 @@ cpu_reboot(int howto, char *what)
 
 #ifdef MULTIPROCESSOR
 	/* Halt other CPU */
-	ppc_send_ipi(IPI_T_NOTME, PPC_IPI_HALT);
+	cpu_send_ipi(IPI_DST_NOTME, IPI_HALT);
 	delay(100000);	/* XXX */
 #endif
 
@@ -262,7 +261,7 @@ callback(void *p)
 #endif
 
 void
-copy_disp_props(struct device *dev, int node, prop_dictionary_t dict)
+copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 {
 	uint32_t temp;
 	uint64_t cmap_cb, backlight_cb;

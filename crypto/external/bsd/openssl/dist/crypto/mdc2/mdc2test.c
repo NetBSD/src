@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 	unsigned char md[MDC2_DIGEST_LENGTH];
 	int i;
 	EVP_MD_CTX c;
-	static char *text="Now is the time for all ";
+	static const char *text="Now is the time for all ";
 
 #ifdef CHARSET_EBCDIC
 	ebcdic2ascii(text,text,strlen(text));
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 
 	EVP_MD_CTX_init(&c);
 	EVP_DigestInit_ex(&c,EVP_mdc2(), NULL);
-	EVP_DigestUpdate(&c,(unsigned char *)text,strlen(text));
+	EVP_DigestUpdate(&c,(const unsigned char *)text,strlen(text));
 	EVP_DigestFinal_ex(&c,&(md[0]),NULL);
 
 	if (memcmp(md,pad1,MDC2_DIGEST_LENGTH) != 0)
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 	EVP_DigestInit_ex(&c,EVP_mdc2(), NULL);
 	/* FIXME: use a ctl function? */
 	((MDC2_CTX *)c.md_data)->pad_type=2;
-	EVP_DigestUpdate(&c,(unsigned char *)text,strlen(text));
+	EVP_DigestUpdate(&c,(const unsigned char *)text,strlen(text));
 	EVP_DigestFinal_ex(&c,&(md[0]),NULL);
 
 	if (memcmp(md,pad2,MDC2_DIGEST_LENGTH) != 0)

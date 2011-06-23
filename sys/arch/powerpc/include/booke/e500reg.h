@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.7 2011/05/28 05:23:08 matt Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.7.2.1 2011/06/23 14:19:31 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -277,10 +277,12 @@
 #define	USB1_BASE	0x22100	/* MPC8536 */
 #define	USB2_BASE	0x23100	/* MPC8536 */
 #define	USB3_BASE	0x2b100	/* MPC8536 */
+#define	USB_SNOOP1	0x0300	/* DMA Snooping Register 1 */
+#define	USB_SNOOP2	0x0304	/* DMA Snooping Register 2 */
+#define	USB_CONTROL	0x0400	/* USB General Purpose Register */
+#define	USB_EN		__PPCBIT(29)
+#define	USB_ULPI_INT_EN	__PPCBIT(31)
 #define	USB_SIZE	0x00f00
-
-#define	USB_SNOOP1	0x400
-#define	USB_SNOOP2	0x404
 
 #define	SNOOP_2GB	0x1e
 

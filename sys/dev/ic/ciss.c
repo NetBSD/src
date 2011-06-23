@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.25 2011/05/16 17:21:37 mhitch Exp $	*/
+/*	$NetBSD: ciss.c,v 1.25.2.1 2011/06/23 14:19:59 cherry Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.25 2011/05/16 17:21:37 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.25.2.1 2011/06/23 14:19:59 cherry Exp $");
 
 #include "bio.h"
 
@@ -1421,6 +1421,8 @@ ciss_create_sensors(struct ciss_softc *sc)
 
 	for (i = 0; i < nsensors; i++) {
 		sc->sc_sensor[i].units = ENVSYS_DRIVE;
+		sc->sc_sensor[i].state = ENVSYS_SINVALID;
+		sc->sc_sensor[i].value_cur = ENVSYS_DRIVE_EMPTY;
 		/* Enable monitoring for drive state changes */
 		sc->sc_sensor[i].flags |= ENVSYS_FMONSTCHANGED;
 		/* logical drives */
@@ -1436,7 +1438,8 @@ ciss_create_sensors(struct ciss_softc *sc)
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = ciss_sensor_refresh;
 	if (sysmon_envsys_register(sc->sc_sme)) {
-		printf("%s: unable to register with sysmon\n", device_xname(&sc->sc_dev));
+		printf("%s: unable to register with sysmon\n",
+		    device_xname(&sc->sc_dev));
 		return(1);
 	}
 	return (0);

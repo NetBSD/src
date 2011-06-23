@@ -104,7 +104,8 @@ void ENGINE_load_aesni (void)
 	ENGINE *toadd = ENGINE_aesni();
 	if (!toadd)
 		return;
-	ENGINE_add (toadd);
+	if (ENGINE_add (toadd))
+		ENGINE_register_complete (toadd);
 	ENGINE_free (toadd);
 	ERR_clear_error ();
 #endif
@@ -150,11 +151,23 @@ static const char   aesni_id[] = "aesni",
 
 /* ===== Engine "management" functions ===== */
 
+#if defined(_WIN32)
+typedef unsigned __int64 IA32CAP;
+#else
+typedef unsigned long long IA32CAP;
+#endif
+
 /* Prepare the ENGINE structure for registration */
 static int
 aesni_bind_helper(ENGINE *e)
 {
-	int engage = (OPENSSL_ia32cap_P[1] & (1 << (57-32))) != 0;
+	int engage;
+	if (sizeof(OPENSSL_ia32cap_P) > 4) {
+		engage = (int)((OPENSSL_ia32cap_P >> 30) >> 27) & 1;
+	} else {
+		IA32CAP OPENSSL_ia32_cpuid(void);
+		engage = (int)(OPENSSL_ia32_cpuid() >> 57) & 1;
+	}
 
 	/* Register everything or return with an error */
 	if (!ENGINE_set_id(e, aesni_id) ||

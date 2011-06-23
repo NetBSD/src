@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.216 2011/05/23 21:30:56 joerg Exp $	*/
+/*	$NetBSD: vnd.c,v 1.216.2.1 2011/06/23 14:19:54 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.216 2011/05/23 21:30:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.216.2.1 2011/06/23 14:19:54 cherry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -638,7 +638,7 @@ vndthread(void *arg)
 		bp->b_iodone = vndiodone;
 		bp->b_private = obp;
 		bp->b_vp = vnd->sc_vp;
-		bp->b_objlock = &bp->b_vp->v_interlock;
+		bp->b_objlock = bp->b_vp->v_interlock;
 		bp->b_data = obp->b_data;
 		bp->b_bcount = obp->b_bcount;
 		BIO_COPYPRIO(bp, obp);
@@ -723,9 +723,9 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	/* We need to increase the number of outputs on the vnode if
 	 * there was any write to it. */
 	if (!doread) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		vp->v_numoutput++;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 
 	biodone(bp);
@@ -750,9 +750,9 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 
 	if (!(flags & B_READ)) {
 		vp = bp->b_vp;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		vp->v_numoutput++;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 
 	/* convert to a byte offset within the file. */

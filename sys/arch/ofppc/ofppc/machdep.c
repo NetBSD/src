@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.113 2010/11/02 19:19:22 phx Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113.6.1 2011/06/23 14:19:26 cherry Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2010/11/02 19:19:22 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113.6.1 2011/06/23 14:19:26 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,7 +354,7 @@ ofppc_init_comcons(int isa_node)
 }
 
 void
-copy_disp_props(struct device *dev, int node, prop_dictionary_t dict)
+copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 {
 	uint32_t temp;
 	char typestr[32];

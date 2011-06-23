@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 2010/11/06 16:36:27 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8.6.1 2011/06/23 14:19:31 cherry Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -109,10 +109,6 @@ struct pmap_physseg {
 	char *attrs;
 };
 
-#define VM_PHYSSEG_MAX		16	/* 1? */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0
 
 #endif /* _MACHINE_VMPARAM_H_ */

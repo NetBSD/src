@@ -86,6 +86,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "SHA256", "SHA512", "RIPEMD",
 			 "MDC2", "WHIRLPOOL", "RSA", "DSA", "DH", "EC", "ECDH", "ECDSA",
 			 "HMAC", "AES", "CAMELLIA", "SEED", "GOST",
+			 # ECP_NISTP224
+			 "EC_NISTP224_64_GCC_128",
 			 # Envelope "algorithms"
 			 "EVP", "X509", "ASN1_TYPEDEFS",
 			 # Helper "algorithms"
@@ -98,7 +100,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 # RFC3779
 			 "RFC3779",
 			 # TLS
-			 "TLSEXT", "PSK",
+			 "TLSEXT", "PSK", "SRP",
 			 # CMS
 			 "CMS",
 			 # CryptoAPI Engine
@@ -108,7 +110,9 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 # JPAKE
 			 "JPAKE",
 			 # Deprecated functions
-			 "DEPRECATED" );
+			 "DEPRECATED",
+			 # Hide SSL internals
+			 "SSL_INTERN");
 
 my $options="";
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
@@ -127,7 +131,7 @@ my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
 my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw;
 my $no_fp_api; my $no_static_engine=1; my $no_gmp; my $no_deprecated;
 my $no_rfc3779; my $no_psk; my $no_tlsext; my $no_cms; my $no_capieng;
-my $no_jpake; my $no_ssl2;
+my $no_jpake; my $no_srp; my $no_ssl2; my $no_nistp_gcc;
 
 my $zlib;
 
@@ -215,9 +219,11 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-rfc3779$/)	{ $no_rfc3779=1; }
 	elsif (/^no-tlsext$/)	{ $no_tlsext=1; }
 	elsif (/^no-cms$/)	{ $no_cms=1; }
+	elsif (/^no-ec-nistp224-64-gcc-128$/)	{ $no_nistp_gcc=1; }
 	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
 	elsif (/^no-capieng$/)	{ $no_capieng=1; }
 	elsif (/^no-jpake$/)	{ $no_jpake=1; }
+	elsif (/^no-srp$/)	{ $no_srp=1; }
 	}
 
 
@@ -257,6 +263,8 @@ $ssl.=" ssl/tls1.h";
 
 my $crypto ="crypto/crypto.h";
 $crypto.=" crypto/o_dir.h";
+$crypto.=" crypto/o_str.h";
+$crypto.=" crypto/o_time.h";
 $crypto.=" crypto/des/des.h crypto/des/des_old.h" ; # unless $no_des;
 $crypto.=" crypto/idea/idea.h" ; # unless $no_idea;
 $crypto.=" crypto/rc4/rc4.h" ; # unless $no_rc4;
@@ -316,6 +324,8 @@ $crypto.=" crypto/krb5/krb5_asn.h";
 $crypto.=" crypto/pqueue/pqueue.h";
 $crypto.=" crypto/cms/cms.h";
 $crypto.=" crypto/jpake/jpake.h";
+$crypto.=" crypto/modes/modes.h";
+$crypto.=" crypto/srp/srp.h";
 
 my $symhacks="crypto/symhacks.h";
 
@@ -978,6 +988,12 @@ sub do_defs
 	$platform{"SHA512_Update"} = "!VMSVAX";
 	$platform{"SHA512_Final"} = "!VMSVAX";
 	$platform{"SHA512"} = "!VMSVAX";
+	$platform{"WHIRLPOOL_Init"} = "!VMSVAX";
+	$platform{"WHIRLPOOL"} = "!VMSVAX";
+	$platform{"WHIRLPOOL_BitUpdate"} = "!VMSVAX";
+	$platform{"EVP_whirlpool"} = "!VMSVAX";
+	$platform{"WHIRLPOOL_Final"} = "!VMSVAX";
+	$platform{"WHIRLPOOL_Update"} = "!VMSVAX";
 
 
 	# Info we know about
@@ -1163,9 +1179,12 @@ sub is_valid
 			if ($keyword eq "TLSEXT" && $no_tlsext) { return 0; }
 			if ($keyword eq "PSK" && $no_psk) { return 0; }
 			if ($keyword eq "CMS" && $no_cms) { return 0; }
+			if ($keyword eq "EC_NISTP224_64_GCC_128" && $no_nistp_gcc)
+					{ return 0; }
 			if ($keyword eq "SSL2" && $no_ssl2) { return 0; }
 			if ($keyword eq "CAPIENG" && $no_capieng) { return 0; }
 			if ($keyword eq "JPAKE" && $no_jpake) { return 0; }
+			if ($keyword eq "SRP" && $no_srp) { return 0; }
 			if ($keyword eq "DEPRECATED" && $no_deprecated) { return 0; }
 
 			# Nothing recognise as true

@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.42 2011/01/07 22:21:56 jmmv Exp $	*/
+/*	$NetBSD: histedit.c,v 1.42.4.1 2011/06/23 14:17:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.42 2011/01/07 22:21:56 jmmv Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.42.4.1 2011/06/23 14:17:48 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: histedit.c,v 1.42 2011/01/07 22:21:56 jmmv Exp $");
 #include "parser.h"
 #include "var.h"
 #include "options.h"
+#include "builtins.h"
 #include "main.h"
 #include "output.h"
 #include "mystring.h"

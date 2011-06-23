@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.6 2011/05/17 17:34:51 dyoung Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.6.2.1 2011/06/23 14:19:28 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.6 2011/05/17 17:34:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.6.2.1 2011/06/23 14:19:28 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -509,6 +509,7 @@ pq3pci_msi_intr(void *v)
 	mutex_spin_enter(msig->msig_lock);
 	KASSERT(curcpu()->ci_cpl == msig->msig_ipl);
 	//KASSERT(curcpu()->ci_idepth == 0);
+	uint32_t matches = 0;
 	for (int rv = 0;;) {
 		uint32_t group = cpu_read_4(msig->msig_msir);
 		if (group == 0) {
@@ -522,6 +523,10 @@ pq3pci_msi_intr(void *v)
 			/*
 			 * if MSIs are working, just clear the free MSIs.
 			 */
+			KASSERTMSG((group & msig->msig_free_mask) == 0,
+			   ("%s: group#%u: unexpected MSIs (%#x)",
+			    __func__, msig->msig_group,
+			    group & msig->msig_free_mask));
 			group &= ~msig->msig_free_mask;
 		} else {
 			/*
@@ -538,6 +543,7 @@ pq3pci_msi_intr(void *v)
 			}
 			group = ~msig->msig_free_mask;
 		}
+		uint32_t this_msi = __BIT(31);
 		for (struct pq3pci_msihand *msih = msig->msig_ihands + 31;
 		     group != 0;
 		     msih--) {
@@ -550,9 +556,11 @@ pq3pci_msi_intr(void *v)
 			if ((*msih->msih_ih.ih_func)(msih->msih_ih.ih_arg)) {
 				rv = 1;
 				msih->msih_ev.ev_count += !working_msi_p;
-			} else {
+				matches |= this_msi;
+			} else if ((matches & this_msi) == 0) {
 				msih->msih_ev_spurious.ev_count += working_msi_p;
 			}
+			this_msi >>= n + 1;
 		}
 	}
 }

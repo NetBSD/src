@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.21 2009/03/14 15:36:00 dsl Exp $ */
+/* $NetBSD: gbus.c,v 1.21.10.1 2011/06/23 14:18:55 cherry Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.21 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.21.10.1 2011/06/23 14:18:55 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,19 +57,19 @@ __KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.21 2009/03/14 15:36:00 dsl Exp $");
 #define KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
 struct gbus_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	int		sc_tlsbnode;	/* node on the TurboLaser */
 };
 
-static int	gbusmatch(struct device *, struct cfdata *, void *);
-static void	gbusattach(struct device *, struct device *, void *);
+static int	gbusmatch(device_t, cfdata_t, void *);
+static void	gbusattach(device_t, device_t, void *);
 
-CFATTACH_DECL(gbus, sizeof(struct gbus_softc),
+CFATTACH_DECL_NEW(gbus, sizeof(struct gbus_softc),
     gbusmatch, gbusattach, NULL, NULL);
 
 static int	gbusprint(void *, const char *);
 
-struct gbus_attach_args gbus_children[] = {
+const struct gbus_attach_args gbus_children[] = {
 	{ "zsc",	GBUS_DUART0_OFFSET },
 	{ "zsc",	GBUS_DUART1_OFFSET },
 	{ "mcclock",	GBUS_CLOCK_OFFSET },
@@ -88,7 +88,7 @@ gbusprint(void *aux, const char *pnp)
 }
 
 static int
-gbusmatch(struct device *parent, struct cfdata *cf, void *aux)
+gbusmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct tlsb_dev_attach_args *ta = aux;
 
@@ -108,21 +108,23 @@ gbusmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-gbusattach(struct device *parent, struct device *self, void *aux)
+gbusattach(device_t parent, device_t self, void *aux)
 {
-	struct gbus_softc *sc = (struct gbus_softc *)self;
+	struct gbus_softc *sc = device_private(self);
 	struct tlsb_dev_attach_args *ta = aux;
-	struct gbus_attach_args *ga;
+	const struct gbus_attach_args *ga;
 	int locs[GBUSCF_NLOCS];
 
-	printf("\n");
+	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	sc->sc_tlsbnode = ta->ta_node;
 
 	/* Attach the children. */
 	for (ga = gbus_children; ga->ga_name != NULL; ga++) {
-		locs[GBUSCF_OFFSET] = ga->ga_offset;
-		(void) config_found_sm_loc(self, "gbus", locs, ga,
-					   gbusprint, config_stdsubmatch);
+		struct gbus_attach_args gaa = *ga;
+		locs[GBUSCF_OFFSET] = gaa.ga_offset;
+		(void) config_found_sm_loc(self, "gbus", locs, &gaa,
+			   gbusprint, config_stdsubmatch);
 	}
 }

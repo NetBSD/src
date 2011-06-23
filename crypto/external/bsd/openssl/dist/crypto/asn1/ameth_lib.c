@@ -69,6 +69,7 @@ extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[];
 extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD hmac_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD cmac_asn1_meth;
 
 /* Keep this sorted in type order !! */
 static const EVP_PKEY_ASN1_METHOD *standard_methods[] = 
@@ -90,7 +91,8 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] =
 #ifndef OPENSSL_NO_EC
 	&eckey_asn1_meth,
 #endif
-	&hmac_asn1_meth
+	&hmac_asn1_meth,
+	&cmac_asn1_meth
 	};
 
 typedef int sk_cmp_fn_type(const char * const *a, const char * const *b);
@@ -172,7 +174,6 @@ static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type)
 	{
 	const EVP_PKEY_ASN1_METHOD *t;
-	ENGINE *e;
 
 	for (;;)
 		{
@@ -184,6 +185,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type)
 	if (pe)
 		{
 #ifndef OPENSSL_NO_ENGINE
+		ENGINE *e;
 		/* type will contain the final unaliased type */
 		e = ENGINE_get_pkey_asn1_meth_engine(type);
 		if (e)

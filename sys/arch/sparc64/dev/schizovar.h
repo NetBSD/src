@@ -1,4 +1,4 @@
-/*	$NetBSD: schizovar.h,v 1.4 2010/02/06 00:23:30 mrg Exp $	*/
+/*	$NetBSD: schizovar.h,v 1.4.10.1 2011/06/23 14:19:42 cherry Exp $	*/
 /*	$OpenBSD: schizovar.h,v 1.10 2007/01/14 16:19:49 kettenis Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ struct schizo_pbm {
 };
 
 struct schizo_softc {
-	struct device sc_dv;
+	device_t sc_dev;
 	int sc_node;
 	int sc_ign;
 	bus_dma_tag_t sc_dmat;

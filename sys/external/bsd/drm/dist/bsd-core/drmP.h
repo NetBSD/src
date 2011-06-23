@@ -696,7 +696,7 @@ struct drm_ati_pcigart_info {
 };
 
 #ifndef DMA_BIT_MASK
-#define DMA_BIT_MASK(n) (((n) == 64) ? ~0ULL : (1ULL<<(n)) - 1)
+#define DMA_BIT_MASK(n) ((dma_addr_t)(((n) == 64) ? ~0ULL : (1ULL<<(n)) - 1))
 #endif
 
 #define upper_32_bits(n) ((u32)(((n) >> 16) >> 16))

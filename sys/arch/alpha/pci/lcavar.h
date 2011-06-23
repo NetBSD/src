@@ -1,4 +1,4 @@
-/* $NetBSD: lcavar.h,v 1.9 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: lcavar.h,v 1.9.10.1 2011/06/23 14:18:54 cherry Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -55,7 +55,7 @@ struct lca_config {
 };
 
 struct lca_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 
 	struct	lca_config *sc_lcp;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.14 2011/05/23 22:00:30 rmind Exp $	*/
+/*	$NetBSD: adutil.c,v 1.14.2.1 2011/06/23 14:20:13 cherry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.14 2011/05/23 22:00:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.14.2.1 2011/06/23 14:20:13 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -66,7 +66,7 @@ start_over:
 	for (ap = hp->lh_first; ap != NULL; ap = ap->link.le_next) {
 		if (ap->block == an) {
 			vp = ATOV(ap);
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			mutex_exit(&adosfs_hashlock);
 			if (vget(vp, LK_EXCLUSIVE))
 				goto start_over;

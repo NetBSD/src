@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_machdep.c,v 1.3 2011/02/25 10:18:09 kiyohara Exp $	*/
+/*	$NetBSD: obs600_machdep.c,v 1.3.2.1 2011/06/23 14:19:09 cherry Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.3 2011/02/25 10:18:09 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.3.2.1 2011/06/23 14:19:09 cherry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -84,20 +84,23 @@ __KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.3 2011/02/25 10:18:09 kiyohara 
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/module.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
-#include <machine/cpu.h>
 #include <machine/obs600.h>
 
 #include <powerpc/ibm4xx/amcc405ex.h>
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/dev/comopbvar.h>
 #include <powerpc/ibm4xx/dev/gpiicreg.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>
-#include <powerpc/ibm4xx/spr.h>
+
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 
 #include <dev/ic/comreg.h>
 
@@ -135,17 +138,12 @@ char bootpath[256];
 
 extern paddr_t msgbuf_paddr;
 
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-void *startsym, *endsym;
-#endif
-
-void initppc(u_int, u_int, int, char *[], char *);
-int lcsplx(int);
+void initppc(vaddr_t, vaddr_t, int, char *[], char *);
 static int read_eeprom(int, char *);
 
 
 void
-initppc(u_int startkernel, u_int endkernel, int argc, char *argv[],
+initppc(vaddr_t startkernel, vaddr_t endkernel, int argc, char *argv[],
 	char *argstr)
 {
 	vaddr_t va;
@@ -166,25 +164,8 @@ initppc(u_int startkernel, u_int endkernel, int argc, char *argv[],
 
 	/* Initialize AMCC 405EX CPU */
 	ibm40x_memsize_init(memsize, startkernel);
-	ibm4xx_init((void (*)(void))ext_intr);
+	ibm4xx_init(startkernel, endkernel, pic_ext_intr);
 
-	/* Disable Watchdog, PIT and FIT interrupts. (u-boot uses PIT...) */
-	mtspr(SPR_TCR, 0);
-
-	/*
-	 * Set the page size.
-	 */
-	uvm_setpagesize();
-
-	/*
-	 * Initialize pmap module.
-	 */
-	pmap_bootstrap(startkernel, endkernel);
-
-
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
-#endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -197,6 +178,11 @@ initppc(u_int startkernel, u_int endkernel, int argc, char *argv[],
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
 #endif
+
+	/*
+	 * Look for the ibm4xx modules in the right place.
+	 */
+	module_machine = module_machine_ibm4xx;
 }
 
 void
@@ -207,14 +193,6 @@ consinit(void)
 	com_opb_cnattach(OBS600_COM_FREQ, CONADDR, CONSPEED, CONMODE);
 #endif /* NCOM */
 }
-
-int
-lcsplx(int ipl)
-{
-
-	return spllower(ipl); 	/* XXX */
-}
-
 
 /*
  * Machine dependent startup code.

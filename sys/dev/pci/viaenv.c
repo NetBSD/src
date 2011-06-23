@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.30 2010/12/10 21:20:09 phx Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.30.6.1 2011/06/23 14:20:08 cherry Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.30 2010/12/10 21:20:09 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.30.6.1 2011/06/23 14:20:08 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,6 +342,9 @@ viaenv_attach(device_t parent, device_t self, void *aux)
 	COPYDESCR(sc->sc_sensor[9].desc, "VSENS4");	/* VSENS4 (12V) */
 
 #undef COPYDESCR
+
+	for (i = 0; i < 10; i++)
+		sc->sc_sensor[i].state = ENVSYS_SINVALID;
 
 	sc->sc_sme = sysmon_envsys_create();
 

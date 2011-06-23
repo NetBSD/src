@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.56 2011/02/21 22:07:44 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.56.2.1 2011/06/23 14:18:37 cherry Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.9";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.56 2011/02/21 22:07:44 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.56.2.1 2011/06/23 14:18:37 cherry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1386,7 +1386,8 @@ localsub(const timezone_t sp, const time_t * const timep, const long offset,
 	*/
 	result = timesub(sp, &t, ttisp->tt_gmtoff, tmp);
 	tmp->tm_isdst = ttisp->tt_isdst;
-	tzname[tmp->tm_isdst] = &sp->chars[ttisp->tt_abbrind];
+	if (sp == lclptr)
+		tzname[tmp->tm_isdst] = &sp->chars[ttisp->tt_abbrind];
 #ifdef TM_ZONE
 	tmp->TM_ZONE = &sp->chars[ttisp->tt_abbrind];
 #endif /* defined TM_ZONE */

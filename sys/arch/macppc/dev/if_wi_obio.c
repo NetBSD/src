@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.21 2010/12/16 01:56:21 macallan Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.21.6.1 2011/06/23 14:19:20 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.21 2010/12/16 01:56:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.21.6.1 2011/06/23 14:19:20 cherry Exp $");
 
 #include "opt_inet.h"
 
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.21 2010/12/16 01:56:21 macallan Exp
 #include <dev/ic/wivar.h>
 #include <macppc/dev/obiovar.h>
 
-static int wi_obio_match(struct device *, struct cfdata *, void *);
-static void wi_obio_attach(struct device *, struct device *, void *);
+static int wi_obio_match(device_t, cfdata_t, void *);
+static void wi_obio_attach(device_t, device_t, void *);
 static int wi_obio_enable(device_t, int);
 
 struct wi_obio_softc {
@@ -67,7 +67,7 @@ CFATTACH_DECL_NEW(wi_obio, sizeof(struct wi_obio_softc),
     wi_obio_match, wi_obio_attach, NULL, NULL);
 
 int
-wi_obio_match(device_t parent, struct cfdata *match, void *aux)
+wi_obio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct confargs *ca = aux;
 

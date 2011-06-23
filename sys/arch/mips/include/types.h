@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.51 2011/04/29 22:00:54 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.51.2.1 2011/06/23 14:19:22 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -164,5 +164,9 @@ typedef	volatile unsigned int	__cpu_simple_lock_t;
 #define	__HAVE_CPU_VMSPACE_EXEC
 #endif
 #endif /* _KERNEL */
+
+#define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#define	__HAVE_MM_MD_KERNACC
+#define	__HAVE_MM_MD_CACHE_ALIASING
 
 #endif	/* _MACHTYPES_H_ */

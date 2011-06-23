@@ -1,4 +1,4 @@
-/* $NetBSD: t_getrusage.c,v 1.6 2011/04/08 10:36:09 jruoho Exp $ */
+/* $NetBSD: t_getrusage.c,v 1.6.2.1 2011/06/23 14:20:41 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getrusage.c,v 1.6 2011/04/08 10:36:09 jruoho Exp $");
+__RCSID("$NetBSD: t_getrusage.c,v 1.6.2.1 2011/06/23 14:20:41 cherry Exp $");
 
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -142,6 +142,8 @@ ATF_TC_BODY(getrusage_utime_back, tc)
 		if (timercmp(&ru2.ru_utime, &ru1.ru_utime, <) != 0)
 			atf_tc_fail("user time went backwards");
 	}
+
+	atf_tc_fail("anticipated error did not occur");
 }
 
 ATF_TC(getrusage_utime_zero);
@@ -174,6 +176,8 @@ ATF_TC_BODY(getrusage_utime_zero, tc)
 		if (ru.ru_utime.tv_sec == 0 && ru.ru_utime.tv_usec == 0)
 			atf_tc_fail("zero user time from getrusage(2)");
 	}
+
+	atf_tc_fail("anticipated error did not occur");
 }
 
 ATF_TP_ADD_TCS(tp)

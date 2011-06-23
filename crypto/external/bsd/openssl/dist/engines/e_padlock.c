@@ -101,15 +101,14 @@
    compiler choice is limited to GCC and Microsoft C. */
 #undef COMPILE_HW_PADLOCK
 #if !defined(I386_ONLY) && !defined(OPENSSL_NO_INLINE_ASM)
-# if (defined(__GNUC__) && __GNUC__>=2 && \
-	(defined(__i386__) || defined(__i386) || \
-	 defined(__x86_64__) || defined(__x86_64)) \
-     ) || \
+# if (defined(__GNUC__) && (defined(__i386__) || defined(__i386))) || \
      (defined(_MSC_VER) && defined(_M_IX86))
 #  define COMPILE_HW_PADLOCK
 static ENGINE *ENGINE_padlock (void);
 # endif
 #endif
+
+#ifdef OPENSSL_NO_DYNAMIC_ENGINE
 
 void ENGINE_load_padlock (void)
 {
@@ -123,6 +122,8 @@ void ENGINE_load_padlock (void)
 #endif
 }
 
+#endif
+
 #ifdef COMPILE_HW_PADLOCK
 /* We do these includes here to avoid header problems on platforms that
    do not have the VIA padlock anyway... */
@@ -134,7 +135,7 @@ void ENGINE_load_padlock (void)
 # endif
 #elif defined(__GNUC__)
 # ifndef alloca
-#  define alloca(s) __builtin_alloca((s))
+#  define alloca(s) __builtin_alloca(s)
 # endif
 #endif
 
@@ -297,7 +298,6 @@ static volatile struct padlock_cipher_data *padlock_saved_context;
  * =======================================================
  */
 #if defined(__GNUC__) && __GNUC__>=2
-#if defined(__i386__) || defined(__i386)
 /*
  * As for excessive "push %ebx"/"pop %ebx" found all over.
  * When generating position-independent code GCC won't let
@@ -377,6 +377,21 @@ padlock_available(void)
 	return padlock_use_ace + padlock_use_rng;
 }
 
+#ifndef OPENSSL_NO_AES
+/* Our own htonl()/ntohl() */
+static inline void
+padlock_bswapl(AES_KEY *ks)
+{
+	size_t i = sizeof(ks->rd_key)/sizeof(ks->rd_key[0]);
+	unsigned int *key = ks->rd_key;
+
+	while (i--) {
+		asm volatile ("bswapl %0" : "+r"(*key));
+		key++;
+	}
+}
+#endif
+
 /* Force key reload from memory to the CPU microcode.
    Loading EFLAGS from the stack clears EFLAGS[30] 
    which does the trick. */
@@ -434,127 +449,12 @@ static inline void *name(size_t cnt,		\
 		: "edx", "cc", "memory");	\
 	return iv;				\
 }
-#endif
 
-#elif defined(__x86_64__) || defined(__x86_64)
-
-/* Load supported features of the CPU to see if
-   the PadLock is available. */
-static int
-padlock_available(void)
-{
-	char vendor_string[16];
-	unsigned int eax, edx;
-
-	/* Are we running on the Centaur (VIA) CPU? */
-	eax = 0x00000000;
-	vendor_string[12] = 0;
-	asm volatile (
-		"cpuid\n"
-		"movl	%%ebx,(%1)\n"
-		"movl	%%edx,4(%1)\n"
-		"movl	%%ecx,8(%1)\n"
-		: "+a"(eax) : "r"(vendor_string) : "rbx", "rcx", "rdx");
-	if (strcmp(vendor_string, "CentaurHauls") != 0)
-		return 0;
-
-	/* Check for Centaur Extended Feature Flags presence */
-	eax = 0xC0000000;
-	asm volatile ("cpuid"
-		: "+a"(eax) : : "rbx", "rcx", "rdx");
-	if (eax < 0xC0000001)
-		return 0;
-
-	/* Read the Centaur Extended Feature Flags */
-	eax = 0xC0000001;
-	asm volatile ("cpuid"
-		: "+a"(eax), "=d"(edx) : : "rbx", "rcx");
-
-	/* Fill up some flags */
-	padlock_use_ace = ((edx & (0x3<<6)) == (0x3<<6));
-	padlock_use_rng = ((edx & (0x3<<2)) == (0x3<<2));
-
-	return padlock_use_ace + padlock_use_rng;
-}
-
-/* Force key reload from memory to the CPU microcode.
-   Loading EFLAGS from the stack clears EFLAGS[30] 
-   which does the trick. */
-static inline void
-padlock_reload_key(void)
-{
-	asm volatile ("pushfq; popfq");
-}
-
-#ifndef OPENSSL_NO_AES
-/*
- * This is heuristic key context tracing. At first one
- * believes that one should use atomic swap instructions,
- * but it's not actually necessary. Point is that if
- * padlock_saved_context was changed by another thread
- * after we've read it and before we compare it with cdata,
- * our key *shall* be reloaded upon thread context switch
- * and we are therefore set in either case...
- */
-static inline void
-padlock_verify_context(struct padlock_cipher_data *cdata)
-{
-	asm volatile (
-	"pushfq\n"
-"	btl	$30,(%%rsp)\n"
-"	jnc	1f\n"
-"	cmpq	%2,%1\n"
-"	je	1f\n"
-"	popfq\n"
-"	subq	$8,%%rsp\n"
-"1:	addq	$8,%%rsp\n"
-"	movq	%2,%0"
-	:"+m"(padlock_saved_context)
-	: "r"(padlock_saved_context), "r"(cdata) : "cc");
-}
-
-/* Template for padlock_xcrypt_* modes */
-/* BIG FAT WARNING: 
- * 	The offsets used with 'leal' instructions
- * 	describe items of the 'padlock_cipher_data'
- * 	structure.
- */
-#define PADLOCK_XCRYPT_ASM(name,rep_xcrypt)	\
-static inline void *name(size_t cnt,		\
-	struct padlock_cipher_data *cdata,	\
-	void *out, const void *inp) 		\
-{	void *iv; 				\
-	asm volatile ( "leaq	16(%0),%%rdx\n"	\
-		"	leaq	32(%0),%%rbx\n"	\
-			rep_xcrypt "\n"		\
-		: "=a"(iv), "=c"(cnt), "=D"(out), "=S"(inp) \
-		: "0"(cdata), "1"(cnt), "2"(out), "3"(inp)  \
-		: "rbx", "rdx", "cc", "memory");	\
-	return iv;				\
-}
-#endif
-
-#endif	/* cpu */
-
-#ifndef OPENSSL_NO_AES
 /* Generate all functions with appropriate opcodes */
 PADLOCK_XCRYPT_ASM(padlock_xcrypt_ecb, ".byte 0xf3,0x0f,0xa7,0xc8")	/* rep xcryptecb */
 PADLOCK_XCRYPT_ASM(padlock_xcrypt_cbc, ".byte 0xf3,0x0f,0xa7,0xd0")	/* rep xcryptcbc */
 PADLOCK_XCRYPT_ASM(padlock_xcrypt_cfb, ".byte 0xf3,0x0f,0xa7,0xe0")	/* rep xcryptcfb */
 PADLOCK_XCRYPT_ASM(padlock_xcrypt_ofb, ".byte 0xf3,0x0f,0xa7,0xe8")	/* rep xcryptofb */
-
-/* Our own htonl()/ntohl() */
-static inline void
-padlock_bswapl(AES_KEY *ks)
-{
-	size_t i = sizeof(ks->rd_key)/sizeof(ks->rd_key[0]);
-	unsigned int *key = ks->rd_key;
-
-	while (i--) {
-		asm volatile ("bswapl %0" : "+r"(*key));
-		key++;
-	}
-}
 #endif
 
 /* The RNG call itself */
@@ -585,8 +485,8 @@ padlock_xstore(void *addr, unsigned int edx_in)
 static inline unsigned char *
 padlock_memcpy(void *dst,const void *src,size_t n)
 {
-	size_t       *d=dst;
-	const size_t *s=src;
+	long       *d=dst;
+	const long *s=src;
 
 	n /= sizeof(*d);
 	do { *d++ = *s++; } while (--n);
@@ -1321,6 +1221,8 @@ static RAND_METHOD padlock_rand = {
 
 #else  /* !COMPILE_HW_PADLOCK */
 #ifndef OPENSSL_NO_DYNAMIC_ENGINE
+OPENSSL_EXPORT
+int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns);
 OPENSSL_EXPORT
 int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { return 0; }
 IMPLEMENT_DYNAMIC_CHECK_FN()

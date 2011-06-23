@@ -133,10 +133,10 @@ static int ok_new(BIO *h);
 static int ok_free(BIO *data);
 static long ok_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
 
-static __owur int sig_out(BIO* b);
-static __owur int sig_in(BIO* b);
-static __owur int block_out(BIO* b);
-static __owur int block_in(BIO* b);
+static int sig_out(BIO* b);
+static int sig_in(BIO* b);
+static int block_out(BIO* b);
+static int block_in(BIO* b);
 #define OK_BLOCK_SIZE	(1024*4)
 #define OK_BLOCK_BLOCK	4
 #define IOBS		(OK_BLOCK_SIZE+ OK_BLOCK_BLOCK+ 3*EVP_MAX_MD_SIZE)

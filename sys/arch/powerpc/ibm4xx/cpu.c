@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.28 2010/03/18 13:47:05 kiyohara Exp $	*/
+/*	$NetBSD: cpu.c,v 1.28.6.1 2011/06/23 14:19:29 cherry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,47 +36,179 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28 2010/03/18 13:47:05 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28.6.1 2011/06/23 14:19:29 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/evcnt.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <prop/proplib.h>
 
-#include <machine/cpu.h>
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
 
 struct cputab {
 	u_int version;
 	u_int mask;
 	const char *name;
-};
-static struct cputab models[] = {
-	{ PVR_401A1, 	0xffff0000,	"401A1" 	},
-	{ PVR_401B2, 	0xffff0000,	"401B21" 	},
-	{ PVR_401C2, 	0xffff0000,	"401C2" 	},
-	{ PVR_401D2, 	0xffff0000,	"401D2" 	},
-	{ PVR_401E2, 	0xffff0000,	"401E2" 	},
-	{ PVR_401F2, 	0xffff0000,	"401F2" 	},
-	{ PVR_401G2, 	0xffff0000,	"401G2" 	},
-	{ PVR_403, 	0xffff0000,	"403" 		},
-	{ PVR_405GP, 	0xffff0000,	"405GP" 	},
-	{ PVR_405GPR, 	0xffff0000,	"405GPr" 	},
-	{ PVR_405D5X1, 	0xfffff000, 	"Xilinx Virtex II Pro" 	},
-	{ PVR_405D5X2, 	0xfffff000, 	"Xilinx Virtex 4 FX" 	},
-	{ PVR_405EX, 	0xffff0000, 	"405EX" 	},
-	{ 0, 		0,		NULL 		}
+	struct cache_info ci;
 };
 
-static int	cpumatch(struct device *, struct cfdata *, void *);
-static void	cpuattach(struct device *, struct device *, void *);
+static const struct cputab models[] = {
+	{
+		.version = PVR_401A1, 
+		.mask = 0xffff0000,
+		.name = "401A1",
+		.ci = {
+			.dcache_size = 1024,
+			.dcache_line_size = 16,
+			.icache_size = 2848,
+			.icache_line_size = 16,
+		}
+	}, {
+		.version = PVR_401B2, 
+		.mask = 0xffff0000,
+		.name = "401B21",
+		.ci = {
+			.dcache_size = 8192,
+			.dcache_line_size = 16,
+			.icache_size = 16384,
+			.icache_line_size = 16,
+		}
+	}, {
+		.version = PVR_401C2, 
+		.mask = 0xffff0000,
+		.name = "401C2",
+		.ci = {
+			.dcache_size = 8192,
+			.dcache_line_size = 16,
+			.icache_size = 0,
+			.icache_line_size = 16,
+		}
+	}, {
+		.version = PVR_401D2, 
+		.mask = 0xffff0000,
+		.name = "401D2",
+		.ci = {
+			.dcache_size = 2848,
+			.dcache_line_size = 16,
+			.icache_size = 4096,
+			.icache_line_size = 16,
+		}
+	}, {
+		.version = PVR_401E2, 
+		.mask = 0xffff0000,
+		.name = "401E2",
+		.ci = {
+			.dcache_size = 0,
+			.dcache_line_size = 16,
+			.icache_size = 0,
+			.icache_line_size = 16,
+		}
+	}, {
+		.version = PVR_401F2, 
+		.mask = 0xffff0000,
+		.name = "401F2",
+		.ci = {
+			.dcache_size = 2048,
+			.dcache_line_size = 16,
+			.icache_size = 2848,
+			.icache_line_size = 16,
+		}
+	}, {
+		.version = PVR_401G2, 
+		.mask = 0xffff0000,
+		.name = "401G2",
+		.ci = {
+			.dcache_size = 2848,
+			.dcache_line_size = 16,
+			.icache_size = 8192,
+			.icache_line_size = 16,
+		}
+	}, {
+		.version = PVR_403, 
+		.mask = 0xffff0000,
+		.name = "403",
+		.ci = {
+			.dcache_size = 8192,
+			.dcache_line_size = 16,
+			.icache_size = 16384,
+			.icache_line_size = 16,
+		}
+	}, {
+		.version = PVR_405GP, 
+		.mask = 0xffff0000,
+		.name = "405GP",
+		.ci = {
+			.dcache_size = 8192,
+			.dcache_line_size = 32,
+			.icache_size = 8192,
+			.icache_line_size = 32,
+		}
+	}, {
+		.version = PVR_405GPR, 
+		.mask = 0xffff0000,
+		.name = "405GPr",
+		.ci = {
+			.dcache_size = 16384,
+			.dcache_line_size = 32,
+			.icache_size = 16384,
+			.icache_line_size = 32,
+		}
+	}, {
+		.version = PVR_405D5X1, 
+		.mask = 0xfffff000, 
+		.name = "Xilinx Virtex II Pro",
+		.ci = {
+			.dcache_size = 16384,
+			.dcache_line_size = 32,
+			.icache_size = 16384,
+			.icache_line_size = 32,
+		}
+	}, {
+		.version = PVR_405D5X2, 
+		.mask = 0xfffff000, 
+		.name = "Xilinx Virtex 4 FX",
+		.ci = {
+			.dcache_size = 16384,
+			.dcache_line_size = 32,
+			.icache_size = 16384,
+			.icache_line_size = 32,
+		}
+	}, {
+		.version = PVR_405EX, 
+		.mask = 0xffff0000, 
+		.name = "405EX",
+		.ci = {
+			.dcache_size = 16384,
+			.dcache_line_size = 32,
+			.icache_size = 16384,
+			.icache_line_size = 32,
+		}
+	}, {
+		.version = 0,
+		.mask = 0,
+		.name = NULL,
+		.ci = {
+			/*
+			 * Unknown CPU type.  For safety we'll specify a
+			 * cache with a 4-byte line size.  That way cache
+			 * flush routines won't miss any lines.
+			 */
+			.dcache_line_size = 4,
+			.icache_line_size = 4,
+		},
+	},
+};
 
-CFATTACH_DECL(cpu, sizeof(struct device),
-    cpumatch, cpuattach, NULL, NULL);
+static int	cpumatch(device_t, cfdata_t, void *);
+static void	cpuattach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(cpu, 0, cpumatch, cpuattach, NULL, NULL);
 
 int ncpus;
 
@@ -87,22 +219,16 @@ struct cpu_info cpu_info[1] = {
 		    NULL, "cpu0", "clock"),
 		.ci_ev_statclock = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,
 		    NULL, "cpu0", "stat clock"),
-		.ci_ev_softclock = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,
-		    NULL, "cpu0", "soft clock"),
-		.ci_ev_softnet = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,
-		    NULL, "cpu0", "soft net"),
-		.ci_ev_softserial = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,
-		    NULL, "cpu0", "soft serial"),
 		.ci_curlwp = &lwp0,
 	}
 };
 
 char cpu_model[80];
 
-int cpufound = 0;
+bool cpufound;
 
 static int
-cpumatch(struct device *parent, struct cfdata *cf, void *aux)
+cpumatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct plb_attach_args *paa = aux;
 
@@ -114,10 +240,10 @@ cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-cpuattach(struct device *parent, struct device *self, void *aux)
+cpuattach(device_t parent, device_t self, void *aux)
 {
-	struct cputab *cp = models;
-	u_int pvr;
+	struct cpu_info * const ci = curcpu();
+	const struct cputab *cp;
 	u_int processor_freq;
 	prop_number_t freq;
 
@@ -125,36 +251,35 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	KASSERT(freq != NULL);
 	processor_freq = (unsigned int) prop_number_integer_value(freq);
 
-	cpufound++;
+	cpufound = true;
 	ncpus++;
 
-	pvr = mfpvr();
-	while (cp->name) {
-		if ((pvr & cp->mask) == cp->version)
+	const u_int pvr = mfpvr();
+	for (cp = models; cp->name != NULL; cp++) {
+		if ((pvr & cp->mask) == cp->version) {
+			strcpy(cpu_model, cp->name);
 			break;
-		cp++;
+		}
 	}
-	if (cp->name)
-		strcpy(cpu_model, cp->name);
-	else
+	if (__predict_false(cp->name == NULL))
 		sprintf(cpu_model, "Version 0x%x", pvr);
 
-	printf(": %dMHz %s (PVR 0x%x)\n", processor_freq / 1000 / 1000,
-	    cp->name ? cp->name : "unknown model", pvr);
+	aprint_normal(": %uMHz %s (PVR 0x%x)\n",
+	    (processor_freq + 500000) / 1000000,
+	    (cp->name != NULL ? cpu_model : "unknown model"),
+	    pvr);
 
 	cpu_probe_cache();
 
 	/* We would crash later on anyway so just make the reason obvious */
-	if (curcpu()->ci_ci.icache_size == 0 &&
-	    curcpu()->ci_ci.dcache_size == 0)
-		panic("%s could not detect cache size", device_xname(self));
+	if (ci->ci_ci.icache_size == 0 && ci->ci_ci.dcache_size == 0)
+		panic("%s: %s: could not detect cache size",
+		    __func__, device_xname(self));
 
-	printf("%s: Instruction cache size %d line size %d\n",
-	    device_xname(self),
-	    curcpu()->ci_ci.icache_size, curcpu()->ci_ci.icache_line_size);
-	printf("%s: Data cache size %d line size %d\n",
-	    device_xname(self),
-	    curcpu()->ci_ci.dcache_size, curcpu()->ci_ci.dcache_line_size);
+	aprint_normal_dev(self, "%uKB/%uB L1 instruction cache\n",
+	    ci->ci_ci.icache_size / 1024, ci->ci_ci.icache_line_size);
+	aprint_normal_dev(self, "%uKB/%uB L1 data cache\n",
+	    ci->ci_ci.dcache_size / 1024, ci->ci_ci.dcache_line_size);
 }
 
 /*
@@ -165,95 +290,19 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 void
 cpu_probe_cache(void)
 {
-	struct cputab *cp = models;
-	u_int pvr;
+	struct cpu_info * const ci = curcpu();
+	const struct cputab *cp = models;
 
-	pvr = mfpvr();
-	while (cp->name) {
+	const u_int pvr = mfpvr();
+	for (cp = models; cp->name != NULL; cp++) {
 		if ((pvr & cp->mask) == cp->version)
 			break;
-		cp++;
 	}
 
 	/*
-	 * First we need to identify the CPU and determine the
-	 * cache line size, or things like memset/memcpy may lose
-	 * badly.
+	 * Copy the cache from the cputab into cpu_info.
 	 */
-	switch (cp->version) {
-	case PVR_401A1:
-		curcpu()->ci_ci.dcache_size = 1024;
-		curcpu()->ci_ci.dcache_line_size = 16;
-		curcpu()->ci_ci.icache_size = 2848;
-		curcpu()->ci_ci.icache_line_size = 16;
-		break;
-	case PVR_401B2:
-		curcpu()->ci_ci.dcache_size = 8192;
-		curcpu()->ci_ci.dcache_line_size = 16;
-		curcpu()->ci_ci.icache_size = 16384;
-		curcpu()->ci_ci.icache_line_size = 16;
-		break;
-	case PVR_401C2:
-		curcpu()->ci_ci.dcache_size = 8192;
-		curcpu()->ci_ci.dcache_line_size = 16;
-		curcpu()->ci_ci.icache_size = 0;
-		curcpu()->ci_ci.icache_line_size = 16;
-		break;
-	case PVR_401D2:
-		curcpu()->ci_ci.dcache_size = 2848;
-		curcpu()->ci_ci.dcache_line_size = 16;
-		curcpu()->ci_ci.icache_size = 4096;
-		curcpu()->ci_ci.icache_line_size = 16;
-		break;
-	case PVR_401E2:
-		curcpu()->ci_ci.dcache_size = 0;
-		curcpu()->ci_ci.dcache_line_size = 16;
-		curcpu()->ci_ci.icache_size = 0;
-		curcpu()->ci_ci.icache_line_size = 16;
-		break;
-	case PVR_401F2:
-		curcpu()->ci_ci.dcache_size = 2048;
-		curcpu()->ci_ci.dcache_line_size = 16;
-		curcpu()->ci_ci.icache_size = 2848;
-		curcpu()->ci_ci.icache_line_size = 16;
-		break;
-	case PVR_401G2:
-		curcpu()->ci_ci.dcache_size = 2848;
-		curcpu()->ci_ci.dcache_line_size = 16;
-		curcpu()->ci_ci.icache_size = 8192;
-		curcpu()->ci_ci.icache_line_size = 16;
-		break;
-	case PVR_403:
-		curcpu()->ci_ci.dcache_size = 8192;
-		curcpu()->ci_ci.dcache_line_size = 16;
-		curcpu()->ci_ci.icache_size = 16384;
-		curcpu()->ci_ci.icache_line_size = 16;
-		break;
-	case PVR_405GP:
-		curcpu()->ci_ci.dcache_size = 8192;
-		curcpu()->ci_ci.dcache_line_size = 32;
-		curcpu()->ci_ci.icache_size = 8192;
-		curcpu()->ci_ci.icache_line_size = 32;
-		break;
-	case PVR_405GPR:
-	case PVR_405D5X1:
-	case PVR_405D5X2:
-	case PVR_405EX:
-		curcpu()->ci_ci.dcache_size = 16384;
-		curcpu()->ci_ci.dcache_line_size = 32;
-		curcpu()->ci_ci.icache_size = 16384;
-		curcpu()->ci_ci.icache_line_size = 32;
-		break;
-	default:
-		/*
-		 * Unknown CPU type.  For safety we'll specify a
-		 * cache with a 4-byte line size.  That way cache
-		 * flush routines won't miss any lines.
-		 */
-		curcpu()->ci_ci.dcache_line_size = 4;
-		curcpu()->ci_ci.icache_line_size = 4;
-		break;
-	}
+	ci->ci_ci = cp->ci;
 }
 
 /*
@@ -262,57 +311,14 @@ cpu_probe_cache(void)
  */
 
 void
-dcache_flush_page(vaddr_t va)
+dcache_wbinv_page(vaddr_t va)
 {
-	int i;
+	const size_t dcache_line_size = curcpu()->ci_ci.dcache_line_size;
 
-	if (curcpu()->ci_ci.dcache_line_size)
-		for (i = 0; i < PAGE_SIZE;
-		     i += curcpu()->ci_ci.dcache_line_size)
-			__asm volatile("dcbf %0,%1" : : "r" (va), "r" (i));
-	__asm volatile("sync;isync" : : );
-}
-
-void
-icache_flush_page(vaddr_t va)
-{
-	int i;
-
-	if (curcpu()->ci_ci.icache_line_size)
-		for (i = 0; i < PAGE_SIZE;
-		     i += curcpu()->ci_ci.icache_line_size)
-			__asm volatile("icbi %0,%1" : : "r" (va), "r" (i));
-	__asm volatile("sync;isync" : : );
-}
-
-void
-dcache_flush(vaddr_t va, vsize_t len)
-{
-	int i;
-
-	if (len == 0)
-		return;
-
-	/* Make sure we flush all cache lines */
-	len += va & (curcpu()->ci_ci.dcache_line_size-1);
-	if (curcpu()->ci_ci.dcache_line_size)
-		for (i = 0; i < len; i += curcpu()->ci_ci.dcache_line_size)
-			__asm volatile("dcbf %0,%1" : : "r" (va), "r" (i));
-	__asm volatile("sync;isync" : : );
-}
-
-void
-icache_flush(vaddr_t va, vsize_t len)
-{
-	int i;
-
-	if (len == 0)
-		return;
-
-	/* Make sure we flush all cache lines */
-	len += va & (curcpu()->ci_ci.icache_line_size-1);
-	if (curcpu()->ci_ci.icache_line_size)
-		for (i = 0; i < len; i += curcpu()->ci_ci.icache_line_size)
-			__asm volatile("icbi %0,%1" : : "r" (va), "r" (i));
-	__asm volatile("sync;isync" : : );
+	if (dcache_line_size) {
+		for (size_t i = 0; i < PAGE_SIZE; i += dcache_line_size) {
+			__asm volatile("dcbf %0,%1" : : "b" (va), "r" (i));
+		}
+		__asm volatile("sync;isync" : : );
+	}
 }

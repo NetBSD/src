@@ -1,4 +1,4 @@
-/*	$NetBSD: nappi_nppb.c,v 1.7 2009/10/21 14:15:51 rmind Exp $ */
+/*	$NetBSD: nappi_nppb.c,v 1.7.10.1 2011/06/23 14:19:07 cherry Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.7 2009/10/21 14:15:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.7.10.1 2011/06/23 14:19:07 cherry Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -46,12 +46,12 @@ __KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.7 2009/10/21 14:15:51 rmind Exp $")
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pciconf.h>
 
-static int	nppbmatch(struct device *, struct cfdata *, void *);
-static void	nppbattach(struct device *, struct device *, void *);
+static int	nppbmatch(device_t, cfdata_t, void *);
+static void	nppbattach(device_t, device_t, void *);
 
 int	nppb_intr(void *); /* XXX into i21555var.h */
 
-CFATTACH_DECL(nppb, sizeof(struct device),
+CFATTACH_DECL_NEW(nppb, 0,
     nppbmatch, nppbattach, NULL, NULL);
 
 #define NPPB_MMBA	0x10
@@ -87,7 +87,7 @@ struct nppb_pci_softc {
 };
 
 static int
-nppbmatch(struct device *parent, struct cfdata *cf, void *aux)
+nppbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	u_int32_t class, id;
@@ -110,7 +110,7 @@ nppbmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-nppbattach(struct device *parent, struct device *self, void *aux)
+nppbattach(device_t parent, device_t self, void *aux)
 {
 	struct nppb_pci_softc *psc = (struct nppb_pci_softc *)self;
 	struct nppb_softc *sc = (struct nppb_softc *)self;

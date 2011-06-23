@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17 2011/01/18 01:02:55 matt Exp $
+#	$NetBSD: genassym.cf,v 1.17.4.1 2011/06/23 14:19:32 cherry Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,14 +33,12 @@
 
 include "opt_ppcarch.h"
 
-quote #define __MUTEX_PRIVATE
-quote #define __RWLOCK_PRIVATE
-
 include <sys/param.h>
 include <sys/time.h>
 include <sys/mutex.h>
 include <sys/rwlock.h>
 include <sys/proc.h>
+include <sys/bitops.h>
 
 include <uvm/uvm_extern.h>
 
@@ -50,97 +48,47 @@ include <machine/pmap.h>
 include <powerpc/cpu.h>
 include <powerpc/oea/cpufeat.h>
 
-define	FRAMELEN	FRAMELEN
-define	FRAME_TF	offsetof(struct ktrapframe, ktf_tf)
-define	FRAME_R0	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[0])
-define	FRAME_R1	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[1])
-define	FRAME_R2	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[2])
-define	FRAME_R3	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[3])
-define	FRAME_R4	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[4])
-define	FRAME_R5	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[5])
-define	FRAME_R6	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[6])
-define	FRAME_R7	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[7])
-define	FRAME_R8	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[8])
-define	FRAME_R9	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[9])
-define	FRAME_R10	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[10])
-define	FRAME_R11	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[11])
-define	FRAME_R12	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[12])
-define	FRAME_R13	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[13])
-define	FRAME_R14	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[14])
-define	FRAME_R15	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[15])
-define	FRAME_R16	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[16])
-define	FRAME_R17	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[17])
-define	FRAME_R18	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[18])
-define	FRAME_R19	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[19])
-define	FRAME_R20	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[20])
-define	FRAME_R21	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[21])
-define	FRAME_R22	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[22])
-define	FRAME_R23	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[23])
-define	FRAME_R24	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[24])
-define	FRAME_R25	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[25])
-define	FRAME_R26	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[26])
-define	FRAME_R27	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[27])
-define	FRAME_R28	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[28])
-define	FRAME_R29	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[29])
-define	FRAME_R30	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[30])
-define	FRAME_R31	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[31])
-define	FRAME_LR	offsetof(struct ktrapframe, ktf_tf.tf_lr)
-define	FRAME_CR	offsetof(struct ktrapframe, ktf_tf.tf_cr)
-define	FRAME_CTR	offsetof(struct ktrapframe, ktf_tf.tf_ctr)
-define	FRAME_XER	offsetof(struct ktrapframe, ktf_tf.tf_xer)
-define	FRAME_CF	offsetof(struct ktrapframe, ktf_tf.tf_cf)
-define	FRAME_SRR0	offsetof(struct ktrapframe, ktf_tf.tf_srr0)
-define	FRAME_SRR1	offsetof(struct ktrapframe, ktf_tf.tf_srr1)
-define	FRAME_IDEPTH	offsetof(struct ktrapframe, ktf_tf.tf_idepth)
 define	FRAME_DAR	offsetof(struct ktrapframe, ktf_tf.tf_dar)
 define	FRAME_DSISR	offsetof(struct ktrapframe, ktf_tf.tf_dsisr)
-define	FRAME_EXC	offsetof(struct ktrapframe, ktf_tf.tf_exc)
 define	FRAME_VRSAVE	offsetof(struct ktrapframe, ktf_tf.tf_vrsave)
 define	FRAME_MQ	offsetof(struct ktrapframe, ktf_tf.tf_mq)
 
 ifdef PPC_OEA64
 define	PM_STEG		offsetof(struct pmap, pm_steg_table)
 else
+define	USER_SR		USER_SR
+define	KERNEL_SR	KERNEL_SR
 define	PM_SR		offsetof(struct pmap, pm_sr[0])
 define	PM_USRSR	offsetof(struct pmap, pm_sr[USER_SR])
 define	PM_KERNELSR	offsetof(struct pmap, pm_sr[KERNEL_SR])
 endif
 
-define	CALLFRAMELEN	CALLFRAMELEN
-define	CFRAME_SP	offsetof(struct callframe, cf_sp)
-define	CFRAME_LR	offsetof(struct callframe, cf_lr)
-define	CFRAME_R30	offsetof(struct callframe, cf_r30)
-define	CFRAME_R31	offsetof(struct callframe, cf_r31)
+define	CI_TEMPSAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVETEMP])
+define	CI_DDBSAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVEDDB])
+define	CI_IPKDBSAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVEIPKDB])
+define	CI_DISISAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVEMMU])
 
-define	SFRAMELEN	SFRAMELEN
-define	SFRAME_SP	offsetof(struct switchframe, sf_sp)
-define	SFRAME_LR	offsetof(struct switchframe, sf_lr)
-define	SFRAME_USER_SR	offsetof(struct switchframe, sf_user_sr)
-define	SFRAME_CR	offsetof(struct switchframe, sf_cr)
-define	SFRAME_R2	offsetof(struct switchframe, sf_fixreg2)
-define	SFRAME_R13	offsetof(struct switchframe, sf_fixreg[0])
-define	SFRAME_R14	offsetof(struct switchframe, sf_fixreg[1])
-define	SFRAME_R15	offsetof(struct switchframe, sf_fixreg[2])
-define	SFRAME_R16	offsetof(struct switchframe, sf_fixreg[3])
-define	SFRAME_R17	offsetof(struct switchframe, sf_fixreg[4])
-define	SFRAME_R18	offsetof(struct switchframe, sf_fixreg[5])
-define	SFRAME_R19	offsetof(struct switchframe, sf_fixreg[6])
-define	SFRAME_R20	offsetof(struct switchframe, sf_fixreg[7])
-define	SFRAME_R21	offsetof(struct switchframe, sf_fixreg[8])
-define	SFRAME_R22	offsetof(struct switchframe, sf_fixreg[9])
-define	SFRAME_R23	offsetof(struct switchframe, sf_fixreg[10])
-define	SFRAME_R24	offsetof(struct switchframe, sf_fixreg[11])
-define	SFRAME_R25	offsetof(struct switchframe, sf_fixreg[12])
-define	SFRAME_R26	offsetof(struct switchframe, sf_fixreg[13])
-define	SFRAME_R27	offsetof(struct switchframe, sf_fixreg[14])
-define	SFRAME_R28	offsetof(struct switchframe, sf_fixreg[15])
-define	SFRAME_R29	offsetof(struct switchframe, sf_fixreg[16])
-define	SFRAME_R30	offsetof(struct switchframe, sf_fixreg[17])
-define	SFRAME_R31	offsetof(struct switchframe, sf_fixreg[18])
+define	CPUSAVE_R28	CPUSAVE_R28*sizeof(register_t)
+define	CPUSAVE_R29	CPUSAVE_R29*sizeof(register_t)
+define	CPUSAVE_R30	CPUSAVE_R30*sizeof(register_t)
+define	CPUSAVE_R31	CPUSAVE_R31*sizeof(register_t)
+define	CPUSAVE_DAR	CPUSAVE_DAR*sizeof(register_t)
+define	CPUSAVE_DSISR	CPUSAVE_DSISR*sizeof(register_t)
+define	CPUSAVE_SRR0	CPUSAVE_SRR0*sizeof(register_t)
+define	CPUSAVE_SRR1	CPUSAVE_SRR1*sizeof(register_t)
 
-define	PCB_PM		offsetof(struct pcb, pcb_pm)
-define	PCB_SP		offsetof(struct pcb, pcb_sp)
-define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
+define	OEACPU_64	OEACPU_64
+define	OEACPU_64_BRIDGE	OEACPU_64_BRIDGE
+define	OEACPU_NOBAT	OEACPU_NOBAT
+define	OEACPU_HIGHBAT	OEACPU_HIGHBAT
+define	OEACPU_601	OEACPU_601
+define	OEACPU_HIGHSPRG	OEACPU_HIGHSPRG
+define	OEACPU_ALTIVEC	OEACPU_ALTIVEC
+
+define	PTE_REF		PTE_REF
+define	PTE_CHG		PTE_CHG
+define	PTE_HID		PTE_HID
+define	PTE_G		PTE_G
 
 define	FPREG_F0	offsetof(struct fpreg, fpreg[0])
 define	FPREG_F1	offsetof(struct fpreg, fpreg[1])
@@ -210,87 +158,3 @@ define	VREG_V30	offsetof(struct vreg, vreg[30][0])
 define	VREG_V31	offsetof(struct vreg, vreg[31][0])
 define	VREG_VRSAVE	offsetof(struct vreg, vrsave)
 define	VREG_VSCR	offsetof(struct vreg, vscr)
-
-define	L_PCB		offsetof(struct lwp, l_addr)
-define	L_CPU		offsetof(struct lwp, l_cpu)
-define	L_MD_UTF	offsetof(struct lwp, l_md.md_utf)
-define	L_PROC		offsetof(struct lwp, l_proc)
-
-define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
-
-define	CI_SIZE		sizeof(struct cpu_info)
-define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
-define	CI_CURPCB	offsetof(struct cpu_info, ci_curpcb)
-define	CI_CURPM	offsetof(struct cpu_info, ci_curpm)
-define	CI_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
-define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
-define	CI_CPL		offsetof(struct cpu_info, ci_cpl)
-define	CI_IDEPTH	offsetof(struct cpu_info, ci_idepth)
-define	CI_TEMPSAVE	offsetof(struct cpu_info, ci_tempsave)
-define	CI_DDBSAVE	offsetof(struct cpu_info, ci_ddbsave)
-define	CI_IPKDBSAVE	offsetof(struct cpu_info, ci_ipkdbsave)
-define	CI_DISISAVE	offsetof(struct cpu_info, ci_disisave)
-define	CI_IDLESPIN	offsetof(struct cpu_info, ci_idlespin)
-
-define	CPUSAVE_R28	CPUSAVE_R28*sizeof(register_t)
-define	CPUSAVE_R29	CPUSAVE_R29*sizeof(register_t)
-define	CPUSAVE_R30	CPUSAVE_R30*sizeof(register_t)
-define	CPUSAVE_R31	CPUSAVE_R31*sizeof(register_t)
-define	CPUSAVE_DAR	CPUSAVE_DAR*sizeof(register_t)
-define	CPUSAVE_DSISR	CPUSAVE_DSISR*sizeof(register_t)
-define	CPUSAVE_SRR0	CPUSAVE_SRR0*sizeof(register_t)
-define	CPUSAVE_SRR1	CPUSAVE_SRR1*sizeof(register_t)
-
-define	FB_PC		offsetof(struct faultbuf, fb_pc)
-define	FB_SP		offsetof(struct faultbuf, fb_sp)
-define	FB_R2		offsetof(struct faultbuf, fb_r2)
-define	FB_CR		offsetof(struct faultbuf, fb_cr)
-define	FB_R13		offsetof(struct faultbuf, fb_fixreg[0])
-define	FB_R14		offsetof(struct faultbuf, fb_fixreg[1])
-define	FB_R15		offsetof(struct faultbuf, fb_fixreg[2])
-define	FB_R16		offsetof(struct faultbuf, fb_fixreg[3])
-define	FB_R17		offsetof(struct faultbuf, fb_fixreg[4])
-define	FB_R18		offsetof(struct faultbuf, fb_fixreg[5])
-define	FB_R19		offsetof(struct faultbuf, fb_fixreg[6])
-define	FB_R20		offsetof(struct faultbuf, fb_fixreg[7])
-define	FB_R21		offsetof(struct faultbuf, fb_fixreg[8])
-define	FB_R22		offsetof(struct faultbuf, fb_fixreg[9])
-define	FB_R23		offsetof(struct faultbuf, fb_fixreg[10])
-define	FB_R24		offsetof(struct faultbuf, fb_fixreg[11])
-define	FB_R25		offsetof(struct faultbuf, fb_fixreg[12])
-define	FB_R26		offsetof(struct faultbuf, fb_fixreg[13])
-define	FB_R27		offsetof(struct faultbuf, fb_fixreg[14])
-define	FB_R28		offsetof(struct faultbuf, fb_fixreg[15])
-define	FB_R29		offsetof(struct faultbuf, fb_fixreg[16])
-define	FB_R30		offsetof(struct faultbuf, fb_fixreg[17])
-define	FB_R31		offsetof(struct faultbuf, fb_fixreg[18])
-
-define	CACHELINESIZE	CACHELINESIZE
-
-define	CPU_CI		offsetof(struct cpu_info, ci_ci)
-
-define	OEACPU_64	OEACPU_64
-define	OEACPU_64_BRIDGE	OEACPU_64_BRIDGE
-define	OEACPU_NOBAT	OEACPU_NOBAT
-define	OEACPU_HIGHBAT	OEACPU_HIGHBAT
-define	OEACPU_601	OEACPU_601
-define	OEACPU_HIGHSPRG	OEACPU_HIGHSPRG
-define	OEACPU_ALTIVEC	OEACPU_ALTIVEC
-
-ifdef	__HAVE_MUTEX_STUBS
-define	__HAVE_MUTEX_STUBS	__HAVE_MUTEX_STUBS
-endif
-ifdef	__HAVE_MUTEX_SPIN_STUBS
-define	__HAVE_MUTEX_SPIN_STUBS	__HAVE_MUTEX_SPIN_STUBS
-endif
-define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
-define	MTX_LOCK	offsetof(struct kmutex, mtx_lock)
-define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)
-
-ifdef	__HAVE_RW_STUBS
-define	__HAVE_RW_STUBS	__HAVE_RW_STUBS
-endif
-define	RW_OWNER	offsetof(struct krwlock, rw_owner)
-define	RW_WRITE_LOCKED	RW_WRITE_LOCKED
-define	RW_READ_INCR	RW_READ_INCR
-define	RW_READER	RW_READER

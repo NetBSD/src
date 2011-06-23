@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.38 2011/05/26 22:16:42 jym Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.38.2.1 2011/06/23 14:19:50 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.38 2011/05/26 22:16:42 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.38.2.1 2011/06/23 14:19:50 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -588,13 +588,13 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	}
 	xbdi->xbdi_evtchn = evop.u.bind_interdomain.local_port;
 
-	snprintf(evname, sizeof(evname), "xbd%d.%d",
+	snprintf(evname, sizeof(evname), "xbdback%di%d",
 	    xbdi->xbdi_domid, xbdi->xbdi_handle);
 	event_set_handler(xbdi->xbdi_evtchn, xbdback_evthandler,
 	    xbdi, IPL_BIO, evname);
-	aprint_verbose("xbd backend 0x%x for domain %d "
-	    "using event channel %d, protocol %s\n", xbdi->xbdi_handle,
-	    xbdi->xbdi_domid, xbdi->xbdi_evtchn, proto);
+	aprint_verbose("xbd backend domain %d handle %#x (%d) "
+	    "using event channel %d, protocol %s\n", xbdi->xbdi_domid,
+	    xbdi->xbdi_handle, xbdi->xbdi_handle, xbdi->xbdi_evtchn, proto);
 	hypervisor_enable_event(xbdi->xbdi_evtchn);
 	hypervisor_notify_via_evtchn(xbdi->xbdi_evtchn);
 	xbdi->xbdi_status = CONNECTED;
@@ -1223,7 +1223,7 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 	xbd_io->xio_buf.b_iodone = xbdback_iodone;
 	xbd_io->xio_buf.b_proc = NULL;
 	xbd_io->xio_buf.b_vp = xbdi->xbdi_vp;
-	xbd_io->xio_buf.b_objlock = &xbdi->xbdi_vp->v_interlock;
+	xbd_io->xio_buf.b_objlock = xbdi->xbdi_vp->v_interlock;
 	xbd_io->xio_buf.b_dev = xbdi->xbdi_dev;
 	xbd_io->xio_buf.b_blkno = xbdi->xbdi_next_sector;
 	xbd_io->xio_buf.b_bcount = 0;
@@ -1387,9 +1387,9 @@ xbdback_do_io(struct work *wk, void *dummy)
 	}
 #endif
 	if ((xbd_io->xio_buf.b_flags & B_READ) == 0) {
-		mutex_enter(&xbd_io->xio_buf.b_vp->v_interlock);
+		mutex_enter(xbd_io->xio_buf.b_vp->v_interlock);
 		xbd_io->xio_buf.b_vp->v_numoutput++;
-		mutex_exit(&xbd_io->xio_buf.b_vp->v_interlock);
+		mutex_exit(xbd_io->xio_buf.b_vp->v_interlock);
 	}
 	bdev_strategy(&xbd_io->xio_buf);
 }

@@ -1,5 +1,5 @@
 /*	$OpenBSD: fins.c,v 1.1 2008/03/19 19:33:09 deraadt Exp $	*/
-/*	$NetBSD: finsio_isa.c,v 1.4 2008/04/22 13:33:38 xtraeme Exp $	*/
+/*	$NetBSD: finsio_isa.c,v 1.4.36.1 2011/06/23 14:20:01 cherry Exp $	*/
 
 /*
  * Copyright (c) 2008 Juan Romero Pardines
@@ -19,7 +19,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.4 2008/04/22 13:33:38 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.4.36.1 2011/06/23 14:20:01 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -542,6 +542,7 @@ finsio_isa_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_sme = sysmon_envsys_create();
 	for (i = 0; sc->sc_finsio_sensors[i].fs_desc; i++) {
+		sc->sc_sensor[i].state = ENVSYS_SINVALID;
 		sc->sc_sensor[i].units = sc->sc_finsio_sensors[i].fs_type;
 		if (sc->sc_sensor[i].units == ENVSYS_SVOLTS_DC)
 			sc->sc_sensor[i].flags = ENVSYS_FCHANGERFACT;

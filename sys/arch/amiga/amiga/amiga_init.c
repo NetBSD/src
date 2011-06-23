@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.122 2011/01/15 21:56:53 phx Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.122.6.1 2011/06/23 14:18:57 cherry Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.122 2011/01/15 21:56:53 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.122.6.1 2011/06/23 14:18:57 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.122 2011/01/15 21:56:53 phx Exp $")
 #include <sys/reboot.h>
 #include <sys/exec.h>
 
+#include <dev/mm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
@@ -1125,3 +1126,19 @@ kernel_reload_write(struct uio *uio)
 	return(0);
 }
 #endif
+
+int
+mm_md_readwrite(dev_t dev, struct uio *uio)
+{
+
+	switch (minor(dev)) {
+#ifdef DEVRELOAD
+	case DEV_RELOAD:
+		if (uio->uio_rw == UIO_READ)
+			return 0;
+		return kernel_reload_write(uio);
+#endif
+	default:
+		return ENXIO;
+	}
+}

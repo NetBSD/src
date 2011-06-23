@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8536DS,v 1.3 2011/03/06 17:08:23 bouyer Exp $
+#	$NetBSD: MPC8536DS,v 1.3.2.1 2011/06/23 14:19:08 cherry Exp $
 #
 #	MPC8536DS -- everything that's currently supported
 #
@@ -7,26 +7,19 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8536DS-$Revision: 1.3 $"
+ident 		"MPC8536DS-$Revision: 1.3.2.1 $"
 
 maxusers	32
+
+makeoptions	NEED_BINARY="yes"
+makeoptions	NEED_UBOOTIMAGE="yes"
 
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
 
-no options	GUR_BASE
-options 	GUR_BASE=0xffe00000
-
 options 	MPC8536
 options 	PIXIS
 #options 	HZ=1000
-
-# Options for necessary to use MD
-options 	MEMORY_DISK_HOOKS
-options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
-options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=6144	# size of memory disk, in blocks
-
 
 #options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
@@ -140,7 +133,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # Kernel root file system and dump configuration.
 config		netbsd		root on ? type ?
-config		netbsdnfs	root on tsec0 type nfs
+config		nfsnetbsd	root on tsec0 type nfs
 
 #
 # Device configuration
@@ -218,7 +211,6 @@ wm*		at pci? dev ? function ?	# Intel Ethernet
 makphy* 	at mii? phy ?			# Marvell PHYs
 #ukphy*		at mii? phy ?			# generic unknown PHYs
 
-pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	rnd			# /dev/random and in-kernel generator

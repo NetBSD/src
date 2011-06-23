@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.26 2010/11/03 22:34:23 dyoung Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.26.6.1 2011/06/23 14:20:10 cherry Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.26 2010/11/03 22:34:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.26.6.1 2011/06/23 14:20:10 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.26 2010/11/03 22:34:23 dyoung Exp $");
 #include <dev/usb/ubsavar.h>
 
 #ifdef UBSA_DEBUG
-Static int	ubsadebug = 0;
+int		ubsadebug = 0;
 #ifdef __FreeBSD__
 SYSCTL_NODE(_hw_usb, OID_AUTO, ubsa, CTLFLAG_RW, 0, "USB ubsa");
 SYSCTL_INT(_hw_usb_ubsa, OID_AUTO, debug, CTLFLAG_RW,

@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.7 2009/09/08 07:08:03 skrll Exp $
+$NetBSD: README.mknative,v 1.7.4.1 2011/06/23 14:20:42 cherry Exp $
 
 This file describes how to bootstrap the native toolchain on a new NetBSD
 platform (and how to update the new toolchain files, if needed).  These
@@ -36,10 +36,11 @@ work.
 
 5. In src/gnu/lib/libgcc4, do "nbmake-MACHINE obj includes".
 
-6. In src/gnu/lib/crtstuff4 do "nbmake-MACHINE depend all install"
+6. If the platform sets USE_COMPILERCRTSTUFF=yes, then in src/gnu/lib/crtstuff4
+   do "nbmake-MACHINE dependall install"
 
-7. In each of src/lib/csu, src/gnu/lib/libgcc4, src/lib/libdes, and src/lib,
-   do "nbmake-MACHINE all install".
+7. In each of src/lib/csu, src/gnu/lib/libgcc4, and src/lib,
+   do "nbmake-MACHINE dependall install".
 
    Optionally, all of the following may be set in the environment to reduce
    the amount of code needed to build at this step.  Basically, it must be

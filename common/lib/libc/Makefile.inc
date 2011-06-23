@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.10 2008/10/26 07:22:50 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.10.14.1 2011/06/23 14:17:49 cherry Exp $
 
 COMMON_DIR:=${.PARSEDIR}
 COMMON_CODEDIRS=atomic gen gmon inet md net quad stdlib string sys
@@ -25,6 +25,11 @@ COMMON_ARCHDIR=${COMMON_DIR}/arch/${COMMON_ARCHSUBDIR}
 .if exists(${COMMON_ARCHDIR}/${i}/Makefile.inc)
 .include "${COMMON_ARCHDIR}/${i}/Makefile.inc"
 .endif
+.if !empty(CPPFLAGS:M-DLIBKERN_OPTIMISE_SPACE) && \
+    exists(${COMMON_ARCHDIR}/$i/small)
+.PATH.S: ${COMMON_ARCHDIR}/$i/small
+.endif
+
 .if exists(${COMMON_ARCHDIR}/$i)
 .PATH.c: ${COMMON_ARCHDIR}/$i
 .PATH.S: ${COMMON_ARCHDIR}/$i

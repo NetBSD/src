@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.47 2011/04/03 01:19:35 rmind Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.47.2.1 2011/06/23 14:20:24 cherry Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.47 2011/04/03 01:19:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.47.2.1 2011/06/23 14:20:24 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -770,20 +770,17 @@ layer_getpages(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	int error;
 
-	/*
-	 * just pass the request on to the underlying layer.
-	 */
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	if (ap->a_flags & PGO_LOCKED) {
 		return EBUSY;
 	}
 	ap->a_vp = LAYERVPTOLOWERVP(vp);
-	mutex_exit(&vp->v_interlock);
-	mutex_enter(&ap->a_vp->v_interlock);
-	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
-	return error;
+	KASSERT(vp->v_interlock == ap->a_vp->v_interlock);
+
+	/* Just pass the request on to the underlying layer. */
+	return VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
 }
 
 int
@@ -796,18 +793,17 @@ layer_putpages(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	int error;
 
-	/*
-	 * just pass the request on to the underlying layer.
-	 */
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	ap->a_vp = LAYERVPTOLOWERVP(vp);
-	mutex_exit(&vp->v_interlock);
+	KASSERT(vp->v_interlock == ap->a_vp->v_interlock);
+
 	if (ap->a_flags & PGO_RECLAIM) {
+		mutex_exit(vp->v_interlock);
 		return 0;
 	}
-	mutex_enter(&ap->a_vp->v_interlock);
-	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
-	return error;
+
+	/* Just pass the request on to the underlying layer. */
+	return VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 }

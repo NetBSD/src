@@ -1,4 +1,4 @@
-/* $NetBSD: compat_16_machdep.c,v 1.16 2009/11/21 05:35:40 rmind Exp $ */
+/* $NetBSD: compat_16_machdep.c,v 1.16.10.1 2011/06/23 14:18:49 cherry Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.16 2009/11/21 05:35:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.16.10.1 2011/06/23 14:18:49 cherry Exp $");
 
 
 #ifdef DEBUG
@@ -132,9 +132,8 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_sc.sc_regs[R_SP] = alpha_pal_rdusp();
 
  	/* save the floating-point state, if necessary, then copy it. */
-	if (pcb->pcb_fpcpu != NULL)
-		fpusave_proc(l, 1);
-	frame.sf_sc.sc_ownedfp = l->l_md.md_flags & MDP_FPUSED;
+	fpu_save();
+	frame.sf_sc.sc_ownedfp = fpu_used_p(l);
 	memcpy((struct fpreg *)frame.sf_sc.sc_fpregs, &pcb->pcb_fp,
 	    sizeof(struct fpreg));
 	frame.sf_sc.sc_fp_control = alpha_read_fp_c(l);
@@ -281,14 +280,13 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	regtoframe((struct reg *)ksc.sc_regs, l->l_md.md_tf);
 	alpha_pal_wrusp(ksc.sc_regs[R_SP]);
 
-	/* XXX ksc.sc_ownedfp ? */
 	pcb = lwp_getpcb(l);
-	if (pcb->pcb_fpcpu != NULL)
-		fpusave_proc(l, 0);
+	fpu_discard();
 	memcpy(&pcb->pcb_fp, (struct fpreg *)ksc.sc_fpregs,
 	    sizeof(struct fpreg));
 	pcb->pcb_fp.fpr_cr = ksc.sc_fpcr;
-	l->l_md.md_flags = ksc.sc_fp_control & MDP_FP_C;
+	l->l_md.md_flags = (ksc.sc_fp_control & MDLWP_FP_C)
+	    | (ksc.sc_ownedfp ? MDLWP_FPUSED : 0);
 
 	mutex_enter(p->p_lock);
 	/* Restore signal stack. */

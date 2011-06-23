@@ -1,4 +1,4 @@
-/* $NetBSD: gd_qnan.h,v 1.2 2011/03/20 23:16:07 christos Exp $ */
+/* $NetBSD: gd_qnan.h,v 1.2.2.1 2011/06/23 14:18:36 cherry Exp $ */
 
 #define f_QNAN 0x7fc00000
 #define d_QNAN0 0x0
@@ -10,6 +10,6 @@
 #define ldus_QNAN0 0x0
 #define ldus_QNAN1 0x0
 #define ldus_QNAN2 0x0
-#define ldus_QNAN3 0x4000
+#define ldus_QNAN3 0xc000
 #define ldus_QNAN4 0x7fff
 /* 6 bytes of tail padding follow, per AMD64 ABI */

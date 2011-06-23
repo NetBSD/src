@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2010/04/11 08:23:52 hannken Exp $	*/
+/*	$NetBSD: main.c,v 1.22.4.1 2011/06/23 14:18:43 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.22 2010/04/11 08:23:52 hannken Exp $");
+__RCSID("$NetBSD: main.c,v 1.22.4.1 2011/06/23 14:18:43 cherry Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -59,12 +59,6 @@ usage(void)
 	    "Usage: %s [-fnpy] [-x snap_backup] filesystem ... \n",
 	    getprogname());
 	exit(FSCK_EXIT_USAGE);
-}
-
-static void
-catch(int n)
-{
-	exit(FSCK_EXIT_SIGNALLED);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.340 2011/05/16 13:22:54 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.340.2.1 2011/06/23 14:19:19 cherry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.340 2011/05/16 13:22:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.340.2.1 2011/06/23 14:19:19 cherry Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -138,6 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.340 2011/05/16 13:22:54 tsutsui Exp $"
 #include <sys/sysctl.h>
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <machine/iopreg.h>
 #include <machine/psc.h>
@@ -2676,4 +2677,12 @@ mac68k_ring_bell(int freq, int length, int volume)
 		    freq, length, volume));
 	else
 		return (ENXIO);
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+	extern u_long maxaddr;
+
+	return (pa < maxaddr) ? 0 : EFAULT;
 }

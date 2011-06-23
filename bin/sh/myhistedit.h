@@ -1,4 +1,4 @@
-/*	$NetBSD: myhistedit.h,v 1.10 2003/08/07 09:05:35 agc Exp $	*/
+/*	$NetBSD: myhistedit.h,v 1.10.52.1 2011/06/23 14:17:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,6 @@ extern int displayhist;
 void histedit(void);
 void sethistsize(const char *);
 void setterm(const char *);
-int histcmd(int, char **);
 int inputrc(int, char **);
 int not_fcnumber(char *);
 int str_to_event(const char *, int);

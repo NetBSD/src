@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.9 2008/04/28 20:23:33 martin Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.9.32.1 2011/06/23 14:19:36 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.9 2008/04/28 20:23:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.9.32.1 2011/06/23 14:19:36 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,20 +53,19 @@ __KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.9 2008/04/28 20:23:33 martin Exp $");
 
 #include "isadma.h"
 
-static int	pnpbus_match(struct device *, struct cfdata *, void *);
-static void	pnpbus_attach(struct device *, struct device *, void *);
+static int	pnpbus_match(device_t, cfdata_t, void *);
+static void	pnpbus_attach(device_t, device_t, void *);
 static int	pnpbus_print(void *, const char *);
-static int	pnpbus_search(struct device *, struct cfdata *,
-			      const int *, void *);
+static int	pnpbus_search(device_t, cfdata_t, const int *, void *);
 
-CFATTACH_DECL(pnpbus, sizeof(struct pnpbus_softc),
+CFATTACH_DECL_NEW(pnpbus, sizeof(struct pnpbus_softc),
     pnpbus_match, pnpbus_attach, NULL, NULL);
 
 struct pnpbus_softc *pnpbus_softc;
 extern struct cfdriver pnpbus_cd;
 
 static int
-pnpbus_match(struct device *parent, struct cfdata *cf, void *aux)
+pnpbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pnpbus_attach_args *paa = aux;
 
@@ -76,14 +75,15 @@ pnpbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-pnpbus_attach(struct device *parent, struct device *self, void *aux)
+pnpbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct pnpbus_softc *sc = (struct pnpbus_softc *)self;
+	struct pnpbus_softc *sc = device_private(self);
 	struct pnpbus_attach_args *paa = aux;
 
 	aprint_normal("\n");
 
 	pnpbus_softc = sc;
+	sc->sc_dev = self;
 	sc->sc_ic = paa->paa_ic;
 	sc->sc_iot = paa->paa_iot;
 	sc->sc_memt = paa->paa_memt;
@@ -387,8 +387,7 @@ pnp_getpna(struct pnpbus_dev_attach_args *pna, struct pnpbus_attach_args *paa,
 }
 
 static int
-pnpbus_search(struct device *parent, struct cfdata *cf,
-	    const int *ldesc, void *aux)
+pnpbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct pnpbus_dev_attach_args pna;
 	struct pnpbus_attach_args *paa = aux;

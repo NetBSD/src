@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.50 2009/11/21 04:16:51 rmind Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.50.10.1 2011/06/23 14:19:40 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.50 2009/11/21 04:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.50.10.1 2011/06/23 14:19:40 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1261,16 +1261,19 @@ tctrl_sensor_setup(struct tctrl_softc *sc)
 	(void)strlcpy(sc->sc_sensor[0].desc, "Case temperature",
 	    sizeof(sc->sc_sensor[0].desc));
 	sc->sc_sensor[0].units = ENVSYS_STEMP;
+	sc->sc_sensor[0].state = ENVSYS_SINVALID;
 
 	/* battery voltage */
 	(void)strlcpy(sc->sc_sensor[1].desc, "Internal battery voltage",
 	    sizeof(sc->sc_sensor[1].desc));
 	sc->sc_sensor[1].units = ENVSYS_SVOLTS_DC;
+	sc->sc_sensor[1].state = ENVSYS_SINVALID;
 
 	/* DC voltage */
 	(void)strlcpy(sc->sc_sensor[2].desc, "DC-In voltage",
 	    sizeof(sc->sc_sensor[2].desc));
 	sc->sc_sensor[2].units = ENVSYS_SVOLTS_DC;
+	sc->sc_sensor[2].state = ENVSYS_SINVALID;
 
 	for (i = 0; i < ENVSYS_NUMSENSORS; i++) {
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,

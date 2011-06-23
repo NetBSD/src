@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_autoconf.c,v 1.2 2011/01/18 01:02:52 matt Exp $	*/
+/*	$NetBSD: booke_autoconf.c,v 1.2.6.1 2011/06/23 14:19:27 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_autoconf.c,v 1.2 2011/01/18 01:02:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_autoconf.c,v 1.2.6.1 2011/06/23 14:19:27 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -73,7 +73,7 @@ e500_device_register(device_t dev, void *aux)
 			if (prop_dictionary_set(device_properties(dev),
 						"mac-address", pd) == false) {
 				printf("WARNING: unable to set mac-addr "
-				    "property for %s\n", dev->dv_xname);
+				    "property for %s\n", device_xname(dev));
 			}
 		}
 		return;

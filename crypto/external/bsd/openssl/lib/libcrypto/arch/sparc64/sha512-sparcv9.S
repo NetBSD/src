@@ -29,7 +29,7 @@ sha256_block_data_order:
 	sll	%i4,3,%i4
 	add	%i1,%i2,%i2
 .Lpic:	call	.+8
-	sub	%o7,.Lpic-K256,%i3
+	add	%o7,K256-.Lpic,%i3
 
 	ld	[%i0+0],%l0
 	ld	[%i0+4],%l1
@@ -1847,3 +1847,4 @@ sha256_block_data_order:
 .type	sha256_block_data_order,#function
 .size	sha256_block_data_order,(.-sha256_block_data_order)
 .asciz	"SHA256 block transform for SPARCv9, CRYPTOGAMS by <appro@openssl.org>"
+.align	4

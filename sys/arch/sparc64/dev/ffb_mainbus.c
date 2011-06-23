@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb_mainbus.c,v 1.9 2010/09/21 03:31:04 macallan Exp $	*/
+/*	$NetBSD: ffb_mainbus.c,v 1.9.6.1 2011/06/23 14:19:41 cherry Exp $	*/
 /*	$OpenBSD: creator_mainbus.c,v 1.4 2002/07/26 16:39:04 jason Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.9 2010/09/21 03:31:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.9.6.1 2011/06/23 14:19:41 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,30 +55,31 @@ __KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.9 2010/09/21 03:31:04 macallan Exp
 
 extern int prom_stdout_node;
 
-int	ffb_mainbus_match(struct device *, struct cfdata *, void *);
-void	ffb_mainbus_attach(struct device *, struct device *, void *);
+int	ffb_mainbus_match(device_t, cfdata_t, void *);
+void	ffb_mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ffb_mainbus, sizeof(struct ffb_softc),
-	      ffb_mainbus_match, ffb_mainbus_attach, NULL, NULL);
+CFATTACH_DECL_NEW(ffb_mainbus, sizeof(struct ffb_softc),
+    ffb_mainbus_match, ffb_mainbus_attach, NULL, NULL);
 
 int
-ffb_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
+ffb_mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
 	if (strcmp(ma->ma_name, "SUNW,ffb") == 0 ||
 	    strcmp(ma->ma_name, "SUNW,afb") == 0)
-		return (1);
-	return (0);
+		return 1;
+	return 0;
 }
 
 void
-ffb_mainbus_attach(struct device *parent, struct device *self, void *aux)
+ffb_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct ffb_softc *sc = (struct ffb_softc *)self;
+	struct ffb_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	int i, nregs;
 
+	sc->sc_dev = self;
 	sc->sc_bt = ma->ma_bustag;
 
 	nregs = min(ma->ma_nreg, FFB_NREGS);

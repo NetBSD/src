@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.71 2011/02/25 00:17:36 joerg Exp $	*/
+/*	$NetBSD: stand.h,v 1.71.2.1 2011/06/23 14:20:23 cherry Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -87,14 +87,14 @@
 struct open_file;
 
 #define FS_DEF(fs) \
-	extern int	__CONCAT(fs,_open)(const char *, struct open_file *); \
-	extern int	__CONCAT(fs,_close)(struct open_file *); \
-	extern int	__CONCAT(fs,_read)(struct open_file *, void *, \
+	extern __compactcall int	__CONCAT(fs,_open)(const char *, struct open_file *); \
+	extern __compactcall int	__CONCAT(fs,_close)(struct open_file *); \
+	extern __compactcall int	__CONCAT(fs,_read)(struct open_file *, void *, \
 						size_t, size_t *); \
-	extern int	__CONCAT(fs,_write)(struct open_file *, void *, \
+	extern __compactcall int	__CONCAT(fs,_write)(struct open_file *, void *, \
 						size_t, size_t *); \
-	extern off_t	__CONCAT(fs,_seek)(struct open_file *, off_t, int); \
-	extern int	__CONCAT(fs,_stat)(struct open_file *, struct stat *)
+	extern __compactcall off_t	__CONCAT(fs,_seek)(struct open_file *, off_t, int); \
+	extern __compactcall int	__CONCAT(fs,_stat)(struct open_file *, struct stat *)
 
 /*
  * This structure is used to define file system operations in a file system
@@ -105,12 +105,12 @@ extern char *fsmod2;
 
 #if !defined(LIBSA_SINGLE_FILESYSTEM)
 struct fs_ops {
-	int	(*open)(const char *, struct open_file *);
-	int	(*close)(struct open_file *);
-	int	(*read)(struct open_file *, void *, size_t, size_t *);
-	int	(*write)(struct open_file *, void *, size_t size, size_t *);
-	off_t	(*seek)(struct open_file *, off_t, int);
-	int	(*stat)(struct open_file *, struct stat *);
+	__compactcall int	(*open)(const char *, struct open_file *);
+	__compactcall int	(*close)(struct open_file *);
+	__compactcall int	(*read)(struct open_file *, void *, size_t, size_t *);
+	__compactcall int	(*write)(struct open_file *, void *, size_t size, size_t *);
+	__compactcall off_t	(*seek)(struct open_file *, off_t, int);
+	__compactcall int	(*stat)(struct open_file *, struct stat *);
 };
 
 extern struct fs_ops file_system[];
@@ -215,8 +215,8 @@ int	(devopen)(struct open_file *, const char *, char **);
 #ifdef HEAP_VARIABLE
 void	setheap(void *, void *);
 #endif
-void	*alloc(size_t);
-void	dealloc(void *, size_t);
+void	*alloc(size_t) __compactcall;
+void	dealloc(void *, size_t) __compactcall;
 struct	disklabel;
 char	*getdisklabel(const char *, struct disklabel *);
 int	dkcksum(const struct disklabel *);

@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioplanar.c,v 1.2 2008/04/28 20:23:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioplanar.c,v 1.2.32.1 2011/06/23 14:19:37 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,13 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: ioplanar.c,v 1.2 2008/04/28 20:23:34 martin Exp $");
 
 #include <rs6000/ioplanar/ioplanarvar.h>
 
-static int	ioplanar_match(struct device *, struct cfdata *, void *);
-static void	ioplanar_attach(struct device *, struct device *, void *);
+static int	ioplanar_match(device_t, cfdata_t, void *);
+static void	ioplanar_attach(device_t, device_t, void *);
 static int	ioplanar_print(void *, const char *);
-static int	ioplanar_search(struct device *, struct cfdata *,
-				const int *, void *);
+static int	ioplanar_search(device_t, cfdata_t, const int *, void *);
 
-CFATTACH_DECL(ioplanar, sizeof(struct ioplanar_softc),
+CFATTACH_DECL_NEW(ioplanar, sizeof(struct ioplanar_softc),
     ioplanar_match, ioplanar_attach, NULL, NULL);
 
 struct ioplanar_softc *ioplanar_softc;
@@ -59,7 +58,7 @@ int rainbow_map[RAINBOW_DEVS] =
 	  IOP_TABLET_2, IOP_MOUSE, IOP_FDC_2 };
 
 static int
-ioplanar_match(struct device *parent, struct cfdata *cf, void *aux)
+ioplanar_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mca_attach_args *ma = aux;
 
@@ -72,14 +71,15 @@ ioplanar_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-ioplanar_attach(struct device *parent, struct device *self, void *aux)
+ioplanar_attach(device_t parent, device_t self, void *aux)
 {
-	struct ioplanar_softc *sc = (struct ioplanar_softc *)self;
+	struct ioplanar_softc *sc = device_private(self);
 	struct mca_attach_args *ma = aux;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	ioplanar_softc = sc;
+	sc->sc_dev = self;
 	sc->sc_ic = ma->ma_mc;
 	sc->sc_iot = ma->ma_iot;
 	sc->sc_memt = ma->ma_memt;
@@ -90,8 +90,7 @@ ioplanar_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-ioplanar_search(struct device *parent, struct cfdata *cf,
-    const int *ldesc, void *aux)
+ioplanar_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct ioplanar_dev_attach_args idaa;
 	struct mca_attach_args *ma = aux;

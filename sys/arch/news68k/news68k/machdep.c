@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 2011/05/16 13:22:54 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94.2.1 2011/06/23 14:19:25 cherry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2011/05/16 13:22:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94.2.1 2011/06/23 14:19:25 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2011/05/16 13:22:54 tsutsui Exp $")
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #define MAXMEM	64*1024		/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
@@ -1008,6 +1009,21 @@ consinit(void)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
+}
+
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+
+	*handled = false;
+	return ISIIOVA(ptr) ? EFAULT : 0;
 }
 
 #ifdef MODULAR

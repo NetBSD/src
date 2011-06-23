@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.73 2010/04/13 11:31:11 tsutsui Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.73.6.1 2011/06/23 14:19:02 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.73 2010/04/13 11:31:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.73.6.1 2011/06/23 14:19:02 cherry Exp $");
 
 #include "opt_ddb.h"
 
@@ -188,7 +188,7 @@ enum fdc_state {
 
 /* software state, per controller */
 struct fdc_softc {
-	struct device	sc_dev;		/* boilerplate */
+	device_t	sc_dev;		/* boilerplate */
 
 	struct callout sc_timo_ch;	/* timeout callout */
 	struct callout sc_intr_ch;	/* pseudo-intr callout */
@@ -202,11 +202,11 @@ struct fdc_softc {
 };
 
 /* controller driver configuration */
-int	fdcprobe(struct device *, struct cfdata *, void *);
+int	fdcprobe(device_t, cfdata_t, void *);
 int	fdprint(void *, const char *);
-void	fdcattach(struct device *, struct device *, void *);
+void	fdcattach(device_t, device_t, void *);
 
-CFATTACH_DECL(fdc, sizeof(struct fdc_softc),
+CFATTACH_DECL_NEW(fdc, sizeof(struct fdc_softc),
     fdcprobe, fdcattach, NULL, NULL);
 
 /*
@@ -246,7 +246,7 @@ struct fd_type fd_types[] = {
 
 /* software state, per disk (with up to 4 disks per ctlr) */
 struct fd_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	struct disk	sc_dk;
 
 	struct fd_type	*sc_deftype;	/* default type descriptor */
@@ -279,10 +279,10 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-int	fdprobe(struct device *, struct cfdata *, void *);
-void	fdattach(struct device *, struct device *, void *);
+int	fdprobe(device_t, cfdata_t, void *);
+void	fdattach(device_t, device_t, void *);
 
-CFATTACH_DECL(hdfd, sizeof(struct fd_softc),
+CFATTACH_DECL_NEW(hdfd, sizeof(struct fd_softc),
     fdprobe, fdattach, NULL, NULL);
 
 const struct bdevsw fd_bdevsw = {
@@ -298,29 +298,28 @@ void	fdstart(struct fd_softc *);
 
 struct dkdriver fddkdriver = { fdstrategy };
 
-void	fd_set_motor(struct fdc_softc *fdc, int reset);
-void	fd_motor_off(void *arg);
-void	fd_motor_on(void *arg);
-int	fdcresult(struct fdc_softc *fdc);
-int	out_fdc(u_char x);
+void	fd_set_motor(struct fdc_softc *, int);
+void	fd_motor_off(void *);
+void	fd_motor_on(void *);
+int	fdcresult(struct fdc_softc *);
+int	out_fdc(u_char);
 void	fdc_ctrl_intr(struct clockframe);
-void	fdcstart(struct fdc_softc *fdc);
-void	fdcstatus(struct device *dv, int n, const char *s);
-void	fdctimeout(void *arg);
-void	fdcpseudointr(void *arg);
+void	fdcstart(struct fdc_softc *);
+void	fdcstatus(device_t, int, const char *);
+void	fdctimeout(void *);
+void	fdcpseudointr(void *);
 int	fdcintr(void *);
-void	fdcretry(struct fdc_softc *fdc);
-void	fdfinish(struct fd_softc *fd, struct buf *bp);
+void	fdcretry(struct fdc_softc *);
+void	fdfinish(struct fd_softc *, struct buf *);
 int	fdformat(dev_t, struct ne7_fd_formb *, struct proc *);
 
 static void	fdgetdisklabel(struct fd_softc *, dev_t);
-static void	fdgetdefaultlabel(struct fd_softc *, struct disklabel *,
-		    int);
+static void	fdgetdefaultlabel(struct fd_softc *, struct disklabel *, int);
 
 inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 
 int
-fdcprobe(struct device *parent, struct cfdata *cfp, void *aux)
+fdcprobe(device_t parent, cfdata_t cf, void *aux)
 {
 	static int	fdc_matched = 0;
 	bus_space_tag_t mb_tag;
@@ -395,14 +394,15 @@ fdprint(void *aux, const char *fdc)
 }
 
 void
-fdcattach(struct device *parent, struct device *self, void *aux)
+fdcattach(device_t parent, device_t self, void *aux)
 {
-	struct fdc_softc	*fdc = (void *)self;
+	struct fdc_softc	*fdc = device_private(self);
 	struct fdc_attach_args	fa;
 	int			has_fifo;
 
 	has_fifo = 0;
 
+	fdc->sc_dev = self;
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
 
@@ -450,22 +450,22 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-fdprobe(struct device *parent, struct cfdata *cfp, void *aux)
+fdprobe(device_t parent, cfdata_t cf, void *aux)
 {
-	struct fdc_softc	*fdc = (void *)parent;
+	struct fdc_softc	*fdc = device_private(parent);
 	struct fdc_attach_args	*fa = aux;
 	int			drive = fa->fa_drive;
 	int			n;
 
-	if (cfp->cf_loc[FDCCF_UNIT] != FDCCF_UNIT_DEFAULT &&
-	    cfp->cf_loc[FDCCF_UNIT] != drive)
+	if (cf->cf_loc[FDCCF_UNIT] != FDCCF_UNIT_DEFAULT &&
+	    cf->cf_loc[FDCCF_UNIT] != drive)
 		return 0;
 	/*
 	 * XXX
 	 * This is to work around some odd interactions between this driver
 	 * and SMC Ethernet cards.
 	 */
-	if (cfp->cf_loc[FDCCF_UNIT] == FDCCF_UNIT_DEFAULT && drive >= 2)
+	if (cf->cf_loc[FDCCF_UNIT] == FDCCF_UNIT_DEFAULT && drive >= 2)
 		return 0;
 
 	/* select drive and turn on motor */
@@ -503,14 +503,15 @@ fdprobe(struct device *parent, struct cfdata *cfp, void *aux)
  * Controller is working, and drive responded.  Attach it.
  */
 void
-fdattach(struct device *parent, struct device *self, void *aux)
+fdattach(device_t parent, device_t self, void *aux)
 {
-	struct fdc_softc	*fdc  = (void *)parent;
-	struct fd_softc		*fd   = (void *)self;
+	struct fdc_softc	*fdc  = device_private(parent);
+	struct fd_softc		*fd   = device_private(self);
 	struct fdc_attach_args	*fa   = aux;
 	struct fd_type		*type = fa->fa_deftype;
 	int			drive = fa->fa_drive;
 
+	fd->sc_dev = self;
 	callout_init(&fd->sc_motoron_ch, 0);
 	callout_init(&fd->sc_motoroff_ch, 0);
 
@@ -531,7 +532,7 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&fd->sc_dk, fd->sc_dev.dv_xname, &fddkdriver);
+	disk_init(&fd->sc_dk, device_xname(self), &fddkdriver);
 	disk_attach(&fd->sc_dk);
 
 	/* Needed to power off if the motor is on when we halt. */
@@ -635,7 +636,9 @@ fdstrategy(struct buf *bp)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
 	else {
-		struct fdc_softc *fdc = (void *) device_parent(&fd->sc_dev);
+		struct fdc_softc *fdc;
+
+		fdc = device_private(device_parent(fd->sc_dev));
 		if (fdc->sc_state == DEVIDLE) {
 			printf("fdstrategy: controller inactive\n");
 			fdcstart(fdc);
@@ -654,7 +657,7 @@ done:
 void
 fdstart(struct fd_softc *fd)
 {
-	struct fdc_softc *fdc = (void *) device_parent(&fd->sc_dev);
+	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
 	int active = fdc->sc_drives.tqh_first != 0;
 
 	/* Link into controller queue. */
@@ -669,7 +672,7 @@ fdstart(struct fd_softc *fd)
 void
 fdfinish(struct fd_softc *fd, struct buf *bp)
 {
-	struct fdc_softc *fdc = (void *) device_parent(&fd->sc_dev);
+	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
 
 	/*
 	 * Move this drive to the end of the queue to give others a `fair'
@@ -732,11 +735,12 @@ void
 fd_motor_off(void *arg)
 {
 	struct fd_softc *fd = arg;
+	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
 	int s;
 
 	s = splbio();
 	fd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
-	fd_set_motor((struct fdc_softc *) device_parent(&fd->sc_dev), 0);
+	fd_set_motor(fdc, 0);
 	splx(s);
 }
 
@@ -744,7 +748,7 @@ void
 fd_motor_on(void *arg)
 {
 	struct fd_softc *fd = arg;
-	struct fdc_softc *fdc = (void *) device_parent(&fd->sc_dev);
+	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
 	int s;
 
 	s = splbio();
@@ -858,9 +862,9 @@ fdcpstatus(struct fdc_softc *fdc)
 }
 
 void
-fdcstatus(struct device *dv, int n, const char *s)
+fdcstatus(device_t self, int n, const char *s)
 {
-	struct fdc_softc *fdc = (void *) device_parent(dv);
+	struct fdc_softc *fdc = device_private(device_parent(self));
 	char bits[64];
 
 	if (n == 0) {
@@ -869,7 +873,7 @@ fdcstatus(struct device *dv, int n, const char *s)
 		n = 2;
 	}
 
-	printf("%s: %s", dv->dv_xname, s);
+	printf("%s: %s", device_xname(self), s);
 
 	switch (n) {
 	case 0:
@@ -898,7 +902,7 @@ fdctimeout(void *arg)
 	int s;
 
 	s = splbio();
-	fdcstatus(&fd->sc_dev, 0, "timeout");
+	fdcstatus(fd->sc_dev, 0, "timeout");
 
 	if (bufq_peek(fd->sc_q) != NULL)
 		fdc->sc_state++;
@@ -1105,7 +1109,7 @@ loop:
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 ||
 		    cyl != bp->b_cylinder * fd->sc_type->step) {
 #ifdef FD_DEBUG
-			fdcstatus(&fd->sc_dev, 2, "seek failed");
+			fdcstatus(fd->sc_dev, 2, "seek failed");
 #endif
 			fdcretry(fdc);
 			goto loop;
@@ -1136,7 +1140,7 @@ loop:
 				goto loop;
 			}
 #ifdef FD_DEBUG
-			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
+			fdcstatus(fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
 			printf("blkno %qd nblks %d\n",
 			    fd->sc_blkno, fd->sc_nblks);
@@ -1199,7 +1203,7 @@ loop:
 		out_fdc(NE7CMD_SENSEI);
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 || cyl != 0) {
 #ifdef FD_DEBUG
-			fdcstatus(&fd->sc_dev, 2, "recalibrate failed");
+			fdcstatus(fd->sc_dev, 2, "recalibrate failed");
 #endif
 			fdcretry(fdc);
 			goto loop;
@@ -1213,7 +1217,7 @@ loop:
 		goto doseek;
 
 	default:
-		fdcstatus(&fd->sc_dev, 0, "stray interrupt");
+		fdcstatus(fd->sc_dev, 0, "stray interrupt");
 		return 1;
 	}
 #ifdef DIAGNOSTIC

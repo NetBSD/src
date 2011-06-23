@@ -1,4 +1,4 @@
-.text
+.text	
 .globl	sha1_block_data_order
 .type	sha1_block_data_order,@function
 .align	16
@@ -6,13 +6,14 @@ sha1_block_data_order:
 	pushq	%rbx
 	pushq	%rbp
 	pushq	%r12
-	movq	%rsp,%rax
+	movq	%rsp,%r11
 	movq	%rdi,%r8
 	subq	$72,%rsp
 	movq	%rsi,%r9
 	andq	$-64,%rsp
 	movq	%rdx,%r10
-	movq	%rax,64(%rsp)
+	movq	%r11,64(%rsp)
+.Lprologue:
 
 	movl	0(%r8),%edx
 	movl	4(%r8),%esi
@@ -599,7 +600,7 @@ sha1_block_data_order:
 	addl	%ebx,%edi
 	roll	$1,%eax
 	movl	%eax,32(%rsp)
-	leal	2400959708(%rax,%rdx,1),%esi
+	leal	-1894007588(%rax,%rdx,1),%esi
 	movl	36(%rsp),%eax
 	movl	%ebp,%ebx
 	movl	%ebp,%ecx
@@ -617,7 +618,7 @@ sha1_block_data_order:
 	roll	$30,%ebp
 	movl	%eax,36(%rsp)
 	addl	%ebx,%esi
-	leal	2400959708(%rax,%r12,1),%edx
+	leal	-1894007588(%rax,%r12,1),%edx
 	movl	40(%rsp),%eax
 	movl	%edi,%ebx
 	movl	%edi,%ecx
@@ -635,7 +636,7 @@ sha1_block_data_order:
 	roll	$30,%edi
 	movl	%eax,40(%rsp)
 	addl	%ebx,%edx
-	leal	2400959708(%rax,%r11,1),%r12d
+	leal	-1894007588(%rax,%r11,1),%r12d
 	movl	44(%rsp),%eax
 	movl	%esi,%ebx
 	movl	%esi,%ecx
@@ -653,7 +654,7 @@ sha1_block_data_order:
 	roll	$30,%esi
 	movl	%eax,44(%rsp)
 	addl	%ebx,%r12d
-	leal	2400959708(%rax,%rbp,1),%r11d
+	leal	-1894007588(%rax,%rbp,1),%r11d
 	movl	48(%rsp),%eax
 	movl	%edx,%ebx
 	movl	%edx,%ecx
@@ -671,7 +672,7 @@ sha1_block_data_order:
 	roll	$30,%edx
 	movl	%eax,48(%rsp)
 	addl	%ebx,%r11d
-	leal	2400959708(%rax,%rdi,1),%ebp
+	leal	-1894007588(%rax,%rdi,1),%ebp
 	movl	52(%rsp),%eax
 	movl	%r12d,%ebx
 	movl	%r12d,%ecx
@@ -689,7 +690,7 @@ sha1_block_data_order:
 	roll	$30,%r12d
 	movl	%eax,52(%rsp)
 	addl	%ebx,%ebp
-	leal	2400959708(%rax,%rsi,1),%edi
+	leal	-1894007588(%rax,%rsi,1),%edi
 	movl	56(%rsp),%eax
 	movl	%r11d,%ebx
 	movl	%r11d,%ecx
@@ -707,7 +708,7 @@ sha1_block_data_order:
 	roll	$30,%r11d
 	movl	%eax,56(%rsp)
 	addl	%ebx,%edi
-	leal	2400959708(%rax,%rdx,1),%esi
+	leal	-1894007588(%rax,%rdx,1),%esi
 	movl	60(%rsp),%eax
 	movl	%ebp,%ebx
 	movl	%ebp,%ecx
@@ -725,7 +726,7 @@ sha1_block_data_order:
 	roll	$30,%ebp
 	movl	%eax,60(%rsp)
 	addl	%ebx,%esi
-	leal	2400959708(%rax,%r12,1),%edx
+	leal	-1894007588(%rax,%r12,1),%edx
 	movl	0(%rsp),%eax
 	movl	%edi,%ebx
 	movl	%edi,%ecx
@@ -743,7 +744,7 @@ sha1_block_data_order:
 	roll	$30,%edi
 	movl	%eax,0(%rsp)
 	addl	%ebx,%edx
-	leal	2400959708(%rax,%r11,1),%r12d
+	leal	-1894007588(%rax,%r11,1),%r12d
 	movl	4(%rsp),%eax
 	movl	%esi,%ebx
 	movl	%esi,%ecx
@@ -761,7 +762,7 @@ sha1_block_data_order:
 	roll	$30,%esi
 	movl	%eax,4(%rsp)
 	addl	%ebx,%r12d
-	leal	2400959708(%rax,%rbp,1),%r11d
+	leal	-1894007588(%rax,%rbp,1),%r11d
 	movl	8(%rsp),%eax
 	movl	%edx,%ebx
 	movl	%edx,%ecx
@@ -779,7 +780,7 @@ sha1_block_data_order:
 	roll	$30,%edx
 	movl	%eax,8(%rsp)
 	addl	%ebx,%r11d
-	leal	2400959708(%rax,%rdi,1),%ebp
+	leal	-1894007588(%rax,%rdi,1),%ebp
 	movl	12(%rsp),%eax
 	movl	%r12d,%ebx
 	movl	%r12d,%ecx
@@ -797,7 +798,7 @@ sha1_block_data_order:
 	roll	$30,%r12d
 	movl	%eax,12(%rsp)
 	addl	%ebx,%ebp
-	leal	2400959708(%rax,%rsi,1),%edi
+	leal	-1894007588(%rax,%rsi,1),%edi
 	movl	16(%rsp),%eax
 	movl	%r11d,%ebx
 	movl	%r11d,%ecx
@@ -815,7 +816,7 @@ sha1_block_data_order:
 	roll	$30,%r11d
 	movl	%eax,16(%rsp)
 	addl	%ebx,%edi
-	leal	2400959708(%rax,%rdx,1),%esi
+	leal	-1894007588(%rax,%rdx,1),%esi
 	movl	20(%rsp),%eax
 	movl	%ebp,%ebx
 	movl	%ebp,%ecx
@@ -833,7 +834,7 @@ sha1_block_data_order:
 	roll	$30,%ebp
 	movl	%eax,20(%rsp)
 	addl	%ebx,%esi
-	leal	2400959708(%rax,%r12,1),%edx
+	leal	-1894007588(%rax,%r12,1),%edx
 	movl	24(%rsp),%eax
 	movl	%edi,%ebx
 	movl	%edi,%ecx
@@ -851,7 +852,7 @@ sha1_block_data_order:
 	roll	$30,%edi
 	movl	%eax,24(%rsp)
 	addl	%ebx,%edx
-	leal	2400959708(%rax,%r11,1),%r12d
+	leal	-1894007588(%rax,%r11,1),%r12d
 	movl	28(%rsp),%eax
 	movl	%esi,%ebx
 	movl	%esi,%ecx
@@ -869,7 +870,7 @@ sha1_block_data_order:
 	roll	$30,%esi
 	movl	%eax,28(%rsp)
 	addl	%ebx,%r12d
-	leal	2400959708(%rax,%rbp,1),%r11d
+	leal	-1894007588(%rax,%rbp,1),%r11d
 	movl	32(%rsp),%eax
 	movl	%edx,%ebx
 	movl	%edx,%ecx
@@ -887,7 +888,7 @@ sha1_block_data_order:
 	roll	$30,%edx
 	movl	%eax,32(%rsp)
 	addl	%ebx,%r11d
-	leal	2400959708(%rax,%rdi,1),%ebp
+	leal	-1894007588(%rax,%rdi,1),%ebp
 	movl	36(%rsp),%eax
 	movl	%r12d,%ebx
 	movl	%r12d,%ecx
@@ -905,7 +906,7 @@ sha1_block_data_order:
 	roll	$30,%r12d
 	movl	%eax,36(%rsp)
 	addl	%ebx,%ebp
-	leal	2400959708(%rax,%rsi,1),%edi
+	leal	-1894007588(%rax,%rsi,1),%edi
 	movl	40(%rsp),%eax
 	movl	%r11d,%ebx
 	movl	%r11d,%ecx
@@ -923,7 +924,7 @@ sha1_block_data_order:
 	roll	$30,%r11d
 	movl	%eax,40(%rsp)
 	addl	%ebx,%edi
-	leal	2400959708(%rax,%rdx,1),%esi
+	leal	-1894007588(%rax,%rdx,1),%esi
 	movl	44(%rsp),%eax
 	movl	%ebp,%ebx
 	movl	%ebp,%ecx
@@ -941,7 +942,7 @@ sha1_block_data_order:
 	roll	$30,%ebp
 	movl	%eax,44(%rsp)
 	addl	%ebx,%esi
-	leal	2400959708(%rax,%r12,1),%edx
+	leal	-1894007588(%rax,%r12,1),%edx
 	movl	48(%rsp),%eax
 	movl	%edi,%ebx
 	movl	%edi,%ecx
@@ -959,7 +960,7 @@ sha1_block_data_order:
 	roll	$30,%edi
 	movl	%eax,48(%rsp)
 	addl	%ebx,%edx
-	leal	3395469782(%rax,%r11,1),%r12d
+	leal	-899497514(%rax,%r11,1),%r12d
 	movl	52(%rsp),%eax
 	movl	%edi,%ebx
 	movl	%edx,%r11d
@@ -974,7 +975,7 @@ sha1_block_data_order:
 	addl	%ebx,%r12d
 	roll	$1,%eax
 	movl	%eax,52(%rsp)
-	leal	3395469782(%rax,%rbp,1),%r11d
+	leal	-899497514(%rax,%rbp,1),%r11d
 	movl	56(%rsp),%eax
 	movl	%esi,%ebx
 	movl	%r12d,%ebp
@@ -989,7 +990,7 @@ sha1_block_data_order:
 	addl	%ebx,%r11d
 	roll	$1,%eax
 	movl	%eax,56(%rsp)
-	leal	3395469782(%rax,%rdi,1),%ebp
+	leal	-899497514(%rax,%rdi,1),%ebp
 	movl	60(%rsp),%eax
 	movl	%edx,%ebx
 	movl	%r11d,%edi
@@ -1004,7 +1005,7 @@ sha1_block_data_order:
 	addl	%ebx,%ebp
 	roll	$1,%eax
 	movl	%eax,60(%rsp)
-	leal	3395469782(%rax,%rsi,1),%edi
+	leal	-899497514(%rax,%rsi,1),%edi
 	movl	0(%rsp),%eax
 	movl	%r12d,%ebx
 	movl	%ebp,%esi
@@ -1019,7 +1020,7 @@ sha1_block_data_order:
 	addl	%ebx,%edi
 	roll	$1,%eax
 	movl	%eax,0(%rsp)
-	leal	3395469782(%rax,%rdx,1),%esi
+	leal	-899497514(%rax,%rdx,1),%esi
 	movl	4(%rsp),%eax
 	movl	%r11d,%ebx
 	movl	%edi,%edx
@@ -1034,7 +1035,7 @@ sha1_block_data_order:
 	addl	%ebx,%esi
 	roll	$1,%eax
 	movl	%eax,4(%rsp)
-	leal	3395469782(%rax,%r12,1),%edx
+	leal	-899497514(%rax,%r12,1),%edx
 	movl	8(%rsp),%eax
 	movl	%ebp,%ebx
 	movl	%esi,%r12d
@@ -1049,7 +1050,7 @@ sha1_block_data_order:
 	addl	%ebx,%edx
 	roll	$1,%eax
 	movl	%eax,8(%rsp)
-	leal	3395469782(%rax,%r11,1),%r12d
+	leal	-899497514(%rax,%r11,1),%r12d
 	movl	12(%rsp),%eax
 	movl	%edi,%ebx
 	movl	%edx,%r11d
@@ -1064,7 +1065,7 @@ sha1_block_data_order:
 	addl	%ebx,%r12d
 	roll	$1,%eax
 	movl	%eax,12(%rsp)
-	leal	3395469782(%rax,%rbp,1),%r11d
+	leal	-899497514(%rax,%rbp,1),%r11d
 	movl	16(%rsp),%eax
 	movl	%esi,%ebx
 	movl	%r12d,%ebp
@@ -1079,7 +1080,7 @@ sha1_block_data_order:
 	addl	%ebx,%r11d
 	roll	$1,%eax
 	movl	%eax,16(%rsp)
-	leal	3395469782(%rax,%rdi,1),%ebp
+	leal	-899497514(%rax,%rdi,1),%ebp
 	movl	20(%rsp),%eax
 	movl	%edx,%ebx
 	movl	%r11d,%edi
@@ -1094,7 +1095,7 @@ sha1_block_data_order:
 	addl	%ebx,%ebp
 	roll	$1,%eax
 	movl	%eax,20(%rsp)
-	leal	3395469782(%rax,%rsi,1),%edi
+	leal	-899497514(%rax,%rsi,1),%edi
 	movl	24(%rsp),%eax
 	movl	%r12d,%ebx
 	movl	%ebp,%esi
@@ -1109,7 +1110,7 @@ sha1_block_data_order:
 	addl	%ebx,%edi
 	roll	$1,%eax
 	movl	%eax,24(%rsp)
-	leal	3395469782(%rax,%rdx,1),%esi
+	leal	-899497514(%rax,%rdx,1),%esi
 	movl	28(%rsp),%eax
 	movl	%r11d,%ebx
 	movl	%edi,%edx
@@ -1124,7 +1125,7 @@ sha1_block_data_order:
 	addl	%ebx,%esi
 	roll	$1,%eax
 	movl	%eax,28(%rsp)
-	leal	3395469782(%rax,%r12,1),%edx
+	leal	-899497514(%rax,%r12,1),%edx
 	movl	32(%rsp),%eax
 	movl	%ebp,%ebx
 	movl	%esi,%r12d
@@ -1139,7 +1140,7 @@ sha1_block_data_order:
 	addl	%ebx,%edx
 	roll	$1,%eax
 	movl	%eax,32(%rsp)
-	leal	3395469782(%rax,%r11,1),%r12d
+	leal	-899497514(%rax,%r11,1),%r12d
 	movl	36(%rsp),%eax
 	movl	%edi,%ebx
 	movl	%edx,%r11d
@@ -1154,7 +1155,7 @@ sha1_block_data_order:
 	addl	%ebx,%r12d
 	roll	$1,%eax
 	movl	%eax,36(%rsp)
-	leal	3395469782(%rax,%rbp,1),%r11d
+	leal	-899497514(%rax,%rbp,1),%r11d
 	movl	40(%rsp),%eax
 	movl	%esi,%ebx
 	movl	%r12d,%ebp
@@ -1169,7 +1170,7 @@ sha1_block_data_order:
 	addl	%ebx,%r11d
 	roll	$1,%eax
 	movl	%eax,40(%rsp)
-	leal	3395469782(%rax,%rdi,1),%ebp
+	leal	-899497514(%rax,%rdi,1),%ebp
 	movl	44(%rsp),%eax
 	movl	%edx,%ebx
 	movl	%r11d,%edi
@@ -1184,7 +1185,7 @@ sha1_block_data_order:
 	addl	%ebx,%ebp
 	roll	$1,%eax
 	movl	%eax,44(%rsp)
-	leal	3395469782(%rax,%rsi,1),%edi
+	leal	-899497514(%rax,%rsi,1),%edi
 	movl	48(%rsp),%eax
 	movl	%r12d,%ebx
 	movl	%ebp,%esi
@@ -1199,7 +1200,7 @@ sha1_block_data_order:
 	addl	%ebx,%edi
 	roll	$1,%eax
 	movl	%eax,48(%rsp)
-	leal	3395469782(%rax,%rdx,1),%esi
+	leal	-899497514(%rax,%rdx,1),%esi
 	movl	52(%rsp),%eax
 	movl	%r11d,%ebx
 	movl	%edi,%edx
@@ -1213,7 +1214,7 @@ sha1_block_data_order:
 	roll	$30,%ebp
 	addl	%ebx,%esi
 	roll	$1,%eax
-	leal	3395469782(%rax,%r12,1),%edx
+	leal	-899497514(%rax,%r12,1),%edx
 	movl	56(%rsp),%eax
 	movl	%ebp,%ebx
 	movl	%esi,%r12d
@@ -1227,7 +1228,7 @@ sha1_block_data_order:
 	roll	$30,%edi
 	addl	%ebx,%edx
 	roll	$1,%eax
-	leal	3395469782(%rax,%r11,1),%r12d
+	leal	-899497514(%rax,%r11,1),%r12d
 	movl	60(%rsp),%eax
 	movl	%edi,%ebx
 	movl	%edx,%r11d
@@ -1241,7 +1242,7 @@ sha1_block_data_order:
 	roll	$30,%esi
 	addl	%ebx,%r12d
 	roll	$1,%eax
-	leal	3395469782(%rax,%rbp,1),%r11d
+	leal	-899497514(%rax,%rbp,1),%r11d
 	movl	%esi,%ebx
 	movl	%r12d,%ebp
 	xorl	%edx,%ebx
@@ -1269,10 +1270,13 @@ sha1_block_data_order:
 	leaq	64(%r9),%r9
 	subq	$1,%r10
 	jnz	.Lloop
-	movq	64(%rsp),%rsp
-	popq	%r12
-	popq	%rbp
-	popq	%rbx
+	movq	64(%rsp),%rsi
+	movq	(%rsi),%r12
+	movq	8(%rsi),%rbp
+	movq	16(%rsi),%rbx
+	leaq	24(%rsi),%rsp
+.Lepilogue:
 	.byte	0xf3,0xc3
 .size	sha1_block_data_order,.-sha1_block_data_order
 .byte	83,72,65,49,32,98,108,111,99,107,32,116,114,97,110,115,102,111,114,109,32,102,111,114,32,120,56,54,95,54,52,44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111,114,103,62,0
+.align	16

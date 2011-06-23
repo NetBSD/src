@@ -1,3 +1,4 @@
+.machine	"any"
 .text
 
 .globl	OPENSSL_cpuid_setup
@@ -49,6 +50,8 @@ OPENSSL_cleanse:
 	cmplwi	4,7
 	li	0,0
 	bge	.Lot
+	cmplwi	4,0
+	bclr	14,2
 .Little:	mtctr	4
 	stb	0,0(3)
 	addi	3,3,1

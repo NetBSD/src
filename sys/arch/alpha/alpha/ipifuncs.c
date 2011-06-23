@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.45 2010/12/17 02:36:35 joerg Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.45.6.1 2011/06/23 14:18:51 cherry Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.45 2010/12/17 02:36:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.45.6.1 2011/06/23 14:18:51 cherry Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.45 2010/12/17 02:36:35 joerg Exp $");
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/xcall.h>
+#include <sys/bitops.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -62,8 +63,6 @@ void	alpha_ipi_halt(struct cpu_info *, struct trapframe *);
 void	alpha_ipi_microset(struct cpu_info *, struct trapframe *);
 void	alpha_ipi_imb(struct cpu_info *, struct trapframe *);
 void	alpha_ipi_ast(struct cpu_info *, struct trapframe *);
-void	alpha_ipi_synch_fpu(struct cpu_info *, struct trapframe *);
-void	alpha_ipi_discard_fpu(struct cpu_info *, struct trapframe *);
 void	alpha_ipi_pause(struct cpu_info *, struct trapframe *);
 void	alpha_ipi_xcall(struct cpu_info *, struct trapframe *);
 
@@ -71,28 +70,24 @@ void	alpha_ipi_xcall(struct cpu_info *, struct trapframe *);
  * NOTE: This table must be kept in order with the bit definitions
  * in <machine/intr.h>.
  */
-ipifunc_t ipifuncs[ALPHA_NIPIS] = {
-	alpha_ipi_halt,
-	alpha_ipi_microset,
-	pmap_do_tlb_shootdown,
-	alpha_ipi_imb,
-	alpha_ipi_ast,
-	alpha_ipi_synch_fpu,
-	alpha_ipi_discard_fpu,
-	alpha_ipi_pause,
-	alpha_ipi_xcall
+const ipifunc_t ipifuncs[ALPHA_NIPIS] = {
+	[ilog2(ALPHA_IPI_HALT)] =	alpha_ipi_halt,
+	[ilog2(ALPHA_IPI_MICROSET)] =	alpha_ipi_microset,
+	[ilog2(ALPHA_IPI_SHOOTDOWN)] =	pmap_do_tlb_shootdown,
+	[ilog2(ALPHA_IPI_IMB)] =	alpha_ipi_imb,
+	[ilog2(ALPHA_IPI_AST)] =	alpha_ipi_ast,
+	[ilog2(ALPHA_IPI_PAUSE)] =	alpha_ipi_pause,
+	[ilog2(ALPHA_IPI_XCALL)] =	alpha_ipi_xcall
 };
 
-const char *ipinames[ALPHA_NIPIS] = {
-	"halt ipi",
-	"microset ipi",
-	"shootdown ipi",
-	"imb ipi",
-	"ast ipi",
-	"synch fpu ipi",
-	"discard fpu ipi",
-	"pause ipi",
-	"xcall ipi"
+const char * const ipinames[ALPHA_NIPIS] = {
+	[ilog2(ALPHA_IPI_HALT)] =	"halt ipi",
+	[ilog2(ALPHA_IPI_MICROSET)] =	"microset ipi",
+	[ilog2(ALPHA_IPI_SHOOTDOWN)] =	"shootdown ipi",
+	[ilog2(ALPHA_IPI_IMB)] =	"imb ipi",
+	[ilog2(ALPHA_IPI_AST)] =	"ast ipi",
+	[ilog2(ALPHA_IPI_PAUSE)] =	"pause ipi",
+	[ilog2(ALPHA_IPI_XCALL)] =	"xcall ipi"
 };
 
 /*
@@ -103,16 +98,16 @@ const char *ipinames[ALPHA_NIPIS] = {
 void
 alpha_ipi_init(struct cpu_info *ci)
 {
-	struct cpu_softc *sc = ci->ci_softc;
+	struct cpu_softc * const sc = ci->ci_softc;
+	const char * const xname = device_xname(sc->sc_dev);
 	int i;
 
 	evcnt_attach_dynamic(&sc->sc_evcnt_ipi, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "ipi");
+	    NULL, xname, "ipi");
 
 	for (i = 0; i < ALPHA_NIPIS; i++) {
 		evcnt_attach_dynamic(&sc->sc_evcnt_which_ipi[i],
-		    EVCNT_TYPE_INTR, NULL, sc->sc_dev.dv_xname,
-		    ipinames[i]);
+		    EVCNT_TYPE_INTR, NULL, xname, ipinames[i]);
 	}
 }
 
@@ -122,7 +117,7 @@ alpha_ipi_init(struct cpu_info *ci)
 void
 alpha_ipi_process(struct cpu_info *ci, struct trapframe *framep)
 {
-	struct cpu_softc *sc = ci->ci_softc;
+	struct cpu_softc * const sc = ci->ci_softc;
 	u_long pending_ipis, bit;
 
 #ifdef DIAGNOSTIC
@@ -266,24 +261,6 @@ alpha_ipi_ast(struct cpu_info *ci, struct trapframe *framep)
 
 	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp)
 		aston(ci->ci_curlwp);
-}
-
-void
-alpha_ipi_synch_fpu(struct cpu_info *ci, struct trapframe *framep)
-{
-
-	if (ci->ci_flags & CPUF_FPUSAVE)
-		return;
-	fpusave_cpu(ci, 1);
-}
-
-void
-alpha_ipi_discard_fpu(struct cpu_info *ci, struct trapframe *framep)
-{
-
-	if (ci->ci_flags & CPUF_FPUSAVE)
-		return;
-	fpusave_cpu(ci, 0);
 }
 
 void

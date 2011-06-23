@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.24 2011/01/18 01:02:53 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.24.4.1 2011/06/23 14:19:29 cherry Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,21 +33,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24 2011/01/18 01:02:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24.4.1 2011/06/23 14:19:29 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <prop/proplib.h>
 
-#include <machine/cpu.h>
-
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
+#include <powerpc/ibm4xx/cpu.h>
 
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
@@ -97,15 +97,17 @@ stat_intr(struct clockframe *frame)
 	ci->ci_ev_statclock.ev_count++;
 
 	/* Nobody can interrupt us, but see if we're allowed to run. */
-	if (! (ci->ci_cpl & mask_statclock))
+	int s = splclock();
+	if (IPL_CLOCK > s)
   		statclock(frame);
+	splx(s);
 }
 
 void
 decr_intr(struct clockframe *frame)
 {
 	struct cpu_info * const ci = curcpu();
-	int pri;
+	int pcpl;
 	long tbtick, xticks;
 	int nticks;
 
@@ -125,8 +127,8 @@ decr_intr(struct clockframe *frame)
 
 	ci->ci_data.cpu_nintr++;
 	ci->ci_ev_clock.ev_count++;
-	pri = splclock();
-	if (pri & mask_clock) {
+	pcpl = splclock();
+	if (pcpl >= IPL_CLOCK) {
 		tickspending += nticks;
 		ticksmissed += nticks;
 	} else {
@@ -152,7 +154,7 @@ decr_intr(struct clockframe *frame)
 			hardclock(frame);
 		hardclock(frame);
 	}
-	splx(pri);
+	splx(pcpl);
 }
 
 void

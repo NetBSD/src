@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.229 2011/04/24 18:46:23 rmind Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.229.2.1 2011/06/23 14:20:20 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.229 2011/04/24 18:46:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.229.2.1 2011/06/23 14:20:20 cherry Exp $");
 
 #include "opt_bufcache.h"
 
@@ -790,7 +790,7 @@ bwrite(buf_t *bp)
 
 	vp = bp->b_vp;
 	if (vp != NULL) {
-		KASSERT(bp->b_objlock == &vp->v_interlock);
+		KASSERT(bp->b_objlock == vp->v_interlock);
 		if (vp->v_type == VBLK)
 			mp = vp->v_specmountpoint;
 		else
@@ -924,7 +924,7 @@ bdwrite(buf_t *bp)
 	 *	(2) Charge for the write,
 	 *	(3) Make sure it's on its vnode's correct block list.
 	 */
-	KASSERT(bp->b_vp == NULL || bp->b_objlock == &bp->b_vp->v_interlock);
+	KASSERT(bp->b_vp == NULL || bp->b_objlock == bp->b_vp->v_interlock);
 
 	if (!ISSET(bp->b_oflags, BO_DELWRI)) {
 		mutex_enter(&bufcache_lock);
@@ -1041,10 +1041,10 @@ brelsel(buf_t *bp, int set)
 		mutex_enter(bp->b_objlock);
 		CLR(bp->b_oflags, BO_DONE|BO_DELWRI);
 		if ((vp = bp->b_vp) != NULL) {
-			KASSERT(bp->b_objlock == &vp->v_interlock);
+			KASSERT(bp->b_objlock == vp->v_interlock);
 			reassignbuf(bp, bp->b_vp);
 			brelvp(bp);
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 		} else {
 			KASSERT(bp->b_objlock == &buffer_lock);
 			mutex_exit(bp->b_objlock);
@@ -1115,7 +1115,7 @@ incore(struct vnode *vp, daddr_t blkno)
 	LIST_FOREACH(bp, BUFHASH(vp, blkno), b_hash) {
 		if (bp->b_lblkno == blkno && bp->b_vp == vp &&
 		    !ISSET(bp->b_cflags, BC_INVAL)) {
-		    	KASSERT(bp->b_objlock == &vp->v_interlock);
+		    	KASSERT(bp->b_objlock == vp->v_interlock);
 		    	return (bp);
 		}
 	}
@@ -1168,9 +1168,9 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 
 		LIST_INSERT_HEAD(BUFHASH(vp, blkno), bp, b_hash);
 		bp->b_blkno = bp->b_lblkno = bp->b_rawblkno = blkno;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		bgetvp(vp, bp);
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		preserve = 0;
 	}
 	mutex_exit(&bufcache_lock);
@@ -1409,9 +1409,9 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 
 	/* Disassociate us from our vnode, if we had one... */
 	if (vp != NULL) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		brelvp(bp);
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 
 	return (bp);
@@ -1886,7 +1886,7 @@ getiobuf(struct vnode *vp, bool waitok)
 	if ((bp->b_vp = vp) == NULL)
 		bp->b_objlock = &buffer_lock;
 	else
-		bp->b_objlock = &vp->v_interlock;
+		bp->b_objlock = vp->v_interlock;
 	
 	return bp;
 }
@@ -1957,9 +1957,9 @@ nestiobuf_setup(buf_t *mbp, buf_t *bp, int offset, size_t size)
 	bp->b_private = mbp;
 	BIO_COPYPRIO(bp, mbp);
 	if (!b_read && vp != NULL) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		vp->v_numoutput++;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 }
 

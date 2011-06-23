@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2011/03/06 17:08:16 bouyer Exp $
+#	$NetBSD: Makefile,v 1.28.2.1 2011/06/23 14:18:43 cherry Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 WARNS?=	3	# XXX: sign-compare issues in ../fsck_ffs
@@ -33,7 +33,7 @@ LDADD+= -lutil -ledit -lterminfo -lprop
 DPADD+= ${LIBUTIL} ${LIBEDIT} ${LIBTERMINFO} ${LIBPROP}
 .endif
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 .for f in fsdb ffs_appleufs
 COPTS.${f}.c+=	-Wno-pointer-sign
 .endfor

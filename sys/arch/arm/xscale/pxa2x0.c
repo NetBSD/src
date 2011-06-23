@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.18 2009/08/09 06:12:33 kiyohara Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.18.10.1 2011/06/23 14:19:01 cherry Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.18 2009/08/09 06:12:33 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.18.10.1 2011/06/23 14:19:01 cherry Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -126,7 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.18 2009/08/09 06:12:33 kiyohara Exp $")
 #include <arm/xscale/xscalereg.h>
 
 struct pxaip_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_bust;
 	bus_dma_tag_t sc_dmat;
 	bus_space_handle_t sc_bush_clk;
@@ -134,10 +134,9 @@ struct pxaip_softc {
 };
 
 /* prototypes */
-static int	pxaip_match(struct device *, struct cfdata *, void *);
-static void	pxaip_attach(struct device *, struct device *, void *);
-static int 	pxaip_search(struct device *, struct cfdata *,
-			     const int *, void *);
+static int	pxaip_match(device_t, cfdata_t, void *);
+static void	pxaip_attach(device_t, device_t, void *);
+static int 	pxaip_search(device_t, cfdata_t, const int *, void *);
 static void	pxaip_attach_critical(struct pxaip_softc *);
 static int	pxaip_print(void *, const char *);
 
@@ -154,7 +153,7 @@ static int	pxaip_measure_cpuclock(struct pxaip_softc *);
 #endif
 
 /* attach structures */
-CFATTACH_DECL(pxaip, sizeof(struct pxaip_softc),
+CFATTACH_DECL_NEW(pxaip, sizeof(struct pxaip_softc),
     pxaip_match, pxaip_attach, NULL, NULL);
 
 static struct pxaip_softc *pxaip_sc;
@@ -166,7 +165,7 @@ static vaddr_t pxaclkman_regs;
 	(*((volatile uint32_t *)(pxaclkman_regs + (reg))))
 
 static int
-pxaip_match(struct device *parent, struct cfdata *match, void *aux)
+pxaip_match(device_t parent, cfdata_t match, void *aux)
 {
 
 #if	!defined(CPU_XSCALE_PXA270)
@@ -190,16 +189,17 @@ pxaip_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-pxaip_attach(struct device *parent, struct device *self, void *aux)
+pxaip_attach(device_t parent, device_t self, void *aux)
 {
-	struct pxaip_softc *sc = (struct pxaip_softc *)self;
+	struct pxaip_softc *sc = device_private(self);
 	int cpuclock;
 
 	pxaip_sc = sc;
+	sc->sc_dev = self;
 	sc->sc_bust = &pxa2x0_bs_tag;
 	sc->sc_dmat = &pxa2x0_bus_dma_tag;
 
-	aprint_normal(": PXA2x0 Onchip Peripheral Bus\n");
+	aprint_normal(": Onchip Peripheral Bus\n");
 
 	if (bus_space_map(sc->sc_bust, PXA2X0_CLKMAN_BASE, PXA2X0_CLKMAN_SIZE,
 	    0, &sc->sc_bush_clk))
@@ -234,8 +234,7 @@ pxaip_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-pxaip_search(struct device *parent, struct cfdata *cf,
-	     const int *ldesc, void *aux)
+pxaip_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct pxaip_softc *sc = aux;
 	struct pxaip_attach_args aa;
@@ -265,7 +264,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 	aa.pxa_addr = PXA2X0_INTCTL_BASE;
 	aa.pxa_size = PXA2X0_INTCTL_SIZE;
 	aa.pxa_intr = PXAIPCF_INTR_DEFAULT;
-	if (config_found(&sc->sc_dev, &aa, pxaip_print) == NULL)
+	if (config_found(sc->sc_dev, &aa, pxaip_print) == NULL)
 		panic("pxaip_attach_critical: failed to attach INTC!");
 
 #if NPXAGPIO > 0
@@ -275,7 +274,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 	aa.pxa_addr = PXA2X0_GPIO_BASE;
 	aa.pxa_size = PXA2X0_GPIO_SIZE;
 	aa.pxa_intr = PXAIPCF_INTR_DEFAULT;
-	if (config_found(&sc->sc_dev, &aa, pxaip_print) == NULL)
+	if (config_found(sc->sc_dev, &aa, pxaip_print) == NULL)
 		panic("pxaip_attach_critical: failed to attach GPIO!");
 #endif
 
@@ -286,7 +285,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 	aa.pxa_addr = PXA2X0_DMAC_BASE;
 	aa.pxa_size = PXA2X0_DMAC_SIZE;
 	aa.pxa_intr = PXA2X0_INT_DMA;
-	if (config_found(&sc->sc_dev, &aa, pxaip_print) == NULL)
+	if (config_found(sc->sc_dev, &aa, pxaip_print) == NULL)
 		panic("pxaip_attach_critical: failed to attach DMAC!");
 #endif
 }
@@ -294,7 +293,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 static int
 pxaip_print(void *aux, const char *name)
 {
-	struct pxaip_attach_args *sa = (struct pxaip_attach_args*)aux;
+	struct pxaip_attach_args *sa = (struct pxaip_attach_args *)aux;
 
 	if (sa->pxa_addr != PXAIPCF_ADDR_DEFAULT) {
 		aprint_normal(" addr 0x%lx", sa->pxa_addr);

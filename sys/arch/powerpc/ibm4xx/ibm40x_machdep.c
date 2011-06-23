@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm40x_machdep.c,v 1.5 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: ibm40x_machdep.c,v 1.5.110.1 2011/06/23 14:19:29 cherry Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,13 +67,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm40x_machdep.c,v 1.5 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm40x_machdep.c,v 1.5.110.1 2011/06/23 14:19:29 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <machine/powerpc.h>
+
+#include <powerpc/ibm4xx/cpu.h>
 
 /*
  * Global variables used here and there

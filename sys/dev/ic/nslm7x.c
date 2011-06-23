@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.57 2011/03/05 22:27:21 jakllsch Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.57.2.1 2011/06/23 14:20:00 cherry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.57 2011/03/05 22:27:21 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.57.2.1 2011/06/23 14:20:00 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1667,6 +1667,7 @@ lm_attach(struct lm_softc *lmsc)
 	lmsc->sc_sme = sysmon_envsys_create();
 	/* Initialize sensors */
 	for (i = 0; i < lmsc->numsensors; i++) {
+		lmsc->sensors[i].state = ENVSYS_SINVALID;
 		if (sysmon_envsys_sensor_attach(lmsc->sc_sme,
 						&lmsc->sensors[i])) {
 			sysmon_envsys_destroy(lmsc->sc_sme);
