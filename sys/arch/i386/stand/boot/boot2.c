@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.54 2011/05/26 04:25:27 uebayasi Exp $	*/
+/*	$NetBSD: boot2.c,v 1.55 2011/06/23 12:07:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -356,7 +356,7 @@ boot2(int biosdev, uint64_t biossector)
 			bootmenu(); /* does not return */
 		    } else {
 			/* DO ask for password */
-			if (check_password(boot_params.bp_password)) {
+			if (check_password((char *)boot_params.bp_password)) {
 			    /* password ok */
 			    printf("type \"?\" or \"help\" for help.\n");
 			    bootmenu(); /* does not return */
