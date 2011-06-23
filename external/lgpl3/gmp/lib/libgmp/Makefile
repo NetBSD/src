@@ -1,479 +1,300 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 04:23:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/23 12:09:30 mrg Exp $
 
 .include <bsd.init.mk>
 
+DIST=${.CURDIR}/../../dist
+
+# XXX
+MKLINT=no
+
 LIB=	gmp
 
-SRCS=			\
-	assert.c	\
-	compat.c	\
-	errno.c	\
-	extract-dbl.c	\
-	invalid.c	\
-	memory.c	\
-	mp_bpl.c	\
-	mp_clz_tab.c	\
-	mp_dv_tab.c	\
-	mp_minv_tab.c	\
-	mp_get_fns.c	\
-	mp_set_fns.c	\
-	rand.c	\
-	randclr.c	\
-	randdef.c	\
-	randiset.c	\
-	randlc2s.c	\
-	randlc2x.c	\
-	randmt.c	\
-	randmts.c	\
-	rands.c	\
-	randsd.c	\
-	randsdui.c	\
-	randbui.c	\
-	randmui.c	\
-	version.c	\
-	nextprime.c	\
-	tal-reent.c	\
-	init.c	\
-	init2.c	\
-	inits.c	\
-	set.c	\
-	set_ui.c	\
-	set_si.c	\
-	set_str.c	\
-	set_d.c	\
-	set_z.c	\
-	iset.c	\
-	iset_ui.c	\
-	iset_si.c	\
-	iset_str.c	\
-	iset_d.c	\
-	clear.c	\
-	clears.c	\
-	get_str.c	\
-	dump.c	\
-	size.c	\
-	eq.c	\
-	reldiff.c	\
-	sqrt.c	\
-	random2.c	\
-	inp_str.c	\
-	out_str.c	\
-	add.c	\
-	add_ui.c	\
-	sub.c	\
-	sub_ui.c	\
-	ui_sub.c	\
-	mul.c	\
-	mul_ui.c	\
-	div.c	\
-	div_ui.c	\
-	cmp.c	\
-	cmp_d.c	\
-	cmp_ui.c	\
-	cmp_si.c	\
-	mul_2exp.c	\
-	div_2exp.c	\
-	abs.c	\
-	neg.c	\
-	set_q.c	\
-	get_d.c	\
-	get_d_2exp.c	\
-	set_dfl_prec.c	\
-	set_prc.c	\
-	set_prc_raw.c	\
-	get_dfl_prec.c	\
-	get_prc.c	\
-	ui_div.c	\
-	sqrt_ui.c	\
-	ceilfloor.c	\
-	trunc.c	\
-	pow_ui.c	\
-	urandomb.c	\
-	swap.c	\
-	fits_sint.c	\
-	fits_slong.c	\
-	fits_sshort.c	\
-	fits_uint.c	\
-	fits_ulong.c	\
-	fits_ushort.c	\
-	get_si.c	\
-	get_ui.c	\
-	int_p.c	\
-	abs.c	\
-	add.c	\
-	add_ui.c	\
-	aorsmul.c	\
-	aorsmul_i.c	\
-	and.c	\
-	array_init.c	\
-	bin_ui.c	\
-	bin_uiui.c	\
-	cdiv_q.c	\
-	cdiv_q_ui.c	\
-	cdiv_qr.c	\
-	cdiv_qr_ui.c	\
-	cdiv_r.c	\
-	cdiv_r_ui.c	\
-	cdiv_ui.c	\
-	cfdiv_q_2exp.c	\
-	cfdiv_r_2exp.c	\
-	clear.c	\
-	clears.c	\
-	clrbit.c	\
-	cmp.c	\
-	cmp_d.c	\
-	cmp_si.c	\
-	cmp_ui.c	\
-	cmpabs.c	\
-	cmpabs_d.c	\
-	cmpabs_ui.c	\
-	com.c	\
-	combit.c	\
-	cong.c	\
-	cong_2exp.c	\
-	cong_ui.c	\
-	divexact.c	\
-	divegcd.c	\
-	dive_ui.c	\
-	divis.c	\
-	divis_ui.c	\
-	divis_2exp.c	\
-	dump.c	\
-	export.c	\
-	fac_ui.c	\
-	fdiv_q.c	\
-	fdiv_q_ui.c	\
-	fdiv_qr.c	\
-	fdiv_qr_ui.c	\
-	fdiv_r.c	\
-	fdiv_r_ui.c	\
-	fdiv_ui.c	\
-	fib_ui.c	\
-	fib2_ui.c	\
-	fits_sint.c	\
-	fits_slong.c	\
-	fits_sshort.c	\
-	fits_uint.c	\
-	fits_ulong.c	\
-	fits_ushort.c	\
-	gcd.c	\
-	gcd_ui.c	\
-	gcdext.c	\
-	get_d.c	\
-	get_d_2exp.c	\
-	get_si.c	\
-	get_str.c	\
-	get_ui.c	\
-	getlimbn.c	\
-	hamdist.c	\
-	import.c	\
-	init.c	\
-	init2.c	\
-	inits.c	\
-	inp_raw.c	\
-	inp_str.c	\
-	invert.c	\
-	ior.c	\
-	iset.c	\
-	iset_d.c	\
-	iset_si.c	\
-	iset_str.c	\
-	iset_ui.c	\
-	jacobi.c	\
-	kronsz.c	\
-	kronuz.c	\
-	kronzs.c	\
-	kronzu.c	\
-	lcm.c	\
-	lcm_ui.c	\
-	lucnum_ui.c	\
-	lucnum2_ui.c	\
-	millerrabin.c	\
-	mod.c	\
-	mul.c	\
-	mul_2exp.c	\
-	mul_si.c	\
-	mul_ui.c	\
-	n_pow_ui.c	\
-	neg.c	\
-	nextprime.c	\
-	out_raw.c	\
-	out_str.c	\
-	perfpow.c	\
-	perfsqr.c	\
-	popcount.c	\
-	pow_ui.c	\
-	powm.c	\
-	powm_sec.c	\
-	powm_ui.c	\
-	pprime_p.c	\
-	random.c	\
-	random2.c	\
-	realloc.c	\
-	realloc2.c	\
-	remove.c	\
-	root.c	\
-	rootrem.c	\
-	rrandomb.c	\
-	scan0.c	\
-	scan1.c	\
-	set.c	\
-	set_d.c	\
-	set_f.c	\
-	set_q.c	\
-	set_si.c	\
-	set_str.c	\
-	set_ui.c	\
-	setbit.c	\
-	size.c	\
-	sizeinbase.c	\
-	sqrt.c	\
-	sqrtrem.c	\
-	sub.c	\
-	sub_ui.c	\
-	swap.c	\
-	tdiv_ui.c	\
-	tdiv_q.c	\
-	tdiv_q_2exp.c	\
-	tdiv_q_ui.c	\
-	tdiv_qr.c	\
-	tdiv_qr_ui.c	\
-	tdiv_r.c	\
-	tdiv_r_2exp.c	\
-	tdiv_r_ui.c	\
-	tstbit.c	\
-	ui_pow_ui.c	\
-	ui_sub.c	\
-	urandomb.c	\
-	urandomm.c	\
-	xor.c	\
-	abs.c	\
-	aors.c	\
-	canonicalize.c	\
-	clear.c	\
-	clears.c	\
-	cmp.c	\
-	cmp_si.c	\
-	cmp_ui.c	\
-	div.c	\
-	get_d.c	\
-	get_den.c	\
-	get_num.c	\
-	get_str.c	\
-	init.c	\
-	inits.c	\
-	inp_str.c	\
-	inv.c	\
-	md_2exp.c	\
-	mul.c	\
-	neg.c	\
-	out_str.c	\
-	set.c	\
-	set_den.c	\
-	set_num.c	\
-	set_si.c	\
-	set_str.c	\
-	set_ui.c	\
-	equal.c	\
-	set_z.c	\
-	set_d.c	\
-	set_f.c	\
-	swap.c	\
-	fib_table.c	\
-	mp_bases.c	\
-	add.c	\
-	add_1.c	\
-	add_n.c	\
-	sub.c	\
-	sub_1.c	\
-	sub_n.c	\
-	neg.c	\
-	com.c	\
-	mul_1.c	\
-	addmul_1.c	\
-	submul_1.c	\
-	lshift.c	\
-	rshift.c	\
-	dive_1.c	\
-	diveby3.c	\
-	divis.c	\
-	divrem.c	\
-	divrem_1.c	\
-	divrem_2.c	\
-	fib2_ui.c	\
-	mod_1.c	\
-	mod_34lsub1.c	\
-	mode1o.c	\
-	pre_mod_1.c	\
-	dump.c	\
-	mod_1_1.c	\
-	mod_1_2.c	\
-	mod_1_3.c	\
-	mod_1_4.c	\
-	lshiftc.c	\
-	mul.c	\
-	mul_fft.c	\
-	mul_n.c	\
-	sqr.c	\
-	mul_basecase.c	\
-	sqr_basecase.c	\
-	nussbaumer_mul.c	\
-	random.c	\
-	random2.c	\
-	pow_1.c	\
-	rootrem.c	\
-	sqrtrem.c	\
-	get_str.c	\
-	set_str.c	\
-	scan0.c	\
-	scan1.c	\
-	popcount.c	\
-	hamdist.c	\
-	cmp.c	\
-	perfsqr.c	\
-	perfpow.c	\
-	gcd_1.c	\
-	gcd.c	\
-	gcdext_1.c	\
-	gcdext.c	\
-	gcd_lehmer.c	\
-	gcd_subdiv_step.c	\
-	gcdext_lehmer.c	\
-	gcdext_subdiv_step.c	\
-	div_q.c	\
-	tdiv_qr.c	\
-	jacbase.c	\
-	get_d.c	\
-	matrix22_mul.c	\
-	hgcd2.c	\
-	hgcd.c	\
-	mullo_n.c	\
-	mullo_basecase.c	\
-	toom22_mul.c	\
-	toom32_mul.c	\
-	toom42_mul.c	\
-	toom52_mul.c	\
-	toom62_mul.c	\
-	toom33_mul.c	\
-	toom43_mul.c	\
-	toom53_mul.c	\
-	toom63_mul.c	\
-	toom44_mul.c	\
-	toom6h_mul.c	\
-	toom6_sqr.c	\
-	toom8h_mul.c	\
-	toom8_sqr.c	\
-	toom_couple_handling.c	\
-	toom2_sqr.c	\
-	toom3_sqr.c	\
-	toom4_sqr.c	\
-	toom_eval_dgr3_pm1.c	\
-	toom_eval_dgr3_pm2.c	\
-	toom_eval_pm1.c	\
-	toom_eval_pm2.c	\
-	toom_eval_pm2exp.c	\
-	toom_eval_pm2rexp.c	\
-	toom_interpolate_5pts.c	\
-	toom_interpolate_6pts.c	\
-	toom_interpolate_7pts.c	\
-	toom_interpolate_8pts.c	\
-	toom_interpolate_12pts.c	\
-	toom_interpolate_16pts.c	\
-	invertappr.c	\
-	invert.c	\
-	binvert.c	\
-	mulmod_bnm1.c	\
-	sqrmod_bnm1.c	\
-	sbpi1_div_q.c	\
-	sbpi1_div_qr.c	\
-	sbpi1_divappr_q.c	\
-	dcpi1_div_q.c	\
-	dcpi1_div_qr.c	\
-	dcpi1_divappr_q.c	\
-	mu_div_qr.c	\
-	mu_divappr_q.c	\
-	mu_div_q.c	\
-	bdiv_q_1.c	\
-	sbpi1_bdiv_q.c	\
-	sbpi1_bdiv_qr.c	\
-	dcpi1_bdiv_q.c	\
-	dcpi1_bdiv_qr.c	\
-	mu_bdiv_q.c	\
-	mu_bdiv_qr.c	\
-	bdiv_q.c	\
-	bdiv_qr.c	\
-	divexact.c	\
-	bdiv_dbm1c.c	\
-	redc_1.c	\
-	redc_2.c	\
-	redc_n.c	\
-	powm.c	\
-	powlo.c	\
-	powm_sec.c	\
-	subcnd_n.c	\
-	redc_1_sec.c	\
-	trialdiv.c	\
-	remove.c	\
-	and_n.c	\
-	andn_n.c	\
-	nand_n.c	\
-	ior_n.c	\
-	iorn_n.c	\
-	nior_n.c	\
-	xor_n.c	\
-	xnor_n.c	\
-	copyi.c	\
-	copyd.c	\
-	zero.c	\
-	invert_limb.c	\
-	mul_2.c	\
-	addmul_2.c	\
-	addlsh1_n.c	\
-	sublsh1_n.c	\
-	rsblsh1_n.c	\
-	rsh1add_n.c	\
-	rsh1sub_n.c	\
-	addlsh2_n.c	\
-	rsblsh2_n.c	\
-	addlsh_n.c	\
-	rsblsh_n.c	\
-	addaddmul_1msb0.c	\
-	asprintf.c	\
-	asprntffuns.c	\
-	doprnt.c	\
-	doprntf.c	\
-	doprnti.c	\
-	fprintf.c	\
-	obprintf.c	\
-	obvprintf.c	\
-	obprntffuns.c	\
-	printf.c	\
-	printffuns.c	\
-	snprintf.c	\
-	snprntffuns.c	\
-	sprintf.c	\
-	sprintffuns.c	\
-	vasprintf.c	\
-	vfprintf.c	\
-	vprintf.c	\
-	vsnprintf.c	\
-	vsprintf.c	\
-	repl-vsnprintf.c	\
-	doscan.c	\
-	fscanf.c	\
-	fscanffuns.c	\
-	scanf.c		\
-	sscanf.c	\
-	sscanffuns.c	\
-	vfscanf.c	\
-	vscanf.c	\
-	vsscanf.c
+MPF_SRCS = \
+	init.c init2.c inits.c set.c			\
+	set_ui.c set_si.c set_str.c set_d.c		\
+	set_z.c iset.c iset_ui.c iset_si.c		\
+	iset_str.c iset_d.c clear.c clears.c		\
+	get_str.c dump.c size.c eq.c reldiff.c		\
+	sqrt.c random2.c inp_str.c out_str.c		\
+	add.c add_ui.c sub.c sub_ui.c ui_sub.c		\
+	mul.c mul_ui.c div.c div_ui.c			\
+	cmp.c cmp_d.c cmp_ui.c cmp_si.c			\
+	mul_2exp.c div_2exp.c abs.c neg.c		\
+	set_q.c get_d.c get_d_2exp.c set_dfl_prec.c	\
+	set_prc.c set_prc_raw.c get_dfl_prec.c		\
+	get_prc.c ui_div.c sqrt_ui.c			\
+	ceilfloor.c trunc.c pow_ui.c			\
+	urandomb.c swap.c				\
+	fits_sint.c fits_slong.c fits_sshort.c		\
+	fits_uint.c fits_ulong.c fits_ushort.c		\
+	get_si.c get_ui.c				\
+	int_p.c
 
+MPZ_SRCS = \
+	abs.c add.c add_ui.c				\
+	aorsmul.c aorsmul_i.c and.c array_init.c	\
+	bin_ui.c bin_uiui.c				\
+	cdiv_q.c cdiv_q_ui.c				\
+	cdiv_qr.c cdiv_qr_ui.c				\
+	cdiv_r.c cdiv_r_ui.c cdiv_ui.c			\
+	cfdiv_q_2exp.c cfdiv_r_2exp.c			\
+	clear.c clears.c clrbit.c			\
+	cmp.c cmp_d.c cmp_si.c cmp_ui.c			\
+	cmpabs.c cmpabs_d.c cmpabs_ui.c			\
+	com.c combit.c					\
+	cong.c cong_2exp.c cong_ui.c			\
+	divexact.c divegcd.c dive_ui.c			\
+	divis.c divis_ui.c divis_2exp.c dump.c		\
+	export.c fac_ui.c fdiv_q.c			\
+	fdiv_q_ui.c fdiv_qr.c fdiv_qr_ui.c		\
+	fdiv_r.c fdiv_r_ui.c				\
+	fdiv_ui.c fib_ui.c fib2_ui.c fits_sint.c	\
+	fits_slong.c fits_sshort.c fits_uint.c		\
+	fits_ulong.c fits_ushort.c gcd.c		\
+	gcd_ui.c gcdext.c get_d.c get_d_2exp.c		\
+	get_si.c get_str.c get_ui.c getlimbn.c		\
+	hamdist.c					\
+	import.c init.c init2.c inits.c 		\
+	inp_raw.c inp_str.c invert.c			\
+	ior.c iset.c iset_d.c iset_si.c			\
+	iset_str.c iset_ui.c jacobi.c kronsz.c		\
+	kronuz.c kronzs.c kronzu.c			\
+	lcm.c lcm_ui.c lucnum_ui.c lucnum2_ui.c		\
+	millerrabin.c mod.c mul.c mul_2exp.c		\
+	mul_si.c mul_ui.c				\
+	n_pow_ui.c neg.c nextprime.c			\
+	out_raw.c out_str.c perfpow.c perfsqr.c		\
+	popcount.c pow_ui.c powm.c powm_sec.c		\
+	powm_ui.c pprime_p.c random.c random2.c		\
+	realloc.c realloc2.c remove.c			\
+	root.c rootrem.c rrandomb.c scan0.c		\
+	scan1.c set.c set_d.c set_f.c			\
+	set_q.c set_si.c set_str.c set_ui.c		\
+	setbit.c					\
+	size.c sizeinbase.c sqrt.c			\
+	sqrtrem.c sub.c sub_ui.c swap.c			\
+	tdiv_ui.c tdiv_q.c tdiv_q_2exp.c		\
+	tdiv_q_ui.c tdiv_qr.c tdiv_qr_ui.c		\
+	tdiv_r.c tdiv_r_2exp.c tdiv_r_ui.c		\
+	tstbit.c ui_pow_ui.c ui_sub.c urandomb.c	\
+	urandomm.c xor.c
+
+MPQ_SRCS = \
+	abs.c aors.c					\
+	canonicalize.c clear.c clears.c			\
+	cmp.c cmp_si.c cmp_ui.c div.c			\
+	get_d.c get_den.c get_num.c get_str.c		\
+	init.c inits.c inp_str.c inv.c			\
+	md_2exp.c mul.c neg.c out_str.c			\
+	set.c set_den.c set_num.c			\
+	set_si.c set_str.c set_ui.c			\
+	equal.c set_z.c set_d.c				\
+	set_f.c swap.c
+
+#	addmul_2.c \
+#	addmul_3.c \
+#	addmul_4.c \
+#	addmul_5.c \
+#	addmul_6.c \
+#	addmul_7.c \
+#	addmul_8.c \
+#	and_n.c \
+#	andn_n.c \
+#	ior_n.c \
+#	iorn_n.c \
+#	mul_2.c \
+#	mul_3.c \
+#	mul_4.c \
+#	nand_n.c \
+#	nior_n.c \
+#	udiv_qrnnd.c \
+#	xor_n.c
+#	xnor_n.c
+# many asm
+#	sqr_diagonal.c \
+
+MPN_SRCS = \
+	add.c \
+	add_1.c \
+	add_n.c \
+	addmul_1.c \
+	cmp.c \
+	com.c \
+	copyd.c \
+	copyi.c \
+	dive_1.c \
+	diveby3.c \
+	divexact.c \
+	divis.c \
+	divrem.c \
+	divrem_1.c \
+	divrem_2.c \
+	sbpi1_bdiv_qr.c \
+	sbpi1_bdiv_q.c \
+	sbpi1_div_qr.c \
+	sbpi1_div_q.c \
+	sbpi1_divappr_q.c \
+	dcpi1_bdiv_qr.c \
+	dcpi1_bdiv_q.c \
+	dcpi1_div_qr.c \
+	dcpi1_div_q.c \
+	dcpi1_divappr_q.c \
+	dump.c \
+	fib2_ui.c \
+	gcd.c \
+	gcd_1.c \
+	gcdext.c \
+	get_d.c \
+	get_str.c \
+	hgcd2.c \
+	hgcd.c \
+	jacbase.c \
+	lshift.c \
+	matrix22_mul.c \
+	mod_1.c \
+	mod_34lsub1.c \
+	mode1o.c \
+	mod_1_1.c \
+	mod_1_2.c \
+	mod_1_3.c \
+	mod_1_4.c \
+	mul.c \
+	mul_1.c \
+	mul_fft.c \
+	mul_n.c \
+	mul_basecase.c \
+	nussbaumer_mul.c \
+	toom22_mul.c \
+	toom32_mul.c \
+	toom42_mul.c \
+	toom52_mul.c \
+	toom62_mul.c \
+	toom33_mul.c \
+	toom43_mul.c \
+	toom53_mul.c \
+	toom63_mul.c \
+	toom44_mul.c \
+	toom6h_mul.c \
+	toom6_sqr.c \
+	toom8h_mul.c \
+	toom8_sqr.c \
+	toom_couple_handling.c \
+	toom2_sqr.c \
+	toom3_sqr.c \
+	toom4_sqr.c \
+	toom_eval_dgr3_pm1.c \
+	toom_eval_dgr3_pm2.c \
+	toom_eval_pm1.c \
+	toom_eval_pm1.c \
+	toom_eval_pm2exp.c \
+	toom_eval_pm2rexp.c \
+	toom_interpolate_5pts.c \
+	toom_interpolate_6pts.c \
+	toom_interpolate_7pts.c \
+	toom_interpolate_8pts.c \
+	toom_interpolate_12pts.c \
+	toom_interpolate_16pts.c \
+	invertappr.c \
+	invert.c \
+	binvert.c \
+	mulmod_bnm1.c \
+	sqrmod_bnm1.c \
+	mullo_n.c \
+	mullo_basecase.c \
+	neg.c \
+	perfsqr.c \
+	pre_divrem_1.c \
+	pre_mod_1.c \
+	pow_1.c \
+	random.c \
+	random2.c \
+	rshift.c \
+	rootrem.c \
+	scan0.c \
+	scan1.c \
+	set_str.c \
+	sqr_basecase.c \
+	sqrtrem.c \
+	sub.c \
+	sub_1.c \
+	sub_n.c \
+	submul_1.c \
+	tdiv_qr.c \
+
+#	udiv_w_sdiv.c
+
+MPN_GENERIC_SRCS = \
+	popcount.c \
+	hamdist.c
+
+PRINTF_SRCS =						\
+	asprintf.c asprntffuns.c			\
+	doprnt.c doprntf.c doprnti.c			\
+	fprintf.c					\
+	obprintf.c obvprintf.c obprntffuns.c		\
+	printf.c printffuns.c				\
+	snprintf.c snprntffuns.c			\
+	sprintf.c sprintffuns.c				\
+	vasprintf.c vfprintf.c vprintf.c		\
+	vsnprintf.c vsprintf.c				\
+	repl-vsnprintf.c
+
+SCANF_SRCS =						\
+	doscan.c fscanf.c fscanffuns.c			\
+	scanf.c sscanf.c sscanffuns.c			\
+	vfscanf.c vscanf.c vsscanf.c
+
+SRCS+= 									\
+	assert.c compat.c errno.c extract-dbl.c invalid.c memory.c	\
+	mp_bpl.c mp_clz_tab.c mp_dv_tab.c mp_minv_tab.c mp_get_fns.c	\
+	mp_set_fns.c rand.c randclr.c randdef.c randiset.c randlc2s.c 	\
+	randlc2x.c randmt.c randmts.c rands.c randsd.c randsdui.c 	\
+	randbui.c randmui.c version.c nextprime.c
+
+.for _src in ${MPN_SRCS}
+COPTS.${_src}+=	-DOPERATION_${_src:R}
+.endfor
+SRCS+=	${MPN_SRCS}
+
+SRCS+=	tal-reent.c
+
+# these are generated
+SRCS+=	fib_table.c mp_bases.c
+
+
+# Build the files that may have multiple identical base names under
+# different names.
+# XXX	${MPBSD_SRCS:C/^/mpbsd /}
+.for _dir _srcfile in \
+	${MPF_SRCS:C/^/mpf /} \
+	${MPZ_SRCS:C/^/mpz /} \
+	${MPQ_SRCS:C/^/mpq /} \
+	${PRINTF_SRCS:C/^/printf /} \
+	${SCANF_SRCS:C/^/scanf /}
+${_dir}_${_srcfile}: #Makefile
+	echo '#include "'${_dir}/${_srcfile}'"' > ${.TARGET}
+
+SRCS+=		${_dir}_${_srcfile}
+CLEANFILES+=	${_dir}_${_srcfile}
+
+.endfor
+
+# Build the generic popcount/hamdist for now
+.for _srcfile in \
+	${MPN_GENERIC_SRCS}
+mpn_${_srcfile}: Makefile
+	echo '#include "mpn/generic/popham.c"' > ${.TARGET}
+
+COPTS.mpn_${_srcfile}+= -DOPERATION_${_srcfile:R}
+
+SRCS+=		mpn_${_srcfile}
+CLEANFILES+=	mpn_${_srcfile}
+.endfor
 
 INCS=		gmp.h
 INCSDIR=	/usr/include
 
-CPPFLAGS+=	-I${.CURDIR} -D__GMP_WITHIN_GMP
+CPPFLAGS+=	-I. -I${DIST} -I${.CURDIR}/arch/${MACHINE_ARCH} -D__GMP_WITHIN_GMP -DHAVE_CONFIG_H
 
 WITHOUT_MAN=	yes
 
@@ -507,6 +328,12 @@ perfsqr.h: gen-psqr.c
 
 CLEANFILES+=	${DPSRCS} gen-fac_ui gen-fib gen-bases gen-psqr
 
+.sinclude "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
+
 .include <bsd.lib.mk>
 
-.PATH: ${.CURDIR}/../../dist ${.CURDIR}/../../dist/mpf
+.PATH:	${DIST} \
+	${DIST}/mpn/generic \
+	${.CURDIR}/arch/${MACHINE_ARCH} \
+	${DIST}/mpf \
+	${DIST}/mpz
