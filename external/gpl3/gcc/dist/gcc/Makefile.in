@@ -1823,8 +1823,7 @@ libgcc-support: libgcc.mvars stmp-int-hdrs $(TCONFIG_H) \
 	$(MACHMODE_H) $(FPBIT) $(DPBIT) $(TPBIT) $(LIB2ADD) \
 	$(LIB2ADD_ST) $(LIB2ADDEH) $(srcdir)/emutls.c gcov-iov.h $(SFP_MACHINE)
 
-libgcc.mvars: config.status Makefile $(LIB2ADD) $(LIB2ADD_ST) specs \
-		xgcc$(exeext)
+libgcc.mvars: config.status Makefile
 	: > tmp-libgcc.mvars
 	echo LIB1ASMFUNCS = '$(LIB1ASMFUNCS)' >> tmp-libgcc.mvars
 	echo LIB1ASMSRC = '$(LIB1ASMSRC)' >> tmp-libgcc.mvars
@@ -3821,6 +3820,12 @@ gcov-dump$(exeext): $(GCOV_DUMP_OBJS) $(LIBDEPS)
 # Build the include directories.  The stamp files are stmp-* rather than
 # s-* so that mostlyclean does not force the include directory to
 # be rebuilt.
+
+unwind.h: $(UNWIND_H)
+	-if [ -d include ] ; then true; else mkdir include; chmod a+rx include; fi
+	rm -f include/unwind.h
+	cp $(UNWIND_H) include/unwind.h
+	chmod a+r include/unwind.h
 
 # Build the include directories.
 stmp-int-hdrs: $(STMP_FIXINC) $(USER_H) $(UNWIND_H) fixinc_list
