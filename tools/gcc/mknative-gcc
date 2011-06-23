@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.47 2011/06/23 05:42:37 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.48 2011/06/23 12:06:32 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -421,7 +421,7 @@ get_gcc_libiberty () {
 		_libibertydir="usr.bin/$_subdir/libiberty"
 		;;
 	gcc)
-		_libibertydir="$_subdir/lib/libiberty"
+		_libibertydir="lib/libiberty"
 		;;
 	esac
 	mkdir -p $_OUTDIR/$_libibertydir/arch/$MACHINE_ARCH
