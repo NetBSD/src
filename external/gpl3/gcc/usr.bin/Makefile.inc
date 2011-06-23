@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.1 2011/06/21 06:03:13 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2011/06/23 11:47:13 mrg Exp $
 
 .include <bsd.own.mk>
 
-TOP=		${NETBSDSRCDIR}/gnu
-DIST=		${TOP}/dist/gcc4
+TOP=		${NETBSDSRCDIR}
+DIST=		${TOP}/external/gpl3/gcc/dist
 
 GCCARCH=	${.CURDIR}/../arch/${MACHINE_ARCH}
 
