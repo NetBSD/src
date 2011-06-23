@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.3 2011/06/20 20:24:28 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.4 2011/06/23 01:27:20 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,10 @@
 #define _POWERPC_BOOKE_PTE_H_
 
 #ifndef _LOCORE
-typedef __uint32_t pt_entry_t;
+#ifndef __BSD_PT_ENTRY_T
+#define __BSD_PT_ENTRY_T	__uint32_t
+typedef __BSD_PT_ENTRY_T	pt_entry_t;
+#endif
 #endif
 
 #include <powerpc/booke/spr.h>
