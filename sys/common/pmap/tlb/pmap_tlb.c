@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.5 2011/06/23 01:27:21 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.6 2011/06/23 02:33:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.5 2011/06/23 01:27:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.6 2011/06/23 02:33:44 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -134,7 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.5 2011/06/23 01:27:21 matt Exp $");
 
 #include <uvm/uvm.h>
 
-static kmutex_t pmap_tlb0_mutex __aligned(32);
+static kmutex_t pmap_tlb0_mutex __cacheline_aligned;
 #ifdef MULTIPROCESSOR
 static struct pmap_tlb_info *pmap_tlbs[MAXCPUS] = {
 	[0] = &pmap_tlb_info,
@@ -142,12 +142,14 @@ static struct pmap_tlb_info *pmap_tlbs[MAXCPUS] = {
 static u_int pmap_ntlbs = 1;
 #endif
 
+#define	IFCONSTANT(x)	(__builtin_constant_p((x)) ? (x) : 0)
+
 struct pmap_tlb_info pmap_tlb0_info = {
+	.ti_name = "tlb0",
 	.ti_asid_hint = KERNEL_PID + 1,
 #ifdef PMAP_TLB_NUM_PIDS
-	.ti_asid_mask = PMAP_TLB_NUM_PIDS - 1,
-	.ti_asid_max = PMAP_TLB_NUM_PIDS - 1,
-	.ti_asids_free = PMAP_TLB_NUM_PIDS - 1 - KERNEL_PID,
+	.ti_asid_max = IFCONSTANT(PMAP_TLB_NUM_PIDS - 1),
+	.ti_asids_free = IFCONSTANT(PMAP_TLB_NUM_PIDS - (KERNEL_PID + 1)),
 #endif
 	.ti_asid_bitmap[0] = (2 << KERNEL_PID) - 1,
 #ifdef PMAP_TLB_WIRED_UPAGES
@@ -160,6 +162,8 @@ struct pmap_tlb_info pmap_tlb0_info = {
 	.ti_tlbinvop = TLBINV_NOBODY,
 #endif
 };
+
+#undef IFCONSTANT
 
 #define	__BITMAP_SET(bm, n) \
 	((bm)[(n) / (8*sizeof(bm[0]))] |= 1LU << ((n) % (8*sizeof(bm[0]))))
@@ -231,42 +235,39 @@ void
 pmap_tlb_info_init(struct pmap_tlb_info *ti)
 {
 #ifdef MULTIPROCESSOR
-	if (ti == &pmap_tlb0_info) {
-		mutex_init(ti->ti_lock, MUTEX_DEFAULT, IPL_SCHED);
+	if (ti != &pmap_tlb0_info) {
+
+		KASSERT(pmap_tlbs[pmap_ntlbs] == NULL);
+
+		ti->ti_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
+		ti->ti_asid_bitmap[0] = (2 << KERNEL_PID) - 1;
+		ti->ti_asid_hint = KERNEL_PID + 1;
+		ti->ti_asid_max = pmap_tlbs[0]->ti_asid_max;
+		ti->ti_asid_mask = pmap_tlbs[0]->ti_asid_mask;
+		ti->ti_asids_free = ti->ti_asid_max - KERNEL_PID;
+		ti->ti_tlbinvop = TLBINV_NOBODY,
+		ti->ti_victim = NULL;
+		ti->ti_cpu_mask = 0;
+		ti->ti_index = pmap_ntlbs++;
+		ti->ti_wired = 0;
+		pmap_tlbs[ti->ti_index] = ti;
 		return;
 	}
-
-	KASSERT(pmap_tlbs[pmap_ntlbs] == NULL);
-
-	ti->ti_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
-	ti->ti_asid_bitmap[0] = (2 << KERNEL_PID) - 1;
-	ti->ti_asid_hint = KERNEL_PID + 1;
-	ti->ti_asid_max = pmap_tlbs[0]->ti_asid_max;
-	ti->ti_asid_mask = pmap_tlbs[0]->ti_asid_mask;
-	ti->ti_asids_free = ti->ti_asid_max - KERNEL_PID;
-	ti->ti_tlbinvop = TLBINV_NOBODY,
-	ti->ti_victim = NULL;
-	ti->ti_cpu_mask = 0;
-	ti->ti_index = pmap_ntlbs++;
-	ti->ti_wired = 0;
-	pmap_tlbs[ti->ti_index] = ti;
-#else
+#endif
 	KASSERT(ti == &pmap_tlb0_info);
 	mutex_init(ti->ti_lock, MUTEX_DEFAULT, IPL_SCHED);
-#if 0
-	if (!CPUISMIPSNN) {
-		ti->ti_asid_max = mips_options.mips_num_tlb_entries - 1;
-		ti->ti_asids_free = ti->ti_asid_max - KERNEL_PID;
-		ti->ti_asid_mask = ti->ti_asid_max;
-		/*
-		 * Now figure out what mask we need to focus on asid_max.
-		 */
-		while ((ti->ti_asid_mask + 1) & ti->ti_asid_mask) {
-			ti->ti_asid_mask |= ti->ti_asid_mask >> 1;
-		}
+	if (ti->ti_asid_max == 0) {
+		ti->ti_asid_max = pmap_md_tlb_asid_max();
+		ti->ti_asids_free = ti->ti_asid_max - (KERNEL_PID + 1);
 	}
-#endif
-#endif /* MULTIPROCESSOR */
+	/*
+	 * Now figure out what mask we need to focus on asid_max.
+	 */
+	ti->ti_asid_mask = ~0U >> __builtin_clz(ti->ti_asid_max);
+
+	KASSERT(ti->ti_asid_max < sizeof(ti->ti_asid_bitmap)*8);
+	KASSERT(ti->ti_asid_max <= ti->ti_asid_mask);
+	KASSERT(((ti->ti_asid_mask + 1) & ti->ti_asid_mask) == 0);
 }
 
 #ifdef MULTIPROCESSOR
@@ -781,37 +782,16 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 	TLBINFO_UNLOCK(ti);
 #endif /* MULTIPROCESSOR */
 }
+
 #ifdef DEBUG
-static bool
-pmap_tlb_check_entry(void *ctx, vaddr_t va, uint32_t asid, uint32_t pte)
-{
-	pmap_t pm = ctx;
-        struct pmap_asid_info * const pai = PMAP_PAI(pm, curcpu()->ci_tlb_info);
-
-	if (asid != pai->pai_asid)
-		return true;
-
-	const pt_entry_t * const ptep = pmap_pte_lookup(pm, va);
-	KASSERT(ptep != NULL);
-	pt_entry_t xpte = *ptep;
-	xpte &= ~((xpte & (PTE_UNSYNCED|PTE_UNMODIFIED)) << 1);
-	xpte ^= xpte & (PTE_UNSYNCED|PTE_UNMODIFIED|PTE_WIRED);
-
-	KASSERTMSG(pte == xpte,
-	    ("pm=%p va=%#"PRIxVADDR" asid=%u: TLB pte (%#x) != real pte (%#x/%#x)",
-	    pm, va, asid, pte, xpte, *ptep));
-
-	return true;
-}
-
 void
-pmap_tlb_check(pmap_t pm)
+pmap_tlb_check(pmap_t pm, bool (*func)(void *, vaddr_t, tlb_asid_t, pt_entry_t))
 {
         struct pmap_tlb_info * const ti = curcpu()->ci_tlb_info;
         struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
         TLBINFO_LOCK(ti);
         if (pm == pmap_kernel() || pai->pai_asid > KERNEL_PID)
-		tlb_walk(pm, pmap_tlb_check_entry);
+		tlb_walk(pm, func);
         TLBINFO_UNLOCK(ti);
 }
 #endif /* DEBUG */
