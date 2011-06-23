@@ -162,7 +162,9 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #     if defined (_AIX) || defined (_IBMR2)
  #pragma alloca
 #     else
-       char *alloca ();
+#      if !defined (__NetBSD__)
+        char *alloca ();
+#      endif
 #     endif
 #    endif
 #   endif
