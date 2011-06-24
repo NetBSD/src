@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.11 2011/06/24 20:06:04 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.12 2011/06/24 20:11:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.11 2011/06/24 20:06:04 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.12 2011/06/24 20:11:23 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -356,7 +356,7 @@ service_t service_list[] = {
 	{ 0x1115, "Personal Area Networking User",	A(panu_attrs) },
 	{ 0x1116, "Network Access Point",		A(nap_attrs) },
 	{ 0x1117, "Group Network",			A(gn_attrs) },
-	{ 0x1118, "Direct Printing",			NULL, 0 },
+	{ 0x1118, "Direct Printing",			A(bp_attrs) },
 	{ 0x1119, "Reference Printing",			A(bp_attrs) },
 	{ 0x111a, "Imaging",				NULL, 0 },
 	{ 0x111b, "Imaging Responder",			A(bi_attrs) },
@@ -367,7 +367,7 @@ service_t service_list[] = {
 	{ 0x1120, "Direct Printing Reference Objects",	NULL, 0 },
 	{ 0x1121, "Reflected User Interface",		A(rui_attrs) },
 	{ 0x1122, "Basic Printing",			NULL, 0 },
-	{ 0x1123, "Printing Status",			NULL, 0 },
+	{ 0x1123, "Printing Status",			A(bp_attrs) },
 	{ 0x1124, "Human Interface Device",		A(hid_attrs) },
 	{ 0x1125, "Hardcopy Cable Replacement",		NULL, 0 },
 	{ 0x1126, "Hardcopy Cable Replacement Print",	A(hcr_attrs) },
