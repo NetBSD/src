@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.98 2011/06/24 01:39:22 rmind Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.99 2011/06/24 01:48:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.98 2011/06/24 01:39:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.99 2011/06/24 01:48:43 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -818,7 +818,11 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 		UVMHIST_LOG(maphist, "<- done [creating new amap 0x%x->0x%x]",
 		    entry->start, entry->end, 0, 0);
 
-		/* Allocate an initialised amap and install it. */
+		/*
+		 * Allocate an initialised amap and install it.
+		 * Note: we must update the length after clipping.
+		 */
+		len = entry->end - entry->start;
 		entry->aref.ar_pageoff = 0;
 		entry->aref.ar_amap = amap_alloc(len, 0, waitf);
 		if (entry->aref.ar_amap != NULL) {
