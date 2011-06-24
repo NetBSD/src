@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.16 2011/06/15 06:28:39 cliff Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.17 2011/06/24 03:53:46 kiyohara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -519,7 +519,7 @@ _C_LABEL(ddb_trap):
 	stw	%r3,CI_DDBSAVE+CPUSAVE_SRR1(%r4)
 	wrteei	0			/* disable interrupts */
 	isync
-	stmw	%r28,CI_DDBSAVE(%r1)
+	stmw	%r28,CI_DDBSAVE(%r4)
 	mflr	%r28
 	stw	%r28,CI_DDBSAVE+CPUSAVE_SRR0(%r4)
 	li	%r29,EXC_BPT
