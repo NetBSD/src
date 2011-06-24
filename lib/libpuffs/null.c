@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.28 2009/10/18 20:14:06 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.29 2011/06/24 16:59:29 manu Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.28 2009/10/18 20:14:06 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.29 2011/06/24 16:59:29 manu Exp $");
 #endif /* !lint */
 
 /*
@@ -410,21 +410,36 @@ puffs_null_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct puffs_node *pn = opc;
 	int fd, rv;
 	int fflags;
+	struct stat sb;
 
 	rv = 0;
-	fd = writeableopen(PNPATH(pn));
-	if (fd == -1)
+	if (stat(PNPATH(pn), &sb) == -1)
 		return errno;
+	if (S_ISDIR(sb.st_mode)) {
+		DIR *dirp;
+		if ((dirp = opendir(PNPATH(pn))) == 0)
+			return errno;
+		fd = dirfd(dirp);
+		if (fd == -1)
+			return errno;
 
-	if (how & PUFFS_FSYNC_DATAONLY)
-		fflags = FDATASYNC;
-	else
-		fflags = FFILESYNC;
-	if (how & PUFFS_FSYNC_CACHE)
-		fflags |= FDISKSYNC;
+		if (fsync(fd) == -1)
+			rv = errno;
+	} else {
+		fd = writeableopen(PNPATH(pn));
+		if (fd == -1)
+			return errno;
 
-	if (fsync_range(fd, fflags, offlo, offhi - offlo) == -1)
-		rv = errno;
+		if (how & PUFFS_FSYNC_DATAONLY)
+			fflags = FDATASYNC;
+		else
+			fflags = FFILESYNC;
+		if (how & PUFFS_FSYNC_CACHE)
+			fflags |= FDISKSYNC;
+
+		if (fsync_range(fd, fflags, offlo, offhi - offlo) == -1)
+			rv = errno;
+	}
 
 	close(fd);
 
