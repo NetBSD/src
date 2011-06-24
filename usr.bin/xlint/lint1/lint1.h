@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.24 2009/10/02 19:01:14 christos Exp $ */
+/* $NetBSD: lint1.h,v 1.25 2011/06/24 01:10:31 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,9 +35,19 @@
 #include "lint.h"
 #include "op.h"
 
-/* XXX - works for most systems, but the whole ALIGN thing needs to go away */
-#ifndef ALIGN
-#define ALIGN(x) (((x) + 7) & ~7)
+/*
+ * XXX - Super conservative so that works for most systems, but we should
+ * not depend on the host settings but the target settings in determining
+ * the alignment. The only valid use for this is in mem1.c; uses in decl.c
+ * are bogus.
+ */
+#ifndef WORST_ALIGN
+#ifdef _LP64
+# define AVAL	15
+#else
+# define AVAL	7
+#endif
+#define WORST_ALIGN(x) (((x) + AVAL) & ~AVAL)
 #endif
 
 /*
