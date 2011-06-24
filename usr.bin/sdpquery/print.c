@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.8 2011/05/24 12:44:30 joerg Exp $	*/
+/*	$NetBSD: print.c,v 1.9 2011/06/24 18:50:32 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.8 2011/05/24 12:44:30 joerg Exp $");
+__RCSID("$NetBSD: print.c,v 1.9 2011/06/24 18:50:32 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -77,8 +77,8 @@ static void print_uint8d(sdp_data_t *);
 static void print_uint8x(sdp_data_t *);
 static void print_uint16d(sdp_data_t *);
 static void print_uint16x(sdp_data_t *);
-static void print_uint32x(sdp_data_t *);
 static void print_uint32d(sdp_data_t *);
+static void print_uint32x(sdp_data_t *);
 static void print_uuid(sdp_data_t *);
 static void print_uuid_list(sdp_data_t *);
 static void print_string(sdp_data_t *);
@@ -112,6 +112,10 @@ static void print_pnp_source(sdp_data_t *);
 static void print_mas_types(sdp_data_t *);
 static void print_supported_repositories(sdp_data_t *);
 static void print_character_repertoires(sdp_data_t *);
+static void print_bip_capabilities(sdp_data_t *);
+static void print_bip_features(sdp_data_t *);
+static void print_bip_functions(sdp_data_t *);
+static void print_bip_capacity(sdp_data_t *);
 
 static void print_rfcomm(sdp_data_t *);
 static void print_bnep(sdp_data_t *);
@@ -260,6 +264,13 @@ attr_t bp_attrs[] = {	/* Basic Printing */
 	{ 0x037a, "DeviceName",				print_string },
 };
 
+attr_t bi_attrs[] = {	/* Basic Imaging */
+	{ 0x0310, "SupportedCapabilities",		print_bip_capabilities },
+	{ 0x0311, "SupportedFeatures",			print_bip_features },
+	{ 0x0312, "SupportedFunctions",			print_bip_functions },
+	{ 0x0313, "TotalImagingDataCapacity",		print_bip_capacity },
+};
+
 attr_t hf_attrs[] = {	/* Handsfree */
 	{ 0x0311, "SupportedFeatures",			print_hf_features },
 };
@@ -341,9 +352,9 @@ service_t service_list[] = {
 	{ 0x1118, "Direct Printing",			NULL, 0 },
 	{ 0x1119, "Reference Printing",			A(bp_attrs) },
 	{ 0x111a, "Imaging",				NULL, 0 },
-	{ 0x111b, "Imaging Responder",			NULL, 0 },
-	{ 0x111c, "Imaging Automatic Archive",		NULL, 0 },
-	{ 0x111d, "Imaging Referenced Objects",		NULL, 0 },
+	{ 0x111b, "Imaging Responder",			A(bi_attrs) },
+	{ 0x111c, "Imaging Automatic Archive",		A(bi_attrs) },
+	{ 0x111d, "Imaging Referenced Objects",		A(bi_attrs) },
 	{ 0x111e, "Handsfree",				A(hf_attrs) },
 	{ 0x111f, "Handsfree Audio Gateway",		A(hfag_attrs) },
 	{ 0x1120, "Direct Printing Reference Objects",	NULL, 0 },
@@ -433,6 +444,19 @@ sdp_get_uint32(sdp_data_t *d, uint32_t *vp)
 		return false;
 
 	*vp = (uint32_t)v;
+	return true;
+}
+
+static bool
+sdp_get_uint64(sdp_data_t *d, uint64_t *vp)
+{
+	uintmax_t v;
+
+	if (sdp_data_type(d) != SDP_DATA_UINT64
+	    || !sdp_get_uint(d, &v))
+		return false;
+
+	*vp = (uint64_t)v;
 	return true;
 }
 
@@ -1408,6 +1432,97 @@ print_character_repertoires(sdp_data_t *data)
 	if (v & (1<<15)) printf("    KSC 5601-1992\n");
 	if (v & (1<<16)) printf("    Big5\n");
 	if (v & (1<<17)) printf("    TIS-620\n");
+}
+
+static void
+print_bip_capabilities(sdp_data_t *data)
+{
+	uint8_t v;
+
+	if (!sdp_get_uint8(data, &v))
+		return;
+
+	if (Nflag)
+		printf("(0x%02x)", v);
+
+	printf("\n");
+	if (v & (1<< 0)) printf("    Generic imaging\n");
+	if (v & (1<< 1)) printf("    Capturing\n");
+	if (v & (1<< 2)) printf("    Printing\n");
+	if (v & (1<< 3)) printf("    Displaying\n");
+}
+
+static void
+print_bip_features(sdp_data_t *data)
+{
+	uint16_t v;
+
+	if (!sdp_get_uint16(data, &v))
+		return;
+
+	if (Nflag)
+		printf("(0x%04x)", v);
+
+	printf("\n");
+	if (v & (1<<0))	printf("    ImagePush\n");
+	if (v & (1<<1))	printf("    ImagePush-Store\n");
+	if (v & (1<<2))	printf("    ImagePush-Print\n");
+	if (v & (1<<3))	printf("    ImagePush-Display\n");
+	if (v & (1<<4))	printf("    ImagePull\n");
+	if (v & (1<<5))	printf("    AdvancedImagePrinting\n");
+	if (v & (1<<6))	printf("    AutomaticArchive\n");
+	if (v & (1<<7))	printf("    RemoteCamera\n");
+	if (v & (1<<8))	printf("    RemoteDisplay\n");
+}
+
+static void
+print_bip_functions(sdp_data_t *data)
+{
+	uint32_t v;
+
+	if (!sdp_get_uint32(data, &v))
+		return;
+
+	if (Nflag)
+		printf("(0x%08x)", v);
+
+	printf("\n");
+	if (v & (1<< 0)) printf("    GetCapabilities\n");
+	if (v & (1<< 1)) printf("    PutImage\n");
+	if (v & (1<< 2)) printf("    PutLinkedAttachment\n");
+	if (v & (1<< 3)) printf("    PutLinkedThumbnail\n");
+	if (v & (1<< 4)) printf("    RemoteDisplay\n");
+	if (v & (1<< 5)) printf("    GetImagesList\n");
+	if (v & (1<< 6)) printf("    GetImageProperties\n");
+	if (v & (1<< 7)) printf("    GetImage\n");
+	if (v & (1<< 8)) printf("    GetLinkedThumbnail\n");
+	if (v & (1<< 9)) printf("    GetLinkedAttachment\n");
+	if (v & (1<<10)) printf("    DeleteImage\n");
+	if (v & (1<<11)) printf("    StartPrint\n");
+	if (v & (1<<12)) printf("    GetPartialImage\n");
+	if (v & (1<<13)) printf("    StartArchive\n");
+	if (v & (1<<14)) printf("    GetMonitoringImage\n");
+	if (v & (1<<16)) printf("    GetStatus\n");
+}
+
+static void
+print_bip_capacity(sdp_data_t *data)
+{
+	char buf[9];
+	uint64_t v;
+
+	if (!sdp_get_uint64(data, &v))
+		return;
+
+	if (v > INT64_MAX) {
+		printf("more than ");
+		v = INT64_MAX;
+	}
+
+	(void)humanize_number(buf, sizeof(buf), (int64_t)v,
+	    "bytes", HN_AUTOSCALE, HN_NOSPACE);
+
+	printf("%s\n", buf);
 }
 
 static void
