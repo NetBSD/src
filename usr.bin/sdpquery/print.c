@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.9 2011/06/24 18:50:32 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.10 2011/06/24 19:03:46 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.9 2011/06/24 18:50:32 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.10 2011/06/24 19:03:46 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -303,6 +303,13 @@ attr_t hid_attrs[] = {	/* Human Interface Device */
 	{ 0x020e, "HIDBootDevice",			print_bool },
 };
 
+attr_t hcr_attrs[] = {	/* Hardcopy Cable Replacement */
+	{ 0x0300, "1284ID",				print_string },
+	{ 0x0302, "DeviceName",				print_string },
+	{ 0x0304, "FriendlyName",			print_string },
+	{ 0x0306, "DeviceLocation",			print_string },
+};
+
 attr_t pnp_attrs[] = {	/* Device ID */
 	{ 0x0200, "SpecificationID",			print_profile_version },
 	{ 0x0201, "VendorID",				print_uint16x },
@@ -363,8 +370,8 @@ service_t service_list[] = {
 	{ 0x1123, "Printing Status",			NULL, 0 },
 	{ 0x1124, "Human Interface Device",		A(hid_attrs) },
 	{ 0x1125, "Hardcopy Cable Replacement",		NULL, 0 },
-	{ 0x1126, "Hardcopy Cable Replacement Print",	NULL, 0 },
-	{ 0x1127, "Hardcopy Cable Replacement Scan",	NULL, 0 },
+	{ 0x1126, "Hardcopy Cable Replacement Print",	A(hcr_attrs) },
+	{ 0x1127, "Hardcopy Cable Replacement Scan",	A(hcr_attrs) },
 	{ 0x1128, "Common ISDN Access",			NULL, 0 },
 	{ 0x1129, "Video Conferencing GW",		NULL, 0 },
 	{ 0x112a, "UDI MT",				NULL, 0 },
