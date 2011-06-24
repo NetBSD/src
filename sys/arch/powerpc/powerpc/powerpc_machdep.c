@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.57 2011/06/21 06:32:36 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.58 2011/06/24 22:19:45 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.57 2011/06/21 06:32:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.58 2011/06/24 22:19:45 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -159,7 +159,7 @@ sysctl_machdep_powersave(SYSCTLFN_ARGS)
 	struct sysctlnode node = *rnode;
 
 	if (powersave < 0)
-		node.sysctl_flags |= ~CTLFLAG_READWRITE;
+		node.sysctl_flags &= ~CTLFLAG_READWRITE;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 #endif
