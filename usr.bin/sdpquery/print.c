@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.12 2011/06/24 20:11:23 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.13 2011/06/24 20:53:56 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.12 2011/06/24 20:11:23 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.13 2011/06/24 20:53:56 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -82,6 +82,7 @@ static void print_uint32x(sdp_data_t *);
 static void print_uuid(sdp_data_t *);
 static void print_uuid_list(sdp_data_t *);
 static void print_string(sdp_data_t *);
+static void print_string_list(sdp_data_t *);
 static void print_url(sdp_data_t *);
 static void print_profile_version(sdp_data_t *);
 static void print_language_string(sdp_data_t *);
@@ -244,19 +245,19 @@ attr_t gn_attrs[] = {	/* Group Network */
 };
 
 attr_t bp_attrs[] = {	/* Basic Printing */
-	{ 0x0350, "DocumentFormatsSupported",		print_string },
+	{ 0x0350, "DocumentFormatsSupported",		print_string_list },
 	{ 0x0352, "CharacterRepertoiresSupported",	print_character_repertoires },
-	{ 0x0354, "XHTML-PrintImageFormatsSupported",	print_string },
+	{ 0x0354, "XHTML-PrintImageFormatsSupported",	print_string_list },
 	{ 0x0356, "ColorSupported",			print_bool },
 	{ 0x0358, "1284ID",				print_string },
 	{ 0x035a, "PrinterName",			print_string },
 	{ 0x035c, "PrinterLocation",			print_string },
 	{ 0x035e, "DuplexSupported",			print_bool },
-	{ 0x0360, "MediaTypesSupported",		print_string },
+	{ 0x0360, "MediaTypesSupported",		print_string_list },
 	{ 0x0362, "MaxMediaWidth",			print_uint16d },
 	{ 0x0364, "MaxMediaLength",			print_uint16d },
 	{ 0x0366, "EnhancedLayoutSupport",		print_bool },
-	{ 0x0368, "RUIFormatsSupported",		print_string },
+	{ 0x0368, "RUIFormatsSupported",		print_string_list },
 	{ 0x0370, "ReferencePrintingRUISupported",	print_bool },
 	{ 0x0372, "DirectPrintingRUISupported",		print_bool },
 	{ 0x0374, "ReferencePrintingTopURL",		print_url },
@@ -281,7 +282,7 @@ attr_t hfag_attrs[] = {	/* Handsfree Audio Gateway */
 };
 
 attr_t rui_attrs[] = {	/* Reflected User Interface */
-	{ 0x0368, "RUIFormatsSupported",		print_string },
+	{ 0x0368, "RUIFormatsSupported",		print_string_list },
 	{ 0x0378, "PrinterAdminRUITopURL",		print_url },
 };
 
@@ -771,6 +772,31 @@ print_string(sdp_data_t *data)
 		return;
 
 	printf("\"%s\"\n", string_vis(VIS_CSTYLE, str, len));
+}
+
+static void
+print_string_list(sdp_data_t *data)
+{
+	char *str, *ep;
+	size_t len, l;
+
+	if (!sdp_get_str(data, &str, &len))
+		return;
+
+	printf("\n");
+	while (len > 0) {
+		ep = memchr(str, (int)',', len);
+		if (ep == NULL) {
+			l = len;
+			len = 0;
+		} else {
+			l = (size_t)(ep - str);
+			len -= l + 1;
+			ep++;
+		}
+		printf("    %s\n", string_vis(VIS_CSTYLE, str, l));
+		str = ep;
+	}
 }
 
 static void
