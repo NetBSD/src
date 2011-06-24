@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/23 12:09:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/06/24 03:50:23 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -91,138 +91,6 @@ MPQ_SRCS = \
 	equal.c set_z.c set_d.c				\
 	set_f.c swap.c
 
-#	addmul_2.c \
-#	addmul_3.c \
-#	addmul_4.c \
-#	addmul_5.c \
-#	addmul_6.c \
-#	addmul_7.c \
-#	addmul_8.c \
-#	and_n.c \
-#	andn_n.c \
-#	ior_n.c \
-#	iorn_n.c \
-#	mul_2.c \
-#	mul_3.c \
-#	mul_4.c \
-#	nand_n.c \
-#	nior_n.c \
-#	udiv_qrnnd.c \
-#	xor_n.c
-#	xnor_n.c
-# many asm
-#	sqr_diagonal.c \
-
-MPN_SRCS = \
-	add.c \
-	add_1.c \
-	add_n.c \
-	addmul_1.c \
-	cmp.c \
-	com.c \
-	copyd.c \
-	copyi.c \
-	dive_1.c \
-	diveby3.c \
-	divexact.c \
-	divis.c \
-	divrem.c \
-	divrem_1.c \
-	divrem_2.c \
-	sbpi1_bdiv_qr.c \
-	sbpi1_bdiv_q.c \
-	sbpi1_div_qr.c \
-	sbpi1_div_q.c \
-	sbpi1_divappr_q.c \
-	dcpi1_bdiv_qr.c \
-	dcpi1_bdiv_q.c \
-	dcpi1_div_qr.c \
-	dcpi1_div_q.c \
-	dcpi1_divappr_q.c \
-	dump.c \
-	fib2_ui.c \
-	gcd.c \
-	gcd_1.c \
-	gcdext.c \
-	get_d.c \
-	get_str.c \
-	hgcd2.c \
-	hgcd.c \
-	jacbase.c \
-	lshift.c \
-	matrix22_mul.c \
-	mod_1.c \
-	mod_34lsub1.c \
-	mode1o.c \
-	mod_1_1.c \
-	mod_1_2.c \
-	mod_1_3.c \
-	mod_1_4.c \
-	mul.c \
-	mul_1.c \
-	mul_fft.c \
-	mul_n.c \
-	mul_basecase.c \
-	nussbaumer_mul.c \
-	toom22_mul.c \
-	toom32_mul.c \
-	toom42_mul.c \
-	toom52_mul.c \
-	toom62_mul.c \
-	toom33_mul.c \
-	toom43_mul.c \
-	toom53_mul.c \
-	toom63_mul.c \
-	toom44_mul.c \
-	toom6h_mul.c \
-	toom6_sqr.c \
-	toom8h_mul.c \
-	toom8_sqr.c \
-	toom_couple_handling.c \
-	toom2_sqr.c \
-	toom3_sqr.c \
-	toom4_sqr.c \
-	toom_eval_dgr3_pm1.c \
-	toom_eval_dgr3_pm2.c \
-	toom_eval_pm1.c \
-	toom_eval_pm1.c \
-	toom_eval_pm2exp.c \
-	toom_eval_pm2rexp.c \
-	toom_interpolate_5pts.c \
-	toom_interpolate_6pts.c \
-	toom_interpolate_7pts.c \
-	toom_interpolate_8pts.c \
-	toom_interpolate_12pts.c \
-	toom_interpolate_16pts.c \
-	invertappr.c \
-	invert.c \
-	binvert.c \
-	mulmod_bnm1.c \
-	sqrmod_bnm1.c \
-	mullo_n.c \
-	mullo_basecase.c \
-	neg.c \
-	perfsqr.c \
-	pre_divrem_1.c \
-	pre_mod_1.c \
-	pow_1.c \
-	random.c \
-	random2.c \
-	rshift.c \
-	rootrem.c \
-	scan0.c \
-	scan1.c \
-	set_str.c \
-	sqr_basecase.c \
-	sqrtrem.c \
-	sub.c \
-	sub_1.c \
-	sub_n.c \
-	submul_1.c \
-	tdiv_qr.c \
-
-#	udiv_w_sdiv.c
-
 MPN_GENERIC_SRCS = \
 	popcount.c \
 	hamdist.c
@@ -251,11 +119,6 @@ SRCS+= 									\
 	randlc2x.c randmt.c randmts.c rands.c randsd.c randsdui.c 	\
 	randbui.c randmui.c version.c nextprime.c
 
-.for _src in ${MPN_SRCS}
-COPTS.${_src}+=	-DOPERATION_${_src:R}
-.endfor
-SRCS+=	${MPN_SRCS}
-
 SRCS+=	tal-reent.c
 
 # these are generated
@@ -279,6 +142,7 @@ CLEANFILES+=	${_dir}_${_srcfile}
 
 .endfor
 
+.if 0
 # Build the generic popcount/hamdist for now
 .for _srcfile in \
 	${MPN_GENERIC_SRCS}
@@ -290,6 +154,7 @@ COPTS.mpn_${_srcfile}+= -DOPERATION_${_srcfile:R}
 SRCS+=		mpn_${_srcfile}
 CLEANFILES+=	mpn_${_srcfile}
 .endfor
+.endif
 
 INCS=		gmp.h
 INCSDIR=	/usr/include
