@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.2 2011/06/23 11:47:13 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2011/06/24 05:27:57 mrg Exp $
 
 .include <bsd.own.mk>
 
 TOP=		${NETBSDSRCDIR}
 DIST=		${TOP}/external/gpl3/gcc/dist
 
-GCCARCH=	${.CURDIR}/../arch/${MACHINE_ARCH}
+GCCARCH=	${.CURDIR}/../gcc/arch/${MACHINE_ARCH}
 
 CPPFLAGS+=	-DLOCALEDIR=\"/usr/share/locale\" -DNETBSD_NATIVE
 HOST_CPPFLAGS+=	-I${.CURDIR}/..
@@ -21,13 +21,15 @@ BUILD_PREFIX=	${C_BUILD_PREFIX}
 LIBIBERTYOBJ!=		cd ${.CURDIR}/../../lib/libiberty && ${PRINTOBJDIR}
 FRONTENDOBJ!=		cd ${.CURDIR}/../frontend && ${PRINTOBJDIR}
 BACKENDOBJ!=		cd ${.CURDIR}/../backend && ${PRINTOBJDIR}
-LIBCPPOBJ!=		cd ${.CURDIR}/../../lib/libcpp && ${PRINTOBJDIR}
+LIBCPPOBJ!=		cd ${.CURDIR}/../libcpp && ${PRINTOBJDIR}
 
 HOSTLIBIBERTYOBJ!=	cd ${.CURDIR}/../host-libiberty && ${PRINTOBJDIR}
 HOSTLIBIBERTY=		${HOSTLIBIBERTYOBJ}/libiberty/libiberty.a
 
 BASEVER!=		cat ${GNUHOSTDIST}/gcc/BASE-VER
-DEVPHASE!=		cat ${GNUHOSTDIST}/gcc/DEV-PHASE
+# XXX
+#DEVPHASE!=		cat ${GNUHOSTDIST}/gcc/DEV-PHASE
+DEVPHASE="release"
 DATESTAMP!=		cat ${GNUHOSTDIST}/gcc/DATESTAMP
 
 BASEVERSTR=		"\"$(BASEVER)\""
