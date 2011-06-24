@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.10 2011/06/24 19:03:46 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.11 2011/06/24 20:06:04 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.10 2011/06/24 19:03:46 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.11 2011/06/24 20:06:04 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -646,10 +646,10 @@ print_service_attribute(uint16_t id, sdp_data_t *value)
 
 	for (i = 0; i < nservices; i++) {
 		for (j = 0; j < __arraycount(service_list); j++) {
-			if (service_class[i] == service_list[j].class)
-				return print_attribute(id, value,
-				    service_list[j].attrs,
-				    service_list[j].nattr);
+			if (service_class[i] == service_list[j].class
+			    && print_attribute(id, value,
+			    service_list[j].attrs, service_list[j].nattr))
+				return true;
 		}
 	}
 
