@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 06:03:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/24 05:25:24 mrg Exp $
 
 NOOBJ=# defined
 
 .include <bsd.own.mk>
 
-.if ${MKGCC} != "no" && exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
+.if ${MKGCC} != "no" && exists(${.CURDIR}/gcc/arch/${MACHINE_ARCH}/defs.mk)
 
 # We keep libcpp here since it depends upon frontend.
 
