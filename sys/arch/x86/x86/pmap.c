@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.125 2011/06/23 16:25:09 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.126 2011/06/24 01:39:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.125 2011/06/23 16:25:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.126 2011/06/24 01:39:41 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -744,8 +744,8 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 
 	l = curlwp;
  retry:
-	ci = curcpu();
 	mutex_enter(pmap->pm_lock);
+	ci = curcpu();
 	curpmap = ci->ci_pmap;
 	if (vm_map_pmap(&l->l_proc->p_vmspace->vm_map) == pmap) {
 		/* Our own pmap so just load it: easy. */
