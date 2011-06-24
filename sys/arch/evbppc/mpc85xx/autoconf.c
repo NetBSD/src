@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2011/06/18 06:36:25 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2011/06/24 23:54:37 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2011/06/18 06:36:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2011/06/24 23:54:37 matt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -58,7 +58,7 @@ void
 cpu_configure(void)
 {
 
-	(*powerpc_intrsw->intrsw_init)();
+	intr_init();
 	calc_delayconst();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
