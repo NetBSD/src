@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 06:03:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/24 05:26:06 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -92,7 +92,7 @@ gtype-desc.c: gtype-desc.h
 gtype-desc.h: gengtype
 	${_MKTARGET_CREATE}
 	rm -f auto-host.h
-	ln -s ${.CURDIR}/../arch/${MACHINE_ARCH}/auto-host.h .
+	ln -s ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/auto-host.h .
 	./gengtype
 # gengtype is the real need for options.h
 gengtype.lo gengtype-lex.lo gengtype-yacc.lo: ${HH} gtyp-gen.h config.h options.h
