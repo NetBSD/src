@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.96 2011/06/23 18:15:30 rmind Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.97 2011/06/24 01:03:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.96 2011/06/23 18:15:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.97 2011/06/24 01:03:08 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1167,7 +1167,7 @@ amap_pp_adjref(struct vm_amap *amap, int curslot, vsize_t slotlen, int adjval,
 		}
 		prevlcv = lcv;
 	}
-	if (lcv) {
+	if (lcv == 0) {
 		/*
 		 * Ensure that the "prevref == ref" test below always
 		 * fails, since we are starting from the beginning of
