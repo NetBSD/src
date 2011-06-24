@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.28 2011/06/12 03:36:02 rmind Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.29 2011/06/24 01:39:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -109,7 +109,7 @@ void uvm_anon_dropswap(struct vm_anon *);
 #define	uvm_anon_dropswap(a)	/* nothing */
 #endif /* defined(VMSWAP) */
 void uvm_anon_release(struct vm_anon *);
-bool uvm_anon_pagein(struct vm_anon *);
+bool uvm_anon_pagein(struct vm_amap *, struct vm_anon *);
 #endif /* _KERNEL */
 
 #endif /* _UVM_UVM_ANON_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.56 2011/06/24 01:23:05 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.57 2011/06/24 01:39:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.56 2011/06/24 01:23:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.57 2011/06/24 01:39:22 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -311,18 +311,19 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
  */
 
 bool
-uvm_anon_pagein(struct vm_anon *anon)
+uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 {
 	struct vm_page *pg;
 	struct uvm_object *uobj;
 
 	KASSERT(mutex_owned(anon->an_lock));
+	KASSERT(anon->an_lock == amap->am_lock);
 
 	/*
 	 * Get the page of the anon.
 	 */
 
-	switch (uvmfault_anonget(NULL, NULL, anon)) {
+	switch (uvmfault_anonget(NULL, amap, anon)) {
 	case 0:
 		/* Success - we have the page. */
 		KASSERT(mutex_owned(anon->an_lock));

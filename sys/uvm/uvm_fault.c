@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.187 2011/06/23 17:36:59 rmind Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.188 2011/06/24 01:39:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.187 2011/06/23 17:36:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.188 2011/06/24 01:39:22 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -275,7 +275,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 
 	UVMHIST_FUNC("uvmfault_anonget"); UVMHIST_CALLED(maphist);
 	KASSERT(mutex_owned(anon->an_lock));
-	KASSERT(amap == NULL || anon->an_lock == amap->am_lock);
+	KASSERT(anon->an_lock == amap->am_lock);
 
 	/* Increment the counters.*/
 	uvmexp.fltanget++;
