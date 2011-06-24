@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.97 2011/06/24 01:03:08 rmind Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.98 2011/06/24 01:39:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.97 2011/06/24 01:03:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.98 2011/06/24 01:39:22 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1358,7 +1358,7 @@ amap_swap_off(int startslot, int endslot)
 
 			am->am_flags |= AMAP_SWAPOFF;
 
-			rv = uvm_anon_pagein(anon);
+			rv = uvm_anon_pagein(am, anon);
 			amap_lock(am);
 
 			am->am_flags &= ~AMAP_SWAPOFF;
