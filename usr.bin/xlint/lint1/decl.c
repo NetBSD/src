@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.52 2011/05/24 12:49:11 joerg Exp $ */
+/* $NetBSD: decl.c,v 1.53 2011/06/24 01:10:31 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.52 2011/05/24 12:49:11 joerg Exp $");
+__RCSID("$NetBSD: decl.c,v 1.53 2011/06/24 01:10:31 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -926,15 +926,15 @@ getbound(type_t *tp)
 	} else if (t == FUNC) {
 		/* compiler takes alignment of function */
 		error(14);
-		a = ALIGN(1) * CHAR_BIT;
+		a = WORST_ALIGN(1) * CHAR_BIT;
 	} else {
 		if ((a = size(t)) == 0) {
 			a = CHAR_BIT;
-		} else if (a > ALIGN(1) * CHAR_BIT) {
-			a = ALIGN(1) * CHAR_BIT;
+		} else if (a > WORST_ALIGN(1) * CHAR_BIT) {
+			a = WORST_ALIGN(1) * CHAR_BIT;
 		}
 	}
-	if (a < CHAR_BIT || a > ALIGN(1) * CHAR_BIT)
+	if (a < CHAR_BIT || a > WORST_ALIGN(1) * CHAR_BIT)
 		LERROR("getbound()");
 	return (a);
 }
