@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.22 2010/12/24 12:41:42 skrll Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.23 2011/06/25 05:45:11 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@ void	*dlsym(void * __restrict, const char * __restrict);
 int	dladdr(const void * __restrict, Dl_info * __restrict);
 int	dlctl(void *, int, void *);
 int	dlinfo(void *, int, void *);
+void	*dlvsym(void * __restrict, const char * __restrict,
+	    const char * __restrict);
 #endif
 __aconst char *dlerror(void);
 __END_DECLS
