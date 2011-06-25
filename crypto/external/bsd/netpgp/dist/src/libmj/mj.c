@@ -37,7 +37,7 @@
 
 /* save 'n' chars of 's' in malloc'd memory */
 static char *
-strnsave(const char *s, int n, unsigned esc)
+strnsave(const char *s, int n, unsigned encoded)
 {
 	char	*newc;
 	char	*cp;
@@ -46,16 +46,25 @@ strnsave(const char *s, int n, unsigned esc)
 	if (n < 0) {
 		n = (int)strlen(s);
 	}
-	NEWARRAY(char, cp, (n * 2) + 1, "strnsave", return NULL);
-	if (esc) {
+	NEWARRAY(char, cp, n + n + 1, "strnsave", return NULL);
+	if (encoded) {
 		newc = cp;
 		for (i = 0 ; i < n ; i++) {
-			if (*s == '\\') {
-				*newc++ = *s++;
+			if ((uint8_t)*s == 0xac) {
+				*newc++ = (char)0xac;
+				*newc++ = '1';
+				s += 1;
 			} else if (*s == '"') {
-				*newc++ = '\\';
+				*newc++ = (char)0xac;
+				*newc++ = '2';
+				s += 1;
+			} else if (*s == 0x0) {
+				*newc++ = (char)0xac;
+				*newc++ = '0';
+				s += 1;
+			} else {
+				*newc++ = *s++;
 			}
-			*newc++ = *s++;
 		}
 		*newc = 0x0;
 	} else {
@@ -87,7 +96,7 @@ create_number(mj_t *atom, double d)
 
 	atom->type = MJ_NUMBER;
 	atom->c = snprintf(number, sizeof(number), "%g", d);
-	atom->value.s = strnsave(number, (int)atom->c, 0);
+	atom->value.s = strnsave(number, (int)atom->c, MJ_HUMAN);
 }
 
 /* create an integer */
@@ -98,15 +107,15 @@ create_integer(mj_t *atom, int64_t i)
 
 	atom->type = MJ_NUMBER;
 	atom->c = snprintf(number, sizeof(number), "%" PRIi64, i);
-	atom->value.s = strnsave(number, (int)atom->c, 0);
+	atom->value.s = strnsave(number, (int)atom->c, MJ_HUMAN);
 }
 
 /* create a string */
 static void
-create_string(mj_t *atom, const char *s)
+create_string(mj_t *atom, const char *s, ssize_t len)
 {
 	atom->type = MJ_STRING;
-	atom->value.s = strnsave(s, -1, 1);
+	atom->value.s = strnsave(s, (int)len, MJ_JSON_ENCODE);
 	atom->c = (unsigned)strlen(atom->value.s);
 }
 
@@ -180,6 +189,8 @@ int
 mj_create(mj_t *atom, const char *type, ...)
 {
 	va_list	 args;
+	ssize_t	 len;
+	char	*s;
 
 	if (strcmp(type, "false") == 0) {
 		atom->type = MJ_FALSE;
@@ -199,8 +210,10 @@ mj_create(mj_t *atom, const char *type, ...)
 		va_end(args);
 	} else if (strcmp(type, "string") == 0) {
 		va_start(args, type);
-		create_string(atom, (char *)va_arg(args, char *));
+		s = (char *)va_arg(args, char *);
+		len = (size_t)va_arg(args, size_t);
 		va_end(args);
+		create_string(atom, s, len);
 	} else if (strcmp(type, "array") == 0) {
 		atom->type = MJ_ARRAY;
 	} else if (strcmp(type, "object") == 0) {
@@ -214,10 +227,12 @@ mj_create(mj_t *atom, const char *type, ...)
 
 /* put a JSON tree into a text string */
 int
-mj_snprint(char *buf, size_t size, mj_t *atom)
+mj_snprint(char *buf, size_t size, mj_t *atom, int encoded)
 {
-	unsigned	i;
-	int		cc;
+	unsigned	 i;
+	char		*s;
+	char		*bp;
+	int		 cc;
 
 	switch(atom->type) {
 	case MJ_NULL:
@@ -229,11 +244,41 @@ mj_snprint(char *buf, size_t size, mj_t *atom)
 	case MJ_NUMBER:
 		return snprintf(buf, size, "%s", atom->value.s);
 	case MJ_STRING:
-		return snprintf(buf, size, "\"%s\"", atom->value.s);
+		if (encoded) {
+			return snprintf(buf, size, "\"%s\"", atom->value.s);
+		}
+		for (bp = buf, *bp++ = '"', s = atom->value.s ;
+		     (size_t)(bp - buf) < size && (unsigned)(s - atom->value.s) < atom->c ; ) {
+			if ((uint8_t)*s == 0xac) {
+				switch(s[1]) {
+				case '0':
+					*bp++ = 0x0;
+					s += 2;
+					break;
+				case '1':
+					*bp++ = (char)0xac;
+					s += 2;
+					break;
+				case '2':
+					*bp++ = '"';
+					s += 2;
+					break;
+				default:
+					(void) fprintf(stderr, "unrecognised character '%02x'\n", (uint8_t)s[1]);
+					s += 1;
+					break;
+				}
+			} else {
+				*bp++ = *s++;
+			}
+		}
+		*bp++ = '"';
+		*bp = 0x0;
+		return (int)(bp - buf) - 1;
 	case MJ_ARRAY:
 		cc = snprintf(buf, size, "[ ");
 		for (i = 0 ; i < atom->c ; i++) {
-			cc += mj_snprint(&buf[cc], size - cc, &atom->value.v[i]);
+			cc += mj_snprint(&buf[cc], size - cc, &atom->value.v[i], encoded);
 			if (i < atom->c - 1) {
 				cc += snprintf(&buf[cc], size - cc, ", ");
 			}
@@ -242,9 +287,9 @@ mj_snprint(char *buf, size_t size, mj_t *atom)
 	case MJ_OBJECT:
 		cc = snprintf(buf, size, "{ ");
 		for (i = 0 ; i < atom->c ; i += 2) {
-			cc += mj_snprint(&buf[cc], size - cc, &atom->value.v[i]);
+			cc += mj_snprint(&buf[cc], size - cc, &atom->value.v[i], encoded);
 			cc += snprintf(&buf[cc], size - cc, ":");
-			cc += mj_snprint(&buf[cc], size - cc, &atom->value.v[i + 1]);
+			cc += mj_snprint(&buf[cc], size - cc, &atom->value.v[i + 1], encoded);
 			if (i + 1 < atom->c - 1) {
 				cc += snprintf(&buf[cc], size - cc, ", ");
 			}
@@ -258,7 +303,7 @@ mj_snprint(char *buf, size_t size, mj_t *atom)
 
 /* allocate and print the atom */
 int
-mj_asprint(char **buf, mj_t *atom)
+mj_asprint(char **buf, mj_t *atom, int encoded)
 {
 	int	 size;
 
@@ -266,8 +311,7 @@ mj_asprint(char **buf, mj_t *atom)
 	if ((*buf = calloc(1, (unsigned)(size + 1))) == NULL) {
 		return -1;
 	}
-	(void) mj_snprint(*buf, (unsigned)(size + 1), atom);
-	return size + 1;
+	return mj_snprint(*buf, (unsigned)(size + 1), atom, encoded) + 1;
 }
 
 /* read into a JSON tree from a string */
@@ -278,11 +322,11 @@ mj_parse(mj_t *atom, const char *s, int *from, int *to, int *tok)
 
 	switch(atom->type = *tok = gettok(s, from, to, tok)) {
 	case MJ_NUMBER:
-		atom->value.s = strnsave(&s[*from], *to - *from, 1);
+		atom->value.s = strnsave(&s[*from], *to - *from, MJ_JSON_ENCODE);
 		atom->c = atom->size = (unsigned)strlen(atom->value.s);
 		return gettok(s, from, to, tok);
 	case MJ_STRING:
-		atom->value.s = strnsave(&s[*from + 1], *to - *from - 2, 1);
+		atom->value.s = strnsave(&s[*from + 1], *to - *from - 2, MJ_HUMAN);
 		atom->c = atom->size = (unsigned)strlen(atom->value.s);
 		return gettok(s, from, to, tok);
 	case MJ_NULL:
@@ -364,7 +408,7 @@ mj_deepcopy(mj_t *dst, mj_t *src)
 	case MJ_STRING:
 	case MJ_NUMBER:
 		(void) memcpy(dst, src, sizeof(*dst));
-		dst->value.s = strnsave(src->value.s, -1, 0);
+		dst->value.s = strnsave(src->value.s, -1, MJ_HUMAN);
 		dst->c = dst->size = (unsigned)strlen(dst->value.s);
 		return 1;
 	case MJ_ARRAY:
@@ -399,6 +443,7 @@ mj_delete(mj_t *atom)
 		for (i = 0 ; i < atom->c ; i++) {
 			mj_delete(&atom->value.v[i]);
 		}
+		/* XXX - agc - causing problems? free(atom->value.v); */
 		break;
 	default:
 		break;
@@ -449,6 +494,8 @@ int
 mj_append(mj_t *atom, const char *type, ...)
 {
 	va_list	 args;
+	ssize_t	 len;
+	char	*s;
 
 	if (atom->type != MJ_ARRAY && atom->type != MJ_OBJECT) {
 		return 0;
@@ -456,7 +503,9 @@ mj_append(mj_t *atom, const char *type, ...)
 	ALLOC(mj_t, atom->value.v, atom->size, atom->c, 10, 10, "mj_append()", return 0);
 	va_start(args, type);
 	if (strcmp(type, "string") == 0) {
-		create_string(&atom->value.v[atom->c++], (char *)va_arg(args, char *));
+		s = (char *)va_arg(args, char *);
+		len = (ssize_t)va_arg(args, ssize_t);
+		create_string(&atom->value.v[atom->c++], s, len);
 	} else if (strcmp(type, "integer") == 0) {
 		create_integer(&atom->value.v[atom->c++], (int64_t)va_arg(args, int64_t));
 	} else if (strcmp(type, "object") == 0 || strcmp(type, "array") == 0) {
@@ -473,15 +522,19 @@ int
 mj_append_field(mj_t *atom, const char *name, const char *type, ...)
 {
 	va_list	 args;
+	ssize_t	 len;
+	char	*s;
 
 	if (atom->type != MJ_OBJECT) {
 		return 0;
 	}
-	mj_append(atom, "string", name);
+	mj_append(atom, "string", name, -1);
 	ALLOC(mj_t, atom->value.v, atom->size, atom->c, 10, 10, "mj_append_field()", return 0);
 	va_start(args, type);
 	if (strcmp(type, "string") == 0) {
-		create_string(&atom->value.v[atom->c++], (char *)va_arg(args, char *));
+		s = (char *)va_arg(args, char *);
+		len = (ssize_t)va_arg(args, ssize_t);
+		create_string(&atom->value.v[atom->c++], s, len);
 	} else if (strcmp(type, "integer") == 0) {
 		create_integer(&atom->value.v[atom->c++], (int64_t)va_arg(args, int64_t));
 	} else if (strcmp(type, "object") == 0 || strcmp(type, "array") == 0) {
@@ -541,6 +594,7 @@ mj_pretty(mj_t *mj, void *vp, unsigned depth, const char *trailer)
 {
 	unsigned	 i;
 	FILE		*fp;
+	char		*s;
 
 	fp = (FILE *)vp;
 	switch(mj->type) {
@@ -552,7 +606,9 @@ mj_pretty(mj_t *mj, void *vp, unsigned depth, const char *trailer)
 		break;
 	case MJ_STRING:
 		indent(fp, depth, NULL);
-		(void) fprintf(fp, "\"%s\"", mj->value.s);
+		mj_asprint(&s, mj, MJ_HUMAN);
+		(void) fprintf(fp, "\"%s\"", s);
+		free(s);
 		break;
 	case MJ_ARRAY:
 		indent(fp, depth, "[\n");
@@ -572,4 +628,26 @@ mj_pretty(mj_t *mj, void *vp, unsigned depth, const char *trailer)
 	}
 	indent(fp, 0, trailer);
 	return 1;
+}
+
+/* show the contents of the simple atom as a string representation */
+const char *
+mj_string_rep(mj_t *atom)
+{
+	if (atom == NULL) {
+		return 0;
+	}
+	switch(atom->type) {
+	case MJ_STRING:
+	case MJ_NUMBER:
+		return atom->value.s;
+	case MJ_NULL:
+		return "null";
+	case MJ_FALSE:
+		return "false";
+	case MJ_TRUE:
+		return "true";
+	default:
+		return NULL;
+	}
 }

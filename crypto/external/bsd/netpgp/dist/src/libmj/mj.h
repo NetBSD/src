@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010 Alistair Crooks <agc@NetBSD.org>
+ * Copyright (c) 2010,2011 Alistair Crooks <agc@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef MJ_H_
-#define MJ_H_	20100718
+#define MJ_H_	20110607
 
 enum {
 	MJ_NULL		= 1,
@@ -32,7 +32,12 @@ enum {
 	MJ_NUMBER	= 4,
 	MJ_STRING	= 5,
 	MJ_ARRAY	= 6,
-	MJ_OBJECT	= 7
+	MJ_OBJECT	= 7,
+
+	MJ_LAST		= MJ_OBJECT,
+
+	MJ_HUMAN	= 0,	/* human readable, not encoded */
+	MJ_JSON_ENCODE	= 1	/* encoded JSON */
 };
 
 /* a minimalist JSON node */
@@ -47,23 +52,28 @@ typedef struct mj_t {
 } mj_t;
 
 /* creation and deletion */
-int mj_create(mj_t *, const char *, ...);
-int mj_parse(mj_t *, const char *, int *, int *, int *);
-int mj_append(mj_t *, const char *, ...);
-int mj_append_field(mj_t *, const char *, const char *, ...);
-int mj_deepcopy(mj_t *, mj_t *);
-void mj_delete(mj_t *);
+int mj_create(mj_t */*atom*/, const char */*type*/, .../*value*/);
+int mj_parse(mj_t */*atom*/, const char */*s*/, int */*from*/,
+		int */*to*/, int */*token*/);
+int mj_append(mj_t */*atom*/, const char */*type*/, .../*value*/);
+int mj_append_field(mj_t */*atom*/, const char */*name*/, const char */*type*/,
+		.../*value*/);
+int mj_deepcopy(mj_t */*dst*/, mj_t */*src*/);
+void mj_delete(mj_t */*atom*/);
 
 /* JSON object access */
-int mj_arraycount(mj_t *);
-int mj_object_find(mj_t *, const char *, const unsigned, const unsigned);
-mj_t *mj_get_atom(mj_t *, ...);
-int mj_lint(mj_t *);
+int mj_arraycount(mj_t */*atom*/);
+int mj_object_find(mj_t */*atom*/, const char */*name*/,
+		const unsigned /*from*/, const unsigned /*incr*/);
+mj_t *mj_get_atom(mj_t */*atom*/, ...);
+int mj_lint(mj_t */*atom*/);
 
 /* textual output */
-int mj_snprint(char *, size_t, mj_t *);
-int mj_asprint(char **, mj_t *);
-int mj_string_size(mj_t *);
-int mj_pretty(mj_t *, void *, unsigned, const char *);
+int mj_snprint(char */*buf*/, size_t /*size*/, mj_t */*atom*/, int /*encoded*/);
+int mj_asprint(char **/*bufp*/, mj_t */*atom*/, int /*encoded*/);
+int mj_string_size(mj_t */*atom*/);
+int mj_pretty(mj_t */*atom*/, void */*fp*/, unsigned /*depth*/,
+		const char */*trailer*/);
+const char *mj_string_rep(mj_t */*atom*/);
 
 #endif

@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.49 2010/11/15 08:50:32 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.50 2011/06/25 00:37:44 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -1039,7 +1039,7 @@ pgp_keyring_json(pgp_io_t *io, const pgp_keyring_t *keyring, mj_t *obj, const in
 	if (pgp_get_debug_level(__FILE__)) {
 		char	*s;
 
-		mj_asprint(&s, obj);
+		mj_asprint(&s, obj, MJ_JSON_ENCODE);
 		(void) fprintf(stderr, "pgp_keyring_json: '%s'\n", s);
 		free(s);
 	}

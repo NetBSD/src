@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.89 2011/01/03 05:34:53 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.90 2011/06/25 00:37:44 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -509,7 +509,8 @@ p(FILE *fp, const char *s, ...)
 static void
 pobj(FILE *fp, mj_t *obj, int depth)
 {
-	unsigned	i;
+	unsigned	 i;
+	char		*s;
 
 	if (obj == NULL) {
 		(void) fprintf(stderr, "No object found\n");
@@ -528,7 +529,10 @@ pobj(FILE *fp, mj_t *obj, int depth)
 		p(fp, obj->value.s, NULL);
 		break;
 	case MJ_STRING:
-		(void) fprintf(fp, "%.*s", (int)(obj->c), obj->value.s);
+		if ((i = mj_asprint(&s, obj, MJ_HUMAN)) > 2) {
+			(void) fprintf(fp, "%.*s", (int)i - 2, &s[1]);
+			free(s);
+		}
 		break;
 	case MJ_ARRAY:
 		for (i = 0 ; i < obj->c ; i++) {
@@ -582,7 +586,7 @@ format_json_key(FILE *fp, mj_t *obj, const int psigs)
 	int	 i;
 
 	if (pgp_get_debug_level(__FILE__)) {
-		mj_asprint(&s, obj);
+		mj_asprint(&s, obj, MJ_HUMAN);
 		(void) fprintf(stderr, "formatobj: json is '%s'\n", s);
 		free(s);
 	}
@@ -919,7 +923,7 @@ netpgp_list_keys(netpgp_t *netpgp, const int psigs)
 	return pgp_keyring_list(netpgp->io, netpgp->pubring, psigs);
 }
 
-/* list the keys in a keyring, returning a JSON string */
+/* list the keys in a keyring, returning a JSON encoded string */
 int
 netpgp_list_keys_json(netpgp_t *netpgp, char **json, const int psigs)
 {
@@ -935,7 +939,7 @@ netpgp_list_keys_json(netpgp_t *netpgp, char **json, const int psigs)
 		(void) fprintf(stderr, "No keys in keyring\n");
 		return 0;
 	}
-	ret = mj_asprint(json, &obj);
+	ret = mj_asprint(json, &obj, MJ_JSON_ENCODE);
 	mj_delete(&obj);
 	return ret;
 }
@@ -1033,7 +1037,7 @@ netpgp_match_keys_json(netpgp_t *netpgp, char **json, char *name, const char *fm
 			k += 1;
 		}
 	} while (key != NULL);
-	ret = mj_asprint(json, &id_array);
+	ret = mj_asprint(json, &id_array, MJ_JSON_ENCODE);
 	mj_delete(&id_array);
 	return ret;
 }
