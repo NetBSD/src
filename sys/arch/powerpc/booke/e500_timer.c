@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_timer.c,v 1.2 2011/01/18 01:02:52 matt Exp $	*/
+/*	$NetBSD: e500_timer.c,v 1.3 2011/06/25 00:07:10 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_timer.c,v 1.2 2011/01/18 01:02:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_timer.c,v 1.3 2011/06/25 00:07:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -152,6 +152,8 @@ e500_clock_intr(void *v)
 	}
 
 	wrtee(0);	/* turn off interrupts */
+
+	tf->tf_srr1 &= ~PSL_POW;	/* make cpu_idle exit */
 
 	return 1;
 }
