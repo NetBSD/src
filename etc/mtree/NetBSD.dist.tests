@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.49 2011/05/30 18:14:11 njoly Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.50 2011/06/25 05:45:12 nonaka Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -88,6 +88,9 @@
 ./usr/libdata/debug/usr/tests/lib/libutil
 ./usr/libdata/debug/usr/tests/libexec
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso0
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso1
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso2
 ./usr/libdata/debug/usr/tests/modules
 ./usr/libdata/debug/usr/tests/net
 ./usr/libdata/debug/usr/tests/net/bpf
@@ -211,6 +214,10 @@
 ./usr/tests/lib/libutil
 ./usr/tests/libexec
 ./usr/tests/libexec/ld.elf_so
+./usr/tests/libexec/ld.elf_so/data
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2
 ./usr/tests/modules
 ./usr/tests/net
 ./usr/tests/net/bpf
