@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.3 2011/06/25 20:13:03 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.4 2011/06/25 20:27:01 christos Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -202,7 +202,7 @@ ftp_cmd(conn_t *conn, const char *fmt, ...)
 	va_list ap;
 	size_t len;
 	char *msg;
-	int r;
+	ssize_t r;
 
 	va_start(ap, fmt);
 	len = vasprintf(&msg, fmt, ap);
@@ -229,7 +229,7 @@ ftp_cmd(conn_t *conn, const char *fmt, ...)
  * Return a pointer to the filename part of a path
  */
 static const char *
-ftp_filename(const char *file, int *len, int *type, int subdir)
+ftp_filename(const char *file, size_t *len, int *type, int subdir)
 {
 	const char *s;
 
@@ -256,6 +256,7 @@ ftp_pwd(conn_t *conn, char **pwd)
 {
 	char *src, *dst, *end;
 	int q;
+	size_t len;
 
 	if (conn->err != FTP_WORKING_DIRECTORY &&
 	    conn->err != FTP_FILE_ACTION_OK)
@@ -264,7 +265,8 @@ ftp_pwd(conn_t *conn, char **pwd)
 	src = conn->buf + 4;
 	if (src >= end || *src++ != '"')
 		return (FTP_PROTOCOL_ERROR);
-	*pwd = malloc(end - src + 1);
+	len = end - src + 1;
+	*pwd = malloc(len);
 	if (*pwd == NULL)
 		return (FTP_PROTOCOL_ERROR);
 	for (q = 0, dst = *pwd; src < end; ++src) {
@@ -295,7 +297,8 @@ ftp_cwd(conn_t *conn, const char *path, int subdir)
 {
 	const char *beg, *end;
 	char *pwd, *dst;
-	int e, i, len;
+	int e;
+	size_t i, len;
 
 	if (*path != '/') {
 		ftp_seterr(501);
@@ -342,7 +345,7 @@ ftp_cwd(conn_t *conn, const char *path, int subdir)
 		len = strlen(pwd);
 
 		/* Look for a common prefix between PWD and dir to fetch. */
-		for (i = 0; i <= len && i <= end - dst; ++i)
+		for (i = 0; i <= len && i <= (size_t)(end - dst); ++i)
 			if (pwd[i] != dst[i])
 				break;
 		/* Keep going up a dir until we have a matching prefix. */
@@ -409,6 +412,7 @@ ftp_mode_type(conn_t *conn, int mode, int type)
 	case 0:
 	case 's':
 		mode = 'S';
+		/*FALLTHROUGH*/
 	case 'S':
 		break;
 	default:
@@ -437,14 +441,17 @@ ftp_mode_type(conn_t *conn, int mode, int type)
 	case 0:
 	case 'i':
 		type = 'I';
+		/*FALLTHROUGH*/
 	case 'I':
 		break;
 	case 'a':
 		type = 'A';
+		/*FALLTHROUGH*/
 	case 'A':
 		break;
 	case 'd':
 		type = 'D';
+		/*FALLTHROUGH*/
 	case 'D':
 		/* can't handle yet */
 	default:
@@ -464,7 +471,8 @@ ftp_stat(conn_t *conn, const char *file, struct url_stat *us)
 {
 	char *ln;
 	const char *filename;
-	int filenamelen, type;
+	size_t filenamelen;
+	int type;
 	struct tm tm;
 	time_t t;
 	int e;
@@ -552,7 +560,7 @@ static ssize_t
 ftp_readfn(void *v, void *buf, size_t len)
 {
 	struct ftpio *io;
-	int r;
+	ssize_t r;
 
 	io = (struct ftpio *)v;
 	if (io == NULL) {
@@ -585,7 +593,7 @@ static ssize_t
 ftp_writefn(void *v, const void *buf, size_t len)
 {
 	struct ftpio *io;
-	int w;
+	ssize_t w;
 
 	io = (struct ftpio *)v;
 	if (io == NULL) {
@@ -619,7 +627,6 @@ static void
 ftp_closefn(void *v)
 {
 	struct ftpio *io;
-	int r;
 
 	io = (struct ftpio *)v;
 	if (io == NULL) {
@@ -635,7 +642,7 @@ ftp_closefn(void *v)
 	fetch_close(io->dconn);
 	io->dconn = NULL;
 	io->dir = -1;
-	r = ftp_chkerr(io->cconn);
+	(void)ftp_chkerr(io->cconn);
 	fetch_cache_put(io->cconn, ftp_disconnect);
 	free(io);
 	return;
@@ -676,7 +683,8 @@ ftp_transfer(conn_t *conn, const char *oper, const char *file, const char *op_ar
 	} u;
 	const char *bindaddr;
 	const char *filename;
-	int filenamelen, type;
+	size_t filenamelen;
+	int type;
 	int low, pasv, verbose;
 	int e, sd = -1;
 	socklen_t l;
@@ -759,7 +767,7 @@ retry_mode:
 			}
 			l = (e == FTP_PASSIVE_MODE ? 6 : 21);
 			for (i = 0; *p && i < l; i++, p++)
-				addr[i] = strtol(p, &p, 10);
+				addr[i] = (unsigned char)strtol(p, &p, 10);
 			if (i < l) {
 				e = FTP_PROTOCOL_ERROR;
 				goto ouch;
@@ -861,7 +869,7 @@ retry_mode:
 #ifdef IPV6_PORTRANGE
 			arg = low ? IPV6_PORTRANGE_DEFAULT : IPV6_PORTRANGE_HIGH;
 			if (setsockopt(sd, IPPROTO_IPV6, IPV6_PORTRANGE,
-				(char *)&arg, sizeof(arg)) == -1)
+				&arg, (socklen_t)sizeof(arg)) == -1)
 				goto sysouch;
 #endif
 			break;
@@ -870,7 +878,7 @@ retry_mode:
 #ifdef IP_PORTRANGE
 			arg = low ? IP_PORTRANGE_DEFAULT : IP_PORTRANGE_HIGH;
 			if (setsockopt(sd, IPPROTO_IP, IP_PORTRANGE,
-				(char *)&arg, sizeof(arg)) == -1)
+				&arg, (socklen_t)sizeof(arg)) == -1)
 				goto sysouch;
 #endif
 			break;
@@ -892,14 +900,14 @@ retry_mode:
 			e = ftp_cmd(conn, "PORT %d,%d,%d,%d,%d,%d\r\n",
 			    (a >> 24) & 0xff, (a >> 16) & 0xff,
 			    (a >> 8) & 0xff, a & 0xff,
-			    (p >> 8) & 0xff, p & 0xff);
+			    ((unsigned int)p >> 8) & 0xff, p & 0xff);
 			break;
 		case AF_INET6:
 #define UC(b)	(((int)b)&0xff)
 			e = -1;
 			u.sin6.sin6_scope_id = 0;
 			if (getnameinfo(&u.sa, l,
-				hname, sizeof(hname),
+				hname, (socklen_t)sizeof(hname),
 				NULL, 0, NI_NUMERICHOST) == 0) {
 				e = ftp_cmd(conn, "EPRT |%d|%s|%d|\r\n", 2, hname,
 				    htons(u.sin6.sin6_port));
@@ -907,7 +915,7 @@ retry_mode:
 					goto ouch;
 			}
 			if (e != FTP_OK) {
-				ap = (char *)&u.sin6.sin6_addr;
+				ap = (char *)(void *)&u.sin6.sin6_addr;
 				e = ftp_cmd(conn,
 				    "LPRT %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\r\n",
 				    6, 16,
@@ -916,7 +924,7 @@ retry_mode:
 				    UC(ap[8]), UC(ap[9]), UC(ap[10]), UC(ap[11]),
 				    UC(ap[12]), UC(ap[13]), UC(ap[14]), UC(ap[15]),
 				    2,
-				    (ntohs(u.sin6.sin6_port) >> 8) & 0xff,
+				    ((unsigned int)ntohs(u.sin6.sin6_port) >> 8) & 0xff,
 				    ntohs(u.sin6.sin6_port)        & 0xff);
 			}
 			break;

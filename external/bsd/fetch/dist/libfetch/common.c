@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.1.1.9 2010/03/24 20:51:41 joerg Exp $	*/
+/*	$NetBSD: common.c,v 1.2 2011/06/25 20:27:01 christos Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -539,7 +539,7 @@ fetch_read(conn_t *conn, char *buf, size_t len)
 		}
 #ifdef WITH_SSL
 		if (conn->ssl != NULL)
-			rlen = SSL_read(conn->ssl, buf, len);
+			rlen = SSL_read(conn->ssl, buf, (int)len);
 		else
 #endif
 			rlen = read(conn->sd, buf, len);
@@ -588,7 +588,7 @@ fetch_getln(conn_t *conn)
 			return (-1);
 		if (len == 0)
 			break;
-		next = memchr(conn->buf + conn->buflen, '\n', len);
+		next = memchr(conn->buf + conn->buflen, '\n', (size_t)len);
 		conn->buflen += len;
 		if (conn->buflen == conn->bufsize && next == NULL) {
 			tmp = conn->buf;
@@ -674,7 +674,7 @@ fetch_write(conn_t *conn, const void *buf, size_t len)
 		errno = 0;
 #ifdef WITH_SSL
 		if (conn->ssl != NULL)
-			wlen = SSL_write(conn->ssl, buf, len);
+			wlen = SSL_write(conn->ssl, buf, (int)len);
 		else
 #endif
 #ifndef MSG_NOSIGNAL
