@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2009/08/30 19:24:40 plunky Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2011/06/25 09:28:45 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@ __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc.\
   Copyright (c) 2006 Itronix, Inc.\
   Copyright (c) 2004 Maksim Yevmenkin m_evmenkin@yahoo.com.\
   All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.7 2009/08/30 19:24:40 plunky Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2011/06/25 09:28:45 plunky Exp $");
 
 #include <errno.h>
 #include <grp.h>
@@ -155,7 +155,8 @@ main(int argc, char *argv[])
 static bool
 drop_root(char const *user, char const *group)
 {
-	int	 uid, gid;
+	gid_t	gid;
+	uid_t	uid;
 	char	*ep;
 
 	if ((uid = getuid()) != 0) {
