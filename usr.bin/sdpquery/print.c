@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.13 2011/06/24 20:53:56 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.14 2011/06/25 09:16:52 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.13 2011/06/24 20:53:56 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.14 2011/06/25 09:16:52 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -67,7 +67,7 @@ static const char *string_uuid(uuid_t *);
 static const char *string_vis(int, const char *, size_t);
 
 static void print_hexdump(const char *, const uint8_t *, size_t);
-static bool print_attribute(uint16_t, sdp_data_t *, attr_t *, int);
+static bool print_attribute(uint16_t, sdp_data_t *, attr_t *, size_t);
 static bool print_universal_attribute(uint16_t, sdp_data_t *);
 static bool print_language_attribute(uint16_t, sdp_data_t *);
 static bool print_service_attribute(uint16_t, sdp_data_t *);
@@ -481,7 +481,8 @@ print_record(sdp_data_t *rec)
 	while (sdp_get_attr(rec, &id, &value)) {
 		if (Xflag) {
 			printf("AttributeID 0x%04x:\n", id);
-			print_hexdump("     ", value.next, value.end - value.next);
+			print_hexdump("     ", value.next,
+			    (size_t)(value.end - value.next));
 		} else if (Rflag) {
 			printf("AttributeID 0x%04x:\n", id);
 			sdp_data_print(&value, 4);
@@ -585,9 +586,9 @@ print_hexdump(const char *title, const uint8_t *data, size_t len)
 }
 
 static bool
-print_attribute(uint16_t id, sdp_data_t *value, attr_t *attr, int count)
+print_attribute(uint16_t id, sdp_data_t *value, attr_t *attr, size_t count)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < count; i++) {
 		if (id == attr[i].id) {
