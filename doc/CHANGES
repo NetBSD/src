@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1570 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1571 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1046,3 +1046,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	GMP: Import GNU MP 5.0.2.  [mrg 20110619]
 	sandpoint: Add support for booting from RAID 1 [jdc 20110620]
 	GCC: Import version 4.5.3.  [mrg 20110620]
+	ld.elf_so(1): Support ELF symbol versioning. [nonaka 20110625]
