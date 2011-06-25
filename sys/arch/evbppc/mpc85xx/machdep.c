@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2011/06/23 01:27:20 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2011/06/25 00:07:10 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -752,7 +752,7 @@ e500_ipi_halt(void)
 	msr = wrtee(0);
 
 	hid0 = mfspr(SPR_HID0);
-	hid0 = (hid0 & ~HID0_TBEN) | HID0_DOZE;
+	hid0 = (hid0 & ~(HID0_TBEN|HID0_NAP|HID0_SLEEP)) | HID0_DOZE;
 	mtspr(SPR_HID0, hid0);
 
 	msr = (msr & ~(PSL_EE|PSL_CE|PSL_ME)) | PSL_WE;
@@ -778,8 +778,13 @@ initppc(vaddr_t startkernel, vaddr_t endkernel,
 	printf(" initppc(%#"PRIxVADDR", %#"PRIxVADDR", %p, %p, %p, %p)<enter>",
 	    startkernel, endkernel, a0, a1, a2, a3);
 
+	/*
+	 * Make sure we don't enter NAP or SLEEP if PSL_POW (MSR[WE]) is set.
+	 * DOZE is ok.
+	 */
 	const register_t hid0 = mfspr(SPR_HID0);
-	mtspr(SPR_HID0, hid0 | HID0_TBEN | HID0_EMCP);
+	mtspr(SPR_HID0,
+	    (hid0 & ~(HID0_NAP | HID0_SLEEP)) | HID0_TBEN | HID0_EMCP | HID0_DOZE);
 #ifdef CADMUS
 	/*
 	 * Need to cache this from cadmus since we need to unmap cadmus since
@@ -1063,6 +1068,8 @@ cpu_startup(void)
 {
 	struct cpu_info * const ci = curcpu();
 	const uint16_t svr = getsvr();
+
+	powersave = 0;	/* we can do it but turn it on by default */
 
 	booke_cpu_startup(socname(mfspr(SPR_SVR)));
 
