@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.31 2011/02/13 16:01:39 wiz Exp $
+.\"	$NetBSD: dlfcn.3,v 1.32 2011/06/25 05:45:11 nonaka Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,6 +34,7 @@
 .Nm dlopen ,
 .Nm dlclose ,
 .Nm dlsym ,
+.Nm dlvsym ,
 .Nm dladdr ,
 .Nm dlctl ,
 .Nm dlerror
@@ -50,6 +51,8 @@ dynamically linked program automatically.)
 .Fn dlclose "void *handle"
 .Ft "void *"
 .Fn dlsym "void * restrict handle" "const char * restrict symbol"
+.Ft "void *"
+.Fn dlvsym "void * restrict handle" "const char * restrict symbol" "const char *version"
 .Ft "int"
 .Fn dladdr "void * restrict addr" "Dl_info * restrict dli"
 .Ft "int"
@@ -153,6 +156,7 @@ returns a
 to be used in calls to
 .Fn dlclose ,
 .Fn dlsym ,
+.Fn dlvsym ,
 and
 .Fn dlctl .
 If the named shared object has already
@@ -233,6 +237,18 @@ is limited to the shared object issuing the call to
 .Fn dlsym
 and those shared objects which were loaded after it that are visible.
 .El
+.Pp
+.Fn dlvsym
+does the same as
+.Fn dlsym
+but takes a
+.Fa version
+string as an additional argument.
+Both the
+.Fa symbol
+and the
+.Fa version
+must match in order for the symbol to be resolved.
 .Pp
 .Fn dladdr
 examines all currently mapped shared objects for a symbol whose address --

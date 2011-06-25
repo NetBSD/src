@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.105 2011/03/29 20:56:35 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.106 2011/06/25 05:45:12 nonaka Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -104,6 +104,16 @@ typedef struct _rtld_search_path_t {
 	size_t          sp_pathlen;
 } Search_Path;
 
+typedef struct Struct_Ver_Entry {
+	Elf_Word        hash;
+	u_int           flags;
+	const char     *name;
+	const char     *file;
+} Ver_Entry;
+
+/* Ver_Entry.flags */
+#define VER_INFO_HIDDEN	0x01
+
 
 #define RTLD_MAX_ENTRY 10
 #define RTLD_MAX_LIBRARY 4
@@ -184,6 +194,7 @@ typedef struct Struct_Obj_Entry {
 	/* Entry points for dlopen() and friends. */
 	void           *(*dlopen)(const char *, int);
 	void           *(*dlsym)(void *, const char *);
+	void           *(*dlvsym)(void *, const char *, const char *);
 	char           *(*dlerror)(void);
 	int             (*dlclose)(void *);
 	int             (*dladdr)(const void *, Dl_info *);
@@ -251,6 +262,17 @@ typedef struct Struct_Obj_Entry {
 	size_t		tlsoffset;	/* Offset in the static TLS block */
 	size_t		tlsalign;	/* Needed alignment for static TLS */
 #endif
+
+	/* symbol versioning */
+	const Elf_Verneed *verneed;	/* Required versions. */
+	Elf_Word	verneednum;	/* Number of entries in verneed table */
+	const Elf_Verdef  *verdef;	/* Provided versions. */
+	Elf_Word	verdefnum;	/* Number of entries in verdef table */
+	const Elf_Versym *versyms;	/* Symbol versions table */
+
+	Ver_Entry	*vertab;	/* Versions required/defined by this
+					 * object */
+	int		vertabnum;	/* Number of entries in vertab */
 } Obj_Entry;
 
 typedef struct Struct_DoneList {
@@ -278,6 +300,11 @@ extern Objlist _rtld_list_main;
 extern Elf_Sym _rtld_sym_zero;
 
 #define	RTLD_MODEMASK 0x3
+
+/* Flags to be passed into _rtld_symlook_ family of functions. */
+#define SYMLOOK_IN_PLT	0x01	/* Lookup for PLT symbol */
+#define SYMLOOK_DLSYM	0x02	/* Return newes versioned symbol.
+				   Used by dlsym. */
 
 /* Flags for _rtld_load_object() and friends. */
 #define	_RTLD_GLOBAL	0x01	/* Add object to global DAG. */
@@ -352,22 +379,43 @@ Obj_Entry *_rtld_load_library(const char *, const Obj_Entry *, int);
 /* symbol.c */
 unsigned long _rtld_elf_hash(const char *);
 const Elf_Sym *_rtld_symlook_obj(const char *, unsigned long,
-    const Obj_Entry *, bool);
+    const Obj_Entry *, u_int, const Ver_Entry *);
 const Elf_Sym *_rtld_find_symdef(unsigned long, const Obj_Entry *,
-    const Obj_Entry **, bool);
+    const Obj_Entry **, u_int);
 const Elf_Sym *_rtld_find_plt_symdef(unsigned long, const Obj_Entry *, 
     const Obj_Entry **, bool);
 
 const Elf_Sym *_rtld_symlook_list(const char *, unsigned long,
-    const Objlist *, const Obj_Entry **, bool, DoneList *);
+    const Objlist *, const Obj_Entry **, u_int, const Ver_Entry *, DoneList *);
 const Elf_Sym *_rtld_symlook_default(const char *, unsigned long,
-    const Obj_Entry *, const Obj_Entry **, bool);
+    const Obj_Entry *, const Obj_Entry **, u_int, const Ver_Entry *);
 const Elf_Sym *_rtld_symlook_needed(const char *, unsigned long,
-    const Needed_Entry *, const Obj_Entry **, bool,
+    const Needed_Entry *, const Obj_Entry **, u_int, const Ver_Entry *,
     DoneList *, DoneList *);
 #ifdef COMBRELOC
 void _rtld_combreloc_reset(const Obj_Entry *);
 #endif
+
+/* symver.c */
+int _rtld_object_match_name(const Obj_Entry *, const char *);
+int _rtld_verify_object_versions(Obj_Entry *);
+
+static __inline const Ver_Entry *
+_rtld_fetch_ventry(const Obj_Entry *obj, unsigned long symnum)
+{
+	Elf_Half vernum;
+
+	if (obj->vertab) {
+		vernum = VER_NDX(obj->versyms[symnum].vs_vers);
+		if (vernum >= obj->vertabnum) {
+			_rtld_error("%s: symbol %s has wrong verneed value %d",
+			    obj->path, &obj->strtab[symnum], vernum);
+		} else if (obj->vertab[vernum].hash) {
+			return &obj->vertab[vernum];
+		}
+	}
+	return NULL;
+}
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 /* tls.c */
