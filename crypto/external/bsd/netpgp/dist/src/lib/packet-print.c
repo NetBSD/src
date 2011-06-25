@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.40 2010/11/15 08:50:32 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.41 2011/06/25 00:37:44 agc Exp $");
 #endif
 
 #include <string.h>
@@ -493,12 +493,12 @@ pgp_sprint_mj(pgp_io_t *io, const pgp_keyring_t *keyring,
 	}
 	(void) memset(keyjson, 0x0, sizeof(*keyjson));
 	mj_create(keyjson, "object");
-	mj_append_field(keyjson, "header", "string", header);
+	mj_append_field(keyjson, "header", "string", header, -1);
 	mj_append_field(keyjson, "key bits", "integer", (int64_t) numkeybits(pubkey));
-	mj_append_field(keyjson, "pka", "string", pgp_show_pka(pubkey->alg));
-	mj_append_field(keyjson, "key id", "string", strhexdump(keyid, key->sigid, PGP_KEY_ID_SIZE, ""));
+	mj_append_field(keyjson, "pka", "string", pgp_show_pka(pubkey->alg), -1);
+	mj_append_field(keyjson, "key id", "string", strhexdump(keyid, key->sigid, PGP_KEY_ID_SIZE, ""), -1);
 	mj_append_field(keyjson, "fingerprint", "string",
-		strhexdump(fp, key->sigfingerprint.fingerprint, key->sigfingerprint.length, " "));
+		strhexdump(fp, key->sigfingerprint.fingerprint, key->sigfingerprint.length, " "), -1);
 	mj_append_field(keyjson, "birthtime", "integer", pubkey->birthtime);
 	mj_append_field(keyjson, "duration", "integer", pubkey->duration);
 	for (i = 0; i < key->uidc; i++) {
@@ -508,8 +508,8 @@ pgp_sprint_mj(pgp_io_t *io, const pgp_keyring_t *keyring,
 		}
 		(void) memset(&sub_obj, 0x0, sizeof(sub_obj));
 		mj_create(&sub_obj, "array");
-		mj_append(&sub_obj, "string", key->uids[i]);
-		mj_append(&sub_obj, "string", (r >= 0) ? "[REVOKED]" : "");
+		mj_append(&sub_obj, "string", key->uids[i], -1);
+		mj_append(&sub_obj, "string", (r >= 0) ? "[REVOKED]" : "", -1);
 		mj_append_field(keyjson, "uid", "array", &sub_obj);
 		mj_delete(&sub_obj);
 		for (j = 0 ; j < key->subsigc ; j++) {
@@ -530,21 +530,21 @@ pgp_sprint_mj(pgp_io_t *io, const pgp_keyring_t *keyring,
 					key->subsigs[j].sig.info.type == PGP_SIG_SUBKEY) {
 				mj_append(&sub_obj, "integer", (int64_t)numkeybits(&key->enckey));
 				mj_append(&sub_obj, "string",
-					(const char *)pgp_show_pka(key->enckey.alg));
+					(const char *)pgp_show_pka(key->enckey.alg), -1);
 				mj_append(&sub_obj, "string",
-					strhexdump(keyid, key->encid, PGP_KEY_ID_SIZE, ""));
+					strhexdump(keyid, key->encid, PGP_KEY_ID_SIZE, ""), -1);
 				mj_append(&sub_obj, "integer", (int64_t)key->enckey.birthtime);
 				mj_append_field(keyjson, "encryption", "array", &sub_obj);
 				mj_delete(&sub_obj);
 			} else {
 				mj_append(&sub_obj, "string",
-					strhexdump(keyid, key->subsigs[j].sig.info.signer_id, PGP_KEY_ID_SIZE, ""));
+					strhexdump(keyid, key->subsigs[j].sig.info.signer_id, PGP_KEY_ID_SIZE, ""), -1);
 				mj_append(&sub_obj, "integer",
 					(int64_t)(key->subsigs[j].sig.info.birthtime));
 				from = 0;
 				trustkey = pgp_getkeybyid(io, keyring, key->subsigs[j].sig.info.signer_id, &from, NULL);
 				mj_append(&sub_obj, "string",
-					(trustkey) ? (char *)trustkey->uids[trustkey->uid0] : "[unknown]");
+					(trustkey) ? (char *)trustkey->uids[trustkey->uid0] : "[unknown]", -1);
 				mj_append_field(keyjson, "sig", "array", &sub_obj);
 				mj_delete(&sub_obj);
 			}
@@ -553,7 +553,7 @@ pgp_sprint_mj(pgp_io_t *io, const pgp_keyring_t *keyring,
 	if (pgp_get_debug_level(__FILE__)) {
 		char	*buf;
 
-		mj_asprint(&buf, keyjson);
+		mj_asprint(&buf, keyjson, 1);
 		(void) fprintf(stderr, "pgp_sprint_mj: '%s'\n", buf);
 		free(buf);
 	}
