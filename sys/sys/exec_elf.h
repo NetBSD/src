@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.112 2011/05/26 16:42:15 nonaka Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.113 2011/06/25 05:45:10 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -870,6 +870,11 @@ struct netbsd_elfcore_procinfo {
 #define	Elf_Off		Elf32_Off
 #define	Elf_SOff	Elf32_SOff
 #define	Elf_Nhdr	Elf32_Nhdr
+#define	Elf_Verdef	Elf32_Verdef
+#define	Elf_Verdaux	Elf32_Verdaux
+#define	Elf_Verneed	Elf32_Verneed
+#define	Elf_Vernaux	Elf32_Vernaux
+#define	Elf_Versym	Elf32_Versym
 
 #define	ELF_R_SYM	ELF32_R_SYM
 #define	ELF_R_TYPE	ELF32_R_TYPE
@@ -891,6 +896,11 @@ struct netbsd_elfcore_procinfo {
 #define	Elf_Off		Elf64_Off
 #define	Elf_SOff	Elf64_SOff
 #define	Elf_Nhdr	Elf64_Nhdr
+#define	Elf_Verdef	Elf64_Verdef
+#define	Elf_Verdaux	Elf64_Verdaux
+#define	Elf_Verneed	Elf64_Verneed
+#define	Elf_Vernaux	Elf64_Vernaux
+#define	Elf_Versym	Elf64_Versym
 
 #define	ELF_R_SYM	ELF64_R_SYM
 #define	ELF_R_TYPE	ELF64_R_TYPE
@@ -953,6 +963,11 @@ typedef struct {
 #define	VER_DEF_CURRENT		1
 
 /*
+ * These constants are used for Elf32_Verdef struct's vd_ndx.
+ */
+#define	VER_DEF_IDX(x)		VER_NDX(x)
+
+/*
  * These constants are used for Elf32_Verdef struct's vd_flags.  
  */
 #define VER_FLG_BASE		0x1
@@ -963,12 +978,23 @@ typedef struct {
  */
 #define	VER_NDX_LOCAL		0
 #define	VER_NDX_GLOBAL		1
+#define	VER_NDX_GIVEN		2
 
 /*
  * These constants are used for Elf32_Verneed struct's version number.  
  */
 #define	VER_NEED_NONE		0
 #define	VER_NEED_CURRENT	1
+
+/*
+ * These constants are used for Elf32_Vernaux struct's vna_other.
+ */
+#define	VER_NEED_HIDDEN		VER_NDX_HIDDEN
+#define	VER_NEED_IDX(x)		VER_NDX(x)
+
+/* index */
+#define	VER_NDX_HIDDEN		0x8000
+#define	VER_NDX(x)		((x) & ~VER_NDX_HIDDEN)
 
 /*
  * GNU Extension hidding symbol

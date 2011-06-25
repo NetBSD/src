@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1630 2011/06/14 15:27:46 jmmv Exp $
+#	$NetBSD: mi,v 1.1631 2011/06/25 05:45:11 nonaka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5814,6 +5814,7 @@
 ./usr/share/man/cat3/dlfcn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dlopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dlsym.0			comp-c-catman		.cat
+./usr/share/man/cat3/dlvsym.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dn_comp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dn_expand.0		comp-c-catman		.cat
@@ -11908,6 +11909,7 @@
 ./usr/share/man/html3/dlfcn.html		comp-c-htmlman		html
 ./usr/share/man/html3/dlopen.html		comp-c-htmlman		html
 ./usr/share/man/html3/dlsym.html		comp-c-htmlman		html
+./usr/share/man/html3/dlvsym.html		comp-c-htmlman		html
 ./usr/share/man/html3/dm.html			comp-c-htmlman		html
 ./usr/share/man/html3/dn_comp.html		comp-c-htmlman		html
 ./usr/share/man/html3/dn_expand.html		comp-c-htmlman		html
@@ -17911,6 +17913,7 @@
 ./usr/share/man/man3/dlfcn.3			comp-c-man		.man
 ./usr/share/man/man3/dlopen.3			comp-c-man		.man
 ./usr/share/man/man3/dlsym.3			comp-c-man		.man
+./usr/share/man/man3/dlvsym.3			comp-c-man		.man
 ./usr/share/man/man3/dm.3			comp-c-man		.man
 ./usr/share/man/man3/dn_comp.3			comp-c-man		.man
 ./usr/share/man/man3/dn_expand.3		comp-c-man		.man

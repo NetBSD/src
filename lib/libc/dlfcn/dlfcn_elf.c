@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn_elf.c,v 1.9 2011/03/12 21:55:09 joerg Exp $	*/
+/*	$NetBSD: dlfcn_elf.c,v 1.10 2011/06/25 05:45:11 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dlfcn_elf.c,v 1.9 2011/03/12 21:55:09 joerg Exp $");
+__RCSID("$NetBSD: dlfcn_elf.c,v 1.10 2011/06/25 05:45:11 nonaka Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: dlfcn_elf.c,v 1.9 2011/03/12 21:55:09 joerg Exp $");
 #define	dlopen		___dlopen
 #define	dlclose		___dlclose
 #define	dlsym		___dlsym
+#define	dlvsym		___dlvsym
 #define	dlerror		___dlerror
 #define	dladdr		___dladdr
 #define	dlinfo		___dlinfo
@@ -59,6 +60,7 @@ __RCSID("$NetBSD: dlfcn_elf.c,v 1.9 2011/03/12 21:55:09 joerg Exp $");
 __weak_alias(dlopen,___dlopen)
 __weak_alias(dlclose,___dlclose)
 __weak_alias(dlsym,___dlsym)
+__weak_alias(dlvsym,___dlvsym)
 __weak_alias(dlerror,___dlerror)
 __weak_alias(dladdr,___dladdr)
 __weak_alias(dlinfo,___dlinfo)
@@ -67,6 +69,7 @@ __weak_alias(dl_iterate_phdr,___dl_iterate_phdr)
 __weak_alias(__dlopen,___dlopen)
 __weak_alias(__dlclose,___dlclose)
 __weak_alias(__dlsym,___dlsym)
+__weak_alias(__dlvsym,___dlvsym)
 __weak_alias(__dlerror,___dlerror)
 __weak_alias(__dladdr,___dladdr)
 __weak_alias(__dlinfo,___dlinfo)
@@ -104,6 +107,14 @@ dlclose(void *fd)
 /*ARGSUSED*/
 void *
 dlsym(void *handle, const char *name)
+{
+
+	return NULL;
+}
+
+/*ARGSUSED*/
+void *
+dlvsym(void *handle, const char *name, const char *version)
 {
 
 	return NULL;
