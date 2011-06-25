@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.1.1.11 2010/03/24 20:51:44 joerg Exp $	*/
+/*	$NetBSD: ftp.c,v 1.2 2011/06/25 17:13:34 christos Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -1097,17 +1097,22 @@ static struct url *
 ftp_get_proxy(struct url * url, const char *flags)
 {
 	struct url *purl;
-	char *p;
+	char *p, *fp, *FP, *hp, *HP;
 
 	if (flags != NULL && strchr(flags, 'd') != NULL)
-		return (NULL);
+		return NULL;
 	if (fetch_no_proxy_match(url->host))
-		return (NULL);
-	if (((p = getenv("FTP_PROXY")) || (p = getenv("ftp_proxy")) ||
-		(p = getenv("HTTP_PROXY")) || (p = getenv("http_proxy"))) &&
+		return NULL;
+
+	FP = getenv("FTP_PROXY");
+	fp = getenv("ftp_proxy");
+	HP = getenv("HTTP_PROXY");
+	hp = getenv("http_proxy");
+
+	if (((p = FP) || (p = fp) || (p = HP) || (p = hp))) &&
 	    *p && (purl = fetchParseURL(p)) != NULL) {
 		if (!*purl->scheme) {
-			if (getenv("FTP_PROXY") || getenv("ftp_proxy"))
+			if (fp || FP)
 				strcpy(purl->scheme, SCHEME_FTP);
 			else
 				strcpy(purl->scheme, SCHEME_HTTP);
@@ -1116,10 +1121,10 @@ ftp_get_proxy(struct url * url, const char *flags)
 			purl->port = fetch_default_proxy_port(purl->scheme);
 		if (strcasecmp(purl->scheme, SCHEME_FTP) == 0 ||
 		    strcasecmp(purl->scheme, SCHEME_HTTP) == 0)
-			return (purl);
+			return purl;
 		fetchFreeURL(purl);
 	}
-	return (NULL);
+	return NULL;
 }
 
 /*
