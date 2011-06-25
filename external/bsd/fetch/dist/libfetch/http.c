@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.1.1.7 2010/01/30 21:26:14 joerg Exp $	*/
+/*	$NetBSD: http.c,v 1.2 2011/06/25 20:27:01 christos Exp $	*/
 /*-
  * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
@@ -146,7 +146,7 @@ struct httpio
 	char		*buf;		/* chunk buffer */
 	size_t		 bufsize;	/* size of chunk buffer */
 	ssize_t		 buflen;	/* amount of data currently in buffer */
-	int		 bufpos;	/* current read offset in buffer */
+	size_t		 bufpos;	/* current read offset in buffer */
 	int		 eof;		/* end-of-file flag */
 	int		 error;		/* error flag */
 	size_t		 chunksize;	/* remaining size of current chunk */
@@ -156,7 +156,7 @@ struct httpio
 /*
  * Get next chunk header
  */
-static int
+static ssize_t
 http_new_chunk(struct httpio *io)
 {
 	char *p;
@@ -205,7 +205,7 @@ http_growbuf(struct httpio *io, size_t len)
 /*
  * Fill the input buffer, do chunk decoding on the fly
  */
-static int
+static ssize_t
 http_fillbuf(struct httpio *io, size_t len)
 {
 	if (io->error)
@@ -286,7 +286,7 @@ http_readfn(void *v, void *buf, size_t len)
 
 	for (pos = 0; len > 0; pos += l, len -= l) {
 		/* empty buffer */
-		if (!io->buf || io->bufpos == io->buflen)
+		if (!io->buf || (ssize_t)io->bufpos == io->buflen)
 			if (http_fillbuf(io, len) < 1)
 				break;
 		l = io->buflen - io->bufpos;
@@ -325,7 +325,7 @@ http_closefn(void *v)
 
 		val = 0;
 		setsockopt(io->conn->sd, IPPROTO_TCP, TCP_NODELAY, &val,
-			   sizeof(val));
+			   (socklen_t)sizeof(val));
 			  fetch_cache_put(io->conn, fetch_close);
 #ifdef TCP_NOPUSH
 		val = 1;
@@ -410,7 +410,7 @@ http_cmd(conn_t *conn, const char *fmt, ...)
 	va_list ap;
 	size_t len;
 	char *msg;
-	int r;
+	ssize_t r;
 
 	va_start(ap, fmt);
 	len = vasprintf(&msg, fmt, ap);
@@ -604,7 +604,7 @@ http_base64(const char *src)
 	    "0123456789+/";
 	char *str, *dst;
 	size_t l;
-	int t, r;
+	unsigned int t, r;
 
 	l = strlen(src);
 	if ((str = malloc(((l + 2) / 3) * 4 + 1)) == NULL)
@@ -962,7 +962,7 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 #endif
 		val = 1;
 		setsockopt(conn->sd, IPPROTO_TCP, TCP_NODELAY, &val,
-			   sizeof(val));
+		    (socklen_t)sizeof(val));
 
 		/* get reply */
 		switch (http_get_reply(conn)) {
@@ -1238,7 +1238,8 @@ fetchGetHTTP(struct url *URL, const char *flags)
  * Store a file by HTTP
  */
 fetchIO *
-fetchPutHTTP(struct url *URL, const char *flags)
+/*ARGSUSED*/
+fetchPutHTTP(struct url *URL __unused, const char *flags __unused)
 {
 	fprintf(stderr, "fetchPutHTTP(): not implemented\n");
 	return (NULL);
@@ -1430,7 +1431,8 @@ static struct http_index_cache *index_cache;
  * List a directory
  */
 int
-fetchListHTTP(struct url_list *ue, struct url *url, const char *pattern, const char *flags)
+/*ARGSUSED*/
+fetchListHTTP(struct url_list *ue, struct url *url, const char *pattern __unused, const char *flags)
 {
 	fetchIO *f;
 	char buf[2 * PATH_MAX];
