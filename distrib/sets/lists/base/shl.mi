@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.587 2011/06/06 16:16:00 njoly Exp $
+# $NetBSD: shl.mi,v 1.588 2011/06/25 00:42:58 agc Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -321,8 +321,8 @@
 ./usr/lib/libmenu.so.6				base-sys-shlib
 ./usr/lib/libmenu.so.6.0			base-sys-shlib
 ./usr/lib/libmj.so				base-crypto-shlib	crypto
-./usr/lib/libmj.so.0				base-crypto-shlib	crypto
-./usr/lib/libmj.so.0.0				base-crypto-shlib	crypto
+./usr/lib/libmj.so.1				base-crypto-shlib	crypto
+./usr/lib/libmj.so.1.0				base-crypto-shlib	crypto
 ./usr/lib/libnetpgp.so				base-crypto-shlib	crypto
 ./usr/lib/libnetpgp.so.3			base-crypto-shlib	crypto
 ./usr/lib/libnetpgp.so.3.0			base-crypto-shlib	crypto
