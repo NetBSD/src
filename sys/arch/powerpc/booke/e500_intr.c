@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.12 2011/06/21 06:24:25 matt Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.13 2011/06/25 00:07:10 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -444,6 +444,7 @@ static inline void
 e500_splset(struct cpu_info *ci, int ipl)
 {
 	struct cpu_softc * const cpu = ci->ci_softc;
+
 	//KASSERT(!cpu_intr_p() || ipl >= IPL_VM);
 	KASSERT((curlwp->l_pflag & LP_INTR) == 0 || ipl != IPL_NONE);
 #if 0
@@ -454,7 +455,7 @@ e500_splset(struct cpu_info *ci, int ipl)
 	u_int ctpr = (ipl >= IPL_VM ? 15 : ipl);
 	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == old_ctpr);
 #else
-	u_int ctpr = IPL2CTPR(ipl);
+	const u_int ctpr = IPL2CTPR(ipl);
 	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == IPL2CTPR(ci->ci_cpl));
 #endif
 	openpic_write(cpu, OPENPIC_CTPR, ctpr);
@@ -951,6 +952,13 @@ e500_extintr(struct trapframe *tf)
 	e500_splset(ci, old_ipl);		/* and drop back */
 #endif
 
+	/*
+	 * If we interrupted while power-saving and we need to exit idle,
+	 * we need to clear PSL_POW so we won't go back into power-saving.
+	 */
+	if (__predict_false(tf->tf_srr1 & PSL_POW) && ci->ci_want_resched)
+		tf->tf_srr1 &= ~PSL_POW;
+
 //	printf("%s(%p): idepth=%d exit\n", __func__, tf, ci->ci_idepth);
 }
 
@@ -1047,6 +1055,9 @@ e500_idlespin(void)
 	    ("%s: cpu%u: CTPR (%d) != IPL_NONE", __func__, cpu_number(),
 	     CTPR2IPL(openpic_read(curcpu()->ci_softc, OPENPIC_CTPR))));
 	KASSERT(mfmsr() & PSL_EE);
+
+	if (powersave > 0)
+		mtmsr(mfmsr() | PSL_POW);
 }
 
 static void
