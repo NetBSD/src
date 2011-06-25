@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.150 2011/04/02 16:49:49 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.151 2011/06/25 05:45:12 nonaka Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.150 2011/04/02 16:49:49 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.151 2011/06/25 05:45:12 nonaka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -373,9 +373,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	char          **env, **oenvp;
 	const AuxInfo  *aux;
 	const AuxInfo  *auxp;
-#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 	Obj_Entry      *obj;
-#endif
 	Elf_Addr       *const osp = sp;
 	bool            bind_now = 0;
 	const char     *ld_bind_now, *ld_preload, *ld_library_path;
@@ -634,6 +632,12 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	dbg(("loading needed objects"));
 	if (_rtld_load_needed_objects(_rtld_objmain, _RTLD_MAIN) == -1)
 		_rtld_die();
+
+	dbg(("checking for required versions"));
+	for (obj = _rtld_objlist; obj != NULL; obj = obj->next) {
+		if (_rtld_verify_object_versions(obj) == -1)
+			_rtld_die();
+	}
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 	dbg(("initializing initial Thread Local Storage"));
@@ -930,6 +934,7 @@ dlopen(const char *name, int mode)
 	bool nodelete;
 	bool now;
 	sigset_t mask;
+	int result;
 
 	dbg(("dlopen of %s %d", name, mode));
 
@@ -956,10 +961,18 @@ dlopen(const char *name, int mode)
 		if (*old_obj_tail != NULL) {	/* We loaded something new. */
 			assert(*old_obj_tail == obj);
 
-			if (_rtld_load_needed_objects(obj, flags) == -1 ||
-			    (_rtld_init_dag(obj),
-			    _rtld_relocate_objects(obj,
-			    (now || obj->z_now))) == -1) {
+			result = _rtld_load_needed_objects(obj, flags);
+			if (result != -1) {
+				Objlist_Entry *entry;
+				_rtld_init_dag(obj);
+				SIMPLEQ_FOREACH(entry, &obj->dagmembers, link) {
+					result = _rtld_verify_object_versions(entry->obj);
+					if (result == -1)
+						break;
+				}
+			}
+			if (result == -1 || _rtld_relocate_objects(obj,
+			    (now || obj->z_now)) == -1) {
 				_rtld_unload_object(&mask, obj, false);
 				obj->dl_refcount--;
 				obj = NULL;
@@ -998,8 +1011,8 @@ _rtld_objmain_sym(const char *name)
 	obj = _rtld_objmain;
 	_rtld_donelist_init(&donelist);
 
-	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, false,
-	    &donelist);
+	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, 0,
+	    NULL, &donelist);
 
 	if (def != NULL)
 		return obj->relocbase + def->st_value;
@@ -1022,9 +1035,8 @@ hackish_return_address(void)
 #define	lookup_mutex_exit()	_rtld_shared_exit()
 #endif
 
-__strong_alias(__dlsym,dlsym)
-void *
-dlsym(void *handle, const char *name)
+static void *
+do_dlsym(void *handle, const char *name, const Ver_Entry *ventry)
 {
 	const Obj_Entry *obj;
 	unsigned long hash;
@@ -1032,11 +1044,10 @@ dlsym(void *handle, const char *name)
 	const Obj_Entry *defobj;
 	void *retaddr;
 	DoneList donelist;
+	const u_int flags = SYMLOOK_DLSYM | SYMLOOK_IN_PLT;
 #ifdef __HAVE_FUNCTION_DESCRIPTORS
 	sigset_t mask;
 #endif
-
-	dbg(("dlsym of %s in %p", name, handle));
 
 	lookup_mutex_enter();
 
@@ -1062,7 +1073,7 @@ dlsym(void *handle, const char *name)
 
 		switch ((intptr_t)handle) {
 		case (intptr_t)NULL:	 /* Just the caller's shared object. */
-			def = _rtld_symlook_obj(name, hash, obj, false);
+			def = _rtld_symlook_obj(name, hash, obj, flags, ventry);
 			defobj = obj;
 			break;
 
@@ -1073,7 +1084,7 @@ dlsym(void *handle, const char *name)
 		case (intptr_t)RTLD_SELF:	/* Caller included */
 			for (; obj; obj = obj->next) {
 				if ((def = _rtld_symlook_obj(name, hash, obj,
-				    false)) != NULL) {
+				    flags, ventry)) != NULL) {
 					defobj = obj;
 					break;
 				}
@@ -1082,7 +1093,7 @@ dlsym(void *handle, const char *name)
 
 		case (intptr_t)RTLD_DEFAULT:
 			def = _rtld_symlook_default(name, hash, obj, &defobj,
-			    false);
+			    flags, ventry);
 			break;
 
 		default:
@@ -1101,7 +1112,7 @@ dlsym(void *handle, const char *name)
 		if (obj->mainprog) {
 			/* Search main program and all libraries loaded by it */
 			def = _rtld_symlook_list(name, hash, &_rtld_list_main,
-			    &defobj, false, &donelist);
+			    &defobj, flags, ventry, &donelist);
 		} else {
 			Needed_Entry fake;
 			DoneList depth;
@@ -1113,7 +1124,7 @@ dlsym(void *handle, const char *name)
 
 			_rtld_donelist_init(&depth);
 			def = _rtld_symlook_needed(name, hash, &fake, &defobj,
-			    false, &donelist, &depth);
+			    flags, ventry, &donelist, &depth);
 		}
 
 		break;
@@ -1137,6 +1148,35 @@ dlsym(void *handle, const char *name)
 	_rtld_error("Undefined symbol \"%s\"", name);
 	lookup_mutex_exit();
 	return NULL;
+}
+
+__strong_alias(__dlsym,dlsym)
+void *
+dlsym(void *handle, const char *name)
+{
+
+	dbg(("dlsym of %s in %p", name, handle));
+
+	return do_dlsym(handle, name, NULL);
+}
+
+__strong_alias(__dlvsym,dlvsym)
+void *
+dlvsym(void *handle, const char *name, const char *version)
+{
+	Ver_Entry *ventry = NULL;
+	Ver_Entry ver_entry;
+
+	dbg(("dlvsym of %s@%s in %p", name, version ? version : NULL, handle));
+
+	if (version != NULL) {
+		ver_entry.name = version;
+		ver_entry.file = NULL;
+		ver_entry.hash = _rtld_elf_hash(version);
+		ver_entry.flags = 0;
+		ventry = &ver_entry;
+	}
+	return do_dlsym(handle, name, ventry);
 }
 
 __strong_alias(__dladdr,dladdr)

@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.40 2011/03/09 23:10:07 joerg Exp $	 */
+/*	$NetBSD: headers.c,v 1.41 2011/06/25 05:45:12 nonaka Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.40 2011/03/09 23:10:07 joerg Exp $");
+__RCSID("$NetBSD: headers.c,v 1.41 2011/06/25 05:45:12 nonaka Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -134,6 +134,29 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 		case DT_STRSZ:
 			obj->strsize = dynp->d_un.d_val;
+			break;
+
+		case DT_VERNEED:
+			obj->verneed = (const Elf_Verneed *)
+			    (obj->relocbase + dynp->d_un.d_ptr);
+			break;
+
+		case DT_VERNEEDNUM:
+			obj->verneednum = dynp->d_un.d_val;
+			break;
+
+		case DT_VERDEF:
+			obj->verdef = (const Elf_Verdef *)
+			    (obj->relocbase + dynp->d_un.d_ptr);
+			break;
+
+		case DT_VERDEFNUM:
+			obj->verdefnum = dynp->d_un.d_val;
+			break;
+
+		case DT_VERSYM:
+			obj->versyms = (const Elf_Versym *)
+			    (obj->relocbase + dynp->d_un.d_ptr);
 			break;
 
 		case DT_HASH:
