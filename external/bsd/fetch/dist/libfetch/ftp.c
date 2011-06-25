@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.2 2011/06/25 17:13:34 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.3 2011/06/25 20:13:03 christos Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -144,8 +144,8 @@ unmappedaddr(struct sockaddr_in6 *sin6, socklen_t *len)
 	if (sin6->sin6_family != AF_INET6 ||
 	    !IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
 		return;
-	sin4 = (struct sockaddr_in *)sin6;
-	addr = *(uint32_t *)&sin6->sin6_addr.s6_addr[12];
+	sin4 = (struct sockaddr_in *)(void *)sin6;
+	addr = *(uint32_t *)(void *)&sin6->sin6_addr.s6_addr[12];
 	port = sin6->sin6_port;
 	memset(sin4, 0, sizeof(struct sockaddr_in));
 	sin4->sin_addr.s_addr = addr;
@@ -1109,7 +1109,7 @@ ftp_get_proxy(struct url * url, const char *flags)
 	HP = getenv("HTTP_PROXY");
 	hp = getenv("http_proxy");
 
-	if (((p = FP) || (p = fp) || (p = HP) || (p = hp))) &&
+	if ((((p = FP) || (p = fp) || (p = HP) || (p = hp))) &&
 	    *p && (purl = fetchParseURL(p)) != NULL) {
 		if (!*purl->scheme) {
 			if (fp || FP)
