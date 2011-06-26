@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.248 2011/03/09 22:12:45 pooka Exp $
+	$NetBSD: syscalls.master,v 1.249 2011/06/26 17:05:24 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -51,6 +51,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
+#include <sys/socket.h>
 #include <sys/mount.h>
 #include <sys/sched.h>
 #include <sys/syscallargs.h>
@@ -106,13 +107,13 @@
 			    const struct msghdr *msg, int flags); }
 29	STD 	RUMP	{ ssize_t|sys||recvfrom(int s, void *buf, size_t len, \
 			    int flags, struct sockaddr *from, \
-			    unsigned int *fromlenaddr); }
+			    socklen_t *fromlenaddr); }
 30	STD	RUMP	{ int|sys||accept(int s, struct sockaddr *name, \
-			    unsigned int *anamelen); }
+			    socklen_t *anamelen); }
 31	STD	RUMP	{ int|sys||getpeername(int fdes, struct sockaddr *asa, \
-			    unsigned int *alen); }
+			    socklen_t *alen); }
 32	STD	RUMP	{ int|sys||getsockname(int fdes, struct sockaddr *asa, \
-			    unsigned int *alen); }
+			    socklen_t *alen); }
 33	STD 	RUMP	{ int|sys||access(const char *path, int flags); }
 34	STD 	 RUMP	{ int|sys||chflags(const char *path, u_long flags); }
 35	STD 	RUMP	{ int|sys||fchflags(int fd, u_long flags); }
@@ -206,9 +207,9 @@
 96	STD 		{ int|sys||setpriority(int which, id_t who, int prio); }
 97	COMPAT_30 MODULAR { int|sys||socket(int domain, int type, int protocol); }
 98	STD	RUMP	{ int|sys||connect(int s, const struct sockaddr *name, \
-			    unsigned int namelen); }
+			    socklen_t namelen); }
 99	COMPAT_43 MODULAR { int|sys||accept(int s, void *name, \
-			    int *anamelen); } oaccept
+			    socklen_t *anamelen); } oaccept
 100	STD 		{ int|sys||getpriority(int which, id_t who); }
 101	COMPAT_43 MODULAR { int|sys||send(int s, void *buf, int len, \
 			    int flags); } osend
@@ -217,9 +218,9 @@
 103	COMPAT_13 MODULAR { int|sys||sigreturn(struct sigcontext13 *sigcntxp); } \
 			    sigreturn13
 104	STD	RUMP	{ int|sys||bind(int s, const struct sockaddr *name, \
-			    unsigned int namelen); }
+			    socklen_t namelen); }
 105	STD	RUMP	{ int|sys||setsockopt(int s, int level, int name, \
-			    const void *val, unsigned int valsize); }
+			    const void *val, socklen_t valsize); }
 106	STD	RUMP	{ int|sys||listen(int s, int backlog); }
 107	OBSOL		vtimes
 108	COMPAT_43 MODULAR { int|sys||sigvec(int signum, struct sigvec *nsv, \
@@ -238,7 +239,7 @@
 			    void *tzp); }
 117	COMPAT_50 MODULAR { int|sys||getrusage(int who, struct rusage50 *rusage); }
 118	STD	RUMP	{ int|sys||getsockopt(int s, int level, int name, \
-			    void *val, unsigned int *avalsize); }
+			    void *val, socklen_t *avalsize); }
 119	OBSOL		resuba
 120	STD 	RUMP	{ ssize_t|sys||readv(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
@@ -249,7 +250,7 @@
 123	STD 	 RUMP	{ int|sys||fchown(int fd, uid_t uid, gid_t gid); }
 124	STD 	 RUMP	{ int|sys||fchmod(int fd, mode_t mode); }
 125	COMPAT_43 MODULAR { int|sys||recvfrom(int s, void *buf, size_t len, \
-			    int flags, void *from, int *fromlenaddr); } \
+			    int flags, void *from, socklen_t *fromlenaddr); } \
 			    orecvfrom
 126	STD 	RUMP	{ int|sys||setreuid(uid_t ruid, uid_t euid); }
 127	STD 	RUMP	{ int|sys||setregid(gid_t rgid, gid_t egid); }
@@ -261,7 +262,7 @@
 132	STD 	 RUMP	{ int|sys||mkfifo(const char *path, mode_t mode); }
 133	STD 	 RUMP	{ ssize_t|sys||sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
-			    unsigned int tolen); }
+			    socklen_t tolen); }
 134	STD	 RUMP	{ int|sys||shutdown(int s, int how); }
 135	STD	 RUMP	{ int|sys||socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
@@ -273,7 +274,7 @@
 140	COMPAT_50 MODULAR { int|sys||adjtime(const struct timeval50 *delta, \
 			    struct timeval50 *olddelta); }
 141	COMPAT_43 MODULAR { int|sys||getpeername(int fdes, void *asa, \
-			    int *alen); } ogetpeername
+			    socklen_t *alen); } ogetpeername
 142	COMPAT_43 MODULAR { int32_t|sys||gethostid(void); } ogethostid
 143	COMPAT_43 MODULAR { int|sys||sethostid(int32_t hostid); } osethostid
 144	COMPAT_43 MODULAR { int|sys||getrlimit(int which, \
@@ -286,7 +287,7 @@
 			    int uid, void *arg); }
 149	COMPAT_43 MODULAR { int|sys||quota(void); } oquota
 150	COMPAT_43 MODULAR { int|sys||getsockname(int fdec, void *asa, \
-			    int *alen); } ogetsockname
+			    socklen_t *alen); } ogetsockname
 
 ; Syscalls 151-180 inclusive are reserved for vendor-specific
 ; system calls.  (This includes various calls added for compatibity
@@ -886,3 +887,9 @@
 			    size_t fh_size, struct stat *sb); }
 452	STD  RUMP	{ int|sys|50|quotactl(const char *path, \
 			    struct plistref *pref); }
+453	STD  RUMP	{ int|sys||pipe2(int *fildes, int flags); }
+454	STD  RUMP	{ int|sys||dup3(int from, int to, int flags); }
+455	STD  RUMP	{ int|sys||kqueue1(int flags); }
+456	STD  RUMP	{ int|sys||paccept(int s, struct sockaddr *name, \
+			    socklen_t *anamelen, const sigset_t *mask, \
+			    int flags); }
