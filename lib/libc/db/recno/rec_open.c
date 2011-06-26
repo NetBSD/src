@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_open.c,v 1.17 2008/09/11 12:58:00 joerg Exp $	*/
+/*	$NetBSD: rec_open.c,v 1.18 2011/06/26 22:16:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rec_open.c,v 1.17 2008/09/11 12:58:00 joerg Exp $");
+__RCSID("$NetBSD: rec_open.c,v 1.18 2011/06/26 22:16:46 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -70,10 +70,8 @@ __rec_open(const char *fname, int flags, mode_t mode, const RECNOINFO *openinfo,
 	dbp = NULL;
 	/* Open the user's file -- if this fails, we're done. */
 	if (fname != NULL) {
-		if ((rfd = open(fname, flags, mode)) == -1)
-			return (NULL);
-		if (fcntl(rfd, F_SETFD, FD_CLOEXEC) == -1)
-			goto err;
+		if ((rfd = open(fname, flags | O_CLOEXEC, mode)) == -1)
+			return NULL;
 	}
 
 	/* Create a btree in memory (backed by disk). */
