@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.205 2011/03/06 17:08:15 bouyer Exp $
+#	$NetBSD: Makefile.inc,v 1.206 2011/06/26 16:42:41 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -77,7 +77,7 @@ ASM=	access.S acct.S \
 	bind.S \
 	chdir.S chflags.S chmod.S chown.S chroot.S __clock_getres50.S \
 		__clock_gettime50.S \
-	dup.S dup2.S  \
+	dup.S dup2.S dup3.S \
 	extattrctl.S \
 		extattr_delete_fd.S extattr_delete_file.S \
 		extattr_delete_link.S extattr_get_fd.S extattr_get_file.S \
@@ -92,7 +92,7 @@ ASM=	access.S acct.S \
 		getpriority.S getrlimit.S __getrusage50.S getsid.S \
 		getsockname.S getsockopt.S __gettimeofday50.S \
 	ioctl.S \
-	kqueue.S ktrace.S \
+	kqueue.S kqueue1.S ktrace.S \
 		_ksem_close.S _ksem_destroy.S _ksem_getvalue.S _ksem_init.S \
 		_ksem_post.S _ksem_trywait.S _ksem_unlink.S _ksem_wait.S \
 		_ksem_open.S \
@@ -107,8 +107,9 @@ ASM=	access.S acct.S \
 		mlock.S mlockall.S modctl.S __mount50.S mprotect.S \
 		__msgctl50.S msgget.S munlock.S munlockall.S munmap.S \
 	nfssvc.S __ntp_gettime50.S \
-	pathconf.S pmc_get_info.S pmc_control.S __posix_chown.S \
-		__posix_fchown.S __posix_lchown.S __posix_rename.S profil.S \
+	paccept.S pathconf.S pipe2.S pmc_get_info.S pmc_control.S \
+		__posix_chown.S __posix_fchown.S __posix_lchown.S \
+		__posix_rename.S profil.S \
 	__quotactl50.S \
 	rasctl.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
 		rmdir.S \
@@ -242,6 +243,7 @@ MLINKS+=_exit.2 _Exit.2
 MLINKS+=brk.2 sbrk.2
 MLINKS+=clone.2 __clone.2
 MLINKS+=dup.2 dup2.2
+MLINKS+=dup.2 dup3.2
 MLINKS+=chdir.2 fchdir.2
 MLINKS+=chflags.2 fchflags.2 chflags.2 lchflags.2
 MLINKS+=chmod.2 fchmod.2 chmod.2 lchmod.2
@@ -308,3 +310,5 @@ MLINKS+=truncate.2 ftruncate.2
 MLINKS+=utimes.2 futimes.2 utimes.2 lutimes.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
+MLINKS+=pipe.2 pipe2.2
+MLINKS+=accept.2 paccept.2

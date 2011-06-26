@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.203 2011/02/01 01:39:20 matt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.204 2011/06/26 16:42:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.203 2011/02/01 01:39:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.204 2011/06/26 16:42:42 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -598,10 +598,13 @@ fsocreate(int domain, struct socket **sop, int type, int protocol,
 	struct socket	*so;
 	struct file	*fp;
 	int		fd, error;
+	int		flags = type & SOCK_FLAGS_MASK;
 
+	type &= ~SOCK_FLAGS_MASK;
 	if ((error = fd_allocfile(&fp, &fd)) != 0)
-		return (error);
-	fp->f_flag = FREAD|FWRITE;
+		return error;
+	fd_set_exclose(l, fd, (flags & SOCK_CLOEXEC) != 0);
+	fp->f_flag = FREAD|FWRITE|((flags & SOCK_NONBLOCK) ? FNONBLOCK : 0);
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_ops = &socketops;
 	error = socreate(domain, &so, type, protocol, l, NULL);
@@ -1379,7 +1382,9 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 				    type == SCM_RIGHTS) {
 					sounlock(so);
 					splx(s);
-					error = (*dom->dom_externalize)(cm, l);
+					error = (*dom->dom_externalize)(cm, l,
+					    (flags & MSG_CMSG_CLOEXEC) ?
+					    O_CLOEXEC : 0);
 					s = splsoftnet();
 					solock(so);
 				}

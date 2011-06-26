@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.143 2011/04/24 18:46:23 rmind Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.144 2011/06/26 16:42:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.143 2011/04/24 18:46:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.144 2011/06/26 16:42:42 christos Exp $");
 
 #include "opt_pipe.h"
 
@@ -164,7 +164,8 @@ sys_listen(struct lwp *l, const struct sys_listen_args *uap, register_t *retval)
 }
 
 int
-do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
+do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock,
+    const sigset_t *mask, int flags, int clrflags)
 {
 	file_t		*fp, *fp2;
 	struct mbuf	*nam;
@@ -186,6 +187,10 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 	*new_sock = fd;
 	so = fp->f_data;
 	solock(so);
+
+	if (__predict_false(mask))
+		sigsuspendsetup(l, mask);
+
 	if (!(so->so_proto->pr_flags & PR_LISTEN)) {
 		error = EOPNOTSUPP;
 		goto bad;
@@ -224,7 +229,8 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 	if (soqremque(so2, 1) == 0)
 		panic("accept");
 	fp2->f_type = DTYPE_SOCKET;
-	fp2->f_flag = fp->f_flag;
+	fp2->f_flag = (fp->f_flag & ~clrflags) |
+	    ((flags & SOCK_NONBLOCK) ? FNONBLOCK : 0); 
 	fp2->f_ops = &socketops;
 	fp2->f_data = so2;
 	error = soaccept(so2, nam);
@@ -239,16 +245,21 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 		closef(fp2);
 		fd_abort(curproc, NULL, fd);
 	} else {
+		fd_set_exclose(l, fd, (flags & SOCK_CLOEXEC) != 0);
 		fd_affix(curproc, fp2, fd);
 		*name = nam;
 	}
 	fd_putfile(sock);
+	if (__predict_false(mask))
+		sigsuspendteardown(l);
 	return (error);
  bad:
  	sounlock(so);
  	m_freem(nam);
 	fd_putfile(sock);
  	fd_abort(curproc, fp2, fd);
+	if (__predict_false(mask))
+		sigsuspendteardown(l);
  	return (error);
 }
 
@@ -263,7 +274,46 @@ sys_accept(struct lwp *l, const struct sys_accept_args *uap, register_t *retval)
 	int error, fd;
 	struct mbuf *name;
 
-	error = do_sys_accept(l, SCARG(uap, s), &name, retval);
+	error = do_sys_accept(l, SCARG(uap, s), &name, retval, NULL, 0, 0);
+	if (error != 0)
+		return error;
+	error = copyout_sockname(SCARG(uap, name), SCARG(uap, anamelen),
+	    MSG_LENUSRSPACE, name);
+	if (name != NULL)
+		m_free(name);
+	if (error != 0) {
+		fd = (int)*retval;
+		if (fd_getfile(fd) != NULL)
+			(void)fd_close(fd);
+	}
+	return error;
+}
+
+int
+sys_paccept(struct lwp *l, const struct sys_paccept_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int)			s;
+		syscallarg(struct sockaddr *)	name;
+		syscallarg(unsigned int *)	anamelen;
+		syscallarg(const sigset_t *)	mask;
+		syscallarg(int)			flags;
+	} */
+	int error, fd;
+	struct mbuf *name;
+	sigset_t *mask, amask;
+
+	if (SCARG(uap, mask) != NULL) {
+		error = copyin(SCARG(uap, mask), &amask, sizeof(amask));
+		if (error)
+			return error;
+		mask = &amask;
+	} else
+		mask = NULL;
+
+	error = do_sys_accept(l, SCARG(uap, s), &name, retval, mask,
+	    SCARG(uap, flags), FNONBLOCK);
 	if (error != 0)
 		return error;
 	error = copyout_sockname(SCARG(uap, name), SCARG(uap, anamelen),
@@ -364,26 +414,31 @@ sys_socketpair(struct lwp *l, const struct sys_socketpair_args *uap, register_t 
 	struct socket	*so1, *so2;
 	int		fd, error, sv[2];
 	proc_t		*p;
+	int		flags = SCARG(uap, type) & SOCK_FLAGS_MASK;
+	int		type = SCARG(uap, type) & ~SOCK_FLAGS_MASK;
+	int		fnonblock = (flags & SOCK_NONBLOCK) ? FNONBLOCK : 0; 
 
 	p = curproc;
-	error = socreate(SCARG(uap, domain), &so1, SCARG(uap, type),
+	error = socreate(SCARG(uap, domain), &so1, type,
 	    SCARG(uap, protocol), l, NULL);
 	if (error)
 		return (error);
-	error = socreate(SCARG(uap, domain), &so2, SCARG(uap, type),
+	error = socreate(SCARG(uap, domain), &so2, type,
 	    SCARG(uap, protocol), l, so1);
 	if (error)
 		goto free1;
 	if ((error = fd_allocfile(&fp1, &fd)) != 0)
 		goto free2;
+	fd_set_exclose(l, fd, (flags & SOCK_CLOEXEC) != 0);
 	sv[0] = fd;
-	fp1->f_flag = FREAD|FWRITE;
+	fp1->f_flag = FREAD|FWRITE|fnonblock;
 	fp1->f_type = DTYPE_SOCKET;
 	fp1->f_ops = &socketops;
 	fp1->f_data = so1;
 	if ((error = fd_allocfile(&fp2, &fd)) != 0)
 		goto free3;
-	fp2->f_flag = FREAD|FWRITE;
+	fd_set_exclose(l, fd, (flags & SOCK_CLOEXEC) != 0);
+	fp2->f_flag = FREAD|FWRITE|fnonblock;
 	fp2->f_type = DTYPE_SOCKET;
 	fp2->f_ops = &socketops;
 	fp2->f_data = so2;
@@ -1005,12 +1060,6 @@ pipe1(struct lwp *l, register_t *retval, int flags)
  free1:
 	(void)soclose(rso);
 	return (error);
-}
-
-int
-sys_pipe(struct lwp *l, const void *v, register_t *retval)
-{
-	return pipe1(l, retval, 0);
 }
 #endif /* PIPE_SOCKETPAIR */
 

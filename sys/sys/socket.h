@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.99 2011/02/01 01:39:21 matt Exp $	*/
+/*	$NetBSD: socket.h,v 1.100 2011/06/26 16:43:12 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -97,6 +97,7 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #endif
 
 #include <sys/uio.h>
+#include <sys/sigtypes.h>
 
 /*
  * Socket types.
@@ -106,6 +107,10 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define	SOCK_RAW	3		/* raw-protocol interface */
 #define	SOCK_RDM	4		/* reliably-delivered message */
 #define	SOCK_SEQPACKET	5		/* sequenced packet stream */
+
+#define	SOCK_CLOEXEC	0x10000000	/* set close on exec on socket */
+#define	SOCK_NONBLOCK	0x20000000	/* set non blocking i/o socket */
+#define	SOCK_FLAGS_MASK	0xf0000000	/* flags mask */
 
 /*
  * Option flags per-socket.
@@ -485,6 +490,9 @@ struct msghdr {
 #define	MSG_BCAST	0x0100		/* this message was rcvd using link-level brdcst */
 #define	MSG_MCAST	0x0200		/* this message was rcvd using link-level mcast */
 #define	MSG_NOSIGNAL	0x0400		/* do not generate SIGPIPE on EOF */
+#if defined(_NETBSD_SOURCE)
+#define	MSG_CMSG_CLOEXEC 0x0800		/* close on exec receiving fd */
+#endif
 
 /* Extra flags used internally only */
 #define	MSG_USERFLAGS	0x0ffffff
@@ -603,6 +611,8 @@ int	getpeername(int, struct sockaddr * __restrict, socklen_t * __restrict);
 int	getsockname(int, struct sockaddr * __restrict, socklen_t * __restrict);
 int	getsockopt(int, int, int, void *__restrict, socklen_t * __restrict);
 int	listen(int, int);
+int	paccept(int, struct sockaddr * __restrict, socklen_t * __restrict,
+	const sigset_t * __restrict, int);
 ssize_t	recv(int, void *, size_t, int);
 ssize_t	recvfrom(int, void *__restrict, size_t, int,
 	    struct sockaddr * __restrict, socklen_t * __restrict);
