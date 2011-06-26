@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.117 2011/06/06 16:16:00 njoly Exp $
+# $NetBSD: md.amd64,v 1.118 2011/06/26 10:14:13 njoly Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1028,7 +1028,7 @@
 ./usr/libdata/debug/usr/lib/i386/libm.so.0.9.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmagic.so.3.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmenu.so.6.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libmj.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libmj.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libnetpgp.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libnpf.so.0.0.debug	comp-compat-shlib	compat,pic,npf,debug
 ./usr/libdata/debug/usr/lib/i386/libobjc.so.3.0.debug	comp-compat-shlib	compat,pic,debug
