@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_ffs.c,v 1.4 2011/01/13 12:55:19 pooka Exp $	*/
+/*	$NetBSD: fstest_ffs.c,v 1.5 2011/06/26 13:06:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <ufs/ufs/ufsmount.h>
 
