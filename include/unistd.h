@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.125 2011/01/19 19:21:29 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.126 2011/06/26 16:42:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -300,6 +300,7 @@ int	 acct(const char *);
 int	 closefrom(int);
 int	 des_cipher(const char *, char *, long, int);
 int	 des_setkey(const char *);
+int	 dup3(int, int, int);
 void	 endusershell(void);
 int	 exect(const char *, char * const *, char * const *);
 int	 fchroot(int);
@@ -315,11 +316,12 @@ int	 initgroups(const char *, gid_t);
 int	 iruserok(uint32_t, int, const char *, const char *);
 int      issetugid(void);
 int	 nfssvc(int, void *);
+int	 pipe2(int *, int);
 int	 profil(char *, size_t, u_long, u_int);
 #ifndef __PSIGNAL_DECLARED
 #define __PSIGNAL_DECLARED
 /* also in signal.h */
-void	psignal(int, const char *);
+void	 psignal(int, const char *);
 #endif /* __PSIGNAL_DECLARED */
 int	 rcmd(char **, int, const char *, const char *, const char *, int *);
 int	 reboot(int, char *);

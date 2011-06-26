@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.124 2009/12/29 04:23:43 elad Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.125 2011/06/26 16:43:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -350,7 +350,8 @@ int	do_sys_recvmsg(struct lwp *, int, struct msghdr *, struct mbuf **,
 
 int	do_sys_bind(struct lwp *, int, struct mbuf *);
 int	do_sys_connect(struct lwp *, int, struct mbuf *);
-int	do_sys_accept(struct lwp *, int, struct mbuf **, register_t *);
+int	do_sys_accept(struct lwp *, int, struct mbuf **, register_t *,
+	    const sigset_t *, int, int);
 
 /*
  * Inline functions for sockets and socket buffering.
