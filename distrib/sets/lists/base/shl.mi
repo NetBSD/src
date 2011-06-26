@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.588 2011/06/25 00:42:58 agc Exp $
+# $NetBSD: shl.mi,v 1.589 2011/06/26 16:42:39 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -15,7 +15,7 @@
 #
 ./lib/libc.so					base-sys-shlib		dynamicroot
 ./lib/libc.so.12				base-sys-shlib		dynamicroot
-./lib/libc.so.12.177				base-sys-shlib		dynamicroot
+./lib/libc.so.12.178				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
@@ -170,7 +170,7 @@
 ./usr/lib/libbz2.so.1.1				base-sys-shlib
 ./usr/lib/libc.so				base-sys-shlib
 ./usr/lib/libc.so.12				base-sys-shlib
-./usr/lib/libc.so.12.177			base-sys-shlib
+./usr/lib/libc.so.12.178			base-sys-shlib
 ./usr/lib/libcdk.so				base-obsolete		obsolete
 ./usr/lib/libcom_err.so				base-krb5-shlib		kerberos
 ./usr/lib/libcom_err.so.7			base-krb5-shlib		kerberos
