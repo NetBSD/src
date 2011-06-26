@@ -1,4 +1,4 @@
-/*	$NetBSD: t_swwdog.c,v 1.4 2010/10/24 13:16:12 pgoyette Exp $	*/
+/*	$NetBSD: t_swwdog.c,v 1.5 2011/06/26 12:14:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
