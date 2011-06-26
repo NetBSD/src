@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.55.2.1 2011/06/03 13:27:42 cherry Exp $ */
+/* $NetBSD: hypervisor.c,v 1.55.2.2 2011/06/26 12:56:33 cherry Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.55.2.1 2011/06/03 13:27:42 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.55.2.2 2011/06/26 12:56:33 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,6 @@ CFATTACH_DECL_NEW(hypervisor, 0,
     hypervisor_match, hypervisor_attach, NULL, NULL);
 
 static int hypervisor_print(void *, const char *);
-static int hypervisor_vcpu_print(void *, const char *);
 
 union hypervisor_attach_cookie {
 	const char *hac_device;		/* first elem of all */
@@ -183,6 +182,15 @@ hypervisor_match(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
+#ifdef MULTIPROCESSOR
+static int
+hypervisor_vcpu_print(void *aux, const char *parent)
+{
+	/* Unconfigured cpus are ignored quietly. */
+	return (QUIET);
+}
+#endif /* MULTIPROCESSOR */
+
 /*
  * Attach the hypervisor.
  */
@@ -190,7 +198,6 @@ void
 hypervisor_attach(device_t parent, device_t self, void *aux)
 {
 	int xen_version;
-	cpuid_t vcpuid;
 
 #if NPCI >0
 #ifdef PCI_BUS_FIXUP
@@ -226,6 +233,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	 * allocated vcpus (See: cpu.c:vcpu_match()) by iterating
 	 * through the maximum supported by NetBSD MP.
 	 */
+	cpuid_t vcpuid;
 
 	for (vcpuid = 1; vcpuid < maxcpus; vcpuid++) {
 		memset(&hac, 0, sizeof(hac));
@@ -329,13 +337,6 @@ hypervisor_print(void *aux, const char *parent)
 	if (parent)
 		aprint_normal("%s at %s", hac->hac_device, parent);
 	return (UNCONF);
-}
-
-static int
-hypervisor_vcpu_print(void *aux, const char *parent)
-{
-	/* Unconfigured cpus are ignored quietly. */
-	return (QUIET);
 }
 
 #if defined(DOM0OPS)
