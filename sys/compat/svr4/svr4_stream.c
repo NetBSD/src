@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.78 2010/11/19 06:44:38 dholland Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.79 2011/06/26 16:42:41 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.78 2010/11/19 06:44:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.79 2011/06/26 16:42:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1682,7 +1682,8 @@ svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_
 		 * We are after a listen, so we try to accept...
 		 */
 
-		error = do_sys_accept(l, SCARG(uap, fd), &name, retval);
+		error = do_sys_accept(l, SCARG(uap, fd), &name, retval,
+		    NULL, 0, FNONBLOCK);
 		if (error != 0) {
 			DPRINTF(("getmsg: accept failed %d\n", error));
 			goto out;

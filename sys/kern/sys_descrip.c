@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.21 2011/06/12 03:35:56 rmind Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.22 2011/06/26 16:42:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.21 2011/06/12 03:35:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.22 2011/06/26 16:42:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,44 @@ sys_dup(struct lwp *l, const struct sys_dup_args *uap, register_t *retval)
 /*
  * Duplicate a file descriptor to a particular value.
  */
+static int
+dodup(struct lwp *l, int from, int to, int flags, register_t *retval)
+{
+	int error;
+	file_t *fp;
+
+	if ((fp = fd_getfile(from)) == NULL)
+		return EBADF;
+	mutex_enter(&fp->f_lock);
+	fp->f_count++;
+	mutex_exit(&fp->f_lock);
+	fd_putfile(from);
+
+	if ((u_int)to >= curproc->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
+	    (u_int)to >= maxfiles)
+		error = EBADF;
+	else if (from == to)
+		error = 0;
+	else
+		error = fd_dup2(fp, to, flags);
+	closef(fp);
+	*retval = to;
+
+	return error;
+}
+
+int
+sys_dup3(struct lwp *l, const struct sys_dup3_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int)	from;
+		syscallarg(int)	to;
+		syscallarg(int)	flags;
+	} */
+	return dodup(l, SCARG(uap, from), SCARG(uap, to), SCARG(uap, flags),
+	    retval);
+}
+
 int
 sys_dup2(struct lwp *l, const struct sys_dup2_args *uap, register_t *retval)
 {
@@ -129,32 +167,7 @@ sys_dup2(struct lwp *l, const struct sys_dup2_args *uap, register_t *retval)
 		syscallarg(int)	from;
 		syscallarg(int)	to;
 	} */
-	int old, new, error;
-	file_t *fp;
-
-	old = SCARG(uap, from);
-	new = SCARG(uap, to);
-
-	if ((fp = fd_getfile(old)) == NULL) {
-		return EBADF;
-	}
-	mutex_enter(&fp->f_lock);
-	fp->f_count++;
-	mutex_exit(&fp->f_lock);
-	fd_putfile(old);
-
-	if ((u_int)new >= curproc->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
-	    (u_int)new >= maxfiles) {
-		error = EBADF;
-	} else if (old == new) {
-		error = 0;
-	} else {
-		error = fd_dup2(fp, new);
-	}
-	closef(fp);
-	*retval = new;
-
-	return error;
+	return dodup(l, SCARG(uap, from), SCARG(uap, to), 0, retval);
 }
 
 /*
@@ -316,6 +329,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	filedesc_t *fdp;
 	file_t *fp;
 	struct flock fl;
+	bool cloexec = false;
 
 	fd = SCARG(uap, fd);
 	cmd = SCARG(uap, cmd);
@@ -365,6 +379,9 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	}
 
 	switch (cmd) {
+	case F_DUPFD_CLOEXEC:
+		cloexec = true;
+		/*FALLTHROUGH*/
 	case F_DUPFD:
 		newmin = (long)SCARG(uap, arg);
 		if ((u_int)newmin >=
@@ -373,7 +390,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 			fd_putfile(fd);
 			return EINVAL;
 		}
-		error = fd_dup(fp, newmin, &i, false);
+		error = fd_dup(fp, newmin, &i, cloexec);
 		*retval = i;
 		break;
 
@@ -721,4 +738,26 @@ sys___posix_fadvise50(struct lwp *l,
 	    SCARG(uap, len), SCARG(uap, advice));
 
 	return 0;
+}
+
+int
+sys_pipe(struct lwp *l, const void *v, register_t *retval)
+{
+	return pipe1(l, retval, 0);
+}
+
+int
+sys_pipe2(struct lwp *l, const struct sys_pipe2_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int[2]) fildes;
+		syscallarg(int) flags;
+	} */
+	int fd[2], error;
+
+	if ((error = pipe1(l, retval, SCARG(uap, flags))) != 0)
+		return error;
+	fd[0] = retval[0];
+	fd[1] = retval[1];
+	return copyout(fd, SCARG(uap, fildes), sizeof(fd));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.37 2011/04/10 15:45:33 christos Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.38 2011/06/26 16:43:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -180,6 +180,7 @@
 #if defined(_NETBSD_SOURCE)
 #define	F_CLOSEM	10		/* close all fds >= to the one given */
 #define	F_MAXFD		11		/* return the max open fd */
+#define	F_DUPFD_CLOEXEC	12		/* close on exec duplicated fd */
 #endif
 
 /* file descriptor flags (F_GETFD, F_SETFD) */

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1631 2011/06/25 05:45:11 nonaka Exp $
+#	$NetBSD: mi,v 1.1632 2011/06/26 16:42:40 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4303,6 +4303,7 @@
 ./usr/share/man/cat2/connect.0			comp-c-catman		.cat
 ./usr/share/man/cat2/dup.0			comp-c-catman		.cat
 ./usr/share/man/cat2/dup2.0			comp-c-catman		.cat
+./usr/share/man/cat2/dup3.0			comp-c-catman		.cat
 ./usr/share/man/cat2/errno.0			comp-c-catman		.cat
 ./usr/share/man/cat2/execve.0			comp-c-catman		.cat
 ./usr/share/man/cat2/extattr_delete_fd.0	comp-c-catman		.cat
@@ -4424,8 +4425,10 @@
 ./usr/share/man/cat2/ntp_adjtime.0		comp-c-catman		.cat
 ./usr/share/man/cat2/ntp_gettime.0		comp-c-catman		.cat
 ./usr/share/man/cat2/open.0			comp-c-catman		.cat
+./usr/share/man/cat2/paccept.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pathconf.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pipe.0			comp-c-catman		.cat
+./usr/share/man/cat2/pipe2.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pmc_control.0		comp-c-catman		.cat
 ./usr/share/man/cat2/pmc_get_info.0		comp-c-catman		.cat
 ./usr/share/man/cat2/poll.0			comp-c-catman		.cat
@@ -10469,6 +10472,7 @@
 ./usr/share/man/html2/connect.html		comp-c-htmlman		html
 ./usr/share/man/html2/dup.html			comp-c-htmlman		html
 ./usr/share/man/html2/dup2.html			comp-c-htmlman		html
+./usr/share/man/html2/dup3.html			comp-c-htmlman		html
 ./usr/share/man/html2/errno.html		comp-c-htmlman		html
 ./usr/share/man/html2/execve.html		comp-c-htmlman		html
 ./usr/share/man/html2/extattr_delete_fd.html	comp-c-htmlman		html
@@ -10584,8 +10588,10 @@
 ./usr/share/man/html2/ntp_adjtime.html		comp-c-htmlman		html
 ./usr/share/man/html2/ntp_gettime.html		comp-c-htmlman		html
 ./usr/share/man/html2/open.html			comp-c-htmlman		html
+./usr/share/man/html2/paccept.html		comp-c-htmlman		html
 ./usr/share/man/html2/pathconf.html		comp-c-htmlman		html
 ./usr/share/man/html2/pipe.html			comp-c-htmlman		html
+./usr/share/man/html2/pipe2.html		comp-c-htmlman		html
 ./usr/share/man/html2/pmc_control.html		comp-c-htmlman		html
 ./usr/share/man/html2/pmc_get_info.html		comp-c-htmlman		html
 ./usr/share/man/html2/poll.html			comp-c-htmlman		html
@@ -16404,6 +16410,7 @@
 ./usr/share/man/man2/connect.2			comp-c-man		.man
 ./usr/share/man/man2/dup.2			comp-c-man		.man
 ./usr/share/man/man2/dup2.2			comp-c-man		.man
+./usr/share/man/man2/dup3.2			comp-c-man		.man
 ./usr/share/man/man2/errno.2			comp-c-man		.man
 ./usr/share/man/man2/execve.2			comp-c-man		.man
 ./usr/share/man/man2/extattr_delete_fd.2	comp-c-man		.man
@@ -16524,8 +16531,10 @@
 ./usr/share/man/man2/ntp_adjtime.2		comp-c-man		.man
 ./usr/share/man/man2/ntp_gettime.2		comp-c-man		.man
 ./usr/share/man/man2/open.2			comp-c-man		.man
+./usr/share/man/man2/paccept.2			comp-c-man		.man
 ./usr/share/man/man2/pathconf.2			comp-c-man		.man
 ./usr/share/man/man2/pipe.2			comp-c-man		.man
+./usr/share/man/man2/pipe2.2			comp-c-man		.man
 ./usr/share/man/man2/pmc_control.2		comp-c-man		.man
 ./usr/share/man/man2/pmc_get_info.2		comp-c-man		.man
 ./usr/share/man/man2/poll.2			comp-c-man		.man

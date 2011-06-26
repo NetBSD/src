@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.37 2010/05/17 12:16:43 jruoho Exp $
+.\"	$NetBSD: fcntl.2,v 1.38 2011/06/26 16:42:41 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd May 17, 2010
+.Dd June 25, 2011
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ and is technically a pointer to void, but it is
 interpreted as an int by some commands and ignored by others.
 .Pp
 Commands are:
-.Bl -tag -width F_GETOWNX
+.Bl -tag -width F_DUPFD_CLOEXEC
 .It Dv F_DUPFD
 Return a new descriptor as follows:
 .Pp
@@ -80,6 +80,9 @@ is cleared to remain open across
 .Xr execve 2
 system calls.
 .El
+.It Dv F_DUPFD_CLOEXEC
+Same as F_DUPFD, but sets the close-on-exec property on the file descriptor
+created.
 .It Dv F_GETFD
 Get the close-on-exec flag associated with the file descriptor
 .Fa fd

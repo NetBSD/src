@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.22 2011/04/24 18:46:24 rmind Exp $	*/
+/*	$NetBSD: event.h,v 1.23 2011/06/26 16:43:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -246,6 +246,7 @@ struct timespec;
 __BEGIN_DECLS
 #if defined(_NETBSD_SOURCE)
 int	kqueue(void);
+int	kqueue1(int);
 #ifndef __LIBC12_SOURCE__
 int	kevent(int, const struct kevent *, size_t, struct kevent *, size_t,
 		    const struct timespec *) __RENAME(__kevent50);

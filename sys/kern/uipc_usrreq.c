@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.135 2011/06/12 03:35:56 rmind Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.136 2011/06/26 16:42:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.135 2011/06/12 03:35:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.136 2011/06/26 16:42:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1233,7 +1233,7 @@ unp_drain(void)
 #endif
 
 int
-unp_externalize(struct mbuf *rights, struct lwp *l)
+unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 {
 	struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
 	struct proc *p = l->l_proc;
@@ -1316,9 +1316,11 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 	 */
 	rp = (file_t **)CMSG_DATA(cm);
 	for (i = 0; i < nfds; i++) {
+		int fd = fdp[i];
 		fp = *rp++;
 		atomic_dec_uint(&unp_rights);
-		fd_affix(p, fp, fdp[i]);
+		fd_set_exclose(l, fd, (flags & O_CLOEXEC) != 0);
+		fd_affix(p, fp, fd);
 		mutex_enter(&fp->f_lock);
 		fp->f_msgcount--;
 		mutex_exit(&fp->f_lock);

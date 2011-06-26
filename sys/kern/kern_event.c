@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.71 2010/09/10 10:23:46 drochner Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.72 2011/06/26 16:42:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.71 2010/09/10 10:23:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.72 2011/06/26 16:42:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -714,8 +714,8 @@ seltrue_kqfilter(dev_t dev, struct knote *kn)
 /*
  * kqueue(2) system call.
  */
-int
-sys_kqueue(struct lwp *l, const void *v, register_t *retval)
+static int
+kqueue1(struct lwp *l, int flags, register_t *retval)
 {
 	struct kqueue *kq;
 	file_t *fp;
@@ -723,7 +723,7 @@ sys_kqueue(struct lwp *l, const void *v, register_t *retval)
 
 	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return error;
-	fp->f_flag = FREAD | FWRITE;
+	fp->f_flag = FREAD | FWRITE | (flags & FNONBLOCK);
 	fp->f_type = DTYPE_KQUEUE;
 	fp->f_ops = &kqueueops;
 	kq = kmem_zalloc(sizeof(*kq), KM_SLEEP);
@@ -734,8 +734,28 @@ sys_kqueue(struct lwp *l, const void *v, register_t *retval)
 	fp->f_data = kq;
 	*retval = fd;
 	kq->kq_fdp = curlwp->l_fd;
+	fd_set_exclose(l, fd, (flags & O_CLOEXEC) != 0);
 	fd_affix(curproc, fp, fd);
 	return error;
+}
+
+/*
+ * kqueue(2) system call.
+ */
+int
+sys_kqueue(struct lwp *l, const void *v, register_t *retval)
+{
+	return kqueue1(l, 0, retval);
+}
+
+int
+sys_kqueue1(struct lwp *l, const struct sys_kqueue1_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) flags;
+	} */
+	return kqueue1(l, SCARG(uap, flags), retval);
 }
 
 /*

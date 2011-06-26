@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.214 2011/04/24 20:30:38 rmind Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.215 2011/06/26 16:42:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.214 2011/04/24 20:30:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.215 2011/06/26 16:42:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -729,7 +729,7 @@ fd_dup(file_t *fp, int minfd, int *newp, bool exclose)
  * dup2 operation.
  */
 int
-fd_dup2(file_t *fp, unsigned new)
+fd_dup2(file_t *fp, unsigned new, int flags)
 {
 	filedesc_t *fdp = curlwp->l_fd;
 	fdfile_t *ff;
@@ -773,6 +773,8 @@ fd_dup2(file_t *fp, unsigned new)
 	fd_used(fdp, new);
 	mutex_exit(&fdp->fd_lock);
 
+	dt->dt_ff[new]->ff_exclose = (flags & O_CLOEXEC) != 0;
+	fp->f_flag |= flags & FNONBLOCK;
 	/* Slot is now allocated.  Insert copy of the file. */
 	fd_affix(curproc, fp, new);
 	if (ff != NULL) {

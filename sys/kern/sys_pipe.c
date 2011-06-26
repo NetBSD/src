@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.130 2011/04/10 15:45:33 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.131 2011/06/26 16:42:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.130 2011/04/10 15:45:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.131 2011/06/26 16:42:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,12 +293,6 @@ free2:
 	pipeclose(rpipe);
 
 	return (error);
-}
-
-int
-sys_pipe(struct lwp *l, const void *v, register_t *retval)
-{
-	return pipe1(l, retval, 0);
 }
 
 /*
