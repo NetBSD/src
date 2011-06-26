@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1571 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1572 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1047,3 +1047,11 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	sandpoint: Add support for booting from RAID 1 [jdc 20110620]
 	GCC: Import version 4.5.3.  [mrg 20110620]
 	ld.elf_so(1): Support ELF symbol versioning. [nonaka 20110625]
+	kernel: Add new system calls pipe2(2), dup3(2), paccept(2), kqueue1(2)
+		and flags SOCK_CLOEXEC/SOCK_NONBLOCK to socket(2), and
+		socketpair(2), as well as fcntl(2) F_DUPFD_CLOEXEC, and
+		a MSG_CMSG_CLOEXEC flag to recvfrom(2) to be able to set
+		close-on-exec to all newly created file descriptors
+		[christos 20110626]
+	userland: Add an 'e' mode character to popen(3), and fopen(3) to set
+		close on exec to opened file descriptors. [christos 20110626]
