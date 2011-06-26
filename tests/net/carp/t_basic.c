@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.4 2010/11/07 17:51:21 jmmv Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.5 2011/06/26 13:13:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_basic.c,v 1.4 2010/11/07 17:51:21 jmmv Exp $");
+__RCSID("$NetBSD: t_basic.c,v 1.5 2011/06/26 13:13:31 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: t_basic.c,v 1.4 2010/11/07 17:51:21 jmmv Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "../config/netconfig.c"
 #include "../../h_macros.h"
