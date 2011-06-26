@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mountd.c,v 1.3 2010/11/07 17:51:18 jmmv Exp $	*/
+/*	$NetBSD: t_mountd.c,v 1.4 2011/06/26 13:08:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
