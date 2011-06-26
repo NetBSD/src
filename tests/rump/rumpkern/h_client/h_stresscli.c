@@ -1,4 +1,4 @@
-/*	$NetBSD: h_stresscli.c,v 1.8 2011/01/12 12:32:53 pooka Exp $	*/
+/*	$NetBSD: h_stresscli.c,v 1.9 2011/06/26 13:17:36 christos Exp $	*/
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <rump/rump_syscalls.h>
 #include <rump/rumpclient.h>
