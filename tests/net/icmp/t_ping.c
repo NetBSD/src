@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.13 2011/01/05 14:43:40 martin Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.14 2011/06/26 13:15:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.13 2011/01/05 14:43:40 martin Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.14 2011/06/26 13:15:22 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: t_ping.c,v 1.13 2011/01/05 14:43:40 martin Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <netinet/in.h>
 #include <netinet/ip_var.h>
