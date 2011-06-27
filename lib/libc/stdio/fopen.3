@@ -1,4 +1,4 @@
-.\"	$NetBSD: fopen.3,v 1.25 2011/06/26 16:42:41 christos Exp $
+.\"	$NetBSD: fopen.3,v 1.26 2011/06/27 08:21:07 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -105,7 +105,7 @@ This is a non
 .St -ansiC
 extension.
 .Pp
-the letter
+The letter
 .Dq e
 in the mode string sets the close-on-exec flag in the file descriptors of
 the newly opened file files; if the operation fails,
@@ -202,6 +202,9 @@ is returned and the global variable
 is set to indicate the error.
 .Sh ERRORS
 .Bl -tag -width Er
+.It Bq Er EFTYPE
+The file is not a regular file and the character ``f'' is specified
+in the mode.
 .It Bq Er EINVAL
 The
 .Fa mode
@@ -211,9 +214,6 @@ provided to
 or
 .Fn freopen
 was invalid.
-.It Bq Er EFTYPE
-The file is not a regular file and the character ``f'' is specified
-in the mode.
 .El
 .Pp
 The
