@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.29 2011/06/24 16:59:29 manu Exp $	*/
+/*	$NetBSD: null.c,v 1.30 2011/06/27 12:06:19 manu Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.29 2011/06/24 16:59:29 manu Exp $");
+__RCSID("$NetBSD: null.c,v 1.30 2011/06/27 12:06:19 manu Exp $");
 #endif /* !lint */
 
 /*
@@ -578,8 +578,13 @@ puffs_null_node_readdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 */
 	while (i--) {
 		rv = readdir_r(dp, &entry, &result);
-		if (rv || !result)
+		if (rv != 0)
 			goto out;
+
+		if (!result) {
+			*eofflag = 1;
+			goto out;
+		}
 	}
 
 	for (;;) {
