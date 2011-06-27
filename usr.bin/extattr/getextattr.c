@@ -1,4 +1,4 @@
-/*	$NetBSD: getextattr.c,v 1.4 2011/05/24 12:25:05 joerg Exp $	*/
+/*	$NetBSD: getextattr.c,v 1.5 2011/06/27 16:34:48 manu Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Networks Associates Technology, Inc.
@@ -238,8 +238,7 @@ main(int argc, char *argv[])
 			if (!flag_quiet)
 				printf("%s\t", argv[arg_counter]);
 			for (i = 0; i < error; i += buf[i] + 1)
-			    printf("%s%*.*s", i ? "\t" : "",
-				buf[i], buf[i], buf + i + 1);
+			    printf("%s%s", i ? "\t" : "", buf + i + 1);
 			printf("\n");
 			continue;
 		case EAGET:
