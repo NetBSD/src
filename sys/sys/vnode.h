@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.232 2011/06/21 17:28:11 riz Exp $	*/
+/*	$NetBSD: vnode.h,v 1.233 2011/06/27 11:52:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ enum vtagtype	{
 	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
 	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS,
 	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS, VT_HFS, VT_EFS, VT_ZFS,
-	VT_RUMP, VT_NILFS
+	VT_RUMP, VT_NILFS, VT_V7FS
 };
 
 #define	VNODE_TAGS \
@@ -114,7 +114,7 @@ enum vtagtype	{
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
     "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
     "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS", "VT_EFS", \
-    "VT_ZFS", "VT_RUMP", "VT_NILFS"
+    "VT_ZFS", "VT_RUMP", "VT_NILFS", "VT_V7FS"
 
 struct vnode;
 struct buf;

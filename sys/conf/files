@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1017 2011/06/23 23:42:43 matt Exp $
+#	$NetBSD: files,v 1.1018 2011/06/27 11:52:24 uch Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1376,6 +1376,7 @@ include "fs/smbfs/files.smbfs"
 include "fs/sysvbfs/files.sysvbfs"
 include "fs/tmpfs/files.tmpfs"
 include "fs/union/files.union"
+include "fs/v7fs/files.v7fs"
 include "miscfs/fdesc/files.fdesc"
 include "miscfs/kernfs/files.kernfs"
 include "miscfs/nullfs/files.nullfs"

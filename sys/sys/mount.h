@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.199 2011/04/02 04:57:35 rmind Exp $	*/
+/*	$NetBSD: mount.h,v 1.200 2011/06/27 11:52:24 uch Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -94,6 +94,7 @@
 #define MOUNT_ZFS	"zfs"		/* Sun ZFS */
 #define MOUNT_NILFS	"nilfs"		/* NTT's NiLFS(2) logging file system */
 #define MOUNT_RUMPFS	"rumpfs"	/* rump virtual file system */
+#define	MOUNT_V7FS	"v7fs"		/* 7th Edition of Unix Filesystem */
 
 #ifndef _STANDALONE
 

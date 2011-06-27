@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.108 2011/01/18 19:52:24 matt Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.109 2011/06/27 11:52:24 uch Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -328,7 +328,7 @@ static const char *const dktypenames[] = { DKTYPE_DEFN(DKTYPE_NAMES) NULL };
 x(UNUSED,   0, "unused",     NULL,    NULL)   /* unused */ \
 x(SWAP,     1, "swap",       NULL,    NULL)   /* swap */ \
 x(V6,       2, "Version 6",  NULL,    NULL)   /* Sixth Edition */ \
-x(V7,       3, "Version 7",  NULL,    NULL)   /* Seventh Edition */ \
+x(V7,       3, "Version 7", "v7fs",  "v7fs")  /* Seventh Edition */ \
 x(SYSV,     4, "System V",   NULL,    NULL)   /* System V */ \
 x(V71K,     5, "4.1BSD",     NULL,    NULL)   /* V7, 1K blocks (4.1, 2.9) */ \
 x(V8,    6, "Eighth Edition",NULL,    NULL)   /* Eighth Edition, 4K blocks */ \
@@ -354,6 +354,7 @@ x(UDF,     24, "UDF",        NULL,   "udf")   /* UDF */ \
 x(SYSVBFS, 25, "SysVBFS",    NULL,  "sysvbfs")/* System V boot file system */ \
 x(EFS,     26, "EFS",        NULL,   "efs")   /* SGI's Extent Filesystem */ \
 x(NILFS,   27, "NiLFS",      NULL,   "nilfs") /* NTT's NiLFS(2) */
+
 
 #ifndef _LOCORE
 #define	FS_TYPENUMS(tag, number, name, fsck, mount) __CONCAT(FS_,tag=number),

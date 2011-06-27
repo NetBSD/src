@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.119 2011/02/08 03:20:15 haad Exp $
+#	$NetBSD: Makefile,v 1.120 2011/06/27 11:52:23 uch Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -21,6 +21,7 @@ SUBDIR+= newfs_lfs fsck_lfs dump_lfs resize_lfs
 SUBDIR+= newfs_msdos fsck_msdos
 SUBDIR+= newfs_sysvbfs
 SUBDIR+= newfs_udf
+SUBDIR+= newfs_v7fs fsck_v7fs
 SUBDIR+= mount_ados
 SUBDIR+= mount_cd9660
 SUBDIR+= mount_efs
@@ -47,6 +48,7 @@ SUBDIR+= mount_sysvbfs
 SUBDIR+= mount_tmpfs
 SUBDIR+= mount_umap
 SUBDIR+= mount_union
+SUBDIR+= mount_v7fs
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+= cgdconfig
