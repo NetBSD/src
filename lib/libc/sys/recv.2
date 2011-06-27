@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.28 2011/06/26 16:42:41 christos Exp $
+.\"	$NetBSD: recv.2,v 1.29 2011/06/27 08:21:08 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -234,10 +234,24 @@ if an error occurred.
 .Sh ERRORS
 The calls fail if:
 .Bl -tag -width Er
+.It Bq Er EAGAIN
+The socket is marked non-blocking, and the receive operation
+would block, or
+a receive timeout had been set,
+and the timeout expired before data were received.
 .It Bq Er EBADF
 The argument
 .Fa s
 is an invalid descriptor.
+.It Bq Er EFAULT
+The receive buffer pointer(s) point outside the process's
+address space.
+.It Bq Er EINTR
+The receive was interrupted by delivery of a signal before
+any data were available.
+.It Bq Er EINVAL
+The total length of the I/O is more than can be expressed by the ssize_t
+return value.
 .It Bq Er ENOTCONN
 The socket is associated with a connection-oriented protocol
 and has not been connected (see
@@ -248,20 +262,6 @@ and
 The argument
 .Fa s
 does not refer to a socket.
-.It Bq Er EAGAIN
-The socket is marked non-blocking, and the receive operation
-would block, or
-a receive timeout had been set,
-and the timeout expired before data were received.
-.It Bq Er EINTR
-The receive was interrupted by delivery of a signal before
-any data were available.
-.It Bq Er EFAULT
-The receive buffer pointer(s) point outside the process's
-address space.
-.It Bq Er EINVAL
-The total length of the I/O is more than can be expressed by the ssize_t
-return value.
 .El
 .Pp
 .Fn recvmsg
