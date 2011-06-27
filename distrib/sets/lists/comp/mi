@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1633 2011/06/27 11:52:22 uch Exp $
+#	$NetBSD: mi,v 1.1634 2011/06/27 16:39:43 manu Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2228,6 +2228,7 @@
 ./usr/include/sys/wapbl.h			comp-c-include
 ./usr/include/sys/wapbl_replay.h		comp-c-include
 ./usr/include/sys/wdog.h			comp-c-include
+./usr/include/sys/xattr.h			comp-c-include
 ./usr/include/sysexits.h			comp-c-include
 ./usr/include/syslog.h				comp-c-include
 ./usr/include/tar.h				comp-c-include
