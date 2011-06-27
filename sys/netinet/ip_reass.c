@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.7 2010/11/05 00:21:51 rmind Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.8 2011/06/27 00:45:50 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.7 2010/11/05 00:21:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.8 2011/06/27 00:45:50 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -267,11 +267,11 @@ ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 		else if (ip_nfragpackets >= ip_maxfragpackets) {
 			goto dropfrag;
 		}
-		ip_nfragpackets++;
 		fp = malloc(sizeof(ipfr_queue_t), M_FTABLE, M_NOWAIT);
 		if (fp == NULL) {
 			goto dropfrag;
 		}
+		ip_nfragpackets++;
 		TAILQ_INIT(&fp->ipq_fragq);
 		fp->ipq_nfrags = 1;
 		fp->ipq_ttl = IPFRAGTTL;
