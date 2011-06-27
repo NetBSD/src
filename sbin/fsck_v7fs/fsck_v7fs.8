@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck_v7fs.8,v 1.1 2011/06/27 11:52:58 uch Exp $
+.\"	$NetBSD: fsck_v7fs.8,v 1.2 2011/06/27 13:50:31 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,17 +35,16 @@
 .Nd 7th Edition(V7) filesystem consistency checker
 .Sh SYNOPSIS
 .Nm
-.Op Fl o Ar options
+.Op Fl FnPpy
 .Op Fl B Ar byteorder
-.Op Fl nypP
-.Op Fl F
+.Op Fl o Ar options
 .Ar filesystem ...
 .Sh DESCRIPTION
 The
 .Nm
 utility verifies and repairs
 .Tn Version 7
-filesystems
+file systems.
 .Pp
 The following flags are interpreted by
 .Nm .
@@ -55,23 +54,14 @@ Convert the file system metadata to
 .Ar byteorder
 byte order if needed.
 Valid byte orders are
-.Dq be
-and
-.Dq le
+.Dq be ,
+.Dq le ,
 and
 .Dq pdp .
 .It Fl F
-Check file system to a regular file.
+Check file system inside a regular file.
 .It Fl n
 Don't correct file system.
-.It Fl y
-Causes
-.Nm
-to assume yes as the answer to all operator questions.
-.It Fl p
-preen mode. See fsck(8)
-.It Fl P
-Display a progress meter for the file system check.
 .It Fl o
 Options are specified with a
 .Fl o
@@ -79,11 +69,20 @@ flag followed by a comma separated string of options.
 The following options are available:
 .Bl -tag -width data
 .It Cm data
-.Tn Check data block duplication.
+Check data block duplication.
 .It Cm free
-.Tn Check free block duplication.
+Check free block duplication.
 .El
-
+.It Fl P
+Display a progress meter for the file system check.
+.It Fl p
+Preen mode.
+See
+.Xr fsck 8 .
+.It Fl y
+Causes
+.Nm
+to assume yes as the answer to all operator questions.
 .El
 .Sh SEE ALSO
 .Xr fsck 8 ,
