@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1085 2011/06/07 10:07:35 cegger Exp $
+$NetBSD: pcidevs,v 1.1086 2011/06/27 14:52:44 nonaka Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3092,14 +3092,22 @@ product ITT AGX016	0x0001	AGX016
 product ITT ITT3204	0x0002	ITT3204 MPEG Decoder
 
 /* JMicron products */
-product JMICRON	JMB360	0x2360 JMB360 SATA Controller
-product JMICRON	JMB361	0x2361 JMB361 SATA/PATA Controller
-product JMICRON	JMB363	0x2363 JMB363 SATA/PATA Controller
-product JMICRON	JMB365	0x2365 JMB365 SATA/PATA Controller
-product JMICRON	JMB366	0x2366 JMB366 SATA/PATA Controller
-product JMICRON	JMB368	0x2368 JMB368 PATA Controller
-product JMICRON	JMC250	0x0250 JMC250 Gigabit Ethernet Controller
-product JMICRON	JMC260	0x0260 JMC260 Fast Ethernet Controller
+product JMICRON	JMB360		0x2360 JMB360 SATA Controller
+product JMICRON	JMB361		0x2361 JMB361 SATA/PATA Controller
+product JMICRON	JMB363		0x2363 JMB363 SATA/PATA Controller
+product JMICRON	JMB365		0x2365 JMB365 SATA/PATA Controller
+product JMICRON	JMB366		0x2366 JMB366 SATA/PATA Controller
+product JMICRON	JMB368		0x2368 JMB368 PATA Controller
+product JMICRON	JMB38X_SD	0x2381 JMB38X SD Host Controller
+product JMICRON	JMB38X_MMC	0x2382 JMB38X SD/MMC Host Controller
+product JMICRON	JMB38X_MS	0x2383 JMB38X Memory Stick Host Controller
+product JMICRON	JMB38X_XD	0x2384 JMB38X xD Host Controller
+product JMICRON	JMB388_SD	0x2391 JMB388 SD Host Controller
+product JMICRON	JMB388_MMC	0x2392 JMB388 SD/MMC Host Controller
+product JMICRON	JMB388_MS	0x2393 JMB388 Memory Stick Host Controller
+product JMICRON	JMB388_XD	0x2394 JMB388 xD Host Controller
+product JMICRON	JMC250		0x0250 JMC250 Gigabit Ethernet Controller
+product JMICRON	JMC260		0x0260 JMC260 Fast Ethernet Controller
 
 /* JNI products */
 product JNI JNIC1460	0x1460	JNIC-1460 Fibre-Channel Adapter
