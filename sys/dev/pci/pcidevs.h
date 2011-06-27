@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1081 2011/06/07 10:08:02 cegger Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1082 2011/06/27 14:53:25 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1085 2011/06/07 10:07:35 cegger Exp
+ *	NetBSD: pcidevs,v 1.1086 2011/06/27 14:52:44 nonaka Exp
  */
 
 /*
@@ -3105,6 +3105,14 @@
 #define	PCI_PRODUCT_JMICRON_JMB365	0x2365		/* JMB365 SATA/PATA Controller */
 #define	PCI_PRODUCT_JMICRON_JMB366	0x2366		/* JMB366 SATA/PATA Controller */
 #define	PCI_PRODUCT_JMICRON_JMB368	0x2368		/* JMB368 PATA Controller */
+#define	PCI_PRODUCT_JMICRON_JMB38X_SD	0x2381		/* JMB38X SD Host Controller */
+#define	PCI_PRODUCT_JMICRON_JMB38X_MMC	0x2382		/* JMB38X SD/MMC Host Controller */
+#define	PCI_PRODUCT_JMICRON_JMB38X_MS	0x2383		/* JMB38X Memory Stick Host Controller */
+#define	PCI_PRODUCT_JMICRON_JMB38X_XD	0x2384		/* JMB38X xD Host Controller */
+#define	PCI_PRODUCT_JMICRON_JMB388_SD	0x2391		/* JMB388 SD Host Controller */
+#define	PCI_PRODUCT_JMICRON_JMB388_MMC	0x2392		/* JMB388 SD/MMC Host Controller */
+#define	PCI_PRODUCT_JMICRON_JMB388_MS	0x2393		/* JMB388 Memory Stick Host Controller */
+#define	PCI_PRODUCT_JMICRON_JMB388_XD	0x2394		/* JMB388 xD Host Controller */
 #define	PCI_PRODUCT_JMICRON_JMC250	0x0250		/* JMC250 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_JMICRON_JMC260	0x0260		/* JMC260 Fast Ethernet Controller */
 
