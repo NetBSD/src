@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.99 2011/06/24 01:48:43 rmind Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.100 2011/06/27 15:56:36 hannken Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.99 2011/06/24 01:48:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.100 2011/06/27 15:56:36 hannken Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -766,7 +766,6 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 	const int waitf = (flags & AMAP_COPY_NOWAIT) ? UVM_FLAG_NOWAIT : 0;
 	struct vm_amap *amap, *srcamap;
 	struct vm_anon *tofree;
-	kmutex_t *lock;
 	u_int slots, lcv;
 	vsize_t len;
 
@@ -900,7 +899,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 	/*
 	 * Drop our reference to the old amap (srcamap) and unlock.
 	 * Since the reference count on srcamap is greater than one,
-	 * (we checked above), it cannot drop to zero.
+	 * (we checked above), it cannot drop to zero while it is locked.
 	 */
 
 	srcamap->am_ref--;
@@ -917,20 +916,20 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 	}
 #endif
 	uvm_anfree(tofree);
-	amap_unlock(srcamap);
 
 	/*
 	 * If we referenced any anons, then share the source amap's lock.
 	 * Otherwise, we have nothing in common, so allocate a new one.
 	 */
 
+	KASSERT(amap->am_lock == NULL);
 	if (amap->am_nused != 0) {
-		lock = srcamap->am_lock;
-		mutex_obj_hold(lock);
-	} else {
-		lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
-	}		
-	amap->am_lock = lock;
+		amap->am_lock = srcamap->am_lock;
+		mutex_obj_hold(amap->am_lock);
+	}
+	amap_unlock(srcamap);
+	if (amap->am_lock == NULL)
+		amap->am_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	amap_list_insert(amap);
 
 	/*
