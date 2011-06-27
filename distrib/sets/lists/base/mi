@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.939 2011/05/20 01:59:14 msaitoh Exp $
+# $NetBSD: mi,v 1.940 2011/06/27 11:52:22 uch Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -239,6 +239,7 @@
 ./sbin/fsck_ffs					base-sysutil-root
 ./sbin/fsck_lfs					base-sysutil-root
 ./sbin/fsck_msdos				base-sysutil-root
+./sbin/fsck_v7fs				base-sysutil-root
 ./sbin/fsdb					base-sysutil-root
 ./sbin/fsirand					base-sysutil-root
 ./sbin/gpt					base-sysutil-root
@@ -289,6 +290,7 @@
 ./sbin/mount_ufs				base-sysutil-root
 ./sbin/mount_umap				base-miscfs-root
 ./sbin/mount_union				base-miscfs-root
+./sbin/mount_v7fs				base-sysutil-root
 ./sbin/mountd					base-obsolete		obsolete
 ./sbin/newbtconf				base-sysutil-root
 ./sbin/newfs					base-sysutil-root
@@ -297,6 +299,7 @@
 ./sbin/newfs_msdos				base-sysutil-root
 ./sbin/newfs_sysvbfs				base-sysutil-root
 ./sbin/newfs_udf				base-sysutil-root
+./sbin/newfs_v7fs				base-sysutil-root
 ./sbin/newlfs					base-obsolete		obsolete
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
@@ -796,6 +799,7 @@
 ./usr/include/fs/sysvbfs			base-c-usr
 ./usr/include/fs/tmpfs				base-c-usr
 ./usr/include/fs/udf				base-c-usr
+./usr/include/fs/v7fs				base-c-usr
 ./usr/include/g++				base-cxx-usr
 ./usr/include/g++/backward			base-cxx-usr
 ./usr/include/g++/bits				base-cxx-usr
