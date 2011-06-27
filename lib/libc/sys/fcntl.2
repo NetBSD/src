@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.38 2011/06/26 16:42:41 christos Exp $
+.\"	$NetBSD: fcntl.2,v 1.39 2011/06/27 08:21:08 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,8 +81,9 @@ is cleared to remain open across
 system calls.
 .El
 .It Dv F_DUPFD_CLOEXEC
-Same as F_DUPFD, but sets the close-on-exec property on the file descriptor
-created.
+Same as
+.Dv F_DUPFD ,
+but sets the close-on-exec property on the file descriptor created.
 .It Dv F_GETFD
 Get the close-on-exec flag associated with the file descriptor
 .Fa fd
@@ -318,6 +319,28 @@ or an
 request fails or blocks respectively when another process has existing
 locks on bytes in the specified region and the type of any of those
 locks conflicts with the type specified in the request.
+.Sh RETURN VALUES
+Upon successful completion, the value returned depends on
+.Fa cmd
+as follows:
+.Bl -tag -width F_GETOWNX -offset indent
+.It Dv F_DUPFD
+A new file descriptor.
+.It Dv F_GETFD
+Value of flag (only the low-order bit is defined).
+.It Dv F_GETFL
+Value of flags.
+.It Dv F_GETOWN
+Value of file descriptor owner.
+.It Dv F_MAXFD
+Value of the highest file descriptor open by the process.
+.It other
+Value other than \-1.
+.El
+.Pp
+Otherwise, a value of \-1 is returned and
+.Va errno
+is set to indicate the error.
 .Sh COMPATIBILITY
 This interface follows the completely stupid semantics of
 .At V
@@ -366,28 +389,6 @@ This implementation detects that sleeping until a locked region is unlocked
 would cause a deadlock and fails with an
 .Er EDEADLK
 error.
-.Sh RETURN VALUES
-Upon successful completion, the value returned depends on
-.Fa cmd
-as follows:
-.Bl -tag -width F_GETOWNX -offset indent
-.It Dv F_DUPFD
-A new file descriptor.
-.It Dv F_GETFD
-Value of flag (only the low-order bit is defined).
-.It Dv F_GETFL
-Value of flags.
-.It Dv F_GETOWN
-Value of file descriptor owner.
-.It Dv F_MAXFD
-Value of the highest file descriptor open by the process.
-.It other
-Value other than \-1.
-.El
-.Pp
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to indicate the error.
 .Sh ERRORS
 .Fn fcntl
 will fail if:
