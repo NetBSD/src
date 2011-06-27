@@ -1,4 +1,4 @@
-/* $NetBSD: mips-gcc.h,v 1.4 2011/02/25 11:55:28 pooka Exp $ */
+/* $NetBSD: mips-gcc.h,v 1.5 2011/06/27 06:40:26 matt Exp $ */
 
 /*
 -------------------------------------------------------------------------------
@@ -90,11 +90,6 @@ what the endianness of the CPU.  VFP is sane.
 -------------------------------------------------------------------------------
 */
 #if defined(SOFTFLOAT_FOR_GCC)
-#if defined(__MIPSEB__)
 #define FLOAT64_DEMANGLE(a)	(a)
 #define FLOAT64_MANGLE(a)	(a)
-#else
-#define FLOAT64_DEMANGLE(a)	(((a) << 32) | ((a) >> 32))
-#define FLOAT64_MANGLE(a)	FLOAT64_DEMANGLE(a)
-#endif
 #endif
