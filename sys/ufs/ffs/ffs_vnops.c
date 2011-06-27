@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.119 2011/06/12 03:36:00 rmind Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.120 2011/06/27 16:34:47 manu Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.119 2011/06/12 03:36:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.120 2011/06/27 16:34:47 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -736,9 +736,19 @@ ffs_listextattr(void *v)
 	struct inode *ip = VTOI(ap->a_vp);
 	struct fs *fs = ip->i_fs;
 
-	/* Not supported for UFS1 file systems. */
-	if (fs->fs_magic == FS_UFS1_MAGIC)
+	if (fs->fs_magic == FS_UFS1_MAGIC) {
+#ifdef UFS_EXTATTR
+		struct vnode *vp = ap->a_vp;
+		int error;
+
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
+		error = ufs_listextattr(ap);
+		fstrans_done(vp->v_mount);
+		return error;
+#else
 		return (EOPNOTSUPP);
+#endif
+	}
 
 	/* XXX Not implemented for UFS2 file systems. */
 	return (EOPNOTSUPP);
