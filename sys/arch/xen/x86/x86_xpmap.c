@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.26.2.2 2011/06/23 14:19:50 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.26.2.3 2011/06/27 10:23:21 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.2 2011/06/23 14:19:50 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.3 2011/06/27 10:23:21 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -658,7 +658,9 @@ bootstrap_again:
 	    (UPAGES + 1) * NBPG);
 
 	/* Finally, flush TLB. */
+	xpq_queue_lock();
 	xpq_queue_tlb_flush();
+	xpq_queue_unlock();
 
 	return (init_tables + ((count + l2_4_count) * PAGE_SIZE));
 }
