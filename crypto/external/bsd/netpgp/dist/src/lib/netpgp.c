@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.90 2011/06/25 00:37:44 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.91 2011/06/27 07:05:31 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -852,10 +852,12 @@ netpgp_init(netpgp_t *netpgp)
 			(void) fprintf(io->errs, "Can't read pub keyring\n");
 			return 0;
 		}
-		netpgp->secring = readkeyring(netpgp, "secring");
-		if (netpgp->secring == NULL) {
-			(void) fprintf(io->errs, "Can't read sec keyring\n");
-			return 0;
+		if (netpgp_getvar(netpgp, "need seckey")) {
+			netpgp->secring = readkeyring(netpgp, "secring");
+			if (netpgp->secring == NULL) {
+				(void) fprintf(io->errs, "Can't read sec keyring\n");
+				return 0;
+			}
 		}
 	} else {
 		last = (netpgp->pubring != NULL);
