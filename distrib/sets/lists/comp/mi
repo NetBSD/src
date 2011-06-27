@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1632 2011/06/26 16:42:40 christos Exp $
+#	$NetBSD: mi,v 1.1633 2011/06/27 11:52:22 uch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -663,6 +663,8 @@
 ./usr/include/fs/tmpfs/tmpfs_args.h		comp-c-include
 ./usr/include/fs/udf/ecma167-udf.h		comp-c-include
 ./usr/include/fs/udf/udf_mount.h		comp-c-include
+./usr/include/fs/v7fs/v7fs.h			comp-c-include
+./usr/include/fs/v7fs/v7fs_args.h		comp-c-include
 ./usr/include/fstab.h				comp-c-include
 ./usr/include/fts.h				comp-c-include
 ./usr/include/ftw.h				comp-c-include
