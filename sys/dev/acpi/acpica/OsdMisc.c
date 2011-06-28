@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.11 2011/02/17 12:08:46 jruoho Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.12 2011/06/28 09:09:43 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.11 2011/02/17 12:08:46 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.12 2011/06/28 09:09:43 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_ddb.h"
@@ -122,7 +122,7 @@ AcpiOsSignal(UINT32 Function, void *Info)
 }
 
 ACPI_STATUS
-AcpiOsGetLine(char *Buffer)
+AcpiOsGetLine(char *Buffer, UINT32 BufferLength, UINT32 *BytesRead)
 {
 #if defined(DDB)
 	char *cp;
