@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.h,v 1.4 2011/06/28 18:14:11 ahoka Exp $	*/
+/*	$NetBSD: flash.h,v 1.5 2011/06/28 21:01:23 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -41,7 +41,6 @@
 #include <sys/buf.h>
 #include <sys/flashio.h>
 
-#define FLASH_DEBUG 1
 #ifdef FLASH_DEBUG
 #define FLDPRINTF(x)	if (flashdebug) printf x
 #define FLDPRINTFN(n,x)	if (flashdebug>(n)) printf x
