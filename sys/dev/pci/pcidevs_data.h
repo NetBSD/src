@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1081 2011/06/27 14:53:26 nonaka Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1082 2011/06/28 14:58:34 sborrill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1086 2011/06/27 14:52:44 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1087 2011/06/28 14:22:36 sborrill Exp
  */
 
 /*
@@ -5943,6 +5943,8 @@ static const uint16_t pci_products[] = {
 	    21224, 21523, 10147, 6141, 6150, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SATA3, 
 	    21224, 21523, 10147, 6141, 6150, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_8500_GT, 
+	    20997, 8816, 21010, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_8400M_GS, 
 	    20997, 21529, 21535, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_NVS140M, 
@@ -9046,7 +9048,7 @@ static const char pci_words[] = { "."
 	    "7000\0" /* 2 refs @ 8801 */
 	    "IGP\0" /* 7 refs @ 8806 */
 	    "(A4+)\0" /* 1 refs @ 8810 */
-	    "8500\0" /* 4 refs @ 8816 */
+	    "8500\0" /* 5 refs @ 8816 */
 	    "AIW\0" /* 2 refs @ 8821 */
 	    "BB\0" /* 1 refs @ 8825 */
 	    "BC\0" /* 1 refs @ 8828 */
@@ -10720,9 +10722,9 @@ static const char pci_words[] = { "."
 	    "Model\0" /* 1 refs @ 20982 */
 	    "64\0" /* 1 refs @ 20988 */
 	    "MCP04\0" /* 7 refs @ 20991 */
-	    "GeForce\0" /* 26 refs @ 20997 */
+	    "GeForce\0" /* 27 refs @ 20997 */
 	    "6800\0" /* 4 refs @ 21005 */
-	    "GT\0" /* 1 refs @ 21010 */
+	    "GT\0" /* 2 refs @ 21010 */
 	    "nForce4\0" /* 14 refs @ 21013 */
 	    "ATA133\0" /* 13 refs @ 21021 */
 	    "nForce2\0" /* 27 refs @ 21028 */
