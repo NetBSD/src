@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_io.c,v 1.6 2011/05/01 14:48:11 ahoka Exp $	*/
+/*	$NetBSD: nand_io.c,v 1.7 2011/06/28 07:05:19 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_io.c,v 1.6 2011/05/01 14:48:11 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_io.c,v 1.7 2011/06/28 07:05:19 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -268,7 +268,7 @@ nand_io_cache_sync(device_t self)
 
 	DPRINTF(("writing %zu bytes to 0x%jx\n",
 		chip->nc_block_size, (uintmax_t )base));
-	
+
 	error = nand_flash_write(self,
 	    base, chip->nc_block_size, &retlen, wc->nwc_data);
 
@@ -303,11 +303,13 @@ nand_sync_thread(void * arg)
 		 * or if we havent touched the cache since more than 1 ms
 		 */
 		binuptime(&now);
-		if (nand_timestamp_diff(&now, &wc->nwc_last_write)
-		    > hz / 5 ||
-		    nand_timestamp_diff(&now, &wc->nwc_creation)
+		if (nand_timestamp_diff(&now, &wc->nwc_last_write) > hz / 5) {
+			DPRINTF(("syncing write cache after timeout\n"));
+			nand_io_cache_sync(self);
+		} else if (nand_timestamp_diff(&now, &wc->nwc_creation)
 		    > 3 * hz) {
-			printf("syncing write cache after timeout\n");
+			aprint_error_dev(self,
+			    "syncing write cache after 3 sec timeout!\n");
 			nand_io_cache_sync(self);
 		}
 	}
