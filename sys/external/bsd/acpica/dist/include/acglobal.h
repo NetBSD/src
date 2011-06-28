@@ -128,6 +128,12 @@ UINT8       ACPI_INIT_GLOBAL (AcpiGbl_CopyDsdtLocally, FALSE);
  */
 UINT8       ACPI_INIT_GLOBAL (AcpiGbl_TruncateIoAddresses, FALSE);
 
+/*
+ * Disable runtime checking and repair of values returned by control methods.
+ * Use only if the repair is causing a problem on a particular machine.
+ */
+UINT8       ACPI_INIT_GLOBAL (AcpiGbl_DisableAutoRepair, FALSE);
+
 
 /* AcpiGbl_FADT is a local copy of the FADT, converted to a common format. */
 
@@ -190,13 +196,16 @@ ACPI_EXTERN ACPI_MUTEX_INFO             AcpiGbl_MutexInfo[ACPI_NUM_MUTEX];
 
 /*
  * Global lock mutex is an actual AML mutex object
- * Global lock semaphore works in conjunction with the HW global lock
+ * Global lock semaphore works in conjunction with the actual global lock
+ * Global lock spinlock is used for "pending" handshake
  */
 ACPI_EXTERN ACPI_OPERAND_OBJECT        *AcpiGbl_GlobalLockMutex;
 ACPI_EXTERN ACPI_SEMAPHORE              AcpiGbl_GlobalLockSemaphore;
+ACPI_EXTERN ACPI_SPINLOCK               AcpiGbl_GlobalLockPendingLock;
 ACPI_EXTERN UINT16                      AcpiGbl_GlobalLockHandle;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_GlobalLockAcquired;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_GlobalLockPresent;
+ACPI_EXTERN BOOLEAN                     AcpiGbl_GlobalLockPending;
 
 /*
  * Spinlocks are used for interfaces that can be possibly called at
@@ -422,10 +431,11 @@ ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOpt_ini_methods;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOpt_NoRegionSupport;
 
 ACPI_EXTERN char                       *AcpiGbl_DbArgs[ACPI_DEBUGGER_MAX_ARGS];
-ACPI_EXTERN char                        AcpiGbl_DbLineBuf[80];
-ACPI_EXTERN char                        AcpiGbl_DbParsedBuf[80];
-ACPI_EXTERN char                        AcpiGbl_DbScopeBuf[40];
-ACPI_EXTERN char                        AcpiGbl_DbDebugFilename[40];
+ACPI_EXTERN ACPI_OBJECT_TYPE            AcpiGbl_DbArgTypes[ACPI_DEBUGGER_MAX_ARGS];
+ACPI_EXTERN char                        AcpiGbl_DbLineBuf[ACPI_DB_LINE_BUFFER_SIZE];
+ACPI_EXTERN char                        AcpiGbl_DbParsedBuf[ACPI_DB_LINE_BUFFER_SIZE];
+ACPI_EXTERN char                        AcpiGbl_DbScopeBuf[80];
+ACPI_EXTERN char                        AcpiGbl_DbDebugFilename[80];
 ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOutputToFile;
 ACPI_EXTERN char                       *AcpiGbl_DbBuffer;
 ACPI_EXTERN char                       *AcpiGbl_DbFilename;
