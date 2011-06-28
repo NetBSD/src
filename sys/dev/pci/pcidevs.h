@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1082 2011/06/27 14:53:25 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1083 2011/06/28 14:58:33 sborrill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1086 2011/06/27 14:52:44 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1087 2011/06/28 14:22:36 sborrill Exp
  */
 
 /*
@@ -3686,6 +3686,7 @@
 #define	PCI_PRODUCT_NVIDIA_MCP61_LAN4	0x03ef		/* nForce MCP61 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP61_SATA2	0x03f6		/* nForce MCP61 Serial ATA Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP61_SATA3	0x03f7		/* nForce MCP61 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_GF_8500_GT	0x0421		/* GeForce 8500 GT */
 #define	PCI_PRODUCT_NVIDIA_GF_8400M_GS	0x0427		/* GeForce 8400M GS */
 #define	PCI_PRODUCT_NVIDIA_QUADRO_NVS140M	0x0429		/* Quadro NVS 140M */
 #define	PCI_PRODUCT_NVIDIA_MCP65_ISA	0x0440		/* nForce MCP65 PCI-ISA Bridge */
