@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.30 2011/06/01 15:54:10 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.31 2011/06/28 16:19:16 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -36,6 +36,7 @@
 #include <puffs.h>
 #include <sys/socket.h>
 #include <sys/socket.h>
+#include <sys/extattr.h>
 #include <machine/vmparam.h>
 
 #include "perfuse_priv.h"
@@ -2924,3 +2925,213 @@ perfuse_cache_write(pu, opc, size, runs)
 	return;
 }
 
+/* ARGSUSED4 */
+int
+perfuse_node_getextattr(pu, opc, attrns, attrname, attrsize, attr, resid, pcr)
+	struct puffs_usermount *pu;
+	puffs_cookie_t opc;
+	int attrns;
+	const char *attrname;
+	size_t *attrsize;
+	uint8_t *attr;
+	size_t *resid;
+	const struct puffs_cred *pcr;
+{
+	struct perfuse_state *ps;
+	char fuse_attrname[LINUX_XATTR_NAME_MAX + 1];
+	perfuse_msg_t *pm;
+	struct fuse_getxattr_in *fgi;
+	struct fuse_getxattr_out *fgo;
+	struct fuse_out_header *foh;
+	size_t attrnamelen;
+	size_t len;
+	char *np;
+	int error;
+
+	ps = puffs_getspecific(pu);
+	attrname = perfuse_native_ns(attrns, attrname, fuse_attrname);
+	attrnamelen = strlen(attrname) + 1;
+	len = sizeof(*fgi) + attrnamelen;
+
+	pm = ps->ps_new_msg(pu, opc, FUSE_GETXATTR, len, pcr);
+	fgi = GET_INPAYLOAD(ps, pm, fuse_getxattr_in);
+	fgi->size = (resid != NULL) ? *resid : 0;
+	np = (char *)(void *)(fgi + 1);
+	(void)strlcpy(np, attrname, attrnamelen);
+	
+	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
+		goto out;
+
+	/*
+	 * We just get fuse_getattr_out with list size if we requested
+	 * a null size.
+	 */
+	if (resid == NULL) {
+		fgo = GET_OUTPAYLOAD(ps, pm, fuse_getxattr_out);
+
+		if (attrsize != NULL)
+			*attrsize = fgo->size;
+
+		goto out;
+	}
+
+	/*
+	 * And with a non null requested size, we get the list just 
+	 * after the header
+	 */
+	foh = GET_OUTHDR(ps, pm);
+	np = (char *)(void *)(foh + 1);
+
+	if (resid != NULL) {
+		len = MAX(foh->len - sizeof(*foh), *resid);
+		(void)memcpy(attr, np, len);
+		*resid -= len;
+	}
+	
+out: 
+	ps->ps_destroy_msg(pm);
+
+	return error;
+}
+
+int
+perfuse_node_setextattr(pu, opc, attrns, attrname, attr, resid, pcr)
+	struct puffs_usermount *pu;
+	puffs_cookie_t opc;
+	int attrns;
+	const char *attrname;
+	uint8_t *attr;
+	size_t *resid;
+	const struct puffs_cred *pcr;
+{
+	struct perfuse_state *ps;
+	char fuse_attrname[LINUX_XATTR_NAME_MAX + 1];
+	perfuse_msg_t *pm;
+	struct fuse_setxattr_in *fsi;
+	size_t attrnamelen;
+	size_t len;
+	char *np;
+	int error;
+	
+	ps = puffs_getspecific(pu);
+	attrname = perfuse_native_ns(attrns, attrname, fuse_attrname);
+	attrnamelen = strlen(attrname) + 1;
+	len = sizeof(*fsi) + attrnamelen + *resid;
+
+	pm = ps->ps_new_msg(pu, opc, FUSE_SETXATTR, len, pcr);
+	fsi = GET_INPAYLOAD(ps, pm, fuse_setxattr_in);
+	fsi->size = *resid;
+	fsi->flags = 0;
+	np = (char *)(void *)(fsi + 1);
+	(void)strlcpy(np, attrname, attrnamelen);
+	np += attrnamelen;
+	(void)memcpy(np, (char *)attr, *resid);
+
+	if ((error = xchg_msg(pu, opc, pm, 
+			      NO_PAYLOAD_REPLY_LEN, wait_reply)) != 0)
+		goto out;
+
+	*resid = 0;
+out: 
+	ps->ps_destroy_msg(pm);
+
+	return error;
+}
+
+/* ARGSUSED2 */
+int
+perfuse_node_listextattr(pu, opc, attrns, attrsize, attrs, resid, pcr)
+	struct puffs_usermount *pu;
+	puffs_cookie_t opc;
+	int attrns;
+	size_t *attrsize;
+	uint8_t *attrs;
+	size_t *resid;
+	const struct puffs_cred *pcr;
+{
+	struct perfuse_state *ps;
+	perfuse_msg_t *pm;
+	struct fuse_getxattr_in *fgi;
+	struct fuse_getxattr_out *fgo;
+	struct fuse_out_header *foh;
+	char *np;
+	size_t len, puffs_len;
+	int error;
+	
+	ps = puffs_getspecific(pu);
+	len = sizeof(*fgi);
+
+	pm = ps->ps_new_msg(pu, opc, FUSE_LISTXATTR, len, pcr);
+	fgi = GET_INPAYLOAD(ps, pm, fuse_getxattr_in);
+	if (resid != NULL)
+		fgi->size = *resid;
+	else
+		fgi->size = 0;
+	
+	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
+		goto out;
+
+	/*
+	 * We just get fuse_getattr_out with list size if we requested
+	 * a null size.
+	 */
+	if (resid == NULL) {
+		fgo = GET_OUTPAYLOAD(ps, pm, fuse_getxattr_out);
+
+		if (attrsize != NULL)
+			*attrsize = fgo->size;
+
+		goto out;
+	}
+
+	/*
+	 * And with a non null requested size, we get the list just 
+	 * after the header
+	 */
+	foh = GET_OUTHDR(ps, pm);
+	np = (char *)(void *)(foh + 1);
+	puffs_len = foh->len - sizeof(*foh);
+
+	if (attrs != NULL) {
+		(void)memcpy(attrs, np, puffs_len);
+		*resid -= puffs_len;
+	}
+
+	if (attrsize != NULL) 
+		*attrsize = puffs_len;
+
+out: 
+	ps->ps_destroy_msg(pm);
+
+	return error;
+}
+
+int
+perfuse_node_deleteextattr(pu, opc, attrns, attrname, pcr)
+	struct puffs_usermount *pu;
+	puffs_cookie_t opc;
+	int attrns;
+	const char *attrname;
+	const struct puffs_cred *pcr;
+{
+	struct perfuse_state *ps;
+	char fuse_attrname[LINUX_XATTR_NAME_MAX + 1];
+	perfuse_msg_t *pm;
+	size_t attrnamelen;
+	char *np;
+	int error;
+	
+	ps = puffs_getspecific(pu);
+	attrname = perfuse_native_ns(attrns, attrname, fuse_attrname);
+	attrnamelen = strlen(attrname) + 1;
+
+	pm = ps->ps_new_msg(pu, opc, FUSE_REMOVEXATTR, attrnamelen, pcr);
+	np = _GET_INPAYLOAD(ps, pm, char *);
+	(void)strlcpy(np, attrname, attrnamelen);
+	
+	error = xchg_msg(pu, opc, pm, NO_PAYLOAD_REPLY_LEN, wait_reply);
+	
+	ps->ps_destroy_msg(pm);
+
+	return error;
+}
