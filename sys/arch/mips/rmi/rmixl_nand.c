@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_nand.c,v 1.5 2011/03/27 13:36:50 ahoka Exp $	*/
+/*	$NetBSD: rmixl_nand.c,v 1.6 2011/06/28 07:17:31 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.5 2011/03/27 13:36:50 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.6 2011/06/28 07:17:31 ahoka Exp $");
 
 #include "opt_flash.h"
 
@@ -63,10 +63,10 @@ static int  rmixl_nand_detach(device_t, int);
 static void rmixl_nand_command(device_t, uint8_t);
 static void rmixl_nand_address(device_t, uint8_t);
 static void rmixl_nand_busy(device_t);
-static void rmixl_nand_read_byte(device_t, uint8_t *);
-static void rmixl_nand_write_byte(device_t, uint8_t);
-static void rmixl_nand_read_word(device_t, uint16_t *);
-static void rmixl_nand_write_word(device_t, uint16_t);
+static void rmixl_nand_read_1(device_t, uint8_t *);
+static void rmixl_nand_write_1(device_t, uint8_t);
+static void rmixl_nand_read_2(device_t, uint16_t *);
+static void rmixl_nand_write_2(device_t, uint16_t);
 static void rmixl_nand_read_buf(device_t, void *, size_t);
 static void rmixl_nand_write_buf(device_t, const void *, size_t);
 
@@ -206,14 +206,14 @@ rmixl_nand_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_nand_if.command = rmixl_nand_command;
 	sc->sc_nand_if.address = rmixl_nand_address;
-	sc->sc_nand_if.read_buf_byte = rmixl_nand_read_buf;
-	sc->sc_nand_if.read_buf_word = rmixl_nand_read_buf;
-	sc->sc_nand_if.read_byte = rmixl_nand_read_byte;
-	sc->sc_nand_if.read_word = rmixl_nand_read_word;
-	sc->sc_nand_if.write_buf_byte = rmixl_nand_write_buf;
-	sc->sc_nand_if.write_buf_word = rmixl_nand_write_buf;
-	sc->sc_nand_if.write_byte = rmixl_nand_write_byte;
-	sc->sc_nand_if.write_word = rmixl_nand_write_word;
+	sc->sc_nand_if.read_buf_1 = rmixl_nand_read_buf;
+	sc->sc_nand_if.read_buf_2 = rmixl_nand_read_buf;
+	sc->sc_nand_if.read_1 = rmixl_nand_read_1;
+	sc->sc_nand_if.read_2 = rmixl_nand_read_2;
+	sc->sc_nand_if.write_buf_1 = rmixl_nand_write_buf;
+	sc->sc_nand_if.write_buf_2 = rmixl_nand_write_buf;
+	sc->sc_nand_if.write_1 = rmixl_nand_write_1;
+	sc->sc_nand_if.write_2 = rmixl_nand_write_2;
 	sc->sc_nand_if.busy = rmixl_nand_busy;
 
 	sc->sc_nand_if.ecc.necc_code_size = 3;
@@ -287,31 +287,31 @@ rmixl_nand_busy(device_t self)
 }
 
 static void
-rmixl_nand_read_byte(device_t self, uint8_t *data)
-{	
+rmixl_nand_read_1(device_t self, uint8_t *data)
+{
 	struct rmixl_nand_softc *sc = device_private(self);
-	
+
 	*data = bus_space_read_1(sc->sc_iobus_bst, sc->sc_iobus_bsh, 0);
 }
 
 static void
-rmixl_nand_write_byte(device_t self, uint8_t data)
-{	
+rmixl_nand_write_1(device_t self, uint8_t data)
+{
 	struct rmixl_nand_softc *sc = device_private(self);
-	
+
 	bus_space_write_1(sc->sc_iobus_bst, sc->sc_iobus_bsh, 0, data);
 }
 
 static void
-rmixl_nand_read_word(device_t self, uint16_t *data)
+rmixl_nand_read_2(device_t self, uint16_t *data)
 {
 	struct rmixl_nand_softc *sc = device_private(self);
-	
+
 	*data = bus_space_read_2(sc->sc_iobus_bst, sc->sc_iobus_bsh, 0);
 }
 
 static void
-rmixl_nand_write_word(device_t self, uint16_t data)
+rmixl_nand_write_2(device_t self, uint16_t data)
 {
 	struct rmixl_nand_softc *sc = device_private(self);
 
