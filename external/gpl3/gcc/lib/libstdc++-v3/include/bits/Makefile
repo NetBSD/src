@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/23 11:47:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/06/28 04:07:36 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -34,7 +34,9 @@ BITS_CPUDIR=${MACHINE_GNU_ARCH}
 
 .PATH:	${DIST}/libstdc++-v3/include/bits \
 	${DIST}/libstdc++-v3/include/c_std \
+	${DIST}/libstdc++-v3/include/precompiled \
 	${CONF}/os/bsd/netbsd \
+	${CONF}/os/generic \
 	${CONF}/io \
 	${CONF}/cpu/${BITS_CPUDIR} \
 	${CONF}/cpu/generic \
