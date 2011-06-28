@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_nand.c,v 1.2 2011/03/27 13:35:39 ahoka Exp $	*/
+/*	$NetBSD: omap2_nand.c,v 1.3 2011/06/28 07:16:53 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.2 2011/03/27 13:35:39 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.3 2011/06/28 07:16:53 ahoka Exp $");
 
 #include "opt_omap.h"
 #include "opt_flash.h"
@@ -88,15 +88,15 @@ static int	omap2_nand_detach(device_t, int);
 void omap2_nand_command(device_t self, uint8_t command);
 void omap2_nand_address(device_t self, uint8_t address);
 void omap2_nand_busy(device_t self);
-void omap2_nand_read_byte(device_t self, uint8_t *data);
-void omap2_nand_write_byte(device_t self, uint8_t data);
-void omap2_nand_read_word(device_t self, uint16_t *data);
-void omap2_nand_write_word(device_t self, uint16_t data);
+void omap2_nand_read_1(device_t self, uint8_t *data);
+void omap2_nand_write_1(device_t self, uint8_t data);
+void omap2_nand_read_2(device_t self, uint16_t *data);
+void omap2_nand_write_2(device_t self, uint16_t data);
 bool omap2_nand_isbusy(device_t self);
-void omap2_nand_read_buf_byte(device_t self, void *buf, size_t len);
-void omap2_nand_read_buf_word(device_t self, void *buf, size_t len);
-void omap2_nand_write_buf_byte(device_t self, const void *buf, size_t len);
-void omap2_nand_write_buf_word(device_t self, const void *buf, size_t len);
+void omap2_nand_read_buf_1(device_t self, void *buf, size_t len);
+void omap2_nand_read_buf_2(device_t self, void *buf, size_t len);
+void omap2_nand_write_buf_1(device_t self, const void *buf, size_t len);
+void omap2_nand_write_buf_2(device_t self, const void *buf, size_t len);
 
 int omap2_nand_ecc_init(device_t self);
 int omap2_nand_ecc_prepare(device_t self, int mode);
@@ -146,14 +146,14 @@ omap2_nand_isbusy(device_t self)
 {
 	struct omap2_nand_softc *sc = device_private(self);
 	uint8_t status;
-	
+
 	DELAY(1);		/* just to be sure we are not early */
-	
+
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 	    sc->sc_cmd_reg, ONFI_READ_STATUS);
-	
+
 	DELAY(1);
-		
+
 	status = bus_space_read_1(sc->sc_iot,
 	    sc->sc_ioh, sc->sc_data_reg);
 
@@ -169,7 +169,7 @@ omap2_nand_match(struct device *parent, struct cfdata *match, void *aux)
 	bus_size_t cs_offset;
 	uint32_t result;
 	int ret = 0;
-	
+
 	iot = gpmc->gpmc_iot;
 
 	cs_offset = GPMC_CS_CONFIG_BASE(gpmc->gpmc_cs);
@@ -253,14 +253,14 @@ omap2_nand_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_nand_if.command = &omap2_nand_command;
 	sc->sc_nand_if.address = &omap2_nand_address;
-	sc->sc_nand_if.read_buf_byte = &omap2_nand_read_buf_byte;
-	sc->sc_nand_if.read_buf_word = &omap2_nand_read_buf_word;
-	sc->sc_nand_if.read_byte = &omap2_nand_read_byte;
-	sc->sc_nand_if.read_word = &omap2_nand_read_word;
-	sc->sc_nand_if.write_buf_byte = &omap2_nand_write_buf_byte;
-	sc->sc_nand_if.write_buf_word = &omap2_nand_write_buf_word;
-	sc->sc_nand_if.write_byte = &omap2_nand_write_byte;
-	sc->sc_nand_if.write_word = &omap2_nand_write_word;
+	sc->sc_nand_if.read_buf_1 = &omap2_nand_read_buf_1;
+	sc->sc_nand_if.read_buf_2 = &omap2_nand_read_buf_2;
+	sc->sc_nand_if.read_1 = &omap2_nand_read_1;
+	sc->sc_nand_if.read_2 = &omap2_nand_read_2;
+	sc->sc_nand_if.write_buf_1 = &omap2_nand_write_buf_1;
+	sc->sc_nand_if.write_buf_2 = &omap2_nand_write_buf_2;
+	sc->sc_nand_if.write_1 = &omap2_nand_write_1;
+	sc->sc_nand_if.write_2 = &omap2_nand_write_2;
 	sc->sc_nand_if.busy = &omap2_nand_busy;
 
 #ifdef OMAP2_NAND_HARDWARE_ECC
@@ -310,83 +310,83 @@ omap2_nand_busy(device_t self)
 }
 
 void
-omap2_nand_read_byte(device_t self, uint8_t *data)
-{	
+omap2_nand_read_1(device_t self, uint8_t *data)
+{
 	struct omap2_nand_softc *sc = device_private(self);
-	
+
 	*data = bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->sc_data_reg);
 }
 
 void
-omap2_nand_write_byte(device_t self, uint8_t data)
-{	
+omap2_nand_write_1(device_t self, uint8_t data)
+{
 	struct omap2_nand_softc *sc = device_private(self);
-	
+
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_data_reg, data);
 }
 
 void
-omap2_nand_read_word(device_t self, uint16_t *data)
+omap2_nand_read_2(device_t self, uint16_t *data)
 {
 	struct omap2_nand_softc *sc = device_private(self);
-	
+
 	*data = bus_space_read_2(sc->sc_iot, sc->sc_ioh, sc->sc_data_reg);
 }
 
 void
-omap2_nand_write_word(device_t self, uint16_t data)
+omap2_nand_write_2(device_t self, uint16_t data)
 {
 	struct omap2_nand_softc *sc = device_private(self);
-	
+
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, sc->sc_data_reg, data);
 }
 
 void
-omap2_nand_read_buf_byte(device_t self, void *buf, size_t len)
+omap2_nand_read_buf_1(device_t self, void *buf, size_t len)
 {
 	struct omap2_nand_softc *sc = device_private(self);
 
 	KASSERT(buf != NULL);
 	KASSERT(len >= 1);
-	
+
 	bus_space_read_multi_1(sc->sc_iot, sc->sc_ioh,
 	    sc->sc_data_reg, buf, len);
 }
 
 void
-omap2_nand_read_buf_word(device_t self, void *buf, size_t len)
+omap2_nand_read_buf_2(device_t self, void *buf, size_t len)
 {
 	struct omap2_nand_softc *sc = device_private(self);
 
 	KASSERT(buf != NULL);
 	KASSERT(len >= 2);
 	KASSERT(!(len & 0x01));
-	
+
 	bus_space_read_multi_2(sc->sc_iot, sc->sc_ioh,
 	    sc->sc_data_reg, buf, len / 2);
 }
 
 void
-omap2_nand_write_buf_byte(device_t self, const void *buf, size_t len)
+omap2_nand_write_buf_1(device_t self, const void *buf, size_t len)
 {
 	struct omap2_nand_softc *sc = device_private(self);
 
 	KASSERT(buf != NULL);
 	KASSERT(len >= 1);
-	
+
 	bus_space_write_multi_1(sc->sc_iot, sc->sc_ioh,
 	    sc->sc_data_reg, buf, len);
 }
 
 void
-omap2_nand_write_buf_word(device_t self, const void *buf, size_t len)
+omap2_nand_write_buf_2(device_t self, const void *buf, size_t len)
 {
 	struct omap2_nand_softc *sc = device_private(self);
 
 	KASSERT(buf != NULL);
 	KASSERT(len >= 2);
 	KASSERT(!(len & 0x01));
-	
+
 	bus_space_write_multi_2(sc->sc_iot, sc->sc_ioh,
 	    sc->sc_data_reg, buf, len / 2);
 }
@@ -456,7 +456,7 @@ omap2_nand_ecc_prepare(device_t self, int mode)
 		val &= ~ECCPOINTER;
 		val |= ECCCLEAR | MASKEDINT(ECCPOINTER, 1);
 		gpmc_register_write(sc->sc_gpmcsc, GPMC_ECC_CONTROL, val);
-		
+
 		val = gpmc_register_read(sc->sc_gpmcsc, GPMC_ECC_CONFIG);
 		val &= ~ECCCS;
 		val |= ECCENABLE | MASKEDINT(ECCCS, sc->sc_cs);
@@ -465,7 +465,7 @@ omap2_nand_ecc_prepare(device_t self, int mode)
 		else
 			val &= ~ECC16B;
 		gpmc_register_write(sc->sc_gpmcsc, GPMC_ECC_CONFIG, val);
-		
+
 		break;
 	default:
 		aprint_error_dev(self, "invalid i/o mode for ecc prepare\n");
@@ -508,7 +508,7 @@ omap2_nand_ecc_correct(device_t self, uint8_t *data, const uint8_t *oldecc,
 		/* erased page! */
 		if ((oecc == 0x0fff0fff) && (cecc == 0x00000000))
 			return NAND_ECC_OK;
-		
+
 		return NAND_ECC_TWOBIT;
 	}
 }
