@@ -1,15 +1,24 @@
 #
-# acpisrc utility
+# acpisrc - ACPICA source code conversion utility
+#
+
+#
+# Note: This makefile is intended to be used from within the native
+# ACPICA directory structure, from under generate/unix. It specifically
+# places all object files in a generate/unix subdirectory, not within
+# the various ACPICA source directories. This prevents collisions
+# between different compilations of the same source file with different
+# compile options, and prevents pollution of the source code.
 #
 include ../Makefile.config
-
 PROG = acpisrc
-
 
 #
 # Flags specific to acpisrc
 #
-CFLAGS+= -DACPI_APPLICATION -I$(ACPICA_TOOLS)/acpisrc
+CFLAGS+= \
+    -DACPI_SRC_APP \
+    -I$(ACPICA_TOOLS)/acpisrc
 
 OBJS = \
 	ascase.o \
@@ -20,8 +29,7 @@ OBJS = \
 	astable.o \
 	asutils.o \
 	getopt.o \
-	osunixdir.o 
-
+	osunixdir.o
 
 #
 # Root rule
@@ -29,7 +37,6 @@ OBJS = \
 $(PROG) : $(OBJS)
 	$(CC) $(LDFLAGS) $(OBJS) -o $(PROG)
 	$(COPYPROG)
-
 
 #
 # acpisrc source
@@ -55,13 +62,11 @@ astable.o :         $(ACPICA_TOOLS)/acpisrc/astable.c
 asutils.o :         $(ACPICA_TOOLS)/acpisrc/asutils.c
 	$(COMPILE)
 
-
 #
 # ACPICA core source - common
 #
 getopt.o :          $(ACPICA_COMMON)/getopt.c
 	$(COMPILE)
-
 
 #
 # Unix OS services layer (OSL)
@@ -70,8 +75,8 @@ osunixdir.o :       $(ACPICA_OSL)/osunixdir.c
 	$(COMPILE)
 
 
-clean : 
+clean :
 	rm -f $(PROG) $(PROG).exe $(OBJS)
 
-install : 
+install :
 	$(INSTALLPROG)
