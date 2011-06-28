@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1634 2011/06/27 16:39:43 manu Exp $
+#	$NetBSD: mi,v 1.1635 2011/06/28 04:53:51 uch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3051,6 +3051,7 @@
 ./usr/libdata/debug/sbin/fsck_ffs.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck_lfs.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck_msdos.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/fsck_v7fs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsdb.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsirand.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/gpt.debug		comp-sysutil-debug	debug
@@ -3094,12 +3095,14 @@
 ./usr/libdata/debug/sbin/mount_udf.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_umap.debug	comp-miscfs-debug	debug
 ./usr/libdata/debug/sbin/mount_union.debug	comp-miscfs-debug	debug
+./usr/libdata/debug/sbin/mount_v7fs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_ext2fs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_lfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_msdos.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_sysvbfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_udf.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/newfs_v7fs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/pfctl.debug		comp-pf-debug		pf,debug
 ./usr/libdata/debug/sbin/pflogd.debug		comp-pf-debug		pf,debug
 ./usr/libdata/debug/sbin/pfs.debug		comp-pf-debug		pf,debug
