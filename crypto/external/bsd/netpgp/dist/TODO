@@ -13,7 +13,6 @@ get rid of public key free as part of seckey
 is get_passphrase_cb needed?
 error logging
 separate from libcrypto?
-thresholds
 default compression when signing?
 
 Done
@@ -107,3 +106,4 @@ fix calloc return values in symmetric.c/ops_crypt_t
 prog to convert from pgp sec to ssh sec
 add user-specifiable ciphers for encryption
 elgamal enc/decryption?
+thresholds - see sharedkey, ssss, threshold etc

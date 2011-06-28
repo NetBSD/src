@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.91 2011/06/27 07:05:31 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.92 2011/06/28 03:35:28 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -327,20 +327,24 @@ readsshkeys(netpgp_t *netpgp, char *homedir, const char *needseckey)
 	return 1;
 }
 
-/* set ssh uid to first one in pubring */
-static void
-set_first_pubring(pgp_keyring_t *pubring, char *id, size_t len, int last)
+/* get the uid of the first key in the keyring */
+static int
+get_first_ring(pgp_keyring_t *ring, char *id, size_t len, int last)
 {
 	uint8_t	*src;
 	int	 i;
 	int	 n;
 
+	if (ring == NULL) {
+		return 0;
+	}
 	(void) memset(id, 0x0, len);
-	src = pubring->keys[(last) ? pubring->keyc - 1 : 0].sigid;
+	src = ring->keys[(last) ? ring->keyc - 1 : 0].sigid;
 	for (i = 0, n = 0 ; i < PGP_KEY_ID_SIZE ; i += 2) {
 		n += snprintf(&id[n], len - n, "%02x%02x", src[i], src[i + 1]);
 	}
 	id[n] = 0x0;
+	return 1;
 }
 
 /* find the time - in a specific %Y-%m-%d format - using a regexp */
@@ -815,58 +819,75 @@ netpgp_init(netpgp_t *netpgp)
 		}
 	}
 	netpgp->io = io;
+	/* get passphrase from an fd */
 	if ((passfd = netpgp_getvar(netpgp, "pass-fd")) != NULL &&
 	    (netpgp->passfp = fdopen(atoi(passfd), "r")) == NULL) {
 		(void) fprintf(io->errs, "Can't open fd %s for reading\n",
 			passfd);
 		return 0;
 	}
+	/* warn if core dumps are enabled */
 	if (coredumps) {
 		(void) fprintf(io->errs,
 			"netpgp: warning: core dumps enabled\n");
 	}
+	/* get home directory - where keyrings are in a subdir */
 	if ((homedir = netpgp_getvar(netpgp, "homedir")) == NULL) {
 		(void) fprintf(io->errs, "netpgp: bad homedir\n");
 		return 0;
 	}
-	/* read from either gpg files or ssh keys */
 	if (netpgp_getvar(netpgp, "ssh keys") == NULL) {
+		/* read from ordinary pgp keyrings */
+		netpgp->pubring = readkeyring(netpgp, "pubring");
+		if (netpgp->pubring == NULL) {
+			(void) fprintf(io->errs, "Can't read pub keyring\n");
+			return 0;
+		}
+		/* if a userid has been given, we'll use it */
 		if ((userid = netpgp_getvar(netpgp, "userid")) == NULL) {
+			/* also search in config file for default id */
 			(void) memset(id, 0x0, sizeof(id));
 			(void) conffile(netpgp, homedir, id, sizeof(id));
 			if (id[0] != 0x0) {
 				netpgp_setvar(netpgp, "userid", userid = id);
 			}
 		}
-		if (userid == NULL) {
-			if (netpgp_getvar(netpgp, "need userid") != NULL) {
-				(void) fprintf(io->errs,
-						"Cannot find user id\n");
-				return 0;
-			}
-		} else {
-			(void) netpgp_setvar(netpgp, "userid", userid);
-		}
-		netpgp->pubring = readkeyring(netpgp, "pubring");
-		if (netpgp->pubring == NULL) {
-			(void) fprintf(io->errs, "Can't read pub keyring\n");
-			return 0;
-		}
+		/* only read secret keys if we need to */
 		if (netpgp_getvar(netpgp, "need seckey")) {
+			/* read the secret ring */
 			netpgp->secring = readkeyring(netpgp, "secring");
 			if (netpgp->secring == NULL) {
 				(void) fprintf(io->errs, "Can't read sec keyring\n");
 				return 0;
 			}
+			/* now, if we don't have a valid user, use the first in secring */
+			if (!userid && netpgp_getvar(netpgp, "need userid") != NULL) {
+				/* signing - need userid and sec key */
+				(void) memset(id, 0x0, sizeof(id));
+				if (get_first_ring(netpgp->secring, id, sizeof(id), 0)) {
+					netpgp_setvar(netpgp, "userid", userid = id);
+				}
+			}
+		} else if (netpgp_getvar(netpgp, "need userid") != NULL) {
+			/* encrypting - get first in pubring */
+			if (!userid && get_first_ring(netpgp->pubring, id, sizeof(id), 0)) {
+				(void) netpgp_setvar(netpgp, "userid", userid = id);
+			}
+		}
+		if (!userid && netpgp_getvar(netpgp, "need userid")) {
+			/* if we don't have a user id, and we need one, fail */
+			(void) fprintf(io->errs, "Cannot find user id\n");
+			return 0;
 		}
 	} else {
+		/* read from ssh keys */
 		last = (netpgp->pubring != NULL);
 		if (!readsshkeys(netpgp, homedir, netpgp_getvar(netpgp, "need seckey"))) {
 			(void) fprintf(io->errs, "Can't read ssh keys\n");
 			return 0;
 		}
 		if ((userid = netpgp_getvar(netpgp, "userid")) == NULL) {
-			set_first_pubring(netpgp->pubring, id, sizeof(id), last);
+			get_first_ring(netpgp->pubring, id, sizeof(id), last);
 			netpgp_setvar(netpgp, "userid", userid = id);
 		}
 		if (userid == NULL) {
@@ -1581,9 +1602,9 @@ netpgp_encrypt_memory(netpgp_t *netpgp,
 			int armored)
 {
 	const pgp_key_t	*keypair;
-	pgp_memory_t		*enc;
-	pgp_io_t		*io;
-	size_t			 m;
+	pgp_memory_t	*enc;
+	pgp_io_t	*io;
+	size_t		 m;
 
 	io = netpgp->io;
 	if (in == NULL) {
