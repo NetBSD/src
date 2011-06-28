@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/28 04:23:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/06/28 10:11:04 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -10,7 +10,9 @@ CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \
 		-DTARGET_NAME=\"${MACHINE_GNU_PLATFORM}\"
 HOST_CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 DPSRCS+=	insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
-CPPFLAGS.prefix.c+=     -DPREFIX=\"/usr\"
+CPPFLAGS.prefix.c+=	-DPREFIX=\"/usr\"
+CPPFLAGS.cppdefault.c+=	-DPREFIX=\"/usr\"
+CPPFLAGS+=	-I${DIST}/libgcc
 
 .include <bsd.lib.mk>
 
@@ -72,6 +74,9 @@ gengenrtl: gengenrtl.lo build-errors.lo
 tm-preds.h: genpreds ${G_md_file}
 	${_MKTARGET_CREATE}
 	./genpreds -h ${G_md_file} >${.TARGET}
+tm-constrs.h: genpreds ${G_md_file}
+	${_MKTARGET_CREATE}
+	./genpreds -c ${G_md_file} >${.TARGET}
 insn-preds.c: genpreds ${G_md_file}
 	${_MKTARGET_CREATE}
 	./genpreds ${G_md_file} >${.TARGET}
@@ -88,19 +93,24 @@ gencheck: gencheck.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
+.if 0
 gtyp-input.list: Makefile
 	for f in ${G_GTFILES}; do echo $f; done > ${.TARGET}
 CLEANFILES+=	gtyp-input.list
+.endif
+
+gtyp-input.list.tmp: ${GCCARCH}/gtyp-input.list
+	sed s#SRCDIR#${DIST}/# < ${.ALLSRC} > ${.TARGET}
 
 gtype-desc.c: gtype-desc.h
-gtype-desc.h: gengtype
+gtype-desc.h: gengtype gtyp-input.list.tmp
 	${_MKTARGET_CREATE}
 	rm -f auto-host.h
 	ln -s ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/auto-host.h .
-	./gengtype ${DIST} gtyp-input.list
+	./gengtype ${DIST} gtyp-input.list.tmp
 # gengtype is the real need for options.h
 gengtype.lo gengtype-lex.lo gengtype-parse.lo: ${HH} gtyp-gen.h config.h options.h
-gengtype: gengtype.lo gengtype-lex.lo gengtype-parse.lo build-errors.lo gtyp-input.list
+gengtype: gengtype.lo gengtype-lex.lo gengtype-parse.lo build-errors.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
@@ -266,19 +276,22 @@ ${f:R}.lo: ${HH}
 
 EXTRADEPENDS=		${G_BUILD_RTL:.o=.lo} ${G_BUILD_SUPPORT:.o=.lo} \
 			${G_BUILD_PRINT:.o=.lo} ${G_BUILD_ERRORS:.o=.lo}
-.for f in attr.h codes.h config.h emit.c extract.c flags.h opinit.c output.c \
+LDFLAGS.genautomata+=	-lm
+
+.for f in attr.h attrtab.c automata.c codes.h config.h emit.c extract.c flags.h opinit.c output.c \
 	  peep.c recog.c
 CLEANFILES+=		gen${f:R} insn-${f}
 
 gen${f:R}.lo: ${HH}
 gen${f:R}: gen${f:R}.lo ${EXTRADEPENDS} 
 	${_MKTARGET_LINK}
-	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
+	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY} ${LDFLAGS.${.TARGET}}
 insn-${f}: gen${f:R} ${G_md_file}
 	${_MKTARGET_CREATE}
 	./gen${f:R} ${G_md_file} >${.TARGET}
 .endfor
 
+.if 0
 #
 # "One of these things is not like the other"
 #
@@ -291,6 +304,7 @@ genattrtab: genattrtab.lo genautomata.lo ${EXTRADEPENDS} ${G_BUILD_VARRAY:.o=.lo
 insn-attrtab.c: genattrtab ${G_md_file}
 	${_MKTARGET_CREATE}
 	./genattrtab ${G_md_file} >${.TARGET}
+.endif
 
 #
 # Required hard-coded dependancies.
@@ -305,6 +319,10 @@ insn-extract.o: insn-config.h
 toplev.d toplev.o: options.h
 coverage.d: gcov-iov.h
 gcov-io.h: gcov-iov.h
+alias.d alias.o: insn-constants.h tm_p.h tm-preds.h
+cgraphunit.d cgraphunit.o: gcov-io.h
+# XXX
+i386.d i386.o: tm-constrs.h
 
 COPTS+=-Wno-stack-protector
 
