@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1086 2011/06/27 14:52:44 nonaka Exp $
+$NetBSD: pcidevs,v 1.1087 2011/06/28 14:22:36 sborrill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3679,6 +3679,7 @@ product NVIDIA	MCP61_LAN3	0x03ee	nForce MCP61 Gigabit Ethernet Controller
 product NVIDIA	MCP61_LAN4	0x03ef	nForce MCP61 Gigabit Ethernet Controller
 product NVIDIA	MCP61_SATA2	0x03f6	nForce MCP61 Serial ATA Controller
 product NVIDIA	MCP61_SATA3	0x03f7	nForce MCP61 Serial ATA Controller
+product NVIDIA	GF_8500_GT	0x0421	GeForce 8500 GT
 product NVIDIA	GF_8400M_GS	0x0427	GeForce 8400M GS
 product NVIDIA	QUADRO_NVS140M	0x0429	Quadro NVS 140M
 product NVIDIA	MCP65_ISA	0x0440	nForce MCP65 PCI-ISA Bridge
