@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/03/09 10:05:28 ahoka Exp $
+# $NetBSD: Makefile,v 1.3 2011/06/28 18:14:12 ahoka Exp $
 
 .include "../Makefile.inc"
 
@@ -7,7 +7,6 @@
 KMOD=   nand
 IOCONF=	nand.ioconf
 SRCS=	nand.c
-SRCS+=	nand_io.c
 SRCS+=	nand_bbt.c
 SRCS+=	nand_crc.c
 SRCS+=	hamming.c
