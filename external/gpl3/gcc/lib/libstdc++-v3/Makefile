@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/23 12:16:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/06/28 04:08:57 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -26,12 +26,13 @@ INCSDIR=	/usr/include/g++
 
 .include "${.CURDIR}/../libsupc++/Makefile.common"
 
-SRCS=		${LIBMATHSRCS} ${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS}
+SRCS=		${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS}
 # affects profiling; can't switch it off just for profiling easily.
 #CXXFLAGS+=	${G_SECTION_FLAGS}
 #CXXFLAGS+=	-ffunction-sections -fdata-sections 
 CXXFLAGS+=	-fno-implicit-templates -fdiagnostics-show-location=once
 CPPFLAGS+=	-I${DIST}/libstdc++-v3/include
+CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 
 CONF=		${DIST}/libstdc++-v3/config
 
@@ -49,6 +50,32 @@ COPTS.valarray-inst.cc = -Wno-stack-protector
 COPTS.wlocale-inst.cc = -Wno-stack-protector
 COPTS.concept-inst.cc=	-D_GLIBCPP_CONCEPT_CHECKS -fimplicit-templates
 CPPFLAGS.strstream.cc=	-I$(GLIBCPP_INCLUDE_DIR)/backward -Wno-deprecated
+
+# For GCC 4.5
+.if ${HAVE_GCC} >= 45
+# XXX also need this for some PCHs.
+CPPFLAGS.atomic.cc = -std=gnu++0x
+CPPFLAGS.compatibility-c++0x.cc = -std=gnu++0x
+CPPFLAGS.functexcept.cc = -std=gnu++0x
+CPPFLAGS.hash_c++0x.cc = -std=gnu++0x
+CPPFLAGS.hashtable_c++0x.cc = -std=gnu++0x
+CPPFLAGS.limits.cc = -std=gnu++0x
+CPPFLAGS.system_error.cc = -std=gnu++0x
+CPPFLAGS.fstream-inst.cc = -std=gnu++0x
+CPPFLAGS.string-inst.cc = -std=gnu++0x
+CPPFLAGS.wstring-inst.cc = -std=gnu++0x
+CPPFLAGS.mutex.cc = -std=gnu++0x
+CPPFLAGS.condition_variable.cc = -std=gnu++0x
+CPPFLAGS.chrono.cc = -std=gnu++0x
+CPPFLAGS.thread.cc = -std=gnu++0x
+CPPFLAGS.future.cc = -std=gnu++0x
+
+CPPFLAGS.cp-demangle.cc += -DIN_GLIBCPP_V3
+CPPFLAGS.concept-inst.cc += -D_GLIBCXX_CONCEPT_CHECKS
+CPPFLAGS.parallel_list.cc += -D_GLIBCXX_PARALLEL
+CPPFLAGS.parallel_settings.cc += -D_GLIBCXX_PARALLEL
+CPPFLAGS.compatibility-parallel_list.cc += -D_GLIBCXX_PARALLEL
+.endif
 
 # XXX
 MKDEPFLAGS+=	-I$(GLIBCPP_INCLUDE_DIR)/backward
@@ -122,7 +149,6 @@ unwind.h: ${G_UNWIND_H}
 CLEANFILES+= unwind.h
 
 .PATH:	${DIST}/libstdc++-v3/src \
-	${DIST}/libstdc++-v3/libmath \
 	${DIST}/libstdc++-v3/libsupc++ \
 	${DIST}/libiberty \
 	${CONF}/locale/generic \
