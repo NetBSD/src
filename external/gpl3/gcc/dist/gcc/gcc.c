@@ -3665,8 +3665,8 @@ process_command (int argc, const char **argv)
 					     standard_libexec_prefix);
       if (gcc_exec_prefix)
 	xputenv (concat ("GCC_EXEC_PREFIX=", gcc_exec_prefix, NULL));
-    }
 #endif
+    }
   else
     {
       /* make_relative_prefix requires a program name, but
