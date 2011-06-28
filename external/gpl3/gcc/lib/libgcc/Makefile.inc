@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2011/06/23 11:47:12 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2011/06/28 04:03:56 mrg Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -17,7 +17,7 @@ GCCARCHXX=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libstdc++-v3/arch/${MACHINE_ARC
 GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_USE_COLLECT2} ${G_INCLUDES}
 CPPFLAGS+=	-I${.CURDIR} -I${GCCARCHLIBGCC}
 CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
-CPPFLAGS+=	-I${G_EXTRA_HEADERS:M/*:H:u}
+CPPFLAGS+=	${G_EXTRA_HEADERS:M/*:H:u:S/^/-I/g}
 CPPFLAGS+=	-I${DIST} -I${DIST}/gcc/cp -I${DIST}/gcc/config -I${GCCARCHXX} -I.
 
 .if ${MACHINE_ARCH} == "powerpc" || \
@@ -38,7 +38,7 @@ COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 LIB2FUNCS_ALL=	_muldi3 _negdi2 _lshrdi3 _ashldi3 _ashrdi3 \
         _cmpdi2 _ucmpdi2 _floatdidf _floatdisf _fixunsdfsi _fixunssfsi \
         _fixunsdfdi _fixdfdi _fixunssfdi _fixsfdi _fixxfdi _fixunsxfdi \
-        _floatdixf _fixunsxfsi _fixtfdi _fixunstfdi _floatditf _clear_cache \
+        _floatdixf _floatundixf _fixunsxfsi _fixtfdi _fixunstfdi _floatditf _clear_cache \
         _enable_execute_stack _trampoline __main _absvsi2 _absvdi2 _addvsi3 \
         _addvdi3 _subvsi3 _subvdi3 _mulvsi3 _mulvdi3 _negvsi2 _negvdi2 _ctors \
         _ffssi2 _ffsdi2 _clz _clzsi2 _clzdi2 _ctzsi2 _ctzdi2 _popcount_tab \
