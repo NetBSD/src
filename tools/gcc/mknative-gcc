@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.49 2011/06/28 03:58:55 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.50 2011/06/28 04:30:32 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -599,6 +599,9 @@ get_gcc () {
 	for f in $hfiles; do
 		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
 	done
+
+	write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/bversion.h \
+		<$_TMPDIR/gcc/bversion.h
 }
 
 ##### main #####
