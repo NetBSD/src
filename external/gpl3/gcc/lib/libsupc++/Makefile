@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/23 12:16:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/06/28 04:03:16 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -34,7 +34,6 @@ unwind.h: ${G_UNWIND_H}
 CLEANFILES+= unwind.h
 
 .PATH:	${DIST}/libstdc++-v3/src \
-	${DIST}/libstdc++-v3/libmath \
 	${DIST}/libstdc++-v3/libsupc++ \
 	${DIST}/libiberty \
 	${.CURDIR}/../libstdc++-v3/arch/${MACHINE_ARCH}
