@@ -87,7 +87,7 @@ along with GCC; see the file COPYING3.  If not see
 #define STANDARD_EXEC_PREFIX		"/usr/libexec/"
 
 #undef TOOLDIR_BASE_PREFIX
-#define TOOLDIR_BASE_PREFIX		"/usr/"
+#define TOOLDIR_BASE_PREFIX		"../"
 
 #undef STANDARD_BINDIR_PREFIX
 #define STANDARD_BINDIR_PREFIX		"/usr/bin"
