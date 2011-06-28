@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.10 2011/06/28 07:16:11 ahoka Exp $	*/
+/*	$NetBSD: nand.h,v 1.11 2011/06/28 18:14:11 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -43,14 +43,13 @@
 
 #include <dev/nand/onfi.h>
 #include <dev/flash/flash.h>
+#include <dev/flash/flash_io.h>
 
 #ifdef NAND_DEBUG
 #define DPRINTF(x)	printf x
 #else
 #define DPRINTF(x)
 #endif
-
-//#define NAND_VERBOSE
 
 /* same as in linux for compatibility */
 enum {
@@ -157,7 +156,7 @@ struct nand_softc {
 	size_t sc_part_offset;
 	size_t sc_part_size;
 	kmutex_t sc_device_lock; /* serialize access to chip */
-	struct nand_write_cache sc_cache;
+	struct flash_io sc_flash_io;
 };
 
 /* structure holding the nand api */

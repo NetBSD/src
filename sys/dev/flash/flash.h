@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.h,v 1.3 2011/04/04 14:25:09 ahoka Exp $	*/
+/*	$NetBSD: flash.h,v 1.4 2011/06/28 18:14:11 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -41,6 +41,21 @@
 #include <sys/buf.h>
 #include <sys/flashio.h>
 
+#define FLASH_DEBUG 1
+#ifdef FLASH_DEBUG
+#define FLDPRINTF(x)	if (flashdebug) printf x
+#define FLDPRINTFN(n,x)	if (flashdebug>(n)) printf x
+#else
+#define FLDPRINTF(x)
+#define FLDPRINTFN(n,x)
+#endif
+
+struct flash_partition {
+	flash_off_t part_offset;
+	flash_size_t part_size;
+	int part_flags;
+};
+
 /**
  *  flash_softc - private structure for flash layer driver
  */
@@ -50,12 +65,14 @@ struct flash_softc {
 	device_t sc_parent_dev;		/* Hardware (parent) device */
 	void *hw_softc;			/* Hardware device private softc */
 	struct flash_interface *flash_if;	/* Hardware interface */
+	struct flash_partition sc_partinfo;	/* partition information */
 
 	bool sc_readonly;		/* read only flash device */
 };
 
 struct flash_attach_args {
 	struct flash_interface *flash_if;	/* Hardware interface */
+	struct flash_partition partinfo;
 };
 
 device_t flash_attach_mi(struct flash_interface *, device_t);
@@ -65,12 +82,6 @@ device_t flash_get_device(dev_t);
 
 /**
  * struct erase_instruction - instructions to erase a flash eraseblock
- * @fd: flash descriptor
- * @addr: start address of the erase operation
- * @len: the erase length
- * @callback: callback operation, called when erase finished
- * @priv: private data
- * @state: the erase operation's result
  */
 struct flash_erase_instruction {
 	flash_off_t ei_addr;
@@ -85,25 +96,8 @@ enum {
 	FLASH_PART_FILESYSTEM	= (1<<2)
 };
 
-struct flash_partition {
-	flash_off_t part_offset;
-	flash_off_t part_size;
-	int part_flags;
-};
-
 /**
  * struct flash_interface - interface for flash operations
- * @type: type of flash device
- * @size: size of flash
- * @page_size: page size of flash
- * @erasesize: erase size of flash
- * @writesize: minimum write size of flash
- * @minor: minor number of the character device attached to this driver
- * @erase: erase operation of the flash
- * @read: read operation of the flash
- * @write: write operation of the flash
- * @block_markbad: marks a block as bad on the flash
- * @block_isbad: checks if a block is bad on flash
  */
 struct flash_interface {
 	int (*erase)(device_t, struct flash_erase_instruction *);
@@ -115,11 +109,6 @@ struct flash_interface {
 
 	int (*submit)(device_t, struct buf *);
 
-	/* storage for partition info */
-	struct flash_partition partition;
-
-	/* total size of mtd */
-	flash_size_t size;	 
 	uint32_t page_size;
 	uint32_t erasesize;
 	uint32_t writesize;
@@ -146,10 +135,6 @@ int flash_sync(device_t);
 
 /*
  * check_pattern - checks the buffer only contains the byte pattern
- * @buf: the buffer to check
- * @patt: the pattern to match
- * @offset: the starting byte number, the matching starts from here
- * @size: the buffer size
  *
  * This functions checks if the buffer only contains a specified byte pattern.
  * Returns %0 if found something else, %1 otherwise.

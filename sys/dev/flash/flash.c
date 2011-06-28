@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.6 2011/06/28 07:00:17 ahoka Exp $	*/
+/*	$NetBSD: flash.c,v 1.7 2011/06/28 18:14:11 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.6 2011/06/28 07:00:17 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.7 2011/06/28 18:14:11 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -61,14 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.6 2011/06/28 07:00:17 ahoka Exp $");
 #include <sys/flashio.h>
 #include "flash.h"
 
-#define FLASH_DEBUG 1
 #ifdef FLASH_DEBUG
-#define DPRINTF(x)	if (flashdebug) printf x
-#define DPRINTFN(n,x)	if (flashdebug>(n)) printf x
-int	flashdebug = FLASH_DEBUG;
-#else
-#define DPRINTF(x)
-#define DPRINTFN(n,x)
+int flashdebug = FLASH_DEBUG;
 #endif
 
 extern struct cfdriver flash_cd;
@@ -146,9 +140,10 @@ flash_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_parent_dev = parent;
 	sc->flash_if = faa->flash_if;
+	sc->sc_partinfo = faa->partinfo;
 	sc->hw_softc = device_private(parent);
 
-	format_bytes(pbuf[0], sizeof(pbuf[0]), sc->flash_if->size);
+	format_bytes(pbuf[0], sizeof(pbuf[0]), sc->sc_partinfo.part_size);
 	format_bytes(pbuf[1], sizeof(pbuf[1]), sc->flash_if->erasesize);
 
 	aprint_naive("\n");
@@ -168,10 +163,10 @@ flash_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal_dev(sc->sc_dev,
 	    "size: %#jx, offset: %#jx",
-	    (uintmax_t )sc->flash_if->partition.part_size,
-	    (uintmax_t )sc->flash_if->partition.part_offset);
+	    (uintmax_t )sc->sc_partinfo.part_size,
+	    (uintmax_t )sc->sc_partinfo.part_offset);
 
-	if (sc->flash_if->partition.part_flags & FLASH_PART_READONLY) {
+	if (sc->sc_partinfo.part_flags & FLASH_PART_READONLY) {
 		sc->sc_readonly = true;
 		aprint_normal(", read only");
 	} else {
@@ -180,7 +175,7 @@ flash_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	if (sc->flash_if->partition.part_size == 0) {
+	if (sc->sc_partinfo.part_size == 0) {
 		aprint_error_dev(self,
 		    "partition size must be larger than 0\n");
 		return;
@@ -271,7 +266,7 @@ flashopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	int unit = minor(dev);
 	struct flash_softc *sc;
 
-	DPRINTFN(1, ("flash: opening device unit %d\n", unit));
+	FLDPRINTFN(1, ("flash: opening device unit %d\n", unit));
 
 	if ((sc = device_lookup_private(&flash_cd, unit)) == NULL)
 		return ENXIO;
@@ -295,7 +290,7 @@ flashclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	struct flash_softc *sc;
 	int err;
 
-	DPRINTFN(1, ("flash: closing flash device unit %d\n", unit));
+	FLDPRINTFN(1, ("flash: closing flash device unit %d\n", unit));
 
 	if ((sc = device_lookup_private(&flash_cd, unit)) == NULL)
 		return ENXIO;
@@ -348,7 +343,7 @@ flashstrategy(struct buf *bp)
 	}
 
 	flash_if = sc->flash_if;
-	part = &flash_if->partition;
+	part = &sc->sc_partinfo;
 
 	/* divider */
 	KASSERT(flash_if->writesize != 0);
@@ -371,7 +366,7 @@ flashstrategy(struct buf *bp)
 		goto done;
 	}
 
-	device_blks = sc->flash_if->size / DEV_BSIZE;
+	device_blks = sc->sc_partinfo.part_size / DEV_BSIZE;
 	KASSERT(part->part_offset % DEV_BSIZE == 0);
 	bp->b_rawblkno = bp->b_blkno + (part->part_offset / DEV_BSIZE);
 
@@ -455,7 +450,7 @@ flashioctl(dev_t dev, u_long command, void *data, int flags, struct lwp *l)
 	case FLASH_DUMP:
 		dp = data;
 		offset = dp->dp_block * sc->flash_if->erasesize;
-		DPRINTF(("Reading from block: %jd len: %jd\n",
+		FLDPRINTF(("Reading from block: %jd len: %jd\n",
 			(intmax_t )dp->dp_block, (intmax_t )dp->dp_len));
 		err = flash_read(sc->sc_parent_dev, offset, dp->dp_len,
 		    &retlen, dp->dp_buf);
@@ -473,7 +468,7 @@ flashioctl(dev_t dev, u_long command, void *data, int flags, struct lwp *l)
 		ip->ip_page_size = sc->flash_if->page_size;
 		ip->ip_erase_size = sc->flash_if->erasesize;
 		ip->ip_flash_type = sc->flash_if->type;
-		ip->ip_flash_size = sc->flash_if->size;
+		ip->ip_flash_size = sc->sc_partinfo.part_size;
 		break;
 	default:
 		err = ENODEV;
@@ -537,9 +532,9 @@ flash_get_device(dev_t dev)
 }
 
 static inline flash_off_t
-flash_get_part_offset(struct flash_softc *fl, size_t poffset)
+flash_get_part_offset(struct flash_softc *sc, size_t poffset)
 {
-	return fl->flash_if->partition.part_offset + poffset;
+	return sc->sc_partinfo.part_offset + poffset;
 }
 
 int
@@ -553,11 +548,11 @@ flash_erase(device_t self, struct flash_erase_instruction *ei)
 		return EACCES;
 
 	/* adjust for flash partition */
-	e.ei_addr += sc->flash_if->partition.part_offset;
+	e.ei_addr += sc->sc_partinfo.part_offset;
 
 	/* bounds check for flash partition */
-	if (e.ei_addr + e.ei_len > sc->flash_if->partition.part_size +
-	    sc->flash_if->partition.part_offset)
+	if (e.ei_addr + e.ei_len > sc->sc_partinfo.part_size +
+	    sc->sc_partinfo.part_offset)
 		return EINVAL;
 
 	return sc->flash_if->erase(device_parent(self), &e);
@@ -569,10 +564,10 @@ flash_read(device_t self,
 {
 	struct flash_softc *sc = device_private(self);
 
-	offset += sc->flash_if->partition.part_offset;
+	offset += sc->sc_partinfo.part_offset;
 
-	if (offset + len > sc->flash_if->partition.part_size +
-	    sc->flash_if->partition.part_offset)
+	if (offset + len > sc->sc_partinfo.part_size +
+	    sc->sc_partinfo.part_offset)
 		return EINVAL;
 
 	return sc->flash_if->read(device_parent(self),
@@ -588,10 +583,10 @@ flash_write(device_t self,
 	if (sc->sc_readonly)
 		return EACCES;
 
-	offset += sc->flash_if->partition.part_offset;
+	offset += sc->sc_partinfo.part_offset;
 
-	if (offset + len > sc->flash_if->partition.part_size +
-	    sc->flash_if->partition.part_offset)
+	if (offset + len > sc->sc_partinfo.part_size +
+	    sc->sc_partinfo.part_offset)
 		return EINVAL;
 
 	return sc->flash_if->write(device_parent(self),
@@ -606,11 +601,11 @@ flash_block_markbad(device_t self, flash_off_t offset)
 	if (sc->sc_readonly)
 		return EACCES;
 
-	offset += sc->flash_if->partition.part_offset;
+	offset += sc->sc_partinfo.part_offset;
 
 	if (offset + sc->flash_if->erasesize >=
-	    sc->flash_if->partition.part_size +
-	    sc->flash_if->partition.part_offset)
+	    sc->sc_partinfo.part_size +
+	    sc->sc_partinfo.part_offset)
 		return EINVAL;
 
 	return sc->flash_if->block_markbad(device_parent(self), offset);
@@ -621,11 +616,11 @@ flash_block_isbad(device_t self, flash_off_t offset, bool *bad)
 {
 	struct flash_softc *sc = device_private(self);
 
-	offset += sc->flash_if->partition.part_offset;
+	offset += sc->sc_partinfo.part_offset;
 
 	if (offset + sc->flash_if->erasesize >
-	    sc->flash_if->partition.part_size +
-	    sc->flash_if->partition.part_offset)
+	    sc->sc_partinfo.part_size +
+	    sc->sc_partinfo.part_offset)
 		return EINVAL;
 
 	return sc->flash_if->block_isbad(device_parent(self), offset, bad);
