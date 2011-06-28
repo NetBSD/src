@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.12 2011/06/28 07:16:11 ahoka Exp $	*/
+/*	$NetBSD: nand.c,v 1.13 2011/06/28 18:14:11 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.12 2011/06/28 07:16:11 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.13 2011/06/28 18:14:11 ahoka Exp $");
 
 #include "locators.h"
 
@@ -42,10 +42,10 @@ __KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.12 2011/06/28 07:16:11 ahoka Exp $");
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
-#include <sys/sysctl.h>
 #include <sys/atomic.h>
 
 #include <dev/flash/flash.h>
+#include <dev/flash/flash_io.h>
 #include <dev/nand/nand.h>
 #include <dev/nand/onfi.h>
 #include <dev/nand/hamming.h>
@@ -75,8 +75,17 @@ CFATTACH_DECL_NEW(nand, sizeof(struct nand_softc),
 int	nanddebug = NAND_DEBUG;
 #endif
 
-int nand_cachesync_timeout = 1;
-int nand_cachesync_nodenum;
+struct flash_interface nand_flash_if = {
+	.type = FLASH_TYPE_NAND,
+
+	.read = nand_flash_read,
+	.write = nand_flash_write,
+	.erase = nand_flash_erase,
+	.block_isbad = nand_flash_isbad,
+	.block_markbad = nand_flash_markbad,
+
+	.submit = nand_io_submit
+};
 
 #ifdef NAND_VERBOSE
 const struct nand_manufacturer nand_mfrs[] = {
@@ -138,13 +147,17 @@ nand_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	nand_flash_if.erasesize = chip->nc_block_size;
+	nand_flash_if.page_size = chip->nc_page_size;
+	nand_flash_if.writesize = chip->nc_page_size;
+
 	/* allocate cache */
 	chip->nc_oob_cache = kmem_alloc(chip->nc_spare_size, KM_SLEEP);
 	chip->nc_page_cache = kmem_alloc(chip->nc_page_size, KM_SLEEP);
 
 	mutex_init(&sc->sc_device_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	if (nand_sync_thread_start(self)) {
+	if (flash_sync_thread_init(&sc->sc_flash_io, &nand_flash_if)) {
 		goto error;
 	}
 
@@ -174,42 +187,23 @@ nand_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct nand_softc *sc = device_private(parent);
 	struct nand_chip *chip = &sc->sc_chip;
-	struct flash_interface *flash_if;
 	struct flash_attach_args faa;
 
-	flash_if = kmem_alloc(sizeof(*flash_if), KM_SLEEP);
+	faa.flash_if = &nand_flash_if;
 
-	flash_if->type = FLASH_TYPE_NAND;
-
-	flash_if->read = nand_flash_read;
-	flash_if->write = nand_flash_write;
-	flash_if->erase = nand_flash_erase;
-	flash_if->block_isbad = nand_flash_isbad;
-	flash_if->block_markbad = nand_flash_markbad;
-
-	flash_if->submit = nand_io_submit;
-
-	flash_if->erasesize = chip->nc_block_size;
-	flash_if->page_size = chip->nc_page_size;
-	flash_if->writesize = chip->nc_page_size;
-
-	flash_if->partition.part_offset = cf->cf_loc[FLASHBUSCF_OFFSET];
+	faa.partinfo.part_offset = cf->cf_loc[FLASHBUSCF_OFFSET];
 
 	if (cf->cf_loc[FLASHBUSCF_SIZE] == 0) {
-		flash_if->size = chip->nc_size -
-		    flash_if->partition.part_offset;
-		flash_if->partition.part_size = flash_if->size;
+		faa.partinfo.part_size = chip->nc_size -
+		    faa.partinfo.part_offset;
 	} else {
-		flash_if->size = cf->cf_loc[FLASHBUSCF_SIZE];
-		flash_if->partition.part_size = cf->cf_loc[FLASHBUSCF_SIZE];
+		faa.partinfo.part_size = cf->cf_loc[FLASHBUSCF_SIZE];
 	}
 
 	if (cf->cf_loc[FLASHBUSCF_READONLY])
-		flash_if->partition.part_flags = FLASH_PART_READONLY;
+		faa.partinfo.part_flags = FLASH_PART_READONLY;
 	else
-		flash_if->partition.part_flags = 0;
-
-	faa.flash_if = flash_if;
+		faa.partinfo.part_flags = 0;
 
 	if (config_match(parent, cf, &faa)) {
 		if (config_attach(parent, cf, &faa, nand_print) != NULL) {
@@ -217,8 +211,6 @@ nand_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		} else {
 			return 1;
 		}
-	} else {
-		kmem_free(flash_if, sizeof(*flash_if));
 	}
 
 	return 1;
@@ -1492,69 +1484,6 @@ out:
 	mutex_exit(&sc->sc_device_lock);
 
 	return error;
-}
-
-static int
-sysctl_nand_verify(SYSCTLFN_ARGS)
-{
-	int error, t;
-	struct sysctlnode node;
-
-	node = *rnode;
-	t = *(int *)rnode->sysctl_data;
-	node.sysctl_data = &t;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return error;
-
-	if (node.sysctl_num == nand_cachesync_nodenum) {
-		if (t <= 0 || t > 60)
-			return EINVAL;
-	} else {
-		return EINVAL;
-	}
-
-	*(int *)rnode->sysctl_data = t;
-
-	return 0;
-}
-
-SYSCTL_SETUP(sysctl_nand, "sysctl nand subtree setup")
-{
-	int rc, nand_root_num;
-	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto error;
-	}
-
-	if ((rc = sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "nand",
-	    SYSCTL_DESCR("NAND driver controls"),
-	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0) {
-		goto error;
-	}
-
-	nand_root_num = node->sysctl_num;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-	    CTLTYPE_INT, "cache_sync_timeout",
-	    SYSCTL_DESCR("NAND write cache sync timeout in seconds"),
-	    sysctl_nand_verify, 0, &nand_cachesync_timeout,
-	    0, CTL_HW, nand_root_num, CTL_CREATE,
-	    CTL_EOL)) != 0) {
-		goto error;
-	}
-
-	nand_cachesync_nodenum = node->sysctl_num;
-
-	return;
-
-error:
-	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
 
 MODULE(MODULE_CLASS_DRIVER, nand, "flash");
