@@ -1,38 +1,71 @@
 #
 # iASL compiler/disassembler
 #
+# NOTE: This makefile is intended to be used in the Linux environment,
+# with the Linux directory structure. It will not work directly
+# on the native ACPICA source tree.
+#
 
-PROG=	iasl
+#
+# Configuration
+# Notes:
+#   gcc should be version 4 or greater, otherwise some of the options
+#       used will not be recognized.
+#   Global optimization flags (such as -O2, -Os) are not used, since
+#       they cause issues on some compilers.
+#   The _GNU_SOURCE symbol is required for many hosts.
+#
+PROG = iasl
 
+HOST =          _LINUX
+NOMAN =         YES
+COMPILE =       $(CC) -c $(CFLAGS) $(CWARNINGFLAGS) -o$@ $?
+
+ACPICA_COMPONENTS =
 ACPICA_SRC =    ..
-ASL_COMPILER =  $(ACPICA_SRC)/compiler
 ACPICA_COMMON = $(ACPICA_SRC)/common
-ACPICA_CORE =   $(ACPICA_SRC)
+ACPICA_CORE =   $(ACPICA_SRC)$(ACPICA_COMPONENTS)
 ACPICA_TOOLS =  $(ACPICA_SRC)/tools
 ACPICA_OSL =    $(ACPICA_SRC)/os_specific/service_layers
+ASL_COMPILER =  $(ACPICA_SRC)/compiler
+INSTALLDIR =    /usr/bin
+INSTALLPROG =   cp --remove-destination $(PROG) $(INSTALLDIR)
 
-NOMAN=	YES
-CFLAGS+= -Wall -O2 -Wstrict-prototypes -D_LINUX -DACPI_ASL_COMPILER -I../include -I../compiler
+CFLAGS+= \
+    -D$(HOST) \
+    -D_GNU_SOURCE \
+    -DACPI_ASL_COMPILER \
+    -I$(ACPICA_SRC)/include \
+    -I$(ASL_COMPILER)
+
+CWARNINGFLAGS = \
+    -ansi \
+    -Wall \
+    -Wbad-function-cast \
+    -Wdeclaration-after-statement \
+    -Werror \
+    -Wformat=2 \
+    -Wmissing-declarations \
+    -Wmissing-prototypes \
+    -Wstrict-aliasing=0 \
+    -Wstrict-prototypes \
+    -Wswitch-default \
+    -Wpointer-arith \
+    -Wundef
 
 #
 # Bison/Flex configuration
 #
 YACC=    bison
-YFLAGS+= -v -d -y -pAslCompiler
+YFLAGS+= -v -d -y
 
 LEX=     flex
-LFLAGS+= -i -s -PAslCompiler
-
-
-COMPILE = $(CC) -c $(CFLAGS) -o$@ $?
-LDFLAGS += -lpthread -lrt
-
+LFLAGS+= -i -s
 
 OBJS = \
 	adfile.o \
 	adisasm.o \
 	adwalk.o \
-	aslbtypes.o \
 	aslanalyze.o \
 	aslbtypes.o \
 	aslcodegen.o \
@@ -71,6 +104,8 @@ OBJS = \
 	dtexpress.o \
 	dtfield.o \
 	dtio.o \
+	dtparserlex.o \
+	dtparserparse.o \
 	dtsubtable.o \
 	dttable.o \
 	dttemplate.o \
@@ -165,11 +200,15 @@ OBJS = \
 
 INTERMEDIATES = \
 	aslcompilerlex.c \
-	aslcompilerparse.c
+	aslcompilerparse.c \
+	dtparserlex.c \
+	dtparserparse.c
 
 MISC = \
 	aslcompiler.y.h \
-	aslcompilerparse.output
+	aslcompilerparse.output \
+	dtparser.y.h \
+	dtparserparse.output
 
 
 #
@@ -177,30 +216,43 @@ MISC = \
 #
 $(PROG) : $(INTERMEDIATES) $(OBJS)
 	$(CC) $(OBJS) $(LDFLAGS) -o $(PROG)
-	$(COPYPROG)
 
 
 #
 # Parser and Lexer - intermediate C files
 #
 aslcompilerlex.c :   $(ASL_COMPILER)/aslcompiler.l
-	${LEX} ${LFLAGS} -o$@ $?
+	${LEX} ${LFLAGS} -PAslCompiler -o$@ $?
 
 aslcompilerparse.c : $(ASL_COMPILER)/aslcompiler.y
-	${YACC} ${YFLAGS} -o$@ $?
+	${YACC} ${YFLAGS} -pAslCompiler -o$@ $?
 	@mv -f aslcompilerparse.h aslcompiler.y.h
 
+dtparserlex.c :      $(ASL_COMPILER)/dtparser.l
+	${LEX} ${LFLAGS} -PDtParser -o$@ $?
+
+dtparserparse.c :    $(ASL_COMPILER)/dtparser.y
+	${YACC} ${YFLAGS} -pDtParser -o$@ $?
+	@mv -f dtparserparse.h dtparser.y.h
+
+
 #
-# Parser and Lexer - final object files
+# Parsers and Lexers - final object files
 #
 # Cannot use the common compile warning flags since the C files are created
 # by the utilities above and they are not necessarily ANSI C, etc.
 #
 aslcompilerlex.o :   aslcompilerlex.c
-	$(CC) -c $(CFLAGS) -Wall -Werror -o$@ $?
+	$(CC) -c $(CFLAGS) -Wall -Werror -Wstrict-aliasing=0 -o$@ $?
 
 aslcompilerparse.o : aslcompilerparse.c
-	$(CC) -c $(CFLAGS) -Wall -Werror -o$@ $?
+	$(CC) -c $(CFLAGS) -Wall -Werror -Wstrict-aliasing=0 -o$@ $?
+
+dtparserlex.o :      dtparserlex.c
+	$(CC) -c $(CFLAGS) -Wall -Werror -Wstrict-aliasing=0 -o$@ $?
+
+dtparserparse.o :    dtparserparse.c
+	$(CC) -c $(CFLAGS) -Wall -Werror -Wstrict-aliasing=0 -o$@ $?
 
 
 #
@@ -613,5 +665,8 @@ osunixxf.o :        $(ACPICA_OSL)/osunixxf.c
 	$(COMPILE)
 
 
-clean : 
+clean :
 	rm -f $(PROG) $(PROG).exe $(OBJS) $(INTERMEDIATES) $(MISC)
+
+install :
+	$(INSTALLPROG)

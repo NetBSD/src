@@ -1,20 +1,58 @@
 #
-# AcpiExec utility
+# acpiexec: ACPI execution simulator. Runs ACPICA code in user
+# space. Loads ACPI tables, displays the namespace, and allows
+# execution of control methods.
+#
+# NOTE: This makefile is intended to be used in the Linux environment,
+# with the Linux directory structure. It will not work directly
+# on the native ACPICA source tree.
 #
 
+#
+# Configuration
+# Notes:
+#   gcc should be version 4 or greater, otherwise some of the options
+#       used will not be recognized.
+#   Global optimization flags (such as -O2, -Os) are not used, since
+#       they cause issues on some compilers.
+#   The _GNU_SOURCE symbol is required for many hosts.
+#
 PROG = acpiexec
 
+HOST =          _LINUX
+NOMAN =         YES
+COMPILE =       $(CC) -c $(CFLAGS) $(CWARNINGFLAGS) -o$@ $?
+LDFLAGS +=      -lpthread -lrt
+
+ACPICA_COMPONENTS =
 ACPICA_SRC =    ../..
 ACPICA_COMMON = $(ACPICA_SRC)/common
-ACPICA_CORE =   $(ACPICA_SRC)
+ACPICA_CORE =   $(ACPICA_SRC)$(ACPICA_COMPONENTS)
 ACPICA_TOOLS =  $(ACPICA_SRC)/tools
 ACPICA_OSL =    $(ACPICA_SRC)/os_specific/service_layers
+INSTALLDIR =    /usr/bin
+INSTALLPROG =   cp --remove-destination $(PROG) $(INSTALLDIR)
 
-NOMAN=	YES
-CFLAGS+= -Wall -g -D_LINUX -DNDEBUG -D_CONSOLE -DACPI_EXEC_APP -Wstrict-prototypes -I$(ACPICA_SRC)/include 
+CFLAGS+= \
+    -D$(HOST) \
+    -D_GNU_SOURCE \
+    -DACPI_EXEC_APP \
+    -I$(ACPICA_SRC)/include
 
-COMPILE = $(CC) -c $(CFLAGS) -o$@ $?
-LDFLAGS += -lpthread -lrt
+CWARNINGFLAGS = \
+    -ansi \
+    -Wall \
+    -Wbad-function-cast \
+    -Wdeclaration-after-statement \
+    -Werror \
+    -Wformat=2 \
+    -Wmissing-declarations \
+    -Wmissing-prototypes \
+    -Wstrict-aliasing=0 \
+    -Wstrict-prototypes \
+    -Wswitch-default \
+    -Wpointer-arith \
+    -Wundef
 
 OBJS = \
 	aeexec.o \
@@ -56,6 +94,7 @@ OBJS = \
 	dswscope.o \
 	dswstate.o \
 	evevent.o \
+	evglock.o \
 	evgpe.o \
 	evgpeblk.o \
 	evgpeinit.o \
@@ -169,14 +208,11 @@ OBJS = \
 	utxferror.o \
 	utxface.o
 
-
 #
 # Root rule
 #
 $(PROG) : $(OBJS)
-	$(CC) $(LDFLAGS) $(OBJS) -lpthread -o $(PROG)
-	$(COPYPROG)
-
+	$(CC) $(LDFLAGS) $(OBJS) -o $(PROG)
 
 #
 # acpiexec source
@@ -193,13 +229,11 @@ aemain.o :          $(ACPICA_TOOLS)/acpiexec/aemain.c
 aetables.o :        $(ACPICA_TOOLS)/acpiexec/aetables.c
 	$(COMPILE)
 
-
 #
 # ACPICA core source - common
 #
 getopt.o :          $(ACPICA_COMMON)/getopt.c
 	$(COMPILE)
-
 
 #
 # ACPICA core source
@@ -307,6 +341,9 @@ dswstate.o :        $(ACPICA_CORE)/dispatcher/dswstate.c
 	$(COMPILE)
 
 evevent.o :         $(ACPICA_CORE)/events/evevent.c
+	$(COMPILE)
+
+evglock.o :         $(ACPICA_CORE)/events/evglock.c
 	$(COMPILE)
 
 evgpe.o :           $(ACPICA_CORE)/events/evgpe.c
@@ -588,7 +625,7 @@ utcopy.o :          $(ACPICA_CORE)/utilities/utcopy.c
 utdebug.o :         $(ACPICA_CORE)/utilities/utdebug.c
 	$(COMPILE)
 
-utdebug.o :         $(ACPICA_CORE)/utilities/utdebug.c
+utdecode.o :        $(ACPICA_CORE)/utilities/utdecode.c
 	$(COMPILE)
 
 utdelete.o :        $(ACPICA_CORE)/utilities/utdelete.c
@@ -639,7 +676,6 @@ utxferror.o :       $(ACPICA_CORE)/utilities/utxferror.c
 utxface.o :         $(ACPICA_CORE)/utilities/utxface.c
 	$(COMPILE)
 
-
 #
 # Unix OS services layer (OSL)
 #
@@ -647,5 +683,8 @@ osunixxf.o :        $(ACPICA_OSL)/osunixxf.c
 	$(COMPILE)
 
 
-clean : 
+clean :
 	rm -f $(PROG) $(PROG).exe $(OBJS)
+
+install :
+	$(INSTALLPROG)
