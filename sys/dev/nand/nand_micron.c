@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_micron.c,v 1.4 2011/05/01 13:20:28 rmind Exp $	*/
+/*	$NetBSD: nand_micron.c,v 1.5 2011/06/28 07:16:11 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_micron.c,v 1.4 2011/05/01 13:20:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_micron.c,v 1.5 2011/06/28 07:16:11 ahoka Exp $");
 
 #include "nand.h"
 #include "onfi.h"
@@ -107,10 +107,10 @@ nand_read_parameters_micron(device_t self, struct nand_chip *chip)
 	nand_select(self, true);
 	nand_command(self, ONFI_READ_ID);
 	nand_address(self, 0x00);
-	nand_read_byte(self, &mfgrid);
-	nand_read_byte(self, &devid);
-	nand_read_byte(self, &dontcare);
-	nand_read_byte(self, &params);
+	nand_read_1(self, &mfgrid);
+	nand_read_1(self, &devid);
+	nand_read_1(self, &dontcare);
+	nand_read_1(self, &params);
 	nand_select(self, false);
 
 	KASSERT(chip->nc_manf_id == mfgrid);
@@ -137,7 +137,7 @@ mt29fxgx_parameters(device_t self, struct nand_chip *chip,
 
 	dp = nand_micron_device_lookup(devid);
 	if (dp == NULL) {
-		aprint_error_dev(self, "unknown device id %#x\n", devid); 
+		aprint_error_dev(self, "unknown device id %#x\n", devid);
 		return 1;
 	}
 
