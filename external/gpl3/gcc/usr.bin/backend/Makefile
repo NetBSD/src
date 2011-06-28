@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/24 05:26:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/06/28 04:23:01 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -43,7 +43,7 @@ CLEANFILES+=	gengenrtl genrtl.c genrtl.h \
 # These files have special needs
 #
 .for f in \
-	build-errors build-ggc-none build-print-rtl build-rtl build-varray dummy-conditions gcov-iov genattr genattrtab genautomata gencheck genchecksum gencodes genconditions genconfig genconstants genemit genextract genflags gengenrtl gengtype gengtype-lex gengtype-yacc genmddeps genmodes genopinit genoutput genpeep genpreds genrecog gensupport insn-conditions min-insn-modes read-rtl
+	build-errors build-ggc-none build-print-rtl build-rtl build-varray dummy-conditions gcov-iov genattr genattrtab genautomata gencheck genchecksum gencodes genconditions genconfig genconstants genemit genextract genflags gengenrtl gengtype gengtype-lex genmddeps genmodes genopinit genoutput genpeep genpreds genrecog gensupport insn-conditions min-insn-modes read-rtl
 CPPFLAGS.${f}.c=		-DGENERATOR_FILE
 .endfor
 
@@ -88,15 +88,19 @@ gencheck: gencheck.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
+gtyp-input.list: Makefile
+	for f in ${G_GTFILES}; do echo $f; done > ${.TARGET}
+CLEANFILES+=	gtyp-input.list
+
 gtype-desc.c: gtype-desc.h
 gtype-desc.h: gengtype
 	${_MKTARGET_CREATE}
 	rm -f auto-host.h
 	ln -s ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/auto-host.h .
-	./gengtype
+	./gengtype ${DIST} gtyp-input.list
 # gengtype is the real need for options.h
-gengtype.lo gengtype-lex.lo gengtype-yacc.lo: ${HH} gtyp-gen.h config.h options.h
-gengtype: gengtype.lo gengtype-lex.lo gengtype-yacc.lo build-errors.lo
+gengtype.lo gengtype-lex.lo gengtype-parse.lo: ${HH} gtyp-gen.h config.h options.h
+gengtype: gengtype.lo gengtype-lex.lo gengtype-parse.lo build-errors.lo gtyp-input.list
 	${_MKTARGET_LINK}
 	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
