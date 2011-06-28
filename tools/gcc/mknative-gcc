@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.48 2011/06/23 12:06:32 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.49 2011/06/28 03:58:55 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -483,12 +483,12 @@ get_libstdcxx_v3 () {
 
 	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/config.h \
 		<$_TMPDIR/$_PLATFORM/libstdc++-v3/config.h
+	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/gstdint.h \
+		<$_TMPDIR/$_PLATFORM/libstdc++-v3/include/gstdint.h
+	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/omp.h \
+		<$_TMPDIR/$_PLATFORM/libgomp/omp.h
 
 	{
-		# libmath
-		getvars $_PLATFORM/libstdc++-v3/libmath/Makefile \
-			libmath_la_SOURCES libmath_la_LIBADD
-
 		# libsupc++
 		getvars $_PLATFORM/libstdc++-v3/libsupc++/Makefile \
 			sources | sed 's/^G_sources=/G_LIBSUPCXX_SOURCES=/'
@@ -501,7 +501,7 @@ get_libstdcxx_v3 () {
 
 		# include
 		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
-			c_base_headers_rename std_headers_rename
+			c_base_headers std_headers | sed -e 's#/[^ 	][^ 	]*/##g' -e 's/\${GNUHOSTDIST}//g'
 		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
 			bits_headers backward_headers ext_headers c_base_headers_extra \
 			$_headers1 | sed -e 's#/[^ 	][^ 	]*/##g' -e 's/\${GNUHOSTDIST}//g'
