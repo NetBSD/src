@@ -1,4 +1,4 @@
-/*	$NetBSD: nandemulator.c,v 1.4 2011/04/26 13:38:13 ahoka Exp $	*/
+/*	$NetBSD: nandemulator.c,v 1.5 2011/06/28 10:32:45 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.4 2011/04/26 13:38:13 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.5 2011/06/28 10:32:45 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,14 +57,14 @@ static void nandemulator_device_reset(device_t);
 static void nandemulator_command(device_t, uint8_t);
 static void nandemulator_address(device_t, uint8_t);
 static void nandemulator_busy(device_t);
-static void nandemulator_read_byte(device_t, uint8_t *);
-static void nandemulator_write_byte(device_t, uint8_t);
-static void nandemulator_read_word(device_t, uint16_t *);
-static void nandemulator_write_word(device_t, uint16_t);
-static void nandemulator_read_buf_byte(device_t, void *, size_t);
-static void nandemulator_read_buf_word(device_t, void *, size_t);
-static void nandemulator_write_buf_byte(device_t, const void *, size_t);
-static void nandemulator_write_buf_word(device_t, const void *, size_t);
+static void nandemulator_read_1(device_t, uint8_t *);
+static void nandemulator_write_1(device_t, uint8_t);
+static void nandemulator_read_2(device_t, uint16_t *);
+static void nandemulator_write_2(device_t, uint16_t);
+static void nandemulator_read_buf_1(device_t, void *, size_t);
+static void nandemulator_read_buf_2(device_t, void *, size_t);
+static void nandemulator_write_buf_1(device_t, const void *, size_t);
+static void nandemulator_write_buf_2(device_t, const void *, size_t);
 
 static size_t nandemulator_address_to_page(device_t);
 static size_t nandemulator_page_to_backend_offset(device_t, size_t);
@@ -186,14 +186,14 @@ nandemulator_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_nand_if.command = &nandemulator_command;
 	sc->sc_nand_if.address = &nandemulator_address;
-	sc->sc_nand_if.read_buf_byte = &nandemulator_read_buf_byte;
-	sc->sc_nand_if.read_buf_word = &nandemulator_read_buf_word;
-	sc->sc_nand_if.read_byte = &nandemulator_read_byte;
-	sc->sc_nand_if.read_word = &nandemulator_read_word;
-	sc->sc_nand_if.write_buf_byte = &nandemulator_write_buf_byte;
-	sc->sc_nand_if.write_buf_word = &nandemulator_write_buf_word;
-	sc->sc_nand_if.write_byte = &nandemulator_write_byte;
-	sc->sc_nand_if.write_word = &nandemulator_write_word;
+	sc->sc_nand_if.read_buf_1 = &nandemulator_read_buf_1;
+	sc->sc_nand_if.read_buf_2 = &nandemulator_read_buf_2;
+	sc->sc_nand_if.read_1 = &nandemulator_read_1;
+	sc->sc_nand_if.read_2 = &nandemulator_read_2;
+	sc->sc_nand_if.write_buf_1 = &nandemulator_write_buf_1;
+	sc->sc_nand_if.write_buf_2 = &nandemulator_write_buf_2;
+	sc->sc_nand_if.write_1 = &nandemulator_write_1;
+	sc->sc_nand_if.write_2 = &nandemulator_write_2;
 	sc->sc_nand_if.busy = &nandemulator_busy;
 
 	sc->sc_nand_if.ecc.necc_code_size = 3;
@@ -326,7 +326,7 @@ nandemulator_address_chip(device_t self)
 
 	KASSERT(sc->sc_address_counter ==
 	    sc->sc_column_cycles + sc->sc_row_cycles);
-	
+
 	if (sc->sc_address_counter !=
 	    sc->sc_column_cycles + sc->sc_row_cycles) {
 		aprint_error_dev(self, "incorrect number of address cycles\n");
@@ -472,7 +472,7 @@ nandemulator_address(device_t self, uint8_t address)
 		sc->sc_address <<= 8;
 		sc->sc_address |= address;
 		sc->sc_address_counter++;
-		
+
 		if (sc->sc_address_counter ==
 		    sc->sc_column_cycles + sc->sc_row_cycles) {
 			nandemulator_address_chip(self);
@@ -505,7 +505,7 @@ nandemulator_busy(device_t self)
 }
 
 static void
-nandemulator_read_byte(device_t self, uint8_t *data)
+nandemulator_read_1(device_t self, uint8_t *data)
 {
 	struct nandemulator_softc *sc = device_private(self);
 
@@ -523,7 +523,7 @@ nandemulator_read_byte(device_t self, uint8_t *data)
 }
 
 static void
-nandemulator_write_byte(device_t self, uint8_t data)
+nandemulator_write_1(device_t self, uint8_t data)
 {
 	struct nandemulator_softc *sc = device_private(self);
 
@@ -548,7 +548,7 @@ nandemulator_write_byte(device_t self, uint8_t data)
 }
 
 static void
-nandemulator_read_word(device_t self, uint16_t *data)
+nandemulator_read_2(device_t self, uint16_t *data)
 {
 	struct nandemulator_softc *sc = device_private(self);
 
@@ -574,7 +574,7 @@ nandemulator_read_word(device_t self, uint16_t *data)
 }
 
 static void
-nandemulator_write_word(device_t self, uint16_t data)
+nandemulator_write_2(device_t self, uint16_t data)
 {
 	struct nandemulator_softc *sc = device_private(self);
 
@@ -607,7 +607,7 @@ nandemulator_write_word(device_t self, uint16_t data)
 }
 
 static void
-nandemulator_read_buf_byte(device_t self, void *buf, size_t len)
+nandemulator_read_buf_1(device_t self, void *buf, size_t len)
 {
 	uint8_t *addr;
 
@@ -616,13 +616,13 @@ nandemulator_read_buf_byte(device_t self, void *buf, size_t len)
 
 	addr = buf;
 	while (len > 0) {
-		nandemulator_read_byte(self, addr);
+		nandemulator_read_1(self, addr);
 		addr++, len--;
 	}
 }
 
 static void
-nandemulator_read_buf_word(device_t self, void *buf, size_t len)
+nandemulator_read_buf_2(device_t self, void *buf, size_t len)
 {
 	uint16_t *addr;
 
@@ -633,13 +633,13 @@ nandemulator_read_buf_word(device_t self, void *buf, size_t len)
 	addr = buf;
 	len /= 2;
 	while (len > 0) {
-		nandemulator_read_word(self, addr);
+		nandemulator_read_2(self, addr);
 		addr++, len--;
 	}
 }
 
 static void
-nandemulator_write_buf_byte(device_t self, const void *buf, size_t len)
+nandemulator_write_buf_1(device_t self, const void *buf, size_t len)
 {
 	const uint8_t *addr;
 
@@ -648,13 +648,13 @@ nandemulator_write_buf_byte(device_t self, const void *buf, size_t len)
 
 	addr = buf;
 	while (len > 0) {
-		nandemulator_write_byte(self, *addr);
+		nandemulator_write_1(self, *addr);
 		addr++, len--;
 	}
 }
 
 static void
-nandemulator_write_buf_word(device_t self, const void *buf, size_t len)
+nandemulator_write_buf_2(device_t self, const void *buf, size_t len)
 {
 	const uint16_t *addr;
 
@@ -665,7 +665,7 @@ nandemulator_write_buf_word(device_t self, const void *buf, size_t len)
 	addr = buf;
 	len /= 2;
 	while (len > 0) {
-		nandemulator_write_word(self, *addr);
+		nandemulator_write_2(self, *addr);
 		addr++, len--;
 	}
 }
