@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile.common,v 1.2 2011/06/23 11:47:13 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.3 2011/06/28 04:03:16 mrg Exp $
 
 DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
 GNUHOSTDIST=	${DIST}
 
-LIBMATHSRCS=	${G_libmath_la_SOURCES} ${G_libmath_la_LIBADD:.lo=.c}
 LIBSTDCXXSRCS=	${G_SRC_SOURCES}
 LIBSUPCXXSRCS=	${G_LIBSUPCXX_SOURCES} ${G_LIBSUPCXX_C_SOURCES}
 
