@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.15 2011/05/30 14:50:08 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.16 2011/06/28 16:19:16 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -34,6 +34,7 @@
 #include <puffs.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/extattr.h>
 #include <sys/un.h>
 #include <machine/vmparam.h>
 
@@ -476,6 +477,12 @@ perfuse_init(pc, pmi)
 	PUFFSOP_SET(pops, perfuse, node, advlock);
 	PUFFSOP_SET(pops, perfuse, node, read);
 	PUFFSOP_SET(pops, perfuse, node, write);
+#ifdef PUFFS_EXTNAMELEN
+	PUFFSOP_SET(pops, perfuse, node, getextattr);
+	PUFFSOP_SET(pops, perfuse, node, setextattr);
+	PUFFSOP_SET(pops, perfuse, node, listextattr);
+	PUFFSOP_SET(pops, perfuse, node, deleteextattr);
+#endif /* PUFFS_EXTNAMELEN */
 
 	puffs_flags = PUFFS_KFLAG_WTCACHE;
 
