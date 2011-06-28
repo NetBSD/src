@@ -1,4 +1,4 @@
-/*	$NetBSD: flashio.h,v 1.3 2011/04/04 18:23:39 ahoka Exp $	*/
+/*	$NetBSD: flashio.h,v 1.4 2011/06/28 20:49:43 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -61,6 +61,7 @@ enum {
 /* common integer type to address flash */
 typedef int64_t flash_off_t;
 typedef uint64_t flash_size_t;
+typedef uint64_t flash_addr_t;
 
 /**
  * struct erase_params - for ioctl erase call
