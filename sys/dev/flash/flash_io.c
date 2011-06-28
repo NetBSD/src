@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_io.c,v 1.1 2011/06/28 18:14:11 ahoka Exp $	*/
+/*	$NetBSD: flash_io.c,v 1.2 2011/06/28 20:58:00 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_io.c,v 1.1 2011/06/28 18:14:11 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_io.c,v 1.2 2011/06/28 20:58:00 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -252,7 +252,7 @@ flash_io_cache_sync(struct flash_io *fio)
 		goto out;
 	}
 
-	FLDPRINTF(("writing %zu bytes to 0x%jx\n",
+	FLDPRINTF(("writing %" PRIu32 " bytes to 0x%jx\n",
 		fio->fio_if->erasesize, (uintmax_t )base));
 
 	error = fio->fio_if->write(fio->fio_dev,
