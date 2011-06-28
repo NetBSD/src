@@ -48,6 +48,12 @@
  *
  * Note: Use #define __APPLE__ for OS X generation.
  */
+#include "acpi.h"
+#include "accommon.h"
+#include "amlcode.h"
+#include "acparser.h"
+#include "acdebug.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -56,12 +62,6 @@
 #include <semaphore.h>
 #include <pthread.h>
 #include <errno.h>
-
-#include "acpi.h"
-#include "accommon.h"
-#include "amlcode.h"
-#include "acparser.h"
-#include "acdebug.h"
 
 #define _COMPONENT          ACPI_OS_SERVICES
         ACPI_MODULE_NAME    ("osunixxf")
@@ -311,18 +311,21 @@ AcpiOsVprintf (
  *
  * FUNCTION:    AcpiOsGetLine
  *
- * PARAMETERS:  fmt                 - Standard printf format
- *              args                - Argument list
+ * PARAMETERS:  Buffer              - Where to return the command line
+ *              BufferLength        - Maximum length of Buffer
+ *              BytesRead           - Where the actual byte count is returned
  *
- * RETURN:      Actual bytes read
+ * RETURN:      Status and actual bytes read
  *
  * DESCRIPTION: Formatted input with argument list pointer
  *
  *****************************************************************************/
 
-UINT32
+ACPI_STATUS
 AcpiOsGetLine (
-    char                    *Buffer)
+    char                    *Buffer,
+    UINT32                  BufferLength,
+    UINT32                  *BytesRead)
 {
     UINT8                   Temp;
     UINT32                  i;
@@ -330,6 +333,11 @@ AcpiOsGetLine (
 
     for (i = 0; ; i++)
     {
+        if (i >= BufferLength)
+        {
+            return (AE_BUFFER_OVERFLOW);
+        }
+
         scanf ("%1c", &Temp);
         if (!Temp || Temp == '\n')
         {
@@ -345,7 +353,11 @@ AcpiOsGetLine (
 
     /* Return the number of bytes in the string */
 
-    return (i);
+    if (BytesRead)
+    {
+        *BytesRead = i;
+    }
+    return (AE_OK);
 }
 
 
@@ -803,39 +815,6 @@ AcpiOsRemoveInterruptHandler (
 
 /******************************************************************************
  *
- * FUNCTION:    AcpiOsExecute
- *
- * PARAMETERS:  Type                - Type of execution
- *              Function            - Address of the function to execute
- *              Context             - Passed as a parameter to the function
- *
- * RETURN:      Status.
- *
- * DESCRIPTION: Execute a new thread
- *
- *****************************************************************************/
-
-ACPI_STATUS
-AcpiOsExecute (
-    ACPI_EXECUTE_TYPE       Type,
-    ACPI_OSD_EXEC_CALLBACK  Function,
-    void                    *Context)
-{
-    pthread_t               thread;
-    int                     ret;
-
-
-    ret = pthread_create (&thread, NULL, (PTHREAD_CALLBACK) Function, Context);
-    if (ret)
-    {
-        AcpiOsPrintf("Create thread failed");
-    }
-    return (0);
-}
-
-
-/******************************************************************************
- *
  * FUNCTION:    AcpiOsStall
  *
  * PARAMETERS:  microseconds        - Time to sleep
@@ -1142,27 +1121,6 @@ AcpiOsWritable (
 
 /******************************************************************************
  *
- * FUNCTION:    AcpiOsGetThreadId
- *
- * PARAMETERS:  None
- *
- * RETURN:      Id of the running thread
- *
- * DESCRIPTION: Get the ID of the current (running) thread
- *
- *****************************************************************************/
-
-ACPI_THREAD_ID
-AcpiOsGetThreadId (
-    void)
-{
-
-    return (ACPI_CAST_PTHREAD_T (pthread_self()));
-}
-
-
-/******************************************************************************
- *
  * FUNCTION:    AcpiOsSignal
  *
  * PARAMETERS:  Function            - ACPI CA signal function code
@@ -1194,3 +1152,61 @@ AcpiOsSignal (
 
     return (AE_OK);
 }
+
+/* Optional multi-thread support */
+
+#ifndef ACPI_SINGLE_THREADED
+/******************************************************************************
+ *
+ * FUNCTION:    AcpiOsGetThreadId
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      Id of the running thread
+ *
+ * DESCRIPTION: Get the ID of the current (running) thread
+ *
+ *****************************************************************************/
+
+ACPI_THREAD_ID
+AcpiOsGetThreadId (
+    void)
+{
+
+    return (ACPI_CAST_PTHREAD_T (pthread_self()));
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AcpiOsExecute
+ *
+ * PARAMETERS:  Type                - Type of execution
+ *              Function            - Address of the function to execute
+ *              Context             - Passed as a parameter to the function
+ *
+ * RETURN:      Status.
+ *
+ * DESCRIPTION: Execute a new thread
+ *
+ *****************************************************************************/
+
+ACPI_STATUS
+AcpiOsExecute (
+    ACPI_EXECUTE_TYPE       Type,
+    ACPI_OSD_EXEC_CALLBACK  Function,
+    void                    *Context)
+{
+    pthread_t               thread;
+    int                     ret;
+
+
+    ret = pthread_create (&thread, NULL, (PTHREAD_CALLBACK) Function, Context);
+    if (ret)
+    {
+        AcpiOsPrintf("Create thread failed");
+    }
+    return (0);
+}
+
+#endif /* ACPI_SINGLE_THREADED */
