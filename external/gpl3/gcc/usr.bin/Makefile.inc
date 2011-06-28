@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2011/06/24 05:27:57 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2011/06/28 04:22:17 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,7 @@ HOSTLIBIBERTY=		${HOSTLIBIBERTYOBJ}/libiberty/libiberty.a
 BASEVER!=		cat ${GNUHOSTDIST}/gcc/BASE-VER
 # XXX
 #DEVPHASE!=		cat ${GNUHOSTDIST}/gcc/DEV-PHASE
-DEVPHASE="release"
+DEVPHASE=
 DATESTAMP!=		cat ${GNUHOSTDIST}/gcc/DATESTAMP
 
 BASEVERSTR=		"\"$(BASEVER)\""
