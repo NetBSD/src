@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.12 2009/04/18 10:12:42 dogcow Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.13 2011/06/28 13:15:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -54,11 +54,11 @@ struct sect {
 	unsigned long len;
 };
 
-void	combine __P((struct sect *, struct sect *, int));
-int	phcmp __P((const void *, const void *));
-char   *saveRead __P((int file, off_t offset, off_t len, const char *name));
-void	copy __P((int, int, off_t, off_t));
-void	translate_syms __P((int, int, off_t, off_t, off_t, off_t));
+void	combine(struct sect *, struct sect *, int);
+int	phcmp(const void *, const void *);
+char   *saveRead(int file, off_t offset, off_t len, const char *name);
+void	copy(int, int, off_t, off_t);
+void	translate_syms(int, int, off_t, off_t, off_t, off_t);
 
 int    *symTypeTable;
 
@@ -118,8 +118,8 @@ usage:
 
 	/* Find space for a table matching ELF section indices to a.out symbol
 	 * types. */
-	symTypeTable = (int *) malloc(ex.e_shnum * sizeof(int));
-	if (!symTypeTable) {
+	symTypeTable = malloc(ex.e_shnum * sizeof(int));
+	if (symTypeTable == NULL) {
 		fprintf(stderr, "symTypeTable: can't allocate.\n");
 		exit(1);
 	}
@@ -196,7 +196,7 @@ usage:
 	/* If there's a data section but no text section, then the loader
 	 * combined everything into one section.   That needs to be the text
 	 * section, so just make the data section zero length following text. */
-	if (data.len && !text.len) {
+	if (data.len && text.len == 0) {
 		text = data;
 		data.vaddr = text.vaddr + text.len;
 		data.len = 0;
@@ -213,7 +213,7 @@ usage:
 	if (ex.e_machine == EM_PPC)
 		aex.a_midmag = htonl((symflag << 26) | (MID_POWERPC << 16)
 			| OMAGIC);
-		
+
 	aex.a_text = text.len;
 	aex.a_data = data.len;
 	aex.a_bss = bss.len;
@@ -287,10 +287,8 @@ usage:
    nlist format and write it to out. */
 
 void
-translate_syms(out, in, symoff, symsize, stroff, strsize)
-	int     out, in;
-	off_t   symoff, symsize;
-	off_t   stroff, strsize;
+translate_syms(int out, int in, off_t symoff, off_t symsize,
+    off_t stroff, off_t strsize)
 {
 #define SYMS_PER_PASS	64
 	Elf32_Sym inbuf[64];
@@ -314,8 +312,8 @@ translate_syms(out, in, symoff, symsize, stroff, strsize)
 	 * the string table - if that assumption is bad, this could easily
 	 * blow up. */
 	newstringsize = strsize + remaining;
-	newstrings = (char *) malloc(newstringsize);
-	if (!newstrings) {
+	newstrings = malloc(newstringsize);
+	if (newstrings == NULL) {
 		fprintf(stderr, "No memory for new string table!\n");
 		exit(1);
 	}
@@ -398,9 +396,7 @@ translate_syms(out, in, symoff, symsize, stroff, strsize)
 }
 
 void
-copy(out, in, offset, size)
-	int     out, in;
-	off_t   offset, size;
+copy(int out, int in, off_t offset, off_t size)
 {
 	char    ibuf[4096];
 	int     remaining, cur, count;
@@ -430,11 +426,10 @@ copy(out, in, offset, size)
 /* Combine two segments, which must be contiguous.   If pad is true, it's
    okay for there to be padding between. */
 void
-combine(base, new, pad)
-	struct sect *base, *new;
-	int     pad;
+combine(struct sect *base, struct sect *new, int pad)
 {
-	if (!base->len)
+
+	if (base->len == 0)
 		*base = *new;
 	else
 		if (new->len) {
@@ -452,12 +447,12 @@ combine(base, new, pad)
 }
 
 int
-phcmp(vh1, vh2)
-	const void *vh1, *vh2;
+phcmp(const void *vh1, const void *vh2)
 {
 	const Elf32_Phdr *h1, *h2;
-	h1 = (const Elf32_Phdr *) vh1;
-	h2 = (const Elf32_Phdr *) vh2;
+
+	h1 = (const Elf32_Phdr *)vh1;
+	h2 = (const Elf32_Phdr *)vh2;
 
 	if (h1->p_vaddr > h2->p_vaddr)
 		return 1;
@@ -468,7 +463,7 @@ phcmp(vh1, vh2)
 			return 0;
 }
 
-char   *
+char *
 saveRead(int file, off_t offset, off_t len, const char *name)
 {
 	char   *tmp;
@@ -478,7 +473,7 @@ saveRead(int file, off_t offset, off_t len, const char *name)
 		fprintf(stderr, "%s: fseek: %s\n", name, strerror(errno));
 		exit(1);
 	}
-	if (!(tmp = (char *) malloc(len)))
+	if ((tmp = malloc(len)) == NULL)
 		errx(1, "%s: Can't allocate %ld bytes.", name, (long)len);
 	count = read(file, tmp, len);
 	if (count != len) {
