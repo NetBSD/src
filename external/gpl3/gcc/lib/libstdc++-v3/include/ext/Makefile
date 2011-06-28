@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/23 11:47:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/06/28 04:07:04 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,8 @@ INCS=		${G_ext_headers}
 INCSDIR=	/usr/include/g++/ext
 
 .PATH: ${DIST}/libstdc++-v3/include/ext
+# for ext/hash_set
+.PATH: ${DIST}/libstdc++-v3/include/backward
 
 # Get default targets including <bsd.inc.mk>.
 .include <bsd.prog.mk>
