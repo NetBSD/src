@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.5 2011/06/12 05:29:42 matt Exp $	*/
+/*	$NetBSD: flash.c,v 1.6 2011/06/28 07:00:17 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.5 2011/06/12 05:29:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.6 2011/06/28 07:00:17 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -80,7 +80,6 @@ dev_type_write(flashwrite);
 dev_type_ioctl(flashioctl);
 dev_type_strategy(flashstrategy);
 dev_type_dump(flashdump);
-dev_type_size(flashsize);
 
 int flash_print(void *aux, const char *pnp);
 
@@ -107,7 +106,7 @@ const struct bdevsw flash_bdevsw = {
 	.d_strategy = flashstrategy,
 	.d_ioctl = flashioctl,
 	.d_dump = flashdump,
-	.d_psize = flashsize,
+	.d_psize = nosize,
 	.d_flag = D_DISK | D_MPSAFE
 };
 
@@ -153,7 +152,7 @@ flash_attach(device_t parent, device_t self, void *aux)
 	format_bytes(pbuf[1], sizeof(pbuf[1]), sc->flash_if->erasesize);
 
 	aprint_naive("\n");
-	
+
 	switch (sc->flash_if->type) {
 	case FLASH_TYPE_NOR:
 		aprint_normal(": %s NOR flash\n", pbuf[0]);
@@ -162,7 +161,7 @@ flash_attach(device_t parent, device_t self, void *aux)
 	case FLASH_TYPE_NAND:
 		aprint_normal(": %s NAND flash\n", pbuf[0]);
 		break;
-		
+
 	default:
 		aprint_normal(": %s unknown flash\n", pbuf[0]);
 	}
@@ -186,7 +185,7 @@ flash_attach(device_t parent, device_t self, void *aux)
 		    "partition size must be larger than 0\n");
 		return;
 	}
-	
+
 	switch (sc->flash_if->type) {
 	case FLASH_TYPE_NOR:
 		aprint_normal_dev(sc->sc_dev,
@@ -202,7 +201,7 @@ flash_attach(device_t parent, device_t self, void *aux)
 		    sc->flash_if->writesize);
 		break;
 	}
-	
+
 	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, flash_shutdown))
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't establish power handler\n");
@@ -217,7 +216,7 @@ flash_detach(device_t device, int flags)
 
 	/* freeing flash_if is our responsibility */
 	kmem_free(sc->flash_if, sizeof(*sc->flash_if));
-	
+
 	return 0;
 }
 
@@ -281,7 +280,7 @@ flashopen(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	/* reset buffer length */
 //	sc->sc_cache->fc_len = 0;
-	
+
 	return 0;
 }
 
@@ -306,7 +305,7 @@ flashclose(dev_t dev, int flags, int fmt, struct lwp *l)
 		if (err)
 			return err;
 	}
-	
+
 	return 0;
 }
 
@@ -353,7 +352,7 @@ flashstrategy(struct buf *bp)
 
 	/* divider */
 	KASSERT(flash_if->writesize != 0);
-	
+
 	aprint_debug_dev(sc->sc_dev, "flash_strategy()\n");
 
 	if (!(bp->b_flags & B_READ) && sc->sc_readonly) {
@@ -382,7 +381,7 @@ flashstrategy(struct buf *bp)
 
 	bp->b_resid = bp->b_bcount;
 	flash_if->submit(sc->sc_parent_dev, bp);
-	
+
 	return;
 done:
 	bp->b_resid = bp->b_bcount;
@@ -426,7 +425,7 @@ flashioctl(dev_t dev, u_long command, void *data, int flags, struct lwp *l)
 		ei.ei_addr = ep->ep_addr;
 		ei.ei_len = ep->ep_len;
 		ei.ei_callback = NULL;
-		
+
 		err = flash_erase(sc->sc_dev, &ei);
 		if (err) {
 			return err;
@@ -452,7 +451,7 @@ flashioctl(dev_t dev, u_long command, void *data, int flags, struct lwp *l)
 
 		err = flash_block_markbad(sc->sc_dev, bbp->bbp_addr);
 
-		break;		
+		break;
 	case FLASH_DUMP:
 		dp = data;
 		offset = dp->dp_block * sc->flash_if->erasesize;
@@ -470,7 +469,7 @@ flashioctl(dev_t dev, u_long command, void *data, int flags, struct lwp *l)
 		break;
 	case FLASH_GET_INFO:
 		ip = data;
-		
+
 		ip->ip_page_size = sc->flash_if->page_size;
 		ip->ip_erase_size = sc->flash_if->erasesize;
 		ip->ip_flash_type = sc->flash_if->type;
@@ -484,12 +483,6 @@ flashioctl(dev_t dev, u_long command, void *data, int flags, struct lwp *l)
 }
 
 int
-flashsize(dev_t dev)
-{
-    return -1;
-}
-
-int
 flashdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
     return EACCES;
@@ -499,7 +492,7 @@ bool
 flash_shutdown(device_t self, int how)
 {
 	struct flash_softc *sc = device_private(self);
-	
+
 	if ((how & RB_NOSYNC) == 0 && !sc->sc_readonly)
 		flash_sync(self);
 
@@ -566,7 +559,7 @@ flash_erase(device_t self, struct flash_erase_instruction *ei)
 	if (e.ei_addr + e.ei_len > sc->flash_if->partition.part_size +
 	    sc->flash_if->partition.part_offset)
 		return EINVAL;
-	
+
 	return sc->flash_if->erase(device_parent(self), &e);
 }
 
@@ -612,9 +605,9 @@ flash_block_markbad(device_t self, flash_off_t offset)
 
 	if (sc->sc_readonly)
 		return EACCES;
-	
+
 	offset += sc->flash_if->partition.part_offset;
-	
+
 	if (offset + sc->flash_if->erasesize >=
 	    sc->flash_if->partition.part_size +
 	    sc->flash_if->partition.part_offset)
@@ -627,7 +620,7 @@ int
 flash_block_isbad(device_t self, flash_off_t offset, bool *bad)
 {
 	struct flash_softc *sc = device_private(self);
-	
+
 	offset += sc->flash_if->partition.part_offset;
 
 	if (offset + sc->flash_if->erasesize >
@@ -642,7 +635,7 @@ int
 flash_sync(device_t self)
 {
 	struct flash_softc *sc = device_private(self);
-	
+
 	if (sc->sc_readonly)
 		return EACCES;
 
