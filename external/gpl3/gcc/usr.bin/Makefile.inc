@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2011/06/28 04:22:17 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2011/06/28 09:28:22 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,7 @@ LIBIBERTYOBJ!=		cd ${.CURDIR}/../../lib/libiberty && ${PRINTOBJDIR}
 FRONTENDOBJ!=		cd ${.CURDIR}/../frontend && ${PRINTOBJDIR}
 BACKENDOBJ!=		cd ${.CURDIR}/../backend && ${PRINTOBJDIR}
 LIBCPPOBJ!=		cd ${.CURDIR}/../libcpp && ${PRINTOBJDIR}
+LIBDECNUMBEROBJ!=	cd ${.CURDIR}/../../lib/libdecnumber && ${PRINTOBJDIR}
 
 HOSTLIBIBERTYOBJ!=	cd ${.CURDIR}/../host-libiberty && ${PRINTOBJDIR}
 HOSTLIBIBERTY=		${HOSTLIBIBERTYOBJ}/libiberty/libiberty.a
@@ -44,9 +45,16 @@ DATESTAMPSTR=		"\" $(DATESTAMP)\""
 DATESTAMPSTR=		"\"\""
 .endif
 
-VER_CPPFLAGS=		-DBASEVER=${BASEVERSTR} \
-			-DDATESTAMP=${DATESTAMPSTR} \
-			-DDEVPHASE=${DEVPHASESTR}
+# XXX pull this out of our configs
+G_BUGURL_s="\"<http://www.NetBSD.org/Misc/send-pr.html>\""
+G_PKGVERSION_s="\"(NetBSD nb1 20110620) \""
+
+VER_CPPFLAGS=			-DBUGURL=${G_BUGURL_s} \
+				-DPKGVERSION=${G_PKGVERSION_s} \
+				-DBASEVER="\"${BASEVER}"\" \
+				-DDATESTAMP="\"${DATESTAMP}"\" \
+				-DDEVPHASE=${DEVPHASE} \
+				-DREVISION=${REVISION}
 CPPFLAGS.version.c=		${VER_CPPFLAGS}
 
 .include "${GCCARCH}/defs.mk"
