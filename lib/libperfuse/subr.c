@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.11 2011/04/25 04:54:53 manu Exp $ */
+/*  $NetBSD: subr.c,v 1.12 2011/06/28 16:19:16 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -33,8 +33,18 @@
 #include <syslog.h>
 #include <puffs.h>
 #include <paths.h>
+#include <sys/extattr.h>
 
 #include "perfuse_priv.h"
+
+struct perfuse_ns_map {
+	const char *pnm_ns;
+	const size_t pnm_nslen;
+	const int pnm_native_ns;
+};
+
+#define PERFUSE_NS_MAP(ns, native_ns)	\
+	{ ns ".", sizeof(ns), native_ns }
 
 static size_t node_path(puffs_cookie_t, char *, size_t);
 
@@ -232,4 +242,52 @@ perfuse_node_path(opc)
 		sprintf(buf, "/");
 
 	return buf;
+}
+
+const char *
+perfuse_native_ns(attrnamespace, attrname, fuse_attrname)
+	const int attrnamespace;
+	const char *attrname;
+	char *fuse_attrname;
+{
+	const struct perfuse_ns_map *pnm;
+	const struct perfuse_ns_map perfuse_ns_map[] = {
+		PERFUSE_NS_MAP("trusted", EXTATTR_NAMESPACE_SYSTEM),
+		PERFUSE_NS_MAP("security", EXTATTR_NAMESPACE_SYSTEM),
+		PERFUSE_NS_MAP("system", EXTATTR_NAMESPACE_SYSTEM),
+		PERFUSE_NS_MAP("user", EXTATTR_NAMESPACE_USER),
+		{ NULL, 0, EXTATTR_NAMESPACE_USER },
+	};
+
+	/*
+	 * If attribute has a reserved Linux namespace (e.g.: trusted.foo)
+	 * and that namespace matches the requested native namespace
+	 * we have nothing to do. 
+	 * Otherwise we have either:
+	 * (system|trusted|security).* with user namespace: prepend user.
+	 * anything else with system napespace: prepend system.
+	 */
+	for (pnm = perfuse_ns_map; pnm->pnm_ns; pnm++) {
+		if (strncmp(attrname, pnm->pnm_ns, pnm->pnm_nslen) != 0) 
+			continue;
+
+		if (attrnamespace == pnm->pnm_native_ns)
+			return attrname;
+
+	 	/* (system|trusted|security).* with user namespace */
+		if (attrnamespace == EXTATTR_NAMESPACE_USER) {
+			(void)snprintf(fuse_attrname, LINUX_XATTR_NAME_MAX, 
+				       "user.%s", attrname);
+			return (const char *)fuse_attrname;
+		}
+	}
+
+	/* anything else with system napespace */
+	if (attrnamespace == EXTATTR_NAMESPACE_SYSTEM) {
+		(void)snprintf(fuse_attrname, LINUX_XATTR_NAME_MAX, 
+			       "system.%s", attrname);
+		return (const char *)fuse_attrname;
+	}
+
+	return (const char *)attrname;
 }
