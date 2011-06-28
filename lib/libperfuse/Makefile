@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.5 2011/06/28 16:19:16 manu Exp $
+# $NetBSD: Makefile,v 1.6 2011/06/28 20:28:48 riz Exp $
 
 LIB=            perfuse
-LIBDPLIBS+=     puffs	/usr/src/lib/libpuffs
+LIBDPLIBS+=     puffs	${.CURDIR}/../libpuffs
 
 PERFUSE_OPT_DEBUG_FLAGS=   -g -DPERFUSE_DEBUG
 
