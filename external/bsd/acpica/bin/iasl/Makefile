@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/02/18 17:34:22 jruoho Exp $
+# $NetBSD: Makefile,v 1.4 2011/06/28 09:11:33 jruoho Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
@@ -16,8 +16,8 @@ CPPFLAGS+=	-D_USE_BERKELEY_YACC
 LDADD+=		-ll -ly -lrt -lpthread
 DPADD+=		${LIBL} ${LIBY} ${LIBRT} ${LIBPTHREAD}
 
-DPSRCS= aslcompilerparse.c
-DPSRCS+=aslcompilerlex.c
+DPSRCS= aslcompilerparse.c aslcompilerlex.c \
+	dtparserparse.c dtparserlex.c
 
 .PATH:	${TOPDIR}
 SRCS+=  aslcompilerparse.c aslcompilerlex.c adfile.c \
@@ -30,6 +30,7 @@ SRCS+=  aslcompilerparse.c aslcompilerlex.c adfile.c \
 	aslrestype2q.c aslrestype2w.c aslstartup.c aslstubs.c   \
 	asltransform.c asltree.c aslutils.c asluuid.c           \
 	aslwalks.c dtcompile.c dtexpress.c dtfield.c dtio.c     \
+	dtparserparse.c dtparserlex.c				\
 	dtsubtable.c dttable.c dttemplate.c dtutils.c
 
 .PATH: ${TOPDIR}/../common
@@ -71,7 +72,7 @@ SRCS+=  utalloc.c utcache.c utcopy.c utdebug.c utdecode.c       \
 	utmisc.c utmutex.c utobject.c utosi.c utresrc.c         \
 	utstate.c utxface.c utxferror.c
 
-.PATH: ${TOPDIR}/..
+.PATH: ${TOPDIR}/../os_specific/service_layers
 SRCS+=	osunixxf.c
 
 aslcompilerparse.c: ${TOPDIR}/aslcompiler.y
@@ -81,7 +82,16 @@ aslcompilerparse.c: ${TOPDIR}/aslcompiler.y
 aslcompilerlex.c: ${TOPDIR}/aslcompiler.l
 	${LEX} -i -PAslCompiler -o${.TARGET} ${.ALLSRC}
 
-CLEANFILES+=	aslcompilerlex.c aslcompilerparse.c \
-		aslcompiler.y.h aslcompilerparse.output
+dtparserparse.c: ${TOPDIR}/dtparser.y
+	${YACC} -v -d -o${.TARGET} -pDtParser ${.ALLSRC}
+	mv -f ${.PREFIX}.h dtparser.y.h
+
+dtparserlex.c: ${TOPDIR}/dtparser.l
+	${LEX} -i -PDtParser -o${.TARGET} ${.ALLSRC}
+
+CLEANFILES+=	aslcompilerlex.c aslcompilerparse.c	\
+		aslcompiler.y.h aslcompilerparse.output \
+		dtparserlex.c dtparserparse.c		\
+		dtparser.y.h dtparserparse.output
 
 .include <bsd.prog.mk>
