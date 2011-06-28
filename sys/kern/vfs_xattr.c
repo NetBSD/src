@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.24 2011/06/27 16:39:43 manu Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.25 2011/06/28 07:50:03 manu Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.24 2011/06/27 16:39:43 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.25 2011/06/28 07:50:03 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1021,8 +1021,17 @@ sys_listxattr(struct lwp *l, const struct sys_listxattr_args *uap, register_t *r
 
 	error = extattr_list_vp(vp, EXTATTR_NAMESPACE_SYSTEM,
 	    list, size, l, &listsize_sys);
-	if (error)
+	switch (error) {
+	case EPERM:
+		error = 0; /* Ignore and just skip system EA */
+		listsize_sys = 0;
+		break;
+	case 0:
+		break;
+	default: 
 		goto out;
+		break;
+	}
 
 	*retval = listsize_usr + listsize_sys; 	
 
@@ -1065,8 +1074,17 @@ sys_llistxattr(struct lwp *l, const struct sys_llistxattr_args *uap, register_t 
 
 	error = extattr_list_vp(vp, EXTATTR_NAMESPACE_SYSTEM,
 	    list, size, l, &listsize_sys);
-	if (error)
+	switch (error) {
+	case EPERM:
+		error = 0; /* Ignore and just skip system EA */
+		listsize_sys = 0;
+		break;
+	case 0:
+		break;
+	default: 
 		goto out;
+		break;
+	}
 
 	*retval = listsize_usr + listsize_sys; 	
 out:
@@ -1109,8 +1127,17 @@ sys_flistxattr(struct lwp *l, const struct sys_flistxattr_args *uap, register_t 
 
 	error = extattr_list_vp(vp, EXTATTR_NAMESPACE_SYSTEM,
 	    list, size, l, &listsize_sys);
-	if (error)
+	switch (error) {
+	case EPERM:
+		error = 0; /* Ignore and just skip system EA */
+		listsize_sys = 0;
+		break;
+	case 0:
+		break;
+	default: 
 		goto out;
+		break;
+	}
 
 	*retval = listsize_usr + listsize_sys; 	
 out:
