@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.26 2009/12/19 10:27:13 tsutsui Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.27 2011/06/28 13:13:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -84,22 +84,19 @@ void    safewrite(int outfile, const void *buf, off_t len, const char *msg);
 void    copy(int, int, off_t, off_t);
 void    combine(struct sect * base, struct sect * new, int paddable);
 void    translate_syms(struct elf_syms *, struct ecoff_syms *);
-void 
-elf_symbol_table_to_ecoff(int out, int in,
-    struct ecoff_exechdr * ep,
-    off_t symoff, off_t symsize,
-    off_t stroff, off_t strsize);
+void	elf_symbol_table_to_ecoff(int out, int in,
+	    struct ecoff_exechdr * ep,
+	    off_t symoff, off_t symsize,
+	    off_t stroff, off_t strsize);
 
 
-int 
-make_ecoff_section_hdrs(struct ecoff_exechdr * ep,
-    struct ecoff_scnhdr * esecs);
+int	make_ecoff_section_hdrs(struct ecoff_exechdr * ep,
+	    struct ecoff_scnhdr * esecs);
 
-void 
-write_ecoff_symhdr(int outfile, struct ecoff_exechdr * ep,
-    struct ecoff_symhdr * symhdrp,
-    long nesyms, long extsymoff, long extstroff,
-    long strsize);
+void	write_ecoff_symhdr(int outfile, struct ecoff_exechdr * ep,
+	    struct ecoff_symhdr * symhdrp,
+	    long nesyms, long extsymoff, long extstroff,
+	    long strsize);
 
 void    pad16(int fd, int size, const char *msg);
 void	bswap32_region(int32_t* , int);
@@ -110,9 +107,8 @@ int	needswap;
 
 
 
-void
-elf_read_syms(struct elf_syms * elfsymsp, int infile,
-    off_t symoff, off_t symsize, off_t stroff, off_t strsize);
+void	elf_read_syms(struct elf_syms * elfsymsp, int infile,
+	    off_t symoff, off_t symsize, off_t stroff, off_t strsize);
 
 
 int
@@ -309,7 +305,7 @@ usage:
 	/* If there's a data section but no text section, then the loader
 	 * combined everything into one section.   That needs to be the text
 	 * section, so just make the data section zero length following text. */
-	if (data.len && !text.len) {
+	if (data.len && text.len == 0) {
 		text = data;
 		data.vaddr = text.vaddr + text.len;
 		data.len = 0;
@@ -486,9 +482,7 @@ usage:
 }
 
 void
-copy(out, in, offset, size)
-	int     out, in;
-	off_t   offset, size;
+copy(int out, int in, off_t offset, off_t size)
 {
 	char    ibuf[4096];
 	size_t  remaining, cur, count;
@@ -515,11 +509,10 @@ copy(out, in, offset, size)
 /* Combine two segments, which must be contiguous.   If pad is true, it's
    okay for there to be padding between. */
 void
-combine(base, new, pad)
-	struct sect *base, *new;
-	int     pad;
+combine(struct sect *base, struct sect *new, int pad)
 {
-	if (!base->len)
+
+	if (base->len == 0)
 		*base = *new;
 	else
 		if (new->len) {
@@ -537,9 +530,9 @@ combine(base, new, pad)
 }
 
 int
-phcmp(h1, h2)
-	Elf32_Phdr *h1, *h2;
+phcmp(Elf32_Phdr *h1, Elf32_Phdr *h2)
 {
+
 	if (h1->p_vaddr > h2->p_vaddr)
 		return 1;
 	else
@@ -549,18 +542,18 @@ phcmp(h1, h2)
 			return 0;
 }
 
-char
-       *
+char *
 saveRead(int file, off_t offset, off_t len, const char *name)
 {
 	char   *tmp;
 	int     count;
 	off_t   off;
+
 	if ((off = lseek(file, offset, SEEK_SET)) < 0) {
 		fprintf(stderr, "%s: fseek: %s\n", name, strerror(errno));
 		exit(1);
 	}
-	if (!(tmp = (char *) malloc(len))) {
+	if ((tmp = malloc(len)) == NULL) {
 		fprintf(stderr, "%s: Can't allocate %ld bytes.\n", name, (long) len);
 		exit(1);
 	}
@@ -577,6 +570,7 @@ void
 safewrite(int outfile, const void *buf, off_t len, const char *msg)
 {
 	int     written;
+
 	written = write(outfile, buf, len);
 	if (written != len) {
 		fprintf(stderr, msg, strerror(errno));
@@ -590,11 +584,9 @@ safewrite(int outfile, const void *buf, off_t len, const char *msg)
  * for text, data, and bss.
  */
 int
-make_ecoff_section_hdrs(ep, esecs)
-	struct ecoff_exechdr *ep;
-	struct ecoff_scnhdr *esecs;
-
+make_ecoff_section_hdrs(struct ecoff_exechdr *ep, struct ecoff_scnhdr *esecs)
 {
+
 	ep->f.f_nscns = 6;	/* XXX */
 
 	strcpy(esecs[0].s_name, ".text");
@@ -640,12 +632,11 @@ make_ecoff_section_hdrs(ep, esecs)
  * Mark all symbols as EXTERN (for now).
  */
 void
-write_ecoff_symhdr(out, ep, symhdrp, nesyms, extsymoff, extstroff, strsize)
-	int     out;
-	struct ecoff_exechdr *ep;
-	struct ecoff_symhdr *symhdrp;
-	long    nesyms, extsymoff, extstroff, strsize;
+write_ecoff_symhdr(int out, struct ecoff_exechdr *ep,
+    struct ecoff_symhdr *symhdrp, long nesyms,
+    long extsymoff, long extstroff, long strsize)
 {
+
 	if (debug)
 		fprintf(stderr, "writing symhdr for %ld entries at offset 0x%lx\n",
 		    nesyms, (u_long) ep->f.f_symptr);
@@ -672,18 +663,15 @@ write_ecoff_symhdr(out, ep, symhdrp, nesyms, extsymoff, extstroff, strsize)
 		symhdrp->magic = bswap16(symhdrp->magic);
 		symhdrp->ilineMax = bswap16(symhdrp->ilineMax);
 	}
-		
+
 	safewrite(out, symhdrp, sizeof(*symhdrp),
 	    "writing symbol header: %s\n");
 }
 
 
 void
-elf_read_syms(elfsymsp, in, symoff, symsize, stroff, strsize)
-	struct elf_syms *elfsymsp;
-	int     in;
-	off_t   symoff, symsize;
-	off_t   stroff, strsize;
+elf_read_syms(struct elf_syms *elfsymsp, int in, off_t symoff, off_t symsize,
+    off_t stroff, off_t strsize)
 {
 	register int nsyms;
 	int i;
@@ -715,11 +703,8 @@ elf_read_syms(elfsymsp, in, symoff, symsize, stroff, strsize)
  *
  */
 void
-elf_symbol_table_to_ecoff(out, in, ep, symoff, symsize, stroff, strsize)
-	int     out, in;
-	struct ecoff_exechdr *ep;
-	off_t   symoff, symsize;
-	off_t   stroff, strsize;
+elf_symbol_table_to_ecoff(int out, int in, struct ecoff_exechdr *ep,
+    off_t symoff, off_t symsize, off_t stroff, off_t strsize)
 {
 
 	struct elf_syms elfsymtab;
@@ -786,9 +771,7 @@ elf_symbol_table_to_ecoff(out, in, ep, symoff, symsize, stroff, strsize)
  * In-memory translation of ELF symbosl to ECOFF.
  */
 void
-translate_syms(elfp, ecoffp)
-	struct elf_syms *elfp;
-	struct ecoff_syms *ecoffp;
+translate_syms(struct elf_syms *elfp, struct ecoff_syms *ecoffp)
 {
 
 	int     i;
@@ -812,7 +795,7 @@ translate_syms(elfp, ecoffp)
 
 	newstrings = (char *) ecoffp->stringtab;
 	nsp = (char *) ecoffp->stringtab;
-	if (!newstrings) {
+	if (newstrings == NULL) {
 		fprintf(stderr, "No memory for new string table!\n");
 		exit(1);
 	}
@@ -853,6 +836,7 @@ translate_syms(elfp, ecoffp)
 void
 pad16(int fd, int size, const char *msg)
 {
+
 	safewrite(fd, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0", size, msg);
 }
 
