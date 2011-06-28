@@ -105,11 +105,11 @@ typedef struct acpi_handler_info
 
 static ACPI_HANDLER_INFO    AcpiGbl_HandlerList[] =
 {
-    {&AcpiGbl_SystemNotify.Handler,     "System Notifications"},
-    {&AcpiGbl_DeviceNotify.Handler,     "Device Notifications"},
-    {&AcpiGbl_TableHandler,             "ACPI Table Events"},
-    {&AcpiGbl_ExceptionHandler,         "Control Method Exceptions"},
-    {&AcpiGbl_InterfaceHandler,         "OSI Invocations"}
+    {&AcpiGbl_SystemNotify.Handler,    __UNCONST("System Notifications")},
+    {&AcpiGbl_DeviceNotify.Handler,    __UNCONST("Device Notifications")},
+    {&AcpiGbl_TableHandler,            __UNCONST("ACPI Table Events")},
+    {&AcpiGbl_ExceptionHandler,        __UNCONST("Control Method Exceptions")},
+    {&AcpiGbl_InterfaceHandler,        __UNCONST("OSI Invocations")}
 };
 
 
