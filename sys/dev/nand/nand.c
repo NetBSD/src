@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.11 2011/05/01 13:20:28 rmind Exp $	*/
+/*	$NetBSD: nand.c,v 1.12 2011/06/28 07:16:11 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.11 2011/05/01 13:20:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.12 2011/06/28 07:16:11 ahoka Exp $");
 
 #include "locators.h"
 
@@ -133,7 +133,7 @@ nand_attach(device_t parent, device_t self, void *aux)
 		aprint_error("NAND chip is write protected!\n");
 		return;
 	}
-	
+
 	if (nand_scan_media(self, chip)) {
 		return;
 	}
@@ -289,14 +289,14 @@ nand_init_interface(struct nand_interface *interface)
 	interface->select = &nand_default_select;
 	interface->command = NULL;
 	interface->address = NULL;
-	interface->read_buf_byte = NULL;
-	interface->read_buf_word = NULL;
-	interface->read_byte = NULL;
-	interface->read_word = NULL;
-	interface->write_buf_byte = NULL;
-	interface->write_buf_word = NULL;
-	interface->write_byte = NULL;
-	interface->write_word = NULL;
+	interface->read_buf_1 = NULL;
+	interface->read_buf_2 = NULL;
+	interface->read_1 = NULL;
+	interface->read_2 = NULL;
+	interface->write_buf_1 = NULL;
+	interface->write_buf_2 = NULL;
+	interface->write_1 = NULL;
+	interface->write_2 = NULL;
 	interface->busy = NULL;
 
 	/*-
@@ -366,10 +366,10 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 	nand_select(self, true);
 	nand_command(self, ONFI_READ_ID);
 	nand_address(self, 0x20);
-	nand_read_byte(self, &onfi_signature[0]);
-	nand_read_byte(self, &onfi_signature[1]);
-	nand_read_byte(self, &onfi_signature[2]);
-	nand_read_byte(self, &onfi_signature[3]);
+	nand_read_1(self, &onfi_signature[0]);
+	nand_read_1(self, &onfi_signature[1]);
+	nand_read_1(self, &onfi_signature[2]);
+	nand_read_1(self, &onfi_signature[3]);
 	nand_select(self, false);
 
 	if (onfi_signature[0] != 'O' || onfi_signature[1] != 'N' ||
@@ -423,7 +423,7 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 	    PRIu8 "\n",
 	    chip->nc_addr_cycles_column, chip->nc_addr_cycles_row);
 #endif
-		
+
 	ecc = chip->nc_ecc = &sc->nand_if->ecc;
 
 	/*
@@ -488,8 +488,8 @@ nand_read_id(device_t self, uint8_t *manf, uint8_t *dev)
 	nand_command(self, ONFI_READ_ID);
 	nand_address(self, 0x00);
 
-	nand_read_byte(self, manf);
-	nand_read_byte(self, dev);
+	nand_read_1(self, manf);
+	nand_read_1(self, dev);
 
 	nand_select(self, false);
 }
@@ -505,7 +505,7 @@ nand_read_parameter_page(device_t self, struct onfi_parameter_page *params)
 
 //read_params:
 //	tries++;
-	
+
 	nand_select(self, true);
 	nand_command(self, ONFI_READ_PARAMETER_PAGE);
 	nand_address(self, 0x00);
@@ -517,10 +517,10 @@ nand_read_parameter_page(device_t self, struct onfi_parameter_page *params)
 	bufp = (uint8_t *)params;
 	/* XXX why i am not using read_buf? */
 	for (i = 0; i < 256; i++) {
-		nand_read_byte(self, &bufp[i]);
+		nand_read_1(self, &bufp[i]);
 	}
 	nand_select(self, false);
-	
+
 	/* validate the parameter page with the crc */
 	crc = nand_crc16(bufp, 254);
 
@@ -639,7 +639,7 @@ nand_get_status(device_t self)
 
 	nand_command(self, ONFI_READ_STATUS);
 	nand_busy(self);
-	nand_read_byte(self, &status);
+	nand_read_1(self, &status);
 
 	return status;
 }
@@ -682,14 +682,14 @@ nand_default_read_page(device_t self, size_t offset, uint8_t *data)
 	if (chip->nc_flags & NC_BUSWIDTH_16) {
 		for (b = 0, e = 0; b < chip->nc_page_size; b += bs, e += cs) {
 			nand_ecc_prepare(self, NAND_ECC_READ);
-			nand_read_buf_word(self, data + b, bs);
+			nand_read_buf_2(self, data + b, bs);
 			nand_ecc_compute(self, data + b,
 			    chip->nc_ecc_cache + e);
 		}
 	} else {
 		for (b = 0, e = 0; b < chip->nc_page_size; b += bs, e += cs) {
 			nand_ecc_prepare(self, NAND_ECC_READ);
-			nand_read_buf_byte(self, data + b, bs);
+			nand_read_buf_1(self, data + b, bs);
 			nand_ecc_compute(self, data + b,
 			    chip->nc_ecc_cache + e);
 		}
@@ -775,20 +775,20 @@ nand_default_program_page(device_t self, size_t page, const uint8_t *data)
 	if (chip->nc_flags & NC_BUSWIDTH_16) {
 		for (b = 0, e = 0; b < chip->nc_page_size; b += bs, e += cs) {
 			nand_ecc_prepare(self, NAND_ECC_WRITE);
-			nand_write_buf_word(self, data + b, bs);
+			nand_write_buf_2(self, data + b, bs);
 			nand_ecc_compute(self, data + b, ecc + e);
 		}
 		/* write oob with ecc correction code */
-		nand_write_buf_word(self, chip->nc_oob_cache,
+		nand_write_buf_2(self, chip->nc_oob_cache,
 		    chip->nc_spare_size);
 	} else {
 		for (b = 0, e = 0; b < chip->nc_page_size; b += bs, e += cs) {
 			nand_ecc_prepare(self, NAND_ECC_WRITE);
-			nand_write_buf_byte(self, data + b, bs);
+			nand_write_buf_1(self, data + b, bs);
 			nand_ecc_compute(self, data + b, ecc + e);
 		}
 		/* write oob with ecc correction code */
-		nand_write_buf_byte(self, chip->nc_oob_cache,
+		nand_write_buf_1(self, chip->nc_oob_cache,
 		    chip->nc_spare_size);
 	}
 
@@ -829,9 +829,9 @@ nand_read_oob(device_t self, size_t page, uint8_t *oob)
 	nand_prepare_read(self, page, chip->nc_page_size);
 
 	if (chip->nc_flags & NC_BUSWIDTH_16)
-		nand_read_buf_word(self, oob, chip->nc_spare_size);
+		nand_read_buf_2(self, oob, chip->nc_spare_size);
 	else
-		nand_read_buf_byte(self, oob, chip->nc_spare_size);
+		nand_read_buf_1(self, oob, chip->nc_spare_size);
 
 	/* for debugging drivers */
 #if 0
@@ -855,9 +855,9 @@ nand_write_oob(device_t self, size_t offset, const void *oob)
 	nand_busy(self);
 
 	if (chip->nc_flags & NC_BUSWIDTH_16)
-		nand_write_buf_word(self, oob, chip->nc_spare_size);
+		nand_write_buf_2(self, oob, chip->nc_spare_size);
 	else
-		nand_write_buf_byte(self, oob, chip->nc_spare_size);
+		nand_write_buf_1(self, oob, chip->nc_spare_size);
 
 	status = nand_get_status(self);
 	KASSERT(status & ONFI_STATUS_RDY);
@@ -918,12 +918,12 @@ nand_isfactorybad(device_t self, flash_off_t offset)
 
 		if (chip->nc_flags & NC_BUSWIDTH_16) {
 			uint16_t word;
-			nand_read_word(self, &word);
+			nand_read_2(self, &word);
 			if (word == 0x0000)
 				return true;
 		} else {
 			uint8_t byte;
-			nand_read_byte(self, &byte);
+			nand_read_1(self, &byte);
 			if (byte == 0x00)
 				return true;
 		}
@@ -949,7 +949,7 @@ nand_iswornoutbad(device_t self, flash_off_t offset)
 		nand_prepare_read(self, block,
 		    chip->nc_page_size + (chip->nc_badmarker_offs & 0xfe));
 
-		nand_read_word(self, &word);
+		nand_read_2(self, &word);
 		mark = htole16(word);
 		if (chip->nc_badmarker_offs & 0x01)
 			mark >>= 8;
@@ -961,7 +961,7 @@ nand_iswornoutbad(device_t self, flash_off_t offset)
 		nand_prepare_read(self, block,
 		    chip->nc_page_size + chip->nc_badmarker_offs);
 
-		nand_read_byte(self, &byte);
+		nand_read_1(self, &byte);
 		if (byte != 0xff)
 			return true;
 	}
@@ -1115,7 +1115,7 @@ nand_flash_write_unaligned(device_t self, flash_off_t offset, size_t len,
 
 			memcpy(chip->nc_page_cache + firstoff,
 			    bufp, chip->nc_page_size - firstoff);
-			
+
 			printf("program page: %s: %d\n", __FILE__, __LINE__);
 			error = nand_program_page(self,
 			    addr, chip->nc_page_cache);
