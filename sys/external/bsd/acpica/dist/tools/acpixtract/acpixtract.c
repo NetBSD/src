@@ -50,11 +50,11 @@
 
 /* Note: This is a 32-bit program only */
 
-#define VERSION             0x20100107
+#define VERSION             0x20110330
 #define FIND_HEADER         0
 #define EXTRACT_DATA        1
 #define BUFFER_SIZE         256
-
+#define MIN_HEADER_LENGTH   6   /* strlen ("DSDT @") */
 
 /* Local prototypes */
 
@@ -505,10 +505,30 @@ ExtractTables (
         {
         case FIND_HEADER:
 
+            /* Ignore lines that are too short to be header lines */
+
+            if (strlen (Buffer) < MIN_HEADER_LENGTH)
+            {
+                continue;
+            }
+
             /* Ignore empty lines and lines that start with a space */
 
             if ((Buffer[0] == ' ') ||
                 (Buffer[0] == '\n'))
+            {
+                continue;
+            }
+
+            /*
+             * Ignore lines that are not of the form <sig> @ <addr>. Examples:
+             *
+             * DSDT @ 0x737e4000
+             * XSDT @ 0x737f2fff
+             * RSD PTR @ 0xf6cd0
+             * SSDT @ (nil)
+             */
+            if (!strstr (Buffer, " @ "))
             {
                 continue;
             }
