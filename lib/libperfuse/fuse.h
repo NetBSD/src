@@ -1,4 +1,4 @@
-/*  $NetBSD: fuse.h,v 1.3 2011/05/11 14:52:48 jakllsch Exp $ */
+/*  $NetBSD: fuse.h,v 1.4 2011/06/28 16:19:16 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -38,6 +38,11 @@
 #define FUSE_PREF_BUFSIZE (sysconf(_SC_PAGESIZE) + 0x1000)
 #define FUSE_BUFSIZE MAX(FUSE_PREF_BUFSIZE /* CONSTCOND */, FUSE_MIN_BUFSIZE)
 #endif /* FUSE_BUFSIZE */
+
+/* From <linux/limits.h> */
+#define LINUX_XATTR_NAME_MAX   255 
+#define LINUX_XATTR_SIZE_MAX 65536
+#define LINUX_XATTR_LIST_MAX 65536 
 
 struct fuse_attr {
 	uint64_t	ino;
