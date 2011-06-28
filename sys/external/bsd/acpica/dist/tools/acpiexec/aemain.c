@@ -93,6 +93,7 @@ usage (void)
     printf ("   -da                 Disable method abort on error\n");
     printf ("   -di                 Disable execution of STA/INI methods during init\n");
     printf ("   -do                 Disable Operation Region address simulation\n");
+    printf ("   -dr                 Disable repair of method return values\n");
     printf ("   -dt                 Disable allocation tracking (performance)\n");
     printf ("\n");
 
@@ -433,6 +434,10 @@ main (
             AcpiGbl_DbOpt_NoRegionSupport = TRUE;
             break;
 
+        case 'r':
+            AcpiGbl_DisableAutoRepair = TRUE;
+            break;
+
         case 't':
             #ifdef ACPI_DBG_TRACK_ALLOCATIONS
                 AcpiGbl_DisableMemTracking = TRUE;
@@ -659,7 +664,7 @@ enterloop:
     }
     else if (AcpiGbl_BatchMode == 2)
     {
-        AcpiDbExecute (BatchBuffer, NULL, EX_NO_SINGLE_STEP);
+        AcpiDbExecute (BatchBuffer, NULL, NULL, EX_NO_SINGLE_STEP);
     }
     else
     {
