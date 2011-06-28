@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.17 2011/06/24 03:53:46 kiyohara Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.18 2011/06/28 11:42:51 kiyohara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -208,6 +208,9 @@ _C_LABEL(ddblow):
 	stmw	%r28,CI_DDBSAVE(%r1)	/* free r28-r31 */
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
+	mfsrr0	%r30;
+	mfsrr1	%r31;
+	stmw	%r30,(CI_DDBSAVE+CPUSAVE_SRR0)(%r1);	/* save srr0/srr1 */
 	lis	%r1,ddbstk+INTSTK-CALLFRAMELEN@ha	/* get new SP */
 	addi	%r1,%r1,ddbstk+INTSTK-CALLFRAMELEN@l
 	bla	ddbtrap
@@ -228,6 +231,9 @@ _C_LABEL(ipkdblow):
 	stmw	%r28,CI_IPKDBSAVE(%r1)	/* free r28-r31 */
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
+	mfsrr0	%r30;
+	mfsrr1	%r31;
+	stmw	%r30,(CI_IPKDBSAVE+CPUSAVE_SRR0)(%r1);	/* save srr0/srr1 */
 	lis	%r1,ipkdbstk+INTSTK-CALLFRAMELEN@ha	/* get new SP */
 	addi	%r1,%r1,ipkdbstk+INTSTK-CALLFRAMELEN@l
 	bla	ipkdbtrap
@@ -516,12 +522,12 @@ _C_LABEL(ddb_trap):
 	mtsprg1	%r1
 	GET_CPUINFO(%r4)
 	mfmsr	%r3
-	stw	%r3,CI_DDBSAVE+CPUSAVE_SRR1(%r4)
+	stw	%r3,(CI_DDBSAVE+CPUSAVE_SRR1)(%r4)
 	wrteei	0			/* disable interrupts */
 	isync
 	stmw	%r28,CI_DDBSAVE(%r4)
 	mflr	%r28
-	stw	%r28,CI_DDBSAVE+CPUSAVE_SRR0(%r4)
+	stw	%r28,(CI_DDBSAVE+CPUSAVE_SRR0)(%r4)
 	li	%r29,EXC_BPT
 	mtlr	%r29
 	mfcr	%r29
@@ -535,7 +541,6 @@ ddbtrap:
 	addi	%r3,%r1,FRAME_TF
 	bl	_C_LABEL(ddb_trap_glue)
 	or.	%r3,%r3,%r3
-	addi	%r3,%r1,FRAME_TF
 	beq	trapagain
 	b	trapexit
 #endif /* DDB || KGDB */
