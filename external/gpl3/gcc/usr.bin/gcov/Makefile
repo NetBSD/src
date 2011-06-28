@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 06:03:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/28 09:31:11 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,6 @@ MAN=		gcov.1
 
 .include <bsd.prog.mk>
 
-LDADD=		-L${LIBIBERTYOBJ} -liberty
+LDADD=		-L${LIBIBERTYOBJ} -liberty -lintl
 
 .PATH: ${DIST}/gcc
