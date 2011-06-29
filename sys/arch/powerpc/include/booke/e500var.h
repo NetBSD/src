@@ -1,4 +1,4 @@
-/*	$NetBSD: e500var.h,v 1.3 2011/06/05 16:52:25 matt Exp $	*/
+/*	$NetBSD: e500var.h,v 1.4 2011/06/29 06:01:33 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -85,9 +85,11 @@ int	e500_cpunode_submatch(device_t, cfdata_t, const char *, void *);
  * Used by MP hatch code to fetch the TLB1 entries so they be setup on the
  * just hatched CPU.
  */
-void   *e500_tlb1_fetch(size_t);
+void *	e500_tlb1_fetch(size_t);
 void	e500_tlb1_sync(void);
 void	e500_ipi_halt(void);
+void	e500_spinup_trampoline(void);
+void	e500_cpu_hatch(struct cpu_info *);
 
 void	pq3gpio_attach(device_t, device_t, void *);
 
@@ -96,11 +98,14 @@ void	pq3gpio_attach(device_t, device_t, void *);
  */
 
 struct uboot_spinup_entry {
-	uint64_t entry_addr;
-	uint64_t entry_r3;
+	uint32_t entry_addr_upper;
+	uint32_t entry_addr_lower;
+	uint32_t entry_r3_upper;
+	uint32_t entry_r3_lower;
 	uint32_t entry__rsvd;
 	uint32_t entry_pir;
-	uint64_t entry_r6;
+	uint32_t entry_r6_upper;
+	uint32_t entry_r6_lower;
 };
 
 #endif /* _KERNEL */
