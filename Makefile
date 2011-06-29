@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.285 2011/06/22 05:13:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.286 2011/06/29 02:05:24 mrg Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -412,12 +412,10 @@ do-${targ}: .PHONY ${targ}
 .endfor
 
 .if defined(HAVE_GCC)
-.    if ${HAVE_GCC} != 45	# XXX for now
 .if ${USE_COMPILERCRTSTUFF} == "yes"
 BUILD_CC_LIB= ${BUILD_CC_LIB_BASEDIR}/crtstuff${LIBGCC_EXT}
 .endif
 BUILD_CC_LIB+= ${BUILD_CC_LIB_BASEDIR}/libgcc${LIBGCC_EXT}
-.    endif
 .elif defined(HAVE_PCC)
 BUILD_CC_LIB+= external/bsd/pcc/crtstuff
 BUILD_CC_LIB+= external/bsd/pcc/libpcc
@@ -448,26 +446,22 @@ do-tools-obj: .PHONY .MAKE
 
 do-libgcc: .PHONY .MAKE
 .if defined(HAVE_GCC)
-.    if ${HAVE_GCC} != 45	# XXX for now
 .if ${MKGCC} != "no"
 .if ${USE_COMPILERCRTSTUFF} == "yes"
 	${MAKEDIRTARGET} . do-${BUILD_CC_LIB_BASETARGET}-crtstuff${LIBGCC_EXT}
 .endif
 	${MAKEDIRTARGET} . do-${BUILD_CC_LIB_BASETARGET}-libgcc${LIBGCC_EXT}
 .endif
-.    endif
 .endif
 
 do-compat-libgcc: .PHONY .MAKE
 .if defined(HAVE_GCC)
-.    if ${HAVE_GCC} != 45	# XXX for now
 .if ${MKGCC} != "no"
 .if ${USE_COMPILERCRTSTUFF} == "yes"
 	${MAKEDIRTARGET} . do-compat-${BUILD_CC_LIB_BASETARGET}-crtstuff${LIBGCC_EXT}
 .endif
 	${MAKEDIRTARGET} . do-compat-${BUILD_CC_LIB_BASETARGET}-libgcc${LIBGCC_EXT}
 .endif
-.    endif
 .endif
 
 do-libpcc: .PHONY .MAKE
