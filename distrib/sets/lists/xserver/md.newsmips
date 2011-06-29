@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.6 2011/05/21 11:52:30 tsutsui Exp $
+# $NetBSD: md.newsmips,v 1.7 2011/06/29 14:35:13 tsutsui Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/Xnewsmips				-unknown-	x11
 ./usr/X11R6/man/cat1/Xnewsmips.0			-unknown-	.cat,x11
@@ -8,8 +8,9 @@
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
 ./usr/X11R7/bin/gtf					-unknown-	xorg
-./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
-./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	obsolete
+./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		-unknown-	xorg
@@ -118,3 +119,4 @@
 ./usr/X11R7/man/man4/ws.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
+./usr/X11R7/share/aclocal/xorg-server.m4		-unknown-	xorg
