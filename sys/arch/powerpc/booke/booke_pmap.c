@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.7 2011/06/23 02:33:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.8 2011/06/29 06:05:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -329,3 +329,11 @@ pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
 
 	return true;
 }
+
+#ifdef MULTIPROCESSOR
+void
+pmap_md_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
+{
+	/* nothing */
+}
+#endif /* MULTIPROCESSOR */
