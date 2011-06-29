@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2008/10/25 22:27:35 apb Exp $
+# $NetBSD: Makefile,v 1.11 2011/06/29 01:59:26 mrg Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/libs/libgroff/Makefile,v 1.5 2003/05/01 13:22:19 ru Exp $
 
@@ -24,13 +24,13 @@ CLEANFILES=	version.cpp
 
 .include <bsd.lib.mk>
 
-version.cpp: ${GROFF_DIST}/VERSION ${GROFF_DIST}/REVISION
+version.cpp: ${GROFF_DIST}/VERSION ${GROFF_DIST}/REVISION Makefile
 	${_MKTARGET_CREATE}
 	(\
 	    v=`cat ${GROFF_DIST}/VERSION`;\
 	    r=`cat ${GROFF_DIST}/REVISION`;\
 	    echo 'const char *version_string = "'$$v'";' ;\
 	    echo 'const char *revision_string = "'$$r'";' ;\
-	    echo 'extern "C" const char *Version_string = "'$$v'.'$$r'";' |\
+	    echo 'extern "C" { const char *Version_string = "'$$v'.'$$r'"; }' |\
 		${TOOL_SED} -e 's/\.0\"/\"/'; \
 	) > ${.TARGET}
