@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.30 2011/02/08 20:20:26 rmind Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.31 2011/06/29 09:12:42 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -142,6 +142,7 @@ struct vnd_softc {
 #define	VNF_VUNCONF	0x200	/* device is unconfiguring */
 #define VNF_COMP	0x400	/* file is compressed */
 #define VNF_CLEARING	0x800	/* unit is being torn down */
+#define VNF_USE_VN_RDWR	0x1000	/* have to use vn_rdwr() */
 
 /* structure of header in a compressed file */
 struct vnd_comp_header
