@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.69 2011/06/21 04:21:17 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.70 2011/06/29 06:00:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.69 2011/06/21 04:21:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.70 2011/06/29 06:00:17 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -1213,37 +1213,37 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 	ci->ci_curpm = ci->ci_curpcb->pcb_pm;
 
 	cpu_hatch_data = h;
-	h->running = 0;
-	h->self = self;
-	h->ci = ci;
-	h->pir = ci->ci_cpuid;
+	h->hatch_running = 0;
+	h->hatch_self = self;
+	h->hatch_ci = ci;
+	h->hatch_pir = ci->ci_cpuid;
 
 	cpu_hatch_stack = (uint32_t)hp;
 	ci->ci_lasttb = cpu_info[0].ci_lasttb;
 
 	/* copy special registers */
 
-	h->hid0 = mfspr(SPR_HID0);
+	h->hatch_hid0 = mfspr(SPR_HID0);
 	
-	__asm volatile ("mfsdr1 %0" : "=r"(h->sdr1));
+	__asm volatile ("mfsdr1 %0" : "=r"(h->hatch_sdr1));
 	for (i = 0; i < 16; i++) {
-		__asm ("mfsrin %0,%1" : "=r"(h->sr[i]) :
+		__asm ("mfsrin %0,%1" : "=r"(h->hatch_sr[i]) :
 		       "r"(i << ADDR_SR_SHFT));
 	}
 	if (oeacpufeat & OEACPU_64)
-		h->asr = mfspr(SPR_ASR);
+		h->hatch_asr = mfspr(SPR_ASR);
 	else
-		h->asr = 0;
+		h->hatch_asr = 0;
 
 	/* copy the bat regs */
-	__asm volatile ("mfibatu %0,0" : "=r"(h->batu[0]));
-	__asm volatile ("mfibatl %0,0" : "=r"(h->batl[0]));
-	__asm volatile ("mfibatu %0,1" : "=r"(h->batu[1]));
-	__asm volatile ("mfibatl %0,1" : "=r"(h->batl[1]));
-	__asm volatile ("mfibatu %0,2" : "=r"(h->batu[2]));
-	__asm volatile ("mfibatl %0,2" : "=r"(h->batl[2]));
-	__asm volatile ("mfibatu %0,3" : "=r"(h->batu[3]));
-	__asm volatile ("mfibatl %0,3" : "=r"(h->batl[3]));
+	__asm volatile ("mfibatu %0,0" : "=r"(h->hatch_batu[0]));
+	__asm volatile ("mfibatl %0,0" : "=r"(h->hatch_batl[0]));
+	__asm volatile ("mfibatu %0,1" : "=r"(h->hatch_batu[1]));
+	__asm volatile ("mfibatl %0,1" : "=r"(h->hatch_batl[1]));
+	__asm volatile ("mfibatu %0,2" : "=r"(h->hatch_batu[2]));
+	__asm volatile ("mfibatl %0,2" : "=r"(h->hatch_batl[2]));
+	__asm volatile ("mfibatu %0,3" : "=r"(h->hatch_batu[3]));
+	__asm volatile ("mfibatl %0,3" : "=r"(h->hatch_batl[3]));
 	__asm volatile ("sync; isync");
 
 	if (md_setup_trampoline(h, ci) == -1)
@@ -1255,7 +1255,7 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 
 	delay(200000);
 
-	if (h->running < 1) {
+	if (h->hatch_running < 1) {
 		aprint_error("%d:CPU %d didn't start %d\n", cpu_spinstart_ack,
 		    ci->ci_cpuid, cpu_spinstart_ack);
 		Debugger();
@@ -1276,7 +1276,7 @@ register_t
 cpu_hatch(void)
 {
 	volatile struct cpu_hatch_data *h = cpu_hatch_data;
-	struct cpu_info * const ci = h->ci;
+	struct cpu_info * const ci = h->hatch_ci;
 	struct pcb *pcb;
 	u_int msr;
 	int i;
@@ -1291,44 +1291,44 @@ cpu_hatch(void)
 	 */
 
 	msr = mfspr(SPR_PIR);
-	if (msr != h->pir)
-		mtspr(SPR_PIR, h->pir);
+	if (msr != h->hatch_pir)
+		mtspr(SPR_PIR, h->hatch_pir);
 	
 	__asm volatile ("mtsprg0 %0" :: "r"(ci));
 	curlwp = ci->ci_curlwp;
 	cpu_spinstart_ack = 0;
 
 	/* Initialize MMU. */
-	__asm ("mtibatu 0,%0" :: "r"(h->batu[0]));
-	__asm ("mtibatl 0,%0" :: "r"(h->batl[0]));
-	__asm ("mtibatu 1,%0" :: "r"(h->batu[1]));
-	__asm ("mtibatl 1,%0" :: "r"(h->batl[1]));
-	__asm ("mtibatu 2,%0" :: "r"(h->batu[2]));
-	__asm ("mtibatl 2,%0" :: "r"(h->batl[2]));
-	__asm ("mtibatu 3,%0" :: "r"(h->batu[3]));
-	__asm ("mtibatl 3,%0" :: "r"(h->batl[3]));
+	__asm ("mtibatu 0,%0" :: "r"(h->hatch_batu[0]));
+	__asm ("mtibatl 0,%0" :: "r"(h->hatch_batl[0]));
+	__asm ("mtibatu 1,%0" :: "r"(h->hatch_batu[1]));
+	__asm ("mtibatl 1,%0" :: "r"(h->hatch_batl[1]));
+	__asm ("mtibatu 2,%0" :: "r"(h->hatch_batu[2]));
+	__asm ("mtibatl 2,%0" :: "r"(h->hatch_batl[2]));
+	__asm ("mtibatu 3,%0" :: "r"(h->hatch_batu[3]));
+	__asm ("mtibatl 3,%0" :: "r"(h->hatch_batl[3]));
 
-	mtspr(SPR_HID0, h->hid0);
+	mtspr(SPR_HID0, h->hatch_hid0);
 
 	__asm ("mtibatl 0,%0; mtibatu 0,%1; mtdbatl 0,%0; mtdbatu 0,%1;"
 	    :: "r"(battable[0].batl), "r"(battable[0].batu));
 
 	__asm volatile ("sync");
 	for (i = 0; i < 16; i++)
-		__asm ("mtsrin %0,%1" :: "r"(h->sr[i]), "r"(i << ADDR_SR_SHFT));
+		__asm ("mtsrin %0,%1" :: "r"(h->hatch_sr[i]), "r"(i << ADDR_SR_SHFT));
 	__asm volatile ("sync; isync");
 
 	if (oeacpufeat & OEACPU_64)
-		mtspr(SPR_ASR, h->asr);
+		mtspr(SPR_ASR, h->hatch_asr);
 
 	cpu_spinstart_ack = 1;
 	__asm ("ptesync");
-	__asm ("mtsdr1 %0" :: "r"(h->sdr1));
+	__asm ("mtsdr1 %0" :: "r"(h->hatch_sdr1));
 	__asm volatile ("sync; isync");
 
 	cpu_spinstart_ack = 5;
 	for (i = 0; i < 16; i++)
-		__asm ("mfsrin %0,%1" : "=r"(h->sr[i]) :
+		__asm ("mfsrin %0,%1" : "=r"(h->hatch_sr[i]) :
 		       "r"(i << ADDR_SR_SHFT));
 
 	/* Enable I/D address translations. */
@@ -1340,9 +1340,9 @@ cpu_hatch(void)
 
 	md_sync_timebase(h);
 
-	cpu_setup(h->self, ci);
+	cpu_setup(h->hatch_self, ci);
 
-	h->running = 1;
+	h->hatch_running = 1;
 	__asm volatile ("sync; isync");
 
 	while (start_secondary_cpu == 0)

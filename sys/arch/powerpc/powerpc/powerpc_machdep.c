@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.58 2011/06/24 22:19:45 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.59 2011/06/29 06:00:17 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.58 2011/06/24 22:19:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.59 2011/06/29 06:00:17 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
+#include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
 
 #include <sys/param.h>
@@ -89,6 +90,10 @@ const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 	[PCU_VEC] = &vec_ops,
 #endif
 };
+
+#ifdef MULTIPROCESSOR
+volatile struct cpuset_info cpuset_info;
+#endif
 
 /*
  * Set set up registers on exec.
