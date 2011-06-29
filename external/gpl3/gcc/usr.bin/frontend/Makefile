@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/28 10:14:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/06/29 02:16:52 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -7,9 +7,10 @@ LIBISPRIVATE=	yes
 
 LIB=		frontend
 
-SRCS=		gcc.c version.c intl.c prefix.c opts-common.c
+SRCS=		gcc.c version.c intl.c prefix.c opts-common.c gcc-options.c
 
-.if ${MACHINE_ARCH} == "x86_64"
+# XXX
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
 SRCS+=		driver-i386.c
 .PATH:		${DIST}/gcc/config/i386
 .endif
@@ -33,11 +34,19 @@ COPTS+=		-Wno-stack-protector
 
 .PATH: ${DIST}/gcc
 
-#
 # Build the specs.h file
-#
 CLEANFILES+=	specs.h
 specs.h: Makefile
 	for f in cp objc; do \
 		echo "#include \"$$f/lang-specs.h\""; \
 	done > specs.h
+
+# Build the options files
+optionlist: ${G_ALL_OPT_FILES} ${GCCARCH}/defs.mk Makefile ${DIST}/gcc/opt-gather.awk
+	${TOOL_AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} > ${.TARGET}
+
+CPPFLAGS.gcc-options.c=	-DGCC_DRIVER
+gcc-options.c: optionlist
+	${TOOL_AWK} -f ${DIST}/gcc/opt-functions.awk -f ${DIST}/gcc/optc-gen.awk \
+		-v header_name="config.h system.h coretypes.h tm.h" < optionlist > ${.TARGET}
+CLEANFILES+=	optionlist gcc-options.c
