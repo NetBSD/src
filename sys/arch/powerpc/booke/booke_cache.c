@@ -1,3 +1,4 @@
+/*	$NetBSD: booke_cache.c,v 1.4 2011/06/29 21:53:10 dholland Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +38,7 @@
  */
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_cache.c,v 1.3 2011/06/15 22:46:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_cache.c,v 1.4 2011/06/29 21:53:10 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>

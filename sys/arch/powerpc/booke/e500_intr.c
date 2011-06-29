@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.14 2011/06/29 05:55:47 matt Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.15 2011/06/29 21:53:11 dholland Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,6 +37,9 @@
 #include "opt_mpc85xx.h"
 
 #define __INTR_PRIVATE
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.15 2011/06/29 21:53:11 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

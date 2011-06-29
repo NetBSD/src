@@ -1,3 +1,4 @@
+/*	$NetBSD: booke_pmap.c,v 1.9 2011/06/29 21:53:10 dholland Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.8 2011/06/29 06:05:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.9 2011/06/29 21:53:10 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
