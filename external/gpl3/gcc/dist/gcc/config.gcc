@@ -1975,7 +1975,7 @@ powerpc*-*-freebsd*)
 	extra_options="${extra_options} rs6000/sysv4.opt"
 	;;
 powerpc*-*-netbsd*)
-	tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h freebsd-spec.h rs6000/sysv4.h"
+	tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h svr4.h freebsd-spec.h rs6000/sysv4.h"
 	case ${target} in
 	  powerpc64*)
 	    tm_file="rs6000/biarch64.h ${tm_file} rs6000/default64.h rs6000/netbsd64.h"
