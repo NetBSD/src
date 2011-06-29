@@ -1766,17 +1766,11 @@ init_gcc_specs (struct obstack *obstack, const char *shared_name,
 		"}"
 		"%{!static:%{!static-libgcc:"
 #if USE_LD_AS_NEEDED
-		"%{!shared:"
 		"%{!shared-libgcc:",
 		static_name, " --as-needed ", shared_name, " --no-as-needed"
 		"}"
 		"%{shared-libgcc:",
-		shared_name, "%{!shared: ", static_name, "}"
-		"}"
-		"}"
-		"%{shared:"
-		"%{shared-libgcc: --as-needed", shared_name, " --no-as-needed} ",
-		"%{!shared-libgcc:", static_name,
+		shared_name, "%{!shared: ", static_name,
 #ifdef LIBGCC_PICSUFFIX
 		LIBGCC_PICSUFFIX,
 #endif
@@ -1787,7 +1781,8 @@ init_gcc_specs (struct obstack *obstack, const char *shared_name,
 		"%{!shared-libgcc:", static_name, " ", eh_name, "}"
 		"%{shared-libgcc:", shared_name, " ", static_name, "}"
 		"}"
-#ifdef LINK_EH_SPEC
+/* XXX NH XXX */
+#ifdef LINK_EH_SPEC || 1
 		"%{shared:"
 		"%{shared-libgcc:", shared_name, "}"
 		"%{!shared-libgcc:", static_name,
