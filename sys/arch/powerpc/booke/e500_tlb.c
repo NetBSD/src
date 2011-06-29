@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.5 2011/06/23 05:42:27 matt Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.6 2011/06/29 23:15:55 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.5 2011/06/23 05:42:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.6 2011/06/29 23:15:55 matt Exp $");
 
 #include <sys/param.h>
 
@@ -689,9 +689,13 @@ e500_tlb_mapiodev(paddr_t pa, psize_t len)
 
 	/*
 	 * See if we have a TLB entry for the pa.  If completely falls within
-	 * mark the reference and return the pa.
+	 * mark the reference and return the pa.  But only if the tlb entry
+	 * is not cacheable.
 	 */
-	if (xtlb && pa + len <= xtlb->e_tlb.tlb_va + xtlb->e_tlb.tlb_size) {
+	if (xtlb
+	    && pa + len <= xtlb->e_tlb.tlb_va + xtlb->e_tlb.tlb_size
+	    && ((xtlb->e_tlb.tlb_pte & PTE_W) == 0
+		|| (xtlb->e_tlb.tlb_pte & PTE_I) == PTE_I)) {
 		xtlb->e_refcnt++;
 		return (void *) pa;
 	}
