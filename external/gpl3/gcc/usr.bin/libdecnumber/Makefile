@@ -3,9 +3,7 @@
 DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
 GNUHOSTDIST=	${DIST}
 
-NOLINT=		# defined
-NOPIC=		# defined
-NOPROFILE=	# defined
+LIBISPRIVATE=   yes
 
 .include <bsd.own.mk>
 
