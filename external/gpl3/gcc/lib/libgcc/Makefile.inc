@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2011/06/28 04:03:56 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2011/06/29 01:56:57 mrg Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -134,13 +134,8 @@ dp-bit.c: ${.CURDIR}/Makefile
 .PATH: ${DIST}/gcc ${DIST}/gcc/cp ${DIST}/gcc/cp/inc ${DIST}/gcc/config \
 	${G_CONFIGDIR}
 
-tconfig.h:
-	${_MKTARGET_CREATE}
-	TARGET_CPU_DEFAULT="" \
-	HEADERS="$(G_xm_include_list)" DEFINES="USED_FOR_TARGET $(G_xm_defines)" \
-	${HOST_SH} $(GNUHOSTDIST)/gcc/mkconfig.sh tconfig.h
+.include "../Makefile.tconfigh"
 DPSRCS+=	tconfig.h
-CLEANFILES+=	tconfig.h
 
 BUILDSYMLINKS+=	${G_UNWIND_H} unwind.h
 DPSRCS+=	unwind.h
