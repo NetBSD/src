@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15 2011/06/05 17:03:16 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.16 2011/06/29 06:13:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2011/06/05 17:03:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2011/06/29 06:13:09 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -241,7 +241,7 @@ md_setup_trampoline(volatile struct cpu_hatch_data *h, struct cpu_info *ci)
 	u_int msr;
 
 	msr = mfmsr();
-	h->running = -1;
+	h->hatch_running = -1;
 	cpu_spinstart_cpunum = ci->ci_cpuid;
 	__asm volatile("dcbf 0,%0"::"r"(&cpu_spinstart_cpunum):"memory");
 
@@ -262,10 +262,10 @@ md_presync_timebase(volatile struct cpu_hatch_data *h)
 		/* Sync timebase. */
 		tb = mftb();
 
-		h->tbu = tb >> 32;
-		h->tbl = tb & 0xffffffff;
+		h->hatch_tbu = tb >> 32;
+		h->hatch_tbl = tb & 0xffffffff;
 
-		h->running = 0;
+		h->hatch_running = 0;
 	}
 	/* otherwise, the machine has no rtas, or if it does, things
 	 * are pre-syncd, per PAPR v2.2.  I don't have anything without
@@ -284,7 +284,7 @@ md_start_timebase(volatile struct cpu_hatch_data *h)
 	 * running.
 	 */
 	for (i = 0; i < 100000; i++)
-		if (h->running)
+		if (h->hatch_running)
 			break;
 
 	/* Start timebase. */
@@ -293,17 +293,17 @@ md_start_timebase(volatile struct cpu_hatch_data *h)
 }
 
 /*
- * We wait for h->running to become 0, and then we know that the time is
- * frozen and h->tb is correct.
+ * We wait for h->hatch_running to become 0, and then we know that the time is
+ * frozen and h->hatch_tb is correct.
  */
 
 void
 md_sync_timebase(volatile struct cpu_hatch_data *h)
 {
 	/* Sync timebase. */
-	u_int tbu = h->tbu;
-	u_int tbl = h->tbl;
-	while (h->running == -1)
+	u_int tbu = h->hatch_tbu;
+	u_int tbl = h->hatch_tbl;
+	while (h->hatch_running == -1)
 		;
 	__asm volatile ("sync; isync");
 	__asm volatile ("mttbl %0" :: "r"(0));
