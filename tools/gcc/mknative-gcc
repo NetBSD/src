@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.50 2011/06/28 04:30:32 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.51 2011/06/29 02:02:38 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -434,6 +434,16 @@ get_gcc_libiberty () {
 		<$_TMPDIR/libiberty/config.h
 }
 
+##### lib/libdecnumber #####
+
+get_libdecnumber () {
+	_subdir="$1"
+
+	mkdir -p $_OUTDIR/lib/$_subdir/arch/$MACHINE_ARCH
+	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/config.h \
+		<$_TMPDIR/libdecnumber/config.h
+}
+
 ##### gnu/lib/libobjc #####
 
 get_libobjc () {
@@ -567,7 +577,7 @@ get_gcc () {
 		getvars gcc/Makefile \
 			F77_OBJS | sed 's/f\///g'
 		case ${_subdir} in
-		gcc4)
+		gcc4 | gcc)
 			getvars libcpp/Makefile \
 				libcpp_a_OBJS
 			;;
@@ -592,16 +602,18 @@ get_gcc () {
 		hfiles='auto-host gencheck configargs gthr-default tm bconfig config multilib'
 		;;
 	gcc)
-		write_c $_OUTDIRBASE/usr.bin/$_subdir/libcpp/arch/$MACHINE_ARCH/config.h <$_TMPDIR/libcpp/config.h
-		hfiles='auto-host configargs gthr-default tm bconfig config multilib'
+		mkdir -p $_OUTDIR/usr.bin/libcpp/arch/$MACHINE_ARCH
+		write_c $_OUTDIRBASE/usr.bin/libcpp/arch/$MACHINE_ARCH/config.h <$_TMPDIR/libcpp/config.h
+		hfiles='auto-host configargs gthr-default tm bconfig config multilib bversion plugin-version'
 		;;
 	esac
 	for f in $hfiles; do
 		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
 	done
 
-	write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/bversion.h \
-		<$_TMPDIR/gcc/bversion.h
+	for f in all-tree.def; do
+		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f <$_TMPDIR/gcc/$f
+	done
 }
 
 ##### main #####
@@ -642,6 +654,7 @@ gcc45)
 	get_gcc_libiberty gcc
 	get_libobjc libobjc
 	get_libstdcxx_v3 libstdc++-v3
+	get_libdecnumber libdecnumber
 	exit 0
 	;;
 
