@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.77 2011/06/19 02:42:53 rmind Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.78 2011/06/29 19:51:12 hannken Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.77 2011/06/19 02:42:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.78 2011/06/29 19:51:12 hannken Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -771,18 +771,6 @@ ubc_zerorange(struct uvm_object *uobj, off_t off, size_t len, int flags)
 		off += bytelen;
 		len -= bytelen;
 	}
-}
-
-/*
- * uvm_vnp_zerorange: set a range of bytes in a file to zero.
- * WILL BE REMOVED AFTER THE NEXT KERNEL VERSION BUMP (5.99.54)!
- */
-void uvm_vnp_zerorange(struct vnode *, off_t, size_t);
-void
-uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
-{
-
-	ubc_zerorange(&vp->v_uobj, off, len, UBC_UNMAP_FLAG(vp));
 }
 
 /*
