@@ -1,11 +1,26 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 06:03:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/29 02:17:17 mrg Exp $
 
-.include <bsd.own.mk>
+# For ../Makefile.inc and bsd.own.mk
+.include <bsd.init.mk>
 
 PROG=		cpp
-SRCS=		cppspec.c
+SRCS=		gcc.c cppspec.c prefix.c version.c
+
+# XXX
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
+SRCS+=		driver-i386.c
+.PATH:		${DIST}/gcc/config/i386
+.endif
 
 CPPFLAGS+=	-I${BACKENDOBJ}
+CPPFLAGS.prefix.c+=	-DPREFIX=\"/usr\"
+
+CPPFLAGS.gcc.c+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
+		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \
+		-DPREFIX=\"/usr\" \
+		-DDEFAULT_TARGET_VERSION=\"${G_version}\" \
+		-DDEFAULT_TARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\" \
+		-DCONFIGURE_SPECS="\"\""
 
 LINKS=		${BINDIR}/cpp ${BINDIR}/gcpp
 
@@ -16,6 +31,8 @@ MAN=		cpp.1
 MLINKS+=	cpp.1 gcpp.1 cpp.1 cccp.1
 
 .include "../Makefile.frontend"
+
+LDADD+=		-lintl
 
 .include <bsd.info.mk>
 
