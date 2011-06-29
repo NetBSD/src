@@ -19,4 +19,8 @@ LDADD+=		-ll -lutil -lc
 
 CWARNFLAGS.clang+=	-Wno-format -Wno-conversion
 
+.if ${HAVE_GCC} == 45
+COPTS.testlang_parse.c+=	-Wno-enum-compare
+.endif
+
 .include <bsd.test.mk>
