@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2011/06/28 10:15:15 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2011/06/29 02:15:13 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -46,8 +46,10 @@ DATESTAMPSTR=		"\"\""
 .endif
 
 # XXX pull this out of our configs
-G_BUGURL_s="\"<http://www.NetBSD.org/Misc/send-pr.html>\""
-G_PKGVERSION_s="\"(NetBSD nb1 20110620) \""
+G_BUGURL=<http://www.NetBSD.org/Misc/send-pr.html>
+G_BUGURL_s="\"${G_BUG_URL}\""
+G_PKGVERSION_s=(NetBSD nb1 20110620) 
+G_PKGVERSION_s="\"${G_PKGVERSION} \""
 
 VER_CPPFLAGS=			-DBUGURL=${G_BUGURL_s} \
 				-DPKGVERSION=${G_PKGVERSION_s} \
