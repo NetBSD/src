@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.1.1.1 2009/12/13 16:54:25 kardel Exp $	*/
+/*	$NetBSD: util.h,v 1.2 2011/06/29 02:41:03 mrg Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -72,7 +72,7 @@
  * Use this in translation units that would otherwise be empty, to
  * suppress compiler warnings.
  */
-#define EMPTY_TRANSLATION_UNIT static void isc__empty(void) { isc__empty(); }
+#define EMPTY_TRANSLATION_UNIT static void __unused isc__empty(void) { } 
 
 /*%
  * We use macros instead of calling the routines directly because
