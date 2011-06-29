@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/28 04:23:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/29 02:05:25 mrg Exp $
 
-SUBDIR+= crtstuff libgcc libiberty libobjc libsupc++ libstdc++-v3
+# crtstuff is built out of elsewhere, or not at all
+SUBDIR+= libgcc libiberty libobjc libsupc++ libstdc++-v3
 
 .include <bsd.subdir.mk>
