@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.67 2011/06/01 05:06:17 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.68 2011/06/29 03:15:18 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.67 2011/06/01 05:06:17 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.68 2011/06/29 03:15:18 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1771,7 +1771,10 @@ mach64_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		}
 		}
 		return 0;
-		
+	case WSDISPLAYIO_GET_EDID: {
+		struct wsdisplayio_edid_info *d = data;
+		return wsdisplayio_get_edid(sc->sc_dev, d);
+	}
 	}
 	return EPASSTHROUGH;
 }
@@ -2057,10 +2060,6 @@ machfb_fbioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 		    sc->sc_pcitag, data);
 
 	default:
-#ifdef MACHFB_DEBUG
-		log(LOG_NOTICE, "machfb_fbioctl(0x%lx) (%s[%d])\n", cmd,
-		    p->p_comm, p->p_pid);
-#endif
 		return ENOTTY;
 	}
 #ifdef MACHFB_DEBUG

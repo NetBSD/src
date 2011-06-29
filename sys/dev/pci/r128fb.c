@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.21 2011/02/15 04:06:43 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.22 2011/06/29 03:14:36 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.21 2011/02/15 04:06:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.22 2011/06/29 03:14:36 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.21 2011/02/15 04:06:43 macallan Exp $")
 #include <dev/i2c/i2cvar.h>
 
 #include "opt_r128fb.h"
+#include "opt_vcons.h"
 
 #ifdef R128FB_DEBUG
 #define DPRINTF printf
@@ -201,8 +202,8 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
 	bool			is_console;
-	int i, j;
-	uint32_t reg, flags;
+	int			i, j;
+	uint32_t		reg, flags;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -425,6 +426,10 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			return 0;
 		}
 		return EPASSTHROUGH;
+	case WSDISPLAYIO_GET_EDID: {
+		struct wsdisplayio_edid_info *d = data;
+		return wsdisplayio_get_edid(sc->sc_dev, d);
+	}
 	}
 	return EPASSTHROUGH;
 }
@@ -502,6 +507,9 @@ r128fb_init_screen(void *cookie, struct vcons_screen *scr,
 
 	rasops_init(ri, sc->sc_height / 8, sc->sc_width / 8);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
+#ifdef VCONS_DRAW_INTR
+	scr->scr_flags |= VCONS_DONT_READ;
+#endif
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
