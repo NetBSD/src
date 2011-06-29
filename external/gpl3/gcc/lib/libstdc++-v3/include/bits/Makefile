@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/28 04:07:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/06/29 02:01:37 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,7 @@ DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
 CONF=		${DIST}/libstdc++-v3/config
 
 INCS=		${G_bits_headers} ${G_c_base_headers_extra} ${G_thread_host_headers} ${G_host_headers_extra} ${G_host_headers}
+INCS+=		c++config.h
 INCSDIR=	/usr/include/g++/bits
 
 CLEANFILES+=	basic_file.h c++io.h c++locale.h
