@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2011/06/23 05:42:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.40 2011/06/29 02:02:38 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -142,7 +142,8 @@ NATIVE_CONFIGURE_ARGS+=	\
 		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} all-build-libiberty)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} configure-gcc configure-libcpp) && \
-		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} configure-libiberty)
+		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} configure-libiberty) && \
+		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} configure-libdecnumber)
 	# edit Makefile so that maybe-all-gcc does not depend on all-gcc any more.
 		(cd .native && mv Makefile Makefile.config && \
 			${TOOL_SED} -e 's/\(maybe-all-gcc:\) all-gcc/\1/' \
