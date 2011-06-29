@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.97 2011/06/29 03:06:16 macallan Exp $ */
+/* $NetBSD: wsconsio.h,v 1.98 2011/06/29 04:50:32 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -575,8 +575,8 @@ struct wsdisplayio_bus_id {
  */
 
 struct wsdisplayio_edid_info {
-	int buffer_size;
-	int data_size;
+	uint32_t buffer_size;
+	uint32_t data_size;
 	uint8_t *edid_data;
 };
 #define WSDISPLAYIO_GET_EDID	_IOWR('W', 102, struct wsdisplayio_edid_info)
