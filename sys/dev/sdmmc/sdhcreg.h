@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.2 2011/03/17 16:56:58 matt Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.3 2011/06/29 06:21:16 matt Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -112,6 +112,7 @@
 #define  SDHC_COMMAND_COMPLETE		(1<<0)
 #define  SDHC_NINTR_STATUS_MASK		0x81ff
 #define SDHC_EINTR_STATUS		0x32
+#define  SDHC_DMA_ERROR			(1<<12)
 #define  SDHC_AUTO_CMD12_ERROR		(1<<8)
 #define  SDHC_CURRENT_LIMIT_ERROR	(1<<7)
 #define  SDHC_DATA_END_BIT_ERROR	(1<<6)
@@ -147,6 +148,11 @@
 #define  SDHC_TIMEOUT_FREQ_SHIFT	0
 #define  SDHC_TIMEOUT_FREQ_MASK		0x1f
 #define SDHC_MAX_CAPABILITIES		0x48
+#define	SDHC_HOST_VER			0xFC
+#define  SDHC_VVN_MASK			0x0f
+#define  SDHC_VVN_SHIFT			0x04
+#define  SDHC_SVN_MASK			0x0f
+#define  SDHC_SVN_SHIFT			0x00
 #define SDHC_SLOT_INTR_STATUS		0xfc
 #define SDHC_HOST_CTL_VERSION		0xfe
 #define  SDHC_SPEC_VERS_SHIFT		0
