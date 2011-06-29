@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.25 2011/06/28 07:50:03 manu Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.26 2011/06/29 08:01:14 manu Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.25 2011/06/28 07:50:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.26 2011/06/29 08:01:14 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -794,7 +794,7 @@ sys_setxattr(struct lwp *l, const struct sys_setxattr_args *uap, register_t *ret
 	error = namei_simple_user(SCARG(uap, path),
 				NSM_FOLLOW_NOEMULROOT, &vp);
 	if (error)
-		goto out_rele;
+		goto out;
 
 	namespace = xattr_native(attrname);
 
@@ -802,7 +802,6 @@ sys_setxattr(struct lwp *l, const struct sys_setxattr_args *uap, register_t *ret
 	    attrname, SCARG(uap, value), SCARG(uap, size), l, 
 	    &attrlen, SCARG(uap, flags));
 
-out_rele:
 	vrele(vp);
 out:
 	*retval = (error == 0) ? 0 : -1;
@@ -833,7 +832,7 @@ sys_lsetxattr(struct lwp *l, const struct sys_lsetxattr_args *uap, register_t *r
 	error = namei_simple_user(SCARG(uap, path),
 				NSM_NOFOLLOW_NOEMULROOT, &vp);
 	if (error)
-		goto out_rele;
+		goto out;
 
 	namespace = xattr_native(attrname);
 
@@ -841,7 +840,6 @@ sys_lsetxattr(struct lwp *l, const struct sys_lsetxattr_args *uap, register_t *r
 	    attrname, SCARG(uap, value), SCARG(uap, size), l,
 	    &attrlen, SCARG(uap, flags));
 
-out_rele:
 	vrele(vp);
 out:
 	*retval = (error == 0) ? 0 : -1;
