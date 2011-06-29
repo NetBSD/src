@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.13 2011/06/25 00:07:10 matt Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.14 2011/06/29 05:55:47 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1132,7 +1132,7 @@ e500_intr_cpu_send_ipi(cpuid_t target, uint32_t ipimsg)
 	struct cpu_softc * const cpu = ci->ci_softc;
 	uint32_t dstmask;
 
-	if (target >= ncpu) {
+	if (target >= CPU_MAXNUM) {
 		CPU_INFO_ITERATOR cii;
 		struct cpu_info *dst_ci;
 
@@ -1149,7 +1149,10 @@ e500_intr_cpu_send_ipi(cpuid_t target, uint32_t ipimsg)
 		}
 	} else {
 		struct cpu_info * const dst_ci = cpu_lookup(target);
-		KASSERT(target == cpu_index(dst_ci));
+		KASSERT(dst_ci != NULL);
+		KASSERTMSG(target == cpu_index(dst_ci),
+		    ("%s: target (%lu) != cpu_index(cpu%u)",
+		     __func__, target, cpu_index(dst_ci)));
 		dstmask = (1 << target);
 		if (ipimsg)
 			atomic_or_32(&dst_ci->ci_pending_ipis, ipimsg);
