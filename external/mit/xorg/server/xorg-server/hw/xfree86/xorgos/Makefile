@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2011/02/21 04:42:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.29 2011/06/29 14:49:14 tsutsui Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -59,6 +59,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 
 .if ${MACHINE} == "ews4800mips" || \
     ${MACHINE} == "hpcmips" || \
+    ${MACHINE} == "newsmips" || \
     ${MACHINE} == "sgimips"
 SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
