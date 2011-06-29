@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/28 09:31:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/06/29 02:01:37 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -22,4 +22,4 @@ ${OBJS}: ${G_LIBCPP_DEPS}
 localedir.h:
 	echo '#define LOCALEDIR "/usr/share/locale"' > ${.TARGET}
 
-init.o: localedir.h
+init.d init.o: localedir.h

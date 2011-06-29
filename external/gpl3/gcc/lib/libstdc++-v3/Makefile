@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/28 04:08:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/06/29 02:01:37 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -17,12 +17,9 @@ CWARNFLAGS.clang+=	-Wno-logical-op-parentheses \
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
 SHLIB_MAJOR=	7
-SHLIB_MINOR=	0
+SHLIB_MINOR=	1
 
 SUBDIR=		include
-
-INCS=		c++config.h
-INCSDIR=	/usr/include/g++
 
 .include "${.CURDIR}/../libsupc++/Makefile.common"
 

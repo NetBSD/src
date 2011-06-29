@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/06/28 10:11:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/06/29 02:01:37 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -100,14 +100,18 @@ CLEANFILES+=	gtyp-input.list
 .endif
 
 gtyp-input.list.tmp: ${GCCARCH}/gtyp-input.list
-	sed s#SRCDIR#${DIST}/# < ${.ALLSRC} > ${.TARGET}
+	sed s#SRCDIR#${DIST}# < ${.ALLSRC} > ${.TARGET}
+CLEANFILES+=	gtyp-input.list.tmp
+
+# XXX
+CLEANFILES+=	gtype-lto.h gtype-objcp.h tm-constrs.h
 
 gtype-desc.c: gtype-desc.h
 gtype-desc.h: gengtype gtyp-input.list.tmp
 	${_MKTARGET_CREATE}
 	rm -f auto-host.h
 	ln -s ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/auto-host.h .
-	./gengtype ${DIST} gtyp-input.list.tmp
+	./gengtype ${DIST}/gcc gtyp-input.list.tmp
 # gengtype is the real need for options.h
 gengtype.lo gengtype-lex.lo gengtype-parse.lo: ${HH} gtyp-gen.h config.h options.h
 gengtype: gengtype.lo gengtype-lex.lo gengtype-parse.lo build-errors.lo
@@ -321,6 +325,7 @@ coverage.d: gcov-iov.h
 gcov-io.h: gcov-iov.h
 alias.d alias.o: insn-constants.h tm_p.h tm-preds.h
 cgraphunit.d cgraphunit.o: gcov-io.h
+vec.lo: gtype-desc.h
 # XXX
 i386.d i386.o: tm-constrs.h
 
