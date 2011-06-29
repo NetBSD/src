@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.25 2011/06/29 06:32:32 mrg Exp $
+# $NetBSD: Makefile,v 1.26 2011/06/29 06:34:31 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -13,6 +13,6 @@ DHCPSRCDIR=	common
 
 .include <bsd.lib.mk>
 
-.if defined(HAVE_GCC) && HAVE_GCC >= 45
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45
 CPPFLAGS.dns.c+=	-Wno-enum-compare
 .endif
