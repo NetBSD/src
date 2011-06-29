@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.frontend,v 1.1 2011/06/21 06:03:13 mrg Exp $
+#	$NetBSD: Makefile.frontend,v 1.2 2011/06/29 02:14:28 mrg Exp $
 
 BINDIR=		/usr/bin
 
@@ -18,6 +18,12 @@ gcc-vers.texi:
 		echo "@set DEVELOPMENT"; \
 	else \
 		echo "@clear DEVELOPMENT"; \
-	fi) > ${.TARGET}
+	fi; \
+	echo "@set srcdir $(DIST)/gcc"; \
+	if [ -n "$(PKGVERSION)" ]; then \
+	  echo "@set VERSION_PACKAGE $(PKGVERSION)"; \
+	fi; \
+	echo "@set BUGURL $(BUGURL)"; \
+	) > ${.TARGET}
 
 CLEANFILES+=	gcc-vers.texi
