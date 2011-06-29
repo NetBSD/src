@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.46 2011/05/13 22:16:43 rmind Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.47 2011/06/29 06:22:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.46 2011/05/13 22:16:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.47 2011/06/29 06:22:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,12 @@ mi_cpu_attach(struct cpu_info *ci)
 	snprintf(ci->ci_data.cpu_name, sizeof(ci->ci_data.cpu_name), "cpu%d",
 	    cpu_index(ci));
 
+	if (__predict_false(cpu_infos == NULL)) {
+		cpu_infos =
+		    kmem_zalloc(sizeof(cpu_infos[0]) * maxcpus, KM_SLEEP);
+	}
+	cpu_infos[cpu_index(ci)] = ci;
+
 	sched_cpuattach(ci);
 
 	error = create_idle_lwp(ci);
@@ -151,12 +157,6 @@ mi_cpu_attach(struct cpu_info *ci)
 	TAILQ_INIT(&ci->ci_data.cpu_biodone);
 	ncpu++;
 	ncpuonline++;
-
-	if (cpu_infos == NULL) {
-		cpu_infos =
-		    kmem_zalloc(sizeof(cpu_infos[0]) * maxcpus, KM_SLEEP);
-	}
-	cpu_infos[cpu_index(ci)] = ci;
 
 	return 0;
 }
