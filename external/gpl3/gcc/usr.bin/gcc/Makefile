@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 06:03:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/29 02:00:09 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -22,5 +22,8 @@ INFOFLAGS=      -I${DIST}/gcc/doc -I${DIST}/gcc/doc/include
 .include <bsd.info.mk>
 
 COPTS.builtins.c = -Wno-stack-protector
+
+LDADD+=		-lintl
+DPADD+=		${LIBINTL}
 
 gcc.info: gcc-vers.texi
