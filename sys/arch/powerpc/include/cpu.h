@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.86 2011/06/21 06:32:36 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.87 2011/06/29 06:00:17 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -154,17 +154,33 @@ struct cpu_info {
 
 #if defined(MULTIPROCESSOR) && !defined(_MODULE)
 struct cpu_hatch_data {
-	device_t self;
-	struct cpu_info *ci;
-	int running;
-	int pir;
-	int asr;
-	int hid0;
-	int sdr1;
-	int sr[16];
-	int batu[4], batl[4];
-	int tbu, tbl;
+	int hatch_running;
+	device_t hatch_self;
+	struct cpu_info *hatch_ci;
+	uint32_t hatch_tbu;
+	uint32_t hatch_tbl;
+	uint32_t hatch_hid0;
+	uint32_t hatch_pir;
+#if defined(PPC_OEA) || defined(PPC_OEA64_BRIDGE)
+	uintptr_t hatch_asr;
+	uintptr_t hatch_sdr1;
+	uint32_t hatch_sr[16];
+	uintptr_t hatch_batu[8], hatch_batl[8];
+#endif
+#if defined(PPC_BOOKE)
+	vaddr_t hatch_sp;
+#endif
 };
+
+struct cpuset_info {
+	__cpuset_t cpus_running;
+	__cpuset_t cpus_hatched;
+	__cpuset_t cpus_paused;
+	__cpuset_t cpus_resumed;
+	__cpuset_t cpus_halted;
+};
+
+extern volatile struct cpuset_info cpuset_info;
 #endif /* MULTIPROCESSOR && !_MODULE */
 
 #if defined(MULTIPROCESSOR) || defined(_MODULE)
