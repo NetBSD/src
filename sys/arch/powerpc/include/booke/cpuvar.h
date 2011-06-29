@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.10 2011/06/23 01:27:20 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.11 2011/06/29 06:00:56 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -160,6 +160,9 @@ void	booke_cpu_startup(const char *);	/* model name */
 struct powerpc_bus_dma_tag booke_bus_dma_tag;
 
 extern struct cpu_info cpu_info[];
+#ifdef MULTIPROCESSOR
+extern volatile struct cpu_hatch_data cpu_hatch_data;
+#endif
 
 void	cpu_evcnt_attach(struct cpu_info *);
 uint32_t cpu_read_4(bus_size_t);
