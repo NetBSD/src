@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/21 04:52:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/06/29 02:05:24 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SUBDIR+=	binutils
 
 .if ${HAVE_GCC} == 45
 .if ${MKGCCCMDS} != "no"
-#SUBDIR+=	gcc
+SUBDIR+=	gcc
 .endif
 .endif
 

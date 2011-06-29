@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.169 2011/06/22 05:16:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.170 2011/06/29 02:05:25 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -13,10 +13,9 @@ SUBDIR+=	../gnu/lib/crtstuff4
 SUBDIR+=	../gnu/lib/libgcc4
 . else
 .  if (${USE_COMPILERCRTSTUFF} == "yes")
-# XXX not yet
-#SUBDIR+=	../external/gpl3/gcc/lib/crtstuff
+SUBDIR+=	../external/gpl3/gcc/lib/crtstuff
 .  endif
-#SUBDIR+=	../external/gpl3/gcc/lib/libgcc
+SUBDIR+=	../external/gpl3/gcc/lib/libgcc
 . endif
 .endif
 
@@ -74,14 +73,15 @@ SUBDIR+=	../gnu/lib/libmalloc
 .if (${MKGCC} != "no")
 . if ${HAVE_GCC} == 4
 SUBDIR+=	../gnu/lib/libobjc4
+. else
+SUBDIR+=	../external/gpl3/gcc/lib/libobjc
 . endif
 .endif
 
 . if ${HAVE_GCC} >= 45
-# XXX not yet
-#SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
-#SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
-#SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
+SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
+SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
+SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
 .endif
 
 #
@@ -127,6 +127,9 @@ SUBDIR+=	../external/gpl3/binutils/lib	# libbfd depends on libz
 . if ${HAVE_GCC} == 4
 SUBDIR+=	../gnu/lib/libstdc++-v3_4	# depends on libm
 SUBDIR+=	../gnu/lib/libsupc++4
+. else
+SUBDIR+=	../external/gpl3/gcc/lib/libstdc++-v3
+SUBDIR+=	../external/gpl3/gcc/lib/libsupc++
 . endif
 .endif
 
