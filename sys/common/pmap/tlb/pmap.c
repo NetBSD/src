@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 2011/06/23 20:46:15 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 2011/06/29 05:53:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8 2011/06/23 20:46:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2011/06/29 05:53:44 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -324,7 +324,7 @@ pmap_page_syncicache(struct vm_page *pg)
 		for (; pv != NULL; pv = pv->pv_next) {
 #ifdef MULTIPROCESSOR
 			CPUSET_MERGE(onproc, pv->pv_pmap->pm_onproc);
-			if (CPUSET_EQUAL_P(onproc, cpus_running)) {
+			if (CPUSET_EQUAL_P(onproc, cpuset_info.cpus_running)) {
 				break;
 			}
 #else
@@ -585,7 +585,7 @@ pmap_update(struct pmap *pmap)
 	PMAP_COUNT(update);
 
 	kpreempt_disable();
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && defined(PMAP_NEED_TLB_SHOOTDOWN)
 	u_int pending = atomic_swap_uint(&pmap->pm_shootdown_pending, 0);
 	if (pending && pmap_tlb_shootdown_bystanders(pmap))
 		PMAP_COUNT(shootdown_ipis);
