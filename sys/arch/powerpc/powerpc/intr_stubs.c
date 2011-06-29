@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: intr_stubs.c,v 1.2 2011/06/15 17:47:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr_stubs.c,v 1.3 2011/06/29 05:57:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -207,5 +207,12 @@ void
 intr_wdogintr(struct trapframe *tf)
 {
 	(*powerpc_intrsw->intrsw_wdogintr)(tf);
-	
+}
+
+void cpu_send_ipi(cpuid_t, uint32_t) __stub;
+
+void
+cpu_send_ipi(cpuid_t id, uint32_t mask)
+{
+	(*powerpc_intrsw->intrsw_cpu_send_ipi)(id, mask);
 }
