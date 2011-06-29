@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/28 04:07:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/06/29 02:01:37 mrg Exp $
 
 SUBDIR=		backward ext bits debug tr1
 #SUBDIR+=	pb_assoc
@@ -12,7 +12,12 @@ SUBDIR=		backward ext bits debug tr1
 DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
 GNUHOSTDIST=	${DIST}
 
-INCS=		exception new typeinfo cxxabi.h exception_defines.h
+# libsupc++
+INCS=		exception new typeinfo cxxabi.h cxxabi-forced.h
+INCS+=		exception_defines.h initializer_list exception_ptr.h
+INCS+=		nested_exception.h
+
+# others
 INCS+=		cerrno
 INCS+=		${G_std_headers} ${G_c_base_headers}
 INCS+=		${G_c_compatibility_headers_extra}
