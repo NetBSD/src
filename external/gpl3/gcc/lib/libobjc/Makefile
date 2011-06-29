@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/23 11:47:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/06/29 01:56:58 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -83,18 +83,14 @@ CLEANFILES+=	${FAKEHEADERS}
 
 ${SRCS}: tconfig.h unwind.h options.h
 
-tconfig.h:
-	${_MKTARGET_CREATE}
-	TARGET_CPU_DEFAULT="" \
-	HEADERS="$(G_xm_include_list)" DEFINES="USED_FOR_TARGET $(G_xm_defines)" \
-	${HOST_SH} $(GNUHOSTDIST)/gcc/mkconfig.sh tconfig.h
+.include "../Makefile.tconfigh"
 
 unwind.h: ${G_UNWIND_H}
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
 	ln -s ${G_UNWIND_H} ${.TARGET}
 
-CLEANFILES+= cs-tconfig.h tconfig.h unwind.h
+CLEANFILES+= unwind.h
 
 # XXX just while all platforms defs.mk are updated..
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
