@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.56 2011/06/05 17:03:16 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.57 2011/06/29 06:13:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56 2011/06/05 17:03:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57 2011/06/29 06:13:08 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -218,7 +218,7 @@ md_setup_trampoline(volatile struct cpu_hatch_data *h, struct cpu_info *ci)
 		*(u_int *)EXC_RST =		/* ba cpu_spinup_trampoline */
 		    0x48000002 | (u_int)cpu_spinup_trampoline;
 		__syncicache((void *)EXC_RST, 0x100);
-		h->running = -1;
+		h->hatch_running = -1;
 
 		/* see if there's an OF property for the reset register */
 		sprintf(cpupath, "/cpus/@%x", ci->ci_cpuid);
@@ -260,14 +260,14 @@ md_presync_timebase(volatile struct cpu_hatch_data *h)
 		tb = mftb();
 		tb += 100000;  /* 3ms @ 33MHz */
 
-		h->tbu = tb >> 32;
-		h->tbl = tb & 0xffffffff;
+		h->hatch_tbu = tb >> 32;
+		h->hatch_tbl = tb & 0xffffffff;
 
 		while (tb > mftb())
 			;
 
 		__asm volatile ("sync; isync");
-		h->running = 0;
+		h->hatch_running = 0;
 
 		delay(500000);
 	} else
@@ -291,7 +291,7 @@ md_start_timebase(volatile struct cpu_hatch_data *h)
 		 * running.
 		 */
 		for (i = 0; i < 100000; i++)
-			if (h->running)
+			if (h->hatch_running)
 				break;
 
 		/* Start timebase. */
@@ -308,9 +308,9 @@ md_sync_timebase(volatile struct cpu_hatch_data *h)
 #ifdef OPENPIC
 	if (openpic_base) {
 		/* Sync timebase. */
-		u_int tbu = h->tbu;
-		u_int tbl = h->tbl;
-		while (h->running == -1)
+		u_int tbu = h->hatch_tbu;
+		u_int tbl = h->hatch_tbl;
+		while (h->hatch_running == -1)
 			;
 		__asm volatile ("sync; isync");
 		__asm volatile ("mttbl %0" :: "r"(0));
