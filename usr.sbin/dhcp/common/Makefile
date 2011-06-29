@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2008/05/03 14:48:32 lukem Exp $
+# $NetBSD: Makefile,v 1.24 2011/06/29 02:40:11 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -12,3 +12,5 @@ MAN    = dhcp-options.5 dhcp-eval.5
 DHCPSRCDIR=	common
 
 .include <bsd.lib.mk>
+
+CPPFLAGS.dns.c+=	-Wno-enum-compare

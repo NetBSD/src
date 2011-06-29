@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2008/08/29 00:02:25 gmcgarry Exp $
+# $NetBSD: Makefile,v 1.15 2011/06/29 02:40:11 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -20,3 +20,5 @@ COPTS += -Wno-unreachable-code
 .endif
 
 .include <bsd.prog.mk>
+
+CPPFLAGS.ddns.c+=	-Wno-enum-compare
