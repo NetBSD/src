@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.20 2011/02/09 13:37:48 tsutsui Exp $
+#	$NetBSD: Makefile.common,v 1.21 2011/06/29 14:49:13 tsutsui Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -20,6 +20,7 @@
     ${MACHINE} == "i386"	|| \
     ${MACHINE} == "macppc"	|| \
     ${MACHINE} == "netwinder"	|| \
+    ${MACHINE} == "newsmips"	|| \
     ${MACHINE} == "prep"	|| \
     ${MACHINE} == "ofppc"	|| \
     ${MACHINE} == "sgimips"	|| \
@@ -60,9 +61,9 @@ XSERVER_HAS_CFB=	yes
 XSERVER_XMACPPC=	yes
 .endif
 
-.if ${MACHINE} == "newsmips"
-XSERVER_XNEWSMIPS?=	yes
-.endif
+#.if ${MACHINE} == "newsmips"
+#XSERVER_XNEWSMIPS?=	yes
+#.endif
 
 .if ${MACHINE} == "pmax"
 XSERVER_XDECNETBSD=	yes

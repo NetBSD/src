@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2011/06/29 14:38:02 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.57 2011/06/29 14:49:12 tsutsui Exp $
 
 # xf86-input drivers
 
@@ -196,6 +196,11 @@ SUBDIR+= \
 	xf86-video-tdfx \
 	xf86-video-wsfb
 .endif	# ${MACHINE} == "ofppc"
+
+.if ${MACHINE} == "newsmips"
+SUBDIR+= \
+	xf86-video-wsfb
+.endif	# ${MACHINE} == "newsmips"
 
 .if ${MACHINE} == "prep"
 SUBDIR+= \
