@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.55 2011/05/17 22:29:06 macallan Exp $
+#	$NetBSD: Makefile,v 1.56 2011/06/29 14:38:02 tsutsui Exp $
 
 # xf86-input drivers
 
@@ -178,6 +178,12 @@ SUBDIR+= \
 #	xf86-video-imstt
 .endif	# ${MACHINE} == "macppc"
 
+.if ${MACHINE} == "netwinder"
+SUBDIR+= \
+	xf86-video-wsfb
+#	xf86-video-igs
+.endif	# ${MACHINE} == "netwinder"
+
 .if ${MACHINE} == "ofppc"
 SUBDIR+= \
 	xf86-video-ati \
@@ -190,12 +196,6 @@ SUBDIR+= \
 	xf86-video-tdfx \
 	xf86-video-wsfb
 .endif	# ${MACHINE} == "ofppc"
-
-.if ${MACHINE} == "netwinder"
-SUBDIR+= \
-	xf86-video-wsfb
-#	xf86-video-igs
-.endif	# ${MACHINE} == "netwinder"
 
 .if ${MACHINE} == "prep"
 SUBDIR+= \
