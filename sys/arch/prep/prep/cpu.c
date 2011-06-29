@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.16 2011/06/05 17:03:17 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.17 2011/06/29 06:13:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2011/06/05 17:03:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17 2011/06/29 06:13:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ md_setup_trampoline(volatile struct cpu_hatch_data *h, struct cpu_info *ci)
 	/* ba cpu_spinup_trampoline */
 	*(u_int *)EXC_RST = 0x48000002 | (u_int)cpu_spinup_trampoline;
 	__syncicache((void *)EXC_RST, 0x100);
-	h->running = -1;
+	h->hatch_running = -1;
 
 	/* Start secondary CPU. */
 	openpic_write(OPENPIC_PROC_INIT, (1 << 1));
@@ -121,14 +121,14 @@ md_presync_timebase(volatile struct cpu_hatch_data *h)
 	tb = mftb();
 	tb += 100000;  /* 3ms @ 33MHz */
 
-	h->tbu = tb >> 32;
-	h->tbl = tb & 0xffffffff;
+	h->hatch_tbu = tb >> 32;
+	h->hatch_tbl = tb & 0xffffffff;
 
 	while (tb > mftb())
 		;
 
 	__asm volatile ("sync; isync");
-	h->running = 0;
+	h->hatch_running = 0;
 
 	delay(500000);
 }
@@ -142,10 +142,10 @@ md_start_timebase(volatile struct cpu_hatch_data *h)
 void
 md_sync_timebase(volatile struct cpu_hatch_data *h)
 {
-	u_int tbu = h->tbu;
-	u_int tbl = h->tbl;
+	u_int tbu = h->hatch_tbu;
+	u_int tbl = h->hatch_tbl;
 
-	while (h->running == -1)
+	while (h->hatch_running == -1)
 		;
 
 	__asm volatile ("sync; isync");
