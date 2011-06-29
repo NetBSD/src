@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.96 2011/06/08 10:25:21 drochner Exp $ */
+/* $NetBSD: wsconsio.h,v 1.97 2011/06/29 03:06:16 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -564,5 +564,33 @@ struct wsdisplayio_bus_id {
 };
 
 #define WSDISPLAYIO_GET_BUSID	_IOR('W', 101, struct wsdisplayio_bus_id)
+
+/*
+ * retrieving EDID data from a wsdisplay driver
+ * The EDID block will be written into a buffer pointed at by edid_data,
+ * the caller must fill in buffer_size and edid_data, the driver will set
+ * data_size to the number of bytes actually written.
+ * If the buffer is too small the call will fail with EAGAIN and the driver
+ * will set data_size without writing anything into the buffer.
+ */
+
+struct wsdisplayio_edid_info {
+	int buffer_size;
+	int data_size;
+	uint8_t *edid_data;
+};
+#define WSDISPLAYIO_GET_EDID	_IOWR('W', 102, struct wsdisplayio_edid_info)
+
+/* 
+ * this is for enabling and disabling interrupt-driven drawing
+ * pass 1 to enable polling, 0 to go back to normal
+ * the kernel itself will call this on the console device when entering or
+ * leaving ddb and on panic
+ * may have side effects like hard switching to the virtual console which
+ * shows kernel output, resetting the video hardware etc. - not really for
+ * userland to mess with
+ */
+#define WSDISPLAYIO_SET_POLLING	_IOW('W', 103, int)
+#define WSDISPLAYIOMGWEHITANDKILLEDASKUNK WSDISPLAYIO_SET_POLLING
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */
