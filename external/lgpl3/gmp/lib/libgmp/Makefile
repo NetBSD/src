@@ -1,11 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/24 03:50:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/06/29 08:09:43 mrg Exp $
 
 .include <bsd.init.mk>
 
 DIST=${.CURDIR}/../../dist
-
-# XXX
-MKLINT=no
 
 LIB=	gmp
 
@@ -167,29 +164,29 @@ DPSRCS= fac_ui.h fib_table.h fib_table.c mp_bases.h mp_bases.c perfsqr.h
 
 fac_ui.h: gen-fac_ui.c
 	${HOST_CC} -o ${.OBJDIR}/gen-fac_ui ${.ALLSRC}
-	${.OBJDIR}/gen-fac_ui 64 0 > ${.OBJDIR}/fac_ui.h
+	${.OBJDIR}/gen-fac_ui ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/fac_ui.h
 
 gen-fib: gen-fib.c
 	${HOST_CC} -o ${.OBJDIR}/gen-fib ${.ALLSRC}
 
 fib_table.h: gen-fib
-	${.OBJDIR}/gen-fib header 64 0 > ${.OBJDIR}/fib_table.h
+	${.OBJDIR}/gen-fib header ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/fib_table.h
 
 fib_table.c: gen-fib
-	${.OBJDIR}/gen-fib table 64 0 > ${.OBJDIR}/fib_table.c
+	${.OBJDIR}/gen-fib table ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/fib_table.c
 
 gen-bases: gen-bases.c
 	${HOST_CC} -o ${.OBJDIR}/gen-bases ${.ALLSRC} -lm
 
 mp_bases.h: gen-bases
-	${.OBJDIR}/gen-bases header 64 0 > ${.OBJDIR}/mp_bases.h
+	${.OBJDIR}/gen-bases header ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/mp_bases.h
 
 mp_bases.c: gen-bases
-	${.OBJDIR}/gen-bases table 64 0 > ${.OBJDIR}/mp_bases.c
+	${.OBJDIR}/gen-bases table ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/mp_bases.c
 
 perfsqr.h: gen-psqr.c
 	${HOST_CC} -o ${.OBJDIR}/gen-psqr ${.ALLSRC}
-	${.OBJDIR}/gen-psqr 64 0 > ${.OBJDIR}/perfsqr.h
+	${.OBJDIR}/gen-psqr ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/perfsqr.h
 
 CLEANFILES+=	${DPSRCS} gen-fac_ui gen-fib gen-bases gen-psqr
 
