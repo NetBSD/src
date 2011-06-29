@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2011/06/25 00:07:10 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2011/06/29 05:53:05 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetSBD$");
 
 #include <prop/proplib.h>
 
-#include <machine/stdarg.h>
+#include <powerpc/stdarg.h>
 
 #include <dev/cons.h>
 
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetSBD$");
 #include <net/if_media.h>
 #include <dev/mii/miivar.h>
 
+#include <powerpc/cpuset.h>
 #include <powerpc/pcb.h>
 #include <powerpc/spr.h>
 #include <powerpc/booke/spr.h>
@@ -663,27 +664,10 @@ e500_tlb_print(device_t self, const char *name, uint32_t tlbcfg)
 }
 
 static void
-e500_cpu_attach(device_t self, u_int instance)
+cpu_print_info(struct cpu_info *ci)
 {
-	struct cpu_info * const ci = &cpu_info[instance - (instance > 0)];
-
-	if (instance > 1) {
-#ifdef MULTIPROCESSOR
-#error		still needs to be written
-		ci->ci_idepth = -1;
-		cpu_probe_cache();
-#else
-		aprint_error_dev(self, "disabled (uniprocessor kernel)\n");
-		return;
-#endif
-	}
-
-	self->dv_private = ci;
-
-	ci->ci_cpuid = instance - (instance > 0);
-	ci->ci_dev = self;
-        //ci->ci_idlespin = cpu_idlespin;
 	uint64_t freq = board_info_get_number("processor-frequency");
+	device_t self = ci->ci_dev;
 
 	char freqbuf[10];
 	if (freq >= 999500000) {
@@ -736,12 +720,238 @@ e500_cpu_attach(device_t self, u_int instance)
 
 	e500_tlb_print(self, "tlb0", mfspr(SPR_TLB0CFG));
 	e500_tlb_print(self, "tlb1", mfspr(SPR_TLB1CFG));
+}
+
+#ifdef MULTIPROCESSOR
+static void
+e500_cpu_spinup(device_t self, struct cpu_info *ci)
+{
+	uintptr_t spinup_table_addr = board_info_get_number("mp-spin-up-table");
+	struct pglist splist;
+
+	if (spinup_table_addr == 0) {
+		aprint_error_dev(self, "hatch failed (no spin-up table)");
+		return;
+	}
+
+	struct uboot_spinup_entry * const e = (void *)spinup_table_addr;
+	volatile struct cpu_hatch_data * const h = &cpu_hatch_data;
+	const size_t id = cpu_index(ci);
+	volatile __cpuset_t * const hatchlings = &cpuset_info.cpus_hatched;
+
+	if (h->hatch_sp == 0) {
+		int error = uvm_pglistalloc(PAGE_SIZE, PAGE_SIZE,
+		    64*1024*1024, PAGE_SIZE, 0, &splist, 1, 1);
+		if (error) {
+			aprint_error_dev(self,
+			    "unable to allocate hatch stack\n");
+			return;
+		}
+		h->hatch_sp = VM_PAGE_TO_PHYS(TAILQ_FIRST(&splist))
+		    + PAGE_SIZE - CALLFRAMELEN;
+        }
+
+
+	for (size_t i = 1; e[i].entry_pir != 0; i++) {
+		printf("%s: cpu%u: entry#%zu(%p): pir=%u\n",
+		    __func__, ci->ci_cpuid, i, &e[i], e[i].entry_pir);
+		if (e[i].entry_pir == ci->ci_cpuid) {
+
+			ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
+			ci->ci_curpcb = lwp_getpcb(ci->ci_curlwp);
+			ci->ci_curpm = pmap_kernel();
+			ci->ci_lasttb = cpu_info[0].ci_lasttb;
+			ci->ci_data.cpu_cc_freq =
+			    cpu_info[0].ci_data.cpu_cc_freq;
+
+			h->hatch_self = self;
+			h->hatch_ci = ci;
+			h->hatch_running = -1;
+			h->hatch_pir = e[i].entry_pir;
+			h->hatch_hid0 = mfspr(SPR_HID0);
+			KASSERT(h->hatch_sp != 0);
+			/*
+			 * Get new timebase.  We don't want to deal with
+			 * timebase crossing a 32-bit boundary so make sure
+			 * that we have enough headroom to do the timebase
+			 * synchronization. 
+			 */
+#define	TBSYNC_SLOP	2000
+			uint32_t tbl;
+			uint32_t tbu;
+			do {
+				tbu = mfspr(SPR_RTBU);
+				tbl = mfspr(SPR_RTBL) + TBSYNC_SLOP;
+			} while (tbl < TBSYNC_SLOP);
+			
+			h->hatch_tbu = tbu;
+			h->hatch_tbl = tbl;
+			__asm("sync;isync");
+			dcache_wbinv((vaddr_t)h, sizeof(*h));
+
+#if 1
+			/*
+			 * And here we go...
+			 */
+			e[i].entry_addr_lower =
+			    (uint32_t)e500_spinup_trampoline;
+			dcache_wbinv((vaddr_t)&e[i], sizeof(e[i]));
+			__asm __volatile("sync;isync");
+			__insn_barrier();
+
+			for (u_int timo = 0; timo++ < 10000; ) {
+				dcache_inv((vaddr_t)&e[i], sizeof(e[i]));
+				if (e[i].entry_addr_lower == 3) {
+					printf(
+					    "%s: cpu%u started in %u spins\n",
+					    __func__, cpu_index(ci), timo);
+					break;
+				}
+			}
+			for (u_int timo = 0; timo++ < 10000; ) {
+				dcache_inv((vaddr_t)h, sizeof(*h));
+				if (h->hatch_running == 0) {
+					printf(
+					    "%s: cpu%u cracked in %u spins: (running=%d)\n",
+					    __func__, cpu_index(ci),
+					    timo, h->hatch_running);
+					break;
+				}
+			}
+			if (h->hatch_running == -1) {
+				aprint_error_dev(self,
+				    "hatch failed (timeout): running=%d"
+				    ", entry=%#x\n",
+				    h->hatch_running, e[i].entry_addr_lower);
+				goto out;
+			}
+#endif
+
+			/*
+			 * First then we do is to synchronize timebases.
+			 * TBSYNC_SLOP*16 should be more than enough
+			 * instructions.
+			 */
+			while (tbl != mftbl())
+				continue;
+			h->hatch_running = 1;
+			dcache_wbinv((vaddr_t)h, sizeof(*h));
+			__asm("sync;isync");
+			__insn_barrier();
+
+			for (u_int timo = 10000; timo-- > 0; ) {
+				dcache_inv((vaddr_t)h, sizeof(*h));
+				if (h->hatch_running > 1)
+					break;
+			}
+			if (h->hatch_running == 1) {
+				printf(
+				    "%s: tb sync failed: offset from %"PRId64"=%"PRId64" (running=%d)\n",
+				    __func__,
+				    ((int64_t)tbu << 32) + tbl,
+				    (int64_t)
+					(((uint64_t)h->hatch_tbu << 32)
+					+ (uint64_t)h->hatch_tbl),
+				    h->hatch_running);
+				goto out;
+			}
+			printf(
+			    "%s: tb synced: offset=%"PRId64" (running=%d)\n",
+			    __func__,
+			    (int64_t)
+				(((uint64_t)h->hatch_tbu << 32)
+				+ (uint64_t)h->hatch_tbl),
+			    h->hatch_running);
+			/*
+			 * Now we wait for the hatching to complete.  10ms
+			 * should be long enough.
+			 */
+			for (u_int timo = 10000; timo-- > 0; ) {
+				if (CPUSET_HAS_P(*hatchlings, id)) {
+					aprint_normal_dev(self,
+					    "hatch successful (%u spins, "
+					    "timebase adjusted by %"PRId64")\n",
+					    10000 - timo,
+					    (int64_t)
+						(((uint64_t)h->hatch_tbu << 32)
+						+ (uint64_t)h->hatch_tbl));
+					goto out;
+				}
+				DELAY(1);
+			}
+
+			aprint_error_dev(self,
+			    "hatch failed (timeout): running=%u\n",
+			    h->hatch_running);
+			goto out;
+		}
+	}
+
+	aprint_error_dev(self, "hatch failed (no spin-up entry for PIR %u)",
+	    ci->ci_cpuid);
+out:
+	if (h->hatch_sp == 0)
+		uvm_pglistfree(&splist);
+}
+#endif
+
+void
+e500_cpu_hatch(struct cpu_info *ci)
+{
+	mtmsr(mfmsr() | PSL_CE | PSL_ME | PSL_DE);
+
+	/*
+	 * Make sure interrupts are blocked.
+	 */
+	cpu_write_4(OPENPIC_BASE + OPENPIC_CTPR, 15);	/* IPL_HIGH */
+
+	intr_cpu_hatch(ci);
+
+	cpu_print_info(ci);
+
+/*
+ */
+}
+
+static void
+e500_cpu_attach(device_t self, u_int instance)
+{
+	struct cpu_info * const ci = &cpu_info[instance - (instance > 0)];
+
+	if (instance > 1) {
+#if defined(MULTIPROCESSOR)
+		ci->ci_idepth = -1;
+		self->dv_private = ci;
+
+		ci->ci_cpuid = instance - (instance > 0);
+		ci->ci_dev = self;
+		ci->ci_tlb_info = cpu_info[0].ci_tlb_info;
+
+		mi_cpu_attach(ci);
+
+		intr_cpu_attach(ci);
+		cpu_evcnt_attach(ci);
+
+		e500_cpu_spinup(self, ci);
+		return;
+#else
+		aprint_error_dev(self, "disabled (uniprocessor kernel)\n");
+		return;
+#endif
+	}
+
+	self->dv_private = ci;
+
+	ci->ci_cpuid = instance - (instance > 0);
+	ci->ci_dev = self;
 
 	intr_cpu_attach(ci);
 	cpu_evcnt_attach(ci);
 
-	if (ci == curcpu())
-		intr_cpu_hatch(ci);
+	KASSERT(ci == curcpu());
+	intr_cpu_hatch(ci);
+
+	cpu_print_info(ci);
 }
 
 void
@@ -900,7 +1110,9 @@ initppc(vaddr_t startkernel, vaddr_t endkernel,
 	 * Initialize exception vectors and interrupts
 	 */
 	exception_init(&e500_intrsw);
+
 	printf(" exception_init=%p", &e500_intrsw);
+
 	mtspr(SPR_TCR, TCR_WIE | mfspr(SPR_TCR));
 
 	/*
@@ -1117,9 +1329,11 @@ cpu_startup(void)
 				break;
 			}
 		}
-		if (!found)
+		if (!found) {
 			printf("Found MP boot page @ %#"PRIxPADDR
 			    " with missing U-boot signature!\n", boot_page);
+			board_info_add_number("mp-spin-up-table", 0);
+		}
 	}
 	board_info_add_number("l2-cache-size", l2siz);
 	board_info_add_number("l2-cache-line-size", 32);
