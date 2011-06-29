@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/06/29 02:01:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/06/29 02:17:35 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -327,7 +327,9 @@ alias.d alias.o: insn-constants.h tm_p.h tm-preds.h
 cgraphunit.d cgraphunit.o: gcov-io.h
 vec.lo: gtype-desc.h
 # XXX
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 i386.d i386.o: tm-constrs.h
+.endif
 
 COPTS+=-Wno-stack-protector
 
