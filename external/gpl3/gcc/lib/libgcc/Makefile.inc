@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2011/06/29 01:56:57 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2011/06/29 08:05:52 mrg Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -35,18 +35,31 @@ COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 #
 
 # This is copied from gcc/mklibgcc.in:$lib2funcs
-LIB2FUNCS_ALL=	_muldi3 _negdi2 _lshrdi3 _ashldi3 _ashrdi3 \
-        _cmpdi2 _ucmpdi2 _floatdidf _floatdisf _fixunsdfsi _fixunssfsi \
-        _fixunsdfdi _fixdfdi _fixunssfdi _fixsfdi _fixxfdi _fixunsxfdi \
-        _floatdixf _floatundixf _fixunsxfsi _fixtfdi _fixunstfdi _floatditf _clear_cache \
-        _enable_execute_stack _trampoline __main _absvsi2 _absvdi2 _addvsi3 \
-        _addvdi3 _subvsi3 _subvdi3 _mulvsi3 _mulvdi3 _negvsi2 _negvdi2 _ctors \
-        _ffssi2 _ffsdi2 _clz _clzsi2 _clzdi2 _ctzsi2 _ctzdi2 _popcount_tab \
-        _popcountsi2 _popcountdi2 _paritysi2 _paritydi2 _powisf2 _powidf2 \
-        _powixf2 _powitf2 \
+LIB2FUNCS_ALL= \
+	_muldi3 _negdi2 _lshrdi3 _ashldi3 _ashrdi3 _cmpdi2 _ucmpdi2    \
+	_clear_cache _enable_execute_stack _trampoline __main _absvsi2 \
+	_absvdi2 _addvsi3 _addvdi3 _subvsi3 _subvdi3 _mulvsi3 _mulvdi3 \
+	_negvsi2 _negvdi2 _ctors _ffssi2 _ffsdi2 _clz _clzsi2 _clzdi2  \
+	_ctzsi2 _ctzdi2 _popcount_tab _popcountsi2 _popcountdi2        \
+	_paritysi2 _paritydi2 _powisf2 _powidf2 _powixf2 _powitf2      \
+	_mulsc3 _muldc3 _mulxc3 _multc3 _divsc3 _divdc3 _divxc3        \
+	_divtc3 _bswapsi2 _bswapdi2
 
-LIB2FUNCS_ALL+=	\
-	_mulsc3 _muldc3 _mulxc3 _multc3 _divsc3 _divdc3 _divxc3 _divtc3
+# non swfloat versions 
+.for _p in _fix _fixuns
+. for _s in sf df xf tf
+LIB2FUNCS_ALL+=	${_p}${_s}di
+. endfor
+.endfor
+.for _p in _float _floatun
+. for _s in sf df xf tf
+LIB2FUNCS_ALL+=	${_p}di${_s}
+. endfor
+.endfor
+
+.for _m in sf df xf
+LIB2FUNCS_ALL+=	fixuns${_p}si
+.endfor
 
 LIB2FUNCS_SHORT:=${LIB2FUNCS_ALL}
 LIB2_DIVMOD_FUNCS:=${G_LIB2_DIVMOD_FUNCS}
