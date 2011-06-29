@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1 2011/06/24 03:50:23 mrg Exp $
+$NetBSD: README,v 1.2 2011/06/29 01:38:27 simonb Exp $
 
 GMP in NetBSD.  We need GMP for GCC >= 4.2.
 
@@ -43,4 +43,4 @@ changed at any time.
 
 
 mrg@netbsd.org
-- 2001/06/22
+- 2011/06/22
