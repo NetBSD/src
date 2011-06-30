@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.107 2011/03/08 12:20:17 njoly Exp $
+#	$NetBSD: bsd.man.mk,v 1.108 2011/06/30 18:13:51 matt Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -34,7 +34,7 @@ _MNUMBERS=	1 2 3 4 5 6 7 8 9
 MANCOMPRESS?=
 MANSUFFIX?=
 .else
-MANCOMPRESS?=	gzip -ncf
+MANCOMPRESS?=	${TOOL_GZIP} -ncf
 MANSUFFIX?=	.gz
 .endif
 
