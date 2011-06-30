@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.22 2010/11/28 08:23:23 hannken Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.23 2011/06/30 20:09:24 wiz Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for Genetec G4250EBX 
+ * Machine dependent functions for kernel setup for Genetec G4250EBX 
  * evaluation board.
  * 
  * Based on iq80310_machhdep.c
@@ -103,7 +103,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for Intel IQ80310 evaluation
+ * Machine dependent functions for kernel setup for Intel IQ80310 evaluation
  * boards using RedBoot firmware.
  */
 
@@ -165,7 +165,7 @@
 
 /*
  * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
+ * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
 

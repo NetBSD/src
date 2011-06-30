@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbsh3,v 1.19 2010/04/06 15:54:30 nonaka Exp $
+#	$NetBSD: majors.evbsh3,v 1.20 2011/06/30 20:09:29 wiz Exp $
 #
 # Device majors for evbsh3
 #
@@ -49,6 +49,6 @@ device-major	ld		char 69  block 20	ld
 
 device-major	nsmb		char 98			nsmb
 
-# Majors up to 143 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.

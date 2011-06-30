@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.99 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.100 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -675,10 +675,10 @@ Changes from NetBSD 0.9 to NetBSD 1.0:
 	add bootpd to othersrc. Add bootp service nos to/etc/services. (brezak)
 	add -x flag to strip. Removes local syms, stabs, and compiler idents
 		symbols. (brezak)
-	machine independant changes to VM to be able to handle machines with
+	machine independent changes to VM to be able to handle machines with
 		non-contiguous memory from Wolfgang Solfrank. Machines that
 		need this use "option MACHINE_NONCONTIG". (brezak)
-	i386: machine dependant changes for non-contiguous memory. WARNING-
+	i386: machine dependent changes for non-contiguous memory. WARNING-
 		you will need a new config for this. (brezak)
 	i386: boot program changes to load the symbols table from the image,
 		be able to boot omagic executables, pass a few more
@@ -1817,7 +1817,7 @@ Changes from NetBSD 1.0 to NetBSD 1.1:
 	libsa: Added a machine-independent `twiddler' to libsa.  Also made the
 		libsa exec() more useful. [mycroft 19950220]
 	yppasswd(1): Added yppasswd as a link to passwd. (phil)
-	audio: Added new machine independant audio subsystem. Drivers for i386
+	audio: Added new machine independent audio subsystem. Drivers for i386
 		SoundBlaster (SB, SB16 and SBPRO), PAS (In SB emulation),
 		and Windows Sound System. Thanx to John Kohl, Jeff Chilton,
 		George Michaelson, and Havard Eidnes. (brezak)
@@ -2791,7 +2791,7 @@ Changes from NetBSD 1.2 to NetBSD 1.3:
 		options PFIL_HOOKS.  [mrg 19960905]
 	getpgid(2): added getpgid(2) system call, as per SVR4.  [mrg 19960905]
 	reboot(2): changed reboot(2) system call to take a string of boot
-		commands, to be handled by the machine dependant boot()
+		commands, to be handled by the machine dependent boot()
 		function.  current only the sparc and sun3 ports use
 		this.  [mrg 19960905]
 	poll(2): added poll(2) system call.  [mycroft 19960907]
@@ -4840,7 +4840,7 @@ Changes from NetBSD 1.4 to NetBSD 1.5:
 		These routines now expect the protocol header to be included
 		with the packet, not stripped off.  [thorpej 19990518]
 	kernel: make the kernel buffer allocation routine allocsys() machine
-		independant; all ports now support the BUFCACHE option.
+		independent; all ports now support the BUFCACHE option.
 		[lukem 19990519].
 	sparc:  finally NetBSD works Ok on HyperSPARC machines [pk 19990521]
 	mips:	reduce extraneous kernel space TLB exceptions by preserving
@@ -7793,7 +7793,7 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	/etc/postinstall: check for obsolete minor/teeny shared libraries.
 		[lukem 20040812]
 	kernel: Add extensions to the autoconf(9) framework to allow device
-		detachment and bus rescans in a bus independant way, and
+		detachment and bus rescans in a bus independent way, and
 		for better support of driver LKMs.  [drochner 20040819]
 	libc: Add optimized ffs(3) implementation for ARM architecture 5.
 		[rearnsha 20040821]

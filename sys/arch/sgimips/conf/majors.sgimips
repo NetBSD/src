@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sgimips,v 1.26 2011/04/26 16:36:41 joerg Exp $
+#	$NetBSD: majors.sgimips,v 1.27 2011/06/30 20:09:35 wiz Exp $
 #
 # Device majors for sgimips
 #
@@ -69,6 +69,6 @@ device-major	lpt		char 78			lpt
 device-major    sysmon          char 79                 sysmon_envsys | sysmon_wdog
 device-major	nsmb		char 98			nsmb
 
-# Majors up to 143 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.

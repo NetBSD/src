@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.108 2010/11/02 18:02:59 chs Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.109 2011/06/30 20:09:39 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.108 2010/11/02 18:02:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.109 2011/06/30 20:09:39 wiz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -721,7 +721,7 @@ linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control
 				error = EINVAL;
 				goto done;
 			}
-			/* machine dependant ! */
+			/* machine dependent ! */
 			break;
 		default:
 			/* pray and leave intact */

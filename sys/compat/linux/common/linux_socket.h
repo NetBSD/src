@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.20 2010/11/02 18:03:00 chs Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.21 2011/06/30 20:09:39 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  * the rest matches IPPROTO_XXX
  */
 
-/* SOL_SOCKET is machine dependant on Linux */
+/* SOL_SOCKET is machine dependent on Linux */
 #define LINUX_SOL_IP		0
 #define LINUX_SOL_TCP		6
 #define LINUX_SOL_UDP		17
@@ -94,7 +94,7 @@
 #define LINUX_SOL_AAL		265
 
 /*
- * Options for [gs]etsockopt(2), socket level are machine dependant.
+ * Options for [gs]etsockopt(2), socket level are machine dependent.
  */
 
 /*

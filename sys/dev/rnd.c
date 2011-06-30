@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.80 2010/12/06 16:22:57 christos Exp $	*/
+/*	$NetBSD: rnd.c,v 1.81 2011/06/30 20:09:40 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.80 2010/12/06 16:22:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.81 2011/06/30 20:09:40 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -170,7 +170,7 @@ static int		rnd_have_entropy = 0;
 LIST_HEAD(, __rndsource_element)	rnd_sources;
 
 /*
- * Generate a 32-bit counter.  This should be more machine dependant,
+ * Generate a 32-bit counter.  This should be more machine dependent,
  * using cycle counters and the like when possible.
  */
 static inline u_int32_t

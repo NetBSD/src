@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8548CDS,v 1.6 2011/06/11 00:52:42 matt Exp $
+#	$NetBSD: MPC8548CDS,v 1.7 2011/06/30 20:09:29 wiz Exp $
 #
 #	MPC8548CDS -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8548CDS-$Revision: 1.6 $"
+ident 		"MPC8548CDS-$Revision: 1.7 $"
 
 maxusers	32
 
@@ -86,7 +86,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
-options 	FFS_EI		# FFS Endian Independant support
+options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.19 2011/04/04 20:37:45 dyoung Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.20 2011/06/30 20:09:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.19 2011/04/04 20:37:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.20 2011/06/30 20:09:20 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ footbridge_pci_intr_map(const struct pci_attach_args *pa,
 		return(1);
 		break;
 #ifdef cats
-	/* This is machine dependant and needs to be moved */
+	/* This is machine dependent and needs to be moved */
 	case PCI_INTERRUPT_PIN_A:
 		intr = IRQ_PCI;
 		break;

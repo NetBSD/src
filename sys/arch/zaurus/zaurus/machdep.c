@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2011/06/23 11:28:53 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2011/06/30 20:09:38 wiz Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for 
+ * Machine dependent functions for kernel setup for 
  * Intel DBPXA250 evaluation board (a.k.a. Lubbock).
  * Based on iq80310_machhdep.c
  */
@@ -102,12 +102,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for Intel IQ80310 evaluation
+ * Machine dependent functions for kernel setup for Intel IQ80310 evaluation
  * boards using RedBoot firmware.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2011/06/23 11:28:53 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2011/06/30 20:09:38 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -193,7 +193,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2011/06/23 11:28:53 nonaka Exp $");
 
 /*
  * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
+ * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
 u_int cpu_reset_address = 0;
@@ -745,7 +745,7 @@ initarm(void *arg)
 #endif
 
 	/* Fake bootconfig structure for the benefit of pmap.c */
-	/* XXX must make the memory description h/w independant */
+	/* XXX must make the memory description h/w independent */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = memstart;
 	bootconfig.dram[0].pages = memsize / PAGE_SIZE;

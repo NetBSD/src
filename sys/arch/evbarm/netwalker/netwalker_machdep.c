@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.3 2010/12/09 05:00:14 bsh Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.4 2011/06/30 20:09:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation. 
@@ -26,7 +26,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for Sharp Netwalker.
+ * Machine dependent functions for kernel setup for Sharp Netwalker.
  * Based on iq80310_machhdep.c
  */
 /*
@@ -97,12 +97,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for Intel IQ80310 evaluation
+ * Machine dependent functions for kernel setup for Intel IQ80310 evaluation
  * boards using RedBoot firmware.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.3 2010/12/09 05:00:14 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.4 2011/06/30 20:09:26 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -169,7 +169,7 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.3 2010/12/09 05:00:14 bsh Ex
 
 /*
  * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
+ * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
 

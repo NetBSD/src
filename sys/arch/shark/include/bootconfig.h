@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.4 2006/10/26 23:31:47 bjh21 Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.5 2011/06/30 20:09:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -57,7 +57,7 @@ typedef struct _PhysMem {
  * 1. fake a bootconfig structure as required
  * 2. provide a generic structure for this information
  *    (need to see the shark code first)
- * 3. move the dependant routines to the machine specific
+ * 3. move the dependent routines to the machine specific
  *    areas (e.g. move dumpsys() to *_machdep.c
  *
  * 1 is probably the simplest stop gap measure
