@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.940 2011/06/27 11:52:22 uch Exp $
+# $NetBSD: mi,v 1.941 2011/06/30 04:36:34 agc Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -10,6 +10,10 @@
 #	e.g., "lib<name>.so.<N>" and "lib<name>.so.<N>.<M>"
 #	Exceptions to this rule may include shared libraries that
 #	are dlopen()ed at run-time, such as extra locales, etc.
+#
+# /usr/bin/ident is in `base-util-bin', not `base-rcs-bin' as it is used by pkgsrc
+# /usr/bin/ldd is also used by pkgsrc, and should stay in base-util-bin
+# C locale (/usr/share/nls/C) is required by POSIX, so is installed if any locales are.
 #
 .						base-sys-root
 ./altroot					base-sys-root
@@ -462,7 +466,6 @@
 ./usr/bin/hoststat				base-mailwrapper-bin
 ./usr/bin/iconv					base-util-bin
 ./usr/bin/id					base-util-bin
-# This is in `base-util-bin', not `base-rcs-bin' as it is used by pkgsrc
 ./usr/bin/ident					base-util-bin
 ./usr/bin/indent				base-c-bin
 ./usr/bin/info					base-texinfo-bin
@@ -500,7 +503,6 @@
 ./usr/bin/ldapsearch				base-ldap-bin		ldap
 ./usr/bin/ldapurl				base-ldap-bin		ldap
 ./usr/bin/ldapwhoami				base-ldap-bin		ldap
-# This is also used by pkgsrc, and should stay in base-util-bin
 ./usr/bin/ldd					base-util-bin
 ./usr/bin/leave					base-util-bin
 ./usr/bin/less					base-util-bin
@@ -3761,7 +3763,6 @@
 ./usr/share/mk/sys.mk				base-mk-share		share
 ./usr/share/ms					base-groff-share
 ./usr/share/nls					base-locale-share
-# C locale is required by POSIX, so is installed if any locales are.
 ./usr/share/nls/C				base-locale-share
 ./usr/share/nls/C/grep.cat			base-locale-share	nls,bsdgrep
 ./usr/share/nls/C/libc.cat			base-locale-share	nls
