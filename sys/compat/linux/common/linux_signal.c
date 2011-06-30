@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.71 2010/07/07 01:30:35 chs Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.72 2011/06/30 20:09:39 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.71 2010/07/07 01:30:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.72 2011/06/30 20:09:39 wiz Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -293,7 +293,7 @@ linux_sys_rt_sigaction(struct lwp *l, const struct linux_sys_rt_sigaction_args *
 #if defined __amd64__
 		if (nlsa.linux_sa_flags & LINUX_SA_RESTORER) {
 			if ((tramp = nlsa.linux_sa_restorer) != NULL)
-				vers = 2; /* XXX arch dependant */
+				vers = 2; /* XXX arch dependent */
 		}
 #endif
 

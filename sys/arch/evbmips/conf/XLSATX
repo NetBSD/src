@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.4 2011/04/14 05:05:35 cliff Exp $
+#	$NetBSD: XLSATX,v 1.5 2011/06/30 20:09:29 wiz Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.4 $"
+#ident 		"XLSATX-$Revision: 1.5 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -85,7 +85,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

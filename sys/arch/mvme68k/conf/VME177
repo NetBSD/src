@@ -1,4 +1,4 @@
-#	$NetBSD: VME177,v 1.29 2010/04/16 13:48:33 pooka Exp $
+#	$NetBSD: VME177,v 1.30 2011/06/30 20:09:33 wiz Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -33,7 +33,7 @@ file-system	TMPFS
 #file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

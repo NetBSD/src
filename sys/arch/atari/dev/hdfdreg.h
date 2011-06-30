@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfdreg.h,v 1.6 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: hdfdreg.h,v 1.7 2011/06/30 20:09:21 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -115,7 +115,7 @@ struct ne7_fd_formb {
 		struct fd_form_data {
 			/*
 			 * DO NOT CHANGE THE LAYOUT OF THIS STRUCTS
-			 * it is hardware-dependant since it exactly
+			 * it is hardware-dependent since it exactly
 			 * matches the byte sequence to write to FDC
 			 * during its `format track' operation
 			 */

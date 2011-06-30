@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.53 2011/06/13 14:20:37 matt Exp $
+#	$NetBSD: WALNUT,v 1.54 2011/06/30 20:09:29 wiz Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -82,7 +82,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
-options 	FFS_EI		# FFS Endian Independant support
+options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

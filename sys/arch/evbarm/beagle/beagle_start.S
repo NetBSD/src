@@ -1,5 +1,5 @@
 /*
- * Machine dependant startup code for BEAGLEBOARD boards.
+ * Machine dependent startup code for BEAGLEBOARD boards.
  * Based on omap_start.S
  *
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -92,7 +92,7 @@
 #include <arm/omap/omap2_obioreg.h>
 #include <evbarm/beagle/beagle.h>  
 
-RCSID("$NetBSD: beagle_start.S,v 1.5 2011/01/31 06:28:02 matt Exp $")
+RCSID("$NetBSD: beagle_start.S,v 1.6 2011/06/30 20:09:23 wiz Exp $")
 
 #define Invalidate_I_cache(reg) \
 	mcr	p15, 0, reg, c7, c5, 0	/* Invalidate Entire I cache */

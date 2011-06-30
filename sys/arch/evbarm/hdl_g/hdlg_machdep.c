@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlg_machdep.c,v 1.14 2009/12/26 16:01:24 uebayasi Exp $	*/
+/*	$NetBSD: hdlg_machdep.c,v 1.15 2011/06/30 20:09:24 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -68,12 +68,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for GigaLANDISK
+ * Machine dependent functions for kernel setup for GigaLANDISK
  * using RedBoot firmware.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.14 2009/12/26 16:01:24 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.15 2011/06/30 20:09:24 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -129,7 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.14 2009/12/26 16:01:24 uebayasi E
 
 /*
  * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
+ * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  *
  * XXX Not actually used on hdlg -- clean up the generic

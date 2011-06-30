@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.11 2008/04/28 20:23:26 martin Exp $ */
+/* $NetBSD: bus_dma.h,v 1.12 2011/06/30 20:09:32 wiz Exp $ */
 
 /*
  * This file was extracted from from alpha/include/bus.h
@@ -211,7 +211,7 @@ struct m68k_bus_dmamap {
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	u_int		_dm_flags;	/* misc. flags */
 
-	/* Machine dependant fields: */
+	/* Machine dependent fields: */
 	bus_size_t  dm_xfer_len;	/* length of successful transfer */
 
 	/*
