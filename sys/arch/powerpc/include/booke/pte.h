@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.5 2011/06/23 20:46:15 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.6 2011/06/30 00:52:59 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -126,15 +126,9 @@ pte_to_paddr(pt_entry_t pt_entry)
 }
 
 static inline pt_entry_t
-pte_iouncached_bits(void)
-{
-	return PTE_W|PTE_I|PTE_G;
-}
-
-static inline pt_entry_t
 pte_ionocached_bits(void)
 {
-	return PTE_WIG;
+	return PTE_I|PTE_G;
 }
 
 static inline pt_entry_t
@@ -218,7 +212,7 @@ pte_prot_bits(struct vm_page_md *mdpg, vm_prot_t prot)
 static inline pt_entry_t
 pte_flag_bits(struct vm_page_md *mdpg, int flags)
 {
-	if (__predict_false(flags & PMAP_MD_NOCACHE)) {
+	if (__predict_false(flags & PMAP_NOCACHE)) {
 		if (__predict_true(mdpg != NULL)) {
 			return pte_nocached_bits();
 		} else {

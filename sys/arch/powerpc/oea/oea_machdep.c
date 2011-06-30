@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.58 2011/06/20 07:18:07 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.59 2011/06/30 00:52:59 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.58 2011/06/20 07:18:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.59 2011/06/30 00:52:59 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -835,7 +835,7 @@ kvtop(void *addr)
  * Allocate vm space and mapin the I/O address
  */
 void *
-mapiodev(paddr_t pa, psize_t len)
+mapiodev(paddr_t pa, psize_t len, bool prefetchable)
 {
 	paddr_t faddr;
 	vaddr_t taddr, va;
@@ -850,7 +850,8 @@ mapiodev(paddr_t pa, psize_t len)
 		return NULL;
 
 	for (; len > 0; len -= PAGE_SIZE) {
-		pmap_kenter_pa(taddr, faddr, VM_PROT_READ | VM_PROT_WRITE, 0);
+		pmap_kenter_pa(taddr, faddr, VM_PROT_READ | VM_PROT_WRITE,
+		    (prefetchable ? PMAP_MD_PREFETCHABLE : PMAP_NOCACHE));
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}

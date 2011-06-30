@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.13 2011/06/29 21:53:10 dholland Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.14 2011/06/30 00:52:58 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.13 2011/06/29 21:53:10 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.14 2011/06/30 00:52:58 matt Exp $");
 
 #include "opt_modular.h"
 
@@ -313,7 +313,7 @@ cpu_reboot(int howto, char *what)
  * 	mapping if one is found.
  */
 void *
-mapiodev(paddr_t pa, psize_t len)
+mapiodev(paddr_t pa, psize_t len, bool prefetchable)
 {
 	const vsize_t off = pa & PAGE_MASK;
 
@@ -321,7 +321,7 @@ mapiodev(paddr_t pa, psize_t len)
 	 * See if we have reserved TLB entry for the pa. This needs to be
 	 * true for console as we can't use uvm during early bootstrap.
 	 */
-	void * const p = tlb_mapiodev(pa, len);
+	void * const p = tlb_mapiodev(pa, len, prefetchable);
 	if (p != NULL)
 		return p;
 
@@ -340,7 +340,7 @@ mapiodev(paddr_t pa, psize_t len)
 		va -= PAGE_SIZE;
 		pa -= PAGE_SIZE;
 		pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE,
-		    PMAP_NOCACHE);
+		    prefetchable ? 0 : PMAP_NOCACHE);
 	}
 	pmap_update(pmap_kernel());
 	return (void *)(va + off);
