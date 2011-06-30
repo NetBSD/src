@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2011/06/29 02:02:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.41 2011/06/30 07:02:17 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,10 @@ GNUHOSTDIST=		${.CURDIR}/../../external/gpl3/gcc/dist
 .else
 MKNATIVE_TARGET=	gcc4
 .endif
-MKNATIVE_CONFIG_TARGET_LIBS=
+MKNATIVE_CONFIG_TARGET_LIBS= \
+	configure-target-libiberty \
+	configure-target-libstdc++-v3 \
+	configure-target-libobjc
 BINENV=		/usr/bin/env -i
 
 VAX_CONFIGURE_ARGS=
@@ -130,6 +133,7 @@ NATIVE_CONFIGURE_ARGS+=	\
 NATIVE_CONFIGURE_ARGS+=	\
 			--disable-multilib \
 			--disable-symvers \
+			--disable-libstdcxx-pch \
 			--build=`${GCCSRCDIR}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM}
 
@@ -147,15 +151,15 @@ NATIVE_CONFIGURE_ARGS+=	\
 	# edit Makefile so that maybe-all-gcc does not depend on all-gcc any more.
 		(cd .native && mv Makefile Makefile.config && \
 			${TOOL_SED} -e 's/\(maybe-all-gcc:\) all-gcc/\1/' \
-				< Makefile.config > Makefile) && \
+				< Makefile.config > Makefile)
+	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e tree-check.h config.h multilib.h gcov-iov.h)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e libgcc.mvars tconfig.h unwind.h)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && touch gcc/cc1obj gcc/cc1plus gcc/f771 gcc/libgcc.a gcc/libgcc_s.so && \
-			${MKNATIVE_ENV} ${BUILD_MAKE} configure-target-libiberty \
-			${MKNATIVE_CONFIG_TARGET_LIBS} configure-target-libobjc \
-			configure-target-libstdc++-v3 \
+			${MKNATIVE_ENV} ${BUILD_MAKE} \
+			${MKNATIVE_CONFIG_TARGET_LIBS} \
 			ALL_GCC_C= ALL_GCC_CXX= \
 			CC_FOR_TARGET=${CC:Q}' '${CCADDFLAGS:Q} \
 			CXX_FOR_TARGET=${CXX:Q}' '${CCADDFLAGS:Q}' '${CXXADDFLAGS:Q} \
