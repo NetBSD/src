@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.88 2011/06/19 20:48:11 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.89 2011/06/30 09:32:07 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5318,4 +5318,14 @@ lib/libc/gen/getgrent.c				1.63
 
 	_gr_copy() can get called with fromgrp->gr_mem == NULL.
 	[sjg, ticket #1636]
+
+sys/netatalk/aarp.c				1.35
+sys/netatalk/aarp.h				1.3
+sys/netatalk/ddp_usrreq.c			1.40
+
+	aarpprobe() is called before MOWNER_ATTACH(&aarp_mowner),
+	leading to a DIAGNOSTIC panic when MBUFTRACE is defined and
+	atalkd is started. Fix by moving MOWNER_ATTACH(&aarp_mowner)
+	to ddp_init(). Should fix PR kern/44734
+	[bouyer, ticket #1622]
 
