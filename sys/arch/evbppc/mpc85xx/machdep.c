@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2011/06/29 05:53:05 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2011/06/30 00:52:56 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -398,8 +398,10 @@ e500_cnputc(dev_t dv, int c)
 }
 
 static void *
-gur_tlb_mapiodev(paddr_t pa, psize_t len)
+gur_tlb_mapiodev(paddr_t pa, psize_t len, bool prefetchable)
 {
+	if (prefetchable)
+		return NULL;
 	if (pa < gur_bst.pbs_offset)
 		return NULL;
 	if (pa + len > gur_bst.pbs_offset + gur_bst.pbs_limit)
@@ -407,7 +409,7 @@ gur_tlb_mapiodev(paddr_t pa, psize_t len)
 	return (void *)pa;
 }
 
-static void *(* const early_tlb_mapiodev)(paddr_t, psize_t) = gur_tlb_mapiodev;
+static void *(* const early_tlb_mapiodev)(paddr_t, psize_t, bool) = gur_tlb_mapiodev;
 
 static void
 e500_cpu_reset(void)

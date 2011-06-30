@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.14 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.15 2011/06/30 00:52:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.14 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.15 2011/06/30 00:52:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -138,8 +138,8 @@ uninorth_attach(device_t parent, device_t self, void *aux)
 
 	macppc_pci_get_chipset_tag(pc);
 	pc->pc_node = node;
-	pc->pc_addr = mapiodev(reg[0] + 0x800000, 4);
-	pc->pc_data = mapiodev(reg[0] + 0xc00000, 8);
+	pc->pc_addr = mapiodev(reg[0] + 0x800000, 4, false);
+	pc->pc_data = mapiodev(reg[0] + 0xc00000, 8, false);
 	pc->pc_bus = busrange[0];
 	pc->pc_conf_read = uninorth_conf_read;
 	pc->pc_conf_write = uninorth_conf_write;
