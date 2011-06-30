@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.3 2008/08/29 19:08:29 matt Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.4 2011/06/30 20:09:20 wiz Exp $	*/
 
 /*
  * machine/setjmp.h: machine dependent setjmp-related information.
@@ -14,7 +14,7 @@
  *
  * Description of the setjmp buffer
  *
- * word  0	magic number	(dependant on creator)
+ * word  0	magic number	(dependent on creator)
  *       1 -  3	f4		fp register 4
  *	 4 -  6	f5		fp register 5
  *	 7 -  9 f6		fp register 6
@@ -31,7 +31,7 @@
  *	22	r12		register 12 (ip)
  *	23	r13		register 13 (sp)
  *	24	r14		register 14 (lr)
- *	25	signal mask	(dependant on magic)
+ *	25	signal mask	(dependent on magic)
  *	26	(con't)
  *	27	(con't)
  *	28	(con't)

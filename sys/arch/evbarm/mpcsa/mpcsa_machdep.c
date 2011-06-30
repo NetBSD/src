@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_machdep.c,v 1.4 2010/01/22 08:56:05 martin Exp $	*/
-/*	$NetBSD: mpcsa_machdep.c,v 1.4 2010/01/22 08:56:05 martin Exp $	*/
+/*	$Id: mpcsa_machdep.c,v 1.5 2011/06/30 20:09:26 wiz Exp $	*/
+/*	$NetBSD: mpcsa_machdep.c,v 1.5 2011/06/30 20:09:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -73,11 +73,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for Iyonix.
+ * Machine dependent functions for kernel setup for Iyonix.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.4 2010/01/22 08:56:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.5 2011/06/30 20:09:26 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -159,7 +159,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.4 2010/01/22 08:56:05 martin Exp
 
 /*
  * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
+ * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
 

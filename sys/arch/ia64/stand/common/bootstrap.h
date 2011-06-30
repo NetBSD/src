@@ -1,4 +1,4 @@
-/*	$NetBSD: bootstrap.h,v 1.6 2009/07/20 04:59:03 kiyohara Exp $	*/
+/*	$NetBSD: bootstrap.h,v 1.7 2011/06/30 20:09:31 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -35,7 +35,7 @@
 #include <sys/queue.h>
 
 /*
- * Generic device specifier; architecture-dependant 
+ * Generic device specifier; architecture-dependent 
  * versions may be larger, but should be allowed to
  * overlap.
  */

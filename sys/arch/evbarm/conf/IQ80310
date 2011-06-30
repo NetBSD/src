@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.71 2011/03/06 17:08:22 bouyer Exp $
+#	$NetBSD: IQ80310,v 1.72 2011/06/30 20:09:23 wiz Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -47,7 +47,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

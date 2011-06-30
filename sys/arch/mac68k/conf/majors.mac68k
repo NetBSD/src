@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mac68k,v 1.21 2008/11/12 12:36:03 ad Exp $
+#	$NetBSD: majors.mac68k,v 1.22 2011/06/30 20:09:32 wiz Exp $
 #
 # Device majors for mac68k
 #
@@ -52,6 +52,6 @@ device-major	cpi		char 54			cpi
 
 device-major	nsmb		char 98			nsmb
 
-# Majors up to 143 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.

@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.19 2010/01/22 08:56:04 martin Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.20 2011/06/30 20:09:22 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for Armadillo.
+ * Machine dependent functions for kernel setup for Armadillo.
  */
 
 /*	Armadillo-9 physical memory map
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.19 2010/01/22 08:56:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.20 2011/06/30 20:09:22 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -196,7 +196,7 @@ static struct armadillo_model_t armadillo_model_table[] = {
 
 /*
  * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
+ * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
 

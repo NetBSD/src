@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.16 2010/11/28 08:23:23 hannken Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.17 2011/06/30 20:09:24 wiz Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.16 2010/11/28 08:23:23 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.17 2011/06/30 20:09:24 wiz Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -192,7 +192,7 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.16 2010/11/28 08:23:23 hannken 
 
 /*
  * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
+ * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
 

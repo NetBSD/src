@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.59 2010/04/23 19:27:35 macallan Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.60 2011/06/30 20:09:40 wiz Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -9,7 +9,7 @@
  * chipset.
  * Copyright Roger Hardiman and Amancio Hasty.
  *
- * bktr_os : This has all the Operating System dependant code,
+ * bktr_os : This has all the Operating System dependent code,
  *             probe/attach and open/close/ioctl/read/mmap
  *             memory allocation
  *             PCI bus interfacing
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.59 2010/04/23 19:27:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.60 2011/06/30 20:09:40 wiz Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
