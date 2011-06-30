@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.671 2011/06/20 06:52:37 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.672 2011/06/30 18:09:54 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -949,6 +949,12 @@ ${var}?= yes
 .for var in USE_PIGZGZIP USE_LIBTRE
 ${var}?= no
 .endfor
+
+.if ${USE_PIGZGZIP} != "no"
+TOOL_GZIP=		${TOOL_PIGZ}
+.else
+TOOL_GZIP=		gzip
+.endif
 
 #
 # Where X11 sources are and where it is installed to.
