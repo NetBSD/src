@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.36 2011/06/30 14:52:37 macallan Exp $
+.\" $NetBSD: wsdisplay.4,v 1.37 2011/06/30 14:56:09 macallan Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
 .\" Copyright (c) 2002 Ben Harris.
@@ -119,7 +119,8 @@ the keyboard input.
 (In some cases \- if no screen is set up or if a screen
 was just deleted \- it is possible that no focus is present at all.)
 The focus can be switched by either special keyboard input (typically
-.Tn CTRL-ALT-F Ns Ar n, STOP-F Ns Ar n on Sun hardware )
+.Tn CTRL-ALT-F Ns Ar n, STOP-F Ns Ar n on Sun hardware, Command-F Ns Ar n
+on ADB keyboards )
 or an ioctl command issued by a user program.
 Screens are created and deleted through the
 .Pa /dev/ttyEcfg
