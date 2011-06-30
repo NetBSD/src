@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.283 2011/05/30 13:47:01 joerg Exp $
+#	$NetBSD: bsd.README,v 1.284 2011/06/30 18:13:51 matt Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -415,9 +415,9 @@ USE_YP		If "no", disables building YP (NIS) support into
 		various system utilities/libraries that support it.
 		If ${MKYP} is "no", USE_YP will also be forced to "no".
 
-USE_PIGZGZIP	If "no", use the host "gzip" program to compress sets.
+USE_PIGZGZIP	If "no", use the host "gzip" program to compress things.
 		Otherwise, build tools/pigz and use nbpigz to compress
-		the sets.
+		things.
 		Default: "no".
 
 X11FLAVOUR	Set to "Xorg" or "XFree86", depending on whether to build
