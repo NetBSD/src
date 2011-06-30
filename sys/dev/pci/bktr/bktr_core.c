@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.51 2010/11/13 13:52:09 uebayasi Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.52 2011/06/30 20:09:40 wiz Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.51 2010/11/13 13:52:09 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.52 2011/06/30 20:09:40 wiz Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -1778,7 +1778,7 @@ video_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, void *arg,
 			    && bktr->video.addr == 0) {
 
 /*****************************/
-/* *** OS Dependant code *** */
+/* *** OS Dependent code *** */
 /*****************************/
 #if defined(__NetBSD__) || defined(__OpenBSD__)
                                 bus_dmamap_t dmamap;

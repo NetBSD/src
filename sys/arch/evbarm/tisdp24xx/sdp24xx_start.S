@@ -1,5 +1,5 @@
 /*
- * Machine dependant startup code for SDP2430 boards.
+ * Machine dependent startup code for SDP2430 boards.
  * Based on omap_start.S
  *
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -92,7 +92,7 @@
 #include <arm/omap/omap2_obioreg.h>
 #include <evbarm/tisdp24xx/sdp24xx.h>  
 
-RCSID("$NetBSD: sdp24xx_start.S,v 1.5 2011/01/31 06:28:05 matt Exp $")
+RCSID("$NetBSD: sdp24xx_start.S,v 1.6 2011/06/30 20:09:28 wiz Exp $")
 
 #if 0
 #define Invalidate_I_cache(reg) \

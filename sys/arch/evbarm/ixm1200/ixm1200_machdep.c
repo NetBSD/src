@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.47 2009/12/28 03:22:20 uebayasi Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.48 2011/06/30 20:09:25 wiz Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.47 2009/12/28 03:22:20 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.48 2011/06/30 20:09:25 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -129,7 +129,7 @@ void ixp12x0_reset(void) __attribute__((noreturn));
 
 /*
  * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
+ * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.46 2011/06/05 17:09:18 matt Exp $	*/
+/*	$NetBSD: grf.c,v 1.47 2011/06/30 20:09:21 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.46 2011/06/05 17:09:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.47 2011/06/30 20:09:21 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -227,7 +227,7 @@ grfioctl(dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 	case GRFGETNUMVM:
 		return gp->g_mode(gp, GM_GRFGETNUMVM, data, 0, 0);
 	/*
-	 * these are all hardware dependant, and have to be resolved
+	 * these are all hardware dependent, and have to be resolved
 	 * in the respective driver.
 	 */
 	case GRFIOCPUTCMAP:

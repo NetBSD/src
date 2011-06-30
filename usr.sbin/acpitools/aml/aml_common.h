@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_common.h,v 1.1 2007/01/14 04:36:13 christos Exp $	*/
+/*	$NetBSD: aml_common.h,v 1.2 2011/06/30 20:09:42 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -126,7 +126,7 @@ struct aml_region_handle {
 	vm_offset_t	addr, bytelen;
 	u_int32_t	unit;		/* access unit in bytes */
 
-	/* region type dependant */
+	/* region type dependent */
 	vm_offset_t	vaddr;			/* SystemMemory */
 	u_int32_t	pci_bus, pci_devfunc;	/* PCI_Config */
 };

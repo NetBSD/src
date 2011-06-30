@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.38 2011/05/31 02:34:32 enami Exp $ */
+/* $NetBSD: mkdep.c,v 1.39 2011/06/30 20:09:42 wiz Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\
  All rights reserved.");
-__RCSID("$NetBSD: mkdep.c,v 1.38 2011/05/31 02:34:32 enami Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.39 2011/06/30 20:09:42 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -255,7 +255,7 @@ main(int argc, char **argv)
 		case 'f':	/* Name of output file */
 			filename = optarg;
 			continue;
-		case 'o':	/* Mark dependant files .OPTIONAL */
+		case 'o':	/* Mark dependent files .OPTIONAL */
 			oflag = 1;
 			continue;
 		case 'p':	/* Program mode (x.o: -> x:) */

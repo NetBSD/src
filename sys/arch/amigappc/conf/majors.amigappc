@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amigappc,v 1.4 2010/01/24 12:17:05 phx Exp $
+#	$NetBSD: majors.amigappc,v 1.5 2011/06/30 20:09:19 wiz Exp $
 #
 # Device majors for amigappc
 #
@@ -60,6 +60,6 @@ device-major	wsmouse		char 61			wsmouse
 device-major	wsfont		char 62			wsfont
 device-major	wsmux		char 63			wsmux
 
-# Majors up to 143 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.

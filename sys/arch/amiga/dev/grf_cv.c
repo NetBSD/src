@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.51 2010/02/05 12:13:36 phx Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.52 2011/06/30 20:09:19 wiz Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.51 2010/02/05 12:13:36 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.52 2011/06/30 20:09:19 wiz Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -1519,7 +1519,7 @@ cv_load_mon(struct grf_softc *gp, struct grfcvtext_mode *md)
 
 	/*
 	 * M-Parameter of Display FIFO
-	 * This is dependant on the pixel clock and the memory clock.
+	 * This is dependent on the pixel clock and the memory clock.
 	 * The FIFO filling bandwidth is 240 MHz  and the FIFO is 96 Byte wide.
 	 * Then the time to fill the FIFO is tfill = (96/240000000) sec, the time
 	 * to empty the FIFO is tempty = (96/pixelclock) sec.

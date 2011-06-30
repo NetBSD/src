@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.39 2011/02/24 04:28:45 joerg Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.40 2011/06/30 20:09:19 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup
+ * Machine dependent functions for kernel setup
  *
  * Created      : 17/09/94
  */
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.39 2011/02/24 04:28:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.40 2011/06/30 20:09:19 wiz Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>

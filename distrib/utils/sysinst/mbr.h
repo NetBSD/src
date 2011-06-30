@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.25 2011/04/04 08:30:12 mbalmer Exp $	*/
+/*	$NetBSD: mbr.h,v 1.26 2011/06/30 20:09:15 wiz Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -125,7 +125,7 @@ void	edit_bootsel_default_disk(int);
 void	configure_bootsel(void);
 #endif
 
-/* Machine dependant mbr functions */
+/* Machine dependent mbr functions */
 int	md_mbr_use_wholedisk(mbr_info_t *mbri);
 int	md_check_mbr(mbr_info_t *mbri);
 

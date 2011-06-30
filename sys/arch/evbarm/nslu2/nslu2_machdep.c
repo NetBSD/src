@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.17 2009/12/26 16:01:25 uebayasi Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.18 2011/06/30 20:09:28 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -89,12 +89,12 @@
  */
 
 /*
- * Machine dependant functions for kernel setup for Linksys NSLU2
+ * Machine dependent functions for kernel setup for Linksys NSLU2
  * using RedBoot firmware.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.17 2009/12/26 16:01:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.18 2011/06/30 20:09:28 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -154,7 +154,7 @@ __KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.17 2009/12/26 16:01:25 uebayasi 
 
 /*
  * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
+ * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
 
