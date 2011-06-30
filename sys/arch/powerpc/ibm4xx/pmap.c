@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69 2011/06/21 04:21:44 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.70 2011/06/30 00:52:58 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2011/06/21 04:21:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2011/06/30 00:52:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -820,11 +820,11 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	/* XXXX -- need to support multiple page sizes. */
 	tte |= TTE_SZ_16K;
 #ifdef	DIAGNOSTIC
-	if ((flags & (PME_NOCACHE | PME_WRITETHROUG)) ==
-		(PME_NOCACHE | PME_WRITETHROUG))
+	if ((flags & (PMAP_NOCACHE | PME_WRITETHROUG)) ==
+		(PMAP_NOCACHE | PME_WRITETHROUG))
 		panic("pmap_enter: uncached & writethrough");
 #endif
-	if (flags & PME_NOCACHE)
+	if (flags & PMAP_NOCACHE)
 		/* Must be I/O mapping */
 		tte |= TTE_I | TTE_G;
 #ifdef PPC_4XX_NOCACHE
@@ -941,11 +941,11 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		/* XXXX -- need to support multiple page sizes. */
 		tte |= TTE_SZ_16K;
 #ifdef DIAGNOSTIC
-		if ((prot & (PME_NOCACHE | PME_WRITETHROUG)) ==
-			(PME_NOCACHE | PME_WRITETHROUG))
+		if ((flags & (PMAP_NOCACHE | PME_WRITETHROUG)) ==
+			(PMAP_NOCACHE | PME_WRITETHROUG))
 			panic("pmap_kenter_pa: uncached & writethrough");
 #endif
-		if (prot & PME_NOCACHE)
+		if (flags & PMAP_NOCACHE)
 			/* Must be I/O mapping */
 			tte |= TTE_I | TTE_G;
 #ifdef PPC_4XX_NOCACHE
