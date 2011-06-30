@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.222 2011/06/12 03:35:39 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.223 2011/06/30 20:09:19 wiz Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -127,7 +127,7 @@
  *
  * pmap.c
  *
- * Machine dependant vm stuff
+ * Machine dependent vm stuff
  *
  * Created      : 20/09/94
  */
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.222 2011/06/12 03:35:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.223 2011/06/30 20:09:19 wiz Exp $");
 
 #ifdef PMAP_DEBUG
 

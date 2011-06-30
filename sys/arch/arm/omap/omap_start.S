@@ -1,7 +1,7 @@
-/*	$NetBSD: omap_start.S,v 1.3 2009/10/21 14:15:50 rmind Exp $ */
+/*	$NetBSD: omap_start.S,v 1.4 2011/06/30 20:09:20 wiz Exp $ */
 
 /*
- * Machine dependant startup code for OMAP boards.
+ * Machine dependent startup code for OMAP boards.
  * Based on lubbock_start.S and tsarm_start.S
  *
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.

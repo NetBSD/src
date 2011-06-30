@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.86 2011/03/06 17:08:34 bouyer Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.87 2011/06/30 20:09:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -64,7 +64,7 @@ typedef int32_t netbsd32_key_t;
 typedef int32_t netbsd32_intptr_t;
 typedef uint32_t netbsd32_uintptr_t;
 
-/* netbsd32_[u]int64 are machine dependant and defined below */
+/* netbsd32_[u]int64 are machine dependent and defined below */
 
 /*
  * machine depedant section; must define:
@@ -87,7 +87,7 @@ typedef uint32_t netbsd32_uintptr_t;
  *	char netbsd32_esigcode[], netbsd32_sigcode[]
  *		- the above are abvious
  *
- * pull in the netbsd32 machine dependant header, that may help with the
+ * pull in the netbsd32 machine dependent header, that may help with the
  * above, or it may be provided via the MD layer itself.
  */
 #include <machine/netbsd32_machdep.h>

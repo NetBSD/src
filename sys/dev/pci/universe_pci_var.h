@@ -1,4 +1,4 @@
-/* $NetBSD: universe_pci_var.h,v 1.4 2005/12/11 12:22:51 christos Exp $ */
+/* $NetBSD: universe_pci_var.h,v 1.5 2011/06/30 20:09:40 wiz Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -30,7 +30,7 @@
  * Common data and functions for PCI-VME interfaces using the
  * Newbridge/Tundra Universe II (CA91C142).
  * The chip doesn't adhere to the PCI specs wrt address window usage and
- * interrupt routing, so we need implementation dependant front-ends.
+ * interrupt routing, so we need implementation dependent front-ends.
  */
 struct univ_pci_data {
 	pci_chipset_tag_t pc;

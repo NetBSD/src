@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.20 2009/05/12 08:23:00 cegger Exp $ */
+/* $NetBSD: btvmeii.c,v 1.21 2011/06/30 20:09:40 wiz Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.20 2009/05/12 08:23:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.21 2011/06/30 20:09:40 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ CFATTACH_DECL(btvmeii, sizeof(struct b3_2706_softc),
  * PCI devices behind it: A Tundra Universe as device 4 and
  * some FPGA with glue logics as device 8.
  * As long as the autoconf code doesn't provide more support
- * for dependant devices, we have to duplicate a part of the
+ * for dependent devices, we have to duplicate a part of the
  * "ppb" functions here.
  */
 
