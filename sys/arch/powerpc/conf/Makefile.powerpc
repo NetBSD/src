@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.47 2011/06/25 02:26:53 matt Exp $
+#	$NetBSD: Makefile.powerpc,v 1.48 2011/06/30 18:17:11 matt Exp $
 #
 # Makefile for NetBSD
 #
@@ -106,10 +106,6 @@ MKUBOOTIMAGEARGS=       -A powerpc -T kernel -C gz
 MKUBOOTIMAGEARGS+=      -a ${TEXTADDR:C/....$/0000/} -e $(TEXTADDR)
 MKUBOOTIMAGEARGS+=      -n "NetBSD/$(MACHINE) ${_OSRELEASE} ($(KERNEL_BUILD:T))"
 
-.if defined(USE_PIGZGZIP) && ${USE_PIGZGZIP} != "no"
-TOOL_GZIP?=		${TOOL_PIGZ}
-.endif
-TOOL_GZIP?=		gzip
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${TOOL_GZIP} -9cn $@.bin '>' $@.bin.gz; \
 	${TOOL_GZIP} -9cn $@.bin > $@.bin.gz; \
