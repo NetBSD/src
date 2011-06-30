@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.63 2009/12/20 09:36:06 dsl Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.64 2011/06/30 22:38:50 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.63 2009/12/20 09:36:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.64 2011/06/30 22:38:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,7 @@ soo_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	struct socket *so = fp->f_data;
 	int error;
 
-	error = (*so->so_receive)(so, (struct mbuf **)0,
-	    uio, (struct mbuf **)0, (struct mbuf **)0, (int *)0);
+	error = (*so->so_receive)(so, NULL, uio, NULL, NULL, NULL);
 
 	return error;
 }
@@ -114,8 +113,7 @@ soo_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	struct socket *so = fp->f_data;
 	int error;
 
-	error = (*so->so_send)(so, (struct mbuf *)0,
-		uio, (struct mbuf *)0, (struct mbuf *)0, 0, curlwp);
+	error = (*so->so_send)(so, NULL, uio, NULL, NULL, 0, curlwp);
 
 	return error;
 }
@@ -234,13 +232,12 @@ soo_stat(file_t *fp, struct stat *ub)
 	struct socket *so = fp->f_data;
 	int error;
 
-	memset((void *)ub, 0, sizeof(*ub));
+	memset(ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFSOCK;
 
 	solock(so);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_SENSE,
-	    (struct mbuf *)ub, (struct mbuf *)0, (struct mbuf *)0,
-	    curlwp);
+	    (struct mbuf *)ub, NULL, NULL, curlwp);
 	sounlock(so);
 
 	return error;
