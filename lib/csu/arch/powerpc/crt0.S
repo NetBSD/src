@@ -29,21 +29,23 @@
 
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.1 2011/02/08 02:02:25 matt Exp $")
+RCSID("$NetBSD: crt0.S,v 1.2 2011/06/30 20:10:17 matt Exp $")
 
 STRONG_ALIAS(_start,__start)
 
 	.weak	_SDA_BASE_
-	.weak	_SDA_BASE2_
 
 ENTRY_NOPROFILE(__start)
+	bcl	20,31,1f
+1:
+	mflr	%r11
 	/* SVR4 ABI says small data is in r13 */
-	lis	%r13,_SDA_BASE_@ha
-	addi	%r13,%r13,_SDA_BASE_@l
+	addis	%r13,%r11,_SDA_BASE_-1b@ha
+	addi	%r13,%r13,_SDA_BASE_-1b@l
 
-	/* E[mbedded] ABI says small data is in r2 */
-	lis	%r2,_SDA_BASE2_@ha
-	addi	%r2,%r2,_SDA_BASE2_@l
+	mr	%r3,%r6
+	mr	%r4,%r7
+	mr	%r5,%r8
 
 	b	___start
 END(__start)
