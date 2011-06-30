@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.5 2011/03/07 05:09:09 joerg Exp $ */
+/* $NetBSD: crt0-common.c,v 1.6 2011/06/30 19:48:43 joerg Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,9 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.5 2011/03/07 05:09:09 joerg Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.6 2011/06/30 19:48:43 joerg Exp $");
 
 #include <sys/types.h>
+#include <sys/exec.h>
 #include <sys/syscall.h>
 #include <machine/profile.h>
 #include <stdlib.h>
@@ -73,8 +74,8 @@ struct ps_strings *__ps_strings = 0;
 static char	 empty_string[] = "";
 char		*__progname = empty_string;
 
-void		___start(int, char **, char **, void (*)(void),
-    const Obj_Entry *, struct ps_strings *);
+void		___start(void (*)(void), const Obj_Entry *,
+			 struct ps_strings *);
 
 #define	write(fd, s, n)	__syscall(SYS_write, (fd), (s), (n))
 
@@ -85,26 +86,27 @@ do {						\
 } while (0)
 
 void
-___start(int argc, char **argv, char **envp,
-    void (*cleanup)(void),			/* from shared loader */
+___start(void (*cleanup)(void),			/* from shared loader */
     const Obj_Entry *obj,			/* from shared loader */
     struct ps_strings *ps_strings)
 {
-	environ = envp;
 
-	if (argv[0] != NULL) {
+	if (ps_strings == NULL)
+		_FATAL("ps_strings missing\n");
+	__ps_strings = ps_strings;
+
+	environ = ps_strings->ps_envstr;
+
+	if (ps_strings->ps_argvstr[0] != NULL) {
 		char *c;
-		__progname = argv[0];
-		for (c = argv[0]; *c; ++c) {
+		__progname = ps_strings->ps_argvstr[0];
+		for (c = ps_strings->ps_argvstr[0]; *c; ++c) {
 			if (*c == '/')
 				__progname = c + 1;
 		}
 	} else {
 		__progname = empty_string;
 	}
-
-	if (ps_strings != NULL)
-		__ps_strings = ps_strings;
 
 	if (&rtld_DYNAMIC != NULL) {
 		if (obj == NULL)
@@ -126,5 +128,5 @@ ___start(int argc, char **argv, char **envp,
 	atexit(_fini);
 	_init();
 
-	exit(main(argc, argv, environ));
+	exit(main(ps_strings->ps_nargvstr, ps_strings->ps_argvstr, environ));
 }
