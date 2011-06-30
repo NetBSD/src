@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.704 2011/06/12 03:35:42 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.705 2011/06/30 23:28:03 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.704 2011/06/12 03:35:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.705 2011/06/30 23:28:03 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1861,7 +1861,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 				memcpy(
 					&pcb->pcb_savefpu.sv_xmm,
 					&mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
-					sizeof (&pcb->pcb_savefpu.sv_xmm));
+					sizeof (pcb->pcb_savefpu.sv_xmm));
 			} else {
 				/* This is a weird corner case */
 				process_xmm_to_s87((struct savexmm *)
