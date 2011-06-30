@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.75 2011/06/30 00:09:26 enami Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.76 2011/06/30 00:37:07 enami Exp $	*/
 
 /*
  * Copyright (c) 2005-2011 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.75 2011/06/30 00:09:26 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.76 2011/06/30 00:37:07 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -821,8 +821,7 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 			return ENOSPC;
 		}
 	} else if (newsize < oldsize) {
-		int zerolen = MIN(newpages << PAGE_SHIFT, node->tn_size)
-		    - newsize;
+		int zerolen = MIN(round_page(newsize), node->tn_size) - newsize;
 
 		ubc_zerorange(uobj, newsize, zerolen, UBC_UNMAP_FLAG(vp));
 	}
@@ -831,7 +830,16 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	node->tn_size = newsize;
 	uvm_vnp_setsize(vp, newsize);
 
+	/*
+	 * Free "backing store".
+	 */
 	if (newpages < oldpages) {
+		KASSERT(uobj->vmobjlock == vp->v_interlock);
+
+		mutex_enter(uobj->vmobjlock);
+		uao_dropswap_range(uobj, newpages, oldpages);
+		mutex_exit(uobj->vmobjlock);
+
 		/* Decrease the used-memory counter. */
 		tmpfs_mem_decr(tmp, (oldpages - newpages) << PAGE_SHIFT);
 	}
