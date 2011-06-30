@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.53 2011/06/29 05:06:03 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.54 2011/06/30 07:01:14 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -479,7 +479,7 @@ get_libstdcxx_v3 () {
 	*)
 		_src_CC_files="atomicity_file CCODECVT_CC CCOLLATE_CC CCTYPE_CC CMESSAGES_CC CMONEY_CC CNUMERIC_CC CTIME_CC CLOCALE_CC BASIC_FILE_CC"
 		_headers1="host_headers debug_headers tr1_headers c_compatibility_headers_extra"
-		_headers2="thread_host_headers host_headers_extra"
+		_headers2="thread_host_headers host_headers_extra tr1_impl_headers parallel_headers decimal_headers"
 		_build_headers="c++allocator.h c++config.h cxxabi_tweaks.h gthr-default.h gthr-posix.h gthr-single.h gthr-tpf.h gthr.h"
 		_unwind="UNWIND_H"
 		;;
