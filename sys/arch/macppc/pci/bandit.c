@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.28 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: bandit.c,v 1.29 2011/06/30 00:52:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.28 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.29 2011/06/30 00:52:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -126,8 +126,8 @@ bandit_attach(device_t parent, device_t self, void *aux)
 	pc->pc_node = node;
 	pc->pc_iot = &sc->sc_iot;
 	pc->pc_memt = &sc->sc_memt;
-	pc->pc_addr = mapiodev(reg[0] + 0x800000, 4);
-	pc->pc_data = mapiodev(reg[0] + 0xc00000, 8);
+	pc->pc_addr = mapiodev(reg[0] + 0x800000, 4, false);
+	pc->pc_data = mapiodev(reg[0] + 0xc00000, 8, false);
 	pc->pc_bus = busrange[0];
 	pc->pc_conf_read = bandit_conf_read;
 	pc->pc_conf_write = bandit_conf_write;

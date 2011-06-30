@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.30 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: adb.c,v 1.31 2011/06/30 00:52:57 matt Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.30 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.31 2011/06/30 00:52:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -111,7 +111,7 @@ adbattach(device_t parent, device_t self, void *aux)
 
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
-	sc->sc_regbase = mapiodev(ca->ca_reg[0], ca->ca_reg[1]);
+	sc->sc_regbase = mapiodev(ca->ca_reg[0], ca->ca_reg[1], false);
 	Via1Base = sc->sc_regbase;
 
 	if (strcmp(ca->ca_name, "via-cuda") == 0)
