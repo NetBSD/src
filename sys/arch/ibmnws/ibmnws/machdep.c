@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2011/06/20 07:18:06 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2011/06/30 00:52:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2011/06/20 07:18:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2011/06/30 00:52:56 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -160,7 +160,7 @@ cpu_startup(void)
 	/*
 	 * Mapping PReP interrput vector register.
 	 */
-	prep_intr_reg = (vaddr_t) mapiodev(PREP_INTR_REG, PAGE_SIZE);
+	prep_intr_reg = (vaddr_t) mapiodev(PREP_INTR_REG, PAGE_SIZE, false);
 	if (!prep_intr_reg)
 		panic("startup: no room for interrupt register");
 	prep_intr_reg_off = INTR_VECTOR_REG;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.49 2009/10/27 03:45:32 snj Exp $	*/
+/*	$NetBSD: zs.c,v 1.50 2011/06/30 00:52:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.49 2009/10/27 03:45:32 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.50 2011/06/30 00:52:57 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -218,7 +218,7 @@ zsc_attach(device_t parent, device_t self, void *aux)
 
 	chip = 0;
 	ca->ca_reg[0] += ca->ca_baseaddr;
-	zsd = mapiodev(ca->ca_reg[0], ca->ca_reg[1]);
+	zsd = mapiodev(ca->ca_reg[0], ca->ca_reg[1], false);
 
 	node = OF_child(ca->ca_node);	/* ch-a */
 
@@ -238,7 +238,7 @@ zsc_attach(device_t parent, device_t self, void *aux)
 		regs[2] += ca->ca_baseaddr;
 		regs[4] += ca->ca_baseaddr;
 #ifdef ZS_TXDMA
-		zsc->zsc_txdmareg[channel] = mapiodev(regs[2], regs[3]);
+		zsc->zsc_txdmareg[channel] = mapiodev(regs[2], regs[3], false);
 		zsc->zsc_txdmacmd[channel] =
 			dbdma_alloc(sizeof(dbdma_command_t) * 3);
 		memset(zsc->zsc_txdmacmd[channel], 0,

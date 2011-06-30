@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.27 2011/06/05 17:03:16 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.28 2011/06/30 00:52:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27 2011/06/05 17:03:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28 2011/06/30 00:52:58 matt Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -83,7 +83,7 @@ init_prepivr(int node)
 		aprint_error("Incorrectly identified i8259 as prepivr\n");
 		return setup_i8259();
 	}
-	prep_intr_reg = (vaddr_t)mapiodev(ivr, sizeof(uint32_t));
+	prep_intr_reg = (vaddr_t)mapiodev(ivr, sizeof(uint32_t), false);
 	prep_intr_reg_off = 0; /* hack */
 	if (!prep_intr_reg)
 		panic("startup: no room for interrupt register");
@@ -125,7 +125,7 @@ init_openpic(int node)
 		    (aadr.phys_hi & OFW_PCI_PHYS_HI_SPACEMASK) &&
 		    (aadr.size_lo + aadr.phys_lo <= (rp->size_lo+rp->host))) {
 			baseaddr = (unsigned char *)mapiodev(
-			    rp->host | aadr.phys_lo, aadr.size_lo);
+			    rp->host | aadr.phys_lo, aadr.size_lo, false);
 			aprint_normal("Found openpic at %08x\n",
 			    rp->host | aadr.phys_lo);
 			setup_openpic(baseaddr, 0);
@@ -153,7 +153,7 @@ init_openpic(int node)
 		return FALSE;
 
 	if (len == sizeof(int)*2) {
-		baseaddr = (unsigned char *)mapiodev(reg[0], reg[1]);
+		baseaddr = (unsigned char *)mapiodev(reg[0], reg[1], false);
 		aprint_verbose("Found openpic at %08x\n", reg[0]);
 #ifdef PIC_OPENPIC
 		(void)setup_openpic(baseaddr, 0);
@@ -180,12 +180,12 @@ init_openpic(int node)
 	if (i > OPENPIC_MAX_ISUS)
 		aprint_error("Increase OPENPIC_MAX_ISUS to %d\n", i);
 
-	baseaddr = (unsigned char *)mapiodev(reg[0], 0x40000);
+	baseaddr = (unsigned char *)mapiodev(reg[0], 0x40000, false);
 	aprint_verbose("Found openpic at %08x\n", reg[0]);
 
 	for (j=0; j < i; j++) {
 		isu[j] = (unsigned char *)mapiodev(reg[(j+1)*2],
-		    reg[(j+1)*2+1]);
+		    reg[(j+1)*2+1], false);
 		isumap[j] = reg[(j+1)*2+1];
 	}
 	(void)setup_distributed_openpic(baseaddr, i, (void **)isu, isumap);

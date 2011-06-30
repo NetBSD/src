@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.20 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.21 2011/06/30 00:52:57 matt Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.20 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.21 2011/06/30 00:52:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,7 +124,7 @@ mediabay_attach(device_t parent, device_t self, void *aux)
 
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
-	sc->sc_addr = mapiodev(ca->ca_reg[0], PAGE_SIZE);
+	sc->sc_addr = mapiodev(ca->ca_reg[0], PAGE_SIZE, false);
 	sc->sc_node = ca->ca_node;
 	sc->sc_baseaddr = ca->ca_baseaddr;
 	sc->sc_tag = ca->ca_tag;

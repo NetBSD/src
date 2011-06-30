@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4 2011/06/22 18:06:32 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5 2011/06/30 00:52:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4 2011/06/22 18:06:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5 2011/06/30 00:52:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -109,8 +109,8 @@ pmppc_pci_get_chipset_tag(pci_chipset_tag_t pc)
 	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;
 	pc->pc_conf_hook = genppc_pci_conf_hook;
 
-	pc->pc_addr = mapiodev(CPC_PCICFGADR, 4);
-	pc->pc_data = mapiodev(CPC_PCICFGDATA, 4);
+	pc->pc_addr = mapiodev(CPC_PCICFGADR, 4, false);
+	pc->pc_data = mapiodev(CPC_PCICFGDATA, 4, false);
 	pc->pc_bus = 0;
 	pc->pc_node = 0;
 	pc->pc_memt = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.10 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: gpio.c,v 1.11 2011/06/30 00:52:57 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.10 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.11 2011/06/30 00:52:57 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -95,7 +95,8 @@ gpio_obio_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
-	sc->sc_port = mapiodev(ca->ca_baseaddr + ca->ca_reg[0], ca->ca_reg[1]);
+	sc->sc_port = mapiodev(ca->ca_baseaddr + ca->ca_reg[0], ca->ca_reg[1],
+	    false);
 
 	ca2.ca_baseaddr = ca->ca_baseaddr;
 	for (child = OF_child(ca->ca_node); child; child = OF_peer(child)) {

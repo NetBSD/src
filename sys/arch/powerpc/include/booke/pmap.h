@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.7 2011/06/23 02:33:44 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8 2011/06/30 00:52:59 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -52,7 +52,6 @@
 #include <powerpc/cpuset.h>
 #endif
 
-#define	PMAP_MD_NOCACHE		0x01000000
 #define	PMAP_NEED_PROCWR
 
 #include <common/pmap/tlb/vmpagemd.h>

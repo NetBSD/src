@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_kernel.c,v 1.8 2011/06/20 08:07:03 matt Exp $	*/
+/*	$NetBSD: pmap_kernel.c,v 1.9 2011/06/30 00:52:59 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.8 2011/06/20 08:07:03 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.9 2011/06/30 00:52:59 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap.h"
@@ -44,12 +44,12 @@ struct pmap *const kernel_pmap_ptr = &kernel_pmap_;
 u_int
 powerpc_mmap_flags(paddr_t pa)
 {
-	u_int flags = PMAP_MD_NOCACHE;
+	u_int flags = PMAP_NOCACHE;
 
 	if (pa & POWERPC_MMAP_FLAG_PREFETCHABLE)
 		flags |= PMAP_MD_PREFETCHABLE;
 	if (pa & POWERPC_MMAP_FLAG_CACHEABLE)
-		flags &= ~PMAP_MD_NOCACHE;
+		flags &= ~PMAP_NOCACHE;
 	return flags;
 }
 

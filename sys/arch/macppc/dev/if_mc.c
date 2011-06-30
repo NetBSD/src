@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.19 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.20 2011/06/30 00:52:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.19 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.20 2011/06/30 00:52:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -117,8 +117,8 @@ mc_attach(device_t parent, device_t self, void *aux)
 	reg[2] += ca->ca_baseaddr;
 	reg[4] += ca->ca_baseaddr;
 
-	sc->sc_txdma = mapiodev(reg[2], reg[3]);
-	sc->sc_rxdma = mapiodev(reg[4], reg[5]);
+	sc->sc_txdma = mapiodev(reg[2], reg[3], false);
+	sc->sc_rxdma = mapiodev(reg[4], reg[5], false);
 	bus_space_map(sc->sc_regt, reg[0], reg[1], 0, &sc->sc_regh);
 
 	sc->sc_tail = 0;

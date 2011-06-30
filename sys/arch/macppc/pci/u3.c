@@ -1,4 +1,4 @@
-/* $NetBSD: u3.c,v 1.4 2011/06/18 08:08:28 matt Exp $ */
+/* $NetBSD: u3.c,v 1.5 2011/06/30 00:52:58 matt Exp $ */
 
 /*
  * Copyright 2006 Kyma Systems LLC.
@@ -104,7 +104,7 @@ ibmcpc_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal("Mapping in config space @ pa 0x%08x, size: 0x%08x\n",
 	    reg[1], reg[2]);
-	pc_data = mapiodev(reg[1], reg[2]);
+	pc_data = mapiodev(reg[1], reg[2], false);
 
 	for (child = OF_child(OF_finddevice("/ht")), i = 1; child;
 	    child = OF_peer(child), i++) {

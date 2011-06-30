@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.6 2011/06/17 19:03:00 matt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.7 2011/06/30 00:52:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.6 2011/06/17 19:03:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.7 2011/06/30 00:52:59 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -260,7 +260,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 			ibm82660_print(pa, self);
 			break;
 		case PCI_PRODUCT_IBM_PYTHON:
-			python = mapiodev(0xfeff6000, 0x60);
+			python = mapiodev(0xfeff6000, 0x60, false);
 			v = 0x88b78e01; /* taken from linux */
 			out32rb(python+0x30, v);
 			v = in32rb(python+0x30);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.57 2011/06/29 06:13:08 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.58 2011/06/30 00:52:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57 2011/06/29 06:13:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.58 2011/06/30 00:52:57 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -189,7 +189,7 @@ ohare_init(void)
 	volatile uint32_t *cache_reg, x;
 
 	/* enable L2 cache */
-	cache_reg = mapiodev(CACHE_REG, PAGE_SIZE);
+	cache_reg = mapiodev(CACHE_REG, PAGE_SIZE, false);
 	if (((cache_reg[2] >> 24) & 0x0f) >= 3) {
 		x = cache_reg[4];
 		if ((x & 0x10) == 0)

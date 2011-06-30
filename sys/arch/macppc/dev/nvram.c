@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.16 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: nvram.c,v 1.17 2011/06/30 00:52:57 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.16 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.17 2011/06/30 00:52:57 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,13 +103,13 @@ nvram_attach(device_t parent, device_t self, void *aux)
 
 	case 8:						/* untested */
 		sc->nv_type = NVRAM_IOMEM;
-		sc->nv_data = mapiodev(ca->ca_baseaddr + reg[0], reg[1]);
+		sc->nv_data = mapiodev(ca->ca_baseaddr + reg[0], reg[1], false);
 		break;
 
 	case 16:
 		sc->nv_type = NVRAM_PORT;
-		sc->nv_port = mapiodev(ca->ca_baseaddr + reg[0], reg[1]);
-		sc->nv_data = mapiodev(ca->ca_baseaddr + reg[2], reg[3]);
+		sc->nv_port = mapiodev(ca->ca_baseaddr + reg[0], reg[1], false);
+		sc->nv_data = mapiodev(ca->ca_baseaddr + reg[2], reg[3], false);
 		break;
 
 	case 0:

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 2007/12/17 19:09:08 garbled Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 2011/06/30 00:53:00 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -44,8 +44,7 @@ struct confargs {
 };
 
 #ifdef _KERNEL
-extern void *mapiodev(paddr_t, psize_t);
-extern paddr_t kvtop(void *);
+paddr_t kvtop(void *);
 
 void inittodr(time_t);
 void resettodr(void);

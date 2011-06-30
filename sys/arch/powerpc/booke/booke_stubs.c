@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_stubs.c,v 1.8 2011/06/29 21:53:11 dholland Exp $	*/
+/*	$NetBSD: booke_stubs.c,v 1.9 2011/06/30 00:52:58 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.8 2011/06/29 21:53:11 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.9 2011/06/30 00:52:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -143,12 +143,12 @@ tlb_walk(void *ctx, bool (*func)(void *, vaddr_t, uint32_t, uint32_t))
 	(*cpu_md_ops.md_tlb_ops->md_tlb_walk)(ctx, func);
 }
 
-void *tlb_mapiodev(paddr_t, psize_t) __stub;
+void *tlb_mapiodev(paddr_t, psize_t, bool) __stub;
 
 void *
-tlb_mapiodev(paddr_t pa, psize_t len)
+tlb_mapiodev(paddr_t pa, psize_t len, bool prefetchable)
 {
-	return (*cpu_md_ops.md_tlb_io_ops->md_tlb_mapiodev)(pa, len);
+	return (*cpu_md_ops.md_tlb_io_ops->md_tlb_mapiodev)(pa, len, prefetchable);
 }
 
 void tlb_unmapiodev(vaddr_t, vsize_t) __stub;

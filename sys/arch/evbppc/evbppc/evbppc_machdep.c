@@ -1,4 +1,4 @@
-/*	$NetBSD: evbppc_machdep.c,v 1.11 2011/06/12 04:20:18 mrg Exp $	*/
+/*	$NetBSD: evbppc_machdep.c,v 1.12 2011/06/30 00:52:56 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.11 2011/06/12 04:20:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.12 2011/06/30 00:52:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,12 +94,14 @@ int fake_mapiodev = 1;
  * 	mapping if one is found.
  */
 void *
-mapiodev(paddr_t pa, psize_t len)
+mapiodev(paddr_t pa, psize_t len, bool prefetchable)
 {
 	void *p;
 	paddr_t faddr;
 	vaddr_t taddr, va;
 	int off;
+
+	KASSERT(!prefetchable);
 
 	/*
 	 * See if we have reserved TLB entry for the pa. This needs to be
@@ -123,7 +125,7 @@ mapiodev(paddr_t pa, psize_t len)
 
 	for (; len > 0; len -= PAGE_SIZE) {
 		pmap_kenter_pa(taddr, faddr, 
-			VM_PROT_READ|VM_PROT_WRITE|PME_NOCACHE, 0);
+			VM_PROT_READ|VM_PROT_WRITE, PMAP_NOCACHE);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}

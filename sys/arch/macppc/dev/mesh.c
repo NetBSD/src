@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.34 2009/09/26 15:49:45 tsutsui Exp $	*/
+/*	$NetBSD: mesh.c,v 1.35 2011/06/30 00:52:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.34 2009/09/26 15:49:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.35 2011/06/30 00:52:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -211,9 +211,9 @@ mesh_attach(device_t parent, device_t self, void *aux)
 	reg = ca->ca_reg;
 	reg[0] += ca->ca_baseaddr;
 	reg[2] += ca->ca_baseaddr;
-	sc->sc_reg = mapiodev(reg[0], reg[1]);
+	sc->sc_reg = mapiodev(reg[0], reg[1], false);
 	sc->sc_irq = ca->ca_intr[0];
-	sc->sc_dmareg = mapiodev(reg[2], reg[3]);
+	sc->sc_dmareg = mapiodev(reg[2], reg[3], false);
 
 	sc->sc_cfflags = device_cfdata(self)->cf_flags;
 	sc->sc_meshid = mesh_read_reg(sc, MESH_MESH_ID) & 0x1f;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.87 2011/06/29 06:00:17 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.88 2011/06/30 00:52:59 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -352,7 +352,7 @@ void	dcache_wbinv(vaddr_t, vsize_t);
 void	dcache_inv(vaddr_t, vsize_t);
 void	icache_inv(vaddr_t, vsize_t);
 
-void *	mapiodev(paddr_t, psize_t);
+void *	mapiodev(paddr_t, psize_t, bool);
 void	unmapiodev(vaddr_t, vsize_t);
 
 #ifdef MULTIPROCESSOR
