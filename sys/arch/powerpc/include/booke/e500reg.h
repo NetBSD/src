@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.8 2011/06/09 19:10:37 matt Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.9 2011/06/30 04:45:04 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -560,6 +560,7 @@
 #define	MDR_AS2		__PPCBITS(8,15)
 #define	MDR_AS1		__PPCBITS(16,23)
 #define	MDR_AS0		__PPCBITS(24,31)
+#define	LSOR		0x090 /* Special Operation Initiation register */
 #define LSDMR		0x094 /* SDRAM mode register */
 #define LURT		0x0A0 /* UPM refresh timer */
 #define LSRT		0x0A4 /* SDRAM refresh timer */
