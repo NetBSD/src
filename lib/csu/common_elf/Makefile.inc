@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.33 2011/06/20 06:52:36 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.34 2011/06/30 20:09:15 wiz Exp $
 
 .if !defined(ELFSIZE)
 ELFSIZE=32
@@ -39,7 +39,7 @@ crt0.o: crt0.c
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
 
-# dependant on crt0.o to pick up header dependencies
+# dependent on crt0.o to pick up header dependencies
 gcrt0.o: ${.CURDIR}/crt0.c crt0.o
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}.o

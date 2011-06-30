@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.44 2010/01/08 11:35:08 pooka Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.45 2011/06/30 20:09:41 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.44 2010/01/08 11:35:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.45 2011/06/30 20:09:41 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2009,7 +2009,7 @@ ntfs_runtocn(
 #endif
 
 /*
- * this initializes toupper table & dependant variables to be ready for
+ * this initializes toupper table & dependent variables to be ready for
  * later work
  */
 void

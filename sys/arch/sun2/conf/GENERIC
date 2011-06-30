@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.77 2011/03/06 17:08:32 bouyer Exp $
+# $NetBSD: GENERIC,v 1.78 2011/06/30 20:09:37 wiz Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.77 $"
+#ident 		"GENERIC-$Revision: 1.78 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -98,7 +98,7 @@ file-system	TMPFS		# Efficient memory file-system
 options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space

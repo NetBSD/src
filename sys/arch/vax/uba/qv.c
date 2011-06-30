@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.27 2009/11/21 04:45:39 rmind Exp $	*/
+/*	$NetBSD: qv.c,v 1.28 2011/06/30 20:09:38 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -118,12 +118,12 @@
  *      virtual system console. This code runs before and during auto-
  *      configuration and therefore is require to have a second path for setup.
  *      It is futher constrained to have a character output routine that
- *      is not dependant on the interrupt system.
+ *      is not dependent on the interrupt system.
  *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.27 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.28 2011/06/30 20:09:38 wiz Exp $");
 
 #include "qv.h"
 #if NQV > 0

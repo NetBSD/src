@@ -1,4 +1,4 @@
-#	$NetBSD: majors.x68k,v 1.23 2010/03/06 23:45:40 plunky Exp $
+#	$NetBSD: majors.x68k,v 1.24 2011/06/30 20:09:38 wiz Exp $
 #
 # Device majors for x68k
 #
@@ -60,6 +60,6 @@ device-major	uscanner	char 60			uscanner
 device-major	sysmon		char 61			sysmon_power
 device-major	nsmb		char 98			nsmb
 
-# Majors up to 143 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.

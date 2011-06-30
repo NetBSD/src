@@ -109,7 +109,7 @@
 #define PSM_MCR_OBP	0x40	/* OBP done notification */
 #define PSM_MCR_RST	0x80	/* Reset PSMbus interface */
 
-/* Mode dependant registers */
+/* Mode dependent registers */
 
 /* Mode 0 - System configuration */
 

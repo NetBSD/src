@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.134 2011/03/06 17:08:21 bouyer Exp $
+# $NetBSD: GENERIC,v 1.135 2011/06/30 20:09:21 wiz Exp $
 #
 # GENERIC machine description file
 # 
@@ -78,7 +78,7 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.69 2009/12/28 03:22:19 uebayasi Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.70 2011/06/30 20:09:21 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -33,14 +33,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for EBSA285 core architecture
+ * Machine dependent functions for kernel setup for EBSA285 core architecture
  * using cyclone firmware
  *
  * Created      : 24/11/97
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.69 2009/12/28 03:22:19 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.70 2011/06/30 20:09:21 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.69 2009/12/28 03:22:19 uebayasi E
 
 /*
  * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
+ * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
 

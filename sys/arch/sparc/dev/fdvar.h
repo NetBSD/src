@@ -1,4 +1,4 @@
-/*	$NetBSD: fdvar.h,v 1.14 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: fdvar.h,v 1.15 2011/06/30 20:09:36 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ struct ne7_fd_formb {
 		struct fd_form_data {
 			/*
 			 * DO NOT CHANGE THE LAYOUT OF THIS STRUCTS
-			 * it is hardware-dependant since it exactly
+			 * it is hardware-dependent since it exactly
 			 * matches the byte sequence to write to FDC
 			 * during its `format track' operation
 			 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp24xx_machdep.c,v 1.10 2010/11/28 08:23:24 hannken Exp $ */
+/*	$NetBSD: sdp24xx_machdep.c,v 1.11 2011/06/30 20:09:28 wiz Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.10 2010/11/28 08:23:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.11 2011/06/30 20:09:28 wiz Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -178,7 +178,7 @@ __KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.10 2010/11/28 08:23:24 hannken
 
 /*
  * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
+ * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
 

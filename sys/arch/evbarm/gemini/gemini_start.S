@@ -1,7 +1,7 @@
-/*	$NetBSD: gemini_start.S,v 1.7 2011/01/31 06:28:02 matt Exp $	*/
+/*	$NetBSD: gemini_start.S,v 1.8 2011/06/30 20:09:24 wiz Exp $	*/
 
 /*
- * Machine dependant startup code for GEMINI boards.
+ * Machine dependent startup code for GEMINI boards.
  * Based on omap_start.S
  *
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -91,7 +91,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: gemini_start.S,v 1.7 2011/01/31 06:28:02 matt Exp $")
+RCSID("$NetBSD: gemini_start.S,v 1.8 2011/06/30 20:09:24 wiz Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)

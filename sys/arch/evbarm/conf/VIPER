@@ -1,4 +1,4 @@
-#	$NetBSD: VIPER,v 1.21 2011/03/06 17:08:23 bouyer Exp $
+#	$NetBSD: VIPER,v 1.22 2011/06/30 20:09:24 wiz Exp $
 #
 #	Arcom Viper
 #
@@ -45,7 +45,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER
 
 # Networking options

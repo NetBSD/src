@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.35 2009/12/26 16:01:25 uebayasi Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.36 2011/06/30 20:09:28 wiz Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005 Fujitsu Component Limited
@@ -95,18 +95,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for integrator board
+ * Machine dependent functions for kernel setup for integrator board
  *
  * Created      : 24/11/97
  */
 
 /*
- * Machine dependant functions for kernel setup for Samsung SMDK2800
+ * Machine dependent functions for kernel setup for Samsung SMDK2800
  * derived from integrator_machdep.c
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.35 2009/12/26 16:01:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.36 2011/06/30 20:09:28 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -176,7 +176,7 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.35 2009/12/26 16:01:25 uebaya
 
 /*
  * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
+ * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
 u_int cpu_reset_address = (u_int)0;

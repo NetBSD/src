@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.13 2010/12/20 21:11:24 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.14 2011/06/30 20:09:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,7 +57,7 @@
 /*
  * gas/arm uses @ as a single comment character and thus cannot be used here
  * Instead it recognised the # instead of an @ symbols in .type directives
- * We define a couple of macros so that assembly code will not be dependant
+ * We define a couple of macros so that assembly code will not be dependent
  * on one or the other.
  */
 #define _ASM_TYPE_FUNCTION	%function

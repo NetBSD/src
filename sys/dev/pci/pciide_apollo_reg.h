@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_apollo_reg.h,v 1.18 2009/10/19 18:41:15 bouyer Exp $	*/
+/*	$NetBSD: pciide_apollo_reg.h,v 1.19 2011/06/30 20:09:40 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -87,7 +87,7 @@
  */
 #define AMD756_CHIPREV_DISABLEDMA(rev) ((rev) <= AMD756_CHIPREV_D2)
 
-/* registers offset - vendor dependant */
+/* registers offset - vendor dependent */
 #define APO_VIA_REGBASE			0x40
 #define APO_AMD_REGBASE			0x40
 #define APO_NVIDIA_REGBASE		0x50

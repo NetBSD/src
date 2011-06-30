@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.47 2011/03/06 17:08:32 bouyer Exp $
+# $NetBSD: FOURMEG,v 1.48 2011/06/30 20:09:37 wiz Exp $
 
 # FOURMEG Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FOURMEG-$Revision: 1.47 $"
+#ident 		"FOURMEG-$Revision: 1.48 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -71,7 +71,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

@@ -1,4 +1,4 @@
-/* $NetBSD: nvram.h,v 1.6 2008/04/28 20:23:33 martin Exp $ */
+/* $NetBSD: nvram.h,v 1.7 2011/06/30 20:09:35 wiz Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ typedef struct _HEADER {
 	uint32_t ConfigLastWriteDT[2]; /* last change to config area */
 	uint32_t ConfigCount;	/* count of entries in configuration */
 
-	/* OS Dependant temp area */
+	/* OS Dependent temp area */
 	void *OSAreaAddress;
 	uint32_t OSAreaLength;
 	uint32_t OSAreaLastWriteDT[2]; /* last change to OSArea */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.18 2011/01/13 21:15:16 skrll Exp $	*/
+/*	$NetBSD: pdc.h,v 1.19 2011/06/30 20:09:30 wiz Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.35 2007/07/15 20:03:48 kettenis Exp $	*/
 
@@ -666,7 +666,7 @@ struct stable_storage {
 	struct device_path ss_pri_boot;	/* (see above) */
 	char	ss_filenames[32];
 	u_short	ss_os_version;	/* 0 == none, 1 == HP-UX, 2 == MPE-XL */
-	char	ss_os[22];	/* OS-dependant information */
+	char	ss_os[22];	/* OS-dependent information */
 	char	ss_pdc[7];	/* reserved */
 	char	ss_fast_size;	/* how much memory to test.  0xf == all, or */
 				/*	else it's (256KB << ss_fast_size) */

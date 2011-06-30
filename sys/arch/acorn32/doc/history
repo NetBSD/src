@@ -1,4 +1,4 @@
-#	$NetBSD: history,v 1.4 2006/02/25 02:28:56 wiz Exp $
+#	$NetBSD: history,v 1.5 2011/06/30 20:09:17 wiz Exp $
 ---------------------------------------------------------------------------
 This document is more included as a historical reference and nostalgia :)
 rather than a still worked on list.
@@ -360,7 +360,7 @@ rather than a still worked on list.
 	- merged in new wd driver from NetBSD-current
 	- merged in new com driver from NetBSD-current
 	- merged in new fd driver from NetBSD-current
-	- created new file sys_machdep.c for machine dependant syscall stuff
+	- created new file sys_machdep.c for machine dependent syscall stuff
 	- moved sys_sysctl from machdep.c to sys_machdep.c
 	- fixed nested comments in iic.S
 	- removed old bug tracing code from cpuswitch.S

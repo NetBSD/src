@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.4 2011/02/01 23:23:52 jakllsch Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.5 2011/06/30 20:09:25 wiz Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.4 2011/02/01 23:23:52 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.5 2011/06/30 20:09:25 wiz Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.4 2011/02/01 23:23:52 jakllsch
 
 /*
  * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
+ * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
 

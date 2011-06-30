@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.67 2009/01/23 21:58:28 dsl Exp $	*/
+/*	$NetBSD: suff.c,v 1.68 2011/06/30 20:09:42 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.67 2009/01/23 21:58:28 dsl Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.68 2011/06/30 20:09:42 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.67 2009/01/23 21:58:28 dsl Exp $");
+__RCSID("$NetBSD: suff.c,v 1.68 2011/06/30 20:09:42 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1434,7 +1434,7 @@ SuffFindCmds(Src *targ, Lst slst)
 	     * We haven't looked to see if .OPTIONAL files exist yet, so
 	     * don't use one as the implicit source.
 	     * This allows us to use .OPTIONAL in .depend files so make won't
-	     * complain "don't know how to make xxx.h' when a dependant file
+	     * complain "don't know how to make xxx.h' when a dependent file
 	     * has been moved/deleted.
 	     */
 	    continue;

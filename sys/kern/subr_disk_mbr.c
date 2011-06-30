@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.41 2010/05/11 20:07:40 pooka Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.42 2011/06/30 20:09:41 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.41 2010/05/11 20:07:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.42 2011/06/30 20:09:41 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -596,7 +596,7 @@ validate_label(mbr_args_t *a, uint label_sector)
 		if ((char *)dlp > dlp_lim) {
 			if (a->action != WRITE_LABEL)
 				return SCAN_CONTINUE;
-			/* Write at arch. dependant default location */
+			/* Write at arch. dependent default location */
 			dlp_byte = (char *)a->bp->b_data + LABELOFFSET;
 			if (label_sector)
 				dlp_byte += MBR_LABELSECTOR * a->lp->d_secsize;

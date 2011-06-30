@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.153 2011/04/04 08:30:12 mbalmer Exp $	*/
+/*	$NetBSD: defs.h,v 1.154 2011/06/30 20:09:15 wiz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,11 +117,11 @@ enum {
     SET_X11_ETC,	/* X11 config */
     SET_X11_LAST,
 
-    /* Machine dependant sets */
-    SET_MD_1,		/* Machine dependant set */
-    SET_MD_2,		/* Machine dependant set */
-    SET_MD_3,		/* Machine dependant set */
-    SET_MD_4,		/* Machine dependant set */
+    /* Machine dependent sets */
+    SET_MD_1,		/* Machine dependent set */
+    SET_MD_2,		/* Machine dependent set */
+    SET_MD_3,		/* Machine dependent set */
+    SET_MD_4,		/* Machine dependent set */
 
     SET_LAST,
     SET_GROUP,		/* Start of submenu */
@@ -141,7 +141,7 @@ enum {
 #define SET_X11_NOSERVERS SET_X11_BASE, SET_X11_FONTS, SET_X11_PROG, SET_X11_ETC
 #define SET_X11 SET_X11_NOSERVERS, SET_X11_SERVERS
 
-/* All machine dependant sets */
+/* All machine dependent sets */
 #define SET_MD SET_MD_1, SET_MD_2, SET_MD_3, SET_MD_4
 
 /* Set list flags */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd_elfxx.c,v 1.4 2009/09/07 04:49:03 dholland Exp $	*/
+/*	$NetBSD: ldd_elfxx.c,v 1.5 2011/06/30 20:09:41 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd_elfxx.c,v 1.4 2009/09/07 04:49:03 dholland Exp $");
+__RCSID("$NetBSD: ldd_elfxx.c,v 1.5 2011/06/30 20:09:41 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ __RCSID("$NetBSD: ldd_elfxx.c,v 1.4 2009/09/07 04:49:03 dholland Exp $");
 #include "ldd.h"
 
 /*
- * elfxx_ldd() - bit-size independant ELF ldd implementation.
+ * elfxx_ldd() - bit-size independent ELF ldd implementation.
  * returns 0 on success and -1 on failure.
  */
 int

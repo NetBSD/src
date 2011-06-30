@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.128 2011/05/28 13:01:49 ryo Exp $
+#	$NetBSD: GENERIC_TINY,v 1.129 2011/06/30 20:09:31 wiz Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -102,7 +102,7 @@ file-system	KERNFS		# /kern
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FF snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

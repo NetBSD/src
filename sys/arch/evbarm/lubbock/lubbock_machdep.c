@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.26 2010/11/28 08:23:24 hannken Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.27 2011/06/30 20:09:25 wiz Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -28,7 +28,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for 
+ * Machine dependent functions for kernel setup for 
  * Intel DBPXA250 evaluation board (a.k.a. Lubbock).
  * Based on iq80310_machhdep.c
  */
@@ -100,7 +100,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for Intel IQ80310 evaluation
+ * Machine dependent functions for kernel setup for Intel IQ80310 evaluation
  * boards using RedBoot firmware.
  */
 
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.26 2010/11/28 08:23:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.27 2011/06/30 20:09:25 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -174,7 +174,7 @@ __KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.26 2010/11/28 08:23:24 hannken
 
 /*
  * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
+ * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.prep,v 1.21 2008/11/12 12:36:05 ad Exp $
+#	$NetBSD: majors.prep,v 1.22 2011/06/30 20:09:35 wiz Exp $
 #
 # Device majors for prep
 #
@@ -67,6 +67,6 @@ device-major	ksyms		char 76			ksyms
 
 device-major	nsmb		char 98			nsmb
 
-# Majors up to 143 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.

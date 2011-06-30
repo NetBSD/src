@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.30 2011/02/20 07:59:50 matt Exp $	*/
+/*	$NetBSD: imc.c,v 1.31 2011/06/30 20:09:35 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.30 2011/02/20 07:59:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.31 2011/06/30 20:09:35 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -180,7 +180,7 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_GIO64ARB);
 	reg &= (IMC_GIO64ARB_GRX64 | IMC_GIO64ARB_GRXRT | IMC_GIO64ARB_GRXMST);
 
-	/* Rest of settings are machine/board dependant */
+	/* Rest of settings are machine/board dependent */
 	if (mach_type == MACH_SGI_IP20) {
 		reg |=   IMC_GIO64ARB_ONEGIO;
 	        reg |=  (IMC_GIO64ARB_EXP0RT	| IMC_GIO64ARB_EXP1RT);

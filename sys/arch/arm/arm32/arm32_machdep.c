@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.75 2011/06/12 03:35:39 rmind Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.76 2011/06/30 20:09:19 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -35,14 +35,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup
+ * Machine dependent functions for kernel setup
  *
  * Created      : 17/09/94
  * Updated	: 18/04/01 updated for new wscons
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.75 2011/06/12 03:35:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.76 2011/06/30 20:09:19 wiz Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -191,7 +191,7 @@ bootsync(void)
 /*
  * void cpu_startup(void)
  *
- * Machine dependant startup code. 
+ * Machine dependent startup code. 
  *
  */
 void

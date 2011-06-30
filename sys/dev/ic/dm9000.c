@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.2 2010/09/10 08:58:36 ahoka Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.3 2011/06/30 20:09:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -476,7 +476,7 @@ dme_prepare(struct dme_softc *sc, struct ifnet *ifp)
 
 	/* XXX: This support 16-bit I/O mode only. */
 	/* XXX: This code must be factored out, such that architecture
-	   dependant versions can be supplied */
+	   dependent versions can be supplied */
 
 	int left_over_count = 0; /* Number of bytes from previous mbuf, which
 				    need to be written with the next.*/

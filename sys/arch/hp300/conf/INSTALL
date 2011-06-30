@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.45 2011/03/06 17:08:24 bouyer Exp $
+# $NetBSD: INSTALL,v 1.46 2011/06/30 20:09:30 wiz Exp $
 #
 # INSTALL machine description file
 #
@@ -82,7 +82,7 @@ file-system	MFS		# Memory-based filesystem
 # Filesystem options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	NFSSERVER	# Network filesystem server
 #options 	NFS_BOOT_BOOTP	# use bootp for NFS boot

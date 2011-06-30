@@ -1,4 +1,4 @@
-#	$NetBSD: majors.emips,v 1.1 2011/01/26 01:18:50 pooka Exp $
+#	$NetBSD: majors.emips,v 1.2 2011/06/30 20:09:22 wiz Exp $
 #
 # Device majors for emips
 #
@@ -45,6 +45,6 @@ device-major	cgd		char 104  block 33	cgd
 device-major	ksyms		char 105		ksyms
 device-major	nsmb		char 106		nsmb
 
-# Majors up to 143 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.

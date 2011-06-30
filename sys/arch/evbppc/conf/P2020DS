@@ -1,4 +1,4 @@
-#	$NetBSD: P2020DS,v 1.4 2011/06/10 16:38:17 matt Exp $
+#	$NetBSD: P2020DS,v 1.5 2011/06/30 20:09:29 wiz Exp $
 #
 #	P2020DS -- everything that's currently supported
 #
@@ -8,7 +8,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020DS-$Revision: 1.4 $"
+ident 		"P2020DS-$Revision: 1.5 $"
 
 maxusers	32
 
@@ -86,7 +86,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
-options 	FFS_EI		# FFS Endian Independant support
+options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

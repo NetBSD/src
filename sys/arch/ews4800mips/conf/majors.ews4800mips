@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ews4800mips,v 1.4 2008/11/12 12:36:00 ad Exp $
+#	$NetBSD: majors.ews4800mips,v 1.5 2011/06/30 20:09:30 wiz Exp $
 #
 # Device majors for ews4800mips
 #
@@ -37,6 +37,6 @@ device-major	cgd		char 40  block 10	cgd
 device-major	ksyms		char 41			ksyms
 device-major	wsfont		char 42			wsfont
 
-# Majors up to 143 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in
 # sys/conf/majors.

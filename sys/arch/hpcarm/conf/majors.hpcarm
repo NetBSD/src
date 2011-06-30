@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcarm,v 1.11 2010/03/06 23:45:39 plunky Exp $
+#	$NetBSD: majors.hpcarm,v 1.12 2011/06/30 20:09:30 wiz Exp $
 #
 # Device majors for hpcarm
 #
@@ -104,6 +104,6 @@ device-major	tslcd		char 108		tslcd
 device-major	twe		char 109  		twe
 device-major	nsmb		char 110		nsmb
 
-# Majors up to 143 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.

@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.68 2011/03/06 17:08:23 bouyer Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.69 2011/06/30 20:09:23 wiz Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -50,7 +50,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

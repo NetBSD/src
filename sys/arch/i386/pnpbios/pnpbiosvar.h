@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbiosvar.h,v 1.11 2009/05/04 12:13:19 cegger Exp $ */
+/* $NetBSD: pnpbiosvar.h,v 1.12 2011/06/30 20:09:31 wiz Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -70,7 +70,7 @@ struct pnpresources {
 	SIMPLEQ_HEAD(, pnp_io) io;
 	SIMPLEQ_HEAD(, pnp_irq) irq;
 	SIMPLEQ_HEAD(, pnp_dma) dma;
-	struct pnpresources *dependant_link;
+	struct pnpresources *dependent_link;
 	struct pnp_compatid *compatids;
 	char *longname;
 };

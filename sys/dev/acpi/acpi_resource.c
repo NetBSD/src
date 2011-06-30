@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.34 2011/06/15 09:02:38 jruoho Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.35 2011/06/30 20:09:39 wiz Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.34 2011/06/15 09:02:38 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.35 2011/06/30 20:09:39 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -224,7 +224,7 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 
 	case ACPI_RESOURCE_TYPE_START_DEPENDENT:
 		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-				     "Start dependant functions: %u\n",
+				     "Start dependent functions: %u\n",
 				     res->Data.StartDpf.CompatibilityPriority));
 		if (ops->start_dep)
 			(*ops->start_dep)(arg->dev, arg->context,
@@ -233,7 +233,7 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 
 	case ACPI_RESOURCE_TYPE_END_DEPENDENT:
 		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-				     "End dependant functions\n"));
+				     "End dependent functions\n"));
 		if (ops->end_dep)
 			(*ops->end_dep)(arg->dev, arg->context);
 		break;
@@ -831,7 +831,7 @@ acpi_res_parse_start_dep(device_t dev, void *context,
     int preference)
 {
 
-	aprint_error_dev(dev, "ACPI: dependant functions not supported\n");
+	aprint_error_dev(dev, "ACPI: dependent functions not supported\n");
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.94 2011/05/24 18:28:01 joerg Exp $	*/
+/*	$NetBSD: twe.c,v 1.95 2011/06/30 20:09:40 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.94 2011/05/24 18:28:01 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.95 2011/06/30 20:09:40 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1517,7 +1517,7 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 	tc = ccb->ccb_cmd;
 	tc->tc_size += 2 * nsegs;
 
-	/* The location of the S/G list is dependant upon command type. */
+	/* The location of the S/G list is dependent upon command type. */
 	switch (tc->tc_opcode >> 5) {
 	case 2:
 		for (i = 0; i < nsegs; i++) {

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mvmeppc,v 1.19 2008/11/12 12:36:04 ad Exp $
+#	$NetBSD: majors.mvmeppc,v 1.20 2011/06/30 20:09:33 wiz Exp $
 #
 # Device majors for mvmeppc
 #
@@ -49,6 +49,6 @@ device-major	ksyms		char 61			ksyms
 
 device-major	nsmb		char 98			nsmb
 
-# Majors up to 143 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.

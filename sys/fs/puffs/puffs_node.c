@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.18 2011/06/12 03:35:54 rmind Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.19 2011/06/30 20:09:41 wiz Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.18 2011/06/12 03:35:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.19 2011/06/30 20:09:41 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -63,7 +63,7 @@ static struct puffs_node *puffs_cookie2pnode(struct puffs_mount *,
 struct pool puffs_pnpool;
 
 /*
- * Grab a vnode, intialize all the puffs-dependant stuff.
+ * Grab a vnode, intialize all the puffs-dependent stuff.
  */
 int
 puffs_getvnode(struct mount *mp, puffs_cookie_t ck, enum vtype type,

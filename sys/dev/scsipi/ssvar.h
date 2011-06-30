@@ -1,4 +1,4 @@
-/*	$NetBSD: ssvar.h,v 1.17 2005/12/11 12:23:51 christos Exp $	*/
+/*	$NetBSD: ssvar.h,v 1.18 2011/06/30 20:09:40 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -55,7 +55,7 @@ struct ss_special {
 };
 
 /*
- * ss_softc has to be declared here, because the device dependant
+ * ss_softc has to be declared here, because the device dependent
  * modules include it
  */
 struct ss_softc {

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.78 2011/03/06 17:08:19 bouyer Exp $
+# $NetBSD: GENERIC.in,v 1.79 2011/06/30 20:09:18 wiz Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.78 $"
+#ident 		"GENERIC-$Revision: 1.79 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -167,7 +167,7 @@ file-system	TMPFS		# Efficient memory file-system
 
 # Filesystem options
 
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl

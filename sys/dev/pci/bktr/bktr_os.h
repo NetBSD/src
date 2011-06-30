@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.h,v 1.3 2003/03/11 23:11:26 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.h,v 1.6 2003/03/12 00:14:41 wiz Exp $	*/
+/*	$NetBSD: bktr_os.h,v 1.7 2011/06/30 20:09:40 wiz Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.h,v 1.4 2000/04/16 07:56:58 roger Exp$ */
 
 /*
@@ -9,7 +9,7 @@
  * chipset.
  * Copyright Roger Hardiman and Amancio Hasty.
  *
- * bktr_os : This has all the Operating System dependant code.
+ * bktr_os : This has all the Operating System dependent code.
  *
  */
 

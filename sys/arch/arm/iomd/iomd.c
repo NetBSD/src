@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.15 2006/08/05 18:22:57 bjh21 Exp $	*/
+/*	$NetBSD: iomd.c,v 1.16 2011/06/30 20:09:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.15 2006/08/05 18:22:57 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.16 2011/06/30 20:09:20 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ iomdattach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/* Set up the external DMA channels */
-	/* XXX - this should be machine dependant not IOMD dependant */
+	/* XXX - this should be machine dependent not IOMD dependent */
 	switch (sc->sc_id) {
 	case ARM7500_IOC_ID:
 	case ARM7500FE_IOC_ID:

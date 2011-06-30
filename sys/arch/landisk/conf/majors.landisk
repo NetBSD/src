@@ -1,4 +1,4 @@
-#	$NetBSD: majors.landisk,v 1.6 2010/03/06 23:45:39 plunky Exp $
+#	$NetBSD: majors.landisk,v 1.7 2011/06/30 20:09:32 wiz Exp $
 #
 # Device majors for landisk
 #
@@ -71,6 +71,6 @@ device-major	pci		char 80			pci
 
 device-major	button		char 84			button
 
-# Majors up to 143 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.

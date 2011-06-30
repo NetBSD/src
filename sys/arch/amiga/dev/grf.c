@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.55 2011/06/03 00:52:22 matt Exp $ */
+/*	$NetBSD: grf.c,v 1.56 2011/06/30 20:09:19 wiz Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.55 2011/06/03 00:52:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.56 2011/06/30 20:09:19 wiz Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -232,7 +232,7 @@ grfioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case GRFGETNUMVM:
 		return(gp->g_mode(gp, GM_GRFGETNUMVM, data, 0, 0));
 	/*
-	 * these are all hardware dependant, and have to be resolved
+	 * these are all hardware dependent, and have to be resolved
 	 * in the respective driver.
 	 */
 	case GRFIOCPUTCMAP:
