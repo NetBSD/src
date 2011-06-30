@@ -48,5 +48,11 @@ struct pq3obio_softc {
 	struct powerpc_bus_space sc_obio_bst;
 };
 
+#ifdef _KERNEL
+void lbc_lock(struct pq3obio_softc *);
+void lbc_unlock(struct pq3obio_softc *);
+uint32_t lbc_read_4(struct pq3obio_softc *, bus_size_t);
+void lbc_write_4(struct pq3obio_softc *, bus_size_t, uint32_t size);
+#endif
 
 #endif /* _POWERPC_BOOKE_OBIOVAR_H_ */
