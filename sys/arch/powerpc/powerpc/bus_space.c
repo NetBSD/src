@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.27 2011/06/20 05:39:43 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.28 2011/06/30 00:53:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.27 2011/06/20 05:39:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.28 2011/06/30 00:53:00 matt Exp $");
 
 #define _POWERPC_BUS_SPACE_PRIVATE
 
@@ -614,7 +614,8 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	/*
 	 * Map this into the kernel pmap.
 	 */
-	*bshp = (bus_space_handle_t) mapiodev(pa, size);
+	*bshp = (bus_space_handle_t) mapiodev(pa, size,
+	    (flags & BUS_SPACE_MAP_PREFETCHABLE) != 0);
 	if (*bshp == 0) {
 		extent_free(t->pbs_extent, bpa, size, EX_NOWAIT | extent_flags);
 #ifdef DEBUG
@@ -747,7 +748,7 @@ memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 		}
 	}
 #endif /* defined (PPC_OEA) || defined(PPC_OEA601) */
-	*bshp = (bus_space_handle_t) mapiodev(pa, size);
+	*bshp = (bus_space_handle_t) mapiodev(pa, size, false);
 	if (*bshp == 0) {
 		extent_free(t->pbs_extent, bpa, size, EX_NOWAIT | extent_flags);
 		return (ENOMEM);

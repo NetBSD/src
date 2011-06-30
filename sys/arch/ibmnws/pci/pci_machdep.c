@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 2011/06/22 18:06:33 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.8 2011/06/30 00:52:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -84,8 +84,8 @@ ibmnws_pci_get_chipset_tag_indirect(pci_chipset_tag_t pc)
 	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;
 	pc->pc_conf_hook = ibmnws_pci_conf_hook;
 
-	pc->pc_addr = mapiodev(PCI_MODE1_ADDRESS_REG, 4);
-	pc->pc_data = mapiodev(PCI_MODE1_DATA_REG, 4);
+	pc->pc_addr = mapiodev(PCI_MODE1_ADDRESS_REG, 4, false);
+	pc->pc_data = mapiodev(PCI_MODE1_DATA_REG, 4, false);
 	pc->pc_bus = 0;
 	pc->pc_node = 0;
 	pc->pc_memt = 0;

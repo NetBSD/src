@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.11 2011/06/29 06:00:56 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.12 2011/06/30 00:52:59 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -115,7 +115,7 @@ struct tlb_md_io_ops {
 	 * early boot by doing cpu_md_ops.tlb_md_ops = (const struct
 	 * tlb_md_ops *) &<variable containing mapiodev pointer>.
 	 */
-	void *(*md_tlb_mapiodev)(paddr_t, psize_t);
+	void *(*md_tlb_mapiodev)(paddr_t, psize_t, bool);
 	void (*md_tlb_unmapiodev)(vaddr_t, vsize_t);
 	int (*md_tlb_ioreserve)(vaddr_t, vsize_t, uint32_t);
 	int (*md_tlb_iorelease)(vaddr_t);
@@ -175,7 +175,7 @@ void	calc_delayconst(void);
 struct intrsw;
 void	exception_init(const struct intrsw *);
 
-void	*tlb_mapiodev(paddr_t, psize_t);
+void	*tlb_mapiodev(paddr_t, psize_t, bool);
 void	tlb_unmapiodev(vaddr_t, vsize_t);
 int	tlb_ioreserve(vaddr_t, vsize_t, pt_entry_t);
 int	tlb_iorelease(vaddr_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 2011/06/20 07:18:07 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73 2011/06/30 00:53:00 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2011/06/20 07:18:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2011/06/30 00:53:00 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -342,11 +342,11 @@ prep_setup_openpic(PPC_DEVICE *dev)
 		if (pa->PPCData[0] == 1)
 			baseaddr = (unsigned char *)mapiodev(
 			    le64dec(&pa->PPCData[4]) | PREP_BUS_SPACE_IO,
-			    le64dec(&pa->PPCData[12]));
+			    le64dec(&pa->PPCData[12]), false);
 		else if (pa->PPCData[0] == 2)
 			baseaddr = (unsigned char *)mapiodev(
 			    le64dec(&pa->PPCData[4]) | PREP_BUS_SPACE_MEM,
-			    le64dec(&pa->PPCData[12]));
+			    le64dec(&pa->PPCData[12]), false);
 		if (baseaddr == NULL)
 			return 0;
 		pic_init();
@@ -407,7 +407,7 @@ setup_ivr(PPC_DEVICE *dev)
 		/* otherwise we have a memory packet */
 		addr = le64dec(&pa->PPCData[4]) & ~(PAGE_SIZE-1);
 		prep_intr_reg_off = le64dec(&pa->PPCData[4]) & (PAGE_SIZE-1); 
-		prep_intr_reg = (vaddr_t)mapiodev(addr, PAGE_SIZE);
+		prep_intr_reg = (vaddr_t)mapiodev(addr, PAGE_SIZE, false);
 		if (!prep_intr_reg)
 			panic("startup: no room for interrupt register");
 		return;
@@ -450,7 +450,7 @@ prep_init(void)
 		 * occur on certain motorola VME boards.  Instead we need
 		 * to just hardcode it.
 		 */
-		prep_intr_reg = (vaddr_t) mapiodev(PREP_INTR_REG, PAGE_SIZE);
+		prep_intr_reg = (vaddr_t) mapiodev(PREP_INTR_REG, PAGE_SIZE, false);
 		if (!prep_intr_reg)
 			panic("startup: no room for interrupt register");
 		prep_intr_reg_off = INTR_VECTOR_REG;

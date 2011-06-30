@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.16 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.17 2011/06/30 00:52:57 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -62,7 +62,6 @@ void identifycpu(char *);
 /* these are in machdep.c */
 void initppc(u_int, u_int, char *);
 void model_init(void);
-void *mapiodev(paddr_t, psize_t);
 paddr_t kvtop(void *);
 void dumpsys(void);
 void copy_disp_props(device_t, int, prop_dictionary_t);

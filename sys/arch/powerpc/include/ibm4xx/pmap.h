@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 2011/06/20 20:24:28 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 2011/06/30 00:52:59 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -138,7 +138,6 @@
  */
 #define	PME_NOCACHE	0x1000000
 #define	PME_WRITETHROUG	0x2000000
-#define	PMAP_MD_NOCACHE	PME_NOCACHE	/* XXX: OEA pmap compat. for bus_dma */
 
 /*
  * Pmap stuff
