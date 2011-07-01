@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.40 2010/04/16 20:05:37 dyoung Exp $
+.\" $NetBSD: bus_space.9,v 1.41 2011/07/01 22:05:28 dyoung Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -380,7 +380,9 @@ functions.
 Implementations are encouraged to implement prototyped (type-checked)
 versions of these interfaces, but may implement them as macros if appropriate.
 Machine-dependent types, variables, and functions should be marked clearly in
-.In machine/bus.h
+.In machine/bus_defs.h
+and in
+.In machine/bus_funcs.h
 to avoid confusion with the
 machine-independent types and functions, and, if possible, should be
 given names which make the machine-dependence clear.
@@ -496,7 +498,7 @@ Functions which take a count of bytes have undefined results if the specified
 is zero.
 .Sh TYPES
 Several types are defined in
-.In machine/bus.h
+.In machine/bus_defs.h
 to facilitate use of the
 .Nm
 functions by drivers.
