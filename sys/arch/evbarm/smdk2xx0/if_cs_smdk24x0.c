@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_smdk24x0.c,v 1.3 2009/09/22 14:55:19 tsutsui Exp $ */
+/*	$NetBSD: if_cs_smdk24x0.c,v 1.4 2011/07/01 20:44:21 dyoung Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_smdk24x0.c,v 1.3 2009/09/22 14:55:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_smdk24x0.c,v 1.4 2011/07/01 20:44:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_smdk24x0.c,v 1.3 2009/09/22 14:55:19 tsutsui E
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arch/arm/s3c2xx0/s3c2410reg.h>

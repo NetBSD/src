@@ -1,4 +1,4 @@
-/*	$NetBSD: sm_obio_space.c,v 1.3 2005/12/11 12:17:09 christos Exp $ */
+/*	$NetBSD: sm_obio_space.c,v 1.4 2011/07/01 20:42:37 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sm_obio_space.c,v 1.3 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sm_obio_space.c,v 1.4 2011/07/01 20:42:37 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: sm_obio_space.c,v 1.3 2005/12/11 12:17:09 christos E
 
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pmap.h>
 
 /* Proto types for all the bus_space structure functions */

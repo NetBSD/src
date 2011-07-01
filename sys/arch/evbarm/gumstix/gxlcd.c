@@ -1,4 +1,4 @@
-/*	$NetBSD: gxlcd.c,v 1.2 2009/11/21 08:33:50 kiyohara Exp $	*/
+/*	$NetBSD: gxlcd.c,v 1.3 2011/07/01 20:39:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxlcd.c,v 1.2 2009/11/21 08:33:50 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxlcd.c,v 1.3 2011/07/01 20:39:34 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: gxlcd.c,v 1.2 2009/11/21 08:33:50 kiyohara Exp $");
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_callbacks.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0reg.h>

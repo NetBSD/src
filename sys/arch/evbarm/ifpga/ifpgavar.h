@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpgavar.h,v 1.5 2009/07/21 16:04:16 dyoung Exp $ */
+/*	$NetBSD: ifpgavar.h,v 1.6 2011/07/01 20:39:34 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,7 +32,7 @@
 #ifndef _IFPGAVAR_H_
 #define _IFPGAVAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* We statically map the UARTS at boot so that we can access the console
    before we've probed for the IFPGA. */

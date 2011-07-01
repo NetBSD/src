@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_mainbus.c,v 1.8 2009/10/21 14:15:51 rmind Exp $ */
+/*	$NetBSD: ixp12x0_mainbus.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_mainbus.c,v 1.8 2009/10/21 14:15:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_mainbus.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $");
 
 /*
  * front-end for the ixp12x0 I/O Processor.
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_mainbus.c,v 1.8 2009/10/21 14:15:51 rmind Ex
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <evbarm/ixm1200/ixm1200reg.h>
 #include <evbarm/ixm1200/ixm1200var.h>

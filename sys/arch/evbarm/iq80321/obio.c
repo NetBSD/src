@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.15 2011/06/06 16:29:15 matt Exp $	*/
+/*	$NetBSD: obio.c,v 1.16 2011/07/01 20:41:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -41,14 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.15 2011/06/06 16:29:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.16 2011/07/01 20:41:16 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/i80321reg.h>
 
