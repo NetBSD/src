@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.3 2011/02/20 07:48:37 matt Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.4 2011/07/01 19:01:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.3 2011/02/20 07:48:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.4 2011/07/01 19:01:31 dyoung Exp $");
 
 #include "locators.h"
 #include "pci.h"
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.3 2011/02/20 07:48:37 matt Exp $");
 #include <sys/malloc.h>
 
 #define _MIPS_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <machine/int_fmtio.h>
 

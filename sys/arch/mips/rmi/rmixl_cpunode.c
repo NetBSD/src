@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpunode.c,v 1.2 2011/02/20 07:48:37 matt Exp $	*/
+/*	$NetBSD: rmixl_cpunode.c,v 1.3 2011/07/01 19:01:30 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.2 2011/02/20 07:48:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.3 2011/07/01 19:01:30 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.2 2011/02/20 07:48:37 matt Exp $
 #include <mips/rmi/rmixlvar.h>
 #include <mips/rmi/rmixl_cpunodevar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include "locators.h"
 
 static int  cpunode_rmixl_match(device_t, cfdata_t, void *);

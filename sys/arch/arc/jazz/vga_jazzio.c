@@ -1,4 +1,4 @@
-/* $NetBSD: vga_jazzio.c,v 1.16 2011/03/06 14:58:44 tsutsui Exp $ */
+/* $NetBSD: vga_jazzio.c,v 1.17 2011/07/01 19:25:42 dyoung Exp $ */
 /* NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.16 2011/03/06 14:58:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.17 2011/07/01 19:25:42 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.16 2011/03/06 14:58:44 tsutsui Exp 
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/wired_map.h>
 
 #include <mips/pte.h>

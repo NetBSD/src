@@ -1,5 +1,5 @@
-/*	$Id: at91pmc.c,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
-/*	$NetBSD: at91pmc.c,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
+/*	$Id: at91pmc.c,v 1.4 2011/07/01 19:31:17 dyoung Exp $	*/
+/*	$NetBSD: at91pmc.c,v 1.4 2011/07/01 19:31:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/time.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>

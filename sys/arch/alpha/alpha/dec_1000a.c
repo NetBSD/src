@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.30 2011/06/14 15:34:21 matt Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.31 2011/07/01 19:22:35 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.30 2011/06/14 15:34:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.31 2011/07/01 19:22:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.30 2011/06/14 15:34:21 matt Exp $");
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
 #include <machine/cpuconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

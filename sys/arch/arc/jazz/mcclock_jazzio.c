@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_jazzio.c,v 1.12 2011/02/08 20:20:09 rmind Exp $	*/
+/*	$NetBSD: mcclock_jazzio.c,v 1.13 2011/07/01 19:25:42 dyoung Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -41,14 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_jazzio.c,v 1.12 2011/02/08 20:20:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_jazzio.c,v 1.13 2011/07/01 19:25:42 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/clock_subr.h>
 

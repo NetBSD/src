@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.21 2011/05/11 17:49:31 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.22 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.21 2011/05/11 17:49:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22 2011/07/01 18:53:47 dyoung Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.21 2011/05/11 17:49:31 dyoung Exp 
 #include <uvm/uvm_extern.h>
 
 #define _SGIMIPS_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/sysconf.h>
 

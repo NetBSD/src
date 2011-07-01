@@ -1,4 +1,4 @@
-/*	$NetBSD: eppcic.c,v 1.4 2008/06/29 05:53:39 hamajima Exp $	*/
+/*	$NetBSD: eppcic.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.4 2008/06/29 05:53:39 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.4 2008/06/29 05:53:39 hamajima Exp $");
 #include <sys/device.h>
 #include <sys/kthread.h>
 #include <uvm/uvm_param.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciachip.h>

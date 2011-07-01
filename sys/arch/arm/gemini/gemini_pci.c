@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_pci.c,v 1.9 2011/04/04 20:37:45 dyoung Exp $	*/
+/*	$NetBSD: gemini_pci.c,v 1.10 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /* adapted from:
  *	NetBSD: i80312_pci.c,v 1.9 2005/12/11 12:16:51 christos Exp
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.9 2011/04/04 20:37:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.10 2011/07/01 19:32:28 dyoung Exp $");
 
 #include <sys/cdefs.h>
 
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.9 2011/04/04 20:37:45 dyoung Exp $"
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/pic/picvar.h>

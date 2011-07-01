@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.15 2011/06/30 20:09:28 wiz Exp $ */
+/*	$NetBSD: tsarm_machdep.c,v 1.16 2011/07/01 19:11:34 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.15 2011/06/30 20:09:28 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.16 2011/07/01 19:11:34 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.15 2011/06/30 20:09:28 wiz Exp $
 #include <ddb/db_extern.h>
 
 #include <acorn32/include/bootconfig.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <arm/undefined.h>

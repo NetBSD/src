@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.45 2011/02/20 07:59:51 matt Exp $ */
+/* $NetBSD: if_mec.c,v 1.46 2011/07/01 18:53:47 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.45 2011/02/20 07:59:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.46 2011/07/01 18:53:47 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "rnd.h"
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.45 2011/02/20 07:59:51 matt Exp $");
 
 #include <net/bpf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/machtype.h>
 

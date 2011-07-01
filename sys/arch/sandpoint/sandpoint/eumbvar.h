@@ -1,4 +1,4 @@
-/* $NetBSD: eumbvar.h,v 1.5 2010/05/12 17:20:24 phx Exp $ */
+/* $NetBSD: eumbvar.h,v 1.6 2011/07/01 19:16:06 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct eumb_attach_args {
 	const char *eumb_name;

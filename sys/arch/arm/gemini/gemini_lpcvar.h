@@ -1,11 +1,11 @@
-/*	$NetBSD: gemini_lpcvar.h,v 1.2 2008/11/15 05:48:34 cliff Exp $	*/
+/*	$NetBSD: gemini_lpcvar.h,v 1.3 2011/07/01 19:32:28 dyoung Exp $	*/
 
 #ifndef _ARM_GEMINI_LPCVAR_H
 #define _ARM_GEMINI_LPCVAR_H
 
 #include <sys/types.h>
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #define GEMINI_LPC_LDN_ALL	-1	/* "global" LDN */
 

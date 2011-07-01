@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.16 2009/12/14 00:46:13 matt Exp $	*/
+/*	$NetBSD: mace.c,v 1.17 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.16 2009/12/14 00:46:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.17 2011/07/01 18:53:47 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.16 2009/12/14 00:46:13 matt Exp $");
 #include <uvm/uvm_extern.h>
 
 #define	_SGIMIPS_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/locore.h>
 #include <machine/autoconf.h>

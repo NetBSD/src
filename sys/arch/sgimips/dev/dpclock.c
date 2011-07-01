@@ -1,4 +1,4 @@
-/*	$NetBSD: dpclock.c,v 1.2 2009/12/12 14:44:09 tsutsui Exp $	*/
+/*	$NetBSD: dpclock.c,v 1.3 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Erik Reid
@@ -39,7 +39,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/sysconf.h>
 #include <machine/machtype.h>

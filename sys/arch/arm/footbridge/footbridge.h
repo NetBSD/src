@@ -1,10 +1,10 @@
-/*      $NetBSD: footbridge.h,v 1.3 2009/03/14 14:45:55 dsl Exp $  */
+/*      $NetBSD: footbridge.h,v 1.4 2011/07/01 19:32:28 dyoung Exp $  */
 
 #ifndef _FOOTBRIDGE_H_
 #define _FOOTBRIDGE_H_
 
 #include <sys/termios.h>
-#include <arm/bus.h>
+#include <sys/bus.h>
 void footbridge_pci_bs_tag_init(void);
 void footbridge_sa110_cc_setup(void);
 void footbridge_create_io_bs_tag(struct bus_space *, void *);

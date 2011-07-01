@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.6 2009/03/14 21:04:15 dsl Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.7 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.6 2009/03/14 21:04:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.7 2011/07/01 18:53:46 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.6 2009/03/14 21:04:15 dsl Exp $")
 #include <sys/device.h>
 #include <sys/extent.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/eisa/eisavar.h>
 
 void

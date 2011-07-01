@@ -1,5 +1,5 @@
-/*	$Id: at91twi.c,v 1.4 2009/03/14 21:04:05 dsl Exp $	*/
-/*	$NetBSD: at91twi.c,v 1.4 2009/03/14 21:04:05 dsl Exp $	*/
+/*	$Id: at91twi.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $	*/
+/*	$NetBSD: at91twi.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -31,13 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.4 2009/03/14 21:04:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/lock.h>
 
 #include <arm/at91/at91var.h>

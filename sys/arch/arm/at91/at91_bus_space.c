@@ -1,4 +1,4 @@
-/*	$NetBSD: at91_bus_space.c,v 1.3 2009/10/23 06:53:12 snj Exp $ */
+/*	$NetBSD: at91_bus_space.c,v 1.4 2011/07/01 19:31:16 dyoung Exp $ */
 
 /*
  * Based on ep93xx_space.c
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91_bus_space.c,v 1.3 2009/10/23 06:53:12 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91_bus_space.c,v 1.4 2011/07/01 19:31:16 dyoung Exp $");
 
 /*
  * bus_space I/O functions for ep93xx
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: at91_bus_space.c,v 1.3 2009/10/23 06:53:12 snj Exp $
 
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/at91/at91var.h>
 //#include <arm/ep93xx/ep93xxreg.h>

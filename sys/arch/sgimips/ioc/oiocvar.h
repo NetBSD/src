@@ -1,4 +1,4 @@
-/*	$NetBSD: oiocvar.h,v 1.1 2009/02/10 06:04:56 rumble Exp $	*/
+/*	$NetBSD: oiocvar.h,v 1.2 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -40,7 +40,7 @@
 #ifndef _ARCH_SGIMIPS_DEV_OIOCVAR_H_
 #define	_ARCH_SGIMIPS_DEV_OIOCVAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct oioc_attach_args {
 	const char	       *oa_name;	/* name of device */

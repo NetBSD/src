@@ -1,4 +1,4 @@
-/*	$NetBSD: jazziovar.h,v 1.7 2007/03/04 05:59:36 christos Exp $	*/
+/*	$NetBSD: jazziovar.h,v 1.8 2011/07/01 19:25:41 dyoung Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -29,7 +29,7 @@
 #ifndef __JAZZIOVAR_H
 #define __JAZZIOVAR_H
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct jazzio_attach_args {
 	const char *ja_name;
