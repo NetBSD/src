@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.45 2011/06/06 21:53:42 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.46 2011/07/01 02:04:15 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1662,7 +1662,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	# get tlblock addr
 	li	k0, __SIMPLELOCK_LOCKED
 1:	swapw	k0, k1				# set it to locked
-	bnez	k1, 1b				# was it locked?
+	bnez	k0, 1b				# was it locked?
 	 nop					#  if it was, try again
 #else
 #define	TLB_INVALID_EXCEPTION_EXIT	_C_LABEL(MIPSX(kern_gen_exception))
@@ -1735,6 +1735,10 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 #ifdef MIPS3
 	nop
 	nop
+#endif
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	# get tlblock addr
+	INT_S	zero, 0(k1)			# clear lock
 #endif
 	eret
 
