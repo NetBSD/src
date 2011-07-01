@@ -1,4 +1,4 @@
-/*	$NetBSD: epohci.c,v 1.4 2009/03/14 15:36:01 dsl Exp $ */
+/*	$NetBSD: epohci.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.4 2009/03/14 15:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.4 2009/03/14 15:36:01 dsl Exp $");
 #include <sys/mbuf.h>
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

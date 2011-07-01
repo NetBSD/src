@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.33 2011/04/24 16:26:53 rmind Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.34 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.33 2011/04/24 16:26:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.34 2011/07/01 19:32:28 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.33 2011/04/24 16:26:53 rmind Ex
 #include <sys/malloc.h>
 #include <sys/termios.h>
 #include <sys/kauth.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <arm/footbridge/dc21285mem.h>
 #include <arm/footbridge/dc21285reg.h>

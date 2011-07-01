@@ -1,4 +1,4 @@
-/* $NetBSD: sgmapvar.h,v 1.15 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: sgmapvar.h,v 1.16 2011/07/01 19:22:35 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_ALPHA_COMMON_SGMAPVAR_H
 
 #include <sys/extent.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * Bits n:13 of the DMA address are the index of the PTE into

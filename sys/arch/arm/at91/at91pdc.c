@@ -1,7 +1,7 @@
-/*	$Id: at91pdc.c,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
+/*	$Id: at91pdc.c,v 1.3 2011/07/01 19:31:17 dyoung Exp $	*/
 
 #include <sys/types.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <arm/at91/at91pdcvar.h>
 
 int at91pdc_alloc_fifo(bus_dma_tag_t dmat, at91pdc_fifo_t *fifo, int size,

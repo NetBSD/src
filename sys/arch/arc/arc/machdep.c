@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.123 2011/02/20 07:52:42 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.124 2011/07/01 19:28:00 dyoung Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 2011/02/20 07:52:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124 2011/07/01 19:28:00 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 2011/02/20 07:52:42 matt Exp $");
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/pio.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/trap.h>
 #include <machine/autoconf.h>
 #include <machine/platform.h>

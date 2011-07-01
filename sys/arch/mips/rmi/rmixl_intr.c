@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.5 2011/04/29 21:58:27 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.6 2011/07/01 19:01:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.5 2011/04/29 21:58:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.6 2011/07/01 19:01:30 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.5 2011/04/29 21:58:27 matt Exp $");
 #include <sys/mutex.h>
 #include <sys/cpu.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <mips/cpu.h>

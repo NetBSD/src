@@ -1,4 +1,4 @@
-/* 	$NetBSD: xcvbusvar.h,v 1.1 2006/12/02 22:18:47 freza Exp $ */
+/* 	$NetBSD: xcvbusvar.h,v 1.2 2011/07/01 19:03:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #ifndef _VIRTEX_DEV_VIRTEXVAR_H_
 #define _VIRTEX_DEV_VIRTEXVAR_H_

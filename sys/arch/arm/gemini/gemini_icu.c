@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_icu.c,v 1.4 2010/12/20 00:25:27 matt Exp $	*/
+/*	$NetBSD: gemini_icu.c,v 1.5 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /* adapted from:
  *	NetBSD: omap2_icu.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -36,7 +36,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_icu.c,v 1.4 2010/12/20 00:25:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_icu.c,v 1.5 2011/07/01 19:32:28 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_icu.c,v 1.4 2010/12/20 00:25:27 matt Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/cpu.h>
 #include <arm/armreg.h>

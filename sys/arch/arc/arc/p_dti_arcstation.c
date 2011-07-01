@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_arcstation.c,v 1.16 2011/02/20 07:52:42 matt Exp $	*/
+/*	$NetBSD: p_dti_arcstation.c,v 1.17 2011/07/01 19:28:00 dyoung Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.16 2011/02/20 07:52:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.17 2011/07/01 19:28:00 dyoung Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.16 2011/02/20 07:52:42 matt E
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pio.h>
 #include <machine/platform.h>
 #include <machine/wired_map.h>

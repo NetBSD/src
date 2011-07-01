@@ -1,4 +1,4 @@
-/*	$Id: lightvar.h,v 1.1 2006/12/26 04:28:16 rumble Exp $	*/
+/*	$Id: lightvar.h,v 1.2 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -27,7 +27,7 @@
 #ifndef _ARCH_SGIMIPS_GIO_LIGHTVAR_H_
 #define _ARCH_SGIMIPS_GIO_LIGHTVAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 int light_cnattach(struct gio_attach_args *);
 
