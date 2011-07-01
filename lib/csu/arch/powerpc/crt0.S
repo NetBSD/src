@@ -29,9 +29,11 @@
 
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.2 2011/06/30 20:10:17 matt Exp $")
+RCSID("$NetBSD: crt0.S,v 1.3 2011/07/01 02:59:05 joerg Exp $")
 
 STRONG_ALIAS(_start,__start)
+
+	.hidden ___start
 
 	.weak	_SDA_BASE_
 
