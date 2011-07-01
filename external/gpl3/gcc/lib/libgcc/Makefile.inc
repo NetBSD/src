@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2011/07/01 05:07:06 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2011/07/01 10:04:13 mrg Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -157,8 +157,6 @@ DPSRCS+=	unwind.h
 
 .include "../../Makefile.hacks"
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && \
-    (${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "armeb")
 ${SRCS}: options.h
 
 optionlist: ${G_ALL_OPT_FILES} ${GCCARCH}/defs.mk Makefile ${DIST}/gcc/opt-gather.awk
@@ -171,4 +169,3 @@ options.h: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opth-gen.awk
 		< optionlist > ${.TARGET}
 
 CLEANFILES+=	options.h optionlist
-.endif
