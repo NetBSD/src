@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pnpbus.c,v 1.9 2008/04/28 20:23:33 martin Exp $	*/
+/*	$NetBSD: wdc_pnpbus.c,v 1.10 2011/07/01 16:55:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.9 2008/04/28 20:23:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.10 2011/07/01 16:55:42 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.9 2008/04/28 20:23:33 martin Exp $"
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/isa_machdep.h>
 #include <machine/residual.h>
