@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp.c,v 1.9 2009/05/29 04:57:05 darran Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp.c,v 1.10 2011/07/01 02:46:24 joerg Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.9 2009/05/29 04:57:05 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.10 2011/07/01 02:46:24 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -447,7 +447,7 @@ ieee8023ad_portinit(struct agr_port *port)
 {
 	struct ieee8023ad_port *iport = IEEE8023AD_PORT(port);
 
-	memset(iport, 0, sizeof(iport));
+	memset(iport, 0, sizeof(*iport));
 
 	lacp_portinit(port);
 }
