@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.8 2011/06/30 00:52:57 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.9 2011/07/01 20:47:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -49,7 +49,7 @@
 #include <uvm/uvm_extern.h>
 
 #define _POWERPC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
