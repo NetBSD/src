@@ -1,5 +1,6 @@
-# $NetBSD: GENERIC.in,v 1.80 2011/07/01 13:30:18 rkujawa Exp $
+# $NetBSD: GENERIC.in,v 1.81 2011/07/01 15:46:30 rkujawa Exp $
 #
+##
 # GENERIC machine description file
 #
 # This machine description file is used to generate the default NetBSD
@@ -56,7 +57,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.80 $"
+#ident 		"GENERIC-$Revision: 1.81 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -566,6 +567,8 @@ ch*	at scsibus? target ? lun ?	# scsi autochangers
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 ss*	at scsibus? target ? lun ?	# scsi scanner
 uk*	at scsibus? target ? lun ?	# scsi unknown
+')m4_dnl
+m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
 
 # Bluetooth Controller and Device support
 # tested only with btuart on an A1200
@@ -597,8 +600,8 @@ wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 #btsco* at bthub?
-')m4_dnl
 
+')m4_dnl
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 #
 # accept filters
@@ -668,7 +671,8 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 pseudo-device	ksyms			# /dev/ksyms (kernel symbols)
 pseudo-device	nsmb			# experimental - SMB requester
-
+')m4_dnl
+m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
 pseudo-device   bcsp                    # BlueCore Serial Protocol
 pseudo-device   btuart                  # Bluetooth HCI UART (H4)
 ')m4_dnl
