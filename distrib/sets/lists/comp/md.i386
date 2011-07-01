@@ -1,20 +1,41 @@
-# $NetBSD: md.i386,v 1.118 2011/05/12 14:56:22 joerg Exp $
+# $NetBSD: md.i386,v 1.119 2011/07/01 02:10:09 mrg Exp $
 ./usr/include/clang-3.0/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/emmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/immintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/mm3dnow.h		comp-c-include		llvm
-./usr/include/clang-3.0/mmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/mm_malloc.h		comp-c-include		llvm
+./usr/include/clang-3.0/mmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/pmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/smmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/tmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/xmmintrin.h		comp-c-include		llvm
 ./usr/include/emmintrin.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.1/emmintrin.h		comp-c-include		gcccmds,gcc=4
-./usr/include/gcc-4.1/mmintrin.h		comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/mm_malloc.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/mmintrin.h		comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/pmmintrin.h		comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/xmmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.5/abmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/ammintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/avxintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/bmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/emmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/fma4intrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/ia32intrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/immintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/lwpintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/mm3dnow.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/mm_malloc.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/nmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/pmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/popcntintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/smmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/tmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/wmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/x86intrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/xmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/xopintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
 ./usr/include/i386/ansi.h			comp-c-include
@@ -94,8 +115,8 @@
 ./usr/include/i386/vmparam.h			comp-c-include
 ./usr/include/i386/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
-./usr/include/mmintrin.h			comp-obsolete		obsolete
 ./usr/include/mm_malloc.h			comp-obsolete		obsolete
+./usr/include/mmintrin.h			comp-obsolete		obsolete
 ./usr/include/pmc.h				comp-c-include
 ./usr/include/pmmintrin.h			comp-obsolete		obsolete
 ./usr/include/x86				comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.177 2011/06/26 16:42:40 christos Exp $
+# $NetBSD: shl.mi,v 1.178 2011/07/01 02:10:11 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -41,6 +41,10 @@
 ./usr/lib/libgcc_eh_p.a				comp-c-proflib		profile
 ./usr/lib/libgcc_eh_pic.a			comp-c-piclib
 ./usr/lib/libgcc_pic.a				comp-c-lib
+./usr/lib/libgmp.so				comp-c-shlib	gcc=45
+./usr/lib/libgmp.so.10				comp-c-shlib	gcc=45
+./usr/lib/libgmp.so.10.2			comp-c-shlib	gcc=45
+./usr/lib/libgmp_pic.a				comp-c-piclib	gcc=45
 ./usr/lib/libgnumalloc_pic.a			comp-c-piclib
 ./usr/lib/libgssapi_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libhdb_pic.a				comp-c-piclib		kerberos
@@ -53,7 +57,7 @@
 ./usr/lib/libisccc_pic.a			comp-bind-piclib
 ./usr/lib/libisccfg_pic.a			comp-bind-piclib
 ./usr/lib/libiscsi_pic.a			comp-c-piclib		iscsi
-./usr/lib/libisns_pic.a		comp-isns-piclib	
+./usr/lib/libisns_pic.a				comp-isns-piclib	
 ./usr/lib/libkadm5clnt_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libkadm5srv_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libkadm_pic.a				comp-obsolete		obsolete
@@ -69,12 +73,20 @@
 ./usr/lib/libldap_r_pic.a			comp-ldap-piclib	ldap
 ./usr/lib/liblua_pic.a				comp-c-piclib
 ./usr/lib/liblwres_pic.a			comp-bind-piclib
-./usr/lib/liblzma_pic.a				comp-c-piclib
 ./usr/lib/liblzf_pic.a				comp-c-piclib
+./usr/lib/liblzma_pic.a				comp-c-piclib
 ./usr/lib/libm_pic.a				comp-c-piclib
 ./usr/lib/libmagic_pic.a			comp-c-piclib
 ./usr/lib/libmenu_pic.a				comp-c-piclib
 ./usr/lib/libmj_pic.a				comp-c-piclib
+./usr/lib/libmpc.so				comp-c-shlib	gcc=45
+./usr/lib/libmpc.so.2				comp-c-shlib	gcc=45
+./usr/lib/libmpc.so.2.0				comp-c-shlib	gcc=45
+./usr/lib/libmpc_pic.a				comp-c-piclib	gcc=45
+./usr/lib/libmpfr.so				comp-c-shlib	gcc=45
+./usr/lib/libmpfr.so.4				comp-c-shlib	gcc=45
+./usr/lib/libmpfr.so.4.1			comp-c-shlib	gcc=45
+./usr/lib/libmpfr_pic.a				comp-c-piclib	gcc=45
 ./usr/lib/libnetpgp_pic.a			comp-c-piclib		crypto
 ./usr/lib/libnpf_pic.a				comp-npf-piclib		npf
 ./usr/lib/libnvpair_pic.a			comp-zfs-piclib		zfs
@@ -102,24 +114,25 @@
 ./usr/lib/librpcsvc_pic.a			comp-c-piclib
 ./usr/lib/librt_pic.a				comp-c-piclib
 ./usr/lib/librump_pic.a				comp-c-piclib
+./usr/lib/librumpclient_pic.a			comp-c-piclib
 ./usr/lib/librumpcrypto_pic.a			comp-obsolete		obsolete
 ./usr/lib/librumpdev_audio_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_bpf_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_cgd_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_disk_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_dm_pic.a			comp-c-piclib
-./usr/lib/librumpdev_drvctl_pic.a			comp-c-piclib
+./usr/lib/librumpdev_drvctl_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_fss_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_md_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_netsmb_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_pad_pic.a			comp-c-piclib
-./usr/lib/librumpdev_pud_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_pic.a			comp-c-piclib
+./usr/lib/librumpdev_pud_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_putter_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_raidframe_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_rnd_pic.a			comp-c-piclib
-./usr/lib/librumpdev_scsipi_pic.a			comp-c-piclib
-./usr/lib/librumpdev_scsitest_pic.a			comp-c-piclib
+./usr/lib/librumpdev_scsipi_pic.a		comp-c-piclib
+./usr/lib/librumpdev_scsitest_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_sysmon_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_ubt_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_ucom_pic.a			comp-c-piclib
@@ -139,7 +152,7 @@
 ./usr/lib/librumpfs_mfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_msdos_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_nfs_pic.a			comp-c-piclib
-./usr/lib/librumpfs_nfsserver_pic.a			comp-c-piclib
+./usr/lib/librumpfs_nfsserver_pic.a		comp-c-piclib
 ./usr/lib/librumpfs_nilfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_ntfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_null_pic.a			comp-c-piclib
@@ -155,12 +168,13 @@
 ./usr/lib/librumpfs_umapfs_pic.a		comp-obsolete		obsolete
 ./usr/lib/librumpfs_union_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_zfs_pic.a			comp-c-piclib		zfs
-./usr/lib/librumpkern_crypto_pic.a			comp-c-piclib
+./usr/lib/librumphijack_pic.a			comp-c-piclib
+./usr/lib/librumpkern_crypto_pic.a		comp-c-piclib
 ./usr/lib/librumpkern_ksem_pic.a		comp-c-piclib
 ./usr/lib/librumpkern_solaris_pic.a		comp-c-piclib		zfs
 ./usr/lib/librumpkern_tty_pic.a			comp-c-piclib
 ./usr/lib/librumpkern_z_pic.a			comp-c-piclib
-./usr/lib/librumpnet_agr_pic.a		comp-c-piclib
+./usr/lib/librumpnet_agr_pic.a			comp-c-piclib
 ./usr/lib/librumpnet_bridge_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_local_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_net80211_pic.a		comp-c-piclib
@@ -172,8 +186,6 @@
 ./usr/lib/librumpnet_sockin_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_virtif_pic.a		comp-c-piclib
 ./usr/lib/librumpuser_pic.a			comp-c-piclib
-./usr/lib/librumphijack_pic.a			comp-c-piclib
-./usr/lib/librumpclient_pic.a			comp-c-piclib
 ./usr/lib/librumpvfs_fifofs_pic.a		comp-c-piclib
 ./usr/lib/librumpvfs_layerfs_pic.a		comp-c-piclib
 ./usr/lib/librumpvfs_pic.a			comp-c-piclib
@@ -250,6 +262,7 @@
 ./usr/libdata/debug/usr/lib/libform.so.6.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug
 ./usr/libdata/debug/usr/lib/libgcc_s.so.1.0.debug	comp-sys-debug	gcc,debug
+./usr/libdata/debug/usr/lib/libgmp.so.10.2		comp-c-shlib	gcc=45,debug
 ./usr/libdata/debug/usr/lib/libgnumalloc.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libgssapi.so.10.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libhdb.so.14.0.debug	comp-krb5-debug	kerberos,debug
@@ -274,17 +287,20 @@
 ./usr/libdata/debug/usr/lib/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug
 ./usr/libdata/debug/usr/lib/liblua.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/liblwres.so.5.3.debug	comp-bind-debug	debug
-./usr/libdata/debug/usr/lib/liblzma.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/liblzf.so.0.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/liblzma.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libm.so.0.9.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmagic.so.3.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmenu.so.6.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmj.so.1.0.debug		comp-crypto-debug	debug
+./usr/libdata/debug/usr/lib/libmpc.so.2.0		comp-c-shlib	gcc=45,debug
+./usr/libdata/debug/usr/lib/libmpfr.so.4.1		comp-c-shlib	gcc=45,debug
 ./usr/libdata/debug/usr/lib/libnetpgp.so.3.0.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libnpf.so.0.0.debug		comp-npf-debug	npf,debug
 ./usr/libdata/debug/usr/lib/libnvpair.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libobjc.so.2.0.debug	comp-sys-debug	gcc=3,debug
 ./usr/libdata/debug/usr/lib/libobjc.so.3.0.debug	comp-sys-debug	gcc=4,debug
+./usr/libdata/debug/usr/lib/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug
 ./usr/libdata/debug/usr/lib/libopcodes.so.4.0.debug	comp-c-debug	binutils,debug
 ./usr/libdata/debug/usr/lib/libossaudio.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libp2k.so.2.0.debug		comp-puffs-debug	debug
@@ -305,6 +321,7 @@
 ./usr/libdata/debug/usr/lib/librpcsvc.so.1.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/librt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/librump.so.0.0.debug	comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/librumpclient.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpdev.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpdev_audio.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpdev_bpf.so.0.0.debug	comp-rump-debug	debug
@@ -354,6 +371,7 @@
 ./usr/libdata/debug/usr/lib/librumpfs_umap.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_union.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_zfs.so.0.0.debug		comp-rump-debug	debug,zfs
+./usr/libdata/debug/usr/lib/librumphijack.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpkern_crypto.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpkern_ksem.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpkern_solaris.so.0.0.debug	comp-rump-debug	debug,zfs
@@ -371,8 +389,6 @@
 ./usr/libdata/debug/usr/lib/librumpnet_sockin.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpnet_virtif.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpuser.so.0.0.debug	comp-rump-debug	debug
-./usr/libdata/debug/usr/lib/librumphijack.so.0.0.debug	comp-rump-debug	debug
-./usr/libdata/debug/usr/lib/librumpclient.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpvfs.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpvfs_fifofs.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug
@@ -383,6 +399,7 @@
 ./usr/libdata/debug/usr/lib/libssl.so.8.2.debug		comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug
+./usr/libdata/debug/usr/lib/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libukfs.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libumem.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug
