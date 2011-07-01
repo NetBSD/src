@@ -1,10 +1,11 @@
-# $NetBSD: DRACO,v 1.138 2011/06/30 20:09:18 wiz Exp $
+# $NetBSD: DRACO,v 1.139 2011/07/01 15:46:30 rkujawa Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.77 2011/01/14 10:01:12 phx Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.80 2011/07/01 13:30:18 rkujawa Exp $
 #
+##
 # GENERIC machine description file
 #
 # This machine description file is used to generate the default NetBSD
@@ -28,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.138 $"
+#ident 		"GENERIC-$Revision: 1.139 $"
 
 
 maxusers	8
@@ -320,7 +321,6 @@ cd*	at scsibus? target ? lun ?	# scsi cds
 ch*	at scsibus? target ? lun ?	# scsi autochangers
 ss*	at scsibus? target ? lun ?	# scsi scanner
 uk*	at scsibus? target ? lun ?	# scsi unknown
-
 #
 # accept filters
 pseudo-device	accf_data		# "dataready" accept filter
