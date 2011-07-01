@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.91 2011/01/14 23:56:13 christos Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.92 2011/07/01 02:46:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.91 2011/01/14 23:56:13 christos Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.92 2011/07/01 02:46:15 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -974,7 +974,7 @@ host_long_port6
 			data_dest.su_family = AF_INET6;
 			buf[0] = $39.i; buf[1] = $41.i;
 			(void)memcpy(&data_dest.su_port, buf,
-			    sizeof(&data_dest.su_port));
+			    sizeof(data_dest.su_port));
 			buf[0] = $5.i; buf[1] = $7.i;
 			buf[2] = $9.i; buf[3] = $11.i;
 			buf[4] = $13.i; buf[5] = $15.i;
