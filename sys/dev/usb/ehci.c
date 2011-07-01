@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.180 2011/06/30 20:09:40 wiz Exp $ */
+/*	$NetBSD: ehci.c,v 1.181 2011/07/01 23:48:20 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.180 2011/06/30 20:09:40 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181 2011/07/01 23:48:20 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3988,7 +3988,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 			if (page_offs >= dma_buf->block->size)
 				break;
 
-			long long page = DMAADDR(dma_buf, page_offs);
+			unsigned long long page = DMAADDR(dma_buf, page_offs);
 			page = EHCI_PAGE(page);
 			itd->itd.itd_bufr[j] =
 			    htole32(EHCI_ITD_SET_BPTR(page));
