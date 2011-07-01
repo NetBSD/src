@@ -1,4 +1,4 @@
-/*	$NetBSD: mp.c,v 1.2 2009/06/13 13:35:11 tsutsui Exp $	*/
+/*	$NetBSD: mp.c,v 1.3 2011/07/01 18:21:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mp.c,v 1.2 2009/06/13 13:35:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mp.c,v 1.3 2011/07/01 18:21:31 dyoung Exp $");
 
 #include "opt_multiprocessor.h"
 #include "pchb.h"
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: mp.c,v 1.2 2009/06/13 13:35:11 tsutsui Exp $");
 
 #include <machine/specialreg.h>
 #include <machine/cpuvar.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/mpconfig.h>
 
 #include <dev/pci/pcivar.h>

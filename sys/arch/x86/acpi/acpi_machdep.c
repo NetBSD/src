@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.1 2011/06/12 11:31:31 jruoho Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.2 2011/07/01 18:22:39 dyoung Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,15 +40,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.1 2011/06/12 11:31:31 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.2 2011/07/01 18:22:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/cpufunc.h>
 
 #include <dev/acpi/acpica.h>
