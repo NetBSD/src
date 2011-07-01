@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.25 2010/03/01 01:15:24 jym Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.26 2011/07/01 18:14:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.25 2010/03/01 01:15:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.26 2011/07/01 18:14:15 dyoung Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.25 2010/03/01 01:15:24 jym Exp $"
 
 #include <sys/sysctl.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/cardbus/rbus.h>
 
 #include <sys/device.h>

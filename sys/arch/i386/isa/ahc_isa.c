@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.38 2010/02/28 15:52:16 snj Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.39 2011/07/01 18:11:24 dyoung Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.38 2010/02/28 15:52:16 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.39 2011/07/01 18:11:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.38 2010/02/28 15:52:16 snj Exp $");
 #include <sys/malloc.h>
 #include <sys/reboot.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/scsipi/scsi_all.h>
