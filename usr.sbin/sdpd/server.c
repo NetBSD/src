@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.9 2010/10/18 20:43:23 plunky Exp $	*/
+/*	$NetBSD: server.c,v 1.10 2011/07/01 03:07:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.9 2010/10/18 20:43:23 plunky Exp $");
+__RCSID("$NetBSD: server.c,v 1.10 2011/07/01 03:07:21 joerg Exp $");
 
 #include <sys/select.h>
 #include <sys/stat.h>
@@ -98,7 +98,7 @@ server_init(server_t *srv, char const *control, char const *sgroup)
 	assert(srv != NULL);
 	assert(control != NULL);
 
-	memset(srv, 0, sizeof(srv));
+	memset(srv, 0, sizeof(*srv));
 	FD_ZERO(&srv->fdset);
 	srv->sgroup = sgroup;
 
