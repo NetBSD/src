@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.12 2008/03/29 19:15:35 tsutsui Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.13 2011/07/01 20:59:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/ic/z8530sc.h>
 
 #include "kbd.h"	/* NKBD */
