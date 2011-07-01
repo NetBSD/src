@@ -1,4 +1,4 @@
-/*	$NetBSD: lcd.c,v 1.4 2011/01/04 10:42:33 skrll Exp $	*/
+/*	$NetBSD: lcd.c,v 1.5 2011/07/01 18:33:09 dyoung Exp $	*/
 /*	OpenBSD: lcd.c,v 1.2 2007/07/20 22:13:45 kettenis Exp 	*/
 
 /*
@@ -24,7 +24,7 @@
 #include <sys/callout.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/pdc.h>
 

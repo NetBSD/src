@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ssio.c,v 1.2 2010/03/05 18:41:29 skrll Exp $	*/
+/*	$NetBSD: com_ssio.c,v 1.3 2011/07/01 18:33:09 dyoung Exp $	*/
 
 /*	$OpenBSD: com_ssio.c,v 1.2 2007/06/24 16:28:39 kettenis Exp $	*/
 
@@ -23,7 +23,7 @@
 #include <sys/device.h>
 #include <sys/tty.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/iomod.h>
 
 #include <dev/ic/comreg.h>

@@ -20,7 +20,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/lptreg.h>
 #include <dev/ic/lptvar.h>

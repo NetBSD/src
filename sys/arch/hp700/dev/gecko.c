@@ -22,7 +22,7 @@
 #include <sys/systm.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/iomod.h>
 #include <machine/pdc.h>

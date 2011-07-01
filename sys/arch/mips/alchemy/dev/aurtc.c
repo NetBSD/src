@@ -1,4 +1,4 @@
-/* $NetBSD: aurtc.c,v 1.12 2009/12/12 14:44:09 tsutsui Exp $ */
+/* $NetBSD: aurtc.c,v 1.13 2011/07/01 18:39:29 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.12 2009/12/12 14:44:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.13 2011/07/01 18:39:29 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.12 2009/12/12 14:44:09 tsutsui Exp $");
 
 #include <dev/clock_subr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
