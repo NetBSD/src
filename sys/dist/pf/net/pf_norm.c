@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.23 2010/11/05 01:35:58 rmind Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.24 2011/07/01 02:33:23 mrg Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.109 2007/05/28 17:16:39 henning Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.23 2010/11/05 01:35:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.24 2011/07/01 02:33:23 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1487,7 +1487,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
     struct pf_state_peer *src, struct pf_state_peer *dst, int *writeback)
 {
 	struct timeval uptime;
-	u_int32_t tsval, tsecr;
+	u_int32_t tsval = 0, tsecr = 0;
 	u_int tsval_from_last;
 	u_int8_t hdr[60];
 	u_int8_t *opt;
