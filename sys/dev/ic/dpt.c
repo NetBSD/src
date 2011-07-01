@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.64 2010/11/13 13:52:01 uebayasi Exp $	*/
+/*	$NetBSD: dpt.c,v 1.65 2011/07/01 08:38:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.64 2010/11/13 13:52:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.65 2011/07/01 08:38:10 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -535,7 +535,7 @@ dpt_readcfg(struct dpt_softc *sc)
 	 */
 	dpt_outb(sc, HA_COMMAND, CP_PIO_GETCFG);
 	memset(ec, 0, sizeof(*ec));
-	i = ((int)&((struct eata_cfg *)0)->ec_cfglen +
+	i = ((int)(uintptr_t)&((struct eata_cfg *)0)->ec_cfglen +
 	    sizeof(ec->ec_cfglen)) >> 1;
 	p = (u_int16_t *)ec;
 
@@ -550,13 +550,13 @@ dpt_readcfg(struct dpt_softc *sc)
 		*p++ = bus_space_read_stream_2(sc->sc_iot, sc->sc_ioh, HA_DATA);
 
 	if ((i = ec->ec_cfglen) > (sizeof(struct eata_cfg)
-	    - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
+	    - (int)(uintptr_t)(&(((struct eata_cfg *)0L)->ec_cfglen))
 	    - sizeof(ec->ec_cfglen)))
 		i = sizeof(struct eata_cfg)
-		  - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
+		  - (int)(uintptr_t)(&(((struct eata_cfg *)0L)->ec_cfglen))
 		  - sizeof(ec->ec_cfglen);
 
-	j = i + (int)(&(((struct eata_cfg *)0L)->ec_cfglen)) +
+	j = i + (int)(uintptr_t)(&(((struct eata_cfg *)0L)->ec_cfglen)) +
 	    sizeof(ec->ec_cfglen);
 	i >>= 1;
 
