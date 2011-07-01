@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.941 2011/06/30 04:36:34 agc Exp $
+# $NetBSD: mi,v 1.942 2011/07/01 02:10:08 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -805,12 +805,16 @@
 ./usr/include/g++				base-cxx-usr
 ./usr/include/g++/backward			base-cxx-usr
 ./usr/include/g++/bits				base-cxx-usr
-./usr/include/g++/debug				base-cxx-usr
+./usr/include/g++/debug				base-cxx-usr		gcc=45
+./usr/include/g++/decimal			base-cxx-usr
 ./usr/include/g++/ext				base-cxx-usr
 ./usr/include/g++/gen				base-obsolete		obsolete
-./usr/include/g++/std				base-cxx-usr
+./usr/include/g++/parallel			base-cxx-usr		gcc=45
+./usr/include/g++/std				base-obsolete		obsolete
 ./usr/include/g++/tr1				base-cxx-usr
+./usr/include/g++/tr1_impl			base-cxx-usr		gcc=45
 ./usr/include/gcc-4.1				base-c-usr
+./usr/include/gcc-4.5				base-c-usr
 ./usr/include/gssapi				base-c-usr
 ./usr/include/gssapi/rpc			base-obsolete		obsolete
 ./usr/include/dev/pci/hdaudio			base-c-usr
