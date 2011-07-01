@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mainbus.c,v 1.10 2008/03/29 05:42:45 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_mainbus.c,v 1.11 2011/07/01 18:31:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mainbus.c,v 1.10 2008/03/29 05:42:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mainbus.c,v 1.11 2011/07/01 18:31:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_mainbus.c,v 1.10 2008/03/29 05:42:45 tsutsui
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mc146818reg.h>

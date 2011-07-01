@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22 2009/12/14 00:45:59 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.23 2011/07/01 18:30:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 2009/12/14 00:45:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.23 2011/07/01 18:30:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 2009/12/14 00:45:59 matt Exp $");
 #include <mips/cache.h>
 
 #define _ALGOR_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/locore.h>
 
