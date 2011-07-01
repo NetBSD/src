@@ -1,4 +1,4 @@
-/*	$NetBSD: gxpcic.c,v 1.11 2009/08/09 07:10:13 kiyohara Exp $ */
+/*	$NetBSD: gxpcic.c,v 1.12 2011/07/01 20:39:34 dyoung Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -71,7 +71,7 @@
 #include <sys/malloc.h>
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>

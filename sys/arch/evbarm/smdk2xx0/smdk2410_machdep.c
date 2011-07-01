@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.28 2011/06/30 20:09:28 wiz Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.29 2011/07/01 20:44:21 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.28 2011/06/30 20:09:28 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.29 2011/07/01 20:44:21 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -136,7 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.28 2011/06/30 20:09:28 wiz Ex
 #endif
 
 #include <machine/bootconfig.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>

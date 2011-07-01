@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_7seg.c,v 1.4 2005/12/24 20:06:59 perry Exp $	*/
+/*	$NetBSD: brh_7seg.c,v 1.5 2011/07/01 20:38:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,12 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brh_7seg.c,v 1.4 2005/12/24 20:06:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brh_7seg.c,v 1.5 2011/07/01 20:38:16 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <evbarm/adi_brh/brhreg.h>
 #include <evbarm/adi_brh/brhvar.h>

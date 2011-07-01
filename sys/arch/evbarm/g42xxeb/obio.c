@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.9 2010/06/07 15:17:24 bsh Exp $ */
+/*	$NetBSD: obio.c,v 1.10 2011/07/01 20:38:17 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec corp.  All rights reserved.
@@ -37,7 +37,7 @@
 #include <sys/reboot.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <arm/cpufunc.h>
 
