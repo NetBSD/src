@@ -1,4 +1,4 @@
-/*      $NetBSD: ixm1200_pci.c,v 1.8 2011/04/04 20:37:48 dyoung Exp $ */
+/*      $NetBSD: ixm1200_pci.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $ */
 #define PCI_DEBUG
 /*
  * Copyright (c) 2002, 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_pci.c,v 1.8 2011/04/04 20:37:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_pci.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $");
 
 /*
  * IXM1200 PCI interrupt support.
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixm1200_pci.c,v 1.8 2011/04/04 20:37:48 dyoung Exp $
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <evbarm/ixm1200/ixm1200reg.h>
 #include <evbarm/ixm1200/ixm1200var.h>

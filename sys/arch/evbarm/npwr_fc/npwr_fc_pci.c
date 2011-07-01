@@ -1,4 +1,4 @@
-/*	$NetBSD: npwr_fc_pci.c,v 1.2 2011/04/04 20:37:49 dyoung Exp $	*/
+/*	$NetBSD: npwr_fc_pci.c,v 1.3 2011/07/01 20:44:20 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,14 +40,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npwr_fc_pci.c,v 1.2 2011/04/04 20:37:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npwr_fc_pci.c,v 1.3 2011/07/01 20:44:20 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <evbarm/iq80321/iq80321reg.h>
 #include <evbarm/iq80321/iq80321var.h>

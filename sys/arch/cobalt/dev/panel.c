@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.21 2011/05/03 09:15:20 tsutsui Exp $ */
+/* $NetBSD: panel.c,v 1.22 2011/07/01 20:36:42 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.21 2011/05/03 09:15:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.22 2011/07/01 20:36:42 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.21 2011/05/03 09:15:20 tsutsui Exp $");
 #include <sys/select.h>
 #include <sys/reboot.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/ic/hd44780reg.h>

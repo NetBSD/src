@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.79 2011/06/30 20:09:25 wiz Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.80 2011/07/01 20:41:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.79 2011/06/30 20:09:25 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.80 2011/07/01 20:41:16 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.79 2011/06/30 20:09:25 wiz Exp
 #include <ddb/db_extern.h>
 
 #include <machine/bootconfig.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <arm/undefined.h>

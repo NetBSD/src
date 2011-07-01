@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_com.c,v 1.3 2009/10/21 14:15:51 rmind Exp $ */
+/*	$NetBSD: armadillo9_com.c,v 1.4 2011/07/01 20:38:16 dyoung Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_com.c,v 1.3 2009/10/21 14:15:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_com.c,v 1.4 2011/07/01 20:38:16 dyoung Exp $");
 
 /* Front-end of epcom */
 
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_com.c,v 1.3 2009/10/21 14:15:51 rmind Exp
 #include <sys/termios.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/ep93xx/epcomreg.h>
 #include <arm/ep93xx/epcomvar.h>

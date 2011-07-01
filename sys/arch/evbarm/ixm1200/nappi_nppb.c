@@ -1,4 +1,4 @@
-/*	$NetBSD: nappi_nppb.c,v 1.8 2011/06/06 16:29:15 matt Exp $ */
+/*	$NetBSD: nappi_nppb.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.8 2011/06/06 16:29:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.8 2011/06/06 16:29:15 matt Exp $");
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

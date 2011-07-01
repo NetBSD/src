@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.16 2010/06/02 06:44:33 kiyohara Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.17 2011/07/01 20:46:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.16 2010/06/02 06:44:33 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.17 2011/07/01 20:46:39 dyoung Exp $");
 
 #include "opt_ev64260.h"
 #include "opt_pci.h"
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.16 2010/06/02 06:44:33 kiyohara Exp
 #include <sys/extent.h>
 
 #define _POWERPC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include "opt_pci.h"
 #include <dev/pci/pcivar.h>

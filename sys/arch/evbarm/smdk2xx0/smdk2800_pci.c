@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_pci.c,v 1.4 2005/12/11 12:17:09 christos Exp $ */
+/*	$NetBSD: smdk2800_pci.c,v 1.5 2011/07/01 20:44:21 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_pci.c,v 1.4 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_pci.c,v 1.5 2011/07/01 20:44:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2800_pci.c,v 1.4 2005/12/11 12:17:09 christos Ex
 #include <sys/extent.h>
 
 #define _ARM32_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>

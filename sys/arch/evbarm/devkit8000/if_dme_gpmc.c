@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dme_gpmc.c,v 1.1 2010/09/08 22:49:49 ahoka Exp $	*/
+/*	$NetBSD: if_dme_gpmc.c,v 1.2 2011/07/01 20:38:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2010 Adam Hoka
@@ -65,7 +65,7 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arch/arm/omap/omap2_gpmcvar.h>

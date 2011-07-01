@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.18 2011/06/30 20:09:28 wiz Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.19 2011/07/01 20:44:20 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.18 2011/06/30 20:09:28 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.19 2011/07/01 20:44:20 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -120,7 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.18 2011/06/30 20:09:28 wiz Exp $
 #include <ddb/db_extern.h>
 
 #include <machine/bootconfig.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <arm/undefined.h>

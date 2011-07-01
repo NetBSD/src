@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.36 2011/06/30 20:09:24 wiz Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.37 2011/07/01 20:39:34 dyoung Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -165,7 +165,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/bootconfig.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/db_machdep.h>
 #include <machine/frame.h>

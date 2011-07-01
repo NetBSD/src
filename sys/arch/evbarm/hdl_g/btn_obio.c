@@ -1,4 +1,4 @@
-/*	$NetBSD: btn_obio.c,v 1.1 2006/04/16 02:22:33 nonaka Exp $	*/
+/*	$NetBSD: btn_obio.c,v 1.2 2011/07/01 20:39:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 NONAKA Kimihiro
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.1 2006/04/16 02:22:33 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.2 2011/07/01 20:39:34 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.1 2006/04/16 02:22:33 nonaka Exp $");
 
 #include <arm/xscale/i80321var.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/sysmon/sysmonvar.h>

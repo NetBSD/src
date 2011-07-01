@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_mainbus.c,v 1.3 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: becc_mainbus.c,v 1.4 2011/07/01 20:38:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -42,14 +42,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_mainbus.c,v 1.3 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_mainbus.c,v 1.4 2011/07/01 20:38:16 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <evbarm/adi_brh/brhreg.h>
 #include <evbarm/adi_brh/brhvar.h>

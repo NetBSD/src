@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gpmc.c,v 1.3 2008/08/27 11:03:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gpmc.c,v 1.4 2011/07/01 20:45:45 dyoung Exp $");
 
 #include "locators.h"
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_gpmc.c,v 1.3 2008/08/27 11:03:10 matt Exp $");
 #include <net/if_media.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

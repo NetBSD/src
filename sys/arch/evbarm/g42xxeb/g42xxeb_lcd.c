@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_lcd.c,v 1.13 2010/03/13 11:15:52 bsh Exp $ */
+/* $NetBSD: g42xxeb_lcd.c,v 1.14 2011/07/01 20:38:17 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2005 Genetec corp.
@@ -44,7 +44,7 @@
 #include <dev/wscons/wsdisplayvar.h> 
 #include <dev/wscons/wscons_callbacks.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <arm/sa11x0/sa11x0_var.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0reg.h>

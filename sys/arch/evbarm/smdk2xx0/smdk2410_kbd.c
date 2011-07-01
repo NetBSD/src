@@ -1,4 +1,4 @@
-/* $NetBSD: smdk2410_kbd.c,v 1.6 2010/06/07 15:17:24 bsh Exp $ */
+/* $NetBSD: smdk2410_kbd.c,v 1.7 2011/07/01 20:44:21 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -40,13 +40,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.6 2010/06/07 15:17:24 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.7 2011/07/01 20:44:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 
 #include <dev/wscons/wsconsio.h>

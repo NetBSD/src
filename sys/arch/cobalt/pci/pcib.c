@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.19 2008/05/09 10:59:55 tsutsui Exp $	*/
+/*	$NetBSD: pcib.c,v 1.20 2011/07/01 20:37:08 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.19 2008/05/09 10:59:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.20 2011/07/01 20:37:08 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.19 2008/05/09 10:59:55 tsutsui Exp $");
 #include <sys/malloc.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/pci/pcivar.h>

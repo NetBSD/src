@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.67 2011/06/30 20:09:24 wiz Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.68 2011/07/01 20:39:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.67 2011/06/30 20:09:24 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.68 2011/07/01 20:39:34 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.67 2011/06/30 20:09:24 wiz 
 #include <ddb/db_extern.h>
 
 #include <machine/bootconfig.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>

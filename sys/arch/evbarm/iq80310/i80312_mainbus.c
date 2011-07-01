@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mainbus.c,v 1.13 2005/12/11 12:17:09 christos Exp $	*/
+/*	$NetBSD: i80312_mainbus.c,v 1.14 2011/07/01 20:41:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -42,14 +42,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_mainbus.c,v 1.13 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_mainbus.c,v 1.14 2011/07/01 20:41:16 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <evbarm/iq80310/iq80310reg.h>
 #include <evbarm/iq80310/iq80310var.h>

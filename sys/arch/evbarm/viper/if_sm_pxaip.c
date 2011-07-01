@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pxaip.c,v 1.4 2007/10/17 19:54:13 garbled Exp $	*/
+/*	$NetBSD: if_sm_pxaip.c,v 1.5 2011/07/01 20:45:45 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pxaip.c,v 1.4 2007/10/17 19:54:13 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pxaip.c,v 1.5 2011/07/01 20:45:45 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_pxaip.c,v 1.4 2007/10/17 19:54:13 garbled Exp 
 #include <net/if_media.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

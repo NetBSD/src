@@ -35,7 +35,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <evbarm/g42xxeb/g42xxeb_reg.h>
 
 

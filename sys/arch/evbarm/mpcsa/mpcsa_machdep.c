@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_machdep.c,v 1.5 2011/06/30 20:09:26 wiz Exp $	*/
-/*	$NetBSD: mpcsa_machdep.c,v 1.5 2011/06/30 20:09:26 wiz Exp $	*/
+/*	$Id: mpcsa_machdep.c,v 1.6 2011/07/01 20:44:20 dyoung Exp $	*/
+/*	$NetBSD: mpcsa_machdep.c,v 1.6 2011/07/01 20:44:20 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.5 2011/06/30 20:09:26 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.6 2011/07/01 20:44:20 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.5 2011/06/30 20:09:26 wiz Exp $"
 
 #define	DRAM_BLOCKS	1
 #include <machine/bootconfig.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <arm/undefined.h>

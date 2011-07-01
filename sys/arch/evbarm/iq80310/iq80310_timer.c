@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.21 2008/01/20 16:28:24 joerg Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.22 2011/07/01 20:41:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.21 2008/01/20 16:28:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.22 2011/07/01 20:41:16 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.21 2008/01/20 16:28:24 joerg Exp
 
 #include <dev/clock_subr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <arm/cpufunc.h>
 
 #include <evbarm/iq80310/iq80310reg.h>

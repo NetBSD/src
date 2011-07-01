@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.25 2011/05/17 17:34:48 dyoung Exp $	*/
+/*	$NetBSD: gt.c,v 1.26 2011/07/01 20:36:42 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.25 2011/05/17 17:34:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.26 2011/07/01 20:36:42 dyoung Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.25 2011/05/17 17:34:48 dyoung Exp $");
 #include <sys/extent.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <mips/cache.h>

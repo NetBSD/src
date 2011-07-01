@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.6 2011/02/20 07:54:10 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.7 2011/07/01 20:36:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6 2011/02/20 07:54:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7 2011/07/01 20:36:42 dyoung Exp $");
 
 #define __INTR_PRIVATE
 
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6 2011/02/20 07:54:10 matt Exp $");
 #include <sys/intr.h>
 
 #include <mips/mips3_clock.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/i8259reg.h>
 #include <dev/isa/isareg.h>
