@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.20 2011/04/04 20:37:51 dyoung Exp $ */
+/* $NetBSD: piixpcib.c,v 1.21 2011/07/01 17:37:27 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -36,14 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.20 2011/04/04 20:37:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.21 2011/07/01 17:37:27 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/sysctl.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <machine/frame.h>
 #include <machine/bioscall.h>

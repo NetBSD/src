@@ -1,4 +1,4 @@
-/*	$NetBSD: opti82c700.c,v 1.9 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: opti82c700.c,v 1.10 2011/07/01 17:37:26 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opti82c700.c,v 1.9 2008/04/28 20:23:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opti82c700.c,v 1.10 2011/07/01 17:37:26 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: opti82c700.c,v 1.9 2008/04/28 20:23:25 martin Exp $"
 #include <sys/malloc.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.48 2010/02/26 19:25:07 jym Exp $	*/
+/*	$NetBSD: elan520.c,v 1.49 2011/07/01 17:37:26 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.48 2010/02/26 19:25:07 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.49 2011/07/01 17:37:26 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.48 2010/02/26 19:25:07 jym Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <x86/nmi.h>
 
