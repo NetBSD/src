@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/07/01 01:24:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/07/01 05:07:46 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -51,6 +51,7 @@ FILESDIR=${LIBDIR}
 .PATH: ${DIST}/gcc ${DIST}/gcc/config ${G_CONFIGDIR}
 
 .include "../Makefile.tconfigh"
+EXTRA_FAKEHEADERS= options.h
 .include "../Makefile.hacks"
 
 ${OBJS}: ${DPSRCS}
