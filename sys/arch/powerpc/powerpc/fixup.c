@@ -1,4 +1,4 @@
-/*	$NetBSD: fixup.c,v 1.4 2011/06/15 15:18:20 matt Exp $	*/
+/*	$NetBSD: fixup.c,v 1.5 2011/07/01 23:47:09 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fixup.c,v 1.4 2011/06/15 15:18:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixup.c,v 1.5 2011/07/01 23:47:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -177,7 +177,11 @@ powerpc_fixup_stubs(uint32_t *start, uint32_t *end,
 			case OPC_branch_19: {
 				KASSERT(r_lr == -1 || i.i_int == 0x4e800421);
 				KASSERT(r_lr != -1 || i.i_int == 0x4e800420);
-				KASSERT(ctr != 0);
+				if (ctr == 0) {
+					panic("%s: jump at %p to %p would "
+					    "branch to 0", __func__, insnp,
+					    insnp + instr.i_i.i_li);
+				}
 				fixup.jfi_real = fixup_addr2offset(ctr);
 				break;
 			}
