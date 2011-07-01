@@ -1,4 +1,4 @@
-/*	$NetBSD: via8231.c,v 1.3 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: via8231.c,v 1.4 2011/07/01 17:37:27 dyoung Exp $	*/
 /*	OpenBSD: via8231.c,v 1.6 2005/10/27 16:41:06 mickey Exp 	*/
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via8231.c,v 1.3 2008/04/28 20:23:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via8231.c,v 1.4 2011/07/01 17:37:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: via8231.c,v 1.3 2008/04/28 20:23:25 martin Exp $");
 #include <sys/malloc.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
