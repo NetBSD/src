@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1636 2011/07/01 02:10:10 mrg Exp $
+#	$NetBSD: mi,v 1.1637 2011/07/01 12:09:34 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3521,7 +3521,7 @@
 ./usr/libdata/debug/usr/bin/fsplit.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fstat.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/ftp.debug		comp-netutil-debug	debug
-./usr/libdata/debug/usr/bin/g++debug		comp-cxx-debug		gcccmds,debug
+./usr/libdata/debug/usr/bin/g++.debug		comp-cxx-debug		gcccmds,debug
 ./usr/libdata/debug/usr/bin/g77.debug		comp-fortran-debug	gcc=3,gcccmds,debug
 ./usr/libdata/debug/usr/bin/gcc.debug		comp-c-debug		gcccmds,debug
 ./usr/libdata/debug/usr/bin/gcore.debug		comp-debug-debug	debug
