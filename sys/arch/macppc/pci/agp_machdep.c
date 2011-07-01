@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_machdep.c,v 1.2 2008/04/29 06:53:02 martin Exp $ */
+/*	$NetBSD: agp_machdep.c,v 1.3 2011/07/01 18:43:05 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_machdep.c,v 1.2 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_machdep.c,v 1.3 2011/07/01 18:43:05 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

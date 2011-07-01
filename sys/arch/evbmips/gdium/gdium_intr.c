@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_intr.c,v 1.3 2011/06/08 17:47:48 bouyer Exp $	*/
+/*	$NetBSD: gdium_intr.c,v 1.4 2011/07/01 18:45:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.3 2011/06/08 17:47:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.4 2011/07/01 18:45:36 dyoung Exp $");
 
 #define __INTR_PRIVATE
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.3 2011/06/08 17:47:48 bouyer Exp $"
 #include <sys/kernel.h>
 #include <sys/cpu.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <mips/locore.h>

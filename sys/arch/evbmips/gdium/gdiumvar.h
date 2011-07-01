@@ -1,4 +1,4 @@
-/*	$NetBSD: gdiumvar.h,v 1.1 2009/08/06 00:50:26 matt Exp $	*/
+/*	$NetBSD: gdiumvar.h,v 1.2 2011/07/01 18:45:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/pci/pcivar.h>
 
 #include <mips/bonito/bonitovar.h>

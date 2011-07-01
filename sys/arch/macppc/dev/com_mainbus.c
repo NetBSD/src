@@ -41,7 +41,7 @@
 #include <sys/device.h>
 #include <sys/tty.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/ofw/openfirm.h>
 
 #include <dev/ic/comreg.h>

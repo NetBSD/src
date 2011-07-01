@@ -1,4 +1,4 @@
-/*	$NetBSD: memecc.c,v 1.11 2008/12/16 22:35:26 christos Exp $	*/
+/*	$NetBSD: memecc.c,v 1.12 2011/07/01 18:51:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,13 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.11 2008/12/16 22:35:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.12 2011/07/01 18:51:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <sparc/sparc/memeccreg.h>
 
