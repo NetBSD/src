@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_qmgr.c,v 1.6 2009/03/05 01:48:58 msaitoh Exp $	*/
+/*	$NetBSD: ixp425_qmgr.c,v 1.7 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -60,7 +60,7 @@
 */
 #include <sys/cdefs.h>
 /*__FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/ixp425_qmgr.c,v 1.1 2006/11/19 23:55:23 sam Exp $");*/
-__KERNEL_RCSID(0, "$NetBSD: ixp425_qmgr.c,v 1.6 2009/03/05 01:48:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_qmgr.c,v 1.7 2011/07/01 20:32:51 dyoung Exp $");
 
 /*
  * Intel XScale Queue Manager support.
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_qmgr.c,v 1.6 2009/03/05 01:48:58 msaitoh Exp 
 #include <sys/malloc.h>
 #include <sys/resource.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_com.c,v 1.12 2009/12/06 12:27:33 kiyohara Exp $	*/
+/*	$NetBSD: pxa2x0_com.c,v 1.13 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.12 2009/12/06 12:27:33 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.13 2011/07/01 20:32:51 dyoung Exp $");
 
 #include "opt_com.h"
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.12 2009/12/06 12:27:33 kiyohara Exp
 #include <sys/termios.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

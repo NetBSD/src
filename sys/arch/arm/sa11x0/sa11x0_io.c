@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.18 2009/11/07 07:27:42 cegger Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.19 2011/07/01 20:31:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.18 2009/11/07 07:27:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.19 2011/07/01 20:31:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.18 2009/11/07 07:27:42 cegger Exp $"
 
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pmap.h>
 
 /* Prototypes for all the bus_space structure functions */

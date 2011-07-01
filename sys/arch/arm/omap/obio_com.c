@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_com.c,v 1.3 2008/08/27 11:03:10 matt Exp $	*/
+/*	$NetBSD: obio_com.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $	*/
 
 /*
  * Based on arch/arm/omap/omap_com.c
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.3 2008/08/27 11:03:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $");
 
 #include "opt_omap.h"
 #include "opt_com.h"
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.3 2008/08/27 11:03:10 matt Exp $");
 #include <sys/termios.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clk.c,v 1.14 2008/05/10 15:31:04 martin Exp $	*/
+/*	$NetBSD: ixp12x0_clk.c,v 1.15 2011/07/01 20:27:50 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.14 2008/05/10 15:31:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.15 2011/07/01 20:27:50 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.14 2008/05/10 15:31:04 martin Exp 
 #include <sys/timetc.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>

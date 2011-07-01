@@ -1,4 +1,4 @@
-/* $NetBSD: mpcore_space.c,v 1.1 2011/03/10 07:47:15 bsh Exp $ */
+/* $NetBSD: mpcore_space.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $ */
 
 /* derived from: */
 /* NetBSD: imx_space.c,v 1.2 2010/11/13 05:00:31 bsh Exp */
@@ -80,7 +80,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <uvm/uvm_extern.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 bs_protos(mpcore);
 bs_protos(generic);

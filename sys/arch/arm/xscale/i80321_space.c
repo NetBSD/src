@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_space.c,v 1.12 2010/02/24 19:12:12 skrll Exp $	*/
+/*	$NetBSD: i80321_space.c,v 1.13 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,14 +40,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.12 2010/02/24 19:12:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.13 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/i80321reg.h>
 #include <arm/xscale/i80321var.h>

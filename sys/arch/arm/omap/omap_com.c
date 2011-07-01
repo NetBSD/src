@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_com.c,v 1.3 2008/11/21 17:13:07 matt Exp $	*/
+/*	$NetBSD: omap_com.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $	*/
 
 /*
  * Based on arch/arm/xscale/pxa2x0_com.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_com.c,v 1.3 2008/11/21 17:13:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_com.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $");
 
 #include "opt_com.h"
 
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap_com.c,v 1.3 2008/11/21 17:13:07 matt Exp $");
 #include <sys/termios.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.2 2011/04/12 18:10:15 ahoka Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.3 2011/07/01 20:30:21 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.2 2011/04/12 18:10:15 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.3 2011/07/01 20:30:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.2 2011/04/12 18:10:15 ahoka Exp $");
 
 #include <dev/videomode/videomode.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <arm/omap/omapfbreg.h>
 #include <arm/omap/omap2_obiovar.h>
 #include <arm/omap/omap2_obioreg.h>

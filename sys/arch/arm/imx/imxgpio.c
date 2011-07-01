@@ -1,4 +1,4 @@
-/*	$NetBSD: imxgpio.c,v 1.1 2010/11/30 13:05:27 bsh Exp $ */
+/*	$NetBSD: imxgpio.c,v 1.2 2011/07/01 20:27:50 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.1 2010/11/30 13:05:27 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.2 2011/07/01 20:27:50 dyoung Exp $");
 
 #define	_INTR_PRIVATE
 
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.1 2010/11/30 13:05:27 bsh Exp $");
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/imx/imx31reg.h>
 #include <arm/imx/imx31var.h>

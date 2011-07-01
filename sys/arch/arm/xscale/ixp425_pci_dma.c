@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci_dma.c,v 1.4 2009/10/21 14:15:50 rmind Exp $ */
+/*	$NetBSD: ixp425_pci_dma.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_dma.c,v 1.4 2009/10/21 14:15:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_dma.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_pci_dma.c,v 1.4 2009/10/21 14:15:50 rmind Exp
 #include <uvm/uvm_extern.h>
 
 #define _ARM32_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>

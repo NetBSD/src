@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.74 2011/06/10 09:27:51 tsutsui Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.75 2011/07/01 20:34:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.74 2011/06/10 09:27:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.75 2011/07/01 20:34:05 dyoung Exp $");
 
 #include "opt_ddb.h"
 
@@ -117,7 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.74 2011/06/10 09:27:51 tsutsui Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>
 #include <machine/intr.h>

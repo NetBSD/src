@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_npe.c,v 1.7 2011/05/13 22:28:40 rmind Exp $	*/
+/*	$NetBSD: ixp425_npe.c,v 1.8 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -62,7 +62,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/ixp425_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.7 2011/05/13 22:28:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.8 2011/07/01 20:32:51 dyoung Exp $");
 
 /*
  * Intel XScale Network Processing Engine (NPE) support.
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.7 2011/05/13 22:28:40 rmind Exp $")
 
 #include <dev/firmload.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 

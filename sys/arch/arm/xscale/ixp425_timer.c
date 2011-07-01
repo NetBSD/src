@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.15 2009/10/21 14:15:51 rmind Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.16 2011/07/01 20:32:51 dyoung Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.15 2009/10/21 14:15:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.16 2011/07/01 20:32:51 dyoung Exp $");
 
 #include "opt_ixp425.h"
 #include "opt_perfctrs.h"
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.15 2009/10/21 14:15:51 rmind Exp 
 
 #include <dev/clock_subr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>

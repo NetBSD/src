@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.38 2009/10/21 00:30:43 snj Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.39 2011/07/01 20:26:35 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.38 2009/10/21 00:30:43 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.39 2011/07/01 20:26:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.38 2009/10/21 00:30:43 snj Exp $");
 #include <sys/ioctl.h>
 
 #include <arm/mainbus/mainbus.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/wscons/wsconsio.h>
