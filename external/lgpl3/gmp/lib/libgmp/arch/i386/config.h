@@ -215,7 +215,8 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
     implementation of the corresponding routine exists.  */
 #define HAVE_NATIVE_mpn_add_n 1
 /* #undef HAVE_NATIVE_mpn_add_n_sub_n */
-#define HAVE_NATIVE_mpn_add_nc 1
+/* XXXMRG */
+/* #define HAVE_NATIVE_mpn_add_nc 1 */
 /* #undef HAVE_NATIVE_mpn_addaddmul_1msb0 */
 /* #undef HAVE_NATIVE_mpn_addlsh1_n */
 /* #undef HAVE_NATIVE_mpn_addlsh2_n */
@@ -243,7 +244,8 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 #define HAVE_NATIVE_mpn_divrem_2 1
 /* #undef HAVE_NATIVE_mpn_gcd_1 */
 /* #undef HAVE_NATIVE_mpn_hamdist */
-#define HAVE_NATIVE_mpn_invert_limb 1
+/* XXXMRG */
+/* #define HAVE_NATIVE_mpn_invert_limb 1 */
 /* #undef HAVE_NATIVE_mpn_ior_n */
 /* #undef HAVE_NATIVE_mpn_iorn_n */
 #define HAVE_NATIVE_mpn_lshift 1
@@ -281,7 +283,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 #define HAVE_NATIVE_mpn_sqr_basecase 1
 /* #undef HAVE_NATIVE_mpn_sqr_diagonal */
 #define HAVE_NATIVE_mpn_sub_n 1
-#define HAVE_NATIVE_mpn_sub_nc 1
+/* #define HAVE_NATIVE_mpn_sub_nc 1 */
 /* #undef HAVE_NATIVE_mpn_sublsh1_n */
 /* #undef HAVE_NATIVE_mpn_sublsh2_n */
 /* #undef HAVE_NATIVE_mpn_sublsh_n */
