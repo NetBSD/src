@@ -1,4 +1,4 @@
-/* $NetBSD: ausmbus_psc.c,v 1.9 2009/04/20 12:11:50 pgoyette Exp $ */
+/* $NetBSD: ausmbus_psc.c,v 1.10 2011/07/01 18:39:29 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.9 2009/04/20 12:11:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.10 2011/07/01 18:39:29 dyoung Exp $");
 
 #include "locators.h"
 
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.9 2009/04/20 12:11:50 pgoyette Exp
 #include <sys/device.h>
 #include <sys/errno.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 
 #include <mips/alchemy/dev/aupscreg.h>

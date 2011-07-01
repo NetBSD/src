@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.18 2011/02/01 18:33:24 skrll Exp $	*/
+/*	$NetBSD: asp.c,v 1.19 2011/07/01 18:33:09 dyoung Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.18 2011/02/01 18:33:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.19 2011/07/01 18:33:09 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
 #include <machine/cpufunc.h>

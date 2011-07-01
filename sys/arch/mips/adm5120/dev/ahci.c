@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.6 2011/04/04 19:58:56 dyoung Exp $	*/
+/*	$NetBSD: ahci.c,v 1.7 2011/07/01 18:38:49 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.6 2011/04/04 19:58:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.7 2011/07/01 18:38:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.6 2011/04/04 19:58:56 dyoung Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 
 #include <dev/usb/usb.h>

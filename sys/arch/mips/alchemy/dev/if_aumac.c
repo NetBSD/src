@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.29 2010/11/12 13:40:10 uebayasi Exp $ */
+/* $NetBSD: if_aumac.c,v 1.30 2011/07/01 18:39:29 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.29 2010/11/12 13:40:10 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.30 2011/07/01 18:39:29 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.29 2010/11/12 13:40:10 uebayasi Exp $
 #include <sys/rnd.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/endian.h>
 
