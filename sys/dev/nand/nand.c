@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.13 2011/06/28 18:14:11 ahoka Exp $	*/
+/*	$NetBSD: nand.c,v 1.14 2011/07/01 16:46:13 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.13 2011/06/28 18:14:11 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.14 2011/07/01 16:46:13 ahoka Exp $");
 
 #include "locators.h"
 
@@ -84,7 +84,7 @@ struct flash_interface nand_flash_if = {
 	.block_isbad = nand_flash_isbad,
 	.block_markbad = nand_flash_markbad,
 
-	.submit = nand_io_submit
+	.submit = nand_flash_submit
 };
 
 #ifdef NAND_VERBOSE
@@ -228,7 +228,7 @@ nand_detach(device_t self, int flags)
 		return error;
 	}
 
-	nand_sync_thread_stop(self);
+	flash_sync_thread_destroy(&sc->sc_flash_io);
 #ifdef NAND_BBT
 	nand_bbt_detach(self);
 #endif
@@ -1035,6 +1035,14 @@ nand_default_select(device_t self, bool enable)
 }
 
 /* implementation of the block device API */
+
+int
+nand_flash_submit(device_t self, struct buf *bp)
+{
+	struct nand_softc *sc = device_private(self);
+
+	return flash_io_submit(&sc->sc_flash_io, bp);
+}
 
 /*
  * handle (page) unaligned write to nand
