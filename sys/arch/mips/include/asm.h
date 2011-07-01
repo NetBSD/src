@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.44 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.45 2011/07/01 06:00:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -338,7 +338,7 @@ _C_LABEL(x):
 #define	PTR_ADDI	addi
 #define	PTR_ADDU	addu
 #define	PTR_ADDIU	addiu
-#define	PTR_SUB		add
+#define	PTR_SUB		subu
 #define	PTR_SUBI	subi
 #define	PTR_SUBU	subu
 #define	PTR_SUBIU	subu
@@ -360,7 +360,7 @@ _C_LABEL(x):
 #define	PTR_ADDI	daddi
 #define	PTR_ADDU	daddu
 #define	PTR_ADDIU	daddiu
-#define	PTR_SUB		dadd
+#define	PTR_SUB		dsubu
 #define	PTR_SUBI	dsubi
 #define	PTR_SUBU	dsubu
 #define	PTR_SUBIU	dsubu
@@ -384,7 +384,7 @@ _C_LABEL(x):
 #define	INT_ADDI	addi
 #define	INT_ADDU	addu
 #define	INT_ADDIU	addiu
-#define	INT_SUB		add
+#define	INT_SUB		subu
 #define	INT_SUBI	subi
 #define	INT_SUBU	subu
 #define	INT_SUBIU	subu
@@ -406,7 +406,7 @@ _C_LABEL(x):
 #define	INT_ADDI	daddi
 #define	INT_ADDU	daddu
 #define	INT_ADDIU	daddiu
-#define	INT_SUB		dadd
+#define	INT_SUB		dsubu
 #define	INT_SUBI	dsubi
 #define	INT_SUBU	dsubu
 #define	INT_SUBIU	dsubu
@@ -430,7 +430,7 @@ _C_LABEL(x):
 #define	LONG_ADDI	addi
 #define	LONG_ADDU	addu
 #define	LONG_ADDIU	addiu
-#define	LONG_SUB	add
+#define	LONG_SUB	subu
 #define	LONG_SUBI	subi
 #define	LONG_SUBU	subu
 #define	LONG_SUBIU	subu
@@ -452,7 +452,7 @@ _C_LABEL(x):
 #define	LONG_ADDI	daddi
 #define	LONG_ADDU	daddu
 #define	LONG_ADDIU	daddiu
-#define	LONG_SUB	dadd
+#define	LONG_SUB	dsubu
 #define	LONG_SUBI	dsubi
 #define	LONG_SUBU	dsubu
 #define	LONG_SUBIU	dsubu
