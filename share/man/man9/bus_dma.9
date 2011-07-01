@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.53 2010/05/14 18:52:46 jruoho Exp $
+.\" $NetBSD: bus_dma.9,v 1.54 2011/07/01 22:05:28 dyoung Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,9 +95,12 @@
 .Sh DESCRIPTION
 Provide a bus- and machine-independent "DMA mapping interface."
 .Sh IMPLEMENTATION NOTES
-All data structures, function prototypes, and macros will be defined
+All data types and constants will be defined
 by the port-specific header
-.In machine/bus.h .
+.In machine/bus_defs.h .
+All functions will be defined
+by the port-specific header
+.In machine/bus_funcs.h .
 Note that this document
 assumes the existence of types already defined by the current "bus.h"
 interface.
