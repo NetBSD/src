@@ -1,4 +1,4 @@
-/*	$NetBSD: obiovar.h,v 1.3 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: obiovar.h,v 1.4 2011/07/01 19:12:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #ifndef _LANDISK_OBIOVAR_H_
 #define _LANDISK_OBIOVAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* obio tag */
 extern struct _bus_space obio_bus_io;

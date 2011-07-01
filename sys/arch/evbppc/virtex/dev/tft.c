@@ -1,4 +1,4 @@
-/* 	$NetBSD: tft.c,v 1.3 2011/02/06 23:25:17 jmcneill Exp $ */
+/* 	$NetBSD: tft.c,v 1.4 2011/07/01 19:03:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tft.c,v 1.3 2011/02/06 23:25:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tft.c,v 1.4 2011/07/01 19:03:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: tft.c,v 1.3 2011/02/06 23:25:17 jmcneill Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>

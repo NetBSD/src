@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.13 2011/06/17 19:03:04 matt Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.14 2011/07/01 18:59:19 dyoung Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.13 2011/06/17 19:03:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.14 2011/07/01 18:59:19 dyoung Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.13 2011/06/17 19:03:04 matt Exp $
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/stdarg.h>
 
 #include <dev/ofw/openfirm.h>

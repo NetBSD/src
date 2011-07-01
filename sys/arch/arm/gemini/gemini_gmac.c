@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.6 2010/04/05 07:19:29 joerg Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.7 2011/07/01 19:32:28 dyoung Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #include <net/if.h>
 #include <net/if_ether.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/gemini/gemini_reg.h>
 #include <arm/gemini/gemini_obiovar.h>
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.6 2010/04/05 07:19:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.7 2011/07/01 19:32:28 dyoung Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */

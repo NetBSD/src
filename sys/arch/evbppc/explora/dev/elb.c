@@ -1,4 +1,4 @@
-/*	$NetBSD: elb.c,v 1.8 2011/06/06 17:13:06 matt Exp $	*/
+/*	$NetBSD: elb.c,v 1.9 2011/07/01 19:02:32 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elb.c,v 1.8 2011/06/06 17:13:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elb.c,v 1.9 2011/07/01 19:02:32 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: elb.c,v 1.8 2011/06/06 17:13:06 matt Exp $");
 
 #include <machine/explora.h>
 #define _POWERPC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <powerpc/ibm4xx/dcr403cgx.h>
 

@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.9 2010/04/05 07:19:29 joerg Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.9 2010/04/05 07:19:29 joerg Exp $	*/
+/*	$Id: at91emac.c,v 1.10 2011/07/01 19:31:17 dyoung Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.10 2011/07/01 19:31:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.9 2010/04/05 07:19:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.10 2011/07/01 19:31:17 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.9 2010/04/05 07:19:29 joerg Exp $");
 #include <sys/device.h>
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>

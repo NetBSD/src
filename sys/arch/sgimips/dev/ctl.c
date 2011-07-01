@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.2 2011/02/20 07:59:50 matt Exp $	 */
+/*	$NetBSD: ctl.c,v 1.3 2011/07/01 18:53:46 dyoung Exp $	 */
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctl.c,v 1.2 2011/02/20 07:59:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctl.c,v 1.3 2011/07/01 18:53:46 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ctl.c,v 1.2 2011/02/20 07:59:50 matt Exp $");
 #include <machine/cpu.h>
 #include <machine/locore.h>
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/machtype.h>
 #include <machine/sysconf.h>
 

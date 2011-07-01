@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mace.c,v 1.8 2009/11/21 17:40:28 rmind Exp $	*/
+/*	$NetBSD: com_mace.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.8 2009/11/21 17:40:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.8 2009/11/21 17:40:28 rmind Exp $");
 #include <machine/cpu.h>
 #include <machine/locore.h>
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/machtype.h>
 
 #include <sgimips/mace/macevar.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: opms_jazzio.c,v 1.10 2011/03/06 14:58:44 tsutsui Exp $ */
+/* $NetBSD: opms_jazzio.c,v 1.11 2011/07/01 19:25:42 dyoung Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms_jazzio.c,v 1.10 2011/03/06 14:58:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms_jazzio.c,v 1.11 2011/07/01 19:25:42 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: opms_jazzio.c,v 1.10 2011/03/06 14:58:44 tsutsui Exp
 #include <sys/tty.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arc/dev/pcconsvar.h>
 #include <arc/dev/opmsvar.h>

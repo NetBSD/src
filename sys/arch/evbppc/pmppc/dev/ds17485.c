@@ -1,4 +1,4 @@
-/*	$NetBSD: ds17485.c,v 1.7 2010/12/09 04:31:57 uebayasi Exp $	*/
+/*	$NetBSD: ds17485.c,v 1.8 2011/07/01 19:03:09 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.7 2010/12/09 04:31:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.8 2011/07/01 19:03:09 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ __KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.7 2010/12/09 04:31:57 uebayasi Exp $")
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mc146818reg.h>

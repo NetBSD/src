@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_gpio.c,v 1.2 2008/12/14 01:55:15 matt Exp $	*/
+/*	$NetBSD: gemini_gpio.c,v 1.3 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /* adapted from
  *	$NetBSD: omap2_gpio.c,v 1.6 2008/11/19 06:26:27 matt Exp
@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_gpio.c,v 1.2 2008/12/14 01:55:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gpio.c,v 1.3 2011/07/01 19:32:28 dyoung Exp $");
 
 #define _INTR_PRIVATE
 
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_gpio.c,v 1.2 2008/12/14 01:55:15 matt Exp $")
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/gemini/gemini_reg.h>
 #include <arm/gemini/gemini_obiovar.h>

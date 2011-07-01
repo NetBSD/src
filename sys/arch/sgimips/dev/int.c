@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.23 2011/03/10 17:32:46 tsutsui Exp $	*/
+/*	$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.23 2011/03/10 17:32:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: int.c,v 1.23 2011/03/10 17:32:46 tsutsui Exp $");
 #include <dev/ic/i8253reg.h>
 #include <machine/sysconf.h>
 #include <machine/machtype.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <mips/locore.h>
 
 #include <mips/cache.h>

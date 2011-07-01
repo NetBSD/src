@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_nand.c,v 1.6 2011/06/28 07:17:31 ahoka Exp $	*/
+/*	$NetBSD: rmixl_nand.c,v 1.7 2011/07/01 19:01:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.6 2011/06/28 07:17:31 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.7 2011/07/01 19:01:31 dyoung Exp $");
 
 #include "opt_flash.h"
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.6 2011/06/28 07:17:31 ahoka Exp $")
 #include <sys/device.h>
 #include <sys/endian.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
