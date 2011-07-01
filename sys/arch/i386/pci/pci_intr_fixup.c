@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.48 2011/06/06 14:33:31 msaitoh Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.49 2011/07/01 17:37:26 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.48 2011/06/06 14:33:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.49 2011/07/01 17:37:26 dyoung Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.48 2011/06/06 14:33:31 msaitoh 
 #include <sys/queue.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/pci/pcireg.h>
