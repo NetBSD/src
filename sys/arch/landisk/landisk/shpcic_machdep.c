@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic_machdep.c,v 1.3 2011/04/06 01:32:06 dyoung Exp $	*/
+/*	$NetBSD: shpcic_machdep.c,v 1.4 2011/07/01 19:12:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic_machdep.c,v 1.3 2011/04/06 01:32:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic_machdep.c,v 1.4 2011/07/01 19:12:53 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: shpcic_machdep.c,v 1.3 2011/04/06 01:32:06 dyoung Ex
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pciconf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/pci_machdep.h>
 

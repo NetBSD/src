@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1743.c,v 1.8 2011/06/15 05:29:32 cliff Exp $	*/
+/*	$NetBSD: ds1743.c,v 1.9 2011/07/01 19:03:50 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Wasabi Sysetms, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1743.c,v 1.8 2011/06/15 05:29:32 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1743.c,v 1.9 2011/07/01 19:03:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ds1743.c,v 1.8 2011/06/15 05:29:32 cliff Exp $");
 #include <dev/clock_subr.h>
 
 #include <machine/rtc.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <evbppc/walnut/dev/ds1743reg.h>
 #include <evbppc/walnut/dev/pbusvar.h>

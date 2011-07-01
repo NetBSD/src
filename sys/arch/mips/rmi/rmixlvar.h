@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.5 2011/04/14 05:21:22 cliff Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.6 2011/07/01 19:01:31 dyoung Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
 #include <mips/locore.h>
 #include <mips/rmi/rmixl_firmware.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 

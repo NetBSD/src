@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_bus_intio.c,v 1.2 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: jensenio_bus_intio.c,v 1.3 2011/07/01 19:22:35 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_bus_intio.c,v 1.2 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_bus_intio.c,v 1.3 2011/07/01 19:22:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: jensenio_bus_intio.c,v 1.2 2008/04/28 20:23:11 marti
 #include <sys/device.h>
 #include <sys/extent.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/eisa/eisavar.h>
 

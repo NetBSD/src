@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridgevar.h,v 1.6 2009/07/21 07:35:55 skrll Exp $	*/
+/*	$NetBSD: footbridgevar.h,v 1.7 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/rtc.h>
 #include <dev/pci/pcivar.h>
 

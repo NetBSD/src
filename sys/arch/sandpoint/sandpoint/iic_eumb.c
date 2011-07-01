@@ -1,4 +1,4 @@
-/* $NetBSD: iic_eumb.c,v 1.15 2011/06/18 08:08:30 matt Exp $ */
+/* $NetBSD: iic_eumb.c,v 1.16 2011/07/01 19:16:06 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2010,2011 Frank Wille.
@@ -29,12 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.15 2011/06/18 08:08:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.16 2011/07/01 19:16:06 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/i2c/motoi2cvar.h>
 #include <sandpoint/sandpoint/eumbvar.h>
 #include <machine/bootinfo.h>

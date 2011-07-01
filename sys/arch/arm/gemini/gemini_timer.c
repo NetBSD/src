@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_timer.c,v 1.4 2010/01/05 13:14:56 mbalmer Exp $	*/
+/*	$NetBSD: gemini_timer.c,v 1.5 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /* adapted from:
  *	NetBSD: omap2_geminitmr.c,v 1.1 2008/08/27 11:03:10 matt Exp
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_timer.c,v 1.4 2010/01/05 13:14:56 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_timer.c,v 1.5 2011/07/01 19:32:28 dyoung Exp $");
 
 #include "opt_gemini.h"
 #include "opt_cpuoptions.h"
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_timer.c,v 1.4 2010/01/05 13:14:56 mbalmer Exp
 
 #include <dev/clock_subr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>

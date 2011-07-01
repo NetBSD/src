@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.22 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: pci_6600.c,v 1.23 2011/07/01 19:19:50 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.22 2011/06/14 15:34:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.23 2011/07/01 19:19:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.22 2011/06/14 15:34:22 matt Exp $");
 
 #include <machine/autoconf.h>
 #define _ALPHA_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/rpb.h>
 #include <machine/alpha.h>
 

@@ -1,4 +1,4 @@
-/* $Id: rmixl_com.c,v 1.4 2011/05/11 00:38:03 cliff Exp $ */
+/* $Id: rmixl_com.c,v 1.5 2011/07/01 19:01:30 dyoung Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.4 2011/05/11 00:38:03 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.5 2011/07/01 19:01:30 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.4 2011/05/11 00:38:03 cliff Exp $");
 #include <sys/ttydefaults.h>
 #include <sys/types.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/cons.h>
 #include <dev/ic/comreg.h>

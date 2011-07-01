@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_elb.c,v 1.12 2011/06/18 06:44:25 matt Exp $	*/
+/*	$NetBSD: fb_elb.c,v 1.13 2011/07/01 19:02:32 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.12 2011/06/18 06:44:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.13 2011/07/01 19:02:32 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.12 2011/06/18 06:44:25 matt Exp $");
 #include <dev/rasops/rasops.h>
 
 #include <machine/explora.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <evbppc/explora/dev/elbvar.h>
 

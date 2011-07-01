@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.40 2009/09/27 05:29:20 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.41 2011/07/01 19:25:41 dyoung Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.40 2009/09/27 05:29:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.41 2011/07/01 19:25:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.40 2009/09/27 05:29:20 tsutsui Exp $");
 
 #include <dev/cons.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 
 #include <arc/jazz/fdreg.h>

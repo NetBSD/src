@@ -1,5 +1,5 @@
-/*	$Id: at91busvar.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
-/*	$NetBSD: at91busvar.h,v 1.3 2009/10/23 06:53:13 snj Exp $ */
+/*	$Id: at91busvar.h,v 1.4 2011/07/01 19:31:16 dyoung Exp $	*/
+/*	$NetBSD: at91busvar.h,v 1.4 2011/07/01 19:31:16 dyoung Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -34,7 +34,7 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <arm/at91/at91piovar.h>
 
 

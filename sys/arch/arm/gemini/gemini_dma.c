@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_dma.c,v 1.1 2008/10/24 04:23:18 matt Exp $	*/
+/*	$NetBSD: gemini_dma.c,v 1.2 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /* adapted from:
  *	NetBSD: pxa2x0_dma.c,v 1.4 2005/12/11 12:16:51 christos Exp
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_dma.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_dma.c,v 1.2 2011/07/01 19:32:28 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_dma.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
 #include <uvm/uvm_extern.h>
 
 #define	_ARM32_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct arm32_bus_dma_tag gemini_bus_dma_tag = {
 	0,

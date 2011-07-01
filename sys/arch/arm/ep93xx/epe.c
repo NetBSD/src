@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.25 2010/04/05 07:19:29 joerg Exp $	*/
+/*	$NetBSD: epe.c,v 1.26 2011/07/01 19:31:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.25 2010/04/05 07:19:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.26 2011/07/01 19:31:17 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.25 2010/04/05 07:19:29 joerg Exp $");
 #include <sys/device.h>
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>

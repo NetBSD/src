@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.21 2011/03/06 14:58:44 tsutsui Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.22 2011/07/01 19:25:41 dyoung Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -31,13 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.21 2011/03/06 14:58:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.22 2011/07/01 19:25:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pio.h>
 #include <machine/autoconf.h>
 #include <machine/platform.h>

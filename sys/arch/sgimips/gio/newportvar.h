@@ -1,4 +1,4 @@
-/*	$NetBSD: newportvar.h,v 1.2 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: newportvar.h,v 1.3 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -32,7 +32,7 @@
 #ifndef _ARCH_SGIMIPS_GIO_NEWPORTVAR_H_
 #define _ARCH_SGIMIPS_GIO_NEWPORTVAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 int newport_cnattach(struct gio_attach_args *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: epsocvar.h,v 1.3 2009/10/23 00:39:30 snj Exp $ */
+/*	$NetBSD: epsocvar.h,v 1.4 2011/07/01 19:31:17 dyoung Exp $ */
 /*
  * Copyright (c) 2004 Jesse Off
  * All rights reserved.
@@ -32,7 +32,7 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct epgpio_softc;
 

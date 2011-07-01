@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.4 2011/06/18 06:44:27 matt Exp $	*/
+/*	$NetBSD: flash.c,v 1.5 2011/07/01 19:03:09 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.4 2011/06/18 06:44:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.5 2011/07/01 19:03:09 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <arch/evbppc/pmppc/dev/mainbus.h>
 
 struct flash_softc {

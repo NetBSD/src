@@ -1,4 +1,4 @@
-/*	$NetBSD: com_jazzio.c,v 1.11 2008/04/28 20:23:13 martin Exp $	*/
+/*	$NetBSD: com_jazzio.c,v 1.12 2011/07/01 19:25:41 dyoung Exp $	*/
 /*	$OpenBSD: com_lbus.c,v 1.7 1998/03/16 09:38:41 pefo Exp $	*/
 /*	NetBSD: com_isa.c,v 1.12 1998/08/15 17:47:17 mycroft Exp 	*/
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.11 2008/04/28 20:23:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.12 2011/07/01 19:25:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.11 2008/04/28 20:23:13 martin Exp $
 #include <sys/tty.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arc/jazz/jazziovar.h>

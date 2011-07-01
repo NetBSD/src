@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.h,v 1.10 2011/01/25 12:21:04 tsutsui Exp $	*/
+/*	$NetBSD: hpcdma.h,v 1.11 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -39,7 +39,7 @@
 #ifndef _SGIMIPS_HPC_DMA_H
 #define _SGIMIPS_HPC_DMA_H
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct hpc_dma_softc {
 	bus_space_tag_t		sc_bst;

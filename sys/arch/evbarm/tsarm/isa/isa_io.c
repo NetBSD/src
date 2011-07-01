@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.7 2009/03/14 21:04:08 dsl Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.8 2011/07/01 19:11:34 dyoung Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,13 +38,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.7 2009/03/14 21:04:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.8 2011/07/01 19:11:34 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/extent.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pio.h>
 #include <machine/isa_machdep.h>
 

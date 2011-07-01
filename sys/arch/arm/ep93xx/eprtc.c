@@ -1,4 +1,4 @@
-/*	$NetBSD: eprtc.c,v 1.4 2010/01/05 13:14:56 mbalmer Exp $	*/
+/*	$NetBSD: eprtc.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,14 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.4 2010/01/05 13:14:56 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <dev/clock_subr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <arm/ep93xx/ep93xxvar.h> 
 #include <arm/ep93xx/epsocvar.h> 
 #include <arm/ep93xx/eprtcreg.h> 

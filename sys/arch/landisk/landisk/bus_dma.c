@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.13 2010/11/06 11:46:01 uebayasi Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.14 2011/07/01 19:12:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13 2010/11/06 11:46:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.14 2011/07/01 19:12:53 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13 2010/11/06 11:46:01 uebayasi Exp $"
 
 #include <machine/autoconf.h>
 #define	_LANDISK_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #if defined(DEBUG) && defined(BUSDMA_DEBUG)
 int busdma_debug = 0;

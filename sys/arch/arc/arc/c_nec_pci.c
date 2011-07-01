@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.18 2011/02/20 07:52:42 matt Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.19 2011/07/01 19:28:00 dyoung Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.18 2011/02/20 07:52:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.19 2011/07/01 19:28:00 dyoung Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.18 2011/02/20 07:52:42 matt Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pio.h>
 #include <machine/platform.h>
 #include <machine/wired_map.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma_3000_300.c,v 1.5 2009/03/14 15:36:00 dsl Exp $ */
+/* $NetBSD: tc_dma_3000_300.c,v 1.6 2011/07/01 19:19:50 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,11 +32,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_300.c,v 1.5 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_300.c,v 1.6 2011/07/01 19:19:50 dyoung Exp $");
 
 #include <sys/param.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <alpha/tc/tc_dma_3000_300.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio_eb_space.c,v 1.2 2011/02/20 07:48:37 matt Exp $	*/
+/*	$NetBSD: rmixl_obio_eb_space.c,v 1.3 2011/07/01 19:01:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,12 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio_eb_space.c,v 1.2 2011/02/20 07:48:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio_eb_space.c,v 1.3 2011/07/01 19:01:31 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <mips/rmi/rmixl_obiovar.h>
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>

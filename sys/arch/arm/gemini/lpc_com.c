@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc_com.c,v 1.3 2008/11/15 05:48:34 cliff Exp $	*/
+/*	$NetBSD: lpc_com.c,v 1.4 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /* adapted from:
  *	NetBSD: gemini_com.c,v 1.1 2008/10/24 04:23:18 matt Exp
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpc_com.c,v 1.3 2008/11/15 05:48:34 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpc_com.c,v 1.4 2011/07/01 19:32:28 dyoung Exp $");
 
 #include "opt_com.h"
 #include "locators.h"
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpc_com.c,v 1.3 2008/11/15 05:48:34 cliff Exp $");
 #include <sys/kernel.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

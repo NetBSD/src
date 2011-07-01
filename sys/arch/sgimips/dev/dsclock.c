@@ -1,4 +1,4 @@
-/*	$NetBSD: dsclock.c,v 1.4 2010/01/12 15:20:29 tsutsui Exp $	*/
+/*	$NetBSD: dsclock.c,v 1.5 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -34,14 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsclock.c,v 1.4 2010/01/12 15:20:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsclock.c,v 1.5 2011/07/01 18:53:46 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/sysconf.h>
 #include <machine/machtype.h>

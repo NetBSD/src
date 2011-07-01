@@ -1,4 +1,4 @@
-/* $NetBSD: lca_dma.c,v 1.21 2010/12/15 01:27:19 matt Exp $ */
+/* $NetBSD: lca_dma.c,v 1.22 2011/07/01 19:19:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.21 2010/12/15 01:27:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.22 2011/07/01 19:19:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.21 2010/12/15 01:27:19 matt Exp $");
 #include <sys/malloc.h>
 
 #define _ALPHA_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

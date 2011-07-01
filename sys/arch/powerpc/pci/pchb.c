@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.7 2011/06/30 00:52:59 matt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.8 2011/07/01 18:59:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.7 2011/06/30 00:52:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.8 2011/07/01 18:59:19 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pio.h>
 
 #include <dev/pci/pcivar.h>

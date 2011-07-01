@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.19 2011/01/25 13:31:41 tsutsui Exp $ */
+/* $NetBSD: haltwo.c,v 1.20 2011/07/01 18:53:46 dyoung Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.19 2011/01/25 13:31:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.20 2011/07/01 18:53:46 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.19 2011/01/25 13:31:41 tsutsui Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/sysconf.h>
 
 #include <sgimips/hpc/hpcvar.h>

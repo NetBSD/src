@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_iobus.c,v 1.2 2011/03/18 01:21:34 cliff Exp $	*/
+/*	$NetBSD: rmixl_iobus.c,v 1.3 2011/07/01 19:01:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_iobus.c,v 1.2 2011/03/18 01:21:34 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_iobus.c,v 1.3 2011/07/01 19:01:31 dyoung Exp $");
 
 #include "locators.h"
 
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_iobus.c,v 1.2 2011/03/18 01:21:34 cliff Exp $"
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppc.c,v 1.10 2011/06/09 02:49:32 rmind Exp $ */
+/* $NetBSD: pi1ppc.c,v 1.11 2011/07/01 18:53:47 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.10 2011/06/09 02:49:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.11 2011/07/01 18:53:47 dyoung Exp $");
 
 #include "opt_pi1ppc.h"
 
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.10 2011/06/09 02:49:32 rmind Exp $");
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 /*#include <machine/intr.h>*/
 
 #include <dev/ppbus/ppbus_conf.h>

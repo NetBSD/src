@@ -1,5 +1,5 @@
-/*	$Id: at91usart.c,v 1.4 2011/04/24 16:26:53 rmind Exp $	*/
-/*	$NetBSD: at91usart.c,v 1.4 2011/04/24 16:26:53 rmind Exp $ */
+/*	$Id: at91usart.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $	*/
+/*	$NetBSD: at91usart.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.4 2011/04/24 16:26:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.4 2011/04/24 16:26:53 rmind Exp $");
 #include <sys/kauth.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/at91/at91reg.h>
 #include <arm/at91/at91var.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.10 2009/12/26 16:01:23 uebayasi Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.11 2011/07/01 19:31:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.10 2009/12/26 16:01:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.11 2011/07/01 19:31:16 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.10 2009/12/26 16:01:23 uebayasi Exp $"
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <arm/undefined.h>

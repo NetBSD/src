@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.36 2011/05/17 17:34:47 dyoung Exp $	*/
+/*	$NetBSD: necpb.c,v 1.37 2011/07/01 19:28:00 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.36 2011/05/17 17:34:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.37 2011/07/01 19:28:00 dyoung Exp $");
 
 #include "opt_pci.h"
 
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.36 2011/05/17 17:34:47 dyoung Exp $");
 #include <uvm/uvm_extern.h>
 
 #define _ARC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <machine/pio.h>
 

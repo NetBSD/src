@@ -1,4 +1,4 @@
-/* $NetBSD: if_gpn.c,v 1.3 2010/04/05 07:19:29 joerg Exp $ */
+/* $NetBSD: if_gpn.c,v 1.4 2011/07/01 19:32:28 dyoung Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "opt_gemini.h"
 
-__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.3 2010/04/05 07:19:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.4 2011/07/01 19:32:28 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.3 2010/04/05 07:19:29 joerg Exp $");
 
 #include <net/bpf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/gemini/gemini_var.h>
 #include <arm/gemini/gemini_ipm.h>

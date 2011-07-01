@@ -1,4 +1,4 @@
-/* $NetBSD: macekbc.c,v 1.5 2011/02/20 07:59:51 matt Exp $ */
+/* $NetBSD: macekbc.c,v 1.6 2011/07/01 18:53:47 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,14 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macekbc.c,v 1.5 2011/02/20 07:59:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macekbc.c,v 1.6 2011/07/01 18:53:47 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <sgimips/mace/macevar.h>

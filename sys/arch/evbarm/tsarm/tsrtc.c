@@ -1,4 +1,4 @@
-/*	$NetBSD: tsrtc.c,v 1.6 2008/04/04 09:33:07 tsutsui Exp $	*/
+/*	$NetBSD: tsrtc.c,v 1.7 2011/07/01 19:11:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsrtc.c,v 1.6 2008/04/04 09:33:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsrtc.c,v 1.7 2011/07/01 19:11:34 dyoung Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: tsrtc.c,v 1.6 2008/04/04 09:33:07 tsutsui Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mc146818reg.h>

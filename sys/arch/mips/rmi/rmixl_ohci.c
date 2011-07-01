@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_ohci.c,v 1.3 2011/04/29 21:54:14 matt Exp $	*/
+/*	$NetBSD: rmixl_ohci.c,v 1.4 2011/07/01 19:01:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,13 +32,13 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.3 2011/04/29 21:54:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.4 2011/07/01 19:01:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>

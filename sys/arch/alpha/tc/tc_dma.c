@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma.c,v 1.12 2009/03/18 10:22:23 cegger Exp $ */
+/* $NetBSD: tc_dma.c,v 1.13 2011/07/01 19:19:50 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,13 +32,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma.c,v 1.12 2009/03/18 10:22:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma.c,v 1.13 2011/07/01 19:19:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 
 #define _ALPHA_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/tc/tcvar.h>
 

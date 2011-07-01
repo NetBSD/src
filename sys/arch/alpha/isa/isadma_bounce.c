@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.10 2010/12/15 01:29:37 matt Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.11 2011/07/01 19:22:35 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.10 2010/12/15 01:29:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.11 2011/07/01 19:22:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.10 2010/12/15 01:29:37 matt Exp 
 #include <sys/mbuf.h>
 
 #define _ALPHA_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

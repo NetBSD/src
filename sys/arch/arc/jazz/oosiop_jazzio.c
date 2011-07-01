@@ -1,4 +1,4 @@
-/* $NetBSD: oosiop_jazzio.c,v 1.6 2008/03/29 09:11:35 tsutsui Exp $ */
+/* $NetBSD: oosiop_jazzio.c,v 1.7 2011/07/01 19:25:42 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop_jazzio.c,v 1.6 2008/03/29 09:11:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop_jazzio.c,v 1.7 2011/07/01 19:25:42 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: oosiop_jazzio.c,v 1.6 2008/03/29 09:11:35 tsutsui Ex
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/oosiopreg.h>
 #include <dev/ic/oosiopvar.h>

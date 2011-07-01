@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.58 2011/04/24 16:26:53 rmind Exp $	*/
+/*	$NetBSD: pccons.c,v 1.59 2011/07/01 19:25:41 dyoung Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.58 2011/04/24 16:26:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.59 2011/07/01 19:25:41 dyoung Exp $");
 
 #include "opt_ddb.h"
 
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.58 2011/04/24 16:26:53 rmind Exp $");
 #include <sys/proc.h>
 #include <sys/kauth.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/pcdisplay.h>
 #include <machine/pccons.h>

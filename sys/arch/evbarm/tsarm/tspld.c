@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.20 2009/10/23 00:39:31 snj Exp $	*/
+/*	$NetBSD: tspld.c,v 1.21 2011/07/01 19:11:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.20 2009/10/23 00:39:31 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.21 2011/07/01 19:11:34 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.20 2009/10/23 00:39:31 snj Exp $");
 #include <sys/device.h>
 #include <sys/wdog.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include "isa.h"

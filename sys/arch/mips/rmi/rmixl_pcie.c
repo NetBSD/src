@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.6 2011/05/17 17:34:51 dyoung Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.7 2011/07/01 19:01:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.6 2011/05/17 17:34:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.7 2011/07/01 19:01:31 dyoung Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.6 2011/05/17 17:34:51 dyoung Exp $"
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <mips/rmi/rmixlreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ep93xx_busdma.c,v 1.3 2009/10/23 00:39:30 snj Exp $ */
+/*	$NetBSD: ep93xx_busdma.c,v 1.4 2011/07/01 19:31:17 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_busdma.c,v 1.3 2009/10/23 00:39:30 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_busdma.c,v 1.4 2011/07/01 19:31:17 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ep93xx_busdma.c,v 1.3 2009/10/23 00:39:30 snj Exp $"
 #include <sys/extent.h>
 
 #define _ARM32_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/ep93xx/ep93xxvar.h>
 

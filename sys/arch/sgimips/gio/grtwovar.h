@@ -1,4 +1,4 @@
-/*	$NetBSD: grtwovar.h,v 1.2 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: grtwovar.h,v 1.3 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
 #ifndef _ARCH_SGIMIPS_GIO_GRTWOVAR_H_
 #define _ARCH_SGIMIPS_GIO_GRTWOVAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 int grtwo_cnattach(struct gio_attach_args *);
 

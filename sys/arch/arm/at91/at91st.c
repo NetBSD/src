@@ -1,4 +1,4 @@
-/*$NetBSD: at91st.c,v 1.3 2009/10/27 03:42:31 snj Exp $*/
+/*$NetBSD: at91st.c,v 1.4 2011/07/01 19:31:17 dyoung Exp $*/
 
 /*
  * AT91RM9200 clock functions
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91st.c,v 1.3 2009/10/27 03:42:31 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91st.c,v 1.4 2011/07/01 19:31:17 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: at91st.c,v 1.3 2009/10/27 03:42:31 snj Exp $");
 
 #include <dev/clock_subr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>

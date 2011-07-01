@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.13 2009/03/14 21:04:08 dsl Exp $ */
+/* $NetBSD: tslcd.c,v 1.14 2011/07/01 19:11:34 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.13 2009/03/14 21:04:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.14 2011/07/01 19:11:34 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.13 2009/03/14 21:04:08 dsl Exp $");
 #include <sys/callout.h>
 #include <sys/select.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/wscons/wsdisplayvar.h>

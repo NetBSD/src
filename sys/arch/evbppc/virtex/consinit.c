@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2 2007/10/17 19:54:20 garbled Exp $ */
+/*	$NetBSD: consinit.c,v 1.3 2011/07/01 19:03:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -33,13 +33,13 @@
 #include "xlcom.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2 2007/10/17 19:54:20 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3 2011/07/01 19:03:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <evbppc/virtex/virtex.h>
 

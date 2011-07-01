@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.20 2011/02/20 07:59:51 matt Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.21 2011/07/01 18:54:32 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.20 2011/02/20 07:59:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.21 2011/07/01 18:54:32 dyoung Exp $");
 
 #ifndef _LP64
 
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.20 2011/02/20 07:59:51 matt Exp $");
 #include <sys/systm.h>
 
 #include <machine/machtype.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/cons.h>
 

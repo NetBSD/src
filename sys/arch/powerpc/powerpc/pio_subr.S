@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.13 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.14 2011/07/01 18:59:19 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
@@ -46,7 +46,7 @@
 
 /* LINTSTUB: include <sys/param.h> */
 /* LINTSTUB: include <sys/types.h> */
-/* LINTSTUB: include <machine/bus.h> */
+/* LINTSTUB: include <sys/bus.h> */
 
 /* LINTSTUB: Func: void out8(volatile u_int8_t *a, u_int8_t v) */
 

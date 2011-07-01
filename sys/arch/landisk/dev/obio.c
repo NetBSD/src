@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.8 2009/11/07 07:27:45 cegger Exp $	*/
+/*	$NetBSD: obio.c,v 1.9 2011/07/01 19:12:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.8 2009/11/07 07:27:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.9 2011/07/01 19:12:53 dyoung Exp $");
 
 #include "btn_obio.h"
 #include "pwrsw_obio.h"
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.8 2009/11/07 07:27:45 cegger Exp $");
 #include <sh3/pmap.h>
 #include <sh3/pte.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.41 2011/02/20 07:59:50 matt Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.41 2011/02/20 07:59:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $");
 
 
 #include <sys/param.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.41 2011/02/20 07:59:50 matt Exp $");
 
 #include <net/bpf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/sysconf.h>
 

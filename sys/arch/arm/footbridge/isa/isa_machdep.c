@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.17 2010/06/13 02:11:22 tsutsui Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.18 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.17 2010/06/13 02:11:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.18 2011/07/01 19:32:28 dyoung Exp $");
 
 #include "opt_irqstats.h"
 
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.17 2010/06/13 02:11:22 tsutsui Exp
 #include <sys/proc.h>
 
 #define _ARM32_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <machine/intr.h>
 #include <machine/pio.h>

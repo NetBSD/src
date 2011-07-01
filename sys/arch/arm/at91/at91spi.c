@@ -1,5 +1,5 @@
-/*	$Id: at91spi.c,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
-/*	$NetBSD: at91spi.c,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
+/*	$Id: at91spi.c,v 1.3 2011/07/01 19:31:17 dyoung Exp $	*/
+/*	$NetBSD: at91spi.c,v 1.3 2011/07/01 19:31:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91spi.c,v 1.2 2008/07/03 01:15:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91spi.c,v 1.3 2011/07/01 19:31:17 dyoung Exp $");
 
 #include "locators.h"
 
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: at91spi.c,v 1.2 2008/07/03 01:15:38 matt Exp $");
 #include <sys/errno.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/vmparam.h>
 #include <sys/inttypes.h>

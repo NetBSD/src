@@ -1,4 +1,4 @@
-/*	$NetBSD: pbusvar.h,v 1.1 2002/12/09 12:16:24 scw Exp $	*/
+/*	$NetBSD: pbusvar.h,v 1.2 2011/07/01 19:03:51 dyoung Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct pbus_attach_args {
 	const char *pb_name;

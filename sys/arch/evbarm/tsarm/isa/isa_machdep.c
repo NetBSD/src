@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.10 2009/08/19 15:14:59 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.11 2011/07/01 19:11:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.10 2009/08/19 15:14:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.11 2011/07/01 19:11:35 dyoung Exp $");
 
 #include "opt_irqstats.h"
 
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.10 2009/08/19 15:14:59 dyoung Exp 
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <machine/intr.h>
 #include <machine/pio.h>

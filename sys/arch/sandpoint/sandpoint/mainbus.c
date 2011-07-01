@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.23 2011/06/05 17:03:19 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.24 2011/07/01 19:16:06 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.23 2011/06/05 17:03:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24 2011/07/01 19:16:06 dyoung Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.23 2011/06/05 17:03:19 matt Exp $");
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/isa_machdep.h>
 
 #include <dev/pci/pcivar.h>

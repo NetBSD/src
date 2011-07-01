@@ -1,4 +1,4 @@
-/* $NetBSD: if_gmc.c,v 1.3 2008/12/23 02:15:11 matt Exp $ */
+/* $NetBSD: if_gmc.c,v 1.4 2011/07/01 19:32:28 dyoung Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <sys/kmem.h>
 #include <sys/mbuf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/gemini/gemini_reg.h>
@@ -47,7 +47,7 @@
 #include <net/if_ether.h>
 #include <net/if_dl.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.3 2008/12/23 02:15:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.4 2011/07/01 19:32:28 dyoung Exp $");
 
 #define	MAX_TXSEG	32
 

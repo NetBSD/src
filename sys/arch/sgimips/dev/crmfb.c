@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.34 2011/05/17 22:52:28 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.35 2011/07/01 18:53:46 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.34 2011/05/17 22:52:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.35 2011/07/01 18:53:46 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.34 2011/05/17 22:52:28 macallan Exp $");
 
 #define _SGIMIPS_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/machtype.h>
 #include <machine/vmparam.h>
 

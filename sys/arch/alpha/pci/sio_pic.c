@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.40 2009/03/16 23:11:09 dsl Exp $ */
+/* $NetBSD: sio_pic.c,v 1.41 2011/07/01 19:19:50 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.40 2009/03/16 23:11:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.41 2011/07/01 19:19:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.40 2009/03/16 23:11:09 dsl Exp $");
 #include <sys/syslog.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

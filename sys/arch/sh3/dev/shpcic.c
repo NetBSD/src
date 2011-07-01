@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.14 2011/05/17 17:34:52 dyoung Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.15 2011/07/01 19:17:38 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.14 2011/05/17 17:34:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.15 2011/07/01 19:17:38 dyoung Exp $");
 
 #include "opt_pci.h"
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.14 2011/05/17 17:34:52 dyoung Exp $");
 #include <sh3/exception.h>
 #include <sh3/pcicreg.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/pci_machdep.h>
 

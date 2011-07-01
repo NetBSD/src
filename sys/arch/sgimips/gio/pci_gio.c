@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.8 2011/05/17 17:34:52 dyoung Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.9 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.8 2011/05/17 17:34:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.9 2011/07/01 18:53:46 dyoung Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.8 2011/05/17 17:34:52 dyoung Exp $");
 #include <sys/malloc.h>
 #include <sys/extent.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/machtype.h>
 
 #include <sgimips/gio/giovar.h>

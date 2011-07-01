@@ -1,5 +1,5 @@
-/*	$Id: at91aic.c,v 1.6 2011/06/06 16:29:14 matt Exp $	*/
-/*	$NetBSD: at91aic.c,v 1.6 2011/06/06 16:29:14 matt Exp $	*/
+/*	$Id: at91aic.c,v 1.7 2011/07/01 19:31:16 dyoung Exp $	*/
+/*	$NetBSD: at91aic.c,v 1.7 2011/07/01 19:31:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy.
@@ -49,7 +49,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>

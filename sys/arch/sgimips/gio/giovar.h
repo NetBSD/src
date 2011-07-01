@@ -1,4 +1,4 @@
-/*	$NetBSD: giovar.h,v 1.9 2007/02/19 20:14:30 rumble Exp $	*/
+/*	$NetBSD: giovar.h,v 1.10 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -36,7 +36,7 @@
  * GIO 32/32-bis/64 bus
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct giobus_attach_args {
 	bus_space_tag_t	gba_iot;

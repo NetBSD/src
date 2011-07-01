@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.24 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.25 2011/07/01 19:22:35 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.24 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.25 2011/07/01 19:22:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.24 2008/04/28 20:23:11 martin Exp
 #include <uvm/uvm_extern.h>
 
 #define	_ALPHA_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <alpha/common/sgmapvar.h>
 

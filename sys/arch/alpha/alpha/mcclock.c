@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.16 2009/03/05 01:48:58 msaitoh Exp $ */
+/* $NetBSD: mcclock.c,v 1.17 2011/07/01 19:22:35 dyoung Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.16 2009/03/05 01:48:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.17 2011/07/01 19:22:35 dyoung Exp $");
 
 #include "opt_clock_compat_osf1.h"
 
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.16 2009/03/05 01:48:58 msaitoh Exp $")
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu_counter.h>
 
 #include <dev/clock_subr.h>

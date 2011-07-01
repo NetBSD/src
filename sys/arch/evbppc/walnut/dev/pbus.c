@@ -1,4 +1,4 @@
-/*	$NetBSD: pbus.c,v 1.12 2011/06/15 05:21:38 cliff Exp $	*/
+/*	$NetBSD: pbus.c,v 1.13 2011/07/01 19:03:51 dyoung Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.12 2011/06/15 05:21:38 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.13 2011/07/01 19:03:51 dyoung Exp $");
 
 #include "locators.h"
 #include "pckbc.h"
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.12 2011/06/15 05:21:38 cliff Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/walnut.h>
 
 #include <evbppc/walnut/dev/pbusvar.h>

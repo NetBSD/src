@@ -1,4 +1,4 @@
-/*	$NetBSD: epgpio.c,v 1.3 2009/08/03 06:57:09 he Exp $	*/
+/*	$NetBSD: epgpio.c,v 1.4 2011/07/01 19:31:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,13 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.3 2009/08/03 06:57:09 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.4 2011/07/01 19:31:17 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <sys/gpio.h>
 #include <dev/gpio/gpiovar.h>

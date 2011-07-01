@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.41 2011/02/20 07:59:51 matt Exp $	*/
+/*	$NetBSD: console.c,v 1.42 2011/07/01 18:54:32 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.41 2011/02/20 07:59:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.42 2011/07/01 18:54:32 dyoung Exp $");
 
 #include "opt_kgdb.h"
 
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.41 2011/02/20 07:59:51 matt Exp $");
 #include <sys/termios.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/machtype.h>
 
 #include <dev/cons.h>

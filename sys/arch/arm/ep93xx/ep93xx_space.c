@@ -1,4 +1,4 @@
-/*	$NetBSD: ep93xx_space.c,v 1.4 2009/10/23 00:39:30 snj Exp $ */
+/*	$NetBSD: ep93xx_space.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_space.c,v 1.4 2009/10/23 00:39:30 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_space.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $");
 
 /*
  * bus_space I/O functions for ep93xx
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ep93xx_space.c,v 1.4 2009/10/23 00:39:30 snj Exp $")
 
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/ep93xx/ep93xxreg.h>
 #include <arm/ep93xx/ep93xxvar.h>

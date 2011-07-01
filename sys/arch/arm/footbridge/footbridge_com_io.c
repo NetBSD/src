@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com_io.c,v 1.6 2009/03/14 21:04:05 dsl Exp $	*/
+/*	$NetBSD: footbridge_com_io.c,v 1.7 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -43,11 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com_io.c,v 1.6 2009/03/14 21:04:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com_io.c,v 1.7 2011/07/01 19:32:28 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* Proto types for all the bus_space structure functions */
 

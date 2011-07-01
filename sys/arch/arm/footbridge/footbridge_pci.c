@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.20 2011/06/30 20:09:20 wiz Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.21 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.20 2011/06/30 20:09:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.21 2011/07/01 19:32:28 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.20 2011/06/30 20:09:20 wiz Exp 
 #include <sys/device.h>
 
 #define _ARM32_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/pci/pcireg.h>

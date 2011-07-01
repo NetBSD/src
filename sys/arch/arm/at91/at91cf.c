@@ -1,5 +1,5 @@
-/*	$Id: at91cf.c,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
-/*	$NetBSD: at91cf.c,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
+/*	$Id: at91cf.c,v 1.3 2011/07/01 19:31:17 dyoung Exp $	*/
+/*	$NetBSD: at91cf.c,v 1.3 2011/07/01 19:31:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91cf.c,v 1.2 2008/07/03 01:15:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91cf.c,v 1.3 2011/07/01 19:31:17 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: at91cf.c,v 1.2 2008/07/03 01:15:38 matt Exp $");
 #include <sys/device.h>
 #include <sys/kthread.h>
 #include <uvm/uvm_param.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciachip.h>

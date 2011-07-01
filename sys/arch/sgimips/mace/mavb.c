@@ -1,4 +1,4 @@
-/* $NetBSD: mavb.c,v 1.6 2008/08/23 17:43:36 tsutsui Exp $ */
+/* $NetBSD: mavb.c,v 1.7 2011/07/01 18:53:47 dyoung Exp $ */
 /* $OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 #include <sys/malloc.h>
 #include <sys/callout.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/autoconf.h>
 

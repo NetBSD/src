@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.31 2009/03/18 10:22:35 cegger Exp $	*/
+/*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.31 2009/03/18 10:22:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $");
 
 #include "opt_ddb.h"
 
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.31 2009/03/18 10:22:35 cegger Exp $");
 #include <sys/device.h>
 
 #define _SGIMIPS_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/machtype.h>
 #include <machine/sysconf.h>
 

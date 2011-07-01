@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_jazzio.c,v 1.9 2011/03/06 14:58:44 tsutsui Exp $	*/
+/*	$NetBSD: lpt_jazzio.c,v 1.10 2011/07/01 19:25:42 dyoung Exp $	*/
 /*	$OpenBSD: lpt_lbus.c,v 1.3 1997/04/10 16:29:17 pefo Exp $	*/
 
 /*
@@ -55,14 +55,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_jazzio.c,v 1.9 2011/03/06 14:58:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_jazzio.c,v 1.10 2011/07/01 19:25:42 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/ic/lptreg.h>

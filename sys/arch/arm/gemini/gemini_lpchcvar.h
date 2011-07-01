@@ -1,11 +1,11 @@
-/*	$NetBSD: gemini_lpchcvar.h,v 1.3 2008/11/20 20:23:04 cliff Exp $	*/
+/*	$NetBSD: gemini_lpchcvar.h,v 1.4 2011/07/01 19:32:28 dyoung Exp $	*/
 
 #ifndef  _ARM_GEMINI_LPHCVAR_H
 #define  _ARM_GEMINI_LPHCVAR_H
 
 #include <sys/types.h>
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <arch/arm/gemini/gemini_lpcvar.h>
 
 

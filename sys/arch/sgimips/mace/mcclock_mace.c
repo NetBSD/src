@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.13 2009/12/13 11:10:50 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.14 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.13 2009/12/13 11:10:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.14 2011/07/01 18:53:47 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.13 2009/12/13 11:10:50 tsutsui Ex
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/machtype.h>
 
 #include <dev/clock_subr.h>

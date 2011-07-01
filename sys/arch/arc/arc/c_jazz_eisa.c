@@ -1,4 +1,4 @@
-/*	$NetBSD: c_jazz_eisa.c,v 1.12 2005/12/11 12:16:37 christos Exp $	*/
+/*	$NetBSD: c_jazz_eisa.c,v 1.13 2011/07/01 19:28:00 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.12 2005/12/11 12:16:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.13 2011/07/01 19:28:00 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.12 2005/12/11 12:16:37 christos Ex
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pio.h>
 #include <machine/platform.h>
 
