@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.15 2009/03/18 10:22:24 cegger Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.16 2011/07/01 20:31:39 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.15 2009/03/18 10:22:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.16 2011/07/01 20:31:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.15 2009/03/18 10:22:24 cegger Exp 
 #include <sys/time.h>
 #include <sys/timetc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <arm/cpufunc.h>
 

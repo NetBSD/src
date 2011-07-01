@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_udc.c,v 1.4 2011/06/09 17:29:42 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_udc.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $	*/
 /*	$OpenBSD: pxa27x_udc.c,v 1.5 2005/03/30 14:24:39 dlg Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #include <sys/kernel.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/pxa2x0cpu.h>
 #include <arm/xscale/pxa2x0reg.h>

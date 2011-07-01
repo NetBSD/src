@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.8 2011/06/09 17:29:42 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.9 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
 #include <sys/audioio.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>

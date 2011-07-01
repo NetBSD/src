@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.51 2011/06/05 06:31:41 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.52 2011/07/01 20:34:06 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.51 2011/06/05 06:31:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.52 2011/07/01 20:34:06 dyoung Exp $");
 
 #include "opt_mbtype.h"
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.51 2011/06/05 06:31:41 tsutsui Exp
 #include <sys/malloc.h>
 
 #define _ATARI_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpsipvar.h,v 1.2 2009/10/21 14:15:50 rmind Exp $ */
+/*	$NetBSD: ixpsipvar.h,v 1.3 2011/07/01 20:27:50 dyoung Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct ixpsip_softc {
 	struct device sc_dev;

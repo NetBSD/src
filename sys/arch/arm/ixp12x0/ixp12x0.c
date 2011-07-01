@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.17 2011/05/17 17:34:48 dyoung Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.18 2011/07/01 20:27:50 dyoung Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.17 2011/05/17 17:34:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.18 2011/07/01 20:27:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/ixp12x0/ixp12x0reg.h>
 #include <arm/ixp12x0/ixp12x0var.h>

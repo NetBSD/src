@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_iomux.c,v 1.1 2010/11/30 13:05:27 bsh Exp $	*/
+/*	$NetBSD: imx51_iomux.c,v 1.2 2011/07/01 20:27:50 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_iomux.c,v 1.1 2010/11/30 13:05:27 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_iomux.c,v 1.2 2011/07/01 20:27:50 dyoung Exp $");
 
 #define	_INTR_PRIVATE
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx51_iomux.c,v 1.1 2010/11/30 13:05:27 bsh Exp $");
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/imx/imx51reg.h>
 #include <arm/imx/imx51var.h>

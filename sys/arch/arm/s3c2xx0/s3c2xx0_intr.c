@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0_intr.c,v 1.14 2010/12/20 00:25:29 matt Exp $ */
+/* $NetBSD: s3c2xx0_intr.c,v 1.15 2011/07/01 20:31:39 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -73,13 +73,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.14 2010/12/20 00:25:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.15 2011/07/01 20:31:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>

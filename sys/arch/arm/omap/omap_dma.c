@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_dma.c,v 1.2 2010/07/07 22:53:44 macallan Exp $	*/
+/*	$NetBSD: omap_dma.c,v 1.3 2011/07/01 20:30:21 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_dma.c,v 1.2 2010/07/07 22:53:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_dma.c,v 1.3 2011/07/01 20:30:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap_dma.c,v 1.2 2010/07/07 22:53:44 macallan Exp $"
 #include <uvm/uvm_extern.h>
 
 #define	_ARM32_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct arm32_bus_dma_tag omap_bus_dma_tag = {
 	0,

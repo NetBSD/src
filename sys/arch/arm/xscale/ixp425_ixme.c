@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_ixme.c,v 1.2 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: ixp425_ixme.c,v 1.3 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_ixme.c,v 1.2 2008/04/28 20:23:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_ixme.c,v 1.3 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_ixme.c,v 1.2 2008/04/28 20:23:14 martin Exp $
 #include <sys/device.h>
 
 #define _ARM32_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/ixp425var.h>
 #include <arm/xscale/ixp425_qmgr.h>

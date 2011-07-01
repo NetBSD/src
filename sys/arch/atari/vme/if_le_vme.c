@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.30 2010/04/13 11:31:11 tsutsui Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.31 2011/07/01 20:34:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.30 2010/04/13 11:31:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.31 2011/07/01 20:34:06 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.30 2010/04/13 11:31:11 tsutsui Exp $
 #endif
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/iomap.h>
 #include <machine/scu.h>
 #include <machine/intr.h>

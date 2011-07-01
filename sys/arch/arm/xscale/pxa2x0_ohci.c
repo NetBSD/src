@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ohci.c,v 1.7 2009/08/10 23:08:12 kiyohara Exp $	*/
+/*	$NetBSD: pxa2x0_ohci.c,v 1.8 2011/07/01 20:32:51 dyoung Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #include <sys/kernel.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
