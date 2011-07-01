@@ -1,4 +1,4 @@
-/*	$NetBSD: xboxlcd.c,v 1.3 2007/12/11 12:00:56 lukem Exp $	*/
+/*	$NetBSD: xboxlcd.c,v 1.4 2011/07/01 18:16:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 Andrew Gillham
@@ -33,12 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxlcd.c,v 1.3 2007/12/11 12:00:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxlcd.c,v 1.4 2011/07/01 18:16:30 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/xbox.h>
 #include <machine/pio.h>
 
