@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.6 2008/11/03 15:13:16 rjs Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7 2011/07/01 20:47:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 
 int cpumatch(device_t, cfdata_t, void *);

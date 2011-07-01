@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9 2011/06/05 17:03:16 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10 2011/07/01 20:49:38 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2011/06/05 17:03:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2011/07/01 20:49:38 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/platform.h>
 

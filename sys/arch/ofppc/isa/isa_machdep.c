@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.c,v 1.5 2008/04/28 20:23:30 martin Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.6 2011/07/01 20:51:14 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.5 2008/04/28 20:23:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6 2011/07/01 20:51:14 dyoung Exp $");
 
 #include <sys/param.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pio.h>
 
 #include <sys/extent.h>

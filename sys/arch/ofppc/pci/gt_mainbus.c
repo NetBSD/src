@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.3 2010/12/17 19:18:49 phx Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.4 2011/07/01 20:51:15 dyoung Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.3 2010/12/17 19:18:49 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.4 2011/07/01 20:51:15 dyoung Exp $");
 
 #include "opt_pci.h"
 #include "opt_marvell.h"
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.3 2010/12/17 19:18:49 phx Exp $");
 #include <sys/malloc.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/isa_machdep.h>
 #include <machine/pegasosreg.h>
 

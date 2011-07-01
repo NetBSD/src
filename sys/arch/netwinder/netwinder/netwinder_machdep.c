@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.75 2011/06/30 20:09:34 wiz Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.76 2011/07/01 20:50:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.75 2011/06/30 20:09:34 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.76 2011/07/01 20:50:34 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.75 2011/06/30 20:09:34 wiz E
 
 #include <machine/bootconfig.h>
 #define	_ARM32_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>

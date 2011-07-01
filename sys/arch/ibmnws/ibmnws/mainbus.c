@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2011/05/17 17:34:50 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10 2011/07/01 20:47:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
 #include <sys/malloc.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/isa_machdep.h>
 
 #include <dev/pci/pcivar.h>
