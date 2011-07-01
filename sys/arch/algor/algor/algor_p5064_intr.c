@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.25 2011/04/06 01:25:18 dyoung Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.26 2011/07/01 18:30:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.25 2011/04/06 01:25:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.26 2011/07/01 18:30:36 dyoung Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.25 2011/04/06 01:25:18 dyoung
 #include <sys/kernel.h>
 #include <sys/cpu.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 

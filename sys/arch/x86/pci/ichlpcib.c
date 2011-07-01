@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.31 2011/06/15 06:43:20 jruoho Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.32 2011/07/01 18:22:08 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.31 2011/06/15 06:43:20 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.32 2011/07/01 18:22:08 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.31 2011/06/15 06:43:20 jruoho Exp $")
 #include <sys/sysctl.h>
 #include <sys/timetc.h>
 #include <sys/gpio.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

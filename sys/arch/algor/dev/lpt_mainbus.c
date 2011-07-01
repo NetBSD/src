@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mainbus.c,v 1.10 2009/11/27 03:23:04 rmind Exp $	*/
+/*	$NetBSD: lpt_mainbus.c,v 1.11 2011/07/01 18:31:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_mainbus.c,v 1.10 2009/11/27 03:23:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mainbus.c,v 1.11 2011/07/01 18:31:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_mainbus.c,v 1.10 2009/11/27 03:23:04 rmind Exp $
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/lptreg.h>
 #include <dev/ic/lptvar.h>

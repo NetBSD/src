@@ -1,4 +1,4 @@
-/* $NetBSD: amdpcib_hpet.c,v 1.7 2011/06/15 08:19:43 jruoho Exp $ */
+/* $NetBSD: amdpcib_hpet.c,v 1.8 2011/07/01 18:22:08 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.7 2011/06/15 08:19:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.8 2011/07/01 18:22:08 dyoung Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.7 2011/06/15 08:19:43 jruoho Exp 
 #include <sys/time.h>
 #include <sys/timetc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

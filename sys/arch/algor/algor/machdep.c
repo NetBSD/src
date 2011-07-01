@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2011/02/20 07:51:21 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 2011/07/01 18:30:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2011/02/20 07:51:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2011/07/01 18:30:36 dyoung Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2011/02/20 07:51:21 matt Exp $");
 #include <ddb/db_extern.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/pmon.h>
 #include <machine/pcb.h>

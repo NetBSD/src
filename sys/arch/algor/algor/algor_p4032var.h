@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032var.h,v 1.6 2011/02/20 07:51:21 matt Exp $	*/
+/*	$NetBSD: algor_p4032var.h,v 1.7 2011/07/01 18:30:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/pci/pcivar.h>
 
 struct p4032_config {

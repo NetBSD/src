@@ -1,4 +1,4 @@
-/* $NetBSD: ichlpcib_hpet.c,v 1.2 2011/06/15 08:19:43 jruoho Exp $ */
+/* $NetBSD: ichlpcib_hpet.c,v 1.3 2011/07/01 18:22:08 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -29,14 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib_hpet.c,v 1.2 2011/06/15 08:19:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib_hpet.c,v 1.3 2011/07/01 18:22:08 dyoung Exp $");
 
 #include <sys/param.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
-
-#include <machine/bus.h>
 
 #include <dev/ic/hpetreg.h>
 #include <dev/ic/hpetvar.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.9 2011/02/15 18:10:33 jruoho Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.10 2011/07/01 18:21:31 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.9 2011/02/15 18:10:33 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.10 2011/07/01 18:21:31 dyoung Exp $");
 
 #include "opt_mtrr.h"
 
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.9 2011/02/15 18:10:33 jruoho Exp
 #include <sys/kernel.h>
 #include <sys/lwp.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/bootinfo.h>
 #include <machine/mtrr.h>
 

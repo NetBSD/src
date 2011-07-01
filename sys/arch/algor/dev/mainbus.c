@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.22 2011/06/05 17:03:18 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.23 2011/07/01 18:31:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.22 2011/06/05 17:03:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.23 2011/07/01 18:31:31 dyoung Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.22 2011/06/05 17:03:18 matt Exp $");
 #include <sys/malloc.h>
 #include <sys/extent.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <mips/cache.h>

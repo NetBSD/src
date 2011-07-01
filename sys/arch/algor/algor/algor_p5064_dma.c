@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_dma.c,v 1.4 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: algor_p5064_dma.c,v 1.5 2011/07/01 18:30:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,12 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p5064_dma.c,v 1.4 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_dma.c,v 1.5 2011/07/01 18:30:36 dyoung Exp $");
 
 #include <sys/param.h>
 
 #define	_ALGOR_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <algor/algor/algor_p5064reg.h>
 #include <algor/algor/algor_p5064var.h>

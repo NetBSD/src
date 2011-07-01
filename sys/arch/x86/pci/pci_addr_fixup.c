@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.5 2010/07/26 22:33:23 jym Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.6 2011/07/01 18:22:08 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.5 2010/07/26 22:33:23 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.6 2011/07/01 18:22:08 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.5 2010/07/26 22:33:23 jym Exp $
 #include <sys/device.h>
 #include <sys/extent.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
