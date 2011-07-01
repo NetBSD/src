@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.8 2011/06/03 03:09:02 christos Exp $ */
+/* $NetBSD: psm.c,v 1.9 2011/07/01 18:48:36 dyoung Exp $ */
 /*
  * Copyright (c) 2006 Itronix Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  * time with APM at this point, and some of sysmon seems "lacking".
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.8 2011/06/03 03:09:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.9 2011/07/01 18:48:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.8 2011/06/03 03:09:02 christos Exp $");
 #include <sys/kauth.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/ebus/ebusreg.h>

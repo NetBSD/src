@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.22 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.23 2011/07/01 18:41:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.22 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.23 2011/07/01 18:41:52 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.22 2011/06/18 08:08:28 matt Exp $")
 #endif
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/wi_ieee.h>
 #include <dev/ic/wireg.h>

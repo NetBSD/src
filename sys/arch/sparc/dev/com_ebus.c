@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.15 2008/04/28 20:23:35 martin Exp $ */
+/*	$NetBSD: com_ebus.c,v 1.16 2011/07/01 18:50:41 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.15 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.16 2011/07/01 18:50:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 

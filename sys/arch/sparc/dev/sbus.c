@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.74 2010/01/03 23:03:20 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.75 2011/07/01 18:50:41 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.74 2010/01/03 23:03:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.75 2011/07/01 18:50:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.74 2010/01/03 23:03:20 mrg Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sparc/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/xboxvar.h>

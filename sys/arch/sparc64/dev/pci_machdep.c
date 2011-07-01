@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.72 2011/05/11 22:26:46 macallan Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.73 2011/07/01 18:48:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.72 2011/05/11 22:26:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.73 2011/07/01 18:48:36 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.72 2011/05/11 22:26:46 macallan Ex
 #include <sys/malloc.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
 #include <dev/pci/pcivar.h>

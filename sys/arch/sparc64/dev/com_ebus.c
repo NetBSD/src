@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.32 2011/06/02 00:16:22 mrg Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.33 2011/07/01 18:48:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.32 2011/06/02 00:16:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.33 2011/07/01 18:48:36 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.32 2011/06/02 00:16:22 mrg Exp $");
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
 

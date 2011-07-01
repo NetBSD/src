@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.15 2009/03/14 21:04:16 dsl Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.16 2011/07/01 18:49:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -26,14 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.15 2009/03/14 21:04:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.16 2011/07/01 18:49:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/openfirm.h>
 #include <machine/promlib.h>
 #include <dev/pci/pcivar.h>

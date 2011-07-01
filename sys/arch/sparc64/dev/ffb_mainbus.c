@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb_mainbus.c,v 1.10 2011/06/03 03:20:39 christos Exp $	*/
+/*	$NetBSD: ffb_mainbus.c,v 1.11 2011/07/01 18:48:36 dyoung Exp $	*/
 /*	$OpenBSD: creator_mainbus.c,v 1.4 2002/07/26 16:39:04 jason Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.10 2011/06/03 03:20:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.11 2011/07/01 18:48:36 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.10 2011/06/03 03:20:39 christos Ex
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
 

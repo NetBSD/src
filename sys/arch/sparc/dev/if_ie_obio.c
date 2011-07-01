@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.39 2011/06/03 16:28:40 tsutsui Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.40 2011/07/01 18:50:41 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.39 2011/06/03 16:28:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.40 2011/07/01 18:50:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.39 2011/06/03 16:28:40 tsutsui Exp 
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/autoconf.h>
 

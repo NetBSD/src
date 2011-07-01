@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.19 2010/01/03 23:03:21 mrg Exp $ */
+/*	$NetBSD: oclock.c,v 1.20 2011/07/01 18:51:51 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.19 2010/01/03 23:03:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.20 2011/07/01 18:51:51 dyoung Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.19 2010/01/03 23:03:21 mrg Exp $");
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/promlib.h>
 #include <machine/autoconf.h>
 

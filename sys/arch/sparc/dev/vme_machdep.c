@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.63 2011/01/14 02:06:31 rmind Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.64 2011/07/01 18:50:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.63 2011/01/14 02:06:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.64 2011/07/01 18:50:42 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.63 2011/01/14 02:06:31 rmind Exp $
 #include <uvm/uvm_extern.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sparc/sparc/iommuvar.h>
 #include <machine/autoconf.h>
 #include <machine/oldmon.h>

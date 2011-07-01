@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.39 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.40 2011/07/01 18:43:05 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.39 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40 2011/07/01 18:43:05 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.39 2011/06/18 08:08:28 matt Exp $"
 #include <sys/device.h>
 
 #define _POWERPC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>

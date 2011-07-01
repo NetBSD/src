@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 2002/03/07 14:44:03 simonb Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 2011/07/01 18:46:35 dyoung Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct mainbus_attach_args {
 	const char	*ma_name;

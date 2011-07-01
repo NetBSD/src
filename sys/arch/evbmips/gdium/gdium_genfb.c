@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_genfb.c,v 1.4 2010/05/11 01:38:14 macallan Exp $	*/
+/*	$NetBSD: gdium_genfb.c,v 1.5 2011/07/01 18:45:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_genfb.c,v 1.4 2010/05/11 01:38:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_genfb.c,v 1.5 2011/07/01 18:45:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: gdium_genfb.c,v 1.4 2010/05/11 01:38:14 macallan Exp
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>

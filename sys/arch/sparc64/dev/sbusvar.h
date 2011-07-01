@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.17 2009/09/17 16:28:12 tsutsui Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.18 2011/07/01 18:48:37 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #ifndef _SBUS_VAR_SPARC64_H_
 #define _SBUS_VAR_SPARC64_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * Macro to convert a PROM virtual address to a bus_space_handle_t.

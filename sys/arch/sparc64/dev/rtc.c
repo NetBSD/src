@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.7 2010/03/11 03:54:56 mrg Exp $	*/
+/*	$NetBSD: rtc.c,v 1.8 2011/07/01 18:48:37 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.7 2010/03/11 03:54:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.8 2011/07/01 18:48:37 dyoung Exp $");
 
 /*
  * Clock driver for 'rtc' - mc146818 driver.
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.7 2010/03/11 03:54:56 mrg Exp $");
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/clock_subr.h>

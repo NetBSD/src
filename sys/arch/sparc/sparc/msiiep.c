@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.40 2011/05/17 17:34:53 dyoung Exp $ */
+/*	$NetBSD: msiiep.c,v 1.41 2011/07/01 18:51:51 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.40 2011/05/17 17:34:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.41 2011/07/01 18:51:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.40 2011/05/17 17:34:53 dyoung Exp $");
 #include <uvm/uvm.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/promlib.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.20 2011/06/30 00:52:57 matt Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.21 2011/07/01 18:41:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.20 2011/06/30 00:52:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.21 2011/07/01 18:41:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.20 2011/06/30 00:52:57 matt Exp $");
 
 #include <dev/ofw/openfirm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/pio.h>
 

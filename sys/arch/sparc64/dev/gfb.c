@@ -1,4 +1,4 @@
-/*	$NetBSD: gfb.c,v 1.3 2010/08/31 03:08:23 macallan Exp $	*/
+/*	$NetBSD: gfb.c,v 1.4 2011/07/01 18:48:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfb.c,v 1.3 2010/08/31 03:08:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfb.c,v 1.4 2011/07/01 18:48:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: gfb.c,v 1.3 2010/08/31 03:08:23 macallan Exp $");
 
 #include <dev/videomode/videomode.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
 

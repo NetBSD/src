@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.43 2011/06/03 03:20:39 christos Exp $	*/
+/*	$NetBSD: ffb.c,v 1.44 2011/07/01 18:48:36 dyoung Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.43 2011/06/03 03:20:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.44 2011/07/01 18:48:36 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.43 2011/06/03 03:20:39 christos Exp $");
 #include <sys/malloc.h>
 #include <sys/mman.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
 #include <machine/vmparam.h>

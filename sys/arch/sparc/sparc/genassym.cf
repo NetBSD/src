@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.65 2011/02/20 10:02:01 mrg Exp $
+#	$NetBSD: genassym.cf,v 1.66 2011/07/01 18:51:51 dyoung Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ include <sparc/dev/zsreg.h>
 include <sparc/dev/zsvar.h>
 endif
 
-include <machine/bus.h>
+include <sys/bus.h>
 include <sparc/dev/audioamdvar.h>
 
 include <sparc/dev/fdreg.h>

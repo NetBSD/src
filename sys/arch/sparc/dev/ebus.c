@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.31 2009/09/20 16:18:21 tsutsui Exp $ */
+/*	$NetBSD: ebus.c,v 1.32 2011/07/01 18:50:41 dyoung Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.31 2009/09/20 16:18:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.32 2011/07/01 18:50:41 dyoung Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -60,7 +60,7 @@ int ebus_debug = 0;
 #include <sys/kernel.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/pci/pcivar.h>

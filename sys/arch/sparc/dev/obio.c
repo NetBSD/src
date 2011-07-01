@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.71 2008/05/17 18:11:32 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.72 2011/07/01 18:50:41 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.71 2008/05/17 18:11:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.72 2011/07/01 18:50:41 dyoung Exp $");
 
 #include "locators.h"
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.71 2008/05/17 18:11:32 macallan Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sparc/dev/sbusvar.h>
 #include <machine/autoconf.h>
 #include <machine/oldmon.h>

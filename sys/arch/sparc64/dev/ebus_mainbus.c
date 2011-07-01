@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.4 2011/06/02 00:24:23 christos Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.5 2011/07/01 18:48:36 dyoung Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ extern int ebus_debug;
 #include <sys/time.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
 

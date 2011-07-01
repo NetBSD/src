@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.22 2008/12/16 22:35:25 christos Exp $	*/
+/*	$NetBSD: sw.c,v 1.23 2011/07/01 18:50:41 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.22 2008/12/16 22:35:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.23 2011/07/01 18:50:41 dyoung Exp $");
 
 #include "opt_ddb.h"
 
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.22 2008/12/16 22:35:25 christos Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/autoconf.h>
 

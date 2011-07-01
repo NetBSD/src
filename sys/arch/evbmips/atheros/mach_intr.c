@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_intr.c,v 1.3 2011/02/20 07:48:33 matt Exp $	*/
+/*	$NetBSD: mach_intr.c,v 1.4 2011/07/01 18:45:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.3 2011/02/20 07:48:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.4 2011/07/01 18:45:36 dyoung Exp $");
 
 #include "opt_ddb.h"
 
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.3 2011/02/20 07:48:33 matt Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <mips/locore.h>

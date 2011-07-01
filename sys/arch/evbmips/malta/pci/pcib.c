@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.14 2011/02/20 07:48:35 matt Exp $	*/
+/*	$NetBSD: pcib.c,v 1.15 2011/07/01 18:46:35 dyoung Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.14 2011/02/20 07:48:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.15 2011/07/01 18:46:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.14 2011/02/20 07:48:35 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <evbmips/malta/maltareg.h>
 #include <evbmips/malta/maltavar.h>
 #include <evbmips/malta/dev/gtreg.h>
