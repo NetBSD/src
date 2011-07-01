@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/06/29 08:09:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/07/01 01:30:16 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -139,24 +139,10 @@ CLEANFILES+=	${_dir}_${_srcfile}
 
 .endfor
 
-.if 0
-# Build the generic popcount/hamdist for now
-.for _srcfile in \
-	${MPN_GENERIC_SRCS}
-mpn_${_srcfile}: Makefile
-	echo '#include "mpn/generic/popham.c"' > ${.TARGET}
-
-COPTS.mpn_${_srcfile}+= -DOPERATION_${_srcfile:R}
-
-SRCS+=		mpn_${_srcfile}
-CLEANFILES+=	mpn_${_srcfile}
-.endfor
-.endif
-
 INCS=		gmp.h
 INCSDIR=	/usr/include
 
-CPPFLAGS+=	-I. -I${DIST} -I${.CURDIR}/arch/${MACHINE_ARCH} -D__GMP_WITHIN_GMP -DHAVE_CONFIG_H
+CPPFLAGS+=	-I. -I${DIST} -I${.CURDIR}/arch/${LIBGMP_MACHINE_ARCH} -D__GMP_WITHIN_GMP -DHAVE_CONFIG_H
 
 WITHOUT_MAN=	yes
 
@@ -190,12 +176,17 @@ perfsqr.h: gen-psqr.c
 
 CLEANFILES+=	${DPSRCS} gen-fac_ui gen-fib gen-bases gen-psqr
 
-.sinclude "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
+.if defined(MLIBDIR)
+LIBGMP_MACHINE_ARCH:=${MLIBDIR}
+.endif
+LIBGMP_MACHINE_ARCH?=${MACHINE_ARCH}
+
+.include "${.CURDIR}/arch/${LIBGMP_MACHINE_ARCH}/Makefile.inc"
 
 .include <bsd.lib.mk>
 
 .PATH:	${DIST} \
 	${DIST}/mpn/generic \
-	${.CURDIR}/arch/${MACHINE_ARCH} \
+	${.CURDIR}/arch/${LIBGMP_MACHINE_ARCH} \
 	${DIST}/mpf \
 	${DIST}/mpz

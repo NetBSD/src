@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/23 04:38:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/07/01 01:30:16 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -470,10 +470,13 @@ CPPFLAGS+=	-I. \
 		-DHAVE_CEIL=1 \
 		-DHAVE_ATTRIBUTE_MODE=1
 
-.if ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
 CPPFLAGS+=	-DHAVE_LDOUBLE_IEEE_EXT_LITTLE=1
 .endif
 
+.if ${MACHINE_ARCH} == "sparc64"
+CPPFLAGS+=	-DHAVE_LDOUBLE_IEEE_QUAD_BIG=1
+.endif
 
 WITHOUT_MAN=	yes
 
