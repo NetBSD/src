@@ -1,4 +1,4 @@
-/*	$NetBSD: cert.c,v 1.1.1.1 2011/04/13 18:15:10 elric Exp $	*/
+/*	$NetBSD: cert.c,v 1.2 2011/07/01 02:10:19 joerg Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2007 Kungliga Tekniska Högskolan
@@ -357,7 +357,7 @@ hx509_cert_free(hx509_cert cert)
     free(cert->friendlyname);
     if (cert->basename)
 	hx509_name_free(&cert->basename);
-    memset(cert, 0, sizeof(cert));
+    memset(cert, 0, sizeof(*cert));
     free(cert);
 }
 
