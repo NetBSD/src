@@ -1,4 +1,4 @@
-/* $NetBSD: admgpio.c,v 1.3 2011/02/20 07:48:35 matt Exp $ */
+/* $NetBSD: admgpio.c,v 1.4 2011/07/01 18:38:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: admgpio.c,v 1.3 2011/02/20 07:48:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admgpio.c,v 1.4 2011/07/01 18:38:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: admgpio.c,v 1.3 2011/02/20 07:48:35 matt Exp $");
 #include <sys/gpio.h>
 #include <sys/kernel.h>	/* for hz */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/gpio/gpiovar.h>
 
