@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.104 2011/06/03 02:33:27 christos Exp $ */
+/*	$NetBSD: clock.c,v 1.105 2011/07/01 18:49:24 dyoung Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.104 2011/06/03 02:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.105 2011/07/01 18:49:24 dyoung Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.104 2011/06/03 02:33:27 christos Exp $")
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
 #include <machine/cpu.h>

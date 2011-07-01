@@ -1,4 +1,4 @@
-/* $NetBSD: dbau1500.c,v 1.5 2011/04/04 20:37:49 dyoung Exp $ */
+/* $NetBSD: dbau1500.c,v 1.6 2011/07/01 18:44:45 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,10 +32,10 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbau1500.c,v 1.5 2011/04/04 20:37:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbau1500.c,v 1.6 2011/07/01 18:44:45 dyoung Exp $");
 
 #include <sys/param.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/locore.h>
 #include <evbmips/alchemy/obiovar.h>
 #include <evbmips/alchemy/board.h>

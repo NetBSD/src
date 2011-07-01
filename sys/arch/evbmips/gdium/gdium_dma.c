@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_dma.c,v 1.3 2011/06/08 17:47:48 bouyer Exp $	*/
+/*	$NetBSD: gdium_dma.c,v 1.4 2011/07/01 18:45:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,12 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_dma.c,v 1.3 2011/06/08 17:47:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_dma.c,v 1.4 2011/07/01 18:45:36 dyoung Exp $");
 
 #include <sys/param.h>
 
 #define	_MIPS_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <evbmips/gdium/gdiumreg.h>
 #include <evbmips/gdium/gdiumvar.h>

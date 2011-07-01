@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.17 2010/12/20 00:25:37 matt Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.18 2011/07/01 18:43:05 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -28,14 +28,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.17 2010/12/20 00:25:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.18 2011/07/01 18:43:05 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
 #include <powerpc/oea/bat.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
