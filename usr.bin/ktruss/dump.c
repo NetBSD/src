@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.37 2011/03/06 17:08:42 bouyer Exp $	*/
+/*	$NetBSD: dump.c,v 1.38 2011/07/01 02:34:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.37 2011/03/06 17:08:42 bouyer Exp $");
+__RCSID("$NetBSD: dump.c,v 1.38 2011/07/01 02:34:50 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -349,6 +349,7 @@ dumpheader(struct ktr_header *kth)
 	static union timeholder prevtime;
 	union timeholder temp;
 
+	temp.tv.tv_sec = temp.tv.tv_usec = 0;
 	wprintf("%6d ", kth->ktr_pid);
 	if (kth->ktr_version > KTRFAC_VERSION(KTRFACv0))
 		wprintf("%6d ", kth->ktr_lid);
