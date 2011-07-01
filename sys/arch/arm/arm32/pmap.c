@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.223 2011/06/30 20:09:19 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.224 2011/07/01 20:57:45 dyoung Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -205,13 +205,13 @@
  
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pmap.h>
 #include <machine/pcb.h>
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.223 2011/06/30 20:09:19 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224 2011/07/01 20:57:45 dyoung Exp $");
 
 #ifdef PMAP_DEBUG
 
