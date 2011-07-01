@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_space.c,v 1.4 2009/11/07 07:27:44 cegger Exp $	*/
+/*	$NetBSD: obio_space.c,v 1.5 2011/07/01 20:48:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,14 +40,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_space.c,v 1.4 2009/11/07 07:27:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_space.c,v 1.5 2011/07/01 20:48:23 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* Prototypes for all the bus_space structure functions */
 bs_protos(obio);
