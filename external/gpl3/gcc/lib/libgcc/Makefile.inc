@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2011/07/01 01:24:53 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2011/07/01 05:07:06 mrg Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -47,18 +47,19 @@ LIB2FUNCS_ALL= \
 
 # non swfloat versions 
 .for _p in _fix _fixuns
-. for _s in sf df xf tf
-LIB2FUNCS_ALL+=	${_p}${_s}di
+. for _m in sf df xf tf
+LIB2FUNCS_ALL+=	${_p}${_m}di
 . endfor
 .endfor
+
 .for _p in _float _floatun
-. for _s in sf df xf tf
-LIB2FUNCS_ALL+=	${_p}di${_s}
+. for _m in sf df xf tf
+LIB2FUNCS_ALL+=	${_p}di${_m}
 . endfor
 .endfor
 
 .for _m in sf df xf
-LIB2FUNCS_ALL+=	fixuns${_p}si
+LIB2FUNCS_ALL+=	_fixuns${_m}si
 .endfor
 
 LIB2FUNCS_SHORT:=${LIB2FUNCS_ALL}
@@ -155,3 +156,19 @@ BUILDSYMLINKS+=	${G_UNWIND_H} unwind.h
 DPSRCS+=	unwind.h
 
 .include "../../Makefile.hacks"
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && \
+    (${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "armeb")
+${SRCS}: options.h
+
+optionlist: ${G_ALL_OPT_FILES} ${GCCARCH}/defs.mk Makefile ${DIST}/gcc/opt-gather.awk
+	${TOOL_AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} \
+		> ${.TARGET}
+
+options.h: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opth-gen.awk
+	${TOOL_AWK} -f ${DIST}/gcc/opt-functions.awk \
+		-f ${DIST}/gcc/opth-gen.awk \
+		< optionlist > ${.TARGET}
+
+CLEANFILES+=	options.h optionlist
+.endif
