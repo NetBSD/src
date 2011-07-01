@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_sgc.c,v 1.7 2011/02/01 18:33:24 skrll Exp $	*/
+/*	$NetBSD: siop_sgc.c,v 1.8 2011/07/01 18:33:09 dyoung Exp $	*/
 
 /*	$OpenBSD: siop_sgc.c,v 1.1 2007/08/05 19:09:52 kettenis Exp $	*/
 
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_sgc.c,v 1.7 2011/02/01 18:33:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_sgc.c,v 1.8 2011/07/01 18:33:09 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -28,7 +28,7 @@ __KERNEL_RCSID(0, "$NetBSD: siop_sgc.c,v 1.7 2011/02/01 18:33:24 skrll Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/iomod.h>
 
 #include <dev/scsipi/scsi_all.h>

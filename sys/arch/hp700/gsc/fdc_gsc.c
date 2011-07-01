@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_gsc.c,v 1.9 2010/12/11 19:32:06 skrll Exp $	*/
+/*	$NetBSD: fdc_gsc.c,v 1.10 2011/07/01 18:33:09 dyoung Exp $	*/
 
 /*	$OpenBSD: fdc_gsc.c,v 1.1 1998/09/30 04:45:46 mickey Exp $	*/
 
@@ -29,14 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_gsc.c,v 1.9 2010/12/11 19:32:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_gsc.c,v 1.10 2011/07/01 18:33:09 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/iomod.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/autoconf.h>
 

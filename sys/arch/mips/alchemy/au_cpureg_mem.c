@@ -1,4 +1,4 @@
-/* $NetBSD: au_cpureg_mem.c,v 1.5 2008/04/28 20:23:27 martin Exp $ */
+/* $NetBSD: au_cpureg_mem.c,v 1.6 2011/07/01 18:39:29 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,11 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_cpureg_mem.c,v 1.5 2008/04/28 20:23:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_cpureg_mem.c,v 1.6 2011/07/01 18:39:29 dyoung Exp $");
 
 #include <sys/param.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
 

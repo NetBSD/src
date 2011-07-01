@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.19 2010/04/05 07:19:31 joerg Exp $ */
+/* $Id: if_ae.c,v 1.20 2011/07/01 18:40:00 dyoung Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.19 2010/04/05 07:19:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.20 2011/07/01 18:40:00 dyoung Exp $");
 
 
 #include <sys/param.h>
@@ -123,7 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.19 2010/04/05 07:19:31 joerg Exp $");
 
 #include <net/bpf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/mii/mii.h>
