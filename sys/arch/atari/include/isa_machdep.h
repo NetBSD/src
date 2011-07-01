@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.15 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.16 2011/07/01 21:16:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 #ifndef _ATARI_ISA_MACHDEP_H_
 #define _ATARI_ISA_MACHDEP_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <dev/isa/isadmavar.h>
 
