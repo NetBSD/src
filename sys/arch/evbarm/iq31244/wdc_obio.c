@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.5 2008/04/28 20:23:16 martin Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.6 2011/07/01 20:41:16 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2005 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.5 2008/04/28 20:23:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.6 2011/07/01 20:41:16 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/xscale/i80321var.h>

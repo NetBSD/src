@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.9 2009/05/29 14:15:44 rjs Exp $ */
+/*	$NetBSD: obio.c,v 1.10 2011/07/01 20:42:37 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.9 2009/05/29 14:15:44 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.10 2011/07/01 20:42:37 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.9 2009/05/29 14:15:44 rjs Exp $");
 #include <sys/reboot.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <arm/cpufunc.h>
 

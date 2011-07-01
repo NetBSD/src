@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_mainbus.c,v 1.6 2009/10/21 14:15:51 rmind Exp $ */
+/*	$NetBSD: ixdp425_mainbus.c,v 1.7 2011/07/01 20:42:36 dyoung Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_mainbus.c,v 1.6 2009/10/21 14:15:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_mainbus.c,v 1.7 2011/07/01 20:42:36 dyoung Exp $");
 
 /*
  * front-end for the ixp425 NetworkProcessor.
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixdp425_mainbus.c,v 1.6 2009/10/21 14:15:51 rmind Ex
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>

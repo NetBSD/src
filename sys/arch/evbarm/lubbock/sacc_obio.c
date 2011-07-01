@@ -1,4 +1,4 @@
-/*	$NetBSD: sacc_obio.c,v 1.11 2010/03/13 10:55:09 bsh Exp $ */
+/*	$NetBSD: sacc_obio.c,v 1.12 2011/07/01 20:42:37 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.11 2010/03/13 10:55:09 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.12 2011/07/01 20:42:37 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.11 2010/03/13 10:55:09 bsh Exp $");
 #include <net/if_media.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/sa11x0/sa1111_reg.h>
 #include <arm/sa11x0/sa1111_var.h>

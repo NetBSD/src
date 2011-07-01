@@ -1,4 +1,4 @@
-/*	$NetBSD: int_bus_dma.h,v 1.2 2002/07/31 17:34:26 thorpej Exp $ */
+/*	$NetBSD: int_bus_dma.h,v 1.3 2011/07/01 20:39:34 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,7 +32,7 @@
 #ifndef _INT_BUS_DMA_H
 #define _INT_BUS_DMA_H
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #define CM_ALIAS_TO_LOCAL(addr) (addr & 0x0fffffff)
 #define LOCAL_TO_CM_ALIAS(addr)	(addr | 0x80000000)

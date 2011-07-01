@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.23 2011/06/30 20:09:24 wiz Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.24 2011/07/01 20:38:17 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -139,7 +139,7 @@
 #endif
 
 #include <machine/bootconfig.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <arm/undefined.h>

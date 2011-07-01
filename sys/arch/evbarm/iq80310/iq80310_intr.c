@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.28 2011/01/31 23:56:14 jakllsch Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.29 2011/07/01 20:41:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.28 2011/01/31 23:56:14 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.29 2011/07/01 20:41:16 dyoung Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.28 2011/01/31 23:56:14 jakllsch E
 #include <sys/systm.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>

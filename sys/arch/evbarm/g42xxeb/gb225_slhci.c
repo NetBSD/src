@@ -1,4 +1,4 @@
-/*	$NetBSD: gb225_slhci.c,v 1.5 2010/06/07 15:17:24 bsh Exp $ */
+/*	$NetBSD: gb225_slhci.c,v 1.6 2011/07/01 20:38:17 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 
 #include <dev/usb/usb.h>

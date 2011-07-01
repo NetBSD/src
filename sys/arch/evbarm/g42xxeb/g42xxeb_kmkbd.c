@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_kmkbd.c,v 1.11 2010/03/13 11:26:42 bsh Exp $ */
+/* $NetBSD: g42xxeb_kmkbd.c,v 1.12 2011/07/01 20:38:17 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003, 2005 Genetec corp.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.11 2010/03/13 11:26:42 bsh Exp $" );
+__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.12 2011/07/01 20:38:17 dyoung Exp $" );
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.11 2010/03/13 11:26:42 bsh Exp $
 #include <sys/callout.h>
 #include <sys/kernel.h>			/* for hz */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>

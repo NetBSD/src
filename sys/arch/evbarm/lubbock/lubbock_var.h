@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_var.h,v 1.2 2009/05/29 14:15:44 rjs Exp $ */
+/*	$NetBSD: lubbock_var.h,v 1.3 2011/07/01 20:42:37 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <evbarm/lubbock/lubbock_reg.h>
 
 
