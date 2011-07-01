@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.20 2010/11/09 12:24:47 skrll Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.21 2011/07/01 18:33:09 dyoung Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.38 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.20 2010/11/09 12:24:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.21 2011/07/01 18:33:09 dyoung Exp $");
 
 #include "opt_cputype.h"
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.20 2010/11/09 12:24:47 skrll Exp $");
 
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>

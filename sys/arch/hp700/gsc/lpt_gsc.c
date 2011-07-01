@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_gsc.c,v 1.13 2011/02/01 18:33:24 skrll Exp $	*/
+/*	$NetBSD: lpt_gsc.c,v 1.14 2011/07/01 18:33:09 dyoung Exp $	*/
 
 /*	$OpenBSD: lpt_gsc.c,v 1.6 2000/07/21 17:41:06 mickey Exp $	*/
 
@@ -53,13 +53,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_gsc.c,v 1.13 2011/02/01 18:33:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_gsc.c,v 1.14 2011/07/01 18:33:09 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>

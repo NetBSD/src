@@ -1,4 +1,4 @@
-/* $Id: ar531xvar.h,v 1.6 2011/02/20 07:48:36 matt Exp $ */
+/* $Id: ar531xvar.h,v 1.7 2011/07/01 18:40:01 dyoung Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -44,7 +44,7 @@
 #define	_MIPS_ATHEROS_AR531XVAR_H_
 
 #include <sys/param.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct ar531x_device {
 	const char	*name;

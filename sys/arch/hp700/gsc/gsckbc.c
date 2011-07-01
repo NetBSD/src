@@ -1,4 +1,4 @@
-/* $NetBSD: gsckbc.c,v 1.7 2011/02/01 18:33:24 skrll Exp $ */
+/* $NetBSD: gsckbc.c,v 1.8 2011/07/01 18:33:09 dyoung Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gsckbc.c,v 1.7 2011/02/01 18:33:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gsckbc.c,v 1.8 2011/07/01 18:33:09 dyoung Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: gsckbc.c,v 1.7 2011/02/01 18:33:24 skrll Exp $");
 #include "ioconf.h"
 
 /* bus_space / bus_dma etc. */
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 /* general system data and functions */

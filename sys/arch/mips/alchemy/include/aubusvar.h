@@ -1,9 +1,9 @@
-/* $NetBSD: aubusvar.h,v 1.4 2006/07/13 22:56:01 gdamore Exp $ */
+/* $NetBSD: aubusvar.h,v 1.5 2011/07/01 18:39:30 dyoung Exp $ */
 
 #ifndef _MIPS_ALCHEMY_DEV_AUBUSVAR_H_
 #define	_MIPS_ALCHEMY_DEV_AUBUSVAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * Machine-dependent structures for autoconfiguration

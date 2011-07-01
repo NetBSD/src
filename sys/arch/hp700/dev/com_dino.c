@@ -31,7 +31,7 @@
 #include <sys/device.h>
 #include <sys/tty.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>

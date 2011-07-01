@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.15 2011/01/13 21:44:13 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.16 2011/07/01 18:33:09 dyoung Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -40,7 +40,7 @@
 
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
 

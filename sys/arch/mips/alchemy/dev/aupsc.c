@@ -1,4 +1,4 @@
-/* $NetBSD: aupsc.c,v 1.5 2006/10/02 07:32:16 gdamore Exp $ */
+/* $NetBSD: aupsc.c,v 1.6 2011/07/01 18:39:29 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupsc.c,v 1.5 2006/10/02 07:32:16 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupsc.c,v 1.6 2011/07/01 18:39:29 dyoung Exp $");
 
 #include "locators.h"
 
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: aupsc.c,v 1.5 2006/10/02 07:32:16 gdamore Exp $");
 #include <sys/device.h>
 #include <sys/errno.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 
 #include <mips/alchemy/include/aubusvar.h>

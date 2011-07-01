@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.10 2011/05/17 17:34:51 dyoung Exp $ */
+/* $NetBSD: aupci.c,v 1.11 2011/07/01 18:39:29 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.10 2011/05/17 17:34:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.11 2011/07/01 18:39:29 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.10 2011/05/17 17:34:51 dyoung Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
 

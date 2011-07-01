@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_bounce.c,v 1.9 2011/02/20 07:51:22 matt Exp $	*/
+/*	$NetBSD: isadma_bounce.c,v 1.10 2011/07/01 18:31:32 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.9 2011/02/20 07:51:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.10 2011/07/01 18:31:32 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.9 2011/02/20 07:51:22 matt Exp $
 #include <mips/cache.h>
 
 #define _ALGOR_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/locore.h>
 
 #include <dev/isa/isareg.h>

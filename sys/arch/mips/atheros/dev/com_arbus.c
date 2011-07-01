@@ -1,4 +1,4 @@
-/* $NetBSD: com_arbus.c,v 1.8 2011/02/09 22:01:44 matt Exp $ */
+/* $NetBSD: com_arbus.c,v 1.9 2011/07/01 18:40:00 dyoung Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.8 2011/02/09 22:01:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.9 2011/07/01 18:40:00 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.8 2011/02/09 22:01:44 matt Exp $");
 #include <sys/ttydefaults.h>
 #include <sys/types.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/cons.h>
 #include <dev/ic/comreg.h>

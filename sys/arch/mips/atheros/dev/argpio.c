@@ -1,4 +1,4 @@
-/* $NetBSD: argpio.c,v 1.3 2006/09/04 05:17:26 gdamore Exp $ */
+/* $NetBSD: argpio.c,v 1.4 2011/07/01 18:40:00 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Garrett D'Amore
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.3 2006/09/04 05:17:26 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.4 2011/07/01 18:40:00 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.3 2006/09/04 05:17:26 gdamore Exp $");
 #include <sys/device.h>
 #include <sys/gpio.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <mips/atheros/include/arbusvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.21 2009/08/19 15:17:00 dyoung Exp $	*/
+/*	$NetBSD: pcib.c,v 1.22 2011/07/01 18:31:32 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.21 2009/08/19 15:17:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.22 2011/07/01 18:31:32 dyoung Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.21 2009/08/19 15:17:00 dyoung Exp $");
 #include <sys/malloc.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

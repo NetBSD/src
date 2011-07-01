@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_gsc.c,v 1.19 2011/02/01 18:33:24 skrll Exp $	*/
+/*	$NetBSD: osiop_gsc.c,v 1.20 2011/07/01 18:33:09 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.  All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop_gsc.c,v 1.19 2011/02/01 18:33:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop_gsc.c,v 1.20 2011/07/01 18:33:09 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: osiop_gsc.c,v 1.19 2011/02/01 18:33:24 skrll Exp $")
 #include <machine/intr.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/osiopreg.h>
 #include <dev/ic/osiopvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.22 2011/02/04 11:00:30 skrll Exp $	*/
+/*	$NetBSD: harmony.c,v 1.23 2011/07/01 18:33:09 dyoung Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -85,7 +85,7 @@
 #include <machine/intr.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <hp700/dev/cpudevs.h>
 #include <hp700/gsc/gscbusvar.h>

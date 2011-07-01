@@ -74,7 +74,7 @@ struct drm_file;
 #include <machine/param.h>
 #endif
 #include <machine/pmap.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #if defined(__i386__) || defined(__x86_64__)
 #include <machine/specialreg.h>
 #include <machine/sysarch.h>

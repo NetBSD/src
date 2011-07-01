@@ -1,4 +1,4 @@
-/* $NetBSD: adm5120_pciio_space.c,v 1.2 2008/04/28 20:23:27 martin Exp $ */
+/* $NetBSD: adm5120_pciio_space.c,v 1.3 2011/07/01 18:38:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,11 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_pciio_space.c,v 1.2 2008/04/28 20:23:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_pciio_space.c,v 1.3 2011/07/01 18:38:49 dyoung Exp $");
 
 #include <sys/param.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <mips/adm5120/include/adm5120reg.h>
 #include <mips/adm5120/include/adm5120_pcivar.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: augpio.c,v 1.5 2006/03/24 18:22:42 gdamore Exp $ */
+/* $NetBSD: augpio.c,v 1.6 2011/07/01 18:39:29 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: augpio.c,v 1.5 2006/03/24 18:22:42 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: augpio.c,v 1.6 2011/07/01 18:39:29 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: augpio.c,v 1.5 2006/03/24 18:22:42 gdamore Exp $");
 
 #include <dev/gpio/gpiovar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 
 #include <mips/alchemy/include/aubusvar.h>

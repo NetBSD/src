@@ -1,4 +1,4 @@
-/* $NetBSD: adm5120_cfio.c,v 1.1 2007/03/20 08:52:04 dyoung Exp $ */
+/* $NetBSD: adm5120_cfio.c,v 1.2 2011/07/01 18:38:48 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -30,13 +30,13 @@
  * OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_cfio.c,v 1.1 2007/03/20 08:52:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_cfio.c,v 1.2 2011/07/01 18:38:48 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <mips/cache.h>
 #include <mips/cpuregs.h>

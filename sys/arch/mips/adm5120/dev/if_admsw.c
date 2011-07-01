@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.8 2010/04/05 07:19:30 joerg Exp $ */
+/* $NetBSD: if_admsw.c,v 1.9 2011/07/01 18:38:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.8 2010/04/05 07:19:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.9 2011/07/01 18:38:49 dyoung Exp $");
 
 
 #include <sys/param.h>
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.8 2010/04/05 07:19:30 joerg Exp $");
 
 #include <net/bpf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/endian.h>
 

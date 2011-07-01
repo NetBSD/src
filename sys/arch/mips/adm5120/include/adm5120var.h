@@ -1,4 +1,4 @@
-/*	$NetBSD: adm5120var.h,v 1.2 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: adm5120var.h,v 1.3 2011/07/01 18:38:49 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -62,7 +62,7 @@
 #ifndef	_ADM5120VAR_H_
 #define	_ADM5120VAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #if 0
 #include <sys/socket.h>

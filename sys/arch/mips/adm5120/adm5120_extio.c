@@ -1,4 +1,4 @@
-/* $NetBSD: adm5120_extio.c,v 1.4 2011/02/20 07:48:35 matt Exp $ */
+/* $NetBSD: adm5120_extio.c,v 1.5 2011/07/01 18:38:48 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -65,13 +65,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_extio.c,v 1.4 2011/02/20 07:48:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_extio.c,v 1.5 2011/07/01 18:38:48 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <mips/cache.h>
 #include <mips/cpuregs.h>

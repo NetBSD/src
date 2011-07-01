@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.22 2010/11/12 10:51:14 njoly Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.23 2011/07/01 18:37:08 dyoung Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.22 2010/11/12 10:51:14 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.23 2011/07/01 18:37:08 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.22 2010/11/12 10:51:14 njoly Exp $
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/bus_private.h>
 
 #include <uvm/uvm.h>

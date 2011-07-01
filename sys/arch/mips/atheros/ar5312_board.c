@@ -1,4 +1,4 @@
-/* $Id: ar5312_board.c,v 1.2 2009/07/06 00:43:22 alc Exp $ */
+/* $Id: ar5312_board.c,v 1.3 2011/07/01 18:40:00 dyoung Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -40,13 +40,13 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5312_board.c,v 1.2 2009/07/06 00:43:22 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5312_board.c,v 1.3 2011/07/01 18:40:00 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <mips/atheros/include/ar5312reg.h>
 #include <mips/atheros/include/ar531xvar.h>
 

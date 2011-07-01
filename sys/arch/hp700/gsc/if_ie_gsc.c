@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.24 2011/06/03 16:28:40 tsutsui Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.25 2011/07/01 18:33:09 dyoung Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.24 2011/06/03 16:28:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.25 2011/07/01 18:33:09 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.24 2011/06/03 16:28:40 tsutsui Exp $
 
 #include <netinet/in.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
