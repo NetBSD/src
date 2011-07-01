@@ -1,4 +1,4 @@
-/*	$NetBSD: geode.c,v 1.14 2009/10/19 23:19:38 rmind Exp $	*/
+/*	$NetBSD: geode.c,v 1.15 2011/07/01 17:37:26 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -64,14 +64,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.14 2009/10/19 23:19:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.15 2011/07/01 17:37:26 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/wdog.h>
 #include <uvm/uvm_extern.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 #include <arch/i386/pci/geodevar.h>
