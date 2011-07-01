@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-des3.c,v 1.1.1.1 2011/04/13 18:15:32 elric Exp $	*/
+/*	$NetBSD: crypto-des3.c,v 1.2 2011/07/01 02:10:19 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -204,7 +204,7 @@ _krb5_DES3_random_to_key(krb5_context context,
     DES_cblock *k;
     int i, j;
 
-    memset(x, 0, sizeof(x));
+    memset(x, 0, 32);
     for (i = 0; i < 3; ++i) {
 	unsigned char foo;
 	for (j = 0; j < 7; ++j) {
