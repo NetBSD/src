@@ -1,4 +1,4 @@
-/*	$NetBSD: gxmci.c,v 1.2 2009/08/09 06:12:34 kiyohara Exp $	*/
+/*	$NetBSD: gxmci.c,v 1.3 2011/07/01 20:39:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,13 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxmci.c,v 1.2 2009/08/09 06:12:34 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxmci.c,v 1.3 2011/07/01 20:39:34 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/xscale/pxa2x0cpu.h>

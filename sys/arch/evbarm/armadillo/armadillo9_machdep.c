@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.20 2011/06/30 20:09:22 wiz Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.21 2011/07/01 20:38:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.20 2011/06/30 20:09:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.21 2011/07/01 20:38:16 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -141,7 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.20 2011/06/30 20:09:22 wiz 
 #define	DRAM_BLOCKS	4
 #include <machine/bootconfig.h>
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <arm/undefined.h>

@@ -1,5 +1,5 @@
-/*	$Id: imx31lk_pcic.c,v 1.3 2008/06/30 00:49:31 perry Exp $	*/
-/*	$NetBSD: imx31lk_pcic.c,v 1.3 2008/06/30 00:49:31 perry Exp $	*/
+/*	$Id: imx31lk_pcic.c,v 1.4 2011/07/01 20:41:16 dyoung Exp $	*/
+/*	$NetBSD: imx31lk_pcic.c,v 1.4 2011/07/01 20:41:16 dyoung Exp $	*/
 /*	$OpenBSD: pxapcic.c,v 1.1 2005/07/01 23:51:55 uwe Exp $	*/
 
 /*
@@ -19,14 +19,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31lk_pcic.c,v 1.3 2008/06/30 00:49:31 perry Exp $");
+__KERNEL_RCSID(0, "$Id: imx31lk_pcic.c,v 1.4 2011/07/01 20:41:16 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm.h>
 

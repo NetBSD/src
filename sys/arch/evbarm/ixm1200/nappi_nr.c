@@ -1,4 +1,4 @@
-/* $NetBSD: nappi_nr.c,v 1.8 2008/04/28 20:23:17 martin Exp $ */
+/* $NetBSD: nappi_nr.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nappi_nr.c,v 1.8 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nappi_nr.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $");
 
 /*
  * LED support for NAPPI.
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: nappi_nr.c,v 1.8 2008/04/28 20:23:17 martin Exp $");
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/ixp12x0/ixpsipvar.h>
 

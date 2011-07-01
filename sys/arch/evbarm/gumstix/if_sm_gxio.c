@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_gxio.c,v 1.9 2010/08/28 04:33:00 kiyohara Exp $ */
+/*	$NetBSD: if_sm_gxio.c,v 1.10 2011/07/01 20:39:34 dyoung Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.9 2010/08/28 04:33:00 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.10 2011/07/01 20:39:34 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.9 2010/08/28 04:33:00 kiyohara Exp 
 #include <net/if_media.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

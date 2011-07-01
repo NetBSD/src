@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpcom_ixm.c,v 1.8 2009/10/21 14:15:51 rmind Exp $ */
+/*	$NetBSD: ixpcom_ixm.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpcom_ixm.c,v 1.8 2009/10/21 14:15:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpcom_ixm.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $");
 
 /* Front-end of ixpcom */
 
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixpcom_ixm.c,v 1.8 2009/10/21 14:15:51 rmind Exp $")
 #include <sys/termios.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/ixp12x0/ixp12x0_comreg.h>
 #include <arm/ixp12x0/ixp12x0_comvar.h>

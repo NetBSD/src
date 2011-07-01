@@ -1,4 +1,4 @@
-/* $NetBSD: lubbock_lcd.c,v 1.11 2010/03/13 11:15:52 bsh Exp $ */
+/* $NetBSD: lubbock_lcd.c,v 1.12 2011/07/01 20:42:37 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  *   LCD panel geometry
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.11 2010/03/13 11:15:52 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.12 2011/07/01 20:42:37 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.11 2010/03/13 11:15:52 bsh Exp $")
 #include <dev/wscons/wsdisplayvar.h> 
 #include <dev/wscons/wscons_callbacks.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0_lcd.h>
