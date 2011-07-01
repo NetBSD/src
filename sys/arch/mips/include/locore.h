@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.90 2011/04/29 22:05:16 matt Exp $ */
+/* $NetBSD: locore.h,v 1.91 2011/07/01 22:08:22 dyoung Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -28,7 +28,7 @@
 #ifndef _MIPS_LOCORE_H
 #define _MIPS_LOCORE_H
 
-#ifndef _LKM
+#if !defined(_LKM) && defined(_KERNEL_OPT)
 #include "opt_cputype.h"
 #endif
 
