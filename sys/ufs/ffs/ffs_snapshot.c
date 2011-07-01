@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.116 2011/06/12 03:36:00 rmind Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.117 2011/07/01 14:28:21 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.116 2011/06/12 03:36:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.117 2011/07/01 14:28:21 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1896,15 +1896,29 @@ ffs_copyonwrite(void *v, struct buf *bp, bool data_valid)
 		return 0;
 	}
 	/*
-	 * First check to see if it is after the file system or
-	 * in the preallocated list.
-	 * By doing this check we avoid several potential deadlocks.
+	 * First check to see if it is after the file system,
+	 * in the journal or in the preallocated list.
+	 * By doing these checks we avoid several potential deadlocks.
 	 */
 	fs = ip->i_fs;
 	lbn = fragstoblks(fs, dbtofsb(fs, bp->b_blkno));
 	if (bp->b_blkno >= fsbtodb(fs, fs->fs_size)) {
 		mutex_exit(&si->si_lock);
 		return 0;
+	}
+	if ((fs->fs_flags & FS_DOWAPBL) &&
+	    fs->fs_journal_location == UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM) {
+		off_t blk_off, log_start, log_end;
+
+		log_start = (off_t)fs->fs_journallocs[UFS_WAPBL_INFS_ADDR] *
+		    fs->fs_journallocs[UFS_WAPBL_INFS_BLKSZ];
+		log_end = log_start + fs->fs_journallocs[UFS_WAPBL_INFS_COUNT] *
+		    fs->fs_journallocs[UFS_WAPBL_INFS_BLKSZ];
+		blk_off = dbtob(bp->b_blkno);
+		if (blk_off >= log_start && blk_off < log_end) {
+			mutex_exit(&si->si_lock);
+			return 0;
+		}
 	}
 	snapblklist = si->si_snapblklist;
 	upper = (snapblklist != NULL ? snapblklist[0] - 1 : 0);
