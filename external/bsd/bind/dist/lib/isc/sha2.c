@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.c,v 1.2 2011/02/16 03:47:11 christos Exp $	*/
+/*	$NetBSD: sha2.c,v 1.3 2011/07/01 02:24:14 joerg Exp $	*/
 
 /*
  * Copyright (C) 2005-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -897,7 +897,7 @@ isc_sha256_final(isc_uint8_t digest[], isc_sha256_t *context) {
 	}
 
 	/* Clean up state data: */
-	memset(context, 0, sizeof(context));
+	memset(context, 0, sizeof(*context));
 	usedspace = 0;
 }
 
@@ -1210,7 +1210,7 @@ void isc_sha512_final(isc_uint8_t digest[], isc_sha512_t *context) {
 	}
 
 	/* Zero out state data */
-	memset(context, 0, sizeof(context));
+	memset(context, 0, sizeof(*context));
 }
 
 
@@ -1263,7 +1263,7 @@ isc_sha384_final(isc_uint8_t digest[], isc_sha384_t *context) {
 	}
 
 	/* Zero out state data */
-	memset(context, 0, sizeof(context));
+	memset(context, 0, sizeof(*context));
 }
 #endif /* !ISC_PLATFORM_OPENSSLHASH */
 
@@ -1294,7 +1294,7 @@ isc_sha224_end(isc_sha224_t *context, char buffer[]) {
 #ifdef ISC_PLATFORM_OPENSSLHASH
 		EVP_MD_CTX_cleanup(context);
 #else
-		memset(context, 0, sizeof(context));
+		memset(context, 0, sizeof(*context));
 #endif
 	}
 	memset(digest, 0, ISC_SHA224_DIGESTLENGTH);
@@ -1333,7 +1333,7 @@ isc_sha256_end(isc_sha256_t *context, char buffer[]) {
 #ifdef ISC_PLATFORM_OPENSSLHASH
 		EVP_MD_CTX_cleanup(context);
 #else
-		memset(context, 0, sizeof(context));
+		memset(context, 0, sizeof(*context));
 #endif
 	}
 	memset(digest, 0, ISC_SHA256_DIGESTLENGTH);
@@ -1372,7 +1372,7 @@ isc_sha512_end(isc_sha512_t *context, char buffer[]) {
 #ifdef ISC_PLATFORM_OPENSSLHASH
 		EVP_MD_CTX_cleanup(context);
 #else
-		memset(context, 0, sizeof(context));
+		memset(context, 0, sizeof(*context));
 #endif
 	}
 	memset(digest, 0, ISC_SHA512_DIGESTLENGTH);
@@ -1411,7 +1411,7 @@ isc_sha384_end(isc_sha384_t *context, char buffer[]) {
 #ifdef ISC_PLATFORM_OPENSSLHASH
 		EVP_MD_CTX_cleanup(context);
 #else
-		memset(context, 0, sizeof(context));
+		memset(context, 0, sizeof(*context));
 #endif
 	}
 	memset(digest, 0, ISC_SHA384_DIGESTLENGTH);
