@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/29 01:56:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/01 01:24:53 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -73,24 +73,13 @@ runtime-info.h:
 
 ${OBJS} ${POBJS} ${SOBJS}: runtime-info.h
 
-# these aren't necessary but are #include'd
-FAKEHEADERS=	${EXTRA_FAKEHEADERS} insn-flags.h insn-constants.h
-${FAKEHEADERS}:
-	${_MKTARGET_CREATE}
-	touch ${.TARGET}
-tm.h ${SRCS}: ${FAKEHEADERS}
-CLEANFILES+=	${FAKEHEADERS}
-
 ${SRCS}: tconfig.h unwind.h options.h
 
+BUILDSYMLINKS+=	${G_UNWIND_H} unwind.h
+DPSRCS+=	unwind.h
+
 .include "../Makefile.tconfigh"
-
-unwind.h: ${G_UNWIND_H}
-	${_MKTARGET_CREATE}
-	rm -f ${.TARGET}
-	ln -s ${G_UNWIND_H} ${.TARGET}
-
-CLEANFILES+= unwind.h
+.include "../Makefile.hacks"
 
 # XXX just while all platforms defs.mk are updated..
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)

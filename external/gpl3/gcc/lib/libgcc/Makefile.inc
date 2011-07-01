@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2011/06/29 08:05:52 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2011/07/01 01:24:53 mrg Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -82,7 +82,7 @@ CLEANFILES+=	${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} cs-tconfig.h
 CLEANFILES+=	${LIB1ASMFUNCS}
 .endif
 
-.for file in ${G_LIB2ADD:M${GNUHOSTDIST}*}
+.for file in ${G_LIB2ADD:M${GNUHOSTDIST}*:N*.c}
 BUILDSYMLINKS+=	${file} ${file:T:S/.asm$/.S/}
 .endfor
 
@@ -150,13 +150,8 @@ dp-bit.c: ${.CURDIR}/Makefile
 .include "../Makefile.tconfigh"
 DPSRCS+=	tconfig.h
 
+${SRCS}: unwind.h
 BUILDSYMLINKS+=	${G_UNWIND_H} unwind.h
 DPSRCS+=	unwind.h
 
-# these aren't necessary but are #include'd
-FAKEHEADERS=options.h insn-flags.h insn-constants.h
-${FAKEHEADERS}:
-	${_MKTARGET_CREATE}
-	touch ${.TARGET}
-DPSRCS+=	${FAKEHEADERS}
-CLEANFILES+=	${FAKEHEADERS}
+.include "../../Makefile.hacks"
