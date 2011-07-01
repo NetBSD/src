@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_dma.c,v 1.9 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: isa_dma.c,v 1.10 2011/07/01 20:34:06 dyoung Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_dma.c,v 1.9 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_dma.c,v 1.10 2011/07/01 20:34:06 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: isa_dma.c,v 1.9 2009/03/14 21:04:06 dsl Exp $");
 #include <sys/mbuf.h>
 
 #define _ATARI_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

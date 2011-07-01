@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_ahb.c,v 1.4 2010/11/13 05:00:31 bsh Exp $	*/
+/*	$NetBSD: imx31_ahb.c,v 1.5 2011/07/01 20:27:50 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.4 2010/11/13 05:00:31 bsh Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.5 2011/07/01 20:27:50 dyoung Exp $");
 
 #include "locators.h"
 #include "avic.h"
@@ -112,7 +112,7 @@ __KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.4 2010/11/13 05:00:31 bsh Exp $");
 #include <sys/reboot.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/cpufunc.h>
 #include <arm/mainbus/mainbus.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: iomdkbc.c,v 1.3 2006/10/21 22:45:03 bjh21 Exp $ */
+/* $NetBSD: iomdkbc.c,v 1.4 2011/07/01 20:26:35 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomdkbc.c,v 1.3 2006/10/21 22:45:03 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomdkbc.c,v 1.4 2011/07/01 20:26:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: iomdkbc.c,v 1.3 2006/10/21 22:45:03 bjh21 Exp $");
 
 #include <dev/pckbport/pckbportvar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arch/arm/iomd/iomdreg.h>

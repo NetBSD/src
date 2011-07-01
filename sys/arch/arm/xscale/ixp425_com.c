@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_com.c,v 1.17 2008/03/14 15:09:09 cube Exp $	*/
+/*	$NetBSD: ixp425_com.c,v 1.18 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.17 2008/03/14 15:09:09 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.18 2011/07/01 20:32:51 dyoung Exp $");
 
 #include "opt_com.h"
 #ifndef COM_PXA2X0
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.17 2008/03/14 15:09:09 cube Exp $")
 #include <sys/termios.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.h,v 1.9 2009/01/29 12:28:15 nonaka Exp $ */
+/* $NetBSD: pxa2x0_lcd.h,v 1.10 2011/07/01 20:32:51 dyoung Exp $ */
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -37,7 +37,7 @@
 #define _ARM_XSCALE_PXA2X0_LCD_H
 
 #include <dev/rasops/rasops.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* LCD Contoroller */
 

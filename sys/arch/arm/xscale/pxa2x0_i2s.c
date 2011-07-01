@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2s.c,v 1.8 2009/03/13 13:55:18 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_i2s.c,v 1.9 2011/07/01 20:32:51 dyoung Exp $	*/
 /*	$OpenBSD: pxa2x0_i2s.c,v 1.7 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
@@ -18,14 +18,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.8 2009/03/13 13:55:18 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.9 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>

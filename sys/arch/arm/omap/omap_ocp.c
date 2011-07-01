@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_ocp.c,v 1.4 2008/12/12 17:36:14 matt Exp $ */
+/*	$NetBSD: omap_ocp.c,v 1.5 2011/07/01 20:30:21 dyoung Exp $ */
 
 /*
  * Autoconfiguration support for the Texas Instruments OMAP OCP bus.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_ocp.c,v 1.4 2008/12/12 17:36:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_ocp.c,v 1.5 2011/07/01 20:30:21 dyoung Exp $");
 
 #include "locators.h"
 
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap_ocp.c,v 1.4 2008/12/12 17:36:14 matt Exp $");
 #include <sys/reboot.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/cpufunc.h>
 #include <arm/mainbus/mainbus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2s.h,v 1.1 2006/12/17 16:03:33 peter Exp $	*/
+/*	$NetBSD: pxa2x0_i2s.h,v 1.2 2011/07/01 20:32:51 dyoung Exp $	*/
 /*	$OpenBSD: pxa2x0_i2s.h,v 1.3 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 #ifndef _PXA2X0_I2S_H_
 #define _PXA2X0_I2S_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct pxa2x0_i2s_dma;
 struct audio_params;

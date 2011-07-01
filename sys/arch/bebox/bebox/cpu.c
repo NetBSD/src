@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10 2011/06/03 00:16:27 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.11 2011/07/01 20:34:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2011/06/03 00:16:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11 2011/07/01 20:34:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 
 int cpumatch(device_t, cfdata_t, void *);

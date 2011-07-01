@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_clock.c,v 1.2 2010/11/15 18:19:19 bsh Exp $ */
+/*	$NetBSD: imx31_clock.c,v 1.3 2011/07/01 20:27:50 dyoung Exp $ */
 /*
  * Copyright (c) 2009,2010  Genetec corp.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec corp.
@@ -37,7 +37,7 @@
 #include <sys/device.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/cpu.h>
 #include <arm/armreg.h>
