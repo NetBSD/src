@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2011/06/30 07:02:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.42 2011/07/01 01:27:17 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -151,15 +151,17 @@ NATIVE_CONFIGURE_ARGS+=	\
 	# edit Makefile so that maybe-all-gcc does not depend on all-gcc any more.
 		(cd .native && mv Makefile Makefile.config && \
 			${TOOL_SED} -e 's/\(maybe-all-gcc:\) all-gcc/\1/' \
+				    -e 's/\(maybe-all-target-libgcc:\) all-target-libgcc/\1/' \
 				< Makefile.config > Makefile)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e tree-check.h config.h multilib.h gcov-iov.h)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e libgcc.mvars tconfig.h unwind.h)
+		(cd .native && touch gcc/cc1obj gcc/cc1plus gcc/f771 gcc/libgcc.a gcc/libgcc_s.so)
+.for _lib in ${MKNATIVE_CONFIG_TARGET_LIBS}
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
-		(cd .native && touch gcc/cc1obj gcc/cc1plus gcc/f771 gcc/libgcc.a gcc/libgcc_s.so && \
-			${MKNATIVE_ENV} ${BUILD_MAKE} \
-			${MKNATIVE_CONFIG_TARGET_LIBS} \
+		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} \
+			${_lib} \
 			ALL_GCC_C= ALL_GCC_CXX= \
 			CC_FOR_TARGET=${CC:Q}' '${CCADDFLAGS:Q} \
 			CXX_FOR_TARGET=${CXX:Q}' '${CCADDFLAGS:Q}' '${CXXADDFLAGS:Q} \
@@ -167,6 +169,7 @@ NATIVE_CONFIGURE_ARGS+=	\
 			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
 			ac_cv_prog_cc_cross=yes) && \
 	true
+.endfor
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native/${MACHINE_GNU_PLATFORM}/libstdc++-v3/include && \
 			${MKNATIVE_ENV} ${BUILD_MAKE} \
