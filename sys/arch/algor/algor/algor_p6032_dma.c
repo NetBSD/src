@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_dma.c,v 1.5 2009/10/26 00:59:39 snj Exp $	*/
+/*	$NetBSD: algor_p6032_dma.c,v 1.6 2011/07/01 18:30:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,12 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_dma.c,v 1.5 2009/10/26 00:59:39 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_dma.c,v 1.6 2011/07/01 18:30:36 dyoung Exp $");
 
 #include <sys/param.h>
 
 #define	_ALGOR_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <algor/algor/algor_p6032reg.h>
 #include <algor/algor/algor_p6032var.h>
