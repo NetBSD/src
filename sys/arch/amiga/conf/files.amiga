@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.144 2011/06/12 03:35:38 rmind Exp $
+#	$NetBSD: files.amiga,v 1.145 2011/07/01 13:30:18 rkujawa Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -488,5 +488,8 @@ file arch/m68k/m68k/linux_trap.c		compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
+
+# Bluetooth stack
+include "dev/bluetooth/files.bluetooth"
 
 include "arch/amiga/conf/majors.amiga"

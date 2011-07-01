@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.267 2011/06/30 20:09:18 wiz Exp $
+# $NetBSD: GENERIC,v 1.268 2011/07/01 13:30:18 rkujawa Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.267 $"
+#ident 		"GENERIC-$Revision: 1.268 $"
 
 
 maxusers	8
@@ -462,6 +462,37 @@ ch*	at scsibus? target ? lun ?	# scsi autochangers
 ss*	at scsibus? target ? lun ?	# scsi scanner
 uk*	at scsibus? target ? lun ?	# scsi unknown
 
+# Bluetooth Controller and Device support
+# tested only with btuart on an A1200
+
+# Bluetooth PCMCIA Controllers
+bt3c*   at pcmcia? function ?           # 3Com 3CRWB6096-A
+btbc*   at pcmcia? function ?           # AnyCom BlueCard LSE041/039/139
+
+# Bluetooth Device Hub
+bthub*  at bcsp?
+bthub*  at bt3c?
+bthub*  at btbc?
+bthub*  at btuart?
+
+# Bluetooth HID support
+bthidev* at bthub?
+
+# Bluetooth Mouse
+btms*   at bthidev? reportid ?
+wsmouse* at btms? mux 0
+
+# Bluetooth Keyboard
+#btkbd* at bthidev? reportid ?
+#wskbd* at btkbd? console ? mux 1
+
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
+
+# Bluetooth Audio support
+#btsco* at bthub?
+
 #
 # accept filters
 pseudo-device	accf_data		# "dataready" accept filter
@@ -515,6 +546,9 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	ksyms			# /dev/ksyms (kernel symbols)
 pseudo-device	nsmb			# experimental - SMB requester
+
+pseudo-device   bcsp                    # BlueCore Serial Protocol
+pseudo-device   btuart                  # Bluetooth HCI UART (H4)
 
 # Veriexec
 #
