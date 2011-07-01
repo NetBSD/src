@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2011/06/29 02:15:13 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2011/07/01 10:03:17 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -31,7 +31,11 @@ BASEVER!=		cat ${GNUHOSTDIST}/gcc/BASE-VER
 # XXX
 #DEVPHASE!=		cat ${GNUHOSTDIST}/gcc/DEV-PHASE
 DEVPHASE=
+.if ${DEVPHASE} == "release" || ${DEVPHASE} == ""
+DATESTAMP=
+.else
 DATESTAMP!=		cat ${GNUHOSTDIST}/gcc/DATESTAMP
+.endif
 
 BASEVERSTR=		"\"$(BASEVER)\""
 .if !empty(DEVPHASE)
@@ -39,7 +43,7 @@ DEVPHASESTR=		"\" $(DEVPHASE)\""
 .else
 DEVPHASESTR=		"\"\""
 .endif
-.if !empty(DEVPHASE)
+.if !empty(DATESTAMP)
 DATESTAMPSTR=		"\" $(DATESTAMP)\""
 .else
 DATESTAMPSTR=		"\"\""
@@ -48,13 +52,13 @@ DATESTAMPSTR=		"\"\""
 # XXX pull this out of our configs
 G_BUGURL=<http://www.NetBSD.org/Misc/send-pr.html>
 G_BUGURL_s="\"${G_BUG_URL}\""
-G_PKGVERSION_s=(NetBSD nb1 20110620) 
+G_PKGVERSION=(NetBSD nb1 20110620) 
 G_PKGVERSION_s="\"${G_PKGVERSION} \""
 
 VER_CPPFLAGS=			-DBUGURL=${G_BUGURL_s} \
 				-DPKGVERSION=${G_PKGVERSION_s} \
 				-DBASEVER="\"${BASEVER}"\" \
-				-DDATESTAMP="\"${DATESTAMP}"\" \
+				-DDATESTAMP=${DATESTAMPSTR} \
 				-DDEVPHASE=${DEVPHASE} \
 				-DREVISION=${REVISION}
 CPPFLAGS.version.c=		${VER_CPPFLAGS}
