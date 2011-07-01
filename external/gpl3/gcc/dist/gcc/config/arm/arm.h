@@ -2111,7 +2111,7 @@ typedef struct
   (GET_CODE (X) == REG && ARM_REG_OK_FOR_INDEX_P (X))
 
 /* Define this for compatibility reasons. */
-#define HANDLE_PRAGMA_PACK_PUSH_POP
+#define HANDLE_PRAGMA_PACK_PUSH_POP 1
 
 /* Specify the machine mode that this machine uses
    for the index in the tablejump instruction.  */
