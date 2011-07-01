@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.87 2011/04/27 20:05:56 mbalmer Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.88 2011/07/01 02:10:07 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -120,14 +120,16 @@
 ./usr/include/fs
 ./usr/include/fs/smbfs
 ./usr/include/g++
-# remove me when gcc3.3 upgrade is complete
-./usr/include/g++/std
 ./usr/include/g++/backward
-./usr/include/g++/ext
 ./usr/include/g++/bits
-./usr/include/g++/tr1
 ./usr/include/g++/debug
+./usr/include/g++/decimal
+./usr/include/g++/ext
+./usr/include/g++/parallel
+./usr/include/g++/tr1
+./usr/include/g++/tr1_impl
 ./usr/include/gcc-4.1
+./usr/include/gcc-4.5
 ./usr/include/gssapi
 ./usr/include/isofs
 ./usr/include/isofs/cd9660
