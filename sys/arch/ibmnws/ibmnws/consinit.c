@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.4 2008/05/15 23:38:49 rjs Exp $	*/
+/*	$NetBSD: consinit.c,v 1.5 2011/07/01 20:47:43 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/cons.h>
