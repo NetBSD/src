@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.119 2011/06/26 16:42:40 christos Exp $
+# $NetBSD: md.amd64,v 1.120 2011/07/01 02:10:09 mrg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -71,8 +71,8 @@
 ./usr/include/clang-3.0/emmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/immintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/mm3dnow.h		comp-c-include		llvm
-./usr/include/clang-3.0/mmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/mm_malloc.h		comp-c-include		llvm
+./usr/include/clang-3.0/mmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/pmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/smmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/tmmintrin.h		comp-c-include		llvm
@@ -83,6 +83,27 @@
 ./usr/include/gcc-4.1/mmintrin.h		comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/pmmintrin.h		comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/xmmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.5/abmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/ammintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/avxintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/bmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/emmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/fma4intrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/ia32intrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/immintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/lwpintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/mm3dnow.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/mm_malloc.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/nmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/pmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/popcntintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/smmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/tmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/wmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/x86intrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/xmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/xopintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/ansi.h			comp-c-include
 ./usr/include/i386/aout_machdep.h		comp-c-include
@@ -269,12 +290,12 @@
 ./usr/lib/i386/i18n/libDECHanyu_pic.a		comp-obsolete		obsolete
 ./usr/lib/i386/i18n/libEUC.a			comp-c-lib		compat
 ./usr/lib/i386/i18n/libEUC.so			comp-sys-shlib		compat,pic
-./usr/lib/i386/i18n/libEUC_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW.a			comp-c-lib		compat
 ./usr/lib/i386/i18n/libEUCTW.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-proflib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_p.a		comp-obsolete		obsolete
 ./usr/lib/i386/i18n/libEUCTW_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/i18n/libEUC_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/i18n/libEUC_p.a			comp-obsolete		obsolete
 ./usr/lib/i386/i18n/libEUC_pic.a		comp-obsolete		obsolete
 ./usr/lib/i386/i18n/libGBK2K.a			comp-c-lib		compat
@@ -528,6 +549,11 @@
 ./usr/lib/i386/libgcov_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libgcov_p.a			comp-obsolete		obsolete
 ./usr/lib/i386/libgcov_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/libgmp.a				comp-c-lib		gcc=45,compat
+./usr/lib/i386/libgmp.so			comp-sys-shlib		gcc=45,compat,pic
+./usr/lib/i386/libgmp_g.a			-unknown-		gcc=45,compat,debuglib
+./usr/lib/i386/libgmp_p.a			comp-c-proflib		gcc=45,compat,profile
+./usr/lib/i386/libgmp_pic.a			comp-c-piclib		gcc=45,compat,pic
 ./usr/lib/i386/libgnumalloc.a			comp-c-lib		compat
 ./usr/lib/i386/libgnumalloc.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libgnumalloc_g.a			comp-c-proflib		compat,debuglib
@@ -690,6 +716,16 @@
 ./usr/lib/i386/libmj_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libmj_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libmj_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libmpc.a				comp-c-lib		gcc=45,compat
+./usr/lib/i386/libmpc.so			comp-sys-shlib		gcc=45,compat,pic
+./usr/lib/i386/libmpc_g.a			-unknown-		gcc=45,compat,debuglib
+./usr/lib/i386/libmpc_p.a			comp-c-proflib		gcc=45,compat,profile
+./usr/lib/i386/libmpc_pic.a			comp-c-piclib		gcc=45,compat,pic
+./usr/lib/i386/libmpfr.a			comp-c-lib		gcc=45,compat
+./usr/lib/i386/libmpfr.so			comp-sys-shlib		gcc=45,compat,pic
+./usr/lib/i386/libmpfr_g.a			-unknown-		gcc=45,compat,debuglib
+./usr/lib/i386/libmpfr_p.a			comp-c-proflib		gcc=45,compat,profile
+./usr/lib/i386/libmpfr_pic.a			comp-c-piclib		gcc=45,compat,pic
 ./usr/lib/i386/libnetpgp.a			comp-c-lib		compat
 ./usr/lib/i386/libnetpgp.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libnetpgp_g.a			comp-c-proflib		compat,debuglib
@@ -752,12 +788,12 @@
 ./usr/lib/i386/libprop_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libpthread.a			comp-c-lib		compat
 ./usr/lib/i386/libpthread.so			comp-sys-shlib		compat,pic
-./usr/lib/i386/libpthread_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libpthread_dbg.a			comp-c-lib		compat
 ./usr/lib/i386/libpthread_dbg.so		comp-sys-shlib		compat,pic
 ./usr/lib/i386/libpthread_dbg_g.a		comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libpthread_dbg_p.a		comp-c-proflib		compat,profile
 ./usr/lib/i386/libpthread_dbg_pic.a		comp-c-piclib		compat,pic
+./usr/lib/i386/libpthread_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libpthread_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libpthread_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libpuffs.a			comp-c-lib		compat
@@ -824,6 +860,8 @@
 ./usr/lib/i386/librumpdev_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/librumpdev_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/librumpdev_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/librumphijack.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/librumphijack_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/i386/librumpnet.a			comp-c-lib		compat
 ./usr/lib/i386/librumpnet.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/librumpnet_g.a			comp-c-proflib		compat,debuglib
@@ -831,11 +869,9 @@
 ./usr/lib/i386/librumpnet_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/librumpuser.a			comp-c-lib		compat
 ./usr/lib/i386/librumpuser.so			comp-sys-shlib		compat,pic
-./usr/lib/i386/librumphijack.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/librumpuser_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/librumpuser_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/librumpuser_pic.a		comp-c-piclib		compat,pic
-./usr/lib/i386/librumphijack_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/i386/librumpvfs.a			comp-c-lib		compat
 ./usr/lib/i386/librumpvfs.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/librumpvfs_g.a			comp-c-proflib		compat,debuglib
@@ -991,9 +1027,10 @@
 ./usr/libdata/debug/usr/lib/i386/libfetch.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libform.so.6.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libgcc_s.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libgmp.so.10.2.debug	comp-compat-shlib	gcc=45,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libgnumalloc.so.1.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libgssapi.so.9.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libgssapi.so.10.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libgssapi.so.9.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libhdb.so.13.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libhdb.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libheimbase.so.1.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
@@ -1029,6 +1066,8 @@
 ./usr/libdata/debug/usr/lib/i386/libmagic.so.3.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmenu.so.6.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmj.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libmpc.so.2.0.debug	comp-compat-shlib	gcc=45,compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libmpfr.so.4.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libnetpgp.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libnpf.so.0.0.debug	comp-compat-shlib	compat,pic,npf,debug
 ./usr/libdata/debug/usr/lib/i386/libobjc.so.3.0.debug	comp-compat-shlib	compat,pic,debug
@@ -1056,9 +1095,9 @@
 ./usr/libdata/debug/usr/lib/i386/librumpclient.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librumpcrypto.so.0.0.debug	comp-obsolete obsolete
 ./usr/libdata/debug/usr/lib/i386/librumpdev.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/librumphijack.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librumpnet.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librumpuser.so.0.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/librumphijack.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librumpvfs.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libsaslc.so.0.0.debug	comp-compat-shlib	compat,pic,crypto,debug
 ./usr/libdata/debug/usr/lib/i386/libskey.so.2.0.debug	comp-compat-shlib	compat,pic,skey,debug
@@ -1067,7 +1106,8 @@
 ./usr/libdata/debug/usr/lib/i386/libss.so.6.0.debug	comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/i386/libssh.so.16.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libssl.so.8.2.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	gcc=4,compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libterminfo.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libukfs.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libusbhid.so.1.0.debug	comp-compat-shlib	compat,pic,debug

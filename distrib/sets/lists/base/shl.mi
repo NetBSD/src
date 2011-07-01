@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.589 2011/06/26 16:42:39 christos Exp $
+# $NetBSD: shl.mi,v 1.590 2011/07/01 02:10:09 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -333,9 +333,10 @@
 ./usr/lib/libnvpair.so.0			base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libnvpair.so.0.0			base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/libobjc.so				base-sys-shlib		gcc
-./usr/lib/libobjc.so.2.0			base-sys-shlib		gcc=3
-./usr/lib/libobjc.so.3				base-sys-shlib		gcc
+./usr/lib/libobjc.so.3				base-sys-shlib		gcc=4
 ./usr/lib/libobjc.so.3.0			base-sys-shlib		gcc=4
+./usr/lib/libobjc.so.3				base-sys-shlib		gcc=45
+./usr/lib/libobjc.so.3.0			base-sys-shlib		gcc=45
 ./usr/lib/libopenpgpsdk.so			base-obsolete		obsolete
 ./usr/lib/libopenpgpsdk.so.0			base-obsolete		obsolete
 ./usr/lib/libopenpgpsdk.so.0.9			base-obsolete		obsolete
@@ -642,7 +643,9 @@
 ./usr/lib/libstdc++.so.5			base-sys-shlib		gcc=3
 ./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3,cxx
 ./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=4,cxx
+./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=45,cxx
 ./usr/lib/libstdc++.so.7.0			base-sys-shlib		gcc=4,cxx
+./usr/lib/libstdc++.so.7.1			base-sys-shlib		gcc=45,cxx
 ./usr/lib/libtermcap.so				base-sys-shlib
 ./usr/lib/libtermcap.so.0			base-sys-shlib
 ./usr/lib/libtermcap.so.0.6			base-sys-shlib
