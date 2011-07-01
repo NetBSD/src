@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/07/01 05:07:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/07/01 10:04:36 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -22,7 +22,7 @@ EXTRA_FAKEHEADERS=
 .else
 # Machine-independent definitions (include file names).
 .include "${.CURDIR}/defs.mk"
-EXTRA_FAKEHEADERS=	options.h
+EXTRA_FAKEHEADERS=
 .endif
 
 LIBGCCOBJ!=    cd ${.CURDIR}/../libgcc/libgcc && ${PRINTOBJDIR}
