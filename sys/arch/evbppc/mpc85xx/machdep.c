@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2011/06/30 00:52:56 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2011/07/01 07:44:33 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -480,14 +480,16 @@ memprobe(vaddr_t endkernel)
 			}
 		}
 		mr = physmemr;
-		for (u_int i = 0; i < cnt; i++, mr++) {
+		for (u_int i = 0; i + 1 < cnt; i++, mr++) {
 			if (mr->start + mr->size == mr[1].start) {
 				mr->size += mr[1].size;
-				for (u_int j = 1; j < cnt - i; j++)
+				for (u_int j = 1; i + j + 1 < cnt; j++)
 					mr[j] = mr[j+1];
 				cnt--;
 			}
 		}
+	} else {
+		panic("%s: no memory found", __func__);
 	}
 
 	/*
