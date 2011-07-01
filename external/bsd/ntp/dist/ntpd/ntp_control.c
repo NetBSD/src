@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.3 2011/07/01 02:18:54 mrg Exp $	*/
 
 /*
  * ntp_control.c - respond to control messages and send async traps
@@ -527,7 +527,7 @@ ctl_error(
 	 */
 	rpkt.r_m_e_op = (u_char) (CTL_RESPONSE|CTL_ERROR|(res_opcode &
 							  CTL_OP_MASK));
-	rpkt.status = htons((u_short) ((errcode<<8) & 0xff00));
+	rpkt.status = htons((u_short) ((errcode & 0xff) << 8));
 	rpkt.count = 0;
 
 	/*
