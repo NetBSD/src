@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.56 2011/07/01 01:27:17 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.57 2011/07/01 02:11:14 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -529,7 +529,7 @@ get_libstdcxx_v3 () {
 get_gcc () {
 	_subdir="$1"
 	mkdir -p $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH
-	mkdir -p $_OUTDIR/usr.bin/$_subdir/libcpp/arch/$MACHINE_ARCH
+	mkdir -p $_OUTDIR/usr.bin/libcpp/arch/$MACHINE_ARCH
 	case ${_subdir} in
 	gcc4)
 		_buildname="BUILD_"
@@ -602,7 +602,6 @@ get_gcc () {
 		hfiles='auto-host gencheck configargs gthr-default tm bconfig config multilib'
 		;;
 	gcc)
-		mkdir -p $_OUTDIR/usr.bin/libcpp/arch/$MACHINE_ARCH
 		write_c $_OUTDIRBASE/usr.bin/libcpp/arch/$MACHINE_ARCH/config.h <$_TMPDIR/libcpp/config.h
 		hfiles='auto-host configargs gthr-default tm bconfig config multilib bversion plugin-version'
 		;;
