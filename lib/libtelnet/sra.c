@@ -32,7 +32,7 @@
 #ifdef notdef
 __FBSDID("$FreeBSD: src/contrib/telnet/libtelnet/sra.c,v 1.16 2002/05/06 09:48:02 markm Exp $");
 #else
-__RCSID("$NetBSD: sra.c,v 1.8 2005/10/25 23:36:07 christos Exp $");
+__RCSID("$NetBSD: sra.c,v 1.9 2011/07/01 01:15:27 joerg Exp $");
 #endif
 
 #ifdef	SRA
@@ -328,7 +328,7 @@ sra_reply(Authenticator *ap, unsigned char *data, int cnt)
 			(void)strcpy(passprompt, "Password: ");
 		}
 		/* encode password */
-		memset(pass,0,sizeof(pass));
+		memset(pass,0,256);
 		if (telnet_gets(passprompt,pass,255,0) == NULL) {
 			printf("\n");
 			exit(1);
