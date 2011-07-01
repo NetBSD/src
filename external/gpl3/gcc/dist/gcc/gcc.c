@@ -1753,47 +1753,24 @@ init_gcc_specs (struct obstack *obstack, const char *shared_name,
 {
   char *buf;
 
-  buf = concat ("%{static",
-#ifdef LIBGCC_PICSUFFIX
-		": ", static_name, " ", eh_name, "}",
-		"%{static-libgcc: ",
-		"%{!shared:", static_name, " ", eh_name, "}",
-		"%{shared:", static_name, LIBGCC_PICSUFFIX, " ",
-		eh_name, LIBGCC_PICSUFFIX, "}",
-#else
- 		"|static-libgcc:", static_name, " ", eh_name,
-#endif
-		"}"
+  buf = concat ("%{static|static-libgcc:", static_name, " ", eh_name, "}"
 		"%{!static:%{!static-libgcc:"
 #if USE_LD_AS_NEEDED
 		"%{!shared-libgcc:",
-		static_name,
-#ifdef LIBGCC_PICSUFFIX
-		LIBGCC_PICSUFFIX,
-#endif
-		" --as-needed ", shared_name, " --no-as-needed"
+		static_name, " --as-needed ", shared_name, " --no-as-needed"
 		"}"
 		"%{shared-libgcc:",
-		shared_name, "%{!shared: ", static_name,
-#ifdef LIBGCC_PICSUFFIX
-		LIBGCC_PICSUFFIX,
-#endif
-		"}"
+		shared_name, "%{!shared: ", static_name, "}"
 		"}"
 #else
 		"%{!shared:"
 		"%{!shared-libgcc:", static_name, " ", eh_name, "}"
 		"%{shared-libgcc:", shared_name, " ", static_name, "}"
 		"}"
-/* XXX NH XXX */
-#ifdef LINK_EH_SPEC || 1
+#ifdef LINK_EH_SPEC
 		"%{shared:"
 		"%{shared-libgcc:", shared_name, "}"
-		"%{!shared-libgcc:", static_name,
-#ifdef LIBGCC_PICSUFFIX
-		LIBGCC_PICSUFFIX,
-#endif
-		"}"
+		"%{!shared-libgcc:", static_name, "}"
 		"}"
 #else
 		"%{shared:", shared_name, "}"
