@@ -1,4 +1,4 @@
-/* $NetBSD: fdfs.c,v 1.7 2009/08/06 00:51:55 pooka Exp $	 */
+/* $NetBSD: fdfs.c,v 1.8 2011/07/01 02:48:48 joerg Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ fd_reclaim(struct uvnode *vp)
 		free(fs->fd_bufp[i].buf);
 	free(fs->fd_bufp);
 	free(fs);
-	memset(vp, 0, sizeof(vp));
+	memset(vp, 0, sizeof(*vp));
 }
 
 /*
