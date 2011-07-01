@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_direct.c,v 1.7 2011/06/18 08:08:29 matt Exp $	*/
+/*	$NetBSD: prep_pciconf_direct.c,v 1.8 2011/07/01 16:56:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 Klaus J. Klein.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.7 2011/06/18 08:08:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.8 2011/07/01 16:56:52 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.7 2011/06/18 08:08:29 matt
 #include <uvm/uvm_extern.h>
 
 #define _POWERPC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/platform.h>
 

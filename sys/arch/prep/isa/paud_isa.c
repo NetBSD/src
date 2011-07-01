@@ -1,4 +1,4 @@
-/*	$NetBSD: paud_isa.c,v 1.13 2011/06/02 14:12:25 tsutsui Exp $	*/
+/*	$NetBSD: paud_isa.c,v 1.14 2011/07/01 16:57:29 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.13 2011/06/02 14:12:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.14 2011/07/01 16:57:29 dyoung Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.13 2011/06/02 14:12:25 tsutsui Exp $"
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <sys/audioio.h>

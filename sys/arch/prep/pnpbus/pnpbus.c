@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.10 2011/06/18 08:08:30 matt Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.11 2011/07/01 16:55:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.10 2011/06/18 08:08:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.11 2011/07/01 16:55:42 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.10 2011/06/18 08:08:30 matt Exp $");
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
 #include <machine/platform.h>

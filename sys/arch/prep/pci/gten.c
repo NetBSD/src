@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.19 2011/06/18 08:08:29 matt Exp $	*/
+/*	$NetBSD: gten.c,v 1.20 2011/07/01 16:56:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.19 2011/06/18 08:08:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.20 2011/07/01 16:56:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.19 2011/06/18 08:08:29 matt Exp $");
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/gtenvar.h>
 
 static	int	gten_match(device_t, cfdata_t, void *);

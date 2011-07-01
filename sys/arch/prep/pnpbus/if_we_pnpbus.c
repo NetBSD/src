@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_pnpbus.c,v 1.7 2011/06/18 08:08:29 matt Exp $	*/
+/*	$NetBSD: if_we_pnpbus.c,v 1.8 2011/07/01 16:55:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.7 2011/06/18 08:08:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.8 2011/07/01 16:55:42 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.7 2011/06/18 08:08:29 matt Exp $"
 
 #include <net/if_ether.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/isa_machdep.h>
 #include <machine/residual.h>
