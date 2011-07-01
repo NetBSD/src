@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.258 2011/06/12 03:35:47 rmind Exp $ */
+/*	$NetBSD: machdep.c,v 1.259 2011/07/01 08:37:28 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.258 2011/06/12 03:35:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.259 2011/07/01 08:37:28 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -937,8 +937,8 @@ stackdump(void)
 			       (unsigned long long)fp64->fr_arg[3],
 			       (unsigned long long)fp64->fr_arg[4],
 			       (unsigned long long)fp64->fr_arg[5],	
-			       (unsigned long long)fp64->fr_arg[6],
-			       (unsigned long long)fp64->fr_fp);
+			       (unsigned long long)fp64->fr_fp,
+			       (unsigned long long)fp64->fr_pc);
 			fp = (struct frame32 *)(u_long)fp64->fr_fp;
 		} else {
 			/* 32-bit frame */
@@ -952,8 +952,8 @@ stackdump(void)
 			       fp->fr_arg[3],
 			       fp->fr_arg[4],
 			       fp->fr_arg[5],
-			       fp->fr_arg[6],
-			       fp->fr_fp);
+			       fp->fr_fp,
+			       fp->fr_pc);
 			fp = (struct frame32*)(u_long)fp->fr_fp;
 		}
 	}
