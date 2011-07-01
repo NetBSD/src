@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_pnpbios.c,v 1.8 2008/04/28 20:23:25 martin Exp $ */
+/* $NetBSD: atppc_pnpbios.c,v 1.9 2011/07/01 18:14:15 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_pnpbios.c,v 1.8 2008/04/28 20:23:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_pnpbios.c,v 1.9 2011/07/01 18:14:15 dyoung Exp $");
 
 #include "opt_atppc.h"
 
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_pnpbios.c,v 1.8 2008/04/28 20:23:25 martin Exp
 #include <sys/proc.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
