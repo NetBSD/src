@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.222 2011/05/24 22:46:42 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.223 2011/07/01 07:45:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.222 2011/05/24 22:46:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.223 2011/07/01 07:45:39 matt Exp $");
 
 #include "rnd.h"
 
@@ -6690,13 +6690,13 @@ static int
 wm_valid_nvm_bank_detect_ich8lan(struct wm_softc *sc, unsigned int *bank)
 {
 	uint32_t act_offset = ICH_NVM_SIG_WORD * 2 + 1;
-	uint8_t bank_high_byte;
 	uint32_t bank1_offset = sc->sc_ich8_flash_bank_size * sizeof(uint16_t);
 
 	if ((sc->sc_type != WM_T_ICH10) && (sc->sc_type != WM_T_PCH)) {
 		/* Value of bit 22 corresponds to the flash bank we're on. */
 		*bank = (CSR_READ(sc, WMREG_EECD) & EECD_SEC1VAL) ? 1 : 0;
 	} else {
+		uint8_t bank_high_byte;
 		wm_read_ich8_byte(sc, act_offset, &bank_high_byte);
 		if ((bank_high_byte & 0xc0) == 0x80)
 			*bank = 0;
@@ -6975,6 +6975,8 @@ wm_read_ich8_byte(struct wm_softc *sc, uint32_t index, uint8_t* data)
 	status = wm_read_ich8_data(sc, index, 1, &word);
 	if (status == 0)
 		*data = (uint8_t)word;
+	else
+		*data = 0;
 
 	return status;
 }
