@@ -1,4 +1,4 @@
-/* $NetBSD: sb_pnpbios.c,v 1.15 2008/03/17 13:38:25 cube Exp $ */
+/* $NetBSD: sb_pnpbios.c,v 1.16 2011/07/01 18:14:15 dyoung Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_pnpbios.c,v 1.15 2008/03/17 13:38:25 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_pnpbios.c,v 1.16 2011/07/01 18:14:15 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: sb_pnpbios.c,v 1.15 2008/03/17 13:38:25 cube Exp $")
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

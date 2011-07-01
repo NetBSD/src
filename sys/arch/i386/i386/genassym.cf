@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.89 2011/06/12 03:35:41 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.90 2011/07/01 18:14:15 dyoung Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ endif
 include <machine/tlog.h>
 
 
-include <x86/bus.h>
+include <sys/bus.h>
 
 define	PAGE_SIZE		PAGE_SIZE
 

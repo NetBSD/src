@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.705 2011/06/30 23:28:03 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.706 2011/07/01 18:14:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.705 2011/06/30 23:28:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.706 2011/07/01 18:14:15 dyoung Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -212,7 +212,7 @@ uint32_t arch_i386_xbox_memsize = 0;
 #include "cardbus.h"
 #if NCARDBUS > 0
 /* For rbus_min_start hint. */
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/cardbus/rbus.h>
 #include <machine/rbus_machdep.h>
 #endif

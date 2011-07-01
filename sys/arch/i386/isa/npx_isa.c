@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_isa.c,v 1.21 2009/05/04 12:38:51 cegger Exp $	*/
+/*	$NetBSD: npx_isa.c,v 1.22 2011/07/01 18:11:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,13 +67,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.21 2009/05/04 12:38:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.22 2011/07/01 18:11:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpufunc.h>
 #include <machine/intr.h>
 #include <machine/specialreg.h>

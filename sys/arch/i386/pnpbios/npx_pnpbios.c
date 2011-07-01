@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_pnpbios.c,v 1.12 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: npx_pnpbios.c,v 1.13 2011/07/01 18:14:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_pnpbios.c,v 1.12 2008/04/28 20:23:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_pnpbios.c,v 1.13 2011/07/01 18:14:15 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpufunc.h>
 #include <machine/intr.h>
 #include <machine/specialreg.h>

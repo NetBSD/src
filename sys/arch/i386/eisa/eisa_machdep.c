@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.34 2009/11/17 23:51:59 dyoung Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.35 2011/07/01 18:14:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.34 2009/11/17 23:51:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.35 2011/07/01 18:14:15 dyoung Exp $");
 
 #include "ioapic.h"
 
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.34 2009/11/17 23:51:59 dyoung Exp
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/bus_private.h>
 
 #include <dev/isa/isareg.h>
