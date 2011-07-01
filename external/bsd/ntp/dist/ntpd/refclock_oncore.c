@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.4 2011/07/01 02:18:37 mrg Exp $	*/
 
 
 /*
@@ -2488,7 +2488,7 @@ oncore_msg_Bl(
 {
 	int	chan, id, subframe, valid, page, i, j, tow;
 	int	day_now, day_lsf;
-	const char *cp;
+	const char *cp = NULL /* XXX gcc */;
 	char Msg[120];
 	enum {
 		WARN_NOT_YET,
