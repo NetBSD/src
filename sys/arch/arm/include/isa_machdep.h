@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.7 2009/08/19 15:01:07 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.8 2011/07/01 21:16:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef _ARM32_ISA_MACHDEP_H_
 #define _ARM32_ISA_MACHDEP_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/isa/isadmavar.h>
 
 /*

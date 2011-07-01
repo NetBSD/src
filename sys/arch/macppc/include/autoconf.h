@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.17 2011/06/30 00:52:57 matt Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.18 2011/07/01 21:02:15 dyoung Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -34,7 +34,7 @@
 #ifndef _MACHINE_AUTOCONF_H_
 #define _MACHINE_AUTOCONF_H_
 
-#include <machine/bus.h>	/* for bus_space_tag_t */
+#include <sys/bus.h>	/* for bus_space_tag_t */
 
 struct confargs {
 	const char *ca_name;

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.10 2010/06/26 16:10:00 tsutsui Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.11 2011/07/01 21:00:57 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/ic/z8530sc.h>
 
 struct zsc_softc {

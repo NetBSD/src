@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.18 2011/01/20 19:47:40 skrll Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.19 2011/07/01 21:02:15 dyoung Exp $	*/
 
 /*	$OpenBSD: autoconf.h,v 1.10 2001/05/05 22:33:42 art Exp $	*/
 
@@ -30,7 +30,7 @@
 
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pdc.h>
 
 /* 16 should be enough for anyone */

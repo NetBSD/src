@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.5 2009/12/17 15:29:47 matt Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.6 2011/07/01 21:02:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct mainbus_attach_args {
 	const char	*ma_name;

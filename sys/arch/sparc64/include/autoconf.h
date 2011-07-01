@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.29 2011/03/12 11:43:38 nakayama Exp $ */
+/*	$NetBSD: autoconf.h,v 1.30 2011/07/01 20:59:38 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  * Autoconfiguration information.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/promlib.h>
 
 /* This is used to map device classes to IPLs */
