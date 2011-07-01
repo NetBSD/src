@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2410.c,v 1.10 2005/12/11 12:16:51 christos Exp $ */
+/*	$NetBSD: s3c2410.c,v 1.11 2011/07/01 20:31:39 dyoung Exp $ */
 
 /*
  * Copyright (c) 2003, 2005  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.10 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.11 2011/07/01 20:31:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.10 2005/12/11 12:16:51 christos Exp $"
 #include <sys/reboot.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/cpufunc.h>
 #include <arm/mainbus/mainbus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.15 2011/05/17 17:34:48 dyoung Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.16 2011/07/01 20:31:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.15 2011/05/17 17:34:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.16 2011/07/01 20:31:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.15 2011/05/17 17:34:48 dyoung Exp 
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/s3c2xx0/s3c2800reg.h>
 #include <arm/s3c2xx0/s3c2800var.h>

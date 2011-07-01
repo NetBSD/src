@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.22 2010/12/20 00:25:29 matt Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.23 2011/07/01 20:32:51 dyoung Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.22 2010/12/20 00:25:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.23 2011/07/01 20:32:51 dyoung Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.22 2010/12/20 00:25:29 matt Exp $"
 #include <sys/systm.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>

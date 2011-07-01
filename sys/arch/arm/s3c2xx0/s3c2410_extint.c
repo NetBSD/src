@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_extint.c,v 1.10 2010/01/05 13:14:56 mbalmer Exp $ */
+/* $NetBSD: s3c2410_extint.c,v 1.11 2011/07/01 20:31:39 dyoung Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -39,13 +39,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.10 2010/01/05 13:14:56 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.11 2011/07/01 20:31:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <uvm/uvm_extern.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <arm/cpufunc.h>
 

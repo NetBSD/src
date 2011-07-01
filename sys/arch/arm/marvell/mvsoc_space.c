@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_space.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $	*/
+/*	$NetBSD: mvsoc_space.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $");
 
 #include "opt_mvsoc.h"
 #include "mvpex.h"
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/marvell/mvsocreg.h>
 #include <arm/marvell/mvsocvar.h>

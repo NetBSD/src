@@ -40,7 +40,7 @@
 #include <sys/wdog.h>
 
 #include <machine/param.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/sysmon/sysmonvar.h>
 
 #include <arm/omap/omap_wdtvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocvar.h,v 1.1 2010/10/03 05:49:24 kiyohara Exp $	*/
+/*	$NetBSD: mvsocvar.h,v 1.2 2011/07/01 20:30:21 dyoung Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -28,7 +28,7 @@
 #ifndef _MVSOCVAR_H_
 #define _MVSOCVAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct mvsoc_softc {
         device_t sc_dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dic.c,v 1.1 2011/03/11 03:26:37 bsh Exp $ */
+/*	$NetBSD: dic.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $ */
 
 /*
  * Copyright (c) 2010, 2011 Genetec Corporation.  All rights reserved.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dic.c,v 1.1 2011/03/11 03:26:37 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dic.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $");
 
 #define	_INTR_PRIVATE	/* for arm/pic/picvar.h */
 
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: dic.c,v 1.1 2011/03/11 03:26:37 bsh Exp $");
 #include <sys/atomic.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 

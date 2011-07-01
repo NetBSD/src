@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.4 2008/03/29 05:42:45 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.5 2011/07/01 20:34:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -117,7 +117,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.4 2008/03/29 05:42:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.5 2011/07/01 20:34:53 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.4 2008/03/29 05:42:45 tsutsui Exp 
 #include <sys/device.h>
 #include <sys/time.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/clock_subr.h>
 #include <dev/isa/isareg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.19 2008/04/27 18:58:45 matt Exp $ */
+/*	$NetBSD: i80321_timer.c,v 1.20 2011/07/01 20:32:51 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.19 2008/04/27 18:58:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.20 2011/07/01 20:32:51 dyoung Exp $");
 
 #include "opt_perfctrs.h"
 #include "opt_i80321.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.19 2008/04/27 18:58:45 matt Exp $
 
 #include <dev/clock_subr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <arm/cpufunc.h>
 
 #include <arm/xscale/i80321reg.h>

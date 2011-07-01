@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.18 2011/06/10 09:29:07 tsutsui Exp $	*/
+/*	$NetBSD: leo.c,v 1.19 2011/07/01 20:34:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.18 2011/06/10 09:29:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.19 2011/07/01 20:34:06 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.18 2011/06/10 09:29:07 tsutsui Exp $");
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/iomap.h>
 #include <machine/scu.h>
 #include <atari/vme/vmevar.h>

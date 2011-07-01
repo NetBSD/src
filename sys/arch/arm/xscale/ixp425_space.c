@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_space.c,v 1.7 2009/10/21 14:15:51 rmind Exp $ */
+/*	$NetBSD: ixp425_space.c,v 1.8 2011/07/01 20:32:51 dyoung Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_space.c,v 1.7 2009/10/21 14:15:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_space.c,v 1.8 2011/07/01 20:32:51 dyoung Exp $");
 
 /*
  * bus_space I/O functions for ixp425
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_space.c,v 1.7 2009/10/21 14:15:51 rmind Exp $
 
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>

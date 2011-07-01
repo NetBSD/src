@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800.c,v 1.11 2005/12/11 12:16:51 christos Exp $ */
+/*	$NetBSD: s3c2800.c,v 1.12 2011/07/01 20:31:39 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.11 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.12 2011/07/01 20:31:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.11 2005/12/11 12:16:51 christos Exp $"
 #include <sys/reboot.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/cpufunc.h>
 #include <arm/mainbus/mainbus.h>

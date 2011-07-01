@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_mputmr.c,v 1.3 2010/06/19 19:44:58 matt Exp $	*/
+/*	$NetBSD: omap2_mputmr.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $	*/
 
 /*
  * OMAP 2430 GP timers
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_mputmr.c,v 1.3 2010/06/19 19:44:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_mputmr.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $");
 
 #include "opt_omap.h"
 #include "opt_cpuoptions.h"
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_mputmr.c,v 1.3 2010/06/19 19:44:58 matt Exp $"
 
 #include <dev/clock_subr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/omap/omap_gptmrreg.h>

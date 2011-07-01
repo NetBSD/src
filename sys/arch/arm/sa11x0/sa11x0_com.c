@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.48 2011/04/24 16:26:54 rmind Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.49 2011/07/01 20:31:39 dyoung Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.48 2011/04/24 16:26:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.49 2011/07/01 20:31:39 dyoung Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.48 2011/04/24 16:26:54 rmind Exp $"
 
 #include <dev/cons.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <arm/sa11x0/sa11x0_reg.h>
 #include <arm/sa11x0/sa11x0_var.h>
 #include <arm/sa11x0/sa11x0_comreg.h>

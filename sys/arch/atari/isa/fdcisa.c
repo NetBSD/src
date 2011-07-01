@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcisa.c,v 1.13 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: fdcisa.c,v 1.14 2011/07/01 20:34:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,14 +64,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.13 2008/04/28 20:23:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.14 2011/07/01 20:34:06 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
