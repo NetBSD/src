@@ -1,4 +1,4 @@
-/* $NetBSD: eumb.c,v 1.4 2011/06/06 16:42:19 matt Exp $ */
+/* $NetBSD: eumb.c,v 1.5 2011/07/01 19:16:06 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eumb.c,v 1.4 2011/06/06 16:42:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eumb.c,v 1.5 2011/07/01 19:16:06 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <sandpoint/sandpoint/eumbvar.h>

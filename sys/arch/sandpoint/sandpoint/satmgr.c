@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.11 2011/04/19 18:16:03 phx Exp $ */
+/* $NetBSD: satmgr.c,v 1.12 2011/07/01 19:16:06 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include <dev/ic/comreg.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/bootinfo.h>
 

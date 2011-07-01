@@ -1,4 +1,4 @@
-/*	$NetBSD: oioc.c,v 1.1 2009/02/10 06:04:56 rumble Exp $	*/
+/*	$NetBSD: oioc.c,v 1.2 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oioc.c,v 1.1 2009/02/10 06:04:56 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oioc.c,v 1.2 2011/07/01 18:53:47 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: oioc.c,v 1.1 2009/02/10 06:04:56 rumble Exp $");
 #include <machine/cpu.h>
 #include <machine/locore.h>
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/machtype.h>
 #include <machine/sysconf.h>
 

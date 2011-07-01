@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.19 2010/11/22 07:27:28 skrll Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.20 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,11 +39,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.19 2010/11/22 07:27:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.20 2011/07/01 19:32:28 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <arm/footbridge/footbridge.h>
 #include <arm/footbridge/dc21285mem.h>
 #include <uvm/uvm_extern.h>

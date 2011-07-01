@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.7 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: consinit.c,v 1.8 2011/07/01 19:03:50 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.7 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.8 2011/07/01 19:03:50 dyoung Exp $");
 
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <powerpc/ibm4xx/ibm405gp.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>

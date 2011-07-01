@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.25 2011/02/15 09:56:32 mrg Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.26 2011/07/01 18:51:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.25 2011/02/15 09:56:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.26 2011/07/01 18:51:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.25 2011/02/15 09:56:32 mrg Exp $")
 #include <sys/cpu.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>

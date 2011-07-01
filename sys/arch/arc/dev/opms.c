@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.18 2008/06/13 08:27:38 cegger Exp $	*/
+/*	$NetBSD: opms.c,v 1.19 2011/07/01 19:25:41 dyoung Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.18 2008/06/13 08:27:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.19 2011/07/01 19:25:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.18 2008/06/13 08:27:38 cegger Exp $");
 #include <sys/proc.h>
 #include <sys/conf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/kbdreg.h>
 #include <machine/mouse.h>
 

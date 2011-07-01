@@ -1,4 +1,4 @@
-/* $NetBSD: gbusvar.h,v 1.2 2008/04/28 20:23:12 martin Exp $ */
+/* $NetBSD: gbusvar.h,v 1.3 2011/07/01 19:19:50 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  * Autoconfiguration definitions for the Gbus found on TurboLaser CPU modules.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct gbus_attach_args {
 	const char *ga_name;		/* name of device */

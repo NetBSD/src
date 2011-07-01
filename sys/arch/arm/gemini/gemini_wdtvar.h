@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_wdtvar.h,v 1.3 2008/11/20 20:23:05 cliff Exp $	*/
+/*	$NetBSD: gemini_wdtvar.h,v 1.4 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /*
  * adapted/extracted from omap_wdt.c
@@ -34,7 +34,7 @@
 #define  _ARM_GEMINI_WDTVAR_H
 
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/sysmon/sysmonvar.h>
  
 typedef struct geminiwdt_softc {

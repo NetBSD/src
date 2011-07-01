@@ -1,4 +1,4 @@
-/* 	$NetBSD: dcr.c,v 1.1 2006/12/02 22:18:47 freza Exp $ */
+/* 	$NetBSD: dcr.c,v 1.2 2011/07/01 19:03:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -37,10 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcr.c,v 1.1 2006/12/02 22:18:47 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcr.c,v 1.2 2011/07/01 19:03:50 dyoung Exp $");
 
 #include <sys/types.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <evbppc/virtex/dcr.h>
 
 int

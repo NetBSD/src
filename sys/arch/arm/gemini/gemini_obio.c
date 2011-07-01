@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_obio.c,v 1.9 2011/05/17 17:34:48 dyoung Exp $	*/
+/*	$NetBSD: gemini_obio.c,v 1.10 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /* adapted from:
  *      NetBSD: omap2_obio.c,v 1.5 2008/10/21 18:50:25 matt Exp
@@ -104,7 +104,7 @@
 
 #include "opt_gemini.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.9 2011/05/17 17:34:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.10 2011/07/01 19:32:28 dyoung Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -118,7 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.9 2011/05/17 17:34:48 dyoung Exp $
 #include <sys/reboot.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/cpufunc.h>
 #include <arm/mainbus/mainbus.h>

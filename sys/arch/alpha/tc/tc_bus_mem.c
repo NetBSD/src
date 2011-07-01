@@ -1,4 +1,4 @@
-/* $NetBSD: tc_bus_mem.c,v 1.31 2010/12/15 01:29:37 matt Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.32 2011/07/01 19:19:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.31 2010/12/15 01:29:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.32 2011/07/01 19:19:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.31 2010/12/15 01:29:37 matt Exp $")
 #include <sys/syslog.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/tc/tcvar.h>
 
 #define	__C(A,B)	__CONCAT(A,B)

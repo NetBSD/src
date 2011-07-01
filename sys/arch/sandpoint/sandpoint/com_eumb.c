@@ -1,4 +1,4 @@
-/* $NetBSD: com_eumb.c,v 1.6 2011/02/24 19:32:34 phx Exp $ */
+/* $NetBSD: com_eumb.c,v 1.7 2011/07/01 19:16:06 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_eumb.c,v 1.6 2011/02/24 19:32:34 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_eumb.c,v 1.7 2011/07/01 19:16:06 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/ic/comreg.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.43 2011/06/04 01:49:43 tsutsui Exp $ */
+/* $NetBSD: ioasic.c,v 1.44 2011/07/01 19:19:50 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.43 2011/06/04 01:49:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.44 2011/07/01 19:19:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.43 2011/06/04 01:49:43 tsutsui Exp $");
 #include <sys/malloc.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pte.h>
 #include <machine/rpb.h>
 

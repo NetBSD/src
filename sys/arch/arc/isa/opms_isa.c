@@ -1,4 +1,4 @@
-/* $NetBSD: opms_isa.c,v 1.11 2011/03/06 14:58:43 tsutsui Exp $ */
+/* $NetBSD: opms_isa.c,v 1.12 2011/07/01 19:25:41 dyoung Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,14 +28,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms_isa.c,v 1.11 2011/03/06 14:58:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms_isa.c,v 1.12 2011/07/01 19:25:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

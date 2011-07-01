@@ -2,7 +2,7 @@
 #define _ARM_GEMINI_VAR_H_
 
 #include <sys/types.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* GEMINI generic */
 
