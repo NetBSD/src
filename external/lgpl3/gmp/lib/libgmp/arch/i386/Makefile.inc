@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2011/06/29 08:06:47 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2011/07/01 01:49:18 mrg Exp $
 
 SRCS+= \
 	random.c \
@@ -134,25 +134,34 @@ C_SRCS_LIST= \
 	andn_n.c		mpn/generic/logops_n.c \
 
 ASM_SRCS_LIST= \
-	add_n.asm		mpn/x86/aors_n.asm \
-	sqr_basecase.asm		mpn/x86/sqr_basecase.asm \
 	submul_1.asm		mpn/x86/aorsmul_1.asm \
-	umul.asm		mpn/x86/umul.asm \
-	mul_basecase.asm		mpn/x86/mul_basecase.asm \
-	lshift.asm		mpn/x86/lshift.asm \
-	mul_1.asm		mpn/x86/mul_1.asm \
-	divrem_1.asm		mpn/x86/divrem_1.asm \
-	copyd.asm		mpn/x86/copyd.asm \
 	bdiv_dbm1c.asm		mpn/x86/bdiv_dbm1c.asm \
-	udiv.asm		mpn/x86/udiv.asm \
-	dive_1.asm		mpn/x86/dive_1.asm \
-	copyi.asm		mpn/x86/copyi.asm \
-	rshift.asm		mpn/x86/rshift.asm \
-	mod_34lsub1.asm		mpn/x86/mod_34lsub1.asm \
-	invert_limb.asm		mpn/x86/invert_limb.asm \
 	addmul_1.asm		mpn/x86/aorsmul_1.asm \
 	divrem_2.asm		mpn/x86/divrem_2.asm \
-	sub_n.asm		mpn/x86/aors_n.asm \
+
+# XXX using C versions
+#	add_n.asm		mpn/x86/aors_n.asm \
+#	bdiv_q_1.asm		mpn/x86_64/bdiv_q_1.asm \
+#	copyd.asm		mpn/x86/copyd.asm \
+#	copyi.asm		mpn/x86/copyi.asm \
+#	dive_1.asm		mpn/x86/dive_1.asm \
+#	divrem_1.asm		mpn/x86/divrem_1.asm \
+#	invert_limb.asm		mpn/x86/invert_limb.asm \
+#	lshift.asm		mpn/x86/lshift.asm \
+#	rshift.asm		mpn/x86/rshift.asm \
+#	mod_34lsub1.asm		mpn/x86/mod_34lsub1.asm \
+#	umul.asm		mpn/x86/umul.asm \
+#	mul_1.asm		mpn/x86/mul_1.asm \
+#	sqr_basecase.asm	mpn/x86/sqr_basecase.asm \
+#	mul_basecase.asm	mpn/x86/mul_basecase.asm \
+#	sub_n.asm		mpn/x86/aors_n.asm \
+
+#	udiv.asm		mpn/x86/udiv.asm \
+
+SRCS+=	add_n.c bdiv_q_1.c copyd.c copyi.c dive_1.c lshift.c rshift.c mod_34lsub1.c
+SRCS+=	mul_1.c sqr_basecase.c mul_basecase.c sub_n.c divrem_1.c
+# XXX? put in C_SRCS_LIST?
+# divrem.c
 
 gen-trialdivtab: gen-trialdivtab.c
 	${HOST_CC} -o ${.OBJDIR}/gen-trialdivtab ${.ALLSRC} -lm
