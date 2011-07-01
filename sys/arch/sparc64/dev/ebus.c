@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.57 2011/06/02 00:24:23 christos Exp $	*/
+/*	$NetBSD: ebus.c,v 1.58 2011/07/01 18:48:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.57 2011/06/02 00:24:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.58 2011/07/01 18:48:36 dyoung Exp $");
 
 #include "opt_ddb.h"
 
@@ -64,7 +64,7 @@ int ebus_debug = 0x0;
 #include <sys/time.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
 

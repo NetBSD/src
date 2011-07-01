@@ -1,4 +1,4 @@
-/*	$NetBSD: pcfiic_ebus.c,v 1.1 2010/02/28 11:49:44 martin Exp $	*/
+/*	$NetBSD: pcfiic_ebus.c,v 1.2 2011/07/01 18:48:36 dyoung Exp $	*/
 /*	$OpenBSD: pcfiic_ebus.c,v 1.13 2008/06/08 03:07:40 deraadt Exp $ */
 
 /*
@@ -29,7 +29,7 @@
 #include <sys/kernel.h>
 #include <sys/rwlock.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/openfirm.h>
 #include <machine/autoconf.h>
 

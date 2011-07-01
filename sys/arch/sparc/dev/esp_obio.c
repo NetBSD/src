@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.23 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.24 2011/07/01 18:50:41 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.23 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.24 2011/07/01 18:50:41 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.23 2008/04/28 20:23:35 martin Exp $")
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 

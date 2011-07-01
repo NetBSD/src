@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.51 2011/06/20 16:33:42 pgoyette Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.52 2011/07/01 18:50:41 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.51 2011/06/20 16:33:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.52 2011/07/01 18:50:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.51 2011/06/20 16:33:42 pgoyette Exp $");
 
 #include <machine/apmvar.h>
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/tctrl.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.52 2009/11/18 22:51:07 dyoung Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.53 2011/07/01 18:41:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.52 2009/11/18 22:51:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.53 2011/07/01 18:41:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.52 2009/11/18 22:51:07 dyoung Exp $")
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/pio.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.7 2011/06/03 03:02:36 christos Exp $	*/
+/*	$NetBSD: pyro.c,v 1.8 2011/07/01 18:48:37 dyoung Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #include <sys/systm.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #ifdef DDB

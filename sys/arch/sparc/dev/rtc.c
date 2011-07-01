@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.16 2009/12/12 14:44:09 tsutsui Exp $ */
+/*	$NetBSD: rtc.c,v 1.17 2011/07/01 18:50:41 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.16 2009/12/12 14:44:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.17 2011/07/01 18:50:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.16 2009/12/12 14:44:09 tsutsui Exp $");
 #include <sys/gmon.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/clock_subr.h>

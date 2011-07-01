@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.2 2011/02/20 07:48:33 matt Exp $ */
+/* $NetBSD: mainbus.c,v 1.3 2011/07/01 18:45:36 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -66,13 +66,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2011/02/20 07:48:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2011/07/01 18:45:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <mips/cache.h>
 #include <mips/cpuregs.h>
