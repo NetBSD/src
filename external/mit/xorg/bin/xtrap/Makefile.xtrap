@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xtrap,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile.xtrap,v 1.2 2011/07/01 01:25:52 mrg Exp $
 
 NOMAN=	1
 
@@ -15,3 +15,8 @@ DPADD+=	${LIBXTRAP} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
+
+# XXX
+.if defined(HAVE_GCC)
+COPTS+= -Wno-error
+.endif

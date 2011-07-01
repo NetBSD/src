@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2010/11/22 21:05:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2011/07/01 01:25:52 mrg Exp $
 
 NOLINT=		1	# XTODO: tess.ln SIGSEGVs lint :(
 
@@ -89,3 +89,10 @@ PKGCONFIG_VERSION.glu=	${MESA_VER}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
+
+# XXX
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45
+COPTS.arcsorter.cc+=	-Wno-error
+COPTS.sorter.cc+=	-Wno-error
+COPTS.tobezier.cc+=	-Wno-error
+.endif

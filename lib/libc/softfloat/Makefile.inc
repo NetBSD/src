@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2011/01/17 10:08:35 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2011/07/01 01:25:52 mrg Exp $
 
 SOFTFLOAT_BITS?=64
 .PATH:		${ARCHDIR}/softfloat \
@@ -18,3 +18,9 @@ SRCS.softfloat+=eqsf2.c nesf2.c gtsf2.c gesf2.c ltsf2.c lesf2.c negsf2.c \
 		nexf2.c gtxf2.c gexf2.c negxf2.c unordsf2.c unorddf2.c
 
 SRCS+=		${SRCS.softfloat}
+
+# XXX
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && \
+    (${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "armeb")
+COPTS.softfloat.c+=	-Wno-enum-compare
+.endif
