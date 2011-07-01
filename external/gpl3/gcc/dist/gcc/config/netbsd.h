@@ -149,12 +149,21 @@ along with GCC; see the file COPYING3.  If not see
 #undef LIB_SPEC
 #define LIB_SPEC NETBSD_LIB_SPEC
 
-/* Don't provide a LIBGCC_SPEC appropriate for NetBSD as the default
-   is correct. In the --disabled-shared case -lgcc is perfect.  */
+/* Provide a LIBGCC_SPEC for NetBSD that will find libgcc_pic.  Override
+   the this entirely by defining REAL_LIBGCC_SPEC.  */
 
-#if defined(NETBSD_TOOLS) || defined(NETBSD_NATIVE)
-#define LIBGCC_PICSUFFIX	"_pic"
-#endif
+#define NETBSD_LIBGCC_SPEC						\
+  "%{static:-lgcc -lgcc_eh}						\
+   %{static-libgcc:							\
+     %{!shared:-lgcc -lgcc_eh						\
+       %{shared:-lgcc_pic -lgcc_eh_pic}}}				\
+   %{!static:								\
+     %{!static-libgcc:							\
+       %{!shared-libgcc:-lgcc_pic --as-needed -lgcc_s --no-as-needed }	\
+       %{shared-libgcc:-lgcc_s						\
+         %{!shared: -lgcc_pic}}}}"					\
+
+#define REAL_LIBGCC_SPEC NETBSD_LIBGCC_SPEC
 
 /* Pass -cxx-isystem to cc1/cc1plus.  */
 #define NETBSD_CC1_AND_CC1PLUS_SPEC		\
