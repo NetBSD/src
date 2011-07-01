@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.17 2009/09/20 16:18:21 tsutsui Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.18 2011/07/01 18:50:41 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.17 2009/09/20 16:18:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.18 2011/07/01 18:50:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.17 2009/09/20 16:18:21 tsutsui Exp $")
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sparc/sparc/cpuunitvar.h>
 #include <sparc/dev/bootbusvar.h>

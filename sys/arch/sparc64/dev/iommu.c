@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.103 2011/03/20 21:26:36 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.104 2011/07/01 18:48:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.103 2011/03/20 21:26:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.104 2011/07/01 18:48:36 dyoung Exp $");
 
 #include "opt_ddb.h"
 
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.103 2011/03/20 21:26:36 mrg Exp $");
 
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
 

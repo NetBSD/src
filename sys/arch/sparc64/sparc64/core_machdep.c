@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.4 2011/01/14 02:06:32 rmind Exp $ */
+/*	$NetBSD: core_machdep.c,v 1.5 2011/07/01 18:49:24 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4 2011/01/14 02:06:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5 2011/07/01 18:49:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4 2011/01/14 02:06:32 rmind Exp $
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <machine/trap.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * cpu_coredump is called to write a core dump header.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.87 2011/03/16 05:49:43 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.88 2011/07/01 18:48:37 dyoung Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.87 2011/03/16 05:49:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.88 2011/07/01 18:48:37 dyoung Exp $");
 
 #include "opt_ddb.h"
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.87 2011/03/16 05:49:43 mrg Exp $");
 #include <sys/device.h>
 #include <sys/reboot.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/openfirm.h>
 
 #include <sparc64/dev/iommureg.h>

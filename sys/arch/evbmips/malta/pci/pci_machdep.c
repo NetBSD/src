@@ -1,13 +1,13 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 2011/02/20 07:48:35 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.6 2011/07/01 18:46:35 dyoung Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5 2011/02/20 07:48:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.6 2011/07/01 18:46:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 
 #define _MIPS_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * PCI doesn't have any special needs; just use

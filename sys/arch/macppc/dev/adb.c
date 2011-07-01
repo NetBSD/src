@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.31 2011/06/30 00:52:57 matt Exp $	*/
+/*	$NetBSD: adb.c,v 1.32 2011/07/01 18:41:51 dyoung Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.31 2011/06/30 00:52:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.32 2011/07/01 18:41:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.31 2011/06/30 00:52:57 matt Exp $");
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/pio.h>
 

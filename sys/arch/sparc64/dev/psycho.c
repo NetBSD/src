@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.107 2011/06/02 00:24:23 christos Exp $	*/
+/*	$NetBSD: psycho.c,v 1.108 2011/07/01 18:48:37 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.107 2011/06/02 00:24:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.108 2011/07/01 18:48:37 dyoung Exp $");
 
 #include "opt_ddb.h"
 
@@ -88,7 +88,7 @@ int psycho_debug = 0x0;
 #include <uvm/uvm.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/psl.h>
 

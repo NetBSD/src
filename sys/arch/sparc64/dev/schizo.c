@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.22 2011/06/03 03:02:12 christos Exp $	*/
+/*	$NetBSD: schizo.c,v 1.23 2011/07/01 18:48:37 dyoung Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #include <sys/reboot.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/psl.h>
 
