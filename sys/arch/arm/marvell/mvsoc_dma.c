@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_dma.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $ */
+/*	$NetBSD: mvsoc_dma.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_dma.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_dma.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $");
 
 #define _ARM32_BUS_DMA_PRIVATE
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: mvsoc_dma.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $
 #include <sys/systm.h>
 #include <sys/extent.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/marvell/mvsocvar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.20 2011/06/05 06:31:42 tsutsui Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.21 2011/07/01 20:34:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.20 2011/06/05 06:31:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.21 2011/07/01 20:34:06 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.20 2011/06/05 06:31:42 tsutsui Exp
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>

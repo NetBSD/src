@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.11 2009/03/16 23:11:10 dsl Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.12 2011/07/01 20:34:06 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.11 2009/03/16 23:11:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.12 2011/07/01 20:34:06 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.11 2009/03/16 23:11:10 dsl Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

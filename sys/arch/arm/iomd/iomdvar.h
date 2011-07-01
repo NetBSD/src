@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdvar.h,v 1.2 2002/04/19 01:04:39 wiz Exp $	*/
+/*	$NetBSD: iomdvar.h,v 1.3 2011/07/01 20:26:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -39,7 +39,7 @@
  * Created      : 02/02/97
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * Attach args for iomd_clock device

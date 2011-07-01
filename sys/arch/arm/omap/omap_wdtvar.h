@@ -32,7 +32,7 @@
 #define  _OMAP_WDTVAR_H
 
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/sysmon/sysmonvar.h>
  
 #define	OMAPWDT32K_DEFAULT_PERIOD	4		/* in seconds */

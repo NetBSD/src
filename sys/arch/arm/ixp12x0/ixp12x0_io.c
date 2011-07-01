@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_io.c,v 1.14 2009/11/07 07:27:41 cegger Exp $ */
+/*	$NetBSD: ixp12x0_io.c,v 1.15 2011/07/01 20:27:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.14 2009/11/07 07:27:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.15 2011/07/01 20:27:50 dyoung Exp $");
 
 /*
  * bus_space I/O functions for ixp12x0
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.14 2009/11/07 07:27:41 cegger Exp $
 
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/ixp12x0/ixp12x0reg.h>
 #include <arm/ixp12x0/ixp12x0var.h>

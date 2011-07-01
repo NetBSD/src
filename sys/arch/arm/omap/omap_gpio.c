@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_gpio.c,v 1.5 2008/12/17 20:51:32 cegger Exp $ */
+/*	$NetBSD: omap_gpio.c,v 1.6 2011/07/01 20:30:21 dyoung Exp $ */
 
 /*
  * The OMAP GPIO Controller interface is inspired by pxa2x0_gpio.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_gpio.c,v 1.5 2008/12/17 20:51:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_gpio.c,v 1.6 2011/07/01 20:30:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap_gpio.c,v 1.5 2008/12/17 20:51:32 cegger Exp $")
 #include <sys/malloc.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/omap/omap_tipb.h>
 #include <arm/omap/omap_gpio.h>

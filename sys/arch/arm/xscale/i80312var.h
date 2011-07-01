@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312var.h,v 1.9 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: i80312var.h,v 1.10 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #ifndef _ARM_XSCALE_I80312VAR_H_
 #define	_ARM_XSCALE_I80312VAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 

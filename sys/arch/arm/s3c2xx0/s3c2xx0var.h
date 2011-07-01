@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0var.h,v 1.5 2010/11/16 02:53:02 bsh Exp $ */
+/* $NetBSD: s3c2xx0var.h,v 1.6 2011/07/01 20:31:39 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -35,7 +35,7 @@
 #ifndef _ARM_S3C2XX0VAR_H_
 #define _ARM_S3C2XX0VAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 
 struct s3c2xx0_softc {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocrtc.c,v 1.1 2011/03/05 14:50:56 matt Exp $	*/
+/*	$NetBSD: mvsocrtc.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsocrtc.c,v 1.1 2011/03/05 14:50:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsocrtc.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: mvsocrtc.c,v 1.1 2011/03/05 14:50:56 matt Exp $");
 
 #include <dev/clock_subr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/marvell/mvsocrtcreg.h>
 #include <dev/marvell/marvellvar.h>

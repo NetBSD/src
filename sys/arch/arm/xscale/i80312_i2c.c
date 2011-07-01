@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_i2c.c,v 1.4 2007/12/06 17:00:32 ad Exp $	*/
+/*	$NetBSD: i80312_i2c.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_i2c.c,v 1.4 2007/12/06 17:00:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_i2c.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: i80312_i2c.c,v 1.4 2007/12/06 17:00:32 ad Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/xscale/i80312var.h>

@@ -1,4 +1,4 @@
-/*	$Id: imx_pcic.c,v 1.3 2008/06/30 00:46:41 perry Exp $	*/
+/*	$Id: imx_pcic.c,v 1.4 2011/07/01 20:27:50 dyoung Exp $	*/
 
 /*
  * IMX CF interface to pcic/pcmcia
@@ -6,7 +6,7 @@
  * Sun Apr  1 21:42:37 PDT 2007
  */
 
-/*	$NetBSD: imx_pcic.c,v 1.3 2008/06/30 00:46:41 perry Exp $	*/
+/*	$NetBSD: imx_pcic.c,v 1.4 2011/07/01 20:27:50 dyoung Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx_pcic.c,v 1.3 2008/06/30 00:46:41 perry Exp $");
+__KERNEL_RCSID(0, "$Id: imx_pcic.c,v 1.4 2011/07/01 20:27:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$Id: imx_pcic.c,v 1.3 2008/06/30 00:46:41 perry Exp $");
 
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
         
 #include <dev/pcmcia/pcmciareg.h>

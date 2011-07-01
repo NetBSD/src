@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_space.c,v 1.9 2009/11/07 07:27:42 cegger Exp $ */
+/*	$NetBSD: pxa2x0_space.c,v 1.10 2011/07/01 20:32:51 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -76,14 +76,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.9 2009/11/07 07:27:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.10 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* Prototypes for all the bus_space structure functions */
 bs_protos(pxa2x0);
