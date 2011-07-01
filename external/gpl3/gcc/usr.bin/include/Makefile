@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/29 08:37:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/07/01 01:22:07 mrg Exp $
 
 .include "../Makefile.inc"
 
@@ -6,30 +6,29 @@
 INCS=	altivec.h
 .elif ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 INCS= \
-	mmintrin.h \
-	mm3dnow.h \
-	xmmintrin.h \
-	emmintrin.h \
-	pmmintrin.h \
-	tmmintrin.h \
+	abmintrin.h \
 	ammintrin.h \
-	smmintrin.h \
-	nmmintrin.h \
-	bmmintrin.h \
-	fma4intrin.h \
-	wmmintrin.h \
-	immintrin.h \
-	x86intrin.h \
 	avxintrin.h \
-	xopintrin.h \
+	bmmintrin.h \
+	emmintrin.h \
+	fma4intrin.h \
 	ia32intrin.h \
-	popcntintrin.h \
+	immintrin.h \
 	lwpintrin.h \
-	abmintrin.h
+	mm3dnow.h \
+	mmintrin.h \
+	nmmintrin.h \
+	pmmintrin.h \
+	popcntintrin.h \
+	smmintrin.h \
+	tmmintrin.h \
+	wmmintrin.h \
+	x86intrin.h \
+	xmmintrin.h \
+	xopintrin.h \
+	mm_malloc.h
 
-# XXX this comment is no longer true:
-# We don't have posix_memalign, so use the gmm_malloc.h version.
-mm_malloc.h: ${DIST}/gcc/config/i386/gmm_malloc.h
+mm_malloc.h: ${DIST}/gcc/config/i386/pmm_malloc.h
 	cp $> ${.TARGET}
 
 CLEANFILES+=	mm_malloc.h
