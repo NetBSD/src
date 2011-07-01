@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_isa.c,v 1.13 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: mkclock_isa.c,v 1.14 2011/07/01 20:50:00 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,14 +35,14 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.13 2008/04/28 20:23:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.14 2011/07/01 20:50:00 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mk48txxreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.6 2007/10/17 19:56:53 garbled Exp $	*/
+/*	$NetBSD: consinit.c,v 1.7 2011/07/01 20:52:02 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,13 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.6 2007/10/17 19:56:53 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.7 2011/07/01 20:52:02 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <machine/bootinfo.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/cons.h>
