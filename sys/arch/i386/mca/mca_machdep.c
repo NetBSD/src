@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.40 2011/04/03 22:29:27 dyoung Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.41 2011/07/01 18:14:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.40 2011/04/03 22:29:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.41 2011/07/01 18:14:15 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.40 2011/04/03 22:29:27 dyoung Exp 
 
 #include <machine/bioscall.h>
 #include <machine/psl.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/bus_private.h>
 #include <machine/pio.h>
 

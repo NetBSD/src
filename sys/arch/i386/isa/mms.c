@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.52 2009/05/04 12:14:31 cegger Exp $	*/
+/*	$NetBSD: mms.c,v 1.53 2011/07/01 18:11:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.52 2009/05/04 12:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.53 2011/07/01 18:11:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -32,7 +32,7 @@ __KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.52 2009/05/04 12:14:31 cegger Exp $");
 #include <sys/device.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 
