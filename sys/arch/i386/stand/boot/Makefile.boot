@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.53 2011/06/20 06:52:37 mrg Exp $
+# $NetBSD: Makefile.boot,v 1.54 2011/07/01 01:26:16 mrg Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -83,7 +83,7 @@ SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
 SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
 SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 CPPFLAGS+=	-Wno-pointer-sign
 .endif
 

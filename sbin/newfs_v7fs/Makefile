@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/06/27 11:52:58 uch Exp $
+# $NetBSD: Makefile,v 1.2 2011/07/01 01:26:15 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ LDADD+= -lutil
 CPPFLAGS+=-DV7FS_EI -I${V7FS} -I${FSCK} -g
 .PATH: ${V7FS} ${FSCK}
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
+.if defined(HAVE_GCC)
 COPTS.newfs_v7fs.c+=	-Wno-pointer-sign
 .endif
 
