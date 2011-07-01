@@ -1,4 +1,4 @@
-/* $NetBSD: admwdog.c,v 1.2 2009/10/19 23:19:38 rmind Exp $ */
+/* $NetBSD: admwdog.c,v 1.3 2011/07/01 18:38:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: admwdog.c,v 1.2 2009/10/19 23:19:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admwdog.c,v 1.3 2011/07/01 18:38:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: admwdog.c,v 1.2 2009/10/19 23:19:38 rmind Exp $");
 #include <sys/wdog.h>
 #include <sys/kernel.h>	/* for hz */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/sysmon/sysmonvar.h>
 

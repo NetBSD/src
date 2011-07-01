@@ -1,4 +1,4 @@
-/*	$NetBSD: ssio.c,v 1.1 2009/05/28 08:41:29 skrll Exp $	*/
+/*	$NetBSD: ssio.c,v 1.2 2011/07/01 18:33:09 dyoung Exp $	*/
 
 /*	$OpenBSD: ssio.c,v 1.7 2009/03/08 22:19:04 miod Exp $	*/
 
@@ -26,7 +26,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/iomod.h>
 
 #include <dev/pci/pcireg.h>

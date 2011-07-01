@@ -1,4 +1,4 @@
-/* $Id: arbus.c,v 1.12 2011/02/20 07:48:36 matt Exp $ */
+/* $Id: arbus.c,v 1.13 2011/07/01 18:40:00 dyoung Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.12 2011/02/20 07:48:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.13 2011/07/01 18:40:00 dyoung Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.12 2011/02/20 07:48:36 matt Exp $");
 #include <sys/malloc.h>
 
 #define	_MIPS_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <mips/atheros/include/ar5312reg.h>
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>

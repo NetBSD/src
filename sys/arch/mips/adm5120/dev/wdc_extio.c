@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_extio.c,v 1.3 2009/10/19 23:19:38 rmind Exp $ */
+/*	$NetBSD: wdc_extio.c,v 1.4 2011/07/01 18:38:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_extio.c,v 1.3 2009/10/19 23:19:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_extio.c,v 1.4 2011/07/01 18:38:49 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_extio.c,v 1.3 2009/10/19 23:19:38 rmind Exp $");
 #include <sys/kernel.h>
 #include <sys/callout.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/cpu.h>
 

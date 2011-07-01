@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13 2010/11/12 02:07:27 dholland Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14 2011/07/01 18:37:08 dyoung Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,13 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2010/11/12 02:07:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2011/07/01 18:37:08 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include "hypervisor.h"
 #include "pci.h"

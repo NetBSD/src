@@ -1,4 +1,4 @@
-/* $NetBSD: uart.c,v 1.7 2011/04/24 16:26:56 rmind Exp $ */
+/* $NetBSD: uart.c,v 1.8 2011/07/01 18:38:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.7 2011/04/24 16:26:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.8 2011/07/01 18:38:49 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.7 2011/04/24 16:26:56 rmind Exp $");
 #include <sys/vnode.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <mips/adm5120/include/adm5120var.h>
 #include <mips/adm5120/include/adm5120_obiovar.h>
