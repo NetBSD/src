@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.5 2011/02/20 07:51:21 matt Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.6 2011/07/01 21:02:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #ifndef _ALGOR_AUTOCONF_H_
 #define	_ALGOR_AUTOCONF_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * Machine-dependent structures for autoconfiguration

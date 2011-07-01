@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.10 2007/10/17 19:57:04 garbled Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.11 2011/07/01 21:00:21 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -32,7 +32,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct mainbus_attach_args {
 	char		*ma_name;

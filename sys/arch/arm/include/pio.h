@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.1 2001/02/23 21:23:48 reinoud Exp $	*/
+/*	$NetBSD: pio.h,v 1.2 2011/07/01 21:20:33 dyoung Exp $	*/
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 #ifndef _ARM32_PIO_H_
 #define _ARM32_PIO_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 extern struct bus_space isa_io_bs_tag;
 
