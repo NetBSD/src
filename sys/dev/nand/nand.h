@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.11 2011/06/28 18:14:11 ahoka Exp $	*/
+/*	$NetBSD: nand.h,v 1.12 2011/07/01 16:46:13 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -452,14 +452,10 @@ int nand_flash_markbad(device_t, flash_off_t);
 int nand_flash_write(device_t, flash_off_t, size_t, size_t *, const u_char *);
 int nand_flash_read(device_t, flash_off_t, size_t, size_t *, uint8_t *);
 int nand_flash_erase(device_t, struct flash_erase_instruction *);
+int nand_flash_submit(device_t, struct buf *);
 
 /* nand specific functions */
 int nand_erase_block(device_t, size_t);
-
-int nand_io_submit(device_t, struct buf *);
-void nand_sync_thread(void *);
-int nand_sync_thread_start(device_t);
-void nand_sync_thread_stop(device_t);
 
 bool nand_isfactorybad(device_t, flash_off_t);
 bool nand_iswornoutbad(device_t, flash_off_t);
