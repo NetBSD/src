@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_pci.c,v 1.6 2011/04/06 01:48:43 dyoung Exp $	*/
+/*	$NetBSD: iyonix_pci.c,v 1.7 2011/07/01 20:48:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,14 +40,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_pci.c,v 1.6 2011/04/06 01:48:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_pci.c,v 1.7 2011/07/01 20:48:23 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <iyonix/iyonix/iyonixreg.h>
 #include <iyonix/iyonix/iyonixvar.h>
