@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.91 2011/04/05 13:17:04 pgoyette Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.92 2011/07/01 18:21:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.91 2011/04/05 13:17:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.92 2011/07/01 18:21:31 dyoung Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.91 2011/04/05 13:17:04 pgoyette Exp $")
 
 #include <machine/specialreg.h>
 #include <machine/cpuvar.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/mpacpi.h>
 #include <machine/mpbiosvar.h>
 

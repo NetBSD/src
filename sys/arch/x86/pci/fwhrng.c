@@ -1,4 +1,4 @@
-/*	$NetBSD: fwhrng.c,v 1.2 2010/08/23 02:57:19 jakllsch Exp $	*/
+/*	$NetBSD: fwhrng.c,v 1.3 2011/07/01 18:22:08 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.2 2010/08/23 02:57:19 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.3 2011/07/01 18:22:08 dyoung Exp $");
 
 #include "rnd.h"        
                             
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.2 2010/08/23 02:57:19 jakllsch Exp $");
 #include <sys/time.h>
 #include <sys/rnd.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arch/x86/pci/i82802reg.h>
 

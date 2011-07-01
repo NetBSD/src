@@ -1,4 +1,4 @@
-/*	$NetBSD: rdcpcib.c,v 1.1 2011/04/04 17:09:39 bouyer Exp $	*/
+/*	$NetBSD: rdcpcib.c,v 1.2 2011/07/01 18:22:08 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rdcpcib.c,v 1.1 2011/04/04 17:09:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rdcpcib.c,v 1.2 2011/07/01 18:22:08 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: rdcpcib.c,v 1.1 2011/04/04 17:09:39 bouyer Exp $");
 #include <sys/sysctl.h>
 #include <sys/timetc.h>
 #include <sys/gpio.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
