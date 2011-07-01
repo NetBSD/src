@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.21 2006/03/17 15:53:46 rumble Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.22 2011/07/01 02:51:52 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.21 2006/03/17 15:53:46 rumble Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.22 2011/07/01 02:51:52 joerg Exp $");
 #endif
 
 
@@ -237,7 +237,7 @@ main(int argc, char **argv)
 	strncpy(status.ifname, ifname, sizeof status.ifname);
 	memset(&timeout, 0, sizeof timeout);
 	strncpy(timeout.ifname, ifname, sizeof timeout.ifname);
-	memset(&authfailstats, 0, sizeof &authfailstats);
+	memset(&authfailstats, 0, sizeof authfailstats);
 	strncpy(authfailstats.ifname, ifname, sizeof authfailstats.ifname);
 	memset(&authfailset, 0, sizeof authfailset);
 	strncpy(authfailset.ifname, ifname, sizeof authfailset.ifname);

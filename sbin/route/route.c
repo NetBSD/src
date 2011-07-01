@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.130 2011/06/22 04:57:28 kefren Exp $	*/
+/*	$NetBSD: route.c,v 1.131 2011/07/01 02:54:51 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.130 2011/06/22 04:57:28 kefren Exp $");
+__RCSID("$NetBSD: route.c,v 1.131 2011/07/01 02:54:51 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1464,7 +1464,7 @@ prefixlen(const char *s, struct sou *soup)
 	r = len & 7;
 	switch (af) {
 	case AF_INET:
-		memset(soup->so_mask, 0, sizeof(soup->so_mask));
+		memset(soup->so_mask, 0, sizeof(*soup->so_mask));
 		soup->so_mask->sin.sin_family = AF_INET;
 		soup->so_mask->sin.sin_len = sizeof(struct sockaddr_in);
 		soup->so_mask->sin.sin_addr.s_addr = (len == 0 ? 0
