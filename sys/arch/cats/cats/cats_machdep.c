@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.70 2011/06/30 20:09:21 wiz Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.71 2011/07/01 20:35:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.70 2011/06/30 20:09:21 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.71 2011/07/01 20:35:31 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.70 2011/06/30 20:09:21 wiz Exp $"
 
 #include <machine/bootconfig.h>
 #define	_ARM32_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>

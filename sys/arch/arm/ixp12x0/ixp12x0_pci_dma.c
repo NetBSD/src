@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_pci_dma.c,v 1.7 2009/10/21 14:15:50 rmind Exp $ */
+/*	$NetBSD: ixp12x0_pci_dma.c,v 1.8 2011/07/01 20:27:50 dyoung Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci_dma.c,v 1.7 2009/10/21 14:15:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci_dma.c,v 1.8 2011/07/01 20:27:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci_dma.c,v 1.7 2009/10/21 14:15:50 rmind Ex
 #include <uvm/uvm_extern.h>
 
 #define _ARM32_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/ixp12x0/ixp12x0_pcireg.h>
 #include <arm/ixp12x0/ixp12x0var.h>

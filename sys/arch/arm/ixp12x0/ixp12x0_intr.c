@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.21 2010/12/20 00:25:28 matt Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.22 2011/07/01 20:27:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.21 2010/12/20 00:25:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.22 2011/07/01 20:27:50 dyoung Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.21 2010/12/20 00:25:28 matt Exp $
 #include <sys/simplelock.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>

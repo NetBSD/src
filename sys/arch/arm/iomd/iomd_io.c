@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_io.c,v 1.5 2006/08/05 18:22:57 bjh21 Exp $	*/
+/*	$NetBSD: iomd_io.c,v 1.6 2011/07/01 20:26:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,11 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_io.c,v 1.5 2006/08/05 18:22:57 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_io.c,v 1.6 2011/07/01 20:26:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* Proto types for all the bus_space structure functions */
 

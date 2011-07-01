@@ -1,4 +1,4 @@
-/*	$NetBSD: omap5912_intr.c,v 1.4 2010/12/20 00:25:29 matt Exp $	*/
+/*	$NetBSD: omap5912_intr.c,v 1.5 2011/07/01 20:30:21 dyoung Exp $	*/
 
 /*
  * IRQ data specific to the Texas Instruments OMAP5912 processor.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap5912_intr.c,v 1.4 2010/12/20 00:25:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap5912_intr.c,v 1.5 2011/07/01 20:30:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap5912_intr.c,v 1.4 2010/12/20 00:25:29 matt Exp $
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <machine/lock.h>
 

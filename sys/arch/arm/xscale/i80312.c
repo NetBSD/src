@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.20 2011/05/17 17:34:48 dyoung Exp $	*/
+/*	$NetBSD: i80312.c,v 1.21 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,14 +40,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312.c,v 1.20 2011/05/17 17:34:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312.c,v 1.21 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #define	_ARM32_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/i80312reg.h>
 #include <arm/xscale/i80312var.h>

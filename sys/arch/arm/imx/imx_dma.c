@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_dma.c,v 1.1 2010/11/13 07:11:03 bsh Exp $ */
+/*	$NetBSD: imx_dma.c,v 1.2 2011/07/01 20:27:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 2009  Genetec Corporation.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_dma.c,v 1.1 2010/11/13 07:11:03 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_dma.c,v 1.2 2011/07/01 20:27:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx_dma.c,v 1.1 2010/11/13 07:11:03 bsh Exp $");
 #include <uvm/uvm_extern.h>
 
 #define	_ARM32_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct arm32_bus_dma_tag imx_bus_dma_tag = {
 	0,

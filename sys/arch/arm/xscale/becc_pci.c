@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.9 2011/04/04 20:37:46 dyoung Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.10 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.9 2011/04/04 20:37:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.10 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.9 2011/04/04 20:37:46 dyoung Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/beccreg.h>
 #include <arm/xscale/beccvar.h>

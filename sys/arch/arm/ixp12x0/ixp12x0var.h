@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0var.h,v 1.8 2009/10/21 14:15:50 rmind Exp $ */
+/*	$NetBSD: ixp12x0var.h,v 1.9 2011/07/01 20:27:50 dyoung Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 

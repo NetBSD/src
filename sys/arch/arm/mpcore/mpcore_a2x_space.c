@@ -35,14 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcore_a2x_space.c,v 1.1 2011/03/10 07:47:15 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcore_a2x_space.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* Prototypes for all the bus_space structure functions */
 bs_protos(mpcore);

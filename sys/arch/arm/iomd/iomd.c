@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.16 2011/06/30 20:09:20 wiz Exp $	*/
+/*	$NetBSD: iomd.c,v 1.17 2011/07/01 20:26:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.16 2011/06/30 20:09:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.17 2011/07/01 20:26:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.16 2011/06/30 20:09:20 wiz Exp $");
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <arm/iomd/iomdreg.h>

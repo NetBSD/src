@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpsip.c,v 1.12 2009/10/21 14:15:50 rmind Exp $ */
+/*	$NetBSD: ixpsip.c,v 1.13 2011/07/01 20:27:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpsip.c,v 1.12 2009/10/21 14:15:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpsip.c,v 1.13 2011/07/01 20:27:50 dyoung Exp $");
 
 /*
  * Slow peripheral bus of ixp12x0 Processor
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixpsip.c,v 1.12 2009/10/21 14:15:50 rmind Exp $");
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/ixp12x0/ixp12x0var.h>
 #include <arm/ixp12x0/ixpsipvar.h>

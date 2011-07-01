@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425var.h,v 1.12 2009/10/21 14:15:51 rmind Exp $ */
+/*	$NetBSD: ixp425var.h,v 1.13 2011/07/01 20:32:51 dyoung Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 

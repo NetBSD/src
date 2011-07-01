@@ -1,7 +1,7 @@
-/*	$Id: imx31_aips.c,v 1.3 2008/05/02 22:00:29 martin Exp $	*/
+/*	$Id: imx31_aips.c,v 1.4 2011/07/01 20:27:50 dyoung Exp $	*/
 
 /* derived from:	*/
-/*	$NetBSD: imx31_aips.c,v 1.3 2008/05/02 22:00:29 martin Exp $ */
+/*	$NetBSD: imx31_aips.c,v 1.4 2011/07/01 20:27:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_aips.c,v 1.3 2008/05/02 22:00:29 martin Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_aips.c,v 1.4 2011/07/01 20:27:50 dyoung Exp $");
 
 #include "locators.h"
 
@@ -113,7 +113,7 @@ __KERNEL_RCSID(0, "$Id: imx31_aips.c,v 1.3 2008/05/02 22:00:29 martin Exp $");
 #include <sys/reboot.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/cpufunc.h>
 #include <arm/mainbus/mainbus.h>

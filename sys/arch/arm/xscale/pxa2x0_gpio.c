@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.14 2011/06/09 17:29:42 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.15 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.14 2011/06/09 17:29:42 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.15 2011/07/01 20:32:51 dyoung Exp $");
 
 #include "opt_pxa2x0_gpio.h"
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.14 2011/06/09 17:29:42 nonaka Exp 
 #include <sys/malloc.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/pxa2x0cpu.h>
 #include <arm/xscale/pxa2x0reg.h>

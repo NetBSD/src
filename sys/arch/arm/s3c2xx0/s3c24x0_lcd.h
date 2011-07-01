@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.h,v 1.4 2007/03/04 05:59:38 christos Exp $ */
+/* $NetBSD: s3c24x0_lcd.h,v 1.5 2011/07/01 20:31:39 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -34,7 +34,7 @@
 #define	_ARM_S3C2XX0_S3C24X0_LCD_H
 
 #include <dev/rasops/rasops.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* LCD Contoroller */
 

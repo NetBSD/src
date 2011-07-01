@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_space.c,v 1.3 2009/11/07 07:27:41 cegger Exp $ */
+/*	$NetBSD: omap_space.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $ */
 
 /*
  * bus_space functions for Texas Instruments OMAP processor.
@@ -73,14 +73,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_space.c,v 1.3 2009/11/07 07:27:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_space.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* Prototypes for all the bus_space structure functions */
 bs_protos(omap);

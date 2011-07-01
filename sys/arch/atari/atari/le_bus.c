@@ -1,4 +1,4 @@
-/*	$NetBSD: le_bus.c,v 1.17 2009/03/18 16:00:10 cegger Exp $	*/
+/*	$NetBSD: le_bus.c,v 1.18 2011/07/01 20:34:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.17 2009/03/18 16:00:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.18 2011/07/01 20:34:05 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.17 2009/03/18 16:00:10 cegger Exp $");
 #include <sys/malloc.h>
 #include <sys/bswap.h>
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * This file contains the common functions for using a litte endian (linear)

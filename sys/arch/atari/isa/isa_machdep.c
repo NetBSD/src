@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.38 2011/06/10 09:27:51 tsutsui Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.39 2011/07/01 20:34:06 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.38 2011/06/10 09:27:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.39 2011/07/01 20:34:06 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.38 2011/06/10 09:27:51 tsutsui Exp
 #include <sys/device.h>
 
 #define _ATARI_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
 

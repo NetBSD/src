@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_wdog.c,v 1.2 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: ixp425_wdog.c,v 1.3 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_wdog.c,v 1.2 2008/04/28 20:23:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_wdog.c,v 1.3 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_wdog.c,v 1.2 2008/04/28 20:23:14 martin Exp $
 #include <dev/sysmon/sysmonvar.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>

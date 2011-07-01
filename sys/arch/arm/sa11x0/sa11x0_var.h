@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_var.h,v 1.10 2009/08/09 06:12:33 kiyohara Exp $	*/
+/*	$NetBSD: sa11x0_var.h,v 1.11 2011/07/01 20:31:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -34,7 +34,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct sa11x0_softc {
 	device_t sc_dev;

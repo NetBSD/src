@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.25 2009/08/09 06:12:33 kiyohara Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.26 2011/07/01 20:31:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.25 2009/08/09 06:12:33 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.26 2011/07/01 20:31:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.25 2009/08/09 06:12:33 kiyohara Exp $")
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/arm32/psl.h>
 #include <arm/arm32/machdep.h>

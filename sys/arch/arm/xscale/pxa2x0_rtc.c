@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_rtc.c,v 1.4 2011/05/14 15:01:50 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_rtc.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2007 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.4 2011/05/14 15:01:50 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -31,7 +31,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.4 2011/05/14 15:01:50 nonaka Exp $"
 
 #include <dev/clock_subr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/pxa2x0cpu.h>
 #include <arm/xscale/pxa2x0reg.h>

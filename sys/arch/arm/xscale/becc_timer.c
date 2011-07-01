@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_timer.c,v 1.14 2008/01/20 16:28:24 joerg Exp $	*/
+/*	$NetBSD: becc_timer.c,v 1.15 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.14 2008/01/20 16:28:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.15 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.14 2008/01/20 16:28:24 joerg Exp $"
 
 #include <dev/clock_subr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <arm/cpufunc.h>
 
 #include <arm/xscale/beccreg.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.20 2009/05/29 14:15:44 rjs Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.21 2011/07/01 20:31:39 dyoung Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.20 2009/05/29 14:15:44 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.21 2011/07/01 20:31:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.20 2009/05/29 14:15:44 rjs Exp $")
 #include <sys/kthread.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pcmcia/pcmciachip.h>
 #include <dev/pcmcia/pcmciavar.h>

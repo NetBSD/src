@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.38 2011/04/24 16:26:54 rmind Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.39 2011/07/01 20:27:50 dyoung Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.38 2011/04/24 16:26:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.39 2011/07/01 20:27:50 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.38 2011/04/24 16:26:54 rmind Exp $
 #include <sys/lwp.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/ixp12x0/ixp12x0_comreg.h>
 #include <arm/ixp12x0/ixp12x0_comvar.h>

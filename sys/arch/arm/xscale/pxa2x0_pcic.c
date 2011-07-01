@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_pcic.c,v 1.8 2009/03/02 10:17:58 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_pcic.c,v 1.9 2011/07/01 20:32:51 dyoung Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.8 2009/03/02 10:17:58 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.9 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -29,7 +29,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.8 2009/03/02 10:17:58 nonaka Exp $
 
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
         
 #include <dev/pcmcia/pcmciareg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_wdog.c,v 1.8 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: i80321_wdog.c,v 1.9 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,14 +40,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_wdog.c,v 1.8 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_wdog.c,v 1.9 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/wdog.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <arm/cpufunc.h>
 
 #include <arm/xscale/i80321reg.h>

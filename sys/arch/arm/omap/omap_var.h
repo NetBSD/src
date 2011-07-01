@@ -2,7 +2,7 @@
 #define _ARM_OMAP_OMAP_VAR_H_
 
 #include <sys/types.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* Texas Instruments OMAP generic */
 

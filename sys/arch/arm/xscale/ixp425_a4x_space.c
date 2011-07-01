@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_a4x_space.c,v 1.2 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: ixp425_a4x_space.c,v 1.3 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -43,14 +43,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_a4x_space.c,v 1.2 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_a4x_space.c,v 1.3 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* Prototypes for all the bus_space structure functions */
 bs_protos(ixp425);

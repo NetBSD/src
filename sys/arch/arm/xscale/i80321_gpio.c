@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_gpio.c,v 1.2 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: i80321_gpio.c,v 1.3 2011/07/01 20:32:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/i80321reg.h>
 #include <arm/xscale/i80321var.h>

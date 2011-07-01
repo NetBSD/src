@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_clock.c,v 1.1 2010/11/13 06:51:37 bsh Exp $ */
+/*	$NetBSD: imx51_clock.c,v 1.2 2011/07/01 20:27:50 dyoung Exp $ */
 /*
  * Copyright (c) 2009  Genetec corp.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec corp.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_clock.c,v 1.1 2010/11/13 06:51:37 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_clock.c,v 1.2 2011/07/01 20:27:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx51_clock.c,v 1.1 2010/11/13 06:51:37 bsh Exp $");
 #include <dev/clock_subr.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/cpufunc.h>
 

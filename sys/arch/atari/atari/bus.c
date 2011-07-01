@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.55 2010/11/06 11:46:00 uebayasi Exp $	*/
+/*	$NetBSD: bus.c,v 1.56 2011/07/01 20:34:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.55 2010/11/06 11:46:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.56 2011/07/01 20:34:05 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.55 2010/11/06 11:46:00 uebayasi Exp $");
 #include <machine/cpu.h>
 #include <m68k/cacheops.h>
 #define	_ATARI_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 int  bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 		bus_size_t alignment, bus_size_t boundary,

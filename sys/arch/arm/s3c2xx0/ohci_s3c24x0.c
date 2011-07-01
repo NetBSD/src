@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_s3c24x0.c,v 1.7 2010/11/11 15:58:41 dyoung Exp $ */
+/*	$NetBSD: ohci_s3c24x0.c,v 1.8 2011/07/01 20:31:39 dyoung Exp $ */
 
 /* derived from ohci_pci.c */
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.7 2010/11/11 15:58:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.8 2011/07/01 20:31:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.7 2010/11/11 15:58:41 dyoung Exp 
 #include <sys/proc.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/s3c2xx0/s3c24x0var.h>
 

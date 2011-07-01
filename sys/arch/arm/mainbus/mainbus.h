@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.h,v 1.1 2001/02/24 19:38:02 reinoud Exp $ */
+/* $NetBSD: mainbus.h,v 1.2 2011/07/01 20:31:39 dyoung Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,7 +41,7 @@
  * Created      : 15/12/94
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * mainbus driver attach arguments

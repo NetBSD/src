@@ -1,7 +1,7 @@
-/*	$Id: omap2_gpmc.c,v 1.8 2010/09/04 16:23:47 ahoka Exp $	*/
+/*	$Id: omap2_gpmc.c,v 1.9 2011/07/01 20:30:21 dyoung Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_gpmc.c,v 1.8 2010/09/04 16:23:47 ahoka Exp $ */
+/*	$NetBSD: omap2_gpmc.c,v 1.9 2011/07/01 20:30:21 dyoung Exp $ */
 
 
 /*
@@ -102,7 +102,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.8 2010/09/04 16:23:47 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.9 2011/07/01 20:30:21 dyoung Exp $");
 
 #include "locators.h"
 
@@ -113,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.8 2010/09/04 16:23:47 ahoka Exp $")
 #include <sys/reboot.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/cpufunc.h>
 #include <arm/mainbus/mainbus.h>

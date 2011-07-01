@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.28 2009/08/09 06:12:33 kiyohara Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.29 2011/07/01 20:31:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.28 2009/08/09 06:12:33 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.29 2011/07/01 20:31:39 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.28 2009/08/09 06:12:33 kiyohara Exp
 #include <sys/timetc.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>

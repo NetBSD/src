@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sip.c,v 1.11 2009/10/21 14:15:50 rmind Exp $ */
+/*	$NetBSD: ixp425_sip.c,v 1.12 2011/07/01 20:32:51 dyoung Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.11 2009/10/21 14:15:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.12 2011/07/01 20:32:51 dyoung Exp $");
 
 /*
  * Slow peripheral bus of IXP425 Processor
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.11 2009/10/21 14:15:50 rmind Exp $"
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/ixp425var.h>
 #include <arm/xscale/ixp425_sipvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_nand.c,v 1.3 2011/06/28 07:16:53 ahoka Exp $	*/
+/*	$NetBSD: omap2_nand.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.3 2011/06/28 07:16:53 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $");
 
 #include "opt_omap.h"
 #include "opt_flash.h"
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.3 2011/06/28 07:16:53 ahoka Exp $")
 #include <sys/cdefs.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arch/arm/omap/omap2_gpmcvar.h>
 #include <arch/arm/omap/omap2_gpmcreg.h>

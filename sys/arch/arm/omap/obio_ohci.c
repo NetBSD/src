@@ -1,7 +1,7 @@
-/*	$Id: obio_ohci.c,v 1.4 2008/12/12 17:36:14 matt Exp $	*/
+/*	$Id: obio_ohci.c,v 1.5 2011/07/01 20:30:21 dyoung Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: obio_ohci.c,v 1.4 2008/12/12 17:36:14 matt Exp $	*/
+/*	$NetBSD: obio_ohci.c,v 1.5 2011/07/01 20:30:21 dyoung Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #include "opt_omap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.4 2008/12/12 17:36:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.5 2011/07/01 20:30:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -31,7 +31,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.4 2008/12/12 17:36:14 matt Exp $");
 #include <sys/kernel.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

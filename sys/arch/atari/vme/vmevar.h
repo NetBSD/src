@@ -1,4 +1,4 @@
-/*	$NetBSD: vmevar.h,v 1.7 2011/06/05 06:33:43 tsutsui Exp $	*/
+/*	$NetBSD: vmevar.h,v 1.8 2011/07/01 20:34:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * Definitions for VME autoconfiguration.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* 
  * Structures and definitions needed by the machine-dependent header.

@@ -1,7 +1,7 @@
-/* $Id: imx_space.c,v 1.2 2010/11/13 05:00:31 bsh Exp $ */
+/* $Id: imx_space.c,v 1.3 2011/07/01 20:27:50 dyoung Exp $ */
 
 /* derived from: */
-/*	$NetBSD: imx_space.c,v 1.2 2010/11/13 05:00:31 bsh Exp $ */
+/*	$NetBSD: imx_space.c,v 1.3 2011/07/01 20:27:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <uvm/uvm_extern.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 bs_protos(imx);
 bs_protos(generic);

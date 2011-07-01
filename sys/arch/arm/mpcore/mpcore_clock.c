@@ -1,4 +1,4 @@
-/*	$NetBSD: mpcore_clock.c,v 1.1 2011/03/10 07:47:15 bsh Exp $ */
+/*	$NetBSD: mpcore_clock.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011  Genetec corp.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec corp.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcore_clock.c,v 1.1 2011/03/10 07:47:15 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcore_clock.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpcore_clock.c,v 1.1 2011/03/10 07:47:15 bsh Exp $")
 #include <dev/clock_subr.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/cpu.h>
 #include <arm/armreg.h>

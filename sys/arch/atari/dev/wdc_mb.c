@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.34 2009/03/08 05:25:31 tsutsui Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.35 2011/07/01 20:34:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.34 2009/03/08 05:25:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.35 2011/07/01 20:34:05 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.34 2009/03/08 05:25:31 tsutsui Exp $");
 
 #include <sys/bswap.h>
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>
 #include <machine/dma.h>

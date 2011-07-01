@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.19 2011/06/09 17:29:42 nonaka Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.20 2011/07/01 20:32:51 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.19 2011/06/09 17:29:42 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.20 2011/07/01 20:32:51 dyoung Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -116,7 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.19 2011/06/09 17:29:42 nonaka Exp $");
 #include <sys/reboot.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/cpufunc.h>
 #include <arm/mainbus/mainbus.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.23 2009/05/29 14:15:44 rjs Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.24 2011/07/01 20:31:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.23 2009/05/29 14:15:44 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.24 2011/07/01 20:31:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.23 2009/05/29 14:15:44 rjs Exp $");
 #include <sys/malloc.h>
 #include <sys/uio.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/sa11x0/sa11x0_reg.h>

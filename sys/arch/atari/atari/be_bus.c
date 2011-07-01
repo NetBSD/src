@@ -1,4 +1,4 @@
-/*	$NetBSD: be_bus.c,v 1.14 2010/03/31 13:15:52 tsutsui Exp $	*/
+/*	$NetBSD: be_bus.c,v 1.15 2011/07/01 20:34:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.14 2010/03/31 13:15:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.15 2011/07/01 20:34:05 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * This file contains the common functions for using a big endian (linear)

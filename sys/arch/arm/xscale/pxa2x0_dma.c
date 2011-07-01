@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dma.c,v 1.4 2005/12/11 12:16:51 christos Exp $ */
+/*	$NetBSD: pxa2x0_dma.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_dma.c,v 1.4 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_dma.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_dma.c,v 1.4 2005/12/11 12:16:51 christos Exp 
 #include <uvm/uvm_extern.h>
 
 #define	_ARM32_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct arm32_bus_dma_tag pxa2x0_bus_dma_tag = {
 	0,

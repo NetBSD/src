@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2009/03/08 05:25:31 tsutsui Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11 2011/07/01 20:34:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2009/03/08 05:25:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2011/07/01 20:34:05 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 static int		mb_bus_space_peek_1(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t);

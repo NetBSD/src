@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_prcm.c,v 1.1 2010/08/28 13:02:32 ahoka Exp $	*/
+/*	$NetBSD: omap2_prcm.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2010 Adam Hoka
@@ -28,12 +28,12 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_prcm.c,v 1.1 2010/08/28 13:02:32 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_prcm.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/omap/omap_var.h>
 

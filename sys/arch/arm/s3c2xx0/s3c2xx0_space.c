@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_space.c,v 1.8 2009/11/07 07:27:41 cegger Exp $ */
+/*	$NetBSD: s3c2xx0_space.c,v 1.9 2011/07/01 20:31:39 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -74,14 +74,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_space.c,v 1.8 2009/11/07 07:27:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_space.c,v 1.9 2011/07/01 20:31:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* Prototypes for all the bus_space structure functions */
 bs_protos(s3c2xx0);

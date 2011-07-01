@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425.c,v 1.14 2011/05/17 17:34:48 dyoung Exp $ */
+/*	$NetBSD: ixp425.c,v 1.15 2011/07/01 20:32:51 dyoung Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -30,14 +30,14 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.14 2011/05/17 17:34:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.15 2011/07/01 20:32:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>
