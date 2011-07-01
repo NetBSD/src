@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbusvar.h,v 1.7 2011/06/18 08:08:30 matt Exp $	*/
+/*	$NetBSD: pnpbusvar.h,v 1.8 2011/07/01 16:55:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _PREP_PNPBUSVAR_H_
 
 #include <sys/queue.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/residual.h>
 
 struct pnpbus_mem {
