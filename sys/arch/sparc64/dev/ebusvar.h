@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusvar.h,v 1.10 2011/06/02 00:24:23 christos Exp $	*/
+/*	$NetBSD: ebusvar.h,v 1.11 2011/07/01 18:48:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -36,7 +36,7 @@
 #include <sys/time.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.22 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.23 2011/07/01 18:48:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ebus.c,v 1.22 2008/05/29 14:51:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ebus.c,v 1.23 2011/07/01 18:48:36 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_ebus.c,v 1.22 2008/05/29 14:51:26 mrg Exp $");
 #include <sys/device.h>
 #include <sys/tty.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>

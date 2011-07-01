@@ -1,4 +1,4 @@
-/*	$NetBSD: maltavar.h,v 1.5 2011/02/20 07:48:34 matt Exp $	*/
+/*	$NetBSD: maltavar.h,v 1.6 2011/07/01 18:46:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/pci/pcivar.h>
 #include <dev/isa/isavar.h>
 

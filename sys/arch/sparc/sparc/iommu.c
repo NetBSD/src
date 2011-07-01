@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.92 2009/11/07 07:27:46 cegger Exp $ */
+/*	$NetBSD: iommu.c,v 1.93 2011/07/01 18:51:51 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.92 2009/11/07 07:27:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.93 2011/07/01 18:51:51 dyoung Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.92 2009/11/07 07:27:46 cegger Exp $");
 #include <uvm/uvm.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>

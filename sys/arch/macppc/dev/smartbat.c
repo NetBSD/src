@@ -1,4 +1,4 @@
-/*	$NetBSD: smartbat.c,v 1.5 2011/06/18 08:08:28 matt Exp $ */
+/*	$NetBSD: smartbat.c,v 1.6 2011/07/01 18:41:52 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.5 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.6 2011/07/01 18:41:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.5 2011/06/18 08:08:28 matt Exp $");
 
 #include <macppc/dev/pmuvar.h>
 #include <macppc/dev/batteryvar.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include "opt_battery.h"
 
 #ifdef SMARTBAT_DEBUG
