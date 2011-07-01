@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/07/01 01:24:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/07/01 05:07:59 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -69,8 +69,6 @@ runtime-info.h:
 
 .PATH: ${DIST}/libobjc ${DIST}/libobjc/objc
 
-.include <bsd.lib.mk>
-
 ${OBJS} ${POBJS} ${SOBJS}: runtime-info.h
 
 ${SRCS}: tconfig.h unwind.h options.h
@@ -94,6 +92,8 @@ options.h: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opth-gen.awk
 
 CLEANFILES+=	options.h optionlist
 .endif
+
+.include <bsd.lib.mk>
 
 .else
 .include <bsd.prog.mk>	# do nothing
