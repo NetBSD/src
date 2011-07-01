@@ -1,4 +1,4 @@
-/*	$NetBSD: epsoc.c,v 1.10 2009/10/23 00:39:30 snj Exp $	*/
+/*	$NetBSD: epsoc.c,v 1.11 2011/07/01 19:31:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.10 2009/10/23 00:39:30 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.11 2011/07/01 19:31:17 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.10 2009/10/23 00:39:30 snj Exp $");
 #include <sys/time.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>

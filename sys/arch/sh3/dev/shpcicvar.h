@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcicvar.h,v 1.7 2009/08/02 00:06:44 nonaka Exp $	*/
+/*	$NetBSD: shpcicvar.h,v 1.8 2011/07/01 19:17:38 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -29,7 +29,7 @@
 #ifndef	_SH3_SHPCICVAR_H_
 #define	_SH3_SHPCICVAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 bus_space_tag_t shpcic_get_bus_io_tag(void);
 bus_space_tag_t shpcic_get_bus_mem_tag(void);

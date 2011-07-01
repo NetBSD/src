@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.5 2010/05/06 04:32:16 macallan Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.6 2011/07/01 18:59:19 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.5 2010/05/06 04:32:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.6 2011/07/01 18:59:19 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.5 2010/05/06 04:32:16 macallan Exp
 #include <dev/ofw/openfirm.h>
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/wscons/wsconsio.h>

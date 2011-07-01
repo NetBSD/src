@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppcvar.h,v 1.5 2011/06/09 02:49:32 rmind Exp $ */
+/* $NetBSD: pi1ppcvar.h,v 1.6 2011/07/01 18:53:47 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -33,7 +33,7 @@
 #ifndef __PI1PPCVAR_H
 #define __PI1PPCVAR_H
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/types.h>
 #include <sys/device.h>
 #include <sys/callout.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2011/07/01 19:12:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2008/04/28 20:23:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2011/07/01 19:12:53 dyoung Exp $");
 
 #include "obio.h"
 #include "pci.h"
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2008/04/28 20:23:26 martin Exp $");
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <landisk/dev/obiovar.h>
 

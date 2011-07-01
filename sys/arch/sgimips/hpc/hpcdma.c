@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.20 2011/01/25 12:30:32 tsutsui Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.21 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.20 2011/01/25 12:30:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.21 2011/07/01 18:53:46 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.20 2011/01/25 12:30:32 tsutsui Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sgimips/hpc/hpcvar.h>
 #include <sgimips/hpc/hpcreg.h>

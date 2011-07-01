@@ -1,4 +1,4 @@
-/*$NetBSD: at91tctmr.c,v 1.4 2010/06/19 19:47:34 matt Exp $*/
+/*$NetBSD: at91tctmr.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $*/
 
 /*
  * AT91 Timer Counter (TC) based clock functions
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91tctmr.c,v 1.4 2010/06/19 19:47:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91tctmr.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: at91tctmr.c,v 1.4 2010/06/19 19:47:34 matt Exp $");
 
 #include <dev/clock_subr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>

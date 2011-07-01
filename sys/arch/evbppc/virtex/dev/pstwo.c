@@ -1,4 +1,4 @@
-/* 	$NetBSD: pstwo.c,v 1.3 2011/06/18 06:44:27 matt Exp $ */
+/* 	$NetBSD: pstwo.c,v 1.4 2011/07/01 19:03:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pstwo.c,v 1.3 2011/06/18 06:44:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pstwo.c,v 1.4 2011/07/01 19:03:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: pstwo.c,v 1.3 2011/06/18 06:44:27 matt Exp $");
 #include <sys/syslog.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pckbport/pckbportvar.h>
 

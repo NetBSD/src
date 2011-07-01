@@ -1,4 +1,4 @@
-/* $NetBSD: prep_machdep.c,v 1.6 2009/02/13 22:41:03 apb Exp $ */
+/* $NetBSD: prep_machdep.c,v 1.7 2011/07/01 18:59:19 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.6 2009/02/13 22:41:03 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.7 2011/07/01 18:59:19 dyoung Exp $");
 
 #include "opt_modular.h"
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.6 2009/02/13 22:41:03 apb Exp $")
 
 #include <uvm/uvm_extern.h>
 #include <machine/powerpc.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pmap.h>
 #include <powerpc/oea/bat.h>
 

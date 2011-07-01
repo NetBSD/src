@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_com.c,v 1.2 2008/11/08 09:39:27 cliff Exp $	*/
+/*	$NetBSD: gemini_com.c,v 1.3 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /* adapted from:
  *	NetBSD: omap_com.c,v 1.2 2008/03/14 15:09:09 cube Exp
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_com.c,v 1.2 2008/11/08 09:39:27 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_com.c,v 1.3 2011/07/01 19:32:28 dyoung Exp $");
 
 #include "opt_com.h"
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_com.c,v 1.2 2008/11/08 09:39:27 cliff Exp $")
 #include <sys/termios.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/pic/picvar.h>
 

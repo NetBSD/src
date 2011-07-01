@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_timer.c,v 1.4 2008/12/04 00:38:07 cliff Exp $	*/
+/*	$NetBSD: obio_timer.c,v 1.5 2011/07/01 19:32:28 dyoung Exp $	*/
 
 /* adapted from:
  *	NetBSD: obio_mputmr.c,v 1.3 2008/08/27 11:03:10 matt Exp
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_timer.c,v 1.4 2008/12/04 00:38:07 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_timer.c,v 1.5 2011/07/01 19:32:28 dyoung Exp $");
 
 #include "opt_cpuoptions.h"
 #include "opt_gemini.h"
@@ -120,7 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio_timer.c,v 1.4 2008/12/04 00:38:07 cliff Exp $")
 
 #include <dev/clock_subr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <arm/gemini/gemini_reg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.12 2011/05/17 17:34:52 dyoung Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.13 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.12 2011/05/17 17:34:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.13 2011/07/01 18:53:47 dyoung Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.12 2011/05/17 17:34:52 dyoung Exp $")
 #include <machine/locore.h>
 #include <machine/autoconf.h>
 #include <machine/vmparam.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/machtype.h>
 
 #include <mips/cache.h>

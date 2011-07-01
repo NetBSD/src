@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlb.c,v 1.14 2006/03/01 12:38:10 yamt Exp $	*/
+/*	$NetBSD: jazzdmatlb.c,v 1.15 2011/07/01 19:25:41 dyoung Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.14 2006/03/01 12:38:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.15 2011/07/01 19:25:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.14 2006/03/01 12:38:10 yamt Exp $")
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arc/jazz/jazzdmatlbreg.h>
 #include <arc/jazz/jazzdmatlbvar.h>

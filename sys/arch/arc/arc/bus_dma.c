@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.32 2011/02/20 07:52:42 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.33 2011/07/01 19:28:00 dyoung Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.32 2011/02/20 07:52:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.33 2011/07/01 19:28:00 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.32 2011/02/20 07:52:42 matt Exp $");
 #include <mips/cache.h>
 
 #define _ARC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 paddr_t	kvtophys(vaddr_t);	/* XXX */
 

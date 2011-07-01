@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_dma.c,v 1.3 2010/02/02 20:40:07 skrll Exp $ */
+/* $NetBSD: jensenio_dma.c,v 1.4 2011/07/01 19:22:35 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.3 2010/02/02 20:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.4 2011/07/01 19:22:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.3 2010/02/02 20:40:07 skrll Exp $
 #include <sys/mbuf.h>
 
 #define _ALPHA_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/eisa/eisavar.h>
 

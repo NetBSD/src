@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_bus_io.c,v 1.4 2010/12/15 01:27:19 matt Exp $ */
+/* $NetBSD: mcpcia_bus_io.c,v 1.5 2011/07/01 19:19:49 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: mcpcia_bus_io.c,v 1.4 2010/12/15 01:27:19 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mcpcia_bus_io.c,v 1.5 2011/07/01 19:19:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(1, "$NetBSD: mcpcia_bus_io.c,v 1.4 2010/12/15 01:27:19 matt Exp $
 #include <sys/syslog.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <alpha/pci/mcpciareg.h>
 #include <alpha/pci/mcpciavar.h>
