@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/06/29 02:17:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2011/07/01 01:29:12 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -93,12 +93,7 @@ gencheck: gencheck.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
-.if 0
-gtyp-input.list: Makefile
-	for f in ${G_GTFILES}; do echo $f; done > ${.TARGET}
-CLEANFILES+=	gtyp-input.list
-.endif
-
+# be nice to generate this entirely; but difficult.
 gtyp-input.list.tmp: ${GCCARCH}/gtyp-input.list
 	sed s#SRCDIR#${DIST}# < ${.ALLSRC} > ${.TARGET}
 CLEANFILES+=	gtyp-input.list.tmp
@@ -166,7 +161,7 @@ gcov-iov: gcov-iov.lo
 #	TARGET_CPU_DEFAULT="$(G_target_cpu_default)" \
 #	${HOST_SH} ${GNUHOSTDIST}/gcc/mkconfig.sh ${.TARGET}
 
-tm_p.h: Makefile
+tm_p.h: Makefile tm-preds.h
 	${_MKTARGET_CREATE}
 	TARGET_CPU_DEFAULT="" \
 	HEADERS="$(G_tm_p_include_list)" DEFINES="" \
@@ -295,26 +290,11 @@ insn-${f}: gen${f:R} ${G_md_file}
 	./gen${f:R} ${G_md_file} >${.TARGET}
 .endfor
 
-.if 0
-#
-# "One of these things is not like the other"
-#
-CLEANFILES+=		genattrtab insn-attrtab.c
-genattrtab.lo: ${HH} gtype-desc.h
-genautomata.lo: ${HH}
-genattrtab: genattrtab.lo genautomata.lo ${EXTRADEPENDS} ${G_BUILD_VARRAY:.o=.lo}
-	${_MKTARGET_LINK}
-	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY} -lm
-insn-attrtab.c: genattrtab ${G_md_file}
-	${_MKTARGET_CREATE}
-	./genattrtab ${G_md_file} >${.TARGET}
-.endif
-
 #
 # Required hard-coded dependancies.
 #
 genextract.lo: insn-config.h
-insn-conditions.lo: insn-constants.h tm_p.h tm-preds.h
+insn-conditions.lo: insn-constants.h tm_p.h
 build-ggc-none.lo: gtype-desc.h
 ggc-none.o: gtype-desc.h
 
@@ -323,13 +303,15 @@ insn-extract.o: insn-config.h
 toplev.d toplev.o: options.h
 coverage.d: gcov-iov.h
 gcov-io.h: gcov-iov.h
-alias.d alias.o: insn-constants.h tm_p.h tm-preds.h
+alias.d alias.o: insn-constants.h tm_p.h
 cgraphunit.d cgraphunit.o: gcov-io.h
 vec.lo: gtype-desc.h
+gtype-desc.d gtype-desc.o: insn-constants.h
 # XXX
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 i386.d i386.o: tm-constrs.h
 .endif
+insn-emit.d insn-emit.o: tm-constrs.h
 
 COPTS+=-Wno-stack-protector
 
