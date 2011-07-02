@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.150 2011/06/12 03:36:03 rmind Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.151 2011/07/02 01:26:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.150 2011/06/12 03:36:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.151 2011/07/02 01:26:29 matt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -298,8 +298,13 @@ static void *
 uarea_system_poolpage_alloc(struct pool *pp, int flags)
 {
 	void * const va = cpu_uarea_alloc(true);
-	KASSERT(va != NULL);
-	return va;
+	if (va != NULL)
+		return va;
+
+	return (void *)uvm_km_alloc(kernel_map, pp->pr_alloc->pa_pagesz,
+	    USPACE_ALIGN, UVM_KMF_WIRED |
+	    ((flags & PR_WAITOK) ? UVM_KMF_WAITVA :
+	    (UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK)));
 }
 
 static void
