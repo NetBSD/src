@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.1 2011/06/27 11:52:25 uch Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.2 2011/07/02 01:05:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.1 2011/06/27 11:52:25 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.2 2011/07/02 01:05:38 uch Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -73,7 +73,7 @@ struct pool v7fs_node_pool;
 static int v7fs_mountfs(struct vnode *, struct mount *, int);
 static int v7fs_openfs(struct vnode *, struct mount *, struct lwp *);
 static void v7fs_closefs(struct vnode *, struct mount *);
-static bool is_v7fs_partition(struct vnode *);
+static int is_v7fs_partition(struct vnode *);
 static enum vtype v7fs_mode_to_vtype(v7fs_mode_t mode);
 
 int
@@ -185,7 +185,7 @@ v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	    mp->mnt_op->vfs_name, mp, l);
 }
 
-static bool
+static int
 is_v7fs_partition(struct vnode *devvp)
 {
 	struct partinfo dpart;
@@ -193,12 +193,12 @@ is_v7fs_partition(struct vnode *devvp)
 
 	if ((error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED)) != 0) {
 		DPRINTF("VOP_IOCTL=%d\n", error);
-		return false;
+		return error;
 	}
 	DPRINTF("fstype=%d dtype=%d bsize=%d\n", dpart.part->p_fstype,
 	    dpart.disklab->d_type, dpart.disklab->d_secsize);
 
-	return dpart.part->p_fstype == FS_V7;
+	return (dpart.part->p_fstype == FS_V7) ? 0 : EINVAL;
 }
 
 static int
@@ -224,8 +224,9 @@ v7fs_openfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	}
 
 	/* Get partition information */
-	if (!is_v7fs_partition(devvp))
+	if ((error = is_v7fs_partition(devvp))) {
 		goto close_exit;
+	}
 
 	return 0; /* lock held */
 
@@ -576,8 +577,8 @@ v7fs_mountroot(void)
 
 	DPRINTF("");
 	/* On mountroot, devvp (rootdev) is opened by vfs_mountroot */
-	if (!is_v7fs_partition (rootvp))
-		return EINVAL;
+	if ((error = is_v7fs_partition (rootvp)))
+		return error;
 
 	if ((error = vfs_rootmountalloc(MOUNT_V7FS, "root_device", &mp))) {
 		DPRINTF("mountalloc error=%d\n", error);
