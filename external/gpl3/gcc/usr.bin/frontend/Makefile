@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/29 02:16:52 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/02 14:06:42 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -13,6 +13,10 @@ SRCS=		gcc.c version.c intl.c prefix.c opts-common.c gcc-options.c
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
 SRCS+=		driver-i386.c
 .PATH:		${DIST}/gcc/config/i386
+.endif
+.if ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "powerpc64"
+SRCS+=		driver-rs6000.c
+.PATH:		${DIST}/gcc/config/rs6000
 .endif
 
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
