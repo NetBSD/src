@@ -1661,6 +1661,10 @@ __GMP_DECLSPEC void mpn_copyd __GMP_PROTO ((mp_ptr, mp_srcptr, mp_size_t));
 #define mpn_zero __MPN(zero)
 __GMP_DECLSPEC void mpn_zero __GMP_PROTO ((mp_ptr, mp_size_t));
 
+#define mpn_udiv_w_sdiv __MPN(udiv_w_sdiv)
+__GMP_DECLSPEC mp_limb_t mpn_udiv_w_sdiv __GMP_PROTO ((mp_limb_t *, mp_limb_t, mp_limb_t, mp_limb_t));
+
+
 /**************** mpz inlines ****************/
 
 /* The following are provided as inlines where possible, but always exist as
