@@ -29,13 +29,13 @@
 
 #include <powerpc/asm.h>
 
-__RCSID("$NetBSD: gprsavrest.S,v 1.1 2011/07/02 03:35:03 matt Exp $")
+__RCSID("$NetBSD: gprsavrest.S,v 1.2 2011/07/02 23:36:02 mrg Exp $")
 
 #ifndef RESTGPR
 #define RESTGPR(n)	RESTOREXGPR(_restgpr_,n,_x)
-#define	RESTGPR_END(n)	RESTOREXGPR_END(_restgpr,n,_x)
+#define RESTGPR_END(n)	RESTOREXGPR_END(_restgpr_,n,_x)
 #define SAVEGPR(n)	SAVEXGPR(_savegpr_,n,)
-#define	SAVEGPR_END(n)	SAVEXGPR_END(_savegpr,n,)
+#define SAVEGPR_END(n)	SAVEXGPR_END(_savegpr_,n,)
 #endif
 
 #define RESTOREXGPR(a,n,b) \
