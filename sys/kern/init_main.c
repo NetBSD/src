@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.432 2011/06/12 03:35:56 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.433 2011/07/02 17:53:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.432 2011/06/12 03:35:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.433 2011/07/02 17:53:50 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -494,6 +494,10 @@ main(void)
 	ifinit1();
 
 	spldebug_start();
+
+	/* Initialize sockets thread(s) */
+	soinit1();
+
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
