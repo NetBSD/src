@@ -1,7 +1,6 @@
 dnl config.m4.  Generated automatically by configure.
 changequote(<,>)
 ifdef(<__CONFIG_M4_INCLUDED__>,,<
-define(<CONFIG_TOP_SRCDIR>,<`/u1/netbsd-HEAD/src/external/lgpl3/gmp/dist'>)
 define(<WANT_ASSERT>,0)
 define(<WANT_PROFILING>,<`no'>)
 define(<SQR_TOOM2_THRESHOLD>,<42>)
