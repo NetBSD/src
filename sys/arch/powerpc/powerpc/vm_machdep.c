@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.90 2011/06/20 05:50:39 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.91 2011/07/02 00:38:29 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.90 2011/06/20 05:50:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.91 2011/07/02 00:38:29 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -298,7 +298,7 @@ cpu_uarea_alloc(bool system)
 	error = uvm_pglistalloc(USPACE, 0, ptoa(physmem), 0, 0, &pglist, 1, 1);
 	if (error) {
 		if (!system)
-			return NULL;
+			return (void *)uvm_uarea_alloc();
 		panic("%s: uvm_pglistalloc failed: %d", __func__, error);
 	}
 
@@ -315,7 +315,7 @@ cpu_uarea_alloc(bool system)
 
 	return (void *)(uintptr_t)PMAP_MAP_POOLPAGE(pa);
 #else
-	return NULL;
+	return (void *)uvm_uarea_alloc();
 #endif
 }
 
