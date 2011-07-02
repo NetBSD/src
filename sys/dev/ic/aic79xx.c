@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.44 2009/09/03 14:52:22 tsutsui Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.45 2011/07/02 13:12:44 mrg Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.44 2009/09/03 14:52:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.45 2011/07/02 13:12:44 mrg Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -7198,7 +7198,7 @@ ahd_search_qinfifo(struct ahd_softc *ahd, int target, char channel,
 					ahd_freeze_scb(scb);
 				if ((scb->flags & SCB_ACTIVE) == 0)
 					printf("Inactive SCB in qinfifo\n");
-				if (scb->xs->error != CAM_REQ_CMP)
+				if ((cam_status)scb->xs->error != CAM_REQ_CMP)
 					printf("SEARCH_COMPLETE(0x%x):"
 					       " ostat 0x%x, cstat 0x%x, "
 					       "xs_error 0x%x\n",
