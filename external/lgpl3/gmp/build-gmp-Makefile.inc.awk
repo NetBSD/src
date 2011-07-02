@@ -16,7 +16,7 @@
 		} else {
 			c_src_list[$5] = $3
 		}
-	} else if (match($3, /\.asm$/)) {
+	} else if (match($3, /\.(asm|s|S)$/)) {
 		asm_list[$5] = $3
 	}
 }
