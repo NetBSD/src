@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.23 2010/07/06 05:59:59 mrg Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.24 2011/07/02 17:37:28 tsutsui Exp $
 
 MACHINE_ARCH=	arm
 CPPFLAGS+=	-D${MACHINE}
@@ -19,18 +19,18 @@ SYSTEM_LD_HEAD_EXTRA+=; \
 		${SYSTEM_OBJ} ; \
 	  cat ${ARM}/conf/kern.ldscript.tail ) > ldscript
 
+REMOVE_SECTIONS= \
+	-R .ident -R .arm.atpcs -R .comment -R .note.netbsd.ident \
+	-R .debug_abbrev -R .debug_info -R .debug_line -R .debug_str \
+	-R .debug_frame -R .debug_loc -R .debug_pubnames \
+	-R .debug_aranges -R .debug_pubtypes -R .ARM.attributes
+
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo \
 	 "${OBJCOPY} -O a.out-arm-netbsd \
-		-R .ident -R .arm.atpcs -R .comment -R .note.netbsd.ident \
-		-R .debug_abbrev -R .debug_info -R .debug_line -R .debug_str \
-		-R .debug_frame -R .debug_loc -R .debug_pubnames \
-		-R .debug_aranges -R .ARM.attributes \
+		${REMOVE_SECTIONS} \
 		$@ $@.aout"; \
 	${OBJCOPY} -O a.out-arm-netbsd \
-		-R .ident -R .arm.atpcs -R .comment -R .note.netbsd.ident \
-		-R .debug_abbrev -R .debug_info -R .debug_line -R .debug_str \
-		-R .debug_frame -R .debug_loc -R .debug_pubnames \
-		-R .debug_aranges -R .ARM.attributes \
+		${REMOVE_SECTIONS} \
 		$@ $@.aout
 .endif
