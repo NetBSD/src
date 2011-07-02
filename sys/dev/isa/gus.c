@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.105 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: gus.c,v 1.106 2011/07/02 13:14:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.105 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.106 2011/07/02 13:14:46 mrg Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -1648,7 +1648,7 @@ gus_dmaout_dointr(struct gus_softc *sc)
 	 * flip to the next DMA buffer
 	 */
 
-	sc->sc_dmabuf = ++sc->sc_dmabuf % sc->sc_nbufs;
+	sc->sc_dmabuf = (sc->sc_dmabuf + 1) % sc->sc_nbufs;
 	/*
 	 * See comments below about DMA admission control strategy.
 	 * We can call the upper level here if we have an
@@ -1744,7 +1744,7 @@ gus_voice_intr(struct gus_softc *sc)
 					       device_xname(&sc->sc_dev), sc->sc_bufcnt);
 					gus_falsestops++;
 
-					sc->sc_playbuf = ++sc->sc_playbuf % sc->sc_nbufs;
+					sc->sc_playbuf = (sc->sc_playbuf + 1) % sc->sc_nbufs;
 					gus_start_playing(sc, sc->sc_playbuf);
 				} else if (sc->sc_bufcnt < 0) {
 					panic("%s: negative bufcnt in stopped voice",
@@ -1919,7 +1919,7 @@ gus_continue_playing(struct gus_softc *sc, int voice)
 	 * update playbuf to point to the buffer the hardware just started
 	 * playing
 	 */
-	sc->sc_playbuf = ++sc->sc_playbuf % sc->sc_nbufs;
+	sc->sc_playbuf = (sc->sc_playbuf + 1) % sc->sc_nbufs;
 
 	/*
 	 * account for buffer just finished
