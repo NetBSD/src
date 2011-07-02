@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.22 2011/06/20 06:21:45 matt Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.23 2011/07/02 00:22:06 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.22 2011/06/20 06:21:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.23 2011/07/02 00:22:06 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -189,6 +189,13 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	}
 #endif
 
+#if defined (PPC_OEA64_BRIDGE) && defined (PPC_OEA)
+	if (oeacpufeat & OEACPU_64_BRIDGE)
+		pmap_setup64bridge();
+	else
+		pmap_setup32();
+#endif
+
 	oea_init(pic_ext_intr);
 
 	ofmaplen = save_ofmap(NULL, 0);
@@ -209,12 +216,6 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 
 	uvm_setpagesize();
 
-#if defined (PPC_OEA64_BRIDGE) && defined (PPC_OEA)
-	if (oeacpufeat & OEACPU_64_BRIDGE)
-		pmap_setup64bridge();
-	else
-		pmap_setup32();
-#endif
 	pmap_bootstrap(startkernel, endkernel);
 
 /* as far as I can tell, the pmap_setup_seg0 stuff is horribly broken */
