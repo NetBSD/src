@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.69 2011/06/03 16:28:40 tsutsui Exp $	*/
+/*	$NetBSD: i82586.c,v 1.70 2011/07/02 13:13:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.69 2011/06/03 16:28:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.70 2011/07/02 13:13:22 mrg Exp $");
 
 
 #include <sys/param.h>
@@ -1507,7 +1507,7 @@ ie_cfg_setup(struct ie_softc *sc, int cmd, int promiscuous, int manchester)
 	*IE_CMD_CFG_IFS(buf)       = 0x60;
 	*IE_CMD_CFG_SLOT_LOW(buf)  = 0;
 	*IE_CMD_CFG_SLOT_HIGH(buf) = 0xf2;
-	*IE_CMD_CFG_PROMISC(buf)   = !!promiscuous | manchester << 2;
+	*IE_CMD_CFG_PROMISC(buf)   = (!!promiscuous) | manchester << 2;
 	*IE_CMD_CFG_CRSCDT(buf)    = 0;
 	*IE_CMD_CFG_MINLEN(buf)    = 64;
 	*IE_CMD_CFG_JUNK(buf)      = 0xff;
