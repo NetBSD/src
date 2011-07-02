@@ -29,7 +29,7 @@
 
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.3 2011/07/01 02:59:05 joerg Exp $")
+RCSID("$NetBSD: crt0.S,v 1.4 2011/07/02 20:16:09 matt Exp $")
 
 STRONG_ALIAS(_start,__start)
 
@@ -45,9 +45,9 @@ ENTRY_NOPROFILE(__start)
 	addis	%r13,%r11,_SDA_BASE_-1b@ha
 	addi	%r13,%r13,_SDA_BASE_-1b@l
 
-	mr	%r3,%r6
-	mr	%r4,%r7
-	mr	%r5,%r8
+	mr	%r3,%r7		/* cleanup */
+	mr	%r4,%r6		/* obj */
+	mr	%r5,%r8		/* ps_strings */
 
 	b	___start
 END(__start)
