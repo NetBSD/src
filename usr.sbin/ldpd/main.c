@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.5 2011/06/14 11:28:51 kefren Exp $ */
+/* $NetBSD: main.c,v 1.6 2011/07/02 18:17:12 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 		case 'p':
 			if ((command_port = atoi(optarg)) < 1) {
 				print_usage(argv[0]);
-				return -1;
+				return EXIT_FAILURE;
 			}
 			break;
 		case 'W':
@@ -98,26 +98,26 @@ main(int argc, char *argv[])
 		case 'h':
 		default:
 			print_usage(argv[0]);
-			return -1;
+			return EXIT_FAILURE;
 			break;
 		}
 	if (geteuid()) {
 		fatalp("You have to run this as ROOT\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	cpf = conf_parsefile(conffile);
 	if (cpf < 0 && strcmp(conffile, CONFFILE)) {
 		fatalp("Cannot parse config file: %s\n", conffile);
-		return -1;
+		return EXIT_FAILURE;
 	} else if (cpf > 0) {
 		fatalp("Cannot parse line %d in config file\n", cpf);
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	if (set_my_ldp_id()) {
 		fatalp("Cannot set LDP ID\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
 	if (conf_ldp_id.s_addr != 0)
 		strlcpy(my_ldp_id, inet_ntoa(conf_ldp_id), INET_ADDRSTRLEN);
@@ -125,30 +125,30 @@ main(int argc, char *argv[])
 	if (mplssockaddr.sa_len == 0) {
 		fatalp("You need one mpls interface up and an IP "
 		    "address set for it\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
 	if (mpls_start_ldp() == -1)
-		return -1;
+		return EXIT_FAILURE;
 	if (!strcmp(LDP_ID, "0.0.0.0")) {
 		fatalp("Cannot set my LDP ID.\nAre you sure you've "
 		    "got a non-loopback INET interface UP ?\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
 	init_command_sockets();
 	if ((command_socket = create_command_socket(command_port)) < 1) {
 		fatalp("Cannot create command socket\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
 	if (create_hello_socket() < 1) {
 		fatalp("Cannot create hello socket\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	ls = create_listening_socket();
 
 	if (ls < 0) {
 		fatalp("Cannot create listening socket\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	if (dontfork == 1)
@@ -162,5 +162,5 @@ main(int argc, char *argv[])
 	if (forkres < 0)
 		perror("fork");
 
-	return 0;
+	return EXIT_SUCCESS;
 }
