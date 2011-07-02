@@ -52,11 +52,16 @@ along with GCC; see the file COPYING3.  If not see
 
 
 #undef TARGET_VERSION
+#if 0
 #define TARGET_VERSION			\
   fprintf (stderr,			\
 	   TARGET_68010			\
 	   ? " (NetBSD/68010 ELF)"	\
 	   : " (NetBSD/m68k ELF)");
+#else
+#define TARGET_VERSION			\
+  fprintf (stderr," (NetBSD/m68k/68010 ELF)");
+#endif
 
 
 /* Provide a CPP_SPEC appropriate for NetBSD m68k targets.  Currently we
