@@ -1242,7 +1242,8 @@ install-data: install-data-recursive
 uninstall: uninstall-recursive
 
 install-am: all-am
-	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am
+	@$(MAKE) $(AM_MAKEFLAGS) install-data-am
 
 installcheck: installcheck-recursive
 install-strip:
