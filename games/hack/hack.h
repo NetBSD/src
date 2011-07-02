@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.h,v 1.13 2009/06/29 23:05:33 dholland Exp $	*/
+/*	$NetBSD: hack.h,v 1.14 2011/07/02 02:10:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -67,6 +67,7 @@
 #include "config.h"
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 
 #ifndef BSD
 #define	index	strchr
