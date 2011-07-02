@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.125 2011/06/26 16:43:12 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.126 2011/07/02 17:53:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -280,6 +280,7 @@ int	sbreserve(struct sockbuf *, u_long, struct socket *);
 int	sbwait(struct sockbuf *);
 int	sb_max_set(u_long);
 void	soinit(void);
+void	soinit1(void);
 void	soinit2(void);
 int	soabort(struct socket *);
 int	soaccept(struct socket *, struct mbuf *);
