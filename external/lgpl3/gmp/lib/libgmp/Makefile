@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/07/01 01:30:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/07/02 14:04:30 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -124,7 +124,6 @@ SRCS+=	fib_table.c mp_bases.c
 
 # Build the files that may have multiple identical base names under
 # different names.
-# XXX	${MPBSD_SRCS:C/^/mpbsd /}
 .for _dir _srcfile in \
 	${MPF_SRCS:C/^/mpf /} \
 	${MPZ_SRCS:C/^/mpz /} \
