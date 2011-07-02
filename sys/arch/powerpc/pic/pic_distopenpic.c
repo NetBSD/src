@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_distopenpic.c,v 1.6 2011/06/20 06:21:45 matt Exp $ */
+/*	$NetBSD: pic_distopenpic.c,v 1.7 2011/07/02 13:08:25 mrg Exp $ */
 
 /*-
  * Copyright (c) 2008 Tim Rightnour
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_distopenpic.c,v 1.6 2011/06/20 06:21:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_distopenpic.c,v 1.7 2011/07/02 13:08:25 mrg Exp $");
 
 #include "opt_openpic.h"
 #include "opt_interrupt.h"
@@ -174,7 +174,7 @@ static void
 distopic_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 {
 	struct openpic_ops *opic = (struct openpic_ops *)pic;
-	int isu, realirq, realpri = max(1, min(15, pri));
+	int isu, realirq = -1, realpri = max(1, min(15, pri));
 	uint32_t x;
 
 	isu = opic_isu_from_irq(opic, irq, &realirq);
@@ -196,7 +196,7 @@ static void
 distopic_enable_irq(struct pic_ops *pic, int irq, int type)
 {
 	struct openpic_ops *opic = (struct openpic_ops *)pic;
-	int isu, realirq;
+	int isu, realirq = -1;
 	u_int x;
 
 	isu = opic_isu_from_irq(opic, irq, &realirq);
@@ -210,7 +210,7 @@ static void
 distopic_disable_irq(struct pic_ops *pic, int irq)
 {
 	struct openpic_ops *opic = (struct openpic_ops *)pic;
-	int isu, realirq;
+	int isu, realirq = -1;
 	u_int x;
 
 	isu = opic_isu_from_irq(opic, irq, &realirq);
