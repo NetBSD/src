@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.26 2011/04/24 16:27:01 rmind Exp $	*/
+/*	$NetBSD: spif.c,v 1.27 2011/07/02 13:21:30 mrg Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.26 2011/04/24 16:27:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.27 2011/07/02 13:21:30 mrg Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -539,7 +539,7 @@ stty_param(struct tty *tp, struct termios *t)
 						      SPIF_CARD(tp->t_dev));
 	struct stty_port *sp = &st->sc_port[SPIF_PORT(tp->t_dev)];
 	struct spif_softc *sc = sp->sp_sc;
-	uint8_t rbprl, rbprh, tbprl, tbprh;
+	uint8_t rbprl = 0, rbprh = 0, tbprl = 0, tbprh = 0;
 	int s, opt;
 
 	if (t->c_ospeed &&
