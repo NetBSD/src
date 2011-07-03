@@ -23,6 +23,14 @@ TARGET_LIBGCC2_CFLAGS = -fomit-frame-pointer -fpic
 LIBGCC2_DEBUG_CFLAGS = -g0
 LIB2FUNCS_EXTRA = $(srcdir)/config/floatunsidf.c $(srcdir)/config/floatunsisf.c
 
+# This list is from t-arm-elf, but with some things removed.
+LIB1ASMFUNCS += _udivsi3 _divsi3 _umodsi3 _modsi3 _dvmd_tls _bb_init_func \
+	_call_via_rX _interwork_call_via_rX \
+	_arm_fixunsdfsi \
+	_arm_floatdidf _arm_floatdisf _arm_floatundidf _arm_floatundisf \
+	_lshrdi3 _ashrdi3 _ashldi3 \
+	_clzsi2 _clzdi2 
+
 # Build a shared libgcc library.
 SHLIB_EXT = .so
 SHLIB_NAME = @shlib_base_name@.so
