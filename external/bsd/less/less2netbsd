@@ -86,7 +86,7 @@ do
 	then
 		NEW_FILENAME="${FILENAME}.new"
 		rm -f "${NEW_FILENAME}"
-		(echo '/*	$NetBSD	*/'
+		(echo '/*	$NetBSD: less2netbsd,v 1.3 2011/07/03 19:42:09 tron Exp $	*/'
 		 echo ''
 		 cat "$FILENAME") >"${NEW_FILENAME}"
 		mv -f "${NEW_FILENAME}" "$FILENAME"
