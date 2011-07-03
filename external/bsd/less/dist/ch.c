@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: ch.c,v 1.3 2011/07/03 20:14:12 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -140,7 +140,9 @@ extern int logfile;
 extern char *namelogfile;
 #endif
 
-static int ch_addbuf();
+static int ch_addbuf __P((void));
+static int buffered __P((BLOCKNUM));
+static void ch_delbufs __P((void));
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tags.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: tags.c,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -61,12 +61,6 @@ static int getentry();
  * findctag() uses either pattern (in which case line number is 0),
  * or line number (in which case pattern is NULL).
  */
-struct taglist {
-	struct tag *tl_first;
-	struct tag *tl_last;
-};
-#define TAG_END  ((struct tag *) &taglist)
-static struct taglist taglist = { TAG_END, TAG_END };
 struct tag {
 	struct tag *next, *prev; /* List links */
 	char *tag_file;		/* Source file containing the tag */
@@ -74,6 +68,12 @@ struct tag {
 	char *tag_pattern;	/* Pattern used to find the tag */
 	char tag_endline;	/* True if the pattern includes '$' */
 };
+struct taglist {
+	struct tag *tl_first;
+	struct tag *tl_last;
+};
+#define TAG_END  ((struct tag *) &taglist)
+static struct taglist taglist = { TAG_END, TAG_END };
 static struct tag *curtag;
 
 #define TAG_INS(tp) \
@@ -544,7 +544,7 @@ findgtag(tag, type)
 		while (fgets(buf, sizeof(buf), fp))
 		{
 			char *name, *file, *line;
-			int len;
+			size_t len;
 
 			if (sigs)
 			{
