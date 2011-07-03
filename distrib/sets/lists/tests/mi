@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.357 2011/07/03 15:05:43 jruoho Exp $
+# $NetBSD: mi,v 1.358 2011/07/03 15:24:49 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2232,41 +2232,41 @@
 ./usr/tests/libexec				tests-lib-tests
 ./usr/tests/libexec/Atffile			tests-lib-tests		atf
 ./usr/tests/libexec/ld.elf_so			tests-libexec-tests
-./usr/tests/libexec/ld.elf_so/Atffile		tests-libexec-tests	atf
+./usr/tests/libexec/ld.elf_so/Atffile		tests-libexec-tests	atf,pic
 ./usr/tests/libexec/ld.elf_so/data		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v0-v0		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v0-v1		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v0-v2		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v1-v0		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v1-v1		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v1-v2		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v2-v0		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v2-v1		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v2-v2		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v0-v0		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v0-v1		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v0-v2		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v1-v0		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v1-v1		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v1-v2		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v2-v0		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v2-v1		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v2-v2		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/h_df_1_noopen1	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/h_df_1_noopen2	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/h_dl_symver_v0	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/h_dl_symver_v1	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/h_dl_symver_v2	tests-libexec-tests	atf
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v0-v0		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v0-v1		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v0-v2		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v1-v0		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v1-v1		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v1-v2		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v2-v0		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v2-v1		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stderr.v2-v2		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v0-v0		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v0-v1		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v0-v2		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v1-v0		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v1-v1		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v1-v2		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v2-v0		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v2-v1		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/data/symver-output-ref-stdout.v2-v2		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/h_df_1_noopen1	tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/h_df_1_noopen2	tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/h_dl_symver_v0	tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/h_dl_symver_v1	tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/h_dl_symver_v2	tests-libexec-tests	atf,pic
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0	tests-libexec-tests	atf
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1	tests-libexec-tests	atf
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/h_locking		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/t_df_1_noopen	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/t_dl_symver	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/t_dlerror-cleared	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/t_dlerror-false	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/t_dlinfo		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/t_dlvsym		tests-libexec-tests	atf
+./usr/tests/libexec/ld.elf_so/h_locking		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/t_df_1_noopen	tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/t_dl_symver	tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/t_dlerror-cleared	tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/t_dlerror-false	tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/t_dlinfo		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/t_dlvsym		tests-libexec-tests	atf,pic
 ./usr/tests/modules				tests-sys-tests
 ./usr/tests/net					tests-net-tests
 ./usr/tests/net/Atffile				tests-net-tests		atf
