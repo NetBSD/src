@@ -1,6 +1,6 @@
-#	$NetBSD: list.ramdisk,v 1.15 2011/06/19 02:19:34 tsutsui Exp $
+#	$NetBSD: list.ramdisk,v 1.16 2011/07/03 23:11:32 tron Exp $
 
-SRCDIRS	usr.bin/less
+SRCDIRS	external/bsd/less/bin
 SRCDIRS	bin sbin usr.bin usr.sbin libexec
 
 # Programs for a minimal ramdisk image
