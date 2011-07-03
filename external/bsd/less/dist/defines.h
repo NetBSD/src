@@ -1,4 +1,4 @@
-/*	$NetBSD	*/
+/*	$NetBSD: defines.h,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
 
 /* defines.h.  Generated from defines.h.in by configure.  */
 /* defines.h.in.  Generated from configure.ac by autoheader.  */
