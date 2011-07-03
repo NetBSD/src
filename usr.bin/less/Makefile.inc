@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.4 2009/04/14 22:15:22 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2011/07/03 15:28:47 mrg Exp $
 
-WARNS?=	1	# many -Wshadow -Wcast-qual & other issues
+WARNS?=	2
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
 .endif
 
-CWARNFLAGS+=	-Wno-strict-prototypes -Wno-missing-prototypes
+CWARNFLAGS+=	-Wno-strict-prototypes -Wno-missing-prototypes -Wno-shadow
