@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.10 2009/05/24 22:55:03 dholland Exp $	*/
+/*	$NetBSD: move.c,v 1.11 2011/07/03 06:44:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.10 2009/05/24 22:55:03 dholland Exp $");
+__RCSID("$NetBSD: move.c,v 1.11 2011/07/03 06:44:01 mrg Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
 #include <math.h>
+#include <float.h>
 #include "trek.h"
 
 /*
@@ -128,7 +129,7 @@ move(int ramflag, int course, double time, double speed)
 		evtime += 0.005;
 		time = evtime;
 	} else
-		evtime = -1.0e50;
+		evtime = DBL_MIN;
 	dist = time * speed;
 
 	/* move within quadrant */
