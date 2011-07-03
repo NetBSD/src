@@ -1,4 +1,4 @@
-/*	$NetBSD	*/
+/*	$NetBSD: regexp.h,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
 
 /*
  * Definitions etc. for regexp(3) routines.

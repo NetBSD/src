@@ -1,4 +1,4 @@
-/*	$NetBSD	*/
+/*	$NetBSD: linenum.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
