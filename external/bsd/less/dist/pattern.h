@@ -1,4 +1,4 @@
-/*	$NetBSD: pattern.h,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: pattern.h,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -13,7 +13,8 @@
 #if HAVE_POSIX_REGCOMP
 #include <regex.h>
 #ifdef REG_EXTENDED
-#define	REGCOMP_FLAG	REG_EXTENDED
+extern int more_mode;
+#define	REGCOMP_FLAG	(more_mode ? 0 : REG_EXTENDED)
 #else
 #define	REGCOMP_FLAG	0
 #endif

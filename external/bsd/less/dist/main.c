@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -34,6 +34,7 @@ public char *	progname;
 public int	quitting;
 public int	secure;
 public int	dohelp;
+public int	more_mode = 0;
 
 #if LOGFILE
 public int	logfile = -1;
@@ -113,6 +114,9 @@ main(argc, argv)
 	 * Process command line arguments and LESS environment arguments.
 	 * Command line arguments override environment arguments.
 	 */
+	if (strcmp(getprogname(), "more") == 0)
+		more_mode = 1;
+
 	is_tty = isatty(1);
 	get_term();
 	init_cmds();
@@ -238,7 +242,7 @@ main(argc, argv)
 		quit(QUIT_OK);
 	}
 
-	if (missing_cap && !know_dumb)
+	if (missing_cap && !know_dumb && !more_mode)
 		error("WARNING: terminal is not fully functional", NULL_PARG);
 	init_mark();
 	open_getchr();
