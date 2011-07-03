@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2010/02/06 23:45:25 he Exp $
+#	$NetBSD: Makefile,v 1.35 2011/07/03 15:29:34 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -52,3 +52,7 @@ map: map.c
 	./map | plot > /dev/tty
 
 .include <bsd.prog.mk>
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && ${MACHINE_ARCH} == "vax"
+COPTS.misc.c+=	-O0
+.endif
