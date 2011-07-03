@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.60 2011/07/03 12:11:32 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.61 2011/07/03 12:26:02 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -10,10 +10,15 @@
 _TMPDIR=$2
 _TOP=$3
 _PLATFORM=$4
-_ABI=$5
-_DESTDIR=$6
+_DESTDIR=$5
+_ABI=$6
 _VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*=[ 	]*,,'`
 _GNU_DIST=`cd ${_VPATH}; pwd`
+
+if [ -z "$_DESTDIR" ]; then
+	echo "\$_DESTDIR is empty" 2>&1
+	exit 1
+fi
 
 . $_TOP/tools/gcc/mknative.common
 
@@ -30,7 +35,7 @@ get_crtstuff () {
 	getvars gcc/Makefile \
 		INCLUDES CRTSTUFF_CFLAGS CRTSTUFF_T_CFLAGS \
 		tm_defines xm_file xm_defines \
-		| sed "s,-I$_DESTDIR/usr/include,," \
+		| sed "s,-I$_DESTDIR/usr/include,,g" \
 		| write_mk $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH.mk
 }
 
@@ -389,7 +394,7 @@ get_libgcc () {
 			SHLIB_MAPFILES SHLIB_NM_FLAGS \
 			EXTRA_HEADERS xm_defines \
 			tm_defines ${_extravars}
-	} | sed "s,-I$_DESTDIR/usr/include,," \
+	} | sed "s,-I$_DESTDIR/usr/include,,g" \
 	| write_mk $_OUTDIRBASE/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH.mk
 
 	# Generate new style files.
@@ -573,7 +578,7 @@ get_gcc () {
 			tm_defines host_xm_file host_xm_defines tm_p_file \
 			target_cpu_default ${_extravars} ${_extravars2} \
 			lang_specs_files ${_extravars3} \
-				| sed "s,-I$_DESTDIR/usr/include,," \
+				| sed "s,-I$_DESTDIR/usr/include,,g"
 		getvars gcc/Makefile \
 			LIB2ADDEHDEP | sed 's/unwind.inc//'
 		getvars gcc/Makefile \
