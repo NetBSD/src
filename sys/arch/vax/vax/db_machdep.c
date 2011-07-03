@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.57 2010/12/14 23:44:49 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.58 2011/07/03 02:18:21 matt Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.57 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.58 2011/07/03 02:18:21 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -142,14 +142,14 @@ typedef struct __vax_frame {
  * contain the registers when panic was called. (easy to debug).
  */
 void
-kdb_trap(struct trapframe *frame)
+kdb_trap(struct trapframe *tf)
 {
 	int s;
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
 #endif
 
-	switch (frame->trap) {
+	switch (tf->tf_trap) {
 	case T_BPTFLT:	/* breakpoint */
 	case T_TRCTRAP: /* single_step */
 		break;
@@ -160,16 +160,16 @@ kdb_trap(struct trapframe *frame)
 		if (panicstr) {
 			struct	callsframe *pf, *df;
 
-			df = (void *)frame->fp; /* start of debug's calls */
+			df = (void *)tf->tf_fp; /* start of debug's calls */
 			pf = (void *)df->ca_fp; /* start of panic's calls */
-			memcpy(&ddb_regs.r0, &pf->ca_argno, sizeof(int) * 12);
-			ddb_regs.fp = pf->ca_fp;
-			ddb_regs.pc = pf->ca_pc;
-			ddb_regs.ap = pf->ca_ap;
-			ddb_regs.sp = (unsigned)pf;
-			ddb_regs.psl = frame->psl & ~0x1fffe0;
-			ddb_regs.psl |= pf->ca_maskpsw & 0xffe0;
-			ddb_regs.psl |= (splsave << 16);
+			memcpy(&ddb_regs.tf_r0, &pf->ca_argno, sizeof(int) * 12);
+			ddb_regs.tf_fp = pf->ca_fp;
+			ddb_regs.tf_pc = pf->ca_pc;
+			ddb_regs.tf_ap = pf->ca_ap;
+			ddb_regs.tf_sp = (unsigned)pf;
+			ddb_regs.tf_psl = tf->tf_psl & ~0x1fffe0;
+			ddb_regs.tf_psl |= pf->ca_maskpsw & 0xffe0;
+			ddb_regs.tf_psl |= (splsave << 16);
 		}
 #endif
 		break;
@@ -178,7 +178,7 @@ kdb_trap(struct trapframe *frame)
 		if ((boothowto & RB_KDB) == 0)
 			return;
 
-		kdbprinttrap(frame->trap, frame->code);
+		kdbprinttrap(tf->tf_trap, tf->tf_code);
 		if (db_recover != 0) {
 			db_error("Faulted in DDB; continuing...\n");
 			/*NOTREACHED*/
@@ -186,13 +186,13 @@ kdb_trap(struct trapframe *frame)
 	}
 
 #ifdef MULTIPROCESSOR
-	ci->ci_ddb_regs = frame;
+	ci->ci_ddb_regs = tf;
 	if (pause_cpus())
 		return;
 #endif
 #ifndef MULTIPROCESSOR
 	if (!panicstr)
-		memcpy(&ddb_regs, frame, sizeof(struct trapframe));
+		memcpy(&ddb_regs, tf, sizeof(struct trapframe));
 #else
 	memcpy(&ddb_regs, stopcpu->ci_ddb_regs, sizeof(struct trapframe));
 	printf("stopped on CPU %d\n", stopcpu->ci_cpuid);
@@ -203,18 +203,18 @@ kdb_trap(struct trapframe *frame)
 	s = splhigh();
 	db_active++;
 	cnpollc(true);
-	db_trap(frame->trap, frame->code);
+	db_trap(tf->tf_trap, tf->tf_code);
 	cnpollc(false);
 	db_active--;
 	splx(s);
 
 #ifndef MULTIPROCESSOR
 	if (!panicstr)
-		memcpy(frame, &ddb_regs, sizeof(struct trapframe));
+		memcpy(tf, &ddb_regs, sizeof(struct trapframe));
 #else
 	memcpy(stopcpu->ci_ddb_regs, &ddb_regs, sizeof(struct trapframe));
 #endif
-	frame->sp = mfpr(PR_USP);
+	tf->tf_sp = mfpr(PR_USP);
 #ifdef MULTIPROCESSOR
 	rpb.wait = 0;
 	resume_cpus();
@@ -268,25 +268,25 @@ Debugger(void)
  * Machine register set.
  */
 const struct db_variable db_regs[] = {
-	{"r0",	&ddb_regs.r0,	FCN_NULL},
-	{"r1",	&ddb_regs.r1,	FCN_NULL},
-	{"r2",	&ddb_regs.r2,	FCN_NULL},
-	{"r3",	&ddb_regs.r3,	FCN_NULL},
-	{"r4",	&ddb_regs.r4,	FCN_NULL},
-	{"r5",	&ddb_regs.r5,	FCN_NULL},
-	{"r6",	&ddb_regs.r6,	FCN_NULL},
-	{"r7",	&ddb_regs.r7,	FCN_NULL},
-	{"r8",	&ddb_regs.r8,	FCN_NULL},
-	{"r9",	&ddb_regs.r9,	FCN_NULL},
-	{"r10", &ddb_regs.r10,	FCN_NULL},
-	{"r11", &ddb_regs.r11,	FCN_NULL},
-	{"ap",	&ddb_regs.ap,	FCN_NULL},
-	{"fp",	&ddb_regs.fp,	FCN_NULL},
-	{"sp",	&ddb_regs.sp,	FCN_NULL},
-	{"pc",	&ddb_regs.pc,	FCN_NULL},
-	{"psl", &ddb_regs.psl,	FCN_NULL},
+	{"r0",	&ddb_regs.tf_r0,	FCN_NULL},
+	{"r1",	&ddb_regs.tf_r1,	FCN_NULL},
+	{"r2",	&ddb_regs.tf_r2,	FCN_NULL},
+	{"r3",	&ddb_regs.tf_r3,	FCN_NULL},
+	{"r4",	&ddb_regs.tf_r4,	FCN_NULL},
+	{"r5",	&ddb_regs.tf_r5,	FCN_NULL},
+	{"r6",	&ddb_regs.tf_r6,	FCN_NULL},
+	{"r7",	&ddb_regs.tf_r7,	FCN_NULL},
+	{"r8",	&ddb_regs.tf_r8,	FCN_NULL},
+	{"r9",	&ddb_regs.tf_r9,	FCN_NULL},
+	{"r10", &ddb_regs.tf_r10,	FCN_NULL},
+	{"r11", &ddb_regs.tf_r11,	FCN_NULL},
+	{"ap",	&ddb_regs.tf_ap,	FCN_NULL},
+	{"fp",	&ddb_regs.tf_fp,	FCN_NULL},
+	{"sp",	&ddb_regs.tf_sp,	FCN_NULL},
+	{"pc",	&ddb_regs.tf_pc,	FCN_NULL},
+	{"psl", &ddb_regs.tf_psl,	FCN_NULL},
 };
-const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + __arraycount(db_regs);
 
 #define IN_USERLAND(x)	(((u_int)(x) & 0x80000000) == 0)
 
@@ -347,8 +347,9 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
 			}
 			tf = (struct trapframe *) &fp->vax_args[arg_base + 2];
 			(*pr)("0x%lx: trap type=0x%lx code=0x%lx pc=0x%lx psl=0x%lx\n",
-			      tf, tf->trap, tf->code, tf->pc, tf->psl);
-			pc = tf->pc;
+			    tf, tf->tf_trap, tf->tf_code,
+			    tf->tf_pc, tf->tf_psl);
+			pc = tf->tf_pc;
 		}
 
 		diff = INT_MAX;
@@ -425,9 +426,9 @@ db_stack_trace_print(
 		(*pr)("panic: %s\n", panicstr);
 		/* xxx ? where did we panic and whose stack are we using? */
 #ifdef MULTIPROCESSOR
-		db_dump_stack((VAX_CALLFRAME *)(ddb_regs.fp), ddb_regs.ap, pr);
+		db_dump_stack((VAX_CALLFRAME *)(ddb_regs.tf_fp), ddb_regs.tf_ap, pr);
 #else
-		db_dump_stack((VAX_CALLFRAME *)(ddb_regs.sp), ddb_regs.ap, pr);
+		db_dump_stack((VAX_CALLFRAME *)(ddb_regs.tf_sp), ddb_regs.tf_ap, pr);
 #endif
 		return;
 	}
@@ -504,7 +505,7 @@ db_stack_trace_print(
 	(*pr)(" FP = 0x%x\n", (unsigned int)(pcb->FP));
 	(*pr)(" PC = 0x%x\n", (unsigned int)(pcb->PC));
 	(*pr)(" PSL = 0x%x\n", (unsigned int)(pcb->PSL));
-	(*pr)(" Trap frame pointer: 0x%x\n", (unsigned int)(pcb->framep));
+	(*pr)(" Trap frame pointer: %o\n", l->l_md.md_utf);
 	db_dump_stack((VAX_CALLFRAME *)(pcb->FP), (u_int)pcb->KSP, pr);
 	return;
 #if 0

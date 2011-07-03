@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.181 2011/06/12 03:35:49 rmind Exp $	 */
+/* $NetBSD: machdep.c,v 1.182 2011/07/03 02:18:21 matt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 2011/06/12 03:35:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2011/07/03 02:18:21 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -460,30 +460,28 @@ dumpsys(void)
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf = pcb->framep;
+	struct trapframe * const tf = l->l_md.md_utf;
 
-	memcpy(&regs->r0, &tf->r0, 12 * sizeof(int));
-	regs->ap = tf->ap;
-	regs->fp = tf->fp;
-	regs->sp = tf->sp;
-	regs->pc = tf->pc;
-	regs->psl = tf->psl;
+	memcpy(&regs->r0, &tf->tf_r0, 12 * sizeof(int));
+	regs->ap = tf->tf_ap;
+	regs->fp = tf->tf_fp;
+	regs->sp = tf->tf_sp;
+	regs->pc = tf->tf_pc;
+	regs->psl = tf->tf_psl;
 	return 0;
 }
 
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
 {
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf = pcb->framep;
+	struct trapframe * const tf = l->l_md.md_utf;
 
-	memcpy(&tf->r0, &regs->r0, 12 * sizeof(int));
-	tf->ap = regs->ap;
-	tf->fp = regs->fp;
-	tf->sp = regs->sp;
-	tf->pc = regs->pc;
-	tf->psl = (regs->psl|PSL_U|PSL_PREVU) &
+	memcpy(&tf->tf_r0, &regs->r0, 12 * sizeof(int));
+	tf->tf_ap = regs->ap;
+	tf->tf_fp = regs->fp;
+	tf->tf_sp = regs->sp;
+	tf->tf_pc = regs->pc;
+	tf->tf_psl = (regs->psl|PSL_U|PSL_PREVU) &
 	    ~(PSL_MBZ|PSL_IS|PSL_IPL1F|PSL_CM); /* Allow compat mode? */
 	return 0;
 }
@@ -491,14 +489,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 int
 process_set_pc(struct lwp *l, void *addr)
 {
-	struct pcb *pcb = lwp_getpcb(l);
-	struct	trapframe *tf;
-	void	*ptr;
-
-	ptr = (char *)pcb->framep;
-	tf = ptr;
-
-	tf->pc = (unsigned) addr;
+	l->l_md.md_utf->tf_pc = (uintptr_t) addr;
 
 	return (0);
 }
@@ -506,17 +497,12 @@ process_set_pc(struct lwp *l, void *addr)
 int
 process_sstep(struct lwp *l, int sstep)
 {
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf;
-	void *ptr;
-
-	ptr = pcb->framep;
-	tf = ptr;
+	struct trapframe * const tf = l->l_md.md_utf;
 
 	if (sstep)
-		tf->psl |= PSL_T;
+		tf->tf_psl |= PSL_T;
 	else
-		tf->psl &= ~PSL_T;
+		tf->tf_psl &= ~PSL_T;
 
 	return (0);
 }
@@ -639,8 +625,7 @@ void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
     void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf = pcb->framep;
+	struct trapframe * const tf = l->l_md.md_utf;
 	uint32_t saframe[11], *fp = saframe;
 
 	sp = (void *)((uintptr_t)sp - sizeof(saframe));
@@ -675,45 +660,43 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 		/* NOTREACHED */
 	}
 
-	tf->ap = (uintptr_t) sp + 20;
-	tf->sp = (long) sp;
-	tf->fp = (long) sp;
-	tf->pc = (long) upcall + 2;
-	tf->psl = (long) PSL_U | PSL_PREVU;
+	tf->tf_ap = (uintptr_t) sp + 20;
+	tf->tf_sp = (long) sp;
+	tf->tf_fp = (long) sp;
+	tf->tf_pc = (long) upcall + 2;
+	tf->tf_psl = (long) PSL_U | PSL_PREVU;
 }
 
 void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
-	const struct pcb *pcb = lwp_getpcb(l);
-	const struct trapframe *tf = pcb->framep;
+	const struct trapframe * const tf = l->l_md.md_utf;
 	__greg_t *gr = mcp->__gregs;
 
-	gr[_REG_R0] = tf->r0;
-	gr[_REG_R1] = tf->r1;
-	gr[_REG_R2] = tf->r2;
-	gr[_REG_R3] = tf->r3;
-	gr[_REG_R4] = tf->r4;
-	gr[_REG_R5] = tf->r5;
-	gr[_REG_R6] = tf->r6;
-	gr[_REG_R7] = tf->r7;
-	gr[_REG_R8] = tf->r8;
-	gr[_REG_R9] = tf->r9;
-	gr[_REG_R10] = tf->r10;
-	gr[_REG_R11] = tf->r11;
-	gr[_REG_AP] = tf->ap;
-	gr[_REG_FP] = tf->fp;
-	gr[_REG_SP] = tf->sp;
-	gr[_REG_PC] = tf->pc;
-	gr[_REG_PSL] = tf->psl;
+	gr[_REG_R0] = tf->tf_r0;
+	gr[_REG_R1] = tf->tf_r1;
+	gr[_REG_R2] = tf->tf_r2;
+	gr[_REG_R3] = tf->tf_r3;
+	gr[_REG_R4] = tf->tf_r4;
+	gr[_REG_R5] = tf->tf_r5;
+	gr[_REG_R6] = tf->tf_r6;
+	gr[_REG_R7] = tf->tf_r7;
+	gr[_REG_R8] = tf->tf_r8;
+	gr[_REG_R9] = tf->tf_r9;
+	gr[_REG_R10] = tf->tf_r10;
+	gr[_REG_R11] = tf->tf_r11;
+	gr[_REG_AP] = tf->tf_ap;
+	gr[_REG_FP] = tf->tf_fp;
+	gr[_REG_SP] = tf->tf_sp;
+	gr[_REG_PC] = tf->tf_pc;
+	gr[_REG_PSL] = tf->tf_psl;
 	*flags |= _UC_CPU;
 }
 
 int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf = pcb->framep;
+	struct trapframe * const tf = l->l_md.md_utf;
 	const __greg_t *gr = mcp->__gregs;
 
 	if ((flags & _UC_CPU) == 0)
@@ -724,23 +707,23 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	    (gr[_REG_PSL] & PSL_CM))
 		return (EINVAL);
 
-	tf->r0 = gr[_REG_R0];
-	tf->r1 = gr[_REG_R1];
-	tf->r2 = gr[_REG_R2];
-	tf->r3 = gr[_REG_R3];
-	tf->r4 = gr[_REG_R4];
-	tf->r5 = gr[_REG_R5];
-	tf->r6 = gr[_REG_R6];
-	tf->r7 = gr[_REG_R7];
-	tf->r8 = gr[_REG_R8];
-	tf->r9 = gr[_REG_R9];
-	tf->r10 = gr[_REG_R10];
-	tf->r11 = gr[_REG_R11];
-	tf->ap = gr[_REG_AP];
-	tf->fp = gr[_REG_FP];
-	tf->sp = gr[_REG_SP];
-	tf->pc = gr[_REG_PC];
-	tf->psl = gr[_REG_PSL];
+	tf->tf_r0 = gr[_REG_R0];
+	tf->tf_r1 = gr[_REG_R1];
+	tf->tf_r2 = gr[_REG_R2];
+	tf->tf_r3 = gr[_REG_R3];
+	tf->tf_r4 = gr[_REG_R4];
+	tf->tf_r5 = gr[_REG_R5];
+	tf->tf_r6 = gr[_REG_R6];
+	tf->tf_r7 = gr[_REG_R7];
+	tf->tf_r8 = gr[_REG_R8];
+	tf->tf_r9 = gr[_REG_R9];
+	tf->tf_r10 = gr[_REG_R10];
+	tf->tf_r11 = gr[_REG_R11];
+	tf->tf_ap = gr[_REG_AP];
+	tf->tf_fp = gr[_REG_FP];
+	tf->tf_sp = gr[_REG_SP];
+	tf->tf_pc = gr[_REG_PC];
+	tf->tf_psl = gr[_REG_PSL];
 	return 0;
 }
 
