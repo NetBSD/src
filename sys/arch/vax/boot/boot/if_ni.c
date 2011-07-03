@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.8 2009/10/26 19:16:58 cegger Exp $ */
+/*	$NetBSD: if_ni.c,v 1.9 2011/07/03 08:56:25 mrg Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -194,6 +194,7 @@ niopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	struct ni_msg *msg;
 	struct ni_ptdb *ptdb;
 	int i, va, res;
+	struct ni_param *nip;
 
 	if (beenhere++ && askname == 0)
 		return 0;
@@ -368,7 +369,8 @@ niopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	msg->nm_status = 0;
 	msg->nm_len = sizeof(struct ni_param) + 6;
 	msg->nm_opcode2 = NI_WPARAM;
-	((struct ni_param *)&msg->nm_text[0])->np_flags = NP_PAD;
+	nip = (struct ni_param *)&msg->nm_text[0];
+	nip->np_flags = NP_PAD;
 
 	puton(msg, &gvp->nc_forw0, PCR_CMDQNE|PCR_CMDQ0|PCR_OWN);
 
@@ -383,8 +385,7 @@ niopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 		insput(data, &fqb->nf_mforw, PCR_FREEQNE|PCR_MFREEQ|PCR_OWN);
 	}
 #endif
-	bcopy(((struct ni_param *)&msg->nm_text[0])->np_dpa,
-	    enaddr, ETHER_ADDR_LEN);
+	bcopy(nip->np_dpa, enaddr, ETHER_ADDR_LEN);
 	insput(data, &fqb->nf_mforw, PCR_FREEQNE|PCR_MFREEQ|PCR_OWN);
 
 #ifdef NIDEBUG
