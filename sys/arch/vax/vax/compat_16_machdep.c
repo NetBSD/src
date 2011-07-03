@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.3 2010/12/14 23:44:49 matt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.4 2011/07/03 02:18:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4 2011/07/03 02:18:21 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -120,14 +120,11 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	/* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */
-	struct proc *p = l->l_proc;
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *scf;
-	struct sigcontext *ucntx;
+	struct proc * const p = l->l_proc;
+	struct trapframe * const tf = l->l_md.md_utf;
+	struct sigcontext * const ucntx = SCARG(uap, sigcntxp);
 	struct sigcontext ksc;
 
-	scf = pcb->framep;
-	ucntx = SCARG(uap, sigcntxp);
 
 	if (copyin((void *)ucntx, (void *)&ksc, sizeof(struct sigcontext)))
 		return EINVAL;
@@ -143,15 +140,16 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &ksc.sc_mask, 0);
 	mutex_exit(p->p_lock);
 
-	scf->fp = ksc.sc_fp;
-	scf->ap = ksc.sc_ap;
-	scf->pc = ksc.sc_pc;
-	scf->sp = ksc.sc_sp;
-	scf->psl = ksc.sc_ps;
+	tf->tf_fp = ksc.sc_fp;
+	tf->tf_ap = ksc.sc_ap;
+	tf->tf_pc = ksc.sc_pc;
+	tf->tf_sp = ksc.sc_sp;
+	tf->tf_psl = ksc.sc_ps;
 	return (EJUSTRETURN);
 }
 
@@ -177,15 +175,15 @@ setupstack_sigcontext2(const struct ksiginfo *ksi, const sigset_t *mask,
 {
 	struct trampoline2 tramp;
 	struct sigcontext sigctx;
-	struct proc *p = l->l_proc;
+	struct proc * const p = l->l_proc;
 	bool error;
 
 	/* The sigcontext struct will be passed back to sigreturn().  */
-	sigctx.sc_pc = tf->pc;
-	sigctx.sc_ps = tf->psl;
-	sigctx.sc_ap = tf->ap;
-	sigctx.sc_fp = tf->fp;
-	sigctx.sc_sp = tf->sp;
+	sigctx.sc_pc = tf->tf_pc;
+	sigctx.sc_ps = tf->tf_psl;
+	sigctx.sc_ap = tf->tf_ap;
+	sigctx.sc_fp = tf->tf_fp;
+	sigctx.sc_sp = tf->tf_sp;
 	sigctx.sc_onstack = onstack ? SS_ONSTACK : 0;
 	sigctx.sc_mask = *mask;
 	sp -= sizeof(struct sigcontext);
@@ -200,7 +198,7 @@ setupstack_sigcontext2(const struct ksiginfo *ksi, const sigset_t *mask,
 	mutex_exit(p->p_lock);
 
 	/* Store the handler in the trapframe.  */
-	tf->fp = handler;
+	tf->tf_fp = handler;
 
 	/* Copy out the sigcontext and trampoline.  */
 	error = (copyout(&sigctx, (char *)tramp.scp, sizeof(sigctx)) != 0 ||

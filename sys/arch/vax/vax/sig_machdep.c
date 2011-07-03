@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.20 2010/12/14 23:44:50 matt Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.21 2011/07/03 02:18:21 matt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.20 2010/12/14 23:44:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.21 2011/07/03 02:18:21 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -157,7 +157,7 @@ setupstack_siginfo3(const struct ksiginfo *ksi, const sigset_t *mask, int vers,
 	vaddr_t handler)
 {
 	struct trampoline3 tramp;
-	struct proc *p = l->l_proc;
+	struct proc * const p = l->l_proc;
 	ucontext_t uc;
 	bool error;
 
@@ -179,7 +179,7 @@ setupstack_siginfo3(const struct ksiginfo *ksi, const sigset_t *mask, int vers,
 	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
 
-	tf->fp = handler;
+	tf->tf_fp = handler;
 
 	/* Copy the context to the stack.  */
 	error = (copyout(&uc, (char *)tramp.ucp, sizeof(uc)) != 0 ||
@@ -196,12 +196,11 @@ setupstack_siginfo3(const struct ksiginfo *ksi, const sigset_t *mask, int vers,
 void
 sendsig_sighelper(const ksiginfo_t *ksi, const sigset_t *mask)
 {
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf = pcb->framep;
-	struct sigaltstack *ss = &l->l_sigstk;
-	const struct sigact_sigdesc *sd =
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	struct trapframe * const tf = l->l_md.md_utf;
+	struct sigaltstack * const ss = &l->l_sigstk;
+	const struct sigact_sigdesc * const sd =
 	    &p->p_sigacts->sa_sigdesc[ksi->ksi_signo];
 	vaddr_t sp;
 	int onstack;
@@ -210,7 +209,7 @@ sendsig_sighelper(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Figure what stack we are running on.  */
 	onstack = (ss->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (sd->sd_sigact.sa_flags & SA_ONSTACK) != 0;
-	sp = onstack ? ((vaddr_t)ss->ss_sp + ss->ss_size) : tf->sp;
+	sp = onstack ? ((vaddr_t)ss->ss_sp + ss->ss_size) : tf->tf_sp;
 
 	if (sd->sd_vers > 3 || (setup = sig_setupstacks[sd->sd_vers]) == NULL)
 		goto nosupport;
@@ -221,13 +220,13 @@ sendsig_sighelper(const ksiginfo_t *ksi, const sigset_t *mask)
 		goto nosupport;
 
 	if (sd->sd_vers == 0)
-		tf->pc = (register_t)p->p_sigctx.ps_sigcode;
+		tf->tf_pc = (register_t)p->p_sigctx.ps_sigcode;
 	else
-		tf->pc = (register_t)sd->sd_tramp;
+		tf->tf_pc = (register_t)sd->sd_tramp;
 
-	tf->psl = PSL_U | PSL_PREVU;
-	tf->sp = sp;
-	tf->ap = sp;
+	tf->tf_psl = PSL_U | PSL_PREVU;
+	tf->tf_sp = sp;
+	tf->tf_ap = sp;
 
 	if (onstack)
 		ss->ss_flags |= SS_ONSTACK;
