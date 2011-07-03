@@ -1,4 +1,4 @@
-.\"	$NetBSD: revoke.2,v 1.13 2011/07/03 20:34:52 jruoho Exp $
+.\"	$NetBSD: revoke.2,v 1.14 2011/07/03 20:36:34 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,11 +52,11 @@ for the file named by
 .Fa path .
 Subsequent operations on any such descriptors
 fail, with the exceptions that a
-.Fn read
+.Xr read 2
 from a character device file which has been revoked
 returns a count of zero (end of file),
 and a
-.Fn close
+.Xr close 2
 call will succeed.
 If the file is a special file for a device which is open,
 the device close function
