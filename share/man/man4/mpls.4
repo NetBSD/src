@@ -1,4 +1,4 @@
-.\" $NetBSD: mpls.4,v 1.5 2011/07/03 07:00:47 kefren Exp $
+.\" $NetBSD: mpls.4,v 1.6 2011/07/03 09:10:37 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,13 +75,13 @@ In network bit order:
 |               |        |       |        |
 -------------------------------------------
 .Ed
-.Bl -tag -width "Bottom of stack"
+.Bl -tag -width "Bottom of Stack"
 .It Label
 20 bits representing FEC, consequently the only information
 used to forward the frame to next-hop
 .It Experimental
 3 bits that are sometimes used for specifying a type of service
-.It Bottom of stack
+.It Bottom of Stack
 1 bit that is set for the last entry in the shim
 stack and 0 for all others.
 This way, multiple labels can
@@ -220,7 +220,7 @@ Route MPLS packets encapsulated with label 60 to 192.168.1.100 and POP label
 .It
 Route IP packets into MPLS domain and prepend more tags
 .Bd -literal
-# route add 10/8 -ifa 192.168.1.200 -ifp mpls0 -tag 20,30,40 -inet 192.168.1.100 
+# route add 10/8 -ifa 192.168.1.200 -ifp mpls0 -tag 20,30,40 -inet 192.168.1.100
 .Ed
 For the above example, tag 20 will be inserted at Bottom of Stack, while tag 40
 will be set into the outermost shim.
