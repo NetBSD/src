@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.105 2011/07/01 02:10:09 mrg Exp $
+# $NetBSD: md.sparc64,v 1.106 2011/07/03 22:47:25 mrg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -416,6 +416,11 @@
 ./usr/lib/sparc/libgcov_g.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libgcov_p.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libgcov_pic.a			comp-obsolete		obsolete
+./usr/lib/sparc/libgmp.a			comp-c-lib		compat,gcc=45
+./usr/lib/sparc/libgmp.so			base-sys-shlib		compat,pic,gcc=45
+./usr/lib/sparc/libgmp_g.a			-unknown-		compat,debuglib,gcc=45
+./usr/lib/sparc/libgmp_p.a			comp-c-proflib		compat,profile,gcc=45
+./usr/lib/sparc/libgmp_pic.a			comp-c-piclib		compat,pic,gcc=45
 ./usr/lib/sparc/libgnumalloc.a			comp-c-lib		compat
 ./usr/lib/sparc/libgnumalloc.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libgnumalloc_g.a		-unknown-		compat,debuglib
@@ -576,6 +581,16 @@
 ./usr/lib/sparc/libmj_g.a			-unknown-		compat,debuglib,crypto
 ./usr/lib/sparc/libmj_p.a			comp-c-proflib		compat,profile,crypto
 ./usr/lib/sparc/libmj_pic.a			comp-c-piclib		compat,pic,crypto
+./usr/lib/sparc/libmpc.a			comp-c-lib		compat,gcc=45
+./usr/lib/sparc/libmpc.so			base-sys-shlib		compat,pic,gcc=45
+./usr/lib/sparc/libmpc_g.a			-unknown-		compat,debuglib,gcc=45
+./usr/lib/sparc/libmpc_p.a			comp-c-proflib		compat,profile,gcc=45
+./usr/lib/sparc/libmpc_pic.a			comp-c-piclib		compat,pic,gcc=45
+./usr/lib/sparc/libmpfr.a			comp-c-lib		compat,gcc=45
+./usr/lib/sparc/libmpfr.so			base-sys-shlib		compat,pic,gcc=45
+./usr/lib/sparc/libmpfr_g.a			-unknown-		compat,debuglib,gcc=45
+./usr/lib/sparc/libmpfr_p.a			comp-c-proflib		compat,profile,gcc=45
+./usr/lib/sparc/libmpfr_pic.a			comp-c-piclib		compat,pic,gcc=45
 ./usr/lib/sparc/libnetpgp.a			comp-c-lib		compat,crypto
 ./usr/lib/sparc/libnetpgp.so			comp-sys-shlib		compat,pic,crypto
 ./usr/lib/sparc/libnetpgp_g.a			-unknown-		compat,debuglib,crypto
@@ -925,8 +940,8 @@
 ./usr/libdata/debug/usr/lib/sparc/libpam.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpcap.so.4.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpci.so.2.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libposix.so.0.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libperfuse.so.0.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libposix.so.0.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libprop.so.1.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpthread.so.1.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpthread_dbg.so.2.0.debug		comp-compat-shlib	compat,pic,debug
