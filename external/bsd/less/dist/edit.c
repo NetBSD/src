@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: edit.c,v 1.3 2011/07/03 20:14:12 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -29,7 +29,7 @@ extern int sigs;
 extern IFILE curr_ifile;
 extern IFILE old_ifile;
 extern struct scrpos initial_scrpos;
-extern void constant *ml_examine;
+extern void *constant ml_examine;
 #if SPACES_IN_FILENAMES
 extern char openquote;
 extern char closequote;
@@ -49,6 +49,11 @@ public ino_t curr_ino;
 char *curr_altfilename = NULL;
 static void *curr_altpipe;
 
+
+static void close_file __P((void));
+static int edit_istep __P((IFILE, int, int));
+static int edit_inext __P((IFILE, int));
+static int edit_iprev __P((IFILE, int));
 
 /*
  * Textlist functions deal with a list of words separated by spaces.
@@ -322,7 +327,7 @@ edit_ifile(ifile)
 		 * It looks like a bad file.  Don't try to open it.
 		 */
 		error("%s", &parg);
-		free(parg.p_string);
+		free((void *)parg.p_string);
 	    err1:
 		if (alt_filename != NULL)
 		{
@@ -352,7 +357,7 @@ edit_ifile(ifile)
 		 */
 		parg.p_string = errno_message(filename);
 		error("%s", &parg);
-		free(parg.p_string);
+		free((void *)parg.p_string);
 	    	goto err1;
 	} else 
 	{
@@ -744,7 +749,8 @@ use_logfile(filename)
 	 */
 	filename = shell_unquote(filename);
 	exists = open(filename, OPEN_READ);
-	close(exists);
+	if (exists >= 0)
+		close(exists);
 	exists = (exists >= 0);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: signal.c,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -28,6 +28,12 @@
  * "sigs" contains bits indicating signals which need to be processed.
  */
 public int sigs;
+
+static RETSIGTYPE u_interrupt __P((int));
+static RETSIGTYPE stop __P((int));
+#if MSDOS_COMPILER==WIN32C
+static BOOL WINAPI wbreak_handler __P((DWORD));
+#endif
 
 extern int sc_width, sc_height;
 extern int screen_trashed;

@@ -1,4 +1,4 @@
-/*	$NetBSD: filename.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: filename.c,v 1.3 2011/07/03 20:14:12 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -61,6 +61,12 @@ extern IFILE old_ifile;
 extern char openquote;
 extern char closequote;
 #endif
+
+static char *dirfile __P((char *, char *));
+static POSITION seek_filesize __P((int));
+static char *readfd __P((FILE *));
+static int metachar __P((int));
+static FILE *shellcmd __P((char *));
 
 /*
  * Remove quotes around a filename.

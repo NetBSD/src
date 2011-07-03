@@ -1,4 +1,4 @@
-/*	$NetBSD: decode.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: decode.c,v 1.3 2011/07/03 20:14:12 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -225,6 +225,11 @@ static struct tablelist *list_ecmd_tables = NULL;
 static struct tablelist *list_var_tables = NULL;
 static struct tablelist *list_sysvar_tables = NULL;
 
+static int add_cmd_table __P((struct tablelist **, char *, int));
+static int cmd_decode __P((struct tablelist *, char *, char **));
+static int gint __P((char **));
+static int old_lesskey __P((char *, int));
+static int new_lesskey __P((char *, int, int));
 
 /*
  * Expand special key abbreviations in a command table.
@@ -749,7 +754,7 @@ editchar(c, flags)
 {
 	int action;
 	int nch;
-	char *s;
+	char *s = NULL;	/* XXX: GCC */
 	char usercmd[MAX_CMDLEN+1];
 	
 	/*
