@@ -1,4 +1,4 @@
-/* $NetBSD: t_mknod.c,v 1.2 2011/07/03 15:42:07 jruoho Exp $ */
+/* $NetBSD: t_mknod.c,v 1.3 2011/07/03 19:02:00 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mknod.c,v 1.2 2011/07/03 15:42:07 jruoho Exp $");
+__RCSID("$NetBSD: t_mknod.c,v 1.3 2011/07/03 19:02:00 jruoho Exp $");
 
 #include <sys/stat.h>
 
@@ -121,7 +121,7 @@ ATF_TC_BODY(mknod_stat, tc)
 	ATF_REQUIRE(stat(path, &st) == 0);
 
 	if (S_ISCHR(st.st_mode) == 0)
-		atf_tc_fail_nonfatal("invalid mode from mknod(2) (S_IFBLK)");
+		atf_tc_fail_nonfatal("invalid mode from mknod(2) (S_IFCHR)");
 
 	ATF_REQUIRE(unlink(path) == 0);
 
