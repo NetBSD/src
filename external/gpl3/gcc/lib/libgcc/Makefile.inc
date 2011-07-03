@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2011/07/01 10:04:13 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2011/07/03 08:35:41 mrg Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -151,21 +151,31 @@ dp-bit.c: ${.CURDIR}/Makefile
 .include "../Makefile.tconfigh"
 DPSRCS+=	tconfig.h
 
-${SRCS}: unwind.h
+# XXX figure out why Makefile.hacks doesn't work
 BUILDSYMLINKS+=	${G_UNWIND_H} unwind.h
 DPSRCS+=	unwind.h
 
-.include "../../Makefile.hacks"
+# these aren't necessary but are #include'd
+FAKEHEADERS=options.h insn-flags.h insn-constants.h sysroot-suffix.h
+${FAKEHEADERS}:
+	${_MKTARGET_CREATE}
+	touch ${.TARGET}
+DPSRCS+=	${FAKEHEADERS}
+CLEANFILES+=	${FAKEHEADERS}
 
-${SRCS}: options.h
+# XXX arm hack
+.if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "armeb"
+${SRCS}: insn-modes.h
+# XXX XXX
+${__DPSRCS.d}: insn-modes.h
+insn-modes.h:
+	${_MKTARGET_CREATE}
+	echo "enum machine_mode { X };" > ${.TARGET}
+DPSRCS+=	insn-modes.h
+CLEANFILES+=	insn-modes.h
+.endif
 
-optionlist: ${G_ALL_OPT_FILES} ${GCCARCH}/defs.mk Makefile ${DIST}/gcc/opt-gather.awk
-	${TOOL_AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} \
-		> ${.TARGET}
-
-options.h: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opth-gen.awk
-	${TOOL_AWK} -f ${DIST}/gcc/opt-functions.awk \
-		-f ${DIST}/gcc/opth-gen.awk \
-		< optionlist > ${.TARGET}
-
-CLEANFILES+=	options.h optionlist
+# XXX
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 45 && ${MACHINE_ARCH} == "m68k"
+COPTS._fixunsxfdi.c+=	-O0
+.endif
