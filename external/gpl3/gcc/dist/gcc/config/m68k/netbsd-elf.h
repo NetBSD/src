@@ -85,6 +85,11 @@ along with GCC; see the file COPYING3.  If not see
 #undef LINK_SPEC
 #define LINK_SPEC NETBSD_LINK_SPEC_ELF
 
+/* NetBSD/sun2 does not support shlibs, avoid using libgcc_pic.  */
+#if TARGET_DEFAULT_CPU == 0
+#undef REAL_LIBGCC_SPEC
+#endif
+
 #define NETBSD_ENTRY_POINT "_start"
 
 /* Output assembler code to FILE to increment profiler label # LABELNO
