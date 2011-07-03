@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2011/07/03 06:46:49 mrg Exp $
+# $NetBSD: Makefile,v 1.7 2011/07/03 15:28:25 mrg Exp $
 #
 
 NOMAN=		# defined
@@ -48,6 +48,11 @@ SRCS.h_dl_symver_v2=	h_dl_symver.c
 V2ODIR!=		cd ${.CURDIR}/helper_symver_dso2 && ${PRINTOBJDIR}
 LDADD.h_dl_symver_v2=	-L${V2ODIR} -lh_helper_symver_dso
 
-.endif
-
 .include <bsd.test.mk>
+
+.else
+
+NOPROG=	# defined
+.include <bsd.prog.mk>
+
+.endif
