@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1322 2011/06/27 11:52:23 uch Exp $
+# $NetBSD: mi,v 1.1323 2011/07/03 21:59:31 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -246,6 +246,7 @@
 ./usr/share/man/cat1/ldd.0			man-util-catman		.cat
 ./usr/share/man/cat1/leave.0			man-util-catman		.cat
 ./usr/share/man/cat1/less.0			man-util-catman		.cat
+./usr/share/man/cat1/lessecho.0			man-util-catman		.cat
 ./usr/share/man/cat1/lesskey.0			man-util-catman		.cat
 ./usr/share/man/cat1/limit.0			man-util-catman		.cat
 ./usr/share/man/cat1/linkfarm.0			man-obsolete		obsolete
@@ -3106,6 +3107,7 @@
 ./usr/share/man/html1/ldd.html			man-util-htmlman	html
 ./usr/share/man/html1/leave.html		man-util-htmlman	html
 ./usr/share/man/html1/less.html			man-util-htmlman	html
+./usr/share/man/html1/lessecho.html		man-util-htmlman	html
 ./usr/share/man/html1/lesskey.html		man-util-htmlman	html
 ./usr/share/man/html1/limit.html		man-util-htmlman	html
 ./usr/share/man/html1/linkfarm.html		man-obsolete		obsolete
@@ -5609,6 +5611,7 @@
 ./usr/share/man/man1/ldd.1			man-util-man		.man
 ./usr/share/man/man1/leave.1			man-util-man		.man
 ./usr/share/man/man1/less.1			man-util-man		.man
+./usr/share/man/man1/lessecho.1			man-util-man		.man
 ./usr/share/man/man1/lesskey.1			man-util-man		.man
 ./usr/share/man/man1/limit.1			man-util-man		.man
 ./usr/share/man/man1/linkfarm.1			man-obsolete		obsolete
