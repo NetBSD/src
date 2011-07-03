@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.h,v 1.23 2010/11/13 02:23:27 matt Exp $     */
+/*      $NetBSD: trap.h,v 1.24 2011/07/03 02:18:20 matt Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,25 +81,25 @@
 
 #ifndef _LOCORE
 struct	trapframe {
-	long	fp;	/* Stack frame pointer */
-	long	ap;     /* Argument pointer on user stack */
-	long	sp;	/* Stack pointer */
-	long	r0;     /* General registers saved upon trap/syscall */
-	long	r1;
-	long	r2;
-	long	r3;
-	long	r4;
-	long	r5;
-	long	r6;
-	long	r7;
-	long	r8;
-	long	r9;
-	long	r10;
-	long	r11;
-	long	trap;	/* Type of trap */
-        long	code;   /* Trap specific code */
-        long	pc;     /* User pc */
-        long	psl;    /* User psl */
+	long	tf_fp;	/* Stack frame pointer */
+	long	tf_ap;     /* Argument pointer on user stack */
+	long	tf_sp;	/* Stack pointer */
+	long	tf_r0;     /* General registers saved upon trap/syscall */
+	long	tf_r1;
+	long	tf_r2;
+	long	tf_r3;
+	long	tf_r4;
+	long	tf_r5;
+	long	tf_r6;
+	long	tf_r7;
+	long	tf_r8;
+	long	tf_r9;
+	long	tf_r10;
+	long	tf_r11;
+	long	tf_trap;	/* Type of trap */
+        long	tf_code;   /* Trap specific code */
+        long	tf_pc;     /* User pc */
+        long	tf_psl;    /* User psl */
 };
 
 #endif /* _LOCORE */
