@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.156 2010/07/01 02:38:31 rmind Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.157 2011/07/03 08:57:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.156 2010/07/01 02:38:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.157 2011/07/03 08:57:43 mrg Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -242,7 +242,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	int resume_all;
 	ksiginfo_t ksi;
 	char *path;
-	int len;
+	int len = 0;
 
 	error = 0;
 	req = SCARG(uap, req);
