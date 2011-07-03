@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.18 2010/12/20 00:25:45 matt Exp $     */
+/*	$NetBSD: syscall.c,v 1.19 2011/07/03 02:18:21 matt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18 2010/12/20 00:25:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19 2011/07/03 02:18:21 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
@@ -67,39 +67,37 @@ syscall_intern(struct proc *p)
 }
 
 void
-syscall(struct trapframe *frame)
+syscall(struct trapframe *tf)
 {
 	int error;
 	int rval[2];
 	int args[2+SYS_MAXSYSARGS]; /* add two for SYS___syscall + padding */
-	struct trapframe * const exptr = frame;
 	struct lwp * const l = curlwp;
 	struct proc * const p = l->l_proc;
-	struct pcb *pcb = lwp_getpcb(l);
 	const struct emul * const emul = p->p_emul;
 	const struct sysent *callp = emul->e_sysent;
 	const u_quad_t oticks = p->p_sticks;
 
 	TDB(("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n",
-	    syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
+	    syscallnames[tf->tf_code], tf->tf_pc, tf->tf_psl,tf->tf_sp,
 	    p->p_pid,frame));
 
 	curcpu()->ci_data.cpu_nsyscall++;
  
  	LWP_CACHE_CREDS(l, p);
 
-	pcb->framep = frame;
+	l->l_md.md_utf = tf;
 
-	if ((unsigned long) frame->code >= emul->e_nsysent)
+	if ((unsigned long) tf->tf_code >= emul->e_nsysent)
 		callp += emul->e_nosys;
 	else
-		callp += frame->code;
+		callp += tf->tf_code;
 
 	rval[0] = 0;
-	rval[1] = frame->r1;
+	rval[1] = tf->tf_r1;
 
 	if (callp->sy_narg) {
-		error = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
+		error = copyin((char*)tf->tf_ap + 4, args, callp->sy_argsize);
 		if (error)
 			goto bad;
 	}
@@ -116,20 +114,19 @@ syscall(struct trapframe *frame)
 	 */
 	if (__predict_true(!p->p_trace_enabled)
 	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
-	    || (error = trace_enter(frame->code, args, callp->sy_narg)) == 0) {
+	    || (error = trace_enter(tf->tf_code, args, callp->sy_narg)) == 0) {
 		error = sy_call(callp, curlwp, args, rval);
 	}
 
-	KASSERT(exptr == pcb->framep);
 	TDB(("return %s pc %lx, psl %lx, sp %lx, pid %d, err %d r0 %d, r1 %d, "
-	    "frame %p\n", syscallnames[exptr->code], exptr->pc, exptr->psl,
-	    exptr->sp, p->p_pid, error, rval[0], rval[1], exptr));
+	    "tf %p\n", syscallnames[tf->tf_code], tf->tf_pc, tf->tf_psl,
+	    tf->tf_sp, p->p_pid, error, rval[0], rval[1], exptr));
 bad:
 	switch (error) {
 	case 0:
-		exptr->r1 = rval[1];
-		exptr->r0 = rval[0];
-		exptr->psl &= ~PSL_C;
+		tf->tf_r1 = rval[1];
+		tf->tf_r0 = rval[0];
+		tf->tf_psl &= ~PSL_C;
 		break;
 
 	case EJUSTRETURN:
@@ -137,28 +134,27 @@ bad:
 
 	case ERESTART:
 		/* assumes CHMK $n was used */
-		exptr->pc -= (exptr->code > 63 ? 4 : 2);
+		tf->tf_pc -= (tf->tf_code > 63 ? 4 : 2);
 		break;
 
 	default:
-		exptr->r0 = error;
-		exptr->psl |= PSL_C;
+		tf->tf_r0 = error;
+		tf->tf_psl |= PSL_C;
 		break;
 	}
 
 	if (__predict_false(p->p_trace_enabled)
 	    && __predict_true(!(callp->sy_flags & SYCALL_INDIRECT)))
-		trace_exit(frame->code, rval, error);
+		trace_exit(tf->tf_code, rval, error);
 
-	userret(l, frame, oticks);
+	userret(l, tf, oticks);
 }
 
 void
 child_return(void *arg)
 {
 	struct lwp *l = arg;
-	struct pcb *pcb = lwp_getpcb(l);
 
-	userret(l, pcb->framep, 0);
+	userret(l, l->l_md.md_utf, 0);
 	ktrsysret(SYS_fork, 0, 0);
 }
