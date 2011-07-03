@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.17 2011/03/15 07:33:36 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.18 2011/07/03 10:34:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ typedef struct {
 #elif __mips_n64
 #define	__UCONTEXT_SIZE		__UCONTEXT_SIZE_N64
 #define	__UCONTEXT32_SIZE	__UCONTEXT_SIZE_N32
-#elif
+#else
 #error O64 is not supported
 #endif
 
