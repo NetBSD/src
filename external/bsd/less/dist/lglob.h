@@ -1,4 +1,4 @@
-/*	$NetBSD: lglob.h,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: lglob.h,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -36,7 +36,7 @@
 #else
 #if MSDOS_COMPILER==DJGPPC
 
-#define	DECL_GLOB_LIST(list)		glob_t list;  int i;
+#define	DECL_GLOB_LIST(list)		glob_t list;  size_t i;
 #define	GLOB_LIST(filename,list)	glob(filename,GLOB_NOCHECK,0,&list)
 #define	GLOB_LIST_FAILED(list)		0
 #define	SCAN_GLOB_LIST(list,p)		i = 0;  i < list.gl_pathc;  i++

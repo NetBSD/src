@@ -1,4 +1,4 @@
-/*	$NetBSD: ifile.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: ifile.c,v 1.3 2011/07/03 20:14:12 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -50,6 +50,12 @@ struct ifile {
 static struct ifile anchor = { &anchor, &anchor, NULL, NULL, 0, 0, '\0',
 				{ NULL_POSITION, 0 } };
 static int ifiles = 0;
+
+static void incr_index __P((struct ifile *, int));
+static void link_ifile __P((struct ifile *, struct ifile *));
+static void unlink_ifile __P((struct ifile *));
+static struct ifile *new_ifile __P((char *, struct ifile *));
+static struct ifile *find_ifile __P((char *));
 
 	static void
 incr_index(p, incr)

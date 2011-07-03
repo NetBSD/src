@@ -1,4 +1,4 @@
-/*	$NetBSD: brac.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: brac.c,v 1.3 2011/07/03 20:14:12 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -36,9 +36,7 @@ match_brac(obrac, cbrac, forwdir, n)
 	register int c;
 	register int nest;
 	POSITION pos;
-	int (*chget)();
-
-	extern int ch_forw_get(), ch_back_get();
+	int (*chget) __P((void));
 
 	/*
 	 * Seek to the line containing the open bracket.

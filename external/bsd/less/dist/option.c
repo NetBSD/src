@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: option.c,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -26,8 +26,9 @@
 static struct loption *pendopt;
 public int plusoption = FALSE;
 
-static char *optstring();
-static int flip_triple();
+static char *optstring __P((char *, char **, char *, char *));
+static int flip_triple __P((int, int));
+static void nostring __P((char *));
 
 extern int screen_trashed;
 extern int less_is_more;
@@ -448,6 +449,8 @@ toggle_option(o, lower, s, how_toggle)
 		{
 		case BOOL:
 		case TRIPLE:
+			if (*(o->ovar) < 0)
+				error("Negative option is invalid", NULL_PARG);
 			/*
 			 * Print the odesc message.
 			 */

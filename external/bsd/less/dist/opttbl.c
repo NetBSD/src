@@ -1,4 +1,4 @@
-/*	$NetBSD: opttbl.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: opttbl.c,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -30,6 +30,7 @@ public int bs_mode;		/* How to process backspaces */
 public int know_dumb;		/* Don't complain about dumb terminals */
 public int quit_at_eof;		/* Quit after hitting end of file twice */
 public int quit_if_one_screen;	/* Quit if EOF on first screen */
+public int be_helpful;		/* more(1) style -d */
 public int squeeze;		/* Squeeze multiple blank lines into one */
 public int tabstop;		/* Tab settings */
 public int back_scroll;		/* Repaint screen on backwards movement */
@@ -167,7 +168,15 @@ static struct loption option[] =
 			"Repaint by painting from top of screen"
 		}
 	},
+#if 1
 	{ 'd', &d_optname,
+		BOOL, OPT_OFF, &be_helpful, NULL,
+		{ "Be less helpful in prompts",
+		"Be helpful in prompts", 
+		NULL }
+	},
+#endif
+	{ -1, &d_optname,
 		BOOL|NO_TOGGLE, OPT_OFF, &know_dumb, NULL,
 		{
 			"Assume intelligent terminal",

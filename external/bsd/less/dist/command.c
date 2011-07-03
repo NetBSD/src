@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: command.c,v 1.3 2011/07/03 20:14:12 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -56,6 +56,10 @@ extern int screen_trashed;	/* The screen has been overwritten */
 extern int shift_count;
 extern int oldbot;
 extern int forw_prompt;
+extern int be_helpful;
+extern int more_mode;
+
+static int helpprompt;
 
 #if SHELL_ESCAPE
 static char *shellcmd = NULL;	/* For holding last shell command for "!!" */
@@ -478,21 +482,25 @@ mca_search_char(c)
 	 * Certain characters as the first char of 
 	 * the pattern have special meaning:
 	 *	!  Toggle the NO_MATCH flag
-	 *	*  Toggle the PAST_EOF flag
-	 *	@  Toggle the FIRST_FILE flag
+	 *	*  Toggle the PAST_EOF flag (less extension)
+	 *	@  Toggle the FIRST_FILE flag (less extension)
 	 */
 	if (len_cmdbuf() > 0)
 		return (NO_MCA);
 
 	switch (c)
 	{
-	case CONTROL('E'): /* ignore END of file */
 	case '*':
+		if (more_mode)
+			break;
+	case CONTROL('E'): /* ignore END of file */
 		if (mca != A_FILTER)
 			flag = SRCH_PAST_EOF;
 		break;
-	case CONTROL('F'): /* FIRST file */
 	case '@':
+		if (more_mode)
+			break;
+	case CONTROL('F'): /* FIRST file */
 		if (mca != A_FILTER)
 			flag = SRCH_FIRST_FILE;
 		break;
@@ -739,16 +747,23 @@ prompt()
 		clear_bot();
 	clear_cmd();
 	forw_prompt = 0;
-	p = pr_string();
-	if (is_filtering())
-		putstr("& ");
-	if (p == NULL || *p == '\0')
-		putchr(':');
-	else
-	{
+	if (helpprompt) {
 		at_enter(AT_STANDOUT);
-		putstr(p);
+		putstr("[Press 'h' for instructions.]");
 		at_exit();
+		helpprompt = 0;
+	} else {
+		p = pr_string();
+		if (is_filtering())
+			putstr("& ");
+		if (p == NULL || *p == '\0')
+			putchr(':');
+		else
+		{
+			at_enter(AT_STANDOUT);
+			putstr(p);
+			at_exit();
+		}
 	}
 	clear_eol();
 }
@@ -1758,7 +1773,10 @@ commands()
 			break;
 
 		default:
-			bell();
+			if (be_helpful)
+				helpprompt = 1;
+			else
+				bell();
 			break;
 		}
 	}

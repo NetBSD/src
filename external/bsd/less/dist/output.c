@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: output.c,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -438,7 +438,7 @@ less_printf(fmt, parg)
 	register char *fmt;
 	PARG *parg;
 {
-	register char *s;
+	register constant char *s;
 	register int col;
 
 	col = 0;

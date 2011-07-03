@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: search.c,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -701,7 +701,7 @@ search_range(pos, endpos, search_type, matches, maxlines, plinepos, pendpos)
 	char *cline;
 	int line_len;
 	LINENUM linenum;
-	char *sp, *ep;
+	char *sp = NULL, *ep = NULL;	/* XXX: GCC */
 	int line_match;
 	int cvt_ops;
 	int cvt_len;

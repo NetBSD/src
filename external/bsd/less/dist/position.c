@@ -1,4 +1,4 @@
-/*	$NetBSD: position.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: position.c,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -109,6 +109,7 @@ pos_clear()
 pos_init()
 {
 	struct scrpos scrpos;
+	scrpos.pos = scrpos.ln = 0;	/* XXX: GCC */
 
 	if (sc_height <= table_size)
 		return;
