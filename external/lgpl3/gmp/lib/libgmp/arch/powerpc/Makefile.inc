@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2011/07/01 01:51:03 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2011/07/03 06:43:16 mrg Exp $
 
 SRCS+= \
 	random.c \
@@ -173,11 +173,17 @@ dummy:
 ${.OBJDIR}/config.m4: ${.CURDIR}/arch/${MACHINE_ARCH}/config.m4
 	cp ${.CURDIR}/arch/${MACHINE_ARCH}/config.m4 ${.TARGET}
 
+BUILD_S_INCS=	-I${.CURDIR} -I${.OBJDIR}/dummy -I${DIST}/ -I${DIST}/mpn
+
+M4FLAGS.mode1s.o= -DPIC
 .for _build _src in ${ASM_SRCS_LIST}
 ${_build:R}.s: Makefile dummy ${.OBJDIR}/config.m4
-	${TOOL_M4} -DCONFIG_TOP_SRCDIR=${DIST} -I${.CURDIR} -I${.OBJDIR}/dummy -I${DIST}/ -I${DIST}/mpn -DOPERATION_${.TARGET:R} ${DIST}/${_src} > ${.TARGET}
+	${TOOL_M4} -DCONFIG_TOP_SRCDIR=${DIST} ${BUILD_S_INCS} \
+		${M4FLAGS.${.TARGET:R}} \
+		-DOPERATION_${.TARGET:R} ${DIST}/${_src} > ${.TARGET}
 
-SRCS+=	${_build:R}.s
+SRCS+=		${_build:R}.s
+CLEANFILES+=	${_build:R}.s
 
 .endfor
 
