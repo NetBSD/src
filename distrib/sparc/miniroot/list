@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.35 2010/02/11 09:06:50 roy Exp $
+#	$NetBSD: list,v 1.36 2011/07/03 23:11:33 tron Exp $
 
 # Sparc extra's
 PROG	bin/rcmd
@@ -18,7 +18,7 @@ PROG	usr/sbin/installboot
 
 # crunchgen source directory specials
 SPECIAL	vi	srcdir usr.bin/nvi/build
-SPECIAL	less	srcdir usr.bin/less/less
+SPECIAL	less	srcdir external/bsd/less/bin/less
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
