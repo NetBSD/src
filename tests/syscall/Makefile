@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.33 2011/06/20 18:03:41 jruoho Exp $
+# $NetBSD: Makefile,v 1.34 2011/07/03 14:34:22 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ TESTS_C+=	t_access t_cmsg t_dup t_fsync
 TESTS_C+=	t_getgroups t_getlogin t_getpid
 TESTS_C+=	t_getrusage t_getsid t_gettimeofday
 TESTS_C+=	t_itimer t_kill
-TESTS_C+=	t_mincore t_mmap t_mprotect t_msync t_nanosleep
+TESTS_C+=	t_mincore t_mknod t_mmap t_mprotect t_msync t_nanosleep
 TESTS_C+=	t_poll t_pollts t_pselect
 TESTS_C+=	t_setrlimit t_setuid t_stat t_timer t_truncate t_umask
 
