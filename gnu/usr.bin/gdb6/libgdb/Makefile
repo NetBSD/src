@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2011/04/10 16:47:04 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2011/07/03 15:26:25 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -43,4 +43,8 @@ COPTS+=	-Wno-stack-protector
 
 .if ${MACHINE} == "amiga"
 COPTS.dwarf2-frame.c+=-O1
+.endif
+
+.if defined(HAVE_GCC) && HAVE_GCC == 4 && ${MACHINE} == "sun2"
+COPTS.dwarf2-frame.c+=-O0
 .endif
