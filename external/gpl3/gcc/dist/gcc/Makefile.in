@@ -767,7 +767,7 @@ BUILD_LINKERFLAGS = $(BUILD_CFLAGS)
 
 # Native linker and preprocessor flags.  For x-fragment overrides.
 BUILD_LDFLAGS=@BUILD_LDFLAGS@
-BUILD_CPPFLAGS=$(ALL_CPPFLAGS)
+BUILD_CPPFLAGS=$(BALL_CPPFLAGS)
 
 # Actual name to use when installing a native compiler.
 GCC_INSTALL_NAME := $(shell echo gcc|sed '$(program_transform_name)')
@@ -982,6 +982,7 @@ ALL_CXXFLAGS = $(T_CFLAGS) $(CXXFLAGS) $(INTERNAL_CFLAGS) \
 # puts -I options in CPPFLAGS, our include files in the srcdir will always
 # win against random include files in /usr/include.
 ALL_CPPFLAGS = $(INCLUDES) $(CPPFLAGS)
+BALL_CPPFLAGS = $(BINCLUDES) $(CPPFLAGS)
 
 # This is the variable to use when using $(COMPILER).
 ifneq ($(ENABLE_BUILD_WITH_CXX),yes)
@@ -1042,6 +1043,10 @@ BUILD_ERRORS = build/errors.o
 INCLUDES = -I. -I$(@D) -I$(srcdir) -I$(srcdir)/$(@D) \
 	   -I$(srcdir)/../include @INCINTL@ \
 	   $(CPPINC) $(GMPINC) $(DECNUMINC) \
+	   $(PPLINC) $(CLOOGINC) $(LIBELFINC)
+BINCLUDES = -I. -I$(@D) -I$(srcdir) -I$(srcdir)/$(@D) \
+	   -I$(srcdir)/../include @INCINTL@ \
+	   $(CPPINC) $(DECNUMINC) \
 	   $(PPLINC) $(CLOOGINC) $(LIBELFINC)
 
 .c.o:
