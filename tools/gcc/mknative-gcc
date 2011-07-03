@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.58 2011/07/02 13:25:05 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.59 2011/07/03 06:47:12 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -619,6 +619,11 @@ get_gcc () {
 	for f in gtyp-input.list; do
 		sed -e 's/^.*external\/gpl3\/gcc\/dist/SRCDIR/' < $_TMPDIR/gcc/$f > $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f
 	done
+
+	# special platforms
+	if [ "${MACHINE_ARCH}" = "sh3el" -o "${MACHINE_ARCH}" = "sh3eb" ]; then
+		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/sysroot-suffix.h <$_TMPDIR/gcc/sysroot-suffix.h
+	fi
 }
 
 ##### main #####
