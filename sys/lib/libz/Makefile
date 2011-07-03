@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2009/03/25 18:41:06 tls Exp $
+#	$NetBSD: Makefile,v 1.17 2011/07/03 15:29:35 mrg Exp $
 
 LIB=	z
 NOPIC=	# defined
@@ -32,3 +32,7 @@ lib${LIB}.o:: ${OBJS}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.o
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && ${MACHINE_ARCH} == "vax"
+COPTS.inftrees.c+=	-O0
+.endif

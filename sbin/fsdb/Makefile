@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2011/06/22 02:49:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.31 2011/07/03 15:29:35 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 WARNS?=	3	# XXX: sign-compare issues in ../fsck_ffs
@@ -46,6 +46,9 @@ COPTS.pass1.c+=	-fno-tree-fre -fno-tree-lrs
 .include <bsd.prog.mk>
 
 # XXX
-.if ${HAVE_GCC} == 45
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 45
 COPTS.fsdb.c+=	-Wno-error
+.if ${MACHINE_ARCH} == "vax"
+COPTS.fsdb.c+=	-O0
+.endif
 .endif
