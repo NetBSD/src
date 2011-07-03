@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.849 2011/06/28 09:17:21 jruoho Exp $
+#	$NetBSD: 3RDPARTY,v 1.850 2011/07/03 22:01:27 tron Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -508,8 +508,8 @@ http://www.kame.net/dev/cvsweb.cgi/kame/COVERAGE has functionality comparison
 among KAME/*BSD, *BSD-current and recent *BSD releases.
 
 Package:	less
-Version:	less394
-Current Vers:	less443
+Version:	less-444
+Current Vers:	less-444
 Maintainer:	Mark Nudelman <markn@greenwoodsoftware.com>
 Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
@@ -518,11 +518,9 @@ Responsible:	mrg
 License:	Less License (BSD 2-clause) or GPLv3 (v2 prior to less418)
 Notes:
 Many changes to make less act as more when invoked as more.  Beware.
-Use the src/usr.bin/less/less2netbsd script to prepare source tree
+Use the "src/external/bsd/less/less2netbsd" script to prepare source tree
 for importation.  Run ./configure before hand to generate "defines.h".
-Talk to mrg before importing any new version.  (less 381's configure
-does not detect NetBSD has a sigset_t due to a bad test; this is fixed
-by hand in defines.h.)
+Talk to mrg before importing any new version.
 
 Package:	libarchive
 Version:	2.8.0
