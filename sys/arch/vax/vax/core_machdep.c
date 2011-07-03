@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.4 2010/12/14 23:44:49 matt Exp $	     */
+/*	$NetBSD: core_machdep.c,v 1.5 2011/07/03 02:18:21 matt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5 2011/07/03 02:18:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 {
 	struct md_coredump md_core;
 	struct coreseg cseg;
-	struct pcb *pcb;
 	int error;
 
 	if (iocookie == NULL) {
@@ -66,8 +65,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 		return 0;
 	}
 
-	pcb = lwp_getpcb(l);
-	md_core.md_tf = *(struct trapframe *)pcb->framep; /*XXX*/
+	md_core.md_tf = *l->l_md.md_utf;	/*XXX*/
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
