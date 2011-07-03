@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.18 2011/06/19 02:18:31 tsutsui Exp $
+# $NetBSD: list,v 1.19 2011/07/03 23:11:34 tron Exp $
 #
 
 # The PROM provides a default kernel name of "vmunix"
@@ -138,7 +138,7 @@ PROG	usr/bin/gzip	usr/bin/gzcat usr/bin/gunzip
 # install.md still uses sort
 PROG	usr/bin/sort
 
-SPECIAL	less		srcdir	usr.bin/less/less
+SPECIAL	less		srcdir	external/bsd/less/bin/less
 SPECIAL	vi		srcdir	usr.bin/nvi/build
 
 SPECIAL	ed		srcdir	distrib/utils/x_ed
