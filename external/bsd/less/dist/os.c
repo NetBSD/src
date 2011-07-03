@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: os.c,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -62,6 +62,10 @@ public int reading;
 static jmp_buf read_label;
 
 extern int sigs;
+
+#if !HAVE_STRERROR
+static char *strerror __P((int));
+#endif
 
 /*
  * Like read() system call, but is deliberately interruptible.
@@ -235,7 +239,7 @@ strerror(err)
 errno_message(filename)
 	char *filename;
 {
-	register char *p;
+	register const char *p;
 	register char *m;
 	int len;
 #if HAVE_ERRNO

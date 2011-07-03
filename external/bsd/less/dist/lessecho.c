@@ -1,4 +1,4 @@
-/*	$NetBSD: lessecho.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: lessecho.c,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -30,7 +30,7 @@
 
 #include "less.h"
 
-static char *version = "$Revision: 1.2 $";
+static char *version = "$Revision: 1.3 $";
 
 static int quote_all = 0;
 static char openquote = '"';
@@ -39,6 +39,11 @@ static char *meta_escape = "\\";
 static char meta_escape_buf[2];
 static char metachars[64] = "";
 static int num_metachars = 0;
+
+static void pr_usage __P((void));
+static void pr_version __P((void));
+static void pr_error __P((char *));
+static long lstrtol __P((char *, int, char **));
 
 	static void
 pr_usage()

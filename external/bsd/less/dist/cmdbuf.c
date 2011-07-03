@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdbuf.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: cmdbuf.c,v 1.3 2011/07/03 20:14:12 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -22,6 +22,9 @@
 #if HAVE_STAT
 #include <sys/stat.h>
 #endif
+#if HAVE_ERRNO_H
+#include <errno.h>
+#endif
 
 extern int sc_width;
 extern int utf_mode;
@@ -34,7 +37,7 @@ static int cmd_offset;		/* Index into cmdbuf of first displayed char */
 static int literal;		/* Next input char should not be interpreted */
 
 #if TAB_COMPLETE_FILENAME
-static int cmd_complete();
+static int cmd_complete __P((int));
 /*
  * These variables are statics used by cmd_complete.
  */
@@ -46,8 +49,24 @@ static char *tk_trial;
 static struct textlist tk_tlist;
 #endif
 
-static int cmd_left();
-static int cmd_right();
+static void cmd_repaint __P((char *));
+static void cmd_home __P((void));
+static void cmd_lshift __P((void));
+static void cmd_rshift __P((void));
+static int cmd_right __P((void));
+static int cmd_left __P((void));
+static int cmd_ichar __P((char *, int));
+static int cmd_erase __P((void));
+static int cmd_delete __P((void));
+static int cmd_werase __P((void));
+static int cmd_wdelete __P((void));
+static int cmd_kill __P((void));
+static int cmd_updown __P((int));
+static int cmd_edit __P((int));
+static int cmd_istr __P((char *));
+static char *delimit_word __P((void));
+static void init_compl __P((void));
+static char *next_compl __P((int, char *));
 
 #if SPACES_IN_FILENAMES
 public char openquote = '"';
@@ -930,7 +949,7 @@ cmd_istr(str)
 	static char *
 delimit_word()
 {
-	char *word;
+	char *word = NULL;
 #if SPACES_IN_FILENAMES
 	char *p;
 	int delim_quoted = 0;
@@ -1374,10 +1393,20 @@ init_cmdhist()
 	char *filename;
 	FILE *f;
 	char *p;
+#ifdef HAVE_STAT
+	struct stat st;
+#endif
 
 	filename = histfile_name();
 	if (filename == NULL)
 		return;
+#ifdef HAVE_STAT
+	/* ignore devices/fifos; allow symlinks */
+	if (stat(filename, &st) < 0)
+		return;
+	if (!S_ISREG(st.st_mode))
+		return;
+#endif
 	f = fopen(filename, "r");
 	free(filename);
 	if (f == NULL)
