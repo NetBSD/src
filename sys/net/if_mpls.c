@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.7 2011/06/22 19:08:29 kefren Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.8 2011/07/03 18:46:12 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.7 2011/06/22 19:08:29 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.8 2011/07/03 18:46:12 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -218,7 +218,8 @@ mpls_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst, struc
 
 	while (psize <= rt_gettag(rt)->sa_len - sizeof(mh)) {
 		pms++;
-		if ((m = mpls_prepend_shim(m, &mh)) == NULL)
+		if (mh.shim.label != MPLS_LABEL_IMPLNULL &&
+		    ((m = mpls_prepend_shim(m, &mh)) == NULL))
 			return ENOBUFS;
 		memset(&mh, 0, sizeof(mh));
 		mh.s_addr = ntohl(pms->s_addr);
@@ -392,7 +393,8 @@ mpls_lse(struct mbuf *m)
 		tshim.s_addr = ntohl(htag->s_addr);
 		tshim.shim.bos = tshim.shim.exp = 0;
 		tshim.shim.ttl = mpls_defttl;
-		if ((m = mpls_prepend_shim(m, &tshim)) == NULL)
+		if (tshim.shim.label != MPLS_LABEL_IMPLNULL &&
+		    ((m = mpls_prepend_shim(m, &tshim)) == NULL))
 			return ENOBUFS;
 		psize += sizeof(tshim);
 	}
