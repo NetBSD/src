@@ -1,4 +1,4 @@
-/* $NetBSD: t_mknod.c,v 1.3 2011/07/03 19:02:00 jruoho Exp $ */
+/* $NetBSD: t_mknod.c,v 1.4 2011/07/03 20:22:51 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mknod.c,v 1.3 2011/07/03 19:02:00 jruoho Exp $");
+__RCSID("$NetBSD: t_mknod.c,v 1.4 2011/07/03 20:22:51 jruoho Exp $");
 
 #include <sys/stat.h>
 
@@ -54,9 +54,6 @@ ATF_TC_BODY(mknod_err, tc)
 	char buf[PATH_MAX + 1];
 
 	(void)memset(buf, 'x', sizeof(buf));
-
-	errno = 0;
-	ATF_REQUIRE_ERRNO(EINVAL, mknod(path, -1, 0) == -1);
 
 	/*
 	 * See the old PR kern/45111.
