@@ -1,4 +1,4 @@
-/*	$NetBSD	*/
+/*	$NetBSD: funcs.h,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
 
 	public char * save ();
 	public VOID_POINTER ecalloc ();
