@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/07/03 18:02:01 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2011/07/03 18:15:18 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -13,5 +13,8 @@ SRCS=	main.c screen.c brac.c ch.c charset.c cmdbuf.c \
 
 LDADD+=	-lcurses -ltermcap
 DPADD+=	${LIBCURSES}
+
+MLINKS=	less.1 more.1 less.1 page.1
+LINKS=	${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
 
 .include "bsd.prog.mk"
