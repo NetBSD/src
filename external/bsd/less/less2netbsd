@@ -1,3 +1,6 @@
+#!/bin/sh
+#
+#	$NetBSD: less2netbsd,v 1.4 2011/07/03 23:22:37 tron Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -86,7 +89,7 @@ do
 	then
 		NEW_FILENAME="${FILENAME}.new"
 		rm -f "${NEW_FILENAME}"
-		(echo '/*	$NetBSD: less2netbsd,v 1.3 2011/07/03 19:42:09 tron Exp $	*/'
+		(echo '/*	$NetBSD: less2netbsd,v 1.4 2011/07/03 23:22:37 tron Exp $	*/'
 		 echo ''
 		 cat "$FILENAME") >"${NEW_FILENAME}"
 		mv -f "${NEW_FILENAME}" "$FILENAME"
