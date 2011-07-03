@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2010/02/11 09:06:51 roy Exp $
+#	$NetBSD: list,v 1.14 2011/07/03 23:11:34 tron Exp $
 
 # Vax extras
 PROG	sbin/disklabel
@@ -18,7 +18,7 @@ PROG	usr/sbin/installboot
 
 # crunchgen source directory specials
 SPECIAL	vi	srcdir usr.bin/nvi/build
-SPECIAL	less	srcdir usr.bin/less/less
+SPECIAL	less	srcdir external/bsd/less/bin/less
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
