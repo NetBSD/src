@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.359 2011/07/03 17:47:15 jruoho Exp $
+# $NetBSD: mi,v 1.360 2011/07/03 21:06:56 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -642,6 +642,7 @@
 ./usr/libdata/debug/usr/tests/syscall/t_poll.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_pollts.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_pselect.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall/t_revoke.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_setrlimit.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_setuid.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_stat.debug			tests-syscall-debug	debug,atf
@@ -2391,6 +2392,7 @@
 ./usr/tests/syscall/t_poll			tests-syscall-tests	atf
 ./usr/tests/syscall/t_pollts			tests-syscall-tests	atf
 ./usr/tests/syscall/t_pselect			tests-syscall-tests	atf
+./usr/tests/syscall/t_revoke			tests-syscall-tests	atf
 ./usr/tests/syscall/t_setrlimit			tests-syscall-tests	atf
 ./usr/tests/syscall/t_setuid			tests-syscall-tests	atf
 ./usr/tests/syscall/t_stat			tests-syscall-tests	atf
