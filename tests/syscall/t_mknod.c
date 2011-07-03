@@ -1,4 +1,4 @@
-/* $NetBSD: t_mknod.c,v 1.1 2011/07/03 14:34:22 jruoho Exp $ */
+/* $NetBSD: t_mknod.c,v 1.2 2011/07/03 15:42:07 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mknod.c,v 1.1 2011/07/03 14:34:22 jruoho Exp $");
+__RCSID("$NetBSD: t_mknod.c,v 1.2 2011/07/03 15:42:07 jruoho Exp $");
 
 #include <sys/stat.h>
 
@@ -59,10 +59,8 @@ ATF_TC_BODY(mknod_err, tc)
 	ATF_REQUIRE_ERRNO(EINVAL, mknod(path, -1, 0) == -1);
 
 	/*
-	 * The following case triggers an assertion with tmpfs.
+	 * See the old PR kern/45111.
 	 */
-	atf_tc_skip("the test case may cause a panic; see PR kern/45111");
-
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EINVAL, mknod(path, S_IFCHR, -1) == -1);
 
