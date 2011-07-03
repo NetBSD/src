@@ -22,9 +22,11 @@ Boston, MA 02110-1301, USA.  */
 /* Force the default endianness and ABI flags onto the command line
    in order to make the other specs easier to write.  */
 
+#undef DRIVER_SELF_SPECS
 #define DRIVER_SELF_SPECS \
-"%{!EB:%{!EL:%(endian_spec)}}", \
-"%{!mabi=*: -mabi=n32}"
+  BASE_DRIVER_SELF_SPECS \
+  "%{!EB:%{!EL:%(endian_spec)}}", \
+  "%{!mabi=*: -mabi=n32}"
 
 /* Define default target values.  */
 
