@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.41 2011/06/19 01:53:36 christos Exp $
+#	$NetBSD: list,v 1.42 2011/07/03 22:05:01 tron Exp $
 
 SRCDIRS	bin
 
@@ -126,7 +126,7 @@ PROG	ktrace
 PROG	ktruss
 
 PROG	less		more
-SPECIAL	less		srcdir	usr.bin/less/less
+SPECIAL	less		srcdir	external/bsd/less/bin/less
 
 PROG	vi		ex
 SPECIAL vi        	srcdir  usr.bin/nvi/build
