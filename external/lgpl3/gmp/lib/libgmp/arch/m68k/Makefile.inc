@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2011/07/02 13:43:05 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2011/07/03 06:43:16 mrg Exp $
 
 SRCS+= \
 	random.c \
@@ -172,7 +172,8 @@ ${.OBJDIR}/config.m4: ${.CURDIR}/arch/${MACHINE_ARCH}/config.m4
 ${_build:R}.s: Makefile dummy ${.OBJDIR}/config.m4
 	${TOOL_M4} -DCONFIG_TOP_SRCDIR=${DIST} -I${.CURDIR} -I${.OBJDIR}/dummy -I${DIST}/ -I${DIST}/mpn -DOPERATION_${.TARGET:R} ${DIST}/${_src} > ${.TARGET}
 
-SRCS+=	${_build:R}.s
+SRCS+=		${_build:R}.s
+CLEANFILES+=	${_build:R}.s
 
 .endfor
 
