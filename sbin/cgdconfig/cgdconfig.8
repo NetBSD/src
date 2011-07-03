@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.30 2010/03/30 14:26:55 joerg Exp $
+.\" $NetBSD: cgdconfig.8,v 1.31 2011/07/03 19:05:10 dholland Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -190,7 +190,7 @@ determines if the generated key is correct.
 If the newly configured disk fails to verify, then
 .Nm
 will regenerate the key and re-configure the device.
-It only makes sense to specify a verification method if at least of the
+It only makes sense to specify a verification method if at least one of the
 key generation methods is error prone, e.g., uses a user-entered passphrase.
 The following verification methods are supported:
 .Pp
