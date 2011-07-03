@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.97 2011/04/11 23:03:38 joerg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.98 2011/07/03 22:59:46 dholland Exp $
 
 .include <bsd.init.mk>
 
@@ -273,7 +273,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@includedir@,\\$$\{prefix\}/include,; \
 		s,@datarootdir@,\\$$\{prefix\}/share,; \
 		s,@datadir@,\\$$\{datarootdir\},; \
-		s,@appdefaultdir@,\\$$\{libdir}/X11/app-default,; \
+		s,@appdefaultdir@,\\$$\{libdir}/X11/app-defaults,; \
 		s,@MAPDIR@,\\$$\{libdir\}/X11/fonts/util,; \
 		s,@ICONDIR@,\\$$\{datarootdir\}/icons,; \
 		s,@PACKAGE_VERSION@,$${_pkg_version},; \
