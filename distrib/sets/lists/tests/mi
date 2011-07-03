@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.358 2011/07/03 15:24:49 mrg Exp $
+# $NetBSD: mi,v 1.359 2011/07/03 17:47:15 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -632,6 +632,7 @@
 ./usr/libdata/debug/usr/tests/syscall/t_gettimeofday.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_itimer.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_kill.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall/t_link.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_mincore.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_mknod.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_mmap.debug			tests-syscall-debug	debug,atf
@@ -2380,6 +2381,7 @@
 ./usr/tests/syscall/t_gettimeofday		tests-syscall-tests	atf
 ./usr/tests/syscall/t_itimer			tests-syscall-tests	atf
 ./usr/tests/syscall/t_kill			tests-syscall-tests	atf
+./usr/tests/syscall/t_link			tests-syscall-tests	atf
 ./usr/tests/syscall/t_mincore			tests-syscall-tests	atf
 ./usr/tests/syscall/t_mknod			tests-syscall-tests	atf
 ./usr/tests/syscall/t_mmap			tests-syscall-tests	atf
