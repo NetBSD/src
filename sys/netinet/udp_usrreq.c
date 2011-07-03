@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.180 2011/05/03 18:28:45 dyoung Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.181 2011/07/03 09:03:32 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.180 2011/05/03 18:28:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.181 2011/07/03 09:03:32 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1300,6 +1300,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	{
 		struct in_addr laddr;			/* XXX */
 
+		memset(&laddr, 0, sizeof laddr);
 		if (nam) {
 			laddr = inp->inp_laddr;		/* XXX */
 			if ((so->so_state & SS_ISCONNECTED) != 0) {
