@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/07/01 01:29:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2011/07/03 06:42:03 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -106,6 +106,9 @@ gtype-desc.h: gengtype gtyp-input.list.tmp
 	${_MKTARGET_CREATE}
 	rm -f auto-host.h
 	ln -s ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/auto-host.h .
+	if [ -f ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/sysroot-suffix.h ]; then \
+	  ln -s ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/sysroot-suffix.h ; \
+	fi
 	./gengtype ${DIST}/gcc gtyp-input.list.tmp
 # gengtype is the real need for options.h
 gengtype.lo gengtype-lex.lo gengtype-parse.lo: ${HH} gtyp-gen.h config.h options.h
