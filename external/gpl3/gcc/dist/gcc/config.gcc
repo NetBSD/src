@@ -1640,10 +1640,10 @@ m68010-*-netbsdelf* | m68k*-*-netbsdelf*)
 	m68010*)
 		target_cpu_default="0"
 		tmake_file=m68k/t-m68kelf
+		default_m68k_cpu=68010
 		;;
 	*)
-		target_cpu_default="MASK_68020|MASK_68881|MASK_BITFIELD"
-		#default_m68k_cpu=68020
+		default_m68k_cpu=68020
 		;;
 	esac
 	;;
