@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.c,v 1.20 2011/03/09 11:36:43 drochner Exp $ */
+/*	$NetBSD: deflate.c,v 1.21 2011/07/03 01:01:06 mrg Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.c,v 1.3 2001/08/20 02:45:22 hugh Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.20 2011/03/09 11:36:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.21 2011/07/03 01:01:06 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -234,7 +234,7 @@ gzip_global(u_int8_t *data, u_int32_t size,
 	int error, i, j;
 	struct deflate_buf buf[ZBUF];
 	u_int32_t crc;
-	u_int32_t isize, icrc;
+	u_int32_t isize = 0, icrc = 0;
 
 	DPRINTF(("gzip_global: decomp %d, size %d\n", decomp, size));
 
