@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 06:02:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/07/03 08:35:42 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -14,10 +14,20 @@ LIB=		gcc
 .if !defined(MKNATIVE_LIBGCC_NEW)
 
 SRCS+=		${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} \
-		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS}
+		${G_LIB2ADD:T:S/.asm/.S/} ${G_LIB2ADD_ST} ${LIB1ASMFUNCS}
 .if ${MKPIC} == "no"
 SRCS+=		${LIB2_EH}
 .endif
+
+# These usually just have "foo.S", we need to link from the
+# gcc/config/$PLATFORM/foo.asm to it.  So far, only rs6000 uses it,
+# so we hack it for now.
+#.for file in ${G_LIB2ADD_ST}
+.   if ${MACHINE_ARCH} == "powerpc"  # XXX XXX why does the above work?*
+.for file in crtsavfpr.S crtresfpr.S crtsavgpr.S crtresgpr.S crtresxfpr.S crtresxgpr.S
+BUILDSYMLINKS+=	${GNUHOSTDIST}/gcc/config/rs6000/${file:S/.S$/.asm/} ${file}
+.endfor
+.   endif
 
 .else	# defined(MKNATIVE_LIBGCC_NEW)
 
@@ -41,7 +51,7 @@ CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 
 .c.pico:
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp1
+	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp1
 	${NM} -pg ${.TARGET}.tmp1 | \
 	    ${TOOL_AWK} 'NF == 3 { print "\t.hidden", $$3 }' | \
 	    ${CC} ${COPTS} -Wl,-x -r -nostdinc -nostdlib ${CPUFLAGS} -o ${.TARGET}.tmp2 ${.TARGET}.tmp1 -xassembler -
