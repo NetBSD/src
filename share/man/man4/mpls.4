@@ -1,4 +1,4 @@
-.\" $NetBSD: mpls.4,v 1.4 2011/06/16 03:23:08 yamt Exp $
+.\" $NetBSD: mpls.4,v 1.5 2011/07/03 07:00:47 kefren Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -183,7 +183,7 @@ Create an MPLS interface and set an IP address:
 .It
 Route IP packets into MPLS domain with a specific tag
 .Bd -literal
-# route add 10.0.0.0/8 -ifp mpls0 -tag 25 192.168.1.100
+# route add 10.0.0.0/8 -ifp mpls0 -tag 25 -inet 192.168.1.100
 .Ed
 .It
 Create a static MPLS forwarding rule - swap the incoming
@@ -208,7 +208,7 @@ sockaddrs: \*[Lt]DST,GATEWAY,IFP,IFA,TAG\*[Gt]
 Route IP packets into MPLS domain but use a different source
 address for local generated packets.
 .Bd -literal
-# route add 10.0.0.0/8 -ifa 192.168.1.180 -ifp mpls0 -tag 25 192.168.1.100
+# route add 10.0.0.0/8 -ifa 192.168.1.180 -ifp mpls0 -tag 25 -inet 192.168.1.100
 .Ed
 For the latter example, setting an IP address for the mpls0 interface
 is not necessary.
@@ -216,6 +216,19 @@ is not necessary.
 Route MPLS packets encapsulated with label 60 to 192.168.1.100 and POP label
 .Bd -literal
 # route add -mpls 60 -tag 3 -inet 192.168.1.100
+.Ed
+.It
+Route IP packets into MPLS domain and prepend more tags
+.Bd -literal
+# route add 10/8 -ifa 192.168.1.200 -ifp mpls0 -tag 20,30,40 -inet 192.168.1.100 
+.Ed
+For the above example, tag 20 will be inserted at Bottom of Stack, while tag 40
+will be set into the outermost shim.
+.It
+Replace label 60 with label 30, prepend two more labels: 40 and 41 (in this order)
+and forward the result to 192.168.1.100
+.Bd -literal
+# route add -mpls 60 -tag 30,40,41 -inet 192.168.1.100
 .Ed
 .El
 .Sh SEE ALSO
