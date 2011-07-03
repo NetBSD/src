@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.3 2010/12/14 23:44:49 matt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.4 2011/07/03 02:18:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.3 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.4 2011/07/03 02:18:21 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -123,14 +123,12 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 	/* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */
-	struct proc *p = l->l_proc;
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *scf;
+	struct proc * const p = l->l_proc;
+	struct trapframe * const tf = l->l_md.md_utf;
 	struct sigcontext13 *ucntx;
 	struct sigcontext13 ksc;
 	sigset_t mask;
 
-	scf = pcb->framep;
 	ucntx = SCARG(uap, sigcntxp);
 	if (copyin((void *)ucntx, (void *)&ksc, sizeof(struct sigcontext)))
 		return EINVAL;
@@ -152,11 +150,11 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
 	mutex_exit(p->p_lock);
 
-	scf->fp = ksc.sc_fp;
-	scf->ap = ksc.sc_ap;
-	scf->pc = ksc.sc_pc;
-	scf->sp = ksc.sc_sp;
-	scf->psl = ksc.sc_ps;
+	tf->tf_fp = ksc.sc_fp;
+	tf->tf_ap = ksc.sc_ap;
+	tf->tf_pc = ksc.sc_pc;
+	tf->tf_sp = ksc.sc_sp;
+	tf->tf_psl = ksc.sc_ps;
 	return (EJUSTRETURN);
 }
 
@@ -167,14 +165,14 @@ setupstack_oldsigcontext(const struct ksiginfo *ksi, const sigset_t *mask,
 {
 	struct sigcontext sigctx;
 	struct otrampframe tramp;
-	struct proc *p = l->l_proc;
+	struct proc * const p = l->l_proc;
 	bool error;
 
-	sigctx.sc_pc = tf->pc;
-	sigctx.sc_ps = tf->psl;
-	sigctx.sc_ap = tf->ap;
-	sigctx.sc_fp = tf->fp; 
-	sigctx.sc_sp = tf->sp; 
+	sigctx.sc_pc = tf->tf_pc;
+	sigctx.sc_ps = tf->tf_psl;
+	sigctx.sc_ap = tf->tf_ap;
+	sigctx.sc_fp = tf->tf_fp; 
+	sigctx.sc_sp = tf->tf_sp; 
 	sigctx.sc_onstack = onstack ? SS_ONSTACK : 0;
 	sigctx.sc_mask = *mask;
 	sp -= sizeof(struct sigcontext);

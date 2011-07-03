@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.115 2011/04/14 08:17:27 matt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.116 2011/07/03 02:18:21 matt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.115 2011/04/14 08:17:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.116 2011/07/03 02:18:21 matt Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_ultrix.h"
@@ -84,14 +84,10 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb1, *pcb2;
-	struct trapframe *tf;
 	struct callsframe *cf;
-	vaddr_t uv;
 	extern int sret; /* Return address in trap routine */
 
-	pcb1 = lwp_getpcb(l1);
-	pcb2 = lwp_getpcb(l2);
+	struct pcb * const pcb2 = lwp_getpcb(l2);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -109,10 +105,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/*
 	 * Copy the trap frame.
 	 */
-	uv = uvm_lwp_getuarea(l2);
-	tf = (struct trapframe *)(uv + USPACE) - 1;
-	pcb2->framep = tf;
-	*tf = *(struct trapframe *)pcb1->framep;
+	const vaddr_t uv = uvm_lwp_getuarea(l2);
+	struct trapframe * const tf = (struct trapframe *)(uv + USPACE) - 1;
+	l2->l_md.md_utf = tf;
+	*tf = *l1->l_md.md_utf;
 
 	/*
 	 * Activate address space for the new process.	The PTEs have
@@ -161,45 +157,43 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * If specified, give the child a different stack.
 	 */
 	if (stack != NULL)
-		tf->sp = (uintptr_t)stack + stacksize;
+		tf->tf_sp = (uintptr_t)stack + stacksize;
 
 	/*
 	 * Set the last return information after fork().
 	 * This is only interesting if the child will return to userspace,
 	 * but doesn't hurt otherwise.
 	 */
-	tf->r0 = l1->l_proc->p_pid; /* parent pid. (shouldn't be needed) */
-	tf->r1 = 1;
-	tf->psl = PSL_U|PSL_PREVU;
+	tf->tf_r0 = l1->l_proc->p_pid; /* parent pid. (shouldn't be needed) */
+	tf->tf_r1 = 1;
+	tf->tf_psl = PSL_U|PSL_PREVU;
 }
 
 vaddr_t
 cpu_lwp_pc(struct lwp *l)
 {
-	struct pcb * const pcb = lwp_getpcb(l);
-	return pcb->PC;
+	return l->l_md.md_utf->tf_pc;
 }
 
 #if KERN_SA > 0
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf;
+	struct trapframe * const tf = l->l_md.md_utf;
 	struct callsframe *cf;
 	extern int sret;
 
 	panic("cpu_setfunc() called\n");
 
-	tf = (struct trapframe *)(uvm_lwp_getuarea(l) + USPACE) - 1;
 	cf = (struct callsframe *)tf - 1;
 	cf->ca_cond = 0;
-	cf->ca_maskpsw = 0x20000000;
+	cf->ca_maskpsw = 0x20000000;	/* CALLS, no saved registers */
 	cf->ca_pc = (unsigned)&sret;
 	cf->ca_argno = 1;
 	cf->ca_arg1 = (long)arg;
 
-	pcb->framep = tf;
+	struct pcb * const pcb = lwp_getpcb(l);
+
 	pcb->KSP = (long)cf;
 	pcb->FP = (long)cf;
 	pcb->AP = (long)&cf->ca_argno;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.18 2011/05/26 15:34:14 joerg Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.19 2011/07/03 02:18:20 matt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -47,17 +47,17 @@ typedef struct trapframe db_regs_t;
 extern	db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
-#define	PC_REGS(regs)	(*(db_addr_t *)&(regs)->pc)
+#define	PC_REGS(regs)	(*(db_addr_t *)&(regs)->tf_pc)
 
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define	BKPT_INST	0x03		/* breakpoint instruction */
 #define	BKPT_SIZE	(1)		/* size of breakpoint inst */
 #define	BKPT_SET(inst, addr)	(BKPT_INST)
 
-#define	FIXUP_PC_AFTER_BREAK(regs)	((regs)->pc -= BKPT_SIZE)
+#define	FIXUP_PC_AFTER_BREAK(regs)	((regs)->tf_pc -= BKPT_SIZE)
 
-#define	db_clear_single_step(regs)	((regs)->psl &= ~PSL_T)
-#define	db_set_single_step(regs)	((regs)->psl |=  PSL_T)
+#define	db_clear_single_step(regs)	((regs)->tf_psl &= ~PSL_T)
+#define	db_set_single_step(regs)	((regs)->tf_psl |=  PSL_T)
 
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BPTFLT)
 #define IS_WATCHPOINT_TRAP(type, code)	((type) == T_TRCTRAP)

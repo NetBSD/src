@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.79 2010/12/14 23:44:49 matt Exp $	*/
+/*	$NetBSD: locore.c,v 1.80 2011/07/03 02:18:21 matt Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.79 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.80 2011/07/03 02:18:21 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -92,7 +92,6 @@ void
 _start(struct rpb *prpb)
 {
 	extern uintptr_t scratch;
-	struct pcb *pcb0;
 	struct pte *pt;
 	vaddr_t uv;
 
@@ -340,8 +339,7 @@ _start(struct rpb *prpb)
 	pt = kvtopte(uv);
 	pt->pg_v = 0;
 
-	pcb0 = lwp_getpcb(&lwp0);
-	pcb0->framep = (void *)scratch;
+	lwp0.l_md.md_utf = (void *)scratch;
 
 	/*
 	 * Change mode down to userspace is done by faking a stack

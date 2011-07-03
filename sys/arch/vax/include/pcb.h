@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.13 2010/03/20 23:31:30 chs Exp $	*/
+/*	$NetBSD: pcb.h,v 1.14 2011/07/03 02:18:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -56,7 +56,6 @@ struct pcb {
 	long	P1LR;		/*  Page 1 Length Register    */
 
 	/* Software registers, only used by kernel software */
-	void   *framep;		/* Pointer to syscall frame */
 	void   *pcb_onfault;	/* Tells whether fault copy */
 	paddr_t pcb_paddr;	/* physical address of PCB */
 	struct pmap *pcb_pm;	/* owning pmap */
