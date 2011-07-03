@@ -326,6 +326,10 @@ hppa*-*-*)
 m32r*-*-*)
         cpu_type=m32r
         ;;
+m680[012]0-*-*)
+	cpu_type=m68k
+	extra_headers=math-68881.h
+	;;
 m68k-*-*)
 	extra_headers=math-68881.h
 	;;
@@ -1628,11 +1632,20 @@ m68k-*-elf* | fido-*-elf*)
 	esac
 	extra_parts="crtbegin.o crtend.o"
 	;;
-m68k*-*-netbsdelf*)
-	default_m68k_cpu=68020
-	default_cf_cpu=5475
+m68010-*-netbsdelf* | m68k*-*-netbsdelf*)
 	tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h m68k/netbsd-elf.h"
-	tm_defines="${tm_defines} MOTOROLA=1"
+	tm_defines="${tm_defines} MOTOROLA=1 USE_GAS=1"
+	default_cf_cpu=5475
+	case ${target} in
+	m68010*)
+		target_cpu_default="0"
+		tmake_file=m68k/t-m68kelf
+		;;
+	*)
+		target_cpu_default="MASK_68020|MASK_68881|MASK_BITFIELD"
+		#default_m68k_cpu=68020
+		;;
+	esac
 	;;
 m68k*-*-openbsd*)
 	default_m68k_cpu=68020
@@ -2283,7 +2296,7 @@ sh-*-symbianelf* | sh[12346l]*-*-symbianelf* | \
 		# SHmedia, 64-bit ABI
 		tmake_file="${tmake_file} sh/t-sh64 sh/t-netbsd sh/t-netbsd-sh5-64"
 		;;
-	*-*-netbsd)
+	*-*-netbsd*)
                 tmake_file="${tmake_file} sh/t-netbsd"
 		;;
 	sh64*-*-linux*)
