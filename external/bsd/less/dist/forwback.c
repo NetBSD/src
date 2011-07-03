@@ -1,4 +1,4 @@
-/*	$NetBSD: forwback.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: forwback.c,v 1.3 2011/07/03 20:14:12 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -28,6 +28,7 @@ extern int sigs;
 extern int top_scroll;
 extern int quiet;
 extern int sc_width, sc_height;
+extern int more_mode;
 extern int plusoption;
 extern int forw_scroll;
 extern int back_scroll;
@@ -38,6 +39,9 @@ extern int oldbot;
 #if TAGS
 extern char *tagoption;
 #endif
+
+static void eof_bell __P((void));
+static void eof_check __P((void));
 
 /*
  * Sound the bell to indicate user is trying to move past end of file.
@@ -240,7 +244,8 @@ forw(n, pos, force, only_last, nblank)
 		 * start the display after the beginning of the file,
 		 * and it is not appropriate to squish in that case.
 		 */
-		if (first_time && pos == NULL_POSITION && !top_scroll && 
+		if ((first_time || more_mode) &&
+		    pos == NULL_POSITION && !top_scroll && 
 #if TAGS
 		    tagoption == NULL &&
 #endif

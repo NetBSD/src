@@ -1,4 +1,4 @@
-/*	$NetBSD: lesskey.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: lesskey.c,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -214,6 +214,8 @@ char *outfile = NULL ;
 int linenum;
 int errors;
 
+void terror(char *);
+
 extern char version[];
 
 	void
@@ -422,7 +424,7 @@ tstr(pp, xlate)
 				case 'e': ch = SK_END; break;
 				case 'x': ch = SK_DELETE; break;
 				default:
-					error("illegal char after \\k");
+					terror("illegal char after \\k");
 					*pp = p+1;
 					return ("");
 				}
@@ -519,7 +521,7 @@ add_cmd_char(c)
 {
 	if (currtable->pbuffer >= currtable->buffer + MAX_USERCMD)
 	{
-		error("too many commands");
+		terror("too many commands");
 		exit(1);
 	}
 	*(currtable->pbuffer)++ = c;
@@ -619,12 +621,12 @@ findaction(actname)
 	for (i = 0;  currtable->names[i].cn_name != NULL;  i++)
 		if (strcmp(currtable->names[i].cn_name, actname) == 0)
 			return (currtable->names[i].cn_action);
-	error("unknown action");
+	terror("unknown action");
 	return (A_INVALID);
 }
 
 	void
-error(s)
+terror(s)
 	char *s;
 {
 	fprintf(stderr, "line %d: %s\n", linenum, s);
@@ -651,7 +653,7 @@ parse_cmdline(p)
 		s = tstr(&p, 1);
 		cmdlen += strlen(s);
 		if (cmdlen > MAX_CMDLEN)
-			error("command too long");
+			terror("command too long");
 		else
 			add_cmd_str(s);
 	} while (*p != ' ' && *p != '\t' && *p != '\0');
@@ -668,7 +670,7 @@ parse_cmdline(p)
 	p = skipsp(p);
 	if (*p == '\0')
 	{
-		error("missing action");
+		terror("missing action");
 		return;
 	}
 	actname = p;
@@ -721,7 +723,7 @@ parse_varline(p)
 	p = skipsp(p);
 	if (*p++ != '=')
 	{
-		error("missing =");
+		terror("missing =");
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: charset.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: charset.c,v 1.3 2011/07/03 20:14:12 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -117,6 +117,9 @@ static char *binfmt = NULL;
 static char *utfbinfmt = NULL;
 public int binattr = AT_STANDOUT;
 
+static void ichardef __P((char *));
+static int icharset __P((char *, int));
+static void ilocale __P((void));
 
 /*
  * Define a charset, given a description string.

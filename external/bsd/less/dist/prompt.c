@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: prompt.c,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -57,13 +57,24 @@ static constant char w_proto[] =
 static constant char more_proto[] =
   "--More--(?eEND ?x- Next\\: %x.:?pB%pB\\%:byte %bB?s/%s...%t)";
 
-public char *prproto[3];
+public char constant *prproto[3];
 public char constant *eqproto = e_proto;
 public char constant *hproto = h_proto;
 public char constant *wproto = w_proto;
 
 static char message[PROMPT_SIZE];
 static char *mp;
+
+static void ap_pos __P((POSITION));
+static void ap_int __P((int));
+static void ap_str __P((char *));
+static void ap_char __P((int));
+static void ap_quest __P((void));
+static POSITION curr_byte __P((int));
+static int cond __P((int, int));
+static void protochar __P((int, int, int));
+static const char *skipcond __P((const char *));
+static const char *wherechar __P((const char *, int *));
 
 /*
  * Initialize the prompt prototype strings.
@@ -100,10 +111,11 @@ ap_str(s)
  * Append a character to the end of the message.
  */
 	static void
-ap_char(c)
-	char c;
+ap_char(i)
+	int i;
 {
 	char buf[2];
+	char c = (char)i;
 
 	buf[0] = c;
 	buf[1] = '\0';
@@ -395,9 +407,9 @@ protochar(c, where, iseditproto)
  * where to resume parsing the string.
  * We must keep track of nested IFs and skip them properly.
  */
-	static char *
+	static const char *
 skipcond(p)
-	register char *p;
+	register const char *p;
 {
 	register int iflevel;
 
@@ -453,9 +465,9 @@ skipcond(p)
 /*
  * Decode a char that represents a position on the screen.
  */
-	static char *
+	static const char *
 wherechar(p, wp)
-	char *p;
+	const char *p;
 	int *wp;
 {
 	switch (*p)
@@ -479,10 +491,10 @@ wherechar(p, wp)
  */
 	public char *
 pr_expand(proto, maxwidth)
-	char *proto;
+	const char *proto;
 	int maxwidth;
 {
-	register char *p;
+	register const char *p;
 	register int c;
 	int where;
 
