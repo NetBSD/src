@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.1 2011/03/03 05:59:37 kiyohara Exp $	*/
+/*	$NetBSD: wd.c,v 1.2 2011/07/04 12:03:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ wd_get_params(struct wd_softc *wd)
 	if ((error = wdc_exec_identify(wd, buf)) != 0)
 		return error;
 
-	wd->sc_params = *(struct ataparams *)buf;
+	memcpy(&wd->sc_params, buf, sizeof wd->sc_params);
 
 	/* 48-bit LBA addressing */
 	if ((wd->sc_params.atap_cmd2_en & ATA_CMD2_LBA48) != 0)
