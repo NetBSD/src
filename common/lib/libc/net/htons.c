@@ -1,4 +1,4 @@
-/*	$NetBSD: htons.c,v 1.1 2005/12/20 19:28:51 christos Exp $	*/
+/*	$NetBSD: htons.c,v 1.2 2011/07/04 21:29:16 joerg Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: htons.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
+__RCSID("$NetBSD: htons.c,v 1.2 2011/07/04 21:29:16 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -15,8 +15,7 @@ __RCSID("$NetBSD: htons.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
 #undef htons
 
 uint16_t
-htons(x)
-	uint16_t x;
+htons(uint16_t x)
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
 	u_char *s = (u_char *) &x;
