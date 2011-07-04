@@ -1,4 +1,4 @@
-/*	$NetBSD: hdtoa.c,v 1.8 2011/03/21 23:37:42 enami Exp $	*/
+/*	$NetBSD: hdtoa.c,v 1.9 2011/07/04 11:46:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/gdtoa/_hdtoa.c,v 1.4 2007/01/03 04:57:58 das Exp $");
 #else
-__RCSID("$NetBSD: hdtoa.c,v 1.8 2011/03/21 23:37:42 enami Exp $");
+__RCSID("$NetBSD: hdtoa.c,v 1.9 2011/07/04 11:46:41 mrg Exp $");
 #endif
 
 #include <float.h>
@@ -261,6 +261,7 @@ hldtoa(long double e, const char *xdigs, int ndigits, int *decpt, int *sign,
 	char *s, *s0;
 	size_t bufsize;
 
+	memset(&u, 0, sizeof u);
 	u.extu_ld = e;
 	*sign = u.extu_ext.ext_sign;
 
