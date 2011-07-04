@@ -1,4 +1,4 @@
-/* $NetBSD: t_revoke.c,v 1.1 2011/07/03 21:06:56 jruoho Exp $ */
+/* $NetBSD: t_revoke.c,v 1.2 2011/07/04 03:23:31 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_revoke.c,v 1.1 2011/07/03 21:06:56 jruoho Exp $");
+__RCSID("$NetBSD: t_revoke.c,v 1.2 2011/07/04 03:23:31 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -98,6 +98,7 @@ ATF_TC(revoke_err);
 ATF_TC_HEAD(revoke_err, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test errors from revoke(2)");
+	atf_tc_set_md_var(tc, "require.user", "unprivileged");
 }
 
 ATF_TC_BODY(revoke_err, tc)
