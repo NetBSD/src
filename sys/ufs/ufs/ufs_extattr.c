@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.33 2011/06/27 16:34:47 manu Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.34 2011/07/04 08:07:32 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.33 2011/06/27 16:34:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.34 2011/07/04 08:07:32 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -96,7 +96,7 @@ static int	ufs_extattr_get(struct vnode *vp, int attrnamespace,
 		    const char *name, struct uio *uio, size_t *size,
 		    kauth_cred_t cred, struct lwp *l);
 static int	ufs_extattr_list(struct vnode *vp, int attrnamespace,
-		    struct uio *uio, size_t *size,
+		    struct uio *uio, size_t *size, int flag,
 		    kauth_cred_t cred, struct lwp *l);
 static int	ufs_extattr_set(struct vnode *vp, int attrnamespace,
 		    const char *name, struct uio *uio, kauth_cred_t cred,
@@ -1137,6 +1137,7 @@ vop_listextattr {
 	IN int a_attrnamespace;
 	INOUT struct uio *a_uio;
 	OUT size_t *a_size;
+	IN int flag;
 	IN kauth_cred_t a_cred;
 	struct proc *a_p;
 };
@@ -1149,7 +1150,7 @@ vop_listextattr {
 	ufs_extattr_uepm_lock(ump);
 
 	error = ufs_extattr_list(ap->a_vp, ap->a_attrnamespace,
-	    ap->a_uio, ap->a_size, ap->a_cred, curlwp);
+	    ap->a_uio, ap->a_size, ap->a_flag, ap->a_cred, curlwp);
 
 	ufs_extattr_uepm_unlock(ump);
 
@@ -1162,7 +1163,8 @@ vop_listextattr {
  */
 static int
 ufs_extattr_list(struct vnode *vp, int attrnamespace,
-    struct uio *uio, size_t *size, kauth_cred_t cred, struct lwp *l)
+    struct uio *uio, size_t *size, int flag, 
+    kauth_cred_t cred, struct lwp *l)
 {
 	struct ufs_extattr_list_entry *uele;
 	struct ufs_extattr_header ueh;
@@ -1199,13 +1201,33 @@ ufs_extattr_list(struct vnode *vp, int attrnamespace,
 			vn_lock(uele->uele_backing_vnode, LK_SHARED | LK_RETRY);
 
 		/*
-		 * +1 for trailing \0
+		 * +1 for trailing NUL (listxattr flavor)
+		 *  or leading name length (extattr_list_file flavor)
 	 	 */
-		attrnamelen = strlen(uele->uele_attrname) + 1;
-		listsize += attrnamelen;
+		attrnamelen = strlen(uele->uele_attrname);
+		listsize += attrnamelen + 1;
 
 		/* Return data if the caller requested it. */
 		if (uio != NULL) {
+			/*
+			 * We support two flavors. Either NUL-terminated
+			 * strings (a la listxattr), or non NUL-terminated,
+			 * one byte length prefixed strings (for
+			 * extattr_list_file). EXTATTR_LIST_LENPREFIX switches
+		 	 * that second behavior.
+			 */
+			if (flag & EXTATTR_LIST_LENPREFIX) {
+				uint8_t len = (uint8_t)attrnamelen;
+
+				/* Copy leading name length */
+				error = uiomove(&len, sizeof(len), uio);
+				if (error != 0)
+					break;	
+			} else {
+				/* Include trailing NULL */
+				attrnamelen++; 
+			}
+
 			error = uiomove(uele->uele_attrname, 
 					(size_t)attrnamelen, uio);
 			if (error != 0)
