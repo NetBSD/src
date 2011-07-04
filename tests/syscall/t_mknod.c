@@ -1,4 +1,4 @@
-/* $NetBSD: t_mknod.c,v 1.5 2011/07/04 03:52:11 jruoho Exp $ */
+/* $NetBSD: t_mknod.c,v 1.6 2011/07/04 04:10:34 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mknod.c,v 1.5 2011/07/04 03:52:11 jruoho Exp $");
+__RCSID("$NetBSD: t_mknod.c,v 1.6 2011/07/04 04:10:34 jruoho Exp $");
 
 #include <sys/stat.h>
 
@@ -54,7 +54,6 @@ ATF_TC_HEAD(mknod_err, tc)
 ATF_TC_BODY(mknod_err, tc)
 {
 	char buf[PATH_MAX + 1];
-	int fd;
 
 	(void)memset(buf, 'x', sizeof(buf));
 
@@ -79,22 +78,34 @@ ATF_TC_BODY(mknod_err, tc)
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(ENOENT, mknod("/a/b/c/d/e/f/g", S_IFCHR, 0) == -1);
-
-	fd = open(_PATH_DEVNULL, O_RDONLY);
-
-	if (fd >= 0) {
-
-		errno = 0;
-		ATF_REQUIRE_ERRNO(EEXIST,
-		    mknod(_PATH_DEVNULL, S_IFCHR, 0) == -1);
-
-		(void)close(fd);
-	}
 }
 
 ATF_TC_CLEANUP(mknod_err, tc)
 {
 	(void)unlink(path);
+}
+
+ATF_TC(mknod_exist);
+ATF_TC_HEAD(mknod_exist, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test EEXIST from mknod(2)");
+	atf_tc_set_md_var(tc, "require.user", "root");
+}
+
+ATF_TC_BODY(mknod_exist, tc)
+{
+	int fd;
+
+	fd = open(_PATH_DEVNULL, O_RDONLY);
+
+	if (fd < 0)
+		return;
+	else {
+		(void)close(fd);
+	}
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EEXIST, mknod(_PATH_DEVNULL, S_IFCHR, 0) == -1);
 }
 
 ATF_TC_WITH_CLEANUP(mknod_perm);
@@ -170,6 +181,7 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, mknod_err);
+	ATF_TP_ADD_TC(tp, mknod_exist);
 	ATF_TP_ADD_TC(tp, mknod_perm);
 	ATF_TP_ADD_TC(tp, mknod_stat);
 
