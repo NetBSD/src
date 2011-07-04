@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.25 2005/12/28 15:26:06 yamt Exp $	*/
+/*	$NetBSD: xdr.h,v 1.26 2011/07/04 07:54:38 manu Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -313,6 +313,7 @@ extern bool_t	xdr_hyper(XDR *, longlong_t *);
 extern bool_t	xdr_u_hyper(XDR *, u_longlong_t *);
 extern bool_t	xdr_longlong_t(XDR *, longlong_t *);
 extern bool_t	xdr_u_longlong_t(XDR *, u_longlong_t *);
+extern unsigned long xdr_sizeof(xdrproc_t, void *);
 __END_DECLS
 
 /*
