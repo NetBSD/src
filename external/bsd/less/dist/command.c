@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.3 2011/07/03 20:14:12 tron Exp $	*/
+/*	$NetBSD: command.c,v 1.4 2011/07/04 12:31:53 joerg Exp $	*/
 
 /*
  * Copyright (C) 1984-2011  Mark Nudelman
@@ -44,9 +44,9 @@ extern char version[];
 extern struct scrpos initial_scrpos;
 extern IFILE curr_ifile;
 extern void constant *ml_search;
-extern void constant *ml_examine;
+extern void * constant ml_examine;
 #if SHELL_ESCAPE || PIPEC
-extern void constant *ml_shell;
+extern void * constant ml_shell;
 #endif
 #if EDITOR
 extern char *editor;
