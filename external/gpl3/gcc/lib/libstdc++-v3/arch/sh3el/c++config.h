@@ -499,7 +499,7 @@ _GLIBCXX_END_NAMESPACE
 /* #undef _GLIBCXX_HAVE_FABSL */
 
 /* Define to 1 if you have the <fenv.h> header file. */
-#define _GLIBCXX_HAVE_FENV_H 1
+/* #undef _GLIBCXX_HAVE_FENV_H */
 
 /* Define to 1 if you have the `finite' function. */
 #define _GLIBCXX_HAVE_FINITE 1
@@ -662,7 +662,7 @@ _GLIBCXX_END_NAMESPACE
 /* #undef _GLIBCXX_HAVE_NAN_H */
 
 /* Define if poll is available in <poll.h>. */
-/* #undef _GLIBCXX_HAVE_POLL */
+#define _GLIBCXX_HAVE_POLL 1
 
 /* Define to 1 if you have the `powf' function. */
 /* #undef _GLIBCXX_HAVE_POWF */
@@ -773,7 +773,7 @@ _GLIBCXX_END_NAMESPACE
 /* #undef _GLIBCXX_HAVE_S_IFREG */
 
 /* Define if S_IFREG is available in <sys/stat.h>. */
-/* #undef _GLIBCXX_HAVE_S_ISREG */
+#define _GLIBCXX_HAVE_S_ISREG 1
 
 /* Define to 1 if you have the `tanf' function. */
 /* #undef _GLIBCXX_HAVE_TANF */
@@ -788,7 +788,7 @@ _GLIBCXX_END_NAMESPACE
 /* #undef _GLIBCXX_HAVE_TANL */
 
 /* Define to 1 if you have the <tgmath.h> header file. */
-#define _GLIBCXX_HAVE_TGMATH_H 1
+/* #undef _GLIBCXX_HAVE_TGMATH_H */
 
 /* Define to 1 if the target supports thread-local storage. */
 /* #undef _GLIBCXX_HAVE_TLS */
@@ -815,7 +815,7 @@ _GLIBCXX_END_NAMESPACE
 #define _GLIBCXX_HAVE_WCTYPE_H 1
 
 /* Define if writev is available in <sys/uio.h>. */
-/* #undef _GLIBCXX_HAVE_WRITEV */
+#define _GLIBCXX_HAVE_WRITEV 1
 
 /* Define to 1 if you have the `_acosf' function. */
 /* #undef _GLIBCXX_HAVE__ACOSF */
