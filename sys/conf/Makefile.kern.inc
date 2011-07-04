@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.140 2011/06/20 06:52:38 mrg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.141 2011/07/04 13:00:19 mrg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -510,10 +510,17 @@ VARSTACK=kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
     uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c \
     dev/ofw/ofw_subr.c
 
-. if defined(HAVE_GCC) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 .for __varstack in ${VARSTACK}
 COPTS.${__varstack:T} += -Wno-stack-protector
 .endfor
+.endif
+
+# XXX ugly ugly to fix
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 45
+CWARNFLAGS.tulip.c+=	-Wno-array-bounds
+CWARNFLAGS.radeonfb.c+=	-Wno-cast-qual
+CWARNFLAGS.dbcool.c+=	-Wno-cast-qual
 .endif
 
 AFLAGS+=	${AOPTS.${.IMPSRC:T}}
