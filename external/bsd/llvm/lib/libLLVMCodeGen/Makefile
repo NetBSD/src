@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/08 08:48:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/04 16:10:39 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -40,6 +40,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	LocalStackSlotAllocation.cpp \
 	LowerSubregs.cpp \
 	MachineBasicBlock.cpp \
+	MachineBranchProbabilityInfo.cpp \
 	MachineCSE.cpp \
 	MachineDominators.cpp \
 	MachineFunction.cpp \
@@ -66,7 +67,6 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	PeepholeOptimizer.cpp \
 	ScoreboardHazardRecognizer.cpp \
 	PostRASchedulerList.cpp \
-	PreAllocSplitting.cpp \
 	ProcessImplicitDefs.cpp \
 	PrologEpilogInserter.cpp \
 	PseudoSourceValue.cpp \
@@ -85,7 +85,6 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	ScheduleDAGPrinter.cpp \
 	ShadowStackGC.cpp \
 	ShrinkWrapping.cpp \
-	SimpleRegisterCoalescing.cpp \
 	SjLjEHPrepare.cpp \
 	SlotIndexes.cpp \
 	Spiller.cpp \

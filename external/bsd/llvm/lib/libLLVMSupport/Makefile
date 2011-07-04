@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/07/04 16:10:39 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -12,6 +12,7 @@ SRCS+=	APFloat.cpp \
 	APInt.cpp \
 	APSInt.cpp \
 	Allocator.cpp \
+	BranchProbability.cpp \
 	circular_raw_ostream.cpp \
 	CommandLine.cpp \
 	ConstantRange.cpp \
