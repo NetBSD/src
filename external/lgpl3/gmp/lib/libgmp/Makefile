@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/07/03 15:25:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2011/07/04 12:00:15 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -176,7 +176,7 @@ perfsqr.h: gen-psqr.c
 CLEANFILES+=	${DPSRCS} gen-fac_ui gen-fib gen-bases gen-psqr gen-trialdivtab
 
 .if defined(MLIBDIR)
-LIBGMP_MACHINE_ARCH:=${MLIBDIR}
+LIBGMP_MACHINE_ARCH?=${MLIBDIR}
 .endif
 LIBGMP_MACHINE_ARCH?=${MACHINE_ARCH}
 
