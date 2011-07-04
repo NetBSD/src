@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.3 2011/01/23 06:47:14 matt Exp $	*/
+/*	$NetBSD: ffs.S,v 1.4 2011/07/04 11:35:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,13 +31,14 @@
 
 #include <mips/asm.h>
 
-RCSID("$NetBSD: ffs.S,v 1.3 2011/01/23 06:47:14 matt Exp $")
+RCSID("$NetBSD: ffs.S,v 1.4 2011/07/04 11:35:26 mrg Exp $")
 
 /* bit = ffs(value) */
 
 	.text
 	.set	noreorder
 
+WEAK_ALIAS(__ffssi2,ffs)
 #if __mips == 64 || __mips == 32
 LEAF(ffs)
 #ifndef _LP64
