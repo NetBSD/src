@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.67 2011/06/09 14:41:24 drochner Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.68 2011/07/04 16:06:17 joerg Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.67 2011/06/09 14:41:24 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.68 2011/07/04 16:06:17 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2029,7 +2029,7 @@ cryptof_stat(struct file *fp, struct stat *st)
 {
 	struct fcrypt *fcr = fp->f_data;
 
-	(void)memset(st, 0, sizeof(st));
+	(void)memset(st, 0, sizeof(*st));
 
 	mutex_enter(&crypto_mtx);
 	st->st_dev = makedev(cdevsw_lookup_major(&crypto_cdevsw), fcr->sesn);
