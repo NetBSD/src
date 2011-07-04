@@ -1,4 +1,4 @@
-/* $NetBSD: t_mknod.c,v 1.4 2011/07/03 20:22:51 jruoho Exp $ */
+/* $NetBSD: t_mknod.c,v 1.5 2011/07/04 03:52:11 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,13 +29,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mknod.c,v 1.4 2011/07/03 20:22:51 jruoho Exp $");
+__RCSID("$NetBSD: t_mknod.c,v 1.5 2011/07/04 03:52:11 jruoho Exp $");
 
 #include <sys/stat.h>
 
 #include <atf-c.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
+#include <paths.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -52,8 +54,16 @@ ATF_TC_HEAD(mknod_err, tc)
 ATF_TC_BODY(mknod_err, tc)
 {
 	char buf[PATH_MAX + 1];
+	int fd;
 
 	(void)memset(buf, 'x', sizeof(buf));
+
+	errno = 0;
+
+	if (mknod(path, -1, 0) != -1 || errno != EINVAL) {
+		atf_tc_expect_fail("PR kern/45113");
+		atf_tc_fail("mknod(2) did not fail properly");
+	}
 
 	/*
 	 * See the old PR kern/45111.
@@ -68,10 +78,18 @@ ATF_TC_BODY(mknod_err, tc)
 	ATF_REQUIRE_ERRNO(EFAULT, mknod((char *)-1, S_IFCHR, 0) == -1);
 
 	errno = 0;
-	ATF_REQUIRE_ERRNO(EEXIST, mknod("/dev/null", S_IFCHR, 0) == -1);
-
-	errno = 0;
 	ATF_REQUIRE_ERRNO(ENOENT, mknod("/a/b/c/d/e/f/g", S_IFCHR, 0) == -1);
+
+	fd = open(_PATH_DEVNULL, O_RDONLY);
+
+	if (fd >= 0) {
+
+		errno = 0;
+		ATF_REQUIRE_ERRNO(EEXIST,
+		    mknod(_PATH_DEVNULL, S_IFCHR, 0) == -1);
+
+		(void)close(fd);
+	}
 }
 
 ATF_TC_CLEANUP(mknod_err, tc)
