@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.148 2011/03/26 19:51:42 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.149 2011/07/04 07:54:38 manu Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -747,6 +747,7 @@
 #define xdr_rpcbs		_xdr_rpcbs
 #define xdr_rpcbs		_xdr_rpcbs
 #define xdr_short		_xdr_short
+#define xdr_sizeof		_xdr_sizeof
 #define xdr_string		_xdr_string
 #define xdr_u_char		_xdr_u_char
 #define	xdr_u_hyper		_xdr_u_hyper
