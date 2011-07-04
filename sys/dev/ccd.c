@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.140 2011/06/21 06:23:38 jruoho Exp $	*/
+/*	$NetBSD: ccd.c,v 1.141 2011/07/04 16:06:45 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.140 2011/06/21 06:23:38 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.141 2011/07/04 16:06:45 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 		/*
 		 * Copy in the pathname of the component.
 		 */
-		memset(tmppath, 0, sizeof(tmppath));	/* sanity */
+		memset(tmppath, 0, MAXPATHLEN);	/* sanity */
 		error = copyinstr(cpaths[ix], tmppath,
 		    MAXPATHLEN, &ci->ci_pathlen);
 		if (ci->ci_pathlen == 0)

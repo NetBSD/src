@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.118 2010/11/15 05:56:29 uebayasi Exp $ */
+/* $NetBSD: rtw.c,v 1.119 2011/07/04 16:06:17 joerg Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.118 2010/11/15 05:56:29 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.119 2011/07/04 16:06:17 joerg Exp $");
 
 
 #include <sys/param.h>
@@ -640,7 +640,7 @@ rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 	regs = &sc->sc_regs;
 	rk = &sc->sc_keys;
 
-	(void)memset(rk, 0, sizeof(rk));
+	(void)memset(rk, 0, sizeof(*rk));
 
 	/* Temporarily use software crypto for all keys. */
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
