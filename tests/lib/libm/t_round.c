@@ -1,4 +1,4 @@
-/* $NetBSD: t_round.c,v 1.1 2011/04/08 06:49:21 jruoho Exp $ */
+/* $NetBSD: t_round.c,v 1.2 2011/07/04 22:33:29 mrg Exp $ */
 
 #include <atf-c.h>
 #include <math.h>
@@ -12,6 +12,12 @@
 /* 0.5 - EPSILON */
 #define VAL	0x0.7ffffffffffffcp0
 #define VALF	0x0.7fffff8p0
+
+#ifdef __vax__
+#define SMALL_NUM	1.0e-38
+#else
+#define SMALL_NUM	1.0e-40
+#endif
 
 ATF_TC(round_dir);
 ATF_TC_HEAD(round_dir, tc)
@@ -27,14 +33,14 @@ ATF_TC_BODY(round_dir, tc)
 	b = round(a);
 	bf = roundf(af);
 
-	ATF_REQUIRE(fabs(b) < 1.0e-40);
-	ATF_REQUIRE(fabsf(bf) < 1.0e-40);
+	ATF_REQUIRE(fabs(b) < SMALL_NUM);
+	ATF_REQUIRE(fabsf(bf) < SMALL_NUM);
 
 	c = round(-a);
 	cf = roundf(-af);
 
-	ATF_REQUIRE(fabs(c) < 1.0e-40);
-	ATF_REQUIRE(fabsf(cf) < 1.0e-40);
+	ATF_REQUIRE(fabs(c) < SMALL_NUM);
+	ATF_REQUIRE(fabsf(cf) < SMALL_NUM);
 }
 
 ATF_TP_ADD_TCS(tp)

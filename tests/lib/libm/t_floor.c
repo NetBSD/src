@@ -1,4 +1,4 @@
-/* $NetBSD: t_floor.c,v 1.4 2011/03/25 10:42:38 jruoho Exp $ */
+/* $NetBSD: t_floor.c,v 1.5 2011/07/04 22:33:29 mrg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_floor.c,v 1.4 2011/03/25 10:42:38 jruoho Exp $");
+__RCSID("$NetBSD: t_floor.c,v 1.5 2011/07/04 22:33:29 mrg Exp $");
 
 #include <math.h>
 #include <limits.h>
@@ -42,6 +42,12 @@ ATF_TC_HEAD(floor, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "A basic test of floor(3)");
 }
+
+#ifdef __vax__
+#define SMALL_NUM	1.0e-38
+#else
+#define SMALL_NUM	1.0e-40
+#endif
 
 ATF_TC_BODY(floor, tc)
 {
@@ -60,8 +66,8 @@ ATF_TC_BODY(floor, tc)
 		x = i + 0.999999999;
 		y = i + 0.000000001;
 
-		ATF_REQUIRE(fabs(floor(x) - (double)i) < 1.0e-40);
-		ATF_REQUIRE(fabs(floor(y) - (double)i) < 1.0e-40);
+		ATF_REQUIRE(fabs(floor(x) - (double)i) < SMALL_NUM);
+		ATF_REQUIRE(fabs(floor(y) - (double)i) < SMALL_NUM);
 	}
 }
 
