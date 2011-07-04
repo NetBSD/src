@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pselect.c,v 1.4 2011/05/29 22:12:32 christos Exp $ */
+/*	$NetBSD: t_pselect.c,v 1.5 2011/07/04 20:09:28 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -151,10 +151,10 @@ ATF_TC_BODY(pselect_signal_mask_with_signal, tc)
 	case -1:
 		err(1, "fork");
 	default:
-		usleep(10000);
+		sleep(1);
 		if (kill(pid, SIGTERM) == -1)
 			err(1, "kill");
-		usleep(500);
+		sleep(1);
 		switch (waitpid(pid, &status, WNOHANG)) {
 		case -1:
 			err(1, "wait");
