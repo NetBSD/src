@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.141 2009/09/07 13:31:44 tsutsui Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.142 2011/07/04 16:06:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.141 2009/09/07 13:31:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.142 2011/07/04 16:06:17 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,7 +511,7 @@ ncr53c9x_init(struct ncr53c9x_softc *sc, int doreset)
 
 		TAILQ_INIT(&sc->ready_list);
 		sc->sc_nexus = NULL;
-		memset(sc->sc_tinfo, 0, sizeof(sc->sc_tinfo));
+		memset(sc->sc_tinfo, 0, sizeof(*sc->sc_tinfo));
 		for (r = 0; r < sc->sc_ntarg; r++) {
 			LIST_INIT(&sc->sc_tinfo[r].luns);
 		}
