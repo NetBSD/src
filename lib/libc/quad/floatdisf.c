@@ -1,4 +1,4 @@
-/*	$NetBSD: floatdisf.c,v 1.6 2003/08/07 16:43:16 agc Exp $	*/
+/*	$NetBSD: floatdisf.c,v 1.7 2011/07/04 06:23:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)floatdisf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: floatdisf.c,v 1.6 2003/08/07 16:43:16 agc Exp $");
+__RCSID("$NetBSD: floatdisf.c,v 1.7 2011/07/04 06:23:50 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,8 +48,7 @@ __RCSID("$NetBSD: floatdisf.c,v 1.6 2003/08/07 16:43:16 agc Exp $");
  * Convert (signed) quad to float.
  */
 float
-__floatdisf(x)
-	quad_t x;
+__floatdisf(quad_t x)
 {
 	float f;
 	union uu u;

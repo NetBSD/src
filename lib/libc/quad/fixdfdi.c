@@ -1,4 +1,4 @@
-/*	$NetBSD: fixdfdi.c,v 1.4 2003/08/07 16:43:16 agc Exp $	*/
+/*	$NetBSD: fixdfdi.c,v 1.5 2011/07/04 06:23:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fixdfdi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fixdfdi.c,v 1.4 2003/08/07 16:43:16 agc Exp $");
+__RCSID("$NetBSD: fixdfdi.c,v 1.5 2011/07/04 06:23:50 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,8 +49,7 @@ __RCSID("$NetBSD: fixdfdi.c,v 1.4 2003/08/07 16:43:16 agc Exp $");
  * We clamp anything that is out of range.
  */
 quad_t
-__fixdfdi(x)
-	double x;
+__fixdfdi(double x)
 {
 	if (x < 0)
 		if (x <= QUAD_MIN)

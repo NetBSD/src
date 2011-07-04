@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunsdfdi.c,v 1.7 2003/08/07 16:43:16 agc Exp $	*/
+/*	$NetBSD: fixunsdfdi.c,v 1.8 2011/07/04 06:23:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fixunsdfdi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fixunsdfdi.c,v 1.7 2003/08/07 16:43:16 agc Exp $");
+__RCSID("$NetBSD: fixunsdfdi.c,v 1.8 2011/07/04 06:23:50 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,8 +54,7 @@ __RCSID("$NetBSD: fixunsdfdi.c,v 1.7 2003/08/07 16:43:16 agc Exp $");
  * of range becomes UQUAD_MAX.
  */
 u_quad_t
-__fixunsdfdi(x)
-	double x;
+__fixunsdfdi(double x)
 {
 	union uu t;
 	unsigned int tmp;
