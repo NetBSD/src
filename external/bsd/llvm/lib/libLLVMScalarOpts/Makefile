@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/03/18 23:32:03 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/07/04 16:10:39 joerg Exp $
 
 LIB=	LLVMScalarOpts
 
@@ -27,6 +27,7 @@ SRCS+=	ADCE.cpp \
 	LoopUnswitch.cpp \
 	LowerAtomic.cpp \
 	MemCpyOptimizer.cpp \
+	ObjCARC.cpp \
 	Reassociate.cpp \
 	Reg2Mem.cpp \
 	SCCP.cpp \
