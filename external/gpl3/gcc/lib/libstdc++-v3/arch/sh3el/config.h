@@ -120,7 +120,7 @@
 /* #undef HAVE_FABSL */
 
 /* Define to 1 if you have the <fenv.h> header file. */
-#define HAVE_FENV_H 1
+/* #undef HAVE_FENV_H */
 
 /* Define to 1 if you have the `finite' function. */
 #define HAVE_FINITE 1
@@ -283,7 +283,7 @@
 /* #undef HAVE_NAN_H */
 
 /* Define if poll is available in <poll.h>. */
-/* #undef HAVE_POLL */
+#define HAVE_POLL 1
 
 /* Define to 1 if you have the `powf' function. */
 /* #undef HAVE_POWF */
@@ -394,7 +394,7 @@
 /* #undef HAVE_S_IFREG */
 
 /* Define if S_IFREG is available in <sys/stat.h>. */
-/* #undef HAVE_S_ISREG */
+#define HAVE_S_ISREG 1
 
 /* Define to 1 if you have the `tanf' function. */
 /* #undef HAVE_TANF */
@@ -409,7 +409,7 @@
 /* #undef HAVE_TANL */
 
 /* Define to 1 if you have the <tgmath.h> header file. */
-#define HAVE_TGMATH_H 1
+/* #undef HAVE_TGMATH_H */
 
 /* Define to 1 if the target supports thread-local storage. */
 /* #undef HAVE_TLS */
@@ -436,7 +436,7 @@
 #define HAVE_WCTYPE_H 1
 
 /* Define if writev is available in <sys/uio.h>. */
-/* #undef HAVE_WRITEV */
+#define HAVE_WRITEV 1
 
 /* Define to 1 if you have the `_acosf' function. */
 /* #undef HAVE__ACOSF */
