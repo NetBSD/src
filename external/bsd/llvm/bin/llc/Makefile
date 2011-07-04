@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/03/18 23:32:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/07/04 22:37:59 joerg Exp $
 
 PROG_CXX=	llc
 NOMAN=		yes
@@ -13,6 +13,9 @@ LLVM_LIBS+= \
 	AsmPrinter \
 	AsmParser \
 	BitReader \
+	PowerPCCodeGen \
+	PowerPCTargetInfo \
+	PowerPCAsmPrinter \
 	X86CodeGen \
 	X86TargetInfo \
 	X86AsmParser \
