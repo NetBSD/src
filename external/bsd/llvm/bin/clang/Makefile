@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/05/12 14:56:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/07/04 16:10:39 joerg Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -18,6 +18,7 @@ SRCS=	driver.cpp \
 CLANG_LIBS+= \
 	clangFrontendTool \
 	clangFrontend \
+	clangARCMigrate \
 	clangStaticAnalyzerFrontend \
 	clangStaticAnalyzerCheckers \
 	clangStaticAnalyzerCore \
