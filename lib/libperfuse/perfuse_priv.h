@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.19 2011/06/28 16:19:16 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.20 2011/07/04 08:07:30 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -228,7 +228,7 @@ int perfuse_node_getextattr(struct puffs_usermount *, puffs_cookie_t,
 int perfuse_node_setextattr(struct puffs_usermount *, puffs_cookie_t,
     int, const char *, uint8_t *, size_t *, const struct puffs_cred *);
 int perfuse_node_listextattr(struct puffs_usermount *, puffs_cookie_t,
-    int, size_t *, uint8_t *, size_t *, const struct puffs_cred *);
+    int, size_t *, uint8_t *, size_t *, int, const struct puffs_cred *);
 int perfuse_node_deleteextattr(struct puffs_usermount *, puffs_cookie_t,
     int, const char *, const struct puffs_cred *);
 

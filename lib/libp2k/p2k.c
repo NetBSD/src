@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.54 2011/01/07 16:02:32 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.55 2011/07/04 08:07:29 manu Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -1304,8 +1304,8 @@ p2k_node_setextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 /*ARGSUSED*/
 int
 p2k_node_listextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
-	int attrnamespace, size_t *attrsize,
-	uint8_t *attrs, size_t *resid, const struct puffs_cred *pcr)
+	int attrnamespace, size_t *attrsize, uint8_t *attrs,
+	size_t *resid, int flags, const struct puffs_cred *pcr)
 {
 	struct vnode *vp = OPC2VP(opc);
 	struct kauth_cred *cred;
@@ -1319,7 +1319,8 @@ p2k_node_listextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 	cred = cred_create(pcr);
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
-	rv = RUMP_VOP_LISTEXTATTR(vp, attrnamespace, uio, attrsize, cred);
+	rv = RUMP_VOP_LISTEXTATTR(vp, attrnamespace, uio, attrsize,
+	    flags, cred);
 	RUMP_VOP_UNLOCK(vp);
 	cred_destroy(cred);
 
