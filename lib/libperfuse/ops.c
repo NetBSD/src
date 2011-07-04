@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.31 2011/06/28 16:19:16 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.32 2011/07/04 08:07:29 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -3040,13 +3040,14 @@ out:
 
 /* ARGSUSED2 */
 int
-perfuse_node_listextattr(pu, opc, attrns, attrsize, attrs, resid, pcr)
+perfuse_node_listextattr(pu, opc, attrns, attrsize, attrs, resid, flag, pcr)
 	struct puffs_usermount *pu;
 	puffs_cookie_t opc;
 	int attrns;
 	size_t *attrsize;
 	uint8_t *attrs;
 	size_t *resid;
+	int flag;
 	const struct puffs_cred *pcr;
 {
 	struct perfuse_state *ps;
@@ -3093,6 +3094,19 @@ perfuse_node_listextattr(pu, opc, attrns, attrsize, attrs, resid, pcr)
 	puffs_len = foh->len - sizeof(*foh);
 
 	if (attrs != NULL) {
+		/* 
+		 * Convert the FUSE reply to length prefixed strings
+		 * if this is what the kernel wants.
+		 */
+		if (flag & PUFFS_EXTATTR_LIST_LENPREFIX) {
+			size_t i, attrlen;
+
+			for (i = 0; i < puffs_len; i += attrlen + 1) {
+				attrlen = strlen(np + i);
+				(void)memmove(np + i + 1, np + i, attrlen);
+				*(np + i) = (uint8_t)attrlen;
+			}	
+		}
 		(void)memcpy(attrs, np, puffs_len);
 		*resid -= puffs_len;
 	}

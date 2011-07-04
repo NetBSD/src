@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.75 2010/07/06 13:47:47 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.76 2011/07/04 08:07:30 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -626,6 +626,7 @@ struct puffs_vnmsg_listextattr {
 	size_t			pvnr_datasize;			/* IN	  */
 
 	size_t			pvnr_resid;			/* IN/OUT */
+	int			pvnr_flag;			/* OUT */
 	uint8_t			pvnr_data[0]			/* IN	  */
 				    __aligned(ALIGNBYTES+1);
 };

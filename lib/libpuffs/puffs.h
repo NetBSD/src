@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.117 2010/06/07 11:21:31 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.118 2011/07/04 08:07:30 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -113,6 +113,7 @@ struct puffs_usermount;
 #define PUFFS_FSYNC_DATAONLY 0x0002
 #define PUFFS_FSYNC_CACHE    0x0100
 
+#define PUFFS_EXTATTR_LIST_LENPREFIX 1
 /*
  * Magic constants
  */
@@ -231,7 +232,7 @@ struct puffs_ops {
 	int (*puffs_node_setextattr)(struct puffs_usermount *, puffs_cookie_t,
 	    int, const char *, uint8_t *, size_t *, const struct puffs_cred *);
 	int (*puffs_node_listextattr)(struct puffs_usermount *, puffs_cookie_t,
-	    int, size_t *, uint8_t *, size_t *, const struct puffs_cred *);
+	    int, size_t *, uint8_t *, size_t *, int, const struct puffs_cred *);
 	int (*puffs_node_deleteextattr)(struct puffs_usermount *,
 	    puffs_cookie_t, int, const char *, const struct puffs_cred *);
 
@@ -379,7 +380,7 @@ enum {
 	    const struct puffs_cred *);					\
 	int fsname##_node_listextattr(struct puffs_usermount *,		\
 	    puffs_cookie_t, int, size_t *, uint8_t *, size_t *,		\
-	    const struct puffs_cred *);					\
+	    int, const struct puffs_cred *);				\
 	int fsname##_node_deleteextattr(struct puffs_usermount *,	\
 	    puffs_cookie_t, int, const char *,				\
 	    const struct puffs_cred *);

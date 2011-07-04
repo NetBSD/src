@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.153 2011/06/12 03:35:54 rmind Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.154 2011/07/04 08:07:30 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.153 2011/06/12 03:35:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.154 2011/07/04 08:07:30 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2721,6 +2721,7 @@ puffs_vnop_listextattr(void *v)
 		int a_attrnamespace;
 		struct uio *a_uio;
 		size_t *a_size;
+		int a_flag,
 		kauth_cred_t a_cred;
 	}; */ *ap = v;
 	PUFFS_MSG_VARS(vn, listextattr);
@@ -2729,6 +2730,7 @@ puffs_vnop_listextattr(void *v)
 	int attrnamespace = ap->a_attrnamespace;
 	struct uio *uio = ap->a_uio;
 	size_t *sizep = ap->a_size;
+	int flag = ap->a_flag;
 	size_t tomove, resid;
 	int error;
 
@@ -2747,6 +2749,7 @@ puffs_vnop_listextattr(void *v)
 	    &park_listextattr, (void *)&listextattr_msg, 1);
 
 	listextattr_msg->pvnr_attrnamespace = attrnamespace;
+	listextattr_msg->pvnr_flag = flag;
 	puffs_credcvt(&listextattr_msg->pvnr_cred, ap->a_cred);
 	listextattr_msg->pvnr_resid = tomove;
 	if (sizep)
