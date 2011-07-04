@@ -1,4 +1,4 @@
-/*	$NetBSD: floatunsdidf.c,v 1.6 2003/08/07 16:43:16 agc Exp $	*/
+/*	$NetBSD: floatundidf.c,v 1.1 2011/07/04 06:23:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)floatunsdidf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: floatunsdidf.c,v 1.6 2003/08/07 16:43:16 agc Exp $");
+__RCSID("$NetBSD: floatundidf.c,v 1.1 2011/07/04 06:23:50 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,8 +49,7 @@ __RCSID("$NetBSD: floatunsdidf.c,v 1.6 2003/08/07 16:43:16 agc Exp $");
  * This is exactly like floatdidf.c except that negatives never occur.
  */
 double
-__floatunsdidf(x)
-	u_quad_t x;
+__floatundidf(u_quad_t x)
 {
 	double d;
 	union uu u;
