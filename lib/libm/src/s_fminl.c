@@ -25,12 +25,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_fminl.c,v 1.2 2010/03/08 01:05:20 snj Exp $");
+__RCSID("$NetBSD: s_fminl.c,v 1.3 2011/07/04 11:46:41 mrg Exp $");
 #ifdef notdef
 __FBSDID("$FreeBSD: src/lib/msun/src/s_fminl.c,v 1.1 2004/06/30 07:04:01 das Exp $");
 #endif
 
 #include <math.h>
+#include <string.h>
 
 #include <machine/ieee.h>
 #ifdef EXT_EXP_INFNAN
@@ -39,6 +40,7 @@ fminl(long double x, long double y)
 {
 	union ieee_ext_u u[2];
 
+	memset(&u, 0, sizeof u);
 	u[0].extu_ld = x;
 	u[0].extu_ext.ext_frach &= ~0x80000000;
 	u[1].extu_ld = y;
