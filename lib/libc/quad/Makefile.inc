@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.12 2011/07/04 06:23:50 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2011/07/04 11:22:39 mrg Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # Quad support
 SRCS.quad=	cmpdi2.c divdi3.c fixdfdi.c fixsfdi.c fixunsdfdi.c \
-	fixunssfdi.c floatdidf.c floatdisf.c floatundidf.c \
+	fixunssfdi.c floatdidf.c floatdisf.c floatundisf.c floatundidf.c \
 	moddi3.c muldi3.c negdi2.c qdivrem.c \
 	ucmpdi2.c udivdi3.c umoddi3.c 
 
