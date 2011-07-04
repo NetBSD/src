@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/01 14:13:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/04 16:10:39 joerg Exp $
 
 LIB=	LLVMMC
 
@@ -35,12 +35,14 @@ SRCS+=	ELFObjectWriter.cpp \
 	MCSectionELF.cpp \
 	MCSectionMachO.cpp \
 	MCStreamer.cpp \
+	MCSubtargetInfo.cpp \
 	MCSymbol.cpp \
 	MCValue.cpp \
 	MCWin64EH.cpp \
 	MachObjectWriter.cpp \
 	WinCOFFStreamer.cpp \
 	WinCOFFObjectWriter.cpp \
+	SubtargetFeature.cpp \
 	TargetAsmBackend.cpp
 
 .if defined(HOSTLIB)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:03 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/07/04 16:10:40 joerg Exp $
 
 LIB=	LLVMX86CodeGen
 
@@ -32,20 +32,17 @@ SRCS+=	SSEDomainFix.cpp \
 TABLEGEN_SRC=		X86.td
 TABLEGEN_INCLUDES=	-I${LLVM_SRCDIR}/lib/Target/X86
 TABLEGEN_OUTPUT= \
-	X86GenRegisterInfo.h.inc|-gen-register-desc-header \
-	X86GenRegisterNames.inc|-gen-register-enums \
-	X86GenRegisterInfo.inc|-gen-register-desc \
-	X86GenDisassemblerTables.inc|-gen-disassembler \
-	X86GenInstrNames.inc|-gen-instr-enums \
-	X86GenInstrInfo.inc|-gen-instr-desc \
+	X86GenAsmMatcher.inc|-gen-asm-matcher \
 	X86GenAsmWriter.inc|-gen-asm-writer \
 	X86GenAsmWriter1.inc|-gen-asm-writer^-asmwriternum=1 \
-	X86GenAsmMatcher.inc|-gen-asm-matcher \
-	X86GenDAGISel.inc|-gen-dag-isel \
-	X86GenFastISel.inc|-gen-fast-isel \
 	X86GenCallingConv.inc|-gen-callingconv \
-	X86GenSubtarget.inc|-gen-subtarget \
-	X86GenEDInfo.inc|-gen-enhanced-disassembly-info
+	X86GenDAGISel.inc|-gen-dag-isel \
+	X86GenDisassemblerTables.inc|-gen-disassembler \
+	X86GenEDInfo.inc|-gen-enhanced-disassembly-info \
+	X86GenFastISel.inc|-gen-fast-isel \
+	X86GenInstrInfo.inc|-gen-instr-info \
+	X86GenRegisterInfo.inc|-gen-register-info \
+	X86GenSubtargetInfo.inc|-gen-subtarget
 
 .include "${.PARSEDIR}/../../tablegen.mk"
 

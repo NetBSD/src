@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2011/05/12 14:56:23 joerg Exp $
+# $NetBSD: Makefile,v 1.6 2011/07/04 16:10:39 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -49,11 +49,13 @@ SUBDIR+= \
 	libLLVMLinker \
 	libLLVMMCJIT \
 	libLLVMObject \
-	libLLVMRuntimeDyld
+	libLLVMRuntimeDyld \
+	libLLVMX86MCTargetDesc
 .endif
 
 SUBDIR+= \
 	libclangAnalysis \
+	libclangARCMigrate \
 	libclangAST \
 	libclangBasic \
 	libclangCodeGen \
