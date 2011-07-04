@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.5 2007/11/08 21:31:04 martin Exp $ */
+/* $NetBSD: softfloat.c,v 1.6 2011/07/04 08:02:35 matt Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.5 2007/11/08 21:31:04 martin Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.6 2011/07/04 08:02:35 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -1128,6 +1128,15 @@ float32 int32_to_float32( int32 a )
 
 }
 
+float32 uint32_to_float32( uint32 a )
+{
+    if ( a == 0 ) return 0;
+    if ( a & (bits32) 0x80000000 )
+	return normalizeRoundAndPackFloat32( 0, 0x9D, a >> 1 );
+    return normalizeRoundAndPackFloat32( 0, 0x9C, a );
+}
+
+
 /*
 -------------------------------------------------------------------------------
 Returns the result of converting the 32-bit two's complement integer `a'
@@ -1148,6 +1157,17 @@ float64 int32_to_float64( int32 a )
     shiftCount = countLeadingZeros32( absA ) + 21;
     zSig = absA;
     return packFloat64( zSign, 0x432 - shiftCount, zSig<<shiftCount );
+
+}
+
+float64 uint32_to_float64( uint32 a )
+{
+    int8 shiftCount;
+    bits64 zSig = a;
+
+    if ( a == 0 ) return 0;
+    shiftCount = countLeadingZeros32( a ) + 21;
+    return packFloat64( 0, 0x432 - shiftCount, zSig<<shiftCount );
 
 }
 
@@ -1177,6 +1197,17 @@ floatx80 int32_to_floatx80( int32 a )
 
 }
 
+floatx80 uint32_to_floatx80( uint32 a )
+{
+    int8 shiftCount;
+    bits64 zSig = a;
+
+    if ( a == 0 ) return packFloatx80( 0, 0, 0 );
+    shiftCount = countLeadingZeros32( a ) + 32;
+    return packFloatx80( 0, 0x403E - shiftCount, zSig<<shiftCount );
+
+}
+
 #endif
 
 #ifdef FLOAT128
@@ -1201,6 +1232,17 @@ float128 int32_to_float128( int32 a )
     shiftCount = countLeadingZeros32( absA ) + 17;
     zSig0 = absA;
     return packFloat128( zSign, 0x402E - shiftCount, zSig0<<shiftCount, 0 );
+
+}
+
+float128 uint32_to_float128( uint32 a )
+{
+    int8 shiftCount;
+    bits64 zSig0 = a;
+
+    if ( a == 0 ) return packFloat128( 0, 0, 0, 0 );
+    shiftCount = countLeadingZeros32( a ) + 17;
+    return packFloat128( 0, 0x402E - shiftCount, zSig0<<shiftCount, 0 );
 
 }
 

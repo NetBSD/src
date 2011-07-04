@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.6 2007/11/08 15:50:23 martin Exp $	*/
+/*	$NetBSD: softfloat.h,v 1.7 2011/07/04 08:02:35 matt Exp $	*/
 
 /* This is a derivative work. */
 
@@ -121,13 +121,17 @@ void float_raise( fp_except );
 Software IEC/IEEE integer-to-floating-point conversion routines.
 -------------------------------------------------------------------------------
 */
-float32 int32_to_float32( int );
-float64 int32_to_float64( int );
+float32 int32_to_float32( int32 );
+float32 uint32_to_float32( uint32 );
+float64 int32_to_float64( int32 );
+float64 uint32_to_float64( uint32 );
 #ifdef FLOATX80
-floatx80 int32_to_floatx80( int );
+floatx80 int32_to_floatx80( int32 );
+floatx80 uint32_to_floatx80( uint32 );
 #endif
 #ifdef FLOAT128
-float128 int32_to_float128( int );
+float128 int32_to_float128( int32 );
+float128 uint32_to_float128( uint32 );
 #endif
 float32 int64_to_float32( long long );
 float64 int64_to_float64( long long );
