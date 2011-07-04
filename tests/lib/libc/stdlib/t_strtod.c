@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.21 2011/06/14 02:37:31 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.22 2011/07/04 22:33:29 mrg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.21 2011/06/14 02:37:31 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.22 2011/07/04 22:33:29 mrg Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -82,6 +82,12 @@ ATF_TC_HEAD(strtod_hex, tc)
 	atf_tc_set_md_var(tc, "descr", "A strtod(3) with hexadecimals");
 }
 
+#ifdef __vax__
+#define SMALL_NUM       1.0e-38
+#else
+#define SMALL_NUM       1.0e-40
+#endif
+
 ATF_TC_BODY(strtod_hex, tc)
 {
 	const char *str;
@@ -93,14 +99,14 @@ ATF_TC_BODY(strtod_hex, tc)
 
 	ATF_REQUIRE(end == str + 4);
 	ATF_REQUIRE(signbit(d) != 0);
-	ATF_REQUIRE(fabs(d) < 1.0e-40);
+	ATF_REQUIRE(fabs(d) < SMALL_NUM);
 
 	str = "-0x";
 	d = strtod(str, &end);	/* -0.0 */
 
 	ATF_REQUIRE(end == str + 2);
 	ATF_REQUIRE(signbit(d) != 0);
-	ATF_REQUIRE(fabs(d) < 1.0e-40);
+	ATF_REQUIRE(fabs(d) < SMALL_NUM);
 }
 
 ATF_TC(strtod_inf);
