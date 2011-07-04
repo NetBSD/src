@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/07/02 14:08:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/07/04 12:38:29 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -470,12 +470,29 @@ CPPFLAGS+=	-I. \
 		-DHAVE_CEIL=1 \
 		-DHAVE_ATTRIBUTE_MODE=1
 
+LIBMPFR_MACHINE_ARCH?=	${MACHINE_ARCH}
+
+# XXX
+# XXX XXX check mips*
 # XXX XXX do something more, more ports!!
-.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
+# XXX
+# XXX missing: arm* sparc sh3* m68k/m68000 (powerpc64/ia64)
+
+# IEEE FP support.  No VAX here.
+.if ${LIBMPFR_MACHINE_ARCH} == "x86_64" || \
+    ${LIBMPFR_MACHINE_ARCH} == "i386"
+    ${LIBMPFR_MACHINE_ARCH} == "mipsel"
 CPPFLAGS+=	-DHAVE_LDOUBLE_IEEE_EXT_LITTLE=1
 .endif
 
-.if ${MACHINE_ARCH} == "sparc64"
+.if ${LIBMPFR_MACHINE_ARCH} == "mips64el"
+CPPFLAGS+=	-DHAVE_LDOUBLE_IEEE_QUAD_LITTLE=1
+.endif
+
+.if ${LIBMPFR_MACHINE_ARCH} == "sparc64" || \
+    ${LIBMPFR_MACHINE_ARCH} == "powerpc" || \
+    ${LIBMPFR_MACHINE_ARCH} == "powerpc64" || \
+    ${LIBMPFR_MACHINE_ARCH} == "mips64eb"
 CPPFLAGS+=	-DHAVE_LDOUBLE_IEEE_QUAD_BIG=1
 .endif
 
@@ -490,6 +507,6 @@ ${SRCS}: mparam.h
 
 .PATH: ${.CURDIR}/../../dist
 
-.if ${MACHINE_ARCH} == "vax"
+.if ${LIBMPFR_MACHINE_ARCH} == "vax"
 COPTS.set_ld.c+=	-Wno-error
 .endif
