@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.2 2011/05/13 22:31:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.3 2011/07/04 23:37:30 sjg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -126,8 +126,8 @@ filemon_comment(struct filemon * filemon)
 	int len;
 
 	len = snprintf(filemon->fm_msgbufr, sizeof(filemon->fm_msgbufr),
-	    "# filemon version 2\n# Target pid %d\nV 2\n",
-	    curproc->p_pid);
+	    "# filemon version %d\n# Target pid %d\nV %d\n",
+		       FILEMON_VERSION, curproc->p_pid, FILEMON_VERSION);
 
 	filemon_output(filemon, filemon->fm_msgbufr, len);
 }

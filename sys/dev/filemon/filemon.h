@@ -1,4 +1,4 @@
-/* $NetBSD: filemon.h,v 1.1 2010/09/09 00:10:16 sjg Exp $ */
+/* $NetBSD: filemon.h,v 1.2 2011/07/04 23:37:30 sjg Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -30,6 +30,8 @@
 #endif
 #define FILEMON_SET_FD		_IOWR('S', 1, int)
 #define FILEMON_SET_PID		_IOWR('S', 2, pid_t)
+
+#define FILEMON_VERSION		3
 
 #ifdef _KERNEL
 struct filemon {
