@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.1 2011/02/08 02:02:25 matt Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.2 2011/07/04 21:55:09 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.1 2011/02/08 02:02:25 matt Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.2 2011/07/04 21:55:09 matt Exp $")
 
 	.section	.ctors, "aw", @progbits
 	.p2align 2
@@ -182,7 +182,7 @@ __do_global_ctors_aux:
 	addis   %r4,%r3,__initialized-1b@ha	/* pcrel (hi) */
 	lbzu	%r0,__initialized-1b@l(%r4)	/* pcrel (lo) load+update */
 	cmpwi	%r0,0				/* have we already done this? */
-	bnelr					/* yep, return
+	bnelr					/* yep, return */
 
 	li	%r0,1
 	stb	%r0,0(%r4)			/* remember we've been here */
