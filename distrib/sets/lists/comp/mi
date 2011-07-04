@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1637 2011/07/01 12:09:34 njoly Exp $
+#	$NetBSD: mi,v 1.1638 2011/07/04 12:05:00 manu Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9193,6 +9193,7 @@
 ./usr/share/man/cat3/xdr_replymsg.0		comp-c-catman		.cat
 ./usr/share/man/cat3/xdr_setpos.0		comp-c-catman		.cat
 ./usr/share/man/cat3/xdr_short.0		comp-c-catman		.cat
+./usr/share/man/cat3/xdr_sizeof.0		comp-c-catman		.cat
 ./usr/share/man/cat3/xdr_string.0		comp-c-catman		.cat
 ./usr/share/man/cat3/xdr_u_char.0		comp-c-catman		.cat
 ./usr/share/man/cat3/xdr_u_long.0		comp-c-catman		.cat
@@ -15206,6 +15207,7 @@
 ./usr/share/man/html3/xdr_replymsg.html		comp-c-htmlman		html
 ./usr/share/man/html3/xdr_setpos.html		comp-c-htmlman		html
 ./usr/share/man/html3/xdr_short.html		comp-c-htmlman		html
+./usr/share/man/html3/xdr_sizeof.html		comp-c-htmlman		html
 ./usr/share/man/html3/xdr_string.html		comp-c-htmlman		html
 ./usr/share/man/html3/xdr_u_char.html		comp-c-htmlman		html
 ./usr/share/man/html3/xdr_u_long.html		comp-c-htmlman		html
@@ -21294,6 +21296,7 @@
 ./usr/share/man/man3/xdr_replymsg.3		comp-c-man		.man
 ./usr/share/man/man3/xdr_setpos.3		comp-c-man		.man
 ./usr/share/man/man3/xdr_short.3		comp-c-man		.man
+./usr/share/man/man3/xdr_sizeof.3		comp-c-man		.man
 ./usr/share/man/man3/xdr_string.3		comp-c-man		.man
 ./usr/share/man/man3/xdr_u_char.3		comp-c-man		.man
 ./usr/share/man/man3/xdr_u_long.3		comp-c-man		.man
