@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.26 2011/06/29 08:01:14 manu Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.27 2011/07/04 08:07:30 manu Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.26 2011/06/29 08:01:14 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.27 2011/07/04 08:07:30 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,7 +355,7 @@ extattr_delete_vp(struct vnode *vp, int attrnamespace, const char *attrname,
  */
 static int
 extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
-    struct lwp *l, register_t *retval)
+    int flag, struct lwp *l, register_t *retval)
 {
 	struct uio auio, *auiop;
 	size_t size, *sizep;
@@ -386,7 +386,8 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 	} else
 		sizep = &size;
 
-	error = VOP_LISTEXTATTR(vp, attrnamespace, auiop, sizep, l->l_cred);
+	error = VOP_LISTEXTATTR(vp, attrnamespace, auiop, sizep, 
+				flag, l->l_cred);
 
 	if (auiop != NULL) {
 		cnt -= auio.uio_resid;
@@ -695,7 +696,8 @@ sys_extattr_list_fd(struct lwp *l, const struct sys_extattr_list_fd_args *uap, r
 	vp = (struct vnode *) fp->f_data;
 
 	error = extattr_list_vp(vp, SCARG(uap, attrnamespace),
-	    SCARG(uap, data), SCARG(uap, nbytes), l, retval);
+	    SCARG(uap, data), SCARG(uap, nbytes),
+	    EXTATTR_LIST_LENPREFIX, l, retval);
 
 	fd_putfile(SCARG(uap, fd));
 	return (error);
@@ -719,7 +721,8 @@ sys_extattr_list_file(struct lwp *l, const struct sys_extattr_list_file_args *ua
 		return (error);
 
 	error = extattr_list_vp(vp, SCARG(uap, attrnamespace),
-	    SCARG(uap, data), SCARG(uap, nbytes), l, retval);
+	    SCARG(uap, data), SCARG(uap, nbytes),
+	    EXTATTR_LIST_LENPREFIX, l, retval);
 
 	vrele(vp);
 	return (error);
@@ -743,7 +746,8 @@ sys_extattr_list_link(struct lwp *l, const struct sys_extattr_list_link_args *ua
 		return (error);
 
 	error = extattr_list_vp(vp, SCARG(uap, attrnamespace),
-	    SCARG(uap, data), SCARG(uap, nbytes), l, retval);
+	    SCARG(uap, data), SCARG(uap, nbytes),
+	    EXTATTR_LIST_LENPREFIX, l, retval);
 
 	vrele(vp);
 	return (error);
@@ -1008,7 +1012,7 @@ sys_listxattr(struct lwp *l, const struct sys_listxattr_args *uap, register_t *r
 	size = SCARG(uap, size);
 
 	error = extattr_list_vp(vp, EXTATTR_NAMESPACE_USER,
-	    list, size, l, &listsize_usr);
+	    list, size, 0, l, &listsize_usr);
 	if (error)
 		goto out;
 
@@ -1018,7 +1022,7 @@ sys_listxattr(struct lwp *l, const struct sys_listxattr_args *uap, register_t *r
 		size -= listsize_usr;
 
 	error = extattr_list_vp(vp, EXTATTR_NAMESPACE_SYSTEM,
-	    list, size, l, &listsize_sys);
+	    list, size, 0, l, &listsize_sys);
 	switch (error) {
 	case EPERM:
 		error = 0; /* Ignore and just skip system EA */
@@ -1061,7 +1065,7 @@ sys_llistxattr(struct lwp *l, const struct sys_llistxattr_args *uap, register_t 
 	size = SCARG(uap, size);
 
 	error = extattr_list_vp(vp, EXTATTR_NAMESPACE_USER,
-	    list, size, l, &listsize_usr);
+	    list, size, 0, l, &listsize_usr);
 	if (error)
 		goto out;
 
@@ -1071,7 +1075,7 @@ sys_llistxattr(struct lwp *l, const struct sys_llistxattr_args *uap, register_t 
 		size -= listsize_usr;
 
 	error = extattr_list_vp(vp, EXTATTR_NAMESPACE_SYSTEM,
-	    list, size, l, &listsize_sys);
+	    list, size, 0, l, &listsize_sys);
 	switch (error) {
 	case EPERM:
 		error = 0; /* Ignore and just skip system EA */
@@ -1114,7 +1118,7 @@ sys_flistxattr(struct lwp *l, const struct sys_flistxattr_args *uap, register_t 
 	size = SCARG(uap, size);
 
 	error = extattr_list_vp(vp, EXTATTR_NAMESPACE_USER,
-	    list, size, l, &listsize_usr);
+	    list, size, 0, l, &listsize_usr);
 	if (error)
 		goto out;
 
@@ -1124,7 +1128,7 @@ sys_flistxattr(struct lwp *l, const struct sys_flistxattr_args *uap, register_t 
 		size -= listsize_usr;
 
 	error = extattr_list_vp(vp, EXTATTR_NAMESPACE_SYSTEM,
-	    list, size, l, &listsize_sys);
+	    list, size, 0, l, &listsize_sys);
 	switch (error) {
 	case EPERM:
 		error = 0; /* Ignore and just skip system EA */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.35 2010/12/06 14:50:34 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.36 2011/07/04 08:07:30 manu Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.35 2010/12/06 14:50:34 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.36 2011/07/04 08:07:30 manu Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -975,6 +975,7 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_listextattr *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 			size_t res, *resp, *sizep;
+			int flag;
 			uint8_t *data;
 
 			if (pops->puffs_node_listextattr == NULL) {
@@ -997,9 +998,10 @@ dispatch(struct puffs_cc *pcc)
 			}
 
 			res = auxt->pvnr_resid;
+			flag = auxt->pvnr_flag;
 			error = pops->puffs_node_listextattr(pu,
 			    opcookie, auxt->pvnr_attrnamespace,
-			    sizep, data, resp, pcr);
+			    sizep, data, resp, flag, pcr);
 
 			/* need to move a bit more? */
 			preq->preq_buflen =
