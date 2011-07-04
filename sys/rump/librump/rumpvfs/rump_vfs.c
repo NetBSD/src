@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.66 2011/06/12 03:35:59 rmind Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.67 2011/07/04 11:31:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.66 2011/06/12 03:35:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.67 2011/07/04 11:31:37 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.66 2011/06/12 03:35:59 rmind Exp $");
 #include "rump_private.h"
 #include "rump_vfs_private.h"
 
-struct cwdinfo cwdi0;
+extern struct cwdinfo cwdi0;
 const char *rootfstype = ROOT_FSTYPE_ANY;
 
 static void
