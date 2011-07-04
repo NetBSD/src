@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/10 04:45:41 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/07/04 16:20:46 joerg Exp $
 
 .include "../Makefile.inc"
 
@@ -9,7 +9,5 @@ IOCONF=	padlock.ioconf
 SRCS=	via_padlock.c
 
 WARNS=	4
-
-COPTS.via_padlock.c+=	${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 .include <bsd.kmodule.mk>
