@@ -3,14 +3,14 @@
 # Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp 
 #
 G_INCLUDES=-I. -I. -I${GNUHOSTDIST}/gcc -I${GNUHOSTDIST}/gcc/. -I${GNUHOSTDIST}/gcc/../include -I./../intl -I${GNUHOSTDIST}/gcc/../libcpp/include     -I${GNUHOSTDIST}/gcc/../libdecnumber -I${GNUHOSTDIST}/gcc/../libdecnumber/dpd -I../libdecnumber   -I/usr/include/libelf
-G_LIB2ADD=${GNUHOSTDIST}/gcc/config/floatunsidf.c ${GNUHOSTDIST}/gcc/config/floatunsisf.c
+G_LIB2ADD=
 G_LIB2ADDEH=${GNUHOSTDIST}/gcc/unwind-dw2.c ${GNUHOSTDIST}/gcc/unwind-dw2-fde.c ${GNUHOSTDIST}/gcc/unwind-sjlj.c ${GNUHOSTDIST}/gcc/gthr-gnat.c ${GNUHOSTDIST}/gcc/unwind-c.c
 G_LIB2ADD_ST=
 G_LIB1ASMFUNCS=_ashiftrt _ashiftrt_n _ashiftlt _lshiftrt _movmem _movmem_i4 _mulsi3 _sdivsi3 _sdivsi3_i4 _udivsi3 _udivsi3_i4 _set_fpscr _div_table _udiv_qrnnd_16 _ic_invalidate
 G_LIB1ASMSRC=sh/lib1funcs.asm
 G_LIB2_DIVMOD_FUNCS=_divdi3 _moddi3 _udivdi3 _umoddi3 _udiv_w_sdiv _udivmoddi4
 G_LIB2FUNCS_ST=_eprintf __gcc_bcmp
-G_LIB2FUNCS_EXTRA=${GNUHOSTDIST}/gcc/config/floatunsidf.c ${GNUHOSTDIST}/gcc/config/floatunsisf.c
+G_LIB2FUNCS_EXTRA=
 G_LIBGCC2_CFLAGS=-O2   -DIN_GCC   -W -Wall -Wwrite-strings -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition  -isystem ./include  -fpic -mieee -g -DHAVE_GTHR_DEFAULT -DIN_LIBGCC2 -D__GCC_FLOAT_NOT_NEEDED 
 G_SHLIB_MKMAP=${GNUHOSTDIST}/gcc/mkmap-symver.awk
 G_SHLIB_MKMAP_OPTS=
