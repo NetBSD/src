@@ -4,7 +4,9 @@
 /* OpenSSL was configured with the following options: */
 #ifndef OPENSSL_DOING_MAKEDEPEND
 
-
+#ifndef OPENSSL_NO_EC_NISTP224_64_GCC_128
+# define OPENSSL_NO_EC_NISTP224_64_GCC_128
+#endif
 #ifndef OPENSSL_NO_GMP
 # define OPENSSL_NO_GMP
 #endif
@@ -62,6 +64,9 @@
    who haven't had the time to do the appropriate changes in their
    applications.  */
 #ifdef OPENSSL_ALGORITHM_DEFINES
+# if defined(OPENSSL_NO_EC_NISTP224_64_GCC_128) && !defined(NO_EC_NISTP224_64_GCC_128)
+#  define NO_EC_NISTP224_64_GCC_128
+# endif
 # if defined(OPENSSL_NO_CAMELLIA) && !defined(NO_CAMELLIA)
 #  define NO_CAMELLIA
 # endif
