@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2011/07/05 17:22:22 joerg Exp $
+# $NetBSD: Makefile,v 1.11 2011/07/05 19:37:11 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,7 @@ SUBDIR=	\
 	libLLVMTarget \
 	libLLVMTransformsUtils \
 	libLLVMARMCodeGen \
+	libLLVMMipsCodeGen \
 	libLLVMPowerPCCodeGen \
 	libLLVMSparcCodeGen \
 	libLLVMX86CodeGen
@@ -36,6 +37,9 @@ SUBDIR+= \
 	libLLVMARMAsmPrinter \
 	libLLVMARMDisassembler \
 	libLLVMARMTargetInfo
+
+SUBDIR+= \
+	libLLVMMipsTargetInfo
 
 SUBDIR+= \
 	libLLVMPowerPCAsmPrinter \
