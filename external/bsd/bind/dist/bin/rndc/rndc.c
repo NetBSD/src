@@ -1,7 +1,7 @@
-/*	$NetBSD: rndc.c,v 1.2 2011/02/16 03:46:48 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.3 2011/07/05 21:59:18 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc.c,v 1.131.20.1 2011-02-03 11:44:45 marka Exp */
+/* Id: rndc.c,v 1.131.20.1.2.1 2011-06-02 23:47:28 tbox Exp */
 
 /*! \file */
 

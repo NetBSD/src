@@ -1,7 +1,7 @@
-/*	$NetBSD: task.h,v 1.2 2011/02/16 03:47:13 christos Exp $	*/
+/*	$NetBSD: task.h,v 1.3 2011/07/05 21:59:19 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: task.h,v 1.69.14.1 2011-02-03 05:50:07 marka Exp */
+/* Id: task.h,v 1.69.14.1.2.1 2011-06-02 23:47:36 tbox Exp */
 
 #ifndef ISC_TASK_H
 #define ISC_TASK_H 1
