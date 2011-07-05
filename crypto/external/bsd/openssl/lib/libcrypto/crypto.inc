@@ -1,4 +1,4 @@
-#	$NetBSD: crypto.inc,v 1.2 2011/06/06 08:04:19 spz Exp $
+#	$NetBSD: crypto.inc,v 1.3 2011/07/05 10:42:54 spz Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -8,10 +8,17 @@
 .PATH:	${OPENSSLSRC}/crypto
 
 
-CRYPTO_SRCS = cryptlib.c mem.c mem_clr.c mem_dbg.c cversion.c ex_data.c \
+CRYPTO_SRCS = cryptlib.c mem.c mem_dbg.c cversion.c ex_data.c \
 	cpt_err.c ebcdic.c uid.c o_time.c o_str.c o_dir.c o_fips.c o_init.c
 SRCS += ${CRYPTO_SRCS}
 
+.if !defined(CPUID)
+CRYPTO_SRCS+=  mem_clr.c
+.else
+CRYPTO_SRCS+=  ${CPUID_SRCS}
+CRYPTOCPPFLAGS=-DOPENSSL_CPUID_OBJ
+.endif
+
 .for cryptosrc in ${CRYPTO_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/crypto
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/crypto ${CRYPTOCPPFLAGS}
 .endfor
