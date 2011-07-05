@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- File: Id: Bv9ARM-book.xml,v 1.478.8.2 2011-02-03 07:39:02 marka Exp -->
+<!-- File: Id: Bv9ARM-book.xml,v 1.478.8.2.2.1 2011-06-09 03:17:11 marka Exp -->
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
   <title>BIND 9 Administrator Reference Manual</title>
 
@@ -9212,8 +9212,8 @@ deny-answer-aliases { "example.net"; };
           <para>
             The rules encoded in a response policy zone (RPZ) are applied
             only to responses to queries that ask for recursion (RD=1).
-            RPZs are normal DNS zones containing largely valid RRsets
-            that can be queried normal if allowed.
+            RPZs are normal DNS zones containing RRsets
+            that can be queried normally if allowed.
             It is usually best to restrict those queries with something like
             <command>allow-query {none; };</command> or
             <command>allow-query { 127.0.0.1; };</command>.
@@ -9225,6 +9225,8 @@ deny-answer-aliases { "example.net"; };
             records resolved in the process of generating the response.
             The owner name of a QNAME rule is the query name relativized
             to the RPZ.
+	    The records in a rewrite rule are usually A, AAAA, or special
+	    CNAMEs, but can be any type except DNAME.
           </para>
 
           <para>
@@ -9324,6 +9326,7 @@ nodata.domain.com           CNAME   *.
 bad.domain.com              A       10.0.0.1
                             AAAA    2001:2::1
 ok.domain.com               CNAME   ok.domain.com.
+*.badzone.domain.com	    CNAME   garden.example.com.
 
 ; IP rules rewriting all answers for 127/8 except 127.0.0.1
 8.0.0.0.127.ip              CNAME   .
