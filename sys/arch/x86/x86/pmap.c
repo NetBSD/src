@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.126 2011/06/24 01:39:41 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.127 2011/07/05 14:07:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.126 2011/06/24 01:39:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.127 2011/07/05 14:07:12 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3212,7 +3212,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	    "PG_PVLIST, va = %#" PRIxVADDR ", pa = %#" PRIxPADDR,
 	    va, (paddr_t)pmap_pte2pa(opte)));
 
-	KASSERT(pmap == pmap_kernel() || uvm_page_locked_p(pg));
+	KASSERT(uvm_page_locked_p(pg));
 
 	/* Sync R/M bits. */
 	pp = VM_PAGE_TO_PP(pg);
