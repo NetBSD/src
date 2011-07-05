@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.c,v 1.1.1.7 2011/05/28 07:00:31 spz Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.8 2011/07/05 21:30:45 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.c,v 1.333.14.2 2011-02-18 04:01:16 marka Exp */
+/* Id: socket.c,v 1.333.14.2.2.1 2011-06-02 23:47:36 tbox Exp */
 
 /*! \file */
 
