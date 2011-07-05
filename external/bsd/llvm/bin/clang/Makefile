@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/07/05 17:22:21 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2011/07/05 19:37:10 joerg Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -42,6 +42,8 @@ LLVM_LIBS+= \
 	ARMTargetInfo \
 	ARMAsmParser \
 	ARMAsmPrinter \
+	MipsCodeGen \
+	MipsTargetInfo \
 	PowerPCCodeGen \
 	PowerPCTargetInfo \
 	PowerPCAsmPrinter \
