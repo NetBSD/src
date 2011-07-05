@@ -1,3 +1,27 @@
+	--- 9.8.0-P4 released ---
+
+3124.	[bug]		Use an rdataset attribute flag to indicate
+			negative-cache records rather than using rrtype 0;
+			this will prevent problems when that rrtype is
+			used in actual DNS packets.  [RT #24777]
+
+	--- 9.8.0-P3 released (withdrawn) ---
+
+3126.	[security]	Using DNAME record to generate replacements caused
+			RPZ to exit with a assertion failure. [RT #23766]
+
+3125.	[security]	Using wildcard CNAME records as a replacement with
+			RPZ caused named to exit with a assertion failure.
+			[RT #24715]
+
+3123.	[security]	Change #2912 exposed a latent flaw in
+			dns_rdataset_totext() that could cause named to
+			crash with an assertion failure. [RT #24777]
+
+3115.	[bug]		Named could fail to return requested data when
+			following a CNAME that points into the same zone.
+			[RT #2445]
+
 	--- 9.8.0-P2 released ---
 
 3121.   [security]      An authoritative name server sending a negative
