@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.299 2011/06/13 23:19:40 rmind Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.300 2011/07/05 14:03:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.299 2011/06/13 23:19:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.300 2011/07/05 14:03:07 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2367,55 +2367,8 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			}
 		} else if (UVM_ET_ISOBJ(entry) &&
 			   UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj)) {
-			KASSERT(vm_map_pmap(map) == pmap_kernel());
-
-			/*
-			 * note: kernel object mappings are currently used in
-			 * two ways:
-			 *  [1] "normal" mappings of pages in the kernel object
-			 *  [2] uvm_km_valloc'd allocations in which we
-			 *      pmap_enter in some non-kernel-object page
-			 *      (e.g. vmapbuf).
-			 *
-			 * for case [1], we need to remove the mapping from
-			 * the pmap and then remove the page from the kernel
-			 * object (because, once pages in a kernel object are
-			 * unmapped they are no longer needed, unlike, say,
-			 * a vnode where you might want the data to persist
-			 * until flushed out of a queue).
-			 *
-			 * for case [2], we need to remove the mapping from
-			 * the pmap.  there shouldn't be any pages at the
-			 * specified offset in the kernel object [but it
-			 * doesn't hurt to call uvm_km_pgremove just to be
-			 * safe?]
-			 *
-			 * uvm_km_pgremove currently does the following:
-			 *   for pages in the kernel object in range:
-			 *     - drops the swap slot
-			 *     - uvm_pagefree the page
-			 */
-
-			/*
-			 * remove mappings from pmap and drop the pages
-			 * from the object.  offsets are always relative
-			 * to vm_map_min(kernel_map).
-			 *
-			 * don't need to lock object as the kernel is
-			 * always self-consistent.
-			 */
-
-			pmap_remove(pmap_kernel(), entry->start,
-			    entry->start + len);
-			uvm_km_pgremove(entry->start, entry->end);
-
-			/*
-			 * null out kernel_object reference, we've just
-			 * dropped it
-			 */
-
-			entry->etype &= ~UVM_ET_OBJ;
-			entry->object.uvm_obj = NULL;
+			panic("%s: kernel object %p %p\n",
+			    __func__, map, entry);
 		} else if (UVM_ET_ISOBJ(entry) || entry->aref.ar_amap) {
 			/*
 			 * remove mappings the standard way.  lock object
