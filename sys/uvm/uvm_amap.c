@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.100 2011/06/27 15:56:36 hannken Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.101 2011/07/05 13:47:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.100 2011/06/27 15:56:36 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.101 2011/07/05 13:47:24 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1060,7 +1060,6 @@ ReStart:
 		 */
 
 		nanon->an_lock = amap->am_lock;
-		mutex_obj_hold(nanon->an_lock);
 		uvm_pagecopy(pg, npg);
 		anon->an_ref--;
 		KASSERT(anon->an_ref > 0);
