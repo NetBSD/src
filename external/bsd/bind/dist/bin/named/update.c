@@ -1,7 +1,7 @@
-/*	$NetBSD: update.c,v 1.2 2011/02/16 03:46:46 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.3 2011/07/05 21:59:18 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: update.c,v 1.186.16.1 2011-02-03 06:18:51 marka Exp */
+/* Id: update.c,v 1.186.16.1.2.1 2011-06-02 23:47:28 tbox Exp */
 
 #include <config.h>
 
@@ -3438,7 +3438,7 @@ add_signing_records(dns_db_t *db, dns_rdatatype_t privatetype,
 	 */
 	for (tuple = ISC_LIST_HEAD(diff->tuples);
 	     tuple != NULL; tuple = next) {
-	
+
 		next = ISC_LIST_NEXT(tuple, link);
 
 		if (tuple->rdata.type != dns_rdatatype_dnskey)
@@ -3502,7 +3502,7 @@ add_signing_records(dns_db_t *db, dns_rdatatype_t privatetype,
 	     tuple = ISC_LIST_HEAD(temp_diff.tuples)) {
 
 		ISC_LIST_UNLINK(temp_diff.tuples, tuple, link);
-                ISC_LIST_APPEND(diff->tuples, tuple, link);
+		ISC_LIST_APPEND(diff->tuples, tuple, link);
 
 		dns_rdata_tostruct(&tuple->rdata, &dnskey, NULL);
 		if ((dnskey.flags &
