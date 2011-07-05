@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.13 2011/06/08 22:43:10 rmind Exp $ */
+/* $NetBSD: viapcib.c,v 1.14 2011/07/05 07:08:17 mrg Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.13 2011/06/08 22:43:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.14 2011/07/05 07:08:17 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -232,7 +232,7 @@ static int
 viapcib_wait(struct viapcib_softc *sc)
 {
 	int rv, timeout;
-	uint8_t val;
+	uint8_t val = 0;
 
 	timeout = VIAPCIB_SMBUS_TIMEOUT;
 	rv = 0;
