@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.109 2011/06/12 03:36:03 rmind Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.110 2011/07/05 14:03:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.109 2011/06/12 03:36:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.110 2011/07/05 14:03:06 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -384,10 +384,7 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *vmin /* IN/OUT */,
 }
 
 /*
- * uvm_km_pgremove: remove pages from a kernel uvm_object.
- *
- * => when you unmap a part of anonymous kernel memory you want to toss
- *    the pages right away.    (this gets called from uvm_unmap_...).
+ * uvm_km_pgremove: remove pages from a kernel uvm_object and KVA.
  */
 
 void
@@ -406,7 +403,7 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 	KASSERT(endva <= VM_MAX_KERNEL_ADDRESS);
 
 	mutex_enter(uobj->vmobjlock);
-
+	pmap_remove(pmap_kernel(), startva, endva);
 	for (curoff = start; curoff < end; curoff = nextoff) {
 		nextoff = curoff + PAGE_SIZE;
 		pg = uvm_pagelookup(uobj, curoff);
@@ -474,6 +471,7 @@ uvm_km_pgremove_intrsafe(struct vm_map *map, vaddr_t start, vaddr_t end)
 		pg = PHYS_TO_VM_PAGE(pa);
 		KASSERT(pg);
 		KASSERT(pg->uobject == NULL && pg->uanon == NULL);
+		KASSERT((pg->flags & PG_BUSY) == 0);
 		uvm_pagefree(pg);
 	}
 }
@@ -655,15 +653,8 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size, uvm_flag_t flags)
 
 	size = round_page(size);
 
-
 	if (flags & UVM_KMF_PAGEABLE) {
-		/*
-		 * No need to lock for pmap, since the kernel is always
-		 * self-consistent.  The pages cannot be in use elsewhere.
-		 */
 		uvm_km_pgremove(addr, addr + size);
-		pmap_remove(pmap_kernel(), addr, addr + size);
-
 	} else if (flags & UVM_KMF_WIRED) {
 		/*
 		 * Note: uvm_km_pgremove_intrsafe() extracts mapping, thus
@@ -722,6 +713,8 @@ again:
 			return 0;
 		}
 	}
+	pg->flags &= ~PG_BUSY;	/* new page */
+	UVM_PAGE_OWN(pg, NULL);
 	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE);
 	pmap_update(pmap_kernel());
