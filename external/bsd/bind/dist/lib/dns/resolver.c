@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.9 2011/05/29 15:17:09 spz Exp $	*/
+/*	$NetBSD: resolver.c,v 1.10 2011/07/05 21:59:19 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resolver.c,v 1.428.6.5 2011-02-18 23:41:51 mgraff Exp */
+/* Id: resolver.c,v 1.428.6.5.2.1 2011-06-21 20:15:53 each Exp */
 
 /*! \file */
 
@@ -437,6 +437,7 @@ struct dns_resolver {
 					 FCTX_ADDRINFO_TRIED) != 0)
 
 #define NXDOMAIN(r) (((r)->attributes & DNS_RDATASETATTR_NXDOMAIN) != 0)
+#define NEGATIVE(r) (((r)->attributes & DNS_RDATASETATTR_NEGATIVE) != 0)
 
 static void destroy(dns_resolver_t *res);
 static void empty_bucket(dns_resolver_t *res);
@@ -1061,7 +1062,7 @@ fctx_sendevents(fetchctx_t *fctx, isc_result_t result, int line) {
 		 * Negative results must be indicated in event->result.
 		 */
 		if (dns_rdataset_isassociated(event->rdataset) &&
-		    event->rdataset->type == dns_rdatatype_none) {
+		    NEGATIVE(event->rdataset)) {
 			INSIST(event->result == DNS_R_NCACHENXDOMAIN ||
 			       event->result == DNS_R_NCACHENXRRSET);
 		}
@@ -4168,7 +4169,7 @@ validated(isc_task_t *task, isc_event_t *event) {
 	if (result != ISC_R_SUCCESS &&
 	    result != DNS_R_UNCHANGED)
 		goto noanswer_response;
-	if (ardataset != NULL && ardataset->type == 0) {
+	if (ardataset != NULL && NEGATIVE(ardataset)) {
 		if (NXDOMAIN(ardataset))
 			eresult = DNS_R_NCACHENXDOMAIN;
 		else
@@ -4489,7 +4490,7 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_adbaddrinfo_t *addrinfo,
 					result = ISC_R_SUCCESS;
 					if (!need_validation &&
 					    ardataset != NULL &&
-					    ardataset->type == 0) {
+					    NEGATIVE(ardataset)) {
 						/*
 						 * The answer in the cache is
 						 * better than the answer we
@@ -4619,7 +4620,7 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_adbaddrinfo_t *addrinfo,
 			if (result == DNS_R_UNCHANGED) {
 				if (ANSWER(rdataset) &&
 				    ardataset != NULL &&
-				    ardataset->type == 0) {
+				    NEGATIVE(ardataset)) {
 					/*
 					 * The answer in the cache is better
 					 * than the answer we found, and is
@@ -4649,7 +4650,7 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_adbaddrinfo_t *addrinfo,
 			 * Negative results must be indicated in event->result.
 			 */
 			if (dns_rdataset_isassociated(event->rdataset) &&
-			    event->rdataset->type == dns_rdatatype_none) {
+			    NEGATIVE(event->rdataset)) {
 				INSIST(eresult == DNS_R_NCACHENXDOMAIN ||
 				       eresult == DNS_R_NCACHENXRRSET);
 			}
@@ -4729,7 +4730,7 @@ ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 		 * care about whether it is DNS_R_NCACHENXDOMAIN or
 		 * DNS_R_NCACHENXRRSET then extract it.
 		 */
-		if (ardataset->type == 0) {
+		if (NEGATIVE(ardataset)) {
 			/*
 			 * The cache data is a negative cache entry.
 			 */

@@ -1,7 +1,7 @@
-/*	$NetBSD: message.c,v 1.6 2011/02/16 03:47:04 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.7 2011/07/05 21:59:19 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: message.c,v 1.254 2010-06-03 05:23:27 marka Exp */
+/* Id: message.c,v 1.254.186.3 2011-06-21 20:15:47 each Exp */
 
 /*! \file */
 
@@ -2518,7 +2518,7 @@ dns_message_peekheader(isc_buffer_t *source, dns_messageid_t *idp,
 
 isc_result_t
 dns_message_reply(dns_message_t *msg, isc_boolean_t want_question_section) {
-	unsigned int first_section;
+	unsigned int clear_after;
 	isc_result_t result;
 
 	REQUIRE(DNS_MESSAGE_VALID(msg));
@@ -2530,15 +2530,15 @@ dns_message_reply(dns_message_t *msg, isc_boolean_t want_question_section) {
 	    msg->opcode != dns_opcode_notify)
 		want_question_section = ISC_FALSE;
 	if (msg->opcode == dns_opcode_update)
-		first_section = DNS_SECTION_ADDITIONAL;
+		clear_after = DNS_SECTION_PREREQUISITE;
 	else if (want_question_section) {
 		if (!msg->question_ok)
 			return (DNS_R_FORMERR);
-		first_section = DNS_SECTION_ANSWER;
+		clear_after = DNS_SECTION_ANSWER;
 	} else
-		first_section = DNS_SECTION_QUESTION;
+		clear_after = DNS_SECTION_QUESTION;
 	msg->from_to_wire = DNS_MESSAGE_INTENTRENDER;
-	msgresetnames(msg, first_section);
+	msgresetnames(msg, clear_after);
 	msgresetopt(msg);
 	msgresetsigs(msg, ISC_TRUE);
 	msginitprivate(msg);
