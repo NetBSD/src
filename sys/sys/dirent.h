@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.25 2011/05/23 21:59:23 joerg Exp $	*/
+/*	$NetBSD: dirent.h,v 1.26 2011/07/05 07:32:33 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,6 +74,13 @@ struct dirent {
 #define	DT_WHT		14
 
 /*
+ * Caution: the following macros are used by the ufs/ffs code on ffs's
+ * struct direct as well as the exposed struct dirent. The two
+ * structures are not the same, so it's important (until ufs is fixed,
+ * XXX) that the macro definitions remain type-polymorphic.
+ */
+
+/*
  * The _DIRENT_ALIGN macro returns the alignment of struct dirent.
  * struct direct and struct dirent12 used 4 byte alignment but
  * struct dirent uses 8.
@@ -84,7 +91,7 @@ struct dirent {
  * struct dirent
  */
 #if __GNUC_PREREQ__(4, 0)
-#define	_DIRENT_NAMEOFF(dp)	__builtin_offsetof(struct dirent, d_name)
+#define	_DIRENT_NAMEOFF(dp)	__builtin_offsetof(__typeof(*dp), d_name)
 #else
 #define _DIRENT_NAMEOFF(dp) \
     ((char *)(void *)&(dp)->d_name - (char *)(void *)dp)
