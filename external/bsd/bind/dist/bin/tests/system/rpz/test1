@@ -12,13 +12,19 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: test1,v 1.4 2011-01-13 19:30:41 each Exp
+; Id: test1,v 1.4.130.1 2011-06-09 03:17:11 marka Exp
 
 
 server 10.53.0.3 5300
 
+; NXDOMAIN
 update add  a0-1.tld2.bl.	300 CNAME .
-update add  a3-1.tld2.bl.	300 CNAME *.
+
+; NODATA
+update add  a1-1.tld2.bl.	300 CNAME *.
+;	and no assert-botch
+update add  a1-2.tld2.bl.	300 DNAME example.com.
+
 update add  *.sub1.tld2.bl.	300 A 12.12.12.12
 
 send
