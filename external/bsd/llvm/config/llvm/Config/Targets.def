@@ -23,6 +23,6 @@
 #  error Please define the macro LLVM_TARGET(TargetName)
 #endif
 
-LLVM_TARGET(X86) LLVM_TARGET(PowerPC) LLVM_TARGET(Sparc)
+LLVM_TARGET(X86) LLVM_TARGET(PowerPC) LLVM_TARGET(Sparc) LLVM_TARGET(ARM) 
 
 #undef LLVM_TARGET
