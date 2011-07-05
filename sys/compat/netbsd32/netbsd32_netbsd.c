@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.171 2011/06/05 08:42:59 dsl Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.172 2011/07/05 14:21:46 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.171 2011/06/05 08:42:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.172 2011/07/05 14:21:46 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2566,6 +2566,25 @@ netbsd32__sched_getaffinity(struct lwp *l,
 	NETBSD32TOX_UAP(size, size_t);
 	NETBSD32TOP_UAP(cpuset, cpuset_t *);
 	return sys__sched_getaffinity(l, &ua, retval);
+}
+
+int
+netbsd32_pipe2(struct lwp *l, const struct netbsd32_pipe2_args *uap,
+	       register_t *retval)
+{
+	/* {
+		syscallarg(netbsd32_intp) fildes;
+		syscallarg(int) flags;
+	} */
+	int fd[2], error;
+
+	error = pipe1(l, retval, SCARG(uap, flags));
+	if (error)
+		return error;
+
+	fd[0] = retval[0];
+	fd[1] = retval[1];
+	return copyout(fd, SCARG_P32(uap, fildes), sizeof(fd));
 }
 
 /*

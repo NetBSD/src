@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.85 2011/03/06 17:08:35 bouyer Exp $
+	$NetBSD: syscalls.master,v 1.86 2011/07/05 14:21:47 njoly Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -971,3 +971,4 @@
 			    netbsd32_size_t fh_size, netbsd32_statp_t sb); }
 452	STD		{ int|netbsd32|50|quotactl(const netbsd32_charp path, \
 			    netbsd32_voidp pref); }
+453	STD		{ int|netbsd32||pipe2(netbsd32_intp fildes, int flags); }
