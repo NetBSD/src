@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.188 2011/06/24 01:39:22 rmind Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.189 2011/07/05 13:47:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.188 2011/06/24 01:39:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.189 2011/07/05 13:47:24 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -614,11 +614,9 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 
 		KASSERT(anon->an_lock == NULL);
 		anon->an_lock = amap->am_lock;
-		mutex_obj_hold(anon->an_lock);
 		pg = uvm_pagealloc(NULL, ufi->orig_rvaddr, anon,
 		    UVM_FLAG_COLORMATCH | (opg == NULL ? UVM_PGA_ZERO : 0));
 		if (pg == NULL) {
-			mutex_obj_free(anon->an_lock);
 			anon->an_lock = NULL;
 		}
 	} else {

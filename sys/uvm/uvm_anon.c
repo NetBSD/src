@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.57 2011/06/24 01:39:22 rmind Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.58 2011/07/05 13:47:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.57 2011/06/24 01:39:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.58 2011/07/05 13:47:24 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -158,6 +158,7 @@ uvm_anfree1(struct vm_anon *anon)
 
 			if (pg->flags & PG_BUSY) {
 				pg->flags |= PG_RELEASED;
+				mutex_obj_hold(anon->an_lock);
 				return;
 			}
 			mutex_enter(&uvm_pageqlock);
@@ -191,9 +192,6 @@ uvm_anfree1(struct vm_anon *anon)
 	KASSERT(anon->an_swslot == 0);
 #endif
 
-	if (anon->an_lock != NULL) {
-		mutex_obj_free(anon->an_lock);
-	}
 	pool_cache_put(&uvm_anon_cache, anon);
 	UVMHIST_LOG(maphist,"<- done!",0,0,0,0);
 }
@@ -422,7 +420,6 @@ uvm_anon_release(struct vm_anon *anon)
 
 	KASSERT(anon->an_page == NULL);
 
-	mutex_obj_hold(lock);
 	uvm_anfree(anon);
 	mutex_exit(lock);
 	mutex_obj_free(lock);
