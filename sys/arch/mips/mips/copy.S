@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.12 2011/04/06 05:07:40 matt Exp $	*/
+/*	$NetBSD: copy.S,v 1.13 2011/07/05 08:07:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -578,6 +578,7 @@ LEAF(badaddr)
 4:
 	INT_L	v0, (a0)
 5:
+	sync
 	PTR_S	zero, PCB_ONFAULT(v1)
 	j	ra
 	 move	v0, zero		# made it w/o errors
