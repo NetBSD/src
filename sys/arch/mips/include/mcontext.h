@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.18 2011/07/03 10:34:25 mrg Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.19 2011/07/05 19:30:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -215,6 +215,8 @@ __lwp_gettcb_fast(void)
 	    : "v1");
 	return __tcb;
 }
+
+void _lwp_setprivate(void *);
 
 static inline void
 __lwp_settcb(struct tls_tcb *__tcb)
