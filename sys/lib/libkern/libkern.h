@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.97 2011/02/19 02:02:14 matt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.98 2011/07/05 01:56:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -245,8 +245,12 @@ tolower(int ch)
 #define SMALL_RANDOM
 
 #ifndef offsetof
+#if __GNUC_PREREQ__(4, 0)
+#define offsetof(type, member)	__builtin_offsetof(type, member)
+#else
 #define	offsetof(type, member) \
     ((size_t)(unsigned long)(&(((type *)0)->member)))
+#endif
 #endif
 
 #define	MTPRNG_RLEN		624
