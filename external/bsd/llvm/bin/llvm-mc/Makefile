@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/07/05 14:15:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/07/05 17:22:21 joerg Exp $
 
 PROG_CXX=	llvm-mc
 NOMAN=		yes
@@ -11,6 +11,12 @@ SRCS=	llvm-mc.cpp \
 	Disassembler.cpp
 
 LLVM_LIBS+= \
+	MCDisassembler \
+	ARMCodeGen \
+	ARMTargetInfo \
+	ARMAsmParser \
+	ARMAsmPrinter \
+	ARMDisassembler \
 	PowerPCCodeGen \
 	PowerPCTargetInfo \
 	PowerPCAsmPrinter \
@@ -29,7 +35,6 @@ LLVM_LIBS+= \
 	TransformsUtils \
 	Analysis \
 	AsmPrinter \
-	MCDisassembler \
 	MCParser \
 	MC \
 	Core \
