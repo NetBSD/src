@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.43 2011/07/06 18:27:31 dyoung Exp $
+.\" $NetBSD: bus_space.9,v 1.44 2011/07/06 21:36:16 dyoung Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,6 +87,8 @@
 .Nm bus_space_set_region_4 ,
 .Nm bus_space_set_region_8 ,
 .Nm bus_space_subregion ,
+.Nm bus_space_tag_create ,
+.Nm bus_space_tag_destroy ,
 .Nm bus_space_unmap ,
 .Nm bus_space_vaddr ,
 .Nm bus_space_write_1 ,
@@ -165,6 +167,12 @@
 .Ft paddr_t
 .Fn bus_space_mmap "bus_space_tag_t space" "bus_addr_t addr" "off_t off" \
 "int prot" "int flags"
+.Ft int
+.Fn bus_space_tag_create "bus_space_tag_t obst" "uint64_t present" \
+    "uint64_t extpresent" "const struct bus_space_overrides *ov" "void *ctx" \
+    "bus_space_tag_t *bstp"
+.Ft void
+.Fn bus_space_tag_destroy "bus_space_tag_t bst"
 .Ft int
 .Fn bus_space_peek_1 "bus_space_tag_t space" "bus_space_handle_t handle" \
 "bus_size_t offset" "uint8_t *datap"
@@ -1801,6 +1809,102 @@ functions.
 .Pp
 These functions are defined just as their non-stream counterparts,
 except that they provide no byte-order translation.
+.Sh IMPLEMENTING BUS SPACES IN MACHINE-INDEPENDENT CODE
+.Bl -ohang -compact
+.It Fn bus_space_tag_create "obst" "present" "extpresent" "ov" "ctx" "bstp"
+Create a copy of the tag
+.Fa obst
+at
+.Fa *bstp .
+Except for the behavior
+overridden by
+.Fa ov ,
+.Fa *bstp
+inherits the behavior of
+.Fa obst
+under
+.Nm
+calls.
+.Pp
+.Fa ov
+contains function pointers corresponding to
+.Nm
+routines.
+Each function pointer has a corresponding bit in
+.Fa present
+or
+.Fa extpresent ,
+and if that bit is 1, the function pointer overrides the corresponding
+.Nm
+call for the new tag.
+Any combination of these bits may be set in
+.Fa present :
+.Pp
+.Bl -tag -width BUS_SPACE_OVERRIDE_RESERVE_SUBREGION -compact
+.It Dv BUS_SPACE_OVERRIDE_MAP
+.It Dv BUS_SPACE_OVERRIDE_UNMAP
+.It Dv BUS_SPACE_OVERRIDE_ALLOC
+.It Dv BUS_SPACE_OVERRIDE_FREE
+.It Dv BUS_SPACE_OVERRIDE_RESERVE
+.It Dv BUS_SPACE_OVERRIDE_RELEASE
+.It Dv BUS_SPACE_OVERRIDE_RESERVATION_MAP
+.It Dv BUS_SPACE_OVERRIDE_RESERVATION_UNMAP
+.It Dv BUS_SPACE_OVERRIDE_RESERVE_SUBREGION
+.El
+.Pp
+.Fn bus_space_tag_create
+does not copy
+.Fa ov .
+After a new tag is created by
+.Fn bus_space_tag_create ,
+.Fa ov
+must not be destroyed until after the
+tag is destroyed by
+.Fn bus_space_tag_destroy .
+.Pp
+The first argument of every override-function is a
+.Vt "void *" ,
+and
+.Fa ctx
+is passed in that argument.
+.Pp
+Return 0 if the call succeeds.
+Return
+.Dv EOPNOTSUPP
+if the architecture does not support overrides.
+Return
+.Dv EINVAL
+if
+.Fa present
+is 0, if
+.Fa ov
+is
+.Dv NULL ,
+or if
+.Fa present
+indicates that an override is present, but the corresponding override
+in
+.Fa ov
+is
+.Dv NULL .
+.Pp
+If the call does not succeed,
+.Fa *bstp
+is undefined.
+.It Fn bus_space_tag_destroy "bst"
+Destroy a tag,
+.Fa bst ,
+created by a prior call to
+.Fn bus_space_tag_create .
+If
+.Fa bst
+was not created by
+.Fn bus_space_tag_create ,
+results are undefined.
+If
+.Fa bst
+was already destroyed, results are undefined.
+.El
 .Sh EXPECTED CHANGES TO THE BUS_SPACE FUNCTIONS
 The definition of the
 .Nm
