@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.13 2011/07/05 08:07:53 matt Exp $	*/
+/*	$NetBSD: copy.S,v 1.14 2011/07/06 09:27:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -277,6 +277,23 @@ LEAF(copyefault)
 	b	copyerr
 	 li	v0, EFAULT
 END(copyefault)
+
+LEAF(kfetch_32)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
+	PTR_LA	v0, _C_LABEL(kfetcherr)
+	bgez	a0, _C_LABEL(kfetcherr)
+	 PTR_S	v0, PCB_ONFAULT(v1)
+	INT_L	v0, 0(a0)			# fetch int
+	/*
+	 * Normally a sync instructions would be used but this has to work on
+	 * MIPS1 which doesn't have a sync.
+	 */
+	nop					# load delay for mips1
+	move	t0, v0				# dependent instruction
+	xor	t0, v0				# make t0 zero
+	j	ra
+	 PTR_S	t0, PCB_ONFAULT(v1)
+END(kfetch_32)
 
 /*
  * int fuswintr(void *)
@@ -578,8 +595,14 @@ LEAF(badaddr)
 4:
 	INT_L	v0, (a0)
 5:
-	sync
-	PTR_S	zero, PCB_ONFAULT(v1)
+	/*
+	 * Normally a sync instructions would be used but this has to work on
+	 * MIPS1 which doesn't have a sync.
+	 */
+	nop
+	move	t0, v0			# dependent instruction
+	xor	t0, t0			# zero t0
+	PTR_S	t0, PCB_ONFAULT(v1)	# clear onfault
 	j	ra
 	 move	v0, zero		# made it w/o errors
 END(badaddr)
@@ -596,6 +619,12 @@ LEAF(fswintrberr)
 	j	ra
 	 li	v0, -1
 END(fswintrberr)
+
+LEAF(kfetcherr)
+	PTR_S	zero, PCB_ONFAULT(v1)
+	j	ra
+	 move	v0, a1
+END(kfetcherr)
 
 LEAF(fswberr)
 XLEAF(baderr)
