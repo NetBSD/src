@@ -5842,7 +5842,8 @@ ppc_elf_relocate_section (bfd *output_bfd,
       howto = NULL;
       if (r_type < R_PPC_max)
 	howto = ppc_elf_howto_table[r_type];
-      switch (r_type)
+      /* Cast to int as the fake relocs are not in enum elf_ppc_reloc_type.  */
+      switch ((int)r_type)
 	{
 	default:
 	  (*_bfd_error_handler)
