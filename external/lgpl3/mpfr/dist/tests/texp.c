@@ -170,7 +170,9 @@ compare_exp2_exp3 (mpfr_prec_t p0, mpfr_prec_t p1)
       mpfr_set_prec (x, prec);
       mpfr_set_prec (y, prec);
       mpfr_set_prec (z, prec);
-      mpfr_urandomb (x, RANDS);
+      do
+        mpfr_urandomb (x, RANDS);
+      while (MPFR_IS_ZERO (x));  /* 0 is handled by mpfr_exp only */
       rnd = RND_RAND ();
       mpfr_exp_2 (y, x, rnd);
       mpfr_exp_3 (z, x, rnd);

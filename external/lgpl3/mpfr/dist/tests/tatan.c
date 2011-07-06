@@ -535,6 +535,52 @@ atan2_different_prec (void)
   mpfr_clears (a, x, y, (mpfr_ptr) 0);
 }
 
+/* http://websympa.loria.fr/wwsympa/arc/mpfr/2011-05/msg00008.html
+ * Incorrect flags (in debug mode on a 32-bit machine, assertion failure).
+ */
+static void
+reduced_expo_range (void)
+{
+  mpfr_exp_t emin, emax;
+  mpfr_t x, y, ex_y;
+  int inex, ex_inex;
+  unsigned int flags, ex_flags;
+
+  emin = mpfr_get_emin ();
+  emax = mpfr_get_emax ();
+
+  mpfr_inits2 (12, x, y, ex_y, (mpfr_ptr) 0);
+  mpfr_set_str (x, "0.1e-5", 2, MPFR_RNDN);
+
+  mpfr_set_emin (-5);
+  mpfr_set_emax (-5);
+  mpfr_clear_flags ();
+  inex = mpfr_atan (y, x, MPFR_RNDN);
+  flags = __gmpfr_flags;
+  mpfr_set_emin (emin);
+  mpfr_set_emax (emax);
+
+  mpfr_set_str (ex_y, "0.1e-5", 2, MPFR_RNDN);
+  ex_inex = 1;
+  ex_flags = MPFR_FLAGS_INEXACT;
+
+  if (SIGN (inex) != ex_inex || flags != ex_flags ||
+      ! mpfr_equal_p (y, ex_y))
+    {
+      printf ("Error in reduced_expo_range\non x = ");
+      mpfr_dump (x);
+      printf ("Expected y = ");
+      mpfr_out_str (stdout, 2, 0, ex_y, MPFR_RNDN);
+      printf ("\n         inex = %d, flags = %u\n", ex_inex, ex_flags);
+      printf ("Got      y = ");
+      mpfr_out_str (stdout, 2, 0, y, MPFR_RNDN);
+      printf ("\n         inex = %d, flags = %u\n", SIGN (inex), flags);
+      exit (1);
+    }
+
+  mpfr_clears (x, y, ex_y, (mpfr_ptr) 0);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -546,6 +592,7 @@ main (int argc, char *argv[])
   smallvals_atan2 ();
   atan2_bug_20071003 ();
   atan2_different_prec ();
+  reduced_expo_range ();
 
   test_generic_atan  (2, 200, 17);
   test_generic_atan2 (2, 200, 17);

@@ -431,5 +431,5 @@ mpfr_atan (mpfr_ptr atan, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   MPFR_GROUP_CLEAR (group);
 
   MPFR_SAVE_EXPO_FREE (expo);
-  return mpfr_check_range (arctgt, inexact, rnd_mode);
+  return mpfr_check_range (atan, inexact, rnd_mode);
 }

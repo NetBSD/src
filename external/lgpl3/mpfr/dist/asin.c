@@ -63,11 +63,14 @@ mpfr_asin (mpfr_ptr asin, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
 
   compared = mpfr_cmp_ui (xp, 1);
 
+  MPFR_SAVE_EXPO_MARK (expo);
+
   if (MPFR_UNLIKELY (compared >= 0))
     {
       mpfr_clear (xp);
       if (compared > 0)                  /* asin(x) = NaN for |x| > 1 */
         {
+          MPFR_SAVE_EXPO_FREE (expo);
           MPFR_SET_NAN (asin);
           MPFR_RET_NAN;
         }
@@ -80,13 +83,11 @@ mpfr_asin (mpfr_ptr asin, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
               inexact = -mpfr_const_pi (asin, MPFR_INVERT_RND(rnd_mode));
               MPFR_CHANGE_SIGN (asin);
             }
-          mpfr_div_2ui (asin, asin, 1, rnd_mode); /* May underflow */
-          return inexact;
+          mpfr_div_2ui (asin, asin, 1, rnd_mode);
         }
     }
-
-  MPFR_SAVE_EXPO_MARK (expo);
-
+  else
+    {
   /* Compute exponent of 1 - ABS(x) */
   mpfr_ui_sub (xp, 1, xp, MPFR_RNDD);
   MPFR_ASSERTD (MPFR_GET_EXP (xp) <= 0);
@@ -115,6 +116,7 @@ mpfr_asin (mpfr_ptr asin, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   inexact = mpfr_set (asin, xp, rnd_mode);
 
   mpfr_clear (xp);
+    }
 
   MPFR_SAVE_EXPO_FREE (expo);
   return mpfr_check_range (asin, inexact, rnd_mode);

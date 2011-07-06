@@ -27,7 +27,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define MPFR_VERSION_MAJOR 3
 #define MPFR_VERSION_MINOR 0
 #define MPFR_VERSION_PATCHLEVEL 1
-#define MPFR_VERSION_STRING "3.0.1"
+#define MPFR_VERSION_STRING "3.0.1-p4"
 
 /* Macros dealing with MPFR VERSION */
 #define MPFR_VERSION_NUM(a,b,c) (((a) << 16L) | ((b) << 8) | (c))

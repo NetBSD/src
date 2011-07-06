@@ -219,6 +219,49 @@ test20071215 (void)
   mpfr_clear (y);
 }
 
+static void
+reduced_expo_range (void)
+{
+  mpfr_exp_t emin, emax;
+  mpfr_t x, y, ex_y;
+  int inex, ex_inex;
+  unsigned int flags, ex_flags;
+
+  emin = mpfr_get_emin ();
+  emax = mpfr_get_emax ();
+
+  mpfr_inits2 (4, x, y, ex_y, (mpfr_ptr) 0);
+  mpfr_set_str (x, "-0.1e1", 2, MPFR_RNDN);
+
+  mpfr_set_emin (1);
+  mpfr_set_emax (1);
+  mpfr_clear_flags ();
+  inex = mpfr_asin (y, x, MPFR_RNDA);
+  flags = __gmpfr_flags;
+  mpfr_set_emin (emin);
+  mpfr_set_emax (emax);
+
+  mpfr_set_str (ex_y, "-0.1101e1", 2, MPFR_RNDN);
+  ex_inex = -1;
+  ex_flags = MPFR_FLAGS_INEXACT;
+
+  if (SIGN (inex) != ex_inex || flags != ex_flags ||
+      ! mpfr_equal_p (y, ex_y))
+    {
+      printf ("Error in reduced_expo_range\non x = ");
+      mpfr_dump (x);
+      printf ("Expected y = ");
+      mpfr_out_str (stdout, 2, 0, ex_y, MPFR_RNDN);
+      printf ("\n         inex = %d, flags = %u\n", ex_inex, ex_flags);
+      printf ("Got      y = ");
+      mpfr_out_str (stdout, 2, 0, y, MPFR_RNDN);
+      printf ("\n         inex = %d, flags = %u\n", SIGN (inex), flags);
+      exit (1);
+    }
+
+  mpfr_clears (x, y, ex_y, (mpfr_ptr) 0);
+}
+
 int
 main (void)
 {
@@ -226,6 +269,7 @@ main (void)
 
   special ();
   special_overflow ();
+  reduced_expo_range ();
 
   test_generic (2, 100, 15);
 
