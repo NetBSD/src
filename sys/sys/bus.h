@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 2011/07/06 18:11:45 dyoung Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 2011/07/06 20:24:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -121,7 +121,6 @@ struct bus_space_overrides {
 
 bool	bus_space_handle_is_equal(bus_space_tag_t, bus_space_handle_t,
     bus_space_handle_t);
-bool	bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
 int	bus_space_tag_create(bus_space_tag_t, uint64_t,
 	                     const struct bus_space_overrides *, void *,
 	                     bus_space_tag_t *);
@@ -165,5 +164,7 @@ void	bus_space_trim(bus_space_tag_t, bus_space_reservation_t *, bus_size_t,
 #else
 #include <machine/bus.h>
 #endif
+
+bool	bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
 
 #endif	/* _SYS_BUS_H_ */
