@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/07/04 12:38:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/07/06 19:52:06 drochner Exp $
 
 .include <bsd.init.mk>
 
@@ -6,6 +6,8 @@
 MKLINT=no
 
 LIB=	mpfr
+
+LIBDPLIBS+= gmp ${.CURDIR}/../../../gmp/lib/libgmp
 
 SRCS=	\
 	abort_prec_max.c \
@@ -504,6 +506,7 @@ mparam.h: mparam_h.in
 	cp ${.ALLSRC} ${.TARGET}
 
 ${SRCS}: mparam.h
+CLEANFILES+= mparam.h
 
 .PATH: ${.CURDIR}/../../dist
 

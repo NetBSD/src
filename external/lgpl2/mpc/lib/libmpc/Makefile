@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/23 04:39:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/07/06 19:52:05 drochner Exp $
 
 .include <bsd.init.mk>
 
 LIB=	mpc
+
+LIBDPLIBS+= gmp ${.CURDIR}/../../../../lgpl3/gmp/lib/libgmp
+LIBDPLIBS+= mpfr ${.CURDIR}/../../../../lgpl3/mpfr/lib/libmpfr
 
 SRCS=	\
 	abs.c \
