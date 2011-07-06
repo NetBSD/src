@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/07/03 06:42:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2011/07/06 01:18:32 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -107,6 +107,7 @@ gtype-desc.h: gengtype gtyp-input.list.tmp
 	rm -f auto-host.h
 	ln -s ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/auto-host.h .
 	if [ -f ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/sysroot-suffix.h ]; then \
+	  rm -f sysroot-suffix.h; \
 	  ln -s ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/sysroot-suffix.h ; \
 	fi
 	./gengtype ${DIST}/gcc gtyp-input.list.tmp
