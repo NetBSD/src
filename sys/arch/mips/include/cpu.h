@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.102 2011/05/02 00:29:54 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.103 2011/07/06 09:27:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -539,6 +539,7 @@ extern volatile __cpuset_t cpus_halted;
 #endif
 
 /* copy.S */
+int32_t kfetch_32(volatile uint32_t *, uint32_t);
 int8_t	ufetch_int8(void *);
 int16_t	ufetch_int16(void *);
 int32_t ufetch_int32(void *);
