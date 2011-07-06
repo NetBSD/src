@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2011/07/03 06:43:16 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2011/07/06 19:52:06 drochner Exp $
 
 SRCS+= \
 	random.c \
@@ -180,7 +180,12 @@ CLEANFILES+=	trialdivtab.h
 dummy:
 	mkdir dummy
 ${.OBJDIR}/config.m4: ${.CURDIR}/arch/${MACHINE_ARCH}/config.m4
-	cp ${.CURDIR}/arch/${MACHINE_ARCH}/config.m4 ${.TARGET}
+	cp ${.CURDIR}/arch/${MACHINE_ARCH}/config.m4 ${.OBJDIR}/config.m4
+
+CLEANFILES+=	config.m4
+clean: cleandummy
+cleandummy: .PHONY
+	rmdir dummy
 
 .for _build _src in ${ASM_SRCS_LIST}
 ${_build:R}.s: Makefile dummy ${.OBJDIR}/config.m4
