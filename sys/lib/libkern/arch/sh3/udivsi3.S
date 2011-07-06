@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.8 2009/01/07 22:15:18 uwe Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.9 2011/07/06 01:29:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: udivsi3.S,v 1.8 2009/01/07 22:15:18 uwe Exp $")
+	RCSID("$NetBSD: udivsi3.S,v 1.9 2011/07/06 01:29:54 mrg Exp $")
 #endif
 
 /*
@@ -65,6 +65,7 @@
 
 
 /* r0 <= r4 / r5 */
+WEAK_ALIAS(__udivsi3_i4i,__udivsi3)
 NENTRY(__udivsi3)
 	tst	r5, r5
 	bt	div_by_zero
