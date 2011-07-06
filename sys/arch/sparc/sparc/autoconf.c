@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.240 2011/01/14 02:06:31 rmind Exp $ */
+/*	$NetBSD: autoconf.c,v 1.241 2011/07/06 20:47:05 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.240 2011/01/14 02:06:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.241 2011/07/06 20:47:05 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.240 2011/01/14 02:06:31 rmind Exp $")
 #include <uvm/uvm_extern.h>
 
 #include <machine/pcb.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/promlib.h>
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
