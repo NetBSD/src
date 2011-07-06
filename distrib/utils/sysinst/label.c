@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.56 2011/05/30 14:20:48 joerg Exp $	*/
+/*	$NetBSD: label.c,v 1.57 2011/07/06 01:20:03 mrg Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.56 2011/05/30 14:20:48 joerg Exp $");
+__RCSID("$NetBSD: label.c,v 1.57 2011/07/06 01:20:03 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -710,7 +710,7 @@ const char *
 get_last_mounted(int fd, int partstart, partinfo *lp)
 {
 	static char sblk[SBLOCKSIZE];		/* is this enough? */
-	#define SB ((struct fs *)sblk)
+	struct fs *SB = (struct fs *)sblk;
 	static const int sblocks[] = SBLOCKSEARCH;
 	const int *sbp;
 	char *cp;
@@ -726,7 +726,7 @@ get_last_mounted(int fd, int partstart, partinfo *lp)
 		    partstart * (off_t)512 + *sbp) != sizeof sblk)
 			continue;
 		/* Maybe we should validate the checksum??? */
-		switch (((struct fs *)sblk)->fs_magic) {
+		switch (SB->fs_magic) {
 		case FS_UFS1_MAGIC:
 		case FS_UFS1_MAGIC_SWAPPED:
 			if (!(SB->fs_old_flags & FS_FLAGS_UPDATED)) {
