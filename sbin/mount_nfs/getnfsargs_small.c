@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs_small.c,v 1.8 2008/04/29 06:53:01 martin Exp $	*/
+/*	$NetBSD: getnfsargs_small.c,v 1.9 2011/07/06 09:02:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getnfsargs_small.c,v 1.8 2008/04/29 06:53:01 martin Exp $");
+__RCSID("$NetBSD: getnfsargs_small.c,v 1.9 2011/07/06 09:02:54 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -248,8 +248,8 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 
 	nfsargsp->fh = nfhret.nfh;
 	if (nfsvers == NFS_VER3) {
-		nfsargsp->fhsize = ntohl(*(uint32_t *)nfhret.nfh);
-		nfsargsp->fh += 4;
+		nfsargsp->fhsize = be32dec(nfhret.nfh);
+		nfsargsp->fh += sizeof(uint32_t);
 	} else {
 		nfsargsp->fhsize = NFSX_V2FH;
 		nfsargsp->flags &= ~NFSMNT_NFSV3;
