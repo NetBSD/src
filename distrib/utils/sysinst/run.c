@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.67 2011/05/30 14:20:19 joerg Exp $	*/
+/*	$NetBSD: run.c,v 1.68 2011/07/06 01:18:08 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -677,7 +677,7 @@ run_program(int flags, const char *cmd, ...)
 	if (actionwin != NULL) {
 		if (actionwin != stdscr)
 			delwin(actionwin);
-		if (err == 0 || !(flags & RUN_NO_CLEAR)) {
+		if (errstr == 0 || !(flags & RUN_NO_CLEAR)) {
 			wclear(stdscr);
 			touchwin(stdscr);
 			clearok(stdscr, 1);
