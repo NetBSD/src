@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1638 2011/07/04 12:05:00 manu Exp $
+#	$NetBSD: mi,v 1.1639 2011/07/06 18:18:08 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2308,6 +2308,7 @@
 ./usr/include/sys/bswap.h			comp-c-include
 ./usr/include/sys/buf.h				comp-c-include
 ./usr/include/sys/bufq.h			comp-obsolete		obsolete
+./usr/include/sys/bus.h				comp-c-include
 ./usr/include/sys/callback.h			comp-c-include
 ./usr/include/sys/callout.h			comp-c-include
 ./usr/include/sys/cc_microtime.h		comp-obsolete		obsolete
