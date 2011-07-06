@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 2010/04/19 18:24:27 dyoung Exp $	*/
+/*	$NetBSD: bus.h,v 1.4 2011/07/06 18:11:45 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,52 +29,98 @@
 #ifndef _SYS_BUS_H_
 #define	_SYS_BUS_H_
 
-#include <machine/bus.h>
+#include <sys/types.h>
 
-struct bus_space_reservation;
+#ifdef __HAVE_NEW_STYLE_BUS_H
 
-typedef struct bus_space_reservation /* {
-	bus_addr_t	sr_addr;
-	bus_size_t	sr_size;
-} */ bus_space_reservation_t;
+#include <machine/bus_defs.h>
+
+struct bus_space_reservation {
+	bus_addr_t _bsr_start;
+	bus_size_t _bsr_size;
+};
+
+typedef struct bus_space_reservation bus_space_reservation_t;
+
+static inline bus_size_t
+bus_space_reservation_size(bus_space_reservation_t *bsr)
+{
+	return bsr->_bsr_size;
+}
+
+static inline bus_space_reservation_t *
+bus_space_reservation_init(bus_space_reservation_t *bsr,
+    bus_addr_t addr, bus_size_t size)
+{
+	bsr->_bsr_start = addr;
+	bsr->_bsr_size = size;
+	return bsr;
+}
+
+static inline bus_addr_t
+bus_space_reservation_addr(bus_space_reservation_t *bsr)
+{
+	return bsr->_bsr_start;
+}
 
 enum bus_space_override_idx {
-	  BUS_SPACE_OVERRIDE_SPACE_MAP		= __BIT(0)
-	, BUS_SPACE_OVERRIDE_SPACE_UNMAP	= __BIT(1)
-	, BUS_SPACE_OVERRIDE_SPACE_ALLOC	= __BIT(2)
-	, BUS_SPACE_OVERRIDE_SPACE_FREE		= __BIT(3)
-	, BUS_SPACE_OVERRIDE_SPACE_EXTEND	= __BIT(4)
-	, BUS_SPACE_OVERRIDE_SPACE_TRIM		= __BIT(5)
+	  BUS_SPACE_OVERRIDE_MAP		= __BIT(0)
+	, BUS_SPACE_OVERRIDE_UNMAP		= __BIT(1)
+	, BUS_SPACE_OVERRIDE_ALLOC		= __BIT(2)
+	, BUS_SPACE_OVERRIDE_FREE		= __BIT(3)
+	, BUS_SPACE_OVERRIDE_RESERVE		= __BIT(4)
+	, BUS_SPACE_OVERRIDE_RELEASE		= __BIT(5)
+	, BUS_SPACE_OVERRIDE_RESERVATION_MAP	= __BIT(6)
+	, BUS_SPACE_OVERRIDE_RESERVATION_UNMAP	= __BIT(7)
+	, BUS_SPACE_OVERRIDE_RESERVE_SUBREGION	= __BIT(8)
+#if 0
+	, BUS_SPACE_OVERRIDE_EXTEND	= __BIT(9)
+	, BUS_SPACE_OVERRIDE_TRIM	= __BIT(10)
+#endif
 };
 
 /* Only add new members at the end of this struct! */
 struct bus_space_overrides {
-	int (*bs_space_map)(void *, bus_space_tag_t, bus_addr_t, bus_size_t,
+	int (*ov_space_map)(void *, bus_space_tag_t, bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *);
 
-	void (*bs_space_unmap)(void *, bus_space_tag_t, bus_space_handle_t,
+	void (*ov_space_unmap)(void *, bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t);
 
-	int (*bs_space_alloc)(void *, bus_space_tag_t, bus_addr_t, bus_addr_t,
+	int (*ov_space_alloc)(void *, bus_space_tag_t, bus_addr_t, bus_addr_t,
 	    bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *,
 	    bus_space_handle_t *);
 
-	void (*bs_space_free)(void *, bus_space_tag_t, bus_space_handle_t,
+	void (*ov_space_free)(void *, bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t);
 
-	int (*bs_space_reserve)(void *, bus_space_tag_t, bus_addr_t, bus_size_t,
+	int (*ov_space_reserve)(void *, bus_space_tag_t, bus_addr_t, bus_size_t,
+	    int, bus_space_reservation_t *);
+
+	void (*ov_space_release)(void *, bus_space_tag_t,
 	    bus_space_reservation_t *);
 
-	void (*bus_space_release)(void *, bus_space_tag_t,
-	    bus_space_reservation_t);
+	int (*ov_space_reservation_map)(void *, bus_space_tag_t,
+	    bus_space_reservation_t *, int, bus_space_handle_t *);
 
-	int (*bs_space_extend)(void *, bus_space_tag_t, bus_space_reservation_t,
-	    bus_size_t, bus_size_t);
+	void (*ov_space_reservation_unmap)(void *, bus_space_tag_t,
+	    bus_space_handle_t, bus_size_t);
 
-	void (*bs_space_trim)(void *, bus_space_tag_t, bus_space_reservation_t,
-	    bus_size_t, bus_size_t);
+	int (*ov_space_reserve_subregion)(void *, bus_space_tag_t,
+	    bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t,
+	    int, bus_space_reservation_t *);
+
+#if 0
+	int (*ov_space_extend)(void *, bus_space_tag_t,
+	    bus_space_reservation_t *, bus_size_t, bus_size_t);
+
+	void (*ov_space_trim)(void *, bus_space_tag_t,
+	    bus_space_reservation_t *, bus_size_t, bus_size_t);
+#endif
 };
 
+bool	bus_space_handle_is_equal(bus_space_tag_t, bus_space_handle_t,
+    bus_space_handle_t);
 bool	bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
 int	bus_space_tag_create(bus_space_tag_t, uint64_t,
 	                     const struct bus_space_overrides *, void *,
@@ -84,20 +130,40 @@ void	bus_space_tag_destroy(bus_space_tag_t);
 /* Reserve a region of bus space.  Reserved bus space cannot be allocated
  * with bus_space_alloc().  Reserved space has not been bus_space_map()'d.
  */
-int	bus_space_reserve(bus_space_tag_t, bus_addr_t, bus_size_t,
+int	bus_space_reserve(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	                  bus_space_reservation_t *);
 
-/* Cancel a reservation. */
-void	bus_space_release(bus_space_tag_t, bus_space_reservation_t);
+int
+bus_space_reserve_subregion(bus_space_tag_t,
+    bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t,
+    int, bus_space_reservation_t *);
 
+/* Cancel a reservation. */
+void	bus_space_release(bus_space_tag_t, bus_space_reservation_t *);
+
+int bus_space_reservation_map(bus_space_tag_t, bus_space_reservation_t *,
+    int, bus_space_handle_t *);
+
+void bus_space_reservation_unmap(bus_space_tag_t, bus_space_handle_t,
+    bus_size_t);
+
+#if 0
 /* Extend a reservation to the left and/or to the right.  The extension
  * has not been bus_space_map()'d.
  */
-int	bus_space_extend(bus_space_tag_t, bus_space_reservation_t, bus_size_t,
+int	bus_space_extend(bus_space_tag_t, bus_space_reservation_t *, bus_size_t,
 	                 bus_size_t);
 
 /* Trim bus space from a reservation on the left and/or on the right. */
-void	bus_space_trim(bus_space_tag_t, bus_space_reservation_t, bus_size_t,
+void	bus_space_trim(bus_space_tag_t, bus_space_reservation_t *, bus_size_t,
 	               bus_size_t);
+#endif
+
+#include <sys/bus_proto.h>
+
+#include <machine/bus_funcs.h>
+#else
+#include <machine/bus.h>
+#endif
 
 #endif	/* _SYS_BUS_H_ */
