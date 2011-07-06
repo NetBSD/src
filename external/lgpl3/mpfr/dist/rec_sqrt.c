@@ -375,20 +375,37 @@ mpfr_mpn_rec_sqrt (mpfr_limb_ptr x, mpfr_prec_t p,
       MPFR_ASSERTD(un == ln + 1 || un == ln + 2);
       /* the high un-ln limbs of u will overlap the low part of {x+ln,xn},
          we need to add or subtract the overlapping part {u + ln, un - ln} */
+      /* Warning! th may be 0, in which case the mpn_add_1 and mpn_sub_1
+         below (with size = th) mustn't be used. In such a case, the limb
+         (carry) will be 0, so that this is semantically a no-op, but if
+         mpn_add_1 and mpn_sub_1 are used, GMP (currently) still does a
+         non-atomic read/write in a place that is not always allocated,
+         with the possible consequences: a crash if the corresponding
+         address is not mapped, or (rather unlikely) memory corruption
+         if another process/thread writes at the same place; things may
+         be worse with future GMP versions. Hence the tests carry != 0. */
       if (neg == 0)
         {
           if (ln > 0)
             MPN_COPY (x, u, ln);
           cy = mpn_add (x + ln, x + ln, xn, u + ln, un - ln);
           /* add cu at x+un */
-          cy += mpn_add_1 (x + un, x + un, th, cu);
+          if (cu != 0)
+            {
+              MPFR_ASSERTD (th != 0);
+              cy += mpn_add_1 (x + un, x + un, th, cu);
+            }
         }
       else /* negative case */
         {
           /* subtract {u+ln, un-ln} from {x+ln,un} */
           cy = mpn_sub (x + ln, x + ln, xn, u + ln, un - ln);
           /* carry cy is at x+un, like cu */
-          cy = mpn_sub_1 (x + un, x + un, th, cy + cu); /* n - un = th */
+          if (cy + cu != 0)
+            {
+              MPFR_ASSERTD (th != 0);
+              cy = mpn_sub_1 (x + un, x + un, th, cy + cu); /* n - un = th */
+            }
           /* cy cannot be zero, since the most significant bit of Xh is 1,
              and the correction is bounded by 2^{-h+3} */
           MPFR_ASSERTD(cy == 0);
