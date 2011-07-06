@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.42 2011/07/01 22:06:19 dyoung Exp $
+.\" $NetBSD: bus_space.9,v 1.43 2011/07/06 18:27:31 dyoung Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 1, 2011
+.Dd July 6, 2011
 .Dt BUS_SPACE 9
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Nm bus_space_copy_region_4 ,
 .Nm bus_space_copy_region_8 ,
 .Nm bus_space_free ,
+.Nm bus_space_handle_is_equal ,
 .Nm bus_space_is_equal ,
 .Nm bus_space_map ,
 .Nm bus_space_mmap ,
@@ -73,6 +74,14 @@
 .Nm bus_space_read_stream_2 ,
 .Nm bus_space_read_stream_4 ,
 .Nm bus_space_read_stream_8 ,
+.Nm bus_space_release ,
+.Nm bus_space_reservation_addr ,
+.Nm bus_space_reservation_init ,
+.Nm bus_space_reservation_size ,
+.Nm bus_space_reservation_map ,
+.Nm bus_space_reservation_unmap ,
+.Nm bus_space_reserve ,
+.Nm bus_space_reserve_subregion ,
 .Nm bus_space_set_region_1 ,
 .Nm bus_space_set_region_2 ,
 .Nm bus_space_set_region_4 ,
@@ -108,7 +117,31 @@
 .Sh SYNOPSIS
 .In sys/bus.h
 .Ft bool
+.Fn bus_space_handle_is_equal "bus_space_tag_t space" \
+    "bus_space_handle_t handle1" "bus_space_handle_t handle2"
+.Ft bool
 .Fn bus_space_is_equal "bus_space_tag_t space1" "bus_space_tag_t space2"
+.Ft void
+.Fn bus_space_release "bus_space_tag_t t" "bus_space_reservation_t *bsr"
+.Ft int
+.Fn bus_space_reserve "bus_space_tag_t t" "bus_addr_t bpa" "bus_size_t size" \
+    "int flags" "bus_space_reservation_t *bsrp"
+.Ft int
+.Fn bus_space_reserve_subregion "bus_space_tag_t t" \
+    "bus_addr_t reg_start" "bus_addr_t reg_end" \
+    "bus_size_t size" "bus_size_t alignment" "bus_size_t boundary" \
+    "int flags" "bus_space_reservation_t *bsrp"
+.Ft void
+.Fn bus_space_reservation_init "bus_space_reservation_t *bsr" \
+    "bus_addr_t addr" "bus_size_t size"
+.Ft bus_size_t
+.Fn bus_space_reservation_size "bus_space_reservation_t *bsr"
+.Ft int
+.Fn bus_space_reservation_map "bus_space_tag_t t" \
+    "bus_space_reservation_t *bsr" "int flags" "bus_space_handle_t *bshp"
+.Ft void
+.Fn bus_space_reservation_unmap "bus_space_tag_t t" "bus_space_handle_t bsh" \
+    "bus_size_t size"
 .Ft int
 .Fn bus_space_map "bus_space_tag_t space" "bus_addr_t address" \
 "bus_size_t size" "int flags" "bus_space_handle_t *handlep"
@@ -544,6 +577,25 @@ type is used to describe a mapping of a range of bus space.
 Its contents are machine-dependent and should be considered opaque by
 machine-independent code.
 This type is used when performing bus space access operations.
+.It Fa bus_space_reservation_t
+.Pp
+The
+.Fa bus_space_reservation_t
+type is used to describe a range of bus space.
+It logically consists of a
+.Fa bus_addr_t ,
+the first address in the range,
+and a
+.Fa bus_size_t ,
+the length in bytes of the range.
+Machine-independent code creates and interrogates a
+.Fa bus_space_reservation_t
+using a constructor,
+.Fn bus_space_reservation_init ,
+and accessor functions,
+.Fn bus_space_reservation_addr
+and
+.Fn bus_space_reservation_size .
 .El
 .Sh COMPARING BUS SPACE TAGS
 To check whether or not one
@@ -563,7 +615,9 @@ instead.
 Bus space must be mapped before it can be used, and should be
 unmapped when it is no longer needed.
 The
-.Fn bus_space_map
+.Fn bus_space_map ,
+.Fn bus_space_reservation_map ,
+.Fn bus_space_reservation_unmap ,
 and
 .Fn bus_space_unmap
 functions provide these capabilities.
@@ -579,7 +633,7 @@ function allows such subregions to be created.
 .Pp
 The
 .Fn bus_space_map
-function maps the region of bus space named by the
+function exclusively reserves and maps the region of bus space named by the
 .Fa space ,
 .Fa address ,
 and
@@ -666,11 +720,44 @@ ISA memory and I/O spaces).
 Mapped regions may contain areas for which there is no device on the bus.
 If space in those areas is accessed, the results are bus-dependent.
 .Pp
+.It Fn bus_space_reservation_map "space" "bsr" "flags" "handlep"
+.Pp
+The
+.Fn bus_space_reservation_map
+function is similar to
+.Fn bus_space_map but it maps a region of bus space
+that was previously reserved by a call to
+.Fn bus_space_reserve
+or
+.Fn bus_space_reserve_subregion .
+The region is given by the
+.Fa space
+and
+.Fa bsr
+arguments.
+If successful, it returns zero and fills in the bus space handle pointed
+to by
+.Fa handlep
+with the handle that can be used to access the mapped region.
+If unsuccessful, it will return non-zero and leave the bus space handle
+pointed to by
+.Fa handlep
+in an undefined state.
+.Pp
+A region mapped by
+.Fn bus_space_reservation_map
+may only be unmapped by a call to
+.Fn bus_space_reservation_unmap .
+.Pp
+For more details, see the description of
+.Fn bus_space_map .
+.Pp
 .It Fn bus_space_unmap "space" "handle" "size"
 .Pp
 The
 .Fn bus_space_unmap
-function unmaps a region of bus space mapped with
+function unmaps and relinquishes a region of bus space reserved and
+mapped with
 .Fn bus_space_map .
 When unmapping a region, the
 .Fa size
@@ -690,6 +777,26 @@ a software bug which should cause a panic.
 In that case,
 .Fn bus_space_unmap
 will never return.
+.Pp
+.It Fn bus_space_reservation_unmap "space" "handle" "size"
+.Pp
+The
+.Fn bus_space_reservation_unmap
+function is similar to
+.Fn bus_space_unmap
+but it should be called on handles
+mapped by
+.Fn bus_space_reservation_map
+and only on such handles.
+Unlike
+.Fn bus_space_unmap ,
+.Fn bus_space_reservation_unmap
+does not relinquish exclusive use of the bus space named by
+.Fa handle
+and
+.Fa size ;
+that is the job of
+.Fn bus_space_release .
 .Pp
 .It Fn bus_space_subregion "space" "handle" "offset" "size" "nhandlep"
 .Pp
@@ -785,6 +892,16 @@ The
 .Fa prot
 argument indicates the memory protection requested by the user application
 for the range.
+.Pp
+.It Fn bus_space_handle_is_equal "space" "handle1" "handle2"
+Use
+.Fn bus_space_handle_is_equal to
+check whether or not 
+.Fa handle1
+and
+.Fa handle2
+refer to regions starting at the same address in the bus space
+.Fa space .
 .El
 .Sh ALLOCATING AND FREEING BUS SPACE
 Some devices require or allow bus space to be allocated by the operating
@@ -792,10 +909,19 @@ system for device use.
 When the devices no longer need the space, the
 operating system should free it for use by other devices.
 The
-.Fn bus_space_alloc
+.Fn bus_space_alloc ,
+.Fn bus_space_free ,
+.Fn bus_space_reserve ,
+.Fn bus_space_reserve_subregion ,
 and
-.Fn bus_space_free
+.Fn bus_space_release
 functions provide these capabilities.
+The functions
+.Fn bus_space_reserve ,
+.Fn bus_space_reserve_subregion ,
+and
+.Fn bus_space_release
+are not yet available on all architectures.
 .Pp
 .Bl -ohang -compact
 .It Fn bus_space_alloc "space" "reg_start" "reg_end" "size" "alignment" \
@@ -872,6 +998,120 @@ The
 .Fn bus_space_subregion
 function can be used on handles created by
 .Fn bus_space_alloc .
+.Pp
+.It Fn bus_space_reserve "t" "bpa" "size" "flags" "bsrp"
+.Pp
+The
+.Fn bus_space_reserve
+function reserves, for the caller's exclusive use,
+.Fa size
+bytes starting at the address
+.Fa bpa
+in the space referenced by
+.Fa t .
+.Pp
+.Fn bus_space_reserve
+does
+.Em not
+map the space.
+The caller should use
+.Fn bus_space_reservation_map
+to map the reservation.
+.Fa flags
+contains a hint how the caller may map the reservation, later.
+Whenever possible, callers should pass the same flags to
+.Fn bus_space_reserve
+as they will pass to
+.Fn bus_space_reservation_map
+to map the reservation.
+.Pp
+On success,
+.Fn bus_space_reserve
+records the reservation at 
+.Fa bsrp
+and returns 0.
+On failure,
+.Fa bsrp 
+is undefined, and
+.Fn bus_space_reserve
+returns a non-zero error code.
+Possible error codes include
+.Bl -tag -width EOPNOTSUPP -offset indent
+.It Dv EOPNOTSUPP
+.Fn bus_space_reserve
+is not supported on this architecture, or
+.Fa flags
+was incompatible with the bus space represented by
+.Fa t .
+.It Dv ENOMEM
+There was not sufficient bus space at
+.Fa bpa
+to satisfy the request.
+.El
+.Pp
+.It Fn bus_space_reserve_subregion "t" "reg_start" "reg_end" \
+    "size" "alignment" "boundary" "flags" "bsrp"
+.Pp
+The
+.Fn bus_space_reserve_subregion
+function reserves, for the caller's exclusive use,
+.Fa size
+bytes in the space referenced by
+.Fa t .
+The parameters
+.Fa reg_start ,
+.Fa reg_end ,
+.Fa alignment ,
+.Fa boundary ,
+and
+.Fa flags
+each work alike to the 
+.Fn bus_space_alloc
+parameters of the same names.
+.Pp
+On success,
+.Fn bus_space_reserve_subregion
+records the reservation at 
+.Fa bsrp
+and returns 0.
+On failure,
+.Fa bsrp 
+is undefined, and
+.Fn bus_space_reserve_subregion
+returns a non-zero error code.
+Possible error codes include
+.Bl -tag -width EOPNOTSUPP -offset indent
+.It Dv EOPNOTSUPP
+.Fn bus_space_reserve
+is not supported on this architecture, or
+.Fa flags
+was incompatible with the bus space represented by
+.Fa t .
+.It Dv ENOMEM
+There was not sufficient bus space at
+.Fa bpa
+to satisfy the request.
+.El
+.Pp
+.It Fn bus_space_release "t" "bsr"
+.Pp
+The
+.Fn bus_space_release
+function releases the bus space
+.Fa bsr
+in
+.Fa t
+that was previously reserved by
+.Fn bus_space_reserve
+or
+.Fn bus_space_reserve_subregion .
+.Pp
+If
+.Fn bus_space_release
+is called on a reservation that has been mapped by
+.Fn bus_space_reservation_map
+without subsequently being unmapped, the behavior of the system is
+undefined.
 .Pp
 .It Fn bus_space_free "space" "handle" "size"
 .Pp
