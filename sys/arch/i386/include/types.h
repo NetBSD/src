@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.73 2011/06/12 03:35:42 rmind Exp $	*/
+/*	$NetBSD: types.h,v 1.74 2011/07/06 18:46:04 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -101,7 +101,7 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 /* The x86 does not have strict alignment requirements. */
 #define	__NO_STRICT_ALIGNMENT
 
-#define	__HAVE_DEVICE_REGISTER
+#define	__HAVE_NEW_STYLE_BUS_H
 #define	__HAVE_CPU_DATA_FIRST
 #define	__HAVE_CPU_COUNTER
 #define	__HAVE_MD_CPU_OFFLINE
