@@ -1,4 +1,4 @@
-/* $NetBSD: t_getcontext.c,v 1.1 2011/07/07 07:06:21 jruoho Exp $ */
+/* $NetBSD: t_getcontext.c,v 1.2 2011/07/07 07:27:49 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,13 +29,13 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_getcontext.c,v 1.1 2011/07/07 07:06:21 jruoho Exp $");
-
-#include <ucontext.h>
-#include <stdarg.h>
-#include <stdlib.h>
+__RCSID("$NetBSD: t_getcontext.c,v 1.2 2011/07/07 07:27:49 jruoho Exp $");
 
 #include <atf-c.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <ucontext.h>
 
 #define STACKSZ (10*1024)
 #define DEPTH 3
@@ -60,8 +60,41 @@ run(int n, ...)
 	calls++;
 }
 
-ATF_TC(getcontext_link);
-ATF_TC_HEAD(getcontext_link, tc)
+ATF_TC(getcontext_err);
+ATF_TC_HEAD(getcontext_err, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test errors from getcontext(2)");
+}
+
+ATF_TC_BODY(getcontext_err, tc)
+{
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EFAULT, getcontext((void *)-1) == -1);
+}
+
+ATF_TC(setcontext_err);
+ATF_TC_HEAD(setcontext_err, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test errors from setcontext(2)");
+}
+
+ATF_TC_BODY(setcontext_err, tc)
+{
+	ucontext_t uc;
+
+	uc.uc_link = NULL;
+	uc.uc_flags = -1;
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EINVAL, setcontext(&uc) == -1);
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EFAULT, setcontext((void *)-1) == -1);
+}
+
+ATF_TC(setcontext_link);
+ATF_TC_HEAD(setcontext_link, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr",
@@ -69,7 +102,7 @@ ATF_TC_HEAD(getcontext_link, tc)
 	    "and argument passing to the new context");
 }
 
-ATF_TC_BODY(getcontext_link, tc)
+ATF_TC_BODY(setcontext_link, tc)
 {
 	ucontext_t uc[DEPTH];
 	ucontext_t save;
@@ -95,7 +128,9 @@ ATF_TC_BODY(getcontext_link, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, getcontext_link);
+	ATF_TP_ADD_TC(tp, getcontext_err);
+	ATF_TP_ADD_TC(tp, setcontext_err);
+	ATF_TP_ADD_TC(tp, setcontext_link);
 
 	return atf_no_error();
 }
