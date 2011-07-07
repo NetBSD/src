@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.23 2010/10/17 15:33:04 phx Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.24 2011/07/07 01:26:55 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -439,7 +439,9 @@ devopen(struct open_file *of, const char *name, char **file)
 		    || nread != DEV_BSIZE
 		    || getdisklabel(buf, &label)) {
 			/* Else try APM or MBR partitions */
-			if (((struct drvr_map *)buf)->sbSig == DRIVER_MAP_MAGIC)
+			struct drvr_map *map = (struct drvr_map *)buf;
+
+			if (map->sbSig == DRIVER_MAP_MAGIC)
 				error = search_mac_label(&ofdev, buf, &label);
 			else
 				error = search_dos_label(&ofdev, 0, buf,
