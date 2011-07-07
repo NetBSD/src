@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basedirname.c,v 1.1 2010/12/22 23:45:44 pgoyette Exp $	*/
+/*	$NetBSD: t_basedirname.c,v 1.2 2011/07/07 09:49:59 jruoho Exp $	*/
 
 /*
  * Regression test for basename(3).
@@ -90,14 +90,13 @@ struct {
 	{ NULL,			NULL }
 };
 
-ATF_TC(t_basename);
-
-ATF_TC_HEAD(t_basename, tc)
+ATF_TC(basename_posix);
+ATF_TC_HEAD(basename_posix, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test basename(3) with POSIX examples");
 }
 
-ATF_TC_BODY(t_basename, tc)
+ATF_TC_BODY(basename_posix, tc)
 {
 	char testbuf[32], *base;
 	int i;
@@ -142,14 +141,13 @@ ATF_TC_BODY(t_basename, tc)
 }
 
 
-ATF_TC(t_dirname);
-
-ATF_TC_HEAD(t_dirname, tc)
+ATF_TC(dirname_posix);
+ATF_TC_HEAD(dirname_posix, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test dirname(3) with POSIX examples");
 }
 
-ATF_TC_BODY(t_dirname, tc)
+ATF_TC_BODY(dirname_posix, tc)
 {
 	char testbuf[32], *base;
 	int i;
@@ -195,8 +193,8 @@ ATF_TC_BODY(t_dirname, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, t_basename);
-	ATF_TP_ADD_TC(tp, t_dirname);
+	ATF_TP_ADD_TC(tp, basename_posix);
+	ATF_TP_ADD_TC(tp, dirname_posix);
 
 	return atf_no_error();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_glob_star.c,v 1.6 2010/11/03 16:10:21 christos Exp $	*/
+/*	$NetBSD: t_glob_star.c,v 1.7 2011/07/07 09:49:59 jruoho Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_glob_star.c,v 1.6 2010/11/03 16:10:21 christos Exp $");
+__RCSID("$NetBSD: t_glob_star.c,v 1.7 2011/07/07 09:49:59 jruoho Exp $");
 
 #include <atf-c.h>
 
@@ -54,9 +54,6 @@ __RCSID("$NetBSD: t_glob_star.c,v 1.6 2010/11/03 16:10:21 christos Exp $");
 #else
 #define DPRINTF(a)
 #endif
-
-ATF_TC(t_glob_star);
-ATF_TC(t_glob_star_not);
 
 struct gl_file {
 	const char *name;
@@ -88,7 +85,7 @@ static struct gl_dir d[] = {
 	{ "a/b", b, __arraycount(b), 0 },
 };
 
-static const char *glob_star[] = { 
+static const char *glob_star[] = {
     "a/1", "a/3", "a/4", "a/b", "a/b/w", "a/b/x", "a/b/y", "a/b/z",
 };
 
@@ -193,33 +190,35 @@ run(const char *p, int flags, const char **res, size_t len)
 }
 
 
-ATF_TC_HEAD(t_glob_star, tc)
+ATF_TC(glob_star);
+ATF_TC_HEAD(glob_star, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test glob(3) ** with GLOB_STAR");
 }
 
-ATF_TC_BODY(t_glob_star, tc)
+ATF_TC_BODY(glob_star, tc)
 {
 	run("a/**", GLOB_STAR, glob_star, __arraycount(glob_star));
 }
 
-ATF_TC_HEAD(t_glob_star_not, tc)
+ATF_TC(glob_star_not);
+ATF_TC_HEAD(glob_star_not, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test glob(3) ** without GLOB_STAR");
 }
 
 
-ATF_TC_BODY(t_glob_star_not, tc)
+ATF_TC_BODY(glob_star_not, tc)
 {
 	run("a/**", 0, glob_star_not, __arraycount(glob_star_not));
 }
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, t_glob_star);
-	ATF_TP_ADD_TC(tp, t_glob_star_not);
+	ATF_TP_ADD_TC(tp, glob_star);
+	ATF_TP_ADD_TC(tp, glob_star_not);
 
 	return atf_no_error();
 }
