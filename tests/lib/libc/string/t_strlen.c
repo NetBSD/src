@@ -1,4 +1,4 @@
-/* $NetBSD: t_strlen.c,v 1.1 2011/07/07 08:59:33 jruoho Exp $ */
+/* $NetBSD: t_strlen.c,v 1.2 2011/07/07 09:16:06 jruoho Exp $ */
 
 /*
  * Written by J.T. Conklin <jtc@acorntoolworks.com>
@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <unistd.h>
 
 static void	write_num(int);
 
@@ -135,10 +136,41 @@ ATF_TC_BODY(strlen_basic, tc)
 	}
 }
 
+ATF_TC(strlen_huge);
+ATF_TC_HEAD(strlen_huge, tc)
+{
+        atf_tc_set_md_var(tc, "descr", "Test strlen(3) with huge strings");
+}
+
+ATF_TC_BODY(strlen_huge, tc)
+{
+	long page;
+	char *str;
+	size_t i;
+
+	page = sysconf(_SC_PAGESIZE);
+	ATF_REQUIRE(page >= 0);
+
+	for (i = 1; i < 1000; i = i + 100) {
+
+		str = malloc(i * page + 1);
+
+		if (str == NULL)
+			continue;
+
+		(void)memset(str, 'x', i * page);
+		str[i * page + 1] = '\0';
+
+		ATF_REQUIRE(strlen(str) == i * page);
+		free(str);
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, strlen_basic);
+	ATF_TP_ADD_TC(tp, strlen_huge);
 
 	return atf_no_error();
 }
