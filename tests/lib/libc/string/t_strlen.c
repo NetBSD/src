@@ -1,4 +1,4 @@
-/* $NetBSD: t_strlen.c,v 1.2 2011/07/07 09:16:06 jruoho Exp $ */
+/* $NetBSD: t_strlen.c,v 1.3 2011/07/07 09:31:27 jruoho Exp $ */
 
 /*
  * Written by J.T. Conklin <jtc@acorntoolworks.com>
@@ -166,11 +166,34 @@ ATF_TC_BODY(strlen_huge, tc)
 	}
 }
 
+ATF_TC(strnlen_basic);
+ATF_TC_HEAD(strnlen_basic, tc)
+{
+        atf_tc_set_md_var(tc, "descr", "A naive test of strnlen(3)");
+}
+
+ATF_TC_BODY(strnlen_basic, tc)
+{
+	char buf[1];
+
+	buf[0] = '\0';
+
+	ATF_REQUIRE(strnlen(buf, 000) == 0);
+	ATF_REQUIRE(strnlen(buf, 111) == 0);
+
+	ATF_REQUIRE(strnlen("xxx", 0) == 0);
+	ATF_REQUIRE(strnlen("xxx", 1) == 1);
+	ATF_REQUIRE(strnlen("xxx", 2) == 2);
+	ATF_REQUIRE(strnlen("xxx", 3) == 3);
+	ATF_REQUIRE(strnlen("xxx", 9) == 3);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, strlen_basic);
 	ATF_TP_ADD_TC(tp, strlen_huge);
+	ATF_TP_ADD_TC(tp, strnlen_basic);
 
 	return atf_no_error();
 }
