@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.40 2011/07/04 15:46:10 jruoho Exp $
+# $NetBSD: Makefile,v 1.41 2011/07/07 05:50:26 jruoho Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/syscall
 
-TESTS_C+=	t_access t_chroot t_cmsg t_dup t_fsync
+TESTS_C+=	t_access t_chroot t_dup t_fsync
 TESTS_C+=	t_getgroups t_getlogin t_getpid
 TESTS_C+=	t_getrusage t_getsid t_gettimeofday
 TESTS_C+=	t_issetugid t_itimer t_kill t_link
@@ -16,9 +16,6 @@ TESTS_C+=	t_umask t_unlink
 
 LDADD.t_getpid+=	-lpthread
 LDADD.t_timer+=		-lpthread
-
-LDADD.t_cmsg+=		-lrumpnet_local -lrumpnet_net -lrumpnet
-LDADD.t_cmsg+=		-lrumpvfs -lrump -lrumpuser -lpthread
 
 WARNS=		4
 
