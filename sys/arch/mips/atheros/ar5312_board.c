@@ -1,4 +1,4 @@
-/* $Id: ar5312_board.c,v 1.3 2011/07/01 18:40:00 dyoung Exp $ */
+/* $NetBSD: ar5312_board.c,v 1.4 2011/07/07 05:06:44 matt Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -40,7 +40,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5312_board.c,v 1.3 2011/07/01 18:40:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5312_board.c,v 1.4 2011/07/07 05:06:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ar5312_board.c,v 1.3 2011/07/01 18:40:00 dyoung Exp 
 
 #include <sys/bus.h>
 #include <mips/atheros/include/ar5312reg.h>
-#include <mips/atheros/include/ar531xvar.h>
+#include <mips/atheros/include/platform.h>
 
 #include <ah_soc.h>
 
@@ -60,8 +60,8 @@ extern const char *ether_sprintf(const uint8_t *);
  * for the signature string that marks the start of the data.
  * We search at most 500KB.
  */
-const struct ar531x_boarddata *
-ar531x_board_info(void)
+static const struct ar531x_boarddata *
+ar5312_get_board_info(void)
 {
 	static const struct ar531x_boarddata *board = NULL;
 	const uint8_t *ptr, *end;
@@ -70,23 +70,23 @@ ar531x_board_info(void)
 	if (board == NULL) {
 		/* configure flash bank 0 */
 		fctl = REGVAL(AR5312_FLASHCTL_BASE + AR5312_FLASHCTL_0) & 
-		    AR5312_FLASHCTL_MW_MASK;
+		    AR5312_FLASHCTL_MW;
 
 		fctl |=
 		    AR5312_FLASHCTL_E |
 		    AR5312_FLASHCTL_RBLE |
 		    AR5312_FLASHCTL_AC_8M |
-		    (1 << AR5312_FLASHCTL_IDCY_SHIFT) |
-		    (7 << AR5312_FLASHCTL_WST1_SHIFT) |
-		    (7 << AR5312_FLASHCTL_WST2_SHIFT);
+		    __SHIFTIN(1, AR5312_FLASHCTL_IDCY) |
+		    __SHIFTIN(7, AR5312_FLASHCTL_WST1) |
+		    __SHIFTIN(7, AR5312_FLASHCTL_WST2);
 
 		REGVAL(AR5312_FLASHCTL_BASE + AR5312_FLASHCTL_0) = fctl;
 
 		REGVAL(AR5312_FLASHCTL_BASE + AR5312_FLASHCTL_1) &=
-		    ~(AR5312_FLASHCTL_E | AR5312_FLASHCTL_AC_MASK);
+		    ~(AR5312_FLASHCTL_E | AR5312_FLASHCTL_AC);
 
 		REGVAL(AR5312_FLASHCTL_BASE + AR5312_FLASHCTL_2) &=
-		    ~(AR5312_FLASHCTL_E | AR5312_FLASHCTL_AC_MASK);
+		    ~(AR5312_FLASHCTL_E | AR5312_FLASHCTL_AC);
 
 		/* search backward in the flash looking for the signature */
 		ptr = (const uint8_t *) MIPS_PHYS_TO_KSEG1(AR5312_FLASH_END - 0x1000);
@@ -105,15 +105,15 @@ ar531x_board_info(void)
  * Locate the radio configuration data; it is located relative
  * to the board configuration data.
  */
-const void *
-ar531x_radio_info(void)
+static const void *
+ar5312_get_radio_info(void)
 {
 	static const void *radio = NULL;
 	const struct ar531x_boarddata *board;
 	const uint8_t *baddr, *ptr, *end;
 
 	if (radio == NULL) {
-		board = ar531x_board_info();
+		board = ar5312_get_board_info();
 		if (board == NULL)
 			return NULL;
 		baddr = (const uint8_t *) board;
@@ -139,18 +139,7 @@ done:
 	return radio;
 }
 
-/*
- * Locate board and radio configuration data in flash.
- */
-int
-ar531x_board_config(struct ar531x_config *config)
-{
-
-	config->board = ar531x_board_info();
-	if (config->board == NULL)
-		return ENOENT;
-	config->radio = ar531x_radio_info();
-	if (config->radio == NULL)
-		return ENOENT;		/* XXX distinct code */
-	return 0;
-}
+const struct atheros_boardsw ar5312_boardsw = {
+	.absw_get_board_info = ar5312_get_board_info,
+	.absw_get_radio_info = ar5312_get_radio_info,
+};

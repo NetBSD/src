@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.25 2011/02/20 07:48:33 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.26 2011/07/07 05:06:44 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2011/02/20 07:48:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2011/07/07 05:06:44 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -143,7 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2011/02/20 07:48:33 matt Exp $");
 #include <mips/locore.h>
 #include <mips/cpuregs.h>
 
-#include <mips/atheros/include/ar531xvar.h>
+#include <mips/atheros/include/platform.h>
 #include <mips/atheros/include/arbusvar.h>
 
 /* Maps for VM objects. */
@@ -162,7 +162,7 @@ cal_timer(void)
 {
 	uint32_t	cntfreq;
 
-	cntfreq = curcpu()->ci_cpu_freq = ar531x_cpu_freq();
+	cntfreq = curcpu()->ci_cpu_freq = atheros_get_cpu_freq();
 	
 	/* MIPS 4Kc CP0 counts every other clock */
 	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
@@ -189,10 +189,10 @@ mach_init(void)
 	memset(edata, 0, (char *)kernend - edata);
 
 	/* setup early console */
-	ar531x_early_console();
+	atheros_set_platformsw();
 
 	/* set CPU model info for sysctl_hw */
-	snprintf(cpu_model, 64, "%s", ar531x_cpuname());
+	snprintf(cpu_model, 64, "Atheros %s", atheros_get_cpuname());
 
 	/*
 	 * Set up the exception vectors and CPU-specific function
@@ -235,7 +235,7 @@ mach_init(void)
 	 * Note: Reserve the first page!  That's where the trap
 	 * vectors are located.
 	 */
-	memsize = ar531x_memsize();
+	memsize = atheros_get_memsize();
 
 	printf("Memory size: 0x%08x\n", memsize);
 	physmem = btoc(memsize);
@@ -269,13 +269,13 @@ mach_init(void)
 	/*
 	 * Initialize busses.
 	 */
-	ar531x_businit();
+	atheros_bus_init();
 
 	/*
 	 * Turn off (ignore) the hardware watchdog.  If we got this
 	 * far, then we shouldn't need it anymore.
 	 */
-	ar531x_wdog(0);
+	atheros_wdog_reload(0);
 
 	/*
 	 * Turn off watchpoint that may have been enabled by the
@@ -303,7 +303,7 @@ consinit(void)
 	 * Everything related to console initialization is done
 	 * in mach_init().
 	 */
-	ar531x_consinit();
+	atheros_consinit();
 }
 
 void
@@ -416,6 +416,7 @@ cpu_reboot(int howto, char *bootstr)
 	printf("reseting board...\n\n");
 	mips_icache_sync_all();
 	mips_dcache_wbinv_all();
+	atheros_reset();
 	__asm volatile("jr	%0" :: "r"(MIPS_RESET_EXC_VEC));
 	printf("Oops, back from reset\n\nSpinning...");
 	for (;;)

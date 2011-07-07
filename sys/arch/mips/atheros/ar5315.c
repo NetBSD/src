@@ -1,4 +1,4 @@
-/* $NetBSD: ar5315.c,v 1.7 2010/01/22 08:56:05 martin Exp $ */
+/* $NetBSD: ar5315.c,v 1.8 2011/07/07 05:06:44 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,12 +48,14 @@
  * family.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.7 2010/01/22 08:56:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.8 2011/07/07 05:06:44 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-
 #include "opt_memsize.h"
+
+#define __INTR_PRIVATE
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -72,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.7 2010/01/22 08:56:05 martin Exp $");
 #include <ah_soc.h>	/* XXX really doesn't belong in hal */
 
 #include <mips/atheros/include/ar5315reg.h>
-#include <mips/atheros/include/ar531xvar.h>
+#include <mips/atheros/include/platform.h>
 #include <mips/atheros/include/arbusvar.h>
 
 #include <machine/locore.h>
@@ -85,8 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.7 2010/01/22 08:56:05 martin Exp $");
 #define	PUTPCIREG(x,v)	(REGVAL((x) + AR5315_PCI_BASE)) = (v)
 #define	GETSDRAMREG(x)	REGVAL((x) + AR5315_SDRAMCTL_BASE)
 
-uint32_t
-ar531x_memsize(void)
+static uint32_t
+ar5315_get_memsize(void)
 {
 #ifndef	MEMSIZE
 	uint32_t	memsize = 0;
@@ -96,16 +98,13 @@ ar531x_memsize(void)
 	 * Determine the memory size.  We query the board info.
 	 */
 	memcfg = GETSDRAMREG(AR5315_SDRAMCTL_MEM_CFG);
-	cw = (memcfg & AR5315_MEM_CFG_COL_WIDTH_MASK) >>
-	    AR5315_MEM_CFG_COL_WIDTH_SHIFT;
+	cw = __SHIFTOUT(memcfg, AR5315_MEM_CFG_COL_WIDTH);
 	cw += 1;
-	rw = (memcfg & AR5315_MEM_CFG_ROW_WIDTH_MASK) >>
-	    AR5315_MEM_CFG_ROW_WIDTH_SHIFT;
+	rw = __SHIFTOUT(memcfg, AR5315_MEM_CFG_ROW_WIDTH);
 	rw += 1;
 
 	/* XXX: according to redboot, this could be wrong if DDR SDRAM */
-	dw = (memcfg & AR5315_MEM_CFG_DATA_WIDTH_MASK) >>
-	    AR5315_MEM_CFG_DATA_WIDTH_SHIFT;
+	dw = __SHIFTOUT(memcfg, AR5315_MEM_CFG_DATA_WIDTH);
 	dw += 1;
 	dw *= 8;	/* bits */
 
@@ -123,27 +122,8 @@ ar531x_memsize(void)
 #endif
 }
 
-const char *
-ar531x_cpuname(void)
-{
-	uint16_t	rev = GETSYSREG(AR5315_SYSREG_SREV);
-	switch (rev) {
-	case 0x52:	/* AP30 */
-	case 0x57:	/* AP31 */
-		return "Atheros AR5312";
-	case 0x58:	/* AP43 */
-		return "Atheros AR2313";
-	case 0x86:	/* AP51-Light */
-	case 0x87:	/* AP51-Full */
-		return "Atheros AR2315";
-	case 0x91:	/* AP61 */
-		return "Atheros AR2317";
-	}
-	return ("Atheros AR531X");
-}
-
-void
-ar531x_wdog(uint32_t period)
+static void
+ar5315_wdog_reload(uint32_t period)
 {
 
 	if (period == 0) {
@@ -155,26 +135,24 @@ ar531x_wdog(uint32_t period)
 	}
 }
 
-void
-ar531x_businit(void)
+static void
+ar5315_bus_init(void)
 {
 	/*
-	 * XXX: clear COP0 config bits 0 and 1 -- Linux sets KSEG0 to either
-	 * 0 or 4.  Why does it do this?  It is implementation defined...
+	 * Set CCA of KSEG0 access to 3 (actually any value other than
+	 * 2 & 7 means that KSEG0 accesses are cached but 3 is standard
+	 * value for writeback caching).
 	 */
-	mips3_cp0_config_write(mips3_cp0_config_read() & ~0x3);
+	mips3_cp0_config_write((mips3_cp0_config_read() & -8) | 3);
 
 	PUTSYSREG(AR5315_SYSREG_AHB_ERR0, AR5315_AHB_ERROR_DET);
 	GETSYSREG(AR5315_SYSREG_AHB_ERR1);
 }
 
-static uint32_t
-get_freq(uint32_t clkreg) 
+static void
+ar5315_get_freqs(struct arfreqs *freqs) 
 {
-	uint32_t	freq = 0;
-	uint32_t	clkctl, pllc, pllout, refdiv, fbdiv, div2, cpudiv;
-
-	static const int pll_divide_table[] = {
+	static const uint8_t pll_divide_table[] = {
 		2, 3, 4, 6, 3,
 		/*
 		 * these entries are bogus, but it avoids a possible
@@ -182,67 +160,48 @@ get_freq(uint32_t clkreg)
 		 */
 		1, 1, 1
 	};
-	static const int pre_divide_table[] = {
+	static const uint8_t pre_divide_table[] = {
 		1, 2, 4, 5
 	};
 
-	if (freq)
-		return freq;
+	const uint32_t pllc = GETSYSREG(AR5315_SYSREG_PLLC_CTL);
 
-	pllc = GETSYSREG(AR5315_SYSREG_PLLC_CTL);
-	clkctl = GETSYSREG(clkreg);
+	const uint32_t refdiv = pre_divide_table[AR5315_PLLC_REF_DIV(pllc)];
+	const uint32_t fbdiv = AR5315_PLLC_FB_DIV(pllc);
+	const uint32_t div2 = (AR5315_PLLC_DIV_2(pllc) + 1) * 2; /* results in 2 or 4 */
 
-	refdiv = pre_divide_table[AR5315_PLLC_REF_DIV(pllc)];
-	fbdiv = AR5315_PLLC_FB_DIV(pllc);
-	div2 = (AR5315_PLLC_DIV_2(pllc) + 1) * 2;	/* results in 2 or 4 */
-
-	cpudiv = AR5315_CLOCKCTL_DIV(clkctl);
-	cpudiv = cpudiv ? (cpudiv * 2) : 1;
+	freqs->freq_ref = 40000000;
 
 	/* 40MHz reference clk, reference and feedback dividers */
-	pllout = (40000000 / refdiv) * div2 * fbdiv;
+	freqs->freq_pll = (freqs->freq_ref / refdiv) * div2 * fbdiv;
 
-	switch (AR5315_CLOCKCTL_SELECT(clkctl)) {
-	case 0:
-	case 1:
-		/* CLKM select */
-		pllout /= pll_divide_table[AR5315_PLLC_CLKM(pllc)];
-		break;
-	case 2:
-		/* CLKC select */
-		pllout /= pll_divide_table[AR5315_PLLC_CLKC(pllc)];
-		break;
-	default:
-		/* ref_clk select */
-		pllout = 40000000;	/* use original reference clock */
-		break;
-	}
+	const uint32_t pllout[4] = {
+	    /* CLKM select */
+	    [0] = freqs->freq_pll / pll_divide_table[AR5315_PLLC_CLKM(pllc)],
+	    [1] = freqs->freq_pll / pll_divide_table[AR5315_PLLC_CLKM(pllc)],
 
-	freq = pllout/(cpudiv); 
+	    /* CLKC select */
+	    [2] = freqs->freq_pll / pll_divide_table[AR5315_PLLC_CLKC(pllc)],
 
-	return (freq);
-}
+	    /* ref_clk select */
+	    [3] = freqs->freq_ref, /* use original reference clock */
+	};
 
-uint32_t
-ar531x_cpu_freq(void)
-{
-	static uint32_t	freq = 0;
-	if (freq == 0)
-		freq = get_freq(AR5315_SYSREG_CPUCLK);
-	return (freq);
-}
+	const uint32_t amba_clkctl = GETSYSREG(AR5315_SYSREG_AMBACLK);
+	uint32_t ambadiv = AR5315_CLOCKCTL_DIV(amba_clkctl);
+	ambadiv = ambadiv ? (ambadiv * 2) : 1;
+	freqs->freq_bus = pllout[AR5315_CLOCKCTL_SELECT(amba_clkctl)] / ambadiv;
 
-uint32_t
-ar531x_bus_freq(void)
-{
-	static uint32_t	freq = 0;
-	if (freq == 0)
-		freq = get_freq(AR5315_SYSREG_AMBACLK);
-	return (freq);
+	const uint32_t cpu_clkctl = GETSYSREG(AR5315_SYSREG_CPUCLK);
+	uint32_t cpudiv = AR5315_CLOCKCTL_DIV(cpu_clkctl);
+	cpudiv = cpudiv ? (cpudiv * 2) : 1;
+	freqs->freq_cpu = pllout[AR5315_CLOCKCTL_SELECT(cpu_clkctl)] / cpudiv;
+
+	freqs->freq_mem = 0;
 }
 
 static void
-addprop_data(struct device *dev, const char *name, const uint8_t *data,
+addprop_data(device_t dev, const char *name, const uint8_t *data,
     int len)
 {
 	prop_data_t	pd;
@@ -256,7 +215,7 @@ addprop_data(struct device *dev, const char *name, const uint8_t *data,
 }
 
 static void
-addprop_integer(struct device *dev, const char *name, uint32_t val)
+addprop_integer(device_t dev, const char *name, uint32_t val)
 {
 	prop_number_t	pn;
 	pn = prop_number_create_integer(val);
@@ -268,13 +227,16 @@ addprop_integer(struct device *dev, const char *name, uint32_t val)
 	prop_object_release(pn);
 }
 
-void
-ar531x_device_register(struct device *dev, void *aux) 
+static void
+ar5315_device_register(struct device *dev, void *aux) 
 {
-	struct arbus_attach_args *aa = aux;
-	const struct ar531x_boarddata *info;
+	const struct arbus_attach_args * const aa = aux;
+	const struct ar531x_boarddata * const info = atheros_get_board_info();
 
-	info = ar531x_board_info();
+	if (device_is_a(dev, "com")) {
+		addprop_integer(dev, "frequency", atheros_get_bus_freq());
+	}
+
 	if (info == NULL) {
 		/* nothing known about this board! */
 		return;
@@ -311,10 +273,6 @@ ar531x_device_register(struct device *dev, void *aux)
 		    GETSYSREG(AR5315_SYSREG_SREV));
 	}
 
-	if (device_is_a(dev, "com")) {
-		addprop_integer(dev, "frequency", ar531x_bus_freq());
-	}
-
 	if (device_is_a(dev, "argpio")) {
 		if (info->config & BD_RSTFACTORY) {
 			addprop_integer(dev, "reset-pin",
@@ -327,44 +285,10 @@ ar531x_device_register(struct device *dev, void *aux)
 	}
 }
 
-const struct ar531x_device *
-ar531x_get_devices(void)
+static int
+ar5315_enable_device(const struct atheros_device *adv)
 {
-	const static struct ar531x_device devices[] = {
-		{
-			"com",
-			AR5315_UART_BASE, 0x1000,
-			AR5315_CPU_IRQ_MISC, AR5315_MISC_IRQ_UART,
-			0, 0, 0
-		},
-		{
-			"ae",
-			AR5315_ENET_BASE, 0x100000,
-			AR5315_CPU_IRQ_ENET, -1,
-			0, 0, 0
-		},
-		{
-			"ath",
-			AR5315_WLAN_BASE, 0x100000,
-			AR5315_CPU_IRQ_WLAN, -1,
-			0, 0, 0
-		},
-		{
-			"arspi",
-			AR5315_SPI_BASE, 0x10,
-			AR5315_CPU_IRQ_MISC, AR5315_MISC_IRQ_SPI,
-			0, 0, 0
-		},
-		{ NULL }
-	};
-
-	return devices;
-}
-
-int
-ar531x_enable_device(const struct ar531x_device *dev)
-{
-	if (dev->addr == AR5315_WLAN_BASE) {
+	if (adv->adv_addr == AR5315_WLAN_BASE) {
 		/* enable arbitration for wlan */
 		PUTSYSREG(AR5315_SYSREG_AHB_ARB_CTL,
 		    GETSYSREG(AR5315_SYSREG_AHB_ARB_CTL) | AR5315_ARB_WLAN);
@@ -384,3 +308,108 @@ ar531x_enable_device(const struct ar531x_device *dev)
 	}
 	return 0;
 }
+
+static void
+ar5315_intr_init(void)
+{
+	atheros_intr_init();
+}
+
+static void
+ar5315_reset(void)
+{
+	PUTSYSREG(AR5315_SYSREG_COLDRESET,
+	    AR5315_COLD_AHB | AR5315_COLD_APB | AR5315_COLD_CPU);
+}
+
+const static struct atheros_device ar5315_devices[] = {
+	{
+		.adv_name = "com",
+		.adv_addr = AR5315_UART_BASE,
+		.adv_size = 0x1000,
+		.adv_cirq = AR5315_CPU_IRQ_MISC,
+		.adv_mirq = AR5315_MISC_IRQ_UART,
+	}, {
+		.adv_name = "ae",
+		.adv_addr = AR5315_ENET_BASE,
+		.adv_size = 0x100000,
+		.adv_cirq = AR5315_CPU_IRQ_ENET,
+		.adv_mirq = -1,
+	}, {
+		.adv_name = "ath",
+		.adv_addr = AR5315_WLAN_BASE,
+		.adv_size = 0x100000,
+		.adv_cirq = AR5315_CPU_IRQ_WLAN,
+		.adv_mirq = -1,
+	}, {
+		.adv_name = "arspi",
+		.adv_addr = AR5315_SPI_BASE,
+		.adv_size = 0x10,
+		.adv_cirq = AR5315_CPU_IRQ_MISC,
+		.adv_mirq = AR5315_MISC_IRQ_SPI,
+	}, {
+		.adv_name = NULL
+	}
+};
+
+static const struct ipl_sr_map ar5315_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTBIO] =		MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_SOFTSERIAL] =	MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0
+				    | MIPS_INT_MASK_1 | MIPS_INT_MASK_2,
+	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
+};
+
+static const char * const ar5315_cpu_intrnames[] = {
+	"int 0 (misc)",
+	"int 1 (wlan)",
+	"int 2 (enet)",
+};
+
+static const char * const ar5315_misc_intrnames[] = {
+	"misc 0 (uart)",
+	"misc 1 (i2c)",
+	"misc 2 (spi)",
+	"misc 3 (ahb error)",
+	"misc 4 (apb error)",
+	"misc 5 (timer)",
+	"misc 6 (gpio)",
+	"misc 7 (watchdog)",
+	"misc 8 (ir)"
+};
+
+const struct atheros_platformsw ar5315_platformsw = {
+	.apsw_intrsw = &atheros_intrsw,
+	.apsw_intr_init = ar5315_intr_init,
+	.apsw_cpu_intrnames = ar5315_cpu_intrnames,
+	.apsw_misc_intrnames = ar5315_misc_intrnames,
+	.apsw_cpu_nintrs = __arraycount(ar5315_cpu_intrnames),
+	.apsw_misc_nintrs = __arraycount(ar5315_misc_intrnames),
+	.apsw_cpuirq_misc = AR5315_CPU_IRQ_MISC,
+	.apsw_ipl_sr_map = &ar5315_ipl_sr_map,
+
+	.apsw_revision_id_addr = AR5315_SYSREG_BASE + AR5315_SYSREG_SREV,
+	.apsw_uart0_base = AR5315_UART_BASE,
+	.apsw_misc_intstat = AR5315_SYSREG_BASE + AR5315_SYSREG_MISC_INTSTAT,
+	.apsw_misc_intmask = AR5315_SYSREG_BASE + AR5315_SYSREG_MISC_INTMASK,
+
+	/*
+	 * CPU specific routines.
+	 */
+	.apsw_get_memsize = ar5315_get_memsize,
+	.apsw_wdog_reload = ar5315_wdog_reload,
+	.apsw_bus_init = ar5315_bus_init,
+	.apsw_reset = ar5315_reset,
+
+	.apsw_get_freqs = ar5315_get_freqs,
+	.apsw_device_register = ar5315_device_register,
+	.apsw_enable_device = ar5315_enable_device,
+	.apsw_devices = ar5315_devices,
+};
