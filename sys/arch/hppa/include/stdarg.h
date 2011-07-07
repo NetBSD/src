@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.5 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.6 2011/07/07 01:27:13 mrg Exp $	*/
 
 /*	$OpenBSD: stdarg.h,v 1.2 1998/11/23 03:28:23 mickey Exp $	*/
 
@@ -44,12 +44,17 @@ typedef _BSD_VA_LIST_	va_list;
 #ifdef __lint__
 #define __builtin_next_arg(t)		((t) ? 0 : 0)
 #define	__builtin_stdarg_start(a, l)	((a) = (va_list)(void *)&(l))
+#define	__builtin_va_start(a, l)	((a) = (va_list)(void *)&(l))
 #define	__builtin_va_arg(a, t)		((a) ? (t) 0 : (t) 0)
 #define	__builtin_va_end(a)		/* nothing */
 #define	__builtin_va_copy(d, s)		((d) = (s))
 #endif /* __lint__ */
 
+#if __GNUC_PREREQ__(4, 5)
+#define	va_start(ap, last)	__builtin_va_start((ap), (last))
+#else
 #define	va_start(ap, last)	__builtin_stdarg_start((ap), (last))
+#endif
 #define	va_arg			__builtin_va_arg
 #define	va_end			__builtin_va_end
 #define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
