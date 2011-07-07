@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.170 2011/06/29 02:05:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.171 2011/07/07 07:33:40 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -79,8 +79,8 @@ SUBDIR+=	../external/gpl3/gcc/lib/libobjc
 .endif
 
 . if ${HAVE_GCC} >= 45
-SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
-SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
+SUBDIR+=	../external/lgpl3/gmp/lib/libgmp .WAIT
+SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr .WAIT
 SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
 .endif
 
