@@ -1,4 +1,4 @@
-/* $NetBSD: t_dir.c,v 1.3 2011/06/11 18:03:18 christos Exp $ */
+/* $NetBSD: t_dir.c,v 1.4 2011/07/07 09:49:59 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -39,16 +39,15 @@
 
 #include <sys/stat.h>
 
-ATF_TC(seekdir);
-
-ATF_TC_HEAD(seekdir, tc)
+ATF_TC(seekdir_basic);
+ATF_TC_HEAD(seekdir_basic, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr",
 	    "Check telldir(3) and seekdir(3) for correct behavior (PR/24324)");
 }
 
-ATF_TC_BODY(seekdir, tc)
+ATF_TC_BODY(seekdir_basic, tc)
 {
 	DIR *dp;
 	char *wasname;
@@ -113,7 +112,6 @@ ATF_TC_BODY(seekdir, tc)
 }
 
 ATF_TC(telldir_leak);
-
 ATF_TC_HEAD(telldir_leak, tc)
 {
 
@@ -161,7 +159,7 @@ ATF_TC_BODY(telldir_leak, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, seekdir);
+	ATF_TP_ADD_TC(tp, seekdir_basic);
 	ATF_TP_ADD_TC(tp, telldir_leak);
 
 	return atf_no_error();
