@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.171 2011/07/07 07:33:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.172 2011/07/07 07:37:17 matt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -78,10 +78,8 @@ SUBDIR+=	../external/gpl3/gcc/lib/libobjc
 . endif
 .endif
 
-. if ${HAVE_GCC} >= 45
-SUBDIR+=	../external/lgpl3/gmp/lib/libgmp .WAIT
-SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr .WAIT
-SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
+.if ${HAVE_GCC} >= 45
+SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
 .endif
 
 #
@@ -133,6 +131,10 @@ SUBDIR+=	../external/gpl3/gcc/lib/libsupc++
 . endif
 .endif
 
+.if ${HAVE_GCC} >= 45
+SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
+.endif
+
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
@@ -160,6 +162,10 @@ SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
 .endif
 
 SUBDIR+=	librumphijack
+
+.if ${HAVE_GCC} >= 45
+SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
+.endif
 
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
