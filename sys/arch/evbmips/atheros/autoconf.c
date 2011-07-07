@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.9 2008/04/28 20:23:17 martin Exp $ */
+/* $NetBSD: autoconf.c,v 1.10 2011/07/07 05:06:44 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,15 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2011/07/07 05:06:44 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/bus.h>
+#include <sys/systm.h>
 
-#include <mips/atheros/include/ar531xvar.h>
+#include <mips/atheros/include/platform.h>
 #include <mips/atheros/include/arbusvar.h>
 
 /*
@@ -71,7 +71,7 @@ cpu_rootconf(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
-	ar531x_device_register(dev, aux);
+	(*platformsw->apsw_device_register)(dev, aux);
 }
