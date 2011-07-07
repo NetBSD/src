@@ -1,4 +1,4 @@
-/*	$NetBSD: t_div.c,v 1.1 2010/12/23 15:27:44 pgoyette Exp $ */
+/*	$NetBSD: t_div.c,v 1.2 2011/07/07 11:12:18 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,15 +36,14 @@
 #define	QUOT	1
 #define	REM	999236
 
-ATF_TC(div);
-
-ATF_TC_HEAD(div, tc)
+ATF_TC(div_basic);
+ATF_TC_HEAD(div_basic, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Test div(3) for correctness");
 }
 
-ATF_TC_BODY(div, tc)
+ATF_TC_BODY(div_basic, tc)
 {
 	div_t d;
 
@@ -54,15 +53,14 @@ ATF_TC_BODY(div, tc)
 	ATF_CHECK(d.rem  == REM);
 }
 
-ATF_TC(ldiv);
-
-ATF_TC_HEAD(ldiv, tc)
+ATF_TC(ldiv_basic);
+ATF_TC_HEAD(ldiv_basic, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Test ldiv(3) for correctness");
 }
 
-ATF_TC_BODY(ldiv, tc)
+ATF_TC_BODY(ldiv_basic, tc)
 {
 	ldiv_t ld;
 
@@ -72,15 +70,14 @@ ATF_TC_BODY(ldiv, tc)
 	ATF_CHECK(ld.rem  == REM);
 }
 
-ATF_TC(lldiv);
-
-ATF_TC_HEAD(lldiv, tc)
+ATF_TC(lldiv_basic);
+ATF_TC_HEAD(lldiv_basic, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Test lllldiv(3) for correctness");
 }
 
-ATF_TC_BODY(lldiv, tc)
+ATF_TC_BODY(lldiv_basic, tc)
 {
 	lldiv_t lld;
 
@@ -93,9 +90,9 @@ ATF_TC_BODY(lldiv, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, div);
-	ATF_TP_ADD_TC(tp, ldiv);
-	ATF_TP_ADD_TC(tp, lldiv);
+	ATF_TP_ADD_TC(tp, div_basic);
+	ATF_TP_ADD_TC(tp, ldiv_basic);
+	ATF_TP_ADD_TC(tp, lldiv_basic);
 
 	return atf_no_error();
 }
