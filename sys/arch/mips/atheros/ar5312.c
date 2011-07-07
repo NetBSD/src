@@ -1,4 +1,4 @@
-/* $NetBSD: ar5312.c,v 1.7 2010/12/15 00:06:47 matt Exp $ */
+/* $NetBSD: ar5312.c,v 1.8 2011/07/07 05:06:44 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,6 +48,7 @@
  */
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#define __INTR_PRIVATE
 
 #include "opt_memsize.h"
 #include <sys/param.h>
@@ -66,13 +67,15 @@
 
 #include <prop/proplib.h>
 
-#include <mips/atheros/include/ar5312reg.h>
-#include <mips/atheros/include/ar531xvar.h>
+#include <ah_soc.h>
+
+#include <mips/atheros/include/platform.h>
 #include <mips/atheros/include/arbusvar.h>
+#include <mips/atheros/include/ar5312reg.h>
 #include "com.h"
 
-uint32_t
-ar531x_memsize(void)
+static uint32_t
+ar5312_get_memsize(void)
 {
 	uint32_t memsize;
 	uint32_t memcfg, bank0, bank1;
@@ -87,10 +90,8 @@ ar531x_memsize(void)
 	memsize = MEMSIZE;
 #else
 	memcfg = GETSDRAMREG(AR5312_SDRAMCTL_MEM_CFG1);
-	bank0 = (memcfg & AR5312_MEM_CFG1_BANK0_MASK) >>
-	    AR5312_MEM_CFG1_BANK0_SHIFT;
-	bank1 = (memcfg & AR5312_MEM_CFG1_BANK1_MASK) >>
-	    AR5312_MEM_CFG1_BANK1_SHIFT;
+	bank0 = __SHIFTOUT(memcfg, AR5312_MEM_CFG1_BANK0);
+	bank1 = __SHIFTOUT(memcfg, AR5312_MEM_CFG1_BANK1);
 
 	memsize = (bank0 ? (1 << (bank0 + 1)) : 0) +
 	    (bank1 ? (1 << (bank1 + 1)) : 0);
@@ -100,8 +101,8 @@ ar531x_memsize(void)
 	return (memsize);
 }
 
-void
-ar531x_wdog(uint32_t period)
+static void
+ar5312_wdog_reload(uint32_t period)
 {
 
 	if (period == 0) {
@@ -113,29 +114,8 @@ ar531x_wdog(uint32_t period)
 	}
 }
 
-const char *
-ar531x_cpuname(void)
-{
-	uint32_t	revision;
-
-	revision = GETSYSREG(AR5312_SYSREG_REVISION);
-	switch (AR5312_REVISION_MAJOR(revision)) {
-	case AR5312_REVISION_MAJ_AR5311:
-		return ("Atheros AR5311");
-	case AR5312_REVISION_MAJ_AR5312:
-		return ("Atheros AR5312");
-	case AR5312_REVISION_MAJ_AR2313:
-		return ("Atheros AR2313");
-	case AR5312_REVISION_MAJ_AR5315:
-		return ("Atheros AR5315");
-	default:
-		return ("Atheros AR531X");
-	}
-}
-
-void
-ar531x_businit(void)
-
+static void
+ar5312_bus_init(void)
 {
 	/*
 	 * Clear previous AHB errors
@@ -144,24 +124,19 @@ ar531x_businit(void)
 	GETSYSREG(AR5312_SYSREG_AHBDMAE);
 }
 
-uint32_t
-ar531x_cpu_freq(void)
+static void
+ar5312_reset(void)
 {
-	static uint32_t	cpufreq;
-	uint32_t	wisoc = GETSYSREG(AR5312_SYSREG_REVISION);
+	PUTSYSREG(AR5312_SYSREG_RESETCTL, AR5312_RESET_SYSTEM);
+}
 
-	uint32_t	predivmask;
-	uint32_t	predivshift;
-	uint32_t	multmask;
-	uint32_t	multshift;
-	uint32_t	doublermask;
-	uint32_t	divisor;
+static void
+ar5312_get_freqs(struct arfreqs *freqs)
+{
+	const uint32_t	wisoc = GETSYSREG(AR5312_SYSREG_REVISION);
+
+	uint32_t	predivisor;
 	uint32_t	multiplier;
-	uint32_t	clockctl;
-
-	const int	predivide_table[4] = { 1, 2, 4, 5 };
-
-	/* XXX: in theory we might be able to get clock from bootrom */
 
 	/*
 	 * This logic looks at the clock control register and
@@ -170,45 +145,33 @@ ar531x_cpu_freq(void)
 	 * be very accurate -- WiFi requires usec resolution timers.
 	 */
 
-	if (cpufreq) {
-		return cpufreq;
-	}
+	const uint32_t clockctl = GETSYSREG(AR5312_SYSREG_CLOCKCTL);
 
 	if (AR5312_REVISION_MAJOR(wisoc) == AR5312_REVISION_MAJ_AR2313) {
-		predivmask = AR2313_CLOCKCTL_PREDIVIDE_MASK;
-		predivshift = AR2313_CLOCKCTL_PREDIVIDE_SHIFT;
-		multmask = AR2313_CLOCKCTL_MULTIPLIER_MASK;
-		multshift = AR2313_CLOCKCTL_MULTIPLIER_SHIFT;
-		doublermask = AR2313_CLOCKCTL_DOUBLER_MASK;
+		predivisor = __SHIFTOUT(clockctl, AR2313_CLOCKCTL_PREDIVIDE);
+		multiplier = __SHIFTOUT(clockctl, AR2313_CLOCKCTL_MULTIPLIER);
 	} else {
-		predivmask = AR5312_CLOCKCTL_PREDIVIDE_MASK;
-		predivshift = AR5312_CLOCKCTL_PREDIVIDE_SHIFT;
-		multmask = AR5312_CLOCKCTL_MULTIPLIER_MASK;
-		multshift = AR5312_CLOCKCTL_MULTIPLIER_SHIFT;
-		doublermask = AR5312_CLOCKCTL_DOUBLER_MASK;
+		predivisor = __SHIFTOUT(clockctl, AR5312_CLOCKCTL_PREDIVIDE);
+		multiplier = __SHIFTOUT(clockctl, AR5312_CLOCKCTL_MULTIPLIER);
+		if (clockctl & AR5312_CLOCKCTL_DOUBLER)
+			multiplier <<= 1;
 	}
 
 	/*
 	 * Note that the source clock involved here is a 40MHz.
 	 */
 
-	clockctl = GETSYSREG(AR5312_SYSREG_CLOCKCTL);
-	divisor = predivide_table[(clockctl & predivmask) >> predivshift];
-	multiplier = (clockctl & multmask) >> multshift;
+	const uint32_t divisor = (0x5421 >> (predivisor * 4)) & 15;
 
-	if (clockctl & doublermask)
-		multiplier <<= 1;
+	const uint32_t cpufreq = (40000000 / divisor) * multiplier;
 
-	cpufreq = (40000000 / divisor) * multiplier;
-
-	return (cpufreq);
+	freqs->freq_cpu = cpufreq;
+	freqs->freq_bus = cpufreq / 4;
+	freqs->freq_mem = 0;
+	freqs->freq_ref = 40000000;
+	freqs->freq_pll = 40000000;
 }
 
-uint32_t
-ar531x_bus_freq(void)
-{
-	return (ar531x_cpu_freq() / 4);
-}
 
 static void
 addprop_data(struct device *dev, const char *name, const uint8_t *data,
@@ -237,13 +200,16 @@ addprop_integer(struct device *dev, const char *name, uint32_t val)
 	prop_object_release(pn);
 }
 
-void
-ar531x_device_register(struct device *dev, void *aux) 
+static void
+ar5312_device_register(device_t dev, void *aux) 
 {
-	struct arbus_attach_args *aa = aux;
-	const struct ar531x_boarddata *info;
+	const struct arbus_attach_args * const aa = aux;
 
-	info = ar531x_board_info();
+	if (device_is_a(dev, "com")) {
+		addprop_integer(dev, "frequency", atheros_get_bus_freq());
+	}
+
+	const struct ar531x_boarddata * const info = atheros_get_board_info();
 	if (info == NULL) {
 		/* nothing known about this board! */
 		return;
@@ -285,10 +251,6 @@ ar531x_device_register(struct device *dev, void *aux)
 
 	}
 
-	if (device_is_a(dev, "com")) {
-		addprop_integer(dev, "frequency", ar531x_cpu_freq() / 4);
-	}
-
 	if (device_is_a(dev, "argpio")) {
 		if (info->config & BD_RSTFACTORY) {
 			addprop_integer(dev, "reset-pin",
@@ -301,110 +263,172 @@ ar531x_device_register(struct device *dev, void *aux)
 	}
 }
 
-int
-ar531x_enable_device(const struct ar531x_device *dev)
+static int
+ar5312_enable_device(const struct atheros_device *adv)
 {
-	const struct ar531x_boarddata *info;
+	const struct ar531x_boarddata * const info = atheros_get_board_info();
 
-	info = ar531x_board_info();
-	if (dev->mask && ((dev->mask & info->config) == 0)) {
+	if (info != NULL
+	    && adv->adv_mask && ((adv->adv_mask & info->config) == 0)) {
 		return -1;
 	}
-	if (dev->reset) {
+	if (adv->adv_reset) {
 		/* put device into reset */
 		PUTSYSREG(AR5312_SYSREG_RESETCTL,
-		    GETSYSREG(AR5312_SYSREG_RESETCTL) | dev->reset);
+		    GETSYSREG(AR5312_SYSREG_RESETCTL) | adv->adv_reset);
 
 		delay(15000);	/* XXX: tsleep? */
 
 		/* take it out of reset */
 		PUTSYSREG(AR5312_SYSREG_RESETCTL,
-		    GETSYSREG(AR5312_SYSREG_RESETCTL) & ~dev->reset);
+		    GETSYSREG(AR5312_SYSREG_RESETCTL) & ~adv->adv_reset);
 
 		delay(25);
 	}
-	if (dev->enable) {
+	if (adv->adv_enable) {
 		PUTSYSREG(AR5312_SYSREG_ENABLE,
-		    GETSYSREG(AR5312_SYSREG_ENABLE) | dev->enable);
+		    GETSYSREG(AR5312_SYSREG_ENABLE) | adv->adv_enable);
 	}
 	return 0;
 }
 
-const struct ar531x_device *
-ar531x_get_devices(void)
+static void
+ar5312_intr_init(void)
 {
-	static const struct ar531x_device devices[] = {
-		{
-			"ae",
-			AR5312_ENET0_BASE, 0x100000,
-			AR5312_IRQ_ENET0, -1,
-			AR5312_BOARD_CONFIG_ENET0,
-			AR5312_RESET_ENET0 | AR5312_RESET_PHY0,
-			AR5312_ENABLE_ENET0
-		},
-		{
-			"ae",
-			AR5312_ENET1_BASE, 0x100000,
-			AR5312_IRQ_ENET1, -1,
-			AR5312_BOARD_CONFIG_ENET1,
-			AR5312_RESET_ENET1 | AR5312_RESET_PHY1,
-			AR5312_ENABLE_ENET1
-		},
-		{
-			"com",
-			AR5312_UART0_BASE, 0x1000,
-			AR5312_IRQ_MISC, AR5312_MISC_IRQ_UART0,
-			AR5312_BOARD_CONFIG_UART0,
-			0,
-			0,
-		},
-		{
-			"com",
-			AR5312_UART1_BASE, 0x1000,
-			-1, -1,
-			AR5312_BOARD_CONFIG_UART1,
-			0,
-			0,
-		},
-		{
-			"ath",
-			AR5312_WLAN0_BASE, 0x100000,
-			AR5312_IRQ_WLAN0, -1,
-			AR5312_BOARD_CONFIG_WLAN0,
-			AR5312_RESET_WLAN0 |
-			AR5312_RESET_WARM_WLAN0_MAC |
-			AR5312_RESET_WARM_WLAN0_BB,
-			AR5312_ENABLE_WLAN0
-		},
-		{
-			"ath",
-			AR5312_WLAN1_BASE, 0x100000,
-			AR5312_IRQ_WLAN1, -1,
-			AR5312_BOARD_CONFIG_WLAN1,
-			AR5312_RESET_WLAN1 |
-			AR5312_RESET_WARM_WLAN1_MAC |
-			AR5312_RESET_WARM_WLAN1_BB,
-			AR5312_ENABLE_WLAN1
-		},
-		{
-			"athflash",
-			AR5312_FLASH_BASE, 0,
-			-1, -1,
-			0,
-			0,
-			0,
-		},
-		{
-			"argpio", 0x1000,
-			AR5312_GPIO_BASE,
-			AR5312_IRQ_MISC, AR5312_MISC_IRQ_GPIO,
-			0,
-			0,
-			0
-		},
-		{ NULL }
-	};
-
-	return devices;
+	atheros_intr_init();
 }
 
+static const struct atheros_device ar5312_devices[] = {
+	{
+		.adv_name = "ae",
+		.adv_addr = AR5312_ENET0_BASE,
+		.adv_size = 0x100000,
+		.adv_cirq = AR5312_IRQ_ENET0,
+		.adv_mirq = -1,
+		.adv_mask = AR5312_BOARD_CONFIG_ENET0,
+		.adv_reset = AR5312_RESET_ENET0 | AR5312_RESET_PHY0,
+		.adv_enable = AR5312_ENABLE_ENET0
+	}, {
+		.adv_name = "ae",
+		.adv_addr = AR5312_ENET1_BASE,
+		.adv_size = 0x100000,
+		.adv_cirq = AR5312_IRQ_ENET1,
+		.adv_mirq = -1,
+		.adv_mask = AR5312_BOARD_CONFIG_ENET1,
+		.adv_reset = AR5312_RESET_ENET1 | AR5312_RESET_PHY1,
+		.adv_enable = AR5312_ENABLE_ENET1
+	}, {
+		.adv_name = "com",
+		.adv_addr = AR5312_UART0_BASE,
+		.adv_size = 0x1000,
+		.adv_cirq = AR5312_IRQ_MISC,
+		.adv_mirq = AR5312_MISC_IRQ_UART0,
+		.adv_mask = AR5312_BOARD_CONFIG_UART0,
+	}, {
+		.adv_name = "com",
+		.adv_addr = AR5312_UART1_BASE,
+		.adv_size = 0x1000,
+		.adv_cirq = -1,
+		.adv_mirq = -1,
+		.adv_mask = AR5312_BOARD_CONFIG_UART1,
+	}, {
+		.adv_name = "ath",
+		.adv_addr = AR5312_WLAN0_BASE,
+		.adv_size = 0x100000,
+		.adv_cirq = AR5312_IRQ_WLAN0,
+		.adv_mirq = -1,
+		.adv_mask = AR5312_BOARD_CONFIG_WLAN0,
+		.adv_reset = AR5312_RESET_WLAN0 | AR5312_RESET_WARM_WLAN0_MAC
+		    | AR5312_RESET_WARM_WLAN0_BB,
+		.adv_enable = AR5312_ENABLE_WLAN0
+	}, {
+		.adv_name = "ath",
+		.adv_addr = AR5312_WLAN1_BASE,
+		.adv_size = 0x100000,
+		.adv_cirq = AR5312_IRQ_WLAN1,
+		.adv_mirq = -1,
+		.adv_mask = AR5312_BOARD_CONFIG_WLAN1,
+		.adv_reset = AR5312_RESET_WLAN1 | AR5312_RESET_WARM_WLAN1_MAC
+		    | AR5312_RESET_WARM_WLAN1_BB,
+		.adv_enable = AR5312_ENABLE_WLAN1
+	}, {
+		.adv_name = "athflash",
+		.adv_addr = AR5312_FLASH_BASE,
+		.adv_size = 0,
+		.adv_cirq = -1,
+		.adv_mirq = -1,
+	}, {
+		.adv_name = "argpio",
+		.adv_addr = AR5312_GPIO_BASE,
+		.adv_size = 0x1000,
+		.adv_cirq = AR5312_IRQ_MISC,
+		.adv_mirq = AR5312_MISC_IRQ_GPIO,
+	}, {
+		.adv_name = NULL
+	}
+};
+
+static const struct ipl_sr_map ar5312_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE]		= 0,
+	[IPL_SOFTCLOCK]		= MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTBIO]		= MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET]		= MIPS_SOFT_INT_MASK,
+	[IPL_SOFTSERIAL]	= MIPS_SOFT_INT_MASK,
+	[IPL_VM]		= MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0
+				    | MIPS_INT_MASK_1 | MIPS_INT_MASK_2
+				    | MIPS_INT_MASK_3,
+	[IPL_SCHED]		= MIPS_INT_MASK,
+	[IPL_DDB]		= MIPS_INT_MASK,
+	[IPL_HIGH]		= MIPS_INT_MASK,
+    },
+};
+
+static const char * const ar5312_cpu_intrnames[] = {
+	"int 0 (wlan0)",
+	"int 1 (enet0)",
+	"int 2 (enet1)",
+	"int 3 (wlan1)",
+	"int 4 (misc)",
+	"int 5 (timer)",
+};
+
+static const char * const ar5312_misc_intrnames[] = {
+	"misc 0 (timer)",
+	"misc 1 (AHBproc error)",
+	"misc 2 (AHBdma error)",
+	"misc 3 (gpio)",
+	"misc 4 (uart)",
+	"misc 5 (uart dma)",
+	"misc 6 (watchdog)"
+};
+
+
+const struct atheros_platformsw ar5312_platformsw = {
+	.apsw_intrsw = &atheros_intrsw,
+	.apsw_intr_init = ar5312_intr_init,
+	.apsw_cpu_intrnames = ar5312_cpu_intrnames,
+	.apsw_misc_intrnames = ar5312_misc_intrnames,
+	.apsw_cpu_nintrs = __arraycount(ar5312_cpu_intrnames),
+	.apsw_misc_nintrs = __arraycount(ar5312_misc_intrnames),
+	.apsw_cpuirq_misc = AR5312_IRQ_MISC,
+	.apsw_ipl_sr_map = &ar5312_ipl_sr_map,
+
+	.apsw_revision_id_addr = AR5312_SYSREG_BASE + AR5312_SYSREG_REVISION,
+	.apsw_uart0_base = AR5312_UART0_BASE,
+	.apsw_misc_intstat = AR5312_SYSREG_BASE + AR5312_SYSREG_MISC_INTSTAT,
+	.apsw_misc_intmask = AR5312_SYSREG_BASE + AR5312_SYSREG_MISC_INTMASK,
+
+	/*
+	 * CPU specific routines.
+	 */
+	.apsw_get_memsize = ar5312_get_memsize,
+	.apsw_wdog_reload = ar5312_wdog_reload,
+	.apsw_bus_init = ar5312_bus_init,
+	.apsw_reset = ar5312_reset,
+
+	.apsw_get_freqs = ar5312_get_freqs,
+	.apsw_device_register = ar5312_device_register,
+	.apsw_enable_device = ar5312_enable_device,
+	.apsw_devices = ar5312_devices,
+};

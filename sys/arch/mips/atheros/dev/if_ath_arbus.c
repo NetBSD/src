@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.19 2011/07/01 18:40:01 dyoung Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.20 2011/07/07 05:06:44 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.19 2011/07/01 18:40:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.20 2011/07/07 05:06:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.19 2011/07/01 18:40:01 dyoung Exp
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
 
-#include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
+#include <mips/atheros/include/platform.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/ic/ath_netbsd.h>
@@ -144,7 +144,7 @@ ath_arbus_attach(device_t parent, device_t self, void *opaque)
 	/*
 	 * Setup HAL configuration state for use by the driver.
 	 */
-	rv = ar531x_board_config(&asc->sc_config);
+	rv = atheros_get_board_config(&asc->sc_config);
 	if (rv) {
 		aprint_error_dev(self, "unable to locate board configuration\n");
 		return;

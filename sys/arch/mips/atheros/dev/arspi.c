@@ -1,4 +1,4 @@
-/* $NetBSD: arspi.c,v 1.7 2011/07/01 18:40:00 dyoung Exp $ */
+/* $NetBSD: arspi.c,v 1.8 2011/07/07 05:06:44 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.7 2011/07/01 18:40:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.8 2011/07/07 05:06:44 matt Exp $");
 
 #include "locators.h"
 
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.7 2011/07/01 18:40:00 dyoung Exp $");
 #include <machine/cpu.h>
 
 #include <mips/atheros/include/ar5315reg.h>
-#include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
 
 #include <mips/atheros/dev/arspireg.h>

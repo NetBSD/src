@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.15 2011/02/20 07:48:34 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.16 2011/07/07 05:06:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15 2011/02/20 07:48:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.16 2011/07/07 05:06:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,7 +72,9 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 
 		if (pending & MIPS_INT_MASK_5) {
 			struct clockframe cf;
-			KASSERT(ipl == IPL_SCHED);
+			KASSERTMSG(ipl == IPL_SCHED,
+			    ("%s: ipl (%d) != IPL_SCHED (%d)",
+			     __func__, ipl, IPL_SCHED));
 			/* call the common MIPS3 clock interrupt handler */ 
 			cf.pc = pc;
 			cf.sr = status;
