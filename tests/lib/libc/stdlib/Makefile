@@ -1,12 +1,11 @@
-# $NetBSD: Makefile,v 1.14 2011/06/04 14:56:58 jruoho Exp $
+# $NetBSD: Makefile,v 1.15 2011/07/07 15:50:23 jruoho Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libc/stdlib
 
 TESTS_C+=	t_div
-TESTS_C+=	t_environment
-TESTS_C+=	t_environment_pth
+TESTS_C+=	t_getenv
 TESTS_C+=	t_exit
 TESTS_C+=	t_hsearch
 TESTS_C+=	t_mi_vector_hash
@@ -25,7 +24,7 @@ PROGS+=		h_atexit
 PROGS+=		h_getopt h_getopt_long
 
 LDADD.t_strtod=			-lm
-LDADD.t_environment_pth=	-pthread
+LDADD.t_getenv=			-pthread
 
 COPTS+=				-ffloat-store
 

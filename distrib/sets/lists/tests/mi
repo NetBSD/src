@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.370 2011/07/07 14:29:59 pgoyette Exp $
+# $NetBSD: mi,v 1.371 2011/07/07 15:50:23 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -440,9 +440,10 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/h_getopt.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/h_getopt_long.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_div.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_environment.debug	tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_environment_pth.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_environment.debug	tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_environment_pth.debug	tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_exit.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_getenv.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_hsearch.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_posix_memalign.debug	tests-lib-debug		debug,atf
@@ -2016,9 +2017,10 @@
 ./usr/tests/lib/libc/stdlib/h_getopt_long	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_atexit		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_div		tests-lib-tests		atf
-./usr/tests/lib/libc/stdlib/t_environment	tests-lib-tests		atf
-./usr/tests/lib/libc/stdlib/t_environment_pth	tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_environment	tests-obsolete		obsolete
+./usr/tests/lib/libc/stdlib/t_environment_pth	tests-obsolete		obsolete
 ./usr/tests/lib/libc/stdlib/t_exit		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_getenv		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_getopt		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_hsearch		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		atf
