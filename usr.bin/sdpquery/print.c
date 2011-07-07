@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.15 2011/07/07 10:26:00 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.16 2011/07/07 10:49:38 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.15 2011/07/07 10:26:00 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.16 2011/07/07 10:49:38 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -556,6 +556,7 @@ string_vis(int style, const char *src, size_t len)
 	static char buf[50];
 	char *dst = buf;
 
+	buf[0] = '\0';
 	style |= VIS_NL;
 	while (len > 0 && (dst + 5) < (buf + sizeof(buf))) {
 		dst = vis(dst, src[0], style, (len > 1 ? src[1] : 0));
