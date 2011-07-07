@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.364 2011/07/07 05:50:26 jruoho Exp $
+# $NetBSD: mi,v 1.365 2011/07/07 06:18:25 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -458,9 +458,9 @@
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_string.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_swab.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_cerror.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_clone.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_context.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/sys/t_cerror.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigqueue.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/termios				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/termios/t_tcsetpgrp.debug	tests-lib-debug		debug,atf
@@ -620,40 +620,40 @@
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_p2kifs.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/sbin					tests-sbin-tests
 ./usr/libdata/debug/usr/tests/sbin/resize_ffs				tests-sbin-tests
-./usr/libdata/debug/usr/tests/syscall					tests-syscall-debug
-./usr/libdata/debug/usr/tests/syscall/t_access.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_chroot.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall					tests-obsolete
+./usr/libdata/debug/usr/tests/syscall/t_access.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_chroot.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-obsolete		obsolete
-./usr/libdata/debug/usr/tests/syscall/t_dup.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_fsync.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_getgroups.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_getlogin.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_getpid.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_getrusage.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_getsid.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_gettimeofday.debug		tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_issetugid.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_itimer.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_kill.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_link.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_mincore.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_mkfifo.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_mknod.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_mmap.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_mprotect.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_msync.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_nanosleep.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_poll.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_pollts.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_pselect.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_revoke.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_setrlimit.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_setuid.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_stat.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_timer.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_truncate.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_umask.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_unlink.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall/t_dup.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_fsync.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_getgroups.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_getlogin.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_getpid.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_getrusage.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_getsid.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_gettimeofday.debug		tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_issetugid.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_itimer.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_kill.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_link.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_mincore.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_mkfifo.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_mknod.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_mmap.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_mprotect.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_msync.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_nanosleep.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_poll.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_pollts.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_pselect.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_revoke.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_setrlimit.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_setuid.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_stat.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_timer.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_truncate.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_umask.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_unlink.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/usr.bin					tests-sbin-tests
 ./usr/libdata/debug/usr/tests/usr.sbin					tests-sbin-tests
 ./usr/libdata/debug/usr/tests/util					tests-util-debug
@@ -1997,9 +1997,9 @@
 ./usr/tests/lib/libc/string/t_swab		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys			tests-lib-tests
 ./usr/tests/lib/libc/sys/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_cerror		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_clone		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_context		tests-lib-tests		atf
-./usr/tests/lib/libc/sys/t_cerror		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_sigqueue		tests-lib-tests		atf
 ./usr/tests/lib/libc/termios			tests-lib-tests
 ./usr/tests/lib/libc/termios/Atffile		tests-lib-tests		atf
@@ -2373,41 +2373,41 @@
 ./usr/tests/sys/rc/h_args			tests-sys-tests	atf
 ./usr/tests/sys/rc/h_simple			tests-sys-tests	atf
 ./usr/tests/sys/rc/t_rc_d_cli			tests-sys-tests	atf
-./usr/tests/syscall				tests-syscall-tests
-./usr/tests/syscall/Atffile			tests-syscall-tests	atf
-./usr/tests/syscall/t_access			tests-syscall-tests	atf
-./usr/tests/syscall/t_chroot			tests-syscall-tests	atf
+./usr/tests/syscall				tests-obsolete
+./usr/tests/syscall/Atffile			tests-obsolete		obsolete
+./usr/tests/syscall/t_access			tests-obsolete		obsolete
+./usr/tests/syscall/t_chroot			tests-obsolete		obsolete
 ./usr/tests/syscall/t_cmsg			tests-obsolete		obsolete
-./usr/tests/syscall/t_dup			tests-syscall-tests	atf
-./usr/tests/syscall/t_fsync			tests-syscall-tests	atf
-./usr/tests/syscall/t_getgroups			tests-syscall-tests	atf
-./usr/tests/syscall/t_getlogin			tests-syscall-tests	atf
-./usr/tests/syscall/t_getpid			tests-syscall-tests	atf
-./usr/tests/syscall/t_getrusage			tests-syscall-tests	atf
-./usr/tests/syscall/t_getsid			tests-syscall-tests	atf
-./usr/tests/syscall/t_gettimeofday		tests-syscall-tests	atf
-./usr/tests/syscall/t_issetugid			tests-syscall-tests	atf
-./usr/tests/syscall/t_itimer			tests-syscall-tests	atf
-./usr/tests/syscall/t_kill			tests-syscall-tests	atf
-./usr/tests/syscall/t_link			tests-syscall-tests	atf
-./usr/tests/syscall/t_mincore			tests-syscall-tests	atf
-./usr/tests/syscall/t_mkfifo			tests-syscall-tests	atf
-./usr/tests/syscall/t_mknod			tests-syscall-tests	atf
-./usr/tests/syscall/t_mmap			tests-syscall-tests	atf
-./usr/tests/syscall/t_mprotect			tests-syscall-tests	atf
-./usr/tests/syscall/t_msync			tests-syscall-tests	atf
-./usr/tests/syscall/t_nanosleep			tests-syscall-tests	atf
-./usr/tests/syscall/t_poll			tests-syscall-tests	atf
-./usr/tests/syscall/t_pollts			tests-syscall-tests	atf
-./usr/tests/syscall/t_pselect			tests-syscall-tests	atf
-./usr/tests/syscall/t_revoke			tests-syscall-tests	atf
-./usr/tests/syscall/t_setrlimit			tests-syscall-tests	atf
-./usr/tests/syscall/t_setuid			tests-syscall-tests	atf
-./usr/tests/syscall/t_stat			tests-syscall-tests	atf
-./usr/tests/syscall/t_timer			tests-syscall-tests	atf
-./usr/tests/syscall/t_truncate			tests-syscall-tests	atf
-./usr/tests/syscall/t_umask			tests-syscall-tests	atf
-./usr/tests/syscall/t_unlink			tests-syscall-tests	atf
+./usr/tests/syscall/t_dup			tests-obsolete		obsolete
+./usr/tests/syscall/t_fsync			tests-obsolete		obsolete
+./usr/tests/syscall/t_getgroups			tests-obsolete		obsolete
+./usr/tests/syscall/t_getlogin			tests-obsolete		obsolete
+./usr/tests/syscall/t_getpid			tests-obsolete		obsolete
+./usr/tests/syscall/t_getrusage			tests-obsolete		obsolete
+./usr/tests/syscall/t_getsid			tests-obsolete		obsolete
+./usr/tests/syscall/t_gettimeofday		tests-obsolete		obsolete
+./usr/tests/syscall/t_issetugid			tests-obsolete		obsolete
+./usr/tests/syscall/t_itimer			tests-obsolete		obsolete
+./usr/tests/syscall/t_kill			tests-obsolete		obsolete
+./usr/tests/syscall/t_link			tests-obsolete		obsolete
+./usr/tests/syscall/t_mincore			tests-obsolete		obsolete
+./usr/tests/syscall/t_mkfifo			tests-obsolete		obsolete
+./usr/tests/syscall/t_mknod			tests-obsolete		obsolete
+./usr/tests/syscall/t_mmap			tests-obsolete		obsolete
+./usr/tests/syscall/t_mprotect			tests-obsolete		obsolete
+./usr/tests/syscall/t_msync			tests-obsolete		obsolete
+./usr/tests/syscall/t_nanosleep			tests-obsolete		obsolete
+./usr/tests/syscall/t_poll			tests-obsolete		obsolete
+./usr/tests/syscall/t_pollts			tests-obsolete		obsolete
+./usr/tests/syscall/t_pselect			tests-obsolete		obsolete
+./usr/tests/syscall/t_revoke			tests-obsolete		obsolete
+./usr/tests/syscall/t_setrlimit			tests-obsolete		obsolete
+./usr/tests/syscall/t_setuid			tests-obsolete		obsolete
+./usr/tests/syscall/t_stat			tests-obsolete		obsolete
+./usr/tests/syscall/t_timer			tests-obsolete		obsolete
+./usr/tests/syscall/t_truncate			tests-obsolete		obsolete
+./usr/tests/syscall/t_umask			tests-obsolete		obsolete
+./usr/tests/syscall/t_unlink			tests-obsolete		obsolete
 ./usr/tests/toolchain				tests-syscall-tests	atf
 ./usr/tests/toolchain/Atffile			tests-syscall-tests	atf
 ./usr/tests/toolchain/cc			tests-syscall-tests	atf
