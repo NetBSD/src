@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1574 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1575 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1057,3 +1057,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		close on exec to opened file descriptors. [christos 20110626]
 	acpi(4): Updated ACPICA to 20110623. [jruoho 20110628]
 	less(1): Import version 444. [tron 20110703]
+	mips: Rework Atheros MIPS-based SoC support.  Add initial support
+		for AR71xx (24K) and AR9344 (74K) SoCs.
