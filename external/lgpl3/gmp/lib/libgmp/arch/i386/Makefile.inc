@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2011/07/06 19:52:06 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2011/07/07 17:55:26 drochner Exp $
 
 SRCS+= \
 	random.c \
@@ -185,7 +185,7 @@ ${.OBJDIR}/config.m4: ${.CURDIR}/arch/${MACHINE_ARCH}/config.m4
 CLEANFILES+=	config.m4
 clean: cleandummy
 cleandummy: .PHONY
-	rmdir dummy
+	-rmdir dummy
 
 .for _build _src in ${ASM_SRCS_LIST}
 ${_build:R}.s: Makefile dummy ${.OBJDIR}/config.m4
