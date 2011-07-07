@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2011/07/05 19:37:11 joerg Exp $
+# $NetBSD: Makefile,v 1.12 2011/07/07 21:46:50 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -55,7 +55,7 @@ SUBDIR+= \
 	libLLVMX86TargetInfo \
 	libLLVMX86Utils
 
-.if ${NO_LLVM_DEVELOPER:Dno} == "yes" && ${LLVM_DEVELOPER:U} == "yes"
+.if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
 SUBDIR+= \
 	libLLVMArchive \
 	libLLVMCBackend \
