@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vis.c,v 1.2 2011/03/12 19:52:48 christos Exp $	*/
+/*	$NetBSD: t_vis.c,v 1.3 2011/07/07 10:02:53 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -53,15 +53,14 @@ static int styles[] = {
 
 #define SIZE	256
 
-ATF_TC(vis);
-
-ATF_TC_HEAD(vis, tc)
+ATF_TC(strvis_basic);
+ATF_TC_HEAD(strvis_basic, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Test strvis(3)");
 }
 
-ATF_TC_BODY(vis, tc)
+ATF_TC_BODY(strvis_basic, tc)
 {
 	char *srcbuf, *dstbuf, *visbuf;
 	unsigned int i, j;
@@ -86,7 +85,7 @@ ATF_TC_BODY(vis, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, vis);
+	ATF_TP_ADD_TC(tp, strvis_basic);
 
 	return atf_no_error();
 }

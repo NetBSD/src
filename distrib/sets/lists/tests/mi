@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.368 2011/07/07 08:59:30 jruoho Exp $
+# $NetBSD: mi,v 1.369 2011/07/07 10:02:52 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -372,7 +372,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_setdomainname.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_sethostname.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_siginfo.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog_pthread.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog_pthread.debug	tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_ttyname.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_vis.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo			tests-obsolete		obsolete
@@ -1872,7 +1873,8 @@
 ./usr/tests/lib/libc/gen/t_setdomainname	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_sethostname		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_siginfo		tests-lib-tests		atf
-./usr/tests/lib/libc/gen/t_syslog_pthread	tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_syslog		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_syslog_pthread	tests-obsolete		obsolete
 ./usr/tests/lib/libc/gen/t_ttyname		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_vis			tests-lib-tests		atf
 ./usr/tests/lib/libc/getaddrinfo		tests-obsolete		obsolete
