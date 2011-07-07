@@ -1,4 +1,4 @@
-/*	$NetBSD: t_stresep.c,v 1.1 2010/12/26 13:35:54 pgoyette Exp $ */
+/*	$NetBSD: t_stresep.c,v 1.2 2011/07/07 08:27:36 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,15 +42,14 @@
 		atf_tc_fail("Check stderr for test id/line");		\
 	}
 
-ATF_TC(check_stresep);  
- 
-ATF_TC_HEAD(check_stresep, tc)
+ATF_TC(stresep_basic);
+ATF_TC_HEAD(stresep_basic, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Test stresep results");
 }
 
-ATF_TC_BODY(check_stresep, tc)
+ATF_TC_BODY(stresep_basic, tc)
 {
 	char brk[] = "foo\\ \\ bar baz bar\\ foo\\  bar\\ \\ foo \\ \\ \\ "
 		     "baz bar\\ \\ ";
@@ -67,7 +66,7 @@ ATF_TC_BODY(check_stresep, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, check_stresep);
+	ATF_TP_ADD_TC(tp, stresep_basic);
 
 	return atf_no_error();
 }
