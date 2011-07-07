@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.141 2011/07/04 13:00:19 mrg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.142 2011/07/07 08:47:22 mrg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -521,6 +521,8 @@ COPTS.${__varstack:T} += -Wno-stack-protector
 CWARNFLAGS.tulip.c+=	-Wno-array-bounds
 CWARNFLAGS.radeonfb.c+=	-Wno-cast-qual
 CWARNFLAGS.dbcool.c+=	-Wno-cast-qual
+CWARNFLAGS.adb_kbd.c+=	-Wno-cast-qual
+CWARNFLAGS.adb_ms.c+=	-Wno-cast-qual
 .endif
 
 AFLAGS+=	${AOPTS.${.IMPSRC:T}}
