@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.369 2011/07/07 10:02:52 jruoho Exp $
+# $NetBSD: mi,v 1.370 2011/07/07 14:29:59 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -660,7 +660,7 @@
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_p2kifs.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/sbin					tests-sbin-tests
 ./usr/libdata/debug/usr/tests/sbin/resize_ffs				tests-sbin-tests
-./usr/libdata/debug/usr/tests/syscall					tests-obsolete
+./usr/libdata/debug/usr/tests/syscall					tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_access.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_chroot.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-obsolete		obsolete
@@ -2453,7 +2453,7 @@
 ./usr/tests/sys/rc/h_args			tests-sys-tests	atf
 ./usr/tests/sys/rc/h_simple			tests-sys-tests	atf
 ./usr/tests/sys/rc/t_rc_d_cli			tests-sys-tests	atf
-./usr/tests/syscall				tests-obsolete
+./usr/tests/syscall				tests-obsolete		obsolete
 ./usr/tests/syscall/Atffile			tests-obsolete		obsolete
 ./usr/tests/syscall/t_access			tests-obsolete		obsolete
 ./usr/tests/syscall/t_chroot			tests-obsolete		obsolete
