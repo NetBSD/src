@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.89 2011/06/30 09:32:07 sborrill Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.90 2011/07/07 12:46:06 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5328,4 +5328,24 @@ sys/netatalk/ddp_usrreq.c			1.40
 	atalkd is started. Fix by moving MOWNER_ATTACH(&aarp_mowner)
 	to ddp_init(). Should fix PR kern/44734
 	[bouyer, ticket #1622]
+
+dist/bind/CHANGES				patch
+dist/bind/version				patch
+dist/bind/lib/dns/api				patch
+dist/bind/lib/dns/masterdump.c			patch
+dist/bind/lib/dns/message.c			patch
+dist/bind/lib/dns/ncache.c			patch
+dist/bind/lib/dns/nsec3.c			patch
+dist/bind/lib/dns/rbtdb.c			patch
+dist/bind/lib/dns/rdataset.c			patch
+dist/bind/lib/dns/resolver.c			patch
+dist/bind/lib/dns/validator.c			patch
+dist/bind/lib/dns/include/dns/rdataset.h	patch
+distrib/sets/lists/base/md.amd64		patch
+distrib/sets/lists/base/md.sparc64		patch
+distrib/sets/lists/base/shl.mi			patch
+lib/libdns/shlib_version			patch
+
+	Update bind to 9.7.3-P3 fixing CVE-2011-2464
+	[spz, ticket #1647]
 
