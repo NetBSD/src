@@ -1,4 +1,4 @@
-/* $NetBSD: t_hsearch.c,v 1.1 2011/01/13 14:32:35 pgoyette Exp $ */
+/* $NetBSD: t_hsearch.c,v 1.2 2011/07/07 11:12:18 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -45,7 +45,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -56,14 +56,14 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_hsearch.c,v 1.1 2011/01/13 14:32:35 pgoyette Exp $");
+__RCSID("$NetBSD: t_hsearch.c,v 1.2 2011/07/07 11:12:18 jruoho Exp $");
 
 #include <errno.h>
 #include <search.h>
@@ -74,15 +74,14 @@ __RCSID("$NetBSD: t_hsearch.c,v 1.1 2011/01/13 14:32:35 pgoyette Exp $");
 
 #define REQUIRE_ERRNO(x) ATF_REQUIRE_MSG(x, "%s", strerror(errno))
 
-ATF_TC(basic);
-
-ATF_TC_HEAD(basic, tc)
+ATF_TC(hsearch_basic);
+ATF_TC_HEAD(hsearch_basic, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Checks basic insertions and searching");
 }
 
-ATF_TC_BODY(basic, tc)
+ATF_TC_BODY(hsearch_basic, tc)
 {
 	ENTRY e, *ep;
 	char ch[2];
@@ -124,16 +123,15 @@ ATF_TC_BODY(basic, tc)
 	hdestroy();
 }
 
-ATF_TC(duplicate);
-
-ATF_TC_HEAD(duplicate, tc)
+ATF_TC(hsearch_duplicate);
+ATF_TC_HEAD(hsearch_duplicate, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Checks that inserting duplicate "
 	    "doesn't overwrite existing data");
 }
 
-ATF_TC_BODY(duplicate, tc)
+ATF_TC_BODY(hsearch_duplicate, tc)
 {
 	ENTRY e, *ep;
 
@@ -161,16 +159,15 @@ ATF_TC_BODY(duplicate, tc)
 	hdestroy();
 }
 
-ATF_TC(nonexistent);
-
-ATF_TC_HEAD(nonexistent, tc)
+ATF_TC(hsearch_nonexistent);
+ATF_TC_HEAD(hsearch_nonexistent, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks searching for non-existent entry");
 }
 
-ATF_TC_BODY(nonexistent, tc)
+ATF_TC_BODY(hsearch_nonexistent, tc)
 {
 	ENTRY e, *ep;
 
@@ -183,16 +180,15 @@ ATF_TC_BODY(nonexistent, tc)
 	hdestroy();
 }
 
-ATF_TC(two);
-
-ATF_TC_HEAD(two, tc)
+ATF_TC(hsearch_two);
+ATF_TC_HEAD(hsearch_two, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks that searching doesn't overwrite previous search results");
 }
 
-ATF_TC_BODY(two, tc)
+ATF_TC_BODY(hsearch_two, tc)
 {
 	ENTRY e, *ep, *ep2;
 	char *sa, *sb;
@@ -215,7 +211,7 @@ ATF_TC_BODY(two, tc)
 	e.data = (void*)(long)1;
 
 	ep = hsearch(e, ENTER);
-	
+
 	ATF_REQUIRE(ep != NULL);
 	ATF_REQUIRE_STREQ(ep->key, "b");
 	ATF_REQUIRE_EQ((long)ep->data, 1);
@@ -233,17 +229,17 @@ ATF_TC_BODY(two, tc)
 	ATF_REQUIRE(ep2 != NULL);
 	ATF_REQUIRE_STREQ(ep2->key, "b");
 	ATF_REQUIRE_EQ((long)ep2->data, 1);
-	
+
 	hdestroy();
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, basic);
-	ATF_TP_ADD_TC(tp, duplicate);
-	ATF_TP_ADD_TC(tp, nonexistent);
-	ATF_TP_ADD_TC(tp, two);
+	ATF_TP_ADD_TC(tp, hsearch_basic);
+	ATF_TP_ADD_TC(tp, hsearch_duplicate);
+	ATF_TP_ADD_TC(tp, hsearch_nonexistent);
+	ATF_TP_ADD_TC(tp, hsearch_two);
 
 	return atf_no_error();
 }

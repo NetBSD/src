@@ -1,4 +1,4 @@
-/*	$NetBSD: t_posix_memalign.c,v 1.1 2011/01/01 23:56:49 pgoyette Exp $ */
+/*	$NetBSD: t_posix_memalign.c,v 1.2 2011/07/07 11:12:18 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_posix_memalign.c,v 1.1 2011/01/01 23:56:49 pgoyette Exp $");
+__RCSID("$NetBSD: t_posix_memalign.c,v 1.2 2011/07/07 11:12:18 jruoho Exp $");
 
 #include <atf-c.h>
 
@@ -42,12 +42,12 @@ __RCSID("$NetBSD: t_posix_memalign.c,v 1.1 2011/01/01 23:56:49 pgoyette Exp $");
 #include <stdlib.h>
 #include <string.h>
 
-ATF_TC(posix_memalign);
-ATF_TC_HEAD(posix_memalign, tc)
+ATF_TC(posix_memalign_basic);
+ATF_TC_HEAD(posix_memalign_basic, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks posix_memalign(3)");
 }
-ATF_TC_BODY(posix_memalign, tc)
+ATF_TC_BODY(posix_memalign_basic, tc)
 {
 	size_t size[] = {
 		1, 2, 3, 4, 10, 100, 16384, 32768, 65536
@@ -82,7 +82,7 @@ ATF_TC_BODY(posix_memalign, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, posix_memalign);
+	ATF_TP_ADD_TC(tp, posix_memalign_basic);
 
 	return atf_no_error();
 }
