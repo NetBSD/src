@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/07/05 19:37:11 joerg Exp $
+#	$NetBSD: Makefile,v 1.9 2011/07/07 05:41:59 matt Exp $
 
 .include <bsd.init.mk>
 
@@ -39,7 +39,7 @@ CLEANFILES+=	need-dl need-dl.c need-dl.out
 cleandir: cleandir-llvm
 
 cleandir-llvm:
-	rm -r config
+	test ! -d config || rm -r config
 	rm -f need-dl need-dl.tmp
 
 .include <bsd.hostprog.mk>
