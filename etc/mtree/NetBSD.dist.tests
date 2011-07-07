@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.50 2011/06/25 05:45:12 nonaka Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.51 2011/07/07 07:40:46 jruoho Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -108,7 +108,6 @@
 ./usr/libdata/debug/usr/tests/rump/rumpvfs
 ./usr/libdata/debug/usr/tests/sbin
 ./usr/libdata/debug/usr/tests/sbin/resize_ffs
-./usr/libdata/debug/usr/tests/syscall
 ./usr/libdata/debug/usr/tests/usr.bin
 ./usr/libdata/debug/usr/tests/usr.sbin
 ./usr/libdata/debug/usr/tests/util
@@ -244,7 +243,6 @@
 ./usr/tests/sbin/sysctl
 ./usr/tests/sys
 ./usr/tests/sys/rc
-./usr/tests/syscall
 ./usr/tests/toolchain
 ./usr/tests/toolchain/cc
 ./usr/tests/usr.bin
