@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2011/07/07 21:46:50 joerg Exp $
+# $NetBSD: Makefile,v 1.13 2011/07/07 21:59:15 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -36,6 +36,7 @@ SUBDIR+= \
 	libLLVMARMAsmParser \
 	libLLVMARMAsmPrinter \
 	libLLVMARMDisassembler \
+	libLLVMARMMCTargetDesc \
 	libLLVMARMTargetInfo
 
 SUBDIR+= \
