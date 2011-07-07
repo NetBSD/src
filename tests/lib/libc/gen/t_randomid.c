@@ -1,4 +1,4 @@
-/* $NetBSD: t_randomid.c,v 1.2 2011/01/13 03:00:41 pgoyette Exp $ */
+/* $NetBSD: t_randomid.c,v 1.3 2011/07/07 09:49:59 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -40,15 +40,14 @@
 
 uint64_t last[65536];
 
-ATF_TC(randomid);
-
-ATF_TC_HEAD(randomid, tc)
+ATF_TC(randomid_basic);
+ATF_TC_HEAD(randomid_basic, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Check randomid(3)");
 }
 
-ATF_TC_BODY(randomid, tc)
+ATF_TC_BODY(randomid_basic, tc)
 {
 	static randomid_t ctx = NULL;
 	uint64_t lowest, n, diff;
@@ -88,7 +87,7 @@ ATF_TC_BODY(randomid, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, randomid);
+	ATF_TP_ADD_TC(tp, randomid_basic);
 
 	return atf_no_error();
 }

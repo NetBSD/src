@@ -1,4 +1,4 @@
-/*	$NetBSD: t_humanize_number.c,v 1.4 2011/06/11 18:03:18 christos Exp $	*/
+/*	$NetBSD: t_humanize_number.c,v 1.5 2011/07/07 09:49:59 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -194,15 +194,14 @@ out:
 	va_end(ap);
 }
 
-ATF_TC(humanize_basic);
-
-ATF_TC_HEAD(humanize_basic, tc)
+ATF_TC(humanize_number_basic);
+ATF_TC_HEAD(humanize_number_basic, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Test humanize_number(3)");
 }
 
-ATF_TC_BODY(humanize_basic, tc)
+ATF_TC_BODY(humanize_number_basic, tc)
 {
 	char fbuf[128];
 	const struct hnopts *ho;
@@ -244,15 +243,14 @@ ATF_TC_BODY(humanize_basic, tc)
 	}
 }
 
-ATF_TC(humanize_big);
-
-ATF_TC_HEAD(humanize_big, tc)
+ATF_TC(humanize_number_big);
+ATF_TC_HEAD(humanize_number_big, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Test humanize big numbers");
 }
 
-ATF_TC_BODY(humanize_big, tc)
+ATF_TC_BODY(humanize_number_big, tc)
 {
 	char buf[1024];
 	int rv;
@@ -308,8 +306,8 @@ ATF_TC_BODY(humanize_big, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, humanize_basic);
-	ATF_TP_ADD_TC(tp, humanize_big);
+	ATF_TP_ADD_TC(tp, humanize_number_basic);
+	ATF_TP_ADD_TC(tp, humanize_number_big);
 
 	return atf_no_error();
 }

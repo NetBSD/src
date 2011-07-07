@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fmtcheck.c,v 1.1 2010/12/28 12:46:15 pgoyette Exp $	*/
+/*	$NetBSD: t_fmtcheck.c,v 1.2 2011/07/07 09:49:59 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,15 +75,14 @@ struct test_fmt {
 	{ "%p %30s %#llx %-10.*e", "This number %lu%% and string %s has %qd numbers and %.*g floats", 1 },
 };
 
-ATF_TC(tc_fmtcheck);
-
-ATF_TC_HEAD(tc_fmtcheck, tc)
+ATF_TC(fmtcheck_basic);
+ATF_TC_HEAD(fmtcheck_basic, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Test fmtcheck(3)");
 }
 
-ATF_TC_BODY(tc_fmtcheck, tc)
+ATF_TC_BODY(fmtcheck_basic, tc)
 {
 	unsigned int	i, r;
 	const char	*f, *cf, *f1, *f2;
@@ -110,7 +109,7 @@ ATF_TC_BODY(tc_fmtcheck, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, tc_fmtcheck);
+	ATF_TP_ADD_TC(tp, fmtcheck_basic);
 
 	return atf_no_error();
 }
