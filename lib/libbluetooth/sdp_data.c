@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp_data.c,v 1.1 2009/05/12 10:05:06 plunky Exp $	*/
+/*	$NetBSD: sdp_data.c,v 1.2 2011/07/07 10:44:50 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp_data.c,v 1.1 2009/05/12 10:05:06 plunky Exp $");
+__RCSID("$NetBSD: sdp_data.c,v 1.2 2011/07/07 10:44:50 plunky Exp $");
 
 #include <sdp.h>
 #include <stdarg.h>
@@ -358,6 +358,7 @@ _sdp_putstr(int indent, int style, const char *type,
 	printf("%*s", indent, "");
 
 	style |= VIS_NL;
+	buf[0] = '\0';
 
 	while (len > 0 && (dst + 5) < (buf + sizeof(buf))) {
 		dst = vis(dst, str[0], style, (len > 0 ? str[1] : 0));
