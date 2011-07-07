@@ -1,7 +1,9 @@
-/*	$NetBSD: float.h,v 1.15 2011/07/07 17:29:31 matt Exp $ */
+/*	$NetBSD: float.h,v 1.16 2011/07/07 22:52:48 matt Exp $ */
 
 #ifndef _MIPS_FLOAT_H_
 #define _MIPS_FLOAT_H_
+
+#include <sys/cdefs.h>
 
 #if defined(__mips_n32) || defined(__mips_n64)
 
