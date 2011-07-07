@@ -1,4 +1,4 @@
-/* $NetBSD: t_sigqueue.c,v 1.3 2011/01/10 16:42:37 christos Exp $ */
+/* $NetBSD: t_sigqueue.c,v 1.4 2011/07/07 16:31:11 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,34 +30,35 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigqueue.c,v 1.3 2011/01/10 16:42:37 christos Exp $");
+__RCSID("$NetBSD: t_sigqueue.c,v 1.4 2011/07/07 16:31:11 jruoho Exp $");
 
-#include <signal.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sched.h>
-#include <err.h>
 
 #include <atf-c.h>
+#include <errno.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <sched.h>
+#include <unistd.h>
 
-ATF_TC(sigqueue);
-ATF_TC_HEAD(sigqueue, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Checks sigqueue sigval delivery");
-}
+static void	handler(int, siginfo_t *, void *);
 
 #define VALUE (int)0xc001dad1
 static int value;
 
 static void
-/*ARGSUSED*/
 handler(int signo, siginfo_t *info, void *data)
 {
 	value = info->si_value.sival_int;
 	kill(0, SIGINFO);
 }
 
-ATF_TC_BODY(sigqueue, tc)
+ATF_TC(sigqueue_basic);
+ATF_TC_HEAD(sigqueue_basic, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks sigqueue(3) sigval delivery");
+}
+
+ATF_TC_BODY(sigqueue_basic, tc)
 {
 	struct sigaction sa;
 	union sigval sv;
@@ -66,20 +67,37 @@ ATF_TC_BODY(sigqueue, tc)
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_SIGINFO;
 
-	if (sigaction(SIGUSR1, &sa, NULL) == -1)
-		err(1, "sigaction");
+	if (sigaction(SIGUSR1, &sa, NULL) != 0)
+		atf_tc_fail("sigaction failed");
 
 	sv.sival_int = VALUE;
-	if (sigqueue(0, SIGUSR1, sv) == -1)
-		err(1, "sigqueue");
+
+	if (sigqueue(0, SIGUSR1, sv) != 0)
+		atf_tc_fail("sigqueue failed");
 
 	sched_yield();
 	ATF_REQUIRE_EQ(sv.sival_int, value);
 }
 
+ATF_TC(sigqueue_err);
+ATF_TC_HEAD(sigqueue_err, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test errors from sigqueue(3)");
+}
+
+ATF_TC_BODY(sigqueue_err, tc)
+{
+	union sigval sv;
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EINVAL, sigqueue(getpid(), -1, sv) == -1);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, sigqueue);
+
+	ATF_TP_ADD_TC(tp, sigqueue_basic);
+	ATF_TP_ADD_TC(tp, sigqueue_err);
 
 	return atf_no_error();
 }
