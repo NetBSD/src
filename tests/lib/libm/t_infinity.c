@@ -1,4 +1,4 @@
-/* $NetBSD: t_infinity.c,v 1.3 2011/05/31 22:40:35 alnsn Exp $ */
+/* $NetBSD: t_infinity.c,v 1.4 2011/07/07 11:04:30 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -29,12 +29,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_infinity.c,v 1.3 2011/05/31 22:40:35 alnsn Exp $");
+__RCSID("$NetBSD: t_infinity.c,v 1.4 2011/07/07 11:04:30 jruoho Exp $");
+
+#include <sys/utsname.h>
 
 #include <atf-c.h>
 #include <math.h>
 #include <float.h>
 #include <stdlib.h>
+#include <string.h>
 
 ATF_TC(infinity_float);
 ATF_TC_HEAD(infinity_float, tc)
@@ -89,13 +92,16 @@ ATF_TC_HEAD(infinity_long_double, tc)
 
 ATF_TC_BODY(infinity_long_double, tc)
 {
+	struct utsname utsname;
 
 	/*
 	 * May fail under QEMU; cf. PR misc/44767.
 	 */
-	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
-		atf_tc_expect_fail("PR misc/44767");
+	ATF_REQUIRE(uname(&utsname) == 0);
 
+	if (strcmp(utsname.machine, "amd64") == 0 &&
+	    system("cpuctl identify 0 | grep -q QEMU") == 0)
+		atf_tc_expect_fail("PR misc/44767");
 
 #ifndef LDBL_MAX
 	atf_tc_skip("no long double support on this architecture");

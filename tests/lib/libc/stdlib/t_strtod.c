@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.22 2011/07/04 22:33:29 mrg Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.23 2011/07/07 11:04:30 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,9 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.22 2011/07/04 22:33:29 mrg Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.23 2011/07/07 11:04:30 jruoho Exp $");
+
+#include <sys/utsname.h>
 
 #include <errno.h>
 #include <math.h>
@@ -161,12 +163,18 @@ ATF_TC_BODY(strtold_inf, tc)
 {
 #ifndef __vax__
 #   ifdef __HAVE_LONG_DOUBLE
+
+	struct utsname utsname;
+
 	/*
 	 * See the closed PR lib/33262.
 	 *
 	 * This may also fail under QEMU; cf. PR misc/44767.
 	 */
-	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
+	ATF_REQUIRE(uname(&utsname) == 0);
+
+	if (strcmp(utsname.machine, "amd64") == 0 &&
+	    system("cpuctl identify 0 | grep -q QEMU") == 0)
 		atf_tc_expect_fail("PR misc/44767");
 
 	for (size_t i = 0; i < __arraycount(inf_strings); i++) {
@@ -229,6 +237,8 @@ ATF_TC_BODY(strtold_nan, tc)
 {
 #ifndef __vax__
 #   ifdef __HAVE_LONG_DOUBLE
+
+	struct utsname utsname;
 	char *end;
 
 	/*
@@ -236,7 +246,10 @@ ATF_TC_BODY(strtold_nan, tc)
 	 *
 	 * This may also fail under QEMU; cf. PR misc/44767.
 	 */
-	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
+	ATF_REQUIRE(uname(&utsname) == 0);
+
+	if (strcmp(utsname.machine, "amd64") == 0 &&
+	    system("cpuctl identify 0 | grep -q QEMU") == 0)
 		atf_tc_expect_fail("PR misc/44767");
 
 	long double ld = strtold(nan_string, &end);
@@ -260,13 +273,19 @@ ATF_TC_HEAD(strtod_round, tc)
 ATF_TC_BODY(strtod_round, tc)
 {
 #if defined(__i386__) || defined(__amd64__) || defined(__sparc__)
+
+	struct utsname utsname;
+
 	/*
 	 * Test that strtod(3) honors the current rounding mode.
 	 * The used value is somewhere near 1 + DBL_EPSILON + FLT_EPSILON.
 	 *
 	 * May fail under QEMU; cf. PR misc/44767.
 	 */
-	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
+	ATF_REQUIRE(uname(&utsname) == 0);
+
+	if (strcmp(utsname.machine, "amd64") == 0 &&
+	    system("cpuctl identify 0 | grep -q QEMU") == 0)
 		atf_tc_expect_fail("PR misc/44767");
 
 	const char *val =
