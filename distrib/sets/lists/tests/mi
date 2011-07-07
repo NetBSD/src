@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.365 2011/07/07 06:18:25 jruoho Exp $
+# $NetBSD: mi,v 1.366 2011/07/07 06:58:53 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -458,10 +458,41 @@
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_string.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_swab.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_access.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_cerror.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_chroot.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_clone.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_context.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_dup.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_fsync.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_getgroups.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_getitimer.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_getlogin.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_getpid.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_getrusage.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_getsid.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_gettimeofday.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_issetugid.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_kill.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_link.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_mincore.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_mkfifo.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_mknod.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_mmap.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_mprotect.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_msync.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_nanosleep.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_poll.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_revoke.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_select.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_setrlimit.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_setuid.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigqueue.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_stat.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_timer_create.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_truncate.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_umask.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_unlink.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/termios				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/termios/t_tcsetpgrp.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls				tests-lib-debug
@@ -1997,10 +2028,41 @@
 ./usr/tests/lib/libc/string/t_swab		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys			tests-lib-tests
 ./usr/tests/lib/libc/sys/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_access		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_cerror		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_chroot		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_clone		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_context		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_dup			tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_fsync		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_getgroups		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_getitimer		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_getlogin		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_getpid		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_getrusage		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_getsid		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_gettimeofday		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_issetugid		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_kill			tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_link			tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_mincore		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_mkfifo		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_mknod		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_mmap			tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_mprotect		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_msync		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_nanosleep		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_poll			tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_revoke		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_select		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_setrlimit		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_setuid		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_sigqueue		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_stat			tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_timer_create		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_truncate		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_umask		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_unlink		tests-lib-tests		atf
 ./usr/tests/lib/libc/termios			tests-lib-tests
 ./usr/tests/lib/libc/termios/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/termios/t_tcsetpgrp	tests-lib-tests		atf
