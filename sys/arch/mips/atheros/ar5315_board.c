@@ -1,4 +1,4 @@
-/* $NetBSD: ar5315_board.c,v 1.2 2009/07/06 00:43:22 alc Exp $ */
+/* $NetBSD: ar5315_board.c,v 1.3 2011/07/07 05:06:44 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -46,7 +46,7 @@
  * information data in flash for the AR5315.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5315_board.c,v 1.2 2009/07/06 00:43:22 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5315_board.c,v 1.3 2011/07/07 05:06:44 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -69,8 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: ar5315_board.c,v 1.2 2009/07/06 00:43:22 alc Exp $")
 #include <ah_soc.h>	/* XXX really doesn't belong in hal */
 
 #include <mips/atheros/include/ar5315reg.h>
-#include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
+#include <mips/atheros/include/platform.h>
 
 #include <machine/locore.h>
 #include "com.h"
@@ -81,8 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: ar5315_board.c,v 1.2 2009/07/06 00:43:22 alc Exp $")
  * for the signature string that marks the start of the data.
  * We search at most 500KB.
  */
-const struct ar531x_boarddata *
-ar531x_board_info(void)
+static const struct ar531x_boarddata *
+ar5315_get_board_info(void)
 {
 	static const struct ar531x_boarddata *board = NULL;
 	const uint8_t *ptr, *end;
@@ -107,8 +107,8 @@ ar531x_board_info(void)
  * Locate the radio configuration data; it is located relative to the
  * board configuration data.
  */
-const void *
-ar531x_radio_info(void)
+static const void *
+ar5315_get_radio_info(void)
 {
 	static const void *radio = NULL;
 	const struct ar531x_boarddata *board;
@@ -117,7 +117,7 @@ ar531x_radio_info(void)
 	if (radio)
 		goto done;
 
-	board = ar531x_board_info();
+	board = ar5315_get_board_info();
 	if (board == NULL)
 		return NULL;
 	baddr = (const uint8_t *) board;
@@ -140,20 +140,7 @@ done:
 	return radio;
 }
 
-/*
- * Locate board and radio configuration data in flash.
- */
-int
-ar531x_board_config(struct ar531x_config *config)
-{
-
-	config->board = ar531x_board_info();
-	if (config->board == NULL)
-		return ENOENT;
-
-	config->radio = ar531x_radio_info();
-	if (config->radio == NULL)
-		return ENOENT;		/* XXX distinct code */
-
-	return 0;
-}
+const struct atheros_boardsw ar5315_boardsw = {
+	.absw_get_board_info = ar5315_get_board_info,
+	.absw_get_radio_info = ar5315_get_radio_info,
+};

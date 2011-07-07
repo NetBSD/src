@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.5 2008/02/11 20:27:01 dyoung Exp $ */
+/* $NetBSD: wdog.c,v 1.6 2011/07/07 05:06:44 matt Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.5 2008/02/11 20:27:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.6 2011/07/07 05:06:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.5 2008/02/11 20:27:01 dyoung Exp $");
 
 #include <machine/cpu.h>
 
-#include <mips/atheros/include/ar531xvar.h>
+#include <mips/atheros/include/platform.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.5 2008/02/11 20:27:01 dyoung Exp $");
 #define	WDOG_DEFAULT_PERIOD	5
 #endif
 
-static int wdog_match(device_t, struct cfdata *, void *);
+static int wdog_match(device_t, cfdata_t, void *);
 static void wdog_attach(device_t, device_t, void *);
 static int wdog_tickle(struct sysmon_wdog *);
 static int wdog_setmode(struct sysmon_wdog *);
@@ -124,7 +124,7 @@ wdog_attach(device_t parent, device_t self, void *aux)
 {
 	struct wdog_softc *sc = device_private(self);
 
-	sc->sc_mult = ar531x_bus_freq();
+	sc->sc_mult = atheros_get_bus_freq();
 	sc->sc_wdog_period = WDOG_DEFAULT_PERIOD;
 	sc->sc_wdog_max = 0xffffffffU / sc->sc_mult;
 	sc->sc_wdog_reload = sc->sc_wdog_period * sc->sc_mult;
@@ -147,7 +147,7 @@ wdog_tickle(struct sysmon_wdog *smw)
 {
 	struct wdog_softc *sc = smw->smw_cookie;
 
-	ar531x_wdog(sc->sc_wdog_reload);
+	atheros_wdog_reload(sc->sc_wdog_reload);
 	return (0);
 }
 
@@ -157,7 +157,7 @@ wdog_setmode(struct sysmon_wdog *smw)
 	struct wdog_softc *sc = smw->smw_cookie;
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
-		ar531x_wdog(0);
+		atheros_wdog_reload(0);
 	} else {
 
 		if (smw->smw_period == WDOG_PERIOD_DEFAULT)
@@ -174,7 +174,7 @@ wdog_setmode(struct sysmon_wdog *smw)
 			sc->sc_wdog_reload = sc->sc_wdog_period * sc->sc_mult;
 		}
 
-		ar531x_wdog(sc->sc_wdog_reload);
+		atheros_wdog_reload(sc->sc_wdog_reload);
 	}
 
 	return (0);
