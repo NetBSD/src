@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mi_vector_hash.c,v 1.2 2009/07/20 18:24:01 joerg Exp $	*/
+/*	$NetBSD: t_mi_vector_hash.c,v 1.3 2011/07/07 11:12:18 jruoho Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,15 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mi_vector_hash.c,v 1.2 2009/07/20 18:24:01 joerg Exp $");
+__RCSID("$NetBSD: t_mi_vector_hash.c,v 1.3 2011/07/07 11:12:18 jruoho Exp $");
 
 #include <atf-c.h>
 #include <stdlib.h>
 #include <string.h>
 
-ATF_TC(t_mi_vector_hash);
-
-ATF_TC_HEAD(t_mi_vector_hash, tc)
+ATF_TC(mi_vector_hash_basic);
+ATF_TC_HEAD(mi_vector_hash_basic, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test mi_vector_hash_vector_hash for consistent results");
@@ -70,7 +69,7 @@ static const struct testvector {
 	{ "abcdefghijklmnop", { 0x2cf18103, 0x638c9268, 0xfa1ecf51 } },
 };
 
-ATF_TC_BODY(t_mi_vector_hash, tc)
+ATF_TC_BODY(mi_vector_hash_basic, tc)
 {
 	size_t i, j, len;
 	uint32_t hashes[3];
@@ -90,7 +89,7 @@ ATF_TC_BODY(t_mi_vector_hash, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, t_mi_vector_hash);
+	ATF_TP_ADD_TC(tp, mi_vector_hash_basic);
 
 	return atf_no_error();
 }
