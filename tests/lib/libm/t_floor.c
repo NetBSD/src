@@ -1,4 +1,4 @@
-/* $NetBSD: t_floor.c,v 1.5 2011/07/04 22:33:29 mrg Exp $ */
+/* $NetBSD: t_floor.c,v 1.6 2011/07/07 11:04:30 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,13 +29,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_floor.c,v 1.5 2011/07/04 22:33:29 mrg Exp $");
+__RCSID("$NetBSD: t_floor.c,v 1.6 2011/07/07 11:04:30 jruoho Exp $");
 
+#include <sys/utsname.h>
+
+#include <atf-c.h>
 #include <math.h>
 #include <limits.h>
 #include <stdlib.h>
-
-#include <atf-c.h>
+#include <string.h>
 
 ATF_TC(floor);
 ATF_TC_HEAD(floor, tc)
@@ -51,6 +53,7 @@ ATF_TC_HEAD(floor, tc)
 
 ATF_TC_BODY(floor, tc)
 {
+	struct utsname utsname;
 	const int n = 10240;
 	double x, y;
 	int i;
@@ -58,7 +61,10 @@ ATF_TC_BODY(floor, tc)
 	/*
 	 * This may fail under QEMU; see PR misc/44767.
 	 */
-	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
+	ATF_REQUIRE(uname(&utsname) == 0);
+
+	if (strcmp(utsname.machine, "amd64") == 0 &&
+	    system("cpuctl identify 0 | grep -q QEMU") == 0)
 		atf_tc_expect_fail("PR misc/44767");
 
 	for (i = 0; i < n; i++) {
