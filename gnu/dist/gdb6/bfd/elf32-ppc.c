@@ -3028,7 +3028,7 @@ ppc_elf_check_relocs (bfd *abfd,
 	}
 
       r_type = ELF32_R_TYPE (rel->r_info);
-      switch (r_type)
+      switch ((int)r_type)
 	{
 	case R_PPC_GOT_TLSLD16:
 	case R_PPC_GOT_TLSLD16_LO:
