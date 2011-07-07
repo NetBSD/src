@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.7 2011/03/30 08:34:20 jruoho Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.8 2011/07/07 11:04:30 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,15 +29,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bitops.c,v 1.7 2011/03/30 08:34:20 jruoho Exp $");
+__RCSID("$NetBSD: t_bitops.c,v 1.8 2011/07/07 11:04:30 jruoho Exp $");
 
 #include <atf-c.h>
 
 #include <sys/cdefs.h>
 #include <sys/bitops.h>
+#include <sys/utsname.h>
 
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 static const struct {
 	uint32_t	val;
@@ -137,13 +139,13 @@ ATF_TC_BODY(ffsfls, tc)
 	}
 }
 
-ATF_TC(ilog2_1);
-ATF_TC_HEAD(ilog2_1, tc)
+ATF_TC(ilog2_basic);
+ATF_TC_HEAD(ilog2_basic, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test ilog2(3) for correctness");
 }
 
-ATF_TC_BODY(ilog2_1, tc)
+ATF_TC_BODY(ilog2_basic, tc)
 {
 	uint64_t i, x;
 
@@ -155,21 +157,25 @@ ATF_TC_BODY(ilog2_1, tc)
 	}
 }
 
-ATF_TC(ilog2_2);
-ATF_TC_HEAD(ilog2_2, tc)
+ATF_TC(ilog2_log2);
+ATF_TC_HEAD(ilog2_log2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test log2(3) vs. ilog2(3)");
 }
 
-ATF_TC_BODY(ilog2_2, tc)
+ATF_TC_BODY(ilog2_log2, tc)
 {
+	struct utsname utsname;
 	double  x, y;
 	uint64_t i;
 
 	/*
 	 * This may fail under QEMU; see PR misc/44767.
 	 */
-	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
+	ATF_REQUIRE(uname(&utsname) == 0);
+
+	if (strcmp(utsname.machine, "amd64") == 0 &&
+	    system("cpuctl identify 0 | grep -q QEMU") == 0)
 		atf_tc_expect_fail("PR misc/44767");
 
 	for (i = 1; i < UINT32_MAX; i += UINT16_MAX) {
@@ -187,8 +193,8 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, fast_divide32);
 	ATF_TP_ADD_TC(tp, ffsfls);
-	ATF_TP_ADD_TC(tp, ilog2_1);
-	ATF_TP_ADD_TC(tp, ilog2_2);
+	ATF_TP_ADD_TC(tp, ilog2_basic);
+	ATF_TP_ADD_TC(tp, ilog2_log2);
 
 	return atf_no_error();
 }
