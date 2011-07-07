@@ -1,4 +1,4 @@
-/*	$NetBSD: t_syslog_pthread.c,v 1.3 2011/07/07 09:49:59 jruoho Exp $	*/
+/*	$NetBSD: t_syslog.c,v 1.1 2011/07/07 10:02:53 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -44,8 +44,10 @@ ATF_TC_HEAD(syslog_pthread, tc)
 ATF_TC_BODY(syslog_pthread, tc)
 {
 
-	//atf_tc_expect_timeout("PR lib/44248");
-	syslog(LOG_DEBUG, "from tests/lib/libc/gen/t_syslog_pthread");
+	/*
+	 * See the old PR lib/44248; syslog(3) fails with pthread(3).
+	 */
+	syslog(LOG_DEBUG, "from tests/lib/libc/gen/t_syslog");
 }
 
 ATF_TP_ADD_TCS(tp)
