@@ -1,4 +1,4 @@
-/*	$NetBSD: t_glob_star.c,v 1.7 2011/07/07 09:49:59 jruoho Exp $	*/
+/*	$NetBSD: t_glob.c,v 1.1 2011/07/07 15:53:27 jruoho Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_glob_star.c,v 1.7 2011/07/07 09:49:59 jruoho Exp $");
+__RCSID("$NetBSD: t_glob.c,v 1.1 2011/07/07 15:53:27 jruoho Exp $");
 
 #include <atf-c.h>
 

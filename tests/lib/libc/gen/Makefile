@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2011/07/07 10:02:53 jruoho Exp $
+# $NetBSD: Makefile,v 1.28 2011/07/07 15:53:27 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ TESTS_C+=	t_dir
 TESTS_C+=	t_fmtcheck
 TESTS_C+=	t_getcwd
 TESTS_C+=	t_getgrent
-TESTS_C+=	t_glob_star
+TESTS_C+=	t_glob
 TESTS_C+=	t_humanize_number
 TESTS_C+=	t_ldexp
 TESTS_C+=	t_nice

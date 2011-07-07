@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.371 2011/07/07 15:50:23 jruoho Exp $
+# $NetBSD: mi,v 1.372 2011/07/07 15:53:27 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -361,7 +361,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fmtcheck.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_getcwd.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_getgrent.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/gen/t_glob_star.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_glob.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_glob_star.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_humanize_number.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_ldexp.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_nice.debug			tests-lib-debug		debug,atf
@@ -1863,7 +1864,8 @@
 ./usr/tests/lib/libc/gen/t_fmtcheck		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_getcwd		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_getgrent		tests-lib-tests		atf
-./usr/tests/lib/libc/gen/t_glob_star		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_glob			tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_glob_star		tests-obsolete		obsolete
 ./usr/tests/lib/libc/gen/t_humanize_number	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_ldexp		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_nice			tests-lib-tests		atf
