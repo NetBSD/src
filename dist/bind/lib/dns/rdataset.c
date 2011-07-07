@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataset.c,v 1.1.1.5.8.3 2011/06/18 11:36:56 bouyer Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.1.1.5.8.4 2011/07/07 20:27:42 sborrill Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataset.c,v 1.84.186.2.48.1 2011-05-27 00:43:06 each Exp */
+/* Id: rdataset.c,v 1.84.186.2.48.3 2011-06-21 20:14:47 each Exp */
 
 /*! \file */
 
@@ -347,7 +347,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		count = 1;
 		result = dns_rdataset_first(rdataset);
 		INSIST(result == ISC_R_NOMORE);
-	} else if (rdataset->type == 0) {
+	} else if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0) {
 		/*
 		 * This is a negative caching rdataset.
 		 */
