@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_ohare.c,v 1.9 2011/06/19 07:59:47 matt Exp $ */
+/*	$NetBSD: pic_ohare.c,v 1.10 2011/07/07 01:26:37 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.9 2011/06/19 07:59:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.10 2011/07/07 01:26:37 mrg Exp $");
 
 #include "opt_interrupt.h"
 
@@ -62,7 +62,7 @@ struct ohare_ops {
 
 static struct ohare_ops *setup_ohare(uint32_t, int);
 static void setup_ohare2(uint32_t, int);
-inline void ohare_read_events(struct ohare_ops *);
+static inline void ohare_read_events(struct ohare_ops *);
 
 #define INT_STATE_REG	((uint32_t)pic->pic_cookie + 0x20)
 #define INT_ENABLE_REG	((uint32_t)pic->pic_cookie + 0x24)
@@ -199,7 +199,7 @@ ohare_disable_irq(struct pic_ops *pic, int irq)
 	out32rb(INT_ENABLE_REG, ohare->enable_mask); 
 }
 
-inline void
+static inline void
 ohare_read_events(struct ohare_ops *ohare)
 {
 	struct pic_ops *pic = &ohare->pic;
