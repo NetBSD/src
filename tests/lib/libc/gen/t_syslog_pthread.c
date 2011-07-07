@@ -1,4 +1,4 @@
-/*	$NetBSD: t_syslog_pthread.c,v 1.2 2010/12/30 22:21:53 pooka Exp $	*/
+/*	$NetBSD: t_syslog_pthread.c,v 1.3 2011/07/07 09:49:59 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -33,15 +33,15 @@
 #include <atf-c.h>
 #include <syslog.h>
 
-ATF_TC(basic);
-ATF_TC_HEAD(basic, tc)
+ATF_TC(syslog_pthread);
+ATF_TC_HEAD(syslog_pthread, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Test that syslog works at all");
 	atf_tc_set_md_var(tc, "timeout", "2");
 }
 
-ATF_TC_BODY(basic, tc)
+ATF_TC_BODY(syslog_pthread, tc)
 {
 
 	//atf_tc_expect_timeout("PR lib/44248");
@@ -50,7 +50,8 @@ ATF_TC_BODY(basic, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, basic);
+
+	ATF_TP_ADD_TC(tp, syslog_pthread);
 
 	return atf_no_error();
 }
