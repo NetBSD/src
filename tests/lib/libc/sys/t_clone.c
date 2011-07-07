@@ -1,4 +1,4 @@
-/* $NetBSD: t_clone.c,v 1.1 2011/01/13 02:40:44 pgoyette Exp $ */
+/* $NetBSD: t_clone.c,v 1.2 2011/07/07 16:31:11 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_clone.c,v 1.1 2011/01/13 02:40:44 pgoyette Exp $");
+__RCSID("$NetBSD: t_clone.c,v 1.2 2011/07/07 16:31:11 jruoho Exp $");
 
 #include <sys/mman.h>
 #include <sys/resource.h>
@@ -72,14 +72,6 @@ dummy(void *arg)
 	return 0;
 }
 
-ATF_TC(clone);
-
-ATF_TC_HEAD(clone, tc)
-{
-
-	atf_tc_set_md_var(tc, "descr", "Checks clone(2)");
-}
-
 static int
 clone_func(void *arg)
 {
@@ -104,7 +96,14 @@ clone_func(void *arg)
 	return (CHILDEXIT);
 }
 
-ATF_TC_BODY(clone, tc)
+ATF_TC(clone_basic);
+ATF_TC_HEAD(clone_basic, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks clone(2)");
+}
+
+ATF_TC_BODY(clone_basic, tc)
 {
 	sigset_t mask;
 	void *allocstack, *stack;
@@ -171,16 +170,15 @@ ATF_TC_BODY(clone, tc)
 	ATF_REQUIRE_ERRNO(errno, munmap(allocstack, STACKSIZE) != -1);
 }
 
-ATF_TC(null_stack);
-
-ATF_TC_HEAD(null_stack, tc)
+ATF_TC(clone_null_stack);
+ATF_TC_HEAD(clone_null_stack, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks that clone(2) fails when stack pointer is NULL");
 }
 
-ATF_TC_BODY(null_stack, tc)
+ATF_TC_BODY(clone_null_stack, tc)
 {
 	int rv;
 
@@ -191,16 +189,15 @@ ATF_TC_BODY(null_stack, tc)
 	ATF_REQUIRE_EQ(errno, EINVAL);
 }
 
-ATF_TC(null_func);
-
-ATF_TC_HEAD(null_func, tc)
+ATF_TC(clone_null_func);
+ATF_TC_HEAD(clone_null_func, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks that clone(2) fails when function pointer is NULL");
 }
 
-ATF_TC_BODY(null_func, tc)
+ATF_TC_BODY(clone_null_func, tc)
 {
 	void *allocstack, *stack;
 	int rv, stat;
@@ -220,9 +217,8 @@ ATF_TC_BODY(null_func, tc)
 	ATF_REQUIRE_ERRNO(errno, munmap(allocstack, STACKSIZE) != -1);
 }
 
-ATF_TC(out_of_proc);
-
-ATF_TC_HEAD(out_of_proc, tc)
+ATF_TC(clone_out_of_proc);
+ATF_TC_HEAD(clone_out_of_proc, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr",
@@ -230,7 +226,7 @@ ATF_TC_HEAD(out_of_proc, tc)
 	atf_tc_set_md_var(tc, "require.user", "unprivileged");
 }
 
-ATF_TC_BODY(out_of_proc, tc)
+ATF_TC_BODY(clone_out_of_proc, tc)
 {
 	struct rlimit rl;
 	int rv;
@@ -253,10 +249,10 @@ ATF_TC_BODY(out_of_proc, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, clone);
-	ATF_TP_ADD_TC(tp, null_stack);
-	ATF_TP_ADD_TC(tp, null_func);
-	ATF_TP_ADD_TC(tp, out_of_proc);
+	ATF_TP_ADD_TC(tp, clone_basic);
+	ATF_TP_ADD_TC(tp, clone_null_stack);
+	ATF_TP_ADD_TC(tp, clone_null_func);
+	ATF_TP_ADD_TC(tp, clone_out_of_proc);
 
 	return atf_no_error();
 }
