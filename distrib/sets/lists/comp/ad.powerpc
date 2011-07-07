@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.53 2011/07/07 08:46:21 mrg Exp $
+# $NetBSD: ad.powerpc,v 1.54 2011/07/07 15:05:00 matt Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb,gdb=6
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -11,7 +11,6 @@
 ./usr/include/gcc-4.5/si2vmx.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/spe.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/spu2vmx.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/vec_types.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/powerpc				comp-c-include
 ./usr/include/powerpc/ansi.h			comp-c-include
