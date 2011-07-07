@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.363 2011/07/04 15:46:09 jruoho Exp $
+# $NetBSD: mi,v 1.364 2011/07/07 05:50:26 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -287,6 +287,7 @@
 ./usr/libdata/debug/usr/tests/include/sys				tests-include-tests
 ./usr/libdata/debug/usr/tests/include/sys/t_bitops.debug		tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/sys/t_bootblock.debug		tests-include-tests	debug,atf
+./usr/libdata/debug/usr/tests/include/sys/t_socket.debug		tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/sys/t_tree.debug			tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/sys/t_types.debug			tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/t_bitstring.debug			tests-include-tests	debug,atf
@@ -622,7 +623,7 @@
 ./usr/libdata/debug/usr/tests/syscall					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/syscall/t_access.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_chroot.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_dup.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_fsync.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_getgroups.debug			tests-syscall-debug	debug,atf
@@ -1428,6 +1429,7 @@
 ./usr/tests/include/sys/Atffile			tests-include-tests	atf
 ./usr/tests/include/sys/t_bitops		tests-include-tests	atf
 ./usr/tests/include/sys/t_bootblock		tests-include-tests	atf
+./usr/tests/include/sys/t_socket		tests-include-tests	atf
 ./usr/tests/include/sys/t_tree			tests-include-tests	atf
 ./usr/tests/include/sys/t_types			tests-include-tests	atf
 ./usr/tests/include/t_bitstring			tests-include-tests	atf
@@ -2375,7 +2377,7 @@
 ./usr/tests/syscall/Atffile			tests-syscall-tests	atf
 ./usr/tests/syscall/t_access			tests-syscall-tests	atf
 ./usr/tests/syscall/t_chroot			tests-syscall-tests	atf
-./usr/tests/syscall/t_cmsg			tests-syscall-tests	atf
+./usr/tests/syscall/t_cmsg			tests-obsolete		obsolete
 ./usr/tests/syscall/t_dup			tests-syscall-tests	atf
 ./usr/tests/syscall/t_fsync			tests-syscall-tests	atf
 ./usr/tests/syscall/t_getgroups			tests-syscall-tests	atf

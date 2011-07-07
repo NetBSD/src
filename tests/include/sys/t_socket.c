@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cmsg.c,v 1.16 2011/01/02 12:58:17 pooka Exp $	*/
+/*	$NetBSD: t_socket.c,v 1.1 2011/07/07 05:50:27 jruoho Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <util.h>
 
-#include "../h_macros.h"
+#include "../../h_macros.h"
 
 ATF_TC(cmsg_sendfd_bounds);
 ATF_TC_HEAD(cmsg_sendfd_bounds, tc)
