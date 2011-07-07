@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.37 2011/07/01 20:39:34 dyoung Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.38 2011/07/07 08:48:34 mrg Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -222,6 +222,7 @@ u_int cpu_reset_address = 0;
 
 BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
+const size_t bootargs_len = sizeof(bootargs) - 1;	/* without nul */
 char *boot_args = NULL;
 
 uint32_t system_serial_high;
@@ -1092,13 +1093,14 @@ process_kernel_args(int argc, char *argv[])
 			consinit();
 		}
 #endif
-		if (j == MAX_BOOT_STRING) {
+		if (j == bootargs_len) {
 			*(bootargs + j) = '\0';
 			continue;
 		}
 		if (j != 0)
 			*(bootargs + j++) = ' ';
-		strncpy(bootargs + j, argv[i], MAX_BOOT_STRING - j);
+		strncpy(bootargs + j, argv[i], bootargs_len - j);
+		bootargs[bootargs_len] = '\0';
 		j += strlen(argv[i]);
 	}
 	boot_args = bootargs;
