@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.366 2011/07/07 06:58:53 jruoho Exp $
+# $NetBSD: mi,v 1.367 2011/07/07 07:06:21 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -459,12 +459,13 @@
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_swab.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_access.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/sys/t_cerror.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_cerror.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_chroot.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_clone.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/sys/t_context.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_context.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_dup.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_fsync.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_getcontext.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getgroups.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getitimer.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getlogin.debug		tests-lib-debug		debug,atf
@@ -2029,12 +2030,13 @@
 ./usr/tests/lib/libc/sys			tests-lib-tests
 ./usr/tests/lib/libc/sys/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_access		tests-lib-tests		atf
-./usr/tests/lib/libc/sys/t_cerror		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_cerror		tests-obsolete		obsolete
 ./usr/tests/lib/libc/sys/t_chroot		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_clone		tests-lib-tests		atf
-./usr/tests/lib/libc/sys/t_context		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_context		tests-obsolete		obsolete
 ./usr/tests/lib/libc/sys/t_dup			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_fsync		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_getcontext		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_getgroups		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_getitimer		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_getlogin		tests-lib-tests		atf
