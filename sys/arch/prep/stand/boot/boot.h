@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.8 2006/06/20 05:49:09 garbled Exp $	*/
+/*	$NetBSD: boot.h,v 1.9 2011/07/07 06:01:12 mrg Exp $	*/
 
 #define TICKS_PER_SEC	(66666667 / 4)		/* 66MHz */
 #define NS_PER_TICK	(1000000000 / TICKS_PER_SEC)
@@ -38,7 +38,7 @@ int inclose(struct open_file *);
  * io
  */
 void outb(int, char);
-inline void outw(int, u_int16_t);
+void outw(int, u_int16_t);
 u_char inb(int);
 u_long local_to_PCI(u_long);
 void unlockVideo(int);
