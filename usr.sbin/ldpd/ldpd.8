@@ -1,4 +1,4 @@
-.\" $NetBSD: ldpd.8,v 1.4 2010/12/31 06:15:08 wiz Exp $
+.\" $NetBSD: ldpd.8,v 1.5 2011/07/07 05:20:16 kefren Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 7, 2010
+.Dd July 7, 2011
 .Dt LDPD 8
 .Os
 .Sh NAME
@@ -79,6 +79,9 @@ The options are as follows:
 Specifies a path to the config file.
 Default:
 .Pa /etc/ldpd.conf
+- see
+.Xr ldpd.conf 5
+for configuration file format.
 .It Fl D
 Enable debug mode.
 .It Fl d
@@ -100,6 +103,12 @@ Enable output of warning messages.
 .%D January 2001
 .%T LDP Specification
 .Re
+.Rs
+.%R RFC
+.%N 3037
+.%D January 2001
+.%T LDP Applicability
+.Re
 .Sh HISTORY
 The
 .Nm
@@ -107,4 +116,4 @@ command appeared in
 .Nx 6.0 .
 .Sh BUGS
 .Nm
-supports only IPv4.
+supports only IPv4 and doesn't implement Path Vector and Hop Count TLVs.
