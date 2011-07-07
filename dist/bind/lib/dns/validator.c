@@ -1,7 +1,7 @@
-/*	$NetBSD: validator.c,v 1.6.4.4 2011/06/18 11:20:30 bouyer Exp $	*/
+/*	$NetBSD: validator.c,v 1.6.4.5 2011/07/07 12:44:25 sborrill Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: validator.c,v 1.182.16.14.10.1 2011-05-27 00:43:06 each Exp */
+/* Id: validator.c,v 1.182.16.14.10.3 2011-06-21 20:14:47 each Exp */
 
 #include <config.h>
 
@@ -130,6 +130,8 @@
 
 #define SHUTDOWN(v)		(((v)->attributes & VALATTR_SHUTDOWN) != 0)
 #define CANCELED(v)		(((v)->attributes & VALATTR_CANCELED) != 0)
+
+#define NEGATIVE(r)	(((r)->attributes & DNS_RDATASETATTR_NEGATIVE) != 0)
 
 static void
 destroy(dns_validator_t *val);
@@ -736,7 +738,7 @@ dsvalidated(isc_task_t *task, isc_event_t *event) {
 		name = dns_fixedname_name(&val->fname);
 		if ((val->attributes & VALATTR_INSECURITY) != 0 &&
 		    val->frdataset.covers == dns_rdatatype_ds &&
-		    val->frdataset.type == 0 &&
+		    NEGATIVE(&val->frdataset) &&
 		    isdelegation(name, &val->frdataset, DNS_R_NCACHENXRRSET)) {
 			if (val->mustbesecure) {
 				validator_log(val, ISC_LOG_WARNING,
@@ -3968,7 +3970,7 @@ validator_start(isc_task_t *task, isc_event_t *event) {
 			val->attributes |= VALATTR_NEEDNODATA;
 		result = nsecvalidate(val, ISC_FALSE);
 	} else if (val->event->rdataset != NULL &&
-		    val->event->rdataset->type == 0)
+		    NEGATIVE(val->event->rdataset))
 	{
 		/*
 		 * This is a nonexistence validation.
