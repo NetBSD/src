@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/07/04 16:10:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/07/07 21:59:15 joerg Exp $
 
 LIB=	LLVMX86MCTargetDesc
 
@@ -9,7 +9,7 @@ LIB=	LLVMX86MCTargetDesc
 X86_OBJDIR!=	cd ${.CURDIR}/../libLLVMX86CodeGen && ${PRINTOBJDIR}
 CPPFLAGS+=	-I${X86_OBJDIR} -I${LLVM_SRCDIR}/lib/Target/X86
 
-SRCS+=	X86TargetDesc.cpp
+SRCS+=	X86MCTargetDesc.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
