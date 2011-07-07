@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.69 2010/12/20 00:25:26 matt Exp $ */
+/*	$NetBSD: sbic.c,v 1.70 2011/07/07 06:02:06 mrg Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.69 2010/12/20 00:25:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.70 2011/07/07 06:02:06 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1272,7 +1272,7 @@ sbicxfin(sbic_regmap_t regs, int len, void *bp)
 				return len;
 			}
 
-			if( ! asr & SBIC_ASR_BSY ) {
+			if (!(asr & SBIC_ASR_BSY)) {
 				GET_SBIC_csr(regs, csr);
 				CSR_TRACE('<',csr,asr,len);
 				QPRINTF(("[CSR%02xASR%02x]", csr, asr));
