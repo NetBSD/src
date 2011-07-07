@@ -1,4 +1,4 @@
-/*	$NetBSD: t_memmem.c,v 1.1 2010/12/26 13:35:54 pgoyette Exp $ */
+/*	$NetBSD: t_memmem.c,v 1.2 2011/07/07 08:27:36 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -65,15 +65,14 @@ int lb2 = 10;
 		atf_tc_fail("Check stderr for test id/line");		\
 	}
 
-ATF_TC(check_memmem);
-        
-ATF_TC_HEAD(check_memmem, tc)
+ATF_TC(memmem_basic);
+ATF_TC_HEAD(memmem_basic, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Test memmem results");
 }
 
-ATF_TC_BODY(check_memmem, tc)
+ATF_TC_BODY(memmem_basic, tc)
 {
 
 	expect(memmem(b2, lb2, p0, lp0) == b2);
@@ -95,7 +94,7 @@ ATF_TC_BODY(check_memmem, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, check_memmem);
+	ATF_TP_ADD_TC(tp, memmem_basic);
 
 	return atf_no_error();
 }

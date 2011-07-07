@@ -1,4 +1,4 @@
-/*	$NetBSD: t_swab.c,v 1.1 2010/12/26 13:35:54 pgoyette Exp $ */
+/*	$NetBSD: t_swab.c,v 1.2 2011/07/07 08:27:36 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,15 +61,14 @@ dump(const char *f, char *b, size_t l)
 	printf("\n");
 }
 
-ATF_TC(check_swab);
-
-ATF_TC_HEAD(check_swab, tc)
+ATF_TC(swab_basic);
+ATF_TC_HEAD(swab_basic, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Test swab results");
 }
 
-ATF_TC_BODY(check_swab, tc)
+ATF_TC_BODY(swab_basic, tc)
 {
 	char a[MAXCHK], b[MAXCHK], r[MAXCHK];
 	size_t i;
@@ -90,7 +89,7 @@ ATF_TC_BODY(check_swab, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, check_swab);
+	ATF_TP_ADD_TC(tp, swab_basic);
 
 	return atf_no_error();
 }
