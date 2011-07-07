@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.158 2011/06/20 07:18:06 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.159 2011/07/07 01:26:16 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158 2011/06/20 07:18:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.159 2011/07/07 01:26:16 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -324,7 +324,7 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 
 	gfb_cb.gcc_cookie = (void *)console_instance;
 	gfb_cb.gcc_set_mapreg = of_set_palette;
-	cmap_cb = (uint64_t)&gfb_cb;
+	cmap_cb = (uint64_t)(uintptr_t)&gfb_cb;
 	prop_dictionary_set_uint64(dict, "cmap_callback", cmap_cb);
 
 	/* not let's look for backlight control */
@@ -339,7 +339,7 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 		gpc.gpc_cookie = (void *)console_instance;
 		gpc.gpc_set_parameter = of_set_backlight;
 		gpc.gpc_get_parameter = of_get_backlight;
-		backlight_cb = (uint64_t)&gpc;
+		backlight_cb = (uint64_t)(uintptr_t)&gpc;
 		prop_dictionary_set_uint64(dict, "backlight_callback", 
 		    backlight_cb);
 		/*
