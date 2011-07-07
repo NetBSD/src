@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2011/07/07 07:06:21 jruoho Exp $
+# $NetBSD: Makefile,v 1.6 2011/07/07 19:29:58 jruoho Exp $
 
 MKMAN=	no
 
@@ -42,7 +42,7 @@ TESTS_C+=		t_umask
 TESTS_C+=		t_unlink
 
 LDADD.t_getpid+=        -lpthread
-LDADD.t_timer+=         -lpthread
+LDADD.t_timer_create+=  -lpthread
 
 WARNS=			4
 
