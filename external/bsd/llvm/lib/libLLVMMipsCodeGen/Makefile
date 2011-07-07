@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/07/05 19:37:11 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/07/07 21:59:15 joerg Exp $
 
 LIB=	LLVMMipsCodeGen
 
@@ -15,6 +15,8 @@ SRCS+=	MipsAsmPrinter.cpp \
 	MipsISelLowering.cpp \
 	MipsFrameLowering.cpp \
 	MipsMCAsmInfo.cpp \
+	MipsMCInstLower.cpp \
+	MipsMCSymbolRefExpr.cpp \
 	MipsRegisterInfo.cpp \
 	MipsSubtarget.cpp \
 	MipsTargetMachine.cpp \
