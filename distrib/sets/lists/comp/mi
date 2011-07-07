@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1640 2011/07/07 08:46:21 mrg Exp $
+#	$NetBSD: mi,v 1.1641 2011/07/07 15:05:41 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3687,7 +3687,7 @@
 ./usr/libdata/debug/usr/bin/printenv.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/printf.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/progress.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/protoize.debug	comp-c-debug		gcccmds,debug
+./usr/libdata/debug/usr/bin/protoize.debug	comp-c-debug		gcc=4,gcccmds,debug
 ./usr/libdata/debug/usr/bin/pwhash.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/qsafe.debug		comp-util-debug		crypto,debug
 ./usr/libdata/debug/usr/bin/qsieve.debug	comp-util-debug		crypto,debug
@@ -3782,7 +3782,7 @@
 ./usr/libdata/debug/usr/bin/unifdef.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/uniq.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/units.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/unprotoize.debug	comp-c-debug		gcccmds,debug
+./usr/libdata/debug/usr/bin/unprotoize.debug	comp-c-debug		gcc=4,gcccmds,debug
 ./usr/libdata/debug/usr/bin/unvis.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/unzip.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/usbhidaction.debug	comp-util-debug		debug
