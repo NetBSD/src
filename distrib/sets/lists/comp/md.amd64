@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.121 2011/07/05 10:01:15 spz Exp $
+# $NetBSD: md.amd64,v 1.122 2011/07/07 08:46:21 mrg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -87,6 +87,8 @@
 ./usr/include/gcc-4.5/ammintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/avxintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/bmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/cross-stdarg.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/cpuid.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/emmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/fma4intrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/ia32intrin.h		comp-c-include		gcccmds,gcc=45
@@ -99,6 +101,7 @@
 ./usr/include/gcc-4.5/pmmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/popcntintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/smmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/tmmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/wmmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/x86intrin.h		comp-c-include		gcccmds,gcc=45

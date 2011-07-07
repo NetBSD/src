@@ -1,33 +1,21 @@
-#	$NetBSD: Makefile,v 1.3 2011/07/01 01:22:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/07 08:46:20 mrg Exp $
 
 .include "../Makefile.inc"
 
-.if ${MACHINE_CPU} == "powerpc"
-INCS=	altivec.h
-.elif ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-INCS= \
-	abmintrin.h \
-	ammintrin.h \
-	avxintrin.h \
-	bmmintrin.h \
-	emmintrin.h \
-	fma4intrin.h \
-	ia32intrin.h \
-	immintrin.h \
-	lwpintrin.h \
-	mm3dnow.h \
-	mmintrin.h \
-	nmmintrin.h \
-	pmmintrin.h \
-	popcntintrin.h \
-	smmintrin.h \
-	tmmintrin.h \
-	wmmintrin.h \
-	x86intrin.h \
-	xmmintrin.h \
-	xopintrin.h \
-	mm_malloc.h
+# XXX for G_EXTRA_HEADERS.  make mknative-gcc put that somewhere
+# inside usr.bin/ not lib/
+.if exists(${.CURDIR}/../../lib/libgcc/arch/${MACHINE_ARCH}.mk)
+.include "${.CURDIR}/../../lib/libgcc/arch/${MACHINE_ARCH}.mk"
+.endif
 
+INCS= ${G_EXTRA_HEADERS:T}
+
+# XXX missed some how
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+INCS+=	mm_malloc.h
+
+# XXX we should put this in gcc/config.gcc and regenerate the i386/x86
+# mknative files
 mm_malloc.h: ${DIST}/gcc/config/i386/pmm_malloc.h
 	cp $> ${.TARGET}
 
@@ -38,4 +26,6 @@ INCSDIR=	/usr/include/gcc-4.5
 
 .include <bsd.prog.mk>
 
+# XXX probably don't need the first of these
 .PATH: ${G_out_file:H}
+.PATH: ${G_EXTRA_HEADERS:H:O:u}

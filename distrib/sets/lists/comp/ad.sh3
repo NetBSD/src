@@ -1,4 +1,5 @@
-# $NetBSD: ad.sh3,v 1.24 2008/08/22 13:30:56 lukem Exp $
+# $NetBSD: ad.sh3,v 1.25 2011/07/07 08:46:21 mrg Exp $
+./usr/include/gcc-4.5/tgmath.h			comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sh3				comp-c-include
 ./usr/include/sh3/ansi.h			comp-c-include

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1639 2011/07/06 18:18:08 dyoung Exp $
+#	$NetBSD: mi,v 1.1640 2011/07/07 08:46:21 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -745,7 +745,7 @@
 ./usr/include/g++/backward/hash_set.h		comp-cxx-include	gcc=4,cxx
 ./usr/include/g++/backward/hash_set.h		comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/backward/hashtable.h		comp-cxx-include	gcc=4,cxx
-./usr/include/g++/backward/hashtable.h		comp-obsolete		gcc=45,obsolete
+./usr/include/g++/backward/hashtable.h		comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/backward/heap.h		comp-cxx-include	gcc=4,cxx
 ./usr/include/g++/backward/heap.h		comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/backward/iomanip.h		comp-cxx-include	gcc=4,cxx
@@ -953,7 +953,7 @@
 ./usr/include/g++/cmath				comp-cxx-include	cxx
 ./usr/include/g++/compare.h			comp-obsolete		obsolete
 ./usr/include/g++/complex			comp-cxx-include	cxx
-./usr/include/g++/complex.h			comp-obsolete		obsolete
+./usr/include/g++/complex.h			comp-obsolete		gcc=45,cxx
 ./usr/include/g++/condition_variable		comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/csetjmp			comp-cxx-include	cxx
 ./usr/include/g++/csignal			comp-cxx-include	cxx

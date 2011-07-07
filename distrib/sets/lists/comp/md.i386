@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.119 2011/07/01 02:10:09 mrg Exp $
+# $NetBSD: md.i386,v 1.120 2011/07/07 08:46:21 mrg Exp $
 ./usr/include/clang-3.0/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/emmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/immintrin.h		comp-c-include		llvm
@@ -19,6 +19,8 @@
 ./usr/include/gcc-4.5/ammintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/avxintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/bmmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/cpuid.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/cross-stdarg.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/emmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/fma4intrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/ia32intrin.h		comp-c-include		gcccmds,gcc=45
@@ -31,6 +33,7 @@
 ./usr/include/gcc-4.5/pmmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/popcntintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/smmintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/tmmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/wmmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/x86intrin.h		comp-c-include		gcccmds,gcc=45
