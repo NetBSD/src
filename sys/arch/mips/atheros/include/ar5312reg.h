@@ -1,4 +1,4 @@
-/* $Id: ar5312reg.h,v 1.3 2009/07/06 00:43:23 alc Exp $ */
+/* $Id: ar5312reg.h,v 1.4 2011/07/07 05:06:44 matt Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -63,29 +63,30 @@
 /*
  * FLASHCTL registers  -- offset relative to AR531X_FLASHCTL_BASE
  */
-#define	AR5312_FLASHCTL_0			0x00
-#define	AR5312_FLASHCTL_1			0x04
-#define	AR5312_FLASHCTL_2			0x08
+#define	AR5312_FLASHCTL_0		0x00
+#define	AR5312_FLASHCTL_1		0x04
+#define	AR5312_FLASHCTL_2		0x08
 
-#define	AR5312_FLASHCTL_IDCY_MASK		0xf	/* idle cycle turn */
-#define	AR5312_FLASHCTL_IDCY_SHIFT		0
-#define	AR5312_FLASHCTL_WST1_MASK		0x3e0	/* wait state 1 */
-#define	AR5312_FLASHCTL_WST1_SHIFT		5
-#define	AR5312_FLASHCTL_WST2_MASK		0xf800	/* wait state 1 */
-#define	AR5312_FLASHCTL_WST2_SHIFT		11
-#define AR5312_FLASHCTL_RBLE			0x00000400 /* rd byte enable */
-#define	AR5312_FLASHCTL_AC_MASK			0x00070000	/* addr chk */
-#define	AR5312_FLASHCTL_AC_SHIFT		16
-#define	AR5312_FLASHCTL_AC_128K			0x00000000
-#define	AR5312_FLASHCTL_AC_256K			0x00010000
-#define	AR5312_FLASHCTL_AC_512K			0x00020000
-#define	AR5312_FLASHCTL_AC_1M			0x00030000
-#define	AR5312_FLASHCTL_AC_2M			0x00040000
-#define	AR5312_FLASHCTL_AC_4M			0x00050000
-#define	AR5312_FLASHCTL_AC_8M			0x00060000
-#define	AR5312_FLASHCTL_AC_16M			0x00070000
-#define AR5312_FLASHCTL_E			0x00080000 /* enable */
-#define AR5312_FLASHCTL_MW_MASK			0x30000000 /* mem width */
+#define	AR5312_FLASHCTL_IDCY		__BITS(0,3)	/* idle cycle turn */
+#define	AR5312_FLASHCTL_WST1		__BITS(5,9)	/* wait state 1 */
+#define AR5312_FLASHCTL_RBLE		__BIT(10)	/* rd byte enable */
+#define	AR5312_FLASHCTL_WST2		__BITS(11,15)	/* wait state 1 */
+#define	AR5312_FLASHCTL_AC		__BITS(16,18)	/* addr chk */
+#define	AR5312_FLASHCTL_AC_128K		0
+#define	AR5312_FLASHCTL_AC_256K		1
+#define	AR5312_FLASHCTL_AC_512K		2
+#define	AR5312_FLASHCTL_AC_1M		3
+#define	AR5312_FLASHCTL_AC_2M		4
+#define	AR5312_FLASHCTL_AC_4M		5
+#define	AR5312_FLASHCTL_AC_8M		6
+#define	AR5312_FLASHCTL_AC_16M		7
+#define AR5312_FLASHCTL_E		__BIT(19)	/* enable */
+#define AR5312_FLASHCTL_BUSERR		__BIT(24)	/* buserr */
+#define AR5312_FLASHCTL_WPERR		__BIT(25)	/* wperr */
+#define AR5312_FLASHCTL_WP		__BIT(26)	/* wp */
+#define AR5312_FLASHCTL_BM		__BIT(27)	/* bm */
+#define AR5312_FLASHCTL_MW		__BITS(28,29)	/* mem width */
+#define AR5312_FLASHCTL_AT		__BITS(31,30)	/* access type */
 
 /*
  * SYSREG registers  -- offset relative to AR531X_SYSREG_BASE
@@ -106,61 +107,56 @@
 #define	AR5312_SYSREG_REVISION		0x0090
 
 /* WDOG_CTL watchdog control bits */
-#define	AR5312_WDOG_CTL_IGNORE			0x0000
-#define	AR5312_WDOG_CTL_NMI			0x0001
-#define	AR5312_WDOG_CTL_RESET			0x0002
+#define	AR5312_WDOG_CTL_IGNORE		0x0000
+#define	AR5312_WDOG_CTL_NMI		0x0001
+#define	AR5312_WDOG_CTL_RESET		0x0002
 
 /* Resets */
-#define	AR5312_RESET_SYSTEM			0x00000001
-#define	AR5312_RESET_CPU			0x00000002
-#define	AR5312_RESET_WLAN0			0x00000004	/* mac & bb */
-#define	AR5312_RESET_PHY0			0x00000008	/* enet phy */
-#define	AR5312_RESET_PHY1			0x00000010	/* enet phy */
-#define	AR5312_RESET_ENET0			0x00000020	/* mac */
-#define	AR5312_RESET_ENET1			0x00000040	/* mac */
-#define	AR5312_RESET_UART0			0x00000100	/* mac */
-#define	AR5312_RESET_WLAN1			0x00000200	/* mac & bb */
-#define	AR5312_RESET_APB			0x00000400	/* bridge */
-#define	AR5312_RESET_WARM_CPU			0x00001000
-#define	AR5312_RESET_WARM_WLAN0_MAC		0x00002000
-#define	AR5312_RESET_WARM_WLAN0_BB		0x00004000
-#define	AR5312_RESET_NMI			0x00010000
-#define	AR5312_RESET_WARM_WLAN1_MAC		0x00020000
-#define	AR5312_RESET_WARM_WLAN1_BB		0x00040000
-#define	AR5312_RESET_LOCAL_BUS			0x00080000
-#define	AR5312_RESET_WDOG			0x00100000
+#define	AR5312_RESET_SYSTEM		__BIT(0)
+#define	AR5312_RESET_CPU		__BIT(1)
+#define	AR5312_RESET_WLAN0		__BIT(2)	/* mac & bb */
+#define	AR5312_RESET_PHY0		__BIT(3)	/* enet phy */
+#define	AR5312_RESET_PHY1		__BIT(4)	/* enet phy */
+#define	AR5312_RESET_ENET0		__BIT(5)	/* mac */
+#define	AR5312_RESET_ENET1		__BIT(6)	/* mac */
+#define	AR5312_RESET_UART0		__BIT(8)	/* mac */
+#define	AR5312_RESET_WLAN1		__BIT(9)	/* mac & bb */
+#define	AR5312_RESET_APB		__BIT(10)	/* bridge */
+#define	AR5312_RESET_WARM_CPU		__BIT(16)
+#define	AR5312_RESET_WARM_WLAN0_MAC	__BIT(17)
+#define	AR5312_RESET_WARM_WLAN0_BB	__BIT(18)
+#define	AR5312_RESET_NMI		__BIT(20)
+#define	AR5312_RESET_WARM_WLAN1_MAC	__BIT(21)
+#define	AR5312_RESET_WARM_WLAN1_BB	__BIT(22)
+#define	AR5312_RESET_LOCAL_BUS		__BIT(23)
+#define	AR5312_RESET_WDOG		__BIT(24)
 
 /* AR5312/2312 clockctl bits */
-#define	AR5312_CLOCKCTL_PREDIVIDE_MASK		0x00000030
-#define	AR5312_CLOCKCTL_PREDIVIDE_SHIFT			 4
-#define	AR5312_CLOCKCTL_MULTIPLIER_MASK		0x00001f00
-#define	AR5312_CLOCKCTL_MULTIPLIER_SHIFT		 8
-#define	AR5312_CLOCKCTL_DOUBLER_MASK		0x00010000
+#define	AR5312_CLOCKCTL_PREDIVIDE	__BITS(4,5)
+#define	AR5312_CLOCKCTL_MULTIPLIER	__BITS(8,12)
+#define	AR5312_CLOCKCTL_DOUBLER		__BIT(16)
 
 /* AR2313 clockctl */
-#define	AR2313_CLOCKCTL_PREDIVIDE_MASK		0x00003000
-#define	AR2313_CLOCKCTL_PREDIVIDE_SHIFT			12
-#define	AR2313_CLOCKCTL_MULTIPLIER_MASK		0x001f0000
-#define	AR2313_CLOCKCTL_MULTIPLIER_SHIFT		16
-#define	AR2313_CLOCKCTL_DOUBLER_MASK		0x00000000
+#define	AR2313_CLOCKCTL_PREDIVIDE	__BITS(12,13)
+#define	AR2313_CLOCKCTL_MULTIPLIER	__BITS(16,20)
 
 /* Enables */
-#define	AR5312_ENABLE_WLAN0			0x0001
-#define	AR5312_ENABLE_ENET0			0x0002
-#define	AR5312_ENABLE_ENET1			0x0004
-#define	AR5312_ENABLE_WLAN1			0x0018	/* both DMA and PIO */
+#define	AR5312_ENABLE_WLAN0		__BIT(0)
+#define	AR5312_ENABLE_ENET0		__BIT(1)
+#define	AR5312_ENABLE_ENET1		__BIT(2)
+#define	AR5312_ENABLE_WLAN1		__BITS(7,8)	/* both DMA and PIO */
 
 /* Revision ids */
-#define	AR5312_REVISION_WMAC_MAJOR(x)		(((x) >> 12) & 0xf)
-#define	AR5312_REVISION_WMAC_MINOR(x)		(((x) >> 8) & 0xf)
-#define	AR5312_REVISION_WMAC(x)			(((x) >> 8) & 0xff)
-#define	AR5312_REVISION_MAJOR(x)		(((x) >> 4) & 0xf)
-#define	AR5312_REVISION_MINOR(x)		(((x) >> 0) & 0xf)
+#define	AR5312_REVISION_WMAC_MAJOR(x)	(((x) >> 12) & 0xf)
+#define	AR5312_REVISION_WMAC_MINOR(x)	(((x) >> 8) & 0xf)
+#define	AR5312_REVISION_WMAC(x)		(((x) >> 8) & 0xff)
+#define	AR5312_REVISION_MAJOR(x)	(((x) >> 4) & 0xf)
+#define	AR5312_REVISION_MINOR(x)	(((x) >> 0) & 0xf)
 
-#define	AR5312_REVISION_MAJ_AR5311		0x1
-#define	AR5312_REVISION_MAJ_AR5312		0x4
-#define	AR5312_REVISION_MAJ_AR2313		0x5
-#define	AR5312_REVISION_MAJ_AR5315		0xB
+#define	AR5312_REVISION_MAJ_AR5311	0x1
+#define	AR5312_REVISION_MAJ_AR5312	0x4
+#define	AR5312_REVISION_MAJ_AR2313	0x5
+#define	AR5312_REVISION_MAJ_AR5315	0xB
 
 /*
  * SDRAMCTL registers  -- offset relative to SDRAMCTL
@@ -169,10 +165,8 @@
 #define	AR5312_SDRAMCTL_MEM_CFG1	0x0004
 
 /* memory config 1 bits */
-#define	AR5312_MEM_CFG1_BANK0_MASK		0x00000700
-#define	AR5312_MEM_CFG1_BANK0_SHIFT		8
-#define	AR5312_MEM_CFG1_BANK1_MASK		0x00007000
-#define	AR5312_MEM_CFG1_BANK1_SHIFT		12
+#define	AR5312_MEM_CFG1_BANK0		__BITS(8,10)
+#define	AR5312_MEM_CFG1_BANK1		__BITS(12,15)
 
 /* helper macro for accessing system registers without bus space */
 #define	REGVAL(x)	*((volatile uint32_t *)(MIPS_PHYS_TO_KSEG1((x))))
