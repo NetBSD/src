@@ -1,4 +1,4 @@
-/* $NetBSD: t_memcpy.c,v 1.2 2011/04/07 18:14:09 jruoho Exp $ */
+/* $NetBSD: t_memcpy.c,v 1.3 2011/07/07 08:27:36 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -75,15 +75,13 @@ runTest(unsigned char *b1, unsigned char *b2)
 	}
 }
 
-ATF_TC(check_memcpy);
-
-ATF_TC_HEAD(check_memcpy, tc)
+ATF_TC(memcpy_basic);
+ATF_TC_HEAD(memcpy_basic, tc)
 {
-  
 	atf_tc_set_md_var(tc, "descr", "Test memcpy results");
 }
- 
-ATF_TC_BODY(check_memcpy, tc)
+
+ATF_TC_BODY(memcpy_basic, tc)
 {
 	int i, j;
 	testBlock_t auto1, auto2;
@@ -104,7 +102,7 @@ ATF_TC_BODY(check_memcpy, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, check_memcpy);
+	ATF_TP_ADD_TC(tp, memcpy_basic);
 
 	return atf_no_error();
 }
