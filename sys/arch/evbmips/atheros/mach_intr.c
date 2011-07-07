@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_intr.c,v 1.4 2011/07/01 18:45:36 dyoung Exp $	*/
+/*	$NetBSD: mach_intr.c,v 1.5 2011/07/07 05:06:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.4 2011/07/01 18:45:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.5 2011/07/07 05:06:44 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -48,17 +48,17 @@ __KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.4 2011/07/01 18:45:36 dyoung Exp $")
 #include <machine/intr.h>
 
 #include <mips/locore.h>
-#include <mips/atheros/include/ar531xvar.h>
+#include <mips/atheros/include/platform.h>
 
 void
 evbmips_intr_init(void)
 {
-	ar531x_intr_init();
+	(*platformsw->apsw_intr_init)();
 }
 
 void
 evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 {
 
-	ar531x_cpuintr(ipl, pc, ipending);
+	(*platformsw->apsw_intrsw->aisw_iointr)(ipl, pc, ipending);
 }

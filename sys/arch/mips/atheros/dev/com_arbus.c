@@ -1,4 +1,4 @@
-/* $NetBSD: com_arbus.c,v 1.9 2011/07/01 18:40:00 dyoung Exp $ */
+/* $NetBSD: com_arbus.c,v 1.10 2011/07/07 05:06:44 matt Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.9 2011/07/01 18:40:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.10 2011/07/07 05:06:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.9 2011/07/01 18:40:00 dyoung Exp $")
 
 #include <mips/cpuregs.h>
 #include <mips/atheros/include/arbusvar.h>
-#include <mips/atheros/include/ar531xvar.h>
 
 #include "opt_com.h"
 
@@ -205,9 +204,9 @@ com_arbus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_frequency = (int)prop_number_integer_value(prop);
 
-	if (!com_is_console(aa->aa_bst, aa->aa_addr, &ioh) &&
-	    bus_space_map(aa->aa_bst, aa->aa_addr, aa->aa_size, 0,
-		&ioh) != 0) {
+	if (!com_is_console(aa->aa_bst, aa->aa_addr, &ioh)
+	    && bus_space_map(aa->aa_bst, aa->aa_addr, aa->aa_size, 0,
+		    &ioh) != 0) {
 		aprint_error(": can't map registers\n");
 		return;
 	}
@@ -224,11 +223,9 @@ com_arbus_attach(device_t parent, device_t self, void *aux)
 void
 com_arbus_initmap(struct com_regs *regsp)
 {
-	int	i;
 
 	/* rewrite the map to shift for alignment */
-	for (i = 0;
-	     i < (sizeof (regsp->cr_map) / sizeof (regsp->cr_map[0])); i++) {
+	for (size_t i = 0; i < __arraycount(regsp->cr_map); i++) {
 		regsp->cr_map[i] = (com_std_map[i] * 4) + 3;
 	}
 }
