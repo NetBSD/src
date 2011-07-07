@@ -1,4 +1,4 @@
-/* $NetBSD: t_context.c,v 1.1 2011/01/13 02:40:44 pgoyette Exp $ */
+/* $NetBSD: t_getcontext.c,v 1.1 2011/07/07 07:06:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_context.c,v 1.1 2011/01/13 02:40:44 pgoyette Exp $");
+__RCSID("$NetBSD: t_getcontext.c,v 1.1 2011/07/07 07:06:21 jruoho Exp $");
 
 #include <ucontext.h>
 #include <stdarg.h>
@@ -60,9 +60,8 @@ run(int n, ...)
 	calls++;
 }
 
-ATF_TC(context);
-
-ATF_TC_HEAD(context, tc)
+ATF_TC(getcontext_link);
+ATF_TC_HEAD(getcontext_link, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr",
@@ -70,7 +69,7 @@ ATF_TC_HEAD(context, tc)
 	    "and argument passing to the new context");
 }
 
-ATF_TC_BODY(context, tc)
+ATF_TC_BODY(getcontext_link, tc)
 {
 	ucontext_t uc[DEPTH];
 	ucontext_t save;
@@ -96,7 +95,7 @@ ATF_TC_BODY(context, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, context);
+	ATF_TP_ADD_TC(tp, getcontext_link);
 
 	return atf_no_error();
 }
