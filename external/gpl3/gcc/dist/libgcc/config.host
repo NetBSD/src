@@ -269,6 +269,8 @@ hppa*64*-*-hpux11*)
 	;;
 hppa[12]*-*-hpux11*)
 	;;
+hppa*-*-netbsd*)
+	;;
 i[34567]86-*-darwin*)
 	;;
 x86_64-*-darwin*)
