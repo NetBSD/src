@@ -1,4 +1,4 @@
-/* $NetBSD: t_dup.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $ */
+/* $NetBSD: t_dup.c,v 1.2 2011/07/07 10:27:31 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,18 +29,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dup.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $");
+__RCSID("$NetBSD: t_dup.c,v 1.2 2011/07/07 10:27:31 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
+#include <atf-c.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <atf-c.h>
+#include <sysexits.h>
 
 static char	 path[] = "dup";
 
@@ -63,58 +65,69 @@ ATF_TC_HEAD(dup_max, tc)
 
 ATF_TC_BODY(dup_max, tc)
 {
-	int current, fd, *buf, serrno;
 	struct rlimit res;
-	long i, maxfd;
+	int *buf, fd, sta;
+	size_t i, n;
+	pid_t pid;
 
-	/*
-	 * Open a temporary file until the
-	 * maximum number of open files is
-	 * reached. Ater that dup(2) should
-	 * fail with EMFILE.
-	 */
-	(void)memset(&res, 0, sizeof(struct rlimit));
+	pid = fork();
+	ATF_REQUIRE(pid >= 0);
 
-	ATF_REQUIRE(getrlimit(RLIMIT_NOFILE, &res) == 0);
+	if (pid == 0) {
 
-	ATF_REQUIRE(res.rlim_cur > 0);
-	ATF_REQUIRE(res.rlim_max > 0);
+		/*
+		 * Open a temporary file until the
+		 * maximum number of open files is
+		 * reached. Ater that dup(2) should
+		 * fail with EMFILE.
+		 */
+		(void)closefrom(0);
+		(void)memset(&res, 0, sizeof(struct rlimit));
 
-	maxfd = res.rlim_cur;
-	buf = calloc(maxfd, sizeof(int));
+		if (getrlimit(RLIMIT_NOFILE, &res) != 0)
+			_exit(EX_OSERR);
 
-	if (buf == NULL)
-		return;
+		if (res.rlim_cur == 0 || res.rlim_max == 0)
+			_exit(EX_OSERR);
 
-	buf[0] = mkstemp(path);
-	ATF_REQUIRE(buf[0] != -1);
+		n = res.rlim_cur;
+		buf = calloc(n, sizeof(int));
 
-	current = fcntl(0, F_MAXFD);
-	ATF_REQUIRE(current != -1);
+		if (buf == NULL)
+			_exit(EX_OSERR);
 
-	fd = -1;
-	serrno = EMFILE;
+		buf[0] = mkstemp(path);
 
-	for (i = current; i <= maxfd; i++) {
+		if (buf[0] < 0)
+			_exit(EX_OSERR);
 
-		buf[i] = open(path, O_RDONLY);
+		for (i = 1; i < n; i++) {
 
-		if (buf[i] < 0)
-			goto out;
+			buf[i] = open(path, O_RDONLY);
+
+			if (buf[i] < 0)
+				_exit(EX_OSERR);
+		}
+
+		errno = 0;
+		fd = dup(buf[0]);
+
+		if (fd != -1 || errno != EMFILE)
+			_exit(EX_DATAERR);
+
+		_exit(EXIT_SUCCESS);
 	}
 
-	errno = 0;
-	fd = dup(buf[0]);
-	serrno = errno;
+	(void)wait(&sta);
 
-out:
-	for (i = 0; i <= maxfd; i++)
-		(void)close(buf[i]);
+	if (WIFEXITED(sta) == 0 || WEXITSTATUS(sta) != EXIT_SUCCESS) {
 
-	free(buf);
+		if (WEXITSTATUS(sta) == EX_OSERR)
+			atf_tc_fail("unknown error");
 
-	if (fd != -1 || serrno != EMFILE)
-		atf_tc_fail("dup(2) dupped more than RLIMIT_NOFILE");
+		if (WEXITSTATUS(sta) == EX_DATAERR)
+			atf_tc_fail("dup(2) dupped more than RLIMIT_NOFILE");
+	}
 }
 
 ATF_TC_CLEANUP(dup_max, tc)
