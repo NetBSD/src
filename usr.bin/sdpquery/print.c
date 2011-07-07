@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.14 2011/06/25 09:16:52 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.15 2011/07/07 10:26:00 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.14 2011/06/25 09:16:52 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.15 2011/07/07 10:26:00 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -117,6 +117,7 @@ static void print_bip_capabilities(sdp_data_t *);
 static void print_bip_features(sdp_data_t *);
 static void print_bip_functions(sdp_data_t *);
 static void print_bip_capacity(sdp_data_t *);
+static void print_1284id(sdp_data_t *);
 
 static void print_rfcomm(sdp_data_t *);
 static void print_bnep(sdp_data_t *);
@@ -249,7 +250,7 @@ attr_t bp_attrs[] = {	/* Basic Printing */
 	{ 0x0352, "CharacterRepertoiresSupported",	print_character_repertoires },
 	{ 0x0354, "XHTML-PrintImageFormatsSupported",	print_string_list },
 	{ 0x0356, "ColorSupported",			print_bool },
-	{ 0x0358, "1284ID",				print_string },
+	{ 0x0358, "1284ID",				print_1284id },
 	{ 0x035a, "PrinterName",			print_string },
 	{ 0x035c, "PrinterLocation",			print_string },
 	{ 0x035e, "DuplexSupported",			print_bool },
@@ -305,7 +306,7 @@ attr_t hid_attrs[] = {	/* Human Interface Device */
 };
 
 attr_t hcr_attrs[] = {	/* Hardcopy Cable Replacement */
-	{ 0x0300, "1284ID",				print_string },
+	{ 0x0300, "1284ID",				print_1284id },
 	{ 0x0302, "DeviceName",				print_string },
 	{ 0x0304, "FriendlyName",			print_string },
 	{ 0x0306, "DeviceLocation",			print_string },
@@ -1557,6 +1558,38 @@ print_bip_capacity(sdp_data_t *data)
 	    "bytes", HN_AUTOSCALE, HN_NOSPACE);
 
 	printf("%s\n", buf);
+}
+
+static void
+print_1284id(sdp_data_t *data)
+{
+	char *str, *ep;
+	size_t len, l;
+
+	if (!sdp_get_str(data, &str, &len))
+		return;
+
+	if (len < 2 || len != be16dec(str)) {
+		printf("[invalid IEEE 1284 Device ID]\n");
+		return;
+	}
+
+	str += 2;
+	len -= 2;
+
+	printf("\n");
+	while (len > 0) {
+		ep = memchr(str, (int)';', len);
+		if (ep == NULL) {
+			printf("[invalid IEEE 1284 Device ID]\n");
+			return;
+		}
+
+		l = (size_t)(ep - str + 1);
+		printf("    %s\n", string_vis(VIS_CSTYLE, str, l));
+		str += l;
+		len -= l;
+	}
 }
 
 static void
