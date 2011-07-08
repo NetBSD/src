@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.5 2011/06/08 23:05:48 rmind Exp $ */
+/* $NetBSD: spi.c,v 1.6 2011/07/08 03:29:15 mrg Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.5 2011/06/08 23:05:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.6 2011/07/08 03:29:15 mrg Exp $");
 
 #include "locators.h"
 
@@ -228,7 +228,7 @@ spi_chunk_init(struct spi_chunk *chunk, int cnt, const uint8_t *wptr,
 {
 
 	chunk->chunk_write = chunk->chunk_wptr = wptr;
-	chunk->chunk_read = chunk->chunk_read = rptr;
+	chunk->chunk_read = chunk->chunk_rptr = rptr;
 	chunk->chunk_rresid = chunk->chunk_wresid = chunk->chunk_count = cnt;
 	chunk->chunk_next = NULL;
 }
