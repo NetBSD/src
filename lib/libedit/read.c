@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.58 2011/02/18 20:53:05 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.59 2011/07/08 15:54:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.58 2011/02/18 20:53:05 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.59 2011/07/08 15:54:56 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -352,7 +352,11 @@ read_char(EditLine *el, Char *cp)
 			}
 			goto again;
 		}
-	} else  /* we don't support other multibyte charsets */
+	} else if (*cbuf >= 0 ||  /* ASCII */
+		/* we don't support other multibyte charsets */
+		++cbp != 1 ||
+		/* Try non-ASCII characters in a 8-bit character set */
+		(bytes = ct_mbtowc(cp, cbuf, cbp)) != 1)
 #endif
 		*cp = (unsigned char)cbuf[0];
 
