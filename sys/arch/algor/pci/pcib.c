@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.22 2011/07/01 18:31:32 dyoung Exp $	*/
+/*	$NetBSD: pcib.c,v 1.23 2011/07/08 18:48:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.22 2011/07/01 18:31:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.23 2011/07/08 18:48:59 matt Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.22 2011/07/01 18:31:32 dyoung Exp $");
 #include <algor/algor/algor_p6032var.h>
 #endif
 
-const char *pcib_intrnames[16] = {
+const char * const pcib_intrnames[16] = {
 	"irq 0",
 	"irq 1",
 	"irq 2",
@@ -95,7 +95,7 @@ struct pcib_softc {
 	bus_space_handle_t sc_ioh_icu2;
 	bus_space_handle_t sc_ioh_elcr;
 
-	struct algor_isa_chipset sc_ic;
+	struct mips_isa_chipset sc_ic;
 
 	struct pcib_intrhead sc_intrtab[16];
 

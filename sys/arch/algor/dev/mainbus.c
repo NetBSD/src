@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.23 2011/07/01 18:31:31 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.24 2011/07/08 18:48:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.23 2011/07/01 18:31:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24 2011/07/08 18:48:58 matt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -241,7 +241,7 @@ mainbus_print(void *aux, const char *pnp)
 	if (pnp)
 		aprint_normal("%s at %s", ma->ma_name, pnp);
 	if (ma->ma_addr != (bus_addr_t) -1)
-		aprint_normal(" addr 0x%lx", ma->ma_addr);
+		aprint_normal(" addr %#" PRIxBUSADDR, ma->ma_addr);
 
 	return (UNCONF);
 }

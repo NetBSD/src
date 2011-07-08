@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_bus_io.c,v 1.5 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: algor_p5064_bus_io.c,v 1.6 2011/07/08 18:48:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p5064_bus_io.c,v 1.5 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_bus_io.c,v 1.6 2011/07/08 18:48:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,14 +50,15 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p5064_bus_io.c,v 1.5 2008/04/28 20:23:10 marti
 #include <algor/algor/algor_p5064var.h>
 
 #define	CHIP		algor_p5064
+#define	CHIP_IO
 
 #define	CHIP_EX_MALLOC_SAFE(v)	(((struct p5064_config *)(v))->ac_mallocsafe)
-#define	CHIP_IO_EXTENT(v)	(((struct p5064_config *)(v))->ac_io_ex)
+#define	CHIP_EXTENT(v)		(((struct p5064_config *)(v))->ac_io_ex)
 
 /* IO region 1 */
-#define	CHIP_IO_W1_BUS_START(v)	0x00000000UL
-#define	CHIP_IO_W1_BUS_END(v)	0x00ffffffUL
-#define	CHIP_IO_W1_SYS_START(v)	P5064_PCIIO
-#define	CHIP_IO_W1_SYS_END(v)	(P5064_PCIIO + 0x00ffffffUL)
+#define	CHIP_W1_BUS_START(v)	0x00000000UL
+#define	CHIP_W1_BUS_END(v)	0x00ffffffUL
+#define	CHIP_W1_SYS_START(v)	P5064_PCIIO
+#define	CHIP_W1_SYS_END(v)	(P5064_PCIIO + 0x00ffffffUL)
 
-#include <algor/pci/pci_alignstride_bus_io_chipdep.c>
+#include <mips/mips/bus_space_alignstride_chipdep.c>
