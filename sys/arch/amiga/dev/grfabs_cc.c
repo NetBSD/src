@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.34 2010/12/20 00:25:25 matt Exp $ */
+/*	$NetBSD: grfabs_cc.c,v 1.35 2011/07/08 09:42:16 mrg Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.34 2010/12/20 00:25:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.35 2011/07/08 09:42:16 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1575,7 +1575,7 @@ display_a2024_view(view_t *v)
 	if (a24_this_data->current_view != v) {
 		vdata_t *vd = VDATA(v);
 		cop_t  *cp, *tmp;
-		u_char *inst_plane[2];
+		u_char *inst_plane[2] = { NULL, NULL };
 		u_char **plane = inst_plane;
 		u_long  full_line = v->bitmap->bytes_per_row + v->bitmap->row_mod;
 		u_long  half_plane = full_line * v->bitmap->rows / 2;
@@ -3047,7 +3047,7 @@ display_pal_a2024_view(view_t *v)
 	if (p24_this_data->current_view != v) {
 		vdata_t *vd = VDATA(v);
 		cop_t  *cp, *tmp;
-		u_char *inst_plane[2];
+		u_char *inst_plane[2] = { NULL, NULL };
 		u_char **plane = inst_plane;
 		u_long  full_line = v->bitmap->bytes_per_row + v->bitmap->row_mod;
 		u_long  half_plane = full_line * v->bitmap->rows / 2;
