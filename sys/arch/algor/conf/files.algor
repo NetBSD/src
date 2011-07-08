@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.27 2011/02/20 07:51:21 matt Exp $
+#	$NetBSD: files.algor,v 1.28 2011/07/08 18:48:57 matt Exp $
 
 # Algorithmics evaluation board specific configuration info.
 
@@ -34,13 +34,13 @@ file	arch/algor/algor/algor_p6032_dma.c	algor_p6032
 file	arch/algor/algor/algor_p6032_intr.c	algor_p6032
 
 file	arch/algor/algor/autoconf.c
-file	arch/algor/algor/bus_dma.c
 file	arch/algor/algor/disksubr.c
 file	arch/algor/algor/interrupt.c
 file	arch/algor/algor/led.c
 file	arch/algor/algor/machdep.c
 file	arch/algor/algor/pmon.c
 
+file	arch/mips/mips/bus_dma.c
 file	arch/mips/mips/mips3_clock.c
 file	arch/mips/mips/mips3_clockintr.c
 
@@ -55,7 +55,7 @@ file	arch/algor/dev/mainbus.c		mainbus
 
 device	cpu
 attach	cpu at mainbus
-file	arch/algor/algor/cpu.c			cpu
+file	arch/evbmips/evbmips/cpu.c		cpu
 
 device	mcclock: mc146818
 
@@ -116,10 +116,9 @@ file	arch/algor/pci/pciide_machdep.c		pciide_common
 # ISA bus support.
 #
 attach	mcclock at isa with mcclock_isa
-file	arch/algor/isa/mcclock_isa.c		mcclock_isa
+file	arch/evbmips/isa/mcclock_isa.c		mcclock_isa
 
-file	arch/algor/isa/isadma_bounce.c		isa & (algor_p5064 |
-							algor_p6032)
+file	arch/evbmips/isa/isadma_bounce.c	isa & (algor_p5064|algor_p6032)
 
 # ISA speaker generates keyboard beep
 #device	isabeep

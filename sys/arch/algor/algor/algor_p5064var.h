@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064var.h,v 1.8 2011/07/01 18:30:36 dyoung Exp $	*/
+/*	$NetBSD: algor_p5064var.h,v 1.9 2011/07/08 18:48:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,14 +34,14 @@
 #include <dev/isa/isavar.h>
 
 struct p5064_config {
-	struct algor_bus_space ac_iot;
-	struct algor_bus_space ac_memt;
+	struct mips_bus_space ac_iot;
+	struct mips_bus_space ac_memt;
 
-	struct algor_bus_dma_tag ac_pci_dmat;
-	struct algor_bus_dma_tag ac_isa_dmat;
+	struct mips_bus_dma_tag ac_pci_dmat;
+	struct mips_bus_dma_tag ac_isa_dmat;
 
-	struct algor_pci_chipset ac_pc;
-	struct algor_isa_chipset ac_ic;
+	struct mips_pci_chipset ac_pc;
+	struct mips_isa_chipset ac_ic;
 
 	struct extent *ac_io_ex;
 	struct extent *ac_mem_ex;
