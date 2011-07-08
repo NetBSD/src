@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.44 2011/07/06 21:36:16 dyoung Exp $
+.\" $NetBSD: bus_space.9,v 1.45 2011/07/08 19:40:24 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -733,7 +733,8 @@ If space in those areas is accessed, the results are bus-dependent.
 The
 .Fn bus_space_reservation_map
 function is similar to
-.Fn bus_space_map but it maps a region of bus space
+.Fn bus_space_map
+but it maps a region of bus space
 that was previously reserved by a call to
 .Fn bus_space_reserve
 or
@@ -903,8 +904,8 @@ for the range.
 .Pp
 .It Fn bus_space_handle_is_equal "space" "handle1" "handle2"
 Use
-.Fn bus_space_handle_is_equal to
-check whether or not 
+.Fn bus_space_handle_is_equal
+to check whether or not
 .Fa handle1
 and
 .Fa handle2
@@ -1035,23 +1036,23 @@ to map the reservation.
 .Pp
 On success,
 .Fn bus_space_reserve
-records the reservation at 
+records the reservation at
 .Fa bsrp
 and returns 0.
 On failure,
-.Fa bsrp 
+.Fa bsrp
 is undefined, and
 .Fn bus_space_reserve
 returns a non-zero error code.
 Possible error codes include
 .Bl -tag -width EOPNOTSUPP -offset indent
-.It Dv EOPNOTSUPP
+.It Er EOPNOTSUPP
 .Fn bus_space_reserve
 is not supported on this architecture, or
 .Fa flags
 was incompatible with the bus space represented by
 .Fa t .
-.It Dv ENOMEM
+.It Er ENOMEM
 There was not sufficient bus space at
 .Fa bpa
 to satisfy the request.
@@ -1073,29 +1074,29 @@ The parameters
 .Fa boundary ,
 and
 .Fa flags
-each work alike to the 
+each work alike to the
 .Fn bus_space_alloc
 parameters of the same names.
 .Pp
 On success,
 .Fn bus_space_reserve_subregion
-records the reservation at 
+records the reservation at
 .Fa bsrp
 and returns 0.
 On failure,
-.Fa bsrp 
+.Fa bsrp
 is undefined, and
 .Fn bus_space_reserve_subregion
 returns a non-zero error code.
 Possible error codes include
 .Bl -tag -width EOPNOTSUPP -offset indent
-.It Dv EOPNOTSUPP
+.It Er EOPNOTSUPP
 .Fn bus_space_reserve
 is not supported on this architecture, or
 .Fa flags
 was incompatible with the bus space represented by
 .Fa t .
-.It Dv ENOMEM
+.It Er ENOMEM
 There was not sufficient bus space at
 .Fa bpa
 to satisfy the request.
@@ -1870,10 +1871,10 @@ is passed in that argument.
 .Pp
 Return 0 if the call succeeds.
 Return
-.Dv EOPNOTSUPP
+.Er EOPNOTSUPP
 if the architecture does not support overrides.
 Return
-.Dv EINVAL
+.Er EINVAL
 if
 .Fa present
 is 0, if
