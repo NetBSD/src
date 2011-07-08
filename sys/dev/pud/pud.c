@@ -1,4 +1,4 @@
-/*	$NetBSD: pud.c,v 1.10 2011/02/07 03:14:28 jakllsch Exp $	*/
+/*	$NetBSD: pud.c,v 1.11 2011/07/08 09:32:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.10 2011/02/07 03:14:28 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.11 2011/07/08 09:32:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -81,7 +81,7 @@ pud_putter_getout(void *this, size_t maxsize, int nonblock,
 	uint8_t **data, size_t *dlen, void **cookie)
 {
 	struct pud_dev *pd = this;
-	struct pud_touser *putp;
+	struct pud_touser *putp = NULL;
 	int error = 0;
 
 	mutex_enter(&pd->pd_mtx);
