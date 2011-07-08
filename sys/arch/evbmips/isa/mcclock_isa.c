@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.13 2011/07/01 18:46:35 dyoung Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.14 2011/07/08 18:49:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.13 2011/07/01 18:46:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.14 2011/07/08 18:49:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -51,9 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.13 2011/07/01 18:46:35 dyoung Exp 
 #define	ALGOR_YEAR_ZERO		1920
 
 static int	mcclock_isa_match(device_t, cfdata_t, void *);
-static void	mcclock_isa_attach(device_t,  device_t, void *);
+static void	mcclock_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(mcclock_isa, sizeof (struct mc146818_softc),
+CFATTACH_DECL_NEW(mcclock_isa, sizeof(struct mc146818_softc),
     mcclock_isa_match, mcclock_isa_attach, NULL, NULL);
 
 static void	mcclock_isa_write(struct mc146818_softc *, u_int, u_int);
@@ -125,10 +125,11 @@ mcclock_isa_attach(device_t parent, device_t self, void *aux)
 	    MC_REGB_24HR);
 
 	mc146818_attach(sc);
+
 	aprint_normal("\n");
 }
 
-void
+static void
 mcclock_isa_write(struct mc146818_softc *sc, u_int reg, u_int datum)
 {
 	bus_space_tag_t iot = sc->sc_bst;
@@ -138,7 +139,7 @@ mcclock_isa_write(struct mc146818_softc *sc, u_int reg, u_int datum)
 	bus_space_write_1(iot, ioh, 1, datum);
 }
 
-u_int
+static u_int
 mcclock_isa_read(struct mc146818_softc *sc, u_int reg)
 {
 	bus_space_tag_t iot = sc->sc_bst;
