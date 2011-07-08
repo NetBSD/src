@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.12 2010/08/21 13:19:39 pgoyette Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.13 2011/07/08 09:32:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.12 2010/08/21 13:19:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.13 2011/07/08 09:32:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ handle_modctl_load(modctl_load_t *ml)
 	char *props;
 	int error;
 	prop_dictionary_t dict;
-	size_t propslen;
+	size_t propslen = 0;
 
 	if ((ml->ml_props != NULL && ml->ml_propslen == 0) ||
 	    (ml->ml_props == NULL && ml->ml_propslen > 0)) {
