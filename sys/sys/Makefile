@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.134 2011/07/06 18:18:07 dyoung Exp $
+#	$NetBSD: Makefile,v 1.135 2011/07/08 19:09:01 dyoung Exp $
 
 .include <bsd.sys.mk>
 
 INCSDIR= /usr/include/sys
 
 INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
-	bitops.h bootblock.h bswap.h buf.h bus.h \
+	bitops.h bootblock.h bswap.h buf.h \
 	callback.h callout.h cdefs.h cdefs_aout.h \
 	cdefs_elf.h cdio.h chio.h clockctl.h condvar.h conf.h core.h \
 	cpuio.h ctype_bits.h ctype_inline.h \
