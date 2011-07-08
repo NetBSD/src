@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.205 2011/06/29 08:10:05 mrg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.206 2011/07/08 03:29:52 mrg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -62,6 +62,10 @@ CXXFLAGS+=	${${ACTIVE_CXX} == "gcc":? -Wno-non-template-friend -Wno-pmf-conversi
 .if ${WARNS} > 3 && defined(HAVE_GCC)
 CFLAGS+=	-Wsign-compare
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wpointer-sign :}
+.endif
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 45 && ${MACHINE} == "dreamcast"
+# XXX GCC 4.5 for dreamcast is extra noisy for cases it should be better with
+CFLAGS+=	-Wno-uninitialized
 .endif
 .endif
 
