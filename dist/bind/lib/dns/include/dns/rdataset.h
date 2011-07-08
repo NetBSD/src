@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataset.h,v 1.1.1.5.4.1.2.2 2011/06/18 11:28:35 bouyer Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.1.1.5.4.1.2.3 2011/07/08 21:04:05 sborrill Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataset.h,v 1.67.186.2.48.1 2011-05-27 00:43:06 each Exp */
+/* Id: rdataset.h,v 1.67.186.2.48.3 2011-06-21 20:14:48 each Exp */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -205,6 +205,7 @@ struct dns_rdataset {
 #define DNS_RDATASETATTR_RESIGN		0x00040000
 #define DNS_RDATASETATTR_CLOSEST	0x00080000
 #define DNS_RDATASETATTR_OPTOUT		0x00100000	/*%< OPTOUT proof */
+#define DNS_RDATASETATTR_NEGATIVE	0x00200000
 
 /*%
  * _OMITDNSSEC:
