@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.4 2011/04/06 01:37:59 dyoung Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.5 2011/07/08 18:49:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -42,18 +42,15 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.4 2011/04/06 01:37:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.5 2011/07/08 18:49:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
-
-#include <dev/isa/isavar.h>
 
 void *
 pciide_machdep_compat_intr_establish(device_t dev,
@@ -63,6 +60,6 @@ pciide_machdep_compat_intr_establish(device_t dev,
 
 	if (pc->pc_pciide_compat_intr_establish == NULL)
 		return (NULL);
-	return (algor_pciide_compat_intr_establish(pc, dev, pa, chan,
+	return ((*pc->pc_pciide_compat_intr_establish)(pc, dev, pa, chan,
 	    func, arg));
 }

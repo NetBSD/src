@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_bus_mem.c,v 1.4 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: algor_p6032_bus_mem.c,v 1.5 2011/07/08 18:48:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_bus_mem.c,v 1.4 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_bus_mem.c,v 1.5 2011/07/08 18:48:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,9 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p6032_bus_mem.c,v 1.4 2008/04/28 20:23:10 mart
 #include <algor/algor/algor_p6032var.h>
 
 #define	CHIP		algor_p6032
+#define	CHIP_MEM
 
 #define	CHIP_EX_MALLOC_SAFE(v)	(((struct p6032_config *)(v))->ac_mallocsafe)
-#define	CHIP_MEM_EXTENT(v)	(((struct p6032_config *)(v))->ac_mem_ex)
+#define	CHIP_EXTENT(v)		(((struct p6032_config *)(v))->ac_mem_ex)
 
 /*
  * There are actually 3 PCILO memory windows, but PMON configures them
@@ -60,19 +61,17 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p6032_bus_mem.c,v 1.4 2008/04/28 20:23:10 mart
  */
 
 /* MEM region 1 */
-#define	CHIP_MEM_W1_BUS_START(v)	0x00000000UL
-#define	CHIP_MEM_W1_BUS_END(v)		0x0bffffffUL
-#define	CHIP_MEM_W1_SYS_START(v)	((u_long)BONITO_PCILO_BASE)
-#define	CHIP_MEM_W1_SYS_END(v)		((u_long)BONITO_PCILO_BASE + \
-					 0x0bffffffUL)
+#define	CHIP_W1_BUS_START(v)	0x00000000UL
+#define	CHIP_W1_BUS_END(v)	0x0bffffffUL
+#define	CHIP_W1_SYS_START(v)	((u_long)BONITO_PCILO_BASE)
+#define	CHIP_W1_SYS_END(v)	((u_long)BONITO_PCILO_BASE + 0x0bffffffUL)
 
 #if 0 /* XXX Should implement access to this via TLB or 64-bit KSEG */
 /* MEM region 2 */
-#define	CHIP_MEM_W2_BUS_START(v)	0x20000000UL
-#define	CHIP_MEM_W2_BUS_END(v)		0xffffffffUL
-#define	CHIP_MEM_W2_SYS_START(v)	((u_long)BONITO_PCIHI_BASE)
-#define	CHIP_MEM_W2_SYS_END(v)		((u_long)BONITO_PCIHI_BASE + \
-					 0xe0000000UL)
+#define	CHIP_W2_BUS_START(v)	0x20000000UL
+#define	CHIP_W2_BUS_END(v)	0xffffffffUL
+#define	CHIP_W2_SYS_START(v)	((u_long)BONITO_PCIHI_BASE)
+#define	CHIP_W2_SYS_END(v)	((u_long)BONITO_PCIHI_BASE + 0xe0000000UL)
 #endif
 
-#include <algor/pci/pci_alignstride_bus_mem_chipdep.c>
+#include <mips/mips/bus_space_alignstride_chipdep.c>

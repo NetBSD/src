@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032var.h,v 1.7 2011/07/01 18:30:36 dyoung Exp $	*/
+/*	$NetBSD: algor_p4032var.h,v 1.8 2011/07/08 18:48:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,14 +33,14 @@
 #include <dev/pci/pcivar.h>
 
 struct p4032_config {
-	struct algor_bus_space ac_lociot;
-	struct algor_bus_space ac_iot;
-	struct algor_bus_space ac_memt;
+	struct mips_bus_space ac_lociot;
+	struct mips_bus_space ac_iot;
+	struct mips_bus_space ac_memt;
 
-	struct algor_bus_dma_tag ac_pci_dmat;
-	struct algor_bus_dma_tag ac_pci_pf_dmat;
+	struct mips_bus_dma_tag ac_pci_dmat;
+	struct mips_bus_dma_tag ac_pci_pf_dmat;
 
-	struct algor_pci_chipset ac_pc;
+	struct mips_pci_chipset ac_pc;
 
 	struct extent *ac_io_ex;
 	struct extent *ac_mem_ex;
