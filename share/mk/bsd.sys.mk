@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.206 2011/07/08 03:29:52 mrg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.207 2011/07/08 20:59:53 uwe Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -63,8 +63,10 @@ CXXFLAGS+=	${${ACTIVE_CXX} == "gcc":? -Wno-non-template-friend -Wno-pmf-conversi
 CFLAGS+=	-Wsign-compare
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wpointer-sign :}
 .endif
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 45 && ${MACHINE} == "dreamcast"
-# XXX GCC 4.5 for dreamcast is extra noisy for cases it should be better with
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 45 \
+     && (${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el"))
+# XXX GCC 4.5 for sh3 (which we compile with -Os) is extra noisy for
+# cases it should be better with
 CFLAGS+=	-Wno-uninitialized
 .endif
 .endif
