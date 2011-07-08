@@ -1,7 +1,7 @@
 .\"	@(#)xdr.3n	2.2 88/08/03 4.0 RPCSRC; from 1.16 88/03/14 SMI
-.\"	$NetBSD: xdr.3,v 1.13 2011/07/04 08:19:51 manu Exp $
+.\"	$NetBSD: xdr.3,v 1.14 2011/07/08 19:28:22 wiz Exp $
 .\"
-.Dd April 17, 2003
+.Dd July 4, 2011
 .Dt XDR 3
 .Os
 .Sh NAME
@@ -382,7 +382,7 @@ A filter primitive that translates between C short integers
 and their external representations.
 This routine returns one if it succeeds, zero otherwise.
 .It Fn xdr_sizeof
-This routine returns the amount of memory required to encode 
+This routine returns the amount of memory required to encode
 .Fa data
 using filter
 .Fa func .
