@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_usbivar.h,v 1.3 2011/04/29 21:54:14 matt Exp $	*/
+/*	$NetBSD: rmixl_usbivar.h,v 1.4 2011/07/08 19:10:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -33,7 +33,6 @@
 #define _MIPS_RMI_RMIXL_USBIVAR_H_
 
 #include <sys/bus.h>
-#include <mips/bus_dma.h>
 
 struct rmixl_usbi_attach_args {
 	bus_space_tag_t	usbi_eb_bst;

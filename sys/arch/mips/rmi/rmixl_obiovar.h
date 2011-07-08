@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obiovar.h,v 1.3 2011/02/20 07:48:37 matt Exp $	*/
+/*	$NetBSD: rmixl_obiovar.h,v 1.4 2011/07/08 19:10:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,8 +32,8 @@
 #ifndef _MIPS_RMI_RMIXL_OBIOVAR_H_
 #define _MIPS_RMI_RMIXL_OBIOVAR_H_
 
+#include <sys/bus.h>
 #include <dev/pci/pcivar.h>
-#include <mips/bus_dma.h>
 #include <mips/pci_machdep.h>
 
 struct obio_attach_args {
