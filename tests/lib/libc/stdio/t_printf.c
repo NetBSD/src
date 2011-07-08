@@ -1,4 +1,4 @@
-/* $NetBSD: t_format.c,v 1.5 2010/12/23 13:34:46 pgoyette Exp $ */
+/* $NetBSD: t_printf.c,v 1.1 2011/07/08 06:38:04 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,15 +31,30 @@
 #include <stdio.h>
 #include <string.h>
 
-ATF_TC(zero_padding);
+ATF_TC(sprintf_dotzero);
+ATF_TC_HEAD(sprintf_dotzero, tc)
+{
 
-ATF_TC_HEAD(zero_padding, tc)
+	atf_tc_set_md_var(tc, "descr", \
+	    "PR lib/32951: %.0f formats (0.0,0.5] to \"0.\"");
+}
+
+ATF_TC_BODY(sprintf_dotzero, tc)
+{
+	char s[4];
+
+	ATF_CHECK(snprintf(s, sizeof(s), "%.0f", 0.1) == 1);
+	ATF_REQUIRE_STREQ(s, "0");
+}
+
+ATF_TC(sprintf_zeropad);
+ATF_TC_HEAD(sprintf_zeropad, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "output format zero padding");
 }
 
-ATF_TC_BODY(zero_padding, tc)
+ATF_TC_BODY(sprintf_zeropad, tc)
 {
 	char str[1024];
 
@@ -56,73 +71,11 @@ ATF_TC_BODY(zero_padding, tc)
 #endif
 }
 
-ATF_TC(dot_zero_f);
-
-ATF_TC_HEAD(dot_zero_f, tc)
-{
-
-	atf_tc_set_md_var(tc, "descr", \
-	    "PR lib/32951: %.0f formats (0.0,0.5] to \"0.\"");
-}
-
-ATF_TC_BODY(dot_zero_f, tc)
-{
-	char s[4];
-
-	ATF_CHECK(snprintf(s, sizeof(s), "%.0f", 0.1) == 1);
-	ATF_REQUIRE_STREQ(s, "0");
-}
-
-ATF_TC(sscanf_neg_hex);
-
-ATF_TC_HEAD(sscanf_neg_hex, tc)
-{
-
-	atf_tc_set_md_var(tc, "descr", \
-	    "PR lib/21691: %i and %x fail with negative hex numbers");
-}
-
-ATF_TC_BODY(sscanf_neg_hex, tc)
-{
-#define NUM     -0x1234
-#define STRNUM  ___STRING(NUM)
-
-        int i;
-
-        sscanf(STRNUM, "%i", &i);
-	ATF_REQUIRE(i == NUM);
-
-        sscanf(STRNUM, "%x", &i);
-	ATF_REQUIRE(i == NUM);
-}
-
-ATF_TC(sscanf_whitespace);
-
-ATF_TC_HEAD(sscanf_whitespace, tc)
-{
-
-	atf_tc_set_md_var(tc, "descr", "verify sscanf skips all whitespace");
-}
-
-ATF_TC_BODY(sscanf_whitespace, tc)
-{
-	const char str[] = "\f\n\r\t\v%z";
-	char c;
-
-        /* set of "white space" symbols from isspace(3) */
-        c = 0;
-        (void)sscanf(str, "%%%c", &c);
-	ATF_REQUIRE(c == 'z');
-}
-
-
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, zero_padding);
-	ATF_TP_ADD_TC(tp, dot_zero_f);
-	ATF_TP_ADD_TC(tp, sscanf_neg_hex);
-	ATF_TP_ADD_TC(tp, sscanf_whitespace);
+	ATF_TP_ADD_TC(tp, sprintf_dotzero);
+	ATF_TP_ADD_TC(tp, sprintf_zeropad);
 
 	return atf_no_error();
 }
