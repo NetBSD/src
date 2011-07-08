@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.34 2011/07/06 18:46:04 dyoung Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.35 2011/07/08 03:23:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.34 2011/07/06 18:46:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.35 2011/07/08 03:23:14 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,14 +158,15 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 		int flags, bus_space_handle_t *bshp)
 {
 	bus_space_reservation_t bsr;
+	bus_space_tag_t it;
 	int error;
 
-	if ((t->bst_present & BUS_SPACE_OVERRIDE_MAP) != 0) {
-		return (*t->bst_ov->ov_space_map)(t->bst_ctx, t, bpa, size,
+	for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_MAP) == 0)
+			continue;
+		return (*it->bst_ov->ov_space_map)(it->bst_ctx, t, bpa, size,
 		    flags, bshp);
 	}
-	if (t->bst_super != NULL)
-		return bus_space_map(t->bst_super, bpa, size, flags, bshp);
 
 	error = bus_space_reserve(t, bpa, size, flags, &bsr);
 	if (error != 0)
@@ -184,13 +185,12 @@ bus_space_reservation_map(bus_space_tag_t t, bus_space_reservation_t *bsr,
 {
 	bus_addr_t bpa;
 	bus_size_t size;
+	bus_space_tag_t it;
 
-	if ((t->bst_present & BUS_SPACE_OVERRIDE_RESERVATION_MAP) != 0) {
-		return (*t->bst_ov->ov_space_reservation_map)(t->bst_ctx, t,
-		    bsr, flags, bshp);
-	}
-	if (t->bst_super != NULL) {
-		return bus_space_reservation_map(t->bst_super,
+	for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_RESERVATION_MAP) == 0)
+			continue;
+		return (*it->bst_ov->ov_space_reservation_map)(it->bst_ctx, t,
 		    bsr, flags, bshp);
 	}
 
@@ -249,13 +249,14 @@ bus_space_reserve(bus_space_tag_t t,
 {
 	struct extent *ex;
 	int error;
+	bus_space_tag_t it;
 
-	if ((t->bst_present & BUS_SPACE_OVERRIDE_RESERVE) != 0) {
-		return (*t->bst_ov->ov_space_reserve)(t->bst_ctx, t,
+	for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_RESERVE) == 0)
+			continue;
+		return (*it->bst_ov->ov_space_reserve)(it->bst_ctx, t,
 		    bpa, size, flags, bsrp);
 	}
-	if (t->bst_super != NULL)
-		return bus_space_reserve(t->bst_super, bpa, size, flags, bsrp);
 
 	/*
 	 * Pick the appropriate extent map.
@@ -294,13 +295,15 @@ bus_space_reserve_subregion(bus_space_tag_t t,
 	struct extent *ex;
 	u_long bpa;
 	int error;
+	bus_space_tag_t it;
 
-	if ((t->bst_present & BUS_SPACE_OVERRIDE_RESERVE_SUBREGION) != 0) {
-		return (*t->bst_ov->ov_space_reserve_subregion)(t->bst_ctx, t,
+	for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_RESERVE_SUBREGION) ==
+		    0)
+			continue;
+		return (*it->bst_ov->ov_space_reserve_subregion)(it->bst_ctx, t,
 		    rstart, rend, size, alignment, boundary, flags, bsrp);
 	}
-	if (t->bst_super != NULL)
-		return bus_space_reserve(t->bst_super, bpa, size, flags, bsrp);
 
 	/*
 	 * Pick the appropriate extent map.
@@ -344,15 +347,15 @@ void
 bus_space_release(bus_space_tag_t t, bus_space_reservation_t *bsr)
 {
 	struct extent *ex;
+	bus_space_tag_t it;
 
-	if ((t->bst_present & BUS_SPACE_OVERRIDE_RELEASE) != 0) {
-		(*t->bst_ov->ov_space_release)(t->bst_ctx, t, bsr);
+	for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_RELEASE) == 0)
+			continue;
+		(*it->bst_ov->ov_space_release)(it->bst_ctx, t, bsr);
 		return;
 	}
-	if (t->bst_super != NULL) {
-		bus_space_release(t->bst_super, bsr);
-		return;
-	}
+
 	/*
 	 * Pick the appropriate extent map.
 	 */
@@ -379,15 +382,14 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 		int flags, bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 	bus_space_reservation_t bsr;
+	bus_space_tag_t it;
 	int error;
 
-	if ((t->bst_present & BUS_SPACE_OVERRIDE_ALLOC) != 0) {
-		return (*t->bst_ov->ov_space_alloc)(t->bst_ctx, t, rstart, rend,
-		    size, alignment, boundary, flags, bpap, bshp);
-	}
-	if (t->bst_super != NULL) {
-		return bus_space_alloc(t->bst_super, rstart, rend, size,
-		    alignment, boundary, flags, bpap, bshp);
+	for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_ALLOC) == 0)
+			continue;
+		return (*it->bst_ov->ov_space_alloc)(it->bst_ctx, t,
+		    rstart, rend, size, alignment, boundary, flags, bpap, bshp);
 	}
 
 	/*
@@ -567,13 +569,14 @@ void
 bus_space_reservation_unmap(bus_space_tag_t t, const bus_space_handle_t bsh,
     const bus_size_t size)
 {
-	if ((t->bst_present & BUS_SPACE_OVERRIDE_RESERVATION_UNMAP) != 0) {
-		(*t->bst_ov->ov_space_reservation_unmap)(t->bst_ctx,
+	bus_space_tag_t it;
+
+	for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_RESERVATION_UNMAP) ==
+		    0)
+			continue;
+		(*it->bst_ov->ov_space_reservation_unmap)(it->bst_ctx,
 		    t, bsh, size);
-		return;
-	}
-	if (t->bst_super != NULL) {
-		bus_space_reservation_unmap(t->bst_super, bsh, size);
 		return;
 	}
 
@@ -586,13 +589,12 @@ bus_space_unmap(bus_space_tag_t t, const bus_space_handle_t bsh,
 {
 	bus_addr_t addr;
 	bus_space_reservation_t bsr;
+	bus_space_tag_t it;
 
-	if ((t->bst_present & BUS_SPACE_OVERRIDE_UNMAP) != 0) {
-		(*t->bst_ov->ov_space_unmap)(t->bst_ctx, t, bsh, size);
-		return;
-	}
-	if (t->bst_super != NULL) {
-		bus_space_unmap(t->bst_super, bsh, size);
+	for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_UNMAP) == 0)
+			continue;
+		(*it->bst_ov->ov_space_unmap)(it->bst_ctx, t, bsh, size);
 		return;
 	}
 
@@ -605,13 +607,12 @@ bus_space_unmap(bus_space_tag_t t, const bus_space_handle_t bsh,
 void
 bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
+	bus_space_tag_t it;
 
-	if ((t->bst_present & BUS_SPACE_OVERRIDE_FREE) != 0) {
-		(*t->bst_ov->ov_space_free)(t->bst_ctx, t, bsh, size);
-		return;
-	}
-	if (t->bst_super != NULL) {
-		bus_space_free(t->bst_super, bsh, size);
+	for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_FREE) == 0)
+			continue;
+		(*it->bst_ov->ov_space_free)(it->bst_ctx, t, bsh, size);
 		return;
 	}
 	/* bus_space_unmap() does all that we need to do. */
@@ -902,14 +903,15 @@ bus_space_tag_destroy(bus_space_tag_t bst)
 }
 
 int
-bus_space_tag_create(bus_space_tag_t obst, uint64_t present,
-    const struct bus_space_overrides *ov, void *ctx, bus_space_tag_t *bstp)
+bus_space_tag_create(bus_space_tag_t obst, const uint64_t present,
+    const uint64_t extpresent, const struct bus_space_overrides *ov, void *ctx,
+    bus_space_tag_t *bstp)
 {
 	uint64_t bit, bits, nbits;
 	bus_space_tag_t bst;
 	const void *fp;
 
-	if (ov == NULL || present != 0)
+	if (ov == NULL || present == 0 || extpresent != 0)
 		return EINVAL;
 
 	bst = kmem_alloc(sizeof(struct bus_space_tag), KM_SLEEP);
