@@ -1,4 +1,4 @@
-/* $NetBSD: ar_intr.c,v 1.1 2011/07/07 05:06:44 matt Exp $ */
+/* $NetBSD: ar_intr.c,v 1.2 2011/07/08 18:49:27 dyoung Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar_intr.c,v 1.1 2011/07/07 05:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar_intr.c,v 1.2 2011/07/08 18:49:27 dyoung Exp $");
 
 #define __INTR_PRIVATE
 
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: ar_intr.c,v 1.1 2011/07/07 05:06:44 matt Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <mips/locore.h>
