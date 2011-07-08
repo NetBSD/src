@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_bus_io.c,v 1.4 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: algor_p6032_bus_io.c,v 1.5 2011/07/08 18:48:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_bus_io.c,v 1.4 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_bus_io.c,v 1.5 2011/07/08 18:48:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,15 +49,16 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p6032_bus_io.c,v 1.4 2008/04/28 20:23:10 marti
 #include <algor/algor/algor_p6032reg.h>
 #include <algor/algor/algor_p6032var.h>
 
-#define	CHIP		algor_p6032
+#define	CHIP			algor_p6032
+#define	CHIP_IO
 
 #define	CHIP_EX_MALLOC_SAFE(v)	(((struct p6032_config *)(v))->ac_mallocsafe)
-#define	CHIP_IO_EXTENT(v)	(((struct p6032_config *)(v))->ac_io_ex)
+#define	CHIP_EXTENT(v)		(((struct p6032_config *)(v))->ac_io_ex)
 
 /* IO region 1 */
-#define	CHIP_IO_W1_BUS_START(v)	0x00000000UL
-#define	CHIP_IO_W1_BUS_END(v)	0x000fffffUL
-#define	CHIP_IO_W1_SYS_START(v)	((u_long)BONITO_PCIIO_BASE)
-#define	CHIP_IO_W1_SYS_END(v)	((u_long)BONITO_PCIIO_BASE + 0x000fffffUL)
+#define	CHIP_W1_BUS_START(v)	0x00000000UL
+#define	CHIP_W1_BUS_END(v)	0x000fffffUL
+#define	CHIP_W1_SYS_START(v)	((u_long)BONITO_PCIIO_BASE)
+#define	CHIP_W1_SYS_END(v)	((u_long)BONITO_PCIIO_BASE + 0x000fffffUL)
 
-#include <algor/pci/pci_alignstride_bus_io_chipdep.c>
+#include <mips/mips/bus_space_alignstride_chipdep.c>
