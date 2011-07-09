@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_video.c,v 1.3 2011/05/26 23:42:39 jmcneill Exp $ */
+/* $NetBSD: auvitek_video.c,v 1.4 2011/07/09 15:00:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.3 2011/05/26 23:42:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.4 2011/07/09 15:00:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +100,8 @@ static int		auvitek_isoc_process(struct auvitek_softc *,
 					     uint8_t *, uint32_t);
 static void		auvitek_videobuf_weave(struct auvitek_softc *,
 					       uint8_t *, uint32_t);
-static int		auvitek_tuner_reset(void *);
 
-static const struct video_hw_if auvitek_hw_if = {
+static const struct video_hw_if auvitek_video_if = {
 	.open = auvitek_open,
 	.close = auvitek_close,
 	.get_devname = auvitek_get_devname,
@@ -133,7 +132,7 @@ auvitek_video_attach(struct auvitek_softc *sc)
 {
 	snprintf(sc->sc_businfo, sizeof(sc->sc_businfo), "usb:%08x",
 	    sc->sc_udev->cookie.cookie);
-	sc->sc_videodev = video_attach_mi(&auvitek_hw_if, sc->sc_dev);
+	sc->sc_videodev = video_attach_mi(&auvitek_video_if, sc->sc_dev);
 
 	return (sc->sc_videodev != NULL);
 }
@@ -167,7 +166,9 @@ auvitek_open(void *opaque, int flags)
 	mutex_enter(&sc->sc_subdev_lock);
 	if (sc->sc_xc5k == NULL) {
 		sc->sc_xc5k = xc5k_open(sc->sc_dev, &sc->sc_i2c, 0xc2 >> 1, 
-		    auvitek_tuner_reset, sc);
+		    auvitek_board_tuner_reset, sc,
+		    auvitek_board_get_if_frequency(sc),
+		    FE_ATSC);
 	}
 	mutex_exit(&sc->sc_subdev_lock);
 
@@ -525,7 +526,7 @@ auvitek_set_frequency(void *opaque, struct video_frequency *vf)
 	params.frequency = vf->frequency;
 	if (sc->sc_au8522)
 		au8522_set_audio(sc->sc_au8522, false);
-	error = xc5k_tune(sc->sc_xc5k, &params);
+	error = xc5k_tune_video(sc->sc_xc5k, &params);
 	if (sc->sc_au8522)
 		au8522_set_audio(sc->sc_au8522, true);
 	if (error)
@@ -548,7 +549,7 @@ auvitek_start_xfer(struct auvitek_softc *sc)
 	usbd_status err;
 	int i;
 
-	err = usbd_set_interface(sc->sc_iface, AUVITEK_XFER_ALTNO);
+	err = usbd_set_interface(sc->sc_isoc_iface, AUVITEK_XFER_ALTNO);
 	if (err != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(sc->sc_dev, "couldn't set altno %d: %s\n",
 		    AUVITEK_XFER_ALTNO, usbd_errstr(err));
@@ -562,7 +563,7 @@ auvitek_start_xfer(struct auvitek_softc *sc)
 
 	ax->ax_nframes = nframes;
 	ax->ax_uframe_len = uframe_len;
-	for (i = 0; i < AUVITEK_NXFERS; i++) {
+	for (i = 0; i < AUVITEK_NISOC_XFERS; i++) {
 		struct auvitek_isoc *isoc = &ax->ax_i[i];
 		isoc->i_ax = ax;
 		isoc->i_frlengths =
@@ -570,7 +571,7 @@ auvitek_start_xfer(struct auvitek_softc *sc)
 			KM_SLEEP);
 	}
 
-	err = usbd_open_pipe(sc->sc_iface, ax->ax_endpt,
+	err = usbd_open_pipe(sc->sc_isoc_iface, ax->ax_endpt,
 	    USBD_EXCLUSIVE_USE, &ax->ax_pipe);
 	if (err != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(sc->sc_dev, "couldn't open pipe: %s\n",
@@ -578,7 +579,7 @@ auvitek_start_xfer(struct auvitek_softc *sc)
 		return EIO;
 	}
 
-	for (i = 0; i < AUVITEK_NXFERS; i++) {
+	for (i = 0; i < AUVITEK_NISOC_XFERS; i++) {
 		struct auvitek_isoc *isoc = &ax->ax_i[i];
 
 		isoc->i_xfer = usbd_alloc_xfer(sc->sc_udev);
@@ -613,7 +614,7 @@ auvitek_stop_xfer(struct auvitek_softc *sc)
 		ax->ax_pipe = NULL;
 	}
 
-	for (i = 0; i < AUVITEK_NXFERS; i++) {
+	for (i = 0; i < AUVITEK_NISOC_XFERS; i++) {
 		struct auvitek_isoc *isoc = &ax->ax_i[i];
 		if (isoc->i_xfer != NULL) {
 			usbd_free_buffer(isoc->i_xfer);
@@ -628,7 +629,7 @@ auvitek_stop_xfer(struct auvitek_softc *sc)
 	}
 
 	usbd_delay_ms(sc->sc_udev, 1000);
-	err = usbd_set_interface(sc->sc_iface, 0);
+	err = usbd_set_interface(sc->sc_isoc_iface, 0);
 	if (err != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't set zero bw interface: %s\n",
@@ -649,7 +650,7 @@ auvitek_isoc_start(struct auvitek_softc *sc)
 	ax->ax_av.av_eb = ax->ax_av.av_ob = 0;
 	ax->ax_av.av_stride = 720 * 2;
 
-	for (i = 0; i < AUVITEK_NXFERS; i++) {
+	for (i = 0; i < AUVITEK_NISOC_XFERS; i++) {
 		error = auvitek_isoc_start1(&ax->ax_i[i]);
 		if (error)
 			return error;
@@ -796,12 +797,4 @@ auvitek_videobuf_weave(struct auvitek_softc *sc, uint8_t *buf, uint32_t len)
 		buf += wlen;
 		resid -= wlen;
 	}
-}
-
-static int
-auvitek_tuner_reset(void *priv)
-{
-	struct auvitek_softc *sc = priv;
-
-	return auvitek_board_tuner_reset(sc);
 }

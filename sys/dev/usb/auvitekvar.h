@@ -1,4 +1,4 @@
-/* $NetBSD: auvitekvar.h,v 1.2 2010/12/28 04:02:33 jmcneill Exp $ */
+/* $NetBSD: auvitekvar.h,v 1.3 2011/07/09 15:00:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,6 +30,8 @@
 #define _AUVITEKVAR_H
 
 #include <sys/mutex.h>
+#include <sys/condvar.h>
+#include <sys/kthread.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -47,8 +49,10 @@ enum auvitek_board {
 	AUVITEK_BOARD_HVR_950Q,
 };
 
-#define	AUVITEK_NXFERS		8
+#define	AUVITEK_NISOC_XFERS	16
+#define	AUVITEK_NBULK_XFERS	1
 #define AUVITEK_XFER_ALTNO	5
+#define	AUVITEK_BULK_BUFLEN	58658	/* BDA driver uses the same */
 
 struct auvitek_isoc {
 	struct auvitek_xfer	*i_ax;
@@ -69,7 +73,7 @@ struct auvitek_xfer {
 	int			ax_endpt;
 	uint16_t		ax_maxpktlen;
 	usbd_pipe_handle	ax_pipe;
-	struct auvitek_isoc	ax_i[AUVITEK_NXFERS];
+	struct auvitek_isoc	ax_i[AUVITEK_NISOC_XFERS];
 	uint32_t		ax_nframes;
 	uint32_t		ax_uframe_len;
 	uint8_t			ax_frinfo;
@@ -77,15 +81,32 @@ struct auvitek_xfer {
 	struct auvitek_videobuf	ax_av;
 };
 
+struct auvitek_bulk_xfer {
+	struct auvitek_softc	*bx_sc;
+	usbd_xfer_handle	bx_xfer;
+	uint8_t			*bx_buffer;
+};
+
+struct auvitek_bulk {
+	struct auvitek_softc	*ab_sc;
+	int			ab_endpt;
+	usbd_pipe_handle	ab_pipe;
+	struct auvitek_bulk_xfer ab_bx[AUVITEK_NBULK_XFERS];
+	bool			ab_running;
+	kmutex_t		ab_lock;
+	kcondvar_t		ab_cv;
+};
+
 struct auvitek_softc {
 	device_t		sc_dev;
-	device_t		sc_videodev, sc_audiodev;
+	device_t		sc_videodev, sc_dtvdev, sc_audiodev;
 	struct i2c_controller	sc_i2c;
 	kmutex_t		sc_i2c_lock;
 
 	usbd_device_handle	sc_udev;
 	int			sc_uport;
-	usbd_interface_handle	sc_iface;
+	usbd_interface_handle	sc_isoc_iface;
+	usbd_interface_handle	sc_bulk_iface;
 
 	char			sc_running;
 	char			sc_dying;
@@ -102,6 +123,7 @@ struct auvitek_softc {
 	uint32_t		sc_curfreq;
 
 	struct auvitek_xfer	sc_ax;
+	struct auvitek_bulk	sc_ab;
 
 	char			sc_businfo[32];
 };
@@ -117,7 +139,8 @@ void	auvitek_audio_childdet(struct auvitek_softc *, device_t);
 
 /* auvitek_board.c */
 void	auvitek_board_init(struct auvitek_softc *);
-int	auvitek_board_tuner_reset(struct auvitek_softc *);
+int	auvitek_board_tuner_reset(void *);
+unsigned int auvitek_board_get_if_frequency(struct auvitek_softc *);
 
 /* auvitek_i2c.c */
 int	auvitek_i2c_attach(struct auvitek_softc *);
@@ -127,5 +150,10 @@ int	auvitek_i2c_detach(struct auvitek_softc *, int);
 int	auvitek_video_attach(struct auvitek_softc *);
 int	auvitek_video_detach(struct auvitek_softc *, int);
 void	auvitek_video_childdet(struct auvitek_softc *, device_t);
+
+/* auvitek_dtv.c */
+int	auvitek_dtv_attach(struct auvitek_softc *);
+int	auvitek_dtv_detach(struct auvitek_softc *, int);
+void	auvitek_dtv_childdet(struct auvitek_softc *, device_t);
 
 #endif /* !_AUVITEKVAR_H */
