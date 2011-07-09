@@ -1,0 +1,10 @@
+# $NetBSD: files.dtv,v 1.1 2011/07/09 14:46:56 jmcneill Exp $
+
+define	dtvbus { }
+
+device	dtv
+attach	dtv at dtvbus
+file	dev/dtv/dtv_buffer.c	dtv
+file	dev/dtv/dtv_device.c	dtv
+file	dev/dtv/dtv_ioctl.c	dtv
+file	dev/dtv/dtv_scatter.c	dtv
