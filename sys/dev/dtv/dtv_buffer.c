@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_buffer.c,v 1.2 2011/07/09 17:55:20 jmcneill Exp $ */
+/* $NetBSD: dtv_buffer.c,v 1.3 2011/07/09 21:08:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_buffer.c,v 1.2 2011/07/09 17:55:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_buffer.c,v 1.3 2011/07/09 21:08:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -64,7 +64,7 @@ dtv_buffer_write(struct dtv_softc *sc, const uint8_t *buf, size_t buflen)
 
 		if (SIMPLEQ_EMPTY(&ds->ds_ingress)) {
 			aprint_debug_dev(sc->sc_dev,
-			    "dropping sample (%u)\n", resid);
+			    "dropping sample (%zu)\n", resid);
 			mutex_exit(&ds->ds_lock);
 			return;
 		}
