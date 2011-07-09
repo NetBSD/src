@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.26 2011/07/01 18:30:36 dyoung Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.27 2011/07/09 16:03:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,22 +38,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.26 2011/07/01 18:30:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.27 2011/07/09 16:03:00 matt Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
 
 #include <sys/param.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/cpu.h>
-
 #include <sys/bus.h>
-#include <machine/autoconf.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/queue.h>
+#include <sys/systm.h>
+
+#include <algor/autoconf.h>
 
 #include <mips/locore.h>
 
@@ -270,7 +270,7 @@ struct p5064_intrhead p5064_intrtab[NIRQMAPS];
 #define	NINTRS			3	/* MIPS INT0 - INT2 */
 
 struct p5064_cpuintr {
-	LIST_HEAD(, algor_intrhand) cintr_list;
+	LIST_HEAD(, evbmips_intrhand) cintr_list;
 	struct evcnt cintr_count;
 };
 
@@ -438,7 +438,7 @@ void *
 algor_p5064_intr_establish(int irq, int (*func)(void *), void *arg)
 {
 	const struct p5064_irqmap *irqmap;
-	struct algor_intrhand *ih;
+	struct evbmips_intrhand *ih;
 	int s;
 
 	irqmap = &p5064_irqmap[irq];
@@ -480,7 +480,7 @@ void
 algor_p5064_intr_disestablish(void *cookie)
 {
 	const struct p5064_irqmap *irqmap;
-	struct algor_intrhand *ih = cookie;
+	struct evbmips_intrhand *ih = cookie;
 	int s;
 
 	irqmap = ih->ih_irqmap;
@@ -511,7 +511,7 @@ void
 algor_p5064_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 {
 	const struct p5064_irqmap *irqmap;
-	struct algor_intrhand *ih;
+	struct evbmips_intrhand *ih;
 	int level, i;
 	uint32_t irr[NIRQREG];
 
@@ -706,7 +706,7 @@ void *
 algor_p5064_isa_intr_establish(void *v, int iirq, int type, int level,
     int (*func)(void *), void *arg)
 {
-	struct algor_intrhand *ih;
+	struct evbmips_intrhand *ih;
 	int irqidx;
 
 	if (iirq > 15 || type == IST_NONE)
@@ -726,7 +726,7 @@ algor_p5064_isa_intr_establish(void *v, int iirq, int type, int level,
 void
 algor_p5064_isa_intr_disestablish(void *v, void *cookie)
 {
-	struct algor_intrhand *ih = cookie;
+	struct evbmips_intrhand *ih = cookie;
 
 	/* Translate the IRQ back to our domain. */
 	ih->ih_irq = p5064_isa_to_irqmap[ih->ih_irq];

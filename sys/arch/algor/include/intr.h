@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2011/02/20 07:51:21 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.15 2011/07/09 16:03:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,12 +39,13 @@
 
 #ifdef	_KERNEL
 
-struct algor_intrhand {
-	LIST_ENTRY(algor_intrhand) ih_q;
+struct evbmips_intrhand {
+	LIST_ENTRY(evbmips_intrhand) ih_q;
 	const void *ih_irqmap;
 	int (*ih_func)(void *);
 	void *ih_arg;
 	int ih_irq;		/* mostly for ISA */
+	int ih_ipl;
 };
 
 extern struct evcnt mips_int5_evcnt;

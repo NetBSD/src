@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2011/07/01 18:30:36 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 2011/07/09 16:03:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2011/07/01 18:30:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2011/07/09 16:03:00 matt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -81,17 +81,18 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2011/07/01 18:30:36 dyoung Exp $");
 #include "opt_ethaddr.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/buf.h>
-#include <sys/reboot.h>
-#include <sys/mount.h>
-#include <sys/kcore.h>
 #include <sys/boot_flag.h>
-#include <sys/termios.h>
-#include <sys/ksyms.h>
+#include <sys/buf.h>
+#include <sys/bus.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/kcore.h>
+#include <sys/ksyms.h>
 #include <sys/lwp.h>
+#include <sys/mount.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
+#include <sys/termios.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -101,16 +102,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2011/07/01 18:30:36 dyoung Exp $");
 #include <dev/cons.h>
 
 #include <mips/locore.h>
+#include <mips/pcb.h>
 
 #ifdef DDB
-#include <machine/db_machdep.h>
+#include <mips/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 
-#include <sys/bus.h>
-#include <machine/autoconf.h>
 #include <machine/pmon.h>
-#include <machine/pcb.h>
+#include <algor/autoconf.h>
 
 #include <algor/pci/vtpbcvar.h>
 
