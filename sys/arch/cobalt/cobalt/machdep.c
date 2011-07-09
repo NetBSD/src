@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.111 2011/02/20 15:47:28 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112 2011/07/09 16:09:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2011/02/20 15:47:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2011/07/09 16:09:01 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -72,9 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2011/02/20 15:47:28 tsutsui Exp $"
 #include <uvm/uvm_extern.h>
 
 #include <machine/bootinfo.h>
-#include <machine/psl.h>
 
 #include <mips/locore.h>
+#include <mips/psl.h>
 
 #include <dev/cons.h>
 
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2011/02/20 15:47:28 tsutsui Exp $"
 #include "ksyms.h"
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-#include <machine/db_machdep.h>
+#include <mips/db_machdep.h>
 #include <ddb/db_extern.h>
 #define ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
