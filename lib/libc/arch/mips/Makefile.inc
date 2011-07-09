@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2011/01/26 01:18:48 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2011/07/09 02:30:27 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,15 @@ CPPFLAGS.assym.h+=-D__LIBC12_SOURCE__
 
 .if ${MKSOFTFLOAT} != "no"
 .include <softfloat/Makefile.inc>
-CPPFLAGS+= -DSOFTFLOAT_NEED_FIXUNS
 CPPFLAGS+= -DSOFTFLOAT
+
+SRCS+=	fixunsgen_ieee754.c fixunssfsi_ieee754.c fixunsdfsi_ieee754.c
+SRCS+=	fixunsgen64_ieee754.c #fixunssfdi.c fixunsdfdi.c
+.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+SRCS+=	fixunstfsi_ieee754.c fixunstfdi_ieee754.c
+.endif
+.endif
+
+.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+SRCS+=	floatunditf_ieee754.c
 .endif
