@@ -42,7 +42,10 @@ L(2):	add	r2, pc, r2
 	adds	r1, r3, r0
 	adc	r12, r12, r0
 	rsb	r0, r12, r2
-	bx	lr
+ifdef(`ARM_THUMB_MODE',
+`	bx	lr
+',`	mov	pc, lr
+')
 
 	ALIGN(4)
 L(4):	.word	approx_tab-8-512-L(2)
