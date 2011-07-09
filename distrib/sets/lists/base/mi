@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.943 2011/07/01 22:23:19 mrg Exp $
+# $NetBSD: mi,v 1.944 2011/07/09 21:24:29 tron Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -759,6 +759,7 @@
 ./usr/include/dev/dec				base-c-usr
 ./usr/include/dev/dm	                        base-c-usr
 ./usr/include/dev/dmover			base-c-usr
+./usr/include/dev/dtv				base-c-usr
 ./usr/include/dev/eisa				base-obsolete		obsolete
 ./usr/include/dev/hpc				base-c-usr
 ./usr/include/dev/i2c				base-obsolete		obsolete
