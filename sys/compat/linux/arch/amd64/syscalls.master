@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.37 2011/05/30 17:50:31 alnsn Exp $
+	$NetBSD: syscalls.master,v 1.38 2011/07/09 14:49:40 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -133,10 +133,10 @@
 35	STD		{ int|linux_sys||nanosleep( \
 			    const struct linux_timespec *rqtp, \
 			    struct linux_timespec *rmtp); }
-36	NOARGS		{ int|compat_50_sys||getitimer(u_int which, \
+36	NOARGS		{ int|compat_50_sys||getitimer(int which, \
 			    struct itimerval50 *itv); }
 37	STD		{ int|linux_sys||alarm(unsigned int secs); }
-38	NOARGS		{ int|compat_50_sys||setitimer(u_int which, \
+38	NOARGS		{ int|compat_50_sys||setitimer(int which, \
 			    struct itimerval50 *itv, \
 			    struct itimerval50 *oitv); }
 39	STD		{ pid_t|sys||getpid(void); }
@@ -174,7 +174,7 @@
 			    int optname, void *optval, int *optlen); }
 56	STD		{ int|linux_sys||clone(int flags, void *stack, \
 			    void *parent_tidptr, void *child_tidptr, void *tls); }
-57	NOARGS		{ int|sys||fork(void); }
+57	STD		{ int|linux_sys||fork(void); }
 58	NOARGS		{ int|sys|14|vfork(void); }
 59	NOARGS		{ int|sys||execve(const char *path, char **argp, \
 			    char **envp); }

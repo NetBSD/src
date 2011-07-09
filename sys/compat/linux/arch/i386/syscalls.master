@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.105 2011/05/30 17:50:31 alnsn Exp $
+	$NetBSD: syscalls.master,v 1.106 2011/07/09 14:49:40 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -196,9 +196,9 @@
 			    unsigned int hi, int val); }
 102	STD		{ int|linux_sys||socketcall(int what, void *args); }
 103	UNIMPL		syslog
-104	NOARGS		{ int|compat_50_sys||setitimer(u_int which, \
+104	NOARGS		{ int|compat_50_sys||setitimer(int which, \
 			    struct itimerval50 *itv, struct itimerval50 *oitv); }
-105	NOARGS		{ int|compat_50_sys||getitimer(u_int which, \
+105	NOARGS		{ int|compat_50_sys||getitimer(int which, \
 			    struct itimerval50 *itv); }
 106	STD		{ int|linux_sys||stat(const char *path, \
 			    struct linux_stat *sp); }
