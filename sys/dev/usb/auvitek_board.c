@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_board.c,v 1.2 2010/12/28 04:02:33 jmcneill Exp $ */
+/* $NetBSD: auvitek_board.c,v 1.3 2011/07/09 15:00:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_board.c,v 1.2 2010/12/28 04:02:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_board.c,v 1.3 2011/07/09 15:00:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,9 @@ auvitek_board_init(struct auvitek_softc *sc)
 }
 
 int
-auvitek_board_tuner_reset(struct auvitek_softc *sc)
+auvitek_board_tuner_reset(void *priv)
 {
+	struct auvitek_softc *sc = priv;
 	uint8_t val;
 
 	switch (sc->sc_board) {
@@ -116,4 +117,10 @@ auvitek_board_tuner_reset(struct auvitek_softc *sc)
 	}
 
 	return 0;
+}
+
+unsigned int
+auvitek_board_get_if_frequency(struct auvitek_softc *sc)
+{
+	return 6000000;	/* 6MHz */
 }

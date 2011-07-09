@@ -1,7 +1,7 @@
-/* $NetBSD: xc5kvar.h,v 1.2 2011/07/09 15:00:44 jmcneill Exp $ */
+/* $NetBSD: au8522mod.h,v 1.1 2011/07/09 15:00:43 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,38 +26,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _XC5KVAR_H
-#define _XC5KVAR_H
+#ifndef _AU8522MOD_H
+#define _AU8522MOD_H
 
-#include <dev/i2c/i2cvar.h>
-#include <dev/dtv/dtvio.h>
-#include <dev/video_if.h>
-
-typedef int (*xc5k_reset_cb)(void *);
-
-struct xc5k {
-	device_t	parent;
-	i2c_tag_t	i2c;
-	i2c_addr_t	i2c_addr;
-
-	xc5k_reset_cb	reset;
-	void		*reset_priv;
-
-	unsigned int	if_freq;
-	fe_type_t	fe_type;
+struct au8522_modulation_table {
+	uint16_t	reg;
+	uint8_t		val;
 };
 
-struct xc5k_params {
-	uint16_t		signal_source;
-	uint32_t		frequency;
-	enum video_standard	standard;
-};
+#include <dev/i2c/au8522mod_8vsb.h>
+#include <dev/i2c/au8522mod_qam64.h>
+#include <dev/i2c/au8522mod_qam256.h>
 
-struct xc5k *	xc5k_open(device_t, i2c_tag_t, i2c_addr_t,
-			  xc5k_reset_cb, void *, unsigned int, fe_type_t);
-void		xc5k_close(struct xc5k *);
-int		xc5k_tune_video(struct xc5k *, struct xc5k_params *);
-int		xc5k_tune_dtv(struct xc5k *, const struct dvb_frontend_parameters *);
-fe_status_t	xc5k_get_status(struct xc5k *);
-
-#endif /* !_XC5KVAR_H */
+#endif /* !_AU8522MOD_H */

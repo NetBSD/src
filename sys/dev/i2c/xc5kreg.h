@@ -1,4 +1,4 @@
-/* $NetBSD: xc5kreg.h,v 1.1 2010/12/27 15:42:11 jmcneill Exp $ */
+/* $NetBSD: xc5kreg.h,v 1.2 2011/07/09 15:00:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,13 +33,24 @@
 #define	XC5K_REG_INIT		0x00
 #define	XC5K_REG_VIDEO_MODE	0x01
 #define	 XC5K_VIDEO_MODE_BTSC		0x8028
+#define	 XC5K_VIDEO_MODE_DTV6		0x8002
+#define	 XC5K_VIDEO_MODE_DTV7		0x8007
+#define	 XC5K_VIDEO_MODE_DTV8		0x800b
+#define	 XC5K_VIDEO_MODE_DTV78		0x801b
 #define	XC5K_REG_AUDIO_MODE	0x02
 #define	 XC5K_AUDIO_MODE_BTSC		0x0400
+#define	 XC5K_AUDIO_MODE_DTV6		0x00c0
+#define	 XC5K_AUDIO_MODE_DTV7		0x00c0
+#define	 XC5K_AUDIO_MODE_DTV8		0x00c0
+#define	 XC5K_AUDIO_MODE_DTV78		0x00c0
 #define	XC5K_REG_RF_FREQ	0x03
 #define	XC5K_REG_D_CODE		0x04
 #define	XC5K_REG_IF_OUT		0x05
 #define	XC5K_REG_SEEK_MODE	0x07
 #define	XC5K_REG_POWER_DOWN	0x0a
+#define	XC5K_REG_OUTAMP		0x0b
+#define	 XC5K_OUTAMP_DIGITAL		0x008a
+#define	 XC5K_OUTAMP_ANALOG	 	0x0009
 #define	XC5K_REG_SIGNAL_SOURCE	0x0d
 #define	 XC5K_SIGNAL_SOURCE_AIR		0
 #define	 XC5K_SIGNAL_SOURCE_CABLE	1
@@ -54,6 +65,8 @@
 #define	XC5K_REG_FRAME_LINES	0x02
 #define	XC5K_REG_HSYNC_FREQ	0x03
 #define	XC5K_REG_LOCK		0x04
+#define	 XC5K_LOCK_LOCKED		0x0001
+#define	 XC5K_LOCK_NOSIGNAL		0x0002
 #define	XC5K_REG_FREQ_ERR	0x05
 #define	XC5K_REG_SNR		0x06
 #define	XC5K_REG_VERSION	0x07
