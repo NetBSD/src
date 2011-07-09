@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.c,v 1.16 2011/02/20 07:47:38 matt Exp $ */
+/* $NetBSD: systemsw.c,v 1.17 2011/07/09 16:59:40 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,18 +33,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.16 2011/02/20 07:47:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.17 2011/07/09 16:59:40 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/kernel.h>
+#include <sys/systm.h>
 
 #include <mips/locore.h>
 #include <mips/mips3_clock.h>
 
-#include <machine/intr.h>
-#include <machine/systemsw.h>
+#include <sbmips/systemsw.h>
 
 
 /* trivial functions for function switch */

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.49 2011/02/20 07:47:38 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.50 2011/07/09 16:59:40 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,54 +58,55 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2011/02/20 07:47:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2011/07/09 16:59:40 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 #include "opt_modular.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
-#include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/exec.h>
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
+#include <sys/file.h>
+#include <sys/intr.h>
 #include <sys/kcore.h>
+#include <sys/kernel.h>
 #include <sys/ksyms.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/mount.h>
+#include <sys/msgbuf.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/syscallargs.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
-#include <machine/pte.h>
-#include <machine/autoconf.h>
-#include <machine/intr.h>
-#include <machine/swarm.h>
 #include <mips/locore.h>
+#include <mips/psl.h>
+#include <mips/pte.h>
+#include <mips/reg.h>
 
 #include <mips/cfe/cfe_api.h>
 
+#include <sbmips/autoconf.h>
+#include <sbmips/swarm.h>
+
 #if 0 /* XXXCGD */
-#include <machine/nvram.h>
+#include <sbmips/nvram.h>
 #endif /* XXXCGD */
-#include <machine/leds.h>
+#include <sbmips/leds.h>
 
 #include <mips/sibyte/dev/sbbuswatchvar.h>
 
 #include "ksyms.h"
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-#include <machine/db_machdep.h>
+#include <mips/db_machdep.h>
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
