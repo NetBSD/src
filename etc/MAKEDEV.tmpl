@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.138 2011/02/26 18:07:16 ahoka Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.139 2011/07/09 14:49:28 jmcneill Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -235,6 +235,7 @@
 #	dpt*	DPT/Adaptec EATA RAID management interface
 #	dpti*	DPT/Adaptec I2O RAID management interface
 #	drm*	Direct Rendering Manager interface
+#	dtv*	Digital TV interface
 #	fb*	PMAX generic framebuffer pseudo-device
 #	fd	file descriptors
 #	grf*	graphics frame buffer device
@@ -745,6 +746,7 @@ all)
 	makedev putter
 	makedev drvctl
 	makedev video
+	makedev dtv
 	makedev drm0
 	makedev altmem
 	makedev zfs
@@ -783,6 +785,10 @@ radio)
 
 video)
 	makedev video0 video1 video2 video3
+	;;
+
+dtv)
+	makedev dtv0 dtv1 dtv2 dtv3
 	;;
 
 altmem)
@@ -1376,6 +1382,15 @@ video*)
 	unit=${i#video}
 	: ${unit:-0}
 	mkdev video$unit c %video_chr% $unit 666
+	;;
+
+dtv*)
+	unit=${i#dtv}
+	makedir dvb 755
+	makedir dvb/adapter$unit 755
+	mkdev dvb/adapter$unit/frontend0 c %dtv_chr% $(($unit + 0)) 666
+	mkdev dvb/adapter$unit/demux0 c %dtv_chr% $(($unit + 16)) 666
+	mkdev dvb/adapter$unit/dvr0 c %dtv_chr% $(($unit + 32)) 666
 	;;
 
 amr*)
