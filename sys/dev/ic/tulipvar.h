@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.64 2009/04/17 15:22:35 cegger Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.65 2011/07/09 23:18:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -571,8 +571,6 @@ do {									\
 #define	TULIP_SP_FIELD(x, f)	TULIP_SP_FIELD_C((x)[f * 2], (x)[f * 2 + 1])
 
 #ifdef _KERNEL
-extern const char * const tlp_chip_names[];
-
 extern const struct tulip_mediasw tlp_21040_mediasw;
 extern const struct tulip_mediasw tlp_21040_tp_mediasw;
 extern const struct tulip_mediasw tlp_21040_auibnc_mediasw;
@@ -604,6 +602,7 @@ void	tlp_mediastatus(struct ifnet *, struct ifmediareq *);
 
 void	tlp_21140_gpio_get(struct tulip_softc *sc, struct ifmediareq *ifmr);
 int	tlp_21140_gpio_set(struct tulip_softc *sc);
+const char *tlp_chip_name(tulip_chip_t);
 
 #endif /* _KERNEL */
 

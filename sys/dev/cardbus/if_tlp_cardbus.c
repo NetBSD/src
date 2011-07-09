@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.67 2010/03/10 00:21:10 dyoung Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.68 2011/07/09 23:18:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.67 2010/03/10 00:21:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.68 2011/07/09 23:18:05 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -187,8 +187,7 @@ tlp_cardbus_lookup(const struct cardbus_attach_args *ca)
 {
 	const struct tulip_cardbus_product *tcp;
 
-	for (tcp = tlp_cardbus_products;
-	     tlp_chip_names[tcp->tcp_chip] != NULL;
+	for (tcp = tlp_cardbus_products; tcp->tcp_chip != TULIP_CHIP_INVALID;
 	     tcp++) {
 		if (PCI_VENDOR(ca->ca_id) == tcp->tcp_vendor &&
 		    PCI_PRODUCT(ca->ca_id) == tcp->tcp_product)
@@ -297,7 +296,7 @@ tlp_cardbus_attach(device_t parent, device_t self,
 	}
 
 	printf(": %s Ethernet, pass %d.%d\n",
-	    tlp_chip_names[sc->sc_chip],
+	    tlp_chip_name(sc->sc_chip),
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 	/*
