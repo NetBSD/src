@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.44 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.45 2011/07/09 15:02:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.44 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.45 2011/07/09 15:02:15 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,14 +138,14 @@ static void	ncr5380_irq_intr(void *);
 static void	ncr5380_drq_intr(void *);
 static void	do_ncr5380_drq_intr(void *);
 
-static inline void	scsi_clr_ipend(void);
-static		  void	scsi_mach_init(struct ncr_softc *);
-static		  int	machine_match(struct device *, struct cfdata *, void *,
-			    struct cfdriver *);
-static inline int	pdma_ready(void);
-static		  int	transfer_pdma(u_char *, u_char *, u_long *);
+static void	scsi_clr_ipend(void);
+static void	scsi_mach_init(struct ncr_softc *);
+static int	machine_match(struct device *, struct cfdata *, void *,
+			      struct cfdriver *);
+static int	pdma_ready(void);
+static int	transfer_pdma(u_char *, u_char *, u_long *);
 
-static inline void
+static void
 scsi_clr_ipend(void)
 {
 	int tmp;
@@ -266,7 +266,7 @@ pdma_cleanup(void)
 }
 #endif
 
-static inline int
+static int
 pdma_ready(void)
 {
 #if USE_PDMA
