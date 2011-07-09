@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.20 2011/07/01 18:30:36 dyoung Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.21 2011/07/09 16:03:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,22 +37,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.20 2011/07/01 18:30:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.21 2011/07/09 16:03:00 matt Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
 
 #include <sys/param.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/cpu.h>
-
 #include <sys/bus.h>
-#include <machine/autoconf.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/queue.h>
+#include <sys/systm.h>
+
+#include <algor/autoconf.h>
 
 #include <mips/locore.h>
 
@@ -162,7 +162,7 @@ struct p6032_intrhead p6032_intrtab[NIRQMAPS];
 #define	NINTRS			2	/* MIPS INT0 - INT1 */
 
 struct p6032_cpuintr {
-	LIST_HEAD(, algor_intrhand) cintr_list;
+	LIST_HEAD(, evbmips_intrhand) cintr_list;
 	struct evcnt cintr_count;
 };
 
@@ -306,7 +306,7 @@ void *
 algor_p6032_intr_establish(int irq, int (*func)(void *), void *arg)
 {
 	const struct p6032_irqmap *irqmap;
-	struct algor_intrhand *ih;
+	struct evbmips_intrhand *ih;
 	int s;
 
 	irqmap = &p6032_irqmap[irq];
@@ -347,7 +347,7 @@ void
 algor_p6032_intr_disestablish(void *cookie)
 {
 	const struct p6032_irqmap *irqmap;
-	struct algor_intrhand *ih = cookie;
+	struct evbmips_intrhand *ih = cookie;
 	int s;
 
 	irqmap = ih->ih_irqmap;
@@ -375,7 +375,7 @@ void
 algor_p6032_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 {
 	const struct p6032_irqmap *irqmap;
-	struct algor_intrhand *ih;
+	struct evbmips_intrhand *ih;
 	int level;
 	uint32_t isr;
 
