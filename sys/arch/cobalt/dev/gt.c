@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.26 2011/07/01 20:36:42 dyoung Exp $	*/
+/*	$NetBSD: gt.c,v 1.27 2011/07/09 16:09:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,30 +26,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.26 2011/07/01 20:36:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.27 2011/07/09 16:09:01 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/select.h>
-#include <sys/tty.h>
-#include <sys/proc.h>
+#include <sys/bus.h>
 #include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/uio.h>
-#include <sys/kernel.h>
-#include <sys/syslog.h>
-#include <sys/types.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/extent.h>
+#include <sys/file.h>
+#include <sys/intr.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/select.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/tty.h>
+#include <sys/uio.h>
 
 #include <machine/autoconf.h>
-#include <sys/bus.h>
-#include <machine/intr.h>
 
 #include <mips/cache.h>
 
