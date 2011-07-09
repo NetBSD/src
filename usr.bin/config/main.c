@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.42 2010/03/22 14:40:54 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.43 2011/07/09 08:01:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -541,6 +541,7 @@ mksymlinks(void)
 	snprintf(buf, sizeof(buf), "arch/%s/include", machine);
 	p = sourcepath(buf);
 	ret = recreate(p, "machine");
+	ret = recreate(p, machine);
 	free(p);
 
 	if (machinearch != NULL) {
