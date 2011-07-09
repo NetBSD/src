@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.88 2011/02/14 03:18:11 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.89 2011/07/09 15:02:49 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.88 2011/02/14 03:18:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.89 2011/07/09 15:02:49 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -165,8 +165,8 @@ const struct db_variable db_regs[] = {
 	{ "i3",		dbregfr(arg[3]),	db_sparc_regop, },
 	{ "i4",		dbregfr(arg[4]),	db_sparc_regop, },
 	{ "i5",		dbregfr(arg[5]),	db_sparc_regop, },
-	{ "i6",		dbregfr(arg[6]),	db_sparc_regop, },
-	{ "i7",		dbregfr(arg[7]),	db_sparc_regop, },
+	{ "i6",		dbregfr(fp),		db_sparc_regop, },
+	{ "i7",		dbregfr(pc),		db_sparc_regop, },
 };
 const struct db_variable * const db_eregs =
     db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
