@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.93 2011/07/09 14:50:00 tron Exp $	*/
+/*	$NetBSD: refuse.c,v 1.94 2011/07/09 17:16:46 tron Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.93 2011/07/09 14:50:00 tron Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.94 2011/07/09 17:16:46 tron Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1298,6 +1298,9 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 
 	fuse->fc = fc;
 
+	if (fuse->op.init != NULL)
+		fusectx->private_data = fuse->op.init(NULL); /* XXX */
+
 	/* initialise the puffs operations structure */
         PUFFSOP_INIT(pops);
 
@@ -1360,9 +1363,6 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 		if (fuse->op.getattr(po_root->po_path, &st) == 0)
 			puffs_stat2vattr(&pn_root->pn_va, &st);
 	assert(pn_root->pn_va.va_type == VDIR);
-
-	if (fuse->op.init)
-		fusectx->private_data = fuse->op.init(NULL); /* XXX */
 
 	puffs_set_prepost(pu, set_fuse_context_pid, NULL);
 
