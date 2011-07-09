@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.176 2010/11/13 13:52:02 uebayasi Exp $	*/
+/*	$NetBSD: tulip.c,v 1.177 2011/07/09 23:18:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.176 2010/11/13 13:52:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.177 2011/07/09 23:18:05 christos Exp $");
 
 
 #include <sys/param.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.176 2010/11/13 13:52:02 uebayasi Exp $")
 #include <dev/ic/tulipreg.h>
 #include <dev/ic/tulipvar.h>
 
-const char * const tlp_chip_names[] = TULIP_CHIP_NAMES;
+static const char * const tlp_chip_names[] = TULIP_CHIP_NAMES;
 
 static const struct tulip_txthresh_tab tlp_10_txthresh_tab[] =
     TLP_TXTHRESH_TAB_10;
@@ -6196,4 +6196,14 @@ tlp_rs7112_tmsw_init(struct tulip_softc *sc)
 		sc->sc_tick = tlp_mii_tick;
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	}
+}
+
+const char *
+tlp_chip_name(tulip_chip_t t) {
+	if ((int)t < 0 || (int)t >= __arraycount(tlp_chip_names)) {
+		static char buf[256];
+		(void)snprintf(buf, sizeof(buf), "[unknown 0x%x]", t);
+		return buf;
+	}
+	return tlp_chip_names[t];
 }

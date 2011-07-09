@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.116 2010/01/21 16:14:39 martin Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.117 2011/07/09 23:18:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.116 2010/01/21 16:14:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.117 2011/07/09 23:18:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,9 +270,8 @@ tlp_pci_lookup(const struct pci_attach_args *pa)
 	    PCI_SUBSYS_ID_REG)) == PCI_VENDOR_LMC)
 		return NULL;
 
-	for (tpp = tlp_pci_products;
-	     tlp_chip_names[tpp->tpp_chip] != NULL;
-	     tpp++) {
+	for (tpp = tlp_pci_products; tpp->tpp_chip != TULIP_CHIP_INVALID;
+	    tpp++) {
 		if (PCI_VENDOR(pa->pa_id) == tpp->tpp_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == tpp->tpp_product)
 			return tpp;
@@ -461,7 +460,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal(": %s Ethernet, pass %d.%d\n",
-	    tlp_chip_names[sc->sc_chip],
+	    tlp_chip_name(sc->sc_chip),
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 	switch (sc->sc_chip) {
