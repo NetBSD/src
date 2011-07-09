@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2011/07/09 02:30:27 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2011/07/09 04:12:01 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -13,11 +13,13 @@ CPPFLAGS+= -DSOFTFLOAT
 
 SRCS+=	fixunsgen_ieee754.c fixunssfsi_ieee754.c fixunsdfsi_ieee754.c
 SRCS+=	fixunsgen64_ieee754.c #fixunssfdi.c fixunsdfdi.c
-.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+.if (${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el") \
+    && (!defined(CPUFLAGS) || empty(CPUFLAGS:M-mabi=32))
 SRCS+=	fixunstfsi_ieee754.c fixunstfdi_ieee754.c
 .endif
 .endif
 
-.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+.if (${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el") \
+    && (!defined(CPUFLAGS) || empty(CPUFLAGS:M-mabi=32))
 SRCS+=	floatunditf_ieee754.c
 .endif
