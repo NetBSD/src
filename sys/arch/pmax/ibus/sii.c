@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.9 2011/06/04 01:31:23 tsutsui Exp $	*/
+/*	$NetBSD: sii.c,v 1.10 2011/07/09 17:32:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.9 2011/06/04 01:31:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.10 2011/07/09 17:32:30 matt Exp $");
 
 #include "sii.h"
 /*
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.9 2011/06/04 01:31:23 tsutsui Exp $");
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/locore.h>
+#include <mips/locore.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_message.h>

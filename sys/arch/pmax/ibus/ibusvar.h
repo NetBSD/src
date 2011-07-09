@@ -1,9 +1,9 @@
-/*	$NetBSD: ibusvar.h,v 1.19 2011/02/20 07:50:24 matt Exp $	*/
+/*	$NetBSD: ibusvar.h,v 1.20 2011/07/09 17:32:29 matt Exp $	*/
 
 #ifndef _PMAX_IBUS_IBUSVAR_H_
 #define _PMAX_IBUS_IBUSVAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct ibus_attach_args;
 

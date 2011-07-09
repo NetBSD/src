@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_3max.c,v 1.14 2011/02/20 07:50:24 matt Exp $	*/
+/*	$NetBSD: ibus_3max.c,v 1.15 2011/07/09 17:32:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.14 2011/02/20 07:50:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.15 2011/07/09 17:32:29 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 #include <dev/tc/tcvar.h>
+
 #include <pmax/ibus/ibusvar.h>
 #include <pmax/pmax/kn02.h>
 
