@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_buffer.c,v 1.1 2011/07/09 14:46:56 jmcneill Exp $ */
+/* $NetBSD: dtv_buffer.c,v 1.2 2011/07/09 17:55:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_buffer.c,v 1.1 2011/07/09 14:46:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_buffer.c,v 1.2 2011/07/09 17:55:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -120,7 +120,7 @@ dtv_buffer_free(struct dtv_buffer *db)
 	kmem_free(db, sizeof(*db));
 }
 
-static int
+int
 dtv_buffer_realloc(struct dtv_softc *sc, size_t bufsize)
 {
 	struct dtv_stream *ds = &sc->sc_stream;
@@ -196,23 +196,14 @@ dtv_stream_enqueue(struct dtv_stream *ds, struct dtv_buffer *db)
 }
 
 int
-dtv_buffer_setup(struct dtv_softc *sc, size_t bufsize)
+dtv_buffer_setup(struct dtv_softc *sc)
 {
 	struct dtv_stream *ds = &sc->sc_stream;
 	unsigned int i;
-	int error;
 
 	mutex_enter(&ds->ds_lock);
-
-	error = dtv_buffer_realloc(sc, PAGE_ALIGN(bufsize));
-	if (error) {
-		mutex_exit(&ds->ds_lock);
-		return error;
-	}
-
 	for (i = 0; i < ds->ds_nbufs; i++)
 		dtv_stream_enqueue(ds, ds->ds_buf[i]);
-
 	mutex_exit(&ds->ds_lock);
 
 	return 0;
@@ -224,13 +215,10 @@ dtv_buffer_destroy(struct dtv_softc *sc)
 	struct dtv_stream *ds = &sc->sc_stream;
 
 	mutex_enter(&ds->ds_lock);
-
 	while (SIMPLEQ_FIRST(&ds->ds_ingress))
 		SIMPLEQ_REMOVE_HEAD(&ds->ds_ingress, db_entries);
 	while (SIMPLEQ_FIRST(&ds->ds_egress))
 		SIMPLEQ_REMOVE_HEAD(&ds->ds_egress, db_entries);
-	dtv_buffer_realloc(sc, 0);
-
 	mutex_exit(&ds->ds_lock);
 
 	return 0;
