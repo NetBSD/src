@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.18 2011/02/20 07:47:38 matt Exp $ */
+/* $NetBSD: rtc.c,v 1.19 2011/07/09 16:59:40 matt Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.18 2011/02/20 07:47:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.19 2011/07/09 16:59:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,8 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.18 2011/02/20 07:47:38 matt Exp $");
 
 #include <dev/clock_subr.h>
 
-#include <machine/swarm.h>
-#include <machine/systemsw.h>
+#include <sbmips/swarm.h>
+#include <sbmips/systemsw.h>
 
 #include <mips/locore.h>
 #include <mips/sibyte/dev/sbsmbusvar.h>
