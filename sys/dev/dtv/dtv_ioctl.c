@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_ioctl.c,v 1.1 2011/07/09 14:46:56 jmcneill Exp $ */
+/* $NetBSD: dtv_ioctl.c,v 1.2 2011/07/09 17:55:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_ioctl.c,v 1.1 2011/07/09 14:46:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_ioctl.c,v 1.2 2011/07/09 17:55:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -75,26 +75,17 @@ dtv_demux_ioctl(struct dtv_softc *sc, u_long cmd, void *data, int flags)
 {
 	struct dmx_pes_filter_params *pesfilt;
 	uint16_t pid;
-	size_t bufsize;
 	int error;
 
 	switch (cmd) {
 	case DMX_START:
-		if (sc->sc_bufsize_chg) {
-			if ((error = dtv_buffer_setup(sc, sc->sc_bufsize)) != 0)
-				return error;
-			sc->sc_bufsize_chg = false;
-		}
+		error = dtv_buffer_setup(sc);
+		if (error)
+			return error;
 		return dtv_device_start_transfer(sc);
 	case DMX_STOP:
 		return dtv_device_stop_transfer(sc);
 	case DMX_SET_BUFFER_SIZE:
-		bufsize = *(uintptr_t *)data;
-		if (bufsize >= DTV_DEFAULT_BUFSIZE &&
-		    sc->sc_bufsize != bufsize) {
-			sc->sc_bufsize = bufsize;
-			sc->sc_bufsize_chg = true;
-		}
 		return 0;
 	case DMX_SET_PES_FILTER:
 		pesfilt = data;
