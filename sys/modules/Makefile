@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.73 2011/06/15 09:45:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.74 2011/07/09 14:56:43 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,7 @@ SUBDIR+=	coda5
 SUBDIR+=	compat
 SUBDIR+=	compat_ossaudio
 SUBDIR+=	coredump
+SUBDIR+=	dtv
 SUBDIR+=	efs
 SUBDIR+=	ext2fs
 SUBDIR+=	exec_script
