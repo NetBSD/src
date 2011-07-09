@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_device.c,v 1.2 2011/07/09 17:55:20 jmcneill Exp $ */
+/* $NetBSD: dtv_device.c,v 1.3 2011/07/09 19:24:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.2 2011/07/09 17:55:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.3 2011/07/09 19:24:10 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.2 2011/07/09 17:55:20 jmcneill Exp 
 #include <sys/select.h>
 
 #include <dev/dtv/dtvvar.h>
-#include <dev/dtv/dtvmodule.h>
 
 MODULE(MODULE_CLASS_DRIVER, dtv, NULL);
 
@@ -74,6 +73,8 @@ CFATTACH_DECL_NEW(dtv,
     dtv_detach,
     NULL
 );
+
+extern struct cfdriver dtv_cd;
 
 static int
 dtv_match(device_t parent, cfdata_t cfdata, void *aa)
@@ -144,13 +145,20 @@ dtv_detach(device_t self, int flags)
 	return 0;
 }
 
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
 static int
 dtv_modcmd(modcmd_t cmd, void *arg)
 {
+#ifdef _MODULE
 	int error, bmaj = -1, cmaj = -1;
+#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
 		error = config_init_component(cfdriver_ioconf_dtv,
 		    cfattach_ioconf_dtv, cfdata_ioconf_dtv);
 		if (error)
@@ -160,10 +168,17 @@ dtv_modcmd(modcmd_t cmd, void *arg)
 			config_fini_component(cfdriver_ioconf_dtv,
 			    cfattach_ioconf_dtv, cfdata_ioconf_dtv);
 		return error;
+#else
+		return 0;
+#endif
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
 		devsw_detach(NULL, &dtv_cdevsw);
 		return config_fini_component(cfdriver_ioconf_dtv,
 		    cfattach_ioconf_dtv, cfdata_ioconf_dtv);
+#else
+		return 0;
+#endif
 	default:
 		return ENOTTY;
 	}
