@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.27 2011/06/04 01:57:35 tsutsui Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.28 2011/07/09 17:32:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,8 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.27 2011/06/04 01:57:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.28 2011/07/09 17:32:31 matt Exp $");
 
+#define	_PMAX_BUS_DMA_PRIVATE
 /*
  * Which system models were configured?
  */
@@ -41,14 +42,12 @@ __KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.27 2011/06/04 01:57:35 tsutsui Exp $");
 #include "opt_dec_3maxplus.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
-#include <machine/autoconf.h>
-#include <machine/sysconf.h>
-
-#define	_PMAX_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <pmax/autoconf.h>
+#include <pmax/sysconf.h>
 
 #include <dev/tc/tcvar.h>
 #include <pmax/pmax/pmaxtype.h>
@@ -177,7 +176,7 @@ tc_ds_get_dma_tag(int slot)
 #include "pxg.h"
 
 #include <pmax/pmax/cons.h>
-#include <machine/dec_prom.h>
+#include <pmax/dec_prom.h>
 
 int	tc_checkslot(tc_addr_t, char *);
 

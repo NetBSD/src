@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.19 2011/02/20 07:50:24 matt Exp $	*/
+/*	$NetBSD: ibus.c,v 1.20 2011/07/09 17:32:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,13 +31,13 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.19 2011/02/20 07:50:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.20 2011/07/09 17:32:29 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
-#include <machine/sysconf.h>
+#include <pmax/sysconf.h>
 #include <pmax/ibus/ibusvar.h>
 
 #include "locators.h"

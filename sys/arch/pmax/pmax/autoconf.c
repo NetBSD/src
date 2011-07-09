@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.77 2011/04/06 15:31:48 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.78 2011/07/09 17:32:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,17 +39,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77 2011/04/06 15:31:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.78 2011/07/09 17:32:30 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/conf.h>
-#include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
 
-#include <machine/autoconf.h>
-#include <machine/intr.h>
-#include <machine/sysconf.h>
+#include <pmax/autoconf.h>
+#include <pmax/sysconf.h>
 
 #include <pmax/pmax/pmaxtype.h>
 

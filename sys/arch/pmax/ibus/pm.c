@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.9 2011/06/04 01:31:23 tsutsui Exp $	*/
+/*	$NetBSD: pm.c,v 1.10 2011/07/09 17:32:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,17 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.9 2011/06/04 01:31:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.10 2011/07/09 17:32:30 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/bus.h>
+#include <sys/device.h>
 #include <sys/ioctl.h>
-
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/intr.h>
+#include <sys/kernel.h>
+#include <sys/systm.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>

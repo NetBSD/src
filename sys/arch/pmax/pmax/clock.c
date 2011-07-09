@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.39 2011/06/04 01:43:56 tsutsui Exp $ */
+/* $NetBSD: clock.c,v 1.40 2011/07/09 17:32:30 matt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39 2011/06/04 01:43:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40 2011/07/09 17:32:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,7 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39 2011/06/04 01:43:56 tsutsui Exp $");
 #include <dev/clock_subr.h>
 
 #include <dev/dec/clockvar.h>
-#include <machine/sysconf.h>
+
+#include <pmax/sysconf.h>
 
 #include "opt_ntp.h"
 

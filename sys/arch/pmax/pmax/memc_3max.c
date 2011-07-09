@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3max.c,v 1.16 2009/12/14 00:46:11 matt Exp $	*/
+/*	$NetBSD: memc_3max.c,v 1.17 2011/07/09 17:32:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,12 +32,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.16 2009/12/14 00:46:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.17 2011/07/09 17:32:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/locore.h>		/* wbflush() */
+#include <mips/locore.h>		/* wbflush() */
 
 #include <pmax/pmax/kn02.h>	/* error-register defs copied into kn03.h */
 #include <pmax/pmax/memc.h>

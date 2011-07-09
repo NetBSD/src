@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.18 2011/02/20 07:50:25 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.19 2011/07/09 17:32:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,20 +30,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18 2011/02/20 07:50:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.19 2011/07/09 17:32:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/proc.h>
 
-#include <mips/psl.h>
 #include <mips/locore.h>
+#include <mips/psl.h>
 #include <mips/regnum.h>
 
-#include <machine/autoconf.h>
-#include <machine/sysconf.h>
-#include <machine/intr.h>
+#include <pmax/autoconf.h>
+#include <pmax/sysconf.h>
 
 struct evcnt pmax_clock_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "clock", "intr");
