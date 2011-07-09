@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.67 2011/04/03 03:19:52 mhitch Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.68 2011/07/09 17:32:30 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,17 +70,16 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.67 2011/04/03 03:19:52 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.68 2011/07/09 17:32:30 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/cpu.h>
 #include <sys/evcnt.h>
 #include <sys/lwp.h>
+#include <sys/systm.h>
 #include <sys/timetc.h>
 
-#include <machine/sysconf.h>
-#include <machine/locore.h>
+#include <mips/locore.h>
 
 #include <mips/mips/mips_mcclock.h>	/* mclock CPUspeed estimation */
 
@@ -88,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.67 2011/04/03 03:19:52 mhitch Exp
 #include <dev/tc/tcvar.h>		/* tc type definitions for.. */
 #include <dev/tc/ioasicreg.h>		/* ioasic interrrupt masks */
 #include <dev/tc/ioasicvar.h>		/* ioasic_base */
+
+#include <pmax/sysconf.h>
 
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn03.h>

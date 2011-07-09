@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_pmax.c,v 1.22 2011/02/20 07:50:24 matt Exp $	*/
+/*	$NetBSD: ibus_pmax.c,v 1.23 2011/07/09 17:32:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,19 +31,19 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.22 2011/02/20 07:50:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.23 2011/07/09 17:32:29 matt Exp $");
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 #include <pmax/ibus/ibusvar.h>
 
-#include <machine/autoconf.h>
-#include <machine/sysconf.h>
+#include <pmax/autoconf.h>
+#include <pmax/sysconf.h>
 
 #include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn230.h>

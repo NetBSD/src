@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.8 2011/06/04 01:31:23 tsutsui Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.9 2011/07/09 17:32:30 matt Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -16,23 +16,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.8 2011/06/04 01:31:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.9 2011/07/09 17:32:30 matt Exp $");
 
 #include "sii.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/bus.h>
+#include <sys/device.h>
+#include <sys/systm.h>
 
-#include <machine/locore.h>
+#include <mips/locore.h>
+#include <pmax/locore.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
 
-#include <machine/bus.h>
 #include <pmax/ibus/siireg.h>
 #include <pmax/ibus/siivar.h>
 

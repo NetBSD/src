@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.5 2002/06/05 06:19:29 simonb Exp $ */
+/* $NetBSD: locore.h,v 1.6 2011/07/09 17:32:30 matt Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -17,8 +17,6 @@
 
 #ifndef _PMAX_LOCORE_H_
 #define _PMAX_LOCORE_H_
-
-#include <mips/locore.h>
 
 void	CopyToBuffer(u_short *src, 	/* NB: must be short aligned */
 	     volatile u_short *dst, int length);

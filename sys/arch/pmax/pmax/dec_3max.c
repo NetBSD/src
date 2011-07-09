@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.53 2011/03/10 17:13:13 tsutsui Exp $ */
+/* $NetBSD: dec_3max.c,v 1.54 2011/07/09 17:32:30 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,24 +70,25 @@
 #define	__INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.53 2011/03/10 17:13:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.54 2011/07/09 17:32:30 matt Exp $");
 
 #include "dzkbd.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/lwp.h>
-#include <sys/cpu.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/intr.h>
+#include <sys/lwp.h>
+#include <sys/systm.h>
 
-#include <machine/locore.h>
-#include <machine/sysconf.h>
+#include <mips/locore.h>
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
 #include <dev/tc/tcvar.h>		/* tc_addr_t */
+
+#include <pmax/sysconf.h>
 
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn02.h>

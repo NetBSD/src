@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.7 2009/07/20 17:05:13 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8 2011/07/09 17:32:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,12 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.7 2009/07/20 17:05:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8 2011/07/09 17:32:30 matt Exp $");
 
 #include <sys/param.h>
+#include <sys/bus.h>
 #include <sys/systm.h>
-
-#include <machine/bus.h>
 
 /* ARGSUSED */
 int
