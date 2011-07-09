@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.182 2011/07/01 18:49:24 dyoung Exp $ */
+/*	$NetBSD: autoconf.c,v 1.183 2011/07/09 15:03:35 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.182 2011/07/01 18:49:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.183 2011/07/09 15:03:35 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1088,7 +1088,7 @@ noether:
 			gfb_cb.gcc_cookie = 
 			    (void *)(intptr_t)console_instance;
 			gfb_cb.gcc_set_mapreg = of_set_palette;
-			cmap_cb = (uint64_t)&gfb_cb;
+			cmap_cb = (uint64_t)(uintptr_t)&gfb_cb;
 			prop_dictionary_set_uint64(dict,
 			    "cmap_callback", cmap_cb);
 		}
