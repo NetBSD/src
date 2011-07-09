@@ -1,4 +1,4 @@
-/* $NetBSD: xc5k.c,v 1.2 2010/12/28 00:11:50 jmcneill Exp $ */
+/* $NetBSD: xc5k.c,v 1.3 2011/07/09 15:00:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xc5k.c,v 1.2 2010/12/28 00:11:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xc5k.c,v 1.3 2011/07/09 15:00:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: xc5k.c,v 1.2 2010/12/28 00:11:50 jmcneill Exp $");
 
 #define	XC5K_FIRMWARE_DRVNAME	"xc5k"
 #define	XC5K_FIRMWARE_IMGNAME	"dvb-fe-xc5000-1.6.114.fw"
+
+#define	XC5K_FREQ_MIN		1000000
+#define	XC5K_FREQ_MAX		1023000000
 
 static kmutex_t xc5k_firmware_lock;
 
@@ -126,7 +129,7 @@ static int
 xc5k_firmware_open(struct xc5k *xc)
 {
 	firmware_handle_t fwh;
-	uint16_t product_id;
+	uint16_t product_id, xcversion, xcbuild;
 	uint8_t *fw = NULL;
 	size_t fwlen;
 	int error;
@@ -156,6 +159,18 @@ xc5k_firmware_open(struct xc5k *xc)
 	aprint_normal_dev(xc->parent, "xc5k: loading firmware '%s/%s'\n",
 	    XC5K_FIRMWARE_DRVNAME, XC5K_FIRMWARE_IMGNAME);
 	error = xc5k_firmware_upload(xc, fw, fwlen);
+	if (!error) {
+		xc5k_read_2(xc, XC5K_REG_VERSION, &xcversion);
+		xc5k_read_2(xc, XC5K_REG_BUILD, &xcbuild);
+		if (!error)
+			aprint_normal_dev(xc->parent,
+			    "xc5k: hw %d.%d, fw %d.%d.%d\n",
+			    (xcversion >> 12) & 0xf,
+			    (xcversion >> 8) & 0xf,
+			    (xcversion >> 4) & 0xf,
+			    xcversion & 0xf,
+			    xcbuild);
+	}
 
 done:
 	if (fw)
@@ -228,7 +243,8 @@ xc5k_write_2(struct xc5k *xc, uint16_t reg, uint16_t val)
 
 struct xc5k *
 xc5k_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr,
-    xc5k_reset_cb reset, void *reset_priv)
+    xc5k_reset_cb reset, void *reset_priv, unsigned int if_freq,
+    fe_type_t fe_type)
 {
 	struct xc5k *xc;
 	uint16_t product_id;
@@ -241,6 +257,8 @@ xc5k_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr,
 	xc->i2c_addr = addr;
 	xc->reset = reset;
 	xc->reset_priv = reset_priv;
+	xc->if_freq = if_freq;
+	xc->fe_type = fe_type;
 
 	if (xc5k_read_2(xc, XC5K_REG_PRODUCT_ID, &product_id))
 		goto failed;
@@ -275,7 +293,7 @@ xc5k_close(struct xc5k *xc)
 }
 
 int
-xc5k_tune(struct xc5k *xc, struct xc5k_params *params)
+xc5k_tune_video(struct xc5k *xc, struct xc5k_params *params)
 {
 	uint16_t amode, vmode;
 	uint16_t lock, freq;
@@ -298,9 +316,11 @@ xc5k_tune(struct xc5k *xc, struct xc5k_params *params)
 		return EIO;
 	if (xc5k_write_2(xc, XC5K_REG_AUDIO_MODE, amode))
 		return EIO;
+	if (xc5k_write_2(xc, XC5K_REG_OUTAMP, XC5K_OUTAMP_ANALOG))
+		return EIO;
 	freq = (params->frequency * 62500) / 15625;
 #ifdef XC5K_DEBUG
-	printf("xc5k_tune: frequency=%u (%u Hz)\n", params->frequency,
+	printf("xc5k_tune_video: frequency=%u (%u Hz)\n", params->frequency,
 	    params->frequency * 62500);
 	printf("           freq=%u\n", freq);
 #endif
@@ -312,7 +332,7 @@ xc5k_tune(struct xc5k *xc, struct xc5k_params *params)
 		if (xc5k_read_2(xc, XC5K_REG_LOCK, &lock))
 			return EIO;
 #ifdef XC5K_DEBUG
-		printf("xc5k_tune: lock=0x%04x\n", lock);
+		printf("xc5k_tune_video: lock=0x%04x\n", lock);
 #endif
 		if (lock == 1)
 			break;
@@ -322,6 +342,98 @@ xc5k_tune(struct xc5k *xc, struct xc5k_params *params)
 	return 0;
 }
 
+int
+xc5k_tune_dtv(struct xc5k *xc, const struct dvb_frontend_parameters *params)
+{
+	uint16_t amode, vmode;
+	uint32_t freq, ifout;
+	int signal_source;
+	fe_modulation_t modulation;
+
+	if (xc->fe_type == FE_ATSC)
+		modulation = params->u.vsb.modulation;
+	else if (xc->fe_type == FE_QAM)
+		modulation = params->u.qam.modulation;
+	else
+		return EINVAL;
+
+	switch (modulation) {
+	case VSB_8:
+	case VSB_16:
+		signal_source = XC5K_SIGNAL_SOURCE_AIR;
+		switch (xc->fe_type) {
+		case FE_ATSC:
+			amode = XC5K_AUDIO_MODE_DTV6;
+			vmode = XC5K_VIDEO_MODE_DTV6;
+			freq = params->frequency - 1750000;
+			break;
+		default:
+			return EINVAL;
+		}
+		break;
+	case QAM_16:
+	case QAM_32:
+	case QAM_64:
+	case QAM_128:
+	case QAM_256:
+		signal_source = XC5K_SIGNAL_SOURCE_CABLE;
+		switch (xc->fe_type) {
+		case FE_ATSC:
+			amode = XC5K_AUDIO_MODE_DTV6;
+			vmode = XC5K_VIDEO_MODE_DTV6;
+			freq = params->frequency - 1750000;
+			break;
+		case FE_QAM:
+			amode = XC5K_AUDIO_MODE_DTV78;
+			vmode = XC5K_VIDEO_MODE_DTV78;
+			freq = params->frequency - 2750000;
+			break;
+		default:
+			return EINVAL;
+		}
+		break;
+	default:
+		return EINVAL;
+	}
+
+	if (freq > XC5K_FREQ_MAX || freq < XC5K_FREQ_MIN)
+		return ERANGE;
+
+	if (xc5k_write_2(xc, XC5K_REG_SIGNAL_SOURCE, signal_source))
+		return EIO;
+	if (xc5k_write_2(xc, XC5K_REG_VIDEO_MODE, vmode))
+		return EIO;
+	if (xc5k_write_2(xc, XC5K_REG_AUDIO_MODE, amode))
+		return EIO;
+	ifout = ((xc->if_freq / 1000) * 1024) / 1000;
+	if (xc5k_write_2(xc, XC5K_REG_IF_OUT, ifout))
+		return EIO;
+	if (xc5k_write_2(xc, XC5K_REG_OUTAMP, XC5K_OUTAMP_DIGITAL))
+		return EIO;
+	freq = (uint16_t)(freq / 15625);
+	if (xc5k_write_2(xc, XC5K_REG_FINER_FREQ, freq))
+		return EIO;
+
+	return 0;
+}
+
+fe_status_t
+xc5k_get_status(struct xc5k *xc)
+{
+	uint16_t lock_status;
+	fe_status_t festatus = 0;
+
+	if (xc5k_read_2(xc, XC5K_REG_LOCK, &lock_status))
+		return 0;
+	if (lock_status & XC5K_LOCK_LOCKED) {
+		festatus |= FE_HAS_LOCK;
+		if ((lock_status & XC5K_LOCK_NOSIGNAL) == 0)
+			festatus |= FE_HAS_SIGNAL;
+	}
+
+	return festatus;
+}
+
 MODULE(MODULE_CLASS_DRIVER, xc5k, NULL);
 
 static int
@@ -329,7 +441,7 @@ xc5k_modcmd(modcmd_t cmd, void *opaque)
 {
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		mutex_init(&xc5k_firmware_lock, MUTEX_DEFAULT, IPL_VM);
+		mutex_init(&xc5k_firmware_lock, MUTEX_DEFAULT, IPL_NONE);
 		return 0;
 	case MODULE_CMD_FINI:
 		mutex_destroy(&xc5k_firmware_lock);

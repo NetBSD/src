@@ -1,4 +1,4 @@
-/* $NetBSD: au8522.c,v 1.3 2011/05/26 23:42:05 jmcneill Exp $ */
+/* $NetBSD: au8522.c,v 1.4 2011/07/09 15:00:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au8522.c,v 1.3 2011/05/26 23:42:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au8522.c,v 1.4 2011/07/09 15:00:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,10 +41,13 @@ __KERNEL_RCSID(0, "$NetBSD: au8522.c,v 1.3 2011/05/26 23:42:05 jmcneill Exp $");
 #include <sys/kmem.h>
 #include <sys/module.h>
 
+#include <dev/dtv/dtvio.h>
+
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/i2c/au8522reg.h>
 #include <dev/i2c/au8522var.h>
+#include <dev/i2c/au8522mod.h>
 
 static int	au8522_reset(struct au8522 *);
 static int	au8522_read_1(struct au8522 *, uint16_t, uint8_t *);
@@ -187,8 +190,31 @@ au8522_set_ainput(struct au8522 *au, au8522_ainput_t ai)
 	return 0;
 }
 
+static int
+au8522_set_if(struct au8522 *au)
+{
+	uint8_t ifinit[3];
+	unsigned int n;
+
+	switch (au->if_freq) {
+	case 6000000:	/* 6MHz */
+		ifinit[0] = 0xfb;
+		ifinit[1] = 0x8e;
+		ifinit[2] = 0x39;
+		break;
+	default:
+		aprint_error_dev(au->parent, "au8522: unsupported if freq %dHz\n", au->if_freq);
+		return EINVAL;
+	}
+
+	for (n = 0; n < __arraycount(ifinit); n++)
+		au8522_write_1(au, 0x80b5 + n, ifinit[n]);
+
+	return 0;
+}
+
 struct au8522 *
-au8522_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr)
+au8522_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr, unsigned int if_freq)
 {
 	struct au8522 *au;
 
@@ -198,6 +224,8 @@ au8522_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr)
 	au->parent = parent;
 	au->i2c = i2c;
 	au->i2c_addr = addr;
+	au->current_modulation = -1;
+	au->if_freq = if_freq;
 
 	if (au8522_reset(au))
 		goto failed;
@@ -269,6 +297,90 @@ au8522_set_audio(struct au8522 *au, bool onoff)
 		au8522_write_1(au, AU8522_REG_AUDIO_VOL_R, 0x00);
 		au8522_write_1(au, AU8522_REG_AUDIO_VOL, 0x00);
 	}
+}
+
+int
+au8522_set_modulation(struct au8522 *au, fe_modulation_t modulation)
+{
+	const struct au8522_modulation_table *modtab = NULL;
+	size_t modtablen;
+	unsigned int n;
+
+	switch (modulation) {
+	case VSB_8:
+		modtab = au8522_modulation_8vsb;
+		modtablen = __arraycount(au8522_modulation_8vsb);
+		break;
+	case QAM_64:
+		modtab = au8522_modulation_qam64;
+		modtablen = __arraycount(au8522_modulation_qam64);
+		break;
+	case QAM_256:
+		modtab = au8522_modulation_qam256;
+		modtablen = __arraycount(au8522_modulation_qam256);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	for (n = 0; n < modtablen; n++)
+		au8522_write_1(au, modtab[n].reg, modtab[n].val);
+
+	au8522_set_if(au);
+
+	au->current_modulation = modulation;
+
+	return 0;
+}
+
+void
+au8522_set_gate(struct au8522 *au, bool onoff)
+{
+	au8522_write_1(au, AU8522_REG_TUNERCTL, onoff ? AU8522_TUNERCTL_EN : 0);
+}
+
+fe_status_t
+au8522_get_dtv_status(struct au8522 *au)
+{
+	fe_status_t status = 0;
+	uint8_t val;
+
+	//printf("%s: current_modulation = %d\n", __func__,
+	//    au->current_modulation);
+
+	switch (au->current_modulation) {
+	case VSB_8:
+		if (au8522_read_1(au, 0x4088, &val))
+			return 0;
+		if ((val & 0x03) == 0x03) {
+			status |= FE_HAS_SIGNAL;
+			status |= FE_HAS_CARRIER;
+			status |= FE_HAS_VITERBI;
+		}
+		break;
+	case QAM_64:
+	case QAM_256:
+		if (au8522_read_1(au, 0x4541, &val))
+			return 0;
+		if (val & 0x80) {
+			status |= FE_HAS_VITERBI;
+		}
+		if (val & 0x20) {
+			status |= FE_HAS_SIGNAL;
+			status |= FE_HAS_CARRIER;
+		}
+		break;
+	default:
+		break;
+	}
+
+	if (status & FE_HAS_VITERBI) {
+		status |= FE_HAS_SYNC;
+		status |= FE_HAS_LOCK;
+	}
+
+	//printf("%s: status = 0x%x\n", __func__, status);
+	return status;
 }
 
 MODULE(MODULE_CLASS_DRIVER, au8522, NULL);
