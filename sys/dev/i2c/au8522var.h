@@ -1,4 +1,4 @@
-/* $NetBSD: au8522var.h,v 1.2 2011/05/26 23:42:05 jmcneill Exp $ */
+/* $NetBSD: au8522var.h,v 1.3 2011/07/09 15:00:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,11 +30,16 @@
 #define _AU8522VAR_H
 
 #include <dev/i2c/i2cvar.h>
+#include <dev/dtv/dtvio.h>
 
 struct au8522 {
 	device_t	parent;
 	i2c_tag_t	i2c;
 	i2c_addr_t	i2c_addr;
+
+	unsigned int	if_freq;
+
+	fe_modulation_t	current_modulation;
 };
 
 typedef enum {
@@ -51,7 +56,7 @@ typedef enum {
 	AU8522_AINPUT_SIF,
 } au8522_ainput_t;
 
-struct au8522 *	au8522_open(device_t, i2c_tag_t, i2c_addr_t);
+struct au8522 *	au8522_open(device_t, i2c_tag_t, i2c_addr_t, unsigned int);
 void		au8522_close(struct au8522 *);
 
 void		au8522_enable(struct au8522 *, bool);
@@ -59,5 +64,8 @@ void		au8522_set_input(struct au8522 *,
 				 au8522_vinput_t, au8522_ainput_t);
 int		au8522_get_signal(struct au8522 *);
 void		au8522_set_audio(struct au8522 *, bool);
+int		au8522_set_modulation(struct au8522 *, fe_modulation_t);
+void		au8522_set_gate(struct au8522 *, bool);
+fe_status_t	au8522_get_dtv_status(struct au8522 *);
 
 #endif /* !_AU8522VAR_H */

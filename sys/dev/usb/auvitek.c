@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek.c,v 1.3 2010/12/28 04:02:33 jmcneill Exp $ */
+/* $NetBSD: auvitek.c,v 1.4 2011/07/09 15:00:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.3 2010/12/28 04:02:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.4 2011/07/09 15:00:44 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -115,7 +115,9 @@ auvitek_attach(device_t parent, device_t self, void *opaque)
 
 	sc->sc_dying = sc->sc_running = 0;
 
-	mutex_init(&sc->sc_subdev_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_subdev_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_ab.ab_lock, MUTEX_DEFAULT, IPL_USB);
+	cv_init(&sc->sc_ab.ab_cv, "auvitekbulk");
 
 	err = usbd_set_config_index(dev, 0, 1);
 	if (err) {
@@ -123,14 +125,23 @@ auvitek_attach(device_t parent, device_t self, void *opaque)
 		    usbd_errstr(err));
 		return;
 	}
-	err = usbd_device2interface_handle(dev, 0, &sc->sc_iface);
+	err = usbd_device2interface_handle(dev, 0, &sc->sc_isoc_iface);
+	if (err) {
+		aprint_error_dev(self, "couldn't get interface handle: %s\n",
+		    usbd_errstr(err));
+		return;
+	}
+	err = usbd_device2interface_handle(dev, 3, &sc->sc_bulk_iface);
 	if (err) {
 		aprint_error_dev(self, "couldn't get interface handle: %s\n",
 		    usbd_errstr(err));
 		return;
 	}
 
-	err = usbd_set_interface(sc->sc_iface, AUVITEK_XFER_ALTNO);
+	sc->sc_ax.ax_sc = sc->sc_ab.ab_sc = sc;
+	sc->sc_ax.ax_endpt = sc->sc_ab.ab_endpt = -1;
+
+	err = usbd_set_interface(sc->sc_isoc_iface, AUVITEK_XFER_ALTNO);
 	if (err) {
 		aprint_error_dev(self, "couldn't set interface: %s\n",
 		    usbd_errstr(err));
@@ -138,13 +149,11 @@ auvitek_attach(device_t parent, device_t self, void *opaque)
 	}
 
 	nep = 0;
-	usbd_endpoint_count(sc->sc_iface, &nep);
-	sc->sc_ax.ax_sc = sc;
-	sc->sc_ax.ax_endpt = -1;
+	usbd_endpoint_count(sc->sc_isoc_iface, &nep);
 	for (i = 0; i < nep; i++) {
 		int dir, type;
 
-		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
+		ed = usbd_interface2endpoint_descriptor(sc->sc_isoc_iface, i);
 		if (ed == NULL) {
 			aprint_error_dev(self,
 			    "couldn't read endpoint descriptor %d\n", i);
@@ -154,21 +163,22 @@ auvitek_attach(device_t parent, device_t self, void *opaque)
 		dir = UE_GET_DIR(ed->bEndpointAddress);
 		type = UE_GET_XFERTYPE(ed->bmAttributes);
 
-		if (dir == UE_DIR_IN && type == UE_ISOCHRONOUS) {
+		if (dir == UE_DIR_IN && type == UE_ISOCHRONOUS &&
+		    sc->sc_ax.ax_endpt == -1) {
 			sc->sc_ax.ax_endpt = ed->bEndpointAddress;
 			sc->sc_ax.ax_maxpktlen =
 			    UE_GET_SIZE(UGETW(ed->wMaxPacketSize)) *
 			    (UE_GET_TRANS(UGETW(ed->wMaxPacketSize)) + 1);
-			break;
 		}
 	}
-	err = usbd_set_interface(sc->sc_iface, 0);
+
+	err = usbd_set_interface(sc->sc_isoc_iface, 0);
 	if (err) {
 		aprint_error_dev(self, "couldn't set interface: %s\n",
 		    usbd_errstr(err));
-		sc->sc_dying = 1;
 		return;
 	}
+
 	if (sc->sc_ax.ax_endpt == -1) {
 		aprint_error_dev(self, "couldn't find isoc endpoint\n");
 		sc->sc_dying = 1;
@@ -183,11 +193,60 @@ auvitek_attach(device_t parent, device_t self, void *opaque)
 	aprint_debug_dev(self, "isoc endpoint 0x%02x size %d\n",
 	    sc->sc_ax.ax_endpt, sc->sc_ax.ax_maxpktlen);
 
+	nep = 0;
+	usbd_endpoint_count(sc->sc_bulk_iface, &nep);
+	for (i = 0; i < nep; i++) {
+		int dir, type;
+
+		ed = usbd_interface2endpoint_descriptor(sc->sc_bulk_iface, i);
+		if (ed == NULL) {
+			aprint_error_dev(self,
+			    "couldn't read endpoint descriptor %d\n", i);
+			continue;
+		}
+
+		dir = UE_GET_DIR(ed->bEndpointAddress);
+		type = UE_GET_XFERTYPE(ed->bmAttributes);
+
+		if (dir == UE_DIR_IN && type == UE_BULK &&
+		    sc->sc_ab.ab_endpt == -1) {
+			sc->sc_ab.ab_endpt = ed->bEndpointAddress;
+		}
+	}
+
+	if (sc->sc_ab.ab_endpt == -1) {
+		aprint_error_dev(self, "couldn't find bulk endpoint\n");
+		sc->sc_dying = 1;
+		return;
+	}
+
+	for (i = 0; i < AUVITEK_NBULK_XFERS; i++) {
+		sc->sc_ab.ab_bx[i].bx_sc = sc;
+		sc->sc_ab.ab_bx[i].bx_xfer = usbd_alloc_xfer(sc->sc_udev);
+		if (sc->sc_ab.ab_bx[i].bx_xfer == NULL) {
+			aprint_error_dev(self, "couldn't allocate xfer\n");
+			sc->sc_dying = 1;
+			return;
+		}
+		sc->sc_ab.ab_bx[i].bx_buffer = usbd_alloc_buffer(
+		    sc->sc_ab.ab_bx[i].bx_xfer, AUVITEK_BULK_BUFLEN);
+		if (sc->sc_ab.ab_bx[i].bx_buffer == NULL) {
+			aprint_error_dev(self,
+			    "couldn't allocate xfer buffer\n");
+			sc->sc_dying = 1;
+			return;
+		}
+	}
+
+	aprint_debug_dev(self, "bulk endpoint 0x%02x size %d\n",
+	    sc->sc_ab.ab_endpt, AUVITEK_BULK_BUFLEN);
+
 	auvitek_board_init(sc);
 
 	auvitek_i2c_attach(sc);
 
-	sc->sc_au8522 = au8522_open(self, &sc->sc_i2c, 0x8e >> 1);
+	sc->sc_au8522 = au8522_open(self, &sc->sc_i2c, 0x8e >> 1,
+	    auvitek_board_get_if_frequency(sc));
 	if (sc->sc_au8522 == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't initialize decoder\n");
 		sc->sc_dying = 1;
@@ -196,17 +255,20 @@ auvitek_attach(device_t parent, device_t self, void *opaque)
 
 	auvitek_video_attach(sc);
 	auvitek_audio_attach(sc);
+	auvitek_dtv_attach(sc);
 }
 
 static int
 auvitek_detach(device_t self, int flags)
 {
 	struct auvitek_softc *sc = device_private(self);
+	unsigned int i;
 
 	sc->sc_dying = 1;
 
 	pmf_device_deregister(self);
 
+	auvitek_dtv_detach(sc, flags);
 	auvitek_audio_detach(sc, flags);
 	auvitek_video_detach(sc, flags);
 
@@ -218,6 +280,13 @@ auvitek_detach(device_t self, int flags)
 	auvitek_i2c_detach(sc, flags);
 
 	mutex_destroy(&sc->sc_subdev_lock);
+
+	for (i = 0; i < AUVITEK_NBULK_XFERS; i++) {
+		if (sc->sc_ab.ab_bx[i].bx_xfer)
+			usbd_free_xfer(sc->sc_ab.ab_bx[i].bx_xfer);
+	}
+	cv_destroy(&sc->sc_ab.ab_cv);
+	mutex_destroy(&sc->sc_ab.ab_lock);
 
 	return 0;
 }
@@ -242,6 +311,8 @@ auvitek_childdet(device_t self, device_t child)
 	struct auvitek_softc *sc = device_private(self);
 
 	auvitek_video_childdet(sc, child);
+	auvitek_audio_childdet(sc, child);
+	auvitek_dtv_childdet(sc, child);
 }
 
 uint8_t
@@ -287,7 +358,7 @@ auvitek_write_1(struct auvitek_softc *sc, uint16_t reg, uint8_t data)
 		    usbd_errstr(err));
 }
 
-MODULE(MODULE_CLASS_DRIVER, auvitek, "au8522,xc5k");
+MODULE(MODULE_CLASS_DRIVER, auvitek, "au8522,xc5k,dtv");
 
 #ifdef _MODULE
 #include "ioconf.c"
