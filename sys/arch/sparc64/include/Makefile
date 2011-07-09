@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.26 2011/04/13 03:24:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.27 2011/07/09 17:15:46 dyoung Exp $
 
 INCSDIR= /usr/include/sparc64
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
-	bswap.h bsd_openprom.h bus.h \
+	bswap.h bsd_openprom.h \
 	cdefs.h cgtworeg.h cpu.h ctlreg.h \
 	disklabel.h \
 	eeprom.h elf_machdep.h endian.h endian_machdep.h \

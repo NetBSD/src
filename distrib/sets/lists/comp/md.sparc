@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.74 2011/07/09 14:57:48 mrg Exp $
+# $NetBSD: md.sparc,v 1.75 2011/07/09 17:15:47 dyoung Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -73,7 +73,7 @@
 ./usr/include/sparc64/autoconf.h		comp-c-include
 ./usr/include/sparc64/bsd_openprom.h		comp-c-include
 ./usr/include/sparc64/bswap.h			comp-c-include
-./usr/include/sparc64/bus.h			comp-c-include
+./usr/include/sparc64/bus.h			comp-obsolete		obsolete
 ./usr/include/sparc64/cdefs.h			comp-c-include
 ./usr/include/sparc64/cgtworeg.h		comp-c-include
 ./usr/include/sparc64/conf.h			comp-obsolete		obsolete
