@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.17 2011/02/20 07:48:34 matt Exp $
+#	$NetBSD: files.malta,v 1.18 2011/07/09 16:03:01 matt Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c
@@ -59,7 +59,7 @@ attach	gt at mainbus
 file	arch/evbmips/malta/dev/gt.c		gt	# XXX should be in arch/mips/galileo ?
 
 file	arch/evbmips/malta/pci/pci_machdep.c	pci
-file	arch/evbmips/malta/pci/pciide_machdep.c	pciide_common
+file	arch/mips/pci/pciide_machdep.c		pciide_common
 
 device	pchb
 attach	pchb at pci

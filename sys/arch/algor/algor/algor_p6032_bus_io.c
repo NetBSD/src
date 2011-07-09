@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_bus_io.c,v 1.5 2011/07/08 18:48:56 matt Exp $	*/
+/*	$NetBSD: algor_p6032_bus_io.c,v 1.6 2011/07/09 16:03:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_bus_io.c,v 1.5 2011/07/08 18:48:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_bus_io.c,v 1.6 2011/07/09 16:03:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p6032_bus_io.c,v 1.5 2011/07/08 18:48:56 matt 
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/locore.h>
+#include <mips/locore.h>
 
 #include <algor/algor/algor_p6032reg.h>
 #include <algor/algor/algor_p6032var.h>
