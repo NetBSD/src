@@ -1,4 +1,4 @@
-/*	$NetBSD: floatunditf_ieee754.c,v 1.1 2011/07/09 02:30:27 matt Exp $	*/
+/*	$NetBSD: floatunditf_ieee754.c,v 1.2 2011/07/09 03:16:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)floatunsdidf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: floatunditf_ieee754.c,v 1.1 2011/07/09 02:30:27 matt Exp $");
+__RCSID("$NetBSD: floatunditf_ieee754.c,v 1.2 2011/07/09 03:16:40 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,16 +65,16 @@ __floatunditf(u_quad_t x)
 	return (ld);
 #else
 	union ieee_ext_u extu;
+	quad_t tmp = x;		/* must be signed */
+	size_t width = 64;
+	size_t bit = 0;
+	quad_t mask = ~(quad_t)0;
 
 	if (x == 0)
 		return 0.0L;
 	if (x == 1)
 		return 1.0L;
 
-	quad_t tmp = x;		/* must be signed */
-	size_t width = 64;
-	size_t bit = 0;
-	quad_t mask = ~(quad_t)0;
 	while (mask != 0 && (tmp >= 0)) {
 		width >>= 1;
 		mask <<= width;
