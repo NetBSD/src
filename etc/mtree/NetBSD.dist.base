@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.88 2011/07/01 02:10:07 mrg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.89 2011/07/09 14:55:44 jmcneill Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -98,6 +98,7 @@
 ./usr/include/dev/ata
 ./usr/include/dev/dec
 ./usr/include/dev/dmover
+./usr/include/dev/dtv
 ./usr/include/dev/hpc
 ./usr/include/dev/i2o
 ./usr/include/dev/ic
