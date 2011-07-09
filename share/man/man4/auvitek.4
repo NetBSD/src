@@ -1,6 +1,6 @@
-.\"	$NetBSD: auvitek.4,v 1.3 2010/12/28 04:03:58 jmcneill Exp $
+.\"	$NetBSD: auvitek.4,v 1.4 2011/07/09 15:06:49 jmcneill Exp $
 .\"
-.\" Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
+.\" Copyright (c) 2010, 2011 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 27, 2010
+.Dd July 9, 2011
 .Dt AUVITEK 4
 .Os
 .Sh NAME
@@ -32,6 +32,7 @@
 .Nd Auvitek AU0828 video capture device driver
 .Sh SYNOPSIS
 .Cd "auvitek* at uhub?"
+.Cd "dtv* at dtvbus?"
 .Cd "video* at videobus?"
 .Cd "uaudio* at auvitek?"
 .Cd "audio* at uaudio?"
@@ -78,6 +79,7 @@ Cards with an XC5000 tuner require the firmware provided by the
 package to function properly.
 .Sh SEE ALSO
 .Xr audio 4 ,
+.Xr dtv 4 ,
 .Xr ehci 4 ,
 .Xr uaudio 4 ,
 .Xr video 4 ,
@@ -87,5 +89,3 @@ The
 .Nm
 device driver appeared in
 .Nx 6.0 .
-.Sh BUGS
-Digital capture is not supported.
