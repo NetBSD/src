@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1642 2011/07/08 19:09:02 dyoung Exp $
+#	$NetBSD: mi,v 1.1643 2011/07/09 14:52:02 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -266,6 +266,9 @@
 ./usr/include/dev/dec/mcclockvar.h		comp-obsolete		obsolete
 ./usr/include/dev/dm/netbsd-dm.h		comp-c-include		
 ./usr/include/dev/dmover/dmover_io.h		comp-c-include
+./usr/include/dev/dtv/dtvio.h			comp-c-include
+./usr/include/dev/dtv/dtvio_demux.h		comp-c-include
+./usr/include/dev/dtv/dtvio_frontend.h		comp-c-include
 ./usr/include/dev/eisa/ahbreg.h			comp-obsolete		obsolete
 ./usr/include/dev/eisa/eisadevs.h		comp-obsolete		obsolete
 ./usr/include/dev/eisa/eisadevs_data.h		comp-obsolete		obsolete
