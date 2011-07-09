@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.38 2011/07/09 14:49:40 christos Exp $
+	$NetBSD: syscalls.master,v 1.39 2011/07/09 23:46:32 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -174,7 +174,7 @@
 			    int optname, void *optval, int *optlen); }
 56	STD		{ int|linux_sys||clone(int flags, void *stack, \
 			    void *parent_tidptr, void *child_tidptr, void *tls); }
-57	STD		{ int|linux_sys||fork(void); }
+57	NOARGS		{ int|sys||fork(void); }
 58	NOARGS		{ int|sys|14|vfork(void); }
 59	NOARGS		{ int|sys||execve(const char *path, char **argp, \
 			    char **envp); }
