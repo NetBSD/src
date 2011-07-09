@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.6 2011/07/04 08:02:35 matt Exp $ */
+/* $NetBSD: softfloat.c,v 1.7 2011/07/09 02:28:31 matt Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.6 2011/07/04 08:02:35 matt Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.7 2011/07/09 02:28:31 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -4482,6 +4482,7 @@ int64 float128_to_int64_round_to_zero( float128 a )
 
 }
 
+#if defined(SOFTFLOAT_FOR_GCC) && defined(SOFTFLOAT_NEED_FIXUNS)
 /*
  * just like above - but do not care for overflow of signed results
  */
@@ -4531,6 +4532,7 @@ uint64 float128_to_uint64_round_to_zero( float128 a )
     return z;
 
 }
+#endif /* defined(SOFTFLOAT_FOR_GCC) && defined(SOFTFLOAT_NEED_FIXUNS) */
 
 /*
 -------------------------------------------------------------------------------
