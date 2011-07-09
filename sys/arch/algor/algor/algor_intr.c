@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.16 2011/02/20 07:51:21 matt Exp $	*/
+/*	$NetBSD: algor_intr.c,v 1.1 2011/07/09 16:03:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.16 2011/02/20 07:51:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_intr.c,v 1.1 2011/07/09 16:03:00 matt Exp $");
 
 #define	__INTR_PRIVATE
 #include "opt_algor_p4032.h"
@@ -42,10 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.16 2011/02/20 07:51:21 matt Exp $");
 #include <sys/intr.h>
 #include <sys/cpu.h>
 
-//#include <uvm/uvm_extern.h>
-
-#include <machine/autoconf.h>
-#include <machine/locore.h>
+#include <algor/autoconf.h>
+#include <mips/locore.h>
 #include <mips/mips3_clock.h>
 
 #ifdef ALGOR_P4032
@@ -85,7 +83,11 @@ static const struct ipl_sr_map algor_ipl_sr_map = {
 };
 
 void
+#ifdef evbmips
+evbmips_intr_init(void)
+#else
 intr_init(void)
+#endif
 {
 	ipl_sr_map = algor_ipl_sr_map;
 
@@ -98,6 +100,25 @@ intr_init(void)
 #endif
 }
 
+#ifdef evbmips
+void
+evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
+{
+	(*algor_iointr)(ipl, pc, pending);
+}
+
+void *
+evbmips_intr_establish(int irq, int (*func)(void *), void *arg)
+{
+	return (*algor_intr_establish)(irq, func, arg);
+}
+
+void
+evbmips_intr_disestablish(void *cookie)
+{
+	(*algor_intr_disestablish)(cookie);
+}
+#else
 void
 cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
@@ -125,3 +146,4 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 		(void)splhigh();
 	}
 }
+#endif

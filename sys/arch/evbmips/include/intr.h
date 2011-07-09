@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18 2011/02/20 07:48:34 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.19 2011/07/09 16:03:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@ struct evbmips_intrhand {
 	LIST_ENTRY(evbmips_intrhand) ih_q;
 	int (*ih_func)(void *);
 	void *ih_arg;
+	const void *ih_irqmap;			/* for algor */
 	int ih_irq;
 	int ih_ipl;
 };

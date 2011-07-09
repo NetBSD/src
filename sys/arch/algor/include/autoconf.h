@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.6 2011/07/01 21:02:15 dyoung Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.7 2011/07/09 16:03:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -45,7 +45,10 @@ struct mainbus_attach_args {
 #ifdef _KERNEL
 extern char algor_ethaddr[];
 
-void	(*algor_iointr)(int, vaddr_t, uint32_t);
+extern void	(*algor_iointr)(int, vaddr_t, uint32_t);
+extern void *	(*algor_intr_establish)(int, int (*)(void *), void *);
+extern void	(*algor_intr_disestablish)(void *);
+
 
 void	led_display(uint8_t, uint8_t, uint8_t, uint8_t);
 #endif /* _KERNEL */

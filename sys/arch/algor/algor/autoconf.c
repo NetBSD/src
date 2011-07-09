@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2011/07/01 18:30:36 dyoung Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2011/07/09 16:03:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,26 +30,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2011/07/01 18:30:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2011/07/09 16:03:00 matt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
 #include "opt_algor_p6032.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/conf.h>
-#include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
 
 #include <dev/pci/pcivar.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
 
-#include <sys/bus.h>
-#include <machine/autoconf.h>
-#include <machine/intr.h>
+#include <algor/autoconf.h>
 
 #ifdef ALGOR_P4032
 #include <algor/algor/algor_p4032var.h>

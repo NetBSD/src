@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_bus_locio.c,v 1.6 2011/07/09 16:03:00 matt Exp $	*/
+/*	$NetBSD: pmon.h,v 1.1 2011/07/09 16:03:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,36 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Platform-specific local bus I/O support for the Algorithmics P-4032.
- */
+#ifndef _EVBMIPS_PMON_H_
+#define	_EVBMIPS_PMON_H_
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p4032_bus_locio.c,v 1.6 2011/07/09 16:03:00 matt Exp $");
+#ifdef _KERNEL
+void	pmon_init(char *[]);
+const char *pmon_getenv(const char *);
+#endif /* _KERNEL */
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/syslog.h>
-#include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
-
-#include <mips/locore.h>
-
-#include <algor/algor/algor_p4032reg.h>
-#include <algor/algor/algor_p4032var.h>
-
-#define	CHIP		algor_p4032loc
-#define	CHIP_IO
-
-/* log2(4) */
-#define	CHIP_ALIGN_STRIDE	2
-
-/* IO region 1 */
-#define	CHIP_W1_BUS_START(v)	0x00000000UL
-#define	CHIP_W1_BUS_END(v)	0xffffffffUL
-#define	CHIP_W1_SYS_START(v)	0
-#define	CHIP_W1_SYS_END(v)	CHIP_W1_BUS_END(v)
-
-#include <mips/mips/bus_space_alignstride_chipdep.c>
+#endif /* _EVBMIPS_PMON_H_ */
