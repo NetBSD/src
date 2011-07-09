@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.40 2011/05/03 09:15:20 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.41 2011/07/09 16:09:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,18 +31,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.40 2011/05/03 09:15:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.41 2011/07/09 16:09:01 matt Exp $");
+
+#define _COBALT_BUS_DMA_PRIVATE
 
 #include <sys/param.h>
+#include <sys/bus.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
-
-#define _COBALT_BUS_DMA_PRIVATE
-#include <machine/bus.h>
 
 #include <common/bus_dma/bus_dmamem_common.h>
 
