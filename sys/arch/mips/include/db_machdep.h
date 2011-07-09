@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.27 2011/05/26 15:34:13 joerg Exp $ */
+/* $NetBSD: db_machdep.h,v 1.28 2011/07/09 16:58:05 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -40,6 +40,10 @@
 #include <mips/regnum.h>		/* symbolic register indices */
 #include <mips/pcb.h>
 
+#define	DB_ELF_SYMBOLS
+#ifndef DB_ELFSIZE
+#define	DB_ELFSIZE	32
+#endif
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 #define	DDB_EXPR_FMT	"l"		/* expression is long */
