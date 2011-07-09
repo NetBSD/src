@@ -1,7 +1,7 @@
-/* $NetBSD: xc5kvar.h,v 1.2 2011/07/09 15:00:44 jmcneill Exp $ */
+/* $NetBSD: au8522mod_8vsb.h,v 1.1 2011/07/09 15:00:43 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,38 +26,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _XC5KVAR_H
-#define _XC5KVAR_H
-
-#include <dev/i2c/i2cvar.h>
-#include <dev/dtv/dtvio.h>
-#include <dev/video_if.h>
-
-typedef int (*xc5k_reset_cb)(void *);
-
-struct xc5k {
-	device_t	parent;
-	i2c_tag_t	i2c;
-	i2c_addr_t	i2c_addr;
-
-	xc5k_reset_cb	reset;
-	void		*reset_priv;
-
-	unsigned int	if_freq;
-	fe_type_t	fe_type;
+static const struct au8522_modulation_table au8522_modulation_8vsb[] = {
+	{ 0x8090, 0x84 },
+	{ 0x4092, 0x11 },
+	{ 0x2005, 0x00 },
+	{ 0x8091, 0x80 },
+	{ 0x80a3, 0x0c },
+	{ 0x80a4, 0xe8 },
+	{ 0x8081, 0xc4 },
+	{ 0x80a5, 0x40 },
+	{ 0x80a7, 0x40 },
+	{ 0x80a6, 0x67 },
+	{ 0x8262, 0x20 },
+	{ 0x821c, 0x30 },
+	{ 0x80d8, 0x1a },
+	{ 0x8227, 0xa0 },
+	{ 0x8121, 0xff },
+	{ 0x80a8, 0xf0 },
+	{ 0x80a9, 0x05 },
+	{ 0x80aa, 0x77 },
+	{ 0x80ab, 0xf0 },
+	{ 0x80ac, 0x05 },
+	{ 0x80ad, 0x77 },
+	{ 0x80ae, 0x41 },
+	{ 0x80af, 0x66 },
+	{ 0x821b, 0xcc },
+	{ 0x821d, 0x80 },
+	{ 0x80a4, 0xe8 },
+	{ 0x8231, 0x13 },
 };
-
-struct xc5k_params {
-	uint16_t		signal_source;
-	uint32_t		frequency;
-	enum video_standard	standard;
-};
-
-struct xc5k *	xc5k_open(device_t, i2c_tag_t, i2c_addr_t,
-			  xc5k_reset_cb, void *, unsigned int, fe_type_t);
-void		xc5k_close(struct xc5k *);
-int		xc5k_tune_video(struct xc5k *, struct xc5k_params *);
-int		xc5k_tune_dtv(struct xc5k *, const struct dvb_frontend_parameters *);
-fe_status_t	xc5k_get_status(struct xc5k *);
-
-#endif /* !_XC5KVAR_H */

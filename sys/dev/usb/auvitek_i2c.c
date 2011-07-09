@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_i2c.c,v 1.1 2010/12/27 15:42:11 jmcneill Exp $ */
+/* $NetBSD: auvitek_i2c.c,v 1.2 2011/07/09 15:00:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_i2c.c,v 1.1 2010/12/27 15:42:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_i2c.c,v 1.2 2011/07/09 15:00:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ auvitek_i2c_read(struct auvitek_softc *sc, i2c_addr_t addr,
 	uint8_t v;
 	unsigned int i;
 
-	KASSERT(mutex_owned(&sc->sc_i2c_lock));
+	//KASSERT(mutex_owned(&sc->sc_i2c_lock));
 
 	auvitek_write_1(sc, AU0828_REG_I2C_MBMODE, 1);
 	auvitek_write_1(sc, AU0828_REG_I2C_CLKDIV, sc->sc_i2c_clkdiv);
@@ -160,7 +160,7 @@ auvitek_i2c_write(struct auvitek_softc *sc, i2c_addr_t addr,
 	uint8_t v;
 	unsigned int i, fifolen;
 
-	KASSERT(mutex_owned(&sc->sc_i2c_lock));
+	//KASSERT(mutex_owned(&sc->sc_i2c_lock));
 
 	auvitek_write_1(sc, AU0828_REG_I2C_MBMODE, 1);
 	auvitek_write_1(sc, AU0828_REG_I2C_CLKDIV, sc->sc_i2c_clkdiv);
