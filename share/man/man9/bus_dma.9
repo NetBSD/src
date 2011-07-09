@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.56 2011/07/08 22:38:08 dyoung Exp $
+.\" $NetBSD: bus_dma.9,v 1.57 2011/07/09 07:57:53 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -330,11 +330,11 @@ Returns 0 on success, or an error code to indicate mode of failure.
 Possible error codes include the following:
 .Pp
 .Bl -tag -width dmam -compact
-.It Er EINVAL
-.Fa buflen
-is too large for the DMA map. 
 .It Er EFBIG
 Too many segments.
+.It Er EINVAL
+.Fa buflen
+is too large for the DMA map.
 .It Er ENOMEM
 Could not allocate memory for, e.g., a bounce buffer.
 .El
