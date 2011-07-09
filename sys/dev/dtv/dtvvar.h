@@ -1,4 +1,4 @@
-/* $NetBSD: dtvvar.h,v 1.1 2011/07/09 14:46:56 jmcneill Exp $ */
+/* $NetBSD: dtvvar.h,v 1.2 2011/07/09 17:55:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include <dev/dtv/dtvif.h>
 #include <dev/dtv/dtv_scatter.h>
 
-#define	DTV_DEFAULT_BUFSIZE	(64 * 4096)
+#define	DTV_DEFAULT_BUFSIZE	(128 * PAGE_SIZE)
 
 #define	TS_PKTLEN		188
 #define	TS_HAS_SYNC(_tspkt)	((_tspkt)[0] == 0x47)
@@ -107,7 +107,8 @@ struct dtv_softc {
 int	dtv_frontend_ioctl(struct dtv_softc *, u_long, void *, int);
 int	dtv_demux_ioctl(struct dtv_softc *, u_long, void *, int);
 
-int	dtv_buffer_setup(struct dtv_softc *, size_t);
+int	dtv_buffer_realloc(struct dtv_softc *, size_t);
+int	dtv_buffer_setup(struct dtv_softc *);
 int	dtv_buffer_destroy(struct dtv_softc *);
 int	dtv_buffer_read(struct dtv_softc *, struct uio *, int);
 int	dtv_buffer_poll(struct dtv_softc *, int, lwp_t *);

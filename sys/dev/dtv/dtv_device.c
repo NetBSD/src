@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_device.c,v 1.1 2011/07/09 14:46:56 jmcneill Exp $ */
+/* $NetBSD: dtv_device.c,v 1.2 2011/07/09 17:55:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.1 2011/07/09 14:46:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.2 2011/07/09 17:55:20 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -102,6 +102,11 @@ dtv_attach(device_t parent, device_t self, void *aa)
 	cv_init(&ds->ds_sample_cv, "dtv");
 	selinit(&ds->ds_sel);
 	dtv_scatter_buf_init(&ds->ds_data);
+	if (dtv_buffer_realloc(sc, DTV_DEFAULT_BUFSIZE) != 0) {
+		aprint_error(": no memory\n");
+		sc->sc_dying = true;
+		return;
+	}
 
 	dtv_device_get_devinfo(sc, &info);
 
@@ -133,6 +138,7 @@ dtv_detach(device_t self, int flags)
 	cv_destroy(&ds->ds_sample_cv);
 	mutex_destroy(&ds->ds_lock);
 	seldestroy(&ds->ds_sel);
+	dtv_buffer_realloc(sc, 0);
 	dtv_scatter_buf_destroy(&ds->ds_data);
 
 	return 0;
