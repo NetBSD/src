@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.41 2011/02/20 07:50:25 matt Exp $ */
+/* $NetBSD: mainbus.c,v 1.42 2011/07/09 17:32:31 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,14 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.41 2011/02/20 07:50:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.42 2011/07/09 17:32:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/sysconf.h>
-#include <machine/autoconf.h>
+#include <pmax/sysconf.h>
+#include <pmax/autoconf.h>
 
 /* Definition of the mainbus driver. */
 static int	mbmatch(device_t, cfdata_t, void *);

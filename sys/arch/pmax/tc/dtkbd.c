@@ -1,4 +1,4 @@
-/*	$NetBSD: dtkbd.c,v 1.9 2011/06/04 01:37:36 tsutsui Exp $	*/
+/*	$NetBSD: dtkbd.c,v 1.10 2011/07/09 17:32:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,15 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.9 2011/06/04 01:37:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.10 2011/07/09 17:32:31 matt Exp $");
 
 #include "locators.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h> 
+#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/callout.h>
+#include <sys/systm.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -46,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.9 2011/06/04 01:37:36 tsutsui Exp $");
 #include <dev/wscons/wsksymvar.h>
 #include <dev/dec/wskbdmap_lk201.h>
 #include <dev/tc/tcvar.h>
-
-#include <machine/bus.h> 
 
 #include <pmax/tc/dtreg.h>
 #include <pmax/tc/dtvar.h>

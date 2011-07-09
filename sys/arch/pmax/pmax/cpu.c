@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.30 2011/02/20 07:50:25 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.31 2011/07/09 17:32:30 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 2011/02/20 07:50:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 2011/07/09 17:32:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 2011/02/20 07:50:25 matt Exp $");
 
 #include <mips/locore.h>
 
-#include <machine/autoconf.h>
+#include <pmax/autoconf.h>
 
 #include "ioconf.h"
 

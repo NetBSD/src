@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.51 2011/02/20 07:50:25 matt Exp $ */
+/* $NetBSD: dec_3100.c,v 1.52 2011/07/09 17:32:30 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -69,19 +69,18 @@
 
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.51 2011/02/20 07:50:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.52 2011/07/09 17:32:30 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/cpu.h>
-#include <sys/lwp.h>
+#include <sys/device.h>
 #include <sys/intr.h>
+#include <sys/lwp.h>
+#include <sys/systm.h>
 
-#include <machine/sysconf.h>
+#include <pmax/sysconf.h>
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
-//#include <mips/locore.h>
 
 #include <dev/tc/tcvar.h>		/* tc_addr_t */
 
