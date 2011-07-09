@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.308 2011/06/14 13:59:23 jruoho Exp $
+# $NetBSD: ALL,v 1.309 2011/07/09 15:02:03 jmcneill Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.308 $"
+#ident 		"ALL-$Revision: 1.309 $"
 
 maxusers	64		# estimated number of users
 
@@ -1487,6 +1487,7 @@ pseye*	at uhub?		# Sony PLAYSTATION(R) Eye webcam
 uvideo* at uhub?		# USB Video Class capture devices
 auvitek* at uhub?		# Auvitek AU0828 video capture devices
 video*	at videobus?
+dtv*	at dtvbus?
 
 
 # TV cards
