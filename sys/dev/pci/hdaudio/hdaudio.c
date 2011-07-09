@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.11 2011/02/13 17:49:12 jmcneill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.12 2011/07/09 16:01:31 riastradh Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.11 2011/02/13 17:49:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.12 2011/07/09 16:01:31 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1034,6 +1034,7 @@ void
 hdaudio_stream_disestablish(struct hdaudio_stream *st)
 {
 	struct hdaudio_softc *sc = st->st_host;
+	struct hdaudio_dma dma;
 
 	KASSERT(sc->sc_stream_mask & (1 << st->st_shift));
 
@@ -1041,8 +1042,12 @@ hdaudio_stream_disestablish(struct hdaudio_stream *st)
 	sc->sc_stream_mask &= ~(1 << st->st_shift);
 	st->st_intr = NULL;
 	st->st_cookie = NULL;
-	hdaudio_dma_free(sc, &st->st_bdl);
+	dma = st->st_bdl;
+	st->st_bdl.dma_valid = false;
 	mutex_exit(&sc->sc_stream_mtx);
+
+	/* Can't bus_dmamem_unmap while holding a mutex.  */
+	hdaudio_dma_free(sc, &dma);
 }
 
 /*
