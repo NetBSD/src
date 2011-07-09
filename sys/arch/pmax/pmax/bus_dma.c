@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.55 2011/02/20 07:50:25 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.56 2011/07/09 17:32:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,19 +31,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.55 2011/02/20 07:50:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.56 2011/07/09 17:32:30 matt Exp $");
 
 #include "opt_cputype.h"
 
+#define _PMAX_BUS_DMA_PRIVATE
+
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
-
-#define _PMAX_BUS_DMA_PRIVATE
-#include <machine/bus.h>
 
 #include <common/bus_dma/bus_dmamem_common.h>
 

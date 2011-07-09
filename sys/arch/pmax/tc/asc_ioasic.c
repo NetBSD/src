@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.23 2009/12/14 00:46:11 matt Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.24 2011/07/09 17:32:31 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.23 2009/12/14 00:46:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.24 2011/07/09 17:32:31 matt Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/bus.h>
+#include <sys/device.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -44,8 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.23 2009/12/14 00:46:11 matt Exp $")
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
-
-#include <machine/bus.h>
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>

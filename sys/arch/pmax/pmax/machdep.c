@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.243 2011/04/06 15:31:08 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.244 2011/07/09 17:32:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,22 +39,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.243 2011/04/06 15:31:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.244 2011/07/09 17:32:30 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
+#define _PMAX_BUS_DMA_PRIVATE
+
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/buf.h>
-#include <sys/reboot.h>
-#include <sys/mount.h>
-#include <sys/kcore.h>
 #include <sys/boot_flag.h>
-#include <sys/ksyms.h>
-#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/bus.h>
 #include <sys/device.h>
+#include <sys/kcore.h>
+#include <sys/kernel.h>
+#include <sys/ksyms.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -63,22 +66,19 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.243 2011/04/06 15:31:08 tsutsui Exp $"
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <mips/cache.h>
+#include <mips/locore.h>
 #include <mips/regnum.h>
 #include <mips/psl.h>
 
-#include <machine/autoconf.h>
-#include <machine/dec_prom.h>
-#include <machine/sysconf.h>
-#include <machine/bootinfo.h>
-#include <machine/locore.h>
+#include <pmax/autoconf.h>
+#include <pmax/dec_prom.h>
+#include <pmax/sysconf.h>
+#include <pmax/bootinfo.h>
 
 #include <pmax/pmax/machdep.h>
 
-#define _PMAX_BUS_DMA_PRIVATE
-#include <machine/bus.h>
-
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-#include <machine/db_machdep.h>
+#include <mips/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 
