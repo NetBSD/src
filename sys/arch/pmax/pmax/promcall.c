@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.20 2011/02/20 07:50:25 matt Exp $	*/
+/*	$NetBSD: promcall.c,v 1.21 2011/07/09 17:32:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.20 2011/02/20 07:50:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.21 2011/07/09 17:32:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.20 2011/02/20 07:50:25 matt Exp $");
 
 #include <dev/cons.h>
 
-#include <machine/dec_prom.h>
+#include <pmax/dec_prom.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/machdep.h>
 

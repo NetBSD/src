@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.10 2011/02/20 07:50:24 matt Exp $	*/
+/*	$NetBSD: dz_ibus.c,v 1.11 2011/07/09 17:32:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -61,22 +61,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.10 2011/02/20 07:50:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.11 2011/07/09 17:32:29 matt Exp $");
 
 #include "dzkbd.h"
 #include "dzms.h"
 
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/file.h>
+#include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
 #include <sys/reboot.h>
-
-#include <machine/bus.h>
+#include <sys/systm.h>
+#include <sys/tty.h>
 
 #include <dev/cons.h>
 

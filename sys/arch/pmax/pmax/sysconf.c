@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.13 2011/02/20 07:50:25 matt Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.14 2011/07/09 17:32:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,11 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.13 2011/02/20 07:50:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.14 2011/07/09 17:32:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <machine/sysconf.h>
+
+#include <pmax/sysconf.h>
+
 #include <pmax/pmax/pmaxtype.h>
 
 
