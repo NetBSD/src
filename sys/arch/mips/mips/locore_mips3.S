@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.99 2011/04/12 22:50:33 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.100 2011/07/10 23:21:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -87,11 +87,11 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
+#include <sys/endian.h>
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 #include <machine/param.h>
-#include <machine/endian.h>
 
 #include "assym.h"
 

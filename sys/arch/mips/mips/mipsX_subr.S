@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.49 2011/05/28 14:40:13 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.50 2011/07/10 23:21:59 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -123,6 +123,7 @@
 #include "opt_vmswap.h"
 
 #include <sys/cdefs.h>
+#include <sys/endian.h>
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
@@ -132,7 +133,6 @@
 #include <mips/trap.h>
 
 #include <machine/param.h>
-#include <machine/endian.h>
 
 #include "assym.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.22 2011/04/29 22:06:12 matt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.23 2011/07/10 23:21:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,16 +35,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.22 2011/04/29 22:06:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.23 2011/07/10 23:21:58 matt Exp $");
 
-#include <sys/types.h>
-#include <sys/systm.h>
 #include <sys/param.h>
+#include <sys/cpu.h>
+#include <sys/systm.h>
 
-#include <machine/reg.h>
-#include <machine/cpu.h>
+#include <mips/reg.h>
 #include <mips/mips_opcode.h>
-/*#include <machine/param.h>*/
+
 #include <machine/db_machdep.h>
 
 #include <ddb/db_interface.h>
