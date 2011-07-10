@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.32 2011/03/24 17:05:47 bouyer Exp $ */
+/*      $NetBSD: edquota.c,v 1.33 2011/07/10 07:19:24 dholland Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.32 2011/03/24 17:05:47 bouyer Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.33 2011/07/10 07:19:24 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ struct quotause {
 
 #define MAX_TMPSTR	(100+MAXPATHLEN)
 
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 static int	getentry(const char *, int);
 static struct quotause * getprivs(long, int, const char *, int);
 static struct quotause * getprivs2(long, int, const char *, int);
