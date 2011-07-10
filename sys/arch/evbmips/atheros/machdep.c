@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.26 2011/07/07 05:06:44 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.27 2011/07/10 00:03:53 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -110,23 +110,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2011/07/07 05:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2011/07/10 00:03:53 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_modular.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/buf.h>
-#include <sys/reboot.h>
-#include <sys/mount.h>
-#include <sys/kcore.h>
 #include <sys/boot_flag.h>
-#include <sys/termios.h>
-#include <sys/ksyms.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/kcore.h>
+#include <sys/ksyms.h>
+#include <sys/mount.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -135,7 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2011/07/07 05:06:44 matt Exp $");
 #include "ksyms.h"
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-#include <machine/db_machdep.h>
+#include <mips/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 

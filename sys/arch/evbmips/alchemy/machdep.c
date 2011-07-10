@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.50 2011/04/04 20:37:49 dyoung Exp $ */
+/* $NetBSD: machdep.c,v 1.51 2011/07/10 00:03:52 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2011/04/04 20:37:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2011/07/10 00:03:52 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -80,16 +80,16 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2011/04/04 20:37:49 dyoung Exp $");
 #include "opt_ethaddr.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/buf.h>
-#include <sys/reboot.h>
-#include <sys/mount.h>
-#include <sys/kcore.h>
 #include <sys/boot_flag.h>
-#include <sys/termios.h>
-#include <sys/ksyms.h>
+#include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/kcore.h>
+#include <sys/kernel.h>
+#include <sys/ksyms.h>
+#include <sys/mount.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
+#include <sys/termios.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -101,15 +101,17 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2011/04/04 20:37:49 dyoung Exp $");
 #include "ksyms.h"
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-#include <machine/db_machdep.h>
+#include <mips/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 
 #include <mips/cache.h>
 #include <mips/locore.h>
+
 #include <machine/yamon.h>
 
 #include <evbmips/alchemy/board.h>
+
 #include <mips/alchemy/dev/aupcivar.h>
 #include <mips/alchemy/dev/aupcmciavar.h>
 #include <mips/alchemy/dev/auspivar.h>

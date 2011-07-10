@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.6 2011/07/07 05:06:44 matt Exp $ */
+/* $NetBSD: wdog.c,v 1.7 2011/07/10 00:03:53 matt Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -79,14 +79,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.6 2011/07/07 05:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.7 2011/07/10 00:03:53 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/wdog.h>
-
-#include <machine/cpu.h>
 
 #include <mips/atheros/include/platform.h>
 

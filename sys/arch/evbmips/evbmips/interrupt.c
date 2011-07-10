@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.16 2011/07/07 05:06:44 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.17 2011/07/10 00:03:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,15 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.16 2011/07/07 05:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.17 2011/07/10 00:03:53 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/intr.h>
 
+#include <mips/locore.h>
 #include <mips/mips3_clock.h>
-#include <machine/locore.h>
 
 void
 intr_init(void)
