@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.14 2011/07/06 10:01:02 matt Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.15 2011/07/10 23:13:22 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,14 +81,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.14 2011/07/06 10:01:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.15 2011/07/10 23:13:22 matt Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
 #endif
 #include <sys/malloc.h>
 
-#include <machine/locore.h>
+#include <mips/locore.h>
 
 #include <uvm/uvm_extern.h>
 
