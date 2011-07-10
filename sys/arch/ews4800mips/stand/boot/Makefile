@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2011/07/07 06:01:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2011/07/10 23:35:12 matt Exp $
 
 WARNS		?= 1
 NOMAN		=
@@ -138,7 +138,7 @@ ${BOOT_KERNEL}.gz: ${BINKERNEL_O} ${OBJS} ${LIBS}
 	    ${BINKERNEL_O}
 	mv ${BOOT_KERNEL}.elf ${BOOT_KERNEL}
 	${OBJDUMP} -h ${BOOT_KERNEL}
-	gzip -9c ${BOOT_KERNEL} > ${.TARGET}.tmp
+	${TOOL_GZIP} -9c ${BOOT_KERNEL} > ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
 	ls -al ${.TARGET}
 
