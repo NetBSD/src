@@ -1,4 +1,4 @@
-/* $Id: arbus.c,v 1.14 2011/07/07 05:06:44 matt Exp $ */
+/* $Id: arbus.c,v 1.15 2011/07/10 06:26:02 matt Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.14 2011/07/07 05:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.15 2011/07/10 06:26:02 matt Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -70,6 +70,9 @@ struct arbus_intrhand {
 CFATTACH_DECL_NEW(arbus, 0, arbus_match, arbus_attach, NULL, NULL);
 
 struct mips_bus_space	arbus_mbst;
+#if _BYTE_ORDER == _BIG_ENDIAN
+struct mips_bus_space	arbus_mbst_le;
+#endif
 struct mips_bus_dma_tag	arbus_mdt = {
 	._dmamap_ops = _BUS_DMAMAP_OPS_INITIALIZER,
 	._dmamem_ops = _BUS_DMAMEM_OPS_INITIALIZER,
@@ -85,6 +88,9 @@ arbus_init(void)
 	done = true;
 
 	arbus_bus_mem_init(&arbus_mbst, NULL);
+#if _BYTE_ORDER == _BIG_ENDIAN
+	arbusle_bus_mem_init(&arbus_mbst_le, NULL);
+#endif
 }
 
 /* this primarily exists so we can get to the console... */
@@ -125,6 +131,11 @@ arbus_attach(device_t parent, device_t self, void *aux)
 		aa.aa_size = adv->adv_size;
 		aa.aa_dmat = &arbus_mdt;
 		aa.aa_bst = &arbus_mbst;
+#if _BYTE_ORDER == _BIG_ENDIAN
+		aa.aa_bst_le = &arbus_mbst_le;
+#else
+		aa.aa_bst_le = &arbus_mbst;
+#endif
 		aa.aa_cirq = adv->adv_cirq;
 		aa.aa_mirq = adv->adv_mirq;
 
