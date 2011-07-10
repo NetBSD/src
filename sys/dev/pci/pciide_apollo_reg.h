@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_apollo_reg.h,v 1.19 2011/06/30 20:09:40 wiz Exp $	*/
+/*	$NetBSD: pciide_apollo_reg.h,v 1.20 2011/07/10 20:01:37 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -91,6 +91,7 @@
 #define APO_VIA_REGBASE			0x40
 #define APO_AMD_REGBASE			0x40
 #define APO_NVIDIA_REGBASE		0x50
+#define APO_VIA_VT6421_REGBASE		0xa0
 
 /* misc. configuration registers */
 #define APO_IDECONF(sc) ((sc)->sc_apo_regbase + 0x00)
@@ -110,7 +111,7 @@
 #define APO_IDECONF_FIFO_CONF_MASK 0x60000000
 
 /* Misc. controls register - VIA only */
-#define APO_CTLMISC(sc) 0x44
+#define APO_CTLMISC(sc) ((sc)->sc_apo_regbase + 0x04)
 #define APO_CTLMISC_BM_STS_RTY	0x00000008
 #define APO_CTLMISC_FIFO_HWS	0x00000010
 #define APO_CTLMISC_WR_IRDY_WS	0x00000020
@@ -129,7 +130,7 @@
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3) + 4))
 
 /* misc timings control - VIA only */
-#define APO_MISCTIM(sc) 0x4c
+#define APO_MISCTIM(sc) ((sc)->sc_apo_regbase + 0x0c)
 
 /* Ultra-DMA control (586A/B only, amd and nvidia ) */
 #define APO_UDMA(sc) ((sc)->sc_apo_regbase + 0x10)
