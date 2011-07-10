@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.56 2011/02/20 07:50:25 matt Exp $
+# $NetBSD: Makefile.booters,v 1.57 2011/07/10 08:42:55 mrg Exp $
 
 NOMAN=		# defined
 
@@ -31,7 +31,6 @@ LDBUG=		-T $S/arch/mips/conf/stand.ldscript
 AFLAGS+=	-mips3 -mabi=32
 CFLAGS+=	-mips3 -mabi=32
 LDBUG+=		-m elf32ltsmip
-MACHINE_ARCH=	mipsel
 .endif
 
 NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
