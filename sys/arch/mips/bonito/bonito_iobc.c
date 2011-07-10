@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_iobc.c,v 1.4 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: bonito_iobc.c,v 1.5 2011/07/10 23:13:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,12 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_iobc.c,v 1.4 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_iobc.c,v 1.5 2011/07/10 23:13:22 matt Exp $");
 
 #include <sys/param.h>
+#include <sys/intr.h>
 
-#include <machine/locore.h>
-#include <machine/intr.h>
+#include <mips/locore.h>
 
 #include <mips/bonito/bonitoreg.h>
 #include <mips/bonito/bonitovar.h>

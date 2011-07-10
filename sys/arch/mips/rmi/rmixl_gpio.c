@@ -1,5 +1,5 @@
-/*	$NetBSD: rmixl_gpio.c,v 1.2 2011/07/01 19:01:30 dyoung Exp $	*/
-/*	$NetBSD: rmixl_gpio.c,v 1.2 2011/07/01 19:01:30 dyoung Exp $	*/
+/*	$NetBSD: rmixl_gpio.c,v 1.3 2011/07/10 23:13:22 matt Exp $	*/
+/*	$NetBSD: rmixl_gpio.c,v 1.3 2011/07/10 23:13:22 matt Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_gpio.c,v 1.2 2011/07/01 19:01:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_gpio.c,v 1.3 2011/07/10 23:13:22 matt Exp $");
 
 #define _INTR_PRIVATE
 
@@ -37,17 +37,14 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_gpio.c,v 1.2 2011/07/01 19:01:30 dyoung Exp $"
 #include "gpio.h"
  
 #include <sys/param.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/evcnt.h>
+#include <sys/intr.h>
 #include <sys/atomic.h>
  
 #include <uvm/uvm_extern.h>
   
-#include <machine/intr.h>
- 
-#include <mips/cpu.h>
-
-#include <sys/bus.h>
-
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
 #include <mips/rmi/rmixl_obiovar.h>
