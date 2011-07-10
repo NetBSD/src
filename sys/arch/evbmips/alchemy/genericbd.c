@@ -1,4 +1,4 @@
-/* $NetBSD: genericbd.c,v 1.3 2011/07/01 18:44:45 dyoung Exp $ */
+/* $NetBSD: genericbd.c,v 1.4 2011/07/10 00:03:52 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,11 +32,13 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genericbd.c,v 1.3 2011/07/01 18:44:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genericbd.c,v 1.4 2011/07/10 00:03:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
-#include <machine/locore.h>
+
+#include <mips/locore.h>
+
 #include <evbmips/alchemy/obiovar.h>
 #include <evbmips/alchemy/board.h>
 
