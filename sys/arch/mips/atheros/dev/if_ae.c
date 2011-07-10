@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.20 2011/07/01 18:40:00 dyoung Exp $ */
+/* $Id: if_ae.c,v 1.21 2011/07/10 06:24:19 matt Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,21 +98,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.20 2011/07/01 18:40:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.21 2011/07/10 06:24:19 matt Exp $");
 
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/callout.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
 #include <sys/device.h>
-
-#include <machine/endian.h>
+#include <sys/endian.h>
+#include <sys/errno.h>
+#include <sys/intr.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -122,9 +122,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.20 2011/07/01 18:40:00 dyoung Exp $");
 #include <net/if_ether.h>
 
 #include <net/bpf.h>
-
-#include <sys/bus.h>
-#include <machine/intr.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

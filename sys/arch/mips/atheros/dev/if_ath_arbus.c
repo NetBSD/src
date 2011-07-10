@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.20 2011/07/07 05:06:44 matt Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.21 2011/07/10 06:24:19 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,18 +34,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.20 2011/07/07 05:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.21 2011/07/10 06:24:19 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/errno.h>
-
 #include <sys/bus.h>
-#include <machine/intr.h>
+#include <sys/device.h>
+#include <sys/errno.h>
+#include <sys/intr.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
