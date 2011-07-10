@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_intr.c,v 1.4 2011/07/01 18:45:36 dyoung Exp $	*/
+/*	$NetBSD: gdium_intr.c,v 1.5 2011/07/10 00:03:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.4 2011/07/01 18:45:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.5 2011/07/10 00:03:53 matt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -45,15 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.4 2011/07/01 18:45:36 dyoung Exp $"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
-#include <sys/queue.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/cpu.h>
-
-#include <sys/bus.h>
-#include <machine/intr.h>
 
 #include <mips/locore.h>
 
