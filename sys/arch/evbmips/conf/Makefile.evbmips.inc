@@ -29,11 +29,23 @@ MKUBOOTIMAGEARGS=       -A mips -T kernel -C none
 MKUBOOTIMAGEARGS+=      -a ${TEXTADDR:C/....$/0000/} -e $(TEXTADDR)
 MKUBOOTIMAGEARGS+=      -n "$(MACHINE) ${_OSRELEASE} ($(KERNEL_BUILD:T))"
 
+.if ${NEED_UBOOTIMAGE} == "gz"
+MKUBOOTIMAGEARGS+=	-C gz
+
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${TOOL_GZIP} -9cn $@.bin '>' $@.bin.gz; \
+	${TOOL_GZIP} -9cn $@.bin > $@.bin.gz; \
+	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin.gz $@.ub; \
+	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin.gz $@.ub
+
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin.gz@}
+.else
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin $@.ub; \
 	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin $@.ub; \
 
+.endif
+
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.ub@}
 .endif
 .endif
-
