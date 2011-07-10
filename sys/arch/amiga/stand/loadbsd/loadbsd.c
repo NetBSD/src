@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.34 2009/10/21 23:53:38 snj Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.35 2011/07/10 21:02:39 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -198,7 +198,7 @@ main(int argc, char **argv)
 	if ((ExpansionBase=(void *)OpenLibrary(EXPANSIONNAME, 0)) == NULL)
 		err(20, "can't open expansion library");
 
-	while ((ch = getopt(argc, argv, "aAbc:DhI:km:n:qptsSvVZ")) != -1) {
+	while ((ch = getopt(argc, argv, "aAbCc:DhI:km:n:qptsSvVZ")) != -1) {
 		switch (ch) {
 		case 'k':
 			k_flag = 1;
@@ -250,6 +250,9 @@ main(int argc, char **argv)
 				amiga_flags |= i << 1;
 			else
 				err(20, "-n option must be 0, 1, 2, or 3");
+			break;
+		case 'C':
+			amiga_flags |= (1 << 3);
 			break;
 		case 'I':
 			I_flag = strtoul(optarg, NULL, 16);
@@ -835,7 +838,7 @@ _startit_sz: .long _startit_end-_startit
 void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-abhkpstADSVZ] [-c machine] [-m mem] [-n mode] [-I sync-inhibit] kernel\n",
+	fprintf(stderr, "usage: %s [-abhkpstACDSVZ] [-c machine] [-m mem] [-n mode] [-I sync-inhibit] kernel\n",
 	    program_name);
 	exit(1);
 }
@@ -854,6 +857,7 @@ OPTIONS
 \t-b  Ask for which root device.
 \t    Its possible to have multiple roots and choose between them.
 \t-c  Set machine type. [e.g 3000; use 32000+N for DraCo rev. N]
+\t-C  Use Serial Console.
 \t-D  Enter debugger
 \t-h  This help message.
 \t-I  Inhibit sync negotiation. Option value is bit-encoded targets.
