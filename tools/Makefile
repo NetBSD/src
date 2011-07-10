@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.146 2011/06/21 02:15:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.147 2011/07/10 08:43:51 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -107,7 +107,8 @@ SUBDIR+=	macppc-fixcoff
 SUBDIR+=	powerpc-mkbootimage
 .endif
 
-.if (${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb")
+.if (${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
+     ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb")
 SUBDIR+=	mips-elf2ecoff
 .endif
 
