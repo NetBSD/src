@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/07/03 08:35:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/07/10 02:39:57 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -13,8 +13,14 @@ LIB=		gcc
 
 .if !defined(MKNATIVE_LIBGCC_NEW)
 
+# XXX handle this better?
+.if ${MACHINE} == "emips"
+G_LIB2ADD_HACK+=	${GNUHOSTDIST}/gcc/config/floatunsidf.c \
+			${GNUHOSTDIST}/gcc/config/floatunsisf.c
+.endif
+
 SRCS+=		${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} \
-		${G_LIB2ADD:T:S/.asm/.S/} ${G_LIB2ADD_ST} ${LIB1ASMFUNCS}
+		${G_LIB2ADD_HACK:T:S/.asm/.S/} ${G_LIB2ADD:T:S/.asm/.S/} ${G_LIB2ADD_ST} ${LIB1ASMFUNCS}
 .if ${MKPIC} == "no"
 SRCS+=		${LIB2_EH}
 .endif
