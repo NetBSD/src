@@ -1,4 +1,4 @@
-/* $NetBSD: au8522reg.h,v 1.1 2010/12/27 15:42:11 jmcneill Exp $ */
+/* $NetBSD: au8522reg.h,v 1.2 2011/07/10 00:47:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -80,5 +80,7 @@
 #define	AU8522_REG_VFCOEF_CVBS		0x0415
 #define	AU8522_REG_AUDIO_FREQ		0x0606
 #define	AU8522_REG_LPFCOEF_BASE		0x060b
+#define	AU8522_REG_SNR_QAM		0x4522
+#define	AU8522_REG_SNR_VSB		0x4311
 
 #endif /* !_AU8522REG_H */

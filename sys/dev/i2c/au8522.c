@@ -1,4 +1,4 @@
-/* $NetBSD: au8522.c,v 1.4 2011/07/09 15:00:43 jmcneill Exp $ */
+/* $NetBSD: au8522.c,v 1.5 2011/07/10 00:47:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au8522.c,v 1.4 2011/07/09 15:00:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au8522.c,v 1.5 2011/07/10 00:47:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,9 +345,6 @@ au8522_get_dtv_status(struct au8522 *au)
 	fe_status_t status = 0;
 	uint8_t val;
 
-	//printf("%s: current_modulation = %d\n", __func__,
-	//    au->current_modulation);
-
 	switch (au->current_modulation) {
 	case VSB_8:
 		if (au8522_read_1(au, 0x4088, &val))
@@ -379,8 +376,47 @@ au8522_get_dtv_status(struct au8522 *au)
 		status |= FE_HAS_LOCK;
 	}
 
-	//printf("%s: status = 0x%x\n", __func__, status);
 	return status;
+}
+
+uint16_t
+au8522_get_snr(struct au8522 *au)
+{
+	const struct au8522_snr_table *snrtab = NULL;
+	uint16_t snrreg;
+	uint8_t val;
+	size_t snrtablen;
+	unsigned int n;
+
+	switch (au->current_modulation) {
+	case VSB_8:
+		snrtab = au8522_snr_8vsb;
+		snrtablen = __arraycount(au8522_snr_8vsb);
+		snrreg = AU8522_REG_SNR_VSB;
+		break;
+	case QAM_64:
+		snrtab = au8522_snr_qam64;
+		snrtablen = __arraycount(au8522_snr_qam64);
+		snrreg = AU8522_REG_SNR_QAM;
+		break;
+	case QAM_256:
+		snrtab = au8522_snr_qam256;
+		snrtablen = __arraycount(au8522_snr_qam256);
+		snrreg = AU8522_REG_SNR_QAM;
+		break;
+	default:
+		return 0;
+	}
+
+	if (au8522_read_1(au, snrreg, &val))
+		return 0;
+
+	for (n = 0; n < snrtablen; n++) {
+		if (val < snrtab[n].val)
+			return snrtab[n].snr;
+	}
+
+	return 0;
 }
 
 MODULE(MODULE_CLASS_DRIVER, au8522, NULL);
