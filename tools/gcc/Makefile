@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2011/07/03 12:11:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.44 2011/07/10 15:28:26 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -64,7 +64,8 @@ MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q} \
 		EXTRA_PARTS= CPPFLAGS=${GCC_CPPFLAGS:Q} \
 		AR=${HOST_AR:Q} RANLIB=${HOST_RANLIB:Q}
 
-CONFIGURE_ENV+= gcc_cv_libc_provides_ssp=yes
+CONFIGURE_ENV+= gcc_cv_libc_provides_ssp=yes \
+		gcc_cv_as_sparc_gotdata_op=no
 
 MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
 			CC_FOR_BUILD=${HOST_CC:Q} \
@@ -84,7 +85,8 @@ MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
 			gcc_cv_libc_provides_ssp=yes \
 			gdb_cv_printf_has_long_double=yes \
 			gdb_cv_printf_has_long_long=yes \
-			gdb_cv_scanf_has_long_double=yes
+			gdb_cv_scanf_has_long_double=yes \
+			gcc_cv_as_sparc_gotdata_op=no
 
 ALL_TARGET=	all-gcc
 INSTALL_TARGET=	install-gcc
