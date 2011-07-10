@@ -1,4 +1,4 @@
-/* $NetBSD: ar9344.c,v 1.1 2011/07/07 05:06:44 matt Exp $ */
+/* $NetBSD: ar9344.c,v 1.2 2011/07/10 06:26:02 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,7 +48,7 @@
  * family.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar9344.c,v 1.1 2011/07/07 05:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar9344.c,v 1.2 2011/07/10 06:26:02 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -183,6 +183,11 @@ ar9344_get_freqs(struct arfreqs *freqs)
 	} else {
 		freqs->freq_mem = cpu_pll_freq / (post_div + 1);
 	}
+
+	/*
+	 * Console is off the reference clock, not the bus clock.
+	 */
+	freqs->freq_uart = freqs->freq_ref;
 }
 
 #if 0
@@ -285,26 +290,22 @@ ar9344_device_register(device_t dev, void *aux)
 static int
 ar9344_enable_device(const struct atheros_device *adv)
 {
-#if 0
-	if (adv->adv_addr == AR9344_WLAN_BASE) {
-		/* enable arbitration for wlan */
-		PUTRESET(AR9344_RESET_AHB_ARB_CTL,
-		    GETRESET(AR9344_RESET_AHB_ARB_CTL) | AR9344_ARB_WLAN);
+	if (adv->adv_reset) {
+		/* put device into reset */
+		PUTRESETREG(AR9344_RESET_RESETCTL,
+		    GETRESETREG(AR9344_RESET_RESETCTL) | adv->adv_reset);
 
-		/* set WLAN for big endian */
-		PUTRESET(AR9344_RESET_ENDIAN,
-		    GETRESET(AR9344_RESET_ENDIAN) | AR9344_ENDIAN_WLAN);
+		delay(15000);	/* XXX: tsleep? */
 
-		/* wake up the mac */
-		PUTPCIREG(AR9344_PCI_MAC_SCR,
-		    (GETPCIREG(AR9344_PCI_MAC_SCR) & ~PCI_MAC_SCR_SLM_MASK) |
-		    PCI_MAC_SCR_SLM_FWAKE);
+		/* take it out of reset */
+		PUTRESETREG(AR9344_RESET_RESETCTL,
+		    GETRESETREG(AR9344_RESET_RESETCTL) & ~adv->adv_reset);
 
-		/* wait for it to wake up */
-		while (GETPCIREG(AR9344_PCI_MAC_PCICFG) &
-		    PCI_MAC_PCICFG_SPWR_DN);
+		delay(25);
 	}
-#endif
+	if (adv->adv_enable)
+		panic("%s: %s: enable not supported!", __func__, adv->adv_name);
+
 	return 0;
 }
 
@@ -392,10 +393,13 @@ static const struct atheros_device ar9344_devices[] = {
 		.adv_mirq = AR9344_MISC_IRQ_UART0,
 	}, {
 		.adv_name = "ehci",
-		.adv_addr = AR9344_USB_BASE,
+		.adv_addr = AR9344_USB_BASE + 0x100,
 		.adv_size = 0x1000,
 		.adv_cirq = ARCHIP_CPU_IRQ_USB,
 		.adv_mirq = -1,
+		.adv_reset = AR9344_RESETCTL_USB_PHY_SUSPEND_OVERRIDE
+		    | ARCHIP_RESETCTL_USB_PHY_RESET
+		    | ARCHIP_RESETCTL_USB_HOST_RESET,
 	}, {
 		.adv_name = "age",
 		.adv_addr = AR9344_GMAC0_BASE,

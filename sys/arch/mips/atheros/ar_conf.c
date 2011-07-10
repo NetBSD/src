@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_conf.c,v 1.1 2011/07/07 05:06:44 matt Exp $	*/
+/*	$NetBSD: ar_conf.c,v 1.2 2011/07/10 06:26:02 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ar_conf.c,v 1.1 2011/07/07 05:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar_conf.c,v 1.2 2011/07/10 06:26:02 matt Exp $");
 
 #include <sys/param.h>
 
@@ -102,6 +102,13 @@ static const struct atheros_chip chips[] = {
 #ifdef WISOC_AR9344
 	{
 		.ac_platformsw =	&ar9344_platformsw,
+		.ac_chipid =		0x20,	/* 7240? */
+		.ac_chipmask =		0xff,
+		.ac_cid =		MIPS_PRID_CID_MTI,
+		.ac_pid =		MIPS_74K,
+		.ac_name =		"AR7240"
+	}, {
+		.ac_platformsw =	&ar9344_platformsw,
 		.ac_chipid =		ARCHIP_AR9344,
 		.ac_chipmask =		0xff,
 		.ac_cid =		MIPS_PRID_CID_MTI,
@@ -129,6 +136,15 @@ u_int
 atheros_get_chipid(void)
 {
 	return my_chip->ac_chipid;
+}
+
+uint32_t
+atheros_get_uart_freq(void)
+{
+	if (chip_freqs.freq_uart)
+		return chip_freqs.freq_uart;
+
+	return chip_freqs.freq_bus;
 }
 
 uint32_t
@@ -172,6 +188,12 @@ atheros_set_platformsw(void)
 			atheros_early_consinit();
 			printf("Early console started!\n");
 			(*apsw->apsw_get_freqs)(&chip_freqs);
+			printf("freqs: cpu=%u bus=%u mem=%u ref=%u pll=%u\n",
+			     chip_freqs.freq_cpu,
+			     chip_freqs.freq_bus,
+			     chip_freqs.freq_mem,
+			     chip_freqs.freq_ref,
+			     chip_freqs.freq_pll);
 			return;
 		}
 	}

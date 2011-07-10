@@ -1,4 +1,4 @@
-/* $NetBSD: ar_console.c,v 1.1 2011/07/07 05:06:44 matt Exp $ */
+/* $NetBSD: ar_console.c,v 1.2 2011/07/10 06:26:02 matt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * This file implement an Atheros dependent early console.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar_console.c,v 1.1 2011/07/07 05:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar_console.c,v 1.2 2011/07/10 06:26:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ar_console.c,v 1.1 2011/07/07 05:06:44 matt Exp $");
 #include <mips/atheros/include/platform.h>
 #include <mips/atheros/include/arbusvar.h>
 
-#include <machine/locore.h>
+#include <mips/locore.h>
 #include "com.h"
 
 #include <dev/ic/ns16450reg.h>
@@ -66,7 +66,8 @@ atheros_consinit(void)
 #if NCOM > 0
 	/* Setup polled serial for early console I/O */
 	/* XXX: pass in CONSPEED? */
-	com_arbus_cnattach(platformsw->apsw_uart0_base, atheros_get_bus_freq());
+	com_arbus_cnattach(platformsw->apsw_uart0_base,
+	    atheros_get_uart_freq());
 #else
 	panic("Not configured to use serial console!\n");
 	/* not going to see that message now, are we? */
