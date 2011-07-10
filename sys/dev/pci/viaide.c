@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.75 2011/05/17 17:34:54 dyoung Exp $	*/
+/*	$NetBSD: viaide.c,v 1.76 2011/07/10 20:01:37 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,10 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.75 2011/05/17 17:34:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.76 2011/07/10 20:01:37 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -46,7 +47,7 @@ static void	via_mapchan(const struct pci_attach_args *,
 static void	via_mapregs_compat_native(const struct pci_attach_args *,
 		    struct pciide_channel *);
 static int	via_sata_chip_map_common(struct pciide_softc *,
-		    struct pci_attach_args *);
+		    const struct pci_attach_args *);
 static void	via_sata_chip_map(struct pciide_softc *,
 		    const struct pci_attach_args *, int);
 static void	via_sata_chip_map_6(struct pciide_softc *,
@@ -311,7 +312,7 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	},
 	{ PCI_PRODUCT_VIATECH_VT6421_RAID,
 	  0,
-	  "VIA Technologies VT6421 Serial RAID Controller",
+	  "VIA Technologies VT6421 Serial ATA RAID Controller",
 	  via_sata_chip_map_new,
 	},
 	{ PCI_PRODUCT_VIATECH_VT8237_SATA,
@@ -366,7 +367,7 @@ viaide_lookup(pcireg_t id)
 static int
 viaide_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct pci_attach_args *pa = aux;
+	const struct pci_attach_args *pa = aux;
 
 	if (viaide_lookup(pa->pa_id) != NULL)
 		return (2);
@@ -376,7 +377,7 @@ viaide_match(device_t parent, cfdata_t match, void *aux)
 static void
 viaide_attach(device_t parent, device_t self, void *aux)
 {
-	struct pci_attach_args *pa = aux;
+	const struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = device_private(self);
 	const struct pciide_product_desc *pp;
 
@@ -835,10 +836,14 @@ pio:		/* setup PIO mode */
 }
 
 static int
-via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
+via_sata_chip_map_common(struct pciide_softc *sc,
+    const struct pci_attach_args *cpa)
 {
 	pcireg_t csr;
 	int maptype, ret;
+	struct pci_attach_args pac, *pa = &pac;
+
+	pac = *cpa;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return 0;
@@ -908,18 +913,15 @@ via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-via_sata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa0,
+via_sata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa,
     int satareg_shift)
 {
 	struct pciide_channel *cp;
 	struct ata_channel *wdc_cp;
 	struct wdc_regs *wdr;
-	struct pci_attach_args pacopy, *pa;
 	pcireg_t interface;
 	int channel;
 
-	pacopy = *pa0;
-	pa = &pacopy;
 	interface = PCI_INTERFACE(pa->pa_class);
 
 	if (via_sata_chip_map_common(sc, pa) == 0)
@@ -983,32 +985,117 @@ via_sata_chip_map_7(struct pciide_softc *sc, const struct pci_attach_args *pa)
 }
 
 static void
+via_vt6421_mapreg_dma(struct pciide_softc *sc, const struct pci_attach_args *pa)
+{
+	struct pciide_channel *pc;
+	int chan, reg;
+	bus_size_t size;
+
+	sc->sc_dma_ok = (pci_mapreg_map(pa, PCIIDE_REG_BUS_MASTER_DMA,
+	    PCI_MAPREG_TYPE_IO, 0, &sc->sc_dma_iot, &sc->sc_dma_ioh,
+	    NULL, &sc->sc_dma_ios) == 0);
+	sc->sc_dmat = pa->pa_dmat;
+	if (sc->sc_dma_ok == 0) {
+		aprint_verbose(", but unused (couldn't map registers)");
+	} else {
+		sc->sc_wdcdev.dma_arg = sc;
+		sc->sc_wdcdev.dma_init = pciide_dma_init;
+		sc->sc_wdcdev.dma_start = pciide_dma_start;
+		sc->sc_wdcdev.dma_finish = pciide_dma_finish;
+	}
+
+	if (device_cfdata(sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
+	    PCIIDE_OPTIONS_NODMA) {
+		aprint_verbose(
+		    ", but unused (forced off by config file)");
+		sc->sc_dma_ok = 0;
+	}
+
+	if (sc->sc_dma_ok == 0)
+		return;
+
+	for (chan = 0; chan < 4; chan++) {
+		pc = &sc->pciide_channels[chan];
+		for (reg = 0; reg < IDEDMA_NREGS; reg++) {
+			size = 4;
+			if (size > (IDEDMA_SCH_OFFSET - reg))
+				size = IDEDMA_SCH_OFFSET - reg;
+			if (bus_space_subregion(sc->sc_dma_iot, sc->sc_dma_ioh,
+			    IDEDMA_SCH_OFFSET * chan + reg, size,
+			    &pc->dma_iohs[reg]) != 0) {
+				sc->sc_dma_ok = 0;
+				aprint_verbose(", but can't subregion offset "
+				               "%d size %lu",
+					       reg, (u_long)size);
+				return;
+			}
+		}
+	}
+}
+
+static int
+via_vt6421_chansetup(struct pciide_softc *sc, int channel)
+{
+	struct pciide_channel *cp = &sc->pciide_channels[channel];
+
+	sc->wdc_chanarray[channel] = &cp->ata_channel;
+
+	cp->ata_channel.ch_channel = channel;
+	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
+	cp->ata_channel.ch_queue =
+	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+	cp->ata_channel.ch_ndrive = 2;
+	if (cp->ata_channel.ch_queue == NULL) {
+		aprint_error("%s channel %d: "
+		    "can't allocate memory for command queue",
+		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), channel);
+		return 0;
+	}
+	return 1;
+}
+
+static void
 via_sata_chip_map_new(struct pciide_softc *sc,
-    const struct pci_attach_args *pa0)
+    const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	struct ata_channel *wdc_cp;
 	struct wdc_regs *wdr;
-	struct pci_attach_args pacopy, *pa;
-	pcireg_t interface;
 	int channel;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 	int i;
 
-	pacopy = *pa0;
-	pa = &pacopy;
-	interface = PCI_INTERFACE(pa->pa_class);
-
-	if (via_sata_chip_map_common(sc, pa) == 0)
+	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	if (interface == 0) {
-		ATADEBUG_PRINT(("via_sata_chip_map interface == 0\n"),
-		    DEBUG_PROBE);
-		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
-		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
+	sc->sc_apo_regbase = APO_VIA_VT6421_REGBASE;
+
+	if (pci_mapreg_map(pa, PCI_BAR(5), PCI_MAPREG_TYPE_IO, 0,
+	    &sc->sc_ba5_st, &sc->sc_ba5_sh, NULL, &sc->sc_ba5_ss) != 0) {
+		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "couldn't map SATA regs\n");
 	}
+
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
+	via_vt6421_mapreg_dma(sc, pa);
+	aprint_verbose("\n");
+
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+		sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+	}
+	sc->sc_wdcdev.sc_atac.atac_set_modes = sata_setup_channel;
+	
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 3;
+
+	wdc_allocate_regs(&sc->sc_wdcdev);
 
 	if (pci_intr_map(pa, &intrhandle) != 0) {
 		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
@@ -1033,9 +1120,9 @@ via_sata_chip_map_new(struct pciide_softc *sc,
 	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
 	     channel++) {
 		cp = &sc->pciide_channels[channel];
-		if (pciide_chansetup(sc, channel, interface) == 0)
+		if (via_vt6421_chansetup(sc, channel) == 0)
 			continue;
-		cp->ata_channel.ch_ndrive = 1;
+		cp->ata_channel.ch_ndrive = 2;
 		wdc_cp = &cp->ata_channel;
 		wdr = CHAN_TO_WDC_REGS(wdc_cp);
 
@@ -1065,9 +1152,8 @@ via_sata_chip_map_new(struct pciide_softc *sc,
 			    wdc_cp->ch_channel);
 			continue;
 		}
-		sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
 
-		if (pci_mapreg_map(pa, (PCI_MAPREG_START + (4 * (channel))),
+		if (pci_mapreg_map(pa, PCI_BAR(wdc_cp->ch_channel),
 		    PCI_MAPREG_TYPE_IO, 0, &wdr->cmd_iot, &wdr->cmd_baseioh,
 		    NULL, &wdr->cmd_ios) != 0) {
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
