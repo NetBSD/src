@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.27 2011/01/22 19:19:16 joerg Exp $
+ * $NetBSD: main.c,v 1.28 2011/07/10 21:02:38 mhitch Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -216,6 +216,9 @@ again:
 					break;
 				case 'A':	/* enable AGA modes */
 					amiga_flags |= 1;
+					break;
+				case 'C':	/* Serial Console */
+					amiga_flags |= (1 << 3);
 					break;
 				case 'D':	/* enter Debugger */
 					boothowto |= RB_KDB;
