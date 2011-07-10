@@ -1,4 +1,4 @@
-.\"	$NetBSD: locate.conf.5,v 1.8 2011/02/21 02:31:57 itohy Exp $
+.\"	$NetBSD: locate.conf.5,v 1.9 2011/07/10 13:42:49 apb Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 1, 2005
+.Dd July 10, 2011
 .Dt LOCATE.CONF 5
 .Os
 .Sh NAME
@@ -47,12 +47,15 @@ The
 file contains a list of newline separated records,
 each of which is composed of a keyword and arguments,
 which are separated by white space.
+Arguments with embedded shell metacharacters must be quoted in
+.Xr sh 1
+style.
 Lines beginning with
 .Dq #
 are treated as comments and ignored.
 However, a
 .Dq #
-in the middle of a line does not start comment.
+in the middle of a line does not start a comment.
 .Pp
 The configuration options are as follows:
 .Bl -tag -width XXXXXX
