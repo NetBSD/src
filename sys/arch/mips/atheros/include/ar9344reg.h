@@ -1,4 +1,4 @@
-/* $NetBSD: ar9344reg.h,v 1.1 2011/07/07 05:06:44 matt Exp $ */
+/* $NetBSD: ar9344reg.h,v 1.2 2011/07/10 23:13:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -52,7 +52,8 @@
 #define	AR9344_SLIC_BASE		0x180A9000
 #define	AR9344_STEREO_BASE		0x180B0000
 #define	AR9344_MDIO_BASE		0x180B8000
-#define	AR9344_PCIE_RC_BASE		0x180F0000
+#define	AR9344_PCIE_RC_BASE		0x180C0000
+#define	AR9344_PCIE_RC_BASE2		0x180F0000
 #define	AR9344_WDMA_BASE		0x18100000
 #define	AR9344_RTC_BASE			0x18107000
 #define	AR9344_UART1_BASE		0x18150000	/* high speed */

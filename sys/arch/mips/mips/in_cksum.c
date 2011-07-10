@@ -1,4 +1,4 @@
-/* $NetBSD: in_cksum.c,v 1.14 2010/09/18 16:43:50 tsutsui Exp $ */
+/* $NetBSD: in_cksum.c,v 1.15 2011/07/10 23:13:22 matt Exp $ */
 
 /*
  * Copyright (c) 1993 Regents of the University of California.
@@ -42,18 +42,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.14 2010/09/18 16:43:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.15 2011/07/10 23:13:22 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/endian.h>
 #include <sys/mbuf.h>
+#include <sys/systm.h>
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 
-#include <machine/endian.h>
 
 union memptr {
 	uint32_t *l;

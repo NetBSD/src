@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clock.c,v 1.12 2011/02/20 07:45:48 matt Exp $	*/
+/*	$NetBSD: mips3_clock.c,v 1.13 2011/07/10 23:13:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,18 +40,17 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.12 2011/02/20 07:45:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.13 2011/07/10 23:13:22 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 #include <sys/kernel.h>
 #include <sys/timetc.h>
-#include <sys/cpu.h>
 
 #include <mips/mips3_clock.h>
 
-#include <machine/intr.h>
-#include <machine/locore.h>
+#include <mips/locore.h>
 
 /*
  * Wait for at least "n" microseconds.
