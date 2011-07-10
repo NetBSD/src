@@ -1,4 +1,4 @@
-#	$NetBSD: DB120,v 1.2 2011/07/09 21:46:19 matt Exp $
+#	$NetBSD: DB120,v 1.3 2011/07/10 00:03:12 matt Exp $
 #
 # Qualcomm Atheros AR9344 DB120 evaluation board.
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DB120-$Revision: 1.2 $"
+#ident 		"DB120-$Revision: 1.3 $"
 
 maxusers	32
 
@@ -18,9 +18,10 @@ makeoptions	CPUFLAGS+="-mips32r2"
 makeoptions	NEED_MDSETIMAGE="yes"
 makeoptions	NEED_BINARY="yes"
 makeoptions	NEED_UBOOTIMAGE="yes"
-options 	NOFPU		# No FPU
-options 	FPEMUL		# emulate FPU insn
-options		WISOC_AR9344	# WiSoC select
+options 	NOFPU				# No FPU
+options 	FPEMUL				# emulate FPU insn
+options		WISOC_AR9344			# WiSoC select
+options 	COM_16650,COM_TOLERANCE=50	# +/- 5%
 
 # Options for necessary to use MD
 #options 	MEMORY_DISK_HOOKS
