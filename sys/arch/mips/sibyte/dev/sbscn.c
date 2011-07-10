@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.35 2011/04/24 16:26:56 rmind Exp $ */
+/* $NetBSD: sbscn.c,v 1.36 2011/07/10 23:32:03 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.35 2011/04/24 16:26:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.36 2011/07/10 23:32:03 matt Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -145,7 +145,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.35 2011/04/24 16:26:56 rmind Exp $");
 #endif
 #include <mips/sibyte/dev/sbscnvar.h>
 #include <dev/cons.h>
-#include <machine/locore.h>
+#include <mips/locore.h>
 
 void	sbscn_attach_channel(struct sbscn_softc *sc, int chan, int intr);
 #if defined(DDB) || defined(KGDB)
