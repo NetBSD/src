@@ -1,4 +1,4 @@
-#	$NetBSD: files.atheros,v 1.9 2011/07/07 05:06:45 matt Exp $
+#	$NetBSD: files.atheros,v 1.10 2011/07/10 23:13:22 matt Exp $
 
 defflag	opt_wisoc.h	WISOC_AR5312 WISOC_AR5315 WISOC_AR7100 WISOC_AR9344
 
@@ -19,6 +19,7 @@ file	arch/mips/atheros/ar9344.c		wisoc_ar9344
 device	arbus { [addr=-1] }
 attach	arbus at mainbus
 file	arch/mips/atheros/arbus.c		arbus
+file	arch/mips/atheros/arbusle.c		arbus
 
 # On-chip UART device
 attach	com at arbus with com_arbus
@@ -51,8 +52,10 @@ file	arch/mips/atheros/dev/arspi.c		arspi
 
 # On-chip PCI controller
 device	arpci: pcibus
+device	arpcie: pcibus
 attach	arpci at arbus
-file	arch/mips/atheros/dev/arpci.c		arpci
+attach	arpcie at arbus
+file	arch/mips/atheros/dev/arpci.c		arpci | arpcie
 
 # On-chip OHCI USB controller
 attach	ohci at arbus with ohci_arbus

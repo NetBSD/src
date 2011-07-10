@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.27 2011/07/01 18:39:29 dyoung Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.28 2011/07/10 23:13:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,20 +68,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.27 2011/07/01 18:39:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.28 2011/07/10 23:13:23 matt Exp $");
 
 #include "opt_ddb.h"
 #define __INTR_PRIVATE
 
 #include <sys/param.h>
-#include <sys/queue.h>
+#include <sys/bus.h>
+#include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
-
-#include <sys/bus.h>
-#include <machine/intr.h>
 
 #include <mips/locore.h>
 #include <mips/alchemy/include/aureg.h>

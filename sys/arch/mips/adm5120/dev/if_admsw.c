@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.9 2011/07/01 18:38:49 dyoung Exp $ */
+/* $NetBSD: if_admsw.c,v 1.10 2011/07/10 23:13:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,20 +76,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.9 2011/07/01 18:38:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.10 2011/07/10 23:13:23 matt Exp $");
 
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/callout.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/queue.h>
+#include <sys/endian.h>
+#include <sys/errno.h>
+#include <sys/intr.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/systm.h>
 
 #include <prop/proplib.h>
 
@@ -101,10 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.9 2011/07/01 18:38:49 dyoung Exp $");
 #include <net/if_ether.h>
 
 #include <net/bpf.h>
-
-#include <sys/bus.h>
-#include <machine/intr.h>
-#include <machine/endian.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
