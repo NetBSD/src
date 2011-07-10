@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.klinks.mk,v 1.8 2011/02/20 04:05:14 jmcneill Exp $
+#	$NetBSD: bsd.klinks.mk,v 1.9 2011/07/10 23:50:24 matt Exp $
 #
 
 .include <bsd.own.mk>
@@ -14,7 +14,7 @@ S=	/sys
 .endif
 .endif
 
-CLEANFILES+=	machine ${MACHINE_CPU}
+CLEANFILES+=	machine ${MACHINE_CPU} ${MACHINE}
 .if ${MACHINE} == "sun2" || ${MACHINE} == "sun3"
 CLEANFILES+=	sun68k
 .elif ${MACHINE} == "sparc64"
@@ -23,6 +23,8 @@ CLEANFILES+=	sparc
 CLEANFILES+=	x86
 .elif ${MACHINE} == "amd64"
 CLEANFILES+=	x86 i386
+.elif ${MACHINE} == "evbmips"
+CLEANFILES+=	algor sbmips
 .endif
 
 .if defined(XEN_BUILD) || ${MACHINE} == "xen"
@@ -39,6 +41,8 @@ CLEANFILES+=	x86
 .BEGIN:
 	@rm -f machine && \
 	    ln -s $S/arch/${MACHINE}/include machine
+	@rm -f ${MACHINE} && \
+	    ln -s $S/arch/${MACHINE}/include ${MACHINE}
 	@if [ -d $S/arch/${MACHINE_CPU} ]; then \
 	    rm -f ${MACHINE_CPU} && \
 	    ln -s $S/arch/${MACHINE_CPU}/include ${MACHINE_CPU}; \
@@ -67,5 +71,11 @@ CLEANFILES+=	x86
 	    ln -s $S/arch/xen/include xen
 	@rm -rf xen-ma && mkdir xen-ma && \
 	    ln -s ../${XEN_BUILD:U${MACHINE_ARCH}} xen-ma/machine
+.endif
+.if ${MACHINE} == "evbmips"
+	@rm -f algor && \
+	    ln -s $S/arch/algor/include algor
+	@rm -f sbmips && \
+	    ln -s $S/arch/sbmips/include sbmips
 .endif
 .endif
