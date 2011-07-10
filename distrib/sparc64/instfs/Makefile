@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2010/03/12 23:07:13 martin Exp $
+#	$NetBSD: Makefile,v 1.15 2011/07/10 08:51:24 mrg Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -7,7 +7,7 @@
 
 .include "${.CURDIR}/../instfs/Makefile.instfs"
 IMAGE=			install.fs
-IMAGESIZE=		8m
+IMAGESIZE=		9m
 
 IMAGETAR=		instfs.tgz
 IMAGETAR_RELEASEDIR=	installation/misc
