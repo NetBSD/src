@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2011/07/03 13:43:23 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2011/07/10 03:05:34 mrg Exp $
 
 SRCS+= \
 	random.c \
@@ -152,12 +152,14 @@ C_SRCS_LIST= \
 gen-trialdivtab: gen-trialdivtab.c
 	${HOST_CC} -o ${.OBJDIR}/gen-trialdivtab ${.ALLSRC} -lm
 
-# XXX
-# XXX is this right?
+.if (defined(CPUFLAGS) && !empty(CPUFLAGS:M-mabi=64))
 GMP_LIMB_BITS=64
+.else
+GMP_LIMB_BITS=32
+.endif
 
 trialdiv.c: trialdivtab.h
-trialdivtab.h: gen-trialdivtab
+trialdivtab.h: gen-trialdivtab Makefile
 	${.OBJDIR}/gen-trialdivtab $(GMP_LIMB_BITS) 8000 > ${.OBJDIR}/trialdivtab.h
 
 CLEANFILES+=	trialdivtab.h
