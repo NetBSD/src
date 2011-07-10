@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.21 2011/02/20 07:47:39 matt Exp $ */
+/* $NetBSD: sbobio.c,v 1.22 2011/07/10 23:32:03 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,13 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.21 2011/02/20 07:47:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.22 2011/07/10 23:32:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/locore.h>
+#include <mips/locore.h>
+
 #include <mips/sibyte/include/sb1250_int.h>
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/include/sb1250_scd.h>

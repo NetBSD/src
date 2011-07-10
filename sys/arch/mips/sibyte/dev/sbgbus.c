@@ -1,4 +1,4 @@
-/* $NetBSD: sbgbus.c,v 1.12 2011/02/01 03:16:54 matt Exp $ */
+/* $NetBSD: sbgbus.c,v 1.13 2011/07/10 23:32:03 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.12 2011/02/01 03:16:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.13 2011/07/10 23:32:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,9 +41,11 @@ __KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.12 2011/02/01 03:16:54 matt Exp $");
 
 #include "ioconf.h"
 
-#include <machine/locore.h>
-#include <machine/sb1250/sb1250_regs.h>
-#include <machine/sb1250/sb1250_genbus.h>
+#include <mips/locore.h>
+
+#include <sbmips/sb1250/sb1250_regs.h>
+#include <sbmips/sb1250/sb1250_genbus.h>
+
 #include <sbmips/dev/sbobio/sbobiovar.h>
 #include <sbmips/dev/sbgbus/sbgbusvar.h>
 

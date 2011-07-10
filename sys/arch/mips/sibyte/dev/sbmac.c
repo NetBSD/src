@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.40 2011/02/20 07:47:39 matt Exp $ */
+/* $NetBSD: sbmac.c,v 1.41 2011/07/10 23:32:03 matt Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.40 2011/02/20 07:47:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.41 2011/07/10 23:32:03 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -61,12 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.40 2011/02/20 07:47:39 matt Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#include <machine/locore.h>
+#include <mips/locore.h>
 
 #include "sbobiovar.h"
 
@@ -1956,22 +1951,6 @@ sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			sbmac_init_and_start(sc);
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		{
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
-				    ifp->if_addrlen);
-			/* Set new address. */
-			sbmac_init_and_start(sc);
-			break;
-		}
 #endif
 		default:
 			sbmac_init_and_start(sc);

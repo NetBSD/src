@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz_pci.c,v 1.3 2011/04/06 01:44:45 dyoung Exp $ */
+/* $NetBSD: sbbrz_pci.c,v 1.4 2011/07/10 23:32:03 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.3 2011/04/06 01:44:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.4 2011/07/10 23:32:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.3 2011/04/06 01:44:45 dyoung Exp $")
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-#include <machine/locore.h>
+#include <mips/locore.h>
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/include/sb1250_scd.h>
 #include <mips/sibyte/include/sb1250_int.h>
