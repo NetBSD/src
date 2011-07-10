@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2011/07/02 17:37:28 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.21 2011/07/10 04:37:56 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,16 +12,8 @@ MDSET_RELEASEDIR=	binary/kernel
 
 MDSET_NOSTRIP=		# defined
 
-REMOVE_SECTIONS= \
-	-R .ident -R .arm.atpcs -R .comment -R .note.netbsd.ident \
-	-R .debug_abbrev -R .debug_info -R .debug_line -R .debug_str \
-	-R .debug_frame -R .debug_loc -R .debug_pubnames \
-	-R .debug_aranges -R .debug_pubtypes -R .ARM.attributes
-
 MDSET_POST.netbsd-INSTALL.aout= \
-    ${OBJCOPY} -O a.out-arm-netbsd \
-	${REMOVE_SECTIONS} \
-	${.TARGET} ${.TARGET}.tmp ;\
+    ${OBJCOPY} ${OBJCOPY_ELF2AOUT_FLAGS} ${.TARGET} ${.TARGET}.tmp ;\
 	mv ${.TARGET}.tmp ${.TARGET}
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
