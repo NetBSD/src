@@ -1,4 +1,4 @@
-/* $NetBSD: dtvio_demux.h,v 1.1 2011/07/09 14:46:56 jmcneill Exp $ */
+/* $NetBSD: dtvio_demux.h,v 1.2 2011/07/10 15:50:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -80,6 +80,12 @@ typedef enum {
 
 	DMX_PES_OTHER,
 } dmx_pes_type_t;
+
+#define	DMX_PES_AUDIO		DMX_PES_AUDIO0
+#define	DMX_PES_VIDEO		DMX_PES_VIDEO0
+#define	DMX_PES_TELETEXT	DMX_PES_TELETEXT0
+#define	DMX_PES_SUBTITLE	DMX_PES_SUBTITLE0
+#define	DMX_PES_PCR		DMX_PES_PCR0
 
 #define	DMX_FILTER_SIZE	16
 
