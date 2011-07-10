@@ -1,4 +1,4 @@
-/*	$NetBSD: smartbat.c,v 1.6 2011/07/01 18:41:52 dyoung Exp $ */
+/*	$NetBSD: smartbat.c,v 1.7 2011/07/10 14:41:34 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.6 2011/07/01 18:41:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.7 2011/07/10 14:41:34 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,7 @@ smartbat_attach(device_t parent, device_t self, void *aux)
 
 #define INITDATA(index, unit, string)					\
 	sc->sc_sensor[index].units = unit;     				\
+	sc->sc_sensor[index].state = ENVSYS_SINVALID;			\
 	snprintf(sc->sc_sensor[index].desc,				\
 	    sizeof(sc->sc_sensor[index].desc), "%s", string);
 

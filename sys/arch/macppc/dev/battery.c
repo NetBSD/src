@@ -1,4 +1,4 @@
-/*	$NetBSD: battery.c,v 1.13 2011/07/01 18:41:51 dyoung Exp $ */
+/*	$NetBSD: battery.c,v 1.14 2011/07/10 14:41:34 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.13 2011/07/01 18:41:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.14 2011/07/10 14:41:34 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,6 +229,7 @@ battery_update(struct battery_softc *sc, int out)
 
 #define INITDATA(index, unit, string)					\
 	sc->sc_sensor[index].units = unit;     				\
+	sc->sc_sensor[index].state = ENVSYS_SINVALID;			\
 	snprintf(sc->sc_sensor[index].desc,				\
 	    sizeof(sc->sc_sensor[index].desc), "%s", string);
 
