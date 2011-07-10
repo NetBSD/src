@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.13 2011/06/28 13:15:24 tsutsui Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.14 2011/07/10 04:56:31 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -75,6 +75,7 @@ main(int argc, char **argv)
 	struct exec aex;
 	int     infile, outfile;
 	unsigned long cur_vma = ULONG_MAX;
+	unsigned long mid;
 	int     symflag = 0;
 
 	strtabix = symtabix = 0;
@@ -209,10 +210,36 @@ usage:
 		text.len = data.vaddr - text.vaddr;
 
 	/* We now have enough information to cons up an a.out header... */
-	aex.a_midmag = htonl((symflag << 26) | (MID_PMAX << 16) | OMAGIC);
-	if (ex.e_machine == EM_PPC)
-		aex.a_midmag = htonl((symflag << 26) | (MID_POWERPC << 16)
-			| OMAGIC);
+	switch (ex.e_machine) {
+	case EM_SPARC:
+		mid = MID_SPARC;
+		break;
+	case EM_386:
+		mid = MID_PC386;
+		break;
+	case EM_68K:
+		mid = MID_M68K;
+		break;
+	case EM_MIPS:
+		if (ex.e_ident[EI_DATA] == ELFDATA2LSB)
+			mid = MID_PMAX;
+		else
+			mid = MID_MIPS;
+		break;
+	case EM_PPC:
+		mid = MID_POWERPC;
+		break;
+	case EM_ARM:
+		mid = MID_ARM6;
+		break;
+	case EM_VAX:
+		mid = MID_VAX;
+		break;
+	case EM_NONE:
+	default:
+		mid = MID_ZERO;
+	}
+	aex.a_midmag = htonl((symflag << 26) | (mid << 16) | OMAGIC);
 
 	aex.a_text = text.len;
 	aex.a_data = data.len;
