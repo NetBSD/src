@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_dtv.c,v 1.1 2011/07/09 15:00:44 jmcneill Exp $ */
+/* $NetBSD: auvitek_dtv.c,v 1.2 2011/07/10 00:47:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.1 2011/07/09 15:00:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.2 2011/07/10 00:47:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,13 +190,15 @@ auvitek_dtv_get_status(void *priv)
 uint16_t
 auvitek_dtv_get_signal_strength(void *priv)
 {
-	return 0;	/* TODO */
+	return auvitek_dtv_get_snr(priv);
 }
 
 uint16_t
 auvitek_dtv_get_snr(void *priv)
 {
-	return 0;	/* TODO */
+	struct auvitek_softc *sc = priv;
+
+	return au8522_get_snr(sc->sc_au8522);
 }
 
 static int
