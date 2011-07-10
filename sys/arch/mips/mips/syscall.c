@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.44 2011/02/20 07:45:48 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.45 2011/07/10 23:21:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,25 +68,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.44 2011/02/20 07:45:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.45 2011/07/10 23:21:59 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/endian.h>
 #include <sys/proc.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <mips/locore.h>
 #include <mips/trap.h>
 #include <mips/reg.h>
