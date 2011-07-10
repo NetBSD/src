@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2011/06/27 11:52:58 uch Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2011/07/10 12:14:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.1 2011/06/27 11:52:58 uch Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2011/07/10 12:14:01 uch Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -146,11 +146,11 @@ make_freeblocklist(struct v7fs_self *fs, v7fs_daddr_t listblk, uint8_t *buf)
 		{
 			VPRINTF("\nlast freeblock #%d\n",
 			    (*val32)(fb->freeblock[i + 1]));
-			fb->nfreeblock = (*val16)(k);
 
 			memmove(fb->freeblock + 1, fb->freeblock + i + 1, k *
 			    sizeof(v7fs_daddr_t));
 			fb->freeblock[0] = 0; /* Terminate link; */
+			fb->nfreeblock = (*val16)(k + 1);
 			VPRINTF("last freeblock contains #%d\n",
 			    (*val16)(fb->nfreeblock));
 			fs->io.write(fs->io.cookie, buf, listblk);
@@ -211,7 +211,8 @@ make_filesystem(struct v7fs_self *fs, v7fs_daddr_t volume_size,
 	for (i = V7FS_MAX_FREEBLOCK - 1, j = sb->datablock_start_sector; i >= 0;
 	    i--, j++)
 		sb->freeblock[i] = j;
-	sb->total_freeblock = volume_size - sb->datablock_start_sector - 1;
+
+	sb->total_freeblock = volume_size - sb->datablock_start_sector;
 
 	/* Write superblock. */
 	sb->modified = 1;
