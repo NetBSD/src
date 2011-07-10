@@ -1,4 +1,4 @@
-#	$NetBSD: DB120,v 1.3 2011/07/10 00:03:12 matt Exp $
+#	$NetBSD: DB120,v 1.4 2011/07/10 23:34:37 matt Exp $
 #
 # Qualcomm Atheros AR9344 DB120 evaluation board.
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DB120-$Revision: 1.3 $"
+#ident 		"DB120-$Revision: 1.4 $"
 
 maxusers	32
 
@@ -17,7 +17,7 @@ options 	MIPS32R2
 makeoptions	CPUFLAGS+="-mips32r2"
 makeoptions	NEED_MDSETIMAGE="yes"
 makeoptions	NEED_BINARY="yes"
-makeoptions	NEED_UBOOTIMAGE="yes"
+makeoptions	NEED_UBOOTIMAGE="gz"
 options 	NOFPU				# No FPU
 options 	FPEMUL				# emulate FPU insn
 options		WISOC_AR9344			# WiSoC select
@@ -145,15 +145,17 @@ wdog0		at mainbus?
 arbus0		at mainbus?
 
 com*		at arbus? addr ?
-#arpci*		at arbus? addr ?
-#pci*		at arpci?
-#ehci*		at arbus? addr ?
-#usb*		at ohci?
-#uhub*		at usb?
-#uhub*		at uhub? port ?
-#umass*		at uhub? port ? configuration ? interface ?
-#scsibus*	at umass? channel ?
-#sd*		at scsibus? target ? lun ?
+arpcie*		at arbus? addr ?
+pci*		at arpcie?
+arpci*		at arbus? addr ?
+pci*		at arpci?
+ehci*		at arbus? addr ?
+usb*		at ehci?
+uhub*		at usb?
+uhub*		at uhub? port ?
+umass*		at uhub? port ? configuration ? interface ?
+scsibus*	at umass? channel ?
+sd*		at scsibus? target ? lun ?
 #ae*		at arbus? addr ?
 #ath*		at arbus? addr ?
 #athflash*	at arbus? addr ?
