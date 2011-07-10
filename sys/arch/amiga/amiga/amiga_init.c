@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.123 2011/06/12 03:35:38 rmind Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.124 2011/07/10 21:02:37 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -35,9 +35,10 @@
 #include "opt_p5ppc68kboard.h"
 #include "opt_devreload.h"
 #include "opt_m68k_arch.h"
+#include "ser.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.123 2011/06/12 03:35:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.124 2011/07/10 21:02:37 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +83,10 @@ extern char *esym;
 #ifdef GRF_AGA
 extern u_long aga_enable;
 #endif
+
+#if NSER > 0
+extern int serconsole;
+#endif 
 
 extern u_long noncontig_enable;
 
@@ -257,6 +262,10 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 #endif
 	if (flags & (3 << 1))
 		RELOC(noncontig_enable, u_long) = (flags >> 1) & 3;
+#if NSER > 0
+	if (flags & (1 << 3))
+		RELOC(serconsole, int) = 0;
+#endif
 
 	RELOC(scsi_nosync, u_long) = inh_sync;
 
