@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 2011/02/20 07:48:34 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 2011/07/10 00:03:53 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,23 +74,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2011/02/20 07:48:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2011/07/10 00:03:53 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 #include "opt_modular.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/buf.h>
-#include <sys/reboot.h>
-#include <sys/mount.h>
-#include <sys/kcore.h>
 #include <sys/boot_flag.h>
-#include <sys/termios.h>
-#include <sys/ksyms.h>
+#include <sys/buf.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/kcore.h>
+#include <sys/kernel.h>
+#include <sys/ksyms.h>
+#include <sys/mount.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
+#include <sys/termios.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -99,15 +100,14 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2011/02/20 07:48:34 matt Exp $");
 #include "ksyms.h"
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-#include <machine/db_machdep.h>
+#include <mips/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/psl.h>
 #include <machine/yamon.h>
 
 #include <mips/locore.h>
+#include <mips/psl.h>
 
 #include <evbmips/malta/autoconf.h>
 #include <evbmips/malta/maltareg.h>

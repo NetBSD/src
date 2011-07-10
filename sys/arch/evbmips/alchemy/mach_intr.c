@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_intr.c,v 1.5 2011/07/01 18:44:45 dyoung Exp $	*/
+/*	$NetBSD: mach_intr.c,v 1.6 2011/07/10 00:03:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,19 +38,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.5 2011/07/01 18:44:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.6 2011/07/10 00:03:52 matt Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
-#include <sys/queue.h>
+#include <sys/bus.h>
+#include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
-
-#include <sys/bus.h>
-#include <machine/intr.h>
 
 #include <mips/locore.h>
 #include <mips/alchemy/include/auvar.h>
