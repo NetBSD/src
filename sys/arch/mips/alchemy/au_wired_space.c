@@ -1,4 +1,4 @@
-/* $NetBSD: au_wired_space.c,v 1.7 2011/07/01 18:39:29 dyoung Exp $ */
+/* $NetBSD: au_wired_space.c,v 1.8 2011/07/10 23:13:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_wired_space.c,v 1.7 2011/07/01 18:39:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_wired_space.c,v 1.8 2011/07/10 23:13:23 matt Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: au_wired_space.c,v 1.7 2011/07/01 18:39:29 dyoung Ex
 #include <sys/endian.h>
 
 #include <sys/bus.h>
-#include <machine/locore.h>
+#include <mips/locore.h>
 #include <machine/wired_map.h>
 #include <mips/alchemy/include/au_wired_space.h>
 

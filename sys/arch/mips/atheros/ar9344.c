@@ -1,4 +1,4 @@
-/* $NetBSD: ar9344.c,v 1.2 2011/07/10 06:26:02 matt Exp $ */
+/* $NetBSD: ar9344.c,v 1.3 2011/07/10 23:13:22 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,7 +48,7 @@
  * family.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar9344.c,v 1.2 2011/07/10 06:26:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar9344.c,v 1.3 2011/07/10 23:13:22 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -413,7 +413,7 @@ static const struct atheros_device ar9344_devices[] = {
 		.adv_cirq = ARCHIP_CPU_IRQ_GMAC1,
 		.adv_mirq = -1,
 	}, {
-		.adv_name = "pcierc",
+		.adv_name = "arpcie",
 		.adv_addr = AR9344_PCIE_RC_BASE,
 		.adv_size = 0x1000,
 		.adv_cirq = AR9344_CPU_IRQ_PCIERC,

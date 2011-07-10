@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clockintr.c,v 1.11 2011/02/20 07:45:48 matt Exp $	*/
+/*	$NetBSD: mips3_clockintr.c,v 1.12 2011/07/10 23:13:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,17 +39,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.11 2011/02/20 07:45:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.12 2011/07/10 23:13:22 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/cpu.h>
 #include <sys/evcnt.h>
 #include <sys/intr.h>
 
 #include <mips/mips3_clock.h>
 
-#include <machine/locore.h>
+#include <mips/locore.h>
 
 /*
  * Handling to be done upon receipt of a MIPS 3 clock interrupt.  This
