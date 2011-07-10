@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2011/07/09 15:50:38 matt Exp $
+#	$NetBSD: Makefile,v 1.25 2011/07/10 08:42:55 mrg Exp $
 
 NOMAN= # defined
 
@@ -58,7 +58,6 @@ CFLAGS=		-O2 -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
 AFLAGS+=	-mips3 -mabi=32
 CFLAGS+=	-mips3 -mabi=32
 LINKFORMAT=	-m elf32ltsmip
-MACHINE_ARCH=	mipsel
 .endif
 
 CFLAGS+=	-Wall -Werror
