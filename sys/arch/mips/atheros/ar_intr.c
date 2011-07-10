@@ -1,4 +1,4 @@
-/* $NetBSD: ar_intr.c,v 1.2 2011/07/08 18:49:27 dyoung Exp $ */
+/* $NetBSD: ar_intr.c,v 1.3 2011/07/10 06:24:18 matt Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,19 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar_intr.c,v 1.2 2011/07/08 18:49:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar_intr.c,v 1.3 2011/07/10 06:24:18 matt Exp $");
 
 #define __INTR_PRIVATE
 
 #include <sys/param.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
-#include <sys/systm.h>
-#include <sys/device.h>
+#include <sys/intr.h>
 #include <sys/kernel.h>
-#include <sys/bus.h>
-
-#include <machine/intr.h>
+#include <sys/malloc.h>
 
 #include <mips/locore.h>
 #include <mips/atheros/include/platform.h>

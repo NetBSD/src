@@ -1,4 +1,4 @@
-/* $NetBSD: ar5315.c,v 1.8 2011/07/07 05:06:44 matt Exp $ */
+/* $NetBSD: ar5315.c,v 1.9 2011/07/10 06:24:18 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,7 +48,7 @@
  * family.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.8 2011/07/07 05:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.9 2011/07/10 06:24:18 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.8 2011/07/07 05:06:44 matt Exp $");
 #include <mips/atheros/include/platform.h>
 #include <mips/atheros/include/arbusvar.h>
 
-#include <machine/locore.h>
+#include <mips/locore.h>
 
 /* helper macro for accessing system registers without bus space */
 #define	REGVAL(x)	*((volatile uint32_t *)(MIPS_PHYS_TO_KSEG1((x))))
