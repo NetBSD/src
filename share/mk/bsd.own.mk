@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.673 2011/07/02 20:21:16 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.674 2011/07/10 04:36:13 tsutsui Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -435,6 +435,27 @@ CPP=		${TOOL_CPP.${ACTIVE_CPP}}
 CXX=		${TOOL_CXX.${ACTIVE_CXX}}
 FC=		${TOOL_FC.${ACTIVE_FC}}
 OBJC=		${TOOL_OBJC.${ACTIVE_OBJC}}
+
+# OBJCOPY flags to create a.out binaries for old firmware
+# shared among src/distrib and ${MACHINE}/conf/Makefile.${MACHINE}.inc
+.if ${MACHINE_CPU} == "arm"
+OBJCOPY_ELF2AOUT_FLAGS?=	\
+	-O a.out-arm-netbsd	\
+	-R .ident		\
+	-R .ARM.attributes	\
+	-R .arm.atpcs		\
+	-R .comment		\
+	-R .debug_abbrev	\
+	-R .debug_info		\
+	-R .debug_line		\
+	-R .debug_frame		\
+	-R .debug_loc		\
+	-R .debug_pubnames	\
+	-R .debug_aranges	\
+	-R .debug_str		\
+	-R .debug_pubtypes	\
+	-R .note.netbsd.ident
+.endif
 
 #
 # Targets to check if DESTDIR or RELEASEDIR is provided
