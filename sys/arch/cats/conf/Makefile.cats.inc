@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.24 2011/07/02 17:37:28 tsutsui Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.25 2011/07/10 04:37:56 tsutsui Exp $
 
 MACHINE_ARCH=	arm
 CPPFLAGS+=	-D${MACHINE}
@@ -19,18 +19,7 @@ SYSTEM_LD_HEAD_EXTRA+=; \
 		${SYSTEM_OBJ} ; \
 	  cat ${ARM}/conf/kern.ldscript.tail ) > ldscript
 
-REMOVE_SECTIONS= \
-	-R .ident -R .arm.atpcs -R .comment -R .note.netbsd.ident \
-	-R .debug_abbrev -R .debug_info -R .debug_line -R .debug_str \
-	-R .debug_frame -R .debug_loc -R .debug_pubnames \
-	-R .debug_aranges -R .debug_pubtypes -R .ARM.attributes
-
 SYSTEM_LD_TAIL_EXTRA+=; \
-	echo \
-	 "${OBJCOPY} -O a.out-arm-netbsd \
-		${REMOVE_SECTIONS} \
-		$@ $@.aout"; \
-	${OBJCOPY} -O a.out-arm-netbsd \
-		${REMOVE_SECTIONS} \
-		$@ $@.aout
+	echo "${OBJCOPY} ${OBJCOPY_ELF2AOUT_FLAGS} $@ $@.aout"; \
+	${OBJCOPY} ${OBJCOPY_ELF2AOUT_FLAGS} $@ $@.aout
 .endif
