@@ -1,4 +1,4 @@
-/* $NetBSD: sbpcihb.c,v 1.2 2011/02/17 14:24:12 matt Exp $ */
+/* $NetBSD: sbpcihb.c,v 1.3 2011/07/10 23:32:03 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -48,7 +48,7 @@
 #include <dev/pci/ppbreg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <machine/locore.h>
+#include <mips/locore.h>
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/include/sb1250_scd.h>
 
