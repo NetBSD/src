@@ -1,4 +1,4 @@
-/*	$NetBSD: arpci.c,v 1.1 2011/07/07 05:06:44 matt Exp $	*/
+/*	$NetBSD: arpci.c,v 1.2 2011/07/10 23:13:22 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arpci.c,v 1.1 2011/07/07 05:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arpci.c,v 1.2 2011/07/10 23:13:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,6 +51,7 @@ struct arpci_softc {
 	bus_space_handle_t sc_bsh;
 	struct mips_bus_space sc_memt;
 	struct mips_pci_chipset sc_pc;
+	bool sc_pcie;
 	u_int sc_pba_flags;
 };
 
@@ -65,10 +66,10 @@ arpci_attach_hook(device_t parent, device_t self,
 static int
 arpci_bus_maxdevs(void *v, int busno)
 {
-	//struct arpci_softc * const sc = v;
+	struct arpci_softc * const sc = v;
 
 	if (busno == 0)
-		return 22;
+		return (sc->sc_pcie ? 1 : 22);
 
 	return 32;
 }
@@ -152,7 +153,7 @@ arpci_conf_read(void *v, pcitag_t tag, int reg)
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
 		    AR7100_PCI_LCL_CFG_CMD, AR7100_PCI_LCL_CFG_CMD_READ | tag);
 		addr += AR7100_PCI_LCL_CFG_RDATA;
-		printf("%s: tag %#lx ", __func__, tag);
+		printf("%s: tag %#lx: ", __func__, tag);
 	} else {
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
 		    AR7100_PCI_CFG_ADDR, tag);
@@ -287,6 +288,7 @@ arpci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bst = aa->aa_bst;
 	sc->sc_dmat = aa->aa_dmat;
+	sc->sc_pcie = (strcmp(device_cfdata(self)->cf_name, "arpcie") == 0);
 
 	if (bus_space_map(aa->aa_bst, aa->aa_addr, aa->aa_size, 0,
 		    &sc->sc_bsh)) {
@@ -294,7 +296,7 @@ arpci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	aprint_normal("\n");
+	aprint_normal(": PCI%s bus\n", (sc->sc_pcie ? "-Express x1" : ""));
 	arpci_bus_mem_init(&sc->sc_memt, sc);
 	arpci_chipset_init(sc);
 
@@ -314,6 +316,8 @@ arpci_attach(device_t parent, device_t self, void *aux)
 }
 
 CFATTACH_DECL_NEW(arpci, sizeof(struct arpci_softc),
+    arpci_match, arpci_attach, NULL, NULL);
+CFATTACH_DECL_NEW(arpcie, sizeof(struct arpci_softc),
     arpci_match, arpci_attach, NULL, NULL);
 
 #define CHIP			arpci

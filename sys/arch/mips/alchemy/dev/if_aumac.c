@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.30 2011/07/01 18:39:29 dyoung Exp $ */
+/* $NetBSD: if_aumac.c,v 1.31 2011/07/10 23:13:23 matt Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,21 +46,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.30 2011/07/01 18:39:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.31 2011/07/10 23:13:23 matt Exp $");
 
 #include "rnd.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/callout.h>
+#include <sys/device.h>
+#include <sys/endian.h>
+#include <sys/errno.h> 
+#include <sys/intr.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h> 
-#include <sys/device.h>
-#include <sys/queue.h>
 
 #include <uvm/uvm.h>		/* for PAGE_SIZE */
 
@@ -73,10 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.30 2011/07/01 18:39:29 dyoung Exp $")
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
-
-#include <sys/bus.h>
-#include <machine/intr.h>
-#include <machine/endian.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

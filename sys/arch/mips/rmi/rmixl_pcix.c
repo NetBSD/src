@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.8 2011/07/01 19:01:31 dyoung Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.9 2011/07/10 23:13:22 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.8 2011/07/01 19:01:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.9 2011/07/10 23:13:22 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -48,17 +48,16 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.8 2011/07/01 19:01:31 dyoung Exp $"
 #include <sys/cdefs.h>
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/extent.h>
+#include <sys/intr.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>		/* for 'hz' */
-#include <sys/cpu.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <sys/bus.h>
-#include <machine/intr.h>
 
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
@@ -74,8 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.8 2011/07/01 19:01:31 dyoung Exp $"
 #ifdef	PCI_NETBSD_CONFIGURE
 #include <mips/cache.h>
 #endif
-
-#include <machine/pci_machdep.h>
 
 #ifdef PCI_DEBUG
 int rmixl_pcix_debug = PCI_DEBUG;

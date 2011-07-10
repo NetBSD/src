@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_softint.c,v 1.4 2011/04/06 05:23:59 matt Exp $	*/
+/*	$NetBSD: mips_softint.c,v 1.5 2011/07/10 23:13:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -30,18 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.4 2011/04/06 05:23:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.5 2011/07/10 23:13:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
-#include <sys/proc.h>
-#include <sys/lwp.h>
 #include <sys/intr.h>
+#include <sys/lwp.h>
 #include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/intr.h>
 #include <mips/locore.h>
 
 #ifdef __HAVE_FAST_SOFTINTS

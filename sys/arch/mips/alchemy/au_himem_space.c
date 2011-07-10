@@ -1,4 +1,4 @@
-/* $NetBSD: au_himem_space.c,v 1.12 2011/07/01 18:39:29 dyoung Exp $ */
+/* $NetBSD: au_himem_space.c,v 1.13 2011/07/10 23:13:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.12 2011/07/01 18:39:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.13 2011/07/10 23:13:23 matt Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.12 2011/07/01 18:39:29 dyoung E
 #include <uvm/uvm.h>
 
 #include <sys/bus.h>
-#include <machine/locore.h>
+#include <mips/locore.h>
 #include <mips/alchemy/include/au_himem_space.h>
 
 #define	TRUNC_PAGE(x)	((x) & ~(PAGE_SIZE - 1))

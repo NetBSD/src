@@ -1,4 +1,4 @@
-/* $NetBSD: uart.c,v 1.8 2011/07/01 18:38:49 dyoung Exp $ */
+/* $NetBSD: uart.c,v 1.9 2011/07/10 23:13:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -32,38 +32,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.8 2011/07/01 18:38:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.9 2011/07/10 23:13:23 matt Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/time.h>
-#include <sys/device.h>
-
-#include <sys/proc.h>
-#include <sys/buf.h>
-#include <sys/ioctl.h>
-#include <sys/kauth.h>
-#include <sys/tty.h>
-#include <sys/file.h>
-#include <sys/conf.h>
-#include <sys/vnode.h>
-
-#include <machine/intr.h>
 #include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/ioctl.h>
+#include <sys/intr.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/tty.h>
+
+#include <dev/cons.h>
 
 #include <mips/adm5120/include/adm5120var.h>
 #include <mips/adm5120/include/adm5120_obiovar.h>
-#include <dev/cons.h>
 #include <mips/adm5120/dev/uart.h>
 
 #define REG_READ(o)	bus_space_read_4(sc->sc_st, sc->sc_ioh, (o))
 #define REG_WRITE(o,v)	bus_space_write_4(sc->sc_st, sc->sc_ioh, (o),(v))
 
 cons_decl(uart_);
-
-extern struct consdev *cn_tab;          /* physical console device info */
 
 dev_type_open(uart_open);
 dev_type_open(uart_close);
@@ -75,75 +66,76 @@ dev_type_poll(uart_poll);
 dev_type_stop(uart_stop);
 
 const struct cdevsw uart_cdevsw = {
-	        uart_open, uart_close, uart_read, uart_write, uart_ioctl,
-		        uart_stop, uart_tty, uart_poll, nommap, ttykqfilter, D_TTY
+        uart_open, uart_close, uart_read, uart_write, uart_ioctl,
+        uart_stop, uart_tty, uart_poll, nommap, ttykqfilter, D_TTY
 };
 
-
 struct consdev uartcons = {
-	        NULL, NULL, uart_cngetc, uart_cnputc, uart_cnpollc, NULL, NULL, NULL,
-		        NODEV, CN_NORMAL
+        .cn_getc = uart_cngetc,
+	.cn_putc = uart_cnputc,
+	.cn_pollc = uart_cnpollc,
+        .cn_dev = NODEV,
+	.cn_pri = CN_NORMAL
 };
 
 struct uart_softc {
-        struct device               sc_dev;
-	struct tty 	   	    *sc_tty;
+        device_t		sc_dev;
+	struct tty *		sc_tty;
 
-        bus_space_tag_t             sc_st;
-        bus_space_handle_t          sc_ioh;
-	void			    *sc_ih;
+        bus_space_tag_t		sc_st;
+        bus_space_handle_t	sc_ioh;
+	void *			sc_ih;
 };
 
 extern struct cfdriver uart_cd;
 static int  uart_consattached;
 
-static int  uart_probe  (struct device *, struct cfdata *, void *);
-static void uart_attach (struct device *, struct device *, void *);
+static int  uart_probe  (device_t, cfdata_t, void *);
+static void uart_attach (device_t, device_t, void *);
 
 void	uart_start(struct tty *);
 int	uart_param(struct tty *, struct termios *);
 int	uart_intr(void *);
 
-CFATTACH_DECL(uart, sizeof(struct uart_softc),
+CFATTACH_DECL_NEW(uart, sizeof(struct uart_softc),
     uart_probe, uart_attach, NULL, NULL);
 
 static int
-uart_probe(struct device *parent, struct cfdata *cf, void *aux)
+uart_probe(device_t parent, cfdata_t cf, void *aux)
 {
-	struct obio_attach_args *aa = aux;
+	struct obio_attach_args * const oba = aux;
 
-        if (strcmp(aa->oba_name, cf->cf_name) == 0)
+        if (strcmp(oba->oba_name, cf->cf_name) == 0)
                 return (1);
 
         return (0);
 }
 
 static void
-uart_attach(struct device *parent, struct device *self, void *aux)
+uart_attach(device_t parent, device_t self, void *aux)
 {
-        struct obio_attach_args *oba = aux;
-        struct uart_softc *sc = (struct uart_softc *)self;
+        struct obio_attach_args * const oba = aux;
+        struct uart_softc * const sc = device_private(self);
 	struct tty *tp;
 	int maj, minor;
-			
+
+	sc->sc_dev = self;
         sc->sc_st = oba->oba_st;
-        if (bus_space_map(oba->oba_st, oba->oba_addr, 256, 0,
-            &sc->sc_ioh)) {
-                printf("%s: unable to map device\n", sc->sc_dev.dv_xname);
+        if (bus_space_map(oba->oba_st, oba->oba_addr, 256, 0, &sc->sc_ioh)) {
+                aprint_error("unable to map device\n");
                 return;
 	}
 
 	/* Establish the interrupt. */
 	sc->sc_ih = adm5120_intr_establish(oba->oba_irq, INTR_FIQ, uart_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error("unable to establish interrupt\n");
 		return;
 	}
 	REG_WRITE(UART_CR_REG,UART_CR_PORT_EN|UART_CR_RX_INT_EN|UART_CR_RX_TIMEOUT_INT_EN);
 
 	maj = cdevsw_lookup_major(&uart_cdevsw);
-	minor = sc->sc_dev.dv_unit;
+	minor = device_unit(sc->sc_dev);
 
 	tp = tty_alloc();
 	tp->t_oproc = uart_start;
@@ -154,9 +146,9 @@ uart_attach(struct device *parent, struct device *self, void *aux)
 	if (minor == 0 && uart_consattached) {
 		/* attach as console*/
 		cn_tab->cn_dev = tp->t_dev;
-		printf(" console");
+		aprint_normal(" console");
 	}
-        printf("\n");
+        aprint_normal("\n");
 }
 
 int 
@@ -172,14 +164,16 @@ uart_cnputc(dev_t dev, int c)
 {
 	char chr;
 	chr = c;
-	while ((*((volatile unsigned long *)0xb2600018)) & 0x20) ;
+	while ((*((volatile unsigned long *)0xb2600018)) & 0x20)
+		continue;
 	(*((volatile unsigned long *)0xb2600000)) = c;
 }
 
 int
 uart_cngetc(dev_t dev)
 {
-	while ((*((volatile unsigned long *)0xb2600018)) & 0x10) ;
+	while ((*((volatile unsigned long *)0xb2600018)) & 0x10)
+		continue;
 	return (*((volatile unsigned long *)0xb2600000)) & 0xff;
 }
 

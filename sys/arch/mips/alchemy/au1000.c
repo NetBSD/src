@@ -1,4 +1,4 @@
-/* $NetBSD: au1000.c,v 1.9 2011/07/01 18:39:29 dyoung Exp $ */
+/* $NetBSD: au1000.c,v 1.10 2011/07/10 23:13:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -101,11 +101,11 @@ __KERNEL_RCSID(0, "$NetBSD");
 
 #include <sys/param.h>
 #include <sys/bus.h>
-#include <machine/locore.h>
+#include <mips/locore.h>
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 
-static const char *au1000_irqnames[] = {
+static const char * const au1000_irqnames[] = {
 	"uart0",
 	"uart1",
 	"uart2",

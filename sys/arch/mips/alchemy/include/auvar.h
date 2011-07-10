@@ -1,4 +1,4 @@
-/* $NetBSD: auvar.h,v 1.10 2011/02/20 07:48:36 matt Exp $ */
+/* $NetBSD: auvar.h,v 1.11 2011/07/10 23:13:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -81,7 +81,7 @@ struct au_chipdep {
 	const char	*name;
 	bus_addr_t	icus[2];	/* in case it ever changes */
 	struct au_dev	*devices;
-	const char	**irqnames;
+	const char	* const *irqnames;
 };
 
 struct au_chipdep	*au_chipdep(void);

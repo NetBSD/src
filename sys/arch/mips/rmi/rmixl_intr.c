@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.6 2011/07/01 19:01:30 dyoung Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.7 2011/07/10 23:13:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,26 +64,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.6 2011/07/01 19:01:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.7 2011/07/10 23:13:22 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #define	__INTR_PRIVATE
 
 #include <sys/param.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/atomic.h>
-#include <sys/mutex.h>
-#include <sys/cpu.h>
-
 #include <sys/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/mutex.h>
+#include <sys/systm.h>
 
-#include <mips/cpu.h>
 #include <mips/cpuset.h>
 #include <mips/locore.h>
 

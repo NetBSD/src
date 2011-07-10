@@ -1,4 +1,4 @@
-/*	$NetBSD: adm5120_intr.c,v 1.5 2011/07/01 18:38:48 dyoung Exp $	*/
+/*	$NetBSD: adm5120_intr.c,v 1.6 2011/07/10 23:13:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -67,20 +67,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.5 2011/07/01 18:38:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.6 2011/07/10 23:13:23 matt Exp $");
 
 #include "opt_ddb.h"
 #define __INTR_PRIVATE
 
 #include <sys/param.h>
-#include <sys/queue.h>
+#include <sys/intr.h>
 #include <sys/malloc.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
-
-#include <sys/bus.h>
-#include <machine/intr.h>
 
 #include <mips/locore.h>
 #include <mips/adm5120/include/adm5120reg.h>

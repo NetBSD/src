@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.22 2011/07/01 18:39:29 dyoung Exp $ */
+/* $NetBSD: aubus.c,v 1.23 2011/07/10 23:13:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -97,24 +97,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.22 2011/07/01 18:39:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.23 2011/07/10 23:13:23 matt Exp $");
 
 #include "locators.h"
+#define _MIPS_BUS_DMA_PRIVATE
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
 
-#define _MIPS_BUS_DMA_PRIVATE
-#include <sys/bus.h>
-#include <machine/locore.h>
+#include <mips/locore.h>
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
 
-static int	aubus_match(device_t, struct cfdata *, void *);
+static int	aubus_match(device_t, cfdata_t, void *);
 static void	aubus_attach(device_t, device_t, void *);
 static int	aubus_print(void *, const char *);
 
@@ -132,7 +132,7 @@ struct mips_bus_dma_tag aubus_mdt = {
  * Probe for the aubus; always succeeds.
  */
 static int
-aubus_match(device_t parent, struct cfdata *match, void *aux)
+aubus_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
@@ -145,7 +145,7 @@ static void
 aubus_attach(device_t parent, device_t self, void *aux)
 {
 	struct aubus_attach_args aa;
-	struct device *sc = self;
+	device_t sc = self;
 	struct au_chipdep *chip;
 	const struct au_dev *ad;
 	int locs[AUBUSCF_NLOCS];

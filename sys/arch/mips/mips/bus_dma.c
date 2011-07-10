@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.26 2011/07/01 20:58:39 dyoung Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.27 2011/07/10 23:13:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,16 +32,20 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26 2011/07/01 20:58:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.27 2011/07/10 23:13:22 matt Exp $");
+
+#define _MIPS_BUS_DMA_PRIVATE
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/proc.h>
-#include <sys/mbuf.h>
 #include <sys/evcnt.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm.h>
 
@@ -50,10 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26 2011/07/01 20:58:39 dyoung Exp $");
 #include <mips/mips3_pte.h>
 #endif
 
-#define _MIPS_BUS_DMA_PRIVATE
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/locore.h>
+#include <mips/locore.h>
 
 const struct mips_bus_dmamap_ops mips_bus_dmamap_ops = _BUS_DMAMAP_OPS_INITIALIZER;
 const struct mips_bus_dmamem_ops mips_bus_dmamem_ops = _BUS_DMAMEM_OPS_INITIALIZER;

@@ -1,4 +1,4 @@
-/* $NetBSD: auspi.c,v 1.5 2011/07/01 18:39:29 dyoung Exp $ */
+/* $NetBSD: auspi.c,v 1.6 2011/07/10 23:13:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,19 +42,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.5 2011/07/01 18:39:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.6 2011/07/10 23:13:23 matt Exp $");
 
 #include "locators.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
-
-#include <sys/bus.h>
-#include <machine/cpu.h>
+#include <sys/systm.h>
 
 #include <mips/alchemy/include/aubusvar.h>
 #include <mips/alchemy/include/auvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_pci.c,v 1.8 2011/07/01 20:48:47 dyoung Exp $	*/
+/*	$NetBSD: bonito_pci.c,v 1.9 2011/07/10 23:13:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,15 +35,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_pci.c,v 1.8 2011/07/01 20:48:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_pci.c,v 1.9 2011/07/10 23:13:22 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-
 #include <sys/bus.h>
-#include <machine/intr.h>
-#include <machine/locore.h>
+#include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/systm.h>
+
+#include <mips/locore.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
