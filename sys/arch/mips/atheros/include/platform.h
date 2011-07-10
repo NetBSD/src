@@ -1,4 +1,4 @@
-/* $NetBSD: platform.h,v 1.1 2011/07/07 05:06:44 matt Exp $ */
+/* $NetBSD: platform.h,v 1.2 2011/07/10 06:26:02 matt Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -79,6 +79,7 @@ struct arfreqs {
 	uint32_t freq_mem;
 	uint32_t freq_pll;
 	uint32_t freq_ref;
+	uint32_t freq_uart;
 };
 
 struct atheros_platformsw {
@@ -134,6 +135,7 @@ const char *
 	atheros_get_cpuname(void);
 u_int	atheros_get_chipid(void);
 
+uint32_t atheros_get_uart_freq(void);
 uint32_t atheros_get_bus_freq(void);
 uint32_t atheros_get_cpu_freq(void);
 uint32_t atheros_get_mem_freq(void);
