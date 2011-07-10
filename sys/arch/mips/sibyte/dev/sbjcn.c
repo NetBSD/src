@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.27 2011/04/24 16:26:56 rmind Exp $ */
+/* $NetBSD: sbjcn.c,v 1.28 2011/07/10 23:32:03 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.27 2011/04/24 16:26:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.28 2011/07/10 23:32:03 matt Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -129,8 +129,10 @@ __KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.27 2011/04/24 16:26:56 rmind Exp $");
 
 #include <sbmips/dev/sbscd/sbscdvar.h>
 #include <sbmips/dev/sbscd/sbjcnvar.h>
+
 #include <dev/cons.h>
-#include <machine/locore.h>
+
+#include <mips/locore.h>
 
 void	sbjcn_attach_channel(struct sbjcn_softc *sc, int chan, int intr);
 static void sbjcncn_grabdword(struct sbjcn_channel *ch);
