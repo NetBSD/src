@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_llsc.S,v 1.1 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: lock_stubs_llsc.S,v 1.2 2011/07/10 23:21:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-#include <machine/cpu.h>
+#include <machine/cpu.h>		/* MIPS_CURLWP */
 
 #include "assym.h"
 

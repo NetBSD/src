@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.14 2009/11/21 17:40:28 rmind Exp $ */
+/*	$NetBSD: svr4_machdep.c,v 1.15 2011/07/10 23:21:59 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,21 +36,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.14 2009/11/21 17:40:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.15 2011/07/10 23:21:59 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
+#include <sys/cpu.h>
 #include <sys/exec.h>
+#include <sys/exec_elf.h> 
 #include <sys/kernel.h>
+#include <sys/mount.h> 
+#include <sys/proc.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/mount.h> 
 #include <sys/syscallargs.h>
-#include <sys/exec_elf.h> 
+#include <sys/sysctl.h>
+#include <sys/systm.h>
  
 #include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_ucontext.h>
@@ -59,9 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.14 2009/11/21 17:40:28 rmind Exp 
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_exec.h>
 
-#include <machine/cpu.h>
-#include <machine/psl.h>
-#include <machine/reg.h>
+#include <mips/psl.h>
+#include <mips/reg.h>
+
 #include <machine/vmparam.h>
 
 /* 
