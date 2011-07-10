@@ -436,7 +436,7 @@
 
 /* Define if your assembler and linker support GOTDATA_OP relocs. */
 #ifndef USED_FOR_TARGET
-#define HAVE_AS_SPARC_GOTDATA_OP 1
+/* #define HAVE_AS_SPARC_GOTDATA_OP 1 */
 #endif
 
 
