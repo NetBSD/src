@@ -1,4 +1,4 @@
-/* $NetBSD: au8522mod.h,v 1.1 2011/07/09 15:00:43 jmcneill Exp $ */
+/* $NetBSD: au8522mod.h,v 1.2 2011/07/10 00:47:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,6 +32,11 @@
 struct au8522_modulation_table {
 	uint16_t	reg;
 	uint8_t		val;
+};
+
+struct au8522_snr_table {
+	uint16_t	val;
+	uint16_t	snr;
 };
 
 #include <dev/i2c/au8522mod_8vsb.h>
