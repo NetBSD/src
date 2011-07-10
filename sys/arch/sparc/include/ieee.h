@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.13 2010/09/20 16:13:35 christos Exp $	*/
+/*	$NetBSD: ieee.h,v 1.14 2011/07/10 04:49:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,6 +114,8 @@ union ieee_ext_u {
 #define extu_exp	extu_ext.ext_exp
 #define extu_sign	extu_ext.ext_sign
 #define extu_fracl	extu_ext.ext_fracl
+#define extu_fraclm	extu_ext.ext_fraclm
+#define extu_frachm	extu_ext.ext_frachm
 #define extu_frach	extu_ext.ext_frach
 
 #define LDBL_NBIT	0x80000000
