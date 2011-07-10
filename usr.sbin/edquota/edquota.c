@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.34 2011/07/10 07:31:48 dholland Exp $ */
+/*      $NetBSD: edquota.c,v 1.35 2011/07/10 07:54:49 dholland Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.34 2011/07/10 07:31:48 dholland Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.35 2011/07/10 07:54:49 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ __RCSID("$NetBSD: edquota.c,v 1.34 2011/07/10 07:31:48 dholland Exp $");
 #include "pathnames.h"
 
 static const char *quotagroup = QUOTAGROUP;
-static char tmpfil[] = _PATH_TMP;
+static char tmpfil[] = _PATH_TMPFILE;
 
 struct quotause {
 	struct	quotause *next;
@@ -97,7 +97,6 @@ struct quotause {
 #define MAX_TMPSTR	(100+MAXPATHLEN)
 
 static void	usage(void) __dead;
-static int	getentry(const char *, int);
 static struct quotause * getprivs(long, int, const char *, int);
 static struct quotause * getprivs2(long, int, const char *, int);
 static struct quotause * getprivs1(long, int, const char *);
@@ -107,7 +106,6 @@ static void	putprivs1(uint32_t, int, struct quotause *);
 static int	editit(const char *);
 static int	writeprivs(struct quotause *, int, const char *, int);
 static int	readprivs(struct quotause *, int);
-static void	freeq(struct quotause *);
 static void	freeprivs(struct quotause *);
 static void clearpriv(int, char **, const char *, int);
 
@@ -123,12 +121,12 @@ static int dflag = 0;
 // support code
 
 /*
- * This routine converts a name for a particular quota type to
+ * This routine converts a name for a particular quota class to
  * an identifier. This routine must agree with the kernel routine
- * getinoquota as to the interpretation of quota types.
+ * getinoquota as to the interpretation of quota classes.
  */
 static int
-getentry(const char *name, int quotaclass)
+getidbyname(const char *name, int quotaclass)
 {
 	struct passwd *pw;
 	struct group *gr;
@@ -161,7 +159,7 @@ getentry(const char *name, int quotaclass)
  * Free a quotause structure.
  */
 static void
-freeq(struct quotause *qup)
+quotause_destroy(struct quotause *qup)
 {
 	free(qup->qfname);
 	free(qup);
@@ -177,7 +175,7 @@ freeprivs(struct quotause *quplist)
 
 	for (qup = quplist; qup; qup = nextqup) {
 		nextqup = qup->next;
-		freeq(qup);
+		quotause_destroy(qup);
 	}
 }
 
@@ -236,13 +234,13 @@ getprivs1(long id, int quotaclass, const char *filesys)
 		fd = open(qfpathname, O_RDWR|O_CREAT, 0640);
 		if (fd < 0 && errno != ENOENT) {
 			warnx("open `%s'", qfpathname);
-			freeq(qup);
+			quotause_destroy(qup);
 			return NULL;
 		}
 		warnx("Creating quota file %s", qfpathname);
 		sleep(3);
 		(void)fchown(fd, getuid(),
-		    getentry(quotagroup, QUOTA_CLASS_GROUP));
+		    getidbyname(quotagroup, QUOTA_CLASS_GROUP));
 		(void)fchmod(fd, 0640);
 	}
 	(void)lseek(fd, (off_t)(id * sizeof(struct dqblk)),
@@ -262,7 +260,7 @@ getprivs1(long id, int quotaclass, const char *filesys)
 	default:		/* ERROR */
 		warn("read error in `%s'", qfpathname);
 		close(fd);
-		freeq(qup);
+		quotause_destroy(qup);
 		return NULL;
 	}
 	close(fd);
@@ -470,7 +468,7 @@ clearpriv(int argc, char **argv, const char *filesys, int quotaclass)
 	}
 
 	for ( ; argc > 0; argc--, argv++) {
-		if ((id = getentry(*argv, quotaclass)) == -1)
+		if ((id = getidbyname(*argv, quotaclass)) == -1)
 			continue;
 		data = prop_dictionary_create();
 		if (data == NULL)
@@ -996,7 +994,7 @@ main(int argc, char *argv[])
 	if (pflag) {
 		if (soft || hard || grace || dflag || cflag)
 			usage();
-		if ((protoid = getentry(protoname, quotaclass)) == -1)
+		if ((protoid = getidbyname(protoname, quotaclass)) == -1)
 			return 1;
 		protoprivs = getprivs(protoid, quotaclass, fs, 0);
 		for (qup = protoprivs; qup; qup = qup->next) {
@@ -1004,7 +1002,7 @@ main(int argc, char *argv[])
 			qup->qe[QL_FL].ufsqe_time = 0;
 		}
 		while (argc-- > 0) {
-			if ((id = getentry(*argv++, quotaclass)) < 0)
+			if ((id = getidbyname(*argv++, quotaclass)) < 0)
 				continue;
 			putprivs(id, quotaclass, protoprivs);
 		}
@@ -1070,7 +1068,7 @@ main(int argc, char *argv[])
 			return 0;
 		}
 		for ( ; argc > 0; argc--, argv++) {
-			if ((id = getentry(*argv, quotaclass)) == -1)
+			if ((id = getidbyname(*argv, quotaclass)) == -1)
 				continue;
 			curprivs = getprivs(id, quotaclass, fs, 0);
 			for (lqup = curprivs; lqup; lqup = lqup->next) {
@@ -1121,7 +1119,7 @@ main(int argc, char *argv[])
 		freeprivs(curprivs);
 	}
 	for ( ; argc > 0; argc--, argv++) {
-		if ((id = getentry(*argv, quotaclass)) == -1)
+		if ((id = getidbyname(*argv, quotaclass)) == -1)
 			continue;
 		curprivs = getprivs(id, quotaclass, fs, 0);
 		if (writeprivs(curprivs, tmpfd, *argv, quotaclass) == 0)
