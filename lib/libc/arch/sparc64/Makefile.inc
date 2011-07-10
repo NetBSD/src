@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2011/06/22 05:23:53 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2011/07/10 04:52:23 matt Exp $
 
 SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S
 
@@ -8,6 +8,7 @@ AFLAGS+= -Wa,-Av9a
 .PATH: ${ARCHDIR}/softfloat
 SRCS+= qp.c
 CPPFLAGS+=	-DSOFTFLOATSPARC64_FOR_GCC -DEXCEPTIONS_WITH_SOFTFLOAT
+CPPFLAGS+=	-DSOFTFLOAT_NEED_FIXUNS
 .if ${MKSOFTFLOAT} != "no"
 .include <softfloat/Makefile.inc>
 .else
