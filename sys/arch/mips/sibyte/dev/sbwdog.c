@@ -1,4 +1,4 @@
-/* $NetBSD: sbwdog.c,v 1.12 2011/02/20 07:47:39 matt Exp $ */
+/* $NetBSD: sbwdog.c,v 1.13 2011/07/10 23:32:03 matt Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.12 2011/02/20 07:47:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.13 2011/07/10 23:32:03 matt Exp $");
 
 #include "locators.h"
 
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.12 2011/02/20 07:47:39 matt Exp $");
 
 #include <dev/sysmon/sysmonvar.h>
 
-#include <machine/locore.h>
+#include <mips/locore.h>
 
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/include/sb1250_scd.h>
