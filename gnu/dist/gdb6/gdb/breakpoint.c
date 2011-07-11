@@ -1327,7 +1327,7 @@ update_breakpoints_after_exec (void)
 	(b->type == bp_catch_vfork) ||
 	(b->type == bp_catch_fork))
       {
-	b->loc->address = (CORE_ADDR) (uintptr_t) NULL;
+	b->loc->address = 0;
 	continue;
       }
 
@@ -1380,7 +1380,7 @@ update_breakpoints_after_exec (void)
        unnecessary.  A call to breakpoint_re_set_one always recomputes
        the breakpoint's address from scratch, or deletes it if it can't.
        So I think this assignment could be deleted without effect.  */
-    b->loc->address = (CORE_ADDR) (uintptr_t) NULL;
+    b->loc->address = 0;
   }
   /* FIXME what about longjmp breakpoints?  Re-create them here?  */
   create_overlay_event_breakpoint ("_ovly_debug_event");
