@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.12 2010/06/07 13:52:30 tnozaki Exp $	*/
+/*	$NetBSD: limits.h,v 1.13 2011/07/11 02:54:04 matt Exp $	*/
 
 /*	$OpenBSD: limits.h,v 1.2 2000/07/31 20:06:02 millert Exp $	*/
 
@@ -117,13 +117,54 @@
 #define LONG_BIT	32
 #define WORD_BIT	32
 
+#ifndef DBL_DIG
+#ifdef __DBL_DIG__
+#define DBL_DIG         __DBL_DIG__
+#else
 #define DBL_DIG		15
-#define DBL_MAX		1.7976931348623157E+308
-#define DBL_MIN		2.2250738585072014E-308
+#endif
+#endif
 
+#ifndef DBL_MAX
+#ifdef __DBL_MAX__
+#define DBL_MAX		__DBL_MAX__
+#else
+#define DBL_MAX		1.7976931348623157E+308
+#endif
+#endif
+
+#ifndef DBL_MIN
+#ifdef __DBL_MIN__
+#define DBL_MIN		__DBL_MIN__
+#else
+#define DBL_MIN		2.2250738585072014E-308
+#endif
+#endif
+
+#ifndef FLT_DIG
+#ifdef __FLT_DIG__
+#define FLT_DIG         __FLT_DIG__
+#else
 #define FLT_DIG         6
+#endif
+#endif
+
+#ifndef FLT_MAX
+#ifdef __FLT_MAX__
+#define FLT_MAX		__FLT_MAX__
+#else
 #define FLT_MAX		3.40282347E+38F 
+#endif
+#endif
+
+#ifndef FLT_MIN
+#ifdef __FLT_MIN__
+#define FLT_MIN		__FLT_MIN__
+#else
 #define FLT_MIN		1.17549435E-38F 
+#endif
+#endif
+
 #endif
 
 #endif /* _MACHINE_LIMITS_H_ */
