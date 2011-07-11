@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.57 2011/04/03 01:19:37 rmind Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.58 2011/07/11 08:23:00 hannken Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -247,7 +247,6 @@ function doit() {
 	printf(");\n");
 }
 BEGIN	{
-	arg0special="";
 	vop_offset = 1; # start at 1, to count the 'default' op
 
 	printf("struct buf;\n");
@@ -257,16 +256,6 @@ BEGIN	{
 		printf("struct vm_page;\n");
 	}
 	printf("\n#ifndef _KERNEL\n#include <stdbool.h>\n#endif\n");
-	printf("\n/* Special cases: */\n");
-
-	argc=1;
-	argtype[0]="struct buf *";
-	argname[0]="bp";
-	lockstate[0] = -1;
-	arg0special="->b_vp";
-	name="vop_bwrite";
-	doit();
-	printf("\n/* End of special cases */\n");
 	if (rump)
 		printf("\n");
 }
@@ -420,10 +409,10 @@ function bodynorm() {
 			printf("#endif\n");
 		}
 	}
-	printf("\tmpsafe = (%s%s->v_vflag & VV_MPSAFE);\n", argname[0], arg0special);
+	printf("\tmpsafe = (%s->v_vflag & VV_MPSAFE);\n", argname[0]);
 	printf("\tif (!mpsafe) { KERNEL_LOCK(1, curlwp); }\n");
-	printf("\terror = (VCALL(%s%s, VOFFSET(%s), &a));\n",
-		argname[0], arg0special, name);
+	printf("\terror = (VCALL(%s, VOFFSET(%s), &a));\n",
+		argname[0], name);
 	printf("\tif (!mpsafe) { KERNEL_UNLOCK_ONE(curlwp); }\n");
 	if (willmake != -1) {
 		printf("#ifdef DIAGNOSTIC\n");
@@ -460,21 +449,8 @@ function doit() {
 		bodynorm();
 }
 BEGIN	{
-	printf("\n/* Special cases: */\n");
 	# start from 1 (vop_default is at 0)
 	argc=1;
-	willmake=-1;
-	argdir[0]="IN";
-	argtype[0]="struct buf *";
-	argname[0]="bp";
-	lockstate[0] = -1;
-	arg0special="->b_vp";
-	willrele[0]=0;
-	name="vop_bwrite";
-	doit();
-	printf("\n/* End of special cases */\n");
-
-	arg0special="";
 }
 '"$awk_parser" | sed -e "$anal_retentive"
 
@@ -486,7 +462,6 @@ BEGIN	{
 echo "
 const struct vnodeop_desc * const ${rump}vfs_op_descs[] = {
 	&${rump}vop_default_desc,	/* MUST BE FIRST */
-	&${rump}vop_bwrite_desc,	/* XXX: SPECIAL CASE */
 "
 
 # Body stuff

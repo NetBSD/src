@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.61 2011/04/02 23:05:50 rmind Exp $
+#	$NetBSD: vnode_if.src,v 1.62 2011/07/11 08:23:00 hannken Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -50,6 +50,14 @@
 # parameter, the flags required for the initial namei() call are listed.
 # Additional flags may be added to the namei() call, but these are required.
 #     
+
+#
+#% bwrite     vp      = = =
+#
+vop_bwrite {
+	IN struct vnode *vp;
+	IN struct buf *bp;
+};
  
 #
 #% lookup     dvp     L L L
@@ -457,13 +465,6 @@ vop_whiteout {
 };
 
 #
-# Needs work: no vp?
-#
-#vop_bwrite {
-#	IN struct buf *bp;
-#};
-
-#
 #% getpages	vp = = =
 #
 vop_getpages {
@@ -516,6 +517,7 @@ vop_listextattr {
 	IN int attrnamespace;
 	INOUT struct uio *uio;
 	OUT size_t *size;
+	IN int flag;
 	IN kauth_cred_t cred;
 };
 
