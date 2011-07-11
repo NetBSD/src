@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2011/01/22 19:19:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2011/07/11 01:24:34 mrg Exp $
 
 ### what we need:
 
@@ -73,10 +73,10 @@ DEFS+=	-D__daddr_t=int32_t
 .S.o: ; ${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
 
 bootxx_ffs: x.out
-	${RELOC2BB} x.out $@ || ${NM} -u x.out
+	${RELOC2BB} x.out $@ || ${NM} -u x.out && false
 
 bootxx_fd: f.out
-	${RELOC2BB} -F f.out $@ || ${NM} -u f.out
+	${RELOC2BB} -F f.out $@ || ${NM} -u f.out && false
 
 x.out: xxstart.o libboot.a
 	${LD} ${LDFLAGS} -r -dc -e _start -o $@ $>

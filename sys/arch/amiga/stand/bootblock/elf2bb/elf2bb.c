@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.15 2008/04/28 20:23:13 martin Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.16 2011/07/11 01:24:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -208,7 +208,8 @@ main(int argc, char *argv[])
 		 */
 		bbsize = 32768;
 		if (bbsize < (tsz + dsz + bsz)) {
-			err(1, "%s: too big.", argv[0]);
+			errx(1, "%s: too big (%d < (%d + %d + %d))",
+			    argv[0], bbsize, tsz, dsz, bsz);
 		}
 		sumsize = bbsize / 512;
 	}
