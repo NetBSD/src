@@ -1,4 +1,4 @@
-/* $NetBSD: emdtvvar.h,v 1.1 2011/07/11 18:02:04 jmcneill Exp $ */
+/* $NetBSD: emdtvvar.h,v 1.2 2011/07/11 18:30:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -121,7 +121,5 @@ void	emdtv_write_multi_1(struct emdtv_softc *, uint8_t, uint16_t,
 			    const uint8_t *, uint16_t);
 
 bool	emdtv_gpio_ctl(struct emdtv_softc *, emdtv_gpio_reg_t, bool);
-
-bool	emdtv_i2c_transfer(void *, struct dvb_i2c_msg *, int);
 
 #endif /* !_DEV_USB_EMDTVVAR_H */
