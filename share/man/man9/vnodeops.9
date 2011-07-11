@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.81 2011/06/14 00:22:45 rmind Exp $
+.\"     $NetBSD: vnodeops.9,v 1.82 2011/07/11 08:27:37 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 14, 2011
+.Dd July 11, 2011
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -192,7 +192,7 @@
 .Ft int
 .Fn VOP_STRATEGY "struct vnode *vp" "struct buf *bp"
 .Ft int
-.Fn VOP_BWRITE "struct buf *bp"
+.Fn VOP_BWRITE "struct vnode *vp" "struct buf *bp"
 .Ft int
 .Fn VOP_GETEXTATTR "struct vnode *vp" "int attrnamespace" "const char *name" \
 "struct uio *uio" "size_t *size" "kauth_cred_t cred"
@@ -1305,8 +1305,11 @@ will either read or write data to the file depending on the value of
 .Em bp-\*[Gt]b_flags .
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
-.It Fn VOP_BWRITE "bp"
+.It Fn VOP_BWRITE "vp" "bp"
 Write a file system buffer.
+The argument
+.Fa vp
+is the vnode to write to.
 The argument
 .Fa bp
 specifies the buffer to be written.
