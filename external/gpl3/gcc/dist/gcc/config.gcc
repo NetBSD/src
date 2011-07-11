@@ -1646,6 +1646,7 @@ m68010-*-netbsdelf* | m68k*-*-netbsdelf*)
 		default_m68k_cpu=68020
 		;;
 	esac
+	tmake_file="${tmake_file} m68k/t-floatlib"
 	;;
 m68k*-*-openbsd*)
 	default_m68k_cpu=68020
