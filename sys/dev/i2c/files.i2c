@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.36 2011/07/11 00:30:23 jakllsch Exp $
+#	$NetBSD: files.i2c,v 1.37 2011/07/11 18:00:06 jmcneill Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -17,8 +17,16 @@ file	dev/i2c/i2c_bitbang.c			i2c_bitbang
 define	au8522: i2cexec
 file	dev/i2c/au8522.c			au8522
 
+# LG DT3303 decoder
+define	lg3303: i2cexec
+file	dev/i2c/lg3303.c			lg3303
+
+# Xceive XC3028 tuner
+define	xc3028: i2cexec, firmload
+file	dev/i2c/xc3028.c			xc3028
+
 # Xceive XC5000 tuner
-define	xc5k: i2cexec
+define	xc5k: i2cexec, firmload
 file	dev/i2c/xc5k.c				xc5k
 
 # Generic PLL-based tuners
