@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.49 2011/07/11 08:27:38 hannken Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.50 2011/07/11 08:34:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.49 2011/07/11 08:27:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.50 2011/07/11 08:34:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,7 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.49 2011/07/11 08:27:38 hannken Exp
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
 #include <miscfs/genfs/genfs.h>
+#include <miscfs/specfs/specdev.h>
 
 /*
  * This is the 08-June-99 bypass routine, based on the 10-Apr-92 bypass
@@ -529,9 +530,15 @@ layer_fsync(void *v)
 		off_t offhi;
 		struct lwp *a_l;
 	} */ *ap = v;
+	int error;
 
 	if (ap->a_flags & FSYNC_RECLAIM) {
 		return 0;
+	}
+	if (ap->a_vp->v_type == VBLK || ap->a_vp->v_type == VCHR) {
+		error = spec_fsync(v);
+		if (error)
+			return error;
 	}
 	return LAYERFS_DO_BYPASS(ap->a_vp, ap);
 }
