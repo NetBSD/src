@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.15 2011/05/21 12:02:55 tsutsui Exp $	*/
+/*	$NetBSD: sti.c,v 1.16 2011/07/11 02:30:49 matt Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.15 2011/05/21 12:02:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.16 2011/07/11 02:30:49 matt Exp $");
 
 #include "wsdisplay.h"
 
@@ -640,8 +640,7 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 
 	scr->scr_scrlist[0] = &scr->scr_wsd;
 	scr->scr_screenlist.nscreens = 1;
-	scr->scr_screenlist.screens =
-	    (const struct wsscreen_descr **)scr->scr_scrlist;
+	scr->scr_screenlist.screens = scr->scr_scrlist;
 
 	return 0;
 

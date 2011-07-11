@@ -1,4 +1,4 @@
-/*	$NetBSD: stivar.h,v 1.6 2010/11/09 12:24:48 skrll Exp $	*/
+/*	$NetBSD: stivar.h,v 1.7 2011/07/11 02:30:49 matt Exp $	*/
 
 /*	$OpenBSD: stivar.h,v 1.24 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -96,7 +96,7 @@ struct sti_screen {
 	int			 scr_nscreens;
 	u_int			 scr_wsmode;
 	struct	wsscreen_descr	 scr_wsd;
-	struct	wsscreen_descr	*scr_scrlist[1];
+	const struct wsscreen_descr	*scr_scrlist[1];
 	struct	wsscreen_list	 scr_screenlist;
 };
 
