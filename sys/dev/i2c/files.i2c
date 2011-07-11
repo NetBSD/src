@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.34 2011/04/04 17:58:40 phx Exp $
+#	$NetBSD: files.i2c,v 1.35 2011/07/11 00:01:51 jakllsch Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -20,6 +20,11 @@ file	dev/i2c/au8522.c			au8522
 # Xceive XC5000 tuner
 define	xc5k: i2cexec
 file	dev/i2c/xc5k.c				xc5k
+
+# Generic PLL-based tuners
+define	tvpll: i2cexec
+file	dev/i2c/tvpll.c				tvpll
+file	dev/i2c/tvpll_tuners.c			tvpll
 
 #
 # I2C master devices
