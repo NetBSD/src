@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.48 2011/06/12 03:35:58 rmind Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.49 2011/07/11 08:27:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.48 2011/06/12 03:35:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.49 2011/07/11 08:27:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -731,29 +731,6 @@ layer_print(void *v)
 	struct vnode *vp = ap->a_vp;
 	printf ("\ttag VT_LAYERFS, vp=%p, lowervp=%p\n", vp, LAYERVPTOLOWERVP(vp));
 	return 0;
-}
-
-/*
- * XXX - vop_bwrite must be hand coded because it has no
- * vnode in its arguments.
- * This goes away with a merged VM/buffer cache.
- */
-int
-layer_bwrite(void *v)
-{
-	struct vop_bwrite_args /* {
-		struct buf *a_bp;
-	} */ *ap = v;
-	struct buf *bp = ap->a_bp;
-	struct vnode *savedvp;
-	int error;
-
-	savedvp = bp->b_vp;
-	bp->b_vp = LAYERVPTOLOWERVP(bp->b_vp);
-	error = VOP_BWRITE(bp);
-	bp->b_vp = savedvp;
-
-	return error;
 }
 
 int
