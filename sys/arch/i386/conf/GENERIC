@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1036 2011/07/09 15:02:43 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.1037 2011/07/11 18:31:10 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1036 $"
+#ident 		"GENERIC-$Revision: 1.1037 $"
 
 maxusers	64		# estimated number of users
 
@@ -1423,6 +1423,7 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 pseye*	at uhub?		# Sony PLAYSTATION(R) Eye webcam
 uvideo* at uhub?		# USB Video Class capture devices
 auvitek* at uhub?		# Auvitek AU0828 video capture devices
+emdtv*	at uhub?		# Empia EM28xx video capture devices
 video* at videobus?
 dtv* at dtvbus?
 
