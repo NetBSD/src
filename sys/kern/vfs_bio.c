@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.230 2011/06/12 03:35:56 rmind Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.231 2011/07/11 08:27:37 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.230 2011/06/12 03:35:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.231 2011/07/11 08:27:37 hannken Exp $");
 
 #include "opt_bufcache.h"
 
@@ -951,9 +951,10 @@ bawrite(buf_t *bp)
 {
 
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
+	KASSERT(bp->b_vp != NULL);
 
 	SET(bp->b_flags, B_ASYNC);
-	VOP_BWRITE(bp);
+	VOP_BWRITE(bp->b_vp, bp);
 }
 
 /*
