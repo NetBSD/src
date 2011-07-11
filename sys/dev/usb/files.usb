@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.107 2011/07/10 02:25:52 jmcneill Exp $
+#	$NetBSD: files.usb,v 1.108 2011/07/11 18:02:04 jmcneill Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -157,6 +157,15 @@ file	dev/usb/auvitek_board.c		auvitek
 file	dev/usb/auvitek_dtv.c		auvitek
 file	dev/usb/auvitek_i2c.c		auvitek
 file	dev/usb/auvitek_video.c		auvitek
+
+# Empia EM28xx
+device	emdtv: dtvbus, irbus, i2cexec, lg3303, xc3028
+attach	emdtv at usbdevif
+file	dev/usb/emdtv.c			emdtv
+file	dev/usb/emdtv_board.c		emdtv
+file	dev/usb/emdtv_dtv.c		emdtv
+file	dev/usb/emdtv_i2c.c		emdtv
+file	dev/usb/emdtv_ir.c		emdtv
 
 #
 # Misc
