@@ -1,4 +1,4 @@
-/*	$NetBSD: t_types.c,v 1.1 2011/05/05 05:24:45 jruoho Exp $ */
+/*	$NetBSD: t_types.c,v 1.2 2011/07/11 16:12:56 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_types.c,v 1.1 2011/05/05 05:24:45 jruoho Exp $");
+__RCSID("$NetBSD: t_types.c,v 1.2 2011/07/11 16:12:56 njoly Exp $");
 
 #include <sys/types.h>
 
@@ -99,11 +99,11 @@ ATF_TC_BODY(types_signed, tc)
 	pid = 0;
 	size = 0;
 
-	ATF_REQUIRE((bc - 1) <= 0);
-	ATF_REQUIRE((bs - 1) <= 0);
-	ATF_REQUIRE((off - 1) <= 0);
-	ATF_REQUIRE((pid - 1) <= 0);
-	ATF_REQUIRE((size - 1) <= 0);
+	ATF_CHECK((bc - 1) <= 0);
+	ATF_CHECK((bs - 1) <= 0);
+	ATF_CHECK((off - 1) <= 0);
+	ATF_CHECK((pid - 1) <= 0);
+	ATF_CHECK((size - 1) <= 0);
 }
 
 ATF_TC(types_unsigned);
@@ -125,17 +125,17 @@ ATF_TC_BODY(types_unsigned, tc)
 	ino = 0;
 	size = 0;
 
-	ATF_REQUIRE((fb - 1) > 0);
-	ATF_REQUIRE((ff - 1) > 0);
-	ATF_REQUIRE((ino - 1) > 0);
-	ATF_REQUIRE((size - 1) > 0);
+	ATF_CHECK((fb - 1) > 0);
+	ATF_CHECK((ff - 1) > 0);
+	ATF_CHECK((ino - 1) > 0);
+	ATF_CHECK((size - 1) > 0);
 
 	/*
 	 * Test also rlim_t; PR standards/18067.
 	 */
 	lim = 0;
 
-	ATF_REQUIRE((lim - 1) > 0);
+	ATF_CHECK((lim - 1) > 0);
 }
 
 ATF_TP_ADD_TCS(tp)
