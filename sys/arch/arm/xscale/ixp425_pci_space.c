@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci_space.c,v 1.9 2011/07/01 20:32:51 dyoung Exp $ */
+/*	$NetBSD: ixp425_pci_space.c,v 1.10 2011/07/11 15:59:56 matt Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.9 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.10 2011/07/11 15:59:56 matt Exp $");
 
 /*
  * bus_space PCI functions for ixp425
@@ -61,13 +61,13 @@ bs_protos(bs_notimpl);
 
 /* special I/O functions */
 #if 1	/* XXX */
-inline u_int8_t  _pci_io_bs_r_1(void *, bus_space_handle_t, bus_size_t);
-inline u_int16_t _pci_io_bs_r_2(void *, bus_space_handle_t, bus_size_t);
-inline u_int32_t _pci_io_bs_r_4(void *, bus_space_handle_t, bus_size_t);
+u_int8_t  _pci_io_bs_r_1(void *, bus_space_handle_t, bus_size_t);
+u_int16_t _pci_io_bs_r_2(void *, bus_space_handle_t, bus_size_t);
+u_int32_t _pci_io_bs_r_4(void *, bus_space_handle_t, bus_size_t);
 
-inline void _pci_io_bs_w_1(void *, bus_space_handle_t, bus_size_t, u_int8_t);
-inline void _pci_io_bs_w_2(void *, bus_space_handle_t, bus_size_t, u_int16_t);
-inline void _pci_io_bs_w_4(void *, bus_space_handle_t, bus_size_t, u_int32_t);
+void _pci_io_bs_w_1(void *, bus_space_handle_t, bus_size_t, u_int8_t);
+void _pci_io_bs_w_2(void *, bus_space_handle_t, bus_size_t, u_int16_t);
+void _pci_io_bs_w_4(void *, bus_space_handle_t, bus_size_t, u_int32_t);
 #endif
 
 struct bus_space ixp425_pci_bs_tag_template = {
@@ -257,7 +257,7 @@ ixp425_pci_io_bs_vaddr(void *t, bus_space_handle_t bsh)
 
 /* special I/O functions */
 #if 1	/* _pci_io_bs_{rw}_{124} */
-inline u_int8_t
+u_int8_t
 _pci_io_bs_r_1(void *v, bus_space_handle_t ioh, bus_size_t off)
 {
 	u_int32_t data, n, be;
@@ -277,7 +277,7 @@ _pci_io_bs_r_1(void *v, bus_space_handle_t ioh, bus_size_t off)
 	return data >> (8 * n);
 }
 
-inline u_int16_t
+u_int16_t
 _pci_io_bs_r_2(void *v, bus_space_handle_t ioh, bus_size_t off)
 {
 	u_int32_t data, n, be;
@@ -297,7 +297,7 @@ _pci_io_bs_r_2(void *v, bus_space_handle_t ioh, bus_size_t off)
 	return data >> (8 * n);
 }
 
-inline u_int32_t
+u_int32_t
 _pci_io_bs_r_4(void *v, bus_space_handle_t ioh, bus_size_t off)
 {
 	u_int32_t data;
@@ -314,7 +314,7 @@ _pci_io_bs_r_4(void *v, bus_space_handle_t ioh, bus_size_t off)
 	return data;
 }
 
-inline void
+void
 _pci_io_bs_w_1(void *v, bus_space_handle_t ioh, bus_size_t off,
 	u_int8_t val)
 {
@@ -334,7 +334,7 @@ _pci_io_bs_w_1(void *v, bus_space_handle_t ioh, bus_size_t off,
 	PCI_CONF_UNLOCK(s);
 }
 
-inline void
+void
 _pci_io_bs_w_2(void *v, bus_space_handle_t ioh, bus_size_t off,
 	u_int16_t val)
 {
@@ -354,7 +354,7 @@ _pci_io_bs_w_2(void *v, bus_space_handle_t ioh, bus_size_t off,
 	PCI_CONF_UNLOCK(s);
 }
 
-inline void
+void
 _pci_io_bs_w_4(void *v, bus_space_handle_t ioh, bus_size_t off,
 	u_int32_t val)
 {
