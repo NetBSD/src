@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.35 2011/07/11 00:01:51 jakllsch Exp $
+#	$NetBSD: files.i2c,v 1.36 2011/07/11 00:30:23 jakllsch Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -25,6 +25,10 @@ file	dev/i2c/xc5k.c				xc5k
 define	tvpll: i2cexec
 file	dev/i2c/tvpll.c				tvpll
 file	dev/i2c/tvpll_tuners.c			tvpll
+
+# Nextwave NXT200x demodulator
+define	nxt2k: i2cexec
+file	dev/i2c/nxt2k.c				nxt2k
 
 #
 # I2C master devices
