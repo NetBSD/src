@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.581 2011/06/11 13:50:06 nonaka Exp $
+$NetBSD: usbdevs,v 1.582 2011/07/11 20:21:59 matt Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -546,6 +546,7 @@ vendor 3COM2		0x6891	3Com
 vendor EDIMAX		0x7392	EDIMAX
 vendor INTEL		0x8086	Intel
 vendor MOSCHIP		0x9710	MosChip Semiconductor
+vendor xxFTDI		0x9e88  FTDI
 vendor CACE		0xcace	CACE Technologies
 vendor EMPIA		0xeb1a	eMPIA Technology
 vendor HP2		0xf003	Hewlett Packard
@@ -1316,6 +1317,7 @@ product FTDI LCD_CFA_633	0xfc0b	Crystalfontz CFA-633 LCD
 product FTDI LCD_CFA_631	0xfc0c	Crystalfontz CFA-631 LCD
 product FTDI LCD_CFA_635	0xfc0d	Crystalfontz CFA-635 LCD
 product FTDI SEMC_DSS20		0xfc82	SEMC DSS-20 SyncStation
+product xxFTDI SHEEVAPLUG_JTAG	0x9e8f	SheevaPlug JTAGKey
 
 /* Fuji photo products */
 product FUJIPHOTO MASS0100	0x0100	Mass Storage
