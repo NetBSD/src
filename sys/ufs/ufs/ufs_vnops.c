@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.189 2011/04/30 14:24:27 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.190 2011/07/11 08:27:41 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.189 2011/04/30 14:24:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.190 2011/07/11 08:27:41 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1439,7 +1439,7 @@ ufs_mkdir(void *v)
 	 * We must write out the buffer containing the new directory body
 	 * before entering the new name in the parent.
 	 */
-	if ((error = VOP_BWRITE(bp)) != 0)
+	if ((error = VOP_BWRITE(bp->b_vp, bp)) != 0)
 		goto bad;
 	if ((error = UFS_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
 		goto bad;

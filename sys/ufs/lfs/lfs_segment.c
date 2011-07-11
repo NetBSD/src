@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.221 2011/06/12 03:36:01 rmind Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.222 2011/07/11 08:27:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.221 2011/06/12 03:36:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.222 2011/07/11 08:27:40 hannken Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1480,7 +1480,7 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 			    ip->i_ffs1_blocks += bb;
 		    /* XXX ondisk32 */
 		    ((int32_t *)bp->b_data)[ap->in_off] = ndaddr;
-		    (void) VOP_BWRITE(bp);
+		    (void) VOP_BWRITE(bp->b_vp, bp);
 	}
 
 	KASSERT(ooff == 0 || ooff == UNWRITTEN || ooff == daddr);

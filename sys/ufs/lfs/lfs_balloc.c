@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.69 2010/02/16 23:20:30 mlelstv Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.70 2011/07/11 08:27:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.69 2010/02/16 23:20:30 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.70 2011/07/11 08:27:40 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -163,7 +163,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 			uvm_vnp_setsize(vp, ip->i_size);
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (bpp)
-				(void) VOP_BWRITE(bp);
+				(void) VOP_BWRITE(bp->b_vp, bp);
 		}
 	}
 
@@ -283,7 +283,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 						ibp->b_flags, curproc->p_pid);
 				}
 #endif
-				if ((error = VOP_BWRITE(ibp)))
+				if ((error = VOP_BWRITE(ibp->b_vp, ibp)))
 					return error;
 			}
 		}
@@ -341,7 +341,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 					ibp->b_flags, curproc->p_pid);
 			}
 #endif
-			VOP_BWRITE(ibp);
+			VOP_BWRITE(ibp->b_vp, ibp);
 		}
 	} else if (bpp && !(bp->b_oflags & (BO_DONE|BO_DELWRI))) {
 		/*

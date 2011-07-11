@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.423 2011/06/12 03:35:56 rmind Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.424 2011/07/11 08:27:37 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.423 2011/06/12 03:35:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.424 2011/07/11 08:27:37 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -197,7 +197,7 @@ restart:
 #endif
 			bp->b_cflags |= BC_BUSY | BC_VFLUSH;
 			mutex_exit(&bufcache_lock);
-			VOP_BWRITE(bp);
+			VOP_BWRITE(bp->b_vp, bp);
 			mutex_enter(&bufcache_lock);
 			goto restart;
 		}

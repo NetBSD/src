@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.124 2011/06/16 09:21:03 hannken Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.125 2011/07/11 08:27:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.124 2011/06/16 09:21:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.125 2011/07/11 08:27:40 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -312,7 +312,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 				return (error);
 			oip->i_ffs1_size = oip->i_size = length;
 			uvm_vnp_setsize(ovp, length);
-			(void) VOP_BWRITE(bp);
+			(void) VOP_BWRITE(bp->b_vp, bp);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
 			oip->i_lfs_hiblk = lblkno(fs, oip->i_size + fs->lfs_bsize - 1) - 1;
 			return (lfs_update(ovp, NULL, NULL, 0));
@@ -365,7 +365,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		}
 		if (bp->b_oflags & BO_DELWRI)
 			fs->lfs_avail += odb - btofsb(fs, size);
-		(void) VOP_BWRITE(bp);
+		(void) VOP_BWRITE(bp->b_vp, bp);
 	} else { /* vp->v_type == VREG && length < osize && offset != 0 */
 		/*
 		 * When truncating a regular file down to a non-block-aligned
@@ -758,7 +758,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 		memset((void *)&bap[last + 1], 0,
 		/* XXX ondisk32 */
 		  (u_int)(NINDIR(fs) - (last + 1)) * sizeof (int32_t));
-		error = VOP_BWRITE(bp);
+		error = VOP_BWRITE(bp->b_vp, bp);
 		if (error)
 			allerror = error;
 		bap = copy;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.63 2010/11/30 10:43:06 dholland Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.64 2011/07/11 08:27:39 hannken Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.63 2010/11/30 10:43:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.64 2011/07/11 08:27:39 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -858,7 +858,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp, struct componentname *cnp)
 		ep = (struct ext2fs_direct *)((char *)ep + dsize);
 	}
 	memcpy((void *)ep, (void *)&newdir, (u_int)newentrysize);
-	error = VOP_BWRITE(bp);
+	error = VOP_BWRITE(bp->b_vp, bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (!error && dp->i_endoff && dp->i_endoff < ext2fs_size(dp))
 		error = ext2fs_truncate(dvp, (off_t)dp->i_endoff, IO_SYNC,
@@ -896,7 +896,7 @@ ext2fs_dirremove(struct vnode *dvp, struct componentname *cnp)
 		if (error != 0)
 			return (error);
 		ep->e2d_ino = 0;
-		error = VOP_BWRITE(bp);
+		error = VOP_BWRITE(bp->b_vp, bp);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (error);
 	}
@@ -908,7 +908,7 @@ ext2fs_dirremove(struct vnode *dvp, struct componentname *cnp)
 	if (error != 0)
 		return (error);
 	ep->e2d_reclen = h2fs16(fs2h16(ep->e2d_reclen) + dp->i_reclen);
-	error = VOP_BWRITE(bp);
+	error = VOP_BWRITE(bp->b_vp, bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	return (error);
 }
@@ -937,7 +937,7 @@ ext2fs_dirrewrite(struct inode *dp, struct inode *ip,
 	} else {
 		ep->e2d_type = 0;
 	}
-	error = VOP_BWRITE(bp);
+	error = VOP_BWRITE(bp->b_vp, bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	return (error);
 }

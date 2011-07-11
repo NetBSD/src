@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.106 2010/11/30 10:43:06 dholland Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.107 2011/07/11 08:27:41 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.106 2010/11/30 10:43:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.107 2011/07/11 08:27:41 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -805,7 +805,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 			    dp->i_offset);
 		}
 #endif
-		error = VOP_BWRITE(bp);
+		error = VOP_BWRITE(bp->b_vp, bp);
 		vfs_timestamp(&ts);
 		ret = UFS_UPDATE(dvp, &ts, &ts, UPDATE_DIROP);
 		if (error == 0)
@@ -933,7 +933,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 		    (dp->i_offset & (dirblksiz - 1)),
 		    dp->i_offset & ~(dirblksiz - 1));
 #endif
-	error = VOP_BWRITE(bp);
+	error = VOP_BWRITE(bp->b_vp, bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	/*
 	 * If all went well, and the directory can be shortened, proceed
@@ -1036,7 +1036,7 @@ out:
 		ip->i_flag |= IN_CHANGE;
 		UFS_WAPBL_UPDATE(ITOV(ip), NULL, NULL, 0);
 	}
-	error = VOP_BWRITE(bp);
+	error = VOP_BWRITE(bp->b_vp, bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	/*
 	 * If the last named reference to a snapshot goes away,
@@ -1074,7 +1074,7 @@ ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
 	DIP_ASSIGN(oip, nlink, oip->i_nlink);
 	oip->i_flag |= IN_CHANGE;
 	UFS_WAPBL_UPDATE(ITOV(oip), NULL, NULL, UPDATE_DIROP);
-	error = VOP_BWRITE(bp);
+	error = VOP_BWRITE(bp->b_vp, bp);
 	dp->i_flag |= iflags;
 	/*
 	 * If the last named reference to a snapshot goes away,

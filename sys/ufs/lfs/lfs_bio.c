@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.119 2011/06/12 03:36:01 rmind Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.120 2011/07/11 08:27:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.119 2011/06/12 03:36:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.120 2011/07/11 08:27:40 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,6 +351,7 @@ int
 lfs_bwrite(void *v)
 {
 	struct vop_bwrite_args /* {
+		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct buf *bp = ap->a_bp;

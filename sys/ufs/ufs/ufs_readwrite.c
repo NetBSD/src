@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.98 2011/06/19 02:42:53 rmind Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.99 2011/07/11 08:27:41 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.98 2011/06/19 02:42:53 rmind Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.99 2011/07/11 08:27:41 hannken Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -478,7 +478,7 @@ WRITE(void *v)
 			break;
 		}
 #ifdef LFS_READWRITE
-		(void)VOP_BWRITE(bp);
+		(void)VOP_BWRITE(bp->b_vp, bp);
 		lfs_reserve(fs, vp, NULL,
 		    -btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
 		need_unreserve = false;

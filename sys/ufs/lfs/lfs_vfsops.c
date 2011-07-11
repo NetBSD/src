@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.289 2011/06/12 03:36:01 rmind Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.290 2011/07/11 08:27:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.289 2011/06/12 03:36:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.290 2011/07/11 08:27:40 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1785,7 +1785,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		if (devvp->v_type == VBLK) {
 			bp->b_dev = devvp->v_rdev;
 		}
-		VOP_BWRITE(bp);
+		VOP_BWRITE(bp->b_vp, bp);
 		while (lfs_gatherblock(sp, bp, NULL))
 			continue;
 	}
@@ -2023,7 +2023,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 			       &bp) != 0)
 			panic("balloc extending ifile");
 		memset(bp->b_data, 0, fs->lfs_bsize);
-		VOP_BWRITE(bp);
+		VOP_BWRITE(bp->b_vp, bp);
 	}
 
 	/* Register new ifile size */
@@ -2050,7 +2050,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 			    NOCRED, 0, &obp))
 				panic("resize: bread src blk failed");
 			memcpy(bp->b_data, obp->b_data, fs->lfs_bsize);
-			VOP_BWRITE(bp);
+			VOP_BWRITE(bp->b_vp, bp);
 			brelse(obp, 0);
 		}
 	}
@@ -2067,7 +2067,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 				memset(sup, 0, sizeof(*sup));
 				i++;
 			}
-			VOP_BWRITE(bp);
+			VOP_BWRITE(bp->b_vp, bp);
 		}
 	}
 
@@ -2124,7 +2124,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	bread(ivp, 0, fs->lfs_bsize, NOCRED, B_MODIFY, &bp);
 	((CLEANERINFO *)bp->b_data)->clean = fs->lfs_nclean;
 	((CLEANERINFO *)bp->b_data)->dirty = fs->lfs_nseg - fs->lfs_nclean;
-	VOP_BWRITE(bp);
+	VOP_BWRITE(bp->b_vp, bp);
 
 	/* Let Ifile accesses proceed */
 	VOP_UNLOCK(ivp);

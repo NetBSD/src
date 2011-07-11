@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.133 2010/02/16 23:20:30 mlelstv Exp $	*/
+/*	$NetBSD: lfs.h,v 1.134 2011/07/11 08:27:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -280,7 +280,7 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 #  define DLOG(a) lfs_debug_log a
 # else /* ! DEBUG */
 #  define LFS_BCLEAN_LOG(fs, bp)
-#  define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp))
+#  define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp)->b_vp, (bp))
 #  define DLOG(a)
 # endif /* ! DEBUG */
 #else /* ! _KERNEL */

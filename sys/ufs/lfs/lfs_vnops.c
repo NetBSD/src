@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.235 2011/06/12 03:36:01 rmind Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.236 2011/07/11 08:27:41 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.235 2011/06/12 03:36:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.236 2011/07/11 08:27:41 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1606,7 +1606,7 @@ segwait_common:
 			return EBUSY;
 		}
 		sup->su_flags |= SEGUSE_INVAL;
-		VOP_BWRITE(bp);
+		VOP_BWRITE(bp->b_vp, bp);
 		return 0;
 
 	    case LFCNRESIZE:

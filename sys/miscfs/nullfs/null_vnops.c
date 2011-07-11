@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.37 2011/01/10 11:11:03 hannken Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.38 2011/07/11 08:27:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vnops.c,v 1.37 2011/01/10 11:11:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vnops.c,v 1.38 2011/07/11 08:27:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,6 @@ const struct vnodeopv_entry_desc null_vnodeop_entries[] = {
 
 	{ &vop_open_desc,	layer_open },	/* mount option handling */
 
-	{ &vop_bwrite_desc,	layer_bwrite },
 	{ &vop_bmap_desc,	layer_bmap },
 	{ &vop_getpages_desc,	layer_getpages },
 	{ &vop_putpages_desc,	layer_putpages },
