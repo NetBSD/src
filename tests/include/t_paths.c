@@ -1,4 +1,4 @@
-/*	$NetBSD: t_paths.c,v 1.5 2011/04/04 19:59:08 jruoho Exp $ */
+/*	$NetBSD: t_paths.c,v 1.6 2011/07/11 17:51:48 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_paths.c,v 1.5 2011/04/04 19:59:08 jruoho Exp $");
+__RCSID("$NetBSD: t_paths.c,v 1.6 2011/07/11 17:51:48 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -163,26 +163,26 @@ ATF_TC_BODY(paths, tc)
 			if (strcmp(paths[i].path, _PATH_BPF) == 0)
 				atf_tc_expect_fail("PR lib/44807");
 
-			ATF_REQUIRE(S_ISBLK(m) != 0 || S_ISCHR(m) != 0);
+			ATF_CHECK(S_ISBLK(m) != 0 || S_ISCHR(m) != 0);
 
-			ATF_REQUIRE((paths[i].flags & PATH_DIR) == 0);
-			ATF_REQUIRE((paths[i].flags & PATH_FILE) == 0);
+			ATF_CHECK((paths[i].flags & PATH_DIR) == 0);
+			ATF_CHECK((paths[i].flags & PATH_FILE) == 0);
 		}
 
 		if ((paths[i].flags & PATH_DIR) != 0) {
 
-			ATF_REQUIRE(S_ISDIR(m) != 0);
+			ATF_CHECK(S_ISDIR(m) != 0);
 
-			ATF_REQUIRE((paths[i].flags & PATH_DEV) == 0);
-			ATF_REQUIRE((paths[i].flags & PATH_FILE) == 0);
+			ATF_CHECK((paths[i].flags & PATH_DEV) == 0);
+			ATF_CHECK((paths[i].flags & PATH_FILE) == 0);
 		}
 
 		if ((paths[i].flags & PATH_FILE) != 0) {
 
-			ATF_REQUIRE(S_ISREG(m) != 0);
+			ATF_CHECK(S_ISREG(m) != 0);
 
-			ATF_REQUIRE((paths[i].flags & PATH_DEV) == 0);
-			ATF_REQUIRE((paths[i].flags & PATH_DIR) == 0);
+			ATF_CHECK((paths[i].flags & PATH_DEV) == 0);
+			ATF_CHECK((paths[i].flags & PATH_DIR) == 0);
 		}
 
 		ATF_REQUIRE(close(fd) == 0);
