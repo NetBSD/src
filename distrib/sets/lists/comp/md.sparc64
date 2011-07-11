@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.108 2011/07/09 17:15:47 dyoung Exp $
+# $NetBSD: md.sparc64,v 1.109 2011/07/11 13:42:49 njoly Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -886,7 +886,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libdes.so.8.1.debug			comp-compat-shlib	compat,pic,debug,crypto
 ./usr/libdata/debug/usr/lib/sparc/libdevmapper.so.1.0.debug			comp-compat-shlib	compat,pic,debug,lvm
 ./usr/libdata/debug/usr/lib/sparc/libdm.so.0.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libdns.so.5.4.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libdns.so.5.5.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libdns_sd.so.0.0.debug		comp-compat-shlib	compat,pic,debug,mdns
 ./usr/libdata/debug/usr/lib/sparc/libdwarf.so.0.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libedit.so.3.0.debug			comp-compat-shlib	compat,pic,debug
