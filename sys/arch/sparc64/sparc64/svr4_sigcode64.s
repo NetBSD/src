@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode64.s,v 1.3 2002/05/05 08:15:15 thorpej Exp $	*/
+/*	$NetBSD: svr4_sigcode64.s,v 1.4 2011/07/12 07:51:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
@@ -68,6 +68,9 @@
 
 	.register	%g2,#scratch
 	.register	%g3,#scratch
+
+#define BLOCK_SIZE SPARC64_BLOCK_SIZE
+#define BLOCK_ALIGN SPARC64_BLOCK_ALIGN
 
 /*
  * XXXXX Not implemented yet

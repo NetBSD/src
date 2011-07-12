@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.13 2005/12/11 12:19:10 christos Exp $ */
+/*	$NetBSD: reg.h,v 1.14 2011/07/12 07:51:34 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -171,7 +171,7 @@ struct reg64 {
  * XXXX UltraSPARC processors don't implement a floating point queue.
  */
 #define	FP_QSIZE	16
-#define ALIGNFPSTATE(f)		((struct fpstate64 *)(((long)(f))&(~BLOCK_ALIGN)))
+#define ALIGNFPSTATE(f)		((struct fpstate64 *)(((long)(f))&(~SPARC64_BLOCK_ALIGN)))
 
 struct fp_qentry {
 	int	*fq_addr;		/* the instruction's address */
