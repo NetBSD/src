@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2011/07/11 01:24:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.46 2011/07/12 03:09:03 mrg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
@@ -98,7 +98,7 @@ CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 .S.o: ; ${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
 
 boot.amiga: x.out
-	${RELOC2BB} -S x.out $@ || ${NM} -u x.out && false
+	${RELOC2BB} -S x.out $@ || (${NM} -u x.out && false)
 
 x.out: xxstart.o libboot.a ${LIBZ}
 	${LD} ${LDFLAGS} -r -dc -e start -o $@ $>
