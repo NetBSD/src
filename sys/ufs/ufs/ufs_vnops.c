@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.190 2011/07/11 08:27:41 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.191 2011/07/12 02:22:13 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.190 2011/07/11 08:27:41 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.191 2011/07/12 02:22:13 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1286,7 +1286,8 @@ ufs_rename(void *v)
 		 */
 		if (doingdirectory && newparent) {
 			KASSERT(dp != NULL);
-			xp->i_offset = mastertemplate.dot_reclen;
+			/* XXX gross; should be an argument */
+			xp->i_crap.ulr_offset = mastertemplate.dot_reclen;
 			ufs_dirrewrite(xp, dp, newparent, DT_DIR, 0, IN_CHANGE);
 			cache_purge(fdvp);
 		}

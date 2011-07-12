@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.107 2011/07/11 08:27:41 hannken Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.108 2011/07/12 02:22:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.107 2011/07/11 08:27:41 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.108 2011/07/12 02:22:13 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -144,6 +144,7 @@ ufs_lookup(void *v)
 	const int needswap = UFS_MPNEEDSWAP(ump);
 	int dirblksiz = ump->um_dirblksiz;
 	ino_t foundino;
+	struct ufs_lookup_results *results;
 
 	flags = cnp->cn_flags;
 
@@ -151,6 +152,15 @@ ufs_lookup(void *v)
 	slotoffset = -1;
 	*vpp = NULL;
 	endsearch = 0; /* silence compiler warning */
+
+	/*
+	 * Produce the auxiliary lookup results into i_crap. Increment
+	 * its serial number so elsewhere we can tell if we're using
+	 * stale results. This should not be done this way. XXX.
+	 */
+	results = &dp->i_crap;
+	dp->i_crapcounter++;
+
 	/*
 	 * Check accessiblity of directory.
 	 */
@@ -225,13 +235,13 @@ ufs_lookup(void *v)
 		numdirpasses = 1;
 		entryoffsetinblock = 0; /* silence compiler warning */
 		switch (ufsdirhash_lookup(dp, cnp->cn_nameptr, cnp->cn_namelen,
-		    &dp->i_offset, &bp, nameiop == DELETE ? &prevoff : NULL)) {
+		    &results->ulr_offset, &bp, nameiop == DELETE ? &prevoff : NULL)) {
 		case 0:
 			ep = (struct direct *)((char *)bp->b_data +
-			    (dp->i_offset & bmask));
+			    (results->ulr_offset & bmask));
 			goto foundentry;
 		case ENOENT:
-			dp->i_offset = roundup(dp->i_size, dirblksiz);
+			results->ulr_offset = roundup(dp->i_size, dirblksiz);
 			goto notfound;
 		default:
 			/* Something failed; just do a linear search. */
@@ -240,35 +250,35 @@ ufs_lookup(void *v)
 	}
 #endif /* UFS_DIRHASH */
 
-	if (nameiop != LOOKUP || dp->i_diroff == 0 ||
-	    dp->i_diroff >= dp->i_size) {
+	if (nameiop != LOOKUP || results->ulr_diroff == 0 ||
+	    results->ulr_diroff >= dp->i_size) {
 		entryoffsetinblock = 0;
-		dp->i_offset = 0;
+		results->ulr_offset = 0;
 		numdirpasses = 1;
 	} else {
-		dp->i_offset = dp->i_diroff;
-		if ((entryoffsetinblock = dp->i_offset & bmask) &&
-		    (error = ufs_blkatoff(vdp, (off_t)dp->i_offset,
+		results->ulr_offset = results->ulr_diroff;
+		if ((entryoffsetinblock = results->ulr_offset & bmask) &&
+		    (error = ufs_blkatoff(vdp, (off_t)results->ulr_offset,
 		    NULL, &bp, false)))
 			goto out;
 		numdirpasses = 2;
 		nchstats.ncs_2passes++;
 	}
-	prevoff = dp->i_offset;
+	prevoff = results->ulr_offset;
 	endsearch = roundup(dp->i_size, dirblksiz);
 	enduseful = 0;
 
 searchloop:
-	while (dp->i_offset < endsearch) {
+	while (results->ulr_offset < endsearch) {
 		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
 			preempt();
 		/*
 		 * If necessary, get the next directory block.
 		 */
-		if ((dp->i_offset & bmask) == 0) {
+		if ((results->ulr_offset & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp, 0);
-			error = ufs_blkatoff(vdp, (off_t)dp->i_offset, NULL,
+			error = ufs_blkatoff(vdp, (off_t)results->ulr_offset, NULL,
 			    &bp, false);
 			if (error)
 				goto out;
@@ -296,9 +306,9 @@ searchloop:
 		    (dirchk && ufs_dirbadentry(vdp, ep, entryoffsetinblock))) {
 			int i;
 
-			ufs_dirbad(dp, dp->i_offset, "mangled entry");
+			ufs_dirbad(dp, results->ulr_offset, "mangled entry");
 			i = dirblksiz - (entryoffsetinblock & (dirblksiz - 1));
-			dp->i_offset += i;
+			results->ulr_offset += i;
 			entryoffsetinblock += i;
 			continue;
 		}
@@ -317,16 +327,16 @@ searchloop:
 			if (size > 0) {
 				if (size >= slotneeded) {
 					slotstatus = FOUND;
-					slotoffset = dp->i_offset;
+					slotoffset = results->ulr_offset;
 					slotsize = ufs_rw16(ep->d_reclen,
 					    needswap);
 				} else if (slotstatus == NONE) {
 					slotfreespace += size;
 					if (slotoffset == -1)
-						slotoffset = dp->i_offset;
+						slotoffset = results->ulr_offset;
 					if (slotfreespace >= slotneeded) {
 						slotstatus = COMPACT;
-						slotsize = dp->i_offset +
+						slotsize = results->ulr_offset +
 						    ufs_rw16(ep->d_reclen,
 							     needswap) -
 						    slotoffset;
@@ -363,12 +373,12 @@ foundentry:
 				 */
 				if (!FSFMT(vdp) && ep->d_type == DT_WHT) {
 					slotstatus = FOUND;
-					slotoffset = dp->i_offset;
+					slotoffset = results->ulr_offset;
 					slotsize = ufs_rw16(ep->d_reclen,
 					    needswap);
-					dp->i_reclen = slotsize;
+					results->ulr_reclen = slotsize;
 					/*
-					 * This is used to set dp->i_endoff,
+					 * This is used to set results->ulr_endoff,
 					 * which may be used by ufs_direnter2()
 					 * as a length to truncate the
 					 * directory to.  Therefore, it must
@@ -389,15 +399,15 @@ foundentry:
 					goto notfound;
 				}
 				foundino = ufs_rw32(ep->d_ino, needswap);
-				dp->i_reclen = ufs_rw16(ep->d_reclen, needswap);
+				results->ulr_reclen = ufs_rw16(ep->d_reclen, needswap);
 				goto found;
 			}
 		}
-		prevoff = dp->i_offset;
-		dp->i_offset += ufs_rw16(ep->d_reclen, needswap);
+		prevoff = results->ulr_offset;
+		results->ulr_offset += ufs_rw16(ep->d_reclen, needswap);
 		entryoffsetinblock += ufs_rw16(ep->d_reclen, needswap);
 		if (ep->d_ino)
-			enduseful = dp->i_offset;
+			enduseful = results->ulr_offset;
 	}
 notfound:
 	/*
@@ -406,8 +416,8 @@ notfound:
 	 */
 	if (numdirpasses == 2) {
 		numdirpasses--;
-		dp->i_offset = 0;
-		endsearch = dp->i_diroff;
+		results->ulr_offset = 0;
+		endsearch = results->ulr_diroff;
 		goto searchloop;
 	}
 	if (bp != NULL)
@@ -432,29 +442,29 @@ notfound:
 		/*
 		 * Return an indication of where the new directory
 		 * entry should be put.  If we didn't find a slot,
-		 * then set dp->i_count to 0 indicating
+		 * then set results->ulr_count to 0 indicating
 		 * that the new slot belongs at the end of the
 		 * directory. If we found a slot, then the new entry
-		 * can be put in the range from dp->i_offset to
-		 * dp->i_offset + dp->i_count.
+		 * can be put in the range from results->ulr_offset to
+		 * results->ulr_offset + results->ulr_count.
 		 */
 		if (slotstatus == NONE) {
-			dp->i_offset = roundup(dp->i_size, dirblksiz);
-			dp->i_count = 0;
-			enduseful = dp->i_offset;
+			results->ulr_offset = roundup(dp->i_size, dirblksiz);
+			results->ulr_count = 0;
+			enduseful = results->ulr_offset;
 		} else if (nameiop == DELETE) {
-			dp->i_offset = slotoffset;
-			if ((dp->i_offset & (dirblksiz - 1)) == 0)
-				dp->i_count = 0;
+			results->ulr_offset = slotoffset;
+			if ((results->ulr_offset & (dirblksiz - 1)) == 0)
+				results->ulr_count = 0;
 			else
-				dp->i_count = dp->i_offset - prevoff;
+				results->ulr_count = results->ulr_offset - prevoff;
 		} else {
-			dp->i_offset = slotoffset;
-			dp->i_count = slotsize;
+			results->ulr_offset = slotoffset;
+			results->ulr_count = slotsize;
 			if (enduseful < slotoffset + slotsize)
 				enduseful = slotoffset + slotsize;
 		}
-		dp->i_endoff = roundup(enduseful, dirblksiz);
+		results->ulr_endoff = roundup(enduseful, dirblksiz);
 #if 0 /* commented out by dbj. none of the on disk fields changed */
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 #endif
@@ -487,9 +497,9 @@ found:
 	 * Check that directory length properly reflects presence
 	 * of this entry.
 	 */
-	if (dp->i_offset + DIRSIZ(FSFMT(vdp), ep, needswap) > dp->i_size) {
-		ufs_dirbad(dp, dp->i_offset, "i_size too small");
-		dp->i_size = dp->i_offset + DIRSIZ(FSFMT(vdp), ep, needswap);
+	if (results->ulr_offset + DIRSIZ(FSFMT(vdp), ep, needswap) > dp->i_size) {
+		ufs_dirbad(dp, results->ulr_offset, "i_size too small");
+		dp->i_size = results->ulr_offset + DIRSIZ(FSFMT(vdp), ep, needswap);
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		UFS_WAPBL_UPDATE(vdp, NULL, NULL, UPDATE_DIROP);
@@ -502,7 +512,7 @@ found:
 	 * in the cache as to where the entry was found.
 	 */
 	if ((flags & ISLASTCN) && nameiop == LOOKUP)
-		dp->i_diroff = dp->i_offset &~ (dirblksiz - 1);
+		results->ulr_diroff = results->ulr_offset &~ (dirblksiz - 1);
 
 	/*
 	 * If deleting, and at end of pathname, return
@@ -517,15 +527,15 @@ found:
 		if (error)
 			goto out;
 		/*
-		 * Return pointer to current entry in dp->i_offset,
+		 * Return pointer to current entry in results->ulr_offset,
 		 * and distance past previous entry (if there
-		 * is a previous entry in this block) in dp->i_count.
+		 * is a previous entry in this block) in results->ulr_count.
 		 * Save directory inode pointer in ndp->ni_dvp for dirremove().
 		 */
-		if ((dp->i_offset & (dirblksiz - 1)) == 0)
-			dp->i_count = 0;
+		if ((results->ulr_offset & (dirblksiz - 1)) == 0)
+			results->ulr_count = 0;
 		else
-			dp->i_count = dp->i_offset - prevoff;
+			results->ulr_count = results->ulr_offset - prevoff;
 		if (dp->i_number == foundino) {
 			vref(vdp);
 			*vpp = vdp;
@@ -755,6 +765,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	struct ufsmount *ump = VFSTOUFS(dvp->v_mount);
 	const int needswap = UFS_MPNEEDSWAP(ump);
 	int dirblksiz = ump->um_dirblksiz;
+	struct ufs_lookup_results *ulr;
 
 	UFS_WAPBL_JLOCK_ASSERT(dvp->v_mount);
 
@@ -765,20 +776,24 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	dp = VTOI(dvp);
 	newentrysize = DIRSIZ(0, dirp, 0);
 
-	if (dp->i_count == 0) {
+	/* XXX should handle this material another way */
+	ulr = &dp->i_crap;
+	UFS_CHECK_CRAPCOUNTER(dp);
+
+	if (ulr->ulr_count == 0) {
 		/*
-		 * If dp->i_count is 0, then namei could find no
-		 * space in the directory. Here, dp->i_offset will
+		 * If ulr_count is 0, then namei could find no
+		 * space in the directory. Here, ulr_offset will
 		 * be on a directory block boundary and we will write the
 		 * new entry into a fresh block.
 		 */
-		if (dp->i_offset & (dirblksiz - 1))
+		if (ulr->ulr_offset & (dirblksiz - 1))
 			panic("ufs_direnter: newblk");
-		if ((error = UFS_BALLOC(dvp, (off_t)dp->i_offset, dirblksiz,
+		if ((error = UFS_BALLOC(dvp, (off_t)ulr->ulr_offset, dirblksiz,
 		    cr, B_CLRBUF | B_SYNC, &bp)) != 0) {
 			return (error);
 		}
-		dp->i_size = dp->i_offset + dirblksiz;
+		dp->i_size = ulr->ulr_offset + dirblksiz;
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		uvm_vnp_setsize(dvp, dp->i_size);
@@ -795,14 +810,14 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 				dirp->d_type = tmp;
 			}
 		}
-		blkoff = dp->i_offset & (ump->um_mountp->mnt_stat.f_iosize - 1);
+		blkoff = ulr->ulr_offset & (ump->um_mountp->mnt_stat.f_iosize - 1);
 		memcpy((char *)bp->b_data + blkoff, dirp, newentrysize);
 #ifdef UFS_DIRHASH
 		if (dp->i_dirhash != NULL) {
-			ufsdirhash_newblk(dp, dp->i_offset);
-			ufsdirhash_add(dp, dirp, dp->i_offset);
+			ufsdirhash_newblk(dp, ulr->ulr_offset);
+			ufsdirhash_add(dp, dirp, ulr->ulr_offset);
 			ufsdirhash_checkblock(dp, (char *)bp->b_data + blkoff,
-			    dp->i_offset);
+			    ulr->ulr_offset);
 		}
 #endif
 		error = VOP_BWRITE(bp->b_vp, bp);
@@ -829,8 +844,12 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	 *
 	 * N.B. - THIS IS AN ARTIFACT OF 4.2 AND SHOULD NEVER HAPPEN.
 	 */
-	if (dp->i_offset + dp->i_count > dp->i_size) {
-		dp->i_size = dp->i_offset + dp->i_count;
+	if (ulr->ulr_offset + ulr->ulr_count > dp->i_size) {
+#ifdef DIAGNOSTIC
+		printf("ufs_direnter: reached 4.2-only block, "
+		       "not supposed to happen\n");
+#endif
+		dp->i_size = ulr->ulr_offset + ulr->ulr_count;
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		UFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
@@ -838,7 +857,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	/*
 	 * Get the block containing the space for the new directory entry.
 	 */
-	error = ufs_blkatoff(dvp, (off_t)dp->i_offset, &dirbuf, &bp, true);
+	error = ufs_blkatoff(dvp, (off_t)ulr->ulr_offset, &dirbuf, &bp, true);
 	if (error) {
 		return (error);
 	}
@@ -851,7 +870,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	ep = (struct direct *)dirbuf;
 	dsize = (ep->d_ino != 0) ?  DIRSIZ(FSFMT(dvp), ep, needswap) : 0;
 	spacefree = ufs_rw16(ep->d_reclen, needswap) - dsize;
-	for (loc = ufs_rw16(ep->d_reclen, needswap); loc < dp->i_count; ) {
+	for (loc = ufs_rw16(ep->d_reclen, needswap); loc < ulr->ulr_count; ) {
 		uint16_t reclen;
 
 		nep = (struct direct *)(dirbuf + loc);
@@ -881,8 +900,8 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 #ifdef UFS_DIRHASH
 		if (dp->i_dirhash != NULL)
 			ufsdirhash_move(dp, nep,
-			    dp->i_offset + ((char *)nep - dirbuf),
-			    dp->i_offset + ((char *)ep - dirbuf));
+			    ulr->ulr_offset + ((char *)nep - dirbuf),
+			    ulr->ulr_offset + ((char *)ep - dirbuf));
 #endif
 		memcpy((void *)ep, (void *)nep, dsize);
 	}
@@ -924,14 +943,14 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 #ifdef UFS_DIRHASH
 	if (dp->i_dirhash != NULL && (ep->d_ino == 0 ||
 	    dirp->d_reclen == spacefree))
-		ufsdirhash_add(dp, dirp, dp->i_offset + ((char *)ep - dirbuf));
+		ufsdirhash_add(dp, dirp, ulr->ulr_offset + ((char *)ep - dirbuf));
 #endif
 	memcpy((void *)ep, (void *)dirp, (u_int)newentrysize);
 #ifdef UFS_DIRHASH
 	if (dp->i_dirhash != NULL)
 		ufsdirhash_checkblock(dp, dirbuf -
-		    (dp->i_offset & (dirblksiz - 1)),
-		    dp->i_offset & ~(dirblksiz - 1));
+		    (ulr->ulr_offset & (dirblksiz - 1)),
+		    ulr->ulr_offset & ~(dirblksiz - 1));
 #endif
 	error = VOP_BWRITE(bp->b_vp, bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -942,12 +961,12 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	 * lock other inodes which can lead to deadlock if we also hold a
 	 * lock on the newly entered node.
 	 */
-	if (error == 0 && dp->i_endoff && dp->i_endoff < dp->i_size) {
+	if (error == 0 && ulr->ulr_endoff && ulr->ulr_endoff < dp->i_size) {
 #ifdef UFS_DIRHASH
 		if (dp->i_dirhash != NULL)
-			ufsdirhash_dirtrunc(dp, dp->i_endoff);
+			ufsdirhash_dirtrunc(dp, ulr->ulr_endoff);
 #endif
-		(void) UFS_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr);
+		(void) UFS_TRUNCATE(dvp, (off_t)ulr->ulr_endoff, IO_SYNC, cr);
 	}
 	UFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
 	return (error);
@@ -975,6 +994,11 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 #ifdef FFS_EI
 	const int needswap = UFS_MPNEEDSWAP(dp->i_ump);
 #endif
+	struct ufs_lookup_results *ulr;
+
+	/* XXX should handle this material another way */
+	ulr = &dp->i_crap;
+	UFS_CHECK_CRAPCOUNTER(dp);
 
 	UFS_WAPBL_JLOCK_ASSERT(dvp->v_mount);
 
@@ -982,7 +1006,7 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 		/*
 		 * Whiteout entry: set d_ino to WINO.
 		 */
-		error = ufs_blkatoff(dvp, (off_t)dp->i_offset, (void *)&ep,
+		error = ufs_blkatoff(dvp, (off_t)ulr->ulr_offset, (void *)&ep,
 				     &bp, true);
 		if (error)
 			return (error);
@@ -992,7 +1016,7 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 	}
 
 	if ((error = ufs_blkatoff(dvp,
-	    (off_t)(dp->i_offset - dp->i_count), (void *)&ep, &bp, true)) != 0)
+	    (off_t)(ulr->ulr_offset - ulr->ulr_count), (void *)&ep, &bp, true)) != 0)
 		return (error);
 
 #ifdef UFS_DIRHASH
@@ -1001,12 +1025,12 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 	 * that `ep' is the previous entry when dp->i_count != 0.
 	 */
 	if (dp->i_dirhash != NULL)
-		ufsdirhash_remove(dp, (dp->i_count == 0) ? ep :
+		ufsdirhash_remove(dp, (ulr->ulr_count == 0) ? ep :
 		   (struct direct *)((char *)ep +
-		   ufs_rw16(ep->d_reclen, needswap)), dp->i_offset);
+		   ufs_rw16(ep->d_reclen, needswap)), ulr->ulr_offset);
 #endif
 
-	if (dp->i_count == 0) {
+	if (ulr->ulr_count == 0) {
 		/*
 		 * First entry in block: set d_ino to zero.
 		 */
@@ -1016,7 +1040,7 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 		 * Collapse new free space into previous entry.
 		 */
 		ep->d_reclen =
-		    ufs_rw16(ufs_rw16(ep->d_reclen, needswap) + dp->i_reclen,
+		    ufs_rw16(ufs_rw16(ep->d_reclen, needswap) + ulr->ulr_reclen,
 			needswap);
 	}
 
@@ -1024,8 +1048,8 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 	if (dp->i_dirhash != NULL) {
 		int dirblksiz = ip->i_ump->um_dirblksiz;
 		ufsdirhash_checkblock(dp, (char *)ep -
-		    ((dp->i_offset - dp->i_count) & (dirblksiz - 1)),
-		    dp->i_offset & ~(dirblksiz - 1));
+		    ((ulr->ulr_offset - ulr->ulr_count) & (dirblksiz - 1)),
+		    ulr->ulr_offset & ~(dirblksiz - 1));
 	}
 #endif
 
@@ -1063,8 +1087,13 @@ ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
 	struct direct *ep;
 	struct vnode *vdp = ITOV(dp);
 	int error;
+	struct ufs_lookup_results *ulr;
 
-	error = ufs_blkatoff(vdp, (off_t)dp->i_offset, (void *)&ep, &bp, true);
+	/* XXX should handle this material another way */
+	ulr = &dp->i_crap;
+	UFS_CHECK_CRAPCOUNTER(dp);
+
+	error = ufs_blkatoff(vdp, (off_t)ulr->ulr_offset, (void *)&ep, &bp, true);
 	if (error)
 		return (error);
 	ep->d_ino = ufs_rw32(newinum, UFS_MPNEEDSWAP(dp->i_ump));

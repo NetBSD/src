@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.57 2010/07/28 11:03:48 hannken Exp $	*/
+/*	$NetBSD: inode.h,v 1.58 2011/07/12 02:22:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -45,6 +45,22 @@
 #include <ufs/ufs/quota.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <miscfs/genfs/genfs_node.h>
+
+/*
+ * Lookup result state (other than the result inode). This is
+ * currently stashed in the vnode between VOP_LOOKUP and directory
+ * operation VOPs, which is gross.
+ */
+struct ufs_lookup_results {
+	int32_t	  ulr_count;	/* Size of free slot in directory. */
+	doff_t	  ulr_endoff;	/* End of useful stuff in directory. */
+	doff_t	  ulr_diroff;	/* Offset in dir, where we found last entry. */
+	doff_t	  ulr_offset;	/* Offset of free space in directory. */
+	u_int32_t ulr_reclen;	/* Size of found directory entry. */
+};
+
+/* notyet XXX */
+#define UFS_CHECK_CRAPCOUNTER(dp) ((void)(dp)->i_crapcounter)
 
 /*
  * Per-filesystem inode extensions.
@@ -98,14 +114,12 @@ struct inode {
 	struct	 lockf *i_lockf;/* Head of byte-level lock list. */
 
 	/*
-	 * Side effects; used during directory lookup.
+	 * Side effects; used during (and after) directory lookup.
+	 * XXX should not be here.
 	 */
-	int32_t	  i_count;	/* Size of free slot in directory. */
-	doff_t	  i_endoff;	/* End of useful stuff in directory. */
-	doff_t	  i_diroff;	/* Offset in dir, where we found last entry. */
-	doff_t	  i_offset;	/* Offset of free space in directory. */
-	u_int32_t i_reclen;	/* Size of found directory entry. */
-	int       i_unused;	/* was for softdep, now unused */
+	struct ufs_lookup_results i_crap;
+	unsigned i_crapcounter;	/* serial number for i_crap */
+
 	/*
 	 * Inode extensions
 	 */
