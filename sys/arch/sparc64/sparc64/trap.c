@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.166 2011/06/23 13:39:40 nakayama Exp $ */
+/*	$NetBSD: trap.c,v 1.167 2011/07/12 07:51:34 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.166 2011/06/23 13:39:40 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.167 2011/07/12 07:51:34 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -165,7 +165,7 @@ int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/
  * set, no matter how it is interpreted.  Appendix N of the Sparc V8 document
  * seems to imply that we should do this, and it does make sense.
  */
-const struct fpstate64 initfpstate __aligned(BLOCK_SIZE) = {
+const struct fpstate64 initfpstate __aligned(SPARC64_BLOCK_SIZE) = {
 	.fs_regs =
 	{ ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
