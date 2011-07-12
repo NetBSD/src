@@ -1,4 +1,4 @@
-/* $NetBSD: t_strlen.c,v 1.3 2011/07/07 09:31:27 jruoho Exp $ */
+/* $NetBSD: t_strlen.c,v 1.4 2011/07/12 12:08:07 njoly Exp $ */
 
 /*
  * Written by J.T. Conklin <jtc@acorntoolworks.com>
@@ -159,7 +159,7 @@ ATF_TC_BODY(strlen_huge, tc)
 			continue;
 
 		(void)memset(str, 'x', i * page);
-		str[i * page + 1] = '\0';
+		str[i * page] = '\0';
 
 		ATF_REQUIRE(strlen(str) == i * page);
 		free(str);
