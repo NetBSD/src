@@ -719,7 +719,8 @@ __LA_DECL const char	*archive_format_name(struct archive *);
 __LA_DECL int		 archive_format(struct archive *);
 __LA_DECL void		 archive_clear_error(struct archive *);
 __LA_DECL void		 archive_set_error(struct archive *, int _err,
-			    const char *fmt, ...);
+			    const char *fmt, ...)
+			 __attribute__((__format__(__printf__,3,4)));
 __LA_DECL void		 archive_copy_error(struct archive *dest,
 			    struct archive *src);
 __LA_DECL int		 archive_file_count(struct archive *);
