@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.191 2011/07/12 02:22:13 dholland Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.192 2011/07/12 16:59:49 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.191 2011/07/12 02:22:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.192 2011/07/12 16:59:49 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -135,22 +135,28 @@ ufs_create(void *v)
 		struct vattr		*a_vap;
 	} */ *ap = v;
 	int	error;
+	struct vnode *dvp = ap->a_dvp;
+	struct ufs_lookup_results *ulr;
+
+	/* XXX should handle this material another way */
+	ulr = &VTOI(dvp)->i_crap;
+	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
 	/*
 	 * UFS_WAPBL_BEGIN1(dvp->v_mount, dvp) performed by successful
 	 * ufs_makeinode
 	 */
-	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
+	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	error =
 	    ufs_makeinode(MAKEIMODE(ap->a_vap->va_type, ap->a_vap->va_mode),
-			  ap->a_dvp, ap->a_vpp, ap->a_cnp);
+			  dvp, ulr, ap->a_vpp, ap->a_cnp);
 	if (error) {
-		fstrans_done(ap->a_dvp->v_mount);
+		fstrans_done(dvp->v_mount);
 		return (error);
 	}
-	UFS_WAPBL_END1(ap->a_dvp->v_mount, ap->a_dvp);
-	fstrans_done(ap->a_dvp->v_mount);
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
+	UFS_WAPBL_END1(dvp->v_mount, dvp);
+	fstrans_done(dvp->v_mount);
+	VN_KNOTE(dvp, NOTE_WRITE);
 	return (0);
 }
 
@@ -173,9 +179,14 @@ ufs_mknod(void *v)
 	int		error;
 	struct mount	*mp;
 	ino_t		ino;
+	struct ufs_lookup_results *ulr;
 
 	vap = ap->a_vap;
 	vpp = ap->a_vpp;
+
+	/* XXX should handle this material another way */
+	ulr = &VTOI(ap->a_dvp)->i_crap;
+	UFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
 
 	/*
 	 * UFS_WAPBL_BEGIN1(dvp->v_mount, dvp) performed by successful
@@ -184,7 +195,7 @@ ufs_mknod(void *v)
 	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
 	if ((error =
 	    ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
-	    ap->a_dvp, vpp, ap->a_cnp)) != 0)
+	    ap->a_dvp, ulr, vpp, ap->a_cnp)) != 0)
 		goto out;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
@@ -759,10 +770,16 @@ ufs_remove(void *v)
 	struct vnode	*vp, *dvp;
 	struct inode	*ip;
 	int		error;
+	struct ufs_lookup_results *ulr;
 
 	vp = ap->a_vp;
 	dvp = ap->a_dvp;
 	ip = VTOI(vp);
+
+	/* XXX should handle this material another way */
+	ulr = &VTOI(dvp)->i_crap;
+	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
+
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	if (vp->v_type == VDIR || (ip->i_flags & (IMMUTABLE | APPEND)) ||
 	    (VTOI(dvp)->i_flags & APPEND))
@@ -770,7 +787,8 @@ ufs_remove(void *v)
 	else {
 		error = UFS_WAPBL_BEGIN(dvp->v_mount);
 		if (error == 0) {
-			error = ufs_dirremove(dvp, ip, ap->a_cnp->cn_flags, 0);
+			error = ufs_dirremove(dvp, ulr,
+					      ip, ap->a_cnp->cn_flags, 0);
 			UFS_WAPBL_END(dvp->v_mount);
 		}
 	}
@@ -802,10 +820,15 @@ ufs_link(void *v)
 	struct inode *ip;
 	struct direct *newdir;
 	int error;
+	struct ufs_lookup_results *ulr;
 
 	KASSERT(dvp != vp);
 	KASSERT(vp->v_type != VDIR);
 	KASSERT(dvp->v_mount == vp->v_mount);
+
+	/* XXX should handle this material another way */
+	ulr = &VTOI(dvp)->i_crap;
+	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	error = vn_lock(vp, LK_EXCLUSIVE);
@@ -836,7 +859,7 @@ ufs_link(void *v)
 	if (!error) {
 		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 		ufs_makedirentry(ip, cnp, newdir);
-		error = ufs_direnter(dvp, vp, newdir, cnp, NULL);
+		error = ufs_direnter(dvp, ulr, vp, newdir, cnp, NULL);
 		pool_cache_put(ufs_direct_cache, newdir);
 	}
 	if (error) {
@@ -872,6 +895,11 @@ ufs_whiteout(void *v)
 	struct direct		*newdir;
 	int			error;
 	struct ufsmount		*ump = VFSTOUFS(dvp->v_mount);
+	struct ufs_lookup_results *ulr;
+
+	/* XXX should handle this material another way */
+	ulr = &VTOI(dvp)->i_crap;
+	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
 	error = 0;
 	switch (ap->a_flags) {
@@ -896,7 +924,7 @@ ufs_whiteout(void *v)
 		    (size_t)cnp->cn_namelen);
 		newdir->d_name[cnp->cn_namelen] = '\0';
 		newdir->d_type = DT_WHT;
-		error = ufs_direnter(dvp, NULL, newdir, cnp, NULL);
+		error = ufs_direnter(dvp, ulr, NULL, newdir, cnp, NULL);
 		pool_cache_put(ufs_direct_cache, newdir);
 		break;
 
@@ -909,7 +937,7 @@ ufs_whiteout(void *v)
 #endif
 
 		cnp->cn_flags &= ~DOWHITEOUT;
-		error = ufs_dirremove(dvp, NULL, cnp->cn_flags, 0);
+		error = ufs_dirremove(dvp, ulr, NULL, cnp->cn_flags, 0);
 		break;
 	default:
 		panic("ufs_whiteout: unknown op");
@@ -1154,7 +1182,8 @@ ufs_rename(void *v)
 		}
 		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 		ufs_makedirentry(ip, tcnp, newdir);
-		error = ufs_direnter(tdvp, NULL, newdir, tcnp, NULL);
+		error = ufs_direnter(tdvp, &VTOI(tdvp)->i_crap,
+				     NULL, newdir, tcnp, NULL);
 		pool_cache_put(ufs_direct_cache, newdir);
 		if (error != 0) {
 			if (doingdirectory && newparent) {
@@ -1210,7 +1239,8 @@ ufs_rename(void *v)
 			error = EISDIR;
 			goto bad;
 		}
-		if ((error = ufs_dirrewrite(dp, xp, ip->i_number,
+		if ((error = ufs_dirrewrite(dp, dp->i_crap.ulr_offset,
+		    xp, ip->i_number,
 		    IFTODT(ip->i_mode), doingdirectory && newparent ?
 		    newparent : doingdirectory, IN_CHANGE | IN_UPDATE)) != 0)
 			goto bad;
@@ -1286,12 +1316,16 @@ ufs_rename(void *v)
 		 */
 		if (doingdirectory && newparent) {
 			KASSERT(dp != NULL);
-			/* XXX gross; should be an argument */
+
+			/* match old behavior; probably dead assignment XXX */
 			xp->i_crap.ulr_offset = mastertemplate.dot_reclen;
-			ufs_dirrewrite(xp, dp, newparent, DT_DIR, 0, IN_CHANGE);
+
+			ufs_dirrewrite(xp, mastertemplate.dot_reclen,
+			    dp, newparent, DT_DIR, 0, IN_CHANGE);
 			cache_purge(fdvp);
 		}
-		error = ufs_dirremove(fdvp, xp, fcnp->cn_flags, 0);
+		error = ufs_dirremove(fdvp, &VTOI(fdvp)->i_crap,
+				      xp, fcnp->cn_flags, 0);
 		xp->i_flag &= ~IN_RENAME;
 	}
 	VN_KNOTE(fvp, NOTE_RENAME);
@@ -1345,8 +1379,13 @@ ufs_mkdir(void *v)
 	int			error, dmode;
 	struct ufsmount		*ump = dp->i_ump;
 	int			dirblksiz = ump->um_dirblksiz;
+	struct ufs_lookup_results *ulr;
 
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
+
+	/* XXX should handle this material another way */
+	ulr = &dp->i_crap;
+	UFS_CHECK_CRAPCOUNTER(dp);
 
 	if ((nlink_t)dp->i_nlink >= LINK_MAX) {
 		error = EMLINK;
@@ -1447,7 +1486,7 @@ ufs_mkdir(void *v)
 	}
 	newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 	ufs_makedirentry(ip, cnp, newdir);
-	error = ufs_direnter(dvp, tvp, newdir, cnp, bp);
+	error = ufs_direnter(dvp, ulr, tvp, newdir, cnp, bp);
 	pool_cache_put(ufs_direct_cache, newdir);
  bad:
 	if (error == 0) {
@@ -1489,12 +1528,18 @@ ufs_rmdir(void *v)
 	struct componentname	*cnp;
 	struct inode		*ip, *dp;
 	int			error;
+	struct ufs_lookup_results *ulr;
 
 	vp = ap->a_vp;
 	dvp = ap->a_dvp;
 	cnp = ap->a_cnp;
 	ip = VTOI(vp);
 	dp = VTOI(dvp);
+
+	/* XXX should handle this material another way */
+	ulr = &dp->i_crap;
+	UFS_CHECK_CRAPCOUNTER(dp);
+
 	/*
 	 * No rmdir "." or of mounted directories please.
 	 */
@@ -1538,7 +1583,7 @@ ufs_rmdir(void *v)
 	 * inode.  If we crash in between, the directory
 	 * will be reattached to lost+found,
 	 */
-	error = ufs_dirremove(dvp, ip, cnp->cn_flags, 1);
+	error = ufs_dirremove(dvp, ulr, ip, cnp->cn_flags, 1);
 	if (error) {
 		UFS_WAPBL_END(dvp->v_mount);
 		goto out;
@@ -1592,14 +1637,20 @@ ufs_symlink(void *v)
 	struct vnode	*vp, **vpp;
 	struct inode	*ip;
 	int		len, error;
+	struct ufs_lookup_results *ulr;
 
 	vpp = ap->a_vpp;
+
+	/* XXX should handle this material another way */
+	ulr = &VTOI(ap->a_dvp)->i_crap;
+	UFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
+
 	/*
 	 * UFS_WAPBL_BEGIN1(dvp->v_mount, dvp) performed by successful
 	 * ufs_makeinode
 	 */
 	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
-	error = ufs_makeinode(IFLNK | ap->a_vap->va_mode, ap->a_dvp,
+	error = ufs_makeinode(IFLNK | ap->a_vap->va_mode, ap->a_dvp, ulr,
 			      vpp, ap->a_cnp);
 	if (error)
 		goto out;
@@ -2144,8 +2195,8 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
  * Allocate a new inode.
  */
 int
-ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
-	struct componentname *cnp)
+ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
+	struct vnode **vpp, struct componentname *cnp)
 {
 	struct inode	*ip, *pdir;
 	struct direct	*newdir;
@@ -2214,7 +2265,7 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		goto bad;
 	newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 	ufs_makedirentry(ip, cnp, newdir);
-	error = ufs_direnter(dvp, tvp, newdir, cnp, NULL);
+	error = ufs_direnter(dvp, ulr, tvp, newdir, cnp, NULL);
 	pool_cache_put(ufs_direct_cache, newdir);
 	if (error)
 		goto bad;
