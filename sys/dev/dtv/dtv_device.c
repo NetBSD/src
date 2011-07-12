@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_device.c,v 1.3 2011/07/09 19:24:10 jmcneill Exp $ */
+/* $NetBSD: dtv_device.c,v 1.4 2011/07/12 00:57:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.3 2011/07/09 19:24:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.4 2011/07/12 00:57:19 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -57,8 +57,13 @@ const struct cdevsw dtv_cdevsw = {
 	.d_open = dtvopen,
 	.d_close = dtvclose,
 	.d_read = dtvread,
+	.d_write = nowrite,
 	.d_ioctl = dtvioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
 	.d_poll = dtvpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
 	.d_flag = D_OTHER|D_MPSAFE,
 };
 
@@ -99,7 +104,8 @@ dtv_attach(device_t parent, device_t self, void *aa)
 	ds->ds_buf = NULL;
 	SIMPLEQ_INIT(&ds->ds_ingress);
 	SIMPLEQ_INIT(&ds->ds_egress);
-	mutex_init(&ds->ds_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&ds->ds_egress_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&ds->ds_ingress_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&ds->ds_sample_cv, "dtv");
 	selinit(&ds->ds_sel);
 	dtv_scatter_buf_init(&ds->ds_data);
@@ -112,7 +118,7 @@ dtv_attach(device_t parent, device_t self, void *aa)
 	dtv_device_get_devinfo(sc, &info);
 
 	aprint_naive("\n");
-	aprint_normal(": '%s'", info.name);
+	aprint_normal(": %s", info.name);
 	switch (info.type) {
 	case FE_QPSK:
 		aprint_normal(" [QPSK]");
@@ -137,7 +143,8 @@ dtv_detach(device_t self, int flags)
 	struct dtv_stream *ds = &sc->sc_stream;
 
 	cv_destroy(&ds->ds_sample_cv);
-	mutex_destroy(&ds->ds_lock);
+	mutex_destroy(&ds->ds_ingress_lock);
+	mutex_destroy(&ds->ds_egress_lock);
 	seldestroy(&ds->ds_sel);
 	dtv_buffer_realloc(sc, 0);
 	dtv_scatter_buf_destroy(&ds->ds_data);
@@ -274,9 +281,6 @@ dtvpoll(dev_t dev, int events, lwp_t *l)
 	} else if (ISDTVDVR(dev)) {
 		return dtv_buffer_poll(sc, events, l);
 	}
-
-	printf("%s: DTVDEV = 0x%x, events = 0x%x\n",
-	    __func__, DTVDEV(dev), events);
 
 	return POLLERR;
 }
