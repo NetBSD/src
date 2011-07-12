@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.65 2011/07/12 02:22:13 dholland Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.66 2011/07/12 16:59:48 dholland Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.65 2011/07/12 02:22:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.66 2011/07/12 16:59:48 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -747,7 +747,9 @@ ext2fs_dirbadentry(struct vnode *dp, struct ext2fs_direct *de,
  * entry is to be obtained.
  */
 int
-ext2fs_direnter(struct inode *ip, struct vnode *dvp, struct componentname *cnp)
+ext2fs_direnter(struct inode *ip, struct vnode *dvp,
+		const struct ufs_lookup_results *ulr,
+		struct componentname *cnp)
 {
 	struct ext2fs_direct *ep, *nep;
 	struct inode *dp;
@@ -760,12 +762,8 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp, struct componentname *cnp)
 	char *dirbuf;
 	struct ufsmount *ump = VFSTOUFS(dvp->v_mount);
 	int dirblksiz = ump->um_dirblksiz;
-	struct ufs_lookup_results *ulr;
 
 	dp = VTOI(dvp);
-
-	ulr = &dp->i_crap;
-	UFS_CHECK_CRAPCOUNTER(dp);
 
 	newdir.e2d_ino = h2fs32(ip->i_number);
 	newdir.e2d_namlen = cnp->cn_namelen;
@@ -893,19 +891,15 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp, struct componentname *cnp)
  * to the size of the previous entry.
  */
 int
-ext2fs_dirremove(struct vnode *dvp, struct componentname *cnp)
+ext2fs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
+		 struct componentname *cnp)
 {
 	struct inode *dp;
 	struct ext2fs_direct *ep;
 	struct buf *bp;
 	int error;
-	struct ufs_lookup_results *ulr;
 
 	dp = VTOI(dvp);
-
-	/* XXX should handle this material another way */
-	ulr = &dp->i_crap;
-	UFS_CHECK_CRAPCOUNTER(dp);
 
 	if (ulr->ulr_count == 0) {
 		/*
@@ -939,18 +933,13 @@ ext2fs_dirremove(struct vnode *dvp, struct componentname *cnp)
  * set up by a call to namei.
  */
 int
-ext2fs_dirrewrite(struct inode *dp, struct inode *ip,
-    struct componentname *cnp)
+ext2fs_dirrewrite(struct inode *dp, const struct ufs_lookup_results *ulr,
+    struct inode *ip, struct componentname *cnp)
 {
 	struct buf *bp;
 	struct ext2fs_direct *ep;
 	struct vnode *vdp = ITOV(dp);
 	int error;
-	struct ufs_lookup_results *ulr;
-
-	/* XXX should handle this material another way */
-	ulr = &dp->i_crap;
-	UFS_CHECK_CRAPCOUNTER(dp);
 
 	error = ext2fs_blkatoff(vdp, (off_t)ulr->ulr_offset, (void *)&ep, &bp);
 	if (error != 0)

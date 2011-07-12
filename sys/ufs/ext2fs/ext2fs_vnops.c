@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.99 2011/04/26 11:32:40 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.100 2011/07/12 16:59:48 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.99 2011/04/26 11:32:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.100 2011/07/12 16:59:48 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -526,7 +526,12 @@ ext2fs_remove(void *v)
 	struct inode *ip;
 	struct vnode *vp = ap->a_vp;
 	struct vnode *dvp = ap->a_dvp;
+	struct ufs_lookup_results *ulr;
 	int error;
+
+	/* XXX should handle this material another way */
+	ulr = &VTOI(dvp)->i_crap;
+	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
 	ip = VTOI(vp);
 	if (vp->v_type == VDIR ||
@@ -534,7 +539,7 @@ ext2fs_remove(void *v)
 		(VTOI(dvp)->i_e2fs_flags & EXT2_APPEND)) {
 		error = EPERM;
 	} else {
-		error = ext2fs_dirremove(dvp, ap->a_cnp);
+		error = ext2fs_dirremove(dvp, ulr, ap->a_cnp);
 		if (error == 0) {
 			ip->i_e2fs_nlink--;
 			ip->i_flag |= IN_CHANGE;
@@ -567,10 +572,15 @@ ext2fs_link(void *v)
 	struct componentname *cnp = ap->a_cnp;
 	struct inode *ip;
 	int error;
+	struct ufs_lookup_results *ulr;
 
 	KASSERT(dvp != vp);
 	KASSERT(vp->v_type != VDIR);
 	KASSERT(dvp->v_mount == vp->v_mount);
+
+	/* XXX should handle this material another way */
+	ulr = &VTOI(dvp)->i_crap;
+	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
 	error = vn_lock(vp, LK_EXCLUSIVE);
 	if (error) {
@@ -592,7 +602,7 @@ ext2fs_link(void *v)
 	ip->i_flag |= IN_CHANGE;
 	error = ext2fs_update(vp, NULL, NULL, UPDATE_WAIT);
 	if (!error)
-		error = ext2fs_direnter(ip, dvp, cnp);
+		error = ext2fs_direnter(ip, dvp, ulr, cnp);
 	if (error) {
 		ip->i_e2fs_nlink--;
 		ip->i_flag |= IN_CHANGE;
@@ -829,7 +839,7 @@ abortit:
 			    UPDATE_WAIT)) != 0)
 				goto bad;
 		}
-		error = ext2fs_direnter(ip, tdvp, tcnp);
+		error = ext2fs_direnter(ip, tdvp, &VTOI(tdvp)->i_crap, tcnp);
 		if (error != 0) {
 			if (doingdirectory && newparent) {
 				dp->i_e2fs_nlink--;
@@ -883,7 +893,7 @@ abortit:
 			error = EISDIR;
 			goto bad;
 		}
-		error = ext2fs_dirrewrite(dp, ip, tcnp);
+		error = ext2fs_dirrewrite(dp, &dp->i_crap, ip, tcnp);
 		if (error != 0)
 			goto bad;
 		/*
@@ -992,7 +1002,7 @@ abortit:
 				}
 			}
 		}
-		error = ext2fs_dirremove(fdvp, fcnp);
+		error = ext2fs_dirremove(fdvp, &VTOI(fdvp)->i_crap, fcnp);
 		if (!error) {
 			xp->i_e2fs_nlink--;
 			xp->i_flag |= IN_CHANGE;
@@ -1043,6 +1053,11 @@ ext2fs_mkdir(void *v)
 	struct vnode		*tvp;
 	struct ext2fs_dirtemplate dirtemplate;
 	int			error, dmode;
+	struct ufs_lookup_results *ulr;
+
+	/* XXX should handle this material another way */
+	ulr = &VTOI(dvp)->i_crap;
+	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
 	if ((nlink_t)dp->i_e2fs_nlink >= LINK_MAX) {
 		error = EMLINK;
@@ -1125,7 +1140,7 @@ ext2fs_mkdir(void *v)
 	}
 
 	/* Directory set up, now install it's entry in the parent directory. */
-	error = ext2fs_direnter(ip, dvp, cnp);
+	error = ext2fs_direnter(ip, dvp, ulr, cnp);
 	if (error != 0) {
 		dp->i_e2fs_nlink--;
 		dp->i_flag |= IN_CHANGE;
@@ -1164,9 +1179,15 @@ ext2fs_rmdir(void *v)
 	struct componentname *cnp = ap->a_cnp;
 	struct inode *ip, *dp;
 	int error;
+	struct ufs_lookup_results *ulr;
 
 	ip = VTOI(vp);
 	dp = VTOI(dvp);
+
+	/* XXX should handle this material another way */
+	ulr = &dp->i_crap;
+	UFS_CHECK_CRAPCOUNTER(dp);
+
 	/*
 	 * No rmdir "." please.
 	 */
@@ -1198,7 +1219,7 @@ ext2fs_rmdir(void *v)
 	 * inode.  If we crash in between, the directory
 	 * will be reattached to lost+found,
 	 */
-	error = ext2fs_dirremove(dvp, cnp);
+	error = ext2fs_dirremove(dvp, ulr, cnp);
 	if (error != 0)
 		goto out;
 	dp->i_e2fs_nlink--;
@@ -1401,8 +1422,14 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	struct inode *ip, *pdir;
 	struct vnode *tvp;
 	int error, ismember = 0;
+	struct ufs_lookup_results *ulr;
 
 	pdir = VTOI(dvp);
+
+	/* XXX should handle this material another way */
+	ulr = &pdir->i_crap;
+	UFS_CHECK_CRAPCOUNTER(pdir);
+
 	*vpp = NULL;
 	if ((mode & IFMT) == 0)
 		mode |= IFREG;
@@ -1437,7 +1464,7 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	 */
 	if ((error = ext2fs_update(tvp, NULL, NULL, UPDATE_WAIT)) != 0)
 		goto bad;
-	error = ext2fs_direnter(ip, dvp, cnp);
+	error = ext2fs_direnter(ip, dvp, ulr, cnp);
 	if (error != 0)
 		goto bad;
 	vput(dvp);

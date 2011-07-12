@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.108 2011/07/12 02:22:13 dholland Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.109 2011/07/12 16:59:49 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.108 2011/07/12 02:22:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.109 2011/07/12 16:59:49 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -749,7 +749,8 @@ ufs_makedirentry(struct inode *ip, struct componentname *cnp,
  * soft dependency code).
  */
 int
-ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
+ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
+    struct vnode *tvp, struct direct *dirp,
     struct componentname *cnp, struct buf *newdirbp)
 {
 	kauth_cred_t cr;
@@ -765,7 +766,6 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	struct ufsmount *ump = VFSTOUFS(dvp->v_mount);
 	const int needswap = UFS_MPNEEDSWAP(ump);
 	int dirblksiz = ump->um_dirblksiz;
-	struct ufs_lookup_results *ulr;
 
 	UFS_WAPBL_JLOCK_ASSERT(dvp->v_mount);
 
@@ -776,9 +776,12 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	dp = VTOI(dvp);
 	newentrysize = DIRSIZ(0, dirp, 0);
 
+#if 0
+	struct ufs_lookup_results *ulr;
 	/* XXX should handle this material another way */
 	ulr = &dp->i_crap;
 	UFS_CHECK_CRAPCOUNTER(dp);
+#endif
 
 	if (ulr->ulr_count == 0) {
 		/*
@@ -985,7 +988,8 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
  * to the size of the previous entry.
  */
 int
-ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
+ufs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
+	      struct inode *ip, int flags, int isrmdir)
 {
 	struct inode *dp = VTOI(dvp);
 	struct direct *ep;
@@ -994,11 +998,6 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 #ifdef FFS_EI
 	const int needswap = UFS_MPNEEDSWAP(dp->i_ump);
 #endif
-	struct ufs_lookup_results *ulr;
-
-	/* XXX should handle this material another way */
-	ulr = &dp->i_crap;
-	UFS_CHECK_CRAPCOUNTER(dp);
 
 	UFS_WAPBL_JLOCK_ASSERT(dvp->v_mount);
 
@@ -1080,20 +1079,16 @@ out:
  * set up by a call to namei.
  */
 int
-ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
+ufs_dirrewrite(struct inode *dp, off_t offset,
+    struct inode *oip, ino_t newinum, int newtype,
     int isrmdir, int iflags)
 {
 	struct buf *bp;
 	struct direct *ep;
 	struct vnode *vdp = ITOV(dp);
 	int error;
-	struct ufs_lookup_results *ulr;
 
-	/* XXX should handle this material another way */
-	ulr = &dp->i_crap;
-	UFS_CHECK_CRAPCOUNTER(dp);
-
-	error = ufs_blkatoff(vdp, (off_t)ulr->ulr_offset, (void *)&ep, &bp, true);
+	error = ufs_blkatoff(vdp, offset, (void *)&ep, &bp, true);
 	if (error)
 		return (error);
 	ep->d_ino = ufs_rw32(newinum, UFS_MPNEEDSWAP(dp->i_ump));
