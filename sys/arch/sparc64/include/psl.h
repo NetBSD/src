@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.48 2011/05/25 12:01:30 mrg Exp $ */
+/*	$NetBSD: psl.h,v 1.49 2011/07/12 07:51:34 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -265,8 +265,8 @@
 #define CWP		0x01f
 
 /* 64-byte alignment -- this seems the best place to put this. */
-#define BLOCK_SIZE	64
-#define BLOCK_ALIGN	0x3f
+#define SPARC64_BLOCK_SIZE	64
+#define SPARC64_BLOCK_ALIGN	0x3f
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 

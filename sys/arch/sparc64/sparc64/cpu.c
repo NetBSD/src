@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.99 2011/06/18 18:51:18 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.100 2011/07/12 07:51:34 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.99 2011/06/18 18:51:18 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.100 2011/07/12 07:51:34 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -269,8 +269,8 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	 */
 	if (ci->ci_flags & CPUF_PRIMARY) {
 		fpstate_cache = pool_cache_init(sizeof(struct fpstate64),
-					BLOCK_SIZE, 0, 0, "fpstate", NULL,
-					IPL_NONE, NULL, NULL, NULL);
+					SPARC64_BLOCK_SIZE, 0, 0, "fpstate",
+					NULL, IPL_NONE, NULL, NULL, NULL);
 		cpu_reset_fpustate();
 	}
 #ifdef MULTIPROCESSOR
