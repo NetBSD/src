@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.334 2011/06/18 18:51:18 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.335 2011/07/12 07:51:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -89,6 +89,9 @@
 #include <machine/asm.h>
 #include <machine/locore.h>
 #include <sys/syscall.h>
+
+#define BLOCK_SIZE SPARC64_BLOCK_SIZE
+#define BLOCK_ALIGN SPARC64_BLOCK_ALIGN
 
 #include "ksyms.h"
 

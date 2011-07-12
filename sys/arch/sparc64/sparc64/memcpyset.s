@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpyset.s,v 1.2 2010/03/07 00:42:58 mrg Exp $	*/
+/*	$NetBSD: memcpyset.s,v 1.3 2011/07/12 07:51:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -36,6 +36,9 @@
 #include <machine/locore.h>
 
 #ifdef USE_BLOCK_STORE_LOAD
+
+#define BLOCK_SIZE SPARC64_BLOCK_SIZE
+#define BLOCK_ALIGN SPARC64_BLOCK_ALIGN
 
 /*
  * The following routines allow fpu use in the kernel.
