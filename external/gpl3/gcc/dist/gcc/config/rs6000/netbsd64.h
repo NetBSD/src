@@ -57,6 +57,8 @@ extern int dot_symbols;
 #define DOT_SYMBOLS dot_symbols
 #endif
 
+#define TARGET_PROFILE_KERNEL profile_kernel
+
 #undef  PROCESSOR_DEFAULT
 #define PROCESSOR_DEFAULT PROCESSOR_POWER4
 #undef  PROCESSOR_DEFAULT64
@@ -73,10 +75,6 @@ extern int dot_symbols;
 
 #define INVALID_64BIT "-m%s not supported in this configuration"
 #define INVALID_32BIT INVALID_64BIT
-
-#ifndef MASK_PROFILE_KERNEL	/* XXXHRH */
-#define MASK_PROFILE_KERNEL 0	/* XXXHRH */
-#endif				/* XXXHRH */
 
 #undef	SUBSUBTARGET_OVERRIDE_OPTIONS
 #define	SUBSUBTARGET_OVERRIDE_OPTIONS				\
@@ -102,9 +100,9 @@ extern int dot_symbols;
 	      target_flags &= ~MASK_EABI;			\
 	      error (INVALID_64BIT, "eabi");			\
 	    }							\
-	  if (target_flags & MASK_PROTOTYPE)			\
+	  if (TARGET_PROTOTYPE)					\
 	    {							\
-	      target_flags &= ~MASK_PROTOTYPE;			\
+	      target_prototype = 0;				\
 	      error (INVALID_64BIT, "prototype");		\
 	    }							\
 	  if ((target_flags & MASK_POWERPC64) == 0)		\
@@ -119,7 +117,7 @@ extern int dot_symbols;
 	    error (INVALID_32BIT, "32");			\
 	  if (TARGET_PROFILE_KERNEL)				\
 	    {							\
-	      target_flags &= ~MASK_PROFILE_KERNEL;		\
+	      TARGET_PROFILE_KERNEL = 0;			\
 	      error (INVALID_32BIT, "profile-kernel");		\
 	    }							\
 	}							\
@@ -218,9 +216,7 @@ extern int dot_symbols;
    ? 128								\
    : (TARGET_64BIT							\
       && TARGET_ALIGN_NATURAL == 0					\
-      && TYPE_MODE (TREE_CODE (TREE_TYPE (FIELD)) == ARRAY_TYPE		\
-		    ? get_inner_array_type (FIELD)			\
-		    : TREE_TYPE (FIELD)) == DFmode)			\
+      && TYPE_MODE (strip_array_types (TREE_TYPE (FIELD))) == DFmode)	\
    ? MIN ((COMPUTED), 32)						\
    : (COMPUTED))
 
@@ -265,14 +261,6 @@ extern int dot_symbols;
 #define BLOCK_REG_PADDING(MODE, TYPE, FIRST) \
   (!(FIRST) ? upward : FUNCTION_ARG_PADDING (MODE, TYPE))
 
-/* __throw will restore its own return address to be the same as the
-   return address of the function that the throw is being made to.
-   This is unfortunate, because we want to check the original
-   return address to see if we need to restore the TOC.
-   So we have to squirrel it away with this.  */
-#define SETUP_FRAME_ADDRESSES() \
-  do { if (TARGET_64BIT) rs6000_aix_emit_builtin_unwind_init (); } while (0)
-
 /* Override svr4.h  */
 #undef MD_EXEC_PREFIX
 #undef MD_STARTFILE_PREFIX
@@ -280,6 +268,13 @@ extern int dot_symbols;
 /* NetBSD doesn't support saving and restoring 64-bit regs in a 32-bit
    process.  XXXMRG?  */
 #define OS_MISSING_POWERPC64 !TARGET_64BIT
+
+/* NetBSD has float and long double forms of math functions.  */
+#undef  TARGET_C99_FUNCTIONS
+#define TARGET_C99_FUNCTIONS 1
+
+/* NetBSD doesn't have sincos that follows the GNU extension.  */
+#undef  TARGET_HAS_SINCOS
 
 #undef  TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS()			\
@@ -314,16 +309,8 @@ extern int dot_symbols;
 #define RS6000_CPU_CPP_ENDIAN_BUILTINS()	\
   do						\
     {						\
-      if (BYTES_BIG_ENDIAN)			\
-	{					\
-	  builtin_define ("__BIG_ENDIAN__");	\
-	  builtin_assert ("machine=bigendian");	\
-	}					\
-      else					\
-	{					\
-	  builtin_define ("__LITTLE_ENDIAN__");	\
-	  builtin_assert ("machine=littleendian"); \
-	}					\
+      builtin_define ("__BIG_ENDIAN__");	\
+      builtin_assert ("machine=bigendian");	\
     }						\
   while (0)
 
@@ -462,9 +449,8 @@ extern int dot_symbols;
    we also do this for floating-point constants.  We actually can only
    do this if the FP formats of the target and host machines are the
    same, but we can't check that since not every file that uses
-   GO_IF_LEGITIMATE_ADDRESS_P includes real.h.  We also do this when
-   we can write the entry into the TOC and the entry is not larger
-   than a TOC entry.  */
+   the macros includes real.h.  We also do this when we can write the
+   entry into the TOC and the entry is not larger than a TOC entry.  */
 
 #undef  ASM_OUTPUT_SPECIAL_POOL_ENTRY_P
 #define ASM_OUTPUT_SPECIAL_POOL_ENTRY_P(X, MODE)			\
@@ -477,14 +463,13 @@ extern int dot_symbols;
 	   && GET_MODE_BITSIZE (MODE) <= GET_MODE_BITSIZE (Pmode))	\
        || (GET_CODE (X) == CONST_DOUBLE					\
 	   && ((TARGET_64BIT						\
-		&& (TARGET_POWERPC64					\
-		    || TARGET_MINIMAL_TOC				\
-		    || (GET_MODE_CLASS (GET_MODE (X)) == MODE_FLOAT	\
+		&& (TARGET_MINIMAL_TOC					\
+		    || (SCALAR_FLOAT_MODE_P (GET_MODE (X))		\
 			&& ! TARGET_NO_FP_IN_TOC)))			\
 	       || (!TARGET_64BIT					\
 		   && !TARGET_NO_FP_IN_TOC				\
 		   && !TARGET_RELOCATABLE				\
-		   && GET_MODE_CLASS (GET_MODE (X)) == MODE_FLOAT	\
+		   && SCALAR_FLOAT_MODE_P (GET_MODE (X))		\
 		   && BITS_PER_WORD == HOST_BITS_PER_INT)))))
 
 /* This ABI cannot use DBX_LINES_FUNCTION_RELATIVE, nor can it use
@@ -571,4 +556,13 @@ while (0)
 #define LINK_GCC_C_SEQUENCE_SPEC \
   "%{static:--start-group} %G %L %{static:--end-group}%{!static:%G}"
 
+/* Use --as-needed -lgcc_s for eh support.  */
+#ifdef HAVE_LD_AS_NEEDED
+#define USE_LD_AS_NEEDED 1
+#endif
+
+/* NetBSD ppc64 has 128-bit long double support.  */
+#ifdef TARGET_DEFAULT_LONG_DOUBLE_128
+#define RS6000_DEFAULT_LONG_DOUBLE_SIZE 128
+#endif
 #define POWERPC_NETBSD
