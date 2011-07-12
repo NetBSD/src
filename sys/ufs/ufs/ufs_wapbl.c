@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.14 2011/07/12 02:22:14 dholland Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.15 2011/07/12 16:59:49 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.14 2011/07/12 02:22:14 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.15 2011/07/12 16:59:49 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,7 +424,8 @@ wapbl_ufs_rename(void *v)
 		}
 		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 		ufs_makedirentry(ip, tcnp, newdir);
-		error = ufs_direnter(tdvp, NULL, newdir, tcnp, NULL);
+		error = ufs_direnter(tdvp, &VTOI(tdvp)->i_crap,
+				     NULL, newdir, tcnp, NULL);
 		pool_cache_put(ufs_direct_cache, newdir);
 		if (error != 0) {
 			if (doingdirectory && newparent) {
@@ -479,7 +480,8 @@ wapbl_ufs_rename(void *v)
 			error = EISDIR;
 			goto bad;
 		}
-		if ((error = ufs_dirrewrite(tdp, txp, ip->i_number,
+		if ((error = ufs_dirrewrite(tdp, tdp->i_crap.ulr_offset,
+		    txp, ip->i_number,
 		    IFTODT(ip->i_mode), doingdirectory && newparent ?
 		    newparent : doingdirectory, IN_CHANGE | IN_UPDATE)) != 0)
 			goto bad;
@@ -635,12 +637,16 @@ wapbl_ufs_rename(void *v)
 		 */
 		if (doingdirectory && newparent) {
 			KASSERT(fdp != NULL);
-			/* XXX crap, should be argument */
+
+			/* match old behavior; probably dead assignment XXX */
 			fxp->i_crap.ulr_offset = mastertemplate.dot_reclen;
-			ufs_dirrewrite(fxp, fdp, newparent, DT_DIR, 0, IN_CHANGE);
+
+			ufs_dirrewrite(fxp, mastertemplate.dot_reclen,
+			    fdp, newparent, DT_DIR, 0, IN_CHANGE);
 			cache_purge(fdvp);
 		}
-		error = ufs_dirremove(fdvp, fxp, fcnp->cn_flags, 0);
+		error = ufs_dirremove(fdvp, &VTOI(fdvp)->i_crap,
+				      fxp, fcnp->cn_flags, 0);
 		fxp->i_flag &= ~IN_RENAME;
 	}
 	VN_KNOTE(fvp, NOTE_RENAME);
