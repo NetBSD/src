@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.34 2011/06/21 09:36:46 mrg Exp $ */
+/* $NetBSD: lfs.c,v 1.35 2011/07/12 02:46:03 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -362,7 +362,6 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	/* ip->i_vnode = vp; */
 	ip->i_number = ino;
 	ip->i_lockf = 0;
-	ip->i_diroff = 0;
 	ip->i_lfs_effnblks = 0;
 	ip->i_flag = 0;
 
