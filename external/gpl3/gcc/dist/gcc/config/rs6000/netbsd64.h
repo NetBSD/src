@@ -562,7 +562,6 @@ while (0)
 #endif
 
 /* NetBSD ppc64 has 128-bit long double support.  */
-#ifdef TARGET_DEFAULT_LONG_DOUBLE_128
+#undef	RS6000_DEFAULT_LONG_DOUBLE_SIZE
 #define RS6000_DEFAULT_LONG_DOUBLE_SIZE 128
-#endif
 #define POWERPC_NETBSD
