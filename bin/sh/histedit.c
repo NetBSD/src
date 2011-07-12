@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.43 2011/06/18 21:18:46 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.44 2011/07/12 16:40:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.43 2011/06/18 21:18:46 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.44 2011/07/12 16:40:41 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -290,6 +290,7 @@ histcmd(int argc, char **argv)
 		 * Catch interrupts to reset active counter and
 		 * cleanup temp files.
 		 */
+		savehandler = handler;
 		if (setjmp(jmploc.loc)) {
 			active = 0;
 			if (*editfile)
@@ -297,7 +298,6 @@ histcmd(int argc, char **argv)
 			handler = savehandler;
 			longjmp(handler->loc, 1);
 		}
-		savehandler = handler;
 		handler = &jmploc;
 		if (++active > MAXHISTLOOPS) {
 			active = 0;
