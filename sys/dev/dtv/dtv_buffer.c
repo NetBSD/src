@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_buffer.c,v 1.3 2011/07/09 21:08:40 jmcneill Exp $ */
+/* $NetBSD: dtv_buffer.c,v 1.4 2011/07/12 00:57:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_buffer.c,v 1.3 2011/07/09 21:08:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_buffer.c,v 1.4 2011/07/12 00:57:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -46,7 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: dtv_buffer.c,v 1.3 2011/07/09 21:08:40 jmcneill Exp 
 
 #include <dev/dtv/dtvvar.h>
 
-#define	PAGE_ALIGN(a)	(((a) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
+#define	BLOCK_SIZE	DTV_DEFAULT_BLOCKSIZE
+#define	BLOCK_ALIGN(a)	(((a) + BLOCK_SIZE - 1) & ~(BLOCK_SIZE - 1))
 
 static void
 dtv_buffer_write(struct dtv_softc *sc, const uint8_t *buf, size_t buflen)
@@ -60,16 +61,18 @@ dtv_buffer_write(struct dtv_softc *sc, const uint8_t *buf, size_t buflen)
 	KASSERT(buflen == TS_PKTLEN);
 
 	while (resid > 0) {
-		mutex_enter(&ds->ds_lock);
+		mutex_enter(&ds->ds_ingress_lock);
 
 		if (SIMPLEQ_EMPTY(&ds->ds_ingress)) {
 			aprint_debug_dev(sc->sc_dev,
 			    "dropping sample (%zu)\n", resid);
-			mutex_exit(&ds->ds_lock);
+			mutex_exit(&ds->ds_ingress_lock);
 			return;
 		}
 
 		db = SIMPLEQ_FIRST(&ds->ds_ingress);
+		mutex_exit(&ds->ds_ingress_lock);
+
 		avail = min(db->db_length - db->db_bytesused, resid);
 		if (dtv_scatter_io_init(&ds->ds_data,
 		    db->db_offset + db->db_bytesused, avail, &sio)) {
@@ -80,13 +83,15 @@ dtv_buffer_write(struct dtv_softc *sc, const uint8_t *buf, size_t buflen)
 		}
 
 		if (db->db_bytesused == db->db_length) {
+			mutex_enter(&ds->ds_ingress_lock);
 			SIMPLEQ_REMOVE_HEAD(&ds->ds_ingress, db_entries);
+			mutex_exit(&ds->ds_ingress_lock);
+			mutex_enter(&ds->ds_egress_lock);
 			SIMPLEQ_INSERT_TAIL(&ds->ds_egress, db, db_entries);
-			cv_broadcast(&ds->ds_sample_cv);
 			selnotify(&ds->ds_sel, 0, 0);
+			cv_broadcast(&ds->ds_sample_cv);
+			mutex_exit(&ds->ds_egress_lock);
 		}
-
-		mutex_exit(&ds->ds_lock);
 	}
 }
 
@@ -129,7 +134,7 @@ dtv_buffer_realloc(struct dtv_softc *sc, size_t bufsize)
 	off_t offset;
 	int error;
 
-	nbufs = PAGE_ALIGN(bufsize) / PAGE_SIZE;
+	nbufs = BLOCK_ALIGN(bufsize) / BLOCK_SIZE;
 
 	error = dtv_scatter_buf_set_size(&ds->ds_data, bufsize);
 	if (error)
@@ -167,8 +172,8 @@ dtv_buffer_realloc(struct dtv_softc *sc, size_t bufsize)
 	for (i = 0; i < nbufs; i++) {
 		ds->ds_buf[i]->db_offset = offset;
 		ds->ds_buf[i]->db_bytesused = 0;
-		ds->ds_buf[i]->db_length = PAGE_SIZE;
-		offset += PAGE_SIZE;
+		ds->ds_buf[i]->db_length = BLOCK_SIZE;
+		offset += BLOCK_SIZE;
 	}
 
 	return 0;
@@ -201,10 +206,10 @@ dtv_buffer_setup(struct dtv_softc *sc)
 	struct dtv_stream *ds = &sc->sc_stream;
 	unsigned int i;
 
-	mutex_enter(&ds->ds_lock);
+	mutex_enter(&ds->ds_ingress_lock);
 	for (i = 0; i < ds->ds_nbufs; i++)
 		dtv_stream_enqueue(ds, ds->ds_buf[i]);
-	mutex_exit(&ds->ds_lock);
+	mutex_exit(&ds->ds_ingress_lock);
 
 	return 0;
 }
@@ -214,12 +219,14 @@ dtv_buffer_destroy(struct dtv_softc *sc)
 {
 	struct dtv_stream *ds = &sc->sc_stream;
 
-	mutex_enter(&ds->ds_lock);
+	mutex_enter(&ds->ds_ingress_lock);
 	while (SIMPLEQ_FIRST(&ds->ds_ingress))
 		SIMPLEQ_REMOVE_HEAD(&ds->ds_ingress, db_entries);
+	mutex_exit(&ds->ds_ingress_lock);
+	mutex_enter(&ds->ds_egress_lock);
 	while (SIMPLEQ_FIRST(&ds->ds_egress))
 		SIMPLEQ_REMOVE_HEAD(&ds->ds_egress, db_entries);
-	mutex_exit(&ds->ds_lock);
+	mutex_exit(&ds->ds_egress_lock);
 
 	return 0;
 }
@@ -235,31 +242,34 @@ dtv_buffer_read(struct dtv_softc *sc, struct uio *uio, int flags)
 	int error;
 
 	while (uio->uio_resid > 0) {
-		mutex_enter(&ds->ds_lock);
-
 retry:
+		mutex_enter(&ds->ds_egress_lock);
 		while (SIMPLEQ_EMPTY(&ds->ds_egress)) {
 			if (flags & IO_NDELAY) {
-				mutex_exit(&ds->ds_lock);
-				return bread ? 0 : EWOULDBLOCK;
+				mutex_exit(&ds->ds_egress_lock);
+				return EWOULDBLOCK;
 			}
 
-			error = cv_wait_sig(&ds->ds_sample_cv, &ds->ds_lock);
+			error = cv_wait_sig(&ds->ds_sample_cv,
+			    &ds->ds_egress_lock);
 			if (error) {
-				mutex_exit(&ds->ds_lock);
+				mutex_exit(&ds->ds_egress_lock);
 				return EINTR;
 			}
 		}
 		db = SIMPLEQ_FIRST(&ds->ds_egress);
+		mutex_exit(&ds->ds_egress_lock);
 
 		if (db->db_bytesused == 0) {
+			mutex_enter(&ds->ds_egress_lock);
 			db = dtv_stream_dequeue(ds);
+			mutex_exit(&ds->ds_egress_lock);
+			mutex_enter(&ds->ds_ingress_lock);
 			dtv_stream_enqueue(ds, db);
+			mutex_exit(&ds->ds_ingress_lock);
 			ds->ds_bytesread = 0;
 			goto retry;
 		}
-
-		mutex_exit(&ds->ds_lock);
 
 		len = min(uio->uio_resid, db->db_bytesused - ds->ds_bytesread);
 		offset = db->db_offset + ds->ds_bytesread;
@@ -273,10 +283,12 @@ retry:
 		}
 
 		if (ds->ds_bytesread >= db->db_bytesused) {
-			mutex_enter(&ds->ds_lock);
+			mutex_enter(&ds->ds_egress_lock);
 			db = dtv_stream_dequeue(ds);
+			mutex_exit(&ds->ds_egress_lock);
+			mutex_enter(&ds->ds_ingress_lock);
 			dtv_stream_enqueue(ds, db);
-			mutex_exit(&ds->ds_lock);
+			mutex_exit(&ds->ds_ingress_lock);
 
 			ds->ds_bytesread = 0;
 		}
@@ -290,14 +302,26 @@ dtv_buffer_poll(struct dtv_softc *sc, int events, lwp_t *l)
 {
 	struct dtv_stream *ds = &sc->sc_stream;
 	int revents = 0;
+#ifdef DTV_BUFFER_DEBUG
+	struct dtv_buffer *db;
+	size_t bufsize = 0;
+#endif
 
-	mutex_enter(&ds->ds_lock);
+	mutex_enter(&ds->ds_egress_lock);
 	if (!SIMPLEQ_EMPTY(&ds->ds_egress)) {
+#ifdef DTV_BUFFER_DEBUG
+		SIMPLEQ_FOREACH(db, &ds->ds_egress, db_entries)
+			bufsize += db->db_bytesused;
+#endif
 		revents |= (POLLIN | POLLOUT | POLLPRI);
 	} else {
 		selrecord(l, &ds->ds_sel);
 	}
-	mutex_exit(&ds->ds_lock);
+	mutex_exit(&ds->ds_egress_lock);
+
+#ifdef DTV_BUFFER_DEBUG
+	device_printf(sc->sc_dev, "%s: bufsize=%zu\n", __func__, bufsize);
+#endif
 
 	return revents;
 }
