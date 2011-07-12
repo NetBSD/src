@@ -1,4 +1,4 @@
-/* $NetBSD: dtvvar.h,v 1.2 2011/07/09 17:55:20 jmcneill Exp $ */
+/* $NetBSD: dtvvar.h,v 1.3 2011/07/12 00:57:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,8 @@
 #include <dev/dtv/dtvif.h>
 #include <dev/dtv/dtv_scatter.h>
 
-#define	DTV_DEFAULT_BUFSIZE	(128 * PAGE_SIZE)
+#define	DTV_DEFAULT_BLOCKSIZE	(32 * PAGE_SIZE)
+#define	DTV_DEFAULT_BUFSIZE	(32 * DTV_DEFAULT_BLOCKSIZE)
 
 #define	TS_PKTLEN		188
 #define	TS_HAS_SYNC(_tspkt)	((_tspkt)[0] == 0x47)
@@ -58,7 +59,7 @@ struct dtv_stream {
 	struct dtv_buffer	**ds_buf;
 	struct dtv_scatter_buf	ds_data;
 	struct dtv_sample_queue	ds_ingress, ds_egress;
-	kmutex_t		ds_lock;
+	kmutex_t		ds_ingress_lock, ds_egress_lock;
 	kcondvar_t		ds_sample_cv;
 	struct selinfo		ds_sel;
 	uint32_t		ds_bytesread;
