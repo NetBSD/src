@@ -1,4 +1,4 @@
-/*	$NetBSD: mp_subr.S,v 1.2 2010/05/29 21:59:34 martin Exp $	*/
+/*	$NetBSD: mp_subr.S,v 1.3 2011/07/12 07:51:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -84,6 +84,8 @@
 	.register	%g2,#scratch
 	.register	%g3,#scratch
 
+#define BLOCK_SIZE SPARC64_BLOCK_SIZE
+#define BLOCK_ALIGN SPARC64_BLOCK_ALIGN
 
 #if defined(MULTIPROCESSOR)
 /*
