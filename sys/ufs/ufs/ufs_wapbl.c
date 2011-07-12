@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.13 2011/05/23 22:02:26 rmind Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.14 2011/07/12 02:22:14 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.13 2011/05/23 22:02:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.14 2011/07/12 02:22:14 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,15 +160,10 @@ wapbl_ufs_rename(void *v)
 	struct direct		*newdir;
 	int			doingdirectory, oldparent, newparent, error;
 
-	int32_t	  saved_f_count;
-	doff_t	  saved_f_diroff;
-	doff_t	  saved_f_offset;
-	u_int32_t saved_f_reclen;
-	int32_t	  saved_t_count;
-	doff_t	  saved_t_endoff;
-	doff_t	  saved_t_diroff;
-	doff_t	  saved_t_offset;
-	u_int32_t saved_t_reclen;
+	struct ufs_lookup_results saved_f_crap;
+	struct ufs_lookup_results saved_t_crap;
+	unsigned saved_f_crapcounter;
+	unsigned saved_t_crapcounter;
 
 	tvp = ap->a_tvp;
 	tdvp = ap->a_tdvp;
@@ -319,11 +314,8 @@ wapbl_ufs_rename(void *v)
 	 */
 
 	/* save directory lookup information in case tdvp == fdvp */
-	saved_t_count  = tdp->i_count;
-	saved_t_endoff = tdp->i_endoff;
-	saved_t_diroff = tdp->i_diroff;
-	saved_t_offset = tdp->i_offset;
-	saved_t_reclen = tdp->i_reclen;
+	saved_t_crap = tdp->i_crap;
+	saved_t_crapcounter = tdp->i_crapcounter;
 
 	/*
 	 * This was moved up to before the journal lock to
@@ -372,17 +364,15 @@ wapbl_ufs_rename(void *v)
 	vrele(ap->a_fvp);
 
 	/* save directory lookup information in case tdvp == fdvp */
-	saved_f_count  = fdp->i_count;
-	saved_f_diroff = fdp->i_diroff;
-	saved_f_offset = fdp->i_offset;
-	saved_f_reclen = fdp->i_reclen;
+	saved_f_crap = fdp->i_crap;
+	saved_f_crapcounter = fdp->i_crapcounter;
+
+	/* before the introduction of _crap this didn't save endoff (XXX?) */
+	saved_f_crap.ulr_endoff = 0;
 
 	/* restore directory lookup information in case tdvp == fdvp */
-	tdp->i_offset = saved_t_offset;
-	tdp->i_reclen = saved_t_reclen;
-	tdp->i_count  = saved_t_count;
-	tdp->i_endoff = saved_t_endoff;
-	tdp->i_diroff = saved_t_diroff;
+	tdp->i_crap = saved_t_crap;
+	tdp->i_crapcounter = saved_t_crapcounter;
 
 	error = UFS_WAPBL_BEGIN(fdvp->v_mount);
 	if (error)
@@ -519,10 +509,10 @@ wapbl_ufs_rename(void *v)
 	}
 
 	/* restore directory lookup information in case tdvp == fdvp */
-	fdp->i_offset = saved_f_offset;
-	fdp->i_reclen = saved_f_reclen;
-	fdp->i_count  = saved_f_count;
-	fdp->i_diroff = saved_f_diroff;
+	/* before the introduction of _crap this didn't restore endoff (XXX?)*/
+	saved_f_crap.ulr_endoff = fdp->i_crap.ulr_endoff;
+	fdp->i_crap = saved_f_crap;
+	fdp->i_crapcounter = saved_f_crapcounter;
 
 	/*
 	 * Handle case where the directory we need to remove may have
@@ -530,11 +520,11 @@ wapbl_ufs_rename(void *v)
 	 * or when i_count may be wrong due to insertion before this entry.
 	 */
 	if ((tdp->i_number == fdp->i_number) &&
-		(((saved_f_offset >= saved_t_offset) &&
-			(saved_f_offset < saved_t_offset + saved_t_count)) ||
-		((saved_f_offset - saved_f_count >= saved_t_offset) &&
-			(saved_f_offset - saved_f_count <
-			 saved_t_offset + saved_t_count)))) {
+		(((saved_f_crap.ulr_offset >= saved_t_crap.ulr_offset) &&
+			(saved_f_crap.ulr_offset < saved_t_crap.ulr_offset + saved_t_crap.ulr_count)) ||
+		((saved_f_crap.ulr_offset - saved_f_crap.ulr_count >= saved_t_crap.ulr_offset) &&
+			(saved_f_crap.ulr_offset - saved_f_crap.ulr_count <
+			 saved_t_crap.ulr_offset + saved_t_crap.ulr_count)))) {
 		struct buf *bp;
 		struct direct *ep;
 		struct ufsmount *ump = fdp->i_ump;
@@ -551,28 +541,30 @@ wapbl_ufs_rename(void *v)
 		 * the fcnp entry will be somewhere between the start of
 		 * compaction and the original location.
 		 */
-		fdp->i_offset = saved_t_offset;
-		error = ufs_blkatoff(fdvp, (off_t)fdp->i_offset, &dirbuf, &bp,
+		/* XXX crap */
+		fdp->i_crap.ulr_offset = saved_t_crap.ulr_offset;
+		error = ufs_blkatoff(fdvp, (off_t)fdp->i_crap.ulr_offset, &dirbuf, &bp,
 		    false);
 		if (error)
 			goto bad;
 
 		/*
-		 * keep existing fdp->i_count in case
+		 * keep existing ulr_count in case
 		 * compaction started at the same location as the fcnp entry.
 		 */
-		endsearch = saved_f_offset + saved_f_reclen;
+		endsearch = saved_f_crap.ulr_offset + saved_f_crap.ulr_reclen;
 		entryoffsetinblock = 0;
-		while (fdp->i_offset < endsearch) {
+		/* XXX crap */
+		while (fdp->i_crap.ulr_offset < endsearch) {
 			int reclen;
 
 			/*
 			 * If necessary, get the next directory block.
 			 */
-			if ((fdp->i_offset & bmask) == 0) {
+			if ((fdp->i_crap.ulr_offset & bmask) == 0) {
 				if (bp != NULL)
 					brelse(bp, 0);
-				error = ufs_blkatoff(fdvp, (off_t)fdp->i_offset,
+				error = ufs_blkatoff(fdvp, (off_t)fdp->i_crap.ulr_offset,
 				    &dirbuf, &bp, false);
 				if (error)
 					goto bad;
@@ -598,23 +590,23 @@ wapbl_ufs_rename(void *v)
 			    (ufs_rw32(ep->d_ino, needswap) != WINO) &&
 			    (namlen == fcnp->cn_namelen) &&
 			    memcmp(ep->d_name, fcnp->cn_nameptr, namlen) == 0) {
-				fdp->i_reclen = reclen;
+				fdp->i_crap.ulr_reclen = reclen;
 				break;
 			}
-			fdp->i_offset += reclen;
-			fdp->i_count = reclen;
+			fdp->i_crap.ulr_offset += reclen;
+			fdp->i_crap.ulr_count = reclen;
 			entryoffsetinblock += reclen;
 		}
 
-		KASSERT(fdp->i_offset <= endsearch);
+		KASSERT(fdp->i_crap.ulr_offset <= endsearch);
 
 		/*
-		 * If fdp->i_offset points to start of a directory block,
-		 * set fdp->i_count so ufs_dirremove() doesn't compact over
+		 * If ulr_offset points to start of a directory block,
+		 * set ulr_count so ufs_dirremove() doesn't compact over
 		 * a directory block boundary.
 		 */
-		if ((fdp->i_offset & (dirblksiz - 1)) == 0)
-			fdp->i_count = 0;
+		if ((fdp->i_crap.ulr_offset & (dirblksiz - 1)) == 0)
+			fdp->i_crap.ulr_count = 0;
 
 		brelse(bp, 0);
 	}
@@ -643,7 +635,8 @@ wapbl_ufs_rename(void *v)
 		 */
 		if (doingdirectory && newparent) {
 			KASSERT(fdp != NULL);
-			fxp->i_offset = mastertemplate.dot_reclen;
+			/* XXX crap, should be argument */
+			fxp->i_crap.ulr_offset = mastertemplate.dot_reclen;
 			ufs_dirrewrite(fxp, fdp, newparent, DT_DIR, 0, IN_CHANGE);
 			cache_purge(fdvp);
 		}
