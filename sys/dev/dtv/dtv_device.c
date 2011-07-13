@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_device.c,v 1.5 2011/07/13 22:43:04 jmcneill Exp $ */
+/* $NetBSD: dtv_device.c,v 1.6 2011/07/13 22:51:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.5 2011/07/13 22:43:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.6 2011/07/13 22:51:10 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -154,6 +154,7 @@ dtv_detach(device_t self, int flags)
 	dtv_scatter_buf_destroy(&ds->ds_data);
 
 	mutex_destroy(&sc->sc_demux_lock);
+	mutex_destroy(&sc->sc_lock);
 
 	return 0;
 }
