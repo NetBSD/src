@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.36 2011/06/12 03:35:54 rmind Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.37 2011/07/13 19:51:29 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.36 2011/06/12 03:35:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.37 2011/07/13 19:51:29 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -207,8 +207,9 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_dev_bshift = BFS_BSHIFT;
 	mp->mnt_fs_bshift = BFS_BSHIFT;
 
-	DPRINTF("fstype=%d dtype=%d bsize=%d\n", dpart.part->p_fstype,
-	    dpart.disklab->d_type, dpart.disklab->d_secsize);
+	DPRINTF("%s: fstype=%d dtype=%d bsize=%d\n", __func__,
+	    dpart.part->p_fstype, dpart.disklab->d_type,
+	    dpart.disklab->d_secsize);
 
  out:
 	if (devopen && error)
@@ -341,7 +342,7 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	DPRINTF("%s: i-node=%lld\n", __func__, (long long)ino);
 	/* Lookup requested i-node */
 	if (!bfs_inode_lookup(bfs, ino, &inode)) {
-		DPRINTF("bfs_inode_lookup failed.\n");
+		DPRINTF("%s: bfs_inode_lookup failed.\n", __func__);
 		return ENOENT;
 	}
 
