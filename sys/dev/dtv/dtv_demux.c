@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_demux.c,v 1.1 2011/07/13 22:43:04 jmcneill Exp $ */
+/* $NetBSD: dtv_demux.c,v 1.2 2011/07/13 22:50:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.1 2011/07/13 22:43:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.2 2011/07/13 22:50:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -449,7 +449,7 @@ dtv_demux_write(struct dtv_demux *demux, const uint8_t *tspkt, size_t tspktlen)
 
 	if (TS_HAS_PUSI(tspkt)) {
 		if (brem < 16)
-			return 0;
+			goto done;
 
 		section_length = ((p[1] & 0xf) << 8) | p[2];
 
@@ -477,7 +477,7 @@ dtv_demux_write(struct dtv_demux *demux, const uint8_t *tspkt, size_t tspktlen)
 
 	avail = min(sec->sec_length - sec->sec_bytesused, brem);
 	if (avail < 0)
-		return 0;
+		goto done;
 
 	memcpy(&sec->sec_buf[sec->sec_bytesused], p, avail);
 	sec->sec_bytesused += avail;
