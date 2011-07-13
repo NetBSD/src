@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_ioctl.c,v 1.2 2011/07/09 17:55:20 jmcneill Exp $ */
+/* $NetBSD: dtv_ioctl.c,v 1.3 2011/07/13 22:43:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_ioctl.c,v 1.2 2011/07/09 17:55:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_ioctl.c,v 1.3 2011/07/13 22:43:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -64,72 +64,6 @@ dtv_frontend_ioctl(struct dtv_softc *sc, u_long cmd, void *data, int flags)
 		return dtv_device_set_tuner(sc, data);
 	case FE_GET_INFO:
 		dtv_device_get_devinfo(sc, data);
-		return 0;
-	default:
-		return EINVAL;
-	}
-}
-
-int
-dtv_demux_ioctl(struct dtv_softc *sc, u_long cmd, void *data, int flags)
-{
-	struct dmx_pes_filter_params *pesfilt;
-	uint16_t pid;
-	int error;
-
-	switch (cmd) {
-	case DMX_START:
-		error = dtv_buffer_setup(sc);
-		if (error)
-			return error;
-		return dtv_device_start_transfer(sc);
-	case DMX_STOP:
-		return dtv_device_stop_transfer(sc);
-	case DMX_SET_BUFFER_SIZE:
-		return 0;
-	case DMX_SET_PES_FILTER:
-		pesfilt = data;
-
-		if (pesfilt->input != DMX_IN_FRONTEND)
-			return EINVAL;
-		if (pesfilt->output != DMX_OUT_TS_TAP)
-			return EINVAL;
-		if (pesfilt->pes_type != DMX_PES_OTHER)
-			return EINVAL;
-
-		error = dtv_demux_ioctl(sc, DMX_ADD_PID, &pesfilt->pid, flags);
-		if (error)
-			return error;
-
-		if (pesfilt->flags & DMX_IMMEDIATE_START) {
-			error = dtv_demux_ioctl(sc, DMX_START, NULL, flags);
-			if (error)
-				return error;
-		}
-		return 0;
-	case DMX_ADD_PID:
-		pid = *(uint16_t *)data;
-		if (pid > 0x2000)
-			return EINVAL;
-
-		if (pid == 0x2000) {
-			memset(sc->sc_ts.ts_pidfilter, 1,
-			    sizeof(sc->sc_ts.ts_pidfilter));
-		} else {
-			sc->sc_ts.ts_pidfilter[pid] = 1;
-		}
-		return 0;
-	case DMX_REMOVE_PID:
-		pid = *(uint16_t *)data;
-		if (pid > 0x2000)
-			return EINVAL;
-
-		if (pid == 0x2000) {
-			memset(sc->sc_ts.ts_pidfilter, 0,
-			    sizeof(sc->sc_ts.ts_pidfilter));
-		} else {
-			sc->sc_ts.ts_pidfilter[pid] = 0;
-		}
 		return 0;
 	default:
 		return EINVAL;

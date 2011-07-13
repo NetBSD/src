@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_device.c,v 1.4 2011/07/12 00:57:19 jmcneill Exp $ */
+/* $NetBSD: dtv_device.c,v 1.5 2011/07/13 22:43:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.4 2011/07/12 00:57:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.5 2011/07/13 22:43:04 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -98,7 +98,8 @@ dtv_attach(device_t parent, device_t self, void *aa)
 	sc->sc_dev = self;
 	sc->sc_hw = daa->hw;
 	sc->sc_priv = daa->priv;
-	atomic_swap_uint(&sc->sc_open, 0);
+	sc->sc_open = 0;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	ds->ds_nbufs = 0;
 	ds->ds_buf = NULL;
@@ -114,6 +115,9 @@ dtv_attach(device_t parent, device_t self, void *aa)
 		sc->sc_dying = true;
 		return;
 	}
+
+	mutex_init(&sc->sc_demux_lock, MUTEX_DEFAULT, IPL_VM);
+	TAILQ_INIT(&sc->sc_demux_list);
 
 	dtv_device_get_devinfo(sc, &info);
 
@@ -148,6 +152,8 @@ dtv_detach(device_t self, int flags)
 	seldestroy(&ds->ds_sel);
 	dtv_buffer_realloc(sc, 0);
 	dtv_scatter_buf_destroy(&ds->ds_data);
+
+	mutex_destroy(&sc->sc_demux_lock);
 
 	return 0;
 }
@@ -196,7 +202,6 @@ dtvopen(dev_t dev, int flags, int mode, lwp_t *l)
 {
 	struct dtv_softc *sc;
 	struct dtv_ts *ts;
-	unsigned int n;
 	int error;
 
 	if ((sc = device_lookup_private(&dtv_cd, DTVUNIT(dev))) == NULL)
@@ -205,17 +210,20 @@ dtvopen(dev_t dev, int flags, int mode, lwp_t *l)
 		return ENODEV;
 	ts = &sc->sc_ts;
 
-	n = atomic_cas_uint(&sc->sc_open, 0, 1);
-	if (n == 0) {
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_open == 0) {
 		error = dtv_device_open(sc, flags);
-		if (error) {
-			atomic_swap_uint(&sc->sc_open, 0);
+		if (error)
 			return error;
-		}
 		sc->sc_bufsize = DTV_DEFAULT_BUFSIZE;
 		sc->sc_bufsize_chg = true;
 		memset(ts->ts_pidfilter, 0, sizeof(ts->ts_pidfilter));
 	}
+	++sc->sc_open;
+	mutex_exit(&sc->sc_lock);
+
+	if (ISDTVDEMUX(dev))
+		return dtv_demux_open(sc, flags, mode, l);
 
 	return 0;
 }
@@ -228,9 +236,7 @@ dtvclose(dev_t dev, int flags, int mode, lwp_t *l)
 	if ((sc = device_lookup_private(&dtv_cd, DTVUNIT(dev))) == NULL)
 		return ENXIO;
 
-	dtv_device_close(sc);
-	dtv_buffer_destroy(sc);
-	atomic_swap_uint(&sc->sc_open, 0);
+	dtv_close_common(sc);
 
 	return 0;
 }
@@ -259,8 +265,6 @@ dtvioctl(dev_t dev, u_long cmd, void *ptr, int flags, lwp_t *l)
 
 	if (ISDTVFRONTEND(dev)) {
 		return dtv_frontend_ioctl(sc, cmd, ptr, flags);
-	} else if (ISDTVDEMUX(dev)) {
-		return dtv_demux_ioctl(sc, cmd, ptr, flags);
 	}
 
 	return EINVAL;
@@ -276,13 +280,24 @@ dtvpoll(dev_t dev, int events, lwp_t *l)
 
 	if (ISDTVFRONTEND(dev)) {
 		return POLLPRI|POLLIN; /* XXX event */
-	} else if (ISDTVDEMUX(dev)) {
-		return POLLIN|POLLOUT; /* XXX */
 	} else if (ISDTVDVR(dev)) {
 		return dtv_buffer_poll(sc, events, l);
 	}
 
 	return POLLERR;
+}
+
+void
+dtv_close_common(struct dtv_softc *sc)
+{
+	mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_open > 0);
+	--sc->sc_open;
+	if (sc->sc_open == 0) {
+		dtv_device_close(sc);
+		dtv_buffer_destroy(sc);
+	}
+	mutex_exit(&sc->sc_lock);
 }
 
 int

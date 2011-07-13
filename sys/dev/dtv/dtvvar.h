@@ -1,4 +1,4 @@
-/* $NetBSD: dtvvar.h,v 1.3 2011/07/12 00:57:19 jmcneill Exp $ */
+/* $NetBSD: dtvvar.h,v 1.4 2011/07/13 22:43:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -43,7 +43,11 @@
 
 #define	TS_PKTLEN		188
 #define	TS_HAS_SYNC(_tspkt)	((_tspkt)[0] == 0x47)
+#define	TS_HAS_PUSI(_tspkt)	((_tspkt)[1] & 0x40)
+#define	TS_HAS_AF(_tspkt)	((_tspkt)[3] & 0x20)
+#define	TS_HAS_PAYLOAD(_tspkt)	((_tspkt)[3] & 0x10)
 #define	TS_PID(_tspkt)		((((_tspkt)[1] & 0x1f) << 8) | (_tspkt)[2])
+#define	TS_SECTION_MAXLEN	4096
 
 struct dtv_buffer {
 	uint32_t	db_offset;
@@ -65,6 +69,38 @@ struct dtv_stream {
 	uint32_t		ds_bytesread;
 };
 
+typedef enum {
+	DTV_DEMUX_MODE_NONE,
+	DTV_DEMUX_MODE_SECTION,
+	DTV_DEMUX_MODE_PES,
+} dtv_demux_mode_t;
+
+struct dtv_ts_section {
+	uint8_t			sec_buf[TS_SECTION_MAXLEN];
+	uint16_t		sec_bytesused;
+	uint16_t		sec_length;
+};
+
+struct dtv_demux {
+	struct dtv_softc	*dd_sc;
+	struct selinfo		dd_sel;
+	kmutex_t		dd_lock;
+	kcondvar_t		dd_section_cv;
+
+	bool			dd_running;
+
+	dtv_demux_mode_t	dd_mode;
+	struct {
+		struct dmx_sct_filter_params	params;
+		struct dtv_ts_section		section[16];
+		unsigned int			rp, wp;
+		unsigned int			nsections;
+		bool				overflow;
+	} dd_secfilt;
+
+	TAILQ_ENTRY(dtv_demux)	dd_entries;
+};
+
 struct dtv_ts {
 	uint8_t			ts_pidfilter[0x2000];
 	kmutex_t		ts_lock;
@@ -78,12 +114,16 @@ struct dtv_softc {
 	bool		sc_dying;
 
 	unsigned int	sc_open;
+	kmutex_t	sc_lock;
 
 	size_t		sc_bufsize;
 	bool		sc_bufsize_chg;
 
 	struct dtv_stream sc_stream;
 	struct dtv_ts	sc_ts;
+
+	TAILQ_HEAD(, dtv_demux) sc_demux_list;
+	kmutex_t	sc_demux_lock;
 };
 
 #define	dtv_device_get_devinfo(sc, info)	\
@@ -106,12 +146,16 @@ struct dtv_softc {
 	((sc)->sc_hw->stop_transfer((sc)->sc_priv))
 
 int	dtv_frontend_ioctl(struct dtv_softc *, u_long, void *, int);
-int	dtv_demux_ioctl(struct dtv_softc *, u_long, void *, int);
+
+int	dtv_demux_open(struct dtv_softc *, int, int, lwp_t *);
+int	dtv_demux_write(struct dtv_demux *, const uint8_t *, size_t);
 
 int	dtv_buffer_realloc(struct dtv_softc *, size_t);
 int	dtv_buffer_setup(struct dtv_softc *);
 int	dtv_buffer_destroy(struct dtv_softc *);
 int	dtv_buffer_read(struct dtv_softc *, struct uio *, int);
 int	dtv_buffer_poll(struct dtv_softc *, int, lwp_t *);
+
+void	dtv_close_common(struct dtv_softc *);
 
 #endif /* !_DEV_DTV_DTVVAR_H */
