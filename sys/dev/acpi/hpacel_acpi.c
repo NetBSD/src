@@ -1,4 +1,4 @@
-/*	$NetBSD: hpacel_acpi.c,v 1.1 2011/07/13 07:52:48 jruoho Exp $ */
+/*	$NetBSD: hpacel_acpi.c,v 1.2 2011/07/13 10:59:35 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpacel_acpi.c,v 1.1 2011/07/13 07:52:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpacel_acpi.c,v 1.2 2011/07/13 10:59:35 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -190,8 +190,7 @@ hpacel_attach(device_t parent, device_t self, void *aux)
 	sc->sc_node = aa->aa_node;
 
 	aprint_naive("\n");
-	aprint_normal(": HP 3D DriveGuard accelerometer (rev. 0x%02x)\n",
-	    sc->sc_whoami);
+	aprint_normal(": HP 3D DriveGuard accelerometer\n");
 
 	if (hpacel_reg_init(self) != true)
 		return;
