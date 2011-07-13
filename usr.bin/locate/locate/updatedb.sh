@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: updatedb.sh,v 1.13 2011/07/13 07:48:19 apb Exp $
+#	$NetBSD: updatedb.sh,v 1.14 2011/07/13 07:58:35 apb Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -83,34 +83,42 @@ if [ -f "$CONF" ]; then
 		''|'#'*)
 			continue ;;	# skip blank lines and comment lines
 		esac
-		eval "set -- $args"
+		eval "set -- $args"	# set "$@" from $args, obeying quotes
 		case "$com" in
 		searchpath)
-			SRCHPATHS="${SRCHPATHS}${SRCHPATHS:+ }$(shell_quote "$@")";;
+			SRCHPATHS="${SRCHPATHS}${SRCHPATHS:+ }$(shell_quote "$@")"
+			;;
 		ignorefs)
 			for i in "$@"; do
 				q="$(shell_quote "${i#\!}")"
 				fs=
 				case "$i" in
-				none)	ignorefs=;;
-				\!*)	fs="! -fstype $q";;
-				*)	fs="-fstype $q";;
+				none)	ignorefs=
+					;;
+				\!*)	fs="! -fstype $q"
+					;;
+				*)	fs="-fstype $q"
+					;;
 				esac
 				case "$fs" in
 				'')	;;
-				*)	ignorefs="${ignorefs:+${ignorefs} -o }${fs}";;
+				*)	ignorefs="${ignorefs:+${ignorefs} -o }${fs}"
+					;;
 				esac
-			done;;
+			done
+			;;
 		ignore)
 			for i in "$@"; do
 				q="$(shell_quote "$i")"
 				ignore="${ignore:+${ignore} -o }-path ${q}"
-			done;;
+			done
+			;;
 		ignorecontents)
 			for i in "$@"; do
 				q="$(shell_quote "$i")"
 				ignore="${ignore:+${ignore} -o }-path ${q} -print"
-			done;;
+			done
+			;;
 		workdir)
 			if [ $# -ne 1 ]; then
 				echo "$CONF: workdir takes exactly one argument" >&2
@@ -118,10 +126,12 @@ if [ -f "$CONF" ]; then
 				TMPDIR="$1"
 			else
 				echo "$CONF: workdir: $1 nonexistent" >&2
-			fi;;
+			fi
+			;;
 		*)
 			echo "$CONF: $com: unknown config command" >&2
-			exit 1;;
+			exit 1
+			;;
 		esac
 	done < "$CONF"
 fi
@@ -137,7 +147,7 @@ esac
 # insert '-o' if neither $ignorefs or $ignore are empty
 case "$ignorefs $ignore" in
 ' '*|*' ')	;;
-*)		ignore="-o $ignore";;
+*)		ignore="-o $ignore" ;;
 esac
 
 FILELIST=$(mktemp -t locate.list) || exit 1
@@ -146,11 +156,11 @@ trap 'rm -f "$FILELIST"; exit 1' INT QUIT TERM
 
 # Make a file list and compute common bigrams.
 # Entries of each directory shall be sorted (find -s).
+# The "cat" process is not useless; it lets us detect write errors.
 
 (eval "find -s ${SRCHPATHS} $lp $ignorefs $ignore $rp -print"; true) \
 	| cat >> "$FILELIST"
-if [ $? != 0 ]
-then
+if [ $? != 0 ]; then
 	exit 1
 fi
 
