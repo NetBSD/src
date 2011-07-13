@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.41 2011/06/02 02:33:42 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.42 2011/07/13 22:47:29 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.41 2011/06/02 02:33:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.42 2011/07/13 22:47:29 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.41 2011/06/02 02:33:42 macallan Exp $");
 #define GPRINTF aprint_verbose
 #endif
 
+#define GENFB_BRIGHTNESS_STEP 15
+
 static int	genfb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	genfb_mmap(void *, void *, off_t, int);
 static void	genfb_init_screen(void *, struct vcons_screen *, int, long *);
@@ -75,10 +77,6 @@ static int 	genfb_putpalreg(struct genfb_softc *, uint8_t, uint8_t,
 
 static void	genfb_brightness_up(device_t);
 static void	genfb_brightness_down(device_t);
-/* set backlight level */
-static void	genfb_set_backlight(struct genfb_softc *, int);
-/* turn backlight on and off without messing with the level */
-static void	genfb_switch_backlight(struct genfb_softc *, int);
 
 extern const u_char rasops_cmap[768];
 
@@ -91,7 +89,7 @@ void
 genfb_init(struct genfb_softc *sc)
 {
 	prop_dictionary_t dict;
-	uint64_t cmap_cb, pmf_cb, mode_cb, bl_cb, fbaddr;
+	uint64_t cmap_cb, pmf_cb, mode_cb, bl_cb, br_cb, fbaddr;
 	uint32_t fboffset;
 	bool console;
 
@@ -165,17 +163,24 @@ genfb_init(struct genfb_softc *sc)
 	if (prop_dictionary_get_uint64(dict, "backlight_callback", &bl_cb)) {
 		if (bl_cb != 0) {
 			sc->sc_backlight = (void *)(vaddr_t)bl_cb;
-			sc->sc_backlight_on = 1;
-			aprint_naive_dev(sc->sc_dev, 
+			aprint_naive_dev(sc->sc_dev,
 			    "enabling backlight control\n");
-			sc->sc_backlight_level = 
-			    sc->sc_backlight->gpc_get_parameter(
-			    sc->sc_backlight->gpc_cookie);
-			if (console) {
-				pmf_event_register(sc->sc_dev, 
+		}
+	}
+
+	/* optional brightness control callback */
+	sc->sc_brightness = NULL;
+	if (prop_dictionary_get_uint64(dict, "brightness_callback", &br_cb)) {
+		if (br_cb != 0) {
+			sc->sc_brightness = (void *)(vaddr_t)br_cb;
+			aprint_naive_dev(sc->sc_dev,
+			    "enabling brightness control\n");
+			if (console &&
+			    sc->sc_brightness->gpc_upd_parameter != NULL) {
+				pmf_event_register(sc->sc_dev,
 				    PMFE_DISPLAY_BRIGHTNESS_UP,
 				    genfb_brightness_up, TRUE);
-				pmf_event_register(sc->sc_dev, 
+				pmf_event_register(sc->sc_dev,
 				    PMFE_DISPLAY_BRIGHTNESS_DOWN,
 				    genfb_brightness_down, TRUE);
 			}
@@ -206,8 +211,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	    == false)
 		sc->sc_want_clear = true;
 
-	aprint_verbose_dev(sc->sc_dev, "framebuffer at %p, size %dx%d,"
-	    "depth %d, stride %d\n",
+	aprint_verbose_dev(sc->sc_dev, "framebuffer at %p, size %dx%d, depth %d, "
+	    "stride %d\n",
 	    sc->sc_fboffset ? (void *)(intptr_t)sc->sc_fboffset : sc->sc_fbaddr,
 	    sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
 
@@ -341,7 +346,7 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct wsdisplay_fbinfo *wdf;
 	struct vcons_screen *ms = vd->active;
 	struct wsdisplay_param *param;
-	int new_mode, error;
+	int new_mode, error, val;
 
 	switch (cmd) {
 		case WSDISPLAYIO_GINFO:
@@ -404,35 +409,51 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 #endif
 		case WSDISPLAYIO_GETPARAM:
 			param = (struct wsdisplay_param *)data;
-			if (sc->sc_backlight == NULL)
-				return EPASSTHROUGH;
 			switch (param->param) {
 			case WSDISPLAYIO_PARAM_BRIGHTNESS:
+				if (sc->sc_brightness == NULL)
+					return EPASSTHROUGH;
 				param->min = 0;
 				param->max = 255;
-				param->curval = sc->sc_backlight_level;
-				return 0;
+				return sc->sc_brightness->gpc_get_parameter(
+				    sc->sc_brightness->gpc_cookie,
+				    &param->curval);
 			case WSDISPLAYIO_PARAM_BACKLIGHT:
+				if (sc->sc_backlight == NULL)
+					return EPASSTHROUGH;
 				param->min = 0;
 				param->max = 1;
-				param->curval = sc->sc_backlight_on;
-				return 0;
+				return sc->sc_backlight->gpc_get_parameter(
+				    sc->sc_backlight->gpc_cookie,
+				    &param->curval);
 			}
 			return EPASSTHROUGH;
 
 		case WSDISPLAYIO_SETPARAM:
 			param = (struct wsdisplay_param *)data;
-			if (sc->sc_backlight == NULL)
-				return EPASSTHROUGH;
 			switch (param->param) {
 			case WSDISPLAYIO_PARAM_BRIGHTNESS:
-				genfb_set_backlight(sc, param->curval);
-				return 0;
+				if (sc->sc_brightness == NULL)
+					return EPASSTHROUGH;
+				val = param->curval;
+				if (val < 0) val = 0;
+				if (val > 255) val = 255;
+				return sc->sc_brightness->gpc_set_parameter(
+				    sc->sc_brightness->gpc_cookie, val);
 			case WSDISPLAYIO_PARAM_BACKLIGHT:
-				genfb_switch_backlight(sc,  param->curval);
-				return 0;
+				if (sc->sc_backlight == NULL)
+					return EPASSTHROUGH;
+				val = param->curval;
+				if (val < 0) val = 0;
+				if (val > 1) val = 1;
+				return sc->sc_backlight->gpc_set_parameter(
+				    sc->sc_backlight->gpc_cookie, val);
 			}
 			return EPASSTHROUGH;
+		case WSDISPLAYIO_GET_EDID: {
+			struct wsdisplayio_edid_info *d = data;
+			return wsdisplayio_get_edid(sc->sc_dev, d);
+		}
 		default:
 			if (sc->sc_ops.genfb_ioctl)
 				return sc->sc_ops.genfb_ioctl(sc, vs, cmd,
@@ -624,51 +645,15 @@ genfb_borrow(bus_addr_t addr, bus_space_handle_t *hdlp)
 }
 
 static void
-genfb_set_backlight(struct genfb_softc *sc, int level)
-{
-
-	KASSERT(sc->sc_backlight != NULL);
-
-	/*
-	 * should we do nothing when backlight is off, should we just store the
-	 * level and use it when turning back on or should we just flip sc_bl_on
-	 * and turn the backlight on?
-	 * For now turn it on so a crashed screensaver can't get the user stuck
-	 * with a dark screen as long as hotkeys work
-	 */
-	if (level > 255) level = 255;
-	if (level < 0) level = 0;
-	if (level == sc->sc_backlight_level)
-		return;
-	sc->sc_backlight_level = level;
-	if (sc->sc_backlight_on == 0)
-		sc->sc_backlight_on = 1;
-	sc->sc_backlight->gpc_set_parameter(
-	    sc->sc_backlight->gpc_cookie, level);
-}
-
-static void
-genfb_switch_backlight(struct genfb_softc *sc, int on)
-{
-	int level;
-
-	KASSERT(sc->sc_backlight != NULL);
-
-	if (on == sc->sc_backlight_on)
-		return;
-	sc->sc_backlight_on = on;
-	level = on ? sc->sc_backlight_level : 0;
-	sc->sc_backlight->gpc_set_parameter(
-	    sc->sc_backlight->gpc_cookie, level);
-}
-	
-
-static void
 genfb_brightness_up(device_t dev)
 {
 	struct genfb_softc *sc = device_private(dev);
 
-	genfb_set_backlight(sc, sc->sc_backlight_level + 8);
+	KASSERT(sc->sc_brightness != NULL &&
+		sc->sc_brightness->gpc_upd_parameter != NULL);
+
+	(void)sc->sc_brightness->gpc_upd_parameter(
+	    sc->sc_brightness->gpc_cookie, GENFB_BRIGHTNESS_STEP);
 }
 
 static void
@@ -676,7 +661,11 @@ genfb_brightness_down(device_t dev)
 {
 	struct genfb_softc *sc = device_private(dev);
 
-	genfb_set_backlight(sc, sc->sc_backlight_level - 8);
+	KASSERT(sc->sc_brightness != NULL &&
+		sc->sc_brightness->gpc_upd_parameter != NULL);
+
+	(void)sc->sc_brightness->gpc_upd_parameter(
+	    sc->sc_brightness->gpc_cookie, - GENFB_BRIGHTNESS_STEP);
 }
 
 void
