@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.90 2011/06/14 13:59:23 jruoho Exp $
+#	$NetBSD: files.acpi,v 1.91 2011/07/13 07:52:48 jruoho Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -143,6 +143,11 @@ file	dev/acpi/asus_acpi.c		asus
 # Abit uGuru 2005
 attach	ug at acpinodebus with ug_acpi
 file	dev/acpi/ug_acpi.c		ug_acpi
+
+# HP 3D DriveGuard accelerometer
+device	hpacel: sysmon_envsys
+attach	hpacel at acpinodebus
+file	dev/acpi/hpacel_acpi.c		hpacel
 
 # HP Quick Launch Buttons
 device	hpqlb: sysmon_power
