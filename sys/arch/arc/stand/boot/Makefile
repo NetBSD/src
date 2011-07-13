@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2011/02/20 07:52:43 matt Exp $
+# $NetBSD: Makefile,v 1.13 2011/07/13 14:09:36 mrg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>	# for ${HOST_SH}
@@ -25,7 +25,7 @@ LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
 
-AFLAGS=    -x assembler-with-cpp -mno-abicalls -mips2
+AFLAGS=    -x assembler-with-cpp -mno-abicalls -mips2 -mabi=32
 AFLAGS+=   -D_LOCORE -D_KERNEL
 CFLAGS=    -Os -mmemcpy -G 1024
 CFLAGS+=   -ffreestanding -mno-abicalls -msoft-float -mips2 -mabi=32
@@ -36,6 +36,7 @@ CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
 #CPPFLAGS+= -DBOOT_DEBUG
 LDSCRIPT=  ${S}/arch/mips/conf/stand.ldscript
 TEXTADDR=  0x80f00000
+LD+=		-m elf32ltsmip
 
 # if there is a 'version' file, add rule for vers.c and add it to SRCS
 # and CLEANFILES
