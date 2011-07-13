@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_dtv.c,v 1.1 2011/07/11 18:02:04 jmcneill Exp $ */
+/* $NetBSD: emdtv_dtv.c,v 1.2 2011/07/13 14:34:45 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.1 2011/07/11 18:02:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.2 2011/07/13 14:34:45 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,6 +169,17 @@ emdtv_dtv_open(void *priv, int flags)
 		return ENXIO;
 
 	switch (sc->sc_board->eb_tuner) {
+	case EMDTV_TUNER_XC3028:
+		if (sc->sc_xc3028 == NULL) {
+			sc->sc_xc3028 = xc3028_open(sc->sc_dev,
+			    &sc->sc_i2c, 0x61 << 1, emdtv_dtv_tuner_reset, sc,
+			    XC3028);
+		}
+		if (sc->sc_xc3028 == NULL) {
+			aprint_error_dev(sc->sc_dev, "couldn't open xc3028\n");
+			return ENXIO;
+		}
+		break;
 	case EMDTV_TUNER_XC3028L:
 		if (sc->sc_xc3028 == NULL) {
 			sc->sc_xc3028 = xc3028_open(sc->sc_dev,
