@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_datablock.c,v 1.1 2011/06/27 11:52:24 uch Exp $	*/
+/*	$NetBSD: v7fs_datablock.c,v 1.2 2011/07/13 12:18:22 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_datablock.c,v 1.1 2011/06/27 11:52:24 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_datablock.c,v 1.2 2011/07/13 12:18:22 uch Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -262,7 +262,7 @@ v7fs_datablock_foreach(struct v7fs_self *fs, struct v7fs_inode *p,
 	int ret;
 
 	if (!(filesize = v7fs_inode_filesize(p)))
-		return 0;
+		return V7FS_ITERATOR_END;
 #ifdef V7FS_DATABLOCK_DEBUG
 	size_t sz = filesize;
 #endif
