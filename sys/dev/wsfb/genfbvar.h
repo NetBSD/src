@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.20 2011/06/02 02:33:42 macallan Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.21 2011/07/13 22:47:29 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.20 2011/06/02 02:33:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.21 2011/07/13 22:47:29 macallan Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -66,10 +66,22 @@ struct genfb_colormap_callback {
 	void (*gcc_set_mapreg)(void *, int, int, int, int);
 };
 
-struct genfb_parameter_callback{
+/*
+ * Integer parameter provider.  Each callback shall return 0 on success,
+ * and an error(2) number on failure.  The gpc_upd_parameter callback is
+ * optional (i.e. it can be NULL).
+ *
+ * This structure is used for backlight and brightness control.  The
+ * expected parameter range is:
+ *
+ *	[0, 1]		for backlight
+ *	[0, 255]	for brightness
+ */
+struct genfb_parameter_callback {
 	void *gpc_cookie;
-	void (*gpc_set_parameter)(void *, int);
-	int (*gpc_get_parameter)(void *);
+	int (*gpc_get_parameter)(void *, int *);
+	int (*gpc_set_parameter)(void *, int);
+	int (*gpc_upd_parameter)(void *, int);
 };
 
 struct genfb_pmf_callback {
@@ -92,6 +104,7 @@ struct genfb_softc {
 	struct genfb_colormap_callback *sc_cmcb;
 	struct genfb_pmf_callback *sc_pmfcb;
 	struct genfb_parameter_callback *sc_backlight;
+	struct genfb_parameter_callback *sc_brightness;
 	struct genfb_mode_callback *sc_modecb;
 	int sc_backlight_level, sc_backlight_on;
 	void *sc_fbaddr;	/* kva */
