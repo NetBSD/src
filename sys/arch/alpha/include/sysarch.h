@@ -1,4 +1,4 @@
-/* $NetBSD: sysarch.h,v 1.13 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: sysarch.h,v 1.14 2011/07/13 04:47:16 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _ALPHA_SYSARCH_H_
 #define _ALPHA_SYSARCH_H_
 
-#include <machine/bus.h>
+#include <machine/bus_defs.h>
 #include <machine/ieeefp.h>
 
 /*
