@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.53 2011/06/22 08:49:54 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.54 2011/07/13 07:34:55 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.53 2011/06/22 08:49:54 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.54 2011/07/13 07:34:55 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -629,6 +629,8 @@ acpicpu_cstate_latency(struct acpicpu_softc *sc)
 	struct acpicpu_cstate *cs;
 	int i;
 
+	KASSERT(mutex_owned(&sc->sc_mtx) != 0);
+
 	for (i = cs_state_max; i > 0; i--) {
 
 		cs = &sc->sc_cstate[i];
@@ -658,30 +660,25 @@ acpicpu_cstate_idle(void)
 	struct acpicpu_softc *sc;
 	int state;
 
-	acpi_md_OsDisableInterrupt();
-
-	if (__predict_false(ci->ci_want_resched != 0))
-		goto out;
-
 	KASSERT(acpicpu_sc != NULL);
 	KASSERT(ci->ci_acpiid < maxcpus);
 
 	sc = acpicpu_sc[ci->ci_acpiid];
 
 	if (__predict_false(sc == NULL))
-		goto out;
+		return;
 
 	KASSERT(ci->ci_ilevel == IPL_NONE);
 	KASSERT((sc->sc_flags & ACPICPU_FLAG_C) != 0);
 
 	if (__predict_false(sc->sc_cold != false))
-		goto out;
+		return;
 
 	if (__predict_false(mutex_tryenter(&sc->sc_mtx) == 0))
-		goto out;
+		return;
 
-	mutex_exit(&sc->sc_mtx);
 	state = acpicpu_cstate_latency(sc);
+	mutex_exit(&sc->sc_mtx);
 
 	/*
 	 * Apply AMD C1E quirk.
@@ -743,11 +740,6 @@ acpicpu_cstate_idle(void)
 
 	if ((sc->sc_flags & ACPICPU_FLAG_C_ARB) != 0)
 		(void)AcpiWriteBitRegister(ACPI_BITREG_ARB_DISABLE, 0);
-
-	return;
-
-out:
-	acpi_md_OsEnableInterrupt();
 }
 
 static void
@@ -769,8 +761,6 @@ acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 		(void)AcpiOsReadPort(cs->cs_addr, &val, 8);
 		break;
 	}
-
-	acpi_md_OsEnableInterrupt();
 
 	cs->cs_evcnt.ev_count++;
 	end = acpitimer_read_fast(NULL);
