@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.97 2011/06/22 18:06:33 matt Exp $
+#	$NetBSD: files.macppc,v 1.98 2011/07/13 22:54:33 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -18,6 +18,7 @@ file arch/macppc/macppc/interrupts.c
 file arch/powerpc/oea/ofwoea_machdep.c
 file arch/powerpc/oea/ofw_consinit.c
 file arch/macppc/macppc/machdep.c
+file arch/macppc/macppc/static_edid.c
 file arch/powerpc/oea/ofw_rascons.c
 file arch/macppc/dev/dbdma.c
 

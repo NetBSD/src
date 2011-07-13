@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.160 2011/07/13 22:50:11 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.161 2011/07/13 22:54:33 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 2011/07/13 22:50:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161 2011/07/13 22:54:33 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -98,6 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 2011/07/13 22:50:11 macallan Exp $
 #include <macppc/dev/adbvar.h>
 #include <macppc/dev/pmuvar.h>
 #include <macppc/dev/cudavar.h>
+
+#include <macppc/macppc/static_edid.h>
 
 #include "ksyms.h"
 #include "pmu.h"
@@ -364,12 +366,21 @@ add_model_specifics(prop_dictionary_t dict)
 {
 	const char *bl_rev_models[] = {
 		"PowerBook4,3", "PowerBook6,3", "PowerBook6,5", NULL};
+	const char *pismo[] = {
+		"PowerBook3,1", NULL};
 	int node;
 
 	node = OF_finddevice("/");
 
 	if (of_compatible(node, bl_rev_models) != -1) {
 		prop_dictionary_set_bool(dict, "backlight_level_reverted", 1);
+	}
+	if (of_compatible(node, pismo) != -1) {
+		prop_data_t edid;
+
+		edid = prop_data_create_data(edid_pismo, sizeof(edid_pismo));
+		prop_dictionary_set(dict, "EDID", edid);
+		prop_object_release(edid);
 	}
 }
 
