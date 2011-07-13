@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.1 2011/07/11 18:02:04 jmcneill Exp $ */
+/* $NetBSD: emdtv.c,v 1.2 2011/07/13 14:36:29 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.1 2011/07/11 18:02:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.2 2011/07/13 14:36:29 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ CFATTACH_DECL2_NEW(emdtv, sizeof(struct emdtv_softc),
 
 static const struct usb_devno emdtv_devices[] = {
 	{ USB_VENDOR_AMD,	USB_PRODUCT_AMD_TV_WONDER_600_USB },
+	{ USB_VENDOR_PINNACLE,	USB_PRODUCT_PINNACLE_PCTV800E },
 };
 
 int emdtv_debug_regs = 0;
