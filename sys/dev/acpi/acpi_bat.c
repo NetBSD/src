@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.110 2011/06/20 20:24:59 pgoyette Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.111 2011/07/13 09:58:53 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.110 2011/06/20 20:24:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.111 2011/07/13 09:58:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -150,9 +150,10 @@ struct acpibat_softc {
 	struct sysmon_envsys	*sc_sme;
 	struct timeval		 sc_last;
 	envsys_data_t		*sc_sensor;
-	char			 sc_serial[64];
 	kmutex_t		 sc_mutex;
 	kcondvar_t		 sc_condvar;
+	int32_t			 sc_dcapacity;
+	int32_t			 sc_dvoltage;
 	int32_t			 sc_lcapacity;
 	int32_t			 sc_wcapacity;
 	int                      sc_present;
@@ -231,6 +232,8 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	sc->sc_node = aa->aa_node;
 
 	sc->sc_present = 0;
+	sc->sc_dvoltage = 0;
+	sc->sc_dcapacity = 0;
 	sc->sc_lcapacity = 0;
 	sc->sc_wcapacity = 0;
 
@@ -241,7 +244,6 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_condvar, device_xname(self));
 
 	(void)pmf_device_register(self, NULL, acpibat_resume);
-	(void)memset(sc->sc_serial, '\0', sizeof(sc->sc_serial));
 	(void)acpi_register_notify(sc->sc_node, acpibat_notify_handler);
 
 	sc->sc_sensor = kmem_zalloc(ACPIBAT_COUNT *
@@ -442,7 +444,8 @@ static void
 acpibat_print_info(device_t dv, ACPI_OBJECT *elm)
 {
 	struct acpibat_softc *sc = device_private(dv);
-	const char *model, *serial, *tech, *unit;
+	const char *tech, *unit;
+	int32_t dcap, dvol;
 	int i;
 
 	for (i = ACPIBAT_BIF_OEM; i > ACPIBAT_BIF_GRANULARITY2; i--) {
@@ -457,20 +460,17 @@ acpibat_print_info(device_t dv, ACPI_OBJECT *elm)
 			return;
 	}
 
-	model = elm[ACPIBAT_BIF_MODEL].String.Pointer;
-	serial = elm[ACPIBAT_BIF_SERIAL].String.Pointer;
+	dcap = elm[ACPIBAT_BIF_DCAPACITY].Integer.Value;
+	dvol = elm[ACPIBAT_BIF_DVOLTAGE].Integer.Value;
 
-	if (elm[ACPIBAT_BIF_SERIAL].String.Length > sizeof(sc->sc_serial))
+	/*
+	 * Try to detect whether the battery was switched.
+	 */
+	if (sc->sc_dcapacity == dcap && sc->sc_dvoltage == dvol)
 		return;
-
-	if (sc->sc_serial[0] == '\0')
-		(void)strlcpy(sc->sc_serial, serial, sizeof(sc->sc_serial));
 	else {
-		if (strcmp(sc->sc_serial, serial) == 0)
-			return;
-
-		(void)memset(sc->sc_serial, '\0', sizeof(sc->sc_serial));
-		(void)strlcpy(sc->sc_serial, serial, sizeof(sc->sc_serial));
+		sc->sc_dcapacity = dcap;
+		sc->sc_dvoltage = dvol;
 	}
 
 	tech = (elm[ACPIBAT_BIF_TECHNOLOGY].Integer.Value != 0) ?
@@ -480,8 +480,9 @@ acpibat_print_info(device_t dv, ACPI_OBJECT *elm)
 	    elm[ACPIBAT_BIF_OEM].String.Pointer,
 	    elm[ACPIBAT_BIF_TYPE].String.Pointer, tech);
 
-	aprint_verbose_dev(dv, "model number %s, serial number %s\n",
-	    model, serial);
+	aprint_debug_dev(dv, "model number %s, serial number %s\n",
+	    elm[ACPIBAT_BIF_MODEL].String.Pointer,
+	    elm[ACPIBAT_BIF_SERIAL].String.Pointer);
 
 #define SCALE(x) (((int)x) / 1000000), ((((int)x) % 1000000) / 1000)
 
