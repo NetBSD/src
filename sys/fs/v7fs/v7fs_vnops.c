@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.1 2011/06/27 11:52:25 uch Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.2 2011/07/13 12:22:49 uch Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.1 2011/06/27 11:52:25 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.2 2011/07/13 12:22:49 uch Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -439,7 +439,9 @@ v7fs_setattr(void *v)
 	struct v7fs_node *v7node = vp->v_data;
 	struct v7fs_self *fs = v7node->v7fsmount->core;
 	struct v7fs_inode *inode = &v7node->inode;
+	struct timespec *acc, *mod;
 	int error = 0;
+	acc = mod = NULL;
 
 	DPRINTF("\n");
 
@@ -476,20 +478,28 @@ v7fs_setattr(void *v)
 			uvm_vnp_setsize(vp, vap->va_size);
 	}
 
-	if (vap->va_uid != (uid_t)VNOVAL)
+	if (vap->va_uid != (uid_t)VNOVAL) {
 		inode->uid = vap->va_uid;
-	if (vap->va_gid != (uid_t)VNOVAL)
+	}
+	if (vap->va_gid != (uid_t)VNOVAL) {
 		inode->gid = vap->va_gid;
-	if (vap->va_mode != (mode_t)VNOVAL)
+	}
+	if (vap->va_mode != (mode_t)VNOVAL) {
 		v7fs_inode_chmod(inode, vap->va_mode);
-	if (vap->va_atime.tv_sec != VNOVAL)
-		inode->atime = vap->va_atime.tv_sec;
-	if (vap->va_mtime.tv_sec != VNOVAL)
-		inode->mtime = vap->va_mtime.tv_sec;
-	if (vap->va_ctime.tv_sec != VNOVAL)
-		inode->ctime = vap->va_ctime.tv_sec;
+	}
+	if (vap->va_atime.tv_sec != VNOVAL) {
+		acc = &vap->va_atime;
+	}
+	if (vap->va_mtime.tv_sec != VNOVAL) {
+		mod = &vap->va_mtime;
+		v7node->update_mtime = true;
+	}
+	if (vap->va_ctime.tv_sec != VNOVAL) {
+		v7node->update_ctime = true;
+	}
 
-	v7fs_update(vp, 0, 0, 0);
+	v7node->update_atime = true;
+	v7fs_update(vp, acc, mod, 0);
 
 	return error;
 }
