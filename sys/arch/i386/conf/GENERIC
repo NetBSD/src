@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1037 2011/07/11 18:31:10 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.1038 2011/07/13 07:52:48 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1037 $"
+#ident 		"GENERIC-$Revision: 1.1038 $"
 
 maxusers	64		# estimated number of users
 
@@ -366,6 +366,7 @@ attimer*	at acpi?		# AT Timer
 #fdc*		at acpi?		# Floppy disk controller
 fujbp*		at acpi?		# Fujitsu Brightness & Pointer
 fujhk*		at acpi?		# Fujitsu Hotkeys
+#hpacel*	at acpi?		# HP 3D DriveGuard accelerometer
 #hpqlb*		at acpi?		# HP Quick Launch Buttons
 hpet*		at acpihpetbus?		# High Precision Event Timer (table)
 hpet*		at acpinodebus?		# High Precision Event Timer (device)
