@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/05/12 14:56:24 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/07/13 23:48:30 joerg Exp $
 
 LIB=	LLVMipo
 
@@ -9,7 +9,6 @@ LIB=	LLVMipo
 SRCS+=	ArgumentPromotion.cpp \
 	ConstantMerge.cpp \
 	DeadArgumentElimination.cpp \
-	DeadTypeElimination.cpp \
 	ExtractGV.cpp \
 	FunctionAttrs.cpp \
 	GlobalDCE.cpp \
