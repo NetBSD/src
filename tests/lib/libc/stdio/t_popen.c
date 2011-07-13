@@ -1,4 +1,4 @@
-/*	$NetBSD: t_popen.c,v 1.2 2011/06/11 18:03:18 christos Exp $ */
+/*	$NetBSD: t_popen.c,v 1.3 2011/07/13 11:17:03 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -19,7 +19,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: t_popen.c,v 1.2 2011/06/11 18:03:18 christos Exp $");
+__RCSID("$NetBSD: t_popen.c,v 1.3 2011/07/13 11:17:03 jruoho Exp $");
 #endif /* not lint */
 
 #include <atf-c.h>
@@ -63,28 +63,30 @@ __RCSID("$NetBSD: t_popen.c,v 1.2 2011/06/11 18:03:18 christos Exp $");
 		atf_tc_fail("Check stderr for error details.");	\
 	} while ( /*CONSTCOND*/ 0 )
 
-ATF_TC_WITH_CLEANUP(popen);
-
-ATF_TC_HEAD(popen, tc)
+ATF_TC_WITH_CLEANUP(popen_zeropad);
+ATF_TC_HEAD(popen_zeropad, tc)
 {
- 
+
 	atf_tc_set_md_var(tc, "descr", "output format zero padding");
 }
- 
-ATF_TC_BODY(popen, tc)
+
+ATF_TC_BODY(popen_zeropad, tc)
 {
 	char *buffer, command[MAXPATHLEN];
 	int index, in;
 	FILE *my_pipe;
 
-	if ((buffer = malloc(BUFSIZE*sizeof(char))) == NULL)
+	if ((buffer = malloc(BUFSIZE)) == NULL)
 		atf_tc_skip("Unable to allocate buffer.");
 
 	srand ((unsigned int)time(NULL));
-	for (index=0; index<BUFSIZE; index++)
+
+	for (index = 0; index < BUFSIZE; index++)
 		buffer[index]=(char)rand();
 
-	(void)snprintf(command, sizeof(command), "%s >%s", _PATH_CAT, DATAFILE);
+	(void)snprintf(command, sizeof(command), "%s >%s",
+	    _PATH_CAT, DATAFILE);
+
 	if ((my_pipe = popen(command, "w")) == NULL)
 		TEST_ERROR("popen write");
 
@@ -95,6 +97,7 @@ ATF_TC_BODY(popen, tc)
 		TEST_ERROR("pclose");
 
 	(void)snprintf(command, sizeof(command), "%s %s", _PATH_CAT, DATAFILE);
+
 	if ((my_pipe = popen(command, "r")) == NULL)
 		TEST_ERROR("popen read");
 
@@ -118,14 +121,15 @@ ATF_TC_BODY(popen, tc)
 		TEST_ERROR("pclose");
 }
 
-ATF_TC_CLEANUP(popen, tc)
+ATF_TC_CLEANUP(popen_zeropad, tc)
 {
 	(void)unlink(DATAFILE);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, popen);
+
+	ATF_TP_ADD_TC(tp, popen_zeropad);
 
 	return atf_no_error();
 }

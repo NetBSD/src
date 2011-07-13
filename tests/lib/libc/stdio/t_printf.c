@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.1 2011/07/08 06:38:04 jruoho Exp $ */
+/* $NetBSD: t_printf.c,v 1.2 2011/07/13 11:17:03 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,15 +31,15 @@
 #include <stdio.h>
 #include <string.h>
 
-ATF_TC(sprintf_dotzero);
-ATF_TC_HEAD(sprintf_dotzero, tc)
+ATF_TC(snprintf_dotzero);
+ATF_TC_HEAD(snprintf_dotzero, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", \
 	    "PR lib/32951: %.0f formats (0.0,0.5] to \"0.\"");
 }
 
-ATF_TC_BODY(sprintf_dotzero, tc)
+ATF_TC_BODY(snprintf_dotzero, tc)
 {
 	char s[4];
 
@@ -74,7 +74,7 @@ ATF_TC_BODY(sprintf_zeropad, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, sprintf_dotzero);
+	ATF_TP_ADD_TC(tp, snprintf_dotzero);
 	ATF_TP_ADD_TC(tp, sprintf_zeropad);
 
 	return atf_no_error();
