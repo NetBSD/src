@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.87 2011/06/12 03:35:54 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.88 2011/07/13 03:28:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.87 2011/06/12 03:35:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.88 2011/07/13 03:28:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -979,7 +979,7 @@ tmpfs_rename(void *v)
 			tde = tmpfs_dir_lookup(tdnode, tcnp);
 		}
 		KASSERT(tde && tde->td_node == tnode);
-		KASSERT(tnode->tn_type == fnode->tn_type);
+		KASSERT((tnode->tn_type == VDIR) == (fnode->tn_type == VDIR));
 
 		/*
 		 * Remove and destroy the directory entry on the target
