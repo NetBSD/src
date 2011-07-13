@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/06/08 08:48:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/07/13 23:48:30 joerg Exp $
 
 LIB=	clangFrontend
 
@@ -9,7 +9,6 @@ LIB=	clangFrontend
 SRCS+=	ASTConsumers.cpp \
 	ASTMerge.cpp \
 	ASTUnit.cpp \
-	BoostConAction.cpp \
 	CacheTokens.cpp \
 	CompilerInstance.cpp \
 	CompilerInvocation.cpp \
