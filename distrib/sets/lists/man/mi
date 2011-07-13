@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1323 2011/07/03 21:59:31 tron Exp $
+# $NetBSD: mi,v 1.1324 2011/07/13 07:52:49 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1080,6 +1080,7 @@
 ./usr/share/man/cat4/hpcsh/j6x0tp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/psh3lcd.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/psh3tp.0		man-sys-catman		.cat
+./usr/share/man/cat4/hpacel.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hpqlb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hptide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/PCIBIOS.0		man-sys-catman		.cat
@@ -3865,6 +3866,7 @@
 ./usr/share/man/html4/hpcsh/j6x0tp.html		man-sys-htmlman		html
 ./usr/share/man/html4/hpcsh/psh3lcd.html	man-sys-htmlman		html
 ./usr/share/man/html4/hpcsh/psh3tp.html		man-sys-htmlman		html
+./usr/share/man/html4/hpacel.html		man-sys-htmlman		html
 ./usr/share/man/html4/hpqlb.html		man-sys-htmlman		html
 ./usr/share/man/html4/hptide.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/PCIBIOS.html		man-sys-htmlman		html
@@ -6445,6 +6447,7 @@
 ./usr/share/man/man4/hpcsh/j6x0tp.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/psh3lcd.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/psh3tp.4		man-sys-man		.man
+./usr/share/man/man4/hpacel.4			man-sys-man		.man
 ./usr/share/man/man4/hpqlb.4			man-sys-man		.man
 ./usr/share/man/man4/hptide.4			man-sys-man		.man
 ./usr/share/man/man4/i386/PCIBIOS.4		man-sys-man		.man
