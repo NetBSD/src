@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: updatedb.sh,v 1.12 2011/07/10 13:42:49 apb Exp $
+#	$NetBSD: updatedb.sh,v 1.13 2011/07/13 07:48:19 apb Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -89,11 +89,12 @@ if [ -f "$CONF" ]; then
 			SRCHPATHS="${SRCHPATHS}${SRCHPATHS:+ }$(shell_quote "$@")";;
 		ignorefs)
 			for i in "$@"; do
+				q="$(shell_quote "${i#\!}")"
 				fs=
 				case "$i" in
 				none)	ignorefs=;;
-				\!*)	fs="! -fstype $(shell_quote "$i")";;
-				*)	fs="-fstype $(shell_quote "${i#?}")";;
+				\!*)	fs="! -fstype $q";;
+				*)	fs="-fstype $q";;
 				esac
 				case "$fs" in
 				'')	;;
