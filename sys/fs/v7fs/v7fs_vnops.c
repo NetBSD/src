@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.2 2011/07/13 12:22:49 uch Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.3 2011/07/13 12:28:57 uch Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.2 2011/07/13 12:22:49 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.3 2011/07/13 12:28:57 uch Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -886,6 +886,9 @@ readdir_subr(struct v7fs_self *fs, void *ctx, v7fs_daddr_t blk, size_t sz)
 		}
 	}
 	scratch_free(fs, buf);
+
+	if (p->cnt == p->end)
+		return V7FS_ITERATOR_BREAK;
 
 	return error;
 }
