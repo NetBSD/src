@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.63 2011/06/23 08:10:35 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.64 2011/07/13 07:34:55 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.63 2011/06/23 08:10:35 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.64 2011/07/13 07:34:55 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -397,19 +397,19 @@ acpicpu_md_cstate_stop(void)
 }
 
 /*
- * Called with interrupts disabled.
- * Caller should enable interrupts after return.
+ * Called with interrupts enabled.
  */
 void
 acpicpu_md_cstate_enter(int method, int state)
 {
 	struct cpu_info *ci = curcpu();
 
+	KASSERT(ci->ci_ilevel == IPL_NONE);
+
 	switch (method) {
 
 	case ACPICPU_C_STATE_FFH:
 
-		x86_enable_intr();
 		x86_monitor(&ci->ci_want_resched, 0, 0);
 
 		if (__predict_false(ci->ci_want_resched != 0))
@@ -420,8 +420,12 @@ acpicpu_md_cstate_enter(int method, int state)
 
 	case ACPICPU_C_STATE_HALT:
 
-		if (__predict_false(ci->ci_want_resched != 0))
+		x86_disable_intr();
+
+		if (__predict_false(ci->ci_want_resched != 0)) {
+			x86_enable_intr();
 			return;
+		}
 
 		x86_stihlt();
 		break;
