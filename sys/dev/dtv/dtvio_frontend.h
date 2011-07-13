@@ -1,4 +1,4 @@
-/* $NetBSD: dtvio_frontend.h,v 1.1 2011/07/09 14:46:56 jmcneill Exp $ */
+/* $NetBSD: dtvio_frontend.h,v 1.2 2011/07/13 23:16:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -256,6 +256,7 @@ struct dvb_diseqc_slave_reply {
 typedef enum fe_sec_voltage {
 	SEC_VOLTAGE_13,
 	SEC_VOLTAGE_18,
+	SEC_VOLTAGE_OFF,
 } fe_sec_voltage_t;
 
 /* SEC continuous tone */
