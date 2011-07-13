@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.159 2011/07/07 01:26:16 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.160 2011/07/13 22:50:11 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.159 2011/07/07 01:26:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 2011/07/13 22:50:11 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -104,18 +104,23 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.159 2011/07/07 01:26:16 mrg Exp $");
 #include "cuda.h"
 
 struct genfb_colormap_callback gfb_cb;
-struct genfb_parameter_callback gpc;
+struct genfb_parameter_callback gpc_backlight, gpc_brightness;
 
 /*
- * this is bogus - we need to read the actual default from the PMU and then
- * put it here
+ * OpenFirmware gives us no way to check the brightness level or the backlight
+ * state so we assume the backlight is on and about 4/5 up which seems 
+ * reasonable for most laptops
  */
-int backlight_level = 200;
+int backlight_state = 1;
+int brightness_level = 200;
 
 static void of_set_palette(void *, int, int, int, int);
 static void add_model_specifics(prop_dictionary_t);
-static void of_set_backlight(void *, int);
-static int of_get_backlight(void *);
+static int of_get_backlight(void *, int *);
+static int of_set_backlight(void *, int);
+static int of_get_brightness(void *, int *);
+static int of_set_brightness(void *, int);
+static int of_upd_brightness(void *, int);
 
 void
 initppc(u_int startkernel, u_int endkernel, char *args)
@@ -264,7 +269,7 @@ void
 copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 {
 	uint32_t temp;
-	uint64_t cmap_cb, backlight_cb;
+	uint64_t cmap_cb, backlight_cb, brightness_cb;
 	int have_backlight = 0;
 
 	if (node != console_node) {
@@ -336,19 +341,21 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 		have_backlight = 1;
 	}
 	if (have_backlight) {
-		gpc.gpc_cookie = (void *)console_instance;
-		gpc.gpc_set_parameter = of_set_backlight;
-		gpc.gpc_get_parameter = of_get_backlight;
-		backlight_cb = (uint64_t)(uintptr_t)&gpc;
-		prop_dictionary_set_uint64(dict, "backlight_callback", 
+		gpc_backlight.gpc_cookie = (void *)console_instance;
+		gpc_backlight.gpc_set_parameter = of_set_backlight;
+		gpc_backlight.gpc_get_parameter = of_get_backlight;
+		gpc_backlight.gpc_upd_parameter = NULL;
+		backlight_cb = (uint64_t)&gpc_backlight;
+		prop_dictionary_set_uint64(dict, "backlight_callback",
 		    backlight_cb);
-		/*
-		 * since we don't know how to read the backlight level without
-		 * access to the PMU we just set it to the default defined
-		 * above so the hotkeys work as expected
-		 */
-		OF_call_method_1("set-contrast", console_instance, 1, 
-		    backlight_level);
+
+		gpc_brightness.gpc_cookie = (void *)console_instance;
+		gpc_brightness.gpc_set_parameter = of_set_brightness;
+		gpc_brightness.gpc_get_parameter = of_get_brightness;
+		gpc_brightness.gpc_upd_parameter = of_upd_brightness;
+		brightness_cb = (uint64_t)&gpc_brightness;
+		prop_dictionary_set_uint64(dict, "brightness_callback",
+		    brightness_cb);
 	}
 }
 
@@ -374,25 +381,70 @@ of_set_palette(void *cookie, int index, int r, int g, int b)
 	OF_call_method_1("color!", ih, 4, r, g, b, index);
 }
 
-static void
-of_set_backlight(void *cookie, int level)
+static int
+of_get_backlight(void *cookie, int *state)
 {
-	int ih = (int)cookie;
-
-	if (level < 0) level = 0;
-	if (level > 255) level = 255;
-	backlight_level = level;
-	OF_call_method_1("set-contrast", ih, 1, level);
+	if (backlight_state < 0)
+		return ENODEV;
+	*state = backlight_state;
+	return 0;
 }
 
 static int
-of_get_backlight(void *cookie)
+of_set_backlight(void *cookie, int state)
 {
+	int ih = (int)cookie;
 
+	KASSERT(state >= 0 && state <= 1);
+
+	backlight_state = state;
+	if (state)
+		OF_call_method_1("backlight-on", ih, 0);
+	else
+		OF_call_method_1("backlight-off", ih, 0);
+
+	return 0;	/* XXX or use return value of OF_call_method_1? */
+}
+
+static int
+of_get_brightness(void *cookie, int *level)
+{
 	/*
-	 * we don't know how to read the backlight level from OF alone - we
-	 * should read the default from the PMU and then just cache whatever
-	 * we set last
+	 * We don't know how to read the brightness level from OF alone - we
+	 * should read the value from the PMU.  Here, we just return whatever
+	 * we set last (if any).
 	 */
-	return backlight_level;
+	if (brightness_level < 0)
+		return ENODEV;
+	*level = brightness_level;
+	return 0;
+}
+
+static int
+of_set_brightness(void *cookie, int level)
+{
+	int ih = (int)cookie;
+
+	KASSERT(level >= 0 && level <= 255);
+
+	brightness_level = level;
+	OF_call_method_1("set-contrast", ih, 1, brightness_level);
+
+	return 0;	/* XXX or use return value of OF_call_method_1? */
+}
+
+static int
+of_upd_brightness(void *cookie, int delta)
+{
+	int ih = (int)cookie;
+
+	if (brightness_level < 0)
+		return ENODEV;
+
+	brightness_level += delta;
+	if (brightness_level < 0) brightness_level = 0;
+	if (brightness_level > 255) brightness_level = 255;
+	OF_call_method_1("set-contrast", ih, 1, brightness_level);
+
+	return 0;	/* XXX or use return value of OF_call_method_1? */
 }
