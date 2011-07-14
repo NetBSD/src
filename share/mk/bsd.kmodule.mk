@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.30 2011/06/20 07:44:00 mrg Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.31 2011/07/14 18:12:35 matt Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -33,6 +33,8 @@ CFLAGS+=	-fno-strict-aliasing -Wno-pointer-sign
 CFLAGS+=	-mlong-calls
 .elif ${MACHINE_CPU} == "powerpc"
 CFLAGS+=	-mlongcall
+.elif ${MACHINE_CPU} == "vax"
+CFLAGS+=	-fno-pic
 .endif
 
 # evbppc needs some special help
