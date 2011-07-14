@@ -1,4 +1,4 @@
-/* $NetBSD: tvpll_tuners.c,v 1.1 2011/07/11 00:01:52 jakllsch Exp $ */
+/* $NetBSD: tvpll_tuners.c,v 1.2 2011/07/14 23:45:26 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tvpll_tuners.c,v 1.1 2011/07/11 00:01:52 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tvpll_tuners.c,v 1.2 2011/07/14 23:45:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <dev/i2c/tvpllvar.h>
@@ -46,7 +46,7 @@ struct tvpll_data tvpll_tuv1236d_pll = {
 };
 
 static struct tvpll_entry tdvs_h06xf_pll_entries[] = {
-	{ 160000000, 62500, 0xce, 0x01 },
+	{ 165000000, 62500, 0xce, 0x01 },
         { 450000000, 62500, 0xce, 0x02 },
 	{ 999999999, 62500, 0xce, 0x04 },
 };
