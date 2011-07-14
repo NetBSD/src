@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.109 2011/07/12 16:59:49 dholland Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.110 2011/07/14 16:27:11 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.109 2011/07/12 16:59:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.110 2011/07/14 16:27:11 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -722,8 +722,8 @@ bad:
 
 /*
  * Construct a new directory entry after a call to namei, using the
- * parameters that it left in the componentname argument cnp. The
- * argument ip is the inode to which the new directory entry will refer.
+ * name in the componentname argument cnp. The argument ip is the
+ * inode to which the new directory entry will refer.
  */
 void
 ufs_makedirentry(struct inode *ip, struct componentname *cnp,
@@ -741,12 +741,32 @@ ufs_makedirentry(struct inode *ip, struct componentname *cnp,
 
 /*
  * Write a directory entry after a call to namei, using the parameters
- * that it left in nameidata. The argument dirp is the new directory
- * entry contents. Dvp is a pointer to the directory to be written,
- * which was left locked by namei. Remaining parameters (dp->i_offset,
- * dp->i_count) indicate how the space for the new entry is to be obtained.
- * Non-null bp indicates that a directory is being created (for the
- * soft dependency code).
+ * that ufs_lookup left in nameidata and in the ufs_lookup_results.
+ *
+ * DVP is the directory to be updated. It must be locked.
+ * ULR is the ufs_lookup_results structure from the final lookup step.
+ * TVP is not used. (XXX: why is it here? remove it)
+ * DIRP is the new directory entry contents.
+ * CNP is the componentname from the final lookup step.
+ * NEWDIRBP is not used and (XXX) should be removed. The previous
+ * comment here said it was used by the now-removed softupdates code.
+ *
+ * The link count of the target inode is *not* incremented; the
+ * caller does that.
+ *
+ * If ulr->ulr_count is 0, ufs_lookup did not find space to insert the
+ * directory entry. ulr_offset, which is the place to put the entry,
+ * should be on a block boundary (and should be at the end of the
+ * directory AFAIK) and a fresh block is allocated to put the new
+ * directory entry in.
+ *
+ * If ulr->ulr_count is not zero, ufs_lookup found a slot to insert
+ * the entry into. This slot ranges from ulr_offset to ulr_offset +
+ * ulr_count. However, this slot may already be partially populated
+ * requiring compaction. See notes below.
+ *
+ * Furthermore, if ulr_count is not zero and ulr_endoff is not the
+ * same as i_size, the directory is truncated to size ulr_endoff.
  */
 int
 ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
@@ -832,8 +852,8 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	}
 
 	/*
-	 * If dp->i_count is non-zero, then namei found space for the new
-	 * entry in the range dp->i_offset to dp->i_offset + dp->i_count
+	 * If ulr_count is non-zero, then namei found space for the new
+	 * entry in the range ulr_offset to url_offset + url_count
 	 * in the directory. To use this space, we may have to compact
 	 * the entries located there, by copying them together towards the
 	 * beginning of the block, leaving the free space in one usable
@@ -976,16 +996,39 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 }
 
 /*
- * Remove a directory entry after a call to namei, using
- * the parameters which it left in nameidata. The entry
- * dp->i_offset contains the offset into the directory of the
- * entry to be eliminated.  The dp->i_count field contains the
- * size of the previous record in the directory.  If this
- * is 0, the first entry is being deleted, so we need only
- * zero the inode number to mark the entry as free.  If the
- * entry is not the first in the directory, we must reclaim
- * the space of the now empty record by adding the record size
- * to the size of the previous entry.
+ * Remove a directory entry after a call to namei, using the
+ * parameters that ufs_lookup left in nameidata and in the
+ * ufs_lookup_results.
+ *
+ * DVP is the directory to be updated. It must be locked.
+ * ULR is the ufs_lookup_results structure from the final lookup step.
+ * IP, if not null, is the inode being unlinked.
+ * FLAGS may contain DOWHITEOUT.
+ * ISRMDIR is not used and (XXX) should be removed.
+ *
+ * If FLAGS contains DOWHITEOUT the entry is replaced with a whiteout
+ * instead of being cleared.
+ *
+ * ulr->ulr_offset contains the position of the directory entry
+ * to be removed.
+ *
+ * ulr->ulr_reclen contains the size of the directory entry to be
+ * removed.
+ *
+ * ulr->ulr_count contains the size of the *previous* directory
+ * entry. This allows finding it, for free space management. If
+ * ulr_count is 0, the target entry is at the beginning of the
+ * directory. (Does this ever happen? The first entry should be ".",
+ * which should only be removed at rmdir time. Does rmdir come here
+ * to clear out the "." and ".." entries? Perhaps, but I doubt it.)
+ *
+ * The space is marked free by adding it to the record length (not
+ * name length) of the preceding entry. If the first entry becomes
+ * free, it is marked free by setting the inode number to 0.
+ *
+ * The link count of IP is decremented. Note that this is not the
+ * inverse behavior of ufs_direnter, which does not adjust link
+ * counts. Sigh.
  */
 int
 ufs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
@@ -1074,9 +1117,20 @@ out:
 }
 
 /*
- * Rewrite an existing directory entry to point at the inode
- * supplied.  The parameters describing the directory entry are
- * set up by a call to namei.
+ * Rewrite an existing directory entry to point at the inode supplied.
+ *
+ * DP is the directory to update.
+ * OFFSET is the position of the entry in question. It may come
+ * from ulr_offset of a ufs_lookup_results.
+ * OIP is the old inode the directory previously pointed to.
+ * NEWINUM is the number of the new inode.
+ * NEWTYPE is the new value for the type field of the directory entry.
+ * (This is ignored if the fs doesn't support that.)
+ * ISRMDIR is not used and (XXX) should be removed.
+ * IFLAGS are added to DP's inode flags.
+ *
+ * The link count of OIP is decremented. Note that the link count of
+ * the new inode is *not* incremented. Yay for symmetry.
  */
 int
 ufs_dirrewrite(struct inode *dp, off_t offset,
