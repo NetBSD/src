@@ -1,4 +1,4 @@
-/* $NetBSD: nxt2k.c,v 1.1 2011/07/11 00:30:23 jakllsch Exp $ */
+/* $NetBSD: nxt2k.c,v 1.2 2011/07/14 23:44:34 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nxt2k.c,v 1.1 2011/07/11 00:30:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nxt2k.c,v 1.2 2011/07/14 23:44:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: nxt2k.c,v 1.1 2011/07/11 00:30:23 jakllsch Exp $");
 #include <sys/kmem.h>
 #include <sys/condvar.h>
 #include <sys/mutex.h>
+#include <sys/module.h>
 
 #include <dev/firmload.h>
 
@@ -137,7 +138,7 @@ static int
 nxt2k_readreg(struct nxt2k *nxt, uint8_t reg, uint8_t *data, size_t len)
 {
 	uint8_t buf, len2, attr;
-	int i;
+	unsigned int i;
 
 	nxt2k_writedata(nxt, 0x35, &reg, 1);
 
@@ -827,4 +828,14 @@ int
 nxt2k_set_modulation(struct nxt2k *nxt, fe_modulation_t modulation)
 {
 	return nxt2k_fe_set_frontend(nxt, modulation);
+}
+
+MODULE(MODULE_CLASS_DRIVER, nxt2k, NULL);
+
+static int
+nxt2k_modcmd(modcmd_t cmd, void *opaque)
+{
+	if (cmd == MODULE_CMD_INIT || cmd == MODULE_CMD_FINI)
+		return 0;
+	return ENOTTY;
 }
