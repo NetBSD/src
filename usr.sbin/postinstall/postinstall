@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.118 2011/05/27 09:28:42 plunky Exp $
+# $NetBSD: postinstall,v 1.119 2011/07/14 09:31:19 plunky Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -354,6 +354,29 @@ rcconf_is_set()
 	)
 }
 
+# rcvar_is_enabled var
+#	Check if rcvar is enabled
+#
+rcvar_is_enabled()
+{
+	[ $# -eq 1 ] || err 3 "USAGE: rcvar_is_enabled var"
+	_rcie_var="$1"
+	(
+		[ -f "${DEST_DIR}/etc/rc.conf" ] && . "${DEST_DIR}/etc/rc.conf"
+		eval _rcie_val="\${${_rcie_var}}"
+		case $_rcie_val in
+		#	"yes", "true", "on", or "1"
+		[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+			exit 0
+			;;
+
+		*)
+			exit 1
+			;;
+		esac
+	)
+}
+
 # find_file_in_dirlist() file message dir1 [...] --
 #	Find which directory file is in, and sets ${dir} to match.
 #	Returns 0 if matched, otherwise 1 (and sets ${dir} to "").
@@ -675,7 +698,7 @@ do_bluetooth()
 		notfixed="${NOT_FIXED}"
 	fi
 	for _v in btattach btconfig btdevctl; do
-		if rcconf_is_set "${op}" "${_v}" "${_v}"; then
+		if rcvar_is_enabled "${_v}"; then
 			msg \
     "${_v} is obsolete in rc.conf(5)${notfixed}: use bluetooth=YES"
 			failed=$(( ${failed} + 1 ))
