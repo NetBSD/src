@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.12 2011/07/13 23:48:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.13 2011/07/14 21:38:57 joerg Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
 
 .if !defined(HOSTPROG)
 SYMLINKS+=	clang ${BINDIR}/clang++
+SYMLINKS+=	clang ${BINDIR}/clang-cpp
 .endif
 
 .include <bsd.init.mk>
