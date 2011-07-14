@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2011/07/10 23:49:31 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2011/07/14 05:31:16 matt Exp $
 #
 #	etc.evbmips/Makefile.inc -- evbmips-specific etc Makefile targets
 #
@@ -12,7 +12,7 @@ KERNEL_SUFFIXES=	srec
 KERNEL_SETS=		ALCHEMY DBAU1500 DBAU1550 MALTA MTX-1 OMSAL400
 BUILD_KERNELS=		INSTALL_OMSAL400 INSTALL_MALTA
 
-KERNEL_SETS+=		P4032 P5064-64 P6032
+KERNEL_SETS+=		P4032 P5064 P6032
 
 .elif ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
 KERNEL_SETS=		MALTA32 MALTA64 XLSATX32 XLSATX64
