@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1643 2011/07/09 14:52:02 jmcneill Exp $
+#	$NetBSD: mi,v 1.1644 2011/07/14 21:38:56 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -15,6 +15,7 @@
 ./usr/bin/cc					comp-c-bin		gcccmds
 ./usr/bin/clang					comp-c-bin		llvm
 ./usr/bin/clang++				comp-c-bin		llvm
+./usr/bin/clang-cpp				comp-c-bin		llvm
 ./usr/bin/config				comp-util-bin
 ./usr/bin/crunchgen				comp-c-bin
 ./usr/bin/crunchide				comp-c-bin
