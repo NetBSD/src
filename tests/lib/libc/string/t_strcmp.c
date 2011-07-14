@@ -1,4 +1,4 @@
-/* $NetBSD: t_strcmp.c,v 1.2 2011/07/07 09:31:27 jruoho Exp $ */
+/* $NetBSD: t_strcmp.c,v 1.3 2011/07/14 07:33:20 jruoho Exp $ */
 
 /*
  * Written by J.T. Conklin <jtc@acorntoolworks.com>
@@ -108,22 +108,22 @@ ATF_TC_BODY(strcmp_simple, tc)
 	char buf1[10] = "xxx";
 	char buf2[10] = "xxy";
 
-	ATF_REQUIRE(strcmp(buf1, buf1) == 0);
-	ATF_REQUIRE(strcmp(buf2, buf2) == 0);
+	ATF_CHECK(strcmp(buf1, buf1) == 0);
+	ATF_CHECK(strcmp(buf2, buf2) == 0);
 
-	ATF_REQUIRE(strcmp("xöx", "xox") > 0);
-	ATF_REQUIRE(strcmp("xxx", "xxxyyy") < 0);
-	ATF_REQUIRE(strcmp("xxxyyy", "xxx") > 0);
+	ATF_CHECK(strcmp("xöx", "xox") > 0);
+	ATF_CHECK(strcmp("xxx", "xxxyyy") < 0);
+	ATF_CHECK(strcmp("xxxyyy", "xxx") > 0);
 
-	ATF_REQUIRE(strcmp(buf1 + 0, buf2 + 0) < 0);
-	ATF_REQUIRE(strcmp(buf1 + 1, buf2 + 1) < 0);
-	ATF_REQUIRE(strcmp(buf1 + 2, buf2 + 2) < 0);
-	ATF_REQUIRE(strcmp(buf1 + 3, buf2 + 3) == 0);
+	ATF_CHECK(strcmp(buf1 + 0, buf2 + 0) < 0);
+	ATF_CHECK(strcmp(buf1 + 1, buf2 + 1) < 0);
+	ATF_CHECK(strcmp(buf1 + 2, buf2 + 2) < 0);
+	ATF_CHECK(strcmp(buf1 + 3, buf2 + 3) == 0);
 
-	ATF_REQUIRE(strcmp(buf2 + 0, buf1 + 0) > 0);
-	ATF_REQUIRE(strcmp(buf2 + 1, buf1 + 1) > 0);
-	ATF_REQUIRE(strcmp(buf2 + 2, buf1 + 2) > 0);
-	ATF_REQUIRE(strcmp(buf2 + 3, buf1 + 3) == 0);
+	ATF_CHECK(strcmp(buf2 + 0, buf1 + 0) > 0);
+	ATF_CHECK(strcmp(buf2 + 1, buf1 + 1) > 0);
+	ATF_CHECK(strcmp(buf2 + 2, buf1 + 2) > 0);
+	ATF_CHECK(strcmp(buf2 + 3, buf1 + 3) == 0);
 }
 
 ATF_TP_ADD_TCS(tp)
