@@ -1,4 +1,4 @@
-/* $NetBSD: t_mincore.c,v 1.2 2011/07/14 08:09:48 jruoho Exp $ */
+/* $NetBSD: t_mincore.c,v 1.3 2011/07/14 10:24:56 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mincore.c,v 1.2 2011/07/14 08:09:48 jruoho Exp $");
+__RCSID("$NetBSD: t_mincore.c,v 1.3 2011/07/14 10:24:56 jruoho Exp $");
 
 #include <sys/mman.h>
 #include <sys/shm.h>
@@ -130,118 +130,13 @@ ATF_TC_BODY(mincore_err, tc)
 	ATF_REQUIRE(munmap(map, page) == 0);
 }
 
-ATF_TC_WITH_CLEANUP(mincore_incore);
-ATF_TC_HEAD(mincore_incore, tc)
+ATF_TC_WITH_CLEANUP(mincore_resid);
+ATF_TC_HEAD(mincore_resid, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test that mincore(2) works");
+	atf_tc_set_md_var(tc, "descr", "Test page residency with mincore(2)");
 }
 
-ATF_TC_BODY(mincore_incore, tc)
-{
-	char *buf, *vec, *map = MAP_FAILED;
-	const char *str = NULL;
-	const size_t n = 3;
-	ssize_t tot;
-	int fd, rv;
-	size_t i, j;
-
-	/*
-	 * Create a temporary file, write
-	 * few pages to it, and map the file.
-	 */
-	buf = calloc(n, page);
-	vec = calloc(n, page);
-
-	if (buf == NULL || vec == NULL)
-		return;
-
-	for (i = 0; i < (size_t)page * n; i++)
-		buf[i] = 'x';
-
-	fd = open(path, O_RDWR | O_CREAT, 0600);
-
-	if (fd < 0) {
-		str = "failed to open";
-		goto out;
-	}
-
-	tot = 0;
-
-	while (tot < page * (long)n) {
-
-		rv = write(fd, buf, sizeof(buf));
-
-		if (rv < 0) {
-			str = "failed to write";
-			goto out;
-		}
-
-		tot += rv;
-	}
-
-	map = mmap(NULL, page * n, PROT_READ | PROT_WRITE,
-	    MAP_FILE | MAP_PRIVATE, fd, 0);
-
-	if (map == MAP_FAILED) {
-		str = "failed to map";
-		goto out;
-	}
-
-	/*
-	 * Lock the mapping such that only
-	 * in-core page status is returned.
-	 */
-	if (mlock(map, page * n) != 0) {
-		str = "failed to lock";
-		goto out;
-	}
-
-	if (mincore(map, page * n, vec) != 0) {
-		str = "mincore failed";
-		goto out;
-	}
-
-	/*
-	 * Check that the in-core pages
-	 * match the locked pages.
-	 */
-	for (i = j = 0; i < (size_t)page * n; i++) {
-
-		if (vec[i] != 0)
-			j++;
-	}
-
-	if (j != n)
-		str = "mismatch of in-core pages";
-
-out:
-	free(buf);
-	free(vec);
-
-	(void)close(fd);
-	(void)unlink(path);
-
-	if (map != MAP_FAILED) {
-		(void)munlock(map, page);
-		(void)munmap(map, page);
-	}
-
-	if (str != NULL)
-		atf_tc_fail("%s", str);
-}
-
-ATF_TC_CLEANUP(mincore_incore, tc)
-{
-	(void)unlink(path);
-}
-
-ATF_TC_WITH_CLEANUP(mincore_residency);
-ATF_TC_HEAD(mincore_residency, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "mmap(2) residency with mincore(2)");
-}
-
-ATF_TC_BODY(mincore_residency, tc)
+ATF_TC_BODY(mincore_resid, tc)
 {
 	void *addr, *addr2, *addr3, *buf;
 	size_t npgs = 0;
@@ -306,6 +201,9 @@ ATF_TC_BODY(mincore_residency, tc)
 	if (addr == MAP_FAILED)
 		return;
 
+	/*
+	 * Check that the in-core pages match the locked pages.
+	 */
 	ATF_REQUIRE(check_residency(addr, npgs) == 0);
 	ATF_REQUIRE(mlockall(MCL_CURRENT|MCL_FUTURE) == 0);
 	ATF_REQUIRE(check_residency(addr, npgs) == npgs);
@@ -338,7 +236,7 @@ ATF_TC_BODY(mincore_residency, tc)
 	(void)unlink(path);
 }
 
-ATF_TC_CLEANUP(mincore_residency, tc)
+ATF_TC_CLEANUP(mincore_resid, tc)
 {
 	(void)unlink(path);
 }
@@ -398,8 +296,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_REQUIRE(page >= 0);
 
 	ATF_TP_ADD_TC(tp, mincore_err);
-	ATF_TP_ADD_TC(tp, mincore_incore);
-	ATF_TP_ADD_TC(tp, mincore_residency);
+	ATF_TP_ADD_TC(tp, mincore_resid);
 	ATF_TP_ADD_TC(tp, mincore_shmseg);
 
 	return atf_no_error();
