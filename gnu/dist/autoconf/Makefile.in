@@ -427,7 +427,7 @@ maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 #   is changed, acversion.m4 is built only after the new version number is
 #   propagated to the Makefile.  (Libtool uses the same guarantee.)
 
-$(srcdir)/acversion.m4: $(srcdir)/acversion.in $(srcdir)/configure.ac
+$(srcdir)/NetBSD_DISABLED_acversion.m4: $(srcdir)/acversion.in $(srcdir)/configure.ac
 	sed 's,@VERSION\@,$(VERSION),g' $(srcdir)/acversion.in >acversion.tm4
 	mv acversion.tm4 $(srcdir)/acversion.m4
 
