@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.192 2011/07/12 16:59:49 dholland Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.193 2011/07/14 16:27:43 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.192 2011/07/12 16:59:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.193 2011/07/14 16:27:43 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -989,6 +989,7 @@ ufs_rename(void *v)
 	struct mount		*mp;
 	struct direct		*newdir;
 	int			doingdirectory, oldparent, newparent, error;
+	struct ufs_lookup_results from_ulr, to_ulr;
 
 #ifdef WAPBL
 	if (ap->a_tdvp->v_mount->mnt_wapbl)
@@ -1002,6 +1003,12 @@ ufs_rename(void *v)
 	tcnp = ap->a_tcnp;
 	fcnp = ap->a_fcnp;
 	doingdirectory = oldparent = newparent = error = 0;
+
+	/* save the supplemental lookup results as they currently exist */
+	from_ulr = VTOI(fdvp)->i_crap;
+	to_ulr = VTOI(tdvp)->i_crap;
+	UFS_CHECK_CRAPCOUNTER(VTOI(fdvp));
+	UFS_CHECK_CRAPCOUNTER(VTOI(tdvp));
 
 	/*
 	 * Check for cross-device rename.
@@ -1145,6 +1152,11 @@ ufs_rename(void *v)
 			goto out;
 		}
 		dp = VTOI(tdvp);
+
+		/* update the supplemental reasults */
+		to_ulr = dp->i_crap;
+		UFS_CHECK_CRAPCOUNTER(dp);
+
 		xp = NULL;
 		if (tvp)
 			xp = VTOI(tvp);
@@ -1182,7 +1194,7 @@ ufs_rename(void *v)
 		}
 		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 		ufs_makedirentry(ip, tcnp, newdir);
-		error = ufs_direnter(tdvp, &VTOI(tdvp)->i_crap,
+		error = ufs_direnter(tdvp, &to_ulr,
 				     NULL, newdir, tcnp, NULL);
 		pool_cache_put(ufs_direct_cache, newdir);
 		if (error != 0) {
@@ -1239,7 +1251,7 @@ ufs_rename(void *v)
 			error = EISDIR;
 			goto bad;
 		}
-		if ((error = ufs_dirrewrite(dp, dp->i_crap.ulr_offset,
+		if ((error = ufs_dirrewrite(dp, to_ulr.ulr_offset,
 		    xp, ip->i_number,
 		    IFTODT(ip->i_mode), doingdirectory && newparent ?
 		    newparent : doingdirectory, IN_CHANGE | IN_UPDATE)) != 0)
@@ -1282,6 +1294,10 @@ ufs_rename(void *v)
 		vrele(ap->a_fvp);
 		goto out2;
 	}
+	/* update supplemental lookup results */
+	from_ulr = VTOI(fdvp)->i_crap;
+	UFS_CHECK_CRAPCOUNTER(VTOI(fdvp));
+
 	if (fvp != NULL) {
 		xp = VTOI(fvp);
 		dp = VTOI(fdvp);
@@ -1316,15 +1332,11 @@ ufs_rename(void *v)
 		 */
 		if (doingdirectory && newparent) {
 			KASSERT(dp != NULL);
-
-			/* match old behavior; probably dead assignment XXX */
-			xp->i_crap.ulr_offset = mastertemplate.dot_reclen;
-
 			ufs_dirrewrite(xp, mastertemplate.dot_reclen,
 			    dp, newparent, DT_DIR, 0, IN_CHANGE);
 			cache_purge(fdvp);
 		}
-		error = ufs_dirremove(fdvp, &VTOI(fdvp)->i_crap,
+		error = ufs_dirremove(fdvp, &from_ulr,
 				      xp, fcnp->cn_flags, 0);
 		xp->i_flag &= ~IN_RENAME;
 	}
