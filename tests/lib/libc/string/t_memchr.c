@@ -1,4 +1,4 @@
-/* $NetBSD: t_memchr.c,v 1.1 2011/07/07 08:59:32 jruoho Exp $ */
+/* $NetBSD: t_memchr.c,v 1.2 2011/07/14 05:46:04 jruoho Exp $ */
 
 /*
  * Written by J.T. Conklin <jtc@acorntoolworks.com>
@@ -14,7 +14,7 @@
 ATF_TC(memchr_basic);
 ATF_TC_HEAD(memchr_basic, tc)
 {
-        atf_tc_set_md_var(tc, "descr", "Test memchr(3) results");
+        atf_tc_set_md_var(tc, "descr", "Test memchr(3) results, #1");
 }
 
 ATF_TC_BODY(memchr_basic, tc)
@@ -128,10 +128,73 @@ ATF_TC_BODY(memchr_basic, tc)
 	}
 }
 
+ATF_TC(memchr_simple);
+ATF_TC_HEAD(memchr_simple, tc)
+{
+        atf_tc_set_md_var(tc, "descr", "Test memchr(3) results, #2");
+}
+
+ATF_TC_BODY(memchr_simple, tc)
+{
+	char buf[] = "abcdefg";
+	short i = 7;
+
+	ATF_CHECK(memchr(buf, 'a', 0) == NULL);
+	ATF_CHECK(memchr(buf, 'g', 0) == NULL);
+	ATF_CHECK(memchr(buf, 'x', 7) == NULL);
+
+	ATF_CHECK(memchr("\0", 'x', 0) == NULL);
+	ATF_CHECK(memchr("\0", 'x', 1) == NULL);
+
+	while (i <= 14) {
+
+		ATF_CHECK(memchr(buf, 'a', i) == buf + 0);
+		ATF_CHECK(memchr(buf, 'b', i) == buf + 1);
+		ATF_CHECK(memchr(buf, 'c', i) == buf + 2);
+		ATF_CHECK(memchr(buf, 'd', i) == buf + 3);
+		ATF_CHECK(memchr(buf, 'e', i) == buf + 4);
+		ATF_CHECK(memchr(buf, 'f', i) == buf + 5);
+		ATF_CHECK(memchr(buf, 'g', i) == buf + 6);
+
+		i *= 2;
+	}
+}
+
+ATF_TC(memrchr_simple);
+ATF_TC_HEAD(memrchr_simple, tc)
+{
+        atf_tc_set_md_var(tc, "descr", "Test memrchr(3) results");
+}
+
+ATF_TC_BODY(memrchr_simple, tc)
+{
+	char buf[] = "abcdabcd";
+	short i = 8;
+
+	ATF_CHECK(memrchr(buf, 'a', 0) == NULL);
+	ATF_CHECK(memrchr(buf, 'g', 0) == NULL);
+	ATF_CHECK(memrchr(buf, 'x', 8) == NULL);
+
+	ATF_CHECK(memrchr("\0", 'x', 0) == NULL);
+	ATF_CHECK(memrchr("\0", 'x', 1) == NULL);
+
+	while (i <= 16) {
+
+		ATF_CHECK(memrchr(buf, 'a', i) == buf + 4);
+		ATF_CHECK(memrchr(buf, 'b', i) == buf + 5);
+		ATF_CHECK(memrchr(buf, 'c', i) == buf + 6);
+		ATF_CHECK(memrchr(buf, 'd', i) == buf + 7);
+
+		i *= 2;
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, memchr_basic);
+	ATF_TP_ADD_TC(tp, memchr_simple);
+	ATF_TP_ADD_TC(tp, memrchr_simple);
 
 	return atf_no_error();
 }
