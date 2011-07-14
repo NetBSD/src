@@ -1,4 +1,4 @@
-/* $NetBSD: t_getcontext.c,v 1.2 2011/07/07 07:27:49 jruoho Exp $ */
+/* $NetBSD: t_getcontext.c,v 1.3 2011/07/14 04:59:14 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_getcontext.c,v 1.2 2011/07/07 07:27:49 jruoho Exp $");
+__RCSID("$NetBSD: t_getcontext.c,v 1.3 2011/07/14 04:59:14 jruoho Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -81,13 +81,6 @@ ATF_TC_HEAD(setcontext_err, tc)
 
 ATF_TC_BODY(setcontext_err, tc)
 {
-	ucontext_t uc;
-
-	uc.uc_link = NULL;
-	uc.uc_flags = -1;
-
-	errno = 0;
-	ATF_REQUIRE_ERRNO(EINVAL, setcontext(&uc) == -1);
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EFAULT, setcontext((void *)-1) == -1);
