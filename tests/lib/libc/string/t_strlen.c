@@ -1,4 +1,4 @@
-/* $NetBSD: t_strlen.c,v 1.4 2011/07/12 12:08:07 njoly Exp $ */
+/* $NetBSD: t_strlen.c,v 1.5 2011/07/14 07:33:20 jruoho Exp $ */
 
 /*
  * Written by J.T. Conklin <jtc@acorntoolworks.com>
@@ -178,14 +178,14 @@ ATF_TC_BODY(strnlen_basic, tc)
 
 	buf[0] = '\0';
 
-	ATF_REQUIRE(strnlen(buf, 000) == 0);
-	ATF_REQUIRE(strnlen(buf, 111) == 0);
+	ATF_CHECK(strnlen(buf, 000) == 0);
+	ATF_CHECK(strnlen(buf, 111) == 0);
 
-	ATF_REQUIRE(strnlen("xxx", 0) == 0);
-	ATF_REQUIRE(strnlen("xxx", 1) == 1);
-	ATF_REQUIRE(strnlen("xxx", 2) == 2);
-	ATF_REQUIRE(strnlen("xxx", 3) == 3);
-	ATF_REQUIRE(strnlen("xxx", 9) == 3);
+	ATF_CHECK(strnlen("xxx", 0) == 0);
+	ATF_CHECK(strnlen("xxx", 1) == 1);
+	ATF_CHECK(strnlen("xxx", 2) == 2);
+	ATF_CHECK(strnlen("xxx", 3) == 3);
+	ATF_CHECK(strnlen("xxx", 9) == 3);
 }
 
 ATF_TP_ADD_TCS(tp)
