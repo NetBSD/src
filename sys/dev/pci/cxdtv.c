@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.1 2011/07/11 00:46:03 jakllsch Exp $ */
+/* $NetBSD: cxdtv.c,v 1.2 2011/07/14 23:47:45 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.1 2011/07/11 00:46:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.2 2011/07/14 23:47:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.1 2011/07/11 00:46:03 jakllsch Exp $");
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
-
+#include <sys/module.h>
 #include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.1 2011/07/11 00:46:03 jakllsch Exp $");
 #include <dev/i2c/tvpll_tuners.h>
 
 #include <dev/i2c/nxt2kvar.h>
+#include <dev/i2c/lg3303var.h>
 
 #include <dev/pci/cxdtvreg.h>
 #include <dev/pci/cxdtvvar.h>
@@ -63,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.1 2011/07/11 00:46:03 jakllsch Exp $");
 
 static int cxdtv_match(struct device *, struct cfdata *, void *);
 static void cxdtv_attach(struct device *, struct device *, void *);
+static int cxdtv_detach(struct device *, int);
 static int cxdtv_intr(void *);
 
 static bool cxdtv_resume(device_t, const pmf_qual_t *);
@@ -126,7 +128,7 @@ static struct cxdtv_sram_ch cxdtv_sram_chs[] = {
 };
 
 CFATTACH_DECL_NEW(cxdtv, sizeof(struct cxdtv_softc),
-    cxdtv_match, cxdtv_attach, NULL, NULL);
+    cxdtv_match, cxdtv_attach, cxdtv_detach, NULL);
 
 static int
 cxdtv_match(device_t parent, cfdata_t match, void *aux)
@@ -242,6 +244,12 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
+}
+
+static int
+cxdtv_detach(device_t self, int flags)
+{
+	return EBUSY;
 }
 
 static bool
@@ -425,6 +433,10 @@ cxdtv_mpeg_attach(struct cxdtv_softc *sc)
 	case CXDTV_DEMOD_NXT2004:
 		sc->sc_demod = nxt2k_open(sc->sc_dev, &sc->sc_i2c, 0x0a, 0);
 		break;
+	case CXDTV_DEMOD_LG3303:
+		sc->sc_demod = lg3303_open(sc->sc_dev, &sc->sc_i2c, 0x59,
+		    LG3303_CFG_SERIAL_INPUT);
+		break;
 	default:
 		break;
 	}
@@ -515,6 +527,9 @@ cxdtv_dtv_set_tuner(void *priv, const struct dvb_frontend_parameters *params)
 	case CXDTV_DEMOD_NXT2004:
 		error = nxt2k_set_modulation(sc->sc_demod, params->u.vsb.modulation);
 		break;
+	case CXDTV_DEMOD_LG3303:
+		error = lg3303_set_modulation(sc->sc_demod, params->u.vsb.modulation);
+		break;
 	default:
 		break;
 	}
@@ -531,6 +546,8 @@ cxdtv_dtv_get_status(void *priv)
 	switch(sc->sc_board->cb_demod) {
 	case CXDTV_DEMOD_NXT2004:
 		return nxt2k_get_dtv_status(sc->sc_demod);
+	case CXDTV_DEMOD_LG3303:
+		return lg3303_get_dtv_status(sc->sc_demod);
 	default:
 		return 0;
 	}
@@ -1068,4 +1085,33 @@ cxdtv_card_init_hd5500(struct cxdtv_softc *sc)
 	mutex_enter(&sc->sc_delaylock);
 	cv_timedwait(&sc->sc_delaycv, &sc->sc_delaylock, mstohz(15));
 	mutex_exit(&sc->sc_delaylock);
+}
+
+MODULE(MODULE_CLASS_DRIVER, cxdtv, "dtv,tvpll,nxt2k,lg3303");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+cxdtv_modcmd(modcmd_t cmd, void *opaque)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		return config_init_component(cfdriver_ioconf_cxdtv,
+		    cfattach_ioconf_cxdtv, cfdata_ioconf_cxdtv);
+#else
+		return 0;
+#endif
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		return config_fini_component(cfdriver_ioconf_cxdtv,
+		    cfattach_ioconf_cxdtv, cfdata_ioconf_cxdtv);
+#else
+		return 0;
+#endif
+	default:
+		return ENOTTY;
+	}
 }
