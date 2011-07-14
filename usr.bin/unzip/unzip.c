@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.14 2010/05/10 15:45:22 joerg Exp $ */
+/* $NetBSD: unzip.c,v 1.15 2011/07/14 06:35:30 wiz Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.14 2010/05/10 15:45:22 joerg Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.15 2011/07/14 06:35:30 wiz Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -449,7 +449,7 @@ handle_existing_file(char **path)
 			*path = NULL;
 			alen = 0;
 			len = getline(path, &alen, stdin);
-			if ((*path)[len - 1] != '\n')
+			if ((*path)[len - 1] == '\n')
 				(*path)[len - 1] = '\0';
 			return 0;
 		default:
