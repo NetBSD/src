@@ -1,4 +1,4 @@
-/* $NetBSD: t_memset.c,v 1.1 2011/06/03 06:39:52 jruoho Exp $ */
+/* $NetBSD: t_memset.c,v 1.2 2011/07/14 07:33:20 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_memset.c,v 1.1 2011/06/03 06:39:52 jruoho Exp $");
+__RCSID("$NetBSD: t_memset.c,v 1.2 2011/07/14 07:33:20 jruoho Exp $");
 
 #include <sys/stat.h>
 
@@ -142,16 +142,16 @@ ATF_TC_BODY(memset_struct, tc)
 
 	(void)memset(&st, 0, sizeof(struct stat));
 
-	ATF_REQUIRE(st.st_dev == 0);
-	ATF_REQUIRE(st.st_ino == 0);
-	ATF_REQUIRE(st.st_mode == 0);
-	ATF_REQUIRE(st.st_nlink == 0);
-	ATF_REQUIRE(st.st_uid == 0);
-	ATF_REQUIRE(st.st_gid == 0);
-	ATF_REQUIRE(st.st_rdev == 0);
-	ATF_REQUIRE(st.st_size == 0);
-	ATF_REQUIRE(st.st_atime == 0);
-	ATF_REQUIRE(st.st_mtime == 0);
+	ATF_CHECK(st.st_dev == 0);
+	ATF_CHECK(st.st_ino == 0);
+	ATF_CHECK(st.st_mode == 0);
+	ATF_CHECK(st.st_nlink == 0);
+	ATF_CHECK(st.st_uid == 0);
+	ATF_CHECK(st.st_gid == 0);
+	ATF_CHECK(st.st_rdev == 0);
+	ATF_CHECK(st.st_size == 0);
+	ATF_CHECK(st.st_atime == 0);
+	ATF_CHECK(st.st_mtime == 0);
 }
 
 static void
