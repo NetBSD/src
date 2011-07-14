@@ -1,4 +1,4 @@
-/* $NetBSD: tvpll.c,v 1.1 2011/07/11 00:01:52 jakllsch Exp $ */
+/* $NetBSD: tvpll.c,v 1.2 2011/07/14 23:45:43 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,13 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tvpll.c,v 1.1 2011/07/11 00:01:52 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tvpll.c,v 1.2 2011/07/14 23:45:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/syslog.h>
+#include <sys/module.h>
 
 #include <dev/dtv/dtvio.h>
 #include <dev/i2c/i2cvar.h>
@@ -135,4 +136,14 @@ tvpll_tune_dtv(struct tvpll *tvpll,
 	tvpll->frequency = fr;
 
 	return rv;
+}
+
+MODULE(MODULE_CLASS_DRIVER, tvpll, NULL);
+
+static int
+tvpll_modcmd(modcmd_t cmd, void *opaque)
+{
+	if (cmd == MODULE_CMD_INIT || cmd == MODULE_CMD_FINI)
+		return 0;
+	return ENOTTY;
 }
