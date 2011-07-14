@@ -1,4 +1,4 @@
-/* $NetBSD: t_mmap.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $ */
+/* $NetBSD: t_mmap.c,v 1.2 2011/07/14 11:08:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -28,14 +28,42 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*-
+ * Copyright (c)2004 YAMAMOTO Takashi,
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.2 2011/07/14 11:08:45 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
+#include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
 
+#include <atf-c.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -43,12 +71,13 @@ __RCSID("$NetBSD: t_mmap.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include <atf-c.h>
-
 static long	page = 0;
 static char	path[] = "mmap";
 static void	map_check(void *, int);
 static void	map_sighandler(int);
+static void	testloan(void *, void *, char, int);
+
+#define	BUFSIZE	(32 * 1024)	/* enough size to trigger sosend_loan */
 
 static void
 map_check(void *map, int flag)
@@ -61,6 +90,60 @@ map_check(void *map, int flag)
 
 	ATF_REQUIRE(map != MAP_FAILED);
 	ATF_REQUIRE(munmap(map, page) == 0);
+}
+
+void
+testloan(void *vp, void *vp2, char pat, int docheck)
+{
+	char buf[BUFSIZE];
+	char backup[BUFSIZE];
+	ssize_t nwritten;
+	ssize_t nread;
+	int fds[2];
+	int val;
+
+	val = BUFSIZE;
+
+	if (docheck != 0)
+		(void)memcpy(backup, vp, BUFSIZE);
+
+	if (socketpair(AF_LOCAL, SOCK_STREAM, PF_UNSPEC, fds) != 0)
+		atf_tc_fail("socketpair() failed");
+
+	val = BUFSIZE;
+
+	if (setsockopt(fds[1], SOL_SOCKET, SO_RCVBUF, &val, sizeof(val)) != 0)
+		atf_tc_fail("setsockopt() failed, SO_RCVBUF");
+
+	val = BUFSIZE;
+
+	if (setsockopt(fds[0], SOL_SOCKET, SO_SNDBUF, &val, sizeof(val)) != 0)
+		atf_tc_fail("setsockopt() failed, SO_SNDBUF");
+
+	if (fcntl(fds[0], F_SETFL, O_NONBLOCK) != 0)
+		atf_tc_fail("fcntl() failed");
+
+	nwritten = write(fds[0], (char *)vp + page, BUFSIZE - page);
+
+	if (nwritten == -1)
+		atf_tc_fail("write() failed");
+
+	/* Break loan. */
+	(void)memset(vp2, pat, BUFSIZE);
+
+	nread = read(fds[1], buf + page, BUFSIZE - page);
+
+	if (nread == -1)
+		atf_tc_fail("read() failed");
+
+	if (nread != nwritten)
+		atf_tc_fail("too short read");
+
+	if (docheck != 0 && memcmp(backup, buf + page, nread) != 0)
+		atf_tc_fail("data mismatch");
+
+	ATF_REQUIRE(close(fds[0]) == 0);
+	ATF_REQUIRE(close(fds[1]) == 0);
 }
 
 static void
@@ -97,6 +180,56 @@ ATF_TC_BODY(mmap_err, tc)
 
 	ATF_REQUIRE(map == MAP_FAILED);
 	ATF_REQUIRE(errno == EINVAL);
+}
+
+ATF_TC_WITH_CLEANUP(mmap_loan);
+ATF_TC_HEAD(mmap_loan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test uvm page loanout with mmap(2)");
+}
+
+ATF_TC_BODY(mmap_loan, tc)
+{
+	char buf[BUFSIZE];
+	char *vp, *vp2;
+	int fd;
+
+	fd = open(path, O_RDWR | O_CREAT, 0600);
+	ATF_REQUIRE(fd >= 0);
+
+	(void)memset(buf, 'x', sizeof(buf));
+	(void)write(fd, buf, sizeof(buf));
+
+	vp = mmap(NULL, BUFSIZE, PROT_READ | PROT_WRITE,
+	    MAP_FILE | MAP_PRIVATE, fd, 0);
+
+	ATF_REQUIRE(vp != MAP_FAILED);
+
+	vp2 = vp;
+
+	testloan(vp, vp2, 'A', 0);
+	testloan(vp, vp2, 'B', 1);
+
+	ATF_REQUIRE(munmap(vp, BUFSIZE) == 0);
+
+	vp = mmap(NULL, BUFSIZE, PROT_READ | PROT_WRITE,
+	    MAP_FILE | MAP_SHARED, fd, 0);
+
+	vp2 = mmap(NULL, BUFSIZE, PROT_READ | PROT_WRITE,
+	    MAP_FILE | MAP_SHARED, fd, 0);
+
+	ATF_REQUIRE(vp != MAP_FAILED);
+	ATF_REQUIRE(vp2 != MAP_FAILED);
+
+	testloan(vp, vp2, 'E', 1);
+
+	ATF_REQUIRE(munmap(vp, BUFSIZE) == 0);
+	ATF_REQUIRE(munmap(vp2, BUFSIZE) == 0);
+}
+
+ATF_TC_CLEANUP(mmap_loan, tc)
+{
+	(void)unlink(path);
 }
 
 ATF_TC_WITH_CLEANUP(mmap_prot_1);
@@ -312,6 +445,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_REQUIRE(page >= 0);
 
 	ATF_TP_ADD_TC(tp, mmap_err);
+	ATF_TP_ADD_TC(tp, mmap_loan);
 	ATF_TP_ADD_TC(tp, mmap_prot_1);
 	ATF_TP_ADD_TC(tp, mmap_prot_2);
 	ATF_TP_ADD_TC(tp, mmap_prot_3);
