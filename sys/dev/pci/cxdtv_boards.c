@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv_boards.c,v 1.1 2011/07/11 00:46:04 jakllsch Exp $ */
+/* $NetBSD: cxdtv_boards.c,v 1.2 2011/07/14 23:47:45 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv_boards.c,v 1.1 2011/07/11 00:46:04 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv_boards.c,v 1.2 2011/07/14 23:47:45 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -60,7 +60,7 @@ const struct cxdtv_board *
 cxdtv_board_lookup(pci_vendor_id_t vendor, pci_product_id_t product)
 {
 	const struct cxdtv_board *cb;
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < __arraycount(cxdtv_boards); i++) {
 		cb = &cxdtv_boards[i];
