@@ -1,4 +1,4 @@
-/* $NetBSD: t_strcat.c,v 1.1 2011/07/07 08:59:32 jruoho Exp $ */
+/* $NetBSD: t_strcat.c,v 1.2 2011/07/14 05:46:04 jruoho Exp $ */
 
 /*
  * Written by J.T. Conklin <jtc@acorntoolworks.com>
@@ -123,10 +123,31 @@ ATF_TC_BODY(strcat_basic, tc)
 	}
 }
 
+ATF_TC(strncat_simple);
+ATF_TC_HEAD(strncat_simple, tc)
+{
+        atf_tc_set_md_var(tc, "descr", "Test strncat(3) results");
+}
+
+ATF_TC_BODY(strncat_simple, tc)
+{
+	char buf[100] = "abcdefg";
+
+	ATF_CHECK(strncat(buf, "xxx", 0) == buf);
+	ATF_CHECK(strcmp(buf, "abcdefg") == 0);
+	ATF_CHECK(strncat(buf, "xxx", 1) == buf);
+	ATF_CHECK(strcmp(buf, "abcdefgx") == 0);
+	ATF_CHECK(strncat(buf, "xxx", 2) == buf);
+	ATF_CHECK(strcmp(buf, "abcdefgxxx") == 0);
+	ATF_CHECK(strncat(buf, "\0", 1) == buf);
+	ATF_CHECK(strcmp(buf, "abcdefgxxx") == 0);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, strcat_basic);
+	ATF_TP_ADD_TC(tp, strncat_simple);
 
 	return atf_no_error();
 }
