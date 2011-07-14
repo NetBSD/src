@@ -1,4 +1,4 @@
-/* $NetBSD: lg3303var.h,v 1.1 2011/07/11 18:00:06 jmcneill Exp $ */
+/* $NetBSD: lg3303var.h,v 1.2 2011/07/14 23:46:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,15 +32,19 @@
 #include <dev/i2c/i2cvar.h>
 #include <dev/dtv/dtvio.h>
 
+#define	LG3303_CFG_SERIAL_INPUT	0x01
+
 struct lg3303 {
 	device_t	parent;
 	i2c_tag_t	i2c;
 	i2c_addr_t	i2c_addr;
 
 	fe_modulation_t	current_modulation;
+
+	int		flags;
 };
 
-struct lg3303 *	lg3303_open(device_t, i2c_tag_t, i2c_addr_t);
+struct lg3303 *	lg3303_open(device_t, i2c_tag_t, i2c_addr_t, int);
 void		lg3303_close(struct lg3303 *);
 int		lg3303_set_modulation(struct lg3303 *, fe_modulation_t);
 fe_status_t	lg3303_get_dtv_status(struct lg3303 *);

@@ -1,4 +1,4 @@
-/* $NetBSD: lg3303.c,v 1.1 2011/07/11 18:00:06 jmcneill Exp $ */
+/* $NetBSD: lg3303.c,v 1.2 2011/07/14 23:46:52 jmcneill Exp $ */
 
 /*-
  * Copyright 2007 Jason Harmening
@@ -28,7 +28,7 @@
  */
 
 #include <sys/param.h>
-__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.1 2011/07/11 18:00:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.2 2011/07/14 23:46:52 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -80,7 +80,7 @@ static int	lg3303_reset(struct lg3303 *);
 static int	lg3303_init(struct lg3303 *);
 
 struct lg3303 *
-lg3303_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr)
+lg3303_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr, int flags)
 {
 	struct lg3303 *lg;
 
@@ -91,6 +91,7 @@ lg3303_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr)
 	lg->i2c = i2c;
 	lg->i2c_addr = addr;
 	lg->current_modulation = -1;
+	lg->flags = flags;
 
 	if (lg3303_init(lg) != 0) {
 		kmem_free(lg, sizeof(*lg));
@@ -205,10 +206,9 @@ lg3303_set_modulation(struct lg3303 *lg, fe_modulation_t modulation)
 
 	if (lg->current_modulation != modulation) {
 		uint8_t top_ctrl[] = {REG_TOP_CONTROL, 0x00};
-#if 0
-		if (m_input == DVB_INPUT_SERIAL)
+
+		if (lg->flags & LG3303_CFG_SERIAL_INPUT)
 			top_ctrl[1] = 0x40;  
-#endif
 
 		switch (modulation) {
 		case VSB_8:
