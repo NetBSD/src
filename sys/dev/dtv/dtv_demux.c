@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_demux.c,v 1.2 2011/07/13 22:50:24 jmcneill Exp $ */
+/* $NetBSD: dtv_demux.c,v 1.3 2011/07/14 01:37:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.2 2011/07/13 22:50:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.3 2011/07/14 01:37:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -469,6 +469,13 @@ dtv_demux_write(struct dtv_demux *demux, const uint8_t *tspkt, size_t tspktlen)
 		}
 
 		sec->sec_length = section_length + 3;
+
+		/* maximum section length is 4KB */
+		if (sec->sec_length > sizeof(sec->sec_buf)) {
+			sec->sec_bytesused = sec->sec_length = 0;
+			goto done;
+		}
+
 	}
 
 	/* If we have bytes pending and we see payload unit start, flush buf */
