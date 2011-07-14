@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.32 2011/07/04 08:07:29 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.33 2011/07/14 15:37:32 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -58,10 +58,11 @@ static int node_mk_common(struct puffs_usermount *, puffs_cookie_t,
     struct puffs_newinfo *, const struct puffs_cn *pcn, perfuse_msg_t *);
 static int node_mk_common_final(struct puffs_usermount *, puffs_cookie_t,
     struct puffs_node *, const struct puffs_cn *pcn);
+static uint64_t readdir_last_cookie(struct fuse_dirent *, size_t); 
 static ssize_t fuse_to_dirent(struct puffs_usermount *, puffs_cookie_t,
     struct fuse_dirent *, size_t);
 static int readdir_buffered(puffs_cookie_t, struct dirent *, off_t *, 
-    size_t *, const struct puffs_cred *, int *, off_t *, size_t *);
+    size_t *);
 static void requeue_request(struct puffs_usermount *, 
     puffs_cookie_t opc, enum perfuse_qtype);
 static int dequeue_requests(struct perfuse_state *, 
@@ -521,6 +522,28 @@ out:
 	return error;
 }
 
+static uint64_t
+readdir_last_cookie(fd, fd_len)
+	struct fuse_dirent *fd;
+	size_t fd_len;
+{
+	size_t len;
+	size_t seen = 0;
+	char *ndp;
+
+	do {
+		len = FUSE_DIRENT_ALIGN(sizeof(*fd) + fd->namelen);
+		seen += len;
+
+		if (seen >= fd_len)
+			break;
+
+		ndp = (char *)(void *)fd + (size_t)len;
+		fd = (struct fuse_dirent *)(void *)ndp;
+	} while (1 /* CONSTCOND */);
+
+	return fd->off;
+}
 
 static ssize_t
 fuse_to_dirent(pu, opc, fd, fd_len)
@@ -577,8 +600,6 @@ fuse_to_dirent(pu, opc, fd, fd_len)
 			dents = (struct dirent *)(void *)ndp;
 		}
 		
-
-
 		/*
 		 * Filesystem was mounted without -o use_ino
 		 * Perform a lookup to find it.
@@ -612,10 +633,10 @@ fuse_to_dirent(pu, opc, fd, fd_len)
 
 		/*
 		 * Move to the next record.
-		 * fd->off seems unreliable, for instance, flusterfs 
-		 * does not clear the unused bits, and we get 
-		 * 0xffffffffb9b95040 instead of just 0x40. Use 
-		 * record alignement instead.
+		 * fd->off is not the offset, it is an opaque cookie
+		 * given by the filesystem to keep state across multiple
+		 * readdir() operation.
+		 * Use record alignement instead.
 		 */
 		len = FUSE_DIRENT_ALIGN(sizeof(*fd) + fd->namelen);
 #ifdef PERFUSE_DEBUG
@@ -654,18 +675,12 @@ fuse_to_dirent(pu, opc, fd, fd_len)
 	return written;
 }
 
-/* ARGSUSED4 */
 static int 
-readdir_buffered(opc, dent, readoff, 
-		 reslen, pcr, eofflag, cookies, ncookies)
+readdir_buffered(opc, dent, readoff, reslen)
 	puffs_cookie_t opc;
 	struct dirent *dent;
 	off_t *readoff;
 	size_t *reslen;
-	const struct puffs_cred *pcr;
-	int *eofflag;
-	off_t *cookies;
-	size_t *ncookies;
 {
 	struct dirent *fromdent;
 	struct perfuse_node_data *pnd;
@@ -700,7 +715,6 @@ readdir_buffered(opc, dent, readoff,
 		free(pnd->pnd_dirent);
 		pnd->pnd_dirent = NULL;
 		pnd->pnd_dirent_len = 0;
-		*eofflag = 1;
 	}
 
 	return 0;
@@ -2177,6 +2191,7 @@ perfuse_node_symlink(pu, opc, pni, pcn_src, vap, link_target)
 	return node_mk_common(pu, opc, pni, pcn_src, pm);
 }
 
+/* ARGSUSED4 */
 int 
 perfuse_node_readdir(pu, opc, dent, readoff, 
 		     reslen, pcr, eofflag, cookies, ncookies)
@@ -2199,7 +2214,6 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 	struct fuse_dirent *fd;
 	size_t foh_len;
 	int error;
-	uint64_t fd_offset;
 	size_t fd_maxlen;
 	
 	pm = NULL;
@@ -2222,6 +2236,12 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 		DPRINTF("%s: READDIR opc = %p enter critical section\n",
 			__func__, (void *)opc);
 #endif
+	/*
+	 * Re-initialize pnd->pnd_fd_cookie on the first readdir for a node
+	 */
+	if (*readoff == 0)
+		pnd->pnd_fd_cookie = 0;
+
 	/*
 	 * Do we already have the data bufered?
 	 */
@@ -2249,9 +2269,8 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 
 	pnd->pnd_all_fd = NULL;
 	pnd->pnd_all_fd_len = 0;
-	fd_offset = 0;
 	fd_maxlen = ps->ps_max_readahead - sizeof(*foh);
-	
+
 	do {
 		size_t fd_len;
 		char *afdp;
@@ -2263,7 +2282,7 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 		 */
 		fri = GET_INPAYLOAD(ps, pm, fuse_read_in);
 		fri->fh = fh;
-		fri->offset = fd_offset;
+		fri->offset = pnd->pnd_fd_cookie;
 		fri->size = (uint32_t)fd_maxlen;
 		fri->read_flags = 0;
 		fri->lock_owner = 0;
@@ -2284,11 +2303,13 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 		/*
 		 * Empty read: we reached the end of the buffer.
 		 */
-		if (foh_len == sizeof(*foh))
+		if (foh_len == sizeof(*foh)) {
+			*eofflag = 1;
 			break;
+		}
 
 		/*
-		 * Corrupted message.
+		 * Check for corrupted message.
 		 */
 		if (foh_len < sizeof(*foh) + sizeof(*fd)) {
 			DWARNX("readdir reply too short");
@@ -2309,22 +2330,22 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 		(void)memcpy(afdp, fd, fd_len);
 
 		pnd->pnd_all_fd_len += fd_len;
-		fd_offset += fd_len;
+
+		/*
+		 * The fd->off field is used as a cookie for
+		 * resuming the next readdir() where this one was left.
+	 	 */
+		pnd->pnd_fd_cookie = readdir_last_cookie(fd, fd_len);
 
 		ps->ps_destroy_msg(pm);
 		pm = NULL;
+	} while (1 /* CONSTCOND */);
 
-		/*
-		 * If the buffer was not completely filled, 
-		 * that is, if there is room for the biggest 
-		 * struct dirent possible, then we are done:
-		 * no need to issue another READDIR to see
-		 * an empty reply.
-		 */
-	} while (foh_len >= fd_maxlen - (sizeof(*fd) + MAXPATHLEN));
-
-	if (fuse_to_dirent(pu, opc, pnd->pnd_all_fd, pnd->pnd_all_fd_len) == -1)
-		error = EIO;
+	if (pnd->pnd_all_fd != NULL) {
+		if (fuse_to_dirent(pu, opc, pnd->pnd_all_fd, 
+				   pnd->pnd_all_fd_len) == -1)
+			error = EIO;
+	}
 
 out:
 	if (pnd->pnd_all_fd != NULL) {
@@ -2337,8 +2358,7 @@ out:
 		ps->ps_destroy_msg(pm);
 
 	if (error == 0)
-		error = readdir_buffered(opc, dent, readoff,
-			reslen, pcr, eofflag, cookies, ncookies);
+		error = readdir_buffered(opc, dent, readoff, reslen);
 
 	/*
 	 * Schedule queued readdir requests
