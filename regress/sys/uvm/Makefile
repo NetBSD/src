@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 2011/05/20 13:36:12 joerg Exp $
+#	$NetBSD: Makefile,v 1.9 2011/07/14 10:27:36 jruoho Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+= mmap loan1
+SUBDIR+= loan1
 
 .if !empty(SUPPORTED_CC:Mgcc)
 SUBDIR+= stack_exec
