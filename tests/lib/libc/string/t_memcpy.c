@@ -1,4 +1,4 @@
-/* $NetBSD: t_memcpy.c,v 1.3 2011/07/07 08:27:36 jruoho Exp $ */
+/* $NetBSD: t_memcpy.c,v 1.4 2011/07/14 05:46:04 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -99,10 +99,37 @@ ATF_TC_BODY(memcpy_basic, tc)
 	ATF_REQUIRE_EQ(strcmp(result, goodResult), 0);
 }
 
+ATF_TC(memccpy_simple);
+ATF_TC_HEAD(memccpy_simple, tc)
+{
+        atf_tc_set_md_var(tc, "descr", "Test memccpy(3) results");
+}
+
+ATF_TC_BODY(memccpy_simple, tc)
+{
+	char buf[100];
+	char c = ' ';
+
+	(void)memset(buf, c, sizeof(buf));
+
+	ATF_CHECK(memccpy(buf, "foo bar", c, sizeof(buf)) != NULL);
+	ATF_CHECK(buf[4] == c);
+
+	ATF_CHECK(memccpy(buf, "foo bar", '\0', sizeof(buf) - 1) != NULL);
+	ATF_CHECK(buf[8] == c);
+
+	ATF_CHECK(memccpy(buf, "foo bar", 'x', 7) == NULL);
+	ATF_CHECK(strncmp(buf, "foo bar", 7) == 0);
+
+	ATF_CHECK(memccpy(buf, "xxxxxxx", 'r', 7) == NULL);
+	ATF_CHECK(strncmp(buf, "xxxxxxx", 7) == 0);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, memcpy_basic);
+	ATF_TP_ADD_TC(tp, memccpy_simple);
 
 	return atf_no_error();
 }
