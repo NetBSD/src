@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.119 2011/07/14 09:31:19 plunky Exp $
+# $NetBSD: postinstall,v 1.120 2011/07/14 09:35:24 plunky Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1159,14 +1159,13 @@ do_rc()
 	set --	amd amd_master \
 		btcontrol btcontrol_devices \
 		critical_filesystems critical_filesystems_beforenet \
-		defcorename \
-		ip6forwarding \
 		mountcritlocal mountcritremote \
+		network ip6forwarding \
 		network nfsiod_flags \
 		sdpd sdpd_control \
 		sdpd sdpd_groupname \
 		sdpd sdpd_username \
-		sysctl
+		sysctl defcorename
 	while [ $# -gt 1 ]; do
 		if rcconf_is_set "${op}" "$1" "$2" 1; then
 			failed=1
