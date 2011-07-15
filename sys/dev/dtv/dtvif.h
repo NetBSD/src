@@ -1,4 +1,4 @@
-/* $NetBSD: dtvif.h,v 1.1 2011/07/09 14:46:56 jmcneill Exp $ */
+/* $NetBSD: dtvif.h,v 1.2 2011/07/15 20:27:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,6 +34,8 @@
 
 #ifndef _DEV_DTV_DTVIF_H
 #define _DEV_DTV_DTVIF_H
+
+#include <sys/device.h>
 
 #include <dev/dtv/dtvio.h>
 
@@ -76,5 +78,8 @@ struct dtv_payload {
 int	dtv_print(void *, const char *);
 
 void	dtv_submit_payload(device_t, const struct dtv_payload *);
+
+/* dtv_math.c */
+uint32_t	dtv_intlog10(uint32_t);
 
 #endif /* !_DEV_DTV_DTVIF_H */
