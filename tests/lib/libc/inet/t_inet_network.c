@@ -1,4 +1,4 @@
-/* $NetBSD: t_inet_network.c,v 1.1 2011/01/13 13:53:49 pgoyette Exp $ */
+/* $NetBSD: t_inet_network.c,v 1.2 2011/07/15 07:39:26 jruoho Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_inet_network.c,v 1.1 2011/01/13 13:53:49 pgoyette Exp $");
+__RCSID("$NetBSD: t_inet_network.c,v 1.2 2011/07/15 07:39:26 jruoho Exp $");
 
 #include <arpa/inet.h>
 
@@ -43,15 +43,13 @@ __RCSID("$NetBSD: t_inet_network.c,v 1.1 2011/01/13 13:53:49 pgoyette Exp $");
 	    "inet_network(%s) returned: 0x%08X, expected: %s", #input,	\
 	    inet_network(input), #expected)
 
-ATF_TC(inet_network);
-
-ATF_TC_HEAD(inet_network, tc)
+ATF_TC(inet_network_basic);
+ATF_TC_HEAD(inet_network_basic, tc)
 {
-
 	atf_tc_set_md_var(tc, "descr", "Checks inet_network(3)");
 }
 
-ATF_TC_BODY(inet_network, tc)
+ATF_TC_BODY(inet_network_basic, tc)
 {
 
 	H_REQUIRE("0x12", 0x00000012);
@@ -63,10 +61,19 @@ ATF_TC_BODY(inet_network, tc)
 	H_REQUIRE("0x1.23.045.0", 0x01172500);
 	H_REQUIRE("0x12.0x34", 0x00001234);
 
-	/* yes, this is valid (because of the trailing space after the digit) */
+	/* This is valid (because of the trailing space after the digit). */
 	H_REQUIRE("1 bar", 0x00000001);
+}
 
-	/* malformed requests */
+ATF_TC(inet_network_err);
+ATF_TC_HEAD(inet_network_err, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks errors from inet_network(3)");
+}
+
+ATF_TC_BODY(inet_network_err, tc)
+{
+	/* Malformed requests. */
 	H_REQUIRE("4.2.3.1.", 0xffffffff);
 	H_REQUIRE("0x123456", 0xffffffff);
 	H_REQUIRE("0x12.0x345", 0xffffffff);
@@ -92,7 +99,8 @@ ATF_TC_BODY(inet_network, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, inet_network);
+	ATF_TP_ADD_TC(tp, inet_network_basic);
+	ATF_TP_ADD_TC(tp, inet_network_err);
 
 	return atf_no_error();
 }
