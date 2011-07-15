@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.72.4.3 2011/05/20 21:50:09 bouyer Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.72.4.4 2011/07/15 23:41:13 riz Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.72.4.3 2011/05/20 21:50:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.72.4.4 2011/07/15 23:41:13 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -352,17 +352,30 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 	if (__predict_false((park->park_flags & PARKFLAG_WANTREPLY)
 	   && (park->park_flags & PARKFLAG_CALL) == 0
 	   && (l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0))) {
-		park->park_flags |= PARKFLAG_HASERROR;
-		preq->preq_rv = EINTR;
-		if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN
-		    && (preq->preq_optype == PUFFS_VN_INACTIVE
-		     || preq->preq_optype == PUFFS_VN_RECLAIM)) {
-			park->park_preq->preq_opclass |= PUFFSOPFLAG_FAF;
-			park->park_flags &= ~PARKFLAG_WANTREPLY;
-			DPRINTF(("puffs_msg_enqueue: converted to FAF %p\n",
-			    park));
-		} else {
-			return;
+	       sigset_t ss;
+
+	       /*
+		* see the comment about signals in puffs_msg_wait.
+		*/
+	       sigpending1(l, &ss);
+	       if (sigismember(&ss, SIGINT) ||
+		   sigismember(&ss, SIGTERM) ||
+		   sigismember(&ss, SIGKILL) ||
+		   sigismember(&ss, SIGHUP) ||
+		   sigismember(&ss, SIGQUIT)) {
+		       park->park_flags |= PARKFLAG_HASERROR;
+		       preq->preq_rv = EINTR;
+		       if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN
+			   && (preq->preq_optype == PUFFS_VN_INACTIVE
+			    || preq->preq_optype == PUFFS_VN_RECLAIM)) {
+			       park->park_preq->preq_opclass |=
+				   PUFFSOPFLAG_FAF;
+			       park->park_flags &= ~PARKFLAG_WANTREPLY;
+			       DPRINTF(("puffs_msg_enqueue: "
+				   "converted to FAF %p\n", park));
+		       } else {
+			       return;
+		       }
 		}
 	}
 
@@ -431,10 +444,30 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 int
 puffs_msg_wait(struct puffs_mount *pmp, struct puffs_msgpark *park)
 {
-	struct puffs_req *preq = park->park_preq; /* XXX: hmmm */
+	lwp_t *l = curlwp;
+	proc_t *p = l->l_proc;
+        struct puffs_req *preq = park->park_preq; /* XXX: hmmm */
+	sigset_t ss;
+	sigset_t oss;
 	struct mount *mp = PMPTOMP(pmp);
 	int error = 0;
 	int rv;
+
+	/*
+	 * block unimportant signals.
+	 *
+	 * The set of "important" signals here was chosen to be same as
+	 * nfs interruptible mount.
+	 */
+	sigfillset(&ss);
+	sigdelset(&ss, SIGINT);
+	sigdelset(&ss, SIGTERM);
+	sigdelset(&ss, SIGKILL);
+	sigdelset(&ss, SIGHUP);
+	sigdelset(&ss, SIGQUIT);
+	mutex_enter(p->p_lock);
+	sigprocmask1(l, SIG_BLOCK, &ss, &oss);
+	mutex_exit(p->p_lock);
 
 	mutex_enter(&pmp->pmp_lock);
 	puffs_mp_reference(pmp);
@@ -522,6 +555,10 @@ puffs_msg_wait(struct puffs_mount *pmp, struct puffs_msgpark *park)
 	mutex_enter(&pmp->pmp_lock);
 	puffs_mp_release(pmp);
 	mutex_exit(&pmp->pmp_lock);
+
+	mutex_enter(p->p_lock);
+	sigprocmask1(l, SIG_SETMASK, &oss, NULL);
+	mutex_exit(p->p_lock);
 
 	return rv;
 }
