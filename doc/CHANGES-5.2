@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.91 2011/07/15 22:46:55 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.92 2011/07/15 23:41:55 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5375,4 +5375,14 @@ sys/arch/x68k/x68k/locore.s			1.102 via patch
 
 	DIAGNOSTIC assertion fix on x68k without FPU.
 	[tsutsui, ticket #1640]
+
+sys/fs/puffs/puffs_msgif.c				1.84 via patch
+sys/rump/librump/rumpkern/Makefile.rumpkern		patch
+sys/rump/librump/rumpkern/emul.c			patch
+sys/rump/librump/rumpkern/opt/opt_compat_netbsd32.h	new
+
+	Interrupt server wait only on certain signals (same set at nfs -i)
+	instead of all signals.  PR #44093, with rump fix for release
+	build.
+	[manu, ticket #1604]
 
