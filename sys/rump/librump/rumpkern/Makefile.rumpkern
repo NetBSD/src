@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.17 2008/10/25 22:27:38 apb Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.17.4.1 2011/07/15 23:41:13 riz Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -28,7 +28,7 @@ SRCS+=	fstrans_stub.c misc_stub.c pmap_stub.c vfsops_stub.c
 # sys/kern
 SRCS+=	kern_auth.c kern_descrip.c kern_malloc_stdtype.c kern_module.c	\
 	kern_rate.c kern_stub.c kern_sysctl.c kern_timeout.c		\
-	kern_uidinfo.c param.c sys_descrip.c sys_generic.c
+	kern_uidinfo.c param.c sys_descrip.c sys_generic.c sys_sig.c
 
 # sys/kern subr (misc)
 SRCS+=	subr_bufq.c subr_callback.c subr_hash.c subr_iostat.c		\
