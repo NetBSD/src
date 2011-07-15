@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1019 2011/07/09 14:48:12 jmcneill Exp $
+#	$NetBSD: files,v 1.1020 2011/07/15 19:19:56 cliff Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1721,6 +1721,11 @@ include "dev/flash/files.flash"
 # NAND subsytem
 #
 include "dev/nand/files.nand"
+
+#
+# NOR subsytem
+#
+include "dev/nor/files.nor"
 
 #
 # DTV subsystem
