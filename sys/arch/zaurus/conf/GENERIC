@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.44 2011/06/30 20:09:38 wiz Exp $
+#	$NetBSD: GENERIC,v 1.45 2011/07/15 13:47:12 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -361,6 +361,9 @@ sdmmc* at pxamci?
 #options 	SDMMC_DUMP_CSD
 
 ld* at sdmmc?				# MMC/SD/SDHC card
+
+# Pull in optional local configuration
+cinclude "arch/zaurus/conf/GENERIC.local"
 
 
 # Pseudo-Devices
