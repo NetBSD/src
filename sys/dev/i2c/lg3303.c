@@ -1,4 +1,4 @@
-/* $NetBSD: lg3303.c,v 1.2 2011/07/14 23:46:52 jmcneill Exp $ */
+/* $NetBSD: lg3303.c,v 1.3 2011/07/15 03:29:23 jmcneill Exp $ */
 
 /*-
  * Copyright 2007 Jason Harmening
@@ -28,7 +28,7 @@
  */
 
 #include <sys/param.h>
-__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.2 2011/07/14 23:46:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.3 2011/07/15 03:29:23 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -275,8 +275,11 @@ lg3303_get_dtv_status(struct lg3303 *lg)
 		device_printf(lg->parent,
 		    "lg3303: unsupported modulation type (%d)\n",
 		    lg->current_modulation);
-		return EINVAL;
+		return 0;
 	}
+
+	if ((festatus & FE_HAS_CARRIER) == 0)
+		return festatus;
 
 	error = lg3303_read(lg, reg, &value, sizeof(value));
 	if (!error && (value & 0x01))
