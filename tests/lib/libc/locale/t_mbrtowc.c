@@ -1,4 +1,4 @@
-/* $NetBSD: t_ctype2.c,v 1.1 2011/04/09 17:45:25 pgoyette Exp $ */
+/* $NetBSD: t_mbrtowc.c,v 1.1 2011/07/15 07:35:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ctype2.c,v 1.1 2011/04/09 17:45:25 pgoyette Exp $");
+__RCSID("$NetBSD: t_mbrtowc.c,v 1.1 2011/07/15 07:35:21 jruoho Exp $");
 
 #include <errno.h>
 #include <locale.h>
@@ -153,7 +153,7 @@ h_ctype2(const struct test *t, bool use_mbstate)
 		int width = 0;
 
 		ATF_REQUIRE(mbsinit(stp) != 0);
-		
+
 		for (;;) {
 			size_t rv = mbrtowc(&dst, src, n, stp);
 
@@ -175,7 +175,7 @@ h_ctype2(const struct test *t, bool use_mbstate)
 			width += rv;
 			src += rv;
 
-			if (dst != t->wchars[nchar] || 
+			if (dst != t->wchars[nchar] ||
 			    width != t->widths[nchar]) {
 				(void)printf("At position %zd:\n", nchar);
 				(void)printf("  expected: 0x%04X (%u)\n",
@@ -213,7 +213,7 @@ h_ctype2(const struct test *t, bool use_mbstate)
 		for (i = 0; wbuf[i] != 0; ++i) {
 			if (wbuf[i] == t->wchars[i])
 				continue;
-			
+
 			(void)printf("At position %d:\n", i);
 			(void)printf("  expected: 0x%04X\n", t->wchars[i]);
 			(void)printf("  got     : 0x%04X\n", wbuf[i]);
@@ -227,29 +227,14 @@ h_ctype2(const struct test *t, bool use_mbstate)
 	(void)printf("Ok.\n");
 }
 
-ATF_TC(ctype2_state);
-ATF_TC_HEAD(ctype2_state, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-		"Checks mbrtowc(3) and mbsrtowcs(3) (using state "
-		"object) with different locales");
-}
-ATF_TC_BODY(ctype2_state, tc)
-{
-	struct test *t;
-
-	for (t = &tests[0]; t->data != NULL; ++t)
-		h_ctype2(t, true);
-}
-
-ATF_TC(ctype2);
-ATF_TC_HEAD(ctype2, tc)
+ATF_TC(mbrtowc_internal);
+ATF_TC_HEAD(mbrtowc_internal, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 		"Checks mbrtowc(3) and mbsrtowcs(3) (using internal "
 		"state) with different locales");
 }
-ATF_TC_BODY(ctype2, tc)
+ATF_TC_BODY(mbrtowc_internal, tc)
 {
 	struct test *t;
 
@@ -257,10 +242,26 @@ ATF_TC_BODY(ctype2, tc)
 		h_ctype2(t, false);
 }
 
+ATF_TC(mbrtowc_object);
+ATF_TC_HEAD(mbrtowc_object, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"Checks mbrtowc(3) and mbsrtowcs(3) (using state "
+		"object) with different locales");
+}
+ATF_TC_BODY(mbrtowc_object, tc)
+{
+	struct test *t;
+
+	for (t = &tests[0]; t->data != NULL; ++t)
+		h_ctype2(t, true);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, ctype2_state);
-	ATF_TP_ADD_TC(tp, ctype2);
+
+	ATF_TP_ADD_TC(tp, mbrtowc_internal);
+	ATF_TP_ADD_TC(tp, mbrtowc_object);
 
 	return atf_no_error();
 }

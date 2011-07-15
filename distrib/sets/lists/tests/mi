@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.374 2011/07/15 06:41:29 jruoho Exp $
+# $NetBSD: mi,v 1.375 2011/07/15 07:35:21 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -393,11 +393,13 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_round.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_subnormal.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libc/locale/t_ctype1.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/locale/t_ctype2.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbtowc.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcstod.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/locale/t_wctomb.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_ctype1.debug		tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_ctype2.debug		tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbrtowc.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbstowcs.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbtowc.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcstod.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_wctomb.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/inet				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/inet/t_inet_network.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net				tests-lib-debug
@@ -1923,8 +1925,10 @@
 ./usr/tests/lib/libc/ieeefp/t_subnormal		tests-lib-tests		atf
 ./usr/tests/lib/libc/locale			tests-lib-tests
 ./usr/tests/lib/libc/locale/Atffile		tests-lib-tests		atf
-./usr/tests/lib/libc/locale/t_ctype1		tests-lib-tests		atf
-./usr/tests/lib/libc/locale/t_ctype2		tests-lib-tests		atf
+./usr/tests/lib/libc/locale/t_ctype1		tests-obsolete		obsolete
+./usr/tests/lib/libc/locale/t_ctype2		tests-obsolete		obsolete
+./usr/tests/lib/libc/locale/t_mbrtowc		tests-lib-tests		atf
+./usr/tests/lib/libc/locale/t_mbstowcs		tests-lib-tests		atf
 ./usr/tests/lib/libc/locale/t_mbtowc		tests-lib-tests		atf
 ./usr/tests/lib/libc/locale/t_wcstod		tests-lib-tests		atf
 ./usr/tests/lib/libc/locale/t_wctomb		tests-lib-tests		atf
