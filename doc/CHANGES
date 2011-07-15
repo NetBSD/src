@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1578 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1579 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1063,3 +1063,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	auvitek(4): Add digital capture support. [jmcneill 20110709]
 	hpacel(4): Add a driver for HP 3D DriveGuard; a LIS3LV02DL-based
 		accelerometer. [jruoho 20110713]
+	emdtv(4): Add a driver for Empia EM28xx family USB video
+		capture controllers. [jmcneill 20110715]
