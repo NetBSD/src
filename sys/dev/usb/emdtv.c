@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.2 2011/07/13 14:36:29 jakllsch Exp $ */
+/* $NetBSD: emdtv.c,v 1.3 2011/07/15 10:48:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.2 2011/07/13 14:36:29 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.3 2011/07/15 10:48:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,9 +163,6 @@ emdtv_detach(device_t self, int flags)
 			aprint_error_dev(sc->sc_dev,
 			    "couldn't stop stream: %s\n", usbd_errstr(status));
 	}
-
-	if (sc->sc_lg3303)
-		lg3303_close(sc->sc_lg3303);
 
 	emdtv_i2c_detach(sc, flags);
 
