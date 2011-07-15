@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.144 2011/06/26 16:42:42 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.145 2011/07/15 14:50:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.144 2011/06/26 16:42:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.145 2011/07/15 14:50:19 christos Exp $");
 
 #include "opt_pipe.h"
 
@@ -1021,6 +1021,8 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 	int		fd, error;
 	proc_t		*p;
 
+	if (flags & ~(O_CLOEXEC|O_NONBLOCK))
+		return EINVAL;
 	p = curproc;
 	if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, l, NULL)) != 0)
 		return (error);
