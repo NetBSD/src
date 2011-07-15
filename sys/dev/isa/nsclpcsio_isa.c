@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.29 2011/06/20 18:12:54 pgoyette Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.30 2011/07/15 20:56:26 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.29 2011/06/20 18:12:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.30 2011/07/15 20:56:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.29 2011/06/20 18:12:54 pgoyette 
 #include <sys/mutex.h>
 #include <sys/gpio.h>
 #include <sys/bus.h>
+#include <sys/module.h>
 
 /* Don't use gpio for now in the module */
 #ifdef _MODULE
@@ -673,3 +674,32 @@ nsclpcsio_gpio_pin_ctl(void *aux, int pin, int flags)
 	mutex_exit(&sc->sc_lock);
 }
 #endif /* NGPIO */
+
+MODULE(MODULE_CLASS_DRIVER, nsclpcsio, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+nsclpcsio_modcmd(modcmd_t cmd, void *opaque)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		return config_init_component(cfdriver_ioconf_nsclpcsio,
+		    cfattach_ioconf_nsclpcsio, cfdata_ioconf_nsclpcsio);
+#else
+		return 0;
+#endif
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		return config_fini_component(cfdriver_ioconf_nsclpcsio,
+		    cfattach_ioconf_nsclpcsio, cfdata_ioconf_nsclpcsio);
+#else
+		return 0;
+#endif
+	default:
+		return ENOTTY;
+	}
+}
