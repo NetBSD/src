@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.90 2011/07/07 12:46:06 sborrill Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.91 2011/07/15 22:46:55 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5348,4 +5348,31 @@ lib/libdns/shlib_version			patch
 
 	Update bind to 9.7.3-P3 fixing CVE-2011-2464
 	[spz, ticket #1647]
+
+external/ibm-public/postfix/dist/HISTORY                        patch
+external/ibm-public/postfix/dist/src/global/mail_version.h      patch
+external/ibm-public/postfix/dist/src/smtpd/smtpd_sasl_proto.c   patch
+
+	Update Postfix to version 2.7.4. This update fixes the security
+	vulnerability reported in CVE-2011-1720 which fortunately doesn't
+	affect NetBSD as the problematic option is not compiled in.
+	[tron, ticket #1637]
+
+usr.sbin/makefs/cd9660.c			1.30
+usr.sbin/makefs/cd9660/iso9660_rrip.c		1.9-1.10
+
+	Apply fixes for PR bin/44114 (makefs(8) -t cd9660 -o rockridge creates
+	corrupted cd9660fs)
+	[tsutsui, ticket #1638]
+
+sys/arch/mvme68k/stand/libsa/exec_mvme.c	1.16 via patch
+sys/arch/sun68k/stand/tapeboot/boot.c		1.7 via patch
+
+	Avoid backward seek on tape boot.
+	[tsutsui, ticket #1639]
+
+sys/arch/x68k/x68k/locore.s			1.102 via patch
+
+	DIAGNOSTIC assertion fix on x68k without FPU.
+	[tsutsui, ticket #1640]
 
