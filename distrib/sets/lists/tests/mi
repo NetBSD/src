@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.373 2011/07/08 06:38:03 jruoho Exp $
+# $NetBSD: mi,v 1.374 2011/07/15 06:41:29 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -406,6 +406,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_nsd_recurse.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_protoent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_servent.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/net/t_getprotoent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/regex				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/regex/h_regex.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/rpc				tests-lib-debug
@@ -1952,6 +1953,7 @@
 ./usr/tests/lib/libc/net/h_nsd_recurse		tests-lib-tests	atf
 ./usr/tests/lib/libc/net/h_protoent		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/h_servent		tests-lib-tests		atf
+./usr/tests/lib/libc/net/t_getprotoent		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/t_nsdispatch		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/t_protoent		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/t_servent		tests-lib-tests		atf
