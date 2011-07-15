@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.22.2.2 2010/01/02 06:45:03 snj Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.22.2.3 2011/07/15 22:39:02 riz Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.22.2.2 2010/01/02 06:45:03 snj Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.22.2.3 2011/07/15 22:39:02 riz Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -1299,6 +1299,8 @@ cd9660_rrip_move_directory(cd9660node *dir)
 	/* Set the new name */
 	memset(dir->isoDirRecord->name, 0, ISO_FILENAME_MAXLENGTH_WITH_PADDING);
 	strncpy(dir->isoDirRecord->name, newname, 8);
+	dir->isoDirRecord->length[0] = 34 + 8;
+	dir->isoDirRecord->name_len[0] = 8;
 
 	return dir;
 }
