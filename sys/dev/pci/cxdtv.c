@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.4 2011/07/15 03:35:13 jmcneill Exp $ */
+/* $NetBSD: cxdtv.c,v 1.5 2011/07/15 20:29:58 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.4 2011/07/15 03:35:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.5 2011/07/15 20:29:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -628,13 +628,31 @@ cxdtv_dtv_get_status(void *priv)
 static uint16_t
 cxdtv_dtv_get_signal_strength(void *priv)
 {
-	return 27;
+	struct cxdtv_softc *sc = priv;
+
+	switch(sc->sc_board->cb_demod) {
+	case CXDTV_DEMOD_NXT2004:
+		return 0;	/* TODO */
+	case CXDTV_DEMOD_LG3303:
+		return lg3303_get_signal_strength(sc->sc_demod);
+	}
+
+	return 0;
 }
 
 static uint16_t
 cxdtv_dtv_get_snr(void *priv)
 {
-	return 42;
+	struct cxdtv_softc *sc = priv;
+
+	switch(sc->sc_board->cb_demod) {
+	case CXDTV_DEMOD_NXT2004:
+		return 0;	/* TODO */
+	case CXDTV_DEMOD_LG3303:
+		return lg3303_get_snr(sc->sc_demod);
+	}
+
+	return 0;
 }
 
 static int
