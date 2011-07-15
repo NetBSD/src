@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.215 2011/06/26 16:42:41 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.216 2011/07/15 14:50:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.215 2011/06/26 16:42:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.216 2011/07/15 14:50:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -735,6 +735,8 @@ fd_dup2(file_t *fp, unsigned new, int flags)
 	fdfile_t *ff;
 	fdtab_t *dt;
 
+	if (flags & ~(O_CLOEXEC|O_NONBLOCK))
+		return EINVAL;
 	/*
 	 * Ensure there are enough slots in the descriptor table,
 	 * and allocate an fdfile_t up front in case we need it.
