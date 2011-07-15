@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.3 2011/07/15 00:21:26 jmcneill Exp $ */
+/* $NetBSD: cxdtv.c,v 1.4 2011/07/15 03:35:13 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.3 2011/07/15 00:21:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.4 2011/07/15 03:35:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.3 2011/07/15 00:21:26 jmcneill Exp $");
 
 #define CXDTV_SRAM_CH_MPEG	0
 #define CXDTV_TS_PKTSIZE	(188 * 8)
-
 
 static int cxdtv_match(struct device *, struct cfdata *, void *);
 static void cxdtv_attach(struct device *, struct device *, void *);
@@ -860,30 +859,34 @@ cxdtv_mpeg_trigger(struct cxdtv_softc *sc, void *buf)
 	cxdtv_sram_ch_setup(sc, ch, CXDTV_TS_PKTSIZE);
 
 	/* software reset */
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_TS_GEN_CONTROL,
-	    0x40);
-	mutex_enter(&sc->sc_delaylock);
-	cv_timedwait(&sc->sc_delaycv, &sc->sc_delaylock, mstohz(100));
-	mutex_exit(&sc->sc_delaylock);
 
 	/* serial MPEG port on HD5500 */
 	switch(sc->sc_vendor) {
 	case PCI_VENDOR_ATI:
 		/* both ATI boards with DTV are the same */
+		bus_space_write_4(sc->sc_memt, sc->sc_memh,
+		    CXDTV_TS_GEN_CONTROL, 0x40);
+		delay(100);
 		/* parallel MPEG port */
 		bus_space_write_4(sc->sc_memt, sc->sc_memh,
 		    CXDTV_PINMUX_IO, 0x80); /* XXX bit defines */
 		break;
 	case PCI_VENDOR_PCHDTV:
 		if (sc->sc_product == PCI_PRODUCT_PCHDTV_HD5500) {
+			bus_space_write_4(sc->sc_memt, sc->sc_memh,
+			    CXDTV_TS_GEN_CONTROL, 0x48);
+			delay(100);
 			/* serial MPEG port */
 			bus_space_write_4(sc->sc_memt, sc->sc_memh,
 			    CXDTV_PINMUX_IO, 0x00); /* XXX bit defines */
-			bus_space_write_4(sc->sc_memt, sc->sc_memh,
-			    CXDTV_TS_GEN_CONTROL, 0x08);
 			/* byte-width start-of-packet */
 			bus_space_write_4(sc->sc_memt, sc->sc_memh,
+			    CXDTV_HW_SOP_CONTROL,
+			    0x47 << 16 | 188 << 4 | 1);
+			bus_space_write_4(sc->sc_memt, sc->sc_memh,
 			    CXDTV_TS_SOP_STATUS, 1 << 13);
+			bus_space_write_4(sc->sc_memt, sc->sc_memh,
+			    CXDTV_TS_GEN_CONTROL, 0x08);
 		}
 		break;
 	default:
@@ -899,7 +902,7 @@ cxdtv_mpeg_trigger(struct cxdtv_softc *sc, void *buf)
 
 	offset = CXDTV_TS_GEN_CONTROL;
 	v = bus_space_read_4(sc->sc_memt, sc->sc_memh, offset);
-	printf("%06x %08x\n", offset, v);
+	printf("CXDTV_TS_GEN_CONTROL %06x %08x\n", offset, v);
 
 #if 0
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_TS_GEN_CONTROL, 0x00);
@@ -1139,20 +1142,26 @@ cxdtv_card_init_hdtvwonder(struct cxdtv_softc *sc)
 }
 
 /* pcHDTV HD5500 */
+#define	cxdtv_write_field(_mask, _shift, _value)	\
+	(((_value) & (_mask)) << (_shift))
+
+static void
+cxdtv_write_gpio(struct cxdtv_softc *sc, uint32_t mask, uint32_t value)
+{
+	uint32_t v = 0;
+	v |= cxdtv_write_field(0xff, 16, mask);
+	v |= cxdtv_write_field(0xff, 8, mask);
+	v |= cxdtv_write_field(0xff, 0, (mask & value));
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_GP0_IO, v);
+}
+
 static void
 cxdtv_card_init_hd5500(struct cxdtv_softc *sc)
 {
-	uint32_t val;
-
 	/* hardware (demod) reset */
-	val = bus_space_read_4(sc->sc_memt, sc->sc_memh, CXDTV_GP0_IO);
-
-	val &= ~1;
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_GP0_IO, val);
+	cxdtv_write_gpio(sc, 1, 0);
 	delay(100000);
-
-	val |= 1;
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_GP0_IO, val);
+	cxdtv_write_gpio(sc, 1, 1);
 	delay(200000);
 }
 
