@@ -1,4 +1,4 @@
-/* $NetBSD: lg3303.c,v 1.4 2011/07/15 10:10:35 jmcneill Exp $ */
+/* $NetBSD: lg3303.c,v 1.5 2011/07/15 20:28:38 jmcneill Exp $ */
 
 /*-
  * Copyright 2007 Jason Harmening
@@ -28,11 +28,12 @@
  */
 
 #include <sys/param.h>
-__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.4 2011/07/15 10:10:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.5 2011/07/15 20:28:38 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
+#include <sys/bitops.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/lg3303var.h>
@@ -288,65 +289,66 @@ lg3303_get_dtv_status(struct lg3303 *lg)
 	return festatus;
 }
 
-#if notyet
-int lg3303::get_signal(dvb_signal &signal)
+uint16_t
+lg3303_get_snr(struct lg3303 *lg)
 {
-   int error = check_for_lock(signal.locked);
-   uint32_t noise, snr_const;
-   uint8_t buffer[5];
-   uint8_t reg;
-   if (error || !signal.locked)
-   {
-      return error;
-   }
-   signal.ber = 0;
-   switch(m_modulation)
-   {
-      case DVB_MOD_VSB_8:
-         reg = REG_EQPH_ERR0;
-         if ((error = m_device.transact(&reg, sizeof(reg), buffer, sizeof(buffer))))
-         {
-            LIBTUNERERR << "LG3303: Unable to retrieve 8-VSB noise value" << endl;
-            return error;
-         }
-         noise = ((buffer[0] & 7) << 16) | (buffer[3] << 8) | buffer[4];
-         snr_const = 25600;
-         break;
-      case DVB_MOD_QAM_64:
-      case DVB_MOD_QAM_256:
-         reg = REG_CARRIER_MSEQAM1;
-         if ((error = m_device.transact(&reg, sizeof(reg), buffer, 2)))
-         {
-            LIBTUNERERR << "LG3303: Unable to retrieve QAM noise value" << endl;
-            return error;
-         }
-         noise = (buffer[0] << 8) | buffer[1];
-         if (m_modulation == DVB_MOD_QAM_64)
-         {
-            snr_const = 688128;
-         }
-         else
-         {
-            snr_const = 696320;
-         }
-         break;
-      default:
-         LIBTUNERERR << "LG3303: Unsupported modulation type" << endl;
-         return EINVAL;
-   }
-   signal.snr = 10.0 * log10((double)snr_const / noise);
-   signal.strength = (signal.snr / 35) * 100;
-   reg = REG_PACKET_ERR_COUNTER1;
-   if ((error = m_device.transact(&reg, sizeof(reg), buffer, 2)))
-   {
-      LIBTUNERERR << "LG3303: Unable to retrieve packet error count" << endl;
-      return error;
-   }
-   signal.uncorrected_blocks = (buffer[0] << 8) | buffer[1];
-   return 0;
-}
-#endif
+	int64_t noise, snr_const;
+	uint8_t buffer[5];
+	int64_t snr;
+	int error;
 
+	switch (lg->current_modulation) {
+	case VSB_8:
+		error = lg3303_read(lg, REG_EQPH_ERR0, buffer, sizeof(buffer));
+		if (error)
+			return 0;
+		noise = ((buffer[0] & 7) << 16) | (buffer[3] << 8) | buffer[4];
+		snr_const = 73957994;	/* log10(2560) * pow(2,24) */
+		break;
+	case QAM_64:
+	case QAM_256:
+		error = lg3303_read(lg, REG_CARRIER_MSEQAM1, buffer, 2);
+		if (error)
+			return 0;
+		noise = (buffer[0] << 8) | buffer[1];
+		if (lg->current_modulation == QAM_64)
+			snr_const = 97939837;	/* log10(688128) * pow(2,24) */
+		else
+			snr_const = 98026066;	/* log10(696320) * pow(2,24) */
+		break;
+	default:
+		device_printf(lg->parent,
+		    "lg3303: unsupported modulation type (%d)\n",
+		    lg->current_modulation);
+		return 0;
+	}
+
+	if (noise == 0)
+		return 0;
+	snr = dtv_intlog10(noise);
+	if (snr > snr_const)
+		return 0;
+	return (10 * (snr_const - snr)) >> 16;
+}
+
+uint16_t
+lg3303_get_signal_strength(struct lg3303 *lg)
+{
+	return ((uint32_t)lg3303_get_snr(lg) << 16) / 8960;
+}
+
+uint32_t
+lg3303_get_ucblocks(struct lg3303 *lg)
+{
+	uint8_t buffer[2];
+	int error;
+
+	error = lg3303_read(lg, REG_PACKET_ERR_COUNTER1, buffer, sizeof(buffer));
+	if (error)
+		return 0;
+
+	return (buffer[0] << 8) | buffer[1];
+}
 
 MODULE(MODULE_CLASS_DRIVER, lg3303, NULL);
 
