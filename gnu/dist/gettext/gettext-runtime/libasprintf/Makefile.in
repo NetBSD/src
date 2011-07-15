@@ -302,7 +302,9 @@ all: config.h
 .SUFFIXES: .pdf .c .cc .dvi .html .info .lo .o .obj .ps .texi
 am--refresh:
 	@:
-$(srcdir)/NetBSD_DISABLED_Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_Makefile.in:
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -329,7 +331,9 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	$(SHELL) ./config.status --recheck
 
-$(top_srcdir)/NetBSD_DISABLED_configure:  $(am__configure_deps)
+$(top_srcdir)/configure:  $(am__configure_deps)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_configure:
 	cd $(srcdir) && $(AUTOCONF)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
@@ -343,7 +347,9 @@ config.h: stamp-h1
 stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
 	@rm -f stamp-h1
 	cd $(top_builddir) && $(SHELL) ./config.status config.h
-$(srcdir)/NetBSD_DISABLED_config.h.in:  $(am__configure_deps) 
+$(srcdir)/config.h.in:  $(am__configure_deps) 
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_config.h.in:
 	cd $(top_srcdir) && $(AUTOHEADER)
 	rm -f stamp-h1
 	touch $@
@@ -454,7 +460,9 @@ distclean-libtool:
 	    rm -rf $(@:.html=); else rm -Rf $(@:.html=.htp) $@; fi; \
 	  exit 1; \
 	fi
-$(srcdir)/NetBSD_DISABLED_autosprintf.info: autosprintf.texi 
+$(srcdir)/autosprintf.info: autosprintf.texi 
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_autosprintf.info:
 autosprintf.dvi: autosprintf.texi 
 autosprintf.pdf: autosprintf.texi 
 autosprintf.html: autosprintf.texi 
