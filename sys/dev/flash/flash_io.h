@@ -18,7 +18,8 @@ struct flash_io {
 
 int flash_io_submit(struct flash_io *, struct buf *);
 void flash_sync_thread(void *);
-int flash_sync_thread_init(struct flash_io *, struct flash_interface *);
+int flash_sync_thread_init(struct flash_io *, device_t,
+	struct flash_interface *);
 void flash_sync_thread_destroy(struct flash_io *);
 
 #endif
