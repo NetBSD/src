@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdma.c,v 1.2 2010/03/01 13:01:16 pooka Exp $	*/
+/*	$NetBSD: rumpdma.c,v 1.3 2011/07/15 23:40:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 #include <sys/device.h>
 #include <sys/kmem.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * bus dma "implementation" for rump.
