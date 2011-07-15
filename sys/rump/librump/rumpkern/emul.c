@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.53 2008/10/14 10:42:27 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.53.4.1 2011/07/15 23:41:13 riz Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -88,6 +88,8 @@ const char osrelease[] = "999"; /* paradroid 4evah */
 const char kernel_ident[] = "RUMP-ROAST";
 const char *domainname;
 int domainnamelen;
+
+const int sigprop[NSIG];
 
 const struct filterops seltrue_filtops;
 
@@ -505,13 +507,6 @@ sigispending(struct lwp *l, int signo)
 }
 
 void
-sigpending1(struct lwp *l, sigset_t *ss)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
 knote_fdclose(int fd)
 {
 
@@ -647,6 +642,62 @@ proc_crmod_enter()
 
 void
 proc_crmod_leave(kauth_cred_t c1, kauth_cred_t c2, bool sugid)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+int
+killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+int
+setucontext(struct lwp *l, const ucontext_t *ucp)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+getucontext(struct lwp *l, ucontext_t *ucp)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+getnanouptime(struct timespec *tsp)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+kpsignal2(struct proc *p, ksiginfo_t *ksi)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+sigclearall(struct proc *p, const sigset_t *mask, ksiginfoq_t *kq)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+int
+sigget(sigpend_t *sp, ksiginfo_t *out, int signo, const sigset_t *mask)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+ksiginfo_queue_drain0(ksiginfoq_t *kq)
 {
 
 	panic("%s: not implemented", __func__);
