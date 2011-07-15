@@ -46,7 +46,7 @@
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
-//#include <sys/workqueue.h>
+#include <sys/workqueue.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -125,6 +125,9 @@ struct bnx_softc
 	bus_size_t		bnx_size;
 
 	void			*bnx_intrhand;		/* Interrupt handler */
+
+	/* packet allocation workqueue */
+	struct workqueue	*bnx_wq;
 
 	/* ASIC Chip ID. */
 	u_int32_t		bnx_chipid;
