@@ -1,4 +1,4 @@
-/* $NetBSD: lg3303.c,v 1.3 2011/07/15 03:29:23 jmcneill Exp $ */
+/* $NetBSD: lg3303.c,v 1.4 2011/07/15 10:10:35 jmcneill Exp $ */
 
 /*-
  * Copyright 2007 Jason Harmening
@@ -28,7 +28,7 @@
  */
 
 #include <sys/param.h>
-__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.3 2011/07/15 03:29:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.4 2011/07/15 10:10:35 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -199,44 +199,41 @@ lg3303_set_modulation(struct lg3303 *lg, fe_modulation_t modulation)
 		0x49, 0x08,
 		0x4a, 0x9b   
 	};
+	uint8_t top_ctrl[] = {REG_TOP_CONTROL, 0x00};
 
 	error = lg3303_reset(lg);
 	if (error)
 		return error;
 
-	if (lg->current_modulation != modulation) {
-		uint8_t top_ctrl[] = {REG_TOP_CONTROL, 0x00};
+	if (lg->flags & LG3303_CFG_SERIAL_INPUT)
+		top_ctrl[1] = 0x40;  
 
-		if (lg->flags & LG3303_CFG_SERIAL_INPUT)
-			top_ctrl[1] = 0x40;  
-
-		switch (modulation) {
-		case VSB_8:
-			top_ctrl[1] |= 0x03;
-			error = lg3303_write(lg, vsb_data, sizeof(vsb_data));
-			if (error)
-				return error;
-			break;
-		case QAM_256:
-			top_ctrl[1] |= 0x01;
-			/* FALLTHROUGH */
-		case QAM_64:
-			error = lg3303_write(lg, qam_data, sizeof(qam_data));
-			if (error)
-				return error;
-			break;
-		default:
-			device_printf(lg->parent,
-			    "lg3303: unsupported modulation type (%d)\n",
-			    modulation);
-			return EINVAL;
-		}
-		error = lg3303_write(lg, top_ctrl, sizeof(top_ctrl));
+	switch (modulation) {
+	case VSB_8:
+		top_ctrl[1] |= 0x03;
+		error = lg3303_write(lg, vsb_data, sizeof(vsb_data));
 		if (error)
 			return error;
-		lg->current_modulation = modulation;
-		lg3303_reset(lg);
+		break;
+	case QAM_256:
+		top_ctrl[1] |= 0x01;
+		/* FALLTHROUGH */
+	case QAM_64:
+		error = lg3303_write(lg, qam_data, sizeof(qam_data));
+		if (error)
+			return error;
+		break;
+	default:
+		device_printf(lg->parent,
+		    "lg3303: unsupported modulation type (%d)\n",
+		    modulation);
+		return EINVAL;
 	}
+	error = lg3303_write(lg, top_ctrl, sizeof(top_ctrl));
+	if (error)
+		return error;
+	lg->current_modulation = modulation;
+	lg3303_reset(lg);
 
 	return error;
 }
