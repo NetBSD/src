@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_dtv.c,v 1.2 2011/07/13 14:34:45 jakllsch Exp $ */
+/* $NetBSD: emdtv_dtv.c,v 1.3 2011/07/15 10:48:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.2 2011/07/13 14:34:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.3 2011/07/15 10:48:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ emdtv_dtv_open(void *priv, int flags)
 	case EMDTV_DEMOD_LG3303:
 		if (sc->sc_lg3303 == NULL) {
 			sc->sc_lg3303 = lg3303_open(sc->sc_dev,
-			    &sc->sc_i2c, 0x1c);
+			    &sc->sc_i2c, 0x1c, 0);
 		}
 		if (sc->sc_lg3303 == NULL) {
 			aprint_error_dev(sc->sc_dev, "couldn't open lg3303\n");
