@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2011/01/13 02:24:51 pgoyette Exp $
+# $NetBSD: Makefile,v 1.5 2011/07/15 06:41:29 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,8 @@ MKMAN=	no
 TESTS_SUBDIRS+=	getaddrinfo
 
 TESTSDIR=	${TESTSBASE}/lib/libc/net
+
+TESTS_C+=	t_getprotoent
 
 TESTS_SH+=	t_nsdispatch
 TESTS_SH+=	t_protoent
