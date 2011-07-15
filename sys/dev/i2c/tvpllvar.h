@@ -1,4 +1,4 @@
-/* $NetBSD: tvpllvar.h,v 1.1 2011/07/11 00:01:52 jakllsch Exp $ */
+/* $NetBSD: tvpllvar.h,v 1.2 2011/07/15 03:31:37 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Jonathan A. Kollasch
@@ -34,6 +34,8 @@
 #include <dev/i2c/i2cvar.h>
 #include <dev/dtv/dtvio.h>
 
+#define	TVPLL_IGNORE_AUX	0xff
+
 struct tvpll_data {
 	const char * name;
 	uint32_t min;
@@ -47,6 +49,7 @@ struct tvpll_data {
 		uint32_t stepsize;
 		uint8_t config;
 		uint8_t cb;
+		uint8_t aux;
 	} *entries;
 };
 
