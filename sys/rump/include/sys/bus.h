@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2010/02/13 03:19:46 pooka Exp $	*/
+/*	$NetBSD: bus.h,v 1.1 2011/07/15 23:40:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
