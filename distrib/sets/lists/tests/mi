@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.375 2011/07/15 07:35:21 jruoho Exp $
+# $NetBSD: mi,v 1.376 2011/07/15 13:54:31 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -450,6 +450,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_environment_pth.debug	tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_exit.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_getenv.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_getenv_thread.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_hsearch.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_posix_memalign.debug	tests-lib-debug		debug,atf
@@ -2033,6 +2034,7 @@
 ./usr/tests/lib/libc/stdlib/t_environment_pth	tests-obsolete		obsolete
 ./usr/tests/lib/libc/stdlib/t_exit		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_getenv		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_getenv_thread	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_getopt		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_hsearch		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		atf
