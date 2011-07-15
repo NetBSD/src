@@ -1,4 +1,4 @@
-/* $NetBSD: lg3303var.h,v 1.2 2011/07/14 23:46:52 jmcneill Exp $ */
+/* $NetBSD: lg3303var.h,v 1.3 2011/07/15 20:28:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -48,5 +48,8 @@ struct lg3303 *	lg3303_open(device_t, i2c_tag_t, i2c_addr_t, int);
 void		lg3303_close(struct lg3303 *);
 int		lg3303_set_modulation(struct lg3303 *, fe_modulation_t);
 fe_status_t	lg3303_get_dtv_status(struct lg3303 *);
+uint16_t	lg3303_get_snr(struct lg3303 *);
+uint16_t	lg3303_get_signal_strength(struct lg3303 *);
+uint32_t	lg3303_get_ucblocks(struct lg3303 *);
 
 #endif /* !_LG3303VAR_H */
