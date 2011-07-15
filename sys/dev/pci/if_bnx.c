@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.43 2011/05/02 09:03:10 jym Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.44 2011/07/15 11:29:31 jym Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.43 2011/05/02 09:03:10 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.44 2011/07/15 11:29:31 jym Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -397,7 +397,7 @@ void	bnx_stats_update(struct bnx_softc *);
 void	bnx_tick(void *);
 
 struct pool *bnx_tx_pool = NULL;
-int	bnx_alloc_pkts(struct bnx_softc *);
+void	bnx_alloc_pkts(struct work *, void *);
 
 /****************************************************************************/
 /* OpenBSD device dispatch table.                                           */
@@ -705,6 +705,13 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(sc->bnx_dev, "interrupting at %s\n", intrstr);
 
+	/* create workqueue to handle packet allocations */
+	if (workqueue_create(&sc->bnx_wq, device_xname(self),
+	    bnx_alloc_pkts, sc, PRI_NONE, IPL_NONE, WQ_MPSAFE) != 0) {
+		aprint_error_dev(self, "failed to create workqueue\n");
+		goto bnx_attach_fail;
+	}
+
 	sc->bnx_mii.mii_ifp = ifp;
 	sc->bnx_mii.mii_readreg = bnx_miibus_read_reg;
 	sc->bnx_mii.mii_writereg = bnx_miibus_write_reg;
@@ -799,6 +806,7 @@ bnx_detach(device_t dev, int flags)
 	pmf_device_deregister(dev);
 	callout_destroy(&sc->bnx_timeout);
 	ether_ifdetach(ifp);
+	workqueue_destroy(sc->bnx_wq);
 
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->bnx_mii.mii_media, IFM_INST_ANY);
@@ -3839,21 +3847,22 @@ bnx_get_buf_exit:
 	return(rc);
 }
 
-int
-bnx_alloc_pkts(struct bnx_softc *sc)
+void
+bnx_alloc_pkts(struct work * unused, void * arg)
 {
+	struct bnx_softc *sc = arg;
 	struct ifnet *ifp = &sc->bnx_ec.ec_if;
 	struct bnx_pkt *pkt;
-	int i;
+	int i, s;
 
 	for (i = 0; i < 4; i++) { /* magic! */
-		pkt = pool_get(bnx_tx_pool, PR_NOWAIT);
+		pkt = pool_get(bnx_tx_pool, PR_WAITOK);
 		if (pkt == NULL)
 			break;
 
 		if (bus_dmamap_create(sc->bnx_dmatag,
 		    MCLBYTES * BNX_MAX_SEGMENTS, USABLE_TX_BD,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    MCLBYTES, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &pkt->pkt_dmamap) != 0)
 			goto put;
 
@@ -3866,13 +3875,23 @@ bnx_alloc_pkts(struct bnx_softc *sc)
 		mutex_exit(&sc->tx_pkt_mtx);
 	}
 
-	return (i == 0) ? ENOMEM : 0;
+	mutex_enter(&sc->tx_pkt_mtx);
+	CLR(sc->bnx_flags, BNX_ALLOC_PKTS_FLAG);
+	mutex_exit(&sc->tx_pkt_mtx);
+
+	/* fire-up TX now that allocations have been done */
+	s = splnet();
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+		bnx_start(ifp);
+	splx(s);
+
+	return;
 
 stopping:
 	bus_dmamap_destroy(sc->bnx_dmatag, pkt->pkt_dmamap);
 put:
 	pool_put(bnx_tx_pool, pkt);
-	return (i == 0) ? ENOMEM : 0;
+	return;
 }
 
 /****************************************************************************/
@@ -3933,7 +3952,7 @@ bnx_init_tx_chain(struct bnx_softc *sc)
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __func__);
 
 	/* Force an allocation of some dmamaps for tx up front */
-	bnx_alloc_pkts(sc);
+	bnx_alloc_pkts(NULL, sc);
 
 	/* Set the initial TX producer/consumer indices. */
 	sc->tx_prod = 0;
@@ -4805,8 +4824,8 @@ bnx_init(struct ifnet *ifp)
 	if ((error = ether_mediachange(ifp)) != 0)
 		goto bnx_init_exit;
 
-	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	SET(ifp->if_flags, IFF_RUNNING);
+	CLR(ifp->if_flags, IFF_OACTIVE);
 
 	callout_reset(&sc->bnx_timeout, hz, bnx_tick, sc);
 
@@ -4839,8 +4858,8 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 	u_int32_t		addr, prod_bseq;
 	int			i, error;
 	struct m_tag		*mtag;
+	static struct work	bnx_wk; /* Dummy work. Statically allocated. */
 
-again:
 	mutex_enter(&sc->tx_pkt_mtx);
 	pkt = TAILQ_FIRST(&sc->tx_free_pkts);
 	if (pkt == NULL) {
@@ -4848,14 +4867,15 @@ again:
 			mutex_exit(&sc->tx_pkt_mtx);
 			return ENETDOWN;
 		}
-		if (sc->tx_pkt_count <= TOTAL_TX_BD) {
-			mutex_exit(&sc->tx_pkt_mtx);
-			if (bnx_alloc_pkts(sc) == 0)
-				goto again;
-		} else {
-			mutex_exit(&sc->tx_pkt_mtx);
+
+		if (sc->tx_pkt_count <= TOTAL_TX_BD &&
+		    !ISSET(sc->bnx_flags, BNX_ALLOC_PKTS_FLAG)) {
+			workqueue_enqueue(sc->bnx_wq, &bnx_wk, NULL);
+			SET(sc->bnx_flags, BNX_ALLOC_PKTS_FLAG);
 		}
-		return (ENOMEM);
+
+		mutex_exit(&sc->tx_pkt_mtx);
+		return ENOMEM;
 	}
 	TAILQ_REMOVE(&sc->tx_free_pkts, pkt, pkt_entry);
 	mutex_exit(&sc->tx_pkt_mtx);
@@ -5082,7 +5102,7 @@ bnx_ioctl(struct ifnet *ifp, u_long command, void *data)
 		/* XXX set an ifflags callback and let ether_ioctl
 		 * handle all of this.
 		 */
-		if (ifp->if_flags & IFF_UP) {
+		if (ISSET(ifp->if_flags, IFF_UP)) {
 			if (ifp->if_flags & IFF_RUNNING)
 				error = ENETRESET;
 			else
