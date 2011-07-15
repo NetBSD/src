@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.2 2011/07/14 23:47:45 jmcneill Exp $ */
+/* $NetBSD: cxdtv.c,v 1.3 2011/07/15 00:21:26 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.2 2011/07/14 23:47:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.3 2011/07/15 00:21:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.2 2011/07/14 23:47:45 jmcneill Exp $");
 static int cxdtv_match(struct device *, struct cfdata *, void *);
 static void cxdtv_attach(struct device *, struct device *, void *);
 static int cxdtv_detach(struct device *, int);
+static void cxdtv_childdet(struct device *, struct device *);
 static int cxdtv_intr(void *);
 
 static bool cxdtv_resume(device_t, const pmf_qual_t *);
@@ -90,6 +91,7 @@ static int	cxdtv_risc_buffer(struct cxdtv_softc *, uint32_t, uint32_t);
 static int	cxdtv_risc_field(struct cxdtv_softc *, uint32_t *, uint32_t);
 
 static int     cxdtv_mpeg_attach(struct cxdtv_softc *);
+static int     cxdtv_mpeg_detach(struct cxdtv_softc *, int flags);
 static int     cxdtv_mpeg_intr(struct cxdtv_softc *);
 static int     cxdtv_mpeg_reset(struct cxdtv_softc *);
 
@@ -127,8 +129,8 @@ static struct cxdtv_sram_ch cxdtv_sram_chs[] = {
 	},
 };
 
-CFATTACH_DECL_NEW(cxdtv, sizeof(struct cxdtv_softc),
-    cxdtv_match, cxdtv_attach, cxdtv_detach, NULL);
+CFATTACH_DECL2_NEW(cxdtv, sizeof(struct cxdtv_softc),
+    cxdtv_match, cxdtv_attach, cxdtv_detach, NULL, NULL, cxdtv_childdet);
 
 static int
 cxdtv_match(device_t parent, cfdata_t match, void *aux)
@@ -164,6 +166,7 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 	sc = device_private(self);
 
 	sc->sc_dev = self;
+	sc->sc_pc = pa->pa_pc;
 
 	aprint_naive("\n");
 
@@ -249,7 +252,33 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 static int
 cxdtv_detach(device_t self, int flags)
 {
-	return EBUSY;
+	struct cxdtv_softc *sc = device_private(self);
+	int error;
+
+	error = cxdtv_mpeg_detach(sc, flags);
+	if (error)
+		return error;
+
+	if (sc->sc_ih)
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+
+	if (sc->sc_mems)
+		bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
+
+	mutex_destroy(&sc->sc_i2c_buslock);
+	mutex_destroy(&sc->sc_delaylock);
+	cv_destroy(&sc->sc_delaycv);
+
+	return 0;
+}
+
+static void
+cxdtv_childdet(device_t self, device_t child)
+{
+	struct cxdtv_softc *sc = device_private(self);
+
+	if (child == sc->sc_dtvdev)
+		sc->sc_dtvdev = NULL;
 }
 
 static bool
@@ -461,6 +490,50 @@ cxdtv_mpeg_attach(struct cxdtv_softc *sc)
 	sc->sc_dtvdev = config_found_ia(sc->sc_dev, "dtvbus", &daa, dtv_print);
 
 	return (sc->sc_dtvdev != NULL);
+}
+
+int
+cxdtv_mpeg_detach(struct cxdtv_softc *sc, int flags)
+{
+	int error = 0;
+
+	if (sc->sc_dtvdev) {
+		error = config_detach(sc->sc_dtvdev, flags);
+		if (error)
+			return error;
+	}
+
+	if (sc->sc_demod) {
+		switch (sc->sc_board->cb_demod) {
+		case CXDTV_DEMOD_NXT2004:
+			nxt2k_close(sc->sc_demod);
+			break;
+		case CXDTV_DEMOD_LG3303:
+			lg3303_close(sc->sc_demod);
+			break;
+		default:
+			break;
+		}
+		sc->sc_demod = NULL;
+	}
+	if (sc->sc_tuner) {
+		switch (sc->sc_board->cb_tuner) {
+		case CXDTV_TUNER_PLL:
+			tvpll_close(sc->sc_tuner);
+			break;
+		default:
+			break;
+		}
+		sc->sc_tuner = NULL;
+	}
+
+	if (sc->sc_riscbuf) {
+		kmem_free(sc->sc_riscbuf, sc->sc_riscbufsz);
+		sc->sc_riscbuf = NULL;
+		sc->sc_riscbufsz = 0;
+	}
+
+	return error;
 }
 
 static void
@@ -1076,15 +1149,11 @@ cxdtv_card_init_hd5500(struct cxdtv_softc *sc)
 
 	val &= ~1;
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_GP0_IO, val);
-	mutex_enter(&sc->sc_delaylock);
-	cv_timedwait(&sc->sc_delaycv, &sc->sc_delaylock, mstohz(10));
-	mutex_exit(&sc->sc_delaylock);
+	delay(100000);
 
 	val |= 1;
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_GP0_IO, val);
-	mutex_enter(&sc->sc_delaylock);
-	cv_timedwait(&sc->sc_delaycv, &sc->sc_delaylock, mstohz(15));
-	mutex_exit(&sc->sc_delaylock);
+	delay(200000);
 }
 
 MODULE(MODULE_CLASS_DRIVER, cxdtv, "dtv,tvpll,nxt2k,lg3303");
