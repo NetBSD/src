@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.131 2011/06/26 16:42:42 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.132 2011/07/15 14:50:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.131 2011/06/26 16:42:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.132 2011/07/15 14:50:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,6 +251,8 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 	int fd, error;
 	proc_t *p;
 
+	if (flags & ~(O_CLOEXEC|O_NONBLOCK))
+		return EINVAL;
 	p = curproc;
 	rpipe = wpipe = NULL;
 	if (pipe_create(&rpipe, pipe_rd_cache) ||
