@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_dtv.c,v 1.3 2011/07/15 10:48:30 jmcneill Exp $ */
+/* $NetBSD: emdtv_dtv.c,v 1.4 2011/07/15 20:32:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.3 2011/07/15 10:48:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.4 2011/07/15 20:32:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,12 +259,22 @@ emdtv_dtv_get_status(void *priv)
 uint16_t
 emdtv_dtv_get_signal_strength(void *priv)
 {
+	struct emdtv_softc *sc = priv;
+
+	if (sc->sc_lg3303)
+		return lg3303_get_signal_strength(sc->sc_lg3303);
+
 	return 0;
 }
 
 uint16_t
 emdtv_dtv_get_snr(void *priv)
 {
+	struct emdtv_softc *sc = priv;
+
+	if (sc->sc_lg3303)
+		return lg3303_get_snr(sc->sc_lg3303);
+
 	return 0;
 }
 
