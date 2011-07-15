@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.1 2011/06/15 09:45:59 mrg Exp $
+# $NetBSD: md.evbppc,v 1.2 2011/07/15 08:07:08 he Exp $
 ./stand/powerpc-4xx						base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@					base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod
@@ -30,6 +30,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/dm/dm.kmod			base-kernel-modules	lvm,kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/dtrace				base-kernel-modules	kmod,dtrace
 ./stand/powerpc-4xx/@OSRELEASE@/modules/dtrace/dtrace.kmod		base-kernel-modules	kmod,dtrace
+./stand/powerpc-4xx/@OSRELEASE@/modules/dtv				base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/dtv/dtv.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/efs				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/efs/efs.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/exec_script			base-kernel-modules	kmod
@@ -171,6 +173,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/dm/dm.kmod			base-kernel-modules	lvm,kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/dtrace				base-kernel-modules	kmod,dtrace
 ./stand/powerpc-booke/@OSRELEASE@/modules/dtrace/dtrace.kmod		base-kernel-modules	kmod,dtrace
+./stand/powerpc-booke/@OSRELEASE@/modules/dtv				base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/dtv/dtv.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/efs				base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/efs/efs.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/exec_script			base-kernel-modules	kmod
