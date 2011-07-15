@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtvvar.h,v 1.1 2011/07/11 00:46:04 jakllsch Exp $ */
+/* $NetBSD: cxdtvvar.h,v 1.2 2011/07/15 00:21:26 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -75,6 +75,8 @@ struct cxdtv_dma {
 struct cxdtv_softc {
 	device_t		sc_dev;
 	device_t		sc_dtvdev;
+
+	pci_chipset_tag_t	sc_pc;
 
 	bus_space_tag_t		sc_memt;
 	bus_space_handle_t	sc_memh;
