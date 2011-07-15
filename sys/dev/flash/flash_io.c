@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_io.c,v 1.2 2011/06/28 20:58:00 ahoka Exp $	*/
+/*	$NetBSD: flash_io.c,v 1.3 2011/07/15 19:19:57 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_io.c,v 1.2 2011/06/28 20:58:00 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_io.c,v 1.3 2011/07/15 19:19:57 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -96,12 +96,14 @@ flash_io_getblock(struct flash_io *fio, struct buf *bp)
 }
 
 int
-flash_sync_thread_init(struct flash_io *fio, struct flash_interface *flash_if)
+flash_sync_thread_init(struct flash_io *fio, device_t dev,
+    struct flash_interface *flash_if)
 {
 	int error;
 
 	FLDPRINTF(("starting flash io thread\n"));
 
+	fio->fio_dev = dev;
 	fio->fio_if = flash_if;
 
 	fio->fio_data = kmem_alloc(fio->fio_if->erasesize, KM_SLEEP);
