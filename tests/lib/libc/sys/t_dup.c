@@ -1,4 +1,4 @@
-/* $NetBSD: t_dup.c,v 1.2 2011/07/07 10:27:31 jruoho Exp $ */
+/* $NetBSD: t_dup.c,v 1.3 2011/07/15 09:40:16 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dup.c,v 1.2 2011/07/07 10:27:31 jruoho Exp $");
+__RCSID("$NetBSD: t_dup.c,v 1.3 2011/07/15 09:40:16 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -38,13 +38,191 @@ __RCSID("$NetBSD: t_dup.c,v 1.2 2011/07/07 10:27:31 jruoho Exp $");
 #include <atf-c.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sysexits.h>
 
-static char	 path[] = "dup";
+static char	path[] = "dup";
+static void	check_mode(bool, bool, bool);
+
+static void
+check_mode(bool _dup, bool _dup2, bool _dup3)
+{
+	int mode[3] = { O_RDONLY, O_WRONLY, O_RDWR   };
+	int perm[5] = { 0700, 0400, 0600, 0444, 0666 };
+	struct stat st, st1;
+	int fd, fd1, fd2;
+	size_t i, j;
+
+	/*
+	 * Check that a duplicated descriptor
+	 * retains the mode of the original file.
+	 */
+	for (i = 0; i < __arraycount(mode); i++) {
+
+		for (j = 0; j < __arraycount(perm); j++) {
+
+			fd1 = open(path, mode[i] | O_CREAT, perm[j]);
+			fd2 = open("/etc/passwd", O_RDONLY);
+
+			ATF_REQUIRE(fd1 >= 0);
+			ATF_REQUIRE(fd2 >= 0);
+
+			if (_dup != false)
+				fd = dup(fd1);
+			else if (_dup2 != false)
+				fd = dup2(fd1, fd2);
+			else if (_dup3 != false)
+				fd = dup3(fd1, fd2, O_CLOEXEC);
+			else {
+				fd = -1;
+			}
+
+			ATF_REQUIRE(fd >= 0);
+
+			(void)memset(&st, 0, sizeof(struct stat));
+			(void)memset(&st1, 0, sizeof(struct stat));
+
+			ATF_REQUIRE(fstat(fd, &st) == 0);
+			ATF_REQUIRE(fstat(fd1, &st1) == 0);
+
+			if (st.st_mode != st1.st_mode)
+				atf_tc_fail("invalid mode");
+
+			(void)close(fd);
+			(void)close(fd1);
+			(void)close(fd2);
+			(void)unlink(path);
+		}
+	}
+}
+
+ATF_TC(dup2_basic);
+ATF_TC_HEAD(dup2_basic, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A basic test of dup2(2)");
+}
+
+ATF_TC_BODY(dup2_basic, tc)
+{
+	int fd, fd1, fd2;
+
+	fd1 = open("/etc/passwd", O_RDONLY);
+	fd2 = open("/etc/passwd", O_RDONLY);
+
+	ATF_REQUIRE(fd1 >= 0);
+	ATF_REQUIRE(fd2 >= 0);
+
+	fd = dup2(fd1, fd2);
+	ATF_REQUIRE(fd >= 0);
+
+	if (fd != fd2)
+		atf_tc_fail("invalid descriptor");
+
+	(void)close(fd);
+	(void)close(fd1);
+
+	ATF_REQUIRE(close(fd2) != 0);
+}
+
+ATF_TC(dup2_err);
+ATF_TC_HEAD(dup2_err, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test error conditions of dup2(2)");
+}
+
+ATF_TC_BODY(dup2_err, tc)
+{
+	int fd;
+
+	fd = open("/etc/passwd", O_RDONLY);
+	ATF_REQUIRE(fd >= 0);
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EBADF, dup2(-1, -1) == -1);
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EBADF, dup2(fd, -1) == -1);
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EBADF, dup2(-1, fd) == -1);
+
+	/*
+	 * Note that this should not fail with EINVAL.
+	 */
+	ATF_REQUIRE(dup2(fd, fd) != -1);
+
+	(void)close(fd);
+}
+
+ATF_TC_WITH_CLEANUP(dup2_mode);
+ATF_TC_HEAD(dup2_mode, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A basic test of dup2(2)");
+}
+
+ATF_TC_BODY(dup2_mode, tc)
+{
+	check_mode(false, true, false);
+}
+
+ATF_TC_CLEANUP(dup2_mode, tc)
+{
+	(void)unlink(path);
+}
+
+
+ATF_TC(dup3_err);
+ATF_TC_HEAD(dup3_err, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test error conditions of dup3(2)");
+}
+
+ATF_TC_BODY(dup3_err, tc)
+{
+	int fd;
+
+	atf_tc_expect_fail("PR lib/45148");
+
+	fd = open("/etc/passwd", O_RDONLY);
+	ATF_REQUIRE(fd >= 0);
+
+	errno = 0;
+	ATF_REQUIRE(dup3(fd, fd, O_CLOEXEC) != -1);
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EBADF, dup3(-1, -1, O_CLOEXEC) == -1);
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EBADF, dup3(fd, -1, O_CLOEXEC) == -1);
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EBADF, dup3(-1, fd, O_CLOEXEC) == -1);
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EINVAL, dup3(fd, 1, O_NOFOLLOW) == -1); /* Fails. */
+
+	(void)close(fd);
+}
+
+ATF_TC_WITH_CLEANUP(dup3_mode);
+ATF_TC_HEAD(dup3_mode, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A basic test of dup3(2)");
+}
+
+ATF_TC_BODY(dup3_mode, tc)
+{
+	check_mode(false, false, true);
+}
+
+ATF_TC_CLEANUP(dup3_mode, tc)
+{
+	(void)unlink(path);
+}
 
 ATF_TC(dup_err);
 ATF_TC_HEAD(dup_err, tc)
@@ -54,7 +232,9 @@ ATF_TC_HEAD(dup_err, tc)
 
 ATF_TC_BODY(dup_err, tc)
 {
-	ATF_REQUIRE(dup(-1) != 0);
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EBADF, dup(-1) == -1);
 }
 
 ATF_TC_WITH_CLEANUP(dup_max);
@@ -78,8 +258,8 @@ ATF_TC_BODY(dup_max, tc)
 		/*
 		 * Open a temporary file until the
 		 * maximum number of open files is
-		 * reached. Ater that dup(2) should
-		 * fail with EMFILE.
+		 * reached. Ater that dup(2) family
+		 * should fail with EMFILE.
 		 */
 		(void)closefrom(0);
 		(void)memset(&res, 0, sizeof(struct rlimit));
@@ -123,11 +303,15 @@ ATF_TC_BODY(dup_max, tc)
 	if (WIFEXITED(sta) == 0 || WEXITSTATUS(sta) != EXIT_SUCCESS) {
 
 		if (WEXITSTATUS(sta) == EX_OSERR)
-			atf_tc_fail("unknown error");
+			atf_tc_fail("system call error");
 
 		if (WEXITSTATUS(sta) == EX_DATAERR)
 			atf_tc_fail("dup(2) dupped more than RLIMIT_NOFILE");
+
+		atf_tc_fail("unknown error");
 	}
+
+	(void)unlink(path);
 }
 
 ATF_TC_CLEANUP(dup_max, tc)
@@ -143,42 +327,7 @@ ATF_TC_HEAD(dup_mode, tc)
 
 ATF_TC_BODY(dup_mode, tc)
 {
-	int mode[3] = { O_RDONLY, O_WRONLY, O_RDWR   };
-	int perm[5] = { 0700, 0400, 0600, 0444, 0666 };
-	struct stat st1, st2;
-	int fd1, fd2;
-	size_t i, j;
-
-	/*
-	 * Check that a duplicated descriptor
-	 * retains the mode of the original file.
-	 */
-	for (i = 0; i < __arraycount(mode); i++) {
-
-		for (j = 0; j < __arraycount(perm); j++) {
-
-			fd1 = open(path, mode[i] | O_CREAT, perm[j]);
-
-			if (fd1 < 0)
-				return;
-
-			fd2 = dup(fd1);
-			ATF_REQUIRE(fd2 >= 0);
-
-			(void)memset(&st1, 0, sizeof(struct stat));
-			(void)memset(&st2, 0, sizeof(struct stat));
-
-			ATF_REQUIRE(fstat(fd1, &st1) == 0);
-			ATF_REQUIRE(fstat(fd2, &st2) == 0);
-
-			if (st1.st_mode != st2.st_mode)
-				atf_tc_fail("invalid mode");
-
-			ATF_REQUIRE(close(fd1) == 0);
-			ATF_REQUIRE(close(fd2) == 0);
-			ATF_REQUIRE(unlink(path) == 0);
-		}
-	}
+	check_mode(true, false, false);
 }
 
 ATF_TC_CLEANUP(dup_mode, tc)
@@ -189,6 +338,11 @@ ATF_TC_CLEANUP(dup_mode, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, dup2_basic);
+	ATF_TP_ADD_TC(tp, dup2_err);
+	ATF_TP_ADD_TC(tp, dup2_mode);
+	ATF_TP_ADD_TC(tp, dup3_err);
+	ATF_TP_ADD_TC(tp, dup3_mode);
 	ATF_TP_ADD_TC(tp, dup_err);
 	ATF_TP_ADD_TC(tp, dup_max);
 	ATF_TP_ADD_TC(tp, dup_mode);
