@@ -1,4 +1,4 @@
-/* $NetBSD: tvpll_tuners.c,v 1.2 2011/07/14 23:45:26 jmcneill Exp $ */
+/* $NetBSD: tvpll_tuners.c,v 1.3 2011/07/15 03:31:37 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,16 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tvpll_tuners.c,v 1.2 2011/07/14 23:45:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tvpll_tuners.c,v 1.3 2011/07/15 03:31:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <dev/i2c/tvpllvar.h>
 #include <dev/i2c/tvpll_tuners.h>
 
 static struct tvpll_entry tuv1236d_pll_entries[] = {  
-	{ 157250000, 62500, 0xc6, 0x41 },
-	{ 454000000, 62500, 0xc6, 0x42 },
-	{ 999999999, 62500, 0xc6, 0x44 },
+	{ 157250000, 62500, 0xc6, 0x41, TVPLL_IGNORE_AUX },
+	{ 454000000, 62500, 0xc6, 0x42, TVPLL_IGNORE_AUX },
+	{ 999999999, 62500, 0xc6, 0x44, TVPLL_IGNORE_AUX },
 };
 struct tvpll_data tvpll_tuv1236d_pll = {
 	"Philips TUV1236D",
@@ -45,14 +45,15 @@ struct tvpll_data tvpll_tuv1236d_pll = {
 	__arraycount(tuv1236d_pll_entries), tuv1236d_pll_entries
 };
 
+static uint8_t tdvs_h06xf_initdata[] = { 2, 0xdf, 0x50 };
 static struct tvpll_entry tdvs_h06xf_pll_entries[] = {
-	{ 165000000, 62500, 0xce, 0x01 },
-        { 450000000, 62500, 0xce, 0x02 },
-	{ 999999999, 62500, 0xce, 0x04 },
+	{ 165000000, 62500, 0xce, 0x01, 0x50 },
+	{ 450000000, 62500, 0xce, 0x02, 0x50 },
+	{ 999999999, 62500, 0xce, 0x04, 0x50 },
 };
 struct tvpll_data tvpll_tdvs_h06xf_pll = {
 	"LG TDVS-H06xF",
 	54000000, 863000000, 44000000,
-	NULL, NULL,
+	tdvs_h06xf_initdata, NULL,
 	__arraycount(tdvs_h06xf_pll_entries), tdvs_h06xf_pll_entries
 };
