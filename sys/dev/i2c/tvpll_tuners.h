@@ -1,4 +1,4 @@
-/* $NetBSD: tvpll_tuners.h,v 1.1 2011/07/11 00:01:52 jakllsch Exp $ */
+/* $NetBSD: tvpll_tuners.h,v 1.2 2011/07/15 03:30:08 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Jonathan A. Kollasch
@@ -29,7 +29,7 @@
 #ifndef _DEV_I2C_TVPLL_TUNERS_H_
 #define _DEV_I2C_TVPLL_TUNERS_H_
 
-struct tvpll_data tvpll_tuv1236d_pll;
-struct tvpll_data tvpll_tdvs_h06xf_pll;
+extern struct tvpll_data tvpll_tuv1236d_pll;
+extern struct tvpll_data tvpll_tdvs_h06xf_pll;
 
 #endif /* !_DEV_I2C_TVPLL_TUNERS_H_ */
