@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2011/07/15 13:54:31 jruoho Exp $
+# $NetBSD: Makefile,v 1.17 2011/07/15 14:00:41 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,7 @@ PROGS+=		h_atexit
 PROGS+=		h_getopt h_getopt_long
 
 LDADD.t_strtod=			-lm
-LDADD.t_getenv_thread=		-pthread
+LDADD.t_getenv_thread=		-lpthread
 
 COPTS+=				-ffloat-store
 
