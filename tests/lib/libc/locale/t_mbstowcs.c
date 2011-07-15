@@ -1,4 +1,4 @@
-/* $NetBSD: t_ctype1.c,v 1.1 2011/04/09 17:45:25 pgoyette Exp $ */
+/* $NetBSD: t_mbstowcs.c,v 1.1 2011/07/15 07:35:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ctype1.c,v 1.1 2011/04/09 17:45:25 pgoyette Exp $");
+__RCSID("$NetBSD: t_mbstowcs.c,v 1.1 2011/07/15 07:35:21 jruoho Exp $");
 
 #include <errno.h>
 #include <locale.h>
@@ -132,13 +132,13 @@ static struct test {
 }
 };
 
-ATF_TC(ctype1);
-ATF_TC_HEAD(ctype1, tc)
+ATF_TC(mbstowcs_basic);
+ATF_TC_HEAD(mbstowcs_basic, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 		"Checks wide character functions with different locales");
 }
-ATF_TC_BODY(ctype1, tc)
+ATF_TC_BODY(mbstowcs_basic, tc)
 {
 	struct test *t;
 
@@ -196,7 +196,7 @@ ATF_TC_BODY(ctype1, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, ctype1);
+	ATF_TP_ADD_TC(tp, mbstowcs_basic);
 
 	return atf_no_error();
 }
