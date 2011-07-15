@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.6 2011/07/01 22:10:31 dyoung Exp $
+#	$NetBSD: XLSATX,v 1.7 2011/07/15 19:41:28 cliff Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.6 $"
+#ident 		"XLSATX-$Revision: 1.7 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -41,7 +41,7 @@ options 	USERCONF	# userconf(4) support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=503000	# size for embedded symbol table
+options 	SYMTAB_SPACE=510000	# size for embedded symbol table
 #options 	DDB_COMMANDONENTER="trace;show registers"
 options 	DB_MAX_LINE=-1
 
