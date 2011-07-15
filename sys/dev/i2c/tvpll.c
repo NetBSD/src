@@ -1,4 +1,4 @@
-/* $NetBSD: tvpll.c,v 1.2 2011/07/14 23:45:43 jmcneill Exp $ */
+/* $NetBSD: tvpll.c,v 1.3 2011/07/15 03:31:37 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tvpll.c,v 1.2 2011/07/14 23:45:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tvpll.c,v 1.3 2011/07/15 03:31:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,9 @@ struct tvpll *
 tvpll_open(device_t parent, i2c_tag_t t, i2c_addr_t a, struct tvpll_data *p)
 {
 	struct tvpll *tvpll;
+	int rv;
 
-	tvpll = kmem_alloc(sizeof(struct tvpll), KM_NOSLEEP);
+	tvpll = kmem_alloc(sizeof(struct tvpll), KM_SLEEP);
         if (tvpll == NULL)
                 return NULL;
 
@@ -64,6 +65,16 @@ tvpll_open(device_t parent, i2c_tag_t t, i2c_addr_t a, struct tvpll_data *p)
 	tvpll->addr = a;
 
 	tvpll->pll = p;
+
+	if (tvpll->pll->initdata) {
+		iic_acquire_bus(tvpll->tag, I2C_F_POLL);
+		rv = iic_exec(tvpll->tag, I2C_OP_WRITE_WITH_STOP, tvpll->addr,
+		    &tvpll->pll->initdata[1], tvpll->pll->initdata[0],
+		    NULL, 0, I2C_F_POLL);
+		iic_release_bus(tvpll->tag, I2C_F_POLL);
+	}
+
+	device_printf(parent, "tvpll: %s\n", tvpll->pll->name);
 
 	return tvpll;
 }
@@ -104,10 +115,11 @@ tvpll_algo(struct tvpll *tvpll, uint8_t *b,
 	b[1] = (d >> 0) & 0xff;
 	b[2] = pll->entries[i].config;
 	b[3] = pll->entries[i].cb;
+	b[4] = pll->entries[i].aux;
 
 	*fr = (d * pll->entries[i].stepsize) - pll->iffreq;
 
-	log(LOG_DEBUG, "pllw %d %02x %02x %02x %02x\n", *fr, b[0], b[1], b[2], b[3]);
+	log(LOG_DEBUG, "pllw %d %02x %02x %02x %02x %02x\n", *fr, b[0], b[1], b[2], b[3], b[4]);
 	return 0;
 }
 
@@ -117,16 +129,20 @@ tvpll_tune_dtv(struct tvpll *tvpll,
 {
 	int rv;
 	uint32_t fr;
-	uint8_t b[4];
+	uint8_t b[5], ab[2];
 
 	fr = 0;
 
 	if((rv = tvpll_algo(tvpll, b, params, &fr)) != 0)
 		return rv;
 
-	/* gate ctrl? */
-
 	iic_acquire_bus(tvpll->tag, I2C_F_POLL);
+	/* gate ctrl? */
+	if (b[4] != TVPLL_IGNORE_AUX) {
+		ab[0] = b[2] | 0x18;
+		ab[1] = b[4];
+		rv = iic_exec(tvpll->tag, I2C_OP_WRITE_WITH_STOP, tvpll->addr, ab, 2, NULL, 0, I2C_F_POLL);
+	}
 	rv = iic_exec(tvpll->tag, I2C_OP_WRITE_WITH_STOP, tvpll->addr, b, 4, NULL, 0, I2C_F_POLL);
 	iic_release_bus(tvpll->tag, I2C_F_POLL);
 
