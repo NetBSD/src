@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_micron.c,v 1.5 2011/06/28 07:16:11 ahoka Exp $	*/
+/*	$NetBSD: nand_micron.c,v 1.6 2011/07/15 19:19:57 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_micron.c,v 1.5 2011/06/28 07:16:11 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_micron.c,v 1.6 2011/07/15 19:19:57 cliff Exp $");
 
 #include "nand.h"
 #include "onfi.h"
@@ -89,7 +89,7 @@ nand_micron_device_lookup(u_int8_t id)
 }
 
 int
-nand_read_parameters_micron(device_t self, struct nand_chip *chip)
+nand_read_parameters_micron(device_t self, struct nand_chip * const chip)
 {
 	uint8_t mfgrid;
 	uint8_t devid;
@@ -129,7 +129,7 @@ nand_read_parameters_micron(device_t self, struct nand_chip *chip)
 }
 
 static int
-mt29fxgx_parameters(device_t self, struct nand_chip *chip,
+mt29fxgx_parameters(device_t self, struct nand_chip * const chip,
 	u_int8_t devid, uint8_t params)
 {
 	const struct nand_micron_devices *dp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.7 2011/06/28 18:14:11 ahoka Exp $	*/
+/*	$NetBSD: flash.c,v 1.8 2011/07/15 19:19:57 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.7 2011/06/28 18:14:11 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.8 2011/07/15 19:19:57 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -80,9 +80,6 @@ int flash_print(void *aux, const char *pnp);
 bool flash_shutdown(device_t dev, int how);
 int flash_nsectors(struct buf *bp);
 int flash_sector(struct buf *bp);
-
-static inline flash_off_t flash_get_part_offset(struct flash_softc *fl,
-    size_t poffset);
 
 int flash_match(device_t parent, cfdata_t match, void *aux);
 void flash_attach(device_t parent, device_t self, void *aux);
@@ -133,8 +130,8 @@ flash_match(device_t parent, cfdata_t match, void *aux)
 void
 flash_attach(device_t parent, device_t self, void *aux)
 {
-	struct flash_softc *sc = device_private(self);
-	struct flash_attach_args *faa = aux;
+	struct flash_softc * const sc = device_private(self);
+	struct flash_attach_args * const faa = aux;
 	char pbuf[2][sizeof("9999 KB")];
 
 	sc->sc_dev = self;
@@ -150,21 +147,18 @@ flash_attach(device_t parent, device_t self, void *aux)
 
 	switch (sc->flash_if->type) {
 	case FLASH_TYPE_NOR:
-		aprint_normal(": %s NOR flash\n", pbuf[0]);
+		aprint_normal(": NOR flash partition size %s, offset %#jx",
+			pbuf[0], (uintmax_t )sc->sc_partinfo.part_offset);
 		break;
 
 	case FLASH_TYPE_NAND:
-		aprint_normal(": %s NAND flash\n", pbuf[0]);
+		aprint_normal(": NAND flash partition size %s, offset %#jx",
+			pbuf[0], (uintmax_t )sc->sc_partinfo.part_offset);
 		break;
 
 	default:
-		aprint_normal(": %s unknown flash\n", pbuf[0]);
+		aprint_normal(": %s unknown flash", pbuf[0]);
 	}
-
-	aprint_normal_dev(sc->sc_dev,
-	    "size: %#jx, offset: %#jx",
-	    (uintmax_t )sc->sc_partinfo.part_size,
-	    (uintmax_t )sc->sc_partinfo.part_offset);
 
 	if (sc->sc_partinfo.part_flags & FLASH_PART_READONLY) {
 		sc->sc_readonly = true;
@@ -205,7 +199,7 @@ flash_attach(device_t parent, device_t self, void *aux)
 int
 flash_detach(device_t device, int flags)
 {
-	struct flash_softc *sc = device_private(device);
+	struct flash_softc * const sc = device_private(device);
 
 	pmf_device_deregister(sc->sc_dev);
 
@@ -240,7 +234,7 @@ flash_print(void *aux, const char *pnp)
 }
 
 device_t
-flash_attach_mi(struct flash_interface *flash_if, device_t device)
+flash_attach_mi(struct flash_interface * const flash_if, device_t device)
 {
 	struct flash_attach_args arg;
 
@@ -261,7 +255,7 @@ flash_attach_mi(struct flash_interface *flash_if, device_t device)
  * request.
  */
 int
-flashopen(dev_t dev, int flags, int fmt, struct lwp *l)
+flashopen(dev_t dev, int flags, int fmt, lwp_t *l)
 {
 	int unit = minor(dev);
 	struct flash_softc *sc;
@@ -284,7 +278,7 @@ flashopen(dev_t dev, int flags, int fmt, struct lwp *l)
  * We don't have to release any resources, so just return 0.
  */
 int
-flashclose(dev_t dev, int flags, int fmt, struct lwp *l)
+flashclose(dev_t dev, int flags, int fmt, lwp_t *l)
 {
 	int unit = minor(dev);
 	struct flash_softc *sc;
@@ -306,11 +300,11 @@ flashclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 /**
  * flash_read - read from character device
- * This function uses the registered driver's read function to read the requested length to
- * a buffer and then moves this buffer to userspace.
+ * This function uses the registered driver's read function to read the
+ * requested length to * a buffer and then moves this buffer to userspace.
  */
 int
-flashread(dev_t dev, struct uio *uio, int flag)
+flashread(dev_t dev, struct uio * const uio, int flag)
 {
 	return physio(flashstrategy, NULL, dev, B_READ, minphys, uio);
 }
@@ -322,13 +316,13 @@ flashread(dev_t dev, struct uio *uio, int flag)
  * the media.
  */
 int
-flashwrite(dev_t dev, struct uio *uio, int flag)
+flashwrite(dev_t dev, struct uio * const uio, int flag)
 {
 	return physio(flashstrategy, NULL, dev, B_WRITE, minphys, uio);
 }
 
 void
-flashstrategy(struct buf *bp)
+flashstrategy(struct buf * const bp)
 {
 	struct flash_softc *sc;
 	const struct flash_interface *flash_if;
@@ -387,7 +381,7 @@ done:
  * Handle the ioctl for the device
  */
 int
-flashioctl(dev_t dev, u_long command, void *data, int flags, struct lwp *l)
+flashioctl(dev_t dev, u_long command, void * const data, int flags, lwp_t *l)
 {
 	struct flash_erase_params *ep;
 	struct flash_info_params *ip;
@@ -480,13 +474,13 @@ flashioctl(dev_t dev, u_long command, void *data, int flags, struct lwp *l)
 int
 flashdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
-    return EACCES;
+	return EACCES;
 }
 
 bool
 flash_shutdown(device_t self, int how)
 {
-	struct flash_softc *sc = device_private(self);
+	struct flash_softc * const sc = device_private(self);
 
 	if ((how & RB_NOSYNC) == 0 && !sc->sc_readonly)
 		flash_sync(self);
@@ -532,15 +526,15 @@ flash_get_device(dev_t dev)
 }
 
 static inline flash_off_t
-flash_get_part_offset(struct flash_softc *sc, size_t poffset)
+flash_get_part_offset(struct flash_softc * const sc, size_t poffset)
 {
 	return sc->sc_partinfo.part_offset + poffset;
 }
 
 int
-flash_erase(device_t self, struct flash_erase_instruction *ei)
+flash_erase(device_t self, struct flash_erase_instruction * const ei)
 {
-	struct flash_softc *sc = device_private(self);
+	struct flash_softc * const sc = device_private(self);
 	KASSERT(ei != NULL);
 	struct flash_erase_instruction e = *ei;
 
@@ -559,10 +553,10 @@ flash_erase(device_t self, struct flash_erase_instruction *ei)
 }
 
 int
-flash_read(device_t self,
-    flash_off_t offset, size_t len, size_t *retlen, uint8_t *buf)
+flash_read(device_t self, flash_off_t offset, size_t len, size_t * const retlen,
+    uint8_t * const buf)
 {
-	struct flash_softc *sc = device_private(self);
+	struct flash_softc * const sc = device_private(self);
 
 	offset += sc->sc_partinfo.part_offset;
 
@@ -575,10 +569,10 @@ flash_read(device_t self,
 }
 
 int
-flash_write(device_t self,
-    flash_off_t offset, size_t len, size_t *retlen, const uint8_t *buf)
+flash_write(device_t self, flash_off_t offset, size_t len,
+    size_t * const retlen, const uint8_t * const buf)
 {
-	struct flash_softc *sc = device_private(self);
+	struct flash_softc * const sc = device_private(self);
 
 	if (sc->sc_readonly)
 		return EACCES;
@@ -596,7 +590,7 @@ flash_write(device_t self,
 int
 flash_block_markbad(device_t self, flash_off_t offset)
 {
-	struct flash_softc *sc = device_private(self);
+	struct flash_softc * const sc = device_private(self);
 
 	if (sc->sc_readonly)
 		return EACCES;
@@ -612,9 +606,9 @@ flash_block_markbad(device_t self, flash_off_t offset)
 }
 
 int
-flash_block_isbad(device_t self, flash_off_t offset, bool *bad)
+flash_block_isbad(device_t self, flash_off_t offset, bool * const bad)
 {
-	struct flash_softc *sc = device_private(self);
+	struct flash_softc * const sc = device_private(self);
 
 	offset += sc->sc_partinfo.part_offset;
 
@@ -629,7 +623,7 @@ flash_block_isbad(device_t self, flash_off_t offset, bool *bad)
 int
 flash_sync(device_t self)
 {
-	struct flash_softc *sc = device_private(self);
+	struct flash_softc * const sc = device_private(self);
 
 	if (sc->sc_readonly)
 		return EACCES;

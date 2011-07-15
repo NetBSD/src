@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.12 2011/07/01 16:46:13 ahoka Exp $	*/
+/*	$NetBSD: nand.h,v 1.13 2011/07/15 19:19:57 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -160,8 +160,7 @@ struct nand_softc {
 };
 
 /* structure holding the nand api */
-struct nand_interface
-{
+struct nand_interface {
 	/* basic nand controller commands */
 	void (*select) (device_t, bool); /* optional */
 	void (*command) (device_t, uint8_t);
@@ -202,7 +201,7 @@ struct nand_attach_args {
 static inline void
 nand_busy(device_t device)
 {
-	struct nand_softc *sc = device_private(device);
+	struct nand_softc * const sc = device_private(device);
 
 	KASSERT(sc->nand_if->select != NULL);
 	KASSERT(sc->controller_dev != NULL);
@@ -219,7 +218,7 @@ nand_busy(device_t device)
 static inline void
 nand_select(device_t self, bool enable)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->select != NULL);
 	KASSERT(sc->controller_dev != NULL);
@@ -230,7 +229,7 @@ nand_select(device_t self, bool enable)
 static inline void
 nand_address(device_t self, uint32_t address)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->address != NULL);
 	KASSERT(sc->controller_dev != NULL);
@@ -241,7 +240,7 @@ nand_address(device_t self, uint32_t address)
 static inline void
 nand_command(device_t self, uint8_t command)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->command != NULL);
 	KASSERT(sc->controller_dev != NULL);
@@ -252,7 +251,7 @@ nand_command(device_t self, uint8_t command)
 static inline void
 nand_read_1(device_t self, uint8_t *data)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->read_1 != NULL);
 	KASSERT(sc->controller_dev != NULL);
@@ -263,7 +262,7 @@ nand_read_1(device_t self, uint8_t *data)
 static inline void
 nand_write_1(device_t self, uint8_t data)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->write_1 != NULL);
 	KASSERT(sc->controller_dev != NULL);
@@ -274,7 +273,7 @@ nand_write_1(device_t self, uint8_t data)
 static inline void
 nand_read_2(device_t self, uint16_t *data)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->read_2 != NULL);
 	KASSERT(sc->controller_dev != NULL);
@@ -285,7 +284,7 @@ nand_read_2(device_t self, uint16_t *data)
 static inline void
 nand_write_2(device_t self, uint16_t data)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->write_2 != NULL);
 	KASSERT(sc->controller_dev != NULL);
@@ -296,7 +295,7 @@ nand_write_2(device_t self, uint16_t data)
 static inline void
 nand_read_buf_1(device_t self, void *buf, size_t size)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->read_buf_1 != NULL);
 	KASSERT(sc->controller_dev != NULL);
@@ -307,7 +306,7 @@ nand_read_buf_1(device_t self, void *buf, size_t size)
 static inline void
 nand_read_buf_2(device_t self, void *buf, size_t size)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->read_buf_2 != NULL);
 	KASSERT(sc->controller_dev != NULL);
@@ -318,7 +317,7 @@ nand_read_buf_2(device_t self, void *buf, size_t size)
 static inline void
 nand_write_buf_1(device_t self, const void *buf, size_t size)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->write_buf_1 != NULL);
 	KASSERT(sc->controller_dev != NULL);
@@ -329,7 +328,7 @@ nand_write_buf_1(device_t self, const void *buf, size_t size)
 static inline void
 nand_write_buf_2(device_t self, const void *buf, size_t size)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->write_buf_2 != NULL);
 	KASSERT(sc->controller_dev != NULL);
@@ -341,7 +340,7 @@ static inline int
 nand_ecc_correct(device_t self, uint8_t *data, const uint8_t *oldcode,
     const uint8_t *newcode)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->ecc_correct != NULL);
 	KASSERT(sc->controller_dev != NULL);
@@ -352,7 +351,7 @@ nand_ecc_correct(device_t self, uint8_t *data, const uint8_t *oldcode,
 static inline void
 nand_ecc_compute(device_t self, const uint8_t *data, uint8_t *code)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->ecc_compute != NULL);
 	KASSERT(sc->controller_dev != NULL);
@@ -363,7 +362,7 @@ nand_ecc_compute(device_t self, const uint8_t *data, uint8_t *code)
 static inline void
 nand_ecc_prepare(device_t self, int mode)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->controller_dev != NULL);
 
@@ -374,7 +373,7 @@ nand_ecc_prepare(device_t self, int mode)
 static inline int
 nand_program_page(device_t self, size_t offset, const uint8_t *data)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->program_page != NULL);
 
@@ -384,7 +383,7 @@ nand_program_page(device_t self, size_t offset, const uint8_t *data)
 static inline int
 nand_read_page(device_t self, size_t offset, uint8_t *data)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->read_page != NULL);
 
@@ -395,7 +394,7 @@ nand_read_page(device_t self, size_t offset, uint8_t *data)
 static inline bool
 nand_block_isbad(device_t self, flash_off_t block)
 {
-	struct nand_softc *sc = device_private(self);
+	struct nand_softc * const sc = device_private(self);
 
 	KASSERT(sc->nand_if->block_isbad != NULL);
 	KASSERT(sc->controller_dev != NULL);

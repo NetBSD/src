@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.h,v 1.5 2011/06/28 21:01:23 ahoka Exp $	*/
+/*	$NetBSD: flash.h,v 1.6 2011/07/15 19:19:57 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -74,11 +74,6 @@ struct flash_attach_args {
 	struct flash_partition partinfo;
 };
 
-device_t flash_attach_mi(struct flash_interface *, device_t);
-const struct flash_interface *flash_get_interface(dev_t);
-const struct flash_softc *flash_get_softc(dev_t);
-device_t flash_get_device(dev_t);
-
 /**
  * struct erase_instruction - instructions to erase a flash eraseblock
  */
@@ -123,6 +118,11 @@ struct flash_cache {
 	flash_off_t fc_block;
 	uint8_t *fc_data;
 };
+
+device_t flash_attach_mi(struct flash_interface *, device_t);
+const struct flash_interface *flash_get_interface(dev_t);
+const struct flash_softc *flash_get_softc(dev_t);
+device_t flash_get_device(dev_t);
 
 /* flash operations should be used through these */
 int flash_erase(device_t, struct flash_erase_instruction *);

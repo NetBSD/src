@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.14 2011/07/01 16:46:13 ahoka Exp $	*/
+/*	$NetBSD: nand.c,v 1.15 2011/07/15 19:19:57 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.14 2011/07/01 16:46:13 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.15 2011/07/15 19:19:57 cliff Exp $");
 
 #include "locators.h"
 
@@ -157,7 +157,7 @@ nand_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_device_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	if (flash_sync_thread_init(&sc->sc_flash_io, &nand_flash_if)) {
+	if (flash_sync_thread_init(&sc->sc_flash_io, self, &nand_flash_if)) {
 		goto error;
 	}
 
@@ -1037,7 +1037,7 @@ nand_default_select(device_t self, bool enable)
 /* implementation of the block device API */
 
 int
-nand_flash_submit(device_t self, struct buf *bp)
+nand_flash_submit(device_t self, struct buf * const bp)
 {
 	struct nand_softc *sc = device_private(self);
 
@@ -1386,7 +1386,7 @@ nand_flash_isbad(device_t self, flash_off_t ofs, bool *isbad)
 	}
 
 	if (ofs % chip->nc_block_size != 0) {
-		DPRINTF(("offset (0x%jx) is not the multiple of block size "
+		DPRINTF(("offset (0x%jx) is not a multiple of block size "
 			"(%ju)",
 			(uintmax_t)ofs, (uintmax_t)chip->nc_block_size));
 		return EINVAL;
@@ -1415,7 +1415,7 @@ nand_flash_markbad(device_t self, flash_off_t ofs)
 	}
 
 	if (ofs % chip->nc_block_size != 0) {
-		panic("offset (%ju) is not the multiple of block size (%ju)",
+		panic("offset (%ju) is not a multiple of block size (%ju)",
 		    (uintmax_t)ofs, (uintmax_t)chip->nc_block_size);
 	}
 
@@ -1447,7 +1447,7 @@ nand_flash_erase(device_t self,
 	if (ei->ei_addr % chip->nc_block_size != 0) {
 		aprint_error_dev(self,
 		    "nand_flash_erase: ei_addr (%ju) is not"
-		    "the multiple of block size (%ju)",
+		    " a multiple of block size (%ju)",
 		    (uintmax_t)ei->ei_addr,
 		    (uintmax_t)chip->nc_block_size);
 		return EINVAL;
@@ -1456,8 +1456,8 @@ nand_flash_erase(device_t self,
 	if (ei->ei_len % chip->nc_block_size != 0) {
 		aprint_error_dev(self,
 		    "nand_flash_erase: ei_len (%ju) is not"
-		    "the multiple of block size (%ju)",
-		    (uintmax_t)ei->ei_addr,
+		    " a multiple of block size (%ju)",
+		    (uintmax_t)ei->ei_len,
 		    (uintmax_t)chip->nc_block_size);
 		return EINVAL;
 	}
