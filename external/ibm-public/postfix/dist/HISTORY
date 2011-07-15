@@ -15616,7 +15616,7 @@ Apologies for any names omitted.
 	for the "virtual:" transport to "/etc/postfix/virtual:".
 	Symptom reported by Christoph Anton Mitterer.
 
-20200102
+20100102
 
 	Workaround: don't report bogus Berkeley DB close errors as
 	fatal errors. All operations before close are already error
@@ -15884,3 +15884,10 @@ Apologies for any names omitted.
 
 	Portability: FreeBSD closefrom() support time window.  Sahil
 	Tandon.  File: util/sys_defs.h.
+
+20110414
+
+	Bugfix (introduced with Postfix SASL patch 20000314): don't
+	reuse a server SASL handle after authentication failure.
+	Problem reported by Thomas Jarosch of Intra2net AG. File:
+	smtpd/smtpd_proto.c.
