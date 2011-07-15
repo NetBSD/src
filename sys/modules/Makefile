@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.75 2011/07/13 07:52:49 jruoho Exp $
+#	$NetBSD: Makefile,v 1.76 2011/07/15 21:08:48 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -149,6 +149,7 @@ SUBDIR+=	compat_linux
 SUBDIR+=	compat_svr4
 SUBDIR+=	drm
 SUBDIR+=	i915drm
+SUBDIR+=	nsclpcsio
 SUBDIR+=	radeondrm
 SUBDIR+=	viadrm
 SUBDIR+=	pad
