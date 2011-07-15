@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_mvme.c,v 1.15 2008/01/12 09:54:32 tsutsui Exp $ */
+/*	$NetBSD: exec_mvme.c,v 1.15.20.1 2011/07/15 22:43:59 riz Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -56,7 +56,7 @@ exec_mvme(char *file, int flag, int part)
 
 	lflags = LOAD_KERNEL;
 	if ((flag & RB_NOSYM) != 0 )
-		lflags &= ~LOAD_SYM;
+		lflags &= ~(LOAD_SYM | LOAD_NOTE);
 
 	marks[MARK_START] = KERN_LOADADDR;
 	if ((fd = loadfile(file, marks, lflags)) == -1)

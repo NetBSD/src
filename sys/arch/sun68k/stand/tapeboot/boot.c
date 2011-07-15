@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2005/12/11 12:19:29 christos Exp $ */
+/*	$NetBSD: boot.c,v 1.5.88.1 2011/07/15 22:43:59 riz Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -107,7 +107,8 @@ main(void)
 			printf("tapeboot: loading segment %s\n", file);
 
 		marks[MARK_START] = mark_start;
-		if ((fd = loadfile(file, marks, LOAD_KERNEL)) != -1) {
+		if ((fd = loadfile(file, marks,
+		    LOAD_KERNEL & ~LOAD_NOTE)) != -1) {
 			break;
 		}
 		printf("tapeboot: segment %s: %s\n", file, strerror(errno));
