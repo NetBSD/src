@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.147 2011/07/10 08:43:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.148 2011/07/16 15:52:01 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -105,6 +105,10 @@ SUBDIR+=	macppc-fixcoff
 
 .if (${MACHINE} == "prep" || ${MACHINE} == "rs6000" || ${MACHINE} == "bebox")
 SUBDIR+=	powerpc-mkbootimage
+.endif
+
+.if ${MACHINE_ARCH} == "m68k"
+SUBDIR+=	m68k-elf2aout
 .endif
 
 .if (${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
