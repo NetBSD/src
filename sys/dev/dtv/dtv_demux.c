@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_demux.c,v 1.3 2011/07/14 01:37:09 jmcneill Exp $ */
+/* $NetBSD: dtv_demux.c,v 1.4 2011/07/16 12:20:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,8 +32,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * This file contains support for the /dev/dvb/adapter<n>/demux0 device.
+ *
+ * The demux device is implemented as a cloning device. Each instance can
+ * be in one of three modes: unconfigured (NONE), section filter (SECTION),
+ * or PID filter (PES).
+ *
+ * An instance in section filter mode extracts PSI sections based on a
+ * filter configured by the DMX_SET_FILTER ioctl. When an entire section is
+ * received, it is made available to userspace via read method. Data is fed
+ * into the section filter using the dtv_demux_write function.
+ *
+ * An instance in PID filter mode extracts TS packets that match the
+ * specified PID filter configured by the DMX_SET_PES_FILTER, DMX_ADD_PID,
+ * and DMX_REMOVE_PID ioctls. As this driver only implements the
+ * DMX_OUT_TS_TAP output, these TS packets are made available to userspace
+ * by calling read on the /dev/dvb/adapter<n>/dvr0 device.
+ */ 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.3 2011/07/14 01:37:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.4 2011/07/16 12:20:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,9 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.3 2011/07/14 01:37:09 jmcneill Exp $
 #include <sys/poll.h>
 #include <sys/vnode.h>
 #include <sys/queue.h>
-
-#include <net/if.h>
-#include <net/if_ether.h>	/* for ether_crc32_be */
 
 #include <dev/dtv/dtvvar.h>
 
@@ -137,6 +153,7 @@ static uint32_t crc_table[256] = {
 	0xbcb4666d, 0xb8757bda, 0xb5365d03, 0xb1f740b4
 };
 
+/* ISO/IEC 13818-1 Annex A "CRC Decoder Model" */
 static uint32_t
 dtv_demux_crc32(uint8_t *buf, int len)
 {
@@ -150,6 +167,129 @@ dtv_demux_crc32(uint8_t *buf, int len)
 	return CRC;
 }
 
+/*
+ * Start running the demux.
+ */
+static int
+dtv_demux_start(struct dtv_demux *demux)
+{
+	struct dtv_softc *sc = demux->dd_sc;
+	int error = 0;
+	bool dostart = false;
+
+	/*
+	 * If the demux is not running, mark it as running and update the
+	 * global demux run counter.
+	 */
+	mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_demux_runcnt >= 0);
+	if (demux->dd_running == false) {
+		sc->sc_demux_runcnt++;
+		demux->dd_running = true;
+		/* If this is the first demux running, trigger device start */
+		dostart = sc->sc_demux_runcnt == 1;
+	}
+	mutex_exit(&sc->sc_lock);
+
+	if (dostart) {
+		/* Setup receive buffers and trigger device start */
+		error = dtv_buffer_setup(sc);
+		if (error == 0)
+			error = dtv_device_start_transfer(sc);
+	}
+
+	/*
+	 * If something went wrong, restore the run counter and mark this
+	 * demux instance as halted.
+	 */
+	if (error) {
+		mutex_enter(&sc->sc_lock);
+		sc->sc_demux_runcnt--;
+		demux->dd_running = false;
+		mutex_exit(&sc->sc_lock);
+	}
+
+	return error;
+}
+
+/*
+ * Stop running the demux.
+ */
+static int
+dtv_demux_stop(struct dtv_demux *demux)
+{
+	struct dtv_softc *sc = demux->dd_sc;
+	int error = 0;
+	bool dostop = false;
+
+	/*
+	 * If the demux is running, mark it as halted and update the
+	 * global demux run counter.
+	 */
+	mutex_enter(&sc->sc_lock);
+	if (demux->dd_running == true) {
+		KASSERT(sc->sc_demux_runcnt > 0);
+		demux->dd_running = false;
+		sc->sc_demux_runcnt--;
+		/* If this was the last demux running, trigger device stop */
+		dostop = sc->sc_demux_runcnt == 0;
+	}
+	mutex_exit(&sc->sc_lock);
+
+	if (dostop) {
+		/* Trigger device stop */
+		error = dtv_device_stop_transfer(sc);
+	}
+
+	/*
+	 * If something went wrong, restore the run counter and mark this
+	 * demux instance as running.
+	 */
+	if (error) {
+		mutex_enter(&sc->sc_lock);
+		sc->sc_demux_runcnt++;
+		demux->dd_running = true;
+		mutex_exit(&sc->sc_lock);
+	}
+
+	return error;
+}
+
+/*
+ * Put the demux into PID filter mode and update the PID filter table.
+ */
+static int
+dtv_demux_set_pidfilter(struct dtv_demux *demux, uint16_t pid, bool onoff)
+{
+	struct dtv_softc *sc = demux->dd_sc;
+
+	/*
+	 * TS PID is 13 bits; demux device uses special PID 0x2000 to mean
+	 * "all PIDs". Verify that the requested PID is in range.
+	 */
+	if (pid > 0x2000)
+		return EINVAL;
+
+	/* Set demux mode */
+	demux->dd_mode = DTV_DEMUX_MODE_PES;
+	/*
+	 * If requesting "all PIDs", set the on/off flag for all PIDs in
+	 * the PID map, otherwise set the on/off flag for the requested
+	 * PID.
+	 */
+	if (pid == 0x2000) {
+		memset(sc->sc_ts.ts_pidfilter, onoff,
+		    sizeof(sc->sc_ts.ts_pidfilter));
+	} else {
+		sc->sc_ts.ts_pidfilter[pid] = onoff;
+	}
+
+	return 0;
+}
+
+/*
+ * Open a new instance of the demux cloning device.
+ */
 int
 dtv_demux_open(struct dtv_softc *sc, int flags, int mode, lwp_t *l)
 {
@@ -157,10 +297,12 @@ dtv_demux_open(struct dtv_softc *sc, int flags, int mode, lwp_t *l)
 	struct dtv_demux *demux;
 	int error, fd;
 
+	/* Allocate private storage */
 	demux = kmem_zalloc(sizeof(*demux), KM_SLEEP);
 	if (demux == NULL)
 		return ENOMEM;
 	demux->dd_sc = sc;
+	/* Default operation mode is unconfigured */
 	demux->dd_mode = DTV_DEMUX_MODE_NONE;
 	selinit(&demux->dd_sel);
 	mutex_init(&demux->dd_lock, MUTEX_DEFAULT, IPL_VM);
@@ -172,6 +314,7 @@ dtv_demux_open(struct dtv_softc *sc, int flags, int mode, lwp_t *l)
 		return error;
 	}
 
+	/* Add the demux to the list of demux instances */
 	mutex_enter(&sc->sc_demux_lock);
 	TAILQ_INSERT_TAIL(&sc->sc_demux_list, demux, dd_entries);
 	mutex_exit(&sc->sc_demux_lock);
@@ -179,11 +322,15 @@ dtv_demux_open(struct dtv_softc *sc, int flags, int mode, lwp_t *l)
 	return fd_clone(fp, fd, flags, &dtv_demux_fileops, demux);
 }
 
+/*
+ * Close the instance of the demux cloning device.
+ */
 int
 dtv_demux_close(struct file *fp)
 {
 	struct dtv_demux *demux = fp->f_data;
 	struct dtv_softc *sc;
+	int error;
 
 	if (demux == NULL)
 		return ENXIO;
@@ -192,6 +339,14 @@ dtv_demux_close(struct file *fp)
 
 	sc = demux->dd_sc;
 
+	/* If the demux is still running, stop it */
+	if (demux->dd_running) {
+		error = dtv_demux_stop(demux);
+		if (error)
+			return error;
+	}
+
+	/* Remove the demux from the list of demux instances */
 	mutex_enter(&sc->sc_demux_lock);
 	TAILQ_REMOVE(&sc->sc_demux_list, demux, dd_entries);
 	mutex_exit(&sc->sc_demux_lock);
@@ -200,20 +355,23 @@ dtv_demux_close(struct file *fp)
 	cv_destroy(&demux->dd_section_cv);
 	kmem_free(demux, sizeof(*demux));
 
-	dtv_close_common(sc);
+	/* Update the global device open count */
+	dtv_common_close(sc);
 
 	return 0;
 }
 
+/*
+ * Handle demux ioctl requests
+ */
 static int
-dtv_demux_ioctl1(struct dtv_demux *demux, u_long cmd, void *data)
+dtv_demux_ioctl(struct file *fp, u_long cmd, void *data)
 {
-	struct dtv_demux *dd;
+	struct dtv_demux *demux = fp->f_data;
 	struct dtv_softc *sc;
 	struct dmx_pes_filter_params *pesfilt;
 	struct dmx_sct_filter_params *sctfilt;
 	uint16_t pid;
-	unsigned int demux_running;
 	int error;
 
 	if (demux == NULL)
@@ -222,56 +380,40 @@ dtv_demux_ioctl1(struct dtv_demux *demux, u_long cmd, void *data)
 
 	switch (cmd) {
 	case DMX_START:
-		error = 0;
-		demux_running = 0;
-
-		mutex_enter(&sc->sc_demux_lock);
-		TAILQ_FOREACH(dd, &sc->sc_demux_list, dd_entries) {
-			if (dd->dd_running)
-				demux_running++;
-		}
-		if (demux_running == 0) {
-			error = dtv_buffer_setup(sc);
-			if (error)
-				return error;
-			error = dtv_device_start_transfer(sc);
-		}
-		if (error == 0)
-			demux->dd_running = true;
-		mutex_exit(&sc->sc_demux_lock);
-
-		return error;
+		return dtv_demux_start(demux);
 	case DMX_STOP:
-		error = 0;
-		demux_running = 0;
-
-		mutex_enter(&sc->sc_demux_lock);
-		demux->dd_running = false;
-		TAILQ_FOREACH(dd, &sc->sc_demux_list, dd_entries) {
-			if (dd->dd_running)
-				demux_running++;
-		}
-		if (demux_running == 0)
-			error = dtv_device_stop_transfer(sc);
-		mutex_exit(&sc->sc_demux_lock);
-
-		return error;
+		return dtv_demux_stop(demux);
 	case DMX_SET_BUFFER_SIZE:
+		/*
+		 * The demux driver doesn't support configurable buffer sizes,
+		 * but software relies on this command succeeding.
+		 */
 		return 0;
 	case DMX_SET_FILTER:
 		sctfilt = data;
 
+		/* Verify that the requested PID is in range. */
 		if (sctfilt->pid >= 0x2000)
 			return EINVAL;
 
+		/*
+		 * Update section filter parameters, reset read/write ptrs,
+		 * clear section count and overflow flag, and set the
+		 * demux instance mode to section filter.
+		 */
 		demux->dd_secfilt.params = *sctfilt;
 		demux->dd_secfilt.rp = demux->dd_secfilt.wp = 0;
 		demux->dd_secfilt.nsections = 0;
 		demux->dd_secfilt.overflow = false;
 		demux->dd_mode = DTV_DEMUX_MODE_SECTION;
 
+		/*
+		 * If the DMX_IMMEDIATE_START flag is present in the request,
+		 * start running the demux immediately (no need for a
+		 * subsequent DMX_START ioctl).
+		 */
 		if (sctfilt->flags & DMX_IMMEDIATE_START) {
-			error = dtv_demux_ioctl1(demux, DMX_START, NULL);
+			error = dtv_demux_start(demux);
 			if (error)
 				return error;
 		}
@@ -280,60 +422,46 @@ dtv_demux_ioctl1(struct dtv_demux *demux, u_long cmd, void *data)
 	case DMX_SET_PES_FILTER:
 		pesfilt = data;
 
+		/* The driver only supports input from the frontend */
 		if (pesfilt->input != DMX_IN_FRONTEND)
 			return EINVAL;
+		/*
+		 * The driver only supports output to the TS TAP in PID
+		 * filter mode.
+		 */
 		if (pesfilt->output != DMX_OUT_TS_TAP)
 			return EINVAL;
-		if (pesfilt->pes_type != DMX_PES_OTHER)
-			return EINVAL;
 
-		error = dtv_demux_ioctl1(demux, DMX_ADD_PID, &pesfilt->pid);
+		/* Update PID filter table */
+		error = dtv_demux_set_pidfilter(demux, pesfilt->pid, true);
 		if (error)
 			return error;
 
+		/*
+		 * If the DMX_IMMEDIATE_START flag is present in the request,
+		 * start running the demux immediately (no need for a
+		 * subsequent DMX_START ioctl).
+		 */
 		if (pesfilt->flags & DMX_IMMEDIATE_START) {
-			error = dtv_demux_ioctl1(demux, DMX_START, NULL);
+			error = dtv_demux_start(demux);
 			if (error)
 				return error;
 		}
 		return 0;
 	case DMX_ADD_PID:
 		pid = *(uint16_t *)data;
-		if (pid > 0x2000)
-			return EINVAL;
-
-		demux->dd_mode = DTV_DEMUX_MODE_PES;
-		if (pid == 0x2000) {
-			memset(sc->sc_ts.ts_pidfilter, 1,
-			    sizeof(sc->sc_ts.ts_pidfilter));
-		} else {
-			sc->sc_ts.ts_pidfilter[pid] = 1;
-		}
-		return 0;
+		return dtv_demux_set_pidfilter(demux, pid, true);
 	case DMX_REMOVE_PID:
 		pid = *(uint16_t *)data;
-		if (pid > 0x2000)
-			return EINVAL;
-
-		demux->dd_mode = DTV_DEMUX_MODE_PES;
-		if (pid == 0x2000) {
-			memset(sc->sc_ts.ts_pidfilter, 0,
-			    sizeof(sc->sc_ts.ts_pidfilter));
-		} else {
-			sc->sc_ts.ts_pidfilter[pid] = 0;
-		}
-		return 0;
+		return dtv_demux_set_pidfilter(demux, pid, false);
 	default:
 		return EINVAL;
 	}
 }
 
-int
-dtv_demux_ioctl(struct file *fp, u_long cmd, void *data)
-{
-	return dtv_demux_ioctl1(fp->f_data, cmd, data);
-}
-
+/*
+ * Test for I/O readiness
+ */
 static int
 dtv_demux_poll(struct file *fp, int events)
 {
@@ -343,8 +471,13 @@ dtv_demux_poll(struct file *fp, int events)
 	if (demux == NULL)
 		return POLLERR;
 
+	/*
+	 * If the demux instance is in section filter mode, wait for an
+	 * entire section to become ready.
+	 */
 	mutex_enter(&demux->dd_lock);
-	if (demux->dd_secfilt.nsections > 0) {
+	if (demux->dd_mode == DTV_DEMUX_MODE_SECTION &&
+	    demux->dd_secfilt.nsections > 0) {
 		revents |= POLLIN;
 	} else {
 		selrecord(curlwp, &demux->dd_sel);
@@ -354,6 +487,9 @@ dtv_demux_poll(struct file *fp, int events)
 	return revents;
 }
 
+/*
+ * Read from the demux instance
+ */
 static int
 dtv_demux_read(struct file *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
@@ -365,13 +501,16 @@ dtv_demux_read(struct file *fp, off_t *offp, struct uio *uio,
 	if (demux == NULL)
 		return ENXIO;
 
+	/* Only support read if the instance is in section filter mode */
 	if (demux->dd_mode != DTV_DEMUX_MODE_SECTION)
 		return EIO;
 
+	/* Wait for a complete PSI section */
 	mutex_enter(&demux->dd_lock);
 	while (demux->dd_secfilt.nsections == 0) {
 		if (flags & IO_NDELAY) {
 			mutex_exit(&demux->dd_lock);
+			/* No data available */
 			return EWOULDBLOCK;
 		}
 		error = cv_wait_sig(&demux->dd_section_cv, &demux->dd_lock);
@@ -380,22 +519,45 @@ dtv_demux_read(struct file *fp, off_t *offp, struct uio *uio,
 			return error;
 		}
 	}
+	/* Copy the completed PSI section */
 	sec = demux->dd_secfilt.section[demux->dd_secfilt.rp];
+	/* Update read pointer */
 	demux->dd_secfilt.rp++;
 	if (demux->dd_secfilt.rp >= __arraycount(demux->dd_secfilt.section))
 		demux->dd_secfilt.rp = 0;
+	/* Update section count */
 	demux->dd_secfilt.nsections--;
 	mutex_exit(&demux->dd_lock);
 
+	/*
+	 * If the filter parameters specify the DMX_ONESHOT flag, stop
+	 * the demux after one PSI section is received.
+	 */
+	if (demux->dd_secfilt.params.flags & DMX_ONESHOT)
+		dtv_demux_stop(demux);
+
+	/*
+	 * Copy the PSI section to userspace. If the receiving buffer is
+	 * too small, the rest of the payload will be discarded. Although
+	 * this behaviour differs from the Linux implementation, in practice
+	 * it should not be an issue as PSI sections have a max size of 4KB
+	 * (and callers will generally provide a big enough buffer).
+	 */
 	return uiomove(sec.sec_buf, sec.sec_length, uio);
 }
 
+/*
+ * Verify the CRC of a PSI section.
+ */
 static bool
 dtv_demux_check_crc(struct dtv_demux *demux, struct dtv_ts_section *sec)
 {
 	uint32_t crc, sec_crc;
 
-	/* if section_syntax_indicator is not set, there is no CRC */
+	/*
+	 * If section_syntax_indicator is not set, the PSI section does
+	 * not include a CRC field.
+	 */
 	if ((sec->sec_buf[1] & 0x80) == 0)
 		return false;
 
@@ -405,8 +567,13 @@ dtv_demux_check_crc(struct dtv_demux *demux, struct dtv_ts_section *sec)
 	return crc == sec_crc;
 }
 
-int
-dtv_demux_write(struct dtv_demux *demux, const uint8_t *tspkt, size_t tspktlen)
+/*
+ * Process a single TS packet and extract PSI sections based on the
+ * instance's section filter.
+ */
+static int
+dtv_demux_process(struct dtv_demux *demux, const uint8_t *tspkt,
+    size_t tspktlen)
 {
 	struct dtv_ts_section *sec;
 	dmx_filter_t *dmxfilt = &demux->dd_secfilt.params.filter;
@@ -416,14 +583,31 @@ dtv_demux_write(struct dtv_demux *demux, const uint8_t *tspkt, size_t tspktlen)
 
 	KASSERT(tspktlen == TS_PKTLEN);
 
+	/* If the demux instance is not running, ignore the packet */
+	if (demux->dd_running == false)
+		return 0;
+
+	/*
+	 * If the demux instance is not in section filter mode, ignore
+	 * the packet
+	 */
 	if (demux->dd_mode != DTV_DEMUX_MODE_SECTION)
 		return 0;
+	/*
+	 * If the packet's TS PID does not match the section filter PID,
+	 * ignore the packet
+	 */
 	if (TS_PID(tspkt) != demux->dd_secfilt.params.pid)
 		return 0;
+	/*
+	 * If the TS packet does not contain a payload, ignore the packet
+	 */
 	if (TS_HAS_PAYLOAD(tspkt) == 0)
 		return 0;
 
 	mutex_enter(&demux->dd_lock);
+
+	/* If the section buffer is full, set the overflow flag and return */
 	if (demux->dd_secfilt.nsections ==
 	    __arraycount(demux->dd_secfilt.section)) {
 		demux->dd_secfilt.overflow = true;
@@ -460,6 +644,10 @@ dtv_demux_write(struct dtv_demux *demux, const uint8_t *tspkt, size_t tspktlen)
 		}
 		/* table_id_ext filter */
 		if (dmxfilt->mask[1] && dmxfilt->mask[2]) {
+			/*
+			 * table_id_ext is only valid if
+			 * section_syntax_indicator is set
+			 */
 			if (section_length < 2 || (p[1] & 0x80) == 0)
 				goto done;
 			if ((p[3] & dmxfilt->mask[1]) != dmxfilt->filter[1])
@@ -482,17 +670,26 @@ dtv_demux_write(struct dtv_demux *demux, const uint8_t *tspkt, size_t tspktlen)
 	if (sec->sec_bytesused > 0 && TS_HAS_PUSI(tspkt))
 		sec->sec_bytesused = sec->sec_length = 0;
 
+	/* Copy data into section buffer */
 	avail = min(sec->sec_length - sec->sec_bytesused, brem);
 	if (avail < 0)
 		goto done;
-
 	memcpy(&sec->sec_buf[sec->sec_bytesused], p, avail);
 	sec->sec_bytesused += avail;
 
+	/*
+	 * If a complete section has been received, update section count
+	 * and notify readers.
+	 */
 	if (sec->sec_bytesused == sec->sec_length) {
+		/*
+		 * If the DMX_CHECK_CRC flag was present in the DMX_SET_FILTER
+		 * parameters, verify the PSI section checksum. If the
+		 * checksum is invalid, discard the entire corrupt section.
+		 */
 		if ((demux->dd_secfilt.params.flags & DMX_CHECK_CRC) &&
 		    dtv_demux_check_crc(demux, sec) == false) {
-			/* discard packet */
+			/* discard section */
 			sec->sec_bytesused = sec->sec_length = 0;
 			goto done;
 		}
@@ -504,9 +701,6 @@ dtv_demux_write(struct dtv_demux *demux, const uint8_t *tspkt, size_t tspktlen)
 		demux->dd_secfilt.nsections++;
 		cv_broadcast(&demux->dd_section_cv);
 		selnotify(&demux->dd_sel, 0, 0);
-
-		if (demux->dd_secfilt.params.flags & DMX_ONESHOT)
-			dtv_demux_ioctl1(demux, DMX_STOP, NULL);
 	}
 
 done:
@@ -514,3 +708,17 @@ done:
 	return 0;
 }
 
+/*
+ * Submit TS data to all demux instances
+ */
+void
+dtv_demux_write(struct dtv_softc *sc, const uint8_t *tspkt, size_t tspktlen)
+{
+	struct dtv_demux *demux;
+
+	mutex_enter(&sc->sc_demux_lock);
+	TAILQ_FOREACH(demux, &sc->sc_demux_list, dd_entries) {
+		dtv_demux_process(demux, tspkt, tspktlen);
+	}
+	mutex_exit(&sc->sc_demux_lock);
+}
