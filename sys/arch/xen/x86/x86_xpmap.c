@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.26.2.3 2011/06/27 10:23:21 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.26.2.4 2011/07/16 10:59:46 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.3 2011/06/27 10:23:21 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.4 2011/07/16 10:59:46 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -555,6 +555,8 @@ vaddr_t xen_pmap_bootstrap (void);
  * for L3[3].
  */
 static const int l2_4_count = 6;
+#elif defined(__x86_64__)
+static const int l2_4_count = PTP_LEVELS;
 #else
 static const int l2_4_count = PTP_LEVELS - 1;
 #endif
@@ -665,7 +667,6 @@ bootstrap_again:
 	return (init_tables + ((count + l2_4_count) * PAGE_SIZE));
 }
 
-
 /*
  * Build a new table and switch to it
  * old_count is # of old tables (including PGD, PDTPE and PDE)
@@ -740,13 +741,19 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	memset (bt_pgd, 0, PAGE_SIZE);
 	avail = new_pgd + PAGE_SIZE;
 #if PTP_LEVELS > 3
+	/* per-cpu "shadow" pmd */
+	pd_entry_t *bt_cpu_pgd = bt_pgd;
+	bt_pgd = (pd_entry_t *) avail;
+	memset(bt_pgd, 0, PAGE_SIZE);
+	avail += PAGE_SIZE;
+
 	/* Install level 3 */
 	pdtpe = (pd_entry_t *) avail;
 	memset (pdtpe, 0, PAGE_SIZE);
 	avail += PAGE_SIZE;
 
 	addr = ((u_long) pdtpe) - KERNBASE;
-	bt_pgd[pl4_pi(KERNTEXTOFF)] =
+	bt_pgd[pl4_pi(KERNTEXTOFF)] = bt_cpu_pgd[pl4_pi(KERNTEXTOFF)] =
 	    xpmap_ptom_masked(addr) | PG_k | PG_RW | PG_V;
 
 	__PRINTK(("L3 va %#lx pa %#" PRIxPADDR " entry %#" PRIxPADDR
@@ -938,12 +945,14 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
 #endif
 #else /* PAE */
-	/* recursive entry in higher-level PD */
-	bt_pgd[PDIR_SLOT_PTE] =
+	/* recursive entry in higher-level per-cpu PD and pmap_kernel() */
+	bt_pgd[PDIR_SLOT_PTE] = bt_cpu_pgd[PDIR_SLOT_PTE] =
 	    xpmap_ptom_masked(new_pgd - KERNBASE) | PG_k | PG_V;
-	__PRINTK(("bt_pgd[PDIR_SLOT_PTE] va %#" PRIxVADDR " pa %#" PRIxPADDR
+	__PRINTK(("bt_cpu_pgd[PDIR_SLOT_PTE] va %#" PRIxVADDR " pa %#" PRIxPADDR
 	    " entry %#" PRIxPADDR "\n", new_pgd, (paddr_t)new_pgd - KERNBASE,
-	    bt_pgd[PDIR_SLOT_PTE]));
+	    bt_cpu_pgd[PDIR_SLOT_PTE]));
+
+
 	/* Mark tables RO */
 	xen_bt_set_readonly((vaddr_t) pde);
 #endif
@@ -966,7 +975,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 #ifdef PAE
 	PDPpaddr = (u_long)pde - KERNBASE; /* PDP is the L2 with PAE */
 #else
-	PDPpaddr = (u_long)new_pgd - KERNBASE;
+	PDPpaddr = (u_long)bt_pgd - KERNBASE;
 #endif
 
 	/* Switch to new tables */
@@ -987,6 +996,12 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 		    xpmap_ptom(((vaddr_t)&pde[PDIR_SLOT_PTE + 3]) - KERNBASE), 
 		    xpmap_ptom_masked(addr) | PG_k | PG_V);
 		xpq_flush_queue();
+	}
+#elif defined(__x86_64__)
+	if (final) {
+		/* save the address of the shadow L4 pgd page */
+		cpu_info_primary.ci_kpm_pdir = bt_cpu_pgd;
+		cpu_info_primary.ci_kpm_pdirpa = ((paddr_t) bt_cpu_pgd - KERNBASE);
 	}
 #endif
 

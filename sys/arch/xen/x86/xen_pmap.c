@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.2.2.1 2011/06/23 14:19:50 cherry Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.2.2.2 2011/07/16 10:59:46 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.2.2.1 2011/06/23 14:19:50 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.2.2.2 2011/07/16 10:59:46 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -275,18 +275,29 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		for (i = 0; i < PDP_SIZE; i++) {
 			npde = pmap_pa2pte(
 			    pmap_pdirpa(pmap, i * NPDPG)) | PG_k | PG_V;
+
+			xpq_queue_pte_update(xpmap_ptetomach(&APDP_PDE[i]),
+			    npde);
+
+			/* APDP_PDE is per-cpu */
+			xpq_queue_invlpg((vaddr_t) &APDP_PDE[i]);
+
+			/* 
+			 * Install temporary recursive mapping L4 in
+			 * the user pmap. XXX: What's this for ?
+			 */
 			xpq_queue_pte_update(
 			    xpmap_ptom(pmap_pdirpa(pmap, PDIR_SLOT_PTE + i)),
 			    npde);
-			xpq_queue_pte_update(xpmap_ptetomach(&APDP_PDE[i]),
-			    npde);
+
+			xen_bcast_invlpg((vaddr_t) &pmap->pm_pdir[PDIR_SLOT_PTE + i]);
+
 #ifdef PAE
 			/* update shadow entry too */
 			xpq_queue_pte_update(
 			    xpmap_ptetomach(&APDP_PDE_SHADOW[i]), npde);
 #endif /* PAE */
-			xpq_queue_invlpg(
-			    (vaddr_t)&pmap->pm_pdir[PDIR_SLOT_PTE + i]);
+
 		}
 		if (pmap_valid_entry(opde))
 			pmap_apte_flush(ourpmap);

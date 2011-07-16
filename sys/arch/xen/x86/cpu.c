@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.56.2.2 2011/06/23 14:19:50 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.56.2.3 2011/07/16 10:59:46 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.2 2011/06/23 14:19:50 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.3 2011/07/16 10:59:46 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -456,7 +456,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		cpu_get_tsc_freq(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
-		pmap_cpu_init_late(ci);
+		pmap_cpu_init_late(ci); /* XXX: cosmetic */
 
 		/* Every processor needs to init it's own ipi h/w (similar to lapic) */
 		xen_ipi_init();
@@ -507,6 +507,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		//gdt_init_cpu(ci);
 
 		cpu_set_tss_gates(ci);
+		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 
 		if (ci->ci_flags & CPUF_PRESENT) {
@@ -782,8 +783,6 @@ cpu_hatch(void *v)
 
 	aprint_debug_dev(ci->ci_dev, "running\n");
 
-	printf("\n\nAbout to switch to idle_loop()\n\n");
-
 	cpu_switchto(NULL, ci->ci_data.cpu_idlelwp, true);
 
 	panic("switch to idle_loop context returned!\n");
@@ -999,6 +998,10 @@ xen_init_amd64_vcpuctxt(struct cpu_info *ci,
 	initctx->ctrlreg[0] = pcb->pcb_cr0;
 	initctx->ctrlreg[1] = 0; /* "resuming" from kernel - no User cr3. */
 	initctx->ctrlreg[2] = pcb->pcb_cr2; /* XXX: */
+	/* 
+	 * Use pmap_kernel() L4 PD directly, until we setup the
+	 * per-cpu L4 PD in pmap_cpu_init_late()
+	 */
 	initctx->ctrlreg[3] = xpmap_ptom(pcb->pcb_cr3);
 	initctx->ctrlreg[4] = CR4_PAE | CR4_OSFXSR | CR4_OSXMMEXCPT;
 
@@ -1183,7 +1186,6 @@ x86_cpu_idle_xen(void)
 	x86_disable_intr();
 	if (!__predict_false(ci->ci_want_resched)) {
 		idle_block();
-
 	} else {
 		x86_enable_intr();
 	}
@@ -1219,34 +1221,45 @@ cpu_load_pmap(struct pmap *pmap)
 
 #ifdef __x86_64__
 	int i, s;
-	pd_entry_t *old_pgd, *new_pgd;
-	paddr_t addr;
+	pd_entry_t *new_pgd;
 	struct cpu_info *ci;
+	paddr_t l3_shadow_pa;
 
-	/* kernel pmap always in cr3 and should never go in user cr3 */
-	if (pmap_pdirpa(pmap, 0) != pmap_pdirpa(pmap_kernel(), 0)) {
-		ci = curcpu();
-		/*
-		 * Map user space address in kernel space and load
-		 * user cr3
-		 */
-		s = splvm();
-		new_pgd = pmap->pm_pdir;
-		old_pgd = pmap_kernel()->pm_pdir;
-		addr = xpmap_ptom(pmap_pdirpa(pmap_kernel(), 0));
-		xpq_queue_lock();
-		for (i = 0; i < PDIR_SLOT_PTE;
-		    i++, addr += sizeof(pd_entry_t)) {
-			if ((new_pgd[i] & PG_V) || (old_pgd[i] & PG_V))
-				xpq_queue_pte_update(addr, new_pgd[i]);
-		}
-		xpq_queue_unlock();
-		tlbflush();
-		xpq_queue_lock();
+	ci = curcpu();
+	l3_shadow_pa = xpmap_ptom_masked(ci->ci_kpm_pdirpa);
+
+	/*
+	 * Map user space address in kernel space and load
+	 * user cr3
+	 */
+	s = splvm();
+	new_pgd = pmap->pm_pdir;
+
+	xpq_queue_lock();
+	/* Copy source pmap L4 PDEs (in user addr. range) to shadow */
+	for (i = 0; i < PDIR_SLOT_PTE; i++) {
+		xpq_queue_pte_update(l3_shadow_pa + i * sizeof(pd_entry_t), new_pgd[i]);
+	}
+
+	/* Copy kernel mappings */
+	new_pgd = pmap_kernel()->pm_pdir;
+	for (i = PDIR_SLOT_KERN; i < nkptp[PTP_LEVELS - 1]; i++) {
+		xpq_queue_pte_update(l3_shadow_pa + i * sizeof(pd_entry_t), new_pgd[i]);
+	}
+
+	xpq_queue_unlock();
+	tlbflush();
+	xpq_queue_lock();
+	if (__predict_true(pmap != pmap_kernel())) {
 		xen_set_user_pgd(pmap_pdirpa(pmap, 0));
 		ci->ci_xen_current_user_pgd = pmap_pdirpa(pmap, 0);
-		xpq_queue_unlock();
-		splx(s);
 	}
+	else {
+		xpq_queue_pt_switch(l3_shadow_pa);
+		ci->ci_xen_current_user_pgd = 0;
+	}
+	xpq_queue_unlock();
+	splx(s);
+
 #endif /* __x86_64__ */
 }
