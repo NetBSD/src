@@ -1,4 +1,4 @@
-#	$NetBSD: P2020DS,v 1.5 2011/06/30 20:09:29 wiz Exp $
+#	$NetBSD: P2020DS,v 1.6 2011/07/16 22:16:59 matt Exp $
 #
 #	P2020DS -- everything that's currently supported
 #
@@ -8,7 +8,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020DS-$Revision: 1.5 $"
+ident 		"P2020DS-$Revision: 1.6 $"
 
 maxusers	32
 
@@ -137,6 +137,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 config		netbsd		root on ? type ?
 config		nfsnetbsd	root on tsec0 type nfs
 config		netbsd-esata	root on wd1a type ffs
+config		netbsd-sd0a	root on sd0a type ffs
 
 #
 # Device configuration
