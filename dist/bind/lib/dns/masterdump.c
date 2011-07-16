@@ -1,7 +1,7 @@
-/*	$NetBSD: masterdump.c,v 1.1.1.4.4.1.2.2 2011/01/23 21:52:11 bouyer Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.1.1.4.4.1.2.3 2011/07/16 00:44:44 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2008, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: masterdump.c,v 1.73.18.19 2009/11/25 04:50:24 marka Exp */
+/* Id: masterdump.h,v 1.31.14.7 2011-05-27 23:49:08 tbox Exp */
 
 /*! \file */
 
@@ -357,6 +357,7 @@ rdataset_totext(dns_rdataset_t *rdataset,
 	isc_uint32_t current_ttl;
 	isc_boolean_t current_ttl_valid;
 	dns_rdatatype_t type;
+	unsigned int type_start;
 
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 
@@ -438,29 +439,26 @@ rdataset_totext(dns_rdataset_t *rdataset,
 		 * Type.
 		 */
 
-		if (rdataset->type == 0) {
+		if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0) {
 			type = rdataset->covers;
 		} else {
 			type = rdataset->type;
 		}
 
-		{
-			unsigned int type_start;
-			INDENT_TO(type_column);
-			type_start = target->used;
-			if (rdataset->type == 0)
-				RETERR(str_totext("\\-", target));
-			result = dns_rdatatype_totext(type, target);
-			if (result != ISC_R_SUCCESS)
-				return (result);
-			column += (target->used - type_start);
-		}
+		INDENT_TO(type_column);
+		type_start = target->used;
+		if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0)
+			RETERR(str_totext("\\-", target));
+		result = dns_rdatatype_totext(type, target);
+		if (result != ISC_R_SUCCESS)
+			return (result);
+		column += (target->used - type_start);
 
 		/*
 		 * Rdata.
 		 */
 		INDENT_TO(rdata_column);
-		if (rdataset->type == 0) {
+		if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0) {
 			if (NXDOMAIN(rdataset))
 				RETERR(str_totext(";-$NXDOMAIN\n", target));
 			else
@@ -831,7 +829,7 @@ dump_rdatasets_text(isc_mem_t *mctx, dns_name_t *name,
 					sizeof(trustnames[0])));
 			fprintf(f, "; %s\n", trustnames[trust]);
 		}
-		if (rds->type == 0 &&
+		if (((rds->attributes & DNS_RDATASETATTR_NEGATIVE) != 0) &&
 		    (ctx->style.flags & DNS_STYLEFLAG_NCACHE) == 0) {
 			/* Omit negative cache entries */
 		} else {
@@ -987,7 +985,7 @@ dump_rdatasets_raw(isc_mem_t *mctx, dns_name_t *name,
 		dns_rdataset_init(&rdataset);
 		dns_rdatasetiter_current(rdsiter, &rdataset);
 
-		if (rdataset.type == 0 &&
+		if (((rdataset.attributes & DNS_RDATASETATTR_NEGATIVE) != 0) &&
 		    (ctx->style.flags & DNS_STYLEFLAG_NCACHE) == 0) {
 			/* Omit negative cache entries */
 		} else {
