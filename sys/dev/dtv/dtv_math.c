@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_math.c,v 1.1 2011/07/15 20:27:42 jmcneill Exp $ */
+/* $NetBSD: dtv_math.c,v 1.2 2011/07/16 16:13:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Alan Barrett <apb@NetBSD.org>
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_math.c,v 1.1 2011/07/15 20:27:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_math.c,v 1.2 2011/07/16 16:13:13 jmcneill Exp $");
 
+#include <sys/types.h>
 #include <sys/bitops.h>
 
 #include <dev/dtv/dtvif.h>
