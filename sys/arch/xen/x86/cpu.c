@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.59 2011/06/15 20:50:02 rmind Exp $	*/
+/*	$NetBSD: cpu.c,v 1.60 2011/07/16 14:46:18 rmind Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.59 2011/06/15 20:50:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.60 2011/07/16 14:46:18 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -174,7 +174,7 @@ struct cpu_info *phycpu_info_list = &phycpu_info_primary;
 static void	cpu_set_tss_gates(struct cpu_info *ci);
 
 uint32_t cpus_attached = 1;
-uint32_t cpus_running = 0;
+uint32_t cpus_running = 1;
 
 uint32_t phycpus_attached = 0;
 uint32_t phycpus_running = 0;
