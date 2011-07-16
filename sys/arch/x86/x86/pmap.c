@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.121.2.2 2011/06/23 14:19:48 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.121.2.3 2011/07/16 10:59:46 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121.2.2 2011/06/23 14:19:48 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121.2.3 2011/07/16 10:59:46 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -778,7 +778,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		ci->ci_tlbstate = TLBSTATE_VALID;
 		atomic_or_32(&pmap->pm_cpus, cpumask);
 		atomic_or_32(&pmap->pm_kernel_cpus, cpumask);
-		lcr3(pmap_pdirpa(pmap, 0));
+		cpu_load_pmap(pmap);
 	}
 	pmap->pm_ncsw = l->l_ncsw;
 	*pmap2 = curpmap;
@@ -1515,6 +1515,15 @@ pmap_prealloc_lowmem_ptps(void)
 			break;
 		pdes_pa = newp;
 	}
+
+	/* sync to per-cpu PD */
+	xpq_queue_lock();
+	xpq_queue_pte_update(
+		xpmap_ptom_masked(ci_pdirpa(&cpu_info_primary,
+					    pl_i(0, PTP_LEVELS))),
+				  pmap_kernel()->pm_pdir[pl_i(0, PTP_LEVELS)]);
+	xpq_queue_unlock();
+	pmap_pte_flush();
 #else /* XEN */
 	pd_entry_t *pdes;
 
@@ -1575,14 +1584,17 @@ pmap_init(void)
 void
 pmap_cpu_init_late(struct cpu_info *ci)
 {
+	/*
+	 * The BP has already its own PD page allocated during early
+	 * MD startup.
+	 */
+	if (ci == &cpu_info_primary)
+		return;
+
 #ifdef PAE
 	int ret;
 	struct pglist pg;
 	struct vm_page *vmap;
-
-	/* The BP has already its own L3 page allocated in locore.S. */
-	if (ci == &cpu_info_primary)
-		return;
 
 	/*
 	 * Allocate a page for the per-CPU L3 PD. cr3 being 32 bits, PA musts
@@ -1607,7 +1619,35 @@ pmap_cpu_init_late(struct cpu_info *ci)
 		VM_PROT_READ | VM_PROT_WRITE, 0);
 
 	pmap_update(pmap_kernel());
+
+	xpq_queue_lock();
+	xpq_queue_pin_l3_table(xpmap_ptom_masked(ci->ci_pae_l3_pdirpa));
+	xpq_queue_unlock();
 #endif
+#if defined(XEN) && defined (__x86_64)
+	KASSERT(ci != NULL);
+
+	ci->ci_kpm_pdir = (pd_entry_t *)uvm_km_alloc(kernel_map,
+						     PAGE_SIZE, 0, UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_NOWAIT);
+	if (ci->ci_kpm_pdir == NULL) {
+		panic("%s: failed to allocate L4 per-cpu PD for CPU %d\n",
+		      __func__, cpu_index(ci));
+	}
+	ci->ci_kpm_pdirpa = vtophys((vaddr_t) ci->ci_kpm_pdir);
+	KASSERT(ci->ci_kpm_pdirpa != 0);
+
+	cpu_load_pmap(pmap_kernel());
+
+	pmap_kenter_pa((vaddr_t)ci->ci_kpm_pdir, ci->ci_kpm_pdirpa,
+		VM_PROT_READ, 0);
+
+	pmap_update(pmap_kernel());
+
+	xpq_queue_lock();
+	xpq_queue_pin_l4_table(xpmap_ptom_masked(ci->ci_kpm_pdirpa));
+	xpq_queue_unlock();
+
+#endif /* defined(XEN) && defined (__x86_64__) */
 }
 
 /*
@@ -1825,8 +1865,24 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 		 * clear it before freeing
 		 */
 		if (pmap_pdirpa(pmap, 0) == curcpu()->ci_xen_current_user_pgd
-		    && level == PTP_LEVELS - 1)
+		    && level == PTP_LEVELS - 1) {
 			pmap_pte_set(&pmap_kernel()->pm_pdir[index], 0);
+			/*
+			 * Update the per-cpu PD on all cpus the current
+			 * pmap is active on 
+			 */ 
+			CPU_INFO_ITERATOR cii;
+			struct cpu_info *ci;
+			for (CPU_INFO_FOREACH(cii, ci)) {
+				if (ci == NULL) {
+					continue;
+				}
+				if (ci->ci_cpumask & pmap->pm_cpus) {
+					pmap_pte_set(&ci->ci_kpm_pdir[index], 0);
+				}
+			}
+		}
+
 #  endif /*__x86_64__ */
 		invaladdr = level == 1 ? (vaddr_t)ptes :
 		    (vaddr_t)pdes[level - 2];
@@ -1926,6 +1982,21 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 		        pmap_pte_set(&pmap_kernel()->pm_pdir[index],
 		                (pd_entry_t) (pmap_pa2pte(pa)
 		                        | PG_u | PG_RW | PG_V));
+			/*
+			 * Update the per-cpu PD on all cpus the current
+			 * pmap is active on 
+			 */ 
+			CPU_INFO_ITERATOR cii;
+			struct cpu_info *ci;
+			for (CPU_INFO_FOREACH(cii, ci)) {
+				if (ci == NULL) {
+					continue;
+				}
+				if (ci->ci_cpumask & pmap->pm_cpus) {
+					pmap_pte_set(&ci->ci_kpm_pdir[index],
+						     (pd_entry_t) (pmap_pa2pte(pa) | PG_u | PG_RW | PG_V));
+				}
+			}
 		}
 #endif /* XEN && __x86_64__ */
 		pmap_pte_flush();
@@ -4098,10 +4169,13 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 #endif
 
 	for (level = lvl; level > 1; level--) {
-		if (level == PTP_LEVELS)
+		if (level == PTP_LEVELS){
 			pdep = pmap_kernel()->pm_pdir;
-		else
+		}
+		else {
+
 			pdep = pdes[level - 2];
+		}
 		va = kva;
 		index = pl_i_roundup(kva, level);
 		endindex = index + needed_ptps[level - 1] - 1;
@@ -4112,10 +4186,21 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			pmap_get_physpage(va, level - 1, &pa);
 #ifdef XEN
 			xpq_queue_lock();
-			xpq_queue_pte_update((level == PTP_LEVELS) ?
-			    xpmap_ptom(pmap_pdirpa(pmap_kernel(), i)) :
-			    xpmap_ptetomach(&pdep[i]),
-			    pmap_pa2pte(pa) | PG_k | PG_V | PG_RW);
+			switch (level) {
+			case PTP_LEVELS: /* L4 */
+				xpq_queue_pte_update(
+					xpmap_ptom(pmap_pdirpa(pmap_kernel(), i)),
+					pmap_pa2pte(pa) | PG_k | PG_V | PG_RW);
+				xpq_queue_pte_update(
+					xpmap_ptom(ci_pdirpa(&cpu_info_primary, i)),
+					pmap_pa2pte(pa) | PG_k | PG_V | PG_RW);
+
+				break;
+			default: /* All other levels */
+				xpq_queue_pte_update(
+					xpmap_ptetomach(&pdep[i]),
+					pmap_pa2pte(pa) | PG_k | PG_V | PG_RW);
+			}
 #ifdef PAE
 			if (level == PTP_LEVELS &&  i > L2_SLOT_KERN) {
 				/* update real kernel PD too */

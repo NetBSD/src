@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34.2.2 2011/06/23 14:19:48 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34.2.3 2011/07/16 10:59:45 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -184,6 +184,8 @@ struct cpu_info {
 
 #if defined(XEN) && defined(__x86_64__)
 	/* Currently active user PGD (can't use rcr3() with Xen) */
+	pd_entry_t *	ci_kpm_pdir;	/* per-cpu L4 PD (va) */
+	paddr_t		ci_kpm_pdirpa; /* per-cpu L4 PD (pa) */
 	paddr_t		ci_xen_current_user_pgd;
 #endif
 
@@ -231,6 +233,11 @@ struct cpu_info {
 	int		ci_want_resched __aligned(64);
 	int		ci_padout __aligned(64);
 };
+
+#ifdef __x86_64__
+#define ci_pdirpa(ci, index) \
+	((ci)->ci_kpm_pdirpa + (index) * sizeof(pd_entry_t))
+#endif /* __x86_64__ */
 
 /*
  * Macros to handle (some) trapframe registers for common x86 code.
