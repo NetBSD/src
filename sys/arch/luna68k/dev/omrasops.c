@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.9 2009/03/14 21:04:11 dsl Exp $ */
+/* $NetBSD: omrasops.c,v 1.10 2011/07/16 15:52:21 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.9 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.10 2011/07/16 15:52:21 tsutsui Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
@@ -42,13 +42,19 @@ __KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.9 2009/03/14 21:04:11 dsl Exp $");
  *	- font glyphs are stored in 32bit padded.
  */
 
+#define USE_OMRONFONT
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wscons_raster.h>
+#ifndef USE_OMRONFONT
 #include <dev/wscons/wscons_rfont.h>
+#else
+#include <arch/luna68k/dev/omron_rfont.h>
+#endif
 #include <dev/wscons/wsdisplayvar.h>
 
 void rcons_init(struct rcons *, int, int);
@@ -457,7 +463,11 @@ rcons_init(struct rcons *rc, int mrow, int mcol)
 	struct raster *rp = rc->rc_sp;
 	int i;
 
+#ifdef USE_OMRONFONT
+	rc->rc_font = &omron20; /* 12x22 monospacing font */
+#else
 	rc->rc_font = &gallant19; /* 12x22 monospacing font */
+#endif
 
 	/* Get distance to top and bottom of font from font origin */
 	rc->rc_font_ascent = -(rc->rc_font->chars)['a'].homey;
