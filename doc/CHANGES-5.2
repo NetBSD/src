@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.92 2011/07/15 23:41:55 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.93 2011/07/16 00:19:57 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5385,4 +5385,15 @@ sys/rump/librump/rumpkern/opt/opt_compat_netbsd32.h	new
 	instead of all signals.  PR #44093, with rump fix for release
 	build.
 	[manu, ticket #1604]
+
+sys/arch/sparc64/dev/lom.c			1.8
+
+	Limit reading from registers at most once every second with using
+	ratecheck(9).
+	[nakayama, ticket #1641]
+
+sys/ufs/ufs/ufs_inode.c				1.86 via patch
+
+	Prevent panic when removing a file with extended attributes.
+	[manu, ticket #1642]
 
