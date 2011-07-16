@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.82 2011/06/20 17:21:50 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.83 2011/07/16 15:45:24 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.82 2011/06/20 17:21:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.83 2011/07/16 15:45:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.82 2011/06/20 17:21:50 pgoyette Exp $"
 #include <sys/kernel.h>
 #include <sys/module.h>
 #include <sys/systm.h>
+#include <sys/kmem.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -108,6 +109,8 @@ struct acpitz_softc {
 	int			 sc_zone_expire;
 	bool			 sc_first;
 	bool			 sc_have_fan;
+	struct cpu_info	       **sc_psl;
+	size_t			 sc_psl_size;
 };
 
 static int		acpitz_match(device_t, cfdata_t, void *);
@@ -248,6 +251,9 @@ acpitz_detach(device_t self, int flags)
 
 		ACPI_FREE(sc->sc_zone.al[i].Pointer);
 	}
+
+	if (sc->sc_psl)
+		kmem_free(sc->sc_psl, sc->sc_psl_size);
 
 	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
@@ -724,6 +730,8 @@ acpitz_print_processor_list(device_t dv)
 	if (obj->Type != ACPI_TYPE_PACKAGE || obj->Package.Count == 0)
 		goto done;
 
+	sc->sc_psl_size = sizeof(ci) * (obj->Package.Count + 1);
+	sc->sc_psl = kmem_zalloc(sc->sc_psl_size, KM_SLEEP);
 	for (cnt = i = 0; i < obj->Package.Count; i++) {
 
 		pref = &obj->Package.Elements[i];
@@ -741,6 +749,9 @@ acpitz_print_processor_list(device_t dv)
 			aprint_normal(":");
 
 		aprint_normal(" %s", device_xname(ci->ci_dev));
+
+		if (sc->sc_psl)
+			sc->sc_psl[cnt] = ci;
 		++cnt;
 	}
 
@@ -764,6 +775,7 @@ acpitz_init_envsys(device_t dv)
 {
 	const int flags = ENVSYS_FMONLIMITS | ENVSYS_FMONNOTSUPP;
 	struct acpitz_softc *sc = device_private(dv);
+	unsigned int i;
 
 	sc->sc_sme = sysmon_envsys_create();
 
@@ -776,7 +788,20 @@ acpitz_init_envsys(device_t dv)
 	sc->sc_temp_sensor.units = ENVSYS_STEMP;
 	sc->sc_temp_sensor.state = ENVSYS_SINVALID;
 
-	(void)strlcpy(sc->sc_temp_sensor.desc, "temperature",
+	memset(sc->sc_temp_sensor.desc, 0, sizeof(sc->sc_temp_sensor.desc));
+	if (sc->sc_psl) {
+		for (i = 0; sc->sc_psl[i] != NULL; i++) {
+			if (i > 0)
+				strlcat(sc->sc_temp_sensor.desc, "/",
+				    sizeof(sc->sc_temp_sensor.desc));
+			strlcat(sc->sc_temp_sensor.desc,
+			    device_xname(sc->sc_psl[i]->ci_dev),
+			    sizeof(sc->sc_temp_sensor.desc));
+		}
+		strlcat(sc->sc_temp_sensor.desc, " ",
+		    sizeof(sc->sc_temp_sensor.desc));
+	}
+	strlcat(sc->sc_temp_sensor.desc, "temperature",
 	    sizeof(sc->sc_temp_sensor.desc));
 
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_temp_sensor))
