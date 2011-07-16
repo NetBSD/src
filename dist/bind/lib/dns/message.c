@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.2.4.3 2011/01/23 21:47:38 bouyer Exp $	*/
+/*	$NetBSD: message.c,v 1.2.4.4 2011/07/16 00:45:37 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: message.c,v 1.222.18.18 2009/01/19 23:46:15 tbox Exp */
+/* Id: message.c,v 1.222.18.20 2011-06-09 07:12:57 tbox Exp */
 
 /*! \file */
 
@@ -2439,7 +2439,7 @@ dns_message_peekheader(isc_buffer_t *source, dns_messageid_t *idp,
 
 isc_result_t
 dns_message_reply(dns_message_t *msg, isc_boolean_t want_question_section) {
-	unsigned int first_section;
+	unsigned int clear_after;
 	isc_result_t result;
 
 	REQUIRE(DNS_MESSAGE_VALID(msg));
@@ -2453,11 +2453,11 @@ dns_message_reply(dns_message_t *msg, isc_boolean_t want_question_section) {
 	if (want_question_section) {
 		if (!msg->question_ok)
 			return (DNS_R_FORMERR);
-		first_section = DNS_SECTION_ANSWER;
+		clear_after = DNS_SECTION_ANSWER;
 	} else
-		first_section = DNS_SECTION_QUESTION;
+		clear_after = DNS_SECTION_QUESTION;
 	msg->from_to_wire = DNS_MESSAGE_INTENTRENDER;
-	msgresetnames(msg, first_section);
+	msgresetnames(msg, clear_after);
 	msgresetopt(msg);
 	msgresetsigs(msg, ISC_TRUE);
 	msginitprivate(msg);

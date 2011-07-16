@@ -1,7 +1,7 @@
-/*	$NetBSD: ncache.c,v 1.1.1.3.4.3 2011/06/18 10:36:31 bouyer Exp $	*/
+/*	$NetBSD: ncache.c,v 1.1.1.3.4.4 2011/07/16 00:45:37 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -182,7 +182,7 @@ dns_ncache_add(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 					isc_buffer_putuint16(&buffer,
 							     rdataset->type);
 					isc_buffer_putuint8(&buffer,
-							     rdataset->trust);
+					       (unsigned char)rdataset->trust);
 					/*
 					 * Copy the rdataset into the buffer.
 					 */
@@ -259,7 +259,7 @@ dns_ncache_add(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 			trust = dns_trust_authauthority;
 		} else
 			trust = dns_trust_additional;
-		isc_buffer_putuint8(&buffer, trust);	/* trust */
+		isc_buffer_putuint8(&buffer, (unsigned char)trust); /* trust */
 		isc_buffer_putuint16(&buffer, 0);	/* count */
 
 	/*
@@ -285,6 +285,7 @@ dns_ncache_add(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 	RUNTIME_CHECK(dns_rdatalist_tordataset(&ncrdatalist, &ncrdataset)
 		      == ISC_R_SUCCESS);
 	ncrdataset.trust = trust;
+	ncrdataset.attributes |= DNS_RDATASETATTR_NEGATIVE;
 	if (message->rcode == dns_rcode_nxdomain)
 		ncrdataset.attributes |= DNS_RDATASETATTR_NXDOMAIN;
 
@@ -313,6 +314,7 @@ dns_ncache_towire(dns_rdataset_t *rdataset, dns_compress_t *cctx,
 
 	REQUIRE(rdataset != NULL);
 	REQUIRE(rdataset->type == 0);
+	REQUIRE((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0);
 
 	savedbuffer = *target;
 	count = 0;
@@ -505,7 +507,7 @@ static void
 rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust) {
 	unsigned char *raw = rdataset->private3;
 
-	raw[-1] = trust;
+	raw[-1] = (unsigned char)trust;
 }
 
 static dns_rdatasetmethods_t rdataset_methods = {
@@ -539,6 +541,7 @@ dns_ncache_getrdataset(dns_rdataset_t *ncacherdataset, dns_name_t *name,
 
 	REQUIRE(ncacherdataset != NULL);
 	REQUIRE(ncacherdataset->type == 0);
+	REQUIRE((ncacherdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0);
 	REQUIRE(name != NULL);
 	REQUIRE(!dns_rdataset_isassociated(rdataset));
 	REQUIRE(type != dns_rdatatype_rrsig);
@@ -615,6 +618,7 @@ dns_ncache_getsigrdataset(dns_rdataset_t *ncacherdataset, dns_name_t *name,
 
 	REQUIRE(ncacherdataset != NULL);
 	REQUIRE(ncacherdataset->type == 0);
+	REQUIRE((ncacherdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0);
 	REQUIRE(name != NULL);
 	REQUIRE(!dns_rdataset_isassociated(rdataset));
 
@@ -714,6 +718,7 @@ dns_ncache_current(dns_rdataset_t *ncacherdataset, dns_name_t *found,
 
 	REQUIRE(ncacherdataset != NULL);
 	REQUIRE(ncacherdataset->type == 0);
+	REQUIRE((ncacherdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0);
 	REQUIRE(found != NULL);
 	REQUIRE(!dns_rdataset_isassociated(rdataset));
 
