@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.76.4.4 2010/09/07 19:33:35 bouyer Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.76.4.5 2011/07/16 00:19:13 riz Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.76.4.4 2010/09/07 19:33:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.76.4.5 2011/07/16 00:19:13 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -102,15 +102,15 @@ ufs_inactive(void *v)
 		softdep_releasefile(ip);
 
 	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+#ifdef UFS_EXTATTR
+		ufs_extattr_vnode_inactive(vp, curlwp);
+#endif
 		error = UFS_WAPBL_BEGIN(vp->v_mount);
 		if (error)
 			goto out;
 		logged = 1;
 #ifdef QUOTA
 		(void)chkiq(ip, -1, NOCRED, 0);
-#endif
-#ifdef UFS_EXTATTR
-		ufs_extattr_vnode_inactive(vp, curlwp);
 #endif
 		if (ip->i_size != 0) {
 			/*
