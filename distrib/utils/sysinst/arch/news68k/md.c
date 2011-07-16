@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.32 2011/04/04 08:30:37 mbalmer Exp $	*/
+/*	$NetBSD: md.c,v 1.33 2011/07/16 23:49:10 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,6 +57,7 @@ md_init(void)
 void
 md_init_set_status(int flags)
 {
+
 	(void)flags;
 }
 
@@ -67,17 +68,17 @@ md_get_info(void)
 	int fd;
 	char dev_name[100];
 
-	snprintf (dev_name, 100, "/dev/r%sc", diskdev);
+	snprintf(dev_name, sizeof(dev_name), "/dev/r%sc", diskdev);
 
-	fd = open (dev_name, O_RDONLY, 0);
+	fd = open(dev_name, O_RDONLY, 0);
 	if (fd < 0) {
 		endwin();
-		fprintf (stderr, "Can't open %s\n", dev_name);
+		fprintf(stderr, "Can't open %s\n", dev_name);
 		exit(1);
 	}
 	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
 		endwin();
-		fprintf (stderr, "Can't read disklabel on %s.\n", dev_name);
+		fprintf(stderr, "Can't read disklabel on %s.\n", dev_name);
 		close(fd);
 		exit(1);
 	}
@@ -95,7 +96,7 @@ md_get_info(void)
 	 * (If our new label's RAW_PART size ends up smaller than the
 	 * in-core RAW_PART size  value, updating the label will fail.)
 	 */
-	dlsize = dlcyl*dlhead*dlsec;
+	dlsize = dlcyl * dlhead * dlsec;
 	if (disklabel.d_secperunit > dlsize)
 		dlsize = disklabel.d_secperunit;
 
@@ -108,6 +109,7 @@ md_get_info(void)
 int
 md_make_bsd_partitions(void)
 {
+
 	return make_bsd_partitions();
 }
 
@@ -117,6 +119,7 @@ md_make_bsd_partitions(void)
 int
 md_check_partitions(void)
 {
+
 	return 1;
 }
 
@@ -126,6 +129,7 @@ md_check_partitions(void)
 int
 md_pre_disklabel(void)
 {
+
 	return 0;
 }
 
@@ -135,6 +139,7 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
+
 	return 0;
 }
 
@@ -161,12 +166,14 @@ md_post_newfs(void)
 int
 md_post_extract(void)
 {
+
 	return 0;
 }
 
 void
 md_cleanup_install(void)
 {
+
 #ifndef DEBUG
 	enable_rc_conf();
 #endif
@@ -175,6 +182,7 @@ md_cleanup_install(void)
 int
 md_pre_update(void)
 {
+
 	return 1;
 }
 
@@ -182,6 +190,7 @@ md_pre_update(void)
 int
 md_update(void)
 {
+
 	md_post_newfs();
 	return 1;
 }
