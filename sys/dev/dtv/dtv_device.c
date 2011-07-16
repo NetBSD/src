@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_device.c,v 1.6 2011/07/13 22:51:10 jmcneill Exp $ */
+/* $NetBSD: dtv_device.c,v 1.7 2011/07/16 12:20:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.6 2011/07/13 22:51:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.7 2011/07/16 12:20:01 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -118,6 +118,7 @@ dtv_attach(device_t parent, device_t self, void *aa)
 
 	mutex_init(&sc->sc_demux_lock, MUTEX_DEFAULT, IPL_VM);
 	TAILQ_INIT(&sc->sc_demux_list);
+	sc->sc_demux_runcnt = 0;
 
 	dtv_device_get_devinfo(sc, &info);
 
@@ -237,7 +238,7 @@ dtvclose(dev_t dev, int flags, int mode, lwp_t *l)
 	if ((sc = device_lookup_private(&dtv_cd, DTVUNIT(dev))) == NULL)
 		return ENXIO;
 
-	dtv_close_common(sc);
+	dtv_common_close(sc);
 
 	return 0;
 }
@@ -289,7 +290,7 @@ dtvpoll(dev_t dev, int events, lwp_t *l)
 }
 
 void
-dtv_close_common(struct dtv_softc *sc)
+dtv_common_close(struct dtv_softc *sc)
 {
 	mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_open > 0);

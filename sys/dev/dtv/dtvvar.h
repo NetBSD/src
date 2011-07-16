@@ -1,4 +1,4 @@
-/* $NetBSD: dtvvar.h,v 1.4 2011/07/13 22:43:04 jmcneill Exp $ */
+/* $NetBSD: dtvvar.h,v 1.5 2011/07/16 12:20:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -124,6 +124,7 @@ struct dtv_softc {
 
 	TAILQ_HEAD(, dtv_demux) sc_demux_list;
 	kmutex_t	sc_demux_lock;
+	int		sc_demux_runcnt;
 };
 
 #define	dtv_device_get_devinfo(sc, info)	\
@@ -148,7 +149,7 @@ struct dtv_softc {
 int	dtv_frontend_ioctl(struct dtv_softc *, u_long, void *, int);
 
 int	dtv_demux_open(struct dtv_softc *, int, int, lwp_t *);
-int	dtv_demux_write(struct dtv_demux *, const uint8_t *, size_t);
+void	dtv_demux_write(struct dtv_softc *, const uint8_t *, size_t);
 
 int	dtv_buffer_realloc(struct dtv_softc *, size_t);
 int	dtv_buffer_setup(struct dtv_softc *);
@@ -156,6 +157,6 @@ int	dtv_buffer_destroy(struct dtv_softc *);
 int	dtv_buffer_read(struct dtv_softc *, struct uio *, int);
 int	dtv_buffer_poll(struct dtv_softc *, int, lwp_t *);
 
-void	dtv_close_common(struct dtv_softc *);
+void	dtv_common_close(struct dtv_softc *);
 
 #endif /* !_DEV_DTV_DTVVAR_H */
