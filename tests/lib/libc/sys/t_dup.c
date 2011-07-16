@@ -1,4 +1,4 @@
-/* $NetBSD: t_dup.c,v 1.3 2011/07/15 09:40:16 jruoho Exp $ */
+/* $NetBSD: t_dup.c,v 1.4 2011/07/16 14:29:15 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dup.c,v 1.3 2011/07/15 09:40:16 jruoho Exp $");
+__RCSID("$NetBSD: t_dup.c,v 1.4 2011/07/16 14:29:15 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -185,8 +185,6 @@ ATF_TC_BODY(dup3_err, tc)
 {
 	int fd;
 
-	atf_tc_expect_fail("PR lib/45148");
-
 	fd = open("/etc/passwd", O_RDONLY);
 	ATF_REQUIRE(fd >= 0);
 
@@ -202,8 +200,11 @@ ATF_TC_BODY(dup3_err, tc)
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EBADF, dup3(-1, fd, O_CLOEXEC) == -1);
 
+	/*
+	 * See the closed PR lib/45148.
+	 */
 	errno = 0;
-	ATF_REQUIRE_ERRNO(EINVAL, dup3(fd, 1, O_NOFOLLOW) == -1); /* Fails. */
+	ATF_REQUIRE_ERRNO(EINVAL, dup3(fd, 1, O_NOFOLLOW) == -1);
 
 	(void)close(fd);
 }
