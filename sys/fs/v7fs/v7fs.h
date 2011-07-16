@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs.h,v 1.1 2011/06/27 11:52:24 uch Exp $	*/
+/*	$NetBSD: v7fs.h,v 1.2 2011/07/16 12:35:40 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -175,6 +175,6 @@ struct v7fs_inode_diskimage {
 /* Don't apear original V7 filesystem. NetBSD. */
 #define	V7FSBSD_IFFIFO	0010000	/* Named pipe. */
 
-#define	V7FSBSD_MAXSYMLINKS	8
+#define	V7FSBSD_MAXSYMLINKLEN	V7FS_BSIZE
 
 #endif	/*!_V7FS_H_ */

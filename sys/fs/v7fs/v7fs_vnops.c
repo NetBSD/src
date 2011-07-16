@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.3 2011/07/13 12:28:57 uch Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.4 2011/07/16 12:35:40 uch Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.3 2011/07/13 12:28:57 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.4 2011/07/16 12:35:40 uch Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -1130,7 +1130,7 @@ v7fs_pathconf(void *v)
 		*a->a_retval = 30; /* ~1G */
 		break;
 	case _PC_SYMLINK_MAX:
-		*a->a_retval = MAXPATHLEN;
+		*a->a_retval = V7FSBSD_MAXSYMLINKLEN;
 		break;
 	case _PC_2_SYMLINKS:
 		*a->a_retval = 1;
@@ -1224,26 +1224,7 @@ v7fs_symlink(void *v)
 
 	struct v7fs_node *newnode = (*a->a_vpp)->v_data;
 	struct v7fs_inode *p = &newnode->inode;
-
-	if ((error = v7fs_datablock_expand(fs, p, len))) {
-		v7fs_inode_deallocate(fs, ino);
-		error = ENOSPC;
-		goto unlock_exit;
-	}
-	v7fs_daddr_t blk = p->addr[0];	/* 1block only.  */
-	void *buf;
-	if (!(buf = scratch_read(fs, blk))) {
-		v7fs_inode_deallocate(fs, ino);
-		error = EIO;
-		goto unlock_exit;
-	}
-	strncpy(buf, from, V7FS_BSIZE);
-	if (!fs->io.write(fs->io.cookie, buf, blk)) {
-		scratch_free(fs, buf);
-		error = EIO;
-		goto unlock_exit;
-	}
-	scratch_free(fs, buf);
+	v7fs_file_symlink(fs, p, from);
 	uvm_vnp_setsize(*a->a_vpp, v7fs_inode_filesize(p));
 
 	newnode->update_ctime = true;
