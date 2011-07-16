@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_math.c,v 1.3 2011/07/16 22:30:26 apb Exp $ */
+/* $NetBSD: dtv_math.c,v 1.4 2011/07/16 22:41:59 apb Exp $ */
 
 /*-
  * Copyright (c) 2011 Alan Barrett <apb@NetBSD.org>
@@ -27,10 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_math.c,v 1.3 2011/07/16 22:30:26 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_math.c,v 1.4 2011/07/16 22:41:59 apb Exp $");
 
 #include <sys/types.h>
 #include <sys/bitops.h>
+
+#include <dev/dtv/dtvif.h>
 
 /*
  * dtv_intlog10 -- return an approximation to log10(x) * 1<<24,
