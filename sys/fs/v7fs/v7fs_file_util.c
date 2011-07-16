@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_file_util.c,v 1.1 2011/06/27 11:52:24 uch Exp $	*/
+/*	$NetBSD: v7fs_file_util.c,v 1.2 2011/07/16 12:35:40 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_file_util.c,v 1.1 2011/06/27 11:52:24 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_file_util.c,v 1.2 2011/07/16 12:35:40 uch Exp $");
 #ifdef _KERNEL
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -71,6 +71,39 @@ v7fs_file_link(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
 		return error;
 	}
 	p->nlink++;
+	v7fs_inode_writeback(fs, p);
+
+	return 0;
+}
+
+int
+v7fs_file_symlink(struct v7fs_self *fs, struct v7fs_inode *p,
+    const char *target)
+{
+	int error;
+	size_t len = strlen(target) + 1;
+
+	if (len > V7FSBSD_MAXSYMLINKLEN) {/* limited target 512byte pathname */
+		DPRINTF("too long pathname.");
+		return ENAMETOOLONG;
+	}
+
+	if ((error = v7fs_datablock_expand(fs, p, len))) {
+		return error;
+	}
+
+	v7fs_daddr_t blk = p->addr[0];	/* 1block only.  */
+	void *buf;
+	if (!(buf = scratch_read(fs, blk))) {
+		return EIO;
+	}
+
+	strncpy(buf, target, V7FS_BSIZE);
+	if (!fs->io.write(fs->io.cookie, buf, blk)) {
+		scratch_free(fs, buf);
+		return EIO;
+	}
+	scratch_free(fs, buf);
 	v7fs_inode_writeback(fs, p);
 
 	return 0;
