@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: bus.h,v 1.11 2011/07/16 15:52:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -143,13 +143,13 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_read_1(t, h, o)					\
-    ((void) t, (*(volatile u_int8_t *)((h) + 4*(o))))
+    ((void) t, (*(volatile u_int8_t *)((h) + (o)*4)))
 
 #define	bus_space_read_2(t, h, o)					\
-    ((void) t, (*(volatile u_int16_t *)((h) + 4*(o))))
+    ((void) t, (*(volatile u_int16_t *)((h) + (o)*2)))
 
 #define	bus_space_read_4(t, h, o)					\
-    ((void) t, (*(volatile u_int32_t *)((h) + 4*(o))))
+    ((void) t, (*(volatile u_int32_t *)((h) + (o))))
 
 #if 0	/* Cause a link error for bus_space_read_8 */
 #define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
@@ -174,7 +174,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
+		    "r" ((h) + (o)*4), "g" (a), "g" ((size_t)(c)) :	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -188,7 +188,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
+		    "r" ((h) + (o)*2), "g" (a), "g" ((size_t)(c)) :	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -226,11 +226,12 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
-	1:	movb	%%a0@+,%%a1@+				;	\
+	1:	movb	%%a0@,%%a1@+				;	\
+		addql	#4,%%a0					;	\
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
+		    "r" ((h) + (o)*4), "g" (a), "g" ((size_t)(c)) :	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -240,11 +241,12 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
-	1:	movw	%%a0@+,%%a1@+				;	\
+	1:	movw	%%a0@,%%a1@+				;	\
+		addql	#4,%%a0					;	\
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
+		    "r" ((h) + (o)*2), "g" (a), "g" ((size_t)(c)) :	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -276,13 +278,13 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_write_1(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int8_t *)((h) + 4*(o)) = (v))))
+    ((void) t, ((void)(*(volatile u_int8_t *)((h) + (o)*4) = (v))))
 
 #define	bus_space_write_2(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int16_t *)((h) + 4*(o)) = (v))))
+    ((void) t, ((void)(*(volatile u_int16_t *)((h) + (o)*2) = (v))))
 
 #define	bus_space_write_4(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int32_t *)((h) + 4*(o)) = (v))))
+    ((void) t, ((void)(*(volatile u_int32_t *)((h) + (o)) = (v))))
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_8	!!! bus_space_write_8 not implemented !!!
@@ -307,7 +309,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
+		    "r" ((h) + (o)*4), "g" (a), "g" ((size_t)(c)) :	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -321,7 +323,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
+		    "r" ((h) + (o)*2), "g" (a), "g" ((size_t)(c)) :	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -359,11 +361,12 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
-	1:	movb	%%a1@+,%%a0@+				;	\
+	1:	movb	%%a1@+,%%a0@				;	\
+		addql	#4,%%a0					;	\
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
+		    "r" ((h) + (o)*4), "g" (a), "g" ((size_t)(c)) :	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -373,11 +376,12 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
-	1:	movw	%%a1@+,%%a0@+				;	\
+	1:	movw	%%a1@+,%%a0@				;	\
+		addql	#4,%%a0					;	\
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
+		    "r" ((h) + (o)*2), "g" (a), "g" ((size_t)(c)) :	\
 		    "a0","a1","d0");					\
 } while (0)
 
@@ -419,7 +423,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h)+(o)), "g" ((u_long)val),			\
+		    "r" ((h)+(o)*4), "g" ((u_long)val),			\
 					 "g" ((size_t)(c))	:	\
 		    "a0","d0","d1");					\
 } while (0)
@@ -434,7 +438,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h)+(o)), "g" ((u_long)val),			\
+		    "r" ((h)+(o)*2), "g" ((u_long)val),			\
 					 "g" ((size_t)(c))	:	\
 		    "a0","d0","d1");					\
 } while (0)
@@ -474,11 +478,12 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
-	1:	movb	%%d1,%%a0@+				;	\
+	1:	movb	%%d1,%%a0@				;	\
+		addql	#4,%%a0					;	\
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h)+(o)), "g" ((u_long)val),			\
+		    "r" ((h)+(o)*4), "g" ((u_long)val),			\
 					"g" ((size_t)(c))	:	\
 		    "a0","d0","d1");					\
 } while (0)
@@ -489,11 +494,12 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		movl	%0,%%a0					;	\
 		movl	%1,%%d1					;	\
 		movl	%2,%%d0					;	\
-	1:	movw	%%d1,%%a0@+				;	\
+	1:	movw	%%d1,%%a0@				;	\
+		addql	#4,%%a0					;	\
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
-		    "r" ((h)+(o)), "g" ((u_long)val),			\
+		    "r" ((h)+(o)*2), "g" ((u_long)val),			\
 					"g" ((size_t)(c))	:	\
 		    "a0","d0","d1");					\
 } while (0)
