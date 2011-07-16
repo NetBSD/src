@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_datablock.c,v 1.2 2011/07/13 12:18:22 uch Exp $	*/
+/*	$NetBSD: v7fs_datablock.c,v 1.3 2011/07/16 12:35:32 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_datablock.c,v 1.2 2011/07/13 12:18:22 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_datablock.c,v 1.3 2011/07/16 12:35:32 uch Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -58,12 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: v7fs_datablock.c,v 1.2 2011/07/13 12:18:22 uch Exp $
 #define	DPRINTF(fmt, args...)	((void)0)
 #endif
 
-struct v7fs_daddr_map {
-	int level; /* direct, index1, index2, index3 */
-	v7fs_daddr_t index[3];
-};
-
-static int v7fs_datablock_addr(size_t, struct v7fs_daddr_map *);
 static int v7fs_datablock_deallocate(struct v7fs_self *, v7fs_daddr_t);
 static int loop1(struct v7fs_self *, v7fs_daddr_t, size_t *,
     int (*)(struct v7fs_self *, void *, v7fs_daddr_t, size_t), void *);
@@ -198,7 +192,7 @@ v7fs_datablock_deallocate(struct v7fs_self *fs, v7fs_daddr_t blk)
 	return error;
 }
 
-static int
+int
 v7fs_datablock_addr(size_t sz, struct v7fs_daddr_map *map)
 {
 #define	NIDX		V7FS_DADDR_PER_BLOCK

@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_datablock.h,v 1.1 2011/06/27 11:52:24 uch Exp $	*/
+/*	$NetBSD: v7fs_datablock.h,v 1.2 2011/07/16 12:35:32 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -42,5 +42,11 @@ v7fs_daddr_t v7fs_datablock_last(struct v7fs_self *, struct v7fs_inode *,
 int v7fs_datablock_expand(struct v7fs_self *, struct v7fs_inode *, size_t);
 int v7fs_datablock_contract(struct v7fs_self *, struct v7fs_inode *, size_t);
 int v7fs_datablock_size_change(struct v7fs_self *, size_t, struct v7fs_inode *);
+
+struct v7fs_daddr_map {
+	int level; /* direct, index1, index2, index3 */
+	v7fs_daddr_t index[3];
+};
+int v7fs_datablock_addr(size_t, struct v7fs_daddr_map *);
 __END_DECLS
 #endif /*!_V7FS_INODE_H_ */
