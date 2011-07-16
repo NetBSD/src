@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_buffer.c,v 1.5 2011/07/13 22:43:04 jmcneill Exp $ */
+/* $NetBSD: dtv_buffer.c,v 1.6 2011/07/16 12:20:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_buffer.c,v 1.5 2011/07/13 22:43:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_buffer.c,v 1.6 2011/07/16 12:20:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -99,7 +99,6 @@ void
 dtv_submit_payload(device_t self, const struct dtv_payload *payload)
 {
 	struct dtv_softc *sc = device_private(self);
-	struct dtv_demux *demux;
 	struct dtv_ts *ts = &sc->sc_ts;
 	const uint8_t *tspkt;
 	unsigned int npkts, i;
@@ -111,11 +110,7 @@ dtv_submit_payload(device_t self, const struct dtv_payload *payload)
 			if (ts->ts_pidfilter[TS_PID(tspkt)]) {
 				dtv_buffer_write(sc, tspkt, TS_PKTLEN);
 			}
-			mutex_enter(&sc->sc_demux_lock);
-			TAILQ_FOREACH(demux, &sc->sc_demux_list, dd_entries) {
-				dtv_demux_write(demux, tspkt, TS_PKTLEN);
-			}
-			mutex_exit(&sc->sc_demux_lock);
+			dtv_demux_write(sc, tspkt, TS_PKTLEN);
 		}
 		tspkt += TS_PKTLEN;
 	}
