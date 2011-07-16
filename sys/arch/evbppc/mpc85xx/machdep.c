@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2011/07/01 07:44:33 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2011/07/16 21:36:18 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -488,7 +488,7 @@ memprobe(vaddr_t endkernel)
 				cnt--;
 			}
 		}
-	} else {
+	} else if (cnt == 0) {
 		panic("%s: no memory found", __func__);
 	}
 
