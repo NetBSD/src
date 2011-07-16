@@ -1,4 +1,4 @@
-#	$NetBSD: RB800,v 1.12 2011/06/30 20:09:29 wiz Exp $
+#	$NetBSD: RB800,v 1.13 2011/07/16 21:58:26 matt Exp $
 #
 #	RB800 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"RB800-$Revision: 1.12 $"
+ident 		"RB800-$Revision: 1.13 $"
 
 maxusers	32
 
@@ -150,7 +150,6 @@ cpunode*	at mainbus? node ?
 cpu0		at cpunode?
 
 obio0		at cpunode?		# On-chip Peripheral Bus
-#nflash0		at obio0 cs 0
 #ds1553rtc0	at obio0 addr 0xf8000000 size 8192
 #wdc0		at obio0 cs 2
 #atabus* 	at wdc?
