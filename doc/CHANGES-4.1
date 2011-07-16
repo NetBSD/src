@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.225 2011/06/18 10:37:45 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.226 2011/07/16 00:45:58 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4476,4 +4476,16 @@ dist/bind/lib/dns/include/dns/rdataset.h:	patch
 	 that validated insecure without using DLV and had
 	 DS records in the parent zone.
 	[spz, ticket #1430]
+
+dist/bind/lib/dns/masterdump.c				patch
+dist/bind/lib/dns/message.c				patch
+dist/bind/lib/dns/ncache.c				patch
+dist/bind/lib/dns/rbtdb.c				patch
+dist/bind/lib/dns/rdataset.c				patch
+dist/bind/lib/dns/resolver.c				patch
+dist/bind/lib/dns/validator.c				patch
+dist/bind/lib/dns/include/dns/rdataset.h		patch
+
+	Patch bind to address CVE-2011-2464.
+	[spz, ticket #1431]
 
