@@ -1,11 +1,11 @@
-# $NetBSD: md.hp700,v 1.7 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.hp700,v 1.8 2011/07/17 23:37:32 dyoung Exp $
 ./usr/include/hp700				comp-c-include
 ./usr/include/hp700/ansi.h			comp-c-include
 ./usr/include/hp700/aout_machdep.h		comp-c-include
 ./usr/include/hp700/asm.h			comp-c-include
 ./usr/include/hp700/autoconf.h			comp-c-include
 ./usr/include/hp700/bswap.h			comp-c-include
-./usr/include/hp700/bus.h			comp-c-include
+./usr/include/hp700/bus.h			comp-obsolete		obsolete
 ./usr/include/hp700/byte_swap.h			comp-c-include
 ./usr/include/hp700/cdefs.h			comp-c-include
 ./usr/include/hp700/cpu.h			comp-c-include

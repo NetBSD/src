@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.110 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.sparc64,v 1.111 2011/07/17 23:37:32 dyoung Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -881,7 +881,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libcom_err.so.6.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/sparc/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/sparc/libcrypt.so.1.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libcrypto.so.6.2.debug		comp-compat-shlib	compat,pic,debug,crypto
+./usr/libdata/debug/usr/lib/sparc/libcrypto.so.7.0.debug		comp-compat-shlib	compat,pic,debug,crypto
 ./usr/libdata/debug/usr/lib/sparc/libcurses.so.7.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libdes.so.8.1.debug			comp-compat-shlib	compat,pic,debug,crypto
 ./usr/libdata/debug/usr/lib/sparc/libdevmapper.so.1.0.debug			comp-compat-shlib	compat,pic,debug,lvm
@@ -968,7 +968,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libsl.so.5.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libss.so.6.0.debug			comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/sparc/libssh.so.16.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libssl.so.8.2.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libssl.so.9.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.0.debug		comp-compat-shlib	gcc=4,compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.1.debug		comp-compat-shlib	gcc=45,compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libterminfo.so.1.0.debug		comp-compat-shlib	compat,pic,debug
