@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.12 2011/07/17 20:54:46 joerg Exp $
+# $NetBSD: Makefile,v 1.13 2011/07/17 23:53:41 dyoung Exp $
 
 INCSDIR= /usr/include/sbmips
 
-# XXXcgd need local: bus.h pci_machdep.h
+# XXXcgd need local: pci_machdep.h
 # XXXcgd need export: intr.h
 
 INCS=	ansi.h asm.h \
