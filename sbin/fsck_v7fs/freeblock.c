@@ -1,4 +1,4 @@
-/*	$NetBSD: freeblock.c,v 1.1 2011/06/27 11:52:58 uch Exp $	*/
+/*	$NetBSD: freeblock.c,v 1.2 2011/07/17 12:47:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: freeblock.c,v 1.1 2011/06/27 11:52:58 uch Exp $");
+__RCSID("$NetBSD: freeblock.c,v 1.2 2011/07/17 12:47:38 uch Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -241,6 +241,7 @@ v7fs_freeblock_foreach(struct v7fs_self *fs,
 		}
 
 		/* freeblock list is used as freeblock. */
+		n--;
 		if ((ret = func(fs, ctx, blk)))
 			return ret;
 
