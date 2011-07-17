@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.17 2005/11/16 00:49:03 uwe Exp $ */
+/*	$NetBSD: power.c,v 1.18 2011/07/17 23:18:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.17 2005/11/16 00:49:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.18 2011/07/17 23:18:23 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,11 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: power.c,v 1.17 2005/11/16 00:49:03 uwe Exp $");
 
 #include <sparc/dev/power.h>
 
-static int powermatch(struct device *, struct cfdata *, void *);
-static void powerattach(struct device *, struct device *, void *);
+static int powermatch(device_t, cfdata_t, void *);
+static void powerattach(device_t, device_t, void *);
 
-CFATTACH_DECL(power, sizeof(struct device),
-    powermatch, powerattach, NULL, NULL);
+CFATTACH_DECL_NEW(power, 0, powermatch, powerattach, NULL, NULL);
 
 /*
  * This is the driver for the "power" register available on some Sun4m
@@ -64,7 +63,7 @@ CFATTACH_DECL(power, sizeof(struct device),
  */
 
 static int
-powermatch(struct device *parent, struct cfdata *cf, void *aux)
+powermatch(device_t parent, cfdata_t cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -77,7 +76,7 @@ powermatch(struct device *parent, struct cfdata *cf, void *aux)
 
 /* ARGSUSED */
 static void
-powerattach(struct device *parent, struct device *self, void *aux)
+powerattach(device_t parent, device_t self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -87,7 +86,7 @@ powerattach(struct device *parent, struct device *self, void *aux)
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot, sa->sa_offset, sizeof(uint8_t),
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: cannot map register\n", self->dv_xname);
+		printf("%s: cannot map register\n", device_xname(self));
 		return;
 	}
 	power_reg = (volatile uint8_t *)bh;

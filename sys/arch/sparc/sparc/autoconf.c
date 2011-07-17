@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.241 2011/07/06 20:47:05 dyoung Exp $ */
+/*	$NetBSD: autoconf.c,v 1.242 2011/07/17 23:18:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.241 2011/07/06 20:47:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.242 2011/07/17 23:18:23 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -131,8 +131,8 @@ static	void crazymap(const char *, int *);
 int	st_crazymap(int);
 int	sd_crazymap(int);
 void	sync_crash(void);
-int	mainbus_match(struct device *, struct cfdata *, void *);
-static	void mainbus_attach(struct device *, struct device *, void *);
+int	mainbus_match(device_t, cfdata_t, void *);
+static	void mainbus_attach(device_t, device_t, void *);
 
 struct	bootpath bootpath[8];
 int	nbootpath;
@@ -1044,7 +1044,7 @@ mbprint(void *aux, const char *name)
 }
 
 int
-mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);
@@ -1069,7 +1069,7 @@ static int	prom_getprop_address1(int, void **);
  * We also record the `node id' of the default frame buffer, if any.
  */
 static void
-mainbus_attach(struct device *parent, struct device *dev, void *aux)
+mainbus_attach(device_t parent, device_t dev, void *aux)
 {
 extern struct sparc_bus_dma_tag mainbus_dma_tag;
 extern struct sparc_bus_space_tag mainbus_space_tag;
@@ -1365,8 +1365,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 #endif /* SUN4C || SUN4M || SUN4D */
 }
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
-    mainbus_match, mainbus_attach, NULL, NULL);
+CFATTACH_DECL_NEW(mainbus, 0, mainbus_match, mainbus_attach, NULL, NULL);
 
 
 #if defined(SUN4C) || defined(SUN4M) || defined(SUN4D)

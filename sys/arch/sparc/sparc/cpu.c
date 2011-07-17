@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.232 2011/02/20 11:41:20 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.233 2011/07/17 23:18:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.232 2011/02/20 11:41:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.233 2011/07/17 23:18:23 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.232 2011/02/20 11:41:20 mrg Exp $");
 #endif
 
 struct cpu_softc {
-	struct device	sc_dev;		/* generic device info */
+	device_t sc_dev;
 	struct cpu_info	*sc_cpuinfo;
 };
 
@@ -108,17 +108,17 @@ int	sparc_ncpus;			/* # of CPUs detected by PROM */
 struct cpu_info *cpus[_MAXNCPU+1];	/* we only support 4 CPUs. */
 
 /* The CPU configuration driver. */
-static void cpu_mainbus_attach(struct device *, struct device *, void *);
-int  cpu_mainbus_match(struct device *, struct cfdata *, void *);
+static void cpu_mainbus_attach(device_t, device_t, void *);
+int  cpu_mainbus_match(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(cpu_mainbus, sizeof(struct cpu_softc),
+CFATTACH_DECL_NEW(cpu_mainbus, sizeof(struct cpu_softc),
     cpu_mainbus_match, cpu_mainbus_attach, NULL, NULL);
 
 #if defined(SUN4D)
-static int cpu_cpuunit_match(struct device *, struct cfdata *, void *);
-static void cpu_cpuunit_attach(struct device *, struct device *, void *);
+static int cpu_cpuunit_match(device_t, cfdata_t, void *);
+static void cpu_cpuunit_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cpu_cpuunit, sizeof(struct cpu_softc),
+CFATTACH_DECL_NEW(cpu_cpuunit, sizeof(struct cpu_softc),
     cpu_cpuunit_match, cpu_cpuunit_attach, NULL, NULL);
 #endif /* SUN4D */
 
@@ -193,7 +193,7 @@ static kmutex_t xpmsg_mutex;
  */
 
 int
-cpu_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+cpu_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -201,20 +201,23 @@ cpu_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-cpu_mainbus_attach(struct device *parent, struct device *self, void *aux)
+cpu_mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct { uint32_t va; uint32_t size; } *mbprop = NULL;
 	struct openprom_addr *rrp = NULL;
 	struct cpu_info *cpi;
+	struct cpu_softc *sc;
 	int mid, node;
 	int error, n;
 
 	node = ma->ma_node;
 	mid = (node != 0) ? prom_getpropint(node, "mid", 0) : 0;
-	cpu_attach((struct cpu_softc *)self, node, mid);
+	sc = device_private(self);
+	sc->sc_dev = self;
+	cpu_attach(sc, node, mid);
 
-	cpi = ((struct cpu_softc *)self)->sc_cpuinfo;
+	cpi = sc->sc_cpuinfo;
 	if (cpi == NULL)
 		return;
 
@@ -280,7 +283,7 @@ cpu_mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 #if defined(SUN4D)
 static int
-cpu_cpuunit_match(struct device *parent, struct cfdata *cf, void *aux)
+cpu_cpuunit_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct cpuunit_attach_args *cpua = aux;
 
@@ -288,12 +291,13 @@ cpu_cpuunit_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-cpu_cpuunit_attach(struct device *parent, struct device *self, void *aux)
+cpu_cpuunit_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpuunit_attach_args *cpua = aux;
+	struct cpu_softc *sc = device_private(self);
 
-	cpu_attach((struct cpu_softc *)self, cpua->cpua_node,
-	    cpua->cpua_device_id);
+	sc->sc_dev = self;
+	cpu_attach(sc, cpua->cpua_node, cpua->cpua_device_id);
 }
 #endif /* SUN4D */
 
@@ -490,7 +494,7 @@ cpu_attach_non_boot(struct cpu_softc *sc, struct cpu_info *cpi, int node)
 	if (error != 0) {
 		aprint_normal("\n");
 		aprint_error("%s: mi_cpu_attach failed with %d\n",
-		    sc->sc_dev.dv_xname, error);
+		    device_xname(sc->sc_dev), error);
 		return;
 	}
 
@@ -939,9 +943,9 @@ cache_print(struct cpu_softc *sc)
 
 	if (sc->sc_cpuinfo->flags & CPUFLG_SUN4CACHEBUG)
 		printf("%s: cache chip bug; trap page uncached\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 
-	printf("%s: ", sc->sc_dev.dv_xname);
+	printf("%s: ", device_xname(sc->sc_dev));
 
 	if (ci->c_totalsize == 0) {
 		printf("no cache\n");

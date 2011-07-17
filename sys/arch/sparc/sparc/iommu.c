@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.93 2011/07/01 18:51:51 dyoung Exp $ */
+/*	$NetBSD: iommu.c,v 1.94 2011/07/17 23:18:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.93 2011/07/01 18:51:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.94 2011/07/17 23:18:23 mrg Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.93 2011/07/01 18:51:51 dyoung Exp $");
 #include <sparc/sparc/iommuvar.h>
 
 struct iommu_softc {
-	struct device	sc_dev;		/* base device */
 	struct iommureg	*sc_reg;
 	u_int		sc_pagesize;
 	u_int		sc_range;
@@ -80,14 +79,14 @@ struct iommu_softc {
 
 /* autoconfiguration driver */
 int	iommu_print(void *, const char *);
-void	iommu_attach(struct device *, struct device *, void *);
-int	iommu_match(struct device *, struct cfdata *, void *);
+void	iommu_attach(device_t, device_t, void *);
+int	iommu_match(device_t, cfdata_t, void *);
 
 #if defined(SUN4M)
 static void iommu_copy_prom_entries(struct iommu_softc *);
 #endif
 
-CFATTACH_DECL(iommu, sizeof(struct iommu_softc),
+CFATTACH_DECL_NEW(iommu, sizeof(struct iommu_softc),
     iommu_match, iommu_attach, NULL, NULL);
 
 /* IOMMU DMA map functions */
@@ -130,7 +129,7 @@ iommu_print(void *args, const char *iommu)
 }
 
 int
-iommu_match(struct device *parent, struct cfdata *cf, void *aux)
+iommu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -143,10 +142,10 @@ iommu_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach the iommu.
  */
 void
-iommu_attach(struct device *parent, struct device *self, void *aux)
+iommu_attach(device_t parent, device_t self, void *aux)
 {
 #if defined(SUN4M)
-	struct iommu_softc *sc = (struct iommu_softc *)self;
+	struct iommu_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	struct sparc_bus_dma_tag *dmat = &sc->sc_dmatag;
 	bus_space_handle_t bh;
@@ -301,7 +300,7 @@ iommu_attach(struct device *parent, struct device *self, void *aux)
 		ia.iom_reg = &sbus_iommu_reg;
 		ia.iom_nreg = 1;
 
-		(void) config_found(&sc->sc_dev, (void *)&ia, iommu_print);
+		(void) config_found(self, (void *)&ia, iommu_print);
 		return;
 	}
 
@@ -324,7 +323,7 @@ iommu_attach(struct device *parent, struct device *self, void *aux)
 		prom_getprop(node, "reg", sizeof(struct openprom_addr),
 			&ia.iom_nreg, &ia.iom_reg);
 
-		(void) config_found(&sc->sc_dev, (void *)&ia, iommu_print);
+		(void) config_found(self, (void *)&ia, iommu_print);
 		if (ia.iom_reg != NULL)
 			free(ia.iom_reg, M_DEVBUF);
 	}
