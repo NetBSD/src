@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.43 2008/12/17 19:09:56 cegger Exp $ */
+/*	$NetBSD: memreg.c,v 1.44 2011/07/17 23:32:37 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.43 2008/12/17 19:09:56 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.44 2011/07/17 23:32:37 mrg Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -68,15 +68,15 @@ __KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.43 2008/12/17 19:09:56 cegger Exp $");
 #include <machine/reg.h>	/* for trapframe */
 #include <machine/trap.h>	/* for trap types */
 
-static int	memregmatch_mainbus(struct device *, struct cfdata *, void *);
-static int	memregmatch_obio(struct device *, struct cfdata *, void *);
-static void	memregattach_mainbus(struct device *, struct device *, void *);
-static void	memregattach_obio(struct device *, struct device *, void *);
+static int	memregmatch_mainbus(device_t, cfdata_t, void *);
+static int	memregmatch_obio(device_t, cfdata_t, void *);
+static void	memregattach_mainbus(device_t, device_t, void *);
+static void	memregattach_obio(device_t, device_t, void *);
 
-CFATTACH_DECL(memreg_mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(memreg_mainbus, 0,
     memregmatch_mainbus, memregattach_mainbus, NULL, NULL);
 
-CFATTACH_DECL(memreg_obio, sizeof(struct device),
+CFATTACH_DECL_NEW(memreg_obio, 0,
     memregmatch_obio, memregattach_obio, NULL, NULL);
 
 #if defined(SUN4M)
@@ -87,7 +87,7 @@ static void hardmemerr4m(unsigned, u_int, u_int, u_int, u_int);
  * The OPENPROM calls this "memory-error".
  */
 static int
-memregmatch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
+memregmatch_mainbus(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -95,7 +95,7 @@ memregmatch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static int
-memregmatch_obio(struct device *parent, struct cfdata *cf, void *aux)
+memregmatch_obio(device_t parent, cfdata_t cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 
@@ -112,7 +112,7 @@ memregmatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 
 /* ARGSUSED */
 static void
-memregattach_mainbus(struct device *parent, struct device *self, void *aux)
+memregattach_mainbus(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
@@ -136,7 +136,7 @@ memregattach_mainbus(struct device *parent, struct device *self, void *aux)
 
 /* ARGSUSED */
 static void
-memregattach_obio(struct device *parent, struct device *self, void *aux)
+memregattach_obio(device_t parent, device_t self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	bus_space_handle_t bh;
