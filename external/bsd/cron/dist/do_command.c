@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+/*	$NetBSD: do_command.c,v 1.3 2011/07/17 01:14:25 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 1.9 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.3 2011/07/17 01:14:25 christos Exp $");
 #endif
 #endif
 
@@ -255,8 +255,6 @@ child_process(entry *e) {
 			syslog(LOG_ERR, "setlogin() failure: %m");
 			_exit(ERROR_EXIT);
 		}
-
-		setlogin(usernm);
 #endif /* BSD */
 		if (setuid(e->pwd->pw_uid) != 0) {
 			syslog(LOG_ERR, "setuid failed");
