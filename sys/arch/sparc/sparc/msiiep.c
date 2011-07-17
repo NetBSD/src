@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.41 2011/07/01 18:51:51 dyoung Exp $ */
+/*	$NetBSD: msiiep.c,v 1.42 2011/07/17 23:32:37 mrg Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.41 2011/07/01 18:51:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.42 2011/07/17 23:32:37 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -65,11 +65,10 @@ __KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.41 2011/07/01 18:51:51 dyoung Exp $");
 /*
  * "Stub" ms-IIep parent that knows how to attach various functions.
  */
-static int	msiiep_match(struct device *, struct cfdata *, void *);
-static void	msiiep_attach(struct device *, struct device *, void *);
+static int	msiiep_match(device_t, cfdata_t, void *);
+static void	msiiep_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(msiiep, sizeof(struct device),
-    msiiep_match, msiiep_attach, NULL, NULL);
+CFATTACH_DECL_NEW(msiiep, 0, msiiep_match, msiiep_attach, NULL, NULL);
 
 
 /* sleep in idle spin */
@@ -80,8 +79,8 @@ volatile uint32_t *msiiep_mid = NULL;
 /*
  * The real thing.
  */
-static int	mspcic_match(struct device *, struct cfdata *, void *);
-static void	mspcic_attach(struct device *, struct device *, void *);
+static int	mspcic_match(device_t, cfdata_t, void *);
+static void	mspcic_attach(device_t, device_t, void *);
 static int	mspcic_print(void *, const char *);
 
 CFATTACH_DECL(mspcic, sizeof(struct mspcic_softc),
@@ -192,7 +191,7 @@ static struct sparc_bus_dma_tag mspcic_dma_tag = {
 
 
 static int
-msiiep_match(struct device *parent, struct cfdata *cf, void *aux)
+msiiep_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	pcireg_t id;
@@ -216,7 +215,7 @@ msiiep_match(struct device *parent, struct cfdata *cf, void *aux)
 
 
 static void
-msiiep_attach(struct device *parent, struct device *self, void *aux)
+msiiep_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct msiiep_attach_args msa;
@@ -268,7 +267,7 @@ msiiep_cpu_sleep(struct cpu_info *ci)
  */
 
 static int
-mspcic_match(struct device *parent, struct cfdata *cf, void *aux)
+mspcic_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct msiiep_attach_args *msa = aux;
 
@@ -277,7 +276,7 @@ mspcic_match(struct device *parent, struct cfdata *cf, void *aux)
 
 
 static void
-mspcic_attach(struct device *parent, struct device *self, void *aux)
+mspcic_attach(device_t parent, device_t self, void *aux)
 {
 	struct mspcic_softc *sc = (struct mspcic_softc *)self;
 	struct msiiep_attach_args *msa = aux;
