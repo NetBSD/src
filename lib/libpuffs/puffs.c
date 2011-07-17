@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.92.4.5 2011/06/18 16:17:38 bouyer Exp $	*/
+/*	$NetBSD: puffs.c,v 1.92.4.6 2011/07/17 15:36:03 riz Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.92.4.5 2011/06/18 16:17:38 bouyer Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.92.4.6 2011/07/17 15:36:03 riz Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -101,6 +101,11 @@ fillvnopmask(struct puffs_ops *pops, uint8_t *opmask)
 	FILLOP(write,    WRITE);
 	FILLOP(advlock,  ADVLOCK);
 	FILLOP(abortop,  ABORTOP);
+
+	FILLOP(getextattr,  GETEXTATTR);
+	FILLOP(setextattr,  SETEXTATTR);
+	FILLOP(listextattr, LISTEXTATTR);
+	FILLOP(deleteextattr, DELETEEXTATTR);
 }
 #undef FILLOP
 
@@ -598,9 +603,10 @@ do {									\
 	return rv;
 }
 
+
 /*ARGSUSED*/
 struct puffs_usermount *
-_puffs_init(int dummy, struct puffs_ops *pops, const char *mntfromname,
+_puffs_init52(int dummy, struct puffs_ops *pops, const char *mntfromname,
 	const char *puffsname, void *priv, uint32_t pflags)
 {
 	struct puffs_usermount *pu;
@@ -676,6 +682,55 @@ _puffs_init(int dummy, struct puffs_ops *pops, const char *mntfromname,
 	errno = sverrno;
 	return NULL;
 }
+
+struct puffs_usermount *
+_puffs_init(int dummy, struct puffs_ops51 *pops51, const char *mntfromname,
+	const char *puffsname, void *priv, uint32_t pflags) 
+{
+	struct puffs_ops *pops;
+
+	PUFFSOP_INIT(pops);
+
+	pops->puffs_fs_unmount = pops51->puffs_fs_unmount;
+	pops->puffs_fs_statvfs = pops51->puffs_fs_statvfs;
+	pops->puffs_fs_sync = pops51->puffs_fs_sync;
+	pops->puffs_fs_fhtonode = pops51->puffs_fs_fhtonode;
+	pops->puffs_fs_nodetofh = pops51->puffs_fs_nodetofh;
+	pops->puffs_node_lookup = pops51->puffs_node_lookup;
+	pops->puffs_node_create = pops51->puffs_node_create;
+	pops->puffs_node_mknod = pops51->puffs_node_mknod;
+	pops->puffs_node_open = pops51->puffs_node_open;
+	pops->puffs_node_close = pops51->puffs_node_close;
+	pops->puffs_node_access = pops51->puffs_node_access;
+	pops->puffs_node_getattr = pops51->puffs_node_getattr;
+	pops->puffs_node_setattr = pops51->puffs_node_setattr;
+	pops->puffs_node_poll = pops51->puffs_node_poll;
+	pops->puffs_node_mmap = pops51->puffs_node_mmap;
+	pops->puffs_node_fsync = pops51->puffs_node_fsync;
+	pops->puffs_node_seek = pops51->puffs_node_seek;
+	pops->puffs_node_remove = pops51->puffs_node_remove;
+	pops->puffs_node_link = pops51->puffs_node_link;
+	pops->puffs_node_rename = pops51->puffs_node_rename;
+	pops->puffs_node_mkdir = pops51->puffs_node_mkdir;
+	pops->puffs_node_rmdir = pops51->puffs_node_rmdir;
+	pops->puffs_node_symlink = pops51->puffs_node_symlink;
+	pops->puffs_node_readdir = pops51->puffs_node_readdir;
+	pops->puffs_node_readlink = pops51->puffs_node_readlink;
+	pops->puffs_node_reclaim = pops51->puffs_node_reclaim;
+	pops->puffs_node_inactive = pops51->puffs_node_inactive;
+	pops->puffs_node_print = pops51->puffs_node_print;
+	pops->puffs_node_pathconf = pops51->puffs_node_pathconf;
+	pops->puffs_node_advlock = pops51->puffs_node_advlock;
+	pops->puffs_node_read = pops51->puffs_node_read;
+	pops->puffs_node_write = pops51->puffs_node_write;
+	pops->puffs_node_abortop = pops51->puffs_node_abortop;
+
+	free(pops51);
+	
+	return _puffs_init52(dummy, pops, mntfromname, 
+			     puffsname, priv, pflags);
+}
+
 
 void
 puffs_cancel(struct puffs_usermount *pu, int error)
