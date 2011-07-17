@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.4 2006/05/14 21:38:18 elad Exp $	*/
+/*	$NetBSD: extattr.h,v 1.4.74.1 2011/07/17 15:36:04 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -49,6 +49,9 @@
 #ifdef _KERNEL
 
 #include <sys/syslimits.h>
+
+/* VOP_LISTEXTATTR flags */
+#define EXTATTR_LIST_LENPREFIX 1	/* names with length prefix */
 
 #define	EXTATTR_MAXNAMELEN	NAME_MAX
 struct lwp;
