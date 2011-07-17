@@ -1,6 +1,6 @@
-/*	$NetBSD: types.h,v 1.7 2010/07/17 15:25:57 tsutsui Exp $	*/
+/*	$NetBSD: types.h,v 1.8 2011/07/17 23:27:02 dyoung Exp $	*/
 
-#define __HAVE_DEVICE_REGISTER
+#define __HAVE_NEW_STYLE_BUS_H
 
 #include <powerpc/types.h>
 
