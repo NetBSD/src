@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.42 2011/07/17 23:32:37 mrg Exp $ */
+/*	$NetBSD: msiiep.c,v 1.43 2011/07/17 23:34:17 mrg Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.42 2011/07/17 23:32:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.43 2011/07/17 23:34:17 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -83,7 +83,7 @@ static int	mspcic_match(device_t, cfdata_t, void *);
 static void	mspcic_attach(device_t, device_t, void *);
 static int	mspcic_print(void *, const char *);
 
-CFATTACH_DECL(mspcic, sizeof(struct mspcic_softc),
+CFATTACH_DECL_NEW(mspcic, sizeof(struct mspcic_softc),
     mspcic_match, mspcic_attach, NULL, NULL);
 
 
@@ -278,7 +278,7 @@ mspcic_match(device_t parent, cfdata_t cf, void *aux)
 static void
 mspcic_attach(device_t parent, device_t self, void *aux)
 {
-	struct mspcic_softc *sc = (struct mspcic_softc *)self;
+	struct mspcic_softc *sc = device_private(self);
 	struct msiiep_attach_args *msa = aux;
 	struct mainbus_attach_args *ma = msa->msa_ma;
 	int node = ma->ma_node;
