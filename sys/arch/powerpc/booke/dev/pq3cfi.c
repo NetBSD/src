@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3cfi.c,v 1.1 2011/07/15 19:19:56 cliff Exp $	*/
+/*	$NetBSD: pq3cfi.c,v 1.2 2011/07/17 23:08:56 dyoung Exp $	*/
 
 /*
  * NOR CFI driver support for booke
@@ -8,7 +8,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3cfi.c,v 1.1 2011/07/15 19:19:56 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3cfi.c,v 1.2 2011/07/17 23:08:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -16,7 +16,7 @@ __KERNEL_RCSID(0, "$NetBSD: pq3cfi.c,v 1.1 2011/07/15 19:19:56 cliff Exp $");
 #include <sys/device.h>
 #include <sys/endian.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <powerpc/booke/cpuvar.h>
 

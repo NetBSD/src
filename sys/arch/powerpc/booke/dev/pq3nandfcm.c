@@ -32,14 +32,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3nandfcm.c,v 1.1 2011/06/30 04:44:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3nandfcm.c,v 1.2 2011/07/17 23:08:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <powerpc/booke/cpuvar.h>
 #include <powerpc/booke/e500reg.h>
