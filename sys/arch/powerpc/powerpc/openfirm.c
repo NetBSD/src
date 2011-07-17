@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.20 2008/04/08 02:33:03 garbled Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.21 2011/07/17 20:54:46 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.20 2008/04/08 02:33:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.21 2011/07/17 20:54:46 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.20 2008/04/08 02:33:03 garbled Exp $"
 #include <uvm/uvm_extern.h>
 
 #include <machine/psl.h>
-#include <machine/stdarg.h>
 
 #include <dev/ofw/openfirm.h>
 

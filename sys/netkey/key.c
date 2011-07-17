@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.178 2010/09/05 06:52:53 spz Exp $	*/
+/*	$NetBSD: key.c,v 1.179 2011/07/17 20:54:54 joerg Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.178 2010/09/05 06:52:53 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.179 2011/07/17 20:54:54 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -95,8 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.178 2010/09/05 06:52:53 spz Exp $");
 #include <netinet6/ipcomp.h>
 
 #include <miscfs/kernfs/kernfs.h>
-
-#include <machine/stdarg.h>
 
 #include "rnd.h"
 #if NRND > 0

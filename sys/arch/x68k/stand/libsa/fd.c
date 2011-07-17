@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.6 2011/04/11 14:00:02 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.7 2011/07/17 20:54:49 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -27,7 +27,6 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
-#include <machine/stdarg.h>
 #include <lib/libsa/stand.h>
 
 #include "libx68k.h"

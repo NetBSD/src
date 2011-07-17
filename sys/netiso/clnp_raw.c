@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.33 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.34 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.33 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.34 2011/07/17 20:54:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -83,8 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.33 2008/12/17 20:51:38 cegger Exp $")
 #include <netiso/argo_debug.h>
 
 #include <netiso/tp_user.h>	/* XXX -- defines SOL_NETWORK */
-
-#include <machine/stdarg.h>
 
 struct sockproto rclnp_proto = {PF_ISO, 0};
 

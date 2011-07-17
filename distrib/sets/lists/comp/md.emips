@@ -1,4 +1,4 @@
-#	$NetBSD: md.emips,v 1.1 2011/01/26 01:18:45 pooka Exp $
+#	$NetBSD: md.emips,v 1.2 2011/07/17 20:54:31 joerg Exp $
 #
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/emips				comp-c-include
@@ -49,9 +49,9 @@
 ./usr/include/emips/rwlock.h			comp-c-include
 ./usr/include/emips/setjmp.h			comp-c-include
 ./usr/include/emips/signal.h			comp-c-include
-./usr/include/emips/stdarg.h			comp-c-include
+./usr/include/emips/stdarg.h			comp-obsolete		obsolete
 ./usr/include/emips/trap.h			comp-c-include
 ./usr/include/emips/types.h			comp-c-include
-./usr/include/emips/varargs.h			comp-c-include
+./usr/include/emips/varargs.h			comp-obsolete		obsolete
 ./usr/include/emips/vmparam.h			comp-c-include
 ./usr/include/emips/wchar_limits.h		comp-c-include

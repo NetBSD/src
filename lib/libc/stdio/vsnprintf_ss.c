@@ -1,4 +1,4 @@
-/*	$NetBSD: vsnprintf_ss.c,v 1.9 2009/12/17 15:19:48 christos Exp $	*/
+/*	$NetBSD: vsnprintf_ss.c,v 1.10 2011/07/17 20:54:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsnprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsnprintf_ss.c,v 1.9 2009/12/17 15:19:48 christos Exp $");
+__RCSID("$NetBSD: vsnprintf_ss.c,v 1.10 2011/07/17 20:54:34 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -116,7 +116,7 @@ __weak_alias(vsnprintf_ss,_vsnprintf_ss)
 } while (/*CONSTCOND*/0)
 
 int
-vsnprintf_ss(char *sbuf, size_t slen, const char *fmt0, _BSD_VA_LIST_ ap)
+vsnprintf_ss(char *sbuf, size_t slen, const char *fmt0, va_list ap)
 {
 	const char *fmt;	/* format string */
 	int ch;			/* character from fmt */

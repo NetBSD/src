@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.37 2009/03/18 10:22:44 cegger Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.38 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.37 2009/03/18 10:22:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.38 2011/07/17 20:54:54 joerg Exp $");
 
 #include "opt_iso.h"
 
@@ -93,8 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.37 2009/03/18 10:22:44 cegger Exp $
 #include <netiso/eonvar.h>
 #include <netiso/clnp_stat.h>
 #include <netiso/argo_debug.h>
-
-#include <machine/stdarg.h>
 
 #ifdef ISO
 u_char          clnp_protox[ISOPROTO_MAX];

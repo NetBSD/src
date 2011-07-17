@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2009/08/12 23:29:19 matt Exp $
+#	$NetBSD: Makefile,v 1.22 2011/07/17 20:54:41 joerg Exp $
 
 INCSDIR= /usr/include/hpcmips
 
@@ -16,9 +16,9 @@ INCS=	ansi.h apmvar.h asm.h autoconf.h \
 	math.h mcontext.h mips_opcode.h mutex.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h regdef.h regnum.h reloc.h rwlock.h \
-	setjmp.h signal.h stdarg.h sysconf.h \
+	setjmp.h signal.h sysconf.h \
 	trap.h types.h \
-	varargs.h vmparam.h \
+	vmparam.h \
 	wchar_limits.h
 
 .include <bsd.kinc.mk>

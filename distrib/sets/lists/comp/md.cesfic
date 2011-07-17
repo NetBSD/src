@@ -1,4 +1,4 @@
-# $NetBSD: md.cesfic,v 1.6 2007/02/09 22:22:32 ad Exp $
+# $NetBSD: md.cesfic,v 1.7 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/cesfic				comp-c-include
 ./usr/include/cesfic/_G_config.h		comp-obsolete		obsolete
 ./usr/include/cesfic/ansi.h			comp-c-include
@@ -39,10 +39,10 @@
 ./usr/include/cesfic/rwlock.h			comp-c-include
 ./usr/include/cesfic/setjmp.h			comp-c-include
 ./usr/include/cesfic/signal.h			comp-c-include
-./usr/include/cesfic/stdarg.h			comp-c-include
+./usr/include/cesfic/stdarg.h			comp-obsolete		obsolete
 ./usr/include/cesfic/trap.h			comp-c-include
 ./usr/include/cesfic/types.h			comp-c-include
-./usr/include/cesfic/varargs.h			comp-c-include
+./usr/include/cesfic/varargs.h			comp-obsolete		obsolete
 ./usr/include/cesfic/vmparam.h			comp-c-include
 ./usr/include/cesfic/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include

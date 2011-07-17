@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.26 2010/03/10 20:30:00 bouyer Exp $ */
+/*	$NetBSD: apm.c,v 1.27 2011/07/17 20:54:50 joerg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.26 2010/03/10 20:30:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.27 2011/07/17 20:54:50 joerg Exp $");
 
 #include "opt_apm.h"
 
@@ -60,8 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.26 2010/03/10 20:30:00 bouyer Exp $");
 #include <sys/conf.h>
 
 #include <dev/apm/apmvar.h>
-
-#include <machine/stdarg.h>
 
 #ifdef APMDEBUG
 #define DPRINTF(f, x)		do { if (apmdebug & (f)) printf x; } while (0)

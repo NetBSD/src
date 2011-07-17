@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.51 2009/09/16 15:23:04 pooka Exp $	*/
+/*	$NetBSD: igmp.c,v 1.52 2011/07/17 20:54:53 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.51 2009/09/16 15:23:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.52 2011/07/17 20:54:53 joerg Exp $");
 
 #include "opt_mrouting.h"
 
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.51 2009/09/16 15:23:04 pooka Exp $");
 #include <netinet/ip_var.h>
 #include <netinet/igmp.h>
 #include <netinet/igmp_var.h>
-
-#include <machine/stdarg.h>
 
 #define IP_MULTICASTOPTS	0
 

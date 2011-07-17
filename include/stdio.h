@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.78 2010/09/24 09:21:53 tnozaki Exp $	*/
+/*	$NetBSD: stdio.h,v 1.79 2011/07/17 20:54:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,6 @@
 #include <sys/featuretest.h>
 #include <sys/ansi.h>
 
-#include <machine/ansi.h>
 #ifdef	_BSD_SIZE_T_
 typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
@@ -49,6 +48,13 @@ typedef	_BSD_SIZE_T_	size_t;
 #ifdef	_BSD_SSIZE_T_
 typedef	_BSD_SSIZE_T_	ssize_t;
 #undef	_BSD_SSIZE_T_
+#endif
+
+#if defined(_POSIX_C_SOURCE)
+#ifndef __VA_LIST_DECLARED
+typedef __va_list va_list;
+#define __VA_LIST_DECLARED
+#endif
 #endif
 
 #include <sys/null.h>
@@ -259,9 +265,9 @@ int	 sscanf(const char * __restrict, const char * __restrict, ...)
 		__scanflike(2, 3);
 FILE	*tmpfile(void);
 int	 ungetc(int, FILE *);
-int	 vfprintf(FILE * __restrict, const char * __restrict, _BSD_VA_LIST_)
+int	 vfprintf(FILE * __restrict, const char * __restrict, __va_list)
 		__printflike(2, 0);
-int	 vprintf(const char * __restrict, _BSD_VA_LIST_)
+int	 vprintf(const char * __restrict, __va_list)
 		__printflike(1, 0);
 
 #ifndef __AUDIT__
@@ -270,7 +276,7 @@ int	 sprintf(char * __restrict, const char * __restrict, ...)
 		__printflike(2, 3);
 char	*tmpnam(char *);
 int	 vsprintf(char * __restrict, const char * __restrict,
-    _BSD_VA_LIST_)
+    __va_list)
 		__printflike(2, 0);
 #endif
 
@@ -340,7 +346,7 @@ __BEGIN_DECLS
 int	 snprintf(char * __restrict, size_t, const char * __restrict, ...)
 		__printflike(3, 4);
 int	 vsnprintf(char * __restrict, size_t, const char * __restrict,
-	    _BSD_VA_LIST_)
+	    __va_list)
 		__printflike(3, 0);
 __END_DECLS
 #endif
@@ -381,12 +387,12 @@ __END_DECLS
  */
 #if defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
 __BEGIN_DECLS
-int	 vscanf(const char * __restrict, _BSD_VA_LIST_)
+int	 vscanf(const char * __restrict, __va_list)
 		__scanflike(1, 0);
-int	 vfscanf(FILE * __restrict, const char * __restrict, _BSD_VA_LIST_)
+int	 vfscanf(FILE * __restrict, const char * __restrict, __va_list)
 		__scanflike(2, 0);
 int	 vsscanf(const char * __restrict, const char * __restrict,
-    _BSD_VA_LIST_)
+    __va_list)
     __scanflike(2, 0);
 __END_DECLS
 #endif /* _ISOC99_SOURCE || _NETBSD_SOURCE */
@@ -411,7 +417,7 @@ int	 fpurge(FILE *);
 void	 setbuffer(FILE *, char *, int);
 int	 setlinebuf(FILE *);
 int	 vasprintf(char ** __restrict, const char * __restrict,
-    _BSD_VA_LIST_)
+    __va_list)
 		__printflike(2, 0);
 const char *fmtcheck(const char *, const char *)
 		__format_arg(2);
@@ -493,7 +499,7 @@ static __inline int __sputc(int _c, FILE *_p) {
 #endif /* !_ANSI_SOURCE */
 
 #if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
-int	 vdprintf(int, const char * __restrict, _BSD_VA_LIST_)
+int	 vdprintf(int, const char * __restrict, __va_list)
 		__printflike(2, 0);
 int	 dprintf(int, const char * __restrict, ...)
 		__printflike(2, 3);

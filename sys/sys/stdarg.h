@@ -1,13 +1,8 @@
-/*	$NetBSD: varargs.h,v 1.4 2008/10/26 00:08:15 mrg Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.1 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
- * (c) UNIX System Laboratories, Inc.
- * All or some portions of this file are derived from material licensed
- * to the University of California by American Telephone and Telegraph
- * Co. or Unix System Laboratories, Inc. and are reproduced herein with
- * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,28 +28,39 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)varargs.h	8.2 (Berkeley) 3/22/94
+ *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _AMD64_VARARGS_H_
-#define	_AMD64_VARARGS_H_
+#ifndef _SYS_STDARG_H_
+#define	_SYS_STDARG_H_
 
-#ifdef __x86_64__
+#include <sys/ansi.h>
+#include <sys/featuretest.h>
 
-#include <machine/stdarg.h>
+#ifdef __lint__
+#define __builtin_next_arg(t)		((t) ? 0 : 0)
+#define	__builtin_va_start(a, l)	((a) = (va_list)(void *)&(l))
+#define	__builtin_va_arg(a, t)		((a) ? (t) 0 : (t) 0)
+#define	__builtin_va_end(a)		/* nothing */
+#define	__builtin_va_copy(d, s)		((d) = (s))
+#elif !__GNUC_PREREQ__(4, 5)
+#define	__builtin_va_start(ap, last)	__builtin_stdarg_start((ap), (last))
+#endif
 
-#define	__va_ellipsis	...
-#define	__va_alist_t	__builtin_va_alist_t
-#define	va_alist	__builtin_va_alist
-#define	va_dcl		__va_alist_t __builtin_va_alist; __va_ellipsis
+#ifndef __VA_LIST_DECLARED
+typedef __va_list va_list;
+#define __VA_LIST_DECLARED
+#endif
 
-#undef va_start
-#define	va_start(ap)	__builtin_varargs_start((ap))
+#define	va_start(ap, last)	__builtin_va_start((ap), (last))
+#define	va_arg			__builtin_va_arg
+#define	va_end(ap)		__builtin_va_end(ap)
+#define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
 
-#else	/*	__x86_64__	*/
+#if !defined(_ANSI_SOURCE) && \
+    (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
+     defined(_NETBSD_SOURCE))
+#define	va_copy(dest, src)	__va_copy((dest), (src))
+#endif
 
-#include <i386/varargs.h>
-
-#endif	/*	__x86_64__	*/
-
-#endif /* !_AMD64_VARARGS_H_ */
+#endif /* !_SYS_STDARG_H_ */

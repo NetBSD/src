@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.181 2011/07/03 09:03:32 mrg Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.182 2011/07/17 20:54:53 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.181 2011/07/03 09:03:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.182 2011/07/17 20:54:53 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -117,8 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.181 2011/07/03 09:03:32 mrg Exp $")
 #if defined(NFAITH) && NFAITH > 0
 #include <net/if_faith.h>
 #endif
-
-#include <machine/stdarg.h>
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.135 2011/03/31 19:40:52 dyoung Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.136 2011/07/17 20:54:52 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.135 2011/03/31 19:40:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.136 2011/07/17 20:54:52 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -130,8 +130,6 @@ DOMAIN_DEFINE(routedomain); /* forward declare and add to link set */
 #ifndef COMPATCALL
 #define	COMPATCALL(name, args)	do { } while (/*CONSTCOND*/ 0)
 #endif
-
-#include <machine/stdarg.h>
 
 struct route_info COMPATNAME(route_info) = {
 	.ri_dst = { .sa_len = 2, .sa_family = PF_XROUTE, },

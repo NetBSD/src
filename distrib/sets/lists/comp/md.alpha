@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.59 2011/07/17 01:13:22 dyoung Exp $
+# $NetBSD: md.alpha,v 1.60 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/alpha				comp-c-include
 ./usr/include/alpha/_G_config.h			comp-obsolete		obsolete
 ./usr/include/alpha/alpha_cpu.h			comp-c-include
@@ -59,10 +59,10 @@
 ./usr/include/alpha/rwlock.h			comp-c-include
 ./usr/include/alpha/setjmp.h			comp-c-include
 ./usr/include/alpha/signal.h			comp-c-include
-./usr/include/alpha/stdarg.h			comp-c-include
+./usr/include/alpha/stdarg.h			comp-obsolete		obsolete
 ./usr/include/alpha/sysarch.h			comp-c-include
 ./usr/include/alpha/types.h			comp-c-include
-./usr/include/alpha/varargs.h			comp-c-include
+./usr/include/alpha/varargs.h			comp-obsolete		obsolete
 ./usr/include/alpha/vmparam.h			comp-c-include
 ./usr/include/alpha/vuid_event.h		comp-c-include
 ./usr/include/alpha/wchar_limits.h		comp-c-include
