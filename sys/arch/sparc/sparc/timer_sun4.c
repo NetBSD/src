@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4.c,v 1.18 2011/07/01 18:51:51 dyoung Exp $	*/
+/*	$NetBSD: timer_sun4.c,v 1.19 2011/07/17 23:18:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.18 2011/07/01 18:51:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.19 2011/07/17 23:18:23 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -153,7 +153,7 @@ statintr_4(void *cap)
 
 #if defined(SUN4)
 void
-timerattach_obio_4(struct device *parent, struct device *self, void *aux)
+timerattach_obio_4(device_t parent, device_t self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
@@ -175,7 +175,7 @@ timerattach_obio_4(struct device *parent, struct device *self, void *aux)
 
 #if defined(SUN4C)
 void
-timerattach_mainbus_4c(struct device *parent, struct device *self, void *aux)
+timerattach_mainbus_4c(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: memecc.c,v 1.12 2011/07/01 18:51:51 dyoung Exp $	*/
+/*	$NetBSD: memecc.c,v 1.13 2011/07/17 23:18:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.12 2011/07/01 18:51:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.13 2011/07/17 23:18:23 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.12 2011/07/01 18:51:51 dyoung Exp $");
 #include <sparc/sparc/memeccreg.h>
 
 struct memecc_softc {
-	struct device		sc_dev;		/* base device */
 	bus_space_tag_t		sc_bt;
 	bus_space_handle_t	sc_bh;
 };
@@ -53,17 +52,17 @@ struct memecc_softc {
 struct memecc_softc *memecc_sc;
 
 /* autoconfiguration driver */
-static void	memecc_attach(struct device *, struct device *, void *);
-static int	memecc_match(struct device *, struct cfdata *, void *);
+static void	memecc_attach(device_t, device_t, void *);
+static int	memecc_match(device_t, cfdata_t, void *);
 static int	memecc_error(void);
 
 int	(*memerr_handler)(void);
 
-CFATTACH_DECL(eccmemctl, sizeof(struct memecc_softc),
+CFATTACH_DECL_NEW(eccmemctl, sizeof(struct memecc_softc),
     memecc_match, memecc_attach, NULL, NULL);
 
 int
-memecc_match(struct device *parent, struct cfdata *cf, void *aux)
+memecc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -74,12 +73,17 @@ memecc_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach the device.
  */
 void
-memecc_attach(struct device *parent, struct device *self, void *aux)
+memecc_attach(device_t parent, device_t self, void *aux)
 {
 	struct memecc_softc *sc = (struct memecc_softc *)self;
 	struct mainbus_attach_args *ma = aux;
 	int node;
 	uint32_t reg;
+
+	if (memerr_handler) {
+		printf("%s: already attached\n", __func__);
+		return;
+	}
 
 	sc->sc_bt = ma->ma_bustag;
 	node = ma->ma_node;
