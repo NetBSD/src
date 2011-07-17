@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.42 2011/06/30 00:53:00 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.43 2011/07/17 23:23:54 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.42 2011/06/30 00:53:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.43 2011/07/17 23:23:54 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -631,13 +631,13 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size
 			 * If we are mapping nocache, flush the page from
 			 * cache before we map it.
 			 */
-			if (flags & BUS_DMA_NOCACHE)
+			if (flags & BUS_DMA_DONTCACHE)
 				dcbf(addr, PAGE_SIZE,
 				    curcpu()->ci_ci.dcache_line_size);
 			pmap_kenter_pa(va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    PMAP_WIRED |
-			    ((flags & BUS_DMA_NOCACHE) ? PMAP_NOCACHE : 0));
+			    ((flags & BUS_DMA_DONTCACHE) ? PMAP_NOCACHE : 0));
 		}
 	}
 
