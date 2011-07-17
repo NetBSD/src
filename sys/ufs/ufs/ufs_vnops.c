@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.193 2011/07/14 16:27:43 dholland Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.194 2011/07/17 22:00:38 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.193 2011/07/14 16:27:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.194 2011/07/17 22:00:38 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1557,9 +1557,9 @@ ufs_rmdir(void *v)
 	 */
 	if (dp == ip || vp->v_mountedhere != NULL) {
 		if (dp == ip)
-			vrele(vp);
+			vrele(dvp);
 		else
-			vput(vp);
+			vput(dvp);
 		vput(vp);
 		return (EINVAL);
 	}
