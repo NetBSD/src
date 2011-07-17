@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.59 2011/06/18 18:51:17 nakayama Exp $ */
+/*	$NetBSD: types.h,v 1.60 2011/07/17 23:29:10 dyoung Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -117,7 +117,7 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 
 #endif /* _LOCORE */
 
-#define	__HAVE_DEVICE_REGISTER
+#define	__HAVE_NEW_STYLE_BUS_H
 #define	__HAVE_SYSCALL_INTERN
 #define	__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
 #define __HAVE_CPU_DATA_FIRST
