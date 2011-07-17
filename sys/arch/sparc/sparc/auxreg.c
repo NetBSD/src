@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.38 2007/10/17 19:57:14 garbled Exp $ */
+/*	$NetBSD: auxreg.c,v 1.39 2011/07/17 23:18:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.38 2007/10/17 19:57:14 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.39 2011/07/17 23:18:23 mrg Exp $");
 
 #include "opt_blink.h"
 
@@ -56,17 +56,17 @@ __KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.38 2007/10/17 19:57:14 garbled Exp $");
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/auxreg.h>
 
-static int auxregmatch_mainbus(struct device *, struct cfdata *, void *);
-static int auxregmatch_obio(struct device *, struct cfdata *, void *);
-static void auxregattach_mainbus(struct device *, struct device *, void *);
-static void auxregattach_obio(struct device *, struct device *, void *);
+static int auxregmatch_mainbus(device_t, cfdata_t, void *);
+static int auxregmatch_obio(device_t, cfdata_t, void *);
+static void auxregattach_mainbus(device_t, device_t, void *);
+static void auxregattach_obio(device_t, device_t, void *);
 
-static void auxregattach(struct device *);
+static void auxregattach(void);
 
-CFATTACH_DECL(auxreg_mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(auxreg_mainbus, 0,
     auxregmatch_mainbus, auxregattach_mainbus, NULL, NULL);
 
-CFATTACH_DECL(auxreg_obio, sizeof(struct device),
+CFATTACH_DECL_NEW(auxreg_obio, 0,
     auxregmatch_obio, auxregattach_obio, NULL, NULL);
 
 #ifdef BLINK
@@ -98,7 +98,7 @@ blink(void *zero)
  * The OPENPROM calls this "auxiliary-io" (sun4c) or "auxio" (sun4m).
  */
 static int
-auxregmatch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
+auxregmatch_mainbus(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -106,7 +106,7 @@ auxregmatch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static int
-auxregmatch_obio(struct device *parent, struct cfdata *cf, void *aux)
+auxregmatch_obio(device_t parent, cfdata_t cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 
@@ -118,7 +118,7 @@ auxregmatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 
 /* ARGSUSED */
 static void
-auxregattach_mainbus(struct device *parent, struct device *self, void *aux)
+auxregattach_mainbus(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
@@ -135,11 +135,11 @@ auxregattach_mainbus(struct device *parent, struct device *self, void *aux)
 
 	auxio_reg = AUXIO4C_REG;
 	auxio_regval = *AUXIO4C_REG | AUXIO4C_FEJ | AUXIO4C_MB1;
-	auxregattach(self);
+	auxregattach();
 }
 
 static void
-auxregattach_obio(struct device *parent, struct device *self, void *aux)
+auxregattach_obio(device_t parent, device_t self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -156,11 +156,11 @@ auxregattach_obio(struct device *parent, struct device *self, void *aux)
 
 	auxio_reg = AUXIO4M_REG;
 	auxio_regval = *AUXIO4M_REG | AUXIO4M_MB1;
-	auxregattach(self);
+	auxregattach();
 }
 
 static void
-auxregattach(struct device *self)
+auxregattach(void)
 {
 
 	printf("\n");
