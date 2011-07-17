@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.109 2011/06/30 20:09:39 wiz Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.110 2011/07/17 23:59:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.109 2011/06/30 20:09:39 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.110 2011/07/17 23:59:54 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -309,6 +309,13 @@ linux_sys_socket(struct lwp *l, const struct linux_sys_socket_args *uap, registe
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
+	/*
+	 * Apparently linux uses this to talk to ISDN sockets. If we fail
+	 * now programs seems to handle it, but if we don't we are going
+	 * to fail when we bind and programs don't handle this well.
+	 */
+	if (SCARG(&bsa, domain) == AF_ROUTE && SCARG(&bsa, type) == SOCK_RAW)
+		return ENOTSUP;
 	flags = SCARG(uap, type) & ~LINUX_SOCK_TYPE_MASK;
 	if (flags & ~(LINUX_SOCK_CLOEXEC | LINUX_SOCK_NONBLOCK))
 		return EINVAL;
