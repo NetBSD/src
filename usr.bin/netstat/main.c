@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.79 2011/05/04 01:13:35 dyoung Exp $	*/
+/*	$NetBSD: main.c,v 1.80 2011/07/17 10:22:07 njoly Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.79 2011/05/04 01:13:35 dyoung Exp $");
+__RCSID("$NetBSD: main.c,v 1.80 2011/07/17 10:22:07 njoly Exp $");
 #endif
 #endif /* not lint */
 
@@ -363,7 +363,7 @@ get_kvmd(void)
 	if (kvmd != NULL)
 		return kvmd;
 	if ((kvmd = prepare_kvmd(nlistf, memf, buf)) == NULL)
-		err(1, "kvm error: %s", buf);
+		errx(1, "kvm error: %s", buf);
 	return kvmd;
 }
 
@@ -423,7 +423,7 @@ prepare(const char *nf, const char *mf, struct protox *tp)
 	if (!use_sysctl) {
 
 		if (kvmd == NULL)
-			err(1, "kvm error: %s", buf);
+			errx(1, "kvm error: %s", buf);
 		if (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) {
 			if (nf)
 				errx(1, "%s: no namelist", nf);
