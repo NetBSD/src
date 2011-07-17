@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.25 2010/01/04 03:54:42 mrg Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.26 2011/07/17 23:18:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.25 2010/01/04 03:54:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.26 2011/07/17 23:18:23 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,10 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.25 2010/01/04 03:54:42 mrg Exp $"
 #include <sparc/sparc/timervar.h>
 
 
-static int	timermatch_msiiep(struct device *, struct cfdata *, void *);
-static void	timerattach_msiiep(struct device *, struct device *, void *);
+static int	timermatch_msiiep(device_t, cfdata_t, void *);
+static void	timerattach_msiiep(device_t, device_t, void *);
 
-CFATTACH_DECL(timer_msiiep, sizeof(struct device),
+CFATTACH_DECL_NEW(timer_msiiep, 0,
     timermatch_msiiep, timerattach_msiiep, NULL, NULL);
 
 
@@ -120,7 +120,7 @@ static struct timecounter counter_timecounter = {
 
 
 static int
-timermatch_msiiep(struct device *parent, struct cfdata *cf, void *aux)
+timermatch_msiiep(device_t parent, cfdata_t cf, void *aux)
 {
 	struct msiiep_attach_args *msa = aux;
 
@@ -134,7 +134,7 @@ timermatch_msiiep(struct device *parent, struct cfdata *cf, void *aux)
  * node for them.
  */
 static void
-timerattach_msiiep(struct device *parent, struct device *self, void *aux)
+timerattach_msiiep(device_t parent, device_t self, void *aux)
 {
 
 	/* Put processor counter in "counter" mode */

@@ -1,4 +1,4 @@
-/*	$NetBSD: timervar.h,v 1.9 2010/01/04 04:21:35 mrg Exp $	*/
+/*	$NetBSD: timervar.h,v 1.10 2011/07/17 23:18:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,8 +45,8 @@ int	clockintr_4(void *);
 int	statintr_4(void *);
 void	timer_init_4(void);
 
-void	timerattach_obio_4(struct device *, struct device *, void *);
-void	timerattach_mainbus_4c(struct device *, struct device *, void *);
+void	timerattach_obio_4(device_t, device_t, void *);
+void	timerattach_mainbus_4c(device_t, device_t, void *);
 #endif /* SUN4 || SUN4C */
 
 #if defined(SUN4M)
@@ -55,7 +55,7 @@ int	clockintr_4m(void *);
 int	statintr_4m(void *);
 void	timer_init_4m(void);
 
-void	timerattach_obio_4m(struct device *, struct device *, void *);
+void	timerattach_obio_4m(device_t, device_t, void *);
 #endif /* SUN4M */
 
 /* Imported from clock.c: */

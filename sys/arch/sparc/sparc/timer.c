@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.28 2011/07/01 18:51:51 dyoung Exp $ */
+/*	$NetBSD: timer.c,v 1.29 2011/07/17 23:18:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.28 2011/07/01 18:51:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.29 2011/07/17 23:18:23 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -240,7 +240,7 @@ timerattach(volatile int *cntreg, volatile int *limreg)
  * The sun4 timer must be probed.
  */
 static int
-timermatch_obio(struct device *parent, struct cfdata *cf, void *aux)
+timermatch_obio(device_t parent, cfdata_t cf, void *aux)
 {
 #if defined(SUN4) || defined(SUN4M)
 	union obio_attach_args *uoba = aux;
@@ -277,7 +277,7 @@ timermatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-timerattach_obio(struct device *parent, struct device *self, void *aux)
+timerattach_obio(device_t parent, device_t self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 
@@ -297,14 +297,14 @@ timerattach_obio(struct device *parent, struct device *self, void *aux)
 	}
 }
 
-CFATTACH_DECL(timer_obio, sizeof(struct device),
+CFATTACH_DECL_NEW(timer_obio, 0,
     timermatch_obio, timerattach_obio, NULL, NULL);
 
 /*
  * Only sun4c attaches a timer at mainbus
  */
 static int
-timermatch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
+timermatch_mainbus(device_t parent, cfdata_t cf, void *aux)
 {
 #if defined(SUN4C)
 	struct mainbus_attach_args *ma = aux;
@@ -316,7 +316,7 @@ timermatch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-timerattach_mainbus(struct device *parent, struct device *self, void *aux)
+timerattach_mainbus(device_t parent, device_t self, void *aux)
 {
 
 #if defined(SUN4C)
@@ -324,5 +324,5 @@ timerattach_mainbus(struct device *parent, struct device *self, void *aux)
 #endif /* SUN4C */
 }
 
-CFATTACH_DECL(timer_mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(timer_mainbus, 0,
     timermatch_mainbus, timerattach_mainbus, NULL, NULL);
