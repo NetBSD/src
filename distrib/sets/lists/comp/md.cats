@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.15 2010/03/14 09:52:00 mrg Exp $
+# $NetBSD: md.cats,v 1.16 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/cats				comp-c-include
 ./usr/include/cats/ansi.h			comp-c-include
 ./usr/include/cats/aout_machdep.h		comp-c-include
@@ -42,10 +42,10 @@
 ./usr/include/cats/rwlock.h			comp-c-include
 ./usr/include/cats/setjmp.h			comp-c-include
 ./usr/include/cats/signal.h			comp-c-include
-./usr/include/cats/stdarg.h			comp-c-include
+./usr/include/cats/stdarg.h			comp-obsolete		obsolete
 ./usr/include/cats/sysarch.h			comp-c-include
 ./usr/include/cats/trap.h			comp-c-include
 ./usr/include/cats/types.h			comp-c-include
-./usr/include/cats/varargs.h			comp-c-include
+./usr/include/cats/varargs.h			comp-obsolete		obsolete
 ./usr/include/cats/vmparam.h			comp-c-include
 ./usr/include/cats/wchar_limits.h		comp-c-include

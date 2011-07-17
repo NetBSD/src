@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.42 2011/01/18 08:15:51 matt Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.43 2011/07/17 20:54:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.42 2011/01/18 08:15:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.43 2011/07/17 20:54:52 joerg Exp $");
 
 #include "opt_modular.h"
 
@@ -77,8 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.42 2011/01/18 08:15:51 matt Exp $");
 #include <sys/proc.h>
 #include <sys/ksyms.h>
 #include <sys/module.h>
-
-#include <machine/stdarg.h>
 
 #include <uvm/uvm_extern.h>
 

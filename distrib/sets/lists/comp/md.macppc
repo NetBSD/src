@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.34 2011/06/05 16:52:22 matt Exp $
+# $NetBSD: md.macppc,v 1.35 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/macppc				comp-c-include
 ./usr/include/macppc/_G_config.h		comp-obsolete		obsolete
@@ -57,10 +57,10 @@
 ./usr/include/macppc/setjmp.h			comp-c-include
 ./usr/include/macppc/signal.h			comp-c-include
 ./usr/include/macppc/spr.h			comp-obsolete		obsolete
-./usr/include/macppc/stdarg.h			comp-c-include
+./usr/include/macppc/stdarg.h			comp-obsolete		obsolete
 ./usr/include/macppc/trap.h			comp-c-include
 ./usr/include/macppc/types.h			comp-c-include
-./usr/include/macppc/varargs.h			comp-c-include
+./usr/include/macppc/varargs.h			comp-obsolete		obsolete
 ./usr/include/macppc/vmparam.h			comp-c-include
 ./usr/include/macppc/wchar_limits.h		comp-c-include
 ./usr/include/macppc/z8530var.h			comp-obsolete		obsolete

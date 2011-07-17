@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.16 2010/03/27 22:14:10 tnozaki Exp $ */
+/*	$NetBSD: ansi.h,v 1.17 2011/07/17 20:54:47 joerg Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,11 +51,6 @@
 #define	_BSD_SIZE_T_		unsigned long	/* sizeof() */
 #define	_BSD_SSIZE_T_		long		/* byte count or error */
 #define	_BSD_TIME_T_		__int64_t	/* time() */
-#if __GNUC_PREREQ__(3, 0)
-#define	_BSD_VA_LIST_		__builtin_va_list /* va_list */
-#else
-#define	_BSD_VA_LIST_		char *		/* va_list */
-#endif
 #define	_BSD_CLOCKID_T_		int		/* clockid_t */
 #define	_BSD_TIMER_T_		int		/* timer_t */
 #define	_BSD_SUSECONDS_T_	int		/* suseconds_t */

@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.28 2011/07/06 20:44:47 dyoung Exp $ */
+/* $NetBSD: alpha.h,v 1.29 2011/07/17 20:54:36 joerg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,7 +58,6 @@ typedef union alpha_t_float {
 #ifdef _KERNEL
 
 #include <sys/bus.h>
-#include <machine/stdarg.h>
 
 #include <sys/pcu.h>
 

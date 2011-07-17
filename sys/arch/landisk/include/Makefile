@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2007/02/09 21:55:05 ad Exp $
+#	$NetBSD: Makefile,v 1.3 2011/07/17 20:54:42 joerg Exp $
 
 INCSDIR= /usr/include/landisk
 
@@ -16,9 +16,9 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	math.h mcontext.h mutex.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h rwlock.h \
-	setjmp.h signal.h stdarg.h \
+	setjmp.h signal.h \
 	types.h \
-	varargs.h vmparam.h \
+	vmparam.h \
 	wchar_limits.h
 
 .include <bsd.kinc.mk>

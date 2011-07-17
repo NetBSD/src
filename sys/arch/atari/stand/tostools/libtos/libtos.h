@@ -1,4 +1,4 @@
-/*	$NetBSD: libtos.h,v 1.5 2009/01/06 13:35:30 tsutsui Exp $	*/
+/*	$NetBSD: libtos.h,v 1.6 2011/07/17 20:54:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -54,8 +54,8 @@
 #include <stdarg.h>
 #define	VA_LIST	va_list
 #else
-#include <lib/libsa/stand.h>
-#define	VA_LIST	_BSD_VA_LIST_
+#include <sys/stdarg.h>
+#define	VA_LIST	va_list
 #endif
 
 #ifndef int8_t

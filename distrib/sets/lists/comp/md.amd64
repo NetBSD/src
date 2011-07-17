@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.124 2011/07/17 01:20:12 dyoung Exp $
+# $NetBSD: md.amd64,v 1.125 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -58,13 +58,13 @@
 ./usr/include/amd64/setjmp.h			comp-c-include
 ./usr/include/amd64/signal.h			comp-c-include
 ./usr/include/amd64/specialreg.h		comp-c-include
-./usr/include/amd64/stdarg.h			comp-c-include
+./usr/include/amd64/stdarg.h			comp-obsolete		obsolete
 ./usr/include/amd64/sysarch.h			comp-c-include
 ./usr/include/amd64/trap.h			comp-c-include
 ./usr/include/amd64/tss.h			comp-c-include
 ./usr/include/amd64/types.h			comp-c-include
 ./usr/include/amd64/userret.h			comp-c-include
-./usr/include/amd64/varargs.h			comp-c-include
+./usr/include/amd64/varargs.h			comp-obsolete		obsolete
 ./usr/include/amd64/vmparam.h			comp-c-include
 ./usr/include/amd64/wchar_limits.h		comp-c-include
 ./usr/include/clang-3.0/avxintrin.h		comp-c-include		llvm
@@ -167,13 +167,13 @@
 ./usr/include/i386/signal.h			comp-c-include
 ./usr/include/i386/specialreg.h			comp-c-include
 ./usr/include/i386/spkr.h			comp-c-include
-./usr/include/i386/stdarg.h			comp-c-include
+./usr/include/i386/stdarg.h			comp-obsolete		obsolete
 ./usr/include/i386/svr4_machdep.h		comp-c-include
 ./usr/include/i386/sysarch.h			comp-c-include
 ./usr/include/i386/trap.h			comp-c-include
 ./usr/include/i386/tss.h			comp-c-include
 ./usr/include/i386/types.h			comp-c-include
-./usr/include/i386/varargs.h			comp-c-include
+./usr/include/i386/varargs.h			comp-obsolete		obsolete
 ./usr/include/i386/vm86.h			comp-c-include
 ./usr/include/i386/vmparam.h			comp-c-include
 ./usr/include/i386/wchar_limits.h		comp-c-include

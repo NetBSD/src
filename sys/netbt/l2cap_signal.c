@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.12 2011/02/06 18:51:00 plunky Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.13 2011/07/17 20:54:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.12 2011/02/06 18:51:00 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.13 2011/07/17 20:54:53 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.12 2011/02/06 18:51:00 plunky Exp
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
-
-#include <machine/stdarg.h>
 
 #include <netbt/bluetooth.h>
 #include <netbt/hci.h>

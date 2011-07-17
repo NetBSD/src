@@ -1,4 +1,4 @@
-/*	$NetBSD: raw.c,v 1.1 2011/01/26 01:18:54 pooka Exp $	*/
+/*	$NetBSD: raw.c,v 1.2 2011/07/17 20:54:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
-#include <machine/stdarg.h>
 #include <machine/emipsreg.h>
 
 #include <sys/param.h>

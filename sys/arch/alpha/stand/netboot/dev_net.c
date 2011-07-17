@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.15 2009/10/21 23:12:09 snj Exp $ */
+/* $NetBSD: dev_net.c,v 1.16 2011/07/17 20:54:36 joerg Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -43,7 +43,6 @@
  * for use by the NFS open code (NFS/lookup).
  */
 
-#include <machine/stdarg.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/if.h>

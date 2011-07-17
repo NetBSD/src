@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.22 2009/03/18 16:00:09 cegger Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.23 2011/07/17 20:54:36 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.22 2009/03/18 16:00:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.23 2011/07/17 20:54:36 joerg Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -65,8 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.22 2009/03/18 16:00:09 cegger Exp
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/cons.h>
 #include <dev/wsfont/wsfont.h>
-
-#include <machine/stdarg.h>
 
 /* These can be lowered if you are sure you dont need that much colors. */
 #define MAXDEPTH 8

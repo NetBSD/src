@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_output.c,v 1.25 2009/04/18 14:58:06 tsutsui Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.26 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.25 2009/04/18 14:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.26 2011/07/17 20:54:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -80,8 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.25 2009/04/18 14:58:06 tsutsui Exp
 #include <netiso/clnp.h>
 #include <netiso/clnp_stat.h>
 #include <netiso/argo_debug.h>
-
-#include <machine/stdarg.h>
 
 static struct clnp_fixed dt_template = {
 	ISO8473_CLNP,		/* network identifier */

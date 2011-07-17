@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/01/19 13:11:21 chris Exp $
+#	$NetBSD: Makefile,v 1.6 2011/07/17 20:54:49 joerg Exp $
 
 INCSDIR= /usr/include/zaurus
 
@@ -15,9 +15,9 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h \
 	math.h mcontext.h mutex.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h ptrace.h \
 	reg.h rwlock.h \
-	setjmp.h signal.h stdarg.h sysarch.h \
+	setjmp.h signal.h sysarch.h \
 	trap.h types.h \
-	varargs.h vmparam.h \
+	vmparam.h \
 	wchar_limits.h
 
 .include <bsd.kinc.mk>

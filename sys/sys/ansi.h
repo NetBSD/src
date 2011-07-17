@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.13 2010/03/27 22:14:10 tnozaki Exp $	*/
+/*	$NetBSD: ansi.h,v 1.14 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,5 +65,11 @@ typedef union {
 #define _BSD_WCTRANS_T_	__wctrans_t	/* wctrans_t */
 #define _BSD_WCTYPE_T_	__wctype_t	/* wctype_t */
 #define _BSD_MBSTATE_T_	__mbstate_t	/* mbstate_t */
+
+#ifdef __lint__
+typedef char *__va_list;
+#else
+typedef __builtin_va_list __va_list;
+#endif
 
 #endif	/* !_SYS_ANSI_H_ */
