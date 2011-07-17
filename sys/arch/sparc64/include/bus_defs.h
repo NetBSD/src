@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.1 2011/07/01 17:10:01 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.2 2011/07/17 23:29:10 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,8 +62,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SPARC_BUS_DEFS_H_
-#define _SPARC_BUS_DEFS_H_
+#ifndef _SPARC64_BUS_DEFS_H_
+#define _SPARC64_BUS_DEFS_H_
 
 #include <machine/types.h>
 #include <machine/ctlreg.h>
@@ -295,4 +295,4 @@ struct sparc_bus_dmamap {
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
 
-#endif /* _SPARC_BUS_DEFS_H_ */
+#endif /* _SPARC64_BUS_DEFS_H_ */
