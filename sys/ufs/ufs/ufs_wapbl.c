@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.17 2011/07/17 22:07:59 dholland Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.18 2011/07/17 22:14:47 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.17 2011/07/17 22:07:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.18 2011/07/17 22:14:47 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,9 @@ lock_vnode_sequence(struct vnode *d1, struct ufs_lookup_results *ulr1,
 			VOP_UNLOCK(v1);
 		}
 		VOP_UNLOCK(d1);
-		vrele(v1);
+		if (v1) {
+			vrele(v1);
+		}
 		return ENOENT;
 	}
 	error = do_relookup(d2, ulr2, &v2, cn2);
@@ -268,7 +270,9 @@ lock_vnode_sequence(struct vnode *d1, struct ufs_lookup_results *ulr1,
 			VOP_UNLOCK(v1);
 		}
 		VOP_UNLOCK(d1);
-		vrele(v1);
+		if (v1) {
+			vrele(v1);
+		}
 		return error;
 	}
 	if (v1 && v1->v_type != VDIR && v1 != v2) {
