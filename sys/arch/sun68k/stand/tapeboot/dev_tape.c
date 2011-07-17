@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.5 2009/01/12 07:01:00 tsutsui Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.6 2011/07/17 20:54:48 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 
 #include <sys/types.h>
 #include <machine/mon.h>
-#include <machine/stdarg.h>
 #include <stand.h>
 
 #include "libsa.h"

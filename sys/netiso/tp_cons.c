@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_cons.c,v 1.27 2008/04/23 09:57:59 plunky Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.28 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.27 2008/04/23 09:57:59 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.28 2011/07/17 20:54:54 joerg Exp $");
 
 #include <sys/param.h>
 #include "opt_iso.h"
@@ -74,8 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.27 2008/04/23 09:57:59 plunky Exp $");
 #include <netiso/tp_param.h>
 #include <netiso/argo_debug.h>
 #include <netiso/tp_var.h>
-
-#include <machine/stdarg.h>
 
 int
 tpcons_output(struct mbuf *m0, ...)

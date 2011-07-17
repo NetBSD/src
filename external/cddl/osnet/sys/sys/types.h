@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.11 2010/03/11 23:28:07 darran Exp $	*/
+/*	$NetBSD: types.h,v 1.12 2011/07/17 20:54:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 #ifndef _KERNEL
 #include <stdarg.h>
 #else
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 #endif
 
 #define	MAXNAMELEN	256

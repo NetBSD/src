@@ -1,4 +1,4 @@
-# $NetBSD: ad.hppa,v 1.4 2007/02/09 22:22:32 ad Exp $
+# $NetBSD: ad.hppa,v 1.5 2011/07/17 20:54:30 joerg Exp $
 ./usr/include/hppa				comp-c-include
 ./usr/include/hppa/ansi.h			comp-c-include
 ./usr/include/hppa/aout_machdep.h		comp-c-include
@@ -42,10 +42,10 @@
 ./usr/include/hppa/signal.h			comp-c-include
 ./usr/include/hppa/som.h			comp-c-include
 ./usr/include/hppa/spinlock.h			comp-obsolete		obsolete
-./usr/include/hppa/stdarg.h			comp-c-include
+./usr/include/hppa/stdarg.h			comp-obsolete		obsolete
 ./usr/include/hppa/trap.h			comp-c-include
 ./usr/include/hppa/types.h			comp-c-include
-./usr/include/hppa/varargs.h			comp-c-include
+./usr/include/hppa/varargs.h			comp-obsolete		obsolete
 ./usr/include/hppa/vmparam.h			comp-c-include
 ./usr/include/hppa/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include

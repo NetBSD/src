@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.208 2011/04/14 15:53:36 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.209 2011/07/17 20:54:53 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.208 2011/04/14 15:53:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.209 2011/07/17 20:54:53 joerg Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -128,8 +128,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.208 2011/04/14 15:53:36 yamt Exp $")
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
 #endif
-
-#include <machine/stdarg.h>
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>

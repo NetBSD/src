@@ -1,4 +1,4 @@
-# $NetBSD: md.sun2,v 1.18 2010/03/10 23:13:09 abs Exp $
+# $NetBSD: md.sun2,v 1.19 2011/07/17 20:54:32 joerg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sun2				comp-c-include
 ./usr/include/sun2/_G_config.h			comp-obsolete		obsolete
@@ -52,11 +52,11 @@
 ./usr/include/sun2/rwlock.h			comp-c-include
 ./usr/include/sun2/setjmp.h			comp-c-include
 ./usr/include/sun2/signal.h			comp-c-include
-./usr/include/sun2/stdarg.h			comp-c-include
+./usr/include/sun2/stdarg.h			comp-obsolete		obsolete
 ./usr/include/sun2/svr4_machdep.h		comp-obsolete		obsolete
 ./usr/include/sun2/trap.h			comp-c-include
 ./usr/include/sun2/types.h			comp-c-include
-./usr/include/sun2/varargs.h			comp-c-include
+./usr/include/sun2/varargs.h			comp-obsolete		obsolete
 ./usr/include/sun2/vmparam.h			comp-c-include
 ./usr/include/sun2/vuid_event.h			comp-c-include
 ./usr/include/sun2/wchar_limits.h		comp-c-include

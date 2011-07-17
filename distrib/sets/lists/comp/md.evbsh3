@@ -1,4 +1,4 @@
-# $NetBSD: md.evbsh3,v 1.26 2007/02/09 22:49:47 ad Exp $
+# $NetBSD: md.evbsh3,v 1.27 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/evbsh3				comp-c-include
 ./usr/include/evbsh3/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbsh3/ansi.h			comp-c-include
@@ -50,10 +50,10 @@
 ./usr/include/evbsh3/setjmp.h			comp-c-include
 ./usr/include/evbsh3/shbvar.h			comp-obsolete		obsolete
 ./usr/include/evbsh3/signal.h			comp-c-include
-./usr/include/evbsh3/stdarg.h			comp-c-include
+./usr/include/evbsh3/stdarg.h			comp-obsolete		obsolete
 ./usr/include/evbsh3/trap.h			comp-obsolete		obsolete
 ./usr/include/evbsh3/types.h			comp-c-include
-./usr/include/evbsh3/varargs.h			comp-c-include
+./usr/include/evbsh3/varargs.h			comp-obsolete		obsolete
 ./usr/include/evbsh3/vmparam.h			comp-c-include
 ./usr/include/evbsh3/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include

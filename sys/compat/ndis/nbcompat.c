@@ -1,4 +1,4 @@
-/*	$NetBSD: nbcompat.c,v 1.11 2011/05/14 12:44:16 rmind Exp $	*/
+/*	$NetBSD: nbcompat.c,v 1.12 2011/07/17 20:54:50 joerg Exp $	*/
 
 /* nbcompat.c
  * Implementations of some FreeBSD functions on NetBSD to make things
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbcompat.c,v 1.11 2011/05/14 12:44:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbcompat.c,v 1.12 2011/07/17 20:54:50 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -19,8 +19,6 @@ __KERNEL_RCSID(0, "$NetBSD: nbcompat.c,v 1.11 2011/05/14 12:44:16 rmind Exp $");
 #include <sys/errno.h>
 #include <sys/lock.h>
 #include <sys/bus.h>
-
-#include <machine/stdarg.h>
 
 #include "nbcompat.h"
 

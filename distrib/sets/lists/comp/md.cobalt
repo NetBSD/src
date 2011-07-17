@@ -1,4 +1,4 @@
-# $NetBSD: md.cobalt,v 1.23 2009/08/19 08:24:44 he Exp $
+# $NetBSD: md.cobalt,v 1.24 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/cobalt				comp-c-include
 ./usr/include/cobalt/_G_config.h		comp-obsolete		obsolete
 ./usr/include/cobalt/ansi.h			comp-c-include
@@ -52,10 +52,10 @@
 ./usr/include/cobalt/rwlock.h			comp-c-include
 ./usr/include/cobalt/setjmp.h			comp-c-include
 ./usr/include/cobalt/signal.h			comp-c-include
-./usr/include/cobalt/stdarg.h			comp-c-include
+./usr/include/cobalt/stdarg.h			comp-obsolete		obsolete
 ./usr/include/cobalt/trap.h			comp-c-include
 ./usr/include/cobalt/types.h			comp-c-include
-./usr/include/cobalt/varargs.h			comp-c-include
+./usr/include/cobalt/varargs.h			comp-obsolete		obsolete
 ./usr/include/cobalt/vmparam.h			comp-c-include
 ./usr/include/cobalt/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include

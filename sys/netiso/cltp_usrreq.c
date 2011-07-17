@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.40 2009/04/18 14:58:06 tsutsui Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.41 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.40 2009/04/18 14:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.41 2011/07/17 20:54:54 joerg Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.40 2009/04/18 14:58:06 tsutsui Exp
 #include <netiso/cltp_var.h>
 #include <netiso/tp_param.h>
 #include <netiso/tp_var.h>
-
-#include <machine/stdarg.h>
 #endif
 
 

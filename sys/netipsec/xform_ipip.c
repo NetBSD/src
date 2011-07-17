@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.27 2011/06/06 16:48:35 drochner Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.28 2011/07/17 20:54:54 joerg Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.27 2011/06/06 16:48:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.28 2011/07/17 20:54:54 joerg Exp $");
 
 /*
  * IP-inside-IP processing
@@ -97,8 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.27 2011/06/06 16:48:35 drochner Exp
 #include <netipsec/key.h>
 #include <netipsec/key_debug.h>
 #include <netipsec/ipsec_osdep.h>
-
-#include <machine/stdarg.h>
 
 #ifdef __FreeBSD__
 typedef void	pr_in_input_t (struct mbuf *, int, int); /* XXX FIX THIS */

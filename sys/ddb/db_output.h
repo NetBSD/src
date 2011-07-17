@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.h,v 1.18 2009/03/14 14:46:08 dsl Exp $	*/
+/*	$NetBSD: db_output.h,v 1.19 2011/07/17 20:54:50 joerg Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,6 +29,8 @@
  *	Date:	8/90
  */
 
+#include <sys/stdarg.h>
+
 /*
  * Printing routines for kernel debugger.
  */
@@ -37,7 +39,7 @@ void	db_putchar(int);
 int	db_print_position(void);
 void	db_printf(const char *, ...)
 	    __attribute__((__format__(__printf__,1,2)));
-void	db_vprintf(const char *, _BSD_VA_LIST_);
+void	db_vprintf(const char *, va_list);
 void	db_format_radix(char *, size_t, quad_t, int);
 void	db_format_hex(char *, size_t, quad_t, int);
 void	db_end_line(void);

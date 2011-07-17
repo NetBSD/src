@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.70 2011/03/09 22:04:52 dyoung Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.71 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.70 2011/03/09 22:04:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.71 2011/07/17 20:54:54 joerg Exp $");
 
 #include "opt_eon.h"
 
@@ -106,8 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.70 2011/03/09 22:04:52 dyoung Exp $");
 #include <netiso/argo_debug.h>
 #include <netiso/iso_errno.h>
 #include <netiso/eonvar.h>
-
-#include <machine/stdarg.h>
 
 #define EOK 0
 

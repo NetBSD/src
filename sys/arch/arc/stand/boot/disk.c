@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.5 2011/02/20 07:52:43 matt Exp $	*/
+/*	$NetBSD: disk.c,v 1.6 2011/07/17 20:54:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,6 @@
  */
 
 #include <lib/libsa/stand.h>
-#include <machine/stdarg.h>
 
 #include <sys/param.h>
 #include <sys/disklabel.h>

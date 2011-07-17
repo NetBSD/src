@@ -1,4 +1,4 @@
-/*	$NetBSD: efifpswa.c,v 1.3 2009/07/20 04:59:03 kiyohara Exp $	*/
+/*	$NetBSD: efifpswa.c,v 1.4 2011/07/17 20:54:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Peter Wemm <peter@FreeBSD.org>
@@ -33,7 +33,6 @@
 #include <sys/time.h>
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
-#include <machine/stdarg.h>
 
 #include <efi.h>
 #include <efilib.h>

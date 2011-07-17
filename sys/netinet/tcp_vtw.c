@@ -74,10 +74,9 @@
 #include <netinet/tcp_private.h>
 #include <netinet/tcpip.h>
 
-#include <machine/stdarg.h>
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.7 2011/06/06 19:15:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.8 2011/07/17 20:54:53 joerg Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 

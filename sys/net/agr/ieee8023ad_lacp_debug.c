@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_debug.c,v 1.5 2008/12/16 22:35:38 christos Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_debug.c,v 1.6 2011/07/17 20:54:52 joerg Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,13 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_debug.c,v 1.5 2008/12/16 22:35:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_debug.c,v 1.6 2011/07/17 20:54:52 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
-
-#include <machine/stdarg.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

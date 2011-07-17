@@ -1,5 +1,5 @@
 /*	
- * $NetBSD: dev_net.c,v 1.7 2009/10/26 19:16:56 cegger Exp $
+ * $NetBSD: dev_net.c,v 1.8 2011/07/17 20:54:42 joerg Exp $
  */
 
 /*-
@@ -52,7 +52,6 @@
  * for use by the NFS open code (NFS/lookup).
  */
 
-#include <machine/stdarg.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/if.h>

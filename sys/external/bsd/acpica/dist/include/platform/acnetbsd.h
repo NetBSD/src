@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.6 $
+ *       $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -69,7 +69,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <machine/stdarg.h>
 #include <dev/acpi/acpica/acpi_func.h>
 
 #define asm         __asm

@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.57 2009/05/24 20:53:22 mlelstv Exp $
+# $NetBSD: md.amiga,v 1.58 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/amiga				comp-c-include
 ./usr/include/amiga/_G_config.h			comp-obsolete		obsolete
 ./usr/include/amiga/ansi.h			comp-c-include
@@ -46,11 +46,11 @@
 ./usr/include/amiga/rwlock.h			comp-c-include
 ./usr/include/amiga/setjmp.h			comp-c-include
 ./usr/include/amiga/signal.h			comp-c-include
-./usr/include/amiga/stdarg.h			comp-c-include
+./usr/include/amiga/stdarg.h			comp-obsolete		obsolete
 ./usr/include/amiga/svr4_machdep.h		comp-obsolete		obsolete
 ./usr/include/amiga/trap.h			comp-c-include
 ./usr/include/amiga/types.h			comp-c-include
-./usr/include/amiga/varargs.h			comp-c-include
+./usr/include/amiga/varargs.h			comp-obsolete		obsolete
 ./usr/include/amiga/vmparam.h			comp-c-include
 ./usr/include/amiga/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
