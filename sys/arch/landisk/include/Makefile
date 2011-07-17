@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2011/07/17 20:54:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/17 23:53:41 dyoung Exp $
 
 INCSDIR= /usr/include/landisk
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	bootinfo.h bswap.h bus.h \
+	bootinfo.h bswap.h \
 	button.h \
 	cdefs.h coff_machdep.h cpu.h cputypes.h \
 	db_machdep.h disklabel.h \
