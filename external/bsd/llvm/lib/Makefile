@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2011/07/13 23:48:30 joerg Exp $
+# $NetBSD: Makefile,v 1.15 2011/07/17 20:07:57 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -41,13 +41,16 @@ SUBDIR+= \
 
 SUBDIR+= \
 	libLLVMMipsAsmPrinter \
+	libLLVMMipsMCTargetDesc \
 	libLLVMMipsTargetInfo
 
 SUBDIR+= \
 	libLLVMPowerPCAsmPrinter \
+	libLLVMPowerPCMCTargetDesc \
 	libLLVMPowerPCTargetInfo
 
 SUBDIR+= \
+	libLLVMSparcMCTargetDesc \
 	libLLVMSparcTargetInfo
 
 SUBDIR+= \
