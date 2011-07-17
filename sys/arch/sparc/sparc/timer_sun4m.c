@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.26 2011/07/01 18:51:52 dyoung Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.27 2011/07/17 23:18:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.26 2011/07/01 18:51:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.27 2011/07/17 23:18:23 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -206,7 +206,7 @@ statintr_4m(void *cap)
 }
 
 void
-timerattach_obio_4m(struct device *parent, struct device *self, void *aux)
+timerattach_obio_4m(device_t parent, device_t self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
