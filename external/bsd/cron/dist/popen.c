@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.3 2011/07/17 01:16:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -44,7 +44,7 @@
 static sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 static char rcsid[] = "Id: popen.c,v 1.6 2003/02/16 04:40:01 vixie Exp";
 #else
-__RCSID("$NetBSD: popen.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.3 2011/07/17 01:16:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,26 +98,32 @@ cron_popen(char *program, const char *type, struct passwd *pw) {
 		/* NOTREACHED */
 	case 0:				/* child */
 		if (pw) {
+			if (setsid() == -1)
+				warn("setsid() failed for %s", pw->pw_name);
 #ifdef LOGIN_CAP
-			if (setusercontext(0, pw, pw->pw_uid, LOGIN_SETALL) < 0) {
-				warnx("setusercontext failed for %s",
+			if (setusercontext(0, pw, pw->pw_uid, LOGIN_SETALL) < 0)
+			{
+				warn("setusercontext() failed for %s",
 				    pw->pw_name);
 				_exit(ERROR_EXIT);
 			}
 #else
 			if (setgid(pw->pw_gid) < 0 ||
 			    initgroups(pw->pw_name, pw->pw_gid) < 0) {
-				warnx("unable to set groups for %s",
+				warn("unable to set groups for %s",
 				    pw->pw_name);
-				_exit(1);
+				_exit(ERROR_EXIT);
 			}
 #if (defined(BSD)) && (BSD >= 199103)
-			setlogin(pw->pw_name);
+			if (setlogin(pw->pw_name) < 0) {
+				warn("setlogin() failed for %s",
+				    pw->pw_name);
+				_exit(ERROR_EXIT);
+			}
 #endif /* BSD */
 			if (setuid(pw->pw_uid)) {
-				warnx("unable to set uid for %s",
-				    pw->pw_name);
-				_exit(1);
+				warn("unable to set uid for %s", pw->pw_name);
+				_exit(ERROR_EXIT);
 			}
 #endif /* LOGIN_CAP */
 		}
@@ -136,7 +142,7 @@ cron_popen(char *program, const char *type, struct passwd *pw) {
 			(void)close(pdes[1]);
 		}
 		(void)execvp(argv[0], argv);
-		_exit(1);
+		_exit(ERROR_EXIT);
 	}
 
 	/* parent; assume fdopen can't fail...  */
