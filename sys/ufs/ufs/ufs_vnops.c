@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.194 2011/07/17 22:00:38 dholland Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.195 2011/07/17 22:02:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.194 2011/07/17 22:00:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.195 2011/07/17 22:02:26 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1627,9 +1627,9 @@ ufs_rmdir(void *v)
 #endif
  out:
 	VN_KNOTE(vp, NOTE_DELETE);
+	fstrans_done(dvp->v_mount);
 	vput(dvp);
 	vput(vp);
-	fstrans_done(dvp->v_mount);
 	return (error);
 }
 
