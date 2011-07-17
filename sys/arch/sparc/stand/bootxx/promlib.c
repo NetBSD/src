@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.10 2008/04/28 20:23:36 martin Exp $ */
+/*	$NetBSD: promlib.c,v 1.11 2011/07/17 20:54:47 joerg Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,7 +47,6 @@
 #include <sys/errno.h>
 #include <sys/param.h>
 
-#include <machine/stdarg.h>
 #include <machine/oldmon.h>
 #include <machine/bsd_openprom.h>
 #include <machine/promlib.h>

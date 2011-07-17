@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.42 2009/05/12 14:44:31 cegger Exp $ */
+/*	$NetBSD: ses.c,v 1.43 2011/07/17 20:54:51 joerg Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.42 2009/05/12 14:44:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.43 2011/07/17 20:54:51 joerg Exp $");
 
 #include "opt_scsi.h"
 
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.42 2009/05/12 14:44:31 cegger Exp $");
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-#include <machine/stdarg.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_disk.h>

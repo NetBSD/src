@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_disk.c,v 1.4 2008/04/28 20:23:39 martin Exp $ */
+/*	$NetBSD: dev_disk.c,v 1.5 2011/07/17 20:54:48 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 
 #include <sys/types.h>
 #include <machine/mon.h>
-#include <machine/stdarg.h>
 #include <stand.h>
 
 #include "libsa.h"

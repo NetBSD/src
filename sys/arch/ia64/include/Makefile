@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/07/24 07:46:52 jruoho Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/17 20:54:42 joerg Exp $
 
 INCSDIR= /usr/include/ia64
 
@@ -10,7 +10,7 @@ INCS=	_regset.h acpi_func.h acpi_machdep.h ansi.h \
 	int_mwgwtypes.h int_types.h intr.h intrcnt.h limits.h \
 	loadfile_machdep.h lock.h mca_machdep.h mcontext.h md_var.h \
 	pal.h param.h pcb.h pmap.h proc.h pte.h ptrace.h reg.h sal.h \
-	setjmp.h signal.h smp.h ssc.h stdarg.h types.h varargs.h \
+	setjmp.h signal.h smp.h ssc.h types.h \
 	vmparam.h wchar_limits.h
 
 .include <bsd.kinc.mk>

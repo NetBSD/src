@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.45 2011/07/09 15:02:15 mrg Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.46 2011/07/17 20:54:43 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.45 2011/07/09 15:02:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.46 2011/07/17 20:54:43 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.45 2011/07/09 15:02:15 mrg Exp $");
 #include "ncr5380reg.h"
 
 #include <machine/cpu.h>
-#include <machine/stdarg.h>
 #include <machine/viareg.h>
 
 #include <mac68k/dev/ncr5380var.h>

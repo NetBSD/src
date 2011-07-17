@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.150 2009/12/20 20:42:23 mrg Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.151 2011/07/17 20:54:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.150 2009/12/20 20:42:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.151 2011/07/17 20:54:52 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.150 2009/12/20 20:42:23 mrg Exp $");
 #include <sys/atomic.h>
 #include <sys/lwp.h>
 
-#include <machine/stdarg.h>
 #include <machine/lock.h>
 
 #include <dev/lockstat.h>

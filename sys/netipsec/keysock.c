@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.20 2011/05/16 10:04:02 drochner Exp $	*/
+/*	$NetBSD: keysock.c,v 1.21 2011/07/17 20:54:54 joerg Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.20 2011/05/16 10:04:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.21 2011/07/17 20:54:54 joerg Exp $");
 
 #include "opt_ipsec.h"
 
@@ -62,8 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.20 2011/05/16 10:04:02 drochner Exp $"
 
 #include <netipsec/ipsec_osdep.h>
 #include <netipsec/ipsec_private.h>
-
-#include <machine/stdarg.h>
 
 typedef int	pr_output_t (struct mbuf *, struct socket *);
 

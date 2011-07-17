@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm_extract.c,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: disasm_extract.c,v 1.2 2011/07/17 20:54:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 Marcel Moolenaar
@@ -31,8 +31,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-
-#include <machine/stdarg.h>
 
 #include <ia64/disasm/disasm_int.h>
 #include <ia64/disasm/disasm.h>

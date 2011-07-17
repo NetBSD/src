@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.118 2009/03/18 16:00:22 cegger Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.119 2011/07/17 20:54:53 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.118 2009/03/18 16:00:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.119 2011/07/17 20:54:53 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -145,8 +145,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.118 2009/03/18 16:00:22 cegger Exp $
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
 #endif
-
-#include <machine/stdarg.h>
 
 #define IP_MULTICASTOPTS 0
 #define	M_PULLUP(m, len)						 \

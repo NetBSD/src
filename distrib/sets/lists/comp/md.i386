@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.121 2011/07/17 01:20:12 dyoung Exp $
+# $NetBSD: md.i386,v 1.122 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/clang-3.0/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/emmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/immintrin.h		comp-c-include		llvm
@@ -107,13 +107,13 @@
 ./usr/include/i386/signal.h			comp-c-include
 ./usr/include/i386/specialreg.h			comp-c-include
 ./usr/include/i386/spkr.h			comp-c-include
-./usr/include/i386/stdarg.h			comp-c-include
+./usr/include/i386/stdarg.h			comp-obsolete		obsolete
 ./usr/include/i386/svr4_machdep.h		comp-c-include
 ./usr/include/i386/sysarch.h			comp-c-include
 ./usr/include/i386/trap.h			comp-c-include
 ./usr/include/i386/tss.h			comp-c-include
 ./usr/include/i386/types.h			comp-c-include
-./usr/include/i386/varargs.h			comp-c-include
+./usr/include/i386/varargs.h			comp-obsolete		obsolete
 ./usr/include/i386/vm86.h			comp-c-include
 ./usr/include/i386/vmparam.h			comp-c-include
 ./usr/include/i386/wchar_limits.h		comp-c-include

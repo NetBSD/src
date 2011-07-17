@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.13 2010/10/29 15:32:24 pooka Exp $	*/
+/*	$NetBSD: threads.c,v 1.14 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.13 2010/10/29 15:32:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.14 2011/07/17 20:54:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -37,8 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.13 2010/10/29 15:32:24 pooka Exp $");
 #include <sys/kthread.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-
-#include <machine/stdarg.h>
 
 #include <rump/rumpuser.h>
 

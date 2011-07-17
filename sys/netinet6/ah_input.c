@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.58 2009/03/18 15:14:31 cegger Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.59 2011/07/17 20:54:53 joerg Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.58 2009/03/18 15:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.59 2011/07/17 20:54:53 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -80,8 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.58 2009/03/18 15:14:31 cegger Exp $")
 #include <netkey/key.h>
 #include <netkey/keydb.h>
 #include <netkey/key_debug.h>
-
-#include <machine/stdarg.h>
 
 #include <net/net_osdep.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kprintf.h,v 1.10 2009/01/01 15:10:20 pooka Exp $	*/
+/*	$NetBSD: kprintf.h,v 1.11 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,6 +37,8 @@
 #ifndef _SYS_KPRINTF_H_
 #define	_SYS_KPRINTF_H_
 
+#include <sys/stdarg.h>
+
 /*
  * Implementation internals of the kernel printf.  Exposing them here
  * allows other subsystems to implement precisely the printf semantics
@@ -60,7 +62,7 @@ void	kprintf_unlock(void);
 /*
  * NOTE: the kprintf mutex must be held when these functions are called!
  */
-int	kprintf(const char *, int, void *, char *, _BSD_VA_LIST_);
+int	kprintf(const char *, int, void *, char *, va_list);
 void	klogpri(int);
 
 #endif /* _SYS_KPRINTF_H_ */

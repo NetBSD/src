@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: profile.c,v 1.3 2011/07/17 20:54:33 joerg Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -54,7 +54,6 @@
 #include <sys/smp.h>
 #include <sys/uio.h>
 #include <sys/unistd.h>
-#include <machine/stdarg.h>
 
 #include <sys/cyclic.h>
 #include <sys/dtrace.h>

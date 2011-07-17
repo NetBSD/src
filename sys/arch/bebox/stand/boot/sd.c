@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.1 2010/10/14 06:58:22 kiyohara Exp $	*/
+/*	$NetBSD: sd.c,v 1.2 2011/07/17 20:54:38 joerg Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -33,7 +33,6 @@
 #include <lib/libkern/libkern.h>
 
 #include <machine/param.h>
-#include <machine/stdarg.h>
 
 #include "boot.h"
 #include "sdvar.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: sprintf.c,v 1.4 2007/11/24 13:20:57 isaki Exp $	*/
+/*	$NetBSD: sprintf.c,v 1.5 2011/07/17 20:54:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,30 +33,16 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#ifdef __STDC__
-#include <machine/stdarg.h>
-#else
-#include <machine/varargs.h>
-#endif
 
 #include "stand.h"
 
 int
-#ifdef __STDC__
 sprintf(char *buf, const char *fmt, ...)
-#else
-sprintf(buf, fmt, va_alist)
-	char *buf, *fmt;
-#endif
 {
 	va_list ap;
 	int len;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	len = vsnprintf(buf, -(size_t)buf, fmt, ap);
 	va_end(ap);
 	return len;

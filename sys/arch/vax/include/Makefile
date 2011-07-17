@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2007/02/16 02:17:42 ad Exp $
+#	$NetBSD: Makefile,v 1.28 2011/07/17 20:54:49 joerg Exp $
 
 INCSDIR= /usr/include/vax
 
@@ -18,10 +18,10 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	proc.h profile.h psl.h pte.h ptrace.h \
 	qdioctl.h qdreg.h qduser.h qevent.h \
 	reg.h rpb.h rsp.h rwlock.h \
-	scb.h setjmp.h sid.h signal.h stdarg.h \
+	scb.h setjmp.h sid.h signal.h \
 	trap.h types.h \
 	uvax.h \
-	varargs.h vaxfp.h vmparam.h vsbus.h \
+	vaxfp.h vmparam.h vsbus.h \
 	wchar_limits.h
 
 .include <bsd.kinc.mk>

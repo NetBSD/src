@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.34 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.35 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.34 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.35 2011/07/17 20:54:54 joerg Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -105,8 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.34 2009/03/18 16:00:23 cegger Exp $");
 #include <netiso/tp_var.h>
 #include <netiso/cltp_var.h>
 #include <netiso/idrp_var.h>
-
-#include <machine/stdarg.h>
 
 /*
  * CALLED FROM:

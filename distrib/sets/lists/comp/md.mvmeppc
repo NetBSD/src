@@ -1,4 +1,4 @@
-# $NetBSD: md.mvmeppc,v 1.13 2011/06/05 16:52:22 matt Exp $
+# $NetBSD: md.mvmeppc,v 1.14 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mvmeppc				comp-c-include
 ./usr/include/mvmeppc/_G_config.h		comp-obsolete		obsolete
@@ -53,9 +53,9 @@
 ./usr/include/mvmeppc/setjmp.h			comp-c-include
 ./usr/include/mvmeppc/signal.h			comp-c-include
 ./usr/include/mvmeppc/spr.h			comp-obsolete		obsolete
-./usr/include/mvmeppc/stdarg.h			comp-c-include
+./usr/include/mvmeppc/stdarg.h			comp-obsolete		obsolete
 ./usr/include/mvmeppc/trap.h			comp-c-include
 ./usr/include/mvmeppc/types.h			comp-c-include
-./usr/include/mvmeppc/varargs.h			comp-c-include
+./usr/include/mvmeppc/varargs.h			comp-obsolete		obsolete
 ./usr/include/mvmeppc/vmparam.h			comp-c-include
 ./usr/include/mvmeppc/wchar_limits.h		comp-c-include

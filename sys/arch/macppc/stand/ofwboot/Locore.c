@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.23 2006/09/18 10:19:00 sanjayl Exp $	*/
+/*	$NetBSD: Locore.c,v 1.24 2011/07/17 20:54:43 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,6 @@
 #include <lib/libsa/stand.h>
 
 #include <machine/cpu.h>
-#include <machine/stdarg.h>
 
 #include "openfirm.h"
 

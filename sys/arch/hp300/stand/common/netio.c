@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.13 2009/10/21 23:12:09 snj Exp $	*/
+/*	$NetBSD: netio.c,v 1.14 2011/07/17 20:54:40 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -74,8 +74,6 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
-
-#include <machine/stdarg.h>
 
 #include <net/if.h>
 #include <netinet/in.h>

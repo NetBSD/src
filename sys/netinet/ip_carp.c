@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.44 2010/08/11 11:06:42 pooka Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.45 2011/07/17 20:54:53 joerg Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.44 2010/08/11 11:06:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.45 2011/07/17 20:54:53 joerg Exp $");
 
 /*
  * TODO:
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.44 2010/08/11 11:06:42 pooka Exp $");
 #include <net/netisr.h>
 #include <net/net_stats.h>
 #include <netinet/if_inarp.h>
-
-#include <machine/stdarg.h>
 
 #if NFDDI > 0
 #include <net/if_fddi.h>

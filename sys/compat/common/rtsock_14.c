@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_14.c,v 1.3 2011/02/01 01:39:19 matt Exp $	*/
+/*	$NetBSD: rtsock_14.c,v 1.4 2011/07/17 20:54:50 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.3 2011/02/01 01:39:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.4 2011/07/17 20:54:50 joerg Exp $");
 
 #include "opt_inet.h"
 
@@ -82,8 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.3 2011/02/01 01:39:19 matt Exp $");
 #include <net/if.h>
 #include <net/route.h>
 #include <net/raw_cb.h>
-
-#include <machine/stdarg.h>
 
 #include <compat/net/if.h>
 #include <compat/net/route.h>

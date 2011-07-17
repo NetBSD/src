@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.2 2011/07/04 12:03:56 mrg Exp $	*/
+/*	$NetBSD: wd.c,v 1.3 2011/07/17 20:54:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 #include <lib/libkern/libkern.h>
 
 #include <machine/param.h>
-#include <machine/stdarg.h>
 
 #include "boot.h"
 #include "wdvar.h"

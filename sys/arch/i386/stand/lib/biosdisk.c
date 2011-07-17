@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.37 2011/01/26 20:59:48 jakllsch Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.38 2011/07/17 20:54:41 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -80,7 +80,6 @@
 #include <fs/cd9660/iso.h>
 
 #include <lib/libsa/saerrno.h>
-#include <machine/stdarg.h>
 #include <machine/cpu.h>
 
 #include "libi386.h"

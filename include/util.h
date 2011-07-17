@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.55 2010/02/25 18:37:12 joerg Exp $	*/
+/*	$NetBSD: util.h,v 1.56 2011/07/17 20:54:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -35,8 +35,9 @@
 #include <sys/cdefs.h>
 #include <sys/ttycom.h>
 #include <sys/types.h>
-#include <stdio.h>
 #include <pwd.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <termios.h>
 #include <utmp.h>
 #include <utmpx.h>
@@ -138,8 +139,7 @@ void 		*erealloc(void *, size_t);
 struct __sFILE	*efopen(const char *, const char *);
 int	 	easprintf(char ** __restrict, const char * __restrict, ...)
 			__printflike(2, 3);
-int		evasprintf(char ** __restrict, const char * __restrict,
-    _BSD_VA_LIST_)
+int		evasprintf(char ** __restrict, const char * __restrict, va_list)
 			__printflike(2, 0);
 __END_DECLS
 

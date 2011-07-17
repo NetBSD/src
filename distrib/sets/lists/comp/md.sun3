@@ -1,4 +1,4 @@
-# $NetBSD: md.sun3,v 1.60 2010/03/10 23:13:09 abs Exp $
+# $NetBSD: md.sun3,v 1.61 2011/07/17 20:54:32 joerg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sun3				comp-c-include
 ./usr/include/sun3/_G_config.h			comp-obsolete		obsolete
@@ -61,11 +61,11 @@
 ./usr/include/sun3/rwlock.h			comp-c-include
 ./usr/include/sun3/setjmp.h			comp-c-include
 ./usr/include/sun3/signal.h			comp-c-include
-./usr/include/sun3/stdarg.h			comp-c-include
+./usr/include/sun3/stdarg.h			comp-obsolete		obsolete
 ./usr/include/sun3/svr4_machdep.h		comp-obsolete		obsolete
 ./usr/include/sun3/trap.h			comp-c-include
 ./usr/include/sun3/types.h			comp-c-include
-./usr/include/sun3/varargs.h			comp-c-include
+./usr/include/sun3/varargs.h			comp-obsolete		obsolete
 ./usr/include/sun3/vmparam.h			comp-c-include
 ./usr/include/sun3/vmparam3.h			comp-c-include
 ./usr/include/sun3/vmparam3x.h			comp-c-include

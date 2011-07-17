@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.9 2010/12/28 16:44:45 haad Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.10 2011/07/17 20:54:33 joerg Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -619,8 +619,6 @@ extern char *kmem_asprintf(const char *fmt, ...);
 #include <sys/u8_textprep.h>
 #include <sys/sysevent.h>
 #include <sys/sysevent/eventdefs.h>
-
-#include <machine/stdarg.h>
 
 #include <uvm/uvm_extern.h>
 

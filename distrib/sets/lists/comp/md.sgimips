@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.16 2010/03/14 06:49:57 mrg Exp $
+# $NetBSD: md.sgimips,v 1.17 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/dev/crmfbreg.h			comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sgimips				comp-c-include
@@ -53,10 +53,10 @@
 ./usr/include/sgimips/rwlock.h			comp-c-include
 ./usr/include/sgimips/setjmp.h			comp-c-include
 ./usr/include/sgimips/signal.h			comp-c-include
-./usr/include/sgimips/stdarg.h			comp-c-include
+./usr/include/sgimips/stdarg.h			comp-obsolete		obsolete
 ./usr/include/sgimips/trap.h			comp-c-include
 ./usr/include/sgimips/types.h			comp-c-include
-./usr/include/sgimips/varargs.h			comp-c-include
+./usr/include/sgimips/varargs.h			comp-obsolete		obsolete
 ./usr/include/sgimips/vmparam.h			comp-c-include
 ./usr/include/sgimips/wchar_limits.h		comp-c-include
 ./usr/include/sgimips/z8530var.h		comp-c-include

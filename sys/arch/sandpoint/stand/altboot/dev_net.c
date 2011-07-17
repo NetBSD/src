@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
+/* $NetBSD: dev_net.c,v 1.2 2011/07/17 20:54:46 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 #include <lib/libkern/libkern.h>
 
 #include <machine/bootinfo.h>
-#include <machine/stdarg.h>
 
 #include "globals.h"
 

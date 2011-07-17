@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.34 2009/04/18 14:58:06 tsutsui Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.35 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.34 2009/04/18 14:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.35 2011/07/17 20:54:54 joerg Exp $");
 
 #include "opt_iso.h"
 
@@ -108,8 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.34 2009/04/18 14:58:06 tsutsui Exp $"
 #include <netiso/tp_trace.h>
 #include <netiso/tp_tpdu.h>
 #include <netiso/iso_var.h>
-
-#include <machine/stdarg.h>
 
 static struct socket *
 	tp_newsocket(struct socket *, struct sockaddr *, void *, u_int, u_int);

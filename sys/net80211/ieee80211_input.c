@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.70 2010/04/05 07:22:24 joerg Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.71 2011/07/17 20:54:52 joerg Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.70 2010/04/05 07:22:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.71 2011/07/17 20:54:52 joerg Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.70 2010/04/05 07:22:24 joerg E
 const struct timeval ieee80211_merge_print_intvl = {.tv_sec = 1, .tv_usec = 0};
 
 #ifdef IEEE80211_DEBUG
-#include <machine/stdarg.h>
 
 /*
  * Decide if a received management frame should be

@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: varargs.h,v 1.4 2011/07/17 20:54:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -32,7 +32,7 @@
 #define	_OPENSOLARIS_SYS_VARARGS_H_
 
 #ifdef	_KERNEL
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 #else
 #include <stdarg.h>
 #endif

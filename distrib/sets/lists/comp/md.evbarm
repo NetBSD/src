@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.13 2008/01/19 13:15:46 chris Exp $
+# $NetBSD: md.evbarm,v 1.14 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/evbarm				comp-c-include
 ./usr/include/evbarm/ansi.h			comp-c-include
 ./usr/include/evbarm/aout_machdep.h		comp-c-include
@@ -41,10 +41,10 @@
 ./usr/include/evbarm/rwlock.h			comp-c-include
 ./usr/include/evbarm/setjmp.h			comp-c-include
 ./usr/include/evbarm/signal.h			comp-c-include
-./usr/include/evbarm/stdarg.h			comp-c-include
+./usr/include/evbarm/stdarg.h			comp-obsolete		obsolete
 ./usr/include/evbarm/sysarch.h			comp-c-include
 ./usr/include/evbarm/trap.h			comp-c-include
 ./usr/include/evbarm/types.h			comp-c-include
-./usr/include/evbarm/varargs.h			comp-c-include
+./usr/include/evbarm/varargs.h			comp-obsolete		obsolete
 ./usr/include/evbarm/vmparam.h			comp-c-include
 ./usr/include/evbarm/wchar_limits.h		comp-c-include

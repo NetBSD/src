@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.7 2011/06/20 19:48:05 jdc Exp $ */
+/* $NetBSD: dsk.c,v 1.8 2011/07/17 20:54:46 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -44,10 +44,10 @@
 #include <sys/disklabel.h>
 #include <sys/bootblock.h>
 #include <sys/param.h>
+
 #include <dev/raidframe/raidframevar.h>
 
 #include <machine/bootinfo.h>
-#include <machine/stdarg.h>
 
 #include "globals.h"
 

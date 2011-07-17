@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcarm,v 1.13 2008/08/22 13:42:19 lukem Exp $
+# $NetBSD: md.hpcarm,v 1.14 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/hpcarm				comp-c-include
 ./usr/include/hpcarm/ansi.h			comp-c-include
 ./usr/include/hpcarm/aout_machdep.h		comp-c-include
@@ -41,11 +41,11 @@
 ./usr/include/hpcarm/rwlock.h			comp-c-include
 ./usr/include/hpcarm/setjmp.h			comp-c-include
 ./usr/include/hpcarm/signal.h			comp-c-include
-./usr/include/hpcarm/stdarg.h			comp-c-include
+./usr/include/hpcarm/stdarg.h			comp-obsolete		obsolete
 ./usr/include/hpcarm/sysarch.h			comp-c-include
 ./usr/include/hpcarm/trap.h			comp-c-include
 ./usr/include/hpcarm/types.h			comp-c-include
-./usr/include/hpcarm/varargs.h			comp-c-include
+./usr/include/hpcarm/varargs.h			comp-obsolete		obsolete
 ./usr/include/hpcarm/vmparam.h			comp-c-include
 ./usr/include/hpcarm/wchar_limits.h		comp-c-include
 ./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug

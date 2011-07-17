@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.15 2010/09/09 03:24:57 tls Exp $ */
+/* $NetBSD: if_srt.c,v 1.16 2011/07/17 20:54:52 joerg Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.15 2010/09/09 03:24:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.16 2011/07/17 20:54:52 joerg Exp $");
 
 #include "opt_inet.h"
 
@@ -32,7 +32,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.15 2010/09/09 03:24:57 tls Exp $");
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <net/if_types.h>
-#include <machine/stdarg.h>
 
 #include "if_srt.h"
 

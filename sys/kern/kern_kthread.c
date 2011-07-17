@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.34 2011/05/24 18:18:22 joerg Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.35 2011/07/17 20:54:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.34 2011/05/24 18:18:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.35 2011/07/17 20:54:52 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.34 2011/05/24 18:18:22 joerg Exp 
 #include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
-#include <machine/stdarg.h>
 
 static lwp_t *		kthread_jtarget;
 static kmutex_t		kthread_lock;

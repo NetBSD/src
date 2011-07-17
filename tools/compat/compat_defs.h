@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.78 2011/01/10 20:38:35 apb Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.79 2011/07/17 20:54:55 joerg Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -846,12 +846,6 @@ void *setmode(const char *);
 #endif
 #ifndef _PATH_VI
 #define _PATH_VI "/usr/bin/vi"
-#endif
-
-/* <stdarg.h> */
-
-#ifndef _BSD_VA_LIST_
-#define _BSD_VA_LIST_ va_list
 #endif
 
 /* <stdint.h> */

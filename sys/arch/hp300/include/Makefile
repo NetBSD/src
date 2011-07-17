@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2007/03/04 09:57:43 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.26 2011/07/17 20:54:40 joerg Exp $
 
 INCSDIR= /usr/include/hp300
 
@@ -16,9 +16,9 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	math.h mcontext.h mutex.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h rwlock.h \
-	setjmp.h signal.h stdarg.h \
+	setjmp.h signal.h \
 	trap.h types.h \
-	varargs.h vmparam.h \
+	vmparam.h \
 	wchar_limits.h
 
 .include <bsd.kinc.mk>

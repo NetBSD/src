@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.78 2011/04/17 05:16:28 mrg Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.79 2011/07/17 20:54:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.78 2011/04/17 05:16:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.79 2011/07/17 20:54:52 joerg Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -56,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.78 2011/04/17 05:16:28 mrg Exp $")
 #include <sys/lock.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/stdarg.h>
 
 struct vm_map *module_map;
 char	*module_machine;

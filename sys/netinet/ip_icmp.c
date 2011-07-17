@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.124 2010/07/02 07:02:00 kefren Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.125 2011/07/17 20:54:53 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.124 2010/07/02 07:02:00 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.125 2011/07/17 20:54:53 joerg Exp $");
 
 #include "opt_ipsec.h"
 
@@ -132,8 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.124 2010/07/02 07:02:00 kefren Exp $")
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
 #endif	/* FAST_IPSEC*/
-
-#include <machine/stdarg.h>
 
 /*
  * ICMP routines: error generation, receive packet processing, and

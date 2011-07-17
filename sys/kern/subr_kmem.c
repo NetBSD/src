@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.34 2011/02/17 18:55:31 matt Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.35 2011/07/17 20:54:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.34 2011/02/17 18:55:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.35 2011/07/17 20:54:52 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -78,8 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.34 2011/02/17 18:55:31 matt Exp $");
 #include <uvm/uvm_kmguard.h>
 
 #include <lib/libkern/libkern.h>
-
-#include <machine/stdarg.h>
 
 #define	KMEM_QUANTUM_SIZE	(ALIGNBYTES + 1)
 #define	KMEM_QCACHE_MAX		(KMEM_QUANTUM_SIZE * 32)

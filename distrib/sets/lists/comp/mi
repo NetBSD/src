@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1644 2011/07/14 21:38:56 joerg Exp $
+#	$NetBSD: mi,v 1.1645 2011/07/17 20:54:32 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2467,6 +2467,7 @@
 ./usr/include/sys/specificdata.h		comp-c-include
 ./usr/include/sys/stat.h			comp-c-include
 ./usr/include/sys/statvfs.h			comp-c-include
+./usr/include/sys/stdarg.h			comp-c-include
 ./usr/include/sys/stdint.h			comp-c-include
 ./usr/include/sys/swap.h			comp-c-include
 ./usr/include/sys/syncobj.h			comp-c-include
@@ -2591,7 +2592,7 @@
 ./usr/include/uvm/uvm_stat.h			comp-c-include
 ./usr/include/uvm/uvm_swap.h			comp-c-include
 ./usr/include/uvm/uvm_vnode.h			comp-obsolete		obsolete
-./usr/include/varargs.h				comp-c-include
+./usr/include/varargs.h				comp-obsolete		obsolete
 ./usr/include/vis.h				comp-c-include
 ./usr/include/vm/device_pager.h			comp-obsolete		obsolete
 ./usr/include/vm/lock.h				comp-obsolete		obsolete
@@ -9038,7 +9039,7 @@
 ./usr/share/man/cat3/va_end.0			comp-c-catman		.cat
 ./usr/share/man/cat3/va_start.0			comp-c-catman		.cat
 ./usr/share/man/cat3/valloc.0			comp-c-catman		.cat
-./usr/share/man/cat3/varargs.0			comp-c-catman		.cat
+./usr/share/man/cat3/varargs.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/vasprintf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vdprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/verr.0			comp-c-catman		.cat
@@ -15055,7 +15056,7 @@
 ./usr/share/man/html3/va_end.html		comp-c-htmlman		html
 ./usr/share/man/html3/va_start.html		comp-c-htmlman		html
 ./usr/share/man/html3/valloc.html		comp-c-htmlman		html
-./usr/share/man/html3/varargs.html		comp-c-htmlman		html
+./usr/share/man/html3/varargs.html		comp-obsolete		obsolete
 ./usr/share/man/html3/vasprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/vdprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/verr.html			comp-c-htmlman		html
@@ -21141,7 +21142,7 @@
 ./usr/share/man/man3/va_end.3			comp-c-man		.man
 ./usr/share/man/man3/va_start.3			comp-c-man		.man
 ./usr/share/man/man3/valloc.3			comp-c-man		.man
-./usr/share/man/man3/varargs.3			comp-c-man		.man
+./usr/share/man/man3/varargs.3			comp-obsolete		obsolete
 ./usr/share/man/man3/vasprintf.3		comp-c-man		.man
 ./usr/share/man/man3/vdprintf.3			comp-c-man		.man
 ./usr/share/man/man3/verr.3			comp-c-man		.man

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2011/07/16 21:36:18 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2011/07/17 20:54:39 joerg Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -65,8 +65,6 @@ __KERNEL_RCSID(0, "$NetSBD$");
 #include <uvm/uvm_extern.h>
 
 #include <prop/proplib.h>
-
-#include <powerpc/stdarg.h>
 
 #include <dev/cons.h>
 

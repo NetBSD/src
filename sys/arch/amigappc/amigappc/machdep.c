@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.47 2010/12/19 14:46:10 phx Exp $ */
+/* $NetBSD: machdep.c,v 1.48 2011/07/17 20:54:36 joerg Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2010/12/19 14:46:10 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2011/07/17 20:54:36 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2010/12/19 14:46:10 phx Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/powerpc.h>
-#include <machine/stdarg.h>
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/pic/picvar.h>

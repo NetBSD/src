@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.39 2009/04/18 14:58:06 tsutsui Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.40 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.39 2009/04/18 14:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.40 2011/07/17 20:54:54 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -103,8 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.39 2009/04/18 14:58:06 tsutsui Exp $")
 #ifndef ISO
 #include <netiso/iso_chksum.c>
 #endif
-
-#include <machine/stdarg.h>
 
 /*
  * NAME:		in_getsufx()

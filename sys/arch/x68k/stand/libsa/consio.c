@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.8 2011/04/12 14:07:35 tsutsui Exp $	*/
+/*	$NetBSD: consio.c,v 1.9 2011/07/17 20:54:49 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -25,7 +25,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/stdarg.h>
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.10 2011/07/09 15:04:35 mrg Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.11 2011/07/17 20:54:49 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -27,7 +27,6 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
-#include <machine/stdarg.h>
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 

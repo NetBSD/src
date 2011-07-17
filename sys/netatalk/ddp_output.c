@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.14 2008/04/06 18:46:56 dyoung Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.15 2011/07/17 20:54:53 joerg Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.14 2008/04/06 18:46:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.15 2011/07/17 20:54:53 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.14 2008/04/06 18:46:56 dyoung Exp $
 #include <netatalk/ddp.h>
 #include <netatalk/ddp_var.h>
 #include <netatalk/at_extern.h>
-
-#include <machine/stdarg.h>
 
 int ddp_cksum = 1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.140 2011/04/24 18:46:22 rmind Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.141 2011/07/17 20:54:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.140 2011/04/24 18:46:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.141 2011/07/17 20:54:52 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -81,14 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.140 2011/04/24 18:46:22 rmind Exp $")
 
 static kmutex_t kprintf_mtx;
 static bool kprintf_inited = false;
-
-/*
- * note that stdarg.h and the ansi style va_start macro is used for both
- * ansi and traditional c complers.
- * XXX: this requires that stdarg.h define: va_alist and va_dcl
- */
-#include <machine/stdarg.h>
-
 
 #ifdef KGDB
 #include <sys/kgdb.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vasprintf.c,v 1.12 2009/10/25 20:44:13 christos Exp $	*/
+/*	$NetBSD: vasprintf.c,v 1.13 2011/07/17 20:54:34 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vasprintf.c,v 1.12 2009/10/25 20:44:13 christos Exp $");
+__RCSID("$NetBSD: vasprintf.c,v 1.13 2011/07/17 20:54:34 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -40,10 +40,7 @@ __RCSID("$NetBSD: vasprintf.c,v 1.12 2009/10/25 20:44:13 christos Exp $");
 #include "local.h"
 
 int
-vasprintf(str, fmt, ap)
-	char **str;
-	const char *fmt;
-	_BSD_VA_LIST_ ap;
+vasprintf(char **str, const char *fmt, va_list ap)
 {
 	int ret;
 	FILE f;

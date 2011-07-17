@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.244 2011/04/24 16:26:51 rmind Exp $	*/
+/*	$NetBSD: tty.c,v 1.245 2011/07/17 20:54:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.244 2011/04/24 16:26:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.245 2011/07/17 20:54:52 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,8 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.244 2011/04/24 16:26:51 rmind Exp $");
 #include <sys/intr.h>
 #include <sys/ioctl_compat.h>
 #include <sys/module.h>
-
-#include <machine/stdarg.h>
 
 static int	ttnread(struct tty *);
 static void	ttyblock(struct tty *);

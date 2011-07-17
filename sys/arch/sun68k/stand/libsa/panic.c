@@ -1,7 +1,6 @@
-/*	$NetBSD: panic.c,v 1.3 2002/06/03 00:18:27 fredette Exp $	*/
+/*	$NetBSD: panic.c,v 1.4 2011/07/17 20:54:48 joerg Exp $	*/
 
 
-#include <machine/stdarg.h>
 #include <stand.h>
 #include "libsa.h"
 

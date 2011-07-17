@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.16 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: promlib.c,v 1.17 2011/07/17 20:54:48 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.16 2008/04/28 20:23:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.17 2011/07/17 20:54:48 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.16 2008/04/28 20:23:37 martin Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/stdarg.h>
 #define _SUN2_PROMLIB_PRIVATE
 #include <machine/promlib.h>
 

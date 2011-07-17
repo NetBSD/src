@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.44 2011/07/08 09:31:35 mrg Exp $
+# $NetBSD: ad.m68k,v 1.45 2011/07/17 20:54:30 joerg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/math-68881.h		comp-c-include		gcccmds,gcc=45
@@ -51,13 +51,13 @@
 ./usr/include/m68k/rwlock.h			comp-c-include
 ./usr/include/m68k/setjmp.h			comp-c-include
 ./usr/include/m68k/signal.h			comp-c-include
-./usr/include/m68k/stdarg.h			comp-c-include
+./usr/include/m68k/stdarg.h			comp-obsolete		obsolete
 ./usr/include/m68k/svr4_machdep.h		comp-obsolete		obsolete
 ./usr/include/m68k/sync_icache.h		comp-c-include
 ./usr/include/m68k/sysctl.h			comp-c-include
 ./usr/include/m68k/trap.h			comp-c-include
 ./usr/include/m68k/types.h			comp-c-include
-./usr/include/m68k/varargs.h			comp-c-include
+./usr/include/m68k/varargs.h			comp-obsolete		obsolete
 ./usr/include/m68k/wchar_limits.h		comp-c-include
 ./usr/lib/libm68k.a				comp-c-lib
 ./usr/lib/libm68k_p.a				comp-c-lib		profile

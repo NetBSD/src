@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.15 2010/04/28 22:45:27 chs Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.16 2011/07/17 20:54:51 joerg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,11 +77,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.15 2010/04/28 22:45:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.16 2011/07/17 20:54:51 joerg Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
-
-#include <machine/stdarg.h>		/* for mpt_prt() */
 
 static int	mpt_poll(mpt_softc_t *, struct scsipi_xfer *, int);
 static void	mpt_timeout(void *);

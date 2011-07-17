@@ -1,4 +1,4 @@
-# $NetBSD: md.x68k,v 1.57 2010/03/16 01:48:53 mrg Exp $
+# $NetBSD: md.x68k,v 1.58 2011/07/17 20:54:32 joerg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/x68k				comp-c-include
 ./usr/include/x68k/_G_config.h			comp-obsolete		obsolete
@@ -58,11 +58,11 @@
 ./usr/include/x68k/setjmp.h			comp-c-include
 ./usr/include/x68k/signal.h			comp-c-include
 ./usr/include/x68k/sram.h			comp-c-include
-./usr/include/x68k/stdarg.h			comp-c-include
+./usr/include/x68k/stdarg.h			comp-obsolete		obsolete
 ./usr/include/x68k/svr4_machdep.h		comp-obsolete		obsolete
 ./usr/include/x68k/trap.h			comp-c-include
 ./usr/include/x68k/types.h			comp-c-include
-./usr/include/x68k/varargs.h			comp-c-include
+./usr/include/x68k/varargs.h			comp-obsolete		obsolete
 ./usr/include/x68k/vmparam.h			comp-c-include
 ./usr/include/x68k/vuid_event.h			comp-c-include
 ./usr/include/x68k/wchar_limits.h		comp-c-include

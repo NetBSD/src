@@ -1,4 +1,4 @@
-/*	$NetBSD: efifs.c,v 1.4 2009/07/20 04:59:03 kiyohara Exp $	*/
+/*	$NetBSD: efifs.c,v 1.5 2011/07/17 20:54:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -33,7 +33,6 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
 #include <lib/libkern/libkern.h>
-#include <machine/stdarg.h>
 
 #include <efi.h>
 #include <efilib.h>

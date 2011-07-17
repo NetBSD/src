@@ -1,4 +1,4 @@
-# $NetBSD: md.evbmips,v 1.15 2011/07/17 01:37:32 dyoung Exp $
+# $NetBSD: md.evbmips,v 1.16 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/evbmips				comp-c-include
 ./usr/include/evbmips/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbmips/ansi.h			comp-c-include
@@ -52,10 +52,10 @@
 ./usr/include/evbmips/rwlock.h			comp-c-include
 ./usr/include/evbmips/setjmp.h			comp-c-include
 ./usr/include/evbmips/signal.h			comp-c-include
-./usr/include/evbmips/stdarg.h			comp-c-include
+./usr/include/evbmips/stdarg.h			comp-obsolete		obsolete
 ./usr/include/evbmips/trap.h			comp-c-include
 ./usr/include/evbmips/types.h			comp-c-include
-./usr/include/evbmips/varargs.h			comp-c-include
+./usr/include/evbmips/varargs.h			comp-obsolete		obsolete
 ./usr/include/evbmips/vmparam.h			comp-c-include
 ./usr/include/evbmips/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include

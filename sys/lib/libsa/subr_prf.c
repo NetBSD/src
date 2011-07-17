@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.20 2011/05/20 16:33:07 tsutsui Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.21 2011/07/17 20:54:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,6 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/stdint.h>		/* XXX: for intptr_t */
-#include <machine/stdarg.h>
 
 #include "stand.h"
 

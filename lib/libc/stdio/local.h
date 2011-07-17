@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.29 2010/10/24 17:44:32 tron Exp $	*/
+/*	$NetBSD: local.h,v 1.30 2011/07/17 20:54:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,6 +38,7 @@
 #include "fileext.h"
 
 #include <limits.h>
+#include <stdarg.h>
 #include <stdbool.h>
 
 /*
@@ -63,13 +64,13 @@ extern char	*_mktemp __P((char *));
 extern int	__swsetup __P((FILE *));
 extern int	__sflags __P((const char *, int *));
 extern int	__svfscanf __P((FILE * __restrict, const char * __restrict,
-		    _BSD_VA_LIST_))
+		    va_list))
 		    __attribute__((__format__(__scanf__, 2, 0)));
 extern int	__svfscanf_unlocked __P((FILE * __restrict, const char * __restrict,
-		    _BSD_VA_LIST_))
+		    va_list))
 		    __attribute__((__format__(__scanf__, 2, 0)));
 extern int	__vfprintf_unlocked __P((FILE * __restrict, const char * __restrict,
-		    _BSD_VA_LIST_));
+		    va_list));
 
 
 extern int	__sdidinit;
@@ -83,9 +84,9 @@ extern ssize_t	__getdelim(char **__restrict, size_t *__restrict, int,
     FILE *__restrict);
 extern char	*__fgetstr __P((FILE * __restrict, size_t * __restrict, int));
 extern int 	 __vfwprintf_unlocked __P((FILE *, const wchar_t *,
-    _BSD_VA_LIST_));
+    va_list));
 extern int	 __vfwscanf_unlocked __P((FILE * __restrict,
-    const wchar_t * __restrict, _BSD_VA_LIST_));
+    const wchar_t * __restrict, va_list));
 
 /*
  * Return true iff the given FILE cannot be written now.

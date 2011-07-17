@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.h,v 1.4 2008/09/03 22:56:51 gmcgarry Exp $	*/
+/*	$NetBSD: libhfs.h,v 1.5 2011/07/17 20:54:51 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #if defined(_KERNEL)
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <machine/stdarg.h>
 #include <sys/fcntl.h>
 #endif /* defined(_KERNEL) */
 
@@ -52,10 +51,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #endif /* !defined(_KERNEL) && !defined(STANDALONE) */
-
-#ifndef va_list
-#define va_list _BSD_VA_LIST_
-#endif /* !va_list */
 
 #define max(A,B) ((A) > (B) ? (A):(B))
 #define min(A,B) ((A) < (B) ? (A):(B))

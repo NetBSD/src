@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ndis.c,v 1.24 2011/05/14 12:44:16 rmind Exp $	*/
+/*	$NetBSD: subr_ndis.c,v 1.25 2011/07/17 20:54:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.24 2011/05/14 12:44:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.25 2011/07/17 20:54:50 joerg Exp $");
 #endif
 
 /*
@@ -108,8 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.24 2011/05/14 12:44:16 rmind Exp $")
 #include <sys/rman.h>
 #endif
 #include <sys/bus.h>
-
-#include <machine/stdarg.h>
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_ioctl.h>

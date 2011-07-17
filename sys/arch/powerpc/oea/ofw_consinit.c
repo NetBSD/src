@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.12 2011/07/01 18:59:19 dyoung Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.13 2011/07/17 20:54:46 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.12 2011/07/01 18:59:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.13 2011/07/17 20:54:46 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.12 2011/07/01 18:59:19 dyoung Exp
 
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wscons_callbacks.h>
-
-#include <machine/stdarg.h>
 
 #include "akbd.h"
 #include "adbkbd.h"

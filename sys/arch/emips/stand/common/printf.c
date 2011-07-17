@@ -17,7 +17,7 @@
  * $FreeBSD: src/sys/boot/mips/emips/libemips/printf.c,v 1.2 2006/10/20 09:12:05 imp Exp $
  */
 
-#include <machine/stdarg.h>
+#include <stand.h>
 
 void
 xputchar(int ch)

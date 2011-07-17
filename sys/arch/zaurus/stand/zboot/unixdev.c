@@ -1,4 +1,4 @@
-/*	$NetBSD: unixdev.c,v 1.1 2009/03/02 09:33:02 nonaka Exp $	*/
+/*	$NetBSD: unixdev.c,v 1.2 2011/07/17 20:54:50 joerg Exp $	*/
 /*	$OpenBSD: unixdev.c,v 1.6 2007/06/16 00:26:33 deraadt Exp $	*/
 
 /*
@@ -30,8 +30,6 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
-
-#include <machine/stdarg.h>
 
 #include "boot.h"
 #include "bootinfo.h"

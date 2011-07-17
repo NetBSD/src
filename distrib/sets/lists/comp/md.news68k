@@ -1,4 +1,4 @@
-# $NetBSD: md.news68k,v 1.26 2007/03/04 08:51:19 tsutsui Exp $
+# $NetBSD: md.news68k,v 1.27 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/news68k				comp-c-include
 ./usr/include/news68k/_G_config.h		comp-obsolete		obsolete
@@ -45,10 +45,10 @@
 ./usr/include/news68k/rwlock.h			comp-c-include
 ./usr/include/news68k/setjmp.h			comp-c-include
 ./usr/include/news68k/signal.h			comp-c-include
-./usr/include/news68k/stdarg.h			comp-c-include
+./usr/include/news68k/stdarg.h			comp-obsolete		obsolete
 ./usr/include/news68k/svr4_machdep.h		comp-obsolete		obsolete
 ./usr/include/news68k/trap.h			comp-c-include
 ./usr/include/news68k/types.h			comp-c-include
-./usr/include/news68k/varargs.h			comp-c-include
+./usr/include/news68k/varargs.h			comp-obsolete		obsolete
 ./usr/include/news68k/vmparam.h			comp-c-include
 ./usr/include/news68k/wchar_limits.h		comp-c-include

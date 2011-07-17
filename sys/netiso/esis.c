@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.56 2009/04/18 14:58:06 tsutsui Exp $	*/
+/*	$NetBSD: esis.c,v 1.57 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.56 2009/04/18 14:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.57 2011/07/17 20:54:54 joerg Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -91,8 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.56 2009/04/18 14:58:06 tsutsui Exp $");
 #include <netiso/clnp_stat.h>
 #include <netiso/esis.h>
 #include <netiso/argo_debug.h>
-
-#include <machine/stdarg.h>
 
 /*
  *	Global variables to esis implementation

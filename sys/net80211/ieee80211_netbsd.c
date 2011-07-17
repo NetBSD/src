@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.17 2008/11/12 12:36:28 ad Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.18 2011/07/17 20:54:52 joerg Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.17 2008/11/12 12:36:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.18 2011/07/17 20:54:52 joerg Exp $");
 #endif
 
 /*
@@ -43,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.17 2008/11/12 12:36:28 ad Exp
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/once.h>
-
-#include <machine/stdarg.h>
 
 #include <sys/socket.h>
 
