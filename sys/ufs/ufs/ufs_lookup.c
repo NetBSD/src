@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.110 2011/07/14 16:27:11 dholland Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.111 2011/07/17 22:07:59 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.110 2011/07/14 16:27:11 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.111 2011/07/17 22:07:59 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -1306,6 +1306,129 @@ out:
 	if (vp != NULL)
 		vput(vp);
 	return (error);
+}
+
+/*
+ * Extract the inode number of ".." from a directory.
+ * Helper for ufs_parentcheck.
+ */
+static int
+ufs_readdotdot(struct vnode *vp, int needswap, kauth_cred_t cred, ino_t *result)
+{
+	struct dirtemplate dirbuf;
+	int namlen, error;
+
+	error = vn_rdwr(UIO_READ, vp, &dirbuf,
+		    sizeof (struct dirtemplate), (off_t)0, UIO_SYSSPACE,
+		    IO_NODELOCKED, cred, NULL, NULL);
+	if (error) {
+		return error;
+	}
+
+#if (BYTE_ORDER == LITTLE_ENDIAN)
+	if (FSFMT(vp) && needswap == 0)
+		namlen = dirbuf.dotdot_type;
+	else
+		namlen = dirbuf.dotdot_namlen;
+#else
+	if (FSFMT(vp) && needswap != 0)
+		namlen = dirbuf.dotdot_type;
+	else
+		namlen = dirbuf.dotdot_namlen;
+#endif
+	if (namlen != 2 ||
+	    dirbuf.dotdot_name[0] != '.' ||
+	    dirbuf.dotdot_name[1] != '.') {
+		printf("ufs_readdotdot: directory %llu contains "
+		       "garbage instead of ..\n",
+		       (unsigned long long) VTOI(vp)->i_number);
+		return ENOTDIR;
+	}
+	*result = ufs_rw32(dirbuf.dotdot_ino, needswap);
+	return 0;
+}
+
+/*
+ * Check if LOWER is a descendent of UPPER. If we find UPPER, return
+ * nonzero in FOUND and return a reference to the immediate descendent
+ * of UPPER in UPPERCHILD. If we don't find UPPER (that is, if we
+ * reach the volume root and that isn't UPPER), return zero in FOUND
+ * and null in UPPERCHILD.
+ *
+ * Neither UPPER nor LOWER should be locked.
+ *
+ * On error (such as a permissions error checking up the directory
+ * tree) fail entirely.
+ *
+ * Note that UPPER and LOWER must be on the same volume, and because
+ * we inspect only that volume NEEDSWAP can be constant.
+ */
+int
+ufs_parentcheck(struct vnode *upper, struct vnode *lower, kauth_cred_t cred,
+		int *found_ret, struct vnode **upperchild_ret)
+{
+	const int needswap = UFS_MPNEEDSWAP(VTOI(lower)->i_ump);
+	ino_t upper_ino, found_ino;
+	struct vnode *current, *next;
+	int error;
+
+	if (upper == lower) {
+		vref(upper);
+		*found_ret = 1;
+		*upperchild_ret = upper;
+		return 0;
+	}
+	if (VTOI(lower)->i_number == ROOTINO) {
+		*found_ret = 0;
+		*upperchild_ret = NULL;
+		return 0;
+	}
+
+	upper_ino = VTOI(upper)->i_number;
+
+	current = lower;
+	vref(current);
+	vn_lock(current, LK_EXCLUSIVE | LK_RETRY);
+
+	for (;;) {
+		error = ufs_readdotdot(current, needswap, cred, &found_ino);
+		if (error) {
+			vput(current);
+			return error;
+		}
+		if (found_ino == upper_ino) {
+			VOP_UNLOCK(current);
+			*found_ret = 1;
+			*upperchild_ret = current;
+			return 0;
+		}
+		if (found_ino == ROOTINO) {
+			vput(current);
+			*found_ret = 0;
+			*upperchild_ret = NULL;
+			return 0;
+		}
+		VOP_UNLOCK(current);
+		error = VFS_VGET(current->v_mount, found_ino, &next);
+		if (error) {
+			vrele(current);
+			return error;
+		}
+		KASSERT(VOP_ISLOCKED(next));
+		if (next->v_type != VDIR) {
+			printf("ufs_parentcheck: inode %llu reached via .. of "
+			       "inode %llu is not a directory\n",
+			    (unsigned long long)VTOI(next)->i_number,
+			    (unsigned long long)VTOI(current)->i_number);
+			vput(next);
+			vrele(current);
+			return ENOTDIR;
+		}
+		vrele(current);
+		current = next;
+	}
+
+	return 0;
 }
 
 #define	UFS_DIRRABLKS 0

@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.16 2011/07/14 16:27:43 dholland Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.17 2011/07/17 22:07:59 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.16 2011/07/14 16:27:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.17 2011/07/17 22:07:59 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,138 @@ ulr_overlap(const struct ufs_lookup_results *from_ulr,
 }
 
 /*
+ * Wrapper for relookup that also updates the supplemental results.
+ */
+static int
+do_relookup(struct vnode *dvp, struct ufs_lookup_results *ulr,
+	    struct vnode **vp, struct componentname *cnp)
+{
+	int error;
+
+	error = relookup(dvp, vp, cnp, 0);
+	if (error) {
+		return error;
+	}
+	/* update the supplemental reasults */
+	*ulr = VTOI(dvp)->i_crap;
+	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
+	return 0;
+}
+
+/*
+ * Lock and relookup a sequence of two directories and two children.
+ *
+ */
+static int
+lock_vnode_sequence(struct vnode *d1, struct ufs_lookup_results *ulr1,
+		    struct vnode **v1_ret, struct componentname *cn1, 
+		    int v1_missing_ok,
+		    int overlap_error,
+		    struct vnode *d2, struct ufs_lookup_results *ulr2,
+		    struct vnode **v2_ret, struct componentname *cn2, 
+		    int v2_missing_ok)
+{
+	struct vnode *v1, *v2;
+	int error;
+
+	KASSERT(d1 != d2);
+
+	vn_lock(d1, LK_EXCLUSIVE | LK_RETRY);
+	if (VTOI(d1)->i_size == 0) {
+		/* d1 has been rmdir'd */
+		VOP_UNLOCK(d1);
+		return ENOENT;
+	}
+	error = do_relookup(d1, ulr1, &v1, cn1);
+	if (v1_missing_ok) {
+		if (error == ENOENT) {
+			/*
+			 * Note: currently if the name doesn't exist,
+			 * relookup succeeds (it intercepts the
+			 * EJUSTRETURN from VOP_LOOKUP) and sets tvp
+			 * to NULL. Therefore, we will never get
+			 * ENOENT and this branch is not needed.
+			 * However, in a saner future the EJUSTRETURN
+			 * garbage will go away, so let's DTRT.
+			 */
+			v1 = NULL;
+			error = 0;
+		}
+	} else {
+		if (error == 0 && v1 == NULL) {
+			/* This is what relookup sets if v1 disappeared. */
+			error = ENOENT;
+		}
+	}
+	if (error) {
+		VOP_UNLOCK(d1);
+		return error;
+	}
+	if (v1 && v1 == d2) {
+		VOP_UNLOCK(d1);
+		VOP_UNLOCK(v1);
+		vrele(v1);
+		return overlap_error;
+	}
+
+	/*
+	 * The right way to do this is to do lookups without locking
+	 * the results, and lock the results afterwards; then at the
+	 * end we can avoid trying to lock v2 if v2 == v1.
+	 *
+	 * However, for the reasons described in the fdvp == tdvp case
+	 * in rename below, we can't do that safely. So, in the case
+	 * where v1 is not a directory, unlock it and lock it again
+	 * afterwards. This is safe in locking order because a
+	 * non-directory can't be above anything else in the tree. If
+	 * v1 *is* a directory, that's not true, but then because d1
+	 * != d2, v1 != v2.
+	 */
+	if (v1 && v1->v_type != VDIR) {
+		VOP_UNLOCK(v1);
+	}
+	vn_lock(d2, LK_EXCLUSIVE | LK_RETRY);
+	if (VTOI(d2)->i_size == 0) {
+		/* d2 has been rmdir'd */
+		VOP_UNLOCK(d2);
+		if (v1 && v1->v_type == VDIR) {
+			VOP_UNLOCK(v1);
+		}
+		VOP_UNLOCK(d1);
+		vrele(v1);
+		return ENOENT;
+	}
+	error = do_relookup(d2, ulr2, &v2, cn2);
+	if (v2_missing_ok) {
+		if (error == ENOENT) {
+			/* as above */
+			v2 = NULL;
+			error = 0;
+		}
+	} else {
+		if (error == 0 && v2 == NULL) {
+			/* This is what relookup sets if v2 disappeared. */
+			error = ENOENT;
+		}
+	}
+	if (error) {
+		VOP_UNLOCK(d2);
+		if (v1 && v1->v_type == VDIR) {
+			VOP_UNLOCK(v1);
+		}
+		VOP_UNLOCK(d1);
+		vrele(v1);
+		return error;
+	}
+	if (v1 && v1->v_type != VDIR && v1 != v2) {
+		vn_lock(v1, LK_EXCLUSIVE | LK_RETRY);
+	}
+	*v1_ret = v1;
+	*v2_ret = v2;
+	return 0;
+}
+
+/*
  * Rename vnode operation
  * 	rename("foo", "bar");
  * is essentially
@@ -212,70 +344,234 @@ wapbl_ufs_rename(void *v)
 	UFS_CHECK_CRAPCOUNTER(VTOI(tdvp));
 
 	/*
+	 * Owing to VFS oddities we are currently called with tdvp/tvp
+	 * locked and not fdvp/fvp. In a sane world we'd be passed
+	 * tdvp and fdvp only, unlocked, and two name strings. Pretend
+	 * we have a sane world and unlock tdvp and tvp.
+	 */
+	VOP_UNLOCK(tdvp);
+	if (tvp && tvp != tdvp) {
+		VOP_UNLOCK(tvp);
+	}
+
+	/* Also pretend we have a sane world and vrele fvp/tvp. */
+	vrele(fvp);
+	fvp = NULL;
+	if (tvp) {
+		vrele(tvp);
+		tvp = NULL;
+	}
+
+	/*
 	 * Check for cross-device rename.
 	 */
-	if ((fvp->v_mount != tdvp->v_mount) ||
-	    (tvp && (fvp->v_mount != tvp->v_mount))) {
+	if (fdvp->v_mount != tdvp->v_mount) {
 		error = EXDEV;
  abortit:
-		VOP_ABORTOP(tdvp, tcnp); /* XXX, why not in NFS? */
-		if (tdvp == tvp)
-			vrele(tdvp);
-		else
-			vput(tdvp);
-		if (tvp)
-			vput(tvp);
 		VOP_ABORTOP(fdvp, fcnp); /* XXX, why not in NFS? */
+		VOP_ABORTOP(tdvp, tcnp); /* XXX, why not in NFS? */
+		vrele(tdvp);
+		if (tvp) {
+			vrele(tvp);
+		}
 		vrele(fdvp);
-		vrele(fvp);
+		if (fvp) {
+			vrele(fvp);
+		}
 		return (error);
+	}
+
+	/*
+	 * Reject "." and ".."
+	 */
+	if ((fcnp->cn_flags & ISDOTDOT) || (tcnp->cn_flags & ISDOTDOT) ||
+	    (fcnp->cn_namelen == 1 && fcnp->cn_nameptr[0] == '.') ||
+	    (tcnp->cn_namelen == 1 && tcnp->cn_nameptr[0] == '.')) {
+		error = EINVAL;
+		goto abortit;
+	}
+	    
+	/*
+	 * Get locks.
+	 */
+
+	/* paranoia */
+	fcnp->cn_flags |= LOCKPARENT|LOCKLEAF;
+	tcnp->cn_flags |= LOCKPARENT|LOCKLEAF;
+
+	if (fdvp == tdvp) {
+		/* One directory. Lock it and relookup both children. */
+		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+
+		if (VTOI(fdvp)->i_size == 0) {
+			/* directory has been rmdir'd */
+			VOP_UNLOCK(fdvp);
+			error = ENOENT;
+			goto abortit;
+		}
+
+		error = do_relookup(fdvp, &from_ulr, &fvp, fcnp);
+		if (error == 0 && fvp == NULL) {
+			/* relookup may produce this if fvp disappears */
+			error = ENOENT;
+		}
+		if (error) {
+			VOP_UNLOCK(fdvp);
+			goto abortit;
+		}
+
+		/*
+		 * The right way to do this is to look up both children
+		 * without locking either, and then lock both unless they
+		 * turn out to be the same. However, due to deep-seated
+		 * VFS-level issues all lookups lock the child regardless
+		 * of whether LOCKLEAF is set (if LOCKLEAF is not set,
+		 * the child is locked during lookup and then unlocked)
+		 * so it is not safe to look up tvp while fvp is locked.
+		 *
+		 * Unlocking fvp here temporarily is more or less safe,
+		 * because with the directory locked there's not much
+		 * that can happen to it. However, ideally it wouldn't
+		 * be necessary. XXX.
+		 */
+		VOP_UNLOCK(fvp);
+		/* remember fdvp == tdvp so tdvp is locked */
+		error = do_relookup(tdvp, &to_ulr, &tvp, tcnp);
+		if (error && error != ENOENT) {
+			VOP_UNLOCK(fdvp);
+			goto abortit;
+		}
+		if (error == ENOENT) {
+			/*
+			 * Note: currently if the name doesn't exist,
+			 * relookup succeeds (it intercepts the
+			 * EJUSTRETURN from VOP_LOOKUP) and sets tvp
+			 * to NULL. Therefore, we will never get
+			 * ENOENT and this branch is not needed.
+			 * However, in a saner future the EJUSTRETURN
+			 * garbage will go away, so let's DTRT.
+			 */
+			tvp = NULL;
+		}
+
+		/* tvp is locked; lock fvp if necessary */
+		if (!tvp || tvp != fvp) {
+			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
+		}
+	} else {
+		int found_fdvp;
+		struct vnode *illegal_fvp;
+
+		error = ufs_parentcheck(fdvp, tdvp, fcnp->cn_cred,
+					&found_fdvp, &illegal_fvp);
+		if (error) {
+			goto abortit;
+		}
+		if (found_fdvp) {
+			/* fdvp -> fvp -> tdvp -> tvp */
+			error = lock_vnode_sequence(fdvp, &from_ulr,
+						    &fvp, fcnp, 0,
+						    EINVAL,
+						    tdvp, &to_ulr,
+						    &tvp, tcnp, 1);
+		} else {
+			/* tdvp -> tvp -> fdvp -> fvp */
+			error = lock_vnode_sequence(tdvp, &to_ulr,
+						    &tvp, tcnp, 1,
+						    ENOTEMPTY,
+						    fdvp, &from_ulr,
+						    &fvp, fcnp, 0);
+		}
+		if (error) {
+			if (illegal_fvp) {
+				vrele(illegal_fvp);
+			}
+			goto abortit;
+		}
+		KASSERT(fvp != NULL);
+
+		if (illegal_fvp && fvp == illegal_fvp) {
+			vrele(illegal_fvp);
+			error = EINVAL;
+		abort_withlocks:
+			VOP_UNLOCK(fdvp);
+			if (tdvp != fdvp) {
+				VOP_UNLOCK(tdvp);
+			}
+			VOP_UNLOCK(fvp);
+			if (tvp && tvp != fvp) {
+				VOP_UNLOCK(tvp);
+			}
+			goto abortit;
+		}
+
+		if (illegal_fvp) {
+			vrele(illegal_fvp);
+		}
+	}
+
+	KASSERT(fdvp && VOP_ISLOCKED(fdvp));
+	KASSERT(fvp && VOP_ISLOCKED(fvp));
+	KASSERT(tdvp && VOP_ISLOCKED(tdvp));
+	KASSERT(tvp == NULL || VOP_ISLOCKED(tvp));
+
+	/* --- everything is now locked --- */
+
+	if (tvp && ((VTOI(tvp)->i_flags & (IMMUTABLE | APPEND)) ||
+	    (VTOI(tdvp)->i_flags & APPEND))) {
+		error = EPERM;
+		goto abort_withlocks;
 	}
 
 	/*
 	 * Check if just deleting a link name.
 	 */
-	if (tvp && ((VTOI(tvp)->i_flags & (IMMUTABLE | APPEND)) ||
-	    (VTOI(tdvp)->i_flags & APPEND))) {
-		error = EPERM;
-		goto abortit;
-	}
 	if (fvp == tvp) {
 		if (fvp->v_type == VDIR) {
 			error = EINVAL;
-			goto abortit;
+			goto abort_withlocks;
 		}
 
-		/* Release destination completely. */
+		/* Release destination completely. Leave fdvp locked. */
 		VOP_ABORTOP(tdvp, tcnp);
-		vput(tdvp);
-		vput(tvp);
+		if (fdvp != tdvp) {
+			VOP_UNLOCK(tdvp);
+		}
+		VOP_UNLOCK(tvp);
+		vrele(tdvp);
+		vrele(tvp);
 
 		/* Delete source. */
+		/* XXX: do we really need to relookup again? */
+
+		/*
+		 * fdvp is still locked, but we just unlocked fvp
+		 * (because fvp == tvp) so just decref fvp
+		 */
 		vrele(fvp);
 		fcnp->cn_flags &= ~(MODMASK);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 		fcnp->cn_nameiop = DELETE;
-		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
 			vput(fdvp);
 			return (error);
 		}
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
 	}
+#if 0
 	if ((error = vn_lock(fvp, LK_EXCLUSIVE)) != 0)
 		goto abortit;
+#endif
 	fdp = VTOI(fdvp);
 	ip = VTOI(fvp);
 	if ((nlink_t) ip->i_nlink >= LINK_MAX) {
-		VOP_UNLOCK(fvp);
 		error = EMLINK;
-		goto abortit;
+		goto abort_withlocks;
 	}
 	if ((ip->i_flags & (IMMUTABLE | APPEND)) ||
 		(fdp->i_flags & APPEND)) {
-		VOP_UNLOCK(fvp);
 		error = EPERM;
-		goto abortit;
+		goto abort_withlocks;
 	}
 	if ((ip->i_mode & IFMT) == IFDIR) {
 		/*
@@ -286,9 +582,8 @@ wapbl_ufs_rename(void *v)
 		    (fcnp->cn_flags & ISDOTDOT) ||
 		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
-			VOP_UNLOCK(fvp);
 			error = EINVAL;
-			goto abortit;
+			goto abort_withlocks;
 		}
 		ip->i_flag |= IN_RENAME;
 		doingdirectory = 1;
@@ -297,8 +592,8 @@ wapbl_ufs_rename(void *v)
 	VN_KNOTE(fdvp, NOTE_WRITE);		/* XXXLUKEM/XXX: right place? */
 
 	/*
-	 * When the target exists, both the directory
-	 * and target vnodes are returned locked.
+	 * Both the directory
+	 * and target vnodes are locked.
 	 */
 	tdp = VTOI(tdvp);
 	txp = NULL;
@@ -308,6 +603,7 @@ wapbl_ufs_rename(void *v)
 	mp = fdvp->v_mount;
 	fstrans_start(mp, FSTRANS_SHARED);
 
+#if 0
 	/*
 	 * If ".." must be changed (ie the directory gets a new
 	 * parent) then the source directory must not be in the
@@ -318,13 +614,17 @@ wapbl_ufs_rename(void *v)
 	 * to namei, as the parent directory is unlocked by the
 	 * call to checkpath().
 	 */
+#endif
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
+#if 0
 	VOP_UNLOCK(fvp);
+#endif
 	if (oldparent != tdp->i_number)
 		newparent = tdp->i_number;
 	if (doingdirectory && newparent) {
 		if (error)	/* write access check above */
 			goto out;
+#if 0
 		if (txp != NULL)
 			vput(tvp);
 		txp = NULL;
@@ -346,15 +646,17 @@ wapbl_ufs_rename(void *v)
 		/* update the supplemental reasults */
 		to_ulr = tdp->i_crap;
 		UFS_CHECK_CRAPCOUNTER(tdp);
-
 		if (tvp)
 			txp = VTOI(tvp);
+#endif
 	}
 
+#if 0
 	/*
 	 * XXX handle case where fdvp is parent of tdvp,
 	 * by unlocking tdvp and regrabbing it with vget after?
 	 */
+#endif
 
 	/*
 	 * This was moved up to before the journal lock to
@@ -368,6 +670,7 @@ wapbl_ufs_rename(void *v)
 			error = doingdirectory ? ENOTEMPTY : EISDIR;
 			goto out;
 		}
+#if 0
 		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
 			vput(fdvp);
@@ -390,6 +693,7 @@ wapbl_ufs_rename(void *v)
 		/* update supplemental lookup results */
 		from_ulr = VTOI(fdvp)->i_crap;
 		UFS_CHECK_CRAPCOUNTER(VTOI(fdvp));
+#endif
 	}
 	if (fvp != NULL) {
 		fxp = VTOI(fvp);
@@ -400,15 +704,19 @@ wapbl_ufs_rename(void *v)
 		 */
 		if (doingdirectory)
 			panic("rename: lost dir entry");
+#if 0
 		vrele(ap->a_fvp);
+#endif
 		error = ENOENT;	/* XXX ufs_rename sets "0" here */
 		goto out2;
 	}
+#if 0
 	/*
 	 * XXX: if fvp != a_fvp, a_fvp can now have 0 references and yet we
 	 * access a_fvp->inode via ip later.  boom.
 	 */
 	vrele(ap->a_fvp);
+#endif
 
 	error = UFS_WAPBL_BEGIN(fdvp->v_mount);
 	if (error)
@@ -661,6 +969,8 @@ wapbl_ufs_rename(void *v)
 	/*
 	 * 3) Unlink the source.
 	 */
+
+#if 0
 	/*
 	 * Ensure that the directory entry still exists and has not
 	 * changed while the new name has been entered. If the source is
@@ -670,7 +980,9 @@ wapbl_ufs_rename(void *v)
 	 * flag ensures that it cannot be moved by another rename or removed
 	 * by a rmdir.
 	 */
+#endif
 	if (fxp != ip) {
+		/* now not possible */
 		if (doingdirectory)
 			panic("rename: lost dir entry");
 	} else {
@@ -694,8 +1006,6 @@ wapbl_ufs_rename(void *v)
 	goto done;
 
  out:
-	vrele(fvp);
-	vrele(fdvp);
 	goto out2;
 
 	/* exit routines from steps 1 & 2 */
@@ -709,8 +1019,6 @@ wapbl_ufs_rename(void *v)
 	UFS_WAPBL_UPDATE(fvp, NULL, NULL, 0);
  done:
 	UFS_WAPBL_END(fdvp->v_mount);
-	vput(fdvp);
-	vput(fvp);
  out2:
 	/*
 	 * clear IN_RENAME - some exit paths happen too early to go
@@ -719,13 +1027,20 @@ wapbl_ufs_rename(void *v)
 	 */
 	ip->i_flag &= ~IN_RENAME;
 
-	if (txp)
-		vput(ITOV(txp));
-	if (tdp) {
-		if (newparent)
-			vput(ITOV(tdp));
-		else
-			vrele(ITOV(tdp));
+	VOP_UNLOCK(fdvp);
+	if (tdvp != fdvp) {
+		VOP_UNLOCK(tdvp);
+	}
+	VOP_UNLOCK(fvp);
+	if (tvp && tvp != fvp) {
+		VOP_UNLOCK(tvp);
+	}
+
+	vrele(fdvp);
+	vrele(tdvp);
+	vrele(fvp);
+	if (tvp) {
+		vrele(tvp);
 	}
 
 	fstrans_done(mp);
