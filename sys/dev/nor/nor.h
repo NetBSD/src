@@ -1,4 +1,4 @@
-/*	$NetBSD: nor.h,v 1.2 2011/07/15 19:19:57 cliff Exp $	*/
+/*	$NetBSD: nor.h,v 1.3 2011/07/17 00:52:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -41,7 +41,7 @@
 #include <sys/buf.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/flash/flash.h>
 #include <dev/flash/flash_io.h>
