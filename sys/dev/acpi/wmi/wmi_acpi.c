@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.12 2011/02/16 08:19:56 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.13 2011/07/17 02:46:01 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.12 2011/02/16 08:19:56 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.13 2011/07/17 02:46:01 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -73,7 +73,8 @@ static ACPI_STATUS	acpi_wmi_ec_handler(uint32_t, ACPI_PHYSICAL_ADDRESS,
 				uint32_t, ACPI_INTEGER *, void *, void *);
 static bool		acpi_wmi_suspend(device_t, const pmf_qual_t *);
 static bool		acpi_wmi_resume(device_t, const pmf_qual_t *);
-static ACPI_STATUS	acpi_wmi_enable(ACPI_HANDLE, const char *, bool, bool);
+static ACPI_STATUS	acpi_wmi_enable_event(ACPI_HANDLE, uint8_t, bool);
+static ACPI_STATUS	acpi_wmi_enable_collection(ACPI_HANDLE, const char *, bool);
 static bool		acpi_wmi_input(struct wmi_t *, uint8_t, uint8_t);
 
 const char * const acpi_wmi_ids[] = {
@@ -411,15 +412,14 @@ acpi_wmi_event_add(struct acpi_wmi_softc *sc)
 		return;
 
 	/*
-	 * Enable possible expensive events.
+	 * Enable possible events, expensive or otherwise.
 	 */
 	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
 
-		if ((wmi->guid.flags & ACPI_WMI_FLAG_EVENT) != 0 &&
-		    (wmi->guid.flags & ACPI_WMI_FLAG_EXPENSIVE) != 0) {
+		if ((wmi->guid.flags & ACPI_WMI_FLAG_EVENT) != 0) {
 
-			rv = acpi_wmi_enable(sc->sc_node->ad_handle,
-			    wmi->guid.oid, false, true);
+			rv = acpi_wmi_enable_event(sc->sc_node->ad_handle,
+			    wmi->guid.nid, true);
 
 			if (ACPI_SUCCESS(rv)) {
 				wmi->eevent = true;
@@ -449,10 +449,9 @@ acpi_wmi_event_del(struct acpi_wmi_softc *sc)
 			continue;
 
 		KASSERT((wmi->guid.flags & ACPI_WMI_FLAG_EVENT) != 0);
-		KASSERT((wmi->guid.flags & ACPI_WMI_FLAG_EXPENSIVE) != 0);
 
-		rv = acpi_wmi_enable(sc->sc_node->ad_handle,
-		    wmi->guid.oid, false, false);
+		rv = acpi_wmi_enable_event(sc->sc_node->ad_handle,
+		    wmi->guid.nid, false);
 
 		if (ACPI_SUCCESS(rv)) {
 			wmi->eevent = false;
@@ -606,19 +605,23 @@ acpi_wmi_resume(device_t self, const pmf_qual_t *qual)
 	return true;
 }
 
-/*
- * Enables or disables data collection (WCxx) or an event (WExx).
- */
 static ACPI_STATUS
-acpi_wmi_enable(ACPI_HANDLE hdl, const char *oid, bool data, bool flag)
+acpi_wmi_enable_event(ACPI_HANDLE hdl, uint8_t nid, bool flag)
 {
 	char path[5];
-	const char *str;
 
-	str = (data != false) ? "WC" : "WE";
+	snprintf(path, sizeof(path), "WE%02X", nid);
 
-	(void)strlcpy(path, str, sizeof(path));
-	(void)strlcat(path, oid, sizeof(path));
+	return acpi_eval_set_integer(hdl, path, (flag != false) ? 0x01 : 0x00);
+}
+
+static ACPI_STATUS
+acpi_wmi_enable_collection(ACPI_HANDLE hdl, const char *oid, bool flag)
+{
+	char path[5];
+
+	strlcpy(path, "WC", sizeof(path));
+	strlcat(path, oid, sizeof(path));
 
 	return acpi_eval_set_integer(hdl, path, (flag != false) ? 0x01 : 0x00);
 }
@@ -684,8 +687,8 @@ acpi_wmi_data_query(device_t self, const char *guid,
 	 */
 	if ((wmi->guid.flags & ACPI_WMI_FLAG_EXPENSIVE) != 0) {
 
-		rvxx = acpi_wmi_enable(sc->sc_node->ad_handle,
-		    wmi->guid.oid, true, true);
+		rvxx = acpi_wmi_enable_collection(sc->sc_node->ad_handle,
+		    wmi->guid.oid, true);
 	}
 
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, path, &arg, obuf);
@@ -693,8 +696,8 @@ acpi_wmi_data_query(device_t self, const char *guid,
 	/* No longer needed. */
 	if (ACPI_SUCCESS(rvxx)) {
 
-		(void)acpi_wmi_enable(sc->sc_node->ad_handle,
-		    wmi->guid.oid, true, false);
+		(void)acpi_wmi_enable_collection(sc->sc_node->ad_handle,
+		    wmi->guid.oid, false);
 	}
 
 #ifdef DIAGNOSTIC
