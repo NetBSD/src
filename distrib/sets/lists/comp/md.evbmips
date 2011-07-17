@@ -1,4 +1,4 @@
-# $NetBSD: md.evbmips,v 1.14 2009/08/19 08:24:44 he Exp $
+# $NetBSD: md.evbmips,v 1.15 2011/07/17 01:37:32 dyoung Exp $
 ./usr/include/evbmips				comp-c-include
 ./usr/include/evbmips/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbmips/ansi.h			comp-c-include
@@ -6,7 +6,7 @@
 ./usr/include/evbmips/asm.h			comp-c-include
 ./usr/include/evbmips/bsd-aout.h		comp-obsolete		obsolete
 ./usr/include/evbmips/bswap.h			comp-c-include
-./usr/include/evbmips/bus.h			comp-c-include
+./usr/include/evbmips/bus.h			comp-obsolete		obsolete
 ./usr/include/evbmips/cdefs.h			comp-c-include
 ./usr/include/evbmips/cpu.h			comp-c-include
 ./usr/include/evbmips/db_machdep.h		comp-obsolete		obsolete
