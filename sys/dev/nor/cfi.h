@@ -1,10 +1,10 @@
-/*	$NetBSD: cfi.h,v 1.2 2011/07/15 19:19:57 cliff Exp $	*/
+/*	$NetBSD: cfi.h,v 1.3 2011/07/17 00:52:42 dyoung Exp $	*/
 
 #ifndef _CFI_H_
 #define _CFI_H_
 
 #include <dev/nor/cfi_0002.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * minimum size to bus_space_map for probe/identify QRY:

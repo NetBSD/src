@@ -1,9 +1,9 @@
-/*	$NetBSD: cfi_0002.c,v 1.1 2011/07/15 19:19:57 cliff Exp $	*/
+/*	$NetBSD: cfi_0002.c,v 1.2 2011/07/17 00:52:42 dyoung Exp $	*/
 
 #include "opt_flash.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfi_0002.c,v 1.1 2011/07/15 19:19:57 cliff Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: cfi_0002.c,v 1.2 2011/07/17 00:52:42 dyoung Exp $"); 
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -12,7 +12,7 @@ __KERNEL_RCSID(0, "$NetBSD: cfi_0002.c,v 1.1 2011/07/15 19:19:57 cliff Exp $");
 #include <sys/endian.h>
 #include <sys/time.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
         
 #include <dev/nor/nor.h>
 #include <dev/nor/cfi.h>
