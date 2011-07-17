@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.246 2011/06/21 03:37:21 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.247 2011/07/17 02:32:01 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.246 2011/06/21 03:37:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.247 2011/07/17 02:32:01 jakllsch Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1035,7 +1035,7 @@ acpi_notify_handler(ACPI_HANDLE handle, uint32_t event, void *aux)
 
 	/*
 	 * We deliver notifications only to drivers
-	 * that have been succesfully attached and
+	 * that have been successfully attached and
 	 * that have registered a handler with us.
 	 * The opaque pointer is always the device_t.
 	 */
