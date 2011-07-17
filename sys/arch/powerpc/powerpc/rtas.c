@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.12 2011/06/20 05:50:39 matt Exp $ */
+/*	$NetBSD: rtas.c,v 1.13 2011/07/17 20:54:46 joerg Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.12 2011/06/20 05:50:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.13 2011/07/17 20:54:46 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -20,7 +20,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.12 2011/06/20 05:50:39 matt Exp $");
 #include <dev/clock_subr.h>
 #include <dev/ofw/openfirm.h>
 
-#include <powerpc/stdarg.h>
 #include <powerpc/rtas.h>
 #include <powerpc/psl.h>
 

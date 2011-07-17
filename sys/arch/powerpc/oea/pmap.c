@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81 2011/06/30 00:52:59 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.82 2011/07/17 20:54:46 joerg Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2011/06/30 00:52:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2011/07/17 20:54:46 joerg Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2011/06/30 00:52:59 matt Exp $");
 #include <powerpc/pcb.h>
 #include <powerpc/psl.h>
 #include <powerpc/spr.h>
-#include <powerpc/stdarg.h>
 #include <powerpc/oea/spr.h>
 #include <powerpc/oea/sr_601.h>
 

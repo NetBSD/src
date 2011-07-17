@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.120 2010/04/20 14:32:03 jmcneill Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.121 2011/07/17 20:54:52 joerg Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.120 2010/04/20 14:32:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.121 2011/07/17 20:54:52 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.120 2010/04/20 14:32:03 jmcneill E
 #include <net/if_types.h>
 #include <net/route.h>
 #include <net/ppp_defs.h>
-
-#include <machine/stdarg.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>

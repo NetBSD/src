@@ -1,4 +1,4 @@
-# $NetBSD: md.hp300,v 1.60 2011/02/07 18:11:28 tsutsui Exp $
+# $NetBSD: md.hp300,v 1.61 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/hp300				comp-c-include
 ./usr/include/hp300/_G_config.h			comp-obsolete		obsolete
 ./usr/include/hp300/ansi.h			comp-c-include
@@ -45,11 +45,11 @@
 ./usr/include/hp300/rwlock.h			comp-c-include
 ./usr/include/hp300/setjmp.h			comp-c-include
 ./usr/include/hp300/signal.h			comp-c-include
-./usr/include/hp300/stdarg.h			comp-c-include
+./usr/include/hp300/stdarg.h			comp-obsolete		obsolete
 ./usr/include/hp300/svr4_machdep.h		comp-obsolete		obsolete
 ./usr/include/hp300/trap.h			comp-c-include
 ./usr/include/hp300/types.h			comp-c-include
-./usr/include/hp300/varargs.h			comp-c-include
+./usr/include/hp300/varargs.h			comp-obsolete		obsolete
 ./usr/include/hp300/vmparam.h			comp-c-include
 ./usr/include/hp300/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include

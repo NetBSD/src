@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_name.h,v 1.2 2007/01/14 05:33:18 dogcow Exp $	*/
+/*	$NetBSD: aml_name.h,v 1.3 2011/07/17 20:54:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999 Takanori Watanabe
@@ -34,7 +34,7 @@
 #ifndef _AML_NAME_H_
 #define _AML_NAME_H_
 
-#include <machine/stdarg.h>
+#include <stdarg.h>
 
 #include <aml/aml_obj.h>
 

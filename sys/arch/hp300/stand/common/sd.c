@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.10 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: sd.c,v 1.11 2011/07/17 20:54:40 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,8 +44,6 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
-
-#include <machine/stdarg.h>
 
 #include <lib/libsa/stand.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.32 2008/10/31 16:12:18 christos Exp $	*/
+/*	$NetBSD: syslog.h,v 1.33 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -185,16 +185,9 @@ struct syslog_data {
     .log_mask = 0xff, \
 }
 
-/*
- * Don't use va_list in the vsyslog() prototype.   Va_list is typedef'd in two
- * places (<machine/varargs.h> and <machine/stdarg.h>), so if we include one
- * of them here we may collide with the utility's includes.  It's unreasonable
- * for utilities to have to include one of them to include syslog.h, so we get
- * _BSD_VA_LIST_ from <machine/ansi.h> and use it.
- */
-#include <machine/ansi.h>
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
+#include <sys/ansi.h>
 
 __BEGIN_DECLS
 void	closelog(void);
@@ -203,24 +196,24 @@ int	setlogmask(int);
 void	syslog(int, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
 #if defined(_NETBSD_SOURCE)
-void	vsyslog(int, const char *, _BSD_VA_LIST_)
+void	vsyslog(int, const char *, __va_list)
     __attribute__((__format__(__printf__,2,0)));
 void	closelog_r(struct syslog_data *);
 void	openlog_r(const char *, int, int, struct syslog_data *);
 int	setlogmask_r(int, struct syslog_data *);
 void	syslog_r(int, struct syslog_data *, const char *, ...)
     __attribute__((__format__(__printf__,3,4)));
-void	vsyslog_r(int, struct syslog_data *, const char *, _BSD_VA_LIST_)
+void	vsyslog_r(int, struct syslog_data *, const char *, __va_list)
     __attribute__((__format__(__printf__,3,0)));
 void syslogp(int, const char *, const char *, const char *, ...)
     __attribute__((__format__(__printf__,4,5)));
-void vsyslogp(int, const char *, const char *, const char *, _BSD_VA_LIST_)
+void vsyslogp(int, const char *, const char *, const char *, __va_list)
     __attribute__((__format__(__printf__,4,0)));
 void syslogp_r(int, struct syslog_data *, const char *, const char *,
     const char *, ...)
     __attribute__((__format__(__printf__,5,6)));
 void vsyslogp_r(int, struct syslog_data *, const char *, const char *,
-    const char *, _BSD_VA_LIST_)
+    const char *, __va_list)
     __attribute__((__format__(__printf__,5,0)));
 #endif
 __END_DECLS
@@ -230,7 +223,7 @@ __END_DECLS
 void	logpri(int);
 void	log(int, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
-void	vlog(int, const char *, _BSD_VA_LIST_)
+void	vlog(int, const char *, __va_list)
     __attribute__((__format__(__printf__,2,0)));
 void	addlog(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));

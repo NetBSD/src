@@ -1,4 +1,4 @@
-/*      $NetBSD: ip_etherip.c,v 1.13 2010/04/05 07:22:50 joerg Exp $        */
+/*      $NetBSD: ip_etherip.c,v 1.14 2011/07/17 20:54:53 joerg Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.13 2010/04/05 07:22:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.14 2011/07/17 20:54:53 joerg Exp $");
 
 #include "opt_inet.h"
 
@@ -88,8 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.13 2010/04/05 07:22:50 joerg Exp $"
 #include <net/if_media.h>
 #include <net/if_etherip.h>
 #include <net/bpf.h>
-
-#include <machine/stdarg.h>
 
 int
 ip_etherip_output(struct ifnet *ifp, struct mbuf *m)

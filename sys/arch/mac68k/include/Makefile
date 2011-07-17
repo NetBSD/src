@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2007/02/09 21:55:06 ad Exp $
+#	$NetBSD: Makefile,v 1.23 2011/07/17 20:54:43 joerg Exp $
 
 INCSDIR= /usr/include/mac68k
 
@@ -18,9 +18,9 @@ INCS=	adbsys.h ansi.h aout_machdep.h asm.h autoconf.h \
 	param.h pcb.h pio.h pmap.h pmc.h proc.h profile.h psc.h psl.h \
 	pte.h ptrace.h \
 	reg.h rwlock.h \
-	scsi_5380.h setjmp.h signal.h stdarg.h \
+	scsi_5380.h setjmp.h signal.h \
 	trap.h types.h \
-	varargs.h viareg.h vmparam.h \
+	viareg.h vmparam.h \
 	wchar_limits.h \
 	z8530var.h
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.7 2010/12/14 14:08:42 tron Exp $	*/
+/*	$NetBSD: fbt.c,v 1.8 2011/07/17 20:54:33 joerg Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -56,7 +56,6 @@
 #include <sys/syscall.h>
 #include <sys/uio.h>
 #include <sys/unistd.h>
-#include <machine/stdarg.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>

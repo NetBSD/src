@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.14 2011/07/07 06:01:51 mrg Exp $	*/
+/*	$NetBSD: wd.c,v 1.15 2011/07/17 20:54:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 #include <lib/libkern/libkern.h>
 
 #include <machine/param.h>
-#include <machine/stdarg.h>
 #include <dev/raidframe/raidframevar.h>		/* For RF_PROTECTED_SECTORS */
 
 #include "boot.h"

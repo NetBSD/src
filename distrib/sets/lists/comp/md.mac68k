@@ -1,4 +1,4 @@
-# $NetBSD: md.mac68k,v 1.57 2008/08/22 13:42:19 lukem Exp $
+# $NetBSD: md.mac68k,v 1.58 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mac68k				comp-c-include
 ./usr/include/mac68k/_G_config.h		comp-obsolete		obsolete
@@ -51,11 +51,11 @@
 ./usr/include/mac68k/scsi_5380.h		comp-c-include
 ./usr/include/mac68k/setjmp.h			comp-c-include
 ./usr/include/mac68k/signal.h			comp-c-include
-./usr/include/mac68k/stdarg.h			comp-c-include
+./usr/include/mac68k/stdarg.h			comp-obsolete		obsolete
 ./usr/include/mac68k/svr4_machdep.h		comp-obsolete		obsolete
 ./usr/include/mac68k/trap.h			comp-c-include
 ./usr/include/mac68k/types.h			comp-c-include
-./usr/include/mac68k/varargs.h			comp-c-include
+./usr/include/mac68k/varargs.h			comp-obsolete		obsolete
 ./usr/include/mac68k/viareg.h			comp-c-include
 ./usr/include/mac68k/vmparam.h			comp-c-include
 ./usr/include/mac68k/wchar_limits.h		comp-c-include

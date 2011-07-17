@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.37 2010/02/20 16:46:38 martin Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.38 2011/07/17 20:54:48 joerg Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.37 2010/02/20 16:46:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.38 2011/07/17 20:54:48 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -53,12 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.37 2010/02/20 16:46:38 martin Exp 
 #include <machine/promlib.h>
 
 #include <dev/ofw/ofw_pci.h>
-
-/*
- * Note that stdarg.h and the ANSI style va_start macro is used for both
- * ANSI and traditional C compilers.
- */
-#include <machine/stdarg.h>
 
 #include <machine/sparc64.h>
 

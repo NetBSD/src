@@ -2278,7 +2278,7 @@ void dtrace_debug_printf(const char *, ...);
 extern void dtrace_sync(void);
 extern void dtrace_toxic_ranges(void (*)(uintptr_t, uintptr_t));
 extern void dtrace_xcall(processorid_t, dtrace_xcall_t, void *);
-extern void dtrace_vpanic(const char *, _BSD_VA_LIST_);
+extern void dtrace_vpanic(const char *, va_list);
 extern void dtrace_panic(const char *, ...);
 
 extern int dtrace_safe_defer_signal(void);
