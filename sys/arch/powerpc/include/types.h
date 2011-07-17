@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.45 2011/06/23 01:27:20 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.46 2011/07/17 23:23:54 dyoung Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -75,6 +75,7 @@ typedef volatile __uint32_t __cpuset_t;
 #define __SIMPLELOCK_UNLOCKED	0
 
 #define __HAVE_CPU_COUNTER
+#define __HAVE_NEW_STYLE_BUS_H
 #define __HAVE_SYSCALL_INTERN
 #define	__HAVE_CPU_DATA_FIRST
 #define	__HAVE_CPU_UAREA_ROUTINES
