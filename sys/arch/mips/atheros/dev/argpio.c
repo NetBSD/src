@@ -1,4 +1,4 @@
-/* $NetBSD: argpio.c,v 1.5 2011/07/10 06:24:19 matt Exp $ */
+/* $NetBSD: argpio.c,v 1.6 2011/07/17 01:29:25 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Garrett D'Amore
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.5 2011/07/10 06:24:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.6 2011/07/17 01:29:25 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -159,9 +159,10 @@ argpio_attach(device_t parent, device_t self, void *aux)
 
 		sc->sc_resetbtn.smpsw_name = device_xname(sc->sc_dev);
 		sc->sc_resetbtn.smpsw_type = PSWITCH_TYPE_RESET;
-		if (sysmon_pswitch_register(&sc->sc_resetbtn) != 0)
-			printf("%s: unable to register reset button\n",
-			    sc->sc_dev.dv_xname);
+		if (sysmon_pswitch_register(&sc->sc_resetbtn) != 0) {
+			aprint_normal_dev(sc->sc_dev,
+			    "unable to register reset button\n");
+		}
 	}
 
 	reg = GETREG(sc, GPIO_CR);
@@ -204,7 +205,7 @@ argpio_attach(device_t parent, device_t self, void *aux)
 	gba.gba_gc = &sc->sc_gc;
 	gba.gba_pins = sc->sc_pins;
 	gba.gba_npins = sc->sc_npins;
-	config_found_ia(&sc->sc_dev, "gpiobus", &gba, gpiobus_print);
+	config_found_ia(sc->sc_dev, "gpiobus", &gba, gpiobus_print);
 }
 
 void
