@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.22 2009/12/13 08:25:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 2011/07/17 01:09:00 dyoung Exp $
 
 # These should always be a MACHINE_CPU value
-ARCHDIRS= alpha arm i386 m68k sparc x86_64
+ARCHDIRS= arm i386 m68k sparc x86_64
 
 .for arch in ${ARCHDIRS}
 .include "${.CURDIR}/${arch}/Makefile.inc"
