@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.93 2011/07/16 00:19:57 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.94 2011/07/17 15:36:32 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5396,4 +5396,26 @@ sys/ufs/ufs/ufs_inode.c				1.86 via patch
 
 	Prevent panic when removing a file with extended attributes.
 	[manu, ticket #1642]
+
+distrib/sets/lists/comp/mi			1.1634 via patch
+lib/libc/sys/Makefile.inc			1.207 via patch
+lib/libc/sys/extattr_get_file.2			patch
+lib/libpuffs/dispatcher.c			1.34,1.36 via patch
+lib/libpuffs/puffs.c				1.107 via patch
+lib/libpuffs/puffs.h				1.115,1.118 via patch
+sys/fs/puffs/puffs_msgif.h			1.71,1.76 via patch
+sys/fs/puffs/puffs_vfsops.c			1.88 via patch
+sys/fs/puffs/puffs_vnops.c			1.145,1.154 via patch
+sys/kern/vfs_xattr.c				1.24-1.27 via patch
+sys/kern/vnode_if.c				1.87 via patch
+sys/sys/Makefile				1.133 via patch
+sys/sys/extattr.h				1.6 via patch
+sys/sys/vnode_if.h				1.81 via patch
+sys/ufs/ffs/ffs_vnops.c				patch
+sys/ufs/ufs/ufs_extattr.c			1.31,1.34 via patch
+
+	Support extended attribute backing store autocreation and
+	autoload, fix the Linux-like extattr API, and add puffs
+	support.
+	[manu, ticket #1645]
 
