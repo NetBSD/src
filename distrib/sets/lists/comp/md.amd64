@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.123 2011/07/11 13:42:49 njoly Exp $
+# $NetBSD: md.amd64,v 1.124 2011/07/17 01:20:12 dyoung Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -7,7 +7,7 @@
 ./usr/include/amd64/autoconf.h			comp-obsolete		obsolete
 ./usr/include/amd64/bootinfo.h			comp-c-include
 ./usr/include/amd64/bswap.h			comp-c-include
-./usr/include/amd64/bus.h			comp-c-include
+./usr/include/amd64/bus.h			comp-obsolete		obsolete
 ./usr/include/amd64/byte_swap.h			comp-c-include
 ./usr/include/amd64/cdefs.h			comp-c-include
 ./usr/include/amd64/cpu.h			comp-c-include
@@ -115,7 +115,7 @@
 ./usr/include/i386/bioscall.h			comp-c-include
 ./usr/include/i386/bootinfo.h			comp-c-include
 ./usr/include/i386/bswap.h			comp-c-include
-./usr/include/i386/bus.h			comp-c-include
+./usr/include/i386/bus.h			comp-obsolete		obsolete
 ./usr/include/i386/byte_swap.h			comp-c-include
 ./usr/include/i386/cdefs.h			comp-c-include
 ./usr/include/i386/cpu.h			comp-c-include
@@ -244,7 +244,7 @@
 ./usr/include/x86/aout_machdep.h		comp-c-include
 ./usr/include/x86/autoconf.h			comp-obsolete		obsolete
 ./usr/include/x86/bootinfo.h			comp-c-include
-./usr/include/x86/bus.h				comp-c-include
+./usr/include/x86/bus.h				comp-obsolete		obsolete
 ./usr/include/x86/cacheinfo.h			comp-c-include
 ./usr/include/x86/cpu.h				comp-c-include
 ./usr/include/x86/cputypes.h			comp-c-include

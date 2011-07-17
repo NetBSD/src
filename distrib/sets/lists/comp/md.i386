@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.120 2011/07/07 08:46:21 mrg Exp $
+# $NetBSD: md.i386,v 1.121 2011/07/17 01:20:12 dyoung Exp $
 ./usr/include/clang-3.0/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/emmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/immintrin.h		comp-c-include		llvm
@@ -50,7 +50,7 @@
 ./usr/include/i386/bioscall.h			comp-c-include
 ./usr/include/i386/bootinfo.h			comp-c-include
 ./usr/include/i386/bswap.h			comp-c-include
-./usr/include/i386/bus.h			comp-c-include
+./usr/include/i386/bus.h			comp-obsolete		obsolete
 ./usr/include/i386/byte_swap.h			comp-c-include
 ./usr/include/i386/cdefs.h			comp-c-include
 ./usr/include/i386/conf.h			comp-obsolete		obsolete
@@ -126,7 +126,7 @@
 ./usr/include/x86/aout_machdep.h		comp-c-include
 ./usr/include/x86/autoconf.h			comp-obsolete		obsolete
 ./usr/include/x86/bootinfo.h			comp-c-include
-./usr/include/x86/bus.h				comp-c-include
+./usr/include/x86/bus.h				comp-obsolete		obsolete
 ./usr/include/x86/cacheinfo.h			comp-c-include
 ./usr/include/x86/cpu.h				comp-c-include
 ./usr/include/x86/cputypes.h			comp-c-include
