@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.10 2008/04/28 20:23:13 martin Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.11 2011/07/17 01:36:50 dyoung Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10 2008/04/28 20:23:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.11 2011/07/17 01:36:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,274 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10 2008/04/28 20:23:13 martin Exp $"
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
+
+/*
+ *	uintN_t bus_space_read_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset);
+ *
+ * Read a 1, 2, 4, or 8 byte quantity from bus space
+ * described by tag/handle/offset.
+ */
+
+#define bus_space_read(BYTES,BITS)					\
+__CONCAT3(uint,BITS,_t)					\
+__CONCAT(bus_space_read_,BYTES)(bus_space_tag_t bst,			\
+    bus_space_handle_t bsh, bus_size_t offset)				\
+{									\
+	return (*(volatile __CONCAT3(uint,BITS,_t) *)			\
+	    (bsh + (offset << __CONCAT(bst->bs_stride_,BYTES))));	\
+}
+
+bus_space_read(1,8)
+bus_space_read(2,16)
+bus_space_read(4,32)
+bus_space_read(8,64)
+
+/*
+ *	void bus_space_read_multi_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    uintN_t *addr, size_t count);
+ *
+ * Read `count' 1, 2, 4, or 8 byte quantities from bus space
+ * described by tag/handle/offset and copy into buffer provided.
+ */
+
+#define bus_space_read_multi(BYTES,BITS)				\
+void							\
+__CONCAT(bus_space_read_multi_,BYTES)(bus_space_tag_t bst,		\
+    bus_space_handle_t bsh, bus_size_t offset,				\
+    __CONCAT3(uint,BITS,_t) *datap, bus_size_t count)			\
+{									\
+	volatile __CONCAT3(uint,BITS,_t) *p =				\
+	    (volatile __CONCAT3(uint,BITS,_t) *)			\
+	    (bsh + (offset << __CONCAT(bst->bs_stride_,BYTES)));	\
+									\
+	for (; count > 0; --count)					\
+		*datap++ = *p;						\
+}
+
+bus_space_read_multi(1,8)
+bus_space_read_multi(2,16)
+bus_space_read_multi(4,32)
+bus_space_read_multi(8,64)
+
+/*
+ *	void bus_space_read_region_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    uintN_t *addr, size_t count);
+ *
+ * Read `count' 1, 2, 4, or 8 byte quantities from bus space
+ * described by tag/handle and starting at `offset' and copy into
+ * buffer provided.
+ */
+
+#define bus_space_read_region(BYTES,BITS)				\
+void							\
+__CONCAT(bus_space_read_region_,BYTES)(bus_space_tag_t bst,		\
+    bus_space_handle_t bsh, bus_size_t offset,				\
+    __CONCAT3(uint,BITS,_t) *datap, bus_size_t count)			\
+{									\
+	int stride = 1 << __CONCAT(bst->bs_stride_,BYTES);		\
+	volatile __CONCAT3(uint,BITS,_t) *p =				\
+	    (volatile __CONCAT3(uint,BITS,_t) *)			\
+	    (bsh + (offset << __CONCAT(bst->bs_stride_,BYTES)));	\
+									\
+	for (; count > 0; --count) {					\
+		*datap++ = *p;						\
+		p += stride;						\
+	}								\
+}
+
+bus_space_read_region(1,8)
+bus_space_read_region(2,16)
+bus_space_read_region(4,32)
+bus_space_read_region(8,64)
+
+/*
+ *	void bus_space_write_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    uintN_t value);
+ *
+ * Write the 1, 2, 4, or 8 byte value `value' to bus space
+ * described by tag/handle/offset.
+ */
+
+#define bus_space_write(BYTES,BITS)					\
+void							\
+__CONCAT(bus_space_write_,BYTES)(bus_space_tag_t bst,			\
+    bus_space_handle_t bsh,						\
+    bus_size_t offset, __CONCAT3(uint,BITS,_t) data)			\
+{									\
+	*(volatile __CONCAT3(uint,BITS,_t) *)				\
+	    (bsh + (offset << __CONCAT(bst->bs_stride_,BYTES))) = data; \
+}
+
+bus_space_write(1,8)
+bus_space_write(2,16)
+bus_space_write(4,32)
+bus_space_write(8,64)
+
+/*
+ *	void bus_space_write_multi_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    const uintN_t *addr, size_t count);
+ *
+ * Write `count' 1, 2, 4, or 8 byte quantities from the buffer
+ * provided to bus space described by tag/handle/offset.
+ */
+
+#define bus_space_write_multi(BYTES,BITS)				\
+void							\
+__CONCAT(bus_space_write_multi_,BYTES)(bus_space_tag_t bst,		\
+    bus_space_handle_t bsh, bus_size_t offset,				\
+    const __CONCAT3(uint,BITS,_t) *datap, bus_size_t count)		\
+{									\
+	volatile __CONCAT3(uint,BITS,_t) *p =				\
+	    (volatile __CONCAT3(uint,BITS,_t) *)			\
+	    (bsh + (offset << __CONCAT(bst->bs_stride_,BYTES)));	\
+									\
+	for (; count > 0; --count)					\
+		*p = *datap++;						\
+}
+
+bus_space_write_multi(1,8)
+bus_space_write_multi(2,16)
+bus_space_write_multi(4,32)
+bus_space_write_multi(8,64)
+
+/*
+ *	void bus_space_write_region_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    const uintN_t *addr, size_t count);
+ *
+ * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
+ * to bus space described by tag/handle starting at `offset'.
+ */
+
+#define bus_space_write_region(BYTES,BITS)				\
+void							\
+__CONCAT(bus_space_write_region_,BYTES)(bus_space_tag_t bst,		\
+    bus_space_handle_t bsh, bus_size_t offset,				\
+    const __CONCAT3(uint,BITS,_t) *datap, bus_size_t count)		\
+{									\
+	int stride = 1 << __CONCAT(bst->bs_stride_,BYTES);		\
+	volatile __CONCAT3(uint,BITS,_t) *p =				\
+	    (volatile __CONCAT3(uint,BITS,_t) *)			\
+	    (bsh + (offset << __CONCAT(bst->bs_stride_,BYTES)));	\
+									\
+	for (; count > 0; --count) {					\
+		*p = *datap++;						\
+		p += stride;						\
+	}								\
+}
+
+bus_space_write_region(1,8)
+bus_space_write_region(2,16)
+bus_space_write_region(4,32)
+bus_space_write_region(8,64)
+
+/*
+ *	void bus_space_set_multi_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset, uintN_t val,
+ *	    size_t count);
+ *
+ * Write the 1, 2, 4, or 8 byte value `val' to bus space described
+ * by tag/handle/offset `count' times.
+ */
+
+#define bus_space_set_multi(BYTES,BITS)					\
+void							\
+__CONCAT(bus_space_set_multi_,BYTES)(bus_space_tag_t bst,		\
+    bus_space_handle_t bsh, bus_size_t offset,				\
+    const __CONCAT3(uint,BITS,_t) data, bus_size_t count)		\
+{									\
+	volatile __CONCAT3(uint,BITS,_t) *p =				\
+	    (volatile __CONCAT3(uint,BITS,_t) *)			\
+	    (bsh + (offset << __CONCAT(bst->bs_stride_,BYTES)));	\
+									\
+	for (; count > 0; --count)					\
+		*p = data;						\
+}
+
+bus_space_set_multi(1,8)
+bus_space_set_multi(2,16)
+bus_space_set_multi(4,32)
+bus_space_set_multi(8,64)
+
+/*
+ *	void bus_space_set_region_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset, uintN_t val,
+ *	    size_t count);
+ *
+ * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
+ * by tag/handle starting at `offset'.
+ */
+
+#define bus_space_set_region(BYTES,BITS)				\
+void							\
+__CONCAT(bus_space_set_region_,BYTES)(bus_space_tag_t bst,		\
+    bus_space_handle_t bsh, bus_size_t offset,				\
+    __CONCAT3(uint,BITS,_t) data, bus_size_t count)			\
+{									\
+	int stride = 1 << __CONCAT(bst->bs_stride_,BYTES);		\
+	volatile __CONCAT3(uint,BITS,_t) *p =				\
+	    (volatile __CONCAT3(uint,BITS,_t) *)			\
+	    (bsh + (offset << __CONCAT(bst->bs_stride_,BYTES)));	\
+									\
+	for (; count > 0; --count) {					\
+		*p = data;						\
+		p += stride;						\
+	}								\
+}
+
+bus_space_set_region(1,8)
+bus_space_set_region(2,16)
+bus_space_set_region(4,32)
+bus_space_set_region(8,64)
+
+/*
+ *	void bus_space_copy_region_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh1, bus_size_t off1,
+ *	    bus_space_handle_t bsh2, bus_size_t off2,
+ *	    size_t count);
+ *
+ * Copy `count' 1, 2, 4, or 8 byte values from bus space starting
+ * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
+ */
+
+#define bus_space_copy_region(BYTES,BITS)				\
+void							\
+__CONCAT(bus_space_copy_region_,BYTES)(bus_space_tag_t bst,		\
+    bus_space_handle_t srcbsh, bus_size_t srcoffset,			\
+    bus_space_handle_t dstbsh, bus_size_t dstoffset, bus_size_t count)	\
+{									\
+	int stride = 1 << __CONCAT(bst->bs_stride_,BYTES);		\
+	volatile __CONCAT3(uint,BITS,_t) *srcp =			\
+	    (volatile __CONCAT3(uint,BITS,_t) *)			\
+	    (srcbsh + (srcoffset << __CONCAT(bst->bs_stride_,BYTES)));	\
+	volatile __CONCAT3(uint,BITS,_t) *dstp =			\
+	    (volatile __CONCAT3(uint,BITS,_t) *)			\
+	    (dstbsh + (dstoffset << __CONCAT(bst->bs_stride_,BYTES)));	\
+	bus_size_t offset;						\
+									\
+	if (srcp >= dstp) {						\
+		/* src after dest: copy forward */			\
+		for (offset = 0; count > 0; --count, offset += stride)	\
+			dstp[offset] = srcp[offset];			\
+	} else {							\
+		/* dest after src: copy backward */			\
+		offset = (count << __CONCAT(bst->bs_stride_,BYTES))	\
+		    - stride;						\
+		for (; count > 0; --count, offset -= stride)		\
+			dstp[offset] = srcp[offset];			\
+	}								\
+}
+
+bus_space_copy_region(1,8)
+bus_space_copy_region(2,16)
+bus_space_copy_region(4,32)
+bus_space_copy_region(8,64)
 
 void
 arc_bus_space_init(bus_space_tag_t bst, const char *name, paddr_t paddr,

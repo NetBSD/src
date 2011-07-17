@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.12 2009/08/12 23:29:19 matt Exp $
+#	$NetBSD: Makefile,v 1.13 2011/07/17 01:36:51 dyoung Exp $
 
 INCSDIR=/usr/include/evbmips
 
 INCS=	ansi.h asm.h \
-	bswap.h bus.h \
+	bswap.h \
 	cdefs.h cpu.h \
 	disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
