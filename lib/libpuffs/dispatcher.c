@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.32.4.1 2009/10/18 12:46:07 sborrill Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.32.4.2 2011/07/17 15:36:03 riz Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.32.4.1 2009/10/18 12:46:07 sborrill Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.32.4.2 2011/07/17 15:36:03 riz Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -239,6 +239,29 @@ dispatch(struct puffs_cc *pcc)
 				break;
 
 			pops->puffs_fs_suspend(pu, auxt->pvfsr_status);
+			break;
+		}
+
+		case PUFFS_VFS_EXTATTRCTL:
+		{
+			struct puffs_vfsmsg_extattrctl *auxt = auxbuf;
+			const char *attrname;
+			int flags;
+
+			if (pops->puffs_fs_extattrctl == NULL) {
+				error = EOPNOTSUPP;
+				break;
+			}
+
+			if (auxt->pvfsr_flags & PUFFS_EXTATTRCTL_HASATTRNAME)
+				attrname = auxt->pvfsr_attrname;
+			else
+				attrname = NULL;
+
+			flags = auxt->pvfsr_flags & PUFFS_EXTATTRCTL_HASNODE;
+			error = pops->puffs_fs_extattrctl(pu, auxt->pvfsr_cmd,
+			    opcookie, flags,
+			    auxt->pvfsr_attrnamespace, attrname);
 			break;
 		}
 
@@ -905,6 +928,125 @@ dispatch(struct puffs_cc *pcc)
 
 			error = pops->puffs_node_poll(pu,
 			    opcookie, &auxt->pvnr_events);
+			break;
+		}
+
+		case PUFFS_VN_GETEXTATTR:
+		{
+			struct puffs_vnmsg_getextattr *auxt = auxbuf;
+			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
+			size_t res, *resp, *sizep;
+			uint8_t *data;
+
+			if (pops->puffs_node_getextattr == NULL) {
+				error = EOPNOTSUPP;
+				break;
+			}
+
+			if (auxt->pvnr_datasize)
+				sizep = &auxt->pvnr_datasize;
+			else
+				sizep = NULL;
+
+			res = auxt->pvnr_resid;
+			if (res > 0) {
+				data = auxt->pvnr_data;
+				resp = &auxt->pvnr_resid;
+			} else {
+				data = NULL;
+				resp = NULL;
+			}
+
+			error = pops->puffs_node_getextattr(pu,
+			    opcookie, auxt->pvnr_attrnamespace,
+			    auxt->pvnr_attrname, sizep, data, resp, pcr);
+
+			/* need to move a bit more? */
+			preq->preq_buflen =
+			    sizeof(struct puffs_vnmsg_getextattr)
+			    + (res - auxt->pvnr_resid);
+			break;
+		}
+
+		case PUFFS_VN_SETEXTATTR:
+		{
+			struct puffs_vnmsg_setextattr *auxt = auxbuf;
+			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
+			size_t *resp;
+			uint8_t *data;
+
+			if (pops->puffs_node_setextattr == NULL) {
+				error = EOPNOTSUPP;
+				break;
+			}
+
+			if (auxt->pvnr_resid > 0) {
+				data = auxt->pvnr_data;
+				resp = &auxt->pvnr_resid;
+			} else {
+				data = NULL;
+				resp = NULL;
+			}
+
+			error = pops->puffs_node_setextattr(pu,
+			    opcookie, auxt->pvnr_attrnamespace,
+			    auxt->pvnr_attrname, data, resp, pcr);
+			break;
+		}
+
+		case PUFFS_VN_LISTEXTATTR:
+		{
+			struct puffs_vnmsg_listextattr *auxt = auxbuf;
+			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
+			size_t res, *resp, *sizep;
+			int flag;
+			uint8_t *data;
+
+			if (pops->puffs_node_listextattr == NULL) {
+				error = EOPNOTSUPP;
+				break;
+			}
+
+			if (auxt->pvnr_datasize)
+				sizep = &auxt->pvnr_datasize;
+			else
+				sizep = NULL;
+
+			res = auxt->pvnr_resid;
+			if (res > 0) {
+				data = auxt->pvnr_data;
+				resp = &auxt->pvnr_resid;
+			} else {
+				data = NULL;
+				resp = NULL;
+			}
+
+			res = auxt->pvnr_resid;
+			flag = auxt->pvnr_flag;
+			error = pops->puffs_node_listextattr(pu,
+			    opcookie, auxt->pvnr_attrnamespace,
+			    sizep, data, resp, flag, pcr);
+
+			/* need to move a bit more? */
+			preq->preq_buflen =
+			    sizeof(struct puffs_vnmsg_listextattr)
+			    + (res - auxt->pvnr_resid);
+			break;
+		}
+
+		case PUFFS_VN_DELETEEXTATTR:
+		{
+			struct puffs_vnmsg_deleteextattr *auxt = auxbuf;
+			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
+
+			if (pops->puffs_node_deleteextattr == NULL) {
+				error = EOPNOTSUPP;
+				break;
+			}
+
+			error = pops->puffs_node_deleteextattr(pu,
+			    opcookie, auxt->pvnr_attrnamespace,
+			    auxt->pvnr_attrname, pcr);
 			break;
 		}
 

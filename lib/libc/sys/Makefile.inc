@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.196.2.1 2009/02/02 20:21:09 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.196.2.2 2011/07/17 15:36:03 riz Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -73,6 +73,9 @@ ASM=	access.S acct.S \
 		extattr_get_link.S extattr_list_fd.S extattr_list_file.S \
 		extattr_list_link.S extattr_set_fd.S extattr_set_file.S \
 		extattr_set_link.S \
+	setxattr.S getxattr.S listxattr.S removexattr.S \
+		lsetxattr.S lgetxattr.S llistxattr.S lremovexattr.S \
+		fsetxattr.S fgetxattr.S flistxattr.S fremovexattr.S \
 	fchdir.S fchflags.S fchmod.S fchown.S fchroot.S \
 		__fhopen40.S __fhstat40.S __fhstatvfs140.S fktrace.S \
 		flock.S fpathconf.S __fstat30.S fstatvfs1.S futimes.S \

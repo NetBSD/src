@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1201.2.15 2010/03/17 03:17:18 snj Exp $
+#	$NetBSD: mi,v 1.1201.2.16 2011/07/17 15:36:00 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2079,6 +2079,7 @@
 ./usr/include/sys/wait.h			comp-c-include
 ./usr/include/sys/wapbl.h			comp-c-include
 ./usr/include/sys/wdog.h			comp-c-include
+./usr/include/sys/xattr.h			comp-c-include
 ./usr/include/sysexits.h			comp-c-include
 ./usr/include/syslog.h				comp-c-include
 ./usr/include/tar.h				comp-c-include
