@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/07/04 16:10:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/07/17 20:07:58 joerg Exp $
 
 LIB=	LLVMX86CodeGen
 
@@ -20,7 +20,6 @@ SRCS+=	SSEDomainFix.cpp \
 	X86InstrInfo.cpp \
 	X86JITInfo.cpp \
 	X86MachObjectWriter.cpp \
-	X86MCAsmInfo.cpp \
 	X86MCCodeEmitter.cpp \
 	X86MCInstLower.cpp \
 	X86RegisterInfo.cpp \

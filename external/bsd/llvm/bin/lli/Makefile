@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/05/12 14:56:23 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/07/17 20:07:57 joerg Exp $
 
 PROG_CXX=	lli
 NOMAN=		yes
@@ -12,6 +12,7 @@ SRCS=	lli.cpp
 LLVM_LIBS+= \
 	X86CodeGen \
 	X86TargetInfo \
+	X86MCTargetDesc \
 	X86AsmPrinter \
 	X86Utils \
 	AsmPrinter \

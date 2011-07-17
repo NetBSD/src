@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/07/04 22:37:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/07/17 20:07:58 joerg Exp $
 
 LIB=	LLVMPowerPCCodeGen
 
@@ -16,7 +16,6 @@ SRCS+=	PPCAsmBackend.cpp \
 	PPCISelLowering.cpp \
 	PPCFrameLowering.cpp \
 	PPCJITInfo.cpp \
-	PPCMCAsmInfo.cpp \
 	PPCMCCodeEmitter.cpp \
 	PPCMCInstLower.cpp \
 	PPCPredicates.cpp \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/07/07 21:59:15 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/07/17 20:07:58 joerg Exp $
 
 LIB=	LLVMARMMCTargetDesc
 
@@ -9,7 +9,8 @@ LIB=	LLVMARMMCTargetDesc
 ARM_OBJDIR!=	cd ${.CURDIR}/../libLLVMARMCodeGen && ${PRINTOBJDIR}
 CPPFLAGS+=	-I${ARM_OBJDIR} -I${LLVM_SRCDIR}/lib/Target/ARM
 
-SRCS+=	ARMMCTargetDesc.cpp
+SRCS+=	ARMMCAsmInfo.cpp \
+	ARMMCTargetDesc.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
