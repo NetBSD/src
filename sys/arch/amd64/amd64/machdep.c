@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.161 2011/06/12 03:35:37 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.162 2011/07/17 15:16:58 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161 2011/06/12 03:35:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 2011/07/17 15:16:58 jym Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -523,6 +523,12 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_QUAD, "tsc_freq", NULL,
 		       NULL, 0, &tsc_freq, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "pae",
+		       SYSCTL_DESCR("Whether the kernel uses PAE"),
+		       NULL, 1, NULL, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
