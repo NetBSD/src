@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2009/08/12 23:29:18 matt Exp $
+#	$NetBSD: Makefile,v 1.31 2011/07/17 20:54:37 joerg Exp $
 
 INCSDIR= /usr/include/arc
 
@@ -18,9 +18,9 @@ INCS=	ansi.h asm.h \
 	param.h pcb.h pccons.h pmap.h pmc.h proc.h profile.h psl.h pte.h \
 	ptrace.h \
 	reg.h regdef.h regnum.h reloc.h rwlock.h \
-	setjmp.h signal.h stdarg.h \
+	setjmp.h signal.h \
 	trap.h types.h \
-	varargs.h vmparam.h \
+	vmparam.h \
 	wchar_limits.h
 
 .include <bsd.kinc.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmn_err.h,v 1.3 2010/02/21 01:46:35 darran Exp $	*/
+/*	$NetBSD: cmn_err.h,v 1.4 2011/07/17 20:54:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -59,8 +59,6 @@
 
 #ifndef _OPENSOLARIS_SYS_CMN_ERR_H_
 #define	_OPENSOLARIS_SYS_CMN_ERR_H_
-
-#include <machine/stdarg.h>
 
 #ifdef _KERNEL
 #include <sys/systm.h>

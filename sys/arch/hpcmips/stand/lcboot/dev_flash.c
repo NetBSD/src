@@ -1,4 +1,4 @@
-/* $NetBSD: dev_flash.c,v 1.5 2009/10/26 19:16:55 cegger Exp $ */
+/* $NetBSD: dev_flash.c,v 1.6 2011/07/17 20:54:41 joerg Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.
@@ -26,11 +26,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dev_flash.c,v 1.5 2009/10/26 19:16:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dev_flash.c,v 1.6 2011/07/17 20:54:41 joerg Exp $");
 
 #include <sys/param.h>
 #include <lib/libsa/stand.h>
-#include <machine/stdarg.h>
 
 #include "extern.h"
 

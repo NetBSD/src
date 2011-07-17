@@ -1,4 +1,4 @@
-# $NetBSD: md.landisk,v 1.2 2007/02/09 22:49:47 ad Exp $
+# $NetBSD: md.landisk,v 1.3 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/landisk				comp-c-include
 ./usr/include/landisk/ansi.h			comp-c-include
@@ -46,8 +46,8 @@
 ./usr/include/landisk/rwlock.h			comp-c-include
 ./usr/include/landisk/setjmp.h			comp-c-include
 ./usr/include/landisk/signal.h			comp-c-include
-./usr/include/landisk/stdarg.h			comp-c-include
+./usr/include/landisk/stdarg.h			comp-obsolete		obsolete
 ./usr/include/landisk/types.h			comp-c-include
-./usr/include/landisk/varargs.h			comp-c-include
+./usr/include/landisk/varargs.h			comp-obsolete		obsolete
 ./usr/include/landisk/vmparam.h			comp-c-include
 ./usr/include/landisk/wchar_limits.h		comp-c-include

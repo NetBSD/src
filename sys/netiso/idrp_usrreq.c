@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.23 2009/04/18 14:58:06 tsutsui Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.24 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.23 2009/04/18 14:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.24 2011/07/17 20:54:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -55,8 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.23 2009/04/18 14:58:06 tsutsui Exp
 #include <netiso/iso_pcb.h>
 #include <netiso/iso_var.h>
 #include <netiso/idrp_var.h>
-
-#include <machine/stdarg.h>
 
 LIST_HEAD(, rawcb) idrp_pcb;
 struct isopcb idrp_isop;

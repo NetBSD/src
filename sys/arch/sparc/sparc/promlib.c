@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.42 2010/01/21 11:40:01 martin Exp $ */
+/*	$NetBSD: promlib.c,v 1.43 2011/07/17 20:54:47 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.42 2010/01/21 11:40:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.43 2011/07/17 20:54:47 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.42 2010/01/21 11:40:01 martin Exp $");
 #include <sys/malloc.h>
 #endif /* _STANDALONE */
 
-#include <machine/stdarg.h>
 #include <machine/oldmon.h>
 #include <machine/promlib.h>
 #include <machine/ctlreg.h>

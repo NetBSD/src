@@ -1,4 +1,4 @@
-# $NetBSD: md.arc,v 1.23 2009/08/19 08:24:44 he Exp $
+# $NetBSD: md.arc,v 1.24 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/arc				comp-c-include
 ./usr/include/arc/_G_config.h			comp-obsolete		obsolete
 ./usr/include/arc/ansi.h			comp-c-include
@@ -49,10 +49,10 @@
 ./usr/include/arc/rwlock.h			comp-c-include
 ./usr/include/arc/setjmp.h			comp-c-include
 ./usr/include/arc/signal.h			comp-c-include
-./usr/include/arc/stdarg.h			comp-c-include
+./usr/include/arc/stdarg.h			comp-obsolete		obsolete
 ./usr/include/arc/trap.h			comp-c-include
 ./usr/include/arc/types.h			comp-c-include
-./usr/include/arc/varargs.h			comp-c-include
+./usr/include/arc/varargs.h			comp-obsolete		obsolete
 ./usr/include/arc/vmparam.h			comp-c-include
 ./usr/include/arc/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include

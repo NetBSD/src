@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.6 2006/06/25 17:37:43 tsutsui Exp $	*/
+/*	$NetBSD: ct.c,v 1.7 2011/07/17 20:54:40 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -35,8 +35,6 @@
  * CS80 tape driver
  */
 #include <sys/param.h>
-
-#include <machine/stdarg.h>
 
 #include <hp300/dev/ctreg.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.11 2009/04/11 10:56:13 scw Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.12 2011/07/17 20:54:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 
 #include <sys/types.h>
 #include <machine/prom.h>
-#include <machine/stdarg.h>
 
 #include <lib/libkern/libkern.h>
 

@@ -26,11 +26,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.4 2011/02/20 03:55:18 jmcneill Exp $
+ * $Id: ah_osdep.c,v 1.5 2011/07/17 20:54:51 joerg Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_osdep.c,v 1.4 2011/02/20 03:55:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_osdep.c,v 1.5 2011/07/17 20:54:51 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_athhal.h"
@@ -44,8 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: ah_osdep.c,v 1.4 2011/02/20 03:55:18 jmcneill Exp $"
 #include <sys/proc.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
-
-#include <machine/stdarg.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

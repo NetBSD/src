@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.72 2011/06/16 13:44:56 joerg Exp $	*/
+/*	$NetBSD: stand.h,v 1.73 2011/07/17 20:54:52 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -67,6 +67,7 @@
 #include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/stat.h>
+#include <sys/stdarg.h>
 #include "saioctl.h"
 #include "saerrno.h"
 
@@ -227,11 +228,11 @@ int	sprintf(char *, const char *, ...)
     __attribute__((__format__(__printf__, 2, 3)));
 int	snprintf(char *, size_t, const char *, ...)
     __attribute__((__format__(__printf__, 3, 4)));
-void	vprintf(const char *, _BSD_VA_LIST_)
+void	vprintf(const char *, va_list)
     __attribute__((__format__(__printf__, 1, 0)));
-int	vsprintf(char *, const char *, _BSD_VA_LIST_)
+int	vsprintf(char *, const char *, va_list)
     __attribute__((__format__(__printf__, 2, 0)));
-int	vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_)
+int	vsnprintf(char *, size_t, const char *, va_list)
     __attribute__((__format__(__printf__, 3, 0)));
 void	twiddle(void);
 void	gets(char *);

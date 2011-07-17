@@ -1,4 +1,4 @@
-/*	$NetBSD: saio.c,v 1.12 2009/03/14 21:04:12 dsl Exp $	*/
+/*	$NetBSD: saio.c,v 1.13 2011/07/17 20:54:44 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,6 @@
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 #include <machine/prom.h>
-#include <machine/stdarg.h>
 
 #include <sys/param.h>
 #include <sys/disklabel.h>

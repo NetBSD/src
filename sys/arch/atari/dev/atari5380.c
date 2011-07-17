@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.57 2011/06/05 06:33:42 tsutsui Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.58 2011/07/17 20:54:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.57 2011/06/05 06:33:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.58 2011/07/17 20:54:37 joerg Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.57 2011/06/05 06:33:42 tsutsui Exp $
  */
 #include <atari/dev/ncr5380reg.h>
 
-#include <machine/stdarg.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>
 #include <machine/intr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vsscanf.c,v 1.15 2010/01/11 20:39:29 joerg Exp $	*/
+/*	$NetBSD: vsscanf.c,v 1.16 2011/07/17 20:54:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsscanf.c,v 1.15 2010/01/11 20:39:29 joerg Exp $");
+__RCSID("$NetBSD: vsscanf.c,v 1.16 2011/07/17 20:54:34 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,10 +61,7 @@ eofread(cookie, buf, len)
 }
 
 int
-vsscanf(str, fmt, ap)
-	const char *str;
-	const char *fmt;
-	_BSD_VA_LIST_ ap;
+vsscanf(const char *str, const char *fmt, va_list ap)
 {
 	FILE f;
 	struct __sfileext fext;

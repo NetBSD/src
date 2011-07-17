@@ -1,4 +1,4 @@
-# $NetBSD: md.amigappc,v 1.7 2011/06/05 16:52:22 matt Exp $
+# $NetBSD: md.amigappc,v 1.8 2011/07/17 20:54:31 joerg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/amigappc				comp-c-include
 ./usr/include/amigappc/_G_config.h		comp-obsolete		obsolete
@@ -54,10 +54,10 @@
 ./usr/include/amigappc/setjmp.h			comp-c-include
 ./usr/include/amigappc/signal.h			comp-c-include
 ./usr/include/amigappc/spr.h			comp-obsolete		obsolete
-./usr/include/amigappc/stdarg.h			comp-c-include
+./usr/include/amigappc/stdarg.h			comp-obsolete		obsolete
 ./usr/include/amigappc/trap.h			comp-c-include
 ./usr/include/amigappc/types.h			comp-c-include
-./usr/include/amigappc/varargs.h		comp-c-include
+./usr/include/amigappc/varargs.h		comp-obsolete		obsolete
 ./usr/include/amigappc/vmparam.h		comp-c-include
 ./usr/include/amigappc/wchar_limits.h		comp-c-include
 ./usr/include/amigappc/z8530var.h		comp-obsolete		obsolete

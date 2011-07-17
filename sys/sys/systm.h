@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.247 2011/01/22 09:40:50 mrg Exp $	*/
+/*	$NetBSD: systm.h,v 1.248 2011/07/17 20:54:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -48,6 +48,7 @@
 
 #ifdef _KERNEL
 #include <sys/types.h>
+#include <sys/stdarg.h>
 #endif
 
 #include <sys/device_if.h>
@@ -229,9 +230,9 @@ int	sprintf(char *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
 int	snprintf(char *, size_t, const char *, ...)
     __attribute__((__format__(__printf__,3,4)));
-void	vprintf(const char *, _BSD_VA_LIST_);
-int	vsprintf(char *, const char *, _BSD_VA_LIST_);
-int	vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_);
+void	vprintf(const char *, va_list);
+int	vsprintf(char *, const char *, va_list);
+int	vsnprintf(char *, size_t, const char *, va_list);
 int	humanize_number(char *, size_t, uint64_t, const char *, int);
 
 void	twiddle(void);
