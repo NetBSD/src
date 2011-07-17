@@ -1,4 +1,4 @@
-/*	$NetBSD: clkctrl.c,v 1.4 2008/05/08 02:16:27 macallan Exp $	*/
+/*	$NetBSD: clkctrl.c,v 1.5 2011/07/17 23:32:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clkctrl.c,v 1.4 2008/05/08 02:16:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clkctrl.c,v 1.5 2011/07/17 23:32:37 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,17 +38,17 @@ __KERNEL_RCSID(0, "$NetBSD: clkctrl.c,v 1.4 2008/05/08 02:16:27 macallan Exp $")
 
 #include <sparc/sparc/vaddrs.h>
 
-static int clkctrl_match(struct device *, struct cfdata *, void *);
-static void clkctrl_attach(struct device *, struct device *, void *);
+static int clkctrl_match(device_t, cfdata_t, void *);
+static void clkctrl_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(clkctrl, sizeof(struct device),
+CFATTACH_DECL_NEW(clkctrl, 0,
      clkctrl_match, clkctrl_attach, NULL, NULL);
 
 static void tadpole_cpu_sleep(struct cpu_info *);
 volatile uint8_t *clkctrl_reg = NULL;
 
 static int
-clkctrl_match(struct device *parent, struct cfdata *cf, void *aux)
+clkctrl_match(device_t parent, cfdata_t cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 
@@ -59,7 +59,7 @@ clkctrl_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-clkctrl_attach(struct device *parent, struct device *self, void *aux)
+clkctrl_attach(device_t parent, device_t self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
