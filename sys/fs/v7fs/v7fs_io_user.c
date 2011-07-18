@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_io_user.c,v 1.1 2011/06/27 11:52:25 uch Exp $	*/
+/*	$NetBSD: v7fs_io_user.c,v 1.2 2011/07/18 21:51:49 apb Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,9 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: v7fs_io_user.c,v 1.1 2011/06/27 11:52:25 uch Exp $");
+__RCSID("$NetBSD: v7fs_io_user.c,v 1.2 2011/07/18 21:51:49 apb Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
