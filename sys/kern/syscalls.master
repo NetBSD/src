@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.249 2011/06/26 17:05:24 christos Exp $
+	$NetBSD: syscalls.master,v 1.250 2011/07/18 11:28:24 drochner Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -718,13 +718,13 @@
 374	COMPAT_50 MODULAR RUMP { int|sys||pollts(struct pollfd *fds, u_int nfds, \
 			    const struct timespec50 *ts, const sigset_t *mask); }
 375	STD 	RUMP	{ int|sys||setxattr(const char *path, \
-			    const char *name, void *value, size_t size, \
+			    const char *name, const void *value, size_t size, \
 			    int flags); }
 376	STD 	RUMP	{ int|sys||lsetxattr(const char *path, \
-			    const char *name, void *value, size_t size, \
+			    const char *name, const void *value, size_t size, \
 			    int flags); }
 377	STD 	RUMP	{ int|sys||fsetxattr(int fd, \
-			    const char *name, void *value, size_t size, \
+			    const char *name, const void *value, size_t size, \
 			    int flags); }
 378	STD 	RUMP	{ int|sys||getxattr(const char *path, \
 			    const char *name, void *value, size_t size); }
