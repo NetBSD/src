@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2011/06/05 17:03:16 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2011/07/18 17:51:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Frank Wille.
@@ -58,15 +58,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2011/06/05 17:03:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2011/07/18 17:51:17 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
 
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/device.h>
