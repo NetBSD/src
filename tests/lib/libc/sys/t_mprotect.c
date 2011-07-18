@@ -1,4 +1,4 @@
-/* $NetBSD: t_mprotect.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $ */
+/* $NetBSD: t_mprotect.c,v 1.2 2011/07/18 23:16:11 jym Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mprotect.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $");
+__RCSID("$NetBSD: t_mprotect.c,v 1.2 2011/07/18 23:16:11 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -43,6 +43,8 @@ __RCSID("$NetBSD: t_mprotect.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $");
 #include <unistd.h>
 
 #include <atf-c.h>
+
+#include "../common/exec_prot.h"
 
 static long	page = 0;
 static int	pax_global = -1;
@@ -158,10 +160,91 @@ ATF_TC_BODY(mprotect_err, tc)
 	ATF_REQUIRE(errno == EINVAL);
 }
 
+ATF_TC(mprotect_exec);
+ATF_TC_HEAD(mprotect_exec, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test mprotect(2) executable space protections");
+}
+
+/*
+ * Trivial function -- should fit into a page
+ */
+ATF_TC_BODY(mprotect_exec, tc)
+{
+	pid_t pid;
+	void *map;
+	int sta, xp_support;
+
+	xp_support = exec_prot_support();
+
+	switch (xp_support) {
+	case NOTIMPL:
+		atf_tc_skip(
+		    "Execute protection callback check not implemented");
+		break;
+	case NO_XP:
+		atf_tc_skip(
+		    "Host does not support executable space protection");
+		break;
+	case PARTIAL_XP: case PERPAGE_XP: default:
+		break;
+	}
+
+	/*
+	 * Map a page read/write and copy a trivial assembly function inside.
+	 * We will then change the mapping rights:
+	 * - first by setting the execution right, and check that we can
+	 *   call the code found in the allocated page.
+	 * - second by removing the execution right. This should generate
+	 *   a SIGSEGV on architectures that can enforce --x permissions.
+	 */
+
+	map = mmap(NULL, page, PROT_WRITE|PROT_READ, MAP_ANON, -1, 0);
+	ATF_REQUIRE(map != MAP_FAILED);
+
+	memcpy(map, (void *)return_one,
+	    (uintptr_t)return_one_end - (uintptr_t)return_one);
+ 
+	/* give r-x rights then call code in page */
+	ATF_REQUIRE(mprotect(map, page, PROT_EXEC|PROT_READ) == 0);
+	ATF_REQUIRE(((int (*)(void))map)() == 1);
+
+	/* remove --x right */
+	ATF_REQUIRE(mprotect(map, page, PROT_READ) == 0);
+
+	pid = fork();
+	ATF_REQUIRE(pid >= 0);
+
+	if (pid == 0) {
+		ATF_REQUIRE(signal(SIGSEGV, sighandler) != SIG_ERR);
+		ATF_CHECK(((int (*)(void))map)() == 1);
+		_exit(0);
+	}
+
+	(void)wait(&sta);
+
+	ATF_REQUIRE(WIFEXITED(sta) != 0);
+
+	switch (xp_support) {
+	case PARTIAL_XP:
+		/* Partial protection might fail: indicate it */
+		ATF_CHECK_MSG(WEXITSTATUS(sta) == SIGSEGV,
+		    "Host only supports partial executable space protection");
+		break;
+	case PERPAGE_XP: default:
+		/* Per-page --x protection should not fail */
+		ATF_REQUIRE(WEXITSTATUS(sta) == SIGSEGV);
+		break;
+	}
+
+	ATF_REQUIRE(munmap(map, page) == 0);
+}
+
 ATF_TC(mprotect_pax);
 ATF_TC_HEAD(mprotect_pax, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "PaX restrictions and mprotect(2),");
+	atf_tc_set_md_var(tc, "descr", "PaX restrictions and mprotect(2)");
 	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
@@ -224,7 +307,7 @@ out:
 ATF_TC(mprotect_write);
 ATF_TC_HEAD(mprotect_write, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test mprotect(2) protections");
+	atf_tc_set_md_var(tc, "descr", "Test mprotect(2) write protections");
 }
 
 ATF_TC_BODY(mprotect_write, tc)
@@ -266,6 +349,7 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, mprotect_access);
 	ATF_TP_ADD_TC(tp, mprotect_err);
+	ATF_TP_ADD_TC(tp, mprotect_exec);
 	ATF_TP_ADD_TC(tp, mprotect_pax);
 	ATF_TP_ADD_TC(tp, mprotect_write);
 
