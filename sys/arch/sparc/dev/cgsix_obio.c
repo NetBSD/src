@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.24 2011/07/01 18:50:41 dyoung Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.25 2011/07/18 00:31:13 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.24 2011/07/01 18:50:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.25 2011/07/18 00:31:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ static int	cgsixmatch(device_t, struct cfdata *, void *);
 static void	cgsixattach(device_t, device_t, void *);
 static int	cg6_pfour_probe(void *, void *);
 
-CFATTACH_DECL(cgsix_obio, sizeof(struct cgsix_softc),
+CFATTACH_DECL_NEW(cgsix_obio, sizeof(struct cgsix_softc),
     cgsixmatch, cgsixattach, NULL, NULL);
 
 /*
