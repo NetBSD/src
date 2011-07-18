@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.21 2011/07/18 06:45:28 dholland Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.22 2011/07/18 06:46:05 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.21 2011/07/18 06:45:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.22 2011/07/18 06:46:05 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,14 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.21 2011/07/18 06:45:28 dholland Exp 
 #include <ufs/lfs/lfs_extern.h>
 
 #include <uvm/uvm.h>
-
-/*
- * A virgin directory (no blushing please).
- */
-static const struct dirtemplate mastertemplate = {
-	0,	12,		DT_DIR,	1,	".",
-	0,	DIRBLKSIZ - 12,	DT_DIR,	2,	".."
-};
 
 #ifdef WAPBL_DEBUG_INODES
 #error WAPBL_DEBUG_INODES: not functional before ufs_wapbl.c is updated
