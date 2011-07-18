@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.22 2011/03/14 19:05:19 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.23 2011/07/18 06:47:08 dholland Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -139,8 +139,7 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 		atf_tc_skip("rename not supported by fs");
 
 	/* XXX: msdosfs also sometimes hangs */
-	if (FSTYPE_FFS(tc) || FSTYPE_EXT2FS(tc) || FSTYPE_LFS(tc) ||
-	    FSTYPE_MSDOS(tc) || FSTYPE_FFSLOG(tc))
+	if (FSTYPE_EXT2FS(tc) || FSTYPE_LFS(tc) || FSTYPE_MSDOS(tc))
 		atf_tc_expect_signal(-1, "PR kern/43626");
 
 	/* XXX: unracy execution not caught */
@@ -165,8 +164,7 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 	 * Doesn't always trigger when run on a slow backend
 	 * (i.e. not on tmpfs/mfs).  So do the usual kludge.
 	 */
-	if (FSTYPE_FFS(tc) || FSTYPE_EXT2FS(tc) || FSTYPE_LFS(tc) ||
-	    FSTYPE_MSDOS(tc) || FSTYPE_FFSLOG(tc))
+	if (FSTYPE_EXT2FS(tc) || FSTYPE_LFS(tc) || FSTYPE_MSDOS(tc))
 		abort();
 
 	if (FSTYPE_P2K_FFS(tc)) {
