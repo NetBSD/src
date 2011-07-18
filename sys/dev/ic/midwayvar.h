@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayvar.h,v 1.17 2011/02/01 19:50:03 chuck Exp $	*/
+/*	$NetBSD: midwayvar.h,v 1.18 2011/07/18 00:58:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -100,7 +100,7 @@ struct rrp {
 
 struct en_softc {
   /* bsd glue */
-  struct device sc_dev;		/* system device */
+  device_t sc_dev;		/* system device */
   struct ifnet enif;		/* network ifnet handle */
 
   /* bus glue */
