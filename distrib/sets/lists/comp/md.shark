@@ -1,10 +1,10 @@
-# $NetBSD: md.shark,v 1.16 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.shark,v 1.17 2011/07/18 17:29:20 dyoung Exp $
 ./usr/include/shark				comp-c-include
 ./usr/include/shark/ansi.h			comp-c-include
 ./usr/include/shark/aout_machdep.h		comp-c-include
 ./usr/include/shark/asm.h			comp-c-include
 ./usr/include/shark/bswap.h			comp-c-include
-./usr/include/shark/bus.h			comp-c-include
+./usr/include/shark/bus.h			comp-obsolete		obsolete
 ./usr/include/shark/cdefs.h			comp-c-include
 ./usr/include/shark/cpu.h			comp-c-include
 ./usr/include/shark/db_machdep.h		comp-obsolete		obsolete
