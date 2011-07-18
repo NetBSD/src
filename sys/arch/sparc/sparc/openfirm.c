@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.17 2011/07/17 20:54:47 joerg Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.18 2011/07/18 21:00:28 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,13 +32,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.17 2011/07/17 20:54:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.18 2011/07/18 21:00:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <machine/psl.h>
 #include <machine/promlib.h>
 #include <lib/libkern/libkern.h>
+
+#ifndef _KERNEL
+#include <sys/stdarg.h>
+#endif
 
 int
 OF_peer(int phandle)
