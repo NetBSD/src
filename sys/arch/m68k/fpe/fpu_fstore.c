@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fstore.c,v 1.12 2011/07/18 07:44:30 isaki Exp $	*/
+/*	$NetBSD: fpu_fstore.c,v 1.13 2011/07/18 14:11:27 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.12 2011/07/18 07:44:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.13 2011/07/18 14:11:27 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -53,7 +53,7 @@ fpu_emul_fstore(struct fpemu *fe, struct instruction *insn)
 
 #if DEBUG_FPE
 	printf("  fpu_emul_fstore: frame at %p fpframe at %p\n",
-		frame, fe->fe_fpframe);
+	    frame, fe->fe_fpframe);
 #endif
 
 	word1 = insn->is_word1;
@@ -83,7 +83,7 @@ fpu_emul_fstore(struct fpemu *fe, struct instruction *insn)
 	}
 #if DEBUG_FPE
 	printf("  fpu_emul_fstore: format %d, size %d\n",
-		format, insn->is_datasize);
+	    format, insn->is_datasize);
 #endif
 
 	fe->fe_fpsr &= ~FPSR_EXCP;
@@ -107,19 +107,19 @@ fpu_emul_fstore(struct fpemu *fe, struct instruction *insn)
 
 #if DEBUG_FPE
 	printf("  fpu_emul_fstore: saving FP%d (%08x,%08x,%08x)\n",
-		regnum, fpregs[regnum * 3], fpregs[regnum * 3 + 1],
-		fpregs[regnum * 3 + 2]);
+	    regnum, fpregs[regnum * 3], fpregs[regnum * 3 + 1],
+	    fpregs[regnum * 3 + 2]);
 #endif
 	fpu_explode(fe, &fe->fe_f3, FTYPE_EXT, &fpregs[regnum * 3]);
 #if DEBUG_FPE
 	{
 	static const char *class_name[] =
-		{ "SNAN", "QNAN", "ZERO", "NUM", "INF" };
+	    { "SNAN", "QNAN", "ZERO", "NUM", "INF" };
 	printf("  fpu_emul_fstore: fpn (%s,%c,%d,%08x,%08x,%08x)\n",
-		class_name[fe->fe_f3.fp_class + 2],
-		fe->fe_f3.fp_sign ? '-' : '+', fe->fe_f3.fp_exp,
-		fe->fe_f3.fp_mant[0], fe->fe_f3.fp_mant[1],
-		fe->fe_f3.fp_mant[2]);
+	    class_name[fe->fe_f3.fp_class + 2],
+	    fe->fe_f3.fp_sign ? '-' : '+', fe->fe_f3.fp_exp,
+	    fe->fe_f3.fp_mant[0], fe->fe_f3.fp_mant[1],
+	    fe->fe_f3.fp_mant[2]);
 	}
 #endif
 	fpu_implode(fe, &fe->fe_f3, format, buf);
@@ -127,7 +127,7 @@ fpu_emul_fstore(struct fpemu *fe, struct instruction *insn)
 	fpu_store_ea(frame, insn, &insn->is_ea, (char *)buf);
 #if DEBUG_FPE
 	printf("  fpu_emul_fstore: %08x,%08x,%08x size %d\n",
-		buf[0], buf[1], buf[2], insn->is_datasize);
+	    buf[0], buf[1], buf[2], insn->is_datasize);
 #endif
 
 	return 0;

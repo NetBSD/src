@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.34 2011/07/18 07:44:30 isaki Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.35 2011/07/18 14:11:27 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.34 2011/07/18 07:44:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.35 2011/07/18 14:11:27 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -70,9 +70,9 @@ static struct fpn *fpu_cmp(struct fpemu *);
 #ifdef DEBUG_FPE
 #define DUMP_INSN(insn)							\
 	printf("%s: insn={adv=%d,siz=%d,op=%04x,w1=%04x}\n",		\
-		__func__,						\
-		(insn)->is_advance, (insn)->is_datasize,		\
-		(insn)->is_opcode, (insn)->is_word1)
+	    __func__,							\
+	    (insn)->is_advance, (insn)->is_datasize,			\
+	    (insn)->is_opcode, (insn)->is_word1)
 #define DPRINTF(x)	printf x
 #else
 #define DUMP_INSN(insn)	do {} while (/* CONSTCOND */ 0)
@@ -101,7 +101,7 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 	fe.fe_fpcr = fpf->fpf_fpcr;
 
 	DPRINTF(("%s: ENTERING: FPSR=%08x, FPCR=%08x\n",
-		__func__, fe.fe_fpsr, fe.fe_fpcr));
+	    __func__, fe.fe_fpsr, fe.fe_fpcr));
 
 	/* always set this (to avoid a warning) */
 	insn.is_pc = frame->f_pc;
@@ -134,7 +134,7 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 
 	if ((word & 0xf000) != 0xf000) {
 		DPRINTF(("%s: not coproc. insn.: opcode=0x%x\n",
-			__func__, word));
+		    __func__, word));
 		fpe_abort(frame, ksi, SIGILL, ILL_ILLOPC);
 	}
 
@@ -194,7 +194,7 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 	} else if (optype == 0x0080 || optype == 0x00C0) {
 		/* type=2 or 3: fbcc, short or long disp. */
 		DPRINTF(("%s: fbcc %s\n", __func__,
-			(optype & 0x40) ? "long" : "short"));
+		    (optype & 0x40) ? "long" : "short"));
 		sig = fpu_emul_brcc(&fe, &insn);
 	} else if (optype == 0x0040) {
 		/* type=1: fdbcc, fscc, ftrapcc */
@@ -206,7 +206,7 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 		/* type=6: reserved */
 		/* type=7: reserved */
 		DPRINTF(("%s: bad opcode type: opcode=0x%x\n", __func__,
-			insn.is_opcode));
+		    insn.is_opcode));
 		sig = SIGILL;
 	}
 
@@ -222,7 +222,7 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 #if defined(DDB) && defined(DEBUG_FPE)
 	else {
 		printf("%s: sig=%d, opcode=%x, word1=%x\n", __func__,
-			sig, insn.is_opcode, insn.is_word1);
+		    sig, insn.is_opcode, insn.is_word1);
 		kdb_trap(-1, (db_regs_t *)&frame);
 	}
 #endif
@@ -235,7 +235,7 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 #endif
 
 	DPRINTF(("%s: EXITING: w/FPSR=%08x, FPCR=%08x\n", __func__,
-		fe.fe_fpsr, fe.fe_fpcr));
+	    fe.fe_fpsr, fe.fe_fpcr));
 
 	if (sig)
 		fpe_abort(frame, ksi, sig, 0);
@@ -357,15 +357,15 @@ fpu_emul_fmovmcr(struct fpemu *fe, struct instruction *insn)
 		    insn->is_ea.ea_regnum >= 8 /* address reg */) {
 			/* attempted to copy FPCR to An */
 			DPRINTF(("%s: tried to copy FPCR from/to A%d\n",
-				__func__, insn->is_ea.ea_regnum & 7));
+			    __func__, insn->is_ea.ea_regnum & 7));
 			return SIGILL;
 		}
 		if (fpu_to_mem) {
 			sig = fpu_store_ea(frame, insn, &insn->is_ea,
-				(char *)&fpf->fpf_fpcr);
+			    (char *)&fpf->fpf_fpcr);
 		} else {
 			sig = fpu_load_ea(frame, insn, &insn->is_ea,
-				(char *)&fpf->fpf_fpcr);
+			    (char *)&fpf->fpf_fpcr);
 		}
 	}
 	if (sig)
@@ -377,15 +377,15 @@ fpu_emul_fmovmcr(struct fpemu *fe, struct instruction *insn)
 		    insn->is_ea.ea_regnum >= 8 /* address reg */) {
 			/* attempted to copy FPSR to An */
 			DPRINTF(("%s: tried to copy FPSR from/to A%d\n",
-				__func__, insn->is_ea.ea_regnum & 7));
+			    __func__, insn->is_ea.ea_regnum & 7));
 			return SIGILL;
 		}
 		if (fpu_to_mem) {
 			sig = fpu_store_ea(frame, insn, &insn->is_ea,
-				(char *)&fpf->fpf_fpsr);
+			    (char *)&fpf->fpf_fpsr);
 		} else {
 			sig = fpu_load_ea(frame, insn, &insn->is_ea,
-				(char *)&fpf->fpf_fpsr);
+			    (char *)&fpf->fpf_fpsr);
 		}
 	}
 	if (sig)
@@ -395,10 +395,10 @@ fpu_emul_fmovmcr(struct fpemu *fe, struct instruction *insn)
 		/* fpiar - can be moved to/from An */
 		if (fpu_to_mem) {
 			sig = fpu_store_ea(frame, insn, &insn->is_ea,
-				(char *)&fpf->fpf_fpiar);
+			    (char *)&fpf->fpf_fpiar);
 		} else {
 			sig = fpu_load_ea(frame, insn, &insn->is_ea,
-				(char *)&fpf->fpf_fpiar);
+			    (char *)&fpf->fpf_fpiar);
 		}
 	}
 	return sig;
@@ -469,20 +469,20 @@ fpu_emul_fmovm(struct fpemu *fe, struct instruction *insn)
 		if (regmask & reglist) {
 			if (fpu_to_mem) {
 				sig = fpu_store_ea(frame, insn, &insn->is_ea,
-					(char *)&fpregs[regnum * 3]);
+				    (char *)&fpregs[regnum * 3]);
 				DPRINTF(("%s: FP%d (%08x,%08x,%08x) saved\n",
-					__func__, regnum,
-					fpregs[regnum * 3],
-					fpregs[regnum * 3 + 1],
-					fpregs[regnum * 3 + 2]));
+				    __func__, regnum,
+				    fpregs[regnum * 3],
+				    fpregs[regnum * 3 + 1],
+				    fpregs[regnum * 3 + 2]));
 			} else {		/* mem to fpu */
 				sig = fpu_load_ea(frame, insn, &insn->is_ea,
-					(char *)&fpregs[regnum * 3]);
+				    (char *)&fpregs[regnum * 3]);
 				DPRINTF(("%s: FP%d (%08x,%08x,%08x) loaded\n",
-					__func__, regnum,
-					fpregs[regnum * 3],
-					fpregs[regnum * 3 + 1],
-					fpregs[regnum * 3 + 2]));
+				    __func__, regnum,
+				    fpregs[regnum * 3],
+				    fpregs[regnum * 3 + 1],
+				    fpregs[regnum * 3 + 2]));
 			}
 			if (sig)
 				break;
@@ -503,7 +503,7 @@ fpu_cmp(struct fpemu *fe)
 	if (x->fp_class < 0 || y->fp_class < 0) {
 		/* if either of two is a SNAN, result is SNAN */
 		x->fp_class =
-			(y->fp_class < x->fp_class) ? y->fp_class : x->fp_class;
+		    (y->fp_class < x->fp_class) ? y->fp_class : x->fp_class;
 	} else if (x->fp_class == FPC_INF) {
 		if (y->fp_class == FPC_INF) {
 			/* both infinities */
@@ -573,7 +573,7 @@ fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 	DUMP_INSN(insn);
 
 	DPRINTF(("%s: FPSR = %08x, FPCR = %08x\n", __func__,
-		fe->fe_fpsr, fe->fe_fpcr));
+	    fe->fe_fpsr, fe->fe_fpcr));
 
 	word1 = insn->is_word1;
 	format = (word1 >> 10) & 7;
@@ -581,8 +581,8 @@ fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 
 	/* fetch a source operand : may not be used */
 	DPRINTF(("%s: dst/src FP%d=%08x,%08x,%08x\n", __func__,
-		regnum, fpregs[regnum * 3], fpregs[regnum * 3 + 1],
-		fpregs[regnum * 3 + 2]));
+	    regnum, fpregs[regnum * 3], fpregs[regnum * 3 + 1],
+	    fpregs[regnum * 3 + 2]));
 
 	fpu_explode(fe, &fe->fe_f1, FTYPE_EXT, &fpregs[regnum * 3]);
 
@@ -591,10 +591,10 @@ fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 	/* get the other operand which is always the source */
 	if ((word1 & 0x4000) == 0) {
 		DPRINTF(("%s: FP%d op FP%d => FP%d\n", __func__,
-			format, regnum, regnum));
+		    format, regnum, regnum));
 		DPRINTF(("%s: src opr FP%d=%08x,%08x,%08x\n", __func__,
-			format, fpregs[format * 3], fpregs[format * 3 + 1],
-			fpregs[format * 3 + 2]));
+		    format, fpregs[format * 3], fpregs[format * 3 + 1],
+		    fpregs[format * 3 + 2]));
 		fpu_explode(fe, &fe->fe_f2, FTYPE_EXT, &fpregs[format * 3]);
 	} else {
 		/* the operand is in memory */
@@ -642,18 +642,18 @@ fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 			printf("%c%d@+\n", regname, insn->is_ea.ea_regnum & 7);
 		} else if (flags & EA_OFFSET) {
 			printf("%c%d@(%d)\n", regname,
-				insn->is_ea.ea_regnum & 7,
-				insn->is_ea.ea_offset);
+			    insn->is_ea.ea_regnum & 7,
+			    insn->is_ea.ea_offset);
 		} else if (flags & EA_INDEXED) {
 			printf("%c%d@(...)\n", regname,
-				insn->is_ea.ea_regnum & 7);
+			    insn->is_ea.ea_regnum & 7);
 		} else if (flags & EA_ABS) {
 			printf("0x%08x\n", insn->is_ea.ea_absaddr);
 		} else if (flags & EA_IMMED) {
 			printf("#0x%08x,%08x,%08x\n",
-				insn->is_ea.ea_immed[0],
-				insn->is_ea.ea_immed[1],
-				insn->is_ea.ea_immed[2]);
+			    insn->is_ea.ea_immed[0],
+			    insn->is_ea.ea_immed[1],
+			    insn->is_ea.ea_immed[2]);
 		} else {
 			printf("%c%d@\n", regname, insn->is_ea.ea_regnum & 7);
 		}
@@ -674,7 +674,7 @@ fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 			format = FTYPE_LNG;
 		}
 		DPRINTF(("%s: src = %08x %08x %08x, siz = %d\n", __func__,
-			buf[0], buf[1], buf[2], insn->is_datasize));
+		    buf[0], buf[1], buf[2], insn->is_datasize));
 		fpu_explode(fe, &fe->fe_f2, format, buf);
 	}
 
@@ -853,7 +853,7 @@ fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 
 	default:		/* possibly 040/060 instructions */
 		DPRINTF(("%s: bad opcode=0x%x, word1=0x%x\n", __func__,
-			insn->is_opcode, insn->is_word1));
+		    insn->is_opcode, insn->is_word1));
 		sig = SIGILL;
 	}
 
@@ -870,19 +870,19 @@ fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 #ifdef DEBUG_FPE
 		if (!discard_result) {
 			printf("%s: %08x,%08x,%08x stored in FP%d\n", __func__,
-				fpregs[regnum * 3],
-				fpregs[regnum * 3 + 1],
-				fpregs[regnum * 3 + 2],
-				regnum);
+			    fpregs[regnum * 3],
+			    fpregs[regnum * 3 + 1],
+			    fpregs[regnum * 3 + 2],
+			    regnum);
 		} else {
 			static const char *class_name[] =
-				{ "SNAN", "QNAN", "ZERO", "NUM", "INF" };
+			    { "SNAN", "QNAN", "ZERO", "NUM", "INF" };
 			printf("%s: result(%s,%c,%d,%08x,%08x,%08x) "
-				"discarded\n", __func__,
-				class_name[res->fp_class + 2],
-				res->fp_sign ? '-' : '+', res->fp_exp,
-				res->fp_mant[0], res->fp_mant[1],
-				res->fp_mant[2]);
+			    "discarded\n", __func__,
+			    class_name[res->fp_class + 2],
+			    res->fp_sign ? '-' : '+', res->fp_exp,
+			    res->fp_mant[0], res->fp_mant[1],
+			    res->fp_mant[2]);
 		}
 #endif
 	} else {
@@ -890,7 +890,7 @@ fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 	}
 
 	DPRINTF(("%s: FPSR = %08x, FPCR = %08x\n", __func__,
-		fe->fe_fpsr, fe->fe_fpcr));
+	    fe->fe_fpsr, fe->fe_fpcr));
 
 	DUMP_INSN(insn);
 
@@ -951,7 +951,7 @@ test_cc(struct fpemu *fe, int pred)
 	case 3:			/* Greater or Equal */
 		DPRINTF(("GE"));
 		result = -((fpsr & FPSR_ZERO) ||
-			(fpsr & (FPSR_NAN|FPSR_NEG)) == 0);
+		    (fpsr & (FPSR_NAN|FPSR_NEG)) == 0);
 		break;
 	case 4:			/* Less Than */
 		DPRINTF(("LT"));
@@ -960,7 +960,7 @@ test_cc(struct fpemu *fe, int pred)
 	case 5:			/* Less or Equal */
 		DPRINTF(("LE"));
 		result = -((fpsr & FPSR_ZERO) ||
-			((fpsr & (FPSR_NAN|FPSR_NEG)) == FPSR_NEG));
+		    ((fpsr & (FPSR_NAN|FPSR_NEG)) == FPSR_NEG));
 		break;
 	case 6:			/* Greater or Less than */
 		DPRINTF(("GLT"));
@@ -1017,10 +1017,10 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 
 			if (count-- != 0) {
 				displ = fusword((void *)(insn->is_pc +
-					insn->is_advance));
+				    insn->is_advance));
 				if (displ < 0) {
 					DPRINTF(("%s: fault reading "
-						"displacement\n", __func__));
+					    "displacement\n", __func__));
 					return SIGSEGV;
 				}
 				/* sign-extend the displacement */
@@ -1031,7 +1031,7 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 				insn->is_advance += displ;
 #if 0				/* XXX */
 				insn->is_nextpc = insn->is_pc +
-					insn->is_advance;
+				    insn->is_advance;
 #endif
 			} else {
 				insn->is_advance = 6;
@@ -1081,7 +1081,7 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 		if (branch == -1 || branch == 0) {
 			/* set result */
 			sig = fpu_store_ea(frame, insn, &insn->is_ea,
-				(char *)&branch);
+			    (char *)&branch);
 		} else {
 			/* got an exception */
 			sig = branch;
@@ -1141,8 +1141,8 @@ fpu_emul_brcc(struct fpemu *fe, struct instruction *insn)
 	} else if (sig)
 		return SIGILL;		/* got a signal */
 	DPRINTF(("%s: %s insn @ %x (%x+%x) (disp=%x)\n", __func__,
-		(sig == -1) ? "BRANCH to" : "NEXT",
-		insn->is_pc + insn->is_advance, insn->is_pc, insn->is_advance,
-		displ));
+	    (sig == -1) ? "BRANCH to" : "NEXT",
+	    insn->is_pc + insn->is_advance, insn->is_pc, insn->is_advance,
+	    displ));
 	return 0;
 }
