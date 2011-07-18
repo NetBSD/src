@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/10/20 09:20:11 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2011/07/18 19:30:49 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -31,5 +31,11 @@ TESTS_C+=	${test}
 SRCS.${test}=	${test}.c test_helpers.c
 .endfor
 .undef test
+
+# Don't warn about functions which cannot be stack smash protected as
+# there are a lot of them.
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
+COPTS.dynstr_test.c=	-Wno-stack-protector
+.endif
 
 .include <bsd.test.mk>
