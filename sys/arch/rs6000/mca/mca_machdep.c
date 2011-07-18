@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.3 2011/06/18 08:08:30 matt Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.4 2011/07/18 17:26:56 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.3 2011/06/18 08:08:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.4 2011/07/18 17:26:56 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.3 2011/06/18 08:08:30 matt Exp $")
 
 #include <powerpc/pio.h>
 #define _POWERPC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/mca/mcavar.h>
 #include <dev/mca/mcareg.h>

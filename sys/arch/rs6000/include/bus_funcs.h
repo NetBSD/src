@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2008/04/28 20:23:34 martin Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.1 2011/07/18 17:26:55 dyoung Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,26 +28,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _RS6000_BUS_H_
-#define _RS6000_BUS_H_
+#ifndef _RS6000_BUS_FUNCS_H_
+#define _RS6000_BUS_FUNCS_H_
 
-/*
- * Values for the Be bus space tag, not to be used directly by MI code.
- */
-#define	RS6000_BUS_SPACE_IO	0xC0000000	/* i/o space */
-#define RS6000_BUS_SPACE_MEM	0xC0000000	/* mem space */
+#include <powerpc/bus_funcs.h>
 
-/*
- * Address conversion as seen from a PCI master.
- */
-#define MPC105_DIRECT_MAPPED_SPACE	0xC0000000
-#define PHYS_TO_BUS_MEM(t, x)	((x) | MPC105_DIRECT_MAPPED_SPACE)
-#define BUS_MEM_TO_PHYS(t, x)	((x) & ~MPC105_DIRECT_MAPPED_SPACE)
-
-#ifdef _KERNEL
-extern struct powerpc_bus_space rs6000_iocc0_io_space_tag;
-#endif
-
-#include <powerpc/bus.h>
-
-#endif /* _RS6000_BUS_H_ */
+#endif /* _RS6000_BUS_FUNCS_H_ */

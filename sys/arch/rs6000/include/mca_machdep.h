@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.h,v 1.2 2011/06/18 08:08:30 matt Exp $	*/
+/*	$NetBSD: mca_machdep.h,v 1.3 2011/07/18 17:26:55 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #define _RS6000_MCA_MACHDEP_H_
 
 #define _POWERPC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/iocc.h>
 
 /*
