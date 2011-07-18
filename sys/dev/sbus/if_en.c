@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.28 2011/02/01 19:50:04 chuck Exp $	*/
+/*	$NetBSD: if_en.c,v 1.29 2011/07/18 00:58:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.28 2011/02/01 19:50:04 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.29 2011/07/18 00:58:52 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,17 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.28 2011/02/01 19:50:04 chuck Exp $");
 
 
 /*
- * local structures
- */
-struct en_sbus_softc {
-	/* bus independent stuff */
-	struct en_softc	sc_en;		/* includes "device" structure */
-
-	/* sbus glue */
-};
-
-
-/*
  * prototypes
  */
 static	int en_sbus_match(device_t, cfdata_t, void *);
@@ -78,7 +67,7 @@ static	void en_sbus_attach(device_t, device_t, void *);
  * SBus autoconfig attachments
  */
 
-CFATTACH_DECL(en_sbus, sizeof(struct en_sbus_softc),
+CFATTACH_DECL_NEW(en_sbus, sizeof(struct en_softc),
     en_sbus_match, en_sbus_attach, NULL, NULL);
 
 /***********************************************************************/
@@ -111,8 +100,9 @@ static void
 en_sbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
-	struct en_sbus_softc *ssc = device_private(self);
-	struct en_softc *sc = &ssc->sc_en;
+	struct en_softc *sc = device_private(self);
+
+	sc->sc_dev = self;
 
 	printf("\n");
 
