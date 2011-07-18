@@ -1,4 +1,4 @@
-.\"	$NetBSD: fopen.3,v 1.26 2011/06/27 08:21:07 wiz Exp $
+.\"	$NetBSD: fopen.3,v 1.27 2011/07/18 05:17:16 jruoho Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)fopen.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 24, 2011
+.Dd July 18, 2011
 .Dt FOPEN 3
 .Os
 .Sh NAME
@@ -82,6 +82,9 @@ Append; open for reading and writing.
 The file is created if it does not exist.
 .El
 .Pp
+Additionally:
+.Bl -bullet -offset 2n
+.It
 The
 .Fa mode
 string can also include the letter
@@ -94,17 +97,18 @@ This is strictly for compatibility with
 and has no effect; the
 .Dq b
 is ignored.
-.Pp
+.It
 The letter
 .Dq f
-in the mode string restricts fopen to regular
-files; if the file opened is not a regular file,
+in the mode string restricts
+.Fn fopen
+to regular files; if the file opened is not a regular file,
 .Fn fopen
 will fail.
 This is a non
 .St -ansiC
 extension.
-.Pp
+.It
 The letter
 .Dq e
 in the mode string sets the close-on-exec flag in the file descriptors of
@@ -114,6 +118,7 @@ will fail.
 This is a non
 .St -ansiC
 extension.
+.El
 .Pp
 Any created files will have mode
 .Pf \*q Dv S_IRUSR
@@ -129,8 +134,8 @@ Any created files will have mode
 .Dv S_IWOTH Ns \*q
 .Pq Li 0666 ,
 as modified by the process'
-umask value (see
-.Xr umask 2 ) .
+.Xr umask 2
+value.
 .Pp
 Opening a file with append mode causes all subsequent writes to it
 to be forced to the then current end of file, regardless of intervening
@@ -201,18 +206,14 @@ is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
+The functions may fail if:
 .Bl -tag -width Er
 .It Bq Er EFTYPE
 The file is not a regular file and the character ``f'' is specified
 in the mode.
 .It Bq Er EINVAL
-The
+The specified
 .Fa mode
-provided to
-.Fn fopen ,
-.Fn fdopen ,
-or
-.Fn freopen
 was invalid.
 .El
 .Pp
@@ -264,13 +265,10 @@ The
 .Fn fopen
 and
 .Fn freopen
-functions
-conform to
+functions conform to
 .St -ansiC .
-The
-.Fn fdopen
-function conforms to
-.St -p1003.1-90 .
+All three functions are specified in
+.St -p1003.1-2008 .
 .Sh CAVEATS
 Proper code using
 .Fn fdopen
