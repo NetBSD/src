@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.28 2011/01/16 09:08:29 tsutsui Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.29 2011/07/18 05:57:40 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.28 2011/01/16 09:08:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.29 2011/07/18 05:57:40 jruoho Exp $");
 
 
 #include <sys/param.h>
@@ -942,26 +942,25 @@ zyd_unlock_phy(struct zyd_softc *sc)
 Static int
 zyd_rfmd_init(struct zyd_rf *rf)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct zyd_softc *sc = rf->rf_sc;
 	static const struct zyd_phy_pair phyini[] = ZYD_RFMD_PHY;
 	static const uint32_t rfini[] = ZYD_RFMD_RF;
-	int i, error;
+	int error;
+	size_t i;
 
 	/* init RF-dependent PHY registers */
-	for (i = 0; i < N(phyini); i++) {
+	for (i = 0; i < __arraycount(phyini); i++) {
 		error = zyd_write16(sc, phyini[i].reg, phyini[i].val);
 		if (error != 0)
 			return error;
 	}
 
 	/* init RFMD radio */
-	for (i = 0; i < N(rfini); i++) {
+	for (i = 0; i < __arraycount(rfini); i++) {
 		if ((error = zyd_rfwrite(sc, rfini[i])) != 0)
 			return error;
 	}
 	return 0;
-#undef N
 }
 
 Static int
@@ -995,22 +994,22 @@ zyd_rfmd_set_channel(struct zyd_rf *rf, uint8_t chan)
 Static int
 zyd_al2230_init(struct zyd_rf *rf)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct zyd_softc *sc = rf->rf_sc;
 	static const struct zyd_phy_pair phyini[] = ZYD_AL2230_PHY;
 	static const struct zyd_phy_pair phy2230s[] = ZYD_AL2230S_PHY_INIT;
 	static const uint32_t rfini[] = ZYD_AL2230_RF;
-	int i, error;
+	int error;
+	size_t i;
 
 	/* init RF-dependent PHY registers */
-	for (i = 0; i < N(phyini); i++) {
+	for (i = 0; i < __arraycount(phyini); i++) {
 		error = zyd_write16(sc, phyini[i].reg, phyini[i].val);
 		if (error != 0)
 			return error;
 	}
 
 	if (sc->rf_rev == ZYD_RF_AL2230S) {
-		for (i = 0; i < N(phy2230s); i++) {
+		for (i = 0; i < __arraycount(phy2230s); i++) {
 			error = zyd_write16(sc, phy2230s[i].reg,
 			    phy2230s[i].val);
 			if (error != 0)
@@ -1019,37 +1018,35 @@ zyd_al2230_init(struct zyd_rf *rf)
 	}
 
 	/* init AL2230 radio */
-	for (i = 0; i < N(rfini); i++) {
+	for (i = 0; i < __arraycount(rfini); i++) {
 		if ((error = zyd_rfwrite(sc, rfini[i])) != 0)
 			return error;
 	}
 	return 0;
-#undef N
 }
 
 Static int
 zyd_al2230_init_b(struct zyd_rf *rf)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct zyd_softc *sc = rf->rf_sc;
 	static const struct zyd_phy_pair phyini[] = ZYD_AL2230_PHY_B;
 	static const uint32_t rfini[] = ZYD_AL2230_RF_B;
-	int i, error;
+	int error;
+	size_t i;
 
 	/* init RF-dependent PHY registers */
-	for (i = 0; i < N(phyini); i++) {
+	for (i = 0; i < __arraycount(phyini); i++) {
 		error = zyd_write16(sc, phyini[i].reg, phyini[i].val);
 		if (error != 0)
 			return error;
 	}
 
 	/* init AL2230 radio */
-	for (i = 0; i < N(rfini); i++) {
+	for (i = 0; i < __arraycount(rfini); i++) {
 		if ((error = zyd_rfwrite(sc, rfini[i])) != 0)
 			return error;
 	}
 	return 0;
-#undef N
 }
 
 Static int
@@ -1088,48 +1085,47 @@ zyd_al2230_set_channel(struct zyd_rf *rf, uint8_t chan)
 Static int
 zyd_al7230B_init(struct zyd_rf *rf)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct zyd_softc *sc = rf->rf_sc;
 	static const struct zyd_phy_pair phyini_1[] = ZYD_AL7230B_PHY_1;
 	static const struct zyd_phy_pair phyini_2[] = ZYD_AL7230B_PHY_2;
 	static const struct zyd_phy_pair phyini_3[] = ZYD_AL7230B_PHY_3;
 	static const uint32_t rfini_1[] = ZYD_AL7230B_RF_1;
 	static const uint32_t rfini_2[] = ZYD_AL7230B_RF_2;
-	int i, error;
+	int error;
+	size_t i;
 
 	/* for AL7230B, PHY and RF need to be initialized in "phases" */
 
 	/* init RF-dependent PHY registers, part one */
-	for (i = 0; i < N(phyini_1); i++) {
+	for (i = 0; i < __arraycount(phyini_1); i++) {
 		error = zyd_write16(sc, phyini_1[i].reg, phyini_1[i].val);
 		if (error != 0)
 			return error;
 	}
 	/* init AL7230B radio, part one */
-	for (i = 0; i < N(rfini_1); i++) {
+	for (i = 0; i < __arraycount(rfini_1); i++) {
 		if ((error = zyd_rfwrite(sc, rfini_1[i])) != 0)
 			return error;
 	}
 	/* init RF-dependent PHY registers, part two */
-	for (i = 0; i < N(phyini_2); i++) {
+	for (i = 0; i < __arraycount(phyini_2); i++) {
 		error = zyd_write16(sc, phyini_2[i].reg, phyini_2[i].val);
 		if (error != 0)
 			return error;
 	}
 	/* init AL7230B radio, part two */
-	for (i = 0; i < N(rfini_2); i++) {
+	for (i = 0; i < __arraycount(rfini_2); i++) {
 		if ((error = zyd_rfwrite(sc, rfini_2[i])) != 0)
 			return error;
 	}
 	/* init RF-dependent PHY registers, part three */
-	for (i = 0; i < N(phyini_3); i++) {
+	for (i = 0; i < __arraycount(phyini_3); i++) {
 		error = zyd_write16(sc, phyini_3[i].reg, phyini_3[i].val);
 		if (error != 0)
 			return error;
 	}
 
 	return 0;
-#undef N
 }
 
 Static int
@@ -1146,18 +1142,18 @@ zyd_al7230B_switch_radio(struct zyd_rf *rf, int on)
 Static int
 zyd_al7230B_set_channel(struct zyd_rf *rf, uint8_t chan)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct zyd_softc *sc = rf->rf_sc;
 	static const struct {
 		uint32_t	r1, r2;
 	} rfprog[] = ZYD_AL7230B_CHANTABLE;
 	static const uint32_t rfsc[] = ZYD_AL7230B_RF_SETCHANNEL;
-	int i, error;
+	int error;
+	size_t i;
 
 	(void)zyd_write16(sc, ZYD_CR240, 0x57);
 	(void)zyd_write16(sc, ZYD_CR251, 0x2f);
 
-	for (i = 0; i < N(rfsc); i++) {
+	for (i = 0; i < __arraycount(rfsc); i++) {
 		if ((error = zyd_rfwrite(sc, rfsc[i])) != 0)
 			return error;
 	}
@@ -1177,7 +1173,6 @@ zyd_al7230B_set_channel(struct zyd_rf *rf, uint8_t chan)
 	(void)zyd_write16(sc, ZYD_CR240, 0x08);
 
 	return 0;
-#undef N
 }
 
 /*
@@ -1186,23 +1181,23 @@ zyd_al7230B_set_channel(struct zyd_rf *rf, uint8_t chan)
 Static int
 zyd_al2210_init(struct zyd_rf *rf)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct zyd_softc *sc = rf->rf_sc;
 	static const struct zyd_phy_pair phyini[] = ZYD_AL2210_PHY;
 	static const uint32_t rfini[] = ZYD_AL2210_RF;
 	uint32_t tmp;
-	int i, error;
+	int error;
+	size_t i;
 
 	(void)zyd_write32(sc, ZYD_CR18, 2);
 
 	/* init RF-dependent PHY registers */
-	for (i = 0; i < N(phyini); i++) {
+	for (i = 0; i < __arraycount(phyini); i++) {
 		error = zyd_write16(sc, phyini[i].reg, phyini[i].val);
 		if (error != 0)
 			return error;
 	}
 	/* init AL2210 radio */
-	for (i = 0; i < N(rfini); i++) {
+	for (i = 0; i < __arraycount(rfini); i++) {
 		if ((error = zyd_rfwrite(sc, rfini[i])) != 0)
 			return error;
 	}
@@ -1216,7 +1211,6 @@ zyd_al2210_init(struct zyd_rf *rf)
 	(void)zyd_write32(sc, ZYD_CR18, 3);
 
 	return 0;
-#undef N
 }
 
 Static int
@@ -1258,25 +1252,24 @@ zyd_al2210_set_channel(struct zyd_rf *rf, uint8_t chan)
 Static int
 zyd_gct_init(struct zyd_rf *rf)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct zyd_softc *sc = rf->rf_sc;
 	static const struct zyd_phy_pair phyini[] = ZYD_GCT_PHY;
 	static const uint32_t rfini[] = ZYD_GCT_RF;
-	int i, error;
+	int error;
+	size_t i;
 
 	/* init RF-dependent PHY registers */
-	for (i = 0; i < N(phyini); i++) {
+	for (i = 0; i < __arraycount(phyini); i++) {
 		error = zyd_write16(sc, phyini[i].reg, phyini[i].val);
 		if (error != 0)
 			return error;
 	}
 	/* init cgt radio */
-	for (i = 0; i < N(rfini); i++) {
+	for (i = 0; i < __arraycount(rfini); i++) {
 		if ((error = zyd_rfwrite(sc, rfini[i])) != 0)
 			return error;
 	}
 	return 0;
-#undef N
 }
 
 Static int
@@ -1306,15 +1299,15 @@ zyd_gct_set_channel(struct zyd_rf *rf, uint8_t chan)
 Static int
 zyd_maxim_init(struct zyd_rf *rf)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct zyd_softc *sc = rf->rf_sc;
 	static const struct zyd_phy_pair phyini[] = ZYD_MAXIM_PHY;
 	static const uint32_t rfini[] = ZYD_MAXIM_RF;
 	uint16_t tmp;
-	int i, error;
+	int error;
+	size_t i;
 
 	/* init RF-dependent PHY registers */
-	for (i = 0; i < N(phyini); i++) {
+	for (i = 0; i < __arraycount(phyini); i++) {
 		error = zyd_write16(sc, phyini[i].reg, phyini[i].val);
 		if (error != 0)
 			return error;
@@ -1323,7 +1316,7 @@ zyd_maxim_init(struct zyd_rf *rf)
 	(void)zyd_write16(sc, ZYD_CR203, tmp & ~(1 << 4));
 
 	/* init maxim radio */
-	for (i = 0; i < N(rfini); i++) {
+	for (i = 0; i < __arraycount(rfini); i++) {
 		if ((error = zyd_rfwrite(sc, rfini[i])) != 0)
 			return error;
 	}
@@ -1331,7 +1324,6 @@ zyd_maxim_init(struct zyd_rf *rf)
 	(void)zyd_write16(sc, ZYD_CR203, tmp | (1 << 4));
 
 	return 0;
-#undef N
 }
 
 Static int
@@ -1345,7 +1337,6 @@ zyd_maxim_switch_radio(struct zyd_rf *rf, int on)
 Static int
 zyd_maxim_set_channel(struct zyd_rf *rf, uint8_t chan)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct zyd_softc *sc = rf->rf_sc;
 	static const struct zyd_phy_pair phyini[] = ZYD_MAXIM_PHY;
 	static const uint32_t rfini[] = ZYD_MAXIM_RF;
@@ -1353,7 +1344,8 @@ zyd_maxim_set_channel(struct zyd_rf *rf, uint8_t chan)
 		uint32_t	r1, r2;
 	} rfprog[] = ZYD_MAXIM_CHANTABLE;
 	uint16_t tmp;
-	int i, error;
+	int error;
+	size_t i;
 
 	/*
 	 * Do the same as we do when initializing it, except for the channel
@@ -1361,7 +1353,7 @@ zyd_maxim_set_channel(struct zyd_rf *rf, uint8_t chan)
 	 */
 
 	/* init RF-dependent PHY registers */
-	for (i = 0; i < N(phyini); i++) {
+	for (i = 0; i < __arraycount(phyini); i++) {
 		error = zyd_write16(sc, phyini[i].reg, phyini[i].val);
 		if (error != 0)
 			return error;
@@ -1374,7 +1366,7 @@ zyd_maxim_set_channel(struct zyd_rf *rf, uint8_t chan)
 	(void)zyd_rfwrite(sc, rfprog[chan - 1].r2);
 
 	/* init maxim radio - skipping the two first values */
-	for (i = 2; i < N(rfini); i++) {
+	for (i = 2; i < __arraycount(rfini); i++) {
 		if ((error = zyd_rfwrite(sc, rfini[i])) != 0)
 			return error;
 	}
@@ -1382,7 +1374,6 @@ zyd_maxim_set_channel(struct zyd_rf *rf, uint8_t chan)
 	(void)zyd_write16(sc, ZYD_CR203, tmp | (1 << 4));
 
 	return 0;
-#undef N
 }
 
 /*
@@ -1391,15 +1382,15 @@ zyd_maxim_set_channel(struct zyd_rf *rf, uint8_t chan)
 Static int
 zyd_maxim2_init(struct zyd_rf *rf)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct zyd_softc *sc = rf->rf_sc;
 	static const struct zyd_phy_pair phyini[] = ZYD_MAXIM2_PHY;
 	static const uint32_t rfini[] = ZYD_MAXIM2_RF;
 	uint16_t tmp;
-	int i, error;
+	int error;
+	size_t i;
 
 	/* init RF-dependent PHY registers */
-	for (i = 0; i < N(phyini); i++) {
+	for (i = 0; i < __arraycount(phyini); i++) {
 		error = zyd_write16(sc, phyini[i].reg, phyini[i].val);
 		if (error != 0)
 			return error;
@@ -1408,7 +1399,7 @@ zyd_maxim2_init(struct zyd_rf *rf)
 	(void)zyd_write16(sc, ZYD_CR203, tmp & ~(1 << 4));
 
 	/* init maxim2 radio */
-	for (i = 0; i < N(rfini); i++) {
+	for (i = 0; i < __arraycount(rfini); i++) {
 		if ((error = zyd_rfwrite(sc, rfini[i])) != 0)
 			return error;
 	}
@@ -1416,7 +1407,6 @@ zyd_maxim2_init(struct zyd_rf *rf)
 	(void)zyd_write16(sc, ZYD_CR203, tmp | (1 << 4));
 
 	return 0;
-#undef N
 }
 
 Static int
@@ -1430,7 +1420,6 @@ zyd_maxim2_switch_radio(struct zyd_rf *rf, int on)
 Static int
 zyd_maxim2_set_channel(struct zyd_rf *rf, uint8_t chan)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct zyd_softc *sc = rf->rf_sc;
 	static const struct zyd_phy_pair phyini[] = ZYD_MAXIM2_PHY;
 	static const uint32_t rfini[] = ZYD_MAXIM2_RF;
@@ -1438,7 +1427,8 @@ zyd_maxim2_set_channel(struct zyd_rf *rf, uint8_t chan)
 		uint32_t	r1, r2;
 	} rfprog[] = ZYD_MAXIM2_CHANTABLE;
 	uint16_t tmp;
-	int i, error;
+	int error;
+	size_t i;
 
 	/*
 	 * Do the same as we do when initializing it, except for the channel
@@ -1446,7 +1436,7 @@ zyd_maxim2_set_channel(struct zyd_rf *rf, uint8_t chan)
 	 */
 
 	/* init RF-dependent PHY registers */
-	for (i = 0; i < N(phyini); i++) {
+	for (i = 0; i < __arraycount(phyini); i++) {
 		error = zyd_write16(sc, phyini[i].reg, phyini[i].val);
 		if (error != 0)
 			return error;
@@ -1459,7 +1449,7 @@ zyd_maxim2_set_channel(struct zyd_rf *rf, uint8_t chan)
 	(void)zyd_rfwrite(sc, rfprog[chan - 1].r2);
 
 	/* init maxim2 radio - skipping the two first values */
-	for (i = 2; i < N(rfini); i++) {
+	for (i = 2; i < __arraycount(rfini); i++) {
 		if ((error = zyd_rfwrite(sc, rfini[i])) != 0)
 			return error;
 	}
@@ -1467,7 +1457,6 @@ zyd_maxim2_set_channel(struct zyd_rf *rf, uint8_t chan)
 	(void)zyd_write16(sc, ZYD_CR203, tmp | (1 << 4));
 
 	return 0;
-#undef N
 }
 
 Static int
