@@ -1,8 +1,10 @@
-# $NetBSD: Makefile,v 1.6 2011/07/07 19:29:58 jruoho Exp $
+# $NetBSD: Makefile,v 1.7 2011/07/18 23:16:11 jym Exp $
 
 MKMAN=	no
 
 .include <bsd.own.mk>
+
+.include "../arch/Makefile.exec_prot"
 
 TESTSDIR=		${TESTSBASE}/lib/libc/sys
 
@@ -40,6 +42,8 @@ TESTS_C+=		t_timer_create
 TESTS_C+=		t_truncate
 TESTS_C+=		t_umask
 TESTS_C+=		t_unlink
+
+SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT}
 
 LDADD.t_getpid+=        -lpthread
 LDADD.t_timer_create+=  -lpthread
