@@ -1,4 +1,4 @@
-/*	$NetBSD: dis_tables.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: dis_tables.c,v 1.3 2011/07/18 00:42:40 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -1716,9 +1716,9 @@ dtrace_disx86(dis86_t *x, uint_t cpu_mode)
 	uint_t opcode2;		/* low nibble of 1st byte */
 	uint_t opcode3;		/* extra opcode bits usually from ModRM byte */
 	uint_t opcode4;		/* high nibble of 2nd byte */
-	uint_t opcode5;		/* low nibble of 2ne byte */
+	uint_t opcode5 = 0;	/* low nibble of 2ne byte */	/* XXX: gcc */
 	uint_t opcode6;		/* high nibble of 3rd byte */
-	uint_t opcode7;		/* low nibble of 3rd byte */
+	uint_t opcode7 = 0;	/* low nibble of 3rd byte */	/* XXX: gcc */
 	uint_t opcode_bytes = 1;
 
 	/*
