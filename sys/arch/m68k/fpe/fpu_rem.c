@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_rem.c,v 1.10 2011/07/18 07:44:30 isaki Exp $	*/
+/*	$NetBSD: fpu_rem.c,v 1.11 2011/07/18 14:11:27 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.10 2011/07/18 07:44:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.11 2011/07/18 14:11:27 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -124,12 +124,14 @@ __fpu_modrem(struct fpemu *fe, int modrem)
 		/*
 		 * Step 3
 		 */
-		while (y->fp_exp != r->fp_exp || y->fp_mant[0] != r->fp_mant[0] ||
+		while (y->fp_exp != r->fp_exp ||
+		       y->fp_mant[0] != r->fp_mant[0] ||
 		       y->fp_mant[1] != r->fp_mant[1] ||
 		       y->fp_mant[2] != r->fp_mant[2]) {
 
 			/* Step 3.2 */
-			if (y->fp_exp < r->fp_exp || y->fp_mant[0] < r->fp_mant[0] ||
+			if (y->fp_exp < r->fp_exp ||
+			    y->fp_mant[0] < r->fp_mant[0] ||
 			    y->fp_mant[1] < r->fp_mant[1] ||
 			    y->fp_mant[2] < r->fp_mant[2]) {
 				CPYFPN(&fe->fe_f1, r);
@@ -163,14 +165,16 @@ __fpu_modrem(struct fpemu *fe, int modrem)
 	/* Step 5.1 */
 	if (r->fp_exp + 1 < y->fp_exp ||
 	    (r->fp_exp + 1 == y->fp_exp &&
-	     (r->fp_mant[0] < y->fp_mant[0] || r->fp_mant[1] < y->fp_mant[1] ||
+	     (r->fp_mant[0] < y->fp_mant[0] ||
+	      r->fp_mant[1] < y->fp_mant[1] ||
 	      r->fp_mant[2] < y->fp_mant[2]))) {
 		/* if r < y/2 */
 		goto Step6;
 	}
 	/* Step 5.2 */
 	if (r->fp_exp + 1 != y->fp_exp ||
-	    r->fp_mant[0] != y->fp_mant[0] || r->fp_mant[1] != y->fp_mant[1] ||
+	    r->fp_mant[0] != y->fp_mant[0] ||
+	    r->fp_mant[1] != y->fp_mant[1] ||
 	    r->fp_mant[2] != y->fp_mant[2]) {
 		/* if (!(r < y/2) && !(r == y/2)) */
 		Last_Subtract = 1;
@@ -204,7 +208,7 @@ __fpu_modrem(struct fpemu *fe, int modrem)
 	q |= (signQ << 7);
 	fe->fe_fpframe->fpf_fpsr =
 	fe->fe_fpsr =
-		(fe->fe_fpsr & ~FPSR_QTT) | (q << 16);
+	    (fe->fe_fpsr & ~FPSR_QTT) | (q << 16);
 	return r;
 
  Step9:
@@ -214,7 +218,7 @@ __fpu_modrem(struct fpemu *fe, int modrem)
 	q |= (signQ << 7);
 	fe->fe_fpframe->fpf_fpsr =
 	fe->fe_fpsr =
-		(fe->fe_fpsr & ~FPSR_QTT) | (q << 16);
+	    (fe->fe_fpsr & ~FPSR_QTT) | (q << 16);
 	return &fe->fe_f1;
 }
 
