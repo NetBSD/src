@@ -1,11 +1,10 @@
-/*	$NetBSD: consinit.c,v 1.3 2011/07/18 17:26:56 dyoung Exp $	*/
-
+/*	$NetBSD: bus_defs.h,v 1.1 2011/07/18 17:26:55 dyoung Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Tim Rightnour
+ * by 
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,65 +28,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3 2011/07/18 17:26:56 dyoung Exp $");
+#ifndef _RS6000_BUS_DEFS_H_
+#define _RS6000_BUS_DEFS_H_
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/bus.h>
-
-#include <machine/bootinfo.h>
-#include <machine/intr.h>
-
-#include <dev/cons.h>
-
-#include "com.h"
-#undef NCOM
-#define NCOM 1
-#if (NCOM > 0)
-#include <sys/termios.h>
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-void comsoft(void);
-#endif
-
-extern void setled(uint32_t);
-
-#undef COM_FREQ
-#define COM_FREQ_PWR 23961600
-#define COM_FREQ 8000000
 /*
- * consinit
- * Initialize system console.
+ * Values for the Be bus space tag, not to be used directly by MI code.
  */
-void
-consinit(void)
-{
-	struct btinfo_console *consinfo;
-	static int initted = 0;
+#define	RS6000_BUS_SPACE_IO	0xC0000000	/* i/o space */
+#define RS6000_BUS_SPACE_MEM	0xC0000000	/* mem space */
 
-	if (initted)
-		return;
-	initted = 1;
+/*
+ * Address conversion as seen from a PCI master.
+ */
+#define MPC105_DIRECT_MAPPED_SPACE	0xC0000000
+#define PHYS_TO_BUS_MEM(t, x)	((x) | MPC105_DIRECT_MAPPED_SPACE)
+#define BUS_MEM_TO_PHYS(t, x)	((x) & ~MPC105_DIRECT_MAPPED_SPACE)
 
-	consinfo = (struct btinfo_console *)lookup_bootinfo(BTINFO_CONSOLE);
-	if (!consinfo)
-		panic("not found console information in bootinfo");
-
-/* #if (NCOM > 0) */
-#if 1
-	if (!strcmp(consinfo->devname, "com")) {
-		bus_space_tag_t tag = &rs6000_iocc0_io_space_tag;
-
-		if(comcnattach(tag, consinfo->addr, consinfo->speed, COM_FREQ,
-		    COM_TYPE_NORMAL,
-		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8))) {
-			setled(0x77800000);
-			panic("can't init serial console");
-		}
-		setled(0x77700000);
-		return;
-	}
+#ifdef _KERNEL
+extern struct powerpc_bus_space rs6000_iocc0_io_space_tag;
 #endif
-	panic("invalid console device %s", consinfo->devname);
-}
+
+#include <powerpc/bus_defs.h>
+
+#endif /* _RS6000_BUS_DEFS_H_ */
