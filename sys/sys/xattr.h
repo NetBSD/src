@@ -1,4 +1,4 @@
-/*	$NetBSD: xattr.h,v 1.3 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: xattr.h,v 1.4 2011/07/18 11:28:24 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -59,9 +59,9 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	setxattr(const char *, const char *, void *, size_t, int);
-int	lsetxattr(const char *, const char *, void *, size_t, int);
-int	fsetxattr(int, const char *, void *, size_t, int);
+int	setxattr(const char *, const char *, const void *, size_t, int);
+int	lsetxattr(const char *, const char *, const void *, size_t, int);
+int	fsetxattr(int, const char *, const void *, size_t, int);
 
 ssize_t	getxattr(const char *, const char *, void *, size_t);
 ssize_t	lgetxattr(const char *, const char *, void *, size_t);
