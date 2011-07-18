@@ -1,4 +1,4 @@
-/*	$NetBSD: spifvar.h,v 1.3 2009/09/17 16:28:12 tsutsui Exp $	*/
+/*	$NetBSD: spifvar.h,v 1.4 2011/07/18 00:58:52 mrg Exp $	*/
 /*	$OpenBSD: spifvar.h,v 1.3 2003/06/02 18:32:41 jason Exp $	*/
 
 /*
@@ -53,18 +53,17 @@ struct stty_port {
 };
 
 struct stty_softc {
-	struct	device sc_dev;		/* base device */
+	device_t sc_dev;
 	int	sc_nports;		/* number of serial ports */
 	struct	stty_port sc_port[SPIF_MAX_SERIAL];
 };
 
 struct sbpp_softc {
-	struct	device sc_dev;		/* base device */
 	int	sc_nports;		/* number of parallel ports */
 };
 
 struct spif_softc {
-	struct	device sc_dev;		/* base device */
+	device_t sc_dev;
 	void *sc_stcih;			/* stc interrupt vector */
 	void *sc_ppcih;			/* ppc interrut vector */
 	void *sc_softih;		/* soft interrupt vector */

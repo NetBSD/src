@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.64 2009/09/19 11:58:06 tsutsui Exp $ */
+/*	$NetBSD: stp4020.c,v 1.65 2011/07/18 00:58:52 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.64 2009/09/19 11:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.65 2011/07/18 00:58:52 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ struct stp4020_socket {
 };
 
 struct stp4020_softc {
-	struct device	sc_dev;		/* Base device */
+	device_t		sc_dev;
 	pcmcia_chipset_tag_t	sc_pct;	/* Chipset methods */
 
 	struct lwp	*event_thread;		/* event handling thread */
@@ -143,7 +143,7 @@ static void	stp4020_calc_speed(int bus_speed, int ns, int *length, int *cmd_dela
 static void	stp4020_intr_dispatch(void *arg);
 #endif
 
-CFATTACH_DECL(nell, sizeof(struct stp4020_softc),
+CFATTACH_DECL_NEW(nell, sizeof(struct stp4020_softc),
     stp4020match, stp4020attach, NULL, NULL);
 
 #ifdef STP4020_DEBUG
@@ -330,6 +330,8 @@ stp4020attach(device_t parent, device_t self, void *aux)
 	int rev, i, sbus_intno, hw_ipl;
 	bus_space_handle_t bh;
 
+	sc->sc_dev = self;
+
 	/* Transfer bus tags */
 #ifdef SUN4U
 	tag = sa->sa_bustag;
@@ -513,7 +515,7 @@ stp4020_attach_socket(struct stp4020_socket *h, int speed)
 	paa.iobase = 0;
 	paa.iosize = STP4020_WINDOW_SIZE;
 
-	h->pcmcia = config_found(&h->sc->sc_dev, &paa, stp4020print);
+	h->pcmcia = config_found(h->sc->sc_dev, &paa, stp4020print);
 
 	if (h->pcmcia == NULL)
 		return;
@@ -996,14 +998,14 @@ stp4020_chip_socket_settype(pcmcia_chipset_handle_t pch, int type)
 		h->int_enable = v;
 		h->int_disable = v & ~STP4020_ICR0_IOIE;
 #endif
-		DPRINTF(("%s: configuring card for IO useage\n", device_xname(&h->sc->sc_dev)));
+		DPRINTF(("%s: configuring card for IO useage\n", device_xname(h->sc->sc_dev)));
 	} else {
 		v |= STP4020_ICR0_IFTYPE_MEM;
 #ifndef SUN4U
 		h->int_enable = h->int_disable = v;
 #endif
-		DPRINTF(("%s: configuring card for IO useage\n", device_xname(&h->sc->sc_dev)));
-		DPRINTF(("%s: configuring card for MEM ONLY useage\n", device_xname(&h->sc->sc_dev)));
+		DPRINTF(("%s: configuring card for IO useage\n", device_xname(h->sc->sc_dev)));
+		DPRINTF(("%s: configuring card for MEM ONLY useage\n", device_xname(h->sc->sc_dev)));
 	}
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
 }

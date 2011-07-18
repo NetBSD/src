@@ -1,4 +1,4 @@
-/*	$NetBSD: xbox.c,v 1.20 2009/09/18 12:23:16 tsutsui Exp $ */
+/*	$NetBSD: xbox.c,v 1.21 2011/07/18 00:58:52 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.20 2009/09/18 12:23:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.21 2011/07/18 00:58:52 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -86,16 +86,15 @@ __KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.20 2009/09/18 12:23:16 tsutsui Exp $");
 #define XBOX_NREG		13
 
 struct xbox_softc {
-	struct device	sc_dev;		/* base device */
 	int		sc_key;		/* this xbox's unique key */
 };
 
 /* autoconfiguration driver */
 int	xbox_match(device_t, cfdata_t, void *);
 void	xbox_attach(device_t, device_t, void *);
-int	xbox_print( void *, const char *);
+int	xbox_print(void *, const char *);
 
-CFATTACH_DECL(xbox, sizeof(struct xbox_softc),
+CFATTACH_DECL_NEW(xbox, sizeof(struct xbox_softc),
     xbox_match, xbox_attach, NULL, NULL);
 
 int
