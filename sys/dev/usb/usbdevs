@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.583 2011/07/18 06:30:49 jruoho Exp $
+$NetBSD: usbdevs,v 1.584 2011/07/18 20:23:32 jmcneill Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -219,6 +219,7 @@ vendor AOC		0x05f6	AOC International
 vendor CHIC		0x05fe	Chic Technology
 vendor BARCO		0x0600	Barco Display Systems
 vendor BRIDGE		0x0607	Bridge Information
+vendor SMK		0x0609	SMK
 vendor SOLIDYEAR	0x060b	Solid Year
 vendor BIORAD		0x0614	Bio-Rad Laboratories
 vendor MACALLY		0x0618	Macally
@@ -2546,6 +2547,9 @@ product SMC 2862WG		0xee13	EZ Connect g Wireless USB Adapter
 product SMC2 2020HUB		0x2020	USB Hub
 product SMC3 2662WV1		0xa001	EZ Connect 11Mbps
 product SMC3 2662WUSB		0xa002	2662W-AR Wireless Adapter
+
+/* SMK products */
+product SMK MCE_IR		0x031d	eHome Infrared Transceiver
 
 /* SOHOware products */
 product SOHOWARE NUB100		0x9100	10/100 USB Ethernet
