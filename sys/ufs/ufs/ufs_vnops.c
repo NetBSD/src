@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.195 2011/07/17 22:02:26 dholland Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.196 2011/07/18 01:13:33 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.195 2011/07/17 22:02:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.196 2011/07/18 01:13:33 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1412,11 +1412,16 @@ ufs_mkdir(void *v)
 	 */
 	if ((error = UFS_VALLOC(dvp, dmode, cnp->cn_cred, ap->a_vpp)) != 0)
 		goto out;
-	error = UFS_WAPBL_BEGIN(ap->a_dvp->v_mount);
-	if (error)
-		goto out;
+
 	tvp = *ap->a_vpp;
 	ip = VTOI(tvp);
+
+	error = UFS_WAPBL_BEGIN(ap->a_dvp->v_mount);
+	if (error) {
+		UFS_VFREE(tvp, ip->i_number, dmode);
+		vput(tvp);
+		goto out;
+	}
 	ip->i_uid = kauth_cred_geteuid(cnp->cn_cred);
 	DIP_ASSIGN(ip, uid, ip->i_uid);
 	ip->i_gid = dp->i_gid;
