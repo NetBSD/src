@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2011/07/10 12:14:01 uch Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2011/07/18 21:51:49 apb Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,9 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.2 2011/07/10 12:14:01 uch Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2011/07/18 21:51:49 apb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
