@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xxvar.h,v 1.2 2008/05/29 14:51:27 mrg Exp $	*/
+/*	$NetBSD: cd18xxvar.h,v 1.3 2011/07/18 00:58:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -97,8 +97,6 @@ struct cdtty_port {
 
 /* softc allocated per-cd18xx */
 struct cd18xx_softc {
-	struct device		sc_dev;
-
 	/* tag and handle for our registers (128 bytes) */
 	bus_space_tag_t		sc_tag;
 	bus_space_handle_t	sc_handle;
