@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.27 2011/07/02 13:21:30 mrg Exp $	*/
+/*	$NetBSD: spif.c,v 1.28 2011/07/18 00:58:52 mrg Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.27 2011/07/02 13:21:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.28 2011/07/18 00:58:52 mrg Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -75,13 +75,13 @@ __KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.27 2011/07/02 13:21:30 mrg Exp $");
 
 /* Autoconfig stuff */
 
-CFATTACH_DECL(spif, sizeof(struct spif_softc),
+CFATTACH_DECL_NEW(spif, sizeof(struct spif_softc),
     spif_match, spif_attach, NULL, NULL);
 
-CFATTACH_DECL(stty, sizeof(struct stty_softc),
+CFATTACH_DECL_NEW(stty, sizeof(struct stty_softc),
     stty_match, stty_attach, NULL, NULL);
 
-CFATTACH_DECL(sbpp, sizeof(struct sbpp_softc),
+CFATTACH_DECL_NEW(sbpp, sizeof(struct sbpp_softc),
     sbpp_match, sbpp_attach, NULL, NULL);
 
 dev_type_open(stty_open);
@@ -155,6 +155,8 @@ spif_attach(device_t parent, device_t self, void *aux)
 {
 	struct spif_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = aux;
+
+	sc->sc_dev = self;
 
 	if (sa->sa_nintr != 2) {
 		printf(": expected %d interrupts, got %d\n", 2, sa->sa_nintr);
@@ -280,6 +282,7 @@ stty_attach(device_t parent, device_t dev, void *aux)
 	struct stty_softc *ssc = device_private(dev);
 	int port;
 
+	sc->sc_dev = dev;
 	sc->sc_ttys = ssc;
 
 	for (port = 0; port < sc->sc_nser; port++) {
@@ -924,7 +927,7 @@ spif_softintr(void *vsc)
 
 			if (ISSET(flags, STTYF_RING_OVERFLOW)) {
 				log(LOG_WARNING, "%s-%x: ring overflow\n",
-					device_xname(&stc->sc_dev), i);
+					device_xname(stc->sc_dev), i);
 				r = 1;
 			}
 
@@ -947,7 +950,7 @@ stty_write_ccr(struct spif_softc *sc, uint8_t val)
 	while (STC_READ(sc, STC_CCR) && tries--)
 		/*EMPTY*/;
 	if (tries == 0)
-		aprint_error_dev(&sc->sc_dev, "ccr timeout\n");
+		aprint_error_dev(sc->sc_dev, "ccr timeout\n");
 	STC_WRITE(sc, STC_CCR, val);
 }
 
