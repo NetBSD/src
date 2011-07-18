@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_sppd.c,v 1.13 2010/11/03 08:27:27 plunky Exp $	*/
+/*	$NetBSD: rfcomm_sppd.c,v 1.14 2011/07/18 15:44:17 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc.\
   Copyright (c) 2006 Itronix, Inc.\
   Copyright (c) 2003 Maksim Yevmenkin m_evmenkin@yahoo.com.\
   All rights reserved.");
-__RCSID("$NetBSD: rfcomm_sppd.c,v 1.13 2010/11/03 08:27:27 plunky Exp $");
+__RCSID("$NetBSD: rfcomm_sppd.c,v 1.14 2011/07/18 15:44:17 plunky Exp $");
 
 #include <sys/param.h>
 
@@ -230,18 +230,20 @@ main(int argc, char *argv[])
 	 * be used directly with stdio
 	 */
 	if (tty == NULL) {
-		if (tcgetattr(tty_in, &t) < 0)
-			err(EXIT_FAILURE, "tcgetattr");
+		if (isatty(tty_in)) {
+			if (tcgetattr(tty_in, &t) < 0)
+				err(EXIT_FAILURE, "tcgetattr");
 
-		memcpy(&tio, &t, sizeof(tio));
-		t.c_lflag &= ~(ECHO | ICANON);
-		t.c_iflag &= ~(ICRNL);
+			memcpy(&tio, &t, sizeof(tio));
+			t.c_lflag &= ~(ECHO | ICANON);
+			t.c_iflag &= ~(ICRNL);
 
-		if (memcmp(&tio, &t, sizeof(tio))) {
-			if (tcsetattr(tty_in, TCSANOW, &t) < 0)
-				err(EXIT_FAILURE, "tcsetattr");
+			if (memcmp(&tio, &t, sizeof(tio))) {
+				if (tcsetattr(tty_in, TCSANOW, &t) < 0)
+					err(EXIT_FAILURE, "tcsetattr");
 
-			atexit(reset_tio);
+				atexit(reset_tio);
+			}
 		}
 	} else {
 		if (daemon(0, 0) < 0)
