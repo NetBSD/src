@@ -30,7 +30,7 @@
 #ifndef _RS6000_IOPLANAR_H_
 #define _RS6000_IOPLANAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/mca_machdep.h>
 
 /*

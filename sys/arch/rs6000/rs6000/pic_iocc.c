@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_iocc.c,v 1.3 2011/06/19 07:59:46 matt Exp $	*/
+/*	$NetBSD: pic_iocc.c,v 1.4 2011/07/18 17:26:56 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,18 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_iocc.c,v 1.3 2011/06/19 07:59:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_iocc.c,v 1.4 2011/07/18 17:26:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/pio.h>
 #include <machine/intr.h>
 #include <machine/iocc.h>
-#include <machine/bus.h>
 
 #include <arch/powerpc/pic/picvar.h>
 
