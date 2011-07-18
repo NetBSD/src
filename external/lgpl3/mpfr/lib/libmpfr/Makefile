@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/07/06 19:52:06 drochner Exp $
+#	$NetBSD: Makefile,v 1.7 2011/07/18 17:01:04 tron Exp $
 
 .include <bsd.init.mk>
 
@@ -512,4 +512,10 @@ CLEANFILES+= mparam.h
 
 .if ${LIBMPFR_MACHINE_ARCH} == "vax"
 COPTS.set_ld.c+=	-Wno-error
+.endif
+
+# Don't warn about functions which cannot be stack smash protected as
+# there are a lot of them.
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
+COPTS += -Wno-stack-protector
 .endif

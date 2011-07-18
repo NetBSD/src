@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/07/04 12:00:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2011/07/18 16:55:49 tron Exp $
 
 .include <bsd.init.mk>
 
@@ -121,7 +121,6 @@ SRCS+=	tal-reent.c
 # these are generated
 SRCS+=	fib_table.c mp_bases.c
 
-
 # Build the files that may have multiple identical base names under
 # different names.
 .for _dir _srcfile in \
@@ -189,3 +188,9 @@ LIBGMP_MACHINE_ARCH?=${MACHINE_ARCH}
 	${.CURDIR}/arch/${LIBGMP_MACHINE_ARCH} \
 	${DIST}/mpf \
 	${DIST}/mpz
+
+# Don't warn about functions which cannot be stack smash protected as
+# there are a lot of them.
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
+COPTS += -Wno-stack-protector
+.endif
