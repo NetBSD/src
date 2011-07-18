@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.33 2011/05/22 21:51:39 christos Exp $
+.\"	$NetBSD: makefs.8,v 1.34 2011/07/18 08:58:38 uch Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -191,6 +191,8 @@ The following file system types are supported:
 BSD fast file system (default).
 .It Sy cd9660
 ISO 9660 file system.
+.It Sy v7fs
+7th Edition(V7) file system.
 .El
 .It Fl x
 Exclude file system nodes not explicitly listed in the specfile.
@@ -327,6 +329,16 @@ Use RockRidge extensions (for longer filenames, etc.).
 .It Sy volumeid
 Volume set identifier of the image.
 .El
+.Ss V7FS-specific options
+The following keywords are supported:
+.Pp
+.Bl -tag -width optimization -offset indent -compact
+.It Sy pdp
+PDP endian.
+.It Sy progress
+Display a progress meter for the file system construction and file
+popuration.
+.El
 .Sh SEE ALSO
 .Xr strsuftoll 3 ,
 .Xr installboot 8 ,
@@ -346,4 +358,6 @@ utility appeared in
 .An Ryan Gabrys ,
 .An Alan Perez-Rathke ,
 .An Ram Vedam
-(cd9660 support)
+(cd9660 support),
+.An UCHIYAMA Yasushi
+(v7fs support)
