@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.582 2011/07/11 20:21:59 matt Exp $
+$NetBSD: usbdevs,v 1.583 2011/07/18 06:30:49 jruoho Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1817,6 +1817,8 @@ product MGE UPS2		0xffff	MGE UPS SYSTEMS PROTECTIONCENTER 2
 /* Micro Star International products */
 product MSI BLUETOOTH		0x1967	Bluetooth USB Adapter
 product MSI RT3070		0x3820	RT3070
+product MSI MEGASKY580		0x5580	MSI MegaSky DVB-T Adapter
+product MSI MEGASKY580_55801	0x5581	MSI MegaSky DVB-T Adapter
 product MSI MS6861		0x6861	MS-6861
 product MSI MS6865		0x6865	MS-6865
 product MSI MS6869		0x6869	MS-6869
