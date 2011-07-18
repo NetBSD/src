@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_sppd.c,v 1.14 2011/07/18 15:44:17 plunky Exp $	*/
+/*	$NetBSD: rfcomm_sppd.c,v 1.15 2011/07/18 21:51:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc.\
   Copyright (c) 2006 Itronix, Inc.\
   Copyright (c) 2003 Maksim Yevmenkin m_evmenkin@yahoo.com.\
   All rights reserved.");
-__RCSID("$NetBSD: rfcomm_sppd.c,v 1.14 2011/07/18 15:44:17 plunky Exp $");
+__RCSID("$NetBSD: rfcomm_sppd.c,v 1.15 2011/07/18 21:51:06 christos Exp $");
 
 #include <sys/param.h>
 
@@ -77,6 +77,7 @@ __RCSID("$NetBSD: rfcomm_sppd.c,v 1.14 2011/07/18 15:44:17 plunky Exp $");
 #include <sdp.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -86,19 +87,20 @@ __RCSID("$NetBSD: rfcomm_sppd.c,v 1.14 2011/07/18 15:44:17 plunky Exp $");
 
 #include <netbt/rfcomm.h>
 
-int open_tty(const char *);
-int open_client(bdaddr_t *, bdaddr_t *, int, uintmax_t, const char *);
-int open_server(bdaddr_t *, uint16_t, uint8_t, int, const char *);
-void copy_data(int, int);
-int service_search(const bdaddr_t *, const bdaddr_t *, uint16_t, uintmax_t *, uintmax_t *);
-void sighandler(int);
-void usage(void);
-void reset_tio(void);
+static int open_tty(const char *);
+static int open_client(bdaddr_t *, bdaddr_t *, int, uintmax_t, const char *);
+static int open_server(bdaddr_t *, uint16_t, uint8_t, int, const char *);
+static void copy_data(int, int);
+static int service_search(const bdaddr_t *, const bdaddr_t *, uint16_t,
+    uintmax_t *, uintmax_t *);
+static void sighandler(int);
+static void usage(void) __attribute__((__noreturn__));
+static void reset_tio(void);
 
-int done;		/* got a signal */
-struct termios tio;	/* stored termios for reset on exit */
+static sig_atomic_t done;	/* got a signal */
+static struct termios tio;	/* stored termios for reset on exit */
 
-struct service {
+static const struct service {
 	const char *	name;
 	const char *	description;
 	uint16_t	class;
@@ -117,13 +119,14 @@ main(int argc, char *argv[])
 {
 	struct termios		t;
 	bdaddr_t		laddr, raddr;
-	fd_set			rdset;
+	struct pollfd		pfd[2];
 	const char		*service;
 	char			*ep, *tty;
-	int			lm, n, rfcomm, tty_in, tty_out;
+	int			n, lm, rfcomm, tty_in, tty_out;
 	uint16_t		psm;
 	uint8_t			channel;
 
+	setprogname(argv[0]);
 	bdaddr_copy(&laddr, BDADDR_ANY);
 	bdaddr_copy(&raddr, BDADDR_ANY);
 	service = "SP";
@@ -152,7 +155,8 @@ main(int argc, char *argv[])
 			if (*ep != '\0'
 			    || channel < RFCOMM_CHANNEL_MIN
 			    || channel > RFCOMM_CHANNEL_MAX)
-				errx(EXIT_FAILURE, "Invalid channel: %s", optarg);
+				errx(EXIT_FAILURE, "Invalid channel: %s",
+				    optarg);
 
 			break;
 
@@ -170,7 +174,7 @@ main(int argc, char *argv[])
 			else if (strcasecmp(optarg, "secure") == 0)
 				lm = RFCOMM_LM_SECURE;
 			else
-				errx(EXIT_FAILURE, "%s: unknown mode", optarg);
+				errx(EXIT_FAILURE, "Unknown mode: %s", optarg);
 
 			break;
 
@@ -230,23 +234,21 @@ main(int argc, char *argv[])
 	 * be used directly with stdio
 	 */
 	if (tty == NULL) {
-		if (isatty(tty_in)) {
-			if (tcgetattr(tty_in, &t) < 0)
-				err(EXIT_FAILURE, "tcgetattr");
-
-			memcpy(&tio, &t, sizeof(tio));
+		if (tcgetattr(tty_in, &t) != -1) {
+			tio = t;
 			t.c_lflag &= ~(ECHO | ICANON);
 			t.c_iflag &= ~(ICRNL);
 
-			if (memcmp(&tio, &t, sizeof(tio))) {
-				if (tcsetattr(tty_in, TCSANOW, &t) < 0)
+			if (tio.c_lflag != t.c_lflag ||
+			    tio.c_iflag != t.c_iflag) {
+				if (tcsetattr(tty_in, TCSANOW, &t) == -1)
 					err(EXIT_FAILURE, "tcsetattr");
 
 				atexit(reset_tio);
 			}
 		}
 	} else {
-		if (daemon(0, 0) < 0)
+		if (daemon(0, 0) == -1)
 			err(EXIT_FAILURE, "daemon() failed");
 	}
 
@@ -260,32 +262,30 @@ main(int argc, char *argv[])
 	openlog(getprogname(), LOG_PERROR | LOG_PID, LOG_DAEMON);
 	syslog(LOG_INFO, "Starting on %s...", (tty ? tty : "stdio"));
 
-	n = MAX(tty_in, rfcomm) + 1;
-	while (!done) {
-		FD_ZERO(&rdset);
-		FD_SET(tty_in, &rdset);
-		FD_SET(rfcomm, &rdset);
+	pfd[0].fd = tty_in;
+	pfd[1].fd = rfcomm;
+	pfd[0].events = POLLIN|POLLRDNORM;
+	pfd[1].events = POLLIN|POLLRDNORM;
 
-		if (select(n, &rdset, NULL, NULL, NULL) < 0) {
+	while (!done) {
+		if (poll(pfd, 2, INFTIM) == -1) {
 			if (errno == EINTR)
 				continue;
 
-			syslog(LOG_ERR, "select error: %m");
-			exit(EXIT_FAILURE);
+			syslog(LOG_ERR, "poll error: %m");
 		}
-
-		if (FD_ISSET(tty_in, &rdset))
+		if (pfd[0].revents & (POLLIN|POLLRDNORM))
 			copy_data(tty_in, rfcomm);
 
-		if (FD_ISSET(rfcomm, &rdset))
+		if (pfd[1].revents & (POLLIN|POLLRDNORM))
 			copy_data(rfcomm, tty_out);
 	}
 
 	syslog(LOG_INFO, "Completed on %s", (tty ? tty : "stdio"));
-	exit(EXIT_SUCCESS);
+	return EXIT_SUCCESS;
 }
 
-int
+static int
 open_tty(const char *tty)
 {
 	char		 pty[PATH_MAX], *slash;
@@ -298,60 +298,68 @@ open_tty(const char *tty)
 	 * PATH_MAX characters in length, must contain '/' character and
 	 * must not end with '/'.
 	 */
-	if (strlen(tty) >= sizeof(pty))
-		errx(EXIT_FAILURE, ": tty name too long");
+	if (strlcpy(pty, tty, sizeof(pty)) >= sizeof(pty))
+		errx(EXIT_FAILURE, "Tty name too long `%s'", tty);
 
-	strlcpy(pty, tty, sizeof(pty));
 	slash = strrchr(pty, '/');
 	if (slash == NULL || slash[1] == '\0')
-		errx(EXIT_FAILURE, "%s: invalid tty", tty);
+		errx(EXIT_FAILURE, "Invalid tty `%s'", tty);
 
 	slash[1] = 'p';
 	if (strcmp(pty, tty) == 0)
-		errx(EXIT_FAILURE, "Master and slave tty are the same (%s)", tty);
+		errx(EXIT_FAILURE, "Master and slave tty are the same (%s)",
+		    tty);
 
-	if ((master = open(pty, O_RDWR, 0)) < 0)
-		err(EXIT_FAILURE, "%s", pty);
+	if ((master = open(pty, O_RDWR)) == -1)
+		err(EXIT_FAILURE, "Cannot open `%s'", pty);
 
 	/*
 	 * Slave TTY
 	 */
-
 	if ((gr = getgrnam("tty")) != NULL)
 		ttygid = gr->gr_gid;
 	else
 		ttygid = (gid_t)-1;
 
-	(void)chown(tty, getuid(), ttygid);
-	(void)chmod(tty, S_IRUSR | S_IWUSR | S_IWGRP);
-	(void)revoke(tty);
+	if (chown(tty, getuid(), ttygid) == -1)
+		err(EXIT_FAILURE, "Cannot chown `%s'", pty);
+	if (chmod(tty, S_IRUSR | S_IWUSR | S_IWGRP) == -1)
+		err(EXIT_FAILURE, "Cannot chmod `%s'", pty);
+	if (revoke(tty) == -1)
+		err(EXIT_FAILURE, "Cannot revoke `%s'", pty);
 
 	return master;
 }
 
-int
-open_client(bdaddr_t *laddr, bdaddr_t *raddr, int lm, uintmax_t psm, const char *service)
+static int
+open_client(bdaddr_t *laddr, bdaddr_t *raddr, int lm, uintmax_t psm,
+    const char *service)
 {
 	struct sockaddr_bt sa;
-	struct service *s;
+	const struct service *s;
 	struct linger l;
 	char *ep;
-	int fd, error;
+	int fd;
 	uintmax_t channel;
 
 	for (s = services ; ; s++) {
 		if (s->name == NULL) {
+			errno = 0;
 			channel = strtoul(service, &ep, 10);
-			if (*ep != '\0')
-				errx(EXIT_FAILURE, "Unknown service: %s", service);
+			if (service == ep || *ep != '\0')
+				errx(EXIT_FAILURE, "Unknown service `%s'",
+				    service);
+			if (channel == ULONG_MAX && errno == ERANGE)
+				err(EXIT_FAILURE, "Service `%s'",
+				    service);
 
 			break;
 		}
 
 		if (strcasecmp(s->name, service) == 0) {
-			error = service_search(laddr, raddr, s->class, &psm, &channel);
-			if (error != 0)
-				errx(EXIT_FAILURE, "%s: %s", s->name, strerror(error));
+			if (service_search(laddr, raddr, s->class, &psm,
+			    &channel) == -1)
+				err(EXIT_FAILURE, "%s", s->name);
 
 			break;
 		}
@@ -369,38 +377,39 @@ open_client(bdaddr_t *laddr, bdaddr_t *raddr, int lm, uintmax_t psm, const char 
 	bdaddr_copy(&sa.bt_bdaddr, laddr);
 
 	fd = socket(PF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
-	if (fd < 0)
+	if (fd == -1)
 		err(EXIT_FAILURE, "socket()");
 
-	if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
+	if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1)
 		err(EXIT_FAILURE, "bind(%s)", bt_ntoa(laddr, NULL));
 
 	memset(&l, 0, sizeof(l));
 	l.l_onoff = 1;
 	l.l_linger = 5;
-	if (setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l)) < 0)
+	if (setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l)) == -1)
 		err(EXIT_FAILURE, "linger()");
 
-	if (setsockopt(fd, BTPROTO_RFCOMM, SO_RFCOMM_LM, &lm, sizeof(lm)) < 0)
+	if (setsockopt(fd, BTPROTO_RFCOMM, SO_RFCOMM_LM, &lm, sizeof(lm)) == -1)
 		err(EXIT_FAILURE, "link mode");
 
 	sa.bt_psm = psm;
 	sa.bt_channel = channel;
 	bdaddr_copy(&sa.bt_bdaddr, raddr);
 
-	if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
+	if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1)
 		err(EXIT_FAILURE, "connect(%s, 0x%04"PRIxMAX", %"PRIuMAX")",
 		    bt_ntoa(raddr, NULL), psm, channel);
 
 	return fd;
 }
 
-int
-open_server(bdaddr_t *laddr, uint16_t psm, uint8_t channel, int lm, const char *service)
+static int
+open_server(bdaddr_t *laddr, uint16_t psm, uint8_t channel, int lm,
+    const char *service)
 {
 	uint8_t	buffer[256];
 	struct sockaddr_bt sa;
-	struct service *s;
+	const struct service *s;
 	struct linger l;
 	socklen_t len;
 	sdp_session_t ss;
@@ -417,7 +426,7 @@ open_server(bdaddr_t *laddr, uint16_t psm, uint8_t channel, int lm, const char *
 
 	/* Open server socket */
 	sv = socket(PF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
-	if (sv < 0)
+	if (sv == -1)
 		err(EXIT_FAILURE, "socket()");
 
 	memset(&sa, 0, sizeof(sa));
@@ -426,18 +435,18 @@ open_server(bdaddr_t *laddr, uint16_t psm, uint8_t channel, int lm, const char *
 	sa.bt_psm = psm;
 	sa.bt_channel = channel;
 	bdaddr_copy(&sa.bt_bdaddr, laddr);
-	if (bind(sv, (struct sockaddr *)&sa, sizeof(sa)) < 0)
+	if (bind(sv, (struct sockaddr *)&sa, sizeof(sa)) == -1)
 		err(EXIT_FAILURE, "bind(%s, 0x%04x, %d)",
 		    bt_ntoa(laddr, NULL), psm, channel);
 
-	if (setsockopt(sv, BTPROTO_RFCOMM, SO_RFCOMM_LM, &lm, sizeof(lm)) < 0)
+	if (setsockopt(sv, BTPROTO_RFCOMM, SO_RFCOMM_LM, &lm, sizeof(lm)) == -1)
 		err(EXIT_FAILURE, "link mode");
 
-	if (listen(sv, 1) < 0)
+	if (listen(sv, 1) == -1)
 		err(EXIT_FAILURE, "listen()");
 
 	len = sizeof(sa);
-	if (getsockname(sv, (struct sockaddr *)&sa, &len) < 0)
+	if (getsockname(sv, (struct sockaddr *)&sa, &len) == -1)
 		err(EXIT_FAILURE, "getsockname()");
 	if (len != sizeof(sa))
 		errx(EXIT_FAILURE, "getsockname()");
@@ -516,20 +525,20 @@ open_server(bdaddr_t *laddr, uint16_t psm, uint8_t channel, int lm, const char *
 	/* Accept client connection */
 	len = sizeof(sa);
 	fd = accept(sv, (struct sockaddr *)&sa, &len);
-	if (fd < 0)
+	if (fd == -1)
 		err(EXIT_FAILURE, "accept");
 
 	memset(&l, 0, sizeof(l));
 	l.l_onoff = 1;
 	l.l_linger = 5;
-	if (setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l)) < 0)
+	if (setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l)) == -1)
 		err(EXIT_FAILURE, "linger()");
 
 	close(sv);
 	return fd;
 }
 
-void
+static void
 copy_data(int src, int dst)
 {
 	static char	buf[BUFSIZ];
@@ -553,7 +562,7 @@ copy_data(int src, int dst)
 	}
 }
 
-int
+static int
 service_search(bdaddr_t const *laddr, bdaddr_t const *raddr,
     uint16_t class, uintmax_t *psm, uintmax_t *channel)
 {
@@ -582,12 +591,12 @@ service_search(bdaddr_t const *laddr, bdaddr_t const *raddr,
 
 	ss = sdp_open(laddr, raddr);
 	if (ss == NULL)
-		return errno;
+		return -1;
 
 	rv = sdp_service_search_attribute(ss, &ssp, &ail, &rsp);
 	if (!rv) {
 		sdp_close(ss);
-		return errno;
+		return -1;
 	}
 
 	/*
@@ -656,41 +665,45 @@ service_search(bdaddr_t const *laddr, bdaddr_t const *raddr,
 	}
 
 	sdp_close(ss);
-	return (rv) ? 0 : ENOATTR;
+	if (rv)
+		return 0;
+	errno = ENOATTR;
+	return -1;
 }
 
-void
+static void
 sighandler(int s)
 {
 
 	done++;
 }
 
-void
+static void
 reset_tio(void)
 {
 
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &tio);
 }
 
-void
+static void
 usage(void)
 {
 	const char *cmd = getprogname();
-	struct service *s;
+	const struct service *s;
 
-	fprintf(stderr, "Usage: %s [-d device] [-m mode] [-p psm] [-s service] [-t tty]\n"
-			"       %*s {-a bdaddr | [-c channel]}\n"
-			"\n"
-			"Where:\n"
-			"\t-a bdaddr    remote device address\n"
-			"\t-c channel   local RFCOMM channel\n"
-			"\t-d device    local device address\n"
-			"\t-m mode      link mode\n"
-			"\t-p psm       protocol/service multiplexer\n"
-			"\t-s service   service class\n"
-			"\t-t tty       run in background using pty\n"
-			"\n", cmd, (int)strlen(cmd), "");
+	fprintf(stderr, "Usage: %s [-d device] [-m mode] [-p psm] [-s service]"
+	    " [-t tty]\n"
+	    "       %*s {-a bdaddr | [-c channel]}\n"
+	    "\n"
+	    "Where:\n"
+	    "\t-a bdaddr    remote device address\n"
+	    "\t-c channel   local RFCOMM channel\n"
+	    "\t-d device    local device address\n"
+	    "\t-m mode      link mode\n"
+	    "\t-p psm       protocol/service multiplexer\n"
+	    "\t-s service   service class\n"
+	    "\t-t tty       run in background using pty\n"
+	    "\n", cmd, (int)strlen(cmd), "");
 
 	fprintf(stderr, "Known service classes:\n");
 	for (s = services ; s->name != NULL ; s++)
