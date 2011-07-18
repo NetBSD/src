@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.19 2011/07/18 01:14:04 dholland Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.20 2011/07/18 01:14:27 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.19 2011/07/18 01:14:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.20 2011/07/18 01:14:27 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,18 +371,7 @@ wapbl_ufs_rename(void *v)
 	 */
 	if (fdvp->v_mount != tdvp->v_mount) {
 		error = EXDEV;
- abortit:
-		VOP_ABORTOP(fdvp, fcnp); /* XXX, why not in NFS? */
-		VOP_ABORTOP(tdvp, tcnp); /* XXX, why not in NFS? */
-		vrele(tdvp);
-		if (tvp) {
-			vrele(tvp);
-		}
-		vrele(fdvp);
-		if (fvp) {
-			vrele(fvp);
-		}
-		return (error);
+		goto abort;
 	}
 
 	/*
@@ -392,7 +381,7 @@ wapbl_ufs_rename(void *v)
 	    (fcnp->cn_namelen == 1 && fcnp->cn_nameptr[0] == '.') ||
 	    (tcnp->cn_namelen == 1 && tcnp->cn_nameptr[0] == '.')) {
 		error = EINVAL;
-		goto abortit;
+		goto abort;
 	}
 	    
 	/*
@@ -411,7 +400,7 @@ wapbl_ufs_rename(void *v)
 			/* directory has been rmdir'd */
 			VOP_UNLOCK(fdvp);
 			error = ENOENT;
-			goto abortit;
+			goto abort;
 		}
 
 		error = do_relookup(fdvp, &from_ulr, &fvp, fcnp);
@@ -421,7 +410,7 @@ wapbl_ufs_rename(void *v)
 		}
 		if (error) {
 			VOP_UNLOCK(fdvp);
-			goto abortit;
+			goto abort;
 		}
 
 		/*
@@ -443,7 +432,7 @@ wapbl_ufs_rename(void *v)
 		error = do_relookup(tdvp, &to_ulr, &tvp, tcnp);
 		if (error && error != ENOENT) {
 			VOP_UNLOCK(fdvp);
-			goto abortit;
+			goto abort;
 		}
 		if (error == ENOENT) {
 			/*
@@ -483,7 +472,7 @@ wapbl_ufs_rename(void *v)
 		error = ufs_parentcheck(fdvp, tdvp, fcnp->cn_cred,
 					&found_fdvp, &illegal_fvp);
 		if (error) {
-			goto abortit;
+			goto abort;
 		}
 
 		/* Must lock in tree order. */
@@ -507,23 +496,14 @@ wapbl_ufs_rename(void *v)
 			if (illegal_fvp) {
 				vrele(illegal_fvp);
 			}
-			goto abortit;
+			goto abort;
 		}
 		KASSERT(fvp != NULL);
 
 		if (illegal_fvp && fvp == illegal_fvp) {
 			vrele(illegal_fvp);
 			error = EINVAL;
-		abort_withlocks:
-			VOP_UNLOCK(fdvp);
-			if (tdvp != fdvp) {
-				VOP_UNLOCK(tdvp);
-			}
-			VOP_UNLOCK(fvp);
-			if (tvp && tvp != fvp) {
-				VOP_UNLOCK(tvp);
-			}
-			goto abortit;
+			goto abort_withlocks;
 		}
 
 		if (illegal_fvp) {
@@ -620,26 +600,22 @@ wapbl_ufs_rename(void *v)
 	mp = fdvp->v_mount;
 	fstrans_start(mp, FSTRANS_SHARED);
 
+	if (oldparent != tdp->i_number)
+		newparent = tdp->i_number;
+
 	/*
 	 * If ".." must be changed (ie the directory gets a new
 	 * parent) the user must have write permission in the source
 	 * so as to be able to change "..".
 	 */
-	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
-
-	if (oldparent != tdp->i_number)
-		newparent = tdp->i_number;
 	if (doingdirectory && newparent) {
-		if (error)	/* write access check above */
+		error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
+		if (error)
 			goto out;
 	}
 
-	/*
-	 * This was moved up to before the journal lock to
-	 * avoid potential deadlock
-	 */
-	fcnp->cn_flags &= ~(MODMASK);
-	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
+	KASSERT(fdvp != tvp);
+
 	if (newparent) {
 		/* Check for the rename("foo/foo", "foo") case. */
 		if (fdvp == tvp) {
@@ -973,6 +949,29 @@ wapbl_ufs_rename(void *v)
 	}
 
 	fstrans_done(mp);
+	return (error);
+
+ abort_withlocks:
+	VOP_UNLOCK(fdvp);
+	if (tdvp != fdvp) {
+		VOP_UNLOCK(tdvp);
+	}
+	VOP_UNLOCK(fvp);
+	if (tvp && tvp != fvp) {
+		VOP_UNLOCK(tvp);
+	}
+
+ abort:
+	VOP_ABORTOP(fdvp, fcnp); /* XXX, why not in NFS? */
+	VOP_ABORTOP(tdvp, tcnp); /* XXX, why not in NFS? */
+	vrele(tdvp);
+	if (tvp) {
+		vrele(tvp);
+	}
+	vrele(fdvp);
+	if (fvp) {
+		vrele(fvp);
+	}
 	return (error);
 }
 
