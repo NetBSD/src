@@ -6939,8 +6939,12 @@ dtrace_cred2priv(cred_t *cr, uint32_t *privp, uid_t *uidp, zoneid_t *zoneidp)
 #if defined(sun)
 	if (cr == NULL || PRIV_POLICY_ONLY(cr, PRIV_ALL, B_FALSE)) {
 		/*
-		 * For DTRACE_PRIV_ALL, the uid and zoneid don't matter.
+		 * For DTRACE_PRIV_ALL, the uid and zoneid don't matter,
+		 * but for GCC they do.
 		 */
+		*uidp = 0;
+		*zoneidp = 0;
+
 		priv = DTRACE_PRIV_ALL;
 	} else {
 		*uidp = crgetuid(cr);
@@ -6960,6 +6964,8 @@ dtrace_cred2priv(cred_t *cr, uint32_t *privp, uid_t *uidp, zoneid_t *zoneidp)
 	}
 #else
 	priv = DTRACE_PRIV_ALL;
+	*uidp = 0;
+	*zoneidp = 0;
 #endif
 
 	*privp = priv;
@@ -8092,8 +8098,8 @@ dtrace_probe_enable(dtrace_probedesc_t *desc, dtrace_enabling_t *enab)
 {
 	dtrace_probekey_t pkey;
 	uint32_t priv;
-	uid_t uid = 0;	/* XXX: gcc */
-	zoneid_t zoneid = 0;	/* XXX: gcc */
+	uid_t uid;
+	zoneid_t zoneid;
 
 	ASSERT(MUTEX_HELD(&dtrace_lock));
 	dtrace_ecb_create_cache = NULL;
