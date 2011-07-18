@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.46 2008/06/11 21:25:31 drochner Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.47 2011/07/18 00:05:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.46 2008/06/11 21:25:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.47 2011/07/18 00:05:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.46 2008/06/11 21:25:31 drochner Exp $"
 
 /* per-display variables */
 struct cgeight_softc {
-	struct device	sc_dev;		/* base device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
 	bus_addr_t	sc_paddr;	/* phys address for device mmap() */
@@ -137,15 +136,15 @@ struct cgeight_softc {
 };
 
 /* autoconfiguration driver */
-static void	cgeightattach(struct device *, struct device *, void *);
-static int	cgeightmatch(struct device *, struct cfdata *, void *);
+static void	cgeightattach(device_t, device_t, void *);
+static int	cgeightmatch(device_t, cfdata_t, void *);
 #if defined(SUN4)
-static void	cgeightunblank(struct device *);
+static void	cgeightunblank(device_t);
 #endif
 
 static int	cg8_pfour_probe(void *, void *);
 
-CFATTACH_DECL(cgeight, sizeof(struct cgeight_softc),
+CFATTACH_DECL_NEW(cgeight, sizeof(struct cgeight_softc),
     cgeightmatch, cgeightattach, NULL, NULL);
 
 extern struct cfdriver cgeight_cd;
@@ -175,7 +174,7 @@ static void cgeight_set_video(struct cgeight_softc *, int);
  * Match a cgeight.
  */
 static int
-cgeightmatch(struct device *parent, struct cfdata *cf, void *aux)
+cgeightmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
@@ -202,7 +201,7 @@ cg8_pfour_probe(void *vaddr, void *arg)
  * Attach a display.  We need to notice if it is the console, too.
  */
 static void
-cgeightattach(struct device *parent, struct device *self, void *aux)
+cgeightattach(device_t parent, device_t self, void *aux)
 {
 #if defined(SUN4)
 	union obio_attach_args *uoba = aux;
@@ -221,15 +220,16 @@ cgeightattach(struct device *parent, struct device *self, void *aux)
 			  sizeof(uint32_t),
 			  BUS_SPACE_MAP_LINEAR,
 			  &bh) != 0) {
-		printf("%s: cannot map pfour register\n", self->dv_xname);
+		printf("%s: cannot map pfour register\n",
+			device_xname(self));
 		return;
 	}
 	fb->fb_pfour = (volatile uint32_t *)bh;
 
 	fb->fb_driver = &cgeightfbdriver;
-	fb->fb_device = &sc->sc_dev;
+	fb->fb_device = self;
 	fb->fb_type.fb_type = FBTYPE_MEMCOLOR;
-	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(self)->cf_flags & FB_USERMASK;
 	fb->fb_flags |= FB_PFOUR;
 
 	ramsize = PFOUR_COLOR_OFF_END - PFOUR_COLOR_OFF_OVERLAY;
@@ -285,7 +285,8 @@ cgeightattach(struct device *parent, struct device *self, void *aux)
 			  sizeof(struct fbcontrol),
 			  BUS_SPACE_MAP_LINEAR,
 			  &bh) != 0) {
-		printf("%s: cannot map control registers\n", self->dv_xname);
+		printf("%s: cannot map control registers\n",
+			device_xname(self));
 		return;
 	}
 	sc->sc_fbc = (volatile struct fbcontrol *)bh;
@@ -481,7 +482,7 @@ cgeightmmap(dev_t dev, off_t off, int prot)
  * Undo the effect of an FBIOSVIDEO that turns the video off.
  */
 static void
-cgeightunblank(struct device *dev)
+cgeightunblank(device_t dev)
 {
 
 	cgeight_set_video(device_private(dev), 1);

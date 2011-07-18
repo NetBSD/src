@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.45 2008/06/11 21:25:31 drochner Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.46 2011/07/18 00:05:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.45 2008/06/11 21:25:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.46 2011/07/18 00:05:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.45 2008/06/11 21:25:31 drochner Exp $")
 
 /* per-display variables */
 struct cgfour_softc {
-	struct device	sc_dev;		/* base device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
 	bus_addr_t	sc_paddr;	/* phys address for device mmap() */
@@ -135,8 +134,8 @@ struct cgfour_softc {
 };
 
 /* autoconfiguration driver */
-static int	cgfourmatch(struct device *, struct cfdata *, void *);
-static void	cgfourattach(struct device *, struct device *, void *);
+static int	cgfourmatch(device_t, cfdata_t, void *);
+static void	cgfourattach(device_t, device_t, void *);
 
 #if defined(SUN4)
 static void	cgfourunblank(struct device *);
@@ -144,7 +143,7 @@ static void	cgfourunblank(struct device *);
 
 static int	cg4_pfour_probe(void *, void *);
 
-CFATTACH_DECL(cgfour, sizeof(struct cgfour_softc),
+CFATTACH_DECL_NEW(cgfour, sizeof(struct cgfour_softc),
     cgfourmatch, cgfourattach, NULL, NULL);
 
 extern struct cfdriver cgfour_cd;
@@ -174,7 +173,7 @@ static void cgfour_set_video(struct cgfour_softc *, int);
  * Match a cgfour.
  */
 static int
-cgfourmatch(struct device *parent, struct cfdata *cf, void *aux)
+cgfourmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
@@ -201,7 +200,7 @@ cg4_pfour_probe(void *vaddr, void *arg)
  * Attach a display.  We need to notice if it is the console, too.
  */
 static void
-cgfourattach(struct device *parent, struct device *self, void *aux)
+cgfourattach(device_t parent, device_t self, void *aux)
 {
 #if defined(SUN4)
 	struct cgfour_softc *sc = device_private(self);
@@ -220,15 +219,16 @@ cgfourattach(struct device *parent, struct device *self, void *aux)
 			  sizeof(uint32_t),
 			  BUS_SPACE_MAP_LINEAR,
 			  &bh) != 0) {
-		printf("%s: cannot map control registers\n", self->dv_xname);
+		printf("%s: cannot map control registers\n",
+			device_xname(self));
 		return;
 	}
 	fb->fb_pfour = (volatile uint32_t *)bh;
 
 	fb->fb_driver = &cgfourfbdriver;
-	fb->fb_device = &sc->sc_dev;
+	fb->fb_device = self;
 	fb->fb_type.fb_type = FBTYPE_SUN4COLOR;
-	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(self)->cf_flags & FB_USERMASK;
 	fb->fb_flags |= FB_PFOUR;
 
 	ramsize = PFOUR_COLOR_OFF_END - PFOUR_COLOR_OFF_OVERLAY;
@@ -283,7 +283,8 @@ cgfourattach(struct device *parent, struct device *self, void *aux)
 			  sizeof(struct fbcontrol),
 			  BUS_SPACE_MAP_LINEAR,
 			  &bh) != 0) {
-		printf("%s: cannot map control registers\n", self->dv_xname);
+		printf("%s: cannot map control registers\n",
+			device_xname(self));
 		return;
 	}
 	sc->sc_fbc = (volatile struct fbcontrol *)bh;

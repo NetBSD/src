@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.54 2008/06/11 21:25:31 drochner Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.55 2011/07/18 00:05:35 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.54 2008/06/11 21:25:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.55 2011/07/18 00:05:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.54 2008/06/11 21:25:31 drochner Exp $");
 
 /* per-display variables */
 struct cgtwo_softc {
-	struct	device sc_dev;		/* base device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
 	vme_addr_t		sc_paddr;
 	vme_chipset_tag_t	sc_ct;
@@ -89,13 +88,13 @@ struct cgtwo_softc {
 };
 
 /* autoconfiguration driver */
-static int	cgtwomatch(struct device *, struct cfdata *, void *);
-static void	cgtwoattach(struct device *, struct device *, void *);
-static void	cgtwounblank(struct device *);
+static int	cgtwomatch(device_t, cfdata_t, void *);
+static void	cgtwoattach(device_t, device_t, void *);
+static void	cgtwounblank(device_t);
 int		cgtwogetcmap(struct cgtwo_softc *, struct fbcmap *);
 int		cgtwoputcmap(struct cgtwo_softc *, struct fbcmap *);
 
-CFATTACH_DECL(cgtwo, sizeof(struct cgtwo_softc),
+CFATTACH_DECL_NEW(cgtwo, sizeof(struct cgtwo_softc),
     cgtwomatch, cgtwoattach, NULL, NULL);
 
 extern struct cfdriver cgtwo_cd;
@@ -119,7 +118,7 @@ static struct fbdriver cgtwofbdriver = {
  * Match a cgtwo.
  */
 static int
-cgtwomatch(struct device *parent, struct cfdata *cf, void *aux)
+cgtwomatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->va_vct;
@@ -143,7 +142,7 @@ cgtwomatch(struct device *parent, struct cfdata *cf, void *aux)
  * Attach a display.  We need to notice if it is the console, too.
  */
 static void
-cgtwoattach(struct device *parent, struct device *self, void *aux)
+cgtwoattach(device_t parent, device_t self, void *aux)
 {
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->va_vct;
@@ -158,9 +157,9 @@ cgtwoattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ct = ct;
 	fb->fb_driver = &cgtwofbdriver;
-	fb->fb_device = &sc->sc_dev;
+	fb->fb_device = self;
 	fb->fb_type.fb_type = FBTYPE_SUN2COLOR;
-	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags;
+	fb->fb_flags = device_cfdata(self)->cf_flags;
 
 	fb->fb_type.fb_depth = 8;
 	fb_setsize_eeprom(fb, fb->fb_type.fb_depth, 1152, 900);
@@ -279,7 +278,7 @@ cgtwoioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
  * Undo the effect of an FBIOSVIDEO that turns the video off.
  */
 static void
-cgtwounblank(struct device *dev)
+cgtwounblank(device_t dev)
 {
 	struct cgtwo_softc *sc = device_private(dev);
 	sc->sc_reg->video_enab = 1;
