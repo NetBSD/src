@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.17 2011/07/01 18:50:41 dyoung Exp $ */
+/*	$NetBSD: rtc.c,v 1.18 2011/07/18 00:31:13 mrg Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.17 2011/07/01 18:50:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.18 2011/07/18 00:31:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,8 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.17 2011/07/01 18:50:41 dyoung Exp $");
 #include <dev/ebus/ebusvar.h>
 
 struct rtc_ebus_softc {
-	struct device		sc_dev;
-
 	bus_space_tag_t		sc_bt;	/* parent bus tag */
 	bus_space_handle_t	sc_bh;	/* handle for registers */
 };
@@ -64,7 +62,7 @@ struct rtc_ebus_softc {
 static int	rtcmatch_ebus(device_t, cfdata_t, void *);
 static void	rtcattach_ebus(device_t, device_t, void *);
 
-CFATTACH_DECL(rtc_ebus, sizeof(struct rtc_ebus_softc),
+CFATTACH_DECL_NEW(rtc_ebus, sizeof(struct rtc_ebus_softc),
     rtcmatch_ebus, rtcattach_ebus, NULL, NULL);
 
 /* XXX: global TOD clock handle (sparc/clock.c) */
