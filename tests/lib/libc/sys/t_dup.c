@@ -1,4 +1,4 @@
-/* $NetBSD: t_dup.c,v 1.4 2011/07/16 14:29:15 jruoho Exp $ */
+/* $NetBSD: t_dup.c,v 1.5 2011/07/18 04:29:37 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dup.c,v 1.4 2011/07/16 14:29:15 jruoho Exp $");
+__RCSID("$NetBSD: t_dup.c,v 1.5 2011/07/18 04:29:37 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -158,6 +158,23 @@ ATF_TC_BODY(dup2_err, tc)
 	(void)close(fd);
 }
 
+ATF_TC(dup2_max);
+ATF_TC_HEAD(dup2_max, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test dup2(2) against limits");
+}
+
+ATF_TC_BODY(dup2_max, tc)
+{
+	struct rlimit res;
+
+	(void)memset(&res, 0, sizeof(struct rlimit));
+	(void)getrlimit(RLIMIT_NOFILE, &res);
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EBADF, dup2(STDERR_FILENO, res.rlim_cur + 1) == -1);
+}
+
 ATF_TC_WITH_CLEANUP(dup2_mode);
 ATF_TC_HEAD(dup2_mode, tc)
 {
@@ -207,6 +224,24 @@ ATF_TC_BODY(dup3_err, tc)
 	ATF_REQUIRE_ERRNO(EINVAL, dup3(fd, 1, O_NOFOLLOW) == -1);
 
 	(void)close(fd);
+}
+
+ATF_TC(dup3_max);
+ATF_TC_HEAD(dup3_max, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test dup3(2) against limits");
+}
+
+ATF_TC_BODY(dup3_max, tc)
+{
+	struct rlimit res;
+
+	(void)memset(&res, 0, sizeof(struct rlimit));
+	(void)getrlimit(RLIMIT_NOFILE, &res);
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EBADF, dup3(STDERR_FILENO,
+		res.rlim_cur + 1, O_CLOEXEC) == -1);
 }
 
 ATF_TC_WITH_CLEANUP(dup3_mode);
@@ -341,8 +376,10 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, dup2_basic);
 	ATF_TP_ADD_TC(tp, dup2_err);
+	ATF_TP_ADD_TC(tp, dup2_max);
 	ATF_TP_ADD_TC(tp, dup2_mode);
 	ATF_TP_ADD_TC(tp, dup3_err);
+	ATF_TP_ADD_TC(tp, dup3_max);
 	ATF_TP_ADD_TC(tp, dup3_mode);
 	ATF_TP_ADD_TC(tp, dup_err);
 	ATF_TP_ADD_TC(tp, dup_max);
