@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.18 2011/07/17 22:14:47 dholland Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.19 2011/07/18 01:14:04 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.18 2011/07/17 22:14:47 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.19 2011/07/18 01:14:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,11 +466,28 @@ wapbl_ufs_rename(void *v)
 		int found_fdvp;
 		struct vnode *illegal_fvp;
 
+		/*
+		 * The source must not be above the destination. (If
+		 * it were, the rename would detach a section of the
+		 * tree.)
+		 *
+		 * Look up the tree from tdvp to see if we find fdvp,
+		 * and if so, return the immediate child of fdvp we're
+		 * under; that must not turn out to be the same as
+		 * fvp.
+		 *
+		 * The per-volume rename lock guarantees that the
+		 * result of this check remains true until we finish
+		 * looking up and locking.
+		 */
 		error = ufs_parentcheck(fdvp, tdvp, fcnp->cn_cred,
 					&found_fdvp, &illegal_fvp);
 		if (error) {
 			goto abortit;
 		}
+
+		/* Must lock in tree order. */
+
 		if (found_fdvp) {
 			/* fdvp -> fvp -> tdvp -> tvp */
 			error = lock_vnode_sequence(fdvp, &from_ulr,
@@ -562,10 +579,6 @@ wapbl_ufs_rename(void *v)
 		}
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
 	}
-#if 0
-	if ((error = vn_lock(fvp, LK_EXCLUSIVE)) != 0)
-		goto abortit;
-#endif
 	fdp = VTOI(fdvp);
 	ip = VTOI(fvp);
 	if ((nlink_t) ip->i_nlink >= LINK_MAX) {
@@ -607,60 +620,19 @@ wapbl_ufs_rename(void *v)
 	mp = fdvp->v_mount;
 	fstrans_start(mp, FSTRANS_SHARED);
 
-#if 0
 	/*
 	 * If ".." must be changed (ie the directory gets a new
-	 * parent) then the source directory must not be in the
-	 * directory hierarchy above the target, as this would
-	 * orphan everything below the source directory. Also
-	 * the user must have write permission in the source so
-	 * as to be able to change "..". We must repeat the call 
-	 * to namei, as the parent directory is unlocked by the
-	 * call to checkpath().
+	 * parent) the user must have write permission in the source
+	 * so as to be able to change "..".
 	 */
-#endif
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
-#if 0
-	VOP_UNLOCK(fvp);
-#endif
+
 	if (oldparent != tdp->i_number)
 		newparent = tdp->i_number;
 	if (doingdirectory && newparent) {
 		if (error)	/* write access check above */
 			goto out;
-#if 0
-		if (txp != NULL)
-			vput(tvp);
-		txp = NULL;
-		vref(tdvp);	/* compensate for the ref checkpath loses */
-		if ((error = ufs_checkpath(ip, tdp, tcnp->cn_cred)) != 0) {
-			vrele(tdvp);
-			tdp = NULL;
-			goto out;
-		}
-		tdp = NULL;
-		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
-		error = relookup(tdvp, &tvp, tcnp, 0);
-		if (error != 0) {
-			vput(tdvp);
-			goto out;
-		}
-		tdp = VTOI(tdvp);
-
-		/* update the supplemental reasults */
-		to_ulr = tdp->i_crap;
-		UFS_CHECK_CRAPCOUNTER(tdp);
-		if (tvp)
-			txp = VTOI(tvp);
-#endif
 	}
-
-#if 0
-	/*
-	 * XXX handle case where fdvp is parent of tdvp,
-	 * by unlocking tdvp and regrabbing it with vget after?
-	 */
-#endif
 
 	/*
 	 * This was moved up to before the journal lock to
@@ -674,53 +646,10 @@ wapbl_ufs_rename(void *v)
 			error = doingdirectory ? ENOTEMPTY : EISDIR;
 			goto out;
 		}
-#if 0
-		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
-			vput(fdvp);
-			vrele(ap->a_fvp);
-			goto out2;
-		}
-
-		/* update supplemental lookup results */
-		from_ulr = VTOI(fdvp)->i_crap;
-		UFS_CHECK_CRAPCOUNTER(VTOI(fdvp));
-	} else {
-		error = VOP_LOOKUP(fdvp, &fvp, fcnp);
-		if (error && (error != EJUSTRETURN)) {
-			vput(fdvp);
-			vrele(ap->a_fvp);
-			goto out2;
-		}
-		error = 0;
-
-		/* update supplemental lookup results */
-		from_ulr = VTOI(fdvp)->i_crap;
-		UFS_CHECK_CRAPCOUNTER(VTOI(fdvp));
-#endif
 	}
-	if (fvp != NULL) {
-		fxp = VTOI(fvp);
-		fdp = VTOI(fdvp);
-	} else {
-		/*
-		 * From name has disappeared.
-		 */
-		if (doingdirectory)
-			panic("rename: lost dir entry");
-#if 0
-		vrele(ap->a_fvp);
-#endif
-		error = ENOENT;	/* XXX ufs_rename sets "0" here */
-		goto out2;
-	}
-#if 0
-	/*
-	 * XXX: if fvp != a_fvp, a_fvp can now have 0 references and yet we
-	 * access a_fvp->inode via ip later.  boom.
-	 */
-	vrele(ap->a_fvp);
-#endif
+
+	fxp = VTOI(fvp);
+	fdp = VTOI(fdvp);
 
 	error = UFS_WAPBL_BEGIN(fdvp->v_mount);
 	if (error)
@@ -985,27 +914,23 @@ wapbl_ufs_rename(void *v)
 	 * by a rmdir.
 	 */
 #endif
-	if (fxp != ip) {
-		/* now not possible */
-		if (doingdirectory)
-			panic("rename: lost dir entry");
-	} else {
-		/*
-		 * If the source is a directory with a
-		 * new parent, the link count of the old
-		 * parent directory must be decremented
-		 * and ".." set to point to the new parent.
-		 */
-		if (doingdirectory && newparent) {
-			KASSERT(fdp != NULL);
-			ufs_dirrewrite(fxp, mastertemplate.dot_reclen,
-			    fdp, newparent, DT_DIR, 0, IN_CHANGE);
-			cache_purge(fdvp);
-		}
-		error = ufs_dirremove(fdvp, &from_ulr,
-				      fxp, fcnp->cn_flags, 0);
-		fxp->i_flag &= ~IN_RENAME;
+	KASSERT(fxp == ip);
+
+	/*
+	 * If the source is a directory with a new parent, the link
+	 * count of the old parent directory must be decremented and
+	 * ".." set to point to the new parent.
+	 */
+	if (doingdirectory && newparent) {
+		KASSERT(fdp != NULL);
+		ufs_dirrewrite(fxp, mastertemplate.dot_reclen,
+			       fdp, newparent, DT_DIR, 0, IN_CHANGE);
+		cache_purge(fdvp);
 	}
+	error = ufs_dirremove(fdvp, &from_ulr,
+			      fxp, fcnp->cn_flags, 0);
+	fxp->i_flag &= ~IN_RENAME;
+
 	VN_KNOTE(fvp, NOTE_RENAME);
 	goto done;
 
