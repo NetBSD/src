@@ -1,10 +1,10 @@
-# $NetBSD: md.iyonix,v 1.6 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.iyonix,v 1.7 2011/07/18 17:18:14 dyoung Exp $
 ./usr/include/iyonix				comp-c-include
 ./usr/include/iyonix/ansi.h			comp-c-include
 ./usr/include/iyonix/aout_machdep.h		comp-c-include
 ./usr/include/iyonix/asm.h			comp-c-include
 ./usr/include/iyonix/bswap.h			comp-c-include
-./usr/include/iyonix/bus.h			comp-c-include
+./usr/include/iyonix/bus.h			comp-obsolete		obsolete
 ./usr/include/iyonix/cdefs.h			comp-c-include
 ./usr/include/iyonix/cpu.h			comp-c-include
 ./usr/include/iyonix/db_machdep.h		comp-obsolete		obsolete

@@ -1,11 +1,11 @@
-# $NetBSD: md.dreamcast,v 1.14 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.dreamcast,v 1.15 2011/07/18 17:18:14 dyoung Exp $
 ./usr/include/dreamcast				comp-c-include
 ./usr/include/dreamcast/_G_config.h		comp-obsolete		obsolete
 ./usr/include/dreamcast/ansi.h			comp-c-include
 ./usr/include/dreamcast/aout_machdep.h		comp-c-include
 ./usr/include/dreamcast/asm.h			comp-c-include
 ./usr/include/dreamcast/bswap.h			comp-c-include
-./usr/include/dreamcast/bus.h			comp-c-include
+./usr/include/dreamcast/bus.h			comp-obsolete		obsolete
 ./usr/include/dreamcast/cdefs.h			comp-c-include
 ./usr/include/dreamcast/coff_machdep.h		comp-c-include
 ./usr/include/dreamcast/conf.h			comp-obsolete		obsolete
