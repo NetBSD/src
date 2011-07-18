@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2011/07/18 21:51:49 apb Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2011/07/18 22:50:28 tron Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.3 2011/07/18 21:51:49 apb Exp $");
+__RCSID("$NetBSD: main.c,v 1.4 2011/07/18 22:50:28 tron Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,7 +62,7 @@ determine_ilist_size(v7fs_daddr_t volume_size, int32_t files)
 	v7fs_daddr_t ilist_size;
 
 	if (files)
-		ilist_size =  roundup2(files, V7FS_INODE_PER_BLOCK) /
+		ilist_size =  (files + V7FS_INODE_PER_BLOCK - 1) /
 		    V7FS_INODE_PER_BLOCK;
 	else
 		ilist_size = volume_size / 25; /* 4% */
