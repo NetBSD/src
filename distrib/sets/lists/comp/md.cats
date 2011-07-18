@@ -1,10 +1,10 @@
-# $NetBSD: md.cats,v 1.16 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.cats,v 1.17 2011/07/18 17:18:14 dyoung Exp $
 ./usr/include/cats				comp-c-include
 ./usr/include/cats/ansi.h			comp-c-include
 ./usr/include/cats/aout_machdep.h		comp-c-include
 ./usr/include/cats/asm.h			comp-c-include
 ./usr/include/cats/bswap.h			comp-c-include
-./usr/include/cats/bus.h			comp-c-include
+./usr/include/cats/bus.h			comp-obsolete		obsolete
 ./usr/include/cats/byte_swap.h			comp-obsolete		obsolete
 ./usr/include/cats/cdefs.h			comp-c-include
 ./usr/include/cats/cpu.h			comp-c-include
