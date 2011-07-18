@@ -1,11 +1,11 @@
-# $NetBSD: md.zaurus,v 1.7 2011/07/18 17:29:20 dyoung Exp $
+# $NetBSD: md.zaurus,v 1.8 2011/07/18 17:39:05 dyoung Exp $
 ./usr/include/zaurus				comp-c-include
 ./usr/include/zaurus/ansi.h			comp-c-include
 ./usr/include/zaurus/aout_machdep.h		comp-c-include
 ./usr/include/zaurus/apmvar.h			comp-c-include
 ./usr/include/zaurus/asm.h			comp-c-include
 ./usr/include/zaurus/bswap.h			comp-c-include
-./usr/include/zaurus/bus.h			comp-obsolete		obsolete
+./usr/include/zaurus/bus.h			comp-c-include
 ./usr/include/zaurus/cdefs.h			comp-c-include
 ./usr/include/zaurus/cpu.h			comp-c-include
 ./usr/include/zaurus/disklabel.h		comp-c-include

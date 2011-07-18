@@ -1,11 +1,11 @@
-# $NetBSD: md.hpcarm,v 1.15 2011/07/18 17:29:20 dyoung Exp $
+# $NetBSD: md.hpcarm,v 1.16 2011/07/18 17:39:05 dyoung Exp $
 ./usr/include/hpcarm				comp-c-include
 ./usr/include/hpcarm/ansi.h			comp-c-include
 ./usr/include/hpcarm/aout_machdep.h		comp-c-include
 ./usr/include/hpcarm/apmvar.h			comp-c-include
 ./usr/include/hpcarm/asm.h			comp-c-include
 ./usr/include/hpcarm/bswap.h			comp-c-include
-./usr/include/hpcarm/bus.h			comp-obsolete		obsolete
+./usr/include/hpcarm/bus.h			comp-c-include
 ./usr/include/hpcarm/cdefs.h			comp-c-include
 ./usr/include/hpcarm/cpu.h			comp-c-include
 ./usr/include/hpcarm/db_machdep.h		comp-obsolete		obsolete

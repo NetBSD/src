@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.37 2011/07/17 20:54:30 joerg Exp $
+# $NetBSD: ad.arm,v 1.38 2011/07/18 17:39:05 dyoung Exp $
 ./usr/include/gcc-4.5/arm_neon.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
@@ -23,7 +23,7 @@
 ./usr/include/arm/asm.h				comp-c-include
 ./usr/include/arm/atomic.h			comp-c-include
 ./usr/include/arm/bswap.h			comp-c-include
-./usr/include/arm/bus.h				comp-c-include
+./usr/include/arm/bus.h				comp-obsolete		obsolete
 ./usr/include/arm/byte_swap.h			comp-c-include
 ./usr/include/arm/cdefs.h			comp-c-include
 ./usr/include/arm/cpu.h				comp-c-include

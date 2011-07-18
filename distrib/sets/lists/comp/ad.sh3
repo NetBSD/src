@@ -1,4 +1,4 @@
-# $NetBSD: ad.sh3,v 1.27 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: ad.sh3,v 1.28 2011/07/18 17:39:05 dyoung Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sh3				comp-c-include
@@ -6,7 +6,7 @@
 ./usr/include/sh3/aout_machdep.h		comp-c-include
 ./usr/include/sh3/asm.h				comp-c-include
 ./usr/include/sh3/bswap.h			comp-c-include
-./usr/include/sh3/bus.h				comp-c-include
+./usr/include/sh3/bus.h				comp-obsolete		obsolete
 ./usr/include/sh3/byte_swap.h			comp-c-include
 ./usr/include/sh3/cdefs.h			comp-c-include
 ./usr/include/sh3/coff_machdep.h		comp-c-include
