@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.20 2008/12/28 21:51:46 christos Exp $	*/
+/*	$NetBSD: makefs.h,v 1.21 2011/07/18 08:58:38 uch Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -170,6 +170,10 @@ int		cd9660_parse_opts(const char *, fsinfo_t *);
 void		cd9660_cleanup_opts(fsinfo_t *);
 void		cd9660_makefs(const char *, const char *, fsnode *, fsinfo_t *);
 
+void		v7fs_prep_opts(fsinfo_t *);
+int		v7fs_parse_opts(const char *, fsinfo_t *);
+void		v7fs_cleanup_opts(fsinfo_t *);
+void		v7fs_makefs(const char *, const char *, fsnode *, fsinfo_t *);
 
 extern	u_int		debug;
 extern	struct timespec	start_time;

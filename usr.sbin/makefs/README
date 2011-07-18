@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.4 2009/01/03 08:25:35 lukem Exp $
+$NetBSD: README,v 1.5 2011/07/18 08:58:38 uch Exp $
 
 makefs - build a file system image from a directory tree
 
@@ -17,6 +17,7 @@ makefs creates a file system image from a given directory tree.
 the following file system types can be built:
 	ffs	BSD fast file system
 	cd9660	ISO 9660 file system
+	v7fs	7th edition(V7) file system
 
 Support for the following file systems maybe be added in the future
 	ext2fs	Linux EXT2 file system

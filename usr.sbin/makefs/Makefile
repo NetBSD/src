@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2009/04/22 15:23:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.26 2011/07/18 08:58:38 uch Exp $
 #
 
 WARNS?=	3	# XXX -Wsign-compare
@@ -6,7 +6,7 @@ WARNS?=	3	# XXX -Wsign-compare
 .include <bsd.own.mk>
 
 PROG=	makefs
-SRCS=	cd9660.c ffs.c \
+SRCS=	cd9660.c ffs.c v7fs.c \
 	getid.c \
 	makefs.c misc.c \
 	pack_dev.c \
@@ -22,6 +22,7 @@ CPPFLAGS+=	-I${.CURDIR} -I${MKNODSRC} -I${MTREESRC}
 
 .include "${.CURDIR}/cd9660/Makefile.inc"
 .include "${.CURDIR}/ffs/Makefile.inc"
+.include "${.CURDIR}/v7fs/Makefile.inc"
 
 .if (${HOSTPROG:U} == "")
 DPADD+= ${LIBUTIL}
