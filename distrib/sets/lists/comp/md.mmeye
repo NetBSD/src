@@ -1,4 +1,4 @@
-# $NetBSD: md.mmeye,v 1.27 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.mmeye,v 1.28 2011/07/18 17:29:20 dyoung Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mmeye				comp-c-include
 ./usr/include/mmeye/_G_config.h			comp-obsolete		obsolete
@@ -7,7 +7,7 @@
 ./usr/include/mmeye/asm.h			comp-c-include
 ./usr/include/mmeye/bootinfo.h			comp-obsolete		obsolete
 ./usr/include/mmeye/bswap.h			comp-c-include
-./usr/include/mmeye/bus.h			comp-c-include
+./usr/include/mmeye/bus.h			comp-obsolete		obsolete
 ./usr/include/mmeye/cdefs.h			comp-c-include
 ./usr/include/mmeye/coff_machdep.h		comp-c-include
 ./usr/include/mmeye/conf.h			comp-obsolete		obsolete

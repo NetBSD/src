@@ -1,4 +1,4 @@
-# $NetBSD: md.landisk,v 1.3 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.landisk,v 1.4 2011/07/18 17:29:20 dyoung Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/landisk				comp-c-include
 ./usr/include/landisk/ansi.h			comp-c-include
@@ -6,7 +6,7 @@
 ./usr/include/landisk/asm.h			comp-c-include
 ./usr/include/landisk/bootinfo.h		comp-c-include
 ./usr/include/landisk/bswap.h			comp-c-include
-./usr/include/landisk/bus.h			comp-c-include
+./usr/include/landisk/bus.h			comp-obsolete		obsolete
 ./usr/include/landisk/button.h			comp-c-include
 ./usr/include/landisk/cdefs.h			comp-c-include
 ./usr/include/landisk/coff_machdep.h		comp-c-include
