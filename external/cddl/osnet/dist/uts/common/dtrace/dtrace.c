@@ -8092,8 +8092,8 @@ dtrace_probe_enable(dtrace_probedesc_t *desc, dtrace_enabling_t *enab)
 {
 	dtrace_probekey_t pkey;
 	uint32_t priv;
-	uid_t uid;
-	zoneid_t zoneid;
+	uid_t uid = 0;	/* XXX: gcc */
+	zoneid_t zoneid = 0;	/* XXX: gcc */
 
 	ASSERT(MUTEX_HELD(&dtrace_lock));
 	dtrace_ecb_create_cache = NULL;
