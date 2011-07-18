@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1579 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1580 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1065,3 +1065,15 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		accelerometer. [jruoho 20110713]
 	emdtv(4): Add a driver for Empia EM28xx family USB video
 		capture controllers. [jmcneill 20110715]
+	luna68k: Build a faked a.out kernel using elf2aout(8) tool
+		and a linker script derived from cats and shark so that
+		now LUNA's firmware can load -current kernels directly
+		after almost a decade since luna68k was switched to using
+		ELF format by default.  [tsutsui 20110716]
+	luna68k: Fix stride handling in bus_space(9) multi and region ops
+		to make spc(4) SCSI work properly. [tsutsui 20110716]
+	luna68k: Use the original OMRON font derived from 4.4BSD-Lite/luna68k
+		rather than gallant19 which is used on Sun workstations.
+		[tsutsui 20110716]
+	luna68k: Build a ramdisk based INSTALL kernel with sysinst(8).
+		[tsutsui 20110716]
