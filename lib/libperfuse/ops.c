@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.33 2011/07/14 15:37:32 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.34 2011/07/18 02:14:01 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1651,6 +1651,27 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 		fsi->valid |= FUSE_FATTR_LOCKOWNER;
 	}
 
+	/*
+	 * ftruncate() sends only va_size, and metadata cache
+	 * flush adds va_atime and va_mtime. Some FUSE
+	 * filesystems will attempt to detect ftruncate by 
+	 * checking for FATTR_SIZE being set without
+	 * FATTR_UID|FATTR_GID|FATTR_ATIME|FATTR_MTIME|FATTR_MODE
+	 * 
+	 * Try to adapt and remove FATTR_ATIME|FATTR_MTIME
+	 * if we suspect a ftruncate().
+	 */ 
+	if ((va_size != (u_quad_t)PUFFS_VNOVAL) &&
+	    ((vap->va_mode == (mode_t)PUFFS_VNOVAL) &&
+	     (vap->va_uid == (uid_t)PUFFS_VNOVAL) &&
+	     (vap->va_gid == (gid_t)PUFFS_VNOVAL))) {
+		fsi->atime = 0;
+		fsi->atimensec = 0;
+		fsi->mtime = 0;
+		fsi->mtimensec = 0;
+		fsi->valid &= ~(FUSE_FATTR_ATIME|FUSE_FATTR_MTIME);
+	}
+		    
 	/*
 	 * If nothing remain, discard the operation.
 	 */
