@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fmovecr.c,v 1.13 2011/07/18 07:44:30 isaki Exp $	*/
+/*	$NetBSD: fpu_fmovecr.c,v 1.14 2011/07/18 14:11:27 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_fmovecr.c,v 1.13 2011/07/18 07:44:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_fmovecr.c,v 1.14 2011/07/18 14:11:27 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,8 @@ fpu_emul_fmovecr(struct fpemu *fe, struct instruction *insn)
 	fpu_implode(fe, &fe->fe_f3, FTYPE_EXT, &fpreg[dstreg * 3]);
 #if DEBUG_FPE
 	printf("  fpu_emul_fmovecr: result %08x,%08x,%08x to FP%d\n",
-		fpreg[dstreg * 3], fpreg[dstreg * 3 + 1], fpreg[dstreg * 3 + 2],
-		dstreg);
+	    fpreg[dstreg * 3], fpreg[dstreg * 3 + 1], fpreg[dstreg * 3 + 2],
+	    dstreg);
 #endif
 	return 0;
 }

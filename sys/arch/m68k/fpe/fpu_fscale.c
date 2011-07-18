@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fscale.c,v 1.14 2011/07/18 07:44:30 isaki Exp $	*/
+/*	$NetBSD: fpu_fscale.c,v 1.15 2011/07/18 14:11:27 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_fscale.c,v 1.14 2011/07/18 07:44:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_fscale.c,v 1.15 2011/07/18 14:11:27 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -82,11 +82,11 @@ fpu_emul_fscale(struct fpemu *fe, struct instruction *insn)
 	if ((word1 & 0x4000) == 0) {
 #if DEBUG_FPE
 		printf("fpu_emul_fscale: FP%d op FP%d => FP%d\n",
-			format, regnum, regnum);
+		    format, regnum, regnum);
 		/* the operand is an FP reg */
 		printf("fpu_emul_scale: src opr FP%d=%08x%08x%08x\n",
-			format, fpregs[format*3], fpregs[format*3+1],
-			fpregs[format*3+2]);
+		    format, fpregs[format*3], fpregs[format*3+1],
+		    fpregs[format*3+2]);
 #endif
 		fpu_explode(fe, &fe->fe_f2, FTYPE_EXT, &fpregs[format * 3]);
 		fpu_implode(fe, &fe->fe_f2, FTYPE_LNG, buf);
@@ -131,20 +131,20 @@ fpu_emul_fscale(struct fpemu *fe, struct instruction *insn)
 			printf("%c%d@+\n", regname, insn->is_ea.ea_regnum & 7);
 		} else if (flags & EA_OFFSET) {
 			printf("%c%d@(%d)\n",
-				regname, insn->is_ea.ea_regnum & 7,
-				insn->is_ea.ea_offset);
+			    regname, insn->is_ea.ea_regnum & 7,
+			    insn->is_ea.ea_offset);
 		} else if (flags & EA_INDEXED) {
 			printf("%c%d@(...)\n",
-				regname, insn->is_ea.ea_regnum & 7);
+			    regname, insn->is_ea.ea_regnum & 7);
 		} else if (flags & EA_ABS) {
 			printf("0x%08x\n", insn->is_ea.ea_absaddr);
 		} else if (flags & EA_PC_REL) {
 			printf("pc@(%d)\n", insn->is_ea.ea_offset);
 		} else if (flags & EA_IMMED) {
 			printf("#0x%08x%08x%08x\n",
-				insn->is_ea.ea_immed[0],
-				insn->is_ea.ea_immed[1],
-				insn->is_ea.ea_immed[2]);
+			    insn->is_ea.ea_immed[0],
+			    insn->is_ea.ea_immed[1],
+			    insn->is_ea.ea_immed[2]);
 		} else {
 			printf("%c%d@\n", regname, insn->is_ea.ea_regnum & 7);
 		}
@@ -153,7 +153,7 @@ fpu_emul_fscale(struct fpemu *fe, struct instruction *insn)
 
 #if DEBUG_FPE
 		printf("fpu_emul_fscale: src = %08x%08x%08x, siz = %d\n",
-			buf[0], buf[1], buf[2], insn->is_datasize);
+		    buf[0], buf[1], buf[2], insn->is_datasize);
 #endif
 		if (format == FTYPE_LNG) {
 			/* nothing */
@@ -335,7 +335,7 @@ fpu_emul_fscale(struct fpemu *fe, struct instruction *insn)
 
 #if DEBUG_FPE
 	printf("fpu_emul_fscale: FPSR = %08x, FPCR = %08x\n",
-		fe->fe_fpsr, fe->fe_fpcr);
+	    fe->fe_fpsr, fe->fe_fpcr);
 #endif
 
 	return (fpsr & fe->fe_fpcr & FPSR_EXCP) ? SIGFPE : sig;

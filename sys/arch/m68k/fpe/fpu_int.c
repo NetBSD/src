@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_int.c,v 1.9 2011/07/18 07:44:30 isaki Exp $	*/
+/*	$NetBSD: fpu_int.c,v 1.10 2011/07/18 14:11:27 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_int.c,v 1.9 2011/07/18 07:44:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_int.c,v 1.10 2011/07/18 14:11:27 isaki Exp $");
 
 #include <sys/types.h>
 
@@ -115,7 +115,7 @@ fpu_int(struct fpemu *fe)
 	rsh = 32 - lsh;
 	for (i = 0; i + wsh < 2; i++) {
 		x->fp_mant[i] = (x->fp_mant[i+wsh] << lsh) |
-			(x->fp_mant[i+wsh+1] >> rsh);
+		    (x->fp_mant[i+wsh+1] >> rsh);
 	}
 	x->fp_mant[i] = (x->fp_mant[i+wsh] << lsh);
 	i++;
