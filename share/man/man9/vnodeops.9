@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.82 2011/07/11 08:27:37 hannken Exp $
+.\"     $NetBSD: vnodeops.9,v 1.83 2011/07/18 04:39:28 dholland Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -844,7 +844,7 @@ is the vnode of the target file (if it exists).
 The argument
 .Fa tcnp
 is the pathname component about the file's new name.
-If the operation is successful zero is returned, otherwise and error
+If the operation is successful zero is returned, otherwise an error
 code is returned.
 .Pp
 The source directory and file vnodes should be unlocked and their
