@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2011/07/18 18:37:15 adam Exp $
+#	$NetBSD: Makefile,v 1.11 2011/07/18 19:11:28 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -23,7 +23,8 @@ config/config.status: ${LLVM_SRCDIR}/configure
 	    --enable-targets=x86,powerpc,sparc,arm,mips \
 	    --host=${MACHINE_GNU_PLATFORM} \
 	    --with-c-include-dirs=/usr/include/clang-3.0:/usr/include \
-	    --enable-optimized --disable-assertions
+	    --enable-optimized
+# --disable-assertions
 
 need-dl:
 	printf '#include <dlfcn.h>\nint main(void){void *p; return dladdr(p, p);}' > need-dl.c
