@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.11 2009/03/14 15:36:09 dsl Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.12 2011/07/18 07:44:30 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.11 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.12 2011/07/18 07:44:30 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -194,7 +194,6 @@ fpu_ftoi(struct fpemu *fe, register struct fpn *fp)
 
 	sign = fp->fp_sign;
 	switch (fp->fp_class) {
-
 	case FPC_ZERO:
 		return (0);
 
@@ -212,9 +211,13 @@ fpu_ftoi(struct fpemu *fe, register struct fpn *fp)
 		if ((exp = fp->fp_exp) >= 32)
 			break;
 		/* NB: the following includes exp < 0 cases */
-		if (fpu_shr(fp, FP_NMANT - 1 - FP_NG - exp) != 0)
-			/* m68881/2 do not underflow when
-			   converting to integer */;
+		if (fpu_shr(fp, FP_NMANT - 1 - FP_NG - exp) != 0) {
+			/*
+			 * m68881/2 do not underflow when
+			 * converting to integer
+			 */
+			;
+		}
 		fpu_round(fe, fp);
 		i = fp->fp_mant[2];
 		if (i >= ((u_int)0x80000000 + sign))
@@ -285,9 +288,10 @@ fpu_ftos(struct fpemu *fe, register struct fpn *fp)
 		(void) fpu_shr(fp, FP_NMANT - FP_NG - SNG_FRACBITS - exp);
 		if (fpu_round(fe, fp) && fp->fp_mant[2] == SNG_EXP(1))
 			return (sign | SNG_EXP(1) | 0);
-		if (fe->fe_fpsr & FPSR_INEX2)
-			fe->fe_fpsr |= FPSR_UNFL
-			/* mc68881/2 don't underflow when converting */;
+		if (fe->fe_fpsr & FPSR_INEX2) {
+			/* mc68881/2 don't underflow when converting */
+			fe->fe_fpsr |= FPSR_UNFL;
+		}
 		return (sign | SNG_EXP(0) | fp->fp_mant[2]);
 	}
 	/* -FP_NG for g,r; -1 for implied 1; -SNG_FRACBITS for fraction */
@@ -347,9 +351,10 @@ fpu_ftod(struct fpemu *fe, register struct fpn *fp, u_int *res)
 			res[1] = 0;
 			return (sign | DBL_EXP(1) | 0);
 		}
-		if (fe->fe_fpsr & FPSR_INEX2)
-                        fe->fe_fpsr |= FPSR_UNFL
-			/* mc68881/2 don't underflow when converting */;
+		if (fe->fe_fpsr & FPSR_INEX2) {
+			/* mc68881/2 don't underflow when converting */
+			fe->fe_fpsr |= FPSR_UNFL;
+		}
 		exp = 0;
 		goto done;
 	}
@@ -409,16 +414,19 @@ fpu_ftox(struct fpemu *fe, register struct fpn *fp, u_int *res)
 
 	if ((exp = fp->fp_exp + EXT_EXP_BIAS) < 0) {
 		fe->fe_fpsr |= FPSR_UNFL;
-		/* I'm not sure about this <=... exp==0 doesn't mean
-		   it's a denormal in extended format */
+		/*
+		 * I'm not sure about this <=... exp==0 doesn't mean
+		 * it's a denormal in extended format
+		 */
 		(void) fpu_shr(fp, FP_NMANT - FP_NG - EXT_FRACBITS - exp);
 		if (fpu_round(fe, fp) && fp->fp_mant[1] == EXT_EXPLICIT1) {
 			res[1] = res[2] = 0;
 			return (sign | EXT_EXP(1) | 0);
 		}
-		if (fe->fe_fpsr & FPSR_INEX2)
-                        fe->fe_fpsr |= FPSR_UNFL
-			/* mc68881/2 don't underflow */;
+		if (fe->fe_fpsr & FPSR_INEX2) {
+			/* mc68881/2 don't underflow */
+			fe->fe_fpsr |= FPSR_UNFL;
+		}
 		exp = 0;
 		goto done;
 	}
@@ -446,7 +454,8 @@ done:
  * Implode an fpn, writing the result into the given space.
  */
 void
-fpu_implode(struct fpemu *fe, register struct fpn *fp, int type, register u_int *space)
+fpu_implode(struct fpemu *fe, register struct fpn *fp, int type,
+	register u_int *space)
 {
 	/* XXX Dont delete exceptions set here: fe->fe_fpsr &= ~FPSR_EXCP; */
 

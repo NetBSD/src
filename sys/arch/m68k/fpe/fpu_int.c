@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_int.c,v 1.8 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: fpu_int.c,v 1.9 2011/07/18 07:44:30 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_int.c,v 1.8 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_int.c,v 1.9 2011/07/18 07:44:30 isaki Exp $");
 
 #include <sys/types.h>
 
@@ -42,83 +42,86 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_int.c,v 1.8 2009/03/14 15:36:09 dsl Exp $");
 struct fpn *
 fpu_intrz(struct fpemu *fe)
 {
-  register struct fpn *x = &fe->fe_f2;
-  register int sh, clr, mask, i;
+	register struct fpn *x = &fe->fe_f2;
+	register int sh, clr, mask, i;
 
-  /* special cases first */
-  if (x->fp_class != FPC_NUM) {
-    return x;
-  }
-  /* when |x| < 1.0 */
-  if (x->fp_exp < 0) {
-    x->fp_class = FPC_ZERO;
-    x->fp_mant[0] = x->fp_mant[1] = x->fp_mant[2] = 0;
-    return x;
-  }
+	/* special cases first */
+	if (x->fp_class != FPC_NUM) {
+		return x;
+	}
+	/* when |x| < 1.0 */
+	if (x->fp_exp < 0) {
+		x->fp_class = FPC_ZERO;
+		x->fp_mant[0] = x->fp_mant[1] = x->fp_mant[2] = 0;
+		return x;
+	}
 
-  /* real work */
-  sh = FP_NMANT - 1 - x->fp_exp;
-  if (sh <= 0) {
-    return x;
-  }
+	/* real work */
+	sh = FP_NMANT - 1 - x->fp_exp;
+	if (sh <= 0) {
+		return x;
+	}
 
-  clr = 2 - sh / 32;
-  mask = (0xffffffff << (sh % 32));
+	clr = 2 - sh / 32;
+	mask = (0xffffffff << (sh % 32));
 
-  for (i = 2; i > clr; i--) {
-    x->fp_mant[i] = 0;
-  }
-  x->fp_mant[i] &= mask;
+	for (i = 2; i > clr; i--) {
+		x->fp_mant[i] = 0;
+	}
+	x->fp_mant[i] &= mask;
 
-  return x;
+	return x;
 }
 
 /* FINT */
 struct fpn *
 fpu_int(struct fpemu *fe)
 {
-  register struct fpn *x = &fe->fe_f2;
-  register int rsh, lsh, wsh, i;
+	register struct fpn *x = &fe->fe_f2;
+	register int rsh, lsh, wsh, i;
 
-  /* special cases first */
-  if (x->fp_class != FPC_NUM) {
-    return x;
-  }
-  /* even if we have exponent == -1, we still have possiblity
-     that the result >= 1.0 when mantissa ~= 1.0 and rounded up */
-  if (x->fp_exp < -1) {
-    x->fp_class = FPC_ZERO;
-    x->fp_mant[0] = x->fp_mant[1] = x->fp_mant[2] = 0;
-    return x;
-  }
+	/* special cases first */
+	if (x->fp_class != FPC_NUM) {
+		return x;
+	}
+	/*
+	 * even if we have exponent == -1, we still have possiblity
+	 * that the result >= 1.0 when mantissa ~= 1.0 and rounded up
+	 */
+	if (x->fp_exp < -1) {
+		x->fp_class = FPC_ZERO;
+		x->fp_mant[0] = x->fp_mant[1] = x->fp_mant[2] = 0;
+		return x;
+	}
 
-  /* real work */
-  rsh = FP_NMANT - 1 - x->fp_exp;
-  if (rsh - FP_NG <= 0) {
-    return x;
-  }
+	/* real work */
+	rsh = FP_NMANT - 1 - x->fp_exp;
+	if (rsh - FP_NG <= 0) {
+		return x;
+	}
 
-  fpu_shr(x, rsh - FP_NG);	/* shift to the right */
+	fpu_shr(x, rsh - FP_NG);	/* shift to the right */
 
-  if (fpu_round(fe, x) == 1 /* rounded up */ &&
-      x->fp_mant[2 - (FP_NMANT-rsh)/32] & (1 << ((FP_NMANT-rsh)%32))
-      /* x >= 2.0 */) {
-    rsh--;			/* reduce shift count by 1 */
-    x->fp_exp++;		/* adjust exponent */
-  }
+	if (fpu_round(fe, x) == 1 /* rounded up */ &&
+	    x->fp_mant[2 - (FP_NMANT-rsh)/32] & (1 << ((FP_NMANT-rsh)%32))
+	    /* x >= 2.0 */) {
+		rsh--;			/* reduce shift count by 1 */
+		x->fp_exp++;		/* adjust exponent */
+	}
 
-  /* shift it back to the left */
-  wsh = rsh / 32;
-  lsh = rsh % 32;
-  rsh = 32 - lsh;
-  for (i = 0; i + wsh < 2; i++) {
-    x->fp_mant[i] = (x->fp_mant[i+wsh] << lsh) | (x->fp_mant[i+wsh+1] >> rsh);
-  }
-  x->fp_mant[i] = (x->fp_mant[i+wsh] << lsh);
-  i++;
-  for (; i < 3; i++) {
-    x->fp_mant[i] = 0;
-  }
+	/* shift it back to the left */
+	wsh = rsh / 32;
+	lsh = rsh % 32;
+	rsh = 32 - lsh;
+	for (i = 0; i + wsh < 2; i++) {
+		x->fp_mant[i] = (x->fp_mant[i+wsh] << lsh) |
+			(x->fp_mant[i+wsh+1] >> rsh);
+	}
+	x->fp_mant[i] = (x->fp_mant[i+wsh] << lsh);
+	i++;
+	for (; i < 3; i++) {
+		x->fp_mant[i] = 0;
+	}
 
-  return x;
+	return x;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_rem.c,v 1.9 2009/03/14 21:04:11 dsl Exp $	*/
+/*	$NetBSD: fpu_rem.c,v 1.10 2011/07/18 07:44:30 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.9 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.10 2011/07/18 07:44:30 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -83,148 +83,149 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.9 2009/03/14 21:04:11 dsl Exp $");
  *       Step 9.  At this point, R = 2^(-j)*X - Q Y = Y. Thus,
  *                X = 2^(j)*(Q+1)Y. set Q := 2^(j)*(Q+1),
  *                R := 0. Return signQ, last 7 bits of Q, and R.
- */                
+ */
 
 static struct fpn * __fpu_modrem(struct fpemu *fe, int modrem);
 
 static struct fpn *
 __fpu_modrem(struct fpemu *fe, int modrem)
 {
-    static struct fpn X, Y;
-    struct fpn *x, *y, *r;
-    u_int signX, signY, signQ;
-    int j, k, l, q;
-    int Last_Subtract;
+	static struct fpn X, Y;
+	struct fpn *x, *y, *r;
+	u_int signX, signY, signQ;
+	int j, k, l, q;
+	int Last_Subtract;
 
-    CPYFPN(&X, &fe->fe_f1);
-    CPYFPN(&Y, &fe->fe_f2);
-    x = &X;
-    y = &Y;
-    r = &fe->fe_f2;
-
-    /*
-     * Step 1
-     */
-    signX = x->fp_sign;
-    signY = y->fp_sign;
-    signQ = (signX ^ signY);
-    x->fp_sign = y->fp_sign = 0;
-
-    /*
-     * Step 2
-     */
-    l = x->fp_exp - y->fp_exp;
-    k = 0;
-    q = 0;
-    if (l >= 0) {
-	CPYFPN(r, x);
-	r->fp_exp -= l;
-	j = l;
+	CPYFPN(&X, &fe->fe_f1);
+	CPYFPN(&Y, &fe->fe_f2);
+	x = &X;
+	y = &Y;
+	r = &fe->fe_f2;
 
 	/*
-	 * Step 3
+	 * Step 1
 	 */
-	while (y->fp_exp != r->fp_exp || y->fp_mant[0] != r->fp_mant[0] ||
-	       y->fp_mant[1] != r->fp_mant[1] ||
-	       y->fp_mant[2] != r->fp_mant[2]) {
+	signX = x->fp_sign;
+	signY = y->fp_sign;
+	signQ = (signX ^ signY);
+	x->fp_sign = y->fp_sign = 0;
 
-	    /* Step 3.2 */
-	    if (y->fp_exp < r->fp_exp || y->fp_mant[0] < r->fp_mant[0] ||
-		y->fp_mant[1] < r->fp_mant[1] ||
-		y->fp_mant[2] < r->fp_mant[2]) {
-		CPYFPN(&fe->fe_f1, r);
-		CPYFPN(&fe->fe_f2, y);
-		fe->fe_f2.fp_sign = 1;
-		r = fpu_add(fe);
-		q++;
-	    }
+	/*
+	 * Step 2
+	 */
+	l = x->fp_exp - y->fp_exp;
+	k = 0;
+	q = 0;
+	if (l >= 0) {
+		CPYFPN(r, x);
+		r->fp_exp -= l;
+		j = l;
 
-	    /* Step 3.3 */
-	    if (j == 0)
-		goto Step4;
+		/*
+		 * Step 3
+		 */
+		while (y->fp_exp != r->fp_exp || y->fp_mant[0] != r->fp_mant[0] ||
+		       y->fp_mant[1] != r->fp_mant[1] ||
+		       y->fp_mant[2] != r->fp_mant[2]) {
 
-	    /* Step 3.4 */
-	    k++;
-	    j--;
-	    q += q;
-	    r->fp_exp++;
+			/* Step 3.2 */
+			if (y->fp_exp < r->fp_exp || y->fp_mant[0] < r->fp_mant[0] ||
+			    y->fp_mant[1] < r->fp_mant[1] ||
+			    y->fp_mant[2] < r->fp_mant[2]) {
+				CPYFPN(&fe->fe_f1, r);
+				CPYFPN(&fe->fe_f2, y);
+				fe->fe_f2.fp_sign = 1;
+				r = fpu_add(fe);
+				q++;
+			}
+
+			/* Step 3.3 */
+			if (j == 0)
+				goto Step4;
+
+			/* Step 3.4 */
+			k++;
+			j--;
+			q += q;
+			r->fp_exp++;
+		}
+		/* Step 9 */
+		goto Step9;
 	}
-	/* Step 9 */
-	goto Step9;
-    }
  Step4:
-    Last_Subtract = 0;
-    if (modrem == 0)
-	goto Step6;
+	Last_Subtract = 0;
+	if (modrem == 0)
+		goto Step6;
 
-    /*
-     * Step 5
-     */
-    /* Step 5.1 */
-    if (r->fp_exp + 1 < y->fp_exp ||
-	(r->fp_exp + 1 == y->fp_exp &&
-	 (r->fp_mant[0] < y->fp_mant[0] || r->fp_mant[1] < y->fp_mant[1] ||
-	  r->fp_mant[2] < y->fp_mant[2])))
-	/* if r < y/2 */
-	goto Step6;
-    /* Step 5.2 */
-    if (r->fp_exp + 1 != y->fp_exp ||
-	r->fp_mant[0] != y->fp_mant[0] || r->fp_mant[1] != y->fp_mant[1] ||
-	r->fp_mant[2] != y->fp_mant[2]) {
-	/* if (!(r < y/2) && !(r == y/2)) */
-	Last_Subtract = 1;
-	q++;
-	y->fp_sign = signY;
-    } else {
-	/* Step 5.3 */
-	/* r == y/2 */
-	if (q % 2) {
-	    q++;
-	    signX = !signX;
+	/*
+	 * Step 5
+	 */
+	/* Step 5.1 */
+	if (r->fp_exp + 1 < y->fp_exp ||
+	    (r->fp_exp + 1 == y->fp_exp &&
+	     (r->fp_mant[0] < y->fp_mant[0] || r->fp_mant[1] < y->fp_mant[1] ||
+	      r->fp_mant[2] < y->fp_mant[2]))) {
+		/* if r < y/2 */
+		goto Step6;
 	}
-    }
+	/* Step 5.2 */
+	if (r->fp_exp + 1 != y->fp_exp ||
+	    r->fp_mant[0] != y->fp_mant[0] || r->fp_mant[1] != y->fp_mant[1] ||
+	    r->fp_mant[2] != y->fp_mant[2]) {
+		/* if (!(r < y/2) && !(r == y/2)) */
+		Last_Subtract = 1;
+		q++;
+		y->fp_sign = signY;
+	} else {
+		/* Step 5.3 */
+		/* r == y/2 */
+		if (q % 2) {
+			q++;
+			signX = !signX;
+		}
+	}
 
  Step6:
-    r->fp_sign = signX;
+	r->fp_sign = signX;
 
-    /*
-     * Step 7
-     */
-    if (Last_Subtract) {
-	CPYFPN(&fe->fe_f1, r);
-	CPYFPN(&fe->fe_f2, y);
-	fe->fe_f2.fp_sign = !y->fp_sign;
-	r = fpu_add(fe);
-    }
-    /*
-     * Step 8
-     */
-    q &= 0x7f;
-    q |= (signQ << 7);
-    fe->fe_fpframe->fpf_fpsr =
+	/*
+	 * Step 7
+	 */
+	if (Last_Subtract) {
+		CPYFPN(&fe->fe_f1, r);
+		CPYFPN(&fe->fe_f2, y);
+		fe->fe_f2.fp_sign = !y->fp_sign;
+		r = fpu_add(fe);
+	}
+	/*
+	 * Step 8
+	 */
+	q &= 0x7f;
+	q |= (signQ << 7);
+	fe->fe_fpframe->fpf_fpsr =
 	fe->fe_fpsr =
-	    (fe->fe_fpsr & ~FPSR_QTT) | (q << 16);
-    return r;
+		(fe->fe_fpsr & ~FPSR_QTT) | (q << 16);
+	return r;
 
  Step9:
-    fe->fe_f1.fp_class = FPC_ZERO;
-    q++;
-    q &= 0x7f;
-    q |= (signQ << 7);
-    fe->fe_fpframe->fpf_fpsr =
+	fe->fe_f1.fp_class = FPC_ZERO;
+	q++;
+	q &= 0x7f;
+	q |= (signQ << 7);
+	fe->fe_fpframe->fpf_fpsr =
 	fe->fe_fpsr =
-	    (fe->fe_fpsr & ~FPSR_QTT) | (q << 16);
-    return &fe->fe_f1;
+		(fe->fe_fpsr & ~FPSR_QTT) | (q << 16);
+	return &fe->fe_f1;
 }
 
 struct fpn *
 fpu_rem(struct fpemu *fe)
 {
-  return __fpu_modrem(fe, 1);
+	return __fpu_modrem(fe, 1);
 }
 
 struct fpn *
 fpu_mod(struct fpemu *fe)
 {
-  return __fpu_modrem(fe, 0);
+	return __fpu_modrem(fe, 0);
 }

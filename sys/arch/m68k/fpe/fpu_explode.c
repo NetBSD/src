@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.10 2009/03/14 21:04:11 dsl Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.11 2011/07/18 07:44:30 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.10 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.11 2011/07/18 07:44:30 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -180,7 +180,8 @@ fpu_dtof(register struct fpn *fp, register u_int i, register u_int j)
  * 96-bit extended -> fpn.
  */
 static int
-fpu_xtof(register struct fpn *fp, register u_int i, register u_int j, register u_int k)
+fpu_xtof(register struct fpn *fp, register u_int i, register u_int j,
+	register u_int k)
 {
 	register int exp;
 	register u_int frac, f0, f1, f2;
@@ -222,7 +223,8 @@ fpu_xtof(register struct fpn *fp, register u_int i, register u_int j, register u
  * Explode the contents of a memory operand.
  */
 void
-fpu_explode(register struct fpemu *fe, register struct fpn *fp, int type, register u_int *space)
+fpu_explode(register struct fpemu *fe, register struct fpn *fp, int type,
+	register u_int *space)
 {
 	register u_int s;
 

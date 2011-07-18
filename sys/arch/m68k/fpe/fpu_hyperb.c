@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_hyperb.c,v 1.4 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: fpu_hyperb.c,v 1.5 2011/07/18 07:44:30 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.4 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.5 2011/07/18 07:44:30 isaki Exp $");
 
 #include "fpu_emulate.h"
 
@@ -45,27 +45,27 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.4 2009/03/14 15:36:09 dsl Exp $");
 struct fpn *
 fpu_atanh(struct fpemu *fe)
 {
-  /* stub */
-  return &fe->fe_f2;
+	/* stub */
+	return &fe->fe_f2;
 }
 
 struct fpn *
 fpu_cosh(struct fpemu *fe)
 {
-  /* stub */
-  return &fe->fe_f2;
+	/* stub */
+	return &fe->fe_f2;
 }
 
 struct fpn *
 fpu_sinh(struct fpemu *fe)
 {
-  /* stub */
-  return &fe->fe_f2;
+	/* stub */
+	return &fe->fe_f2;
 }
 
 struct fpn *
 fpu_tanh(struct fpemu *fe)
 {
-  /* stub */
-  return &fe->fe_f2;
+	/* stub */
+	return &fe->fe_f2;
 }
