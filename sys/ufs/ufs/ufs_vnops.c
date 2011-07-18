@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.196 2011/07/18 01:13:33 dholland Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.197 2011/07/18 01:52:55 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.196 2011/07/18 01:13:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.197 2011/07/18 01:52:55 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -972,6 +972,137 @@ ufs_whiteout(void *v)
  *    is different from the source, patch the ".." entry in the
  *    directory.
  */
+
+/*
+ * Notes on rename locking:
+ *
+ * We lock parent vnodes before child vnodes. This means in particular
+ * that if A is above B in the directory tree then A must be locked
+ * before B. (This is true regardless of how many steps appear in
+ * between, because an arbitrary number of other processes could lock
+ * parent/child in between and establish a lock cycle and deadlock.)
+ *
+ * Therefore, if tdvp is above fdvp we must lock tdvp first; if fdvp
+ * is above tdvp we must lock fdvp first; and if they're
+ * incommensurate it doesn't matter. (But, we rely on the fact that
+ * there's a whole-volume rename lock to prevent deadlock among groups
+ * of renames upon overlapping sets of incommensurate vnodes.)
+ *
+ * In addition to establishing lock ordering the parent check also
+ * serves to rule out cases where someone tries to move a directory
+ * underneath itself, e.g. rename("a/b", "a/b/c"). If allowed to
+ * proceed such renames would detach portions of the directory tree
+ * and make fsck very unhappy.
+ *
+ * Note that it is an error for *fvp* to be above tdvp; however,
+ * *fdvp* can be above tdvp, as in rename("a/b", "a/c/d").
+ *
+ * The parent check searches up the tree from tdvp until it either
+ * finds fdvp or the root of the volume. It also returns the vnode it
+ * saw immediately before fdvp, if any. Later on (after looking up
+ * fvp) we will check to see if this *is* fvp and if so fail.
+ *
+ * If the parent check finds fdvp, it means fdvp is above tdvp, so we
+ * lock fdvp first and then tdvp. Otherwise, either tdvp is above fdvp
+ * or they're incommensurate and we lock tdvp first.
+ *
+ * In either case each of the child vnodes has to be looked up and
+ * locked immediately after its parent. The cases
+ *
+ *       fdvp/fvp/[.../]tdvp/tvp
+ *       tdvp/tvp/[.../]fdvp/fvp
+ *
+ * can cause deadlock otherwise. Note that both of these are error
+ * cases; the first fails the parent check and the second fails
+ * because tvp isn't empty. The parent check case is handled before
+ * we start locking; however, the nonempty case requires locking tvp
+ * to find out safely that it's nonempty.
+ *
+ * Therefore the procedure is either
+ *
+ *   lock fdvp
+ *   lookup fvp
+ *   lock fvp
+ *   lock tdvp
+ *   lookup tvp
+ *   lock tvp
+ *
+ * or
+ *
+ *   lock tdvp
+ *   lookup tvp
+ *   lock tvp
+ *   lock fdvp
+ *   lookup fvp
+ *   lock fvp
+ *
+ * This could in principle be simplified by always looking up fvp
+ * last; because of the parent check we know by the time we start
+ * locking that fvp cannot be directly above tdvp, so (given the
+ * whole-volume rename lock and other assumptions) it's safe to lock
+ * tdvp before fvp. This would allow the following scheme:
+ *
+ *   lock fdvp
+ *   lock tdvp
+ * or
+ *   lock tdvp
+ *   lock fdvp
+ *
+ * then
+ *   lookup tvp
+ *   lock tvp
+ *   lookup fvp
+ *   check if fvp is above of tdvp, fail if so
+ *   lock fvp
+ *
+ * which is much, much simpler.
+ *
+ * However, current levels of vfs namei/lookup sanity do not permit
+ * this. It is impossible currently to look up fvp without locking it.
+ * (It gets locked regardless of whether LOCKLEAF is set; without
+ * LOCKLEAF it just gets unlocked again, which doesn't help.)
+ *
+ * Therefore, because we must look up fvp to know if it's above tdvp,
+ * which locks fvp, we must, at least in the case where fdvp is above
+ * tdvp, do that before locking tdvp. The longer scheme does that; the
+ * simpler scheme is not safe.
+ *
+ * Note that for now we aren't doing lookup() but relookup(); however,
+ * the differences are minor.
+ *
+ * On top of all the above, just to make everything more
+ * exciting, any two of the vnodes might end up being the same.
+ *
+ * FROMPARENT == FROMCHILD	mv a/. foo	is an error.
+ * FROMPARENT == TOPARENT	mv a/b a/c	is ok.
+ * FROMPARENT == TOCHILD	mv a/b/c a/b	will give ENOTEMPTY.
+ * FROMCHILD == TOPARENT	mv a/b a/b/c	fails the parent check.
+ * FROMCHILD == TOCHILD		mv a/b a/b	is ok.
+ * TOPARENT == TOCHILD		mv foo a/.	is an error.
+ *
+ * This introduces more cases in the locking, because each distinct
+ * vnode must be locked exactly once.
+ *
+ * When FROMPARENT == TOPARENT and FROMCHILD != TOCHILD we assume it
+ * doesn't matter what order the children are locked in, because the
+ * per-volume rename lock excludes other renames and no other
+ * operation locks two files in the same directory at once. (Note: if
+ * it turns out that link() does, link() is wrong.)
+ *
+ * Until such time as we can do lookups without the namei and lookup
+ * machinery "helpfully" locking the result vnode for us, we can't
+ * avoid tripping on cases where FROMCHILD == TOCHILD. Currently for
+ * non-directories we unlock the first one we lock while looking up
+ * the second, then relock it if necessary. This is more or less
+ * harmless since not much of interest can happen to the objects in
+ * that window while we have the containing directory locked; but it's
+ * not desirable and should be cleaned up when that becomes possible.
+ * The right way to do it is to check after looking the second one up
+ * and only lock it if it's different. (Note: for directories we don't
+ * do this dance because the same directory can't appear more than
+ * once.)
+ */
+
 int
 ufs_rename(void *v)
 {
