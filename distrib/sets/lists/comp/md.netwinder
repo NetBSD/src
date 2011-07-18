@@ -1,10 +1,10 @@
-# $NetBSD: md.netwinder,v 1.13 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.netwinder,v 1.14 2011/07/18 17:18:14 dyoung Exp $
 ./usr/include/netwinder				comp-c-include
 ./usr/include/netwinder/ansi.h			comp-c-include
 ./usr/include/netwinder/aout_machdep.h		comp-c-include
 ./usr/include/netwinder/asm.h			comp-c-include
 ./usr/include/netwinder/bswap.h			comp-c-include
-./usr/include/netwinder/bus.h			comp-c-include
+./usr/include/netwinder/bus.h			comp-obsolete		obsolete
 ./usr/include/netwinder/cdefs.h			comp-c-include
 ./usr/include/netwinder/cpu.h			comp-c-include
 ./usr/include/netwinder/db_machdep.h		comp-obsolete		obsolete
