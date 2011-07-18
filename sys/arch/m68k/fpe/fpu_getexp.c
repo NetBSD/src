@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_getexp.c,v 1.4 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: fpu_getexp.c,v 1.5 2011/07/18 07:44:30 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_getexp.c,v 1.4 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_getexp.c,v 1.5 2011/07/18 07:44:30 isaki Exp $");
 
 #include <sys/types.h>
 
@@ -41,37 +41,36 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_getexp.c,v 1.4 2009/03/14 15:36:09 dsl Exp $");
 struct fpn *
 fpu_getexp(struct fpemu *fe)
 {
-  struct fpn *fp = &fe->fe_f2;
+	struct fpn *fp = &fe->fe_f2;
 
-  fe->fe_fpsr &= ~FPSR_EXCP; /* clear all exceptions */
+	fe->fe_fpsr &= ~FPSR_EXCP; /* clear all exceptions */
 
-  if (fp->fp_class == FPC_INF) {
-    fp = fpu_newnan(fe);
-    fe->fe_fpsr |= FPSR_OPERR;
-  } else if (fp->fp_class == FPC_NUM) { /* a number */
-    fpu_explode(fe, &fe->fe_f3, FTYPE_LNG, &fp->fp_exp);
-    fp = &fe->fe_f3;
-  } else if (fp->fp_class == FPC_SNAN) { /* signaling NaN */
-    fe->fe_fpsr |= FPSR_SNAN;
-  } /* else if fp == zero or fp == quiet NaN, return itself */
-  return fp;
+	if (fp->fp_class == FPC_INF) {
+		fp = fpu_newnan(fe);
+		fe->fe_fpsr |= FPSR_OPERR;
+	} else if (fp->fp_class == FPC_NUM) { /* a number */
+		fpu_explode(fe, &fe->fe_f3, FTYPE_LNG, &fp->fp_exp);
+		fp = &fe->fe_f3;
+	} else if (fp->fp_class == FPC_SNAN) { /* signaling NaN */
+		fe->fe_fpsr |= FPSR_SNAN;
+	} /* else if fp == zero or fp == quiet NaN, return itself */
+	return fp;
 }
 
 struct fpn *
 fpu_getman(struct fpemu *fe)
 {
-  struct fpn *fp = &fe->fe_f2;
+	struct fpn *fp = &fe->fe_f2;
 
-  fe->fe_fpsr &= ~FPSR_EXCP; /* clear all exceptions */
+	fe->fe_fpsr &= ~FPSR_EXCP; /* clear all exceptions */
 
-  if (fp->fp_class == FPC_INF) {
-    fp = fpu_newnan(fe);
-    fe->fe_fpsr |= FPSR_OPERR;
-  } else if (fp->fp_class == FPC_NUM) { /* a number */
-    fp->fp_exp = 0;
-  } else if (fp->fp_class == FPC_SNAN) { /* signaling NaN */
-    fe->fe_fpsr |= FPSR_SNAN;
-  } /* else if fp == zero or fp == quiet NaN, return itself */
-  return fp;
+	if (fp->fp_class == FPC_INF) {
+		fp = fpu_newnan(fe);
+		fe->fe_fpsr |= FPSR_OPERR;
+	} else if (fp->fp_class == FPC_NUM) { /* a number */
+		fp->fp_exp = 0;
+	} else if (fp->fp_class == FPC_SNAN) { /* signaling NaN */
+		fe->fe_fpsr |= FPSR_SNAN;
+	} /* else if fp == zero or fp == quiet NaN, return itself */
+	return fp;
 }
-

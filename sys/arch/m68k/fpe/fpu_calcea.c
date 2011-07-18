@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.24 2011/05/25 15:47:19 tsutsui Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.25 2011/07/18 07:44:30 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -34,7 +34,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.24 2011/05/25 15:47:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.25 2011/07/18 07:44:30 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.24 2011/05/25 15:47:19 tsutsui Exp 
  * Prototypes of static functions
  */
 static int decode_ea6(struct frame *, struct instruction *,
-		      struct insn_ea *, int);
+	struct insn_ea *, int);
 static int fetch_immed(struct frame *, struct instruction *, int *);
 static int fetch_disp(struct frame *, struct instruction *, int, int *);
 static int calc_ea(struct insn_ea *, char *, char **);
@@ -69,7 +69,7 @@ static int calc_ea(struct insn_ea *, char *, char **);
  */
 int
 fpu_decode_ea(struct frame *frame, struct instruction *insn,
-    struct insn_ea *ea, int modreg)
+	struct insn_ea *ea, int modreg)
 {
 	int sig;
 
@@ -88,13 +88,13 @@ fpu_decode_ea(struct frame *frame, struct instruction *insn,
 		ea->ea_regnum = modreg & 0xf;
 		ea->ea_flags = EA_DIRECT;
 		DPRINTF(("%s: register direct reg=%d\n",
-		    __func__, ea->ea_regnum));
+			__func__, ea->ea_regnum));
 	} else if ((modreg & 077) == 074) {
 		/* immediate */
 		ea->ea_flags = EA_IMMED;
 		sig = fetch_immed(frame, insn, &ea->ea_immed[0]);
 		DPRINTF(("%s: immediate size=%d\n",
-		    __func__, insn->is_datasize));
+			__func__, insn->is_datasize));
 	}
 	/*
 	 * rest of the address modes need to be separately
@@ -106,7 +106,7 @@ fpu_decode_ea(struct frame *frame, struct instruction *insn,
 		ea->ea_flags = EA_FRAME_EA;
 		ea->ea_fea = frame->f_fmt4.f_fa;
 		DPRINTF(("%s: 68LC040 - in-frame EA (%p) size %d\n",
-		    __func__, (void *)ea->ea_fea, insn->is_datasize));
+			__func__, (void *)ea->ea_fea, insn->is_datasize));
 		if ((modreg & 070) == 030) {
 			/* postincrement mode */
 			ea->ea_flags |= EA_POSTINCR;
@@ -130,26 +130,26 @@ fpu_decode_ea(struct frame *frame, struct instruction *insn,
 		case 020:			/* (An) */
 			ea->ea_flags = 0;
 			DPRINTF(("%s: register indirect reg=%d\n",
-			    __func__, ea->ea_regnum));
+				__func__, ea->ea_regnum));
 			break;
 
 		case 030:			/* (An)+ */
 			ea->ea_flags = EA_POSTINCR;
 			DPRINTF(("%s: reg indirect postincrement reg=%d\n",
-			    __func__, ea->ea_regnum));
+				__func__, ea->ea_regnum));
 			break;
 
 		case 040:			/* -(An) */
 			ea->ea_flags = EA_PREDECR;
 			DPRINTF(("%s: reg indirect predecrement reg=%d\n",
-			    __func__, ea->ea_regnum));
+				__func__, ea->ea_regnum));
 			break;
 
 		case 050:			/* (d16,An) */
 			ea->ea_flags = EA_OFFSET;
 			sig = fetch_disp(frame, insn, 1, &ea->ea_offset);
 			DPRINTF(("%s: reg indirect with displacement reg=%d\n",
-			    __func__, ea->ea_regnum));
+				__func__, ea->ea_regnum));
 		break;
 
 		case 060:			/* (d8,An,Xn) */
@@ -164,25 +164,25 @@ fpu_decode_ea(struct frame *frame, struct instruction *insn,
 			case 0:			/* (xxxx).W */
 				ea->ea_flags = EA_ABS;
 				sig = fetch_disp(frame, insn, 1,
-				    &ea->ea_absaddr);
+					&ea->ea_absaddr);
 				DPRINTF(("%s: absolute address (word)\n",
-				    __func__));
+					__func__));
 				break;
 
 			case 1:			/* (xxxxxxxx).L */
 				ea->ea_flags = EA_ABS;
 				sig = fetch_disp(frame, insn, 2,
-				    &ea->ea_absaddr);
+					&ea->ea_absaddr);
 				DPRINTF(("%s: absolute address (long)\n",
-				    __func__));
+					__func__));
 				break;
 
 			case 2:			/* (d16,PC) */
 				ea->ea_flags = EA_PC_REL | EA_OFFSET;
 				sig = fetch_disp(frame, insn, 1,
-				    &ea->ea_absaddr);
+					&ea->ea_absaddr);
 				DPRINTF(("%s: pc relative word displacement\n",
-				    __func__));
+					__func__));
 				break;
 
 			case 3:			/* (d8,PC,Xn) */
@@ -194,7 +194,7 @@ fpu_decode_ea(struct frame *frame, struct instruction *insn,
 				/* it should have been taken care of earlier */
 			default:
 				DPRINTF(("%s: invalid addr mode (7,%d)\n",
-				    __func__, modreg & 7));
+					__func__, modreg & 7));
 				return SIGILL;
 			}
 			break;
@@ -210,7 +210,7 @@ fpu_decode_ea(struct frame *frame, struct instruction *insn,
  */
 static int
 decode_ea6(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
-    int modreg)
+	int modreg)
 {
 	int extword, idx;
 	int basedisp, outerdisp;
@@ -246,7 +246,7 @@ decode_ea6(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 		ea->ea_basedisp = idx + basedisp;
 		ea->ea_outerdisp = 0;
 		DPRINTF(("%s: brief ext word idxreg=%d, basedisp=%08x\n",
-		    __func__, ea->ea_idxreg, ea->ea_basedisp));
+			__func__, ea->ea_idxreg, ea->ea_basedisp));
 	} else {
 		/* full extension word */
 		if (extword & 0x80) {
@@ -278,16 +278,16 @@ decode_ea6(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 			break;
 		default:
 			DPRINTF(("%s: invalid indirect mode: ext word %04x\n",
-			    __func__, extword));
+				__func__, extword));
 			return SIGILL;
 			break;
 		}
 		DPRINTF(("%s: full ext idxreg=%d, basedisp=%x, outerdisp=%x\n",
-		    __func__,
-		    ea->ea_idxreg, ea->ea_basedisp, ea->ea_outerdisp));
+			__func__,
+			ea->ea_idxreg, ea->ea_basedisp, ea->ea_outerdisp));
 	}
 	DPRINTF(("%s: regnum=%d, flags=%x\n",
-	    __func__, ea->ea_regnum, ea->ea_flags));
+		__func__, ea->ea_regnum, ea->ea_flags));
 	return 0;
 }
 
@@ -297,7 +297,7 @@ decode_ea6(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
  */
 int
 fpu_load_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
-    char *dst)
+	char *dst)
 {
 	int *reg;
 	char *src;
@@ -322,7 +322,7 @@ fpu_load_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 #ifdef DEBUG_FPE
 		if (ea->ea_flags & (EA_PREDECR|EA_POSTINCR)) {
 			printf("%s: frame ea %08x w/r%d\n",
-			    __func__, ea->ea_fea, ea->ea_regnum);
+				__func__, ea->ea_fea, ea->ea_regnum);
 		} else {
 			printf("%s: frame ea %08x\n", __func__, ea->ea_fea);
 		}
@@ -346,12 +346,12 @@ fpu_load_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 	if (ea->ea_flags & EA_DIRECT) {
 		if (len > 4) {
 			DPRINTF(("%s: operand doesn't fit CPU reg\n",
-			    __func__));
+				__func__));
 			return SIGILL;
 		}
 		if (ea->ea_moffs > 0) {
 			DPRINTF(("%s: more than one move from CPU reg\n",
-			    __func__));
+				__func__));
 			return SIGILL;
 		}
 		src = (char *)&frame->f_regs[ea->ea_regnum];
@@ -359,25 +359,26 @@ fpu_load_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 		if (len < 4) {
 			src += (4 - len);
 			DPRINTF(("%s: short/byte opr - addr adjusted\n",
-			    __func__));
+				__func__));
 		}
 		DPRINTF(("%s: src %p\n", __func__, src));
 		memcpy(dst, src, len);
 	} else if (ea->ea_flags & EA_IMMED) {
 		DPRINTF(("%s: immed %08x%08x%08x size %d\n", __func__,
-		    ea->ea_immed[0], ea->ea_immed[1], ea->ea_immed[2], len));
+			ea->ea_immed[0], ea->ea_immed[1], ea->ea_immed[2],
+			len));
 		src = (char *)&ea->ea_immed[0];
 		if (len < 4) {
 			src += (4 - len);
-			DPRINTF(("%s: short/byte immed opr - "
-			    "addr adjusted\n", __func__));
+			DPRINTF(("%s: short/byte immed opr - addr adjusted\n",
+				__func__));
 		}
 		memcpy(dst, src, len);
 	} else if (ea->ea_flags & EA_ABS) {
 		DPRINTF(("%s: abs addr %08x\n", __func__, ea->ea_absaddr));
 		src = (char *)ea->ea_absaddr;
 		copyin(src, dst, len);
-	} else /* register indirect */ { 
+	} else /* register indirect */ {
 		if (ea->ea_flags & EA_PC_REL) {
 			DPRINTF(("%s: using PC\n", __func__));
 			reg = NULL;
@@ -388,16 +389,15 @@ fpu_load_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 			src = (char *)insn->is_pc + 4;
 			DPRINTF(("%s: pc relative pc+4 = %p\n", __func__, src));
 		} else /* not PC relative */ {
-			DPRINTF(("%s: using register %c%d\n",
-			    __func__,
-			    (ea->ea_regnum >= 8) ? 'a' : 'd',
-			    ea->ea_regnum & 7));
+			DPRINTF(("%s: using register %c%d\n", __func__,
+				(ea->ea_regnum >= 8) ? 'a' : 'd',
+				ea->ea_regnum & 7));
 			/* point to the register */
 			reg = &frame->f_regs[ea->ea_regnum];
 
 			if (ea->ea_flags & EA_PREDECR) {
 				DPRINTF(("%s: predecr mode - "
-				    "reg decremented\n", __func__));
+					"reg decremented\n", __func__));
 				*reg -= step;
 				ea->ea_moffs = 0;
 			}
@@ -417,13 +417,13 @@ fpu_load_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 		if (ea->ea_flags & EA_POSTINCR) {
 			if (ea->ea_flags & EA_PC_REL) {
 				DPRINTF(("%s: tried to postincrement PC\n",
-				    __func__));
+					__func__));
 				return SIGILL;
 			}
 			*reg += step;
 			ea->ea_moffs = 0;
 			DPRINTF(("%s: postinc mode - reg incremented\n",
-			    __func__));
+				__func__));
 		} else {
 			ea->ea_moffs += len;
 		}
@@ -438,7 +438,7 @@ fpu_load_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
  */
 int
 fpu_store_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
-    char *src)
+	char *src)
 {
 	int *reg;
 	char *dst;
@@ -467,7 +467,7 @@ fpu_store_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 #ifdef DEBUG_FPE
 		if (ea->ea_flags & (EA_PREDECR|EA_POSTINCR)) {
 			printf("%s: frame ea %08x w/r%d\n",
-			    __func__, ea->ea_fea, ea->ea_regnum);
+				__func__, ea->ea_fea, ea->ea_regnum);
 		} else {
 			printf("%s: frame ea %08x\n", __func__, ea->ea_fea);
 		}
@@ -494,12 +494,12 @@ fpu_store_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 	} else if (ea->ea_flags & EA_DIRECT) {
 		if (len > 4) {
 			DPRINTF(("%s: operand doesn't fit CPU reg\n",
-			    __func__));
+				__func__));
 			return SIGILL;
 		}
 		if (ea->ea_moffs > 0) {
 			DPRINTF(("%s: more than one move to CPU reg\n",
-			    __func__));
+				__func__));
 			return SIGILL;
 		}
 		dst = (char *)&frame->f_regs[ea->ea_regnum];
@@ -507,20 +507,20 @@ fpu_store_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 		if (len < 4) {
 			dst += (4 - len);
 			DPRINTF(("%s: short/byte opr - dst addr adjusted\n",
-			    __func__));
+				__func__));
 		}
 		DPRINTF(("%s: dst %p\n", __func__, dst));
 		memcpy(dst, src, len);
 	} else /* One of MANY indirect forms... */ {
 		DPRINTF(("%s: using register %c%d\n", __func__,
-		    (ea->ea_regnum >= 8) ? 'a' : 'd', ea->ea_regnum & 7));
+			(ea->ea_regnum >= 8) ? 'a' : 'd', ea->ea_regnum & 7));
 		/* point to the register */
 		reg = &(frame->f_regs[ea->ea_regnum]);
 
 		/* do pre-decrement */
 		if (ea->ea_flags & EA_PREDECR) {
 			DPRINTF(("%s: predecr mode - reg decremented\n",
-			    __func__));
+				__func__));
 			*reg -= step;
 			ea->ea_moffs = 0;
 		}
@@ -538,7 +538,7 @@ fpu_store_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 			*reg += step;
 			ea->ea_moffs = 0;
 			DPRINTF(("%s: postinc mode - reg incremented\n",
-			    __func__));
+				__func__));
 		} else {
 			ea->ea_moffs += len;
 		}
@@ -675,8 +675,8 @@ calc_ea(struct insn_ea *ea, char *ptr, char **eaddr)
 
 		if (ea->ea_flags & EA_MEM_INDIR) {
 			DPRINTF(("%s: mem indir mode: basedisp=%08x, "
-			    "outerdisp=%08x\n",
-			    __func__, ea->ea_basedisp, ea->ea_outerdisp));
+				"outerdisp=%08x\n",
+				__func__, ea->ea_basedisp, ea->ea_outerdisp));
 			DPRINTF(("%s: addr fetched from %p\n", __func__, ptr));
 			/* memory indirect modes */
 			word = fusword(ptr);
