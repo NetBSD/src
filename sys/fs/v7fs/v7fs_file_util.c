@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_file_util.c,v 1.2 2011/07/16 12:35:40 uch Exp $	*/
+/*	$NetBSD: v7fs_file_util.c,v 1.3 2011/07/18 21:51:49 apb Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,8 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_file_util.c,v 1.2 2011/07/16 12:35:40 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_file_util.c,v 1.3 2011/07/18 21:51:49 apb Exp $");
 #ifdef _KERNEL
 #include <sys/systm.h>
 #include <sys/param.h>
