@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.16 2009/08/13 06:59:37 dholland Exp $	*/
+/*	$NetBSD: input.c,v 1.17 2011/07/18 21:46:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: input.c,v 1.16 2009/08/13 06:59:37 dholland Exp $");
+__RCSID("$NetBSD: input.c,v 1.17 2011/07/18 21:46:15 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -59,6 +59,7 @@ static Errorclass onelong(void);
 static Errorclass pccccom(void);	/* Portable C Compiler C Compiler */
 static Errorclass ri(void);
 static Errorclass richieccom(void);	/* Richie Compiler for 11 */
+static Errorclass gcc45ccom(void);	/* gcc45+ */
 static Errorclass troff(void);
 
 /*
@@ -89,6 +90,7 @@ eaterrors(int *r_errorc, Eptr **r_errorv)
 	if (cur_wordc > 0 &&
 	   ((( errorclass = onelong() ) != C_UNKNOWN)
 	   || (( errorclass = cpp() ) != C_UNKNOWN)
+	   || (( errorclass = gcc45ccom() ) != C_UNKNOWN)
 	   || (( errorclass = pccccom() ) != C_UNKNOWN)
 	   || (( errorclass = richieccom() ) != C_UNKNOWN)
 	   || (( errorclass = lint0() ) != C_UNKNOWN)
@@ -267,6 +269,59 @@ pccccom(void)
 	}
 	return (C_UNKNOWN);
 }	/* end of ccom */
+
+/*
+ * Do the error message from gcc 4.5+ which prints:
+ *
+ *	fprintf(stderr, "%s:%d:%d: ", filename, line, column);
+ */
+
+static Errorclass
+gcc45ccom(void)
+{
+	char *cp, *ccp;
+	char **nwordv;
+	char *file;
+
+	if (cur_wordc < 2)
+		return C_UNKNOWN;
+
+	if (lastchar(cur_wordv[1]) != ':')
+		return C_UNKNOWN;
+
+	cp = cur_wordv[1] + strlen(cur_wordv[1]) - 1;
+	while (isdigit((unsigned char)*--cp))
+		continue;
+	if (*cp != ':')
+		return C_UNKNOWN;
+
+	ccp = cp;
+	while (isdigit((unsigned char)*--cp))
+		continue;
+	if (*cp != ':')
+		return C_UNKNOWN;
+
+	clob_last(cur_wordv[1], '\0');	/* last : */
+	*ccp = '\0';			/* middle : */
+	*cp = '\0';			/* first : */
+	file = cur_wordv[1];
+#ifdef notyet
+#define EHEAD 2
+#else
+#define EHEAD 1	/* Nothing to do with column info yet */
+#endif
+	nwordv = wordvsplice(EHEAD, cur_wordc, cur_wordv + 1);
+	nwordv[0] = file;
+	nwordv[1] = cp + 1;
+#ifdef notyet
+	nwordv[2] = ccp + 1;
+#endif
+	cur_wordc += 1;
+	cur_wordv = nwordv - 1;
+	language = INCC;
+	currentfilename = cur_wordv[1];
+	return C_TRUE;
+}
 
 /*
  * Do the error message from the Richie C Compiler for the PDP11,
