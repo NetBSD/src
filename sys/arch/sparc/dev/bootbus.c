@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.18 2011/07/01 18:50:41 dyoung Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.19 2011/07/18 00:31:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.18 2011/07/01 18:50:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.19 2011/07/18 00:31:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.18 2011/07/01 18:50:41 dyoung Exp $");
 #include "locators.h"
 
 struct bootbus_softc {
-	struct device sc_dev;
 	int sc_node;				/* our OBP node */
 
 	bus_space_tag_t sc_st;			/* ours */
@@ -60,11 +59,10 @@ struct bootbus_softc {
 static int bootbus_match(device_t, cfdata_t, void *);
 static void bootbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(bootbus, sizeof(struct bootbus_softc),
+CFATTACH_DECL_NEW(bootbus, sizeof(struct bootbus_softc),
     bootbus_match, bootbus_attach, NULL, NULL);
 
-static int bootbus_submatch(struct device *, struct cfdata *,
-			    const int *, void *);
+static int bootbus_submatch(device_t, cfdata_t, const int *, void *);
 static int bootbus_print(void *, const char *);
 
 static int bootbus_setup_attach_args(struct bootbus_softc *, bus_space_tag_t,
