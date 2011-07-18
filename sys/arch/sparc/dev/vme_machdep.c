@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.64 2011/07/01 18:50:42 dyoung Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.65 2011/07/18 00:31:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.64 2011/07/01 18:50:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.65 2011/07/18 00:31:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.64 2011/07/01 18:50:42 dyoung Exp 
 #include <sparc/dev/vmereg.h>
 
 struct sparcvme_softc {
-	struct device	 sc_dev;	/* base device */
 	bus_space_tag_t	 sc_bustag;
 	bus_dma_tag_t	 sc_dmatag;
 	struct vmebusreg *sc_reg; 	/* VME control registers */
@@ -161,10 +160,10 @@ static paddr_t	sparc_vme_dmamem_mmap(bus_dma_tag_t,
 
 int sparc_vme_mmap_cookie(vme_addr_t, vme_am_t, bus_space_handle_t *);
 
-CFATTACH_DECL(vme_mainbus, sizeof(struct sparcvme_softc),
+CFATTACH_DECL_NEW(vme_mainbus, sizeof(struct sparcvme_softc),
     vmematch_mainbus, vmeattach_mainbus, NULL, NULL);
 
-CFATTACH_DECL(vme_iommu, sizeof(struct sparcvme_softc),
+CFATTACH_DECL_NEW(vme_iommu, sizeof(struct sparcvme_softc),
     vmematch_iommu, vmeattach_iommu, NULL, NULL);
 
 static int vme_attached;
