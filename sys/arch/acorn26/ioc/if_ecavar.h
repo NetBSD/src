@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecavar.h,v 1.2 2009/01/19 23:43:14 bjh21 Exp $	*/
+/*	$NetBSD: if_ecavar.h,v 1.3 2011/07/19 16:05:10 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -33,13 +33,13 @@
 #ifndef _LOCORE
 #include <sys/device.h>
 #include <sys/socket.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_eco.h>
 
 #include <arm/fiq.h>
 
-#include <machine/bus.h>
 #include <machine/fiq.h>
 
 struct eca_fiqstate {

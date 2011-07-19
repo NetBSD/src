@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.19 2011/06/03 07:08:48 matt Exp $ */
+/* $NetBSD: arckbd.c,v 1.20 2011/07/19 16:05:10 dyoung Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.19 2011/06/03 07:08:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.20 2011/07/19 16:05:10 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.19 2011/06/03 07:08:48 matt Exp $");
 #include <sys/reboot.h>	/* For bootverbose */
 #include <sys/syslog.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/irq.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssn.c,v 1.9 2011/06/03 07:08:48 matt Exp $	*/
+/*	$NetBSD: ssn.c,v 1.10 2011/07/19 16:05:11 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -28,13 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssn.c,v 1.9 2011/06/03 07:08:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssn.c,v 1.10 2011/07/19 16:05:11 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <acorn26/iobus/iocreg.h>
 #include <acorn26/iobus/iocvar.h>

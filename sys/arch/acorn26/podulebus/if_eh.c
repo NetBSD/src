@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.15 2009/01/21 23:36:30 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.16 2011/07/19 16:05:11 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.15 2009/01/21 23:36:30 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.16 2011/07/19 16:05:11 dyoung Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.15 2009/01/21 23:36:30 bjh21 Exp $");
 #include <sys/mbuf.h>
 #include <sys/reboot.h>
 #include <sys/syslog.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -62,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.15 2009/01/21 23:36:30 bjh21 Exp $");
 #include <net/if_ether.h>
 
 #include <sys/bswap.h>
-#include <machine/bus.h>
 #include <machine/irq.h>
 
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS

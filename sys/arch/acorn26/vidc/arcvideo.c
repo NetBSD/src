@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.14 2009/01/19 23:09:22 bjh21 Exp $ */
+/* $NetBSD: arcvideo.c,v 1.15 2011/07/19 16:05:11 dyoung Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.14 2009/01/19 23:09:22 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.15 2011/07/19 16:05:11 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/reboot.h>	/* For bootverbose */
 #include <sys/systm.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -53,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.14 2009/01/19 23:09:22 bjh21 Exp $");
 #include <dev/rasops/rasops.h>
 
 #include <machine/boot.h>
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/irq.h>
 #include <machine/machdep.h>

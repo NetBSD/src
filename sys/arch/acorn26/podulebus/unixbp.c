@@ -1,4 +1,4 @@
-/* $NetBSD: unixbp.c,v 1.7 2009/03/18 10:22:22 cegger Exp $ */
+/* $NetBSD: unixbp.c,v 1.8 2011/07/19 16:05:11 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -32,11 +32,12 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: unixbp.c,v 1.7 2009/03/18 10:22:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unixbp.c,v 1.8 2011/07/19 16:05:11 dyoung Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
+
 #include <arch/acorn26/iobus/iocvar.h>
 #include <arch/acorn26/podulebus/unixbpreg.h>
 #include <arch/acorn26/podulebus/unixbpvar.h>

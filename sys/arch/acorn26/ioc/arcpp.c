@@ -1,4 +1,4 @@
-/* $NetBSD: arcpp.c,v 1.11 2009/11/25 14:28:49 rmind Exp $ */
+/* $NetBSD: arcpp.c,v 1.12 2011/07/19 16:05:10 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.11 2009/11/25 14:28:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.12 2011/07/19 16:05:10 dyoung Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.11 2009/11/25 14:28:49 rmind Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/irq.h>
 

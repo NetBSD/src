@@ -1,4 +1,4 @@
-/* $NetBSD: iobusvar.h,v 1.2 2002/03/24 23:37:44 bjh21 Exp $ */
+/* $NetBSD: iobusvar.h,v 1.3 2011/07/19 16:05:10 dyoung Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 #ifndef _ARM26_IOBUSVAR_H
 #define _ARM26_IOBUSVAR_H
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* Structure passed to children of an iobus */
 

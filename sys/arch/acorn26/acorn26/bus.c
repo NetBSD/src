@@ -1,4 +1,4 @@
-/* $NetBSD: bus.c,v 1.6 2006/09/30 16:30:10 bjh21 Exp $ */
+/* $NetBSD: bus.c,v 1.7 2011/07/19 16:05:09 dyoung Exp $ */
 /*-
  * Copyright (c) 1999, 2000 Ben Harris
  * All rights reserved.
@@ -30,11 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.6 2006/09/30 16:30:10 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.7 2011/07/19 16:05:09 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/memcreg.h>
 
 #include <arm/blockio.h>

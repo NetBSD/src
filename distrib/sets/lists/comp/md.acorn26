@@ -1,11 +1,11 @@
-# $NetBSD: md.acorn26,v 1.13 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.acorn26,v 1.14 2011/07/19 16:05:09 dyoung Exp $
 ./usr/include/acorn26				comp-c-include
 ./usr/include/acorn26/ansi.h			comp-c-include
 ./usr/include/acorn26/aout_machdep.h		comp-c-include
 ./usr/include/acorn26/asm.h			comp-c-include
 ./usr/include/acorn26/boot.h			comp-c-include
 ./usr/include/acorn26/bswap.h			comp-c-include
-./usr/include/acorn26/bus.h			comp-c-include
+./usr/include/acorn26/bus.h			comp-obsolete		obsolete
 ./usr/include/acorn26/cdefs.h			comp-c-include
 ./usr/include/acorn26/cpu.h			comp-c-include
 ./usr/include/acorn26/db_machdep.h		comp-obsolete		obsolete
