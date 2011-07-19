@@ -1,4 +1,4 @@
-/*	$NetBSD: rside.c,v 1.10 2008/11/23 11:55:27 chris Exp $	*/
+/*	$NetBSD: rside.c,v 1.11 2011/07/19 15:59:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -56,17 +56,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.10 2008/11/23 11:55:27 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.11 2011/07/19 15:59:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 
 #include <machine/intr.h>
 #include <machine/io.h>
-#include <machine/bus.h>
 #include <acorn32/eb7500atx/rsidereg.h>
 #include <machine/irqhandler.h>
 
