@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.108 2011/07/11 18:02:04 jmcneill Exp $
+#	$NetBSD: files.usb,v 1.109 2011/07/19 12:23:04 jmcneill Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -127,6 +127,11 @@ file	dev/usb/stuirda.c		stuirda
 device	ustir: irbus, irdasir
 attach	ustir at usbdevif
 file	dev/usb/ustir.c			ustir
+
+# Windows Media Center IR tranceivers
+device	irmce: irbus
+attach	irmce at usbifif
+file	dev/usb/irmce.c			irmce
 
 
 # Bluetooth controllers
