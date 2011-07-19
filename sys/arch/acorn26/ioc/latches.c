@@ -1,4 +1,4 @@
-/* $NetBSD: latches.c,v 1.6 2011/06/03 07:21:32 matt Exp $ */
+/* $NetBSD: latches.c,v 1.7 2011/07/19 16:05:11 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,12 +29,11 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: latches.c,v 1.6 2011/06/03 07:21:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: latches.c,v 1.7 2011/07/19 16:05:11 dyoung Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
-
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arch/acorn26/iobus/iocvar.h>
 #include <arch/acorn26/ioc/latchreg.h>

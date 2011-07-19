@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.18 2009/03/18 16:00:08 cegger Exp $ */
+/* $NetBSD: podulebus.c,v 1.19 2011/07/19 16:05:11 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -28,14 +28,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.18 2009/03/18 16:00:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.19 2011/07/19 16:05:11 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/irq.h>
 #include <machine/machdep.h>
