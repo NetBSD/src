@@ -1,4 +1,4 @@
-/* $NetBSD: simple_busfuncs.c,v 1.6 2010/02/03 13:56:53 phx Exp $ */
+/* $NetBSD: simple_busfuncs.c,v 1.7 2011/07/19 15:55:26 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simple_busfuncs.c,v 1.6 2010/02/03 13:56:53 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simple_busfuncs.c,v 1.7 2011/07/19 15:55:26 dyoung Exp $");
 
 /*
  * Do NOT use this standalone.
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: simple_busfuncs.c,v 1.6 2010/02/03 13:56:53 phx Exp 
 Error AMIGA_SIMPLE_BUS_STRIDE not defined in __FILE__, line __LINE__ .
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #define MKN2(x,y) __CONCAT(x, y)
 #define MKN1(x,y) MKN2(x, y)
