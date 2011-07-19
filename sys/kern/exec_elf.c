@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.29 2011/03/07 05:09:12 joerg Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.30 2011/07/19 19:45:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.29 2011/03/07 05:09:12 joerg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.30 2011/07/19 19:45:36 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -885,6 +885,13 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			    memcmp(ndata, ELF_NOTE_PAX_NAME,
 			    ELF_NOTE_PAX_NAMESZ)) {
 bad:
+			    /*
+			     * Ignore GNU tags
+			     */
+			    if (np->n_namesz == ELF_NOTE_GNU_NAMESZ &&
+				memcmp(ndata, ELF_NOTE_GNU_NAME,
+				ELF_NOTE_GNU_NAMESZ) == 0)
+					break;
 #ifdef DIAGNOSTIC
 				printf("%s: bad tag %d: "
 				    "[%d %d, %d %d, %*.*s %*.*s]\n",
