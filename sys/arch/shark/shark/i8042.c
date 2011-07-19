@@ -1,4 +1,4 @@
-/*	$NetBSD: i8042.c,v 1.5 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: i8042.c,v 1.6 2011/07/19 15:07:43 dyoung Exp $	*/
 
 /*
  * Copyright 1997
@@ -59,14 +59,14 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8042.c,v 1.5 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8042.c,v 1.6 2011/07/19 15:07:43 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 #include <machine/kerndebug.h>
 
-#include <machine/bus.h>
 #include <shark/shark/i8042reg.h>
 /* 
 ** Global variables 

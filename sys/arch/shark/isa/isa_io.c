@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.10 2009/03/14 21:04:16 dsl Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.11 2011/07/19 15:07:43 dyoung Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,11 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.10 2009/03/14 21:04:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.11 2011/07/19 15:07:43 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pio.h>
 #include <machine/isa_machdep.h>
 #include <machine/ofw.h>

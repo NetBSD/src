@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.11 2010/01/05 13:20:29 mbalmer Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.12 2011/07/19 15:07:43 dyoung Exp $	*/
 
 /*
  * Copyright 1997
@@ -40,14 +40,14 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.11 2010/01/05 13:20:29 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.12 2011/07/19 15:07:43 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/syslog.h>
 #include <sys/types.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 

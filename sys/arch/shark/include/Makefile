@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.11 2011/07/17 20:54:47 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2011/07/19 15:07:42 dyoung Exp $
 
 INCSDIR= /usr/include/shark
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	bswap.h bus.h \
+	bswap.h \
 	cdefs.h cpu.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
