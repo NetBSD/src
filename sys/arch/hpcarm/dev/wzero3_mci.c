@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_mci.c,v 1.2 2010/05/23 11:53:18 nonaka Exp $	*/
+/*	$NetBSD: wzero3_mci.c,v 1.3 2011/07/19 15:37:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_mci.c,v 1.2 2010/05/23 11:53:18 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_mci.c,v 1.3 2011/07/19 15:37:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/pmf.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/bootinfo.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>

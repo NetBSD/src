@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelgpio.c,v 1.15 2009/05/29 14:15:44 rjs Exp $	*/
+/*	$NetBSD: ipaq_atmelgpio.c,v 1.16 2011/07/19 15:37:38 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.15 2009/05/29 14:15:44 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.16 2011/07/19 15:37:38 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.15 2009/05/29 14:15:44 rjs Exp 
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/malloc.h>
-
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <hpcarm/dev/ipaq_saipvar.h>
 #include <hpcarm/dev/ipaq_gpioreg.h>
