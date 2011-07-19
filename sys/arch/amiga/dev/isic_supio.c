@@ -1,4 +1,4 @@
-/*	$NetBSD: isic_supio.c,v 1.17 2009/05/19 18:39:26 phx Exp $ */
+/*	$NetBSD: isic_supio.c,v 1.18 2011/07/19 15:55:27 dyoung Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -47,7 +47,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.17 2009/05/19 18:39:26 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.18 2011/07/19 15:55:27 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,10 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.17 2009/05/19 18:39:26 phx Exp $");
 #include <net/if.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/bus.h>
 
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 #include <sys/callout.h>
