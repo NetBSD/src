@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/07/02 14:06:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/19 15:59:02 tron Exp $
 
 # For ../Makefile.inc and bsd.own.mk
 .include <bsd.init.mk>
@@ -37,6 +37,8 @@ MLINKS+=	cpp.1 gcpp.1 cpp.1 cccp.1
 .include "../Makefile.frontend"
 
 LDADD+=		-lintl
+
+COPTS+=		-Wno-stack-protector
 
 .include <bsd.info.mk>
 

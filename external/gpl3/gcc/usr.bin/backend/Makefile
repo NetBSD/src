@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2011/07/19 01:37:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2011/07/19 15:59:01 tron Exp $
 
 LIBISPRIVATE=	yes
 
@@ -309,7 +309,7 @@ i386.d i386.o: tm-constrs.h
 .endif
 insn-emit.d insn-emit.o: tm-constrs.h
 
-COPTS+=-Wno-stack-protector
+CFLAGS+=	-Wno-stack-protector
 
 .if ${MACHINE_ARCH} == "m68000"
 COPTS.lambda-code.c=		-O0
