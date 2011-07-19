@@ -1,4 +1,4 @@
-/*      $NetBSD: j720pcic.c,v 1.7 2010/08/19 15:17:53 tsutsui Exp $        */
+/*      $NetBSD: j720pcic.c,v 1.8 2011/07/19 15:37:38 dyoung Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Jornada 720 PCMCIA support. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.7 2010/08/19 15:17:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.8 2011/07/19 15:37:38 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.7 2010/08/19 15:17:53 tsutsui Exp $")
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 

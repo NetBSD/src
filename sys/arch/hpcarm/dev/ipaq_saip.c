@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.22 2009/05/29 14:15:45 rjs Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.23 2011/07/19 15:37:38 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.22 2009/05/29 14:15:45 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.23 2011/07/19 15:37:38 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,9 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.22 2009/05/29 14:15:45 rjs Exp $");
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/uio.h>
+#include <sys/bus.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
 
 #include <arm/sa11x0/sa11x0_var.h>
 #include <arm/sa11x0/sa11x0_reg.h>
