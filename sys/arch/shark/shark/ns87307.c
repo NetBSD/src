@@ -1,4 +1,4 @@
-/*	$NetBSD: ns87307.c,v 1.5 2007/02/22 16:50:42 thorpej Exp $	*/
+/*	$NetBSD: ns87307.c,v 1.6 2011/07/19 15:07:43 dyoung Exp $	*/
 
 /*
  * Copyright 1997
@@ -57,16 +57,16 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns87307.c,v 1.5 2007/02/22 16:50:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns87307.c,v 1.6 2011/07/19 15:07:43 dyoung Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <shark/shark/ns87307reg.h>

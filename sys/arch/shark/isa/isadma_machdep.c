@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.14 2009/03/18 10:22:36 cegger Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.15 2011/07/19 15:07:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.14 2009/03/18 10:22:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.15 2011/07/19 15:07:43 dyoung Exp $");
 
 #define ISA_DMA_STATS
 
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.14 2009/03/18 10:22:36 cegger E
 #include <sys/mbuf.h>
 
 #define _ARM32_BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
