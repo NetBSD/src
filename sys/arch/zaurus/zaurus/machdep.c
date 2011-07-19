@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2011/06/30 20:09:38 wiz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2011/07/19 15:11:49 dyoung Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2011/06/30 20:09:38 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2011/07/19 15:11:49 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -138,6 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2011/06/30 20:09:38 wiz Exp $");
 #include <dev/cons.h>
 #include <sys/conf.h>
 #include <sys/queue.h>
+#include <sys/bus.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -148,7 +149,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2011/06/30 20:09:38 wiz Exp $");
 
 #include <machine/bootconfig.h>
 #include <machine/bootinfo.h>
-#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #ifdef KLOADER
