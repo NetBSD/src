@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2011/07/18 22:50:28 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2011/07/19 18:29:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.4 2011/07/18 22:50:28 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.5 2011/07/19 18:29:41 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -193,7 +193,9 @@ make_filesystem(struct v7fs_self *fs, v7fs_daddr_t volume_size,
 		fs->io.write(fs->io.cookie, buf, i);
 		progress(0);
 	}
+#ifndef HAVE_NBTOOL_CONFIG_H
 	progress_done();
+#endif
 	VPRINTF("\n");
 
 	/* Construct superblock */
@@ -233,7 +235,9 @@ make_filesystem(struct v7fs_self *fs, v7fs_daddr_t volume_size,
 	blk = sb->freeblock[0];
 	while ((blk = make_freeblocklist(fs, blk, buf)))
 		continue;
+#ifndef HAVE_NBTOOL_CONFIG_H
 	progress_done();
+#endif
 
 	VPRINTF("done.\n");
 
