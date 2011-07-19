@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/05/26 12:56:25 joerg Exp $	
+# $NetBSD: Makefile,v 1.4 2011/07/19 03:07:09 dholland Exp $	
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ __sed: .USE
 	    -e 's,3PCAP,3,g' < ${.ALLSRC} > ${.TARGET}
 
 
-SRCDIR=		${.CURDIR}/../dist/
+SRCDIR=		${.CURDIR}/../dist
 .PATH:		${SRCDIR}
 
 LIB=		pcap
