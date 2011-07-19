@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.21 2011/06/12 03:35:46 rmind Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.22 2011/07/19 15:07:43 dyoung Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,17 +38,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.21 2011/06/12 03:35:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.22 2011/07/19 15:07:43 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <dev/ofw/openfirm.h>
 
 struct ofrom_softc {

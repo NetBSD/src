@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.11 2011/02/28 10:05:04 macallan Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.12 2011/07/19 15:07:43 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.11 2011/02/28 10:05:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.12 2011/07/19 15:07:43 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,9 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.11 2011/02/28 10:05:04 macallan Ex
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/bus.h>
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/ofw.h>
 #include <machine/pmap.h>
