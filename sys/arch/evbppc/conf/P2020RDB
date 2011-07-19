@@ -1,4 +1,4 @@
-#	$NetBSD: P2020RDB,v 1.6 2011/06/30 20:09:29 wiz Exp $
+#	$NetBSD: P2020RDB,v 1.7 2011/07/19 19:57:02 matt Exp $
 #
 #	P2020RBD -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020RBD-$Revision: 1.6 $"
+ident 		"P2020RBD-$Revision: 1.7 $"
 
 maxusers	32
 
@@ -133,6 +133,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # Kernel root file system and dump configuration.
 config		netbsd		root on ? type ?
+config		netbsd-sd0a	root on sd0a type ffs
 config		nfsnetbsd	root on tsec0 type nfs
 
 #
@@ -150,6 +151,12 @@ obio0		at cpunode?		# On-chip Peripheral Bus
 #nandfcm*	at obio0 cs ?		# nand flash
 #nand*		at nandfcm?
 #flash*		at nand?
+
+# NOR Flash
+#options 	NOR_VERBOSE
+pq3cfi0 	at obio0 cs 0
+nor*		at pq3cfi?
+flash*		at nor? offset 0 size 0x8000000
 
 e500wdog*	at cpunode?		# Watchdog timer
 
