@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.584 2011/07/18 20:23:32 jmcneill Exp $
+$NetBSD: usbdevs,v 1.585 2011/07/19 06:52:33 jruoho Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -504,6 +504,7 @@ vendor ASUSTEK2		0x1761	ASUSTeK Computer
 vendor SWEEX2		0x177f	Sweex
 vendor METAGEEK		0x1781	MetaGeek
 vendor DISPLAYLINK	0x17e9	DisplayLink
+vendor E3C		0x18b4	E3C Technologies
 vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
@@ -1194,6 +1195,9 @@ product DRAYTEK VIGOR550	0x0550	Vigor550
 
 /* Dynastream Innovations */
 product DYNASTREAM ANTDEVBOARD	0x1003	ANT dev board
+
+/* E3C products */
+product E3C EC168		0x1001	EC168 DVB-T Adapter
 
 /* Edimax products */
 product EDIMAX RT2870_1		0x7711	RT2870
