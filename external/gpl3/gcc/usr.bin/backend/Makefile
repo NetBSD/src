@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/07/06 01:18:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2011/07/19 01:37:59 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -6,9 +6,9 @@ LIB=		backend
 
 SRCS=		${G_OBJS:.o=.c} ${G_out_file:T}
 
-CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \
-		-DTARGET_NAME=\"${MACHINE_GNU_PLATFORM}\"
-HOST_CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
+BOTH_CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
+CPPFLAGS+=	${BOTH_CPPFLAGS} -DTARGET_NAME=\"${MACHINE_GNU_PLATFORM}\"
+HOST_CPPFLAGS+=	${BOTH_CPPFLAGS} -DGENERATOR_FILE
 DPSRCS+=	insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
 CPPFLAGS.prefix.c+=	-DPREFIX=\"/usr\"
 CPPFLAGS.cppdefault.c+=	-DPREFIX=\"/usr\"
@@ -40,14 +40,6 @@ CLEANFILES+=	gengenrtl genrtl.c genrtl.h \
 		gt-*.h *.o *.lo \
 		cs-config.h \
 		gcov-iov gcov-iov.h \
-
-#
-# These files have special needs
-#
-.for f in \
-	build-errors build-ggc-none build-print-rtl build-rtl build-varray dummy-conditions gcov-iov genattr genattrtab genautomata gencheck genchecksum gencodes genconditions genconfig genconstants genemit genextract genflags gengenrtl gengtype gengtype-lex genmddeps genmodes genopinit genoutput genpeep genpreds genrecog gensupport insn-conditions min-insn-modes read-rtl
-CPPFLAGS.${f}.c=		-DGENERATOR_FILE
-.endfor
 
 # XXX
 COPTS.varasm.c=			-Wno-error
@@ -318,5 +310,10 @@ i386.d i386.o: tm-constrs.h
 insn-emit.d insn-emit.o: tm-constrs.h
 
 COPTS+=-Wno-stack-protector
+
+.if ${MACHINE_ARCH} == "m68000"
+COPTS.lambda-code.c=		-O0
+COPTS.tree-loop-linear.c=	-O0
+.endif
 
 .PATH: ${DIST}/gcc ${DIST}/libiberty ${GCCARCH} ${G_out_file:H} ${DIST}/include
