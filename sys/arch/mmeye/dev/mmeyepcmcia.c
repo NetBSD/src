@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.19 2011/02/19 10:46:28 kiyohara Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.20 2011/07/19 15:17:20 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.19 2011/02/19 10:46:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.20 2011/07/19 15:17:20 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,11 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.19 2011/02/19 10:46:28 kiyohara Ex
 #include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/kthread.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/mmeye.h>
 
