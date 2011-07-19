@@ -1,4 +1,4 @@
-/*	$NetBSD: rsbus_io.c,v 1.2 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: rsbus_io.c,v 1.3 2011/07/19 15:59:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,11 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsbus_io.c,v 1.2 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsbus_io.c,v 1.3 2011/07/19 15:59:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* Proto types for all the bus_space structure functions */
 
