@@ -1,4 +1,4 @@
-/*	$NetBSD: zlcd.c,v 1.14 2011/06/21 18:13:19 nonaka Exp $	*/
+/*	$NetBSD: zlcd.c,v 1.15 2011/07/19 15:11:49 dyoung Exp $	*/
 /*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp */
 
@@ -43,13 +43,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.14 2011/06/21 18:13:19 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.15 2011/07/19 15:11:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 
 #include <dev/cons.h>
 #include <dev/wscons/wsconsio.h>
@@ -58,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.14 2011/06/21 18:13:19 nonaka Exp $");
 
 #include <dev/hpc/hpcfbio.h>
 
-#include <machine/bus.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0_lcd.h>
