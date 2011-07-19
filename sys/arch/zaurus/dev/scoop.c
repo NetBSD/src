@@ -1,4 +1,4 @@
-/*	$NetBSD: scoop.c,v 1.8 2011/06/19 16:20:09 nonaka Exp $	*/
+/*	$NetBSD: scoop.c,v 1.9 2011/07/19 15:11:49 dyoung Exp $	*/
 /*	$OpenBSD: zaurus_scoop.c,v 1.12 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,15 +18,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.8 2011/06/19 16:20:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.9 2011/07/19 15:11:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/gpio.h>
-
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/pxa2x0var.h>
 

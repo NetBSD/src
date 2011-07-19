@@ -1,4 +1,4 @@
-/*	$NetBSD: zssp.c,v 1.10 2011/06/19 16:20:09 nonaka Exp $	*/
+/*	$NetBSD: zssp.c,v 1.11 2011/07/19 15:11:49 dyoung Exp $	*/
 /*	$OpenBSD: zaurus_ssp.c,v 1.6 2005/04/08 21:58:49 uwe Exp $	*/
 
 /*
@@ -18,13 +18,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.10 2011/06/19 16:20:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.11 2011/07/19 15:11:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
