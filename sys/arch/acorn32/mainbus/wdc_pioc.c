@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.24 2011/06/03 07:35:37 matt Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.25 2011/07/19 15:59:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -34,14 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.24 2011/06/03 07:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.25 2011/07/19 15:59:53 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <acorn32/mainbus/piocvar.h>

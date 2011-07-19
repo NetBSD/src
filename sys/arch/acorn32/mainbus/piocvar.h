@@ -1,4 +1,4 @@
-/*	$NetBSD: piocvar.h,v 1.1 2001/10/05 22:27:53 reinoud Exp $	*/
+/*	$NetBSD: piocvar.h,v 1.2 2011/07/19 15:59:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  * Created      : 18/02/97
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * pioc driver attach arguments

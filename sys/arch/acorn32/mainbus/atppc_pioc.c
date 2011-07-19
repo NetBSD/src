@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_pioc.c,v 1.5 2009/05/12 07:06:53 cegger Exp $ */
+/* $NetBSD: atppc_pioc.c,v 1.6 2011/07/19 15:59:53 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -32,15 +32,15 @@
 #include "opt_atppc.h"
 
 #include <sys/param.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_pioc.c,v 1.5 2009/05/12 07:06:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_pioc.c,v 1.6 2011/07/19 15:59:53 dyoung Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
 
 #include <arch/acorn32/mainbus/piocvar.h>
 

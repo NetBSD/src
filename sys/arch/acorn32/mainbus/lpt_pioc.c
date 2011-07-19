@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pioc.c,v 1.11 2011/06/03 07:35:37 matt Exp $	*/
+/*	$NetBSD: lpt_pioc.c,v 1.12 2011/07/19 15:59:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,12 +36,12 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_pioc.c,v 1.11 2011/06/03 07:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pioc.c,v 1.12 2011/07/19 15:59:53 dyoung Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 #include <acorn32/mainbus/piocvar.h>
 #include <dev/ic/lptreg.h>

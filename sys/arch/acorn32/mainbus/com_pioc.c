@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.15 2011/06/03 07:35:37 matt Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.16 2011/07/19 15:59:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.15 2011/06/03 07:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.16 2011/07/19 15:59:53 dyoung Exp $");
 
 #include <sys/systm.h>
 #include <sys/tty.h>
@@ -70,9 +70,9 @@ __KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.15 2011/06/03 07:35:37 matt Exp $");
 #include <sys/conf.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
 #include <machine/io.h>
 
 #include <acorn32/mainbus/piocvar.h>

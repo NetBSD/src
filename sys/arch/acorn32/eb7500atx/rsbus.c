@@ -1,4 +1,4 @@
-/* $NetBSD: rsbus.c,v 1.8 2011/06/03 07:35:37 matt Exp $ */
+/* $NetBSD: rsbus.c,v 1.9 2011/07/19 15:59:52 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -29,13 +29,12 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rsbus.c,v 1.8 2011/06/03 07:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsbus.c,v 1.9 2011/07/19 15:59:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <acorn32/eb7500atx/rsbus.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.20 2011/06/30 20:09:17 wiz Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.21 2011/07/19 15:59:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.20 2011/06/30 20:09:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.21 2011/07/19 15:59:52 dyoung Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.20 2011/06/30 20:09:17 wiz E
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
 #include <sys/ksyms.h>
+#include <sys/bus.h>
 
 #include <dev/cons.h>
 
@@ -85,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.20 2011/06/30 20:09:17 wiz E
 #include <arm/arm32/machdep.h>
 #include <arm/undefined.h>
 #include <machine/rtc.h>
-#include <machine/bus.h>
 
 #include <arm/iomd/vidc.h>
 #include <arm/iomd/iomdreg.h>

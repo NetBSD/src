@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs.c,v 1.6 2009/09/22 14:55:19 tsutsui Exp $	*/
+/*	$NetBSD: if_cs.c,v 1.7 2011/07/19 15:59:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -58,12 +58,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.6 2009/09/22 14:55:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.7 2011/07/19 15:59:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include "rnd.h"
 #if NRND > 0
@@ -74,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.6 2009/09/22 14:55:19 tsutsui Exp $");
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <acorn32/eb7500atx/rsbus.h>

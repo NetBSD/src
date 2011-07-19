@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.50 2011/06/03 07:35:37 matt Exp $	*/
+/*	$NetBSD: fd.c,v 1.51 2011/07/19 15:59:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.50 2011/06/03 07:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.51 2011/07/19 15:59:53 dyoung Exp $");
 
 #include "opt_ddb.h"
 
@@ -104,6 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.50 2011/06/03 07:35:37 matt Exp $");
 #include <sys/proc.h>
 #include <sys/fdio.h>
 #include <sys/conf.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -113,7 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.50 2011/06/03 07:35:37 matt Exp $");
 #include <machine/intr.h>
 #include <machine/io.h>
 #include <arm/arm32/katelib.h>
-#include <machine/bus.h>
 
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>

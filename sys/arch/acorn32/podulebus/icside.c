@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.28 2009/05/12 06:54:10 cegger Exp $	*/
+/*	$NetBSD: icside.c,v 1.29 2011/07/19 15:59:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,16 +42,16 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.28 2009/05/12 06:54:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.29 2011/07/19 15:59:54 dyoung Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 
 #include <machine/intr.h>
 #include <machine/io.h>
-#include <machine/bus.h>
 #include <acorn32/podulebus/podulebus.h>
 #include <acorn32/podulebus/icsidereg.h>
 

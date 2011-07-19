@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.26 2008/03/18 20:46:35 cube Exp $	*/
+/*	$NetBSD: rapide.c,v 1.27 2011/07/19 15:59:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,17 +68,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.26 2008/03/18 20:46:35 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.27 2011/07/19 15:59:54 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 
 #include <machine/intr.h>
 #include <machine/io.h>
-#include <machine/bus.h>
 #include <machine/bootconfig.h>
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
