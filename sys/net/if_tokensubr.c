@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.60 2010/04/05 07:22:24 joerg Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.61 2011/07/19 19:42:27 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.60 2010/04/05 07:22:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.61 2011/07/19 19:42:27 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -597,10 +597,8 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 			sa.sa_len = sizeof(sa);
 			eh = (struct ether_header *)sa.sa_data;
 			for (i = 0; i < ISO88025_ADDR_LEN; i++) {
-				eh->ether_shost[i] = c = trh->token_dhost[i];
-				eh->ether_dhost[i] =
-				    eh->ether_dhost[i] = trh->token_shost[i];
-				eh->ether_shost[i] = c;
+				eh->ether_shost[i] = trh->token_dhost[i];
+				eh->ether_dhost[i] = trh->token_shost[i];
 			}
 			eh->ether_type = 0;
 			m_adj(m, lan_hdr_len);
