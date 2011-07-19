@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus_bus_mem.c,v 1.15 2009/08/23 14:28:09 tsutsui Exp $	*/
+/*	$NetBSD: g2bus_bus_mem.c,v 1.16 2011/07/19 15:52:29 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,14 +39,14 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: g2bus_bus_mem.c,v 1.15 2009/08/23 14:28:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2bus_bus_mem.c,v 1.16 2011/07/19 15:52:29 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
 
 #include <dreamcast/dev/g2/g2busvar.h>
 

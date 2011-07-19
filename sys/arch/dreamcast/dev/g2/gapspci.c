@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci.c,v 1.18 2011/05/17 17:34:49 dyoung Exp $	*/
+/*	$NetBSD: gapspci.c,v 1.19 2011/07/19 15:52:29 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.18 2011/05/17 17:34:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.19 2011/07/19 15:52:29 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,9 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.18 2011/05/17 17:34:49 dyoung Exp $");
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/mbuf.h>
+#include <sys/bus.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

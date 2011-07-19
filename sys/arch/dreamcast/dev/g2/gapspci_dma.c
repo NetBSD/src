@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.18 2010/11/12 13:18:56 uebayasi Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.19 2011/07/19 15:52:29 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.18 2010/11/12 13:18:56 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.19 2011/07/19 15:52:29 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,9 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.18 2010/11/12 13:18:56 uebayasi Ex
 #include <sys/mbuf.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
 

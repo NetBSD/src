@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.20 2010/11/21 16:11:32 tsutsui Exp $	*/
+/*	$NetBSD: aica.c,v 1.21 2011/07/19 15:52:29 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.20 2010/11/21 16:11:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.21 2011/07/19 15:52:29 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,12 +37,12 @@ __KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.20 2010/11/21 16:11:32 tsutsui Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/audioio.h>
+#include <sys/bus.h>
 
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
 
-#include <machine/bus.h>
 #include <machine/sysasicvar.h>
 
 #include <dreamcast/dev/g2/g2busvar.h>
