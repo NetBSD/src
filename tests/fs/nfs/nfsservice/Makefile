@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/12/18 04:31:41 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/07/19 03:30:46 dholland Exp $
 #
 
 NOMAN=	1
@@ -26,7 +26,7 @@ LDADD+=	-lrumpnet_shmif						# shmif
 LDADD+=	-lrumpnet -lrump -lrumpuser				# base
 LDADD+=	-lpthread -lutil
 
-CPPFLAGS+=	-DDEBUG -DMOUNT_NOMAIN -I${.CURDIR}/include -D_REENTRANT
+CPPFLAGS+=	-DDEBUG -DMOUNT_NOMAIN -D_REENTRANT
 CPPFLAGS+=	-DRUMP_SYS_NETWORKING
 #CPPFLAGS+=	-DSVC_RUN_DEBUG
 CPPFLAGS+=	-I${.CURDIR}/../../common/nfsrpc
