@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.11 2011/02/19 10:46:28 kiyohara Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.12 2011/07/19 15:17:20 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.11 2011/02/19 10:46:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.12 2011/07/19 15:17:20 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,8 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.11 2011/02/19 10:46:28 kiyohara Ex
 #include <sys/termios.h>
 #include <dev/cons.h>
 #include <sys/conf.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/autoconf.h>
 #include <machine/mmeye.h>
