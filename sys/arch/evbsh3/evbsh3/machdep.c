@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2011/01/19 09:36:33 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 2011/07/19 15:44:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2011/01/19 09:36:33 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2011/07/19 15:44:52 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2011/01/19 09:36:33 he Exp $");
 #include <sys/sysctl.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -93,7 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2011/01/19 09:36:33 he Exp $");
 #include <sh3/cache_sh4.h>
 #include <sh3/exception.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/pcb.h>
 
