@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.34 2011/07/18 02:14:01 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.35 2011/07/19 07:29:39 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -3135,6 +3135,7 @@ perfuse_node_listextattr(pu, opc, attrns, attrsize, attrs, resid, flag, pcr)
 	puffs_len = foh->len - sizeof(*foh);
 
 	if (attrs != NULL) {
+#ifdef PUFFS_EXTATTR_LIST_LENPREFIX
 		/* 
 		 * Convert the FUSE reply to length prefixed strings
 		 * if this is what the kernel wants.
@@ -3148,6 +3149,7 @@ perfuse_node_listextattr(pu, opc, attrns, attrsize, attrs, resid, flag, pcr)
 				*(np + i) = (uint8_t)attrlen;
 			}	
 		}
+#endif /* PUFFS_EXTATTR_LIST_LENPREFIX */
 		(void)memcpy(attrs, np, puffs_len);
 		*resid -= puffs_len;
 	}
