@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.311 2011/07/13 07:52:48 jruoho Exp $
+# $NetBSD: ALL,v 1.312 2011/07/19 19:46:38 tron Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.311 $"
+#ident 		"ALL-$Revision: 1.312 $"
 
 maxusers	64		# estimated number of users
 
@@ -188,6 +188,7 @@ file-system 	EFS		# Silicon Graphics Extent File System
 file-system 	FILECORE	# Acorn filecore file system
 file-system 	ADOSFS		# AmigaDOS file system
 file-system	NILFS		# experimental - NTT's NiLFS(2)
+file-system	V7FS		# 7th Edition(V7) File System
 
 # File system options
 options 	QUOTA		# legacy UFS quotas
@@ -200,6 +201,7 @@ options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+options 	V7FS_EI		# V7FS Endian Independent support
 
 # Networking options
 options 	GATEWAY		# packet forwarding
