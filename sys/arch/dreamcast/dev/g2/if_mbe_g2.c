@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_g2.c,v 1.7 2008/04/12 06:27:01 tsutsui Exp $	*/
+/*	$NetBSD: if_mbe_g2.c,v 1.8 2011/07/19 15:52:30 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 Christian Groessler
@@ -64,17 +64,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_g2.c,v 1.7 2008/04/12 06:27:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_g2.c,v 1.8 2011/07/19 15:52:30 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/sysasicvar.h>
 #include <machine/cpu.h>
