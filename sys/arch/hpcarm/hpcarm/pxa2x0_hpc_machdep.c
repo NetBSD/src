@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.12 2011/06/30 20:09:30 wiz Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.13 2011/07/19 15:37:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.12 2011/06/30 20:09:30 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.13 2011/07/19 15:37:39 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.12 2011/06/30 20:09:30 wiz 
 #include <sys/boot_flag.h>
 #include <sys/conf.h>	/* XXX for consinit related hacks */
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
@@ -82,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.12 2011/06/30 20:09:30 wiz 
 
 #include <machine/bootconfig.h>
 #include <machine/bootinfo.h>
-#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>

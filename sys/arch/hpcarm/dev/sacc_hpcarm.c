@@ -1,4 +1,4 @@
-/*      $NetBSD: sacc_hpcarm.c,v 1.11 2009/05/29 14:15:45 rjs Exp $	*/
+/*      $NetBSD: sacc_hpcarm.c,v 1.12 2011/07/19 15:37:38 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.11 2009/05/29 14:15:45 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.12 2011/07/19 15:37:38 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.11 2009/05/29 14:15:45 rjs Exp $")
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/uio.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 

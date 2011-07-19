@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_lcdvar.h,v 1.3 2009/05/29 14:15:44 rjs Exp $ */
+/*	$NetBSD: ipaq_lcdvar.h,v 1.4 2011/07/19 15:37:38 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 

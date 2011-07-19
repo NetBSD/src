@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_kbd.c,v 1.5 2010/05/30 03:17:21 nonaka Exp $	*/
+/*	$NetBSD: wzero3_kbd.c,v 1.6 2011/07/19 15:37:38 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.5 2010/05/30 03:17:21 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.6 2011/07/19 15:37:38 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.5 2010/05/30 03:17:21 nonaka Exp $"
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/callout.h>
+#include <sys/bus.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_taskq.h>
@@ -43,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.5 2010/05/30 03:17:21 nonaka Exp $"
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
 
-#include <machine/bus.h>
 #include <machine/bootinfo.h>
 #include <machine/config_hook.h>
 #include <machine/platid.h>

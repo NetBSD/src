@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_lcd.c,v 1.18 2009/05/29 14:15:44 rjs Exp $	*/
+/*	$NetBSD: ipaq_lcd.c,v 1.19 2011/07/19 15:37:38 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.18 2009/05/29 14:15:44 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.19 2011/07/19 15:37:38 dyoung Exp $");
 
 #define IPAQ_LCD_DEBUG
 
@@ -40,13 +40,13 @@ __KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.18 2009/05/29 14:15:44 rjs Exp $");
 #include <sys/kernel.h>
 #include <sys/time.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/wscons/wsconsio.h>
 
 #include <machine/bootinfo.h>
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <arm/cpufunc.h>
 #include <arm/arm32/katelib.h>

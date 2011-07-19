@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_lcd.c,v 1.2 2010/12/09 04:37:04 uebayasi Exp $	*/
+/*	$NetBSD: wzero3_lcd.c,v 1.3 2011/07/19 15:37:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2008,2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_lcd.c,v 1.2 2010/12/09 04:37:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_lcd.c,v 1.3 2011/07/19 15:37:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/pmf.h>
+#include <sys/bus.h>
 
 #include <dev/cons.h>
 #include <dev/wscons/wsconsio.h>
@@ -45,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: wzero3_lcd.c,v 1.2 2010/12/09 04:37:04 uebayasi Exp 
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_lcd.h>
 
-#include <machine/bus.h>
 #include <machine/bootinfo.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>

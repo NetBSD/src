@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_usb.c,v 1.1 2010/04/17 13:36:21 nonaka Exp $	*/
+/*	$NetBSD: wzero3_usb.c,v 1.2 2011/07/19 15:37:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -24,17 +24,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_usb.c,v 1.1 2010/04/17 13:36:21 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_usb.c,v 1.2 2011/07/19 15:37:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
 
-#include <machine/bus.h>
 #include <machine/bootinfo.h>
 #include <machine/config_hook.h>
 #include <machine/platid.h>
