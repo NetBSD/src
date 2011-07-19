@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.52 2009/04/05 00:56:20 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.53 2011/07/19 15:30:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.52 2009/04/05 00:56:20 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.53 2011/07/19 15:30:52 dyoung Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.52 2009/04/05 00:56:20 uwe Exp $"
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 
 #include <sys/conf.h> /* cdev_decl */
 #include <dev/cons.h> /* consdev */
@@ -49,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.52 2009/04/05 00:56:20 uwe Exp $"
 #include <sys/buf.h>
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <hpcsh/dev/hd64461/hd64461var.h>

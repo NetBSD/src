@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465uart.c,v 1.17 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: hd64465uart.c,v 1.18 2011/07/19 15:30:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.17 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.18 2011/07/19 15:30:52 dyoung Exp $");
 
 #include "opt_kgdb.h"
 
@@ -37,12 +37,12 @@ __KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.17 2008/04/28 20:23:22 martin Exp 
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/kgdb.h>
+#include <sys/bus.h>
 
 #include <sys/termios.h>
 #include <dev/cons.h>
 #include <sys/conf.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/console.h>
 
