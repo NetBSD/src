@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io.c,v 1.6 2009/03/15 22:18:35 cegger Exp $	*/
+/*	$NetBSD: podulebus_io.c,v 1.7 2011/07/19 15:59:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,11 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: podulebus_io.c,v 1.6 2009/03/15 22:18:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus_io.c,v 1.7 2011/07/19 15:59:54 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* Proto types for all the bus_space structure functions */
 

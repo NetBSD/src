@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.18 2011/06/03 07:35:37 matt Exp $	*/
+/*	$NetBSD: amps.c,v 1.19 2011/07/19 15:59:54 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.18 2011/06/03 07:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.19 2011/07/19 15:59:54 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.18 2011/06/03 07:35:37 matt Exp $");
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <machine/intr.h>
 #include <machine/io.h>
-#include <machine/bus.h>
 #include <acorn32/podulebus/podulebus.h>
 #include <acorn32/podulebus/ampsreg.h>
 #include <dev/ic/comreg.h>

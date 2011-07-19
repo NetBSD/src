@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.16 2011/06/03 07:35:37 matt Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.17 2011/07/19 15:59:53 dyoung Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,14 +41,14 @@
 /*#define PIOC_DEBUG*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.16 2011/06/03 07:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.17 2011/07/19 15:59:53 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <arm/mainbus/mainbus.h>
 #include <acorn32/mainbus/piocreg.h>
 #include <acorn32/mainbus/piocvar.h>
