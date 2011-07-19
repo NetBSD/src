@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/07/02 14:06:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/07/19 15:59:02 tron Exp $
 
 LIBISPRIVATE=	yes
 
@@ -34,7 +34,7 @@ MKPICLIB:=	no
 
 .include <bsd.lib.mk>
 
-COPTS+=		-Wno-stack-protector
+CFLAGS+=	-Wno-stack-protector
 
 .PATH: ${DIST}/gcc
 
