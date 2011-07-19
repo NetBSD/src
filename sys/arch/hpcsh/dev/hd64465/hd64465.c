@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465.c,v 1.14 2011/06/06 17:27:42 matt Exp $	*/
+/*	$NetBSD: hd64465.c,v 1.15 2011/07/19 15:30:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465.c,v 1.14 2011/06/06 17:27:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465.c,v 1.15 2011/07/19 15:30:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/boot_flag.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/debug.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.26 2009/11/07 07:27:44 cegger Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.27 2011/07/19 15:30:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.26 2009/11/07 07:27:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.27 2011/07/19 15:30:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,10 +38,10 @@ __KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.26 2009/11/07 07:27:44 cegger Ex
 #include <sys/malloc.h>
 #include <sys/kthread.h>
 #include <sys/boot_flag.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>

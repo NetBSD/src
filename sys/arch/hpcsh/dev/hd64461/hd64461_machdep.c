@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461_machdep.c,v 1.5 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: hd64461_machdep.c,v 1.6 2011/07/19 15:30:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,12 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461_machdep.c,v 1.5 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461_machdep.c,v 1.6 2011/07/19 15:30:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 

@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcsh,v 1.25 2011/07/18 17:39:05 dyoung Exp $
+# $NetBSD: md.hpcsh,v 1.26 2011/07/19 15:30:51 dyoung Exp $
 ./usr/include/hpcsh				comp-c-include
 ./usr/include/hpcsh/_G_config.h			comp-obsolete		obsolete
 ./usr/include/hpcsh/ansi.h			comp-c-include
@@ -7,7 +7,7 @@
 ./usr/include/hpcsh/asm.h			comp-c-include
 ./usr/include/hpcsh/bootinfo.h			comp-c-include
 ./usr/include/hpcsh/bswap.h			comp-c-include
-./usr/include/hpcsh/bus.h			comp-c-include
+./usr/include/hpcsh/bus.h			comp-obsolete		obsolete
 ./usr/include/hpcsh/cdefs.h			comp-c-include
 ./usr/include/hpcsh/coff_machdep.h		comp-c-include
 ./usr/include/hpcsh/conf.h			comp-obsolete		obsolete

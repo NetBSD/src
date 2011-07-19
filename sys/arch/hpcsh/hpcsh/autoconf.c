@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 2011/02/08 20:20:15 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 2011/07/19 15:30:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2011/02/08 20:20:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2011/07/19 15:30:53 dyoung Exp $");
 
 #include "opt_md.h"
 
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2011/02/08 20:20:15 rmind Exp $");
 #include <sys/conf.h>
 #include <sys/disklabel.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <sh3/exception.h>
-#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <machine/config_hook.h>
