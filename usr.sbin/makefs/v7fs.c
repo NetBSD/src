@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs.c,v 1.1 2011/07/18 08:58:38 uch Exp $	*/
+/*	$NetBSD: v7fs.c,v 1.2 2011/07/19 18:29:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: v7fs.c,v 1.1 2011/07/18 08:58:38 uch Exp $");
+__RCSID("$NetBSD: v7fs.c,v 1.2 2011/07/19 18:29:41 joerg Exp $");
 #endif	/* !__lint */
 
 #include <stdio.h>
@@ -49,10 +49,13 @@ __RCSID("$NetBSD: v7fs.c,v 1.1 2011/07/18 08:58:38 uch Exp $");
 #include "v7fs_impl.h"
 #include "v7fs_makefs.h"
 #include "newfs_v7fs.h"
-#include "progress.h"
 
 static v7fs_opt_t v7fs_opts;
+
+#ifndef HAVE_NBTOOL_CONFIG_H
+#include "progress.h"
 static bool progress_bar_enable;
+#endif
 bool verbose;
 
 void
@@ -90,11 +93,13 @@ v7fs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	int fd, endian, error = 1;
 
 	verbose = debug;
+#ifndef HAVE_NBTOOL_CONFIG_H
 	if ((progress_bar_enable = v7fs_opts.progress)) {
 		progress_switch(progress_bar_enable);
 		progress_init();
 		progress(&(struct progress_arg){ .cdev = image });
 	}
+#endif
 
 	/* Determine filesystem image size */
 	v7fs_estimate(dir, root, fsopts);
@@ -156,6 +161,7 @@ v7fs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 void
 progress(const struct progress_arg *p)
 {
+#ifndef HAVE_NBTOOL_CONFIG_H
 	static struct progress_arg Progress;
 	static char cdev[32];
 	static char label[32];
@@ -178,4 +184,5 @@ progress(const struct progress_arg *p)
 		Progress.total++;
 		progress_bar(cdev, label, Progress.total, PROGRESS_BAR_GRANULE);
 	}
+#endif
 }
