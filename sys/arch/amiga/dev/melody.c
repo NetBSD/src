@@ -1,4 +1,4 @@
-/*	$NetBSD: melody.c,v 1.15 2008/04/28 20:23:12 martin Exp $ */
+/*	$NetBSD: melody.c,v 1.16 2011/07/19 15:55:27 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: melody.c,v 1.15 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: melody.c,v 1.16 2011/07/19 15:55:27 dyoung Exp $");
 
 /*
  * Melody audio driver.
@@ -44,11 +44,10 @@ __KERNEL_RCSID(0, "$NetBSD: melody.c,v 1.15 2008/04/28 20:23:12 martin Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <dev/ic/tms320av110reg.h>
 #include <dev/ic/tms320av110var.h>
-
-#include <machine/bus.h>
 
 #include <amiga/dev/zbusvar.h>
 #include <amiga/amiga/isr.h>

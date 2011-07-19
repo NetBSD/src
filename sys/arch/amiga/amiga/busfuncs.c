@@ -1,4 +1,4 @@
-/*	$NetBSD: busfuncs.c,v 1.11 2010/02/03 13:56:53 phx Exp $	*/
+/*	$NetBSD: busfuncs.c,v 1.12 2011/07/19 15:55:26 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: busfuncs.c,v 1.11 2010/02/03 13:56:53 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: busfuncs.c,v 1.12 2011/07/19 15:55:26 dyoung Exp $");
 
 /*
  * Amiga bus access methods for data widths > 1
  * XXX currently, only 16bit methods are defined
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 bsr(amiga_contiguous_read_2, u_int16_t);
 bsw(amiga_contiguous_write_2, u_int16_t);

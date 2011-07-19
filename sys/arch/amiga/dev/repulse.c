@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.16 2008/04/28 20:23:12 martin Exp $ */
+/*	$NetBSD: repulse.c,v 1.17 2011/07/19 15:55:27 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.16 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.17 2011/07/19 15:55:27 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,8 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.16 2008/04/28 20:23:12 martin Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>		/* FREAD */
-
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
