@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.2 2010/11/12 13:18:57 uebayasi Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.3 2011/07/19 15:44:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 2010/11/12 13:18:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.3 2011/07/19 15:44:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,14 +34,14 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 2010/11/12 13:18:57 uebayasi Exp $")
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#define	_EVBSH3_BUS_DMA_PRIVATE
+#include <sys/bus.h>
 
 #include <uvm/uvm.h>
 
 #include <sh3/cache.h>
 
 #include <machine/autoconf.h>
-#define	_EVBSH3_BUS_DMA_PRIVATE
-#include <machine/bus.h>
 
 #if defined(DEBUG) && defined(BUSDMA_DEBUG)
 int busdma_debug = 0;

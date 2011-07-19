@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_mainbus.c,v 1.1 2010/04/06 15:54:31 nonaka Exp $	*/
+/*	$NetBSD: if_ne_mainbus.c,v 1.2 2011/07/19 15:44:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBS$");
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -49,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBS$");
 #include <net/if_media.h>
 
 #include <sys/intr.h>
-#include <sys/bus.h>
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
