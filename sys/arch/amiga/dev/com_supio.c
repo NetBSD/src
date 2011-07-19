@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.29 2011/01/22 17:10:20 tsutsui Exp $ */
+/*	$NetBSD: com_supio.c,v 1.30 2011/07/19 15:55:26 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.29 2011/01/22 17:10:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.30 2011/07/19 15:55:26 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,9 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.29 2011/01/22 17:10:20 tsutsui Exp $
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
 
 /*#include <dev/isa/isavar.h>*/
 #include <dev/ic/comreg.h>

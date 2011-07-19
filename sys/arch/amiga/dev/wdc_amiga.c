@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.32 2011/01/13 22:02:05 phx Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.33 2011/07/19 15:55:27 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -30,16 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.32 2011/01/13 22:02:05 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.33 2011/07/19 15:55:27 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <sys/bswap.h>
 

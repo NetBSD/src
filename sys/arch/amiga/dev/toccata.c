@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.13 2011/06/02 14:12:24 tsutsui Exp $ */
+/* $NetBSD: toccata.c,v 1.14 2011/07/19 15:55:27 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.13 2011/06/02 14:12:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.14 2011/07/19 15:55:27 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,8 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.13 2011/06/02 14:12:24 tsutsui Exp $")
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>		/* FREAD */
-
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
