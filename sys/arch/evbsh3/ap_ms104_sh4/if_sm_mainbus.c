@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_mainbus.c,v 1.1 2010/04/06 15:54:29 nonaka Exp $	*/
+/*	$NetBSD: if_sm_mainbus.c,v 1.2 2011/07/19 15:44:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_mainbus.c,v 1.1 2010/04/06 15:54:29 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_mainbus.c,v 1.2 2011/07/19 15:44:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -39,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_mainbus.c,v 1.1 2010/04/06 15:54:29 nonaka Exp
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
-#include <machine/bus.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
