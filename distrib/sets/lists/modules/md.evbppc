@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.2 2011/07/15 08:07:08 he Exp $
+# $NetBSD: md.evbppc,v 1.3 2011/07/19 19:19:39 tron Exp $
 ./stand/powerpc-4xx						base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@					base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod
@@ -138,6 +138,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/union/union.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/usbverbose			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/usbverbose/usbverbose.kmod	base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/v7fs 				base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/v7fs/v7fs.kmod		        base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/vnd 				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/vnd/vnd.kmod		        base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/zfs				base-kernel-modules     kmod,zfs

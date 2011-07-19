@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.22 2011/07/09 14:56:43 jmcneill Exp $
+# $NetBSD: mi,v 1.23 2011/07/19 19:19:39 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -140,6 +140,8 @@
 ./@MODULEDIR@/union/union.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/usbverbose			base-kernel-modules	kmod
 ./@MODULEDIR@/usbverbose/usbverbose.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/v7fs				base-kernel-modules	kmod
+./@MODULEDIR@/v7fs/v7fs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/vnd 				base-kernel-modules	kmod
 ./@MODULEDIR@/vnd/vnd.kmod		        base-kernel-modules	kmod
 ./@MODULEDIR@/zfs				base-kernel-modules     kmod,zfs
