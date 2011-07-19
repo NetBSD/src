@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus_machdep.h,v 1.2 2006/09/30 16:30:10 bjh21 Exp $ */
+/* $NetBSD: podulebus_machdep.h,v 1.3 2011/07/19 16:05:10 dyoung Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/param.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct podulebus_chunk {
 	int	pc_type;

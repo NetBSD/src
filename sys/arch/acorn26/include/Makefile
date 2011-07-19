@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.10 2011/07/17 20:54:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2011/07/19 16:05:10 dyoung Exp $
 
 INCSDIR= /usr/include/acorn26
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	boot.h bswap.h bus.h \
+	boot.h bswap.h \
 	cdefs.h cpu.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
