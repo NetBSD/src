@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.43 2011/07/17 23:23:54 dyoung Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.44 2011/07/19 19:55:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.43 2011/07/17 23:23:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.44 2011/07/19 19:55:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -605,7 +605,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size
 	 * If we are mapping a cacheable physically contiguous segment, treat
 	 * it as if we are mapping a poolpage and avoid consuming any KVAs.
 	 */
-	if (nsegs == 1 && (flags & BUS_DMA_NOCACHE) == 0) {
+	if (nsegs == 1 && (flags & BUS_DMA_DONTCACHE) == 0) {
 		KASSERT(size == segs->ds_len);
 		addr = BUS_MEM_TO_PHYS(t, segs->ds_addr);
 		*kvap = (void *)PMAP_MAP_POOLPAGE(addr);
