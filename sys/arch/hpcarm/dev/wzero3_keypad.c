@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_keypad.c,v 1.1 2010/05/30 10:00:27 nonaka Exp $	*/
+/*	$NetBSD: wzero3_keypad.c,v 1.2 2011/07/19 15:37:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_keypad.c,v 1.1 2010/05/30 10:00:27 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_keypad.c,v 1.2 2011/07/19 15:37:39 dyoung Exp $");
 
 #include "wzero3lcd.h"
 #include "opt_wsdisplay_compat.h"
@@ -37,12 +37,12 @@ __KERNEL_RCSID(0, "$NetBSD: wzero3_keypad.c,v 1.1 2010/05/30 10:00:27 nonaka Exp
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/callout.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/pxa2x0cpu.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
 
-#include <machine/bus.h>
 #include <machine/bootinfo.h>
 #include <machine/config_hook.h>
 #include <machine/platid.h>

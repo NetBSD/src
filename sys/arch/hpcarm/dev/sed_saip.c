@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.24 2009/05/29 14:15:45 rjs Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.25 2011/07/19 15:37:38 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.24 2009/05/29 14:15:45 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.25 2011/07/19 15:37:38 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.24 2009/05/29 14:15:45 rjs Exp $");
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/reboot.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/bootinfo.h>
 #include <machine/config_hook.h>
 #include <machine/platid.h>
