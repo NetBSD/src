@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.20 2010/02/02 19:03:31 phx Exp $ */
+/*	$NetBSD: hyper.c,v 1.21 2011/07/19 15:55:27 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.20 2010/02/02 19:03:31 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.21 2011/07/19 15:55:27 dyoung Exp $");
 
 /*
  * zbus HyperCom driver
@@ -42,8 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.20 2010/02/02 19:03:31 phx Exp $");
 #include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/param.h>
-
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <amiga/include/cpu.h>
 
