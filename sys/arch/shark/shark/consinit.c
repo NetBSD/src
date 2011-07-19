@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.10 2011/03/23 04:06:03 macallan Exp $	*/
+/*	$NetBSD: consinit.c,v 1.11 2011/07/19 15:07:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,13 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.10 2011/03/23 04:06:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.11 2011/07/19 15:07:43 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <dev/cons.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/isa/isavar.h>
 
 #include "vga.h"

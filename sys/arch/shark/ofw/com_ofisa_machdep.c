@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ofisa_machdep.c,v 1.6 2009/03/14 21:04:16 dsl Exp $	*/
+/*	$NetBSD: com_ofisa_machdep.c,v 1.7 2011/07/19 15:07:43 dyoung Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,14 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ofisa_machdep.c,v 1.6 2009/03/14 21:04:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ofisa_machdep.c,v 1.7 2011/07/19 15:07:43 dyoung Exp $");
 
 #include "opt_compat_old_ofw.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/ofw/openfirm.h>
