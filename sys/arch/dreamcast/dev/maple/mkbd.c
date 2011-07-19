@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.28 2010/10/17 14:13:44 tsutsui Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.29 2011/07/19 15:52:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.28 2010/10/17 14:13:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.29 2011/07/19 15:52:30 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.28 2010/10/17 14:13:44 tsutsui Exp $");
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 
 #include "wskbd.h"
 
@@ -52,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.28 2010/10/17 14:13:44 tsutsui Exp $");
 #include <dev/wscons/wsksymvar.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
 
 #include <dreamcast/dev/maple/maple.h>
 #include <dreamcast/dev/maple/mapleconf.h>
