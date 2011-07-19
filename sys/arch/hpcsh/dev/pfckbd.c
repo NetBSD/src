@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.27 2009/04/05 02:29:40 uwe Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.28 2011/07/19 15:30:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  * currently, HP Jornada 680/690, HITACHI PERSONA HPW-50PAD only.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.27 2009/04/05 02:29:40 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.28 2011/07/19 15:30:51 dyoung Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.27 2009/04/05 02:29:40 uwe Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/callout.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
