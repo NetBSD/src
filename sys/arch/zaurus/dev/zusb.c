@@ -1,4 +1,4 @@
-/*	$NetBSD: zusb.c,v 1.5 2011/06/19 16:20:09 nonaka Exp $	*/
+/*	$NetBSD: zusb.c,v 1.6 2011/07/19 15:11:49 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2008 Christopher Gilbert
@@ -27,18 +27,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zusb.c,v 1.5 2011/06/19 16:20:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zusb.c,v 1.6 2011/07/19 15:11:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/bus.h>
 
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
 
 #include <zaurus/zaurus/zaurus_reg.h>
 #include <zaurus/zaurus/zaurus_var.h>
