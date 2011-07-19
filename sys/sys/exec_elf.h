@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.114 2011/07/19 19:46:13 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.115 2011/07/19 19:46:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -170,21 +170,21 @@ typedef struct {
 #define	ELFOSABI_SYSV		0	/* UNIX System V ABI */
 #define	ELFOSABI_HPUX		1	/* HP-UX operating system */
 #define	ELFOSABI_NETBSD		2	/* NetBSD */
-#define ELFOSABI_LINUX		3	/* GNU/Linux */
+#define	ELFOSABI_LINUX		3	/* GNU/Linux */
 #define	ELFOSABI_HURD		4	/* GNU/Hurd */
 #define	ELFOSABI_86OPEN		5	/* 86Open */
-#define ELFOSABI_SOLARIS	6	/* Solaris */
-#define ELFOSABI_MONTEREY	7	/* Monterey */
-#define ELFOSABI_IRIX		8	/* IRIX */
-#define ELFOSABI_FREEBSD	9	/* FreeBSD */
-#define ELFOSABI_TRU64		10	/* TRU64 UNIX */
-#define ELFOSABI_MODESTO	11	/* Novell Modesto */
-#define ELFOSABI_OPENBSD	12	/* OpenBSD */
+#define	ELFOSABI_SOLARIS	6	/* Solaris */
+#define	ELFOSABI_MONTEREY	7	/* Monterey */
+#define	ELFOSABI_IRIX		8	/* IRIX */
+#define	ELFOSABI_FREEBSD	9	/* FreeBSD */
+#define	ELFOSABI_TRU64		10	/* TRU64 UNIX */
+#define	ELFOSABI_MODESTO	11	/* Novell Modesto */
+#define	ELFOSABI_OPENBSD	12	/* OpenBSD */
 #define	ELFOSABI_OPENVMS	13	/* OpenVMS */
 #define	ELFOSABI_NSK		14	/* HP Non-Stop Kernel */
 #define	ELFOSABI_AROS		15	/* Amiga Research OS */
 /* Unofficial OSABIs follow */
-#define ELFOSABI_ARM		97	/* ARM */
+#define	ELFOSABI_ARM		97	/* ARM */
 #define	ELFOSABI_STANDALONE	255	/* Standalone (embedded) application */
 
 #define	ELFOSABI_NONE		ELFOSABI_SYSV
@@ -419,11 +419,11 @@ typedef struct {
 #define	SHT_LOOS	0x60000000	/* Operating system specific range */
 #define	SHT_SUNW_move	0x6ffffffa
 #define	SHT_SUNW_syminfo 0x6ffffffc
-#define SHT_SUNW_verdef	0x6ffffffd	/* Versions defined by file */
+#define	SHT_SUNW_verdef	0x6ffffffd	/* Versions defined by file */
 #define	SHT_GNU_verdef	SHT_SUNW_verdef
-#define SHT_SUNW_verneed 0x6ffffffe	/* Versions needed by file */
+#define	SHT_SUNW_verneed 0x6ffffffe	/* Versions needed by file */
 #define	SHT_GNU_verneed	SHT_SUNW_verneed
-#define SHT_SUNW_versym	0x6fffffff	/* Symbol versions */
+#define	SHT_SUNW_versym	0x6fffffff	/* Symbol versions */
 #define	SHT_GNU_versym	SHT_SUNW_versym
 #define	SHT_HIOS	0x6fffffff
 #define	SHT_LOPROC	0x70000000	/* Processor-specific range */
@@ -464,7 +464,7 @@ typedef struct {
 /* Symbol Table index of the undefined symbol */
 #define	ELF_SYM_UNDEFINED	0
 
-#define STN_UNDEF		0	/* undefined index */
+#define	STN_UNDEF		0	/* undefined index */
 
 /* st_info: Symbol Bindings */
 #define	STB_LOCAL		0	/* local symbol */
@@ -662,12 +662,12 @@ typedef struct {
 #define	DT_NUM		29
 
 #define	DT_LOOS		0x60000000	/* Operating system specific range */
-#define DT_VERSYM	0x6ffffff0	/* Symbol versions */
+#define	DT_VERSYM	0x6ffffff0	/* Symbol versions */
 #define	DT_FLAGS_1	0x6ffffffb	/* ELF dynamic flags */
-#define DT_VERDEF	0x6ffffffc	/* Versions defined by file */
-#define DT_VERDEFNUM	0x6ffffffd	/* Number of versions defined by file */
-#define DT_VERNEED	0x6ffffffe	/* Versions needed by file */
-#define DT_VERNEEDNUM	0x6fffffff	/* Number of versions needed by file */
+#define	DT_VERDEF	0x6ffffffc	/* Versions defined by file */
+#define	DT_VERDEFNUM	0x6ffffffd	/* Number of versions defined by file */
+#define	DT_VERNEED	0x6ffffffe	/* Versions needed by file */
+#define	DT_VERNEEDNUM	0x6fffffff	/* Number of versions needed by file */
 #define	DT_HIOS		0x6fffffff
 #define	DT_LOPROC	0x70000000	/* Processor-specific range */
 #define	DT_HIPROC	0x7fffffff
@@ -793,7 +793,7 @@ typedef struct {
  *	word[0..3] md5 or uuid
  * descsz: 16 or 20
  */
-#define ELF_NOTE_TYPE_GNU_BUILD_ID	3
+#define	ELF_NOTE_TYPE_GNU_BUILD_ID	3
 
 /* NetBSD-specific note type: Emulation name.
  * name: NetBSD\0\0
@@ -837,16 +837,16 @@ typedef struct {
  *	word[0]: capability bitmask
  * descsz: 4
  */
-#define ELF_NOTE_TYPE_PAX_TAG		3
+#define	ELF_NOTE_TYPE_PAX_TAG		3
 #define	ELF_NOTE_PAX_MPROTECT		0x01	/* Force enable Mprotect */
 #define	ELF_NOTE_PAX_NOMPROTECT		0x02	/* Force disable Mprotect */
 #define	ELF_NOTE_PAX_GUARD		0x04	/* Force enable Segvguard */
 #define	ELF_NOTE_PAX_NOGUARD		0x08	/* Force disable Servguard */
 #define	ELF_NOTE_PAX_ASLR		0x10	/* Force enable ASLR */
 #define	ELF_NOTE_PAX_NOASLR		0x20	/* Force disable ASLR */
-#define ELF_NOTE_PAX_NAMESZ		4
-#define ELF_NOTE_PAX_NAME		"PaX\0"
-#define ELF_NOTE_PAX_DESCSZ		4
+#define	ELF_NOTE_PAX_NAMESZ		4
+#define	ELF_NOTE_PAX_NAME		"PaX\0"
+#define	ELF_NOTE_PAX_DESCSZ		4
 
 /*
  * NetBSD-specific core file information.
@@ -1019,7 +1019,7 @@ typedef struct {
 /*
  * These constants are used for Elf32_Verdef struct's version number.  
  */
-#define VER_DEF_NONE		0
+#define	VER_DEF_NONE		0
 #define	VER_DEF_CURRENT		1
 
 /*
@@ -1030,7 +1030,7 @@ typedef struct {
 /*
  * These constants are used for Elf32_Verdef struct's vd_flags.  
  */
-#define VER_FLG_BASE		0x1
+#define	VER_FLG_BASE		0x1
 #define	VER_FLG_WEAK		0x2
 
 /*
@@ -1110,18 +1110,18 @@ typedef	Elf32_Versym	Elf64_Versym;
 
 #ifdef _KERNEL
 
-#define ELF_AUX_ENTRIES	14	/* Max size of aux array passed to loader */
-#define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
-#define ELF32_LINK_ADDR	((Elf32_Addr)-2) /* advises to use link address */
-#define ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */
-#define ELF64_LINK_ADDR	((Elf64_Addr)-2) /* advises to use link address */
+#define	ELF_AUX_ENTRIES	14	/* Max size of aux array passed to loader */
+#define	ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
+#define	ELF32_LINK_ADDR	((Elf32_Addr)-2) /* advises to use link address */
+#define	ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */
+#define	ELF64_LINK_ADDR	((Elf64_Addr)-2) /* advises to use link address */
 
 #if defined(ELFSIZE) && (ELFSIZE == 64)
-#define ELF_NO_ADDR	ELF64_NO_ADDR
-#define ELF_LINK_ADDR	ELF64_LINK_ADDR
+#define	ELF_NO_ADDR	ELF64_NO_ADDR
+#define	ELF_LINK_ADDR	ELF64_LINK_ADDR
 #elif defined(ELFSIZE) && (ELFSIZE == 32)
-#define ELF_NO_ADDR	ELF32_NO_ADDR
-#define ELF_LINK_ADDR	ELF32_LINK_ADDR
+#define	ELF_NO_ADDR	ELF32_NO_ADDR
+#define	ELF_LINK_ADDR	ELF32_LINK_ADDR
 #endif
 
 #ifndef ELF32_EHDR_FLAGS_OK
