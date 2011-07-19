@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.15 2009/05/12 06:54:10 cegger Exp $ */
+/* $NetBSD: sbic.c,v 1.16 2011/07/19 15:59:54 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -114,17 +114,17 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.15 2009/05/12 06:54:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.16 2011/07/19 15:59:54 dyoung Exp $");
 
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/kernel.h> /* For hz */
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <dev/scsipi/scsi_all.h>

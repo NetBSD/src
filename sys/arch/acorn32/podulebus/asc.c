@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.17 2011/06/03 07:35:37 matt Exp $	*/
+/*	$NetBSD: asc.c,v 1.18 2011/07/19 15:59:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -98,16 +98,16 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.17 2011/06/03 07:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.18 2011/07/19 15:59:54 dyoung Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/bootconfig.h>		/* asc_poll */
 

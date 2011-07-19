@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus_machdep.h,v 1.3 2011/06/03 07:35:37 matt Exp $ */
+/* $NetBSD: podulebus_machdep.h,v 1.4 2011/07/19 15:59:53 dyoung Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/param.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/io.h>
 
 /* Define the structure used to describe a podule */
