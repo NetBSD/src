@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.77 2011/07/19 19:19:09 tron Exp $
+#	$NetBSD: Makefile,v 1.78 2011/07/19 23:13:31 enami Exp $
 
 .include <bsd.own.mk>
 
@@ -63,6 +63,7 @@ SUBDIR+=	udf
 SUBDIR+=	umap
 SUBDIR+=	union
 SUBDIR+=	usbverbose
+SUBDIR+=	v7fs
 SUBDIR+=	vnd
 SUBDIR+=	tprof
 .if (defined(NOTYET))
@@ -154,7 +155,6 @@ SUBDIR+=	radeondrm
 SUBDIR+=	viadrm
 SUBDIR+=	pad
 SUBDIR+=	padlock
-SUBDIR+=	v7fs
 SUBDIR+=	viac7temp
 SUBDIR+=	wmieeepc
 .endif
