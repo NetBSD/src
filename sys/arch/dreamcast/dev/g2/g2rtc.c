@@ -1,4 +1,4 @@
-/* $NetBSD: g2rtc.c,v 1.5 2010/09/01 17:06:00 tsutsui Exp $ */
+/* $NetBSD: g2rtc.c,v 1.6 2011/07/19 15:52:29 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,15 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.5 2010/09/01 17:06:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.6 2011/07/19 15:52:29 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <dev/clock_subr.h>
 
-#include <machine/bus.h>
 #include <dreamcast/dev/g2/g2busvar.h>
 
 
