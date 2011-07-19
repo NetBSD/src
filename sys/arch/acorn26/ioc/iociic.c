@@ -1,4 +1,4 @@
-/*	$NetBSD: iociic.c,v 1.8 2009/01/18 18:41:34 bjh21 Exp $	*/
+/*	$NetBSD: iociic.c,v 1.9 2011/07/19 16:05:10 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,8 +40,8 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/mutex.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/cpu.h>
 
 #include <acorn26/iobus/iocreg.h> 

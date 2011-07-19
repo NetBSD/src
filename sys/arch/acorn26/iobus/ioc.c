@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.19 2009/03/18 10:22:22 cegger Exp $ */
+/* $NetBSD: ioc.c,v 1.20 2011/07/19 16:05:10 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.19 2009/03/18 10:22:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.20 2011/07/19 16:05:10 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,8 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.19 2009/03/18 10:22:22 cegger Exp $");
 #include <sys/reboot.h>	/* For bootverbose */
 #include <sys/systm.h>
 #include <sys/timetc.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/irq.h>
 
