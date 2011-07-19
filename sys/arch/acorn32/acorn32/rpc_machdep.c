@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.81 2011/06/30 20:09:16 wiz Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.82 2011/07/19 15:59:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.81 2011/06/30 20:09:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.82 2011/07/19 15:59:52 dyoung Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.81 2011/06/30 20:09:16 wiz Exp $")
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
 #include <sys/ksyms.h>
+#include <sys/bus.h>
 
 #include <dev/cons.h>
 
@@ -85,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.81 2011/06/30 20:09:16 wiz Exp $")
 #include <arm/arm32/machdep.h>
 #include <arm/undefined.h>
 #include <machine/rtc.h>
-#include <machine/bus.h>
 
 #include <arm/iomd/vidc.h>
 #include <arm/iomd/iomdreg.h>

@@ -1,4 +1,4 @@
-# $NetBSD: md.acorn32,v 1.25 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.acorn32,v 1.26 2011/07/19 15:59:51 dyoung Exp $
 #./usr/include/acorn32/devmap.h		comp-c-include
 ./usr/include/acorn32				comp-c-include
 ./usr/include/acorn32/ansi.h			comp-c-include
@@ -6,7 +6,7 @@
 ./usr/include/acorn32/asm.h			comp-c-include
 ./usr/include/acorn32/beep.h			comp-obsolete		obsolete
 ./usr/include/acorn32/bswap.h			comp-c-include
-./usr/include/acorn32/bus.h			comp-c-include
+./usr/include/acorn32/bus.h			comp-obsolete		obsolete
 ./usr/include/acorn32/cdefs.h			comp-c-include
 ./usr/include/acorn32/conf.h			comp-obsolete		obsolete
 ./usr/include/acorn32/cpu.h			comp-c-include

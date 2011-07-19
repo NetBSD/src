@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.15 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.16 2011/07/19 15:59:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,20 +50,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.15 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.16 2011/07/19 15:59:54 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/io.h>
 #include <dev/ic/dp8390reg.h>
