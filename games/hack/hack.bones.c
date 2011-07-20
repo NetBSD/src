@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.bones.c,v 1.8 2009/08/12 07:28:40 dholland Exp $	*/
+/*	$NetBSD: hack.bones.c,v 1.9 2011/07/20 07:04:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,13 +63,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.bones.c,v 1.8 2009/08/12 07:28:40 dholland Exp $");
+__RCSID("$NetBSD: hack.bones.c,v 1.9 2011/07/20 07:04:30 dholland Exp $");
 #endif				/* not lint */
 
-#include "hack.h"
-#include "extern.h"
 #include <fcntl.h>
 #include <unistd.h>
+#include "hack.h"
+#include "extern.h"
 
 static char bones[] = "bones_xx";
 
