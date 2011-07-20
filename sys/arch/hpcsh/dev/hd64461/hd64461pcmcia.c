@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.47 2011/07/19 15:30:52 dyoung Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.48 2011/07/20 20:46:49 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.47 2011/07/19 15:30:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.48 2011/07/20 20:46:49 dyoung Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.47 2011/07/19 15:30:52 dyoung Ex
 #include <hpcsh/dev/hd64461/hd64461gpioreg.h>
 #include <hpcsh/dev/hd64461/hd64461pcmciavar.h>
 #include <hpcsh/dev/hd64461/hd64461pcmciareg.h>
+
+#include <hpcsh/bus_util.h>	/* for _BUS_SPACE_WRITE(), et cetera */
 
 #include "locators.h"
 
