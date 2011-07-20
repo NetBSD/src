@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.49 2011/01/29 14:20:18 tsutsui Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.50 2011/07/20 19:27:53 ryoon Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.49 2011/01/29 14:20:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.50 2011/07/20 19:27:53 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,10 +193,6 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		/* The report descriptor for the Wacom Graphire is broken. */
 		switch (uaa->product) {
 		case USB_PRODUCT_WACOM_GRAPHIRE:
-			size = sizeof uhid_graphire_report_descr;
-			descptr = uhid_graphire_report_descr;
-			break;
-
 		case USB_PRODUCT_WACOM_GRAPHIRE2:
 		case USB_PRODUCT_WACOM_GRAPHIRE3_4X5:
 		case USB_PRODUCT_WACOM_GRAPHIRE3_6X8:
