@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.23 2011/07/01 18:48:37 dyoung Exp $	*/
+/*	$NetBSD: schizo.c,v 1.24 2011/07/20 10:39:43 macallan Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/extent.h>
+#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/time.h>
@@ -169,7 +170,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 		   SCZ_ECCCTRL_CE_INTEN;
 	schizo_write(sc, SCZ_ECCCTRL, eccctrl);
 
-	pbm = malloc(sizeof(*pbm), M_DEVBUF, M_NOWAIT | M_ZERO);
+	pbm = kmem_zalloc(sizeof(*pbm), KM_NOSLEEP);
 	if (pbm == NULL)
 		panic("schizo: can't alloc schizo pbm");
 
@@ -250,10 +251,10 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	pbm->sp_pc = schizo_alloc_chipset(pbm, sc->sc_node,
 	    &_sparc_pci_chipset);
 	pbm->sp_pc->spc_busmax = busranges[1];
-	pbm->sp_pc->spc_busnode = malloc(sizeof(*pbm->sp_pc->spc_busnode),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	pbm->sp_pc->spc_busnode = kmem_zalloc(sizeof(*pbm->sp_pc->spc_busnode),
+	    KM_NOSLEEP);
 	if (pbm->sp_pc->spc_busnode == NULL)
-		panic("schizo: malloc busnode");
+		panic("schizo: kmem_alloc busnode");
 
 	pba.pba_bus = busranges[0];
 	pba.pba_bridgetag = NULL;
@@ -452,9 +453,10 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 	}
 
 	/* give us a nice name.. */
-	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
+	name = (char *)kmem_alloc(32, KM_NOSLEEP);
 	if (name == NULL)
-		panic("couldn't malloc iommu name");
+
+		panic("couldn't kmem_alloc iommu name");
 	snprintf(name, 32, "%s dvma", device_xname(sc->sc_dev));
 
 	iommu_init(name, is, tsbsize, iobase);
@@ -521,7 +523,7 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 	    mapoff, clroff));
 
 	ih = (struct intrhand *)
-		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
+		kmem_alloc(sizeof(struct intrhand), KM_NOSLEEP);
 	if (ih == NULL)
 		return;
 	ih->ih_arg = arg;
@@ -564,8 +566,8 @@ schizo_alloc_bus_tag(struct schizo_pbm *pbm, const char *name, int type)
 	struct schizo_softc *sc = pbm->sp_sc;
 	bus_space_tag_t bt;
 
-	bt = (bus_space_tag_t) malloc(sizeof(struct sparc_bus_space_tag),
-		    M_DEVBUF, M_NOWAIT | M_ZERO);
+	bt = (bus_space_tag_t) kmem_zalloc(sizeof(struct sparc_bus_space_tag),
+		    KM_NOSLEEP);
 	if (bt == NULL)
 		panic("schizo: could not allocate bus tag");
 
@@ -584,7 +586,7 @@ schizo_alloc_dma_tag(struct schizo_pbm *pbm)
 	struct schizo_softc *sc = pbm->sp_sc;
 	bus_dma_tag_t dt, pdt = sc->sc_dmat;
 
-	dt = malloc(sizeof(*dt), M_DEVBUF, M_NOWAIT | M_ZERO);
+	dt = kmem_zalloc(sizeof(*dt), KM_NOSLEEP);
 	if (dt == NULL)
 		panic("schizo: could not alloc dma tag");
 
@@ -613,7 +615,7 @@ schizo_alloc_chipset(struct schizo_pbm *pbm, int node, pci_chipset_tag_t pc)
 {
 	pci_chipset_tag_t npc;
 
-	npc = malloc(sizeof *npc, M_DEVBUF, M_NOWAIT);
+	npc = kmem_alloc(sizeof *npc, KM_NOSLEEP);
 	if (npc == NULL)
 		panic("schizo: could not allocate pci_chipset_tag_t");
 	memcpy(npc, pc, sizeof *pc);
@@ -746,7 +748,7 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	vec = INTVEC(ihandle);
 	ino = INTINO(vec);
 
-	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
+	ih = kmem_alloc(sizeof *ih, KM_NOSLEEP);
 	if (ih == NULL)
 		return (NULL);
 
