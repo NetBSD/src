@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.77 2011/06/16 09:21:02 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.78 2011/07/20 11:52:00 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.77 2011/06/16 09:21:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.78 2011/07/20 11:52:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1771,7 +1771,7 @@ msdosfs_pathconf(void *v)
 		*ap->a_retval = 1;
 		return (0);
 	case _PC_NO_TRUNC:
-		*ap->a_retval = 0;
+		*ap->a_retval = 1;
 		return (0);
 	case _PC_SYNC_IO:
 		*ap->a_retval = 1;
