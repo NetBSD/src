@@ -788,7 +788,7 @@ _GLIBCXX_END_NAMESPACE
 /* #undef _GLIBCXX_HAVE_TANL */
 
 /* Define to 1 if you have the <tgmath.h> header file. */
-/* #undef _GLIBCXX_HAVE_TGMATH_H */
+#define _GLIBCXX_HAVE_TGMATH_H 1
 
 /* Define to 1 if the target supports thread-local storage. */
 /* #undef _GLIBCXX_HAVE_TLS */
