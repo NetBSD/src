@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.24 2011/07/20 10:39:43 macallan Exp $	*/
+/*	$NetBSD: schizo.c,v 1.25 2011/07/20 12:06:00 macallan Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -767,6 +767,8 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 
 	DPRINTF(SDB_INTR, ("%s: intr %x: %p mapoff %" PRIx64 " clroff %"
 	    PRIx64 "\n", __func__, ino, intrlev[ino], mapoff, clroff));
+
+	ih->ih_ivec = ihandle;
 
 	intrregs = (uintptr_t)bus_space_vaddr(pbm->sp_regt, pbm->sp_intrh);
 	intrmapptr = (uint64_t *)(uintptr_t)(intrregs + mapoff);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.58 2011/07/01 18:48:36 dyoung Exp $	*/
+/*	$NetBSD: ebus.c,v 1.59 2011/07/20 12:06:00 macallan Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.58 2011/07/01 18:48:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.59 2011/07/20 12:06:00 macallan Exp $");
 
 #include "opt_ddb.h"
 
@@ -285,7 +285,7 @@ ebus_print(void *aux, const char *p)
 		    ea->ea_reg[i].lo,
 		    ea->ea_reg[i].lo + ea->ea_reg[i].size - 1);
 	for (i = 0; i < ea->ea_nintr; i++)
-		aprint_normal(" ipl %d", ea->ea_intr[i]);
+		aprint_normal(" ipl %x", ea->ea_intr[i]);
 	return (UNCONF);
 }
 
