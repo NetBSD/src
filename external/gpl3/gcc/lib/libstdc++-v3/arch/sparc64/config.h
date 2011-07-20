@@ -409,7 +409,7 @@
 /* #undef HAVE_TANL */
 
 /* Define to 1 if you have the <tgmath.h> header file. */
-/* #undef HAVE_TGMATH_H */
+#define HAVE_TGMATH_H 1
 
 /* Define to 1 if the target supports thread-local storage. */
 /* #undef HAVE_TLS */
