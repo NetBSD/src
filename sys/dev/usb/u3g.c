@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.17 2011/03/10 00:13:56 scw Exp $	*/
+/*	$NetBSD: u3g.c,v 1.18 2011/07/20 14:41:39 apb Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.17 2011/03/10 00:13:56 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.18 2011/07/20 14:41:39 apb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,6 +182,7 @@ struct ucom_methods u3g_methods = {
 static const struct usb_devno u3g_devs[] = {
         { USB_VENDOR_DELL, USB_PRODUCT_DELL_W5500 },
 	/* OEM: Huawei */
+	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E1820 },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E220 },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_K3765 },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_MOBILE },
