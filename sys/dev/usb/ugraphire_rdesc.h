@@ -1,4 +1,4 @@
-/*	$NetBSD: ugraphire_rdesc.h,v 1.6 2007/01/22 19:48:57 ghen Exp $	*/
+/*	$NetBSD: ugraphire_rdesc.h,v 1.7 2011/07/20 19:27:53 ryoon Exp $	*/
 /*
  * Copyright (c) 2000 Nick Hibma <n_hibma@freebsd.org>
  * All rights reserved.
@@ -25,72 +25,13 @@
  * SUCH DAMAGE.
  */
 
-static const uByte uhid_graphire_report_descr[] = {
-    0x05, 0x0d,                    /*  USAGE_PAGE (Digitizers)		*/
-    0x09, 0x01,                    /*  USAGE (Digitizer)		*/
-    0xa1, 0x01,                    /*  COLLECTION (Application)		*/
-    0x85, 0x02,                    /*    REPORT_ID (2)			*/
-    0x05, 0x0d,                    /*    USAGE_PAGE (Digitizers)	*/
-    0x09, 0x01,                    /*    USAGE (Digitizer)		*/
-    0xa1, 0x00,                    /*    COLLECTION (Physical)		*/
-    0x15, 0x00,                    /*      LOGICAL_MINIMUM (0)		*/
-    0x25, 0x01,                    /*      LOGICAL_MAXIMUM (1)		*/
-    0x09, 0x33,                    /*      USAGE (Touch)		*/
-    0x95, 0x01,                    /*      REPORT_COUNT (1)		*/
-    0x75, 0x01,                    /*      REPORT_SIZE (1)		*/
-    0x81, 0x02,                    /*      INPUT (Data,Var,Abs)		*/
-    0x09, 0x44,                    /*      USAGE (Barrel Switch)	*/
-    0x95, 0x02,                    /*      REPORT_COUNT (2)		*/
-    0x75, 0x01,                    /*      REPORT_SIZE (1)		*/
-    0x81, 0x02,                    /*      INPUT (Data,Var,Abs)		*/
-    0x09, 0x00,                    /*      USAGE (Undefined)		*/
-    0x95, 0x02,                    /*      REPORT_COUNT (2)		*/
-    0x75, 0x01,                    /*      REPORT_SIZE (1)		*/
-    0x81, 0x03,                    /*      INPUT (Cnst,Var,Abs)		*/
-    0x09, 0x3c,                    /*      USAGE (Invert)		*/
-    0x95, 0x01,                    /*      REPORT_COUNT (1)		*/
-    0x75, 0x01,                    /*      REPORT_SIZE (1)		*/
-    0x81, 0x02,                    /*      INPUT (Data,Var,Abs)		*/
-    0x09, 0x38,                    /*      USAGE (Transducer Index)	*/
-    0x95, 0x01,                    /*      REPORT_COUNT (1)		*/
-    0x75, 0x01,                    /*      REPORT_SIZE (1)		*/
-    0x81, 0x02,                    /*      INPUT (Data,Var,Abs)		*/
-    0x09, 0x32,                    /*      USAGE (In Range)		*/
-    0x95, 0x01,                    /*      REPORT_COUNT (1)		*/
-    0x75, 0x01,                    /*      REPORT_SIZE (1)		*/
-    0x81, 0x02,                    /*      INPUT (Data,Var,Abs)		*/
-    0x05, 0x01,                    /*      USAGE_PAGE (Generic Desktop)	*/
-    0x09, 0x30,                    /*      USAGE (X)			*/
-    0x15, 0x00,                    /*      LOGICAL_MINIMUM (0)		*/
-    0x26, 0xde, 0x27,              /*      LOGICAL_MAXIMUM (10206)	*/
-    0x95, 0x01,                    /*      REPORT_COUNT (1)		*/
-    0x75, 0x10,                    /*      REPORT_SIZE (16)		*/
-    0x81, 0x02,                    /*      INPUT (Data,Var,Abs)		*/
-    0x09, 0x31,                    /*      USAGE (Y)			*/
-    0x26, 0xfe, 0x1c,              /*      LOGICAL_MAXIMUM (7422)	*/
-    0x95, 0x01,                    /*      REPORT_COUNT (1)		*/
-    0x75, 0x10,                    /*      REPORT_SIZE (16)		*/
-    0x81, 0x02,                    /*      INPUT (Data,Var,Abs)		*/
-    0x05, 0x0d,                    /*      USAGE_PAGE (Digitizers)	*/
-    0x09, 0x30,                    /*      USAGE (Tip Pressure)		*/
-    0x26, 0xff, 0x01,              /*      LOGICAL_MAXIMUM (511)	*/
-    0x95, 0x01,                    /*      REPORT_COUNT (1)		*/
-    0x75, 0x10,                    /*      REPORT_SIZE (16)		*/
-    0x81, 0x02,                    /*      INPUT (Data,Var,Abs)		*/
-    0xc0,                          /*    END_COLLECTION			*/
-    0x05, 0x0d,                    /*    USAGE_PAGE (Digitizers)	*/
-    0x09, 0x00,                    /*    USAGE (Undefined)		*/
-    0x85, 0x02,                    /*    REPORT_ID (2)			*/
-    0x95, 0x01,                    /*    REPORT_COUNT (1)		*/
-    0xb1, 0x02,                    /*    FEATURE (Data,Var,Abs)		*/
-    0x09, 0x00,                    /*    USAGE (Undefined)		*/
-    0x85, 0x03,                    /*    REPORT_ID (3)			*/
-    0x95, 0x01,                    /*    REPORT_COUNT (1)		*/
-    0xb1, 0x02,                    /*    FEATURE (Data,Var,Abs)		*/
-    0xc0,                          /*  END_COLLECTION			*/
-};
-
-/* Tested with Graphire3 4x5 and 6x8, and Graphire4 4x5 */
+/* Tested with 
+ * - Graphire
+ * - Graphire2
+ * - Graphire3 4x5
+ * - Graphire3 6x8
+ * - Graphire4 4x5
+ */
 static const uByte uhid_graphire3_4x5_report_descr[] = {
     0x05, 0x01,                    /* USAGE_PAGE (Generic Desktop)	*/
     0x09, 0x02,                    /* USAGE (Mouse)			*/
