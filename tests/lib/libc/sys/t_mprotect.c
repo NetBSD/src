@@ -1,4 +1,4 @@
-/* $NetBSD: t_mprotect.c,v 1.2 2011/07/18 23:16:11 jym Exp $ */
+/* $NetBSD: t_mprotect.c,v 1.3 2011/07/20 22:53:44 jym Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mprotect.c,v 1.2 2011/07/18 23:16:11 jym Exp $");
+__RCSID("$NetBSD: t_mprotect.c,v 1.3 2011/07/20 22:53:44 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -224,21 +224,23 @@ ATF_TC_BODY(mprotect_exec, tc)
 
 	(void)wait(&sta);
 
+	ATF_REQUIRE(munmap(map, page) == 0);
+
 	ATF_REQUIRE(WIFEXITED(sta) != 0);
 
 	switch (xp_support) {
 	case PARTIAL_XP:
-		/* Partial protection might fail: indicate it */
-		ATF_CHECK_MSG(WEXITSTATUS(sta) == SIGSEGV,
-		    "Host only supports partial executable space protection");
+		/* Partial protection might fail; skip the test when it does */
+		if (WEXITSTATUS(sta) != SIGSEGV) {
+			atf_tc_skip("Host only supports "
+			    "partial executable space protection");
+		}
 		break;
 	case PERPAGE_XP: default:
 		/* Per-page --x protection should not fail */
 		ATF_REQUIRE(WEXITSTATUS(sta) == SIGSEGV);
 		break;
 	}
-
-	ATF_REQUIRE(munmap(map, page) == 0);
 }
 
 ATF_TC(mprotect_pax);
