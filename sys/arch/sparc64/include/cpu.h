@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.96 2011/04/13 03:40:00 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.97 2011/07/20 12:06:00 macallan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -331,6 +331,9 @@ struct intrhand {
 	struct intrhand		*ih_pending;	/* interrupt queued */
 	volatile uint64_t	*ih_map;	/* Interrupt map reg */
 	volatile uint64_t	*ih_clr;	/* clear interrupt reg */
+	struct evcnt		ih_cnt;		/* counter for vmstat */
+	uint32_t		ih_ivec;
+	char			ih_name[32];	/* name for the above */
 };
 extern struct intrhand *intrhand[];
 extern struct intrhand *intrlev[MAXINTNUM];
