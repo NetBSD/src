@@ -120,7 +120,7 @@
 /* #undef HAVE_FABSL */
 
 /* Define to 1 if you have the <fenv.h> header file. */
-#define HAVE_FENV_H 1
+/* #undef HAVE_FENV_H */
 
 /* Define to 1 if you have the `finite' function. */
 #define HAVE_FINITE 1
