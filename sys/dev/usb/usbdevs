@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.586 2011/07/20 14:38:04 apb Exp $
+$NetBSD: usbdevs,v 1.587 2011/07/20 17:06:00 jakllsch Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -397,6 +397,7 @@ vendor PROLIFIC2	0x0b8c	Prolific Technology Inc
 vendor O2MICRO		0x0b97	O2 Micro
 vendor USR		0x0baf	U.S. Robotics
 vendor AMBIT		0x0bb2	Ambit Microsystems
+vendor HTC		0x0bb4	HTC
 vendor REALTEK		0x0bda	Realtek
 vendor ADDONICS2	0x0bf6	Addonics Technology
 vendor FSC		0x0bf8	Fujitsu Siemens Computers
@@ -1482,6 +1483,9 @@ product HP HN210E		0x811c	Ethernet HN210E
 /* HP products */
 product HP2 C500		0x6002	PhotoSmart C500
 
+/* HTC products */
+product HTC ANDROID		0x0ffe	Android
+
 /* Huawei Technologies products */
 product HUAWEI MOBILE		0x1001	Huawei Mobile
 product HUAWEI E220  		0x1003	Huawei E220
@@ -2360,7 +2364,9 @@ product SAITEK CYBORG_3D_GOLD	0x0006	Cyborg 3D Gold Joystick
 product SAMSUNG MIGHTYDRIVE	0x1623	Mighty Drive
 product SAMSUNG RT2870_1	0x2018	RT2870
 product SAMSUNG ML6060		0x3008	ML-6060 laser printer
+product SAMSUNG ANDROID		0x6863	Android
 product SAMSUNG GTB3710		0x6876	GT-B3710 LTE/4G datacard
+product SAMSUNG ANDROID2	0x6881	Android
 product SAMSUNG GTB3730		0x689a	GT-B3730 LTE/4G datacard
 
 /* SanDisk products */
