@@ -499,7 +499,7 @@ _GLIBCXX_END_NAMESPACE
 /* #undef _GLIBCXX_HAVE_FABSL */
 
 /* Define to 1 if you have the <fenv.h> header file. */
-#define _GLIBCXX_HAVE_FENV_H 1
+/* #undef _GLIBCXX_HAVE_FENV_H */
 
 /* Define to 1 if you have the `finite' function. */
 #define _GLIBCXX_HAVE_FINITE 1
