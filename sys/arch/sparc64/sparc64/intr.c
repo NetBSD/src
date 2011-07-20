@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.63 2011/06/18 18:51:18 nakayama Exp $ */
+/*	$NetBSD: intr.c,v 1.64 2011/07/20 12:06:00 macallan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.63 2011/06/18 18:51:18 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.64 2011/07/20 12:06:00 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -68,6 +68,8 @@ struct intrhand *intrlev[MAXINTNUM];
 
 void	strayintr(const struct trapframe64 *, int);
 int	intr_list_handler(void *);
+
+extern struct evcnt intr_evcnts[];
 
 /*
  * Stray interrupt handler.  Clear it if possible.
@@ -175,6 +177,20 @@ intr_establish(int level, bool mpsafe, struct intrhand *ih)
 	ih->ih_pil = level; /* XXXX caller should have done this before */
 	ih->ih_pending = 0; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
+#ifdef DEBUG
+	printf("%s: level %x ivec %x\n", __func__, level, ih->ih_ivec);
+#endif
+	/*
+	 * no need for a separate counter if ivec == 0, in that case there's
+	 * either only one device using the interrupt level and there's already
+	 * a counter for it or it's something special like psycho's error
+	 * interrupts
+	 */
+	if (ih->ih_ivec != 0) {
+		snprintf(ih->ih_name, sizeof(ih->ih_name), "%x", ih->ih_ivec);
+		evcnt_attach_dynamic(&ih->ih_cnt, EVCNT_TYPE_INTR,
+		    &intr_evcnts[level], "ivec", ih->ih_name);
+	}
 
 #ifdef MULTIPROCESSOR
 	if (!mpsafe) {

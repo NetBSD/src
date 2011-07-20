@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.65 2011/06/18 18:51:18 nakayama Exp $
+#	$NetBSD: genassym.cf,v 1.66 2011/07/20 12:06:00 macallan Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -246,6 +246,7 @@ define	IH_PEND		offsetof(struct intrhand, ih_pending)
 define	IH_NEXT		offsetof(struct intrhand, ih_next)
 define	IH_MAP		offsetof(struct intrhand, ih_map)
 define	IH_CLR		offsetof(struct intrhand, ih_clr)
+define  IH_CNT		offsetof(struct intrhand, ih_cnt)
 	
 # mbuf fields of import
 define	M_NEXT		offsetof(struct mbuf, m_next)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.88 2011/07/01 18:48:37 dyoung Exp $ */
+/*	$NetBSD: sbus.c,v 1.89 2011/07/20 12:06:00 macallan Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.88 2011/07/01 18:48:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.89 2011/07/20 12:06:00 macallan Exp $");
 
 #include "opt_ddb.h"
 
@@ -578,6 +578,7 @@ sbus_intr_establish(bus_space_tag_t t, int pri, int level,
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
 	ih->ih_number = vec;
+	ih->ih_ivec = 0;
 	ih->ih_pil = (1<<ipl);
 	intr_establish(ipl, level != IPL_VM, ih);
 	return (ih);

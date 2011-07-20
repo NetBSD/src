@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.108 2011/07/01 18:48:37 dyoung Exp $	*/
+/*	$NetBSD: psycho.c,v 1.109 2011/07/20 12:06:00 macallan Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.108 2011/07/01 18:48:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.109 2011/07/20 12:06:00 macallan Exp $");
 
 #include "opt_ddb.h"
 
@@ -1227,6 +1227,8 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
 		return (NULL);
+
+	ih->ih_ivec = ihandle;
 
 	/*
 	 * Hunt through all the interrupt mapping regs to look for our

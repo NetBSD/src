@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.335 2011/07/12 07:51:34 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.336 2011/07/20 12:06:00 macallan Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3452,6 +3452,11 @@ sparc_intr_retry:
 	 add	%l5, %o0, %l5
 	stx	%g0, [%l1]		! Clear intr source
 	membar	#Sync			! Should not be needed
+
+	! increment per-ivec counter
+	ldx	[%l2 + IH_CNT], %l1
+	add	%l1, 1, %l1
+	stx	%l1, [%l2 + IH_CNT] 
 0:
 	cmp	%l7, -1
 	bne,pn	CCCR, 2b		! 'Nother?
