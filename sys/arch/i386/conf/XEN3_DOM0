@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.52 2011/05/28 13:01:50 ryo Exp $
+#	$NetBSD: XEN3_DOM0,v 1.53 2011/07/20 20:27:42 jakllsch Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -590,6 +590,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
+urndis*	at uhub? port ?		# Microsoft RNDIS specification
 
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
