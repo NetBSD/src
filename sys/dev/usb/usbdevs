@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.585 2011/07/19 06:52:33 jruoho Exp $
+$NetBSD: usbdevs,v 1.586 2011/07/20 14:38:04 apb Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1487,6 +1487,7 @@ product HUAWEI MOBILE		0x1001	Huawei Mobile
 product HUAWEI E220  		0x1003	Huawei E220
 product HUAWEI E1750INIT  	0x1446	Huawei E1750 USB CD
 product HUAWEI K3765  		0x1465	Huawei K3765
+product HUAWEI E1820  		0x14ac	Huawei E1820
 product HUAWEI K3765INIT 	0x1520	Huawei K3765 USB CD
 
 /* Huawei-3Com products */
