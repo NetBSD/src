@@ -3,7 +3,7 @@
 /* Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp  */
 
 /* Generated automatically. */
-static const char configuration_arguments[] = "/home/drochner/netbsd/work/tools/gcc/../../external/gpl3/gcc/dist/configure --target=i486--netbsdelf --enable-long-long --enable-threads --with-bugurl=http://www.NetBSD.org/Misc/send-pr.html --with-pkgversion='NetBSD nb1 20110620' --enable-__cxa_atexit --with-arch=i486 --with-tune=nocona --with-mpc=//usr --with-mpfr=//usr --with-gmp=//usr --disable-multilib --disable-symvers --disable-libstdcxx-pch --build=i386-unknown-netbsdelf5.99.54 --host=i486--netbsdelf";
+static const char configuration_arguments[] = "/usr/src2/tools/gcc/../../external/gpl3/gcc/dist/configure --target=i486--netbsdelf --enable-long-long --enable-threads --with-bugurl=http://www.NetBSD.org/Misc/send-pr.html --with-pkgversion='NetBSD nb1 20110620' --enable-__cxa_atexit --with-arch=i486 --with-tune=nocona --with-mpc=/var/obj/i386/usr/src2/destdir.i386/usr --with-mpfr=/var/obj/i386/usr/src2/destdir.i386/usr --with-gmp=/var/obj/i386/usr/src2/destdir.i386/usr --disable-multilib --disable-symvers --disable-libstdcxx-pch --build=x86_64-unknown-netbsd5.99.54 --host=i486--netbsdelf";
 static const char thread_model[] = "posix";
 
 static const struct {
