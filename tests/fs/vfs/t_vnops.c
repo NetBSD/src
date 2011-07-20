@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.24 2011/05/30 13:10:38 martin Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.25 2011/07/20 11:52:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -439,8 +439,6 @@ create_nametoolong(const atf_tc_t *tc, const char *mp)
 	if (val == -1)
 		atf_tc_fail_errno("pathconf");
 
-	if (FSTYPE_MSDOS(tc))
-		atf_tc_expect_fail("PR kern/43670");
 	fd = rump_sys_open(name, O_RDWR|O_CREAT, 0666);
 	if (val != 0 && (fd != -1 || errno != ENAMETOOLONG))
 		atf_tc_fail_errno("open");
@@ -511,8 +509,6 @@ rename_nametoolong(const atf_tc_t *tc, const char *mp)
 	if (val == -1)
 		atf_tc_fail_errno("pathconf");
 
-	if (FSTYPE_MSDOS(tc))
-		atf_tc_expect_fail("PR kern/43670");
 	res = rump_sys_rename("dummy", name);
 	if (val != 0 && (res != -1 || errno != ENAMETOOLONG))
 		atf_tc_fail_errno("rename");
