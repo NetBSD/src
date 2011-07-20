@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.21 2011/07/16 15:52:21 tsutsui Exp $
+#	$NetBSD: Makefile.luna68k,v 1.22 2011/07/20 12:00:04 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -60,7 +60,7 @@ LINKFORMAT=	-N -T ldscript
 
 SYSTEM_LD_HEAD_EXTRA+=; \
 	( cat ${LUNA68K}/conf/kern.ldscript.head ; \
-	  ELF2AOUT=${ELF2AOUT} ${HOST_SH} $S/conf/mkldscript.sh \
+	  OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
 	        ${SYSTEM_OBJ} ; \
 	  cat ${LUNA68K}/conf/kern.ldscript.tail ) > ldscript
 
