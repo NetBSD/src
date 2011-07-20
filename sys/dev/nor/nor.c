@@ -1,4 +1,4 @@
-/*	$NetBSD: nor.c,v 1.2 2011/07/15 19:37:41 cliff Exp $	*/
+/*	$NetBSD: nor.c,v 1.3 2011/07/20 03:42:55 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NOR chips implementing the ONFI CFI specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nor.c,v 1.2 2011/07/15 19:37:41 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nor.c,v 1.3 2011/07/20 03:42:55 cliff Exp $");
 
 #include "locators.h"
 #include "opt_nor.h"
@@ -98,7 +98,7 @@ struct flash_interface nor_flash_if = {
 };
 
 #ifdef NOR_VERBOSE
-const nor_manufacturer_t nor_mfrs[] = {
+const struct nor_manufacturer nor_mfrs[] = {
 	{ NOR_MFR_AMD,		"AMD" },
 	{ NOR_MFR_FUJITSU,	"Fujitsu" },
 	{ NOR_MFR_RENESAS,	"Renesas" },
