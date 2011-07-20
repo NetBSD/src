@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2011/07/17 20:54:39 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2011/07/20 13:21:12 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -122,8 +122,8 @@ char module_machine_booke[] = "powerpc-booke";
 void	initppc(vaddr_t, vaddr_t, void *, void *, void *, void *);
 
 #define	MEMREGIONS	4
-phys_ram_seg_t physmemr[MEMREGIONS];         /* All memory */
-phys_ram_seg_t availmemr[MEMREGIONS];        /* Available memory */
+phys_ram_seg_t physmemr[MEMREGIONS];		/* All memory */
+phys_ram_seg_t availmemr[2*MEMREGIONS];		/* Available memory */
 static u_int nmemr;
 
 #ifndef CONSFREQ
@@ -536,9 +536,10 @@ memprobe(vaddr_t endkernel)
 	/*
 	 * Steal pages at the end of memory for the kernel message buffer.
 	 */
-	availmemr[cnt-1].size -= round_page(MSGBUFSIZE);
-	msgbuf_paddr =
-	    (uintptr_t)(availmemr[cnt-1].start + availmemr[cnt-1].size);
+	mr = availmemr + cnt - 1;
+	KASSERT(mr->size >= round_page(MSGBUFSIZE));
+	mr->size -= round_page(MSGBUFSIZE);
+	msgbuf_paddr = (uintptr_t)(mr->start + mr->size);
 
 	/*
 	 * Calculate physmem.
