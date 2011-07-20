@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1580 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1581 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1061,6 +1061,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		for AR71xx (24K) and AR9344 (74K) SoCs.
 	dtv(4): Add digital TV framework. [jmcneill 20110709]
 	auvitek(4): Add digital capture support. [jmcneill 20110709]
+	cxdtv(4): Add driver for Conexant CX23880-based DTV cards.
+		[jakllsch 20110711]
 	hpacel(4): Add a driver for HP 3D DriveGuard; a LIS3LV02DL-based
 		accelerometer. [jruoho 20110713]
 	emdtv(4): Add a driver for Empia EM28xx family USB video
@@ -1077,3 +1079,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[tsutsui 20110716]
 	luna68k: Build a ramdisk based INSTALL kernel with sysinst(8).
 		[tsutsui 20110716]
+	urndis(4): Add driver for Microsoft RNDIS-based USB networking devices,
+		such as Android-based phones. From OpenBSD. [jakllsch 20110720]
