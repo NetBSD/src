@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.325 2011/07/21 04:00:25 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.326 2011/07/21 04:05:14 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.325 $"
+#ident 		"GENERIC-$Revision: 1.326 $"
 
 maxusers	64		# estimated number of users
 
@@ -318,6 +318,7 @@ ug*		at acpi?		# Abit uGuru Hardware monitor
 wb*		at acpi?		# Winbond W83L518D SD/MMC reader
 sdmmc*		at wb?			# SD/MMC bus
 wmidell*	at acpiwmibus?		# Dell WMI mappings
+wmieeepc*	at acpiwmibus?		# Asus Eee PC WMI mappings
 wmihp*		at acpiwmibus?		# HP WMI mappings
 wmimsi* 	at acpiwmibus?		# MSI WMI mappings
 
