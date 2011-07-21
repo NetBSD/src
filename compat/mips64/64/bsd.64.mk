@@ -1,11 +1,10 @@
-#	$NetBSD: bsd.64.mk,v 1.7 2011/07/10 03:05:33 mrg Exp $
+#	$NetBSD: bsd.64.mk,v 1.8 2011/07/21 03:13:30 mrg Exp $
 
 .if ${MACHINE_ARCH} == "mips64eb"
 LD+=		-m elf64btsmip
 .else
 LD+=		-m elf64ltsmip
 .endif
-LIBGMP_MACHINE_ARCH=	${MACHINE_ARCH}
 MLIBDIR=	64
 
 COPTS+=		-mabi=64
