@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.44 2011/05/11 00:17:55 dyoung Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.45 2011/07/21 15:25:14 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.44 2011/05/11 00:17:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.45 2011/07/21 15:25:14 njoly Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 8
 
@@ -817,7 +817,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 			goto error;
 		}
 
-		DPRINTF("init engine\n");
+		DPRINTF(("init engine\n"));
 		/* XXX: this seems suspicious - per display engine
 		   initialization? */
 		radeonfb_engine_init(dp);
