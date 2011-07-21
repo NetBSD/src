@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2011/07/19 15:59:01 tron Exp $
+#	$NetBSD: Makefile,v 1.12 2011/07/21 03:01:26 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -303,11 +303,15 @@ alias.d alias.o: insn-constants.h tm_p.h
 cgraphunit.d cgraphunit.o: gcov-io.h
 vec.lo: gtype-desc.h
 gtype-desc.d gtype-desc.o: insn-constants.h
-# XXX
+insn-emit.d insn-emit.o: tm-constrs.h
+
+.if ${MACHINE_CPU} == "arm"
+arm.d arm.o: insn-constants.h tm_p.h
+.endif
+
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 i386.d i386.o: tm-constrs.h
 .endif
-insn-emit.d insn-emit.o: tm-constrs.h
 
 CFLAGS+=	-Wno-stack-protector
 
