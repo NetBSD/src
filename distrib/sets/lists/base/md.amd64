@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.129 2011/07/05 22:05:36 spz Exp $
+# $NetBSD: md.amd64,v 1.130 2011/07/21 03:13:31 mrg Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -78,12 +78,12 @@
 ./usr/lib/i386/libcrypto.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcurses.so.7			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcurses.so.7.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libgmp.so.10			base-compat-shlib	gcc=45,compat,pic
-./usr/lib/i386/libgmp.so.10.2			base-compat-shlib	gcc=45,compat,pic
-./usr/lib/i386/libmpc.so.2			base-compat-shlib	gcc=45,compat,pic
-./usr/lib/i386/libmpc.so.2.0			base-compat-shlib	gcc=45,compat,pic
-./usr/lib/i386/libmpfr.so.4			base-compat-shlib	gcc=45,compat,pic
-./usr/lib/i386/libmpfr.so.4.1			base-compat-shlib	gcc=45,compat,pic
+./usr/lib/i386/libgmp.so.10			base-compat-shlib	obsolete
+./usr/lib/i386/libgmp.so.10.2			base-compat-shlib	obsolete
+./usr/lib/i386/libmpc.so.2			base-compat-shlib	obsolete
+./usr/lib/i386/libmpc.so.2.0			base-compat-shlib	obsolete
+./usr/lib/i386/libmpfr.so.4			base-compat-shlib	obsolete
+./usr/lib/i386/libmpfr.so.4.1			base-compat-shlib	obsolete
 ./usr/lib/i386/libdes.so.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdes.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdevmapper.so.1		base-compat-shlib	compat,pic,lvm

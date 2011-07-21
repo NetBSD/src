@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.59 2011/07/05 22:05:36 spz Exp $
+# $NetBSD: ad.mips64eb,v 1.60 2011/07/21 03:13:31 mrg Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -99,8 +99,8 @@
 ./usr/lib/64/libform.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libgcc_s.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libgcc_s.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/64/libgmp.so.10			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/64/libgmp.so.10.2			base-compat-shlib	compat,pic,gcc=45
+./usr/lib/64/libgmp.so.10			base-compat-shlib	obsolete
+./usr/lib/64/libgmp.so.10.2			base-compat-shlib	obsolete
 ./usr/lib/64/libgnumalloc.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libgnumalloc.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/64/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos
@@ -161,10 +161,10 @@
 ./usr/lib/64/libmenu.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libmj.so.1				base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libmj.so.1.0			base-compat-shlib	compat,pic,crypto
-./usr/lib/64/libmpc.so.2			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/64/libmpc.so.2.0			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/64/libmpfr.so.4			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/64/libmpfr.so.4.1			base-compat-shlib	compat,pic,gcc=45
+./usr/lib/64/libmpc.so.2			base-compat-shlib	obsolete
+./usr/lib/64/libmpc.so.2.0			base-compat-shlib	obsolete
+./usr/lib/64/libmpfr.so.4			base-compat-shlib	obsolete
+./usr/lib/64/libmpfr.so.4.1			base-compat-shlib	obsolete
 ./usr/lib/64/libnetpgp.so.3			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libnetpgp.so.3.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libnpf.so.0			base-compat-shlib	compat,pic,npf
@@ -383,8 +383,8 @@
 ./usr/lib/o32/libform.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libgcc_s.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libgcc_s.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/o32/libgmp.so.10			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/o32/libgmp.so.10.2			base-compat-shlib	compat,pic,gcc=45
+./usr/lib/o32/libgmp.so.10			base-compat-shlib	obsolete
+./usr/lib/o32/libgmp.so.10.2			base-compat-shlib	obsolete
 ./usr/lib/o32/libgnumalloc.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libgnumalloc.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/o32/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos
@@ -445,10 +445,10 @@
 ./usr/lib/o32/libmenu.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libmj.so.1			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libmj.so.1.0			base-compat-shlib	compat,pic,crypto
-./usr/lib/o32/libmpc.so.2			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/o32/libmpc.so.2.0			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/o32/libmpfr.so.4			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/o32/libmpfr.so.4.1			base-compat-shlib	compat,pic,gcc=45
+./usr/lib/o32/libmpc.so.2			base-compat-shlib	obsolete
+./usr/lib/o32/libmpc.so.2.0			base-compat-shlib	obsolete
+./usr/lib/o32/libmpfr.so.4			base-compat-shlib	obsolete
+./usr/lib/o32/libmpfr.so.4.1			base-compat-shlib	obsolete
 ./usr/lib/o32/libnetpgp.so.3			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libnetpgp.so.3.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libnpf.so.0			base-compat-shlib	compat,pic,npf

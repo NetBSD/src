@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.180 2011/07/07 15:05:41 matt Exp $
+# $NetBSD: shl.mi,v 1.181 2011/07/21 03:13:32 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -41,10 +41,10 @@
 ./usr/lib/libgcc_eh_p.a				comp-c-proflib		profile
 ./usr/lib/libgcc_eh_pic.a			comp-c-piclib
 ./usr/lib/libgcc_pic.a				comp-c-lib
-./usr/lib/libgmp.so				comp-c-shlib	gcc=45
-./usr/lib/libgmp.so.10				comp-c-shlib	gcc=45
-./usr/lib/libgmp.so.10.2			comp-c-shlib	gcc=45
-./usr/lib/libgmp_pic.a				comp-c-piclib	gcc=45
+./usr/lib/libgmp.so				comp-c-shlib		obsolete
+./usr/lib/libgmp.so.10				comp-c-shlib		obsolete
+./usr/lib/libgmp.so.10.2			comp-c-shlib		obsolete
+./usr/lib/libgmp_pic.a				comp-c-piclib		obsolete
 ./usr/lib/libgnumalloc_pic.a			comp-c-piclib
 ./usr/lib/libgssapi_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libhdb_pic.a				comp-c-piclib		kerberos
@@ -79,14 +79,14 @@
 ./usr/lib/libmagic_pic.a			comp-c-piclib
 ./usr/lib/libmenu_pic.a				comp-c-piclib
 ./usr/lib/libmj_pic.a				comp-c-piclib
-./usr/lib/libmpc.so				comp-c-shlib	gcc=45
-./usr/lib/libmpc.so.2				comp-c-shlib	gcc=45
-./usr/lib/libmpc.so.2.0				comp-c-shlib	gcc=45
-./usr/lib/libmpc_pic.a				comp-c-piclib	gcc=45
-./usr/lib/libmpfr.so				comp-c-shlib	gcc=45
-./usr/lib/libmpfr.so.4				comp-c-shlib	gcc=45
-./usr/lib/libmpfr.so.4.1			comp-c-shlib	gcc=45
-./usr/lib/libmpfr_pic.a				comp-c-piclib	gcc=45
+./usr/lib/libmpc.so				comp-c-shlib		obsolete
+./usr/lib/libmpc.so.2				comp-c-shlib		obsolete
+./usr/lib/libmpc.so.2.0				comp-c-shlib		obsolete
+./usr/lib/libmpc_pic.a				comp-c-piclib		obsolete
+./usr/lib/libmpfr.so				comp-c-shlib		obsolete
+./usr/lib/libmpfr.so.4				comp-c-shlib		obsolete
+./usr/lib/libmpfr.so.4.1			comp-c-shlib		obsolete
+./usr/lib/libmpfr_pic.a				comp-c-piclib		obsolete
 ./usr/lib/libnetpgp_pic.a			comp-c-piclib		crypto
 ./usr/lib/libnpf_pic.a				comp-npf-piclib		npf
 ./usr/lib/libnvpair_pic.a			comp-zfs-piclib		zfs
@@ -262,7 +262,7 @@
 ./usr/libdata/debug/usr/lib/libform.so.6.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug
 ./usr/libdata/debug/usr/lib/libgcc_s.so.1.0.debug	comp-sys-debug	gcc,debug
-./usr/libdata/debug/usr/lib/libgmp.so.10.2.debug	comp-c-shlib	gcc=45,debug
+./usr/libdata/debug/usr/lib/libgmp.so.10.2.debug	comp-c-shlib	obsolete
 ./usr/libdata/debug/usr/lib/libgnumalloc.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libgssapi.so.10.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libhdb.so.14.0.debug	comp-krb5-debug	kerberos,debug
@@ -293,8 +293,8 @@
 ./usr/libdata/debug/usr/lib/libmagic.so.3.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmenu.so.6.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmj.so.1.0.debug		comp-crypto-debug	debug
-./usr/libdata/debug/usr/lib/libmpc.so.2.0.debug		comp-c-shlib	gcc=45,debug
-./usr/libdata/debug/usr/lib/libmpfr.so.4.1.debug	comp-c-shlib	gcc=45,debug
+./usr/libdata/debug/usr/lib/libmpc.so.2.0.debug		comp-c-shlib	obsolete
+./usr/libdata/debug/usr/lib/libmpfr.so.4.1.debug	comp-c-shlib	obsolete
 ./usr/libdata/debug/usr/lib/libnetpgp.so.3.0.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libnpf.so.0.0.debug		comp-npf-debug	npf,debug
 ./usr/libdata/debug/usr/lib/libnvpair.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug

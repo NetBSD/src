@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.123 2011/07/05 22:05:36 spz Exp $
+# $NetBSD: md.sparc64,v 1.124 2011/07/21 03:13:31 mrg Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -100,8 +100,8 @@
 ./usr/lib/sparc/libform.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libgcc_s.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libgcc_s.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libgmp.so.10			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/sparc/libgmp.so.10.2			base-compat-shlib	compat,pic,gcc=45
+./usr/lib/sparc/libgmp.so.10			base-compat-shlib	obsolete
+./usr/lib/sparc/libgmp.so.10.2			base-compat-shlib	obsolete
 ./usr/lib/sparc/libgnumalloc.so.1		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libgnumalloc.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos
@@ -163,10 +163,10 @@
 ./usr/lib/sparc/libmenu.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmj.so.1			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libmj.so.1.0			base-compat-shlib	compat,pic,crypto
-./usr/lib/sparc/libmpc.so.2			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/sparc/libmpc.so.2.0			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/sparc/libmpfr.so.4			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/sparc/libmpfr.so.4.1			base-compat-shlib	compat,pic,gcc=45
+./usr/lib/sparc/libmpc.so.2			base-compat-shlib	obsolete
+./usr/lib/sparc/libmpc.so.2.0			base-compat-shlib	obsolete
+./usr/lib/sparc/libmpfr.so.4			base-compat-shlib	obsolete
+./usr/lib/sparc/libmpfr.so.4.1			base-compat-shlib	obsolete
 ./usr/lib/sparc/libnetpgp.so.3			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libnetpgp.so.3.0		base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libnpf.so.0			base-compat-shlib	compat,pic,npf

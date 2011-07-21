@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/07/05 08:36:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/21 03:13:32 mrg Exp $
 
 MYOBJS=		${G_OBJC_OBJS} ${G_C_AND_OBJC_OBJS} 
 PROG=		cc1obj
@@ -16,7 +16,7 @@ CPPFLAGS.c-cppbuiltin.c=	${VER_CPPFLAGS}
 
 COPTS+=	-Wno-stack-protector
 
-LDADD+=	-lmpc -lmpfr -lgmp -lintl -lz
+LDADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} -lintl -lz
 DPADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} ${LIBINTL} ${LIBZ}
 
 .PATH: ${DIST}/gcc/objc ${DIST}/gcc ${G_out_file:H}

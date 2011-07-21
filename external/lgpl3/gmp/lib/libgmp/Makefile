@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile,v 1.9 2011/07/18 16:55:49 tron Exp $
+#	$NetBSD: Makefile,v 1.10 2011/07/21 03:13:30 mrg Exp $
 
 .include <bsd.init.mk>
+
+# We don't install gmp, just provide it for GCC.
+LIBISPRIVATE=	yes
 
 DIST=${.CURDIR}/../../dist
 
@@ -137,10 +140,7 @@ CLEANFILES+=	${_dir}_${_srcfile}
 
 .endfor
 
-INCS=		gmp.h
-INCSDIR=	/usr/include
-
-CPPFLAGS+=	-I. -I${DIST} -I${.CURDIR}/arch/${LIBGMP_MACHINE_ARCH} -D__GMP_WITHIN_GMP -DHAVE_CONFIG_H
+CPPFLAGS+=	-I. -I${DIST} -I${.CURDIR}/arch/${MACHINE_ARCH} -D__GMP_WITHIN_GMP -DHAVE_CONFIG_H
 
 WITHOUT_MAN=	yes
 
@@ -174,18 +174,13 @@ perfsqr.h: gen-psqr.c
 
 CLEANFILES+=	${DPSRCS} gen-fac_ui gen-fib gen-bases gen-psqr gen-trialdivtab
 
-.if defined(MLIBDIR)
-LIBGMP_MACHINE_ARCH?=${MLIBDIR}
-.endif
-LIBGMP_MACHINE_ARCH?=${MACHINE_ARCH}
-
-.include "${.CURDIR}/arch/${LIBGMP_MACHINE_ARCH}/Makefile.inc"
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
 
 .include <bsd.lib.mk>
 
 .PATH:	${DIST} \
 	${DIST}/mpn/generic \
-	${.CURDIR}/arch/${LIBGMP_MACHINE_ARCH} \
+	${.CURDIR}/arch/${MACHINE_ARCH} \
 	${DIST}/mpf \
 	${DIST}/mpz
 
