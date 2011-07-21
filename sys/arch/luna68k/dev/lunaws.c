@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.20 2009/10/26 19:16:56 cegger Exp $ */
+/* $NetBSD: lunaws.c,v 1.21 2011/07/21 10:33:17 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.20 2009/10/26 19:16:56 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.21 2011/07/21 10:33:17 tsutsui Exp $");
 
 #include "wsmouse.h"
 
@@ -416,7 +416,7 @@ omkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	switch (cmd) {
 	    case WSKBDIO_GTYPE:
-		*(int *)data = 0x19991005 /* XXX */;
+		*(int *)data = WSKBD_TYPE_LUNA;
 		return 0;
 	    case WSKBDIO_SETLEDS:
 	    case WSKBDIO_GETLEDS:
