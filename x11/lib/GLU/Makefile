@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2005/09/24 13:51:46 chs Exp $
+#	$NetBSD: Makefile,v 1.8 2011/07/21 03:36:29 mrg Exp $
 
 NOLINT=		1	# XTODO: tess.ln SIGSEGVs lint :(
 
@@ -68,3 +68,9 @@ DPADD+=		${LIBSTDCXX} ${LIBM}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
+
+# Many const char * vs char * issues in xsrc/xfree
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45
+# XXX -Wno-deprecated doesn't work?
+CXXFLAGS+=	-Wno-error
+.endif
