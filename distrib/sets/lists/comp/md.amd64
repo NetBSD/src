@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.125 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.amd64,v 1.126 2011/07/21 03:13:31 mrg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -552,11 +552,11 @@
 ./usr/lib/i386/libgcov_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libgcov_p.a			comp-obsolete		obsolete
 ./usr/lib/i386/libgcov_pic.a			comp-obsolete		obsolete
-./usr/lib/i386/libgmp.a				comp-c-lib		gcc=45,compat
-./usr/lib/i386/libgmp.so			comp-sys-shlib		gcc=45,compat,pic
-./usr/lib/i386/libgmp_g.a			-unknown-		gcc=45,compat,debuglib
-./usr/lib/i386/libgmp_p.a			comp-c-proflib		gcc=45,compat,profile
-./usr/lib/i386/libgmp_pic.a			comp-c-piclib		gcc=45,compat,pic
+./usr/lib/i386/libgmp.a				comp-c-lib		obsolete
+./usr/lib/i386/libgmp.so			comp-sys-shlib		obsolete
+./usr/lib/i386/libgmp_g.a			-unknown-		obsolete
+./usr/lib/i386/libgmp_p.a			comp-c-proflib		obsolete
+./usr/lib/i386/libgmp_pic.a			comp-c-piclib		obsolete
 ./usr/lib/i386/libgnumalloc.a			comp-c-lib		compat
 ./usr/lib/i386/libgnumalloc.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libgnumalloc_g.a			comp-c-proflib		compat,debuglib
@@ -719,16 +719,16 @@
 ./usr/lib/i386/libmj_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libmj_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libmj_pic.a			comp-c-piclib		compat,pic
-./usr/lib/i386/libmpc.a				comp-c-lib		gcc=45,compat
-./usr/lib/i386/libmpc.so			comp-sys-shlib		gcc=45,compat,pic
-./usr/lib/i386/libmpc_g.a			-unknown-		gcc=45,compat,debuglib
-./usr/lib/i386/libmpc_p.a			comp-c-proflib		gcc=45,compat,profile
-./usr/lib/i386/libmpc_pic.a			comp-c-piclib		gcc=45,compat,pic
-./usr/lib/i386/libmpfr.a			comp-c-lib		gcc=45,compat
-./usr/lib/i386/libmpfr.so			comp-sys-shlib		gcc=45,compat,pic
-./usr/lib/i386/libmpfr_g.a			-unknown-		gcc=45,compat,debuglib
-./usr/lib/i386/libmpfr_p.a			comp-c-proflib		gcc=45,compat,profile
-./usr/lib/i386/libmpfr_pic.a			comp-c-piclib		gcc=45,compat,pic
+./usr/lib/i386/libmpc.a				comp-c-lib		obsolete
+./usr/lib/i386/libmpc.so			comp-sys-shlib		obsolete
+./usr/lib/i386/libmpc_g.a			-unknown-		obsolete
+./usr/lib/i386/libmpc_p.a			comp-c-proflib		obsolete
+./usr/lib/i386/libmpc_pic.a			comp-c-piclib		obsolete
+./usr/lib/i386/libmpfr.a			comp-c-lib		obsolete
+./usr/lib/i386/libmpfr.so			comp-sys-shlib		obsolete
+./usr/lib/i386/libmpfr_g.a			-unknown-		obsolete
+./usr/lib/i386/libmpfr_p.a			comp-c-proflib		obsolete
+./usr/lib/i386/libmpfr_pic.a			comp-c-piclib		obsolete
 ./usr/lib/i386/libnetpgp.a			comp-c-lib		compat
 ./usr/lib/i386/libnetpgp.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libnetpgp_g.a			comp-c-proflib		compat,debuglib
@@ -1030,7 +1030,7 @@
 ./usr/libdata/debug/usr/lib/i386/libfetch.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libform.so.6.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libgcc_s.so.1.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libgmp.so.10.2.debug	comp-compat-shlib	gcc=45,compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libgmp.so.10.2.debug	comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/i386/libgnumalloc.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libgssapi.so.10.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libgssapi.so.9.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
@@ -1069,8 +1069,8 @@
 ./usr/libdata/debug/usr/lib/i386/libmagic.so.3.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmenu.so.6.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmj.so.1.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libmpc.so.2.0.debug	comp-compat-shlib	gcc=45,compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libmpfr.so.4.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libmpc.so.2.0.debug	comp-compat-shlib	obsolete
+./usr/libdata/debug/usr/lib/i386/libmpfr.so.4.1.debug	comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/i386/libnetpgp.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libnpf.so.0.0.debug	comp-compat-shlib	compat,pic,npf,debug
 ./usr/libdata/debug/usr/lib/i386/libobjc.so.3.0.debug	comp-compat-shlib	compat,pic,debug
