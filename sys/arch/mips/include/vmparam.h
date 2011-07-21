@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.48 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.49 2011/07/21 23:03:39 macallan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#include "opt_cputype.h"
 #endif
 
 /*
