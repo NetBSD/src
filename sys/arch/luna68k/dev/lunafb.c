@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.22 2011/07/21 10:06:59 tsutsui Exp $ */
+/* $NetBSD: lunafb.c,v 1.23 2011/07/21 10:33:17 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.22 2011/07/21 10:06:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.23 2011/07/21 10:33:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ omfbioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = 0x19990927;
+		*(u_int *)data = WSDISPLAY_TYPE_LUNA;
 		return (0);
 
 	case WSDISPLAYIO_GINFO:
