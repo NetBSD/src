@@ -1,3 +1,4 @@
+/*	$NetBSD: printf.c,v 1.3 2011/07/21 11:04:24 joerg Exp $	*/
 /*-
  * Copyright (c) 1998 Robert Nordier
  * All rights reserved.
@@ -17,7 +18,7 @@
  * $FreeBSD: src/sys/boot/mips/emips/libemips/printf.c,v 1.2 2006/10/20 09:12:05 imp Exp $
  */
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 
 void
 xputchar(int ch)
