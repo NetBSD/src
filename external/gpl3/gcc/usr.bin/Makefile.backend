@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.backend,v 1.1 2011/06/21 06:03:13 mrg Exp $
+#	$NetBSD: Makefile.backend,v 1.2 2011/07/21 03:13:32 mrg Exp $
 
 NOMAN=		# defined
 BINDIR=		/usr/libexec
@@ -42,3 +42,12 @@ ${PROG}-dummy: ${DUMMYOBJS}
 ${PROG}-checksum.c: genchecksum ${PROG}-dummy
 	${_MKTARGET_CREATE}
 	./genchecksum ${PROG}-dummy >${.TARGET}
+
+# Find our (local) libraries
+LIBGMPDIR!=	cd ${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp && ${PRINTOBJDIR}
+LIBMPFRDIR!=	cd ${NETBSDSRCDIR}/external/lgpl3/mpfr/lib/libmpfr && ${PRINTOBJDIR}
+LIBMPCDIR!=	cd ${NETBSDSRCDIR}/external/lgpl2/mpc/lib/libmpc && ${PRINTOBJDIR}
+
+LIBGMP=		${LIBGMPDIR}/libgmp.a
+LIBMPFR=	${LIBMPFRDIR}/libmpfr.a
+LIBMPC=		${LIBMPCDIR}/libmpc.a

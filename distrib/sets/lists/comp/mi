@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1645 2011/07/17 20:54:32 joerg Exp $
+#	$NetBSD: mi,v 1.1646 2011/07/21 03:13:31 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1576,7 +1576,7 @@
 ./usr/include/gelf.h				comp-c-include
 ./usr/include/getopt.h				comp-c-include
 ./usr/include/glob.h				comp-c-include
-./usr/include/gmp.h				comp-cxx-include	gcc=45,cxx
+./usr/include/gmp.h				comp-cxx-include	obsolete
 ./usr/include/grp.h				comp-c-include
 ./usr/include/gssapi.h				comp-krb5-include	kerberos
 ./usr/include/gssapi/gssapi.h			comp-krb5-include	kerberos
@@ -1754,10 +1754,10 @@
 ./usr/include/mj.h				comp-c-include		crypto
 ./usr/include/mntopts.h				comp-c-include
 ./usr/include/monetary.h			comp-c-include
-./usr/include/mpc-log.h				comp-c-include		gcc=45
-./usr/include/mpc.h				comp-c-include		gcc=45
-./usr/include/mpf2mpfr.h			comp-c-include		gcc=45
-./usr/include/mpfr.h				comp-c-include		gcc=45
+./usr/include/mpc-log.h				comp-c-include		obsolete
+./usr/include/mpc.h				comp-c-include		obsolete
+./usr/include/mpf2mpfr.h			comp-c-include		obsolete
+./usr/include/mpfr.h				comp-c-include		obsolete
 ./usr/include/mpool.h				comp-c-include
 ./usr/include/mqueue.h				comp-c-include
 ./usr/include/msdosfs/bootsect.h		comp-c-include
@@ -2789,9 +2789,9 @@
 ./usr/lib/libgcc_s_g.a				-unknown-		debuglib
 ./usr/lib/libgcov.a				comp-c-lib
 ./usr/lib/libgcov_g.a				-unknown-		debuglib
-./usr/lib/libgmp.a				-unknown-		gcc=45,debuglib
-./usr/lib/libgmp.a				comp-c-lib		gcc=45
-./usr/lib/libgmp_p.a				comp-c-proflib		gcc=45,profile
+./usr/lib/libgmp.a				-unknown-		obsolete
+./usr/lib/libgmp.a				comp-c-lib		obsolete
+./usr/lib/libgmp_p.a				comp-c-proflib		obsolete
 ./usr/lib/libgnumalloc.a			comp-c-lib
 ./usr/lib/libgnumalloc_g.a			-unknown-		debuglib
 ./usr/lib/libgnumalloc_p.a			comp-c-proflib		profile
@@ -2895,12 +2895,12 @@
 ./usr/lib/libmj.a				comp-c-lib		crypto
 ./usr/lib/libmj_g.a				-unknown-		debuglib
 ./usr/lib/libmj_p.a				comp-c-proflib		profile,crypto
-./usr/lib/libmpc.a				-unknown-		gcc=45,debuglib
-./usr/lib/libmpc.a				comp-c-lib		gcc=45
-./usr/lib/libmpc_p.a				comp-c-proflib		gcc=45,profile
-./usr/lib/libmpfr.a				-unknown-		gcc=45,debuglib
-./usr/lib/libmpfr.a				comp-c-lib		gcc=45
-./usr/lib/libmpfr_p.a				comp-c-proflib		gcc=45,profile
+./usr/lib/libmpc.a				-unknown-		obsolete
+./usr/lib/libmpc.a				comp-c-lib		obsolete
+./usr/lib/libmpc_p.a				comp-c-proflib		obsolete
+./usr/lib/libmpfr.a				-unknown-		obsolete
+./usr/lib/libmpfr.a				comp-c-lib		obsolete
+./usr/lib/libmpfr_p.a				comp-c-proflib		obsolete
 ./usr/lib/libnetpgp.a				comp-c-lib		crypto
 ./usr/lib/libnetpgp_g.a				-unknown-		debuglib
 ./usr/lib/libnetpgp_p.a				comp-c-proflib		profile,crypto
@@ -4275,7 +4275,7 @@
 ./usr/libdata/lint/llib-levent.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lfetch.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lform.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-lgmp.ln			comp-c-lintlib		gcc=45,lint
+./usr/libdata/lint/llib-lgmp.ln			comp-c-lintlib		obsolete
 ./usr/libdata/lint/llib-lgnumalloc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lgssapi.ln		comp-krb5-lintlib	lint,kerberos
 ./usr/libdata/lint/llib-lheimbase.ln		comp-krb5-lintlib	lint,kerberos
@@ -4301,8 +4301,8 @@
 ./usr/libdata/lint/llib-lmenu.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmilter.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lmj.ln			comp-c-lintlib		lint,crypto
-./usr/libdata/lint/llib-lmpc.ln			comp-c-lintlib		gcc=45,lint
-./usr/libdata/lint/llib-lmpfr.ln		comp-c-lintlib		gcc=45,lint,missing
+./usr/libdata/lint/llib-lmpc.ln			comp-c-lintlib		obsolete
+./usr/libdata/lint/llib-lmpfr.ln		comp-c-lintlib		obsolete
 ./usr/libdata/lint/llib-lnetpgp.ln		comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lnpf.ln			comp-npf-lintlib	lint,npf
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete

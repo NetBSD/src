@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.111 2011/07/17 23:37:32 dyoung Exp $
+# $NetBSD: md.sparc64,v 1.112 2011/07/21 03:13:31 mrg Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -417,11 +417,11 @@
 ./usr/lib/sparc/libgcov_g.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libgcov_p.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libgcov_pic.a			comp-obsolete		obsolete
-./usr/lib/sparc/libgmp.a			comp-c-lib		compat,gcc=45
-./usr/lib/sparc/libgmp.so			base-sys-shlib		compat,pic,gcc=45
-./usr/lib/sparc/libgmp_g.a			-unknown-		compat,debuglib,gcc=45
-./usr/lib/sparc/libgmp_p.a			comp-c-proflib		compat,profile,gcc=45
-./usr/lib/sparc/libgmp_pic.a			comp-c-piclib		compat,pic,gcc=45
+./usr/lib/sparc/libgmp.a			comp-c-lib		obsolete
+./usr/lib/sparc/libgmp.so			base-sys-shlib		obsolete
+./usr/lib/sparc/libgmp_g.a			-unknown-		obsolete
+./usr/lib/sparc/libgmp_p.a			comp-c-proflib		obsolete
+./usr/lib/sparc/libgmp_pic.a			comp-c-piclib		obsolete
 ./usr/lib/sparc/libgnumalloc.a			comp-c-lib		compat
 ./usr/lib/sparc/libgnumalloc.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libgnumalloc_g.a		-unknown-		compat,debuglib
@@ -582,16 +582,16 @@
 ./usr/lib/sparc/libmj_g.a			-unknown-		compat,debuglib,crypto
 ./usr/lib/sparc/libmj_p.a			comp-c-proflib		compat,profile,crypto
 ./usr/lib/sparc/libmj_pic.a			comp-c-piclib		compat,pic,crypto
-./usr/lib/sparc/libmpc.a			comp-c-lib		compat,gcc=45
-./usr/lib/sparc/libmpc.so			base-sys-shlib		compat,pic,gcc=45
-./usr/lib/sparc/libmpc_g.a			-unknown-		compat,debuglib,gcc=45
-./usr/lib/sparc/libmpc_p.a			comp-c-proflib		compat,profile,gcc=45
-./usr/lib/sparc/libmpc_pic.a			comp-c-piclib		compat,pic,gcc=45
-./usr/lib/sparc/libmpfr.a			comp-c-lib		compat,gcc=45
-./usr/lib/sparc/libmpfr.so			base-sys-shlib		compat,pic,gcc=45
-./usr/lib/sparc/libmpfr_g.a			-unknown-		compat,debuglib,gcc=45
-./usr/lib/sparc/libmpfr_p.a			comp-c-proflib		compat,profile,gcc=45
-./usr/lib/sparc/libmpfr_pic.a			comp-c-piclib		compat,pic,gcc=45
+./usr/lib/sparc/libmpc.a			comp-c-lib		obsolete
+./usr/lib/sparc/libmpc.so			base-sys-shlib		obsolete
+./usr/lib/sparc/libmpc_g.a			-unknown-		obsolete
+./usr/lib/sparc/libmpc_p.a			comp-c-proflib		obsolete
+./usr/lib/sparc/libmpc_pic.a			comp-c-piclib		obsolete
+./usr/lib/sparc/libmpfr.a			comp-c-lib		obsolete
+./usr/lib/sparc/libmpfr.so			base-sys-shlib		obsolete
+./usr/lib/sparc/libmpfr_g.a			-unknown-		obsolete
+./usr/lib/sparc/libmpfr_p.a			comp-c-proflib		obsolete
+./usr/lib/sparc/libmpfr_pic.a			comp-c-piclib		obsolete
 ./usr/lib/sparc/libnetpgp.a			comp-c-lib		compat,crypto
 ./usr/lib/sparc/libnetpgp.so			comp-sys-shlib		compat,pic,crypto
 ./usr/lib/sparc/libnetpgp_g.a			-unknown-		compat,debuglib,crypto
