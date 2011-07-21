@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.172 2011/07/07 07:37:17 matt Exp $
+#	$NetBSD: Makefile,v 1.173 2011/07/21 03:13:30 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -78,7 +78,9 @@ SUBDIR+=	../external/gpl3/gcc/lib/libobjc
 . endif
 .endif
 
-.if ${HAVE_GCC} >= 45
+# Should probably move GMP, MPFR and MPC builds into the GCC >= 4.5
+# specific build area, but we get better parallelism this way.
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && !defined(MLIBDIR)
 SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
 .endif
 
@@ -131,7 +133,7 @@ SUBDIR+=	../external/gpl3/gcc/lib/libsupc++
 . endif
 .endif
 
-.if ${HAVE_GCC} >= 45
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && !defined(MLIBDIR)
 SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
 .endif
 
@@ -163,7 +165,7 @@ SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
 
 SUBDIR+=	librumphijack
 
-.if ${HAVE_GCC} >= 45
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && !defined(MLIBDIR)
 SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
 .endif
 

@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2011/07/06 19:52:05 drochner Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/21 03:13:30 mrg Exp $
 
 .include <bsd.init.mk>
+
+# We don't install mpc, just provide it for GCC.
+LIBISPRIVATE= yes
 
 LIB=	mpc
 
@@ -83,11 +86,11 @@ SRCS=	\
 	ui_div.c \
 	ui_ui_sub.c
 
-
-INCS=		mpc.h mpc-log.h
-INCSDIR=	/usr/include
-
 CPPFLAGS+=	-I${.CURDIR}
+
+# Find <mpfr.h> and <gmp.h>
+CPPFLAGS+=	-I${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp/arch/${MACHINE_ARCH}
+CPPFLAGS+=	-I${NETBSDSRCDIR}/external/lgpl3/mpfr/dist
 
 .include <bsd.lib.mk>
 
