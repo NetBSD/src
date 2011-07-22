@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_ioctl.c,v 1.22 2007/12/20 23:03:03 dsl Exp $	*/
+/*	$NetBSD: osf1_ioctl.c,v 1.23 2011/07/22 10:02:08 njoly Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_ioctl.c,v 1.22 2007/12/20 23:03:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_ioctl.c,v 1.23 2011/07/22 10:02:08 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -92,7 +92,7 @@ osf1_sys_ioctl(struct lwp *l, const struct osf1_sys_ioctl_args *uap, register_t 
 	struct sys_ioctl_args a;
 	int op, dir, group, cmd, len;
 #ifdef SYSCALL_DEBUG
-	char *dirstr;
+	const char *dirstr;
 #endif
 
 	op = SCARG(uap, com);
