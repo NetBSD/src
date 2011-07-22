@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.85 2010/04/23 15:19:20 rmind Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.86 2011/07/22 10:02:08 njoly Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.85 2010/04/23 15:19:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.86 2011/07/22 10:02:08 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -94,10 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.85 2010/04/23 15:19:20 rmind Exp $")
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/common/compat_util.h>
 #include <compat/osf1/osf1_cvt.h>
-
-#ifdef SYSCALL_DEBUG
-extern int scdebug;
-#endif
 
 int
 osf1_sys_classcntl(struct lwp *l, const struct osf1_sys_classcntl_args *uap, register_t *retval)
