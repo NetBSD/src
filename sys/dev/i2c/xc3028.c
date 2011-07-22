@@ -1,4 +1,4 @@
-/* $NetBSD: xc3028.c,v 1.1 2011/07/11 18:00:06 jmcneill Exp $ */
+/* $NetBSD: xc3028.c,v 1.2 2011/07/22 18:21:10 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xc3028.c,v 1.1 2011/07/11 18:00:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xc3028.c,v 1.2 2011/07/22 18:21:10 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ xc3028_dump_fw(struct xc3028 *xc, struct xc3028_fw *xcfw, const char *type)
 	if (xcfw->type & (1 << 30))
 		printf("_%d", xcfw->int_freq);
 	if (xcfw->id)
-		printf(" id=%llx", xcfw->id);
+		printf(" id=%" PRIx64, xcfw->id);
 	printf(" size=%u\n", xcfw->data_size);
 }
 
