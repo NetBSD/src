@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_fan.c,v 1.6 2011/06/21 09:49:05 jruoho Exp $ */
+/*	$NetBSD: acpi_fan.c,v 1.7 2011/07/22 04:15:05 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fan.c,v 1.6 2011/06/21 09:49:05 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fan.c,v 1.7 2011/07/22 04:15:05 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -46,7 +46,6 @@ struct acpifan_softc {
 	struct acpi_devnode	*sc_node;
 	struct sysmon_envsys	*sc_sme;
 	envsys_data_t		 sc_sensor;
-	int			 sc_state;
 };
 
 const char * const acpi_fan_ids[] = {
@@ -89,7 +88,6 @@ acpifan_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme = NULL;
 	sc->sc_dev = self;
 	sc->sc_node = aa->aa_node;
-	sc->sc_state = ACPI_STATE_ERROR;
 
 	aprint_naive("\n");
 	aprint_normal(": ACPI Fan\n");
@@ -112,8 +110,7 @@ acpifan_detach(device_t self, int flags)
 {
 	struct acpifan_softc *sc = device_private(self);
 
-	if (sc->sc_state != ACPI_STATE_ERROR)
-		(void)acpi_power_set(sc->sc_node->ad_handle, ACPI_STATE_D0);
+	(void)acpi_power_set(sc->sc_node->ad_handle, ACPI_STATE_D0);
 
 	pmf_device_deregister(self);
 	acpi_power_deregister(sc->sc_node->ad_handle);
@@ -129,10 +126,6 @@ acpifan_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct acpifan_softc *sc = device_private(self);
 
-	if (sc->sc_state == ACPI_STATE_ERROR)
-		return true;
-
-	(void)acpi_power_get(sc->sc_node->ad_handle, &sc->sc_state);
 	(void)acpi_power_set(sc->sc_node->ad_handle, ACPI_STATE_D0);
 
 	return true;
@@ -143,8 +136,7 @@ acpifan_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct acpifan_softc *sc = device_private(self);
 
-	if (sc->sc_state != ACPI_STATE_ERROR)
-		(void)acpi_power_set(sc->sc_node->ad_handle, sc->sc_state);
+	(void)acpi_power_set(sc->sc_node->ad_handle, ACPI_STATE_D3);
 
 	return true;
 }
@@ -154,8 +146,7 @@ acpifan_shutdown(device_t self, int how)
 {
 	struct acpifan_softc *sc = device_private(self);
 
-	if (sc->sc_state != ACPI_STATE_ERROR)
-		(void)acpi_power_set(sc->sc_node->ad_handle, ACPI_STATE_D0);
+	(void)acpi_power_set(sc->sc_node->ad_handle, ACPI_STATE_D0);
 
 	return true;
 }
@@ -164,8 +155,9 @@ static bool
 acpifan_sensor_init(device_t self)
 {
 	struct acpifan_softc *sc = device_private(self);
+	int state;
 
-	if (acpi_power_get(sc->sc_node->ad_handle, &sc->sc_state) != true)
+	if (acpi_power_get(sc->sc_node->ad_handle, &state) != true)
 		return false;
 
 	sc->sc_sme = sysmon_envsys_create();
