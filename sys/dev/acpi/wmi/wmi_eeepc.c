@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_eeepc.c,v 1.2 2011/02/16 13:15:49 jruoho Exp $ */
+/*	$NetBSD: wmi_eeepc.c,v 1.3 2011/07/22 15:53:02 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_eeepc.c,v 1.2 2011/02/16 13:15:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_eeepc.c,v 1.3 2011/07/22 15:53:02 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,23 +46,57 @@ __KERNEL_RCSID(0, "$NetBSD: wmi_eeepc.c,v 1.2 2011/02/16 13:15:49 jruoho Exp $")
 #define _COMPONENT			ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME			("wmi_eeepc")
 
+
+/*
+ * Current brightness is reported by events in the range of 0x10 to 0x2f.
+ * The low nibble containing a value from 0x0 to 0xA proportionate to
+ * brightness, 0x0 indicates minimum illumination, not backlight off.
+ */
+#define WMI_EEEPC_HK_BACKLIGHT_STATUS_BRIGHTNESS_MASK 0x0f /* 0x0 to 0xA */
+#define WMI_EEEPC_HK_BACKLIGHT_STATUS_DIRECTION_MASK (~WMI_EEEPC_HK_BACKLIGHT_STATUS_BRIGHTNESS_MASK)
+#define WMI_EEEPC_HK_BACKLIGHT_STATUS_DIRECTION_INC 0x10
+#define WMI_EEEPC_HK_BACKLIGHT_STATUS_DIRECTION_DEC 0x20
+
 #define WMI_EEEPC_HK_VOLUME_UP		0x30
 #define WMI_EEEPC_HK_VOLUME_DOWN	0x31
 #define WMI_EEEPC_HK_VOLUME_MUTE	0x32
+#define WMI_EEEPC_HK_EXPRESSGATE	0x5C	/* Also, "SuperHybrid" */
+#define WMI_EEEPC_HK_TOUCHPAD		0x6B
+#define WMI_EEEPC_HK_WIRELESS		0x88
+#define WMI_EEEPC_HK_WEBCAM		0xBD
 #define WMI_EEEPC_HK_DISPLAY_CYCLE	0xCC
+#define WMI_EEEPC_HK_DISPLAY_SAVER	0xE8
 #define WMI_EEEPC_HK_DISPLAY_OFF	0xE9
-/*      WMI_EEEPC_HK_UNKNOWN		0xXX */
+						/* Unlabeled keys on 1215T */ 
+#define WMI_EEEPC_HK_UNKNOWN_xEC	0xEC	/* Fn+E */
+#define WMI_EEEPC_HK_UNKNOWN_xED	0xED	/* Fn+D */
+#define WMI_EEEPC_HK_UNKNOWN_xEE	0xEE	/* Fn+S */
+#define WMI_EEEPC_HK_UNKNOWN_xEF	0xEF	/* Fn+F */
 
-#define WMI_EEEPC_PSW_DISPLAY_CYCLE	0
-#define WMI_EEEPC_PSW_COUNT		1
+#define WMI_EEEPC_IS_BACKLIGHT_STATUS(x) (((x & WMI_EEEPC_HK_BACKLIGHT_STATUS_DIRECTION_MASK) == WMI_EEEPC_HK_BACKLIGHT_STATUS_DIRECTION_INC) || ((x & WMI_EEEPC_HK_BACKLIGHT_STATUS_DIRECTION_MASK) == WMI_EEEPC_HK_BACKLIGHT_STATUS_DIRECTION_DEC))
+
+enum eeepc_smpsw {
+	WMI_EEEPC_PSW_EXPRESSGATE = 0,
+	WMI_EEEPC_PSW_TOUCHPAD,
+	WMI_EEEPC_PSW_WIRELESS,
+	WMI_EEEPC_PSW_WEBCAM,
+	WMI_EEEPC_PSW_DISPLAY_CYCLE,
+	WMI_EEEPC_PSW_DISPLAY_SAVER,
+	WMI_EEEPC_PSW_DISPLAY_OFF,
+	WMI_EEEPC_PSW_UNKNOWN_xEC,
+	WMI_EEEPC_PSW_UNKNOWN_xED,
+	WMI_EEEPC_PSW_UNKNOWN_xEE,
+	WMI_EEEPC_PSW_UNKNOWN_xEF,
+	WMI_EEEPC_PSW_COUNT	/* Must be last. */
+};
 
 #define WMI_EEEPC_GUID_EVENT		"ABBC0F72-8EA1-11D1-00A0-C90629100000"
 
 struct wmi_eeepc_softc {
 	device_t		sc_dev;
 	device_t		sc_parent;
-	struct sysmon_pswitch	sc_smpsw[WMI_EEEPC_PSW_COUNT];
-	bool			sc_smpsw_valid;
+	struct sysmon_pswitch	sc_psw[WMI_EEEPC_PSW_COUNT];
+	bool			sc_psw_valid[WMI_EEEPC_PSW_COUNT];
 };
 
 static int	wmi_eeepc_match(device_t, cfdata_t, void *);
@@ -84,13 +118,11 @@ wmi_eeepc_match(device_t parent, cfdata_t match, void *aux)
 static void
 wmi_eeepc_attach(device_t parent, device_t self, void *aux)
 {
-	static const int dc = WMI_EEEPC_PSW_DISPLAY_CYCLE;
 	struct wmi_eeepc_softc *sc = device_private(self);
 	ACPI_STATUS rv;
 
 	sc->sc_dev = self;
 	sc->sc_parent = parent;
-	sc->sc_smpsw_valid = false;
 
 	rv = acpi_wmi_event_register(parent, wmi_eeepc_notify_handler);
 
@@ -102,11 +134,30 @@ wmi_eeepc_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Asus Eee PC WMI mappings\n");
 
-	sc->sc_smpsw[dc].smpsw_type = PSWITCH_TYPE_HOTKEY;
-	sc->sc_smpsw[dc].smpsw_name = PSWITCH_HK_DISPLAY_CYCLE;
+	memset(sc->sc_psw, 0, sizeof(sc->sc_psw));
+	sc->sc_psw[WMI_EEEPC_PSW_EXPRESSGATE].smpsw_name = "expressgate";
+	sc->sc_psw[WMI_EEEPC_PSW_TOUCHPAD].smpsw_name = "touchpad-toggle";
+	sc->sc_psw[WMI_EEEPC_PSW_WIRELESS].smpsw_name = "wireless-toggle";
+	sc->sc_psw[WMI_EEEPC_PSW_WEBCAM].smpsw_name = "camera-button";
+	sc->sc_psw[WMI_EEEPC_PSW_DISPLAY_CYCLE].smpsw_name = PSWITCH_HK_DISPLAY_CYCLE;
+	sc->sc_psw[WMI_EEEPC_PSW_DISPLAY_SAVER].smpsw_name = PSWITCH_HK_LOCK_SCREEN;
+	sc->sc_psw[WMI_EEEPC_PSW_DISPLAY_OFF].smpsw_name = "display-off";
+	sc->sc_psw[WMI_EEEPC_PSW_UNKNOWN_xEC].smpsw_name = "unlabeled-xEC";
+	sc->sc_psw[WMI_EEEPC_PSW_UNKNOWN_xED].smpsw_name = "unlabeled-xED";
+	sc->sc_psw[WMI_EEEPC_PSW_UNKNOWN_xEE].smpsw_name = "unlabeled-xEE";
+	sc->sc_psw[WMI_EEEPC_PSW_UNKNOWN_xEF].smpsw_name = "unlabeled-xEF";
 
-	if (sysmon_pswitch_register(&sc->sc_smpsw[dc]) == 0)
-		sc->sc_smpsw_valid = true;
+	for (int i = 0; i < WMI_EEEPC_PSW_COUNT; i++) {
+		KASSERT(sc->sc_psw[i].smpsw_name != NULL);
+		sc->sc_psw[i].smpsw_type = PSWITCH_TYPE_HOTKEY;
+		if (sysmon_pswitch_register(&sc->sc_psw[i]) == 0) {
+			sc->sc_psw_valid[i] = true;
+		} else {
+			sc->sc_psw_valid[i] = false;
+			aprint_error_dev(self,
+			    "hotkey[%d] registration failed\n", i);
+		}
+	}
 
 	(void)pmf_device_register(self, wmi_eeepc_suspend, wmi_eeepc_resume);
 }
@@ -116,6 +167,14 @@ wmi_eeepc_detach(device_t self, int flags)
 {
 	struct wmi_eeepc_softc *sc = device_private(self);
 	device_t parent = sc->sc_parent;
+
+
+	for (int i = 0; i < WMI_EEEPC_PSW_COUNT; i++) {
+		if (sc->sc_psw_valid[i] == true) {
+			sysmon_pswitch_unregister(&sc->sc_psw[i]);
+			sc->sc_psw_valid[i] = false;
+		}
+	}
 
 	(void)pmf_device_deregister(self);
 	(void)acpi_wmi_event_deregister(parent);
@@ -146,15 +205,33 @@ wmi_eeepc_resume(device_t self, const pmf_qual_t *qual)
 }
 
 static void
+wmi_eeepc_pswitch_event(struct wmi_eeepc_softc *sc, enum eeepc_smpsw key)
+{
+	if (sc->sc_psw_valid[key] != true) {
+		device_printf(sc->sc_dev, "hotkey[%d] not registered\n", key);
+		return;
+	}
+
+	/*
+	 * This function is called upon key release,
+	 * but the default powerd scripts expect presses.
+	 *
+	 * Anyway, we may as well send the make and the break event.
+	 */
+
+	sysmon_pswitch_event(&sc->sc_psw[key], PSWITCH_EVENT_PRESSED);
+	sysmon_pswitch_event(&sc->sc_psw[key], PSWITCH_EVENT_RELEASED);
+}
+
+static void
 wmi_eeepc_notify_handler(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 {
-	static const int dc = WMI_EEEPC_PSW_DISPLAY_CYCLE;
 	struct wmi_eeepc_softc *sc;
 	device_t self = aux;
 	ACPI_OBJECT *obj;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
-	uint32_t val;
+	uint32_t val = 0; /* XXX GCC */
 
 	buf.Pointer = NULL;
 
@@ -178,6 +255,11 @@ wmi_eeepc_notify_handler(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 
 	val = obj->Integer.Value;
 
+	if (WMI_EEEPC_IS_BACKLIGHT_STATUS(val)) {
+		/* We'll silently ignore these for now. */
+		goto out;
+	}
+
 	switch (val) {
 
 	case WMI_EEEPC_HK_VOLUME_UP:
@@ -192,22 +274,53 @@ wmi_eeepc_notify_handler(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 		pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_TOGGLE);
 		break;
 
+	case WMI_EEEPC_HK_EXPRESSGATE:
+		wmi_eeepc_pswitch_event(sc, WMI_EEEPC_PSW_EXPRESSGATE);
+		break;
+
+	case WMI_EEEPC_HK_TOUCHPAD:
+		wmi_eeepc_pswitch_event(sc, WMI_EEEPC_PSW_TOUCHPAD);
+		break;
+
+	case WMI_EEEPC_HK_WIRELESS:
+		wmi_eeepc_pswitch_event(sc, WMI_EEEPC_PSW_WIRELESS);
+		break;
+
+	case WMI_EEEPC_HK_WEBCAM:
+		wmi_eeepc_pswitch_event(sc, WMI_EEEPC_PSW_WEBCAM);
+		break;
+
 	case WMI_EEEPC_HK_DISPLAY_CYCLE:
+		wmi_eeepc_pswitch_event(sc, WMI_EEEPC_PSW_DISPLAY_CYCLE);
+		break;
 
-		if (sc->sc_smpsw_valid != true) {
-			rv = AE_ABORT_METHOD;
-			break;
-		}
-
-		sysmon_pswitch_event(&sc->sc_smpsw[dc], PSWITCH_EVENT_PRESSED);
+	case WMI_EEEPC_HK_DISPLAY_SAVER:
+		wmi_eeepc_pswitch_event(sc, WMI_EEEPC_PSW_DISPLAY_SAVER);
 		break;
 
 	case WMI_EEEPC_HK_DISPLAY_OFF:
+		wmi_eeepc_pswitch_event(sc, WMI_EEEPC_PSW_DISPLAY_OFF);
+		break;
+
+	case WMI_EEEPC_HK_UNKNOWN_xEC:
+		wmi_eeepc_pswitch_event(sc, WMI_EEEPC_PSW_UNKNOWN_xEC);
+		break;
+
+	case WMI_EEEPC_HK_UNKNOWN_xED:
+		wmi_eeepc_pswitch_event(sc, WMI_EEEPC_PSW_UNKNOWN_xED);
+		break;
+
+	case WMI_EEEPC_HK_UNKNOWN_xEE:
+		wmi_eeepc_pswitch_event(sc, WMI_EEEPC_PSW_UNKNOWN_xEE);
+		break;
+
+	case WMI_EEEPC_HK_UNKNOWN_xEF:
+		wmi_eeepc_pswitch_event(sc, WMI_EEEPC_PSW_UNKNOWN_xEF);
 		break;
 
 	default:
-		aprint_debug_dev(sc->sc_dev,
-		    "unknown key 0x%02X for event 0x%02X\n", val, evt);
+		device_printf(self, "unknown key 0x%02X for event 0x%02X\n",
+		    val, evt);
 		break;
 	}
 
@@ -216,7 +329,7 @@ out:
 		ACPI_FREE(buf.Pointer);
 
 	if (ACPI_FAILURE(rv))
-		aprint_error_dev(sc->sc_dev, "failed to get data for "
+		device_printf(self, "failed to get data for "
 		    "event 0x%02X: %s\n", evt, AcpiFormatException(rv));
 }
 
