@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.29 2011/05/11 00:12:41 dyoung Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.30 2011/07/22 14:34:38 njoly Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.29 2011/05/11 00:12:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.30 2011/07/22 14:34:38 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,9 +105,6 @@ chipsfb_pci_attach(device_t parent, device_t self, void *aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
-#ifdef CHIPSFB_DEBUG
-	printf(prop_dictionary_externalize(dict));
-#endif
 
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;
