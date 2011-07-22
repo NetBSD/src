@@ -1,5 +1,6 @@
 .file	"aesni-x86.s"
 .text
+.ascii	"AES for Intel AES-NI, CRYPTOGAMS by <appro@openssl.org>\0"
 .globl	aesni_encrypt
 .type	aesni_encrypt,@function
 .align	16
@@ -755,7 +756,3 @@ aesni_set_decrypt_key:
 .L047dec_key_ret:
 	ret
 .size	aesni_set_decrypt_key,.-.L_aesni_set_decrypt_key_begin
-.byte	65,69,83,32,102,111,114,32,73,110,116,101,108,32,65,69
-.byte	83,45,78,73,44,32,67,82,89,80,84,79,71,65,77,83
-.byte	32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115
-.byte	115,108,46,111,114,103,62,0
