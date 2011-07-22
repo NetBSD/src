@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.44 2010/03/11 13:51:01 jruoho Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.45 2011/07/22 14:21:40 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.44 2010/03/11 13:51:01 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.45 2011/07/22 14:21:40 jakllsch Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.44 2010/03/11 13:51:01 jruoho Exp
  * Singly linked list for dictionaries to be stored/sent.
  */
 struct power_event_dictionary {
-	SLIST_ENTRY(power_event_dictionary) pev_dict_head;
+	SIMPLEQ_ENTRY(power_event_dictionary) pev_dict_head;
 	prop_dictionary_t dict;
 	int flags;
 };
@@ -166,8 +166,8 @@ static int sysmon_power_event_queue_head;
 static int sysmon_power_event_queue_tail;
 static int sysmon_power_event_queue_count;
 
-static SLIST_HEAD(, power_event_dictionary) pev_dict_list =
-    SLIST_HEAD_INITIALIZER(&pev_dict_list);
+static SIMPLEQ_HEAD(, power_event_dictionary) pev_dict_list =
+    SIMPLEQ_HEAD_INITIALIZER(pev_dict_list);
 
 static struct selinfo sysmon_power_event_queue_selinfo;
 static struct lwp *sysmon_power_daemon;
@@ -261,7 +261,7 @@ sysmon_power_event_queue_flush(void)
  * sysmon_power_daemon_task:
  *
  *	Assign required power event members and sends a signal
- *	to the process to notify that an event was enqueued succesfully.
+ *	to the process to notify that an event was enqueued successfully.
  */
 static int
 sysmon_power_daemon_task(struct power_event_dictionary *ped,
@@ -363,7 +363,7 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 		 * dictionary is ready to be fetched.
 		 */
 		ped->flags |= SYSMON_POWER_DICTIONARY_READY;
-		SLIST_INSERT_HEAD(&pev_dict_list, ped, pev_dict_head);
+		SIMPLEQ_INSERT_TAIL(&pev_dict_list, ped, pev_dict_head);
 		cv_broadcast(&sysmon_power_event_queue_cv);
 		mutex_exit(&sysmon_power_event_queue_mtx);
 		selnotify(&sysmon_power_event_queue_selinfo, 0, 0);
@@ -569,7 +569,7 @@ sysmonioctl_power(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * as busy.
 		 */
 		mutex_enter(&sysmon_power_event_queue_mtx);
-		ped = SLIST_FIRST(&pev_dict_list);
+		ped = SIMPLEQ_FIRST(&pev_dict_list);
 		if (!ped || !ped->dict) {
 			mutex_exit(&sysmon_power_event_queue_mtx);
 			error = ENOTSUP;
@@ -604,7 +604,7 @@ sysmonioctl_power(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		mutex_enter(&sysmon_power_event_queue_mtx);
 		ped->flags &= ~SYSMON_POWER_DICTIONARY_BUSY;
 		ped->flags &= ~SYSMON_POWER_DICTIONARY_READY;
-		SLIST_REMOVE_HEAD(&pev_dict_list, pev_dict_head);
+		SIMPLEQ_REMOVE_HEAD(&pev_dict_list, pev_dict_head);
 		mutex_exit(&sysmon_power_event_queue_mtx);
 		sysmon_power_destroy_dictionary(ped);
 
@@ -768,7 +768,7 @@ sysmon_power_settype(const char *type)
  * sysmon_penvsys_event:
  *
  * 	Puts an event onto the sysmon power queue and sends the
- * 	appropiate event if the daemon is running, otherwise a
+ * 	appropriate event if the daemon is running, otherwise a
  * 	message is shown.
  */
 void
