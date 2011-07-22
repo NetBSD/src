@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.27 2011/07/04 08:07:30 manu Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.28 2011/07/22 12:46:18 manu Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.27 2011/07/04 08:07:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.28 2011/07/22 12:46:18 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.27 2011/07/04 08:07:30 manu Exp $");
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
+#include <sys/ktrace.h>
 
 /*
  * Credential check based on process requesting service, and per-attribute
@@ -260,6 +261,9 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	auio.uio_vmspace = l->l_proc->p_vmspace;
 	cnt = nbytes;
 
+	ktrkuser("xattr-name", (void *)__UNCONST(attrname), strlen(attrname));
+	ktrkuser("xattr-val", __UNCONST(data), nbytes);
+
 	error = VOP_SETEXTATTR(vp, attrnamespace, attrname, &auio, l->l_cred);
 	cnt -= auio.uio_resid;
 	retval[0] = cnt;
@@ -312,12 +316,16 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	} else
 		sizep = &size;
 
+	ktrkuser("xattr-name", (void *)__UNCONST(attrname), strlen(attrname));
+
 	error = VOP_GETEXTATTR(vp, attrnamespace, attrname, auiop, sizep,
 	    l->l_cred);
 
 	if (auiop != NULL) {
 		cnt -= auio.uio_resid;
 		retval[0] = cnt;
+
+		ktrkuser("xattr-val", data, cnt);
 	} else
 		retval[0] = size;
 
@@ -338,6 +346,8 @@ extattr_delete_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	int error;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+
+	ktrkuser("xattr-name", (void *)__UNCONST(attrname), strlen(attrname));
 
 	error = VOP_DELETEEXTATTR(vp, attrnamespace, attrname, l->l_cred);
 	if (error == EOPNOTSUPP)
@@ -392,6 +402,8 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 	if (auiop != NULL) {
 		cnt -= auio.uio_resid;
 		retval[0] = cnt;
+
+		ktrkuser("xattr-list", data, cnt);
 	} else
 		retval[0] = size;
 
@@ -1068,7 +1080,6 @@ sys_llistxattr(struct lwp *l, const struct sys_llistxattr_args *uap, register_t 
 	    list, size, 0, l, &listsize_usr);
 	if (error)
 		goto out;
-
 	if (list)
 		list += listsize_usr;
 	if (size)
