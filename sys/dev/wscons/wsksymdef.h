@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.64 2010/01/28 22:36:19 drochner Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.65 2011/07/22 18:17:12 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -644,6 +644,7 @@ action(KB_UK,	0,	0x0700,	"uk",	,	"UK-English")	\
 action(KB_BE,	0,	0x1300,	"be",	,	"Belgian")	\
 action(KB_CZ,	0,	0x1500, "cz",	,	"Czech")	\
 action(KB_DK,	0,	0x0400,	"dk",	,	"Danish")	\
+action(KB_NL,	0,	0x1600,	"nl",	,	"Dutch") 	\
 action(KB_FI,	0,	0x0900,	"fi",	,	"Finnish")	\
 action(KB_FR,	0,	0x0600,	"fr",	,	"French")	\
 action(KB_DE, KB_NODEAD,0x0300,	"de",".nodead",	"German")	\
@@ -664,7 +665,7 @@ action(KB_UA,	0,	0x1200,	"ua",	,	"Ukrainian")
 
 /* Define all the KB_xx numeric values using above table */
 #define KBF_ENUM(tag, tagf, value, cc, ccf, country) tag=value,
-enum { KB_ENC_FUN(KBF_ENUM) KB_NEXT=0x1600 };
+enum { KB_ENC_FUN(KBF_ENUM) KB_NEXT=0x1700 };
 
 /* Define list of KB_xxx and country codes for array initialisation */
 #define KBF_ENCTAB(tag, tagf, value, cc, ccf, country) { tag, cc },
