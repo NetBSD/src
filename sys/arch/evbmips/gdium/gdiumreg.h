@@ -1,4 +1,4 @@
-/*	$NetBSD: gdiumreg.h,v 1.1 2009/08/06 00:50:26 matt Exp $	*/
+/*	$NetBSD: gdiumreg.h,v 1.2 2011/07/22 20:41:37 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,6 @@
  *	PCI 0080.0000 -> Phys 0080.0000 (8MB, 64bit, prefetchable, burstable)
  */
 
-#define	GDIUM_DMA_PCI_PCIBASE	0x00000000UL
+#define	GDIUM_DMA_PCI_PCIBASE	0x80000000UL
 #define	GDIUM_DMA_PCI_PHYSBASE	0x00000000UL
 #define	GDIUM_DMA_PCI_SIZE	0x80000000UL
