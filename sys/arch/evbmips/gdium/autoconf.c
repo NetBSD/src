@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2009/11/05 00:35:12 dyoung Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2011/07/22 20:41:57 macallan Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2009/11/05 00:35:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2011/07/22 20:41:57 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ device_register(struct device *dev, void *aux)
 	if ((booted_device == NULL) && (netboot == 1))
 		if (device_class(dev) == DV_IFNET)
 			booted_device = dev;
-	if (device_is_a(dev, "genfb")) {
+	if (device_is_a(dev, "genfb") || device_is_a(dev, "voyagerfb")) {
 		dict = device_properties(dev);
 		/*
 		 * this is a hack
