@@ -1,4 +1,4 @@
-.\"	$NetBSD: dup.2,v 1.26 2011/07/16 14:33:33 jruoho Exp $
+.\"	$NetBSD: dup.2,v 1.27 2011/07/22 11:02:39 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -150,9 +150,9 @@ function will also fail if:
 .It Bq Er EINVAL
 .Fa flags
 is other than
-.Va O_NONBLOCK
+.Dv O_NONBLOCK
 or
-.Va O_CLOEXEC .
+.Dv O_CLOEXEC .
 .El
 .Sh SEE ALSO
 .Xr accept 2 ,
