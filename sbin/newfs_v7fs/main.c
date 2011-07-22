@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2011/07/19 19:57:54 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2011/07/22 09:15:10 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.6 2011/07/19 19:57:54 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2011/07/22 09:15:10 uch Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -252,8 +252,11 @@ v7fs_newfs(const struct v7fs_mount_device *mount, int32_t maxfile)
 	v7fs_daddr_t volume_size = mount->sectors;
 
 	/* Check and determine ilistblock, datablock size. */
-	if (volume_size > V7FS_DADDR_MAX + 1)
-		return ENOSPC;
+	if (volume_size > V7FS_DADDR_MAX + 1) {
+		warnx("volume size %d over v7fs limit %d. truncated.",
+		    volume_size, V7FS_DADDR_MAX + 1);
+		volume_size = V7FS_DADDR_MAX + 1;
+	}
 
 	ilist_size = determine_ilist_size(volume_size, maxfile);
 
