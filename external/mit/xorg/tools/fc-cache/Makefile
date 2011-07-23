@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/09/13 21:37:07 hubertf Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/23 23:42:02 mrg Exp $
 
 NOMAN=		1
 
@@ -38,6 +38,9 @@ SRCS.freetype+=	type1cid.c
 
 .PATH:	${FREETYPE}/src/gzip
 SRCS.freetype+=	ftgzip.c
+
+.PATH:	${FREETYPE}/src/bzip2
+SRCS.freetype+=	ftbzip2.c
 
 .PATH:	${FREETYPE}/src/lzw
 SRCS.freetype+=	ftlzw.c
@@ -101,6 +104,8 @@ HOST_CPPFLAGS+=	-I${FONTCONFIG} -I${FREETYPE} \
 		-I${FREETYPE}/include -I${EXPAT}/lib \
 		-I${FONTCONFIG}/../include \
 		-I${DESTDIR}${X11INCDIR} -I.
+
+LDADD=	-lz -lbz2
 
 FCARCH_DEPFILE=	fc-cache.c
 .include "../../lib/fontconfig/src/Makefile.fcarch"
