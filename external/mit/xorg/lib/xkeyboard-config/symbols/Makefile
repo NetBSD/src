@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.7 2011/02/21 05:10:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2011/07/23 12:02:02 mrg Exp $
 
 .include <bsd.own.mk>
 
 XKBNAME=	symbols
 
-FILES=	ad af al altwin am ara at az \
+FILES=	ad af al altwin am apl ara at az \
 	ba bd be bg br brai bt bw by \
-	ca capslock cd ch cn compose ctrl cz \
+	ca capslock cd ch cm cn compose ctrl cz \
 	de dk \
 	ee empty epo es et eurosign \
 	fi fo fr \
@@ -22,12 +22,12 @@ FILES=	ad af al altwin am ara at az \
 	pc ph pk pl pt \
 	ro rs ru rupeesign \
 	se shift si sk sn srvr_ctrl sy \
-	terminate th tj tm tr typo tz \
+	terminate th tj tm tr tw typo tz \
 	ua us uz \
 	vn \
 	za
 
-SUBDIR=		digital_vndr extras fujitsu_vndr hp_vndr macintosh_vndr \
+SUBDIR=		digital_vndr fujitsu_vndr hp_vndr macintosh_vndr \
 		nec_vndr nokia_vndr sgi_vndr sharp_vndr sony_vndr sun_vndr \
 		xfree68_vndr
 
