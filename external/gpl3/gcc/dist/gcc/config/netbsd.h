@@ -262,3 +262,7 @@ __enable_execute_stack (void *addr)					\
 
 /* Define this so we can compile MS code for use with WINE.  */
 #define HANDLE_PRAGMA_PACK_PUSH_POP 1
+
+#if defined(HAVE_LD_EH_FRAME_HDR)
+#define LINK_EH_SPEC "--eh-frame-hdr "
+#endif
