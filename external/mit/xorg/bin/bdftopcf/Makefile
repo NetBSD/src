@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/07/23 23:42:02 mrg Exp $
 
 .include <bsd.own.mk>
 
 PROG=	bdftopcf
 
-LDADD+=	-lXfont -lfontenc -lfreetype -lm -lz
-DPADD+=	${LIBXFONT} ${LIBFONTENC} ${LIBFREETYPE} ${LIBM} ${LIBZ}
+LDADD+=	-lXfont -lfontenc -lfreetype -lm -lz -lbz2
+DPADD+=	${LIBXFONT} ${LIBFONTENC} ${LIBFREETYPE} ${LIBM} ${LIBZ} ${LIBBZ2}
 
 .PATH:	${X11SRCDIR.${PROG}}
 
