@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2011/02/21 01:01:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2011/07/23 12:13:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,8 @@ SRCS.EXA=	radeon_exa.c r600_exa.c r6xx_accel.c \
 		r600_textured_videofuncs.c r600_shader.c \
 		radeon_exa_shared.c \
 		evergreen_exa.c evergreen_accel.c evergreen_shader.c \
-		evergreen_textured_videofuncs.c
+		evergreen_textured_videofuncs.c \
+		cayman_accel.c cayman_shader.c
 
 SRCS=	radeon_accel.c radeon_cursor.c \
 	radeon_driver.c radeon_video.c radeon_bios.c \
