@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.57 2011/05/15 13:36:13 he Exp $
+#	$NetBSD: GUMSTIX,v 1.58 2011/07/23 21:12:57 jakllsch Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -322,6 +322,7 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
 # Bluetooth USB Controllers
 #ubt*	at uhub? port ?
+#aubtfwl* at uhub? port ?
 
 # Bluetooth Device Hub
 bthub*	at bcsp?
