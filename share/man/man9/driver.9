@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.26 2011/07/23 16:02:15 jym Exp $
+.\"     $NetBSD: driver.9,v 1.27 2011/07/23 16:04:35 jym Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .In sys/device.h
 .In sys/errno.h
 .Ft static int
-.Fn foo_match "device_t parent" "struct cfdata *match" "void *aux"
+.Fn foo_match "device_t parent" "cfdata_t match" "void *aux"
 .Ft static void
 .Fn foo_attach "device_t parent" "device_t self" "void *aux"
 .Ft static int
