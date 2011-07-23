@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.111 2011/07/23 20:45:15 jakllsch Exp $
+#	$NetBSD: files.usb,v 1.112 2011/07/23 20:52:15 jakllsch Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -138,6 +138,11 @@ file	dev/usb/irmce.c			irmce
 device	ubt: btbus, bluetooth
 attach	ubt at usbdevif
 file	dev/usb/ubt.c			ubt
+
+# Atheros USB Bluetooth firmware load
+device	aubtfwl: firmload
+attach	aubtfwl at usbdevif
+file	dev/usb/aubtfwl.c		aubtfwl
 
 #
 # Capture devices
