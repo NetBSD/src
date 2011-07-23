@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.181 2011/05/24 16:39:56 joerg Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.182 2011/07/23 11:38:28 jym Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.181 2011/05/24 16:39:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.182 2011/07/23 11:38:28 jym Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -735,15 +735,18 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       0,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
+#ifndef KERN_SA
+		       CTLFLAG_IMMEDIATE|
+#endif
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "no_sa_support",
 		       SYSCTL_DESCR("0 if the kernel supports SA, otherwise "
 		       "it doesn't"),
 		       NULL, 
-#ifdef KERN_SA
-		       0, &sa_system_disabled,
-#else
+#ifndef KERN_SA
 		       1, NULL,
+#else
+		       0, &sa_system_disabled,
 #endif
 		       0,
 		       CTL_KERN, CTL_CREATE, CTL_EOL);
