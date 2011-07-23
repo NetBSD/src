@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.140 2011/07/23 19:14:37 martin Exp $
+# $NetBSD: GENERIC,v 1.141 2011/07/23 21:12:58 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.140 $"
+#ident 		"GENERIC-$Revision: 1.141 $"
 
 maxusers	64
 
@@ -821,6 +821,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## Bluetooth USB Controllers
 ubt* at uhub? port ?
+aubtfwl* at uhub? port ?
 
 ## Bluetooth Device Hub
 #bthub* at bcsp?
