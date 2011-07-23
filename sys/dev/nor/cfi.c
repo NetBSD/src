@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi.c,v 1.4 2011/07/23 06:27:40 cliff Exp $	*/
+/*	$NetBSD: cfi.c,v 1.5 2011/07/23 07:17:34 cliff Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_cfi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfi.c,v 1.4 2011/07/23 06:27:40 cliff Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: cfi.c,v 1.5 2011/07/23 07:17:34 cliff Exp $"); 
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,16 +83,15 @@ static void cfi_hexdump(flash_off_t, void * const, u_int, u_int);
  * in Intel "Common Flash Interface (CFI) and Command Sets"
  * Application Note 646, April 2000
  *
- * The byte ordering of the signature string here varies from that table
- * because of discrepancy in observed behavior, for the case:
- *	- x16 device operating in 16-bit mode
- * Similar discrepancy is expected (but not verified) for the case:
- *	- x32 device operating in 32-bit mode
- * so the ordering is changed here for that case also.
+ * Assume the byte order of the flash (and of the signature there)
+ * is the same as host byte order. The Intel App. Note describes the
+ * little endian variant.
  *
  * XXX down-sized, interleaved & multi-chip opmodes not yet supported
  */
 
+#if BYTE_ORDER == BIG_ENDIAN
+/* BIG ENDIAN host */
 /* 1-byte access */
 static const struct cfi_opmodes cfi_opmodes_1[] = {
 	{ 0, 0, 0, 0x10,  3, "QRY", "x8 device operating in 8-bit mode" },
@@ -109,6 +108,25 @@ static const struct cfi_opmodes cfi_opmodes_4[] = {
 	{ 2, 2, 0, 0x40, 12, "\0\0\0Q\0\0\0R\0\0\0Y",
 		"x32 device operating in 32-bit mode" },
 };
+#else
+/* LITTLE ENDIAN host */
+/* 1-byte access */
+static const struct cfi_opmodes cfi_opmodes_1[] = {
+	{ 0, 0, 0, 0x10,  3, "QRY", "x8 device operating in 8-bit mode" },
+};
+
+/* 2-byte access */
+static const struct cfi_opmodes cfi_opmodes_2[] = {
+	{ 1, 1, 0, 0x20,  6, "Q\0R\0Y\0",
+		"x16 device operating in 16-bit mode" },
+};
+
+/* 4-byte access */
+static const struct cfi_opmodes cfi_opmodes_4[] = {
+	{ 2, 2, 0, 0x40, 12, "Q\0\0\0R\0\0\0Y\0\0\0",
+		"x32 device operating in 32-bit mode" },
+};
+#endif
 
 
 #define LOG2_64K	16
@@ -863,26 +881,30 @@ cfi_jedec_search(struct cfi *cfi)
 static void
 cfi_jedec_fill(struct cfi *cfi, const struct cfi_jedec_tab *jt)
 {
+
 	cfi->cfi_name = jt->jt_name;
 	cfi->cfi_opmode = jt->jt_opmode;
-	memset(&cfi->cfi_qry_data, 0, sizeof(struct cfi_query_data));
-	cfi->cfi_qry_data.id_pri = jt->jt_id_pri;
-	cfi->cfi_qry_data.id_alt = jt->jt_id_alt;
-	cfi->cfi_qry_data.interface_code_desc = jt->jt_interface_code_desc;
-	cfi->cfi_qry_data.write_word_time_typ = jt->jt_write_word_time_typ;
-	cfi->cfi_qry_data.write_nbyte_time_typ = jt->jt_write_nbyte_time_typ;
-	cfi->cfi_qry_data.erase_blk_time_typ = jt->jt_erase_blk_time_typ;
-	cfi->cfi_qry_data.erase_chip_time_typ = jt->jt_erase_chip_time_typ;
-	cfi->cfi_qry_data.write_word_time_max = jt->jt_write_word_time_max;
-	cfi->cfi_qry_data.write_nbyte_time_max = jt->jt_write_nbyte_time_max;
-	cfi->cfi_qry_data.erase_blk_time_max = jt->jt_erase_blk_time_max;
-	cfi->cfi_qry_data.erase_chip_time_max = jt->jt_erase_chip_time_max;
-	cfi->cfi_qry_data.device_size = jt->jt_device_size;
-	cfi->cfi_qry_data.interface_code_desc = jt->jt_interface_code_desc;
-	cfi->cfi_qry_data.write_nbyte_size_max = jt->jt_write_nbyte_size_max;
-	cfi->cfi_qry_data.erase_blk_regions = jt->jt_erase_blk_regions;
+
+	struct cfi_query_data *qryp = &cfi->cfi_qry_data;
+	memset(&qryp, 0, sizeof(*qryp));
+	qryp->id_pri = jt->jt_id_pri;
+	qryp->id_alt = jt->jt_id_alt;
+	qryp->interface_code_desc = jt->jt_interface_code_desc;
+	qryp->write_word_time_typ = jt->jt_write_word_time_typ;
+	qryp->write_nbyte_time_typ = jt->jt_write_nbyte_time_typ;
+	qryp->erase_blk_time_typ = jt->jt_erase_blk_time_typ;
+	qryp->erase_chip_time_typ = jt->jt_erase_chip_time_typ;
+	qryp->write_word_time_max = jt->jt_write_word_time_max;
+	qryp->write_nbyte_time_max = jt->jt_write_nbyte_time_max;
+	qryp->erase_blk_time_max = jt->jt_erase_blk_time_max;
+	qryp->erase_chip_time_max = jt->jt_erase_chip_time_max;
+	qryp->device_size = jt->jt_device_size;
+	qryp->interface_code_desc = jt->jt_interface_code_desc;
+	qryp->write_nbyte_size_max = jt->jt_write_nbyte_size_max;
+	qryp->erase_blk_regions = jt->jt_erase_blk_regions;
 	for (u_int i=0; i < 4; i++)
-		cfi->cfi_qry_data.erase_blk_info[i] = jt->jt_erase_blk_info[i];
+		qryp->erase_blk_info[i] = jt->jt_erase_blk_info[i];
+
 }
 
 void
