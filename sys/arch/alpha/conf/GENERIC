@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.340 2011/06/30 20:09:18 wiz Exp $
+# $NetBSD: GENERIC,v 1.341 2011/07/23 21:12:57 jakllsch Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.340 $"
+ident		"GENERIC-$Revision: 1.341 $"
 
 maxusers 32
 
@@ -644,6 +644,7 @@ btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
+aubtfwl* at uhub? port ?
 
 # Bluetooth Device Hub
 bthub* at bcsp?

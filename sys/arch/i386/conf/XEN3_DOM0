@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.53 2011/07/20 20:27:42 jakllsch Exp $
+#	$NetBSD: XEN3_DOM0,v 1.54 2011/07/23 21:12:58 jakllsch Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -705,6 +705,7 @@ midi*	at midibus?
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
+aubtfwl* at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub* at bt3c?
