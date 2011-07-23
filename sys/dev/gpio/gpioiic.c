@@ -1,4 +1,4 @@
-/* $NetBSD: gpioiic.c,v 1.2 2009/12/06 22:33:44 dyoung Exp $ */
+/* $NetBSD: gpioiic.c,v 1.3 2011/07/23 09:03:38 mbalmer Exp $ */
 /*	$OpenBSD: gpioiic.c,v 1.8 2008/11/24 12:12:12 mbalmer Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.2 2009/12/06 22:33:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.3 2011/07/23 09:03:38 mbalmer Exp $");
 
 /*
  * I2C bus bit-banging through GPIO pins.
@@ -295,7 +295,14 @@ u_int32_t
 gpioiic_bb_read_bits(void *cookie)
 {
 	struct gpioiic_softc *sc = cookie;
+	u_int32_t bits = 0;
 
-	return gpio_pin_read(sc->sc_gpio, &sc->sc_map,
-	    GPIOIIC_PIN_SDA) == GPIO_PIN_HIGH ? GPIOIIC_SDA : 0;
+	if (gpio_pin_read(sc->sc_gpio, &sc->sc_map,
+	    GPIOIIC_PIN_SDA) == GPIO_PIN_HIGH)
+		bits |= GPIOIIC_SDA;
+	if (gpio_pin_read(sc->sc_gpio, &sc->sc_map,
+	    GPIOIIC_PIN_SCL) == GPIO_PIN_HIGH)
+		bits |= GPIOIIC_SCL;
+
+	return bits;
 }
