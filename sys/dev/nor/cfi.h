@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi.h,v 1.3 2011/07/17 00:52:42 dyoung Exp $	*/
+/*	$NetBSD: cfi.h,v 1.4 2011/07/23 06:27:09 cliff Exp $	*/
 
 #ifndef _CFI_H_
 #define _CFI_H_
@@ -22,6 +22,11 @@ typedef enum {
 } cfi_state_t;
 
 
+struct cfi_erase_blk_info {
+	uint16_t z;			/* Erase Blocks are z * 256 bytes */
+	uint16_t y;			/* y+1 = #Erase Blocks in region */
+};
+
 /*
  * CFI Query structure
  */
@@ -40,20 +45,18 @@ struct cfi_query_data {
     uint8_t	write_word_time_typ;	/* typ 1-word timeout, 1<<N usec */
     uint8_t	write_nbyte_time_typ;	/* typ multi-byte timeout, 1<<N usec */
     uint8_t	erase_blk_time_typ;	/* typ 1-blk erase timeout, 1<<N msec */
-    uint8_t	erase_chiptime_typ;	/* typ chip erase timeout, 1<<N msec */
+    uint8_t	erase_chip_time_typ;	/* typ chip erase timeout, 1<<N msec */
     uint8_t	write_word_time_max;	/* max 1-word timeout, typ<<N */
     uint8_t	write_nbyte_time_max;	/* max multi-byte timeout, typ<<N */
     uint8_t	erase_blk_time_max;	/* max 1-blk erase timeout, typ<<N */
-    uint8_t	erase_chiptime_max;	/* max chip erase timeout, typ<<N */
+    uint8_t	erase_chip_time_max;	/* max chip erase timeout, typ<<N */
     /* Device Geometry Definition */
     uint8_t	device_size;		/* 1<<N bytes */
     uint16_t	interface_code_desc;	/* JEP137 interface code description */
     uint16_t	write_nbyte_size_max;	/* max size of multi-byte write, 1<<N */
     uint8_t	erase_blk_regions;	/* number of erase block regions */
-    struct {
-	uint16_t z;			/* Erase Blocks are z * 256 bytes */
-	uint16_t y;			/* y+1 = #Erase Blocks in region */
-    } erase_blk_info[4];
+    struct cfi_erase_blk_info
+		erase_blk_info[4];	/* describe erase block regions */
     /* Vendor-specific Primary command set info */
     union {
 	struct cmdset_0002_query_data cmd_0002;
@@ -69,15 +72,18 @@ struct cfi_query_data {
 /*
  * decode interface_code_desc
  */
+#define CFI_IFCODE_X8		0
+#define CFI_IFCODE_X16		1
+#define CFI_IFCODE_X8X16	2
 static inline const char *
 cfi_interface_desc_str(uint16_t icd)
 {
 	switch(icd) {
-	case 0:
+	case CFI_IFCODE_X8:
 		return "x8";
-	case 1:
+	case CFI_IFCODE_X16:
 		return "x16";
-	case 2:
+	case CFI_IFCODE_X8X16:
 		return "x8/x16";
 	default:
 		return "";
@@ -182,9 +188,11 @@ struct cfi {
 	cfi_state_t		cfi_state;
 	uint8_t			cfi_portwidth;	/* port width, 1<<N bytes */
 	uint8_t			cfi_chipwidth;	/* chip width, 1<<N bytes */
+	bool			cfi_emulated;	/* ary data are faked */
 	struct cfi_query_data	cfi_qry_data;	/* CFI Query data */
 	struct cfi_jedec_id_data
 				cfi_id_data;	/* JEDEC ID data */
+	const char	       *cfi_name;	/* optional chip name */
 	const struct cfi_opmodes 
 			       *cfi_opmode;
 	struct cfi_ops		cfi_ops;	/* chip dependent functions */
@@ -192,6 +200,40 @@ struct cfi {
 #ifdef CFI_0002_STATS
 	struct cfi_0002_stats	cfi_0002_stats;
 #endif
+};
+
+/*
+ * struct cfi_jedec_tab is an amalgamation of
+ * - info to identify a chip based on JEDEC ID data, and
+ * - values needed to fill in struct cfi (i.e. fields we depend on)
+ */
+struct cfi_jedec_tab {
+	/* ID */
+	const char     *jt_name;
+	uint32_t	jt_mid;
+	uint32_t	jt_did;
+	/* cmdset */
+	uint16_t	jt_id_pri;
+	uint16_t	jt_id_alt;
+	/* geometry */
+	uint8_t		jt_device_size;			/* 1<<N bytes */
+	uint16_t	jt_interface_code_desc;
+	uint8_t		jt_write_nbyte_size_max;	/* 1<<N bytes */
+	uint8_t		jt_erase_blk_regions;
+	struct cfi_erase_blk_info
+			jt_erase_blk_info[4];
+	/* timing */
+	uint8_t		jt_write_word_time_typ;		/* 1<<N usec */
+	uint8_t		jt_write_nbyte_time_typ;	/* 1<<N msec */
+	uint8_t		jt_erase_blk_time_typ;		/* 1<<N msec */
+	uint8_t		jt_erase_chip_time_typ;		/* 1<<N msec */
+	uint8_t		jt_write_word_time_max;		/* typ<<N usec */
+	uint8_t		jt_write_nbyte_time_max;	/* typ<<N msec */
+	uint8_t		jt_erase_blk_time_max;		/* typ<<N msec */
+	uint8_t		jt_erase_chip_time_max;		/* typ<<N msec */
+	/* XXX operation mode, perhaps cannot be tabulated */
+	const struct cfi_opmodes
+		       *jt_opmode;
 };
 
 
