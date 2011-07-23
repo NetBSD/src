@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.25 2011/01/05 17:02:03 jmcneill Exp $
+.\"     $NetBSD: driver.9,v 1.26 2011/07/23 16:02:15 jym Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 5, 2011
+.Dd July 23, 2011
 .Dt DRIVER 9
 .Os
 .Sh NAME
@@ -38,13 +38,13 @@
 .In sys/device.h
 .In sys/errno.h
 .Ft static int
-.Fn foo_match "struct device *parent" "struct cfdata *match" "void *aux"
+.Fn foo_match "device_t parent" "struct cfdata *match" "void *aux"
 .Ft static void
-.Fn foo_attach "struct device *parent" "struct device *self" "void *aux"
+.Fn foo_attach "device_t parent" "device_t self" "void *aux"
 .Ft static int
-.Fn foo_detach "struct device *self" "int flags"
+.Fn foo_detach "device_t self" "int flags"
 .Ft static int
-.Fn foo_activate "struct device *self" "enum devact act"
+.Fn foo_activate "device_t self" "enum devact act"
 .Sh DESCRIPTION
 This page briefly describes the basic
 .Nx
@@ -98,7 +98,7 @@ is defined with:
 .Pp
 .Bd -literal
 struct foo_softc {
-	struct device sc_dev;		/* generic device info */
+	device_t sc_dev;		/* generic device info */
 	/* device-specific state */
 };
 .Ed
@@ -106,7 +106,7 @@ struct foo_softc {
 The autoconfiguration framework mandates that the first member of the
 .Em softc
 structure must be the driver-independent
-.Em struct device .
+.Em device_t .
 Probably its most useful aspect to the driver is that it contains the
 device-instance name
 .Em dv_xname .
