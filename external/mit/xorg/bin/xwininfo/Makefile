@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/11/20 23:45:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/23 07:11:49 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,8 @@ SRCS=	xwininfo.c clientwin.c dsimple.c
 
 XWININFODIR=	${X11SRCDIR.${PROG}}
 CPPFLAGS+=-I${XWININFODIR} -I${XWININFODIR}/../include
-.PATH:	${XWININFODIR}
+
+.PATH:	${XWININFODIR} ${XWININFODIR}/man
 
 LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11 -lxcb -lxcb-shape
 DPADD+=	${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11} ${LIBXCB} ${LIBXCB_SHAPE}
