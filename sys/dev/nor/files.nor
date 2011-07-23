@@ -1,4 +1,4 @@
-# $NetBSD: files.nor,v 1.2 2011/07/15 19:19:57 cliff Exp $
+# $NetBSD: files.nor,v 1.3 2011/07/23 06:24:54 cliff Exp $
 
 define	norbus	{ }
 
@@ -9,5 +9,5 @@ file	dev/nor/nor.c		nor
 file	dev/nor/cfi.c		nor
 file	dev/nor/cfi_0002.c	nor
 
-defflag opt_nor.h		NOR_DEBUG
-defflag opt_nor.h		NOR_VERBOSE
+defflag opt_nor.h		NOR_DEBUG NOR_VERBOSE
+defflag opt_cfi.h		CFI_DEBUG_QRY CFI_DEBUG_JEDEC
