@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.63 2011/03/07 15:56:26 jakllsch Exp $
+#	$NetBSD: GENERIC,v 1.64 2011/07/23 21:12:58 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.63 $"
+#ident 		"GENERIC-$Revision: 1.64 $"
 
 maxusers	32		# estimated number of users
 
@@ -733,6 +733,7 @@ midi*	at midibus?
 
 # Bluetooth USB Controllers
 #ubt* at uhub? port ?
+#aubtfwl* at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub* at bcsp?
