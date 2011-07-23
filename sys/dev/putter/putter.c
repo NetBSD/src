@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.31 2011/02/06 14:29:25 haad Exp $	*/
+/*	$NetBSD: putter.c,v 1.32 2011/07/23 14:28:28 hannken Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.31 2011/02/06 14:29:25 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.32 2011/07/23 14:28:28 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,6 +420,7 @@ putter_fop_stat(file_t *fp, struct stat *st)
 	st->st_ctimespec = st->st_birthtimespec = pi->pi_btime;
 	st->st_uid = kauth_cred_geteuid(fp->f_cred);
 	st->st_gid = kauth_cred_getegid(fp->f_cred);
+	st->st_mode = S_IFCHR;
 	KERNEL_UNLOCK_ONE(NULL);
 	return 0;
 }
