@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/06/10 01:56:46 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/07/23 06:06:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ CPPFLAGS+=	-DFREETYPE2 -I${DESTDIR}${X11INCDIR}/freetype2 \
 LDADD+=	-lfontenc -lfreetype -lz -lbz2
 DPADD+=	${LIBFONTENC} ${LIBFREETYPE} ${LIBZ} ${LIBBZ2}
 
-.PATH:	${X11SRCDIR.${PROG}}
+.PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/man
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

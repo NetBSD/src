@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/11/21 02:33:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/23 06:06:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ CPPFLAGS+=-I${X11SRCDIR.${PROG}}/../include
 LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11
 DPADD+=	${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
 
-.PATH:	${X11SRCDIR.${PROG}}
+.PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/man
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
