@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/04 20:53:13 cube Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/23 12:27:41 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -193,7 +193,8 @@ MLINKS+=	XtMalloc.3 XtCalloc.3 \
 		XtMalloc.3 XtRealloc.3 \
 		XtMalloc.3 XtFree.3 \
 		XtMalloc.3 XtNew.3 \
-		XtMalloc.3 XtNewString.3
+		XtMalloc.3 XtNewString.3 \
+		XtMalloc.3 XtAsprintf.3
 
 MLINKS+=	XtManageChildren.3 XtManageChild.3 \
 		XtManageChildren.3 XtUnmanageChildren.3 \
