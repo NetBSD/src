@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1040 2011/07/20 20:29:54 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.1041 2011/07/23 21:12:58 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1040 $"
+#ident 		"GENERIC-$Revision: 1.1041 $"
 
 maxusers	64		# estimated number of users
 
@@ -1455,6 +1455,7 @@ sbt* at sdmmc?
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
+aubtfwl* at uhub? port ?
 
 # Bluetooth Device Hub
 bthub* at bcsp?

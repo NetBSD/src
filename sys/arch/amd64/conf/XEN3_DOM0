@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.69 2011/07/20 20:27:41 jakllsch Exp $
+# $NetBSD: XEN3_DOM0,v 1.70 2011/07/23 21:12:57 jakllsch Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -728,6 +728,7 @@ midi*	at midibus?
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
+aubtfwl* at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub* at bt3c?

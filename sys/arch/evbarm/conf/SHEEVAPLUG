@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.8 2011/07/11 23:01:19 matt Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.9 2011/07/23 21:12:57 jakllsch Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -402,6 +402,7 @@ sbt* at sdmmc?
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
+aubtfwl* at uhub? port ?
 
 # Bluetooth Device Hub
 bthub* at ubt?
