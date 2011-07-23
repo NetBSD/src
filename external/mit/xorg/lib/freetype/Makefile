@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/07/23 23:30:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2011/07/23 23:38:19 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -94,7 +94,8 @@ CPPFLAGS+=	-DFT_CONFIG_OPTION_SUBPIXEL_RENDERING
 .endif
 
 LIBDPLIBS= \
-	z ${.CURDIR}/../../../../../lib/libz
+	z ${.CURDIR}/../../../../../lib/libz \
+	bz2 ${.CURDIR}/../../../../../lib/libbz2
 
 PKGCONFIG=	freetype2
 PKGDIST.freetype2=	${.CURDIR}
