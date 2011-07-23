@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1083 2011/06/28 14:58:33 sborrill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1084 2011/07/23 03:10:11 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1087 2011/06/28 14:22:36 sborrill Exp
+ *	NetBSD: pcidevs,v 1.1088 2011/07/23 03:09:41 matt Exp
  */
 
 /*
@@ -577,6 +577,7 @@
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey Computer */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia Technologies */
 #define	PCI_VENDOR_SYSTEMBASE	0x14a1		/* System Base */
+#define	PCI_VENDOR_MARVELL2	0x1b4b		/* Marvell */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet Wireless Communications */
 #define	PCI_VENDOR_COMPAL	0x14c0		/* COMPAL Electronics */
 #define	PCI_VENDOR_MYRICOM	0x14c1		/* Myricom */
@@ -2151,6 +2152,8 @@
 #define	PCI_PRODUCT_MARVELL_MV78100	0x7810		/* MV78100 SoC Discovery Innovation */
 #define	PCI_PRODUCT_MARVELL_MV78200	0x7820		/* MV78200 SoC Discovery Innovation */
 #define	PCI_PRODUCT_MARVELL_88W8660	0x8660		/* 88W8660 SoC Orion1 */
+
+#define	PCI_PRODUCT_MARVELL2_88SE9123	0x9123		/* 88SE9123 SATA II PCI-E AHCI Controller */
 
 /* Global Sun Tech products */
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P	0x1101		/* GL24110P PCI IEEE 802.11b */
