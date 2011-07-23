@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/03/06 04:10:55 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.7 2011/07/23 21:37:28 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,7 @@ SRCS=	XIAllowEvents.c \
 	XIPassiveGrab.c \
 	XIProperties.c \
 	XISelEv.c \
+	XISetCPtr.c \
 	XIWarpPointer.c \
 	XIHierarchy.c \
 	XIDefineCursor.c \
@@ -52,7 +53,6 @@ SRCS+=	XAllowDv.c \
 	XQueryDv.c \
 	XSelect.c \
 	XSetBMap.c \
-	XSetCPtr.c \
 	XSetDVal.c \
 	XSetMMap.c \
 	XSetMode.c \
