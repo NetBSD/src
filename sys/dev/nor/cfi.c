@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi.c,v 1.3 2011/07/19 20:52:10 cliff Exp $	*/
+/*	$NetBSD: cfi.c,v 1.4 2011/07/23 06:27:40 cliff Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,11 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_nor.h"
 #include "opt_flash.h"
+#include "opt_nor.h"
+#include "opt_cfi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfi.c,v 1.3 2011/07/19 20:52:10 cliff Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: cfi.c,v 1.4 2011/07/23 06:27:40 cliff Exp $"); 
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +64,18 @@ static void cfi_write_4(device_t, flash_off_t, uint32_t);
 static void cfi_write_buf_1(device_t, flash_off_t, const uint8_t *, size_t);
 static void cfi_write_buf_2(device_t, flash_off_t, const uint16_t *, size_t);
 static void cfi_write_buf_4(device_t, flash_off_t, const uint32_t *, size_t);
+static void cfi_jedec_id_1(struct cfi * const );
+static void cfi_jedec_id_2(struct cfi * const );
+static void cfi_jedec_id_4(struct cfi * const );
 static bool cfi_jedec_id(struct cfi * const);
+static bool cfi_emulate(struct cfi * const);
+static const struct cfi_jedec_tab * cfi_jedec_search(struct cfi *);
+static void cfi_jedec_fill(struct cfi * const,
+	const struct cfi_jedec_tab *);
+#if defined(CFI_DEBUG_JEDEC) || defined(CFI_DEBUG_QRY)
+static void cfi_hexdump(flash_off_t, void * const, u_int, u_int);
+#endif
+
 
 
 /*
@@ -96,6 +108,70 @@ static const struct cfi_opmodes cfi_opmodes_2[] = {
 static const struct cfi_opmodes cfi_opmodes_4[] = {
 	{ 2, 2, 0, 0x40, 12, "\0\0\0Q\0\0\0R\0\0\0Y",
 		"x32 device operating in 32-bit mode" },
+};
+
+
+#define LOG2_64K	16
+#define LOG2_128K	17
+#define LOG2_256K	18
+#define LOG2_512K	19
+#define LOG2_1M		20
+#define LOG2_2M		21
+#define LOG2_4M		22
+#define LOG2_8M		23
+#define LOG2_16M	24
+#define LOG2_32M	25
+#define LOG2_64M	26
+#define LOG2_128M	27
+#define LOG2_256M	28
+#define LOG2_512M	29
+#define LOG2_1G		30
+#define LOG2_2G		31
+const struct cfi_jedec_tab cfi_jedec_tab[] = {
+	{
+		.jt_name = "Pm39LV512",
+		.jt_mid = 0x9d,
+		.jt_did = 0x1b,
+		.jt_id_pri = 0,				/* XXX */
+		.jt_id_alt = 0,				/* XXX */
+		.jt_device_size = LOG2_64K,
+		.jt_interface_code_desc = CFI_IFCODE_X8,
+		.jt_erase_blk_regions = 1,
+		.jt_erase_blk_info = {
+			{ 4096/256, (64/4)-1 },
+		},
+		.jt_write_word_time_typ = 40,
+		.jt_write_nbyte_time_typ = 0,
+		.jt_erase_blk_time_typ = 55,
+		.jt_erase_chip_time_typ = 55,
+		.jt_write_word_time_max = 1,
+		.jt_write_nbyte_time_max = 0,
+		.jt_erase_blk_time_max = 1,
+		.jt_erase_chip_time_max = 1,
+		.jt_opmode = &cfi_opmodes_1[0],
+	},
+	{
+		.jt_name = "Pm39LV010",
+		.jt_mid = 0x9d,
+		.jt_did = 0x1c,
+		.jt_id_pri = 0,				/* XXX */
+		.jt_id_alt = 0,				/* XXX */
+		.jt_device_size = LOG2_128K,
+		.jt_interface_code_desc = CFI_IFCODE_X8,
+		.jt_erase_blk_regions = 1,
+		.jt_erase_blk_info = {
+			{ 4096/256, (128/4)-1 },
+		},
+		.jt_write_word_time_typ = 40,
+		.jt_write_nbyte_time_typ = 0,
+		.jt_erase_blk_time_typ = 55,
+		.jt_erase_chip_time_typ = 55,
+		.jt_write_word_time_max = 1,
+		.jt_write_nbyte_time_max = 0,
+		.jt_erase_blk_time_max = 1,
+		.jt_erase_chip_time_max = 1,
+		.jt_opmode = &cfi_opmodes_1[0],
+	},
 };
 
 
@@ -157,11 +233,11 @@ const struct nor_interface nor_interface_cfi = {
 	(qryp)->write_word_time_typ = cfi_unpack_1(data[0x1f]);		\
 	(qryp)->write_nbyte_time_typ = cfi_unpack_1(data[0x20]);	\
 	(qryp)->erase_blk_time_typ = cfi_unpack_1(data[0x21]);		\
-	(qryp)->erase_chiptime_typ = cfi_unpack_1(data[0x22]);		\
+	(qryp)->erase_chip_time_typ = cfi_unpack_1(data[0x22]);		\
 	(qryp)->write_word_time_max = cfi_unpack_1(data[0x23]);		\
 	(qryp)->write_nbyte_time_max = cfi_unpack_1(data[0x24]);	\
 	(qryp)->erase_blk_time_max = cfi_unpack_1(data[0x25]);		\
-	(qryp)->erase_chiptime_max = cfi_unpack_1(data[0x26]);		\
+	(qryp)->erase_chip_time_max = cfi_unpack_1(data[0x26]);		\
 	(qryp)->device_size = cfi_unpack_1(data[0x27]);			\
 	(qryp)->interface_code_desc =					\
 		be16toh(cfi_unpack_2(data[0x28], data[0x29]));		\
@@ -239,6 +315,27 @@ const struct nor_interface nor_interface_cfi = {
 	}								\
     } while (0)
 
+#ifdef CFI_DEBUG_QRY
+# define CFI_DUMP_QRY(off, p, sz, stride)				\
+    do {								\
+	printf("%s: QRY data\n", __func__);				\
+	cfi_hexdump(off, p, sz, stride);				\
+    } while (0)
+#else
+# define CFI_DUMP_QRY(off, p, sz, stride)
+#endif
+
+#ifdef CFI_DEBUG_JEDEC
+# define CFI_DUMP_JEDEC(off, p, sz, stride)				\
+    do {								\
+	printf("%s: JEDEC data\n", __func__);				\
+	cfi_hexdump(off, p, sz, stride);				\
+    } while (0)
+#else
+# define CFI_DUMP_JEDEC(off, p, sz, stride)
+#endif
+
+
 /*
  * cfi_chip_query_opmode - determine operational mode based on QRY signature
  */
@@ -263,6 +360,8 @@ cfi_chip_query_1(struct cfi * const cfi)
 	bus_space_read_region_1(cfi->cfi_bst, cfi->cfi_bsh, 0, data,
 		__arraycount(data));
 
+	CFI_DUMP_QRY(0, data, sizeof(data), 1);
+
 	bool found = cfi_chip_query_opmode(cfi, data, cfi_opmodes_1,
 		__arraycount(cfi_opmodes_1));
 
@@ -280,6 +379,8 @@ cfi_chip_query_2(struct cfi * const cfi)
 
 	bus_space_read_region_2(cfi->cfi_bst, cfi->cfi_bsh, 0, data,
 		__arraycount(data));
+
+	CFI_DUMP_QRY(0, data, sizeof(data), 2);
 
 	bool found = cfi_chip_query_opmode(cfi, (uint8_t *)data,
 		cfi_opmodes_2, __arraycount(cfi_opmodes_2));
@@ -299,6 +400,8 @@ cfi_chip_query_4(struct cfi * const cfi)
 	bus_space_read_region_4(cfi->cfi_bst, cfi->cfi_bsh, 0, data,
 		__arraycount(data));
 
+	CFI_DUMP_QRY(0, data, sizeof(data), 4);
+
 	bool found = cfi_chip_query_opmode(cfi, (uint8_t *)data,
 		cfi_opmodes_4, __arraycount(cfi_opmodes_4));
 
@@ -317,6 +420,8 @@ cfi_chip_query_8(struct cfi * const cfi)
 
 	bus_space_read_region_8(cfi->cfi_bst, cfi->cfi_bsh, 0, data,
 		__arraycount(data));
+
+	CFI_DUMP_QRY(0, data, sizeof(data), 8);
 
 	bool found = cfi_chip_query_opmode(cfi, (uint8_t *)data,
 		cfi_opmodes_8, __arraycount(cfi_opmodes_8));
@@ -372,11 +477,19 @@ cfi_chip_query(struct cfi * const cfi)
 		}
 	}
 
+	if (found)
+		cfi->cfi_emulated = false;
+
 	return found;
 }
 
 /*
  * cfi_probe - search for a CFI NOR trying various port & chip widths
+ *
+ * - gather CFI QRY and PRI data
+ * - gather JEDEC ID data
+ * - if cfi_chip_query() fails, emulate CFI using table data if possible,
+ *   otherwise fail.
  *
  * NOTE:
  *   striped NOR chips design not supported yet,
@@ -394,10 +507,13 @@ cfi_probe(struct cfi * const cfi)
 		cfi->cfi_portwidth = 		/* XXX */
 		cfi->cfi_chipwidth = cw;
 		found = cfi_chip_query(cfi);
+		cfi_jedec_id(cfi);
+		if (! found)
+			found = cfi_emulate(cfi);
 		if (found)
-			goto out;
+			break;
 	}
- out:
+
 	cfi_reset_default(cfi);		/* exit QRY mode */
 	return found;
 }
@@ -407,7 +523,7 @@ cfi_identify(struct cfi * const cfi)
 {
 	const bus_space_tag_t bst = cfi->cfi_bst;
 	const bus_space_handle_t bsh = cfi->cfi_bsh;
-	bool found = true;
+	bool found;
 
 	KASSERT(cfi != NULL);
 	KASSERT(bst != NULL);
@@ -416,20 +532,8 @@ cfi_identify(struct cfi * const cfi)
 	cfi->cfi_bst = bst;		/* restore bus space */
 	cfi->cfi_bsh = bsh;		/*  "       "   "    */
 
-	/* gather CFI PRQ and PRI data */
-	if (! cfi_probe(cfi)) {
-		aprint_debug("%s: cfi_probe failed\n", __func__);
-		found = false;
-		goto out;
-	}
+	found = cfi_probe(cfi);
 
-	/* gather ID data if possible */
-	if (! cfi_jedec_id(cfi)) {
-		aprint_debug("%s: cfi_jedec_id failed\n", __func__);
-		goto out;
-	}
-
- out:
 	cfi_reset_default(cfi);	/* exit QRY mode */
 
 	return found;
@@ -466,6 +570,8 @@ cfi_scan_media(device_t self, struct nor_chip *chip)
 		cfi_0002_init(sc, cfi, chip);
 		break;
 	default:
+		aprint_error_dev(self, "unsupported CFI cmdset %#04x\n",
+			cfi->cfi_qry_data.id_pri);
 		return -1;
 	}
 
@@ -607,6 +713,30 @@ cfi_reset_alt(struct cfi * const cfi)
 }
 
 static void
+cfi_jedec_id_1(struct cfi * const cfi)
+{
+	struct cfi_jedec_id_data *idp = &cfi->cfi_id_data;
+	uint8_t data[0x10];
+
+	bus_space_read_region_1(cfi->cfi_bst, cfi->cfi_bsh, 0, data,
+		__arraycount(data));
+
+	CFI_DUMP_JEDEC(0, data, sizeof(data), 1);
+
+	idp->id_mid = (uint16_t)data[0];
+	idp->id_did[0] = (uint16_t)data[1];
+	idp->id_did[1] = (uint16_t)data[0xe];
+	idp->id_did[2] = (uint16_t)data[0xf];
+	idp->id_prot_state = (uint16_t)data[2];
+	idp->id_indicators = (uint16_t)data[3];
+
+	/* software bits, upper and lower */
+	idp->id_swb_lo = data[0xc];
+	idp->id_swb_hi = data[0xd];
+
+}
+
+static void
 cfi_jedec_id_2(struct cfi * const cfi)
 {
 	struct cfi_jedec_id_data *idp = &cfi->cfi_id_data;
@@ -614,6 +744,8 @@ cfi_jedec_id_2(struct cfi * const cfi)
 
 	bus_space_read_region_2(cfi->cfi_bst, cfi->cfi_bsh, 0, data,
 		__arraycount(data));
+
+	CFI_DUMP_JEDEC(0, data, sizeof(data), 1);
 
 	idp->id_mid = data[0];
 	idp->id_did[0] = data[1];
@@ -628,22 +760,43 @@ cfi_jedec_id_2(struct cfi * const cfi)
 	 */
 	idp->id_swb_lo = data[0xc];
 	idp->id_swb_hi = data[0xd];
+
+}
+
+static void
+cfi_jedec_id_4(struct cfi * const cfi)
+{
+	struct cfi_jedec_id_data *idp = &cfi->cfi_id_data;
+	uint32_t data[0x10];
+
+	bus_space_read_region_4(cfi->cfi_bst, cfi->cfi_bsh, 0, data,
+		__arraycount(data));
+
+	CFI_DUMP_JEDEC(0, data, sizeof(data), 1);
+
+	idp->id_mid = data[0] & 0xffff;
+	idp->id_did[0] = data[1] & 0xffff;
+	idp->id_did[1] = data[0xe] & 0xffff;
+	idp->id_did[2] = data[0xf] & 0xffff;
+	idp->id_prot_state = data[2] & 0xffff;
+	idp->id_indicators = data[3] & 0xffff;
+
+	/* software bits, upper and lower
+	 * - undefined on S29GL-P
+	 * - defined   on S29GL-S
+	 */
+	idp->id_swb_lo = data[0xc] & 0xffff;
+	idp->id_swb_hi = data[0xd] & 0xffff;
+
 }
 
 /*
  * cfi_jedec_id - get JEDEC ID info
- *
- * this should be ignored altogether for CFI chips?
- * JEDEC ID is superceded by CFI info except CFI is not
- * a true superset of the JEDEC, so some info provided
- * by JEDEC is not available via CFI QRY.
- * But the JEDEC info is unreliable:
- * - different chips not distinguishaable by IDs
- * - some fields undefined (read as 0xff) on some chips
  */
 static bool
 cfi_jedec_id(struct cfi * const cfi)
 {
+
 	DPRINTF(("%s\n", __func__));
 
 	cfi_cmd(cfi, 0x555, 0xaa);
@@ -651,16 +804,16 @@ cfi_jedec_id(struct cfi * const cfi)
 	cfi_cmd(cfi, 0x555, 0x90);
 
 	switch(cfi->cfi_portwidth) {
-	case 1:
-		cfi_jedec_id_2(cfi);
-		break;
-#ifdef NOTYET
 	case 0:
 		cfi_jedec_id_1(cfi);
+		break;
+	case 1:
+		cfi_jedec_id_2(cfi);
 		break;
 	case 2:
 		cfi_jedec_id_4(cfi);
 		break;
+#ifdef NOTYET
 	case 3:
 		cfi_jedec_id_8(cfi);
 		break;
@@ -673,6 +826,65 @@ cfi_jedec_id(struct cfi * const cfi)
 	return true;
 }
 
+static bool
+cfi_emulate(struct cfi * const cfi)
+{
+	bool found = false;
+	const struct cfi_jedec_tab *jt = cfi_jedec_search(cfi);
+	if (jt != NULL) {
+		found = true;
+		cfi->cfi_emulated = true;
+		cfi_jedec_fill(cfi, jt);
+	}
+	return found;
+}
+
+/*
+ * cfi_jedec_search - search cfi_jedec_tab[] for entry matching given JEDEC IDs
+ */
+static const struct cfi_jedec_tab *
+cfi_jedec_search(struct cfi *cfi)
+{
+	struct cfi_jedec_id_data *idp = &cfi->cfi_id_data;
+
+	for (u_int i=0; i < __arraycount(cfi_jedec_tab); i++) {
+		const struct cfi_jedec_tab *jt = &cfi_jedec_tab[i];
+		if ((jt->jt_mid == idp->id_mid) &&
+		    (jt->jt_did == idp->id_did[0])) {
+			return jt;
+		}
+	}
+	return NULL;
+}
+
+/*
+ * cfi_jedec_fill - fill in cfi with info from table entry
+ */
+static void
+cfi_jedec_fill(struct cfi *cfi, const struct cfi_jedec_tab *jt)
+{
+	cfi->cfi_name = jt->jt_name;
+	cfi->cfi_opmode = jt->jt_opmode;
+	memset(&cfi->cfi_qry_data, 0, sizeof(struct cfi_query_data));
+	cfi->cfi_qry_data.id_pri = jt->jt_id_pri;
+	cfi->cfi_qry_data.id_alt = jt->jt_id_alt;
+	cfi->cfi_qry_data.interface_code_desc = jt->jt_interface_code_desc;
+	cfi->cfi_qry_data.write_word_time_typ = jt->jt_write_word_time_typ;
+	cfi->cfi_qry_data.write_nbyte_time_typ = jt->jt_write_nbyte_time_typ;
+	cfi->cfi_qry_data.erase_blk_time_typ = jt->jt_erase_blk_time_typ;
+	cfi->cfi_qry_data.erase_chip_time_typ = jt->jt_erase_chip_time_typ;
+	cfi->cfi_qry_data.write_word_time_max = jt->jt_write_word_time_max;
+	cfi->cfi_qry_data.write_nbyte_time_max = jt->jt_write_nbyte_time_max;
+	cfi->cfi_qry_data.erase_blk_time_max = jt->jt_erase_blk_time_max;
+	cfi->cfi_qry_data.erase_chip_time_max = jt->jt_erase_chip_time_max;
+	cfi->cfi_qry_data.device_size = jt->jt_device_size;
+	cfi->cfi_qry_data.interface_code_desc = jt->jt_interface_code_desc;
+	cfi->cfi_qry_data.write_nbyte_size_max = jt->jt_write_nbyte_size_max;
+	cfi->cfi_qry_data.erase_blk_regions = jt->jt_erase_blk_regions;
+	for (u_int i=0; i < 4; i++)
+		cfi->cfi_qry_data.erase_blk_info[i] = jt->jt_erase_blk_info[i];
+}
+
 void
 cfi_print(device_t self, struct cfi * const cfi)
 {
@@ -680,8 +892,14 @@ cfi_print(device_t self, struct cfi * const cfi)
 	struct cfi_query_data * const qryp = &cfi->cfi_qry_data;
 
 	format_bytes(pbuf, sizeof(pbuf), 1 << qryp->device_size);
-	aprint_normal_dev(self, "CFI NOR flash %s %s\n", pbuf,
-		cfi_interface_desc_str(qryp->interface_code_desc));
+	if (cfi->cfi_emulated) {
+		aprint_normal_dev(self, "%s NOR flash %s %s\n",
+			cfi->cfi_name, pbuf,
+			cfi_interface_desc_str(qryp->interface_code_desc));
+	} else {
+		aprint_normal_dev(self, "CFI NOR flash %s %s\n", pbuf,
+			cfi_interface_desc_str(qryp->interface_code_desc));
+	}
 #ifdef NOR_VERBOSE
 	aprint_normal_dev(self, "manufacturer id %#x, device id %#x %#x %#x\n",
 		cfi->cfi_id_data.id_mid,
@@ -710,3 +928,26 @@ cfi_print(device_t self, struct cfi * const cfi)
 		break;
 	}
 }
+
+#if defined(CFI_DEBUG_JEDEC) || defined(CFI_DEBUG_QRY)
+void
+cfi_hexdump(flash_off_t offset, void * const v, u_int count, u_int stride)
+{
+	uint8_t * const data = v;
+	for(int n=0; n < count; n+=16) {
+		int i;
+		printf("%08llx: ", (offset + n) / stride);
+		for(i=n; i < n+16; i++)
+			printf("%02x ", data[i]);
+		printf("\t");
+		for(i=n; i < n+16; i++) {
+			u_int c = (int)data[i];
+			if (c >= 0x20 && c < 0x7f)
+				printf("%c", c);
+			else
+				printf("%c", '.');
+		}
+		printf("\n");
+	}
+}
+#endif
