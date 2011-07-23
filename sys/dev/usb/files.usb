@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.110 2011/07/20 20:00:29 jakllsch Exp $
+#	$NetBSD: files.usb,v 1.111 2011/07/23 20:45:15 jakllsch Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -225,9 +225,9 @@ attach	aue at usbdevif
 file	dev/usb/if_aue.c		aue
 
 # CDC Ethernet
-device  cdce: arp, ether, ifnet
-attach  cdce at usbifif
-file    dev/usb/if_cdce.c                cdce
+device	cdce: arp, ether, ifnet
+attach	cdce at usbifif
+file	dev/usb/if_cdce.c		cdce
 
 # CATC USB-EL1201A
 device	cue: arp, ether, ifnet
@@ -310,9 +310,9 @@ attach	uhmodem at usbifif
 file	dev/usb/uhmodem.c		uhmodem
 
 # iPAQ PDAs
-device  uipaq: ucombus
-attach  uipaq at usbdevif
-file    dev/usb/uipaq.c			uipaq
+device	uipaq: ucombus
+attach	uipaq at usbdevif
+file	dev/usb/uipaq.c			uipaq
 
 # Kyocera AIR-EDGE PHONE
 device	ukyopon: ucombus, umodem_common
