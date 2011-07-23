@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.2 2011/07/02 01:05:38 uch Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.3 2011/07/23 05:10:30 uch Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.2 2011/07/02 01:05:38 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.3 2011/07/23 05:10:30 uch Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -223,15 +223,8 @@ v7fs_openfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		goto unlock_exit;
 	}
 
-	/* Get partition information */
-	if ((error = is_v7fs_partition(devvp))) {
-		goto close_exit;
-	}
-
 	return 0; /* lock held */
 
-close_exit:
-	VOP_CLOSE(devvp, oflags, NOCRED);
 unlock_exit:
 	VOP_UNLOCK(devvp);
 
