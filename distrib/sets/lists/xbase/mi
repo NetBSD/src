@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.109 2011/04/04 06:05:52 mbalmer Exp $
+# $NetBSD: mi,v 1.110 2011/07/23 12:03:10 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2069,6 +2069,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/al			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/altwin			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/am			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/apl			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/apple			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/ar			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/ara			-unknown-	xorg
@@ -2091,6 +2092,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/capslock		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/cd			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/ch			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/cm			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/cn			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/colemak			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/compose			-unknown-	xorg
@@ -2120,12 +2122,12 @@
 ./usr/X11R7/lib/X11/xkb/symbols/epo			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/es			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/et			-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/extras			base-x11-root	xorg
-./usr/X11R7/lib/X11/xkb/symbols/extras/apl		-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/extras/ir		-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/extras/rs		-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/extras/ru		-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/extras/us		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/extras			base-x11-root	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/extras/apl		-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/extras/ir		-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/extras/rs		-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/extras/ru		-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/extras/us		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/eurosign		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/fi			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/fo			-unknown-	xorg
@@ -2408,6 +2410,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/tr			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/tr_f			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/typo			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/tw			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/tz			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/ua			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/us			-unknown-	xorg
