@@ -1,6 +1,6 @@
-#	$NetBSD: shlib_version,v 1.4 2010/11/22 08:34:56 mrg Exp $
+#	$NetBSD: shlib_version,v 1.5 2011/07/23 23:30:19 mrg Exp $
 #
 # XXX XXX XXX netbsd xsrc xfree 4.5 freetype used "major=9"!
 #
 major=7
-minor=2
+minor=3

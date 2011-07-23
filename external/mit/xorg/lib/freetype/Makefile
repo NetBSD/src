@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/04/23 15:26:05 rjs Exp $
+#	$NetBSD: Makefile,v 1.9 2011/07/23 23:30:19 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -33,6 +33,9 @@ SRCS+=	type1cid.c
 
 .PATH:	${FREETYPE}/src/gzip
 SRCS+=	ftgzip.c
+
+.PATH:	${FREETYPE}/src/bzip2
+SRCS+=	ftbzip2.c
 
 .PATH:	${FREETYPE}/src/lzw
 SRCS+=	ftlzw.c
