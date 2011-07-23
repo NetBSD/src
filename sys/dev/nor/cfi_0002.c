@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi_0002.c,v 1.3 2011/07/19 20:52:10 cliff Exp $	*/
+/*	$NetBSD: cfi_0002.c,v 1.4 2011/07/23 06:26:26 cliff Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "opt_flash.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfi_0002.c,v 1.3 2011/07/19 20:52:10 cliff Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: cfi_0002.c,v 1.4 2011/07/23 06:26:26 cliff Exp $"); 
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,8 +127,8 @@ cfi_0002_time_erase_blk(struct cfi *cfi)
 static inline u_long
 cfi_0002_time_erase_all(struct cfi *cfi)
 {
-	u_int shft = cfi->cfi_qry_data.erase_chiptime_typ;
-	shft += cfi->cfi_qry_data.erase_chiptime_max;
+	u_int shft = cfi->cfi_qry_data.erase_chip_time_typ;
+	shft += cfi->cfi_qry_data.erase_chip_time_max;
 	u_long usec = 1000UL << shft;
 	return usec;
 }
@@ -609,10 +609,10 @@ cfi_0002_stats_print(struct cfi *cfi)
 	printf("erase_blk_time_max %d\n",
 		 cfi->cfi_qry_data.erase_blk_time_max);
 
-	printf("erase_chiptime_typ %d\n",
-		 cfi->cfi_qry_data.erase_chiptime_typ);
-	printf("erase_chiptime_max %d\n",
-		 cfi->cfi_qry_data.erase_chiptime_max);
+	printf("erase_chip_time_typ %d\n",
+		 cfi->cfi_qry_data.erase_chip_time_typ);
+	printf("erase_chip_time_max %d\n",
+		 cfi->cfi_qry_data.erase_chip_time_max);
 
 	printf("time_write_nbyte %lu\n", cfi_0002_time_write_nbyte(cfi));
 	printf("time_erase_blk %lu\n", cfi_0002_time_erase_blk(cfi));
