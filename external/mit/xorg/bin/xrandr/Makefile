@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/08/22 01:03:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/23 06:06:41 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ DPADD+=	${LIBXRANDR} ${LIBXRENDER} ${LIBXEXT} ${LIBX11} ${LIBM}
 
 CPPFLAGS+=	-DVERSION=\"1.3.1\"
 
-.PATH:	${X11SRCDIR.${PROG}}
+.PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/man
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
