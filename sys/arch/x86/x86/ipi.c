@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.18.6.1 2011/06/03 13:27:39 cherry Exp $	*/
+/*	$NetBSD: ipi.c,v 1.18.6.2 2011/07/23 09:21:52 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.18.6.1 2011/06/03 13:27:39 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.18.6.2 2011/07/23 09:21:52 cherry Exp $");
 
 #include "opt_mtrr.h"
 
@@ -107,16 +107,6 @@ int
 x86_send_ipi(struct cpu_info *ci, int ipimask)
 {
 	int ret;
-	
-	KASSERT(ci != NULL);
-
-	if (ipimask & X86_IPI_TLB) { 	/* Wrapper for TLB event */
-		KASSERT(ipimask == X86_IPI_TLB);
-
-		ret = x86_ipi(LAPIC_TLB_MCAST_VECTOR,
-			      ci->ci_cpuid, LAPIC_DLMODE_FIXED);		
-		return ret;
-	}
 
 	atomic_or_32(&ci->ci_ipis, ipimask);
 
@@ -141,15 +131,6 @@ x86_broadcast_ipi(int ipimask)
 	struct cpu_info *ci, *self = curcpu();
 	int count = 0;
 	CPU_INFO_ITERATOR cii;
-
-	if (ipimask & X86_IPI_TLB) { 	/* Wrapper for TLB event */
-		KASSERT(ipimask == X86_IPI_TLB);
-
-		if (x86_ipi(LAPIC_TLB_BCAST_VECTOR, LAPIC_DEST_ALLEXCL,
-			    LAPIC_DLMODE_FIXED)) {
-			panic("x86_ipi() failed on Broadcast via lapic.\n");
-		}
-	}
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci == self)
