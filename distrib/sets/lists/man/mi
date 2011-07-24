@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1325 2011/07/20 20:51:11 jakllsch Exp $
+# $NetBSD: mi,v 1.1326 2011/07/24 08:55:30 uch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2708,6 +2708,7 @@
 ./usr/share/man/cat8/rump_sysvbfs.0		man-puffs-catman	.cat
 ./usr/share/man/cat8/rump_tmpfs.0		man-puffs-catman	.cat
 ./usr/share/man/cat8/rump_udf.0			man-puffs-catman	.cat
+./usr/share/man/cat8/rump_v7fs.0		man-puffs-catman	.cat
 ./usr/share/man/cat8/rusersd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rwalld.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rwhod.0			man-netutil-catman	.cat
@@ -5252,6 +5253,7 @@
 ./usr/share/man/html8/rump_sysvbfs.html		man-puffs-htmlman	html
 ./usr/share/man/html8/rump_tmpfs.html		man-puffs-htmlman	html
 ./usr/share/man/html8/rump_udf.html		man-puffs-htmlman	html
+./usr/share/man/html8/rump_v7fs.html		man-puffs-htmlman	html
 ./usr/share/man/html8/rusersd.html		man-netutil-htmlman	html
 ./usr/share/man/html8/rwalld.html		man-netutil-htmlman	html
 ./usr/share/man/html8/rwhod.html		man-netutil-htmlman	html
@@ -8077,6 +8079,7 @@
 ./usr/share/man/man8/rump_sysvbfs.8		man-puffs-man		.man
 ./usr/share/man/man8/rump_tmpfs.8		man-puffs-man		.man
 ./usr/share/man/man8/rump_udf.8			man-puffs-man		.man
+./usr/share/man/man8/rump_v7fs.8		man-puffs-man		.man
 ./usr/share/man/man8/rusersd.8			man-netutil-man		.man
 ./usr/share/man/man8/rwalld.8			man-netutil-man		.man
 ./usr/share/man/man8/rwhod.8			man-netutil-man		.man

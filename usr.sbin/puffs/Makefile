@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2010/07/11 06:16:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2011/07/24 08:55:30 uch Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ SUBDIR=	mount_9p mount_psshfs mount_sysctlfs
 
 SUBDIR+=rump_cd9660 rump_efs rump_ext2fs rump_ffs rump_hfs rump_lfs
 SUBDIR+=rump_msdos rump_nfs rump_ntfs rump_syspuffs rump_sysvbfs
-SUBDIR+=rump_tmpfs rump_udf
+SUBDIR+=rump_tmpfs rump_udf rump_v7fs
 
 .if ${MKCRYPTO} != "no"
 SUBDIR+=rump_smbfs

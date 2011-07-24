@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1646 2011/07/21 03:13:31 mrg Exp $
+#	$NetBSD: mi,v 1.1647 2011/07/24 08:55:29 uch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3140,6 +3140,9 @@
 ./usr/lib/librumpfs_union.a			comp-c-lib
 ./usr/lib/librumpfs_union_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_union_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_v7fs.a			comp-c-lib
+./usr/lib/librumpfs_v7fs_g.a			-unknown-		debuglib
+./usr/lib/librumpfs_v7fs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_zfs.a			comp-c-lib		zfs
 ./usr/lib/librumpfs_zfs_g.a			-unknown-		zfs,debuglib
 ./usr/lib/librumpfs_zfs_p.a			comp-c-piclib		zfs,profile
@@ -4189,6 +4192,7 @@
 ./usr/libdata/debug/usr/sbin/rump_sysvbfs.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/rump_tmpfs.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/rump_udf.debug	comp-puffs-debug	debug
+./usr/libdata/debug/usr/sbin/rump_v7fs.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/rwhod.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/sa.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/schedctl.debug	comp-sysutil-debug	debug
