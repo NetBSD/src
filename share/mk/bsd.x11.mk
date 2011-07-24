@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.98 2011/07/03 22:59:46 dholland Exp $
+#	$NetBSD: bsd.x11.mk,v 1.99 2011/07/24 00:33:38 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -285,12 +285,15 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@RENDER_VERSION@,$${_pkg_version%.*}," \
 		-e "s,@LIBS@,,; \
 		s,@Z_LIBS@,-lz,; \
+		s,@LIBZ@,-lz,; \
+		s,@LIBBZ2@,-lbz2,; \
 		s,@xkb_base@,\\$$\{libdir\}/X11/xkb,; \
 		s,@xcbincludedir@,\\$$\{prefix\}/include/xcb,; \
 		s,@fontrootdir@,\\$$\{libdir\}/X11/fonts,; \
 		s,@LIBXML2_LIBS@,,; \
 		s,@ICONV_LIBS@,,; \
-		s,@NEEDED@,," \
+		s,@NEEDED@,,; \
+		s,@FT2_EXTRA_LIBS@,," \
 		-e "s,@moduledir@,\\$$\{libdir\}/modules,; \
 		s,@sdkdir@,\\$$\{includedir\}/xorg,; \
 		s,@PIXMAN_CFLAGS@,,; \
@@ -310,8 +313,8 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@GL_LIB@,GL,; \
 		s,@GL_PC_REQ_PRIV@,x11 xext,; \
 		s,@GL_PC_LIB_PRIV@,-lm -lpthread,; \
-		s,@GL_PC_CFLAGS@,,; \
-		s,@GLU_LIB@,GLU,; \
+		s,@GL_PC_CFLAGS@,," \
+		-e "s,@GLU_LIB@,GLU,; \
 		s,@GLU_PC_REQ@,gl,; \
 		s,@GLU_PC_REQ_PRIV@,,; \
 		s,@GLU_PC_LIB_PRIV@,-lGLU,; \
