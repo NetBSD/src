@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.127 2011/07/23 12:27:40 mrg Exp $
+#	 $NetBSD: mi,v 1.128 2011/07/24 00:33:38 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5712,6 +5712,7 @@
 ./usr/X11R7/include/freetype2/freetype/ftbbox.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbdf.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbitmap.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftbzip2.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftcache.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftchapters.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftcid.h		-unknown-	xorg
@@ -5755,7 +5756,7 @@
 ./usr/X11R7/include/freetype2/freetype/internal/ftstream.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/internal/fttrace.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/internal/internal.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/pcftypes.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/internal/pcftypes.h	-unknown-	obsolete
 ./usr/X11R7/include/freetype2/freetype/internal/psaux.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/internal/pshints.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/internal/services/svbdf.h	-unknown-	xorg
