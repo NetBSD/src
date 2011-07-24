@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.63 2011/04/02 10:19:27 mbalmer Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.64 2011/07/24 01:35:15 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.63 2011/04/02 10:19:27 mbalmer Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.64 2011/07/24 01:35:15 christos Exp $");
 #endif
 #endif
 
@@ -940,8 +940,8 @@ get_pty(int *master_fdp, int *slave_fdp, char *slave_name, int uid)
     fchmod(*slave_fdp, S_IRUSR | S_IWUSR);
     if (tcgetattr(*slave_fdp, &tios) == 0) {
 	tios.c_cflag &= ~(CSIZE | CSTOPB | PARENB);
-	tios.c_cflag |= CS8 | CREAD;
-	tios.c_iflag  = IGNPAR | CLOCAL;
+	tios.c_cflag |= CS8 | CREAD | CLOCAL;
+	tios.c_iflag  = IGNPAR;
 	tios.c_oflag  = 0;
 	tios.c_lflag  = 0;
 	if (tcsetattr(*slave_fdp, TCSAFLUSH, &tios) < 0)
@@ -971,7 +971,7 @@ open_ppp_loopback(void)
 
     if (tcgetattr(loop_slave, &tios) == 0) {
 	tios.c_cflag &= ~(CSIZE | CSTOPB | PARENB);
-	tios.c_cflag |= CS8 | CREAD;
+	tios.c_cflag |= CS8 | CREAD | CLOCAL;
 	tios.c_iflag = IGNPAR;
 	tios.c_oflag = 0;
 	tios.c_lflag = 0;
@@ -979,9 +979,13 @@ open_ppp_loopback(void)
 	    warn("%s: couldn't set attributes on loopback: %m", __func__);
     }
 
-    if ((flags = fcntl(loop_master, F_GETFL)) != -1) 
-	if (fcntl(loop_master, F_SETFL, flags | O_NONBLOCK) == -1)
-	    warn("%s: couldn't set loopback to nonblock: %m", __func__);
+    flags = fcntl(loop_master, F_GETFL);
+    if (flags == -1 || fcntl(loop_master, F_SETFL, flags | O_NONBLOCK) == -1)
+	    warn("%s: couldn't set master loopback to nonblock: %m", __func__);
+
+    flags = fcntl(loop_slave, F_GETFL);
+    if (flags == -1 || fcntl(loop_slave, F_SETFL, flags | O_NONBLOCK) == -1)
+	    warn("%s: couldn't set slave loopback to nonblock: %m", __func__);
 
     ppp_fd = loop_slave;
     if (ioctl(ppp_fd, TIOCSETD, &pppdisc) < 0)
