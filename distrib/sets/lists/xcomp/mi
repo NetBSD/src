@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.128 2011/07/24 00:33:38 mrg Exp $
+#	 $NetBSD: mi,v 1.129 2011/07/24 15:11:38 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1488,7 +1488,6 @@
 ./usr/X11R6/man/cat3/XtAppUnlock.0			-unknown-	.cat,x11
 ./usr/X11R6/man/cat3/XtAppWarning.0			-unknown-	.cat,x11
 ./usr/X11R6/man/cat3/XtAppWarningMsg.0			-unknown-	.cat,x11
-./usr/X11R6/man/cat3/XtAsprintf.0			-unknown-	.cat,x11
 ./usr/X11R6/man/cat3/XtAugmentTranslations.0		-unknown-	.cat,x11
 ./usr/X11R6/man/cat3/XtBuildEventMask.0			-unknown-	.cat,x11
 ./usr/X11R6/man/cat3/XtCallAcceptFocus.0		-unknown-	.cat,x11
@@ -7182,6 +7181,7 @@
 ./usr/X11R7/man/cat3/XtAppUnlock.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XtAppWarning.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XtAppWarningMsg.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XtAsprintf.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XtAugmentTranslations.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XtBuildEventMask.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XtCallAcceptFocus.0		-unknown-	.cat,xorg
