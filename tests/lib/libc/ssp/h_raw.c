@@ -1,4 +1,4 @@
-/* $NetBSD: h_raw.c,v 1.5 2011/07/23 22:17:43 martin Exp $ */
+/* $NetBSD: h_raw.c,v 1.6 2011/07/24 14:00:36 christos Exp $ */
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: h_raw.c,v 1.5 2011/07/23 22:17:43 martin Exp $");
+__RCSID("$NetBSD: h_raw.c,v 1.6 2011/07/24 14:00:36 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,12 +40,11 @@ void
 poke(int *b, size_t index)
 {
 	size_t i;
-	int sum = 0;
+	volatile int sum = 0;
 
 	b[index] = 42;
 	for (i = 0; i < 10; i++) 
 		sum += b[i];
-	printf("dummy value: %d\n", sum);
 }
 
 int
