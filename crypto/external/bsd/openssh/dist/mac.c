@@ -1,4 +1,3 @@
-/*	$NetBSD: mac.c,v 1.1.1.1 2009/06/07 22:19:11 christos Exp $	*/
 /* $OpenBSD: mac.c,v 1.15 2008/06/13 00:51:47 dtucker Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.

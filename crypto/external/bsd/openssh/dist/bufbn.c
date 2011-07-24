@@ -1,4 +1,3 @@
-/*	$NetBSD: bufbn.c,v 1.1.1.1 2009/06/07 22:19:04 christos Exp $	*/
 /* $OpenBSD: bufbn.c,v 1.6 2007/06/02 09:04:58 djm Exp $*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

@@ -1,4 +1,3 @@
-/*	$NetBSD: cipher.c,v 1.1.1.1 2009/06/07 22:19:06 christos Exp $	*/
 /* $OpenBSD: cipher.c,v 1.82 2009/01/26 09:58:15 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

@@ -1,4 +1,3 @@
-/*	$NetBSD: serverloop.h,v 1.1.1.1 2009/06/07 22:19:18 christos Exp $	*/
 /* $OpenBSD: serverloop.h,v 1.6 2006/03/25 22:22:43 djm Exp $ */
 
 /*

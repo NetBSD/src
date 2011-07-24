@@ -1,4 +1,3 @@
-.\"	$NetBSD: nchan.ms,v 1.1.1.1 2009/06/07 22:19:14 christos Exp $
 .\"	$OpenBSD: nchan.ms,v 1.8 2003/11/21 11:57:03 djm Exp $
 .\"
 .\"

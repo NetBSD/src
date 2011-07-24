@@ -1,4 +1,3 @@
-/*	$NetBSD: monitor_fdpass.h,v 1.1.1.1 2009/06/07 22:19:12 christos Exp $	*/
 /* $OpenBSD: monitor_fdpass.h,v 1.4 2007/09/04 03:21:03 djm Exp $ */
 
 /*

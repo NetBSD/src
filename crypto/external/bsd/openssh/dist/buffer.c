@@ -1,4 +1,3 @@
-/*	$NetBSD: buffer.c,v 1.1.1.2 2010/11/21 17:05:39 adam Exp $	*/
 /* $OpenBSD: buffer.c,v 1.32 2010/02/09 03:56:28 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

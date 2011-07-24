@@ -1,4 +1,3 @@
-/*	$NetBSD: canohost.c,v 1.1.1.3 2010/11/21 17:05:39 adam Exp $	*/
 /* $OpenBSD: canohost.c,v 1.66 2010/01/13 01:20:20 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

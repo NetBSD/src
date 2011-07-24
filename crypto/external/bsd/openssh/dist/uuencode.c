@@ -1,5 +1,4 @@
-/*	$NetBSD: uuencode.c,v 1.1.1.2 2009/12/27 01:07:18 christos Exp $	*/
-/* $OpenBSD: uuencode.c,v 1.25 2009/03/05 11:30:50 djm Exp $ */
+/* $OpenBSD: uuencode.c,v 1.26 2010/08/31 11:54:45 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -71,7 +70,7 @@ uudecode(const char *src, u_char *target, size_t targsize)
 }
 
 void
-dump_base64(FILE *fp, u_char *data, u_int len)
+dump_base64(FILE *fp, const u_char *data, u_int len)
 {
 	char *buf;
 	int i, n;

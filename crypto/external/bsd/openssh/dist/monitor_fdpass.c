@@ -1,4 +1,3 @@
-/*	$NetBSD: monitor_fdpass.c,v 1.1.1.2 2010/11/21 17:05:48 adam Exp $	*/
 /* $OpenBSD: monitor_fdpass.c,v 1.19 2010/01/12 00:58:25 djm Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>

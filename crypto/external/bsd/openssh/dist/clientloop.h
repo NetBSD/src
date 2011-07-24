@@ -1,4 +1,3 @@
-/*	$NetBSD: clientloop.h,v 1.1.1.2 2010/11/21 17:05:42 adam Exp $	*/
 /* $OpenBSD: clientloop.h,v 1.25 2010/06/25 23:15:36 djm Exp $ */
 
 /*

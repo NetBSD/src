@@ -1,4 +1,3 @@
-/*	$NetBSD: auth2-hostbased.c,v 1.1.1.2 2010/11/21 17:05:38 adam Exp $	*/
 /* $OpenBSD: auth2-hostbased.c,v 1.14 2010/08/04 05:42:47 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.

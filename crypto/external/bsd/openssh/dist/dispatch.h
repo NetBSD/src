@@ -1,4 +1,3 @@
-/*	$NetBSD: dispatch.h,v 1.1.1.1 2009/06/07 22:19:08 christos Exp $	*/
 /* $OpenBSD: dispatch.h,v 1.11 2006/04/20 09:27:09 djm Exp $ */
 
 /*

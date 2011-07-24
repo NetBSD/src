@@ -1,4 +1,3 @@
-/*	$NetBSD: gss-serv.c,v 1.1.1.1 2009/06/07 22:19:02 christos Exp $	*/
 /* $OpenBSD: gss-serv.c,v 1.22 2008/05/08 12:02:23 djm Exp $ */
 
 /*

@@ -1,4 +1,3 @@
-/*	$NetBSD: xmalloc.c,v 1.1.1.1 2009/06/07 22:19:31 christos Exp $	*/
 /* $OpenBSD: xmalloc.c,v 1.27 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

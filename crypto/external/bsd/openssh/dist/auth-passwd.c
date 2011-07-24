@@ -1,4 +1,3 @@
-/*	$NetBSD: auth-passwd.c,v 1.1.1.1 2009/06/07 22:19:01 christos Exp $	*/
 /* $OpenBSD: auth-passwd.c,v 1.43 2007/09/21 08:15:29 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

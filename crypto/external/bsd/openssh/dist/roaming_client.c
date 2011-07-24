@@ -1,4 +1,3 @@
-/*	$NetBSD: roaming_client.c,v 1.1.1.1 2010/11/21 17:05:53 adam Exp $	*/
 /* $OpenBSD: roaming_client.c,v 1.3 2010/01/18 01:50:27 dtucker Exp $ */
 /*
  * Copyright (c) 2004-2009 AppGate Network Security AB

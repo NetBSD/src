@@ -1,4 +1,3 @@
-/*	$NetBSD: auth2-none.c,v 1.1.1.2 2010/11/21 17:05:38 adam Exp $	*/
 /* $OpenBSD: auth2-none.c,v 1.16 2010/06/25 08:46:17 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.

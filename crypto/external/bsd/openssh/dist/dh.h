@@ -1,4 +1,3 @@
-/*	$NetBSD: dh.h,v 1.1.1.1 2009/06/07 22:19:08 christos Exp $	*/
 /* $OpenBSD: dh.h,v 1.10 2008/06/26 09:19:40 djm Exp $ */
 
 /*

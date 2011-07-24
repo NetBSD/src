@@ -1,4 +1,3 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2009/06/07 22:19:10 christos Exp $	*/
 /* $OpenBSD: log.c,v 1.41 2008/06/10 04:50:25 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

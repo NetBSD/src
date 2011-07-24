@@ -1,5 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.1.1.3 2010/11/21 17:06:06 adam Exp $	*/
-/* $OpenBSD: sshd.c,v 1.377 2010/08/16 04:06:06 djm Exp $ */
+/* $OpenBSD: sshd.c,v 1.381 2011/01/11 06:13:10 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -717,6 +716,7 @@ list_hostkey_types(void)
 		switch (key->type) {
 		case KEY_RSA:
 		case KEY_DSA:
+		case KEY_ECDSA:
 			if (buffer_len(&b) > 0)
 				buffer_append(&b, ",", 1);
 			p = key_ssh_name(key);
@@ -732,6 +732,7 @@ list_hostkey_types(void)
 		case KEY_DSA_CERT_V00:
 		case KEY_RSA_CERT:
 		case KEY_DSA_CERT:
+		case KEY_ECDSA_CERT:
 			if (buffer_len(&b) > 0)
 				buffer_append(&b, ",", 1);
 			p = key_ssh_name(key);
@@ -758,6 +759,7 @@ get_hostkey_by_type(int type, int need_private)
 		case KEY_DSA_CERT_V00:
 		case KEY_RSA_CERT:
 		case KEY_DSA_CERT:
+		case KEY_ECDSA_CERT:
 			key = sensitive_data.host_certificates[i];
 			break;
 		default:
@@ -1411,7 +1413,7 @@ main(int ac, char **av)
 	else
 		closefrom(REEXEC_DEVCRYPTO_RESERVED_FD);
 
-	SSLeay_add_all_algorithms();
+	OpenSSL_add_all_algorithms();
 
 	/*
 	 * Force logging to stderr until we have loaded the private host
@@ -1494,6 +1496,7 @@ main(int ac, char **av)
 			break;
 		case KEY_RSA:
 		case KEY_DSA:
+		case KEY_ECDSA:
 			sensitive_data.have_ssh2_key = 1;
 			break;
 		}
@@ -1890,7 +1893,8 @@ main(int ac, char **av)
 	/* The connection has been terminated. */
 	packet_get_state(MODE_IN, NULL, NULL, NULL, &ibytes);
 	packet_get_state(MODE_OUT, NULL, NULL, NULL, &obytes);
-	verbose("Transferred: sent %llu, received %llu bytes", obytes, ibytes);
+	verbose("Transferred: sent %llu, received %llu bytes",
+	    (unsigned long long)obytes, (unsigned long long)ibytes);
 
 	verbose("Closing connection to %.500s port %d", remote_ip, remote_port);
 	packet_close();
@@ -2150,6 +2154,8 @@ do_ssh2_kex(void)
 		myproposal[PROPOSAL_COMP_ALGS_CTOS] =
 		myproposal[PROPOSAL_COMP_ALGS_STOC] = "none,zlib@openssh.com";
 	}
+	if (options.kex_algorithms != NULL)
+		myproposal[PROPOSAL_KEX_ALGS] = options.kex_algorithms;
 
 	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = list_hostkey_types();
 
@@ -2159,6 +2165,7 @@ do_ssh2_kex(void)
 	kex->kex[KEX_DH_GRP14_SHA1] = kexdh_server;
 	kex->kex[KEX_DH_GEX_SHA1] = kexgex_server;
 	kex->kex[KEX_DH_GEX_SHA256] = kexgex_server;
+	kex->kex[KEX_ECDH_SHA2] = kexecdh_server;
 	kex->server = 1;
 	kex->client_version_string=client_version_string;
 	kex->server_version_string=server_version_string;

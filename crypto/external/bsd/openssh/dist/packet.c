@@ -1,5 +1,4 @@
-/*	$NetBSD: packet.c,v 1.1.1.3 2010/11/21 17:05:51 adam Exp $	*/
-/* $OpenBSD: packet.c,v 1.168 2010/07/13 23:13:16 djm Exp $ */
+/* $OpenBSD: packet.c,v 1.172 2010/11/13 23:27:50 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -196,13 +195,13 @@ static struct session_state *active_state, *backup_state;
 static struct session_state *
 alloc_session_state(void)
 {
-    struct session_state *s = xcalloc(1, sizeof(*s));
+	struct session_state *s = xcalloc(1, sizeof(*s));
 
-    s->connection_in = -1;
-    s->connection_out = -1;
-    s->max_packet_size = 32768;
-    s->packet_timeout_ms = -1;
-    return s;
+	s->connection_in = -1;
+	s->connection_out = -1;
+	s->max_packet_size = 32768;
+	s->packet_timeout_ms = -1;
+	return s;
 }
 
 /*
@@ -388,8 +387,8 @@ packet_get_ssh1_cipher(void)
 }
 
 void
-packet_get_state(int mode, u_int32_t *seqnr, u_int64_t *blocks, u_int32_t *packets,
-    u_int64_t *bytes)
+packet_get_state(int mode, u_int32_t *seqnr, u_int64_t *blocks,
+    u_int32_t *packets, u_int64_t *bytes)
 {
 	struct packet_state *state;
 
@@ -539,8 +538,7 @@ packet_start_compression(int level)
  */
 
 void
-packet_set_encryption_key(const u_char *key, u_int keylen,
-    int number)
+packet_set_encryption_key(const u_char *key, u_int keylen, int number)
 {
 	Cipher *cipher = cipher_by_number(number);
 
@@ -631,6 +629,12 @@ void
 packet_put_bignum2(BIGNUM * value)
 {
 	buffer_put_bignum2(&active_state->outgoing_packet, value);
+}
+
+void
+packet_put_ecpoint(const EC_GROUP *curve, const EC_POINT *point)
+{
+	buffer_put_ecpoint(&active_state->outgoing_packet, curve, point);
 }
 
 /*
@@ -1502,6 +1506,12 @@ packet_get_bignum2(BIGNUM * value)
 	buffer_get_bignum2(&active_state->incoming_packet, value);
 }
 
+void
+packet_get_ecpoint(const EC_GROUP *curve, EC_POINT *point)
+{
+	buffer_get_ecpoint(&active_state->incoming_packet, curve, point);
+}
+
 void *
 packet_get_raw(u_int *length_ptr)
 {
@@ -1535,6 +1545,13 @@ void *
 packet_get_string_ptr(u_int *length_ptr)
 {
 	return buffer_get_string_ptr(&active_state->incoming_packet, length_ptr);
+}
+
+/* Ensures the returned string has no embedded \0 characters in it. */
+char *
+packet_get_cstring(u_int *length_ptr)
+{
+	return buffer_get_cstring(&active_state->incoming_packet, length_ptr);
 }
 
 /*
@@ -1717,13 +1734,12 @@ packet_not_very_much_data_to_write(void)
 }
 
 static void
-packet_set_tos(int interactive)
+packet_set_tos(int tos)
 {
-	int tos = interactive ? IPTOS_LOWDELAY : IPTOS_THROUGHPUT;
-
 	if (!packet_connection_is_on_socket() ||
 	    !packet_connection_is_ipv4())
 		return;
+	debug3("%s: set IP_TOS 0x%02x", __func__, tos);
 	if (setsockopt(active_state->connection_in, IPPROTO_IP, IP_TOS, &tos,
 	    sizeof(tos)) < 0)
 		error("setsockopt IP_TOS %d: %.100s:",
@@ -1733,7 +1749,7 @@ packet_set_tos(int interactive)
 /* Informs that the current session is interactive.  Sets IP flags for that. */
 
 void
-packet_set_interactive(int interactive)
+packet_set_interactive(int interactive, int qos_interactive, int qos_bulk)
 {
 	if (active_state->set_interactive_called)
 		return;
@@ -1746,7 +1762,7 @@ packet_set_interactive(int interactive)
 	if (!packet_connection_is_on_socket())
 		return;
 	set_nodelay(active_state->connection_in);
-	packet_set_tos(interactive);
+	packet_set_tos(interactive ? qos_interactive : qos_bulk);
 }
 
 /* Returns true if the current connection is interactive. */

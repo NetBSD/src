@@ -1,4 +1,3 @@
-/*	$NetBSD: match.c,v 1.1.1.1 2009/06/07 22:19:11 christos Exp $	*/
 /* $OpenBSD: match.c,v 1.27 2008/06/10 23:06:19 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

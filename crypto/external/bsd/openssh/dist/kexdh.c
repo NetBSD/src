@@ -1,4 +1,3 @@
-/*	$NetBSD: kexdh.c,v 1.1.1.1 2009/06/07 22:19:09 christos Exp $	*/
 /* $OpenBSD: kexdh.c,v 1.23 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.

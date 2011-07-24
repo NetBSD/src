@@ -1,4 +1,3 @@
-/*	$NetBSD: canohost.h,v 1.1.1.2 2009/12/27 01:06:50 christos Exp $	*/
 /* $OpenBSD: canohost.h,v 1.11 2009/05/27 06:31:25 andreas Exp $ */
 
 /*

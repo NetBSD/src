@@ -1,4 +1,3 @@
-/*	$NetBSD: dh.c,v 1.1.1.2 2010/11/21 17:05:43 adam Exp $	*/
 /* $OpenBSD: dh.c,v 1.48 2009/10/01 11:37:33 grunk Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.

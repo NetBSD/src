@@ -1,4 +1,3 @@
-/*	$NetBSD: auth-rhosts.c,v 1.1.1.2 2010/11/21 17:05:37 adam Exp $	*/
 /* $OpenBSD: auth-rhosts.c,v 1.44 2010/03/07 11:57:13 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

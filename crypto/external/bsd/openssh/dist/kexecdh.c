@@ -1,7 +1,7 @@
-/* $OpenBSD: kexgex.c,v 1.27 2006/08/03 03:34:42 deraadt Exp $ */
+/* $OpenBSD: kexecdh.c,v 1.3 2010/09/22 05:01:29 djm Exp $ */
 /*
- * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2010 Damien Miller.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,32 +26,56 @@
 
 #include <sys/types.h>
 
-#include <openssl/evp.h>
 #include <signal.h>
+#include <string.h>
+
+#include <openssl/bn.h>
+#include <openssl/evp.h>
+#include <openssl/ec.h>
+#include <openssl/ecdh.h>
 
 #include "buffer.h"
+#include "ssh2.h"
 #include "key.h"
 #include "cipher.h"
 #include "kex.h"
-#include "ssh2.h"
+#include "log.h"
+
+int
+kex_ecdh_name_to_nid(const char *kexname)
+{
+	if (strlen(kexname) < sizeof(KEX_ECDH_SHA2_STEM) - 1)
+		fatal("%s: kexname too short \"%s\"", __func__, kexname);
+	return key_curve_name_to_nid(kexname + sizeof(KEX_ECDH_SHA2_STEM) - 1);
+}
+
+const EVP_MD *
+kex_ecdh_name_to_evpmd(const char *kexname)
+{
+	int nid = kex_ecdh_name_to_nid(kexname);
+
+	if (nid == -1)
+		fatal("%s: unsupported ECDH curve \"%s\"", __func__, kexname);
+	return key_ec_nid_to_evpmd(nid);
+}
 
 void
-kexgex_hash(
+kex_ecdh_hash(
     const EVP_MD *evp_md,
+    const EC_GROUP *ec_group,
     char *client_version_string,
     char *server_version_string,
     char *ckexinit, int ckexinitlen,
     char *skexinit, int skexinitlen,
     u_char *serverhostkeyblob, int sbloblen,
-    int min, int wantbits, int max, BIGNUM *prime, BIGNUM *gen,
-    BIGNUM *client_dh_pub,
-    BIGNUM *server_dh_pub,
-    BIGNUM *shared_secret,
+    const EC_POINT *client_dh_pub,
+    const EC_POINT *server_dh_pub,
+    const BIGNUM *shared_secret,
     u_char **hash, u_int *hashlen)
 {
 	Buffer b;
-	static u_char digest[EVP_MAX_MD_SIZE];
 	EVP_MD_CTX md;
+	static u_char digest[EVP_MAX_MD_SIZE];
 
 	buffer_init(&b);
 	buffer_put_cstring(&b, client_version_string);
@@ -66,31 +90,23 @@ kexgex_hash(
 	buffer_append(&b, skexinit, skexinitlen);
 
 	buffer_put_string(&b, serverhostkeyblob, sbloblen);
-	if (min == -1 || max == -1)
-		buffer_put_int(&b, wantbits);
-	else {
-		buffer_put_int(&b, min);
-		buffer_put_int(&b, wantbits);
-		buffer_put_int(&b, max);
-	}
-	buffer_put_bignum2(&b, prime);
-	buffer_put_bignum2(&b, gen);
-	buffer_put_bignum2(&b, client_dh_pub);
-	buffer_put_bignum2(&b, server_dh_pub);
+	buffer_put_ecpoint(&b, ec_group, client_dh_pub);
+	buffer_put_ecpoint(&b, ec_group, server_dh_pub);
 	buffer_put_bignum2(&b, shared_secret);
 
-#ifdef DEBUG_KEXDH
+#ifdef DEBUG_KEX
 	buffer_dump(&b);
 #endif
-
 	EVP_DigestInit(&md, evp_md);
 	EVP_DigestUpdate(&md, buffer_ptr(&b), buffer_len(&b));
 	EVP_DigestFinal(&md, digest, NULL);
 
 	buffer_free(&b);
+
+#ifdef DEBUG_KEX
+	dump_digest("hash", digest, EVP_MD_size(evp_md));
+#endif
 	*hash = digest;
 	*hashlen = EVP_MD_size(evp_md);
-#ifdef DEBUG_KEXDH
-	dump_digest("hash", digest, *hashlen);
-#endif
 }
+

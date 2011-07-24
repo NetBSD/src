@@ -1,4 +1,3 @@
-/*	$NetBSD: msg.c,v 1.1.1.1 2009/06/07 22:19:12 christos Exp $	*/
 /* $OpenBSD: msg.c,v 1.15 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.

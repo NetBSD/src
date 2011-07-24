@@ -1,4 +1,3 @@
-/*	$NetBSD: nchan.c,v 1.1.1.2 2010/11/21 17:05:49 adam Exp $	*/
 /* $OpenBSD: nchan.c,v 1.63 2010/01/26 01:28:35 djm Exp $ */
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.

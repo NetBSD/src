@@ -1,5 +1,4 @@
-/*	$NetBSD: kex.h,v 1.1.1.3 2010/11/21 17:05:44 adam Exp $	*/
-/* $OpenBSD: kex.h,v 1.49 2010/02/26 20:29:54 djm Exp $ */
+/* $OpenBSD: kex.h,v 1.52 2010/09/22 05:01:29 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -29,6 +28,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/ec.h>
 
 #define KEX_COOKIE_LEN	16
 
@@ -37,6 +37,8 @@
 #define	KEX_DHGEX_SHA1		"diffie-hellman-group-exchange-sha1"
 #define	KEX_DHGEX_SHA256	"diffie-hellman-group-exchange-sha256"
 #define	KEX_RESUME		"resume@appgate.com"
+/* The following represents the family of ECDH methods */
+#define	KEX_ECDH_SHA2_STEM	"ecdh-sha2-"
 
 #define COMP_NONE	0
 #define COMP_ZLIB	1
@@ -67,6 +69,7 @@ enum kex_exchange {
 	KEX_DH_GRP14_SHA1,
 	KEX_DH_GEX_SHA1,
 	KEX_DH_GEX_SHA256,
+	KEX_ECDH_SHA2,
 	KEX_MAX
 };
 
@@ -132,6 +135,8 @@ struct Kex {
 	void	(*kex[KEX_MAX])(Kex *);
 };
 
+int	 kex_names_valid(const char *);
+
 Kex	*kex_setup(char *[PROPOSAL_MAX]);
 void	 kex_finish(Kex *);
 
@@ -145,6 +150,8 @@ void	 kexdh_client(Kex *);
 void	 kexdh_server(Kex *);
 void	 kexgex_client(Kex *);
 void	 kexgex_server(Kex *);
+void	 kexecdh_client(Kex *);
+void	 kexecdh_server(Kex *);
 
 void
 kex_dh_hash(char *, char *, char *, int, char *, int, u_char *, int,
@@ -153,11 +160,18 @@ void
 kexgex_hash(const EVP_MD *, char *, char *, char *, int, char *,
     int, u_char *, int, int, int, int, BIGNUM *, BIGNUM *, BIGNUM *,
     BIGNUM *, BIGNUM *, u_char **, u_int *);
+void
+kex_ecdh_hash(const EVP_MD *, const EC_GROUP *, char *, char *, char *, int,
+    char *, int, u_char *, int, const EC_POINT *, const EC_POINT *,
+    const BIGNUM *, u_char **, u_int *);
+
+int	kex_ecdh_name_to_nid(const char *);
+const EVP_MD *kex_ecdh_name_to_evpmd(const char *);
 
 void
 derive_ssh1_session_id(BIGNUM *, BIGNUM *, u_int8_t[8], u_int8_t[16]);
 
-#if defined(DEBUG_KEX) || defined(DEBUG_KEXDH)
+#if defined(DEBUG_KEX) || defined(DEBUG_KEXDH) || defined(DEBUG_KEXECDH)
 void	dump_digest(char *, u_char *, int);
 #endif
 

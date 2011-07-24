@@ -1,4 +1,3 @@
-/*	$NetBSD: ttymodes.c,v 1.1.1.1 2009/06/07 22:19:31 christos Exp $	*/
 /* $OpenBSD: ttymodes.c,v 1.29 2008/11/02 00:16:16 stevesk Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

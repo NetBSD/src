@@ -1,4 +1,3 @@
-/*	$NetBSD: addrmatch.c,v 1.1.1.2 2010/11/21 17:05:36 adam Exp $	*/
 /*	$OpenBSD: addrmatch.c,v 1.5 2010/02/26 20:29:54 djm Exp $ */
 
 /*

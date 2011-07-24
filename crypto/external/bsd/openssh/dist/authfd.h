@@ -1,4 +1,3 @@
-/*	$NetBSD: authfd.h,v 1.1.1.2 2010/11/21 17:05:38 adam Exp $	*/
 /* $OpenBSD: authfd.h,v 1.37 2009/08/27 17:44:52 djm Exp $ */
 
 /*

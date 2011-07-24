@@ -1,5 +1,4 @@
-/*	$NetBSD: session.c,v 1.1.1.3 2010/11/21 17:05:56 adam Exp $	*/
-/* $OpenBSD: session.c,v 1.256 2010/06/25 07:20:04 djm Exp $ */
+/* $OpenBSD: session.c,v 1.258 2010/11/25 04:10:09 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -560,7 +559,8 @@ do_exec_no_pty(Session *s, const char *command)
 
 	s->pid = pid;
 	/* Set interactive/non-interactive mode. */
-	packet_set_interactive(s->display != NULL);
+	packet_set_interactive(s->display != NULL,
+	    options.ip_qos_interactive, options.ip_qos_bulk);
 
 #ifdef USE_PIPES
 	/* We are the parent.  Close the child sides of the pipes. */
@@ -690,7 +690,8 @@ do_exec_pty(Session *s, const char *command)
 
 	/* Enter interactive session. */
 	s->ptymaster = ptymaster;
-	packet_set_interactive(1);
+	packet_set_interactive(1, 
+	    options.ip_qos_interactive, options.ip_qos_bulk);
 	if (compat20) {
 		session_set_fds(s, ptyfd, fdout, -1, 1, 1);
 	} else {
@@ -1251,8 +1252,6 @@ launch_login(struct passwd *pw, const char *hostname)
 static void
 child_close_fds(void)
 {
-	int i;
-
 	if (packet_get_connection_in() == packet_get_connection_out())
 		close(packet_get_connection_in());
 	else {
@@ -1278,8 +1277,7 @@ child_close_fds(void)
 	 * initgroups, because at least on Solaris 2.3 it leaves file
 	 * descriptors open.
 	 */
-	for (i = 3; i < 64; i++)
-		close(i);
+	closefrom(STDERR_FILENO + 1);
 }
 
 /*

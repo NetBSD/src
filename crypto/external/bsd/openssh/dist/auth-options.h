@@ -1,4 +1,3 @@
-/*	$NetBSD: auth-options.h,v 1.1.1.2 2010/11/21 17:05:37 adam Exp $	*/
 /* $OpenBSD: auth-options.h,v 1.20 2010/05/07 11:30:29 djm Exp $ */
 
 /*
