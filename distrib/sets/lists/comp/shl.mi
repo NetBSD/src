@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.181 2011/07/21 03:13:32 mrg Exp $
+# $NetBSD: shl.mi,v 1.182 2011/07/24 08:55:30 uch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -167,6 +167,7 @@
 ./usr/lib/librumpfs_umap_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_umapfs_pic.a		comp-obsolete		obsolete
 ./usr/lib/librumpfs_union_pic.a			comp-c-piclib
+./usr/lib/librumpfs_v7fs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_zfs_pic.a			comp-c-piclib		zfs
 ./usr/lib/librumphijack_pic.a			comp-c-piclib
 ./usr/lib/librumpkern_crypto_pic.a		comp-c-piclib
@@ -370,6 +371,7 @@
 ./usr/libdata/debug/usr/lib/librumpfs_udf.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_umap.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_union.so.0.0.debug	comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/librumpfs_v7fs.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_zfs.so.0.0.debug		comp-rump-debug	debug,zfs
 ./usr/libdata/debug/usr/lib/librumphijack.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpkern_crypto.so.0.0.debug	comp-rump-debug	debug
