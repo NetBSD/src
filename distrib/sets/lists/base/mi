@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.944 2011/07/09 21:24:29 tron Exp $
+# $NetBSD: mi,v 1.945 2011/07/24 08:55:28 uch Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1402,6 +1402,7 @@
 ./usr/sbin/rump_sysvbfs				base-puffs-bin
 ./usr/sbin/rump_tmpfs				base-puffs-bin
 ./usr/sbin/rump_udf				base-puffs-bin
+./usr/sbin/rump_v7fs				base-puffs-bin
 ./usr/sbin/rwhod				base-netutil-bin
 ./usr/sbin/sa					base-sysutil-bin
 ./usr/sbin/screenblank				base-sysutil-bin
