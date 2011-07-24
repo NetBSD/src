@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.70 2011/02/19 19:39:28 jruoho Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.71 2011/07/24 20:15:09 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.70 2011/02/19 19:39:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.71 2011/07/24 20:15:09 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -651,7 +651,7 @@ acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
 	unsigned int i;
 
 	if (paddr > 0xff || width % 8 != 0 || value == NULL || arg == NULL ||
-	    paddr + width / 8 > 0xff)
+	    paddr + width / 8 > 0x100)
 		return AE_BAD_PARAMETER;
 
 	addr = paddr;
