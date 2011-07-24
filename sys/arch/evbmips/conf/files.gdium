@@ -1,4 +1,4 @@
-#	$NetBSD: files.gdium,v 1.2 2011/06/08 17:47:48 bouyer Exp $
+#	$NetBSD: files.gdium,v 1.3 2011/07/24 21:40:31 macallan Exp $
 
 file	arch/evbmips/gdium/gdium_bus_io.c
 file	arch/evbmips/gdium/gdium_bus_mem.c
@@ -10,7 +10,8 @@ file	arch/evbmips/gdium/autoconf.c
 file	arch/evbmips/gdium/machdep.c
 
 file	arch/mips/mips/bus_dma.c
-file	arch/evbmips/evbmips/disksubr.c
+#file	arch/evbmips/evbmips/disksubr.c
+file	kern/subr_disk_mbr.c
 file	arch/evbmips/evbmips/interrupt.c
 
 file	arch/mips/mips/mips3_clock.c
