@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.4 2011/07/16 12:35:40 uch Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.5 2011/07/24 12:31:33 uch Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.4 2011/07/16 12:35:40 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.5 2011/07/24 12:31:33 uch Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -954,13 +954,13 @@ v7fs_inactive(void *v)
 	struct v7fs_node *v7node = vp->v_data;
 	struct v7fs_inode *inode = &v7node->inode;
 
-	DPRINTF("%p\n", vp);
-
+	DPRINTF("%p #%d\n", vp, inode->inode_number);
 	if (v7fs_inode_allocated(inode)) {
 		v7fs_update(vp, 0, 0, UPDATE_WAIT);
+		*a->a_recycle = false;
+	} else {
+		*a->a_recycle = true;
 	}
-
-	*a->a_recycle = true;
 
 	VOP_UNLOCK(vp);
 
@@ -978,7 +978,7 @@ v7fs_reclaim(void *v)
 	struct vnode *vp = a->a_vp;
 	struct v7fs_node *v7node = vp->v_data;
 
-	DPRINTF("%p\n", vp);
+	DPRINTF("%p #%d\n", vp, v7node->inode.inode_number);
 	mutex_enter(&mntvnode_lock);
 	LIST_REMOVE(v7node, link);
 	mutex_exit(&mntvnode_lock);
