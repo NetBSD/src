@@ -1,4 +1,4 @@
-/*	$NetBSD: enc_des.c,v 1.13 2007/01/17 23:24:22 hubertf Exp $	*/
+/*	$NetBSD: enc_des.c,v 1.14 2011/07/24 07:18:17 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)enc_des.c	8.3 (Berkeley) 5/30/95"; */
 #else
-__RCSID("$NetBSD: enc_des.c,v 1.13 2007/01/17 23:24:22 hubertf Exp $");
+__RCSID("$NetBSD: enc_des.c,v 1.14 2011/07/24 07:18:17 mbalmer Exp $");
 #endif
 #endif /* not lint */
 
@@ -428,9 +428,8 @@ fb64_session(key, server, fbp)
 	}
 	des_key_sched(&fbp->krbdes_key, fbp->krbdes_sched);
 	/*
-	 * Now look to see if krbdes_start() was was waiting for
-	 * the key to show up.  If so, go ahead an call it now
-	 * that we have the key.
+	 * Now look to see if krbdes_start() was waiting for the key to
+	 * show up.  If so, go ahead an call it now that we have the key.
 	 */
 	if (fbp->need_start) {
 		fbp->need_start = 0;
