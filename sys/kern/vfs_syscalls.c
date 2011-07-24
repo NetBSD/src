@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.431 2011/07/03 15:25:09 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.432 2011/07/24 09:40:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.431 2011/07/03 15:25:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.432 2011/07/24 09:40:10 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1683,7 +1683,8 @@ do_sys_mknod(struct lwp *l, const char *pathname, mode_t mode, dev_t dev,
 			break;
 		}
 	}
-	if (optype == VOP_MKNOD_DESCOFFSET && vattr.va_rdev == VNOVAL)
+	if (error == 0 && optype == VOP_MKNOD_DESCOFFSET
+	    && vattr.va_rdev == VNOVAL)
 		error = EINVAL;
 	if (!error) {
 		switch (optype) {
