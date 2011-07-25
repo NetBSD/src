@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/07/04 16:10:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/07/25 16:32:43 joerg Exp $
 
 LIB=	LLVMMC
 
@@ -12,9 +12,11 @@ SRCS+=	ELFObjectWriter.cpp \
 	MCAsmInfoDarwin.cpp \
 	MCAsmStreamer.cpp \
 	MCAssembler.cpp \
+	MCCodeGenInfo.cpp \
 	MCCodeEmitter.cpp \
 	MCContext.cpp \
 	MCDisassembler.cpp \
+	MCDwarf.cpp \
 	MCELF.cpp \
 	MCELFObjectTargetWriter.cpp \
 	MCELFStreamer.cpp \
@@ -22,11 +24,11 @@ SRCS+=	ELFObjectWriter.cpp \
 	MCInst.cpp \
 	MCInstPrinter.cpp \
 	MCLabel.cpp \
-	MCDwarf.cpp \
 	MCLoggingStreamer.cpp \
 	MCMachOStreamer.cpp \
 	MCMachObjectTargetWriter.cpp \
 	MCNullStreamer.cpp \
+	MCObjectFileInfo.cpp \
 	MCObjectStreamer.cpp \
 	MCObjectWriter.cpp \
 	MCPureStreamer.cpp \
@@ -43,7 +45,8 @@ SRCS+=	ELFObjectWriter.cpp \
 	WinCOFFStreamer.cpp \
 	WinCOFFObjectWriter.cpp \
 	SubtargetFeature.cpp \
-	TargetAsmBackend.cpp
+	TargetAsmBackend.cpp \
+	TargetAsmLexer.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
