@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.93 2011/07/20 21:30:13 dyoung Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.94 2011/07/25 16:02:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.93 2011/07/20 21:30:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.94 2011/07/25 16:02:25 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.93 2011/07/20 21:30:13 dyoung Exp 
 #include <sys/syscallargs.h>
 #include <sys/ucontext.h>
 #include <sys/cpu.h>
+#include <sys/bus.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
