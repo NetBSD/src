@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.5 2011/07/15 20:29:58 jmcneill Exp $ */
+/* $NetBSD: cxdtv.c,v 1.6 2011/07/25 04:31:26 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.5 2011/07/15 20:29:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.6 2011/07/25 04:31:26 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
-#include <sys/condvar.h>
+#include <sys/proc.h>
 #include <sys/module.h>
 #include <sys/bus.h>
 
@@ -212,9 +212,6 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 	reg |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
 
-	mutex_init(&sc->sc_delaylock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&sc->sc_delaycv, "cxdtvwait");
-
 	mutex_init(&sc->sc_i2c_buslock, MUTEX_DRIVER, IPL_NONE);
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_exec = NULL;
@@ -265,8 +262,6 @@ cxdtv_detach(device_t self, int flags)
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
 
 	mutex_destroy(&sc->sc_i2c_buslock);
-	mutex_destroy(&sc->sc_delaylock);
-	cv_destroy(&sc->sc_delaycv);
 
 	return 0;
 }
@@ -556,15 +551,11 @@ cxdtv_dtv_open(void *priv, int flags)
 
 	cxdtv_mpeg_reset(sc);
 
-	printf("sc_dma %p\n", sc->sc_dma);
-	printf("sc_tsbuf %p\n", sc->sc_tsbuf);
 	/* allocate two alternating DMA areas for MPEG TS packets */
 	sc->sc_tsbuf = cxdtv_mpeg_malloc(sc, CXDTV_TS_PKTSIZE * 2);
-	printf("sc_dma %p\n", sc->sc_dma);
-	printf("sc_tsbuf %p\n", sc->sc_tsbuf);
 
 	if (sc->sc_tsbuf == NULL)
-		return EIO;
+		return ENOMEM;
 
 	return 0;
 }
@@ -659,15 +650,9 @@ static int
 cxdtv_dtv_start_transfer(void *priv)
 {
 	struct cxdtv_softc *sc = priv;
-
-	printf("sc_dma %p\n", sc->sc_dma);
-	printf("sc_tsbuf %p\n", sc->sc_tsbuf);
+	
 	/* allocate two alternating DMA areas for MPEG TS packets */
 	sc->sc_tsbuf = cxdtv_mpeg_malloc(sc, CXDTV_TS_PKTSIZE * 2);
-	printf("sc_dma %p\n", sc->sc_dma);
-	printf("sc_tsbuf %p\n", sc->sc_tsbuf);
-
-	printf("KERNADDR %p, DMAADDR %016lx\n", KERNADDR(sc->sc_dma), DMAADDR(sc->sc_dma));
 
 	cxdtv_mpeg_trigger(sc, sc->sc_tsbuf);
 
@@ -717,9 +702,7 @@ cxdtv_mpeg_reset(struct cxdtv_softc *sc)
 
 	/* reset external components*/
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_SRST_IO, 0);
-	mutex_enter(&sc->sc_delaylock);
-	cv_timedwait(&sc->sc_delaycv, &sc->sc_delaylock, MAX(1, mstohz(1)));
-	mutex_exit(&sc->sc_delaylock);
+	kpause("cxdtvrst", false, MAX(1, mstohz(1)), NULL);
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_SRST_IO, 1);
 
 	/* let error interrupts happen */
@@ -859,7 +842,6 @@ cxdtv_mpeg_trigger(struct cxdtv_softc *sc, void *buf)
 	struct cxdtv_dma *p;
 	struct cxdtv_sram_ch *ch;
 	uint32_t v;
-	uint32_t offset;
 
 	ch = &cxdtv_sram_chs[CXDTV_SRAM_CH_MPEG];
 
@@ -918,17 +900,6 @@ cxdtv_mpeg_trigger(struct cxdtv_softc *sc, void *buf)
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_HW_SOP_CONTROL,
 	    0x47 << 16 | 188 << 4 | 1);
 
-	offset = CXDTV_TS_GEN_CONTROL;
-	v = bus_space_read_4(sc->sc_memt, sc->sc_memh, offset);
-	printf("CXDTV_TS_GEN_CONTROL %06x %08x\n", offset, v);
-
-#if 0
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_TS_GEN_CONTROL, 0x00);
-	mutex_enter(&sc->sc_delaylock);
-	cv_timedwait(&sc->sc_delaycv, &sc->sc_delaylock, mstohz(100));
-	mutex_exit(&sc->sc_delaylock);
-#endif
-	
 	/* zero counter */
 	bus_space_write_4(sc->sc_memt, sc->sc_memh,
 	    CXDTV_TS_GP_CNT_CNTRL, 0x03);
@@ -959,21 +930,6 @@ cxdtv_mpeg_trigger(struct cxdtv_softc *sc, void *buf)
 	v = bus_space_read_4(sc->sc_memt, sc->sc_memh, CXDTV_TS_DMA_CNTRL);
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_TS_DMA_CNTRL,
 	    v | CXDTV_TS_RISC_EN | CXDTV_TS_FIFO_EN);
-
-#if 0
-	mutex_enter(&sc->sc_delaylock);
-	cv_timedwait(&sc->sc_delaycv, &sc->sc_delaylock, mstohz(1000));
-	mutex_exit(&sc->sc_delaylock);
-
-	for(offset = 0x33c040; offset < 0x33c064; offset += 4) {
-		v = bus_space_read_4(sc->sc_memt, sc->sc_memh, offset);
-		printf("%06x %08x\n", offset, v);
-	}
-	for(offset = 0x200070; offset < 0x200080; offset += 4) {
-		v = bus_space_read_4(sc->sc_memt, sc->sc_memh, offset);
-		printf("%06x %08x\n", offset, v);
-	}
-#endif
 
 	return 0;
 }
