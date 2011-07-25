@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-rsa.c,v 1.4 2010/11/21 18:59:04 adam Exp $	*/
-/* $OpenBSD: auth-rsa.c,v 1.78 2010/07/13 23:13:16 djm Exp $ */
+/*	$NetBSD: auth-rsa.c,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: auth-rsa.c,v 1.79 2010/12/03 23:55:27 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-rsa.c,v 1.4 2010/11/21 18:59:04 adam Exp $");
+__RCSID("$NetBSD: auth-rsa.c,v 1.5 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -93,9 +93,6 @@ auth_rsa_verify_response(Key *key, BIGNUM *challenge, u_char response[16])
 	u_char buf[32], mdbuf[16];
 	MD5_CTX md;
 	int len;
-
-	if (auth_key_is_revoked(key))
-		return 0;
 
 	/* don't allow short keys */
 	if (BN_num_bits(key->rsa->n) < SSH_RSA_MINIMUM_MODULUS_SIZE) {
@@ -194,7 +191,7 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 	    if ( ldap_ismember(&options.lpk, pw->pw_name) > 0) {
 		if ( (k = ldap_getuserkey(&options.lpk, pw->pw_name)) != NULL) {
 		    for (i = 0 ; i < k->num ; i++) {
-			char *cp, *options = NULL;
+			char *cp, *xoptions = NULL;
 
 			for (cp = k->keys[i]->bv_val; *cp == ' ' || *cp == '\t'; cp++)
 			    ;
@@ -209,7 +206,7 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 			 */
 			if (*cp < '0' || *cp > '9') {
 			    int quoted = 0;
-			    options = cp;
+			    xoptions = cp;
 			    for (; *cp && (quoted || (*cp != ' ' && *cp != '\t')); cp++) {
 				if (*cp == '\\' && cp[1] == '"')
 				    cp++;	/* Skip both */
@@ -217,7 +214,7 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 				    quoted = !quoted;
 			    }
 			} else
-			    options = NULL;
+			    xoptions = NULL;
 
 			/* Parse the key from the line. */
 			if (hostfile_read_key(&cp, &bits, key) == 0) {
@@ -240,7 +237,7 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 			* If our options do not allow this key to be used,
 			* do not send challenge.
 			 */
-			if (!auth_parse_options(pw, options, "[LDAP]", (unsigned long) i))
+			if (!auth_parse_options(pw, xoptions, "[LDAP]", (unsigned long) i))
 			    continue;
 
 			/* break out, this key is allowed */
@@ -334,6 +331,10 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 			logit("Warning: %s, line %lu: keysize mismatch: "
 			    "actual %d vs. announced %d.",
 			    file, linenum, BN_num_bits(key->rsa->n), bits);
+
+		/* Never accept a revoked key */
+		if (auth_key_is_revoked(key))
+			break;
 
 		/* We have found the desired key. */
 		/*

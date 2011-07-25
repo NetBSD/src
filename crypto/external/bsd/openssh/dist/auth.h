@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
+/*	$NetBSD: auth.h,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: auth.h,v 1.66 2010/05/07 11:30:29 djm Exp $ */
 
 /*
@@ -88,7 +88,7 @@ struct Authctxt {
 #endif
 
 struct Authmethod {
-	char	*name;
+	const char	*name;
 	int	(*userauth)(Authctxt *authctxt);
 	int	*enabled;
 };
@@ -151,10 +151,10 @@ void	krb5_cleanup_proc(Authctxt *authctxt);
 void	do_authentication(Authctxt *);
 void	do_authentication2(Authctxt *);
 
-void	auth_log(Authctxt *, int, char *, char *);
-void	userauth_finish(Authctxt *, int, char *);
+void	auth_log(Authctxt *, int, const char *, const char *);
+void	userauth_finish(Authctxt *, int, const char *);
 void	userauth_send_banner(const char *);
-int	auth_root_allowed(char *);
+int	auth_root_allowed(const char *);
 
 char	*auth2_read_banner(void);
 

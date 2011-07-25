@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.h,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
+/*	$NetBSD: channels.h,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: channels.h,v 1.104 2010/05/14 23:29:23 djm Exp $ */
 
 /*
@@ -63,7 +63,7 @@ typedef struct Channel Channel;
 
 typedef void channel_open_fn(int, int, void *);
 typedef void channel_callback_fn(int, void *);
-typedef int channel_infilter_fn(struct Channel *, char *, int);
+typedef int channel_infilter_fn(struct Channel *, const char *, int);
 typedef void channel_filter_cleanup_fn(int, void *);
 typedef u_char *channel_outfilter_fn(struct Channel *, u_char **, u_int *);
 
@@ -205,14 +205,15 @@ struct Channel {
 
 Channel	*channel_by_id(int);
 Channel	*channel_lookup(int);
-Channel *channel_new(char *, int, int, int, int, u_int, u_int, int, char *, int);
+Channel *channel_new(const char *, int, int, int, int, u_int, u_int, int,
+    const char *, int);
 void	 channel_set_fds(int, int, int, int, int, int, int, u_int);
 void	 channel_free(Channel *);
 void	 channel_free_all(void);
 void	 channel_stop_listening(void);
 
 void	 channel_send_open(int);
-void	 channel_request_start(int, char *, int);
+void	 channel_request_start(int, const char *, int);
 void	 channel_register_cleanup(int, channel_callback_fn *, int);
 void	 channel_register_open_confirm(int, channel_open_fn *, void *);
 void	 channel_register_filter(int, channel_infilter_fn *,
@@ -258,9 +259,9 @@ void	 channel_clear_permitted_opens(void);
 void	 channel_clear_adm_permitted_opens(void);
 void 	 channel_print_adm_permitted_opens(void);
 int      channel_input_port_forward_request(int, int);
-Channel	*channel_connect_to(const char *, u_short, char *, char *);
-Channel	*channel_connect_stdio_fwd(const char*, u_short, int, int);
-Channel	*channel_connect_by_listen_address(u_short, char *, char *);
+Channel	*channel_connect_to(const char *, u_short, const char *, const char *);
+Channel	*channel_connect_stdio_fwd(const char *, u_short, int, int);
+Channel	*channel_connect_by_listen_address(u_short, const char *, const char *);
 int	 channel_request_remote_forwarding(const char *, u_short,
 	     const char *, u_short);
 int	 channel_setup_local_fwd_listener(const char *, u_short,

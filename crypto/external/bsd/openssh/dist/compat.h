@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.h,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: compat.h,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: compat.h,v 1.42 2008/09/11 14:22:37 markus Exp $ */
 
 /*
@@ -66,7 +66,7 @@ void     enable_compat13(void);
 void     enable_compat20(void);
 void     compat_datafellows(const char *);
 int	 proto_spec(const char *);
-char	*compat_cipher_proposal(char *);
+const char	*compat_cipher_proposal(const char *);
 
 extern int compat13;
 extern int compat20;

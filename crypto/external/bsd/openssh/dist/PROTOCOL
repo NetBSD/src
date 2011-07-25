@@ -292,3 +292,4 @@ This extension is advertised in the SSH_FXP_VERSION hello with version
 "1".
 
 $OpenBSD: PROTOCOL,v 1.17 2010/12/04 00:18:01 djm Exp $
+$NetBSD: PROTOCOL,v 1.2 2011/07/25 03:03:10 christos Exp $

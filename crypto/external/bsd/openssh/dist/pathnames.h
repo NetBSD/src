@@ -1,5 +1,5 @@
-/*	$NetBSD: pathnames.h,v 1.4 2010/11/21 18:29:49 adam Exp $	*/
-/* $OpenBSD: pathnames.h,v 1.19 2010/02/11 20:37:47 djm Exp $ */
+/*	$NetBSD: pathnames.h,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: pathnames.h,v 1.20 2010/08/31 11:54:45 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -33,6 +33,7 @@
 #define _PATH_HOST_CONFIG_FILE		SSHDIR "/ssh_config"
 #define _PATH_HOST_KEY_FILE		SSHDIR "/ssh_host_key"
 #define _PATH_HOST_DSA_KEY_FILE		SSHDIR "/ssh_host_dsa_key"
+#define _PATH_HOST_ECDSA_KEY_FILE	SSHDIR "/ssh_host_ecdsa_key"
 #define _PATH_HOST_RSA_KEY_FILE		SSHDIR "/ssh_host_rsa_key"
 #define _PATH_DH_MODULI			ETCDIR "/moduli"
 /* Backwards compatibility */
@@ -67,6 +68,7 @@
  */
 #define _PATH_SSH_CLIENT_IDENTITY	".ssh/identity"
 #define _PATH_SSH_CLIENT_ID_DSA		".ssh/id_dsa"
+#define _PATH_SSH_CLIENT_ID_ECDSA	".ssh/id_ecdsa"
 #define _PATH_SSH_CLIENT_ID_RSA		".ssh/id_rsa"
 
 /*

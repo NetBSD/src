@@ -1,4 +1,4 @@
-/*	$NetBSD: nchan.c,v 1.3 2010/11/21 18:29:49 adam Exp $	*/
+/*	$NetBSD: nchan.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: nchan.c,v 1.63 2010/01/26 01:28:35 djm Exp $ */
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: nchan.c,v 1.3 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: nchan.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -85,8 +85,8 @@ static void	chan_send_eow2(Channel *);
 static void	chan_shutdown_write(Channel *);
 static void	chan_shutdown_read(Channel *);
 
-static char *ostates[] = { "open", "drain", "wait_ieof", "closed" };
-static char *istates[] = { "open", "drain", "wait_oclose", "closed" };
+static const char *ostates[] = { "open", "drain", "wait_ieof", "closed" };
+static const char *istates[] = { "open", "drain", "wait_oclose", "closed" };
 
 static void
 chan_set_istate(Channel *c, u_int next)

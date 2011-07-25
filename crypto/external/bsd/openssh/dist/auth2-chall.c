@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-chall.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: auth2-chall.c,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: auth2-chall.c,v 1.34 2008/12/09 04:32:22 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-chall.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: auth2-chall.c,v 1.3 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 
 #include <stdio.h>
@@ -87,12 +87,12 @@ struct KbdintAuthctxt
 #ifdef USE_PAM
 void remove_kbdint_device(const char *);
 void
-remove_kbdint_device(const char *devname)
+remove_kbdint_device(const char *xdevname)
 {
 	int i, j;
 
 	for (i = 0; devices[i] != NULL; i++)
-		if (strcmp(devices[i]->name, devname) == 0) {
+		if (strcmp(devices[i]->name, xdevname) == 0) {
 			for (j = i; devices[j] != NULL; j++)
 				devices[j] = devices[j+1];
 			i--;

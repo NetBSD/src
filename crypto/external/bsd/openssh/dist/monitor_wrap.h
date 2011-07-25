@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.h,v 1.3 2009/12/27 01:40:47 christos Exp $	*/
+/*	$NetBSD: monitor_wrap.h,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: monitor_wrap.h,v 1.22 2009/03/05 07:18:19 djm Exp $ */
 
 /*
@@ -44,7 +44,7 @@ int mm_key_sign(Key *, u_char **, u_int *, u_char *, u_int);
 void mm_inform_authserv(char *, char *);
 struct passwd *mm_getpwnamallow(const char *);
 char *mm_auth2_read_banner(void);
-int mm_auth_password(struct Authctxt *, char *);
+int mm_auth_password(struct Authctxt *, const char *);
 int mm_key_allowed(enum mm_keytype, char *, char *, Key *);
 int mm_user_key_allowed(struct passwd *, Key *);
 int mm_hostbased_key_allowed(struct passwd *, char *, char *, Key *);

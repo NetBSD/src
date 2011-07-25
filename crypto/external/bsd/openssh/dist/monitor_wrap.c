@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.c,v 1.4 2010/11/21 18:29:49 adam Exp $	*/
-/* $OpenBSD: monitor_wrap.c,v 1.69 2010/03/07 11:57:13 dtucker Exp $ */
+/*	$NetBSD: monitor_wrap.c,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.c,v 1.70 2010/08/31 11:54:45 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.4 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.5 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
@@ -71,6 +71,7 @@ __RCSID("$NetBSD: monitor_wrap.c,v 1.4 2010/11/21 18:29:49 adam Exp $");
 #include "misc.h"
 #include "schnorr.h"
 #include "jpake.h"
+#include "uuencode.h"
 
 #include "channels.h"
 #include "session.h"
@@ -295,7 +296,7 @@ mm_inform_authserv(char *service, char *style)
 
 /* Do the password authentication */
 int
-mm_auth_password(Authctxt *authctxt, char *password)
+mm_auth_password(Authctxt *authctxt, const char *password)
 {
 	Buffer m;
 	int authenticated = 0;

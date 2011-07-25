@@ -1,5 +1,5 @@
-/*	$NetBSD: uuencode.c,v 1.3 2009/12/27 01:40:47 christos Exp $	*/
-/* $OpenBSD: uuencode.c,v 1.25 2009/03/05 11:30:50 djm Exp $ */
+/*	$NetBSD: uuencode.c,v 1.4 2011/07/25 03:03:11 christos Exp $	*/
+/* $OpenBSD: uuencode.c,v 1.26 2010/08/31 11:54:45 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: uuencode.c,v 1.3 2009/12/27 01:40:47 christos Exp $");
+__RCSID("$NetBSD: uuencode.c,v 1.4 2011/07/25 03:03:11 christos Exp $");
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <resolv.h>
@@ -73,7 +73,7 @@ uudecode(const char *src, u_char *target, size_t targsize)
 }
 
 void
-dump_base64(FILE *fp, u_char *data, u_int len)
+dump_base64(FILE *fp, const u_char *data, u_int len)
 {
 	char *buf;
 	int i, n;

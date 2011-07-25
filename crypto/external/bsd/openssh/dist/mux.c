@@ -1,5 +1,5 @@
-/*	$NetBSD: mux.c,v 1.3 2010/11/21 18:29:49 adam Exp $	*/
-/* $OpenBSD: mux.c,v 1.21 2010/06/25 23:15:36 djm Exp $ */
+/*	$NetBSD: mux.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: mux.c,v 1.24 2011/01/13 21:54:53 djm Exp $ */
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
  *
@@ -32,7 +32,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: mux.c,v 1.3 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: mux.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -865,7 +865,7 @@ process_mux_stdio_fwd(u_int rid, Channel *c, Buffer *m, Buffer *r)
 
 	if (options.control_master == SSHCTL_MASTER_ASK ||
 	    options.control_master == SSHCTL_MASTER_AUTO_ASK) {
-		if (!ask_permission("Allow forward to to %s:%u? ",
+		if (!ask_permission("Allow forward to %s:%u? ",
 		    chost, cport)) {
 			debug2("%s: stdio fwd refused by user", __func__);
 			/* prepare reply */
@@ -1011,12 +1011,32 @@ muxserver_listen(void)
 {
 	struct sockaddr_un addr;
 	mode_t old_umask;
+	char *orig_control_path = options.control_path;
+	char rbuf[16+1];
+	u_int i, r;
 
 	if (options.control_path == NULL ||
 	    options.control_master == SSHCTL_MASTER_NO)
 		return;
 
 	debug("setting up multiplex master socket");
+
+	/*
+	 * Use a temporary path before listen so we can pseudo-atomically
+	 * establish the listening socket in its final location to avoid
+	 * other processes racing in between bind() and listen() and hitting
+	 * an unready socket.
+	 */
+	for (i = 0; i < sizeof(rbuf) - 1; i++) {
+		r = arc4random_uniform(26+26+10);
+		rbuf[i] = (r < 26) ? 'a' + r :
+		    (r < 26*2) ? 'A' + r - 26 :
+		    '0' + r - 26 - 26;
+	}
+	rbuf[sizeof(rbuf) - 1] = '\0';
+	options.control_path = NULL;
+	xasprintf(&options.control_path, "%s.%s", orig_control_path, rbuf);
+	debug3("%s: temporary control path %s", __func__, options.control_path);
 
 	memset(&addr, '\0', sizeof(addr));
 	addr.sun_family = AF_UNIX;
@@ -1036,6 +1056,7 @@ muxserver_listen(void)
 		if (errno == EINVAL || errno == EADDRINUSE) {
 			error("ControlSocket %s already exists, "
 			    "disabling multiplexing", options.control_path);
+ disable_mux_master:
 			close(muxserver_sock);
 			muxserver_sock = -1;
 			xfree(options.control_path);
@@ -1050,12 +1071,29 @@ muxserver_listen(void)
 	if (listen(muxserver_sock, 64) == -1)
 		fatal("%s listen(): %s", __func__, strerror(errno));
 
+	/* Now atomically "move" the mux socket into position */
+	if (link(options.control_path, orig_control_path) != 0) {
+		if (errno != EEXIST) {
+			fatal("%s: link mux listener %s => %s: %s", __func__, 
+			    options.control_path, orig_control_path,
+			    strerror(errno));
+		}
+		error("ControlSocket %s already exists, disabling multiplexing",
+		    orig_control_path);
+		xfree(orig_control_path);
+		unlink(options.control_path);
+		goto disable_mux_master;
+	}
+	unlink(options.control_path);
+	xfree(options.control_path);
+	options.control_path = orig_control_path;
+
 	set_nonblock(muxserver_sock);
 
 	mux_listener_channel = channel_new("mux listener",
 	    SSH_CHANNEL_MUX_LISTENER, muxserver_sock, muxserver_sock, -1,
 	    CHAN_TCP_WINDOW_DEFAULT, CHAN_TCP_PACKET_DEFAULT,
-	    0, addr.sun_path, 1);
+	    0, options.control_path, 1);
 	mux_listener_channel->mux_rcb = mux_master_read_cb;
 	debug3("%s: mux listener channel %d fd %d", __func__,
 	    mux_listener_channel->self, mux_listener_channel->sock);
@@ -1471,7 +1509,7 @@ mux_client_request_forward(int fd, u_int ftype, Forward *fwd)
 	case MUX_S_FAILURE:
 		e = buffer_get_string(&m, NULL);
 		buffer_free(&m);
-		error("%s: session request failed: %s", __func__, e);
+		error("%s: forwarding request failed: %s", __func__, e);
 		return -1;
 	default:
 		fatal("%s: unexpected response from master 0x%08x",
@@ -1590,12 +1628,12 @@ mux_client_request_session(int fd)
 	case MUX_S_PERMISSION_DENIED:
 		e = buffer_get_string(&m, NULL);
 		buffer_free(&m);
-		error("Master refused forwarding request: %s", e);
+		error("Master refused session request: %s", e);
 		return -1;
 	case MUX_S_FAILURE:
 		e = buffer_get_string(&m, NULL);
 		buffer_free(&m);
-		error("%s: forwarding request failed: %s", __func__, e);
+		error("%s: session request failed: %s", __func__, e);
 		return -1;
 	default:
 		buffer_free(&m);
@@ -1722,7 +1760,7 @@ mux_client_request_stdio_fwd(int fd)
 	case MUX_S_PERMISSION_DENIED:
 		e = buffer_get_string(&m, NULL);
 		buffer_free(&m);
-		fatal("Master refused forwarding request: %s", e);
+		fatal("Master refused stdio forwarding request: %s", e);
 	case MUX_S_FAILURE:
 		e = buffer_get_string(&m, NULL);
 		buffer_free(&m);
@@ -1801,9 +1839,13 @@ muxclient(const char *path)
 			fatal("Control socket connect(%.100s): %s", path,
 			    strerror(errno));
 		}
-		if (errno == ENOENT)
+		if (errno == ECONNREFUSED &&
+		    options.control_master != SSHCTL_MASTER_NO) {
+			debug("Stale control socket %.100s, unlinking", path);
+			unlink(path);
+		} else if (errno == ENOENT) {
 			debug("Control socket \"%.100s\" does not exist", path);
-		else {
+		} else {
 			error("Control socket connect(%.100s): %s", path,
 			    strerror(errno));
 		}

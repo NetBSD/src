@@ -1,3 +1,4 @@
+#	$NetBSD: moduli,v 1.2 2011/07/25 03:03:10 christos Exp $
 #	$OpenBSD: moduli,v 1.2 2004/01/28 04:44:00 dtucker Exp $
 
 # Time Type Tests Tries Size Generator Modulus

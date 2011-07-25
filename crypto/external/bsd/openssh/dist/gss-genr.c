@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-genr.c,v 1.3 2009/12/27 01:40:47 christos Exp $	*/
+/*	$NetBSD: gss-genr.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: gss-genr.c,v 1.20 2009/06/22 05:39:28 dtucker Exp $ */
 
 /*
@@ -254,7 +254,7 @@ ssh_gssapi_check_mechanism(Gssctxt **ctx, gss_OID oid, const char *host)
 {
 	gss_buffer_desc token = GSS_C_EMPTY_BUFFER;
 	OM_uint32 major, minor;
-	gss_OID_desc spnego_oid = {6, (void *)"\x2B\x06\x01\x05\x05\x02"};
+	gss_OID_desc spnego_oid = {6, __UNCONST("\x2B\x06\x01\x05\x05\x02")};
 
 	/* RFC 4462 says we MUST NOT do SPNEGO */
 	if (oid->length == spnego_oid.length && 

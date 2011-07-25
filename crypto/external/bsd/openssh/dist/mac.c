@@ -1,4 +1,4 @@
-/*	$NetBSD: mac.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: mac.c,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: mac.c,v 1.15 2008/06/13 00:51:47 dtucker Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: mac.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: mac.c,v 1.3 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/hmac.h>
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: mac.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #define SSH_UMAC	2	/* UMAC (not integrated with OpenSSL) */
 
 struct {
-	char		*name;
+	const char	*name;
 	int		type;
 	const EVP_MD *	(*mdfunc)(void);
 	int		truncatebits;	/* truncate digest if != 0 */

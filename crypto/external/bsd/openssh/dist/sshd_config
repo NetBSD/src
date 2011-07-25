@@ -1,5 +1,5 @@
-#	$NetBSD: sshd_config,v 1.6 2011/05/03 13:04:00 jruoho Exp $
-#	$OpenBSD: sshd_config,v 1.81 2009/10/08 14:03:41 markus Exp $
+#	$NetBSD: sshd_config,v 1.7 2011/07/25 03:03:11 christos Exp $
+#	$OpenBSD: sshd_config,v 1.82 2010/09/06 17:10:19 naddy Exp $
 
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.
@@ -22,6 +22,7 @@
 # HostKeys for protocol version 2
 #HostKey /etc/ssh/ssh_host_rsa_key
 #HostKey /etc/ssh/ssh_host_dsa_key
+#HostKey /etc/ssh/ssh_host_ecdsa_key
 
 # Lifetime and size of ephemeral version 1 server key
 #KeyRegenerationInterval 1h

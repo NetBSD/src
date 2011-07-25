@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: compat.c,v 1.78 2008/09/11 14:22:37 markus Exp $ */
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: compat.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.3 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -61,7 +61,7 @@ compat_datafellows(const char *version)
 {
 	int i;
 	static struct {
-		char	*pat;
+		const char	*pat;
 		int	bugs;
 	} check[] = {
 		{ "OpenSSH-2.0*,"
@@ -218,8 +218,8 @@ proto_spec(const char *spec)
 	return ret;
 }
 
-char *
-compat_cipher_proposal(char *cipher_prop)
+const char *
+compat_cipher_proposal(const char *cipher_prop)
 {
 	Buffer b;
 	char *orig_prop, *fix_ciphers;

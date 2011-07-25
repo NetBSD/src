@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-glob.c,v 1.3 2010/07/06 15:09:41 christos Exp $	*/
+/*	$NetBSD: sftp-glob.c,v 1.4 2011/07/25 03:03:11 christos Exp $	*/
 /* $OpenBSD: sftp-glob.c,v 1.22 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-glob.c,v 1.3 2010/07/06 15:09:41 christos Exp $");
+__RCSID("$NetBSD: sftp-glob.c,v 1.4 2011/07/25 03:03:11 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -50,7 +50,7 @@ fudge_opendir(const char *path)
 
 	r = xmalloc(sizeof(*r));
 
-	if (do_readdir(cur.conn, (char *)path, &r->dir)) {
+	if (do_readdir(cur.conn, path, &r->dir)) {
 		xfree(r);
 		return(NULL);
 	}
@@ -87,7 +87,7 @@ fudge_lstat(const char *path, struct stat *st)
 {
 	Attrib *a;
 
-	if (!(a = do_lstat(cur.conn, (char *)path, 0)))
+	if (!(a = do_lstat(cur.conn, path, 0)))
 		return(-1);
 
 	attrib_to_stat(a, st);
@@ -100,7 +100,7 @@ fudge_stat(const char *path, struct stat *st)
 {
 	Attrib *a;
 
-	if (!(a = do_stat(cur.conn, (char *)path, 0)))
+	if (!(a = do_stat(cur.conn, path, 0)))
 		return(-1);
 
 	attrib_to_stat(a, st);

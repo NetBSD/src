@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keygen.c,v 1.5 2010/11/22 09:53:01 adam Exp $	*/
-/* $OpenBSD: ssh-keygen.c,v 1.199 2010/08/16 04:06:06 djm Exp $ */
+/*	$NetBSD: ssh-keygen.c,v 1.6 2011/07/25 03:03:11 christos Exp $	*/
+/* $OpenBSD: ssh-keygen.c,v 1.205 2011/01/11 06:13:10 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.5 2010/11/22 09:53:01 adam Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.6 2011/07/25 03:03:11 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: ssh-keygen.c,v 1.5 2010/11/22 09:53:01 adam Exp $");
 /* Number of bits in the RSA/DSA key.  This value can be set on the command line. */
 #define DEFAULT_BITS		2048
 #define DEFAULT_BITS_DSA	1024
+#define DEFAULT_BITS_ECDSA	256
 u_int32_t bits = 0;
 
 /*
@@ -139,7 +140,7 @@ enum {
 int print_public = 0;
 int print_generic = 0;
 
-char *key_type_name = NULL;
+const char *key_type_name = NULL;
 
 /* Load key from this PKCS#11 provider */
 char *pkcs11provider = NULL;
@@ -157,7 +158,7 @@ static void
 ask_filename(struct passwd *pw, const char *prompt)
 {
 	char buf[1024];
-	char *name = NULL;
+	const char *name = NULL;
 
 	if (key_type_name == NULL)
 		name = _PATH_SSH_CLIENT_ID_RSA;
@@ -170,6 +171,10 @@ ask_filename(struct passwd *pw, const char *prompt)
 		case KEY_DSA_CERT_V00:
 		case KEY_DSA:
 			name = _PATH_SSH_CLIENT_ID_DSA;
+			break;
+		case KEY_ECDSA_CERT:
+		case KEY_ECDSA:
+			name = _PATH_SSH_CLIENT_ID_ECDSA;
 			break;
 		case KEY_RSA_CERT:
 		case KEY_RSA_CERT_V00:
@@ -255,6 +260,10 @@ do_convert_to_pkcs8(Key *k)
 		if (!PEM_write_DSA_PUBKEY(stdout, k->dsa))
 			fatal("PEM_write_DSA_PUBKEY failed");
 		break;
+	case KEY_ECDSA:
+		if (!PEM_write_EC_PUBKEY(stdout, k->ecdsa))
+			fatal("PEM_write_EC_PUBKEY failed");
+		break;
 	default:
 		fatal("%s: unsupported key type %s", __func__, key_type(k));
 	}
@@ -275,6 +284,7 @@ do_convert_to_pem(Key *k)
 			fatal("PEM_write_DSAPublicKey failed");
 		break;
 #endif
+	/* XXX ECDSA? */
 	default:
 		fatal("%s: unsupported key type %s", __func__, key_type(k));
 	}
@@ -534,6 +544,12 @@ do_convert_from_pkcs8(Key **k, int *private)
 		(*k)->type = KEY_DSA;
 		(*k)->dsa = EVP_PKEY_get1_DSA(pubkey);
 		break;
+	case EVP_PKEY_EC:
+		*k = key_new(KEY_UNSPEC);
+		(*k)->type = KEY_ECDSA;
+		(*k)->ecdsa = EVP_PKEY_get1_EC_KEY(pubkey);
+		(*k)->ecdsa_nid = key_ecdsa_key_to_nid((*k)->ecdsa);
+		break;
 	default:
 		fatal("%s: unsupported pubkey type %d", __func__,
 		    EVP_PKEY_type(pubkey->type));
@@ -569,6 +585,7 @@ do_convert_from_pem(Key **k, int *private)
 		fclose(fp);
 		return;
 	}
+	/* XXX ECDSA */
 #endif
 	fatal("%s: unrecognised raw private key format", __func__);
 }
@@ -607,6 +624,10 @@ do_convert_from(struct passwd *pw)
 		switch (k->type) {
 		case KEY_DSA:
 			ok = PEM_write_DSAPrivateKey(stdout, k->dsa, NULL,
+			    NULL, 0, NULL, NULL);
+			break;
+		case KEY_ECDSA:
+			ok = PEM_write_ECPrivateKey(stdout, k->ecdsa, NULL,
 			    NULL, 0, NULL, NULL);
 			break;
 		case KEY_RSA:
@@ -1101,7 +1122,8 @@ do_change_passphrase(struct passwd *pw)
  * Print the SSHFP RR.
  */
 static int
-do_print_resource_record(struct passwd *pw, char *fname, char *hname)
+do_print_resource_record(struct passwd *pw, const char *fname,
+    const char *hname)
 {
 	Key *public;
 	char *comment = NULL;
@@ -1399,7 +1421,8 @@ do_ca_sign(struct passwd *pw, int argc, char **argv)
 		tmp = tilde_expand_filename(argv[i], pw->pw_uid);
 		if ((public = key_load_public(tmp, &comment)) == NULL)
 			fatal("%s: unable to open \"%s\"", __func__, tmp);
-		if (public->type != KEY_RSA && public->type != KEY_DSA)
+		if (public->type != KEY_RSA && public->type != KEY_DSA &&
+		    public->type != KEY_ECDSA)
 			fatal("%s: key \"%s\" type %s cannot be certified",
 			    __func__, tmp, key_type(public));
 
@@ -1445,7 +1468,8 @@ do_ca_sign(struct passwd *pw, int argc, char **argv)
 		if (!quiet) {
 			logit("Signed %s key %s: id \"%s\" serial %llu%s%s "
 			    "valid %s", key_cert_type(public), 
-			    out, public->cert->key_id, (unsigned long long)public->cert->serial,
+			    out, public->cert->key_id,
+			    (unsigned long long)public->cert->serial,
 			    cert_principals != NULL ? " for " : "",
 			    cert_principals != NULL ? cert_principals : "",
 			    fmt_validity(cert_valid_from, cert_valid_to));
@@ -1477,7 +1501,8 @@ parse_absolute_time(const char *s)
 {
 	struct tm tm;
 	time_t tt;
-	char buf[32], *fmt;
+	char buf[32];
+	const char *fmt;
 
 	/*
 	 * POSIX strptime says "The application shall ensure that there 
@@ -1670,8 +1695,10 @@ do_show_cert(struct passwd *pw)
 	printf("        Signing CA: %s %s\n",
 	    key_type(key->cert->signature_key), ca_fp);
 	printf("        Key ID: \"%s\"\n", key->cert->key_id);
-	if (!v00)
-		printf("        Serial: %llu\n", (unsigned long long)key->cert->serial);
+	if (!v00) {
+		printf("        Serial: %llu\n",
+		    (unsigned long long)key->cert->serial);
+	}
 	printf("        Valid: %s\n",
 	    fmt_validity(key->cert->valid_after, key->cert->valid_before));
 	printf("        Principals: ");
@@ -1774,7 +1801,7 @@ main(int argc, char **argv)
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
 
-	SSLeay_add_all_algorithms();
+	OpenSSL_add_all_algorithms();
 	log_init(argv[0], SYSLOG_LEVEL_INFO, SYSLOG_FACILITY_USER, 1);
 
 	/* we need this for the home * directory.  */
@@ -1792,7 +1819,7 @@ main(int argc, char **argv)
 	    "O:C:r:g:R:T:G:M:S:s:a:V:W:z:")) != -1) {
 		switch (opt) {
 		case 'b':
-			bits = (u_int32_t)strtonum(optarg, 768, 32768, &errstr);
+			bits = (u_int32_t)strtonum(optarg, 256, 32768, &errstr);
 			if (errstr)
 				fatal("Bits has bad value %s (%s)",
 					optarg, errstr);
@@ -2076,8 +2103,14 @@ main(int argc, char **argv)
 		fprintf(stderr, "unknown key type %s\n", key_type_name);
 		exit(1);
 	}
-	if (bits == 0)
-		bits = (type == KEY_DSA) ? DEFAULT_BITS_DSA : DEFAULT_BITS;
+	if (bits == 0) {
+		if (type == KEY_DSA)
+			bits = DEFAULT_BITS_DSA;
+		else if (type == KEY_ECDSA)
+			bits = DEFAULT_BITS_ECDSA;
+		else
+			bits = DEFAULT_BITS;
+	}
 	maxbits = (type == KEY_DSA) ?
 	    OPENSSL_DSA_MAX_MODULUS_BITS : OPENSSL_RSA_MAX_MODULUS_BITS;
 	if (bits > maxbits) {
@@ -2086,6 +2119,11 @@ main(int argc, char **argv)
 	}
 	if (type == KEY_DSA && bits != 1024)
 		fatal("DSA keys must be 1024 bits");
+	else if (type != KEY_ECDSA && bits < 768)
+		fatal("Key must at least be 768 bits");
+	else if (type == KEY_ECDSA && key_ecdsa_bits_to_nid(bits) == -1)
+		fatal("Invalid ECDSA key length - valid lengths are "
+		    "256, 384 or 521 bits");
 	if (!quiet)
 		printf("Generating public/private %s key pair.\n", key_type_name);
 	private = key_generate(type, bits);

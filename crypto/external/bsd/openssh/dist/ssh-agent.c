@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-agent.c,v 1.5 2010/11/21 18:29:49 adam Exp $	*/
-/* $OpenBSD: ssh-agent.c,v 1.168 2010/08/16 04:06:06 djm Exp $ */
+/*	$NetBSD: ssh-agent.c,v 1.6 2011/07/25 03:03:11 christos Exp $	*/
+/* $OpenBSD: ssh-agent.c,v 1.171 2010/11/21 01:01:13 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.5 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.6 2011/07/25 03:03:11 christos Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -455,8 +455,10 @@ process_add_identity(SocketEntry *e, int version)
 	Idtab *tab = idtab_lookup(version);
 	Identity *id;
 	int type, success = 0, death = 0, confirm = 0;
-	char *type_name, *comment;
+	char *type_name, *comment, *curve;
 	Key *k = NULL;
+	BIGNUM *exponent;
+	EC_POINT *q;
 	u_char *cert;
 	u_int len;
 
@@ -479,7 +481,6 @@ process_add_identity(SocketEntry *e, int version)
 	case 2:
 		type_name = buffer_get_string(&e->request, NULL);
 		type = key_type_from_name(type_name);
-		xfree(type_name);
 		switch (type) {
 		case KEY_DSA:
 			k = key_new_private(type);
@@ -497,6 +498,57 @@ process_add_identity(SocketEntry *e, int version)
 			xfree(cert);
 			key_add_private(k);
 			buffer_get_bignum2(&e->request, k->dsa->priv_key);
+			break;
+		case KEY_ECDSA:
+			k = key_new_private(type);
+			k->ecdsa_nid = key_ecdsa_nid_from_name(type_name);
+			curve = buffer_get_string(&e->request, NULL);
+			if (k->ecdsa_nid != key_curve_name_to_nid(curve))
+				fatal("%s: curve names mismatch", __func__);
+			xfree(curve);
+			k->ecdsa = EC_KEY_new_by_curve_name(k->ecdsa_nid);
+			if (k->ecdsa == NULL)
+				fatal("%s: EC_KEY_new_by_curve_name failed",
+				    __func__);
+			q = EC_POINT_new(EC_KEY_get0_group(k->ecdsa));
+			if (q == NULL)
+				fatal("%s: BN_new failed", __func__);
+			if ((exponent = BN_new()) == NULL)
+				fatal("%s: BN_new failed", __func__);
+			buffer_get_ecpoint(&e->request,
+				EC_KEY_get0_group(k->ecdsa), q);
+			buffer_get_bignum2(&e->request, exponent);
+			if (EC_KEY_set_public_key(k->ecdsa, q) != 1)
+				fatal("%s: EC_KEY_set_public_key failed",
+				    __func__);
+			if (EC_KEY_set_private_key(k->ecdsa, exponent) != 1)
+				fatal("%s: EC_KEY_set_private_key failed",
+				    __func__);
+			if (key_ec_validate_public(EC_KEY_get0_group(k->ecdsa),
+			    EC_KEY_get0_public_key(k->ecdsa)) != 0)
+				fatal("%s: bad ECDSA public key", __func__);
+			if (key_ec_validate_private(k->ecdsa) != 0)
+				fatal("%s: bad ECDSA private key", __func__);
+			BN_clear_free(exponent);
+			EC_POINT_free(q);
+			break;
+		case KEY_ECDSA_CERT:
+			cert = buffer_get_string(&e->request, &len);
+			if ((k = key_from_blob(cert, len)) == NULL)
+				fatal("Certificate parse failed");
+			xfree(cert);
+			key_add_private(k);
+			if ((exponent = BN_new()) == NULL)
+				fatal("%s: BN_new failed", __func__);
+			buffer_get_bignum2(&e->request, exponent);
+			if (EC_KEY_set_private_key(k->ecdsa, exponent) != 1)
+				fatal("%s: EC_KEY_set_private_key failed",
+				    __func__);
+			if (key_ec_validate_public(EC_KEY_get0_group(k->ecdsa),
+			    EC_KEY_get0_public_key(k->ecdsa)) != 0 ||
+			    key_ec_validate_private(k->ecdsa) != 0)
+				fatal("%s: bad ECDSA key", __func__);
+			BN_clear_free(exponent);
 			break;
 		case KEY_RSA:
 			k = key_new_private(type);
@@ -523,9 +575,11 @@ process_add_identity(SocketEntry *e, int version)
 			buffer_get_bignum2(&e->request, k->rsa->q);
 			break;
 		default:
+			xfree(type_name);
 			buffer_clear(&e->request);
 			goto send;
 		}
+		xfree(type_name);
 		break;
 	}
 	/* enable blinding */
@@ -1053,7 +1107,8 @@ main(int ac, char **av)
 	int c_flag = 0, d_flag = 0, k_flag = 0, s_flag = 0;
 	int sock, fd, ch, result, saved_errno;
 	u_int nalloc;
-	char *shell, *format, *pidstr, *agentsocket = NULL;
+	char *shell, *pidstr, *agentsocket = NULL;
+	const char *format;
 	fd_set *readsetp = NULL, *writesetp = NULL;
 	struct sockaddr_un sunaddr;
 	struct rlimit rlim;
@@ -1071,7 +1126,7 @@ main(int ac, char **av)
 	setegid(getgid());
 	setgid(getgid());
 
-	SSLeay_add_all_algorithms();
+	OpenSSL_add_all_algorithms();
 
 	while ((ch = getopt(ac, av, "cdksa:t:")) != -1) {
 		switch (ch) {
@@ -1148,7 +1203,7 @@ main(int ac, char **av)
 
 	if (agentsocket == NULL) {
 		/* Create private directory for agent socket */
-		strlcpy(socket_dir, "/tmp/ssh-XXXXXXXXXX", sizeof socket_dir);
+		mktemp_proto(socket_dir, sizeof(socket_dir));
 		if (mkdtemp(socket_dir) == NULL) {
 			perror("mkdtemp: private socket dir");
 			exit(1);

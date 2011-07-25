@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.c,v 1.5 2010/11/21 18:59:04 adam Exp $	*/
-/* $OpenBSD: kex.c,v 1.82 2009/10/24 11:13:54 andreas Exp $ */
+/*	$NetBSD: kex.c,v 1.6 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: kex.c,v 1.86 2010/09/22 05:01:29 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
+__RCSID("$NetBSD: kex.c,v 1.6 2011/07/25 03:03:10 christos Exp $");
 #include <sys/param.h>
 
 #include <signal.h>
@@ -55,10 +55,38 @@ __RCSID("$NetBSD: kex.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
 static void kex_kexinit_finish(Kex *);
 static void kex_choose_conf(Kex *);
 
+/* Validate KEX method name list */
+int
+kex_names_valid(const char *names)
+{
+	char *s, *cp, *p;
+
+	if (names == NULL || strcmp(names, "") == 0)
+		return 0;
+	s = cp = xstrdup(names);
+	for ((p = strsep(&cp, ",")); p && *p != '\0';
+	    (p = strsep(&cp, ","))) {
+	    	if (strcmp(p, KEX_DHGEX_SHA256) != 0 &&
+		    strcmp(p, KEX_DHGEX_SHA1) != 0 &&
+		    strcmp(p, KEX_DH14) != 0 &&
+		    strcmp(p, KEX_DH1) != 0 &&
+		    (strncmp(p, KEX_ECDH_SHA2_STEM,
+		    sizeof(KEX_ECDH_SHA2_STEM) - 1) != 0 ||
+		    kex_ecdh_name_to_nid(p) == -1)) {
+			error("Unsupported KEX algorithm \"%.100s\"", p);
+			xfree(s);
+			return 0;
+		}
+	}
+	debug3("kex names ok: [%s]", names);
+	xfree(s);
+	return 1;
+}
+
 /* put algorithm proposal into buffer */
 /* used in sshconnect.c as well as kex.c */
 void
-kex_prop2buf(Buffer *b, char *proposal[PROPOSAL_MAX])
+kex_prop2buf(Buffer *b, const char *proposal[PROPOSAL_MAX])
 {
 	u_int i;
 
@@ -92,7 +120,7 @@ kex_buf2prop(Buffer *raw, int *first_kex_follows)
 		buffer_get_char(&b);
 	/* extract kex init proposal strings */
 	for (i = 0; i < PROPOSAL_MAX; i++) {
-		proposal[i] = buffer_get_string(&b,NULL);
+		proposal[i] = buffer_get_cstring(&b,NULL);
 		debug2("kex_parse_kexinit: %s", proposal[i]);
 	}
 	/* first kex follows / reserved */
@@ -216,7 +244,7 @@ kex_input_kexinit(int type, u_int32_t seq, void *ctxt)
 }
 
 Kex *
-kex_setup(char *proposal[PROPOSAL_MAX])
+kex_setup(const char *proposal[PROPOSAL_MAX])
 {
 	Kex *kex;
 
@@ -318,6 +346,10 @@ choose_kex(Kex *k, char *client, char *server)
 	} else if (strcmp(k->name, KEX_DHGEX_SHA256) == 0) {
 		k->kex_type = KEX_DH_GEX_SHA256;
 		k->evp_md = EVP_sha256();
+	} else if (strncmp(k->name, KEX_ECDH_SHA2_STEM,
+	    sizeof(KEX_ECDH_SHA2_STEM) - 1) == 0) {
+		k->kex_type = KEX_ECDH_SHA2;
+		k->evp_md = kex_ecdh_name_to_evpmd(k->name);
 	} else
 		fatal("bad kex alg %s", k->name);
 }
@@ -581,11 +613,11 @@ derive_ssh1_session_id(BIGNUM *host_modulus, BIGNUM *server_modulus,
 	memset(&md, 0, sizeof(md));
 }
 
-#if defined(DEBUG_KEX) || defined(DEBUG_KEXDH)
+#if defined(DEBUG_KEX) || defined(DEBUG_KEXDH) || defined(DEBUG_KEXECDH)
 void
 dump_digest(char *msg, u_char *digest, int len)
 {
-	u_int i;
+	int i;
 
 	fprintf(stderr, "%s\n", msg);
 	for (i = 0; i < len; i++) {

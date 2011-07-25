@@ -1,3 +1,4 @@
+/*	$NetBSD: kexecdhc.c,v 1.2 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: kexecdhc.c,v 1.2 2010/09/22 05:01:29 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -24,6 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: kexecdhc.c,v 1.2 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 
 #include <stdio.h>

@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh2.h,v 1.3 2010/11/21 18:29:49 adam Exp $	*/
-/* $OpenBSD: ssh2.h,v 1.13 2010/02/26 20:29:54 djm Exp $ */
+/*	$NetBSD: ssh2.h,v 1.4 2011/07/25 03:03:11 christos Exp $	*/
+/* $OpenBSD: ssh2.h,v 1.14 2010/08/31 11:54:45 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -98,6 +98,10 @@
 #define SSH2_MSG_KEX_DH_GEX_INIT			32
 #define SSH2_MSG_KEX_DH_GEX_REPLY			33
 #define SSH2_MSG_KEX_DH_GEX_REQUEST			34
+
+/* ecdh */
+#define SSH2_MSG_KEX_ECDH_INIT				30
+#define SSH2_MSG_KEX_ECDH_REPLY				31
 
 /* user authentication: generic */
 

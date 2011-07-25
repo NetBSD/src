@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.c,v 1.4 2010/11/21 18:29:48 adam Exp $	*/
-/* $OpenBSD: clientloop.c,v 1.222 2010/07/19 09:15:12 djm Exp $ */
+/*	$NetBSD: clientloop.c,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: clientloop.c,v 1.231 2011/01/16 12:05:59 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -61,7 +61,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.4 2010/11/21 18:29:48 adam Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.5 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -320,7 +320,7 @@ client_x11_get_proto(const char *display, const char *xauth_path,
 		if (trusted == 0) {
 			xauthdir = xmalloc(MAXPATHLEN);
 			xauthfile = xmalloc(MAXPATHLEN);
-			strlcpy(xauthdir, "/tmp/ssh-XXXXXXXXXX", MAXPATHLEN);
+			mktemp_proto(xauthdir, MAXPATHLEN);
 			if (mkdtemp(xauthdir) != NULL) {
 				do_unlink = 1;
 				snprintf(xauthfile, MAXPATHLEN, "%s/xauthfile",
@@ -539,7 +539,7 @@ static void
 server_alive_check(void)
 {
 	if (packet_inc_alive_timeouts() > options.server_alive_count_max) {
-		logit("Timeout, server not responding.");
+		logit("Timeout, server %s not responding.", host);
 		cleanup_exit(255);
 	}
 	packet_start(SSH2_MSG_GLOBAL_REQUEST);
@@ -576,13 +576,16 @@ client_wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp,
 		 * buffered data to send to the server.
 		 */
 		if (!stdin_eof && packet_not_very_much_data_to_write())
-			FD_SET(fileno(stdin), *readsetp);
+			if ((ret = fileno(stdin)) != -1)
+				FD_SET(ret, *readsetp);
 
 		/* Select stdout/stderr if have data in buffer. */
 		if (buffer_len(&stdout_buffer) > 0)
-			FD_SET(fileno(stdout), *writesetp);
+			if ((ret = fileno(stdout)) != -1)
+				FD_SET(ret, *writesetp);
 		if (buffer_len(&stderr_buffer) > 0)
-			FD_SET(fileno(stderr), *writesetp);
+			if ((ret = fileno(stderr)) != -1)
+				FD_SET(ret, *writesetp);
 	} else {
 		/* channel_prepare_select could have closed the last channel */
 		if (session_closed && !channel_still_open() &&
@@ -939,7 +942,7 @@ out:
  */
 static int
 process_escapes(Channel *c, Buffer *bin, Buffer *bout, Buffer *berr,
-    char *buf, int len)
+    const char *buf, int len)
 {
 	char string[1024];
 	pid_t pid;
@@ -1178,68 +1181,68 @@ Supported escape sequences:\r\n\
 static void
 client_process_input(fd_set *readset)
 {
-	int len;
+	int len, fd;
 	char buf[8192];
 
 	/* Read input from stdin. */
-	if (FD_ISSET(fileno(stdin), readset)) {
-		/* Read as much as possible. */
-		len = read(fileno(stdin), buf, sizeof(buf));
-		if (len < 0 && (errno == EAGAIN || errno == EINTR))
-			return;		/* we'll try again later */
-		if (len <= 0) {
-			/*
-			 * Received EOF or error.  They are treated
-			 * similarly, except that an error message is printed
-			 * if it was an error condition.
-			 */
-			if (len < 0) {
-				snprintf(buf, sizeof buf, "read: %.100s\r\n",
-				    strerror(errno));
-				buffer_append(&stderr_buffer, buf, strlen(buf));
-			}
-			/* Mark that we have seen EOF. */
-			stdin_eof = 1;
-			/*
-			 * Send an EOF message to the server unless there is
-			 * data in the buffer.  If there is data in the
-			 * buffer, no message will be sent now.  Code
-			 * elsewhere will send the EOF when the buffer
-			 * becomes empty if stdin_eof is set.
-			 */
-			if (buffer_len(&stdin_buffer) == 0) {
-				packet_start(SSH_CMSG_EOF);
-				packet_send();
-			}
-		} else if (escape_char1 == SSH_ESCAPECHAR_NONE) {
-			/*
-			 * Normal successful read, and no escape character.
-			 * Just append the data to buffer.
-			 */
-			buffer_append(&stdin_buffer, buf, len);
-		} else {
-			/*
-			 * Normal, successful read.  But we have an escape
-			 * character and have to process the characters one
-			 * by one.
-			 */
-			if (process_escapes(NULL, &stdin_buffer,
-			    &stdout_buffer, &stderr_buffer, buf, len) == -1)
-				return;
+	if ((fd = fileno(stdin)) == -1 || !FD_ISSET(fd, readset))
+		return;
+	/* Read as much as possible. */
+	len = read(fd, buf, sizeof(buf));
+	if (len < 0 && (errno == EAGAIN || errno == EINTR))
+		return;		/* we'll try again later */
+	if (len <= 0) {
+		/*
+		 * Received EOF or error.  They are treated
+		 * similarly, except that an error message is printed
+		 * if it was an error condition.
+		 */
+		if (len < 0) {
+			snprintf(buf, sizeof buf, "read: %.100s\r\n",
+			    strerror(errno));
+			buffer_append(&stderr_buffer, buf, strlen(buf));
 		}
+		/* Mark that we have seen EOF. */
+		stdin_eof = 1;
+		/*
+		 * Send an EOF message to the server unless there is
+		 * data in the buffer.  If there is data in the
+		 * buffer, no message will be sent now.  Code
+		 * elsewhere will send the EOF when the buffer
+		 * becomes empty if stdin_eof is set.
+		 */
+		if (buffer_len(&stdin_buffer) == 0) {
+			packet_start(SSH_CMSG_EOF);
+			packet_send();
+		}
+	} else if (escape_char1 == SSH_ESCAPECHAR_NONE) {
+		/*
+		 * Normal successful read, and no escape character.
+		 * Just append the data to buffer.
+		 */
+		buffer_append(&stdin_buffer, buf, len);
+	} else {
+		/*
+		 * Normal, successful read.  But we have an escape
+		 * character and have to process the characters one
+		 * by one.
+		 */
+		if (process_escapes(NULL, &stdin_buffer,
+		    &stdout_buffer, &stderr_buffer, buf, len) == -1)
+			return;
 	}
 }
 
 static void
 client_process_output(fd_set *writeset)
 {
-	int len;
+	int len, fd;
 	char buf[100];
 
 	/* Write buffered output to stdout. */
-	if (FD_ISSET(fileno(stdout), writeset)) {
+	if ((fd = fileno(stdout)) != -1 && FD_ISSET(fd, writeset)) {
 		/* Write as much data as possible. */
-		len = write(fileno(stdout), buffer_ptr(&stdout_buffer),
+		len = write(fd, buffer_ptr(&stdout_buffer),
 		    buffer_len(&stdout_buffer));
 		if (len <= 0) {
 			if (errno == EINTR || errno == EAGAIN)
@@ -1260,9 +1263,9 @@ client_process_output(fd_set *writeset)
 		buffer_consume(&stdout_buffer, len);
 	}
 	/* Write buffered output to stderr. */
-	if (FD_ISSET(fileno(stderr), writeset)) {
+	if ((fd = fileno(stderr)) != -1 && FD_ISSET(fd, writeset)) {
 		/* Write as much data as possible. */
-		len = write(fileno(stderr), buffer_ptr(&stderr_buffer),
+		len = write(fd, buffer_ptr(&stderr_buffer),
 		    buffer_len(&stderr_buffer));
 		if (len <= 0) {
 			if (errno == EINTR || errno == EAGAIN)
@@ -1322,7 +1325,7 @@ client_filter_cleanup(int cid, void *ctx)
 }
 
 int
-client_simple_escape_filter(Channel *c, char *buf, int len)
+client_simple_escape_filter(Channel *c, const char *buf, int len)
 {
 	if (c->extended_usage != CHAN_EXTENDED_WRITE)
 		return 0;
@@ -1582,25 +1585,23 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 	}
 
 	/* Output any buffered data for stdout. */
-	while (buffer_len(&stdout_buffer) > 0) {
-		len = write(fileno(stdout), buffer_ptr(&stdout_buffer),
-		    buffer_len(&stdout_buffer));
-		if (len <= 0) {
+	if (buffer_len(&stdout_buffer) > 0) {
+		len = atomicio(vwrite, fileno(stdout),
+		    buffer_ptr(&stdout_buffer), buffer_len(&stdout_buffer));
+		if (len < 0 || (u_int)len != buffer_len(&stdout_buffer))
 			error("Write failed flushing stdout buffer.");
-			break;
-		}
-		buffer_consume(&stdout_buffer, len);
+		else
+			buffer_consume(&stdout_buffer, len);
 	}
 
 	/* Output any buffered data for stderr. */
-	while (buffer_len(&stderr_buffer) > 0) {
-		len = write(fileno(stderr), buffer_ptr(&stderr_buffer),
-		    buffer_len(&stderr_buffer));
-		if (len <= 0) {
+	if (buffer_len(&stderr_buffer) > 0) {
+		len = atomicio(vwrite, fileno(stderr),
+		    buffer_ptr(&stderr_buffer), buffer_len(&stderr_buffer));
+		if (len < 0 || (u_int)len != buffer_len(&stderr_buffer))
 			error("Write failed flushing stderr buffer.");
-			break;
-		}
-		buffer_consume(&stderr_buffer, len);
+		else
+			buffer_consume(&stderr_buffer, len);
 	}
 
 	/* Clear and free any buffers. */
@@ -1935,7 +1936,7 @@ client_input_channel_req(int type, u_int32_t seq, void *ctxt)
 		}
 		packet_check_eom();
 	}
-	if (reply) {
+	if (reply && c != NULL) {
 		packet_start(success ?
 		    SSH2_MSG_CHANNEL_SUCCESS : SSH2_MSG_CHANNEL_FAILURE);
 		packet_put_int(c->remote_id);
@@ -1974,6 +1975,9 @@ client_session2_setup(int id, int want_tty, int want_subsystem,
 
 	if ((c = channel_lookup(id)) == NULL)
 		fatal("client_session2_setup: channel %d: unknown channel", id);
+
+	packet_set_interactive(want_tty,
+	    options.ip_qos_interactive, options.ip_qos_bulk);
 
 	if (want_tty) {
 		struct winsize ws;
@@ -2131,5 +2135,6 @@ cleanup_exit(int i)
 	leave_non_blocking();
 	if (options.control_path != NULL && muxserver_sock != -1)
 		unlink(options.control_path);
+	ssh_kill_proxy_command();
 	_exit(i);
 }

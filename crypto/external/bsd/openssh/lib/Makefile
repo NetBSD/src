@@ -1,24 +1,68 @@
-#	$NetBSD: Makefile,v 1.9 2011/06/20 07:43:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2011/07/25 03:03:33 christos Exp $
 
 .include <bsd.own.mk>
 
 LIB=	ssh
-SRCS=	authfd.c authfile.c bufaux.c bufbn.c buffer.c canohost.c channels.c \
-	cipher.c cipher-3des1.c cipher-bf1.c cipher-ctr.c \
-	cleanup.c compat.c compress.c crc32.c deattack.c fatal.c \
-	hostfile.c log.c match.c nchan.c packet.c readpass.c \
-	rsa.c ttymodes.c xmalloc.c atomicio.c \
-	key.c dispatch.c kex.c mac.c uidswap.c uuencode.c misc.c \
-	ssh-dss.c ssh-rsa.c dh.c kexdh.c kexgex.c \
-	kexdhc.c kexgexc.c msg.c progressmeter.c dns.c \
-	monitor_fdpass.c addrmatch.c schnorr.c jpake.c ssh-pkcs11.c \
-	roaming_dummy.c
+SRCS=\
+addrmatch.c \
+atomicio.c \
+authfd.c \
+authfile.c \
+bufaux.c \
+bufbn.c \
+bufec.c \
+buffer.c \
+canohost.c \
+channels.c \
+cipher-3des1.c \
+cipher-bf1.c \
+cipher-ctr.c \
+cipher.c \
+cleanup.c \
+compat.c \
+compress.c \
+crc32.c \
+deattack.c \
+dh.c \
+dispatch.c \
+dns.c \
+fatal.c \
+hostfile.c \
+jpake.c \
+kex.c \
+kexdh.c \
+kexdhc.c \
+kexecdh.c \
+kexecdhc.c \
+kexgex.c \
+kexgexc.c \
+key.c \
+log.c \
+mac.c \
+match.c \
+misc.c \
+monitor_fdpass.c \
+msg.c \
+nchan.c \
+packet.c \
+progressmeter.c \
+readpass.c \
+roaming_dummy.c \
+rsa.c \
+schnorr.c \
+ssh-dss.c \
+ssh-ecdsa.c \
+ssh-pkcs11.c \
+ssh-rsa.c \
+ttymodes.c \
+uidswap.c \
+uuencode.c \
+xmalloc.c
+
 #	umac.c
 SRCS+=	fmt_scaled.c strtonum.c
 SRCS+=	readpassphrase.c getpeereid.c getrrsetbyname.c
 COPTS.monitor_fdpass.c = -Wno-stack-protector
-
-WARNS=	1
 
 SSHDIST=	${NETBSDSRCDIR}/crypto/external/bsd/openssh/dist
 CPPFLAGS+=	-I${SSHDIST}

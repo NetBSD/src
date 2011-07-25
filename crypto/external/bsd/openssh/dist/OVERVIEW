@@ -166,3 +166,4 @@ these programs.
 	xmalloc.c    "safe" malloc routines
 
 $OpenBSD: OVERVIEW,v 1.11 2006/08/03 03:34:41 deraadt Exp $
+$NetBSD: OVERVIEW,v 1.2 2011/07/25 03:03:10 christos Exp $

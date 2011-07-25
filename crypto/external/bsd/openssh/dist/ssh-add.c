@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-add.c,v 1.3 2010/11/21 18:29:49 adam Exp $	*/
-/* $OpenBSD: ssh-add.c,v 1.98 2010/08/16 04:06:06 djm Exp $ */
+/*	$NetBSD: ssh-add.c,v 1.4 2011/07/25 03:03:11 christos Exp $	*/
+/* $OpenBSD: ssh-add.c,v 1.100 2010/08/31 12:33:38 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-add.c,v 1.3 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.4 2011/07/25 03:03:11 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -66,9 +66,10 @@ __RCSID("$NetBSD: ssh-add.c,v 1.3 2010/11/21 18:29:49 adam Exp $");
 extern char *__progname;
 
 /* Default files to add */
-static char *default_files[] = {
+static const char *default_files[] = {
 	_PATH_SSH_CLIENT_ID_RSA,
 	_PATH_SSH_CLIENT_ID_DSA,
+	_PATH_SSH_CLIENT_ID_ECDSA,
 	_PATH_SSH_CLIENT_IDENTITY,
 	NULL
 };
@@ -367,7 +368,7 @@ main(int argc, char **argv)
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
 
-	SSLeay_add_all_algorithms();
+	OpenSSL_add_all_algorithms();
 
 	/* At first, get a connection to the authentication agent. */
 	ac = ssh_get_authentication_connection();

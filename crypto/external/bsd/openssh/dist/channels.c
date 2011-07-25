@@ -1,5 +1,5 @@
-/*	$NetBSD: channels.c,v 1.5 2010/11/21 18:59:04 adam Exp $	*/
-/* $OpenBSD: channels.c,v 1.309 2010/08/05 13:08:42 djm Exp $ */
+/*	$NetBSD: channels.c,v 1.6 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: channels.c,v 1.310 2010/11/24 01:24:14 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: channels.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
+__RCSID("$NetBSD: channels.c,v 1.6 2011/07/25 03:03:10 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -168,7 +168,7 @@ static u_int x11_fake_data_len;
 static int IPv4or6 = AF_UNSPEC;
 
 /* helper */
-static void port_open_helper(Channel *c, char *rtype);
+static void port_open_helper(Channel *c, const char *rtype);
 
 /* non-blocking connect helpers */
 static int connect_next(struct channel_connect *);
@@ -265,8 +265,9 @@ channel_register_fds(Channel *c, int rfd, int wfd, int efd,
  * remote_name to be freed.
  */
 Channel *
-channel_new(char *ctype, int type, int rfd, int wfd, int efd,
-    u_int window, u_int maxpack, int extusage, char *remote_name, int nonblock)
+channel_new(const char *ctype, int type, int rfd, int wfd, int efd,
+    u_int window, u_int maxpack, int extusage, const char *remote_name,
+    int nonblock)
 {
 	int found;
 	u_int i;
@@ -311,7 +312,7 @@ channel_new(char *ctype, int type, int rfd, int wfd, int efd,
 	channel_register_fds(c, rfd, wfd, efd, extusage, nonblock, 0);
 	c->self = found;
 	c->type = type;
-	c->ctype = ctype;
+	c->ctype = __UNCONST(ctype);
 	c->local_window = window;
 	c->local_window_max = window;
 	c->local_consumed = 0;
@@ -377,9 +378,6 @@ channel_close_fd(int *fdp)
 static void
 channel_close_fds(Channel *c)
 {
-	debug3("channel %d: close_fds r %d w %d e %d",
-	    c->self, c->rfd, c->wfd, c->efd);
-
 	channel_close_fd(&c->sock);
 	channel_close_fd(&c->rfd);
 	channel_close_fd(&c->wfd);
@@ -675,7 +673,7 @@ channel_send_open(int id)
 }
 
 void
-channel_request_start(int id, char *service, int wantconfirm)
+channel_request_start(int id, const char *service, int wantconfirm)
 {
 	Channel *c = channel_lookup(id);
 
@@ -1401,7 +1399,7 @@ channel_post_x11_listener(Channel *c, fd_set *readset, fd_set *writeset)
 }
 
 static void
-port_open_helper(Channel *c, char *rtype)
+port_open_helper(Channel *c, const char *rtype)
 {
 	int direct;
 	char buf[1024];
@@ -1482,7 +1480,7 @@ channel_post_port_listener(Channel *c, fd_set *readset, fd_set *writeset)
 	struct sockaddr_storage addr;
 	int newsock, nextstate;
 	socklen_t addrlen;
-	char *rtype;
+	const char *rtype;
 
 	if (FD_ISSET(c->sock, readset)) {
 		debug("Connection to port %d forwarding "
@@ -2513,7 +2511,7 @@ channel_input_open_confirmation(int type, u_int32_t seq, void *ctxt)
 	packet_check_eom();
 }
 
-static char *
+static const char *
 reason2txt(int reason)
 {
 	switch (reason) {
@@ -3164,7 +3162,7 @@ channel_connect_ctx_free(struct channel_connect *cctx)
 
 /* Return CONNECTING channel to remote host, port */
 static Channel *
-connect_to(const char *host, u_short port, char *ctype, char *rname)
+connect_to(const char *host, u_short port, const char *ctype, const char *rname)
 {
 	struct addrinfo hints;
 	int gaierr;
@@ -3201,7 +3199,8 @@ connect_to(const char *host, u_short port, char *ctype, char *rname)
 }
 
 Channel *
-channel_connect_by_listen_address(u_short listen_port, char *ctype, char *rname)
+channel_connect_by_listen_address(u_short listen_port, const char *ctype,
+    const char *rname)
 {
 	int i;
 
@@ -3220,7 +3219,8 @@ channel_connect_by_listen_address(u_short listen_port, char *ctype, char *rname)
 
 /* Check if connecting to that port is permitted and connect. */
 Channel *
-channel_connect_to(const char *host, u_short port, char *ctype, char *rname)
+channel_connect_to(const char *host, u_short port, const char *ctype,
+    const char *rname)
 {
 	int i, permit, permit_adm = 1;
 
