@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.c,v 1.5 2010/11/21 18:59:04 adam Exp $	*/
-/* $OpenBSD: monitor.c,v 1.108 2010/07/13 23:13:16 djm Exp $ */
+/*	$NetBSD: monitor.c,v 1.6 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: monitor.c,v 1.110 2010/09/09 10:45:45 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.6 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -181,7 +181,7 @@ static u_int key_bloblen = 0;
 static int key_blobtype = MM_NOKEY;
 static char *hostbased_cuser = NULL;
 static char *hostbased_chost = NULL;
-static char *auth_method = "unknown";
+static const char *auth_method = "unknown";
 static u_int session_id2_len = 0;
 static u_char *session_id2 = NULL;
 static pid_t monitor_child_pid;
@@ -579,10 +579,10 @@ mm_answer_sign(int sock, Buffer *m)
 	p = buffer_get_string(m, &datlen);
 
 	/*
-	 * Supported KEX types will only return SHA1 (20 byte) or
-	 * SHA256 (32 byte) hashes
+	 * Supported KEX types use SHA1 (20 bytes), SHA256 (32 bytes),
+	 * SHA384 (48 bytes) and SHA512 (64 bytes).
 	 */
-	if (datlen != 20 && datlen != 32)
+	if (datlen != 20 && datlen != 32 && datlen != 48 && datlen != 64)
 		fatal("%s: data length incorrect: %u", __func__, datlen);
 
 	/* save session id, it will be passed on the first call */
@@ -910,8 +910,8 @@ int
 mm_answer_pam_query(int sock, Buffer *m)
 {
 	char *name, *info, **prompts;
-	u_int num, *echo_on;
-	int i, ret;
+	u_int i, num, *echo_on;
+	int ret;
 
 	debug3("%s", __func__);
 	sshpam_authok = NULL;
@@ -945,8 +945,8 @@ int
 mm_answer_pam_respond(int sock, Buffer *m)
 {
 	char **resp;
-	u_int num;
-	int i, ret;
+	u_int i, num;
+	int ret;
 
 	debug3("%s", __func__);
 	sshpam_authok = NULL;
@@ -1587,7 +1587,7 @@ mm_answer_krb4(int socket, Buffer *m)
 
 #ifdef KRB5
 int
-mm_answer_krb5(int socket, Buffer *m)
+mm_answer_krb5(int xsocket, Buffer *m)
 {
 	krb5_data tkt, reply;
 	char *client_user;
@@ -1616,7 +1616,7 @@ mm_answer_krb5(int socket, Buffer *m)
 		if (reply.length)
 			xfree(reply.data);
 	}
-	mm_request_send(socket, MONITOR_ANS_KRB5, m);
+	mm_request_send(xsocket, MONITOR_ANS_KRB5, m);
 
 	auth_method = "kerberos";
 
@@ -1716,6 +1716,7 @@ mm_get_kex(Buffer *m)
 	kex->kex[KEX_DH_GRP14_SHA1] = kexdh_server;
 	kex->kex[KEX_DH_GEX_SHA1] = kexgex_server;
 	kex->kex[KEX_DH_GEX_SHA256] = kexgex_server;
+	kex->kex[KEX_ECDH_SHA2] = kexecdh_server;
 	kex->server = 1;
 	kex->hostkey_type = buffer_get_int(m);
 	kex->kex_type = buffer_get_int(m);

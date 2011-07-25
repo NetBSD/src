@@ -1,4 +1,4 @@
-/*	$NetBSD: progressmeter.c,v 1.3 2011/06/20 09:11:16 mrg Exp $	*/
+/*	$NetBSD: progressmeter.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: progressmeter.c,v 1.37 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Nils Nordman.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: progressmeter.c,v 1.3 2011/06/20 09:11:16 mrg Exp $");
+__RCSID("$NetBSD: progressmeter.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -295,7 +295,7 @@ stop_progress_meter(void)
 	if (cur_pos != end_pos)
 		refresh_progress_meter();
 
-	atomicio(vwrite, STDOUT_FILENO, "\n", 1);
+	atomicio(vwrite, STDOUT_FILENO, __UNCONST("\n"), 1);
 }
 
 /*ARGSUSED*/

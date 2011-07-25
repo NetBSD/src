@@ -1,5 +1,5 @@
-/*	$NetBSD: authfd.c,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
-/* $OpenBSD: authfd.c,v 1.83 2010/04/16 01:47:26 djm Exp $ */
+/*	$NetBSD: authfd.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: authfd.c,v 1.84 2010/08/31 11:54:45 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfd.c,v 1.3 2010/11/21 18:29:48 adam Exp $");
+__RCSID("$NetBSD: authfd.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/socket.h>
@@ -509,6 +509,19 @@ ssh_encode_identity_ssh2(Buffer *b, Key *key, const char *comment)
 		    buffer_len(&key->cert->certblob));
 		buffer_put_bignum2(b, key->dsa->priv_key);
 		break;
+	case KEY_ECDSA:
+		buffer_put_cstring(b, key_curve_nid_to_name(key->ecdsa_nid));
+		buffer_put_ecpoint(b, EC_KEY_get0_group(key->ecdsa),
+		    EC_KEY_get0_public_key(key->ecdsa));
+		buffer_put_bignum2(b, EC_KEY_get0_private_key(key->ecdsa));
+		break;
+	case KEY_ECDSA_CERT:
+		if (key->cert == NULL || buffer_len(&key->cert->certblob) == 0)
+			fatal("%s: no cert/certblob", __func__);
+		buffer_put_string(b, buffer_ptr(&key->cert->certblob),
+		    buffer_len(&key->cert->certblob));
+		buffer_put_bignum2(b, EC_KEY_get0_private_key(key->ecdsa));
+		break;
 	}
 	buffer_put_cstring(b, comment);
 }
@@ -541,6 +554,8 @@ ssh_add_identity_constrained(AuthenticationConnection *auth, Key *key,
 	case KEY_DSA:
 	case KEY_DSA_CERT:
 	case KEY_DSA_CERT_V00:
+	case KEY_ECDSA:
+	case KEY_ECDSA_CERT:
 		type = constrained ?
 		    SSH2_AGENTC_ADD_ID_CONSTRAINED :
 		    SSH2_AGENTC_ADD_IDENTITY;
@@ -589,7 +604,8 @@ ssh_remove_identity(AuthenticationConnection *auth, Key *key)
 		buffer_put_bignum(&msg, key->rsa->e);
 		buffer_put_bignum(&msg, key->rsa->n);
 	} else if (key_type_plain(key->type) == KEY_DSA ||
-	    key_type_plain(key->type) == KEY_RSA) {
+	    key_type_plain(key->type) == KEY_RSA ||
+	    key_type_plain(key->type) == KEY_ECDSA) {
 		key_to_blob(key, &blob, &blen);
 		buffer_put_char(&msg, SSH2_AGENTC_REMOVE_IDENTITY);
 		buffer_put_string(&msg, blob, blen);

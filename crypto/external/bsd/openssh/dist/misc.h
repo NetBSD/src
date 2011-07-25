@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.h,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
-/* $OpenBSD: misc.h,v 1.43 2010/07/13 23:13:16 djm Exp $ */
+/*	$NetBSD: misc.h,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: misc.h,v 1.47 2010/11/21 01:01:13 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,8 +40,8 @@ char	*tohex(const void *, size_t);
 void	 sanitise_stdfd(void);
 void	 ms_subtract_diff(struct timeval *, int *);
 void	 ms_to_timeval(struct timeval *, int);
-int	 timingsafe_bcmp(const void *, const void *, size_t);
 
+int	 timingsafe_bcmp(const void *, const void *, size_t);
 long long strtonum(const char *, long long, long long, const char **);
 
 struct passwd *pwcopy(struct passwd *);
@@ -53,9 +53,9 @@ struct arglist {
 	u_int   num;
 	u_int   nalloc;
 };
-void	 addargs(arglist *, char *, ...)
+void	 addargs(arglist *, const char *, ...)
 	     __attribute__((format(printf, 2, 3)));
-void	 replacearg(arglist *, u_int, char *, ...)
+void	 replacearg(arglist *, u_int, const char *, ...)
 	     __attribute__((format(printf, 3, 4)));
 void	 freeargs(arglist *);
 
@@ -104,6 +104,17 @@ void		put_u16(void *, u_int16_t)
 #endif
     ;
 
+struct bwlimit {
+	size_t buflen;
+	u_int64_t rate, thresh, lamt;
+	struct timeval bwstart, bwend;
+};
+
+void bandwidth_limit_init(struct bwlimit *, u_int64_t, size_t);
+void bandwidth_limit(struct bwlimit *, size_t);
+
+int parse_ipqos(const char *);
+void mktemp_proto(char *, size_t);
 
 /* readpass.c */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-krb5.c,v 1.3 2011/04/24 14:01:46 elric Exp $	*/
+/*	$NetBSD: auth-krb5.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: auth-krb5.c,v 1.19 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  *    Kerberos v5 authentication and ticket-passing routines.
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-krb5.c,v 1.3 2011/04/24 14:01:46 elric Exp $");
+__RCSID("$NetBSD: auth-krb5.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 #include <pwd.h>
 #include <stdarg.h>
@@ -189,7 +189,7 @@ auth_krb5_tgt(Authctxt *authctxt, krb5_data *tgt)
 	authctxt->krb5_fwd_ccache = ccache;
 	ccache = NULL;
 
-	authctxt->krb5_ticket_file = (char *)krb5_cc_get_name(authctxt->krb5_ctx, authctxt->krb5_fwd_ccache);
+	authctxt->krb5_ticket_file = __UNCONST(krb5_cc_get_name(authctxt->krb5_ctx, authctxt->krb5_fwd_ccache));
 
 	problem = krb5_unparse_name(authctxt->krb5_ctx, authctxt->krb5_user,
 	    &pname);
@@ -198,7 +198,7 @@ auth_krb5_tgt(Authctxt *authctxt, krb5_data *tgt)
 
 #ifdef USE_PAM
 	if (options.use_pam)
-		do_pam_putenv("KRB5CCNAME", authctxt->krb5_ticket_file);
+		do_pam_putenv(__UNCONST("KRB5CCNAME"), authctxt->krb5_ticket_file);
 #endif
 	debug("Kerberos v5 TGT accepted (%s)", pname);
 
@@ -274,8 +274,8 @@ auth_krb5_password(Authctxt *authctxt, const char *password)
 	if (problem)
 		goto out;
 
-	authctxt->krb5_ticket_file = (char *)krb5_cc_get_name(authctxt->krb5_ctx,
-	    authctxt->krb5_fwd_ccache);
+	authctxt->krb5_ticket_file = __UNCONST(krb5_cc_get_name(
+	    authctxt->krb5_ctx, authctxt->krb5_fwd_ccache));
 
  out:
 	restore_uid();

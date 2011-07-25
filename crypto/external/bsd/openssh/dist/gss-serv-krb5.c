@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-serv-krb5.c,v 1.4 2011/04/24 14:01:46 elric Exp $	*/
+/*	$NetBSD: gss-serv-krb5.c,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: gss-serv-krb5.c,v 1.7 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv-krb5.c,v 1.4 2011/04/24 14:01:46 elric Exp $");
+__RCSID("$NetBSD: gss-serv-krb5.c,v 1.5 2011/07/25 03:03:10 christos Exp $");
 #ifdef GSSAPI
 #ifdef KRB5
 
@@ -192,7 +192,7 @@ ssh_gssapi_krb5_storecreds(ssh_gssapi_client *client)
 	}
 
 	client->store.filename = xstrdup(krb5_cc_get_name(krb_context, ccache));
-	client->store.envvar = "KRB5CCNAME";
+	client->store.envvar = __UNCONST("KRB5CCNAME");
 	len = strlen(client->store.filename) + 6;
 	client->store.envval = xmalloc(len);
 	snprintf(client->store.envval, len, "FILE:%s", client->store.filename);
@@ -210,7 +210,7 @@ ssh_gssapi_krb5_storecreds(ssh_gssapi_client *client)
 ssh_gssapi_mech gssapi_kerberos_mech = {
 	"toWM5Slw5Ew8Mqkay+al2g==",
 	"Kerberos",
-	{9, "\x2A\x86\x48\x86\xF7\x12\x01\x02\x02"},
+	{9, __UNCONST("\x2A\x86\x48\x86\xF7\x12\x01\x02\x02")},
 	NULL,
 	&ssh_gssapi_krb5_userok,
 	NULL,

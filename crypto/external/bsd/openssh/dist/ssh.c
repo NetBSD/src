@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh.c,v 1.5 2010/11/21 18:59:04 adam Exp $	*/
-/* $OpenBSD: ssh.c,v 1.348 2010/08/16 04:06:06 djm Exp $ */
+/*	$NetBSD: ssh.c,v 1.6 2011/07/25 03:03:11 christos Exp $	*/
+/* $OpenBSD: ssh.c,v 1.356 2011/01/06 22:23:53 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.6 2011/07/25 03:03:11 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: ssh.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -176,9 +177,6 @@ int subsystem_flag = 0;
 /* # of replies received for global requests */
 static int remote_forward_confirms_received = 0;
 
-/* pid of proxycommand child process */
-pid_t proxy_command_pid = 0;
-
 /* mux.c */
 extern int muxserver_sock;
 extern u_int muxclient_command;
@@ -205,6 +203,7 @@ usage(void)
 static int ssh_session(void);
 static int ssh_session2(void);
 static void load_public_identity_files(void);
+static void main_sigchld_handler(int);
 
 /* from muxclient.c */
 void muxclient(const char *);
@@ -217,7 +216,7 @@ int
 main(int ac, char **av)
 {
 	int i, r, opt, exit_status, use_syslog;
-	char *p, *cp, *line, *argv0, buf[MAXPATHLEN];
+	char *p, *cp, *line, *argv0, buf[MAXPATHLEN], *host_arg;
 	struct stat st;
 	struct passwd *pw;
 	int dummy, timeout_ms;
@@ -461,9 +460,10 @@ main(int ac, char **av)
 					exit(255);
 				}
 				if (options.cipher == SSH_CIPHER_3DES)
-					options.ciphers = "3des-cbc";
+					options.ciphers = __UNCONST("3des-cbc");
 				else if (options.cipher == SSH_CIPHER_BLOWFISH)
-					options.ciphers = "blowfish-cbc";
+					options.ciphers =
+					    __UNCONST("blowfish-cbc");
 				else
 					options.ciphers = (char *)-1;
 			}
@@ -593,7 +593,7 @@ main(int ac, char **av)
 	if (!host)
 		usage();
 
-	SSLeay_add_all_algorithms();
+	OpenSSL_add_all_algorithms();
 	ERR_load_crypto_strings();
 
 	/* Initialize the command to execute on remote host. */
@@ -686,6 +686,8 @@ main(int ac, char **av)
 		options.port = sp ? ntohs(sp->s_port) : SSH_DEFAULT_PORT;
 	}
 
+	/* preserve host name given on command line for %n expansion */
+	host_arg = host;
 	if (options.hostname != NULL) {
 		host = percent_expand(options.hostname,
 		    "h", host, (char *)NULL);
@@ -700,7 +702,7 @@ main(int ac, char **av)
 		debug3("expanding LocalCommand: %s", options.local_command);
 		cp = options.local_command;
 		options.local_command = percent_expand(cp, "d", pw->pw_dir,
-		    "h", host, "l", thishost, "n", host, "r", options.user,
+		    "h", host, "l", thishost, "n", host_arg, "r", options.user,
 		    "p", buf, "u", pw->pw_name, (char *)NULL);
 		debug3("expanded LocalCommand: %s", options.local_command);
 		xfree(cp);
@@ -768,7 +770,7 @@ main(int ac, char **av)
 	sensitive_data.external_keysign = 0;
 	if (options.rhosts_rsa_authentication ||
 	    options.hostbased_authentication) {
-		sensitive_data.nkeys = 5;
+		sensitive_data.nkeys = 7;
 		sensitive_data.keys = xcalloc(sensitive_data.nkeys,
 		    sizeof(Key));
 
@@ -777,25 +779,34 @@ main(int ac, char **av)
 		    _PATH_HOST_KEY_FILE, "", NULL, NULL);
 		sensitive_data.keys[1] = key_load_private_cert(KEY_DSA,
 		    _PATH_HOST_DSA_KEY_FILE, "", NULL);
-		sensitive_data.keys[2] = key_load_private_cert(KEY_RSA,
+		sensitive_data.keys[2] = key_load_private_cert(KEY_ECDSA,
+		    _PATH_HOST_ECDSA_KEY_FILE, "", NULL);
+		sensitive_data.keys[3] = key_load_private_cert(KEY_RSA,
 		    _PATH_HOST_RSA_KEY_FILE, "", NULL);
-		sensitive_data.keys[3] = key_load_private_type(KEY_DSA,
+		sensitive_data.keys[4] = key_load_private_type(KEY_DSA,
 		    _PATH_HOST_DSA_KEY_FILE, "", NULL, NULL);
-		sensitive_data.keys[4] = key_load_private_type(KEY_RSA,
+		sensitive_data.keys[5] = key_load_private_type(KEY_ECDSA,
+		    _PATH_HOST_ECDSA_KEY_FILE, "", NULL, NULL);
+		sensitive_data.keys[6] = key_load_private_type(KEY_RSA,
 		    _PATH_HOST_RSA_KEY_FILE, "", NULL, NULL);
 		PRIV_END;
 
 		if (options.hostbased_authentication == 1 &&
 		    sensitive_data.keys[0] == NULL &&
-		    sensitive_data.keys[3] == NULL &&
-		    sensitive_data.keys[4] == NULL) {
+		    sensitive_data.keys[4] == NULL &&
+		    sensitive_data.keys[5] == NULL &&
+		    sensitive_data.keys[6] == NULL) {
 			sensitive_data.keys[1] = key_load_cert(
 			    _PATH_HOST_DSA_KEY_FILE);
 			sensitive_data.keys[2] = key_load_cert(
+			    _PATH_HOST_ECDSA_KEY_FILE);
+			sensitive_data.keys[3] = key_load_cert(
 			    _PATH_HOST_RSA_KEY_FILE);
-			sensitive_data.keys[3] = key_load_public(
-			    _PATH_HOST_DSA_KEY_FILE, NULL);
 			sensitive_data.keys[4] = key_load_public(
+			    _PATH_HOST_DSA_KEY_FILE, NULL);
+			sensitive_data.keys[5] = key_load_public(
+			    _PATH_HOST_ECDSA_KEY_FILE, NULL);
+			sensitive_data.keys[6] = key_load_public(
 			    _PATH_HOST_RSA_KEY_FILE, NULL);
 			sensitive_data.external_keysign = 1;
 		}
@@ -837,10 +848,11 @@ main(int ac, char **av)
 	    tilde_expand_filename(options.user_hostfile2, original_real_uid);
 
 	signal(SIGPIPE, SIG_IGN); /* ignore SIGPIPE early */
+	signal(SIGCHLD, main_sigchld_handler);
 
 	/* Log into the remote system.  Never returns if the login fails. */
 	ssh_login(&sensitive_data, host, (struct sockaddr *)&hostaddr,
-	    pw, timeout_ms);
+	    options.port, pw, timeout_ms);
 
 	if (packet_connection_is_on_socket()) {
 		verbose("Authenticated to %s ([%s]:%d).", host,
@@ -878,12 +890,8 @@ main(int ac, char **av)
 	if (options.control_path != NULL && muxserver_sock != -1)
 		unlink(options.control_path);
 
-	/*
-	 * Send SIGHUP to proxy command if used. We don't wait() in
-	 * case it hangs and instead rely on init to reap the child
-	 */
-	if (proxy_command_pid > 1)
-		kill(proxy_command_pid, SIGHUP);
+	/* Kill ProxyCommand if it is running. */
+	ssh_kill_proxy_command();
 
 	return exit_status;
 }
@@ -915,6 +923,7 @@ control_persist_detach(void)
 		tty_flag = otty_flag;
  		close(muxserver_sock);
  		muxserver_sock = -1;
+		options.control_master = SSHCTL_MASTER_NO;
  		muxclient(options.control_path);
 		/* muxclient() doesn't return on success. */
  		fatal("Failed to connect to new control master");
@@ -1122,6 +1131,7 @@ ssh_session(void)
 	}
 	/* Allocate a pseudo tty if appropriate. */
 	if (tty_flag) {
+		const char *dp;
 		debug("Requesting pty.");
 
 		/* Start the packet. */
@@ -1129,9 +1139,9 @@ ssh_session(void)
 
 		/* Store TERM in the packet.  There is no limit on the
 		   length of the string. */
-		cp = getenv("TERM");
-		if (!cp)
-			cp = "";
+		dp = getenv("TERM");
+		if (!dp)
+			dp = "";
 		packet_put_cstring(cp);
 
 		/* Store window size in the packet. */
@@ -1187,7 +1197,8 @@ ssh_session(void)
 		}
 	}
 	/* Tell the packet module whether this is an interactive session. */
-	packet_set_interactive(interactive);
+	packet_set_interactive(interactive,
+	    options.ip_qos_interactive, options.ip_qos_bulk);
 
 	/* Request authentication agent forwarding if appropriate. */
 	check_agent_present();
@@ -1285,8 +1296,6 @@ ssh_session2_setup(int id, int success, void *arg)
 
 	client_session2_setup(id, tty_flag, subsystem_flag, getenv("TERM"),
 	    NULL, fileno(stdin), &command, environ);
-
-	packet_set_interactive(interactive);
 }
 
 /* open new channel for a session */
@@ -1577,3 +1586,19 @@ load_public_identity_files(void)
 	bzero(pwdir, strlen(pwdir));
 	xfree(pwdir);
 }
+
+static void
+main_sigchld_handler(int sig)
+{
+	int save_errno = errno;
+	pid_t pid;
+	int status;
+
+	while ((pid = waitpid(-1, &status, WNOHANG)) > 0 ||
+	    (pid < 0 && errno == EINTR))
+		;
+
+	signal(sig, main_sigchld_handler);
+	errno = save_errno;
+}
+

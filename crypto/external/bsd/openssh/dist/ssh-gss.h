@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-gss.h,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
+/*	$NetBSD: ssh-gss.h,v 1.3 2011/07/25 03:03:11 christos Exp $	*/
 /* $OpenBSD: ssh-gss.h,v 1.10 2007/06/12 08:20:00 djm Exp $ */
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -57,8 +57,8 @@ typedef struct {
 } ssh_gssapi_client;
 
 typedef struct ssh_gssapi_mech_struct {
-	char *enc_name;
-	char *name;
+	const char *enc_name;
+	const char *name;
 	gss_OID_desc oid;
 	int (*dochild) (ssh_gssapi_client *);
 	int (*userok) (ssh_gssapi_client *, char *);

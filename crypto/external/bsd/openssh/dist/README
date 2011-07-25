@@ -25,3 +25,4 @@ for SSH protocol versions 1.5 and 2.0.
 See http://www.openssh.com/ for more information.
 
 $OpenBSD: README,v 1.7 2006/04/01 05:37:46 djm Exp $
+$NetBSD: README,v 1.2 2011/07/25 03:03:10 christos Exp $

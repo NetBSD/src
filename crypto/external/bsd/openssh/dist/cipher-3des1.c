@@ -1,5 +1,5 @@
-/*	$NetBSD: cipher-3des1.c,v 1.3 2009/07/20 15:33:44 christos Exp $	*/
-/* $OpenBSD: cipher-3des1.c,v 1.6 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: cipher-3des1.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: cipher-3des1.c,v 1.7 2010/10/01 23:05:32 djm Exp $ */
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher-3des1.c,v 1.3 2009/07/20 15:33:44 christos Exp $");
+__RCSID("$NetBSD: cipher-3des1.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>
@@ -72,7 +72,7 @@ ssh1_3des_init(EVP_CIPHER_CTX *ctx, const u_char *key, const u_char *iv,
 		return (1);
 	if (enc == -1)
 		enc = ctx->encrypt;
-	k1 = k2 = k3 = (u_char *) key;
+	k1 = k2 = k3 = __UNCONST(key);
 	k2 += 8;
 	if (EVP_CIPHER_CTX_key_length(ctx) >= 16+8) {
 		if (enc)
@@ -103,7 +103,7 @@ ssh1_3des_cbc(EVP_CIPHER_CTX *ctx, u_char *dest, const u_char *src, size_t len)
 		error("ssh1_3des_cbc: no context");
 		return (0);
 	}
-	if (EVP_Cipher(&c->k1, dest, (u_char *)src, len) == 0 ||
+	if (EVP_Cipher(&c->k1, dest, __UNCONST(src), len) == 0 ||
 	    EVP_Cipher(&c->k2, dest, dest, len) == 0 ||
 	    EVP_Cipher(&c->k3, dest, dest, len) == 0)
 		return (0);
