@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.c,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
-/* $OpenBSD: auth.c,v 1.89 2010/08/04 05:42:47 djm Exp $ */
+/*	$NetBSD: auth.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: auth.c,v 1.91 2010/11/29 23:45:51 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.3 2010/11/21 18:29:48 adam Exp $");
+__RCSID("$NetBSD: auth.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -309,10 +309,11 @@ allowed_user(struct passwd * pw)
 }
 
 void
-auth_log(Authctxt *authctxt, int authenticated, char *method, char *info)
+auth_log(Authctxt *authctxt, int authenticated, const char *method,
+    const char *info)
 {
 	void (*authlog) (const char *fmt,...) = verbose;
-	char *authmsg;
+	const char *authmsg;
 
 	if (use_privsep && !mm_is_monitor() && !authctxt->postponed)
 		return;
@@ -343,7 +344,7 @@ auth_log(Authctxt *authctxt, int authenticated, char *method, char *info)
  * Check whether root logins are disallowed.
  */
 int
-auth_root_allowed(char *method)
+auth_root_allowed(const char *method)
 {
 	switch (options.permit_root_login) {
 	case PERMIT_YES:
@@ -419,16 +420,15 @@ HostStatus
 check_key_in_hostfiles(struct passwd *pw, Key *key, const char *host,
     const char *sysfile, const char *userfile)
 {
-	Key *found;
 	char *user_hostfile;
 	struct stat st;
 	HostStatus host_status;
+	struct hostkeys *hostkeys;
+	const struct hostkey_entry *found;
 
-	/* Check if we know the host and its host key. */
-	found = key_new(key_is_cert(key) ? KEY_UNSPEC : key->type);
-	host_status = check_host_in_hostfile(sysfile, host, key, found, NULL);
-
-	if (host_status != HOST_OK && userfile != NULL) {
+	hostkeys = init_hostkeys();
+	load_hostkeys(hostkeys, host, sysfile);
+	if (userfile != NULL) {
 		user_hostfile = tilde_expand_filename(userfile, pw->pw_uid);
 		if (options.strict_modes &&
 		    (stat(user_hostfile, &st) == 0) &&
@@ -441,16 +441,23 @@ check_key_in_hostfiles(struct passwd *pw, Key *key, const char *host,
 			    user_hostfile);
 		} else {
 			temporarily_use_uid(pw);
-			host_status = check_host_in_hostfile(user_hostfile,
-			    host, key, found, NULL);
+			load_hostkeys(hostkeys, host, user_hostfile);
 			restore_uid();
 		}
 		xfree(user_hostfile);
 	}
-	key_free(found);
+	host_status = check_key_in_hostkeys(hostkeys, key, &found);
+	if (host_status == HOST_REVOKED)
+		error("WARNING: revoked key for %s attempted authentication",
+		    found->host);
+	else if (host_status == HOST_OK)
+		debug("%s: key for %s found at %s:%ld", __func__,
+		    found->host, found->file, found->line);
+	else
+		debug("%s: key for host %s not found", __func__, host);
 
-	debug2("check_key_in_hostfiles: key %s for %s", host_status == HOST_OK ?
-	    "ok" : "not found", host);
+	free_hostkeys(hostkeys);
+
 	return host_status;
 }
 
@@ -529,7 +536,7 @@ secure_filename(FILE *f, const char *file, struct passwd *pw,
 
 static FILE *
 auth_openfile(const char *file, struct passwd *pw, int strict_modes,
-    int log_missing, char *file_type)
+    int log_missing, const char *file_type)
 {
 	char line[1024];
 	struct stat st;
@@ -558,7 +565,7 @@ auth_openfile(const char *file, struct passwd *pw, int strict_modes,
 		close(fd);
 		return NULL;
 	}
-	if (options.strict_modes &&
+	if (strict_modes &&
 	    secure_filename(f, file, pw, line, sizeof(line)) != 0) {
 		fclose(f);
 		logit("Authentication refused: %s", line);
@@ -698,17 +705,19 @@ struct passwd *
 fakepw(void)
 {
 	static struct passwd fake;
+	static char nouser[] = "NOUSER";
+	static char nonexist[] = "/nonexist";
 
 	memset(&fake, 0, sizeof(fake));
-	fake.pw_name = "NOUSER";
-	fake.pw_passwd =
-	    "$2a$06$r3.juUaHZDlIbQaO2dS9FuYxL1W9M81R1Tc92PoSNmzvpEqLkLGrK";
-	fake.pw_gecos = "NOUSER";
+	fake.pw_name = nouser;
+	fake.pw_passwd = __UNCONST(
+	    "$2a$06$r3.juUaHZDlIbQaO2dS9FuYxL1W9M81R1Tc92PoSNmzvpEqLkLGrK");
+	fake.pw_gecos = nouser;
 	fake.pw_uid = (uid_t)-1;
 	fake.pw_gid = (gid_t)-1;
-	fake.pw_class = "";
-	fake.pw_dir = "/nonexist";
-	fake.pw_shell = "/nonexist";
+	fake.pw_class = __UNCONST("");
+	fake.pw_dir = nonexist;
+	fake.pw_shell = nonexist;
 
 	return (&fake);
 }

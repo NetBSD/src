@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.6 2011/04/24 14:09:39 elric Exp $	*/
-/* $OpenBSD: session.c,v 1.256 2010/06/25 07:20:04 djm Exp $ */
+/*	$NetBSD: session.c,v 1.7 2011/07/25 03:03:11 christos Exp $	*/
+/* $OpenBSD: session.c,v 1.258 2010/11/25 04:10:09 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.6 2011/04/24 14:09:39 elric Exp $");
+__RCSID("$NetBSD: session.c,v 1.7 2011/07/25 03:03:11 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -624,7 +624,8 @@ do_exec_no_pty(Session *s, const char *command)
 
 	s->pid = pid;
 	/* Set interactive/non-interactive mode. */
-	packet_set_interactive(s->display != NULL);
+	packet_set_interactive(s->display != NULL,
+	    options.ip_qos_interactive, options.ip_qos_bulk);
 
 #ifdef USE_PIPES
 	/* We are the parent.  Close the child sides of the pipes. */
@@ -762,7 +763,8 @@ do_exec_pty(Session *s, const char *command)
 
 	/* Enter interactive session. */
 	s->ptymaster = ptymaster;
-	packet_set_interactive(1);
+	packet_set_interactive(1, 
+	    options.ip_qos_interactive, options.ip_qos_bulk);
 	if (compat20) {
 		session_set_fds(s, ptyfd, fdout, -1, 1, 1);
 	} else {
@@ -888,8 +890,8 @@ do_motd(void)
 
 	if (options.print_motd) {
 #ifdef HAVE_LOGIN_CAP
-		f = fopen(login_getcapstr(lc, "welcome", "/etc/motd",
-		    "/etc/motd"), "r");
+		f = fopen(login_getcapstr(lc, "welcome", __UNCONST("/etc/motd"),
+		    __UNCONST("/etc/motd")), "r");
 #else
 		f = fopen("/etc/motd", "r");
 #endif
@@ -978,13 +980,13 @@ child_set_env(char ***envp, u_int *envsizep, const char *name,
  * Modified to use child_set_env instead of setenv.
  */
 static void
-lc_setuserenv(char ***env, u_int *envsize, login_cap_t *lc)
+lc_setuserenv(char ***env, u_int *envsize, login_cap_t *lcp)
 {
 	const char *stop = ", \t";
 	int i, count;
 	char *ptr;
 	char **res;
-	char *str = login_getcapstr(lc, "setenv", NULL, NULL);
+	char *str = login_getcapstr(lcp, "setenv", NULL, NULL);
 		  
 	if (str == NULL || *str == '\0')
 		return;
@@ -1021,7 +1023,7 @@ lc_setuserenv(char ***env, u_int *envsize, login_cap_t *lc)
 			if ((ptr = strchr(res[i], '=')) != NULL)
 				*ptr++ = '\0';
 			else 
-				ptr = "";
+				ptr = __UNCONST("");
 			child_set_env(env, envsize, res[i], ptr);
 		}
 	}
@@ -1315,7 +1317,7 @@ static void
 do_nologin(struct passwd *pw)
 {
 	FILE *f = NULL;
-	char buf[1024], *nl, *def_nl = _PATH_NOLOGIN;
+	char buf[1024], *nl, *def_nl = __UNCONST(_PATH_NOLOGIN);
 	struct stat sb;
 
 #ifdef HAVE_LOGIN_CAP
@@ -1501,8 +1503,6 @@ launch_login(struct passwd *pw, const char *hostname)
 static void
 child_close_fds(void)
 {
-	int i;
-
 	if (packet_get_connection_in() == packet_get_connection_out())
 		close(packet_get_connection_in());
 	else {
@@ -1528,8 +1528,7 @@ child_close_fds(void)
 	 * initgroups, because at least on Solaris 2.3 it leaves file
 	 * descriptors open.
 	 */
-	for (i = 3; i < 64; i++)
-		close(i);
+	closefrom(STDERR_FILENO + 1);
 }
 
 /*
@@ -1599,7 +1598,8 @@ do_child(Session *s, const char *command)
 	env = do_setup_env(s, shell);
 
 #ifdef HAVE_LOGIN_CAP
-	shell = login_getcapstr(lc, "shell", (char *)shell, (char *)shell);
+	shell = login_getcapstr(lc, "shell", __UNCONST(shell),
+	    __UNCONST(shell));
 #endif
 
 	/* we have to stash the hostname before we close our socket. */
@@ -1732,9 +1732,9 @@ do_child(Session *s, const char *command)
 	 * Execute the command using the user's shell.  This uses the -c
 	 * option to execute the command.
 	 */
-	argv[0] = (char *) shell0;
-	argv[1] = "-c";
-	argv[2] = (char *) command;
+	argv[0] = __UNCONST(shell0);
+	argv[1] = __UNCONST("-c");
+	argv[2] = __UNCONST(command);
 	argv[3] = NULL;
 	execve(shell, argv, env);
 	perror(shell);
@@ -2243,7 +2243,7 @@ session_pty_cleanup(Session *s)
 	PRIVSEP(session_pty_cleanup2(s));
 }
 
-static char *
+static const char *
 sig2name(int sig)
 {
 #define SSH_SIG(x) if (sig == SIG ## x) return #x

@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher.h,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: cipher.h,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: cipher.h,v 1.37 2009/01/26 09:58:15 markus Exp $ */
 
 /*
@@ -73,7 +73,7 @@ u_int	 cipher_mask_ssh1(int);
 Cipher	*cipher_by_name(const char *);
 Cipher	*cipher_by_number(int);
 int	 cipher_number(const char *);
-char	*cipher_name(int);
+const char	*cipher_name(int);
 int	 ciphers_valid(const char *);
 void	 cipher_init(CipherContext *, Cipher *, const u_char *, u_int,
     const u_char *, u_int, int);

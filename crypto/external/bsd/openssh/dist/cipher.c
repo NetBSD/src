@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: cipher.c,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: cipher.c,v 1.82 2009/01/26 09:58:15 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.3 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/md5.h>
@@ -57,7 +57,7 @@ extern const EVP_CIPHER *evp_aes_ctr_mt(void);
 extern void ssh_aes_ctr_iv(EVP_CIPHER_CTX *, int, u_char *, u_int);
 
 struct Cipher {
-	char	*name;
+	const char	*name;
 	int	number;		/* for ssh1 only */
 	u_int	block_size;
 	u_int	key_len;
@@ -204,7 +204,7 @@ cipher_number(const char *name)
 	return -1;
 }
 
-char *
+const char *
 cipher_name(int id)
 {
 	Cipher *c = cipher_by_number(id);
@@ -243,7 +243,7 @@ cipher_init(CipherContext *cc, Cipher *cipher,
 	type = (*cipher->evptype)();
 
 	EVP_CIPHER_CTX_init(&cc->evp);
-	if (EVP_CipherInit(&cc->evp, type, NULL, (u_char *)iv,
+	if (EVP_CipherInit(&cc->evp, type, NULL, __UNCONST(iv),
 	    (do_encrypt == CIPHER_ENCRYPT)) == 0)
 		fatal("cipher_init: EVP_CipherInit failed for %s",
 		    cipher->name);
@@ -254,7 +254,7 @@ cipher_init(CipherContext *cc, Cipher *cipher,
 			fatal("cipher_init: set keylen failed (%d -> %d)",
 			    klen, keylen);
 	}
-	if (EVP_CipherInit(&cc->evp, NULL, (u_char *)key, NULL, -1) == 0)
+	if (EVP_CipherInit(&cc->evp, NULL, __UNCONST(key), NULL, -1) == 0)
 		fatal("cipher_init: EVP_CipherInit: set key failed for %s",
 		    cipher->name);
 
@@ -275,7 +275,7 @@ cipher_crypt(CipherContext *cc, u_char *dest, const u_char *src, u_int len)
 {
 	if (len % cc->cipher->block_size)
 		fatal("cipher_encrypt: bad plaintext length %d", len);
-	if (EVP_Cipher(&cc->evp, dest, (u_char *)src, len) == 0)
+	if (EVP_Cipher(&cc->evp, dest, __UNCONST(src), len) == 0)
 		fatal("evp_crypt: EVP_Cipher failed");
 }
 
