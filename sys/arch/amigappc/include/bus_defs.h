@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.1 2011/07/18 17:51:17 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.2 2011/07/25 15:58:44 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -35,8 +35,8 @@
  * Memory addresses (in bus space)
  */
 
-typedef u_int32_t bus_addr_t;
-typedef u_int32_t bus_size_t;
+typedef uint32_t bus_addr_t;
+typedef uint32_t bus_size_t;
 
 /*
  * Access methods for bus resources and address space.
@@ -99,31 +99,31 @@ struct amiga_bus_space_methods {
 
 	/* 8 bit methods */
 
-	bsr(*bsr1, u_int8_t);
-	bsw(*bsw1, u_int8_t);
-	bsrm(*bsrm1, u_int8_t);
-	bswm(*bswm1, u_int8_t);
-	bsrm(*bsrr1, u_int8_t);
-	bswm(*bswr1, u_int8_t);
-	bssr(*bssr1, u_int8_t);
-	bscr(*bscr1, u_int8_t);
+	bsr(*bsr1, uint8_t);
+	bsw(*bsw1, uint8_t);
+	bsrm(*bsrm1, uint8_t);
+	bswm(*bswm1, uint8_t);
+	bsrm(*bsrr1, uint8_t);
+	bswm(*bswr1, uint8_t);
+	bssr(*bssr1, uint8_t);
+	bscr(*bscr1, uint8_t);
 
 	/* 16bit methods */
 
-	bsr(*bsr2, u_int16_t);
-	bsw(*bsw2, u_int16_t);
-	bsr(*bsrs2, u_int16_t);
-	bsw(*bsws2, u_int16_t);
-	bsrm(*bsrm2, u_int16_t);
-	bswm(*bswm2, u_int16_t);
-	bsrm(*bsrms2, u_int16_t);
-	bswm(*bswms2, u_int16_t);
-	bsrm(*bsrr2, u_int16_t);
-	bswm(*bswr2, u_int16_t);
-	bsrm(*bsrrs2, u_int16_t);
-	bswm(*bswrs2, u_int16_t);
-	bssr(*bssr2, u_int16_t);
-	bscr(*bscr2, u_int16_t);
+	bsr(*bsr2, uint16_t);
+	bsw(*bsw2, uint16_t);
+	bsr(*bsrs2, uint16_t);
+	bsw(*bsws2, uint16_t);
+	bsrm(*bsrm2, uint16_t);
+	bswm(*bswm2, uint16_t);
+	bsrm(*bsrms2, uint16_t);
+	bswm(*bswms2, uint16_t);
+	bsrm(*bsrr2, uint16_t);
+	bswm(*bswr2, uint16_t);
+	bsrm(*bsrrs2, uint16_t);
+	bswm(*bswrs2, uint16_t);
+	bssr(*bssr2, uint16_t);
+	bscr(*bscr2, uint16_t);
 
 	/* add 32bit methods here */
 };
