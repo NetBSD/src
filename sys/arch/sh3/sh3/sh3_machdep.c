@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.94 2011/07/25 16:02:25 dyoung Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.95 2011/07/25 16:06:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.94 2011/07/25 16:02:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.95 2011/07/25 16:06:58 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -708,8 +708,6 @@ bus_space_read_multi_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  *
  * Allocate a region of bus space.
  */
-int sh_memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
-    bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
 
 #define	bus_space_alloc(t, rs, re, s, a, b, f, ap, hp)			\
 	sh_memio_alloc((t), (rs), (re), (s), (a), (b), (f), (ap), (hp))
@@ -720,7 +718,6 @@ int sh_memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
  *
  * Free a region of bus space.
  */
-void sh_memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 #define	bus_space_free(t, h, s)						\
 	sh_memio_free((t), (h), (s))
@@ -731,7 +728,6 @@ void sh_memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
  *
  * Unmap a region of bus space.
  */
-void sh_memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 #define	bus_space_unmap(t, h, s)					\
 	sh_memio_unmap((t), (h), (s))
@@ -743,8 +739,6 @@ void sh_memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
  *
  * Get a new handle for a subregion of an already-mapped area of bus space.
  */
-int sh_memio_subregion(bus_space_tag_t, bus_space_handle_t,
-    bus_size_t, bus_size_t, bus_space_handle_t *);
 
 #define	bus_space_subregion(t, h, o, s, nhp)				\
 	sh_memio_subregion((t), (h), (o), (s), (nhp))

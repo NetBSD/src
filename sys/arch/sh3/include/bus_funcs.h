@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.2 2011/07/20 21:30:13 dyoung Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.3 2011/07/25 16:06:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -77,6 +77,13 @@ void shpcmcia_memio_free(bus_space_tag_t, bus_space_handle_t,
 int shpcmcia_memio_subregion(bus_space_tag_t, bus_space_handle_t,
     bus_size_t, bus_size_t, bus_space_handle_t *);
 #endif
+
+int sh_memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
+    bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
+void sh_memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+void sh_memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+int sh_memio_subregion(bus_space_tag_t, bus_space_handle_t,
+    bus_size_t, bus_size_t, bus_space_handle_t *);
 
 /*
  * Bus read/write barrier methods.
