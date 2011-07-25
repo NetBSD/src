@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.42.2.6 2011/01/10 00:37:39 jym Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.42.2.7 2011/07/25 00:18:28 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.42.2.6 2011/01/10 00:37:39 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.42.2.7 2011/07/25 00:18:28 jym Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -447,10 +447,8 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 		printf("pirq_establish: can't malloc handler info\n");
 		return NULL;
 	}
-	if (event_set_handler(evtch, pirq_interrupt, ih, level, evname) != 0) {
-		free(ih, M_DEVBUF);
-		return NULL;
-	}
+
+	event_set_handler(evtch, pirq_interrupt, ih, level, evname);
 	ih->pirq = pirq;
 	ih->evtch = evtch;
 	ih->func = func;
