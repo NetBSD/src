@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.38.2.10 2011/05/26 22:30:31 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.38.2.11 2011/07/25 00:18:28 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,8 +25,32 @@
  *
  */
 
+/*
+ * The file contains the xbd frontend code required for block-level
+ * communications (similar to hard disks) between two Xen domains.
+ *
+ * We are not supposed to receive solicitations spontaneously from backend. The
+ * protocol is therefore fairly simple and uses only one ring to communicate
+ * with backend: frontend posts requests to the ring then wait for their
+ * replies asynchronously.
+ *
+ * xbd follows NetBSD's disk(9) convention. At any time, a LWP can schedule
+ * an operation request for the device (be it open(), read(), write(), ...).
+ * Calls are typically processed that way:
+ * - initiate request: xbdread/write/open/ioctl/..
+ * - depending on operation, it is handled directly by disk(9) subsystem or
+ *   goes through physio(9) first.
+ * - the request is ultimately processed by xbdstart() that prepares the
+ *   xbd requests, post them in the ring I/O queue, then signal the backend.
+ *
+ * When a response is available in the queue, the backend signals the frontend
+ * via its event channel. This triggers xbd_handler(), which will link back
+ * the response to its request through the request ID, and mark the I/O as
+ * completed.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38.2.10 2011/05/26 22:30:31 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38.2.11 2011/07/25 00:18:28 jym Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -118,6 +142,7 @@ struct xbd_xenbus_softc {
 #define BLKIF_STATE_DISCONNECTED 0
 #define BLKIF_STATE_CONNECTED    1
 #define BLKIF_STATE_SUSPENDED    2
+
 	int sc_shutdown;
 #define BLKIF_SHUTDOWN_RUN    0 /* no shutdown */
 #define BLKIF_SHUTDOWN_REMOTE 1 /* backend-initiated shutdown in progress */
@@ -274,7 +299,11 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ring.sring = ring;
 
 	/* resume shared structures and tell backend that we are ready */
-	xbd_xenbus_resume(self, PMF_Q_NONE);
+	if (xbd_xenbus_resume(self, PMF_Q_NONE) == false) {
+		uvm_km_free(kernel_map, (vaddr_t)ring, PAGE_SIZE,
+		    UVM_KMF_WIRED);
+		return;
+	}
 
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
@@ -304,6 +333,7 @@ xbd_xenbus_detach(device_t dev, int flags)
 		while (sc->sc_backend_status == BLKIF_STATE_CONNECTED &&
 		    sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
 			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach", hz/2);
+
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosing);
 	}
 	if ((flags & DETACH_FORCE) == 0) {
@@ -420,11 +450,12 @@ xbd_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 	(void)pmap_extract_ma(pmap_kernel(), (vaddr_t)ring, &ma);
 	error = xenbus_grant_ring(sc->sc_xbusd, ma, &sc->sc_ring_gntref);
 	if (error)
-		return false;
+		goto abort_resume;
 
 	error = xenbus_alloc_evtchn(sc->sc_xbusd, &sc->sc_evtchn);
 	if (error)
-		return false;
+		goto abort_resume;
+
 	aprint_verbose_dev(dev, "using event channel %d\n",
 	    sc->sc_evtchn);
 	event_set_handler(sc->sc_evtchn, &xbd_handler, sc,
@@ -452,18 +483,16 @@ again:
 		errmsg = "writing protocol";
 		goto abort_transaction;
 	}
-	error = xenbus_switch_state(sc->sc_xbusd, xbt, XenbusStateInitialised);
-	if (error) {
-		errmsg = "writing frontend XenbusStateInitialised";
-		goto abort_transaction;
-	}
 	error = xenbus_transaction_end(xbt, 0);
 	if (error == EAGAIN)
 		goto again;
-	if (error) {
-		xenbus_dev_fatal(sc->sc_xbusd, error, "completing transaction");
+	if (error != 0) {
+		xenbus_dev_fatal(sc->sc_xbusd, error,
+		    "completing transaction");
 		return false;
 	}
+
+	xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateInitialised);
 
 	if (sc->sc_backend_status == BLKIF_STATE_SUSPENDED) {
 		/*
@@ -477,6 +506,10 @@ again:
 	}
 
 	return true;
+
+abort_resume:
+	xenbus_dev_fatal(sc->sc_xbusd, error, "resuming device");
+	return false;
 
 abort_transaction:
 	xenbus_transaction_end(xbt, 1);
@@ -664,23 +697,22 @@ again:
 				xbdreq->req_nr_segments = seg + 1;
 				goto done;
 			}
-			xengnt_revoke_access(
-			    xbdreq->req_gntref[seg]);
+			xengnt_revoke_access(xbdreq->req_gntref[seg]);
 			xbdreq->req_nr_segments--;
 		}
 		if (rep->operation != BLKIF_OP_READ &&
 		    rep->operation != BLKIF_OP_WRITE) {
-				aprint_error_dev(sc->sc_dev,
-					 "bad operation %d from backend\n",
-					 rep->operation);
-				bp->b_error = EIO;
-				bp->b_resid = bp->b_bcount;
-				goto next;
+			aprint_error_dev(sc->sc_dev,
+			    "bad operation %d from backend\n",
+			    rep->operation);
+			bp->b_error = EIO;
+			bp->b_resid = bp->b_bcount;
+			goto next;
 		}
 		if (rep->status != BLKIF_RSP_OKAY) {
-				bp->b_error = EIO;
-				bp->b_resid = bp->b_bcount;
-				goto next;
+			bp->b_error = EIO;
+			bp->b_resid = bp->b_bcount;
+			goto next;
 		}
 		/* b_resid was set in xbdstart */
 next:

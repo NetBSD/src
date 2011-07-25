@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.12.2.3 2009/11/01 21:43:29 jym Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.12.2.4 2011/07/25 00:18:28 jym Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.12.2.3 2009/11/01 21:43:29 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.12.2.4 2011/07/25 00:18:28 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -216,19 +216,14 @@ xb_read(void *data, unsigned len)
 int
 xb_init_comms(device_t dev)
 {
-	int err;
 	int evtchn;
 
 	evtchn = xen_start_info.store_evtchn;
 
-	err = event_set_handler(evtchn, wake_waiting, NULL, IPL_TTY, "xenbus");
-	if (err) {
-		aprint_error_dev(dev, "request irq failed %i\n", err);
-		return err;
-	}
-
+	event_set_handler(evtchn, wake_waiting, NULL, IPL_TTY, "xenbus");
 	hypervisor_enable_event(evtchn);
 	aprint_verbose_dev(dev, "using event channel %d\n", evtchn);
+
 	return 0;
 }
 
