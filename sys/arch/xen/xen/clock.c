@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.54.6.1 2011/06/03 13:27:42 cherry Exp $	*/
+/*	$NetBSD: clock.c,v 1.54.6.2 2011/07/25 17:29:43 cherry Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.6.1 2011/06/03 13:27:42 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.6.2 2011/07/25 17:29:43 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -452,7 +452,9 @@ xen_initclocks(void)
 			     "hardclock");
 
 #ifdef DOM0OPS
-	callout_init(&xen_timepush_co, 0);
+	if (!tcdone) { /* Do this only once */
+		callout_init(&xen_timepush_co, 0);
+	}
 #endif
 	evtch = bind_virq_to_evtch(VIRQ_TIMER);
 	aprint_verbose("Xen clock: using event channel %d\n", evtch);
