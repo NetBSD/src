@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.45 2011/03/30 00:13:28 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.46 2011/07/25 00:02:38 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.45 2011/03/30 00:13:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.46 2011/07/25 00:02:38 jym Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -356,7 +356,6 @@ xbd_xenbus_resume(void *p)
 
 	sc->sc_ring_gntref = GRANT_INVALID_REF;
 
-
 	/* setup device: alloc event channel and shared ring */
 	ring = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 		UVM_KMF_ZERO | UVM_KMF_WIRED);
@@ -602,23 +601,21 @@ again:
 				xbdreq->req_nr_segments = seg + 1;
 				goto done;
 			}
-			xengnt_revoke_access(
-			    xbdreq->req_gntref[seg]);
+			xengnt_revoke_access(xbdreq->req_gntref[seg]);
 			xbdreq->req_nr_segments--;
 		}
 		if (rep->operation != BLKIF_OP_READ &&
 		    rep->operation != BLKIF_OP_WRITE) {
-				aprint_error_dev(sc->sc_dev,
-					 "bad operation %d from backend\n",
-					 rep->operation);
-				bp->b_error = EIO;
-				bp->b_resid = bp->b_bcount;
-				goto next;
+			aprint_error_dev(sc->sc_dev,
+			    "bad operation %d from backend\n", rep->operation);
+			bp->b_error = EIO;
+			bp->b_resid = bp->b_bcount;
+			goto next;
 		}
 		if (rep->status != BLKIF_RSP_OKAY) {
-				bp->b_error = EIO;
-				bp->b_resid = bp->b_bcount;
-				goto next;
+			bp->b_error = EIO;
+			bp->b_resid = bp->b_bcount;
+			goto next;
 		}
 		/* b_resid was set in xbdstart */
 next:
