@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.44 2011/06/12 03:35:45 rmind Exp $
+#	$NetBSD: files.sh3,v 1.45 2011/07/25 21:12:23 dyoung Exp $
 #
 
 defflag	opt_cputype.h		SH3 SH4
@@ -13,6 +13,8 @@ defflag opt_cache.h		SH4_CACHE_DISABLE_EMODE
 defflag opt_cache.h		SH4_CACHE_DISABLE_ICACHE
 defflag opt_cache.h		SH4_CACHE_WB_P1
 defflag opt_cache.h		SH4_CACHE_WB_U0_P0_P3
+
+defflag opt_landisk.h		LANDISK
 
 file	arch/sh3/sh3/cache.c
 file	arch/sh3/sh3/cache_sh3.c		sh3
@@ -42,6 +44,7 @@ file	arch/sh3/sh3/pmap.c
 file	arch/sh3/sh3/process_machdep.c
 file	arch/sh3/sh3/procfs_machdep.c		procfs
 file	arch/sh3/sh3/sh3_machdep.c
+file	arch/sh3/sh3/sh3_bus_space.c		!landisk
 file	arch/sh3/sh3/sys_machdep.c
 file	arch/sh3/sh3/syscall.c
 file	arch/sh3/sh3/vm_machdep.c

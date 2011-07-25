@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.3 2011/07/25 16:06:58 dyoung Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.4 2011/07/25 21:12:23 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,6 +84,49 @@ void sh_memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 void sh_memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 int sh_memio_subregion(bus_space_tag_t, bus_space_handle_t,
     bus_size_t, bus_size_t, bus_space_handle_t *);
+
+/*
+ *	int bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart,
+ *	    bus_addr_t rend, bus_size_t size, bus_size_t align,
+ *	    bus_size_t boundary, int flags, bus_addr_t *addrp,
+ *	    bus_space_handle_t *bshp);
+ *
+ * Allocate a region of bus space.
+ */
+
+#define	bus_space_alloc(t, rs, re, s, a, b, f, ap, hp)			\
+	sh_memio_alloc((t), (rs), (re), (s), (a), (b), (f), (ap), (hp))
+
+/*
+ *	int bus_space_free(bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t size);
+ *
+ * Free a region of bus space.
+ */
+
+#define	bus_space_free(t, h, s)						\
+	sh_memio_free((t), (h), (s))
+
+/*
+ *	int bus_space_unmap(bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t size);
+ *
+ * Unmap a region of bus space.
+ */
+
+#define	bus_space_unmap(t, h, s)					\
+	sh_memio_unmap((t), (h), (s))
+
+/*
+ *	int bus_space_subregion(bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t offset, bus_size_t size,
+ *	    bus_space_handle_t *nbshp);
+ *
+ * Get a new handle for a subregion of an already-mapped area of bus space.
+ */
+
+#define	bus_space_subregion(t, h, o, s, nhp)				\
+	sh_memio_subregion((t), (h), (o), (s), (nhp))
 
 /*
  * Bus read/write barrier methods.
