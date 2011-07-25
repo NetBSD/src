@@ -18,7 +18,6 @@ aesni_encrypt:
 	jnz	.Loop_enc1_1	
 	aesenclast	%xmm5,%xmm0
 	movups	%xmm0,(%rsi)
-	repz
 	retq
 .size	aesni_encrypt,.-aesni_encrypt
 
@@ -40,7 +39,6 @@ aesni_decrypt:
 	jnz	.Loop_dec1_2	
 	aesdeclast	%xmm5,%xmm0
 	movups	%xmm0,(%rsi)
-	repz
 	retq
 .size	aesni_decrypt, .-aesni_decrypt
 .type	_aesni_encrypt3,@function
@@ -74,7 +72,6 @@ _aesni_encrypt3:
 	aesenclast	%xmm4,%xmm0
 	aesenclast	%xmm4,%xmm1
 	aesenclast	%xmm4,%xmm2
-	repz
 	retq
 .size	_aesni_encrypt3,.-_aesni_encrypt3
 .type	_aesni_decrypt3,@function
@@ -108,7 +105,6 @@ _aesni_decrypt3:
 	aesdeclast	%xmm4,%xmm0
 	aesdeclast	%xmm4,%xmm1
 	aesdeclast	%xmm4,%xmm2
-	repz
 	retq
 .size	_aesni_decrypt3,.-_aesni_decrypt3
 .type	_aesni_encrypt4,@function
@@ -147,7 +143,6 @@ _aesni_encrypt4:
 	aesenclast	%xmm4,%xmm1
 	aesenclast	%xmm4,%xmm2
 	aesenclast	%xmm4,%xmm3
-	repz
 	retq
 .size	_aesni_encrypt4,.-_aesni_encrypt4
 .type	_aesni_decrypt4,@function
@@ -186,7 +181,6 @@ _aesni_decrypt4:
 	aesdeclast	%xmm4,%xmm1
 	aesdeclast	%xmm4,%xmm2
 	aesdeclast	%xmm4,%xmm3
-	repz
 	retq
 .size	_aesni_decrypt4,.-_aesni_decrypt4
 .globl	aesni_ecb_encrypt
@@ -556,7 +550,6 @@ aesni_set_decrypt_key:
 	movaps	%xmm0,(%rdi)
 .Ldec_key_ret:
 	addq	$8,%rsp
-	repz
 	retq
 .LSEH_end_set_decrypt_key:
 .size	aesni_set_decrypt_key,.-aesni_set_decrypt_key
@@ -679,7 +672,6 @@ _aesni_set_encrypt_key:
 	movq	$-2,%rax
 .Lenc_key_ret:
 	addq	$8,%rsp
-	repz
 	retq
 .LSEH_end_set_encrypt_key:
 
@@ -694,7 +686,6 @@ _aesni_set_encrypt_key:
 	pxor	%xmm4,%xmm0
 	pshufd	$255,%xmm1,%xmm1
 	pxor	%xmm1,%xmm0
-	repz
 	retq
 
 .align	16
@@ -715,7 +706,6 @@ _aesni_set_encrypt_key:
 	pxor	%xmm1,%xmm0
 	pshufd	$255,%xmm0,%xmm3
 	pxor	%xmm3,%xmm2
-	repz
 	retq
 
 .align	16
@@ -739,7 +729,6 @@ _aesni_set_encrypt_key:
 	pxor	%xmm4,%xmm0
 	pshufd	$255,%xmm1,%xmm1
 	pxor	%xmm1,%xmm0
-	repz
 	retq
 
 .align	16
@@ -753,6 +742,5 @@ _aesni_set_encrypt_key:
 	pxor	%xmm4,%xmm2
 	pshufd	$170,%xmm1,%xmm1
 	pxor	%xmm1,%xmm2
-	repz
 	retq
 .size	aesni_set_encrypt_key,.-aesni_set_encrypt_key
