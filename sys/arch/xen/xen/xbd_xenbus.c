@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.46 2011/07/25 00:02:38 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.47 2011/07/25 00:06:49 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,8 +25,32 @@
  *
  */
 
+/*
+ * The file contains the xbd frontend code required for block-level
+ * communications (similar to hard disks) between two Xen domains.
+ *
+ * We are not supposed to receive solicitations spontaneously from backend. The
+ * protocol is therefore fairly simple and uses only one ring to communicate
+ * with backend: frontend posts requests to the ring then wait for their
+ * replies asynchronously.
+ *
+ * xbd follows NetBSD's disk(9) convention. At any time, a LWP can schedule
+ * an operation request for the device (be it open(), read(), write(), ...).
+ * Calls are typically processed that way:
+ * - initiate request: xbdread/write/open/ioctl/..
+ * - depending on operation, it is handled directly by disk(9) subsystem or
+ *   goes through physio(9) first.
+ * - the request is ultimately processed by xbdstart() that prepares the
+ *   xbd requests, post them in the ring I/O queue, then signal the backend.
+ *
+ * When a response is available in the queue, the backend signals the frontend
+ * via its event channel. This triggers xbd_handler(), which will link back
+ * the response to its request through the request ID, and mark the I/O as
+ * completed.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.46 2011/07/25 00:02:38 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.47 2011/07/25 00:06:49 jym Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
