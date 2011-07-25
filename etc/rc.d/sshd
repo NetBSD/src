@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.20 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: sshd,v 1.21 2011/07/25 03:04:23 christos Exp $
 #
 
 # PROVIDE: sshd
@@ -37,6 +37,15 @@ sshd_keygen()
 		    -f /etc/ssh/ssh_host_dsa_key -N ''
 	fi
 
+	if [ -f /etc/ssh/ssh_host_ecdsa_key ]; then
+		echo "You already have a ECDSA host key" \
+		    "in /etc/ssh/ssh_host_ecdsa_key"
+		echo "Skipping protocol version 1 ECDSA Key Generation"
+	else
+		/usr/bin/ssh-keygen -t ecdsa -b 521 \
+		    -f /etc/ssh/ssh_host_ecdsa_key -N ''
+	fi
+
 	if [ -f /etc/ssh/ssh_host_rsa_key ]; then
 		echo "You already have a RSA host key" \
 		    "in /etc/ssh/ssh_host_rsa_key"
@@ -52,6 +61,7 @@ sshd_precmd()
 {
 	if [ ! -f /etc/ssh/ssh_host_key -o \
 	    ! -f /etc/ssh/ssh_host_dsa_key -o \
+	    ! -f /etc/ssh/ssh_host_ecdsa_key -o \
 	    ! -f /etc/ssh/ssh_host_rsa_key ]; then
 		run_rc_command keygen
 	fi
