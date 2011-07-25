@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtvvar.h,v 1.2 2011/07/15 00:21:26 jmcneill Exp $ */
+/* $NetBSD: cxdtvvar.h,v 1.3 2011/07/25 04:31:26 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -33,13 +33,9 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/cxdtv_boards.h>
 
-#define CXDTV_MAX_FRONTENDS	4
-
-#define KERNADDR(p)	((void *)((p)->addr))
+#define	KERNADDR(p)	((void *)((p)->addr))
 #define	DMAADDR(p)	((p)->map->dm_segs[0].ds_addr)
 
-#define CXDTV_DEBUG
- 
 #ifdef CXDTV_DEBUG
 #define CX_DPRINTF(x)   if (cxdtv_mpeg_debug) printf x
 static int cxdtv_mpeg_debug = 0;
@@ -87,9 +83,6 @@ struct cxdtv_softc {
 
 	struct i2c_controller	sc_i2c;
 	kmutex_t		sc_i2c_buslock;
-
-	kmutex_t		sc_delaylock;
-	kcondvar_t		sc_delaycv;
 
 	struct cxdtv_sram_ch	sc_mpeg_sch;
 
