@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.35 2011/07/08 03:23:14 dyoung Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.36 2011/07/25 20:34:07 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.35 2011/07/08 03:23:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.36 2011/07/25 20:34:07 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,8 +288,9 @@ bus_space_reserve(bus_space_tag_t t,
 int
 bus_space_reserve_subregion(bus_space_tag_t t,
     bus_addr_t rstart, bus_addr_t rend,
-    bus_size_t size, bus_size_t alignment, bus_size_t boundary,
-    int flags, bus_space_reservation_t *bsrp)
+    const bus_size_t size, const bus_size_t alignment,
+    const bus_size_t boundary,
+    const int flags, bus_space_reservation_t *bsrp)
 {
 	bus_space_reservation_t bsr;
 	struct extent *ex;
