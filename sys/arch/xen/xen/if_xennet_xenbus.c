@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.33.2.11 2011/05/26 22:30:31 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.33.2.12 2011/07/25 00:18:28 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.33.2.11 2011/05/26 22:30:31 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.33.2.12 2011/07/25 00:18:28 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -385,7 +385,13 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_rx_ring.sring = rx_ring;
 
 	/* resume shared structures and tell backend that we are ready */
-	xennet_xenbus_resume(self, PMF_Q_NONE);
+	if (xennet_xenbus_resume(self, PMF_Q_NONE) == false) {
+		uvm_km_free(kernel_map, (vaddr_t)tx_ring, PAGE_SIZE,
+		    UVM_KMF_WIRED);
+		uvm_km_free(kernel_map, (vaddr_t)rx_ring, PAGE_SIZE,
+		    UVM_KMF_WIRED);
+		return;
+	}
 
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
@@ -493,20 +499,23 @@ xennet_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 	(void)pmap_extract_ma(pmap_kernel(), (vaddr_t)tx_ring, &ma);
 	error = xenbus_grant_ring(sc->sc_xbusd, ma, &sc->sc_tx_ring_gntref);
 	if (error)
-		return false;
+		goto abort_resume;
 	(void)pmap_extract_ma(pmap_kernel(), (vaddr_t)rx_ring, &ma);
 	error = xenbus_grant_ring(sc->sc_xbusd, ma, &sc->sc_rx_ring_gntref);
 	if (error)
-		return false;
+		goto abort_resume;
 	error = xenbus_alloc_evtchn(sc->sc_xbusd, &sc->sc_evtchn);
 	if (error)
-		return false;
+		goto abort_resume;
 	aprint_verbose_dev(dev, "using event channel %d\n",
 	    sc->sc_evtchn);
 	event_set_handler(sc->sc_evtchn, &xennet_handler, sc,
 	    IPL_NET, device_xname(dev));
-
 	return true;
+
+abort_resume:
+	xenbus_dev_fatal(sc->sc_xbusd, error, "resuming device");
+	return false;
 }
 
 static int
