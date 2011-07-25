@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1581 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1582 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1081,3 +1081,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[tsutsui 20110716]
 	urndis(4): Add driver for Microsoft RNDIS-based USB networking devices,
 		such as Android-based phones. From OpenBSD. [jakllsch 20110720]
+	openssh: Import 5.8. [christos 20110724]
