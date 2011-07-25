@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/07/17 20:07:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/25 16:32:44 joerg Exp $
 
 LIB=	LLVMMipsCodeGen
 
@@ -7,13 +7,15 @@ LIB=	LLVMMipsCodeGen
 .PATH: ${LLVM_SRCDIR}/lib/Target/Mips
 
 SRCS+=	MipsAsmPrinter.cpp \
+	MipsCodeEmitter.cpp \
 	MipsDelaySlotFiller.cpp \
 	MipsEmitGPRestore.cpp \
 	MipsExpandPseudo.cpp \
+	MipsFrameLowering.cpp \
 	MipsInstrInfo.cpp \
 	MipsISelDAGToDAG.cpp \
 	MipsISelLowering.cpp \
-	MipsFrameLowering.cpp \
+	MipsJITInfo.cpp \
 	MipsMCInstLower.cpp \
 	MipsMCSymbolRefExpr.cpp \
 	MipsRegisterInfo.cpp \

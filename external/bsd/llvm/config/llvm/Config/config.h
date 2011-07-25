@@ -4,6 +4,9 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+/* Bug report URL. */
+#define BUG_REPORT_URL "http://llvm.org"
+
 /* Relative directory for resource files */
 #define CLANG_RESOURCE_DIR ""
 
@@ -74,10 +77,14 @@
 /* #undef HAVE_CRASHREPORTERCLIENT_H */
 
 /* Define if __crashreporter_info__ exists. */
-#define HAVE_CRASHREPORTER_INFO 1
+#define HAVE_CRASHREPORTER_INFO 0
 
 /* Define to 1 if you have the <ctype.h> header file. */
 #define HAVE_CTYPE_H 1
+
+/* Define to 1 if you have the declaration of `strerror_s', and to 0 if you
+   don't. */
+#define HAVE_DECL_STRERROR_S 0
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
@@ -385,9 +392,6 @@
 /* Define to 1 if you have the `strerror_r' function. */
 #define HAVE_STRERROR_R 1
 
-/* Define to 1 if you have the `strerror_s' function. */
-/* #undef HAVE_STRERROR_S */
-
 /* Define to 1 if you have the <strings.h> header file. */
 #define HAVE_STRINGS_H 1
 
@@ -441,6 +445,9 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1
 
+/* Define to 1 if you have the <sys/uio.h> header file. */
+#define HAVE_SYS_UIO_H 1
+
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #define HAVE_SYS_WAIT_H 1
 
@@ -468,11 +475,62 @@
 /* Define to 1 if you have the <windows.h> header file. */
 /* #undef HAVE_WINDOWS_H */
 
+/* Define to 1 if you have the `writev' function. */
+#define HAVE_WRITEV 1
+
 /* Define if the xdot.py program is available */
 /* #undef HAVE_XDOT_PY */
 
+/* Have host's _alloca */
+/* #undef HAVE__ALLOCA */
+
+/* Have host's __alloca */
+/* #undef HAVE___ALLOCA */
+
+/* Have host's __ashldi3 */
+/* #undef HAVE___ASHLDI3 */
+
+/* Have host's __ashrdi3 */
+/* #undef HAVE___ASHRDI3 */
+
+/* Have host's __chkstk */
+/* #undef HAVE___CHKSTK */
+
+/* Have host's __cmpdi2 */
+/* #undef HAVE___CMPDI2 */
+
+/* Have host's __divdi3 */
+/* #undef HAVE___DIVDI3 */
+
 /* Define to 1 if you have the `__dso_handle' function. */
 #define HAVE___DSO_HANDLE 1
+
+/* Have host's __fixdfdi */
+/* #undef HAVE___FIXDFDI */
+
+/* Have host's __fixsfdi */
+/* #undef HAVE___FIXSFDI */
+
+/* Have host's __floatdidf */
+/* #undef HAVE___FLOATDIDF */
+
+/* Have host's __lshrdi3 */
+/* #undef HAVE___LSHRDI3 */
+
+/* Have host's __main */
+/* #undef HAVE___MAIN */
+
+/* Have host's __moddi3 */
+/* #undef HAVE___MODDI3 */
+
+/* Have host's __udivdi3 */
+/* #undef HAVE___UDIVDI3 */
+
+/* Have host's __umoddi3 */
+/* #undef HAVE___UMODDI3 */
+
+/* Have host's ___chkstk */
+/* #undef HAVE____CHKSTK */
 
 /* Linker version detected at compile time. */
 #define HOST_LINK_VERSION "1"
@@ -481,7 +539,7 @@
 #define LLVM_BINDIR "/usr/bin"
 
 /* Time at which LLVM was configured */
-#define LLVM_CONFIGTIME "Mon Dec  6 18:29:34 UTC 2010"
+#define LLVM_CONFIGTIME "Mon Jul 25 15:20:40 CEST 2011"
 
 /* Installation directory for data files */
 #define LLVM_DATADIR "/usr/share/llvm"
@@ -493,7 +551,7 @@
 #define LLVM_ETCDIR "/usr/etc/llvm"
 
 /* Host triple we were built on */
-#define LLVM_HOSTTRIPLE "x86_64-unknown-netbsd5.99.38"
+#define LLVM_HOSTTRIPLE "x86_64--netbsd"
 
 /* Installation directory for include files */
 #define LLVM_INCLUDEDIR "/usr/include"
@@ -519,8 +577,8 @@
 /* LLVM name for the native AsmPrinter init function, if available */
 #define LLVM_NATIVE_ASMPRINTER LLVMInitializeX86AsmPrinter
 
-/* LLVM name for the native MCAsmInfo init function, if available */
-#define LLVM_NATIVE_MCASMINFO LLVMInitializeX86MCAsmInfo
+/* LLVM name for the native TargetMC init function, if available */
+#define LLVM_NATIVE_TARGETMC LLVMInitializeX86TargetMC
 
 /* LLVM name for the native Target init function, if available */
 #define LLVM_NATIVE_TARGET LLVMInitializeX86Target
@@ -595,13 +653,13 @@
 #define PACKAGE_NAME "llvm"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "llvm 2.9svn"
+#define PACKAGE_STRING "llvm 3.0svn"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "-llvm-"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.9svn"
+#define PACKAGE_VERSION "3.0svn"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -623,6 +681,9 @@
 
 /* Define if use udis86 library */
 #define USE_UDIS86 0
+
+/* Type of 1st arg on ELM Callback */
+/* #undef WIN32_ELMCB_PCSTR */
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

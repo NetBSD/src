@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/07/17 20:07:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/07/25 16:32:43 joerg Exp $
 
 LIB=	LLVMARMCodeGen
 
@@ -6,8 +6,7 @@ LIB=	LLVMARMCodeGen
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/ARM
 
-SRCS+=	ARMAsmBackend.cpp \
-	ARMAsmPrinter.cpp \
+SRCS+=	ARMAsmPrinter.cpp \
 	ARMBaseInstrInfo.cpp \
 	ARMBaseRegisterInfo.cpp \
 	ARMCodeEmitter.cpp \
@@ -23,9 +22,6 @@ SRCS+=	ARMAsmBackend.cpp \
 	ARMISelLowering.cpp \
 	ARMInstrInfo.cpp \
 	ARMJITInfo.cpp \
-	ARMMachObjectWriter.cpp \
-	ARMMCCodeEmitter.cpp \
-	ARMMCExpr.cpp \
 	ARMLoadStoreOptimizer.cpp \
 	ARMMCInstLower.cpp \
 	ARMRegisterInfo.cpp \
