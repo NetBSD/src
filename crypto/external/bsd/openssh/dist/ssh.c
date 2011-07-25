@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.6 2011/07/25 03:03:11 christos Exp $	*/
+/*	$NetBSD: ssh.c,v 1.7 2011/07/25 08:51:10 joerg Exp $	*/
 /* $OpenBSD: ssh.c,v 1.356 2011/01/06 22:23:53 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh.c,v 1.6 2011/07/25 03:03:11 christos Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.7 2011/07/25 08:51:10 joerg Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1102,7 +1102,6 @@ ssh_session(void)
 	int interactive = 0;
 	int have_tty = 0;
 	struct winsize ws;
-	char *cp;
 	const char *display;
 
 	/* Enable compression if requested. */
@@ -1142,7 +1141,7 @@ ssh_session(void)
 		dp = getenv("TERM");
 		if (!dp)
 			dp = "";
-		packet_put_cstring(cp);
+		packet_put_cstring(dp);
 
 		/* Store window size in the packet. */
 		if (ioctl(fileno(stdin), TIOCGWINSZ, &ws) < 0)
