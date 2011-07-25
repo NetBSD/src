@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.57 2011/07/01 18:21:31 dyoung Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.58 2011/07/25 20:33:20 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.57 2011/07/01 18:21:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.58 2011/07/25 20:33:20 dyoung Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -407,7 +407,6 @@ _bus_dmamap_load_busaddr(bus_dma_tag_t t, bus_dmamap_t map,
 	bus_addr_t bmask = ~(map->_dm_boundary - 1);
 	bus_addr_t lastaddr = 0xdead; /* XXX gcc */
 	int sgsize;
-	int error = 0;
 
 	if (nseg > 0)
 		lastaddr = segs[nseg-1].ds_addr + segs[nseg-1].ds_len;
@@ -453,7 +452,7 @@ again:
 		goto again;
 
 	map->dm_nsegs = nseg;
-	return error;
+	return 0;
 }
 
 /*
