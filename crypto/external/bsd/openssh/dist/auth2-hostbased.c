@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-hostbased.c,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
+/*	$NetBSD: auth2-hostbased.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: auth2-hostbased.c,v 1.14 2010/08/04 05:42:47 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-hostbased.c,v 1.3 2010/11/21 18:29:48 adam Exp $");
+__RCSID("$NetBSD: auth2-hostbased.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 
 #include <pwd.h>
@@ -101,7 +101,7 @@ userauth_hostbased(Authctxt *authctxt)
 		    "(received %d, expected %d)", key->type, pktype);
 		goto done;
 	}
-	service = datafellows & SSH_BUG_HBSERVICE ? "ssh-userauth" :
+	service = datafellows & SSH_BUG_HBSERVICE ? __UNCONST("ssh-userauth") :
 	    authctxt->service;
 	buffer_init(&b);
 	buffer_put_string(&b, session_id2, session_id2_len);

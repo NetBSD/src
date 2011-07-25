@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: log.c,v 1.41 2008/06/10 04:50:25 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.3 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 
 #include <stdarg.h>
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: log.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 static LogLevel log_level = SYSLOG_LEVEL_INFO;
 static int log_on_stderr = 1;
 static int log_facility = LOG_AUTH;
-static char *argv0;
+static const char *argv0;
 
 extern char *__progname;
 
@@ -226,7 +226,8 @@ debug3(const char *fmt,...)
  */
 
 void
-log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
+log_init(const char *av0, LogLevel level, SyslogFacility facility,
+    int on_stderr)
 {
 	argv0 = av0;
 
@@ -303,7 +304,7 @@ do_log(LogLevel level, const char *fmt, va_list args)
 #endif
 	char msgbuf[MSGBUFSIZ];
 	char fmtbuf[4 * sizeof(msgbuf) + 1];
-	char *txt = NULL;
+	const char *txt = NULL;
 	int pri = LOG_INFO;
 	int saved_errno = errno;
 

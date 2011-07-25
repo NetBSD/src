@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.h,v 1.3 2010/11/21 18:29:49 adam Exp $	*/
-/* $OpenBSD: sftp-client.h,v 1.18 2009/08/18 18:36:20 djm Exp $ */
+/*	$NetBSD: sftp-client.h,v 1.4 2011/07/25 03:03:11 christos Exp $	*/
+/* $OpenBSD: sftp-client.h,v 1.20 2010/12/04 00:18:01 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -52,7 +52,7 @@ struct sftp_statvfs {
  * Initialise a SSH filexfer connection. Returns NULL on error or
  * a pointer to a initialized sftp_conn struct on success.
  */
-struct sftp_conn *do_init(int, int, u_int, u_int);
+struct sftp_conn *do_init(int, int, u_int, u_int, u_int64_t);
 
 u_int sftp_proto_version(struct sftp_conn *);
 
@@ -60,7 +60,7 @@ u_int sftp_proto_version(struct sftp_conn *);
 int do_close(struct sftp_conn *, char *, u_int);
 
 /* Read contents of 'path' to NULL-terminated array 'dir' */
-int do_readdir(struct sftp_conn *, char *, SFTP_DIRENT ***);
+int do_readdir(struct sftp_conn *, const char *, SFTP_DIRENT ***);
 
 /* Frees a NULL-terminated array of SFTP_DIRENTs (eg. from do_readdir) */
 void free_sftp_dirents(SFTP_DIRENT **);
@@ -75,10 +75,10 @@ int do_mkdir(struct sftp_conn *, char *, Attrib *, int);
 int do_rmdir(struct sftp_conn *, char *);
 
 /* Get file attributes of 'path' (follows symlinks) */
-Attrib *do_stat(struct sftp_conn *, char *, int);
+Attrib *do_stat(struct sftp_conn *, const char *, int);
 
 /* Get file attributes of 'path' (does not follow symlinks) */
-Attrib *do_lstat(struct sftp_conn *, char *, int);
+Attrib *do_lstat(struct sftp_conn *, const char *, int);
 
 /* Set file attributes of 'path' */
 int do_setstat(struct sftp_conn *, char *, Attrib *);
@@ -87,13 +87,16 @@ int do_setstat(struct sftp_conn *, char *, Attrib *);
 int do_fsetstat(struct sftp_conn *, char *, u_int, Attrib *);
 
 /* Canonicalise 'path' - caller must free result */
-char *do_realpath(struct sftp_conn *, char *);
+char *do_realpath(struct sftp_conn *, const char *);
 
 /* Get statistics for filesystem hosting file at "path" */
 int do_statvfs(struct sftp_conn *, const char *, struct sftp_statvfs *, int);
 
 /* Rename 'oldpath' to 'newpath' */
 int do_rename(struct sftp_conn *, char *, char *);
+
+/* Link 'oldpath' to 'newpath' */
+int do_hardlink(struct sftp_conn *, char *, char *);
 
 /* Rename 'oldpath' to 'newpath' */
 int do_symlink(struct sftp_conn *, char *, char *);

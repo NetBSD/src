@@ -1,5 +1,5 @@
-/*	$NetBSD: myproposal.h,v 1.3 2010/11/21 18:29:49 adam Exp $	*/
-/* $OpenBSD: myproposal.h,v 1.25 2010/04/16 01:47:26 djm Exp $ */
+/*	$NetBSD: myproposal.h,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: myproposal.h,v 1.27 2010/09/01 22:42:13 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -24,17 +24,29 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #define KEX_DEFAULT_KEX		\
+	"ecdh-sha2-nistp256," \
+	"ecdh-sha2-nistp384," \
+	"ecdh-sha2-nistp521," \
 	"diffie-hellman-group-exchange-sha256," \
 	"diffie-hellman-group-exchange-sha1," \
 	"diffie-hellman-group14-sha1," \
 	"diffie-hellman-group1-sha1"
+
 #define	KEX_DEFAULT_PK_ALG	\
-				"ssh-rsa-cert-v01@openssh.com," \
-				"ssh-dss-cert-v01@openssh.com," \
-				"ssh-rsa-cert-v00@openssh.com," \
-				"ssh-dss-cert-v00@openssh.com," \
-				"ssh-rsa,ssh-dss"
+	"ecdsa-sha2-nistp256-cert-v01@openssh.com," \
+	"ecdsa-sha2-nistp384-cert-v01@openssh.com," \
+	"ecdsa-sha2-nistp521-cert-v01@openssh.com," \
+	"ssh-rsa-cert-v01@openssh.com," \
+	"ssh-dss-cert-v01@openssh.com," \
+	"ssh-rsa-cert-v00@openssh.com," \
+	"ssh-dss-cert-v00@openssh.com," \
+	"ecdsa-sha2-nistp256," \
+	"ecdsa-sha2-nistp384," \
+	"ecdsa-sha2-nistp521," \
+	"ssh-rsa," \
+	"ssh-dss"
 
 #define	KEX_DEFAULT_ENCRYPT \
 	"aes128-ctr,aes192-ctr,aes256-ctr," \
@@ -60,7 +72,7 @@
 #define	KEX_DEFAULT_LANG	""
 
 
-static char *myproposal[PROPOSAL_MAX] = {
+static const char *myproposal[PROPOSAL_MAX] = {
 	KEX_DEFAULT_KEX,
 	KEX_DEFAULT_PK_ALG,
 	KEX_DEFAULT_ENCRYPT,

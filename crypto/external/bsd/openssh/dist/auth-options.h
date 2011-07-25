@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-options.h,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
+/*	$NetBSD: auth-options.h,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: auth-options.h,v 1.20 2010/05/07 11:30:29 djm Exp $ */
 
 /*
@@ -34,7 +34,7 @@ extern int forced_tun_device;
 extern int key_is_cert_authority;
 extern char *authorized_principals;
 
-int	auth_parse_options(struct passwd *, char *, char *, u_long);
+int	auth_parse_options(struct passwd *, const char *, const char *, u_long);
 void	auth_clear_options(void);
 int	auth_cert_options(Key *, struct passwd *);
 

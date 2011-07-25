@@ -1,3 +1,4 @@
+/*	$NetBSD: bufec.c,v 1.2 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: bufec.c,v 1.1 2010/08/31 11:54:45 djm Exp $ */
 /*
  * Copyright (c) 2010 Damien Miller <djm@mindrot.org>
@@ -14,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: bufec.c,v 1.2 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>

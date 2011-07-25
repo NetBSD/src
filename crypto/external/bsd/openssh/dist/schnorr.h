@@ -1,3 +1,4 @@
+/*	$NetBSD: schnorr.h,v 1.2 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: schnorr.h,v 1.1 2009/03/05 07:18:19 djm Exp $ */
 /*
  * Copyright (c) 2009 Damien Miller.  All rights reserved.

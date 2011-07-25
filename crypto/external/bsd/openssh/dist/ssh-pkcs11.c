@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-pkcs11.c,v 1.3 2010/12/02 10:23:51 he Exp $	*/
+/*	$NetBSD: ssh-pkcs11.c,v 1.4 2011/07/25 03:03:11 christos Exp $	*/
 /* $OpenBSD: ssh-pkcs11.c,v 1.6 2010/06/08 21:32:19 markus Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11.c,v 1.3 2010/12/02 10:23:51 he Exp $");
+__RCSID("$NetBSD: ssh-pkcs11.c,v 1.4 2011/07/25 03:03:11 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -278,7 +278,7 @@ pkcs11_rsa_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
 	} else {
 		/* XXX handle CKR_BUFFER_TOO_SMALL */
 		tlen = RSA_size(rsa);
-		rv = f->C_Sign(si->session, (CK_BYTE *)from, flen, to, &tlen);
+		rv = f->C_Sign(si->session, __UNCONST(from), flen, to, &tlen);
 		if (rv == CKR_OK) 
 			rval = tlen;
 		else 
