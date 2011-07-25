@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.28 2010/05/04 04:57:34 macallan Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.29 2011/07/25 18:02:47 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.28 2010/05/04 04:57:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.29 2011/07/25 18:02:47 njoly Exp $");
 
 #include "opt_rasops.h"
 
@@ -53,7 +53,6 @@ static void 	rasops24_putchar8(void *, int, int, u_int, long attr);
 static void 	rasops24_putchar12(void *, int, int, u_int, long attr);
 static void 	rasops24_putchar16(void *, int, int, u_int, long attr);
 static void	rasops24_makestamp(struct rasops_info *, long);
-#endif
 
 /*
  * 4x1 stamp for optimized character blitting
@@ -61,6 +60,7 @@ static void	rasops24_makestamp(struct rasops_info *, long);
 static int32_t	stamp[64];
 static long	stamp_attr;
 static int	stamp_mutex;	/* XXX see note in readme */
+#endif
 
 /*
  * XXX this confuses the hell out of gcc2 (not egcs) which always insists
