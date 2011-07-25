@@ -1,9 +1,9 @@
-/*	$NetBSD: version.h,v 1.5 2010/11/21 18:59:04 adam Exp $	*/
-/* $OpenBSD: version.h,v 1.59 2010/08/08 16:26:42 djm Exp $ */
+/*	$NetBSD: version.h,v 1.6 2011/07/25 03:03:11 christos Exp $	*/
+/* $OpenBSD: version.h,v 1.61 2011/02/04 00:44:43 djm Exp $ */
 
-#define __OPENSSH_VERSION	"OpenSSH_5.6"
-#define __NETBSDSSH_VERSION	"NetBSD_Secure_Shell-20091226"
-#define SSH_HPN         "-hpn13v10"
+#define __OPENSSH_VERSION	"OpenSSH_5.8"
+#define __NETBSDSSH_VERSION	"NetBSD_Secure_Shell-20110722"
+#define SSH_HPN         "-hpn13v11"
 #define SSH_LPK		"-lpk"
 /*
  * it is important to retain OpenSSH version identification part, it is

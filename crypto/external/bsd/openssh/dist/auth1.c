@@ -1,5 +1,5 @@
-/*	$NetBSD: auth1.c,v 1.4 2011/05/24 14:26:55 joerg Exp $	*/
-/* $OpenBSD: auth1.c,v 1.74 2010/06/25 08:46:17 djm Exp $ */
+/*	$NetBSD: auth1.c,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: auth1.c,v 1.75 2010/08/31 09:58:37 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth1.c,v 1.4 2011/05/24 14:26:55 joerg Exp $");
+__RCSID("$NetBSD: auth1.c,v 1.5 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -56,7 +56,7 @@ static int auth1_process_kerberos(Authctxt *, char *, size_t);
 
 struct AuthMethod1 {
 	int type;
-	char *name;
+	const char *name;
 	int *enabled;
 	int (*method)(Authctxt *, char *, size_t);
 };
@@ -106,7 +106,7 @@ static const struct AuthMethod1
 	return (NULL);
 }
 
-static char *
+static const char *
 get_authname(int type)
 {
 	const struct AuthMethod1 *a;
@@ -217,7 +217,7 @@ auth1_process_rhosts_rsa(Authctxt *authctxt, char *info, size_t infolen)
 	 * trust the client; root on the client machine can
 	 * claim to be any user.
 	 */
-	client_user = packet_get_string(&ulen);
+	client_user = packet_get_cstring(&ulen);
 
 	/* Get the client host key. */
 	client_host_key = key_new(KEY_RSA1);
@@ -317,7 +317,7 @@ do_authloop(Authctxt *authctxt)
 #if defined(KRB4) || defined(KRB5)
 	    (!options.kerberos_authentication || options.kerberos_or_local_passwd) &&
 #endif
-	    PRIVSEP(auth_password(authctxt, ""))) {
+	    PRIVSEP(auth_password(authctxt, __UNCONST("")))) {
 #ifdef USE_PAM
  		if (options.use_pam && PRIVSEP(do_pam_account()))
 #endif
@@ -389,7 +389,7 @@ do_authloop(Authctxt *authctxt)
 				while (len > 0 && msg[--len] == '\n')
 					msg[len] = '\0';
 			else
-				msg = "Access denied.";
+				msg = __UNCONST("Access denied.");
 			packet_disconnect("%s", msg);
 		}
 #endif
@@ -424,7 +424,7 @@ do_authentication(Authctxt *authctxt)
 	packet_read_expect(SSH_CMSG_USER);
 
 	/* Get the user name. */
-	user = packet_get_string(&ulen);
+	user = packet_get_cstring(&ulen);
 	packet_check_eom();
 
 	if ((style = strchr(user, ':')) != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-serv.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: gss-serv.c,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: gss-serv.c,v 1.22 2008/05/08 12:02:23 djm Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: gss-serv.c,v 1.3 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: gss-serv.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 
 static ssh_gssapi_client gssapi_client =
     { GSS_C_EMPTY_BUFFER, GSS_C_EMPTY_BUFFER,
-    GSS_C_NO_CREDENTIAL, NULL, {NULL, NULL, NULL}};
+    GSS_C_NO_CREDENTIAL, NULL, {NULL, NULL, NULL, NULL}};
 
 ssh_gssapi_mech gssapi_null_mech =
     { NULL, NULL, {0, NULL}, NULL, NULL, NULL, NULL};

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: log.h,v 1.17 2008/06/13 00:12:02 dtucker Exp $ */
 
 /*
@@ -44,7 +44,7 @@ typedef enum {
 	SYSLOG_LEVEL_NOT_SET = -1
 }       LogLevel;
 
-void     log_init(char *, LogLevel, SyslogFacility, int);
+void     log_init(const char *, LogLevel, SyslogFacility, int);
 
 SyslogFacility	log_facility_number(char *);
 const char * 	log_facility_name(SyslogFacility);

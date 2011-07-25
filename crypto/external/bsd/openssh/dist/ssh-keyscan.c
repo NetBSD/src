@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.4 2010/11/21 18:29:49 adam Exp $	*/
-/* $OpenBSD: ssh-keyscan.c,v 1.82 2010/06/22 04:54:30 djm Exp $ */
+/*	$NetBSD: ssh-keyscan.c,v 1.5 2011/07/25 03:03:11 christos Exp $	*/
+/* $OpenBSD: ssh-keyscan.c,v 1.84 2011/01/04 20:44:13 otto Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -9,7 +9,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.4 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.5 2011/07/25 03:03:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,9 +52,10 @@ int IPv4or6 = AF_UNSPEC;
 
 int ssh_port = SSH_DEFAULT_PORT;
 
-#define KT_RSA1	1
-#define KT_DSA	2
-#define KT_RSA	4
+#define KT_RSA1		1
+#define KT_DSA		2
+#define KT_RSA		4
+#define KT_ECDSA	8
 
 int get_keytypes = KT_RSA;	/* Get only RSA keys by default */
 
@@ -160,7 +161,7 @@ xstrsep(char **str, const char *delim)
  * null token for two adjacent separators, so we may have to loop.
  */
 static char *
-strnnsep(char **stringp, char *delim)
+strnnsep(char **stringp, const char *delim)
 {
 	char *tok;
 
@@ -235,12 +236,14 @@ keygrab_ssh2(con *c)
 	packet_set_connection(c->c_fd, c->c_fd);
 	enable_compat20();
 	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = c->c_keytype == KT_DSA?
-	    "ssh-dss": "ssh-rsa";
+	    "ssh-dss" : (c->c_keytype == KT_RSA ? "ssh-rsa" :
+	    "ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521");
 	c->c_kex = kex_setup(myproposal);
 	c->c_kex->kex[KEX_DH_GRP1_SHA1] = kexdh_client;
 	c->c_kex->kex[KEX_DH_GRP14_SHA1] = kexdh_client;
 	c->c_kex->kex[KEX_DH_GEX_SHA1] = kexgex_client;
 	c->c_kex->kex[KEX_DH_GEX_SHA256] = kexgex_client;
+	c->c_kex->kex[KEX_ECDH_SHA2] = kexecdh_client;
 	c->c_kex->verify_host_key = hostjump;
 
 	if (!(j = setjmp(kexjmp))) {
@@ -561,7 +564,7 @@ do_host(char *host)
 
 	if (name == NULL)
 		return;
-	for (j = KT_RSA1; j <= KT_RSA; j *= 2) {
+	for (j = KT_RSA1; j <= KT_ECDSA; j *= 2) {
 		if (get_keytypes & j) {
 			while (ncon >= MAXCON)
 				conloop();
@@ -659,6 +662,9 @@ main(int argc, char **argv)
 					break;
 				case KEY_DSA:
 					get_keytypes |= KT_DSA;
+					break;
+				case KEY_ECDSA:
+					get_keytypes |= KT_ECDSA;
 					break;
 				case KEY_RSA:
 					get_keytypes |= KT_RSA;

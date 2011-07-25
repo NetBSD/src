@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.c,v 1.4 2010/11/21 18:29:49 adam Exp $	*/
-/* $OpenBSD: readconf.c,v 1.187 2010/07/19 09:15:12 djm Exp $ */
+/*	$NetBSD: readconf.c,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: readconf.c,v 1.190 2010/11/13 23:27:50 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,12 +14,14 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.4 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.5 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -142,6 +144,7 @@ typedef enum {
 	oHashKnownHosts,
 	oTunnel, oTunnelDevice, oLocalCommand, oPermitLocalCommand,
 	oVisualHostKey, oUseRoaming, oZeroKnowledgePasswordAuthentication,
+	oKexAlgorithms, oIPQoS,
 	oNoneEnabled, oTcpRcvBufPoll, oTcpRcvBuf, oNoneSwitch, oHPNDisabled,
 	oHPNBufferSize,
 	oDeprecated, oUnsupported
@@ -260,12 +263,15 @@ static struct {
 #else
 	{ "zeroknowledgepasswordauthentication", oUnsupported },
 #endif
+	{ "kexalgorithms", oKexAlgorithms },
+	{ "ipqos", oIPQoS },
 	{ "noneenabled", oNoneEnabled },
 	{ "tcprcvbufpoll", oTcpRcvBufPoll },
 	{ "tcprcvbuf", oTcpRcvBuf },
 	{ "noneswitch", oNoneSwitch },
 	{ "hpndisabled", oHPNDisabled },
 	{ "hpnbuffersize", oHPNBufferSize },
+
 	{ NULL, oBadOption }
 };
 
@@ -776,6 +782,18 @@ parse_int:
 			options->macs = xstrdup(arg);
 		break;
 
+	case oKexAlgorithms:
+		arg = strdelim(&s);
+		if (!arg || *arg == '\0')
+			fatal("%.200s line %d: Missing argument.",
+			    filename, linenum);
+		if (!kex_names_valid(arg))
+			fatal("%.200s line %d: Bad SSH2 KexAlgorithms '%s'.",
+			    filename, linenum, arg ? arg : "<NONE>");
+		if (*activep && options->kex_algorithms == NULL)
+			options->kex_algorithms = xstrdup(arg);
+		break;
+
 	case oHostKeyAlgorithms:
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
@@ -1038,6 +1056,23 @@ parse_int:
 		intptr = &options->visual_host_key;
 		goto parse_flag;
 
+	case oIPQoS:
+		arg = strdelim(&s);
+		if ((value = parse_ipqos(arg)) == -1)
+			fatal("%s line %d: Bad IPQoS value: %s",
+			    filename, linenum, arg);
+		arg = strdelim(&s);
+		if (arg == NULL)
+			value2 = value;
+		else if ((value2 = parse_ipqos(arg)) == -1)
+			fatal("%s line %d: Bad IPQoS value: %s",
+			    filename, linenum, arg);
+		if (*activep) {
+			options->ip_qos_interactive = value;
+			options->ip_qos_bulk = value2;
+		}
+		break;
+
 	case oUseRoaming:
 		intptr = &options->use_roaming;
 		goto parse_flag;
@@ -1166,6 +1201,7 @@ initialize_options(Options * options)
 	options->cipher = -1;
 	options->ciphers = NULL;
 	options->macs = NULL;
+	options->kex_algorithms = NULL;
 	options->hostkeyalgorithms = NULL;
 	options->protocol = SSH_PROTO_UNKNOWN;
 	options->num_identity_files = 0;
@@ -1208,6 +1244,8 @@ initialize_options(Options * options)
 	options->use_roaming = -1;
 	options->visual_host_key = -1;
 	options->zero_knowledge_password_authentication = -1;
+	options->ip_qos_interactive = -1;
+	options->ip_qos_bulk = -1;
 	options->none_switch = -1;
 	options->none_enabled = -1;
 	options->hpn_disabled = -1;
@@ -1237,7 +1275,7 @@ fill_default_options(Options * options)
 	if (options->exit_on_forward_failure == -1)
 		options->exit_on_forward_failure = 0;
 	if (options->xauth_location == NULL)
-		options->xauth_location = _PATH_XAUTH;
+		options->xauth_location = __UNCONST(_PATH_XAUTH);
 	if (options->gateway_ports == -1)
 		options->gateway_ports = 0;
 	if (options->use_privileged_port == -1)
@@ -1297,6 +1335,7 @@ fill_default_options(Options * options)
 		options->cipher = SSH_CIPHER_NOT_SET;
 	/* options->ciphers, default set in myproposals.h */
 	/* options->macs, default set in myproposals.h */
+	/* options->kex_algorithms, default set in myproposals.h */
 	/* options->hostkeyalgorithms, default set in myproposals.h */
 	if (options->protocol == SSH_PROTO_UNKNOWN)
 		options->protocol = SSH_PROTO_2;
@@ -1320,18 +1359,24 @@ fill_default_options(Options * options)
 			    xmalloc(len);
 			snprintf(options->identity_files[options->num_identity_files++],
 			    len, "~/%.100s", _PATH_SSH_CLIENT_ID_DSA);
+
+			len = 2 + strlen(_PATH_SSH_CLIENT_ID_ECDSA) + 1;
+			options->identity_files[options->num_identity_files] =
+			    xmalloc(len);
+			snprintf(options->identity_files[options->num_identity_files++],
+			    len, "~/%.100s", _PATH_SSH_CLIENT_ID_ECDSA);
 		}
 	}
 	if (options->escape_char == -1)
 		options->escape_char = '~';
 	if (options->system_hostfile == NULL)
-		options->system_hostfile = _PATH_SSH_SYSTEM_HOSTFILE;
+		options->system_hostfile = __UNCONST(_PATH_SSH_SYSTEM_HOSTFILE);
 	if (options->user_hostfile == NULL)
-		options->user_hostfile = _PATH_SSH_USER_HOSTFILE;
+		options->user_hostfile = __UNCONST(_PATH_SSH_USER_HOSTFILE);
 	if (options->system_hostfile2 == NULL)
-		options->system_hostfile2 = _PATH_SSH_SYSTEM_HOSTFILE2;
+		options->system_hostfile2 = __UNCONST(_PATH_SSH_SYSTEM_HOSTFILE2);
 	if (options->user_hostfile2 == NULL)
-		options->user_hostfile2 = _PATH_SSH_USER_HOSTFILE2;
+		options->user_hostfile2 = __UNCONST(_PATH_SSH_USER_HOSTFILE2);
 	if (options->log_level == SYSLOG_LEVEL_NOT_SET)
 		options->log_level = SYSLOG_LEVEL_INFO;
 	if (options->clear_forwardings == 1)
@@ -1395,6 +1440,10 @@ fill_default_options(Options * options)
 		options->visual_host_key = 0;
 	if (options->zero_knowledge_password_authentication == -1)
 		options->zero_knowledge_password_authentication = 0;
+	if (options->ip_qos_interactive == -1)
+		options->ip_qos_interactive = IPTOS_LOWDELAY;
+	if (options->ip_qos_bulk == -1)
+		options->ip_qos_bulk = IPTOS_THROUGHPUT;
 	/* options->local_command should not be set by default */
 	/* options->proxy_command should not be set by default */
 	/* options->user will be set in the main program if appropriate */

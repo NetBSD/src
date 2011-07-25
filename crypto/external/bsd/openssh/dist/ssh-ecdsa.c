@@ -1,3 +1,4 @@
+/*	$NetBSD: ssh-ecdsa.c,v 1.2 2011/07/25 03:03:11 christos Exp $	*/
 /* $OpenBSD: ssh-ecdsa.c,v 1.4 2010/09/10 01:04:10 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -24,6 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: ssh-ecdsa.c,v 1.2 2011/07/25 03:03:11 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>

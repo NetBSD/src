@@ -1,5 +1,5 @@
-/*	$NetBSD: cipher-ctr.c,v 1.3 2009/07/20 15:33:44 christos Exp $	*/
-/* $OpenBSD: cipher-ctr.c,v 1.10 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: cipher-ctr.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: cipher-ctr.c,v 1.11 2010/10/01 23:05:32 djm Exp $ */
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
  *
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher-ctr.c,v 1.3 2009/07/20 15:33:44 christos Exp $");
+__RCSID("$NetBSD: cipher-ctr.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 
 #include <string.h>

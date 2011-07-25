@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.4 2010/11/21 18:59:04 adam Exp $	*/
-/* $OpenBSD: auth2-pubkey.c,v 1.26 2010/06/29 23:16:46 djm Exp $ */
+/*	$NetBSD: auth2-pubkey.c,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
+/* $OpenBSD: auth2-pubkey.c,v 1.27 2010/11/20 05:12:38 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.4 2010/11/21 18:59:04 adam Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.5 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -237,7 +237,7 @@ match_principals_file(char *file, struct passwd *pw, struct KeyCert *cert)
 		if ((ep = strrchr(cp, ' ')) != NULL ||
 		    (ep = strrchr(cp, '\t')) != NULL) {
 			for (; *ep == ' ' || *ep == '\t'; ep++)
-				;;
+				;
 			line_opts = cp;
 			cp = ep;
 		}
@@ -291,7 +291,7 @@ user_key_allowed2(struct passwd *pw, Key *key, char *file)
 		    /* Skip leading whitespace, empty and comment lines. */
 		    for (i = 0 ; i < k->num ; i++) {
 			/* dont forget if multiple keys to reset options */
-			char *cp, *options = NULL;
+			char *cp, *xoptions = NULL;
 
 			for (cp = (char *)k->keys[i]->bv_val; *cp == ' ' || *cp == '\t'; cp++)
 			    ;
@@ -302,7 +302,7 @@ user_key_allowed2(struct passwd *pw, Key *key, char *file)
 			    /* no key?  check if there are options for this key */
 			    int quoted = 0;
 			    debug2("[LDAP] user_key_allowed: check options: '%s'", cp);
-			    options = cp;
+			    xoptions = cp;
 			    for (; *cp && (quoted || (*cp != ' ' && *cp != '\t')); cp++) {
 				if (*cp == '\\' && cp[1] == '"')
 				    cp++;	/* Skip both */
@@ -320,7 +320,7 @@ user_key_allowed2(struct passwd *pw, Key *key, char *file)
 			}
 
 			if (key_equal(found, key) &&
-				auth_parse_options(pw, options, file, linenum) == 1) {
+				auth_parse_options(pw, xoptions, file, linenum) == 1) {
 			    found_key = 1;
 			    debug("[LDAP] matching key found");
 			    fp = key_fingerprint(found, SSH_FP_MD5, SSH_FP_HEX);

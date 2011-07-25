@@ -1,4 +1,4 @@
-/*	$NetBSD: canohost.c,v 1.4 2010/11/21 18:29:48 adam Exp $	*/
+/*	$NetBSD: canohost.c,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
 /* $OpenBSD: canohost.c,v 1.66 2010/01/13 01:20:20 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: canohost.c,v 1.4 2010/11/21 18:29:48 adam Exp $");
+__RCSID("$NetBSD: canohost.c,v 1.5 2011/07/25 03:03:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -199,7 +199,7 @@ get_canonical_hostname(int use_dns)
 	if (packet_connection_is_on_socket())
 		host = get_remote_hostname(packet_get_connection_in(), use_dns);
 	else
-		host = "UNKNOWN";
+		host = __UNCONST("UNKNOWN");
 
 	if (use_dns)
 		canonical_host_name = host;
