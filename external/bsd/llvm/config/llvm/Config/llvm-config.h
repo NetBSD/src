@@ -21,7 +21,7 @@
 #define LLVM_BINDIR "/usr/bin"
 
 /* Time at which LLVM was configured */
-#define LLVM_CONFIGTIME "Mon Dec  6 18:29:34 UTC 2010"
+#define LLVM_CONFIGTIME "Mon Jul 25 15:20:40 CEST 2011"
 
 /* Installation directory for data files */
 #define LLVM_DATADIR "/usr/share/llvm"
@@ -33,7 +33,7 @@
 #define LLVM_ETCDIR "/usr/etc/llvm"
 
 /* Host triple we were built on */
-#define LLVM_HOSTTRIPLE "x86_64-unknown-netbsd5.99.38"
+#define LLVM_HOSTTRIPLE "x86_64--netbsd"
 
 /* Installation directory for include files */
 #define LLVM_INCLUDEDIR "/usr/include"
@@ -59,8 +59,8 @@
 /* LLVM name for the native TargetInfo init function, if available */
 #define LLVM_NATIVE_TARGETINFO LLVMInitializeX86TargetInfo
 
-/* LLVM name for the native MCAsmInfo init function, if available */
-#define LLVM_NATIVE_MCASMINFO LLVMInitializeX86MCAsmInfo
+/* LLVM name for the native TargetMC init function, if available */
+#define LLVM_NATIVE_TARGETMC LLVMInitializeX86TargetMC
 
 /* LLVM name for the native AsmPrinter init function, if available */
 #define LLVM_NATIVE_ASMPRINTER LLVMInitializeX86AsmPrinter
