@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/07/23 23:30:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2011/07/25 18:23:14 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,8 @@ CONFIG_SUBST=	${TOOL_SED} -e 's%@prefix@%${X11ROOTDIR}%' \
 		-e 's%@FT2_EXTRA_LIBS@%%' \
 		-e 's%@build_libtool_libs@%yes%' \
 		-e 's%@hardcode_libdir_flag_spec@%-Wl,-rpath,${X11USRLIBDIR}%' \
-		-e 's%@LIBZ@%-lz%'
+		-e 's%@LIBZ@%-lz%' \
+		-e 's%@LIBBZ2@%-lbz2%'
 
 .PATH: ${X11SRCDIR.freetype}/builds/unix
 freetype-config: freetype-config.in
