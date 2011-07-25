@@ -201,3 +201,4 @@ XXX port0 rfwd (need custom response message)
 XXX send signals via mux
 
 $OpenBSD: PROTOCOL.mux,v 1.4 2011/01/31 21:42:15 djm Exp $
+$NetBSD: PROTOCOL.mux,v 1.2 2011/07/25 03:03:10 christos Exp $

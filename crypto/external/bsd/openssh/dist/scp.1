@@ -1,4 +1,4 @@
-.\"	$NetBSD: scp.1,v 1.3 2010/11/21 18:29:49 adam Exp $
+.\"	$NetBSD: scp.1,v 1.4 2011/07/25 03:03:10 christos Exp $
 .\"  -*- nroff -*-
 .\"
 .\" scp.1
@@ -10,9 +10,9 @@
 .\"
 .\" Created: Sun May  7 00:14:37 1995 ylo
 .\"
-.\" $OpenBSD: scp.1,v 1.50 2010/02/08 10:50:20 markus Exp $
+.\" $OpenBSD: scp.1,v 1.56 2010/12/09 14:13:32 jmc Exp $
 .\"
-.Dd February 8, 2010
+.Dd December 9, 2010
 .Dt SCP 1
 .Os
 .Sh NAME
@@ -21,7 +21,7 @@
 .Sh SYNOPSIS
 .Nm scp
 .Bk -words
-.Op Fl 1246BCpqrv
+.Op Fl 12346BCpqrv
 .Op Fl c Ar cipher
 .Op Fl F Ar ssh_config
 .Op Fl i Ar identity_file
@@ -77,6 +77,11 @@ to use protocol 1.
 Forces
 .Nm
 to use protocol 2.
+.It Fl 3
+Copies between two remote hosts are transferred through the local host.
+Without this option the data is copied directly between the two remote
+hosts.
+Note that this option disables the progress meter.
 .It Fl 4
 Forces
 .Nm
@@ -148,7 +153,9 @@ For full details of the options listed below, and their possible values, see
 .It HostName
 .It IdentityFile
 .It IdentitiesOnly
+.It IPQoS
 .It KbdInteractiveDevices
+.It KexAlgorithms
 .It LogLevel
 .It MACs
 .It NoHostAuthenticationForLocalhost
@@ -210,7 +217,7 @@ to print debugging messages about their progress.
 This is helpful in
 debugging connection, authentication, and configuration problems.
 .El
-.Pp
+.Sh EXIT STATUS
 .Ex -std scp
 .Sh SEE ALSO
 .Xr rcp 1 ,

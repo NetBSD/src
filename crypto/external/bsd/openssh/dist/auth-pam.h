@@ -1,3 +1,4 @@
+/*	$NetBSD: auth-pam.h,v 1.2 2011/07/25 03:03:10 christos Exp $	*/
 /* Id: auth-pam.h,v 1.27 2004/09/11 12:17:26 dtucker Exp  */
 
 /*

@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keysign.c,v 1.3 2010/11/21 18:29:49 adam Exp $	*/
-/* $OpenBSD: ssh-keysign.c,v 1.34 2010/08/16 04:06:06 djm Exp $ */
+/*	$NetBSD: ssh-keysign.c,v 1.4 2011/07/25 03:03:11 christos Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.35 2010/08/31 12:33:38 djm Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.3 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.4 2011/07/25 03:03:11 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>
@@ -190,7 +190,7 @@ main(int argc, char **argv)
 	if (key_fd[0] == -1 && key_fd[1] == -1)
 		fatal("could not open any host key");
 
-	SSLeay_add_all_algorithms();
+	OpenSSL_add_all_algorithms();
 	for (i = 0; i < 256; i++)
 		rnd[i] = arc4random();
 	RAND_seed(rnd, sizeof(rnd));
