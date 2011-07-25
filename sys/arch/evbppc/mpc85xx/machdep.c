@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2011/07/20 13:21:12 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2011/07/25 05:46:12 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,10 +38,10 @@
 
 __KERNEL_RCSID(0, "$NetSBD$");
 
-#include "opt_mpc85xx.h"
 #include "opt_altivec.h"
-#include "opt_pci.h"
 #include "opt_ddb.h"
+#include "opt_mpc85xx.h"
+#include "opt_pci.h"
 #include "gpio.h"
 #include "pci.h"
 
@@ -438,7 +438,6 @@ memprobe(vaddr_t endkernel)
 	 * to ask the DDR memory controller.
 	 */
 	mr = physmemr;
-#if 1
 	for (u_int i = 0; i < 4; i++) {
 		uint32_t v = cpu_read_4(DDRC1_BASE + CS_CONFIG(i));
 		if (v & CS_CONFIG_EN) {
@@ -447,6 +446,12 @@ memprobe(vaddr_t endkernel)
 				continue;
 			mr->start = BNDS_SA_GET(v);
 			mr->size  = BNDS_SIZE_GET(v);
+#ifdef MEMSIZE
+			if (mr->start >= MEMSIZE)
+				continue;
+			if (mr->start + mr->size > MEMSIZE)
+				mr->size = MEMSIZE - mr->start;
+#endif
 #if 0
 			printf(" [%zd]={%#"PRIx64"@%#"PRIx64"}",
 			    mr - physmemr, mr->size, mr->start);
@@ -457,11 +462,6 @@ memprobe(vaddr_t endkernel)
 
 	if (mr == physmemr)
 		panic("no memory configured!");
-#else
-	mr->start = 0;
-	mr->size = 32 << 20;
-	mr++;
-#endif
 
 	/*
 	 * Sort memory regions from low to high and coalesce adjacent regions
