@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.853 2011/07/12 08:52:17 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.854 2011/07/25 03:12:04 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -782,8 +782,8 @@ Notes:
 Patch applied after OpenSSH import.
 
 Package:	OpenSSH
-Version:	5.6
-Current Vers:	5.6 / portable 5.6p1
+Version:	5.8
+Current Vers:	5.8 / portable 5.8p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
@@ -819,6 +819,7 @@ markus is very cooperative about it):
 - handle setuid and unsetuid the posix way instead of setresuid()
 - add all missing functions
 - always bump major when importing to avoid api problems.
+- make compile with gcc-4.5; const fixes, fileno() checks, shadow fixes.
 
 Package:	OpenSSL
 Version:	1.0.1-stable-SNAP-20110605
