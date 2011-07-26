@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.22 2009/05/12 14:39:22 cegger Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.23 2011/07/26 08:59:38 mrg Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.22 2009/05/12 14:39:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.23 2011/07/26 08:59:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.22 2009/05/12 14:39:22 cegger Exp $");
 #define OFRTC_YR  5
 
 struct ofrtc_softc {
-	struct device sc_dev;
 	int sc_phandle;
 	int sc_ihandle;
 	struct todr_chip_handle sc_todr;
@@ -94,7 +93,7 @@ static void ofrtc_attach(device_t, device_t, void *);
 static int ofrtc_gettod(todr_chip_handle_t, struct clock_ymdhms *);
 static int ofrtc_settod(todr_chip_handle_t, struct clock_ymdhms *);
 
-CFATTACH_DECL(ofrtc, sizeof(struct ofrtc_softc),
+CFATTACH_DECL_NEW(ofrtc, sizeof(struct ofrtc_softc),
     ofrtc_match, ofrtc_attach, NULL, NULL);
 
 static int
