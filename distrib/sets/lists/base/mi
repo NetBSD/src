@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.780.2.16 2009/10/18 19:02:34 snj Exp $
+# $NetBSD: mi,v 1.780.2.16.4.1 2011/07/26 02:57:27 matt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -841,6 +841,7 @@
 ./usr/bin/mkfifo				base-util-bin
 ./usr/bin/mklocale				base-locale-bin
 ./usr/bin/mktemp				base-util-bin
+./usr/bin/mkubootimage				base-util-bin
 ./usr/bin/modstat				base-util-bin		!modular
 ./usr/bin/more					base-util-bin
 ./usr/bin/mset					base-tn3270-bin

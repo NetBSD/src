@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1201.2.15 2010/03/17 03:17:18 snj Exp $
+#	$NetBSD: mi,v 1.1201.2.15.4.1 2011/07/26 02:57:27 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2891,6 +2891,7 @@
 ./usr/libdata/debug/usr/bin/mklocale.debug	comp-locale-debug	debug
 ./usr/libdata/debug/usr/bin/mkstr.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/mktemp.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/mkubootimage.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/modstat.debug	comp-util-debug		!modular,debug
 ./usr/libdata/debug/usr/bin/mset.debug		comp-tn3270-debug	debug
 ./usr/libdata/debug/usr/bin/msgattrib.debug	comp-c-debug		debug
