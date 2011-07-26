@@ -1,4 +1,4 @@
-/*	$NetBSD: eppcic.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $	*/
+/*	$NetBSD: eppcic.c,v 1.6 2011/07/26 22:52:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.6 2011/07/26 22:52:47 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,8 +244,6 @@ eppcic_config_socket(struct eppcic_handle *ph)
 	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t)&eppcic_functions;
 	paa.pch = (pcmcia_chipset_handle_t)ph;
-	paa.iobase = ph->ph_space[IO].base;
-	paa.iosize = ph->ph_space[IO].size;
 	ph->ph_card = config_found_ia((void*)sc, "pcmciabus", &paa,
 				      eppcic_print);
 	

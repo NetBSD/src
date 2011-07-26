@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcmcia.c,v 1.1 2010/04/06 15:54:29 nonaka Exp $	*/
+/*	$NetBSD: shpcmcia.c,v 1.2 2011/07/26 22:52:48 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcmcia.c,v 1.1 2010/04/06 15:54:29 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcmcia.c,v 1.2 2011/07/26 22:52:48 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -312,8 +312,6 @@ shpcmcia_attach_socket(struct shpcmcia_handle *h)
 	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t)h->sc->sc_pct;
 	paa.pch = (pcmcia_chipset_handle_t)h;
-	paa.iobase = h->sc->sc_iobase;
-	paa.iosize = h->sc->sc_iosize;
 
 	h->pcmcia = config_found_ia(h->sc->sc_dev, "pcmciabus", &paa,
 				    shpcmcia_print);
