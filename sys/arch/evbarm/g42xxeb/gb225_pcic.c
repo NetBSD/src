@@ -180,8 +180,6 @@ opcic_attach(struct device *parent, struct device *self, void *aux)
 		paa.paa_busname = "pcmcia";
 		paa.pct = (pcmcia_chipset_tag_t)&sa11x0_pcmcia_functions;
 		paa.pch = (pcmcia_chipset_handle_t)&sc->sc_socket[i].ss;
-		paa.iobase = 0;
-		paa.iosize = 0x4000000;
 
 		sc->sc_socket[i].ss.pcmcia =
 		    config_found_ia(sc->sc_pc.sc_dev,

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.24 2009/03/18 10:22:28 cegger Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.25 2011/07/26 22:52:48 dyoung Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.24 2009/03/18 10:22:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.25 2011/07/26 22:52:48 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,8 +307,6 @@ plumpcmcia_attach_socket(struct plumpcmcia_handle *ph)
 	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t)&plumpcmcia_functions;
 	paa.pch = (pcmcia_chipset_handle_t)ph;
-	paa.iobase = 0;
-	paa.iosize = ph->ph_iosize;
 
 	if ((ph->ph_pcmcia = config_found_ia((void*)sc, "pcmciabus", &paa,
 	    plumpcmcia_print))) {
