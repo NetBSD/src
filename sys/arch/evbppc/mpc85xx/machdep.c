@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.2 2011/01/17 07:47:20 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.3 2011/07/26 03:32:45 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -144,7 +144,7 @@ static const uint32_t pixis_spd_map[8] = {
     [PX_SPD_50MHZ] = 50000000,
     [PX_SPD_66MHZ] = 66666666,
     [PX_SPD_83MHZ] = 83333333,
-    [PX_SPD_133MHZ] = 100000000,
+    [PX_SPD_100MHZ] = 100000000,
     [PX_SPD_133MHZ] = 133333333,
     [PX_SPD_166MHZ] = 166666667,
 };
