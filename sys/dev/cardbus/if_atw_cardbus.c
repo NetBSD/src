@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.34 2010/03/04 22:34:37 dyoung Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.35 2011/07/26 20:51:23 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.34 2010/03/04 22:34:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.35 2011/07/26 20:51:23 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -85,8 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.34 2010/03/04 22:34:37 dyoung E
 /*
  * PCI configuration space registers used by the ADM8211.
  */
-#define	ATW_PCI_IOBA		0x10	/* i/o mapped base */
-#define	ATW_PCI_MMBA		0x14	/* memory mapped base */
+#define ATW_PCI_IOBA PCI_BAR(0)	/* i/o mapped base */
+#define ATW_PCI_MMBA PCI_BAR(1)	/* memory mapped base */
 
 struct atw_cardbus_softc {
 	struct atw_softc sc_atw;

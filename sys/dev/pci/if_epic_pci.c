@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.38 2009/11/26 15:17:09 njoly Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.39 2011/07/26 20:51:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.38 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.39 2011/07/26 20:51:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.38 2009/11/26 15:17:09 njoly Exp $
 /*
  * PCI configuration space registers used by the EPIC.
  */
-#define	EPIC_PCI_IOBA		0x10	/* i/o mapped base */
-#define	EPIC_PCI_MMBA		0x14	/* memory mapped base */
+#define EPIC_PCI_IOBA PCI_BAR(0)	/* i/o mapped base */
+#define EPIC_PCI_MMBA PCI_BAR(1)	/* memory mapped base */
 
 struct epic_pci_softc {
 	struct epic_softc sc_epic;	/* real EPIC softc */
