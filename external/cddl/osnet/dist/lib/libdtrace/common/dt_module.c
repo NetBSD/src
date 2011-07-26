@@ -859,8 +859,6 @@ dt_module_update(dtrace_hdl_t *dtp, const char *name)
 	char machine[64];
 	size_t len;
 
-	printf("dt_module_update: %s\n", name);	/* XXX debug */
-
 	if (strcmp("netbsd",name) == 0) {
 		/* want the kernel */
 		strncpy(fname, "/netbsd", sizeof(fname));
