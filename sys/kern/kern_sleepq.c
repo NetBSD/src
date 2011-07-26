@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.39 2011/05/13 22:19:41 rmind Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.40 2011/07/26 13:04:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.39 2011/05/13 22:19:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.40 2011/07/26 13:04:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -166,10 +166,11 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 void
 sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 {
-	lwp_t *l2;
-	const int pri = lwp_eprio(l);
 
 	if ((sobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
+		lwp_t *l2;
+		const int pri = lwp_eprio(l);
+
 		TAILQ_FOREACH(l2, sq, l_sleepchain) {
 			if (lwp_eprio(l2) < pri) {
 				TAILQ_INSERT_BEFORE(l2, l, l_sleepchain);
