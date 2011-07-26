@@ -1,7 +1,7 @@
-/*	$NetBSD: tpfmt.c,v 1.3 2011/04/14 16:27:17 yamt Exp $	*/
+/*	$NetBSD: tpfmt.c,v 1.4 2011/07/26 12:21:27 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2010 YAMAMOTO Takashi,
+ * Copyright (c) 2010,2011 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tpfmt.c,v 1.3 2011/04/14 16:27:17 yamt Exp $");
+__RCSID("$NetBSD: tpfmt.c,v 1.4 2011/07/26 12:21:27 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/rbtree.h>
@@ -171,7 +171,7 @@ main(int argc, char *argv[])
 			distinguish_processes = false;
 			break;
 		default:
-			errx(EXIT_FAILURE, "unknown option %c", ch);
+			exit(EXIT_FAILURE);
 		}
 	}
 	argc -= optind;
