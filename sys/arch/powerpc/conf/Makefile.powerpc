@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.40.22.1 2011/01/07 02:08:24 matt Exp $
+#	$NetBSD: Makefile.powerpc,v 1.40.22.2 2011/07/26 03:41:27 matt Exp $
 #
 # Makefile for NetBSD
 #
@@ -43,13 +43,15 @@ CWARNFLAGS+=	-Wreturn-type
 CFLAGS+=	-mno-strict-align
 CFLAGS+=	-Wa,-maltivec
 .endif
+CFLAGS+=	-msdata=none
 CFLAGS+=	-msoft-float ${CCPUOPTS}
 AFLAGS+=	${AOPTS}
 
 ##
 ## (3) libkern and compat
 ##
-.if !empty(IDENT:M-DLKM)
+OPT_MODULAR=	%MODULAR%
+.if !empty(OPT_MODULAR)
 KERN_AS=	obj
 .endif
 
@@ -78,14 +80,42 @@ LINKFORMAT=	-N -T ${KERNLDSCRIPT}
 
 ENTRYPOINT=	__start
 
-.if defined(NEED_SREC)
+.if defined(NEED_MDSETIMAGE) && $(NEED_MDSETIMAGE) != "no" \
+    && defined(RAMDISKDIR) && exists(${RAMDISKDIR}/ramdisk.fs)
 SYSTEM_LD_TAIL_EXTRA+=; \
-		${OBJCOPY} -v -O srec $@ $@.srec
+	echo ${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs; \
+	${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs
 .endif
 
-.if defined(NEED_BINARY)
+.if defined(NEED_SREC) && ${NEED_SREC} != "no"
 SYSTEM_LD_TAIL_EXTRA+=; \
-		${OBJCOPY} -v -O binary $@ $@.bin
+	echo ${OBJCOPY} -O srec $@ $@.srec; \
+	${OBJCOPY} -O srec $@ $@.srec
+.endif
+
+.if defined(NEED_BINARY) && ${NEED_BINARY} != "no"
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
+	${OBJCOPY} -S -O binary $@ $@.bin
+
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}
+
+.if defined(NEED_UBOOTIMAGE) && ${NEED_UBOOTIMAGE} != "no"
+_OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
+MKUBOOTIMAGEARGS=       -A powerpc -T kernel -C gz
+MKUBOOTIMAGEARGS+=      -a ${TEXTADDR:C/....$/0000/} -e $(TEXTADDR)
+MKUBOOTIMAGEARGS+=      -n "NetBSD/$(MACHINE) ${_OSRELEASE} ($(KERNEL_BUILD:T))"
+TOOL_GZIP?=		gzip
+
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${TOOL_GZIP} -9cn $@.bin '>' $@.bin.gz; \
+	${TOOL_GZIP} -9cn $@.bin > $@.bin.gz; \
+	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin.gz $@.ub; \
+	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin.gz $@.ub
+
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin.gz@}
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.ub@}
+.endif
 .endif
 
 ##
