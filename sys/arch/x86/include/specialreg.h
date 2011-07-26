@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.51 2011/02/20 21:09:32 jruoho Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.52 2011/07/26 12:59:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -277,6 +277,7 @@
 #define	CPUID2_CX16	0x00002000	/* has CMPXCHG16B instruction */
 #define	CPUID2_xTPR	0x00004000	/* Task Priority Messages disabled? */
 #define	CPUID2_PDCM	0x00008000	/* Perf/Debug Capability MSR */
+#define	CPUID2_PCID	0x00020000	/* Process Context ID */
 #define	CPUID2_DCA	0x00040000	/* Direct Cache Access */
 #define	CPUID2_SSE41	0x00080000	/* Streaming SIMD Extensions 4.1 */
 #define	CPUID2_SSE42	0x00100000	/* Streaming SIMD Extensions 4.2 */
@@ -290,10 +291,10 @@
 #define	CPUID2_RAZ	0x80000000	/* RAZ. Indicates guest state. */
 
 #define CPUID2_FLAGS1	"\20\1SSE3\2PCLMULQDQ\3DTES64\4MONITOR\5DS-CPL\6VMX\7SMX" \
-			    "\10EST\11TM2\12SSSE3\13CID\14B11\15B12\16CX16" \
-			    "\17xTPR\20PDCM\21B16\22B17\23DCA\24SSE41\25SSE42" \
-			    "\26X2APIC\27MOVBE\30POPCNT\31B24\32AES\33XSAVE" \
-			    "\34OSXSAVE\35AVX\36F16C\37B30\40RAZ"
+			"\10EST\11TM2\12SSSE3\13CID\14B11\15B12\16CX16" \
+			"\17xTPR\20PDCM\21B16\22PCID\23DCA\24SSE41\25SSE42" \
+			"\26X2APIC\27MOVBE\30POPCNT\31B24\32AES\33XSAVE" \
+			"\34OSXSAVE\35AVX\36F16C\37B30\40RAZ"
 
 #define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 0xf)
 #define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 0xf)
@@ -413,6 +414,7 @@
 #define MSR_MC3_STATUS		0x411
 #define MSR_MC3_ADDR		0x412
 #define MSR_MC3_MISC		0x413
+				/* 0x480 - 0x490 VMX */
 
 /*
  * VIA "Nehemiah" MSRs
