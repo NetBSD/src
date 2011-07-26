@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2cvar.h,v 1.3 2007/12/07 16:01:19 macallan Exp $	*/
+/*	$NetBSD: ki2cvar.h,v 1.4 2011/07/26 08:36:02 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -83,7 +83,7 @@
 #define I2C_ERROR	0x04
 
 struct ki2c_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	u_char *sc_reg;
 	int sc_regstep;
 	

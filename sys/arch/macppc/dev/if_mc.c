@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.21 2011/07/01 18:41:52 dyoung Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.22 2011/07/26 08:36:02 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.21 2011/07/01 18:41:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.22 2011/07/26 08:36:02 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -79,7 +79,7 @@ int mc_supmedia[] = {
 
 #define N_SUPMEDIA (sizeof(mc_supmedia) / sizeof(int));
 
-CFATTACH_DECL(mc, sizeof(struct mc_softc),
+CFATTACH_DECL_NEW(mc, sizeof(struct mc_softc),
     mc_match, mc_attach, NULL, NULL);
 
 hide int
@@ -109,6 +109,7 @@ mc_attach(device_t parent, device_t self, void *aux)
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 	u_int *reg;
 
+	sc->sc_dev = self;
 	sc->sc_node = ca->ca_node;
 	sc->sc_regt = ca->ca_tag;
 
