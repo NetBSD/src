@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.58 2010/12/17 22:24:11 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.59 2011/07/26 13:09:11 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.58 2010/12/17 22:24:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.59 2011/07/26 13:09:11 yamt Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -288,6 +288,15 @@ bt_freehead_tofree(vmem_t *vm, vmem_size_t size)
 
 	return &vm->vm_freelist[idx];
 }
+
+/*
+ * bt_freehead_toalloc: return the freelist for the given size and allocation
+ * strategy.
+ *
+ * for VM_INSTANTFIT, return the list in which any blocks are large enough
+ * for the requested size.  otherwise, return the list which can have blocks
+ * large enough for the requested size.
+ */
 
 static struct vmem_freelist *
 bt_freehead_toalloc(vmem_t *vm, vmem_size_t size, vm_flag_t strat)
@@ -702,6 +711,9 @@ vmem_rehash(vmem_t *vm, size_t newhashsize, vm_flag_t flags)
 
 /*
  * vmem_fit: check if a bt can satisfy the given restrictions.
+ *
+ * it's a caller's responsibility to ensure the region is big enough
+ * before calling us.
  */
 
 static vmem_addr_t
@@ -711,7 +723,7 @@ vmem_fit(const bt_t *bt, vmem_size_t size, vmem_size_t align, vmem_size_t phase,
 	vmem_addr_t start;
 	vmem_addr_t end;
 
-	KASSERT(bt->bt_size >= size);
+	KASSERT(bt->bt_size >= size); /* caller's responsibility */
 
 	/*
 	 * XXX assumption: vmem_addr_t and vmem_size_t are
@@ -912,6 +924,10 @@ vmem_xalloc(vmem_t *vm, vmem_size_t size0, vmem_size_t align, vmem_size_t phase,
 	if (align == 0) {
 		align = vm->vm_quantum_mask + 1;
 	}
+
+	/*
+	 * allocate boundary tags before acquiring the vmem lock.
+	 */
 	btnew = bt_alloc(vm, flags);
 	if (btnew == NULL) {
 		return VMEM_ADDR_NULL;
@@ -922,6 +938,9 @@ vmem_xalloc(vmem_t *vm, vmem_size_t size0, vmem_size_t align, vmem_size_t phase,
 		return VMEM_ADDR_NULL;
 	}
 
+	/*
+	 * choose a free block from which we allocate.
+	 */
 retry_strat:
 	first = bt_freehead_toalloc(vm, size, strat);
 	end = &vm->vm_freelist[VMEM_MAXORDER];
@@ -930,6 +949,13 @@ retry:
 	VMEM_LOCK(vm);
 	vmem_check(vm);
 	if (strat == VM_INSTANTFIT) {
+		/*
+		 * just choose the first block which satisfies our restrictions.
+		 *
+		 * note that we don't need to check the size of the blocks
+		 * because any blocks found on these list should be larger than
+		 * the given size.
+		 */
 		for (list = first; list < end; list++) {
 			bt = LIST_FIRST(list);
 			if (bt != NULL) {
@@ -938,9 +964,27 @@ retry:
 				if (start != VMEM_ADDR_NULL) {
 					goto gotit;
 				}
+				/*
+				 * don't bother to follow the bt_freelist link
+				 * here.  the list can be very long and we are
+				 * told to run fast.  blocks from the later free
+				 * lists are larger and have better chances to
+				 * satisfy our restrictions.
+				 */
 			}
 		}
 	} else { /* VM_BESTFIT */
+		/*
+		 * we assume that, for space efficiency, it's better to
+		 * allocate from a smaller block.  thus we will start searching
+		 * from the lower-order list than VM_INSTANTFIT.
+		 * however, don't bother to find the smallest block in a free
+		 * list because the list can be very long.  we can revisit it
+		 * if/when it turns out to be a problem.
+		 *
+		 * note that the 'first' list can contain blocks smaller than
+		 * the requested size.  thus we need to check bt_size.
+		 */
 		for (list = first; list < end; list++) {
 			LIST_FOREACH(bt, list, bt_freelist) {
 				if (bt->bt_size >= size) {
