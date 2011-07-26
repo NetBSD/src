@@ -1,4 +1,4 @@
-/*	$NetBSD: tpfmt.c,v 1.4 2011/07/26 12:21:27 yamt Exp $	*/
+/*	$NetBSD: tpfmt.c,v 1.5 2011/07/26 12:24:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010,2011 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tpfmt.c,v 1.4 2011/07/26 12:21:27 yamt Exp $");
+__RCSID("$NetBSD: tpfmt.c,v 1.5 2011/07/26 12:24:16 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/rbtree.h>
@@ -52,6 +52,7 @@ static const char ksyms[] = "/dev/ksyms";
 
 static bool filter_by_pid;
 static pid_t target_pid;
+static bool per_symbol;
 
 struct addr {
 	struct rb_node node;
@@ -143,7 +144,7 @@ main(int argc, char *argv[])
 	extern char *optarg;
 	extern int optind;
 
-	while ((ch = getopt(argc, argv, "CkLPp:")) != -1) {
+	while ((ch = getopt(argc, argv, "CkLPp:s")) != -1) {
 		uintmax_t val;
 		char *ep;
 
@@ -169,6 +170,9 @@ main(int argc, char *argv[])
 			break;
 		case 'P':	/* don't distinguish processes */
 			distinguish_processes = false;
+			break;
+		case 's':	/* per symbol */
+			per_symbol = true;
 			break;
 		default:
 			exit(EXIT_FAILURE);
@@ -224,6 +228,15 @@ main(int argc, char *argv[])
 			a->cpuid = 0;
 		}
 		a->in_kernel = in_kernel;
+		if (per_symbol) {
+			const char *name;
+			uint64_t offset;
+
+			name = ksymlookup(a->addr, &offset);
+			if (name != NULL) {
+				a->addr -= offset;
+			}
+		}
 		a->nsamples = 1;
 		o = rb_tree_insert_node(&addrtree, a);
 		if (o != a) {
