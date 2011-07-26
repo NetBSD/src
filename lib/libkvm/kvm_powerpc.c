@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc.c,v 1.8.20.1 2011/01/07 03:20:10 matt Exp $	*/
+/*	$NetBSD: kvm_powerpc.c,v 1.8.20.2 2011/07/26 02:58:05 matt Exp $	*/
 
 /*
  * Copyright (c) 2005 Wasabi Systems, Inc.
@@ -83,12 +83,13 @@
 #include "kvm_private.h"
 
 #include <sys/kcore.h>
-#include <machine/kcore.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/oea/spr.h>
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/pte.h>
+
+#include <machine/kcore.h>
 
 static int	_kvm_match_601bat(kvm_t *kd, u_long va, u_long *pa, int *off);
 static int	_kvm_match_bat(kvm_t *kd, u_long va, u_long *pa, int *off);
@@ -123,22 +124,19 @@ _kvm_match_601bat(kd, va, pa, off)
 	int *off;
 {
 	cpu_kcore_hdr_t	*cpu_kh;
+	struct bat	*b;
 	u_long		pgoff;
 	size_t		size;
-	int		i, nbat;
 
 	cpu_kh = kd->cpu_data;
-	nbat = 4;
-	for (i=0 ; i<nbat ; i++) {
-		if (!BAT601_VALID_P(cpu_kh->dbatu[i]))
-			continue;
-		if (BAT601_VA_MATCH_P(cpu_kh->dbatu[i], cpu_kh->dbatl[i], va)) {
-			size = BAT601_SIZE(cpu_kh->dbatu[i] & BAT601_BSM);
-			pgoff = va & (size-1);
-			*pa = (cpu_kh->dbatl[i] & BAT601_PBN) + pgoff;
-			*off = size - pgoff;
-			return 1;
-		}
+	b = &cpu_kh->battable[BAT_VA2IDX(va)];
+	if (BAT601_VALID_P(b->batu)
+	    && BAT601_VA_MATCH_P(b->batu, b->batl, va)) {
+		size = BAT601_SIZE(b->batu & BAT601_BSM);
+		pgoff = va & (size-1);
+		*pa = (b->batl & BAT601_PBN) + pgoff;
+		*off = size - pgoff;
+		return 1;
 	}
 	return 0;
 }
@@ -155,24 +153,23 @@ _kvm_match_bat(kd, va, pa, off)
 	int *off;
 {
 	cpu_kcore_hdr_t	*cpu_kh;
+	struct bat	*b;
 	u_long		pgoff;
 	size_t		size;
-	int		i, nbat;
 
 	cpu_kh = kd->cpu_data;
+
 	/*
 	 * Assume that we're looking for data and check only the dbats.
 	 */
-	nbat = 8;
-	for (i=0 ; i<nbat ; i++) {
-		if (   ((cpu_kh->dbatu[i] & BAT_Vs) != 0)
-		    && (BAT_VA_MATCH_P(cpu_kh->dbatu[i], va))) {
-			size = BAT_SIZE(cpu_kh->dbatu[i] & BAT_BL);
-			pgoff = va & (size-1);
-			*pa = (cpu_kh->dbatl[i] & BAT_RPN) + pgoff;
-			*off = size - pgoff;
-			return 1;
-		}
+	b = &cpu_kh->battable[BAT_VA2IDX(va)];
+	
+	if ((b->batu & BAT_Vs) != 0 && (BAT_VA_MATCH_P(b->batu, va))) {
+		size = BAT_SIZE(b->batu & BAT_BL);
+		pgoff = va & (size-1);
+		*pa = (b->batl & BAT_RPN) + pgoff;
+		*off = size - pgoff;
+		return 1;
 	}
 	return 0;
 }

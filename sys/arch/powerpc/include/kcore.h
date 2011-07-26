@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.5 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: kcore.h,v 1.5.104.1 2011/07/26 02:58:05 matt Exp $	*/
 
 /*
  * Copyright (c) 2005 Wasabi Systems, Inc.
@@ -38,6 +38,8 @@
 #ifndef	_POWERPC_KCORE_H_
 #define	_POWERPC_KCORE_H_
 
+#include <powerpc/oea/bat.h>
+
 /*
  * Support for 4xx/8xx/82xx/etc, will probably make this a union.
  * The pad/pvr should be kept in the same place, though, so we can
@@ -48,11 +50,7 @@ typedef struct cpu_kcore_hdr {
 	uint32_t	pvr;		/* PVR */
 	register_t	sdr1;		/* SDR1 */
 	register_t	sr[16];		/* Segment registers */
-	register_t	dbatl[8];	/* DBATL[] */
-	register_t	dbatu[8];	/* DBATU[] */
-	register_t	ibatl[8];	/* IBATL[] */
-	register_t	ibatu[8];	/* IBATU[] */
-	register_t	pad_reg;	/* Pad for 32-bit systems */
+	struct bat	battable[BAT_VA2IDX(0xffffffffU)+1];
 } cpu_kcore_hdr_t;
 
 #endif	/* _POWERPC_KCORE_H_ */
