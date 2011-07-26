@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_pcic.c,v 1.9 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: pxa2x0_pcic.c,v 1.10 2011/07/26 22:52:48 dyoung Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.9 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.10 2011/07/26 22:52:48 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,8 +377,6 @@ pxapcic_attach_common(struct pxapcic_softc *sc,
 		paa.paa_busname = "pcmcia";
 		paa.pct = (pcmcia_chipset_tag_t)&pxapcic_pcmcia_functions;
 		paa.pch = (pcmcia_chipset_handle_t)so;
-		paa.iobase = 0;
-		paa.iosize = 0x4000000;
 
 		so->pcmcia = config_found_ia(sc->sc_dev, "pcmciabus", &paa,
 		    pxapcic_print);

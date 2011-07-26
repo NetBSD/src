@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.48 2011/07/20 20:46:49 dyoung Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.49 2011/07/26 22:52:48 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.48 2011/07/20 20:46:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.49 2011/07/26 22:52:48 dyoung Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -418,8 +418,6 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 
 	paa.paa_busname = "pcmcia";
 	paa.pch = (pcmcia_chipset_handle_t)ch;
-	paa.iobase = ch->ch_iobase;
-	paa.iosize = ch->ch_iosize;
 
 	ch->ch_pcmcia = config_found_sm_loc(parent, "pcmciabus", NULL, &paa,
 	    hd64461pcmcia_print, hd64461pcmcia_submatch);

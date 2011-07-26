@@ -1,4 +1,4 @@
-/*      $NetBSD: ipaq_pcic.c,v 1.20 2011/07/19 15:37:38 dyoung Exp $        */
+/*      $NetBSD: ipaq_pcic.c,v 1.21 2011/07/26 22:52:48 dyoung Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.20 2011/07/19 15:37:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.21 2011/07/26 22:52:48 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,8 +125,6 @@ ipaqpcic_attach(device_t parent, device_t self, void *aux)
 		paa.paa_busname = "pcmcia";
 		paa.pct = (pcmcia_chipset_tag_t)&sa11x0_pcmcia_functions;
 		paa.pch = (pcmcia_chipset_handle_t)&sc->sc_socket[i];
-		paa.iobase = 0;
-		paa.iosize = 0x4000000;
 
 		sc->sc_socket[i].pcmcia =
 		    config_found_ia(sc->sc_pc.sc_dev, "pcmciabus",

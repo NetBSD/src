@@ -1,4 +1,4 @@
-/* $NetBSD: aupcmcia.c,v 1.6 2008/01/08 13:26:26 dogcow Exp $ */
+/* $NetBSD: aupcmcia.c,v 1.7 2011/07/26 22:52:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 /* #include "pci.h" */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.6 2008/01/08 13:26:26 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.7 2011/07/26 22:52:49 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -267,9 +267,6 @@ aupcm_attach(struct device *parent, struct device *self, void *aux)
 		paa.paa_busname = "pcmcia";
 		paa.pct = sc->sc_pct;
 		paa.pch = (pcmcia_chipset_handle_t)sp;
-
-		paa.iobase = 0;
-		paa.iosize = AUPCMCIA_MAP_SIZE;
 
 		sp->as_pcmcia = config_found(&sc->sc_dev, &paa, aupcm_print);
 

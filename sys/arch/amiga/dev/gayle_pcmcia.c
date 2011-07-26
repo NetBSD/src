@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.24 2011/01/13 22:02:05 phx Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.25 2011/07/26 22:52:47 dyoung Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.24 2011/01/13 22:02:05 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.25 2011/07/26 22:52:47 dyoung Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -174,8 +174,6 @@ pccard_attach(struct device *parent, struct device *myself, void *aux)
 	paa.paa_busname = "pcmcia";
 	paa.pct = &chip_functions;
 	paa.pch = &self->devs[0];
-	paa.iobase = 0;
-	paa.iosize = 0;
 	self->devs[0].card =
 		config_found(myself, &paa, simple_devprint);
 	if (self->devs[0].card == NULL) {

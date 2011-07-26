@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.20 2011/07/19 15:17:20 dyoung Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.21 2011/07/26 22:52:49 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.20 2011/07/19 15:17:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.21 2011/07/26 22:52:49 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -360,8 +360,6 @@ mmeyepcmcia_attach_socket(struct mmeyepcmcia_handle *h)
 	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t) h->sc->pct;
 	paa.pch = (pcmcia_chipset_handle_t) h;
-	paa.iobase = h->sc->iobase;
-	paa.iosize = h->sc->iosize;
 
 	h->pcmcia = config_found_ia(&h->sc->dev, "pcmciabus", &paa,
 				    mmeyepcmcia_print);
