@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.21 2011/07/01 20:31:39 dyoung Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.22 2011/07/26 22:52:47 dyoung Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.21 2011/07/01 20:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.22 2011/07/26 22:52:47 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,6 @@ sacpcic_attach_common(struct sacc_softc *psc, struct sacpcic_softc *sc,
 		paa.paa_busname = "pcmcia";
 		paa.pct = (pcmcia_chipset_tag_t)&sa11x0_pcmcia_functions;
 		paa.pch = (pcmcia_chipset_handle_t)&sc->sc_socket[i];
-		paa.iobase = 0;
-		paa.iosize = 0x4000000;
 
 		sc->sc_socket[i].pcmcia =
 		    config_found_ia(sc->sc_pc.sc_dev, "pcmciabus", &paa,
