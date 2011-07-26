@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3obio.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $	*/
+/*	$NetBSD: pq3obio.c,v 1.1.2.2 2011/07/26 03:35:24 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3obio.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3obio.c,v 1.1.2.2 2011/07/26 03:35:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,21 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: pq3obio.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $")
 #include <powerpc/booke/cpuvar.h>
 #include <powerpc/booke/e500var.h>
 #include <powerpc/booke/e500reg.h>
-
-struct pq3lbc_softc {
-	bus_addr_t lbc_base;
-	bus_addr_t lbc_limit;
-	uint32_t lbc_br;
-	uint32_t lbc_or;
-};
-
-struct pq3obio_softc {
-	device_t sc_dev;
-	bus_space_tag_t sc_bst;
-	bus_space_handle_t sc_bsh;
-	struct pq3lbc_softc sc_lbcs[8];
-	struct powerpc_bus_space sc_obio_bst;
-};
+#include <powerpc/booke/obiovar.h>
 
 static int pq3obio_match(device_t, cfdata_t, void *);
 static void pq3obio_attach(device_t, device_t, void *);
