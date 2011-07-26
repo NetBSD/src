@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.40 2010/03/05 00:54:01 dyoung Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.41 2011/07/26 20:51:23 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.40 2010/03/05 00:54:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.41 2011/07/26 20:51:23 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -105,8 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.40 2010/03/05 00:54:01 dyoung E
 /*
  * PCI configuration space registers used by the RTL8180.
  */
-#define	RTW_PCI_IOBA		0x10	/* i/o mapped base */
-#define	RTW_PCI_MMBA		0x14	/* memory mapped base */
+#define RTW_PCI_IOBA PCI_BAR(0)	/* i/o mapped base */
+#define RTW_PCI_MMBA PCI_BAR(1)	/* memory mapped base */
 
 struct rtw_cardbus_softc {
 	struct rtw_softc sc_rtw;	/* real RTL8180 softc */

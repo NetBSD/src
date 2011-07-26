@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.53 2010/03/22 23:03:30 dyoung Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.54 2011/07/26 20:51:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.53 2010/03/22 23:03:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.54 2011/07/26 20:51:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,9 @@ struct ex_pci_softc {
  * XXX These should be in a common file!
  */
 #define PCI_CONN		0x48    /* Connector type */
-#define PCI_CBIO		0x10    /* Configuration Base IO Address */
+#define PCI_CBIO PCI_BAR(0)    /* Configuration Base IO Address */
 #define PCI_POWERCTL		0xe0
-#define PCI_FUNCMEM		0x18
+#define PCI_FUNCMEM PCI_BAR(2)
 
 #define PCI_INTR		4
 #define PCI_INTRACK		0x00008000

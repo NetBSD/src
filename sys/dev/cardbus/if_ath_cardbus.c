@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.42 2010/03/04 22:34:37 dyoung Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.43 2011/07/26 20:51:23 dyoung Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.42 2010/03/04 22:34:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.43 2011/07/26 20:51:23 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.42 2010/03/04 22:34:37 dyoung E
 /*
  * PCI configuration space registers
  */
-#define	ATH_PCI_MMBA		0x10	/* memory mapped base */
+#define ATH_PCI_MMBA PCI_BAR(0)	/* memory mapped base */
 
 struct ath_cardbus_softc {
 	struct ath_softc	sc_ath;

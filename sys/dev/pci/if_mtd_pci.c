@@ -1,4 +1,4 @@
-/* $NetBSD: if_mtd_pci.c,v 1.15 2009/11/26 15:17:09 njoly Exp $ */
+/* $NetBSD: if_mtd_pci.c,v 1.16 2011/07/26 20:51:24 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 /* TODO: Check why in IO space, the MII won't work. Memory mapped works */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.15 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.16 2011/07/26 20:51:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.15 2009/11/26 15:17:09 njoly Exp $"
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-#define PCI_IO_MAP_REG		0x10
-#define PCI_MEM_MAP_REG		0x14
+#define PCI_IO_MAP_REG PCI_BAR(0)
+#define PCI_MEM_MAP_REG PCI_BAR(1)
 
 struct mtd_pci_device_id {
 	pci_vendor_id_t		vendor;		/* PCI vendor ID */

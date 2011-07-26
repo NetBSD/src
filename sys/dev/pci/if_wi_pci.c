@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.52 2010/11/23 04:36:09 christos Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.53 2011/07/26 20:51:24 dyoung Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.52 2010/11/23 04:36:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.53 2011/07/26 20:51:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,11 +66,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.52 2010/11/23 04:36:09 christos Exp 
 #include <dev/ic/wireg.h>
 #include <dev/ic/wivar.h>
 
-#define WI_PCI_CBMA		0x10	/* Configuration Base Memory Address */
+#define WI_PCI_CBMA PCI_BAR(0)	/* Configuration Base Memory Address */
 #define WI_PCI_PLX_LOMEM	0x10	/* PLX chip membase */
-#define WI_PCI_PLX_LOIO		0x14	/* PLX chip iobase */
-#define WI_PCI_LOMEM		0x18	/* ISA membase */
-#define WI_PCI_LOIO		0x1C	/* ISA iobase */
+#define WI_PCI_PLX_LOIO PCI_BAR(1)	/* PLX chip iobase */
+#define WI_PCI_LOMEM PCI_BAR(2)	/* ISA membase */
+#define WI_PCI_LOIO PCI_BAR(3)	/* ISA iobase */
 
 #define CHIP_PLX_OTHER		0x01
 #define CHIP_PLX_9052		0x02

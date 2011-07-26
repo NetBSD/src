@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.26 2009/11/26 15:17:09 njoly Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.27 2011/07/26 20:51:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.26 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.27 2011/07/26 20:51:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +96,8 @@ static	void ntwoc_pci_config_interrupts(device_t);
 /*
  * Card specific config register location
  */
-#define PCI_CBMA_ASIC	0x10	/* Configuration Base Memory Address */
-#define PCI_CBMA_SCA	0x18
+#define PCI_CBMA_ASIC PCI_BAR(0)	/* Configuration Base Memory Address */
+#define PCI_CBMA_SCA PCI_BAR(2)
 
 struct ntwoc_pci_softc {
 	/* Generic device stuff */
