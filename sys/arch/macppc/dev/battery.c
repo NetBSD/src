@@ -1,4 +1,4 @@
-/*	$NetBSD: battery.c,v 1.14 2011/07/10 14:41:34 pgoyette Exp $ */
+/*	$NetBSD: battery.c,v 1.15 2011/07/26 08:37:45 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.14 2011/07/10 14:41:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.15 2011/07/26 08:37:45 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,7 @@ battery_attach(device_t parent, device_t self, void *aux)
 	struct battery_softc *sc = device_private(self);
 	uint32_t reg;
 
+	sc->sc_dev = self;
 	sc->sc_pmu_ops = baa->baa_pmu_ops;
 	aprint_normal(": legacy battery ");
 
