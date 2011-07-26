@@ -1,4 +1,4 @@
-/*	$NetBSD: smartbat.c,v 1.7 2011/07/10 14:41:34 pgoyette Exp $ */
+/*	$NetBSD: smartbat.c,v 1.8 2011/07/26 08:36:02 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.7 2011/07/10 14:41:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.8 2011/07/26 08:36:02 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.7 2011/07/10 14:41:34 pgoyette Exp $"
 #define BAT_NSENSORS		8  /* number of sensors */
 
 struct smartbat_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct pmu_ops *sc_pmu_ops;
 	int sc_num;
 	
@@ -88,7 +88,7 @@ static void smartbat_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void smartbat_poll(void *);
 static int smartbat_update(struct smartbat_softc *, int);
 
-CFATTACH_DECL(smartbat, sizeof(struct smartbat_softc),
+CFATTACH_DECL_NEW(smartbat, sizeof(struct smartbat_softc),
     smartbat_match, smartbat_attach, NULL, NULL);
 
 static int
@@ -108,6 +108,7 @@ smartbat_attach(device_t parent, device_t self, void *aux)
 	struct battery_attach_args *baa = aux;
 	struct smartbat_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_pmu_ops = baa->baa_pmu_ops;
 	sc->sc_num = baa->baa_num;
 
@@ -126,7 +127,7 @@ smartbat_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sm_acpower.smpsw_type = PSWITCH_TYPE_ACADAPTER;
 	if (sysmon_pswitch_register(&sc->sc_sm_acpower) != 0)
 		printf("%s: unable to register AC power status with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 }
 
 #define INITDATA(index, unit, string)					\
@@ -160,13 +161,13 @@ smartbat_setup_envsys(struct smartbat_softc *sc)
 		}
 	}
 
-	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_name = device_xname(sc->sc_dev);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = smartbat_refresh;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		sysmon_envsys_destroy(sc->sc_sme);
 	}
 }
@@ -254,7 +255,7 @@ smartbat_update(struct smartbat_softc *sc, int out)
 					 16, buf);
 
 	if (len < 0) {
-		DPRINTF("%s: couldn't get battery data\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s: couldn't get battery data\n", device_xname(sc->sc_dev));
 		/* XXX: the return value is never checked */
 		return -1;
 	}
@@ -295,7 +296,7 @@ smartbat_update(struct smartbat_softc *sc, int out)
 		break;
 	default:
 		/* XXX - Error condition */
-		DPRINTF("%s: why is buf[1] %x?\n", sc->sc_dev.dv_xname, buf[1]);
+		DPRINTF("%s: why is buf[1] %x?\n", device_xname(sc->sc_dev), buf[1]);
 		sc->sc_charge = 0;
 		sc->sc_max_charge = 0;
 		sc->sc_draw = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.17 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.18 2011/07/26 08:36:02 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -59,7 +59,7 @@ static int ki2c_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 		    void *, size_t, int);
 
 
-CFATTACH_DECL(ki2c, sizeof(struct ki2c_softc), ki2c_match, ki2c_attach,
+CFATTACH_DECL_NEW(ki2c, sizeof(struct ki2c_softc), ki2c_match, ki2c_attach,
 	NULL, NULL);
 
 int
@@ -85,7 +85,8 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 
 	char name[32];
 	u_int reg[20];
-	
+
+	sc->sc_dev = self;
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
 	if (OF_getprop(node, "AAPL,i2c-rate", &rate, 4) != 4) {
@@ -125,7 +126,7 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_exec = ki2c_i2c_exec;
 
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
 
 	/* 
 	 * newer OF puts I2C devices under 'i2c-bus' instead of attaching them 
@@ -167,7 +168,7 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 #ifdef DIAGNOSTIC
 		else {
 			printf("%s: device (%s) has no reg or i2c-address property.\n",
-			    sc->sc_dev.dv_xname, name);
+			    device_xname(sc->sc_dev), name);
 		}
 #endif
 	}
