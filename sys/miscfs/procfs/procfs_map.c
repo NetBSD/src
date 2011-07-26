@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.39 2010/09/15 21:37:35 jym Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.40 2011/07/26 13:18:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.39 2010/09/15 21:37:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.40 2011/07/26 13:18:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ again:
 			    (unsigned long long)minor(dev), fileid, path);
 		} else {
 			pos += snprintf(buffer + pos, bufsize - pos,
-			    "%#"PRIxVADDR"x %#"PRIxVADDR"x "
+			    "%#"PRIxVADDR" %#"PRIxVADDR" "
 			    "%c%c%c %c%c%c %s %s %d %d %d\n",
 			    entry->start, entry->end,
 			    (entry->protection & VM_PROT_READ) ? 'r' : '-',
