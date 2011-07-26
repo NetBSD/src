@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1582 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1583 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1059,6 +1059,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	less(1): Import version 444. [tron 20110703]
 	mips: Rework Atheros MIPS-based SoC support.  Add initial support
 		for AR71xx (24K) and AR9344 (74K) SoCs.
+	bind: Update to 9.8.0-P4: Security fixes. [spz 20110705]
 	dtv(4): Add digital TV framework. [jmcneill 20110709]
 	auvitek(4): Add digital capture support. [jmcneill 20110709]
 	cxdtv(4): Add driver for Conexant CX23880-based DTV cards.
