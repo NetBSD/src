@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1201.2.15.4.1 2011/07/26 02:57:27 matt Exp $
+#	$NetBSD: mi,v 1.1201.2.15.4.2 2011/07/26 03:22:21 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1938,6 +1938,7 @@
 ./usr/include/sys/file.h			comp-c-include
 ./usr/include/sys/filedesc.h			comp-c-include
 ./usr/include/sys/filio.h			comp-c-include
+./usr/include/sys/flashio.h			comp-c-include
 ./usr/include/sys/float_ieee.h			comp-obsolete		obsolete
 ./usr/include/sys/float_ieee754.h		comp-c-include
 ./usr/include/sys/fnv_hash.h			comp-obsolete		obsolete
@@ -3236,6 +3237,7 @@
 ./usr/libdata/debug/usr/sbin/extattrctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/faithd.debug	comp-router-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/fixmount.debug	comp-nfsclient-debug	debug
+./usr/libdata/debug/usr/sbin/flashctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/fsinfo.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/fssconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ftp-proxy.debug	comp-pf-debug		pf,debug
