@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.44 2011/04/14 06:12:02 matt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.45 2011/07/26 13:07:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.44 2011/04/14 06:12:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.45 2011/07/26 13:07:20 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -493,6 +493,7 @@ lockdebug_locked(volatile void *lock, void *cvlock, uintptr_t where,
 		}
 	} else if (shared) {
 		l->l_shlocks++;
+		ld->ld_locked = where;
 		ld->ld_shares++;
 		ld->ld_shwant--;
 	} else {
@@ -556,8 +557,10 @@ lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
 		}
 		l->l_shlocks--;
 		ld->ld_shares--;
-		if (ld->ld_lwp == l)
+		if (ld->ld_lwp == l) {
+			ld->ld_unlocked = where;
 			ld->ld_lwp = NULL;
+		}
 		if (ld->ld_cpu == (uint16_t)cpu_index(curcpu()))
 			ld->ld_cpu = (uint16_t)-1;
 	} else {
