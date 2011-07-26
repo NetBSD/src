@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.159 2011/06/13 21:32:42 matt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.160 2011/07/26 13:03:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.159 2011/06/13 21:32:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.160 2011/07/26 13:03:57 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1040,6 +1040,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	ksiginfoq_t kq;
 
 	KASSERT(l != curlwp);
+	KASSERT(last || mutex_owned(p->p_lock));
 
 	/*
 	 * If this was not the last LWP in the process, then adjust
