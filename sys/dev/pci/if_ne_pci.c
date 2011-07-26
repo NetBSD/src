@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.35 2011/05/17 17:34:54 dyoung Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.36 2011/07/26 20:51:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.35 2011/05/17 17:34:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.36 2011/07/26 20:51:24 dyoung Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -169,7 +169,7 @@ ne_pci_lookup(const struct pci_attach_args *pa)
  * PCI constants.
  * XXX These should be in a common file!
  */
-#define PCI_CBIO	0x10		/* Configuration Base IO Address */
+#define PCI_CBIO PCI_BAR(0)		/* Configuration Base IO Address */
 
 static int
 ne_pci_match(device_t parent, cfdata_t match, void *aux)

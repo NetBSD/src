@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.35 2011/07/18 00:58:51 mrg Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.36 2011/07/26 20:51:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.35 2011/07/18 00:58:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.36 2011/07/26 20:51:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ static  void adp_get_macaddr(struct en_pci_softc *, struct pci_attach_args *);
  * (this is card specific)
  */
 
-#define PCI_CBMA        0x10
+#define PCI_CBMA PCI_BAR(0)
 
 /*
  * tonga (pci bridge).   ENI cards only!

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.11 2011/05/18 01:02:43 dyoung Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.12 2011/07/26 20:51:24 dyoung Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.11 2011/05/18 01:02:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.12 2011/07/26 20:51:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.11 2011/05/18 01:02:43 dyoung Exp $
 #include <dev/pci/pcidevs.h>
 
 /* Base Address Register */
-#define BWI_PCI_BAR0	0x10
+#define BWI_PCI_BAR0 PCI_BAR(0)
 
 static int	bwi_pci_match(device_t, cfdata_t, void *);
 static void	bwi_pci_attach(device_t, device_t, void *);
