@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8536DS,v 1.1.2.2 2011/01/17 07:36:36 matt Exp $
+#	$NetBSD: MPC8536DS,v 1.1.2.3 2011/07/26 03:45:15 matt Exp $
 #
 #	MPC8536DS -- everything that's currently supported
 #
@@ -7,9 +7,12 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8536DS-$Revision: 1.1.2.2 $"
+ident 		"MPC8536DS-$Revision: 1.1.2.3 $"
 
 maxusers	32
+
+makeoptions	NEED_BINARY="yes"
+makeoptions	NEED_UBOOTIMAGE="yes"
 
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
@@ -20,13 +23,6 @@ options 	GUR_BASE=0xffe00000
 options 	MPC8536
 options 	PIXIS
 #options 	HZ=1000
-
-# Options for necessary to use MD
-options 	MEMORY_DISK_HOOKS
-options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
-options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=6144	# size of memory disk, in blocks
-
 
 #options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
@@ -90,7 +86,7 @@ file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 options 	QUOTA		# UFS quotas
-options 	FFS_EI		# FFS Endian Independant support
+options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -139,7 +135,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # Kernel root file system and dump configuration.
 config		netbsd		root on ? type ?
-config		netbsdnfs	root on tsec0 type nfs
+config		nfsnetbsd	root on tsec0 type nfs
 
 #
 # Device configuration
@@ -154,6 +150,12 @@ cpu0		at cpunode?
 
 obio0		at cpunode?		# On-chip Peripheral Bus
 #mkclock0	at obio0 addr 0xf8000000 size 8192
+
+# NOR Flash
+#options 	NOR_VERBOSE
+pq3cfi0 	at obio0 cs 0
+nor*		at pq3cfi?
+flash*		at nor? offset 0 size 0x8000000
 
 e500wdog*	at cpunode?		# Watchdog timer
 
@@ -196,9 +198,9 @@ umass*		at uhub? port ?
 scsibus*	at umass? channel ?
 sd*		at scsibus? target ? lun ?
 
-#sdhc*		at cpunode?		# sdmmc
-#sdmmc*		at sdhc?		# SD/MMC bus
-#ld*		at sdmmc?
+#sdhc* 		at cpunode?		# sdmmc
+#sdmmc*  	at sdhc?		# SD/MMC bus
+#ld* 		at sdmmc?
 
 #siisata*	at pci? dev ? function ?
 #atabus* 	at siisata? channel ?
@@ -217,7 +219,6 @@ wm*		at pci? dev ? function ?	# Intel Ethernet
 makphy* 	at mii? phy ?			# Marvell PHYs
 #ukphy*		at mii? phy ?			# generic unknown PHYs
 
-pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	rnd			# /dev/random and in-kernel generator
