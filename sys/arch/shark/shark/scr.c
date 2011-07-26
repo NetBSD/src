@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.25 2009/11/27 03:23:13 rmind Exp $	*/
+/*	$NetBSD: scr.c,v 1.26 2011/07/26 08:56:26 mrg Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.25 2009/11/27 03:23:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.26 2011/07/26 08:56:26 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -450,8 +450,7 @@ typedef unsigned char BYTE;
 /* our soft c structure */
 struct scr_softc 
 {
-    struct device       dev;
-    int                 open;
+    int     open;
 
     /* configuration information */
     int     status;                 /* status to be returned */
@@ -577,8 +576,8 @@ static unsigned char hatStack[HATSTACKSIZE];   /* actual stack used during a FIQ
 */
 
 /* configure routines */
-int     scrprobe(struct device *, struct cfdata *, void *);
-void    scrattach(struct device *, struct device *, void *);
+int     scrprobe(device_t, cfdata_t, void *);
+void    scrattach(device_t, device_t, void *);
 
 static void   initStates(struct scr_softc * sc); 
 
@@ -632,7 +631,7 @@ static void scrUntimeout(void (*func)(struct scr_softc*,int), struct scr_softc*,
 
 
 
-CFATTACH_DECL(scr, sizeof(struct scr_softc),
+CFATTACH_DECL_NEW(scr, sizeof(struct scr_softc),
     scrprobe, scrattach, NULL, NULL);
 
 extern struct cfdriver scr_cd;
@@ -680,10 +679,8 @@ const struct cdevsw scr_cdevsw = {
 **     none.
 **--
 */
-int scrprobe(parent, match, aux)
-    struct  device  *parent;
-    struct cfdata   *match;
-    void            *aux;
+int
+scrprobe(device_t parent, cfdata_t match, void *aux)
 {
     struct isa_attach_args  *ia = aux;
     int                     rv = 0;           
@@ -746,10 +743,8 @@ int scrprobe(parent, match, aux)
 **      none.
 **--
 */
-void scrattach(parent, self, aux)
-    struct device *parent;
-    struct device *self;
-    void         *aux;
+void
+scrattach(device_t parent, device_t self, void *aux)
 {
     struct scr_softc       *sc = (void *)self;
 

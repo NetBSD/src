@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.12 2011/07/19 15:07:43 dyoung Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.13 2011/07/26 08:56:26 mrg Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.12 2011/07/19 15:07:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.13 2011/07/26 08:56:26 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,12 +65,12 @@ static int igsfb_ofbus_phandle = 0;
 
 
 
-static int	igsfb_ofbus_match(struct device *, struct cfdata *, void *);
-static void	igsfb_ofbus_attach(struct device *, struct device *, void *);
+static int	igsfb_ofbus_match(device_t, cfdata_t, void *);
+static void	igsfb_ofbus_attach(device_t, device_t, void *);
 static int	igsfb_setup_dc(struct igsfb_devconfig *);
 static paddr_t	igsfb_ofbus_mmap(void *, void *, off_t, int);
 
-CFATTACH_DECL(igsfb_ofbus, sizeof(struct igsfb_softc),
+CFATTACH_DECL_NEW(igsfb_ofbus, sizeof(struct igsfb_softc),
     igsfb_ofbus_match, igsfb_ofbus_attach, NULL, NULL);
     
 static const char const *compat_strings[] = { "igs,cyperpro2010", NULL };
@@ -196,7 +196,7 @@ igsfb_ofbus_is_console(int phandle)
 
 
 static int
-igsfb_ofbus_match(struct device *parent, struct cfdata *match, void *aux)
+igsfb_ofbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 
@@ -207,13 +207,14 @@ igsfb_ofbus_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-igsfb_ofbus_attach(struct device *parent, struct device *self, void *aux)
+igsfb_ofbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct igsfb_softc *sc = (struct igsfb_softc *)self;
 	struct ofbus_attach_args *oba = aux;
 	uint32_t regs[16];
 	int isconsole, ret;
 	
+	sc->sc_dev = self;
 	if (igsfb_ofbus_is_console(oba->oba_phandle)) {
 		isconsole = 1;
 		sc->sc_dc = &igsfb_console_dc;

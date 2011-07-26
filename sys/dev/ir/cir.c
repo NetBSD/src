@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.28 2010/12/29 13:43:16 jmcneill Exp $	*/
+/*	$NetBSD: cir.c,v 1.29 2011/07/26 08:59:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.28 2010/12/29 13:43:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.29 2011/07/26 08:59:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ int cir_match(device_t parent, cfdata_t match, void *aux);
 void cir_attach(device_t parent, device_t self, void *aux);
 int cir_detach(device_t self, int flags);
 
-CFATTACH_DECL(cir, sizeof(struct cir_softc),
+CFATTACH_DECL_NEW(cir, sizeof(struct cir_softc),
     cir_match, cir_attach, cir_detach, NULL);
 
 extern struct cfdriver cir_cd;
@@ -85,6 +85,8 @@ cir_attach(device_t parent, device_t self, void *aux)
 	struct cir_softc *sc = device_private(self);
 	struct ir_attach_args *ia = aux;
 
+	sc->sc_dev = self;
+
 	selinit(&sc->sc_rdsel);
 	sc->sc_methods = ia->ia_methods;
 	sc->sc_handle = ia->ia_handle;
@@ -93,7 +95,7 @@ cir_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_methods->im_read == NULL ||
 	    sc->sc_methods->im_write == NULL ||
 	    sc->sc_methods->im_setparams == NULL)
-		panic("%s: missing methods", device_xname(&sc->sc_dev));
+		panic("%s: missing methods", device_xname(sc->sc_dev));
 #endif
 	printf("\n");
 }
@@ -125,7 +127,7 @@ ciropen(dev_t dev, int flag, int mode, struct lwp *l)
 	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (EIO);
 	if (sc->sc_open)
 		return (EBUSY);
@@ -167,7 +169,7 @@ cirread(dev_t dev, struct uio *uio, int flag)
 	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (EIO);
 	return (sc->sc_methods->im_read(sc->sc_handle, uio, flag));
 }
@@ -180,7 +182,7 @@ cirwrite(dev_t dev, struct uio *uio, int flag)
 	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (EIO);
 	return (sc->sc_methods->im_write(sc->sc_handle, uio, flag));
 }
@@ -194,7 +196,7 @@ cirioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (EIO);
 
 	switch (cmd) {
@@ -229,7 +231,7 @@ cirpoll(dev_t dev, int events, struct lwp *l)
 	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (POLLERR);
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (POLLERR);
 
 	revents = 0;

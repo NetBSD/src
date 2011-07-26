@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.43 2009/05/12 14:39:22 cegger Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.44 2011/07/26 08:59:38 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.43 2009/05/12 14:39:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.44 2011/07/26 08:59:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.43 2009/05/12 14:39:22 cegger Exp $");
 #include <dev/ofw/openfirm.h>
 
 struct ofdisk_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	int sc_phandle;
 	int sc_unit;
 	int sc_flags;
@@ -66,7 +66,7 @@ struct ofdisk_softc {
 static int ofdisk_match (device_t, cfdata_t, void *);
 static void ofdisk_attach (device_t, device_t, void *);
 
-CFATTACH_DECL(ofdisk, sizeof(struct ofdisk_softc),
+CFATTACH_DECL_NEW(ofdisk, sizeof(struct ofdisk_softc),
     ofdisk_match, ofdisk_attach, NULL, NULL);
 
 extern struct cfdriver ofdisk_cd;
@@ -123,6 +123,7 @@ ofdisk_attach(device_t parent, device_t self, void *aux)
 	char child[64];
 	int l;
 
+	of->sc_dev = self;
 	if ((l = OF_getprop(oba->oba_phandle, "name", child,
 	    sizeof child - 1)) < 0)
 		panic("device without name?");
@@ -134,7 +135,7 @@ ofdisk_attach(device_t parent, device_t self, void *aux)
 	of->sc_phandle = oba->oba_phandle;
 	of->sc_unit = oba->oba_unit;
 	of->sc_ihandle = 0;
-	disk_init(&of->sc_dk, device_xname(&of->sc_dev), &ofdisk_dkdriver);
+	disk_init(&of->sc_dk, device_xname(of->sc_dev), &ofdisk_dkdriver);
 	disk_attach(&of->sc_dk);
 	printf("\n");
 
@@ -425,7 +426,7 @@ ofdisk_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(&of->sc_dev),
+		strlcpy(dkw->dkw_parent, device_xname(of->sc_dev),
 			sizeof(dkw->dkw_parent));
 		return (dkwedge_add(dkw));
 	    }
@@ -441,7 +442,7 @@ ofdisk_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(&of->sc_dev),
+		strlcpy(dkw->dkw_parent, device_xname(of->sc_dev),
 			sizeof(dkw->dkw_parent));
 		return (dkwedge_del(dkw));
 	    }
@@ -563,6 +564,6 @@ ofdisk_getdisklabel(dev_t dev)
 		    unit, RAW_PART), ofdisk_strategy, lp,
 		    of->sc_dk.dk_cpulabel);
 		if (errmes != NULL)
-			printf("%s: %s\n", device_xname(&of->sc_dev), errmes);
+			printf("%s: %s\n", device_xname(of->sc_dev), errmes);
 	}
 }
