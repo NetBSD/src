@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.87 2011/04/24 16:26:52 rmind Exp $	*/
+/*	$NetBSD: tty.h,v 1.88 2011/07/26 13:14:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -282,6 +282,7 @@ void	 ttypend(struct tty *);
 void	 ttyretype(struct tty *);
 void	 ttyrub(int, struct tty *);
 int	 ttysleep(struct tty *, kcondvar_t *, bool, int);
+int	 ttypause(struct tty *, int);
 int	 ttywait(struct tty *);
 int	 ttywflush(struct tty *);
 void	 ttysig(struct tty *, enum ttysigtype, int);
