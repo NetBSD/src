@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2c.c,v 1.2.2.2 2011/01/07 01:19:15 matt Exp $ */
+/* $NetBSD: motoi2c.c,v 1.2.2.3 2011/07/26 03:37:57 matt Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.2.2.2 2011/01/07 01:19:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.2.2.3 2011/07/26 03:37:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.2.2.2 2011/01/07 01:19:15 matt Exp $")
 static int motoi2c_debug = 0;
 #define	DPRINTF		if (motoi2c_debug) printf
 #else
-#define	DPRINTF		(void)
+#define	DPRINTF		if (0) printf
 #endif
 
 static int  motoi2c_acquire_bus(void *, int);
@@ -149,8 +149,10 @@ motoi2c_busy_wait(struct motoi2c_softc *sc, uint8_t cr)
 		DELAY(10);
 
 	if (timo == 0) {
+#ifdef DEBUG
 		DPRINTF("%s: timeout (sr=%#x, cr=%#x)\n",
 		    __func__, sr, I2C_READ(I2CCR));
+#endif
 		error = ETIMEDOUT;
 	}
 	/*
