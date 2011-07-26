@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.24 2010/02/24 22:38:00 dyoung Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.25 2011/07/26 20:51:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.24 2010/02/24 22:38:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.25 2011/07/26 20:51:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,8 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.24 2010/02/24 22:38:00 dyoung Exp $
 /*
  * PCI configuration space registers used by the ADM8211.
  */
-#define	ATW_PCI_IOBA		0x10	/* i/o mapped base */
-#define	ATW_PCI_MMBA		0x14	/* memory mapped base */
+#define ATW_PCI_IOBA PCI_BAR(0)	/* i/o mapped base */
+#define ATW_PCI_MMBA PCI_BAR(1)	/* memory mapped base */
 
 struct atw_pci_softc {
 	struct atw_softc	psc_atw;	/* real ADM8211 softc */
