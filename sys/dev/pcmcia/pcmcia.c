@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.93 2009/05/12 14:42:19 cegger Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.94 2011/07/26 22:24:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.93 2009/05/12 14:42:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.94 2011/07/26 22:24:36 dyoung Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -133,8 +133,6 @@ pcmcia_attach(device_t parent, device_t self, void *aux)
 	sc->dev = self;
 	sc->pct = paa->pct;
 	sc->pch = paa->pch;
-	sc->iobase = paa->iobase;
-	sc->iosize = paa->iosize;
 
 	sc->ih = NULL;
 
