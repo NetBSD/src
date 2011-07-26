@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.48 2011/06/14 15:34:21 matt Exp $ */
+/* $NetBSD: autoconf.c,v 1.49 2011/07/26 14:59:03 njoly Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.48 2011/06/14 15:34:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.49 2011/07/26 14:59:03 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.48 2011/06/14 15:34:21 matt Exp $");
 struct bootdev_data	*bootdev_data;
 
 void	parse_prom_bootdev(void);
-int	atoi(char *);
+static int atoi(const char *);
 
 /*
  * cpu_configure:
@@ -163,8 +163,8 @@ parse_prom_bootdev(void)
 	bootdev_data = &bd;
 }
 
-int
-atoi(char *s)
+static int
+atoi(const char *s)
 {
 	int n, neg;
 
