@@ -790,8 +790,6 @@ dt_options_load(dtrace_hdl_t *dtp)
 	size_t offs;
 	int i;
 
-	printf("dt_options_load() entry \n");	/* XXX debug */
-
 	/*
 	 * To load the option values, we need to ask the kernel to provide its
 	 * DOF, which we'll sift through to look for OPTDESC sections.
@@ -847,7 +845,6 @@ dt_options_load(dtrace_hdl_t *dtp)
 		dtp->dt_options[opt->dofo_option] = opt->dofo_value;
 	}
 
-	printf("dt_options_load() exit \n");	/* XXX debug */
 	return (0);
 }
 
