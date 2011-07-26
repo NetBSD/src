@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.35 2010/04/19 18:24:26 dyoung Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.36 2011/07/26 22:21:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.35 2010/04/19 18:24:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.36 2011/07/26 22:21:02 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -412,8 +412,6 @@ tcic_attach_socket(struct tcic_handle *h)
 	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t) h->sc->pct;
 	paa.pch = (pcmcia_chipset_handle_t) h;
-	paa.iobase = h->sc->iobase;
-	paa.iosize = h->sc->iosize;
 
 	locs[PCMCIABUSCF_CONTROLLER] = 0;
 	locs[PCMCIABUSCF_SOCKET] = h->sock;
