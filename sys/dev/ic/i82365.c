@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.113 2010/04/19 18:24:26 dyoung Exp $	*/
+/*	$NetBSD: i82365.c,v 1.114 2011/07/26 22:21:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.113 2010/04/19 18:24:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.114 2011/07/26 22:21:02 dyoung Exp $");
 
 #define	PCICDEBUG
 
@@ -407,8 +407,6 @@ pcic_attach_socket(struct pcic_handle *h)
 	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t) sc->pct;
 	paa.pch = (pcmcia_chipset_handle_t) h;
-	paa.iobase = sc->iobase;
-	paa.iosize = sc->iosize;
 
 	locs[PCMCIABUSCF_CONTROLLER] = h->chip;
 	locs[PCMCIABUSCF_SOCKET] = h->socket;
