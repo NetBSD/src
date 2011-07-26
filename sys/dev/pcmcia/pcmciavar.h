@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.34 2009/05/12 14:42:19 cegger Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.35 2011/07/26 22:24:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -197,14 +197,6 @@ struct pcmcia_softc {
 	void		*ih;
 	int		sc_enabled_count;	/* how many functions are
 						   enabled */
-
-	/*
-	 * These are passed down from the PCMCIA chip, and exist only
-	 * so that cards with Very Special address allocation needs
-	 * know what range they should be dealing with.
-	 */
-	bus_addr_t iobase;		/* start i/o space allocation here */
-	bus_size_t iosize;		/* size of the i/o space range */
 };
 
 struct pcmcia_cis_quirk {
