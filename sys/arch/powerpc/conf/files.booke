@@ -1,4 +1,4 @@
-#	$NetBSD: files.booke,v 1.1.8.2 2011/01/07 01:26:18 matt Exp $
+#	$NetBSD: files.booke,v 1.1.8.3 2011/07/26 03:38:48 matt Exp $
 #
 # PPC BookE specific configuration info
 
@@ -58,9 +58,9 @@ device	obio { [addr=-1], [size=-1], [cs=-1], [irq=-1] }
 attach	obio at cpunode with pq3obio
 file	arch/powerpc/booke/dev/pq3obio.c	pq3obio
 
-device	nflash
-attach	nflash at obio with pq3flash
-file	arch/powerpc/booke/dev/pq3flash.c	pq3flash
+device  pq3cfi: norbus
+attach	pq3cfi at obio
+file	arch/powerpc/booke/dev/pq3cfi.c		nor
 
 device	rng
 attach	rng at cpunode with pq3rng
