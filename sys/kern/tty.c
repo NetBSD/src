@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.245 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: tty.c,v 1.246 2011/07/26 13:14:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.245 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.246 2011/07/26 13:14:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -875,7 +875,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 			mutex_exit(proc_lock);
 			
 			mutex_spin_enter(&tty_lock);
-			error = ttysleep(tp, &lbolt, true, 0);
+			error = ttypause(tp, hz);
 			if (error) {
 				mutex_spin_exit(&tty_lock);
 				return (error);
@@ -1719,7 +1719,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 		mutex_exit(proc_lock);
 
 		mutex_spin_enter(&tty_lock);
-		error = ttysleep(tp, &lbolt, true, 0);
+		error = ttypause(tp, hz);
 		mutex_spin_exit(&tty_lock);
 		if (error)
 			return (error);
@@ -1843,7 +1843,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 			mutex_spin_enter(&tty_lock);
 			ttysig(tp, TTYSIG_PG1, SIGTSTP);
 			if (first) {
-				error = ttysleep(tp, &lbolt, true, 0);
+				error = ttypause(tp, hz);
 				mutex_spin_exit(&tty_lock);
 				if (error)
 					break;
@@ -1990,7 +1990,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 		mutex_exit(proc_lock);
 
 		mutex_spin_enter(&tty_lock);
-		error = ttysleep(tp, &lbolt, true, 0);
+		error = ttypause(tp, hz);
 		mutex_spin_exit(&tty_lock);
 		if (error)
 			goto out;
@@ -2605,7 +2605,8 @@ out:
 
 /*
  * Sleep on chan, returning ERESTART if tty changed while we napped and
- * returning any errors (e.g. EINTR/ETIMEDOUT) reported by cv_timedwait(_sig).
+ * returning any errors (e.g. EINTR/EWOULDBLOCK) reported by
+ * cv_timedwait(_sig).
  * If the tty is revoked, restarting a pending call will redo validation done
  * at the start of the call.
  *
@@ -2620,13 +2621,26 @@ ttysleep(struct tty *tp, kcondvar_t *cv, bool catch, int timo)
 	KASSERT(mutex_owned(&tty_lock));
 
 	gen = tp->t_gen;
-	if (catch)
+	if (cv == NULL)
+		error = kpause("ttypause", catch, timo, &tty_lock);
+	else if (catch)
 		error = cv_timedwait_sig(cv, &tty_lock, timo);
 	else
 		error = cv_timedwait(cv, &tty_lock, timo);
 	if (error != 0)
 		return (error);
 	return (tp->t_gen == gen ? 0 : ERESTART);
+}
+
+int
+ttypause(struct tty *tp, int timo)
+{
+	int error;
+
+	error = ttysleep(tp, NULL, true, timo);
+	if (error == EWOULDBLOCK)
+		error = 0;
+	return error;
 }
 
 /*
