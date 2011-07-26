@@ -355,7 +355,7 @@ static dtrace_pops_t	dtrace_provider_ops = {
 #else
 	(void (*)(void *, dtrace_modctl_t *))dtrace_nullop,
 #endif
-	(int (*)(void *, dtrace_id_t, void *))dtrace_nullop,
+	(int (*)(void *, dtrace_id_t, void *))dtrace_enable_nullop,
 	(void (*)(void *, dtrace_id_t, void *))dtrace_nullop,
 	(void (*)(void *, dtrace_id_t, void *))dtrace_nullop,
 	(void (*)(void *, dtrace_id_t, void *))dtrace_nullop,
