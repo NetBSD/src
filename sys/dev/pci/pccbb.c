@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.201 2011/01/04 10:40:17 jruoho Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.202 2011/07/26 22:23:32 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.201 2011/01/04 10:40:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.202 2011/07/26 22:23:32 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1000,12 +1000,8 @@ pccbb_pcmcia_attach_setup(struct pccbb_softc *sc,
 	paa->paa_busname = "pcmcia";
 	paa->pct = &pccbb_pcmcia_funcs;
 	paa->pch = sc;
-	paa->iobase = 0;	       /* I don't use them */
-	paa->iosize = 0;
 #if rbus
 	rb = sc->sc_rbus_iot;
-	paa->iobase = rb->rb_start + rb->rb_offset;
-	paa->iosize = rb->rb_end - rb->rb_start;
 #endif
 
 	return;
