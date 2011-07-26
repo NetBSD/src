@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_pci.c,v 1.19 2011/01/26 00:16:52 dyoung Exp $ */
+/* $NetBSD: if_rtw_pci.c,v 1.20 2011/07/26 20:51:24 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005, 2010 David Young.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.19 2011/01/26 00:16:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.20 2011/07/26 20:51:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.19 2011/01/26 00:16:52 dyoung Exp $
 /*
  * PCI configuration space registers used by the RTL8180.
  */
-#define	RTW_PCI_IOBA		0x10	/* i/o mapped base */
-#define	RTW_PCI_MMBA		0x14	/* memory mapped base */
+#define RTW_PCI_IOBA PCI_BAR(0)	/* i/o mapped base */
+#define RTW_PCI_MMBA PCI_BAR(1)	/* memory mapped base */
 
 struct rtw_pci_softc {
 	struct rtw_softc	psc_rtw;

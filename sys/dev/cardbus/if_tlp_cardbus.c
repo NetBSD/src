@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.68 2011/07/09 23:18:05 christos Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.69 2011/07/26 20:51:23 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.68 2011/07/09 23:18:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.69 2011/07/26 20:51:23 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -82,8 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.68 2011/07/09 23:18:05 christos
 /*
  * PCI configuration space registers used by the Tulip.
  */
-#define	TULIP_PCI_IOBA		0x10	/* i/o mapped base */
-#define	TULIP_PCI_MMBA		0x14	/* memory mapped base */
+#define TULIP_PCI_IOBA PCI_BAR(0)	/* i/o mapped base */
+#define TULIP_PCI_MMBA PCI_BAR(1)	/* memory mapped base */
 #define	TULIP_PCI_CFDA		0x40	/* configuration driver area */
 
 #define	CFDA_SLEEP		0x80000000	/* sleep mode */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.31 2009/11/26 15:17:09 njoly Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.32 2011/07/26 20:51:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.31 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.32 2011/07/26 20:51:23 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.31 2009/11/26 15:17:09 njoly Exp $")
 #include <dev/pci/pcidevs.h>
 
 #define	AN_PCI_PLX_IOBA		0x14	/* i/o base for PLX chip */
-#define	AN_PCI_IOBA		0x18	/* i/o base */
+#define AN_PCI_IOBA PCI_BAR(2)	/* i/o base */
 
 struct an_pci_softc {
 	struct an_softc sc_an;		/* real "an" softc */
