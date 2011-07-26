@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.308 2011/04/27 00:38:37 rmind Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.309 2011/07/26 13:33:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.308 2011/04/27 00:38:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.309 2011/07/26 13:33:43 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -1175,7 +1175,7 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig, int idlecheck)
 		break;
 
 	case LSSUSPENDED:
-		if ((prop & SA_KILL) != 0) {
+		if ((prop & SA_KILL) != 0 && (l->l_flag & LW_WCORE) != 0) {
 			/* lwp_continue() will release the lock. */
 			lwp_continue(l);
 			return 1;
