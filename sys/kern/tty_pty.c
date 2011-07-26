@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.128 2011/04/24 16:26:51 rmind Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.129 2011/07/26 13:14:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.128 2011/04/24 16:26:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.129 2011/07/26 13:14:18 yamt Exp $");
 
 #include "opt_ptm.h"
 
@@ -402,7 +402,7 @@ again:
 				return EIO;
 			}
 			ttysig(tp, TTYSIG_PG1, SIGTTIN);
-			error = ttysleep(tp, &lbolt, true, 0);
+			error = ttypause(tp, hz);
 			if (error != 0) {
 				mutex_spin_exit(&tty_lock);
 				return error;
