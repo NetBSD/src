@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.51 2009/11/26 15:17:09 njoly Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.52 2011/07/26 20:51:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.51 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.52 2011/07/26 20:51:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.51 2009/11/26 15:17:09 njoly Exp $")
 /*
  * PCI constants.
  */
-#define PCI_CBIO		0x10    /* Configuration Base IO Address */
+#define PCI_CBIO PCI_BAR(0)    /* Configuration Base IO Address */
 
 static int	ep_pci_match(device_t , cfdata_t, void *);
 static void	ep_pci_attach(device_t , device_t , void *);
