@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.51 2010/08/08 18:22:39 chs Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.52 2011/07/26 08:59:38 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.51 2010/08/08 18:22:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.52 2011/07/26 08:59:38 mrg Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -74,7 +74,7 @@ static int ipkdbprobe (cfdata_t, void *);
 #endif
 
 struct ofnet_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	int sc_phandle;
 	int sc_ihandle;
 	struct ethercom sc_ethercom;
@@ -84,7 +84,7 @@ struct ofnet_softc {
 static int ofnet_match (device_t, cfdata_t, void *);
 static void ofnet_attach (device_t, device_t, void *);
 
-CFATTACH_DECL(ofnet, sizeof(struct ofnet_softc),
+CFATTACH_DECL_NEW(ofnet, sizeof(struct ofnet_softc),
     ofnet_match, ofnet_attach, NULL, NULL);
 
 static void ofnet_read (struct ofnet_softc *);
@@ -130,10 +130,12 @@ ofnet_attach(device_t parent, device_t self, void *aux)
 	int l;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
+	of->sc_dev = self;
+
 	of->sc_phandle = oba->oba_phandle;
 #if NIPKDB_OFN > 0
 	if (kifp &&
-	    kifp->unit - 1 == device_unit(&of->sc_dev) &&
+	    kifp->unit - 1 == device_unit(of->sc_dev) &&
 	    OF_instance_to_package(kifp->port) == oba->oba_phandle)  {
 		ipkdb_of = of;
 		of->sc_ihandle = kifp->port;
@@ -151,7 +153,7 @@ ofnet_attach(device_t parent, device_t self, void *aux)
 
 	callout_init(&of->sc_callout, 0);
 
-	strlcpy(ifp->if_xname, device_xname(&of->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(of->sc_dev), IFNAMSIZ);
 	ifp->if_softc = of;
 	ifp->if_start = ofnet_start;
 	ifp->if_ioctl = ofnet_ioctl;
@@ -408,7 +410,7 @@ ofnet_watchdog(struct ifnet *ifp)
 {
 	struct ofnet_softc *of = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", device_xname(&of->sc_dev));
+	log(LOG_ERR, "%s: device timeout\n", device_xname(of->sc_dev));
 	ifp->if_oerrors++;
 	ofnet_stop(of);
 	ofnet_init(of);

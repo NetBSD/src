@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.19 2009/11/18 21:59:38 macallan Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.20 2011/07/26 08:59:37 mrg Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -127,7 +127,7 @@ struct igsfb_devconfig {
 
 
 struct igsfb_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct igsfb_devconfig *sc_dc;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.42 2011/04/24 16:27:00 rmind Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.43 2011/07/26 08:59:38 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.42 2011/04/24 16:27:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.43 2011/07/26 08:59:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.42 2011/04/24 16:27:00 rmind Exp $");
 #include <dev/ofw/openfirm.h>
 
 struct ofcons_softc {
-	struct device of_dev;
 	struct tty *of_tty;
 	struct callout sc_poll_ch;
 	int of_flags;
@@ -65,7 +64,7 @@ static int stdin, stdout;
 static int ofcons_match(device_t, cfdata_t, void *);
 static void ofcons_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ofcons, sizeof(struct ofcons_softc),
+CFATTACH_DECL_NEW(ofcons, sizeof(struct ofcons_softc),
     ofcons_match, ofcons_attach, NULL, NULL);
 
 extern struct cfdriver ofcons_cd;
