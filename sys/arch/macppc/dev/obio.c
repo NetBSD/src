@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.33 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: obio.c,v 1.34 2011/07/26 08:36:02 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.33 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.34 2011/07/26 08:36:02 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ static int obio_match(device_t, cfdata_t, void *);
 static int obio_print(void *, const char *);
 
 struct obio_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_tag;
 	bus_space_handle_t sc_bh;
 	int sc_node;
@@ -91,7 +91,7 @@ static const char *keylargo[] = {"Keylargo",
 
 #endif
 
-CFATTACH_DECL(obio, sizeof(struct obio_softc),
+CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
 
 int
@@ -131,6 +131,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	char name[32];
 	char compat[32];
 
+	sc->sc_dev = self;
 #ifdef OBIO_SPEED_CONTROL
 	sc->sc_voltage = -1;
 	sc->sc_busspeed = -1;
@@ -387,7 +388,7 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 		return;
 
 	printf("%s: enabling Intrepid CPU speed control\n",
-	    sc->sc_dev.dv_xname);
+	    device_xname(sc->sc_dev));
 
 	sc->sc_spd_lo = curcpu()->ci_khz / 1000;
 	hiclock = 0;
