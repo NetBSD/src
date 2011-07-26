@@ -1,4 +1,4 @@
-#	$NetBSD: files.mmeye,v 1.15 2011/03/22 05:39:31 kiyohara Exp $
+#	$NetBSD: files.mmeye,v 1.16 2011/07/26 16:24:44 dyoung Exp $
 #
 # config file for mmeye
 
@@ -12,6 +12,7 @@ file	arch/mmeye/mmeye/machdep.c
 file	arch/mmeye/mmeye/autoconf.c
 file	arch/mmeye/mmeye/clock_machdep.c
 file	arch/sh3/sh3/disksubr.c			disk
+file	arch/sh3/sh3/sh3_bus_space.c
 
 defparam opt_mmeye.h	MMEYE_NEW_INT
 defflag opt_mmeye.h	MMEYE_EPC_WDT
