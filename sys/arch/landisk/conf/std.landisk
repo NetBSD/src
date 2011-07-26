@@ -1,4 +1,4 @@
-# $NetBSD: std.landisk,v 1.4 2011/07/25 21:12:23 dyoung Exp $
+# $NetBSD: std.landisk,v 1.5 2011/07/26 16:24:43 dyoung Exp $
 #
 # standard, required NetBSD/landisk 'options'
 
@@ -14,7 +14,5 @@ options 	IOM_ROM_BEGIN=0x00000000
 options 	IOM_ROM_SIZE=0x00080000         # 512KB
 options 	IOM_RAM_BEGIN=0x0c000000
 options 	IOM_RAM_SIZE=0x04000000         # 64MB
-
-options		LANDISK
 
 makeoptions	DEFTEXTADDR="0x8c001000"
