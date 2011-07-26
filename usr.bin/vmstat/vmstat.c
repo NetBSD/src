@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.181 2011/05/17 04:18:07 mrg Exp $ */
+/* $NetBSD: vmstat.c,v 1.182 2011/07/26 13:24:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.181 2011/05/17 04:18:07 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.182 2011/07/26 13:24:38 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -304,7 +304,7 @@ void	dohashstat(int, int, const char *);
 void	dointr(int verbose);
 void	domem(void);
 void	dopool(int, int);
-void	dopoolcache(void);
+void	dopoolcache(int);
 void	dosum(void);
 void	dovmstat(struct timespec *, int);
 void	print_total_hdr(void);
@@ -498,7 +498,7 @@ main(int argc, char *argv[])
 				(void)putchar('\n');
 			}
 			if (todo & POOLCACHESTAT) {
-				dopoolcache();
+				dopoolcache(verbose);
 				(void)putchar('\n');
 			}
 			if (todo & SUMSTAT) {
@@ -1456,7 +1456,7 @@ dopool(int verbose, int wide)
 }
 
 void
-dopoolcache(void)
+dopoolcache(int verbose)
 {
 	struct pool_cache pool_cache, *pc = &pool_cache;
 	pool_cache_cpu_t cache_cpu, *cc = &cache_cpu;
@@ -1480,6 +1480,8 @@ dopoolcache(void)
 		deref_kptr(pp->pr_wchan, name, sizeof(name),
 		    "pool wait channel trashed");
 		deref_kptr(pp->pr_cache, pc, sizeof(*pc), "pool cache trashed");
+		if (pc->pc_misses == 0 && !verbose)
+			continue;
 		name[sizeof(name)-1] = '\0';
 
 		cpuhit = 0;
