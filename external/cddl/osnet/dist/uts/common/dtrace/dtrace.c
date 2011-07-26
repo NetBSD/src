@@ -15421,7 +15421,7 @@ static dev_type_open(dtrace_open);
 const struct cdevsw dtrace_cdevsw = {
 	dtrace_open, noclose, noread, nowrite, noioctl,
 	nostop, notty, nopoll, nommap, nokqfilter,
-	D_OTHER
+	D_OTHER | D_MPSAFE
 };
 
 static int dtrace_ioctl(struct file *fp, u_long cmd, void *data);
