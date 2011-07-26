@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.14 2008/07/07 13:01:16 gmcgarry Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.15 2011/07/26 12:57:35 yamt Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -139,7 +139,7 @@
 	movl	%esp, %eax; \
 	jne	999f; \
 	movl	CPUVAR(INTRSTACK), %esp; \
-999:	pushl	%eax; \
+999:	pushl	%eax; /* eax == pointer to intrframe */ \
 
 /*
  * IDEPTH_DECR:
