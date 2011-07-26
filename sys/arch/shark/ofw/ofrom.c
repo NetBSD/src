@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.22 2011/07/19 15:07:43 dyoung Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.23 2011/07/26 08:56:26 mrg Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.22 2011/07/19 15:07:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.23 2011/07/26 08:56:26 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,16 +52,15 @@ __KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.22 2011/07/19 15:07:43 dyoung Exp $");
 #include <dev/ofw/openfirm.h>
 
 struct ofrom_softc {
-	struct device	sc_dev;
 	int		enabled;
 	paddr_t		base;
 	paddr_t		size;
 };
 
-int ofromprobe(struct device *, struct cfdata *, void *);
-void ofromattach(struct device *, struct device *, void *);
+int ofromprobe(device_t, cfdata_t, void *);
+void ofromattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ofrom, sizeof(struct ofrom_softc),
+CFATTACH_DECL_NEW(ofrom, sizeof(struct ofrom_softc),
     ofromprobe, ofromattach, NULL, NULL);
 
 extern struct cfdriver ofrom_cd;
@@ -76,7 +75,7 @@ const struct cdevsw ofrom_cdevsw = {
 };
 
 int
-ofromprobe(struct device *parent, struct cfdata *cf, void *aux)
+ofromprobe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	static const char *const compatible_strings[] = { "rom", NULL };
@@ -87,9 +86,9 @@ ofromprobe(struct device *parent, struct cfdata *cf, void *aux)
 
 
 void
-ofromattach(struct device *parent, struct device *self, void *aux)
+ofromattach(device_t parent, device_t self, void *aux)
 {
-	struct ofrom_softc *sc = (struct ofrom_softc *)self;
+	struct ofrom_softc *sc = device_private(self);
 	struct ofbus_attach_args *oba = aux;
 	char regbuf[8];
 

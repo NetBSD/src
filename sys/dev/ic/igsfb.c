@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.49 2010/05/12 20:58:52 macallan Exp $ */
+/*	$NetBSD: igsfb.c,v 1.50 2011/07/26 08:59:37 mrg Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.49 2010/05/12 20:58:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.50 2011/07/26 08:59:37 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,14 +194,14 @@ igsfb_attach_subr(struct igsfb_softc *sc, int isconsole)
 	dc->dc_console.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
 	printf("%s: %dMB, %s%dx%d, %dbpp\n",
-	       device_xname(&sc->sc_dev),
+	       device_xname(sc->sc_dev),
 	       (uint32_t)(dc->dc_vmemsz >> 20),
 	       (dc->dc_hwflags & IGSFB_HW_BSWAP)
 		   ? (dc->dc_hwflags & IGSFB_HW_BE_SELECT)
 		       ? "hardware bswap, " : "software bswap, "
 		   : "",
 	       dc->dc_width, dc->dc_height, dc->dc_depth);
-	printf("%s: using %dbpp for X\n", device_xname(&sc->sc_dev),
+	printf("%s: using %dbpp for X\n", device_xname(sc->sc_dev),
 	       dc->dc_maxdepth);
 	ri = &dc->dc_console.scr_ri;
 	ri->ri_ops.eraserows(ri, 0, ri->ri_rows, defattr);
@@ -215,7 +215,7 @@ igsfb_attach_subr(struct igsfb_softc *sc, int isconsole)
 	waa.accessops = &igsfb_accessops;
 	waa.accesscookie = &dc->dc_vd;
 
-	config_found(&sc->sc_dev, &waa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &waa, wsemuldisplaydevprint);
 }
 
 
