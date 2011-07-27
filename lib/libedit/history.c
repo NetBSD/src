@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.39 2011/07/27 02:23:29 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.40 2011/07/27 13:18:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.39 2011/07/27 02:23:29 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.40 2011/07/27 13:18:20 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -797,7 +797,8 @@ history_save(TYPE(History) *h, const char *fname)
 	TYPE(HistEvent) ev;
 	int i = -1, retval;
 	size_t len, max_size;
-	char *ptr, *str;
+	char *ptr;
+	const char *str;
 #ifdef WIDECHAR
 	static ct_buffer_t conv;
 #endif
