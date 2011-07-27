@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.24 2011/07/17 23:23:54 dyoung Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.25 2011/07/27 22:04:23 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.24 2011/07/17 23:23:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.25 2011/07/27 22:04:23 macallan Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -119,6 +119,7 @@ u_int timebase_freq = TIMEBASE_FREQ;
 u_int timebase_freq = 0;
 #endif
 
+extern int ofwmsr;
 extern int chosen;
 extern uint32_t ticks_per_sec;
 extern uint32_t ns_per_tick;
@@ -200,6 +201,13 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	ofmaplen = save_ofmap(NULL, 0);
 	if (ofmaplen > 0)
 		save_ofmap(ofmap, ofmaplen);
+
+/*
+ * XXX
+ * we need to do this here instead of earlier on in ofwinit() for some reason
+ * At least some versions of Apple OF 2.0.1 hang if we do this earlier
+ */ 
+	ofwmsr &= ~PSL_IP;
 
 	/* Parse the args string */
 	if (args) {
