@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.64 2011/07/20 12:06:00 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.65 2011/07/27 21:50:16 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.64 2011/07/20 12:06:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.65 2011/07/27 21:50:16 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -186,7 +186,7 @@ intr_establish(int level, bool mpsafe, struct intrhand *ih)
 	 * a counter for it or it's something special like psycho's error
 	 * interrupts
 	 */
-	if (ih->ih_ivec != 0) {
+	if (ih->ih_ivec != 0 && intrlev[ih->ih_number] == NULL) {
 		snprintf(ih->ih_name, sizeof(ih->ih_name), "%x", ih->ih_ivec);
 		evcnt_attach_dynamic(&ih->ih_cnt, EVCNT_TYPE_INTR,
 		    &intr_evcnts[level], "ivec", ih->ih_name);
