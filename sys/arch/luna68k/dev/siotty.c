@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.30 2011/04/24 16:26:56 rmind Exp $ */
+/* $NetBSD: siotty.c,v 1.31 2011/07/27 11:54:40 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.30 2011/04/24 16:26:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.31 2011/07/27 11:54:40 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.30 2011/04/24 16:26:56 rmind Exp $");
 #include <luna68k/dev/sioreg.h>
 #include <luna68k/dev/siovar.h>
 
+#include "ioconf.h"
+
 #define	TIOCM_BREAK 01000 /* non standard use */
 
 static const u_int8_t ch0_regs[6] = {
@@ -72,7 +74,7 @@ static const struct speedtab siospeedtab[] = {
 };
 
 struct siotty_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	struct tty	*sc_tty;
 	struct sioreg	*sc_ctl;
 	u_int 		sc_flags;
@@ -85,12 +87,11 @@ static int  sioparam(struct tty *, struct termios *);
 static void siottyintr(int);
 static int  siomctl(struct siotty_softc *, int, int);
 
-static int  siotty_match(struct device *, struct cfdata *, void *);
-static void siotty_attach(struct device *, struct device *, void *);
+static int  siotty_match(device_t, cfdata_t, void *);
+static void siotty_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(siotty, sizeof(struct siotty_softc),
+CFATTACH_DECL_NEW(siotty, sizeof(struct siotty_softc),
     siotty_match, siotty_attach, NULL, NULL);
-extern struct cfdriver siotty_cd;
 
 dev_type_open(sioopen);
 dev_type_close(sioclose);
@@ -107,7 +108,7 @@ const struct cdevsw siotty_cdevsw = {
 };
 
 static int 
-siotty_match(struct device *parent, struct cfdata *cf, void *aux)
+siotty_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sio_attach_args *args = aux;
 
@@ -119,16 +120,17 @@ siotty_match(struct device *parent, struct cfdata *cf, void *aux)
 static void 
 siotty_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct sio_softc *scp = (void *)parent;
-	struct siotty_softc *sc = (void *)self;
+	struct sio_softc *scp = device_private(parent);
+	struct siotty_softc *sc = device_private(self);
 	struct sio_attach_args *args = aux;
 
+	sc->sc_dev = self;
 	sc->sc_ctl = (struct sioreg *)scp->scp_ctl + args->channel;
 	memcpy(sc->sc_wr, ch0_regs, sizeof(ch0_regs));
 	scp->scp_intr[args->channel] = siottyintr;
 
 	if (args->hwflags == 1) {
-		printf(" (console)");
+		aprint_normal(" (console)");
 		sc->sc_flags = TIOCFLAG_SOFTCAR;
 	}
 	else {
@@ -143,7 +145,7 @@ siotty_attach(struct device *parent, struct device *self, void *aux)
 	}
 	setsioreg(sc->sc_ctl, WR1, sc->sc_wr[WR1]); /* now interrupt driven */
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 /*--------------------  low level routine --------------------*/

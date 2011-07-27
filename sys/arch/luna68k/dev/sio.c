@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.8 2009/03/14 21:04:11 dsl Exp $ */
+/* $NetBSD: sio.c,v 1.9 2011/07/27 11:54:40 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.8 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.9 2011/07/27 11:54:40 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,19 +43,20 @@ __KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.8 2009/03/14 21:04:11 dsl Exp $");
 #include <luna68k/luna68k/isr.h>
 #include <luna68k/dev/siovar.h>
 
-static int  sio_match(struct device *, struct cfdata *, void *);
-static void sio_attach(struct device *, struct device *, void *);
+#include "ioconf.h"
+
+static int  sio_match(device_t, cfdata_t, void *);
+static void sio_attach(device_t, device_t, void *);
 static int  sio_print(void *, const char *);
 
-CFATTACH_DECL(sio, sizeof(struct sio_softc),
+CFATTACH_DECL_NEW(sio, sizeof(struct sio_softc),
     sio_match, sio_attach, NULL, NULL);
-extern struct cfdriver sio_cd;
 
 static void nullintr(int);
 static int xsiointr(void *);
 
 static int
-sio_match(struct device *parent, struct cfdata *cf, void *aux)
+sio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -67,16 +68,17 @@ sio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-sio_attach(struct device *parent, struct device *self, void *aux)
+sio_attach(device_t parent, device_t self, void *aux)
 {
-	struct sio_softc *sc = (void *)self;
+	struct sio_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	struct sio_attach_args sio_args;
 	int channel;
 	extern int sysconsole; /* console: 0 for ttya, 1 for desktop */
 
-	printf(": 7201a\n");
+	aprint_normal(": 7201a\n");
 
+	sc->scp_dev = self;
 	sc->scp_ctl = (void *)ma->ma_addr;
 	sc->scp_intr[0] = sc->scp_intr[1] = nullintr;
 	for (channel = 0; channel < 2; channel++) {
