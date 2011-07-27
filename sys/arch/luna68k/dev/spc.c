@@ -1,4 +1,4 @@
-/* $NetBSD: spc.c,v 1.8 2008/04/28 20:23:26 martin Exp $ */
+/* $NetBSD: spc.c,v 1.9 2011/07/27 14:17:55 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.8 2008/04/28 20:23:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.9 2011/07/27 14:17:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ spc_mainbus_attach(device_t parent, device_t self, void *aux)
 	struct mainbus_attach_args *ma = aux;
 
 	sc->sc_dev = self;
-	aprint_normal ("\n");
+	aprint_normal("\n");
 
 	sc->sc_iot = /* XXX */ 0;
 	sc->sc_ioh = ma->ma_addr;

@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.10 2011/07/16 15:52:21 tsutsui Exp $ */
+/* $NetBSD: omrasops.c,v 1.11 2011/07/27 14:17:54 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.10 2011/07/16 15:52:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.11 2011/07/27 14:17:54 tsutsui Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
@@ -86,8 +86,8 @@ struct wsdisplay_emulops omfb_emulops = {
 #define	ALIGNMASK	(0x1f)
 #define	BYTESDONE	(4)
 
-#define	W(p) (*(u_int32_t *)(p))
-#define	R(p) (*(u_int32_t *)((uint8_t *)(p) + 0x40000))
+#define	W(p) (*(uint32_t *)(p))
+#define	R(p) (*(uint32_t *)((uint8_t *)(p) + 0x40000))
 
 /*
  * Blit a character at the specified co-ordinates.
@@ -99,8 +99,8 @@ om_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 	struct raster *rap = rc->rc_sp;
 	uint8_t *p;
 	int scanspan, startx, height, width, align, y;
-	u_int32_t lmask, rmask, glyph, inverse;
-	u_int32_t *g;
+	uint32_t lmask, rmask, glyph, inverse;
+	uint32_t *g;
 
 	scanspan = rap->linelongs * 4;
 	y = rc->rc_yorigin + rc->rc_font->height * row;
@@ -124,10 +124,9 @@ om_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 			g += 1;
 			height--;
 		}
-	}
-	else {
+	} else {
 		uint8_t *q = p;
-		u_int32_t lhalf, rhalf;
+		uint32_t lhalf, rhalf;
 
 		while (height > 0) {
 			glyph = *g;
@@ -151,7 +150,7 @@ om_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
         struct raster *rap = rc->rc_sp;
         uint8_t *p;
         int scanspan, startx, height, width, align, w, y;
-        u_int32_t lmask, rmask, fill;
+        uint32_t lmask, rmask, fill;
 
         scanspan = rap->linelongs * 4;
         y = rc->rc_yorigin + rc->rc_font->height * row;
@@ -173,8 +172,7 @@ om_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 			p += scanspan;
 			height--;
 		}
-	}
-	else {
+	} else {
 		uint8_t *q = p;
 		while (height > 0) {
 			W(p) = (R(p) & ~lmask) | (fill & lmask);
@@ -201,7 +199,7 @@ om_eraserows(void *cookie, int startrow, int nrows, long attr)
 	struct raster *rap = rc->rc_sp;
 	uint8_t *p, *q;
 	int scanspan, starty, height, width, w;
-	u_int32_t rmask, fill;
+	uint32_t rmask, fill;
 
 	scanspan = rap->linelongs * 4;
 	starty = rc->rc_yorigin + rc->rc_font->height * startrow;
@@ -237,7 +235,7 @@ om_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
         struct raster *rap = rc->rc_sp;
         uint8_t *p, *q;
 	int scanspan, offset, srcy, height, width, w;
-        u_int32_t rmask;
+        uint32_t rmask;
         
 	scanspan = rap->linelongs * 4;
 	height = rc->rc_font->height * nrows;
@@ -278,7 +276,7 @@ om_copycols(void *cookie, int startrow, int srccol, int dstcol, int ncols)
 	struct raster *rap = rc->rc_sp;
 	uint8_t *sp, *dp, *basep;
 	int scanspan, height, width, align, shift, w, y, srcx, dstx;
-	u_int32_t lmask, rmask;
+	uint32_t lmask, rmask;
 
 	scanspan = rap->linelongs * 4;
 	y = rc->rc_yorigin + rc->rc_font->height * startrow;
@@ -372,12 +370,13 @@ om_copycols(void *cookie, int startrow, int srccol, int dstcol, int ncols)
 static int
 om_mapchar(void *cookie, int c, u_int *cp)
 {
+
 	if (c < 128) {
 		*cp = c;
-		return (5);
+		return 5;
 	}
 	*cp = ' ';
-	return (0);
+	return 0;
 }
 
 /*
@@ -390,7 +389,7 @@ om_cursor(void *cookie, int on, int row, int col)
 	struct raster *rap = rc->rc_sp;
 	uint8_t *p;
 	int scanspan, startx, height, width, align, y;
-	u_int32_t lmask, rmask, image;
+	uint32_t lmask, rmask, image;
 
 	if (!on) {
 		/* make sure it's on */
@@ -423,8 +422,7 @@ om_cursor(void *cookie, int on, int row, int col)
 			p += scanspan;
 			height--;
 		}
-	}
-	else {
+	} else {
 		uint8_t *q = p;
 
 		while (height > 0) {
@@ -447,14 +445,15 @@ om_cursor(void *cookie, int on, int row, int col)
 static int
 om_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 {
+
 	if (flags & (WSATTR_HILIT | WSATTR_BLINK |
 		     WSATTR_UNDERLINE | WSATTR_WSCOLORS))
-		return (EINVAL);
+		return EINVAL;
 	if (flags & WSATTR_REVERSE)
 		*attrp = 1;
 	else
 		*attrp = 0;
-	return (0);
+	return 0;
 }
 
 void

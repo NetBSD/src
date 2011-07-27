@@ -1,4 +1,4 @@
-/* $NetBSD: sioreg.h,v 1.3 2005/12/11 12:17:52 christos Exp $ */
+/* $NetBSD: sioreg.h,v 1.4 2011/07/27 14:17:54 tsutsui Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -79,8 +79,8 @@
 #define WR6		0x06
 #define WR7		0x07
 
-#define	WR2A		WR2
-#define	WR2B		(WR2|0x10)
+#define WR2A		WR2
+#define WR2B		(WR2|0x10)
 
 #define RR0		0x08
 #define RR1		0x09
