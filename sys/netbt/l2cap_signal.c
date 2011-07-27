@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.13 2011/07/17 20:54:53 joerg Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.14 2011/07/27 10:25:09 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.13 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.14 2011/07/27 10:25:09 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -155,10 +155,7 @@ l2cap_recv_signal(struct mbuf *m, struct hci_link *link)
 			goto reject;
 		}
 	}
-
-#ifdef DIAGNOSTIC
 	panic("impossible!");
-#endif
 
 reject:
 	l2cap_send_command_rej(link, cmd.ident, L2CAP_REJ_NOT_UNDERSTOOD);
@@ -930,14 +927,8 @@ l2cap_send_signal(struct hci_link *link, uint8_t code, uint8_t ident,
 	l2cap_hdr_t *hdr;
 	l2cap_cmd_hdr_t *cmd;
 
-#ifdef DIAGNOSTIC
-	if (link == NULL)
-		return ENETDOWN;
-
-	if (sizeof(l2cap_cmd_hdr_t) + length > link->hl_mtu)
-		aprint_error_dev(link->hl_unit->hci_dev,
-		    "exceeding L2CAP Signal MTU for link!\n");
-#endif
+	KASSERT(link != NULL);
+	KASSERT(sizeof(l2cap_cmd_hdr_t) + length <= link->hl_mtu);
 
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == NULL)
