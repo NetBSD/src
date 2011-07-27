@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.22 2010/10/14 07:05:03 plunky Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.23 2011/07/27 10:25:09 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.22 2010/10/14 07:05:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.23 2011/07/27 10:25:09 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -432,28 +432,21 @@ hci_acl_recv(struct mbuf *m, struct hci_unit *unit)
 	KASSERT(m != NULL);
 	KASSERT(unit != NULL);
 
-	KASSERT(m->m_pkthdr.len >= sizeof(hdr));
+	if (m->m_pkthdr.len < sizeof(hdr))
+		goto bad;
+		
 	m_copydata(m, 0, sizeof(hdr), &hdr);
 	m_adj(m, sizeof(hdr));
 
-#ifdef DIAGNOSTIC
-	if (hdr.type != HCI_ACL_DATA_PKT) {
-		aprint_error_dev(unit->hci_dev, "bad ACL packet type\n");
-		goto bad;
-	}
-
-	if (m->m_pkthdr.len != le16toh(hdr.length)) {
-		aprint_error_dev(unit->hci_dev,
-		    "bad ACL packet length (%d != %d)\n",
-		    m->m_pkthdr.len, le16toh(hdr.length));
-		goto bad;
-	}
-#endif
+	KASSERT(hdr.type == HCI_ACL_DATA_PKT);
 
 	hdr.length = le16toh(hdr.length);
 	hdr.con_handle = le16toh(hdr.con_handle);
 	handle = HCI_CON_HANDLE(hdr.con_handle);
 	pb = HCI_PB_FLAG(hdr.con_handle);
+
+	if (m->m_pkthdr.len != hdr.length)
+		goto bad;
 
 	link = hci_link_lookup_handle(unit, handle);
 	if (link == NULL) {
@@ -486,10 +479,8 @@ hci_acl_recv(struct mbuf *m, struct hci_unit *unit)
 			aprint_error_dev(unit->hci_dev,
 			    "dropped incomplete ACL packet\n");
 
-		if (m->m_pkthdr.len < sizeof(l2cap_hdr_t)) {
-			aprint_error_dev(unit->hci_dev, "short ACL packet\n");
+		if (m->m_pkthdr.len < sizeof(l2cap_hdr_t))
 			goto bad;
-		}
 
 		link->hl_rxp = m;
 		got = m->m_pkthdr.len;
@@ -510,7 +501,9 @@ hci_acl_recv(struct mbuf *m, struct hci_unit *unit)
 		break;
 
 	default:
-		aprint_error_dev(unit->hci_dev, "unknown packet type\n");
+		DPRINTF("%s: unknown packet type\n",
+		    device_xname(unit->hci_dev));
+
 		goto bad;
 	}
 
@@ -837,27 +830,19 @@ hci_sco_recv(struct mbuf *m, struct hci_unit *unit)
 	KASSERT(m != NULL);
 	KASSERT(unit != NULL);
 
-	KASSERT(m->m_pkthdr.len >= sizeof(hdr));
+	if (m->m_pkthdr.len < sizeof(hdr))
+		goto bad;
+
 	m_copydata(m, 0, sizeof(hdr), &hdr);
 	m_adj(m, sizeof(hdr));
 
-#ifdef DIAGNOSTIC
-	if (hdr.type != HCI_SCO_DATA_PKT) {
-		aprint_error_dev(unit->hci_dev, "bad SCO packet type\n");
-		goto bad;
-	}
-
-	if (m->m_pkthdr.len != hdr.length) {
-		aprint_error_dev(unit->hci_dev,
-		    "bad SCO packet length (%d != %d)\n",
-		    m->m_pkthdr.len, hdr.length);
-
-		goto bad;
-	}
-#endif
+	KASSERT(hdr.type == HCI_SCO_DATA_PKT);
 
 	hdr.con_handle = le16toh(hdr.con_handle);
 	handle = HCI_CON_HANDLE(hdr.con_handle);
+
+	if (m->m_pkthdr.len != hdr.length)
+		goto bad;
 
 	link = hci_link_lookup_handle(unit, handle);
 	if (link == NULL || link->hl_type == HCI_LINK_ACL) {

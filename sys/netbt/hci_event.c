@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.22 2010/11/22 19:56:51 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.23 2011/07/27 10:25:09 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.22 2010/11/22 19:56:51 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.23 2011/07/27 10:25:09 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -157,8 +157,7 @@ hci_eventstr(unsigned int event)
  * process HCI Events
  *
  * We will free the mbuf at the end, no need for any sub
- * functions to handle that. We kind of assume that the
- * device sends us valid events.
+ * functions to handle that.
  */
 void
 hci_event(struct mbuf *m, struct hci_unit *unit)
@@ -167,11 +166,15 @@ hci_event(struct mbuf *m, struct hci_unit *unit)
 
 	KASSERT(m->m_flags & M_PKTHDR);
 
-	KASSERT(m->m_pkthdr.len >= sizeof(hdr));
+	if (m->m_pkthdr.len < sizeof(hdr))
+		goto done;
+
 	m_copydata(m, 0, sizeof(hdr), &hdr);
 	m_adj(m, sizeof(hdr));
 
 	KASSERT(hdr.type == HCI_EVENT_PKT);
+	if (m->m_pkthdr.len != hdr.length)
+		goto done;
 
 	DPRINTFN(1, "(%s) event %s\n",
 	    device_xname(unit->hci_dev), hci_eventstr(hdr.event));
@@ -233,6 +236,7 @@ hci_event(struct mbuf *m, struct hci_unit *unit)
 		break;
 	}
 
+done:
 	m_freem(m);
 }
 
@@ -246,7 +250,9 @@ hci_event_command_status(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_command_status_ep ep;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	if (m->m_pkthdr.len < sizeof(ep))
+		return;
+
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
@@ -292,7 +298,9 @@ hci_event_command_compl(struct hci_unit *unit, struct mbuf *m)
 	hci_command_compl_ep ep;
 	hci_status_rp rp;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	if (m->m_pkthdr.len < sizeof(ep))
+		return;
+
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
@@ -369,7 +377,9 @@ hci_event_num_compl_pkts(struct hci_unit *unit, struct mbuf *m)
 	uint16_t handle, num;
 	int num_acl = 0, num_sco = 0;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	if (m->m_pkthdr.len < sizeof(ep))
+		return;
+
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
@@ -439,7 +449,9 @@ hci_event_inquiry_result(struct hci_unit *unit, struct mbuf *m)
 	hci_inquiry_response ir;
 	struct hci_memo *memo;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	if (m->m_pkthdr.len < sizeof(ep))
+		return;
+
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
@@ -447,7 +459,9 @@ hci_event_inquiry_result(struct hci_unit *unit, struct mbuf *m)
 				(ep.num_responses == 1 ? "" : "s"));
 
 	while(ep.num_responses--) {
-		KASSERT(m->m_pkthdr.len >= sizeof(ir));
+		if (m->m_pkthdr.len < sizeof(ir))
+			return;
+
 		m_copydata(m, 0, sizeof(ir), &ir);
 		m_adj(m, sizeof(ir));
 
@@ -476,7 +490,9 @@ hci_event_rssi_result(struct hci_unit *unit, struct mbuf *m)
 	hci_rssi_response rr;
 	struct hci_memo *memo;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	if (m->m_pkthdr.len < sizeof(ep))
+		return;
+
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
@@ -484,7 +500,9 @@ hci_event_rssi_result(struct hci_unit *unit, struct mbuf *m)
 				(ep.num_responses == 1 ? "" : "s"));
 
 	while(ep.num_responses--) {
-		KASSERT(m->m_pkthdr.len >= sizeof(rr));
+		if (m->m_pkthdr.len < sizeof(rr))
+			return;
+
 		m_copydata(m, 0, sizeof(rr), &rr);
 		m_adj(m, sizeof(rr));
 
@@ -512,7 +530,9 @@ hci_event_extended_result(struct hci_unit *unit, struct mbuf *m)
 	hci_extended_result_ep ep;
 	struct hci_memo *memo;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	if (m->m_pkthdr.len < sizeof(ep))
+		return;
+
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
@@ -546,7 +566,9 @@ hci_event_con_compl(struct hci_unit *unit, struct mbuf *m)
 	struct hci_link *link;
 	int err;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	if (m->m_pkthdr.len < sizeof(ep))
+		return;
+
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
@@ -641,7 +663,9 @@ hci_event_discon_compl(struct hci_unit *unit, struct mbuf *m)
 	hci_discon_compl_ep ep;
 	struct hci_link *link;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	if (m->m_pkthdr.len < sizeof(ep))
+		return;
+
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
@@ -668,7 +692,9 @@ hci_event_con_req(struct hci_unit *unit, struct mbuf *m)
 	hci_reject_con_cp rp;
 	struct hci_link *link;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	if (m->m_pkthdr.len < sizeof(ep))
+		return;
+
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
@@ -715,7 +741,9 @@ hci_event_auth_compl(struct hci_unit *unit, struct mbuf *m)
 	struct hci_link *link;
 	int err;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	if (m->m_pkthdr.len < sizeof(ep))
+		return;
+
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
@@ -757,7 +785,9 @@ hci_event_encryption_change(struct hci_unit *unit, struct mbuf *m)
 	struct hci_link *link;
 	int err;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	if (m->m_pkthdr.len < sizeof(ep))
+		return;
+
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
@@ -801,7 +831,9 @@ hci_event_change_con_link_key_compl(struct hci_unit *unit, struct mbuf *m)
 	struct hci_link *link;
 	int err;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	if (m->m_pkthdr.len < sizeof(ep))
+		return;
+
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
@@ -841,7 +873,9 @@ hci_event_read_clock_offset_compl(struct hci_unit *unit, struct mbuf *m)
 	hci_read_clock_offset_compl_ep ep;
 	struct hci_link *link;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	if (m->m_pkthdr.len < sizeof(ep))
+		return;
+
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
@@ -865,7 +899,9 @@ hci_cmd_read_bdaddr(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_read_bdaddr_rp rp;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(rp));
+	if (m->m_pkthdr.len < sizeof(rp))
+		return;
+
 	m_copydata(m, 0, sizeof(rp), &rp);
 	m_adj(m, sizeof(rp));
 
@@ -890,7 +926,9 @@ hci_cmd_read_buffer_size(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_read_buffer_size_rp rp;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(rp));
+	if (m->m_pkthdr.len < sizeof(rp))
+		return;
+
 	m_copydata(m, 0, sizeof(rp), &rp);
 	m_adj(m, sizeof(rp));
 
@@ -920,7 +958,9 @@ hci_cmd_read_local_features(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_read_local_features_rp rp;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(rp));
+	if (m->m_pkthdr.len < sizeof(rp))
+		return;
+
 	m_copydata(m, 0, sizeof(rp), &rp);
 	m_adj(m, sizeof(rp));
 
@@ -1029,7 +1069,9 @@ hci_cmd_read_local_extended_features(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_read_local_extended_features_rp rp;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(rp));
+	if (m->m_pkthdr.len < sizeof(rp))
+		return;
+
 	m_copydata(m, 0, sizeof(rp), &rp);
 	m_adj(m, sizeof(rp));
 
@@ -1076,7 +1118,9 @@ hci_cmd_read_local_ver(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_read_local_ver_rp rp;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(rp));
+	if (m->m_pkthdr.len < sizeof(rp))
+		return;
+
 	m_copydata(m, 0, sizeof(rp), &rp);
 	m_adj(m, sizeof(rp));
 
@@ -1103,7 +1147,9 @@ hci_cmd_read_local_commands(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_read_local_commands_rp rp;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(rp));
+	if (m->m_pkthdr.len < sizeof(rp))
+		return;
+
 	m_copydata(m, 0, sizeof(rp), &rp);
 	m_adj(m, sizeof(rp));
 
@@ -1132,7 +1178,9 @@ hci_cmd_reset(struct hci_unit *unit, struct mbuf *m)
 	struct hci_link *link, *next;
 	int acl;
 
-	KASSERT(m->m_pkthdr.len >= sizeof(rp));
+	if (m->m_pkthdr.len < sizeof(rp))
+		return;
+
 	m_copydata(m, 0, sizeof(rp), &rp);
 	m_adj(m, sizeof(rp));
 
