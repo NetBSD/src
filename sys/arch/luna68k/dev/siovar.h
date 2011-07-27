@@ -1,4 +1,4 @@
-/* $NetBSD: siovar.h,v 1.5 2011/07/27 11:54:40 tsutsui Exp $ */
+/* $NetBSD: siovar.h,v 1.6 2011/07/27 14:17:55 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,10 +41,10 @@ struct sio_attach_args {
 };
 
 struct sioreg {
-	volatile u_int8_t sio_data;
-	unsigned : 8;
-	volatile u_int8_t sio_cmd;
-	unsigned : 8;
+	volatile uint8_t sio_data;
+	uint8_t	pad0;
+	volatile uint8_t sio_cmd;
+	uint8_t pad1;
 #define sio_stat sio_cmd
 };
 

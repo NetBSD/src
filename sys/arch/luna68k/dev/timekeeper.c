@@ -1,4 +1,4 @@
-/* $NetBSD: timekeeper.c,v 1.9 2011/07/27 11:54:40 tsutsui Exp $ */
+/* $NetBSD: timekeeper.c,v 1.10 2011/07/27 14:17:55 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.9 2011/07/27 11:54:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.10 2011/07/27 14:17:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ struct timekeeper_softc {
 	device_t sc_dev;
 	void *sc_clock, *sc_nvram;
 	int sc_nvramsize;
-	u_int8_t sc_image[2040];
+	uint8_t sc_image[2040];
 	struct todr_chip_handle sc_todr;
 };
 
@@ -117,7 +117,7 @@ static int
 mkclock_get(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	struct timekeeper_softc *sc = (void *)tch->cookie;
-	volatile u_int8_t *chiptime = (void *)sc->sc_clock;
+	volatile uint8_t *chiptime = (void *)sc->sc_clock;
 	int s;
 
 	s = splclock();
@@ -141,8 +141,8 @@ static int
 mkclock_set(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	struct timekeeper_softc *sc = (void *)tch->cookie;
-	volatile u_int8_t *chiptime = (void *)sc->sc_clock;
-	volatile u_int8_t *stamp = (u_int8_t *)sc->sc_nvram + 0x10;
+	volatile uint8_t *chiptime = (void *)sc->sc_clock;
+	volatile uint8_t *stamp = (uint8_t *)sc->sc_nvram + 0x10;
 	int s;
 
 	s = splclock();
@@ -168,13 +168,13 @@ static int
 dsclock_get(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	struct timekeeper_softc *sc = (void *)tch->cookie;
-	volatile u_int8_t *chiptime = (void *)sc->sc_clock;
+	volatile uint8_t *chiptime = (void *)sc->sc_clock;
 	int s;
 
 	s = splclock();
 	/* update in progress; spin loop */
 	while (chiptime[MC_REGA] & MC_REGA_UIP)
-		;
+		continue;
 	dt->dt_sec = chiptime[MC_SEC];
 	dt->dt_min = chiptime[MC_MIN];
 	dt->dt_hour = chiptime[MC_HOUR];
@@ -193,7 +193,7 @@ static int
 dsclock_set(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	struct timekeeper_softc *sc = (void *)tch->cookie;
-	volatile u_int8_t *chiptime = (void *)sc->sc_clock;
+	volatile uint8_t *chiptime = (void *)sc->sc_clock;
 	int s;
 
 	s = splclock();
