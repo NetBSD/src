@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.13 2011/05/13 22:16:44 rmind Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.14 2011/07/27 14:35:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.13 2011/05/13 22:16:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.14 2011/07/27 14:35:34 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.13 2011/05/13 22:16:44 rmind Exp $
 #include <sys/rwlock.h>
 #include <sys/vmem.h>
 #include <sys/xcall.h>
-
-#include <uvm/uvm_extern.h>
 
 #define	PERCPU_QUANTUM_SIZE	(ALIGNBYTES + 1)
 #define	PERCPU_QCACHE_MAX	0

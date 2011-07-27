@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.168 2011/04/08 10:35:37 yamt Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.169 2011/07/27 14:35:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.168 2011/04/08 10:35:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.169 2011/07/27 14:35:34 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -79,8 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.168 2011/04/08 10:35:37 yamt Exp $")
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>
 
 #include "opt_sa.h"
 

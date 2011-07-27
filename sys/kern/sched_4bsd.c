@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.26 2011/04/14 16:19:35 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.27 2011/07/27 14:35:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.26 2011/04/14 16:19:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.27 2011/07/27 14:35:34 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -88,8 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.26 2011/04/14 16:19:35 yamt Exp $")
 #include <sys/lockdebug.h>
 #include <sys/kmem.h>
 #include <sys/intr.h>
-
-#include <uvm/uvm_extern.h>
 
 static void updatepri(struct lwp *);
 static void resetpriority(struct lwp *);

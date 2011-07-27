@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.127 2010/12/20 00:25:46 matt Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.128 2011/07/27 14:35:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.127 2010/12/20 00:25:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.128 2011/07/27 14:35:33 uebayasi Exp $");
 
 #include "opt_ntp.h"
 #include "opt_perfctrs.h"
@@ -88,8 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.127 2010/12/20 00:25:46 matt Exp $"
 #include <sys/timetc.h>
 #include <sys/cpu.h>
 #include <sys/atomic.h>
-
-#include <uvm/uvm_extern.h>
 
 #ifdef GPROF
 #include <sys/gmon.h>

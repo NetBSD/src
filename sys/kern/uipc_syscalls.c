@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.145 2011/07/15 14:50:19 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.146 2011/07/27 14:35:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.145 2011/07/15 14:50:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.146 2011/07/27 14:35:34 uebayasi Exp $");
 
 #include "opt_pipe.h"
 
@@ -83,8 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.145 2011/07/15 14:50:19 christos
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <uvm/uvm_extern.h>
 
 /*
  * System call interface to the socket abstraction.

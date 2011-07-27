@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.208 2010/11/11 11:07:07 hannken Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.209 2011/07/27 14:35:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.208 2010/11/11 11:07:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.209 2011/07/27 14:35:34 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -105,8 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.208 2010/11/11 11:07:07 hannken Exp 
 #include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/module.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 

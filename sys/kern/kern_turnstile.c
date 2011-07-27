@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.29 2011/05/13 22:19:41 rmind Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.30 2011/07/27 14:35:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.29 2011/05/13 22:19:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.30 2011/07/27 14:35:34 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -68,8 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.29 2011/05/13 22:19:41 rmind Ex
 #include <sys/proc.h> 
 #include <sys/sleepq.h>
 #include <sys/systm.h>
-
-#include <uvm/uvm_extern.h>
 
 #define	TS_HASH_SIZE	64
 #define	TS_HASH_MASK	(TS_HASH_SIZE - 1)
