@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.307 2011/05/02 22:27:53 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.308 2011/07/27 13:20:07 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -204,6 +204,8 @@ struct emul {
  * (:	updated atomically
  * ::	unlocked, stable
  */
+struct vmspace;
+
 struct proc {
 	LIST_ENTRY(proc) p_list;	/* l: List of all processes */
 
