@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.rules.inc,v 1.4 2011/05/15 15:10:12 tsutsui Exp $
+# $NetBSD: Makefile.rules.inc,v 1.5 2011/07/27 03:18:52 matt Exp $
 
 SRCS+= ${HEIMSRCS:N*.et:N*.in:N*.asn1}
 
@@ -27,40 +27,43 @@ CLEANFILES+=				\
 	${src:.asn1=_asn1.h}		\
 	${src:.asn1=_asn1.hx}		\
 	${src:.asn1=_asn1-priv.h}	\
-	${src:.asn1=_asn1-priv.hx}
+	${src:.asn1=_asn1-priv.hx}	\
+	${src:.asn1=.ts}
 
 ASN1_INCS += ${src:.asn1=_asn1.h}
 
 DPSRCS +=	${src:.asn1=_asn1.h} ${src:.asn1=_asn1-priv.h}
-DPSRCS +=	${src:.asn1=_asn1.hx} ${src:.asn1=_asn1-priv.hx}
 OBJS +=		${ASN1_FILES.${src}:.x=.o}
 
+${ASN1_FILES.${src}} ${src:.asn1=_asn1.h} ${src:.asn1=_asn1-priv.h}: \
+	 ${src:.asn1=.ts}
+
 .if exists(${src:.asn1=.opt})
-${ASN1_FILES.${src}} ${src:.asn1=_asn1.hx} ${src:.asn1=_asn1-priv.hx}: ${src} \
-					${src:.asn1=.opt} ${TOOL_ASN1_COMPILE}
+${src:.asn1=.ts}: ${src} ${src:.asn1=.opt} ${TOOL_ASN1_COMPILE}
+	@touch $@
 	${TOOL_ASN1_COMPILE}			\
 		${ASN1_OPTS.${src}}		\
 		--option-file=${.ALLSRC:[2]}	\
 		${.ALLSRC:[1]} ${src:.asn1=_asn1}
-
-.else
-${ASN1_FILES.${src}} ${src:.asn1=_asn1.hx} ${src:.asn1=_asn1-priv.hx}: ${src} \
-							${TOOL_ASN1_COMPILE}
-	${TOOL_ASN1_COMPILE}			\
-		${ASN1_OPTS.${src}}		\
-		${.ALLSRC:[1]} ${src:.asn1=_asn1}
-
-.endif
-
-${src:.asn1=_asn1.h}: ${src:.asn1=_asn1.hx}
 	@${TOOL_SED} -E 						\
 	    -e 's,#include <(.*)_asn1\.h>,#include <krb5/\1_asn1.h>,'	\
 	    2> /dev/null < ${src:.asn1=_asn1.hx} > ${src:.asn1=_asn1.h}
-
-${src:.asn1=_asn1-priv.h}: ${src:.asn1=_asn1-priv.hx}
 	@cmp -s ${src:.asn1=_asn1-priv.hx} ${src:.asn1=_asn1-priv.h}	\
 	    2> /dev/null ||						\
 	    cp ${src:.asn1=_asn1-priv.hx} ${src:.asn1=_asn1-priv.h}
+.else
+${src:.asn1=.ts}: ${src} ${TOOL_ASN1_COMPILE}
+	@touch $@
+	${TOOL_ASN1_COMPILE}			\
+		${ASN1_OPTS.${src}}		\
+		${.ALLSRC:[1]} ${src:.asn1=_asn1}
+	@${TOOL_SED} -E 						\
+	    -e 's,#include <(.*)_asn1\.h>,#include <krb5/\1_asn1.h>,'	\
+	    2> /dev/null < ${src:.asn1=_asn1.hx} > ${src:.asn1=_asn1.h}
+	@cmp -s ${src:.asn1=_asn1-priv.hx} ${src:.asn1=_asn1-priv.h}	\
+	    2> /dev/null ||						\
+	    cp ${src:.asn1=_asn1-priv.hx} ${src:.asn1=_asn1-priv.h}
+.endif
 
 .for x2c in ${ASN1_FILES.${src}}
 ${x2c:.x=.c}: ${x2c}
