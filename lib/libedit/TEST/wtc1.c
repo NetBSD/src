@@ -14,6 +14,7 @@
 
 static int continuation;
 volatile sig_atomic_t gotsig;
+static const char hfile[] = ".whistory";
 
 static wchar_t *
 prompt(EditLine *el)
@@ -119,6 +120,7 @@ main(int argc, char *argv[])
 
 	hist = history_winit();		/* Init built-in history     */
 	history_w(hist, &ev, H_SETSIZE, 100);	/* Remember 100 events	     */
+	history_w(hist, &ev, H_LOAD, hfile);
 
 	tok = tok_winit(NULL);			/* Init the tokenizer	     */
 
@@ -260,6 +262,7 @@ main(int argc, char *argv[])
 
 	el_end(el);
 	tok_wend(tok);
+	history_w(hist, &ev, H_SAVE, hfile);
 	history_wend(hist);
 
 	fprintf(stdout, "\n");
