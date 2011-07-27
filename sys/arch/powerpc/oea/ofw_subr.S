@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.9 2011/06/12 16:35:10 matt Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.10 2011/07/27 22:04:23 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 
 	.local	firmstk
 	.globl	openfirmware_entry
+	.globl	ofwmsr
 	.local	ofwsrsave
 	.local	OF_buffer
 
@@ -41,7 +42,7 @@
 	.lcomm	OF_buffer,NBPG,4
 	.comm	openfirmware_entry,4,4	/* openfirmware entry point */
 	.lcomm	ofwsrsave,64,4		/* openfirmware SR savearea */
-	.lcomm	ofwmsr,20,4		/* msr & sprg[0-3] used in OF */
+	.comm	ofwmsr,20,4		/* msr & sprg[0-3] used in OF */
 	.comm	ofwreal_incharge,4,4
 
 /*
@@ -67,8 +68,14 @@ ENTRY_NOPROFILE(ofwinit)
 	stw	%r5,openfirmware_entry@l(%r8) /* save client interface handler*/
 
 	mfmsr	%r0
-	li	%r8,PSL_IP
-	andc	%r0,%r0,%r8			/* make sure PSL_IP is off */
+/*
+ * XXX
+ * doing this here instead of later on in ofwoea_initppc() after setting
+ * up the console and such makes my PowerBook 3400c hang.
+ * Probably just another OF 2.0 weirdness
+ */
+	/*li	%r8,PSL_IP*/
+	/*andc	%r0,%r0,%r8*/			/* make sure PSL_IP is off */
 	lis	%r9,ofwmsr@ha
 	stwu	%r0,ofwmsr@l(%r9)		/* save initial MSR value */
 
