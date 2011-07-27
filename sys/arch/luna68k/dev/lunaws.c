@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.21 2011/07/21 10:33:17 tsutsui Exp $ */
+/* $NetBSD: lunaws.c,v 1.22 2011/07/27 11:54:40 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.21 2011/07/21 10:33:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.22 2011/07/27 11:54:40 tsutsui Exp $");
 
 #include "wsmouse.h"
 
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.21 2011/07/21 10:33:17 tsutsui Exp $");
 #include <luna68k/dev/sioreg.h>
 #include <luna68k/dev/siovar.h>
 
+#include "ioconf.h"
+
 static const u_int8_t ch1_regs[6] = {
 	WR0_RSTINT,				/* Reset E/S Interrupt */
 	WR1_RXALLS,				/* Rx per char, No Tx */
@@ -59,7 +61,7 @@ static const u_int8_t ch1_regs[6] = {
 };
 
 struct ws_softc {
-	struct device	sc_dv;
+	device_t	sc_dev;
 	struct sioreg	*sc_ctl;
 	u_int8_t	sc_wr[6];
 	struct device	*sc_wskbddev;
@@ -110,18 +112,17 @@ static const struct wsmouse_accessops omms_accessops = {
 
 static void wsintr(int);
 
-static int  wsmatch(struct device *, struct cfdata *, void *);
-static void wsattach(struct device *, struct device *, void *);
+static int  wsmatch(device_t, cfdata_t, void *);
+static void wsattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ws, sizeof(struct ws_softc),
+CFATTACH_DECL_NEW(ws, sizeof(struct ws_softc),
     wsmatch, wsattach, NULL, NULL);
-extern struct cfdriver ws_cd;
 
 extern int  syscngetc(dev_t);
 extern void syscnputc(dev_t, int);
 
 static int
-wsmatch(struct device *parent, struct cfdata *match, void *aux)
+wsmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sio_attach_args *args = aux;
 
@@ -131,13 +132,14 @@ wsmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-wsattach(struct device *parent, struct device *self, void *aux)
+wsattach(device_t parent, device_t self, void *aux)
 {
-	struct ws_softc *sc = (struct ws_softc *)self;
-	struct sio_softc *scp = (struct sio_softc *)parent;
+	struct ws_softc *sc = device_private(self);
+	struct sio_softc *scp = device_private(parent);
 	struct sio_attach_args *args = aux;
 	struct wskbddev_attach_args a;
 
+	sc->sc_dev = self;
 	sc->sc_ctl = (struct sioreg *)scp->scp_ctl + 1;
 	memcpy(sc->sc_wr, ch1_regs, sizeof(ch1_regs));
 	scp->scp_intr[1] = wsintr;
@@ -151,7 +153,7 @@ wsattach(struct device *parent, struct device *self, void *aux)
 
 	syscnputc((dev_t)1, 0x20); /* keep quiet mouse */
 
-	printf("\n");
+	aprint_normal("\n");
 
 	a.console = (args->hwflags == 1);
 	a.keymap = &omkbd_keymapdata;
