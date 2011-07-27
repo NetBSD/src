@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.38 2011/01/16 03:05:51 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.39 2011/07/27 02:23:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.38 2011/01/16 03:05:51 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.39 2011/07/27 02:23:29 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -465,23 +465,25 @@ history_def_delete(history_t *h,
 private int
 history_def_insert(history_t *h, TYPE(HistEvent) *ev, const Char *str)
 {
+	hentry_t *c;
 
-	h->cursor = (hentry_t *) h_malloc(sizeof(hentry_t));
-	if (h->cursor == NULL)
+	c = h_malloc(sizeof(*c));
+	if (c == NULL)
 		goto oomem;
-	if ((h->cursor->ev.str = h_strdup(str)) == NULL) {
-		h_free((ptr_t)h->cursor);
+	if ((c->ev.str = h_strdup(str)) == NULL) {
+		h_free((ptr_t)c);
 		goto oomem;
 	}
-	h->cursor->data = NULL;
-	h->cursor->ev.num = ++h->eventid;
-	h->cursor->next = h->list.next;
-	h->cursor->prev = &h->list;
-	h->list.next->prev = h->cursor;
-	h->list.next = h->cursor;
+	c->data = NULL;
+	c->ev.num = ++h->eventid;
+	c->next = h->list.next;
+	c->prev = &h->list;
+	h->list.next->prev = c;
+	h->list.next = c;
 	h->cur++;
+	h->cursor = c;
 
-	*ev = h->cursor->ev;
+	*ev = c->ev;
 	return (0);
 oomem:
 	he_seterrev(ev, _HE_MALLOC_FAILED);
@@ -499,7 +501,7 @@ history_def_enter(ptr_t p, TYPE(HistEvent) *ev, const Char *str)
 
 	if ((h->flags & H_UNIQUE) != 0 && h->list.next != &h->list &&
 	    Strcmp(h->list.next->ev.str, str) == 0)
-	    return (0); 
+	    return (0);
 
 	if (history_def_insert(h, ev, str) == -1)
 		return (-1);	/* error, keep error message */
@@ -551,6 +553,7 @@ history_def_clear(ptr_t p, TYPE(HistEvent) *ev)
 
 	while (h->list.prev != &h->list)
 		history_def_delete(h, ev, h->list.prev);
+	h->cursor = &h->list;
 	h->eventid = 0;
 	h->cur = 0;
 }
@@ -794,7 +797,7 @@ history_save(TYPE(History) *h, const char *fname)
 	TYPE(HistEvent) ev;
 	int i = -1, retval;
 	size_t len, max_size;
-	char *ptr;
+	char *ptr, *str;
 #ifdef WIDECHAR
 	static ct_buffer_t conv;
 #endif
@@ -812,7 +815,8 @@ history_save(TYPE(History) *h, const char *fname)
 	for (i = 0, retval = HLAST(h, &ev);
 	    retval != -1;
 	    retval = HPREV(h, &ev), i++) {
-		len = Strlen(ev.str) * 4;
+		str = ct_encode_string(ev.str, &conv);
+		len = strlen(str) * 4;
 		if (len >= max_size) {
 			char *nptr;
 			max_size = (len + 1024) & ~1023;
@@ -823,7 +827,7 @@ history_save(TYPE(History) *h, const char *fname)
 			}
 			ptr = nptr;
 		}
-		(void) strvis(ptr, ct_encode_string(ev.str, &conv), VIS_WHITE);
+		(void) strvis(ptr, str, VIS_WHITE);
 		(void) fprintf(fp, "%s\n", ptr);
 	}
 oomem:
