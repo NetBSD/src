@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.126 2011/04/10 15:45:33 christos Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.127 2011/07/27 14:35:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.126 2011/04/10 15:45:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.127 2011/07/27 14:35:34 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,8 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.126 2011/04/10 15:45:33 christos E
 #include <sys/ktrace.h>
 #include <sys/atomic.h>
 #include <sys/disklabel.h>
-
-#include <uvm/uvm_extern.h>
 
 /*
  * Read system call.

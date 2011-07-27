@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.40 2011/07/26 13:04:51 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.41 2011/07/27 14:35:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.40 2011/07/26 13:04:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.41 2011/07/27 14:35:34 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.40 2011/07/26 13:04:51 yamt Exp $"
 #include <sys/systm.h>
 #include <sys/sleepq.h>
 #include <sys/ktrace.h>
-
-#include <uvm/uvm_extern.h>
 
 #include "opt_sa.h"
 
