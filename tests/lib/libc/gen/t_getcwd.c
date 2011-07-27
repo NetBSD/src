@@ -1,4 +1,4 @@
-/*	$NetBSD: t_getcwd.c,v 1.2 2011/06/16 15:33:25 joerg Exp $ */
+/*	$NetBSD: t_getcwd.c,v 1.3 2011/07/27 05:04:11 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getcwd.c,v 1.2 2011/06/16 15:33:25 joerg Exp $");
+__RCSID("$NetBSD: t_getcwd.c,v 1.3 2011/07/27 05:04:11 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -71,12 +71,17 @@ ATF_TC_HEAD(getcwd_fts, tc)
 ATF_TC_BODY(getcwd_fts, tc)
 {
 	const char *str = NULL;
-	const short depth = 3;
 	char buf[MAXPATHLEN];
 	char *argv[2];
 	FTSENT *ftse;
 	FTS *fts;
 	int ops;
+	short depth;
+
+	/*
+	 * Do not traverse too deep; cf. PR bin/45180.
+	 */
+	depth = 2;
 
 	argv[1] = NULL;
 	argv[0] = __UNCONST("/");
