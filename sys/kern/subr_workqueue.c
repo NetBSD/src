@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.30 2009/11/11 14:54:40 rmind Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.31 2011/07/27 14:35:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.30 2009/11/11 14:54:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.31 2011/07/27 14:35:34 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.30 2009/11/11 14:54:40 rmind Ex
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/queue.h>
-
-#include <uvm/uvm_extern.h>
 
 typedef struct work_impl {
 	SIMPLEQ_ENTRY(work_impl) wk_entry;

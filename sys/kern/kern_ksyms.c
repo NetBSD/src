@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.63 2011/04/24 18:46:22 rmind Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.64 2011/07/27 14:35:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.63 2011/04/24 18:46:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.64 2011/07/27 14:35:34 uebayasi Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -90,8 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.63 2011/04/24 18:46:22 rmind Exp $"
 #include <sys/proc.h>
 #include <sys/atomic.h>
 #include <sys/ksyms.h>
-
-#include <uvm/uvm_extern.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>
