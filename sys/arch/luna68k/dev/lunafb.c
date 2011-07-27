@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.23 2011/07/21 10:33:17 tsutsui Exp $ */
+/* $NetBSD: lunafb.c,v 1.24 2011/07/27 11:54:40 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.23 2011/07/21 10:33:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.24 2011/07/27 11:54:40 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.23 2011/07/21 10:33:17 tsutsui Exp $");
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
+
+#include "ioconf.h"
 
 struct bt454 {
 	volatile u_int8_t bt_addr;	/* map address register */
@@ -98,7 +100,7 @@ struct hwcmap {
 };
 
 struct omfb_softc {
-	struct device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	struct om_hwdevconfig *sc_dc;	/* device configuration */
 	struct hwcmap sc_cmap;		/* software copy of colormap */
 	int nscreens;
@@ -145,12 +147,11 @@ static const struct wsdisplay_accessops omfb_accessops = {
 	0 /* load_font */
 };
 
-static int  omfbmatch(struct device *, struct cfdata *, void *);
-static void omfbattach(struct device *, struct device *, void *);
+static int  omfbmatch(device_t, cfdata_t, void *);
+static void omfbattach(device_t, device_t, void *);
 
-CFATTACH_DECL(fb, sizeof(struct omfb_softc),
+CFATTACH_DECL_NEW(fb, sizeof(struct omfb_softc),
     omfbmatch, omfbattach, NULL, NULL);
-extern struct cfdriver fb_cd;
 
 extern int hwplanemask;	/* hardware planemask; retrieved at boot */
 
@@ -158,7 +159,7 @@ static int omfb_console;
 int  omfb_cnattach(void);
 
 static int
-omfbmatch(struct device *parent, struct cfdata *cf, void *aux)
+omfbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -175,10 +176,12 @@ omfbmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-omfbattach(struct device *parent, struct device *self, void *args)
+omfbattach(device_t parent, device_t self, void *args)
 {
-	struct omfb_softc *sc = (struct omfb_softc *)self;
+	struct omfb_softc *sc = device_private(self);
 	struct wsemuldisplaydev_attach_args waa;
+
+	sc->sc_dev = self;
 
 	if (omfb_console) {
 		sc->sc_dc = &omfb_console_dc;
@@ -189,7 +192,7 @@ omfbattach(struct device *parent, struct device *self, void *args)
 		    malloc(sizeof(struct om_hwdevconfig), M_DEVBUF, M_WAITOK);
 		omfb_getdevconfig(OMFB_FB_WADDR, sc->sc_dc);
 	}
-	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
+	aprint_normal(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_depth);
 
 	/* WHITE on BLACK */
