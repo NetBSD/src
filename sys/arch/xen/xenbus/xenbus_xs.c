@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.21 2011/07/17 20:54:49 joerg Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.22 2011/07/27 23:11:23 matt Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.21 2011/07/17 20:54:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.22 2011/07/27 23:11:23 matt Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -740,7 +740,7 @@ xenwatch_thread(void *unused)
 			SIMPLEQ_REMOVE_HEAD(&events_to_proces, msg_next);
 			msg->u.watch.handle->xbw_callback(
 				msg->u.watch.handle,
-				(const char **)msg->u.watch.vec,
+				(void *)msg->u.watch.vec,
 				msg->u.watch.vec_size);
 			free(msg->u.watch.vec, M_DEVBUF);
 			free(msg, M_DEVBUF);
