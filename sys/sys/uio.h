@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.35 2010/04/23 15:19:20 rmind Exp $	*/
+/*	$NetBSD: uio.h,v 1.36 2011/07/27 13:20:07 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -75,6 +75,8 @@ enum uio_seg {
 };
 
 #ifdef __UIO_EXPOSE
+
+struct vmspace;
 
 struct uio {
 	struct	iovec *uio_iov;	/* pointer to array of iovecs */
