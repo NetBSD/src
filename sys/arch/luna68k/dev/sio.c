@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.9 2011/07/27 11:54:40 tsutsui Exp $ */
+/* $NetBSD: sio.c,v 1.10 2011/07/27 14:17:54 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.9 2011/07/27 11:54:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.10 2011/07/27 14:17:54 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,4 +114,7 @@ xsiointr(void *arg)
 	return 1;
 }
 
-static void nullintr(v) int v; { }
+static void
+nullintr(int v)
+{
+}
