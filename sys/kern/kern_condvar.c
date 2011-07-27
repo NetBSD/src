@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.29 2011/04/14 20:19:35 jym Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.30 2011/07/27 14:35:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.29 2011/04/14 20:19:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.30 2011/07/27 14:35:33 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -44,8 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.29 2011/04/14 20:19:35 jym Exp $"
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
 #include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>
 
 /*
  * Accessors for the private contents of the kcondvar_t data type.
