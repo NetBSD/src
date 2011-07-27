@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.336 2011/07/20 12:06:00 macallan Exp $	*/
+/*	$NetBSD: locore.s,v 1.337 2011/07/27 20:07:49 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3118,12 +3118,17 @@ interrupt_vector:
 Lsoftint_regular:
 	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
 	membar	#Sync			! Should not be needed due to retry
-	sllx	%g7, PTRSHFT, %g5	! Calculate entry number
 	sethi	%hi(_C_LABEL(intrlev)), %g3
+	sllx	%g7, PTRSHFT, %g5	! Calculate entry number
 	or	%g3, %lo(_C_LABEL(intrlev)), %g3
 	LDPTR	[%g3 + %g5], %g5	! We have a pointer to the handler
 	brz,pn	%g5, 3f			! NULL means it isn't registered yet.  Skip it.
 	 nop
+
+	! increment per-ivec counter
+	ldx	[%g5 + IH_CNT], %g1
+	inc	%g1
+	stx	%g1, [%g5 + IH_CNT]
 
 setup_sparcintr:
 	LDPTR	[%g5+IH_PEND], %g6	! Read pending flag
@@ -3452,11 +3457,6 @@ sparc_intr_retry:
 	 add	%l5, %o0, %l5
 	stx	%g0, [%l1]		! Clear intr source
 	membar	#Sync			! Should not be needed
-
-	! increment per-ivec counter
-	ldx	[%l2 + IH_CNT], %l1
-	add	%l1, 1, %l1
-	stx	%l1, [%l2 + IH_CNT] 
 0:
 	cmp	%l7, -1
 	bne,pn	CCCR, 2b		! 'Nother?
