@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.309 2011/07/26 13:33:43 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.310 2011/07/27 13:45:49 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.309 2011/07/26 13:33:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.310 2011/07/27 13:45:49 uebayasi Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.309 2011/07/26 13:33:43 yamt Exp $");
 #include <sys/pax.h>
 #endif /* PAX_SEGVGUARD */
 
-#include <uvm/uvm_extern.h>
 #include <uvm/uvm_extern.h>
 
 static pool_cache_t	sigacts_cache	__read_mostly;
