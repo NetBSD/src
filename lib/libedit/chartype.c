@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.4 2010/04/15 00:55:57 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.5 2011/07/27 02:18:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.4 2010/04/15 00:55:57 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.5 2011/07/27 02:18:30 christos Exp $");
 #endif /* not lint && not SCCSID */
 #include "el.h"
 #include <stdlib.h>
@@ -89,26 +89,19 @@ ct_encode_string(const Char *s, ct_buffer_t *conv)
 
 	dst = conv->cbuff;
 	while (*s) {
-		used = ct_encode_char(dst, (int)(conv->csize -
-		    (dst - conv->cbuff)), *s);
-		if (used == -1) { /* failed to encode, need more buffer space */
+		used = conv->csize - (dst - conv->cbuff);
+		if (used < 5) {
 			used = dst - conv->cbuff;
 			ct_conv_buff_resize(conv, conv->csize + CT_BUFSIZ, 0);
 			if (!conv->cbuff)
 				return NULL;
 			dst = conv->cbuff + used;
-			/* don't increment s here - we want to retry it! */
 		}
-		else
-			++s;
+		used = ct_encode_char(dst, 5, *s);
+		if (used == -1) /* failed to encode, need more buffer space */
+			abort();
+		++s;
 		dst += used;
-	}
-	if (dst >= (conv->cbuff + conv->csize)) {
-		used = dst - conv->cbuff;
-		ct_conv_buff_resize(conv, conv->csize + 1, 0);
-		if (!conv->cbuff)
-			return NULL;
-		dst = conv->cbuff + used;
 	}
 	*dst = '\0';
 	return conv->cbuff;
