@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.17 2010/11/17 20:19:25 plunky Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.18 2011/07/27 10:25:09 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.17 2010/11/17 20:19:25 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.18 2011/07/27 10:25:09 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -456,12 +456,11 @@ rfcomm_session_complete(void *arg, int count)
 	 */
 	while (count-- > 0) {
 		credit = SIMPLEQ_FIRST(&rs->rs_credits);
-#ifdef DIAGNOSTIC
 		if (credit == NULL) {
 			printf("%s: too many packets completed!\n", __func__);
 			break;
 		}
-#endif
+
 		dlc = credit->rc_dlc;
 		if (dlc != NULL) {
 			dlc->rd_pending--;
