@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.18.40.1 2011/03/28 00:40:25 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.18.40.2 2011/07/27 17:07:13 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.18.40.1 2011/03/28 00:40:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.18.40.2 2011/07/27 17:07:13 matt Exp $");
 
 #include "opt_marvell.h"
 #include "opt_kgdb.h"
@@ -615,8 +615,8 @@ cause_irq(const imask_t *cause, const imask_t *mask)
 void
 ext_intr(struct intrframe *frame)
 {
-	struct cpu_info * const ci = curcpu();
 #ifdef DEBUG
+	struct cpu_info * const ci = curcpu();
 	struct intrframe *oframe;
 #endif
 
