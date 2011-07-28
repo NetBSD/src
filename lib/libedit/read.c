@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.61 2011/07/09 23:54:39 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.62 2011/07/28 00:44:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.61 2011/07/09 23:54:39 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.62 2011/07/28 00:44:35 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -227,8 +227,8 @@ FUN(el,push)(EditLine *el, const Char *str)
 			return;
 		ma->level--;
 	}
-	term_beep(el);
-	term__flush(el);
+	terminal_beep(el);
+	terminal__flush(el);
 }
 
 
@@ -323,7 +323,7 @@ read_char(EditLine *el, Char *cp)
 	while ((num_read = read(el->el_infd, cbuf + cbp, 1)) == -1) {
 		switch (el->el_signal->sig_no) {
 		case SIGCONT:
-			el_set(el, EL_REFRESH);
+			FUN(el,set)(el, EL_REFRESH);
 			/*FALLTHROUGH*/
 		case SIGWINCH:
 			sig_set(el);
@@ -392,7 +392,7 @@ FUN(el,getc)(EditLine *el, Char *cp)
 	int num_read;
 	c_macro_t *ma = &el->el_chared.c_macro;
 
-	term__flush(el);
+	terminal__flush(el);
 	for (;;) {
 		if (ma->level < 0) {
 			if (!read_preread(el))
@@ -455,7 +455,7 @@ read_prepare(EditLine *el)
 	re_refresh(el);		/* print the prompt */
 
 	if (el->el_flags & UNBUFFERED)
-		term__flush(el);
+		terminal__flush(el);
 }
 
 protected void
@@ -538,7 +538,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 		else
 			cp = el->el_line.lastchar;
 
-		term__flush(el);
+		terminal__flush(el);
 
 		while ((num = (*el->el_read.read_char)(el, cp)) == 1) {
 			/* make sure there is space next character */
@@ -645,7 +645,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 
 		case CC_REFRESH_BEEP:
 			re_refresh(el);
-			term_beep(el);
+			terminal_beep(el);
 			break;
 
 		case CC_NORM:	/* normal char */
@@ -686,8 +686,8 @@ FUN(el,gets)(EditLine *el, int *nread)
 			(void) fprintf(el->el_errfile,
 			    "*** editor ERROR ***\r\n\n");
 #endif /* DEBUG_READ */
-			term_beep(el);
-			term__flush(el);
+			terminal_beep(el);
+			terminal__flush(el);
 			break;
 		}
 		el->el_state.argument = 1;
@@ -697,7 +697,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 			break;
 	}
 
-	term__flush(el);		/* flush any buffered output */
+	terminal__flush(el);		/* flush any buffered output */
 	/* make sure the tty is set up correctly */
 	if ((el->el_flags & UNBUFFERED) == 0) {
 		read_finish(el);
