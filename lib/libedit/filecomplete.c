@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.23 2010/12/06 00:05:38 dholland Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.24 2011/07/28 00:50:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.23 2010/12/06 00:05:38 dholland Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.24 2011/07/28 00:50:23 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -49,10 +49,7 @@ __RCSID("$NetBSD: filecomplete.c,v 1.23 2010/12/06 00:05:38 dholland Exp $");
 #ifdef HAVE_VIS_H
 #include <vis.h>
 #else
-#include "np/vis.h"
-#endif
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
+#include "vis.h"
 #endif
 #include "el.h"
 #include "fcns.h"		/* for EL_NUM_FCNS */
@@ -98,11 +95,24 @@ fn_tilde_expand(const char *txt)
 		temp[len - 2] = '\0';
 	}
 	if (temp[0] == 0) {
-		if (getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf), &pass) != 0)
-			pass = NULL;
+#ifdef HAVE_GETPW_R_POSIX
+ 		if (getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf),
+		    &pass) != 0)
+ 			pass = NULL;
+#elif HAVE_GETPW_R_DRAFT
+		pass = getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf));
+#else
+		pass = getpwuid(getuid());
+#endif
 	} else {
+#ifdef HAVE_GETPW_R_POSIX
 		if (getpwnam_r(temp, &pwres, pwbuf, sizeof(pwbuf), &pass) != 0)
 			pass = NULL;
+#elif HAVE_GETPW_R_DRAFT
+		pass = getpwnam_r(temp, &pwres, pwbuf, sizeof(pwbuf));
+#else
+		pass = getpwnam(temp);
+#endif
 	}
 	free(temp);		/* value no more needed */
 	if (pass == NULL)
@@ -348,7 +358,7 @@ void
 fn_display_match_list (EditLine *el, char **matches, size_t num, size_t width)
 {
 	size_t line, lines, col, cols, thisguy;
-	int screenwidth = el->el_term.t_size.h;
+	int screenwidth = el->el_terminal.t_size.h;
 
 	/* Ignore matches[0]. Avoid 1-based array logic below. */
 	matches++;
@@ -432,11 +442,7 @@ fn_complete(EditLine *el,
 		ctemp--;
 
 	len = li->cursor - ctemp;
-#if defined(__SSP__) || defined(__SSP_ALL__)
 	temp = malloc(sizeof(*temp) * (len + 1));
-#else
-	temp = alloca(sizeof(*temp) * (len + 1));
-#endif
 	(void)Strncpy(temp, ctemp, len);
 	temp[len] = '\0';
 
@@ -551,9 +557,7 @@ fn_complete(EditLine *el,
 		free(matches);
 		matches = NULL;
 	}
-#if defined(__SSP__) || defined(__SSP_ALL__)
 	free(temp);
-#endif
 	return retval;
 }
 
