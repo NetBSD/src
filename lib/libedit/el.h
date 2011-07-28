@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.23 2011/07/28 01:05:20 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.24 2011/07/28 01:56:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -100,7 +100,7 @@ typedef struct el_state_t {
 
 #include "tty.h"
 #include "prompt.h"
-#include "key.h"
+#include "keymacro.h"
 #include "terminal.h"
 #include "refresh.h"
 #include "chared.h"
@@ -136,7 +136,7 @@ struct editline {
 	el_prompt_t	  el_rprompt;	/* Prompt stuff			*/
 	el_chared_t	  el_chared;	/* Characted editor stuff	*/
 	el_map_t	  el_map;	/* Key mapping stuff		*/
-	el_key_t	  el_key;	/* Key binding stuff		*/
+	el_keymacro_t	  el_keymacro;	/* Key binding stuff		*/
 	el_history_t	  el_history;	/* History stuff		*/
 	el_search_t	  el_search;	/* Search stuff			*/
 	el_signal_t	  el_signal;	/* Signal handling stuff	*/

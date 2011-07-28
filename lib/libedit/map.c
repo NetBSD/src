@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.26 2011/07/28 01:05:20 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.27 2011/07/28 01:56:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.26 2011/07/28 01:05:20 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.27 2011/07/28 01:56:27 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1005,7 +1005,7 @@ map_init_meta(EditLine *el)
 			break;
 		default:
 			buf[1] = i & 0177;
-			key_add(el, buf, key_map_cmd(el, (int) map[i]), XK_CMD);
+			keymacro_add(el, buf, keymacro_map_cmd(el, (int) map[i]), XK_CMD);
 			break;
 		}
 	map[(int) buf[0]] = ED_SEQUENCE_LEAD_IN;
@@ -1027,7 +1027,7 @@ map_init_vi(EditLine *el)
 	el->el_map.type = MAP_VI;
 	el->el_map.current = el->el_map.key;
 
-	key_reset(el);
+	keymacro_reset(el);
 
 	for (i = 0; i < N_KEYS; i++) {
 		key[i] = vii[i];
@@ -1056,7 +1056,7 @@ map_init_emacs(EditLine *el)
 
 	el->el_map.type = MAP_EMACS;
 	el->el_map.current = el->el_map.key;
-	key_reset(el);
+	keymacro_reset(el);
 
 	for (i = 0; i < N_KEYS; i++) {
 		key[i] = emacs[i];
@@ -1069,7 +1069,7 @@ map_init_emacs(EditLine *el)
 	buf[0] = CONTROL('X');
 	buf[1] = CONTROL('X');
 	buf[2] = 0;
-	key_add(el, buf, key_map_cmd(el, EM_EXCHANGE_MARK), XK_CMD);
+	keymacro_add(el, buf, keymacro_map_cmd(el, EM_EXCHANGE_MARK), XK_CMD);
 
 	tty_bind_char(el, 1);
 	terminal_bind_arrow(el);
@@ -1126,7 +1126,7 @@ map_print_key(EditLine *el, el_action_t *map, const Char *in)
 	el_bindings_t *bp, *ep;
 
 	if (in[0] == '\0' || in[1] == '\0') {
-		(void) key__decode_str(in, outbuf, sizeof(outbuf), "");
+		(void) keymacro__decode_str(in, outbuf, sizeof(outbuf), "");
 		ep = &el->el_map.help[el->el_map.nfunc];
 		for (bp = el->el_map.help; bp < ep; bp++)
 			if (bp->func == map[(unsigned char) *in]) {
@@ -1135,7 +1135,7 @@ map_print_key(EditLine *el, el_action_t *map, const Char *in)
 				return;
 			}
 	} else
-		key_print(el, in);
+		keymacro_print(el, in);
 }
 
 
@@ -1155,7 +1155,7 @@ map_print_some_keys(EditLine *el, el_action_t *map, Int first, Int last)
 	lastbuf[1] = 0;
 	if (map[first] == ED_UNASSIGNED) {
 		if (first == last) {
-			(void) key__decode_str(firstbuf, unparsbuf, 
+			(void) keymacro__decode_str(firstbuf, unparsbuf, 
 			    sizeof(unparsbuf), STRQQ);
 			(void) fprintf(el->el_outfile,
 			    "%-15s->  is undefined\n", unparsbuf);
@@ -1166,14 +1166,14 @@ map_print_some_keys(EditLine *el, el_action_t *map, Int first, Int last)
 	for (bp = el->el_map.help; bp < ep; bp++) {
 		if (bp->func == map[first]) {
 			if (first == last) {
-				(void) key__decode_str(firstbuf, unparsbuf, 
+				(void) keymacro__decode_str(firstbuf, unparsbuf, 
 				    sizeof(unparsbuf), STRQQ);
 				(void) fprintf(el->el_outfile, "%-15s->  " FSTR "\n",
 				    unparsbuf, bp->name);
 			} else {
-				(void) key__decode_str(firstbuf, unparsbuf, 
+				(void) keymacro__decode_str(firstbuf, unparsbuf, 
 				    sizeof(unparsbuf), STRQQ);
-				(void) key__decode_str(lastbuf, extrabuf, 
+				(void) keymacro__decode_str(lastbuf, extrabuf, 
 				    sizeof(extrabuf), STRQQ);
 				(void) fprintf(el->el_outfile,
 				    "%-4s to %-7s->  " FSTR "\n",
@@ -1184,14 +1184,14 @@ map_print_some_keys(EditLine *el, el_action_t *map, Int first, Int last)
 	}
 #ifdef MAP_DEBUG
 	if (map == el->el_map.key) {
-		(void) key__decode_str(firstbuf, unparsbuf, 
+		(void) keymacro__decode_str(firstbuf, unparsbuf, 
 		    sizeof(unparsbuf), STRQQ);
 		(void) fprintf(el->el_outfile,
 		    "BUG!!! %s isn't bound to anything.\n", unparsbuf);
 		(void) fprintf(el->el_outfile, "el->el_map.key[%d] == %d\n",
 		    first, el->el_map.key[first]);
 	} else {
-		(void) key__decode_str(firstbuf, unparsbuf, 
+		(void) keymacro__decode_str(firstbuf, unparsbuf, 
 		    sizeof(unparsbuf), STRQQ);
 		(void) fprintf(el->el_outfile,
 		    "BUG!!! %s isn't bound to anything.\n", unparsbuf);
@@ -1232,7 +1232,7 @@ map_print_all_keys(EditLine *el)
 	map_print_some_keys(el, el->el_map.alt, prev, i - 1);
 
 	(void) fprintf(el->el_outfile, "Multi-character bindings\n");
-	key_print(el, STR(""));
+	keymacro_print(el, STR(""));
 	(void) fprintf(el->el_outfile, "Arrow key bindings\n");
 	terminal_print_arrow(el, STR(""));
 }
@@ -1325,9 +1325,9 @@ map_bind(EditLine *el, int argc, const Char **argv)
 			return (-1);
 		}
 		if (in[1])
-			(void) key_delete(el, in);
+			(void) keymacro_delete(el, in);
 		else if (map[(unsigned char) *in] == ED_SEQUENCE_LEAD_IN)
-			(void) key_delete(el, in);
+			(void) keymacro_delete(el, in);
 		else
 			map[(unsigned char) *in] = ED_UNASSIGNED;
 		return (0);
@@ -1341,7 +1341,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 	}
 #ifdef notyet
 	if (argv[argc + 1] != NULL) {
-		bindkey_usage();
+		bindkeymacro_usage();
 		return (-1);
 	}
 #endif
@@ -1355,9 +1355,9 @@ map_bind(EditLine *el, int argc, const Char **argv)
 			return (-1);
 		}
 		if (key)
-			terminal_set_arrow(el, in, key_map_str(el, out), ntype);
+			terminal_set_arrow(el, in, keymacro_map_str(el, out), ntype);
 		else
-			key_add(el, in, key_map_str(el, out), ntype);
+			keymacro_add(el, in, keymacro_map_str(el, out), ntype);
 		map[(unsigned char) *in] = ED_SEQUENCE_LEAD_IN;
 		break;
 
@@ -1369,13 +1369,13 @@ map_bind(EditLine *el, int argc, const Char **argv)
 			return (-1);
 		}
 		if (key)
-			terminal_set_arrow(el, in, key_map_str(el, out), ntype);
+			terminal_set_arrow(el, in, keymacro_map_str(el, out), ntype);
 		else {
 			if (in[1]) {
-				key_add(el, in, key_map_cmd(el, cmd), ntype);
+				keymacro_add(el, in, keymacro_map_cmd(el, cmd), ntype);
 				map[(unsigned char) *in] = ED_SEQUENCE_LEAD_IN;
 			} else {
-				key_clear(el, map, in);
+				keymacro_clear(el, map, in);
 				map[(unsigned char) *in] = cmd;
 			}
 		}
