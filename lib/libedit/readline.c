@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.93 2011/07/28 00:54:26 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.94 2011/07/28 17:33:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.93 2011/07/28 00:54:26 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.94 2011/07/28 17:33:39 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1673,14 +1673,17 @@ filename_completion_function(const char *name, int state)
  * a completion generator for usernames; returns _first_ username
  * which starts with supplied text
  * text contains a partial username preceded by random character
- * (usually '~'); state is ignored
+ * (usually '~'); state resets search from start (??? should we do that anyway)
  * it's callers responsibility to free returned value
  */
 char *
 username_completion_function(const char *text, int state)
 {
-	struct passwd *pwd, pwres;
+#if defined(HAVE_GETPW_R_POSIX) || defined(HAVE_GETPW_R_DRAFT)
+	struct passwd pwres;
 	char pwbuf[1024];
+#endif
+	struct passwd *pass = NULL;
 
 	if (text[0] == '\0')
 		return (NULL);
@@ -1691,15 +1694,21 @@ username_completion_function(const char *text, int state)
 	if (state == 0)
 		setpwent();
 
-	while (getpwent_r(&pwres, pwbuf, sizeof(pwbuf), &pwd) == 0
-	    && pwd != NULL && text[0] == pwd->pw_name[0]
-	    && strcmp(text, pwd->pw_name) == 0);
+	while (
+#if defined(HAVE_GETPW_R_POSIX) || defined(HAVE_GETPW_R_DRAFT)
+	    getpwent_r(&pwres, pwbuf, sizeof(pwbuf), &pass) == 0 && pass != NULL
+#else
+	    (pass = getpwent()) != NULL
+#endif
+	    && text[0] == pass->pw_name[0]
+	    && strcmp(text, pass->pw_name) == 0)
+		continue;
 
-	if (pwd == NULL) {
+	if (pass == NULL) {
 		endpwent();
 		return NULL;
 	}
-	return strdup(pwd->pw_name);
+	return strdup(pass->pw_name);
 }
 
 
