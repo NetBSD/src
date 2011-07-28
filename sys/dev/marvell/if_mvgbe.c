@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.8 2011/03/07 13:58:32 christos Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.9 2011/07/28 15:36:47 matt Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.8 2011/03/07 13:58:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.9 2011/07/28 15:36:47 matt Exp $");
 
 #include "rnd.h"
 
@@ -319,7 +319,7 @@ struct mvgbe_port {
 
 /* ARGSUSED */
 static int
-mvgbec_match(device_t parent, struct cfdata *match, void *aux)
+mvgbec_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct marvell_attach_args *mva = aux;
 	int i;
@@ -598,7 +598,7 @@ mvgbec_wininit(struct mvgbec_softc *sc)
 
 /* ARGSUSED */
 static int
-mvgbe_match(device_t parent, struct cfdata *match, void *aux)
+mvgbe_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct marvell_attach_args *mva = aux;
 	uint32_t pbase, maddrh, maddrl;
