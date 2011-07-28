@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.23 2011/01/25 02:37:35 matt Exp $ */
+/*	$NetBSD: asm.h,v 1.24 2011/07/28 22:54:02 matt Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -104,5 +104,35 @@
 	.ascii msg;							\
 	.popsection
 #endif /* __STDC__ */
+
+.macro	polyf arg:req degree:req tbladdr:req
+	movf	\arg, %r1
+	movzwl	\degree, %r2
+	movab	\tbladdr, %r3
+
+	clrd	%r0
+	jr	2f
+1:
+	mulf2	%r1, %r0		/* result *= arg */
+2:
+	addf2	*(%r3)+, %r0		/* result += c[n] */
+	sobgtr	%r2, 1b
+	clrf	%r1			/* r1 is 0 on finish */
+.endm
+
+.macro	polyd arg:req degree:req tbladdr:req
+	movd	\arg, %r4
+	movzwl	\degree, %r2
+	movab	\tbladdr, %r3
+
+	clrd	%r0
+	jr	2f
+1:
+	muld2	%r4, %r0		/* result *= arg */
+2:
+	addd2	*(%r3)+, %r0		/* result += c[n] */
+	sobgtr	%r2, 1b
+	clrq	%r4			/* r4, r5 are 0 on finish */
+.endm
 
 #endif /* !_VAX_ASM_H_ */
