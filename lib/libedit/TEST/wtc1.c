@@ -62,6 +62,7 @@ complete(EditLine *el, int ch)
 	const LineInfoW *lf = el_wline(el);
 	int len, mblen, i;
 	unsigned char res;
+	wchar_t dir[1024];
 
 	/* Find the last word */
 	for (ptr = lf->cursor -1; !iswspace(*ptr) && ptr > lf->buffer; --ptr)
@@ -71,7 +72,9 @@ complete(EditLine *el, int ch)
 	/* Convert last word to multibyte encoding, so we can compare to it */
 	wctomb(NULL, 0); /* Reset shift state */
 	mblen = MB_LEN_MAX * len + 1;
-	buf = bptr =(char *)malloc(mblen);
+	buf = bptr = malloc(mblen);
+	if (buf == NULL)
+		err(1, "malloc");
 	for (i = 0; i < len; ++i) {
 		/* Note: really should test for -1 return from wctomb */
 		bptr += wctomb(bptr, ptr[i]);
@@ -84,7 +87,9 @@ complete(EditLine *el, int ch)
 		if (mblen > strlen(dp->d_name))
 			continue;
 		if (strncmp(dp->d_name, buf, mblen) == 0) {
-			if (el_insertstr(el, &dp->d_name[mblen]) == -1)
+			mbstowcs(dir, &dp->d_name[mblen],
+			    sizeof(dir) / sizeof(*dir));
+			if (el_winsertstr(el, dir) == -1)
 				res = CC_ERROR;
 			else
 				res = CC_REFRESH;
