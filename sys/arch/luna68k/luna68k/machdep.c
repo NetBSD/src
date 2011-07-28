@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.80 2011/06/12 03:35:43 rmind Exp $ */
+/* $NetBSD: machdep.c,v 1.81 2011/07/28 09:56:34 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2011/06/12 03:35:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2011/07/28 09:56:34 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -151,7 +151,7 @@ int	delay_divisor = 300;	/* for delay() loop count */
  * Early initialization, before main() is called.
  */
 void
-luna68k_init()
+luna68k_init(void)
 {
 	volatile unsigned char *pio0 = (void *)0x49000000;
 	int sw1, i;
@@ -182,7 +182,7 @@ luna68k_init()
 	pio0[3] = 0xb6;
 	pio0[2] = 1 << 6;		/* enable parity check */
 	pio0[3] = 0xb6;
-	sw1 = pio0[0];			/* dipssw1 value */
+	sw1 = pio0[0];			/* dip sw1 value */
 	sw1 ^= 0xff;
 	sysconsole = !(sw1 & 0x2);	/* console selection */
 
@@ -214,6 +214,7 @@ luna68k_init()
 void
 consinit(void)
 {
+
 	if (sysconsole == 0)
 		syscnattach(0);
 	else {
@@ -268,7 +269,7 @@ cpu_startup(void)
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, false, NULL);
+	    VM_PHYS_SIZE, 0, false, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
@@ -290,14 +291,18 @@ identifycpu(void)
 	case CPU_68030:
 		cpu = "MC68030 CPU+MMU, MC68882 FPU";
 		machtype = LUNA_I;
-		cpuspeed = 20; delay_divisor = 102;	/* 20MHz 68030 */
+		/* 20MHz 68030 */
+		cpuspeed = 20;
+		delay_divisor = 102;
 		hz = 60;
 		break;
 #if defined(M68040)
 	case CPU_68040:
 		cpu = "MC68040 CPU+MMU+FPU, 4k on-chip physical I/D caches";
 		machtype = LUNA_II;
-		cpuspeed = 25; delay_divisor = 300;	/* 25MHz 68040 */
+		/* 25MHz 68040 */
+		cpuspeed = 25;
+		delay_divisor = 300;
 		break;
 #endif
 	default:
@@ -329,8 +334,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 int	waittime = -1;
 
 void
-cpu_reboot(volatile int howto, char *bootstr)
-	/* howto:  XXX to shutup GCC XXX */
+cpu_reboot(int howto, char *bootstr)
 {
 	struct pcb *pcb = lwp_getpcb(curlwp);
 	extern void doboot(void);
@@ -371,13 +375,14 @@ haltsys:
 
 	/* Finally, halt/reboot the system. */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-		u_int8_t *pio = (void *)0x4d000000;
+		uint8_t *pio = (void *)0x4d000000;
 
 		printf("power is going down.\n");
 		DELAY(100000);
 		pio[3] = 0x94;
 		pio[2] = 0 << 4;
-		for (;;) /* NOP */;
+		for (;;)
+			/* NOP */;
 	}
 	if (howto & RB_HALT) {
 		printf("System halted.	Hit any key to reboot.\n\n");
@@ -388,7 +393,8 @@ haltsys:
 	DELAY(100000);
 	doboot();
 	/*NOTREACHED*/
-	while (1) ;
+	for (;;)
+		;
 }
 
 /*
@@ -431,7 +437,7 @@ cpu_init_kcore_hdr(void)
 	/*
 	 * Initialize pointer to kernel segment table.
 	 */
-	m->sysseg_pa = (u_int32_t)(pmap_kernel()->pm_stpa);
+	m->sysseg_pa = (uint32_t)(pmap_kernel()->pm_stpa);
 
 	/*
 	 * Initialize relocation value such that:
@@ -446,7 +452,7 @@ cpu_init_kcore_hdr(void)
 	/*
 	 * Define the end of the relocatable range.
 	 */
-	m->relocend = (u_int32_t)end;
+	m->relocend = (uint32_t)end;
 
 	/*
 	 * The luna68k has one contiguous memory segment.
@@ -474,9 +480,7 @@ cpu_dumpsize(void)
  * Called by dumpsys() to dump the machine-dependent header.
  */
 int
-cpu_dump(dump, blknop)
-	int (*dump)(dev_t, daddr_t, void *, size_t); 
-	daddr_t *blknop;
+cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *blknop)
 {
 	int buf[MDHDRSIZE / sizeof(int)]; 
 	cpu_kcore_hdr_t *chdr;
@@ -494,13 +498,13 @@ cpu_dump(dump, blknop)
 	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
 	error = (*dump)(dumpdev, *blknop, (void *)buf, sizeof(buf));
 	*blknop += btodb(sizeof(buf));
-	return (error);
+	return error;
 }
 
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 
@@ -644,8 +648,9 @@ dumpsys(void)
 void
 straytrap(int pc, u_short evec)
 {
+
 	printf("unexpected trap (vector offset %x) from %x\n",
-	       evec & 0xFFF, pc);
+	    evec & 0xFFF, pc);
 }
 
 int	*nofault;
@@ -660,30 +665,30 @@ badaddr(register void *addr, int nbytes)
 	i = *addr; if (i) return (0);
 #endif
 
-	nofault = (int *) &faultbuf;
+	nofault = (int *)&faultbuf;
 	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return(1);
+		nofault = (int *)0;
+		return 1;
 	}
 
 	switch (nbytes) {
 	case 1:
-		i = *(volatile char *)addr;
+		i = *(volatile int8_t *)addr;
 		break;
 
 	case 2:
-		i = *(volatile short *)addr;
+		i = *(volatile int16_t *)addr;
 		break;
 
 	case 4:
-		i = *(volatile int *)addr;
+		i = *(volatile int32_t *)addr;
 		break;
 
 	default:
 		panic("badaddr: bad request");
 	}
-	nofault = (int *) 0;
-	return (0);
+	nofault = (int *)0;
+	return 0;
 }
 
 void luna68k_abort(const char *);
@@ -700,6 +705,7 @@ static int innmihand;	/* simple mutex */
 void
 nmihand(struct frame frame)
 {
+
 	/* Prevent unwanted recursion */
 	if (innmihand)
 		return;
@@ -715,6 +721,7 @@ nmihand(struct frame frame)
 void
 luna68k_abort(const char *cp)
 {
+
 #ifdef DDB
 	printf("%s\n", cp);
 	cpu_Debugger();
@@ -739,8 +746,8 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error = ENOEXEC;
 #ifdef COMPAT_SUNOS
-	extern sunos_exec_aout_makecmds
-(struct proc *, struct exec_package *);
+	extern sunos_exec_aout_makecmds(struct proc *, struct exec_package *);
+
 	if ((error = sunos_exec_aout_makecmds(l->l_proc, epp)) == 0)
 		return 0;
 #endif
