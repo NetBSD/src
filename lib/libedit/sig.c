@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.15 2009/02/19 15:20:22 christos Exp $	*/
+/*	$NetBSD: sig.c,v 1.16 2011/07/28 00:46:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sig.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sig.c,v 1.15 2009/02/19 15:20:22 christos Exp $");
+__RCSID("$NetBSD: sig.c,v 1.16 2011/07/28 00:46:06 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -82,7 +82,7 @@ sig_handler(int signo)
 		tty_rawmode(sel);
 		if (ed_redisplay(sel, 0) == CC_REFRESH)
 			re_refresh(sel);
-		term__flush(sel);
+		terminal__flush(sel);
 		break;
 
 	case SIGWINCH:
