@@ -273,9 +273,11 @@
 /* Define as `fork' if `vfork' does not work. */
 /* #undef vfork */
 
+#define HAVE_STRLCPY 1
+#define HAVE_FGETLN 1
+#define HAVE_STRLCAT 1
 
 #include "sys.h"
 #define SCCSID
 /* #undef LIBC_SCCS */
 /* #undef lint */
-
