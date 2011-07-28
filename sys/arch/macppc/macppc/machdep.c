@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.161 2011/07/13 22:54:33 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.162 2011/07/28 15:29:52 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161 2011/07/13 22:54:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 2011/07/28 15:29:52 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -347,7 +347,7 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 		gpc_backlight.gpc_set_parameter = of_set_backlight;
 		gpc_backlight.gpc_get_parameter = of_get_backlight;
 		gpc_backlight.gpc_upd_parameter = NULL;
-		backlight_cb = (uint64_t)&gpc_backlight;
+		backlight_cb = (uint64_t)(uintptr_t)&gpc_backlight;
 		prop_dictionary_set_uint64(dict, "backlight_callback",
 		    backlight_cb);
 
@@ -355,7 +355,7 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 		gpc_brightness.gpc_set_parameter = of_set_brightness;
 		gpc_brightness.gpc_get_parameter = of_get_brightness;
 		gpc_brightness.gpc_upd_parameter = of_upd_brightness;
-		brightness_cb = (uint64_t)&gpc_brightness;
+		brightness_cb = (uint64_t)(uintptr_t)&gpc_brightness;
 		prop_dictionary_set_uint64(dict, "brightness_callback",
 		    brightness_cb);
 	}
