@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.55 2011/07/26 16:10:15 joerg Exp $	*/
+/*	$NetBSD: math.h,v 1.56 2011/07/28 22:32:28 joerg Exp $	*/
 
 /*
  * ====================================================
@@ -498,6 +498,8 @@ int	__isnanl(long double);
 int	__signbitl(long double);
 #endif
 
+int		ilogbl(long double);
+long double	logbl(long double);
 long double	scalbnl(long double, int);
 
 __END_DECLS
