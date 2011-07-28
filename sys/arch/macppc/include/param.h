@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 2011/06/20 06:29:53 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.18 2011/07/28 01:24:31 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,9 +53,9 @@
 #define	NKMEMPAGES_MIN_DEFAULT		((8 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT		((48 * 1024 * 1024) >> PAGE_SHIFT)
 
-/* at this offset we mmap() the PCI IO range in display drivers */
-#define PCI_MAGIC_IO_RANGE		0xf2000000
-
 #endif /* _KERNEL && !_MODULE */
+
+/* at this offset we mmap() the PCI IO range in display drivers */
+#define PCI_MAGIC_IO_RANGE              0xf2000000
 
 #include <powerpc/param.h>
