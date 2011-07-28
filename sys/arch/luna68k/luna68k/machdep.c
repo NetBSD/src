@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.81 2011/07/28 09:56:34 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.82 2011/07/28 09:59:13 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2011/07/28 09:56:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.82 2011/07/28 09:59:13 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -153,7 +153,7 @@ int	delay_divisor = 300;	/* for delay() loop count */
 void
 luna68k_init(void)
 {
-	volatile unsigned char *pio0 = (void *)0x49000000;
+	volatile uint8_t *pio0 = (void *)0x49000000;
 	int sw1, i;
 	char *cp;
 	extern char bootarg[64];
@@ -375,7 +375,7 @@ haltsys:
 
 	/* Finally, halt/reboot the system. */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-		uint8_t *pio = (void *)0x4d000000;
+		volatile uint8_t *pio = (void *)0x4d000000;
 
 		printf("power is going down.\n");
 		DELAY(100000);
