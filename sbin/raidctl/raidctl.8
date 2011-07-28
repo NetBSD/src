@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.61 2010/01/27 09:26:16 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.62 2011/07/28 18:25:22 buhrow Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1597,5 +1597,17 @@ component ever fail \(em it is better to use RAID 0 and get the
 additional space and speed, than it is to use parity, but
 not keep the parity correct.
 At least with RAID 0 there is no perception of increased data security.
+.Pp
+When replacing a failed component of a RAID set, it is a good
+idea to zero out the first 64 blocks of the new component to insure the
+RAIDframe driver doesn't erroneously detect a component label in the 
+new component.  This is particularly true on
+.Em
+RAID 1
+sets because there is at most one correct component label in a failed RAID
+1 installation, and the RAIDframe driver picks the component label with the
+highest serial number and modification value as the authoritative source
+for the failed RAID set when choosing which component label to use to
+configure the RAID set.
 .Sh BUGS
 Hot-spare removal is currently not available.
