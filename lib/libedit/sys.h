@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.13 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.14 2011/07/28 00:45:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -100,6 +100,26 @@ size_t	strlcpy(char *dst, const char *src, size_t size);
 #ifndef HAVE_FGETLN
 #define	fgetln libedit_fgetln
 char	*fgetln(FILE *fp, size_t *len);
+#endif
+
+#ifndef HAVE_WCSDUP
+wchar_t *wcsdup(const wchar_t *);
+#endif
+
+#ifndef _DIAGASSERT
+#define _DIAGASSERT(x)
+#endif
+
+#ifndef __RCSID
+#define __RCSID(x)
+#endif
+
+#ifndef HAVE_U_INT32_T
+typedef unsigned int	u_int32_t;
+#endif
+
+#ifndef SIZE_T_MAX
+#define SIZE_T_MAX	((size_t)-1)
 #endif
 
 #define	REGEX		/* Use POSIX.2 regular expression functions */
