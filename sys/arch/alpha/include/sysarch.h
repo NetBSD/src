@@ -1,4 +1,4 @@
-/* $NetBSD: sysarch.h,v 1.16 2011/07/17 04:30:56 dyoung Exp $ */
+/* $NetBSD: sysarch.h,v 1.17 2011/07/28 20:30:06 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,9 +32,7 @@
 #ifndef _ALPHA_SYSARCH_H_
 #define _ALPHA_SYSARCH_H_
 
-#include <sys/types.h>
-#include <sys/stdint.h>
-
+#include <machine/bus_defs.h>
 #include <machine/ieeefp.h>
 
 /*
@@ -44,6 +42,9 @@
 #define	ALPHA_FPGETMASK			0
 #define	ALPHA_FPSETMASK			1
 #define	ALPHA_FPSETSTICKY		2
+#define	ALPHA_BUS_GET_WINDOW_COUNT	3
+#define	ALPHA_BUS_GET_WINDOW		4
+#define	ALPHA_PCI_CONF_READWRITE	5
 #define	ALPHA_FPGETSTICKY		6
 #define	ALPHA_GET_FP_C			7
 #define	ALPHA_SET_FP_C			8
@@ -56,12 +57,6 @@ struct alpha_fp_c_args {
 	uint64_t fp_c;
 };
 
-#ifdef _KERNEL
-#include <machine/bus_defs.h>
-
-#define	ALPHA_BUS_GET_WINDOW_COUNT	3
-#define	ALPHA_BUS_GET_WINDOW		4
-#define	ALPHA_PCI_CONF_READWRITE	5
 struct alpha_bus_get_window_count_args {
 	u_int type;
 	u_int count;	/* output */
@@ -86,6 +81,16 @@ struct alpha_pci_conf_readwrite_args {
 	u_int32_t val;
 };
 
+struct alpha_pci_conf_readwrite_args {
+	int write;
+	u_int bus;
+	u_int device;
+	u_int function;
+	u_int reg;
+	u_int32_t val;
+};
+
+#ifdef _KERNEL
 extern	u_int alpha_bus_window_count[];
 extern	int (*alpha_bus_get_window)(int, int,
 	    struct alpha_bus_space_translation *);
@@ -93,7 +98,25 @@ extern	struct alpha_pci_chipset *alpha_pci_chipset;
 #else
 #include <sys/cdefs.h>
 
+struct alpha_bus_window {
+	void *		abw_addr;
+	size_t		abw_size;
+	struct alpha_bus_space_translation abw_abst;
+};
+
 __BEGIN_DECLS
+int	alpha_bus_getwindows(int, struct alpha_bus_window **);
+int	alpha_bus_mapwindow(struct alpha_bus_window *);
+void	alpha_bus_unmapwindow(struct alpha_bus_window *);
+
+void	*alpha_pci_mem_map(bus_addr_t, bus_size_t, int,
+	    struct alpha_bus_space_translation *);
+void	alpha_pci_mem_unmap(struct alpha_bus_space_translation *,
+	    void *addr, bus_size_t);
+
+u_int32_t alpha_pci_conf_read(u_int, u_int, u_int, u_int);
+void	alpha_pci_conf_write(u_int, u_int, u_int, u_int, u_int32_t);
+
 int	sysarch(int, void *);
 __END_DECLS
 #endif /* _KERNEL */
