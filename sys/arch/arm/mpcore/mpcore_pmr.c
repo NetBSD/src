@@ -1,4 +1,4 @@
-/*	$NetBSD: mpcore_pmr.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $ */
+/*	$NetBSD: mpcore_pmr.c,v 1.3 2011/07/28 02:07:42 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2010, 2011 Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcore_pmr.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcore_pmr.c,v 1.3 2011/07/28 02:07:42 uebayasi Exp $");
 
 #include "locators.h"
 
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: mpcore_pmr.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $"
 #include <arm/pic/picvar.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
 
 #include <arm/mpcore/mpcorereg.h>
 #include <arm/mpcore/mpcorevar.h>
