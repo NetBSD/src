@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.63 2011/07/26 21:03:17 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.64 2011/07/28 00:49:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.63 2011/07/26 21:03:17 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.64 2011/07/28 00:49:18 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -92,7 +92,7 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 	}
 #endif
 
-	if (term_init(el) == -1) {
+	if (terminal_init(el) == -1) {
 		el_free(el->el_prog);
 		el_free(el);
 		return NULL;
@@ -124,7 +124,7 @@ el_end(EditLine *el)
 
 	el_reset(el);
 
-	term_end(el);
+	terminal_end(el);
 	key_end(el);
 	map_end(el);
 	tty_end(el);
@@ -196,7 +196,7 @@ FUN(el,set)(EditLine *el, int op, ...)
 	}
 
 	case EL_TERMINAL:
-		rv = term_set(el, va_arg(ap, char *));
+		rv = terminal_set(el, va_arg(ap, char *));
 		break;
 
 	case EL_EDITOR:
@@ -231,17 +231,17 @@ FUN(el,set)(EditLine *el, int op, ...)
 
 		case EL_TELLTC:
 			argv[0] = STR("telltc");
-			rv = term_telltc(el, i, argv);
+			rv = terminal_telltc(el, i, argv);
 			break;
 
 		case EL_SETTC:
 			argv[0] = STR("settc");
-			rv = term_settc(el, i, argv);
+			rv = terminal_settc(el, i, argv);
 			break;
 
 		case EL_ECHOTC:
 			argv[0] = STR("echotc");
-			rv = term_echotc(el, i, argv);
+			rv = terminal_echotc(el, i, argv);
 			break;
 
 		case EL_SETTY:
@@ -351,7 +351,7 @@ FUN(el,set)(EditLine *el, int op, ...)
 	case EL_REFRESH:
 		re_clear_display(el);
 		re_refresh(el);
-		term__flush(el);
+		terminal__flush(el);
 		break;
 
 	default:
@@ -409,7 +409,7 @@ FUN(el,get)(EditLine *el, int op, ...)
 		break;
 
 	case EL_TERMINAL:
-		term_get(el, va_arg(ap, const char **));
+		terminal_get(el, va_arg(ap, const char **));
 		rv = 0;
 		break;
 
@@ -426,7 +426,7 @@ FUN(el,get)(EditLine *el, int op, ...)
 		switch (op) {
 		case EL_GETTC:
 			argv[0] = name;
-			rv = term_gettc(el, i, argv);
+			rv = terminal_gettc(el, i, argv);
 			break;
 
 		default:
@@ -506,24 +506,24 @@ el_source(EditLine *el, const char *fname)
 	FILE *fp;
 	size_t len;
 	char *ptr;
-#ifdef HAVE_ISSETUGID
-	char path[MAXPATHLEN];
-#endif
+	char *path = NULL;
 	const Char *dptr;
+	int error = 0;
 
 	fp = NULL;
 	if (fname == NULL) {
 #ifdef HAVE_ISSETUGID
 		static const char elpath[] = "/.editrc";
+		size_t len = sizeof(elpath);
 
 		if (issetugid())
 			return (-1);
 		if ((ptr = getenv("HOME")) == NULL)
 			return (-1);
-		if (strlcpy(path, ptr, sizeof(path)) >= sizeof(path))
+		len += strlen(ptr);
+		if ((path = malloc(len)) == NULL)
 			return (-1);
-		if (strlcat(path, elpath, sizeof(path)) >= sizeof(path))
-			return (-1);
+		(void)snprintf(path, len, "%s%s", ptr, elpath);
 		fname = path;
 #else
 		/*
@@ -536,8 +536,10 @@ el_source(EditLine *el, const char *fname)
 	}
 	if (fp == NULL)
 		fp = fopen(fname, "r");
-	if (fp == NULL)
+	if (fp == NULL) {
+		el_free(path);
 		return (-1);
+	}
 
 	while ((ptr = fgetln(fp, &len)) != NULL) {
 		if (*ptr == '\n')
@@ -553,14 +555,13 @@ el_source(EditLine *el, const char *fname)
 			dptr++;
 		if (*dptr == '#')
 			continue;   /* ignore, this is a comment line */
-		if (parse_line(el, dptr) == -1) {
-			(void) fclose(fp);
-			return (-1);
-		}
+		if ((error = parse_line(el, dptr)) == -1)
+			break;
 	}
 
+	el_free(path);
 	(void) fclose(fp);
-	return (0);
+	return (error);
 }
 
 
@@ -578,8 +579,8 @@ el_resize(EditLine *el)
 	(void) sigprocmask(SIG_BLOCK, &nset, &oset);
 
 	/* get the correct window size */
-	if (term_get_size(el, &lins, &cols))
-		term_change_size(el, lins, cols);
+	if (terminal_get_size(el, &lins, &cols))
+		terminal_change_size(el, lins, cols);
 
 	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 }
@@ -592,7 +593,7 @@ public void
 el_beep(EditLine *el)
 {
 
-	term_beep(el);
+	terminal_beep(el);
 }
 
 
