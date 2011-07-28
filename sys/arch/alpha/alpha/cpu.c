@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.92 2011/06/14 15:34:21 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.93 2011/07/28 03:15:20 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.92 2011/06/14 15:34:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.93 2011/07/28 03:15:20 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -238,7 +238,7 @@ recognized:
 		const char *pe = "";
 
 		if (p->pcs_proc_var & PCS_VAR_VAXFP) {
-			fpstr = "VAX FP support";
+			vaxfp = "VAX FP support";
 			needcomma = true;
 		}
 		if (p->pcs_proc_var & PCS_VAR_IEEEFP) {
