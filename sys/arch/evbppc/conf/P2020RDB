@@ -1,4 +1,4 @@
-#	$NetBSD: P2020RDB,v 1.8 2011/07/20 13:20:26 matt Exp $
+#	$NetBSD: P2020RDB,v 1.9 2011/07/28 15:38:48 matt Exp $
 #
 #	P2020RBD -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020RBD-$Revision: 1.8 $"
+ident 		"P2020RBD-$Revision: 1.9 $"
 
 maxusers	32
 
@@ -181,6 +181,10 @@ pci*		at pq3pci?
 
 ppb*		at pci? dev ? function ?	# PCI-PCI bridges
 pci*		at ppb?
+
+ahcisata*	at pci? dev ? function ?
+atabus*		at ahcisata? channel ?
+wd*		at atabus? drive ?
 
 ehci*		at cpunode?		# usb
 usb*		at ehci?

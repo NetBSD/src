@@ -1,0 +1,39 @@
+#	$NetBSD: files.ralink,v 1.2 2011/07/28 15:38:48 matt Exp $
+
+file	arch/mips/ralink/ralink_intr.c
+file	arch/mips/ralink/ralink_bus.c
+
+# Ralink Watchdog Driver
+defparam rwdog.h				RA_WDOG_DEFAULT_PERIOD
+defparam rwdog.h				RA_WDOG_DEFAULT_MODE
+device	rwdog: sysmon_wdog
+attach	rwdog at mainbus
+file	arch/mips/ralink/ralink_wdog.c		rwdog
+
+# On-chip UART device as generic com
+attach	com at mainbus with ralink_com
+file	arch/mips/ralink/ralink_com.c		ralink_com
+options COM_REGMAP
+
+# Ralink GPIO Controller
+device	rgpio: gpiobus
+attach	rgpio at mainbus
+file	arch/mips/ralink/ralink_gpio.c		rgpio
+
+# Ralink I2C Controller
+device	ri2c: i2cbus
+attach	ri2c at mainbus
+file	arch/mips/ralink/ralink_i2c.c		ri2c
+
+# USB OHCI Host Controller
+attach	ohci at mainbus with ralink_ohci
+file	arch/mips/ralink/ralink_ohci.c		ralink_ohci
+
+# USB EHCI Host Controller
+attach	ehci at mainbus with ralink_ehci
+file	arch/mips/ralink/ralink_ehci.c		ralink_ehci
+
+# Ralink Ethernet Controller
+device	reth: ether, ifnet, arp, mii
+attach	reth at mainbus
+file	arch/mips/ralink/ralink_eth.c		reth

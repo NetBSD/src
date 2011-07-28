@@ -1,4 +1,4 @@
-#	$NetBSD: P2020DS,v 1.6 2011/07/16 22:16:59 matt Exp $
+#	$NetBSD: P2020DS,v 1.7 2011/07/28 15:38:48 matt Exp $
 #
 #	P2020DS -- everything that's currently supported
 #
@@ -8,7 +8,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020DS-$Revision: 1.6 $"
+ident 		"P2020DS-$Revision: 1.7 $"
 
 maxusers	32
 
@@ -19,6 +19,7 @@ options 	P2020
 options 	PIXIS
 #options 	SYS_CLK=100000000
 #options 	HZ=1000
+options 	MEMSIZE=0x40000000
 
 makeoptions	NEED_BINARY="yes"
 makeoptions	NEED_UBOOTIMAGE="yes"
