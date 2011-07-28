@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.66 2011/07/28 01:56:27 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.67 2011/07/28 20:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.66 2011/07/28 01:56:27 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.67 2011/07/28 20:50:55 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: el.c,v 1.66 2011/07/28 01:56:27 christos Exp $");
 public EditLine *
 el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 {
-	EditLine *el = (EditLine *) el_malloc(sizeof(EditLine));
+	EditLine *el = el_malloc(sizeof(*el));
 
 	if (el == NULL)
 		return (NULL);
@@ -134,14 +134,14 @@ el_end(EditLine *el)
 	prompt_end(el);
 	sig_end(el);
 
-	el_free((ptr_t) el->el_prog);
+	el_free(el->el_prog);
 #ifdef WIDECHAR
-	el_free((ptr_t) el->el_scratch.cbuff);
-	el_free((ptr_t) el->el_scratch.wbuff);
-	el_free((ptr_t) el->el_lgcyconv.cbuff);
-	el_free((ptr_t) el->el_lgcyconv.wbuff);
+	el_free(el->el_scratch.cbuff);
+	el_free(el->el_scratch.wbuff);
+	el_free(el->el_lgcyconv.cbuff);
+	el_free(el->el_lgcyconv.wbuff);
 #endif
-	el_free((ptr_t) el);
+	el_free(el);
 }
 
 
@@ -270,7 +270,7 @@ FUN(el,set)(EditLine *el, int op, ...)
 	case EL_HIST:
 	{
 		hist_fun_t func = va_arg(ap, hist_fun_t);
-		ptr_t ptr = va_arg(ap, ptr_t);
+		void *ptr = va_arg(ap, void *);
 
 		rv = hist_set(el, func, ptr);
 		if (!(el->el_flags & CHARSET_IS_UTF8))
@@ -521,7 +521,7 @@ el_source(EditLine *el, const char *fname)
 		if ((ptr = getenv("HOME")) == NULL)
 			return (-1);
 		plen += strlen(ptr);
-		if ((path = malloc(plen)) == NULL)
+		if ((path = el_malloc(plen * sizeof(*path))) == NULL)
 			return (-1);
 		(void)snprintf(path, plen, "%s%s", ptr, elpath);
 		fname = path;

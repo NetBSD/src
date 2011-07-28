@@ -1,4 +1,4 @@
-/*	$NetBSD: keymacro.c,v 1.3 2011/07/28 03:52:19 christos Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.4 2011/07/28 20:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: keymacro.c,v 1.3 2011/07/28 03:52:19 christos Exp $");
+__RCSID("$NetBSD: keymacro.c,v 1.4 2011/07/28 20:50:55 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -120,7 +120,7 @@ protected void
 keymacro_end(EditLine *el)
 {
 
-	el_free((ptr_t) el->el_keymacro.buf);
+	el_free(el->el_keymacro.buf);
 	el->el_keymacro.buf = NULL;
 	node__free(el->el_keymacro.map);
 }
@@ -343,7 +343,7 @@ node__try(EditLine *el, keymacro_node_t *ptr, const Char *str,
 		case XK_STR:
 		case XK_EXE:
 			if (ptr->val.str)
-				el_free((ptr_t) ptr->val.str);
+				el_free(ptr->val.str);
 			break;
 		default:
 			EL_ABORT((el->el_errfile, "Bad XK_ type %d\n",
@@ -444,13 +444,13 @@ node__put(EditLine *el, keymacro_node_t *ptr)
 	case XK_EXE:
 	case XK_STR:
 		if (ptr->val.str != NULL)
-			el_free((ptr_t) ptr->val.str);
+			el_free(ptr->val.str);
 		break;
 	default:
 		EL_ABORT((el->el_errfile, "Bad XK_ type %d\n", ptr->type));
 		break;
 	}
-	el_free((ptr_t) ptr);
+	el_free(ptr);
 }
 
 
@@ -462,7 +462,7 @@ node__get(Int ch)
 {
 	keymacro_node_t *ptr;
 
-	ptr = (keymacro_node_t *) el_malloc((size_t) sizeof(keymacro_node_t));
+	ptr = el_malloc(sizeof(*ptr));
 	if (ptr == NULL)
 		return NULL;
 	ptr->ch = ch;
@@ -480,7 +480,7 @@ node__free(keymacro_node_t *k)
 		return;
 	node__free(k->sibling);
 	node__free(k->next);
-	el_free((ptr_t) k);
+	el_free(k);
 }
 
 /* node_lookup():
