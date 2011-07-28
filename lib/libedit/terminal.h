@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.h,v 1.1 2011/07/28 01:05:20 christos Exp $	*/
+/*	$NetBSD: terminal.h,v 1.2 2011/07/28 01:56:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,9 +45,9 @@
 typedef struct {		/* Symbolic function key bindings	*/
 	const Char	*name;	/* name of the key			*/
 	int		 key;	/* Index in termcap table		*/
-	key_value_t	 fun;	/* Function bound to it			*/
+	keymacro_value_t	 fun;	/* Function bound to it			*/
 	int		 type;	/* Type of function			*/
-} fkey_t;
+} funckey_t;
 
 typedef struct {
 	const char *t_name;		/* the terminal name	*/
@@ -67,7 +67,7 @@ typedef struct {
 	char	**t_str;		/* termcap strings	*/
 	int	 *t_val;		/* termcap values	*/
 	char	 *t_cap;		/* Termcap buffer	*/
-	fkey_t	 *t_fkey;		/* Array of keys	*/
+	funckey_t	 *t_fkey;		/* Array of keys	*/
 } el_terminal_t;
 
 /*
@@ -95,7 +95,7 @@ protected int	terminal_init(EditLine *);
 protected void	terminal_bind_arrow(EditLine *);
 protected void	terminal_print_arrow(EditLine *, const Char *);
 protected int	terminal_clear_arrow(EditLine *, const Char *);
-protected int	terminal_set_arrow(EditLine *, const Char *, key_value_t *, int);
+protected int	terminal_set_arrow(EditLine *, const Char *, keymacro_value_t *, int);
 protected void	terminal_end(EditLine *);
 protected void	terminal_get(EditLine *, const char **);
 protected int	terminal_set(EditLine *, const char *);

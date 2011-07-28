@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.36 2011/07/28 00:45:50 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.37 2011/07/28 01:56:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.36 2011/07/28 00:45:50 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.37 2011/07/28 01:56:27 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -924,15 +924,15 @@ tty_bind_char(EditLine *el, int force)
 		if (new[0] == old[0] && !force)
 			continue;
 		/* Put the old default binding back, and set the new binding */
-		key_clear(el, map, old);
+		keymacro_clear(el, map, old);
 		map[UC(old[0])] = dmap[UC(old[0])];
-		key_clear(el, map, new);
+		keymacro_clear(el, map, new);
 		/* MAP_VI == 1, MAP_EMACS == 0... */
 		map[UC(new[0])] = tp->bind[el->el_map.type];
 		if (dalt) {
-			key_clear(el, alt, old);
+			keymacro_clear(el, alt, old);
 			alt[UC(old[0])] = dalt[UC(old[0])];
-			key_clear(el, alt, new);
+			keymacro_clear(el, alt, new);
 			alt[UC(new[0])] = tp->bind[el->el_map.type + 1];
 		}
 	}

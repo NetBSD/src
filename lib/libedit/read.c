@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.62 2011/07/28 00:44:35 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.63 2011/07/28 01:56:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.62 2011/07/28 00:44:35 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.63 2011/07/28 01:56:27 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -268,8 +268,8 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 #endif
                         cmd = el->el_map.current[(unsigned char) *ch];
 		if (cmd == ED_SEQUENCE_LEAD_IN) {
-			key_value_t val;
-			switch (key_get(el, ch, &val)) {
+			keymacro_value_t val;
+			switch (keymacro_get(el, ch, &val)) {
 			case XK_CMD:
 				cmd = val.cmd;
 				break;

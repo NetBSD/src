@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.65 2011/07/28 01:04:41 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.66 2011/07/28 01:56:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.65 2011/07/28 01:04:41 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.66 2011/07/28 01:56:27 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -97,7 +97,7 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 		el_free(el);
 		return NULL;
 	}
-	(void) key_init(el);
+	(void) keymacro_init(el);
 	(void) map_init(el);
 	if (tty_init(el) == -1)
 		el->el_flags |= NO_TTY;
@@ -125,7 +125,7 @@ el_end(EditLine *el)
 	el_reset(el);
 
 	terminal_end(el);
-	key_end(el);
+	keymacro_end(el);
 	map_end(el);
 	tty_end(el);
 	ch_end(el);
