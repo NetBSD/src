@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.135 2011/07/01 18:54:33 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.136 2011/07/28 04:06:09 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135 2011/07/01 18:54:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2011/07/28 04:06:09 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -581,7 +581,7 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 		if ((mem = arcbios_GetMemoryDescriptor(mem)) != NULL) {
 			i++;
 			printf("Mem block %d: type %d, "
-			    "base 0x%04lx, size 0x%04lx\n",
+			    "base 0x%04"PRIx32", size 0x%04"PRIx32"\n",
 			    i, mem->Type, mem->BasePage, mem->PageCount);
 		}
 	} while (mem != NULL);
