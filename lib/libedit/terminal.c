@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.2 2011/07/28 01:56:27 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.3 2011/07/28 03:52:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,14 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.2 2011/07/28 01:56:27 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.3 2011/07/28 03:52:19 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
- * term.c: Editor/termcap-curses interface
- *	   We have to declare a static variable here, since the
- *	   termcap putchar routine does not take an argument!
+ * terminal.c: Editor/termcap-curses interface
+ *	       We have to declare a static variable here, since the
+ *	       termcap putchar routine does not take an argument!
  */
 #include <stdio.h>
 #include <signal.h>
@@ -274,7 +274,8 @@ private void	terminal_setflags(EditLine *);
 private int	terminal_rebuffer_display(EditLine *);
 private void	terminal_free_display(EditLine *);
 private int	terminal_alloc_display(EditLine *);
-private void	terminal_alloc(EditLine *, const struct termcapstr *, const char *);
+private void	terminal_alloc(EditLine *, const struct termcapstr *,
+    const char *);
 private void	terminal_init_arrow(EditLine *);
 private void	terminal_reset_arrow(EditLine *);
 private int	terminal_putc(int);
@@ -344,7 +345,8 @@ terminal_init(EditLine *el)
 	el->el_terminal.t_cap = (char *) el_malloc(TC_BUFSIZE);
 	if (el->el_terminal.t_cap == NULL)
 		return (-1);
-	el->el_terminal.t_fkey = (funckey_t *) el_malloc(A_K_NKEYS * sizeof(funckey_t));
+	el->el_terminal.t_fkey = (funckey_t *) el_malloc(A_K_NKEYS *
+	    sizeof(funckey_t));
 	if (el->el_terminal.t_fkey == NULL)
 		return (-1);
 	el->el_terminal.t_loc = 0;
@@ -415,8 +417,8 @@ terminal_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
          */
 	if (el->el_terminal.t_loc + 3 < TC_BUFSIZE) {
 						/* XXX strcpy is safe */
-		(void) strcpy(*str = &el->el_terminal.t_buf[el->el_terminal.t_loc],
-		    cap);
+		(void) strcpy(*str = &el->el_terminal.t_buf[
+		    el->el_terminal.t_loc], cap);
 		el->el_terminal.t_loc += (int)clen + 1;	/* one for \0 */
 		return;
 	}
@@ -441,7 +443,8 @@ terminal_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 		return;
 	}
 					/* XXX strcpy is safe */
-	(void) strcpy(*str = &el->el_terminal.t_buf[el->el_terminal.t_loc], cap);
+	(void) strcpy(*str = &el->el_terminal.t_buf[el->el_terminal.t_loc],
+	    cap);
 	el->el_terminal.t_loc += (int)clen + 1;	/* one for \0 */
 	return;
 }
@@ -550,7 +553,8 @@ terminal_move_to_line(EditLine *el, int where)
 	if (where > el->el_terminal.t_size.v) {
 #ifdef DEBUG_SCREEN
 		(void) fprintf(el->el_errfile,
-		    "terminal_move_to_line: where is ridiculous: %d\r\n", where);
+		    "terminal_move_to_line: where is ridiculous: %d\r\n",
+		    where);
 #endif /* DEBUG_SCREEN */
 		return;
 	}
@@ -615,7 +619,8 @@ mc_again:
 	if (where > el->el_terminal.t_size.h) {
 #ifdef DEBUG_SCREEN
 		(void) fprintf(el->el_errfile,
-		    "terminal_move_to_char: where is riduculous: %d\r\n", where);
+		    "terminal_move_to_char: where is riduculous: %d\r\n",
+		    where);
 #endif /* DEBUG_SCREEN */
 		return;
 	}
@@ -632,7 +637,8 @@ mc_again:
 	else {
 		if (del > 0) {	/* moving forward */
 			if ((del > 4) && GoodStr(T_RI))
-				terminal_tputs(el, tgoto(Str(T_RI), del, del), del);
+				terminal_tputs(el, tgoto(Str(T_RI), del, del),
+				    del);
 			else {
 					/* if I can do tabs, use them */
 				if (EL_CAN_TAB) {
@@ -649,7 +655,8 @@ mc_again:
 						    (el->el_cursor.h & 0370);
 						    i < (where & ~0x7);
 						    i += 8)
-							terminal__putc(el, '\t');	
+							terminal__putc(el,
+							    '\t');	
 							/* then tab over */
 						el->el_cursor.h = where & ~0x7;
 					}
@@ -681,7 +688,7 @@ mc_again:
 				    (((unsigned int) where >> 3) +
 				     (where & 07)))
 				    : (-del > where)) {
-					terminal__putc(el, '\r');	/* do a CR */
+					terminal__putc(el, '\r');/* do a CR */
 					el->el_cursor.h = 0;
 					goto mc_again;	/* and try again */
 				}
@@ -1138,20 +1145,20 @@ terminal_reset_arrow(EditLine *el)
 	keymacro_add(el, stOH, &arrow[A_K_HO].fun, arrow[A_K_HO].type);
 	keymacro_add(el, stOF, &arrow[A_K_EN].fun, arrow[A_K_EN].type);
 
-	if (el->el_map.type == MAP_VI) {
-		keymacro_add(el, &strA[1], &arrow[A_K_UP].fun, arrow[A_K_UP].type);
-		keymacro_add(el, &strB[1], &arrow[A_K_DN].fun, arrow[A_K_DN].type);
-		keymacro_add(el, &strC[1], &arrow[A_K_RT].fun, arrow[A_K_RT].type);
-		keymacro_add(el, &strD[1], &arrow[A_K_LT].fun, arrow[A_K_LT].type);
-		keymacro_add(el, &strH[1], &arrow[A_K_HO].fun, arrow[A_K_HO].type);
-		keymacro_add(el, &strF[1], &arrow[A_K_EN].fun, arrow[A_K_EN].type);
-		keymacro_add(el, &stOA[1], &arrow[A_K_UP].fun, arrow[A_K_UP].type);
-		keymacro_add(el, &stOB[1], &arrow[A_K_DN].fun, arrow[A_K_DN].type);
-		keymacro_add(el, &stOC[1], &arrow[A_K_RT].fun, arrow[A_K_RT].type);
-		keymacro_add(el, &stOD[1], &arrow[A_K_LT].fun, arrow[A_K_LT].type);
-		keymacro_add(el, &stOH[1], &arrow[A_K_HO].fun, arrow[A_K_HO].type);
-		keymacro_add(el, &stOF[1], &arrow[A_K_EN].fun, arrow[A_K_EN].type);
-	}
+	if (el->el_map.type != MAP_VI)
+		return;
+	keymacro_add(el, &strA[1], &arrow[A_K_UP].fun, arrow[A_K_UP].type);
+	keymacro_add(el, &strB[1], &arrow[A_K_DN].fun, arrow[A_K_DN].type);
+	keymacro_add(el, &strC[1], &arrow[A_K_RT].fun, arrow[A_K_RT].type);
+	keymacro_add(el, &strD[1], &arrow[A_K_LT].fun, arrow[A_K_LT].type);
+	keymacro_add(el, &strH[1], &arrow[A_K_HO].fun, arrow[A_K_HO].type);
+	keymacro_add(el, &strF[1], &arrow[A_K_EN].fun, arrow[A_K_EN].type);
+	keymacro_add(el, &stOA[1], &arrow[A_K_UP].fun, arrow[A_K_UP].type);
+	keymacro_add(el, &stOB[1], &arrow[A_K_DN].fun, arrow[A_K_DN].type);
+	keymacro_add(el, &stOC[1], &arrow[A_K_RT].fun, arrow[A_K_RT].type);
+	keymacro_add(el, &stOD[1], &arrow[A_K_LT].fun, arrow[A_K_LT].type);
+	keymacro_add(el, &stOH[1], &arrow[A_K_HO].fun, arrow[A_K_HO].type);
+	keymacro_add(el, &stOF[1], &arrow[A_K_EN].fun, arrow[A_K_EN].type);
 }
 
 
@@ -1159,7 +1166,8 @@ terminal_reset_arrow(EditLine *el)
  *	Set an arrow key binding
  */
 protected int
-terminal_set_arrow(EditLine *el, const Char *name, keymacro_value_t *fun, int type)
+terminal_set_arrow(EditLine *el, const Char *name, keymacro_value_t *fun,
+    int type)
 {
 	funckey_t *arrow = el->el_terminal.t_fkey;
 	int i;
@@ -1204,8 +1212,8 @@ terminal_print_arrow(EditLine *el, const Char *name)
 	for (i = 0; i < A_K_NKEYS; i++)
 		if (*name == '\0' || Strcmp(name, arrow[i].name) == 0)
 			if (arrow[i].type != XK_NOD)
-				keymacro_kprint(el, arrow[i].name, &arrow[i].fun,
-				    arrow[i].type);
+				keymacro_kprint(el, arrow[i].name,
+				    &arrow[i].fun, arrow[i].type);
 }
 
 
@@ -1679,8 +1687,8 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 		if (*argv && *argv[0]) {
 			if (!silent)
 				(void) fprintf(el->el_errfile,
-				    "echotc: Warning: Extra argument `" FSTR "'.\n",
-				    *argv);
+				    "echotc: Warning: Extra argument `" FSTR
+				    "'.\n", *argv);
 			return (-1);
 		}
 		terminal_tputs(el, tgoto(scap, arg_cols, arg_rows), 1);
@@ -1735,8 +1743,8 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 		if (*argv && *argv[0]) {
 			if (!silent)
 				(void) fprintf(el->el_errfile,
-				    "echotc: Warning: Extra argument `" FSTR "'.\n",
-				    *argv);
+				    "echotc: Warning: Extra argument `" FSTR
+				    "'.\n", *argv);
 			return (-1);
 		}
 		terminal_tputs(el, tgoto(scap, arg_cols, arg_rows), arg_rows);
