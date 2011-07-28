@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.24 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.25 2011/07/28 01:05:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.24 2009/12/30 22:37:40 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.25 2011/07/28 01:05:20 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -155,7 +155,7 @@ ed_delete_next_char(EditLine *el, Int c)
 				return (CC_ERROR);
 #else
 				/* then do an EOF */
-				term_writec(el, c);
+				terminal_writec(el, c);
 				return (CC_EOF);
 #endif
 			} else {
@@ -586,7 +586,7 @@ protected el_action_t
 ed_clear_screen(EditLine *el, Int c __attribute__((__unused__)))
 {
 
-	term_clear_screen(el);	/* clear the whole real screen */
+	terminal_clear_screen(el);	/* clear the whole real screen */
 	re_clear_display(el);	/* reset everything */
 	return (CC_REFRESH);
 }
@@ -910,10 +910,10 @@ ed_command(EditLine *el, Int c __attribute__((__unused__)))
 	int tmplen;
 
 	tmplen = c_gets(el, tmpbuf, STR("\n: "));
-	term__putc(el, '\n');
+	terminal__putc(el, '\n');
 
 	if (tmplen < 0 || (tmpbuf[tmplen] = 0, parse_line(el, tmpbuf)) == -1)
-		term_beep(el);
+		terminal_beep(el);
 
 	el->el_map.current = el->el_map.key;
 	re_clear_display(el);

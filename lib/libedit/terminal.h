@@ -1,4 +1,4 @@
-/*	$NetBSD: term.h,v 1.21 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: terminal.h,v 1.1 2011/07/28 01:05:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,8 +37,8 @@
 /*
  * el.term.h: Termcap header
  */
-#ifndef _h_el_term
-#define	_h_el_term
+#ifndef _h_el_terminal
+#define	_h_el_terminal
 
 #include "histedit.h"
 
@@ -68,7 +68,7 @@ typedef struct {
 	int	 *t_val;		/* termcap values	*/
 	char	 *t_cap;		/* Termcap buffer	*/
 	fkey_t	 *t_fkey;		/* Array of keys	*/
-} el_term_t;
+} el_terminal_t;
 
 /*
  * fKey indexes
@@ -81,36 +81,36 @@ typedef struct {
 #define	A_K_EN		5
 #define	A_K_NKEYS	6
 
-protected void	term_move_to_line(EditLine *, int);
-protected void	term_move_to_char(EditLine *, int);
-protected void	term_clear_EOL(EditLine *, int);
-protected void	term_overwrite(EditLine *, const Char *, size_t);
-protected void	term_insertwrite(EditLine *, Char *, int);
-protected void	term_deletechars(EditLine *, int);
-protected void	term_clear_screen(EditLine *);
-protected void	term_beep(EditLine *);
-protected int	term_change_size(EditLine *, int, int);
-protected int	term_get_size(EditLine *, int *, int *);
-protected int	term_init(EditLine *);
-protected void	term_bind_arrow(EditLine *);
-protected void	term_print_arrow(EditLine *, const Char *);
-protected int	term_clear_arrow(EditLine *, const Char *);
-protected int	term_set_arrow(EditLine *, const Char *, key_value_t *, int);
-protected void	term_end(EditLine *);
-protected void	term_get(EditLine *, const char **);
-protected int	term_set(EditLine *, const char *);
-protected int	term_settc(EditLine *, int, const Char **);
-protected int	term_gettc(EditLine *, int, char **);
-protected int	term_telltc(EditLine *, int, const Char **);
-protected int	term_echotc(EditLine *, int, const Char **);
-protected void	term_writec(EditLine *, Int);
-protected int	term__putc(EditLine *, Int);
-protected void	term__flush(EditLine *);
+protected void	terminal_move_to_line(EditLine *, int);
+protected void	terminal_move_to_char(EditLine *, int);
+protected void	terminal_clear_EOL(EditLine *, int);
+protected void	terminal_overwrite(EditLine *, const Char *, size_t);
+protected void	terminal_insertwrite(EditLine *, Char *, int);
+protected void	terminal_deletechars(EditLine *, int);
+protected void	terminal_clear_screen(EditLine *);
+protected void	terminal_beep(EditLine *);
+protected int	terminal_change_size(EditLine *, int, int);
+protected int	terminal_get_size(EditLine *, int *, int *);
+protected int	terminal_init(EditLine *);
+protected void	terminal_bind_arrow(EditLine *);
+protected void	terminal_print_arrow(EditLine *, const Char *);
+protected int	terminal_clear_arrow(EditLine *, const Char *);
+protected int	terminal_set_arrow(EditLine *, const Char *, key_value_t *, int);
+protected void	terminal_end(EditLine *);
+protected void	terminal_get(EditLine *, const char **);
+protected int	terminal_set(EditLine *, const char *);
+protected int	terminal_settc(EditLine *, int, const Char **);
+protected int	terminal_gettc(EditLine *, int, char **);
+protected int	terminal_telltc(EditLine *, int, const Char **);
+protected int	terminal_echotc(EditLine *, int, const Char **);
+protected void	terminal_writec(EditLine *, Int);
+protected int	terminal__putc(EditLine *, Int);
+protected void	terminal__flush(EditLine *);
 
 /*
  * Easy access macros
  */
-#define	EL_FLAGS	(el)->el_term.t_flags
+#define	EL_FLAGS	(el)->el_terminal.t_flags
 
 #define	EL_CAN_INSERT		(EL_FLAGS & TERM_CAN_INSERT)
 #define	EL_CAN_DELETE		(EL_FLAGS & TERM_CAN_DELETE)
@@ -122,4 +122,4 @@ protected void	term__flush(EditLine *);
 #define	EL_HAS_AUTO_MARGINS	(EL_FLAGS & TERM_HAS_AUTO_MARGINS)
 #define	EL_HAS_MAGIC_MARGINS	(EL_FLAGS & TERM_HAS_MAGIC_MARGINS)
 
-#endif /* _h_el_term */
+#endif /* _h_el_terminal */

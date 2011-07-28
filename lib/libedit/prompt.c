@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.18 2009/12/31 15:58:26 christos Exp $	*/
+/*	$NetBSD: prompt.c,v 1.19 2011/07/28 01:05:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)prompt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: prompt.c,v 1.18 2009/12/31 15:58:26 christos Exp $");
+__RCSID("$NetBSD: prompt.c,v 1.19 2011/07/28 01:05:20 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -103,7 +103,7 @@ prompt_print(EditLine *el, int op)
 			continue;
 		}
 		if (ignore)
-			term__putc(el, *p);
+			terminal__putc(el, *p);
 		else
 			re_putc(el, *p, 1);
 	}
