@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.112 2011/07/26 16:10:16 joerg Exp $
+#  $NetBSD: Makefile,v 1.113 2011/07/28 20:53:20 matt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -100,12 +100,13 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 .endif
 # end of m68k
 .elif (${MACHINE_ARCH} == "vax")
-#.PATH:	${.CURDIR}/arch/vax
+.PATH:	${.CURDIR}/arch/vax
 
 #NOIEEE_ARCH= n_infnan.S n_argred.S n_sqrt.S
 #ARCH_SRCS = n_atan2.S n_cabs.S n_cbrt.S n_support.S n_sincos.S n_tan.S
 # XXX - ripped out due to lack of the insn polyd in the Mariah chip,
 # and emulation code isn't written yet.
+ARCHS_SRCS = n_scalbn.S
 WARNS?=4
 .endif
 
