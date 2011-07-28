@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.114 2011/07/28 21:10:29 joerg Exp $
+#  $NetBSD: Makefile,v 1.115 2011/07/28 22:32:28 joerg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -69,8 +69,8 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 	    e_remainderf.S e_scalb.S e_scalbf.S e_sqrt.S e_sqrtf.S s_atan.S \
 	    s_atanf.S s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S s_cos.S \
 	    s_cosf.S s_finite.S s_finitef.S s_floor.S s_floorf.S s_ilogb.S \
-	    s_ilogbf.S s_log1p.S s_log1pf.S s_logb.S s_logbf.S s_rint.S \
-	    s_rintf.S s_scalbn.S s_scalbnf.S s_significand.S \
+	    s_ilogbf.S s_ilogbl.S s_log1p.S s_log1pf.S s_logb.S s_logbf.S \
+	    s_rint.S s_rintf.S s_scalbn.S s_scalbnf.S s_significand.S \
 	    s_significandf.S s_sin.S s_sinf.S s_tan.S s_tanf.S lrint.S
 # do not pick up the i387 asm version, it is incorrect
 s_modf.o s_modf.pico s_modf.po s_modf.d: s_modf.c
@@ -137,7 +137,7 @@ COMMON_SRCS+= e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	s_ceilf.c s_copysign.c s_copysignf.c s_copysignl.c s_cos.c s_cosf.c s_erf.c \
 	s_erff.c s_exp2.c s_exp2f.c s_expm1.c s_expm1f.c s_fabsf.c s_fabsl.c \
 	s_finite.c s_finitef.c \
-	s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c \
+	s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c s_ilogbl.c \
 	s_isinff.c s_isnanf.c s_ldexpf.c s_lib_version.c s_log1p.c \
 	s_log1pf.c s_logb.c s_logbf.c s_matherr.c s_modff.c s_nextafter.c \
 	s_nextafterf.c s_remquo.c s_remquof.c s_rint.c s_rintf.c s_round.c s_roundf.c s_scalbn.c \
@@ -257,7 +257,7 @@ MLINKS+=ieee.3 finite.3 ieee.3 finitef.3 				\
 MLINKS+=ieee_test.3 logb.3 ieee_test.3 logbf.3
 MLINKS+=ieee_test.3 scalb.3 ieee_test.3 scalbf.3
 MLINKS+=ieee_test.3 significand.3 ieee_test.3 significandf.3
-MLINKS+=ilogb.3 ilogbf.3
+MLINKS+=ilogb.3 ilogbf.3 ilogb.3 ilogbl.3
 MLINKS+=isinff.3 isnanf.3
 MLINKS+=j0.3 j0f.3 j0.3 j1.3 j0.3 j1f.3 j0.3 jn.3 j0.3 jnf.3 \
 	j0.3 y0.3 j0.3 y0f.3 j0.3 y1.3 j0.3 y1f.3 j0.3 yn.3 j0.3 ynf.3
