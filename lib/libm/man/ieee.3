@@ -26,16 +26,17 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
-.\"	$NetBSD: ieee.3,v 1.25 2011/05/10 06:38:33 jruoho Exp $
+.\"	$NetBSD: ieee.3,v 1.26 2011/07/28 21:10:30 joerg Exp $
 .\"
-.Dd April 12, 2011
+.Dd July 28, 2011
 .Dt IEEE 3
 .Os
 .Sh NAME
 .Nm finite ,
 .Nm finitef ,
 .Nm scalbn ,
-.Nm scalbnf
+.Nm scalbnf ,
+.Nm scalbnl
 .Nd functions for IEEE arithmetic
 .Sh LIBRARY
 .Lb libm
@@ -49,6 +50,8 @@
 .Fn scalbn "double x" "int n"
 .Ft float
 .Fn scalbnf "float x" "int n"
+.Ft long double
+.Fn scalbnf "long double x" "int n"
 .Sh DESCRIPTION
 These functions are required or recommended by
 .St -ieee754 .

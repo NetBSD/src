@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1647 2011/07/24 08:55:29 uch Exp $
+#	$NetBSD: mi,v 1.1648 2011/07/28 21:10:25 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8496,6 +8496,7 @@
 ./usr/share/man/cat3/scalbf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scalbn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scalbnf.0			comp-c-catman		.cat
+./usr/share/man/cat3/scalbnl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scale_form.0		comp-c-catman		.cat
 ./usr/share/man/cat3/scandir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scanf.0			comp-c-catman		.cat
@@ -14547,6 +14548,7 @@
 ./usr/share/man/html3/scalbf.html		comp-c-htmlman		html
 ./usr/share/man/html3/scalbn.html		comp-c-htmlman		html
 ./usr/share/man/html3/scalbnf.html		comp-c-htmlman		html
+./usr/share/man/html3/scalbnl.html		comp-c-htmlman		html
 ./usr/share/man/html3/scale_form.html		comp-c-htmlman		html
 ./usr/share/man/html3/scandir.html		comp-c-htmlman		html
 ./usr/share/man/html3/scanf.html		comp-c-htmlman		html
@@ -20603,6 +20605,7 @@
 ./usr/share/man/man3/scalbf.3			comp-c-man		.man
 ./usr/share/man/man3/scalbn.3			comp-c-man		.man
 ./usr/share/man/man3/scalbnf.3			comp-c-man		.man
+./usr/share/man/man3/scalbnl.3			comp-c-man		.man
 ./usr/share/man/man3/scale_form.3		comp-c-man		.man
 ./usr/share/man/man3/scandir.3			comp-c-man		.man
 ./usr/share/man/man3/scanf.3			comp-c-man		.man
