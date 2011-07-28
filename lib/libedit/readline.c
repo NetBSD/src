@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.92 2010/09/16 20:08:51 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.93 2011/07/28 00:54:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.92 2010/09/16 20:08:51 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.93 2011/07/28 00:54:26 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: readline.c,v 1.92 2010/09/16 20:08:51 christos Exp $");
 #ifdef HAVE_VIS_H
 #include <vis.h>
 #else
-#include "np/vis.h"
+#include "vis.h"
 #endif
 #include "readline/readline.h"
 #include "el.h"
