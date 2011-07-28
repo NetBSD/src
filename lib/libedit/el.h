@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.22 2011/01/27 23:11:40 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.23 2011/07/28 01:05:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -101,7 +101,7 @@ typedef struct el_state_t {
 #include "tty.h"
 #include "prompt.h"
 #include "key.h"
-#include "term.h"
+#include "terminal.h"
 #include "refresh.h"
 #include "chared.h"
 #include "common.h"
@@ -129,7 +129,7 @@ struct editline {
 	void		 *el_data;	/* Client data			*/
 	el_line_t	  el_line;	/* The current line information	*/
 	el_state_t	  el_state;	/* Current editor state		*/
-	el_term_t	  el_term;	/* Terminal dependent stuff	*/
+	el_terminal_t	  el_terminal;	/* Terminal dependent stuff	*/
 	el_tty_t	  el_tty;	/* Tty dependent stuff		*/
 	el_refresh_t	  el_refresh;	/* Refresh stuff		*/
 	el_prompt_t	  el_prompt;	/* Prompt stuff			*/

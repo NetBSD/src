@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.25 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.26 2011/07/28 01:05:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.25 2009/12/30 22:37:40 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.26 2011/07/28 01:05:20 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1038,7 +1038,7 @@ map_init_vi(EditLine *el)
 	map_init_nls(el);
 
 	tty_bind_char(el, 1);
-	term_bind_arrow(el);
+	terminal_bind_arrow(el);
 }
 
 
@@ -1072,7 +1072,7 @@ map_init_emacs(EditLine *el)
 	key_add(el, buf, key_map_cmd(el, EM_EXCHANGE_MARK), XK_CMD);
 
 	tty_bind_char(el, 1);
-	term_bind_arrow(el);
+	terminal_bind_arrow(el);
 }
 
 
@@ -1234,7 +1234,7 @@ map_print_all_keys(EditLine *el)
 	(void) fprintf(el->el_outfile, "Multi-character bindings\n");
 	key_print(el, STR(""));
 	(void) fprintf(el->el_outfile, "Arrow key bindings\n");
-	term_print_arrow(el, STR(""));
+	terminal_print_arrow(el, STR(""));
 }
 
 
@@ -1321,7 +1321,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 	}
 	if (rem) {
 		if (key) {
-			(void) term_clear_arrow(el, in);
+			(void) terminal_clear_arrow(el, in);
 			return (-1);
 		}
 		if (in[1])
@@ -1334,7 +1334,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 	}
 	if (argv[argc] == NULL) {
 		if (key)
-			term_print_arrow(el, in);
+			terminal_print_arrow(el, in);
 		else
 			map_print_key(el, map, in);
 		return (0);
@@ -1355,7 +1355,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 			return (-1);
 		}
 		if (key)
-			term_set_arrow(el, in, key_map_str(el, out), ntype);
+			terminal_set_arrow(el, in, key_map_str(el, out), ntype);
 		else
 			key_add(el, in, key_map_str(el, out), ntype);
 		map[(unsigned char) *in] = ED_SEQUENCE_LEAD_IN;
@@ -1369,7 +1369,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 			return (-1);
 		}
 		if (key)
-			term_set_arrow(el, in, key_map_str(el, out), ntype);
+			terminal_set_arrow(el, in, key_map_str(el, out), ntype);
 		else {
 			if (in[1]) {
 				key_add(el, in, key_map_cmd(el, cmd), ntype);
