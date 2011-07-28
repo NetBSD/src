@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.34 2011/02/22 05:45:08 joerg Exp $	*/
+/*	$NetBSD: vi.c,v 1.35 2011/07/28 00:45:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.34 2011/02/22 05:45:08 joerg Exp $");
+__RCSID("$NetBSD: vi.c,v 1.35 2011/07/28 00:45:14 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -608,14 +608,14 @@ vi_list_or_eof(EditLine *el, Int c)
 
 	if (el->el_line.cursor == el->el_line.lastchar) {
 		if (el->el_line.cursor == el->el_line.buffer) {
-			term_writec(el, c);	/* then do a EOF */
+			terminal_writec(el, c);	/* then do a EOF */
 			return (CC_EOF);
 		} else {
 			/*
 			 * Here we could list completions, but it is an
 			 * error right now
 			 */
-			term_beep(el);
+			terminal_beep(el);
 			return (CC_ERROR);
 		}
 	} else {
@@ -627,7 +627,7 @@ vi_list_or_eof(EditLine *el, Int c)
 		/*
 		 * Just complain for now.
 		 */
-		term_beep(el);
+		terminal_beep(el);
 		return (CC_ERROR);
 #endif
 	}
