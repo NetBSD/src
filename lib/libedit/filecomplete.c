@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.25 2011/07/28 17:33:55 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.26 2011/07/28 20:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.25 2011/07/28 17:33:55 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.26 2011/07/28 20:50:55 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -91,7 +91,7 @@ fn_tilde_expand(const char *txt)
 			return NULL;
 	} else {
 		len = temp - txt + 1;	/* text until string after slash */
-		temp = malloc(len);
+		temp = el_malloc(len * sizeof(*temp));
 		if (temp == NULL)
 			return NULL;
 		(void)strncpy(temp, txt + 1, len - 2);
@@ -117,7 +117,7 @@ fn_tilde_expand(const char *txt)
 		pass = getpwnam(temp);
 #endif
 	}
-	free(temp);		/* value no more needed */
+	el_free(temp);		/* value no more needed */
 	if (pass == NULL)
 		return (strdup(txt));
 
@@ -125,10 +125,11 @@ fn_tilde_expand(const char *txt)
 	/* first slash */
 	txt += len;
 
-	temp = malloc(strlen(pass->pw_dir) + 1 + strlen(txt) + 1);
+	len = strlen(pass->pw_dir) + 1 + strlen(txt) + 1;
+	temp = el_malloc(len * sizeof(*temp));
 	if (temp == NULL)
 		return NULL;
-	(void)sprintf(temp, "%s/%s", pass->pw_dir, txt);
+	(void)snprintf(temp, len, "%s/%s", pass->pw_dir, txt);
 
 	return (temp);
 }
@@ -156,9 +157,10 @@ fn_filename_completion_function(const char *text, int state)
 		if (temp) {
 			char *nptr;
 			temp++;
-			nptr = realloc(filename, strlen(temp) + 1);
+			nptr = el_realloc(filename, (strlen(temp) + 1) *
+			    sizeof(*nptr));
 			if (nptr == NULL) {
-				free(filename);
+				el_free(filename);
 				filename = NULL;
 				return NULL;
 			}
@@ -166,9 +168,10 @@ fn_filename_completion_function(const char *text, int state)
 			(void)strcpy(filename, temp);
 			len = temp - text;	/* including last slash */
 
-			nptr = realloc(dirname, len + 1);
+			nptr = el_realloc(dirname, (len + 1) *
+			    sizeof(*nptr));
 			if (nptr == NULL) {
-				free(dirname);
+				el_free(dirname);
 				dirname = NULL;
 				return NULL;
 			}
@@ -176,7 +179,7 @@ fn_filename_completion_function(const char *text, int state)
 			(void)strncpy(dirname, text, len);
 			dirname[len] = '\0';
 		} else {
-			free(filename);
+			el_free(filename);
 			if (*text == 0)
 				filename = NULL;
 			else {
@@ -184,7 +187,7 @@ fn_filename_completion_function(const char *text, int state)
 				if (filename == NULL)
 					return NULL;
 			}
-			free(dirname);
+			el_free(dirname);
 			dirname = NULL;
 		}
 
@@ -195,7 +198,7 @@ fn_filename_completion_function(const char *text, int state)
 
 		/* support for ``~user'' syntax */
 
-		free(dirpath);
+		el_free(dirpath);
 		dirpath = NULL;
 		if (dirname == NULL) {
 			if ((dirname = strdup("")) == NULL)
@@ -246,10 +249,11 @@ fn_filename_completion_function(const char *text, int state)
 		len = strlen(entry->d_name);
 #endif
 
-		temp = malloc(strlen(dirname) + len + 1);
+		len = strlen(dirname) + len + 1;
+		temp = el_malloc(len * sizeof(*temp));
 		if (temp == NULL)
 			return NULL;
-		(void)sprintf(temp, "%s%s", dirname, entry->d_name);
+		(void)snprintf(temp, len, "%s%s", dirname, entry->d_name);
 	} else {
 		(void)closedir(dir);
 		dir = NULL;
@@ -273,7 +277,7 @@ append_char_function(const char *name)
 		rs = "/";
 out:
 	if (expname)
-		free(expname);
+		el_free(expname);
 	return rs;
 }
 /*
@@ -296,10 +300,10 @@ completion_matches(const char *text, char *(*genfunc)(const char *, int))
 			char **nmatch_list;
 			while (matches + 3 >= match_list_len)
 				match_list_len <<= 1;
-			nmatch_list = realloc(match_list,
-			    match_list_len * sizeof(char *));
+			nmatch_list = el_realloc(match_list,
+			    match_list_len * sizeof(*nmatch_list));
 			if (nmatch_list == NULL) {
-				free(match_list);
+				el_free(match_list);
 				return NULL;
 			}
 			match_list = nmatch_list;
@@ -322,9 +326,9 @@ completion_matches(const char *text, char *(*genfunc)(const char *, int))
 		max_equal = i;
 	}
 
-	retstr = malloc(max_equal + 1);
+	retstr = el_malloc((max_equal + 1) * sizeof(*retstr));
 	if (retstr == NULL) {
-		free(match_list);
+		el_free(match_list);
 		return NULL;
 	}
 	(void)strncpy(retstr, match_list[1], max_equal);
@@ -445,7 +449,7 @@ fn_complete(EditLine *el,
 		ctemp--;
 
 	len = li->cursor - ctemp;
-	temp = malloc(sizeof(*temp) * (len + 1));
+	temp = el_malloc((len + 1) * sizeof(*temp));
 	(void)Strncpy(temp, ctemp, len);
 	temp[len] = '\0';
 
@@ -556,11 +560,11 @@ fn_complete(EditLine *el,
 
 		/* free elements of array and the array itself */
 		for (i = 0; matches[i]; i++)
-			free(matches[i]);
-		free(matches);
+			el_free(matches[i]);
+		el_free(matches);
 		matches = NULL;
 	}
-	free(temp);
+	el_free(temp);
 	return retval;
 }
 

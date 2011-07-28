@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.63 2011/07/28 01:56:27 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.64 2011/07/28 20:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.63 2011/07/28 01:56:27 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.64 2011/07/28 20:50:55 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -162,7 +162,7 @@ read__fixio(int fd __attribute__((__unused__)), int e)
 		{
 			int zero = 0;
 
-			if (ioctl(fd, FIONBIO, (ioctl_t) & zero) == -1)
+			if (ioctl(fd, FIONBIO, &zero) == -1)
 				return (-1);
 			else
 				e = 1;
@@ -196,7 +196,7 @@ read_preread(EditLine *el)
 /* FIONREAD attempts to buffer up multiple bytes, and to make that work
  * properly with partial wide/UTF-8 characters would need some careful work. */
 #ifdef FIONREAD
-	(void) ioctl(el->el_infd, FIONREAD, (ioctl_t) & chrs);
+	(void) ioctl(el->el_infd, FIONREAD, &chrs);
 	if (chrs > 0) {
 		char buf[EL_BUFSIZ];
 
@@ -516,7 +516,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 	if (el->el_tty.t_mode == EX_IO && ma->level < 0) {
 		long chrs = 0;
 
-		(void) ioctl(el->el_infd, FIONREAD, (ioctl_t) & chrs);
+		(void) ioctl(el->el_infd, FIONREAD, &chrs);
 		if (chrs == 0) {
 			if (tty_rawmode(el) < 0) {
 				errno = 0;
