@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 2011/06/20 06:29:54 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.7 2011/07/28 01:44:50 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,9 +40,9 @@
 #define	KERNBASE		0x100000
 #define	__NO_FIXED_MSGBUF
 
+#endif /* _KERNEL && !_MODULE */
+
 /* at this offset we mmap() the PCI IO range in display drivers */
 #define PCI_MAGIC_IO_RANGE	0xf2000000
-
-#endif /* _KERNEL && !_MODULE */
 
 #include <powerpc/param.h>
