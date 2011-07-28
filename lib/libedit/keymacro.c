@@ -1,4 +1,4 @@
-/*	$NetBSD: keymacro.c,v 1.1 2011/07/28 01:56:27 christos Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.2 2011/07/28 03:48:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,27 +35,28 @@
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
 #if 0
-static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)keymacro.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: keymacro.c,v 1.1 2011/07/28 01:56:27 christos Exp $");
+__RCSID("$NetBSD: keymacro.c,v 1.2 2011/07/28 03:48:46 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
- * key.c: This module contains the procedures for maintaining
- *	  the extended-key map.
+ * keymacro.c: This module contains the procedures for maintaining
+ *	       the extended-key map.
  *
  *      An extended-key (key) is a sequence of keystrokes introduced
  *	with a sequence introducer and consisting of an arbitrary
- *	number of characters.  This module maintains a map (the el->el_keymacro.map)
+ *	number of characters.  This module maintains a map (the
+ *	el->el_keymacro.map)
  *	to convert these extended-key sequences into input strs
  *	(XK_STR), editor functions (XK_CMD), or unix commands (XK_EXE).
  *
  *      Warning:
  *	  If key is a substr of some other keys, then the longer
  *	  keys are lost!!  That is, if the keys "abcd" and "abcef"
- *	  are in el->el_keymacro.map, adding the key "abc" will cause the first two
- *	  definitions to be lost.
+ *	  are in el->el_keymacro.map, adding the key "abc" will cause
+ *	  the first two definitions to be lost.
  *
  *      Restrictions:
  *      -------------
@@ -68,16 +69,16 @@ __RCSID("$NetBSD: keymacro.c,v 1.1 2011/07/28 01:56:27 christos Exp $");
 #include "el.h"
 
 /*
- * The Nodes of the el->el_keymacro.map.  The el->el_keymacro.map is a linked list
- * of these node elements
+ * The Nodes of the el->el_keymacro.map.  The el->el_keymacro.map is a
+ * linked list of these node elements
  */
 struct keymacro_node_t {
-	Char		ch;		/* single character of key 	 */
-	int		type;		/* node type			 */
-	keymacro_value_t	val;		/* command code or pointer to str,  */
+	Char		 ch;		/* single character of key 	 */
+	int		 type;		/* node type			 */
+	keymacro_value_t val;		/* command code or pointer to str,  */
 					/* if this is a leaf 		 */
 	struct keymacro_node_t *next;	/* ptr to next char of this key  */
-	struct keymacro_node_t *sibling;	/* ptr to another key with same prefix*/
+	struct keymacro_node_t *sibling;/* ptr to another key with same prefix*/
 };
 
 private int		 node_trav(EditLine *, keymacro_node_t *, Char *,
@@ -87,9 +88,10 @@ private int		 node__try(EditLine *, keymacro_node_t *, const Char *,
 private keymacro_node_t	*node__get(Int);
 private void		 node__free(keymacro_node_t *);
 private void		 node__put(EditLine *, keymacro_node_t *);
-private int		 node__delete(EditLine *, keymacro_node_t **, const Char *);
-private int		 node_lookup(EditLine *, const Char *, keymacro_node_t *,
-    size_t);
+private int		 node__delete(EditLine *, keymacro_node_t **,
+    const Char *);
+private int		 node_lookup(EditLine *, const Char *,
+    keymacro_node_t *, size_t);
 private int		 node_enum(EditLine *, keymacro_node_t *, size_t);
 
 #define	KEY_BUFSIZ	EL_BUFSIZ
@@ -102,7 +104,8 @@ protected int
 keymacro_init(EditLine *el)
 {
 
-	el->el_keymacro.buf = el_malloc(KEY_BUFSIZ * sizeof(*el->el_keymacro.buf));
+	el->el_keymacro.buf = el_malloc(KEY_BUFSIZ *
+	    sizeof(*el->el_keymacro.buf));
 	if (el->el_keymacro.buf == NULL)
 		return (-1);
 	el->el_keymacro.map = NULL;
@@ -148,8 +151,8 @@ keymacro_map_str(EditLine *el, Char *str)
 
 
 /* keymacro_reset():
- *	Takes all nodes on el->el_keymacro.map and puts them on free list.  Then
- *	initializes el->el_keymacro.map with arrow keys
+ *	Takes all nodes on el->el_keymacro.map and puts them on free list.
+ *	Then initializes el->el_keymacro.map with arrow keys
  *	[Always bind the ansi arrow keys?]
  */
 protected void
@@ -179,10 +182,10 @@ keymacro_get(EditLine *el, Char *ch, keymacro_value_t *val)
 
 
 /* keymacro_add():
- *      Adds key to the el->el_keymacro.map and associates the value in val with it.
- *      If key is already is in el->el_keymacro.map, the new code is applied to the
- *      existing key. Ntype specifies if code is a command, an
- *      out str or a unix command.
+ *      Adds key to the el->el_keymacro.map and associates the value in
+ *	val with it. If key is already is in el->el_keymacro.map, the new
+ *	code is applied to the existing key. Ntype specifies if code is a
+ *	command, an out str or a unix command.
  */
 protected void
 keymacro_add(EditLine *el, const Char *key, keymacro_value_t *val, int ntype)
@@ -264,8 +267,8 @@ keymacro_print(EditLine *el, const Char *key)
 	el->el_keymacro.buf[0] = '"';
 	if (node_lookup(el, key, el->el_keymacro.map, 1) <= -1)
 		/* key is not bound */
-		(void) fprintf(el->el_errfile, "Unbound extended key \"" FSTR "\"\n",
-		    key);
+		(void) fprintf(el->el_errfile, "Unbound extended key \"" FSTR
+		    "\"\n", key);
 	return;
 }
 
@@ -312,7 +315,8 @@ node_trav(EditLine *el, keymacro_node_t *ptr, Char *ch, keymacro_value_t *val)
  * 	Find a node that matches *str or allocate a new one
  */
 private int
-node__try(EditLine *el, keymacro_node_t *ptr, const Char *str, keymacro_value_t *val, int ntype)
+node__try(EditLine *el, keymacro_node_t *ptr, const Char *str,
+    keymacro_value_t *val, int ntype)
 {
 
 	if (ptr->ch != *str) {
@@ -510,8 +514,9 @@ node_lookup(EditLine *el, const Char *str, keymacro_node_t *ptr, size_t cnt)
 			else {
 			    /* next node is null so key should be complete */
 				if (str[1] == 0) {
-					el->el_keymacro.buf[cnt + used    ] = '"';
-					el->el_keymacro.buf[cnt + used + 1] = '\0';
+					size_t px = cnt + used;
+					el->el_keymacro.buf[px] = '"';
+					el->el_keymacro.buf[px + 1] = '\0';
 					keymacro_kprint(el, el->el_keymacro.buf,
 					    &ptr->val, ptr->type);
 					return (0);
@@ -544,7 +549,8 @@ node_enum(EditLine *el, keymacro_node_t *ptr, size_t cnt)
 		el->el_keymacro.buf[++cnt] = '\0';
 		(void) fprintf(el->el_errfile,
 		    "Some extended keys too long for internal print buffer");
-		(void) fprintf(el->el_errfile, " \"" FSTR "...\"\n", el->el_keymacro.buf);
+		(void) fprintf(el->el_errfile, " \"" FSTR "...\"\n",
+		    el->el_keymacro.buf);
 		return (0);
 	}
 	if (ptr == NULL) {
@@ -555,7 +561,8 @@ node_enum(EditLine *el, keymacro_node_t *ptr, size_t cnt)
 		return (-1);
 	}
 	/* put this char at end of str */
-        used = ct_visual_char(el->el_keymacro.buf + cnt, KEY_BUFSIZ - cnt, ptr->ch);
+        used = ct_visual_char(el->el_keymacro.buf + cnt, KEY_BUFSIZ - cnt,
+	    ptr->ch);
 	if (ptr->next == NULL) {
 		/* print this key and function */
 		el->el_keymacro.buf[cnt + used   ] = '"';
@@ -662,4 +669,3 @@ add_endsep:
 	    buf[len - 1] = '\0';
 	return (size_t)(b - buf);
 }
-
