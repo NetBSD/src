@@ -1,4 +1,4 @@
-/*	$NetBSD: dic.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $ */
+/*	$NetBSD: dic.c,v 1.3 2011/07/28 02:07:42 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2010, 2011 Genetec Corporation.  All rights reserved.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dic.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dic.c,v 1.3 2011/07/28 02:07:42 uebayasi Exp $");
 
 #define	_INTR_PRIVATE	/* for arm/pic/picvar.h */
 
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: dic.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $");
 #include <arm/mpcore/dicreg.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
 
 /*
  * 0 is the highest priority.
