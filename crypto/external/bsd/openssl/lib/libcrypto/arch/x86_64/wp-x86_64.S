@@ -23,7 +23,7 @@ whirlpool_block:
 .Lprologue:
 
 	movq	%r10,%rbx
-	leaq	.Ltable@GOTPCREL(%rip),%rbp
+	leaq	.Ltable(%rip),%rbp
 
 	xorq	%rcx,%rcx
 	xorq	%rdx,%rdx
