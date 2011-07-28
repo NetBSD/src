@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.64 2011/07/27 14:35:34 uebayasi Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.65 2011/07/28 13:42:16 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,12 +71,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.64 2011/07/27 14:35:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.65 2011/07/28 13:42:16 uebayasi Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
-#include "opt_ddbparam.h"	/* for SYMTAB_SPACE */
 #include "opt_dtrace.h"
+#include "opt_ksyms.h"
 #endif
 
 #define _KSYMS_PRIVATE
