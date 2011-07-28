@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.42 2008/06/18 12:25:13 tsutsui Exp $	*/
+/*	$NetBSD: ppi.c,v 1.43 2011/07/28 03:42:20 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.42 2008/06/18 12:25:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.43 2011/07/28 03:42:20 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ ppiopen(dev_t dev, int flags, int fmt, struct lwp *l)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppiopen(%x, %x): flags %x\n",
+		printf("ppiopen(%"PRIx64", %x): flags %x\n",
 		       dev, flags, sc->sc_flags);
 #endif
 	if (sc->sc_flags & PPIF_OPEN)
@@ -226,7 +226,7 @@ ppiclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppiclose(%x, %x): flags %x\n",
+		printf("ppiclose(%"PRIx64", %x): flags %x\n",
 		       dev, flags, sc->sc_flags);
 #endif
 	sc->sc_flags &= ~PPIF_OPEN;
@@ -265,7 +265,7 @@ ppiread(dev_t dev, struct uio *uio, int flags)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppiread(%x, %p)\n", dev, uio);
+		printf("ppiread(%"PRIx64", %p)\n", dev, uio);
 #endif
 	return ppirw(dev, uio);
 }
@@ -276,7 +276,7 @@ ppiwrite(dev_t dev, struct uio *uio, int flags)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppiwrite(%x, %p)\n", dev, uio);
+		printf("ppiwrite(%"PRIx64", %p)\n", dev, uio);
 #endif
 	return ppirw(dev, uio);
 }
@@ -299,7 +299,7 @@ ppirw(dev_t dev, struct uio *uio)
 
 #ifdef DEBUG
 	if (ppidebug & (PDB_FOLLOW|PDB_IO))
-		printf("ppirw(%x, %p, %c): burst %d, timo %d, resid %x\n",
+		printf("ppirw(%"PRIx64", %p, %c): burst %d, timo %d, resid %x\n",
 		       dev, uio, uio->uio_rw == UIO_READ ? 'R' : 'W',
 		       sc->sc_burst, sc->sc_timo, uio->uio_resid);
 #endif

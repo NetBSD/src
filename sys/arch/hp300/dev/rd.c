@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.90 2011/02/08 20:20:13 rmind Exp $	*/
+/*	$NetBSD: rd.c,v 1.91 2011/07/28 03:42:20 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.90 2011/02/08 20:20:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.91 2011/07/28 03:42:20 uebayasi Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -657,7 +657,7 @@ rdstrategy(struct buf *bp)
 
 #ifdef DEBUG
 	if (rddebug & RDB_FOLLOW)
-		printf("rdstrategy(%p): dev %x, bn %llx, bcount %x, %c\n",
+		printf("rdstrategy(%p): dev %"PRIx64", bn %llx, bcount %x, %c\n",
 		       bp, bp->b_dev, bp->b_blkno, bp->b_bcount,
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
