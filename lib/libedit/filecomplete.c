@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.24 2011/07/28 00:50:23 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.25 2011/07/28 17:33:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.24 2011/07/28 00:50:23 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.25 2011/07/28 17:33:55 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -73,10 +73,13 @@ static const Char break_chars[] = { ' ', '\t', '\n', '"', '\\', '\'', '`', '@',
 char *
 fn_tilde_expand(const char *txt)
 {
-	struct passwd pwres, *pass;
+#if defined(HAVE_GETPW_R_POSIX) || defined(HAVE_GETPW_R_DRAFT)
+	struct passwd pwres;
+	char pwbuf[1024];
+#endif
+	struct passwd *pass;
 	char *temp;
 	size_t len = 0;
-	char pwbuf[1024];
 
 	if (txt[0] != '~')
 		return (strdup(txt));
