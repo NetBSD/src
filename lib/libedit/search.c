@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.24 2010/04/15 00:57:33 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.25 2011/07/28 00:46:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.24 2010/04/15 00:57:33 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.25 2011/07/28 00:46:26 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -254,7 +254,7 @@ ce_inc_search(EditLine *el, int dir)
 		case ED_INSERT:
 		case ED_DIGIT:
 			if (el->el_search.patlen >= EL_BUFSIZ - LEN)
-				term_beep(el);
+				terminal_beep(el);
 			else {
 				el->el_search.patbuf[el->el_search.patlen++] =
 				    ch;
@@ -279,7 +279,7 @@ ce_inc_search(EditLine *el, int dir)
 			if (el->el_search.patlen > LEN)
 				done++;
 			else
-				term_beep(el);
+				terminal_beep(el);
 			break;
 
 		default:
@@ -303,7 +303,7 @@ ce_inc_search(EditLine *el, int dir)
 					    *el->el_line.cursor != '\n') {
 						if (el->el_search.patlen >=
 						    EL_BUFSIZ - LEN) {
-							term_beep(el);
+							terminal_beep(el);
 							break;
 						}
 						el->el_search.patbuf[el->el_search.patlen++] =
@@ -316,7 +316,7 @@ ce_inc_search(EditLine *el, int dir)
 					re_refresh(el);
 					break;
 				    } else if (isglob(*cp)) {
-					    term_beep(el);
+					    terminal_beep(el);
 					    break;
 				    }
 				break;
@@ -401,7 +401,7 @@ ce_inc_search(EditLine *el, int dir)
 				el->el_search.patbuf[el->el_search.patlen] =
 				    '\0';
 				if (ret == CC_ERROR) {
-					term_beep(el);
+					terminal_beep(el);
 					if (el->el_history.eventno !=
 					    ohisteventno) {
 						el->el_history.eventno =
