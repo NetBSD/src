@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.13 2009/03/18 10:22:39 cegger Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.14 2011/07/28 16:28:12 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.13 2009/03/18 10:22:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.14 2011/07/28 16:28:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -148,7 +148,8 @@ const struct wsmouse_accessops adbkms_accessops = {
 	adbkms_disable,
 };
 
-static int  adbkbd_sysctl_button(SYSCTLFN_ARGS);
+static int  adbkbd_sysctl_mid(SYSCTLFN_ARGS);
+static int  adbkbd_sysctl_right(SYSCTLFN_ARGS);
 static void adbkbd_setup_sysctl(struct adbkbd_softc *);
 
 #endif /* NWSMOUSE > 0 */
@@ -655,11 +656,11 @@ adbkms_disable(void *v)
 static void
 adbkbd_setup_sysctl(struct adbkbd_softc *sc)
 {
-	struct sysctlnode *node, *me;
+	const struct sysctlnode *me, *node;
 	int ret;
 
 	DPRINTF("%s: sysctl setup\n", device_xname(sc->sc_dev));
-	ret = sysctl_createv(NULL, 0, NULL, (const struct sysctlnode **)&me,
+	ret = sysctl_createv(NULL, 0, NULL, &me,
 	       CTLFLAG_READWRITE,
 	       CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
 	       NULL, 0, NULL, 0,
@@ -667,42 +668,66 @@ adbkbd_setup_sysctl(struct adbkbd_softc *sc)
 
 	ret = sysctl_createv(NULL, 0, NULL,
 	    (const struct sysctlnode **)&node, 
-	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC | CTLFLAG_IMMEDIATE,
-	    CTLTYPE_INT, "middle", "middle mouse button", adbkbd_sysctl_button, 
-		    1, NULL, 0, CTL_MACHDEP, me->sysctl_num, CTL_CREATE, 
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+	    CTLTYPE_INT, "middle", "middle mouse button", adbkbd_sysctl_mid, 
+		    1, sc, 0, CTL_MACHDEP, me->sysctl_num, CTL_CREATE, 
 		    CTL_EOL);
-	node->sysctl_data = sc;
 
 	ret = sysctl_createv(NULL, 0, NULL, 
 	    (const struct sysctlnode **)&node, 
-	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC | CTLFLAG_IMMEDIATE,
-	    CTLTYPE_INT, "right", "right mouse button", adbkbd_sysctl_button, 
-		    2, NULL, 0, CTL_MACHDEP, me->sysctl_num, CTL_CREATE, 
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+	    CTLTYPE_INT, "right", "right mouse button", adbkbd_sysctl_right, 
+		    2, sc, 0, CTL_MACHDEP, me->sysctl_num, CTL_CREATE, 
 		    CTL_EOL);
-	node->sysctl_data = sc;
 }
 
 static int
-adbkbd_sysctl_button(SYSCTLFN_ARGS)
+adbkbd_sysctl_mid(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct adbkbd_softc *sc=(struct adbkbd_softc *)node.sysctl_data;
 	const int *np = newp;
-	int btn = node.sysctl_idata, reg;
+	int reg;
 
-	DPRINTF("adbkbd_sysctl_button %d\n", btn);
-	node.sysctl_idata = sc->sc_trans[btn];
-	reg = sc->sc_trans[btn];
+	DPRINTF("adbkbd_sysctl_mid\n");
+	reg = sc->sc_trans[1];
 	if (np) {
 		/* we're asked to write */	
 		node.sysctl_data = &reg;
 		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
 			
-			sc->sc_trans[btn] = node.sysctl_idata;
+			sc->sc_trans[1] = *(int *)node.sysctl_data;
 			return 0;
 		}
 		return EINVAL;
 	} else {
+		node.sysctl_data = &reg;
+		node.sysctl_size = 4;
+		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	}
+}
+
+static int
+adbkbd_sysctl_right(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct adbkbd_softc *sc=(struct adbkbd_softc *)node.sysctl_data;
+	const int *np = newp;
+	int reg;
+
+	DPRINTF("adbkbd_sysctl_right\n");
+	reg = sc->sc_trans[2];
+	if (np) {
+		/* we're asked to write */	
+		node.sysctl_data = &reg;
+		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
+			
+			sc->sc_trans[2] = *(int *)node.sysctl_data;
+			return 0;
+		}
+		return EINVAL;
+	} else {
+		node.sysctl_data = &reg;
 		node.sysctl_size = 4;
 		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 	}

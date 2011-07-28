@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.9 2010/08/11 16:54:10 macallan Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.10 2011/07/28 16:28:12 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.9 2010/08/11 16:54:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.10 2011/07/28 16:28:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -690,7 +690,7 @@ adbms_disable(void *v)
 static void
 init_trackpad(struct adbms_softc *sc)
 {
-	struct sysctlnode *me = NULL, *node = NULL;
+	const struct sysctlnode *me = NULL, *node = NULL;
 	int cmd, addr, ret;
 	uint8_t buffer[16];
 	uint8_t b2[] = {0x99, 0x94, 0x19, 0xff, 0xb2, 0x8a, 0x1b, 0x50};
@@ -730,20 +730,17 @@ init_trackpad(struct adbms_softc *sc)
 
 	sc->sc_tapping = 1;
 	
-	ret = sysctl_createv(NULL, 0, NULL, (const struct sysctlnode **)&me,
+	ret = sysctl_createv(NULL, 0, NULL, &me,
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
-	ret = sysctl_createv(NULL, 0, NULL, (const struct sysctlnode **)&node,
-	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC | CTLFLAG_IMMEDIATE,
+	ret = sysctl_createv(NULL, 0, NULL, &node,
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
 	    CTLTYPE_INT, "tapping", "tapping the pad causes button events",
-	    sysctl_adbms_tap, 1, NULL, 0,
+	    sysctl_adbms_tap, 1, sc, 0,
 	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
-	if (node != NULL) {
-		node->sysctl_data = sc;
-	}	
 }
 
 static int
@@ -793,12 +790,13 @@ sysctl_adbms_tap(SYSCTLFN_ARGS)
 		node.sysctl_data = &sc->sc_tapping;
 		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
 
-			sc->sc_tapping = (node.sysctl_idata == 0) ? 0 : 1;
+			sc->sc_tapping = (*(int *)node.sysctl_data == 0) ? 0 : 1;
 			return 0;
 		}
 		return EINVAL;
 	} else {
 
+		node.sysctl_data = &sc->sc_tapping;
 		node.sysctl_size = 4;
 		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 	}
