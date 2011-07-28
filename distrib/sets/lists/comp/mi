@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1648 2011/07/28 21:10:25 joerg Exp $
+#	$NetBSD: mi,v 1.1649 2011/07/28 22:32:28 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6782,6 +6782,7 @@
 ./usr/share/man/cat3/ilog2.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ilogb.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ilogbf.0			comp-c-catman		.cat
+./usr/share/man/cat3/ilogbl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/imaxabs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/imaxdiv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/inch.0			comp-c-catman		.cat
@@ -12877,6 +12878,7 @@
 ./usr/share/man/html3/ilog2.html		comp-c-htmlman		html
 ./usr/share/man/html3/ilogb.html		comp-c-htmlman		html
 ./usr/share/man/html3/ilogbf.html		comp-c-htmlman		html
+./usr/share/man/html3/ilogbl.html		comp-c-htmlman		html
 ./usr/share/man/html3/imaxabs.html		comp-c-htmlman		html
 ./usr/share/man/html3/imaxdiv.html		comp-c-htmlman		html
 ./usr/share/man/html3/inch.html			comp-c-htmlman		html
@@ -18891,6 +18893,7 @@
 ./usr/share/man/man3/ilog2.3			comp-c-man		.man
 ./usr/share/man/man3/ilogb.3			comp-c-man		.man
 ./usr/share/man/man3/ilogbf.3			comp-c-man		.man
+./usr/share/man/man3/ilogbl.3			comp-c-man		.man
 ./usr/share/man/man3/imaxabs.3			comp-c-man		.man
 ./usr/share/man/man3/imaxdiv.3			comp-c-man		.man
 ./usr/share/man/man3/inch.3			comp-c-man		.man
