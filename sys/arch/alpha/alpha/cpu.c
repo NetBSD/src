@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.93 2011/07/28 03:15:20 uebayasi Exp $ */
+/* $NetBSD: cpu.c,v 1.94 2011/07/28 03:21:14 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.93 2011/07/28 03:15:20 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.94 2011/07/28 03:21:14 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -248,7 +248,7 @@ recognized:
 			needcomma = true;
 		}
 		if (p->pcs_proc_var & PCS_VAR_PE) {
-			pe = ", Primary Eligible");
+			pe = ", Primary Eligible";
 			if (!needcomma)
 				pe += 2;
 			needcomma = true;
