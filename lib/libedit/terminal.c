@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.3 2011/07/28 03:52:19 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.4 2011/07/28 20:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.3 2011/07/28 03:52:19 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.4 2011/07/28 20:50:55 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -339,25 +339,31 @@ protected int
 terminal_init(EditLine *el)
 {
 
-	el->el_terminal.t_buf = (char *) el_malloc(TC_BUFSIZE);
+	el->el_terminal.t_buf = el_malloc(TC_BUFSIZE *
+	    sizeof(*el->el_terminal.t_buf));
 	if (el->el_terminal.t_buf == NULL)
 		return (-1);
-	el->el_terminal.t_cap = (char *) el_malloc(TC_BUFSIZE);
+	el->el_terminal.t_cap = el_malloc(TC_BUFSIZE *
+	    sizeof(*el->el_terminal.t_cap));
 	if (el->el_terminal.t_cap == NULL)
 		return (-1);
-	el->el_terminal.t_fkey = (funckey_t *) el_malloc(A_K_NKEYS *
-	    sizeof(funckey_t));
+	el->el_terminal.t_fkey = el_malloc(A_K_NKEYS *
+	    sizeof(*el->el_terminal.t_fkey));
 	if (el->el_terminal.t_fkey == NULL)
 		return (-1);
 	el->el_terminal.t_loc = 0;
-	el->el_terminal.t_str = (char **) el_malloc(T_str * sizeof(char *));
+	el->el_terminal.t_str = el_malloc(T_str *
+	    sizeof(*el->el_terminal.t_str));
 	if (el->el_terminal.t_str == NULL)
 		return (-1);
-	(void) memset(el->el_terminal.t_str, 0, T_str * sizeof(char *));
-	el->el_terminal.t_val = (int *) el_malloc(T_val * sizeof(int));
+	(void) memset(el->el_terminal.t_str, 0, T_str *
+	    sizeof(*el->el_terminal.t_str));
+	el->el_terminal.t_val = el_malloc(T_val *
+	    sizeof(*el->el_terminal.t_val));
 	if (el->el_terminal.t_val == NULL)
 		return (-1);
-	(void) memset(el->el_terminal.t_val, 0, T_val * sizeof(int));
+	(void) memset(el->el_terminal.t_val, 0, T_val *
+	    sizeof(*el->el_terminal.t_val));
 	(void) terminal_set(el, NULL);
 	terminal_init_arrow(el);
 	return (0);
@@ -370,16 +376,16 @@ protected void
 terminal_end(EditLine *el)
 {
 
-	el_free((ptr_t) el->el_terminal.t_buf);
+	el_free(el->el_terminal.t_buf);
 	el->el_terminal.t_buf = NULL;
-	el_free((ptr_t) el->el_terminal.t_cap);
+	el_free(el->el_terminal.t_cap);
 	el->el_terminal.t_cap = NULL;
 	el->el_terminal.t_loc = 0;
-	el_free((ptr_t) el->el_terminal.t_str);
+	el_free(el->el_terminal.t_str);
 	el->el_terminal.t_str = NULL;
-	el_free((ptr_t) el->el_terminal.t_val);
+	el_free(el->el_terminal.t_val);
 	el->el_terminal.t_val = NULL;
-	el_free((ptr_t) el->el_terminal.t_fkey);
+	el_free(el->el_terminal.t_fkey);
 	el->el_terminal.t_fkey = NULL;
 	terminal_free_display(el);
 }
@@ -486,8 +492,8 @@ terminal_alloc_display(EditLine *el)
 		b[i] = el_malloc(sizeof(**b) * (c->h + 1));
 		if (b[i] == NULL) {
 			while (--i >= 0)
-				el_free((ptr_t) b[i]);
-			el_free((ptr_t) b);
+				el_free(b[i]);
+			el_free(b);
 			return (-1);
 		}
 	}
@@ -501,8 +507,8 @@ terminal_alloc_display(EditLine *el)
 		b[i] = el_malloc(sizeof(**b) * (c->h + 1));
 		if (b[i] == NULL) {
 			while (--i >= 0)
-				el_free((ptr_t) b[i]);
-			el_free((ptr_t) b);
+				el_free(b[i]);
+			el_free(b);
 			return (-1);
 		}
 	}
@@ -525,15 +531,15 @@ terminal_free_display(EditLine *el)
 	el->el_display = NULL;
 	if (b != NULL) {
 		for (bufp = b; *bufp != NULL; bufp++)
-			el_free((ptr_t) *bufp);
-		el_free((ptr_t) b);
+			el_free(*bufp);
+		el_free(b);
 	}
 	b = el->el_vdisplay;
 	el->el_vdisplay = NULL;
 	if (b != NULL) {
 		for (bufp = b; *bufp != NULL; bufp++)
-			el_free((ptr_t) *bufp);
-		el_free((ptr_t) b);
+			el_free(*bufp);
+		el_free(b);
 	}
 }
 
@@ -1029,7 +1035,7 @@ terminal_get_size(EditLine *el, int *lins, int *cols)
 #ifdef TIOCGWINSZ
 	{
 		struct winsize ws;
-		if (ioctl(el->el_infd, TIOCGWINSZ, (ioctl_t) & ws) != -1) {
+		if (ioctl(el->el_infd, TIOCGWINSZ, &ws) != -1) {
 			if (ws.ws_col)
 				*cols = ws.ws_col;
 			if (ws.ws_row)
@@ -1040,7 +1046,7 @@ terminal_get_size(EditLine *el, int *lins, int *cols)
 #ifdef TIOCGSIZE
 	{
 		struct ttysize ts;
-		if (ioctl(el->el_infd, TIOCGSIZE, (ioctl_t) & ts) != -1) {
+		if (ioctl(el->el_infd, TIOCGSIZE, &ts) != -1) {
 			if (ts.ts_cols)
 				*cols = ts.ts_cols;
 			if (ts.ts_lines)

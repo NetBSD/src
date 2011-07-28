@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.6 2011/07/28 00:48:21 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.7 2011/07/28 20:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.6 2011/07/28 00:48:21 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.7 2011/07/28 20:50:55 christos Exp $");
 #endif /* not lint && not SCCSID */
 #include "el.h"
 #include <stdlib.h>
@@ -52,7 +52,7 @@ ct_conv_buff_resize(ct_buffer_t *conv, size_t mincsize, size_t minwsize)
 	void *p;
 	if (mincsize > conv->csize) {
 		conv->csize = mincsize;
-		p = el_realloc(conv->cbuff, conv->csize * sizeof(char));
+		p = el_realloc(conv->cbuff, conv->csize * sizeof(*conv->cbuff));
 		if (p == NULL) {
 			conv->csize = 0;
 			el_free(conv->cbuff);
@@ -63,7 +63,7 @@ ct_conv_buff_resize(ct_buffer_t *conv, size_t mincsize, size_t minwsize)
 
 	if (minwsize > conv->wsize) {
 		conv->wsize = minwsize;
-		p = el_realloc(conv->wbuff, conv->wsize * sizeof(Char));
+		p = el_realloc(conv->wbuff, conv->wsize * sizeof(*conv->wbuff));
 		if (p == NULL) {
 			conv->wsize = 0;
 			el_free(conv->wbuff);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.35 2011/07/28 00:45:14 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.36 2011/07/28 20:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.35 2011/07/28 00:45:14 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.36 2011/07/28 20:50:55 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1020,7 +1020,7 @@ vi_histedit(EditLine *el, Int c)
 		return CC_ERROR;
 	len = (size_t)(el->el_line.lastchar - el->el_line.buffer);
 #define TMP_BUFSIZ (EL_BUFSIZ * MB_LEN_MAX)
-	cp = el_malloc(TMP_BUFSIZ);
+	cp = el_malloc(TMP_BUFSIZ * sizeof(*cp));
 	if (cp == NULL) {
 		unlink(tempfile);
 		close(fd);
@@ -1028,7 +1028,7 @@ vi_histedit(EditLine *el, Int c)
 	}
 	line = el_malloc(len * sizeof(*line));
 	if (line == NULL) {
-		el_free((ptr_t)cp);
+		el_free(cp);
 		return CC_ERROR;
 	}
 	Strncpy(line, el->el_line.buffer, len);

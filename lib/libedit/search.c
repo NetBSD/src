@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.25 2011/07/28 00:46:26 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.26 2011/07/28 20:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.25 2011/07/28 00:46:26 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.26 2011/07/28 20:50:55 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -86,7 +86,7 @@ protected void
 search_end(EditLine *el)
 {
 
-	el_free((ptr_t) el->el_search.patbuf);
+	el_free(el->el_search.patbuf);
 	el->el_search.patbuf = NULL;
 }
 
@@ -137,7 +137,7 @@ el_match(const Char *str, const Char *pat)
 #elif defined(REGEXP)
 	if ((re = regcomp(ct_encode_string(pat, &conv))) != NULL) {
 		rv = regexec(re, ct_encode_string(str, &conv));
-		free((ptr_t) re);
+		el_free(re);
 	} else {
 		rv = 0;
 	}

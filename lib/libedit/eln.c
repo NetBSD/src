@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.11 2011/07/28 01:05:20 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.12 2011/07/28 20:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.11 2011/07/28 01:05:20 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.12 2011/07/28 20:50:55 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
@@ -215,7 +215,7 @@ el_set(EditLine *el, int op, ...)
 	}
 	case EL_HIST: {           /* hist_fun_t, const char * */
 		hist_fun_t fun = va_arg(ap, hist_fun_t);
-		ptr_t ptr = va_arg(ap, ptr_t);
+		void *ptr = va_arg(ap, void *);
 		ret = hist_set(el, fun, ptr);
 		el->el_flags |= NARROW_HISTORY;
 		break;

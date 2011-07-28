@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.14 2011/07/28 00:45:30 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.15 2011/07/28 20:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,16 +73,6 @@
 
 #ifndef __arraycount
 # define __arraycount(a) (sizeof(a) / sizeof(*(a)))
-#endif
-
-#ifndef _PTR_T
-# define _PTR_T
-typedef void	*ptr_t;
-#endif
-
-#ifndef _IOCTL_T
-# define _IOCTL_T
-typedef void	*ioctl_t;
 #endif
 
 #include <stdio.h>
@@ -164,8 +154,8 @@ extern void	perror(const char *);
 #  define strerror(e)	sys_errlist[e]
 # endif
 # ifdef SABER
-extern ptr_t    memcpy(ptr_t, const ptr_t, size_t);
-extern ptr_t    memset(ptr_t, int, size_t);
+extern void *   memcpy(void *, const void *, size_t);
+extern void *   memset(void *, int, size_t);
 # endif
 extern char    *fgetline(FILE *, int *);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.c,v 1.18 2010/01/03 18:27:10 christos Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.19 2011/07/28 20:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tokenizer.c,v 1.18 2010/01/03 18:27:10 christos Exp $");
+__RCSID("$NetBSD: tokenizer.c,v 1.19 2011/07/28 20:50:55 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -106,29 +106,29 @@ FUN(tok,finish)(TYPE(Tokenizer) *tok)
 public TYPE(Tokenizer) *
 FUN(tok,init)(const Char *ifs)
 {
-	TYPE(Tokenizer) *tok = tok_malloc(sizeof(TYPE(Tokenizer)));
+	TYPE(Tokenizer) *tok = tok_malloc(sizeof(*tok));
 
 	if (tok == NULL)
 		return NULL;
 	tok->ifs = tok_strdup(ifs ? ifs : IFS);
 	if (tok->ifs == NULL) {
-		tok_free((ptr_t)tok);
+		tok_free(tok);
 		return NULL;
 	}
 	tok->argc = 0;
 	tok->amax = AINCR;
 	tok->argv = tok_malloc(sizeof(*tok->argv) * tok->amax);
 	if (tok->argv == NULL) {
-		tok_free((ptr_t)tok->ifs);
-		tok_free((ptr_t)tok);
+		tok_free(tok->ifs);
+		tok_free(tok);
 		return NULL;
 	}
 	tok->argv[0] = NULL;
 	tok->wspace = tok_malloc(WINCR * sizeof(*tok->wspace));
 	if (tok->wspace == NULL) {
-		tok_free((ptr_t)tok->argv);
-		tok_free((ptr_t)tok->ifs);
-		tok_free((ptr_t)tok);
+		tok_free(tok->argv);
+		tok_free(tok->ifs);
+		tok_free(tok);
 		return NULL;
 	}
 	tok->wmax = tok->wspace + WINCR;
@@ -163,10 +163,10 @@ public void
 FUN(tok,end)(TYPE(Tokenizer) *tok)
 {
 
-	tok_free((ptr_t) tok->ifs);
-	tok_free((ptr_t) tok->wspace);
-	tok_free((ptr_t) tok->argv);
-	tok_free((ptr_t) tok);
+	tok_free(tok->ifs);
+	tok_free(tok->wspace);
+	tok_free(tok->argv);
+	tok_free(tok);
 }
 
 

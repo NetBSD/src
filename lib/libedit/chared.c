@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.30 2011/07/28 01:05:20 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.31 2011/07/28 20:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.30 2011/07/28 01:05:20 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.31 2011/07/28 20:50:55 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -544,7 +544,7 @@ ch__clearmacro(EditLine *el)
 {
 	c_macro_t *ma = &el->el_chared.c_macro;
 	while (ma->level >= 0)
-		el_free((ptr_t)ma->macro[ma->level--]);
+		el_free(ma->macro[ma->level--]);
 }
 
 /* ch_enlargebufs():
@@ -589,7 +589,8 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 	/*
 	 * Reallocate kill buffer.
 	 */
-	newbuffer = el_realloc(el->el_chared.c_kill.buf, newsz * sizeof(*newbuffer));
+	newbuffer = el_realloc(el->el_chared.c_kill.buf, newsz *
+	    sizeof(*newbuffer));
 	if (!newbuffer)
 		return 0;
 
@@ -642,20 +643,20 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 protected void
 ch_end(EditLine *el)
 {
-	el_free((ptr_t) el->el_line.buffer);
+	el_free(el->el_line.buffer);
 	el->el_line.buffer = NULL;
 	el->el_line.limit = NULL;
-	el_free((ptr_t) el->el_chared.c_undo.buf);
+	el_free(el->el_chared.c_undo.buf);
 	el->el_chared.c_undo.buf = NULL;
-	el_free((ptr_t) el->el_chared.c_redo.buf);
+	el_free(el->el_chared.c_redo.buf);
 	el->el_chared.c_redo.buf = NULL;
 	el->el_chared.c_redo.pos = NULL;
 	el->el_chared.c_redo.lim = NULL;
 	el->el_chared.c_redo.cmd = ED_UNASSIGNED;
-	el_free((ptr_t) el->el_chared.c_kill.buf);
+	el_free(el->el_chared.c_kill.buf);
 	el->el_chared.c_kill.buf = NULL;
 	ch_reset(el, 1);
-	el_free((ptr_t) el->el_chared.c_macro.macro);
+	el_free(el->el_chared.c_macro.macro);
 	el->el_chared.c_macro.macro = NULL;
 }
 
