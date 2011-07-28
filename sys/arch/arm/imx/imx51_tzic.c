@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_tzic.c,v 1.3 2011/07/01 20:27:50 dyoung Exp $	*/
+/*	$NetBSD: imx51_tzic.c,v 1.4 2011/07/28 02:07:42 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_tzic.c,v 1.3 2011/07/01 20:27:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_tzic.c,v 1.4 2011/07/28 02:07:42 uebayasi Exp $");
 
 #define	_INTR_PRIVATE	/* for arm/pic/picvar.h */
 
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx51_tzic.c,v 1.3 2011/07/01 20:27:50 dyoung Exp $"
 #include <arm/cpufunc.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
 
 #include <arm/imx/imx51reg.h>
 #include <arm/imx/imx51var.h>
