@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.23 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: emacs.c,v 1.24 2011/07/28 01:05:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.23 2009/12/30 22:37:40 christos Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.24 2011/07/28 01:05:20 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -59,14 +59,14 @@ em_delete_or_list(EditLine *el, Int c)
 					/* if I'm at the end */
 		if (el->el_line.cursor == el->el_line.buffer) {
 					/* and the beginning */
-			term_writec(el, c);	/* then do an EOF */
+			terminal_writec(el, c);	/* then do an EOF */
 			return (CC_EOF);
 		} else {
 			/*
 			 * Here we could list completions, but it is an
 			 * error right now
 			 */
-			term_beep(el);
+			terminal_beep(el);
 			return (CC_ERROR);
 		}
 	} else {
