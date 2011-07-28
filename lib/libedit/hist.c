@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.18 2011/07/28 00:43:12 christos Exp $	*/
+/*	$NetBSD: hist.c,v 1.19 2011/07/28 20:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.18 2011/07/28 00:43:12 christos Exp $");
+__RCSID("$NetBSD: hist.c,v 1.19 2011/07/28 20:50:55 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -72,7 +72,7 @@ protected void
 hist_end(EditLine *el)
 {
 
-	el_free((ptr_t) el->el_history.buf);
+	el_free(el->el_history.buf);
 	el->el_history.buf = NULL;
 }
 
@@ -81,7 +81,7 @@ hist_end(EditLine *el)
  *	Set new history interface
  */
 protected int
-hist_set(EditLine *el, hist_fun_t fun, ptr_t ptr)
+hist_set(EditLine *el, hist_fun_t fun, void *ptr)
 {
 
 	el->el_history.ref = ptr;
@@ -212,7 +212,7 @@ hist_enlargebuf(EditLine *el, size_t oldsz, size_t newsz)
 
 #ifdef WIDECHAR
 protected wchar_t *
-hist_convert(EditLine *el, int fn, ptr_t arg)
+hist_convert(EditLine *el, int fn, void *arg)
 {
 	HistEventW ev;
 	if ((*(el)->el_history.fun)((el)->el_history.ref, &ev, fn, arg) == -1)

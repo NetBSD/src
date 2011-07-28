@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.27 2011/07/28 01:56:27 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.28 2011/07/28 20:50:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.27 2011/07/28 01:56:27 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.28 2011/07/28 20:50:55 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -903,26 +903,25 @@ map_init(EditLine *el)
 		EL_ABORT((el->errfile, "Vi insert map incorrect\n"));
 #endif
 
-	el->el_map.alt = (el_action_t *)el_malloc(sizeof(el_action_t) * N_KEYS);
+	el->el_map.alt = el_malloc(sizeof(*el->el_map.alt) * N_KEYS);
 	if (el->el_map.alt == NULL)
 		return (-1);
-	el->el_map.key = (el_action_t *)el_malloc(sizeof(el_action_t) * N_KEYS);
+	el->el_map.key = el_malloc(sizeof(*el->el_map.key) * N_KEYS);
 	if (el->el_map.key == NULL)
 		return (-1);
 	el->el_map.emacs = el_map_emacs;
 	el->el_map.vic = el_map_vi_command;
 	el->el_map.vii = el_map_vi_insert;
-	el->el_map.help = (el_bindings_t *) el_malloc(sizeof(el_bindings_t) *
-	    EL_NUM_FCNS);
+	el->el_map.help = el_malloc(sizeof(*el->el_map.help) * EL_NUM_FCNS);
 	if (el->el_map.help == NULL)
 		return (-1);
 	(void) memcpy(el->el_map.help, help__get(),
-	    sizeof(el_bindings_t) * EL_NUM_FCNS);
-	el->el_map.func = (el_func_t *)el_malloc(sizeof(el_func_t) *
-	    EL_NUM_FCNS);
+	    sizeof(*el->el_map.help) * EL_NUM_FCNS);
+	el->el_map.func = el_malloc(sizeof(*el->el_map.func) * EL_NUM_FCNS);
 	if (el->el_map.func == NULL)
 		return (-1);
-	memcpy(el->el_map.func, func__get(), sizeof(el_func_t) * EL_NUM_FCNS);
+	memcpy(el->el_map.func, func__get(), sizeof(*el->el_map.func)
+	    * EL_NUM_FCNS);
 	el->el_map.nfunc = EL_NUM_FCNS;
 
 #ifdef VIDEFAULT
@@ -941,16 +940,16 @@ protected void
 map_end(EditLine *el)
 {
 
-	el_free((ptr_t) el->el_map.alt);
+	el_free(el->el_map.alt);
 	el->el_map.alt = NULL;
-	el_free((ptr_t) el->el_map.key);
+	el_free(el->el_map.key);
 	el->el_map.key = NULL;
 	el->el_map.emacs = NULL;
 	el->el_map.vic = NULL;
 	el->el_map.vii = NULL;
-	el_free((ptr_t) el->el_map.help);
+	el_free(el->el_map.help);
 	el->el_map.help = NULL;
-	el_free((ptr_t) el->el_map.func);
+	el_free(el->el_map.func);
 	el->el_map.func = NULL;
 }
 
@@ -1401,13 +1400,14 @@ map_addfunc(EditLine *el, const Char *name, const Char *help, el_func_t func)
 	if (name == NULL || help == NULL || func == NULL)
 		return (-1);
 
-	if ((p = el_realloc(el->el_map.func, nf * sizeof(el_func_t))) == NULL)
+	if ((p = el_realloc(el->el_map.func, nf *
+	    sizeof(*el->el_map.func))) == NULL)
 		return (-1);
-	el->el_map.func = (el_func_t *) p;
-	if ((p = el_realloc(el->el_map.help, nf * sizeof(el_bindings_t)))
+	el->el_map.func = p;
+	if ((p = el_realloc(el->el_map.help, nf * sizeof(*el->el_map.help)))
 	    == NULL)
 		return (-1);
-	el->el_map.help = (el_bindings_t *) p;
+	el->el_map.help = p;
 
 	nf = el->el_map.nfunc;
 	el->el_map.func[nf] = func;
