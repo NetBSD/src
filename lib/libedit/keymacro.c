@@ -1,4 +1,4 @@
-/*	$NetBSD: keymacro.c,v 1.2 2011/07/28 03:48:46 christos Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.3 2011/07/28 03:52:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,9 +35,9 @@
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
 #if 0
-static char sccsid[] = "@(#)keymacro.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: keymacro.c,v 1.2 2011/07/28 03:48:46 christos Exp $");
+__RCSID("$NetBSD: keymacro.c,v 1.3 2011/07/28 03:52:19 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
