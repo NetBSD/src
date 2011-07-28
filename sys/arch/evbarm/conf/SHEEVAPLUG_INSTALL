@@ -1,0 +1,10 @@
+#	$NetBSD: SHEEVAPLUG_INSTALL,v 1.1 2011/07/28 15:50:46 matt Exp $
+#
+#	SHEEVAPLUG_INSTALL -- SHEEVAPLUG kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/SHEEVAPLUG"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE
