@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.10 2011/07/27 14:17:54 tsutsui Exp $ */
+/* $NetBSD: sio.c,v 1.11 2011/07/28 10:01:44 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.10 2011/07/27 14:17:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.11 2011/07/28 10:01:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ sio_attach(device_t parent, device_t self, void *aux)
 	int channel;
 	extern int sysconsole; /* console: 0 for ttya, 1 for desktop */
 
-	aprint_normal(": 7201a\n");
+	aprint_normal(": uPD7201A\n");
 
 	sc->scp_dev = self;
 	sc->scp_ctl = (void *)ma->ma_addr;
