@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.60 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.alpha,v 1.61 2011/07/28 20:30:07 dyoung Exp $
 ./usr/include/alpha				comp-c-include
 ./usr/include/alpha/_G_config.h			comp-obsolete		obsolete
 ./usr/include/alpha/alpha_cpu.h			comp-c-include
@@ -70,12 +70,12 @@
 ./usr/include/alpha/z8530var.h			comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/lib/crtfm.o				comp-c-lib
-./usr/lib/libalpha.a				comp-obsolete		obsolete
-./usr/lib/libalpha_p.a				comp-obsolete		obsolete
-./usr/lib/libalpha_pic.a			comp-obsolete		obsolete
-./usr/libdata/lint/llib-lalpha.ln		comp-obsolete		obsolete
+./usr/lib/libalpha.a				comp-c-lib
+./usr/lib/libalpha_p.a				comp-c-proflib		profile
+./usr/lib/libalpha_pic.a			comp-c-piclib
+./usr/libdata/lint/llib-lalpha.ln		comp-c-lintlib		lint
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/lib/libalpha.so.0.0.debug	comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/libalpha.so.0.0.debug	comp-sys-debug		debug
 ./usr/libdata/debug/usr/mdec/mkbootimage.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/mdec/setnetbootinfo.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/bad144.debug	comp-sysutil-debug	debug

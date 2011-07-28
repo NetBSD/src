@@ -1,8 +1,8 @@
-# $NetBSD: md.alpha,v 1.39 2011/07/17 01:13:22 dyoung Exp $
+# $NetBSD: md.alpha,v 1.40 2011/07/28 20:30:07 dyoung Exp $
 ./usr/bin/fdformat				base-util-bin
-./usr/lib/libalpha.so				base-obsolete		obsolete
-./usr/lib/libalpha.so.0				base-obsolete		obsolete
-./usr/lib/libalpha.so.0.0			base-obsolete		obsolete
+./usr/lib/libalpha.so				base-sys-shlib
+./usr/lib/libalpha.so.0				base-sys-shlib
+./usr/lib/libalpha.so.0.0			base-sys-shlib
 ./usr/lkm/dummy_pci.o				base-obsolete		obsolete
 ./usr/lkm/wi_pcmcia.o				base-obsolete		obsolete
 ./usr/mdec/boot					base-sysutil-bin
