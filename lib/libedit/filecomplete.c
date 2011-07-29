@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.27 2011/07/29 15:16:33 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.28 2011/07/29 20:58:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.27 2011/07/29 15:16:33 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.28 2011/07/29 20:58:07 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -46,11 +46,7 @@ __RCSID("$NetBSD: filecomplete.c,v 1.27 2011/07/29 15:16:33 christos Exp $");
 #include <limits.h>
 #include <errno.h>
 #include <fcntl.h>
-#ifdef HAVE_VIS_H
-#include <vis.h>
-#else
-#include "vis.h"
-#endif
+
 #include "el.h"
 #include "fcns.h"		/* for EL_NUM_FCNS */
 #include "histedit.h"
