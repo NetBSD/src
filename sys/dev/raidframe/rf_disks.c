@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.79 2011/05/11 18:13:12 mrg Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.80 2011/07/29 19:55:50 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.79 2011/05/11 18:13:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.80 2011/07/29 19:55:50 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -136,6 +136,11 @@ rf_ConfigureDisks(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 			ret = raidfetch_component_label(raidPtr, c);
 			if (ret)
 				goto fail;
+
+			/* mark it as failed if the label looks bogus... */
+			if (!rf_reasonable_label(&raidPtr->raid_cinfo[c].ci_label,0) && !force) {
+				disks[c].status = rf_ds_failed;
+			}
 		}
 
 		if (disks[c].status != rf_ds_optimal) {
@@ -749,7 +754,12 @@ rf_CheckLabels(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 	num_ser = 0;
 	num_mod = 0;
 
+	ser_values[0] = ser_values[1] = ser_values[2] = ser_values[3] = 0;
+	ser_count[0] = ser_count[1] = ser_count[2] = ser_count[3] = 0;
+
 	for (c = 0; c < raidPtr->numCol; c++) {
+		if (raidPtr->Disks[c].status != rf_ds_optimal)
+			continue;
 		ci_label = raidget_component_label(raidPtr, c);
 		found=0;
 		for(i=0;i<num_ser;i++) {
@@ -805,6 +815,8 @@ rf_CheckLabels(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 			}
 
 			for (c = 0; c < raidPtr->numCol; c++) {
+				if (raidPtr->Disks[c].status != rf_ds_optimal)
+					continue;
 				ci_label = raidget_component_label(raidPtr, c);
 				if (serial_number != ci_label->serial_number) {
 					hosed_column = c;
@@ -860,6 +872,9 @@ rf_CheckLabels(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 			}
 
 			for (c = 0; c < raidPtr->numCol; c++) {
+				if (raidPtr->Disks[c].status != rf_ds_optimal)
+					continue;
+
 				ci_label = raidget_component_label(raidPtr, c);
 				if (mod_number != ci_label->mod_counter) {
 					if (hosed_column == c) {
@@ -918,6 +933,13 @@ rf_CheckLabels(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 		printf("raid%d: Too many different mod counters!\n",
 		       raidPtr->raidid);
 		fatal_error = 1;
+	}
+
+        for (c = 0; c < raidPtr->numCol; c++) {
+		if (raidPtr->Disks[c].status != rf_ds_optimal) {
+			hosed_column = c;
+			break;
+		}
 	}
 
 	/* we start by assuming the parity will be good, and flee from
