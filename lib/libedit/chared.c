@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.33 2011/07/29 15:20:39 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.34 2011/07/29 23:44:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.33 2011/07/29 15:20:39 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.34 2011/07/29 23:44:44 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -691,7 +691,7 @@ c_gets(EditLine *el, Char *buf, const Char *prompt)
 			break;
 
 		default:
-			if (len >= EL_BUFSIZ - 16)
+			if (len >= (ssize_t)(EL_BUFSIZ - 16))
 				terminal_beep(el);
 			else {
 				buf[len++] = ch;

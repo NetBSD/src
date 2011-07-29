@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.27 2011/07/29 15:16:33 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.28 2011/07/29 23:44:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.27 2011/07/29 15:16:33 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.28 2011/07/29 23:44:45 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -128,7 +128,8 @@ el_match(const Char *str, const Char *pat)
 
 #if defined(REGEX)
 	if (regcomp(&re, ct_encode_string(pat, &conv), 0) == 0) {
-		rv = regexec(&re, ct_encode_string(str, &conv), 0, NULL, 0) == 0;
+		rv = regexec(&re, ct_encode_string(str, &conv), (size_t)0, NULL,
+		    0) == 0;
 		regfree(&re);
 	} else {
 		rv = 0;
