@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.5 2011/07/29 15:16:33 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.6 2011/07/29 15:20:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.5 2011/07/29 15:16:33 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.6 2011/07/29 15:20:39 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -88,78 +88,6 @@ __RCSID("$NetBSD: terminal.c,v 1.5 2011/07/29 15:16:33 christos Exp $");
 			    el->el_terminal.t_str[a][0] != '\0')
 #define	Str(a)		el->el_terminal.t_str[a]
 #define	Val(a)		el->el_terminal.t_val[a]
-
-#ifdef notdef
-private const struct {
-	const char *b_name;
-	int b_rate;
-} baud_rate[] = {
-#ifdef B0
-	{ "0", B0 },
-#endif
-#ifdef B50
-	{ "50", B50 },
-#endif
-#ifdef B75
-	{ "75", B75 },
-#endif
-#ifdef B110
-	{ "110", B110 },
-#endif
-#ifdef B134
-	{ "134", B134 },
-#endif
-#ifdef B150
-	{ "150", B150 },
-#endif
-#ifdef B200
-	{ "200", B200 },
-#endif
-#ifdef B300
-	{ "300", B300 },
-#endif
-#ifdef B600
-	{ "600", B600 },
-#endif
-#ifdef B900
-	{ "900", B900 },
-#endif
-#ifdef B1200
-	{ "1200", B1200 },
-#endif
-#ifdef B1800
-	{ "1800", B1800 },
-#endif
-#ifdef B2400
-	{ "2400", B2400 },
-#endif
-#ifdef B3600
-	{ "3600", B3600 },
-#endif
-#ifdef B4800
-	{ "4800", B4800 },
-#endif
-#ifdef B7200
-	{ "7200", B7200 },
-#endif
-#ifdef B9600
-	{ "9600", B9600 },
-#endif
-#ifdef EXTA
-	{ "19200", EXTA },
-#endif
-#ifdef B19200
-	{ "19200", B19200 },
-#endif
-#ifdef EXTB
-	{ "38400", EXTB },
-#endif
-#ifdef B38400
-	{ "38400", B38400 },
-#endif
-	{ NULL, 0 }
-};
-#endif
 
 private const struct termcapstr {
 	const char *name;
@@ -912,20 +840,6 @@ terminal_beep(EditLine *el)
 }
 
 
-#ifdef notdef
-/* terminal_clear_to_bottom():
- *	Clear to the bottom of the screen
- */
-protected void
-terminal_clear_to_bottom(EditLine *el)
-{
-	if (GoodStr(T_cd))
-		terminal_tputs(el, Str(T_cd), Val(T_li));
-	else if (GoodStr(T_ce))
-		terminal_tputs(el, Str(T_ce), Val(T_li));
-}
-#endif
-
 protected void
 terminal_get(EditLine *el, const char **term)
 {
@@ -1583,19 +1497,7 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 		    "yes" : "no");
 		return 0;
 	} else if (Strcmp(*argv, STR("baud")) == 0) {
-#ifdef notdef
-		int i;
-
-		for (i = 0; baud_rate[i].b_name != NULL; i++)
-			if (el->el_tty.t_speed == baud_rate[i].b_rate) {
-				(void) fprintf(el->el_outfile, fmts,
-				    baud_rate[i].b_name);
-				return 0;
-			}
-		(void) fprintf(el->el_outfile, fmtd, 0);
-#else
 		(void) fprintf(el->el_outfile, fmtd, (int)el->el_tty.t_speed);
-#endif
 		return 0;
 	} else if (Strcmp(*argv, STR("rows")) == 0 ||
                    Strcmp(*argv, STR("lines")) == 0) {
