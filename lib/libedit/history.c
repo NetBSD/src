@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.43 2011/07/29 15:16:33 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.44 2011/07/29 20:58:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.43 2011/07/29 15:16:33 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.44 2011/07/29 20:58:07 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -47,11 +47,7 @@ __RCSID("$NetBSD: history.c,v 1.43 2011/07/29 15:16:33 christos Exp $");
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#ifdef HAVE_VIS_H
 #include <vis.h>
-#else
-#include "vis.h"
-#endif
 #include <sys/stat.h>
 
 static const char hist_cookie[] = "_HiStOrY_V2_\n";
