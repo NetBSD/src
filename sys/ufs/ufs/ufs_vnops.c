@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.200 2011/07/18 06:45:47 dholland Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.201 2011/07/29 22:18:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.200 2011/07/18 06:45:47 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.201 2011/07/29 22:18:56 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1317,7 +1317,8 @@ ufs_rename(void *v)
 	struct inode		*ip, *txp, *fxp, *tdp, *fdp;
 	struct mount		*mp;
 	struct direct		*newdir;
-	int			doingdirectory, oldparent, newparent, error;
+	int			doingdirectory, error;
+	ino_t			oldparent, newparent;
 
 	struct ufs_lookup_results from_ulr, to_ulr;
 
@@ -1327,7 +1328,8 @@ ufs_rename(void *v)
 	fdvp = ap->a_fdvp;
 	tcnp = ap->a_tcnp;
 	fcnp = ap->a_fcnp;
-	doingdirectory = oldparent = newparent = error = 0;
+	doingdirectory = error = 0;
+	oldparent = newparent = 0;
 
 	/* save the supplemental lookup results as they currently exist */
 	from_ulr = VTOI(fdvp)->i_crap;
