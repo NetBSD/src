@@ -1154,14 +1154,11 @@ init (int argc, char **argv)
     char *info_v;
     /* Exit status.  */
     int err = 0;
+    struct stat st;
 
     const struct admin_file *fileptr;
 
     umask (cvsumask);
-
-    if (!admin_group_member ())
-	error (1, 0, "usage is restricted to members of the group %s",
-	       config->UserAdminGroup);
 
     if (argc == -1 || argc > 1)
 	usage (init_usage);
@@ -1176,6 +1173,11 @@ init (int argc, char **argv)
 	return get_responses_and_close ();
     }
 #endif /* CLIENT_SUPPORT */
+
+    if (stat (current_parsed_root->directory, &st) != -1)
+	if (!admin_group_member ())
+	    error (1, 0, "init to an existing repository is restricted to"
+		" members of the group %s", config->UserAdminGroup);
 
     /* Note: we do *not* create parent directories as needed like the
        old cvsinit.sh script did.  Few utilities do that, and a
