@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.27 2011/07/29 15:20:39 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.28 2011/07/29 20:58:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.27 2011/07/29 15:20:39 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.28 2011/07/29 20:58:07 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -137,7 +137,7 @@ ed_delete_prev_word(EditLine *el, Int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-ed_delete_next_char(EditLine *el, Int c)
+ed_delete_next_char(EditLine *el, Int c __attribute__((__unused__)))
 {
 #ifdef DEBUG_EDIT
 #define	EL	el->el_line
@@ -432,7 +432,8 @@ ed_argument_digit(EditLine *el, Int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-ed_unassigned(EditLine *el, Int c __attribute__((__unused__)))
+ed_unassigned(EditLine *el __attribute__((__unused__)),
+    Int c __attribute__((__unused__)))
 {
 
 	return CC_ERROR;
