@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.291 2011/05/11 18:13:12 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.292 2011/07/29 19:55:50 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.291 2011/05/11 18:13:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.292 2011/07/29 19:55:50 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -297,7 +297,7 @@ void rf_buildroothack(RF_ConfigSet_t *);
 RF_AutoConfig_t *rf_find_raid_components(void);
 RF_ConfigSet_t *rf_create_auto_sets(RF_AutoConfig_t *);
 static int rf_does_it_fit(RF_ConfigSet_t *,RF_AutoConfig_t *);
-static int rf_reasonable_label(RF_ComponentLabel_t *, uint64_t);
+int rf_reasonable_label(RF_ComponentLabel_t *, uint64_t);
 void rf_create_configuration(RF_AutoConfig_t *,RF_Config_t *, RF_Raid_t *);
 int rf_set_autoconfig(RF_Raid_t *, int);
 int rf_set_rootpartition(RF_Raid_t *, int);
@@ -3132,7 +3132,7 @@ rf_find_raid_components(void)
 }
 
 
-static int
+int
 rf_reasonable_label(RF_ComponentLabel_t *clabel, uint64_t numsecs)
 {
 
@@ -3157,7 +3157,8 @@ rf_reasonable_label(RF_ComponentLabel_t *clabel, uint64_t numsecs)
 		 * label looks reasonable enough...
 		 * let's make sure it has no old garbage.
 		 */
-		rf_fix_old_label_size(clabel, numsecs);
+		if (numsecs)
+			rf_fix_old_label_size(clabel, numsecs);
 		return(1);
 	}
 	return(0);
