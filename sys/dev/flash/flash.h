@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.h,v 1.6 2011/07/15 19:19:57 cliff Exp $	*/
+/*	$NetBSD: flash.h,v 1.7 2011/07/29 20:48:33 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -123,6 +123,7 @@ device_t flash_attach_mi(struct flash_interface *, device_t);
 const struct flash_interface *flash_get_interface(dev_t);
 const struct flash_softc *flash_get_softc(dev_t);
 device_t flash_get_device(dev_t);
+flash_size_t flash_get_size(dev_t);
 
 /* flash operations should be used through these */
 int flash_erase(device_t, struct flash_erase_instruction *);
