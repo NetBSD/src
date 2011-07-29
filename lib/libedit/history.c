@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.42 2011/07/28 20:50:55 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.43 2011/07/29 15:16:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.42 2011/07/28 20:50:55 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.43 2011/07/29 15:16:33 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -220,10 +220,10 @@ history_def_first(void *p, TYPE(HistEvent) *ev)
 		*ev = h->cursor->ev;
 	else {
 		he_seterrev(ev, _HE_FIRST_NOTFOUND);
-		return (-1);
+		return -1;
 	}
 
-	return (0);
+	return 0;
 }
 
 
@@ -240,10 +240,10 @@ history_def_last(void *p, TYPE(HistEvent) *ev)
 		*ev = h->cursor->ev;
 	else {
 		he_seterrev(ev, _HE_LAST_NOTFOUND);
-		return (-1);
+		return -1;
 	}
 
-	return (0);
+	return 0;
 }
 
 
@@ -257,18 +257,18 @@ history_def_next(void *p, TYPE(HistEvent) *ev)
 
 	if (h->cursor == &h->list) {
 		he_seterrev(ev, _HE_EMPTY_LIST);
-		return (-1);
+		return -1;
 	}
 
 	if (h->cursor->next == &h->list) {
 		he_seterrev(ev, _HE_END_REACHED);
-		return (-1);
+		return -1;
 	}
 
         h->cursor = h->cursor->next;
         *ev = h->cursor->ev;
 
-	return (0);
+	return 0;
 }
 
 
@@ -283,18 +283,18 @@ history_def_prev(void *p, TYPE(HistEvent) *ev)
 	if (h->cursor == &h->list) {
 		he_seterrev(ev,
 		    (h->cur > 0) ? _HE_END_REACHED : _HE_EMPTY_LIST);
-		return (-1);
+		return -1;
 	}
 
 	if (h->cursor->prev == &h->list) {
 		he_seterrev(ev, _HE_START_REACHED);
-		return (-1);
+		return -1;
 	}
 
         h->cursor = h->cursor->prev;
         *ev = h->cursor->ev;
 
-	return (0);
+	return 0;
 }
 
 
@@ -311,10 +311,10 @@ history_def_curr(void *p, TYPE(HistEvent) *ev)
 	else {
 		he_seterrev(ev,
 		    (h->cur > 0) ? _HE_CURR_INVALID : _HE_EMPTY_LIST);
-		return (-1);
+		return -1;
 	}
 
-	return (0);
+	return 0;
 }
 
 
@@ -329,7 +329,7 @@ history_def_set(void *p, TYPE(HistEvent) *ev, const int n)
 
 	if (h->cur == 0) {
 		he_seterrev(ev, _HE_EMPTY_LIST);
-		return (-1);
+		return -1;
 	}
 	if (h->cursor == &h->list || h->cursor->ev.num != n) {
 		for (h->cursor = h->list.next; h->cursor != &h->list;
@@ -339,9 +339,9 @@ history_def_set(void *p, TYPE(HistEvent) *ev, const int n)
 	}
 	if (h->cursor == &h->list) {
 		he_seterrev(ev, _HE_NOT_FOUND);
-		return (-1);
+		return -1;
 	}
-	return (0);
+	return 0;
 }
 
 
@@ -356,7 +356,7 @@ history_set_nth(void *p, TYPE(HistEvent) *ev, int n)
 
 	if (h->cur == 0) {
 		he_seterrev(ev, _HE_EMPTY_LIST);
-		return (-1);
+		return -1;
 	}
 	for (h->cursor = h->list.prev; h->cursor != &h->list;
 	    h->cursor = h->cursor->prev)
@@ -364,9 +364,9 @@ history_set_nth(void *p, TYPE(HistEvent) *ev, int n)
 			break;
 	if (h->cursor == &h->list) {
 		he_seterrev(ev, _HE_NOT_FOUND);
-		return (-1);
+		return -1;
 	}
-	return (0);
+	return 0;
 }
 
 
@@ -382,12 +382,12 @@ history_def_add(void *p, TYPE(HistEvent) *ev, const Char *str)
 	HistEventPrivate *evp = (void *)&h->cursor->ev;
 
 	if (h->cursor == &h->list)
-		return (history_def_enter(p, ev, str));
+		return history_def_enter(p, ev, str);
 	len = Strlen(evp->str) + Strlen(str) + 1;
 	s = h_malloc(len * sizeof(*s));
 	if (s == NULL) {
 		he_seterrev(ev, _HE_MALLOC_FAILED);
-		return (-1);
+		return -1;
 	}
 	(void) Strncpy(s, h->cursor->ev.str, len);
         s[len - 1] = '\0';
@@ -395,7 +395,7 @@ history_def_add(void *p, TYPE(HistEvent) *ev, const Char *str)
 	h_free(evp->str);
 	evp->str = s;
 	*ev = h->cursor->ev;
-	return (0);
+	return 0;
 }
 
 
@@ -404,16 +404,16 @@ history_deldata_nth(history_t *h, TYPE(HistEvent) *ev,
     int num, void **data)
 {
 	if (history_set_nth(h, ev, num) != 0)
-		return (-1);
+		return -1;
 	/* magic value to skip delete (just set to n-th history) */
 	if (data == (void **)-1)
-		return (0);
+		return 0;
 	ev->str = Strdup(h->cursor->ev.str);
 	ev->num = h->cursor->ev.num;
 	if (data)
 		*data = h->cursor->data;
 	history_def_delete(h, ev, h->cursor);
-	return (0);
+	return 0;
 }
 
 
@@ -427,11 +427,11 @@ history_def_del(void *p, TYPE(HistEvent) *ev __attribute__((__unused__)),
 {
 	history_t *h = (history_t *) p;
 	if (history_def_set(h, ev, num) != 0)
-		return (-1);
+		return -1;
 	ev->str = Strdup(h->cursor->ev.str);
 	ev->num = h->cursor->ev.num;
 	history_def_delete(h, ev, h->cursor);
-	return (0);
+	return 0;
 }
 
 
@@ -484,10 +484,10 @@ history_def_insert(history_t *h, TYPE(HistEvent) *ev, const Char *str)
 	h->cursor = c;
 
 	*ev = c->ev;
-	return (0);
+	return 0;
 oomem:
 	he_seterrev(ev, _HE_MALLOC_FAILED);
-	return (-1);
+	return -1;
 }
 
 
@@ -501,10 +501,10 @@ history_def_enter(void *p, TYPE(HistEvent) *ev, const Char *str)
 
 	if ((h->flags & H_UNIQUE) != 0 && h->list.next != &h->list &&
 	    Strcmp(h->list.next->ev.str, str) == 0)
-	    return (0);
+	    return 0;
 
 	if (history_def_insert(h, ev, str) == -1)
-		return (-1);	/* error, keep error message */
+		return -1;	/* error, keep error message */
 
 	/*
          * Always keep at least one entry.
@@ -513,7 +513,7 @@ history_def_enter(void *p, TYPE(HistEvent) *ev, const Char *str)
 	while (h->cur > h->max && h->cur > 0)
 		history_def_delete(h, ev, h->list.prev);
 
-	return (1);
+	return 1;
 }
 
 
@@ -590,7 +590,7 @@ FUN(history,init)(void)
 	h->h_add = history_def_add;
 	h->h_del = history_def_del;
 
-	return (h);
+	return h;
 }
 
 
@@ -619,14 +619,14 @@ history_setsize(TYPE(History) *h, TYPE(HistEvent) *ev, int num)
 
 	if (h->h_next != history_def_next) {
 		he_seterrev(ev, _HE_NOT_ALLOWED);
-		return (-1);
+		return -1;
 	}
 	if (num < 0) {
 		he_seterrev(ev, _HE_BAD_PARAM);
-		return (-1);
+		return -1;
 	}
 	history_def_setsize(h->h_ref, num);
-	return (0);
+	return 0;
 }
 
 
@@ -638,14 +638,14 @@ history_getsize(TYPE(History) *h, TYPE(HistEvent) *ev)
 {
 	if (h->h_next != history_def_next) {
 		he_seterrev(ev, _HE_NOT_ALLOWED);
-		return (-1);
+		return -1;
 	}
 	ev->num = history_def_getsize(h->h_ref);
 	if (ev->num < -1) {
 		he_seterrev(ev, _HE_SIZE_NEGATIVE);
-		return (-1);
+		return -1;
 	}
-	return (0);
+	return 0;
 }
 
 
@@ -658,10 +658,10 @@ history_setunique(TYPE(History) *h, TYPE(HistEvent) *ev, int uni)
 
 	if (h->h_next != history_def_next) {
 		he_seterrev(ev, _HE_NOT_ALLOWED);
-		return (-1);
+		return -1;
 	}
 	history_def_setunique(h->h_ref, uni);
-	return (0);
+	return 0;
 }
 
 
@@ -673,10 +673,10 @@ history_getunique(TYPE(History) *h, TYPE(HistEvent) *ev)
 {
 	if (h->h_next != history_def_next) {
 		he_seterrev(ev, _HE_NOT_ALLOWED);
-		return (-1);
+		return -1;
 	}
 	ev->num = history_def_getunique(h->h_ref);
-	return (0);
+	return 0;
 }
 
 
@@ -705,7 +705,7 @@ history_set_fun(TYPE(History) *h, TYPE(History) *nh)
 			h->h_add = history_def_add;
 			h->h_del = history_def_del;
 		}
-		return (-1);
+		return -1;
 	}
 	if (h->h_next == history_def_next)
 		history_def_clear(h->h_ref, &ev);
@@ -722,7 +722,7 @@ history_set_fun(TYPE(History) *h, TYPE(History) *nh)
 	h->h_add = nh->h_add;
 	h->h_del = nh->h_del;
 
-	return (0);
+	return 0;
 }
 
 
@@ -743,7 +743,7 @@ history_load(TYPE(History) *h, const char *fname)
 #endif
 
 	if ((fp = fopen(fname, "r")) == NULL)
-		return (i);
+		return i;
 
 	if ((line = fgetln(fp, &sz)) == NULL)
 		goto done;
@@ -783,7 +783,7 @@ oomem:
 	h_free(ptr);
 done:
 	(void) fclose(fp);
-	return (i);
+	return i;
 }
 
 
@@ -804,7 +804,7 @@ history_save(TYPE(History) *h, const char *fname)
 #endif
 
 	if ((fp = fopen(fname, "w")) == NULL)
-		return (-1);
+		return -1;
 
 	if (fchmod(fileno(fp), S_IRUSR|S_IWUSR) == -1)
 		goto done;
@@ -835,7 +835,7 @@ oomem:
 	h_free(ptr);
 done:
 	(void) fclose(fp);
-	return (i);
+	return i;
 }
 
 
@@ -849,10 +849,10 @@ history_prev_event(TYPE(History) *h, TYPE(HistEvent) *ev, int num)
 
 	for (retval = HCURR(h, ev); retval != -1; retval = HPREV(h, ev))
 		if (ev->num == num)
-			return (0);
+			return 0;
 
 	he_seterrev(ev, _HE_NOT_FOUND);
-	return (-1);
+	return -1;
 }
 
 
@@ -865,11 +865,11 @@ history_next_evdata(TYPE(History) *h, TYPE(HistEvent) *ev, int num, void **d)
 		if (ev->num == num) {
 			if (d)
 				*d = ((history_t *)h->h_ref)->cursor->data;
-			return (0);
+			return 0;
 		}
 
 	he_seterrev(ev, _HE_NOT_FOUND);
-	return (-1);
+	return -1;
 }
 
 
@@ -883,10 +883,10 @@ history_next_event(TYPE(History) *h, TYPE(HistEvent) *ev, int num)
 
 	for (retval = HCURR(h, ev); retval != -1; retval = HNEXT(h, ev))
 		if (ev->num == num)
-			return (0);
+			return 0;
 
 	he_seterrev(ev, _HE_NOT_FOUND);
-	return (-1);
+	return -1;
 }
 
 
@@ -901,10 +901,10 @@ history_prev_string(TYPE(History) *h, TYPE(HistEvent) *ev, const Char *str)
 
 	for (retval = HCURR(h, ev); retval != -1; retval = HNEXT(h, ev))
 		if (Strncmp(str, ev->str, len) == 0)
-			return (0);
+			return 0;
 
 	he_seterrev(ev, _HE_NOT_FOUND);
-	return (-1);
+	return -1;
 }
 
 
@@ -919,10 +919,10 @@ history_next_string(TYPE(History) *h, TYPE(HistEvent) *ev, const Char *str)
 
 	for (retval = HCURR(h, ev); retval != -1; retval = HPREV(h, ev))
 		if (Strncmp(str, ev->str, len) == 0)
-			return (0);
+			return 0;
 
 	he_seterrev(ev, _HE_NOT_FOUND);
-	return (-1);
+	return -1;
 }
 
 

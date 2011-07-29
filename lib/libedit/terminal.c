@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.4 2011/07/28 20:50:55 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.5 2011/07/29 15:16:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.4 2011/07/28 20:50:55 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.5 2011/07/29 15:16:33 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -342,31 +342,31 @@ terminal_init(EditLine *el)
 	el->el_terminal.t_buf = el_malloc(TC_BUFSIZE *
 	    sizeof(*el->el_terminal.t_buf));
 	if (el->el_terminal.t_buf == NULL)
-		return (-1);
+		return -1;
 	el->el_terminal.t_cap = el_malloc(TC_BUFSIZE *
 	    sizeof(*el->el_terminal.t_cap));
 	if (el->el_terminal.t_cap == NULL)
-		return (-1);
+		return -1;
 	el->el_terminal.t_fkey = el_malloc(A_K_NKEYS *
 	    sizeof(*el->el_terminal.t_fkey));
 	if (el->el_terminal.t_fkey == NULL)
-		return (-1);
+		return -1;
 	el->el_terminal.t_loc = 0;
 	el->el_terminal.t_str = el_malloc(T_str *
 	    sizeof(*el->el_terminal.t_str));
 	if (el->el_terminal.t_str == NULL)
-		return (-1);
+		return -1;
 	(void) memset(el->el_terminal.t_str, 0, T_str *
 	    sizeof(*el->el_terminal.t_str));
 	el->el_terminal.t_val = el_malloc(T_val *
 	    sizeof(*el->el_terminal.t_val));
 	if (el->el_terminal.t_val == NULL)
-		return (-1);
+		return -1;
 	(void) memset(el->el_terminal.t_val, 0, T_val *
 	    sizeof(*el->el_terminal.t_val));
 	(void) terminal_set(el, NULL);
 	terminal_init_arrow(el);
-	return (0);
+	return 0;
 }
 
 /* terminal_end():
@@ -470,8 +470,8 @@ terminal_rebuffer_display(EditLine *el)
 	c->v = Val(T_li);
 
 	if (terminal_alloc_display(el) == -1)
-		return (-1);
-	return (0);
+		return -1;
+	return 0;
 }
 
 
@@ -487,14 +487,14 @@ terminal_alloc_display(EditLine *el)
 
 	b =  el_malloc(sizeof(*b) * (c->v + 1));
 	if (b == NULL)
-		return (-1);
+		return -1;
 	for (i = 0; i < c->v; i++) {
 		b[i] = el_malloc(sizeof(**b) * (c->h + 1));
 		if (b[i] == NULL) {
 			while (--i >= 0)
 				el_free(b[i]);
 			el_free(b);
-			return (-1);
+			return -1;
 		}
 	}
 	b[c->v] = NULL;
@@ -502,19 +502,19 @@ terminal_alloc_display(EditLine *el)
 
 	b = el_malloc(sizeof(*b) * (c->v + 1));
 	if (b == NULL)
-		return (-1);
+		return -1;
 	for (i = 0; i < c->v; i++) {
 		b[i] = el_malloc(sizeof(**b) * (c->h + 1));
 		if (b[i] == NULL) {
 			while (--i >= 0)
 				el_free(b[i]);
 			el_free(b);
-			return (-1);
+			return -1;
 		}
 	}
 	b[c->v] = NULL;
 	el->el_vdisplay = b;
-	return (0);
+	return 0;
 }
 
 
@@ -1013,11 +1013,11 @@ terminal_set(EditLine *el, const char *term)
 				/* get the correct window size */
 	(void) terminal_get_size(el, &lins, &cols);
 	if (terminal_change_size(el, lins, cols) == -1)
-		return (-1);
+		return -1;
 	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 	terminal_bind_arrow(el);
 	el->el_terminal.t_name = term;
-	return (i <= 0 ? -1 : 0);
+	return i <= 0 ? -1 : 0;
 }
 
 
@@ -1054,7 +1054,7 @@ terminal_get_size(EditLine *el, int *lins, int *cols)
 		}
 	}
 #endif
-	return (Val(T_co) != *cols || Val(T_li) != *lins);
+	return Val(T_co != *cols || Val(T_li) != *lins);
 }
 
 
@@ -1072,9 +1072,9 @@ terminal_change_size(EditLine *el, int lins, int cols)
 
 	/* re-make display buffers */
 	if (terminal_rebuffer_display(el) == -1)
-		return (-1);
+		return -1;
 	re_clear_display(el);
-	return (0);
+	return 0;
 }
 
 
@@ -1182,9 +1182,9 @@ terminal_set_arrow(EditLine *el, const Char *name, keymacro_value_t *fun,
 		if (Strcmp(name, arrow[i].name) == 0) {
 			arrow[i].fun = *fun;
 			arrow[i].type = type;
-			return (0);
+			return 0;
 		}
-	return (-1);
+	return -1;
 }
 
 
@@ -1200,9 +1200,9 @@ terminal_clear_arrow(EditLine *el, const Char *name)
 	for (i = 0; i < A_K_NKEYS; i++)
 		if (Strcmp(name, arrow[i].name) == 0) {
 			arrow[i].type = XK_NOD;
-			return (0);
+			return 0;
 		}
-	return (-1);
+	return -1;
 }
 
 
@@ -1391,7 +1391,7 @@ terminal_telltc(EditLine *el, int argc __attribute__((__unused__)),
 		    t->long_name, t->name, ub);
 	}
 	(void) fputc('\n', el->el_outfile);
-	return (0);
+	return 0;
 }
 
 
@@ -1487,7 +1487,7 @@ terminal_gettc(EditLine *el, int argc __attribute__((__unused__)), char **argv)
 	void *how;
 
 	if (argv == NULL || argv[1] == NULL || argv[2] == NULL)
-		return (-1);
+		return -1;
 
 	what = argv[1];
 	how = argv[2];
@@ -1549,7 +1549,7 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 	area = buf;
 
 	if (argv == NULL || argv[1] == NULL)
-		return (-1);
+		return -1;
 	argv++;
 
 	if (argv[0][0] == '-') {
@@ -1567,21 +1567,21 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 		argv++;
 	}
 	if (!*argv || *argv[0] == '\0')
-		return (0);
+		return 0;
 	if (Strcmp(*argv, STR("tabs")) == 0) {
 		(void) fprintf(el->el_outfile, fmts, EL_CAN_TAB ? "yes" : "no");
-		return (0);
+		return 0;
 	} else if (Strcmp(*argv, STR("meta")) == 0) {
 		(void) fprintf(el->el_outfile, fmts, Val(T_km) ? "yes" : "no");
-		return (0);
+		return 0;
 	} else if (Strcmp(*argv, STR("xn")) == 0) {
 		(void) fprintf(el->el_outfile, fmts, EL_HAS_MAGIC_MARGINS ?
 		    "yes" : "no");
-		return (0);
+		return 0;
 	} else if (Strcmp(*argv, STR("am")) == 0) {
 		(void) fprintf(el->el_outfile, fmts, EL_HAS_AUTO_MARGINS ?
 		    "yes" : "no");
-		return (0);
+		return 0;
 	} else if (Strcmp(*argv, STR("baud")) == 0) {
 #ifdef notdef
 		int i;
@@ -1590,20 +1590,20 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 			if (el->el_tty.t_speed == baud_rate[i].b_rate) {
 				(void) fprintf(el->el_outfile, fmts,
 				    baud_rate[i].b_name);
-				return (0);
+				return 0;
 			}
 		(void) fprintf(el->el_outfile, fmtd, 0);
 #else
 		(void) fprintf(el->el_outfile, fmtd, (int)el->el_tty.t_speed);
 #endif
-		return (0);
+		return 0;
 	} else if (Strcmp(*argv, STR("rows")) == 0 ||
                    Strcmp(*argv, STR("lines")) == 0) {
 		(void) fprintf(el->el_outfile, fmtd, Val(T_li));
-		return (0);
+		return 0;
 	} else if (Strcmp(*argv, STR("cols")) == 0) {
 		(void) fprintf(el->el_outfile, fmtd, Val(T_co));
-		return (0);
+		return 0;
 	}
 	/*
          * Try to use our local definition first
@@ -1624,7 +1624,7 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 			(void) fprintf(el->el_errfile,
 			    "echotc: Termcap parameter `" FSTR "' not found.\n",
 			    *argv);
-		return (-1);
+		return -1;
 	}
 	/*
          * Count home many values we need for this capability.
@@ -1667,7 +1667,7 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 				(void) fprintf(el->el_errfile,
 				    "echotc: Warning: Extra argument `" FSTR "'.\n",
 				    *argv);
-			return (-1);
+			return -1;
 		}
 		terminal_tputs(el, scap, 1);
 		break;
@@ -1677,7 +1677,7 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 			if (!silent)
 				(void) fprintf(el->el_errfile,
 				    "echotc: Warning: Missing argument.\n");
-			return (-1);
+			return -1;
 		}
 		arg_cols = 0;
 		i = Strtol(*argv, &ep, 10);
@@ -1686,7 +1686,7 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 				(void) fprintf(el->el_errfile,
 				    "echotc: Bad value `" FSTR "' for rows.\n",
 				    *argv);
-			return (-1);
+			return -1;
 		}
 		arg_rows = (int) i;
 		argv++;
@@ -1695,7 +1695,7 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 				(void) fprintf(el->el_errfile,
 				    "echotc: Warning: Extra argument `" FSTR
 				    "'.\n", *argv);
-			return (-1);
+			return -1;
 		}
 		terminal_tputs(el, tgoto(scap, arg_cols, arg_rows), 1);
 		break;
@@ -1712,7 +1712,7 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 			if (!silent)
 				(void) fprintf(el->el_errfile,
 				    "echotc: Warning: Missing argument.\n");
-			return (-1);
+			return -1;
 		}
 		i = Strtol(*argv, &ep, 10);
 		if (*ep != '\0' || i < 0) {
@@ -1720,7 +1720,7 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 				(void) fprintf(el->el_errfile,
 				    "echotc: Bad value `" FSTR "' for cols.\n",
 				    *argv);
-			return (-1);
+			return -1;
 		}
 		arg_cols = (int) i;
 		argv++;
@@ -1728,7 +1728,7 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 			if (!silent)
 				(void) fprintf(el->el_errfile,
 				    "echotc: Warning: Missing argument.\n");
-			return (-1);
+			return -1;
 		}
 		i = Strtol(*argv, &ep, 10);
 		if (*ep != '\0' || i < 0) {
@@ -1736,14 +1736,14 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 				(void) fprintf(el->el_errfile,
 				    "echotc: Bad value `" FSTR "' for rows.\n",
 				    *argv);
-			return (-1);
+			return -1;
 		}
 		arg_rows = (int) i;
 		if (*ep != '\0') {
 			if (!silent)
 				(void) fprintf(el->el_errfile,
 				    "echotc: Bad value `" FSTR "'.\n", *argv);
-			return (-1);
+			return -1;
 		}
 		argv++;
 		if (*argv && *argv[0]) {
@@ -1751,10 +1751,10 @@ terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
 				(void) fprintf(el->el_errfile,
 				    "echotc: Warning: Extra argument `" FSTR
 				    "'.\n", *argv);
-			return (-1);
+			return -1;
 		}
 		terminal_tputs(el, tgoto(scap, arg_cols, arg_rows), arg_rows);
 		break;
 	}
-	return (0);
+	return 0;
 }

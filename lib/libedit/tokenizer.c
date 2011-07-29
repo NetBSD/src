@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.c,v 1.19 2011/07/28 20:50:55 christos Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.20 2011/07/29 15:16:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tokenizer.c,v 1.19 2011/07/28 20:50:55 christos Exp $");
+__RCSID("$NetBSD: tokenizer.c,v 1.20 2011/07/29 15:16:33 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -137,7 +137,7 @@ FUN(tok,init)(const Char *ifs)
 	tok->flags = 0;
 	tok->quote = Q_none;
 
-	return (tok);
+	return tok;
 }
 
 
@@ -233,7 +233,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (-1);
+				return -1;
 			}
 			break;
 
@@ -264,7 +264,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (-1);
+				return -1;
 			}
 			break;
 
@@ -295,7 +295,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (-1);
+				return -1;
 			}
 			break;
 
@@ -321,7 +321,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (0);
+				return 0;
 			}
 			break;
 
@@ -331,15 +331,15 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				/* Finish word and return */
 				if (tok->flags & TOK_EAT) {
 					tok->flags &= ~TOK_EAT;
-					return (3);
+					return 3;
 				}
 				goto tok_line_outok;
 
 			case Q_single:
-				return (1);
+				return 1;
 
 			case Q_double:
-				return (2);
+				return 2;
 
 			case Q_doubleone:
 				tok->quote = Q_double;
@@ -352,7 +352,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (-1);
+				return -1;
 			}
 			break;
 
@@ -384,7 +384,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 				break;
 
 			default:
-				return (-1);
+				return -1;
 
 			}
 			break;
@@ -395,7 +395,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 			Char *s = tok_realloc(tok->wspace,
 			    size * sizeof(*s));
 			if (s == NULL)
-				return (-1);
+				return -1;
 
 			if (s != tok->wspace) {
 				int i;
@@ -414,7 +414,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 			tok->amax += AINCR;
 			p = tok_realloc(tok->argv, tok->amax * sizeof(*p));
 			if (p == NULL)
-				return (-1);
+				return -1;
 			tok->argv = p;
 		}
 	}
@@ -430,7 +430,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 	FUN(tok,finish)(tok);
 	*argv = (const Char **)tok->argv;
 	*argc = tok->argc;
-	return (0);
+	return 0;
 }
 
 /* FUN(tok,str)():
@@ -446,5 +446,5 @@ FUN(tok,str)(TYPE(Tokenizer) *tok, const Char *line, int *argc,
 	memset(&li, 0, sizeof(li));
 	li.buffer = line;
 	li.cursor = li.lastchar = Strchr(line, '\0');
-	return (FUN(tok,line)(tok, &li, argc, argv, NULL, NULL));
+	return FUN(tok,line(tok, &li, argc, argv, NULL, NULL));
 }

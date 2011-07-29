@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.19 2011/07/28 20:50:55 christos Exp $	*/
+/*	$NetBSD: hist.c,v 1.20 2011/07/29 15:16:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.19 2011/07/28 20:50:55 christos Exp $");
+__RCSID("$NetBSD: hist.c,v 1.20 2011/07/29 15:16:33 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -59,9 +59,9 @@ hist_init(EditLine *el)
 	el->el_history.buf = el_malloc(EL_BUFSIZ * sizeof(*el->el_history.buf));
 	el->el_history.sz  = EL_BUFSIZ;
 	if (el->el_history.buf == NULL)
-		return (-1);
+		return -1;
 	el->el_history.last = el->el_history.buf;
-	return (0);
+	return 0;
 }
 
 
@@ -86,7 +86,7 @@ hist_set(EditLine *el, hist_fun_t fun, void *ptr)
 
 	el->el_history.ref = ptr;
 	el->el_history.fun = fun;
-	return (0);
+	return 0;
 }
 
 
@@ -113,20 +113,20 @@ hist_get(EditLine *el)
 #endif /* KSHVI */
 			el->el_line.cursor = el->el_line.lastchar;
 
-		return (CC_REFRESH);
+		return CC_REFRESH;
 	}
 	if (el->el_history.ref == NULL)
-		return (CC_ERROR);
+		return CC_ERROR;
 
 	hp = HIST_FIRST(el);
 
 	if (hp == NULL)
-		return (CC_ERROR);
+		return CC_ERROR;
 
 	for (h = 1; h < el->el_history.eventno; h++)
 		if ((hp = HIST_NEXT(el)) == NULL) {
 			el->el_history.eventno = h;
-			return (CC_ERROR);
+			return CC_ERROR;
 		}
 	(void) Strncpy(el->el_line.buffer, hp,
 			(size_t)(el->el_line.limit - el->el_line.buffer));
@@ -146,7 +146,7 @@ hist_get(EditLine *el)
 #endif /* KSHVI */
 		el->el_line.cursor = el->el_line.lastchar;
 
-	return (CC_REFRESH);
+	return CC_REFRESH;
 }
 
 
@@ -161,7 +161,7 @@ hist_command(EditLine *el, int argc, const Char **argv)
 	TYPE(HistEvent) ev;
 
 	if (el->el_history.ref == NULL)
-		return (-1);
+		return -1;
 
 	if (argc == 1 || Strcmp(argv[1], STR("list")) == 0) {
 		 /* List history entries */
@@ -169,11 +169,11 @@ hist_command(EditLine *el, int argc, const Char **argv)
 		for (str = HIST_LAST(el); str != NULL; str = HIST_PREV(el))
 			(void) fprintf(el->el_outfile, "%d %s",
 			    el->el_history.ev.num, ct_encode_string(str, &el->el_scratch));
-		return (0);
+		return 0;
 	}
 
 	if (argc != 3)
-		return (-1);
+		return -1;
 
 	num = (int)Strtol(argv[2], NULL, 0);
 

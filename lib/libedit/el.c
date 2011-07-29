@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.67 2011/07/28 20:50:55 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.68 2011/07/29 15:16:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.67 2011/07/28 20:50:55 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.68 2011/07/29 15:16:33 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -63,7 +63,7 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 	EditLine *el = el_malloc(sizeof(*el));
 
 	if (el == NULL)
-		return (NULL);
+		return NULL;
 
 	memset(el, 0, sizeof(EditLine));
 
@@ -108,7 +108,7 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 	(void) sig_init(el);
 	(void) read_init(el);
 
-	return (el);
+	return el;
 }
 
 
@@ -167,7 +167,7 @@ FUN(el,set)(EditLine *el, int op, ...)
 	int rv = 0;
 
 	if (el == NULL)
-		return (-1);
+		return -1;
 	va_start(ap, op);
 
 	switch (op) {
@@ -360,7 +360,7 @@ FUN(el,set)(EditLine *el, int op, ...)
 	}
 
 	va_end(ap);
-	return (rv);
+	return rv;
 }
 
 
@@ -482,7 +482,7 @@ FUN(el,get)(EditLine *el, int op, ...)
 	}
 	va_end(ap);
 
-	return (rv);
+	return rv;
 }
 
 
@@ -493,7 +493,7 @@ public const TYPE(LineInfo) *
 FUN(el,line)(EditLine *el)
 {
 
-	return (const TYPE(LineInfo) *) (void *) &el->el_line;
+	return (const TYPE(LineInfo) *)(void *)&el->el_line;
 }
 
 
@@ -517,12 +517,12 @@ el_source(EditLine *el, const char *fname)
 		size_t plen = sizeof(elpath);
 
 		if (issetugid())
-			return (-1);
+			return -1;
 		if ((ptr = getenv("HOME")) == NULL)
-			return (-1);
+			return -1;
 		plen += strlen(ptr);
 		if ((path = el_malloc(plen * sizeof(*path))) == NULL)
-			return (-1);
+			return -1;
 		(void)snprintf(path, plen, "%s%s", ptr, elpath);
 		fname = path;
 #else
@@ -531,14 +531,14 @@ el_source(EditLine *el, const char *fname)
 		 * to keep from inadvertently opening up the user to a security
 		 * hole.
 		 */
-		return (-1);
+		return -1;
 #endif
 	}
 	if (fp == NULL)
 		fp = fopen(fname, "r");
 	if (fp == NULL) {
 		el_free(path);
-		return (-1);
+		return -1;
 	}
 
 	while ((ptr = fgetln(fp, &len)) != NULL) {
@@ -561,7 +561,7 @@ el_source(EditLine *el, const char *fname)
 
 	el_free(path);
 	(void) fclose(fp);
-	return (error);
+	return error;
 }
 
 
@@ -607,7 +607,7 @@ el_editmode(EditLine *el, int argc, const Char **argv)
 	const Char *how;
 
 	if (argv == NULL || argc != 2 || argv[1] == NULL)
-		return (-1);
+		return -1;
 
 	how = argv[1];
 	if (Strcmp(how, STR("on")) == 0) {
@@ -620,7 +620,7 @@ el_editmode(EditLine *el, int argc, const Char **argv)
 	else {
 		(void) fprintf(el->el_errfile, "edit: Bad value `" FSTR "'.\n",
 		    how);
-		return (-1);
+		return -1;
 	}
-	return (0);
+	return 0;
 }
