@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.c,v 1.6 2010/03/13 22:31:15 christos Exp $	*/
+/*	$NetBSD: sdt.c,v 1.7 2011/07/29 13:10:23 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -107,37 +107,37 @@ SDT_PROBE_DECLARE(proc,,,lwp_exit);
 
 /* define the provider */
 static sdt_provider_t l7_provider = {
-    "proc",	/* provider name */
-    0,		/* registered ID - leave as 0 */
-    {
-	{ DTRACE_STABILITY_EVOLVING, DTRACE_STABILITY_EVOLVING, DTRACE_CLASS_COMMON },
-	{ DTRACE_STABILITY_PRIVATE,  DTRACE_STABILITY_PRIVATE,  DTRACE_CLASS_UNKNOWN },
-	{ DTRACE_STABILITY_PRIVATE,  DTRACE_STABILITY_PRIVATE,  DTRACE_CLASS_ISA },
-	{ DTRACE_STABILITY_EVOLVING, DTRACE_STABILITY_EVOLVING, DTRACE_CLASS_COMMON },
-	{ DTRACE_STABILITY_PRIVATE,  DTRACE_STABILITY_PRIVATE,  DTRACE_CLASS_ISA },
-    },
+	"proc",		/* provider name */
+	0,		/* registered ID - leave as 0 */
+	{
+		{ DTRACE_STABILITY_EVOLVING, DTRACE_STABILITY_EVOLVING, DTRACE_CLASS_COMMON },
+		{ DTRACE_STABILITY_PRIVATE,  DTRACE_STABILITY_PRIVATE,  DTRACE_CLASS_UNKNOWN },
+		{ DTRACE_STABILITY_PRIVATE,  DTRACE_STABILITY_PRIVATE,  DTRACE_CLASS_ISA },
+		{ DTRACE_STABILITY_EVOLVING, DTRACE_STABILITY_EVOLVING, DTRACE_CLASS_COMMON },
+		{ DTRACE_STABILITY_PRIVATE,  DTRACE_STABILITY_PRIVATE,  DTRACE_CLASS_ISA },
+	},
 
-    /* list all probes belonging to the provider */
-    { 
-	&SDT_NAME(proc,,,create),
-	&SDT_NAME(proc,,,exec),
-	&SDT_NAME(proc,,,exec_success),
-	&SDT_NAME(proc,,,exec_failure),
-	&SDT_NAME(proc,,,signal_send),
-	&SDT_NAME(proc,,,signal_discard),
-	&SDT_NAME(proc,,,signal_clear),
-	&SDT_NAME(proc,,,signal_handle),
-	&SDT_NAME(proc,,,lwp_create),
-	&SDT_NAME(proc,,,lwp_start),
-	&SDT_NAME(proc,,,lwp_exit),
-	NULL					/* NULL terminated list */
-    }
+	/* list all probes belonging to the provider */
+	{ 
+		&SDT_NAME(proc,,,create),
+		&SDT_NAME(proc,,,exec),
+		&SDT_NAME(proc,,,exec_success),
+		&SDT_NAME(proc,,,exec_failure),
+		&SDT_NAME(proc,,,signal_send),
+		&SDT_NAME(proc,,,signal_discard),
+		&SDT_NAME(proc,,,signal_clear),
+		&SDT_NAME(proc,,,signal_handle),
+		&SDT_NAME(proc,,,lwp_create),
+		&SDT_NAME(proc,,,lwp_start),
+		&SDT_NAME(proc,,,lwp_exit),
+		NULL				/* NULL terminated list */
+	}
 };
 
 /* list of local providers to register with DTrace */
 static sdt_provider_t *sdt_providers[] = {
-    &l7_provider,
-    NULL		/* NULL terminated list */
+	&l7_provider,
+	NULL		/* NULL terminated list */
 };
 
 static sdt_provider_t **sdt_list = NULL;	/* registered provider list */
@@ -167,7 +167,7 @@ sdt_getargdesc(void *arg, dtrace_id_t id, void *parg, dtrace_argdesc_t *desc)
 			sizeof(desc->dtargd_native));
 		desc->dtargd_mapping = desc->dtargd_ndx;
 		if (sprobe->argx[desc->dtargd_ndx] != NULL) {
-		    strncpy(desc->dtargd_xlate, sprobe->argx[desc->dtargd_ndx],
+			strncpy(desc->dtargd_xlate, sprobe->argx[desc->dtargd_ndx],
 			    sizeof(desc->dtargd_xlate));
 		}
 #ifdef SDT_DEBUG
@@ -197,16 +197,16 @@ sdt_getargdesc(void *arg, dtrace_id_t id, void *parg, dtrace_argdesc_t *desc)
 static void
 sdt_provide(void *arg, const dtrace_probedesc_t *desc)
 {
-    	sdt_provider_t *sprov = arg;
+	sdt_provider_t *sprov = arg;
 	int res;
 	int ind;
-	int num_probes=0;
+	int num_probes = 0;
 
 #ifdef SDT_DEBUG
 	if (desc == NULL) {
 		printf("sdt: provide null\n");
 	} else {
-	    printf("sdt: provide %d %02x:%02x:%02x:%02x\n",
+		printf("sdt: provide %d %02x:%02x:%02x:%02x\n",
 		    desc->dtpd_id,
 		    desc->dtpd_provider[0],
 		    desc->dtpd_mod[0],
@@ -215,7 +215,7 @@ sdt_provide(void *arg, const dtrace_probedesc_t *desc)
 	}
 #endif
 
-	for (ind=0; sprov->probes[ind] != NULL; ind++) {
+	for (ind = 0; sprov->probes[ind] != NULL; ind++) {
 	    	if (sprov->probes[ind]->created == 0) {
 			res = dtrace_probe_create(sprov->id,
 				sprov->probes[ind]->module,
@@ -241,14 +241,14 @@ sdt_provide(void *arg, const dtrace_probedesc_t *desc)
 static void
 sdt_destroy(void *arg, dtrace_id_t id, void *parg)
 {
-    	sdt_provider_t *sprov = arg;
-    	int ind;
+	sdt_provider_t *sprov = arg;
+	int ind;
 
 #ifdef SDT_DEBUG
 	printf("sdt: %s\n", __func__);
 #endif
 
-	for (ind=0; sprov->probes[ind] != NULL; ind++) {
+	for (ind = 0; sprov->probes[ind] != NULL; ind++) {
 	    	if (sprov->probes[ind]->id == id) {
 #ifdef SDT_DEBUG
 		    	printf("%s: destroying probe %d (%s:%s:%s:%s)\n",
@@ -269,14 +269,14 @@ sdt_destroy(void *arg, dtrace_id_t id, void *parg)
 static int
 sdt_enable(void *arg, dtrace_id_t id, void *parg)
 {
-    	sdt_provider_t *sprov = arg;
-    	int ind;
+	sdt_provider_t *sprov = arg;
+	int ind;
 
 #ifdef SDT_DEBUG
 	printf("sdt: %s\n", __func__);
 #endif
 
-	for (ind=0; sprov->probes[ind] != NULL; ind++) {
+	for (ind = 0; sprov->probes[ind] != NULL; ind++) {
 	    	if (sprov->probes[ind]->id == id) {
 #ifdef SDT_DEBUG
 		    	printf("%s: enabling probe %d (%s:%s:%s:%s)\n",
@@ -297,14 +297,14 @@ sdt_enable(void *arg, dtrace_id_t id, void *parg)
 static void
 sdt_disable(void *arg, dtrace_id_t id, void *parg)
 {
-    	sdt_provider_t *sprov = arg;
-    	int ind;
+	sdt_provider_t *sprov = arg;
+	int ind;
 
 #ifdef SDT_DEBUG
 	printf("sdt: %s\n", __func__);
 #endif
 
-	for (ind=0; sprov->probes[ind] != NULL; ind++) {
+	for (ind = 0; sprov->probes[ind] != NULL; ind++) {
 	    	if (sprov->probes[ind]->id == id) {
 #ifdef SDT_DEBUG
 		    	printf("%s: disabling probe %d (%s:%s:%s:%s)\n",
@@ -327,12 +327,12 @@ sdt_register(sdt_provider_t *prov)
 	int res;
 
 	/* make sure the provider is not already registered */
-	for (ind=0; ind < sdt_count; ind++) {
-	    if (strncmp(sdt_list[ind]->name, prov->name,
-			SDT_MAX_NAME_SIZE) == 0) {
-		printf("sdt: provider %s already registered\n", prov->name);
-		return -1;
-	    }
+	for (ind = 0; ind < sdt_count; ind++) {
+		if (strncmp(sdt_list[ind]->name, prov->name,
+		    SDT_MAX_NAME_SIZE) == 0) {
+			printf("sdt: provider %s already registered\n", prov->name);
+			return -1;
+		}
 	}
 
 	/* register the new provider */
@@ -357,17 +357,17 @@ sdt_unregister(sdt_provider_t *prov)
 	int res;
 
 	/* find the provider reference */
-	for (ind=0; ind < sdt_count; ind++) {
+	for (ind = 0; ind < sdt_count; ind++) {
 		if (sdt_list[ind] == prov) {
 			res = dtrace_unregister(sdt_list[ind]->id);
 			if (res != 0) {
-			        printf(
+				printf(
 				    "sdt: failed to unregister provider %s\n",
 				    sdt_list[ind]->name);
 			}
 			/* remove provider from list */
 			sdt_list[ind] = sdt_list[--sdt_count];
-			return 0;;
+			return 0;
 		}
 	}
 
@@ -380,7 +380,7 @@ sdt_unregister(sdt_provider_t *prov)
 static void
 sdt_load(void *dummy)
 {
-    	int ind;
+	int ind;
 
 #ifdef SDT_DEBUG
 	printf("sdt: %s\n", __func__);
@@ -396,14 +396,14 @@ sdt_load(void *dummy)
 	sdt_count = 0;
 
 	if (sdt_list == NULL) {
-	    printf("sdt: failed to alloc provider list\n");
-	    return;
+		printf("sdt: failed to alloc provider list\n");
+		return;
 	}
 
-	for (ind=0; sdt_providers[ind] != NULL; ind++) {
+	for (ind = 0; sdt_providers[ind] != NULL; ind++) {
 	    	if (sdt_count >= SDT_MAX_PROVIDER) {
-		    printf("sdt: too many providers\n");
-		    break;
+			printf("sdt: too many providers\n");
+			break;
 		}
 		sdt_register(sdt_providers[ind]);
 
@@ -417,7 +417,7 @@ sdt_load(void *dummy)
 
 
 static int
-sdt_unload()
+sdt_unload(void)
 {
 	int error = 0;
 	int res = 0;
@@ -427,20 +427,20 @@ sdt_unload()
 	printf("sdt: %s\n", __func__);
 #endif
 
-	for (ind=0; ind < sdt_count; ind++) {
-	    if ((res = dtrace_unregister(sdt_list[ind]->id)) != 0) {
+	for (ind = 0; ind < sdt_count; ind++) {
+		if ((res = dtrace_unregister(sdt_list[ind]->id)) != 0) {
 #ifdef SDT_DEBUG
-		    printf("%s: failed to unregister %s error = %d\n",
+			printf("%s: failed to unregister %s error = %d\n",
 			    sdt_list[ind]->name, res);
 #endif
-		    error = res;
-	    } else {
+			error = res;
+		} else {
 #ifdef SDT_DEBUG
-		printf("sdt: unregistered %s id = %d\n",
-			sdt_list[ind]->name,
-			sdt_list[ind]->id);
+			printf("sdt: unregistered %s id = %d\n",
+			    sdt_list[ind]->name,
+			    sdt_list[ind]->id);
 #endif
-	    }
+		}
 	}
 
 	kmem_free(sdt_list, sizeof(sdt_provider_t *) * SDT_MAX_PROVIDER);
