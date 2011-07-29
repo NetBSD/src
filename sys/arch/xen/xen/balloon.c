@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.9 2011/04/29 22:52:02 jym Exp $ */
+/* $NetBSD: balloon.c,v 1.10 2011/07/29 22:16:05 jym Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #define BALLOONDEBUG 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.9 2011/04/29 22:52:02 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.10 2011/07/29 22:16:05 jym Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>
@@ -773,9 +773,9 @@ sysctl_kern_xen_balloon_setup(struct balloon_xenbus_softc *sc)
 
 	sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "kern", NULL,
+	    CTLTYPE_NODE, "machdep", NULL,
 	    NULL, 0, NULL, 0,
-	    CTL_KERN, CTL_EOL);
+	    CTL_MACHDEP, CTL_EOL);
 
 	sysctl_createv(clog, 0, &node, &node,
 	    CTLFLAG_PERMANENT,
