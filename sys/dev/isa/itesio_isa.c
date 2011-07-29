@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.22 2011/06/20 18:12:54 pgoyette Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.23 2011/07/29 20:58:47 jmcneill Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -34,12 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.22 2011/06/20 18:12:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.23 2011/07/29 20:58:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-
+#include <sys/module.h>
 #include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
@@ -609,4 +609,33 @@ itesio_wdt_tickle(struct sysmon_wdog *smw)
 	itesio_exit(sc->sc_iot, sc->sc_pnp_ioh);
 
 	return 0;
+}
+
+MODULE(MODULE_CLASS_DRIVER, itesio, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+itesio_modcmd(modcmd_t cmd, void *opaque)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		return config_init_component(cfdriver_ioconf_itesio,
+		    cfattach_ioconf_itesio, cfdata_ioconf_itesio);
+#else
+		return 0;
+#endif
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		return config_fini_component(cfdriver_ioconf_itesio,
+		    cfattach_ioconf_itesio, cfdata_ioconf_itesio);
+#else
+		return 0;
+#endif
+	default:
+		return ENOTTY;
+	}
 }
