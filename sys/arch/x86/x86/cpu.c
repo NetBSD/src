@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.89 2011/06/22 09:28:08 jruoho Exp $	*/
+/*	$NetBSD: cpu.c,v 1.90 2011/07/29 21:21:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.89 2011/06/22 09:28:08 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.90 2011/07/29 21:21:43 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1137,6 +1137,12 @@ cpu_resume(device_t dv, const pmf_qual_t *qual)
 static bool
 cpu_shutdown(device_t dv, int how)
 {
+	struct cpu_softc *sc = device_private(dv);
+	struct cpu_info *ci = sc->sc_info;
+
+	if (ci->ci_flags & CPUF_BSP)
+		return false;
+
 	return cpu_suspend(dv, NULL);
 }
 
