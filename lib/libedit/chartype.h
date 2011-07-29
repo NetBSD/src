@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.7 2010/12/16 17:42:28 wiz Exp $	*/
+/*	$NetBSD: chartype.h,v 1.8 2011/07/29 23:44:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 #endif
 
 #define ct_mbtowc            mbtowc
-#define ct_mbtowc_reset      mbtowc(0,0,0)
+#define ct_mbtowc_reset      mbtowc(0,0,(size_t)0)
 #define ct_wctomb            wctomb
 #define ct_wctomb_reset      wctomb(0,0)
 #define ct_wcstombs          wcstombs
@@ -206,7 +206,7 @@ protected size_t ct_enc_width(Char);
 
 /* The maximum buffer size to hold the most unwieldly visual representation,
  * in this case \U+nnnnn. */
-#define VISUAL_WIDTH_MAX 8
+#define VISUAL_WIDTH_MAX ((size_t)8)
 
 /* The terminal is thought of in terms of X columns by Y lines. In the cases
  * where a wide character takes up more than one column, the adjacent 

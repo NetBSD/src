@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.8 2011/07/29 15:16:33 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.9 2011/07/29 23:44:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,12 +38,12 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.8 2011/07/29 15:16:33 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.9 2011/07/29 23:44:44 christos Exp $");
 #endif /* not lint && not SCCSID */
 #include "el.h"
 #include <stdlib.h>
 
-#define CT_BUFSIZ 1024
+#define CT_BUFSIZ ((size_t)1024)
 
 #ifdef WIDECHAR
 protected void
@@ -83,7 +83,7 @@ ct_encode_string(const Char *s, ct_buffer_t *conv)
 	if (!s)
 		return NULL;
 	if (!conv->cbuff)
-		ct_conv_buff_resize(conv, CT_BUFSIZ, 0);
+		ct_conv_buff_resize(conv, CT_BUFSIZ, (size_t)0);
 	if (!conv->cbuff)
 		return NULL;
 
@@ -92,12 +92,13 @@ ct_encode_string(const Char *s, ct_buffer_t *conv)
 		used = conv->csize - (dst - conv->cbuff);
 		if (used < 5) {
 			used = dst - conv->cbuff;
-			ct_conv_buff_resize(conv, conv->csize + CT_BUFSIZ, 0);
+			ct_conv_buff_resize(conv, conv->csize + CT_BUFSIZ,
+			    (size_t)0);
 			if (!conv->cbuff)
 				return NULL;
 			dst = conv->cbuff + used;
 		}
-		used = ct_encode_char(dst, 5, *s);
+		used = ct_encode_char(dst, (size_t)5, *s);
 		if (used == -1) /* failed to encode, need more buffer space */
 			abort();
 		++s;
@@ -115,15 +116,15 @@ ct_decode_string(const char *s, ct_buffer_t *conv)
 	if (!s)
 		return NULL;
 	if (!conv->wbuff)
-		ct_conv_buff_resize(conv, 0, CT_BUFSIZ);
+		ct_conv_buff_resize(conv, (size_t)0, CT_BUFSIZ);
 	if (!conv->wbuff)
 		return NULL;
 
-	len = ct_mbstowcs(NULL, s, 0);
+	len = ct_mbstowcs(NULL, s, (size_t)0);
 	if (len == (size_t)-1)
 		return NULL;
 	if (len > conv->wsize)
-		ct_conv_buff_resize(conv, 0, len + 1);
+		ct_conv_buff_resize(conv, (size_t)0, len + 1);
 	if (!conv->wbuff)
 		return NULL;
 	ct_mbstowcs(conv->wbuff, s, conv->wsize);
@@ -144,7 +145,7 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 	 * the argv strings. */
 	for (i = 0, bufspace = 0; i < argc; ++i)
 		bufspace += argv[i] ? strlen(argv[i]) + 1 : 0;
-	ct_conv_buff_resize(conv, 0, bufspace);
+	ct_conv_buff_resize(conv, (size_t)0, bufspace);
 	if (!conv->wsize)
 		return NULL;
 

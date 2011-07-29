@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.38 2011/07/29 20:58:07 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.39 2011/07/29 23:44:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.38 2011/07/29 20:58:07 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.39 2011/07/29 23:44:45 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1037,7 +1037,7 @@ vi_histedit(EditLine *el, Int c __attribute__((__unused__)))
 	cp[TMP_BUFSIZ - 1] = '\0';
 	len = strlen(cp);
 	write(fd, cp, len);
-	write(fd, "\n", 1);
+	write(fd, "\n", (size_t)1);
 	pid = fork();
 	switch (pid) {
 	case -1:

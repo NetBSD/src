@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.97 2011/07/29 20:58:07 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.98 2011/07/29 23:44:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.97 2011/07/29 20:58:07 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.98 2011/07/29 23:44:44 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -221,10 +221,8 @@ _resize_fun(EditLine *el, void *a)
 
 	li = el_line(el);
 	/* a cheesy way to get rid of const cast. */
-	*ap = memchr(li->buffer, *li->buffer, 1);
+	*ap = memchr(li->buffer, *li->buffer, (size_t)1);
 }
-
-static const char _dothistory[] = "/.history";
 
 static const char *
 _default_history_file(void)
@@ -236,8 +234,7 @@ _default_history_file(void)
 		return path;
 	if ((p = getpwuid(getuid())) == NULL)
 		return NULL;
-	strlcpy(path, p->pw_dir, PATH_MAX);
-	strlcat(path, _dothistory, PATH_MAX);
+	(void)snprintf(path, sizeof(path), "%s/.history", p->pw_dir);
 	return path;
 }
 
@@ -1189,7 +1186,7 @@ history_truncate_file (const char *filename, int nlines)
 	}
 
 	for(;;) {
-		if (fread(buf, sizeof(buf), 1, fp) != 1) {
+		if (fread(buf, sizeof(buf), (size_t)1, fp) != 1) {
 			if (ferror(fp)) {
 				ret = errno;
 				break;
@@ -1199,7 +1196,7 @@ history_truncate_file (const char *filename, int nlines)
 				ret = errno;
 				break;
 			}
-			left = fread(buf, 1, sizeof(buf), fp);
+			left = fread(buf, (size_t)1, sizeof(buf), fp);
 			if (ferror(fp)) {
 				ret = errno;
 				break;
@@ -1207,14 +1204,15 @@ history_truncate_file (const char *filename, int nlines)
 			if (left == 0) {
 				count--;
 				left = sizeof(buf);
-			} else if (fwrite(buf, (size_t)left, 1, tp) != 1) {
+			} else if (fwrite(buf, (size_t)left, (size_t)1, tp)
+			    != 1) {
 				ret = errno;
 				break;
 			}
 			fflush(tp);
 			break;
 		}
-		if (fwrite(buf, sizeof(buf), 1, tp) != 1) {
+		if (fwrite(buf, sizeof(buf), (size_t)1, tp) != 1) {
 			ret = errno;
 			break;
 		}
@@ -1244,7 +1242,7 @@ history_truncate_file (const char *filename, int nlines)
 			ret = errno;
 			break;
 		}
-		if (fread(buf, sizeof(buf), 1, tp) != 1) {
+		if (fread(buf, sizeof(buf), (size_t)1, tp) != 1) {
 			if (ferror(tp)) {
 				ret = errno;
 				break;
@@ -1258,7 +1256,7 @@ history_truncate_file (const char *filename, int nlines)
 	if (ret || nlines > 0)
 		goto out3;
 
-	if (fseeko(fp, 0, SEEK_SET) == (off_t)-1) {
+	if (fseeko(fp, (off_t)0, SEEK_SET) == (off_t)-1) {
 		ret = errno;
 		goto out3;
 	}
@@ -1270,12 +1268,12 @@ history_truncate_file (const char *filename, int nlines)
 	}
 
 	for(;;) {
-		if ((left = fread(buf, 1, sizeof(buf), tp)) == 0) {
+		if ((left = fread(buf, (size_t)1, sizeof(buf), tp)) == 0) {
 			if (ferror(fp))
 				ret = errno;
 			break;
 		}
-		if (fwrite(buf, (size_t)left, 1, fp) != 1) {
+		if (fwrite(buf, (size_t)left, (size_t)1, fp) != 1) {
 			ret = errno;
 			break;
 		}
@@ -2055,7 +2053,7 @@ _rl_event_read_char(EditLine *el, char *cp)
 		if (ioctl(el->el_infd, FIONREAD, &n) < 0)
 			return -1;
 		if (n)
-			num_read = read(el->el_infd, cp, 1);
+			num_read = read(el->el_infd, cp, (size_t)1);
 		else
 			num_read = 0;
 #elif defined(F_SETFL) && defined(O_NDELAY)

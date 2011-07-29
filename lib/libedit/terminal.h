@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.h,v 1.2 2011/07/28 01:56:27 christos Exp $	*/
+/*	$NetBSD: terminal.h,v 1.3 2011/07/29 23:44:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@ typedef struct {
 #define	TERM_HAS_AUTO_MARGINS	0x080	/* Has auto margins	*/
 #define	TERM_HAS_MAGIC_MARGINS	0x100	/* Has magic margins	*/
 	char	 *t_buf;		/* Termcap buffer	*/
-	int	  t_loc;		/* location used	*/
+	size_t	  t_loc;		/* location used	*/
 	char	**t_str;		/* termcap strings	*/
 	int	 *t_val;		/* termcap values	*/
 	char	 *t_cap;		/* Termcap buffer	*/
