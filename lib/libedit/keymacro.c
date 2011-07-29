@@ -1,4 +1,4 @@
-/*	$NetBSD: keymacro.c,v 1.4 2011/07/28 20:50:55 christos Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.5 2011/07/29 15:16:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: keymacro.c,v 1.4 2011/07/28 20:50:55 christos Exp $");
+__RCSID("$NetBSD: keymacro.c,v 1.5 2011/07/29 15:16:33 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -107,10 +107,10 @@ keymacro_init(EditLine *el)
 	el->el_keymacro.buf = el_malloc(KEY_BUFSIZ *
 	    sizeof(*el->el_keymacro.buf));
 	if (el->el_keymacro.buf == NULL)
-		return (-1);
+		return -1;
 	el->el_keymacro.map = NULL;
 	keymacro_reset(el);
-	return (0);
+	return 0;
 }
 
 /* keymacro_end():
@@ -134,7 +134,7 @@ keymacro_map_cmd(EditLine *el, int cmd)
 {
 
 	el->el_keymacro.val.cmd = (el_action_t) cmd;
-	return (&el->el_keymacro.val);
+	return &el->el_keymacro.val;
 }
 
 
@@ -146,7 +146,7 @@ keymacro_map_str(EditLine *el, Char *str)
 {
 
 	el->el_keymacro.val.str = str;
-	return (&el->el_keymacro.val);
+	return &el->el_keymacro.val;
 }
 
 
@@ -177,7 +177,7 @@ protected int
 keymacro_get(EditLine *el, Char *ch, keymacro_value_t *val)
 {
 
-	return (node_trav(el, el->el_keymacro.map, ch, val));
+	return node_trav(el, el->el_keymacro.map, ch, val);
 }
 
 
@@ -242,13 +242,13 @@ keymacro_delete(EditLine *el, const Char *key)
 	if (key[0] == '\0') {
 		(void) fprintf(el->el_errfile,
 		    "keymacro_delete: Null extended-key not allowed.\n");
-		return (-1);
+		return -1;
 	}
 	if (el->el_keymacro.map == NULL)
-		return (0);
+		return 0;
 
 	(void) node__delete(el, &el->el_keymacro.map, key);
-	return (0);
+	return 0;
 }
 
 
@@ -287,25 +287,25 @@ node_trav(EditLine *el, keymacro_node_t *ptr, Char *ch, keymacro_value_t *val)
 			/* key not complete so get next char */
 			if (FUN(el,getc)(el, ch) != 1) {/* if EOF or error */
 				val->cmd = ED_END_OF_FILE;
-				return (XK_CMD);
+				return XK_CMD;
 				/* PWP: Pretend we just read an end-of-file */
 			}
-			return (node_trav(el, ptr->next, ch, val));
+			return node_trav(el, ptr->next, ch, val);
 		} else {
 			*val = ptr->val;
 			if (ptr->type != XK_CMD)
 				*ch = '\0';
-			return (ptr->type);
+			return ptr->type;
 		}
 	} else {
 		/* no match found here */
 		if (ptr->sibling) {
 			/* try next sibling */
-			return (node_trav(el, ptr->sibling, ch, val));
+			return node_trav(el, ptr->sibling, ch, val);
 		} else {
 			/* no next sibling -- mismatch */
 			val->str = NULL;
-			return (XK_STR);
+			return XK_STR;
 		}
 	}
 }
@@ -370,7 +370,7 @@ node__try(EditLine *el, keymacro_node_t *ptr, const Char *str,
 			ptr->next = node__get(*str);	/* setup new node */
 		(void) node__try(el, ptr->next, str, val, ntype);
 	}
-	return (0);
+	return 0;
 }
 
 
@@ -392,7 +392,7 @@ node__delete(EditLine *el, keymacro_node_t **inptr, const Char *str)
 			if (xm->sibling->ch == *str)
 				break;
 		if (xm->sibling == NULL)
-			return (0);
+			return 0;
 		prev_ptr = xm;
 		ptr = xm->sibling;
 	}
@@ -404,20 +404,20 @@ node__delete(EditLine *el, keymacro_node_t **inptr, const Char *str)
 			prev_ptr->sibling = ptr->sibling;
 		ptr->sibling = NULL;
 		node__put(el, ptr);
-		return (1);
+		return 1;
 	} else if (ptr->next != NULL &&
 	    node__delete(el, &ptr->next, str) == 1) {
 		if (ptr->next != NULL)
-			return (0);
+			return 0;
 		if (prev_ptr == NULL)
 			*inptr = ptr->sibling;
 		else
 			prev_ptr->sibling = ptr->sibling;
 		ptr->sibling = NULL;
 		node__put(el, ptr);
-		return (1);
+		return 1;
 	} else {
-		return (0);
+		return 0;
 	}
 }
 
@@ -470,7 +470,7 @@ node__get(Int ch)
 	ptr->val.str = NULL;
 	ptr->next = NULL;
 	ptr->sibling = NULL;
-	return (ptr);
+	return ptr;
 }
 
 private void
@@ -493,12 +493,12 @@ node_lookup(EditLine *el, const Char *str, keymacro_node_t *ptr, size_t cnt)
 	ssize_t used;
 
 	if (ptr == NULL)
-		return (-1);	/* cannot have null ptr */
+		return -1;	/* cannot have null ptr */
 
 	if (!str || *str == 0) {
 		/* no more chars in str.  node_enum from here. */
 		(void) node_enum(el, ptr, cnt);
-		return (0);
+		return 0;
 	} else {
 		/* If match put this char into el->el_keymacro.buf.  Recurse */
 		if (ptr->ch == *str) {
@@ -506,7 +506,7 @@ node_lookup(EditLine *el, const Char *str, keymacro_node_t *ptr, size_t cnt)
 			used = ct_visual_char(el->el_keymacro.buf + cnt,
 			    KEY_BUFSIZ - cnt, ptr->ch);
 			if (used == -1)
-				return (-1); /* ran out of buffer space */
+				return -1; /* ran out of buffer space */
 			if (ptr->next != NULL)
 				/* not yet at leaf */
 				return (node_lookup(el, str + 1, ptr->next,
@@ -519,9 +519,9 @@ node_lookup(EditLine *el, const Char *str, keymacro_node_t *ptr, size_t cnt)
 					el->el_keymacro.buf[px + 1] = '\0';
 					keymacro_kprint(el, el->el_keymacro.buf,
 					    &ptr->val, ptr->type);
-					return (0);
+					return 0;
 				} else
-					return (-1);
+					return -1;
 					/* mismatch -- str still has chars */
 			}
 		} else {
@@ -530,7 +530,7 @@ node_lookup(EditLine *el, const Char *str, keymacro_node_t *ptr, size_t cnt)
 				return (node_lookup(el, str, ptr->sibling,
 				    cnt));
 			else
-				return (-1);
+				return -1;
 		}
 	}
 }
@@ -551,14 +551,14 @@ node_enum(EditLine *el, keymacro_node_t *ptr, size_t cnt)
 		    "Some extended keys too long for internal print buffer");
 		(void) fprintf(el->el_errfile, " \"" FSTR "...\"\n",
 		    el->el_keymacro.buf);
-		return (0);
+		return 0;
 	}
 	if (ptr == NULL) {
 #ifdef DEBUG_EDIT
 		(void) fprintf(el->el_errfile,
 		    "node_enum: BUG!! Null ptr passed\n!");
 #endif
-		return (-1);
+		return -1;
 	}
 	/* put this char at end of str */
         used = ct_visual_char(el->el_keymacro.buf + cnt, KEY_BUFSIZ - cnt,
@@ -574,7 +574,7 @@ node_enum(EditLine *el, keymacro_node_t *ptr, size_t cnt)
 	/* go to sibling if there is one */
 	if (ptr->sibling)
 		(void) node_enum(el, ptr->sibling, cnt);
-	return (0);
+	return 0;
 }
 
 

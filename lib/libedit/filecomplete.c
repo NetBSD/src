@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.26 2011/07/28 20:50:55 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.27 2011/07/29 15:16:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.26 2011/07/28 20:50:55 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.27 2011/07/29 15:16:33 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -82,7 +82,7 @@ fn_tilde_expand(const char *txt)
 	size_t len = 0;
 
 	if (txt[0] != '~')
-		return (strdup(txt));
+		return strdup(txt);
 
 	temp = strchr(txt + 1, '/');
 	if (temp == NULL) {
@@ -119,7 +119,7 @@ fn_tilde_expand(const char *txt)
 	}
 	el_free(temp);		/* value no more needed */
 	if (pass == NULL)
-		return (strdup(txt));
+		return strdup(txt);
 
 	/* update pointer txt to point at string immedially following */
 	/* first slash */
@@ -131,7 +131,7 @@ fn_tilde_expand(const char *txt)
 		return NULL;
 	(void)snprintf(temp, len, "%s/%s", pass->pw_dir, txt);
 
-	return (temp);
+	return temp;
 }
 
 
@@ -214,7 +214,7 @@ fn_filename_completion_function(const char *text, int state)
 
 		dir = opendir(dirpath);
 		if (!dir)
-			return (NULL);	/* cannot open the directory */
+			return NULL;	/* cannot open the directory */
 
 		/* will be used in cycle */
 		filename_len = filename ? strlen(filename) : 0;
@@ -260,7 +260,7 @@ fn_filename_completion_function(const char *text, int state)
 		temp = NULL;
 	}
 
-	return (temp);
+	return temp;
 }
 
 
@@ -338,7 +338,7 @@ completion_matches(const char *text, char *(*genfunc)(const char *, int))
 	/* add NULL as last pointer to the array */
 	match_list[matches + 1] = (char *) NULL;
 
-	return (match_list);
+	return match_list;
 }
 
 /*

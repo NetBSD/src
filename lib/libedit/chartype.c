@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.7 2011/07/28 20:50:55 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.8 2011/07/29 15:16:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.7 2011/07/28 20:50:55 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.8 2011/07/29 15:16:33 christos Exp $");
 #endif /* not lint && not SCCSID */
 #include "el.h"
 #include <stdlib.h>
@@ -321,7 +321,7 @@ ct_visual_char(Char *dst, size_t len, Char c)
 		*dst++ = tohexdigit(((unsigned int) c >>  8) & 0xf);
 		*dst++ = tohexdigit(((unsigned int) c >>  4) & 0xf);
 		*dst   = tohexdigit(((unsigned int) c      ) & 0xf);
-		return (c > 0xffff) ? 8 : 7;
+		return c > 0xffff ? 8 : 7;
 #else
 		*dst++ = '\\';
 #define tooctaldigit(v) ((v) + '0')
