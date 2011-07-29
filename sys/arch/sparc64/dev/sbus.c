@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.89 2011/07/20 12:06:00 macallan Exp $ */
+/*	$NetBSD: sbus.c,v 1.90 2011/07/29 08:37:36 mrg Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.89 2011/07/20 12:06:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.90 2011/07/29 08:37:36 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -79,7 +79,7 @@ static int _sbus_bus_map(
 		bus_addr_t,		/*offset*/
 		bus_size_t,		/*size*/
 		int,			/*flags*/
-		vaddr_t,			/* XXX unused -- compat w/sparc */
+		vaddr_t,		/* XXX unused -- compat w/sparc */
 		bus_space_handle_t *);
 static void *sbus_intr_establish(
 		bus_space_tag_t,

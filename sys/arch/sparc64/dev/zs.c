@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.70 2011/03/12 11:43:38 nakayama Exp $	*/
+/*	$NetBSD: zs.c,v 1.71 2011/07/29 08:37:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.70 2011/03/12 11:43:38 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.71 2011/07/29 08:37:36 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.70 2011/03/12 11:43:38 nakayama Exp $");
 #include <ddb/db_output.h>
 
 #include <dev/sbus/sbusvar.h>
+#include <sparc64/dev/fhcvar.h>
 #include <sparc64/dev/cons.h>
 
 #include "ioconf.h"
@@ -154,11 +155,17 @@ struct consdev zs_consdev = {
 static int  zs_match_sbus(device_t, cfdata_t, void *);
 static void zs_attach_sbus(device_t, device_t, void *);
 
+static int  zs_match_fhc(device_t, cfdata_t, void *);
+static void zs_attach_fhc(device_t, device_t, void *);
+
 static void zs_attach(struct zsc_softc *, struct zsdevice *, int);
 static int  zs_print(void *, const char *);
 
 CFATTACH_DECL_NEW(zs, sizeof(struct zsc_softc),
     zs_match_sbus, zs_attach_sbus, NULL, NULL);
+
+CFATTACH_DECL_NEW(zs_fhc, sizeof(struct zsc_softc),
+    zs_match_fhc, zs_attach_fhc, NULL, NULL);
 
 /* Interrupt handlers. */
 int zscheckintr(void *);
@@ -186,6 +193,17 @@ zs_match_sbus(device_t parent, cfdata_t cf, void *aux)
 	struct sbus_attach_args *sa = aux;
 
 	if (strcmp(cf->cf_name, sa->sa_name) != 0)
+		return (0);
+
+	return (1);
+}
+
+static int
+zs_match_fhc(device_t parent, cfdata_t cf, void *aux)
+{
+	struct fhc_attach_args *fa = aux;
+
+	if (strcmp(cf->cf_name, fa->fa_name) != 0)
 		return (0);
 
 	return (1);
@@ -242,6 +260,65 @@ zs_attach_sbus(device_t parent, device_t self, void *aux)
 	zsc->zsc_promunit = prom_getpropint(sa->sa_node, "slave", -2);
 	zsc->zsc_node = sa->sa_node;
 	zs_attach(zsc, zsaddr[zs_unit], sa->sa_pri);
+}
+
+static void
+zs_attach_fhc(device_t parent, device_t self, void *aux)
+{
+	struct zsc_softc *zsc = device_private(self);
+	struct fhc_attach_args *fa = aux;
+	bus_space_handle_t bh;
+	int zs_unit;
+
+	zsc->zsc_dev = self;
+	zs_unit = device_unit(self);
+
+	if (fa->fa_nreg < 1 && fa->fa_npromvaddrs < 1) {
+		printf(": no registers\n");
+		return;
+	}
+
+	if (fa->fa_nintr == 0) {
+		aprint_error(": no interrupt lines\n");
+		return;
+	}
+
+	/* Use the mapping setup by the Sun PROM if possible. */
+	if (zsaddr[zs_unit] == NULL) {
+		/* Only map registers once. */
+		if (fa->fa_npromvaddrs) {
+			/*
+			 * We're converting from a 32-bit pointer to a 64-bit
+			 * pointer.  Since the 32-bit entity is negative, but
+			 * the kernel is still mapped into the lower 4GB
+			 * range, this needs to be zero-extended.
+			 *
+			 * XXXXX If we map the kernel and devices into the
+			 * high 4GB range, this needs to be changed to
+			 * sign-extend the address.
+			 */
+			sparc_promaddr_to_handle(fa->fa_bustag,
+				fa->fa_promvaddrs[0], &bh);
+
+		} else {
+
+			if (fhc_bus_map(fa->fa_bustag,
+					fa->fa_reg[0].fbr_slot,
+					fa->fa_reg[0].fbr_offset,
+					fa->fa_reg[0].fbr_size,
+					BUS_SPACE_MAP_LINEAR,
+					&bh) != 0) {
+				aprint_error(": cannot map registers\n");
+				return;
+			}
+		}
+		zsaddr[zs_unit] = bus_space_vaddr(fa->fa_bustag, bh);
+	}
+	zsc->zsc_bustag = fa->fa_bustag;
+	zsc->zsc_dmatag = NULL;
+	zsc->zsc_promunit = prom_getpropint(fa->fa_node, "slave", -2);
+	zsc->zsc_node = fa->fa_node;
+	zs_attach(zsc, zsaddr[zs_unit], fa->fa_intr[0]);
 }
 
 /*
