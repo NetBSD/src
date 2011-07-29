@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.19 2011/07/28 01:05:20 christos Exp $	*/
+/*	$NetBSD: prompt.c,v 1.20 2011/07/29 15:16:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)prompt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: prompt.c,v 1.19 2011/07/28 01:05:20 christos Exp $");
+__RCSID("$NetBSD: prompt.c,v 1.20 2011/07/29 15:16:33 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -59,7 +59,7 @@ prompt_default(EditLine *el __attribute__((__unused__)))
 {
 	static Char a[3] = {'?', ' ', '\0'};
 
-	return (a);
+	return a;
 }
 
 
@@ -72,7 +72,7 @@ prompt_default_r(EditLine *el __attribute__((__unused__)))
 {
 	static Char a[1] = {'\0'};
 
-	return (a);
+	return a;
 }
 
 
