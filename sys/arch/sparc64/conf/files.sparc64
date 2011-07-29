@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.133 2011/06/12 03:35:47 rmind Exp $
+#	$NetBSD: files.sparc64,v 1.134 2011/07/29 08:37:37 mrg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -42,6 +42,19 @@ file	arch/sparc64/dev/schizo.c		schizo
 file	arch/sparc64/dev/pyro.c			pyro
 file	arch/sparc64/dev/pci_machdep.c		psycho | schizo | pyro
 
+define  central {}
+device	central: central
+attach	central at mainbus
+file	arch/sparc64/dev/central.c		central
+
+define  fhc {}
+device	fhc: fhc
+attach	fhc at mainbus with fhc_mainbus
+attach	fhc at central with fhc_central
+file	arch/sparc64/dev/fhc.c			fhc
+file	arch/sparc64/dev/fhc_central.c		fhc_central
+file	arch/sparc64/dev/fhc_mainbus.c		fhc_mainbus
+
 # IOMMU is for both
 file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo | pyro
 
@@ -56,6 +69,7 @@ file	arch/sparc64/dev/ebus_mainbus.c		ebus_mainbus
 device clock: mk48txx
 attach clock at sbus with mkclock_sbus
 attach clock at ebus with mkclock_ebus
+attach clock at fhc with mkclock_fhc
 file	arch/sparc64/dev/mkclock.c		clock
 
 device rtc: mc146818
@@ -125,7 +139,7 @@ file	arch/sparc64/sparc64/rbus_machdep.c	cardbus
 #
 
 device zs {channel = -1}
-attach zs at sbus
+attach zs at sbus, fhc
 file	arch/sparc64/dev/zs.c			zs needs-flag
 file	dev/ic/z8530sc.c			zs
 
