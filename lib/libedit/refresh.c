@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.36 2011/07/28 01:05:20 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.37 2011/07/29 23:44:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.36 2011/07/28 01:05:20 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.37 2011/07/29 23:44:45 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1081,7 +1081,7 @@ re_fastputc(EditLine *el, Int c)
 			for(i = 1; i < lins; i++)
 				el->el_display[i - 1] = el->el_display[i];
 
-			re__copy_and_pad(firstline, STR(""), 0);
+			re__copy_and_pad(firstline, STR(""), (size_t)0);
 			el->el_display[i - 1] = firstline;
 		} else {
 			el->el_cursor.v++;

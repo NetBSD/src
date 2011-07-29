@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.24 2011/07/28 01:56:27 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.25 2011/07/29 23:44:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#define	EL_BUFSIZ	1024		/* Maximum line size		*/
+#define	EL_BUFSIZ	((size_t)1024)	/* Maximum line size		*/
 
 #define	HANDLE_SIGNALS	0x01
 #define	NO_TTY		0x02
