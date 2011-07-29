@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2011/07/28 01:56:26 christos Exp $
+#	$NetBSD: Makefile,v 1.45 2011/07/29 20:56:58 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -8,6 +8,7 @@ WARNS=	4
 LIB=	edit
 
 LIBDPLIBS+=     terminfo ${.CURDIR}/../libterminfo
+COPTS+=-Wunused-parameter
 
 OSRCS=	chared.c common.c el.c emacs.c fcns.c filecomplete.c help.c \
 	hist.c keymacro.c map.c chartype.c \
