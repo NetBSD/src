@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.8 2011/07/15 19:19:57 cliff Exp $	*/
+/*	$NetBSD: flash.c,v 1.9 2011/07/29 20:48:33 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.8 2011/07/15 19:19:57 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.9 2011/07/29 20:48:33 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -523,6 +523,16 @@ flash_get_device(dev_t dev)
 	sc = device_lookup_private(&flash_cd, unit);
 
 	return sc->sc_dev;
+}
+
+flash_size_t
+flash_get_size(dev_t dev)
+{
+	const struct flash_softc *sc;
+
+	sc = flash_get_softc(dev);
+
+	return sc->sc_partinfo.part_size;
 }
 
 static inline flash_off_t
