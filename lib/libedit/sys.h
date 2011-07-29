@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.15 2011/07/28 20:50:55 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.16 2011/07/29 15:20:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -122,42 +122,6 @@ extern int tgetnum(char *);
 extern int tputs(const char *, int, int (*)(int));
 extern char* tgoto(const char*, int, int);
 extern char* tgetstr(char*, char**);
-#endif
-
-#ifdef notdef
-# undef REGEX
-# undef REGEXP
-# include <malloc.h>
-# ifdef __GNUC__
-/*
- * Broken hdrs.
- */
-extern int	tgetent(const char *bp, char *name);
-extern int	tgetflag(const char *id);
-extern int	tgetnum(const char *id);
-extern char    *tgetstr(const char *id, char **area);
-extern char    *tgoto(const char *cap, int col, int row);
-extern int	tputs(const char *str, int affcnt, int (*putc)(int));
-extern char    *getenv(const char *);
-extern int	fprintf(FILE *, const char *, ...);
-extern int	sigsetmask(int);
-extern int	sigblock(int);
-extern int	fputc(int, FILE *);
-extern int	fgetc(FILE *);
-extern int	fflush(FILE *);
-extern int	tolower(int);
-extern int	toupper(int);
-extern int	errno, sys_nerr;
-extern char	*sys_errlist[];
-extern void	perror(const char *);
-#  include <string.h>
-#  define strerror(e)	sys_errlist[e]
-# endif
-# ifdef SABER
-extern void *   memcpy(void *, const void *, size_t);
-extern void *   memset(void *, int, size_t);
-# endif
-extern char    *fgetline(FILE *, int *);
 #endif
 
 #endif /* _h_sys */
