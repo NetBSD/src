@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.37 2011/07/29 15:16:33 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.38 2011/07/29 20:58:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.37 2011/07/29 15:16:33 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.38 2011/07/29 20:58:07 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -465,7 +465,7 @@ vi_delete_meta(EditLine *el, Int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-vi_end_big_word(EditLine *el, Int c)
+vi_end_big_word(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	if (el->el_line.cursor == el->el_line.lastchar)
@@ -801,7 +801,7 @@ vi_repeat_prev_char(EditLine *el, Int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-vi_match(EditLine *el, Int c)
+vi_match(EditLine *el, Int c __attribute__((__unused__)))
 {
 	const Char match_chars[] = STR("()[]{}");
 	Char *cp;
@@ -848,7 +848,7 @@ vi_match(EditLine *el, Int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-vi_undo_line(EditLine *el, Int c)
+vi_undo_line(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	cv_undo(el);
@@ -862,7 +862,7 @@ vi_undo_line(EditLine *el, Int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-vi_to_column(EditLine *el, Int c)
+vi_to_column(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	el->el_line.cursor = el->el_line.buffer;
@@ -876,7 +876,7 @@ vi_to_column(EditLine *el, Int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-vi_yank_end(EditLine *el, Int c)
+vi_yank_end(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	cv_yank(el, el->el_line.cursor,
@@ -890,7 +890,7 @@ vi_yank_end(EditLine *el, Int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-vi_yank(EditLine *el, Int c)
+vi_yank(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	return cv_action(el, YANK);
@@ -902,7 +902,7 @@ vi_yank(EditLine *el, Int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-vi_comment_out(EditLine *el, Int c)
+vi_comment_out(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	el->el_line.cursor = el->el_line.buffer;
@@ -924,7 +924,7 @@ __weakref_visible char *my_get_alias_text(const char *)
 #endif
 protected el_action_t
 /*ARGSUSED*/
-vi_alias(EditLine *el, Int c)
+vi_alias(EditLine *el, Int c __attribute__((__unused__)))
 {
 #ifdef __weak_reference
 	char alias_name[3];
@@ -954,7 +954,7 @@ vi_alias(EditLine *el, Int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-vi_to_history_line(EditLine *el, Int c)
+vi_to_history_line(EditLine *el, Int c __attribute__((__unused__)))
 {
 	int sv_event_no = el->el_history.eventno;
 	el_action_t rval;
@@ -999,7 +999,7 @@ vi_to_history_line(EditLine *el, Int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-vi_histedit(EditLine *el, Int c)
+vi_histedit(EditLine *el, Int c __attribute__((__unused__)))
 {
 	int fd;
 	pid_t pid;
@@ -1086,7 +1086,7 @@ vi_histedit(EditLine *el, Int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-vi_history_word(EditLine *el, Int c)
+vi_history_word(EditLine *el, Int c __attribute__((__unused__)))
 {
 	const Char *wp = HIST_FIRST(el);
 	const Char *wep, *wsp;
@@ -1136,7 +1136,7 @@ vi_history_word(EditLine *el, Int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-vi_redo(EditLine *el, Int c)
+vi_redo(EditLine *el, Int c __attribute__((__unused__)))
 {
 	c_redo_t *r = &el->el_chared.c_redo;
 
