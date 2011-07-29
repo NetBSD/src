@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.78 2011/07/19 23:13:31 enami Exp $
+#	$NetBSD: Makefile,v 1.79 2011/07/29 21:01:43 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -164,6 +164,7 @@ SUBDIR+=	wmieeepc
 SUBDIR+=	aps
 SUBDIR+=	au8522
 SUBDIR+=	auvitek
+SUBDIR+=	itesio
 SUBDIR+=	xc5k
 .endif
 
