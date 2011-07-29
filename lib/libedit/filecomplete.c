@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.28 2011/07/29 20:58:07 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.29 2011/07/29 23:44:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.28 2011/07/29 20:58:07 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.29 2011/07/29 23:44:44 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -572,6 +572,6 @@ unsigned char
 _el_fn_complete(EditLine *el, int ch __attribute__((__unused__)))
 {
 	return (unsigned char)fn_complete(el, NULL, NULL,
-	    break_chars, NULL, NULL, 100,
+	    break_chars, NULL, NULL, (size_t)100,
 	    NULL, NULL, NULL, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.6 2011/07/29 15:20:39 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.7 2011/07/29 23:44:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.6 2011/07/29 15:20:39 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.7 2011/07/29 23:44:45 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -82,7 +82,7 @@ __RCSID("$NetBSD: terminal.c,v 1.6 2011/07/29 15:20:39 christos Exp $");
  * assumption...
  */
 
-#define	TC_BUFSIZE	2048
+#define	TC_BUFSIZE	((size_t)2048)
 
 #define	GoodStr(a)	(el->el_terminal.t_str[a] != NULL && \
 			    el->el_terminal.t_str[a][0] != '\0')
@@ -353,7 +353,7 @@ terminal_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 						/* XXX strcpy is safe */
 		(void) strcpy(*str = &el->el_terminal.t_buf[
 		    el->el_terminal.t_loc], cap);
-		el->el_terminal.t_loc += (int)clen + 1;	/* one for \0 */
+		el->el_terminal.t_loc += clen + 1;	/* one for \0 */
 		return;
 	}
 	/*
@@ -370,7 +370,7 @@ terminal_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 			termbuf[tlen++] = '\0';
 		}
 	memcpy(el->el_terminal.t_buf, termbuf, TC_BUFSIZE);
-	el->el_terminal.t_loc = (int)tlen;
+	el->el_terminal.t_loc = tlen;
 	if (el->el_terminal.t_loc + 3 >= TC_BUFSIZE) {
 		(void) fprintf(el->el_errfile,
 		    "Out of termcap string space.\n");
@@ -669,7 +669,7 @@ terminal_overwrite(EditLine *el, const Char *cp, size_t n)
 				Char c;
 				if ((c = el->el_display[el->el_cursor.v]
 				    [el->el_cursor.h]) != '\0') {
-					terminal_overwrite(el, &c, 1);
+					terminal_overwrite(el, &c, (size_t)1);
 #ifdef WIDECHAR
 					while (el->el_display[el->el_cursor.v]
 					    [el->el_cursor.h] == MB_FILL_CHAR)
@@ -1236,7 +1236,7 @@ terminal__putc(EditLine *el, Int c)
 	ssize_t i;
 	if (c == MB_FILL_CHAR)
 		return 0;
-	i = ct_encode_char(buf, MB_LEN_MAX, c);
+	i = ct_encode_char(buf, (size_t)MB_LEN_MAX, c);
 	if (i <= 0)
 		return (int)i;
 	buf[i] = '\0';
