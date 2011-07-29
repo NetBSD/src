@@ -1,4 +1,4 @@
-/*	$NetBSD: keymacro.c,v 1.5 2011/07/29 15:16:33 christos Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.6 2011/07/29 23:44:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: keymacro.c,v 1.5 2011/07/29 15:16:33 christos Exp $");
+__RCSID("$NetBSD: keymacro.c,v 1.6 2011/07/29 23:44:44 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -265,7 +265,7 @@ keymacro_print(EditLine *el, const Char *key)
 		return;
 
 	el->el_keymacro.buf[0] = '"';
-	if (node_lookup(el, key, el->el_keymacro.map, 1) <= -1)
+	if (node_lookup(el, key, el->el_keymacro.map, (size_t)1) <= -1)
 		/* key is not bound */
 		(void) fprintf(el->el_errfile, "Unbound extended key \"" FSTR
 		    "\"\n", key);
