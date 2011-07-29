@@ -1,4 +1,5 @@
-#	$NetBSD: t_raid.sh,v 1.8 2011/05/14 17:42:28 jmmv Exp $
+#! /usr/bin/atf-sh
+#	$NetBSD: t_raid.sh,v 1.9 2011/07/29 19:57:38 oster Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -125,7 +126,8 @@ raid1_compfail_cleanup()
 atf_test_case raid1_comp0fail cleanup
 raid1_comp0fail_head()
 {
-	atf_set "descr" "Checks configuring RAID1 after component 0 fails"
+	atf_set "descr" "Checks configuring RAID1 after component 0 fails" \
+		"(PR kern/44251)"
 }
 
 raid1_comp0fail_body()
@@ -144,12 +146,11 @@ raid1_comp0fail_body()
 	# restart server with failed component
 	rump.halt
 	rm disk0.img # FAIL
-	atf_check -s exit:0 ${raidserver}				\
+	atf_check -s exit:0 ${raidserver} 				\
 	    -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}	\
 	    -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}	\
 	    ${RUMP_SERVER}
 
-	atf_expect_fail "PR kern/44251"
 	atf_check -s exit:0 rump.raidctl -c raid.conf raid0
 }
 
@@ -157,6 +158,53 @@ raid1_comp0fail_cleanup()
 {
 	export RUMP_SERVER=unix://sock
 	rump.halt
+}
+
+atf_test_case raid1_normal cleanup
+raid1_normal_head()
+{
+	atf_set "descr" "Checks that RAID1 -c configurations work " \
+		"in the normal case"
+}
+
+raid1_normal_body()
+{
+	makecfg 1 2
+        atf_check -s exit:0 ${raidserver}                               \
+            -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}     \
+            -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}     \
+            ${RUMP_SERVER}
+
+        atf_check -s exit:0 rump.raidctl -C raid.conf raid0
+        atf_check -s exit:0 rump.raidctl -I 12345 raid0
+        atf_check -s exit:0 -o ignore rump.raidctl -iv raid0
+
+        # put some data there
+        atf_check -s exit:0 -e ignore \
+            dd if=$(atf_get_srcdir)/t_raid of=testfile count=4
+        atf_check -s exit:0 -e ignore -x \
+            "dd if=testfile | rump.dd of=${rawraid} conv=sync"
+
+        # restart server, disks remain normal 
+        rump.halt
+
+        atf_check -s exit:0 ${raidserver}                               \
+            -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}     \
+            -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}     \
+            ${RUMP_SERVER}
+
+        atf_check -s exit:0 rump.raidctl -c raid.conf raid0
+
+        # check if we we get what we wrote
+        atf_check -s exit:0 -o file:testfile -e ignore \
+            rump.dd if=${rawraid} count=4
+
+}
+
+raid1_comp0fail_cleanup()
+{       
+        export RUMP_SERVER=unix://sock
+        rump.halt
 }
 
 
@@ -208,11 +256,61 @@ raid5_compfail_cleanup()
 	rump.halt
 }
 
+atf_test_case raid5_normal cleanup
+raid5_normal_head()
+{
+        atf_set "descr" "Checks that RAID5 works after normal shutdown " \
+		"and 'raidctl -c' startup"
+}
+
+raid5_normal_body()
+{
+        makecfg 5 3
+        export RUMP_SERVER=unix://sock
+        atf_check -s exit:0 ${raidserver}                               \
+            -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}     \
+            -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}     \
+            -d key=/disk2,hostpath=disk2.img,size=${RAID_MEDIASIZE}     \
+            ${RUMP_SERVER}
+
+        atf_check -s exit:0 rump.raidctl -C raid.conf raid0
+        atf_check -s exit:0 rump.raidctl -I 12345 raid0
+        atf_check -s exit:0 -o ignore rump.raidctl -iv raid0
+
+        # put some data there
+        atf_check -s exit:0 -e ignore \
+            dd if=$(atf_get_srcdir)/t_raid of=testfile count=4
+        atf_check -s exit:0 -e ignore -x \
+            "dd if=testfile | rump.dd of=${rawraid} conv=sync"
+
+        # restart server after normal shutdown
+        rump.halt
+
+        atf_check -s exit:0 ${raidserver}                               \
+            -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}     \
+            -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}     \
+            -d key=/disk2,hostpath=disk2.img,size=${RAID_MEDIASIZE}     \
+            ${RUMP_SERVER}
+
+        atf_check -s exit:0 rump.raidctl -c raid.conf raid0
+
+        # check if we we get what we wrote
+        atf_check -s exit:0 -o file:testfile -e ignore \
+            rump.dd if=${rawraid} count=4
+}
+
+raid5_normal_cleanup()
+{
+        export RUMP_SERVER=unix://sock
+        rump.halt
+}
 
 atf_init_test_cases()
 {
 	atf_add_test_case smalldisk
+	atf_add_test_case raid1_normal
 	atf_add_test_case raid1_comp0fail
 	atf_add_test_case raid1_compfail
+	atf_add_test_case raid5_normal
 	atf_add_test_case raid5_compfail
 }
