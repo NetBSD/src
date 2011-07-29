@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.141 2011/07/23 21:12:58 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.142 2011/07/29 08:37:37 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.141 $"
+#ident 		"GENERIC-$Revision: 1.142 $"
 
 maxusers	64
 
@@ -240,11 +240,14 @@ sbus*	at mainbus0				# SBus-based systems
 psycho*	at mainbus0				# PCI-based systems
 schizo*	at mainbus?
 pyro*	at mainbus?
+central* at mainbus?
+fhc*	at mainbus?
 pci*	at psycho?
 pci*	at schizo?
 pci*	at pyro?
 pci*	at ppb?
-ppb*	at pci?					# `APB' support.
+ppb*	at pci?
+fhc*	at central?
 ebus*	at mainbus0				# ebus devices
 ebus*	at pci?					# ebus devices
 # XXX 'puc's aren't really bridges, but there's no better place for them here
@@ -266,6 +269,7 @@ lpt*	at ebus?				# parallel port
 ## Mostek clock found on sbus on Ultra-1,2 systems
 ## and found on ebus on Ultra-5 and other systems.
 clock*	at sbus? slot ? offset ?
+clock*	at fhc?
 clock*	at ebus?
 
 ## DS1287 compatible clock found on ebus on Netra X1 and other systems.
@@ -279,7 +283,8 @@ timer*	at mainbus0				# sun4c
 ## Zilog 8530 serial chips.  Each has two-channels.
 ## zs0 is ttya and ttyb.  zs1 is the keyboard and mouse.
 zs*	at sbus? slot ? offset ?
-zstty*	at zs? channel ?			# ttya
+zs*	at fhc?
+zstty*	at zs? channel ?			# ttys
 kbd0	at zstty?
 ms0	at zstty?
 
