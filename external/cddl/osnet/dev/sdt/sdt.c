@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.c,v 1.7 2011/07/29 13:10:23 uebayasi Exp $	*/
+/*	$NetBSD: sdt.c,v 1.8 2011/07/30 10:12:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ SDT_PROBE_DECLARE(proc,,,lwp_start);
 SDT_PROBE_DECLARE(proc,,,lwp_exit);
 
 /* define the provider */
-static sdt_provider_t l7_provider = {
+static sdt_provider_t proc_provider = {
 	"proc",		/* provider name */
 	0,		/* registered ID - leave as 0 */
 	{
@@ -136,7 +136,7 @@ static sdt_provider_t l7_provider = {
 
 /* list of local providers to register with DTrace */
 static sdt_provider_t *sdt_providers[] = {
-	&l7_provider,
+	&proc_provider,
 	NULL		/* NULL terminated list */
 };
 
