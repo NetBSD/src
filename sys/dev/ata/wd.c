@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.386 2011/02/10 05:07:46 enami Exp $ */
+/*	$NetBSD: wd.c,v 1.387 2011/07/30 04:42:03 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.386 2011/02/10 05:07:46 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.387 2011/07/30 04:42:03 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -703,6 +703,7 @@ wdstart1(struct wd_softc *wd, struct buf *bp)
 	wd->sc_wdc_bio.bcount = bp->b_bcount;
 	wd->sc_wdc_bio.databuf = bp->b_data;
 	wd->sc_wdc_bio.blkdone =0;
+	KASSERT(bp == wd->sc_bp || wd->sc_bp == NULL);
 	wd->sc_bp = bp;
 	/*
 	 * If we're retrying, retry in single-sector mode. This will give us
@@ -829,6 +830,8 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 		biodone(bp);
 		wd->openings++;
 	}
+	KASSERT(wd->sc_bp != NULL);
+	wd->sc_bp = NULL;
 	wdstart(wd);
 }
 
