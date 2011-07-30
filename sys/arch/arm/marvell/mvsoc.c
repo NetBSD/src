@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.2 2011/03/05 14:50:56 matt Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.3 2011/07/30 04:34:17 jakllsch Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.2 2011/03/05 14:50:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.3 2011/07/30 04:34:17 jakllsch Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -244,7 +244,7 @@ static const struct mvsoc_periph {
     { ORION_1(88F5182),	"com",     1, MVSOC_COM1_BASE,	ORION_IRQ_UART1 },
     { ORION_1(88F5182),	"ehci",    0, ORION_USB0_BASE,	ORION_IRQ_USBCNT0 },
     { ORION_1(88F5182),	"ehci",    1, ORION_USB1_BASE,	ORION_IRQ_USBCNT1 },
-//  { ORION_1(88F5182),	"gtidmac", 0, ORION_IDMAC_BASE,	0 },
+    { ORION_1(88F5182),	"gtidmac", 0, ORION_IDMAC_BASE,	ORION_IRQ_IDMA0 },
     { ORION_1(88F5182),	"gtpci",   0, ORION_PCI_BASE,	ORION_IRQ_PEX0INT },
     { ORION_1(88F5182),	"gttwsi",  0, MVSOC_TWSI_BASE,	ORION_IRQ_TWSI },
     { ORION_1(88F5182),	"mvgbec",  0, ORION_GBE_BASE,	IRQ_DEFAULT },
