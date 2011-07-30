@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.3 2011/07/23 05:10:30 uch Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.4 2011/07/30 03:53:18 uch Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.3 2011/07/23 05:10:30 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.4 2011/07/30 03:53:18 uch Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -75,6 +75,7 @@ static int v7fs_openfs(struct vnode *, struct mount *, struct lwp *);
 static void v7fs_closefs(struct vnode *, struct mount *);
 static int is_v7fs_partition(struct vnode *);
 static enum vtype v7fs_mode_to_vtype(v7fs_mode_t mode);
+int v7fs_vnode_reload(struct mount *, struct vnode *);
 
 int
 v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
@@ -593,4 +594,35 @@ v7fs_mountroot(void)
 	vfs_unbusy(mp, false, NULL);
 
 	return 0;
+}
+
+/* Reload disk inode information */
+int
+v7fs_vnode_reload(struct mount *mp, struct vnode *vp)
+{
+	struct v7fs_mount *v7fsmount = mp->mnt_data;
+	struct v7fs_self *fs = v7fsmount->core;
+	struct v7fs_node *v7fs_node;
+	struct v7fs_inode *inode = &((struct v7fs_node *)vp->v_data)->inode;
+	int target_ino = inode->inode_number;
+	int error = 0;
+
+	DPRINTF("#%d\n", target_ino);
+	mutex_enter(&mntvnode_lock);
+	for (v7fs_node = LIST_FIRST(&v7fsmount->v7fs_node_head);
+	     v7fs_node != NULL; v7fs_node = LIST_NEXT(v7fs_node, link)) {
+		inode = &v7fs_node->inode;
+		if (!v7fs_inode_allocated(inode)) {
+			continue;
+		}
+		if (inode->inode_number == target_ino) {
+			error = v7fs_inode_load(fs, &v7fs_node->inode,
+			    target_ino);
+			DPRINTF("sync #%d error=%d\n", target_ino, error);
+			break;
+		}
+	}
+	mutex_exit(&mntvnode_lock);
+
+	return error;
 }
