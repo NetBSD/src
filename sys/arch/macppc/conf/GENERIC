@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.292 2011/06/30 20:09:32 wiz Exp $
+# $NetBSD: GENERIC,v 1.293 2011/07/30 04:53:30 jakllsch Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.292 $"
+#ident 		"GENERIC-$Revision: 1.293 $"
 
 maxusers	32
 
@@ -486,6 +486,12 @@ ucom*	at umodem?
 
 ubsa*	at uhub? port ?					# Belkin serial adapter
 ucom*	at ubsa? portno ?
+
+uplcom* at uhub? port ?					# Prolific serial
+ucom* at uplcom? portno ?
+
+uftdi* at uhub? port ?					# FTDI serial
+ucom* at uftdi? portno ?
 
 uhso*	at uhub? port ? configuration ?			# Option N.V. Wireless WAN modems
 
