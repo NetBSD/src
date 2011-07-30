@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.87 2011/05/13 22:16:44 rmind Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.88 2011/07/30 06:19:02 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.87 2011/05/13 22:16:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.88 2011/07/30 06:19:02 uebayasi Exp $");
 
 #define SYSVSEM
 
@@ -106,8 +106,8 @@ seminit(void)
 	    ALIGN(seminfo.semmns * sizeof(struct __sem)) +
 	    ALIGN(seminfo.semmni * sizeof(kcondvar_t)) +
 	    ALIGN(seminfo.semmnu * seminfo.semusz);
-	v = uvm_km_alloc(kernel_map, round_page(sz), 0,
-	    UVM_KMF_WIRED|UVM_KMF_ZERO);
+	sz = round_page(sz);
+	v = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
 	if (v == 0)
 		panic("sysv_sem: cannot allocate memory");
 	sema = (void *)v;
@@ -150,8 +150,8 @@ semrealloc(int newsemmni, int newsemmns, int newsemmnu)
 	    ALIGN(newsemmns * sizeof(struct __sem)) +
 	    ALIGN(newsemmni * sizeof(kcondvar_t)) +
 	    ALIGN(newsemmnu * seminfo.semusz);
-	v = uvm_km_alloc(kernel_map, round_page(sz), 0,
-	    UVM_KMF_WIRED|UVM_KMF_ZERO);
+	sz = round_page(sz);
+	v = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
 	if (v == 0)
 		return ENOMEM;
 
@@ -251,6 +251,7 @@ semrealloc(int newsemmni, int newsemmns, int newsemmnu)
 	    ALIGN(seminfo.semmns * sizeof(struct __sem)) +
 	    ALIGN(seminfo.semmni * sizeof(kcondvar_t)) +
 	    ALIGN(seminfo.semmnu * seminfo.semusz);
+	sz = round_page(sz);
 
 	/* Set the pointers and update the new values */
 	sema = new_sema;
