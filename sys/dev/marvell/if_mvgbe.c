@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.9 2011/07/28 15:36:47 matt Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.10 2011/07/30 19:06:57 rjs Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.9 2011/07/28 15:36:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.10 2011/07/30 19:06:57 rjs Exp $");
 
 #include "rnd.h"
 
@@ -898,8 +898,7 @@ mvgbe_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 	}
 	if (pkts == 0)
 		return;
@@ -1744,8 +1743,7 @@ sw_csum:
 
 		ifp->if_ipackets++;
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* pass it on. */
 		(*ifp->if_input)(ifp, m);
