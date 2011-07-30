@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2011/07/29 23:44:44 christos Exp $
+#	$NetBSD: Makefile,v 1.47 2011/07/30 10:07:27 tron Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -8,7 +8,13 @@ WARNS=	4
 LIB=	edit
 
 LIBDPLIBS+=     terminfo ${.CURDIR}/../libterminfo
-COPTS+=-Wunused-parameter -Wconversion
+
+.include "bsd.own.mk"
+
+COPTS+=	-Wunused-parameter
+.if !defined(HAVE_GCC) || ${HAVE_GCC} != 45
+COPTS+=	-Wconversion
+.endif
 
 OSRCS=	chared.c common.c el.c emacs.c fcns.c filecomplete.c help.c \
 	hist.c keymacro.c map.c chartype.c \
