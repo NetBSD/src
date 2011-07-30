@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.5 2011/07/24 12:31:33 uch Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.6 2011/07/30 03:53:18 uch Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.5 2011/07/24 12:31:33 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.6 2011/07/30 03:53:18 uch Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -66,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.5 2011/07/24 12:31:33 uch Exp $");
 
 MALLOC_JUSTDEFINE(M_V7FS_VNODE, "v7fs vnode", "v7fs vnode structures");
 MALLOC_DECLARE(M_V7FS);
+
+int v7fs_vnode_reload(struct mount *, struct vnode *);
 
 static v7fs_mode_t vtype_to_v7fs_mode(enum vtype);
 static uint8_t v7fs_mode_to_d_type(v7fs_mode_t);
@@ -110,9 +112,11 @@ v7fs_lookup(void *v)
 	bool islastcn = flags & ISLASTCN;
 	v7fs_ino_t ino;
 	int error;
-
-	DPRINTF("%s op=%d flags=%d parent=%d %o %dbyte\n", name,
-	    nameiop, cnp->cn_flags, parent->inode_number, parent->mode,
+#ifdef V7FS_VNOPS_DEBUG
+	const char *opname[] = { "LOOKUP", "CREATE", "DELETE", "RENAME" };
+#endif
+	DPRINTF("'%s' op=%s flags=%d parent=%d %o %dbyte\n", name,
+	    opname[nameiop], cnp->cn_flags, parent->inode_number, parent->mode,
 	    parent->filesize);
 
 	*a->a_vpp = 0;
@@ -132,6 +136,9 @@ v7fs_lookup(void *v)
 
 	/* "." */
 	if (namelen == 1 && name[0] == '.') {
+		if ((nameiop == RENAME) && islastcn) {
+			return EISDIR; /* t_vnops rename_dir(3) */
+		}
 		vref(dvp); /* v_usecount++ */
 		*a->a_vpp = dvp;
 		DPRINTF("done.(.)\n");
@@ -170,7 +177,7 @@ v7fs_lookup(void *v)
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	}
 	*a->a_vpp = vpp;
-	DPRINTF("done.\n");
+	DPRINTF("done.(%s)\n", name);
 
 	return 0;
 }
@@ -439,6 +446,7 @@ v7fs_setattr(void *v)
 	struct v7fs_node *v7node = vp->v_data;
 	struct v7fs_self *fs = v7node->v7fsmount->core;
 	struct v7fs_inode *inode = &v7node->inode;
+	kauth_cred_t cred = ap->a_cred;
 	struct timespec *acc, *mod;
 	int error = 0;
 	acc = mod = NULL;
@@ -477,15 +485,38 @@ v7fs_setattr(void *v)
 		if (error == 0)
 			uvm_vnp_setsize(vp, vap->va_size);
 	}
+	uid_t uid = inode->uid;
+	gid_t gid = inode->gid;
 
 	if (vap->va_uid != (uid_t)VNOVAL) {
-		inode->uid = vap->va_uid;
+		uid = vap->va_uid;
+		error = kauth_authorize_vnode(cred,
+		    KAUTH_VNODE_CHANGE_OWNERSHIP, vp, NULL,
+		    genfs_can_chown(vp, cred, inode->uid, inode->gid, uid,
+		    gid));
+		if (error)
+			return error;
+		inode->uid = uid;
 	}
 	if (vap->va_gid != (uid_t)VNOVAL) {
-		inode->gid = vap->va_gid;
+		gid = vap->va_gid;
+		error = kauth_authorize_vnode(cred,
+		    KAUTH_VNODE_CHANGE_OWNERSHIP, vp, NULL,
+		    genfs_can_chown(vp, cred, inode->uid, inode->gid, uid,
+		    gid));
+		if (error)
+			return error;
+		inode->gid = gid;
 	}
 	if (vap->va_mode != (mode_t)VNOVAL) {
-		v7fs_inode_chmod(inode, vap->va_mode);
+		mode_t mode = vap->va_mode;
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY,
+		    vp, NULL, genfs_can_chmod(vp, cred, inode->uid, inode->gid,
+		    mode));
+		if (error) {
+			return error;
+		}
+		v7fs_inode_chmod(inode, mode);
 	}
 	if (vap->va_atime.tv_sec != VNOVAL) {
 		acc = &vap->va_atime;
@@ -725,8 +756,8 @@ v7fs_rename(void *v)
 	const char *to_name = a->a_tcnp->cn_nameptr;
 	int error;
 
-	DPRINTF("%s->%s\n", from_name, to_name);
-	/* tvp may be NULL. allocated here. */
+	DPRINTF("%s->%s %p %p\n", from_name, to_name, fvp, tvp);
+
 	if ((fvp->v_mount != tdvp->v_mount) ||
 	    (tvp && (fvp->v_mount != tvp->v_mount))) {
 		error = EXDEV;
@@ -736,6 +767,11 @@ v7fs_rename(void *v)
 	// XXXsource file lock?
 	error = v7fs_file_rename(fs, &parent_from->inode, from_name,
 	    &parent_to->inode, to_name);
+	/* 'to file' inode may be changed. (hard-linked and it is cached.)
+	   t_vnops rename_reg_nodir */
+	if (tvp) {
+		v7fs_vnode_reload(parent_from->v7fsmount->mountp, tvp);
+	}
 	/* Sync dirent size change. */
 	uvm_vnp_setsize(tdvp, v7fs_inode_filesize(&parent_to->inode));
 	uvm_vnp_setsize(fdvp, v7fs_inode_filesize(&parent_from->inode));
@@ -1271,5 +1307,4 @@ v7fs_readlink(void *v)
 error_exit:
 	return error;
 }
-
 
