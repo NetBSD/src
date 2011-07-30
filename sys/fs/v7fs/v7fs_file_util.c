@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_file_util.c,v 1.3 2011/07/18 21:51:49 apb Exp $	*/
+/*	$NetBSD: v7fs_file_util.c,v 1.4 2011/07/30 03:52:04 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_file_util.c,v 1.3 2011/07/18 21:51:49 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_file_util.c,v 1.4 2011/07/30 03:52:04 uch Exp $");
 #ifdef _KERNEL
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -61,6 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: v7fs_file_util.c,v 1.3 2011/07/18 21:51:49 apb Exp $
 static int replace_subr(struct v7fs_self *, void *, v7fs_daddr_t, size_t);
 static int lookup_by_number_subr(struct v7fs_self *, void *, v7fs_daddr_t,
     size_t);
+static int can_dirmove(struct v7fs_self *, v7fs_ino_t, v7fs_ino_t);
+static int lookup_parent_from_dir_subr(struct v7fs_self *, void *,
+    v7fs_daddr_t, size_t);
 
 int
 v7fs_file_link(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
@@ -118,24 +121,36 @@ v7fs_file_rename(struct v7fs_self *fs, struct v7fs_inode *parent_from,
     const char *from, struct v7fs_inode *parent_to, const char *to)
 {
 	v7fs_ino_t from_ino, to_ino;
+	struct v7fs_inode inode;
 	int error;
+	bool dir_move;
 
+	/* Check source file */
 	if ((error = v7fs_file_lookup_by_name(fs, parent_from, from,
 	    &from_ino))) {
 		DPRINTF("%s don't exists\n", from);
 		return error;
 	}
+	v7fs_inode_load(fs, &inode, from_ino);
+	dir_move = v7fs_inode_isdir(&inode);
 
-	/* If target file exists, remove. */
+	/* Check target file */
 	error = v7fs_file_lookup_by_name(fs, parent_to, to, &to_ino);
-	if (error == 0) {
+	if (error == 0) {	/* found */
 		DPRINTF("%s already exists\n", to);
 		if ((error = v7fs_file_deallocate(fs, parent_to, to))) {
-			DPRINTF("%s can't remove\n", to);
+			DPRINTF("%s can't remove %d\n", to, error);
 			return error;
 		}
 	} else if (error != ENOENT) {
 		DPRINTF("error=%d\n", error);
+		return error;
+	}
+	/* Check directory hierarchy. t_vnops rename_dir(5) */
+	if (dir_move && (error = can_dirmove(fs, from_ino,
+	    parent_to->inode_number))) {
+		DPRINTF("dst '%s' is child dir of '%s'. error=%d\n", to, from,
+		    error);
 		return error;
 	}
 
@@ -149,18 +164,14 @@ v7fs_file_rename(struct v7fs_self *fs, struct v7fs_inode *parent_from,
 		return error;
 	}
 
-	if (parent_from != parent_to) {
+	if (dir_move && (parent_from != parent_to)) {
 		/* If directory move, update ".." */
-		struct v7fs_inode inode;
-		v7fs_inode_load(fs, &inode, from_ino);
-		if (v7fs_inode_isdir(&inode)) {
-			if ((error = v7fs_directory_replace_entry(fs, &inode,
-			    "..", parent_to->inode_number))) {
-				DPRINTF("can't replace parent dir");
-				return error;
-			}
-			v7fs_inode_writeback(fs, &inode);
+		if ((error = v7fs_directory_replace_entry(fs, &inode, "..",
+			    parent_to->inode_number))) {
+			DPRINTF("can't replace parent dir");
+			return error;
 		}
+		v7fs_inode_writeback(fs, &inode);
 	}
 
 	return 0;
@@ -256,5 +267,78 @@ lookup_by_number_subr(struct v7fs_self *fs, void *ctx, v7fs_daddr_t blk,
 	}
 	scratch_free(fs, buf);
 
+	return ret;
+}
+
+struct lookup_parent_arg {
+	v7fs_ino_t parent_ino;
+};
+
+static int
+can_dirmove(struct v7fs_self *fs, v7fs_ino_t from_ino, v7fs_ino_t to_ino)
+{
+	struct v7fs_inode inode;
+	v7fs_ino_t parent;
+	int error;
+
+	/* Start dir. */
+	if ((error = v7fs_inode_load(fs, &inode, to_ino)))
+		return error;
+
+	if (!v7fs_inode_isdir(&inode))
+		return ENOTDIR;
+
+	/* Lookup the parent. */
+	do {
+		struct lookup_parent_arg arg;
+		/* Search parent dir */
+		arg.parent_ino = 0;
+		v7fs_datablock_foreach(fs, &inode, lookup_parent_from_dir_subr,
+		    &arg);
+		if ((parent = arg.parent_ino) == 0) {
+			DPRINTF("***parent missing\n");
+			return ENOENT;
+		}
+		/* Load parent dir */
+		if ((error = v7fs_inode_load(fs, &inode, parent)))
+			return error;
+		if (parent == from_ino) {
+			DPRINTF("#%d is child dir of #%d\n", to_ino, from_ino);
+			return EINVAL;
+		}
+	} while (parent != V7FS_ROOT_INODE);
+
+	return 0;
+}
+
+static int
+lookup_parent_from_dir_subr(struct v7fs_self *fs, void *ctx, v7fs_daddr_t blk,
+    size_t sz)
+{
+	struct lookup_parent_arg *arg = (struct lookup_parent_arg *)ctx;
+	char name[V7FS_NAME_MAX + 1];
+	void *buf;
+	int ret = 0;
+
+	if (!(buf = scratch_read(fs, blk)))
+		return 0;
+	struct v7fs_dirent *dir = (struct v7fs_dirent *)buf;
+	size_t i, n = sz / sizeof(*dir);
+	if (!v7fs_dirent_endian_convert(fs, dir, n)) {
+		scratch_free(fs, buf);
+		return V7FS_ITERATOR_ERROR;
+	}
+
+	for (i = 0; i < n; i++, dir++) {
+		v7fs_dirent_filename(name, dir->name);
+		if (strncmp(dir->name, "..", V7FS_NAME_MAX) != 0)
+			continue;
+
+		arg->parent_ino = dir->inode_number;
+		ret = V7FS_ITERATOR_BREAK;
+		break;
+	}
+
+	scratch_free(fs, buf);
 	return ret;
 }
