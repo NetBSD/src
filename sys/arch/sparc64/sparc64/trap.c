@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.167 2011/07/12 07:51:34 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.168 2011/07/30 19:29:12 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.167 2011/07/12 07:51:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.168 2011/07/30 19:29:12 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -975,7 +975,7 @@ rwindow_save(struct lwp *l)
  * the registers into the new process after the exec.
  */
 void
-kill_user_windows(struct lwp *l)
+cpu_vmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 
