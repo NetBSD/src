@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.26 2011/05/28 13:01:50 ryo Exp $
+# $NetBSD: XBOX,v 1.27 2011/07/30 12:19:12 jmcneill Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -237,10 +237,6 @@ ucom*	at uplcom? portno ?
 
 uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
-
-# Xbox Controller
-xboxcontroller* at uhub? port ? configuration ?
-wsmouse* at xboxcontroller? mux 0
 
 # USB Generic driver
 ugen*	at uhub? port ?
