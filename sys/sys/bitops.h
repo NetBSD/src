@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.8 2011/05/03 21:36:59 jym Exp $	*/
+/*	$NetBSD: bitops.h,v 1.9 2011/07/30 16:35:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -266,7 +266,7 @@ fast_divide32_prepare(uint32_t _div, uint32_t * __restrict _m,
 	int _l;
 
 	_l = fls32(_div - 1);
-	_mt = 0x100000000ULL * ((1ULL << _l) - _div);
+	_mt = (uint64_t)(0x100000000ULL * ((1ULL << _l) - _div));
 	*_m = (uint32_t)(_mt / _div + 1);
 	*_s1 = (_l > 1) ? 1 : _l;
 	*_s2 = (_l == 0) ? 0 : _l - 1;
@@ -274,7 +274,7 @@ fast_divide32_prepare(uint32_t _div, uint32_t * __restrict _m,
 
 /* ARGSUSED */
 static __inline uint32_t
-fast_divide32(uint32_t _v, uint32_t _div, uint32_t _m, uint8_t _s1,
+fast_divide32(uint32_t _v, uint32_t _div __unused, uint32_t _m, uint8_t _s1,
     uint8_t _s2)
 {
 	uint32_t _t;
