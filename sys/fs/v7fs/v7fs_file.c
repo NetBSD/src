@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_file.c,v 1.2 2011/07/18 21:51:49 apb Exp $	*/
+/*	$NetBSD: v7fs_file.c,v 1.3 2011/07/30 03:51:53 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_file.c,v 1.2 2011/07/18 21:51:49 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_file.c,v 1.3 2011/07/30 03:51:53 uch Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -247,16 +247,24 @@ v7fs_file_deallocate(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
 		return error;
 
 	if (v7fs_inode_isdir(&inode)) {
-		/* Check child directory exists. */
+		char filename[V7FS_NAME_MAX + 1];
+		v7fs_dirent_filename(filename, name);
+		/* Check parent */
+		if (strncmp(filename, "..", V7FS_NAME_MAX) == 0) {
+			DPRINTF("can not remove '..'\n");
+			return EINVAL; /* t_vnops rename_dotdot */
+		}
+		/* Check empty */
 		if (v7fs_inode_filesize(&inode) !=
 		    sizeof(struct v7fs_dirent) * 2 /*"." + ".."*/) {
-			DPRINTF("file exists.\n");
-			return EEXIST;
+			DPRINTF("directory not empty.\n");
+			return ENOTEMPTY;/* t_vnops dir_noempty, rename_dir(6)*/
 		}
 		inode.nlink = 0;	/* remove this. */
 	} else {
 		/* Decrement reference count. */
 		--inode.nlink;	/* regular file. */
+		DPRINTF("%s nlink=%d\n", name, inode.nlink);
 	}
 
 
