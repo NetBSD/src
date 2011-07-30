@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.97 2011/07/20 12:06:00 macallan Exp $ */
+/*	$NetBSD: cpu.h,v 1.98 2011/07/30 19:29:12 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -373,7 +373,7 @@ void	switchtoctx_us(int);
 void	switchtoctx_usiii(int);
 void	next_tick(long);
 /* trap.c */
-void	kill_user_windows(struct lwp *);
+void	cpu_vmspace_exec(struct lwp *, vaddr_t, vaddr_t);
 int	rwindow_save(struct lwp *);
 /* cons.c */
 int	cnrom(void);
