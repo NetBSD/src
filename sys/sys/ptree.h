@@ -1,4 +1,4 @@
-/* $NetBSD: ptree.h,v 1.3 2008/11/25 15:13:47 ad Exp $ */
+/* $NetBSD: ptree.h,v 1.4 2011/07/30 16:37:05 christos Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,42 +46,42 @@ typedef unsigned int pt_bitlen_t;
 
 typedef struct pt_node {
 	uintptr_t ptn_slots[2];		/* must be first */
-#define	PT_SLOT_LEFT			0
-#define	PT_SLOT_RIGHT			1
+#define	PT_SLOT_LEFT			0u
+#define	PT_SLOT_RIGHT			1u
 #ifdef _PT_PRIVATE
-#define	PT_SLOT_ROOT			0
-#define	PT_SLOT_OTHER			1
-#define	PT_SLOT_ODDMAN			1
-#define	PT_TYPE_LEAF			0x00000000
-#define	PT_TYPE_BRANCH			0x00000001
-#define	PT_TYPE_MASK			0x00000001
+#define	PT_SLOT_ROOT			0u
+#define	PT_SLOT_OTHER			1u
+#define	PT_SLOT_ODDMAN			1u
+#define	PT_TYPE_LEAF			0x00000000u
+#define	PT_TYPE_BRANCH			0x00000001u
+#define	PT_TYPE_MASK			0x00000001u
 #endif /* _PT_PRIVATE */
 
 	uint32_t ptn_nodedata;
 #ifdef _PT_PRIVATE
-#define	PTN_LEAF_POSITION_BITS		8
-#define	PTN_LEAF_POSITION_SHIFT		0
-#define	PTN_BRANCH_POSITION_BITS	8
-#define	PTN_BRANCH_POSITION_SHIFT	8
+#define	PTN_LEAF_POSITION_BITS		8u
+#define	PTN_LEAF_POSITION_SHIFT		0u
+#define	PTN_BRANCH_POSITION_BITS	8u
+#define	PTN_BRANCH_POSITION_SHIFT	8u
 #ifndef PTNOMASK
-#define	PTN_MASK_BITLEN_BITS		15
-#define	PTN_MASK_BITLEN_SHIFT		16
-#define	PTN_MASK_FLAG			0x80000000
+#define	PTN_MASK_BITLEN_BITS		15u
+#define	PTN_MASK_BITLEN_SHIFT		16u
+#define	PTN_MASK_FLAG			0x80000000u
 #endif
 #endif /* _PT_PRIVATE */
 
 	uint32_t ptn_branchdata;
 #ifdef _PT_PRIVATE
-#define	PTN_BRANCH_BITOFF_BITS		15
-#define	PTN_BRANCH_BITOFF_SHIFT		0
-#define	PTN_BRANCH_BITLEN_BITS		8
-#define	PTN_BRANCH_BITLEN_SHIFT		16
+#define	PTN_BRANCH_BITOFF_BITS		15u
+#define	PTN_BRANCH_BITOFF_SHIFT		0u
+#define	PTN_BRANCH_BITLEN_BITS		8u
+#define	PTN_BRANCH_BITLEN_SHIFT		16u
 #if 0
-#define	PTN_ORIENTATION_BITS		1
-#define	PTN_ORIENTATION_SHIFT		30
+#define	PTN_ORIENTATION_BITS		1u
+#define	PTN_ORIENTATION_SHIFT		30u
 #endif
-#define	PTN_BRANCH_UNUSED		0x3f000000
-#define	PTN_XBRANCH_FLAG		0x80000000
+#define	PTN_BRANCH_UNUSED		0x3f000000u
+#define	PTN_XBRANCH_FLAG		0x80000000u
 #endif /* _PT_PRIVATE */
 } pt_node_t;
 
