@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.293 2010/04/14 22:26:33 jakllsch Exp $	*/
+/*	$NetBSD: sd.c,v 1.294 2011/07/30 12:08:37 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.293 2010/04/14 22:26:33 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.294 2011/07/30 12:08:37 jmcneill Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -439,7 +439,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	} else {
 		int silent;
 
-		if (part == RAW_PART && fmt == S_IFCHR)
+		if ((part == RAW_PART && fmt == S_IFCHR) || (flag & FSILENT))
 			silent = XS_CTL_SILENT;
 		else
 			silent = 0;
@@ -471,7 +471,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 			}
 		}
 		if (error) {
-			if (silent)
+			if (silent && (flag & FSILENT) == 0)
 				goto out;
 			goto bad2;
 		}

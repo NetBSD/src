@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.61 2011/06/12 03:35:52 rmind Exp $	*/
+/*	$NetBSD: dk.c,v 1.62 2011/07/30 12:08:36 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.61 2011/06/12 03:35:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.62 2011/07/30 12:08:36 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -899,7 +899,7 @@ dkwedge_discover(struct disk *pdk)
 		goto out;
 	}
 
-	error = VOP_OPEN(vp, FREAD, NOCRED);
+	error = VOP_OPEN(vp, FREAD | FSILENT, NOCRED);
 	if (error) {
 		aprint_error("%s: unable to open device, error = %d\n",
 		    pdk->dk_name, error);

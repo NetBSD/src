@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.38 2011/06/26 16:43:12 christos Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.39 2011/07/30 12:08:36 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -130,6 +130,7 @@
 #define	FDEFER		0x00002000	/* defer for next gc pass */
 #define	FHASLOCK	0x00004000	/* descriptor holds advisory lock */
 #define	FSCAN		0x00100000	/* scan during gc passes */
+#define	FSILENT		0x40000000	/* suppress kernel error messages */
 #define	FKIOCTL		0x80000000	/* kernel originated ioctl */
 /* bits settable by fcntl(F_SETFL, ...) */
 #define	FCNTLFLAGS	(FAPPEND|FASYNC|FFSYNC|FNONBLOCK|FDSYNC|FRSYNC|FALTIO|\

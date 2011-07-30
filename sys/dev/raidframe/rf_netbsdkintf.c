@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.292 2011/07/29 19:55:50 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.293 2011/07/30 12:08:36 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.292 2011/07/29 19:55:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.293 2011/07/30 12:08:36 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -3044,7 +3044,7 @@ rf_find_raid_components(void)
 		if (bdevvp(dev, &vp))
 			panic("RAID can't alloc vnode");
 
-		error = VOP_OPEN(vp, FREAD, NOCRED);
+		error = VOP_OPEN(vp, FREAD | FSILENT, NOCRED);
 
 		if (error) {
 			/* "Who cares."  Continue looking
