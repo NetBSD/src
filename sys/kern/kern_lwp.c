@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.160 2011/07/26 13:03:57 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.161 2011/07/30 17:01:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.160 2011/07/26 13:03:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.161 2011/07/30 17:01:04 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -230,6 +230,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.160 2011/07/26 13:03:57 yamt Exp $");
 #include <sys/syscallargs.h>
 #include <sys/syscall_stats.h>
 #include <sys/kauth.h>
+#include <sys/pserialize.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
 #include <sys/kmem.h>
@@ -865,6 +866,10 @@ lwp_startup(struct lwp *prev, struct lwp *new)
 	KPREEMPT_DISABLE(new);
 	spl0();
 	pmap_activate(new);
+
+	/* Note trip through cpu_switchto(). */
+	pserialize_switchpoint();
+
 	LOCKDEBUG_BARRIER(NULL, 0);
 	KPREEMPT_ENABLE(new);
 	if ((new->l_pflag & LP_MPSAFE) == 0) {
