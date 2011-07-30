@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.301 2011/07/30 19:29:12 martin Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.302 2011/07/30 20:05:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.301 2011/07/30 19:29:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.302 2011/07/30 20:05:46 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4184,12 +4184,23 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
 {
 	struct proc *p = l->l_proc;
 	struct vmspace *nvm, *ovm = p->p_vmspace;
-	struct vm_map *map = &ovm->vm_map;
+	struct vm_map *map;
 
 #ifdef __HAVE_CPU_VMSPACE_EXEC
 	cpu_vmspace_exec(l, start, end);
 #endif
 
+	/*
+	 * Special case: no vmspace yet (see posix_spawn) -
+	 * no races possible in this case.
+	 */
+	if (ovm == NULL) {
+		p->p_vmspace = uvmspace_alloc(start, end);
+		pmap_activate(l);
+		return;
+	}
+
+	map = &ovm->vm_map;
 	/*
 	 * see if more than one process is using this vmspace...
 	 */
