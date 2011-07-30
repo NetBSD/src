@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.216 2011/06/09 19:08:31 matt Exp $	*/
+/*	$NetBSD: ohci.c,v 1.217 2011/07/30 20:05:36 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.216 2011/06/09 19:08:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.217 2011/07/30 20:05:36 jmcneill Exp $");
 
 #include "opt_usb.h"
 
@@ -1645,6 +1645,7 @@ ohci_poll(struct usbd_bus *bus)
 	}
 #endif
 
+	sc->sc_eintrs |= OHCI_WDH;
 	if (OREAD4(sc, OHCI_INTERRUPT_STATUS) & sc->sc_eintrs)
 		ohci_intr1(sc);
 }

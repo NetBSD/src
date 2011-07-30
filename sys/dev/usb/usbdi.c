@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.132 2011/06/09 19:08:33 matt Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.133 2011/07/30 20:05:36 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.132 2011/06/09 19:08:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.133 2011/07/30 20:05:36 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -1073,9 +1073,9 @@ usbd_set_polling(usbd_device_handle dev, int on)
 		dev->bus->use_polling++;
 	else
 		dev->bus->use_polling--;
-	/* When polling we need to make sure there is nothing pending to do. */
-	if (dev->bus->use_polling)
-		dev->bus->methods->soft_intr(dev->bus);
+
+	/* Kick the host controller when switching modes */
+	dev->bus->methods->soft_intr(dev->bus);
 }
 
 
