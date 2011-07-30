@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.50 2011/07/20 19:27:53 ryoon Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.51 2011/07/30 12:15:44 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.50 2011/07/20 19:27:53 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.51 2011/07/30 12:15:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.50 2011/07/20 19:27:53 ryoon Exp $");
 
 /* Report descriptor for broken Wacom Graphire */
 #include <dev/usb/ugraphire_rdesc.h>
+/* Report descriptor for game controllers in "XInput" mode */
+#include <dev/usb/xinput_rdesc.h>
 
 #include "locators.h"
 
@@ -90,6 +92,9 @@ uhidev_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uaa = aux;
 
+	/* Game controllers in "XInput" mode */
+	if (USBIF_IS_XINPUT(uaa))
+		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 	if (uaa->class != UICLASS_HID)
 		return (UMATCH_NONE);
 	if (usbd_get_quirks(uaa->device)->uq_flags & UQ_HID_IGNORE)
@@ -212,6 +217,10 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 			/* Keep descriptor */
 			break;
 		}
+	}
+	if (USBIF_IS_XINPUT(uaa)) {
+		size = sizeof uhid_xinput_report_descr;
+		descptr = uhid_xinput_report_descr;
 	}
 
 	if (descptr) {
