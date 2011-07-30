@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.52 2011/04/04 22:48:15 dyoung Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.53 2011/07/30 13:19:21 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.52 2011/04/04 22:48:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.53 2011/07/30 13:19:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ static int ehci_apply_amd_quirks(struct ehci_pci_softc *sc);
 enum ehci_pci_quirk_flags ehci_pci_lookup_quirkdata(pci_vendor_id_t,
 	pci_product_id_t);
 
-#define EHCI_MAX_BIOS_WAIT		1000 /* ms */
+#define EHCI_MAX_BIOS_WAIT		100 /* ms*10 */
 #define EHCI_SBx00_WORKAROUND_REG	0x50
 #define EHCI_SBx00_WORKAROUND_ENABLE	__BIT(27)
 
@@ -389,16 +389,18 @@ ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 		if (EHCI_CAP_GET_ID(cap) != EHCI_CAP_ID_LEGACY)
 			goto next;
 		legsup = pci_conf_read(pc, tag, addr + PCI_EHCI_USBLEGSUP);
-		/* Ask BIOS to give up ownership */
-		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP,
-		    legsup | EHCI_LEG_HC_OS_OWNED);
 		if (legsup & EHCI_LEG_HC_BIOS_OWNED) {
+			/* Ask BIOS to give up ownership */
+			legsup &= ~EHCI_LEG_HC_BIOS_OWNED;
+			legsup |= EHCI_LEG_HC_OS_OWNED;
+			pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP,
+			    legsup);
 			for (ms = 0; ms < EHCI_MAX_BIOS_WAIT; ms++) {
 				legsup = pci_conf_read(pc, tag,
 				    addr + PCI_EHCI_USBLEGSUP);
 				if (!(legsup & EHCI_LEG_HC_BIOS_OWNED))
 					break;
-				delay(1000);
+				delay(10000);
 			}
 			if (ms == EHCI_MAX_BIOS_WAIT) {
 				aprint_normal("%s: BIOS refuses to give up "
@@ -411,9 +413,7 @@ ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 		}
 
 		/* Disable SMIs */
-		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGCTLSTS,
-		    EHCI_LEG_EXT_SMI_BAR | EHCI_LEG_EXT_SMI_PCICMD |
-		    EHCI_LEG_EXT_SMI_OS_CHANGE);
+		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGCTLSTS, 0);
 
 next:
 		if (--maxcap < 0) {
