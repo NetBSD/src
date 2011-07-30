@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.35 2011/04/24 18:46:22 rmind Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.36 2011/07/30 05:24:16 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.35 2011/04/24 18:46:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.36 2011/07/30 05:24:16 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -186,6 +186,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.35 2011/04/24 18:46:22 rmind Exp 
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
 #include <sys/xcall.h>
+#include <sys/kmem.h>
 
 #include <net/netisr.h>
 
@@ -283,8 +284,7 @@ softint_init(struct cpu_info *ci)
 		    sizeof(softhand_t);
 	}
 
-	sc = (softcpu_t *)uvm_km_alloc(kernel_map, softint_bytes, 0,
-	    UVM_KMF_WIRED | UVM_KMF_ZERO);
+	sc = kmem_zalloc(softint_bytes, KM_SLEEP);
 	if (sc == NULL)
 		panic("softint_init_cpu: cannot allocate memory");
 
