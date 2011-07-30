@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.61 2009/01/28 00:59:03 njoly Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.62 2011/07/30 06:19:02 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.61 2009/01/28 00:59:03 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.62 2011/07/30 06:19:02 uebayasi Exp $");
 
 #define SYSVMSG
 
@@ -116,8 +116,8 @@ msginit(void)
 	    ALIGN(msginfo.msgseg * sizeof(struct msgmap)) +
 	    ALIGN(msginfo.msgtql * sizeof(struct __msg)) +
 	    ALIGN(msginfo.msgmni * sizeof(kmsq_t));
-	v = uvm_km_alloc(kernel_map, round_page(sz), 0,
-	    UVM_KMF_WIRED|UVM_KMF_ZERO);
+	sz = round_page(sz);
+	v = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
 	if (v == 0)
 		panic("sysv_msg: cannot allocate memory");
 	msgpool = (void *)v;
@@ -176,8 +176,8 @@ msgrealloc(int newmsgmni, int newmsgseg)
 	    ALIGN(newmsgseg * sizeof(struct msgmap)) +
 	    ALIGN(msginfo.msgtql * sizeof(struct __msg)) +
 	    ALIGN(newmsgmni * sizeof(kmsq_t));
-	v = uvm_km_alloc(kernel_map, round_page(sz), 0,
-	    UVM_KMF_WIRED|UVM_KMF_ZERO);
+	sz = round_page(sz);
+	v = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
 	if (v == 0)
 		return ENOMEM;
 
@@ -339,6 +339,7 @@ msgrealloc(int newmsgmni, int newmsgseg)
 	    ALIGN(msginfo.msgseg * sizeof(struct msgmap)) +
 	    ALIGN(msginfo.msgtql * sizeof(struct __msg)) +
 	    ALIGN(msginfo.msgmni * sizeof(kmsq_t));
+	sz = round_page(sz);
 
 	for (i = 0; i < msginfo.msgmni; i++)
 		cv_destroy(&msqs[i].msq_cv);
