@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.25 2011/06/16 13:27:58 joerg Exp $	*/
+/*	$NetBSD: alloc.c,v 1.26 2011/07/30 03:43:20 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -251,7 +251,7 @@ dealloc(void *ptr, size_t size)
 #endif
 #ifdef DEBUG
 	if (size > (size_t)f->size) {
-		printf("dealloc %u bytes @%lx, should be <=%u\n",
+		printf("dealloc %zu bytes @%lx, should be <=%u\n",
 			size, (u_long)ptr, f->size);
 	}
 
