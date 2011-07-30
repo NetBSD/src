@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.91 2011/01/24 10:05:22 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.92 2011/07/30 19:29:12 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -213,7 +213,7 @@ void	qcopy(const void *, void *, size_t);
 void	qzero(void *, size_t);
 
 /* trap.c */
-void	kill_user_windows(struct lwp *);
+void	cpu_vmspace_exec(struct lwp *, vaddr_t, vaddr_t);
 int	rwindow_save(struct lwp *);
 
 /* cons.c */
