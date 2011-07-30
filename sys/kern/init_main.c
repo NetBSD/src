@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.433 2011/07/02 17:53:50 bouyer Exp $	*/
+/*	$NetBSD: init_main.c,v 1.434 2011/07/30 17:01:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.433 2011/07/02 17:53:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.434 2011/07/30 17:01:04 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -149,6 +149,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.433 2011/07/02 17:53:50 bouyer Exp $
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/percpu.h>
+#include <sys/pserialize.h>
 #include <sys/pset.h>
 #include <sys/sysctl.h>
 #include <sys/reboot.h>
@@ -297,6 +298,7 @@ main(void)
 
 	kernel_lock_init();
 	once_init();
+
 	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
 	kernconfig_lock_init();
 	kthread_sysinit();
@@ -321,6 +323,9 @@ main(void)
 	/* Initialize lock caches. */
 	mutex_obj_init();
 	rw_obj_init();
+
+	/* Passive serialization. */
+	pserialize_init();
 
 	/* Initialize the extent manager. */
 	extent_init();
