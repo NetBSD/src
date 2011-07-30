@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.327 2011/07/23 21:12:57 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.328 2011/07/30 18:41:34 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.327 $"
+#ident 		"GENERIC-$Revision: 1.328 $"
 
 maxusers	64		# estimated number of users
 
@@ -236,6 +236,8 @@ options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+# don't attach pckbd as the console if no PS/2 keyboard is found
+options 	PCKBD_CNATTACH_MAY_FAIL
 # see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
