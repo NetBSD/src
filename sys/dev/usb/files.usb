@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.112 2011/07/23 20:52:15 jakllsch Exp $
+#	$NetBSD: files.usb,v 1.113 2011/07/30 12:19:12 jmcneill Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -372,11 +372,6 @@ file	dev/usb/if_rum.c		rum
 device	utoppy
 attach	utoppy at usbdevif
 file	dev/usb/utoppy.c		utoppy
-
-# Microsoft Xbox controller (gamepad)
-device	xboxcontroller: wsmousedev
-attach	xboxcontroller at usbdevif
-file	dev/usb/xboxcontroller.c	xboxcontroller
 
 # Zydas ZD1211
 device	zyd: ether, ifnet, arp, wlan, firmload
