@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.32 2011/06/16 13:27:58 joerg Exp $	 */
+/*	$NetBSD: tftp.c,v 1.33 2011/07/30 03:43:20 jakllsch Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -410,7 +410,7 @@ tftp_size_of_file(struct tftp_handle *tftpfile)
 		filesize += tftpfile->validsize;
 	}
 #ifdef DEBUG
-	printf("tftp_size_of_file: file is %d bytes\n", filesize);
+	printf("tftp_size_of_file: file is %zu bytes\n", filesize);
 #endif
 	return filesize;
 }
