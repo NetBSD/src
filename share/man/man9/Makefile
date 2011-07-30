@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.348 2011/06/03 18:43:38 rmind Exp $
+#       $NetBSD: Makefile,v 1.349 2011/07/30 18:19:05 rmind Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -40,7 +40,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	panic.9 pathbuf.9 pci.9 pci_configure_bus.9 pci_intr.9 pckbport.9 \
 	pcmcia.9 pcq.9 percpu.9 pfil.9 physio.9 pmap.9 pmatch.9 \
 	pmc.9 pmf.9 pool.9 pool_cache.9 powerhook_establish.9 ppsratecheck.9 \
-	preempt.9 proc_find.9 putter.9 \
+	preempt.9 proc_find.9 pserialize.9 putter.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 roundup.9 \
 	rssadapt.9 rt_timer.9 rwlock.9 RUN_ONCE.9 STACK.9 \
 	sched_4bsd.9 sched_m2.9 scsipi.9 \
@@ -609,6 +609,11 @@ MLINKS+=pool_cache.9 pool_cache_init.9 \
 	pool_cache.9 pool_cache_invalidate.9
 MLINKS+=powerhook_establish.9 powerhook_disestablish.9
 MLINKS+=preempt.9 yield.9
+MLINKS+=pserialize.9 pserialize_create.9 \
+	pserialize.9 pserialize_destroy.9 \
+	pserialize.9 pserialize_read_enter.9 \
+	pserialize.9 pserialize_read_exit.9 \
+	pserialize.9 pserialize_perform.9
 MLINKS+=ras.9 ras_lookup.9 \
 	ras.9 ras_fork.9 \
 	ras.9 ras_purgeall.9
