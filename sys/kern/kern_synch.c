@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.289 2011/05/13 22:16:43 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.290 2011/07/30 17:01:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.289 2011/05/13 22:16:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.290 2011/07/30 17:01:04 christos Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.289 2011/05/13 22:16:43 rmind Exp $
 #include <sys/pmc.h>
 #endif
 #include <sys/cpu.h>
+#include <sys/pserialize.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
 #include <sys/sa.h>
@@ -807,6 +808,9 @@ mi_switch(lwp_t *l)
 			l->l_lwpctl->lc_curcpu = (int)cpu_index(ci);
 			l->l_lwpctl->lc_pctr++;
 		}
+
+		/* Note trip through cpu_switchto(). */
+		pserialize_switchpoint();
 
 		KASSERT(l->l_cpu == ci);
 		splx(oldspl);
