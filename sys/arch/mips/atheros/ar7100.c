@@ -29,10 +29,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ar7100.c,v 1.1 2011/07/07 05:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar7100.c,v 1.2 2011/07/31 23:10:58 matt Exp $");
 
 #define	__INTR_PRIVATE
 #include "pci.h"
+#include "opt_memsize.h"
 
 #include <sys/param.h>
 
@@ -102,7 +103,11 @@ ar7100_intr_init(void)
 static uint32_t
 ar7100_get_memsize(void)
 {
+#ifdef MEMSIZE
+	return MEMSIZE;
+#else
 	return 128*1024*1024;
+#endif
 }
 
 static void
