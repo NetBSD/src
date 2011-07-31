@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.1.1.4 2011/03/02 19:32:22 tron Exp $	*/
+/*	$NetBSD: milter8.c,v 1.1.1.5 2011/07/31 10:02:43 tron Exp $	*/
 
 /*++
 /* NAME
@@ -2502,6 +2502,7 @@ static const char *milter8_message(MILTER *m, VSTREAM *qfile,
     int     mime_errs = 0;
     MILTER_MSG_CONTEXT msg_ctx;
     VSTRING *buf;
+    int     saved_errno;
 
     switch (milter->state) {
     case MILTER8_STAT_ERROR:
@@ -2515,8 +2516,12 @@ static const char *milter8_message(MILTER *m, VSTREAM *qfile,
 	if (msg_verbose)
 	    msg_info("%s: message to milter %s", myname, milter->m.name);
 	if (vstream_fseek(qfile, data_offset, SEEK_SET) < 0) {
+	    saved_errno = errno;
 	    msg_warn("%s: vstream_fseek %s: %m", myname, VSTREAM_PATH(qfile));
-	    return ("450 4.3.0 Queue file write error");
+	    /* XXX This should be available from cleanup_strerror.c. */
+	    return (saved_errno == EFBIG ?
+		    "552 5.3.4 Message file too big" :
+		    "451 4.3.0 Queue file write error");
 	}
 	msg_ctx.milter = milter;
 	msg_ctx.eoh_macros = eoh_macros;
