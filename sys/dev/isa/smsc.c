@@ -1,4 +1,4 @@
-/*	$NetBSD: smsc.c,v 1.10 2011/06/20 18:12:54 pgoyette Exp $ */
+/*	$NetBSD: smsc.c,v 1.11 2011/07/31 16:18:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,11 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.10 2011/06/20 18:12:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.11 2011/07/31 16:18:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/module.h>
 #include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
@@ -339,5 +340,34 @@ smsc_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		rpm = (msb << 8) | lsb;
 		edata->value_cur = smsc_reg2rpm(rpm);
 		break;
+	}
+}
+
+MODULE(MODULE_CLASS_DRIVER, smsc, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+smsc_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_smsc,
+		    cfattach_ioconf_smsc, cfdata_ioconf_smsc);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_smsc,
+		    cfattach_ioconf_smsc, cfdata_ioconf_smsc);
+#endif
+		return error;
+	default:
+		return ENOTTY;
 	}
 }
