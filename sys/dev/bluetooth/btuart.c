@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.25 2011/05/25 16:33:37 uebayasi Exp $	*/
+/*	$NetBSD: btuart.c,v 1.26 2011/07/31 13:51:53 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.25 2011/05/25 16:33:37 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.26 2011/07/31 13:51:53 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.25 2011/05/25 16:33:37 uebayasi Exp $")
 
 #include <netbt/bluetooth.h>
 #include <netbt/hci.h>
+
+#include "ioconf.h"
 
 struct btuart_softc {
 	device_t	sc_dev;
@@ -96,8 +98,6 @@ static void btuart_output_cmd(device_t, struct mbuf *);
 static void btuart_output_acl(device_t, struct mbuf *);
 static void btuart_output_sco(device_t, struct mbuf *);
 static void btuart_stats(device_t, struct bt_stats *, int);
-
-extern struct cfdriver btuart_cd;
 
 /*
  * It doesn't need to be exported, as only btuartattach() uses it,
