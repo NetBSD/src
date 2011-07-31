@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.18 2010/07/29 13:07:14 pgoyette Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.19 2011/07/31 15:59:45 jmcneill Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.18 2010/07/29 13:07:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.19 2011/07/31 15:59:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.18 2010/07/29 13:07:14 pgoyette Exp $")
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/endian.h>
+#include <sys/module.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -59,9 +60,10 @@ struct sdtemp_softc {
 
 static int  sdtemp_match(device_t, cfdata_t, void *);
 static void sdtemp_attach(device_t, device_t, void *);
+static int  sdtemp_detach(device_t, int);
 
 CFATTACH_DECL_NEW(sdtemp, sizeof(struct sdtemp_softc),
-	sdtemp_match, sdtemp_attach, NULL, NULL);
+	sdtemp_match, sdtemp_attach, sdtemp_detach, NULL);
 
 static void	sdtemp_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void	sdtemp_get_limits(struct sysmon_envsys *, envsys_data_t *,
@@ -281,7 +283,7 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 	/* Retrieve and display hardware monitor limits */
 	sdtemp_get_limits(sc->sc_sme, sc->sc_sensor, &sc->sc_deflims,
 	    &sc->sc_defprops);
-	aprint_normal_dev(self, "");
+	aprint_normal("%s: ", device_xname(self));
 	i = 0;
 	if (sc->sc_defprops & PROP_WARNMIN) {
 		aprint_normal("low limit %dC",
@@ -309,6 +311,21 @@ bad:
 	kmem_free(sc->sc_sensor, sizeof(envsys_data_t));
 bad2:
 	sysmon_envsys_destroy(sc->sc_sme);
+}
+
+static int
+sdtemp_detach(device_t self, int flags)
+{
+	struct sdtemp_softc *sc = device_private(self);
+
+	pmf_device_deregister(self);
+
+	if (sc->sc_sme)
+		sysmon_envsys_unregister(sc->sc_sme);
+	if (sc->sc_sensor)
+		kmem_free(sc->sc_sensor, sizeof(envsys_data_t));
+
+	return 0;
 }
 
 /* Retrieve current limits from device, and encode in uKelvins */
@@ -529,4 +546,33 @@ sdtemp_pmf_resume(device_t dev, const pmf_qual_t *qual)
 	}
 	iic_release_bus(sc->sc_tag, 0);
 	return (error == 0);
+}
+
+MODULE(MODULE_CLASS_DRIVER, sdtemp, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+sdtemp_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_sdtemp,
+		    cfattach_ioconf_sdtemp, cfdata_ioconf_sdtemp);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_sdtemp,
+		    cfattach_ioconf_sdtemp, cfdata_ioconf_sdtemp);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }
