@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.59 2011/06/29 06:00:17 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.60 2011/07/31 10:00:52 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.59 2011/06/29 06:00:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.60 2011/07/31 10:00:52 kiyohara Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.59 2011/06/29 06:00:17 matt Ex
 #include <powerpc/altivec.h>
 #endif
 
-#ifdef MULTIPROCESOR
+#ifdef MULTIPROCESSOR
 #include <powerpc/pic/ipivar.h>
 #endif
 
