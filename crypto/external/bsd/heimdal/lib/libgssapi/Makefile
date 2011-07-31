@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/07/31 06:49:03 plunky Exp $
+# $NetBSD: Makefile,v 1.3 2011/07/31 09:58:19 plunky Exp $
 
 USE_FORT?= yes        # network protocol library
 
@@ -34,8 +34,6 @@ ASN1_FILES.spnego.asn1 = \
 	asn1_NegTokenInit.x		\
 	asn1_NegTokenInitWin.x		\
 	asn1_NegTokenResp.x
-
-CLEANFILES+=	spnego_asn1-template.c
 
 krb5src = \
 	krb5/8003.c \
