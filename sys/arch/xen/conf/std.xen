@@ -1,4 +1,4 @@
-# $NetBSD: std.xen,v 1.6 2008/12/12 03:28:57 alc Exp $
+# $NetBSD: std.xen,v 1.6.12.1 2011/07/31 20:49:11 cherry Exp $
 # NetBSD: std.i386,v 1.24 2003/02/26 21:33:36 fvdl Exp 
 #
 # standard, required NetBSD/i386 'options'
@@ -15,6 +15,8 @@ options 	CPU_IN_CKSUM
 #options 	CRYPTO_MD_DES_CBC	# machine-dependant DES CBC code
 #options 	CRYPTO_MD_BF_ENC	# machine-dependant code for BF_encrypt
 #options 	CRYPTO_MD_BF_CBC	# careful: uses bswapl, requires 486
+
+options		MULTIPROCESSOR
 
 # Atheros HAL options
 include "external/isc/atheros_hal/conf/std.ath_hal"

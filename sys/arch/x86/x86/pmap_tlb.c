@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.3.2.2 2011/06/23 14:19:49 cherry Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.3.2.3 2011/07/31 20:49:11 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008-2011 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3.2.2 2011/06/23 14:19:49 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3.2.3 2011/07/31 20:49:11 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3.2.2 2011/06/23 14:19:49 cherry Exp 
 #endif /* XEN */
 #include <x86/i82489reg.h>
 #include <x86/i82489var.h>
-
+#undef MULTIPROCESSOR
 /*
  * TLB shootdown structures.
  */
@@ -291,7 +291,7 @@ static inline void pmap_xen_tlbflush(pmap_tlb_packet_t *tp)
 #else
 static inline void pmap_send_ipi(pmap_tlb_packet_t *tp)
 {
-	int err;
+	int err = 0;
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *lci;
 
@@ -307,7 +307,7 @@ static inline void pmap_send_ipi(pmap_tlb_packet_t *tp)
 			if ((lci->ci_cpumask & pmap_tlb_mailbox.tm_pending) == 0) {
 				continue;
 			}
-			KASSERT(lci->ci_flags & CPUF_RUNNING) != 0);
+			KASSERT(lci->ci_flags & CPUF_RUNNING);
 
 			err |= x86_ipi(LAPIC_TLB_VECTOR,
 				       lci->ci_cpuid, LAPIC_DLMODE_FIXED);
