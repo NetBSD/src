@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: postfix2netbsd,v 1.1 2009/06/23 15:02:51 tron Exp $
+#	$NetBSD: postfix2netbsd,v 1.2 2011/07/31 09:54:57 tron Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -105,10 +105,12 @@ find conf -type f \( -name '*.cf' -o -name 'post*' -o -name 'Makefile*' \) -prin
 done
 echo done
 
+VERSION=$(sed -n -e 's/^#define MAIL_VERSION_NUMBER.*"\(.*\)".*/\1/p' src/global/mail_version.h | tr . -)
+
 echo You can import now.
 
 echo Path: src/external/ibm-public/postfix/dist
 echo Vendor: VENEMA
-echo Versiontag: PFIX-X-Y-Z
+echo Versiontag: PFIX-${VERSION}
 
 exit 0
