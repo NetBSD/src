@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.100 2011/07/10 23:21:59 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.101 2011/07/31 15:39:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -151,6 +151,7 @@
  *----------------------------------------------------------------------------
  */
 LEAF(mips3_wbflush)
+XLEAF(loongson2_wbflush)
 XLEAF(mips32_wbflush)
 XLEAF(mips32r2_wbflush)
 XLEAF(mips64_wbflush)
