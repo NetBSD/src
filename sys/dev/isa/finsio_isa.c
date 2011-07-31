@@ -1,5 +1,5 @@
 /*	$OpenBSD: fins.c,v 1.1 2008/03/19 19:33:09 deraadt Exp $	*/
-/*	$NetBSD: finsio_isa.c,v 1.6 2011/07/31 17:53:26 jmcneill Exp $	*/
+/*	$NetBSD: finsio_isa.c,v 1.7 2011/07/31 18:23:46 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2008 Juan Romero Pardines
@@ -19,7 +19,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.6 2011/07/31 17:53:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.7 2011/07/31 18:23:46 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,14 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.6 2011/07/31 17:53:26 jmcneill Exp 
 #  define FINSIO_FUNC_HWMON 0x4
 
 /* ISA registers index to an internal register space on chip */
-#define FINSIO_ADDR	0	/* global configuration index registers */
-#define FINSIO_DATA	1
-
-/* 
- * The F71882/F71883 chips use a different Hardware Monitor
- * address offset.
- */
-#define FINSIO_F71882_HWM_OFFSET	5
+#define FINSIO_DECODE_SIZE (8)
+#define FINSIO_DECODE_MASK (FINSIO_DECODE_SIZE - 1)
+#define FINSIO_ADDR	5	/* global configuration index */
+#define FINSIO_DATA	6	/* and data registers */
 
 /* Global configuration registers */
 #define FINSIO_MANUF	0x23	/* manufacturer ID */
@@ -493,6 +489,11 @@ finsio_isa_attach(device_t parent, device_t self, void *aux)
 	finsio_exit(sc->sc_iot, ioh);
 	bus_space_unmap(sc->sc_iot, ioh, 2);
 
+	/*
+	 * The address decoder ignores the bottom 3 bits, so do we.
+	 */
+	hwmon_baddr &= ~FINSIO_DECODE_MASK;
+
 	switch (chipid) {
 	case FINSIO_IDF71805:
 		sc->sc_finsio_sensors = f71805_sensors;
@@ -503,12 +504,10 @@ finsio_isa_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": Fintek F71806/F71872 Super I/O\n");
 		break;
 	case FINSIO_IDF71862:
-		hwmon_baddr += FINSIO_F71882_HWM_OFFSET;
 		sc->sc_finsio_sensors = f71883_sensors;
 		aprint_normal(": Fintek F71862 Super I/O\n");
 		break;
 	case FINSIO_IDF71883:
-		hwmon_baddr += FINSIO_F71882_HWM_OFFSET;
 		sc->sc_finsio_sensors = f71883_sensors;
 		aprint_normal(": Fintek F71882/F71883 Super I/O\n");
 		break;
@@ -528,7 +527,8 @@ finsio_isa_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Map Hardware Monitor I/O space */
-	if (bus_space_map(sc->sc_iot, hwmon_baddr, 2, 0, &sc->sc_ioh)) {
+	if (bus_space_map(sc->sc_iot, hwmon_baddr, FINSIO_DECODE_SIZE,
+	    0, &sc->sc_ioh)) {
 		aprint_error(": can't map hwmon I/O space\n");
 		return;
 	}
@@ -573,7 +573,7 @@ finsio_isa_attach(device_t parent, device_t self, void *aux)
 
 fail:
 	sysmon_envsys_destroy(sc->sc_sme);
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, FINSIO_DECODE_SIZE);
 }
 
 static int
@@ -582,7 +582,7 @@ finsio_isa_detach(device_t self, int flags)
 	struct finsio_softc *sc = device_private(self);
 
 	sysmon_envsys_unregister(sc->sc_sme);
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, FINSIO_DECODE_SIZE);
 	return 0;
 }
 
