@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.29 2011/07/29 21:01:43 jmcneill Exp $
+# $NetBSD: md.i386,v 1.30 2011/07/31 17:55:41 jmcneill Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -55,6 +55,8 @@
 ./@MODULEDIR@/exec_aout/exec_aout.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/exec_elf32			base-kernel-modules	kmod
 ./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/finsio				base-kernel-modules	kmod
+./@MODULEDIR@/finsio/finsio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/fujbp				base-kernel-modules	kmod
 ./@MODULEDIR@/fujbp/fujbp.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/fujhk				base-kernel-modules	kmod
