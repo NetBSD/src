@@ -38,7 +38,7 @@ update: ../../libexec/$(PROG)
 	cp $(PROG) ../../libexec
 
 SMTPD_CHECK_OBJ = smtpd_state.o smtpd_peer.o smtpd_xforward.o smtpd_dsn_fix.o \
-	smtpd_resolve.o
+	smtpd_resolve.o smtpd_expand.o
 
 smtpd_token: smtpd_token.c $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIBS) $(SYSLIBS)

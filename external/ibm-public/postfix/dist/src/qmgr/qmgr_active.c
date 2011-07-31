@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_active.c,v 1.1.1.1 2009/06/23 10:08:52 tron Exp $	*/
+/*	$NetBSD: qmgr_active.c,v 1.1.1.2 2011/07/31 10:02:49 tron Exp $	*/
 
 /*++
 /* NAME
@@ -118,6 +118,8 @@
   */
 static void qmgr_active_done_2_bounce_flush(int, char *);
 static void qmgr_active_done_2_generic(QMGR_MESSAGE *);
+static void qmgr_active_done_25_trace_flush(int, char *);
+static void qmgr_active_done_25_generic(QMGR_MESSAGE *);
 static void qmgr_active_done_3_defer_flush(int, char *);
 static void qmgr_active_done_3_defer_warn(int, char *);
 static void qmgr_active_done_3_generic(QMGR_MESSAGE *);
@@ -338,10 +340,8 @@ static void qmgr_active_done_2_bounce_flush(int status, char *context)
 
 static void qmgr_active_done_2_generic(QMGR_MESSAGE *message)
 {
-    const char *myname = "qmgr_active_done_2_generic";
     const char *path;
     struct stat st;
-    int     status;
 
     /*
      * A delivery agent marks a queue file as corrupt by changing its
@@ -374,10 +374,6 @@ static void qmgr_active_done_2_generic(QMGR_MESSAGE *message)
     }
 
     /*
-     * As a temporary implementation, synchronously inform the sender of
-     * trace information. This will block for 10 seconds when the qmgr FIFO
-     * is full.
-     * 
      * XXX With multi-recipient mail, some recipients may have NOTIFY=SUCCESS
      * and others not. Depending on what subset of recipients are delivered,
      * a trace file may or may not be created. Even when the last partial
@@ -390,17 +386,44 @@ static void qmgr_active_done_2_generic(QMGR_MESSAGE *message)
      */
     if ((message->tflags & (DEL_REQ_FLAG_USR_VRFY | DEL_REQ_FLAG_RECORD))
 	|| (message->rflags & QMGR_READ_FLAG_NOTIFY_SUCCESS)) {
-	status = trace_flush(message->tflags,
-			     message->queue_name,
-			     message->queue_id,
-			     message->encoding,
-			     message->sender,
-			     message->dsn_envid,
-			     message->dsn_ret);
-	if (status == 0 && message->tflags_offset)
-	    qmgr_message_kill_record(message, message->tflags_offset);
-	message->flags |= status;
+	atrace_flush(message->tflags,
+		     message->queue_name,
+		     message->queue_id,
+		     message->encoding,
+		     message->sender,
+		     message->dsn_envid,
+		     message->dsn_ret,
+		     qmgr_active_done_25_trace_flush,
+		     (char *) message);
+	return;
     }
+
+    /*
+     * Asynchronous processing does not reach this point.
+     */
+    qmgr_active_done_25_generic(message);
+}
+
+/* qmgr_active_done_25_trace_flush - continue after atrace_flush() completion */
+
+static void qmgr_active_done_25_trace_flush(int status, char *context)
+{
+    QMGR_MESSAGE *message = (QMGR_MESSAGE *) context;
+
+    /*
+     * Process atrace_flush() status and continue processing.
+     */
+    if (status == 0 && message->tflags_offset)
+	qmgr_message_kill_record(message, message->tflags_offset);
+    message->flags |= status;
+    qmgr_active_done_25_generic(message);
+}
+
+/* qmgr_active_done_25_generic - continue processing */
+
+static void qmgr_active_done_25_generic(QMGR_MESSAGE *message)
+{
+    const char *myname = "qmgr_active_done_25_generic";
 
     /*
      * If we get to this point we have tried all recipients for this message.
