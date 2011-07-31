@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.36 2011/07/30 05:24:16 uebayasi Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.37 2011/07/31 13:41:30 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.36 2011/07/30 05:24:16 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.37 2011/07/31 13:41:30 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -186,7 +186,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.36 2011/07/30 05:24:16 uebayasi E
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
 #include <sys/xcall.h>
-#include <sys/kmem.h>
 
 #include <net/netisr.h>
 
@@ -263,6 +262,7 @@ softint_init_isr(softcpu_t *sc, const char *desc, pri_t pri, u_int level)
 	si->si_lwp->l_private = si;
 	softint_init_md(si->si_lwp, level, &si->si_machdep);
 }
+
 /*
  * softint_init:
  *
@@ -284,7 +284,9 @@ softint_init(struct cpu_info *ci)
 		    sizeof(softhand_t);
 	}
 
-	sc = kmem_zalloc(softint_bytes, KM_SLEEP);
+	/* Use uvm_km(9) for persistent, page-aligned allocation. */
+	sc = (softcpu_t *)uvm_km_alloc(kernel_map, softint_bytes, 0,
+	    UVM_KMF_WIRED | UVM_KMF_ZERO);
 	if (sc == NULL)
 		panic("softint_init_cpu: cannot allocate memory");
 
