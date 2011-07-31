@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.25 2010/03/01 17:35:21 njoly Exp $	*/
+/*	$NetBSD: i2c.c,v 1.26 2011/07/31 15:58:25 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.25 2010/03/01 17:35:21 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.26 2011/07/31 15:58:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,13 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		config_attach(parent, cf, &ia, iic_print);
 
 	return (0);
+}
+
+static int
+iic_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	config_search_ia(iic_search, self, ifattr, NULL);
+	return 0;
 }
 
 static int
@@ -275,7 +282,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 		 * Attach all i2c devices described in the kernel
 		 * configuration file.
 		 */
-		config_search_ia(iic_search, self, "iic", NULL);
+		iic_rescan(self, "iic", NULL);
 	}
 }
 
@@ -429,5 +436,5 @@ iic_compat_match(struct i2c_attach_args *ia, const char ** compats)
 }
 
 
-CFATTACH_DECL_NEW(iic, sizeof(struct iic_softc),
-    iic_match, iic_attach, NULL, NULL);
+CFATTACH_DECL2_NEW(iic, sizeof(struct iic_softc),
+    iic_match, iic_attach, NULL, NULL, iic_rescan, NULL);
