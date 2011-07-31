@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1650 2011/07/30 18:19:04 rmind Exp $
+#	$NetBSD: mi,v 1.1651 2011/07/31 03:48:49 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10250,6 +10250,11 @@
 ./usr/share/man/cat9/propdb_destroy.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/properties.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/pserialize.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pserialize_create.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pserialize_destroy.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pserialize_perform.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pserialize_read_enter.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pserialize_read_exit.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/psignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/putiobuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/putter.0			comp-sys-catman		.cat
@@ -16212,6 +16217,11 @@
 ./usr/share/man/html9/prop_dictionary_copyin_ioctl.html	comp-sys-htmlman	html
 ./usr/share/man/html9/prop_dictionary_copyout_ioctl.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pserialize.html		comp-sys-htmlman	html
+./usr/share/man/html9/pserialize_create.html	comp-sys-htmlman	html
+./usr/share/man/html9/pserialize_destroy.html	comp-sys-htmlman	html
+./usr/share/man/html9/pserialize_perform.html	comp-sys-htmlman	html
+./usr/share/man/html9/pserialize_read_enter.html	comp-sys-htmlman	html
+./usr/share/man/html9/pserialize_read_exit.html	comp-sys-htmlman	html
 ./usr/share/man/html9/psignal.html		comp-sys-htmlman	html
 ./usr/share/man/html9/putiobuf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/putter.html		comp-sys-htmlman	html
@@ -22358,6 +22368,11 @@
 ./usr/share/man/man9/propdb_destroy.9		comp-obsolete		obsolete
 ./usr/share/man/man9/properties.9		comp-obsolete		obsolete
 ./usr/share/man/man9/pserialize.9		comp-sys-man		.man
+./usr/share/man/man9/pserialize_create.9	comp-sys-man		.man
+./usr/share/man/man9/pserialize_destroy.9	comp-sys-man		.man
+./usr/share/man/man9/pserialize_perform.9	comp-sys-man		.man
+./usr/share/man/man9/pserialize_read_enter.9	comp-sys-man		.man
+./usr/share/man/man9/pserialize_read_exit.9	comp-sys-man		.man
 ./usr/share/man/man9/psignal.9			comp-sys-man		.man
 ./usr/share/man/man9/putiobuf.9			comp-sys-man		.man
 ./usr/share/man/man9/putter.9			comp-sys-man		.man
