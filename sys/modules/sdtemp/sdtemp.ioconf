@@ -1,0 +1,9 @@
+# $NetBSD: sdtemp.ioconf,v 1.1 2011/07/31 16:00:21 jmcneill Exp $
+
+ioconf sdtemp
+
+include "conf/files"
+
+pseudo-root iic*
+
+sdtemp* at iic? addr 0x18
