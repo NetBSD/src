@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.11 2011/06/15 03:30:15 jruoho Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.12 2011/07/31 22:04:07 jmcneill Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.11 2011/06/15 03:30:15 jruoho Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.12 2011/07/31 22:04:07 jmcneill Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.11 2011/06/15 03:30:15 jruoho Exp $ ")
  * http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/41256.pdf
  */
 
-/* AMD Proessors, Function 3 -- Miscellaneous Control
+/* AMD Processors, Function 3 -- Miscellaneous Control
  */
 
 /* Function 3 Registers */
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.11 2011/06/15 03:30:15 jruoho Exp $ ")
 
 
 /*
- * AMD Family 10h Processorcs, Function 3 -- Miscellaneous Control
+ * AMD Family 10h Processors, Function 3 -- Miscellaneous Control
  */
 
 /* Function 3 Registers */
@@ -196,6 +196,7 @@ amdtemp_match(device_t parent, cfdata_t match, void *aux)
 	case PCI_PRODUCT_AMD_AMD64_MISC:
 	case PCI_PRODUCT_AMD_AMD64_F10_MISC:
 	case PCI_PRODUCT_AMD_AMD64_F11_MISC:
+	case PCI_PRODUCT_AMD_F14_NB:
 		break;
 	default:
 		return 0;
@@ -224,7 +225,7 @@ amdtemp_match(device_t parent, cfdata_t match, void *aux)
 
 
 	/* Not yet supported CPUs */
-	if (family >= 0x12)
+	if (family > 0x14)
 		return 0;
 
 	return 2;	/* supercede pchb(4) */
@@ -267,6 +268,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 
 	case 0x10: /* AMD Barcelona/Phenom */
 	case 0x11: /* AMD Griffin */
+	case 0x14: /* AMD Fusion */
 		amdtemp_family10_init(sc);
 		break;
 
@@ -294,6 +296,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 		break;
 	case 0x10:
 	case 0x11:
+	case 0x14:
 		amdtemp_family10_setup_sensors(sc, device_unit(self));
 		break;
 	}
@@ -319,6 +322,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 		break;
 	case 0x10:
 	case 0x11:
+	case 0x14:
 		sc->sc_sme->sme_refresh = amdtemp_family10_refresh;
 		break;
 	}
@@ -481,7 +485,7 @@ amdtemp_k8_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 static void
 amdtemp_family10_init(struct amdtemp_softc *sc)
 {
-	aprint_normal(" (Family10h / Family11h)");
+	aprint_normal(" (Family%02xh)", sc->sc_family);
 
 	sc->sc_numsensors = 1;
 }
@@ -500,7 +504,7 @@ amdtemp_family10_setup_sensors(struct amdtemp_softc *sc, int dv_unit)
 	sc->sc_sensor[0].state = ENVSYS_SVALID;
 
 	snprintf(sc->sc_sensor[0].desc, sizeof(sc->sc_sensor[0].desc),
-		"CPU%u Sensor0", dv_unit);
+		"cpu%u temperature", dv_unit);
 }
 
 
