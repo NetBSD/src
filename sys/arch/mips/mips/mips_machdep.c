@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.244 2011/06/14 05:30:40 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.245 2011/07/31 15:39:29 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.244 2011/06/14 05:30:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.245 2011/07/31 15:39:29 matt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -218,6 +218,12 @@ extern const mips_locore_jumpvec_t mips1_locore_vec;
 static void	mips3_vector_init(const struct splsw *);
 extern const struct locoresw mips3_locoresw;
 extern const mips_locore_jumpvec_t mips3_locore_vec;
+#endif
+
+#if defined(MIPS3_LOONGSON2)
+static void	loongson2_vector_init(const struct splsw *);
+extern const struct locoresw loongson2_locoresw;
+extern const mips_locore_jumpvec_t loongson2_locore_vec;
 #endif
 
 #if defined(MIPS32)
@@ -432,11 +438,11 @@ static const struct pridtab cputab[] = {
 				(2 << CPU_MIPS_CACHED_CCA_SHIFT))
 #endif
 	{ 0, MIPS_LOONGSON2, MIPS_REV_LOONGSON2E, -1, CPU_ARCH_MIPS3, 64,
-	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT | MIPS_LOONGSON2_CCA, 0, 0,
-						"ICT Loongson 2E CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT | CPU_MIPS_LOONGSON2
+	  | MIPS_LOONGSON2_CCA, 0, 0, "ICT Loongson 2E CPU"	},
 	{ 0, MIPS_LOONGSON2, MIPS_REV_LOONGSON2F, -1, CPU_ARCH_MIPS3, 64,
-	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT | MIPS_LOONGSON2_CCA, 0, 0,
-						"ICT Loongson 2F CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT | CPU_MIPS_LOONGSON2
+	  | MIPS_LOONGSON2_CCA, 0, 0, "ICT Loongson 2F CPU"	},
 
 #if 0 /* ID collisions : can we use a CU1 test or similar? */
 	{ 0, MIPS_R3SONY, -1, -1,		CPU_ARCH_MIPS1, -1,
@@ -479,6 +485,7 @@ static const struct pridtab cputab[] = {
 	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG7,
 	  0, "34K" },
 	{ MIPS_PRID_CID_MTI, MIPS_74K, -1, -1,	-1, 0,
+	  CPU_MIPS_HAVE_SPECIAL_CCA | (0 << CPU_MIPS_CACHED_CCA_SHIFT) |
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,
 	  MIPS_CP0FL_USE |
 	  MIPS_CP0FL_EBASE | MIPS_CP0FL_USERLOCAL | MIPS_CP0FL_HWRENA |
@@ -741,6 +748,53 @@ mips3_vector_init(const struct splsw *splsw)
 	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
 }
 #endif /* MIPS3 */
+
+#if defined(MIPS3_LOONGSON2)
+static void
+loongson2_vector_init(const struct splsw *splsw)
+{
+	/* r4000 exception handler address and end */
+	extern char loongson2_exception[], loongson2_exception_end[];
+
+	/* TLB miss handler address and end */
+	extern char loongson2_tlb_miss[];
+	extern char loongson2_xtlb_miss[];
+
+	/* Cache error handler */
+	extern char loongson2_cache[];
+
+	/*
+	 * Copy down exception vector code.
+	 */
+
+	if (loongson2_xtlb_miss - loongson2_tlb_miss != 0x80)
+		panic("startup: %s vector code not 128 bytes in length",
+		    "UTLB");
+	if (loongson2_cache - loongson2_xtlb_miss != 0x80)
+		panic("startup: %s vector code not 128 bytes in length",
+		    "XTLB");
+	if (loongson2_exception - loongson2_cache != 0x80)
+		panic("startup: %s vector code not 128 bytes in length",
+		    "Cache error");
+	if (loongson2_exception_end - loongson2_exception > 0x80)
+		panic("startup: %s vector code too large",
+		    "General exception");
+
+	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, loongson2_tlb_miss,
+	      loongson2_exception_end - loongson2_tlb_miss);
+
+	/*
+	 * Copy locore-function vector.
+	 */
+	mips_locore_jumpvec = loongson2_locore_vec;
+
+	mips_icache_sync_all();
+	mips_dcache_wbinv_all();
+
+	/* Clear BEV in SR so we start handling our own exceptions */
+	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
+}
+#endif /* MIPS3_LOONGSON2 */
 
 #if defined(MIPS32)
 static void
@@ -1174,12 +1228,21 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 #endif
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_TO_MASK(PAGE_SIZE));
 		mips3_cp0_wired_write(0);
+#if defined(MIPS3_LOONGSON2)
+		if (opts->mips_cpu_flags & CPU_MIPS_LOONGSON2) {
+			(*loongson2_locore_vec.ljv_tlb_invalidate_all)();
+			mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
+			loongson2_vector_init(splsw);
+			mips_locoresw = loongson2_locoresw;
+			break;
+		}
+#endif /* MIPS3_LOONGSON2 */
 		(*mips3_locore_vec.ljv_tlb_invalidate_all)();
 		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
 		mips3_vector_init(splsw);
 		mips_locoresw = mips3_locoresw;
 		break;
-#endif
+#endif /* MIPS3 */
 #if defined(MIPS32)
 	case CPU_ARCH_MIPS32:
 		mips3_tlb_probe();
