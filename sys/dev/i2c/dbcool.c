@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.30 2011/06/20 20:16:19 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.31 2011/07/31 16:05:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.30 2011/06/20 20:16:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.31 2011/07/31 16:05:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.30 2011/06/20 20:16:19 pgoyette Exp $")
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
+#include <sys/module.h>
 
 #include <dev/i2c/dbcool_var.h>
 #include <dev/i2c/dbcool_reg.h>
@@ -793,6 +794,8 @@ static int
 dbcool_detach(device_t self, int flags)
 {
 	struct dbcool_softc *sc = device_private(self);
+
+	pmf_device_deregister(self);
 
 	sysmon_envsys_unregister(sc->sc_sme);
 	sc->sc_sme = NULL;
@@ -2157,5 +2160,34 @@ dbcool_set_fan_limits(struct dbcool_softc *sc, int idx,
 	} else if (*props & PROP_DRIVER_LIMITS) {
 		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, 0xff);
 		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg + 1, 0xff);
+	}
+}
+
+MODULE(MODULE_CLASS_DRIVER, dbcool, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+dbcool_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_dbcool,
+		    cfattach_ioconf_dbcool, cfdata_ioconf_dbcool);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_dbcool,
+		    cfattach_ioconf_dbcool, cfdata_ioconf_dbcool);
+#endif
+		return error;
+	default:
+		return ENOTTY;
 	}
 }
