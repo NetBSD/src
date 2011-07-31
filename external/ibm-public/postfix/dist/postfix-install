@@ -305,7 +305,7 @@ esac
 
 install_root_prompt="the prefix for installed file names. Specify
 this ONLY if you are building ready-to-install packages for
-distribution to other machines."
+distribution to OTHER machines. See PACKAGE_README for instructions."
 
 tempdir_prompt="a directory for scratch files while installing
 Postfix.  You must have write permission in this directory."

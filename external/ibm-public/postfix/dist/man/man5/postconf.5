@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.7 2011/03/02 19:56:38 tron Exp $
+.\"	$NetBSD: postconf.5,v 1.8 2011/07/31 10:05:04 tron Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -4371,6 +4371,8 @@ a request before it is terminated by a built-in watchdog timer.
 .PP
 Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 The default time unit is s (seconds).
+.PP
+This feature is available in Postfix 2.8 and later.
 .SH qmgr_fudge_factor (default: 100)
 Obsolete feature: the percentage of delivery resources that a busy
 mail system will use up for delivery of a large mailing  list
@@ -4386,6 +4388,8 @@ software either retries or aborts the operation.
 .PP
 Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 The default time unit is s (seconds).
+.PP
+This feature is available in Postfix 2.8 and later.
 .SH qmgr_message_active_limit (default: 20000)
 The maximal number of messages in the active queue.
 .SH qmgr_message_recipient_limit (default: 20000)
