@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.103 2011/07/06 09:27:35 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.104 2011/07/31 15:36:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -280,6 +280,7 @@ extern struct mips_options mips_options;
 #define	CPU_MIPS_I_D_CACHE_COHERENT	0x0800	/* I-cache funcs don't need to flush the D-cache */
 #define	CPU_MIPS_NO_LLADDR		0x1000
 #define	CPU_MIPS_HAVE_MxCR		0x2000	/* have mfcr, mtcr insns */
+#define	CPU_MIPS_LOONGSON2		0x4000
 #define	MIPS_NOT_SUPP			0x8000
 
 #endif	/* !_LOCORE */
