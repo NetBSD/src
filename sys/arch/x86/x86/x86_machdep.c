@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.51 2011/06/12 03:35:50 rmind Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.52 2011/07/31 22:43:01 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.51 2011/06/12 03:35:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.52 2011/07/31 22:43:01 jmcneill Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -66,6 +66,11 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.51 2011/06/12 03:35:50 rmind Exp $
 #include <machine/vmparam.h>
 
 #include <uvm/uvm_extern.h>
+
+#include "acpica.h"
+#if NACPICA > 0
+#include <dev/acpi/acpivar.h>
+#endif
 
 void (*x86_cpu_idle)(void);
 static bool x86_cpu_idle_ipi;
@@ -894,6 +899,18 @@ void
 x86_reset(void)
 {
 	uint8_t b;
+
+#if NACPICA > 0
+	/*
+	 * If ACPI is active, try to reset using the reset register
+	 * defined in the FADT.
+	 */
+	if (acpi_active) {
+		if (AcpiReset() != AE_NOT_EXIST)
+			delay(500000); /* wait 0.5 sec to see if that did it */
+	}
+#endif
+
 	/*
 	 * The keyboard controller has 4 random output pins, one of which is
 	 * connected to the RESET pin on the CPU in many PCs.  We tell the
