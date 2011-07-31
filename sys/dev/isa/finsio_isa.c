@@ -1,5 +1,5 @@
 /*	$OpenBSD: fins.c,v 1.1 2008/03/19 19:33:09 deraadt Exp $	*/
-/*	$NetBSD: finsio_isa.c,v 1.5 2011/06/20 18:12:54 pgoyette Exp $	*/
+/*	$NetBSD: finsio_isa.c,v 1.6 2011/07/31 17:53:26 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Juan Romero Pardines
@@ -19,11 +19,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.5 2011/06/20 18:12:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.6 2011/07/31 17:53:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/module.h>
 #include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
@@ -73,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.5 2011/06/20 18:12:54 pgoyette Exp 
 # define FINSIO_IDF71806 	0x0341	/* F71872 and F1806 F/FG */
 # define FINSIO_IDF71883	0x0541	/* F71882 and F1883 */
 # define FINSIO_IDF71862 	0x0601	/* F71862FG */
+# define FINSIO_IDF8000 	0x0581	/* F8000 */
 
 /* in bank sensors of config space */
 #define FINSIO_SENSADDR	0x60	/* sensors assigned I/O address (2 bytes) */
@@ -418,7 +420,7 @@ static struct finsio_sensor f71883_sensors[] = {
 
 	{	.fs_desc = NULL }
 };
-			
+
 static int
 finsio_isa_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -509,6 +511,10 @@ finsio_isa_attach(device_t parent, device_t self, void *aux)
 		hwmon_baddr += FINSIO_F71882_HWM_OFFSET;
 		sc->sc_finsio_sensors = f71883_sensors;
 		aprint_normal(": Fintek F71882/F71883 Super I/O\n");
+		break;
+	case FINSIO_IDF8000:
+		sc->sc_finsio_sensors = f71883_sensors;
+		aprint_normal(": ASUS F8000 Super I/O\n");
 		break;
 	default:
 		/* 
@@ -680,5 +686,34 @@ finsio_refresh_fanrpm(struct finsio_softc *sc, envsys_data_t *edata)
 	else {
 		edata->value_cur = 1500000 / data;
 		edata->state = ENVSYS_SVALID;
+	}
+}
+
+MODULE(MODULE_CLASS_DRIVER, finsio, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+finsio_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_finsio,
+		    cfattach_ioconf_finsio, cfdata_ioconf_finsio);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_finsio,
+		    cfattach_ioconf_finsio, cfdata_ioconf_finsio);
+#endif
+		return error;
+	default:
+		return ENOTTY;
 	}
 }
