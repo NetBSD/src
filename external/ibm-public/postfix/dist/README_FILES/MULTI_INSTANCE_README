@@ -327,7 +327,7 @@ This uses the postmulti(1) command to invoke postconf(1) in the context
 (MAIL_CONFIG=/etc/postfix-out) of the output instance.
 
   * Lines 1-2: With "authorized_submit_users = root", the superuser can test
-    the postix-out instance with "postmulti -i postfix-out -x sendmail -bv
+    the postfix-out instance with "postmulti -i postfix-out -x sendmail -bv
     recipient...", but otherwise local submission remains disabled.
 
   * Lines 1-2: With "master_service_disable =", the "inet" listeners are re-

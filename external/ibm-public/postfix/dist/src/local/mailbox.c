@@ -1,4 +1,4 @@
-/*	$NetBSD: mailbox.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: mailbox.c,v 1.1.1.2 2011/07/31 10:02:41 tron Exp $	*/
 
 /*++
 /* NAME
@@ -280,12 +280,18 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
 	transp_maps = maps_create(VAR_MBOX_TRANSP_MAPS, var_mbox_transp_maps,
 				  DICT_FLAG_LOCK | DICT_FLAG_NO_REGSUB);
     /* The -1 is a hint for the down-stream deliver_completed() function. */
+    dict_errno = 0;
     if (*var_mbox_transp_maps
 	&& (map_transport = maps_find(transp_maps, state.msg_attr.user,
 				      DICT_FLAG_NONE)) != 0) {
 	state.msg_attr.rcpt.offset = -1L;
 	*statusp = deliver_pass(MAIL_CLASS_PRIVATE, map_transport,
 				state.request, &state.msg_attr.rcpt);
+	return (YES);
+    } else if (dict_errno != 0) {
+	/* Details in the logfile. */
+	dsb_simple(state.msg_attr.why, "4.3.0", "table lookup failure");
+	*statusp = DEL_STAT_DEFER;
 	return (YES);
     }
     if (*var_mailbox_transport) {
@@ -321,10 +327,15 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
 	cmd_maps = maps_create(VAR_MAILBOX_CMD_MAPS, var_mailbox_cmd_maps,
 			       DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
 
+    dict_errno = 0;
     if (*var_mailbox_cmd_maps
 	&& (map_command = maps_find(cmd_maps, state.msg_attr.user,
 				    DICT_FLAG_NONE)) != 0) {
 	status = deliver_command(state, usr_attr, map_command);
+    } else if (dict_errno != 0) {
+	/* Details in the logfile. */
+	dsb_simple(state.msg_attr.why, "4.3.0", "table lookup failure");
+	status = DEL_STAT_DEFER;
     } else if (*var_mailbox_command) {
 	status = deliver_command(state, usr_attr, var_mailbox_command);
     } else if (*var_home_mailbox && LAST_CHAR(var_home_mailbox) == '/') {
