@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.139.6.1 2011/06/23 14:19:15 cherry Exp $	*/
+/*	$NetBSD: npx.c,v 1.139.6.2 2011/07/31 20:49:11 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.139.6.1 2011/06/23 14:19:15 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.139.6.2 2011/07/31 20:49:11 cherry Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -719,7 +719,11 @@ npxsave_lwp(struct lwp *l, bool save)
 			break;
 		}
 		splx(s);
+#ifdef XEN
+		xen_send_ipi(oci, XEN_IPI_SYNCH_FPU);
+#else /* XEN */
 		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
+#endif
 		while (pcb->pcb_fpcpu == oci &&
 		    ticks == hardclock_ticks) {
 			x86_pause();

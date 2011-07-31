@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.26.2.4 2011/07/16 10:59:46 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.26.2.5 2011/07/31 20:49:11 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.4 2011/07/16 10:59:46 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.5 2011/07/31 20:49:11 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -946,11 +946,14 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 #endif
 #else /* PAE */
 	/* recursive entry in higher-level per-cpu PD and pmap_kernel() */
-	bt_pgd[PDIR_SLOT_PTE] = bt_cpu_pgd[PDIR_SLOT_PTE] =
+	bt_pgd[PDIR_SLOT_PTE] = 
+#ifdef __x86_64__
+	   bt_cpu_pgd[PDIR_SLOT_PTE] =
+#endif /* __x86_64__ */
 	    xpmap_ptom_masked(new_pgd - KERNBASE) | PG_k | PG_V;
 	__PRINTK(("bt_cpu_pgd[PDIR_SLOT_PTE] va %#" PRIxVADDR " pa %#" PRIxPADDR
 	    " entry %#" PRIxPADDR "\n", new_pgd, (paddr_t)new_pgd - KERNBASE,
-	    bt_cpu_pgd[PDIR_SLOT_PTE]));
+	    bt_pgd[PDIR_SLOT_PTE]));
 
 
 	/* Mark tables RO */

@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.11.6.1 2011/06/03 13:27:42 cherry Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.11.6.2 2011/07/31 20:49:12 cherry Exp $	*/
 
 /*
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.11.6.1 2011/06/03 13:27:42 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.11.6.2 2011/07/31 20:49:12 cherry Exp $");
 
 #include <sys/param.h>
 
@@ -83,20 +83,19 @@ lldt(u_short sel)
 void
 ltr(u_short sel)
 {
-	__PRINTK(("XXX ltr not supported\n"));
+	panic("XXX ltr not supported\n");
 }
 
 void
 lcr0(u_long val)
 {
-	__PRINTK(("XXX lcr0 not supported\n"));
+	panic("XXX lcr0 not supported\n");
 }
 
 u_long
 rcr0(void)
 {
 	/* XXX: handle X86_CR0_TS ? */
-	__PRINTK(("XXX rcr0 not supported\n"));
 	return 0;
 }
 

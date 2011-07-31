@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.702.2.1 2011/06/23 14:19:14 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.702.2.2 2011/07/31 20:49:10 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.702.2.1 2011/06/23 14:19:14 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.702.2.2 2011/07/31 20:49:10 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -949,8 +949,12 @@ haltsys:
 	}
 
 #ifdef MULTIPROCESSOR
+#ifdef XEN
+	xen_broadcast_ipi(XEN_IPI_HALT);
+#else /* XEN */
 	x86_broadcast_ipi(X86_IPI_HALT);
-#endif
+#endif /* XEN */
+#endif /* MULTIPROCESSOR */
 
 	if (howto & RB_HALT) {
 #if NACPICA > 0
@@ -1123,14 +1127,18 @@ trap_info_t xen_idt[MAX_XEN_IDT];
 int xen_idt_idx;
 #endif
 
-#ifndef XEN
 void cpu_init_idt(void)
 {
+#ifndef XEN
 	struct region_descriptor region;
 	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region);
-}
+#else /* XEN */
+	XENPRINTF(("HYPERVISOR_set_trap_table %p\n", xen_idt));
+	if (HYPERVISOR_set_trap_table(xen_idt))
+		panic("HYPERVISOR_set_trap_table %p failed\n", xen_idt);
 #endif /* !XEN */
+}
 
 void
 initgdt(union descriptor *tgdt)
@@ -1166,7 +1174,30 @@ initgdt(union descriptor *tgdt)
 	lgdt(&region);
 #else /* !XEN */
 	frames[0] = xpmap_ptom((uint32_t)gdt - KERNBASE) >> PAGE_SHIFT;
-	pmap_kenter_pa((vaddr_t)gdt, (uint32_t)gdt - KERNBASE, VM_PROT_READ, 0);
+	{	/*
+		 * Enter the gdt page RO into the kernel map. We can't
+		 * use pmap_kenter_pa() here, because %fs is not
+		 * usable until the gdt is loaded, and %fs is used as
+		 * the base pointer for curcpu() and curlwp(), both of
+		 * which are in the callpath of pmap_kenter_pa().
+		 * So we mash up our own - this is MD code anyway.
+		 *
+		 * XXX: review this once we have finegrained locking
+		 * for xpq.
+		 */
+		pt_entry_t *pte, npte;
+		pt_entry_t pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
+
+		pte = kvtopte((vaddr_t)gdt);
+		npte = pmap_pa2pte((paddr_t)gdt - KERNBASE);
+		npte |= PG_RO | pg_nx | PG_V;
+
+		xpq_queue_lock();
+		xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
+		xpq_flush_queue();
+		xpq_queue_unlock();
+	}
+
 	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
 	    NGDT));
 	if (HYPERVISOR_set_gdt(frames, NGDT /* XXX is it right ? */))
@@ -1579,10 +1610,7 @@ init386(paddr_t first_avail)
 	xen_idt[xen_idt_idx].address = (uint32_t)&IDTVEC(svr4_fasttrap);
 	xen_idt_idx++;
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
-
-	XENPRINTF(("HYPERVISOR_set_trap_table %p\n", xen_idt));
-	if (HYPERVISOR_set_trap_table(xen_idt))
-		panic("HYPERVISOR_set_trap_table %p failed\n", xen_idt);
+	cpu_init_idt();
 #endif /* XEN */
 
 	init386_ksyms();

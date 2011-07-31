@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.56.2.3 2011/07/16 10:59:46 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.56.2.4 2011/07/31 20:49:11 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.3 2011/07/16 10:59:46 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.4 2011/07/31 20:49:11 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -100,7 +100,12 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.3 2011/07/16 10:59:46 cherry Exp $");
 #include <machine/gdt.h>
 #include <machine/mtrr.h>
 #include <machine/pio.h>
+
+#ifdef i386
+#include <machine/npx.h>
+#else
 #include <machine/fpu.h>
+#endif
 
 #include <xen/xen.h>
 #include <xen/xen3-public/vcpu.h>
@@ -174,8 +179,6 @@ struct cpu_info phycpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 struct cpu_info *phycpu_info_list = &phycpu_info_primary;
-
-static void	cpu_set_tss_gates(struct cpu_info *ci);
 
 uint32_t cpus_attached = 1;
 uint32_t cpus_running = 0;
@@ -455,7 +458,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		cpu_intr_init(ci);
 		cpu_get_tsc_freq(ci);
 		cpu_init(ci);
-		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci); /* XXX: cosmetic */
 
 		/* Every processor needs to init it's own ipi h/w (similar to lapic) */
@@ -502,11 +504,9 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		/* interrupt handler stack */
 		cpu_intr_init(ci);
 
-		/* Setup gdt */
+		/* Setup per-cpu memory for gdt */
 		gdt_alloc_cpu(ci);
-		//gdt_init_cpu(ci);
 
-		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 
@@ -674,15 +674,6 @@ cpu_start_secondary(struct cpu_info *ci)
 	 * wait for it to become ready
 	 */
 	for (i = 100000; (!(ci->ci_flags & CPUF_PRESENT)) && i > 0; i--) {
-#ifdef MPDEBUG
-		extern int cpu_trace[3];
-		static int otrace[3];
-		if (memcmp(otrace, cpu_trace, sizeof(otrace)) != 0) {
-			aprint_debug_dev(ci->ci_dev, "trace %02x %02x %02x\n",
-				cpu_trace[0], cpu_trace[1], cpu_trace[2]);
-			memcpy(otrace, cpu_trace, sizeof(otrace));
-		}
-#endif
 		delay(10);
 	}
 	if ((ci->ci_flags & CPUF_PRESENT) == 0) {
@@ -728,8 +719,11 @@ cpu_hatch(void *v)
 	struct pcb *pcb;
 	int s, i;
 
-	/* Setup TLS and kernel GS */
+	/* Setup TLS and kernel GS/FS */
 	cpu_init_msrs(ci, true);
+	cpu_init_idt();
+	gdt_init_cpu(ci);
+
 	cpu_probe(ci);
 
 	atomic_or_32(&ci->ci_flags, CPUF_PRESENT);
@@ -749,27 +743,18 @@ cpu_hatch(void *v)
 	pcb = lwp_getpcb(curlwp);
 	pcb->pcb_cr3 = pmap_pdirpa(pmap_kernel(), 0); /* XXX: consider using pmap_load() ? */
 	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
-	lcr0(pcb->pcb_cr0);
 
-	cpu_init_idt();
-	gdt_init_cpu(ci);
 	xen_ipi_init();
 
 	xen_initclocks();
 	
 	/* XXX: lapic_initclocks(); */
 
-#ifdef i386
-#if NNPX > 0
-	npxinit(ci);
-#endif
-#else
+#ifdef __x86_64__
 	fpuinit(ci);
-	/* XXX: fixme compile fpuinit(ci); */
 #endif
 
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
-	ltr(ci->ci_tss_sel);
 
 	cpu_init(ci);
 	cpu_get_tsc_freq(ci);
@@ -818,81 +803,6 @@ cpu_debug_dump(void)
 
 #endif /* MULTIPROCESSOR */
 
-#ifdef i386
-#if 0
-static void
-tss_init(struct i386tss *tss, void *stack, void *func)
-{
-	memset(tss, 0, sizeof *tss);
-	tss->tss_esp0 = tss->tss_esp = (int)((char *)stack + USPACE - 16);
-	tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	tss->__tss_cs = GSEL(GCODE_SEL, SEL_KPL);
-	tss->tss_fs = GSEL(GCPU_SEL, SEL_KPL);
-	tss->tss_gs = tss->__tss_es = tss->__tss_ds =
-	    tss->__tss_ss = GSEL(GDATA_SEL, SEL_KPL);
-	tss->tss_cr3 = pmap_kernel()->pm_pdirpa;
-	tss->tss_esp = (int)((char *)stack + USPACE - 16);
-	tss->tss_ldt = GSEL(GLDT_SEL, SEL_KPL);
-	tss->__tss_eflags = PSL_MBO | PSL_NT;   /* XXX not needed? */
-	tss->__tss_eip = (int)func;
-}
-#endif
-
-/* XXX */
-#define IDTVEC(name)	__CONCAT(X, name)
-typedef void (vector)(void);
-extern vector IDTVEC(tss_trap08);
-#ifdef DDB
-extern vector Xintrddbipi;
-extern int ddb_vec;
-#endif
-
-static void
-cpu_set_tss_gates(struct cpu_info *ci)
-{
-#if 0
-	struct segment_descriptor sd;
-
-	ci->ci_doubleflt_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
-	    UVM_KMF_WIRED);
-	tss_init(&ci->ci_doubleflt_tss, ci->ci_doubleflt_stack,
-	    IDTVEC(tss_trap08));
-	setsegment(&sd, &ci->ci_doubleflt_tss, sizeof(struct i386tss) - 1,
-	    SDT_SYS386TSS, SEL_KPL, 0, 0);
-	ci->ci_gdt[GTRAPTSS_SEL].sd = sd;
-	setgate(&idt[8], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
-	    GSEL(GTRAPTSS_SEL, SEL_KPL));
-#endif
-
-#if defined(DDB) && defined(MULTIPROCESSOR)
-	/*
-	 * Set up separate handler for the DDB IPI, so that it doesn't
-	 * stomp on a possibly corrupted stack.
-	 *
-	 * XXX overwriting the gate set in db_machine_init.
-	 * Should rearrange the code so that it's set only once.
-	 */
-	ci->ci_ddbipi_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
-	    UVM_KMF_WIRED);
-	tss_init(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack,
-	    Xintrddbipi);
-
-	setsegment(&sd, &ci->ci_ddbipi_tss, sizeof(struct i386tss) - 1,
-	    SDT_SYS386TSS, SEL_KPL, 0, 0);
-	ci->ci_gdt[GIPITSS_SEL].sd = sd;
-
-	setgate(&idt[ddb_vec], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
-	    GSEL(GIPITSS_SEL, SEL_KPL));
-#endif
-}
-#else
-static void
-cpu_set_tss_gates(struct cpu_info *ci)
-{
-
-}
-#endif	/* i386 */
-
 extern void hypervisor_callback(void);
 extern void failsafe_callback(void);
 #ifdef __x86_64__
@@ -902,8 +812,8 @@ extern vector Xsyscall, Xsyscall32;
 
 /*
  * Setup the "trampoline". On Xen, we setup nearly all cpu context
- * outside a trampoline, so we prototype and call targetrip like so:
- * void targetrip(struct cpu_info *);
+ * outside a trampoline, so we prototype and call targetip like so:
+ * void targetip(struct cpu_info *);
  */
 
 static void
@@ -922,6 +832,7 @@ gdt_prepframes(paddr_t *frames, vaddr_t base, uint32_t entries)
 	}
 }
 
+#ifdef __x86_64__
 extern char *ldtstore; /* XXX: Xen MP todo */
 
 static void
@@ -969,8 +880,13 @@ xen_init_amd64_vcpuctxt(struct cpu_info *ci,
 	/* resume in kernel-mode */
 	initctx->flags = VGCF_in_kernel | VGCF_online;
 
-	/* Stack and entry points */
-	initctx->user_regs.rbp = pcb->pcb_rbp;
+	/* Stack and entry points:
+	 * We arrange for the stack frame for cpu_hatch() to
+	 * appear as a callee frame of lwp_trampoline(). Being a
+	 * leaf frame prevents trampling on any of the MD stack setup
+	 * that x86/vm_machdep.c:cpu_lwp_fork() does for idle_loop()
+	 */
+
 	initctx->user_regs.rdi = (uint64_t) ci; /* targetrip(ci); */
 	initctx->user_regs.rip = (vaddr_t) targetrip;
 
@@ -1013,6 +929,112 @@ xen_init_amd64_vcpuctxt(struct cpu_info *ci,
 
 	return;
 }
+#else /* i386 */
+extern union descriptor *ldt;
+extern void Xsyscall(void);
+
+static void
+xen_init_i386_vcpuctxt(struct cpu_info *ci,
+			struct vcpu_guest_context *initctx, 
+			void targeteip(struct cpu_info *))
+{
+	/* page frames to point at GDT */
+	extern int gdt_size;
+	paddr_t frames[16];
+	psize_t gdt_ents;
+
+	struct lwp *l;
+	struct pcb *pcb;
+
+	volatile struct vcpu_info *vci;
+
+	KASSERT(ci != NULL);
+	KASSERT(ci != &cpu_info_primary);
+	KASSERT(initctx != NULL);
+	KASSERT(targeteip != NULL);
+
+	memset(initctx, 0, sizeof *initctx);
+
+	gdt_ents = roundup(gdt_size, PAGE_SIZE) >> PAGE_SHIFT; /* XXX: re-investigate roundup(gdt_size... ) for gdt_ents. */
+	KASSERT(gdt_ents <= 16);
+
+	gdt_prepframes(frames, (vaddr_t) ci->ci_gdt, gdt_ents);
+
+	/* 
+	 * Initialise the vcpu context: 
+	 * We use this cpu's idle_loop() pcb context.
+	 */
+
+	l = ci->ci_data.cpu_idlelwp;
+
+	KASSERT(l != NULL);
+	pcb = lwp_getpcb(l);
+	KASSERT(pcb != NULL);
+
+	/* resume with interrupts off */
+	vci = ci->ci_vcpu;
+	vci->evtchn_upcall_mask = 1;
+	xen_mb();
+
+	/* resume in kernel-mode */
+	initctx->flags = VGCF_in_kernel | VGCF_online;
+
+	/* Stack frame setup for cpu_hatch():
+	 * We arrange for the stack frame for cpu_hatch() to
+	 * appear as a callee frame of lwp_trampoline(). Being a
+	 * leaf frame prevents trampling on any of the MD stack setup
+	 * that x86/vm_machdep.c:cpu_lwp_fork() does for idle_loop()
+	 */
+
+	initctx->user_regs.esp = pcb->pcb_esp - 4; /* Leave word for
+						      arg1 */
+	{ /* targeteip(ci); */
+		uint32_t *arg = (uint32_t *) initctx->user_regs.esp;
+		arg[1] = (uint32_t) ci; /* arg1 */
+
+	}
+
+	initctx->user_regs.eip = (vaddr_t) targeteip;
+	initctx->user_regs.cs = GSEL(GCODE_SEL, SEL_KPL);
+	initctx->user_regs.eflags |= pcb->pcb_iopl;
+
+	/* Data segments */
+	initctx->user_regs.ss = GSEL(GDATA_SEL, SEL_KPL);
+	initctx->user_regs.es = GSEL(GDATA_SEL, SEL_KPL);
+	initctx->user_regs.ds = GSEL(GDATA_SEL, SEL_KPL);
+	initctx->user_regs.fs = GSEL(GDATA_SEL, SEL_KPL);
+
+	/* GDT */
+	memcpy(initctx->gdt_frames, frames, sizeof frames);
+	initctx->gdt_ents = gdt_ents;
+
+	/* LDT */
+	initctx->ldt_base = (unsigned long) ldt;
+	initctx->ldt_ents = NLDT;
+
+	/* Kernel context state */
+	initctx->kernel_ss = GSEL(GDATA_SEL, SEL_KPL);
+	initctx->kernel_sp = pcb->pcb_esp0;
+	initctx->ctrlreg[0] = pcb->pcb_cr0;
+	initctx->ctrlreg[1] = 0; /* "resuming" from kernel - no User cr3. */
+	initctx->ctrlreg[2] = pcb->pcb_cr2; /* XXX: */
+	/* 
+	 * Use pmap_kernel() L4 PD directly, until we setup the
+	 * per-cpu L4 PD in pmap_cpu_init_late()
+	 */
+	initctx->ctrlreg[3] = xpmap_ptom(pcb->pcb_cr3);
+	initctx->ctrlreg[4] = /* CR4_PAE |  */CR4_OSFXSR | CR4_OSXMMEXCPT;
+
+
+	/* Xen callbacks */
+	initctx->event_callback_eip = (unsigned long) hypervisor_callback;
+	initctx->event_callback_cs = GSEL(GCODE_SEL, SEL_KPL);
+	initctx->failsafe_callback_eip = (unsigned long) failsafe_callback;
+	initctx->failsafe_callback_cs = GSEL(GCODE_SEL, SEL_KPL);
+
+	return;
+}
+#endif /* __x86_64__ */
 
 int
 mp_cpu_start(struct cpu_info *ci, vaddr_t target)
@@ -1025,7 +1047,11 @@ mp_cpu_start(struct cpu_info *ci, vaddr_t target)
 	KASSERT(ci != &cpu_info_primary);
 	KASSERT(ci->ci_flags & CPUF_AP);
 
+#ifdef __x86_64__
 	xen_init_amd64_vcpuctxt(ci, &vcpuctx, (void (*)(struct cpu_info *))target);
+#else  /* i386 */
+	xen_init_i386_vcpuctxt(ci, &vcpuctx, (void (*)(struct cpu_info *))target);
+#endif /* __x86_64__ */
 
 	/* Initialise the given vcpu to execute cpu_hatch(ci); */
 	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_initialise, ci->ci_cpuid, &vcpuctx))) {
