@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.c,v 1.1.1.5 2011/03/02 19:32:37 tron Exp $	*/
+/*	$NetBSD: smtpd_check.c,v 1.1.1.6 2011/07/31 10:02:56 tron Exp $	*/
 
 /*++
 /* NAME
@@ -3194,6 +3194,7 @@ static const SMTPD_RBL_STATE *find_dnsxl_domain(SMTPD_STATE *state,
     const char *domain;
     const char *reply_addr;
     const char *byte_codes;
+    const char *suffix;
 
     /*
      * Extract the domain, tack on the RBL domain name and query the DNS for
@@ -3205,7 +3206,16 @@ static const SMTPD_RBL_STATE *find_dnsxl_domain(SMTPD_STATE *state,
 	    return (SMTPD_CHECK_DUNNO);
     } else
 	domain = what;
-    if (domain[0] == 0)
+
+    /*
+     * XXX Some Spamhaus RHSBL rejects lookups with "No IP queries" even if
+     * the name has an alphanumerical prefix. We play safe, and skip both
+     * RHSBL and RHSWL queries for names ending in a numerical suffix.
+     */
+    if (domain[0] == 0 || valid_hostname(domain, DONT_GRIPE) == 0)
+	return (SMTPD_CHECK_DUNNO);
+    suffix = strrchr(domain, '.');
+    if (alldig(suffix == 0 ? domain : suffix + 1))
 	return (SMTPD_CHECK_DUNNO);
 
     query = vstring_alloc(100);
@@ -3836,8 +3846,7 @@ static int generic_checks(SMTPD_STATE *state, ARGV *restrictions,
 			 name);
 	    else {
 		cpp += 1;
-		if (state->helo_name
-		    && valid_hostname(state->helo_name, DONT_GRIPE))
+		if (state->helo_name)
 		    status = reject_rbl_domain(state, *cpp, state->helo_name,
 					       SMTPD_NAME_HELO);
 	    }
@@ -5241,6 +5250,7 @@ int     main(int argc, char **argv)
     string_init();
     int_init();
     smtpd_check_init();
+    smtpd_expand_init();
     smtpd_state_init(&state, VSTREAM_IN, "smtpd");
     state.queue_id = "<queue id>";
 
