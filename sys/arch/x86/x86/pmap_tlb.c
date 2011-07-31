@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.3.2.3 2011/07/31 20:49:11 cherry Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.3.2.4 2011/07/31 20:55:22 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008-2011 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3.2.3 2011/07/31 20:49:11 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3.2.4 2011/07/31 20:55:22 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3.2.3 2011/07/31 20:49:11 cherry Exp 
 #endif /* XEN */
 #include <x86/i82489reg.h>
 #include <x86/i82489var.h>
-#undef MULTIPROCESSOR
+
 /*
  * TLB shootdown structures.
  */
