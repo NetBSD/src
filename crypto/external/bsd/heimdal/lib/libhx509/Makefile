@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/07/31 06:49:03 plunky Exp $
+# $NetBSD: Makefile,v 1.4 2011/07/31 09:58:19 plunky Exp $
 
 NOLINT=		# defined
 
@@ -82,8 +82,6 @@ ASN1_FILES.ocsp.asn1 =			\
 	asn1_id_pkix_ocsp.x             \
 	asn1_id_pkix_ocsp_basic.x       \
 	asn1_id_pkix_ocsp_nonce.x
-
-CLEANFILES+=	ocsp_asn1-template.c
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.lib.mk>
