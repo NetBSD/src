@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.23.2.1 2011/06/03 13:27:37 cherry Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.23.2.2 2011/07/31 20:49:10 cherry Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.23.2.1 2011/06/03 13:27:37 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.23.2.2 2011/07/31 20:49:10 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -82,7 +82,9 @@ void kdbprinttrap(int, int);
 #ifdef MULTIPROCESSOR
 extern void ddb_ipi(struct trapframe);
 static void ddb_suspend(struct trapframe *);
+#ifndef XEN
 int ddb_vec;
+#endif /* XEN */
 static bool ddb_mp_online;
 #endif
 

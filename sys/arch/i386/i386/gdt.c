@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.50 2009/11/21 03:11:00 rmind Exp $	*/
+/*	$NetBSD: gdt.c,v 1.50.10.1 2011/07/31 20:49:10 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.50 2009/11/21 03:11:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.50.10.1 2011/07/31 20:49:10 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -207,17 +207,28 @@ gdt_init_cpu(struct cpu_info *ci)
 		KASSERT(va >= VM_MIN_KERNEL_ADDRESS);
 		ptp = kvtopte(va);
 		frames[f] = *ptp >> PAGE_SHIFT;
-		pmap_pte_clearbits(ptp, PG_RW);
+		{ 
+		   /* 
+		    * pmap_pte_clearbits(ptp, PG_RW);
+		    * but without spl(), since %fs is not setup
+		    * properly yet, ie; curcpu() won't work at this
+		    * point and spl() will break.
+		    */
+		   xpq_queue_lock();
+		   xpq_queue_pte_update(xpmap_ptetomach(ptp),
+					*ptp & ~PG_RW);
+		   xpq_flush_queue();
+		   xpq_queue_unlock();
+		}
 	}
-	/* printk("loading gdt %x, %d entries, %d pages", */
-	    /* frames[0] << PAGE_SHIFT, gdt_size[0], len >> PAGE_SHIFT); */
+
 	if (HYPERVISOR_set_gdt(frames, gdt_size[0]))
 		panic("HYPERVISOR_set_gdt failed!\n");
 	lgdt_finish();
 #endif
 }
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && !defined(XEN)
 
 void
 gdt_reload_cpu(struct cpu_info *ci)

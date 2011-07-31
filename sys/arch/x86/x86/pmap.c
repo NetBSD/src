@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.121.2.3 2011/07/16 10:59:46 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.121.2.4 2011/07/31 20:49:11 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121.2.3 2011/07/16 10:59:46 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121.2.4 2011/07/31 20:49:11 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -572,7 +572,7 @@ static void		 pmap_remove_ptes(struct pmap *, struct vm_page *,
 					  vaddr_t, vaddr_t, vaddr_t,
 					  struct pv_entry **);
 
-static bool		 pmap_get_physpage(vaddr_t, int, paddr_t *);
+static bool		 pmap_get_physpage(vaddr_t, paddr_t *);
 static void		 pmap_alloc_level(pd_entry_t * const *, vaddr_t, int,
 					  long *);
 
@@ -989,7 +989,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		npte = pa;
 	} else
 #endif /* DOM0OPS */
-		npte = pmap_pa2pte(pa);
+	{	npte = pmap_pa2pte(pa); 		}
 	npte |= protection_codes[prot] | PG_k | PG_V | pmap_pg_g;
 	npte |= pmap_pat_flags(flags);
 	opte = pmap_pte_testset(pte, npte); /* zap! */
@@ -4108,7 +4108,7 @@ out2:
 }
 
 static bool
-pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
+pmap_get_physpage(vaddr_t va, paddr_t *paddrp)
 {
 	struct vm_page *ptp;
 	struct pmap *kpm = pmap_kernel();
@@ -4182,36 +4182,36 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 
 
 		for (i = index; i <= endindex; i++) {
+			pt_entry_t pte;
 			KASSERT(!pmap_valid_entry(pdep[i]));
-			pmap_get_physpage(va, level - 1, &pa);
+			pmap_get_physpage(va, &pa);
+			pte = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
 #ifdef XEN
 			xpq_queue_lock();
 			switch (level) {
-			case PTP_LEVELS: /* L4 */
+			case PTP_LEVELS: 
+#ifdef __x86_64__
+				/* update the per-cpu L4 */
 				xpq_queue_pte_update(
-					xpmap_ptom(pmap_pdirpa(pmap_kernel(), i)),
-					pmap_pa2pte(pa) | PG_k | PG_V | PG_RW);
-				xpq_queue_pte_update(
-					xpmap_ptom(ci_pdirpa(&cpu_info_primary, i)),
-					pmap_pa2pte(pa) | PG_k | PG_V | PG_RW);
+					xpmap_ptom(ci_pdirpa(&cpu_info_primary, i)), pte);
+#endif /* __x86_64__ */
+#ifdef PAE
+				if (i > L2_SLOT_KERN) {
+					/* update real kernel PD too */
+					xpq_queue_pte_update(
+						xpmap_ptetomach(&pmap_kl2pd[l2tol2(i)]), pte);
+				}
+#endif
+				/* FALLTHROUGH */
 
-				break;
 			default: /* All other levels */
 				xpq_queue_pte_update(
-					xpmap_ptetomach(&pdep[i]),
-					pmap_pa2pte(pa) | PG_k | PG_V | PG_RW);
+					xpmap_ptetomach(&pdep[i]), 
+					pte);
 			}
-#ifdef PAE
-			if (level == PTP_LEVELS &&  i > L2_SLOT_KERN) {
-				/* update real kernel PD too */
-				xpq_queue_pte_update(
-				    xpmap_ptetomach(&pmap_kl2pd[l2tol2(i)]),
-				    pmap_pa2pte(pa) | PG_k | PG_V | PG_RW);
-			}
-#endif
 			xpq_queue_unlock();
 #else /* XEN */
-			pdep[i] = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
+			pdep[i] = pte;
 #endif /* XEN */
 			KASSERT(level != PTP_LEVELS || nkptp[level - 1] +
 			    pl_i(VM_MIN_KERNEL_ADDRESS, level) == i);
