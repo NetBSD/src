@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.54 2009/09/07 13:31:44 tsutsui Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.55 2011/07/31 18:39:00 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #ifndef _DEV_IC_NCR53C9XVAR_H_
 #define _DEV_IC_NCR53C9XVAR_H_
 
-#include <sys/simplelock.h>
+#include <sys/mutex.h>
 
 /* Set this to 1 for normal debug, or 2 for per-target tracing. */
 /* #define NCR53C9X_DEBUG		1 */
@@ -335,7 +335,7 @@ struct ncr53c9x_softc {
 	int sc_minsync;		/* Minimum sync period / 4 */
 	int sc_maxxfer;		/* Maximum transfer size */
 
-	struct simplelock sc_lock;/* driver mutex */
+	kmutex_t sc_lock;	/* driver mutex */
 };
 
 /* values for sc_state */
