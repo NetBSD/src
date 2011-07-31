@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.50 2011/07/10 23:21:59 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.51 2011/07/31 15:39:29 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -228,7 +228,9 @@
  * CPP function renaming macros.
  */
 
-#if defined(MIPS3)
+#if defined(MIPS3_LOONGSON2)
+#define	MIPSX(name)	__CONCAT(loongson2_,name)
+#elif defined(MIPS3)
 #define	MIPSX(name)	__CONCAT(mips3_,name)
 #endif
 
@@ -1639,7 +1641,10 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 #endif
 	tlbwi					# write TLB
 	COP0_SYNC
-#ifdef MIPS3
+#ifdef MIPS3_LOONGSON2
+	li	k0, 4				# ugly
+	mtc0	k0, MIPS_COP_0_DIAG		# invalidate ITLB
+#elif defined(MIPS3)
 	nop
 	nop
 #endif
@@ -1671,7 +1676,10 @@ MIPSX(kern_tlbi_odd):
 #endif
 	tlbwi					# update TLB
 	COP0_SYNC
-#ifdef MIPS3
+#ifdef MIPS3_LOONGSON2
+	li	k0, 4				# ugly
+	mtc0	k0, MIPS_COP_0_DIAG		# invalidate ITLB
+#elif defined(MIPS3)
 	nop
 	nop
 #endif
@@ -1753,7 +1761,10 @@ LEAF(MIPSX(tlb_update))
 	COP0_SYNC
 	tlbwi					# update slot found
 	COP0_SYNC
-#ifdef MIPS3
+#ifdef MIPS3_LOONGSON2
+	li	v0, 4				# ugly
+	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
+#elif defined(MIPS3)
 	nop					# required for QED5230
 	nop					# required for QED5230
 #endif
@@ -1772,7 +1783,10 @@ LEAF(MIPSX(tlb_update))
 	COP0_SYNC
 	tlbwi					# update slot found
 	COP0_SYNC
-#ifdef MIPS3
+#ifdef MIPS3_LOONGSON2
+	li	v0, 4				# ugly
+	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
+#elif defined(MIPS3)
 	nop					# required for QED5230
 	nop					# required for QED5230
 #endif
@@ -1890,7 +1904,10 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 
 	tlbwi
 	COP0_SYNC
-#ifdef MIPS3
+#ifdef MIPS3_LOONGSON2
+	li	v0, 4				# ugly
+	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
+#elif defined(MIPS3)
 	nop
 	nop
 #endif
@@ -1956,6 +1973,12 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	_MFC0	t0, MIPS_COP_0_TLB_HI		# restore PID.
 	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
+
+#ifdef MIPS3_LOONGSON2
+	li	v0, 4				# ugly
+	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
+#endif
+
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	JR_HB_RA				# new ASID will be set soon
 END(MIPSX(tlb_invalidate_asids))
@@ -2005,6 +2028,12 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_globals))
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore current ASID
 	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
+
+#ifdef MIPS3_LOONGSON2
+	li	v0, 4				# ugly
+	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
+#endif
+
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	JR_HB_RA
 END(MIPSX(tlb_invalidate_globals))
@@ -2047,6 +2076,12 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_all))
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore ASID
 	mtc0	t2, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
+
+#ifdef MIPS3_LOONGSON2
+	li	v0, 4				# ugly
+	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
+#endif
+
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	JR_HB_RA
 END(MIPSX(tlb_invalidate_all))
@@ -2204,6 +2239,12 @@ LEAF(MIPSX(tlb_enter))
 	COP0_SYNC
 
 	_MTC0	ta1, MIPS_COP_0_TLB_HI		# restore EntryHi
+
+#ifdef MIPS3_LOONGSON2
+	li	v0, 4				# ugly
+	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
+#endif
+
 	JR_HB_RA
 	.set	at
 END(MIPSX(tlb_enter))
@@ -2432,6 +2473,12 @@ LEAF(MIPSX(tlb_write_indexed))
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# Restore the PID.
 	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	# Restore page mask.
 	COP0_SYNC
+
+#ifdef MIPS3_LOONGSON2
+	li	v0, 4				# ugly
+	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
+#endif
+
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 	JR_HB_RA
 END(MIPSX(tlb_write_indexed))

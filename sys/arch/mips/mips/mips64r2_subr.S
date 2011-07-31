@@ -1,7 +1,8 @@
-/*	$NetBSD: mips64r2_subr.S,v 1.1 2011/03/15 07:39:22 matt Exp $	*/
+/*	$NetBSD: mips64r2_subr.S,v 1.2 2011/07/31 15:39:29 matt Exp $	*/
 
 #undef MIPS1
 #undef MIPS3
+#undef MIPS3_LOONGSON2
 #undef MIPS32
 #undef MIPS32R2
 #undef MIPS64

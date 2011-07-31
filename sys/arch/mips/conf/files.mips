@@ -1,13 +1,13 @@
-#	$NetBSD: files.mips,v 1.70 2011/06/12 03:35:43 rmind Exp $
+#	$NetBSD: files.mips,v 1.71 2011/07/31 15:39:28 matt Exp $
 #
 
 defflag	opt_cputype.h		NOFPU FPEMUL
 				MIPS64_SB1
-				MIPS3_LOONGSON2F
 				ENABLE_MIPS_16KB_PAGE
 				MIPS64_XLP MIPS64_XLR MIPS64_XLS
 					# and the rest...
 					# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
+					# MIPS3_LOONGSON2
 					# MIPS32 MIPS32R2 MIPS64 MIPS64R2
 					# MIPS3_4100
 					# ENABLE_MIPS_4KB_PAGE
@@ -27,6 +27,7 @@ file	arch/mips/mips/mips32_subr.S		mips32
 file	arch/mips/mips/mips32r2_subr.S		mips32r2
 file	arch/mips/mips/mips64_subr.S		mips64
 file	arch/mips/mips/mips64r2_subr.S		mips64r2
+file	arch/mips/mips/loongson2_subr.S		mips3_loongson2
 file	arch/mips/mips/sigcode.S
 file	arch/mips/mips/copy.S
 file	arch/mips/mips/lock_stubs_llsc.S	multiprocessor
