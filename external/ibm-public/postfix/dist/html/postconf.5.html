@@ -7657,6 +7657,8 @@ Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 The default time unit is s (seconds).
 </p>
 
+<p> This feature is available in Postfix 2.8 and later.  </p>
+
 
 </DD>
 
@@ -7689,6 +7691,8 @@ software either retries or aborts the operation. </p>
 Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 The default time unit is s (seconds).
 </p>
+
+<p> This feature is available in Postfix 2.8 and later.  </p>
 
 
 </DD>
@@ -15205,7 +15209,7 @@ instead of the client's cipher preference order. </p>
 <p> By default, the OpenSSL server selects the client's most preferred
 cipher that the server supports. With SSLv3 and later, the server may
 choose its own most preferred cipher that is supported (offered) by
-the client. Setting "<a href="postconf.5.html#tls_preempts_cipherlist">tls_preempt_cipherlist</a> = yes" enables server cipher
+the client. Setting "<a href="postconf.5.html#tls_preempt_cipherlist">tls_preempt_cipherlist</a> = yes" enables server cipher
 preferences. </p>
 
 <p> While server cipher selection may in some cases lead to a more secure

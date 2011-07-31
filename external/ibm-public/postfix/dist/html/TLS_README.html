@@ -865,9 +865,9 @@ cipher from a list supplied by the server. </p>
 <p> By default, the OpenSSL server selects the client's most preferred
 cipher that the server supports. With SSLv3 and later, the server
 may choose its own most preferred cipher that is supported (offered)
-by the client. Setting "<a href="postconf.5.html#tls_preempts_cipherlist">tls_preempt_cipherlist</a> = yes" enables server
+by the client. Setting "<a href="postconf.5.html#tls_preempt_cipherlist">tls_preempt_cipherlist</a> = yes" enables server
 cipher preferences. The default OpenSSL behaviour applies with
-"<a href="postconf.5.html#tls_preempts_cipherlist">tls_preempt_cipherlist</a> = no". </p>
+"<a href="postconf.5.html#tls_preempt_cipherlist">tls_preempt_cipherlist</a> = no". </p>
 
 <p> While server cipher selection may in some cases lead to a more secure
 or performant cipher choice, there is some risk of interoperability
