@@ -1,4 +1,4 @@
-/*	$NetBSD: atomicio.c,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
+/*	$NetBSD: atomicio.c,v 1.4 2011/08/01 15:55:00 christos Exp $	*/
 /* $OpenBSD: atomicio.c,v 1.26 2010/09/22 22:58:51 djm Exp $ */
 /*
  * Copyright (c) 2006 Damien Miller. All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: atomicio.c,v 1.3 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: atomicio.c,v 1.4 2011/08/01 15:55:00 christos Exp $");
 #include <sys/param.h>
 #include <sys/uio.h>
 
@@ -52,7 +52,11 @@ atomicio6(ssize_t (*f) (int, void *, size_t), int fd, void *_s, size_t n,
 	struct pollfd pfd;
 
 	pfd.fd = fd;
-	pfd.events = f == read ? POLLIN : POLLOUT;
+	/*
+	 * check for vwrite instead of read to avoid read being renamed
+	 * by SSP issues
+	 */
+	pfd.events = f == vwrite ? POLLOUT : POLLIN;
 	while (n > pos) {
 		res = (f) (fd, s + pos, n - pos);
 		switch (res) {
