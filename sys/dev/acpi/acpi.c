@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.247 2011/07/17 02:32:01 jakllsch Exp $	*/
+/*	$NetBSD: acpi.c,v 1.248 2011/08/01 11:25:59 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.247 2011/07/17 02:32:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.248 2011/08/01 11:25:59 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -346,6 +346,46 @@ int
 acpi_check(device_t parent, const char *ifattr)
 {
 	return (config_search_ia(acpi_submatch, parent, ifattr, NULL) != NULL);
+}
+
+int
+acpi_reset(void)
+{
+	struct acpi_softc *sc = acpi_softc;
+	ACPI_GENERIC_ADDRESS *ResetReg;
+	ACPI_PCI_ID PciId;
+	ACPI_STATUS status;
+
+	if (sc == NULL)
+		return ENXIO;
+
+	ResetReg = &AcpiGbl_FADT.ResetRegister;
+
+	/* Check if the reset register is supported */
+	if (!(AcpiGbl_FADT.Flags & ACPI_FADT_RESET_REGISTER) ||
+	    !ResetReg->Address) {
+		return ENOENT;
+	}
+
+	switch (ResetReg->SpaceId) {
+	case ACPI_ADR_SPACE_PCI_CONFIG:
+		PciId.Segment = PciId.Bus = 0;
+		PciId.Device = ACPI_GAS_PCI_DEV(ResetReg->Address);
+		PciId.Function = ACPI_GAS_PCI_FUNC(ResetReg->Address);
+		status = AcpiOsWritePciConfiguration(&PciId,
+		    ACPI_GAS_PCI_REGOFF(ResetReg->Address),
+		    AcpiGbl_FADT.ResetValue, ResetReg->BitWidth);
+		break;
+	case ACPI_ADR_SPACE_SYSTEM_IO:
+	case ACPI_ADR_SPACE_SYSTEM_MEMORY:
+		status = AcpiReset();
+		break;
+	default:
+		status = AE_TYPE;
+		break;
+	}
+
+	return ACPI_FAILURE(status) ? EIO : 0;
 }
 
 /*
