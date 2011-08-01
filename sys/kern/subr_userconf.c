@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.24 2011/05/31 23:28:53 dyoung Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.25 2011/08/01 10:33:26 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.24 2011/05/31 23:28:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.25 2011/08/01 10:33:26 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,10 +304,16 @@ userconf_device(char *cmd, int *len, short *unit, short *state)
 	char *c;
 
 	c = cmd;
-	while (*c >= 'a' && *c <= 'z') {
-		l++;
+	while (!(!*c || *c == ' ' || *c == '\t' || *c == '\n'))
 		c++;
+	while (c > cmd) {
+		c--;
+		if (!((*c >= '0' && *c <= '9') || *c == '*')) {
+			c++;
+			break;
+		}
 	}
+	l = c - cmd;
 	if (*c == '*') {
 		s = FSTATE_STAR;
 		c++;
