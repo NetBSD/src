@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.2 2011/07/28 15:38:49 matt Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.3 2011/08/01 23:01:40 matt Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,14 +29,16 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.2 2011/07/28 15:38:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.3 2011/08/01 23:01:40 matt Exp $");
 
 #include <sys/param.h>
+#include <sys/bus.h>
 #include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/intr.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -52,9 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.2 2011/07/28 15:38:49 matt Exp $");
 #include <net/if_vlanvar.h>
 
 #include <net/bpf.h>
-
-#include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
