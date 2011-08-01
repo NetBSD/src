@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.19 2011/04/04 20:37:55 dyoung Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.20 2011/08/01 11:08:03 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.19 2011/04/04 20:37:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.20 2011/08/01 11:08:03 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.19 2011/04/04 20:37:55 dyoung
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/intr.h>
+#include <sys/malloc.h>
 
 #include <dev/pci/pcivar.h>
 
@@ -325,3 +326,93 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 
 	intr_disestablish(cookie);
 }
+
+#if NIOAPIC > 0
+/*
+ * experimental support for MSI, does support a single vector,
+ * no MSI-X, 8-bit APIC IDs
+ * (while it doesn't need the ioapic technically, it borrows
+ * from its kernel support)
+ */
+
+/* dummies, needed by common intr_establish code */
+static void
+msipic_hwmask(struct pic *pic, int pin)
+{
+}
+static void
+msipic_addroute(struct pic *pic, struct cpu_info *ci,
+		int pin, int vec, int type)
+{
+}
+
+static struct pic msi_pic = {
+	.pic_name = "msi",
+	.pic_type = PIC_SOFT,
+	.pic_vecbase = 0,
+	.pic_apicid = 0,
+	.pic_lock = __SIMPLELOCK_UNLOCKED,
+	.pic_hwmask = msipic_hwmask,
+	.pic_hwunmask = msipic_hwmask,
+	.pic_addroute = msipic_addroute,
+	.pic_delroute = msipic_addroute,
+	.pic_edge_stubs = ioapic_edge_stubs,
+};
+
+struct msi_hdl {
+	struct intrhand *ih;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	int co;
+};
+
+void *
+pci_msi_establish(struct pci_attach_args *pa, int level,
+		  int (*func)(void *), void *arg)
+{
+	int co;
+	void *ih;
+	struct msi_hdl *msih;
+	struct cpu_info *ci;
+	struct intrsource *s;
+	u_int32_t cr;
+
+	if (!pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSI, &co, 0))
+		return NULL;
+
+	ih = intr_establish(-1, &msi_pic, -1, IST_EDGE, level,
+			    func, arg, 0);
+	if (!ih)
+		return NULL;
+
+	msih = malloc(sizeof(*msih), M_DEVBUF, M_WAITOK);
+	msih->ih = ih;
+	msih->pc = pa->pa_pc;
+	msih->tag = pa->pa_tag;
+	msih->co = co;
+
+	ci = msih->ih->ih_cpu;
+	s = ci->ci_isources[msih->ih->ih_slot];
+	cr = pci_conf_read(pa->pa_pc, pa->pa_tag, co);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, co + 4,
+		       0xfee00000 | ci->ci_cpuid << 12);
+	if (cr & 0x800000) {
+		pci_conf_write(pa->pa_pc, pa->pa_tag, co + 8, 0);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, co + 12,
+			       s->is_idtvec | 0x4000);
+	} else
+		pci_conf_write(pa->pa_pc, pa->pa_tag, co + 8,
+			       s->is_idtvec | 0x4000);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, co, 0x10000);
+	return ih;
+}
+
+void
+pci_msi_disestablish(void *ih)
+{
+	struct msi_hdl *msih = ih;
+
+	pci_conf_write(msih->pc, msih->tag, msih->co, 0);
+	intr_disestablish(msih->ih);
+}
+#endif
