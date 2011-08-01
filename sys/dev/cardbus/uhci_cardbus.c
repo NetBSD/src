@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.19 2010/05/25 08:37:10 pgoyette Exp $	*/
+/*	$NetBSD: uhci_cardbus.c,v 1.20 2011/08/01 11:20:28 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.19 2010/05/25 08:37:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.20 2011/08/01 11:20:28 drochner Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -131,8 +131,7 @@ uhci_cardbus_attach(device_t parent, device_t self,
 	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
 
 	/* Map and establish the interrupt. */
-	sc->sc_ih = Cardbus_intr_establish(ct, ca->ca_intrline,
-					   IPL_USB, uhci_intr, sc);
+	sc->sc_ih = Cardbus_intr_establish(ct, IPL_USB, uhci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n", devname);
 		return;
