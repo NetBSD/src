@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.134 2011/07/29 08:37:37 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.135 2011/08/01 10:18:23 mrg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -139,7 +139,8 @@ file	arch/sparc64/sparc64/rbus_machdep.c	cardbus
 #
 
 device zs {channel = -1}
-attach zs at sbus, fhc
+attach zs at sbus
+attach zs at fhc with zs_fhc
 file	arch/sparc64/dev/zs.c			zs needs-flag
 file	dev/ic/z8530sc.c			zs
 
