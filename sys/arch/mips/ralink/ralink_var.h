@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_var.h,v 1.2 2011/07/28 15:38:49 matt Exp $	*/
+/*	$NetBSD: ralink_var.h,v 1.3 2011/08/01 23:01:40 matt Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 #ifndef _RALINK_VAR_H_
 #define _RALINK_VAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 extern void ralink_com_early(int);
 
