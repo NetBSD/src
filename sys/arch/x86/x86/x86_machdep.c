@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.52 2011/07/31 22:43:01 jmcneill Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.53 2011/08/01 11:26:31 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.52 2011/07/31 22:43:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.53 2011/08/01 11:26:31 jmcneill Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -906,8 +906,9 @@ x86_reset(void)
 	 * defined in the FADT.
 	 */
 	if (acpi_active) {
-		if (AcpiReset() != AE_NOT_EXIST)
+		if (acpi_reset() == 0) {
 			delay(500000); /* wait 0.5 sec to see if that did it */
+		}
 	}
 #endif
 
