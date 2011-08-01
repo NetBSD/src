@@ -1,0 +1,16 @@
+# $NetBSD: spdmem.ioconf,v 1.1 2011/08/01 03:51:05 pgoyette Exp $
+
+ioconf spdmem
+
+include "conf/files"
+
+pseudo-root iic*
+
+spdmem0 at iic? addr 0x50
+spdmem1 at iic? addr 0x51
+spdmem2 at iic? addr 0x52
+spdmem3 at iic? addr 0x53
+spdmem4 at iic? addr 0x54
+spdmem5 at iic? addr 0x55
+spdmem6 at iic? addr 0x56
+spdmem7 at iic? addr 0x57
