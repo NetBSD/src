@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.34 2010/03/18 20:54:56 dyoung Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.35 2011/08/01 11:20:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.34 2010/03/18 20:54:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.35 2011/08/01 11:20:27 drochner Exp $");
 
 #include "opt_ahc_cardbus.h"
 
@@ -192,8 +192,7 @@ ahc_cardbus_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Establish the interrupt.
 	 */
-	ahc->ih = Cardbus_intr_establish(ct, ca->ca_intrline, IPL_BIO,
-	    ahc_intr, ahc);
+	ahc->ih = Cardbus_intr_establish(ct, IPL_BIO, ahc_intr, ahc);
 	if (ahc->ih == NULL) {
 		printf("%s: unable to establish interrupt\n",
 		    ahc_name(ahc));

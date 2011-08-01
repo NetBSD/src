@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.33 2010/04/19 07:05:15 kiyohara Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.34 2011/08/01 11:20:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.33 2010/04/19 07:05:15 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.34 2011/08/01 11:20:27 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,8 +121,7 @@ fwohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	Cardbus_conf_write(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE);
 
-	sc->sc_ih = Cardbus_intr_establish(ct, ca->ca_intrline,
-					   IPL_BIO, fwohci_intr, sc);
+	sc->sc_ih = Cardbus_intr_establish(ct, IPL_BIO, fwohci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;

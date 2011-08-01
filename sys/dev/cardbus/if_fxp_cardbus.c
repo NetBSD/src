@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.47 2010/03/18 20:52:43 dyoung Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.48 2011/08/01 11:20:27 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.47 2010/03/18 20:52:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.48 2011/08/01 11:20:27 drochner Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -91,7 +91,6 @@ static void fxp_cardbus_disable(struct fxp_softc *);
 struct fxp_cardbus_softc {
 	struct fxp_softc sc;
 	cardbus_devfunc_t ct;
-	cardbus_intr_line_t intrline;
 	pcitag_t tag;
 	pcireg_t base0_reg;
 	pcireg_t base1_reg;
@@ -133,7 +132,6 @@ fxp_cardbus_attach(device_t parent, device_t self,
 	bus_addr_t adr;
 
 	sc->sc_dev = self;
-	csc->intrline = ca->ca_intrline;
 	csc->ct = ca->ca_ct;
 	csc->tag = ca->ca_tag;
 
@@ -220,8 +218,7 @@ fxp_cardbus_enable(struct fxp_softc * sc)
 
 	/* Map and establish the interrupt. */
 
-	sc->sc_ih = Cardbus_intr_establish(ct, csc->intrline, IPL_NET,
-	    fxp_intr, sc);
+	sc->sc_ih = Cardbus_intr_establish(ct, IPL_NET, fxp_intr, sc);
 	if (NULL == sc->sc_ih) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
 		return 1;

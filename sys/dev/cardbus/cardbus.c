@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.107 2010/03/04 22:37:38 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.108 2011/08/01 11:20:27 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.107 2010/03/04 22:37:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.108 2011/08/01 11:20:27 drochner Exp $");
 
 #include "opt_cardbus.h"
 
@@ -112,7 +112,6 @@ cardbusattach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	sc->sc_bus = cba->cba_bus;
-	sc->sc_intrline = cba->cba_intrline;
 	sc->sc_cacheline = cba->cba_cacheline;
 	sc->sc_max_lattimer = MIN(0xf8, cba->cba_max_lattimer);
 
@@ -588,8 +587,6 @@ cardbus_rescan(device_t self, const char *ifattr,
 		ca.ca_id = id;
 		ca.ca_class = class;
 
-		ca.ca_intrline = sc->sc_intrline;
-
 		if (cis_ptr != 0) {
 #define TUPLESIZE 2048
 			u_int8_t *tuple = malloc(TUPLESIZE, M_DEVBUF, M_WAITOK);
@@ -708,9 +705,9 @@ cardbus_childdetached(device_t self, device_t child)
 
 void *
 Cardbus_intr_establish(cardbus_devfunc_t ct,
-    cardbus_intr_line_t irq, int level, int (*func)(void *), void *arg)
+    int level, int (*func)(void *), void *arg)
 {
-	return cardbus_intr_establish(ct->ct_cc, ct->ct_cf, irq, level, func,
+	return cardbus_intr_establish(ct->ct_cc, ct->ct_cf, level, func,
 	    arg);
 }
 
@@ -723,11 +720,11 @@ Cardbus_intr_establish(cardbus_devfunc_t ct,
  */
 void *
 cardbus_intr_establish(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
-    cardbus_intr_line_t irq, int level, int (*func)(void *), void *arg)
+    int level, int (*func)(void *), void *arg)
 {
 
-	DPRINTF(("- cardbus_intr_establish: irq %d\n", irq));
-	return ((*cf->cardbus_intr_establish)(cc, irq, level, func, arg));
+	DPRINTF(("- cardbus_intr_establish\n"));
+	return ((*cf->cardbus_intr_establish)(cc, level, func, arg));
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_cardbus.c,v 1.14 2010/11/13 13:51:58 uebayasi Exp $ */
+/* $NetBSD: siisata_cardbus.c,v 1.15 2011/08/01 11:20:28 drochner Exp $ */
 /* Id: siisata_pci.c,v 1.11 2008/05/21 16:20:11 jakllsch Exp  */
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.14 2010/11/13 13:51:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.15 2011/08/01 11:20:28 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -215,8 +215,7 @@ siisata_cardbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = ca->ca_dmat;
 
 	/* map interrupt */
-	csc->sc_ih = Cardbus_intr_establish(ct, ca->ca_intrline, IPL_BIO,
-	    siisata_intr, sc);
+	csc->sc_ih = Cardbus_intr_establish(ct, IPL_BIO, siisata_intr, sc);
 	if (csc->sc_ih == NULL) {
 		Cardbus_conf_write(ct, ca->ca_tag, SIISATA_CARDBUS_BAR0, 0);
 		(*cf->cardbus_space_free)(cc, csc->sc_rbus_memt, sc->sc_grh,

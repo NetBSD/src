@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.29 2010/03/18 20:54:56 dyoung Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.30 2011/08/01 11:20:27 drochner Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.29 2010/03/18 20:54:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.30 2011/08/01 11:20:27 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.29 2010/03/18 20:54:56 dyoung Exp 
 
 struct com_cardbus_softc {
 	struct com_softc	cc_com;
-	cardbus_intr_line_t	cc_intrline;
 	void			*cc_ih;
 	cardbus_devfunc_t	cc_ct;
 	bus_addr_t		cc_addr;
@@ -211,7 +210,6 @@ com_cardbus_attach (device_t parent, device_t self, void *aux)
 	bus_space_tag_t		iot;
 
 	sc->sc_dev = self;
-	csc->cc_intrline = ca->ca_intrline;
 	csc->cc_ct = ca->ca_ct;
 	csc->cc_tag = ca->ca_tag;
 
@@ -297,8 +295,7 @@ com_cardbus_enable(struct com_softc *sc)
 	com_cardbus_setup(csc);
 
 	/* establish the interrupt. */
-	csc->cc_ih = Cardbus_intr_establish(ct, csc->cc_intrline,
-					    IPL_SERIAL, comintr, sc);
+	csc->cc_ih = Cardbus_intr_establish(ct, IPL_SERIAL, comintr, sc);
 	if (csc->cc_ih == NULL) {
 		aprint_error_dev(DEVICET(csc),
 		    "couldn't establish interrupt\n");

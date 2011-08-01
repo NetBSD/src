@@ -1,4 +1,4 @@
-/*	$Id: njata_cardbus.c,v 1.14 2011/02/21 02:31:59 itohy Exp $	*/
+/*	$Id: njata_cardbus.c,v 1.15 2011/08/01 11:20:28 drochner Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.14 2011/02/21 02:31:59 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.15 2011/08/01 11:20:28 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,8 +209,7 @@ njata_cardbus_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Establish the interrupt.
 	 */
-	sc->sc_ih = Cardbus_intr_establish(ct, ca->ca_intrline, IPL_BIO,
-	    njata32_intr, sc);
+	sc->sc_ih = Cardbus_intr_establish(ct, IPL_BIO, njata32_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error("%s: unable to establish interrupt\n",
 		    NJATA32NAME(sc));

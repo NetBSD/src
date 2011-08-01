@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.45 2010/07/27 21:05:04 jakllsch Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.46 2011/08/01 11:20:27 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.45 2010/07/27 21:05:04 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.46 2011/08/01 11:20:27 drochner Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -130,7 +130,6 @@ struct rtk_cardbus_softc {
 	pcireg_t sc_csr;
 	int sc_bar_reg;
 	pcireg_t sc_bar_val;
-	cardbus_intr_line_t sc_intrline;
 };
 
 CFATTACH_DECL_NEW(rtk_cardbus, sizeof(struct rtk_cardbus_softc),
@@ -184,7 +183,6 @@ rtk_cardbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
-	csc->sc_intrline = ca->ca_intrline;
 
 	t = rtk_cardbus_lookup(ca);
 	if (t == NULL) {
@@ -358,8 +356,7 @@ rtk_cardbus_enable(struct rtk_softc *sc)
 	/*
 	 * Map and establish the interrupt.
 	 */
-	csc->sc_ih = Cardbus_intr_establish(ct, csc->sc_intrline,
-	    IPL_NET, rtk_intr, sc);
+	csc->sc_ih = Cardbus_intr_establish(ct, IPL_NET, rtk_intr, sc);
 	if (csc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to establish interrupt\n");

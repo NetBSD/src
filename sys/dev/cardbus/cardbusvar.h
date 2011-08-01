@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.54 2010/03/15 19:50:50 dyoung Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.55 2011/08/01 11:20:27 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -79,7 +79,7 @@ typedef const struct cardbus_functions {
 	int (*cardbus_space_free)(cardbus_chipset_tag_t, rbus_tag_t,
 	    bus_space_handle_t, bus_size_t);
 	void *(*cardbus_intr_establish)(cardbus_chipset_tag_t,
-	    cardbus_intr_line_t, int, int (*)(void *), void *);
+	    int, int (*)(void *), void *);
 	void (*cardbus_intr_disestablish)(cardbus_chipset_tag_t, void *);
 	int (*cardbus_ctrl)(cardbus_chipset_tag_t, int);
 	int (*cardbus_power)(cardbus_chipset_tag_t, int);
@@ -103,7 +103,6 @@ struct cbslot_attach_args {
 
 	cardbus_chipset_tag_t cba_cc;	/* cardbus chipset */
 	cardbus_function_tag_t cba_cf; /* cardbus functions */
-	cardbus_intr_line_t cba_intrline; /* interrupt line */
 
 	rbus_tag_t cba_rbus_iot;	/* CardBus i/o rbus tag */
 	rbus_tag_t cba_rbus_memt;	/* CardBus mem rbus tag */
@@ -132,7 +131,6 @@ struct cardbus_softc {
 	device_t sc_dev;		/* fundamental device structure */
 
 	int sc_bus;			/* cardbus bus number */
-	cardbus_intr_line_t sc_intrline; /* CardBus intrline */
 
 	bus_space_tag_t sc_iot;		/* CardBus I/O space tag */
 	bus_space_tag_t sc_memt;	/* CardBus MEM space tag */
@@ -151,10 +149,6 @@ struct cardbus_softc {
 					 * the primary bus (PCI bus) sets
 					 * the maximum.
 					 */
-	int sc_volt;			/* applied Vcc voltage */
-#define PCCARD_33V  0x02
-#define PCCARD_XXV  0x04
-#define PCCARD_YYV  0x08
 	int sc_poweron_func;
   struct cardbus_devfunc *sc_funcs[8];	/* list of cardbus device functions */
 };
@@ -223,9 +217,6 @@ struct cardbus_attach_args {
 	pcireg_t ca_id;
 	pcireg_t ca_class;
 
-	/* interrupt information */
-	cardbus_intr_line_t ca_intrline;
-
 	rbus_tag_t ca_rbus_iot;		/* CardBus i/o rbus tag */
 	rbus_tag_t ca_rbus_memt;	/* CardBus mem rbus tag */
 
@@ -266,10 +257,10 @@ struct cardbus_attach_args {
 int cardbus_attach_card(struct cardbus_softc *);
 void cardbus_detach_card(struct cardbus_softc *);
 void *Cardbus_intr_establish(cardbus_devfunc_t,
-    cardbus_intr_line_t, int, int (*)(void *), void *);
+    int, int (*)(void *), void *);
 void Cardbus_intr_disestablish(cardbus_devfunc_t, void *);
 void *cardbus_intr_establish(cardbus_chipset_tag_t, cardbus_function_tag_t,
-    cardbus_intr_line_t, int, int (*) (void *), void *arg);
+    int, int (*) (void *), void *arg);
 void cardbus_intr_disestablish(cardbus_chipset_tag_t, cardbus_function_tag_t,
     void *);
 

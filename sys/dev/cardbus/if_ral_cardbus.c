@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.21 2010/03/18 20:51:42 dyoung Exp $	*/
+/*	$NetBSD: if_ral_cardbus.c,v 1.22 2011/08/01 11:20:27 drochner Exp $	*/
 /*	$OpenBSD: if_ral_cardbus.c,v 1.6 2006/01/09 20:03:31 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * CardBus front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.21 2010/03/18 20:51:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.22 2011/08/01 11:20:27 drochner Exp $");
 
 
 #include <sys/param.h>
@@ -89,7 +89,6 @@ struct ral_cardbus_softc {
 	void			*sc_ih;
 	bus_size_t		sc_mapsize;
 	pcireg_t		sc_bar_val;
-	cardbus_intr_line_t	sc_intrline;
 };
 
 int	ral_cardbus_match(device_t, cfdata_t, void *);
@@ -148,7 +147,6 @@ ral_cardbus_attach(device_t parent, device_t self,
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
-	csc->sc_intrline = ca->ca_intrline;
 
 	/* power management hooks */
 	sc->sc_enable = ral_cardbus_enable;
@@ -211,7 +209,7 @@ ral_cardbus_enable(struct rt2560_softc *sc)
 	ral_cardbus_setup(csc);
 
 	/* map and establish the interrupt handler */
-	csc->sc_ih = Cardbus_intr_establish(ct, csc->sc_intrline, IPL_NET,
+	csc->sc_ih = Cardbus_intr_establish(ct, IPL_NET,
 	    csc->sc_opns->intr, sc);
 	if (csc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev,

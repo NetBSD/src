@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_cardbus.c,v 1.2 2010/06/04 19:27:12 dyoung Exp $	*/
+/*	$NetBSD: sdhc_cardbus.c,v 1.3 2011/08/01 11:20:28 drochner Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_cardbus.c,v 1.2 2010/06/04 19:27:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_cardbus.c,v 1.3 2011/08/01 11:20:28 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -145,8 +145,7 @@ sdhc_cardbus_attach(device_t parent, device_t self, void *aux)
 	    csr | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE);
 
 	/* Establish the interrupt. */
-	sc->sc_ih = Cardbus_intr_establish(ct, ca->ca_intrline, IPL_SDMMC,
-	    sdhc_intr, &sc->sc);
+	sc->sc_ih = Cardbus_intr_establish(ct, IPL_SDMMC, sdhc_intr, &sc->sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		goto err;
