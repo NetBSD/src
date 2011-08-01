@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.80 2011/07/31 17:55:41 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.81 2011/08/01 03:51:05 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -55,6 +55,7 @@ SUBDIR+=	secmodel_bsd44
 SUBDIR+=	secmodel_overlay
 SUBDIR+=	securelevel
 SUBDIR+=	smbfs
+SUBDIR+=	spdmem
 SUBDIR+=	sysvbfs
 SUBDIR+=	suser
 SUBDIR+=	swsensor
