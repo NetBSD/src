@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.156 2011/03/31 06:28:42 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.157 2011/08/01 02:13:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.156 2011/03/31 06:28:42 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.157 2011/08/01 02:13:21 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.156 2011/03/31 06:28:42 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.157 2011/08/01 02:13:21 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1135,7 +1135,8 @@ Job_Touch(GNode *gn, Boolean silent)
     int		  streamID;   	/* ID of stream opened to do the touch */
     struct utimbuf times;	/* Times for utime() call */
 
-    if (gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC|OP_OPTIONAL|OP_PHONY)) {
+    if (gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC|OP_OPTIONAL|
+	OP_SPECIAL|OP_PHONY)) {
 	/*
 	 * .JOIN, .USE, .ZEROTIME and .OPTIONAL targets are "virtual" targets
 	 * and, as such, shouldn't really be created.
