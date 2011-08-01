@@ -1,4 +1,4 @@
-/*	$NetBSD: acpireg.h,v 1.11 2010/10/12 19:10:50 gsutre Exp $	*/
+/*	$NetBSD: acpireg.h,v 1.12 2011/08/01 11:25:59 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -60,6 +60,10 @@
 #define	ACPI_ADR_PCI_DEV(x)	(((x) >> 16) & 0xffff)
 #define	ACPI_ADR_PCI_FUNC(x)	((x) & 0xffff)
 #define	ACPI_ADR_PCI_ALLFUNCS	0xffff
+
+#define	ACPI_GAS_PCI_DEV(x)	(((x) >> 32) & 0xffff)
+#define	ACPI_GAS_PCI_FUNC(x)	(((x) >> 16) & 0xffff)
+#define	ACPI_GAS_PCI_REGOFF(x)	((x) & 0xffff)
 
 /*
  * ACPI driver components.
