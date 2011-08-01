@@ -1,30 +1,36 @@
-#	$NetBSD: Makefile,v 1.256 2011/05/09 08:51:18 manu Exp $
+#	$NetBSD: Makefile,v 1.257 2011/08/01 23:19:52 matt Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
 
-SUBDIR=	ac accton acpitools altq apm apmd arp bad144 bootp \
-	btattach btconfig btdevctl bthcid btpand catman \
-	chroot cnwctl cpuctl crash dev_mkdb \
-	dhcp diskpart dumpfs dumplfs edquota eeprom \
-	envstat eshconfig etcupdate extattrctl flashctl fssconfig fusermount \
-	fwctl gpioctl grfconfig gspa hdaudioctl ifwatchd inetd \
-	installboot \
-	iopctl iostat ipwctl irdaattach isdn iteconfig iwictl\
-	kgmon lastlogin ldpd link lmcconfig lockstat lpr mailwrapper makefs \
-	map-mbone mdconfig memswitch mlxctl mmcformat mopd mountd moused \
-	mrinfo mrouted mscdlabel mtrace \
-	mtree ndbootd ndiscvt netgroup_mkdb nfsd ofctl paxctl pcictl perfused \
-	pppd psrset pstat pwd_mkdb postinstall powerd puffs quot quotacheck \
-	quotactl quotaon rarpd rbootd rdate \
-	repquota rmt rpc.bootparamd rpc.lockd rpc.pcnfsd \
- 	rpc.statd rpcbind rwhod sa screenblank sdpd services_mkdb sesd \
-	schedctl sliplogin \
-	spray srtconfig sti sunlabel sup syslogd tadpolectl tcpdchk \
-	tcpdmatch tcpdrop timed tpctl traceroute trpt unlink \
-	usbdevs user videomode vipw veriexecgen vnconfig wake wiconfig \
-	wlanctl \
-	wsconscfg wsfontload wsmoused wsmuxctl zdump zic
+SUBDIR=	ac accton acpitools altq apm apmd arp \
+	bad144 bootp btattach btconfig btdevctl bthcid btpand catman \
+	chroot cnwctl cpuctl crash \
+	dev_mkdb dhcp diskpart dumpfs dumplfs \
+	edquota eeprom envstat eshconfig etcupdate extattrctl \
+	flashctl fssconfig fusermount fwctl \
+	gpioctl grfconfig gspa \
+	hdaudioctl \
+	ifwatchd inetd installboot iopctl iostat ipwctl irdaattach isdn \
+	iteconfig iwictl \
+	kgmon \
+	lastlogin ldpd link lmcconfig lockstat lpr \
+	mailwrapper makefs map-mbone mdconfig memswitch mlxctl mmcformat \
+	mopd mountd moused mrinfo mrouted mscdlabel mtrace mtree \
+	ndbootd ndiscvt netgroup_mkdb nfsd \
+	ofctl \
+	paxctl pcictl perfused pppd psrset pstat pwd_mkdb postinstall \
+	powerd puffs \
+	quot quotacheck quotactl quotaon \
+	rarpd rbootd rdate repquota rmt rpc.bootparamd rpc.lockd \
+	rpc.pcnfsd rpc.statd rpcbind rwhod \
+	sa screenblank sdpd services_mkdb sesd schedctl sliplogin spray \
+	srtconfig sti sunlabel sup syslogd \
+	tadpolectl tcpdchk tcpdmatch tcpdrop timed tpctl traceroute trpt \
+	unlink usbdevs user \
+	videomode vipw veriexecgen vnconfig \
+	wake wiconfig wlanctl wsconscfg wsfontload wsmoused wsmuxctl \
+	zdump zic
 
 .if (${MKYP} != "no")
 SUBDIR+= rpc.yppasswdd ypbind yppoll ypserv ypset
