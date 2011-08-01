@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.6 2011/04/04 20:37:55 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.7 2011/08/01 11:08:03 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -109,6 +109,10 @@ const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
+
+/* experimental MSI support */
+void *pci_msi_establish(struct pci_attach_args *, int, int (*)(void *), void *);
+void pci_msi_disestablish(void *);
 
 /*
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED
