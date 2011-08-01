@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.34 2011/07/26 08:36:02 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.35 2011/08/01 22:40:21 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.34 2011/07/26 08:36:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.35 2011/08/01 22:40:21 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ static void
 obio_setup_gpios(struct obio_softc *sc, int node)
 {
 	uint32_t gpio_base, reg[6];
-	struct sysctlnode *sysctl_node, *me, *freq;
+	const struct sysctlnode *sysctl_node, *me, *freq;
 	char name[32];
 	int child, use_dfs, cpunode, hiclock;
 
@@ -398,44 +398,41 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 	sysctl_node = NULL;
 
 	if (sysctl_createv(NULL, 0, NULL, 
-	    (const struct sysctlnode **)&me, 
+	    &me, 
 	    CTLFLAG_READWRITE, CTLTYPE_NODE, "intrepid", NULL, NULL,
 	    0, NULL, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL) != 0)
-		printf("couldn't create 'interpid' node\n");
+		printf("couldn't create 'intrepid' node\n");
 	
 	if (sysctl_createv(NULL, 0, NULL, 
-	    (const struct sysctlnode **)&freq, 
+	    &freq, 
 	    CTLFLAG_READWRITE, CTLTYPE_NODE, "frequency", NULL, NULL,
 	    0, NULL, 0, CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL) != 0)
 		printf("couldn't create 'frequency' node\n");
 
 	if (sysctl_createv(NULL, 0, NULL, 
-	    (const struct sysctlnode **)&sysctl_node, 
-	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC | CTLFLAG_IMMEDIATE,
+	    &sysctl_node, 
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
 	    CTLTYPE_INT, "target", "CPU speed", sysctl_cpuspeed_temp, 
-	    0, NULL, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
+	    0, sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
 	    CTL_CREATE, CTL_EOL) == 0) {
-		sysctl_node->sysctl_data = (void *)sc;
 	} else
 		printf("couldn't create 'target' node\n");
 
 	if (sysctl_createv(NULL, 0, NULL, 
-	    (const struct sysctlnode **)&sysctl_node, 
-	    CTLFLAG_READWRITE | CTLFLAG_IMMEDIATE,
+	    &sysctl_node, 
+	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "current", NULL, sysctl_cpuspeed_cur, 
-	    1, NULL, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
+	    1, sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
 	    CTL_CREATE, CTL_EOL) == 0) {
-		sysctl_node->sysctl_data = (void *)sc;
 	} else
 		printf("couldn't create 'current' node\n");
 
 	if (sysctl_createv(NULL, 0, NULL, 
-	    (const struct sysctlnode **)&sysctl_node, 
+	    &sysctl_node, 
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_STRING, "available", NULL, sysctl_cpuspeed_available, 
-	    2, NULL, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
+	    2, sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
 	    CTL_CREATE, CTL_EOL) == 0) {
-		sysctl_node->sysctl_data = (void *)sc;
 	} else
 		printf("couldn't create 'available' node\n");
 	printf("speed: %d\n", curcpu()->ci_khz);
@@ -518,12 +515,11 @@ sysctl_cpuspeed_temp(SYSCTLFN_ARGS)
 		default:
 			speed = -1;
 	}
-	node.sysctl_idata = mhz;
 	node.sysctl_data = &mhz;
 	if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
 		int new_reg;
 
-		new_reg = node.sysctl_idata;
+		new_reg = *(int *)node.sysctl_data;
 		if (new_reg == sc->sc_spd_lo) {
 			obio_set_cpu_speed(sc, 0);
 		} else if (new_reg == sc->sc_spd_hi) {
@@ -555,7 +551,6 @@ sysctl_cpuspeed_cur(SYSCTLFN_ARGS)
 		default:
 			speed = -1;
 	}
-	node.sysctl_idata = mhz;
 	node.sysctl_data = &mhz;
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
