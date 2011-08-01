@@ -1,4 +1,4 @@
-/*	$NetBSD: atrun.c,v 1.19 2008/04/05 20:17:37 christos Exp $	*/
+/*	$NetBSD: atrun.c,v 1.20 2011/08/01 12:28:54 mbalmer Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -59,7 +59,7 @@
 #if 0
 static char rcsid[] = "$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $";
 #else
-__RCSID("$NetBSD: atrun.c,v 1.19 2008/04/05 20:17:37 christos Exp $");
+__RCSID("$NetBSD: atrun.c,v 1.20 2011/08/01 12:28:54 mbalmer Exp $");
 #endif
 
 static int debug = 0;
@@ -366,7 +366,7 @@ int
 main(int argc, char *argv[])
 {
 	/*
-	 * Browse through  _PATH_ATJOBS, checking all the jobfiles wether
+	 * Browse through  _PATH_ATJOBS, checking all the jobfiles whether
 	 * they should be executed and or deleted. The queue is coded into
 	 * the first byte of the job filename, the date (in minutes since
 	 * Eon) as a hex number in the following eight bytes, followed by
