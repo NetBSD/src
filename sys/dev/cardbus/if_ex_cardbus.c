@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.54 2010/03/22 23:03:30 dyoung Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.55 2011/08/01 11:20:27 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.54 2010/03/22 23:03:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.55 2011/08/01 11:20:27 drochner Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -89,7 +89,6 @@ struct ex_cardbus_softc {
 	struct ex_softc sc_softc;
 
 	cardbus_devfunc_t sc_ct;
-	cardbus_intr_line_t sc_intrline;
 	uint8_t sc_cardbus_flags;
 #define EX_REATTACH		0x01
 #define EX_ABSENT		0x02
@@ -223,7 +222,6 @@ ex_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ca->ca_ct;
-	csc->sc_intrline = ca->ca_intrline;
 	csc->sc_tag = ca->ca_tag;
 
 	ecp = ex_cardbus_lookup(ca);
@@ -340,8 +338,7 @@ ex_cardbus_enable(struct ex_softc *sc)
 	Cardbus_function_enable(csc->sc_ct);
 	ex_cardbus_setup(csc);
 
-	sc->sc_ih = Cardbus_intr_establish(csc->sc_ct, csc->sc_intrline,
-	    IPL_NET, ex_intr, sc);
+	sc->sc_ih = Cardbus_intr_establish(csc->sc_ct, IPL_NET, ex_intr, sc);
 	if (NULL == sc->sc_ih) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
 		return (1);
