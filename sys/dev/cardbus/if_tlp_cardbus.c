@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.69 2011/07/26 20:51:23 dyoung Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.70 2011/08/01 11:20:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.69 2011/07/26 20:51:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.70 2011/08/01 11:20:27 drochner Exp $");
 
 #include "opt_inet.h"
 
@@ -102,8 +102,6 @@ struct tulip_cardbus_softc {
 
 	int	sc_bar_reg;		/* which BAR to use */
 	pcireg_t sc_bar_val;		/* value of the BAR */
-
-	cardbus_intr_line_t sc_intrline; /* interrupt line */
 };
 
 int	tlp_cardbus_match(device_t, cfdata_t, void *);
@@ -428,9 +426,6 @@ tlp_cardbus_attach(device_t parent, device_t self,
 		return;
 	}
 
-	/* Remember which interrupt line. */
-	csc->sc_intrline = ca->ca_intrline;
-
 	/*
 	 * Finish off the attach.
 	 */
@@ -494,8 +489,7 @@ tlp_cardbus_enable(struct tulip_softc *sc)
 	/*
 	 * Map and establish the interrupt.
 	 */
-	csc->sc_ih = Cardbus_intr_establish(ct, csc->sc_intrline, IPL_NET,
-	    tlp_intr, sc);
+	csc->sc_ih = Cardbus_intr_establish(ct, IPL_NET, tlp_intr, sc);
 	if (csc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev,
 				 "unable to establish interrupt\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.27 2010/03/18 20:54:56 dyoung Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.28 2011/08/01 11:20:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.27 2010/03/18 20:54:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.28 2011/08/01 11:20:27 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,8 +216,7 @@ adv_cardbus_attach(device_t parent, device_t self,
 	/*
 	 * Establish the interrupt.
 	 */
-	sc->sc_ih = Cardbus_intr_establish(ct, ca->ca_intrline, IPL_BIO,
-	    adv_intr, sc);
+	sc->sc_ih = Cardbus_intr_establish(ct, IPL_BIO, adv_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev,
 				 "unable to establish interrupt\n");

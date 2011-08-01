@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.40 2011/05/17 17:34:53 dyoung Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.41 2011/08/01 11:20:28 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.40 2011/05/17 17:34:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.41 2011/08/01 11:20:28 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.40 2011/05/17 17:34:53 dyoung Exp $")
 
 #include <dev/ic/i82365reg.h>
 
+#include <dev/cardbus/rbus.h>
 #include <dev/pci/pccbbreg.h>
 #include <dev/pci/pccbbvar.h>
 
@@ -641,10 +642,6 @@ ppb_cardbus_attach(device_t parent, device_t self, void *aux)
 	pciirq = 0;
 	rv = 0;
 
-	/* shut up compiler */
-	csc->foo = parent_sc->sc_intrline;
-
-
 	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(ca->ca_class));
 
@@ -695,7 +692,7 @@ ppb_cardbus_attach(device_t parent, device_t self, void *aux)
 	 * was assigned to this slot, as they will all arrive from
 	 * that IRQ.
 	 */
-	rbus_intr_fixup(psc->sc_pc, minbus, maxbus, ca->ca_intrline);
+	rbus_intr_fixup(psc->sc_pc, minbus, maxbus, 0);
 
 	/*
 	 * enable direct routing of interrupts. We do this because
