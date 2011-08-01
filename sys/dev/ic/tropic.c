@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.42 2010/04/05 07:19:37 joerg Exp $	*/
+/*	$NetBSD: tropic.c,v 1.43 2011/08/01 12:28:53 mbalmer Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.42 2010/04/05 07:19:37 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.43 2011/08/01 12:28:53 mbalmer Exp $");
 
 #include "opt_inet.h"
 
@@ -211,7 +211,7 @@ tr_config(struct tr_softc *sc)
 /*
  * XXX Not completely true because Fast Path Transmit has 514 byte buffers
  * XXX and TR_MAX_LINK_HDR is only correct when source-routing is used.
- * XXX depending on wether source routing is used change the calculation
+ * XXX depending on whether source routing is used change the calculation
  * XXX use IFM_TOK_SRCRT (IFF_LINK0)
  * XXX recompute sc_minbuf !!
  */
