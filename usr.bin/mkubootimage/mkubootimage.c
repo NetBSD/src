@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.7 2011/06/08 05:54:38 matt Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.8 2011/08/01 06:16:35 riz Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.7 2011/06/08 05:54:38 matt Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.8 2011/08/01 06:16:35 riz Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -60,6 +60,7 @@ static enum uboot_image_comp image_comp = IH_COMP_NONE;
 static uint32_t image_loadaddr = 0;
 static uint32_t image_entrypoint = 0;
 static char *image_name;
+static uint32_t image_magic = IH_MAGIC;
 
 struct uboot_os {
 	enum uboot_image_os os;
@@ -211,7 +212,7 @@ usage(void)
 	fprintf(stderr, " -C <none|gz|bz2>");
 	fprintf(stderr, " -O <openbsd|netbsd|freebsd|linux>");
 	fprintf(stderr, " -T <standalone|kernel|ramdisk|fs>");
-	fprintf(stderr, " -a <addr> [-e <ep>] -n <name>");
+	fprintf(stderr, " -a <addr> [-e <ep>] [-m <magic>] -n <name>");
 	fprintf(stderr, " <srcfile> <dstfile>\n");
 
 	exit(EXIT_FAILURE);
@@ -268,7 +269,7 @@ generate_header(struct uboot_image_header *hdr, int kernel_fd)
 	munmap(p, st.st_size);
 
 	memset(hdr, 0, sizeof(*hdr));
-	hdr->ih_magic = htonl(IH_MAGIC);
+	hdr->ih_magic = htonl(image_magic);
 	hdr->ih_time = htonl(st.st_mtime);
 	hdr->ih_size = htonl(st.st_size);
 	hdr->ih_load = htonl(image_loadaddr);
@@ -320,7 +321,7 @@ main(int argc, char *argv[])
 	int ch;
 	unsigned long num;
 
-	while ((ch = getopt(argc, argv, "A:C:O:T:a:e:hn:")) != -1) {
+	while ((ch = getopt(argc, argv, "A:C:O:T:a:e:hm:n:")) != -1) {
 		switch (ch) {
 		case 'A':	/* arch */
 			image_arch = get_arch(optarg);
@@ -350,6 +351,13 @@ main(int argc, char *argv[])
 				errx(1, "illegal number -- %s", optarg);
 			image_entrypoint = (uint32_t)num;
 			break;
+		case 'm':	/* magic */
+			errno = 0;
+			num = strtoul(optarg, &ep, 0);
+			if (*ep != '\0' || (errno == ERANGE &&
+			    (num == ULONG_MAX || num == 0)))
+				errx(1, "illegal number -- %s", optarg);
+			image_magic = (uint32_t)num;
 		case 'n':	/* name */
 			image_name = strdup(optarg);
 			break;
