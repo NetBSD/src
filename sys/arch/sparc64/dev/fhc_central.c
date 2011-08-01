@@ -1,4 +1,4 @@
-/*	$NetBSD: fhc_central.c,v 1.1 2011/07/29 08:37:36 mrg Exp $	*/
+/*	$NetBSD: fhc_central.c,v 1.2 2011/08/01 08:36:39 mrg Exp $	*/
 /*	$OpenBSD: fhc_central.c,v 1.5 2004/09/27 18:32:35 jason Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ fhc_central_match(device_t parent, cfdata_t match, void *aux)
 void
 fhc_central_attach(device_t parent, device_t self, void *aux)
 {
-	struct fhc_softc *sc = (struct fhc_softc *)self;
+	struct fhc_softc *sc = device_private(self);
 	struct central_attach_args *ca = aux;
 	u_int32_t board;
 

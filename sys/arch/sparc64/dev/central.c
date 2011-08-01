@@ -1,4 +1,4 @@
-/*	$NetBSD: central.c,v 1.1 2011/07/29 08:37:36 mrg Exp $	*/
+/*	$NetBSD: central.c,v 1.2 2011/08/01 08:36:39 mrg Exp $	*/
 /*	$OpenBSD: central.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ central_match(device_t parent, cfdata_t match, void *aux)
 static void
 central_attach(device_t parent, device_t self, void *aux)
 {
-	struct central_softc *sc = (struct central_softc *)self;
+	struct central_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	int node0, node;
 
