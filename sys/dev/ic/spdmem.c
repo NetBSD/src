@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.2 2010/06/29 04:42:30 pgoyette Exp $ */
+/* $NetBSD: spdmem.c,v 1.3 2011/08/01 03:49:52 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.2 2010/06/29 04:42:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.3 2011/08/01 03:49:52 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,8 +59,8 @@ static void decode_ddr2(const struct sysctlnode *, device_t, struct spdmem *);
 static void decode_ddr3(const struct sysctlnode *, device_t, struct spdmem *);
 static void decode_fbdimm(const struct sysctlnode *, device_t, struct spdmem *);
 
-static void decode_size_speed(const struct sysctlnode *, int, int, int, int,
-			      bool, const char *, int);
+static void decode_size_speed(device_t, const struct sysctlnode *,
+			      int, int, int, int, bool, const char *, int);
 static void decode_voltage_refresh(device_t, struct spdmem *);
 
 #define IS_RAMBUS_TYPE (s->sm_len < 4)
@@ -219,8 +219,7 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 	const char *type;
 	const char *rambus_rev = "Reserved";
 	int dimm_size;
-	int i;
-	unsigned int spd_len, spd_size;
+	unsigned int i, spd_len, spd_size;
 	const struct sysctlnode *node = NULL;
 
 	/*
@@ -262,7 +261,7 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 
 #ifdef DEBUG
 	for (i = 0; i < spd_len;  i += 16) {
-		int j, k;
+		unsigned int j, k;
 		aprint_debug("\n");
 		aprint_debug_dev(self, "0x%02x:", i);
 		k = (spd_len > i + 16) ? spd_len : i + 16;
@@ -276,13 +275,17 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 	/*
 	 * Setup our sysctl subtree, hw.spdmemN
 	 */
+	sc->sc_sysctl_log = NULL;
+#ifdef _MODULE
+	sysctl_spdmem_setup(&sc->sc_sysctl_log);
+#endif
 	if (hw_node != CTL_EOL)
-		sysctl_createv(NULL, 0, NULL, &node,
+		sysctl_createv(&sc->sc_sysctl_log, 0, NULL, &node,
 		    0, CTLTYPE_NODE,
 		    device_xname(self), NULL, NULL, 0, NULL, 0,
 		    CTL_HW, CTL_CREATE, CTL_EOL);
 	if (node != NULL && spd_len != 0)
-                sysctl_createv(NULL, 0, NULL, NULL,
+                sysctl_createv(&sc->sc_sysctl_log, 0, NULL, NULL,
                     0,
                     CTLTYPE_STRUCT, "spd_data",
 		    SYSCTL_DESCR("raw spd data"), NULL,
@@ -341,7 +344,7 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 	aprint_normal_dev(self, "%s", type);
 	strlcpy(sc->sc_type, type, SPDMEM_TYPE_MAXLEN);
 	if (node != NULL)
-		sysctl_createv(NULL, 0, NULL, NULL,
+		sysctl_createv(&sc->sc_sysctl_log, 0, NULL, NULL,
 		    0,
 		    CTLTYPE_STRING, "mem_type",
 		    SYSCTL_DESCR("memory module type"), NULL,
@@ -386,33 +389,40 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 	}
 }
 
+int
+spdmem_common_detach(struct spdmem_softc *sc, device_t self)
+{
+	sysctl_teardown(&sc->sc_sysctl_log);
+
+	return 0;
+}
+
 SYSCTL_SETUP(sysctl_spdmem_setup, "sysctl hw.spdmem subtree setup")
 {
 	const struct sysctlnode *node;
 
-	if (sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0,
-	    CTL_HW, CTL_EOL) != 0)
+	if (sysctl_createv(clog, 0, NULL, &node, CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "hw", NULL, NULL, 0, NULL, 0,
+			       CTL_HW, CTL_EOL) != 0)
 		return;
 
 	hw_node = node->sysctl_num;
 }
 
 static void
-decode_size_speed(const struct sysctlnode *node, int dimm_size, int cycle_time,
-		  int d_clk, int bits, bool round, const char *ddr_type_string,
-		  int speed)
+decode_size_speed(device_t self, const struct sysctlnode *node,
+		  int dimm_size, int cycle_time, int d_clk, int bits,
+		  bool round, const char *ddr_type_string, int speed)
 {
 	int p_clk;
+	struct spdmem_softc *sc = (struct spdmem_softc *)device_private(self);
 
 	if (dimm_size < 1024)
 		aprint_normal("%dMB", dimm_size);
 	else
 		aprint_normal("%dGB", dimm_size / 1024);
 	if (node != NULL)
-		sysctl_createv(NULL, 0, NULL, NULL,
+		sysctl_createv(&sc->sc_sysctl_log, 0, NULL, NULL,
 		    CTLFLAG_IMMEDIATE,
 		    CTLTYPE_INT, "size",
 		    SYSCTL_DESCR("module size in MB"), NULL,
@@ -445,7 +455,7 @@ decode_size_speed(const struct sysctlnode *node, int dimm_size, int cycle_time,
 	aprint_normal(", %dMHz (%s-%d)\n",
 		      d_clk, ddr_type_string, p_clk);
 	if (node != NULL)
-		sysctl_createv(NULL, 0, NULL, NULL,
+		sysctl_createv(&sc->sc_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_IMMEDIATE,
 			       CTLTYPE_INT, "speed",
 			       SYSCTL_DESCR("memory speed in MHz"),
@@ -530,8 +540,8 @@ decode_sdram(const struct sysctlnode *node, device_t self, struct spdmem *s,
 	    default:
 		speed = 66;
 	}
-	decode_size_speed(node, dimm_size, cycle_time, 1, bits, FALSE, "PC",
-			  speed);
+	decode_size_speed(self, node, dimm_size, cycle_time, 1, bits, FALSE,
+			  "PC", speed);
 
 	aprint_verbose_dev(self,
 	    "%d rows, %d cols, %d banks, %d banks/chip, %d.%dns cycle time\n",
@@ -568,7 +578,8 @@ decode_ddr(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 	bits = le16toh(s->sm_ddr.ddr_datawidth);
 	if (s->sm_config == 1 || s->sm_config == 2)
 		bits -= 8;
-	decode_size_speed(node, dimm_size, cycle_time, 2, bits, TRUE, "PC", 0);
+	decode_size_speed(self, node, dimm_size, cycle_time, 2, bits, TRUE,
+			  "PC", 0);
 
 	aprint_verbose_dev(self,
 	    "%d rows, %d cols, %d ranks, %d banks/chip, %d.%dns cycle time\n",
@@ -612,7 +623,8 @@ decode_ddr2(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 	bits = s->sm_ddr2.ddr2_datawidth;
 	if ((s->sm_config & 0x03) != 0)
 		bits -= 8;
-	decode_size_speed(node, dimm_size, cycle_time, 2, bits, TRUE, "PC2", 0);
+	decode_size_speed(self, node, dimm_size, cycle_time, 2, bits, TRUE,
+			  "PC2", 0);
 
 	aprint_verbose_dev(self,
 	    "%d rows, %d cols, %d ranks, %d banks/chip, %d.%02dns cycle time\n",
@@ -666,7 +678,8 @@ decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 		     s->sm_ddr3.ddr3_mtb_divisor;
 	cycle_time *= s->sm_ddr3.ddr3_tCKmin;
 	bits = 1 << (s->sm_ddr3.ddr3_datawidth + 3);
-	decode_size_speed(node, dimm_size, cycle_time, 2, bits, FALSE, "PC3", 0);
+	decode_size_speed(self, node, dimm_size, cycle_time, 2, bits, FALSE,
+			  "PC3", 0);
 
 	aprint_verbose_dev(self,
 	    "%d rows, %d cols, %d log. banks, %d phys. banks, "
@@ -701,7 +714,8 @@ decode_fbdimm(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 			    (s->sm_fbd.fbdimm_mtb_divisor / 2)) /
 		     s->sm_fbd.fbdimm_mtb_divisor;
 	bits = 1 << (s->sm_fbd.fbdimm_dev_width + 2);
-	decode_size_speed(node, dimm_size, cycle_time, 2, bits, TRUE, "PC2", 0);
+	decode_size_speed(self, node, dimm_size, cycle_time, 2, bits, TRUE,
+			  "PC2", 0);
 
 	aprint_verbose_dev(self,
 	    "%d rows, %d cols, %d banks, %d.%02dns cycle time\n",

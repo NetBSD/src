@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.1 2010/03/24 00:31:41 pgoyette Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.2 2011/08/01 03:49:52 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,11 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.1 2010/03/24 00:31:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.2 2011/08/01 03:49:52 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/endian.h>
+#include <sys/module.h>
 #include <sys/sysctl.h>
 #include <machine/bswap.h>
 
@@ -57,14 +58,16 @@ struct spdmem_i2c_softc {
 	i2c_addr_t sc_addr;
 };
 
-static int spdmem_i2c_match(device_t, cfdata_t, void *);
+static int  spdmem_i2c_match(device_t, cfdata_t, void *);
 static void spdmem_i2c_attach(device_t, device_t, void *);
-SYSCTL_SETUP_PROTO(sysctl_spdmem_setup);
+static int  spdmem_i2c_detach(device_t, int);
+
+CFATTACH_DECL_NEW(spdmem_iic, sizeof(struct spdmem_i2c_softc),
+    spdmem_i2c_match, spdmem_i2c_attach, spdmem_i2c_detach, NULL);
 
 static uint8_t spdmem_i2c_read(struct spdmem_softc *, uint8_t);
 
-CFATTACH_DECL_NEW(spdmem_iic, sizeof(struct spdmem_i2c_softc),
-    spdmem_i2c_match, spdmem_i2c_attach, NULL, NULL);
+SYSCTL_SETUP_PROTO(sysctl_spdmem_setup);
 
 static int
 spdmem_i2c_match(device_t parent, cfdata_t match, void *aux)
@@ -107,6 +110,16 @@ spdmem_i2c_attach(device_t parent, device_t self, void *aux)
 	spdmem_common_attach(&sc->sc_base, self);
 }
 
+static int
+spdmem_i2c_detach(device_t self, int flags)
+{
+	struct spdmem_i2c_softc *sc = device_private(self);
+
+	pmf_device_deregister(self);
+
+	return spdmem_common_detach(&sc->sc_base, self);
+}
+
 static uint8_t
 spdmem_i2c_read(struct spdmem_softc *softc, uint8_t reg)
 {
@@ -119,4 +132,33 @@ spdmem_i2c_read(struct spdmem_softc *softc, uint8_t reg)
 	iic_release_bus(sc->sc_tag, 0);
 
 	return val;
+}
+
+MODULE(MODULE_CLASS_DRIVER, spdmem, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+spdmem_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_spdmem,
+		    cfattach_ioconf_spdmem, cfdata_ioconf_spdmem);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_spdmem,
+		    cfattach_ioconf_spdmem, cfdata_ioconf_spdmem);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }
