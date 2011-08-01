@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.24 2011/08/01 03:51:55 pgoyette Exp $
+# $NetBSD: mi,v 1.25 2011/08/01 03:56:23 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -28,8 +28,6 @@
 ./@MODULEDIR@/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/coredump				base-kernel-modules	kmod
 ./@MODULEDIR@/coredump/coredump.kmod		base-kernel-modules	kmod
-./@MODULEDIR@/dbcool				base-kernel-modules	kmod
-./@MODULEDIR@/dbcool/dbcool.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/dirhash				base-obsolete	obsolete
 ./@MODULEDIR@/dirhash/dirhash.kmod		base-obsolete	obsolete
 ./@MODULEDIR@/dm				base-kernel-modules	lvm,kmod
@@ -56,10 +54,6 @@
 ./@MODULEDIR@/flash/flash.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/fss				base-kernel-modules	kmod
 ./@MODULEDIR@/fss/fss.kmod			base-kernel-modules	kmod
-./@MODULEDIR@/hdafg				base-kernel-modules	kmod
-./@MODULEDIR@/hdafg/hdafg.kmod			base-kernel-modules	kmod
-./@MODULEDIR@/hdaudio				base-kernel-modules	kmod
-./@MODULEDIR@/hdaudio/hdaudio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/hfs				base-kernel-modules	kmod
 ./@MODULEDIR@/hfs/hfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/kernfs				base-kernel-modules	kmod
@@ -118,8 +112,6 @@
 ./@MODULEDIR@/scsiverbose/scsiverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/sdt				base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/sdt/sdt.kmod			base-kernel-modules	kmod,dtrace
-./@MODULEDIR@/sdtemp				base-kernel-modules	kmod
-./@MODULEDIR@/sdtemp/sdtemp.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/secmodel_bsd44			base-kernel-modules	kmod
 ./@MODULEDIR@/secmodel_bsd44/secmodel_bsd44.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/secmodel_overlay			base-kernel-modules	kmod
