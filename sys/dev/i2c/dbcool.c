@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.31 2011/07/31 16:05:01 jmcneill Exp $ */
+/*	$NetBSD: dbcool.c,v 1.32 2011/08/01 22:42:57 macallan Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.31 2011/07/31 16:05:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.32 2011/08/01 22:42:57 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1687,8 +1687,7 @@ static int
 dbcool_attach_temp_control(struct dbcool_softc *sc, int idx,
 			   struct chip_id *chip)
 {
-	const struct sysctlnode *me2 = NULL;
-	struct sysctlnode *node = NULL;
+	const struct sysctlnode *me2 = NULL, *node;
 	int j, ret, sysctl_index, rw_flag;
 	uint8_t	sysctl_reg;
 	char name[SYSCTL_NAMELEN];
@@ -1723,8 +1722,9 @@ dbcool_attach_temp_control(struct dbcool_softc *sc, int idx,
 		rw_flag = CTLFLAG_READONLY | CTLFLAG_OWNDESC;
 	else
 		rw_flag = CTLFLAG_READWRITE | CTLFLAG_OWNDESC;
+
 	ret = sysctl_createv(NULL, 0, NULL,
-			     (const struct sysctlnode **)&node, rw_flag,
+			     &node, rw_flag,
 			     CTLTYPE_INT, name,
 			     SYSCTL_DESCR(dbc_sysctl_table[sysctl_index].desc),
 			     dbc_sysctl_table[sysctl_index].helper,
@@ -1732,8 +1732,6 @@ dbcool_attach_temp_control(struct dbcool_softc *sc, int idx,
 			     CTL_HW, sc->sc_root_sysctl_num,
 				sc->sc_sysctl_num[j],
 				DBC_PWM_SYSCTL(idx, sysctl_reg), CTL_EOL);
-	if (node != NULL)
-		node->sysctl_data = sc;
 
 	return ret;
 }
@@ -1745,7 +1743,7 @@ dbcool_setup_controllers(struct dbcool_softc *sc)
 	uint8_t sysctl_reg;
 	struct chip_id *chip = sc->sc_dc.dc_chip;
 	const struct sysctlnode *me2 = NULL;
-	struct sysctlnode *node = NULL;
+	const struct sysctlnode *node = NULL;
 	char name[SYSCTL_NAMELEN];
 
 	for (i = 0; chip->power[i].desc != NULL; i++) {
@@ -1769,7 +1767,7 @@ dbcool_setup_controllers(struct dbcool_softc *sc)
 			else
 				rw_flag = CTLFLAG_READWRITE | CTLFLAG_OWNDESC;
 			ret = sysctl_createv(NULL, 0, NULL,
-				(const struct sysctlnode **)&node, rw_flag,
+				&node, rw_flag,
 				(j == DBC_PWM_BEHAVIOR)?
 					CTLTYPE_STRING:CTLTYPE_INT,
 				name,
@@ -1780,8 +1778,6 @@ dbcool_setup_controllers(struct dbcool_softc *sc)
 					sizeof(dbcool_cur_behav): sizeof(int),
 				CTL_HW, sc->sc_root_sysctl_num, me2->sysctl_num,
 				DBC_PWM_SYSCTL(j, sysctl_reg), CTL_EOL);
-			if (node != NULL)
-				node->sysctl_data = sc;
 		}
 	}
 }
