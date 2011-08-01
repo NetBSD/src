@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416reg.h,v 1.4 2011/03/07 11:25:44 cegger Exp $
+ * $Id: ar5416reg.h,v 1.5 2011/08/01 10:21:32 jmcneill Exp $
  */
 #ifndef _DEV_ATH_AR5416REG_H
 #define	_DEV_ATH_AR5416REG_H
@@ -609,10 +609,11 @@
 	(AH_PRIVATE((_ah))->ah_macVersion >= AR_XSREV_VERSION_MERLIN)
 #define	AR_SREV_MERLIN_20(_ah) \
 	(AR_SREV_MERLIN(_ah) && \
-	 AH_PRIVATE((_ah))->ah_macRev == AR_XSREV_REVISION_MERLIN_20)
+	 AH_PRIVATE((_ah))->ah_macRev >= AR_XSREV_REVISION_MERLIN_20)
 #define	AR_SREV_MERLIN_20_OR_LATER(_ah) \
-	(AR_SREV_MERLIN_20(_ah) || \
-	 AH_PRIVATE((_ah))->ah_macVersion >= AR_XSREV_VERSION_MERLIN)
+	((AH_PRIVATE((_ah))->ah_macVersion > AR_XSREV_VERSION_MERLIN) || \
+	 (AR_SREV_MERLIN((_ah)) && \
+	 AH_PRIVATE((_ah))->ah_macRev >= AR_XSREV_REVISION_MERLIN_20))
 
 #define	AR_SREV_KITE(_ah) \
 	(AH_PRIVATE((_ah))->ah_macVersion == AR_XSREV_VERSION_KITE)
