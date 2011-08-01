@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.30 2010/05/25 08:37:10 pgoyette Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.31 2011/08/01 11:20:27 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.30 2010/05/25 08:37:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.31 2011/08/01 11:20:27 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,8 +164,7 @@ ehci_cardbus_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("%s: offs=%d\n", devname, sc->sc.sc_offs));
 	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
 
-	sc->sc_ih = Cardbus_intr_establish(ct, ca->ca_intrline,
-					   IPL_USB, ehci_intr, sc);
+	sc->sc_ih = Cardbus_intr_establish(ct, IPL_USB, ehci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n", devname);
 		return;

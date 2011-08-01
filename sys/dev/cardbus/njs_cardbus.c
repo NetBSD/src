@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_cardbus.c,v 1.16 2010/03/11 17:27:40 dyoung Exp $	*/
+/*	$NetBSD: njs_cardbus.c,v 1.17 2011/08/01 11:20:28 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.16 2010/03/11 17:27:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.17 2011/08/01 11:20:28 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,8 +201,7 @@ njs_cardbus_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Establish the interrupt.
 	 */
-	sc->sc_ih = Cardbus_intr_establish(ct, ca->ca_intrline, IPL_BIO,
-	    njsc32_intr, sc);
+	sc->sc_ih = Cardbus_intr_establish(ct, IPL_BIO, njsc32_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self,
 				 "unable to establish interrupt\n");
