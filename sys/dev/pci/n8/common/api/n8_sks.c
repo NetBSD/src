@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_sks.c,v 1.1 2008/10/30 12:02:15 darran Exp $";
+static char const n8_id[] = "$Id: n8_sks.c,v 1.2 2011/08/01 12:28:54 mbalmer Exp $";
 /*****************************************************************************/
 /** @file SKS_Management_Interface
  *  @brief Implementation for the SKS Management Interface.
@@ -1016,7 +1016,7 @@ N8_Status_t N8_SKSFree(N8_SKSKeyHandle_t* keyHandle_p)
  * @param keyHandle_p       WO: A N8_SKSKeyHandle_t pointer.
  *
  * @par Externals:
- *    SKS_initialized_g     RW: A boolean value that indicates wether the SKS
+ *    SKS_initialized_g     RW: A boolean value that indicates whether the SKS
  *                              admin interface API has been initialized.
  * @return 
  *    N8_STATUS_OK indicates the key read successfully completed.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.6 2011/05/24 13:26:41 joerg Exp $	*/
+/*	$NetBSD: tls.c,v 1.7 2011/08/01 12:28:53 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.6 2011/05/24 13:26:41 joerg Exp $");
+__RCSID("$NetBSD: tls.c,v 1.7 2011/08/01 12:28:53 mbalmer Exp $");
 
 #ifndef DISABLE_TLS
 #include "syslogd.h"
@@ -665,7 +665,7 @@ deny_cert(struct tls_conn_settings *conn_info,
  * Callback after OpenSSL has verified a peer certificate,
  * gets called for every certificate in a chain (starting with root CA).
  * preverify_ok indicates a valid trust path (necessary),
- * then we check wether the hostname or configured subject matches the cert.
+ * then we check whether the hostname or configured subject matches the cert.
  */
 int
 check_peer_cert(int preverify_ok, X509_STORE_CTX *ctx)

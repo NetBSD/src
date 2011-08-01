@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6var.h,v 1.9 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: smc90cx6var.h,v 1.10 2011/08/01 12:28:53 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  * As the reset functionality differs between the Amiga boards (using the
  * 90c26 chip) and middle-aged ISA boards (using the 90c56 chip), we have
  * a sc_reset callback function in the softc, which does a stop function
- * (reset and leave dead) or a reset function depending on wether the 2nd
+ * (reset and leave dead) or a reset function depending on whether the 2nd
  * parameter is 0 or 1.
  */
 

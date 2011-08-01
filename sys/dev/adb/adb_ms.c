@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.10 2011/07/28 16:28:12 macallan Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.11 2011/08/01 12:28:53 mbalmer Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.10 2011/07/28 16:28:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.11 2011/08/01 12:28:53 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -724,7 +724,7 @@ init_trackpad(struct adbms_softc *sc)
 	delay(1000);
 
 	/*
-	 * setup a sysctl node to control wether tapping the pad should
+	 * setup a sysctl node to control whether tapping the pad should
 	 * trigger mouse button events
 	 */
 

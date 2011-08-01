@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdegdags.c,v 1.12 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: rf_pqdegdags.c,v 1.13 2011/08/01 12:28:53 mbalmer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.12 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.13 2011/08/01 12:28:53 mbalmer Exp $");
 
 #include "rf_archs.h"
 
@@ -175,7 +175,7 @@ applyPDA(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda, RF_PhysDiskAddr_t *ppda, RF
 
    pda, pda, ... , p_1 pda, p_2 pda, q_1 pda, q_2 pda, raidptr, asm
 
-   depending on wether two chunks of recovery data were required.
+   depending on whether two chunks of recovery data were required.
 
    The second condition only arises if there are two failed buffers
    whose lengths do not add up a stripe unit.

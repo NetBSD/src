@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.27 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.28 2011/08/01 12:28:53 mbalmer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.27 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.28 2011/08/01 12:28:53 mbalmer Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -721,7 +721,7 @@ rf_DD_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 
 	/* determine how many pda's we will have to generate per unaccess
 	 * stripe. If there is only one failed data unit, it is one; if two,
-	 * possibly two, depending wether they overlap. */
+	 * possibly two, depending whether they overlap. */
 
 	fone_start = rf_StripeUnitOffset(layoutPtr, fone->startSector);
 	fone_end = fone_start + fone->numSector;

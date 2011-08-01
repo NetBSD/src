@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.116 2011/06/19 11:40:26 martin Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.117 2011/08/01 12:28:53 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.116 2011/06/19 11:40:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.117 2011/08/01 12:28:53 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1374,7 +1374,7 @@ bad:
 
 /*
  * Find the maximum of all currently reported values.
- * The provided callback decides wether a sensor is part of the
+ * The provided callback decides whether a sensor is part of the
  * maximum calculation (by returning true) or ignored (callback
  * returns false). Example usage: callback selects temperature
  * sensors in a given thermal zone, the function calculates the

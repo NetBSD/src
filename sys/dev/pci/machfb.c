@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.68 2011/06/29 03:15:18 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.69 2011/08/01 12:28:53 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.68 2011/06/29 03:15:18 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.69 2011/08/01 12:28:53 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -855,7 +855,7 @@ mach64_init(struct mach64_softc *sc)
 	int need_swap;
 
 	/*
-	 * Test wether the aperture is byte swapped or not
+	 * Test whether the aperture is byte swapped or not
 	 */
 	p32 = (uint32_t*)sc->sc_aperture;
 	saved_value = *p32;
