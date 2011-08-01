@@ -1,4 +1,4 @@
-/*	$NetBSD: e500wdog.c,v 1.2 2011/01/18 01:02:53 matt Exp $	*/
+/*	$NetBSD: e500wdog.c,v 1.3 2011/08/01 17:05:16 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,6 +35,8 @@
  */
 
 #include <sys/cdefs.h>
+
+__KERNEL_RCSID(0, "$NetBSD: e500wdog.c,v 1.3 2011/08/01 17:05:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
