@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.6 2011/06/21 06:25:19 matt Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.7 2011/08/01 17:05:17 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,6 +37,8 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
+
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.7 2011/08/01 17:05:17 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
