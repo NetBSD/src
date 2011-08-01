@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.1 2010/03/24 00:31:41 pgoyette Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.2 2011/08/01 03:49:52 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -518,8 +518,10 @@ struct spdmem {
 struct spdmem_softc {
 	uint8_t		(*sc_read)(struct spdmem_softc *, uint8_t);
 	struct spdmem	sc_spd_data;
+	struct sysctllog *sc_sysctl_log;
 	char		sc_type[SPDMEM_TYPE_MAXLEN];
 };
 
-int spdmem_common_probe(struct spdmem_softc *);
+int  spdmem_common_probe(struct spdmem_softc *);
 void spdmem_common_attach(struct spdmem_softc *, device_t);
+int  spdmem_common_detach(struct spdmem_softc *, device_t);
