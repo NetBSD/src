@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.92 2011/06/28 03:35:28 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.93 2011/08/02 05:36:45 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1028,9 +1028,10 @@ int
 netpgp_match_keys_json(netpgp_t *netpgp, char **json, char *name, const char *fmt, const int psigs)
 {
 	const pgp_key_t	*key;
-	unsigned		 k;
-	mj_t			 id_array;
-	int			 ret;
+	unsigned	 k;
+	mj_t		 id_array;
+	char		*newkey;
+	int		 ret;
 
 	if (name[0] == '0' && name[1] == 'x') {
 		name += 2;
@@ -1044,11 +1045,13 @@ netpgp_match_keys_json(netpgp_t *netpgp, char **json, char *name, const char *fm
 						name, &k);
 		if (key != NULL) {
 			if (strcmp(fmt, "mr") == 0) {
-#if 0
 				pgp_hkp_sprint_keydata(netpgp->io, netpgp->pubring,
-						key, &pubs.v[pubs.c],
-						&key->key.pubkey, psigs);
-#endif
+						key, &newkey,
+						&key->key.pubkey, 0);
+				if (newkey) {
+					printf("%s\n", newkey);
+					free(newkey);
+				}
 			} else {
 				ALLOC(mj_t, id_array.value.v, id_array.size,
 					id_array.c, 10, 10, "netpgp_match_keys_json", return 0);
@@ -1070,9 +1073,10 @@ int
 netpgp_match_pubkeys(netpgp_t *netpgp, char *name, void *vp)
 {
 	const pgp_key_t	*key;
-	unsigned		 k;
-	strings_t		 pubs;
-	FILE			*fp = (FILE *)vp;
+	unsigned	 k;
+	strings_t	 pubs;
+	ssize_t		 cc;
+	FILE		*fp = (FILE *)vp;
 
 	(void) memset(&pubs, 0x0, sizeof(pubs));
 	do {
@@ -1083,7 +1087,9 @@ netpgp_match_pubkeys(netpgp_t *netpgp, char *name, void *vp)
 
 			ALLOC(char *, pubs.v, pubs.size, pubs.c, 10, 10,
 					"netpgp_match_pubkeys", return 0);
-			(void) pgp_sprint_pubkey(key, out, sizeof(out));
+			cc = pgp_sprint_pubkey(key, out, sizeof(out));
+			(void) snprintf(&out[cc], sizeof(out) - cc, "name=%s\n",
+				key->uids[0]);
 			pubs.v[pubs.c++] = netpgp_strdup(out);
 			k += 1;
 		}
@@ -1116,7 +1122,7 @@ char *
 netpgp_get_key(netpgp_t *netpgp, const char *name, const char *fmt)
 {
 	const pgp_key_t	*key;
-	char			*newkey;
+	char		*newkey;
 
 	if ((key = resolve_userid(netpgp, netpgp->pubring, name)) == NULL) {
 		return NULL;
