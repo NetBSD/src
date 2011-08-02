@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.154.4.2.4.1 2011/01/07 02:50:47 matt Exp $ */
+/*	$NetBSD: ehci.c,v 1.154.4.2.4.2 2011/08/02 01:26:01 matt Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.154.4.2.4.1 2011/01/07 02:50:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.154.4.2.4.2 2011/08/02 01:26:01 matt Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2277,6 +2277,8 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		DPRINTFN(8,("ehci_root_ctrl_start: port status=0x%04x\n",
 			    v));
 
+		i = UPS_HIGH_SPEED;
+#if 0
 		if (sc->sc_flags & EHCIF_ETTF) {
 			/*
 			 * If we are doing embedded transaction translation,
@@ -2288,6 +2290,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		} else {
 			i = UPS_HIGH_SPEED;
 		}
+#endif
 		if (v & EHCI_PS_CS)	i |= UPS_CURRENT_CONNECT_STATUS;
 		if (v & EHCI_PS_PE)	i |= UPS_PORT_ENABLED;
 		if (v & EHCI_PS_SUSP)	i |= UPS_SUSPEND;
@@ -2330,10 +2333,11 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			DPRINTFN(5,("ehci_root_ctrl_start: reset port %d\n",
 				    index));
 			if (EHCI_PS_IS_LOWSPEED(v)
+			    && sc->sc_ncomp > 0
 			    && !(sc->sc_flags & EHCIF_ETTF)) {
 				/*
-				 * Low speed device on non-ETTF controller,
-				 * give up ownership.
+				 * Low speed device on non-ETTF controller or
+				 * unaccompanied controller, give up ownership.
 				 */
 				ehci_disown(sc, index, 1);
 				break;
@@ -2352,9 +2356,9 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			 * terminate the reset sequence so there's no need to
 			 * it.
 			 */
-			if (!(sc->sc_flags & EHCIF_ETTF)) {
+			if (v & EHCI_PS_PR) {
 				/* Terminate reset sequence. */
-				EOWRITE4(sc, port, v);
+				EOWRITE4(sc, port, v & ~EHCI_PS_PR);
 				/* Wait for HC to complete reset. */
 				usb_delay_ms(&sc->sc_bus,
 				    EHCI_PORT_RESET_COMPLETE);
