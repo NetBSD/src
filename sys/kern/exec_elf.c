@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.30 2011/07/19 19:45:36 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.31 2011/08/02 16:44:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.30 2011/07/19 19:45:36 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.31 2011/08/02 16:44:01 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -911,6 +911,9 @@ bad:
 			(void)memcpy(&epp->ep_pax_flags,
 			    ndata + ELF_NOTE_PAX_NAMESZ,
 			    sizeof(epp->ep_pax_flags));
+			break;
+
+		case ELF_NOTE_TYPE_SUSE_TAG:
 			break;
 
 		default:
