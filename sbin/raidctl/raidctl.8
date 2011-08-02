@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.62 2011/07/28 18:25:22 buhrow Exp $
+.\"     $NetBSD: raidctl.8,v 1.63 2011/08/02 10:28:00 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1600,8 +1600,9 @@ At least with RAID 0 there is no perception of increased data security.
 .Pp
 When replacing a failed component of a RAID set, it is a good
 idea to zero out the first 64 blocks of the new component to insure the
-RAIDframe driver doesn't erroneously detect a component label in the 
-new component.  This is particularly true on
+RAIDframe driver doesn't erroneously detect a component label in the
+new component.
+This is particularly true on
 .Em
 RAID 1
 sets because there is at most one correct component label in a failed RAID
