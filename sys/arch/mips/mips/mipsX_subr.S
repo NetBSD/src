@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.51 2011/07/31 15:39:29 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.52 2011/08/02 05:13:21 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1052,6 +1052,10 @@ NESTED_NOPROFILE(MIPSX(user_gen_exception), CALLFRAME_SIZ, ra)
 	/*
 	 * Save all the registers except the kernel temporaries onto the stack.
 	 */
+#ifdef MIPS3_LOONGSON2
+	li	k0, MIPS_DIAG_BTB_CLEAR
+	mtc0	k0, MIPS_COP_0_DIAG
+#endif
 	/* K1 already has CURLWP */
 	PTR_L	k0, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	PTR_ADDU k0, USPACE - TF_SIZ - CALLFRAME_SIZ
@@ -1163,6 +1167,10 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
  * Save the relevant user registers onto the kernel stack.
  * We don't need to save s0 - s8 because the compiler does it for us.
  */
+#ifdef MIPS3_LOONGSON2
+	li	k0, MIPS_DIAG_BTB_CLEAR
+	mtc0	k0, MIPS_COP_0_DIAG
+#endif
 	/* k1 contains curlwp */
 	PTR_L	k0, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	PTR_ADDU k0, USPACE - TF_SIZ - CALLFRAME_SIZ
@@ -1333,6 +1341,10 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 	/*
 	 * Save all the registers but kernel temporaries onto the stack.
 	 */
+#ifdef MIPS3_LOONGSON2
+	li	k0, MIPS_DIAG_BTB_CLEAR
+	mtc0	k0, MIPS_COP_0_DIAG
+#endif
 	/* k1 already contains cpulwp */
 	PTR_L	k0, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	PTR_ADDU k0, USPACE - TF_SIZ - CALLFRAME_SIZ
@@ -1642,7 +1654,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	tlbwi					# write TLB
 	COP0_SYNC
 #ifdef MIPS3_LOONGSON2
-	li	k0, 4				# ugly
+	li	k0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	k0, MIPS_COP_0_DIAG		# invalidate ITLB
 #elif defined(MIPS3)
 	nop
@@ -1677,7 +1689,7 @@ MIPSX(kern_tlbi_odd):
 	tlbwi					# update TLB
 	COP0_SYNC
 #ifdef MIPS3_LOONGSON2
-	li	k0, 4				# ugly
+	li	k0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	k0, MIPS_COP_0_DIAG		# invalidate ITLB
 #elif defined(MIPS3)
 	nop
@@ -1762,7 +1774,7 @@ LEAF(MIPSX(tlb_update))
 	tlbwi					# update slot found
 	COP0_SYNC
 #ifdef MIPS3_LOONGSON2
-	li	v0, 4				# ugly
+	li	k0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
 #elif defined(MIPS3)
 	nop					# required for QED5230
@@ -1784,7 +1796,7 @@ LEAF(MIPSX(tlb_update))
 	tlbwi					# update slot found
 	COP0_SYNC
 #ifdef MIPS3_LOONGSON2
-	li	v0, 4				# ugly
+	li	k0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
 #elif defined(MIPS3)
 	nop					# required for QED5230
@@ -1905,7 +1917,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	tlbwi
 	COP0_SYNC
 #ifdef MIPS3_LOONGSON2
-	li	v0, 4				# ugly
+	li	k0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
 #elif defined(MIPS3)
 	nop
@@ -1975,7 +1987,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	COP0_SYNC
 
 #ifdef MIPS3_LOONGSON2
-	li	v0, 4				# ugly
+	li	k0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
 #endif
 
@@ -2030,7 +2042,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_globals))
 	COP0_SYNC
 
 #ifdef MIPS3_LOONGSON2
-	li	v0, 4				# ugly
+	li	k0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
 #endif
 
@@ -2078,7 +2090,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_all))
 	COP0_SYNC
 
 #ifdef MIPS3_LOONGSON2
-	li	v0, 4				# ugly
+	li	k0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
 #endif
 
@@ -2241,7 +2253,7 @@ LEAF(MIPSX(tlb_enter))
 	_MTC0	ta1, MIPS_COP_0_TLB_HI		# restore EntryHi
 
 #ifdef MIPS3_LOONGSON2
-	li	v0, 4				# ugly
+	li	k0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
 #endif
 
@@ -2475,7 +2487,7 @@ LEAF(MIPSX(tlb_write_indexed))
 	COP0_SYNC
 
 #ifdef MIPS3_LOONGSON2
-	li	v0, 4				# ugly
+	li	k0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
 #endif
 
