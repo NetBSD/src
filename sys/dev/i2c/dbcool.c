@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.32 2011/08/01 22:42:57 macallan Exp $ */
+/*	$NetBSD: dbcool.c,v 1.33 2011/08/02 14:06:15 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.32 2011/08/01 22:42:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.33 2011/08/02 14:06:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ static void dbcool_set_fan_limits(struct dbcool_softc *, int,
 				  sysmon_envsys_lim_t *, uint32_t *);
 
 /* SYSCTL Helpers */
+SYSCTL_SETUP_PROTO(sysctl_dbcoolsetup);
 static int sysctl_dbcool_temp(SYSCTLFN_PROTO);
 static int sysctl_adm1030_temp(SYSCTLFN_PROTO);
 static int sysctl_adm1030_trange(SYSCTLFN_PROTO);
@@ -784,6 +785,12 @@ dbcool_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self, "%s dBCool(tm) Controller "
 			"(rev 0x%04x)\n", sc->sc_dc.dc_chip->name, ver);
 
+	sc->sc_sysctl_log = NULL;
+
+#ifdef _MODULE
+	sysctl_dbcoolsetup(&sc->sc_sysctl_log);
+#endif
+
 	dbcool_setup(self);
 
 	if (!pmf_device_register(self, dbcool_pmf_suspend, dbcool_pmf_resume))
@@ -798,6 +805,9 @@ dbcool_detach(device_t self, int flags)
 	pmf_device_deregister(self);
 
 	sysmon_envsys_unregister(sc->sc_sme);
+
+	sysctl_teardown(&sc->sc_sysctl_log);
+
 	sc->sc_sme = NULL;
 	return 0;
 }
@@ -1104,7 +1114,7 @@ dbcool_read_volt(struct dbcool_softc *sc, uint8_t reg, int nom_idx, bool extres)
 
 SYSCTL_SETUP(sysctl_dbcoolsetup, "sysctl dBCool subtree setup")
 {
-	sysctl_createv(NULL, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "hw", NULL,
 		       NULL, 0, NULL, 0,
@@ -1504,7 +1514,7 @@ dbcool_setup(device_t self)
 	/* Determine Vcc for this chip */
 	sc->sc_supply_voltage = dbcool_supply_voltage(sc);
 
-	ret = sysctl_createv(NULL, 0, NULL, &me,
+	ret = sysctl_createv(&sc->sc_sysctl_log, 0, NULL, &me,
 	       CTLFLAG_READWRITE,
 	       CTLTYPE_NODE, device_xname(self), NULL,
 	       NULL, 0, NULL, 0,
@@ -1531,7 +1541,7 @@ dbcool_setup(device_t self)
 			dbcool_setup_controllers(sc);
 
 #ifdef DBCOOL_DEBUG
-		ret = sysctl_createv(NULL, 0, NULL,
+		ret = sysctl_createv(&sc->sc_sysctl_log, 0, NULL,
 			(const struct sysctlnode **)&node,
 			CTLFLAG_READWRITE, CTLTYPE_INT, "reg_select", NULL,
 			sysctl_dbcool_reg_select,
@@ -1540,7 +1550,7 @@ dbcool_setup(device_t self)
 		if (node != NULL)
 			node->sysctl_data = sc;
 
-		ret = sysctl_createv(NULL, 0, NULL,
+		ret = sysctl_createv(&sc->sc_sysctl_log, 0, NULL,
 			(const struct sysctlnode **)&node,
 			CTLFLAG_READWRITE, CTLTYPE_INT, "reg_access", NULL,
 			sysctl_dbcool_reg_access,
@@ -1704,7 +1714,8 @@ dbcool_attach_temp_control(struct dbcool_softc *sc, int idx,
 
 	/* create sysctl node for the sensor if not one already there */
 	if (sc->sc_sysctl_num[j] == -1) {
-		ret = sysctl_createv(NULL, 0, NULL, &me2, CTLFLAG_READWRITE,
+		ret = sysctl_createv(&sc->sc_sysctl_log, 0, NULL, &me2,
+				     CTLFLAG_READWRITE,
 				     CTLTYPE_NODE, sc->sc_sensor[j].desc, NULL,
 				     NULL, 0, NULL, 0,
 				     CTL_HW, sc->sc_root_sysctl_num, CTL_CREATE,
@@ -1722,9 +1733,7 @@ dbcool_attach_temp_control(struct dbcool_softc *sc, int idx,
 		rw_flag = CTLFLAG_READONLY | CTLFLAG_OWNDESC;
 	else
 		rw_flag = CTLFLAG_READWRITE | CTLFLAG_OWNDESC;
-
-	ret = sysctl_createv(NULL, 0, NULL,
-			     &node, rw_flag,
+	ret = sysctl_createv(&sc->sc_sysctl_log, 0, NULL, &node, rw_flag,
 			     CTLTYPE_INT, name,
 			     SYSCTL_DESCR(dbc_sysctl_table[sysctl_index].desc),
 			     dbc_sysctl_table[sysctl_index].helper,
@@ -1748,7 +1757,7 @@ dbcool_setup_controllers(struct dbcool_softc *sc)
 
 	for (i = 0; chip->power[i].desc != NULL; i++) {
 		snprintf(name, sizeof(name), "fan_ctl_%d", i);
-		ret = sysctl_createv(NULL, 0, NULL, &me2,
+		ret = sysctl_createv(&sc->sc_sysctl_log, 0, NULL, &me2,
 		       CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
 		       CTLTYPE_NODE, name, NULL,
 		       NULL, 0, NULL, 0,
@@ -1766,7 +1775,7 @@ dbcool_setup_controllers(struct dbcool_softc *sc)
 				rw_flag = CTLFLAG_READONLY | CTLFLAG_OWNDESC;
 			else
 				rw_flag = CTLFLAG_READWRITE | CTLFLAG_OWNDESC;
-			ret = sysctl_createv(NULL, 0, NULL,
+			ret = sysctl_createv(&sc->sc_sysctl_log, 0, NULL,
 				&node, rw_flag,
 				(j == DBC_PWM_BEHAVIOR)?
 					CTLTYPE_STRING:CTLTYPE_INT,
