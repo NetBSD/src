@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.129 2011/07/24 15:11:38 mrg Exp $
+#	 $NetBSD: mi,v 1.130 2011/08/02 07:56:33 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5845,11 +5845,12 @@
 ./usr/X11R7/include/xorg/IBM.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/TI.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/XIstubs.h			-unknown-	xorg
+./usr/X11R7/include/xorg/Xprintf.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/afb.h				-unknown-	obsolete
 ./usr/X11R7/include/xorg/assyntax.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/atKeynames.h			-unknown-	obsolete
-./usr/X11R7/include/xorg/bstore.h			-unknown-	xorg
-./usr/X11R7/include/xorg/bstorestr.h			-unknown-	xorg
+./usr/X11R7/include/xorg/bstore.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/bstorestr.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/bt829.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/callback.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/cfb.h				-unknown-	obsolete
@@ -5907,6 +5908,7 @@
 ./usr/X11R7/include/xorg/i2c_def.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/input.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/inputstr.h			-unknown-	xorg
+./usr/X11R7/include/xorg/inpututils.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/list.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/mfb.h				-unknown-	obsolete
 ./usr/X11R7/include/xorg/mfbmap.h			-unknown-	obsolete
