@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi.c,v 1.5 2011/07/23 07:17:34 cliff Exp $	*/
+/*	$NetBSD: cfi.c,v 1.6 2011/08/02 03:37:25 cliff Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_cfi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfi.c,v 1.5 2011/07/23 07:17:34 cliff Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: cfi.c,v 1.6 2011/08/02 03:37:25 cliff Exp $"); 
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,11 +222,11 @@ const struct nor_interface nor_interface_cfi = {
 /* only data[7..0] are used regardless of chip width */
 #define cfi_unpack_1(n)			((n) & 0xff)
 
-/* construct (arbitrarily big endian) uint16_t */
+/* construct uint16_t */
 #define cfi_unpack_2(b0, b1)						\
 	((cfi_unpack_1(b1) << 8) | cfi_unpack_1(b0))
 
-/* construct (arbitrarily) big endian uint32_t */
+/* construct uint32_t */
 #define cfi_unpack_4(b0, b1, b2, b3)					\
 	((cfi_unpack_1(b3) << 24) |					\
 	 (cfi_unpack_1(b2) << 16) |					\
@@ -238,12 +238,10 @@ const struct nor_interface nor_interface_cfi = {
 	(qryp)->qry[0] = cfi_unpack_1(data[0x10]);			\
 	(qryp)->qry[1] = cfi_unpack_1(data[0x11]);			\
 	(qryp)->qry[2] = cfi_unpack_1(data[0x12]);			\
-	(qryp)->id_pri = be16toh(cfi_unpack_2(data[0x13], data[0x14]));	\
-	(qryp)->addr_pri =						\
-		be16toh(cfi_unpack_2(data[0x15], data[0x16]));		\
-	(qryp)->id_alt = be16toh(cfi_unpack_2(data[0x17], data[0x18]));	\
-	(qryp)->addr_alt =						\
-		be16toh(cfi_unpack_2(data[0x19], data[0x1a]));		\
+	(qryp)->id_pri = cfi_unpack_2(data[0x13], data[0x14]);		\
+	(qryp)->addr_pri = cfi_unpack_2(data[0x15], data[0x16]);	\
+	(qryp)->id_alt = cfi_unpack_2(data[0x17], data[0x18]);		\
+	(qryp)->addr_alt = cfi_unpack_2(data[0x19], data[0x1a]);	\
 	(qryp)->vcc_min = cfi_unpack_1(data[0x1b]);			\
 	(qryp)->vcc_max = cfi_unpack_1(data[0x1c]);			\
 	(qryp)->vpp_min = cfi_unpack_1(data[0x1d]);			\
@@ -258,18 +256,18 @@ const struct nor_interface nor_interface_cfi = {
 	(qryp)->erase_chip_time_max = cfi_unpack_1(data[0x26]);		\
 	(qryp)->device_size = cfi_unpack_1(data[0x27]);			\
 	(qryp)->interface_code_desc =					\
-		be16toh(cfi_unpack_2(data[0x28], data[0x29]));		\
+		cfi_unpack_2(data[0x28], data[0x29]);			\
 	(qryp)->write_nbyte_size_max = 					\
-		be16toh(cfi_unpack_2(data[0x2a], data[0x2b]));		\
+		cfi_unpack_2(data[0x2a], data[0x2b]);			\
 	(qryp)->erase_blk_regions = cfi_unpack_1(data[0x2c]);		\
 	u_int _i = 0x2d;						\
 	const u_int _n = (qryp)->erase_blk_regions;			\
 	KASSERT(_n <= 4);						\
 	for (u_int _r = 0; _r < _n; _r++, _i+=4) {			\
 		(qryp)->erase_blk_info[_r].y =				\
-			be32toh(cfi_unpack_2(data[_i+0], data[_i+1]));	\
+			cfi_unpack_2(data[_i+0], data[_i+1]);		\
 		(qryp)->erase_blk_info[_r].z =				\
-			be32toh(cfi_unpack_2(data[_i+2], data[_i+3]));	\
+			cfi_unpack_2(data[_i+2], data[_i+3]);		\
 	}								\
     } while (0)
 
