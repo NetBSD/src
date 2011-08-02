@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.35 2011/07/19 07:29:39 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.36 2011/08/02 14:53:38 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -53,7 +53,7 @@ static void fuse_attr_to_vap(struct perfuse_state *,
 static int node_lookup_dir_nodot(struct puffs_usermount *,
     puffs_cookie_t, char *, size_t, struct puffs_node **);
 static int node_lookup_common(struct puffs_usermount *, puffs_cookie_t, 
-    const char*, struct puffs_node **);
+    const char *, const struct puffs_cred *, struct puffs_node **);
 static int node_mk_common(struct puffs_usermount *, puffs_cookie_t,
     struct puffs_newinfo *, const struct puffs_cn *pcn, perfuse_msg_t *);
 static int node_mk_common_final(struct puffs_usermount *, puffs_cookie_t,
@@ -137,6 +137,11 @@ perfuse_node_close_common(pu, opc, mode)
 	/*
 	 * release_flags may be set to FUSE_RELEASE_FLUSH
 	 * to flush locks. lock_owner must be set in that case
+	 *
+	 * ps_new_msg() is called with NULL creds, which will
+	 * be interpreted as FUSE superuser. We come here from the 
+	 * inactive method, which provides no creds, but obviously 	
+	 * runs with kernel privilege.
 	 */
 	pm = ps->ps_new_msg(pu, opc, op, sizeof(*fri), NULL);
 	fri = GET_INPAYLOAD(ps, pm, fuse_release_in);
@@ -240,8 +245,20 @@ sticky_access(targ, pcr)
 
 	tdir = PERFUSE_NODE_DATA(targ)->pnd_parent;
 
-	if ((error = puffs_cred_getuid(pcr, &uid)) != 0)
-		return error;
+	/*
+	 * This covers the case where the kernel requests a DELETE
+	 * or RENAME on its own, and where puffs_cred_getuid would 
+	 * return -1. While such a situation should not happen, 
+	 * we allow it here. 
+	 *
+	 * This also allows root to tamper with other users' files
+	 * that have the sticky bit.
+	 */
+	if (puffs_cred_isjuggernaut(pcr))
+		return 0;
+
+	if (puffs_cred_getuid(pcr, &uid) != 0)
+		DERRX(EX_SOFTWARE, "puffs_cred_getuid fails in %s", __func__);
 
 	sticky = puffs_pn_getvap(tdir)->va_mode & S_ISTXT;
 	owner = puffs_pn_getvap(targ)->va_uid == uid;
@@ -330,7 +347,7 @@ node_lookup_dir_nodot(pu, opc, name, namelen, pnp)
 	(void)snprintf(path, namelen, "%s/%s", 
 		       perfuse_node_path((puffs_cookie_t)dpn), name);
 
-	error = node_lookup_common(pu, opc, path, pnp);
+	error = node_lookup_common(pu, opc, path, NULL, pnp);
 	
 	free(path);
 
@@ -338,10 +355,11 @@ node_lookup_dir_nodot(pu, opc, name, namelen, pnp)
 }
 
 static int
-node_lookup_common(pu, opc, path, pnp)
+node_lookup_common(pu, opc, path, pcr, pnp)
 	struct puffs_usermount *pu;
 	puffs_cookie_t opc;
 	const char *path;
+	const struct puffs_cred *pcr;
 	struct puffs_node **pnp;
 {
 	struct perfuse_state *ps;
@@ -385,7 +403,7 @@ node_lookup_common(pu, opc, path, pnp)
 
 	len = strlen(path) + 1;
 
-	pm = ps->ps_new_msg(pu, opc, FUSE_LOOKUP, len, NULL);
+	pm = ps->ps_new_msg(pu, opc, FUSE_LOOKUP, len, pcr);
 	(void)strlcpy(_GET_INPAYLOAD(ps, pm, char *), path, len);
 
 	if ((error = xchg_msg(pu, opc, pm, sizeof(*feo), wait_reply)) != 0)
@@ -491,13 +509,16 @@ node_mk_common_final(pu, opc, pn, pcn)
 	ps =  puffs_getspecific(pu);
 
 	/* 
-	 * Set owner and group
+	 * Set owner and group. The kernel cannot create a file
+	 * on its own (puffs_cred_getuid would return -1), right?
 	 */
-	(void)puffs_cred_getuid(pcn->pcn_cred, &pn->pn_va.va_uid);
-	(void)puffs_cred_getgid(pcn->pcn_cred, &pn->pn_va.va_gid);
+	if (puffs_cred_getuid(pcn->pcn_cred, &pn->pn_va.va_uid) != 0)
+		DERRX(EX_SOFTWARE, "puffs_cred_getuid fails in %s", __func__);
+	if (puffs_cred_getgid(pcn->pcn_cred, &pn->pn_va.va_gid) != 0)
+		DERRX(EX_SOFTWARE, "puffs_cred_getgid fails in %s", __func__);
 
 	pm = ps->ps_new_msg(pu, (puffs_cookie_t)pn, 
-			    FUSE_SETATTR, sizeof(*fsi), NULL);
+			    FUSE_SETATTR, sizeof(*fsi), pcn->pcn_cred);
 	fsi = GET_INPAYLOAD(ps, pm, fuse_setattr_in);
 	fsi->uid = pn->pn_va.va_uid;
 	fsi->gid = pn->pn_va.va_gid;
@@ -818,6 +839,9 @@ perfuse_fs_init(pu)
 	 * FUSE_EXPORT_SUPPORT | FUSE_BIG_WRITES | FUSE_DONT_MASK
 	 *
 	 * Linux also sets max_readahead at 32 pages (128 kB)
+	 *
+	 * ps_new_msg() is called with NULL creds, which will
+	 * be interpreted as FUSE superuser. 
 	 */
 	pm = ps->ps_new_msg(pu, 0, FUSE_INIT, sizeof(*fii), NULL);
 	fii = GET_INPAYLOAD(ps, pm, fuse_init_in);
@@ -849,8 +873,12 @@ perfuse_fs_unmount(pu, flags)
 	int error;
 
 	ps = puffs_getspecific(pu);
-
 	opc = (puffs_cookie_t)puffs_getroot(pu);
+
+	/*
+	 * ps_new_msg() is called with NULL creds, which will
+	 * be interpreted as FUSE superuser. 
+	 */
 	pm = ps->ps_new_msg(pu, opc, FUSE_DESTROY, 0, NULL);
 
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0){
@@ -884,6 +912,11 @@ perfuse_fs_statvfs(pu, svfsb)
 
 	ps = puffs_getspecific(pu);
 	opc = (puffs_cookie_t)puffs_getroot(pu);
+
+	/*
+	 * ps_new_msg() is called with NULL creds, which will
+	 * be interpreted as FUSE superuser. 
+	 */
 	pm = ps->ps_new_msg(pu, opc, FUSE_STATFS, 0, NULL);
 
 	if ((error = xchg_msg(pu, opc, pm, sizeof(*fso), wait_reply)) != 0)
@@ -1035,7 +1068,7 @@ perfuse_node_lookup(pu, opc, pni, pcn)
 		pn = PERFUSE_NODE_DATA(opc)->pnd_parent;
 	else
 		error = node_lookup_common(pu, (puffs_cookie_t)opc,
-					   pcn->pcn_name, &pn);
+					   pcn->pcn_name, pcn->pcn_cred, &pn);
 	if (error != 0)
 		return error;
 
@@ -1110,7 +1143,8 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 	 */
 	ps = puffs_getspecific(pu);
 	if (ps->ps_flags & PS_NO_CREAT) {
-		error = node_lookup_common(pu, opc, pcn->pcn_name, &pn);
+		error = node_lookup_common(pu, opc, pcn->pcn_name, 
+					   pcn->pcn_cred, &pn);
 		if (error == 0)	
 			return EEXIST;
 
@@ -1118,7 +1152,8 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 		if (error != 0)
 			return error;
 
-		error = node_lookup_common(pu, opc, pcn->pcn_name, &pn);
+		error = node_lookup_common(pu, opc, pcn->pcn_name,
+					   pcn->pcn_cred, &pn);
 		if (error != 0)	
 			return error;
 
@@ -1148,7 +1183,7 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 	 * 
 	 * mode must contain file type (ie: S_IFREG), use VTTOIF(vap->va_type)
 	 */
-	pm = ps->ps_new_msg(pu, opc, FUSE_CREATE, len, NULL);
+	pm = ps->ps_new_msg(pu, opc, FUSE_CREATE, len, pcn->pcn_cred);
 	fci = GET_INPAYLOAD(ps, pm, fuse_create_in);
 	fci->flags = O_CREAT | O_TRUNC | O_RDWR;
 	fci->mode = vap->va_mode | VTTOIF(vap->va_type);
@@ -1248,7 +1283,7 @@ perfuse_node_mknod(pu, opc, pni, pcn, vap)
 	/*	
 	 * mode must contain file type (ie: S_IFREG), use VTTOIF(vap->va_type)
 	 */
-	pm = ps->ps_new_msg(pu, opc, FUSE_MKNOD, len, NULL);
+	pm = ps->ps_new_msg(pu, opc, FUSE_MKNOD, len, pcn->pcn_cred);
 	fmi = GET_INPAYLOAD(ps, pm, fuse_mknod_in);
 	fmi->mode = vap->va_mode | VTTOIF(vap->va_type);
 	fmi->rdev = (uint32_t)vap->va_rdev;
@@ -1712,6 +1747,14 @@ perfuse_node_poll(pu, opc, events)
 	ps = puffs_getspecific(pu);
 	/*
 	 * kh is set if FUSE_POLL_SCHEDULE_NOTIFY is set.
+	 *
+	 * XXX ps_new_msg() is called with NULL creds, which will
+	 * be interpreted as FUSE superuser. We have no way to 
+	 * know the requesting process' credential, but since poll
+	 * is supposed to operate on a file that has been open,
+	 * permission should have already been checked at open time.
+	 * That still may breaks on filesystems that provides odd 
+	 * semantics.
  	 */
 	pm = ps->ps_new_msg(pu, opc, FUSE_POLL, sizeof(*fpi), NULL);
 	fpi = GET_INPAYLOAD(ps, pm, fuse_poll_in);
@@ -1825,7 +1868,7 @@ perfuse_node_fsync(pu, opc, pcr, flags, offlo, offhi)
 	/*
 	 * If fsync_flags  is set, meta data should not be flushed.
 	 */
-	pm = ps->ps_new_msg(pu, opc, op, sizeof(*ffi), NULL);
+	pm = ps->ps_new_msg(pu, opc, op, sizeof(*ffi), pcr);
 	ffi = GET_INPAYLOAD(ps, pm, fuse_fsync_in);
 	ffi->fh = fh;
 	ffi->fsync_flags = (flags & FFILESYNC) ? 0 : 1;
@@ -1920,7 +1963,7 @@ perfuse_node_remove(pu, opc, targ, pcn)
 	name = pcn->pcn_name;
 	len = pcn->pcn_namelen + 1;
 
-	pm = ps->ps_new_msg(pu, opc, FUSE_UNLINK, len, NULL);
+	pm = ps->ps_new_msg(pu, opc, FUSE_UNLINK, len, pcn->pcn_cred);
 	path = _GET_INPAYLOAD(ps, pm, char *);
 	(void)strlcpy(path, name, len);
 
@@ -1971,7 +2014,7 @@ perfuse_node_link(pu, opc, targ, pcn)
 	name = pcn->pcn_name;
 	len =  sizeof(*fli) + pcn->pcn_namelen + 1;
 
-	pm = ps->ps_new_msg(pu, opc, FUSE_LINK, len, NULL);
+	pm = ps->ps_new_msg(pu, opc, FUSE_LINK, len, pcn->pcn_cred);
 	fli = GET_INPAYLOAD(ps, pm, fuse_link_in);
 	fli->oldnodeid = PERFUSE_NODE_DATA(pn)->pnd_ino;
 	(void)strlcpy((char *)(void *)(fli + 1), name, len - sizeof(*fli));
@@ -2029,7 +2072,7 @@ perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
 	oldname_len = pcn_src->pcn_namelen + 1;
 
 	len = sizeof(*fri) + oldname_len + newname_len;
-	pm = ps->ps_new_msg(pu, opc, FUSE_RENAME, len, NULL);
+	pm = ps->ps_new_msg(pu, opc, FUSE_RENAME, len, pcn_targ->pcn_cred);
 	fri = GET_INPAYLOAD(ps, pm, fuse_rename_in);
 	fri->newdir = PERFUSE_NODE_DATA(targ_dir)->pnd_ino;
 	np = (char *)(void *)(fri + 1);
@@ -2106,7 +2149,7 @@ perfuse_node_mkdir(pu, opc, pni, pcn, vap)
 	path = pcn->pcn_name;
 	len = sizeof(*fmi) + pcn->pcn_namelen + 1; 
 
-	pm = ps->ps_new_msg(pu, opc, FUSE_MKDIR, len, NULL);
+	pm = ps->ps_new_msg(pu, opc, FUSE_MKDIR, len, pcn->pcn_cred);
 	fmi = GET_INPAYLOAD(ps, pm, fuse_mkdir_in);
 	fmi->mode = vap->va_mode;
 	fmi->umask = 0; 	/* Seems unused by libfuse? */
@@ -2147,7 +2190,7 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 	name = pcn->pcn_name;
 	len = pcn->pcn_namelen + 1;
 
-	pm = ps->ps_new_msg(pu, opc, FUSE_RMDIR, len, NULL);
+	pm = ps->ps_new_msg(pu, opc, FUSE_RMDIR, len, pcn->pcn_cred);
 	path = _GET_INPAYLOAD(ps, pm, char *);
 	(void)strlcpy(path, name, len);
 
@@ -2203,7 +2246,7 @@ perfuse_node_symlink(pu, opc, pni, pcn_src, vap, link_target)
 	linkname_len = strlen(link_target) + 1;
 	len = path_len + linkname_len;
 
-	pm = ps->ps_new_msg(pu, opc, FUSE_SYMLINK, len, NULL);
+	pm = ps->ps_new_msg(pu, opc, FUSE_SYMLINK, len, pcn_src->pcn_cred);
 	np = _GET_INPAYLOAD(ps, pm, char *);
 	(void)strlcpy(np, path, path_len);
 	np += path_len;
@@ -2509,6 +2552,10 @@ perfuse_node_reclaim(pu, opc)
 
 		/*
 		 * Send the FORGET message
+		 *
+		 * ps_new_msg() is called with NULL creds, which will
+		 * be interpreted as FUSE superuser. This is obviously
+		 * fine since we operate with kernel creds here.
 		 */
 		pm = ps->ps_new_msg(pu, (puffs_cookie_t)pn, FUSE_FORGET, 
 			      sizeof(*ffi), NULL);
@@ -2645,6 +2692,13 @@ perfuse_node_advlock(pu, opc, id, op, fl, flags)
 	else
 		fop = (flags & F_WAIT) ? FUSE_SETLKW : FUSE_SETLK;
 			
+	/*
+	 * XXX ps_new_msg() is called with NULL creds, which will
+	 * be interpreted as FUSE superuser. We have no way to 
+	 * know the requesting process' credential, but since advlock()
+	 * is supposed to operate on a file that has been open(),
+	 * permission should have already been checked at open() time.
+	 */
 	pm = ps->ps_new_msg(pu, opc, fop, sizeof(*fli), NULL);
 	fli = GET_INPAYLOAD(ps, pm, fuse_lk_in);
 	fli->fh = perfuse_get_fh(opc, FWRITE);
