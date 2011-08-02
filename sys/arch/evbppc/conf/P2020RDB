@@ -1,4 +1,4 @@
-#	$NetBSD: P2020RDB,v 1.9 2011/07/28 15:38:48 matt Exp $
+#	$NetBSD: P2020RDB,v 1.10 2011/08/02 00:27:42 matt Exp $
 #
 #	P2020RBD -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020RBD-$Revision: 1.9 $"
+ident 		"P2020RBD-$Revision: 1.10 $"
 
 maxusers	32
 
@@ -154,12 +154,13 @@ obio0		at cpunode?		# On-chip Peripheral Bus
 
 # NOR Flash
 #options 	NOR_VERBOSE
-pq3cfi0 	at obio0 cs 0
-nor*		at pq3cfi?
+cfi0	 	at obio0 cs 0
+nor*		at cfi?
 flash*		at nor? offset 0 size 0x1000000
 
 e500wdog*	at cpunode?		# Watchdog timer
 
+ddrc*		at cpunode?
 duart*		at cpunode?
 com*		at duart? port ?
 options		CONSADDR="DUART1_BASE"
