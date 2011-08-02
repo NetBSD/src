@@ -1,4 +1,4 @@
-#	$NetBSD: P2020DS,v 1.8 2011/07/28 15:54:49 matt Exp $
+#	$NetBSD: P2020DS,v 1.9 2011/08/02 00:27:42 matt Exp $
 #
 #	P2020DS -- everything that's currently supported
 #
@@ -8,7 +8,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020DS-$Revision: 1.8 $"
+ident 		"P2020DS-$Revision: 1.9 $"
 
 maxusers	32
 
@@ -153,8 +153,15 @@ cpu*		at cpunode?
 
 obio0		at cpunode?		# On-chip Peripheral Bus
 
+# NOR Flash
+#options 	NOR_VERBOSE
+cfi0	 	at obio0 cs 0
+nor*		at cfi?
+flash*		at nor? offset 0 size 0x8000000
+
 e500wdog*	at cpunode?		# Watchdog timer
 
+ddrc*		at cpunode?
 duart*		at cpunode?
 com*		at duart? port ?
 options		CONSPEED=115200
