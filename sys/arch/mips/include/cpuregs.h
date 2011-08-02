@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.84 2011/07/31 15:35:04 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.85 2011/08/02 05:12:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -570,6 +570,10 @@
 #define	MIPS_COP_0_DATA_LO	_(28)
 #define	MIPS_COP_0_DATA_HI	_(29)
 #define	MIPS_COP_0_DESAVE	_(31)
+
+#define	MIPS_DIAG_RAS_DISABLE	0x00000001	/* Loongson2 */
+#define	MIPS_DIAG_BTB_CLEAR	0x00000002	/* Loongson2 */
+#define	MIPS_DIAG_ITLB_CLEAR	0x00000004	/* Loongson2 */
 
 /*
  * Values for the code field in a break instruction.
