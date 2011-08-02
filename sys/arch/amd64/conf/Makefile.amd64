@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.37 2011/06/10 03:18:27 joerg Exp $
+#	$NetBSD: Makefile.amd64,v 1.38 2011/08/02 17:22:51 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -65,8 +65,6 @@ spl.o: ${AMD64}/amd64/spl.S assym.h
 
 AFLAGS.locore.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.mptramp.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
-AFLAGS.linux32_sigcode.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
-AFLAGS.netbsd32_sigcode.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.spl.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 CWARNFLAGS.ah_regdomain.c= ${${ACTIVE_CC} == "clang":?-Wno-error:}
 
