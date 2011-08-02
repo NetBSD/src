@@ -3,7 +3,6 @@ include		"arch/evbmips/conf/std.rasoc"
 options 	SYMTAB_SPACE=450000		# size for embedded symbol table
 
 options 	RT3883
-options 	RTNORFLASH
 options 	RTMEMSIZE=128
 #options 	SLICKROCK
 options 	RALINK_ETH_NUM_SW_PARTITIONS=5
