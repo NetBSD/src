@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.9 2011/06/30 04:45:04 matt Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.10 2011/08/02 00:23:34 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,6 +63,49 @@
 	((((((n) & BNDS_EA) + __LOWEST_SET_BIT(BNDS_EA)) << 16) - (((n) & BNDS_SA))) << 8)
 #define	CS_CONFIG(n)		(0x080 + 0x004 * (n))
 #define CS_CONFIG_EN		__PPCBIT(0)
+
+#define	DDR_SDRAM_CFG		0x110
+#define	SDRAM_CFG_MEM_EN	__PPCBIT(0)
+#define	SDRAM_CFG_SREN		__PPCBIT(1)
+#define	SDRAM_CFG_ECC_EN	__PPCBIT(2)
+#define	SDRAM_CFG_RDEN		__PPCBIT(3)
+#define	SDRAM_CFG_TYPE		__PPCBITS(5,7)
+#define	SDRAM_CFG_TYPE_DDR2	3
+#define	SDRAM_CFG_TYPE_DDR3	7
+#define	SDRAM_CFG_DYN_PWR	__PPCBIT(10)
+#define	SDRAM_CFG_DBW		__PPCBITS(11,12)
+#define	SDRAM_CFG_DBW_64BIT	0
+#define	SDRAM_CFG_DBW_32BIT	1
+
+#define	CAPTURE_DATA_HI		0xe20
+#define	CAPTURE_DATA_LO		0xe24
+#define	CAPTURE_ECC		0xe28
+
+#define	ERR_DETECT		0xe40
+#define	ERR_DISABLE		0xe44
+#define	ERR_INT_EN		0xe48
+
+#define	ERR_MMEE		__PPCBIT(0)
+#define	ERR_APEE		__PPCBIT(23)
+#define	ERR_ACEE		__PPCBIT(24)
+#define	ERR_MBEE		__PPCBIT(28)
+#define	ERR_SBEE		__PPCBIT(29)
+#define	ERR_MSEE		__PPCBIT(31)
+
+#define	CAPTURE_ATTRIBUTES	0xe4c
+#define	CATTR_BNUM		__PPCBITS(1,3)
+#define	CATTR_TSIZ		__PPCBITS(5,7)
+#define	CATTR_TSRC		__PPCBITS(11,15)
+#define	CATTR_TTYP		__PPCBITS(18,19)
+#define	CATTR_VLD		__PPCBIT(31)
+
+#define	CAPTURE_ADDRESS		0xe50
+#define	CAPTURE_EXT_ADDRESS	0xe54
+
+#define	ERR_SBE			0xe58
+#define	ERR_SBE_SBET		__PPCBITS(8,15)
+#define	ERR_SBE_SBEC		__PPCBITS(24,31)
+
 #endif /* DDRC_PRIVATE */
 
 #define	GPIO_BASE		0x0fc00
