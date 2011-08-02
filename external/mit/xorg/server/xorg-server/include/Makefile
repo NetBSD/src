@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2010/11/23 08:22:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2011/08/02 07:41:01 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -21,8 +21,8 @@ XF86_SUBDIR=	common ddc dixmods/extmod dri fbdevhw i2c int10 modes \
 .PATH: ${XORGSRC}/../include
 
 INCSDIR=${X11INCDIR}/xorg
-INCS=	BT.h IBM.h TI.h XIstubs.h bstore.h \
-	bstorestr.h bt829.h \
+INCS=	BT.h IBM.h TI.h XIstubs.h \
+	bt829.h \
 	callback.h closestr.h closure.h colormap.h \
 	colormapst.h compiler.h cursor.h cursorstr.h damage.h damagestr.h \
 	dbestruct.h dgaproc.h dix.h dixevents.h dixfont.h dixfontstr.h \
@@ -30,17 +30,17 @@ INCS=	BT.h IBM.h TI.h XIstubs.h bstore.h \
 	eventconvert.h events.h eventstr.h list.h \
 	extension.h extinit.h extnsionst.h fb.h fbdevhw.h fboverlay.h \
 	fbrop.h fi1236.h fourcc.h gc.h gcstruct.h geext.h globals.h \
-	glyphstr.h i2c_def.h input.h inputstr.h \
+	glyphstr.h i2c_def.h input.h inputstr.h inpututils.h \
 	mi.h mibstore.h micmap.h micoord.h mifillarc.h mifpoly.h \
 	migc.h miline.h mipict.h mipointer.h mipointrst.h misc.h miscstruct.h \
 	mispans.h mistruct.h miwideline.h mizerarc.h msp3430.h opaque.h \
 	os.h picture.h picturestr.h pixmap.h pixmapstr.h property.h \
 	protocol-versions.h \
-	propertyst.h randrstr.h region.h regionstr.h renderedge.h resource.h \
+	propertyst.h randrstr.h region.h regionstr.h resource.h \
 	rgb.h sarea.h screenint.h scrnintstr.h selection.h servermd.h \
 	shadow.h shadowfb.h site.h swaprep.h swapreq.h tda8425.h tda9850.h \
 	tda9885.h uda1380.h validate.h vbe.h vbeModes.h vgaHW.h \
-	window.h windowstr.h xaa.h xaaWrapper.h xaalocal.h xaarop.h \
+	window.h windowstr.h xaa.h xaalocal.h xaarop.h \
 	xkbDflts.h xkb.h set.h \
 	xf86.h xf86Crtc.h xf86Cursor.h xf86DDC.h \
 	xf86Modes.h xf86Module.h \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/14 23:37:19 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2011/08/02 07:41:01 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ LDADD+=	-lm
 DPADD+=	${LIBM}
 
 .PATH: ${X11SRCDIR.xorg-server}/hw/xfree86/utils/${PROG}
+.PATH: ${X11SRCDIR.xorg-server}/hw/xfree86/utils/man
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

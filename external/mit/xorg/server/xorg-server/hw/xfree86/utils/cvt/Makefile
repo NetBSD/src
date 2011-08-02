@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/11/23 08:22:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/08/02 07:41:01 mrg Exp $
 
 PROG=	cvt
 SRCS=	cvt.c xf86cvt.c
@@ -18,6 +18,7 @@ LDADD+=	-lm
 DPADD+=	${LIBM}
 
 .PATH: ${X11SRCDIR.xorg-server}/hw/xfree86/utils/${PROG}
+.PATH: ${X11SRCDIR.xorg-server}/hw/xfree86/utils/man
 .PATH: ${X11SRCDIR.xorg-server}/hw/xfree86/modes
 
 .include <bsd.x11.mk>

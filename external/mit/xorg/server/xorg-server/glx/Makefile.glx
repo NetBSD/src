@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.glx,v 1.8 2011/01/15 13:54:53 jmcneill Exp $
+#	$NetBSD: Makefile.glx,v 1.9 2011/08/02 07:41:01 mrg Exp $
 
 .PATH:	${X11SRCDIR.xorg-server}/glx
 .PATH:	${X11SRCDIR.MesaLib}/src/mesa/glapi
@@ -11,6 +11,7 @@ SRCS.glx= \
         indirect_size_get.c \
         indirect_table.c \
         glapi.c \
+        glapi_gentable.c \
         glthread.c \
         glxdri.c \
         extension_string.c \
