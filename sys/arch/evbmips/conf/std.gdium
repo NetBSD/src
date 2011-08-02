@@ -1,4 +1,4 @@
-# $NetBSD: std.gdium,v 1.4 2009/10/21 21:11:59 rmind Exp $
+# $NetBSD: std.gdium,v 1.5 2011/08/02 16:12:44 matt Exp $
 
 machine evbmips mips
 include		"conf/std"	# MI standard options
@@ -15,6 +15,8 @@ options		MIPS3
 options		EXEC_ELF32	# exec ELF32 binaries
 options		EXEC_SCRIPT	# exec #! scripts
 
+makeoptions	AFLAGS+="-Wa,-mfix-loongson2f-jump -Wa,-mfix-loongson2f-nop"
+makeoptions	CFLAGS+="-Wa,-mfix-loongson2f-jump -Wa,-mfix-loongson2f-nop"
 makeoptions	DEFTEXTADDR="0x80200000"
 makeoptions	BOARDTYPE="gdium"
 
