@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi.h,v 1.4.2.2 2011/07/26 03:22:28 matt Exp $	*/
+/*	$NetBSD: cfi.h,v 1.4.2.3 2011/08/02 01:01:35 cliff Exp $	*/
 
 #ifndef _CFI_H_
 #define _CFI_H_
@@ -147,7 +147,6 @@ struct cfi_ops {
  * not for long-term use. Some event counters at the flash and nor
  * layers might be helpful eventually
  */
-#define CFI_0002_STATS	/* XXX TMP */
 #ifdef CFI_0002_STATS
 struct cfi_0002_stats {
 	u_long read_page;
@@ -177,7 +176,7 @@ extern void cfi_0002_stats_print(struct cfi *);
 
 #else
 
-#define CFI_0002_STATS_INIT(cfi)
+#define CFI_0002_STATS_INIT(dev, cfi)
 #define CFI_0002_STATS_INC(cfi, field)
 
 #endif	/* CFI_0002_STATS */
