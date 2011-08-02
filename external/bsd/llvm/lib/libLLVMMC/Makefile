@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/07/25 16:32:43 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/08/02 17:12:39 joerg Exp $
 
 LIB=	LLVMMC
 
@@ -7,6 +7,7 @@ LIB=	LLVMMC
 .PATH: ${LLVM_SRCDIR}/lib/MC
 
 SRCS+=	ELFObjectWriter.cpp \
+	MCAsmBackend.cpp \
 	MCAsmInfo.cpp \
 	MCAsmInfoCOFF.cpp \
 	MCAsmInfoDarwin.cpp \
@@ -39,14 +40,13 @@ SRCS+=	ELFObjectWriter.cpp \
 	MCStreamer.cpp \
 	MCSubtargetInfo.cpp \
 	MCSymbol.cpp \
+	MCTargetAsmLexer.cpp \
 	MCValue.cpp \
 	MCWin64EH.cpp \
 	MachObjectWriter.cpp \
 	WinCOFFStreamer.cpp \
 	WinCOFFObjectWriter.cpp \
-	SubtargetFeature.cpp \
-	TargetAsmBackend.cpp \
-	TargetAsmLexer.cpp
+	SubtargetFeature.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

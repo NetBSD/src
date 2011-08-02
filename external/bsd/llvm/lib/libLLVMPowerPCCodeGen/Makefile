@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/07/17 20:07:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/08/02 17:12:39 joerg Exp $
 
 LIB=	LLVMPowerPCCodeGen
 
@@ -6,8 +6,7 @@ LIB=	LLVMPowerPCCodeGen
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/PowerPC
 
-SRCS+=	PPCAsmBackend.cpp \
-	PPCAsmPrinter.cpp \
+SRCS+=	PPCAsmPrinter.cpp \
 	PPCBranchSelector.cpp \
 	PPCCodeEmitter.cpp \
 	PPCHazardRecognizers.cpp \
@@ -16,9 +15,7 @@ SRCS+=	PPCAsmBackend.cpp \
 	PPCISelLowering.cpp \
 	PPCFrameLowering.cpp \
 	PPCJITInfo.cpp \
-	PPCMCCodeEmitter.cpp \
 	PPCMCInstLower.cpp \
-	PPCPredicates.cpp \
 	PPCRegisterInfo.cpp \
 	PPCSubtarget.cpp \
 	PPCTargetMachine.cpp \

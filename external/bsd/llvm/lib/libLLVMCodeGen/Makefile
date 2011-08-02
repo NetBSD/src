@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/07/17 20:07:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/08/02 17:12:39 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -41,7 +41,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	LowerSubregs.cpp \
 	MachineBasicBlock.cpp \
 	MachineBranchProbabilityInfo.cpp \
-	MachineBlockFrequency.cpp \
+	MachineBlockFrequencyInfo.cpp \
 	MachineCSE.cpp \
 	MachineDominators.cpp \
 	MachineFunction.cpp \
