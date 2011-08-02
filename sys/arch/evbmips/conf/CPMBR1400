@@ -198,6 +198,12 @@ gpio*		at rgpio?
 ri2c0		at mainbus?
 iic*		at ri2c?
 
+# NOR Flash
+#options 	NOR_VERBOSE
+cfi0 		at mainbus0
+nor*		at cfi?
+flash*		at nor? offset 0 size 0x2000000
+
 # USB Hubs
 uhub*		at usb?
 uhub*		at uhub? port ?
