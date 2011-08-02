@@ -201,8 +201,14 @@ iic*		at ri2c?
 # NOR Flash
 #options 	NOR_VERBOSE
 cfi0 		at mainbus0
-nor*		at cfi?
-flash*		at nor? offset 0 size 0x2000000
+nor0		at cfi0
+flash0		at nor0 offset 0x00000000 size 0x00040000
+flash1		at nor0 offset 0x00040000 size 0x00020000
+flash2		at nor0 offset 0x00060000 size 0x00020000
+flash3		at nor0 offset 0x00080000 size 0x00120000	# kernel
+flash4		at nor0 offset 0x001a0000 size 0x006e0000	# filesystem
+flash5		at nor0 offset 0x00880000 size 0x01760000	# upgrade
+flash6		at nor0 offset 0x01fe0000 size 0x00020000
 
 # USB Hubs
 uhub*		at usb?
