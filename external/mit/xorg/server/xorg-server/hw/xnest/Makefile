@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2010/05/22 05:45:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2011/08/02 07:41:01 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ PROG=	Xnest
 .include "../../Makefile.servermod"
 
 .PATH:		${X11SRCDIR.xorg-server}/hw/xnest
+.PATH:		${X11SRCDIR.xorg-server}/hw/xnest/man
 .PATH:		${X11SRCDIR.xorg-server}/Xext
 .PATH:		${X11SRCDIR.xorg-server}/Xi
 .PATH:		${X11SRCDIR.xorg-server}/mi
