@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2010/05/22 05:45:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2011/08/02 07:41:01 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@
 PROG=		Xvfb
 
 .PATH:		${X11SRCDIR.xorg-server}/hw/vfb
+.PATH:		${X11SRCDIR.xorg-server}/hw/vfb/man
 .PATH:		${X11SRCDIR.xorg-server}/Xext
 .PATH:		${X11SRCDIR.xorg-server}/Xi
 .PATH:		${X11SRCDIR.xorg-server}/mi
