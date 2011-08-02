@@ -1,4 +1,4 @@
-/* $NetBSD: sysarch.h,v 1.17 2011/07/28 20:30:06 dyoung Exp $ */
+/* $NetBSD: sysarch.h,v 1.18 2011/08/02 04:45:10 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,15 +71,6 @@ struct alpha_bus_get_window_args {
 #define	ALPHA_BUS_TYPE_PCI_IO		0
 #define	ALPHA_BUS_TYPE_PCI_MEM		1
 #define	ALPHA_BUS_TYPE_MAX		1
-
-struct alpha_pci_conf_readwrite_args {
-	int write;
-	u_int bus;
-	u_int device;
-	u_int function;
-	u_int reg;
-	u_int32_t val;
-};
 
 struct alpha_pci_conf_readwrite_args {
 	int write;
