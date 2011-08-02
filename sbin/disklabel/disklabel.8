@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.63 2011/07/25 16:31:05 christos Exp $
+.\"	$NetBSD: disklabel.8,v 1.64 2011/08/02 10:21:12 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -209,6 +209,10 @@ Previous versions of
 could update the bootstrap code on some architectures.
 This functionality has been subsumed by
 .Xr installboot 8 .
+.Sh FILES
+.Bl -tag -width /etc/disktab -compact
+.It Pa /etc/disktab
+.El
 .Sh EXIT STATUS
 The exit status of
 .Nm
@@ -227,10 +231,6 @@ An I/O error of some sort occurred.
 .It 101..n
 One or more warnings occured while reading the disklabel.
 Subtract 100 to get the number of warnings detected.
-.El
-.Sh FILES
-.Bl -tag -width /etc/disktab -compact
-.It Pa /etc/disktab
 .El
 .Sh EXAMPLES
 .Dl Ic disklabel sd0
@@ -303,7 +303,7 @@ The
 .Nm
 structure stored on disk cannot support partitions/disks greater than 2TB.
 Please use
-.Xr gpt 8 ,
+.Xr gpt 8
 and
 .Xr dkctl 8
 to manage partitions and disks larger than 2TB.
