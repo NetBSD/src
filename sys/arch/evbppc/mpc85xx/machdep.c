@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.3 2011/07/26 03:32:45 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.4 2011/08/02 01:34:36 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -127,6 +127,12 @@ struct extent *pciio_ex;
 
 struct powerpc_bus_space gur_bst = {
 	.pbs_flags = _BUS_SPACE_BIG_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	.pbs_offset = GUR_BASE,
+	.pbs_limit = GUR_SIZE,
+};
+
+struct powerpc_bus_space gur_le_bst = {
+	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	.pbs_offset = GUR_BASE,
 	.pbs_limit = GUR_SIZE,
 };
@@ -614,7 +620,9 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	CTASSERT(offsetof(struct tlb_md_ops, md_tlb_mapiodev) == 0);
 	cpu_md_ops.md_tlb_ops = (const void *)&early_tlb_mapiodev;
 	bus_space_init(&gur_bst, NULL, NULL, 0);
+	bus_space_init(&gur_le_bst, NULL, NULL, 0);
 	cpu->cpu_bst = &gur_bst;
+	cpu->cpu_le_bst = &gur_le_bst;
 	cpu->cpu_bsh = gur_bsh;
 
 	/*
@@ -653,6 +661,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	 * Now find out how much memory is attached
 	 */
 	pmemsize = memprobe(endkernel);
+	cpu->cpu_highmem = pmemsize;
 		printf(" memprobe=%zuMB", (size_t) (pmemsize >> 20));
 
 	/*
