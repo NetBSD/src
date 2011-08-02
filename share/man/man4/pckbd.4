@@ -1,4 +1,4 @@
-.\" $NetBSD: pckbd.4,v 1.20 2011/07/22 19:06:23 christos Exp $
+.\" $NetBSD: pckbd.4,v 1.21 2011/08/02 10:04:07 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -38,9 +38,9 @@
 .Sh DESCRIPTION
 This driver supports PC/AT keyboards within the
 .Xr wscons 4
-console framework. It doesn't provide direct device
-driver entry points but makes its functions available via
-the internal
+console framework.
+It doesn't provide direct device driver entry points but makes its
+functions available via the internal
 .Xr wskbd 4
 interface.
 .Pp
@@ -103,7 +103,8 @@ and
 mappings can be used in the
 .Li KB_NODEAD (
 .Dq .nodead )
-variant.  This switches off the
+variant.
+This switches off the
 .Dq dead accents .
 .Pp
 The
@@ -121,13 +122,15 @@ suffix.
 The
 .Li KB_METAESC (
 .Dq .metaesc )
-option can be applied to any layout.  If set, keys pressed together
-with the ALT modifier are prefixed by an ESC character.  (Standard
-behaviour is to add 128 to the ASCII value.)
+option can be applied to any layout.
+If set, keys pressed together
+with the ALT modifier are prefixed by an ESC character.
+(Standard behaviour is to add 128 to the ASCII value.)
 .Pp
 Because PC keyboard hardware doesn't contain a beeper, requests for
 .Dq keyboard beeps
-cannot be handled directly. On alpha and i386 a helper device attached
+cannot be handled directly.
+On alpha and i386 a helper device attached
 to the
 .Xr pcppi 4
 driver allows the use of the standard ISA speaker for this purpose.
