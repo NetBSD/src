@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.37.18.1 2011/01/07 02:49:58 matt Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.37.18.2 2011/08/02 01:09:44 cliff Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.37.18.1 2011/01/07 02:49:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.37.18.2 2011/08/02 01:09:44 cliff Exp $");
 
 #include "opt_usb.h"
 
@@ -111,7 +111,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	DPRINTFN(5, ("usb_block_allocmem: size=%lu align=%lu\n",
 		     (u_long)size, (u_long)align));
 
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) && 0
 	if (!cpu_intr_p()) {
 		printf("usb_block_allocmem: in interrupt context, size=%lu\n",
 		    (unsigned long) size);
