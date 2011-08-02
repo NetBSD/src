@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.2.1 2011/01/07 01:40:36 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.2 2011/08/02 01:34:36 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.2.1 2011/01/07 01:40:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.2.2 2011/08/02 01:34:36 matt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -121,6 +121,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	ma.ma_name = "cpunode";
 	ma.ma_node = 0;
 	ma.ma_memt = curcpu()->ci_softc->cpu_bst;
+	ma.ma_le_memt = curcpu()->ci_softc->cpu_le_bst;
 	ma.ma_dmat = &booke_bus_dma_tag;
 
 	config_found_sm_loc(self, "mainbus", NULL, &ma, mainbus_print, NULL);
