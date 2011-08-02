@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.26 2011/07/31 15:58:25 jmcneill Exp $	*/
+/*	$NetBSD: i2c.c,v 1.27 2011/08/02 18:46:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.26 2011/07/31 15:58:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.27 2011/08/02 18:46:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.26 2011/07/31 15:58:25 jmcneill Exp $");
 #include "locators.h"
 #include <opt_i2cbus.h>
 
+#define I2C_MAX_ADDR	0x3ff	/* 10-bit address, max */
+
 struct iic_softc {
 	i2c_tag_t sc_tag;
 	int sc_type;
+	device_t sc_devices[I2C_MAX_ADDR + 1];
 };
 
 static void	iic_smbus_intr_thread(void *);
@@ -112,10 +115,29 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ia.ia_ncompat = 0;
 	ia.ia_compat = NULL;
 
-	if (config_match(parent, cf, &ia) > 0)
-		config_attach(parent, cf, &ia, iic_print);
+	if (config_match(parent, cf, &ia) > 0) {
+		if (ia.ia_addr == (i2c_addr_t)-1) 
+			config_attach(parent, cf, &ia, iic_print);
+		else if (ia.ia_addr <= I2C_MAX_ADDR &&
+			   !sc->sc_devices[ia.ia_addr])
+			sc->sc_devices[ia.ia_addr] =
+			    config_attach(parent, cf, &ia, iic_print);
+	}
 
 	return (0);
+}
+
+static void
+iic_child_detach(device_t parent, device_t child)
+{
+	struct iic_softc *sc = device_private(parent);
+	int i;
+
+	for (i = 0; i <= I2C_MAX_ADDR; i++)
+		if (sc->sc_devices[i] == child) {
+			sc->sc_devices[i] = NULL;
+			break;
+	}
 }
 
 static int
@@ -437,4 +459,4 @@ iic_compat_match(struct i2c_attach_args *ia, const char ** compats)
 
 
 CFATTACH_DECL2_NEW(iic, sizeof(struct iic_softc),
-    iic_match, iic_attach, NULL, NULL, iic_rescan, NULL);
+    iic_match, iic_attach, NULL, NULL, iic_rescan, iic_child_detach);
