@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2011/07/25 05:46:12 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2011/08/02 00:25:38 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -268,7 +268,7 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 		1, { ISOURCE_DDR },
 		1 + ilog2(DEVDISR_DDR_15),
 		{ SVR_MPC8572v1 >> 16 } },
-	{ "ddrc", DDRC1_BASE, DDRC_SIZE, 2,
+	{ "ddrc", DDRC2_BASE, DDRC_SIZE, 2,
 		1, { ISOURCE_DDR },
 		1 + ilog2(DEVDISR_DDR2_14),
 		{ SVR_MPC8572v1 >> 16 } },
