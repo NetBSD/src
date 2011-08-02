@@ -1,6 +1,7 @@
 /* tc-mips.c -- assemble code for a MIPS chip.
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   Free Software Foundation, Inc.
    Contributed by the OSF and Ralph Campbell.
    Written by Keith Knowles and Ralph Campbell, working independently.
    Modified for ECOFF and R4000 support by Ian Lance Taylor of Cygnus
@@ -737,7 +738,8 @@ static const unsigned int mips16_to_32_reg_map[] =
 
 /* Classifies the kind of instructions we're interested in when
    implementing -mfix-vr4120.  */
-enum fix_vr4120_class {
+enum fix_vr4120_class
+{
   FIX_VR4120_MACC,
   FIX_VR4120_DMACC,
   FIX_VR4120_MULT,
@@ -746,6 +748,15 @@ enum fix_vr4120_class {
   FIX_VR4120_MTHILO,
   NUM_FIX_VR4120_CLASSES
 };
+
+/* ...likewise -mfix-loongson2f-jump.  */
+static bfd_boolean mips_fix_loongson2f_jump;
+
+/* ...likewise -mfix-loongson2f-nop.  */
+static bfd_boolean mips_fix_loongson2f_nop;
+
+/* True if -mfix-loongson2f-nop or -mfix-loongson2f-jump passed.  */
+static bfd_boolean mips_fix_loongson2f;
 
 /* Given two FIX_VR4120_* values X and Y, bit Y of element X is set if
    there must be at least one other instruction between an instruction
@@ -1031,8 +1042,9 @@ static struct {
 enum mips_regclass { MIPS_GR_REG, MIPS_FP_REG, MIPS16_REG };
 
 static void append_insn
-  (struct mips_cl_insn *ip, expressionS *p, bfd_reloc_code_real_type *r);
+  (struct mips_cl_insn *, expressionS *, bfd_reloc_code_real_type *);
 static void mips_no_prev_insn (void);
+static void macro_build (expressionS *, const char *, const char *, ...);
 static void mips16_macro_build
   (expressionS *, const char *, const char *, va_list);
 static void load_register (int, expressionS *, int);
@@ -1901,6 +1913,8 @@ md_begin (void)
 	      if (nop_insn.insn_mo == NULL && strcmp (name, "nop") == 0)
 		{
 		  create_insn (&nop_insn, mips_opcodes + i);
+		  if (mips_fix_loongson2f_nop)
+		    nop_insn.insn_opcode = LOONGSON2F_NOP_INSN;
 		  nop_insn.fixed_p = 1;
 		}
 	    }
@@ -2694,6 +2708,54 @@ nops_for_insn_or_target (const struct mips_cl_insn *history,
   return nops;
 }
 
+/* Fix NOP issue: Replace nops by "or at,at,zero".  */
+
+static void
+fix_loongson2f_nop (struct mips_cl_insn * ip)
+{
+  if (strcmp (ip->insn_mo->name, "nop") == 0)
+    ip->insn_opcode = LOONGSON2F_NOP_INSN;
+}
+
+/* Fix Jump Issue: Eliminate instruction fetch from outside 256M region
+                   jr target pc &= 'hffff_ffff_cfff_ffff.  */
+
+static void
+fix_loongson2f_jump (struct mips_cl_insn * ip)
+{
+  if (strcmp (ip->insn_mo->name, "j") == 0
+      || strcmp (ip->insn_mo->name, "jr") == 0
+      || strcmp (ip->insn_mo->name, "jalr") == 0)
+    {
+      int sreg;
+      expressionS ep;
+
+      if (! mips_opts.at)
+        return;
+
+      sreg = EXTRACT_OPERAND (RS, *ip);
+      if (sreg == ZERO || sreg == KT0 || sreg == KT1 || sreg == ATREG)
+        return;
+
+      ep.X_op = O_constant;
+      ep.X_add_number = 0xcfff0000;
+      macro_build (&ep, "lui", "t,u", ATREG, BFD_RELOC_HI16);
+      ep.X_add_number = 0xffff;
+      macro_build (&ep, "ori", "t,r,i", ATREG, ATREG, BFD_RELOC_LO16);
+      macro_build (NULL, "and", "d,v,t", sreg, sreg, ATREG);
+    }
+}
+
+static void
+fix_loongson2f (struct mips_cl_insn * ip)
+{
+  if (mips_fix_loongson2f_nop)
+    fix_loongson2f_nop (ip);
+
+  if (mips_fix_loongson2f_jump)
+    fix_loongson2f_jump (ip);
+}
+
 /* Output an instruction.  IP is the instruction information.
    ADDRESS_EXPR is an operand of the instruction to be used with
    RELOC_TYPE.  */
@@ -2706,6 +2768,9 @@ append_insn (struct mips_cl_insn *ip, expressionS *address_expr,
   relax_stateT prev_insn_frag_type = 0;
   bfd_boolean relaxed_branch = FALSE;
   segment_info_type *si = seg_info (now_seg);
+
+  if (mips_fix_loongson2f)
+    fix_loongson2f (ip);
 
   /* Mark instruction labels in mips16 mode.  */
   mips16_mark_labels ();
@@ -11207,6 +11272,7 @@ struct option md_longopts[] =
 #define OPTION_MNO_7000_HILO_FIX (OPTION_FIX_BASE + 1)
   {"no-fix-7000", no_argument, NULL, OPTION_MNO_7000_HILO_FIX},
   {"mno-fix7000", no_argument, NULL, OPTION_MNO_7000_HILO_FIX},
+
 #define OPTION_FIX_VR4120 (OPTION_FIX_BASE + 2)
 #define OPTION_NO_FIX_VR4120 (OPTION_FIX_BASE + 3)
   {"mfix-vr4120",    no_argument, NULL, OPTION_FIX_VR4120},
@@ -11216,8 +11282,17 @@ struct option md_longopts[] =
   {"mfix-vr4130",    no_argument, NULL, OPTION_FIX_VR4130},
   {"mno-fix-vr4130", no_argument, NULL, OPTION_NO_FIX_VR4130},
 
+#define OPTION_FIX_LOONGSON2F_JUMP (OPTION_FIX_BASE + 6)
+#define OPTION_NO_FIX_LOONGSON2F_JUMP (OPTION_FIX_BASE + 7)
+  {"mfix-loongson2f-jump", no_argument, NULL, OPTION_FIX_LOONGSON2F_JUMP},
+  {"mno-fix-loongson2f-jump", no_argument, NULL, OPTION_NO_FIX_LOONGSON2F_JUMP},
+#define OPTION_FIX_LOONGSON2F_NOP (OPTION_FIX_BASE + 8)
+#define OPTION_NO_FIX_LOONGSON2F_NOP (OPTION_FIX_BASE + 9)
+  {"mfix-loongson2f-nop", no_argument, NULL, OPTION_FIX_LOONGSON2F_NOP},
+  {"mno-fix-loongson2f-nop", no_argument, NULL, OPTION_NO_FIX_LOONGSON2F_NOP},
+
   /* Miscellaneous options.  */
-#define OPTION_MISC_BASE (OPTION_FIX_BASE + 6)
+#define OPTION_MISC_BASE (OPTION_FIX_BASE + 10)
 #define OPTION_TRAP (OPTION_MISC_BASE + 0)
   {"trap", no_argument, NULL, OPTION_TRAP},
   {"no-break", no_argument, NULL, OPTION_TRAP},
@@ -11499,6 +11574,22 @@ md_parse_option (int c, char *arg)
       mips_opts.ase_smartmips = 0;
       break;
 
+    case OPTION_FIX_LOONGSON2F_JUMP:
+      mips_fix_loongson2f_jump = TRUE;
+      break;
+
+    case OPTION_NO_FIX_LOONGSON2F_JUMP:
+      mips_fix_loongson2f_jump = FALSE;
+      break;
+
+    case OPTION_FIX_LOONGSON2F_NOP:
+      mips_fix_loongson2f_nop = TRUE;
+      break;
+
+    case OPTION_NO_FIX_LOONGSON2F_NOP:
+      mips_fix_loongson2f_nop = FALSE;
+      break;
+
     case OPTION_FIX_VR4120:
       mips_fix_vr4120 = 1;
       break;
@@ -11714,6 +11805,8 @@ md_parse_option (int c, char *arg)
     default:
       return 0;
     }
+
+    mips_fix_loongson2f = mips_fix_loongson2f_nop || mips_fix_loongson2f_jump;
 
   return 1;
 }
@@ -14715,6 +14808,8 @@ void
 mips_handle_align (fragS *fragp)
 {
   char *p;
+  int bytes, size, excess;
+  valueT opcode;
 
   if (fragp->fr_type != rs_align_code)
     return;
@@ -14722,17 +14817,28 @@ mips_handle_align (fragS *fragp)
   p = fragp->fr_literal + fragp->fr_fix;
   if (*p)
     {
-      int bytes;
-
-      bytes = fragp->fr_next->fr_address - fragp->fr_address - fragp->fr_fix;
-      if (bytes & 1)
-	{
-	  *p++ = 0;
-	  fragp->fr_fix++;
-	}
-      md_number_to_chars (p, mips16_nop_insn.insn_opcode, 2);
-      fragp->fr_var = 2;
+      opcode = mips16_nop_insn.insn_opcode;
+      size = 2;
     }
+  else
+    {
+      opcode = nop_insn.insn_opcode;
+      size = 4;
+    }
+
+  bytes = fragp->fr_next->fr_address - fragp->fr_address - fragp->fr_fix;
+  excess = bytes % size;
+  if (excess != 0)
+    {
+      /* If we're not inserting a whole number of instructions,
+	 pad the end of the fixed part of the frag with zeros.  */
+      memset (p, 0, excess);
+      p += excess;
+      fragp->fr_fix += excess;
+    }
+
+  md_number_to_chars (p, opcode, size);
+  fragp->fr_var = size;
 }
 
 static void
@@ -15433,6 +15539,8 @@ MIPS options:\n\
 -mmt			generate MT instructions\n\
 -mno-mt			do not generate MT instructions\n"));
   fprintf (stream, _("\
+-mfix-loongson2f-jump	work around Loongson2F JUMP instructions\n\
+-mfix-loongson2f-nop	work around Loongson2F NOP errata\n\
 -mfix-vr4120		work around certain VR4120 errata\n\
 -mfix-vr4130		work around VR4130 mflo/mfhi errata\n\
 -mgp32			use 32-bit GPRs, regardless of the chosen ISA\n\
