@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.9 2010/12/05 15:57:40 adam Exp $
+#	$NetBSD: Makefile,v 1.10 2011/08/02 09:11:38 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
 
 LIB=	loader
-.PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/${LIB}
+LOADERDIR=	${X11SRCDIR.xorg-server}/hw/xfree86/${LIB}
+.PATH:	${LOADERDIR}
 
-SRCS=	loader.c loadext.c loadmod.c dlloader.c os.c sdksyms.c
+SRCS=	loader.c loadext.c loadmod.c os.c sdksyms.c
 
 .if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
 #SRCS+=	SparcMulDiv.S
@@ -17,6 +18,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/vbe \
 		-I${X11SRCDIR.xorg-server}/miext/cw \
+		-I${X11SRCDIR.xorg-server}/miext/sync \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/int10 \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/ddc \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/i2c \
@@ -48,3 +50,8 @@ COPTS.loadmod.c=		-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
+
+sdksyms.c: sdksyms.sh
+	CPP='$(CPP)' AWK='$(AWK)' $(LOADERDIR)/sdksyms.sh $(X11SRCDIR.xorg-server) ${CFLAGS} ${CPPFLAGS}
+sdksyms.d: sdksyms.c
+CLEANFILES+=	sdksyms.c

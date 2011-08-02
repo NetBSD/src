@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2010/11/23 08:22:34 mrg Exp $
+# $NetBSD: Makefile,v 1.7 2011/08/02 09:11:38 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -12,7 +12,7 @@ LIB=	xaa
 SRCS=	xaaInit.c xaaGC.c xaaInitAccel.c xaaFallback.c \
 	xaaBitBlt.c xaaCpyArea.c xaaGCmisc.c xaaCpyWin.c \
 	xaaCpyPlane.c xaaFillRect.c xaaTEText.c xaaNonTEText.c \
-	xaaPCache.c xaaSpans.c xaaROP.c xaaImage.c xaaWrapper.c \
+	xaaPCache.c xaaSpans.c xaaROP.c xaaImage.c \
 	xaaRect.c xaaLineMisc.c xaaBitOrder.c \
 	xaaFillPoly.c xaaWideLine.c xaaTables.c xaaFillArc.c \
 	xaaLine.c xaaDashLine.c xaaOverlay.c xaaOffscreen.c \

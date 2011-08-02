@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.fb,v 1.7 2010/05/22 02:40:40 mrg Exp $
+#	$NetBSD: Makefile.fb,v 1.8 2011/08/02 09:11:37 mrg Exp $
 
 .PATH:		${X11SRCDIR.xorg-server}/fb
 SRCS.fb=	fb24_32.c fballpriv.c fbarc.c fbbits.c fbblt.c \
@@ -11,10 +11,7 @@ SRCS.fb=	fb24_32.c fballpriv.c fbarc.c fbbits.c fbblt.c \
 
 CPPFLAGS+=	${X11FLAGS.DIX} ${X11INCS.DIX} -DHAVE_DIX_CONFIG_H
 
-CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
-		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bus \
-		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
-		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${DESTDIR}${X11INCDIR}/xorg
 
 CPPFLAGS+=	-DHAVE_DIX_CONFIG_H

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/08/02 07:41:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/08/02 09:11:38 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -52,6 +52,7 @@ LDADD+=	${LDADD.damageext}
 LDADD+=	${LDADD.miext/damage}
 LDADD+=	${LDADD.miext/shadow}
 LDADD+=	${LDADD.miext/cw}
+LDADD+=	${LDADD.miext/sync}
 LDADD+=	${LDADD.Xi}
 LDADD+=	${LDADD.xkb}
 LDADD+=	${LDADD.os}
@@ -91,6 +92,7 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.miext/damage} \
 	${DPADD.miext/shadow} \
 	${DPADD.miext/cw} \
+	${DPADD.miext/sync} \
 	${DPADD.Xi} \
 	${DPADD.xkb} \
 	${DPADD.composite} \
