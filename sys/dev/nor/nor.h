@@ -1,4 +1,4 @@
-/*	$NetBSD: nor.h,v 1.3 2011/07/17 00:52:42 dyoung Exp $	*/
+/*	$NetBSD: nor.h,v 1.4 2011/08/02 20:44:09 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -344,16 +344,17 @@ nor_erase_block(device_t self, flash_off_t offset)
 
 /* Manufacturer IDs defined by JEDEC */
 enum {
-	NOR_MFR_UNKNOWN	= 0x00,
-	NOR_MFR_AMD	= 0x01,
-	NOR_MFR_FUJITSU	= 0x04,
-	NOR_MFR_RENESAS	= 0x07,
-	NOR_MFR_STMICRO	= 0x20,
-	NOR_MFR_MICRON	= 0x2c,
-	NOR_MFR_NATIONAL= 0x8f,
-	NOR_MFR_TOSHIBA	= 0x98,
-	NOR_MFR_HYNIX	= 0xad,
-	NOR_MFR_SAMSUNG	= 0xec
+	NOR_MFR_UNKNOWN		= 0x00,
+	NOR_MFR_AMD		= 0x01,
+	NOR_MFR_FUJITSU		= 0x04,
+	NOR_MFR_RENESAS		= 0x07,
+	NOR_MFR_STMICRO		= 0x20,
+	NOR_MFR_MICRON		= 0x2c,
+	NOR_MFR_NATIONAL	= 0x8f,
+	NOR_MFR_TOSHIBA		= 0x98,
+	NOR_MFR_HYNIX		= 0xad,
+	NOR_MFGR_MACRONIX	= 0xc2,
+	NOR_MFR_SAMSUNG		= 0xec
 };
 
 struct nor_manufacturer {
