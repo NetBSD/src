@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.115 2011/07/19 19:46:42 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.116 2011/08/02 16:44:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -794,6 +794,25 @@ typedef struct {
  * descsz: 16 or 20
  */
 #define	ELF_NOTE_TYPE_GNU_BUILD_ID	3
+
+/* SuSE-specific note type: version
+ * name: SuSE\0\0\0\0
+ * namesz: 8
+ * desc: 
+ *      word[0] = VVTTMMmm
+ *
+ *	V = version of following data
+ *	T = product type: [box, sles, nld, whatever]
+ *	M = product major version
+ *	m = product minor version
+ * descsz: 8
+ */
+#define	ELF_NOTE_TYPE_SUSE_TAG		0x45537553	/* SuSE in LE */
+/* NetBSD-specific note name and description sizes */
+#define	ELF_NOTE_SUSE_NAMESZ		8
+#define	ELF_NOTE_SUSE_DESCSZ		8
+/* NetBSD-specific note name */
+#define	ELF_NOTE_SUSE_NAME		"SuSE\0\0\0\0"
 
 /* NetBSD-specific note type: Emulation name.
  * name: NetBSD\0\0
