@@ -1,4 +1,4 @@
-# $NetBSD: sdtemp.ioconf,v 1.1 2011/07/31 16:00:21 jmcneill Exp $
+# $NetBSD: sdtemp.ioconf,v 1.2 2011/08/02 18:52:35 pgoyette Exp $
 
 ioconf sdtemp
 
@@ -7,3 +7,10 @@ include "conf/files"
 pseudo-root iic*
 
 sdtemp* at iic? addr 0x18
+sdtemp* at iic? addr 0x19
+sdtemp* at iic? addr 0x1a
+sdtemp* at iic? addr 0x1b
+sdtemp* at iic? addr 0x1c
+sdtemp* at iic? addr 0x1d
+sdtemp* at iic? addr 0x1e
+sdtemp* at iic? addr 0x1f
