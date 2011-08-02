@@ -920,7 +920,7 @@ SVR4_ASM_SPEC \
   %{rdynamic:-export-dynamic} \
   %{!dynamic-linker:-dynamic-linker " LINUX_DYNAMIC_LINKER "}}}"
 
-#if defined(HAVE_LD_EH_FRAME_HDR)
+#if defined(HAVE_LD_EH_FRAME_HDR) && !defined(LINK_EH_SPEC)
 # define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
 #endif
 
