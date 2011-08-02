@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/08/02 07:41:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2011/08/02 07:56:33 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ XF86_SUBDIR=	common ddc dixmods/extmod dri fbdevhw i2c int10 modes \
 .PATH: ${XORGSRC}/../include
 
 INCSDIR=${X11INCDIR}/xorg
-INCS=	BT.h IBM.h TI.h XIstubs.h \
+INCS=	BT.h IBM.h TI.h XIstubs.h Xprintf.h \
 	bt829.h \
 	callback.h closestr.h closure.h colormap.h \
 	colormapst.h compiler.h cursor.h cursorstr.h damage.h damagestr.h \
