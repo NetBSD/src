@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.1.2.2 2011/01/17 07:46:00 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.1.2.3 2011/08/02 01:34:36 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,8 +49,11 @@ struct cpu_softc {
 	struct cpu_info *cpu_ci;
 	struct evcnt *cpu_evcnt_intrs;
 	bus_space_tag_t cpu_bst;
+	bus_space_tag_t cpu_le_bst;
 	bus_space_handle_t cpu_bsh;
 	bus_addr_t cpu_clock_gtbcr;
+
+	paddr_t cpu_highmem;     
 
 	u_int cpu_pcpls[5];
 	struct evcnt cpu_evcnt_spurious_intr;
@@ -74,6 +77,7 @@ struct cpunode_locators {
 struct cpunode_attach_args {
 	const char *cna_busname;
 	bus_space_tag_t cna_memt;
+	bus_space_tag_t cna_le_memt;
 	bus_dma_tag_t cna_dmat;
 	struct cpunode_locators cna_locs;
 	u_int cna_childmask;
@@ -82,6 +86,7 @@ struct cpunode_attach_args {
 struct mainbus_attach_args {
 	const char *ma_name;
 	bus_space_tag_t ma_memt;
+	bus_space_tag_t ma_le_memt;
 	bus_dma_tag_t ma_dmat;
 	int ma_node;
 };

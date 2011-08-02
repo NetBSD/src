@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3ehci.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $	*/
+/*	$NetBSD: pq3ehci.c,v 1.1.2.2 2011/08/02 01:34:36 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.1.2.2 2011/08/02 01:34:36 matt Exp $");
+
+#include "opt_usb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +92,7 @@ pq3ehci_attach(device_t parent, device_t self, void *aux)
 	int error;
 
 	psc->sc_children |= cna->cna_childmask;
-	sc->sc.iot = cna->cna_memt;
+	sc->sc.iot = cna->cna_le_memt;	/* EHCI registers are little endian */
 	sc->sc.sc_dev = self;
 	sc->sc.sc_bus.dmatag = cna->cna_dmat;
 	sc->sc.sc_bus.hci_private = sc;
@@ -111,7 +113,17 @@ pq3ehci_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc.sc_size = cnl->cnl_size;
 
-	sc->sc_ih = intr_establish(cnl->cnl_intrs[0], IPL_VM, IST_ONCHIP,
+	/*
+	 * We need to tell the USB interface to snoop all off RAM starting
+	 * at 0.  Since it can do it by powers of 2, get the highest RAM
+	 * address and roughly round it to the next power of 2 and find
+	 * the number of leading zero bits.  
+	 */
+	cpu_write_4(cnl->cnl_addr + USB_SNOOP1,
+	    SNOOP_2GB - __builtin_clz(curcpu()->ci_softc->cpu_highmem * 2 - 1));
+	cpu_write_4(cnl->cnl_addr + USB_CONTROL, USB_EN);
+
+	sc->sc_ih = intr_establish(cnl->cnl_intrs[0], IPL_USB, IST_ONCHIP,
 	    ehci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
