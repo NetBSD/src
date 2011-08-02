@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2011/06/03 16:35:35 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2011/08/02 16:46:45 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.13 2011/06/03 16:35:35 pgoyette Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2011/08/02 16:46:45 mbalmer Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -88,7 +88,9 @@ main(int argc, char **argv)
 
 	argc -= optind;
 	argv += optind;
-	if (argc != 0)
+	if (argc == 1 && name == NULL)
+		name = argv[0];
+	else if (argc != 0)
 		usage();
 
 	if (prog_init && prog_init() == -1)
@@ -155,7 +157,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [-n name]\n", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-n] [name]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
