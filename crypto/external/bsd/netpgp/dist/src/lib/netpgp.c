@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.93 2011/08/02 05:36:45 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.94 2011/08/02 07:16:56 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -314,10 +314,13 @@ readsshkeys(netpgp_t *netpgp, char *homedir, const char *needseckey)
 			filename = f;
 		}
 		if ((secring = calloc(1, sizeof(*secring))) == NULL) {
+			free(pubring);
 			(void) fprintf(stderr, "readsshkeys: bad alloc\n");
 			return 0;
 		}
 		if (!pgp_ssh2_readkeys(netpgp->io, pubring, secring, NULL, filename, hashtype)) {
+			free(pubring);
+			free(secring);
 			(void) fprintf(stderr, "readsshkeys: can't read sec %s\n", filename);
 			return 0;
 		}
@@ -1911,9 +1914,12 @@ netpgp_write_sshkey(netpgp_t *netpgp, char *s, const char *userid, char *out, si
 	size_t		 cc;
 	char		 f[MAXPATHLEN];
 
+	keyring = NULL;
+	io = NULL;
+	cc = 0;
 	if ((io = calloc(1, sizeof(pgp_io_t))) == NULL) {
 		(void) fprintf(stderr, "netpgp_save_sshpub: bad alloc 1\n");
-		return 0;
+		goto done;
 	}
 	io->outs = stdout;
 	io->errs = stderr;
@@ -1923,23 +1929,23 @@ netpgp_write_sshkey(netpgp_t *netpgp, char *s, const char *userid, char *out, si
 	savepubkey(s, f, sizeof(f));
 	if ((keyring = calloc(1, sizeof(*keyring))) == NULL) {
 		(void) fprintf(stderr, "netpgp_save_sshpub: bad alloc 2\n");
-		return 0;
+		goto done;
 	}
 	if (!pgp_keyring_fileread(netpgp->pubring = keyring, 1, f)) {
 		(void) fprintf(stderr, "can't import key\n");
-		return 0;
+		goto done;
 	}
 	/* get rsa key */
 	k = 0;
 	key = pgp_getnextkeybyname(netpgp->io, netpgp->pubring, userid, &k);
 	if (key == NULL) {
 		(void) fprintf(stderr, "no key found for '%s'\n", userid);
-		return 0;
+		goto done;
 	}
 	if (key->key.pubkey.alg != PGP_PKA_RSA) {
 		/* we're not interested in supporting DSA either :-) */
 		(void) fprintf(stderr, "key not RSA '%s'\n", userid);
-		return 0;
+		goto done;
 	}
 	/* XXX - check trust sigs */
 	/* XXX - check expiry */
@@ -1950,7 +1956,12 @@ netpgp_write_sshkey(netpgp_t *netpgp, char *s, const char *userid, char *out, si
 	cc = formatstring((char *)out, (const uint8_t *)"ssh-rsa", 7);
 	cc += formatbignum((char *)&out[cc], key->key.pubkey.key.rsa.e);
 	cc += formatbignum((char *)&out[cc], key->key.pubkey.key.rsa.n);
-	free(io);
-	free(keyring);
+done:
+	if (io) {
+		free(io);
+	}
+	if (keyring) {
+		free(keyring);
+	}
 	return (int)cc;
 }
