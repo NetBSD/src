@@ -1,4 +1,4 @@
-/*	$NetBSD: openpicreg.h,v 1.4 2011/05/27 15:18:30 matt Exp $	*/
+/*	$NetBSD: openpicreg.h,v 1.5 2011/08/02 00:22:02 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -197,7 +197,7 @@
 
 #define	MPC8544_EXTERNALSOURCES	12
 #define	MPC8544_ONCHIPSOURCES	48
-#define	MPC8544_ONCHIPBITMAP	{ 0x3c3fefff, 0x00000000 }
+#define	MPC8544_ONCHIPBITMAP	{ 0x3c07efff, 0x00000000 }
 #define	MPC8544_IPISOURCES	4
 #define	MPC8544_TIMERSOURCES	4
 #define	MPC8544_MISOURCES	4
