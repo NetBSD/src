@@ -95,6 +95,7 @@ enum optdefs {
 	RESULTS,
 	SSHKEYFILE,
 	CIPHER,
+	FORMAT,
 
 	/* debug */
 	OPS_DEBUG
@@ -107,7 +108,7 @@ static struct option options[] = {
 	/* key-management commands */
 	{"list-keys",	no_argument,		NULL,	LIST_KEYS},
 	{"list-sigs",	no_argument,		NULL,	LIST_SIGS},
-	{"find-key",	no_argument,		NULL,	FIND_KEY},
+	{"find-key",	optional_argument,	NULL,	FIND_KEY},
 	{"export",	no_argument,		NULL,	EXPORT_KEY},
 	{"export-key",	no_argument,		NULL,	EXPORT_KEY},
 	{"import",	no_argument,		NULL,	IMPORT_KEY},
@@ -125,6 +126,7 @@ static struct option options[] = {
 	{"coredumps",	no_argument, 		NULL,	COREDUMPS},
 	{"keyring",	required_argument, 	NULL,	KEYRING},
 	{"userid",	required_argument, 	NULL,	USERID},
+	{"format",	required_argument, 	NULL,	FORMAT},
 	{"hash-alg",	required_argument, 	NULL,	HASH_ALG},
 	{"hash",	required_argument, 	NULL,	HASH_ALG},
 	{"algorithm",	required_argument, 	NULL,	HASH_ALG},
@@ -174,7 +176,8 @@ match_keys(netpgp_t *netpgp, FILE *fp, char *f, const int psigs)
 			return 0;
 		}
 	} else {
-		if (netpgp_match_keys_json(netpgp, &json, f, "human", psigs) == 0) {
+		if (netpgp_match_keys_json(netpgp, &json, f,
+				netpgp_getvar(netpgp, "format"), psigs) == 0) {
 			return 0;
 		}
 	}
@@ -195,9 +198,14 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 	case LIST_SIGS:
 		return match_keys(netpgp, stdout, f, (p->cmd == LIST_SIGS));
 	case FIND_KEY:
-		return netpgp_find_key(netpgp, netpgp_getvar(netpgp, "userid"));
+		if ((key = f) == NULL) {
+			key = netpgp_getvar(netpgp, "userid");
+		}
+		return netpgp_find_key(netpgp, key);
 	case EXPORT_KEY:
-		key = netpgp_export_key(netpgp, netpgp_getvar(netpgp, "userid"));
+		if ((key = f) == NULL) {
+			key = netpgp_getvar(netpgp, "userid");
+		}
 		if (key) {
 			printf("%s", key);
 			return 1;
@@ -209,7 +217,7 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 	case GENERATE_KEY:
 		return netpgp_generate_key(netpgp, f, p->numbits);
 	case GET_KEY:
-		key = netpgp_get_key(netpgp, f, "human");
+		key = netpgp_get_key(netpgp, f, netpgp_getvar(netpgp, "format"));
 		if (key) {
 			printf("%s", key);
 			return 1;
@@ -318,6 +326,9 @@ setoption(netpgp_t *netpgp, prog_t *p, int val, char *arg, int *homeset)
 		netpgp_setvar(netpgp, "ssh keys", "1");
 		netpgp_setvar(netpgp, "sshkeyfile", arg);
 		break;
+	case FORMAT:
+		netpgp_setvar(netpgp, "format", arg);
+		break;
 	case CIPHER:
 		netpgp_setvar(netpgp, "cipher", arg);
 		break;
@@ -389,6 +400,7 @@ main(int argc, char **argv)
 	netpgp_setvar(&netpgp, "sshkeydir", "/etc/ssh");
 	netpgp_setvar(&netpgp, "res", "<stdout>");
 	netpgp_setvar(&netpgp, "hash", DEFAULT_HASH_ALG);
+	netpgp_setvar(&netpgp, "format", "human");
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "S:Vglo:s", options, &optindex)) != -1) {
 		if (ch >= LIST_KEYS) {
