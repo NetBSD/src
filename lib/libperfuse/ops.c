@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.36 2011/08/02 14:53:38 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.37 2011/08/02 16:57:16 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -2790,9 +2790,6 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(opc);
 	pm = NULL;
-
-	if (puffs_pn_getvap((struct puffs_node *)opc)->va_type == VDIR) 
-		return EBADF;
 
 	do {
 		size_t max_read;
