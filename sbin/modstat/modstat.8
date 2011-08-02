@@ -1,4 +1,4 @@
-.\" $NetBSD: modstat.8,v 1.8 2010/12/14 16:23:59 jruoho Exp $
+.\" $NetBSD: modstat.8,v 1.9 2011/08/02 16:46:45 mbalmer Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd December 14, 2010
+.Dd August 2, 2011
 .Dt MODSTAT 8
 .Os
 .Sh NAME
@@ -40,17 +40,20 @@
 .Nd display status of loaded kernel modules
 .Sh SYNOPSIS
 .Nm
-.Op Fl n Ar name
+.Op Fl n
+.Op Ar name
 .Sh DESCRIPTION
 The
 .Nm
-utility displays the status of any kernel modules
-present in the kernel.
+utility displays the status of any kernel modules present in the kernel.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
 .It Fl n Ar name
 Display the status of only the module with this name.
+Please note that
+.Fl n
+is optional.
 .El
 .Pp
 In addition to listing the currently loaded modules' name,
