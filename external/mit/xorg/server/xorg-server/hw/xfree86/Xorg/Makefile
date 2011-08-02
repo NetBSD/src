@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/03/28 10:08:06 plunky Exp $
+#	$NetBSD: Makefile,v 1.2 2011/08/02 07:41:01 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -114,9 +114,7 @@ DPADD+=	${DPADD.dix} \
 
 SYMLINKS=	${X11BINDIR}/Xorg ${X11BINDIR}/X
 
-# XXX
-#Xorg.1: Xorg.man.pre
-#	cp ${.ALLSRC} ${.TARGET}
+# Done in ../doc
 MKMAN=	no
 
 FILES=		xorg-server.m4
