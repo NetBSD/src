@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.13 2011/05/30 14:50:08 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.14 2011/08/02 14:53:38 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -203,13 +203,27 @@ perfuse_new_pb (pu, opc, opcode, payload_len, cred)
 	fih->opcode = opcode;
 	fih->unique = perfuse_next_unique(pu);
 	fih->nodeid = nodeid;
-	fih->uid = (uid_t)-1;
-	fih->gid = (gid_t)-1;
 	fih->pid = 0;
-	if (cred != NULL) {
-		(void)puffs_cred_getuid(cred, &fih->uid);
-		(void)puffs_cred_getgid(cred, &fih->gid);
+
+	/*	
+	 * NULL creds is taken as FUSE root. This currently happens for:
+	 * - mount	root cred assumed
+	 * - umount	root cred assumed
+	 * - inactive	kernel cred used
+	 * - statvfs	root cred assumed
+	 * - poll	checks have been done at open() time
+	 * - addvlock	checks have been done at open() time
+	 */
+	if ((cred != NULL) && !puffs_cred_isjuggernaut(cred)) {
+		if (puffs_cred_getuid(cred, &fih->uid) != 0)
+			DERRX(EX_SOFTWARE, "puffs_cred_getuid failed");
+		if (puffs_cred_getgid(cred, &fih->gid) != 0)
+			DERRX(EX_SOFTWARE, "puffs_cred_getgid failed");
+	} else {
+		fih->uid = (uid_t)0;
+		fih->gid = (gid_t)0;
 	}
+
 	if ((pcc = puffs_cc_getcc(pu)) != NULL)
 		(void)puffs_cc_getcaller(pcc, (pid_t *)&fih->pid, NULL);
 
