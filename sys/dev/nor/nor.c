@@ -1,4 +1,4 @@
-/*	$NetBSD: nor.c,v 1.3 2011/07/20 03:42:55 cliff Exp $	*/
+/*	$NetBSD: nor.c,v 1.4 2011/08/02 20:44:09 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NOR chips implementing the ONFI CFI specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nor.c,v 1.3 2011/07/20 03:42:55 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nor.c,v 1.4 2011/08/02 20:44:09 cliff Exp $");
 
 #include "locators.h"
 #include "opt_nor.h"
@@ -107,6 +107,7 @@ const struct nor_manufacturer nor_mfrs[] = {
 	{ NOR_MFR_NATIONAL,	"National" },
 	{ NOR_MFR_TOSHIBA,	"Toshiba" },
 	{ NOR_MFR_HYNIX,	"Hynix" },
+	{ NOR_MFGR_MACRONIX,	"Macronix" },
 	{ NOR_MFR_SAMSUNG,	"Samsung" },
 	{ NOR_MFR_UNKNOWN,	"Unknown" }
 };
