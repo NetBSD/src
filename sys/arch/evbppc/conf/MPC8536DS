@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8536DS,v 1.7 2011/07/15 19:19:55 cliff Exp $
+#	$NetBSD: MPC8536DS,v 1.8 2011/08/02 00:27:42 matt Exp $
 #
 #	MPC8536DS -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8536DS-$Revision: 1.7 $"
+ident 		"MPC8536DS-$Revision: 1.8 $"
 
 maxusers	32
 
@@ -151,12 +151,13 @@ obio0		at cpunode?		# On-chip Peripheral Bus
 
 # NOR Flash
 #options 	NOR_VERBOSE
-pq3cfi0 	at obio0 cs 0
-nor*		at pq3cfi?
+cfi0	 	at obio0 cs 0
+nor*		at cfi?
 flash*		at nor? offset 0 size 0x8000000
 
 e500wdog*	at cpunode?		# Watchdog timer
 
+ddrc*		at cpunode?
 duart*		at cpunode?
 com*		at duart? port ?
 options		CONSPEED=9600
