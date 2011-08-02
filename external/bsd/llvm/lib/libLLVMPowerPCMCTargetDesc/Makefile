@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/07/17 20:07:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/08/02 17:12:39 joerg Exp $
 
 LIB=	LLVMPowerPCMCTargetDesc
 
@@ -9,8 +9,11 @@ CPPFLAGS+=	-I${PPC_OBJDIR} -I${LLVM_SRCDIR}/lib/Target/PowerPC
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/PowerPC/MCTargetDesc
 
-SRCS+=	PPCMCAsmInfo.cpp \
-	PPCMCTargetDesc.cpp
+SRCS+=	PPCAsmBackend.cpp \
+	PPCMCAsmInfo.cpp \
+	PPCMCCodeEmitter.cpp \
+	PPCMCTargetDesc.cpp \
+	PPCPredicates.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
