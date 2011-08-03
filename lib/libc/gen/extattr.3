@@ -1,6 +1,7 @@
-.\"	$NetBSD: extattr.3,v 1.3 2005/01/02 18:25:09 wiz Exp $
+.\"	$NetBSD: extattr.3,v 1.4 2011/08/03 04:11:17 manu Exp $
 .\"
 .\" Copyright (c) 2001 Dima Dorfman <dd@FreeBSD.org>
+.\" Copyright (c) 2011 Emmanuel Dreyfus <manu@NetBSD.org>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -33,6 +34,13 @@
 .Nm extattr_namespace_to_string ,
 .Nm extattr_string_to_namespace
 .Nd convert an extended attribute namespace identifier to a string and vice versa
+.Nm extattr_copy_file ,
+.Nm extattr_copy_fd ,
+.Nm extattr_copy_link ,
+.Nm cpxattr ,
+.Nm fcpxattr ,
+.Nm lcpxattr 
+.Nd copy extended attributes from a file to another one
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -41,6 +49,18 @@
 .Fn extattr_namespace_to_string "int attrnamespace" "char **string"
 .Ft int
 .Fn extattr_string_to_namespace "const char *string" "int *attrnamespace"
+.Ft int
+.Fn extattr_copy_file "const char *from" "const char *to" "int namespace"
+.Ft int
+.Fn extattr_copy_fd "int from_fd" "int to_fd" "int namespace"
+.Ft int
+.Fn extattr_copy_link "const char *from" "const char *to" "int namespace"
+.Ft int
+.Fn cpxattr "const char *from" "const char *to"
+.Ft int
+.Fn fcpxattr "int from_fd" "int to_fd"
+.Ft int
+.Fn lcpxattr "const char *from" "const char *to"
 .Sh DESCRIPTION
 The
 .Fn extattr_namespace_to_string
@@ -74,6 +94,31 @@ instead of requiring a user to enter the integer representing a namespace,
 an interactive program might ask for a name and use
 .Fn extattr_string_to_namespace
 to get the desired identifier.
+.Pp
+.Fn extattr_copy_file
+copies extended attributes of namespace
+.Ar namespace
+from a file to another one.
+.Fn extattr_copy_fd 
+does the same using open file descriptors, and
+.Fn extattr_copy_link
+does the same as
+.Fn extattr_copy_file
+but operates on symbolic links themselves instead of their targets.
+.Pp
+.Fn cpxattr ,
+.Fn fcpxattr ,
+and
+.Fn lcpxattr
+respectively work the same was as 
+.Fn extattr_copy_file ,
+.Fn extattr_copy_fd ,
+and
+.Fn extattr_copy_link ,
+but will copy extended attributes from all namespaces accessible to the user,
+silently skiping unaccessible namespaces.
+.Pp
+Please note that none of the extended attribute copying functions are atomic.
 .Sh RETURN VALUES
 If any of the calls are unsuccessful, the value \-1 is returned
 and the global variable
@@ -84,6 +129,11 @@ is set to indicate the error.
 .It Bq Er EINVAL
 The requested namespace could not be identified.
 .El
+.Pp
+Extended attribute copying functions may also raise errors produced by
+.Fn extattr_list_file 
+and
+.Fn extattr_get_file .
 .Sh SEE ALSO
 .Xr getextattr 1 ,
 .Xr extattr_get_file 2 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.6 2011/07/04 08:07:31 manu Exp $	*/
+/*	$NetBSD: extattr.h,v 1.7 2011/08/03 04:11:17 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -94,8 +94,17 @@ int	extattr_set_file(const char *_path, int _attrnamespace,
 int	extattr_set_link(const char *_path, int _attrnamespace,
 	    const char *_attrname, const void *_data, size_t _nbytes);
 
+extern const int extattr_namespaces[];
+
 int	extattr_namespace_to_string(int, char **);
 int	extattr_string_to_namespace(const char *, int *);
+int	extattr_copy_fd(int _from_fd, int _to_fd, int _namespace);
+int	extattr_copy_file(const char *_from, const char *_to, int _namespace);
+int	extattr_copy_link(const char *_from, const char *_to, int _namespace);
+
+int	fcpxattr(int _from_fd, int _to_fd);
+int	cpxattr(const char *_from, const char *_to);
+int	lcpxattr(const char *_from, const char *_to);
 __END_DECLS
 
 #endif /* !_KERNEL */
