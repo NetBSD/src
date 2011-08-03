@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.130 2011/08/02 07:56:33 mrg Exp $
+#	 $NetBSD: mi,v 1.131 2011/08/03 00:38:42 macallan Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5947,7 +5947,7 @@
 ./usr/X11R7/include/xorg/region.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/regionstr.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/registry.h			-unknown-	xorg
-./usr/X11R7/include/xorg/renderedge.h			-unknown-	xorg
+./usr/X11R7/include/xorg/renderedge.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/resource.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/rgb.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/rrtransform.h			-unknown-	xorg
@@ -5974,7 +5974,7 @@
 ./usr/X11R7/include/xorg/window.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/windowstr.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xaa.h				-unknown-	xorg
-./usr/X11R7/include/xorg/xaaWrapper.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xaaWrapper.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/xaalocal.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xaarop.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf1bpp.h			-unknown-	obsolete
