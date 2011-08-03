@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.39 2011/02/06 12:37:49 darcy Exp $ */
+/* $NetBSD: utils.c,v 1.40 2011/08/03 04:11:15 manu Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.39 2011/02/06 12:37:49 darcy Exp $");
+__RCSID("$NetBSD: utils.c,v 1.40 2011/08/03 04:11:15 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: utils.c,v 1.39 2011/02/06 12:37:49 darcy Exp $");
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/extattr.h>
 
 #include <err.h>
 #include <errno.h>
@@ -226,6 +227,9 @@ copy_file(FTSENT *entp, int dne)
 			}
 		}
 	}
+
+	if (pflag && (fcpxattr(from_fd, to_fd) != 0))
+		warn("%s: error copying extended attributes", to.p_path);
 
 	(void)close(from_fd);
 
