@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcmips,v 1.18 2011/03/09 18:55:55 mrg Exp $
+# $NetBSD: md.hpcmips,v 1.19 2011/08/03 01:43:26 mrg Exp $
 ./etc/X11/xorg.conf.640x240-jp				-unknown	xorg
 ./etc/X11/xorg.conf.640x240-us				-unknown	xorg
 ./etc/X11/xorg.conf.640x480-jp				-unknown	xorg
@@ -93,11 +93,11 @@
 ./usr/X11R7/lib/modules/libxaa.so.0			-unknown-	xorg
 ./usr/X11R7/lib/modules/libxaa_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/libxaa_pic.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libxf8_16bpp.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libxf8_16bpp.so			-unknown-	xorg
-./usr/X11R7/lib/modules/libxf8_16bpp.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/libxf8_16bpp_g.a		-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/libxf8_16bpp_pic.a		-unknown-	xorg
+./usr/X11R7/lib/modules/libxf8_16bpp.a			-unknown-	obsolete
+./usr/X11R7/lib/modules/libxf8_16bpp.so			-unknown-	obsolete
+./usr/X11R7/lib/modules/libxf8_16bpp.so.0		-unknown-	obsolete
+./usr/X11R7/lib/modules/libxf8_16bpp_g.a		-unknown-	obsolete
+./usr/X11R7/lib/modules/libxf8_16bpp_pic.a		-unknown-	obsolete
 ./usr/X11R7/man/cat1/Xorg.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/cvt.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/gtf.0				-unknown-	.cat,xorg

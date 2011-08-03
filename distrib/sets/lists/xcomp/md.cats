@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.10 2010/05/28 05:39:56 lukem Exp $
+# $NetBSD: md.cats,v 1.11 2011/08/03 01:43:25 mrg Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -116,4 +116,4 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvbe.so.0.debug		-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvgahw.so.0.debug		-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug		-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/libxf8_16bpp.so.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libxf8_16bpp.so.0.debug	-unknown-		obsolete
