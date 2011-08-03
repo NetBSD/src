@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.161 2009/09/30 04:30:50 elad Exp $
+.\"	$NetBSD: sysctl.8,v 1.162 2011/08/03 01:47:40 christos Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd September 30, 2009
+.Dd August 2, 2011
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -62,7 +62,7 @@
 .Nd get or set kernel state
 .Sh SYNOPSIS
 .Nm sysctl
-.Op Fl AdeMn
+.Op Fl AdeMnq
 .Oo
 .Fl r |
 .Fl x
@@ -185,8 +185,11 @@ For example, to save the pagesize in variable psize, use:
 set psize=`sysctl -n hw.pagesize`
 .Ed
 .It Fl q
-Used to indicate that nothing should be printed for writes unless an
+Used to indicate that nothing should be printed for reads or writes unless an
 error is detected.
+For reads, not finding a variable does not print an error, but exits with
+an error code.
+This is useful just for testing that a variable exists.
 .It Fl r
 Raw output form.
 Values printed are in their raw binary forms as retrieved directly
