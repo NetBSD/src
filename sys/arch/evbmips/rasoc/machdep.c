@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2011/07/28 15:50:13 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2011/08/03 16:25:02 matt Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2011/07/28 15:50:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2011/08/03 16:25:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -155,17 +155,20 @@ mach_init(void)
 
 	/*
 	 * Determine the memory size.
-	 *
-	 * Note: Reserve the first page!  That's where the trap
-	 * vectors are located.
 	 */
-	memsize = RTMEMSIZE * 1024 * 1024;
+	memsize = *(volatile uint32_t *)
+	    MIPS_PHYS_TO_KSEG1(RA_SYSCTL_BASE + RA_SYSCTL_CFG0);
+	memsize = __SHIFTOUT(memsize, SYSCTL_CFG0_DRAM_SIZE);
+	if (__predict_false(memsize == 0)) {
+		memsize = 2 << 20;
+	} else {
+		memsize = 4 << (20 + memsize);
+	}
 
 	physmem = btoc(memsize);
 
-	mem_clusters[mem_cluster_cnt].start = PAGE_SIZE;
-	mem_clusters[mem_cluster_cnt].size =
-		memsize - mem_clusters[mem_cluster_cnt].start;
+	mem_clusters[mem_cluster_cnt].start = 0;
+	mem_clusters[mem_cluster_cnt].size = memsize;
 	mem_cluster_cnt++;
 
 	/*
