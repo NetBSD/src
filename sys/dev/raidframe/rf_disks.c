@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.80 2011/07/29 19:55:50 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.81 2011/08/03 14:44:38 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.80 2011/07/29 19:55:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.81 2011/08/03 14:44:38 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -618,7 +618,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		}
 	}
 
-	if ((error = rf_getdisksize(vp, curlwp, diskPtr)) != 0)
+	if ((error = rf_getdisksize(vp, diskPtr)) != 0)
 		return (error);
 
 	/*
