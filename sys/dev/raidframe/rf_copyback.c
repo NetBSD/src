@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.47 2011/05/11 18:13:12 mrg Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.48 2011/08/03 14:44:38 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.47 2011/05/11 18:13:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.48 2011/08/03 14:44:38 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -162,7 +162,7 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 
 		if ((retcode = VOP_GETATTR(vp, &va, curlwp->l_cred)) != 0)
 			return;
-		retcode = rf_getdisksize(vp, curlwp, &raidPtr->Disks[fcol]);
+		retcode = rf_getdisksize(vp, &raidPtr->Disks[fcol]);
 		if (retcode) {
 			return;
 		}

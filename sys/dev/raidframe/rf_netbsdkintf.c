@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.293 2011/07/30 12:08:36 jmcneill Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.294 2011/08/03 14:44:38 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.293 2011/07/30 12:08:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.294 2011/08/03 14:44:38 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -3757,7 +3757,7 @@ rf_buf_queue_check(int raidid)
 }
 
 int
-rf_getdisksize(struct vnode *vp, struct lwp *l, RF_RaidDisk_t *diskPtr)
+rf_getdisksize(struct vnode *vp, RF_RaidDisk_t *diskPtr)
 {
 	uint64_t numsecs;
 	unsigned secsize;
