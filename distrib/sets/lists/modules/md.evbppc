@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.4 2011/07/20 04:47:30 matt Exp $
+# $NetBSD: md.evbppc,v 1.5 2011/08/03 01:32:16 he Exp $
 ./stand/powerpc-4xx						base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@					base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod
@@ -120,6 +120,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/smbfs/smbfs.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/solaris				base-kernel-modules     kmod,solaris
 ./stand/powerpc-4xx/@OSRELEASE@/modules/solaris/solaris.kmod		base-kernel-modules     kmod,solaris
+./stand/powerpc-4xx/@OSRELEASE@/modules/spdmem				base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/spdmem/spdmem.kmod		base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/suser				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/suser/suser.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/swsensor				base-kernel-modules	kmod
@@ -265,6 +267,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/smbfs/smbfs.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/solaris				base-kernel-modules     kmod,solaris
 ./stand/powerpc-booke/@OSRELEASE@/modules/solaris/solaris.kmod		base-kernel-modules     kmod,solaris
+./stand/powerpc-booke/@OSRELEASE@/modules/spdmem			base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/spdmem/spdmem.kmod		base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/suser				base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/suser/suser.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/swsensor				base-kernel-modules	kmod
