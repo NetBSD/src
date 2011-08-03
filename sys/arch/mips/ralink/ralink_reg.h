@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_reg.h,v 1.2 2011/07/28 15:38:49 matt Exp $	*/
+/*	$NetBSD: ralink_reg.h,v 1.3 2011/08/03 16:27:15 matt Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -126,6 +126,16 @@
 #define RA_SYSCTL_RST          0x34
 #define RA_SYSCTL_RSTSTAT      0x38
 #define RA_SYSCTL_GPIOMODE     0x60
+
+#define	SYSCTL_CFG0_BE		__BIT(19)
+#define SYSCTL_CFG0_DRAM_SIZE	__BITS(12,14) 
+#define	SYSCTL_CFG0_DRAM_2MB	0
+#define	SYSCTL_CFG0_DRAM_8MB	1
+#define	SYSCTL_CFG0_DRAM_16MB	2
+#define	SYSCTL_CFG0_DRAM_32MB	3
+#define	SYSCTL_CFG0_DRAM_64MB	4
+#define	SYSCTL_CFG0_DRAM_128MB	5
+#define	SYSCTL_CFG0_DRAM_256MB	6
 
 #if defined(RT3883)
 /* 3883 doesn't have memo regs, use teststat instead */
