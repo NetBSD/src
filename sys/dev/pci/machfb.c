@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.69 2011/08/01 12:28:53 mbalmer Exp $	*/
+/*	$NetBSD: machfb.c,v 1.70 2011/08/03 05:27:08 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.69 2011/08/01 12:28:53 mbalmer Exp $");
+	"$NetBSD: machfb.c,v 1.70 2011/08/03 05:27:08 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -607,14 +607,6 @@ mach64_attach(device_t parent, device_t self, void *aux)
 #ifdef MACHFB_DEBUG
 		edid_print(&ei);
 #endif
-		if (ei.edid_have_range) {
-
-			/* ei has dotclock in MHz, struct videomode in kHz */
-			mode = pick_mode_by_dotclock(width, height,
-			    ei.edid_range.er_max_clock * 1000);
-			if (mode != NULL)
-				printf("mode: %s\n", mode->name);
-		}
 	}
 
 	is_gx = 0;
