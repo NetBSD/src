@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2011/08/03 16:25:02 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2011/08/03 17:34:27 matt Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2011/08/03 16:25:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2011/08/03 17:34:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -221,7 +221,7 @@ cpu_startup(void)
 	 */
 	printf("%s%s", copyright, version);
 	printf("Boot processor: %s\n", cpu_model);
-	format_bytes(pbuf, sizeof(pbuf), RTMEMSIZE * 1024 * 1024);
+	format_bytes(pbuf, sizeof(pbuf), physmem << PAGE_SHIFT);
 	printf("total memory = %s\n", pbuf);
 
 	/*
