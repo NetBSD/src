@@ -1,4 +1,4 @@
-/* $NetBSD: uboot.h,v 1.3 2011/02/26 20:03:09 phx Exp $ */
+/* $NetBSD: uboot.h,v 1.4 2011/08/03 17:46:40 matt Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -56,6 +56,8 @@ enum uboot_image_comp {
 	IH_COMP_NONE = 0,
 	IH_COMP_GZIP = 1,
 	IH_COMP_BZIP2 = 2,
+	IH_COMP_LZMA = 3,
+	IH_COMP_LZO = 4,
 };
 
 #define IH_MAGIC	0x27051956
