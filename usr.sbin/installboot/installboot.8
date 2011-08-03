@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.76 2011/04/25 07:04:50 martin Exp $
+.\"	$NetBSD: installboot.8,v 1.77 2011/08/03 14:47:28 gdt Exp $
 .\"
 .\" Copyright (c) 2002-2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 11, 2010
+.Dd August 3, 2011
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -75,6 +75,8 @@ or disable an existing bootstrap in
 .Pp
 One some architectures the options of an existing installed bootstrap,
 or those of a bootstrap file can be changed.
+Installing a new primary bootstrap will reset those options to default
+values.
 .Pp
 Generally,
 .Nx
@@ -175,6 +177,11 @@ This can be use to change the options in bootxx_xxxfs files,
 raw disk partitions, and the
 .Pa pxeboot_ia32.bin
 file.
+With
+.Fl v
+and without
+.Fl o ,
+show the current options.
 .Sy [ amd64 , i386 ]
 .
 .It Fl f
