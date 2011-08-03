@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2010/12/01 08:59:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2011/08/03 18:22:29 mrg Exp $
 
 NOLINT=	1	# defined
 
@@ -31,6 +31,7 @@ SRCS=	\
 	pixman-utils.c				\
 	pixman-edge.c				\
 	pixman-edge-accessors.c			\
+	pixman-noop.c				\
 	pixman-trap.c				\
 	pixman-timer.c				\
 	pixman-matrix.c
