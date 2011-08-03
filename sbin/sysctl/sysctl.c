@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.134 2011/04/16 01:15:54 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.135 2011/08/03 01:47:40 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.134 2011/04/16 01:15:54 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.135 2011/08/03 01:47:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -321,8 +321,6 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (qflag && !wflag)
-		usage();
 	if (xflag && rflag)
 		usage();
 	/* if ((xflag || rflag) && wflag)
@@ -1540,7 +1538,7 @@ usage(void)
 		      "\t%s %s\n"
 		      "\t%s %s\n"
 		      "\t%s %s\n",
-		      progname, "[-dne] [-x[x]|-r] variable ...",
+		      progname, "[-dneq] [-x[x]|-r] variable ...",
 		      progname, "[-ne] [-q] -w variable=value ...",
 		      progname, "[-dne] -a",
 		      progname, "[-dne] -A",
@@ -1688,6 +1686,10 @@ void
 sysctlparseerror(u_int namelen, const char *pname)
 {
 
+	if (qflag) {
+		errs++;
+		return;
+	}
 	sysctlperror("%s level name '%s' in '%s' is invalid\n",
 		     lname[namelen], gsname, pname);
 }
