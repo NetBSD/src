@@ -112,6 +112,7 @@ static drm_ioctl_desc_t		  drm_ioctls[256] = {
 
 	DRM_IOCTL_DEF(DRM_IOCTL_CONTROL, drm_control, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 
+#ifndef DRM_NO_AGP
 	DRM_IOCTL_DEF(DRM_IOCTL_AGP_ACQUIRE, drm_agp_acquire_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_AGP_RELEASE, drm_agp_release_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_AGP_ENABLE, drm_agp_enable_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
@@ -120,6 +121,7 @@ static drm_ioctl_desc_t		  drm_ioctls[256] = {
 	DRM_IOCTL_DEF(DRM_IOCTL_AGP_FREE, drm_agp_free_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_AGP_BIND, drm_agp_bind_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_AGP_UNBIND, drm_agp_unbind_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+#endif
 
 	DRM_IOCTL_DEF(DRM_IOCTL_SG_ALLOC, drm_sg_alloc_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_SG_FREE, drm_sg_free, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
@@ -531,6 +533,7 @@ static int drm_lastclose(struct drm_device *dev)
 	drm_drawable_free_all(dev);
 	DRM_LOCK();
 
+#ifndef DRM_NO_AGP
 	/* Clear AGP information */
 	if (dev->agp) {
 		drm_agp_mem_t *entry;
@@ -554,6 +557,7 @@ static int drm_lastclose(struct drm_device *dev)
 		dev->agp->acquired = 0;
 		dev->agp->enabled  = 0;
 	}
+#endif
 	if (dev->sg != NULL) {
 		drm_sg_cleanup(dev->sg);
 		dev->sg = NULL;
@@ -611,6 +615,7 @@ static int drm_load(struct drm_device *dev)
 			goto error;
 	}
 
+#ifndef DRM_NO_AGP
 	if (drm_core_has_AGP(dev)) {
 		if (drm_device_is_agp(dev))
 			dev->agp = drm_agp_init(dev);
@@ -627,6 +632,7 @@ static int drm_load(struct drm_device *dev)
 				dev->agp->mtrr = 1;
 		}
 	}
+#endif
 
 	retcode = drm_ctxbitmap_init(dev);
 	if (retcode != 0) {
