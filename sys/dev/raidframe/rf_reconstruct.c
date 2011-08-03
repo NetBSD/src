@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.115 2011/05/28 00:53:04 yamt Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.116 2011/08/03 15:00:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.115 2011/05/28 00:53:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.116 2011/08/03 15:00:29 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -348,7 +348,8 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	const RF_LayoutSW_t *lp;
 	RF_ComponentLabel_t *c_label;
 	int     numDisksDone = 0, rc;
-	struct partinfo dpart;
+	uint64_t numsec;
+	unsigned int secsize;
 	struct pathbuf *pb;
 	struct vnode *vp;
 	struct vattr va;
@@ -464,7 +465,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		return(retcode);
 	}
 
-	retcode = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, curlwp->l_cred);
+	retcode = getdisksize(vp, &numsec, &secsize);
 	if (retcode) {
 		vn_close(vp, FREAD | FWRITE, kauth_cred_get());
 		rf_lock_mutex2(raidPtr->mutex);
@@ -474,10 +475,8 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		return(retcode);
 	}
 	rf_lock_mutex2(raidPtr->mutex);
-	raidPtr->Disks[col].blockSize =	dpart.disklab->d_secsize;
-
-	raidPtr->Disks[col].numBlocks = dpart.part->p_size -
-		rf_protectedSectors;
+	raidPtr->Disks[col].blockSize =	secsize;
+	raidPtr->Disks[col].numBlocks = numsec - rf_protectedSectors;
 
 	raidPtr->raid_cinfo[col].ci_vp = vp;
 	raidPtr->raid_cinfo[col].ci_dev = va.va_rdev;
