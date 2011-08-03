@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.3 2011/08/01 23:01:40 matt Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.4 2011/08/03 17:34:27 matt Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.3 2011/08/01 23:01:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.4 2011/08/03 17:34:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -129,11 +129,9 @@ struct ralink_tx_desc {
 #if RTMEMSIZE >= 64
 #define RALINK_ETH_NUM_RX_DESC 256
 #define RALINK_ETH_NUM_TX_DESC 256
-#elif  RTMEMSIZE >= 32
+#else
 #define RALINK_ETH_NUM_RX_DESC 64
 #define RALINK_ETH_NUM_TX_DESC 64
-#else
-#error RTMEMSIZE invalid	/* XXX */
 #endif
 /* maximum segments per packet */
 #define RALINK_ETH_MAX_TX_SEGS 1
