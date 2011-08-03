@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.9 2011/08/03 17:00:13 matt Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.10 2011/08/03 17:46:40 matt Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.9 2011/08/03 17:00:13 matt Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.10 2011/08/03 17:46:40 matt Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -178,6 +178,8 @@ struct uboot_comp {
 	{ IH_COMP_NONE,		"none" },
 	{ IH_COMP_GZIP,		"gz" },
 	{ IH_COMP_BZIP2,	"bz2" },
+	{ IH_COMP_LZMA,		"lzma" },
+	{ IH_COMP_LZO,		"lzo" },
 };
 
 static enum uboot_image_comp
