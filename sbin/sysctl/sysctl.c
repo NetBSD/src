@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.135 2011/08/03 01:47:40 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.136 2011/08/03 01:58:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.135 2011/08/03 01:47:40 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.136 2011/08/03 01:58:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -325,8 +325,10 @@ main(int argc, char *argv[])
 		usage();
 	/* if ((xflag || rflag) && wflag)
 		usage(); */
-	/* if (aflag && Mflag)
+	/* if (aflag && (Mflag || qflag))
 		usage(); */
+	if ((aflag || Aflag) && qflag)
+		usage();
 	if ((Aflag || Mflag || dflag) && argc == 0 && fn == NULL)
 		aflag = 1;
 
