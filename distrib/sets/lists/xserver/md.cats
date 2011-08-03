@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.41 2011/03/09 18:55:55 mrg Exp $
+# $NetBSD: md.cats,v 1.42 2011/08/03 01:43:26 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -551,11 +551,11 @@
 ./usr/X11R7/lib/modules/libxf4bpp.so.0			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf4bpp_g.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf4bpp_pic.a			-unknown-	obsolete
-./usr/X11R7/lib/modules/libxf8_16bpp.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libxf8_16bpp.so			-unknown-	xorg
-./usr/X11R7/lib/modules/libxf8_16bpp.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/libxf8_16bpp_g.a		-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/libxf8_16bpp_pic.a		-unknown-	xorg
+./usr/X11R7/lib/modules/libxf8_16bpp.a			-unknown-	obsolete
+./usr/X11R7/lib/modules/libxf8_16bpp.so			-unknown-	obsolete
+./usr/X11R7/lib/modules/libxf8_16bpp.so.0		-unknown-	obsolete
+./usr/X11R7/lib/modules/libxf8_16bpp_g.a		-unknown-	obsolete
+./usr/X11R7/lib/modules/libxf8_16bpp_pic.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_32bpp.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_32bpp.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_32bpp.so.0		-unknown-	obsolete
