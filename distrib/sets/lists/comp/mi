@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1651 2011/07/31 03:48:49 dholland Exp $
+#	$NetBSD: mi,v 1.1652 2011/08/03 04:11:15 manu Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5973,6 +5973,7 @@
 ./usr/share/man/cat3/cpuset_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cpuset_size.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cpuset_zero.0		comp-c-catman		.cat
+./usr/share/man/cat3/cpxattr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/creal.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/crealf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/creall.0			comp-c-catman		complex,.cat
@@ -6330,6 +6331,9 @@
 ./usr/share/man/cat3/expm1.0			comp-c-catman		.cat
 ./usr/share/man/cat3/expm1f.0			comp-c-catman		.cat
 ./usr/share/man/cat3/extattr.0			comp-c-catman		.cat
+./usr/share/man/cat3/extattr_copy_fd.0		comp-c-catman		.cat
+./usr/share/man/cat3/extattr_copy_file.0	comp-c-catman		.cat
+./usr/share/man/cat3/extattr_copy_link.0	comp-c-catman		.cat
 ./usr/share/man/cat3/extattr_namespace_to_string.0	comp-c-catman		.cat
 ./usr/share/man/cat3/extattr_string_to_namespace.0	comp-c-catman		.cat
 ./usr/share/man/cat3/fabs.0			comp-c-catman		.cat
@@ -6338,6 +6342,7 @@
 ./usr/share/man/cat3/fast_divide32_prepare.0	comp-c-catman		.cat
 ./usr/share/man/cat3/fast_remainder32.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fclose.0			comp-c-catman		.cat
+./usr/share/man/cat3/fcpxattr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fdim.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fdimf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fdiml.0			comp-c-catman		.cat
@@ -7507,6 +7512,7 @@
 ./usr/share/man/cat3/lber-sockbuf.0		comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat3/lber-types.0		comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat3/lcong48.0			comp-c-catman		.cat
+./usr/share/man/cat3/lcpxattr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ld_errno.0			comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat3/ldap.0			comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat3/ldap_abandon.0		comp-ldap-catman	ldap,.cat
@@ -12081,6 +12087,7 @@
 ./usr/share/man/html3/cpuset_set.html		comp-c-htmlman		html
 ./usr/share/man/html3/cpuset_size.html		comp-c-htmlman		html
 ./usr/share/man/html3/cpuset_zero.html		comp-c-htmlman		html
+./usr/share/man/html3/cpxattr.html		comp-c-htmlman		html
 ./usr/share/man/html3/creal.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/crealf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/creall.html		comp-c-htmlman		complex,html
@@ -12436,6 +12443,9 @@
 ./usr/share/man/html3/expm1.html		comp-c-htmlman		html
 ./usr/share/man/html3/expm1f.html		comp-c-htmlman		html
 ./usr/share/man/html3/extattr.html		comp-c-htmlman		html
+./usr/share/man/html3/extattr_copy_fd.html	comp-c-htmlman		html
+./usr/share/man/html3/extattr_copy_file.html	comp-c-htmlman		html
+./usr/share/man/html3/extattr_copy_link.html	comp-c-htmlman		html
 ./usr/share/man/html3/extattr_namespace_to_string.html	comp-c-htmlman		html
 ./usr/share/man/html3/extattr_string_to_namespace.html	comp-c-htmlman		html
 ./usr/share/man/html3/fabs.html			comp-c-htmlman		html
@@ -12444,6 +12454,7 @@
 ./usr/share/man/html3/fast_divide32_prepare.html	comp-c-htmlman		html
 ./usr/share/man/html3/fast_remainder32.html		comp-c-htmlman		html
 ./usr/share/man/html3/fclose.html		comp-c-htmlman		html
+./usr/share/man/html3/fcpxattr.html		comp-c-htmlman		html
 ./usr/share/man/html3/fdim.html			comp-c-htmlman		html
 ./usr/share/man/html3/fdimf.html		comp-c-htmlman		html
 ./usr/share/man/html3/fdiml.html		comp-c-htmlman		html
@@ -13590,6 +13601,7 @@
 ./usr/share/man/html3/lber-sockbuf.html		comp-ldap-htmlman	ldap,html
 ./usr/share/man/html3/lber-types.html		comp-ldap-htmlman	ldap,html
 ./usr/share/man/html3/lcong48.html		comp-c-htmlman		html
+./usr/share/man/html3/lcpxattr.html		comp-c-htmlman		html
 ./usr/share/man/html3/ld_errno.html		comp-ldap-htmlman	ldap,html
 ./usr/share/man/html3/ldap.html			comp-ldap-htmlman	ldap,html
 ./usr/share/man/html3/ldap_abandon.html		comp-ldap-htmlman	ldap,html
@@ -18096,6 +18108,7 @@
 ./usr/share/man/man3/cpuset_set.3		comp-c-man		.man
 ./usr/share/man/man3/cpuset_size.3		comp-c-man		.man
 ./usr/share/man/man3/cpuset_zero.3		comp-c-man		.man
+./usr/share/man/man3/cpxattr.3			comp-c-man		.man
 ./usr/share/man/man3/creal.3			comp-c-man		complex,.man
 ./usr/share/man/man3/crealf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/creall.3			comp-c-man		complex,.man
@@ -18453,6 +18466,9 @@
 ./usr/share/man/man3/expm1.3			comp-c-man		.man
 ./usr/share/man/man3/expm1f.3			comp-c-man		.man
 ./usr/share/man/man3/extattr.3			comp-c-man		.man
+./usr/share/man/man3/extattr_copy_fd.3		comp-c-man		.man
+./usr/share/man/man3/extattr_copy_file.3	comp-c-man		.man
+./usr/share/man/man3/extattr_copy_link.3	comp-c-man		.man
 ./usr/share/man/man3/extattr_namespace_to_string.3	comp-c-man		.man
 ./usr/share/man/man3/extattr_string_to_namespace.3	comp-c-man		.man
 ./usr/share/man/man3/fabs.3			comp-c-man		.man
@@ -18461,6 +18477,7 @@
 ./usr/share/man/man3/fast_divide32_prepare.3	comp-c-man		.man
 ./usr/share/man/man3/fast_remainder32.3		comp-c-man		.man
 ./usr/share/man/man3/fclose.3			comp-c-man		.man
+./usr/share/man/man3/fcpxattr.3			comp-c-man		.man
 ./usr/share/man/man3/fdim.3			comp-c-man		.man
 ./usr/share/man/man3/fdimf.3			comp-c-man		.man
 ./usr/share/man/man3/fdiml.3			comp-c-man		.man
@@ -19630,6 +19647,7 @@
 ./usr/share/man/man3/lber-sockbuf.3		comp-ldap-man		ldap,.man
 ./usr/share/man/man3/lber-types.3		comp-ldap-man		ldap,.man
 ./usr/share/man/man3/lcong48.3			comp-c-man		.man
+./usr/share/man/man3/lcpxattr.3			comp-c-man		.man
 ./usr/share/man/man3/ld_errno.3			comp-ldap-man		ldap,.man
 ./usr/share/man/man3/ldap.3			comp-ldap-man		ldap,.man
 ./usr/share/man/man3/ldap_abandon.3		comp-ldap-man		ldap,.man

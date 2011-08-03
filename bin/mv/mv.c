@@ -1,4 +1,4 @@
-/* $NetBSD: mv.c,v 1.41 2008/07/20 00:52:40 lukem Exp $ */
+/* $NetBSD: mv.c,v 1.42 2011/08/03 04:11:15 manu Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.41 2008/07/20 00:52:40 lukem Exp $");
+__RCSID("$NetBSD: mv.c,v 1.42 2011/08/03 04:11:15 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: mv.c,v 1.41 2008/07/20 00:52:40 lukem Exp $");
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/extattr.h>
 
 #include <err.h>
 #include <errno.h>
@@ -290,6 +291,10 @@ err:		if (unlink(to))
 		(void)close(to_fd);
 		return (1);
 	}
+
+	if (fcpxattr(from_fd, to_fd) == -1)
+		warn("%s: error copying extended attributes", to);
+
 	(void)close(from_fd);
 #ifdef BSD4_4
 	TIMESPEC_TO_TIMEVAL(&tval[0], &sbp->st_atimespec);
