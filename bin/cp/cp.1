@@ -1,4 +1,4 @@
-.\"	$NetBSD: cp.1,v 1.40 2011/08/03 14:02:59 wiz Exp $
+.\"	$NetBSD: cp.1,v 1.41 2011/08/03 15:44:15 dholland Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -134,11 +134,11 @@ and either the user ID or group ID cannot be preserved, neither
 the set user ID or set group ID bits are preserved in the copy's
 permissions.
 .Pp
-Extended attributes from all accessible namespaces are copied, the
-others being ignored.
-If an error occur during the copy, a message is displayed and
-.Nm cp
-skips the other extended attributes for the file.
+Extended attributes from all accessible namespaces are copied;
+others are ignored.
+If an error occurs during this copy, a message is displayed and
+.Nm
+skips the other extended attributes for that file.
 .It Fl R
 If
 .Ar source_file
