@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.18 2010/10/11 13:58:10 njoly Exp $
+# $NetBSD: md.macppc,v 1.19 2011/08/03 01:43:25 mrg Exp $
 ./usr/X11R6/include/X11/extensions/xf86dga.h		-unknown-	x11
 ./usr/X11R6/include/X11/extensions/xf86dga1.h		-unknown-	x11
 ./usr/X11R6/include/X11/extensions/xf86dga1str.h	-unknown-	x11
@@ -134,4 +134,4 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvbe.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvgahw.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/libxf8_16bpp.so.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libxf8_16bpp.so.0.debug	-unknown-		obsolete
