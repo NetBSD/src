@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_io_user.c,v 1.2 2011/07/18 21:51:49 apb Exp $	*/
+/*	$NetBSD: v7fs_io_user.c,v 1.3 2011/08/03 16:21:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: v7fs_io_user.c,v 1.2 2011/07/18 21:51:49 apb Exp $");
+__RCSID("$NetBSD: v7fs_io_user.c,v 1.3 2011/08/03 16:21:52 dholland Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -125,7 +125,7 @@ read_sector(void *ctx, uint8_t *buf, daddr_t sector)
 	size_t blksz = lio->blksz;
 	int fd = lio->fd;
 
-	if ((lseek(fd, sector * blksz, SEEK_SET) < 0) ||
+	if ((lseek(fd, (off_t)sector * blksz, SEEK_SET) < 0) ||
 	    (read(fd, buf, blksz) < (ssize_t)blksz)) {
 		warn("sector=%ld\n", (long)sector);
 		return false;
@@ -141,7 +141,7 @@ write_sector(void *ctx, uint8_t *buf, daddr_t sector)
 	size_t blksz = lio->blksz;
 	int fd = lio->fd;
 
-	if ((lseek(fd, sector * blksz, SEEK_SET) < 0) ||
+	if ((lseek(fd, (off_t)sector * blksz, SEEK_SET) < 0) ||
 	    (write(fd, buf, blksz) < (ssize_t)blksz)) {
 		warn("sector=%ld\n", (long)sector);
 		return false;
