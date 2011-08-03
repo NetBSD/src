@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.201 2011/07/29 22:18:56 riastradh Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.202 2011/08/03 10:03:51 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.201 2011/07/29 22:18:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.202 2011/08/03 10:03:51 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -912,6 +912,9 @@ ufs_whiteout(void *v)
 	case CREATE:
 		/* create a new directory whiteout */
 		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
+		error = UFS_WAPBL_BEGIN(dvp->v_mount);
+		if (error)
+			break;
 #ifdef DIAGNOSTIC
 		if (ump->um_maxsymlinklen <= 0)
 			panic("ufs_whiteout: old format filesystem");
@@ -931,6 +934,9 @@ ufs_whiteout(void *v)
 	case DELETE:
 		/* remove an existing directory whiteout */
 		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
+		error = UFS_WAPBL_BEGIN(dvp->v_mount);
+		if (error)
+			break;
 #ifdef DIAGNOSTIC
 		if (ump->um_maxsymlinklen <= 0)
 			panic("ufs_whiteout: old format filesystem");
@@ -943,6 +949,7 @@ ufs_whiteout(void *v)
 		panic("ufs_whiteout: unknown op");
 		/* NOTREACHED */
 	}
+	UFS_WAPBL_END(dvp->v_mount);
 	fstrans_done(dvp->v_mount);
 	return (error);
 }

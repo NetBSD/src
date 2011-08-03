@@ -1,4 +1,4 @@
-/*	$NetBSD: t_union.c,v 1.5 2011/01/13 11:00:19 pooka Exp $	*/
+/*	$NetBSD: t_union.c,v 1.6 2011/08/03 10:03:51 hannken Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -133,11 +133,7 @@ basic(const atf_tc_t *tc, const char *mp)
 	
 	/* check that we can whiteout stuff in the upper layer */
 	FSTEST_ENTER();
-	if (FSTYPE_FFSLOG(tc)) {
-		atf_tc_expect_signal(SIGABRT, "PR kern/44377");
-	}
 	RL(rump_sys_unlink(TFILE));
-	atf_tc_expect_pass();
 	ATF_REQUIRE_ERRNO(ENOENT, rump_sys_stat(TFILE, &sb) == -1);
 	FSTEST_EXIT();
 
