@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/08/03 02:57:23 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ DPADD+= ${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXXF86MISC} ${LIBXFONTCACHE}
 DPADD+=	${LIBXEXT} ${LIBX11}
 
 .PATH:	${X11SRCDIR.${PROG}}
+.PATH:	${X11SRCDIR.${PROG}}/man
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
