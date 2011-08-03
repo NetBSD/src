@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/11/21 02:33:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/08/03 02:56:29 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -31,6 +31,7 @@ X11EXTRAMANDEFS=-D__xinitdir__=${XINITDIR}
 X11MANCPP=	yes
 
 .PATH:	${X11SRCDIR.${PROG}}
+.PATH:	${X11SRCDIR.${PROG}}/man
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
