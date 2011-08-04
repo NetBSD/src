@@ -1,4 +1,4 @@
-/* $NetBSD: cx24227.c,v 1.1 2011/08/04 01:48:34 jakllsch Exp $ */
+/* $NetBSD: cx24227.c,v 1.2 2011/08/04 22:24:45 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.1 2011/08/04 01:48:34 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.2 2011/08/04 22:24:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 
 #include <dev/i2c/cx24227var.h>
 
@@ -264,7 +265,7 @@ cx24227_sleepreset(struct cx24227 *sc)
 static int
 cx24227_init(struct cx24227 *sc)
 {
-	int i;
+	unsigned int i;
 	uint16_t reg;
 
 	cx24227_sleepreset(sc);
@@ -304,4 +305,14 @@ cx24227_init(struct cx24227 *sc)
 	cx24227_writereg(sc, 0xf3, 0x0001);
 
 	return 0;
+}
+
+MODULE(MODULE_CLASS_DRIVER, cx24227, NULL);
+
+static int
+cx24227_modcmd(modcmd_t cmd, void *priv)
+{
+	if (cmd == MODULE_CMD_INIT || cmd == MODULE_CMD_FINI)
+		return 0;
+	return ENOTTY;
 }
