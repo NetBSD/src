@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.25 2011/07/27 22:04:23 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.26 2011/08/04 20:02:48 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.25 2011/07/27 22:04:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.26 2011/08/04 20:02:48 phx Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -252,6 +252,11 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 
 	/* CPU clock stuff */
 	set_timebase();
+
+#ifdef DDB
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
 }
 
 void
