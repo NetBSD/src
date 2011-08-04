@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2011/03/24 13:33:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.20 2011/08/04 02:38:41 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,7 @@ BRANDING?=
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
+		--disable-werror \
 		${BRANDING}
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q}
