@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.46 2009/04/23 01:56:48 snj Exp $
+.\"	$NetBSD: hardware,v 1.47 2011/08/04 20:24:36 rkujawa Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -48,12 +48,18 @@ and GVP series II.
 The Emplant SCSI adapter has been reported by a party to
 hang after doing part of the installation without problems
 .It
-53c710 based boards: A4091, Magnum, Warp Engine, Zeus and DraCo builtin
+53c710 based boards: A4091, BlizzardPPC 603e+, Magnum, Warp Engine, Zeus
+and DraCo builtin
 .It
 FAS216 based SCSI boards: FastLane Z3, Blizzard I and II, Blizzard IV,
 Blizzard 2060, CyberSCSI Mk I and II
 .It
 53c770 based SCSI boards: Cyberstorm Mk III SCSI, Cyberstorm PPC SCSI
+.bullet)
+.It
+PCI bridges
+.(bullet -compact
+Phase5 PCI bridge: CyberVision PPC, BlizzardVision PPC
 .bullet)
 .It
 Video controllers
