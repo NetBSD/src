@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1653 2011/08/03 14:13:07 joerg Exp $
+#	$NetBSD: mi,v 1.1654 2011/08/04 03:38:55 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3620,6 +3620,7 @@
 ./usr/libdata/debug/usr/bin/lprm.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/bin/lua.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/luac.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/lzmainfo.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/m4.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/mail.debug		comp-mail-debug		debug
 ./usr/libdata/debug/usr/bin/make.debug		comp-util-debug		debug
