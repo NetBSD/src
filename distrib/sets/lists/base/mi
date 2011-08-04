@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.945 2011/07/24 08:55:28 uch Exp $
+# $NetBSD: mi,v 1.946 2011/08/04 03:38:54 matt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -521,6 +521,9 @@
 ./usr/bin/lprm					base-lpr-bin
 ./usr/bin/lsextattr				base-util-bin
 ./usr/bin/lua					base-util-bin
+./usr/bin/lzcat					base-util-bin
+./usr/bin/lzma					base-util-bin
+./usr/bin/lzmainfo				base-util-bin
 ./usr/bin/m4					base-util-bin
 ./usr/bin/machine				base-util-bin
 ./usr/bin/mail					base-mail-bin
@@ -686,6 +689,7 @@
 ./usr/bin/unexpand				base-util-bin
 ./usr/bin/uniq					base-util-bin
 ./usr/bin/units					base-util-bin
+./usr/bin/unlzma				base-util-bin
 ./usr/bin/unvis					base-util-bin
 ./usr/bin/unxz					base-util-bin
 ./usr/bin/unzip					base-util-bin
