@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.18.10.1 2011/06/03 13:27:40 cherry Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.18.10.2 2011/08/04 09:07:46 cherry Exp $	*/
 
 /*
  *
@@ -42,7 +42,9 @@ int event_set_handler(int, int (*func)(void *), void *, int, const char *);
 int event_remove_handler(int, int (*func)(void *), void *);
 
 struct intrhand;
-void event_set_iplhandler(struct intrhand *, int);
+void event_set_iplhandler(struct cpu_info *ci,
+			  struct intrhand *, 
+			  int);
 
 extern int debug_port;
 extern int xen_debug_handler(void *);
