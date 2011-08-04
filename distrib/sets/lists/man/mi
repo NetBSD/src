@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1327 2011/08/04 03:38:56 matt Exp $
+# $NetBSD: mi,v 1.1328 2011/08/04 21:09:53 rkujawa Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6125,6 +6125,7 @@
 ./usr/share/man/man4/amiga/mem.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/mfcs.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/mgnsc.4		man-sys-man		.man
+./usr/share/man/man4/amiga/p5pb.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/qn.4			man-sys-man		.man
 ./usr/share/man/man4/amiga/ser.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/wesc.4		man-sys-man		.man
