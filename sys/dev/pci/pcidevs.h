@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1084 2011/07/23 03:10:11 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1085 2011/08/04 02:32:58 jakllsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1088 2011/07/23 03:09:41 matt Exp
+ *	NetBSD: pcidevs,v 1.1089 2011/08/04 02:31:37 jakllsch Exp
  */
 
 /*
@@ -1813,6 +1813,7 @@
 #define	PCI_PRODUCT_CONEXANT_CX2388XAUDIO	0x8801		/* CX23880/1/2/3 PCI Audio Port */
 #define	PCI_PRODUCT_CONEXANT_CX2388XMPEG	0x8802		/* CX23880/1/2/3 PCI MPEG Port */
 #define	PCI_PRODUCT_CONEXANT_CX2388XIR	0x8804		/* CX23880/1/2/3 PCI IR Port */
+#define	PCI_PRODUCT_CONEXANT_CX23885	0x8852		/* CX23885 */
 
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB Bridge */
