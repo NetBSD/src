@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.31.10.2 2011/06/26 12:56:32 cherry Exp $	*/
+/*	$NetBSD: intr.h,v 1.31.10.3 2011/08/04 09:07:46 cherry Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -58,13 +58,8 @@ struct evtsource {
 	struct intrhand *ev_handlers;	/* handler chain */
 	struct evcnt ev_evcnt;		/* interrupt counter */
 	char ev_evname[32];		/* event counter name */
+	struct cpu_info *ev_cpu;	/* cpu on which this event is bound */
 	struct simplelock ev_lock;	/* protects this structure */
-
-	/* 
-	 * XXX: The lock is quite coursegrained ( for the entire
-	 * handler list ), but contention is expected to be low. See
-	 * how this performs and revisit.
-	 */
 };
 
 /*

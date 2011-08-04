@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.47.6.1 2011/06/03 13:27:42 cherry Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.47.6.2 2011/08/04 09:07:47 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.47.6.1 2011/06/03 13:27:42 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.47.6.2 2011/08/04 09:07:47 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -234,14 +234,17 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	ci->ci_data.cpu_nintr++;
 	evtsource[evtch]->ev_evcnt.ev_count++;
 	ilevel = ci->ci_ilevel;
-	if (evtsource[evtch]->ev_maxlevel <= ilevel) {
+	if (evtsource[evtch]->ev_maxlevel <= ilevel ||
+	    evtsource[evtch]->ev_cpu != ci /* XXX: get stats */) {
 #ifdef IRQ_DEBUG
 		if (evtch == IRQ_DEBUG)
 		    printf("evtsource[%d]->ev_maxlevel %d <= ilevel %d\n",
 		    evtch, evtsource[evtch]->ev_maxlevel, ilevel);
 #endif
-		hypervisor_set_ipending(evtsource[evtch]->ev_imask,
-		    evtch >> LONG_SHIFT, evtch & LONG_MASK);
+		hypervisor_set_ipending(evtsource[evtch]->ev_cpu,
+					evtsource[evtch]->ev_imask,
+					evtch >> LONG_SHIFT,
+					evtch & LONG_MASK);
 		/* leave masked */
 		return 0;
 	}
@@ -251,13 +254,14 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	simple_lock(&evtsource[evtch]->ev_lock);
 	ih = evtsource[evtch]->ev_handlers;
 	while (ih != NULL) {
-		if (ih->ih_level <= ilevel) {
+		if (ih->ih_level <= ilevel ||
+		   ih->ih_cpu != ci) {
 #ifdef IRQ_DEBUG
 		if (evtch == IRQ_DEBUG)
 		    printf("ih->ih_level %d <= ilevel %d\n", ih->ih_level, ilevel);
 #endif
 			cli();
-			hypervisor_set_ipending(iplmask,
+			hypervisor_set_ipending(ih->ih_cpu, iplmask,
 			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 			/* leave masked */
 			simple_unlock(&evtsource[evtch]->ev_lock);
@@ -287,6 +291,7 @@ splx:
 				ci->ci_ilevel = i;
 				for (ih = ci->ci_isources[i]->ipl_handlers;
 				    ih != NULL; ih = ih->ih_ipl_next) {
+					KASSERT(ih->ih_cpu == ci);
 					sti();
 					ih_fun = (void *)ih->ih_fun;
 					ih_fun(ih->ih_arg, regs);
@@ -582,6 +587,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	ih->ih_arg = ih->ih_realarg = arg;
 	ih->ih_evt_next = NULL;
 	ih->ih_ipl_next = NULL;
+	ih->ih_cpu = ci;
 #ifdef MULTIPROCESSOR
 	if (!mpsafe) {
 		ih->ih_fun = intr_biglock_wrapper;
@@ -591,8 +597,8 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 
 	s = splhigh();
 
-	/* register handler for spllower() */
-	event_set_iplhandler(ih, level);
+	/* register per-cpu handler for spllower() */
+	event_set_iplhandler(ci, ih, level);
 
 	/* register handler for event channel */
 	if (evtsource[evtch] == NULL) {
@@ -602,6 +608,13 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 			panic("can't allocate fixed interrupt source");
 
 		evts->ev_handlers = ih;
+		/* 
+		 * XXX: We're assuming here that ci is the same cpu as
+		 * the one on which this event/port is bound on. The
+		 * api needs to be reshuffled so that this assumption
+		 * is more explicitly implemented.
+		 */
+		evts->ev_cpu = ci; 
 		simple_lock_init(&evts->ev_lock);
 		evtsource[evtch] = evts;
 		if (evname)
@@ -638,11 +651,13 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 }
 
 void
-event_set_iplhandler(struct intrhand *ih, int level)
+event_set_iplhandler(struct cpu_info *ci,
+		     struct intrhand *ih,
+		     int level)
 {
-	struct cpu_info *ci = curcpu();
 	struct iplsource *ipls;
 
+	KASSERT(ci == ih->ih_cpu);
 	if (ci->ci_isources[level] == NULL) {
 		ipls = malloc(sizeof (struct iplsource),
 		    M_DEVBUF, M_WAITOK|M_ZERO);
