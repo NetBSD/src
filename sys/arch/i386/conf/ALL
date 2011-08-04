@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.316 2011/07/30 12:19:12 jmcneill Exp $
+# $NetBSD: ALL,v 1.317 2011/08/04 14:45:54 jakllsch Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.316 $"
+#ident 		"ALL-$Revision: 1.317 $"
 
 maxusers	64		# estimated number of users
 
@@ -1504,6 +1504,10 @@ radio*	at bktr?
 # Conexant CX2388[0-3]-based DTV cards
 cxdtv*	at pci? dev ? function ?
 iic*	at cxdtv?
+
+# Conexant CX23885-based TV cards
+coram*	at pci? dev ? function ?
+iic*	at coram?
 
 isv*	at isa? port 0x3e0		# IDEC Supervision/16 image capture
 
