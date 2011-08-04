@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.47.6.2 2011/08/04 09:07:47 cherry Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.47.6.3 2011/08/04 13:04:20 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.47.6.2 2011/08/04 09:07:47 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.47.6.3 2011/08/04 13:04:20 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -245,7 +245,16 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 					evtsource[evtch]->ev_imask,
 					evtch >> LONG_SHIFT,
 					evtch & LONG_MASK);
-		/* leave masked */
+
+		if (evtsource[evtch]->ev_cpu != ci) { 
+			/* facilitate spllower() on remote cpu */
+			struct cpu_info *rci = evtsource[evtch]->ev_cpu;
+			if (xen_send_ipi(rci, XEN_IPI_KICK)) {
+				panic("xen_send_ipi(%s, XEN_IPI_KICK) failed\n", cpu_name(rci));
+			}
+		}
+
+		/* leave masked */				     
 		return 0;
 	}
 	ci->ci_ilevel = evtsource[evtch]->ev_maxlevel;
