@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.23 2010/02/03 13:56:53 phx Exp $	*/
+/*	$NetBSD: bus.h,v 1.24 2011/08/04 17:48:51 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -125,7 +125,23 @@ struct amiga_bus_space_methods {
 	bssr(*bssr2, u_int16_t);
 	bscr(*bscr2, u_int16_t);
 
-	/* add 32bit methods here */
+	/* 32bit methods */
+
+	bsr(*bsr4, u_int32_t);
+	bsw(*bsw4, u_int32_t);
+	bsr(*bsrs4, u_int32_t);
+	bsw(*bsws4, u_int32_t);
+	bsrm(*bsrm4, u_int32_t);
+	bswm(*bswm4, u_int32_t);
+	bsrm(*bsrms4, u_int32_t);
+	bswm(*bswms4, u_int32_t);
+	bsrm(*bsrr4, u_int32_t);
+	bswm(*bswr4, u_int32_t);
+	bsrm(*bsrrs4, u_int32_t);
+	bswm(*bswrs4, u_int32_t);
+	bssr(*bssr4, u_int32_t);
+	bscr(*bscr4, u_int32_t);
+
 };
 
 /*
@@ -196,37 +212,33 @@ struct amiga_bus_space_methods {
 #define bus_space_set_region_2(t, h, o, v, c)	  dbss(bssr2, t, h, o, v, c)
 #define bus_space_copy_region_2(t, h, o, g, q, c) dbss(bscr2, t, h, o, g, q, c)
 
-/* 4: Fake 32-bit macros */
+/* 4: long-wide "functions" */
 
-#define bus_space_read_4(t, h, o) \
-	(panic("bus_space_read_4 not implemented"), 0)
+#define bus_space_read_4(t, h, o)                 dbsdr(bsr4, t, h, o)
+#define bus_space_write_4(t, h, o, v)             dbsdw(bsw4, t, h, o, v)
+#define bus_space_read_stream_4(t, h, o)          dbsdr(bsrs4, t, h, o)
+#define bus_space_write_stream_4(t, h, o, v)      dbsdw(bsws4, t, h, o, v)
 
-#define bus_space_write_4(t, h, o, v) \
-	panic("bus_space_write_4 not implemented")
-
-#define bus_space_read_stream_4(t, h, o) \
-	(panic("bus_space_read_stream_4 not implemented"), 0)
-
-#define bus_space_write_stream_4(t, h, o, v) \
-	panic("bus_space_read_stream_4 not implemented")
-
-#define bus_space_read_multi_4(t, h, o, p, c) \
-	panic("bus_space_read_multi_4 not implemented")
-
-#define bus_space_write_multi_4(t, h, o, p, c) \
-	panic("bus_space_write_multi_4 not implemented")
+#define bus_space_read_multi_4(t, h, o, p, c)     dbsm(bsrm4, t, h, o, p, c)
+#define bus_space_write_multi_4(t, h, o, p, c)    dbsm(bswm4, t, h, o, p, c)
 
 #define bus_space_read_multi_stream_4(t, h, o, p, c) \
-	panic("bus_space_read_multi_stream_4 not implemented")
+                                                  dbsm(bsrms4, t, h, o, p, c)
 
 #define bus_space_write_multi_stream_4(t, h, o, p, c) \
-	panic("bus_space_write_multi_stream_4 not implemented")
+                                                  dbsm(bswms4, t, h, o, p, c)
+
+#define bus_space_read_region_4(t, h, o, p, c)    dbsm(bsrr4, t, h, o, p, c)
+#define bus_space_write_region_4(t, h, o, p, c)   dbsm(bswr4, t, h, o, p, c)
 
 #define bus_space_read_region_stream_4(t, h, o, p, c) \
-	panic("bus_space_read_region_stream_4 not implemented")
+                                                  dbsm(bsrrs4, t, h, o, p, c)
 
 #define bus_space_write_region_stream_4(t, h, o, p, c) \
-	panic("bus_space_write_region_stream_4 not implemented")
+                                                  dbsm(bswrs4, t, h, o, p, c)
+
+#define bus_space_set_region_4(t, h, o, v, c)     dbss(bssr4, t, h, o, v, c)
+#define bus_space_copy_region_4(t, h, o, g, q, c) dbss(bscr4, t, h, o, g, q, c)
 
 /* 
  * Bus read/write barrier methods.
@@ -238,8 +250,9 @@ struct amiga_bus_space_methods {
  * Note: the 680x0 does not currently require barriers, but we must
  * provide the flags to MI code.
  */   
-#define bus_space_barrier(t, h, o, l, f)        \
-        ((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
+void bus_space_barrier(bus_space_tag_t space, bus_space_handle_t handle,
+			bus_size_t offset, bus_size_t length, int flags);
+
 #define BUS_SPACE_BARRIER_READ  0x01            /* force read barrier */
 #define BUS_SPACE_BARRIER_WRITE 0x02            /* force write barrier */
  
@@ -247,13 +260,27 @@ struct amiga_bus_space_methods {
 
 #define __BUS_SPACE_HAS_STREAM_METHODS
 
+paddr_t bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
+			int flags);
+
+#define BUS_SPACE_MAP_CACHEABLE		0x01
+#define BUS_SPACE_MAP_LINEAR		0x02
+#define BUS_SPACE_MAP_PREFETCHABLE	0x04
+
 /* Instruction for enforcing reorder protection. Nothing for 68k. */
 #define amiga_bus_reorder_protect()
 
+void * bus_space_vaddr(bus_space_tag_t space, bus_space_handle_t handle);
+
 extern const struct amiga_bus_space_methods amiga_bus_stride_1;
+extern const struct amiga_bus_space_methods amiga_bus_stride_1swap;
+extern const struct amiga_bus_space_methods amiga_bus_stride_1swap_abs;
 extern const struct amiga_bus_space_methods amiga_bus_stride_2;
 extern const struct amiga_bus_space_methods amiga_bus_stride_4;
 extern const struct amiga_bus_space_methods amiga_bus_stride_4swap;
 extern const struct amiga_bus_space_methods amiga_bus_stride_16;
 
+void *zbusmap(void *pa, u_int size);
+
 #endif /* _AMIGA_BUS_H_ */
+

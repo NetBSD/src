@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.81 2011/07/01 15:46:30 rkujawa Exp $
+# $NetBSD: GENERIC.in,v 1.82 2011/08/04 17:48:51 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -57,7 +57,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.81 $"
+#ident 		"GENERIC-$Revision: 1.82 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -569,6 +569,12 @@ ss*	at scsibus? target ? lun ?	# scsi scanner
 uk*	at scsibus? target ? lun ?	# scsi unknown
 ')m4_dnl
 m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
+
+# PCI bus support
+options		PCIVERBOSE              # verbose PCI device autoconfig messages
+#options	PCI_CONFIG_DUMP
+p5pb0		at zbus0                # Phase5 PCI bridge (CVPPC/BVPPC)
+pci*		at p5pb0
 
 # Bluetooth Controller and Device support
 # tested only with btuart on an A1200

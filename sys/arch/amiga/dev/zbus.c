@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.63 2011/06/03 00:52:22 matt Exp $ */
+/*	$NetBSD: zbus.c,v 1.64 2011/08/04 17:48:51 rkujawa Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,11 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.63 2011/06/03 00:52:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.64 2011/08/04 17:48:51 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
@@ -53,6 +54,12 @@ struct preconfdata {
 	int manid;
 	int prodid;
 	void *vaddr;
+};
+
+struct quirksdata {
+	int manid;
+	int prodid;
+	uint8_t quirks;
 };
 
 vaddr_t		ZTWOROMADDR;
@@ -148,6 +155,8 @@ static const struct aconfdata aconftab[] = {
 	{ "grfcv",	8512,	34},	/* CyberVison 64 */
 	{ "grfcv3d",	8512,	67},	/* CyberVison 64/3D */
 	{ "cbiiisc", 	8512,	100},	/* Cyberstorm Mk III SCSI */
+	{ "p5pb", 	8512,	101},	/* CyberVisionPPC / BlizzardVisionPPC */
+	{ "bppcsc", 	8512,	110},	/* Blizzard 603e+ SCSI */
 	/* Hacker Inc. */
 	{ "mlhsc",	2011,	1 },
 	/* Resource Management Force */
@@ -217,12 +226,35 @@ static struct preconfdata preconftab[] = {
 };
 static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 
+/*
+ * Quirks table.
+ */
+#define ZORRO_QUIRK_NO_ZBUSMAP 1	/* Don't map VA=PA in zbusattach. */
+static struct quirksdata quirkstab[] = {
+	{8512, 101, ZORRO_QUIRK_NO_ZBUSMAP}
+};
+static int nquirksent = sizeof(quirkstab) / sizeof(struct quirksdata);
 
 void zbusattach(device_t, device_t, void *);
 int zbusprint(void *, const char *);
 int zbusmatch(device_t, cfdata_t, void *);
-void *zbusmap(void *, u_int);
 static const char *aconflookup(int, int);
+
+/*
+ * given a manufacturer id and product id, find quirks
+ * for this board.
+ */
+static uint8_t
+quirkslookup(int mid, int pid)
+{
+	const struct quirksdata *qdp, *eqdp;
+
+	eqdp = &quirkstab[nquirksent];
+	for (qdp = quirkstab; qdp < eqdp; qdp++)
+		if (qdp->manid == mid && qdp->prodid == pid)
+			return(qdp->quirks);
+	return(0);
+}
 
 /*
  * given a manufacturer id and product id, find the name
@@ -306,10 +338,11 @@ zbusattach(device_t pdp, device_t dp, void *auxp)
 		if (amiga_realconfig && pcp < epcp && pcp->vaddr)
 			za.va = pcp->vaddr;
 		else {
-			za.va = (void *) (isztwopa(za.pa) ? 
-			    __UNVOLATILE(ztwomap(za.pa)) :
-			    zbusmap(za.pa, za.size));
-/*                     		??????? */
+			if(quirkslookup(za.manid, za.prodid) != 
+		 	    ZORRO_QUIRK_NO_ZBUSMAP) 
+				za.va = (void *) (isztwopa(za.pa) ? 
+				    __UNVOLATILE(ztwomap(za.pa)) :
+				    zbusmap(za.pa, za.size));
 			/*
 			 * save value if early console init
 			 */

@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.91 2011/07/01 15:46:30 rkujawa Exp $
+# $NetBSD: INSTALL,v 1.92 2011/08/04 17:48:51 rkujawa Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.80 2011/07/01 13:30:18 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.81 2011/07/01 15:46:30 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.91 $"
+#ident 		"GENERIC-$Revision: 1.92 $"
 
 makeoptions	COPTS="-Os"
 
@@ -406,6 +406,12 @@ sd*	at scsibus? target ? lun ?	# scsi disks
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cds
 ch*	at scsibus? target ? lun ?	# scsi autochangers
+
+# PCI bus support
+options		PCIVERBOSE              # verbose PCI device autoconfig messages
+#options	PCI_CONFIG_DUMP
+p5pb0		at zbus0                # Phase5 PCI bridge (CVPPC/BVPPC)
+pci*		at p5pb0
 
 # Bluetooth Controller and Device support
 # tested only with btuart on an A1200
