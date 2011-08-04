@@ -1,4 +1,4 @@
-.\" $NetBSD: p5pb.4,v 1.1 2011/08/04 17:48:50 rkujawa Exp $
+.\" $NetBSD: p5pb.4,v 1.2 2011/08/04 20:40:52 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the PCI bus present on BlizzardVisionPPC and 
+driver provides support for the PCI bus present on BlizzardVisionPPC and
 CyberVisionPPC graphics cards.
 .Sh HARDWARE
 The
@@ -49,15 +49,13 @@ driver supports the following hardware:
 .Bl -tag -width "BLIZZARDVISIONPPC" -offset indent
 .It Em BLIZZARDVISIONPPC
 Phase5 BlizzardVisionPPC graphics card.
-.El
-.Bl -tag -width "BLIZZARDVISIONPPC" -offset indent
 .It Em CYBERVISIONPPC
 Phase5 CyberVisionPPC graphics card.
 .El
 .Sh SEE ALSO
-.Xr pm2fb 4 ,
 .Xr genfb 4 ,
 .Xr pci 4
+.\" .Xr pm2fb 4
 .Sh HISTORY
 The
 .Nm
@@ -70,11 +68,11 @@ The
 driver was written by
 .An Radoslaw Kujawa Aq radoslaw.kujawa@gmail.com .
 .Sh BUGS
-Current version of this driver depends on PCI bus setup and enumeration 
-done by the firmware. 
+Current version of this driver depends on PCI bus setup and enumeration
+done by the firmware.
 .Pp
-The driver will not attach at all, if there is no AutoConfig entry 
-for CVPPC/BVPPC card (Zorro product ID 110). Some firmware revisions
-are known not to create this entry.
+The driver will not attach at all, if there is no AutoConfig entry
+for CVPPC/BVPPC card (Zorro product ID 110).
+Some firmware revisions are known not to create this entry.
 .Pp
 It is not (yet) possible to use the CVPPC/BVPPC as a console.
