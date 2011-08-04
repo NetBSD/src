@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.1 2011/08/04 14:43:55 jakllsch Exp $ */
+/* $NetBSD: coram.c,v 1.2 2011/08/04 22:25:08 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.1 2011/08/04 14:43:55 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.2 2011/08/04 22:25:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
-
+#include <sys/module.h>
 #include <sys/bus.h>
 
 #include <dev/dtv/dtvif.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.1 2011/08/04 14:43:55 jakllsch Exp $");
 
 static int coram_match(device_t, cfdata_t, void *);
 static void coram_attach(device_t, device_t, void *);
+static int coram_detach(device_t, int);
+static void coram_childdet(device_t, device_t);
 static bool coram_resume(device_t, const pmf_qual_t *);
 static int coram_intr(void *);
 
@@ -76,6 +78,7 @@ static int coram_dtv_start_transfer(void *);
 static int coram_dtv_stop_transfer(void *);
 
 static int coram_mpeg_attach(struct coram_softc *);
+static int coram_mpeg_detach(struct coram_softc *, int);
 static int coram_mpeg_reset(struct coram_softc *);
 static void * coram_mpeg_malloc(struct coram_softc *, size_t);
 static int coram_allocmem(struct coram_softc *, size_t, size_t, struct coram_dma *);
@@ -88,8 +91,8 @@ static int coram_risc_field(struct coram_softc *, uint32_t *, uint32_t);
 static int coram_sram_ch_setup(struct coram_softc *, struct coram_sram_ch *, uint32_t);
 static int coram_mpeg_intr(struct coram_softc *);
 
-CFATTACH_DECL_NEW(coram, sizeof(struct coram_softc),
-    coram_match, coram_attach, NULL, NULL);
+CFATTACH_DECL2_NEW(coram, sizeof(struct coram_softc),
+    coram_match, coram_attach, coram_detach, NULL, NULL, coram_childdet);
 
 #define CORAM_SRAM_CH6 0
 
@@ -179,6 +182,7 @@ coram_attach(device_t parent, device_t self, void *v)
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
+	sc->sc_pc = pa->pa_pc;
 
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error_dev(self, "couldn't map interrupt\n");
@@ -222,7 +226,8 @@ coram_attach(device_t parent, device_t self, void *v)
 		memset(&iba, 0, sizeof(iba));
 		iba.iba_tag = &cic->cic_i2c;
 		iba.iba_type = I2C_TYPE_SMBUS;
-		config_found_ia(self, "i2cbus", &iba, iicbus_print);
+		cic->cic_i2cdev = config_found_ia(self, "i2cbus",
+		    &iba, iicbus_print);
 #endif
 	}
 
@@ -263,12 +268,11 @@ coram_attach(device_t parent, device_t self, void *v)
 #endif
 
 	sc->sc_demod = cx24227_open(sc->sc_dev, &sc->sc_iic[0].cic_i2c, 0x19);
-	if ( sc->sc_demod == NULL )
-		panic("no demod");
-
+	if (sc->sc_demod == NULL)
+		aprint_error_dev(self, "couldn't open cx24227\n");
 	sc->sc_tuner = mt2131_open(sc->sc_dev, &sc->sc_iic[0].cic_i2c, 0x61);
-	if ( sc->sc_tuner == NULL )
-		panic("no tuner");
+	if (sc->sc_tuner == NULL)
+		aprint_error_dev(self, "couldn't open mt2131\n");
 
 	coram_mpeg_attach(sc);
 
@@ -276,6 +280,55 @@ coram_attach(device_t parent, device_t self, void *v)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
+}
+
+static int
+coram_detach(device_t self, int flags)
+{
+	struct coram_softc *sc = device_private(self);
+	struct coram_iic_softc *cic;
+	unsigned int i;
+	int error;
+
+	error = coram_mpeg_detach(sc, flags);
+	if (error)
+		return error;
+
+	if (sc->sc_tuner)
+		mt2131_close(sc->sc_tuner);
+	if (sc->sc_demod)
+		cx24227_close(sc->sc_demod);
+	for (i = 0; i < I2C_NUM; i++) {
+		cic = &sc->sc_iic[i];
+		if (cic->cic_i2cdev)
+			config_detach(cic->cic_i2cdev, flags);
+		mutex_destroy(&cic->cic_busmutex);
+	}
+	pmf_device_deregister(self);
+
+	if (sc->sc_mems)
+		bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
+	if (sc->sc_ih)
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+
+	return 0;
+}
+
+static void
+coram_childdet(device_t self, device_t child)
+{
+	struct coram_softc *sc = device_private(self);
+	struct coram_iic_softc *cic;
+	unsigned int i;
+
+	if (sc->sc_dtvdev == child)
+		sc->sc_dtvdev = NULL;
+
+	for (i = 0; i < I2C_NUM; i++) {
+		cic = &sc->sc_iic[i];
+		if (cic->cic_i2cdev == child)
+			cic->cic_i2cdev = NULL;
+	}
 }
 
 static int
@@ -541,6 +594,23 @@ coram_mpeg_attach(struct coram_softc *sc)
 	return (sc->sc_dtvdev != NULL);
 }
 
+static int
+coram_mpeg_detach(struct coram_softc *sc, int flags)
+{
+	struct coram_sram_ch *ch = &coram_sram_chs[CORAM_SRAM_CH6];
+	int error;
+
+	if (sc->sc_dtvdev) {
+		error = config_detach(sc->sc_dtvdev, flags);
+		if (error)
+			return error;
+	}
+	if (sc->sc_riscbuf) {
+		kmem_free(sc->sc_riscbuf, ch->csc_riscsz);
+	}
+
+	return 0;
+}
 
 static void
 coram_dtv_get_devinfo(void *cookie, struct dvb_frontend_info *info)
@@ -562,6 +632,9 @@ coram_dtv_open(void *cookie, int flags)
 	device_printf(sc->sc_dev, "%s\n", __func__);
 
 	//KASSERT(sc->sc_tsbuf == NULL);
+
+	if (sc->sc_tuner == NULL || sc->sc_demod == NULL)
+		return ENXIO;
 
 	coram_mpeg_reset(sc);
 
@@ -959,4 +1032,33 @@ coram_sram_ch_setup(struct coram_softc *sc, struct coram_sram_ch *csc,
 	    csc->csc_cnt1, (bpl >> 3) - 1);
 
 	return 0;
+}
+
+MODULE(MODULE_CLASS_DRIVER, coram, "dtv,cx24227,mt2131");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+coram_modcmd(modcmd_t cmd, void *v)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_coram,
+		    cfattach_ioconf_coram, cfdata_ioconf_coram);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_coram,
+		    cfattach_ioconf_coram, cfdata_ioconf_coram);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }
