@@ -1,4 +1,4 @@
-/* $NetBSD: coramvar.h,v 1.1 2011/08/04 14:43:55 jakllsch Exp $ */
+/* $NetBSD: coramvar.h,v 1.2 2011/08/04 22:25:08 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -72,6 +72,7 @@ struct coram_softc {
 	bus_size_t		sc_mems;
 	bus_dma_tag_t		sc_dmat;
 
+	pci_chipset_tag_t	sc_pc;
 	void *			sc_ih;
 
 	struct coram_iic_softc {
@@ -79,6 +80,7 @@ struct coram_softc {
 		bus_space_handle_t	cic_regh;
 		struct i2c_controller	cic_i2c;
 		kmutex_t		cic_busmutex;
+		device_t		cic_i2cdev;
 	} sc_iic[3];
 
 	struct coram_sram_ch	sc_vidc_sch;
