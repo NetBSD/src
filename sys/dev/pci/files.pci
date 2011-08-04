@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.342 2011/07/14 23:47:45 jmcneill Exp $
+#	$NetBSD: files.pci,v 1.343 2011/08/04 14:43:55 jakllsch Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1053,3 +1053,8 @@ device	cxdtv: dtvbus, i2c_bitbang, i2cbus, i2cexec, tvpll, nxt2k, lg3303
 attach	cxdtv at pci
 file	dev/pci/cxdtv.c		cxdtv
 file	dev/pci/cxdtv_boards.c	cxdtv
+
+# Conexant CX23885-series DTV interface
+device	coram: dtvbus, i2cbus, i2cexec, mt2131, cx24227
+attach	coram at pci
+file	dev/pci/coram.c		coram
