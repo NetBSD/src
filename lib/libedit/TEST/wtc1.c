@@ -2,6 +2,7 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <err.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
