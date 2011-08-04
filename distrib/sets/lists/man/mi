@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1326 2011/07/24 08:55:30 uch Exp $
+# $NetBSD: mi,v 1.1327 2011/08/04 03:38:56 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -266,6 +266,9 @@
 ./usr/share/man/cat1/ls.0			man-util-catman		.cat
 ./usr/share/man/cat1/lsextattr.0		man-util-catman		.cat
 ./usr/share/man/cat1/lua.0			man-util-catman		.cat
+./usr/share/man/cat1/lzcat.0			man-util-catman		.cat
+./usr/share/man/cat1/lzma.0			man-util-catman		.cat
+./usr/share/man/cat1/lzmainfo.0			man-util-catman		.cat
 ./usr/share/man/cat1/m4.0			man-util-catman		.cat
 ./usr/share/man/cat1/machine.0			man-util-catman		.cat
 ./usr/share/man/cat1/mail.0			man-mail-catman		.cat
@@ -540,8 +543,10 @@
 ./usr/share/man/cat1/uudecode.0			man-util-catman		.cat
 ./usr/share/man/cat1/uuencode.0			man-util-catman		.cat
 ./usr/share/man/cat1/uuidgen.0			man-util-catman		.cat
+./usr/share/man/cat1/unlzma.0			man-util-catman		.cat
 ./usr/share/man/cat1/uustat.0			man-obsolete		obsolete
 ./usr/share/man/cat1/uux.0			man-obsolete		obsolete
+./usr/share/man/cat1/unxz.0			man-util-catman		.cat
 ./usr/share/man/cat1/vacation.0			man-mail-catman		.cat
 ./usr/share/man/cat1/vi.0			man-util-catman		.cat
 ./usr/share/man/cat1/videoctl.0			man-video-catman	.cat
@@ -572,6 +577,7 @@
 ./usr/share/man/cat1/xargs.0			man-util-catman		.cat
 ./usr/share/man/cat1/xgettext.0			man-locale-catman	.cat
 ./usr/share/man/cat1/xz.0			man-util-catman		.cat
+./usr/share/man/cat1/xzcat.0			man-util-catman		.cat
 ./usr/share/man/cat1/yes.0			man-util-catman		.cat
 ./usr/share/man/cat1/ypcat.0			man-nis-catman		yp,.cat
 ./usr/share/man/cat1/ypmatch.0			man-nis-catman		yp,.cat
@@ -3130,6 +3136,9 @@
 ./usr/share/man/html1/ls.html			man-util-htmlman	html
 ./usr/share/man/html1/lsextattr.html		man-util-htmlman	html
 ./usr/share/man/html1/lua.html			man-util-htmlman	html
+./usr/share/man/html1/lzcat.html		man-util-htmlman	html
+./usr/share/man/html1/lzma.html			man-util-htmlman	html
+./usr/share/man/html1/lzmainfo.html		man-util-htmlman	html
 ./usr/share/man/html1/m4.html			man-util-htmlman	html
 ./usr/share/man/html1/machine.html		man-util-htmlman	html
 ./usr/share/man/html1/mail.html			man-mail-htmlman	html
@@ -3385,6 +3394,7 @@
 ./usr/share/man/html1/unexpand.html		man-util-htmlman	html
 ./usr/share/man/html1/uniq.html			man-util-htmlman	html
 ./usr/share/man/html1/units.html		man-util-htmlman	html
+./usr/share/man/html1/unlzma.html		man-util-htmlman	html
 ./usr/share/man/html1/unvis.html		man-util-htmlman	html
 ./usr/share/man/html1/unzip.html		man-util-htmlman	html
 ./usr/share/man/html1/uptime.html		man-util-htmlman	html
@@ -3395,6 +3405,7 @@
 ./usr/share/man/html1/uudecode.html		man-util-htmlman	html
 ./usr/share/man/html1/uuencode.html		man-util-htmlman	html
 ./usr/share/man/html1/uuidgen.html		man-util-htmlman	html
+./usr/share/man/html1/unxz.html			man-util-htmlman	html
 ./usr/share/man/html1/vacation.html		man-mail-htmlman	html
 ./usr/share/man/html1/vi.html			man-util-htmlman	html
 ./usr/share/man/html1/videoctl.html		man-video-htmlman	html
@@ -3425,6 +3436,7 @@
 ./usr/share/man/html1/xargs.html		man-util-htmlman	html
 ./usr/share/man/html1/xgettext.html		man-locale-htmlman	html
 ./usr/share/man/html1/xz.html			man-util-htmlman	html
+./usr/share/man/html1/xzcat.html		man-util-htmlman	html
 ./usr/share/man/html1/yes.html			man-util-htmlman	html
 ./usr/share/man/html1/ypcat.html		man-nis-htmlman		yp,html
 ./usr/share/man/html1/ypmatch.html		man-nis-htmlman		yp,html
@@ -5637,6 +5649,9 @@
 ./usr/share/man/man1/ls.1			man-util-man		.man
 ./usr/share/man/man1/lsextattr.1		man-util-man		.man
 ./usr/share/man/man1/lua.1			man-util-man		.man
+./usr/share/man/man1/lzcat.1			man-util-man		.man
+./usr/share/man/man1/lzma.1			man-util-man		.man
+./usr/share/man/man1/lzmainfo.1			man-util-man		.man
 ./usr/share/man/man1/m4.1			man-util-man		.man
 ./usr/share/man/man1/machine.1			man-util-man		.man
 ./usr/share/man/man1/mail.1			man-mail-man		.man
@@ -5900,6 +5915,7 @@
 ./usr/share/man/man1/unexpand.1			man-util-man		.man
 ./usr/share/man/man1/uniq.1			man-util-man		.man
 ./usr/share/man/man1/units.1			man-util-man		.man
+./usr/share/man/man1/unlzma.1			man-util-man		.man
 ./usr/share/man/man1/unvis.1			man-util-man		.man
 ./usr/share/man/man1/unzip.1			man-util-man		.man
 ./usr/share/man/man1/uptime.1			man-util-man		.man
@@ -5913,6 +5929,7 @@
 ./usr/share/man/man1/uuidgen.1			man-util-man		.man
 ./usr/share/man/man1/uustat.1			man-obsolete		obsolete
 ./usr/share/man/man1/uux.1			man-obsolete		obsolete
+./usr/share/man/man1/unxz.1			man-util-man		.man
 ./usr/share/man/man1/vacation.1			man-mail-man		.man
 ./usr/share/man/man1/vi.1			man-util-man		.man
 ./usr/share/man/man1/videoctl.1			man-video-man		.man
@@ -5943,6 +5960,7 @@
 ./usr/share/man/man1/xargs.1			man-util-man		.man
 ./usr/share/man/man1/xgettext.1			man-locale-man		.man
 ./usr/share/man/man1/xz.1			man-util-man		.man
+./usr/share/man/man1/xzcat.1			man-util-man		.man
 ./usr/share/man/man1/yes.1			man-util-man		.man
 ./usr/share/man/man1/ypcat.1			man-nis-man		yp,.man
 ./usr/share/man/man1/ypmatch.1			man-nis-man		yp,.man
