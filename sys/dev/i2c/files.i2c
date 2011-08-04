@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.39 2011/08/04 01:45:37 jakllsch Exp $
+#	$NetBSD: files.i2c,v 1.40 2011/08/04 01:48:34 jakllsch Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -41,6 +41,10 @@ file	dev/i2c/nxt2k.c				nxt2k
 # Microtune MT2131 silicon tuner
 define	mt2131: i2cexec
 file	dev/i2c/mt2131.c			mt2131
+
+# Conexant/Samsung CX24227/S5H1409 demodulator
+define	cx24227: i2cexec
+file	dev/i2c/cx24227.c			cx24227
 
 #
 # I2C master devices
