@@ -1,4 +1,4 @@
-/* $NetBSD: mt2131.c,v 1.1 2011/08/04 01:45:37 jakllsch Exp $ */
+/* $NetBSD: mt2131.c,v 1.2 2011/08/04 22:24:29 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt2131.c,v 1.1 2011/08/04 01:45:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt2131.c,v 1.2 2011/08/04 22:24:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: mt2131.c,v 1.1 2011/08/04 01:45:37 jakllsch Exp $");
 #include <sys/kmem.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/module.h>
 
 #include <dev/i2c/mt2131var.h>
 
@@ -263,4 +264,14 @@ mt2131_write(struct mt2131_softc *sc, uint8_t a, uint8_t v)
 	iic_release_bus(sc->tag, I2C_F_POLL);
 
 	return ret;
+}
+
+MODULE(MODULE_CLASS_DRIVER, mt2131, NULL);
+
+static int
+mt2131_modcmd(modcmd_t cmd, void *priv)
+{
+	if (cmd == MODULE_CMD_INIT || cmd == MODULE_CMD_FINI)
+		return 0;
+	return ENOTTY;
 }
