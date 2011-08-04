@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1088 2011/07/23 03:09:41 matt Exp $
+$NetBSD: pcidevs,v 1.1089 2011/08/04 02:31:37 jakllsch Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1806,6 +1806,7 @@ product CONEXANT CX2388X	0x8800	CX23880/1/2/3 PCI Video/Audio Decoder
 product CONEXANT CX2388XAUDIO	0x8801	CX23880/1/2/3 PCI Audio Port
 product CONEXANT CX2388XMPEG	0x8802	CX23880/1/2/3 PCI MPEG Port
 product CONEXANT CX2388XIR	0x8804	CX23880/1/2/3 PCI IR Port
+product CONEXANT CX23885	0x8852	CX23885
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
