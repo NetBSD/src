@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.41 2011/07/24 23:56:34 jym Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.42 2011/08/04 18:01:49 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.41 2011/07/24 23:56:34 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.42 2011/08/04 18:01:49 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1657,19 +1657,17 @@ xbdback_shm_callback(void *arg)
 		case 0:
 			xbd_io->xio_mapped = 1;
 			SIMPLEQ_REMOVE_HEAD(&xbdback_shmq, xbdi_on_hold);
-			splx(s);
+			(void)splbio();
 			xbdback_trampoline(xbdi, xbdi);
-			s = splvm();
 			break;
 		default:
 			SIMPLEQ_REMOVE_HEAD(&xbdback_shmq, xbdi_on_hold);
-			splx(s);
+			(void)splbio();
 			printf("xbdback_shm_callback: xen_shm error %d\n",
 			       error);
 			xbdi->xbdi_cont = xbdi->xbdi_cont_aux;
 			xbdback_io_error(xbd_io, error);
 			xbdback_trampoline(xbdi, xbdi);
-			s = splvm();
 			break;
 		}
 	}
