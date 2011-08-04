@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.675 2011/07/16 23:42:42 tsutsui Exp $
+#	$NetBSD: bsd.own.mk,v 1.676 2011/08/04 00:52:50 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -46,7 +46,16 @@ NEED_OWN_INSTALL_TARGET?=	yes
 #
 TOOLCHAIN_MISSING?=	no
 
-# default to GCC4.1
+#
+# Platforms using GCC 4.5
+#
+.if ${MACHINE_ARCH} == "sparc64"
+HAVE_GCC?=    45
+.endif
+
+#
+# Otherwise, default to GCC4.1
+#
 .if !defined(HAVE_GCC) && !defined(HAVE_PCC)
 HAVE_GCC=	4
 .endif

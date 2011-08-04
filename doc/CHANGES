@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1585 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1586 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1086,3 +1086,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	mips: Add support for ralink RT3883 SoC from CradlePoint Technologies.
 		[matt 20110729]
 	postfix(1): Import version 2.8.4 [tron 20110731]
+	sparc64: Switch to GCC 4.5.3  [mrg 20110802]
