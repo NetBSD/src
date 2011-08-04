@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.70 2011/08/03 05:27:08 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.71 2011/08/04 00:57:33 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.70 2011/08/03 05:27:08 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.71 2011/08/04 00:57:33 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -502,7 +502,9 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct rasops_info *ri;
 	prop_data_t edid_data;
+#if defined(__sparc__) || defined(__powerpc__)
 	const struct videomode *mode = NULL;
+#endif
 	char devinfo[256];
 	int bar, id, expected_id;
 	int is_gx;
