@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.54 2011/07/13 07:34:55 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.55 2011/08/04 23:22:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.54 2011/07/13 07:34:55 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.55 2011/08/04 23:22:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -48,7 +48,7 @@ ACPI_MODULE_NAME	 ("acpi_cpu_cstate")
 
 static ACPI_STATUS	 acpicpu_cstate_cst(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_cstate_cst_add(struct acpicpu_softc *,
-						ACPI_OBJECT *, int );
+						ACPI_OBJECT *);
 static void		 acpicpu_cstate_cst_bios(void);
 static void		 acpicpu_cstate_memset(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_cstate_dep(struct acpicpu_softc *);
@@ -160,6 +160,7 @@ acpicpu_cstate_callback(void *aux)
 static ACPI_STATUS
 acpicpu_cstate_cst(struct acpicpu_softc *sc)
 {
+	struct acpicpu_cstate *cs = sc->sc_cstate;
 	ACPI_OBJECT *elm, *obj;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
@@ -204,13 +205,18 @@ acpicpu_cstate_cst(struct acpicpu_softc *sc)
 
 	acpicpu_cstate_memset(sc);
 
+	/*
+	 * All x86 processors should support C1 (a.k.a. HALT).
+	 */
+	cs[ACPI_STATE_C1].cs_method = ACPICPU_C_STATE_HALT;
+
 	CTASSERT(ACPI_STATE_C0 == 0 && ACPI_STATE_C1 == 1);
 	CTASSERT(ACPI_STATE_C2 == 2 && ACPI_STATE_C3 == 3);
 
 	for (count = 0, i = 1; i <= n; i++) {
 
 		elm = &obj->Package.Elements[i];
-		rv = acpicpu_cstate_cst_add(sc, elm, i);
+		rv = acpicpu_cstate_cst_add(sc, elm);
 
 		if (ACPI_SUCCESS(rv))
 			count++;
@@ -226,7 +232,7 @@ out:
 }
 
 static ACPI_STATUS
-acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm, int i)
+acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 {
 	struct acpicpu_cstate *cs = sc->sc_cstate;
 	struct acpicpu_cstate state;
@@ -371,30 +377,13 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm, int i)
 		goto out;
 	}
 
-	/*
-	 * As some systems define the type arbitrarily,
-	 * we use a sequential counter instead of the
-	 * BIOS data. For instance, AMD family 14h is
-	 * instructed to only use the value 2; see
-	 *
-	 *	Advanced Micro Devices: BIOS and Kernel
-	 *	Developer's Guide (BKDG) for AMD Family
-	 *	14h Models 00h-0Fh Processors. Revision
-	 *	3.00, January 4, 2011.
-	 */
-	if (i != (int)type) {
+	KASSERT(cs[type].cs_method == 0);
 
-		ACPI_DEBUG_PRINT((ACPI_DB_INFO,
-			"C%d != C%u from BIOS", i, type));
-	}
-
-	KASSERT(cs[i].cs_method == 0);
-
-	cs[i].cs_addr = state.cs_addr;
-	cs[i].cs_power = state.cs_power;
-	cs[i].cs_flags = state.cs_flags;
-	cs[i].cs_method = state.cs_method;
-	cs[i].cs_latency = state.cs_latency;
+	cs[type].cs_addr = state.cs_addr;
+	cs[type].cs_power = state.cs_power;
+	cs[type].cs_flags = state.cs_flags;
+	cs[type].cs_method = state.cs_method;
+	cs[type].cs_latency = state.cs_latency;
 
 out:
 	if (ACPI_FAILURE(rv))
