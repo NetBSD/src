@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.10 2011/08/03 17:46:40 matt Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.11 2011/08/04 04:47:59 matt Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.10 2011/08/03 17:46:40 matt Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.11 2011/08/04 04:47:59 matt Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -396,7 +396,7 @@ main(int argc, char *argv[])
 		perror("open kernel");
 		return EXIT_FAILURE;
 	}
-	image_fd = open(dest, O_WRONLY|O_CREAT, 0666);
+	image_fd = open(dest, O_WRONLY|O_CREAT|O_TRUNC, 0666);
 	if (image_fd == -1) {
 		perror("open image");
 		return EXIT_FAILURE;
