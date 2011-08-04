@@ -1,4 +1,4 @@
-/* $NetBSD: simple_busfuncs.c,v 1.7 2011/07/19 15:55:26 dyoung Exp $ */
+/* $NetBSD: simple_busfuncs.c,v 1.8 2011/08/04 17:48:50 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simple_busfuncs.c,v 1.7 2011/07/19 15:55:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simple_busfuncs.c,v 1.8 2011/08/04 17:48:50 rkujawa Exp $");
 
 /*
  * Do NOT use this standalone.
@@ -399,6 +399,160 @@ oabs(bscr2_)(handlefrom, from, handleto, to, count)
 }
 #endif /* AMIGA_SIMPLE_BUS_WORD_METHODS */
 
+#ifdef AMIGA_SIMPLE_BUS_LONGWORD_METHODS
+
+/* longword methods */
+
+bsr (oabs(bsr4_), u_int32_t);
+bsw (oabs(bsw4_), u_int32_t);
+bsrm(oabs(bsrm4_), u_int32_t);
+bswm(oabs(bswm4_), u_int32_t);
+bsrm(oabs(bsrr4_), u_int32_t);
+bswm(oabs(bswr4_), u_int32_t);
+bssr(oabs(bssr4_), u_int32_t);
+bscr(oabs(bscr4_), u_int32_t);
+
+u_int32_t
+oabs(bsr4_)(handle, offset)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+{
+	u_int32_t *p;
+	u_int32_t x;
+
+	p = (u_int32_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+	x = *p;
+	amiga_bus_reorder_protect();
+	return x;
+}
+
+void
+oabs(bsw4_)(handle, offset, value)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	unsigned value;
+{
+	u_int32_t *p;
+
+	p = (u_int32_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+	*p = (u_int32_t)value;
+	amiga_bus_reorder_protect();
+}
+
+
+void
+oabs(bsrm4_)(handle, offset, pointer, count)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	u_int32_t *pointer;
+	bus_size_t count;
+{
+	volatile u_int32_t *p;
+
+	p = (volatile u_int32_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+
+	while (count > 0) {
+		*pointer++ = *p;
+		amiga_bus_reorder_protect();
+		--count;
+	}
+}
+
+void
+oabs(bswm4_)(handle, offset, pointer, count)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	const u_int32_t *pointer;
+	bus_size_t count;
+{
+	volatile u_int32_t *p;
+
+	p = (volatile u_int32_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+
+	while (count > 0) {
+		*p = *pointer++;
+		amiga_bus_reorder_protect();
+		--count;
+	}
+}
+
+void
+oabs(bsrr4_)(handle, offset, pointer, count)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	u_int32_t *pointer;
+	bus_size_t count;
+{
+	volatile u_int8_t *p;
+
+	p = (volatile u_int8_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+
+	while (count > 0) {
+		*pointer++ = *(volatile u_int32_t *)p;
+		amiga_bus_reorder_protect();
+		p += AMIGA_SIMPLE_BUS_STRIDE * sizeof(u_int32_t);
+		--count;
+	}
+}
+
+void
+oabs(bswr4_)(handle, offset, pointer, count)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	const u_int32_t *pointer;
+	bus_size_t count;
+{
+	volatile u_int8_t *p;
+
+	p = (volatile u_int8_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+
+	while (count > 0) {
+		*(volatile u_int32_t *)p = *pointer++;
+		amiga_bus_reorder_protect();
+		p += AMIGA_SIMPLE_BUS_STRIDE * sizeof(u_int32_t);
+		--count;
+	}
+}
+
+void
+oabs(bssr4_)(handle, offset, value, count)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	unsigned value;
+	bus_size_t count;
+{
+	volatile u_int8_t *p;
+
+	p = (volatile u_int8_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+
+	while (count > 0) {
+		*(volatile u_int32_t *)p = (unsigned)value;
+		amiga_bus_reorder_protect();
+		p += AMIGA_SIMPLE_BUS_STRIDE * sizeof(u_int32_t);
+		--count;
+	}
+}
+
+void
+oabs(bscr4_)(handlefrom, from, handleto, to, count)
+	bus_space_handle_t handlefrom, handleto;
+	bus_size_t from, to;
+	bus_size_t count;
+{
+	volatile u_int8_t *p, *q;
+
+	p = (volatile u_int8_t *)(handlefrom + from * AMIGA_SIMPLE_BUS_STRIDE);
+	q = (volatile u_int8_t *)(handleto   +   to * AMIGA_SIMPLE_BUS_STRIDE);
+
+	while (count > 0) {
+		*(volatile u_int32_t *)q = *(volatile u_int32_t *)p;
+		amiga_bus_reorder_protect();
+		p += AMIGA_SIMPLE_BUS_STRIDE * sizeof(u_int32_t);
+		q += AMIGA_SIMPLE_BUS_STRIDE * sizeof(u_int32_t);
+		--count;
+	}
+}
+#endif /* AMIGA_SIMPLE_BUS_LONGWORD_METHODS */
 
 #ifndef AMIGA_SIMPLE_BUS_NO_ARRAY
 /* method array */
@@ -421,22 +575,42 @@ const struct amiga_bus_space_methods oabs(amiga_bus_stride_) = {
 	oabs(bscr1_),
 
 #ifdef AMIGA_SIMPLE_BUS_WORD_METHODS
-        oabs(bsr2_),
-        oabs(bsw2_),
-        oabs(bsr2_),
-        oabs(bsw2_),
-        oabs(bsrm2_),
-        oabs(bswm2_),
-        oabs(bsrm2_),
-        oabs(bswm2_),
-        oabs(bsrr2_),
-        oabs(bswr2_),
-        oabs(bsrr2_),
-        oabs(bswr2_),
-        oabs(bssr2_),
-        oabs(bscr2_)
+	oabs(bsr2_),
+	oabs(bsw2_),
+	oabs(bsr2_),
+	oabs(bsw2_),
+	oabs(bsrm2_),
+	oabs(bswm2_),
+	oabs(bsrm2_),
+	oabs(bswm2_),
+	oabs(bsrr2_),
+	oabs(bswr2_),
+	oabs(bsrr2_),
+	oabs(bswr2_),
+	oabs(bssr2_),
+	oabs(bscr2_),
 #else /* AMIGA_SIMPLE_BUS_WORD_METHODS */
-	0
+	0,
 #endif /* AMIGA_SIMPLE_BUS_WORD_METHODS */
+
+#ifdef AMIGA_SIMPLE_BUS_LONGWORD_METHODS
+	oabs(bsr4_),
+	oabs(bsw4_),
+	oabs(bsr4_),
+	oabs(bsw4_),
+	oabs(bsrm4_),
+	oabs(bswm4_),
+	oabs(bsrm4_),
+	oabs(bswm4_),
+	oabs(bsrr4_),
+	oabs(bswr4_),
+	oabs(bsrr4_),
+	oabs(bswr4_),
+	oabs(bssr4_),
+	oabs(bscr4_)
+#else /* AMIGA_SIMPLE_BUS_LONGWORD_METHODS */
+	0
+#endif /* AMIGA_SIMPLE_BUS_LONGWORD_METHODS */
+
 };
 #endif
