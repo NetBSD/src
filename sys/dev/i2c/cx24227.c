@@ -1,4 +1,4 @@
-/* $NetBSD: cx24227.c,v 1.3 2011/08/05 20:32:22 jmcneill Exp $ */
+/* $NetBSD: cx24227.c,v 1.4 2011/08/05 21:19:23 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.3 2011/08/05 20:32:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.4 2011/08/05 21:19:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,6 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.3 2011/08/05 20:32:22 jmcneill Exp $")
 #include <sys/module.h>
 
 #include <dev/i2c/cx24227var.h>
+
+/* #define CX24227_DEBUG */
 
 struct cx24227 {
 	device_t        parent;
@@ -171,8 +173,6 @@ cx24227_get_dtv_status(struct cx24227 *sc)
 int
 cx24227_set_modulation(struct cx24227 *sc, fe_modulation_t modulation)
 {
-	printf("%s\n", __func__);
-
 	switch (modulation) {
 	case VSB_8:
 	case QAM_64:
@@ -244,19 +244,21 @@ cx24227_open(device_t parent, i2c_tag_t tag, i2c_addr_t addr)
 	/* read chip ids */
 	value = 0;
 	e = cx24227_readreg(sc, 0x04, &value);
-	printf("%s chipid %04x\n", __func__, value);
-
 	if (e) {
-		printf("%s read failed %d\n", __func__, e);
+		device_printf(parent, "cx24227: read failed: %d\n", e);
 		kmem_free(sc, sizeof(*sc));
 		return NULL;
 	}
+#ifdef CX24227_DEBUG
+	device_printf(parent, "cx24227: chipid %04x\n", value);
+#endif
+
 
 	value = 0x0001; /* open the i2c gate */
 	e = cx24227_writereg(sc, 0xf3, value);
 #if 0
 	if (e) {
-		printf("%s write failed %d\n", __func__, e);
+		device_printf(parent, "cx24227: write failed: %d\n", e);
 		kmem_free(sc, sizeof(*sc));
 		return NULL;
 	}
