@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.248 2011/08/01 11:25:59 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.249 2011/08/05 18:27:48 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.248 2011/08/01 11:25:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.249 2011/08/05 18:27:48 jakllsch Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1185,11 +1185,25 @@ acpi_register_fixed_button(struct acpi_softc *sc, int event)
 	aprint_debug_dev(sc->sc_dev, "fixed %s button present\n",
 	    (type != ACPI_EVENT_SLEEP_BUTTON) ? "power" : "sleep");
 
+	rv = AcpiClearEvent(event)
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(sc->sc_dev,
+		    "fixed event %d did not clear: %s\n",
+		    event, AcpiFormatException(rv));
+	}
+
+	rv = AcpiEnableEvent(event, 0))
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(sc->sc_dev,
+		    "fixed event %d did not enable: %s\n",
+		    event, AcpiFormatException(rv));
+	}
+
 	return;
 
 fail:
 	aprint_error_dev(sc->sc_dev, "failed to register "
-	    "fixed event: %s\n", AcpiFormatException(rv));
+	    "fixed event %d: %s\n", event, AcpiFormatException(rv));
 }
 
 static void
