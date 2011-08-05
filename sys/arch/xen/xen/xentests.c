@@ -1,4 +1,4 @@
-/* $NetBSD: xentests.c,v 1.1.2.1 2011/06/03 13:27:42 cherry Exp $ */
+/* $NetBSD: xentests.c,v 1.1.2.2 2011/08/05 17:26:27 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: xentests.c,v 1.1.2.1 2011/06/03 13:27:42 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xentests.c,v 1.1.2.2 2011/08/05 17:26:27 cherry Exp $");
 
 #include <sys/types.h>
 
@@ -997,6 +997,7 @@ test_tlbstale(void)
 	return result;
 }
 
+#define USEFULLUSERLANDADDRESS 0x10000
 
 /* pmap enter and extract */
 
@@ -1006,7 +1007,7 @@ pmap_setupentry(void *arg)
 	KASSERT(arg != NULL);
 	struct test_args *ta = arg;
 
-	vaddr_t va = 0xfeedface & ~PAGE_MASK; /* PAGE_SIZE aligned */
+	vaddr_t va = USEFULLUSERLANDADDRESS & ~PAGE_MASK; /* PAGE_SIZE aligned */
 	paddr_t pa;
 	struct vm_page *pg;
 
