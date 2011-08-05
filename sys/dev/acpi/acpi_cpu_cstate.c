@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.55 2011/08/04 23:22:30 jmcneill Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.56 2011/08/05 02:29:53 mrg Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.55 2011/08/04 23:22:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.56 2011/08/05 02:29:53 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -377,7 +377,7 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 		goto out;
 	}
 
-	KASSERT(cs[type].cs_method == 0);
+	KASSERT(type == ACPI_STATE_C1 || cs[type].cs_method == 0);
 
 	cs[type].cs_addr = state.cs_addr;
 	cs[type].cs_power = state.cs_power;
