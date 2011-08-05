@@ -1,4 +1,4 @@
-/* $NetBSD: cx24227.c,v 1.2 2011/08/04 22:24:45 jmcneill Exp $ */
+/* $NetBSD: cx24227.c,v 1.3 2011/08/05 20:32:22 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.2 2011/08/04 22:24:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.3 2011/08/05 20:32:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,12 +173,31 @@ cx24227_set_modulation(struct cx24227 *sc, fe_modulation_t modulation)
 {
 	printf("%s\n", __func__);
 
+	switch (modulation) {
+	case VSB_8:
+	case QAM_64:
+	case QAM_256:
+	case QAM_AUTO:
+		break;
+	default:
+		return EINVAL;
+	}
+
 	/* soft reset */
 	cx24227_writereg(sc, 0xf5, 0x0000);
 	cx24227_writereg(sc, 0xf5, 0x0001);
 
-	/* 8 VSB */
-	cx24227_writereg(sc, 0xf4, 0x0000);
+	switch (modulation) {
+	case VSB_8:
+		/* VSB8 */
+		cx24227_writereg(sc, 0xf4, 0x0000);
+		break;
+	default:
+		/* QAM */
+		cx24227_writereg(sc, 0xf4, 0x0001);
+		cx24227_writereg(sc, 0x85, 0x0110);
+		break;
+	}
 
 	/* soft reset */
 	cx24227_writereg(sc, 0xf5, 0x0000);
