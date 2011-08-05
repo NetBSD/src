@@ -1,4 +1,4 @@
-/* $NetBSD: mt2131.c,v 1.2 2011/08/04 22:24:29 jmcneill Exp $ */
+/* $NetBSD: mt2131.c,v 1.3 2011/08/05 20:51:09 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt2131.c,v 1.2 2011/08/04 22:24:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt2131.c,v 1.3 2011/08/05 20:51:09 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,12 +80,9 @@ mt2131_open(device_t parent, i2c_tag_t t, i2c_addr_t a)
 {
 	struct mt2131_softc *sc;
 	int ret;
-
 	uint8_t cmd, reg;
-	
-	cmd = reg = 0;
 
-	printf("%s\n", __func__);
+	cmd = reg = 0;
 
 	/* get id reg */
 	iic_acquire_bus(t, I2C_F_POLL);
@@ -93,14 +90,15 @@ mt2131_open(device_t parent, i2c_tag_t t, i2c_addr_t a)
 	iic_release_bus(t, I2C_F_POLL);
 
 	if (ret) {
-		printf("%s read fail\n", __func__);
+		device_printf(parent, "%s(): read fail\n", __func__);
 		return NULL;
 	}
 
-	printf("%s %02x\n", __func__, reg);
-
-	if ((reg & 0xfe) != 0x3e)
+	if ((reg & 0xfe) != 0x3e) {
+		device_printf(parent, "%s(): chip id %02x unknown\n",
+		    __func__, reg);
 		return NULL;
+	}
 
 	sc = kmem_alloc(sizeof(*sc), KM_SLEEP);
 	if (sc == NULL)
@@ -124,7 +122,7 @@ mt2131_close(struct mt2131_softc *sc)
 int
 mt2131_tune_dtv(struct mt2131_softc *sc, const struct dvb_frontend_parameters *p)
 {
-	int rv;
+	int rv, i;
 	uint64_t o1, o2;
 	uint64_t d1, d2;
 	uint32_t r1, r2;
@@ -151,9 +149,6 @@ mt2131_tune_dtv(struct mt2131_softc *sc, const struct dvb_frontend_parameters *p
 	r1 = d1/8192;
 	r2 = d2/8192;
 
-	printf("mt2131 %lu %lu %lu %u\n", o1, d1, d1&0x1fff, r1);
-	printf("mt2131 %lu %lu %lu %u\n", o2, d2, d2&0x1fff, r2);
-
 	b[1] = (d1 & 0x1fe0) >> 5;
 	b[2] = (d1 & 0x001f);
 	b[3] = r1;
@@ -170,30 +165,26 @@ mt2131_tune_dtv(struct mt2131_softc *sc, const struct dvb_frontend_parameters *p
 	if(regval > 0x13)
 		regval = 0x13;
 
-	printf("mt2131 %u\n", regval);
-
 	rv = mt2131_write(sc, UPC_1, regval);
 
 	if (rv != 0)
-		printf("%s\n", __func__);
+		device_printf(sc->parent, "%s write failed\n", __func__);
 
 	sc->frequency = (o1 - o2 - IF2) * 1000;
-	printf("%s freq %d\n", __func__, sc->frequency);
 
-	int i;
-	b[0] = 0x08;
+	for (i = 0; i < 100; i++) {
+		kpause("mt2131", true, 1, NULL);
 
-	for ( i = 0; i < 100; i++) {
 		rv = mt2131_read(sc, 0x08, &regval);
+		if (rv != 0)
+			device_printf(sc->parent, "%s read failed\n", __func__);
 
 		if (( regval & 0x88 ) == 0x88 ) {
-			printf("mt2131 - locked\n");
-			break;
-		} else {
-			printf("mt2131 - not locked - %02x\n", b[1]);
+			return 0;
 		}
-		kpause("mt2131", true, 1, NULL);
 	}
+
+	device_printf(sc->parent, "mt2131 not locked, %02x\n", b[1]);
 
 	return rv;
 }
@@ -202,8 +193,6 @@ static int
 mt2131_init(struct mt2131_softc *sc)
 {
 	int ret;
-
-	printf("%s\n", __func__);
 
 	ret = iic_acquire_bus(sc->tag, I2C_F_POLL);
 	if (ret)
