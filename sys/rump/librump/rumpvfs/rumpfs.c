@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.96 2011/06/19 02:42:53 rmind Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.97 2011/08/05 08:13:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.96 2011/06/19 02:42:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.97 2011/08/05 08:13:59 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -217,6 +217,7 @@ struct rumpfs_mount {
 static int lastino = 2;
 static kmutex_t reclock;
 
+static void freedir(struct rumpfs_node *, struct componentname *);
 static struct rumpfs_node *makeprivate(enum vtype, dev_t, off_t, bool);
 
 /*
@@ -611,6 +612,10 @@ makedir(struct rumpfs_node *rnd,
 	strlcpy(rdent->rd_name, cnp->cn_nameptr, cnp->cn_namelen+1);
 	rdent->rd_namelen = strlen(rdent->rd_name);
 
+	if ((cnp->cn_flags & ISWHITEOUT) != 0) {
+		KASSERT((cnp->cn_flags & DOWHITEOUT) == 0);
+		freedir(rnd, cnp);
+	}
 	LIST_INSERT_HEAD(&rnd->rn_dir, rdent, rd_entries);
 }
 
@@ -756,6 +761,8 @@ rump_vop_lookup(void *v)
 
 	if (RDENT_ISWHITEOUT(rd)) {
 		cnp->cn_flags |= ISWHITEOUT;
+		if ((cnp->cn_flags & ISLASTCN) && cnp->cn_nameiop == CREATE)
+			return EJUSTRETURN;
 		return ENOENT;
 	}
 
@@ -893,6 +900,8 @@ rump_vop_mkdir(void *v)
 	int rv = 0;
 
 	rn = makeprivate(VDIR, NODEV, DEV_BSIZE, false);
+	if ((cnp->cn_flags & ISWHITEOUT) != 0)
+		rn->rn_va.va_flags |= UF_OPAQUE;
 	rn->rn_parent = rnd;
 	rv = makevnode(dvp->v_mount, rn, vpp);
 	if (rv)
@@ -984,6 +993,8 @@ rump_vop_mknod(void *v)
 	int rv;
 
 	rn = makeprivate(va->va_type, va->va_rdev, DEV_BSIZE, false);
+	if ((cnp->cn_flags & ISWHITEOUT) != 0)
+		rn->rn_va.va_flags |= UF_OPAQUE;
 	rv = makevnode(dvp->v_mount, rn, vpp);
 	if (rv)
 		goto out;
@@ -1014,6 +1025,8 @@ rump_vop_create(void *v)
 
 	newsize = va->va_type == VSOCK ? DEV_BSIZE : 0;
 	rn = makeprivate(va->va_type, NODEV, newsize, false);
+	if ((cnp->cn_flags & ISWHITEOUT) != 0)
+		rn->rn_va.va_flags |= UF_OPAQUE;
 	rv = makevnode(dvp->v_mount, rn, vpp);
 	if (rv)
 		goto out;
@@ -1046,6 +1059,8 @@ rump_vop_symlink(void *v)
 	linklen = strlen(target);
 	KASSERT(linklen < MAXPATHLEN);
 	rn = makeprivate(VLNK, NODEV, linklen, false);
+	if ((cnp->cn_flags & ISWHITEOUT) != 0)
+		rn->rn_va.va_flags |= UF_OPAQUE;
 	rv = makevnode(dvp->v_mount, rn, vpp);
 	if (rv)
 		goto out;
