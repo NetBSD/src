@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.2 2011/08/04 22:25:08 jmcneill Exp $ */
+/* $NetBSD: coram.c,v 1.3 2011/08/05 20:33:17 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.2 2011/08/04 22:25:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.3 2011/08/05 20:33:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -670,15 +670,18 @@ coram_dtv_set_tuner(void *cookie, const struct dvb_frontend_parameters *params)
 	KASSERT(sc->sc_tuner != NULL);
 	mt2131_tune_dtv(sc->sc_tuner, params);
 	KASSERT(sc->sc_demod != NULL);
-	cx24227_set_modulation(sc->sc_demod, params->u.vsb.modulation);
-
-	return 0; /* XXX */
+	return cx24227_set_modulation(sc->sc_demod, params->u.vsb.modulation);
 }
 
 static fe_status_t
 coram_dtv_get_status(void *cookie)
 {
-	return 0;
+	struct coram_softc *sc = cookie;
+
+	if (sc->sc_demod == NULL)
+		return ENXIO;
+
+	return cx24227_get_dtv_status(sc->sc_demod);;
 }
 
 static uint16_t
