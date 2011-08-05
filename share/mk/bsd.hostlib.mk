@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostlib.mk,v 1.14 2004/06/10 00:29:58 lukem Exp $
+#	$NetBSD: bsd.hostlib.mk,v 1.15 2011/08/05 09:36:28 plunky Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
@@ -30,7 +30,7 @@ OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.lo/g}
 .endif
 
 .if defined(OBJS) && !empty(OBJS)
-.NOPATH: ${OBJS} ${HOSTPROG} ${_YHLSRCS}
+.NOPATH: lib${HOSTLIB}.a ${OBJS} ${_YHLSRCS}
 
 ${OBJS}: ${DPSRCS}
 
