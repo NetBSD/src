@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.78 2011/03/17 00:43:48 matt Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.79 2011/08/05 03:55:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ struct	__pthread_st {
 	pthread_mutex_t	*pt_droplock;	/* Drop this lock if cancelled */
 	pthread_cond_t	pt_joiners;	/* Threads waiting to join. */
 	void		*(*pt_func)(void *);/* Function to call at start. */
-	void		*pt_arg;	/* Argumen to pass at start. */
+	void		*pt_arg;	/* Argument to pass at start. */
 
 	/* Threads to defer waking, usually until pthread_mutex_unlock(). */
 	lwpid_t		pt_waiters[PTHREAD__UNPARK_MAX];
