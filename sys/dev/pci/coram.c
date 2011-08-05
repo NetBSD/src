@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.3 2011/08/05 20:33:17 jmcneill Exp $ */
+/* $NetBSD: coram.c,v 1.4 2011/08/05 21:20:27 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.3 2011/08/05 20:33:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.4 2011/08/05 21:20:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.3 2011/08/05 20:33:17 jmcneill Exp $");
 
 #include <dev/i2c/cx24227var.h>
 #include <dev/i2c/mt2131var.h>
+
+/* #define CORAM_DEBUG */
 
 static int coram_match(device_t, cfdata_t, void *);
 static void coram_attach(device_t, device_t, void *);
@@ -415,8 +417,6 @@ coram_resume(device_t dv, const pmf_qual_t *qual)
 	struct coram_softc *sc;
 	sc = device_private(dv);
 
-	device_printf(sc->sc_dev, "%s\n", __func__);
-
 	return true;
 }
 
@@ -629,7 +629,9 @@ coram_dtv_open(void *cookie, int flags)
 {
 	struct coram_softc *sc = cookie;
 
+#ifdef CORAM_DEBUG
 	device_printf(sc->sc_dev, "%s\n", __func__);
+#endif
 
 	//KASSERT(sc->sc_tsbuf == NULL);
 
@@ -652,7 +654,9 @@ coram_dtv_close(void *cookie)
 {
 	struct coram_softc *sc = cookie;
 
+#ifdef CORAM_DEBUG
 	device_printf(sc->sc_dev, "%s\n", __func__);
+#endif
 
 	coram_mpeg_halt(sc);
 
@@ -701,7 +705,9 @@ coram_dtv_start_transfer(void *cookie)
 {
 	struct coram_softc *sc = cookie;
 
+#ifdef CORAM_DEBUG
 	device_printf(sc->sc_dev, "%s\n", __func__);
+#endif
 
 	coram_mpeg_trigger(sc, sc->sc_tsbuf);
 
@@ -713,7 +719,9 @@ coram_dtv_stop_transfer(void *cookie)
 {
 	struct coram_softc *sc = cookie;
 
+#ifdef CORAM_DEBUG
 	device_printf(sc->sc_dev, "%s\n", __func__);
+#endif
 
 	coram_mpeg_halt(sc);
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, PCI_INT_MSK, 0);
@@ -808,7 +816,9 @@ coram_mpeg_halt(struct coram_softc *sc)
 {
 	uint32_t v;
 
+#ifdef CORAM_DEBUG
 	device_printf(sc->sc_dev, "%s\n", __func__);
+#endif
 
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, VID_C_DMA_CTL, 0);
 
@@ -909,14 +919,22 @@ coram_mpeg_trigger(struct coram_softc *sc, void *buf)
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, PCI_INT_MSK, v);
 
 	v = bus_space_read_4(sc->sc_memt, sc->sc_memh, VID_C_GEN_CTL);
+#ifdef CORAM_DEBUG
 	printf("%s, %06x %08x\n", __func__, VID_C_GEN_CTL, v);
+#endif
 	v = bus_space_read_4(sc->sc_memt, sc->sc_memh, VID_C_SOP_STATUS);
+#ifdef CORAM_DEBUG
 	printf("%s, %06x %08x\n", __func__, VID_C_SOP_STATUS, v);
+#endif
 	delay(100*1000);
 	v = bus_space_read_4(sc->sc_memt, sc->sc_memh, VID_C_GEN_CTL);
+#ifdef CORAM_DEBUG
 	printf("%s, %06x %08x\n", __func__, VID_C_GEN_CTL, v);
+#endif
 	v = bus_space_read_4(sc->sc_memt, sc->sc_memh, VID_C_SOP_STATUS);
+#ifdef CORAM_DEBUG
 	printf("%s, %06x %08x\n", __func__, VID_C_SOP_STATUS, v);
+#endif
 
 	return 0;
 }
@@ -988,11 +1006,13 @@ coram_sram_ch_setup(struct coram_softc *sc, struct coram_sram_ch *csc,
 	bpl = (bpl + 7) & ~7;
 	cdt = csc->csc_cdt;
 	lines = csc->csc_fifosz / bpl;
+#ifdef CORAM_DEBUG
 	printf("%s %d lines\n", __func__, lines);
+#endif
 
 	/* fill in CDT */
 	for (i = 0; i < lines; i++) {
-#if 1
+#ifdef CORAM_DEBUG
 		printf("CDT ent %08x, %08x\n", cdt + (16 * i),
 		    csc->csc_fifo + (bpl * i));
 #endif
