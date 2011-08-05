@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.40 2011/06/12 03:35:55 rmind Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.41 2011/08/05 08:17:47 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.40 2011/06/12 03:35:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.41 2011/08/05 08:17:47 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,6 +304,7 @@ union_lookup(void *v)
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
 
+start:
 	upperdvp = dun->un_uppervp;
 	lowerdvp = dun->un_lowervp;
 	uppervp = NULLVP;
@@ -483,6 +484,9 @@ union_lookup(void *v)
 			 * We may be racing another process to make the
 			 * upper-level shadow directory.  Be careful with
 			 * locks/etc!
+			 * If we have to create a shadow directory and want
+			 * to commit the node we have to restart the lookup
+			 * to get the componentname right.
 			 */
 			if (upperdvp) {
 				dun->un_flags &= ~UN_ULOCK;
@@ -491,6 +495,12 @@ union_lookup(void *v)
 				    &uppervp);
 				vn_lock(upperdvp, LK_EXCLUSIVE | LK_RETRY);
 				dun->un_flags |= UN_ULOCK;
+				if (uerror == 0 && cnp->cn_nameiop != LOOKUP) {
+					vput(uppervp);
+					if (lowervp != NULLVP)
+						vput(lowervp);
+					goto start;
+				}
 			}
 			if (uerror) {
 				if (lowervp != NULLVP) {
