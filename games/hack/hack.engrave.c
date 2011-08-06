@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.engrave.c,v 1.12 2011/08/06 20:29:37 dholland Exp $	*/
+/*	$NetBSD: hack.engrave.c,v 1.13 2011/08/06 20:42:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.engrave.c,v 1.12 2011/08/06 20:29:37 dholland Exp $");
+__RCSID("$NetBSD: hack.engrave.c,v 1.13 2011/08/06 20:42:43 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -230,7 +230,7 @@ doengrave(void)
 			if (uwep && uwep->cursed) {
 				/* Andreas Bormann */
 				pline("Since your weapon is welded to your hand,");
-				pline("you use the %s.", aobjnam(uwep, (char *) 0));
+				pline("you use the %s.", aobjnam(uwep, NULL));
 				otmp = uwep;
 			} else {
 				if (!otmp)

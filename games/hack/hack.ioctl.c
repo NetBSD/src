@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.ioctl.c,v 1.9 2009/08/12 07:28:40 dholland Exp $	*/
+/*	$NetBSD: hack.ioctl.c,v 1.10 2011/08/06 20:42:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.ioctl.c,v 1.9 2009/08/12 07:28:40 dholland Exp $");
+__RCSID("$NetBSD: hack.ioctl.c,v 1.10 2011/08/06 20:42:43 dholland Exp $");
 #endif				/* not lint */
 
 /*
@@ -95,7 +95,7 @@ dosuspend(void)
 {
 #ifdef SIGTSTP
 	if (signal(SIGTSTP, SIG_IGN) == SIG_DFL) {
-		settty((char *) 0);
+		settty(NULL);
 		(void) signal(SIGTSTP, SIG_DFL);
 		(void) kill(0, SIGTSTP);
 		gettty();
