@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.116 2011/08/03 14:13:07 joerg Exp $
+#  $NetBSD: Makefile,v 1.117 2011/08/06 10:51:26 jruoho Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -213,7 +213,7 @@ MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 \
 	ieee_test.3 ilogb.3 isinff.3 j0.3 ldexp.3 lgamma.3 lrint.3 \
 	math.3 modf.3 nextafter.3 \
 	remainder.3 rint.3 round.3 \
-	sin.3 sinh.3 sqrt.3 \
+	scalbn.3 sin.3 sinh.3 sqrt.3 \
 	tan.3 tanh.3 trunc.3 fmax.3 fdim.3
 
 # fenv.h interface
@@ -254,8 +254,7 @@ MLINKS+=exp.3 expf.3 exp.3 expm1.3 exp.3 expm1f.3 			\
 MLINKS+=fabs.3 fabsf.3
 MLINKS+=fmod.3 fmodf.3
 MLINKS+=hypot.3 hypotf.3
-MLINKS+=ieee.3 finite.3 ieee.3 finitef.3 				\
-	ieee.3 scalbn.3 ieee.3 scalbnf.3 ieee.3 scalbnl.3
+MLINKS+=ieee.3 finite.3 ieee.3 finitef.3
 MLINKS+=ieee_test.3 logb.3 ieee_test.3 logbf.3 ieee_test.3 logbl.3
 MLINKS+=ieee_test.3 scalb.3 ieee_test.3 scalbf.3
 MLINKS+=ieee_test.3 significand.3 ieee_test.3 significandf.3
@@ -274,6 +273,8 @@ MLINKS+=remainder.3 remainderf.3 \
 	remainder.3 remquo.3 \
 	remainder.3 remquof.3
 MLINKS+=rint.3 rintf.3
+MLINKS+=scalbn.3 scalbnf.3 \
+	scalbn.3 scalbnl.3
 MLINKS+=sin.3 sinf.3
 MLINKS+=sinf.3 sinhf.3
 MLINKS+=sqrt.3 sqrtf.3 sqrt.3 cbrt.3 sqrt.3 cbrtf.3
