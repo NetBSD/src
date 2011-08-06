@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.engrave.c,v 1.11 2011/08/06 20:18:26 dholland Exp $	*/
+/*	$NetBSD: hack.engrave.c,v 1.12 2011/08/06 20:29:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.engrave.c,v 1.11 2011/08/06 20:18:26 dholland Exp $");
+__RCSID("$NetBSD: hack.engrave.c,v 1.12 2011/08/06 20:29:37 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -392,5 +392,5 @@ del_engr(struct engr *ep)
 		return;
 fnd:		;
 	}
-	free((char *) ep);
+	free(ep);
 }

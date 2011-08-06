@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.pager.c,v 1.17 2011/08/06 20:18:26 dholland Exp $	*/
+/*	$NetBSD: hack.pager.c,v 1.18 2011/08/06 20:29:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.pager.c,v 1.17 2011/08/06 20:18:26 dholland Exp $");
+__RCSID("$NetBSD: hack.pager.c,v 1.18 2011/08/06 20:29:37 dholland Exp $");
 #endif				/* not lint */
 
 /* This file contains the command routine dowhatis() and a pager. */
@@ -348,7 +348,7 @@ cornline(int mode, const char *text)
 cleanup:
 	while ((tl = texthead) != NULL) {
 		texthead = tl->next_line;
-		free((char *) tl);
+		free(tl);
 	}
 }
 

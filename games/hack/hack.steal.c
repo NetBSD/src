@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.steal.c,v 1.7 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.steal.c,v 1.8 2011/08/06 20:29:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.steal.c,v 1.7 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.steal.c,v 1.8 2011/08/06 20:29:37 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -216,7 +216,7 @@ steal(struct monst *mtmp)
 	if (Punished && otmp == uball) {
 		Punished = 0;
 		freeobj(uchain);
-		free((char *) uchain);
+		free(uchain);
 		uchain = (struct obj *) 0;
 		uball->spe = 0;
 		uball = (struct obj *) 0;	/* superfluous */

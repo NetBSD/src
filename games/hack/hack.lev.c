@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.lev.c,v 1.12 2011/08/06 20:00:33 dholland Exp $	*/
+/*	$NetBSD: hack.lev.c,v 1.13 2011/08/06 20:29:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.lev.c,v 1.12 2011/08/06 20:00:33 dholland Exp $");
+__RCSID("$NetBSD: hack.lev.c,v 1.13 2011/08/06 20:29:37 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -150,7 +150,7 @@ saveobjchn(int fd, struct obj *otmp)
 		xl = otmp->onamelth;
 		bwrite(fd, (char *) &xl, sizeof(int));
 		bwrite(fd, (char *) otmp, xl + sizeof(struct obj));
-		free((char *) otmp);
+		free(otmp);
 		otmp = otmp2;
 	}
 	bwrite(fd, (char *) &minusone, sizeof(int));
@@ -173,7 +173,7 @@ savemonchn(int fd, struct monst *mtmp)
 		bwrite(fd, (char *) mtmp, xl + sizeof(struct monst));
 		if (mtmp->minvent)
 			saveobjchn(fd, mtmp->minvent);
-		free((char *) mtmp);
+		free(mtmp);
 		mtmp = mtmp2;
 	}
 	bwrite(fd, (char *) &minusone, sizeof(int));
@@ -186,7 +186,7 @@ savegoldchn(int fd, struct gold *gold)
 	while (gold) {
 		gold2 = gold->ngold;
 		bwrite(fd, (char *) gold, sizeof(struct gold));
-		free((char *) gold);
+		free(gold);
 		gold = gold2;
 	}
 	bwrite(fd, nul, sizeof(struct gold));
@@ -199,7 +199,7 @@ savetrapchn(int fd, struct trap *trap)
 	while (trap) {
 		trap2 = trap->ntrap;
 		bwrite(fd, (char *) trap, sizeof(struct trap));
-		free((char *) trap);
+		free(trap);
 		trap = trap2;
 	}
 	bwrite(fd, nul, sizeof(struct trap));
@@ -273,7 +273,7 @@ getlev(int fd, int pid, xchar lev)
 		gold = newgold();
 		mread(fd, gold, sizeof(struct gold));
 	}
-	free((char *) gold);
+	free(gold);
 	trap = newtrap();
 	mread(fd, trap, sizeof(struct trap));
 	while (trap->tx) {
@@ -282,7 +282,7 @@ getlev(int fd, int pid, xchar lev)
 		trap = newtrap();
 		mread(fd, trap, sizeof(struct trap));
 	}
-	free((char *) trap);
+	free(trap);
 	fobj = restobjchn(fd);
 	billobjs = restobjchn(fd);
 	rest_engravings(fd);

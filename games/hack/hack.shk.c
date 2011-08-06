@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.shk.c,v 1.11 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.shk.c,v 1.12 2011/08/06 20:29:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.shk.c,v 1.11 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.shk.c,v 1.12 2011/08/06 20:29:37 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -89,7 +89,7 @@ struct obj     *billobjs = 0;
 void
 obfree(struct obj *obj, struct obj *merge)
 {
-	free((char *) obj);
+	free(obj);
 }
 int
 inshop(void) {
@@ -237,7 +237,7 @@ setpaid(void)
 			obj->unpaid = 0;
 	while ((obj = billobjs) != NULL) {
 		billobjs = obj->nobj;
-		free((char *) obj);
+		free(obj);
 	}
 	ESHK(shopkeeper)->billct = 0;
 }
@@ -419,7 +419,7 @@ obfree(struct obj *obj, struct obj *merge)
 			*bp = bill[ESHK(shopkeeper)->billct];
 		}
 	}
-	free((char *) obj);
+	free(obj);
 }
 
 static void
@@ -603,7 +603,7 @@ dopayobj(struct bill_x *bp)
 			else
 				pline("Error in shopkeeper administration.");
 		}
-		free((char *) obj);
+		free(obj);
 	}
 	return (1);
 }
