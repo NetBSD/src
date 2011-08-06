@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.o_init.c,v 1.13 2011/08/06 20:32:25 dholland Exp $	*/
+/*	$NetBSD: hack.o_init.c,v 1.14 2011/08/06 20:42:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.o_init.c,v 1.13 2011/08/06 20:32:25 dholland Exp $");
+__RCSID("$NetBSD: hack.o_init.c,v 1.14 2011/08/06 20:42:43 dholland Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -228,9 +228,9 @@ dodiscovered(void)
 	}
 	if (ct == 0) {
 		pline("You haven't discovered anything yet...");
-		cornline(3, (char *) 0);
+		cornline(3, NULL);
 	} else
-		cornline(2, (char *) 0);
+		cornline(2, NULL);
 
 	return (0);
 }

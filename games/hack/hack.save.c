@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.save.c,v 1.15 2011/08/06 20:00:33 dholland Exp $	*/
+/*	$NetBSD: hack.save.c,v 1.16 2011/08/06 20:42:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.save.c,v 1.15 2011/08/06 20:00:33 dholland Exp $");
+__RCSID("$NetBSD: hack.save.c,v 1.16 2011/08/06 20:42:43 dholland Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -192,7 +192,7 @@ dorecover(int fd)
 	mread(fd, fut_geno, sizeof fut_geno);
 	restnames(fd);
 	while (1) {
-		if (read(fd, (char *) &tmp, sizeof tmp) != sizeof tmp)
+		if (read(fd, &tmp, sizeof tmp) != sizeof tmp)
 			break;
 		getlev(fd, 0, tmp);
 		glo(tmp);
