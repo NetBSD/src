@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mklev.c,v 1.8 2009/08/12 07:28:40 dholland Exp $	*/
+/*	$NetBSD: hack.mklev.c,v 1.9 2011/08/06 20:42:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mklev.c,v 1.8 2009/08/12 07:28:40 dholland Exp $");
+__RCSID("$NetBSD: hack.mklev.c,v 1.9 2011/08/06 20:42:43 dholland Exp $");
 #endif				/* not lint */
 
 #include <unistd.h>
@@ -188,7 +188,7 @@ makelevel(void)
 		}
 	}
 
-	qsort((char *) rooms, nroom, sizeof(struct mkroom), comp);
+	qsort(rooms, nroom, sizeof(rooms[0]), comp);
 	makecorridors();
 	make_niches();
 

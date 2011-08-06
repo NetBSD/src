@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.tty.c,v 1.15 2010/02/03 15:34:39 roy Exp $	*/
+/*	$NetBSD: hack.tty.c,v 1.16 2011/08/06 20:42:43 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char     sccsid[] = "@(#)hack.tty.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: hack.tty.c,v 1.15 2010/02/03 15:34:39 roy Exp $");
+__RCSID("$NetBSD: hack.tty.c,v 1.16 2011/08/06 20:42:43 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -206,7 +206,7 @@ error(const char *fmt, ...)
 
 	va_start(ap, fmt);
 	if (settty_needed)
-		settty((char *) 0);
+		settty(NULL);
 	vprintf(fmt, ap);
 	va_end(ap);
 	putchar('\n');
