@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.8 2011/08/06 19:32:58 dholland Exp $	*/
+/*	$NetBSD: config.h,v 1.9 2011/08/06 19:47:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -75,9 +75,7 @@
  * <sys/wait.h>		<wait.h>
  * <sys/time.h>		<time.h>
  * <sgtty.h>		<termio.h>
- * Some routines are called differently
- * index		strchr
- * rindex		strrchr
+ *
  * Also, the code for suspend and various ioctls is only given for BSD4.2
  * (I do not have access to a SYSV system.)
  */
