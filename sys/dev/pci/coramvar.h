@@ -1,4 +1,4 @@
-/* $NetBSD: coramvar.h,v 1.2 2011/08/04 22:25:08 jmcneill Exp $ */
+/* $NetBSD: coramvar.h,v 1.3 2011/08/06 19:21:27 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -37,6 +37,12 @@
 
 #define KERNADDR(p)	((void *)((p)->addr))
 #define DMAADDR(p)	((p)->map->dm_segs[0].ds_addr)
+
+struct coram_board {
+	uint16_t vendor;
+	uint16_t product;
+	const char *name;
+};
 
 struct coram_sram_ch {
 	uint32_t	csc_cmds;
@@ -94,8 +100,7 @@ struct coram_softc {
 	void			*sc_tuner;
 	void			*sc_demod;
 
-	pci_vendor_id_t		sc_vendor;
-	pci_product_id_t	sc_product;
+	const struct coram_board *sc_board;
 };
 
 #endif /* !_DEV_PCI_CORAMVAR_H */

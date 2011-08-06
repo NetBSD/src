@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.6 2011/08/06 11:51:11 jmcneill Exp $ */
+/* $NetBSD: coram.c,v 1.7 2011/08/06 19:21:27 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.6 2011/08/06 11:51:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.7 2011/08/06 19:21:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,11 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.6 2011/08/06 11:51:11 jmcneill Exp $");
 /* #define CORAM_DEBUG */
 /* #define CORAM_ATTACH_I2C */
 
-static const struct coram_board {
-	uint16_t vendor;
-	uint16_t product;
-	const char *name;
-} coram_boards[] = {
+static const struct coram_board coram_boards[] = {
 	{ PCI_VENDOR_HAUPPAUGE, 0x7911, "Hauppauge HVR-1250" },
 };
 
