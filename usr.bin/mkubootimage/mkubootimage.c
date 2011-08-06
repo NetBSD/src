@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.11 2011/08/04 04:47:59 matt Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.12 2011/08/06 11:12:05 wiz Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.11 2011/08/04 04:47:59 matt Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.12 2011/08/06 11:12:05 wiz Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -212,7 +212,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "usage: mkubootimage -A <arm|mips|mips64|powerpc>");
-	fprintf(stderr, " -C <none|gz|bz2>");
+	fprintf(stderr, " -C <none|bz2|gz|lzma|lzo>");
 	fprintf(stderr, " -O <openbsd|netbsd|freebsd|linux>");
 	fprintf(stderr, " -T <standalone|kernel|ramdisk|fs>");
 	fprintf(stderr, " -a <addr> [-e <ep>] [-m <magic>] -n <name>");
