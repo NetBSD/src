@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.worm.c,v 1.8 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.worm.c,v 1.9 2011/08/06 20:29:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.worm.c,v 1.8 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.worm.c,v 1.9 2011/08/06 20:29:37 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -279,6 +279,6 @@ remseg(struct wseg *wtmp)
 {
 	if (wtmp->wdispl)
 		newsym(wtmp->wx, wtmp->wy);
-	free((char *) wtmp);
+	free(wtmp);
 }
 #endif	/* NOWORM */
