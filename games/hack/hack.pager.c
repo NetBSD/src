@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.pager.c,v 1.15 2011/05/23 22:53:25 joerg Exp $	*/
+/*	$NetBSD: hack.pager.c,v 1.16 2011/08/06 19:53:24 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.pager.c,v 1.15 2011/05/23 22:53:25 joerg Exp $");
+__RCSID("$NetBSD: hack.pager.c,v 1.16 2011/08/06 19:53:24 dholland Exp $");
 #endif				/* not lint */
 
 /* This file contains the command routine dowhatis() and a pager. */
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: hack.pager.c,v 1.15 2011/05/23 22:53:25 joerg Exp $");
  */
 
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -437,25 +438,6 @@ dosh(void)
 	return (0);
 }
 #endif	/* SHELL */
-
-#ifdef NOWAITINCLUDE
-union wait {			/* used only for the cast  (union wait *) 0  */
-	int             w_status;
-	struct {
-		unsigned short  w_Termsig:7;
-		unsigned short  w_Coredump:1;
-		unsigned short  w_Retcode:8;
-	}               w_T;
-};
-
-#else
-
-#ifdef BSD
-#include	<sys/wait.h>
-#else
-#include	<wait.h>
-#endif	/* BSD */
-#endif	/* NOWAITINCLUDE */
 
 static int
 child(int wt)
