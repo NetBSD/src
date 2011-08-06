@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.h,v 1.15 2011/08/06 19:47:54 dholland Exp $	*/
+/*	$NetBSD: hack.h,v 1.16 2011/08/06 20:18:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -91,7 +91,7 @@ typedef struct {
 #include	"def.rm.h"
 #include	"def.permonst.h"
 
-#define	newstring(x)	(char *) alloc((unsigned)(x))
+#define	newstring(x)	((char *) alloc(x))
 #include "hack.onames.h"
 
 #define ON 1

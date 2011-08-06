@@ -1,4 +1,4 @@
-/*	$NetBSD: def.monst.h,v 1.7 2003/04/02 18:36:34 jsm Exp $	*/
+/*	$NetBSD: def.monst.h,v 1.8 2011/08/06 20:18:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -107,7 +107,7 @@ struct monst {
 	long mextra[1];		/* monster dependent info */
 };
 
-#define newmonst(xl)	(struct monst *) alloc((unsigned)(xl) + sizeof(struct monst))
+#define newmonst(xl)	((struct monst *) alloc((xl) + sizeof(struct monst)))
 
 extern struct monst *fmon;
 extern struct monst *fallen_down;
