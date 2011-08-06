@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.engrave.c,v 1.10 2011/08/06 20:00:33 dholland Exp $	*/
+/*	$NetBSD: hack.engrave.c,v 1.11 2011/08/06 20:18:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.engrave.c,v 1.10 2011/08/06 20:00:33 dholland Exp $");
+__RCSID("$NetBSD: hack.engrave.c,v 1.11 2011/08/06 20:18:26 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -185,8 +185,8 @@ make_engr_at(int x, int y, const char *s)
 
 	if ((ep = engr_at(x, y)) != NULL)
 		del_engr(ep);
-	ep = (struct engr *)
-		alloc((unsigned) (sizeof(struct engr) + strlen(s) + 1));
+	ep = alloc(sizeof(*ep) + strlen(s) + 1);
+
 	ep->nxt_engr = head_engr;
 	head_engr = ep;
 	ep->engr_x = x;
@@ -316,7 +316,7 @@ doengrave(void)
 	}
 	if (oep)
 		len += strlen(oep->engr_txt) + spct;
-	ep = (struct engr *) alloc((unsigned) (sizeof(struct engr) + len + 1));
+	ep = alloc(sizeof(*ep) + len + 1);
 	ep->nxt_engr = head_engr;
 	head_engr = ep;
 	ep->engr_x = u.ux;
@@ -367,8 +367,8 @@ rest_engravings(int fd)
 		mread(fd, &lth, sizeof(unsigned));
 		if (lth == 0)
 			return;
-		ep = (struct engr *) alloc(sizeof(struct engr) + lth);
-		mread(fd, ep, sizeof(struct engr) + lth);
+		ep = alloc(sizeof(*ep) + lth);
+		mread(fd, ep, sizeof(*ep) + lth);
 		ep->nxt_engr = head_engr;
 		ep->engr_txt = (char *) (ep + 1);	/* Andreas Bormann */
 		head_engr = ep;
