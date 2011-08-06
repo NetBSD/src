@@ -1,4 +1,4 @@
-/*	$NetBSD: def.obj.h,v 1.5 2003/04/02 18:36:34 jsm Exp $	*/
+/*	$NetBSD: def.obj.h,v 1.6 2011/08/06 20:18:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -105,7 +105,7 @@ struct obj {
 
 extern struct obj *fobj;
 
-#define newobj(xl)	(struct obj *) alloc((unsigned)(xl) + sizeof(struct obj))
+#define newobj(xl)	((struct obj *) alloc((xl) + sizeof(struct obj)))
 #define	ONAME(otmp)	((char *) otmp->oextra)
 #define	OGOLD(otmp)	(otmp->oextra[0])
 #endif /* _DEF_OBJ_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 2011/08/06 20:00:33 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 2011/08/06 20:18:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <stdio.h>
 
 /* alloc.c */
-long *alloc(unsigned);
+void *alloc(size_t);
 
 /* hack.apply.c */
 int doapply(void);

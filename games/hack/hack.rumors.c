@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.rumors.c,v 1.8 2011/05/23 22:53:25 joerg Exp $	*/
+/*	$NetBSD: hack.rumors.c,v 1.9 2011/08/06 20:18:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.rumors.c,v 1.8 2011/05/23 22:53:25 joerg Exp $");
+__RCSID("$NetBSD: hack.rumors.c,v 1.9 2011/08/06 20:18:26 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"	/* for RUMORFILE and BSD (strchr) */
@@ -88,7 +88,7 @@ init_rumors(FILE *rumf)
 		n_rumors++;
 	rewind(rumf);
 	i = n_rumors / CHARSZ;
-	usedbits = (char *) alloc((unsigned) (i + 1));
+	usedbits = alloc(i + 1);
 	for (; i >= 0; i--)
 		usedbits[i] = 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: def.gold.h,v 1.5 2003/04/02 18:36:34 jsm Exp $	*/
+/*	$NetBSD: def.gold.h,v 1.6 2011/08/06 20:18:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -69,6 +69,6 @@ struct gold {
 	long amount;
 };
 
-#define newgold()	(struct gold *) alloc(sizeof(struct gold))
+#define newgold()	((struct gold *) alloc(sizeof(struct gold)))
 extern struct gold *fgold;
 #endif /* _DEF_GOLD_H_ */

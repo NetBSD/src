@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.end.c,v 1.14 2010/02/03 15:34:38 roy Exp $	*/
+/*	$NetBSD: hack.end.c,v 1.15 2011/08/06 20:18:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.end.c,v 1.14 2010/02/03 15:34:38 roy Exp $");
+__RCSID("$NetBSD: hack.end.c,v 1.15 2011/08/06 20:18:26 dholland Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -300,7 +300,7 @@ done(const char *st1)
 	exit(0);
 }
 
-#define newttentry() (struct toptenentry *) alloc(sizeof(struct toptenentry))
+#define newttentry() ((struct toptenentry *) alloc(sizeof(struct toptenentry)))
 #define	NAMSZ	8
 #define	DTHSZ	40
 #define	PERSMAX	1

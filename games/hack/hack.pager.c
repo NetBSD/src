@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.pager.c,v 1.16 2011/08/06 19:53:24 dholland Exp $	*/
+/*	$NetBSD: hack.pager.c,v 1.17 2011/08/06 20:18:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.pager.c,v 1.16 2011/08/06 19:53:24 dholland Exp $");
+__RCSID("$NetBSD: hack.pager.c,v 1.17 2011/08/06 20:18:26 dholland Exp $");
 #endif				/* not lint */
 
 /* This file contains the command routine dowhatis() and a pager. */
@@ -150,7 +150,7 @@ page_more(FILE *fp, int strip)
 	sig_t           prevsig = signal(SIGINT, intruph);
 
 	set_pager(0);
-	bufr = (char *) alloc((unsigned) CO);
+	bufr = alloc(CO);
 	bufr[CO - 1] = 0;
 	while (fgets(bufr, CO - 1, fp) && (!strip || *bufr == '\t') && !got_intrup) {
 		ep = strchr(bufr, '\n');
@@ -289,8 +289,7 @@ cornline(int mode, const char *text)
 		len = strlen(text);
 		if (len > maxlen)
 			maxlen = len;
-		tl = (struct line *)
-			alloc((unsigned) (len + sizeof(struct line) + 1));
+		tl = alloc(len + sizeof(*tl) + 1);
 		tl->next_line = 0;
 		tl->line_text = (char *) (tl + 1);
 		(void) strcpy(tl->line_text, text);

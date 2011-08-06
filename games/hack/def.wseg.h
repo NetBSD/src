@@ -1,4 +1,4 @@
-/*	$NetBSD: def.wseg.h,v 1.5 2003/04/02 18:36:35 jsm Exp $	*/
+/*	$NetBSD: def.wseg.h,v 1.6 2011/08/06 20:18:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -71,6 +71,6 @@ struct wseg {
 	unsigned wdispl:1;
 };
 
-#define newseg()	(struct wseg *) alloc(sizeof(struct wseg))
+#define newseg()	((struct wseg *) alloc(sizeof(struct wseg)))
 #endif /* NOWORM */
 #endif /* _DEF_WSEG_H_ */
