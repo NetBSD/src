@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.h,v 1.18 2005/06/27 01:55:52 christos Exp $	*/
+/*	$NetBSD: restore.h,v 1.19 2011/08/06 17:01:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -73,7 +73,7 @@ struct digest_desc {
 	const char *dd_name;
 	void (*dd_init)(void *);
 	void (*dd_update)(void *, const u_char *, u_int);
-	char *(*dd_end)(void *, void *);
+	char *(*dd_end)(void *, char *);
 };
 extern const struct digest_desc *ddesc;
 extern const struct digest_desc md5_desc;

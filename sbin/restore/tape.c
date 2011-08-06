@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.63 2009/04/07 12:38:13 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.64 2011/08/06 17:01:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.63 2009/04/07 12:38:13 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.64 2011/08/06 17:01:06 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,15 +98,15 @@ const struct digest_desc digest_descs[] = {
 	{ "MD5",
 	  (void (*)(void *))MD5Init,
 	  (void (*)(void *, const u_char *, u_int))MD5Update,
-	  (char *(*)(void *, void *))MD5End, },
+	  (char *(*)(void *, char *))MD5End, },
 	{ "SHA1",
 	  (void (*)(void *))SHA1Init,
 	  (void (*)(void *, const u_char *, u_int))SHA1Update,
-	  (char *(*)(void *, void *))SHA1End, },
+	  (char *(*)(void *, char *))SHA1End, },
 	{ "RMD160",
 	  (void (*)(void *))RMD160Init,
 	  (void (*)(void *, const u_char *, u_int))RMD160Update,
-	  (char *(*)(void *, void *))RMD160End, },
+	  (char *(*)(void *, char *))RMD160End, },
 	{ .dd_name = NULL },
 };
 
@@ -116,11 +116,11 @@ static union digest_context {
 	RMD160_CTX dc_rmd160;
 } dcontext;
 
-union digest_buffer {
-	char db_md5[32 + 1];
-	char db_sha1[40 + 1];
-	char db_rmd160[40 + 1];
-};
+/*
+ * 32 for md5; 40 for sha1 and rmd160
+ * plus a null terminator.
+ */
+#define DIGEST_BUFFER_SIZE (40 + 1)
 
 #define	FLUSHTAPEBUF()	blkcnt = ntrec + 1
 
@@ -589,7 +589,7 @@ printdumpinfo(void)
 int
 extractfile(char *name)
 {
-	union digest_buffer dbuffer;
+	char dbuffer[DIGEST_BUFFER_SIZE];
 	int flags;
 	uid_t uid;
 	gid_t gid;
@@ -739,12 +739,12 @@ extractfile(char *name)
 			(*ddesc->dd_init)(&dcontext);
 		getfile(xtrfile, xtrskip);
 		if (Dflag) {
-			(*ddesc->dd_end)(&dcontext, &dbuffer);
+			(*ddesc->dd_end)(&dcontext, dbuffer);
 			for (ep = lookupname(name); ep != NULL;
 			    ep = ep->e_links)
 				fprintf(stdout, "%s (%s) = %s\n",
 				    ddesc->dd_name, myname(ep),
-				    (char *)&dbuffer);
+				    dbuffer);
 		}
 		if (Nflag)
 			return (GOOD);
