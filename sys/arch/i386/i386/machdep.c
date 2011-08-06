@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.702.2.2 2011/07/31 20:49:10 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.702.2.3 2011/08/06 21:06:34 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.702.2.2 2011/07/31 20:49:10 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.702.2.3 2011/08/06 21:06:34 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -559,6 +559,12 @@ i386_switch_context(lwp_t *l)
 	}
 
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
+
+	/* Update TLS segment pointers */
+	update_descriptor(&ci->ci_gdt[GUFS_SEL],
+			  (union descriptor *) &pcb->pcb_fsd);
+	update_descriptor(&ci->ci_gdt[GUGS_SEL], 
+			  (union descriptor *) &pcb->pcb_gsd);
 
 	physop.cmd = PHYSDEVOP_SET_IOPL;
 	physop.u.set_iopl.iopl = pcb->pcb_iopl;
