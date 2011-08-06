@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.33 2011/05/28 15:33:41 christos Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.34 2011/08/06 11:04:25 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.33 2011/05/28 15:33:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.34 2011/08/06 11:04:25 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,17 +235,18 @@ sel_do_scan(const int op, void *fds, const int nf, const size_t ni,
 	sc = curcpu()->ci_data.cpu_selcluster;
 	lock = sc->sc_lock;
 	l->l_selcluster = sc;
-	SLIST_INIT(&l->l_selwait);
-
-	l->l_selret = 0;
 	if (op == SELOP_SELECT) {
 		l->l_selbits = fds;
 		l->l_selni = ni;
 	} else {
 		l->l_selbits = NULL;
 	}
+
 	for (;;) {
 		int ncoll;
+
+		SLIST_INIT(&l->l_selwait);
+		l->l_selret = 0;
 
 		/*
 		 * No need to lock.  If this is overwritten by another value
@@ -276,18 +277,18 @@ state_check:
 		if (__predict_false(sc->sc_ncoll != ncoll)) {
 			/* Collision: perform re-scan. */
 			mutex_spin_exit(lock);
+			selclear();
 			continue;
 		}
 		if (__predict_true(l->l_selflag == SEL_EVENT)) {
 			/* Events occured, they are set directly. */
 			mutex_spin_exit(lock);
-			KASSERT(l->l_selret != 0);
-			*retval = l->l_selret;
 			break;
 		}
 		if (__predict_true(l->l_selflag == SEL_RESET)) {
 			/* Events occured, but re-scan is requested. */
 			mutex_spin_exit(lock);
+			selclear();
 			continue;
 		}
 		/* Nothing happen, therefore - sleep. */
@@ -303,6 +304,12 @@ state_check:
 		goto state_check;
 	}
 	selclear();
+
+	/* Add direct events if any. */
+	if (l->l_selflag == SEL_EVENT) {
+		KASSERT(l->l_selret != 0);
+		*retval += l->l_selret;
+	}
 
 	if (__predict_false(mask))
 		sigsuspendteardown(l);
@@ -371,11 +378,14 @@ selscan(char *bits, const int nfd, const size_t ni, register_t *retval)
 	fd_mask *ibitp, *obitp;
 	int msk, i, j, fd, n;
 	file_t *fp;
+	kmutex_t *lock;
 
+	lock = curlwp->l_selcluster->sc_lock;
 	ibitp = (fd_mask *)(bits + ni * 0);
 	obitp = (fd_mask *)(bits + ni * 3);
 	n = 0;
 
+	memset(obitp, 0, ni * 3);
 	for (msk = 0; msk < 3; msk++) {
 		for (i = 0; i < nfd; i += NFDBITS) {
 			fd_mask ibits, obits;
@@ -397,7 +407,12 @@ selscan(char *bits, const int nfd, const size_t ni, register_t *retval)
 				}
 				fd_putfile(fd);
 			}
-			*obitp++ = obits;
+			if (obits != 0) {
+				mutex_spin_enter(lock);
+				*obitp |= obits;
+				mutex_spin_exit(lock);
+			}
+			obitp++;
 		}
 	}
 	*retval = n;
@@ -505,14 +520,14 @@ static inline int
 pollscan(struct pollfd *fds, const int nfd, register_t *retval)
 {
 	file_t *fp;
-	int i, n = 0;
+	int i, n = 0, revents;
 
 	for (i = 0; i < nfd; i++, fds++) {
+		fds->revents = 0;
 		if (fds->fd < 0) {
-			fds->revents = 0;
+			revents = 0;
 		} else if ((fp = fd_getfile(fds->fd)) == NULL) {
-			fds->revents = POLLNVAL;
-			n++;
+			revents = POLLNVAL;
 		} else {
 			/*
 			 * Perform poll: registers select request or returns
@@ -520,11 +535,13 @@ pollscan(struct pollfd *fds, const int nfd, register_t *retval)
 			 * selrecord(), which is a pointer to struct pollfd.
 			 */
 			curlwp->l_selrec = (uintptr_t)fds;
-			fds->revents = (*fp->f_ops->fo_poll)(fp,
+			revents = (*fp->f_ops->fo_poll)(fp,
 			    fds->events | POLLERR | POLLHUP);
-			if (fds->revents != 0)
-				n++;
 			fd_putfile(fds->fd);
+		}
+		if (revents) {
+			fds->revents = revents;
+			n++;
 		}
 	}
 	*retval = n;
@@ -626,7 +643,9 @@ sel_setevents(lwp_t *l, struct selinfo *sip, const int events)
 		int n;
 
 		for (n = 0; n < 3; n++) {
-			if ((fds[idx] & fbit) != 0 && (sel_flag[n] & events)) {
+			if ((fds[idx] & fbit) != 0 &&
+			    (ofds[idx] & fbit) == 0 &&
+			    (sel_flag[n] & events)) {
 				ofds[idx] |= fbit;
 				ret++;
 			}
@@ -638,8 +657,9 @@ sel_setevents(lwp_t *l, struct selinfo *sip, const int events)
 		int revents = events & (pfd->events | POLLERR | POLLHUP);
 
 		if (revents) {
+			if (pfd->revents == 0)
+				ret = 1;
 			pfd->revents |= revents;
-			ret = 1;
 		}
 	}
 	/* Check whether there are any events to return. */
