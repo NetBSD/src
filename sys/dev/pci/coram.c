@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.4 2011/08/05 21:20:27 jmcneill Exp $ */
+/* $NetBSD: coram.c,v 1.5 2011/08/06 11:37:56 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.4 2011/08/05 21:20:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.5 2011/08/06 11:37:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.4 2011/08/05 21:20:27 jmcneill Exp $");
 #include <dev/i2c/mt2131var.h>
 
 /* #define CORAM_DEBUG */
+/* #define CORAM_ATTACH_I2C */
 
 static int coram_match(device_t, cfdata_t, void *);
 static void coram_attach(device_t, device_t, void *);
@@ -160,8 +161,11 @@ coram_attach(device_t parent, device_t self, void *v)
 	const char *intrstr;
 	char devinfo[76];
 	struct coram_iic_softc *cic;
-	struct i2cbus_attach_args iba;
 	uint32_t value;
+	int i;
+#ifdef CORAM_ATTACH_I2C
+	struct i2cbus_attach_args iba;
+#endif
 
 	sc = device_private(self);
 
@@ -207,8 +211,6 @@ coram_attach(device_t parent, device_t self, void *v)
 	reg |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
 
-	int i;
-
 	/* I2C */
 	for(i = 0; i < I2C_NUM; i++) {
 		cic = &sc->sc_iic[i];
@@ -223,7 +225,7 @@ coram_attach(device_t parent, device_t self, void *v)
 		cic->cic_i2c.ic_release_bus = coram_iic_release_bus;
 		cic->cic_i2c.ic_exec = coram_iic_exec;
 
-#if 1
+#ifdef CORAM_ATTACH_I2C
 		/* attach iic(4) */
 		memset(&iba, 0, sizeof(iba));
 		iba.iba_tag = &cic->cic_i2c;
