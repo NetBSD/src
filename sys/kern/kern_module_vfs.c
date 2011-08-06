@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.10 2010/11/28 00:26:38 jnemeth Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.11 2011/08/06 08:11:09 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.10 2010/11/28 00:26:38 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.11 2011/08/06 08:11:09 mbalmer Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -77,15 +77,21 @@ module_load_vfs(const char *name, int flags, bool autoload,
 	path = PNBUF_GET();
 
 	if (!autoload) {
-		nochroot = false;
-		snprintf(path, MAXPATHLEN, "%s", name);
-		error = kobj_load_vfs(&mod->mod_kobj, path, nochroot);
+		if (strchr(name,  '/') != NULL) {
+			nochroot = false;
+			snprintf(path, MAXPATHLEN, "%s", name);
+			error = kobj_load_vfs(&mod->mod_kobj, path, nochroot);
+		} else
+			error = ENOENT;
 	}
 	if (autoload || (error == ENOENT)) {
-		nochroot = true;
-		snprintf(path, MAXPATHLEN, "%s/%s/%s.kmod",
-		    module_base, name, name);
-		error = kobj_load_vfs(&mod->mod_kobj, path, nochroot);
+		if (strchr(name, '/') == NULL) {
+			nochroot = true;
+			snprintf(path, MAXPATHLEN, "%s/%s/%s.kmod",
+			    module_base, name, name);
+			error = kobj_load_vfs(&mod->mod_kobj, path, nochroot);
+		} else
+			error = ENOENT;
 	}
 	if (error != 0) {
 		PNBUF_PUT(path);

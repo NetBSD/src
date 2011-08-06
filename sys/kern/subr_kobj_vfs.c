@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj_vfs.c,v 1.4 2010/11/19 06:44:43 dholland Exp $	*/
+/*	$NetBSD: subr_kobj_vfs.c,v 1.5 2011/08/06 08:11:09 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include <sys/vnode.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.4 2010/11/19 06:44:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.5 2011/08/06 08:11:09 mbalmer Exp $");
 
 static void
 kobj_close_vfs(kobj_t ko)
@@ -138,6 +138,10 @@ kobj_load_vfs(kobj_t *kop, const char *path, const bool nochroot)
 	kauth_cred_t cred;
 	int error;
 	kobj_t ko;
+
+	KASSERT(path != NULL);
+	if (strchr(path, '/') == NULL)
+		return ENOENT;
 
 	cred = kauth_cred_get();
 
