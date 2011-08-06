@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.41 2011/08/06 08:11:10 mbalmer Exp $
+.\" $NetBSD: modload.8,v 1.42 2011/08/06 08:43:28 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -61,7 +61,8 @@ parameter into the running system.
 .Pp
 Modules are loaded from the default system module areas unless the
 .Ar module
-parameter contains a path separator character (/).
+parameter contains a path separator character
+.Pq Sq / .
 .Pp
 The options to
 .Nm
