@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.56 2011/08/05 02:29:53 mrg Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.57 2011/08/06 13:19:46 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.56 2011/08/05 02:29:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.57 2011/08/06 13:19:46 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -556,9 +556,13 @@ acpicpu_cstate_fadt(struct acpicpu_softc *sc)
 		cs[ACPI_STATE_C3].cs_method = 0;
 
 	/*
-	 * Sanity check the latency levels in FADT.
-	 * Values above the thresholds are used to
-	 * inform that C-states are not supported.
+	 * Sanity check the latency levels in FADT. Values above
+	 * the thresholds may be used to inform that C2 and C3 are
+	 * not supported -- AMD family 11h is an example;
+	 *
+	 *	Advanced Micro Devices: BIOS and Kernel Developer's
+	 *	Guide (BKDG) for AMD Family 11h Processors. Section
+	 *	2.4.3, Revision 3.00, July, 2008.
 	 */
 	CTASSERT(ACPICPU_C_C2_LATENCY_MAX == 100);
 	CTASSERT(ACPICPU_C_C3_LATENCY_MAX == 1000);
