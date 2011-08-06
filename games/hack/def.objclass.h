@@ -1,4 +1,4 @@
-/*	$NetBSD: def.objclass.h,v 1.6 2003/04/02 18:36:34 jsm Exp $	*/
+/*	$NetBSD: def.objclass.h,v 1.7 2011/08/06 19:23:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -117,7 +117,7 @@ extern struct objclass objects[];
  * hack.mkobj.c:	char mkobjstr[] = "))[[!!!!????%%%%/=**";
  * hack.apply.c:   otmp = getobj("0#%", "put in");
  * hack.eat.c:     otmp = getobj("%", "eat");
- * hack.invent.c:          if(index("!%?[)=*(0/\"", sym)){
- * hack.invent.c:    || index("%?!*",otmp->olet))){
+ * hack.invent.c:          if(strchr("!%?[)=*(0/\"", sym)){
+ * hack.invent.c:    || strchr("%?!*",otmp->olet))){
  */
 #endif /* _DEF_OBJCLASS_H_ */
