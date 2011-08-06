@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.139 2011/07/09 14:49:28 jmcneill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.140 2011/08/06 12:29:39 jmcneill Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -310,7 +310,7 @@
 usage()
 {
 	cat 1>&2 << _USAGE_
-Usage: ${0##*/} [-fMs] [-m mknod] [-p pax] [-t mtree] special [...]
+Usage: ${0##*/} [-fMsu] [-m mknod] [-p pax] [-t mtree] special [...]
 	Create listed special devices.  Options:
 	-f		Force permissions to be updated on existing devices.
 	-M		Create memory file system.
@@ -318,6 +318,7 @@ Usage: ${0##*/} [-fMs] [-m mknod] [-p pax] [-t mtree] special [...]
 	-p pax  	Name of pax(1) program.  [\$TOOL_PAX or pax]
 	-s		Generate mtree(8) specfile instead of creating devices.
 	-t mtree	Name of mtree(8) program.  [\$TOOL_MTREE or mtree]
+	-u		Don't re-create devices that already exist.
 
 _USAGE_
 	exit 1
@@ -425,8 +426,9 @@ setup()
 	do_mtree=false
 	do_redirect=false
 	do_specfile=false
+	do_update=false
 	opts=
-	while getopts Mfm:p:st: ch; do
+	while getopts Mfm:p:st:u ch; do
 		# Note that $opts is only for options pased through to
 		# MAKEDEV.local, not for all options.
 		case ${ch} in
@@ -467,6 +469,10 @@ setup()
 					"${TOOL_MTREE} is missing or broken"
 				do_mknod=true
 			fi
+			;;
+		u)
+			do_update=true
+			opts="${opts} -u"
 			;;
 		*)	usage ;;
 		esac
@@ -522,6 +528,11 @@ setup()
 			die "-f option works only with mknod"
 		fi
 		do_mknod=true
+	fi
+
+	# do_force and do_update do not work together
+	if $do_force && $do_update; then
+		die "-f and -u options do not work together"
 	fi
 
 	# If no explicit method was specified on the command line or
@@ -663,6 +674,9 @@ mkdev()
 		count_nodes=$((count_nodes + 1))
 		return
 	fi
+	if $do_update && test -e $1; then
+		return
+	fi
 	if $do_specfile; then
 		case $2 in
 		b)	type=block ;;
@@ -680,6 +694,9 @@ lndev()
 		count_nodes=$((count_nodes + 1))
 		return
 	fi
+	if $do_update && test -e $2; then
+		return
+	fi
 	if $do_specfile; then
 		echo "./$2 type=link link=$1 mode=0700 gid=$g_wheel uid=$u_root"
 	else
@@ -691,6 +708,9 @@ makedir()
 {
 	if [ -n "$count_nodes" ]; then
 		count_nodes=$((count_nodes + 1))
+		return
+	fi
+	if $do_update && test -e $1; then
 		return
 	fi
 	if $do_specfile; then
