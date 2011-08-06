@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.invent.c,v 1.16 2011/08/06 20:29:37 dholland Exp $	*/
+/*	$NetBSD: hack.invent.c,v 1.17 2011/08/06 20:42:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.invent.c,v 1.16 2011/08/06 20:29:37 dholland Exp $");
+__RCSID("$NetBSD: hack.invent.c,v 1.17 2011/08/06 20:42:43 dholland Exp $");
 #endif				/* not lint */
 
 #include <assert.h>
@@ -80,7 +80,7 @@ __RCSID("$NetBSD: hack.invent.c,v 1.16 2011/08/06 20:29:37 dholland Exp $");
 static int      lastinvnr = 51;	/* 0 ... 51 */
 
 static char *xprname(struct obj *, char);
-static void doinv(char *);
+static void doinv(const char *);
 static int merged(struct obj *, struct obj *, int);
 
 static void
@@ -499,7 +499,7 @@ getobj(const char *let, const char *word)
 				continue;
 			/* he typed a letter (not a space) to more() */
 		} else if (ilet == '*') {
-			doinv((char *) 0);
+			doinv(NULL);
 			if (!(ilet = morc))
 				continue;
 			/* ... */
@@ -716,14 +716,14 @@ xprname(struct obj *obj, char let)
 int
 ddoinv(void)
 {
-	doinv((char *) 0);
+	doinv(NULL);
 	return (0);
 }
 
 /* called with 0 or "": all objects in inventory */
 /* otherwise: all objects with (serial) letter in lets */
 static void
-doinv(char *lets)
+doinv(const char *lets)
 {
 	struct obj     *otmp;
 	char            ilet;
@@ -736,7 +736,7 @@ doinv(char *lets)
 		pline("Not carrying anything.");
 		return;
 	}
-	cornline(0, (char *) 0);
+	cornline(0, NULL);
 	ilet = 'a';
 	for (otmp = invent; otmp; otmp = otmp->nobj) {
 		if (flags.invlet_constant)
@@ -883,10 +883,10 @@ dolook(void)
 	}
 	if (ct == 1 && !gold) {
 		pline("You %s here %s.", verb, doname(otmp0));
-		cornline(3, (char *) 0);
+		cornline(3, NULL);
 	}
 	if (ct > 1)
-		cornline(2, (char *) 0);
+		cornline(2, NULL);
 	return (!!Blind);
 }
 

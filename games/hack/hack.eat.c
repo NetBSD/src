@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.eat.c,v 1.10 2011/05/23 22:53:25 joerg Exp $	*/
+/*	$NetBSD: hack.eat.c,v 1.11 2011/08/06 20:42:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.eat.c,v 1.10 2011/05/23 22:53:25 joerg Exp $");
+__RCSID("$NetBSD: hack.eat.c,v 1.11 2011/08/06 20:42:43 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -212,7 +212,7 @@ gotit:
 				goto no_opener;
 			}
 			pline("Using your %s you try to open the tin.",
-			      aobjnam(uwep, (char *) 0));
+			      aobjnam(uwep, NULL));
 		} else {
 	no_opener:
 			pline("It is not so easy to open this tin.");

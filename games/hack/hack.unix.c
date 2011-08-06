@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.unix.c,v 1.14 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.unix.c,v 1.15 2011/08/06 20:42:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.unix.c,v 1.14 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.unix.c,v 1.15 2011/08/06 20:42:43 dholland Exp $");
 #endif				/* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */
@@ -242,7 +242,7 @@ veryold(int fd)
 		int             lockedpid;	/* should be the same size as
 						 * hackpid */
 
-		if (read(fd, (char *) &lockedpid, sizeof(lockedpid)) !=
+		if (read(fd, &lockedpid, sizeof(lockedpid)) !=
 		    sizeof(lockedpid))
 			/* strange ... */
 			return (0);
@@ -327,7 +327,7 @@ gotlock:
 	if (fd == -1) {
 		error("cannot creat lock file.");
 	} else {
-		if (write(fd, (char *) &hackpid, sizeof(hackpid))
+		if (write(fd, &hackpid, sizeof(hackpid))
 		    != sizeof(hackpid)) {
 			error("cannot write lock");
 		}
@@ -506,7 +506,7 @@ readmail(void)
 	if (!(mr = getenv("MAILREADER")))
 		mr = DEF_MAILREADER;
 	if (child(1)) {
-		execl(mr, mr, (char *) 0);
+		execl(mr, mr, (char *)NULL);
 		exit(1);
 	}
 #else	/* DEF_MAILREADER */

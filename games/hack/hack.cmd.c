@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.cmd.c,v 1.11 2010/02/03 15:34:38 roy Exp $	*/
+/*	$NetBSD: hack.cmd.c,v 1.12 2011/08/06 20:42:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.cmd.c,v 1.11 2010/02/03 15:34:38 roy Exp $");
+__RCSID("$NetBSD: hack.cmd.c,v 1.12 2011/08/06 20:42:43 dholland Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
@@ -139,7 +139,7 @@ static const struct func_tab cmdlist[] = {
 static const struct ext_func_tab extcmdlist[] = {
 	{ "dip", dodip },
 	{ "pray", dopray },
-	{ (char *) 0, donull }
+	{ NULL, donull }
 };
 
 static char lowc(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.apply.c,v 1.11 2011/05/23 22:53:25 joerg Exp $	*/
+/*	$NetBSD: hack.apply.c,v 1.12 2011/08/06 20:42:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.apply.c,v 1.11 2011/05/23 22:53:25 joerg Exp $");
+__RCSID("$NetBSD: hack.apply.c,v 1.12 2011/08/06 20:42:43 dholland Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
@@ -255,7 +255,7 @@ use_ice_box(struct obj *obj)
 	else {
 		pline("Do you want to take something out of the ice-box? [yn] ");
 		if (readchar() == 'y')
-			if (askchain(fcobj, (char *) 0, 0, out_ice_box, ck_ice_box, 0))
+			if (askchain(fcobj, NULL, 0, out_ice_box, ck_ice_box, 0))
 				return;
 		pline("That was all. Do you wish to put something in? [yn] ");
 		if (readchar() != 'y')
@@ -490,7 +490,7 @@ use_pick_axe(struct obj *obj)
 			 && !sobj_at(ENORMOUS_ROCK, rx, ry)) {
 			/* ACCESSIBLE or POOL */
 			pline("You swing your %s through thin air.",
-			      aobjnam(obj, (char *) 0));
+			      aobjnam(obj, NULL));
 		} else {
 			if (dig_pos.x != rx || dig_pos.y != ry
 			    || dig_level != dlevel || dig_down) {
