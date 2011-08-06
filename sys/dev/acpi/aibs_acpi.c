@@ -1,4 +1,4 @@
-/* $NetBSD: aibs_acpi.c,v 1.2 2011/06/20 17:21:50 pgoyette Exp $ */
+/* $NetBSD: aibs_acpi.c,v 1.3 2011/08/06 05:03:56 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aibs_acpi.c,v 1.2 2011/06/20 17:21:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aibs_acpi.c,v 1.3 2011/08/06 05:03:56 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -228,6 +228,42 @@ aibs_init(device_t self)
 	}
 
 	sc->sc_model = true;
+
+	/*
+	 * If both the new and the old methods are present, prefer
+	 * the old one; GGRP/GITM may not be functional in this case.
+	 */
+	rv = AcpiGetHandle(sc->sc_node->ad_handle, "FSIF", &tmp);
+
+	if (ACPI_FAILURE(rv))
+		return;
+
+	rv = AcpiGetHandle(sc->sc_node->ad_handle, "TSIF", &tmp);
+
+	if (ACPI_FAILURE(rv))
+		return;
+
+	rv = AcpiGetHandle(sc->sc_node->ad_handle, "VSIF", &tmp);
+
+	if (ACPI_FAILURE(rv))
+		return;
+
+	rv = AcpiGetHandle(sc->sc_node->ad_handle, "RFAN", &tmp);
+
+	if (ACPI_FAILURE(rv))
+		return;
+
+	rv = AcpiGetHandle(sc->sc_node->ad_handle, "RTMP", &tmp);
+
+	if (ACPI_FAILURE(rv))
+		return;
+
+	rv = AcpiGetHandle(sc->sc_node->ad_handle, "RVLT", &tmp);
+
+	if (ACPI_FAILURE(rv))
+		return;
+
+	sc->sc_model = false;
 }
 
 static void
