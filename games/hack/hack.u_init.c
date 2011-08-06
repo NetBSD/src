@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.u_init.c,v 1.12 2010/02/03 15:34:39 roy Exp $	*/
+/*	$NetBSD: hack.u_init.c,v 1.13 2011/08/06 19:32:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.u_init.c,v 1.12 2010/02/03 15:34:39 roy Exp $");
+__RCSID("$NetBSD: hack.u_init.c,v 1.13 2011/08/06 19:32:58 dholland Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -377,16 +377,8 @@ ini_inv(struct trobj *trop)
 		if (obj->olet == WEAPON_SYM)
 			if (!uwep)
 				setuwep(obj);
-#ifndef PYRAMID_BUG
 		if (--trop->trquan)
 			continue;	/* make a similar object */
-#else
-		if (trop->trquan) {	/* check if zero first */
-			--trop->trquan;
-			if (trop->trquan)
-				continue;	/* make a similar object */
-		}
-#endif	/* PYRAMID_BUG */
 		trop++;
 	}
 }
