@@ -1,4 +1,4 @@
-.\" $NetBSD: MAKEDEV.8.template,v 1.19 2009/05/18 09:24:47 wiz Exp $
+.\" $NetBSD: MAKEDEV.8.template,v 1.20 2011/08/06 12:32:29 jmcneill Exp $
 .\"
 .\" Copyright (c) 2001, 2003, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Sh SYNOPSIS
 .\" Please keep this in sync with MAKEDEV.local.8
 .Nm
-.Op Fl fMs
+.Op Fl fMsu
 .Op Fl m Ar mknod
 .Op Fl p Ar pax
 .Op Fl t Ar mtree
@@ -127,6 +127,8 @@ and specify the name or path to the
 .Xr mtree 8
 program.
 [Usually, $TOOL_MTREE or mtree.]
+.It Fl u
+Don't re-create devices that already exist.
 .El
 .Pp
 .Nm
