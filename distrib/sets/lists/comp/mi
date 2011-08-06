@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1655 2011/08/06 16:23:55 mbalmer Exp $
+#	$NetBSD: mi,v 1.1656 2011/08/06 16:44:16 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6779,6 +6779,7 @@
 ./usr/share/man/cat3/iconv_open.0		comp-c-catman		.cat
 ./usr/share/man/cat3/idcok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/idlok.0			comp-c-catman		.cat
+./usr/share/man/cat3/ieee.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ieee_test.0		comp-c-catman		.cat
 ./usr/share/man/cat3/if_freenameindex.0		comp-c-catman		.cat
 ./usr/share/man/cat3/if_indextoname.0		comp-c-catman		.cat
@@ -12887,6 +12888,7 @@
 ./usr/share/man/html3/iconv_open.html		comp-c-htmlman		html
 ./usr/share/man/html3/idcok.html		comp-c-htmlman		html
 ./usr/share/man/html3/idlok.html		comp-c-htmlman		html
+./usr/share/man/html3/ieee.html			comp-c-htmlman		html
 ./usr/share/man/html3/ieee_test.html		comp-c-htmlman		html
 ./usr/share/man/html3/if_freenameindex.html	comp-c-htmlman		html
 ./usr/share/man/html3/if_indextoname.html	comp-c-htmlman		html
@@ -18914,6 +18916,7 @@
 ./usr/share/man/man3/iconv_open.3		comp-c-man		.man
 ./usr/share/man/man3/idcok.3			comp-c-man		.man
 ./usr/share/man/man3/idlok.3			comp-c-man		.man
+./usr/share/man/man3/ieee.3			comp-c-man		.man
 ./usr/share/man/man3/ieee_test.3		comp-c-man		.man
 ./usr/share/man/man3/if_freenameindex.3		comp-c-man		.man
 ./usr/share/man/man3/if_indextoname.3		comp-c-man		.man
