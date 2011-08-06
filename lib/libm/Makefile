@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.117 2011/08/06 10:51:26 jruoho Exp $
+#  $NetBSD: Makefile,v 1.118 2011/08/06 11:01:12 jruoho Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -209,7 +209,7 @@ COPTS.s_tanh.c+= -O0
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 \
 	ceil.3 copysign.3 cos.3 cosh.3 \
 	erf.3 exp.3 \
-	fabs.3 fmod.3 frexp.3 hypot.3 ieee.3 \
+	fabs.3 finite.3 fmod.3 frexp.3 hypot.3 \
 	ieee_test.3 ilogb.3 isinff.3 j0.3 ldexp.3 lgamma.3 lrint.3 \
 	math.3 modf.3 nextafter.3 \
 	remainder.3 rint.3 round.3 \
@@ -252,9 +252,9 @@ MLINKS+=exp.3 expf.3 exp.3 expm1.3 exp.3 expm1f.3 			\
 	exp.3 pow.3 exp.3 powf.3 					\
 	exp.3 log2.3 exp.3 log2f.3
 MLINKS+=fabs.3 fabsf.3
+MLINKS+=finite.3 finitef.3
 MLINKS+=fmod.3 fmodf.3
 MLINKS+=hypot.3 hypotf.3
-MLINKS+=ieee.3 finite.3 ieee.3 finitef.3
 MLINKS+=ieee_test.3 logb.3 ieee_test.3 logbf.3 ieee_test.3 logbl.3
 MLINKS+=ieee_test.3 scalb.3 ieee_test.3 scalbf.3
 MLINKS+=ieee_test.3 significand.3 ieee_test.3 significandf.3

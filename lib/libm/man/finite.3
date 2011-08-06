@@ -26,15 +26,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
-.\"	$NetBSD: ieee.3,v 1.28 2011/08/06 10:51:26 jruoho Exp $
+.\"	$NetBSD: finite.3,v 1.1 2011/08/06 11:01:13 jruoho Exp $
 .\"
 .Dd July 28, 2011
-.Dt IEEE 3
+.Dt FINITE 3
 .Os
 .Sh NAME
 .Nm finite ,
-.Nm finitef ,
-.Nd functions for IEEE arithmetic
+.Nm finitef
+.Nd tests for finite values
 .Sh LIBRARY
 .Lb libm
 .Sh SYNOPSIS
@@ -44,28 +44,39 @@
 .Ft int
 .Fn finitef "float x"
 .Sh DESCRIPTION
-These functions are required or recommended by
-.St -ieee754 .
-.Pp
+The
 .Fn finite
-returns the value 1 just when
+function returns the value 1 when
+.Bd -ragged -offset indent
 \-\*(If \*(Lt
 .Fa x
-\*(Lt +\*(If;
-otherwise a
-zero is returned
-(when
+\*(Lt +\*(If.
+.Ed
+.Pp
+Otherwise a zero is returned
+(that is,
 .Pf \*(Ba Ns Fa x Ns \*(Ba
 = \*(If or
 .Fa x
 is \*(Na).
 .Sh SEE ALSO
 .Xr math 3 ,
-.Xr nextafter 3
+.Xr isfinite 3
 .Sh STANDARDS
-.St -ieee754
+The described functions conform to
+.St -ieee754 .
+Note that unlike
+.Xr isfinite 3 ,
+neither function is present in the
+.Dv ISO
+C-language standards or in the
+.Dv IEEE
+.Dv POSIX
+standards.
 .Sh HISTORY
 The
-.Nm ieee
-functions appeared in
+.Nm finite
+and
+.Fn finitef
+functions first appeared in
 .Bx 4.3 .
