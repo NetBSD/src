@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.302 2011/07/30 20:05:46 martin Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.303 2011/08/06 17:25:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.302 2011/07/30 20:05:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.303 2011/08/06 17:25:03 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3947,10 +3947,11 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 		if (amap == NULL || (flags & (PGO_DEACTIVATE|PGO_FREE)) == 0)
 			goto flush_object;
 
-		amap_lock(amap);
-		anon_tofree = NULL;
 		offset = start - current->start;
 		size = MIN(end, current->end) - start;
+		anon_tofree = NULL;
+
+		amap_lock(amap);
 		for ( ; size != 0; size -= PAGE_SIZE, offset += PAGE_SIZE) {
 			anon = amap_lookup(&current->aref, offset);
 			if (anon == NULL)
@@ -4012,8 +4013,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 				continue;
 			}
 		}
-		uvm_anfree(anon_tofree);
-		amap_unlock(amap);
+		uvm_anon_freelst(amap, anon_tofree);
 
  flush_object:
 		/*

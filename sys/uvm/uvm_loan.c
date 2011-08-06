@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.80 2011/06/12 03:36:03 rmind Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.81 2011/08/06 17:25:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.80 2011/06/12 03:36:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81 2011/08/06 17:25:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -750,10 +750,9 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 	 */
 
 	if (pg->uanon) {
+		/* XXX: locking */
 		anon = pg->uanon;
-		mutex_enter(anon->an_lock);
 		anon->an_ref++;
-		mutex_exit(anon->an_lock);
 		if (pg->flags & PG_WANTED) {
 			wakeup(pg);
 		}
@@ -773,23 +772,19 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 	if (anon == NULL) {
 		goto fail;
 	}
-	anon->an_page = pg;
-	pg->uanon = anon;
 	mutex_enter(&uvm_pageqlock);
 	if (pg->wire_count > 0) {
 		mutex_exit(&uvm_pageqlock);
 		UVMHIST_LOG(loanhist, "wired %p", pg,0,0,0);
-		pg->uanon = NULL;
-		anon->an_page = NULL;
-		anon->an_ref--;
-		uvm_anfree(anon);
 		goto fail;
 	}
 	if (pg->loan_count == 0) {
 		pmap_page_protect(pg, VM_PROT_READ);
 	}
 	pg->loan_count++;
-	anon->an_lock = 
+	pg->uanon = anon;
+	anon->an_page = pg;
+	anon->an_lock = /* TODO: share amap lock */
 	uvm_pageactivate(pg);
 	mutex_exit(&uvm_pageqlock);
 	if (pg->flags & PG_WANTED) {
@@ -814,6 +809,10 @@ fail:
 	pg->flags &= ~(PG_WANTED|PG_BUSY);
 	UVM_PAGE_OWN(pg, NULL);
 	uvmfault_unlockall(ufi, amap, uobj, NULL);
+	if (anon) {
+		anon->an_ref--;
+		uvm_anon_free(anon);
+	}
 #endif	/* notdef */
 	return (-1);
 }
@@ -937,20 +936,18 @@ static void
 uvm_unloananon(struct vm_anon **aloans, int nanons)
 {
 #ifdef notdef
-	struct vm_anon *anon;
+	struct vm_anon *anon, *to_free = NULL;
 
+	/* TODO: locking */
+	amap_lock(amap);
 	while (nanons-- > 0) {
-		int refs;
-
 		anon = *aloans++;
-		mutex_enter(anon->an_lock);
-		refs = --anon->an_ref;
-		mutex_exit(anon->an_lock);
-
-		if (refs == 0) {
-			uvm_anfree(anon);
+		if (--anon->an_ref == 0) {
+			anon->an_link = to_free;
+			to_free = anon;
 		}
 	}
+	uvm_anon_freelst(amap, to_free);
 #endif	/* notdef */
 }
 

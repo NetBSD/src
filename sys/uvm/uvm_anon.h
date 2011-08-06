@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.29 2011/06/24 01:39:22 rmind Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.30 2011/08/06 17:25:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -100,7 +100,8 @@ struct vm_aref {
  */
 
 struct vm_anon *uvm_analloc(void);
-void uvm_anfree(struct vm_anon *);
+void uvm_anon_free(struct vm_anon *);
+void uvm_anon_freelst(struct vm_amap *, struct vm_anon *);
 void uvm_anon_init(void);
 struct vm_page *uvm_anon_lockloanpg(struct vm_anon *);
 #if defined(VMSWAP)
