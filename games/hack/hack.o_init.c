@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.o_init.c,v 1.12 2011/08/06 20:18:26 dholland Exp $	*/
+/*	$NetBSD: hack.o_init.c,v 1.13 2011/08/06 20:32:25 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.o_init.c,v 1.12 2011/08/06 20:18:26 dholland Exp $");
+__RCSID("$NetBSD: hack.o_init.c,v 1.13 2011/08/06 20:32:25 dholland Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -181,8 +181,8 @@ savenames(int fd)
 {
 	int             i;
 	size_t          len;
-	bwrite(fd, (char *) bases, sizeof bases);
-	bwrite(fd, (char *) objects, sizeof objects);
+	bwrite(fd, bases, sizeof bases);
+	bwrite(fd, objects, sizeof objects);
 	/*
 	 * as long as we use only one version of Hack/Quest we need not save
 	 * oc_name and oc_descr, but we must save oc_uname for all objects
@@ -190,7 +190,7 @@ savenames(int fd)
 	for (i = 0; i < SIZE(objects); i++) {
 		if (objects[i].oc_uname) {
 			len = strlen(objects[i].oc_uname) + 1;
-			bwrite(fd, (char *) &len, sizeof len);
+			bwrite(fd, &len, sizeof len);
 			bwrite(fd, objects[i].oc_uname, len);
 		}
 	}
