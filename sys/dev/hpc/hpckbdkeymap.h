@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.50 2010/05/23 11:57:04 nonaka Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.51 2011/08/06 03:53:40 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -1065,6 +1065,48 @@ static const keysym_t ws020sh_jp_keydesc[] = {
     KC(205),	KS_Right,	KS_Right,	KS_End,
     KC(208),	KS_Down,	KS_Down,	KS_Next,
 };
+
+const uint8_t netbookpro_keytrans[] = {
+/*	row#0,	row#1,	row#2,	row#3,	row#4,	row#5,	row#6,	row#7	*/
+/*00*/	 28,	205,	 15,	 21,	203,	208,	 49,	 42,
+	UNK,	UNK,	UNK,	UNK,	UNK,	 14,	UNK,	 12,
+/*10*/	 13,	 11,	 25,	 39,	UNK,	 54,	UNK,	UNK,
+	UNK,	UNK,	UNK,	 37,	 23,	  9,	 10,	 24,
+/*20*/	 38,	UNK,	UNK,	 29,	UNK,	UNK,	UNK,	UNK,
+	 51,	 40,	 50,	 36,	 22,	  8,	UNK,	UNK,
+/*30*/	UNK,	184,	UNK,	UNK,	 57,	 19,	  5,	  6,
+	 20,	 34,	 48,	UNK,	UNK,	UNK,	UNK,	 43,
+/*40*/	UNK,	 56,	 33,	 47,	 46,	 32,	 18,	  4,
+	UNK,	UNK,	UNK,	UNK,	UNK,	 53,	UNK,	 16,
+/*50*/	 30,	 44,	 31,	 17,	 45,	UNK,	UNK,	UNK,
+	UNK,	UNK,	UNK,	  1,	  2,	  3,	  7,	 52,
+/*60*/	UNK,	 35,	UNK,	UNK,	UNK,	UNK,	UNK,	UNK,
+	UNK,	UNK,	UNK,	UNK,	UNK,	UNK,	UNK,	UNK,
+};
+
+static const keysym_t netbookpro_keydesc[] = {
+/* pos      command		normal		shifted		fn	*/
+   KC(2),   KS_Cmd_Screen0,	KS_1,		KS_exclam,	KS_f1,
+   KC(3),   KS_Cmd_Screen1,	KS_2,		KS_at,		KS_f2,
+   KC(4),   KS_Cmd_Screen2,	KS_3,		KS_numbersign,	KS_f3,
+   KC(5),   KS_Cmd_Screen3,	KS_4,		KS_dollar,	KS_f4,
+   KC(6),   			KS_5,		KS_percent,	KS_grave,
+   KC(7),   			KS_6,		KS_asciicircum,	KS_apostrophe,
+   KC(8),   			KS_7,		KS_ampersand,	KS_braceleft,
+   KC(9),   			KS_8,		KS_asterisk,	KS_braceright,
+   KC(10),  			KS_9,		KS_parenleft,	KS_bracketleft,
+   KC(11),  			KS_0,		KS_parenright,	KS_bracketright,
+   KC(12),  			KS_minus,	KS_underscore,	KS_numbersign,
+   KC(15),  			KS_Tab,		KS_BackSpace,	KS_Caps_Lock,
+   KC(40),			KS_apostrophe,	KS_quotedbl,	KS_at,
+   KC(43),			KS_backslash,	KS_asciitilde,	KS_bar,
+   KC(51),			KS_comma,	KS_less,	KS_minus,
+   KC(52),  			KS_period,	KS_greater,	KS_plus,
+   KC(53),  			KS_slash,	KS_question,	KS_Help,
+   KC(184),			KS_Mode_switch,	KS_Multi_key,
+   KC(203),			KS_Left,	KS_Left,	KS_Home,
+   KC(205),			KS_Right,	KS_Right,	KS_End,
+};
 #endif /* hpcarm */
 
 #if defined(hpcarm) || defined(hpcsh)
@@ -1539,6 +1581,12 @@ const struct hpckbd_keymap_table {
 		ws020sh_special_keymap,
 		CMDMAP(ws020sh_jp_keydesc),
 		KB_JP },
+	/* NETBOOK PRO */
+	{	&platid_mask_MACH_PSIONTEKLOGIX_NETBOOK_PRO,
+		netbookpro_keytrans,
+		NULL,
+		CMDMAP(netbookpro_keydesc),
+		KB_US },
 #endif /* hpcarm */
 
 	{ .ht_platform = NULL } /* end mark */
