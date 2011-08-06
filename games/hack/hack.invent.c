@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.invent.c,v 1.15 2011/05/23 22:53:25 joerg Exp $	*/
+/*	$NetBSD: hack.invent.c,v 1.16 2011/08/06 20:29:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.invent.c,v 1.15 2011/05/23 22:53:25 joerg Exp $");
+__RCSID("$NetBSD: hack.invent.c,v 1.16 2011/08/06 20:29:37 dholland Exp $");
 #endif				/* not lint */
 
 #include <assert.h>
@@ -237,7 +237,7 @@ freegold(struct gold *gold)
 		}
 		gtmp->ngold = gold->ngold;
 	}
-	free((char *) gold);
+	free(gold);
 }
 
 void
@@ -251,7 +251,7 @@ deltrap(struct trap *trap)
 		for (ttmp = ftrap; ttmp->ntrap != trap; ttmp = ttmp->ntrap);
 		ttmp->ntrap = trap->ntrap;
 	}
-	free((char *) trap);
+	free(trap);
 }
 
 struct wseg    *m_atseg;

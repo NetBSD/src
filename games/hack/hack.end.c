@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.end.c,v 1.15 2011/08/06 20:18:26 dholland Exp $	*/
+/*	$NetBSD: hack.end.c,v 1.16 2011/08/06 20:29:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.end.c,v 1.15 2011/08/06 20:18:26 dholland Exp $");
+__RCSID("$NetBSD: hack.end.c,v 1.16 2011/08/06 20:29:37 dholland Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -804,7 +804,7 @@ prscore(int argc, char **argv)
 					break;
 				}
 			}
-		free((char *) t1);
+		free(t1);
 	}
 #ifdef nonsense
 	totchars[totcharct] = 0;

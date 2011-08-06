@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.topl.c,v 1.13 2011/08/06 20:18:26 dholland Exp $	*/
+/*	$NetBSD: hack.topl.c,v 1.14 2011/08/06 20:29:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.topl.c,v 1.13 2011/08/06 20:18:26 dholland Exp $");
+__RCSID("$NetBSD: hack.topl.c,v 1.14 2011/08/06 20:29:37 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -133,7 +133,7 @@ remember_topl(void)
 		tl = tl->next_topl;
 	}
 	if (tl && tl->next_topl) {
-		free((char *) tl->next_topl);
+		free(tl->next_topl);
 		tl->next_topl = 0;
 	}
 }
