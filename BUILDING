@@ -234,6 +234,11 @@ CONFIGURATION
 
                  Default: ``yes''
 
+     MKKMOD      Can be set to ``yes'' or ``no''.  Indicates whether kernel
+                 modules are built and installed.
+
+                 Default: ``yes''
+
      MKLINT      Can be set to ``yes'' or ``no''.  Indicates whether lint(1)
                  will be run against portions of the NetBSD source code during
                  the build, and whether lint libraries will be installed into
