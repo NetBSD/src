@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1085 2011/08/04 02:32:58 jakllsch Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1086 2011/08/06 14:18:24 mbalmer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1089 2011/08/04 02:31:37 jakllsch Exp
+ *	NetBSD: pcidevs,v 1.1090 2011/08/06 14:17:23 mbalmer Exp
  */
 
 /*
@@ -654,7 +654,7 @@
 #define	PCI_VENDOR_DCI	0x6666		/* Decision Computer */
 #define	PCI_VENDOR_KURUSUGAWA	0x6809		/* Kurusugawa Electronics */
 #define	PCI_VENDOR_PCHDTV	0x7063		/* pcHDTV */
-#define	PCI_VENDOR_QUANCM	0x8008		/* Quancm Electronic GmbH */
+#define	PCI_VENDOR_QUANCOM	0x8008		/* QUANCOM Electronic GmbH */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
 #define	PCI_VENDOR_TRIGEM2	0x8800		/* Trigem Computer (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_PROLAN	0x8c4a		/* ProLAN */
