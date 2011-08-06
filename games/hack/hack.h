@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.h,v 1.14 2011/07/02 02:10:33 mrg Exp $	*/
+/*	$NetBSD: hack.h,v 1.15 2011/08/06 19:47:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -68,11 +68,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-
-#ifndef BSD
-#define	index	strchr
-#define	rindex	strrchr
-#endif /* BSD */
 
 #define	Null(type)	((struct type *) 0)
 
