@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.lev.c,v 1.11 2009/08/12 07:28:40 dholland Exp $	*/
+/*	$NetBSD: hack.lev.c,v 1.12 2011/08/06 20:00:33 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.lev.c,v 1.11 2009/08/12 07:28:40 dholland Exp $");
+__RCSID("$NetBSD: hack.lev.c,v 1.12 2011/08/06 20:00:33 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -219,8 +219,8 @@ getlev(int fd, int pid, xchar lev)
 	xchar           dlvl;
 
 	/* First some sanity checks */
-	mread(fd, (char *) &hpid, sizeof(hpid));
-	mread(fd, (char *) &dlvl, sizeof(dlvl));
+	mread(fd, &hpid, sizeof(hpid));
+	mread(fd, &dlvl, sizeof(dlvl));
 	if ((pid && pid != hpid) || (lev && dlvl != lev)) {
 		pline("Strange, this map is not as I remember it.");
 		pline("Somebody is trying some trickery here ...");
@@ -229,12 +229,12 @@ getlev(int fd, int pid, xchar lev)
 	}
 	fgold = 0;
 	ftrap = 0;
-	mread(fd, (char *) levl, sizeof(levl));
-	mread(fd, (char *) &omoves, sizeof(omoves));
-	mread(fd, (char *) &xupstair, sizeof(xupstair));
-	mread(fd, (char *) &yupstair, sizeof(yupstair));
-	mread(fd, (char *) &xdnstair, sizeof(xdnstair));
-	mread(fd, (char *) &ydnstair, sizeof(ydnstair));
+	mread(fd, levl, sizeof(levl));
+	mread(fd, &omoves, sizeof(omoves));
+	mread(fd, &xupstair, sizeof(xupstair));
+	mread(fd, &yupstair, sizeof(yupstair));
+	mread(fd, &xdnstair, sizeof(xdnstair));
+	mread(fd, &ydnstair, sizeof(ydnstair));
 
 	fmon = restmonchn(fd);
 
@@ -266,55 +266,55 @@ getlev(int fd, int pid, xchar lev)
 
 	setgd();
 	gold = newgold();
-	mread(fd, (char *) gold, sizeof(struct gold));
+	mread(fd, gold, sizeof(struct gold));
 	while (gold->gx) {
 		gold->ngold = fgold;
 		fgold = gold;
 		gold = newgold();
-		mread(fd, (char *) gold, sizeof(struct gold));
+		mread(fd, gold, sizeof(struct gold));
 	}
 	free((char *) gold);
 	trap = newtrap();
-	mread(fd, (char *) trap, sizeof(struct trap));
+	mread(fd, trap, sizeof(struct trap));
 	while (trap->tx) {
 		trap->ntrap = ftrap;
 		ftrap = trap;
 		trap = newtrap();
-		mread(fd, (char *) trap, sizeof(struct trap));
+		mread(fd, trap, sizeof(struct trap));
 	}
 	free((char *) trap);
 	fobj = restobjchn(fd);
 	billobjs = restobjchn(fd);
 	rest_engravings(fd);
 #ifndef QUEST
-	mread(fd, (char *) rooms, sizeof(rooms));
-	mread(fd, (char *) doors, sizeof(doors));
+	mread(fd, rooms, sizeof(rooms));
+	mread(fd, doors, sizeof(doors));
 #endif	/* QUEST */
 #ifndef NOWORM
-	mread(fd, (char *) wsegs, sizeof(wsegs));
+	mread(fd, wsegs, sizeof(wsegs));
 	for (tmp = 1; tmp < 32; tmp++)
 		if (wsegs[tmp]) {
 			wheads[tmp] = wsegs[tmp] = wtmp = newseg();
 			while (1) {
-				mread(fd, (char *) wtmp, sizeof(struct wseg));
+				mread(fd, wtmp, sizeof(struct wseg));
 				if (!wtmp->nseg)
 					break;
 				wheads[tmp]->nseg = wtmp = newseg();
 				wheads[tmp] = wtmp;
 			}
 		}
-	mread(fd, (char *) wgrowtime, sizeof(wgrowtime));
+	mread(fd, wgrowtime, sizeof(wgrowtime));
 #endif	/* NOWORM */
 }
 
 void
-mread(int fd, char *buf, unsigned len)
+mread(int fd, void *buf, size_t len)
 {
-	int             rlen;
+	ssize_t rlen;
 
 	rlen = read(fd, buf, len);
 	if (rlen < 0 || (size_t)rlen != len) {
-		pline("Read %d instead of %u bytes.\n", rlen, len);
+		pline("Read %zd instead of %zu bytes.\n", rlen, len);
 		if (restoring) {
 			(void) unlink(SAVEF);
 			error("Error restoring old game.");
