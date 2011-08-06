@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3cfi.c,v 1.3 2011/07/19 20:52:10 cliff Exp $	*/
+/*	$NetBSD: pq3cfi.c,v 1.4 2011/08/06 05:48:01 cliff Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3cfi.c,v 1.3 2011/07/19 20:52:10 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3cfi.c,v 1.4 2011/08/06 05:48:01 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,29 +68,6 @@ struct pq3cfi_softc {
 CFATTACH_DECL_NEW(pq3cfi, sizeof(struct pq3cfi_softc), pq3cfi_match,
     pq3cfi_attach, pq3cfi_detach, NULL);
 
-/*
- * pq3cfi_addr - return bus address for the CFI NOR flash
- *
- * if the chip select not specified, use address from attach args
- * otherwise use address from the chip select.
- */
-static inline bus_addr_t
-pq3cfi_addr(struct generic_attach_args *ga)
-{
-	bus_addr_t addr_aa = ga->ga_addr;
-
-	if (ga->ga_cs != OBIOCF_CS_DEFAULT) {
-#ifdef NOTYET
-		bus_addr_t addr_cs = get_addr_from_cs(ga->ga_cs);
-		if (addr_aa != addr_cs)
-			aprint_warn("%s: configured addr %#x, CS%d addr %#x\n",
-				__func__, addr_aa, ga->ga_cs, addr_cs);
-		return addr_cs;
-#endif
-	}
-	return addr_aa;
-}
-
 static int
 pq3cfi_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -102,7 +79,7 @@ pq3cfi_match(device_t parent, cfdata_t match, void *aux)
 
 	KASSERT(ga->ga_bst != NULL);
 
-	addr = pq3cfi_addr(ga);
+	addr = ga->ga_addr;
 	if (addr == OBIOCF_ADDR_DEFAULT) {
 		aprint_error("%s: no base address\n", __func__);
 		return 0;
@@ -142,7 +119,7 @@ pq3cfi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_cfi.cfi_bst = ga->ga_bst;
-	sc->sc_addr = pq3cfi_addr(ga);
+	sc->sc_addr = ga->ga_addr;
 
 	/* map enough to identify, remap later when size is known */
 	error = bus_space_map(sc->sc_cfi.cfi_bst, sc->sc_addr, tmpsize,
