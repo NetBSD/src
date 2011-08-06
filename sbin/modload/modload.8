@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.40 2010/12/14 16:23:59 jruoho Exp $
+.\" $NetBSD: modload.8,v 1.41 2011/08/06 08:11:10 mbalmer Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd December 14, 2010
+.Dd August 6, 2011
 .Dt MODLOAD 8
 .Os
 .Sh NAME
@@ -57,10 +57,11 @@ The
 .Nm
 utility loads a kernel module specified by the
 .Ar module
-paramamter into the running system.
+parameter into the running system.
 .Pp
-The current working directory is first searched for the module object file.
-If not found there, the default system module areas are searched.
+Modules are loaded from the default system module areas unless the
+.Ar module
+parameter contains a path separator character (/).
 .Pp
 The options to
 .Nm
