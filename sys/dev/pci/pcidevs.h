@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1086 2011/08/06 14:18:24 mbalmer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1087 2011/08/06 14:55:13 jakllsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1090 2011/08/06 14:17:23 mbalmer Exp
+ *	NetBSD: pcidevs,v 1.1092 2011/08/06 14:53:24 jakllsch Exp
  */
 
 /*
@@ -2155,6 +2155,7 @@
 #define	PCI_PRODUCT_MARVELL_88W8660	0x8660		/* 88W8660 SoC Orion1 */
 
 #define	PCI_PRODUCT_MARVELL2_88SE9123	0x9123		/* 88SE9123 SATA II PCI-E AHCI Controller */
+#define	PCI_PRODUCT_MARVELL2_88SE9128	0x91a3		/* 88SE9128 SATA */
 
 /* Global Sun Tech products */
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P	0x1101		/* GL24110P PCI IEEE 802.11b */
