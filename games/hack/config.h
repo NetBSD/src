@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.9 2011/08/06 19:47:54 dholland Exp $	*/
+/*	$NetBSD: config.h,v 1.10 2011/08/06 19:53:24 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -83,7 +83,6 @@
 
 /* #define STUPID */	/* avoid some complicated expressions if
 			   your C compiler chokes on them */
-/* #define NOWAITINCLUDE */	/* neither <wait.h> nor <sys/wait.h> exists */
 
 #define WIZARD  "bruno"	/* the person allowed to use the -D option */
 #define RECORD	"record"/* the file containing the list of topscorers */
