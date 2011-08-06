@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.end.c,v 1.16 2011/08/06 20:29:37 dholland Exp $	*/
+/*	$NetBSD: hack.end.c,v 1.17 2011/08/06 20:42:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.end.c,v 1.16 2011/08/06 20:29:37 dholland Exp $");
+__RCSID("$NetBSD: hack.end.c,v 1.17 2011/08/06 20:42:43 dholland Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -206,7 +206,7 @@ done(const char *st1)
 	}
 	if (*st1 == 'c')
 		killer = st1;	/* after outrip() */
-	settty((char *) 0);	/* does a clear_screen() */
+	settty(NULL);		/* does a clear_screen() */
 	if (!done_stopprint)
 		printf("Goodbye %s %s...\n\n", pl_character, plname);
 	{

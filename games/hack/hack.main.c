@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.main.c,v 1.16 2011/05/23 22:53:25 joerg Exp $	*/
+/*	$NetBSD: hack.main.c,v 1.17 2011/08/06 20:42:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.main.c,v 1.16 2011/05/23 22:53:25 joerg Exp $");
+__RCSID("$NetBSD: hack.main.c,v 1.17 2011/08/06 20:42:43 dholland Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -471,7 +471,7 @@ not_recovered:
 #ifdef MAIL
 			ckmailstatus();
 #endif
-			rhack((char *) 0);
+			rhack(NULL);
 		}
 		if (multi && multi % 7 == 0)
 			(void) fflush(stdout);
