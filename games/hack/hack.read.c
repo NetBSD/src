@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.read.c,v 1.10 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.read.c,v 1.11 2011/08/06 20:29:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.read.c,v 1.10 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.read.c,v 1.11 2011/08/06 20:29:37 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -203,7 +203,7 @@ doread(void)
 				Punished = 0;
 				freeobj(uchain);
 				unpobj(uchain);
-				free((char *) uchain);
+				free(uchain);
 				uball->spe = 0;
 				uball->owornmask &= ~W_BALL;
 				uchain = uball = (struct obj *) 0;

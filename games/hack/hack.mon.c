@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mon.c,v 1.12 2011/08/06 20:24:35 dholland Exp $	*/
+/*	$NetBSD: hack.mon.c,v 1.13 2011/08/06 20:29:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mon.c,v 1.12 2011/08/06 20:24:35 dholland Exp $");
+__RCSID("$NetBSD: hack.mon.c,v 1.13 2011/08/06 20:29:37 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -765,7 +765,7 @@ dmonsfree(void)
 	struct monst   *mtmp;
 	while ((mtmp = fdmon) != NULL) {
 		fdmon = mtmp->nmon;
-		free((char *) mtmp);
+		free(mtmp);
 	}
 }
 
