@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.engrave.c,v 1.9 2009/08/12 07:28:40 dholland Exp $	*/
+/*	$NetBSD: hack.engrave.c,v 1.10 2011/08/06 20:00:33 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.engrave.c,v 1.9 2009/08/12 07:28:40 dholland Exp $");
+__RCSID("$NetBSD: hack.engrave.c,v 1.10 2011/08/06 20:00:33 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -364,11 +364,11 @@ rest_engravings(int fd)
 	unsigned        lth;
 	head_engr = 0;
 	while (1) {
-		mread(fd, (char *) &lth, sizeof(unsigned));
+		mread(fd, &lth, sizeof(unsigned));
 		if (lth == 0)
 			return;
 		ep = (struct engr *) alloc(sizeof(struct engr) + lth);
-		mread(fd, (char *) ep, sizeof(struct engr) + lth);
+		mread(fd, ep, sizeof(struct engr) + lth);
 		ep->nxt_engr = head_engr;
 		ep->engr_txt = (char *) (ep + 1);	/* Andreas Bormann */
 		head_engr = ep;

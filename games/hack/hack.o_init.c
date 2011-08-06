@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.o_init.c,v 1.10 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.o_init.c,v 1.11 2011/08/06 20:00:33 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.o_init.c,v 1.10 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.o_init.c,v 1.11 2011/08/06 20:00:33 dholland Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -201,11 +201,11 @@ restnames(int fd)
 {
 	int             i;
 	unsigned        len;
-	mread(fd, (char *) bases, sizeof bases);
-	mread(fd, (char *) objects, sizeof objects);
+	mread(fd, bases, sizeof bases);
+	mread(fd, objects, sizeof objects);
 	for (i = 0; i < SIZE(objects); i++)
 		if (objects[i].oc_uname) {
-			mread(fd, (char *) &len, sizeof len);
+			mread(fd, &len, sizeof len);
 			objects[i].oc_uname = (char *) alloc(len);
 			mread(fd, objects[i].oc_uname, len);
 		}

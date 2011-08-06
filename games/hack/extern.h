@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 2011/05/30 03:11:15 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.15 2011/08/06 20:00:33 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@ void bwrite(int, const void *, size_t);
 void saveobjchn(int, struct obj *);
 void savemonchn(int, struct monst *);
 void getlev(int, int, xchar);
-void mread(int, char *, unsigned);
+void mread(int, void *, size_t);
 void mklev(void);
 
 /* hack.main.c */
