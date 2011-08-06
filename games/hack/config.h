@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.7 2003/04/02 18:36:33 jsm Exp $	*/
+/*	$NetBSD: config.h,v 1.8 2011/08/06 19:32:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -85,7 +85,6 @@
 
 /* #define STUPID */	/* avoid some complicated expressions if
 			   your C compiler chokes on them */
-/* #define PYRAMID_BUG */	/* avoid a bug on the Pyramid */
 /* #define NOWAITINCLUDE */	/* neither <wait.h> nor <sys/wait.h> exists */
 
 #define WIZARD  "bruno"	/* the person allowed to use the -D option */
