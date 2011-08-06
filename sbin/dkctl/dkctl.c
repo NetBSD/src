@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.18 2009/08/02 18:16:08 spz Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.19 2011/08/06 16:34:40 dholland Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.18 2009/08/02 18:16:08 spz Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.19 2011/08/06 16:34:40 dholland Exp $");
 #endif
 
 
@@ -550,8 +550,8 @@ disk_addwedge(int argc, char *argv[])
 	if (argc != 4)
 		usage();
 
-	/* XXX Unicode. */
-	if (strlcpy(dkw.dkw_wname, argv[0], sizeof(dkw.dkw_wname)) >=
+	/* XXX Unicode: dkw_wname is supposed to be utf-8 */
+	if (strlcpy((char *)dkw.dkw_wname, argv[0], sizeof(dkw.dkw_wname)) >=
 	    sizeof(dkw.dkw_wname))
 		errx(1, "Wedge name too long; max %zd characters",
 		    sizeof(dkw.dkw_wname) - 1);
