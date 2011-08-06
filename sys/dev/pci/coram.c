@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.5 2011/08/06 11:37:56 jmcneill Exp $ */
+/* $NetBSD: coram.c,v 1.6 2011/08/06 11:51:11 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.5 2011/08/06 11:37:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.6 2011/08/06 11:51:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,12 +54,21 @@ __KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.5 2011/08/06 11:37:56 jmcneill Exp $");
 /* #define CORAM_DEBUG */
 /* #define CORAM_ATTACH_I2C */
 
+static const struct coram_board {
+	uint16_t vendor;
+	uint16_t product;
+	const char *name;
+} coram_boards[] = {
+	{ PCI_VENDOR_HAUPPAUGE, 0x7911, "Hauppauge HVR-1250" },
+};
+
 static int coram_match(device_t, cfdata_t, void *);
 static void coram_attach(device_t, device_t, void *);
 static int coram_detach(device_t, int);
 static void coram_childdet(device_t, device_t);
 static bool coram_resume(device_t, const pmf_qual_t *);
 static int coram_intr(void *);
+static const struct coram_board * coram_board_lookup(uint16_t, uint16_t);
 
 static int coram_iic_exec(void *, i2c_op_t, i2c_addr_t,
     const void *, size_t, void *, size_t, int);
@@ -119,8 +128,6 @@ static struct coram_sram_ch coram_sram_chs[] = {
 	},
 };
 
-//#define PCI_PRODUCT_CONEXANT_CX23885 0x8852
-
 static const struct dtv_hw_if coram_dtv_if = {
 	.get_devinfo = coram_dtv_get_devinfo,
 	.open = coram_dtv_open,
@@ -137,29 +144,29 @@ static int
 coram_match(device_t parent, cfdata_t match, void *v)
 {
 	const struct pci_attach_args *pa = v;
+	pcireg_t subid;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_CONEXANT)
 		return 0;
+	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_CONEXANT_CX23885)
+		return 0;
 
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_CONEXANT_CX23885:
-		return 1;
-	}
+	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	if (coram_board_lookup(PCI_VENDOR(subid), PCI_PRODUCT(subid)) == NULL)
+		return 0;
 
-	/* XXX only match supported boards */
-
-	return 0;
+	return 1;
 }
 
 static void
 coram_attach(device_t parent, device_t self, void *v)
 {
-	struct coram_softc *sc;
+	struct coram_softc *sc = device_private(self);
 	const struct pci_attach_args *pa = v;
 	pci_intr_handle_t ih;
 	pcireg_t reg;
+	char devinfo[256];
 	const char *intrstr;
-	char devinfo[76];
 	struct coram_iic_softc *cic;
 	uint32_t value;
 	int i;
@@ -167,19 +174,15 @@ coram_attach(device_t parent, device_t self, void *v)
 	struct i2cbus_attach_args iba;
 #endif
 
-	sc = device_private(self);
-
 	sc->sc_dev = self;
 
 	aprint_naive("\n");
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
-
-	sc->sc_vendor = PCI_VENDOR(reg);
-	sc->sc_product = PCI_PRODUCT(reg);
-
-	pci_devinfo(reg, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	sc->sc_board = coram_board_lookup(PCI_VENDOR(reg), PCI_PRODUCT(reg));
+	KASSERT(sc->sc_board != NULL);
 
 	if (pci_mapreg_map(pa, CX23885_MMBASE, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->sc_memt, &sc->sc_memh, NULL, &sc->sc_mems)) {
@@ -358,6 +361,21 @@ coram_intr(void *v)
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, PCI_INT_STAT, val);
 
 	return 1;
+}
+
+static const struct coram_board *
+coram_board_lookup(uint16_t vendor, uint16_t product)
+{
+	unsigned int i;
+
+	for (i = 0; i < __arraycount(coram_boards); i++) {
+		if (coram_boards[i].vendor == vendor &&
+		    coram_boards[i].product == product) {
+			return &coram_boards[i];
+		}
+	}
+
+	return NULL;
 }
 
 #define CXDTV_TS_RISCI2  (1 << 4)
@@ -617,8 +635,10 @@ coram_mpeg_detach(struct coram_softc *sc, int flags)
 static void
 coram_dtv_get_devinfo(void *cookie, struct dvb_frontend_info *info)
 {
+	struct coram_softc *sc = cookie;
+
 	memset(info, 0, sizeof(*info));
-	strlcpy(info->name, "CX23885", sizeof(info->name));
+	strlcpy(info->name, sc->sc_board->name, sizeof(info->name));
 	info->type = FE_ATSC;
 	info->frequency_min = 54000000;
 	info->frequency_max = 858000000;
