@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mon.c,v 1.11 2011/05/30 03:11:15 joerg Exp $	*/
+/*	$NetBSD: hack.mon.c,v 1.12 2011/08/06 20:24:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,17 +63,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mon.c,v 1.11 2011/05/30 03:11:15 joerg Exp $");
+__RCSID("$NetBSD: hack.mon.c,v 1.12 2011/08/06 20:24:35 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
 #include "hack.h"
 #include "extern.h"
 #include "hack.mfndpos.h"
-
-#ifndef NULL
-#define	NULL	(char *) 0
-#endif
 
 static int warnlevel;	/* used by movemon and dochugw */
 static long lastwarntime;
