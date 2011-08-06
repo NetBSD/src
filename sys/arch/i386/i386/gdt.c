@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.50.10.1 2011/07/31 20:49:10 cherry Exp $	*/
+/*	$NetBSD: gdt.c,v 1.50.10.2 2011/08/06 14:05:35 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.50.10.1 2011/07/31 20:49:10 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.50.10.2 2011/08/06 14:05:35 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -266,15 +266,17 @@ gdt_grow(int which)
 			gdt_size[which] = MINGDTSIZ;
 			new_len = gdt_size[which] * sizeof(gdt[0]);
 		}
-		for(va = (vaddr_t)(cpu_info_primary.ci_gdt) + old_len + max_len;
-		    va < (vaddr_t)(cpu_info_primary.ci_gdt) + new_len + max_len;
-		    va += PAGE_SIZE) {
-			while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO))
-			    == NULL) {
-				uvm_wait("gdt_grow");
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			for(va = (vaddr_t)(ci->ci_gdt) + old_len + max_len;
+			    va < (vaddr_t)(ci->ci_gdt) + new_len + max_len;
+			    va += PAGE_SIZE) {
+				while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO))
+				       == NULL) {
+					uvm_wait("gdt_grow");
+				}
+				pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+					       VM_PROT_READ | VM_PROT_WRITE, 0);
 			}
-			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ | VM_PROT_WRITE, 0);
 		}
 		return;
 	}
