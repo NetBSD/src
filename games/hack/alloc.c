@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.8 2010/01/17 22:55:20 wiz Exp $	*/
+/*	$NetBSD: alloc.c,v 1.9 2011/08/06 20:18:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,21 +63,22 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alloc.c,v 1.8 2010/01/17 22:55:20 wiz Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.9 2011/08/06 20:18:26 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
 #include "hack.h"
 #include "extern.h"
 
-long *
-alloc(unsigned lth)
+void *
+alloc(size_t len)
 {
-	long  *ptr;
+	void *ptr;
 
-	if (!(ptr = malloc(lth)))
-		panic("Cannot get %d bytes", lth);
-	return (ptr);
+	ptr = malloc(len);
+	if (ptr == NULL)
+		panic("Cannot get %zu bytes", len);
+	return ptr;
 }
 
 #if 0 /* unused */

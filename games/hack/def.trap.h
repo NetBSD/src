@@ -1,4 +1,4 @@
-/*	$NetBSD: def.trap.h,v 1.5 2003/04/02 18:36:35 jsm Exp $	*/
+/*	$NetBSD: def.trap.h,v 1.6 2011/08/06 20:18:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -72,7 +72,7 @@ struct trap {
 };
 
 extern struct trap *ftrap;
-#define newtrap()	(struct trap *) alloc(sizeof(struct trap))
+#define newtrap()	((struct trap *) alloc(sizeof(struct trap)))
 
 /* various kinds of traps */
 #define BEAR_TRAP	0
