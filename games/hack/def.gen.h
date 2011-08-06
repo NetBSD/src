@@ -1,4 +1,4 @@
-/*	$NetBSD: def.gen.h,v 1.5 2003/04/02 18:36:34 jsm Exp $	*/
+/*	$NetBSD: def.gen.h,v 1.6 2011/08/06 20:18:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -73,5 +73,5 @@ struct gen {
 #define	ONCE	0100
 };
 extern struct gen *fgold, *ftrap;
-#define newgen()	(struct gen *) alloc(sizeof(struct gen))
+#define newgen()	((struct gen *) alloc(sizeof(struct gen)))
 #endif /* _DEF_GEN_H_ */
