@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.do_name.c,v 1.11 2009/08/12 07:28:40 dholland Exp $	*/
+/*	$NetBSD: hack.do_name.c,v 1.12 2011/08/06 20:29:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.do_name.c,v 1.11 2009/08/12 07:28:40 dholland Exp $");
+__RCSID("$NetBSD: hack.do_name.c,v 1.12 2011/08/06 20:29:37 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -211,7 +211,7 @@ do_oname(struct obj *obj)
 #if 0
 	obfree(obj, otmp2);	/* now unnecessary: no pointers on bill */
 #endif
-	free((char *) obj);	/* let us hope nobody else saved a pointer */
+	free(obj);	/* let us hope nobody else saved a pointer */
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.do.c,v 1.10 2011/07/20 07:04:30 dholland Exp $	*/
+/*	$NetBSD: hack.do.c,v 1.11 2011/08/06 20:29:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.do.c,v 1.10 2011/07/20 07:04:30 dholland Exp $");
+__RCSID("$NetBSD: hack.do.c,v 1.11 2011/08/06 20:29:37 dholland Exp $");
 #endif				/* not lint */
 
 /* Contains code for 'd', 'D' (drop), '>', '<' (up, down) and 't' (throw) */
@@ -101,7 +101,7 @@ drop(struct obj *obj)
 			if (Invisible)
 				newsym(u.ux, u.uy);
 		}
-		free((char *) obj);
+		free(obj);
 		return (1);
 	}
 	if (obj->owornmask & (W_ARMOR | W_RING)) {
