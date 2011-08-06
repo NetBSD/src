@@ -1,4 +1,4 @@
-.\"	$NetBSD: extattr.3,v 1.4 2011/08/03 04:11:17 manu Exp $
+.\"	$NetBSD: extattr.3,v 1.5 2011/08/06 11:10:01 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Dima Dorfman <dd@FreeBSD.org>
 .\" Copyright (c) 2011 Emmanuel Dreyfus <manu@NetBSD.org>
@@ -39,7 +39,7 @@
 .Nm extattr_copy_link ,
 .Nm cpxattr ,
 .Nm fcpxattr ,
-.Nm lcpxattr 
+.Nm lcpxattr
 .Nd copy extended attributes from a file to another one
 .Sh LIBRARY
 .Lb libc
@@ -99,7 +99,7 @@ to get the desired identifier.
 copies extended attributes of namespace
 .Ar namespace
 from a file to another one.
-.Fn extattr_copy_fd 
+.Fn extattr_copy_fd
 does the same using open file descriptors, and
 .Fn extattr_copy_link
 does the same as
@@ -110,7 +110,7 @@ but operates on symbolic links themselves instead of their targets.
 .Fn fcpxattr ,
 and
 .Fn lcpxattr
-respectively work the same was as 
+respectively work the same was as
 .Fn extattr_copy_file ,
 .Fn extattr_copy_fd ,
 and
@@ -131,7 +131,7 @@ The requested namespace could not be identified.
 .El
 .Pp
 Extended attribute copying functions may also raise errors produced by
-.Fn extattr_list_file 
+.Fn extattr_list_file
 and
 .Fn extattr_get_file .
 .Sh SEE ALSO
