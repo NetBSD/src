@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.65 2011/07/01 08:38:10 mrg Exp $	*/
+/*	$NetBSD: dpt.c,v 1.66 2011/08/07 13:39:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.65 2011/07/01 08:38:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.66 2011/08/07 13:39:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.65 2011/07/01 08:38:10 mrg Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/proc.h>
+#include <sys/mutex.h>
 
 #include <sys/bus.h>
 #ifdef i386
@@ -330,6 +331,7 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 	ec = &sc->sc_ec;
 	snprintf(dpt_sig.dsDescription, sizeof(dpt_sig.dsDescription),
 	    "NetBSD %s DPT driver", osrelease);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/*
 	 * Allocate the CCB/status packet/scratch DMA map and load.
@@ -1156,13 +1158,10 @@ dptioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return (EINVAL);
 		}
 
-		if (sc->sc_uactive++)
-			tsleep(&sc->sc_uactive, PRIBIO, "dptslp", 0);
-
+		mutex_enter(&sc->sc_lock);
 		rv = dpt_passthrough(sc, (struct eata_ucp *)data, l);
+		mutex_exit(&sc->sc_lock);
 
-		sc->sc_uactive--;
-		wakeup_one(&sc->sc_uactive);
 		return (rv);
 
 	default:
