@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.434 2011/07/30 17:01:04 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.435 2011/08/07 13:33:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.434 2011/07/30 17:01:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.435 2011/08/07 13:33:01 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -167,6 +167,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.434 2011/07/30 17:01:04 christos Exp
 #include <sys/event.h>
 #include <sys/lockf.h>
 #include <sys/once.h>
+#include <sys/kcpuset.h>
 #include <sys/ksyms.h>
 #include <sys/uidinfo.h>
 #include <sys/kprintf.h>
@@ -310,6 +311,7 @@ main(void)
 	evcnt_init();
 
 	uvm_init();
+	kcpuset_sysinit();
 
 	prop_kern_init();
 
