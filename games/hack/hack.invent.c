@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.invent.c,v 1.17 2011/08/06 20:42:43 dholland Exp $	*/
+/*	$NetBSD: hack.invent.c,v 1.18 2011/08/07 06:03:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.invent.c,v 1.17 2011/08/06 20:42:43 dholland Exp $");
+__RCSID("$NetBSD: hack.invent.c,v 1.18 2011/08/07 06:03:45 dholland Exp $");
 #endif				/* not lint */
 
 #include <assert.h>
@@ -664,10 +664,12 @@ askchain(struct obj *objchn, char *olets, int allflag,
 		switch (sym) {
 		case 'a':
 			allflag = 1;
+			/* FALLTHROUGH */
 		case 'y':
 			cnt += (*fn) (otmp);
 			if (--max == 0)
 				goto ret;
+			break;
 		case 'n':
 		default:
 			break;
