@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.97 2011/08/05 08:13:59 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.98 2011/08/07 05:56:32 hannken Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.97 2011/08/05 08:13:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.98 2011/08/07 05:56:32 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -927,11 +927,20 @@ rump_vop_rmdir(void *v)
 	struct componentname *cnp = ap->a_cnp;
 	struct rumpfs_node *rnd = dvp->v_data;
 	struct rumpfs_node *rn = vp->v_data;
+	struct rumpfs_dent *rd;
 	int rv = 0;
 
-	if (!LIST_EMPTY(&rn->rn_dir)) {
-		rv = ENOTEMPTY;
-		goto out;
+	LIST_FOREACH(rd, &rn->rn_dir, rd_entries) {
+		if (rd->rd_node != RUMPFS_WHITEOUT) {
+			rv = ENOTEMPTY;
+			goto out;
+		}
+	}
+	while ((rd = LIST_FIRST(&rn->rn_dir)) != NULL) {
+		KASSERT(rd->rd_node == RUMPFS_WHITEOUT);
+		LIST_REMOVE(rd, rd_entries);
+		kmem_free(rd->rd_name, rd->rd_namelen+1);
+		kmem_free(rd, sizeof(*rd));
 	}
 
 	freedir(rnd, cnp);
