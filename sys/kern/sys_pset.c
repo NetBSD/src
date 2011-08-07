@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.16 2011/08/07 13:33:01 rmind Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.17 2011/08/07 21:13:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.16 2011/08/07 13:33:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.17 2011/08/07 21:13:05 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -366,10 +366,11 @@ sys_pset_assign(struct lwp *l, const struct sys_pset_assign_args *uap,
 		 * with this target CPU in it.
 		 */
 		LIST_FOREACH(t, &alllwp, l_list) {
-			if ((t->l_flag & LW_AFFINITY) == 0)
+			if (t->l_affinity == NULL) {
 				continue;
+			}
 			lwp_lock(t);
-			if ((t->l_flag & LW_AFFINITY) == 0) {
+			if (t->l_affinity == NULL) {
 				lwp_unlock(t);
 				continue;
 			}

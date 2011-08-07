@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcpuset.c,v 1.1 2011/08/07 13:33:01 rmind Exp $	*/
+/*	$NetBSD: subr_kcpuset.c,v 1.2 2011/08/07 21:13:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.1 2011/08/07 13:33:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.2 2011/08/07 21:13:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -216,17 +216,16 @@ kcpuset_create(kcpuset_t **retkcp)
 void
 kcpuset_destroy(kcpuset_t *kcp)
 {
-	kcpuset_impl_t *kc, *nkc;
+	kcpuset_impl_t *kc;
 
 	KASSERT(kc_initialised);
 	KASSERT(kcp != NULL);
 
-	kc = KC_GETSTRUCT(kcp);
 	do {
-		nkc = KC_GETSTRUCT(kc->kc_next);
+		kc = KC_GETSTRUCT(kcp);
+		kcp = kc->kc_next;
 		pool_cache_put(kc_cache, kc);
-		kc = nkc;
-	} while (kc);
+	} while (kcp);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.31 2011/08/07 13:33:01 rmind Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.32 2011/08/07 21:13:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.31 2011/08/07 13:33:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.32 2011/08/07 21:13:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -346,15 +346,15 @@ sched_migratable(const struct lwp *l, struct cpu_info *ci)
 	const struct schedstate_percpu *spc = &ci->ci_schedstate;
 	KASSERT(lwp_locked(__UNCONST(l), NULL));
 
-	/* CPU is offline */
+	/* Is CPU offline? */
 	if (__predict_false(spc->spc_flags & SPCF_OFFLINE))
 		return false;
 
-	/* Affinity bind */
-	if (__predict_false(l->l_flag & LW_AFFINITY))
+	/* Is affinity set? */
+	if (__predict_false(l->l_affinity))
 		return kcpuset_isset(l->l_affinity, cpu_index(ci));
 
-	/* Processor-set */
+	/* Is there a processor-set? */
 	return (spc->spc_psid == l->l_psid);
 }
 
