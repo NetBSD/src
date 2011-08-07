@@ -155,13 +155,15 @@ along with GCC; see the file COPYING3.  If not see
 #define NETBSD_LIBGCC_SPEC						\
   "%{static:-lgcc -lgcc_eh}						\
    %{static-libgcc:							\
-     %{!shared:-lgcc -lgcc_eh						\
-       %{shared:-lgcc_pic -lgcc_eh_pic}}}				\
+     %{!shared:-lgcc -lgcc_eh}						\
+     %{shared:-lgcc_pic -lgcc_eh_pic}}					\
    %{!static:								\
      %{!static-libgcc:							\
-       %{!shared-libgcc:-lgcc_pic --as-needed -lgcc_s --no-as-needed }	\
-       %{shared-libgcc:-lgcc_s						\
-         %{!shared: -lgcc_pic}}}}"					\
+       %{!shared:							\
+         %{!shared-libgcc:-lgcc -lgcc_eh}				\
+         %{shared-libgcc:-lgcc_s -lgcc}}				\
+       %{shared:							\
+         %{shared-libgcc:-lgcc_s} -lgcc_pic}}}"
 
 #define REAL_LIBGCC_SPEC NETBSD_LIBGCC_SPEC
 
