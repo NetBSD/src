@@ -3,7 +3,7 @@
 /* Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp  */
 
 /* Generated automatically. */
-static const char configuration_arguments[] = "/usr/src3/tools/gcc/../../external/gpl3/gcc/dist/configure --target=hppa--netbsd --enable-long-long --enable-threads --with-bugurl=http://www.NetBSD.org/Misc/send-pr.html --with-pkgversion='NetBSD nb1 20110620' --enable-__cxa_atexit --with-mpc=/var/obj/hp700/usr/src3/destdir.hp700/usr --with-mpfr=/var/obj/hp700/usr/src3/destdir.hp700/usr --with-gmp=/var/obj/hp700/usr/src3/destdir.hp700/usr --disable-multilib --disable-symvers --disable-libstdcxx-pch --build=x86_64-unknown-netbsd5.99.54 --host=hppa--netbsd";
+static const char configuration_arguments[] = "/usr/src4/tools/gcc/../../external/gpl3/gcc/dist/configure --target=hppa--netbsd --enable-long-long --enable-threads --with-bugurl=http://www.NetBSD.org/Misc/send-pr.html --with-pkgversion='NetBSD nb1 20110620' --enable-__cxa_atexit --with-mpc=/var/obj/hp700/usr/src4/destdir.hp700/usr --with-mpfr=/var/obj/hp700/usr/src4/destdir.hp700/usr --with-gmp=/var/obj/hp700/usr/src4/destdir.hp700/usr --disable-multilib --disable-symvers --disable-libstdcxx-pch --build=x86_64-unknown-netbsd5.99.54 --host=hppa--netbsd";
 static const char thread_model[] = "posix";
 
 static const struct {
