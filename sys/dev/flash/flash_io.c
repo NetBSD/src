@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_io.c,v 1.3 2011/07/15 19:19:57 cliff Exp $	*/
+/*	$NetBSD: flash_io.c,v 1.4 2011/08/07 14:03:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_io.c,v 1.3 2011/07/15 19:19:57 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_io.c,v 1.4 2011/08/07 14:03:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -119,7 +119,7 @@ flash_sync_thread_init(struct flash_io *fio, device_t dev,
 	fio->fio_write_pending = false;
 
 	/* arrange to allocate the kthread */
-	error = kthread_create(PRI_NONE, KTHREAD_JOINABLE | KTHREAD_MPSAFE,
+	error = kthread_create(PRI_NONE, KTHREAD_MUSTJOIN | KTHREAD_MPSAFE,
 	    NULL, flash_sync_thread, fio, &fio->fio_thread, "flashio");
 
 	if (!error)

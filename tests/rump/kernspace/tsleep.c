@@ -1,4 +1,4 @@
-/*	$NetBSD: tsleep.c,v 1.1 2010/05/31 23:32:51 pooka Exp $	*/
+/*	$NetBSD: tsleep.c,v 1.2 2011/08/07 14:03:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: tsleep.c,v 1.1 2010/05/31 23:32:51 pooka Exp $");
+__RCSID("$NetBSD: tsleep.c,v 1.2 2011/08/07 14:03:16 rmind Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -117,7 +117,7 @@ rumptest_tsleep()
 	int rv, i;
 
 	for (i = 0; i < NTHREADS; i++) {
-		rv = kthread_create(PRI_NONE, KTHREAD_JOINABLE,
+		rv = kthread_create(PRI_NONE, KTHREAD_MUSTJOIN,
 		    NULL, bigthread, (void *)(uintptr_t)i, &bigl[i], "b");
 		if (rv)
 			panic("thread create failed: %d", rv);
@@ -126,7 +126,7 @@ rumptest_tsleep()
 	mutex_init(&mymtx, MUTEX_DEFAULT, IPL_NONE);
 
 	for (i = 0; i < NTHREADS; i++) {
-		rv = kthread_create(PRI_NONE, KTHREAD_JOINABLE | KTHREAD_MPSAFE,
+		rv = kthread_create(PRI_NONE, KTHREAD_MUSTJOIN| KTHREAD_MPSAFE,
 		    NULL, tinythread, (void *)(uintptr_t)i, &notbigl[i], "nb");
 		if (rv)
 			panic("thread create failed: %d", rv);

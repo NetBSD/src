@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.23 2011/06/22 04:01:08 mrg Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.24 2011/08/07 14:03:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.23 2011/06/22 04:01:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.24 2011/08/07 14:03:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -116,12 +116,12 @@ rump_virtif_create(int num)
 	ifp->if_softc = sc;
 
 	if (rump_threads) {
-		if ((error = kthread_create(PRI_NONE, KTHREAD_JOINABLE, NULL,
+		if ((error = kthread_create(PRI_NONE, KTHREAD_MUSTJOIN, NULL,
 		    virtif_receiver, ifp, &sc->sc_l_rcv, "virtifr")) != 0)
 			goto out;
 
 		if ((error = kthread_create(PRI_NONE,
-		    KTHREAD_JOINABLE | KTHREAD_MPSAFE, NULL,
+		    KTHREAD_MUSTJOIN | KTHREAD_MPSAFE, NULL,
 		    virtif_sender, ifp, &sc->sc_l_snd, "virtifs")) != 0)
 			goto out;
 	} else {

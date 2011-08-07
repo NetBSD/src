@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.26 2011/05/19 08:55:01 wiz Exp $
+.\"     $NetBSD: kthread.9,v 1.27 2011/08/07 14:03:16 rmind Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 19, 2011
+.Dd August 7, 2011
 .Dt KTHREAD 9
 .Os
 .Sh NAME
@@ -93,7 +93,7 @@ A pointer to receive the new LWP structure for the kernel thread.
 May be
 .Dv NULL ,
 unless
-.Dv KTHREAD_JOINABLE
+.Dv KTHREAD_MUSTJOIN
 is specified in
 .Fa flags .
 .It Fa fmt
@@ -106,7 +106,7 @@ Must not be
 The following
 .Va flags
 are defined.
-.Bl -tag -width KTHREAD_JOINABLE
+.Bl -tag -width KTHREAD_MUSTJOIN
 .It Dv KTHREAD_IDLE
 Causes the thread to be created in the
 .Dv LSIDL
@@ -138,8 +138,8 @@ Threads in the
 .Dv SCHED_RR
 class do not have their priority dynamically
 adjusted by the scheduler.
-.It Dv KTHREAD_JOINABLE
-Requests creation of joinable kthread.
+.It Dv KTHREAD_MUSTJOIN
+Indicates that created kthread must be joined.
 In such case
 .Fn kthread_exit
 will wait until
@@ -160,7 +160,7 @@ Conceptually the function can be compared to the user space
 .Xr pthread_join 3 ,
 however it must be called only once for kernel thread which was
 created using the
-.Dv KTHREAD_JOIN
+.Dv KTHREAD_MUSTJOIN
 flag and would wait on
 .Fa kthread_exit .
 .El

@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.14 2011/07/17 20:54:54 joerg Exp $	*/
+/*	$NetBSD: threads.c,v 1.15 2011/08/07 14:03:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.14 2011/07/17 20:54:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.15 2011/08/07 14:03:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -153,14 +153,14 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	}
 		
 	rv = rumpuser_thread_create(threadbouncer, k, thrname,
-	    (flags & KTHREAD_JOINABLE) == KTHREAD_JOINABLE, &l->l_ctxlink);
+	    (flags & KTHREAD_MUSTJOIN) == KTHREAD_MUSTJOIN, &l->l_ctxlink);
 	if (rv)
 		return rv;
 
 	if (newlp) {
 		*newlp = l;
 	} else {
-		KASSERT((flags & KTHREAD_JOINABLE) == 0);
+		KASSERT((flags & KTHREAD_MUSTJOIN) == 0);
 	}
 
 	return 0;

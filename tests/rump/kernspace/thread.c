@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.1 2010/05/31 23:32:51 pooka Exp $	*/
+/*	$NetBSD: thread.c,v 1.2 2011/08/07 14:03:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: thread.c,v 1.1 2010/05/31 23:32:51 pooka Exp $");
+__RCSID("$NetBSD: thread.c,v 1.2 2011/08/07 14:03:15 rmind Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -57,7 +57,7 @@ rumptest_threadjoin()
 	struct lwp *newl;
 	int rv;
 
-	rv = kthread_create(PRI_NONE, KTHREAD_JOINABLE | KTHREAD_MPSAFE, NULL,
+	rv = kthread_create(PRI_NONE, KTHREAD_MUSTJOIN | KTHREAD_MPSAFE, NULL,
 	    jointhread, NULL, &newl, "jointest");
 	if (rv)
 		panic("thread creation failed: %d", rv);
