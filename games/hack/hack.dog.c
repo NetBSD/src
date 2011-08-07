@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.dog.c,v 1.11 2009/08/12 07:28:40 dholland Exp $	*/
+/*	$NetBSD: hack.dog.c,v 1.12 2011/08/07 06:03:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.dog.c,v 1.11 2009/08/12 07:28:40 dholland Exp $");
+__RCSID("$NetBSD: hack.dog.c,v 1.12 2011/08/07 06:03:45 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -177,7 +177,7 @@ dogfood(struct obj *obj)
 	default:
 		if (!obj->cursed)
 			return (APPORT);
-		/* fall into next case */
+		/* FALLTHROUGH */
 	case BALL_SYM:
 	case CHAIN_SYM:
 	case ROCK_SYM:
@@ -475,12 +475,13 @@ int
 inroom(xchar x, xchar y)
 {
 #ifndef QUEST
-	struct mkroom  *croom = &rooms[0];
-	while (croom->hx >= 0) {
-		if (croom->hx >= x - 1 && croom->lx <= x + 1 &&
-		    croom->hy >= y - 1 && croom->ly <= y + 1)
-			return (croom - rooms);
-		croom++;
+	int pos = 0;
+
+	while (rooms[pos].hx >= 0) {
+		if (rooms[pos].hx >= x - 1 && rooms[pos].lx <= x + 1 &&
+		    rooms[pos].hy >= y - 1 && rooms[pos].ly <= y + 1)
+			return pos;
+		pos++;
 	}
 #endif	/* QUEST */
 	return (-1);		/* not in room or on door */

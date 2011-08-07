@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mkobj.c,v 1.8 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.mkobj.c,v 1.9 2011/08/07 06:03:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mkobj.c,v 1.8 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.mkobj.c,v 1.9 2011/08/07 06:03:45 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -141,9 +141,10 @@ mksobj(int otyp)
 		if (otmp->otyp == TIN)
 			otmp->spe = rnd(...);
 #endif	/* NOT_YET_IMPLEMENTED */
-		/* fall into next case */
+		/* FALLTHROUGH */
 	case GEM_SYM:
 		otmp->quan = rn2(6) ? 1 : 2;
+		break;
 	case TOOL_SYM:
 	case CHAIN_SYM:
 	case BALL_SYM:
