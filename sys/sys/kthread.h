@@ -1,4 +1,4 @@
-/*	$NetBSD: kthread.h,v 1.10 2011/05/19 03:07:29 rmind Exp $	*/
+/*	$NetBSD: kthread.h,v 1.11 2011/08/07 14:03:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	KTHREAD_MPSAFE		0x02	/* Do not acquire kernel_lock */
 #define	KTHREAD_INTR		0x04	/* Software interrupt handler */
 #define	KTHREAD_TS		0x08	/* Time-sharing priority range */
-#define	KTHREAD_JOINABLE	0x10	/* Joinable */
+#define	KTHREAD_MUSTJOIN	0x10	/* Must join on exit */
 
 void	kthread_sysinit(void);
 

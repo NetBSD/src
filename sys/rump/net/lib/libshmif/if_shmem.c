@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.39 2011/03/21 16:41:09 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.40 2011/08/07 14:03:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.39 2011/03/21 16:41:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.40 2011/08/07 14:03:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -186,7 +186,7 @@ allocif(int unit, struct shmif_sc **scp)
 	error = 0;
 	if (rump_threads) {
 		error = kthread_create(PRI_NONE,
-		    KTHREAD_MPSAFE | KTHREAD_JOINABLE, NULL,
+		    KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
 		    shmif_rcv, ifp, &sc->sc_rcvl, "shmif");
 	} else {
 		printf("WARNING: threads not enabled, shmif NOT working\n");
