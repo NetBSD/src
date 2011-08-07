@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.47 2009/05/12 14:31:00 cegger Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.48 2011/08/07 13:39:24 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.47 2009/05/12 14:31:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.48 2011/08/07 13:39:24 rmind Exp $");
 
 #include "rnd.h"
 
@@ -254,7 +254,7 @@ edmcastrategy(struct buf *bp)
 	simple_unlock(&ed->sc_q_lock);
 
 	/* Ring the worker thread */
-	wakeup_one(ed->edc_softc);
+	wakeup(ed->edc_softc);
 
 	return;
 done:
