@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_sched.c,v 1.35 2010/07/01 02:38:31 rmind Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.36 2011/08/07 13:33:01 rmind Exp $	*/
 
 /*
- * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
+ * Copyright (c) 2008, 2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.35 2010/07/01 02:38:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.36 2011/08/07 13:33:01 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -298,12 +298,16 @@ out:
 static int
 genkcpuset(kcpuset_t **dset, const cpuset_t *sset, size_t size)
 {
+	kcpuset_t *kset;
 	int error;
 
-	*dset = kcpuset_create();
-	error = kcpuset_copyin(sset, *dset, size);
-	if (error != 0)
-		kcpuset_unuse(*dset, NULL);
+	kcpuset_create(&kset);
+	error = kcpuset_copyin(sset, kset, size);
+	if (error) {
+		kcpuset_unuse(kset, NULL);
+	} else {
+		*dset = kset;
+	}
 	return error;
 }
 
@@ -320,7 +324,7 @@ sys__sched_setaffinity(struct lwp *l,
 		syscallarg(size_t) size;
 		syscallarg(const cpuset_t *) cpuset;
 	} */
-	kcpuset_t *cpuset, *cpulst = NULL;
+	kcpuset_t *kcset, *kcpulst = NULL;
 	struct cpu_info *ici, *ci;
 	struct proc *p;
 	struct lwp *t;
@@ -330,7 +334,7 @@ sys__sched_setaffinity(struct lwp *l,
 	u_int lcnt;
 	int error;
 
-	error = genkcpuset(&cpuset, SCARG(uap, cpuset), SCARG(uap, size));
+	error = genkcpuset(&kcset, SCARG(uap, cpuset), SCARG(uap, size));
 	if (error)
 		return error;
 
@@ -349,7 +353,7 @@ sys__sched_setaffinity(struct lwp *l,
 	for (CPU_INFO_FOREACH(cii, ici)) {
 		struct schedstate_percpu *ispc;
 
-		if (kcpuset_isset(cpu_index(ici), cpuset) == 0)
+		if (kcpuset_isset(kcset, cpu_index(ici)) == 0)
 			continue;
 
 		ispc = &ici->ci_schedstate;
@@ -375,8 +379,8 @@ sys__sched_setaffinity(struct lwp *l,
 			goto out;
 		}
 		/* Empty set */
-		kcpuset_unuse(cpuset, &cpulst);
-		cpuset = NULL; 
+		kcpuset_unuse(kcset, &kcpulst);
+		kcset = NULL; 
 	}
 
 	if (SCARG(uap, pid) != 0) {
@@ -433,33 +437,42 @@ sys__sched_setaffinity(struct lwp *l,
 			lwp_unlock(t);
 			continue;
 		}
-		if (cpuset) {
+		if (kcset) {
 			/* Set the affinity flag and new CPU set */
 			t->l_flag |= LW_AFFINITY;
-			kcpuset_use(cpuset);
+			kcpuset_use(kcset);
 			if (t->l_affinity != NULL)
-				kcpuset_unuse(t->l_affinity, &cpulst);
-			t->l_affinity = cpuset;
+				kcpuset_unuse(t->l_affinity, &kcpulst);
+			t->l_affinity = kcset;
 			/* Migrate to another CPU, unlocks LWP */
 			lwp_migrate(t, ci);
 		} else {
 			/* Unset the affinity flag */
 			t->l_flag &= ~LW_AFFINITY;
 			if (t->l_affinity != NULL)
-				kcpuset_unuse(t->l_affinity, &cpulst);
+				kcpuset_unuse(t->l_affinity, &kcpulst);
 			t->l_affinity = NULL;
 			lwp_unlock(t);
 		}
 		lcnt++;
 	}
 	mutex_exit(p->p_lock);
-	if (lcnt == 0)
+	if (lcnt == 0) {
 		error = ESRCH;
+	}
 out:
 	mutex_exit(&cpu_lock);
-	if (cpuset != NULL)
-		kcpuset_unuse(cpuset, &cpulst);
-	kcpuset_destroy(cpulst);
+
+	/*
+	 * Drop the initial reference (LWPs, if any, have the ownership now),
+	 * and destroy whatever is in the G/C list, if filled.
+	 */
+	if (kcset) {
+		kcpuset_unuse(kcset, &kcpulst);
+	}
+	if (kcpulst) {
+		kcpuset_destroy(kcpulst);
+	}
 	return error;
 }
 
@@ -477,10 +490,10 @@ sys__sched_getaffinity(struct lwp *l,
 		syscallarg(cpuset_t *) cpuset;
 	} */
 	struct lwp *t;
-	kcpuset_t *cpuset;
+	kcpuset_t *kcset;
 	int error;
 
-	error = genkcpuset(&cpuset, SCARG(uap, cpuset), SCARG(uap, size));
+	error = genkcpuset(&kcset, SCARG(uap, cpuset), SCARG(uap, size));
 	if (error)
 		return error;
 
@@ -500,15 +513,16 @@ sys__sched_getaffinity(struct lwp *l,
 	lwp_lock(t);
 	if (t->l_flag & LW_AFFINITY) {
 		KASSERT(t->l_affinity != NULL);
-		kcpuset_copy(cpuset, t->l_affinity);
-	} else
-		kcpuset_zero(cpuset);
+		kcpuset_copy(kcset, t->l_affinity);
+	} else {
+		kcpuset_zero(kcset);
+	}
 	lwp_unlock(t);
 	mutex_exit(t->l_proc->p_lock);
 
-	error = kcpuset_copyout(cpuset, SCARG(uap, cpuset), SCARG(uap, size));
+	error = kcpuset_copyout(kcset, SCARG(uap, cpuset), SCARG(uap, size));
 out:
-	kcpuset_unuse(cpuset, NULL);
+	kcpuset_unuse(kcset, NULL);
 	return error;
 }
 

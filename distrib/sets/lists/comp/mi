@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1657 2011/08/06 17:17:39 jruoho Exp $
+#	$NetBSD: mi,v 1.1658 2011/08/07 13:33:02 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2385,6 +2385,7 @@
 ./usr/include/sys/ipc.h				comp-c-include
 ./usr/include/sys/joystick.h			comp-c-include
 ./usr/include/sys/kcore.h			comp-c-include
+./usr/include/sys/kcpuset.h			comp-c-include
 ./usr/include/sys/kernel.h			comp-obsolete		obsolete
 ./usr/include/sys/keylock.h			comp-obsolete		obsolete
 ./usr/include/sys/kgdb.h			comp-c-include

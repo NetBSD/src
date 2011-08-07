@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.15 2010/07/01 02:38:31 rmind Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.16 2011/08/07 13:33:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.15 2010/07/01 02:38:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.16 2011/08/07 13:33:01 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -373,7 +373,7 @@ sys_pset_assign(struct lwp *l, const struct sys_pset_assign_args *uap,
 				lwp_unlock(t);
 				continue;
 			}
-			if (kcpuset_isset(cpu_index(ci), t->l_affinity)) {
+			if (kcpuset_isset(t->l_affinity, cpu_index(ci))) {
 				lwp_unlock(t);
 				mutex_exit(proc_lock);
 				mutex_exit(&cpu_lock);
