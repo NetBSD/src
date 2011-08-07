@@ -30,7 +30,7 @@
  *
  *---------------------------------------------------------------------------
  *
- *	$Id: hscx.h,v 1.3 2005/12/11 12:21:26 christos Exp $
+ *	$Id: hscx.h,v 1.4 2011/08/07 20:05:08 jakllsch Exp $
  *
  *      last edit-date: [Sun Feb 14 10:26:56 1999]
  *
@@ -119,7 +119,7 @@ typedef struct hscx_reg {
 	} hscx_rw;
 } hscx_reg_t;
 
-#define REG_OFFSET(type, field) (int)(&(((type *)0)->field))
+#define REG_OFFSET(type, field) (uintptr_t)(&(((type *)0)->field))
 
 /* HSCX read registers */
 
