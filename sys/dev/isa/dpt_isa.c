@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_isa.c,v 1.20 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: dpt_isa.c,v 1.21 2011/08/07 19:46:22 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.20 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.21 2011/08/07 19:46:22 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ dpt_isa_probe(struct isa_attach_args *ia, int iobase)
 	 */
 	bus_space_write_1(iot, ioh, HA_COMMAND, CP_PIO_GETCFG);
 	memset(&ec, 0, sizeof(ec));
-	i = ((int)&((struct eata_cfg *)0)->ec_cfglen +
+	i = ((uintptr_t)&((struct eata_cfg *)0)->ec_cfglen +
 	    sizeof(ec.ec_cfglen)) >> 1;
 	p = (u_int16_t *)&ec;
 
@@ -183,13 +183,13 @@ dpt_isa_probe(struct isa_attach_args *ia, int iobase)
 		*p++ = bus_space_read_stream_2(iot, ioh, HA_DATA);
 
 	if ((i = ec.ec_cfglen) > (sizeof(struct eata_cfg)
-	    - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
+	    - (uintptr_t)(&(((struct eata_cfg *)0L)->ec_cfglen))
 	    - sizeof(ec.ec_cfglen)))
 		i = sizeof(struct eata_cfg)
-		  - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
+		  - (uintptr_t)(&(((struct eata_cfg *)0L)->ec_cfglen))
 		  - sizeof(ec.ec_cfglen);
 
-	j = i + (int)(&(((struct eata_cfg *)0L)->ec_cfglen)) +
+	j = i + (uintptr_t)(&(((struct eata_cfg *)0L)->ec_cfglen)) +
 	    sizeof(ec.ec_cfglen);
 	i >>= 1;
 
