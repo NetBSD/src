@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.35 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.36 2011/08/07 14:03:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.35 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.36 2011/08/07 14:03:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,9 +121,9 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 		l->l_cpu = ci;
 	}
 
-	if ((flag & KTHREAD_JOINABLE) != 0) {
+	if ((flag & KTHREAD_MUSTJOIN) != 0) {
 		KASSERT(lp != NULL);
-		l->l_pflag |= LP_JOINABLE;
+		l->l_pflag |= LP_MUSTJOIN;
 	}
 	if ((flag & KTHREAD_INTR) != 0) {
 		l->l_pflag |= LP_INTR;
@@ -170,7 +170,7 @@ kthread_exit(int ecode)
 	}
 
 	/* Barrier for joining. */
-	if (l->l_pflag & LP_JOINABLE) {
+	if (l->l_pflag & LP_MUSTJOIN) {
 		mutex_enter(&kthread_lock);
 		while (kthread_jtarget != l) {
 			cv_wait(&kthread_cv, &kthread_lock);
