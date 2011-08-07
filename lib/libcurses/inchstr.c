@@ -1,4 +1,4 @@
-/*	$NetBSD: inchstr.c,v 1.3 2009/07/22 16:57:14 roy Exp $	*/
+/*	$NetBSD: inchstr.c,v 1.4 2011/08/07 10:57:10 blymn Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inchstr.c,v 1.3 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: inchstr.c,v 1.4 2011/08/07 10:57:10 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -144,7 +144,8 @@ winchnstr(WINDOW *win, chtype *chstr, int n)
 	end = &win->alines[win->cury]->line[epos];
 
 	while (start <= end) {
-		*chstr = start->ch;
+		/* or in the attributes but strip out internal flags */
+		*chstr = start->ch | (start->attr & ~__ACS_IS_WACS);
 		chstr++;
 		start++;
 	}
