@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.43 2011/06/12 03:35:55 rmind Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.44 2011/08/07 06:01:51 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.43 2011/06/12 03:35:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.44 2011/08/07 06:01:51 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.43 2011/06/12 03:35:55 rmind Exp $"
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/dirent.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/queue.h>
@@ -1191,6 +1192,96 @@ union_diruncache(struct union_node *un)
 		free(un->un_dircache, M_TEMP);
 		un->un_dircache = 0;
 	}
+}
+
+/*
+ * Check whether node can rmdir (check empty).
+ */
+int
+union_check_rmdir(struct union_node *un, kauth_cred_t cred)
+{
+	int dirlen, eofflag, error;
+	char *dirbuf;
+	struct vattr va;
+	struct vnode *tvp;
+	struct dirent *dp, *edp;
+	struct componentname cn;
+	struct iovec aiov;
+	struct uio auio;
+
+	KASSERT(un->un_uppervp != NULL);
+
+	/* Check upper for being opaque. */
+	KASSERT(VOP_ISLOCKED(un->un_uppervp));
+	error = VOP_GETATTR(un->un_uppervp, &va, cred);
+	if (error || (va.va_flags & OPAQUE))
+		return error;
+
+	if (un->un_lowervp == NULL)
+		return 0;
+
+	/* Check lower for being empty. */
+	vn_lock(un->un_lowervp, LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_GETATTR(un->un_lowervp, &va, cred);
+	if (error) {
+		VOP_UNLOCK(un->un_lowervp);
+		return error;
+	}
+	dirlen = va.va_blocksize;
+	dirbuf = kmem_alloc(dirlen, KM_SLEEP);
+	if (dirbuf == NULL) {
+		VOP_UNLOCK(un->un_lowervp);
+		return ENOMEM;
+	}
+	/* error = 0; */
+	eofflag = 0;
+	auio.uio_offset = 0;
+	do {
+		aiov.iov_len = dirlen;
+		aiov.iov_base = dirbuf;
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		auio.uio_resid = aiov.iov_len;
+		auio.uio_rw = UIO_READ;
+		UIO_SETUP_SYSSPACE(&auio);
+		error = VOP_READDIR(un->un_lowervp, &auio, cred, &eofflag,
+		    NULL, NULL);
+		if (error)
+			break;
+		edp = (struct dirent *)&dirbuf[dirlen - auio.uio_resid];
+		for (dp = (struct dirent *)dirbuf;
+		    error == 0 && dp < edp;
+		    dp = (struct dirent *)((char *)dp + dp->d_reclen)) {
+			if (dp->d_reclen == 0) {
+				error = ENOTEMPTY;
+				break;
+			}
+			if (dp->d_type == DT_WHT ||
+			    (dp->d_namlen == 1 && dp->d_name[0] == '.') ||
+			    (dp->d_namlen == 2 && !memcmp(dp->d_name, "..", 2)))
+				continue;
+			/* Check for presence in the upper layer. */
+			cn.cn_nameiop = LOOKUP;
+			cn.cn_flags = ISLASTCN | RDONLY;
+			cn.cn_cred = cred;
+			cn.cn_nameptr = dp->d_name;
+			cn.cn_namelen = dp->d_namlen;
+			cn.cn_hash = 0;
+			cn.cn_consume = 0;
+			error = VOP_LOOKUP(un->un_uppervp, &tvp, &cn);
+			if (error == ENOENT && (cn.cn_flags & ISWHITEOUT)) {
+				error = 0;
+				continue;
+			}
+			if (error == 0)
+				vput(tvp);
+			error = ENOTEMPTY;
+		}
+	} while (error == 0 && !eofflag);
+	kmem_free(dirbuf, dirlen);
+	VOP_UNLOCK(un->un_lowervp);
+
+	return error;
 }
 
 /*
