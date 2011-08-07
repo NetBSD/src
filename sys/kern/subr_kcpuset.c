@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcpuset.c,v 1.2 2011/08/07 21:13:05 rmind Exp $	*/
+/*	$NetBSD: subr_kcpuset.c,v 1.3 2011/08/07 21:38:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.2 2011/08/07 21:13:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.3 2011/08/07 21:38:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -98,7 +98,7 @@ static size_t			kc_nfields __read_mostly = KC_NFIELDS_EARLY;
 
 static pool_cache_t		kc_cache __read_mostly;
 
-static kcpuset_t *		kcpuset_create_raw(void);
+static kcpuset_t *		kcpuset_create_raw(bool);
 
 /*
  * kcpuset_sysinit: initialize the subsystem, transfer early boot cases
@@ -119,8 +119,7 @@ kcpuset_sysinit(void)
 
 	/* First, pre-allocate kcpuset entries. */
 	for (i = 0; i < kc_last_idx; i++) {
-		kcp = kcpuset_create_raw();
-		kcpuset_zero(kcp);
+		kcp = kcpuset_create_raw(true);
 		kc_dynamic[i] = kcp;
 	}
 
@@ -188,7 +187,7 @@ kcpuset_early_ptr(kcpuset_t **kcptr)
  */
 
 static kcpuset_t *
-kcpuset_create_raw(void)
+kcpuset_create_raw(bool zero)
 {
 	kcpuset_impl_t *kc;
 
@@ -196,13 +195,17 @@ kcpuset_create_raw(void)
 	kc->kc_refcnt = 1;
 	kc->kc_next = NULL;
 
+	if (zero) {
+		memset(&kc->kc_field, 0, kc_bitsize);
+	}
+
 	/* Note: return pointer to the actual field of bits. */
 	KASSERT((uint8_t *)kc + KC_BITS_OFF == (uint8_t *)&kc->kc_field);
 	return &kc->kc_field;
 }
 
 void
-kcpuset_create(kcpuset_t **retkcp)
+kcpuset_create(kcpuset_t **retkcp, bool zero)
 {
 
 	if (__predict_false(!kc_initialised)) {
@@ -210,7 +213,7 @@ kcpuset_create(kcpuset_t **retkcp)
 		*retkcp = kcpuset_early_ptr(retkcp);
 		return;
 	}
-	*retkcp = kcpuset_create_raw();
+	*retkcp = kcpuset_create_raw(zero);
 }
 
 void
@@ -237,8 +240,7 @@ void
 kcpuset_copy(kcpuset_t *dkcp, kcpuset_t *skcp)
 {
 
-	KASSERT(kc_initialised);
-	KASSERT(KC_GETSTRUCT(dkcp)->kc_refcnt == 1);
+	KASSERT(!kc_initialised || KC_GETSTRUCT(dkcp)->kc_refcnt == 1);
 	memcpy(dkcp, skcp, kc_bitsize);
 }
 
@@ -382,4 +384,35 @@ kcpuset_match(const kcpuset_t *kcp1, const kcpuset_t *kcp2)
 {
 
 	return memcmp(kcp1, kcp2, kc_bitsize) == 0;
+}
+
+void
+kcpuset_merge(kcpuset_t *kcp1, kcpuset_t *kcp2)
+{
+
+	for (size_t j = 0; j < kc_nfields; j++) {
+		kcp1->bits[j] |= kcp2->bits[j];
+	}
+}
+
+/*
+ * Routines to set/clear the flags atomically.
+ */
+
+void
+kcpuset_atomic_set(kcpuset_t *kcp, cpuid_t i)
+{
+	const size_t j = i >> KC_SHIFT;
+
+	KASSERT(j < kc_nfields);
+	atomic_or_32(&kcp->bits[j], 1 << (i & KC_MASK));
+}
+
+void
+kcpuset_atomic_clear(kcpuset_t *kcp, cpuid_t i)
+{
+	const size_t j = i >> KC_SHIFT;
+
+	KASSERT(j < kc_nfields);
+	atomic_and_32(&kcp->bits[j], ~(1 << (i & KC_MASK)));
 }
