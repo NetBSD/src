@@ -1,4 +1,5 @@
-# $NetBSD: ad.hppa,v 1.5 2011/07/17 20:54:30 joerg Exp $
+# $NetBSD: ad.hppa,v 1.6 2011/08/07 01:49:12 mrg Exp $
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/hppa				comp-c-include
 ./usr/include/hppa/ansi.h			comp-c-include
 ./usr/include/hppa/aout_machdep.h		comp-c-include
