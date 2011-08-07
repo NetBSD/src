@@ -27,7 +27,7 @@
  *	i4b_ipac.h - definitions for the Siemens IPAC PSB2115 chip
  *	==========================================================
  *
- *	$Id: ipac.h,v 1.3 2005/12/11 12:21:27 christos Exp $
+ *	$Id: ipac.h,v 1.4 2011/08/07 20:05:08 jakllsch Exp $
  *
  *      last edit-date: [Thu Jan  6 14:54:19 2000]
  *
@@ -92,7 +92,7 @@ typedef struct ipac_reg {
 	} ipac_rw;
 } ipac_reg_t;
 
-#define REG_OFFSET(type, field) (int)(&(((type *)0)->field))
+#define REG_OFFSET(type, field) (uintptr_t)(&(((type *)0)->field))
 
 /* IPAC read registers */
 

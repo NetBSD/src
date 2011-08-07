@@ -30,7 +30,7 @@
  *
  *---------------------------------------------------------------------------
  *
- *	$Id: isac.h,v 1.3 2005/12/11 12:21:27 christos Exp $
+ *	$Id: isac.h,v 1.4 2011/08/07 20:05:08 jakllsch Exp $
  *
  *      last edit-date: [Sun Feb 14 10:27:13 1999]
  *
@@ -144,7 +144,7 @@ typedef struct isac_reg {
 	} isac_rw;
 } isac_reg_t;
 
-#define REG_OFFSET(type, field) (int)(&(((type *)0)->field))
+#define REG_OFFSET(type, field) (uintptr_t)(&(((type *)0)->field))
 
 /* ISAC read registers */
 
