@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.42 2011/08/04 18:01:49 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.43 2011/08/07 17:10:35 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.42 2011/08/04 18:01:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.43 2011/08/07 17:10:35 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -287,6 +287,7 @@ static void *xbdback_co_main_done2(struct xbdback_instance *, void *);
 static void *xbdback_co_cache_flush(struct xbdback_instance *, void *);
 static void *xbdback_co_cache_flush2(struct xbdback_instance *, void *);
 static void *xbdback_co_cache_doflush(struct xbdback_instance *, void *);
+static void *xbdback_co_cache_doflush_wait(struct xbdback_instance *, void *);
 
 static void *xbdback_co_io(struct xbdback_instance *, void *);
 static void *xbdback_co_io_gotreq(struct xbdback_instance *, void *);
@@ -967,6 +968,8 @@ xbdback_co_main_done(struct xbdback_instance *xbdi, void *obj)
 {
 	(void)obj;
 	if (xbdi->xbdi_io != NULL) {
+		KASSERT(xbdi->xbdi_io->xio_operation == BLKIF_OP_READ ||
+		    xbdi->xbdi_io->xio_operation == BLKIF_OP_WRITE);
 		xbdi->xbdi_cont = xbdback_co_flush;
 		xbdi->xbdi_cont_aux = xbdback_co_main_done2;
 	} else {
@@ -999,9 +1002,13 @@ static void *
 xbdback_co_cache_flush(struct xbdback_instance *xbdi, void *obj)
 {
 	(void)obj;
+	KASSERT(curcpu()->ci_ilevel >= IPL_BIO);
 	XENPRINTF(("xbdback_co_cache_flush %p %p\n", xbdi, obj));
 	if (xbdi->xbdi_io != NULL) {
 		/* Some I/Os are required for this instance. Process them. */
+		KASSERT(xbdi->xbdi_io->xio_operation == BLKIF_OP_READ ||
+		    xbdi->xbdi_io->xio_operation == BLKIF_OP_WRITE);
+		KASSERT(xbdi->xbdi_pendingreqs == 0);
 		xbdi->xbdi_cont = xbdback_co_flush;
 		xbdi->xbdi_cont_aux = xbdback_co_cache_flush2;
 	} else {
@@ -1016,8 +1023,10 @@ xbdback_co_cache_flush2(struct xbdback_instance *xbdi, void *obj)
 	(void)obj;
 	XENPRINTF(("xbdback_co_cache_flush2 %p %p\n", xbdi, obj));
 	if (xbdi->xbdi_pendingreqs > 0) {
-		/* There are pending requests.
-		 * Event or iodone() will restart processing */
+		/*
+		 * There are pending requests.
+		 * Event or iodone() will restart processing
+		 */
 		xbdi->xbdi_cont = NULL;
 		xbdi_put(xbdi);
 		return NULL;
@@ -1039,7 +1048,17 @@ xbdback_co_cache_doflush(struct xbdback_instance *xbdi, void *obj)
 	xbd_io->xio_flush_id = xbdi->xbdi_xen_req.id;
 	workqueue_enqueue(xbdback_workqueue, &xbdi->xbdi_io->xio_work, NULL);
 	/* xbdback_do_io() will advance req pointer and restart processing */
-	xbdi->xbdi_cont = NULL;
+	xbdi->xbdi_cont = xbdback_co_cache_doflush_wait;
+	return NULL;
+}
+
+/* wait for the flush work to complete */
+static void *
+xbdback_co_cache_doflush_wait(struct xbdback_instance *xbdi, void *obj)
+{
+	(void)obj;
+	/* abort the continuation loop; xbdback_do_io() will restart it */
+	xbdi->xbdi_cont = xbdback_co_cache_doflush_wait;
 	return NULL;
 }
 
@@ -1067,6 +1086,8 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj)
 		goto end;
 	}
 
+	KASSERT(req->operation == BLKIF_OP_READ ||
+	    req->operation == BLKIF_OP_WRITE);
 	if (req->operation == BLKIF_OP_WRITE) {
 		if (xbdi->xbdi_ro) {
 			error = EROFS;
@@ -1122,6 +1143,8 @@ xbdback_co_io_gotreq(struct xbdback_instance *xbdi, void *obj)
 	xrq->rq_ioerrs = 0;
 	xrq->rq_id = xbdi->xbdi_xen_req.id;
 	xrq->rq_operation = xbdi->xbdi_xen_req.operation;
+	KASSERT(xbdi->xbdi_req->rq_operation == BLKIF_OP_READ ||
+	    xbdi->xbdi_req->rq_operation == BLKIF_OP_WRITE);
 
 	/* 
 	 * Request-level reasons not to coalesce: different device,
@@ -1144,6 +1167,8 @@ xbdback_co_io_gotreq(struct xbdback_instance *xbdi, void *obj)
 			xbdi->xbdi_next_sector =
 			    xbdi->xbdi_xen_req.sector_number;
 			xbdi->xbdi_cont_aux = xbdi->xbdi_cont; 
+			KASSERT(xbdi->xbdi_io->xio_operation == BLKIF_OP_READ ||
+			    xbdi->xbdi_io->xio_operation == BLKIF_OP_WRITE);
 			xbdi->xbdi_cont = xbdback_co_flush;
 		}
 	} else {
@@ -1159,6 +1184,8 @@ xbdback_co_io_loop(struct xbdback_instance *xbdi, void *obj)
 	struct xbdback_io *xio;
 
 	(void)obj;
+	KASSERT(xbdi->xbdi_req->rq_operation == BLKIF_OP_READ ||
+	    xbdi->xbdi_req->rq_operation == BLKIF_OP_WRITE);
 	if (xbdi->xbdi_segno < xbdi->xbdi_xen_req.nr_segments) {
 		uint8_t this_fs, this_ls, last_fs, last_ls;
 		grant_ref_t thisgrt, lastgrt;
@@ -1211,6 +1238,10 @@ xbdback_co_io_loop(struct xbdback_instance *xbdi, void *obj)
 				xbdi->xbdi_same_page = 1;
 			} else {
 				xbdi->xbdi_cont_aux = xbdback_co_io_loop;
+				KASSERT(xbdi->xbdi_io->xio_operation ==
+				     BLKIF_OP_READ ||
+				    xbdi->xbdi_io->xio_operation ==
+				     BLKIF_OP_WRITE);
 				xbdi->xbdi_cont = xbdback_co_flush;
 				return xbdi;
 			}
@@ -1239,6 +1270,7 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 	vaddr_t start_offset; /* start offset in vm area */
 	int buf_flags;
 
+	KASSERT(curcpu()->ci_ilevel >= IPL_BIO);
 	xbdi_get(xbdi);
 	atomic_inc_uint(&xbdi->xbdi_pendingreqs);
 	
@@ -1385,6 +1417,7 @@ static void
 xbdback_do_io(struct work *wk, void *dummy)
 {
 	struct xbdback_io *xbd_io = (void *)wk;
+	int s;
 	KASSERT(&xbd_io->xio_work == wk);
 
 	switch (xbd_io->xio_operation) {
@@ -1410,9 +1443,11 @@ xbdback_do_io(struct work *wk, void *dummy)
 		xbdback_pool_put(&xbdback_io_pool, xbd_io);
 		xbdi_put(xbdi);
 		/* handle next IO */
+		s = splbio();
 		xbdi->xbdi_io = NULL;
 		xbdi->xbdi_cont = xbdback_co_main_incr;
 		xbdback_trampoline(xbdi, xbdi);
+		splx(s);
 		break;
 	}
 	case BLKIF_OP_READ:
@@ -1730,8 +1765,9 @@ static void xbdback_pool_put(struct xbdback_pool *pp, void *item)
 	} else {
 		struct xbdback_instance *xbdi = SIMPLEQ_FIRST(&pp->q);
 		SIMPLEQ_REMOVE_HEAD(&pp->q, xbdi_on_hold);
-		splx(s);
+		(void)splbio();
 		xbdback_trampoline(xbdi, item);
+		splx(s);
 	}
 }
 
@@ -1743,6 +1779,7 @@ static void
 xbdback_trampoline(struct xbdback_instance *xbdi, void *obj)
 {
 	xbdback_cont_t cont;
+	KASSERT(curcpu()->ci_ilevel >= IPL_BIO);
 
 	while(obj != NULL && xbdi->xbdi_cont != NULL) {
 		cont = xbdi->xbdi_cont;
