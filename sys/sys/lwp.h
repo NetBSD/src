@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.153 2011/08/07 13:33:02 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.154 2011/08/07 14:03:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -248,7 +248,7 @@ extern lwp_t		lwp0;		/* LWP for proc0. */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
 #define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
-#define	LP_JOINABLE	0x00000100 /* Joinable kthread */
+#define	LP_MUSTJOIN	0x00000100 /* Must join kthread on exit */
 #define	LP_SA_PAGEFAULT	0x00000200 /* SA LWP in pagefault handler */
 #define	LP_SA_NOBLOCK	0x00000400 /* SA don't upcall on block */
 #define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */
