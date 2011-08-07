@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1589 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1590 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1096,4 +1096,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		the module is to be loaded from a filesystem path, it must not
 		contain a / character when the module is to be loaded from
 		the system module area. [mbalmer 20110806]
+	amd64: Switch to GCC 4.5.3  [mrg 20110806]
+	i386: Switch to GCC 4.5.3  [mrg 20110806]
 
