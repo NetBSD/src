@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32 2010/12/20 04:27:35 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33 2011/08/07 13:33:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -89,6 +89,7 @@ CIRCLEQ_HEAD(cpuqueue, cpu_info);
 extern kmutex_t cpu_lock;
 extern u_int maxcpus;
 extern struct cpuqueue cpu_queue;
+extern kcpuset_t *kcpuset_attached;
   
 static inline u_int
 cpu_index(struct cpu_info *ci)
