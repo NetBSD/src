@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.103 2011/08/07 15:16:35 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104 2011/08/07 15:22:19 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2011/08/07 15:16:35 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 2011/08/07 15:22:19 kiyohara Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -41,41 +41,26 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2011/08/07 15:16:35 kiyohara Exp $
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/param.h>
-#include <sys/buf.h>
 #include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/exec.h>
-#include <sys/extent.h>
-#include <sys/intr.h>
 #include <sys/kernel.h>
-#include <sys/ksyms.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
 #include <sys/mount.h>
-#include <sys/msgbuf.h>
-#include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/syscallargs.h>
-#include <sys/syslog.h>
 #include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bootinfo.h>
+#include <machine/bebox.h>
 #include <machine/autoconf.h>
+#include <machine/bootinfo.h>
 #include <machine/powerpc.h>
 
-#include <powerpc/pmap.h>
-#include <powerpc/psl.h>
-#include <powerpc/trap.h>
-
-#include <powerpc/oea/bat.h>
 #include <powerpc/pic/picvar.h> 
+#include <powerpc/psl.h>
 
 #include <dev/cons.h>
-
-#include "ksyms.h"
 
 #include "vga.h"
 #if (NVGA > 0)
@@ -104,12 +89,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2011/08/07 15:16:35 kiyohara Exp $
  * Global variables used here and there
  */
 char bootinfo[BOOTINFO_MAXSIZE];
-#define	OFMEMREGIONS	32
-struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
+#define	MEMREGIONS	2
+struct mem_region physmemr[MEMREGIONS], availmemr[MEMREGIONS];
 char bootpath[256];
-paddr_t avail_end;			/* XXX temporary */
 struct pic_ops *isa_pic;
-int isa_pcmciamask = 0x8b28;		/* XXXX */
 extern int primary_pic;
 void initppc(u_long, u_long, u_int, void *);
 static void disable_device(const char *);
@@ -140,7 +123,6 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 		availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
 		availmemr[0].size = meminfo->memsize - availmemr[0].start;
 	}
-	avail_end = physmemr[0].start + physmemr[0].size;    /* XXX temporary */
 
 	/*
 	 * Get CPU clock
