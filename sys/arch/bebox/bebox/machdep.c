@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101 2011/06/30 00:52:55 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102 2011/08/07 15:04:46 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2011/06/30 00:52:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2011/08/07 15:04:46 kiyohara Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -104,7 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2011/06/30 00:52:55 matt Exp $");
  * Global variables used here and there
  */
 char bootinfo[BOOTINFO_MAXSIZE];
-paddr_t bebox_mb_reg;		/* BeBox MotherBoard register */
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 char bootpath[256];
@@ -167,12 +166,6 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 void
 cpu_startup(void)
 {
-	/*
-	 * BeBox Mother Board's Register Mapping
-	 */
-	bebox_mb_reg = (vaddr_t) mapiodev(BEBOX_INTR_REG, PAGE_SIZE, false);
-	if (!bebox_mb_reg)
-		panic("cpu_startup: no room for interrupt register");
 
 	/*
 	 * Do common VM initialization
