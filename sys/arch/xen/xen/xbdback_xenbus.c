@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.43 2011/08/07 17:10:35 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.44 2011/08/07 17:15:40 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.43 2011/08/07 17:10:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.44 2011/08/07 17:15:40 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1047,7 +1047,12 @@ xbdback_co_cache_doflush(struct xbdback_instance *xbdi, void *obj)
 	xbd_io->xio_operation = xbdi->xbdi_xen_req.operation;
 	xbd_io->xio_flush_id = xbdi->xbdi_xen_req.id;
 	workqueue_enqueue(xbdback_workqueue, &xbdi->xbdi_io->xio_work, NULL);
-	/* xbdback_do_io() will advance req pointer and restart processing */
+	/*
+	 * xbdback_do_io() will advance req pointer and restart processing.
+	 * Note that we could probably set xbdi->xbdi_io to NULL and
+	 * let the processing continue, but we really want to wait
+	 * for the flush to complete before doing any more work.
+	 */
 	xbdi->xbdi_cont = xbdback_co_cache_doflush_wait;
 	return NULL;
 }
