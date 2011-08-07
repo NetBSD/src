@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.24 2011/06/20 19:56:11 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.25 2011/08/07 15:44:59 kiyohara Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -120,31 +120,17 @@ __start:
 	cmpwi	0, 9, 0		/* 0 if read by CPU 0, 1 if read by CPU 1 */
 	bne	__start_cpu1
 	b	__start_cpu0
+	nop
 
 __start_cpu1:
-#ifdef CPU1_SLEEP
-	lis	8, 0x0020	/* SLEEP */
-	mfspr	7, SPR_HID0	/* get HID0 */
-	or	7, 7, 8
-	mtspr	SPR_HID0, 7	/* set HID0 */
-	lis	8, 0x0004	/* POW */
-	sync
-	mtmsr	8
-	isync			/* zzz... */
+#ifdef MULTIPROCESSOR
+	li	3, 0x1		/* CPU ID 1 */
+	ba	cpu_spinstart	/* cpu_spinstart(CPU ID) */
 #else
-	addi	9, 9, 1
-	lis	7, 0x100
-__start_cpu1_loop:
-	subi	7, 7, 1
-	cmpi	0, 7, 0
-	bne	__start_cpu1_loop
-	lis	8, 0x8000
-	ori	8, 8, 0x0c00
-	lis	9,_C_LABEL(cpu_info)+CI_CPL@ha
-	lwz	9,_C_LABEL(cpu_info)+CI_CPL@l(9)
-	stb	9, 0(8)
+1:
+	b	1b
 #endif
-	b	__start_cpu1
+	nop
 
 __start_cpu0:
 
