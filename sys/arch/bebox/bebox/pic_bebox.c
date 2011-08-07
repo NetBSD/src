@@ -1,4 +1,4 @@
-/* $NetBSD: pic_bebox.c,v 1.7 2011/06/05 16:52:23 matt Exp $ */
+/* $NetBSD: pic_bebox.c,v 1.8 2011/08/07 15:13:07 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.7 2011/06/05 16:52:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.8 2011/08/07 15:13:07 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -38,18 +38,14 @@ __KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.7 2011/06/05 16:52:23 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/bebox.h>
 #include <machine/pio.h>
 
 #include <arch/powerpc/pic/picvar.h>
 
-extern paddr_t bebox_mb_reg;
-
 #define BEBOX_INTR_MASK		0x0ffffffc
 #define BEBOX_SET_MASK		0x80000000
 #define BEBOX_INTR(x)		(0x80000000 >> x)
-#define CPU0_INT_MASK		0x0f0
-#define CPU1_INT_MASK		0x1f0
-#define INT_STATE_REG		0x2f0
 
 static void bebox_enable_irq(struct pic_ops *, int, int);
 static void bebox_disable_irq(struct pic_ops *, int);
@@ -66,7 +62,7 @@ setup_bebox_intr(void)
 	KASSERT(pic != NULL);
 
 	pic->pic_numintrs = 32;
-	pic->pic_cookie = (void *)bebox_mb_reg;
+	pic->pic_cookie = (void *)BEBOX_REG;
 	pic->pic_enable_irq = bebox_enable_irq;
 	pic->pic_reenable_irq = bebox_enable_irq;
 	pic->pic_disable_irq = bebox_disable_irq;
@@ -82,7 +78,7 @@ static void
 bebox_enable_irq(struct pic_ops *pic, int irq, int type)
 {
 
-	*(volatile unsigned int *)(bebox_mb_reg + CPU0_INT_MASK) =
+	*(volatile unsigned int *)(BEBOX_REG + CPU0_INT_MASK) =
 	    BEBOX_SET_MASK | (1 << (31 - irq));
 }
 
@@ -90,7 +86,7 @@ static void
 bebox_disable_irq(struct pic_ops *pic, int irq)
 {
 
-	*(volatile unsigned int *)(bebox_mb_reg + CPU0_INT_MASK) =
+	*(volatile unsigned int *)(BEBOX_REG + CPU0_INT_MASK) =
 	    (1 << (31 - irq));
 }
 
@@ -99,9 +95,9 @@ bebox_get_irq(struct pic_ops *pic, int mode)
 {
 	unsigned int state;
 
-	state = *(volatile unsigned int *)(bebox_mb_reg + INT_STATE_REG);
+	state = *(volatile unsigned int *)(BEBOX_REG + INT_SOURCE);
 	state &= BEBOX_INTR_MASK;
-	state &= *(volatile unsigned int *)(bebox_mb_reg + CPU0_INT_MASK);
+	state &= *(volatile unsigned int *)(BEBOX_REG + CPU0_INT_MASK);
 	if (state == 0)
 		return 255;
 	return __builtin_clz(state);
