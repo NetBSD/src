@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.2 2011/08/01 15:26:31 he Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.3 2011/08/07 13:33:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.2 2011/08/01 15:26:31 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.3 2011/08/07 13:33:01 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -103,8 +103,8 @@ pserialize_create(void)
 
 	psz = kmem_zalloc(sizeof(struct pserialize), KM_SLEEP);
 	cv_init(&psz->psz_notifier, "psrlz");
-	psz->psz_target = kcpuset_create();
-	psz->psz_pass = kcpuset_create();
+	kcpuset_create(&psz->psz_target);
+	kcpuset_create(&psz->psz_pass);
 	psz->psz_owner = NULL;
 
 	return psz;
@@ -147,7 +147,6 @@ pserialize_perform(pserialize_t psz)
 		return;
 	}
 	KASSERT(psz->psz_owner == NULL);
-	KASSERT(kcpuset_iszero(psz->psz_target));
 	KASSERT(ncpu > 0);
 
 	/*
@@ -157,7 +156,7 @@ pserialize_perform(pserialize_t psz)
 	 * other processors.
 	 */
 	psz->psz_owner = curlwp;
-	kcpuset_fill(psz->psz_target);
+	kcpuset_copy(psz->psz_target, kcpuset_attached);
 	kcpuset_zero(psz->psz_pass);
 
 	mutex_spin_enter(&psz_lock);
@@ -234,7 +233,7 @@ pserialize_switchpoint(void)
 	for (psz = TAILQ_FIRST(&psz_queue1); psz != NULL; psz = next) {
 		next = TAILQ_NEXT(psz, psz_chain);
 		if (!kcpuset_match(psz->psz_pass, psz->psz_target)) {
-			kcpuset_set(cid, psz->psz_pass);
+			kcpuset_set(psz->psz_pass, cid);
 			continue;
 		}
 		kcpuset_zero(psz->psz_pass);
@@ -248,7 +247,7 @@ pserialize_switchpoint(void)
 	for (psz = TAILQ_FIRST(&psz_queue0); psz != NULL; psz = next) {
 		next = TAILQ_NEXT(psz, psz_chain);
 		if (!kcpuset_match(psz->psz_pass, psz->psz_target)) {
-			kcpuset_set(cid, psz->psz_pass);
+			kcpuset_set(psz->psz_pass, cid);
 			continue;
 		}
 		kcpuset_zero(psz->psz_pass);

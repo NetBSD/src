@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.47 2011/06/29 06:22:21 matt Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.48 2011/08/07 13:33:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.47 2011/06/29 06:22:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.48 2011/08/07 13:33:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,9 @@ kmutex_t	cpu_lock		__cacheline_aligned;
 int		ncpu			__read_mostly;
 int		ncpuonline		__read_mostly;
 bool		mp_online		__read_mostly;
+
+kcpuset_t *	kcpuset_attached	__read_mostly;
+
 struct cpuqueue	cpu_queue		__cacheline_aligned
     = CIRCLEQ_HEAD_INITIALIZER(cpu_queue);
 
@@ -131,8 +134,11 @@ mi_cpu_attach(struct cpu_info *ci)
 	if (__predict_false(cpu_infos == NULL)) {
 		cpu_infos =
 		    kmem_zalloc(sizeof(cpu_infos[0]) * maxcpus, KM_SLEEP);
+		kcpuset_create(&kcpuset_attached);
+		kcpuset_zero(kcpuset_attached);
 	}
 	cpu_infos[cpu_index(ci)] = ci;
+	kcpuset_set(kcpuset_attached, ci->ci_index);
 
 	sched_cpuattach(ci);
 
@@ -315,7 +321,7 @@ cpu_xc_offline(struct cpu_info *ci)
 		for (CPU_INFO_FOREACH(cii, mci)) {
 			mspc = &mci->ci_schedstate;
 			if ((mspc->spc_flags & SPCF_OFFLINE) == 0 &&
-			    kcpuset_isset(cpu_index(mci), l->l_affinity))
+			    kcpuset_isset(l->l_affinity, cpu_index(mci)))
 				break;
 		}
 		if (mci == NULL) {

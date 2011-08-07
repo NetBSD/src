@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.30 2010/03/03 00:47:30 yamt Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.31 2011/08/07 13:33:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.30 2010/03/03 00:47:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.31 2011/08/07 13:33:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -352,7 +352,7 @@ sched_migratable(const struct lwp *l, struct cpu_info *ci)
 
 	/* Affinity bind */
 	if (__predict_false(l->l_flag & LW_AFFINITY))
-		return kcpuset_isset(cpu_index(ci), l->l_affinity);
+		return kcpuset_isset(l->l_affinity, cpu_index(ci));
 
 	/* Processor-set */
 	return (spc->spc_psid == l->l_psid);

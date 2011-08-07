@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.152 2011/05/19 03:07:29 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.153 2011/08/07 13:33:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -37,6 +37,7 @@
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
+#include <sys/kcpuset.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/signalvar.h>
