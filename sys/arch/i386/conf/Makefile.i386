@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.173 2011/07/04 16:20:45 joerg Exp $
+#	$NetBSD: Makefile.i386,v 1.174 2011/08/07 14:39:15 jakllsch Exp $
 
 # Makefile for NetBSD
 #
@@ -34,6 +34,7 @@ GENASSYM_CONF=	${I386}/i386/genassym.cf
 ## (2) compile settings
 ##
 CPPFLAGS+=	-Di386
+CFLAGS+=	-mno-sse -mno-sse2 -mno-sse3
 
 AFLAGS.mptramp.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 CWARNFLAGS.ah_regdomain.c= ${${ACTIVE_CC} == "clang":?-Wno-error:}
