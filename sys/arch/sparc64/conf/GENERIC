@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.142 2011/07/29 08:37:37 mrg Exp $
+# $NetBSD: GENERIC,v 1.143 2011/08/07 14:00:08 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.142 $"
+#ident 		"GENERIC-$Revision: 1.143 $"
 
 maxusers	64
 
@@ -432,7 +432,7 @@ pseudo-device   accf_http		# "httpready" accept filter
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
 
-pseudo-device	vnd	
+pseudo-device	vnd
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
 ## Concatenated and striped disks; with this, you can create a software-based
@@ -461,7 +461,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
 
-pseudo-device	md	
+pseudo-device	md
 
 
 #### Network interfaces
@@ -692,20 +692,20 @@ sbp*	at ieee1394if? euihi ? euilo ?
 pseudo-device	loop
 
 ## SLIP and CSLIP interfaces, for IP over a serial line.
-pseudo-device	sl		
+pseudo-device	sl
 
 ## PPP, the successor to SLIP.  See pppd(8).
-pseudo-device	ppp		
+pseudo-device	ppp
 
 ## PPP over Ethernet (RFC 2516)
 pseudo-device	pppoe
 
 ## Starmode Radio IP, a special hardware network device.
-pseudo-device	strip		
+pseudo-device	strip
 
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
-pseudo-device	tun		
+pseudo-device	tun
 pseudo-device	tap			# virtual Ethernet
 
 ## Generic L3 over IP tunnel
