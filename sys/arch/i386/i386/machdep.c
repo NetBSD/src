@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.702.2.3 2011/08/06 21:06:34 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.702.2.4 2011/08/07 19:48:07 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.702.2.3 2011/08/06 21:06:34 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.702.2.4 2011/08/07 19:48:07 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1195,7 +1195,7 @@ initgdt(union descriptor *tgdt)
 		pt_entry_t pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
 
 		pte = kvtopte((vaddr_t)gdt);
-		npte = pmap_pa2pte((paddr_t)gdt - KERNBASE);
+		npte = pmap_pa2pte((vaddr_t)gdt - KERNBASE);
 		npte |= PG_RO | pg_nx | PG_V;
 
 		xpq_queue_lock();

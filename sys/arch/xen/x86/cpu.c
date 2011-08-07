@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.56.2.4 2011/07/31 20:49:11 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.56.2.5 2011/08/07 19:48:08 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.4 2011/07/31 20:49:11 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.5 2011/08/07 19:48:08 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -140,7 +140,7 @@ struct cpu_softc {
 	bool sc_wasonline;
 };
 
-int mp_cpu_start(struct cpu_info *, paddr_t);
+int mp_cpu_start(struct cpu_info *, vaddr_t);
 void mp_cpu_start_cleanup(struct cpu_info *);
 const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 				      mp_cpu_start_cleanup };
