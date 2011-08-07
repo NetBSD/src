@@ -1,4 +1,4 @@
-/*	$NetBSD: busypage.c,v 1.4 2011/06/12 06:38:14 mrg Exp $	*/
+/*	$NetBSD: busypage.c,v 1.5 2011/08/07 14:03:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: busypage.c,v 1.4 2011/06/12 06:38:14 mrg Exp $");
+__RCSID("$NetBSD: busypage.c,v 1.5 2011/08/07 14:03:15 rmind Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -75,7 +75,7 @@ rumptest_busypage()
 	if (testpg == NULL)
 		panic("couldn't create vm page");
 
-	rv = kthread_create(PRI_NONE, KTHREAD_JOINABLE | KTHREAD_MPSAFE, NULL,
+	rv = kthread_create(PRI_NONE, KTHREAD_MUSTJOIN | KTHREAD_MPSAFE, NULL,
 	    thread, NULL, &newl, "jointest");
 	if (rv)
 		panic("thread creation failed: %d", rv);
