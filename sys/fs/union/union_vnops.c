@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.41 2011/08/05 08:17:47 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.42 2011/08/07 06:01:51 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.41 2011/08/05 08:17:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.42 2011/08/07 06:01:51 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1431,6 +1431,13 @@ union_rmdir(void *v)
 
 	if (dun->un_uppervp == NULLVP)
 		panic("union rmdir: null upper vnode");
+
+	error = union_check_rmdir(un, cnp->cn_cred);
+	if (error) {
+		vput(ap->a_dvp);
+		vput(ap->a_vp);
+		return error;
+	}
 
 	if (un->un_uppervp != NULLVP) {
 		struct vnode *dvp = dun->un_uppervp;

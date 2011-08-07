@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.18 2008/06/28 01:34:05 rumble Exp $	*/
+/*	$NetBSD: union.h,v 1.19 2011/08/07 06:01:51 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -134,6 +134,7 @@ extern int union_allocvp(struct vnode **, struct mount *,
 				struct vnode *, struct vnode *,
 				struct componentname *, struct vnode *,
 				struct vnode *, int);
+extern int union_check_rmdir(struct union_node *, kauth_cred_t);
 extern int union_copyfile(struct vnode *, struct vnode *, kauth_cred_t,
     struct lwp *);
 extern int union_copyup(struct union_node *, int, kauth_cred_t,
