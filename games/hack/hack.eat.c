@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.eat.c,v 1.11 2011/08/06 20:42:43 dholland Exp $	*/
+/*	$NetBSD: hack.eat.c,v 1.12 2011/08/07 06:03:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.eat.c,v 1.11 2011/08/06 20:42:43 dholland Exp $");
+__RCSID("$NetBSD: hack.eat.c,v 1.12 2011/08/07 06:03:45 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -495,11 +495,11 @@ eatcorpse(struct obj *otmp)
 	case 'n':
 		u.uhp = u.uhpmax;
 		flags.botl = 1;
-		/* fall into next case */
+		/* FALLTHROUGH */
 	case '@':
 		pline("You cannibal! You will be sorry for this!");
 		/* not tp++; */
-		/* fall into next case */
+		/* FALLTHROUGH */
 	case 'd':
 		Aggravate_monster |= INTRINSIC;
 		break;
@@ -512,12 +512,12 @@ eatcorpse(struct obj *otmp)
 			Invis |= INTRINSIC;
 			See_invisible |= INTRINSIC;
 		}
-		/* fall into next case */
+		/* FALLTHROUGH */
 	case 'y':
 #ifdef QUEST
 		u.uhorizon++;
 #endif	/* QUEST */
-		/* fall into next case */
+		/* FALLTHROUGH */
 	case 'B':
 		Confusion = 50;
 		break;
