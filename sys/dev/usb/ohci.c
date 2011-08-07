@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.217 2011/07/30 20:05:36 jmcneill Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218 2011/08/07 13:45:46 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.217 2011/07/30 20:05:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218 2011/08/07 13:45:46 jmcneill Exp $");
 
 #include "opt_usb.h"
 
@@ -1293,7 +1293,9 @@ ohci_softintr(void *v)
 			DPRINTFN(5,("add ITD %p\n", sitd));
 			continue;
 		}
-		panic("ohci_softintr: addr 0x%08lx not found", (u_long)done);
+		device_printf(sc->sc_dev, "WARNING: addr 0x%08lx not found\n",
+		    (u_long)done);
+		break;
 	}
 
 	DPRINTFN(10,("ohci_softintr: sdone=%p sidone=%p\n", sdone, sidone));
