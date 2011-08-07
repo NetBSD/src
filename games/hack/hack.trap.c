@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.trap.c,v 1.9 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.trap.c,v 1.10 2011/08/07 06:03:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.trap.c,v 1.9 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.trap.c,v 1.10 2011/08/07 06:03:45 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -336,7 +336,7 @@ float_down(void)
 		case TRAPDOOR:
 			if (!xdnstair || u.ustuck)
 				break;
-			/* fall into next case */
+			/* FALLTHROUGH */
 		default:
 			dotrap(trap);
 		}

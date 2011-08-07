@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mkshop.c,v 1.10 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.mkshop.c,v 1.11 2011/08/07 06:03:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mkshop.c,v 1.10 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.mkshop.c,v 1.11 2011/08/07 06:03:45 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -188,7 +188,7 @@ gottype:
 		return;
 	shk->isshk = shk->mpeaceful = 1;
 	shk->msleep = 0;
-	shk->mtrapseen = ~0;	/* we know all the traps already */
+	shk->mtrapseen = ~0U;	/* we know all the traps already */
 	ESHK->shoproom = roomno;
 	ESHK->shoplevel = dlevel;
 	ESHK->shd = doors[sh];

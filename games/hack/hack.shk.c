@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.shk.c,v 1.12 2011/08/06 20:29:37 dholland Exp $	*/
+/*	$NetBSD: hack.shk.c,v 1.13 2011/08/07 06:03:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.shk.c,v 1.12 2011/08/06 20:29:37 dholland Exp $");
+__RCSID("$NetBSD: hack.shk.c,v 1.13 2011/08/07 06:03:45 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -890,6 +890,7 @@ getprice(struct obj *obj)
 		break;
 	case CHAIN_SYM:
 		pline("Strange ..., carrying a chain?");
+		/* FALLTHROUGH */
 	case BALL_SYM:
 		tmp = 10;
 		break;
