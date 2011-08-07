@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.133 2011/04/02 08:11:32 mbalmer Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.134 2011/08/07 13:51:37 rmind Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.133 2011/04/02 08:11:32 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.134 2011/08/07 13:51:37 rmind Exp $");
 
 #include "ppp.h"
 
@@ -130,7 +130,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.133 2011/04/02 08:11:32 mbalmer Exp $")
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/intr.h>
-#include <sys/simplelock.h>
 #include <sys/socketvar.h>
 
 #include <net/if.h>
@@ -205,11 +204,10 @@ static int		ppp_clone_destroy(struct ifnet *);
 static struct ppp_softc *ppp_create(const char *, int);
 
 static LIST_HEAD(, ppp_softc) ppp_softc_list;
+static kmutex_t ppp_list_lock;
 
 struct if_clone ppp_cloner =
     IF_CLONE_INITIALIZER("ppp", ppp_clone_create, ppp_clone_destroy);
-
-static struct simplelock ppp_list_mutex = SIMPLELOCK_INITIALIZER;
 
 #ifdef PPP_COMPRESS
 ONCE_DECL(ppp_compressor_mtx_init);
@@ -232,6 +230,8 @@ pppattach(void)
 
     if (ttyldisc_attach(&ppp_disc) != 0)
     	panic("pppattach");
+
+    mutex_init(&ppp_list_lock, MUTEX_DEFAULT, IPL_NONE);
     LIST_INIT(&ppp_softc_list);
     if_clone_attach(&ppp_cloner);
     RUN_ONCE(&ppp_compressor_mtx_init, ppp_compressor_init);
@@ -244,7 +244,7 @@ ppp_create(const char *name, int unit)
 
     sc = malloc(sizeof(*sc), M_DEVBUF, M_WAIT|M_ZERO);
 
-    simple_lock(&ppp_list_mutex);
+    mutex_enter(&ppp_list_lock);
     if (unit == -1) {
 	int i = 0;
 	LIST_FOREACH(sci, &ppp_softc_list, sc_iflist) {
@@ -280,7 +280,7 @@ ppp_create(const char *name, int unit)
     else
 	LIST_INSERT_HEAD(&ppp_softc_list, sc, sc_iflist);
 
-    simple_unlock(&ppp_list_mutex);
+    mutex_exit(&ppp_list_lock);
 
     if_initname(&sc->sc_if, name, sc->sc_unit = unit);
     callout_init(&sc->sc_timo_ch, 0);
@@ -322,9 +322,9 @@ ppp_clone_destroy(struct ifnet *ifp)
     if (sc->sc_devp != NULL)
 	return EBUSY; /* Not removing it */
 
-    simple_lock(&ppp_list_mutex);
+    mutex_enter(&ppp_list_lock);
     LIST_REMOVE(sc, sc_iflist);
-    simple_unlock(&ppp_list_mutex);
+    mutex_exit(&ppp_list_lock);
 
     bpf_detach(ifp);
     if_detach(ifp);
@@ -342,18 +342,17 @@ pppalloc(pid_t pid)
     struct ppp_softc *sc = NULL, *scf;
     int i;
 
-    simple_lock(&ppp_list_mutex);
-    for (scf = LIST_FIRST(&ppp_softc_list); scf != NULL;
-	scf = LIST_NEXT(scf, sc_iflist)) {
+    mutex_enter(&ppp_list_lock);
+    LIST_FOREACH(scf, &ppp_softc_list, sc_iflist) {
 	if (scf->sc_xfer == pid) {
 	    scf->sc_xfer = 0;
-	    simple_unlock(&ppp_list_mutex);
+	    mutex_exit(&ppp_list_lock);
 	    return scf;
 	}
 	if (scf->sc_devp == NULL && sc == NULL)
 	    sc = scf;
     }
-    simple_unlock(&ppp_list_mutex);
+    mutex_exit(&ppp_list_lock);
 
     if (sc == NULL)
 	sc = ppp_create(ppp_cloner.ifc_name, -1);
