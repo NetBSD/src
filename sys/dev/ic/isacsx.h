@@ -1,4 +1,4 @@
-/* $NetBSD: isacsx.h,v 1.4 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/* $NetBSD: isacsx.h,v 1.5 2011/08/07 20:14:42 jakllsch Exp $	*/
 /*
  *   Copyright (c) 2001 Gary Jennejohn. All rights reserved.
  *
@@ -241,7 +241,7 @@ typedef struct isacsx_reg {
 	} isacsx_rw;
 }  __packed isacsx_reg_t;
 
-#define REG_OFFSET(type, field) (int)(&(((type *)0)->field))
+#define REG_OFFSET(type, field) (uintptr_t)(&(((type *)0)->field))
 
 /* ISACSX read registers */
 
