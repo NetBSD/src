@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1590 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1591 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1022,6 +1022,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	makefs(8): Fix a corrupted RRIP entry problem in deep directories on
 		cd9660 fs with rockridge extension. [tsutsui 20110529]
 	tmpfs: Many fixes and some performance improvements. [rmind 20110529]
+	compat_linux(8), compat_linux32: Add fadvise64() and fadvise64_64()
+		syscalls. [alnsn 20110530]
 	powerpc: Initial SMP support for MPC85xx, reworked and unified IPI
 		code, various other improvements. [matt 20110605]
 	ktrace(1): Add a new trace point to list all open file descriptors
