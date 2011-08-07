@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.wizard.c,v 1.9 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.wizard.c,v 1.10 2011/08/07 06:03:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.wizard.c,v 1.9 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.wizard.c,v 1.10 2011/08/07 06:03:45 dholland Exp $");
 #endif				/* not lint */
 
 /* wizard code - inspired by rogue code from Merlyn Leroy (digi-g!brian) */
@@ -221,7 +221,7 @@ inrange(struct monst *mtmp)
 					pline("\"Destroy the thief, my pets!\"");
 					aggravate();	/* aggravate all the
 							 * monsters */
-					/* fall into next case */
+					/* FALLTHROUGH */
 				case 2:
 					if (flags.no_of_wizards == 1 && rnd(5) == 0)
 						/*

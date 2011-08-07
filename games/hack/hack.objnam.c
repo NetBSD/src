@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.objnam.c,v 1.10 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.objnam.c,v 1.11 2011/08/07 06:03:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.objnam.c,v 1.10 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.objnam.c,v 1.11 2011/08/07 06:03:45 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -200,7 +200,7 @@ xname(struct obj *obj)
 			break;
 		}
 		/* fungis ? */
-		/* fall into next case */
+		/* FALLTHROUGH */
 	case WEAPON_SYM:
 		if (obj->otyp == WORM_TOOTH && pl) {
 			pl = 0;
@@ -212,7 +212,7 @@ xname(struct obj *obj)
 			Strcpy(buf, "crysknives");
 			break;
 		}
-		/* fall into next case */
+		/* FALLTHROUGH */
 	case ARMOR_SYM:
 	case CHAIN_SYM:
 	case ROCK_SYM:
@@ -358,7 +358,7 @@ doname(struct obj *obj)
 	case ARMOR_SYM:
 		if (obj->owornmask & W_ARMOR)
 			strlcat(bp, " (being worn)", bpmax);
-		/* fall into next case */
+		/* FALLTHROUGH */
 	case WEAPON_SYM:
 		if (obj->known) {
 			strlcat(prefix, sitoa(obj->spe), sizeof(prefix));

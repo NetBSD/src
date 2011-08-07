@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.apply.c,v 1.12 2011/08/06 20:42:43 dholland Exp $	*/
+/*	$NetBSD: hack.apply.c,v 1.13 2011/08/07 06:03:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.apply.c,v 1.12 2011/08/06 20:42:43 dholland Exp $");
+__RCSID("$NetBSD: hack.apply.c,v 1.13 2011/08/07 06:03:45 dholland Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
@@ -108,7 +108,7 @@ doapply(void)
 			use_magic_whistle(obj);
 			break;
 		}
-		/* fall into next case */
+		/* FALLTHROUGH */
 	case WHISTLE:
 		use_whistle(obj);
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.engrave.c,v 1.13 2011/08/06 20:42:43 dholland Exp $	*/
+/*	$NetBSD: hack.engrave.c,v 1.14 2011/08/07 06:03:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.engrave.c,v 1.13 2011/08/06 20:42:43 dholland Exp $");
+__RCSID("$NetBSD: hack.engrave.c,v 1.14 2011/08/07 06:03:45 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -105,7 +105,8 @@ sengr_at(const char *s, xchar x, xchar y)
 {
 	struct engr    *ep = engr_at(x, y);
 	char           *t;
-	int             n;
+	size_t n;
+
 	if (ep && ep->engr_time <= moves) {
 		t = ep->engr_txt;
 		/*
@@ -132,8 +133,10 @@ void
 wipe_engr_at(xchar x, xchar y, xchar cnt)
 {
 	struct engr    *ep = engr_at(x, y);
-	int             lth, pos;
+	int             pos;
 	char            ch;
+	size_t lth;
+
 	if (ep) {
 		if ((ep->engr_type != DUST) || Levitation) {
 			cnt = rn2(1 + 50 / (cnt + 1)) ? 0 : 1;

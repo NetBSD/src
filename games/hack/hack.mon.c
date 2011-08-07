@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mon.c,v 1.13 2011/08/06 20:29:37 dholland Exp $	*/
+/*	$NetBSD: hack.mon.c,v 1.14 2011/08/07 06:03:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mon.c,v 1.13 2011/08/06 20:29:37 dholland Exp $");
+__RCSID("$NetBSD: hack.mon.c,v 1.14 2011/08/07 06:03:45 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -848,6 +848,7 @@ killed(struct monst *mtmp)
 	{
 		int             ul = u.ulevel;
 		int             ml = mdat->mlevel;
+		int tmp2;
 
 		if (ul < 14)	/* points are given based on present and
 				 * future level */
