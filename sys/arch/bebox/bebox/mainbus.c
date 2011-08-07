@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.27 2011/07/01 20:34:53 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.28 2011/08/07 15:31:35 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27 2011/07/01 20:34:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28 2011/08/07 15:31:35 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -107,6 +107,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	 */
 	ca.ca_name = "cpu";
 	ca.ca_node = 0;
+	config_found_ia(self, "mainbus", &ca, mainbus_print);
+	ca.ca_name = "cpu";
+	ca.ca_node = 1;
 	config_found_ia(self, "mainbus", &ca, mainbus_print);
 
 	/*
