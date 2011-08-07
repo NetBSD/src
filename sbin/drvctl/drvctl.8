@@ -1,4 +1,4 @@
-.\" $NetBSD: drvctl.8,v 1.10 2009/04/20 22:07:23 wiz Exp $
+.\" $NetBSD: drvctl.8,v 1.11 2011/08/07 12:00:11 jmcneill Exp $
 .\"
 .\" Copyright (c) 2004
 .\" 	Matthias Drochner.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 20, 2009
+.Dd August 7, 2011
 .Dt DRVCTL 8
 .Os
 .Sh NAME
@@ -46,6 +46,7 @@
 .Nm
 .Fl p
 .Ar device
+.Op Ar property ...
 .Nm
 .Fl Q
 .Ar device
@@ -96,10 +97,13 @@ Suppress first column in
 .Fl l
 output.
 .It Fl p
-Get the properties for the device specified by the
+Get properties for the device specified by the
 .Ar device
 argument.
-The properties are displayed as an XML property list.
+If
+.Ar property
+is specified, the value of that property is printed, otherwise
+the properties are displayed as an XML property list.
 .It Fl Q
 Resume the ancestors of
 .Ar device ,

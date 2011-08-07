@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.10 2009/04/20 21:41:50 dyoung Exp $ */
+/* $NetBSD: drvctl.c,v 1.11 2011/08/07 12:00:11 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -26,6 +26,7 @@
  * SUCH DAMAGE.
  */
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,6 +44,7 @@
 					  : O_RDONLY)
 
 static void usage(void);
+static void extract_property(prop_dictionary_t, const char *);
 
 static void
 usage(void)
@@ -51,7 +53,7 @@ usage(void)
 	fprintf(stderr, "Usage: %s -r [-a attribute] busdevice [locator ...]\n"
 	    "       %s -d device\n"
 	    "       %s [-n] -l [device]\n"
-	    "       %s -p device\n"
+	    "       %s -p device [prop]\n"
 	    "       %s -Q device\n"
 	    "       %s -R device\n"
 	    "       %s -S device\n",
@@ -219,16 +221,68 @@ main(int argc, char **argv)
 			errx(3, "get-properties: failed to return result data");
 		}
 
-		xml = prop_dictionary_externalize(data_dict);
-		prop_object_release(results_dict);
+		if (argc == 1) {
+			xml = prop_dictionary_externalize(data_dict);
+			printf("Properties for device `%s':\n%s",
+			       argv[0], xml);
+			free(xml);
+		} else {
+			for (i = 1; i < argc; i++)
+				extract_property(data_dict, argv[i]);
+		}
 
-		printf("Properties for device `%s':\n%s",
-		       argv[0], xml);
-		free(xml);
+		prop_object_release(results_dict);
 		break;
 	default:
 		errx(4, "unknown command");
 	}
 
 	return (0);
+}
+
+static void
+extract_property(prop_dictionary_t dict, const char *prop)
+{
+	char *s, *p, *cur, *ep = NULL, *xml;
+	prop_object_t obj;
+
+	s = strdup(prop);
+	p = strtok_r(s, "/", &ep);
+	while (p) {
+		cur = p;
+		p = strtok_r(NULL, "/", &ep);
+		if (p) {
+			if (prop_dictionary_get_dict(dict, cur, &dict) == false)
+				exit(EXIT_FAILURE);
+		} else {
+			obj = prop_dictionary_get(dict, cur);
+			if (obj == NULL)
+				exit(EXIT_FAILURE);
+			switch (prop_object_type(obj)) {
+			case PROP_TYPE_BOOL:
+				printf("%s\n",
+				    prop_bool_true(obj) ? "true" : "false");
+				break;
+			case PROP_TYPE_NUMBER:
+				printf("%" PRId64 "\n",
+				    prop_number_integer_value(obj));
+				break;
+			case PROP_TYPE_STRING:
+				printf("%s\n",
+				    prop_string_cstring_nocopy(obj));
+				break;
+			case PROP_TYPE_DICTIONARY:
+				xml = prop_dictionary_externalize(obj);
+				printf("%s", xml);
+				free(xml);
+				break;
+			default:
+				fprintf(stderr, "unhandled type %d\n",
+				    prop_object_type(obj));
+				exit(EXIT_FAILURE);
+			}
+		}
+	}
+
+	free(s);
 }
