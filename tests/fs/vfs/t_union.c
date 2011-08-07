@@ -1,4 +1,4 @@
-/*	$NetBSD: t_union.c,v 1.7 2011/08/05 08:17:47 hannken Exp $	*/
+/*	$NetBSD: t_union.c,v 1.8 2011/08/07 06:01:51 hannken Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -176,8 +176,9 @@ whiteout(const atf_tc_t *tc, const char *mp)
 
 	mountunion(mp, lower);
 
-	/* all file systems fail sooner or later */
 	FSTEST_ENTER();
+	ATF_REQUIRE_ERRNO(ENOTEMPTY, rump_sys_rmdir(TDIR) == -1);
+	RL(rump_sys_rmdir(TDFILE));
 	RL(rump_sys_rmdir(TDIR));
 	ATF_REQUIRE_ERRNO(ENOENT, rump_sys_stat(TDFILE, &sb) == -1);
 	ATF_REQUIRE_ERRNO(ENOENT, rump_sys_stat(TDIR, &sb) == -1);
