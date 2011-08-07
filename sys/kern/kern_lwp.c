@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.161 2011/07/30 17:01:04 christos Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.162 2011/08/07 21:13:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.161 2011/07/30 17:01:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.162 2011/08/07 21:13:05 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -803,18 +803,19 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	p2->p_nlwps++;
 	p2->p_nrlwps++;
 
+	KASSERT(l2->l_affinity == NULL);
+
 	if ((p2->p_flag & PK_SYSTEM) == 0) {
-		/* Inherit an affinity */
-		if (l1->l_flag & LW_AFFINITY) {
+		/* Inherit the affinity mask. */
+		if (l1->l_affinity) {
 			/*
 			 * Note that we hold the state lock while inheriting
 			 * the affinity to avoid race with sched_setaffinity().
 			 */
 			lwp_lock(l1);
-			if (l1->l_flag & LW_AFFINITY) {
+			if (l1->l_affinity) {
 				kcpuset_use(l1->l_affinity);
 				l2->l_affinity = l1->l_affinity;
-				l2->l_flag |= LW_AFFINITY;
 			}
 			lwp_unlock(l1);
 		}
@@ -987,12 +988,8 @@ lwp_exit(struct lwp *l)
 
 	lwp_lock(l);
 	l->l_stat = LSZOMB;
-	if (l->l_name != NULL)
+	if (l->l_name != NULL) {
 		strcpy(l->l_name, "(zombie)");
-	if (l->l_flag & LW_AFFINITY) {
-		l->l_flag &= ~LW_AFFINITY;
-	} else {
-		KASSERT(l->l_affinity == NULL);
 	}
 	lwp_unlock(l);
 	p->p_nrlwps--;
@@ -1000,12 +997,6 @@ lwp_exit(struct lwp *l)
 	if (l->l_lwpctl != NULL)
 		l->l_lwpctl->lc_curcpu = LWPCTL_CPU_EXITED;
 	mutex_exit(p->p_lock);
-
-	/* Safe without lock since LWP is in zombie state */
-	if (l->l_affinity) {
-		kcpuset_unuse(l->l_affinity, NULL);
-		l->l_affinity = NULL;
-	}
 
 	/*
 	 * We can no longer block.  At this point, lwp_free() may already
@@ -1103,6 +1094,17 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	cv_destroy(&l->l_sigcv);
 
 	/*
+	 * Free lwpctl structure and affinity.
+	 */
+	if (l->l_lwpctl) {
+		lwp_ctl_free(l);
+	}
+	if (l->l_affinity) {
+		kcpuset_unuse(l->l_affinity, NULL);
+		l->l_affinity = NULL;
+	}
+
+	/*
 	 * Free the LWP's turnstile and the LWP structure itself unless the
 	 * caller wants to recycle them.  Also, free the scheduler specific
 	 * data.
@@ -1112,8 +1114,6 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	 *
 	 * We don't recycle the VM resources at this time.
 	 */
-	if (l->l_lwpctl != NULL)
-		lwp_ctl_free(l);
 
 	if (!recycle && l->l_ts != &turnstile0)
 		pool_cache_put(turnstile_cache, l->l_ts);

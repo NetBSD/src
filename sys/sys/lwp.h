@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.154 2011/08/07 14:03:16 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.155 2011/08/07 21:13:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -227,7 +227,6 @@ extern lwp_t		lwp0;		/* LWP for proc0. */
 #define	LW_BATCH	0x00040000 /* LWP tends to hog CPU */
 #define	LW_WCORE	0x00080000 /* Stop for core dump on return to user */
 #define	LW_WEXIT	0x00100000 /* Exit before return to user */
-#define	LW_AFFINITY	0x00200000 /* Affinity is assigned to the thread */
 #define	LW_SA_UPCALL	0x00400000 /* SA upcall is pending */
 #define	LW_SA_BLOCKING	0x00800000 /* Blocking in tsleep() */
 #define	LW_PENDSIG	0x01000000 /* Pending signal for us */
