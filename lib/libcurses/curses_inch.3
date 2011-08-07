@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_inch.3,v 1.10 2004/04/21 06:24:32 jdc Exp $
+.\"	$NetBSD: curses_inch.3,v 1.11 2011/08/07 10:55:59 blymn Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -219,6 +219,13 @@ and
 .Fn winstr
 is not recommended.
 .Sh RETURN VALUES
+If the calls
+.Fn innstr ,
+.Fn mvinnstr ,
+.Fn mvwinnstr
+and
+.Fn winnstr 
+succeed then they will return the number of characters actually read.
 Functions returning pointers will return
 .Dv NULL
 if an error is detected.
