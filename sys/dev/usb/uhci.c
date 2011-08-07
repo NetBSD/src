@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.239 2011/06/09 19:08:32 matt Exp $	*/
+/*	$NetBSD: uhci.c,v 1.240 2011/08/07 18:58:52 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.239 2011/06/09 19:08:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240 2011/08/07 18:58:52 jakllsch Exp $");
 
 #include "opt_usb.h"
 
@@ -222,7 +222,7 @@ Static usbd_status	uhci_device_setintr(uhci_softc_t *sc,
 Static void		uhci_device_clear_toggle(usbd_pipe_handle pipe);
 Static void		uhci_noop(usbd_pipe_handle pipe);
 
-Static inline uhci_soft_qh_t *uhci_find_prev_qh(uhci_soft_qh_t *,
+static inline uhci_soft_qh_t *uhci_find_prev_qh(uhci_soft_qh_t *,
 						    uhci_soft_qh_t *);
 
 #ifdef UHCI_DEBUG
@@ -353,7 +353,7 @@ const struct usbd_pipe_methods uhci_device_isoc_methods = {
 	} while (0)
 #define uhci_active_intr_info(ii) ((ii)->list.le_prev != NULL)
 
-Static inline uhci_soft_qh_t *
+static inline uhci_soft_qh_t *
 uhci_find_prev_qh(uhci_soft_qh_t *pqh, uhci_soft_qh_t *sqh)
 {
 	DPRINTFN(15,("uhci_find_prev_qh: pqh=%p sqh=%p\n", pqh, sqh));
