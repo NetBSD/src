@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.44 2009/05/12 14:31:00 cegger Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.45 2011/08/07 13:39:24 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.44 2009/05/12 14:31:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.45 2011/08/07 13:39:24 rmind Exp $");
 
 #include "rnd.h"
 
@@ -481,7 +481,7 @@ edc_intr(void *arg)
 	if (intr_id != ISR_DATA_TRANSFER_RDY) {
 	    	if (cmd == CMD_READ_DATA || cmd == CMD_WRITE_DATA)
 			sc->sc_resblk = sc->status_block[SB_RESBLKCNT_IDX];
-		wakeup_one(sc);
+		wakeup(sc);
 	}
 
 	return (1);

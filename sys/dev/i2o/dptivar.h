@@ -1,4 +1,4 @@
-/*	$NetBSD: dptivar.h,v 1.7 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: dptivar.h,v 1.8 2011/08/07 13:39:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,7 +63,6 @@
 struct dpti_softc {
 	struct	device sc_dv;
 	int	sc_blinkled;
-	int	sc_nactive;
 };
 
 struct dpti_ptbuf {
