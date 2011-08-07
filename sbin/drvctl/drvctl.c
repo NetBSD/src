@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.11 2011/08/07 12:00:11 jmcneill Exp $ */
+/* $NetBSD: drvctl.c,v 1.12 2011/08/07 13:00:35 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -37,7 +37,7 @@
 #include <sys/ioctl.h>
 #include <sys/drvctlio.h>
 
-#define OPTS "QRSa:dlnpr"
+#define OPTS "QRSa:dlnprt"
 
 #define	OPEN_MODE(mode)							\
 	(((mode) == 'd' || (mode) == 'r') ? O_RDWR			\
@@ -45,6 +45,7 @@
 
 static void usage(void);
 static void extract_property(prop_dictionary_t, const char *);
+static void list_children(int, char *, bool, bool, int);
 
 static void
 usage(void)
@@ -52,7 +53,7 @@ usage(void)
 
 	fprintf(stderr, "Usage: %s -r [-a attribute] busdevice [locator ...]\n"
 	    "       %s -d device\n"
-	    "       %s [-n] -l [device]\n"
+	    "       %s [-nt] -l [device]\n"
 	    "       %s -p device [prop]\n"
 	    "       %s -Q device\n"
 	    "       %s -R device\n"
@@ -65,16 +66,13 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	bool nflag = false;
+	bool nflag = false, tflag = false;
 	int c, mode;
 	char *attr = 0;
 	extern char *optarg;
 	extern int optind;
 	int fd, res;
-	size_t children;
 	struct devpmargs paa = {.devname = "", .flags = 0};
-	struct devlistargs laa = {.l_devname = "", .l_childname = NULL,
-				  .l_children = 0};
 	struct devdetachargs daa;
 	struct devrescanargs raa;
 	int *locs, i;
@@ -101,6 +99,9 @@ main(int argc, char **argv)
 			break;
 		case 'n':
 			nflag = true;
+			break;
+		case 't':
+			tflag = nflag = true;
 			break;
 		case '?':
 		default:
@@ -141,31 +142,7 @@ main(int argc, char **argv)
 			err(3, "DRVDETACHDEV");
 		break;
 	case 'l':
-		if (argc == 0)
-			*laa.l_devname = '\0';
-		else
-			strlcpy(laa.l_devname, argv[0], sizeof(laa.l_devname));
-
-		if (ioctl(fd, DRVLISTDEV, &laa) == -1)
-			err(3, "DRVLISTDEV");
-
-		children = laa.l_children;
-
-		laa.l_childname = malloc(children * sizeof(laa.l_childname[0]));
-		if (laa.l_childname == NULL)
-			err(5, "DRVLISTDEV");
-		if (ioctl(fd, DRVLISTDEV, &laa) == -1)
-			err(3, "DRVLISTDEV");
-		if (laa.l_children > children)
-			err(6, "DRVLISTDEV: number of children grew");
-
-		for (i = 0; i < (int)laa.l_children; i++) {
-			if (!nflag) {
-				printf("%s ",
-				    (argc == 0) ? "root" : laa.l_devname);
-			}
-			printf("%s\n", laa.l_childname[i]);
-		}
+		list_children(fd, argc ? argv[0] : NULL, nflag, tflag, 0);
 		break;
 	case 'r':
 		memset(&raa, 0, sizeof(raa));
@@ -285,4 +262,50 @@ extract_property(prop_dictionary_t dict, const char *prop)
 	}
 
 	free(s);
+}
+
+static void
+list_children(int fd, char *dvname, bool nflag, bool tflag, int depth)
+{
+	struct devlistargs laa = {.l_devname = "", .l_childname = NULL,
+				  .l_children = 0};
+	size_t children;
+	int i, n;
+
+	if (dvname == NULL) {
+		if (depth > 0)
+			return;
+		*laa.l_devname = '\0';
+	} else {
+		strlcpy(laa.l_devname, dvname, sizeof(laa.l_devname));
+	}
+
+	if (ioctl(fd, DRVLISTDEV, &laa) == -1)
+		err(3, "DRVLISTDEV");
+
+	children = laa.l_children;
+
+	laa.l_childname = malloc(children * sizeof(laa.l_childname[0]));
+	if (laa.l_childname == NULL)
+		err(5, "DRVLISTDEV");
+	if (ioctl(fd, DRVLISTDEV, &laa) == -1)
+		err(3, "DRVLISTDEV");
+	if (laa.l_children > children)
+		err(6, "DRVLISTDEV: number of children grew");
+
+	for (i = 0; i < (int)laa.l_children; i++) {
+		for (n = 0; n < depth; n++)
+			printf("  ");
+		if (!nflag) {
+			printf("%s ",
+			    (dvname == NULL) ? "root" : laa.l_devname);
+		}
+		printf("%s\n", laa.l_childname[i]);
+		if (tflag) {
+			list_children(fd, laa.l_childname[i], nflag,
+			    tflag, depth + 1);
+		}
+	}
+
+	free(laa.l_childname);
 }
