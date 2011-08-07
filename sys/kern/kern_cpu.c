@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.48 2011/08/07 13:33:01 rmind Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.49 2011/08/07 21:13:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.48 2011/08/07 13:33:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.49 2011/08/07 21:13:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,13 +311,12 @@ cpu_xc_offline(struct cpu_info *ci)
 			lwp_unlock(l);
 			continue;
 		}
-		/* Normal case - no affinity */
-		if ((l->l_flag & LW_AFFINITY) == 0) {
+		/* Regular case - no affinity. */
+		if (l->l_affinity == NULL) {
 			lwp_migrate(l, target_ci);
 			continue;
 		}
-		/* Affinity is set, find an online CPU in the set */
-		KASSERT(l->l_affinity != NULL);
+		/* Affinity is set, find an online CPU in the set. */
 		for (CPU_INFO_FOREACH(cii, mci)) {
 			mspc = &mci->ci_schedstate;
 			if ((mspc->spc_flags & SPCF_OFFLINE) == 0 &&

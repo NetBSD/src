@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.36 2011/08/07 13:33:01 rmind Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.37 2011/08/07 21:13:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, 2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.36 2011/08/07 13:33:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.37 2011/08/07 21:13:05 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -425,32 +425,33 @@ sys__sched_setaffinity(struct lwp *l,
 	}
 #endif
 
-	/* Find the LWP(s) */
+	/* Iterate through LWP(s). */
 	lcnt = 0;
 	lid = SCARG(uap, lid);
 	LIST_FOREACH(t, &p->p_lwps, l_sibling) {
-		if (lid && lid != t->l_lid)
+		if (lid && lid != t->l_lid) {
 			continue;
+		}
 		lwp_lock(t);
-		/* It is not allowed to set the affinity for zombie LWPs */
+		/* No affinity for zombie LWPs. */
 		if (t->l_stat == LSZOMB) {
 			lwp_unlock(t);
 			continue;
 		}
+		/* First, release existing affinity, if any. */
+		if (t->l_affinity) {
+			kcpuset_unuse(t->l_affinity, &kcpulst);
+		}
 		if (kcset) {
-			/* Set the affinity flag and new CPU set */
-			t->l_flag |= LW_AFFINITY;
+			/*
+			 * Hold a reference on affinity mask, assign mask to
+			 * LWP and migrate it to another CPU (unlocks LWP).
+			 */
 			kcpuset_use(kcset);
-			if (t->l_affinity != NULL)
-				kcpuset_unuse(t->l_affinity, &kcpulst);
 			t->l_affinity = kcset;
-			/* Migrate to another CPU, unlocks LWP */
 			lwp_migrate(t, ci);
 		} else {
-			/* Unset the affinity flag */
-			t->l_flag &= ~LW_AFFINITY;
-			if (t->l_affinity != NULL)
-				kcpuset_unuse(t->l_affinity, &kcpulst);
+			/* Old affinity mask is released, just clear. */
 			t->l_affinity = NULL;
 			lwp_unlock(t);
 		}
@@ -511,8 +512,7 @@ sys__sched_getaffinity(struct lwp *l,
 		goto out;
 	}
 	lwp_lock(t);
-	if (t->l_flag & LW_AFFINITY) {
-		KASSERT(t->l_affinity != NULL);
+	if (t->l_affinity) {
 		kcpuset_copy(kcset, t->l_affinity);
 	} else {
 		kcpuset_zero(kcset);
