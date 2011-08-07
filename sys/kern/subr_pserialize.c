@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.3 2011/08/07 13:33:01 rmind Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.4 2011/08/07 21:38:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.3 2011/08/07 13:33:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.4 2011/08/07 21:38:32 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -103,8 +103,8 @@ pserialize_create(void)
 
 	psz = kmem_zalloc(sizeof(struct pserialize), KM_SLEEP);
 	cv_init(&psz->psz_notifier, "psrlz");
-	kcpuset_create(&psz->psz_target);
-	kcpuset_create(&psz->psz_pass);
+	kcpuset_create(&psz->psz_target, true);
+	kcpuset_create(&psz->psz_pass, true);
 	psz->psz_owner = NULL;
 
 	return psz;

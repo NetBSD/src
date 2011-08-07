@@ -1,4 +1,4 @@
-/*	$NetBSD: kcpuset.h,v 1.1 2011/08/07 13:33:02 rmind Exp $	*/
+/*	$NetBSD: kcpuset.h,v 1.2 2011/08/07 21:38:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2011 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@ typedef struct kcpuset	kcpuset_t;
 
 void		kcpuset_sysinit(void);
 
-void		kcpuset_create(kcpuset_t **);
+void		kcpuset_create(kcpuset_t **, bool);
 void		kcpuset_destroy(kcpuset_t *);
 void		kcpuset_copy(kcpuset_t *, kcpuset_t *);
 
@@ -57,6 +57,10 @@ void		kcpuset_clear(kcpuset_t *, cpuid_t);
 int		kcpuset_isset(kcpuset_t *, cpuid_t);
 bool		kcpuset_iszero(kcpuset_t *);
 bool		kcpuset_match(const kcpuset_t *, const kcpuset_t *);
+void		kcpuset_merge(kcpuset_t *, kcpuset_t *);
+
+void		kcpuset_atomic_set(kcpuset_t *, cpuid_t);
+void		kcpuset_atomic_clear(kcpuset_t *, cpuid_t);
 
 #endif
 

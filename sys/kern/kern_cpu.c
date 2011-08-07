@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.49 2011/08/07 21:13:05 rmind Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.50 2011/08/07 21:38:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.49 2011/08/07 21:13:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.50 2011/08/07 21:38:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,8 +134,7 @@ mi_cpu_attach(struct cpu_info *ci)
 	if (__predict_false(cpu_infos == NULL)) {
 		cpu_infos =
 		    kmem_zalloc(sizeof(cpu_infos[0]) * maxcpus, KM_SLEEP);
-		kcpuset_create(&kcpuset_attached);
-		kcpuset_zero(kcpuset_attached);
+		kcpuset_create(&kcpuset_attached, true);
 	}
 	cpu_infos[cpu_index(ci)] = ci;
 	kcpuset_set(kcpuset_attached, ci->ci_index);
