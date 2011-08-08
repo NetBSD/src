@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_io_user.c,v 1.3 2011/08/03 16:21:52 dholland Exp $	*/
+/*	$NetBSD: v7fs_io_user.c,v 1.4 2011/08/08 11:42:30 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: v7fs_io_user.c,v 1.3 2011/08/03 16:21:52 dholland Exp $");
+__RCSID("$NetBSD: v7fs_io_user.c,v 1.4 2011/08/08 11:42:30 uch Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -88,7 +88,6 @@ v7fs_io_init(struct v7fs_self **fs, const struct v7fs_mount_device *mount,
 	local.addr = mmap(NULL, local.size, PROT_READ | PROT_WRITE | PROT_NONE,
 	    MAP_FILE | MAP_SHARED/*writeback*/, local.fd,  0);
 	if (local.addr == MAP_FAILED) {
-		warn("mmap failed. use direct I/O.");
 		local.addr = 0;
 		p->io.read = read_sector;
 		p->io.write = write_sector;
