@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.35 2011/06/03 02:48:33 christos Exp $	*/
+/*	$NetBSD: fdc.c,v 1.36 2011/08/08 14:49:06 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.35 2011/06/03 02:48:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.36 2011/08/08 14:49:06 jakllsch Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -257,7 +257,7 @@ CFATTACH_DECL_NEW(fdc_ebus, sizeof(struct fdc_softc),
     fdcmatch_ebus, fdcattach_ebus, NULL, NULL);
 #endif
 
-inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+static inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
@@ -993,7 +993,7 @@ bool fdsuspend(device_t self, const pmf_qual_t *qual)
 }
 
 
-inline struct fd_type *
+static inline struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	int type = FDTYPE(dev);
