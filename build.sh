@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.244 2011/01/26 01:18:43 pooka Exp $
+#	$NetBSD: build.sh,v 1.245 2011/08/08 22:15:42 jmcneill Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -258,6 +258,7 @@ initdefaults()
 	do_kernel=false
 	do_releasekernel=false
 	do_modules=false
+	do_installmodules=false
 	do_install=false
 	do_sets=false
 	do_sourcesets=false
@@ -618,6 +619,8 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
                         except \`etc'.  Useful after "distribution" or "release"
     kernel=conf         Build kernel with config file \`conf'
     releasekernel=conf  Install kernel built by kernel=conf to RELEASEDIR.
+    installmodules=idir Run "make installmodules" to \`idir' to install all
+                        kernel modules.
     modules             Build kernel modules.
     rumptest            Do a linktest for rump (for developers).
     sets                Create binary sets in
@@ -910,7 +913,7 @@ parseoptions()
 			op=modules
 			;;
 
-		install=*)
+		install=*|installmodules=*)
 			arg=${op#*=}
 			op=${op%%=*}
 			[ -n "${arg}" ] ||
@@ -1384,7 +1387,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.244 2011/01/26 01:18:43 pooka Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.245 2011/08/08 22:15:42 jmcneill Exp $
 # with these arguments: ${_args}
 #
 
@@ -1545,6 +1548,14 @@ buildmodules()
 	    bomb "Failed to make do-sys-modules"
 
 	statusmsg "Successful build of kernel modules for NetBSD/${MACHINE} ${DISTRIBVER}"
+}
+
+installmodules()
+{
+	dir="$1"
+	${runcmd} "${makewrapper}" INSTALLMODULESDIR="${dir}" installmodules ||
+	    bomb "Failed to make installmodules to ${dir}"
+	statusmsg "Successful installmodules to ${dir}"
 }
 
 installworld()
@@ -1716,6 +1727,16 @@ main()
 
 		modules)
 			buildmodules
+			;;
+
+		installmodules=*)
+			arg=${op#*=}
+			if [ "${arg}" = "/" ] && \
+			    (	[ "${uname_s}" != "NetBSD" ] || \
+				[ "${uname_m}" != "${MACHINE}" ] ); then
+				bomb "'${op}' must != / for cross builds."
+			fi
+			installmodules "${arg}"
 			;;
 
 		install=*)

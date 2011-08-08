@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.286 2011/06/29 02:05:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.287 2011/08/08 22:15:42 jmcneill Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -338,6 +338,29 @@ installworld: .PHONY .MAKE
 	${MAKEDIRTARGET} distrib/sets installsets \
 		INSTALLDIR=${INSTALLWORLDDIR:U/} INSTALLSETS=${INSTALLSETS:Q}
 	${MAKEDIRTARGET} . postinstall-check DESTDIR=${INSTALLWORLDDIR}
+	@echo   "make ${.TARGET} started at:  ${START_TIME}"
+	@printf "make ${.TARGET} finished at: " && date
+
+#
+# Install modules from $DESTDIR to $INSTALLMODULESDIR
+#
+installmodules: .PHONY .MAKE
+.if (!defined(DESTDIR) || ${DESTDIR} == "" || ${DESTDIR} == "/")
+	@echo "Can't make ${.TARGET} to DESTDIR=/"
+	@false
+.endif
+.if !defined(INSTALLMODULESDIR) || \
+    ${INSTALLMODULESDIR} == "" || ${INSTALLMODULESDIR} == "/"
+.if (${HOST_UNAME_S} != "NetBSD")
+	@echo "Won't cross-make ${.TARGET} from ${HOST_UNAME_S} to NetBSD with INSTALLMODULESDIR=/"
+	@false
+.endif
+.if (${HOST_UNAME_M} != ${MACHINE})
+	@echo "Won't cross-make ${.TARGET} from ${HOST_UNAME_M} to ${MACHINE} with INSTALLMODULESDIR=/"
+	@false
+.endif
+.endif
+	${MAKEDIRTARGET} sys/modules install DESTDIR=${INSTALLMODULESDIR:*/}
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date
 
