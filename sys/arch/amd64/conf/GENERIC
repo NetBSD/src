@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.329 2011/08/08 16:13:42 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.330 2011/08/08 16:27:46 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.329 $"
+#ident 		"GENERIC-$Revision: 1.330 $"
 
 maxusers	64		# estimated number of users
 
@@ -64,7 +64,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-#options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
+options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	MODULAR		# new style module(7) framework
 options 	USERCONF	# userconf(4) support
