@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.94 2011/07/17 15:36:32 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.95 2011/08/08 19:51:37 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5418,4 +5418,21 @@ sys/ufs/ufs/ufs_extattr.c			1.31,1.34 via patch
 	autoload, fix the Linux-like extattr API, and add puffs
 	support.
 	[manu, ticket #1645]
+
+sys/net/if.c					1.243
+
+	Prevent crash when using 'ifconfig destroy'.
+	[sborrill, ticket #1643]
+
+sys/kern/init_main.c				1.433 via patch
+sys/kern/uipc_socket.c				1.205 via patch
+sys/sys/socketvar.h				1.126 via patch
+
+	Prevent NFS server hang under load.  PR#45093.
+	[bouyer, ticket #1644]
+
+share/mk/bsd.x11.mk				1.98 via patch
+
+	Fix the value of "appdefaultdir" that ends up in native X .pc files.
+	[dholland, ticket #1646]
 
