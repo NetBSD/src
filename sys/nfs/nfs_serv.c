@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.159 2011/04/18 00:38:33 dholland Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.160 2011/08/08 16:04:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.159 2011/04/18 00:38:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.160 2011/08/08 16:04:07 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1911,7 +1911,9 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 		nfsm_srvwcc_data(tdirfor_ret, &tdirfor, tdiraft_ret, &tdiraft);
 		if (fdirp)
 			vrele(fdirp);
-		pathbuf_destroy(fromnd.ni_pathbuf);
+		if (fromnd.ni_pathbuf != NULL) {
+			pathbuf_destroy(fromnd.ni_pathbuf);
+		}
 		return (0);
 	}
 	if (fromnd.ni_dvp != fromnd.ni_vp) {
@@ -2060,7 +2062,10 @@ out:
 		if (error == -1)
 			error = 0;
 	}
-	pathbuf_destroy(tond.ni_pathbuf);
+	if (tond.ni_pathbuf != NULL) {
+		pathbuf_destroy(tond.ni_pathbuf);
+		tond.ni_pathbuf = NULL;
+	}
 	tond.ni_cnd.cn_nameiop = 0;
 out1:
 	if (fdirp) {
@@ -2078,6 +2083,7 @@ out1:
 		tdirp = NULL;
 	}
 	pathbuf_destroy(fromnd.ni_pathbuf);
+	fromnd.ni_pathbuf = NULL;
 	fromnd.ni_cnd.cn_nameiop = 0;
 	localfs = NULL;
 	nfsm_reply(2 * NFSX_WCCDATA(v3));
@@ -2095,14 +2101,20 @@ nfsmout:
 		vrele(tdirp);
 #endif
 	if (tond.ni_cnd.cn_nameiop) {
-		pathbuf_destroy(tond.ni_pathbuf);
+		if (tond.ni_pathbuf != NULL) {
+			pathbuf_destroy(tond.ni_pathbuf);
+			tond.ni_pathbuf = NULL;
+		}
 	}
 	if (localfs) {
 		VFS_RENAMELOCK_EXIT(localfs);
 	}
 	if (fromnd.ni_cnd.cn_nameiop) {
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
-		pathbuf_destroy(fromnd.ni_pathbuf);
+		if (fromnd.ni_pathbuf != NULL) {
+			pathbuf_destroy(fromnd.ni_pathbuf);
+			fromnd.ni_pathbuf = NULL;
+		}
 		vrele(fromnd.ni_dvp);
 		vrele(fvp);
 	}
@@ -2189,7 +2201,10 @@ out1:
 		vrele(dirp);
 	}
 	vrele(vp);
-	pathbuf_destroy(nd.ni_pathbuf);
+	if (nd.ni_pathbuf != NULL) {
+		pathbuf_destroy(nd.ni_pathbuf);
+		nd.ni_pathbuf = NULL;
+	}
 	nfsm_reply(NFSX_POSTOPATTR(v3) + NFSX_WCCDATA(v3));
 	if (v3) {
 		nfsm_srvpostop_attr(getret, &at);
@@ -2305,7 +2320,10 @@ out:
 		vrele(dirp);
 		dirp = NULL;
 	}
-	pathbuf_destroy(nd.ni_pathbuf);
+	if (nd.ni_pathbuf != NULL) {
+		pathbuf_destroy(nd.ni_pathbuf);
+		nd.ni_pathbuf = NULL;
+	}
 	abort = 0;
 	nfsm_reply(NFSX_SRVFH(&nsfh, v3) + NFSX_POSTOPATTR(v3) +
 	    NFSX_WCCDATA(v3));
@@ -2326,7 +2344,10 @@ nfsmout:
 			vput(nd.ni_dvp);
 		if (nd.ni_vp)
 			vrele(nd.ni_vp);
-		pathbuf_destroy(nd.ni_pathbuf);
+		if (nd.ni_pathbuf != NULL) {
+			pathbuf_destroy(nd.ni_pathbuf);
+			nd.ni_pathbuf = NULL;
+		}
 	}
 	if (dirp)
 		vrele(dirp);
@@ -2374,6 +2395,7 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lw
 	if (error) {
 		if (nd.ni_pathbuf != NULL) {
 			pathbuf_destroy(nd.ni_pathbuf);
+			nd.ni_pathbuf = NULL;
 		}
 		nfsm_reply(NFSX_WCCDATA(v3));
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
@@ -2419,7 +2441,10 @@ out:
 		vrele(dirp);
 		dirp = NULL;
 	}
-	pathbuf_destroy(nd.ni_pathbuf);
+	if (nd.ni_pathbuf != NULL) {
+		pathbuf_destroy(nd.ni_pathbuf);
+		nd.ni_pathbuf = NULL;
+	}
 	abort = 0;
 	nfsm_reply(NFSX_SRVFH(&nsfh, v3) + NFSX_POSTOPATTR(v3) +
 	    NFSX_WCCDATA(v3));
@@ -2444,7 +2469,10 @@ nfsmout:
 			vput(nd.ni_dvp);
 		if (nd.ni_vp)
 			vrele(nd.ni_vp);
-		pathbuf_destroy(nd.ni_pathbuf);
+		if (nd.ni_pathbuf != NULL) {
+			pathbuf_destroy(nd.ni_pathbuf);
+			nd.ni_pathbuf = NULL;
+		}
 	}
 	if (dirp)
 		vrele(dirp);
@@ -2487,6 +2515,7 @@ nfsrv_rmdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lw
 	if (error) {
 		if (nd.ni_pathbuf != NULL) {
 			pathbuf_destroy(nd.ni_pathbuf);
+			nd.ni_pathbuf = NULL;
 		}
 		nfsm_reply(NFSX_WCCDATA(v3));
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
@@ -2524,7 +2553,10 @@ out:
 			vput(nd.ni_dvp);
 		vput(vp);
 	}
-	pathbuf_destroy(nd.ni_pathbuf);
+	if (nd.ni_pathbuf != NULL) {
+		pathbuf_destroy(nd.ni_pathbuf);
+		nd.ni_pathbuf = NULL;
+	}
 	if (dirp) {
 		if (v3) {
 			diraft_ret = VOP_GETATTR(dirp, &diraft, cred);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsubs.c,v 1.10 2011/04/11 01:33:05 dholland Exp $	*/
+/*	$NetBSD: nfs_srvsubs.c,v 1.11 2011/08/08 16:04:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.10 2011/04/11 01:33:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.11 2011/08/08 16:04:07 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -259,12 +259,12 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 	/*
 	 * And call lookup() to do the real work
 	 *
-	 * Note: ndp->ni_pathbuf is left undestroyed; caller must
-	 * clean it up.
+	 * Note: ndp->ni_pathbuf is left undestroyed on success;
+	 * caller must clean it up.
 	 */
 	error = lookup_for_nfsd(ndp, dp, neverfollow);
 	if (error) {
-		return (error);
+		goto out;
 	}
 	return 0;
 
