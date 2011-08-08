@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.95 2011/08/08 19:51:37 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.96 2011/08/08 19:57:46 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5435,4 +5435,20 @@ share/mk/bsd.x11.mk				1.98 via patch
 
 	Fix the value of "appdefaultdir" that ends up in native X .pc files.
 	[dholland, ticket #1646]
+
+lib/librefuse/refuse.c				1.93
+
+	Don't ignore "userdata" argument in "fuse_main_real". This can crash
+	a FUSE file-system that passes a non-NULL argument here.
+	[tron, ticket #1648]
+
+lib/librefuse/fuse_opt.h			1.5
+
+	Fix compilation of FUSE file systems written in C++.  PR#41250.
+	[tron, ticket #1649]
+
+lib/librefuse/refuse.c				1.94
+
+	Call the FUSE init operation before we try to access the file-system.
+	[tron, ticket #1650]
 
