@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.287 2011/08/08 22:15:42 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.288 2011/08/08 23:18:36 jmcneill Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -360,7 +360,7 @@ installmodules: .PHONY .MAKE
 	@false
 .endif
 .endif
-	${MAKEDIRTARGET} sys/modules install DESTDIR=${INSTALLMODULESDIR:*/}
+	${MAKEDIRTARGET} sys/modules install DESTDIR=${INSTALLMODULESDIR:U/}
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date
 
