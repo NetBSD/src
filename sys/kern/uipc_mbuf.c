@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.141 2011/07/27 14:35:34 uebayasi Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.142 2011/08/08 19:10:33 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.141 2011/07/27 14:35:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.142 2011/08/08 19:10:33 dyoung Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -493,6 +493,8 @@ struct mbuf *
 m_get(int nowait, int type)
 {
 	struct mbuf *m;
+
+	KASSERT(type != MT_FREE);
 
 	m = pool_cache_get(mb_cache,
 	    nowait == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);
@@ -1247,6 +1249,62 @@ m_makewritable(struct mbuf **mp, int off, int len, int how)
 #endif /* defined(DEBUG) */
 
 	return error;
+}
+
+/*
+ * Copy the mbuf chain to a new mbuf chain that is as short as possible.
+ * Return the new mbuf chain on success, NULL on failure.  On success,
+ * free the old mbuf chain.
+ */
+struct mbuf *
+m_defrag(struct mbuf *mold, int flags)
+{
+	struct mbuf *m0, *mn, *n;
+	size_t sz = mold->m_pkthdr.len;
+
+#ifdef DIAGNOSTIC
+	if ((mold->m_flags & M_PKTHDR) == 0)
+		panic("m_defrag: not a mbuf chain header");
+#endif
+
+	MGETHDR(m0, flags, MT_DATA);
+	if (m0 == NULL)
+		return NULL;
+	M_COPY_PKTHDR(m0, mold);
+	mn = m0;
+
+	do {
+		if (sz > MHLEN) {
+			MCLGET(mn, M_DONTWAIT);
+			if ((mn->m_flags & M_EXT) == 0) {
+				m_freem(m0);
+				return NULL;
+			}
+		}
+
+		mn->m_len = MIN(sz, MCLBYTES);
+
+		m_copydata(mold, mold->m_pkthdr.len - sz, mn->m_len,
+		     mtod(mn, void *));
+
+		sz -= mn->m_len;
+
+		if (sz > 0) {
+			/* need more mbufs */
+			MGET(n, M_NOWAIT, MT_DATA);
+			if (n == NULL) {
+				m_freem(m0);
+				return NULL;
+			}
+
+			mn->m_next = n;
+			mn = n;
+		}
+	} while (sz > 0);
+
+	m_freem(mold);
+
+	return m0;
 }
 
 int
