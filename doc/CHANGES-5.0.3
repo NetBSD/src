@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.44 2011/07/07 20:35:27 sborrill Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.45 2011/08/08 19:36:22 riz Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2798,4 +2798,9 @@ lib/libdns/shlib_version			patch
 
 	Update bind to 9.7.3-P3 fixing CVE-2011-2464
 	[spz, ticket #1647]
+
+sys/net/if.c					1.243
+
+	Prevent crash when using 'ifconfig destroy'.
+	[sborrill, ticket #1643]
 
