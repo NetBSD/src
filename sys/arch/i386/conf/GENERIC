@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1044 2011/08/08 17:02:31 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.1045 2011/08/08 18:58:18 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1044 $"
+#ident 		"GENERIC-$Revision: 1.1045 $"
 
 maxusers	64		# estimated number of users
 
@@ -1421,10 +1421,10 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 
 pseye*	at uhub?		# Sony PLAYSTATION(R) Eye webcam
 uvideo* at uhub?		# USB Video Class capture devices
-auvitek* at uhub?		# Auvitek AU0828 video capture devices
-emdtv*	at uhub?		# Empia EM28xx video capture devices
+#auvitek* at uhub?		# Auvitek AU0828 video capture devices
+#emdtv*	at uhub?		# Empia EM28xx video capture devices
 video* at videobus?
-dtv* at dtvbus?
+#dtv* at dtvbus?
 
 
 # TV cards
@@ -1434,7 +1434,7 @@ bktr*	at pci? dev ? function ?
 radio*	at bktr?
 
 # Conexant CX2388[0-3]-based DTV cards
-cxdtv*	at pci? dev ? function ?
+#cxdtv*	at pci? dev ? function ?
 #iic*	at cxdtv?
 
 # Bluetooth Controller and Device support
