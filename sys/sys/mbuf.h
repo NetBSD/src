@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.144 2008/10/24 22:31:40 dyoung Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.145 2011/08/08 19:10:33 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -551,6 +551,8 @@ do {									\
 	if ((m)->m_flags & M_EXT) {					\
 		m_ext_free(m);						\
 	} else {							\
+		KASSERT(m->m_type != MT_FREE);				\
+		m->m_type = MT_FREE;					\
 		pool_cache_put(mb_cache, (m));				\
 	}								\
 
@@ -667,6 +669,7 @@ do {									\
 /* change mbuf to new type */
 #define MCHTYPE(m, t)							\
 do {									\
+	KASSERT((t) != MT_FREE);					\
 	mbstat_type_add((m)->m_type, -1);				\
 	mbstat_type_add(t, 1);						\
 	(m)->m_type = t;						\
@@ -823,6 +826,7 @@ struct	mbuf *m_copyup(struct mbuf *, int, int);
 struct	mbuf *m_split(struct mbuf *,int, int);
 struct	mbuf *m_getptr(struct mbuf *, int, int *);
 void	m_adj(struct mbuf *, int);
+struct	mbuf *m_defrag(struct mbuf *, int);
 int	m_apply(struct mbuf *, int, int,
 		int (*)(void *, void *, unsigned int), void *);
 void	m_cat(struct mbuf *,struct mbuf *);
@@ -854,7 +858,7 @@ void	m_tag_unlink(struct mbuf *, struct m_tag *);
 void	m_tag_delete(struct mbuf *, struct m_tag *);
 void	m_tag_delete_chain(struct mbuf *, struct m_tag *);
 void	m_tag_delete_nonpersistent(struct mbuf *);
-struct	m_tag *m_tag_find(struct mbuf *, int, struct m_tag *);
+struct	m_tag *m_tag_find(const struct mbuf *, int, struct m_tag *);
 struct	m_tag *m_tag_copy(struct m_tag *);
 int	m_tag_copy_chain(struct mbuf *, struct mbuf *);
 void	m_tag_init(struct mbuf *);
