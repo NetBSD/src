@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.89 2008/08/01 15:54:09 dillo Exp $	*/
+/*	$NetBSD: refuse.c,v 1.89.4.1 2011/08/08 19:53:29 riz Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.89 2008/08/01 15:54:09 dillo Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.89.4.1 2011/08/08 19:53:29 riz Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1221,8 +1221,8 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	int		 multithreaded;
 	int		 fd;
 
-	fuse = fuse_setup(argc, argv, ops, size, &mountpoint, &multithreaded,
-			&fd);
+	fuse = fuse_setup_real(argc, argv, ops, size, &mountpoint,
+	    &multithreaded, &fd, userdata);
 
 	return fuse_loop(fuse);
 }
