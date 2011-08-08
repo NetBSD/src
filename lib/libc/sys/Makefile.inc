@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.207 2011/06/27 16:39:44 manu Exp $
+#	$NetBSD: Makefile.inc,v 1.208 2011/08/08 12:08:53 manu Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -87,9 +87,10 @@ ASM=	access.S acct.S \
 	setxattr.S getxattr.S listxattr.S removexattr.S \
 		lsetxattr.S lgetxattr.S llistxattr.S lremovexattr.S \
 		fsetxattr.S fgetxattr.S flistxattr.S fremovexattr.S \
-	fchdir.S fchflags.S fchmod.S fchown.S fchroot.S \
-		__fhopen40.S __fhstat50.S __fhstatvfs140.S fktrace.S \
-		flock.S fpathconf.S __fstat50.S fstatvfs1.S __futimes50.S \
+	faccessat.S fchdir.S fchflags.S fchmod.S fchmodat.S fchown.S \
+		fchownat.S fchroot.S fexecve.S __fhopen40.S __fhstat50.S \
+		__fhstatvfs140.S fktrace.S flock.S fpathconf.S __fstat50.S \
+		fstatvfs1.S fstatat.S  __futimes50.S \
 	__getcwd.S __getdents30.S __getfh30.S getvfsstat.S getgroups.S\
 		__getitimer50.S __getlogin.S getpeername.S getpgid.S getpgrp.S \
 		getpriority.S getrlimit.S __getrusage50.S getsid.S \
@@ -100,22 +101,24 @@ ASM=	access.S acct.S \
 		_ksem_post.S _ksem_trywait.S _ksem_unlink.S _ksem_wait.S \
 		_ksem_open.S \
 	lchflags.S lchmod.S lchown.S lfs_bmapv.S lfs_markv.S lfs_segclean.S \
-		__lfs_segwait50.S link.S listen.S __lstat50.S __lutimes50.S \
-		_lwp_create.S _lwp_exit.S _lwp_kill.S ___lwp_park50.S \
-		_lwp_self.S _lwp_wait.S _lwp_unpark.S _lwp_unpark_all.S \
-		_lwp_suspend.S _lwp_continue.S _lwp_wakeup.S _lwp_detach.S \
-		_lwp_setprivate.S \
+		__lfs_segwait50.S link.S linkat.S listen.S __lstat50.S \
+		__lutimes50.S _lwp_create.S _lwp_exit.S _lwp_kill.S \
+		___lwp_park50.S _lwp_self.S _lwp_wait.S _lwp_unpark.S \
+		_lwp_unpark_all.S _lwp_suspend.S _lwp_continue.S \
+		_lwp_wakeup.S _lwp_detach.S _lwp_setprivate.S \
 		_lwp_setname.S _lwp_getname.S _lwp_ctl.S \
-	madvise.S mincore.S minherit.S mkdir.S mkfifo.S __mknod50.S \
-		mlock.S mlockall.S modctl.S __mount50.S mprotect.S \
-		__msgctl50.S msgget.S munlock.S munlockall.S munmap.S \
+	madvise.S mincore.S minherit.S mkdir.S mkdirat.S mkfifo.S mkfifoat.S \
+		__mknod50.S mknodat.S mlock.S mlockall.S modctl.S __mount50.S \
+		mprotect.S __msgctl50.S msgget.S munlock.S munlockall.S \
+		munmap.S \
 	nfssvc.S __ntp_gettime50.S \
+	openat.S \
 	paccept.S pathconf.S pipe2.S pmc_get_info.S pmc_control.S \
 		__posix_chown.S __posix_fchown.S __posix_lchown.S \
 		__posix_rename.S profil.S \
 	__quotactl50.S \
-	rasctl.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
-		rmdir.S \
+	rasctl.S readlinkat.S reboot.S recvfrom.S recvmsg.S rename.S \
+		renameat.S revoke.S rmdir.S \
 	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \
 		sa_preempt.S semconfig.S semget.S semop.S \
 		sendmsg.S sendto.S setegid.S setcontext.S seteuid.S setgid.S \
@@ -126,11 +129,11 @@ ASM=	access.S acct.S \
 		sigqueueinfo.S \
 		__sigaltstack14.S __sigpending14.S __sigaction_sigtramp.S \
 		____sigtimedwait50.S __socket30.S socketpair.S __stat50.S \
-		statvfs1.S swapctl.S symlink.S __sysctl.S \
+		statvfs1.S swapctl.S symlink.S symlinkat.S __sysctl.S \
 	timer_create.S timer_delete.S __timer_gettime50.S timer_getoverrun.S \
 		____semctl50.S __timer_settime50.S \
-	umask.S undelete.S unlink.S unmount.S __utimes50.S utrace.S uuidgen.S \
-	vadvise.S
+	umask.S undelete.S unlink.S unlinkat.S unmount.S __utimes50.S \
+		utimensat.S utrace.S uuidgen.S vadvise.S
 
 # modules with potentially non default implementations
 ASM_MD=	_lwp_getprivate.S mremap.S 
@@ -283,6 +286,7 @@ MLINKS+=intro.2 errno.2
 MLINKS+=kqueue.2 kevent.2
 MLINKS+=ktrace.2 fktrace.2
 MLINKS+=lseek.2 seek.2
+MLINKS+=link.2 linkat.2
 MLINKS+=_lwp_suspend.2 _lwp_continue.2
 MLINKS+=_lwp_getprivate.2 _lwp_setprivate.2
 MLINKS+=madvise.2 posix_madvise.2

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.316 2011/06/06 22:04:34 matt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.317 2011/08/08 12:08:53 manu Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.316 2011/06/06 22:04:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.317 2011/08/08 12:08:53 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -458,6 +458,19 @@ sys_execve(struct lwp *l, const struct sys_execve_args *uap, register_t *retval)
 
 	return execve1(l, SCARG(uap, path), SCARG(uap, argp),
 	    SCARG(uap, envp), execve_fetch_element);
+}
+
+int   
+sys_fexecve(struct lwp *l, const struct sys_fexecve_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int)			fd;
+		syscallarg(char * const *)	argp;
+		syscallarg(char * const *)	envp;
+	} */
+
+	return ENOSYS;
 }
 
 /*

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.250 2011/07/18 11:28:24 drochner Exp $
+	$NetBSD: syscalls.master,v 1.251 2011/08/08 12:08:53 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -893,3 +893,33 @@
 456	STD  RUMP	{ int|sys||paccept(int s, struct sockaddr *name, \
 			    socklen_t *anamelen, const sigset_t *mask, \
 			    int flags); }
+457	STD  RUMP	{ int|sys||linkat(int fd1, const char *name1, \
+			    int fd2, const char *name2, int flags); }
+458	STD  RUMP	{ int|sys||renameat(int fromfd, const char *from, \
+			    int tofd, const char *to); }
+459	STD  RUMP	{ int|sys||mkfifoat(int fd, const char *path, \
+			    mode_t mode); }
+460	STD  RUMP	{ int|sys||mknodat(int fd, const char *path, \
+			    mode_t mode, uint32_t dev); }
+461	STD  RUMP	{ int|sys||mkdirat(int fd, const char *path, \
+			    mode_t mode); }
+462	STD  RUMP	{ int|sys||faccessat(int fd, const char *path, \
+			    int amode, int flag); }
+463	STD  RUMP	{ int|sys||fchmodat(int fd, const char *path, \
+			    mode_t mode, int flag); }
+464	STD  RUMP	{ int|sys||fchownat(int fd, const char *path, \
+			    uid_t owner, gid_t group, int flag); }
+465	STD  RUMP	{ int|sys||fexecve(int fd, \
+			    char * const *argp, char * const *envp); }
+466	STD  RUMP	{ int|sys||fstatat(int fd, const char *path, \
+			    struct stat *buf, int flag); }
+467	STD  RUMP	{ int|sys||utimensat(int fd, const char *path, \
+			    const struct timespec *tptr, int flag); }
+468	STD  RUMP	{ int|sys||openat(int fd, const char *path, \
+			    int oflags, ... mode_t mode); }
+469	STD  RUMP	{ int|sys||readlinkat(int fd, const char *path, \
+			    char *buf, size_t bufsize); }
+470	STD  RUMP	{ int|sys||symlinkat(const char *path1, int fd, \
+			    const char *path2); }
+471	STD  RUMP	{ int|sys||unlinkat(int fd, const char *path, \
+			    int flag); }

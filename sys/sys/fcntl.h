@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.39 2011/07/30 12:08:36 jmcneill Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.40 2011/08/08 12:08:54 manu Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -114,6 +114,9 @@
 
 #define	O_DIRECTORY	0x00200000	/* fail if not a directory */
 #define	O_CLOEXEC	0x00400000	/* set close on exec */
+#if defined(_INCOMPLETE_XOPEN_C063) || defined(_KERNEL)
+#define	O_SEARCH	0x00800000	/* skip search permission checks */
+#endif
 
 #ifdef _KERNEL
 /* convert from open() flags to/from fflags; convert O_RD/WR to FREAD/FWRITE */
@@ -277,6 +280,18 @@ struct flock {
 #define	POSIX_FADV_DONTNEED	4	/* not be needed in near future */
 #define	POSIX_FADV_NOREUSE	5	/* be accessed once */
 
+/*
+ * Constants for linkat(2)
+ */
+#if defined(_INCOMPLETE_XOPEN_C063) || defined(_KERNEL)
+#define	AT_FDCWD		-100	/* Use cwd for relative link target */
+#define	AT_EACCESS		0x100	/* Use euig/egid for access checks */
+#define	AT_SYMLINK_NOFOLLOW	0x200	/* Do not follow symlinks */
+#define	AT_SYMLINK_FOLLOW	0x400	/* Follow symlinks */
+#define	AT_REMOVEDIR		0x800	/* Remove directory only */
+#endif
+
+
 #ifndef _KERNEL
 #include <sys/cdefs.h>
 
@@ -288,6 +303,13 @@ int	fcntl(int, int, ...);
 int	flock(int, int);
 #endif /* _NETBSD_SOURCE */
 int	posix_fadvise(int, off_t, off_t, int);
+
+/*
+ * X/Open Extended API set 2 (a.k.a. C063)
+ */
+#if defined(_INCOMPLETE_XOPEN_C063)
+int	openat(int, const char *, int oflags, ...);
+#endif
 __END_DECLS
 #endif /* !_KERNEL */
 

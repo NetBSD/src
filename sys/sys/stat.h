@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.60 2011/03/06 17:08:38 bouyer Exp $	*/
+/*	$NetBSD: stat.h,v 1.61 2011/08/08 12:08:54 manu Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -233,6 +233,15 @@ int	fchflags(int, unsigned long);
 int	lchflags(const char *, unsigned long);
 int	lchmod(const char *, mode_t);
 #endif /* defined(_NETBSD_SOURCE) */
+
+/*
+ * X/Open Extended API set 2 (a.k.a. C063)
+ */
+#if defined(_INCOMPLETE_XOPEN_C063) 
+int     fstatat(int, const char *, struct stat *, int);
+int     utimensat(int, const char *, const struct timespec *, int);
+#endif
+
 __END_DECLS
 
 #endif /* !_KERNEL && !_STANDALONE */
