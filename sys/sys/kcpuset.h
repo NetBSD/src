@@ -1,4 +1,4 @@
-/*	$NetBSD: kcpuset.h,v 1.2 2011/08/07 21:38:32 rmind Exp $	*/
+/*	$NetBSD: kcpuset.h,v 1.3 2011/08/08 17:53:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2011 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@ struct kcpuset;
 typedef struct kcpuset	kcpuset_t;
 
 #ifdef _KERNEL
+
+#include <sys/sched.h>
 
 void		kcpuset_sysinit(void);
 
