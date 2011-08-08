@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.432 2011/07/24 09:40:10 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.433 2011/08/08 12:08:53 manu Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.432 2011/07/24 09:40:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.433 2011/08/08 12:08:53 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.432 2011/07/24 09:40:10 martin Ex
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -1160,6 +1161,19 @@ sys_open(struct lwp *l, const struct sys_open_args *uap, register_t *retval)
 	return (0);
 }
 
+int
+sys_openat(struct lwp *l, const struct sys_openat_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(int) flags;
+		syscallarg(int) mode;
+	} */
+
+	return ENOSYS;
+}
+
 static void
 vfs__fhfree(fhandle_t *fhp)
 {
@@ -1616,6 +1630,20 @@ sys___mknod50(struct lwp *l, const struct sys___mknod50_args *uap,
 }
 
 int
+sys_mknodat(struct lwp *l, const struct sys_mknodat_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(mode_t) mode;
+		syscallarg(uint32_t) dev;
+	} */
+
+	return ENOSYS;
+}
+
+int
 do_sys_mknod(struct lwp *l, const char *pathname, mode_t mode, dev_t dev,
     register_t *retval, enum uio_seg seg)
 {
@@ -1771,27 +1799,41 @@ sys_mkfifo(struct lwp *l, const struct sys_mkfifo_args *uap, register_t *retval)
 	return (error);
 }
 
+int
+sys_mkfifoat(struct lwp *l, const struct sys_mkfifoat_args *uap, 
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(int) mode;
+	} */
+
+	return ENOSYS;
+}
 /*
  * Make a hard file link.
  */
 /* ARGSUSED */
-int
-sys_link(struct lwp *l, const struct sys_link_args *uap, register_t *retval)
+static int
+do_sys_link(struct lwp *l, const char *path, const char *link, 
+	    int follow, register_t *retval) 
 {
-	/* {
-		syscallarg(const char *) path;
-		syscallarg(const char *) link;
-	} */
 	struct vnode *vp;
 	struct pathbuf *linkpb;
 	struct nameidata nd;
+	namei_simple_flags_t namei_simple_flags;
 	int error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (follow)
+		namei_simple_flags = NSM_FOLLOW_TRYEMULROOT;
+	else
+		namei_simple_flags =  NSM_NOFOLLOW_TRYEMULROOT;
+
+	error = namei_simple_user(path, namei_simple_flags, &vp);
 	if (error != 0)
 		return (error);
-	error = pathbuf_copyin(SCARG(uap, link), &linkpb);
+	error = pathbuf_copyin(link, &linkpb);
 	if (error) {
 		goto out1;
 	}
@@ -1830,6 +1872,46 @@ abortop:
 }
 
 int
+sys_link(struct lwp *l, const struct sys_link_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(const char *) path;
+		syscallarg(const char *) link;
+	} */
+	const char *path = SCARG(uap, path);
+	const char *link = SCARG(uap, link);
+
+	return do_sys_link(l, path, link, 1, retval);
+}
+
+int
+sys_linkat(struct lwp *l, const struct sys_linkat_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd1;
+		syscallarg(const char *) name1;
+		syscallarg(int) fd2;
+		syscallarg(const char *) name2;
+		syscallarg(int) flags;
+	} */
+	const char *name1 = SCARG(uap, name1);
+	const char *name2 = SCARG(uap, name2);
+	int follow;
+
+	/*
+	 * Specified fd1 and fd2 are not yet implemented
+	 */ 
+	if ((SCARG(uap, fd1) != AT_FDCWD) || (SCARG(uap, fd2) != AT_FDCWD))
+		return ENOSYS;
+
+	follow = SCARG(uap, flags) & AT_SYMLINK_FOLLOW;
+
+	return do_sys_link(l, name1, name2, follow, retval);
+}
+
+
+int
 do_sys_symlink(const char *patharg, const char *link, enum uio_seg seg)
 {
 	struct proc *p = curproc;
@@ -1854,6 +1936,8 @@ do_sys_symlink(const char *patharg, const char *link, enum uio_seg seg)
 			goto out1;
 		}
 	}
+	ktrkuser("symlink-target", path, strlen(path));
+
 	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, linkpb);
 	if ((error = namei(&nd)) != 0)
 		goto out2;
@@ -1895,6 +1979,19 @@ sys_symlink(struct lwp *l, const struct sys_symlink_args *uap, register_t *retva
 
 	return do_sys_symlink(SCARG(uap, path), SCARG(uap, link),
 	    UIO_USERSPACE);
+}
+
+int
+sys_symlinkat(struct lwp *l, const struct sys_symlinkat_args *uap, 
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(const char *) link;
+	} */
+
+	return ENOSYS;
 }
 
 /*
@@ -1953,6 +2050,18 @@ sys_unlink(struct lwp *l, const struct sys_unlink_args *uap, register_t *retval)
 	} */
 
 	return do_sys_unlink(SCARG(uap, path), UIO_USERSPACE);
+}
+
+int
+sys_unlinkat(struct lwp *l, const struct sys_unlinkat_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+	} */
+
+	return ENOSYS;
 }
 
 int
@@ -2267,6 +2376,20 @@ out:
 	return (error);
 }
 
+int
+sys_faccessat(struct lwp *l, const struct sys_faccessat_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(int) amode;
+		syscallarg(int) flag;
+	} */
+
+	return ENOSYS;
+}
+
 /*
  * Common code for all sys_stat functions, including compat versions.
  */
@@ -2333,6 +2456,19 @@ sys___lstat50(struct lwp *l, const struct sys___lstat50_args *uap, register_t *r
 	return copyout(&sb, SCARG(uap, ub), sizeof(sb));
 }
 
+int
+sys_fstatat(struct lwp *l, const struct sys_fstatat_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(struct stat *) ub;
+		syscallarg(int) flag;
+	} */
+
+	return ENOSYS;
+}
 /*
  * Get configurable pathname variables.
  */
@@ -2411,6 +2547,20 @@ sys_readlink(struct lwp *l, const struct sys_readlink_args *uap, register_t *ret
 	vput(vp);
 	*retval = SCARG(uap, count) - auio.uio_resid;
 	return (error);
+}
+
+int
+sys_readlinkat(struct lwp *l, const struct sys_readlinkat_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(char *) buf;
+		syscallarg(size_t) count;
+	} */
+
+	return ENOSYS;
 }
 
 /*
@@ -2560,6 +2710,20 @@ sys_fchmod(struct lwp *l, const struct sys_fchmod_args *uap, register_t *retval)
 	return (error);
 }
 
+int
+sys_fchmodat(struct lwp *l, const struct sys_fchmodat_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(int) mode;
+		syscallarg(int) flag;
+	} */
+
+	return ENOSYS;
+}
+
 /*
  * Change mode of a file given path name; this version does not follow links.
  */
@@ -2677,6 +2841,21 @@ sys_fchown(struct lwp *l, const struct sys_fchown_args *uap, register_t *retval)
 	    l, 0);
 	fd_putfile(SCARG(uap, fd));
 	return (error);
+}
+
+int
+sys_fchownat(struct lwp *l, const struct sys_fchownat_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(uid_t) uid;
+		syscallarg(gid_t) gid;
+		syscallarg(int) flag;
+	} */
+
+	return ENOSYS;
 }
 
 /*
@@ -2867,6 +3046,20 @@ sys___lutimes50(struct lwp *l, const struct sys___lutimes50_args *uap,
 
 	return do_sys_utimes(l, NULL, SCARG(uap, path), NOFOLLOW,
 	    SCARG(uap, tptr), UIO_USERSPACE);
+}
+
+int
+sys_utimensat(struct lwp *l, const struct sys_utimensat_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(const struct timespec *) tptr;
+		syscallarg(int) flag;
+	} */
+
+	return ENOSYS;
 }
 
 /*
@@ -3149,6 +3342,20 @@ sys_rename(struct lwp *l, const struct sys_rename_args *uap, register_t *retval)
 	return (do_sys_rename(SCARG(uap, from), SCARG(uap, to), UIO_USERSPACE, 0));
 }
 
+int
+sys_renameat(struct lwp *l, const struct sys_renameat_args *uap, 
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fromfd;
+		syscallarg(const char *) from;
+		syscallarg(int) tofd;
+		syscallarg(const char *) to;
+	} */
+
+	return ENOSYS;
+}
+
 /*
  * Rename files, POSIX semantics frontend.
  */
@@ -3360,6 +3567,20 @@ sys_mkdir(struct lwp *l, const struct sys_mkdir_args *uap, register_t *retval)
 
 	return do_sys_mkdir(SCARG(uap, path), SCARG(uap, mode), UIO_USERSPACE);
 }
+
+int
+sys_mkdirat(struct lwp *l, const struct sys_mkdirat_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(int) mode;
+	} */
+
+	return ENOSYS;
+}
+
 
 int
 do_sys_mkdir(const char *path, mode_t mode, enum uio_seg seg)
