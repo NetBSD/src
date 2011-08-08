@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.330 2011/08/08 16:27:46 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.331 2011/08/08 18:57:58 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.330 $"
+#ident 		"GENERIC-$Revision: 1.331 $"
 
 maxusers	64		# estimated number of users
 
@@ -1025,7 +1025,7 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 pseye* at uhub?		# Sony PLAYSTATION(R) Eye webcam
 uvideo* at uhub?	# USB Video Class capture devices
 video* at videobus?
-dtv* at dtvbus?
+#dtv* at dtvbus?
 
 
 # TV cards
@@ -1035,7 +1035,7 @@ bktr* at pci? dev ? function ?
 radio* at bktr?
 
 # Conexant CX2388[0-3]-based DTV cards
-cxdtv* at pci? dev ? function ?
+#cxdtv* at pci? dev ? function ?
 #iic* at cxdtv?
 
 
