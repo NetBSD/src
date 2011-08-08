@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.13 2011/03/06 17:08:33 bouyer Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.14 2011/08/08 23:44:06 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.13 2011/03/06 17:08:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.14 2011/08/08 23:44:06 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -63,8 +63,10 @@ MODULE(MODULE_CLASS_MISC, compat, NULL);
 int	ttcompat(struct tty *, u_long, void *, int, struct lwp *);
 
 #ifdef COMPAT_16
+#if !(defined(__amd64__) && !defined(COMPAT_NETBSD32))
 extern char sigcode[], esigcode[];
 struct uvm_object *emul_netbsd_object;
+#endif
 #endif
 
 extern krwlock_t exec_lock;
@@ -157,8 +159,10 @@ static const struct syscall_package compat_syscalls[] = {
 #endif
 
 #if defined(COMPAT_16)
+#if !(defined(__amd64__) && !defined(COMPAT_NETBSD32))
 	{ SYS_compat_16___sigaction14, 0, (sy_call_t *)compat_16_sys___sigaction14 },
 	{ SYS_compat_16___sigreturn14, 0, (sy_call_t *)compat_16_sys___sigreturn14 },
+#endif
 #endif
 
 #if defined(COMPAT_20)
@@ -254,6 +258,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		ttcompatvec = ttcompat;
 #endif
 #ifdef COMPAT_16
+#if !(defined(__amd64__) && !defined(COMPAT_NETBSD32))
 		KASSERT(emul_netbsd.e_sigobject == NULL);
 		rw_enter(&exec_lock, RW_WRITER);
 		emul_netbsd.e_sigcode = sigcode;
@@ -262,6 +267,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		rw_exit(&exec_lock);
 		KASSERT(sendsig_sigcontext_vec == NULL);
 		sendsig_sigcontext_vec = sendsig_sigcontext;
+#endif
 #endif
 #if defined(COMPAT_09) || defined(COMPAT_43)
 		compat_sysctl_init();
@@ -305,6 +311,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		}
 #endif
 #ifdef COMPAT_16
+#if !(defined(__amd64__) && !defined(COMPAT_NETBSD32))
 		/*
 		 * The sigobject may persist if still in use, but
 		 * is reference counted so will die eventually.
@@ -319,6 +326,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		emul_netbsd.e_esigcode = NULL;
 		emul_netbsd.e_sigobject = NULL;
 		rw_exit(&exec_lock);
+#endif
 #endif	/* COMPAT_16 */
 #if defined(COMPAT_09) || defined(COMPAT_43)
 		compat_sysctl_fini();
