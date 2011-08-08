@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.230.4.1 2009/02/24 02:26:42 snj Exp $	*/
+/*	$NetBSD: if.c,v 1.230.4.1.2.1 2011/08/08 19:36:02 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.230.4.1 2009/02/24 02:26:42 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.230.4.1.2.1 2011/08/08 19:36:02 riz Exp $");
 
 #include "opt_inet.h"
 
@@ -726,8 +726,10 @@ again:
 	if_free_sadl(ifp);
 
 	/* Walk the routing table looking for stragglers. */
-	for (i = 0; i <= AF_MAX; i++)
-		(void)rt_walktree(i, if_rt_walktree, ifp);
+	for (i = 0; i <= AF_MAX; i++) {
+		while (rt_walktree(i, if_rt_walktree, ifp) == ERESTART)
+			;
+	}
 
 	DOMAIN_FOREACH(dp) {
 		if (dp->dom_ifdetach != NULL && ifp->if_afdata[dp->dom_family])
@@ -838,7 +840,7 @@ if_rt_walktree(struct rtentry *rt, void *v)
 	if (error != 0)
 		printf("%s: warning: unable to delete rtentry @ %p, "
 		    "error = %d\n", ifp->if_xname, rt, error);
-	return 0;
+	return ERESTART;
 }
 
 /*
