@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.126 2011/06/26 16:42:40 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.127 2011/08/08 12:08:53 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -289,6 +289,24 @@ char	*getwd(char *);				/* obsoleted by getcwd() */
 #if (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 ssize_t	 pread(int, void *, size_t, off_t);
 ssize_t	 pwrite(int, const void *, size_t, off_t);
+#endif
+
+/*
+ * X/Open Extended API set 2 (a.k.a. C063)
+ */
+#if defined(_INCOMPLETE_XOPEN_C063)
+int	linkat(int, const char *, int, const char *, int);
+int	renameat(int, const char *, int, const char *);
+int	mkfifoat(int, const char *, mode_t);
+int	mknodat(int, const char *, mode_t, uint32_t);
+int	mkdirat(int, const char *, mode_t);
+int	faccessat(int, const char *, int, int);
+int	fchmodat(int, const char *, mode_t, int);
+int	fchownat(int, const char *, uid_t, gid_t, int);
+int	fexecve(int, char * const *, char * const *);
+int	readlinkat(int, const char *, char *, size_t);
+int	symlinkat(const char *, int, const char *);
+int	unlinkat(int, const char *, int);
 #endif
 
 
