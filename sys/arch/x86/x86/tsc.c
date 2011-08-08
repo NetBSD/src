@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.29 2011/08/08 11:18:34 jmcneill Exp $	*/
+/*	$NetBSD: tsc.c,v 1.30 2011/08/08 17:00:23 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.29 2011/08/08 11:18:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.30 2011/08/08 17:00:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,11 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.29 2011/08/08 11:18:34 jmcneill Exp $");
 #include <machine/cputypes.h>
 
 #include "tsc.h"
-#include "acpica.h"
-
-#if NACPICA > 0
-#include <dev/acpi/acpivar.h>
-#endif
 
 u_int	tsc_get_timecount(struct timecounter *);
 
@@ -147,21 +142,6 @@ tsc_tc_init(void)
 		tsc_timecounter.tc_quality = -100;
 		safe = false;
 	}
-
-#if NACPICA > 0
-	/*
-	 * If the USE_PLATFORM_CLOCK flag is set in the FADT, it indicates
-	 * that OSPM should use a platform provided timer (either HPET or
-	 * the PM timer). A platform may set this flag if internal
-	 * processor clock(s) cannot provide consistent monotonically
-	 * non-decreasing counters.
-	 */
-	if (acpi_active && (AcpiGbl_FADT.Flags & ACPI_FADT_PLATFORM_CLOCK)) {
-		aprint_debug("TSC: ACPI requested platform-provided timer\n");
-		tsc_timecounter.tc_quality = -100;
-		safe = false;
-	}
-#endif
 
 	if (tsc_freq != 0) {
 		tsc_timecounter.tc_frequency = tsc_freq;
