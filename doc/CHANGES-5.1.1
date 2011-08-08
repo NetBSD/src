@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.1,v 1.1.2.30 2011/08/08 19:35:41 riz Exp $
+# $NetBSD: CHANGES-5.1.1,v 1.1.2.31 2011/08/08 19:47:38 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.1.1
 release:
@@ -2492,4 +2492,11 @@ sys/net/if.c					1.243
 
 	Prevent crash when using 'ifconfig destroy'.
 	[sborrill, ticket #1643]
+
+sys/kern/init_main.c				1.433 via patch
+sys/kern/uipc_socket.c				1.205 via patch
+sys/sys/socketvar.h				1.126 via patch
+
+	Prevent NFS server hang under load.  PR#45093.
+	[bouyer, ticket #1644]
 
