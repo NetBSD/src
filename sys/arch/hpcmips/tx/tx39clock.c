@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.25 2011/03/16 14:43:37 tsutsui Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.26 2011/08/08 17:45:13 matt Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.25 2011/03/16 14:43:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.26 2011/08/08 17:45:13 matt Exp $");
 
 #include "opt_tx39clock_debug.h"
 
@@ -92,8 +92,8 @@ void	tx39clock_cpuspeed(int *, int *);
 
 void	__tx39timer_rtcfreeze(tx_chipset_tag_t);
 void	__tx39timer_rtcreset(tx_chipset_tag_t);
-inline void	__tx39timer_rtcget(struct txtime *);
-inline time_t __tx39timer_rtc2sec(struct txtime *);
+void	__tx39timer_rtcget(struct txtime *);
+time_t __tx39timer_rtc2sec(struct txtime *);
 uint32_t tx39_timecount(struct timecounter *);
 
 CFATTACH_DECL(tx39clock, sizeof(struct tx39clock_softc),
@@ -190,7 +190,7 @@ __tx39timer_rtcfreeze(tx_chipset_tag_t tc)
 	tx_conf_write(tc, TX39_TIMERCONTROL_REG, reg);
 }
 
-inline void
+void
 __tx39timer_rtcget(struct txtime *t)
 {
 	tx_chipset_tag_t tc;	
