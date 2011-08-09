@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.82 2011/08/09 01:42:24 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.83 2011/08/09 08:36:05 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -130,6 +130,7 @@ SUBDIR+=	hpacel
 SUBDIR+=	hpqlb
 SUBDIR+=	thinkpad
 SUBDIR+=	wmidell
+SUBDIR+=	wmieeepc
 SUBDIR+=	wmihp
 SUBDIR+=	wmimsi
 .endif
@@ -158,7 +159,6 @@ SUBDIR+=	viadrm
 SUBDIR+=	pad
 SUBDIR+=	padlock
 SUBDIR+=	viac7temp
-SUBDIR+=	wmieeepc
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \
