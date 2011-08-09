@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.93 2011/03/11 09:59:56 pooka Exp $	*/
+/*	$NetBSD: ping.c,v 1.94 2011/08/09 12:55:19 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.93 2011/03/11 09:59:56 pooka Exp $");
+__RCSID("$NetBSD: ping.c,v 1.94 2011/08/09 12:55:19 joerg Exp $");
 #endif
 
 #include <stdio.h>
@@ -1069,8 +1069,8 @@ pr_pack(u_char *buf,
 		/* check the data */
 		if (datalen > (int)PHDR_LEN
 		    && !(pingflags & F_PING_RANDOM)
-		    && memcmp(&icp->icmp_data[PHDR_LEN],
-			    &opack_icmp.icmp_data[PHDR_LEN],
+		    && memcmp(icp->icmp_data + PHDR_LEN,
+			    opack_icmp.icmp_data + PHDR_LEN,
 			    datalen-PHDR_LEN)) {
 			for (i=PHDR_LEN; i<datalen; i++) {
 				if (icp->icmp_data[i] !=
