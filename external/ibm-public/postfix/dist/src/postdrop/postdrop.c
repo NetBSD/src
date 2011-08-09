@@ -1,4 +1,4 @@
-/*	$NetBSD: postdrop.c,v 1.1.1.1.2.4 2011/01/07 01:24:09 riz Exp $	*/
+/*	$NetBSD: postdrop.c,v 1.1.1.1.2.5 2011/08/09 18:58:17 riz Exp $	*/
 
 /*++
 /* NAME
@@ -237,6 +237,7 @@ int     main(int argc, char **argv)
     int     saved_errno;
     int     from_count = 0;
     int     rcpt_count = 0;
+    int     validate_input = 1;
 
     /*
      * Fingerprint executables and core dumps.
@@ -455,6 +456,7 @@ int     main(int argc, char **argv)
 		   && rec_type != REC_TYPE_EOF)
 		if (rec_type == REC_TYPE_ERROR)
 		    msg_fatal("uid=%ld: malformed input", (long) uid);
+	    validate_input = 0;
 	    errno = saved_errno;
 	    break;
 	}
@@ -480,7 +482,7 @@ int     main(int argc, char **argv)
      * the segment terminator records, there aren't any other mandatory
      * records in a Postfix submission queue file.
      */
-    if (from_count == 0 || rcpt_count == 0) {
+    if (validate_input && (from_count == 0 || rcpt_count == 0)) {
 	status = CLEANUP_STAT_BAD;
 	mail_stream_cleanup(dst);
     }
