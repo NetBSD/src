@@ -1,11 +1,11 @@
-# $NetBSD: Makefile.inc,v 1.25 2011/06/20 07:44:02 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.26 2011/08/09 13:04:28 joerg Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client/server
-CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-array-bounds \
+CWARNFLAGS.clang+=	-Wno-tautological-compare \
 			-Wno-conversion -Wno-constant-logical-operand \
 			-Wno-format-security
 
