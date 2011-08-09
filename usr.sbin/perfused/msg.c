@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.14 2011/08/02 14:53:38 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.15 2011/08/09 07:00:13 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -539,7 +539,7 @@ perfuse_readframe(pu, pufbuf, fd, done)
 	len = foh.len;
 
 #ifdef PERFUSE_DEBUG
-	if (len > FUSE_BUFSIZE)
+	if (len > (size_t)FUSE_BUFSIZE)
 		DERRX(EX_SOFTWARE, "%s: foh.len = %zu", __func__, len);
 #endif
 
