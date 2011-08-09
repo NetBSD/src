@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2011/08/09 09:12:07 uch Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2011/08/09 11:18:28 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.8 2011/08/09 09:12:07 uch Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 2011/08/09 11:18:28 uch Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -78,7 +78,10 @@ partition_check(struct v7fs_self *fs)
 	int error;
 
 	if ((error = v7fs_superblock_load(fs))) {
-		warnx("Can't read superblock sector.");
+		if (error != EINVAL) {
+			/* Invalid superblock information is OK. */
+			warnx("Can't read superblock sector.");
+		}
 	}
 	sb->modified = 1;
 	if ((error = v7fs_superblock_writeback(fs))) {
