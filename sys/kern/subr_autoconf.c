@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.217 2011/08/02 21:23:24 jmcneill Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.218 2011/08/09 21:07:14 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.217 2011/08/02 21:23:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.218 2011/08/09 21:07:14 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1030,8 +1030,8 @@ static const char * const msgs[3] = { "", " not configured\n", " unsupported\n" 
  * on the given parent, but not necessarily configured.  Locate the
  * configuration data for that device (using the submatch function
  * provided, or using candidates' cd_match configuration driver
- * functions) and attach it, and return true.  If the device was
- * not configured, call the given `print' function and return 0.
+ * functions) and attach it, and return its device_t.  If the device was
+ * not configured, call the given `print' function and return NULL.
  */
 device_t
 config_found_sm_loc(device_t parent,
