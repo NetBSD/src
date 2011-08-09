@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1659 2011/08/08 12:08:52 manu Exp $
+#	$NetBSD: mi,v 1.1660 2011/08/09 17:58:27 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7649,6 +7649,7 @@
 ./usr/share/man/cat3/libsaslc.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libusb.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/libusbhid.0		comp-c-catman		.cat
+./usr/share/man/cat3/limits.0			comp-c-catman		.cat
 ./usr/share/man/cat3/link_addr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/link_field.0		comp-c-catman		.cat
 ./usr/share/man/cat3/link_fieldtype.0		comp-c-catman		.cat
@@ -13738,6 +13739,7 @@
 ./usr/share/man/html3/libradius.html		comp-c-htmlman		html
 ./usr/share/man/html3/libsaslc.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libusbhid.html		comp-c-htmlman		html
+./usr/share/man/html3/limits.html		comp-c-htmlman		html
 ./usr/share/man/html3/link_addr.html		comp-c-htmlman		html
 ./usr/share/man/html3/link_field.html		comp-c-htmlman		html
 ./usr/share/man/html3/link_fieldtype.html	comp-c-htmlman		html
@@ -19788,6 +19790,7 @@
 ./usr/share/man/man3/libsaslc.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/libusb.3			comp-obsolete		obsolete
 ./usr/share/man/man3/libusbhid.3		comp-c-man		.man
+./usr/share/man/man3/limits.3			comp-c-man		.man
 ./usr/share/man/man3/link_addr.3		comp-c-man		.man
 ./usr/share/man/man3/link_field.3		comp-c-man		.man
 ./usr/share/man/man3/link_fieldtype.3		comp-c-man		.man
