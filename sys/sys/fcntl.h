@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.40 2011/08/08 12:08:54 manu Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.41 2011/08/09 04:19:17 manu Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -281,7 +281,7 @@ struct flock {
 #define	POSIX_FADV_NOREUSE	5	/* be accessed once */
 
 /*
- * Constants for linkat(2)
+ * Constants for X/Open Extended API set 2 (a.k.a. C063)
  */
 #if defined(_INCOMPLETE_XOPEN_C063) || defined(_KERNEL)
 #define	AT_FDCWD		-100	/* Use cwd for relative link target */
