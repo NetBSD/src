@@ -1,5 +1,5 @@
 #! /usr/bin/atf-sh
-#	$NetBSD: t_raid.sh,v 1.9 2011/07/29 19:57:38 oster Exp $
+#	$NetBSD: t_raid.sh,v 1.10 2011/08/09 13:48:55 martin Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -170,6 +170,7 @@ raid1_normal_head()
 raid1_normal_body()
 {
 	makecfg 1 2
+	export RUMP_SERVER=unix://sock
         atf_check -s exit:0 ${raidserver}                               \
             -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}     \
             -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}     \
