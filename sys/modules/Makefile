@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84 2011/08/09 11:12:02 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.85 2011/08/09 12:09:55 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -101,6 +101,9 @@ SUBDIR+=	tprof_pmi
 SUBDIR+=	tprof_amdpmi
 .endif
 
+#
+# ACPI modules
+#
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "ia64" || \
     ${MACHINE_ARCH} == "x86_64"
@@ -159,6 +162,9 @@ SUBDIR+=	padlock
 SUBDIR+=	viac7temp
 .endif
 
+#
+# ISA modules
+#
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	aps
