@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.30 2011/07/31 17:55:41 jmcneill Exp $
+# $NetBSD: md.i386,v 1.31 2011/08/09 11:12:02 jmcneill Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -45,10 +45,18 @@
 ./@MODULEDIR@/compat_linux/compat_linux.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_svr4			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_svr4/compat_svr4.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/coram				base-kernel-modules	kmod
+./@MODULEDIR@/coram/coram.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/coretemp				base-kernel-modules	kmod
 ./@MODULEDIR@/coretemp/coretemp.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/cx24227				base-kernel-modules	kmod
+./@MODULEDIR@/cx24227/cx24227.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/cxdtv				base-kernel-modules	kmod
+./@MODULEDIR@/cxdtv/cxdtv.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/drm				base-kernel-modules	kmod
 ./@MODULEDIR@/drm/drm.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/emdtv				base-kernel-modules	kmod
+./@MODULEDIR@/emdtv/emdtv.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/est				base-kernel-modules	kmod
 ./@MODULEDIR@/est/est.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/exec_aout				base-kernel-modules	kmod
@@ -71,8 +79,14 @@
 ./@MODULEDIR@/i915drm/i915drm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/itesio				base-kernel-modules	kmod
 ./@MODULEDIR@/itesio/itesio.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/lg3303				base-kernel-modules	kmod
+./@MODULEDIR@/lg3303/lg3303.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/mt2131				base-kernel-modules	kmod
+./@MODULEDIR@/mt2131/mt2131.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/nsclpcsio				base-kernel-modules	kmod
 ./@MODULEDIR@/nsclpcsio/nsclpcsio.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/nxt2k				base-kernel-modules	kmod
+./@MODULEDIR@/nxt2k/nxt2k.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/radeondrm				base-kernel-modules	kmod
 ./@MODULEDIR@/radeondrm/radeondrm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/odcm				base-kernel-modules	kmod
@@ -89,6 +103,8 @@
 ./@MODULEDIR@/tprof_amdpmi/tprof_amdpmi.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/tprof_pmi				base-kernel-modules	kmod
 ./@MODULEDIR@/tprof_pmi/tprof_pmi.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/tvpll				base-kernel-modules	kmod
+./@MODULEDIR@/tvpll/tvpll.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/viac7temp				base-kernel-modules	kmod
 ./@MODULEDIR@/viac7temp/viac7temp.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/viadrm				base-kernel-modules	kmod
@@ -101,5 +117,7 @@
 ./@MODULEDIR@/wmihp/wmihp.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/wmimsi				base-kernel-modules	kmod
 ./@MODULEDIR@/wmimsi/wmimsi.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/xc3028				base-kernel-modules	kmod
+./@MODULEDIR@/xc3028/xc3028.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/xc5k				base-kernel-modules	kmod
 ./@MODULEDIR@/xc5k/xc5k.kmod			base-kernel-modules	kmod
