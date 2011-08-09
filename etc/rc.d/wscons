@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: wscons,v 1.12 2007/04/02 12:42:42 mishka Exp $
+# $NetBSD: wscons,v 1.13 2011/08/09 08:08:10 mbalmer Exp $
 #
 
 # PROVIDE: wscons
@@ -132,6 +132,7 @@ wscons_start()
 			encoding)
 				map=$arg1
 				cmd="$wsctl -w \"encoding=$map\""
+				echo -n 'Keyboard '
 				eval $DOIT $cmd
 				;;
 
