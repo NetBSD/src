@@ -1,4 +1,4 @@
-/* $NetBSD: cx23885reg.h,v 1.1 2011/08/04 14:43:55 jakllsch Exp $ */
+/* $NetBSD: cx23885reg.h,v 1.2 2011/08/09 11:26:40 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -55,6 +55,7 @@
 #define GPIO_ISM		0x110014
 #define SOFT_RESET		0x11001c
 
+#define CLK_DELAY		0x110048
 #define PAD_CTRL		0x11004c
 
 /* Video C Interface */
