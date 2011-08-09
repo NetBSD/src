@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.96 2011/08/08 19:57:46 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.97 2011/08/09 16:20:55 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5451,4 +5451,16 @@ lib/librefuse/refuse.c				1.94
 
 	Call the FUSE init operation before we try to access the file-system.
 	[tron, ticket #1650]
+
+usr.bin/extattr/getextattr.1			1.4 via patch
+usr.bin/extattr/getextattr.c			1.8 via patch
+
+	Improve extended attribute commands.
+	[manu, ticket #1651]
+
+sys/kern/kern_kthread.c				1.28 via patch
+sys/sys/kthread.h				1.9 via patch
+
+	Add support for kthread_join in our kernel thread implementation.
+	[matt, ticket #1652]
 
