@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2011/05/26 12:56:25 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2011/08/09 13:00:59 joerg Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -6,7 +6,7 @@ NTP_MAKEFILE_INC=yes
 USE_FORT?= yes	# network client/server
 
 CWARNFLAGS.clang+=	-Wno-unneeded-internal-declaration \
-			-Wno-format-security -Wno-array-bounds \
+			-Wno-format-security \
 			-Wno-parentheses -Wno-constant-logical-operand
 
 WARNS?=	5
