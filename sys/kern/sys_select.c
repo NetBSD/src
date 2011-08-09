@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.34 2011/08/06 11:04:25 hannken Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.35 2011/08/09 06:36:51 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.34 2011/08/06 11:04:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.35 2011/08/09 06:36:51 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,7 +390,7 @@ selscan(char *bits, const int nfd, const size_t ni, register_t *retval)
 		for (i = 0; i < nfd; i += NFDBITS) {
 			fd_mask ibits, obits;
 
-			ibits = *ibitp++;
+			ibits = *ibitp;
 			obits = 0;
 			while ((j = ffs(ibits)) && (fd = i + --j) < nfd) {
 				ibits &= ~(1 << j);
@@ -408,10 +408,17 @@ selscan(char *bits, const int nfd, const size_t ni, register_t *retval)
 				fd_putfile(fd);
 			}
 			if (obits != 0) {
-				mutex_spin_enter(lock);
+#ifndef NO_DIRECT_SELECT
+				if (obits != *ibitp)
+					mutex_spin_enter(lock);
 				*obitp |= obits;
-				mutex_spin_exit(lock);
+				if (obits != *ibitp)
+					mutex_spin_exit(lock);
+#else
+				*obitp |= obits;
+#endif
 			}
+			ibitp++;
 			obitp++;
 		}
 	}
