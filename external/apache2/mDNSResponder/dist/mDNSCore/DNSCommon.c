@@ -2635,7 +2635,7 @@ mDNSexport const mDNSu8 *GetLargeResourceRecord(mDNS *const m, const DNSMessage 
 		case kDNSType_OPT:	{
 							rdataOPT *opt = rr->resrec.rdata->u.opt;
 							rr->resrec.rdlength = 0;
-							while (ptr < end && (mDNSu8 *)(opt+1) < &rr->resrec.rdata->u.data[MaximumRDSize])
+							while (ptr < end && (mDNSu8 *)(opt+1) < rr->resrec.rdata->u.data + MaximumRDSize)
 								{
 								if (ptr + 4 > end) { LogMsg("GetLargeResourceRecord: OPT RDATA ptr + 4 > end"); return(mDNSNULL); }
 								opt->opt    = getVal16(&ptr);
