@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/07/13 23:48:30 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/08/09 12:30:47 joerg Exp $
 
 LIB=	LLVMipo
 
@@ -20,9 +20,9 @@ SRCS+=	ArgumentPromotion.cpp \
 	Inliner.cpp \
 	Internalize.cpp \
 	LoopExtractor.cpp \
-	LowerSetJmp.cpp \
 	MergeFunctions.cpp \
 	PartialInlining.cpp \
+	PassManagerBuilder.cpp \
 	PruneEH.cpp \
 	StripDeadPrototypes.cpp \
 	StripSymbols.cpp
