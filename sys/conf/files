@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1023 2011/08/07 13:33:01 rmind Exp $
+#	$NetBSD: files,v 1.1024 2011/08/09 01:42:24 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -326,6 +326,10 @@ define	audiobell
 #
 device	video
 attach	video at videobus
+
+# DTV subsystem
+#
+include "dev/dtv/files.dtv"
 
 # National Semiconductor LM7[89]
 #
@@ -1729,8 +1733,3 @@ include "dev/nand/files.nand"
 # NOR subsytem
 #
 include "dev/nor/files.nor"
-
-#
-# DTV subsystem
-#
-include "dev/dtv/files.dtv"

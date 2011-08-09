@@ -1,4 +1,4 @@
-/* $NetBSD: dtvif.h,v 1.2 2011/07/15 20:27:42 jmcneill Exp $ */
+/* $NetBSD: dtvif.h,v 1.3 2011/08/09 01:42:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,6 +52,8 @@
 #define	ISDTVDEMUX(x)		(DTVDEV((x)) == DTV_DEVICE_DEMUX)
 #define	ISDTVDVR(x)		(DTVDEV((x)) == DTV_DEVICE_DVR)
 
+struct dtv_payload;
+
 struct dtv_hw_if {
 	void		(*get_devinfo)(void *, struct dvb_frontend_info *);
 
@@ -61,7 +63,9 @@ struct dtv_hw_if {
 	fe_status_t	(*get_status)(void *);
 	uint16_t	(*get_signal_strength)(void *);
 	uint16_t	(*get_snr)(void *);
-	int		(*start_transfer)(void *);
+	int		(*start_transfer)(void *,
+			    void (*)(void *, const struct dtv_payload *),
+			    void *);
 	int		(*stop_transfer)(void *);
 };
 
@@ -75,11 +79,12 @@ struct dtv_payload {
 	size_t		size;
 };
 
-int	dtv_print(void *, const char *);
-
-void	dtv_submit_payload(device_t, const struct dtv_payload *);
-
-/* dtv_math.c */
-uint32_t	dtv_intlog10(uint32_t);
+static inline int
+dtv_print(void *priv, const char *pnp)
+{
+	if (pnp)
+		aprint_normal("dtv at %s", pnp);
+	return UNCONF;
+}
 
 #endif /* !_DEV_DTV_DTVIF_H */
