@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.25 2011/08/01 03:56:23 pgoyette Exp $
+# $NetBSD: mi,v 1.26 2011/08/09 01:42:57 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -36,6 +36,8 @@
 ./@MODULEDIR@/dtrace/dtrace.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtv				base-kernel-modules	kmod
 ./@MODULEDIR@/dtv/dtv.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/dtv_math				base-kernel-modules	kmod
+./@MODULEDIR@/dtv_math/dtv_math.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/efs				base-kernel-modules	kmod
 ./@MODULEDIR@/efs/efs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/exec_script			base-kernel-modules	kmod
