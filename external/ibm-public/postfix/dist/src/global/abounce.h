@@ -1,4 +1,4 @@
-/*	$NetBSD: abounce.h,v 1.1.1.1.2.3 2011/01/07 01:24:01 riz Exp $	*/
+/*	$NetBSD: abounce.h,v 1.1.1.1.2.4 2011/08/09 18:58:16 riz Exp $	*/
 
 #ifndef _ABOUNCE_H_INCLUDED_
 #define _ABOUNCE_H_INCLUDED_
@@ -26,6 +26,7 @@ typedef void (*ABOUNCE_FN) (int, char *);
 extern void abounce_flush(int, const char *, const char *, const char *, const char *, const char *, int, ABOUNCE_FN, char *);
 extern void adefer_flush(int, const char *, const char *, const char *, const char *, const char *, int, ABOUNCE_FN, char *);
 extern void adefer_warn(int, const char *, const char *, const char *, const char *, const char *, int, ABOUNCE_FN, char *);
+extern void atrace_flush(int, const char *, const char *, const char *, const char *, const char *, int, ABOUNCE_FN, char *);
 
 extern void abounce_flush_verp(int, const char *, const char *, const char *, const char *, const char *, int, const char *, ABOUNCE_FN, char *);
 extern void adefer_flush_verp(int, const char *, const char *, const char *, const char *, const char *, int, const char *, ABOUNCE_FN, char *);

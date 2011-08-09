@@ -340,6 +340,33 @@ EOF
 		       fi;;
 		esac
 		;;
+    Linux.3*)	SYSTYPE=LINUX3
+		if [ -f /usr/include/db.h ]
+		then
+		    : we are all set
+		elif [ -f /usr/include/db/db.h ]
+		then
+		    CCARGS="$CCARGS -I/usr/include/db"
+		else
+		    # On a properly installed system, Postfix builds
+		    # by including <db.h> and by linking with -ldb
+		    echo "No <db.h> include file found." 1>&2
+		    echo "Install the appropriate db*-devel package first." 1>&2
+		    echo "See the RELEASE_NOTES file for more information." 1>&2
+		    exit 1
+		fi
+		SYSLIBS="-ldb"
+		for name in nsl resolv
+		do
+		    for lib in /usr/lib64 /lib64 /usr/lib /lib
+		    do
+			test -e $lib/lib$name.a -o -e $lib/lib$name.so && {
+			    SYSLIBS="$SYSLIBS -l$name"
+			    break
+			}
+		    done
+		done
+		;;
      GNU.0*|GNU/kFreeBSD.[567]*)
      		SYSTYPE=GNU0
 		# Postfix no longer needs DB 1.85 compatibility

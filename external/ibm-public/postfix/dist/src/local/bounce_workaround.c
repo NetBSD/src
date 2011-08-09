@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_workaround.c,v 1.1.1.1.2.3 2011/01/07 01:24:06 riz Exp $	*/
+/*	$NetBSD: bounce_workaround.c,v 1.1.1.1.2.4 2011/08/09 18:58:17 riz Exp $	*/
 
 /*++
 /* NAME
@@ -79,6 +79,7 @@
 #include <strip_addr.h>
 #include <stringops.h>
 #include <bounce.h>
+#include <defer.h>
 #include <split_addr.h>
 #include <canon_addr.h>
 
@@ -99,6 +100,7 @@ int     bounce_workaround(LOCAL_STATE state)
 	char   *stripped_recipient;
 	char   *owner_alias;
 	const char *owner_expansion;
+	int     saved_dict_errno;
 
 #define FIND_OWNER(lhs, rhs, addr) { \
 	lhs = concatenate("owner-", addr, (char *) 0); \
@@ -106,8 +108,9 @@ int     bounce_workaround(LOCAL_STATE state)
 	rhs = maps_find(alias_maps, lhs, DICT_FLAG_NONE); \
     }
 
+	dict_errno = 0;
 	FIND_OWNER(owner_alias, owner_expansion, state.msg_attr.rcpt.address);
-	if (owner_expansion == 0
+	if ((saved_dict_errno = dict_errno) == 0 && owner_expansion == 0
 	    && (stripped_recipient = strip_addr(state.msg_attr.rcpt.address,
 						(char **) 0,
 						*var_rcpt_delim)) != 0) {
@@ -115,13 +118,17 @@ int     bounce_workaround(LOCAL_STATE state)
 	    FIND_OWNER(owner_alias, owner_expansion, stripped_recipient);
 	    myfree(stripped_recipient);
 	}
-	if (owner_expansion != 0) {
+	if ((saved_dict_errno = dict_errno) == 0 && owner_expansion != 0) {
 	    canon_owner = canon_addr_internal(vstring_alloc(10),
 					      var_exp_own_alias ?
 					      owner_expansion : owner_alias);
 	    SET_OWNER_ATTR(state.msg_attr, STR(canon_owner), state.level);
 	}
 	myfree(owner_alias);
+	if (saved_dict_errno != 0)
+	    /* At this point, canon_owner == 0. */
+	    return (defer_append(BOUNCE_FLAGS(state.request),
+				 BOUNCE_ATTR(state.msg_attr)));
     }
 
     /*

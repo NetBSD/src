@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.1.1.1.2.5 2011/03/24 19:54:09 riz Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.1.1.1.2.6 2011/08/09 18:58:18 riz Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -705,7 +705,7 @@ extern int initgroups(const char *, int);
  /*
   * LINUX.
   */
-#ifdef LINUX2
+#if defined(LINUX2) || defined(LINUX3)
 #define SUPPORTED
 #include <sys/types.h>
 #define UINT32_TYPE	unsigned int
