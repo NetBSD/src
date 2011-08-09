@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.121 2011/08/05 14:43:41 jmmv Exp $
+# $NetBSD: postinstall,v 1.122 2011/08/09 18:24:46 jmmv Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1519,6 +1519,37 @@ do_tcpdumpchroot()
 			failed=1
 		fi
 	fi
+	return ${failed}
+}
+
+
+#
+#	atf
+#
+additem atf "validate the _atf to _tests user/group renaming"
+do_atf()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_atf  fix|check"
+	op="$1"
+	failed=0
+
+	if grep '[^#]*unprivileged-user[ \t]*=.*_atf' /etc/atf/common.conf \
+	    >/dev/null
+	then
+		if [ "$1" = "fix" ]; then
+			sed -e \
+			    "/[^#]*unprivileged-user[\ t]*=/s/_atf/_tests/" \
+			    /etc/atf/common.conf >/etc/atf/common.conf.new
+			failed=$(( ${failed} + $? ))
+			mv /etc/atf/common.conf.new /etc/atf/common.conf
+			failed=$(( ${failed} + $? ))
+		else
+			msg "unprivileged-user=_atf in /etc/atf/common.conf" \
+			    "should be _tests"
+			failed=1
+		fi
+	fi
+
 	return ${failed}
 }
 
