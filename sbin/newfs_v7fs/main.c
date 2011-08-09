@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2011/07/22 09:15:10 uch Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2011/08/09 09:12:07 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.7 2011/07/22 09:15:10 uch Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2011/08/09 09:12:07 uch Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,6 +69,26 @@ determine_ilist_size(v7fs_daddr_t volume_size, int32_t files)
 		ilist_size = V7FS_ILISTBLK_MAX;
 
 	return ilist_size;
+}
+
+static int
+partition_check(struct v7fs_self *fs)
+{
+	struct v7fs_superblock *sb = &fs->superblock;
+	int error;
+
+	if ((error = v7fs_superblock_load(fs))) {
+		warnx("Can't read superblock sector.");
+	}
+	sb->modified = 1;
+	if ((error = v7fs_superblock_writeback(fs))) {
+		if (errno == EROFS) {
+			warnx("Overwriting disk label? ");
+		}
+		warnx("Can't write superblock sector.");
+	}
+
+	return error;
 }
 
 static int
@@ -126,7 +146,7 @@ make_root(struct v7fs_self *fs)
 	v7fs_inode_writeback(fs, &inode);
 	if ((error = v7fs_superblock_writeback(fs))) {
 		errno = error;
-		warn("Can't write superblock.");
+		warnx("Can't write superblock.");
 	}
 
 	return error;
@@ -271,6 +291,10 @@ v7fs_newfs(const struct v7fs_mount_device *mount, int32_t maxfile)
 	}
 	fs->endian = mount->endian;
 	v7fs_endian_init(fs);
+
+	if ((error = partition_check(fs))) {
+		return error;
+	}
 
 	/* Construct filesystem. */
 	if ((error = make_filesystem(fs, volume_size, ilist_size))) {
