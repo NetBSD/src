@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/28 04:03:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/08/09 13:00:04 joerg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -6,6 +6,7 @@ NOPIC=		# defined
 NOPROFILE=	# defined
 
 CWARNFLAGS.clang+=	-Wno-parentheses
+UNSUPPORTED_COMPILER.clang=	# defined
 
 .include <bsd.own.mk>
 
