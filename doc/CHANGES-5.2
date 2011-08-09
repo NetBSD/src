@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.97 2011/08/09 16:20:55 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.98 2011/08/09 19:04:14 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5463,4 +5463,41 @@ sys/sys/kthread.h				1.9 via patch
 
 	Add support for kthread_join in our kernel thread implementation.
 	[matt, ticket #1652]
+
+external/ibm-public/postfix/dist/HISTORY	patch
+external/ibm-public/postfix/dist/makedefs	patch
+external/ibm-public/postfix/dist/postfix-install patch
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.c patch
+external/ibm-public/postfix/dist/src/global/abounce.c patch
+external/ibm-public/postfix/dist/src/global/abounce.h patch
+external/ibm-public/postfix/dist/src/global/mail_version.h patch
+external/ibm-public/postfix/dist/src/local/Makefile.in patch
+external/ibm-public/postfix/dist/src/local/bounce_workaround.c patch
+external/ibm-public/postfix/dist/src/local/mailbox.c patch
+external/ibm-public/postfix/dist/src/local/unknown.c patch
+external/ibm-public/postfix/dist/src/master/master_ent.c patch
+external/ibm-public/postfix/dist/src/milter/milter8.c patch
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_active.c patch
+external/ibm-public/postfix/dist/src/postdrop/postdrop.c patch
+external/ibm-public/postfix/dist/src/qmgr/qmgr_active.c patch
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check.c patch
+external/ibm-public/postfix/dist/src/util/sys_defs.h patch
+
+	Update Postfix to version 2.7.5. Changes since version 2.7.4:
+	- Performance: a high load of DSN success notification requests could
+	  slow down the queue manager. Solution: make the trace client
+	  asynchronous, just like the bounce and defer clients.
+	- The local(8) delivery agent ignored table lookup errors in
+	  mailbox_command_maps, mailbox_transport_maps,
+	  fallback_transport_maps and (while bouncing mail to alias) alias
+	  owner lookup.
+	- Workaround: dbl.spamhaus.org rejects lookups with "No IP queries"
+	  even if the name has an alphanumerical prefix. We play safe, and
+	  skip both RHSBL and RHSWL queries for names ending in a numerical
+	  suffix.
+	- The Postfix Milter client reported a temporary error instead of
+	  "file too large" in three cases.
+	- The "sendmail -t" command reported "protocol error" instead of
+	  "file too large", "no space left on device" etc.
+	[tron, ticket #1653]
 
