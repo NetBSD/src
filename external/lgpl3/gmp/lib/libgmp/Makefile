@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2011/07/21 03:13:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2011/08/09 13:01:34 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -189,3 +189,5 @@ CLEANFILES+=	${DPSRCS} gen-fac_ui gen-fib gen-bases gen-psqr gen-trialdivtab
 .if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS += -Wno-stack-protector
 .endif
+
+CWARNFLAGS.clang+=	-Wno-unused-value -Wno-tautological-compare
