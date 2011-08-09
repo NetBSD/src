@@ -1,4 +1,4 @@
-/* $NetBSD: lg3303.c,v 1.5 2011/07/15 20:28:38 jmcneill Exp $ */
+/* $NetBSD: lg3303.c,v 1.6 2011/08/09 10:53:09 jmcneill Exp $ */
 
 /*-
  * Copyright 2007 Jason Harmening
@@ -28,7 +28,7 @@
  */
 
 #include <sys/param.h>
-__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.5 2011/07/15 20:28:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.6 2011/08/09 10:53:09 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.5 2011/07/15 20:28:38 jmcneill Exp $");
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/lg3303var.h>
 #include <dev/dtv/dtvif.h>
+#include <dev/dtv/dtv_math.h>
 
 #define REG_TOP_CONTROL         0x00
 #define REG_IRQ_MASK            0x01
