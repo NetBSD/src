@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.186 2011/08/09 23:16:17 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.187 2011/08/09 23:46:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.186 2011/08/09 23:16:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.187 2011/08/09 23:46:05 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1123,11 +1123,10 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 	for (;;) {
 
 		/*
-		 * If the directory we're on is unmounted, bail out.
-		 * XXX: should this also check if it's unlinked?
-		 * XXX: yes it should... but how?
+		 * If the directory we're on is unmounted, or has been
+		 * rmdir'd, bail out.
 		 */
-		if (searchdir->v_mount == NULL) {
+		if (searchdir->v_mount == NULL || searchdir->v_size == 0) {
 			vput(searchdir);
 			ndp->ni_dvp = NULL;
 			ndp->ni_vp = NULL;
