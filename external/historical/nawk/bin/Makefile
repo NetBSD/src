@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 2011/06/20 07:43:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2011/08/09 13:06:31 joerg Exp $
 
 WARNS?= 4
-CWARNFLAGS.clang+=	-Wno-array-bounds -Wno-self-assign
+CWARNFLAGS.clang+=	-Wno-self-assign
 
 .include <bsd.own.mk>
 
