@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_dtv.c,v 1.4 2011/07/15 20:32:24 jmcneill Exp $ */
+/* $NetBSD: emdtv_dtv.c,v 1.5 2011/08/09 01:42:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.4 2011/07/15 20:32:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.5 2011/08/09 01:42:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,9 @@ static int		emdtv_dtv_set_tuner(void *,
 static fe_status_t	emdtv_dtv_get_status(void *);
 static uint16_t		emdtv_dtv_get_signal_strength(void *);
 static uint16_t		emdtv_dtv_get_snr(void *);
-static int		emdtv_dtv_start_transfer(void *);
+static int		emdtv_dtv_start_transfer(void *,
+			    void (*)(void *, const struct dtv_payload *),
+			    void *);
 static int		emdtv_dtv_stop_transfer(void *);
 
 static int		emdtv_dtv_tuner_reset(void *);
@@ -81,7 +83,6 @@ emdtv_dtv_attach(struct emdtv_softc *sc)
 {
 	usb_endpoint_descriptor_t *ed;
 	usbd_status status;
-	struct dtv_attach_args daa;
 	int i;
 
 	for (i = 0; i < EMDTV_NXFERS; i++) {
@@ -119,9 +120,7 @@ emdtv_dtv_attach(struct emdtv_softc *sc)
 	emdtv_gpio_ctl(sc, EMDTV_GPIO_DEMOD1_RESET, true);
 	usbd_delay_ms(sc->sc_udev, 100);
 
-	daa.hw = &emdtv_dtv_if;
-	daa.priv = sc;
-	sc->sc_dtvdev = config_found_ia(sc->sc_dev, "dtvbus", &daa, dtv_print);
+	emdtv_dtv_rescan(sc, NULL, NULL);
 }
 
 void
@@ -144,6 +143,19 @@ emdtv_dtv_detach(struct emdtv_softc *sc, int flags)
 		usbd_close_pipe(sc->sc_isoc_pipe);
 		sc->sc_isoc_pipe = NULL;
 	}
+}
+
+void
+emdtv_dtv_rescan(struct emdtv_softc *sc, const char *ifattr, const int *locs)
+{
+	struct dtv_attach_args daa;
+
+	daa.hw = &emdtv_dtv_if;
+	daa.priv = sc;
+
+	if (ifattr_match(ifattr, "dtvbus") && sc->sc_dtvdev == NULL)
+		sc->sc_dtvdev = config_found_ia(sc->sc_dev, "dtvbus",
+		    &daa, dtv_print);
 }
 
 static void
@@ -279,7 +291,8 @@ emdtv_dtv_get_snr(void *priv)
 }
 
 static int
-emdtv_dtv_start_transfer(void *priv)
+emdtv_dtv_start_transfer(void *priv,
+    void (*cb)(void *, const struct dtv_payload *), void *arg)
 {
 	struct emdtv_softc *sc = priv;
 	int i, s;
@@ -287,6 +300,8 @@ emdtv_dtv_start_transfer(void *priv)
 	s = splusb();
 
 	sc->sc_streaming = true;
+	sc->sc_dtvsubmitcb = cb;
+	sc->sc_dtvsubmitarg = arg;
 
 	aprint_debug_dev(sc->sc_dev, "allocating isoc xfers (pktsz %d)\n",
 	    sc->sc_isoc_maxpacketsize);
@@ -326,6 +341,9 @@ emdtv_dtv_stop_transfer(void *priv)
 			sc->sc_ix[i].ix_xfer = NULL;
 			sc->sc_ix[i].ix_buf = NULL;
 		}
+
+	sc->sc_dtvsubmitcb = NULL;
+	sc->sc_dtvsubmitarg = NULL;
 
 	return 0;
 }
@@ -379,7 +397,7 @@ emdtv_dtv_isoc(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	KASSERT(xfer == ix->ix_xfer);
 
-	if (sc->sc_dying)
+	if (sc->sc_dying || sc->sc_dtvsubmitcb == NULL)
 		return;
 
 	if (err) {
@@ -404,7 +422,7 @@ emdtv_dtv_isoc(usbd_xfer_handle xfer, usbd_private_handle priv,
 			continue;
 		payload.data = buf;
 		payload.size = ix->ix_frlengths[i];
-		dtv_submit_payload(sc->sc_dtvdev, &payload);
+		sc->sc_dtvsubmitcb(sc->sc_dtvsubmitarg, &payload);
 	}
 
 resched:
