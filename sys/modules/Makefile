@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.83 2011/08/09 08:36:05 jruoho Exp $
+#	$NetBSD: Makefile,v 1.84 2011/08/09 11:12:02 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -15,8 +15,6 @@ SUBDIR+=	coda5
 SUBDIR+=	compat
 SUBDIR+=	compat_ossaudio
 SUBDIR+=	coredump
-SUBDIR+=	dtv
-SUBDIR+=	dtv_math
 SUBDIR+=	efs
 SUBDIR+=	ext2fs
 SUBDIR+=	exec_script
@@ -164,11 +162,8 @@ SUBDIR+=	viac7temp
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	aps
-SUBDIR+=	au8522
-SUBDIR+=	auvitek
 SUBDIR+=	finsio
 SUBDIR+=	itesio
-SUBDIR+=	xc5k
 .endif
 
 .if ${MACHINE_CPU} == "m68k"
@@ -200,6 +195,28 @@ SUBDIR+=	zfs
 
 .if (${MKCOMPATMODULES} != "no")
 SUBDIR+=	arch
+.endif
+
+#
+# DTV modules
+#
+SUBDIR+=	dtv
+SUBDIR+=	dtv_math
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+# tuners/demods
+SUBDIR+=	au8522
+SUBDIR+=	cx24227
+SUBDIR+=	lg3303
+SUBDIR+=	mt2131
+SUBDIR+=	nxt2k
+SUBDIR+=	tvpll
+SUBDIR+=	xc3028
+SUBDIR+=	xc5k
+# hardware drivers
+SUBDIR+=	auvitek
+SUBDIR+=	coram
+SUBDIR+=	cxdtv
+SUBDIR+=	emdtv
 .endif
 
 .include <bsd.subdir.mk>
