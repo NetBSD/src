@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.75 2011/05/28 10:48:51 ryo Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.76 2011/08/09 21:04:05 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.75 2011/05/28 10:48:51 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.76 2011/08/09 21:04:05 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -971,6 +971,15 @@ const struct puc_device_description puc_devices[] = {
 	 * As sold by Kouwell <URL:http://www.kouwell.com/>.
 	 * I/O Flex PCI I/O Card Model-223 with 4 serial and 1 parallel ports.
 	 */
+
+	/* Oxford Semiconductor OXPCIe952 PCIe UARTs */
+	{   "Oxford Semiconductor OXPCIe952 UARTs",
+	    {	PCI_VENDOR_OXFORDSEMI, 0xc120, PCI_VENDOR_OXFORDSEMI, 0xc120 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
 
 	/* Oxford Semiconductor OXmPCI952 PCI UARTs */
 	{   "Oxford Semiconductor OXmPCI952 UARTs",
