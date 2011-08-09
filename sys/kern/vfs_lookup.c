@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.184 2011/05/16 15:09:31 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.185 2011/08/09 18:37:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.184 2011/05/16 15:09:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.185 2011/08/09 18:37:56 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1078,7 +1078,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 	struct nameidata *ndp = state->ndp;
 	struct componentname *cnp = state->cnp;
 	struct vnode *searchdir, *foundobj;
-	const char *cp;
 	int error;
 
 	error = namei_start(state, forcecwd, &searchdir);
@@ -1087,6 +1086,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		ndp->ni_vp = NULL;
 		return error;
 	}
+	KASSERT(searchdir->v_type == VDIR);
 
 	/*
 	 * Setup: break out flag bits into variables.
@@ -1100,11 +1100,28 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 	 * Keep going until we run out of path components.
 	 */
 	cnp->cn_nameptr = ndp->ni_pnbuf;
+
+	/* drop leading slashes (already used them to choose startdir) */
+	while (cnp->cn_nameptr[0] == '/') {
+		cnp->cn_nameptr++;
+		ndp->ni_pathlen--;
+	}
+	/* was it just "/"? */
+	if (cnp->cn_nameptr[0] == '\0') {
+		foundobj = searchdir;
+		searchdir = NULL;
+		cnp->cn_flags |= ISLASTCN;
+
+		/* bleh */
+		goto skiploop;
+	}
+
 	for (;;) {
 
 		/*
 		 * If the directory we're on is unmounted, bail out.
 		 * XXX: should this also check if it's unlinked?
+		 * XXX: yes it should... but how?
 		 */
 		if (searchdir->v_mount == NULL) {
 			vput(searchdir);
@@ -1118,40 +1135,11 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * (currently, this may consume more than one)
 		 */
 
-		/*
-		 * If we have a leading string of slashes, remove
-		 * them, and just make sure the current node is a
-		 * directory.
-		 */
-		cp = cnp->cn_nameptr;
-		if (*cp == '/') {
-			do {
-				cp++;
-			} while (*cp == '/');
-			ndp->ni_pathlen -= cp - cnp->cn_nameptr;
-			cnp->cn_nameptr = cp;
+		/* There should be no slashes here. */
+		KASSERT(cnp->cn_nameptr[0] != '/');
 
-			if (searchdir->v_type != VDIR) {
-				vput(searchdir);
-				ndp->ni_dvp = NULL;
-				ndp->ni_vp = NULL;
-				state->attempt_retry = 1;
-				return ENOTDIR;
-			}
-		}
-
-		/*
-		 * If we've exhausted the path name, then just return the
-		 * current node.
-		 */
-		if (cnp->cn_nameptr[0] == '\0') {
-			foundobj = searchdir;
-			searchdir = NULL;
-			cnp->cn_flags |= ISLASTCN;
-
-			/* bleh */
-			break;
-		}
+		/* and we shouldn't have looped around if we were done */
+		KASSERT(cnp->cn_nameptr[0] != '\0');
 
 		error = lookup_parsepath(state);
 		if (error) {
@@ -1265,6 +1253,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		searchdir = foundobj;
 		foundobj = NULL;
 	}
+
+ skiploop:
 
 	if (foundobj != NULL) {
 		if (foundobj == ndp->ni_erootdir) {
