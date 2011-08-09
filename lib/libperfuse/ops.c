@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.37 2011/08/02 16:57:16 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.38 2011/08/09 09:06:52 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -241,7 +241,7 @@ sticky_access(targ, pcr)
 {
 	uid_t uid;
 	struct puffs_node *tdir;
-	int sticky, owner, error;
+	int sticky, owner;
 
 	tdir = PERFUSE_NODE_DATA(targ)->pnd_parent;
 
@@ -264,9 +264,9 @@ sticky_access(targ, pcr)
 	owner = puffs_pn_getvap(targ)->va_uid == uid;
 
 	if (sticky && !owner)
-		error = EACCES;
+		return EACCES;
 
-	return error;	
+	return 0;
 }
 
 
