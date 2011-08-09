@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.7 2011/08/06 19:21:27 jmcneill Exp $ */
+/* $NetBSD: coram.c,v 1.8 2011/08/09 01:42:24 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.7 2011/08/06 19:21:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.8 2011/08/09 01:42:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ static const struct coram_board coram_boards[] = {
 static int coram_match(device_t, cfdata_t, void *);
 static void coram_attach(device_t, device_t, void *);
 static int coram_detach(device_t, int);
+static int coram_rescan(device_t, const char *, const int *);
 static void coram_childdet(device_t, device_t);
 static bool coram_resume(device_t, const pmf_qual_t *);
 static int coram_intr(void *);
@@ -82,7 +83,7 @@ static int coram_dtv_set_tuner(void *, const struct dvb_frontend_parameters *);
 static fe_status_t coram_dtv_get_status(void *);
 static uint16_t coram_dtv_get_signal_strength(void *);
 static uint16_t coram_dtv_get_snr(void *);
-static int coram_dtv_start_transfer(void *);
+static int coram_dtv_start_transfer(void *, void (*)(void *, const struct dtv_payload *), void *);
 static int coram_dtv_stop_transfer(void *);
 
 static int coram_mpeg_attach(struct coram_softc *);
@@ -100,7 +101,8 @@ static int coram_sram_ch_setup(struct coram_softc *, struct coram_sram_ch *, uin
 static int coram_mpeg_intr(struct coram_softc *);
 
 CFATTACH_DECL2_NEW(coram, sizeof(struct coram_softc),
-    coram_match, coram_attach, coram_detach, NULL, NULL, coram_childdet);
+    coram_match, coram_attach, coram_detach, NULL,
+    coram_rescan, coram_childdet);
 
 #define CORAM_SRAM_CH6 0
 
@@ -317,6 +319,22 @@ coram_detach(device_t self, int flags)
 	return 0;
 }
 
+static int
+coram_rescan(device_t self, const char *ifattr, const int *locs)
+{
+	struct coram_softc *sc = device_private(self);
+	struct dtv_attach_args daa;
+
+	daa.hw = &coram_dtv_if;
+	daa.priv = sc;
+
+	if (ifattr_match(ifattr, "dtvbus") && sc->sc_dtvdev == NULL)
+		sc->sc_dtvdev = config_found_ia(sc->sc_dev, "dtvbus",
+		    &daa, dtv_print);
+
+	return 0;
+}
+ 
 static void
 coram_childdet(device_t self, device_t child)
 {
@@ -404,13 +422,16 @@ coram_mpeg_intr(struct coram_softc *sc)
 		}
 	}
 
+	if (sc->sc_dtvsubmitcb == NULL)
+		goto done;
+
 	if ((s & CXDTV_TS_RISCI1) == CXDTV_TS_RISCI1) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma->map,
 		    0, CORAM_TS_PKTSIZE,
 		    BUS_DMASYNC_POSTREAD);
 		payload.data = KERNADDR(sc->sc_dma);
 		payload.size = CORAM_TS_PKTSIZE;
-		dtv_submit_payload(sc->sc_dtvdev, &payload);
+		sc->sc_dtvsubmitcb(sc->sc_dtvsubmitarg, &payload);
 	}
 
 	if ((s & CXDTV_TS_RISCI2) == CXDTV_TS_RISCI2) {
@@ -419,9 +440,10 @@ coram_mpeg_intr(struct coram_softc *sc)
 		    BUS_DMASYNC_POSTREAD);
 		payload.data = (char *)(KERNADDR(sc->sc_dma)) + (uintptr_t)CORAM_TS_PKTSIZE;
 		payload.size = CORAM_TS_PKTSIZE;
-		dtv_submit_payload(sc->sc_dtvdev, &payload);
+		sc->sc_dtvsubmitcb(sc->sc_dtvsubmitarg, &payload);
 	}
 
+done:
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, VID_C_INT_STAT, s);
 
 	return 1;
@@ -587,7 +609,6 @@ coram_iic_write(struct coram_iic_softc *cic, i2c_op_t op, i2c_addr_t addr,
 static int
 coram_mpeg_attach(struct coram_softc *sc)
 {
-	struct dtv_attach_args daa;
 	struct coram_sram_ch *ch;
 
 	ch = &coram_sram_chs[CORAM_SRAM_CH6];
@@ -600,12 +621,9 @@ coram_mpeg_attach(struct coram_softc *sc)
 
 	coram_mpeg_reset(sc);
 
-	daa.hw = &coram_dtv_if;
-	daa.priv = sc;
-
 	sc->sc_tsbuf = NULL;
 
-	sc->sc_dtvdev = config_found_ia(sc->sc_dev, "dtvbus", &daa, dtv_print);
+	coram_rescan(sc->sc_dev, NULL, NULL);
 
 	return (sc->sc_dtvdev != NULL);
 }
@@ -719,13 +737,17 @@ coram_dtv_get_snr(void *cookie)
 }
 
 static int
-coram_dtv_start_transfer(void *cookie)
+coram_dtv_start_transfer(void *cookie,
+    void (*cb)(void *, const struct dtv_payload *), void *arg)
 {
 	struct coram_softc *sc = cookie;
 
 #ifdef CORAM_DEBUG
 	device_printf(sc->sc_dev, "%s\n", __func__);
 #endif
+
+	sc->sc_dtvsubmitcb = cb;
+	sc->sc_dtvsubmitarg = arg;
 
 	coram_mpeg_trigger(sc, sc->sc_tsbuf);
 
@@ -743,6 +765,9 @@ coram_dtv_stop_transfer(void *cookie)
 
 	coram_mpeg_halt(sc);
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, PCI_INT_MSK, 0);
+
+	sc->sc_dtvsubmitcb = NULL;
+	sc->sc_dtvsubmitarg = NULL;
 
 	return 0;
 }
@@ -1075,7 +1100,7 @@ coram_sram_ch_setup(struct coram_softc *sc, struct coram_sram_ch *csc,
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, coram, "dtv,cx24227,mt2131");
+MODULE(MODULE_CLASS_DRIVER, coram, "cx24227,mt2131");
 
 #ifdef _MODULE
 #include "ioconf.c"
