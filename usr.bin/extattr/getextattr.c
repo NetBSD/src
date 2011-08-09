@@ -1,4 +1,4 @@
-/*	$NetBSD: getextattr.c,v 1.3 2006/06/17 08:32:42 elad Exp $	*/
+/*	$NetBSD: getextattr.c,v 1.3.26.1 2011/08/09 15:55:55 riz Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Networks Associates Technology, Inc.
@@ -50,6 +50,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <vis.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 //#include <util.h>
 
 static enum { EADUNNO, EAGET, EASET, EARM, EALS } what = EADUNNO;
@@ -60,13 +62,16 @@ usage(void)
 
 	switch (what) {
 	case EAGET:
-		fprintf(stderr, "usage: %s [-fhqsx] "
+		fprintf(stderr, "usage: %s [-fhq] [-s | -x | -v style] "
 		    "attrnamespace attrname filename ...\n", getprogname());
 		exit(1);
 
 	case EASET:
 		fprintf(stderr, "usage: %s [-fhnq] "
 		    "attrnamespace attrname attrvalue filename ...\n",
+		    getprogname());
+		fprintf(stderr, "usage: %s [-fhnq] -i attrvalue_file "
+		    "attrnamespace attrname filename ...\n",
 		    getprogname());
 		exit(1);
 
@@ -103,6 +108,58 @@ mkbuf(char **buf, int *oldlen, int newlen)
 	return;
 }
 
+static int
+parse_flag_vis(const char *opt)
+{
+	if (strcmp(opt, "default") == 0)
+		return 0;
+	else if (strcmp(opt, "cstyle") == 0)
+		return VIS_CSTYLE;
+	else if (strcmp(opt, "octal") == 0)
+		return VIS_OCTAL;
+	else if (strcmp(opt, "httpstyle") == 0)
+		return VIS_HTTPSTYLE;
+
+	/* Convenient aliases */
+	else if (strcmp(opt, "vis") == 0)
+		return 0;
+	else if (strcmp(opt, "c") == 0)
+		return VIS_CSTYLE;
+	else if (strcmp(opt, "http") == 0)
+		return VIS_HTTPSTYLE;
+	else
+		fprintf(stderr, "%s: invalid -s option \"%s\"", 
+			getprogname(), opt);
+
+	return -1;
+}
+
+#define HEXDUMP_PRINT(x) ((uint8_t)x >= 32 && (uint8_t)x < 128)  ? x : '.'
+static void
+hexdump(const char *addr, size_t len)
+{
+	unsigned int i, j;
+
+	for (i = 0; i < len; i += 16) {
+		printf("   %03x   ", i);
+		for (j = 0; j < 16; j++) {
+			if (i + j > len)
+				printf("   ");
+			else
+				printf("%02x ", addr[i + j] & 0xff);
+		}
+		printf("   ");
+		for (j = 0; j < 16; j++) {
+			if (i + j > len)
+				printf(" ");
+			else
+				printf("%c", HEXDUMP_PRINT(addr[i + j]));
+		}
+		printf("\n");
+	}
+}
+#undef HEXDUMP_PRINT
+
 int
 main(int argc, char *argv[])
 {
@@ -111,14 +168,15 @@ main(int argc, char *argv[])
 
 	const char *options, *attrname;
 	int	 buflen, visbuflen, ch, error, i, arg_counter, attrnamespace,
-		 minargc;
+		 minargc, val_len = 0;
 
 	int	flag_force = 0;
 	int	flag_nofollow = 0;
 	int	flag_null = 0;
 	int	flag_quiet = 0;
-	int	flag_string = 0;
+	int	flag_vis = -1;
 	int	flag_hex = 0;
+	char	*filename = NULL;
 
 	options = NULL;
 	minargc = 0;
@@ -128,16 +186,16 @@ main(int argc, char *argv[])
 	p = getprogname();
 	if (strcmp(p, "getextattr") == 0) {
 		what = EAGET;
-		options = "fhqsx";
-		minargc = 3;
+		options = "fhqsxv:";
+		minargc = 2;
 	} else if (strcmp(p, "setextattr") == 0) {
 		what = EASET;
-		options = "fhnq";
-		minargc = 4;
+		options = "fhnqi:";
+		minargc = 3;
 	} else if (strcmp(p, "rmextattr") == 0) {
 		what = EARM;
 		options = "fhq";
-		minargc = 3;
+		minargc = 2;
 	} else if (strcmp(p, "lsextattr") == 0) {
 		what = EALS;
 		options = "fhq";
@@ -160,10 +218,17 @@ main(int argc, char *argv[])
 			flag_quiet = 1;
 			break;
 		case 's':
-			flag_string = 1;
+			flag_vis = VIS_SAFE | VIS_WHITE;
+			break;
+		case 'v':
+			flag_vis = parse_flag_vis(optarg);
 			break;
 		case 'x':
 			flag_hex = 1;
+			break;
+		case 'i':
+			filename = optarg;
+			minargc--;
 			break;
 		default:
 			usage();
@@ -173,13 +238,42 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	/*
+	 * Check for missing argument.
+	 */
 	if (argc < minargc)
 		usage();
 
+	/*
+	 * Normal case "namespace attribute". 
+	 */
 	error = extattr_string_to_namespace(argv[0], &attrnamespace);
-	if (error)
-		err(1, argv[0]);
-	argc--; argv++;
+	if (error == 0) {
+		/* 
+		 * Namespace was specified, so we need one more argument
+		 * for the attribute (except for listing)
+		 */
+		if ((what != EALS) && (argc < minargc + 1))
+			usage();
+		argc--; argv++;
+	} else {
+		/*
+		 * The namespace was not valid. Perhaps it was omited.
+		 * Try to guess a missing namespace by using
+		 * linux layout "namespace.attribute". While
+		 * we are here, also test the Linux namespaces.
+		 */
+		if (strstr(argv[0], "user.") == argv[0]) {
+			attrnamespace = EXTATTR_NAMESPACE_USER;
+		} else
+		if ((strstr(argv[0], "system.") == argv[0]) ||
+		    (strstr(argv[0], "trusted.") == argv[0]) ||
+		    (strstr(argv[0], "security.") == argv[0])) {
+			attrnamespace = EXTATTR_NAMESPACE_SYSTEM;
+		} else {
+			err(1, "%s", argv[0]);
+		}
+	}
 
 	if (what != EALS) {
 		attrname = argv[0];
@@ -188,9 +282,38 @@ main(int argc, char *argv[])
 		attrname = NULL;
 
 	if (what == EASET) {
-		mkbuf(&buf, &buflen, strlen(argv[0]) + 1);
-		strcpy(buf, argv[0]); /* safe */
-		argc--; argv++;
+		/*
+		 * Handle -i option, reading value from a file.
+		 */
+		if (filename != NULL) {
+			int fd;
+			struct stat st;
+			ssize_t readen, remain;
+
+			if ((fd = open(filename, O_RDONLY, 0)) == -1)
+				err(1, "%s: cannot open \"%s\"",
+				     getprogname(), filename);
+
+			if (fstat(fd, &st) != 0)
+				err(1, "%s: cannot stat \"%s\"",
+				     getprogname(), filename);
+				
+			val_len = st.st_size;
+			mkbuf(&buf, &buflen, val_len);
+
+			for (remain = val_len; remain > 0; remain -= readen) {
+				if ((readen = read(fd, buf, remain)) == -1)
+					err(1, "%s: cannot read \"%s\"",
+					    getprogname(), filename);
+			}
+
+			(void)close(fd);
+		} else {
+			val_len = strlen(argv[0]) + 1;
+			mkbuf(&buf, &buflen, val_len);
+			strcpy(buf, argv[0]); /* safe */
+			argc--; argv++;
+		}
 	}
 
 	for (arg_counter = 0; arg_counter < argc; arg_counter++) {
@@ -209,11 +332,11 @@ main(int argc, char *argv[])
 			if (flag_nofollow)
 				error = extattr_set_link(argv[arg_counter],
 				    attrnamespace, attrname, buf,
-				    strlen(buf) + flag_null);
+				    val_len + flag_null);
 			else
 				error = extattr_set_file(argv[arg_counter],
 				    attrnamespace, attrname, buf,
-				    strlen(buf) + flag_null);
+				    val_len + flag_null);
 			if (error >= 0)
 				continue;
 			break;
@@ -262,17 +385,24 @@ main(int argc, char *argv[])
 				break;
 			if (!flag_quiet)
 				printf("%s\t", argv[arg_counter]);
-			if (flag_string) {
+			
+			/*
+			 * Check for binary string and terminal output
+			 */
+#if 0
+			for (i = 0; i < error; i++)
+				if (!isprint((int)buf[i]))
+					err(1, "binary data, use -x flag");
+#endif
+
+			if (flag_vis != -1) {
 				mkbuf(&visbuf, &visbuflen, error * 4 + 1);
-				strvisx(visbuf, buf, error,
-				    VIS_SAFE | VIS_WHITE);
+				strvisx(visbuf, buf, error, flag_vis);
 				printf("\"%s\"\n", visbuf);
 				continue;
 			} else if (flag_hex) {
-				for (i = 0; i < error; i++)
-					printf("%s%02x", i ? " " : "",
-					    buf[i]);
 				printf("\n");
+				hexdump(buf, error);
 				continue;
 			} else {
 				fwrite(buf, buflen, 1, stdout);
