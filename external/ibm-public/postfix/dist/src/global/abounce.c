@@ -1,4 +1,4 @@
-/*	$NetBSD: abounce.c,v 1.1.1.1.2.3 2011/01/07 01:24:01 riz Exp $	*/
+/*	$NetBSD: abounce.c,v 1.1.1.1.2.4 2011/08/09 18:58:16 riz Exp $	*/
 
 /*++
 /* NAME
@@ -69,9 +69,21 @@
 /*	int	dsn_ret;
 /*	void	(*callback)(int status, char *context);
 /*	char	*context;
+/*
+/*	void	atrace_flush(flags, queue, id, encoding, sender,
+/*				dsn_envid, dsn_ret, callback, context)
+/*	int	flags;
+/*	const char *queue;
+/*	const char *id;
+/*	const char *encoding;
+/*	const char *sender;
+/*	const char *dsn_envid;
+/*	int	dsn_ret;
+/*	void	(*callback)(int status, char *context);
+/*	char	*context;
 /* DESCRIPTION
 /*	This module implements an asynchronous interface to the
-/*	bounce/defer service for submitting sender notifications
+/*	bounce/defer/trace service for submitting sender notifications
 /*	without waiting for completion of the request.
 /*
 /*	abounce_flush() bounces the specified message to
@@ -93,6 +105,10 @@
 /*	adefer_warn() sends a "mail is delayed" notification to
 /*	the specified sender, including the defer log that was
 /*	built with defer_append().
+/*
+/*	atrace_flush() returns the specified message to the specified
+/*	sender, including the message delivery record log that was
+/*	built with vtrace_append().
 /*
 /*	Arguments:
 /* .IP flags
@@ -358,6 +374,18 @@ void    adefer_warn(int flags, const char *queue, const char *id,
 		            ABOUNCE_FN callback, char *context)
 {
     abounce_request(MAIL_CLASS_PRIVATE, var_defer_service, BOUNCE_CMD_WARN,
+		    flags, queue, id, encoding, sender, dsn_envid, dsn_ret,
+		    callback, context);
+}
+
+/* atrace_flush - asynchronous trace flush */
+
+void    atrace_flush(int flags, const char *queue, const char *id,
+		             const char *encoding, const char *sender,
+		             const char *dsn_envid, int dsn_ret,
+		             ABOUNCE_FN callback, char *context)
+{
+    abounce_request(MAIL_CLASS_PRIVATE, var_trace_service, BOUNCE_CMD_TRACE,
 		    flags, queue, id, encoding, sender, dsn_envid, dsn_ret,
 		    callback, context);
 }

@@ -15891,3 +15891,54 @@ Apologies for any names omitted.
 	reuse a server SASL handle after authentication failure.
 	Problem reported by Thomas Jarosch of Intra2net AG. File:
 	smtpd/smtpd_proto.c.
+
+20110418
+
+	Bugfix (introduced Postfix 2.3 and Postfix 2.7): the Milter
+	client reported some "file too large" errors as temporary
+	errors. Problem reported by Michael Tokarev. Files:
+	milter/milter8.c, cleanup/cleanup_milter.c.
+
+20110420
+
+	Performance: a high load of DSN success notification requests
+	could slow down the queue manager. Solution: make the trace
+	client asynchronous, just like the bounce and defer clients.
+	Problem reported by Eduardo M. Stelmaszczyk of terra.com.br.
+	Files: global/abounce.[hc], *qmgr/qmgr_active.c (the
+	qmgr_active.c files are identical).
+
+20110426
+
+	Bugfix (introduced in Postfix 1.1, duplicated in Postfix
+	2.3, unrelated mistake in Postfix 2.7): the local(8) delivery
+	agent ignored table lookup errors in mailbox_command_maps,
+	mailbox_transport_maps, fallback_transport_maps and (while
+	bouncing mail to alias) alias owner lookup. Problem reported
+	by William Ono. Files: local/command.c, local/mailbox.c,
+	local/unknown.c, local/bounce_workaround.c.
+
+20110601
+
+	Bugfix (introduced Postfix 2.6 with master_service_disable)
+	loop control error when parsing a malformed master.cf file.
+	Found by Coverity. File: master/master_ent.c.
+
+20110602
+
+	Bugfix (introduced: Postfix 2.7): "sendmail -t" reported
+	"protocol error" after queue file write error.  File:
+	postdrop/postdrop.c.
+
+20110614
+
+	Linux kernel version 3 support. Linus Torvalds has reset
+	the counters for reasons not related to changes in code.
+	Files: makedefs, util/sys_defs.h.
+
+20110615
+
+	Workaround: some Spamhaus RHSBL rejects lookups with "No
+	IP queries" even if the name has an alphanumerical prefix.
+	We play safe, and skip RHSBL queries for names ending in a
+	numerical suffix.  File: smtpd/smtpd_check.c.

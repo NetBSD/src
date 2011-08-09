@@ -106,6 +106,7 @@ bounce_workaround.o: ../../include/attr.h
 bounce_workaround.o: ../../include/been_here.h
 bounce_workaround.o: ../../include/bounce.h
 bounce_workaround.o: ../../include/canon_addr.h
+bounce_workaround.o: ../../include/defer.h
 bounce_workaround.o: ../../include/deliver_request.h
 bounce_workaround.o: ../../include/delivered_hdr.h
 bounce_workaround.o: ../../include/dict.h
