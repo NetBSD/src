@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.26 2011/07/05 07:32:33 dholland Exp $	*/
+/*	$NetBSD: dirent.h,v 1.27 2011/08/09 20:05:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -91,7 +91,7 @@ struct dirent {
  * struct dirent
  */
 #if __GNUC_PREREQ__(4, 0)
-#define	_DIRENT_NAMEOFF(dp)	__builtin_offsetof(__typeof(*dp), d_name)
+#define	_DIRENT_NAMEOFF(dp)	__builtin_offsetof(__typeof__(*dp), d_name)
 #else
 #define _DIRENT_NAMEOFF(dp) \
     ((char *)(void *)&(dp)->d_name - (char *)(void *)dp)
