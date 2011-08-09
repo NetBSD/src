@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/06/22 05:23:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/08/09 13:04:28 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -20,5 +20,5 @@ LDADD+=	-lutil -lm
 
 # XXX
 .if ${HAVE_GCC} == 45
-COPTS.altqd.c+=	-Wno-array-bounds
+COPTS.altqd.c+=	${${ACTIVE_CC} == "gcc":?-Wno-array-bounds:}
 .endif
