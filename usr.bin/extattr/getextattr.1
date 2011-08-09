@@ -1,4 +1,4 @@
-.\"	$NetBSD: getextattr.1,v 1.2 2005/01/02 18:41:23 wiz Exp $
+.\"	$NetBSD: getextattr.1,v 1.2.34.1 2011/08/09 15:55:55 riz Exp $
 .\"
 .\"-
 .\" Copyright (c) 2000, 2001 Robert N. M. Watson
@@ -44,35 +44,61 @@
 .Nd manipulate extended attributes
 .Sh SYNOPSIS
 .Nm getextattr
-.Op Fl fhqsx
-.Ar attrnamespace
+.Op Fl fhq 
+.Op Fl s | Fl x | Fl v Ar style
+.Op Ar namespace
 .Ar attrname
 .Ar filename ...
 .Nm lsextattr
 .Op Fl fhq
-.Ar attrnamespace
+.Ar namespace
 .Ar filename ...
 .Nm rmextattr
 .Op Fl fhq
-.Ar attrnamespace
+.Op Ar namespace
 .Ar attrname
 .Ar filename ...
 .Nm setextattr
 .Op Fl fhnq
-.Ar attrnamespace
+.Op Ar namespace
 .Ar attrname
 .Ar attrvalue
+.Ar filename ...
+.Nm setextattr
+.Op Fl fhnq
+.Fl i Ar valuefile
+.Op Ar namespace
+.Ar attrname
 .Ar filename ...
 .Sh DESCRIPTION
 These utilities are user tools to manipulate the named extended
 attributes on files and directories.
+.Pp
 The
-.Ar attrnamespace
+.Ar namespace
 argument should be the namespace of the attribute to retrieve: legal
 values are
 .Cm user
 and
 .Cm system .
+For all operations except
+.Nm lsextattr ,
+the namespace argument may be omitted if the attribute name is namespace
+prefixed, like in
+.Cm user.test .
+In that later case, the 
+.Cm user
+namespace prefix obviously selects 
+.Cm user
+namespace.
+.Cm system ,
+.Cm security ,
+and
+.Cm trusted 
+namespace prefixes select the
+.Cm system
+namespace.
+.Pp
 The
 .Ar attrname
 argument should be the name of the attribute,
@@ -91,6 +117,11 @@ the remaining arguments.
 (No follow.)
 If the file is a symbolic link, perform the operation on the
 link itself rather than the file that the link points to.
+.It Fl i Ar valuefile
+(Input file.)
+Read the attribute value from file
+.Ar valuefile .
+Use this flag in order to set a binary value for an attribute.
 .It Fl n
 .Dv ( NUL Ns
 -terminate.)
@@ -102,6 +133,39 @@ Do not print out the pathname and suppress error messages.
 .It Fl s
 (Stringify.)
 Escape nonprinting characters and put quotes around the output.
+.It Fl v Ar style
+(Visual.)
+Process the attribute value through 
+.Xr vis 3 ,
+using 
+.Ar style .
+Valid values for 
+.Ar style 
+are: 
+.Bl -tag -width indent
+.It Ar default
+Use default
+.Xr vis 3
+encoding.
+.It Ar c
+Use C-style backslash sequences, like in 
+.Nm vis Fl c .
+.It Ar http
+Use URI encoding from RFC 1808, like in
+.Nm vis Fl h .
+.It Ar octal
+Display in octal, like in 
+.Nm vis Fl o .
+.It Ar vis
+Alias for 
+.Ar default .
+.It Ar cstyle
+Alias for 
+.Ar c .
+.It Ar httpstyle
+Alias for 
+.Ar http .
+.El
 .It Fl x
 (Hex.)
 Print the output in hexadecimal.
@@ -112,6 +176,12 @@ setextattr system md5 `md5 -q /boot/kernel/kernel` /boot/kernel/kernel
 getextattr system md5 /boot/kernel/kernel
 lsextattr system /boot/kernel/kernel
 rmextattr system md5 /boot/kernel/kernel
+.Ed
+.Pp
+Examples omitting namespace (and attribute value) argument:
+.Bd -literal
+setextattr -i valuefile trusted.gfid /export/wd3a
+getextattr -x trusted.gfid /export/wd3a
 .Ed
 .Sh SEE ALSO
 .Xr extattr 2 ,
@@ -128,10 +198,10 @@ and
 .Nx 3.0 .
 It was developed to support security extensions requiring additional labels
 to be associated with each file or directory.
+.Pp
+Exented attribute support was resurected and made more usable in
+.Nx 5.2 .
 .Sh AUTHORS
 .An Robert N M Watson
 .An Poul-Henning Kamp
-.Sh BUGS
-The
-.Nm setextattr
-utility can only be used to set attributes to strings.
+.An Emmanuel Dreyfus
