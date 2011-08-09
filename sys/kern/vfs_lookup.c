@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.185 2011/08/09 18:37:56 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.186 2011/08/09 23:16:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.185 2011/08/09 18:37:56 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.186 2011/08/09 23:16:17 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -768,6 +768,10 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 		}
 		vref(searchdir);
 		vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
+		while (cnp->cn_nameptr[0] == '/') {
+			cnp->cn_nameptr++;
+			ndp->ni_pathlen--;
+		}
 	}
 
 	*newsearchdir_ret = searchdir;
