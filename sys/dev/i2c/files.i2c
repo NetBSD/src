@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.40 2011/08/04 01:48:34 jakllsch Exp $
+#	$NetBSD: files.i2c,v 1.41 2011/08/09 01:42:24 jmcneill Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -22,7 +22,7 @@ define	lg3303: i2cexec
 file	dev/i2c/lg3303.c			lg3303
 
 # Xceive XC3028 tuner
-define	xc3028: i2cexec, firmload
+define	xc3028: i2cexec, firmload, dtv_math
 file	dev/i2c/xc3028.c			xc3028
 
 # Xceive XC5000 tuner

@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_buffer.c,v 1.6 2011/07/16 12:20:01 jmcneill Exp $ */
+/* $NetBSD: dtv_buffer.c,v 1.7 2011/08/09 01:42:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_buffer.c,v 1.6 2011/07/16 12:20:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_buffer.c,v 1.7 2011/08/09 01:42:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,9 +96,9 @@ dtv_buffer_write(struct dtv_softc *sc, const uint8_t *buf, size_t buflen)
 }
 
 void
-dtv_submit_payload(device_t self, const struct dtv_payload *payload)
+dtv_buffer_submit(void *priv, const struct dtv_payload *payload)
 {
-	struct dtv_softc *sc = device_private(self);
+	struct dtv_softc *sc = priv;
 	struct dtv_ts *ts = &sc->sc_ts;
 	const uint8_t *tspkt;
 	unsigned int npkts, i;

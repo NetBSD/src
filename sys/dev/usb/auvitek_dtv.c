@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_dtv.c,v 1.2 2011/07/10 00:47:34 jmcneill Exp $ */
+/* $NetBSD: auvitek_dtv.c,v 1.3 2011/08/09 01:42:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.2 2011/07/10 00:47:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.3 2011/08/09 01:42:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,9 @@ static int		auvitek_dtv_set_tuner(void *,
 static fe_status_t	auvitek_dtv_get_status(void *);
 static uint16_t		auvitek_dtv_get_signal_strength(void *);
 static uint16_t		auvitek_dtv_get_snr(void *);
-static int		auvitek_dtv_start_transfer(void *);
+static int		auvitek_dtv_start_transfer(void *,
+			    void (*)(void *, const struct dtv_payload *),
+			    void *);
 static int		auvitek_dtv_stop_transfer(void *);
 
 static int		auvitek_dtv_init_pipes(struct auvitek_softc *);
@@ -87,11 +89,8 @@ static const struct dtv_hw_if auvitek_dtv_if = {
 int
 auvitek_dtv_attach(struct auvitek_softc *sc)
 {
-	struct dtv_attach_args daa;
 
-	daa.hw = &auvitek_dtv_if;
-	daa.priv = sc;
-	sc->sc_dtvdev = config_found_ia(sc->sc_dev, "dtvbus", &daa, dtv_print);
+	auvitek_dtv_rescan(sc, NULL, NULL);
 
 	return (sc->sc_dtvdev != NULL);
 }
@@ -105,6 +104,20 @@ auvitek_dtv_detach(struct auvitek_softc *sc, int flags)
 	}
 
 	return 0;
+}
+
+void
+auvitek_dtv_rescan(struct auvitek_softc *sc, const char *ifattr,
+    const int *locs)
+{
+	struct dtv_attach_args daa;
+
+	daa.hw = &auvitek_dtv_if;
+	daa.priv = sc;
+
+	if (ifattr_match(ifattr, "dtvbus") && sc->sc_dtvdev == NULL)
+		sc->sc_dtvdev = config_found_ia(sc->sc_dev, "dtvbus",
+		    &daa, dtv_print);
 }
 
 void
@@ -158,6 +171,9 @@ auvitek_dtv_close(void *priv)
 
 	auvitek_dtv_stop_transfer(sc);
 	auvitek_dtv_close_pipes(sc);
+
+	sc->sc_dtvsubmitcb = NULL;
+	sc->sc_dtvsubmitarg = NULL;
 }
 
 static int
@@ -202,7 +218,8 @@ auvitek_dtv_get_snr(void *priv)
 }
 
 static int
-auvitek_dtv_start_transfer(void *priv)
+auvitek_dtv_start_transfer(void *priv,
+    void (*cb)(void *, const struct dtv_payload *), void *arg)
 {
 	struct auvitek_softc *sc = priv;
 	int s;
@@ -210,6 +227,9 @@ auvitek_dtv_start_transfer(void *priv)
 	if (sc->sc_ab.ab_running) {
 		return 0;
 	}
+
+	sc->sc_dtvsubmitcb = cb;
+	sc->sc_dtvsubmitarg = arg;
 
 	auvitek_write_1(sc, 0x608, 0x90);
 	auvitek_write_1(sc, 0x609, 0x72);
@@ -278,7 +298,7 @@ auvitek_dtv_bulk_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	struct dtv_payload payload;
 	uint32_t xferlen;
 
-	if (ab->ab_running == false)
+	if (ab->ab_running == false || sc->sc_dtvsubmitcb == NULL)
 		return;
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &xferlen, NULL);
@@ -304,7 +324,7 @@ auvitek_dtv_bulk_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	payload.data = bx->bx_buffer;
 	payload.size = xferlen;
-	dtv_submit_payload(sc->sc_dtvdev, &payload);
+	sc->sc_dtvsubmitcb(sc->sc_dtvsubmitarg, &payload);
 
 next:
 	auvitek_dtv_bulk_start1(bx);

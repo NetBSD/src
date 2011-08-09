@@ -1,4 +1,4 @@
-/* $NetBSD: dtvvar.h,v 1.5 2011/07/16 12:20:01 jmcneill Exp $ */
+/* $NetBSD: dtvvar.h,v 1.6 2011/08/09 01:42:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -141,8 +141,8 @@ struct dtv_softc {
 	((sc)->sc_hw->get_signal_strength((sc)->sc_priv))
 #define	dtv_device_get_snr(sc)			\
 	((sc)->sc_hw->get_snr((sc)->sc_priv))
-#define	dtv_device_start_transfer(sc)		\
-	((sc)->sc_hw->start_transfer((sc)->sc_priv))
+#define	dtv_device_start_transfer(sc)	\
+	((sc)->sc_hw->start_transfer((sc)->sc_priv, dtv_buffer_submit, (sc)))
 #define	dtv_device_stop_transfer(sc)		\
 	((sc)->sc_hw->stop_transfer((sc)->sc_priv))
 
@@ -156,6 +156,7 @@ int	dtv_buffer_setup(struct dtv_softc *);
 int	dtv_buffer_destroy(struct dtv_softc *);
 int	dtv_buffer_read(struct dtv_softc *, struct uio *, int);
 int	dtv_buffer_poll(struct dtv_softc *, int, lwp_t *);
+void	dtv_buffer_submit(void *, const struct dtv_payload *);
 
 void	dtv_common_close(struct dtv_softc *);
 

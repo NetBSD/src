@@ -1,4 +1,4 @@
-/* $NetBSD: auvitekvar.h,v 1.3 2011/07/09 15:00:45 jmcneill Exp $ */
+/* $NetBSD: auvitekvar.h,v 1.4 2011/08/09 01:42:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -121,6 +121,9 @@ struct auvitek_softc {
 
 	unsigned int		sc_ainput, sc_vinput;
 	uint32_t		sc_curfreq;
+	void			(*sc_dtvsubmitcb)(void *,
+				    const struct dtv_payload *);
+	void			*sc_dtvsubmitarg;
 
 	struct auvitek_xfer	sc_ax;
 	struct auvitek_bulk	sc_ab;
@@ -149,11 +152,13 @@ int	auvitek_i2c_detach(struct auvitek_softc *, int);
 /* auvitek_video.c */
 int	auvitek_video_attach(struct auvitek_softc *);
 int	auvitek_video_detach(struct auvitek_softc *, int);
+void	auvitek_video_rescan(struct auvitek_softc *, const char *, const int *);
 void	auvitek_video_childdet(struct auvitek_softc *, device_t);
 
 /* auvitek_dtv.c */
 int	auvitek_dtv_attach(struct auvitek_softc *);
 int	auvitek_dtv_detach(struct auvitek_softc *, int);
+void	auvitek_dtv_rescan(struct auvitek_softc *, const char *, const int *);
 void	auvitek_dtv_childdet(struct auvitek_softc *, device_t);
 
 #endif /* !_AUVITEKVAR_H */

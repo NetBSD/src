@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_video.c,v 1.4 2011/07/09 15:00:45 jmcneill Exp $ */
+/* $NetBSD: auvitek_video.c,v 1.5 2011/08/09 01:42:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.4 2011/07/09 15:00:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.5 2011/08/09 01:42:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,8 @@ auvitek_video_attach(struct auvitek_softc *sc)
 {
 	snprintf(sc->sc_businfo, sizeof(sc->sc_businfo), "usb:%08x",
 	    sc->sc_udev->cookie.cookie);
-	sc->sc_videodev = video_attach_mi(&auvitek_video_if, sc->sc_dev);
+
+	auvitek_video_rescan(sc, NULL, NULL);
 
 	return (sc->sc_videodev != NULL);
 }
@@ -146,6 +147,15 @@ auvitek_video_detach(struct auvitek_softc *sc, int flags)
 	}
 
 	return 0;
+}
+
+void
+auvitek_video_rescan(struct auvitek_softc *sc, const char *ifattr,
+    const int *locs)
+{
+	if (ifattr_match(ifattr, "videobus") && sc->sc_videodev == NULL)
+		sc->sc_videodev = video_attach_mi(&auvitek_video_if,
+		    sc->sc_dev);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.3 2011/07/15 10:48:30 jmcneill Exp $ */
+/* $NetBSD: emdtv.c,v 1.4 2011/08/09 01:42:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.3 2011/07/15 10:48:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.4 2011/08/09 01:42:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.3 2011/07/15 10:48:30 jmcneill Exp $");
 static int	emdtv_match(device_t, cfdata_t, void *);
 static void	emdtv_attach(device_t, device_t, void *);
 static int	emdtv_detach(device_t, int);
+static int	emdtv_rescan(device_t, const char *, const int *);
 static void	emdtv_childdet(device_t, device_t);
 static int	emdtv_activate(device_t, enum devact);
 
@@ -56,7 +57,7 @@ static void	emdtv_default_board_init(struct emdtv_softc *);
 
 CFATTACH_DECL2_NEW(emdtv, sizeof(struct emdtv_softc),
     emdtv_match, emdtv_attach, emdtv_detach, emdtv_activate,
-    NULL, emdtv_childdet);
+    emdtv_rescan, emdtv_childdet);
 
 static const struct usb_devno emdtv_devices[] = {
 	{ USB_VENDOR_AMD,	USB_PRODUCT_AMD_TV_WONDER_600_USB },
@@ -179,6 +180,16 @@ emdtv_activate(device_t self, enum devact act)
 		sc->sc_dying = true;
 		break;
 	}
+
+	return 0;
+}
+
+static int
+emdtv_rescan(device_t self, const char *ifattr, const int *locs)
+{
+	struct emdtv_softc *sc = device_private(self);
+
+	emdtv_dtv_rescan(sc, ifattr, locs);
 
 	return 0;
 }
@@ -442,7 +453,7 @@ emdtv_default_board_init(struct emdtv_softc *sc)
 	usbd_delay_ms(sc->sc_udev, 10);
 }
 
-MODULE(MODULE_CLASS_DRIVER, emdtv, "cir,dtv,lg3303,xc3028");
+MODULE(MODULE_CLASS_DRIVER, emdtv, "cir,lg3303,xc3028");
 
 #ifdef _MODULE
 #include "ioconf.c"

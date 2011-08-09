@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_device.c,v 1.7 2011/07/16 12:20:01 jmcneill Exp $ */
+/* $NetBSD: dtv_device.c,v 1.8 2011/08/09 01:42:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.7 2011/07/16 12:20:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.8 2011/08/09 01:42:24 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -300,13 +300,4 @@ dtv_common_close(struct dtv_softc *sc)
 		dtv_buffer_destroy(sc);
 	}
 	mutex_exit(&sc->sc_lock);
-}
-
-int
-dtv_print(void *arg, const char *pnp)
-{
-	if (pnp)
-		aprint_normal("dtv at %s", pnp);
-
-	return UNCONF;
 }

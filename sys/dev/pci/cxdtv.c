@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.6 2011/07/25 04:31:26 jakllsch Exp $ */
+/* $NetBSD: cxdtv.c,v 1.7 2011/08/09 01:42:24 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.6 2011/07/25 04:31:26 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.7 2011/08/09 01:42:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,11 +50,11 @@ __KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.6 2011/07/25 04:31:26 jakllsch Exp $");
 #include <dev/i2c/nxt2kvar.h>
 #include <dev/i2c/lg3303var.h>
 
+#include <dev/dtv/dtvif.h>
+
 #include <dev/pci/cxdtvreg.h>
 #include <dev/pci/cxdtvvar.h>
 #include <dev/pci/cxdtv_boards.h>
-
-#include <dev/dtv/dtvif.h>
 
 #define CXDTV_MMBASE		0x10
 
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.6 2011/07/25 04:31:26 jakllsch Exp $");
 static int cxdtv_match(struct device *, struct cfdata *, void *);
 static void cxdtv_attach(struct device *, struct device *, void *);
 static int cxdtv_detach(struct device *, int);
+static int cxdtv_rescan(struct device *, const char *, const int *);
 static void cxdtv_childdet(struct device *, struct device *);
 static int cxdtv_intr(void *);
 
@@ -102,6 +103,30 @@ static void    cxdtv_mpeg_free(struct cxdtv_softc *, void *);
 static void cxdtv_card_init_hd5500(struct cxdtv_softc *);
 static void cxdtv_card_init_hdtvwonder(struct cxdtv_softc *);
 
+/* MPEG TS Port */
+static void cxdtv_dtv_get_devinfo(void *, struct dvb_frontend_info *);
+static int cxdtv_dtv_open(void *, int);
+static void cxdtv_dtv_close(void *);
+static int cxdtv_dtv_set_tuner(void *, const struct dvb_frontend_parameters *);
+static fe_status_t cxdtv_dtv_get_status(void *);
+static uint16_t cxdtv_dtv_get_signal_strength(void *);
+static uint16_t cxdtv_dtv_get_snr(void *);
+static int cxdtv_dtv_start_transfer(void *,
+    void (*)(void *, const struct dtv_payload *), void *);
+static int cxdtv_dtv_stop_transfer(void *);
+
+static const struct dtv_hw_if cxdtv_dtv_if = {
+	.get_devinfo = cxdtv_dtv_get_devinfo,
+	.open = cxdtv_dtv_open,
+	.close = cxdtv_dtv_close,
+	.set_tuner = cxdtv_dtv_set_tuner,
+	.get_status = cxdtv_dtv_get_status,
+	.get_signal_strength = cxdtv_dtv_get_signal_strength,
+	.get_snr = cxdtv_dtv_get_snr,
+	.start_transfer = cxdtv_dtv_start_transfer,
+	.stop_transfer = cxdtv_dtv_stop_transfer,
+};
+
 const struct i2c_bitbang_ops cxdtv_i2cbb_ops = {
 	cxdtv_i2cbb_set_bits,
 	cxdtv_i2cbb_set_dir,
@@ -129,7 +154,8 @@ static struct cxdtv_sram_ch cxdtv_sram_chs[] = {
 };
 
 CFATTACH_DECL2_NEW(cxdtv, sizeof(struct cxdtv_softc),
-    cxdtv_match, cxdtv_attach, cxdtv_detach, NULL, NULL, cxdtv_childdet);
+    cxdtv_match, cxdtv_attach, cxdtv_detach, NULL,
+    cxdtv_rescan, cxdtv_childdet);
 
 static int
 cxdtv_match(device_t parent, cfdata_t match, void *aux)
@@ -266,6 +292,22 @@ cxdtv_detach(device_t self, int flags)
 	return 0;
 }
 
+static int
+cxdtv_rescan(device_t self, const char *ifattr, const int *locs)
+{
+	struct cxdtv_softc *sc = device_private(self);
+	struct dtv_attach_args daa;
+
+	daa.hw = &cxdtv_dtv_if;
+	daa.priv = sc;
+
+	if (ifattr_match(ifattr, "dtvbus") && sc->sc_dtvdev == NULL)
+		sc->sc_dtvdev = config_found_ia(sc->sc_dev, "dtvbus",
+		    &daa, dtv_print);
+
+	return 0;
+}
+
 static void
 cxdtv_childdet(device_t self, device_t child)
 {
@@ -396,34 +438,9 @@ cxdtv_iic_write_byte(void *cookie, uint8_t data, int flags)
 	return i2c_bitbang_write_byte(cookie, data, flags, &cxdtv_i2cbb_ops);
 }
 
-/* MPEG TS Port */
-
-static void cxdtv_dtv_get_devinfo(void *, struct dvb_frontend_info *);
-static int cxdtv_dtv_open(void *, int);
-static void cxdtv_dtv_close(void *);
-static int cxdtv_dtv_set_tuner(void *, const struct dvb_frontend_parameters *);
-static fe_status_t cxdtv_dtv_get_status(void *);
-static uint16_t cxdtv_dtv_get_signal_strength(void *);
-static uint16_t cxdtv_dtv_get_snr(void *);
-static int cxdtv_dtv_start_transfer(void *);
-static int cxdtv_dtv_stop_transfer(void *);
-
-static const struct dtv_hw_if cxdtv_dtv_if = {
-	.get_devinfo = cxdtv_dtv_get_devinfo,
-	.open = cxdtv_dtv_open,
-	.close = cxdtv_dtv_close,
-	.set_tuner = cxdtv_dtv_set_tuner,
-	.get_status = cxdtv_dtv_get_status,
-	.get_signal_strength = cxdtv_dtv_get_signal_strength,
-	.get_snr = cxdtv_dtv_get_snr,
-	.start_transfer = cxdtv_dtv_start_transfer,
-	.stop_transfer = cxdtv_dtv_stop_transfer,
-};
-
 int
 cxdtv_mpeg_attach(struct cxdtv_softc *sc)
 {
-	struct dtv_attach_args daa;
 	struct cxdtv_sram_ch *ch;
 
 	CX_DPRINTF(("cxdtv_mpeg_attach\n"));
@@ -478,10 +495,7 @@ cxdtv_mpeg_attach(struct cxdtv_softc *sc)
 	KASSERT(sc->sc_tuner != NULL);
 	KASSERT(sc->sc_demod != NULL);
 
-	daa.hw = &cxdtv_dtv_if;
-	daa.priv = sc;
-
-	sc->sc_dtvdev = config_found_ia(sc->sc_dev, "dtvbus", &daa, dtv_print);
+	cxdtv_rescan(sc->sc_dev, NULL, NULL);
 
 	return (sc->sc_dtvdev != NULL);
 }
@@ -647,10 +661,14 @@ cxdtv_dtv_get_snr(void *priv)
 }
 
 static int
-cxdtv_dtv_start_transfer(void *priv)
+cxdtv_dtv_start_transfer(void *priv,
+    void (*cb)(void *, const struct dtv_payload *), void *arg)
 {
 	struct cxdtv_softc *sc = priv;
 	
+	sc->sc_dtvsubmitcb = cb;
+	sc->sc_dtvsubmitarg = arg;
+
 	/* allocate two alternating DMA areas for MPEG TS packets */
 	sc->sc_tsbuf = cxdtv_mpeg_malloc(sc, CXDTV_TS_PKTSIZE * 2);
 
@@ -666,6 +684,9 @@ cxdtv_dtv_stop_transfer(void *priv)
 
 	cxdtv_mpeg_halt(sc);
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_PCI_INT_MASK, 0);
+
+	sc->sc_dtvsubmitcb = NULL;
+	sc->sc_dtvsubmitarg = NULL;
 
 	return 0;
 }
@@ -970,13 +991,16 @@ cxdtv_mpeg_intr(struct cxdtv_softc *sc)
 	if ( (s & ~CXDTV_TS_RISCI) != 0 )
 		device_printf(sc->sc_dev, "unexpected TS IS %08x\n", s);
 
+	if (sc->sc_dtvsubmitcb == NULL)
+		goto done;
+
 	if ((s & CXDTV_TS_RISCI1) == CXDTV_TS_RISCI1) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma->map,
 			0, CXDTV_TS_PKTSIZE,
 			BUS_DMASYNC_POSTREAD);
 		payload.data = KERNADDR(sc->sc_dma);
 		payload.size = CXDTV_TS_PKTSIZE;
-		dtv_submit_payload(sc->sc_dtvdev, &payload);
+		sc->sc_dtvsubmitcb(sc->sc_dtvsubmitarg, &payload);
 	}
 
 	if ((s & CXDTV_TS_RISCI2) == CXDTV_TS_RISCI2) {
@@ -985,9 +1009,10 @@ cxdtv_mpeg_intr(struct cxdtv_softc *sc)
 			BUS_DMASYNC_POSTREAD);
 		payload.data = (char *)(KERNADDR(sc->sc_dma)) + (uintptr_t)CXDTV_TS_PKTSIZE;
 		payload.size = CXDTV_TS_PKTSIZE;
-		dtv_submit_payload(sc->sc_dtvdev, &payload);
+		sc->sc_dtvsubmitcb(sc->sc_dtvsubmitarg, &payload);
 	}
 
+done:
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_TS_INT_STAT, s);
 
 	return 1;
@@ -1139,7 +1164,7 @@ cxdtv_card_init_hd5500(struct cxdtv_softc *sc)
 	delay(200000);
 }
 
-MODULE(MODULE_CLASS_DRIVER, cxdtv, "dtv,tvpll,nxt2k,lg3303");
+MODULE(MODULE_CLASS_DRIVER, cxdtv, "tvpll,nxt2k,lg3303");
 
 #ifdef _MODULE
 #include "ioconf.c"

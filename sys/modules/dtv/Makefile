@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/07/15 20:27:41 jmcneill Exp $
+# $NetBSD: Makefile,v 1.4 2011/08/09 01:42:25 jmcneill Exp $
 
 .include "../Makefile.inc"
 
@@ -10,7 +10,6 @@ SRCS=	dtv_buffer.c \
 	dtv_demux.c \
 	dtv_device.c \
 	dtv_ioctl.c \
-	dtv_math.c \
 	dtv_scatter.c
 
 WARNS=	4

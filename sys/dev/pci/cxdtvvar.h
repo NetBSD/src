@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtvvar.h,v 1.3 2011/07/25 04:31:26 jakllsch Exp $ */
+/* $NetBSD: cxdtvvar.h,v 1.4 2011/08/09 01:42:24 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -94,6 +94,10 @@ struct cxdtv_softc {
 
 	void			*sc_tuner;
 	void 			*sc_demod;
+
+	void			(*sc_dtvsubmitcb)(void *,
+				    const struct dtv_payload *);
+	void			*sc_dtvsubmitarg;
 
 	const struct cxdtv_board *sc_board;
 	pci_vendor_id_t		sc_vendor;

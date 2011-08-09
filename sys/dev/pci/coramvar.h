@@ -1,4 +1,4 @@
-/* $NetBSD: coramvar.h,v 1.3 2011/08/06 19:21:27 jmcneill Exp $ */
+/* $NetBSD: coramvar.h,v 1.4 2011/08/09 01:42:24 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -99,6 +99,10 @@ struct coram_softc {
 
 	void			*sc_tuner;
 	void			*sc_demod;
+
+	void			(*sc_dtvsubmitcb)(void *,
+				    const struct dtv_payload *);
+	void			*sc_dtvsubmitarg;
 
 	const struct coram_board *sc_board;
 };

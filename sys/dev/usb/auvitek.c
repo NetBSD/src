@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek.c,v 1.4 2011/07/09 15:00:44 jmcneill Exp $ */
+/* $NetBSD: auvitek.c,v 1.5 2011/08/09 01:42:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.4 2011/07/09 15:00:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.5 2011/08/09 01:42:24 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,12 +52,13 @@ __KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.4 2011/07/09 15:00:44 jmcneill Exp $")
 static int	auvitek_match(device_t, cfdata_t, void *);
 static void	auvitek_attach(device_t, device_t, void *);
 static int	auvitek_detach(device_t, int);
+static int	auvitek_rescan(device_t, const char *, const int *);
 static void	auvitek_childdet(device_t, device_t);
 static int	auvitek_activate(device_t, enum devact);
 
 CFATTACH_DECL2_NEW(auvitek, sizeof(struct auvitek_softc),
     auvitek_match, auvitek_attach, auvitek_detach, auvitek_activate,
-    NULL, auvitek_childdet);
+    auvitek_rescan, auvitek_childdet);
 
 static const struct {
 	uint16_t		vendor;
@@ -305,6 +306,17 @@ auvitek_activate(device_t self, enum devact act)
 	}
 }
 
+static int
+auvitek_rescan(device_t self, const char *ifattr, const int *locs)
+{
+	struct auvitek_softc *sc = device_private(self);
+
+	auvitek_video_rescan(sc, ifattr, locs);
+	auvitek_dtv_rescan(sc, ifattr, locs);
+
+	return 0;
+}
+
 static void
 auvitek_childdet(device_t self, device_t child)
 {
@@ -358,7 +370,7 @@ auvitek_write_1(struct auvitek_softc *sc, uint16_t reg, uint8_t data)
 		    usbd_errstr(err));
 }
 
-MODULE(MODULE_CLASS_DRIVER, auvitek, "au8522,xc5k,dtv");
+MODULE(MODULE_CLASS_DRIVER, auvitek, "au8522,xc5k");
 
 #ifdef _MODULE
 #include "ioconf.c"

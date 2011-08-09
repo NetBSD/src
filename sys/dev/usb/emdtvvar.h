@@ -1,4 +1,4 @@
-/* $NetBSD: emdtvvar.h,v 1.2 2011/07/11 18:30:31 jmcneill Exp $ */
+/* $NetBSD: emdtvvar.h,v 1.3 2011/08/09 01:42:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -102,12 +102,16 @@ struct emdtv_softc {
 	uint32_t		sc_frequency;
 
 	bool			sc_streaming;
+	void			(*sc_dtvsubmitcb)(void *,
+				    const struct dtv_payload *);
+	void			*sc_dtvsubmitarg;
 
 	bool			sc_dying;
 };
 
 void	emdtv_dtv_attach(struct emdtv_softc *);
 void	emdtv_dtv_detach(struct emdtv_softc *, int);
+void	emdtv_dtv_rescan(struct emdtv_softc *, const char *, const int *);
 void	emdtv_ir_attach(struct emdtv_softc *);
 void	emdtv_ir_detach(struct emdtv_softc *, int);
 int	emdtv_i2c_attach(struct emdtv_softc *);
