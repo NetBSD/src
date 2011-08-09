@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/23 11:47:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/08/09 12:58:55 joerg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -21,6 +21,8 @@ COPTS.argv.c = -Wno-stack-protector
 COPTS.cp-demangle.c = -Wno-stack-protector
 COPTS.make-relative-prefix.c = -Wno-stack-protector
 COPTS.regex.c = -Wno-stack-protector
+
+CWARNFLAGS.clang+=	-Wno-unused-value
 
 .PATH: ${DIST}/libiberty
 
