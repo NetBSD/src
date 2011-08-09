@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.16 2011/06/28 16:19:16 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.17 2011/08/09 06:58:33 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -484,7 +484,25 @@ perfuse_init(pc, pmi)
 	PUFFSOP_SET(pops, perfuse, node, deleteextattr);
 #endif /* PUFFS_EXTNAMELEN */
 
-	puffs_flags = PUFFS_KFLAG_WTCACHE;
+	/*
+	 * We used to have PUFFS_KFLAG_WTCACHE here, which uses the
+	 * page cache (highly desirable to get mmap(2)), but still sends
+	 * all writes to the filesystem. In fact it does not send the
+	 * data written, but the pages that contain it. 
+	 *
+	 * There is a nasty bug hidden somewhere, possibly in libpuffs'
+	 * VOP_FSYNC, which sends an asynchronous PUFFS_SETATTR that
+	 * update file size. When writes are in progress, it will cause
+	 * the file to be truncated and we get a zero-filled chunk at the
+	 * beginning of a page. Removing PUFFS_KFLAG_WTCACHE fixes that
+	 * problem. 
+	 * 
+	 * The other consequences are that changes will not be propagated
+	 * immediatly to the filesystem, and we get a huge performance gain
+	 * because much less requests are sent. A test case for the above
+	 * mentioned bug got its execution time slashed by factor 50.
+	 */
+	puffs_flags = 0;
 
 	if (perfuse_diagflags & PDF_PUFFS)
 		puffs_flags |= PUFFS_FLAG_OPDUMP;
