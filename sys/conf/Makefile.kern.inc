@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.143 2011/07/28 13:42:16 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.144 2011/08/09 13:02:53 joerg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -81,7 +81,7 @@ CWARNFLAGS+=	-Wno-sign-compare
 .endif
 
 CWARNFLAGS.clang+=	-Wno-unknown-pragmas -Wno-conversion \
-			-Wno-self-assign -Wno-array-bounds
+			-Wno-self-assign
 
 CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${DEBUG} ${COPTS}
@@ -518,7 +518,7 @@ COPTS.${__varstack:T} += -Wno-stack-protector
 
 # XXX ugly ugly to fix
 .if defined(HAVE_GCC) && ${HAVE_GCC} == 45
-CWARNFLAGS.tulip.c+=	-Wno-array-bounds
+CWARNFLAGS.tulip.c+=	${${ACTIVE_CC} == "gcc":?-Wno-array-bounds:}
 CWARNFLAGS.radeonfb.c+=	-Wno-cast-qual
 CWARNFLAGS.dbcool.c+=	-Wno-cast-qual
 CWARNFLAGS.adb_kbd.c+=	-Wno-cast-qual
