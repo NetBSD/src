@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.16 2011/08/09 16:10:10 jruoho Exp $
+#	$NetBSD: TODO,v 1.17 2011/08/09 16:14:41 jruoho Exp $
 
 THINGS TO BE DONE:
 
@@ -71,8 +71,6 @@ This is a list of suggested smaller projects (in no particular order):
   the symptoms)
 + kernel fine-grained locking
 + write a BSD-licensed web browser
-+ write a BSD-licensed privacy guard like gnupg or pgp
-  (see http://netbsd-soc.sourceforge.net/projects/bpg/)
 + perhaps look at putting wonka into src/ (with uuencoded class lib?)
 + document autoconf framework
 + write an overview document for openssl and certificates
