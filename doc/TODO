@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.15 2008/11/12 12:35:52 ad Exp $
+#	$NetBSD: TODO,v 1.16 2011/08/09 16:10:10 jruoho Exp $
 
 THINGS TO BE DONE:
 
@@ -62,7 +62,6 @@ This is a list of suggested smaller projects (in no particular order):
 + autoconf version of nawk, for use in non-NetBSD pkgsrc
 + port valgrind to NetBSD for pkgsrc, then use it to do an audit of
   any memory leakage
-+ implement POSIX async IO
 + help in implementing various things in pkgsrc
 + simplify some of the quirks in our build system
 + help out with scripts for tgm/autobuild
@@ -75,13 +74,11 @@ This is a list of suggested smaller projects (in no particular order):
 + write a BSD-licensed privacy guard like gnupg or pgp
   (see http://netbsd-soc.sourceforge.net/projects/bpg/)
 + perhaps look at putting wonka into src/ (with uuencoded class lib?)
-+ investigate ProPolice
 + document autoconf framework
 + write an overview document for openssl and certificates
 + documentation project help
 + investigate which userland utilities and daemons would benefit from
   kqueue, and rewrite them
-+ better testing in general; in particular, more regression tests
 + add a native scheme interpreter
 + add platform support for TenDRA compiler suite
 + merge moused(8) with wsmoused(8) as a new work mode (i.e. serial)
