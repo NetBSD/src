@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.24.10.2 2009/02/02 22:02:24 snj Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.24.10.3 2011/08/09 16:18:23 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.24.10.2 2009/02/02 22:02:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.24.10.3 2011/08/09 16:18:23 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.24.10.2 2009/02/02 22:02:24 snj E
 
 /*
  * Fork a kernel thread.  Any process can request this to be done.
+ *
+ * With joinable kthreads KTHREAD_JOINABLE flag this should be known.
+ * 1. If you specify KTHREAD_JOINABLE, you must call kthread_join() to reap the thread.
+ *    It will not be automatically reaped by the system.
+ * 2. For any given call to kthread_create(KTHREAD_JOINABLE), you may call kthread_join()
+ *    only once on the returned lwp_t *.
  */
 int
 kthread_create(pri_t pri, int flag, struct cpu_info *ci,
@@ -61,9 +67,10 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	lwp_t *l;
 	vaddr_t uaddr;
 	bool inmem;
-	int error;
+	int error, lc, lwp_flags;
 	va_list ap;
-	int lc;
+
+	lwp_flags = LWP_DETACHED;
 
 	inmem = uvm_uarea_alloc(&uaddr);
 	if (uaddr == 0)
@@ -73,7 +80,10 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	} else {
 		lc = SCHED_RR;
 	}
-	error = lwp_create(&lwp0, &proc0, uaddr, inmem, LWP_DETACHED, NULL,
+	if ((flag & KTHREAD_JOINABLE) != 0) {
+		lwp_flags &= ~LWP_DETACHED;
+	}
+	error = lwp_create(&lwp0, &proc0, uaddr, inmem, lwp_flags, NULL,
 	    0, func, arg, &l, lc);
 	if (error) {
 		uvm_uarea_free(uaddr, curcpu());
@@ -83,7 +93,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	if (fmt != NULL) {
 		l->l_name = kmem_alloc(MAXCOMLEN, KM_SLEEP);
 		if (l->l_name == NULL) {
-			lwp_exit(l);
+			kthread_destroy(l);
 			return ENOMEM;
 		}
 		va_start(ap, fmt);
@@ -98,6 +108,11 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 		KASSERT((flag & KTHREAD_MPSAFE) != 0);
 	}
 
+	/* Joinable kthread can't be NULL. */
+	if ((flag & KTHREAD_JOINABLE) != 0) {
+		KASSERT(l != NULL);
+	}
+	
 	if (pri == PRI_NONE) {
 		if ((flag & KTHREAD_TS) != 0) {
 			/* Maximum user priority level. */
@@ -183,9 +198,39 @@ kthread_exit(int ecode)
 void
 kthread_destroy(lwp_t *l)
 {
-
+	proc_t *p;
+	
 	KASSERT((l->l_flag & LW_SYSTEM) != 0);
 	KASSERT(l->l_stat == LSIDL);
 
+	p = l->l_proc;
+	
+	/* Add LRP_DETACHED flag because we can have joinable kthread now. */
+	mutex_enter(p->p_lock);
+	l->l_prflag |= LPR_DETACHED;
+	mutex_exit(p->p_lock);
+	
 	lwp_exit(l);
+}
+
+/*
+ * Wait for a kthread to exit, as pthread_join().
+ */
+int
+kthread_join(lwp_t *l)
+{
+	lwpid_t departed;
+	proc_t *p;
+	int error;
+
+	KASSERT((l->l_flag & LW_SYSTEM) != 0);
+	KASSERT((l->l_prflag & LPR_DETACHED) == 0);
+	
+	p = l->l_proc;
+
+	mutex_enter(p->p_lock);
+	error = lwp_wait1(curlwp, l->l_lid, &departed, LWPWAIT_EXITCONTROL);
+	mutex_exit(p->p_lock);
+
+	return error;
 }
