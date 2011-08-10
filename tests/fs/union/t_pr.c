@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.7 2010/07/03 13:37:22 pooka Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.8 2011/08/10 06:27:02 hannken Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -50,7 +50,6 @@ ATF_TC_BODY(multilayer, tc)
 	unionargs.target = __UNCONST("/Tunion2/B");
 	unionargs.mntflags = UNMNT_BELOW;
 
-	/* atf_tc_expect_signal(-1, "PR kern/23986"); */
 	rump_sys_mount(MOUNT_UNION, "/Tunion", 0,&unionargs,sizeof(unionargs));
 }
 
@@ -64,7 +63,7 @@ ATF_TC_HEAD(devnull1, tc)
 ATF_TC_BODY(devnull1, tc)
 {
 	struct union_args unionargs;
-	int fd;
+	int fd, res;
 
 	rump_init();
 
@@ -80,14 +79,12 @@ ATF_TC_BODY(devnull1, tc)
 
 	fd = rump_sys_open("/mp/null", O_WRONLY | O_CREAT | O_TRUNC);
 
-	atf_tc_expect_fail("PR kern/43560");
-	if (fd == -1 && errno == EROFS) {
-		atf_tc_fail("open returned EROFS");
-	} else if (fd == -1) {
-		atf_tc_expect_pass();
-		atf_tc_fail_errno("open fail");
-	}
+	if (fd == -1)
+		atf_tc_fail_errno("open");
 
+	res = rump_sys_write(fd, &fd, sizeof(fd));
+	if (res != sizeof(fd))
+		atf_tc_fail("write");
 }
 
 ATF_TC(devnull2);
@@ -100,7 +97,7 @@ ATF_TC_HEAD(devnull2, tc)
 ATF_TC_BODY(devnull2, tc)
 {
 	struct union_args unionargs;
-	int fd;
+	int fd, res;
 
 	rump_init();
 
@@ -118,8 +115,9 @@ ATF_TC_BODY(devnull2, tc)
 	if (fd == -1)
 		atf_tc_fail_errno("open");
 
-	atf_tc_expect_signal(-1, "PR kern/43560");
-	rump_sys_write(fd, &fd, sizeof(fd));
+	res = rump_sys_write(fd, &fd, sizeof(fd));
+	if (res != sizeof(fd))
+		atf_tc_fail("write");
 }
 
 ATF_TP_ADD_TCS(tp)
