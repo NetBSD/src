@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.45 2011/08/10 06:19:54 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.46 2011/08/10 15:56:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.45 2011/08/10 06:19:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.46 2011/08/10 15:56:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,6 +223,12 @@ union_updatevp(struct union_node *un, struct vnode *uppervp,
 
 		un->un_uppervp = uppervp;
 		un->un_uppersz = VNOVAL;
+		/* Update union vnode interlock. */
+		if (uppervp != NULL) {
+			mutex_obj_hold(uppervp->v_interlock);
+			uvm_obj_setlock(&UNIONTOV(un)->v_uobj,
+			    uppervp->v_interlock);
+		}
 	}
 
 	if (docache && (ohash != nhash)) {
