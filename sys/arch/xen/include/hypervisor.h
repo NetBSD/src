@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.31 2009/10/19 18:41:10 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.32 2011/08/10 21:46:02 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -91,6 +91,7 @@ struct xen_npx_attach_args {
 #include <xen/xen3-public/io/netif.h>
 #include <xen/xen3-public/io/blkif.h>
 
+#include <machine/cpu.h>
 #include <machine/hypercalls.h>
 
 #undef u8
@@ -136,7 +137,8 @@ void hypervisor_unmask_event(unsigned int);
 void hypervisor_mask_event(unsigned int);
 void hypervisor_clear_event(unsigned int);
 void hypervisor_enable_ipl(unsigned int);
-void hypervisor_set_ipending(uint32_t, int, int);
+void hypervisor_set_ipending(struct cpu_info *, 
+			     uint32_t, int, int);
 void hypervisor_machdep_attach(void);
 
 /* 

@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.48 2011/07/02 19:07:56 jym Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.49 2011/08/10 21:46:02 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.48 2011/07/02 19:07:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.49 2011/08/10 21:46:02 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -223,7 +223,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		    printf("evtsource[%d]->ev_maxlevel %d <= ilevel %d\n",
 		    evtch, evtsource[evtch]->ev_maxlevel, ilevel);
 #endif
-		hypervisor_set_ipending(evtsource[evtch]->ev_imask,
+		hypervisor_set_ipending(ci, evtsource[evtch]->ev_imask,
 		    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 		/* leave masked */
 		return 0;
@@ -239,7 +239,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		    printf("ih->ih_level %d <= ilevel %d\n", ih->ih_level, ilevel);
 #endif
 			cli();
-			hypervisor_set_ipending(iplmask,
+			hypervisor_set_ipending(ci, iplmask,
 			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 			/* leave masked */
 			goto splx;
