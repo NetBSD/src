@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.35 2011/07/01 19:24:14 dyoung Exp $	*/
+/*	$NetBSD: fpu.c,v 1.36 2011/08/10 11:39:44 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.35 2011/07/01 19:24:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.36 2011/08/10 11:39:44 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -406,7 +406,11 @@ fpusave_lwp(struct lwp *l, bool save)
 			break;
 		}
 		splx(s);
+#ifdef XEN
+		xen_send_ipi(oci, XEN_IPI_SYNCH_FPU);
+#else /* XEN */
 		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
+#endif
 		while (pcb->pcb_fpcpu == oci && ticks == hardclock_ticks) {
 			x86_pause();
 			spins++;
