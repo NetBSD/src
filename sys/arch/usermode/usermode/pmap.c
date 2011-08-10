@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.5 2009/11/07 07:27:48 cegger Exp $ */
+/* $NetBSD: pmap.c,v 1.6 2011/08/10 01:32:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.5 2009/11/07 07:27:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2011/08/10 01:32:44 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,8 +39,12 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.5 2009/11/07 07:27:48 cegger Exp $");
 
 #include "opt_memsize.h"
 
-struct pmap	pmap_kernel_store;
-static uint8_t	pmap_memory[1024*MEMSIZE] __attribute__((__aligned__));
+extern void * calloc(size_t, size_t);
+
+static struct pmap	pmap_kernel_store;
+struct pmap * const	kernel_pmap_ptr = &pmap_kernel_store;
+
+static uint8_t	*pmap_memory;
 static vaddr_t	virtual_avail, virtual_end;
 static vaddr_t	pmap_maxkvaddr;
 
@@ -49,9 +53,9 @@ void		pmap_bootstrap(void);
 void
 pmap_bootstrap(void)
 {
-#if 0
-	vsize_t bufsz;
-#endif
+	pmap_memory = calloc(1, 1024 * MEMSIZE);
+	if (pmap_memory == NULL)
+		panic("pmap_bootstrap: no memory");
 
 	virtual_avail = (vaddr_t)pmap_memory;
 	virtual_end = virtual_avail + sizeof(pmap_memory);
@@ -76,12 +80,6 @@ pmap_bootstrap(void)
 void
 pmap_init(void)
 {
-}
-
-pmap_t
-pmap_kernel(void)
-{
-	return &pmap_kernel_store;
 }
 
 void
