@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_v7fs.c,v 1.2 2011/08/10 11:31:49 uch Exp $ */
+/*	$NetBSD: newfs_v7fs.c,v 1.3 2011/08/10 12:13:20 wiz Exp $ */
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newfs_v7fs.c,v 1.2 2011/08/10 11:31:49 uch Exp $");
+__RCSID("$NetBSD: newfs_v7fs.c,v 1.3 2011/08/10 12:13:20 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -233,10 +233,8 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: \n%s [-vP] [-n maxfile]"
-	    " [-B endian] special\n", getprogname());
-	(void)fprintf(stderr, "%s -F -s partsize [-vPZ] [-n maxfile]"
-	    " [-B endian] file\n", getprogname());
+	(void)fprintf(stderr, "usage: \n%s [-FZ] [-B byte-order]"
+	    " [-n inodes] [-s sectors] [-V verbose] special\n", getprogname());
 
 	exit(EXIT_FAILURE);
 }
