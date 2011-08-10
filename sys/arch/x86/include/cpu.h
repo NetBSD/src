@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35 2011/06/12 03:35:50 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36 2011/08/10 06:40:35 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,6 +66,11 @@
 #include <sys/cpu_data.h>
 #include <sys/evcnt.h>
 #include <sys/device_if.h> /* for device_t */
+
+#ifdef XEN
+#include <xen/xen3-public/xen.h>
+#include <xen/xen3-public/event_channel.h>
+#endif /* XEN */
 
 struct intrsource;
 struct pmap;
@@ -177,13 +182,20 @@ struct cpu_info {
 
 #if defined(XEN) && defined(__x86_64__)
 	/* Currently active user PGD (can't use rcr3() with Xen) */
+	pd_entry_t *	ci_kpm_pdir;	/* per-cpu L4 PD (va) */
+	paddr_t		ci_kpm_pdirpa; /* per-cpu L4 PD (pa) */
 	paddr_t		ci_xen_current_user_pgd;
 #endif
 
 	char *ci_doubleflt_stack;
 	char *ci_ddbipi_stack;
 
+#ifndef XEN
 	struct evcnt ci_ipi_events[X86_NIPI];
+#else   /* XEN */
+	struct evcnt ci_ipi_events[XEN_NIPIS];
+	evtchn_port_t ci_ipi_evtchn;
+#endif  /* XEN */
 
 	device_t	ci_frequency;	/* Frequency scaling technology */
 	device_t	ci_padlock;	/* VIA PadLock private storage */
@@ -219,6 +231,11 @@ struct cpu_info {
 	int		ci_want_resched __aligned(64);
 	int		ci_padout __aligned(64);
 };
+
+#ifdef __x86_64__
+#define ci_pdirpa(ci, index) \
+	((ci)->ci_kpm_pdirpa + (index) * sizeof(pd_entry_t))
+#endif /* __x86_64__ */
 
 /*
  * Macros to handle (some) trapframe registers for common x86 code.
@@ -299,14 +316,9 @@ void cpu_init_msrs(struct cpu_info *, bool);
 void cpu_load_pmap(struct pmap *);
 
 extern uint32_t cpus_attached;
-#ifndef XEN
+
 #define	curcpu()		x86_curcpu()
 #define	curlwp			x86_curlwp()
-#else
-/* XXX initgdt() calls pmap_kenter_pa() which calls splvm() before %fs is set */
-#define curcpu()		(&cpu_info_primary)
-#define curlwp			curcpu()->ci_curlwp
-#endif
 #define	curpcb			((struct pcb *)lwp_getpcb(curlwp))
 
 /*
