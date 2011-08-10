@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/07/23 23:42:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/08/10 10:34:48 tsutsui Exp $
 
 NOMAN=		1
 
@@ -31,8 +31,8 @@ SRCS.freetype+=	type1cid.c
 .PATH:	${FREETYPE}/src/gzip
 SRCS.freetype+=	ftgzip.c
 
-.PATH:	${FREETYPE}/src/bzip2
-SRCS.freetype+=	ftbzip2.c
+#.PATH:	${FREETYPE}/src/bzip2
+#SRCS.freetype+=	ftbzip2.c
 
 .PATH:	${FREETYPE}/src/lzw
 SRCS.freetype+=	ftlzw.c
@@ -78,11 +78,13 @@ SRCS.fontenc=	fontenc.c encparse.c
 
 SRCS+=	${SRCS.mkfontscale} ${SRCS.freetype} ${SRCS.fontenc}
 
-LDADD=	-lz -lbz2
+LDADD=	-lz
+#LDADD+=	-lbz2
 
 HOST_CPPFLAGS=	-DFONTENC_NO_LIBFONT -DXFREE86_FT2 -DFONTENC_NO_LIBFONT \
 		-DFT2_BUILD_LIBRARY -DDARWIN_NO_CARBON \
 		-DFONT_ENCODINGS_DIRECTORY=\"${X11FONTDIR}/encodings/encodings.dir\"
+HOST_CPPFLAGS+=	-DFT_CONFIG_OPTION_DISABLE_BZIP2
 HOST_CPPFLAGS+=	-I${FREETYPE}/include -I${DESTDIR}${X11INCDIR} \
 		-I${DESTDIR}${X11INCDIR}/freetype2
 #		-I${X11SRCDIR.xc}/include/fonts
