@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_v7fs.h,v 1.1 2011/06/27 11:52:58 uch Exp $	*/
+/*	$NetBSD: newfs_v7fs.h,v 1.2 2011/08/10 11:31:49 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -43,6 +43,6 @@ struct progress_arg {
 __BEGIN_DECLS
 void progress(const struct progress_arg *);
 int v7fs_newfs(const struct v7fs_mount_device *, int32_t);
-extern bool verbose;
+extern int v7fs_newfs_verbose;
 __END_DECLS
 #endif /* !_SBIN_NEWFS_V7FS_NEWFS_V7FS_H_ */

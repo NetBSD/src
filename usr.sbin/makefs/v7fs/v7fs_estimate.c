@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_estimate.c,v 1.1 2011/07/18 08:58:39 uch Exp $	*/
+/*	$NetBSD: v7fs_estimate.c,v 1.2 2011/08/10 11:31:49 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: v7fs_estimate.c,v 1.1 2011/07/18 08:58:39 uch Exp $");
+__RCSID("$NetBSD: v7fs_estimate.c,v 1.2 2011/08/10 11:31:49 uch Exp $");
 #endif	/* !__lint */
 
 #include <stdio.h>
@@ -60,8 +60,7 @@ struct v7fs_geometry {
 	v7fs_daddr_t npuredatablk;
 };
 
-extern bool verbose;
-#define	VPRINTF(fmt, args...)	{ if (verbose) printf(fmt, ##args); }
+#define	VPRINTF(fmt, args...)	{ if (v7fs_newfs_verbose) printf(fmt, ##args); }
 
 static int
 v7fs_datablock_size(off_t sz, v7fs_daddr_t *nblk)

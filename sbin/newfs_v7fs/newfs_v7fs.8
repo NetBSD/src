@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_v7fs.8,v 1.2 2011/06/27 13:50:31 wiz Exp $
+.\"	$NetBSD: newfs_v7fs.8,v 1.3 2011/08/10 11:31:49 uch Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,10 +64,11 @@
 .Nd construct a new 7th Edition(V7) File System
 .Sh SYNOPSIS
 .Nm
-.Op Fl FPvZ
+.Op Fl FZ
 .Op Fl B Ar byte-order
 .Op Fl n Ar inodes
 .Op Fl s Ar sectors
+.Op Fl V Ar verbose
 .Ar special
 .Sh DESCRIPTION
 .Nm
@@ -102,12 +103,22 @@ option).
 .It Fl n Ar inodes
 This specifies the number of inodes for the filesystem.
 If the number of inodes exceeds 65536, it is reduced to 65536.
-.It Fl P
-Display a progress meter for the file system construction.
 .It Fl s Ar sectors
 Create file system with specified number of disk sectors.
-.It Fl v
-Verbose mode.
+.It Fl V Ar verbose
+This controls the amount of information written to stdout:
+.Bl -tag -width 3n -offset indent -compact
+.It 0
+No output.
+.It 1
+Overall size, ilist size, endian and filename length.
+.It 2
+A progress bar.
+.It 3
+.It 4
+More verbose message.
+.El
+The default is 3.
 .It Fl Z
 Fill file with zeroes instead of creating a sparse file.
 .El

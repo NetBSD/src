@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2011/08/09 11:18:28 uch Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2011/08/10 11:31:49 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.9 2011/08/09 11:18:28 uch Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 2011/08/10 11:31:49 uch Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,7 +54,8 @@ __RCSID("$NetBSD: main.c,v 1.9 2011/08/09 11:18:28 uch Exp $");
 #include "newfs_v7fs.h"
 #include "progress.h" /*../sbin/fsck */
 
-#define	VPRINTF(fmt, args...)	{ if (verbose) printf(fmt, ##args); }
+#define	VPRINTF(lv, fmt, args...)	{ if (v7fs_newfs_verbose >= lv)	\
+	printf(fmt, ##args); }
 
 static v7fs_daddr_t
 determine_ilist_size(v7fs_daddr_t volume_size, int32_t files)
@@ -170,14 +171,14 @@ make_freeblocklist(struct v7fs_self *fs, v7fs_daddr_t listblk, uint8_t *buf)
 		progress(0);
 		if (j == (int32_t)fs->superblock.volume_size)
 		{
-			VPRINTF("\nlast freeblock #%d\n",
+			VPRINTF(4, "\nlast freeblock #%d\n",
 			    (*val32)(fb->freeblock[i + 1]));
 
 			memmove(fb->freeblock + 1, fb->freeblock + i + 1, k *
 			    sizeof(v7fs_daddr_t));
 			fb->freeblock[0] = 0; /* Terminate link; */
 			fb->nfreeblock = (*val16)(k + 1);
-			VPRINTF("last freeblock contains #%d\n",
+			VPRINTF(4, "last freeblock contains #%d\n",
 			    (*val16)(fb->nfreeblock));
 			fs->io.write(fs->io.cookie, buf, listblk);
 			return 0;
@@ -207,7 +208,7 @@ make_filesystem(struct v7fs_self *fs, v7fs_daddr_t volume_size,
 	int32_t i, j;
 
 	/* Setup ilist. (ilist must be zero filled. becuase of they are free) */
-	VPRINTF("Zero clear ilist.\n");
+	VPRINTF(4, "Zero clear ilist.\n");
 	progress(&(struct progress_arg){ .label = "zero ilist", .tick =
 	    ilist_size / PROGRESS_BAR_GRANULE });
 	memset(buf, 0, sizeof buf);
@@ -218,7 +219,7 @@ make_filesystem(struct v7fs_self *fs, v7fs_daddr_t volume_size,
 #ifndef HAVE_NBTOOL_CONFIG_H
 	progress_done();
 #endif
-	VPRINTF("\n");
+	VPRINTF(4, "\n");
 
 	/* Construct superblock */
 	sb = &fs->superblock;
@@ -227,14 +228,14 @@ make_filesystem(struct v7fs_self *fs, v7fs_daddr_t volume_size,
 	sb->update_time = time(NULL);
 
 	/* fill free inode cache. */
-	VPRINTF("Setup inode cache.\n");
+	VPRINTF(4, "Setup inode cache.\n");
 	sb->nfreeinode = V7FS_MAX_FREEINODE;
 	for (i = V7FS_MAX_FREEINODE - 1, j = V7FS_ROOT_INODE; i >= 0; i--, j++)
 		sb->freeinode[i] = j;
 	sb->total_freeinode = ilist_size * V7FS_INODE_PER_BLOCK - 1;
 
 	/* fill free block cache. */
-	VPRINTF("Setup free block cache.\n");
+	VPRINTF(4, "Setup free block cache.\n");
 	sb->nfreeblock = V7FS_MAX_FREEBLOCK;
 	for (i = V7FS_MAX_FREEBLOCK - 1, j = sb->datablock_start_sector; i >= 0;
 	    i--, j++)
@@ -251,7 +252,7 @@ make_filesystem(struct v7fs_self *fs, v7fs_daddr_t volume_size,
 	}
 
 	/* Construct freeblock list */
-	VPRINTF("Setup whole freeblock list.\n");
+	VPRINTF(4, "Setup whole freeblock list.\n");
 	progress(&(struct progress_arg){ .label = "freeblock list", .tick =
 	    (volume_size - sb->datablock_start_sector) / PROGRESS_BAR_GRANULE});
 	blk = sb->freeblock[0];
@@ -261,7 +262,7 @@ make_filesystem(struct v7fs_self *fs, v7fs_daddr_t volume_size,
 	progress_done();
 #endif
 
-	VPRINTF("done.\n");
+	VPRINTF(4, "done.\n");
 
 	return 0;
 }
@@ -283,7 +284,7 @@ v7fs_newfs(const struct v7fs_mount_device *mount, int32_t maxfile)
 
 	ilist_size = determine_ilist_size(volume_size, maxfile);
 
-	VPRINTF("volume size=%d, ilist size=%d, endian=%d, NAME_MAX=%d\n",
+	VPRINTF(1, "volume size=%d, ilist size=%d, endian=%d, NAME_MAX=%d\n",
 	    volume_size, ilist_size, mount->endian, V7FS_NAME_MAX);
 
 	/* Setup I/O ops. */

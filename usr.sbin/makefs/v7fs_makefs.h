@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_makefs.h,v 1.1 2011/07/18 08:58:38 uch Exp $	*/
+/*	$NetBSD: v7fs_makefs.h,v 1.2 2011/08/10 11:31:49 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -44,5 +44,6 @@ int v7fs_populate(const char *, fsnode *, fsinfo_t *,
     const struct v7fs_mount_device *);
 struct progress_arg;
 void progress(const struct progress_arg *);
+extern int v7fs_newfs_verbose;
 __END_DECLS
 #endif /*!_MAKEFS_V7FS_H_*/

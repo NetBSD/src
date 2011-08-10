@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_v7fs.c,v 1.1 2011/06/27 11:52:58 uch Exp $ */
+/*	$NetBSD: newfs_v7fs.c,v 1.2 2011/08/10 11:31:49 uch Exp $ */
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newfs_v7fs.c,v 1.1 2011/06/27 11:52:58 uch Exp $");
+__RCSID("$NetBSD: newfs_v7fs.c,v 1.2 2011/08/10 11:31:49 uch Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: newfs_v7fs.c,v 1.1 2011/06/27 11:52:58 uch Exp $");
 
 static void usage(void) __dead;
 static bool progress_bar_enable = false;
-bool verbose = false;
+int v7fs_newfs_verbose = 3;	/* newfs compatible */
 
 int
 main(int argc, char **argv)
@@ -72,13 +72,10 @@ main(int argc, char **argv)
 		usage();
 
 	Fflag = Zflag = partsize = 0;
-	while ((ch = getopt(argc, argv, "Fs:Zs:n:B:vP")) != -1) {
+	while ((ch = getopt(argc, argv, "Fs:Zs:n:B:V:")) != -1) {
 		switch (ch) {
-		case 'P':
-			progress_bar_enable = true;
-			break;
-		case 'v':
-			verbose = true;
+		case 'V':
+			v7fs_newfs_verbose = atoi(optarg);
 			break;
 		case 'F':
 			Fflag = 1;
@@ -117,6 +114,9 @@ main(int argc, char **argv)
 		usage();
 	device = argv[0];
 
+	progress_bar_enable = v7fs_newfs_verbose > 1;
+
+
 	if (progress_bar_enable) {
 		progress_switch(progress_bar_enable);
 		progress_init();
@@ -140,7 +140,7 @@ main(int argc, char **argv)
 			goto err_exit;
 		}
 		p = &d.d_partitions[part];
-		if (verbose) {
+		if (v7fs_newfs_verbose) {
 			printf("partition=%d size=%d offset=%d fstype=%d"
 			    " secsize=%d\n", part, p->p_size, p->p_offset,
 			    p->p_fstype, d.d_secsize);

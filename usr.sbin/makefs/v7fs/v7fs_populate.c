@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_populate.c,v 1.2 2011/07/18 17:15:07 tron Exp $	*/
+/*	$NetBSD: v7fs_populate.c,v 1.3 2011/08/10 11:31:49 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: v7fs_populate.c,v 1.2 2011/07/18 17:15:07 tron Exp $");
+__RCSID("$NetBSD: v7fs_populate.c,v 1.3 2011/08/10 11:31:49 uch Exp $");
 #endif	/* !__lint */
 
 #include <stdio.h>
@@ -61,8 +61,7 @@ __RCSID("$NetBSD: v7fs_populate.c,v 1.2 2011/07/18 17:15:07 tron Exp $");
 #include "v7fs_makefs.h"
 #include "newfs_v7fs.h"
 
-extern bool verbose;
-#define	VPRINTF(fmt, args...)	{ if (verbose) printf(fmt, ##args); }
+#define	VPRINTF(fmt, args...)	{ if (v7fs_newfs_verbose) printf(fmt, ##args); }
 
 static void
 attr_setup(fsnode *node, struct v7fs_fileattr *attr)
