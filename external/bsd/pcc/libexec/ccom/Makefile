@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/06/07 13:30:35 plunky Exp $
+#	$NetBSD: Makefile,v 1.10 2011/08/10 08:10:39 plunky Exp $
 
 WARNS?=	2
 
@@ -27,6 +27,9 @@ CPPFLAGS+=	-I${PCC_DIST}/mip
 CPPFLAGS+=	-I${PCC_DIST}/os/${TARGOS}
 CPPFLAGS+=	-I${PCC_DIST}/arch/${TARGMACH}
 CPPFLAGS+=	-I${PCC_DIST}/cc/ccom
+
+COPTS.scan.c+=	-Wno-unused
+COPTS.pftn.c+=	-Wno-uninitialized
 
 DPSRCS=	external.c
 
