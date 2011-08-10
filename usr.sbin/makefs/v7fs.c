@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs.c,v 1.2 2011/07/19 18:29:41 joerg Exp $	*/
+/*	$NetBSD: v7fs.c,v 1.3 2011/08/10 11:31:49 uch Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: v7fs.c,v 1.2 2011/07/19 18:29:41 joerg Exp $");
+__RCSID("$NetBSD: v7fs.c,v 1.3 2011/08/10 11:31:49 uch Exp $");
 #endif	/* !__lint */
 
 #include <stdio.h>
@@ -56,7 +56,7 @@ static v7fs_opt_t v7fs_opts;
 #include "progress.h"
 static bool progress_bar_enable;
 #endif
-bool verbose;
+int v7fs_newfs_verbose;
 
 void
 v7fs_prep_opts(fsinfo_t *fsopts)
@@ -92,7 +92,7 @@ v7fs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	struct v7fs_mount_device v7fs_mount;
 	int fd, endian, error = 1;
 
-	verbose = debug;
+	v7fs_newfs_verbose = debug;
 #ifndef HAVE_NBTOOL_CONFIG_H
 	if ((progress_bar_enable = v7fs_opts.progress)) {
 		progress_switch(progress_bar_enable);
