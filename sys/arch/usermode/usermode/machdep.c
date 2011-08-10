@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.9 2010/02/08 19:02:32 joerg Exp $ */
+/* $NetBSD: machdep.c,v 1.10 2011/08/10 01:32:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2010/02/08 19:02:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2011/08/10 01:32:44 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2010/02/08 19:02:32 joerg Exp $");
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
+
+#include <dev/mm.h>
 
 #include "opt_memsize.h"
 
@@ -100,6 +102,12 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 }
 
 void
-sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prog)
+{
+	return 0;
 }

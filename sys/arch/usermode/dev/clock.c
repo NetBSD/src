@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.4 2009/11/27 03:23:14 rmind Exp $ */
+/* $NetBSD: clock.c,v 1.5 2011/08/10 01:32:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,13 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2009/11/27 03:23:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2011/08/10 01:32:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/timetc.h>
+#include <sys/time.h>
 
 #include <machine/mainbus.h>
 

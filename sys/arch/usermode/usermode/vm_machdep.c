@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.2 2009/10/21 16:07:00 snj Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.3 2011/08/10 01:32:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.2 2009/10/21 16:07:00 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.3 2011/08/10 01:32:44 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -35,9 +35,10 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.2 2009/10/21 16:07:00 snj Exp $");
 
 #include <uvm/uvm_extern.h>
 
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
+	return 0;
 }
 
 void
