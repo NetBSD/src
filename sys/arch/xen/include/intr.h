@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.31 2009/07/29 12:02:06 cegger Exp $	*/
+/*	$NetBSD: intr.h,v 1.32 2011/08/10 11:39:45 cherry Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -175,9 +175,15 @@ int intr_find_mpmapping(int, int, struct xen_intr_handle *);
 struct pic *intr_findpic(int);
 void intr_add_pcibus(struct pcibus_attach_args *);
 
-int x86_send_ipi(struct cpu_info *, int);
-void x86_broadcast_ipi(int);
-void x86_multicast_ipi(int, int);
+#ifdef MULTIPROCESSOR
+void xen_ipi_init(void);
+int xen_send_ipi(struct cpu_info *, uint32_t);
+void xen_broadcast_ipi(uint32_t);
+#else
+#define xen_ipi_init(_1) do {} while(0) /* nothing */
+#define xen_send_ipi(_i1, _i2) do {} while(0) /* nothing */
+#define xen_broadcast_ipi(_i1) do {} while(0) /* nothing */
+#endif /* MULTIPROCESSOR */
 
 #endif /* !_LOCORE */
 
