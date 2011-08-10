@@ -1,5 +1,5 @@
 /*	Id: common.c,v 1.92 2010/03/27 23:46:12 mickey Exp 	*/	
-/*	$NetBSD: common.c,v 1.1.1.3 2010/06/03 18:57:53 plunky Exp $	*/
+/*	$NetBSD: common.c,v 1.2 2011/08/10 08:09:38 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -60,6 +60,7 @@
  */
 
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -470,7 +471,7 @@ struct balloc {
 	} a2;
 };
 
-#define ALIGNMENT ((long)&((struct balloc *)0)->a2)
+#define ALIGNMENT offsetof(struct balloc, a2)
 #define	ROUNDUP(x) (((x) + ((ALIGNMENT)-1)) & ~((ALIGNMENT)-1))
 
 static char *allocpole;
