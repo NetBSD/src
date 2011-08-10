@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.34 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.bebox,v 1.35 2011/08/10 07:56:59 kiyohara Exp $
 ./usr/include/bebox				comp-c-include
 ./usr/include/bebox/_G_config.h			comp-obsolete		obsolete
 ./usr/include/bebox/ansi.h			comp-c-include
@@ -37,11 +37,11 @@
 ./usr/include/bebox/lock.h			comp-c-include
 ./usr/include/bebox/math.h			comp-c-include
 ./usr/include/bebox/mcontext.h			comp-c-include
-./usr/include/bebox/mouse.h			comp-c-include
+./usr/include/bebox/mouse.h			comp-obsolete		obsolete
 ./usr/include/bebox/mutex.h			comp-c-include
 ./usr/include/bebox/param.h			comp-c-include
 ./usr/include/bebox/pcb.h			comp-c-include
-./usr/include/bebox/pccons.h			comp-c-include
+./usr/include/bebox/pccons.h			comp-obsolete		obsolete
 ./usr/include/bebox/pio.h			comp-obsolete		obsolete
 ./usr/include/bebox/pmap.h			comp-c-include
 ./usr/include/bebox/pmc.h			comp-c-include
