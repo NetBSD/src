@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.2 2011/08/10 11:39:46 cherry Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.3 2011/08/10 20:38:45 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.2 2011/08/10 11:39:46 cherry Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.3 2011/08/10 20:38:45 cherry Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.2 2011/08/10 11:39:46 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.3 2011/08/10 20:38:45 cherry Exp $");
 
 #include <sys/types.h>
 
@@ -96,14 +96,11 @@ xen_ipi_handler(struct cpu_info *ci, struct intrframe *regs)
 		ci->ci_ipi_events[bit].ev_count++;
 		if (ipifunc[bit] != NULL) {
 			(*ipifunc[bit])(ci, regs);
-		}
-		else {
+		} else {
 			panic("ipifunc[%d] unsupported!\n", bit);
 			/* NOTREACHED */
 		}
 	}
-
-	return;
 }
 
 /* Must be called once for every cpu that expects to send/recv ipis */
@@ -119,7 +116,8 @@ xen_ipi_init(void)
 	vcpu = ci->ci_cpuid;
 	KASSERT(vcpu < MAX_VIRT_CPUS);
 
-	evtchn = ci->ci_ipi_evtchn = bind_vcpu_to_evtch(vcpu);
+	evtchn = bind_vcpu_to_evtch(vcpu);
+	ci->ci_ipi_evtchn = evtchn;
 
 	KASSERT(evtchn != -1 && evtchn < NR_EVENT_CHANNELS);
 
@@ -130,7 +128,6 @@ xen_ipi_init(void)
 	}
 
 	hypervisor_enable_event(evtchn);
-	return;
 }
 
 /* prefer this to global variable */
@@ -148,8 +145,7 @@ valid_ipimask(uint32_t ipimask)
 
 	if (ipimask & ~masks) {
 		return false;
-	}
-	else {
+	} else {
 		return true;
 	}
 
@@ -162,15 +158,14 @@ xen_send_ipi(struct cpu_info *ci, uint32_t ipimask)
 
 	KASSERT(ci != NULL || ci != curcpu());
 
-	if (!(ci->ci_flags & CPUF_RUNNING)) {
+	if ((ci->ci_flags & CPUF_RUNNING) != 0) {
 		return ENOENT;
 	}
 
 	evtchn = ci->ci_ipi_evtchn;
-	if (false == valid_ipimask(ipimask)) {
-		panic("xen_send_ipi() called with invalid ipimask\n");
-		/* NOTREACHED */
-	}
+
+	KASSERTMSG(valid_ipimask(ipimask) == true, 
+		("xen_send_ipi() called with invalid ipimask\n"));
 
 	atomic_or_32(&ci->ci_ipis, ipimask);
 	hypervisor_notify_via_evtchn(evtchn);
@@ -184,10 +179,8 @@ xen_broadcast_ipi(uint32_t ipimask)
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
 
-	if (false == valid_ipimask(ipimask)) {
-		panic("xen_broadcast_ipi() called with invalid ipimask\n");
-		/* NOTREACHED */
-	}
+	KASSERTMSG(valid_ipimask(ipimask) == true, 
+		("xen_broadcast_ipi() called with invalid ipimask\n"));
 
 	/* 
 	 * XXX-cherry: there's an implicit broadcast sending order
@@ -211,9 +204,6 @@ xen_broadcast_ipi(uint32_t ipimask)
 			}
 		}
 	}
-
-	return;
-	/* NOTREACHED */
 }
 
 /* MD wrapper for the xcall(9) callback. */
@@ -228,7 +218,6 @@ xen_ipi_halt(struct cpu_info *ci, struct intrframe *intrf)
 		panic("vcpu%" PRIuCPUID "shutdown failed.\n", ci->ci_cpuid);
 	}
 
-	return;
 }
 
 static void
@@ -242,7 +231,6 @@ xen_ipi_synch_fpu(struct cpu_info *ci, struct intrframe *intrf)
 #else
 	npxsave_cpu(true);
 #endif /* __x86_64__ */
-	return;
 }
 
 static void
@@ -291,7 +279,6 @@ xen_ipi_xcall(struct cpu_info *ci, struct intrframe *intrf)
 	KASSERT(intrf != NULL);
 
 	xc_ipi_handler();
-	return;
 }
 
 void
@@ -304,7 +291,7 @@ xc_send_ipi(struct cpu_info *ci)
 	if (ci) {
 		if (0 != xen_send_ipi(ci, XEN_IPI_XCALL)) {
 			panic("xen_send_ipi(XEN_IPI_XCALL) failed\n");
-		};
+		}
 	} else {
 		xen_broadcast_ipi(XEN_IPI_XCALL);
 	}
