@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.7 2010/02/08 19:02:32 joerg Exp $ */
+/* $NetBSD: cpu.c,v 1.8 2011/08/10 01:32:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2010/02/08 19:02:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2011/08/10 01:32:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2010/02/08 19:02:32 joerg Exp $");
 
 #include <machine/cpu.h>
 #include <machine/mainbus.h>
+#include <machine/pcb.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
