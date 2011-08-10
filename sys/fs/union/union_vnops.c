@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.42 2011/08/07 06:01:51 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.43 2011/08/10 06:27:02 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.42 2011/08/07 06:01:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.43 2011/08/10 06:27:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -888,12 +888,14 @@ union_setattr(void *v)
 	struct vattr *vap = ap->a_vap;
 	struct vnode *vp = ap->a_vp;
 	struct union_node *un = VTOUNION(vp);
+	bool size_only;		/* All but va_size are VNOVAL. */
 	int error;
 
-  	if ((vap->va_flags != VNOVAL || vap->va_uid != (uid_t)VNOVAL ||
-	    vap->va_gid != (gid_t)VNOVAL || vap->va_atime.tv_sec != VNOVAL ||
-	    vap->va_mtime.tv_sec != VNOVAL || vap->va_mode != (mode_t)VNOVAL) &&
-	    (vp->v_mount->mnt_flag & MNT_RDONLY))
+	size_only = (vap->va_flags == VNOVAL && vap->va_uid == (uid_t)VNOVAL &&
+	    vap->va_gid == (gid_t)VNOVAL && vap->va_atime.tv_sec == VNOVAL &&
+	    vap->va_mtime.tv_sec == VNOVAL && vap->va_mode == (mode_t)VNOVAL);
+
+	if (!size_only && (vp->v_mount->mnt_flag & MNT_RDONLY))
 		return (EROFS);
 	if (vap->va_size != VNOVAL) {
  		switch (vp->v_type) {
@@ -931,8 +933,9 @@ union_setattr(void *v)
 	}
 
 	/*
-	 * Try to set attributes in upper layer,
-	 * otherwise return read-only filesystem error.
+	 * Try to set attributes in upper layer, ignore size change to zero
+	 * for devices to handle O_TRUNC and return read-only filesystem error
+	 * otherwise.
 	 */
 	if (un->un_uppervp != NULLVP) {
 		FIXUP(un);
@@ -940,7 +943,22 @@ union_setattr(void *v)
 		if ((error == 0) && (vap->va_size != VNOVAL))
 			union_newsize(ap->a_vp, vap->va_size, VNOVAL);
 	} else {
-		error = EROFS;
+		KASSERT(un->un_lowervp != NULLVP);
+		switch (un->un_lowervp->v_type) {
+ 		case VCHR:
+ 		case VBLK:
+ 		case VSOCK:
+ 		case VFIFO:
+			if (size_only &&
+			    (vap->va_size == 0 || vap->va_size == VNOVAL))
+				error = 0;
+			else
+				error = EROFS;
+			break;
+		default:
+			error = EROFS;
+			break;
+		}
 	}
 
 	return (error);
@@ -1003,8 +1021,23 @@ union_write(void *v)
 	struct union_node *un = VTOUNION(ap->a_vp);
 
 	vp = UPPERVP(ap->a_vp);
-	if (vp == NULLVP)
-		panic("union: missing upper layer in write");
+	if (vp == NULLVP) {
+		vp = LOWERVP(ap->a_vp);
+		KASSERT(vp != NULL);
+		switch (vp->v_type) {
+		case VBLK:
+		case VCHR:
+		case VSOCK:
+		case VFIFO:
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			error = VOP_WRITE(vp, ap->a_uio, ap->a_ioflag,
+			    ap->a_cred);
+			VOP_UNLOCK(vp);
+			return error;
+		default:
+			panic("union: missing upper layer in write");
+		}
+	}
 
 	FIXUP(un);
 	error = VOP_WRITE(vp, ap->a_uio, ap->a_ioflag, ap->a_cred);
