@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.44 2011/08/07 06:01:51 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.45 2011/08/10 06:19:54 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.44 2011/08/07 06:01:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.45 2011/08/10 06:19:54 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1221,7 +1221,7 @@ union_check_rmdir(struct union_node *un, kauth_cred_t cred)
 		return 0;
 
 	/* Check lower for being empty. */
-	vn_lock(un->un_lowervp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(un->un_lowervp, LK_SHARED | LK_RETRY);
 	error = VOP_GETATTR(un->un_lowervp, &va, cred);
 	if (error) {
 		VOP_UNLOCK(un->un_lowervp);
