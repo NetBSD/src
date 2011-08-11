@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.90 2011/07/29 21:21:43 dyoung Exp $	*/
+/*	$NetBSD: cpu.c,v 1.91 2011/08/11 18:11:17 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.90 2011/07/29 21:21:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.91 2011/08/11 18:11:17 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1209,4 +1209,24 @@ cpu_load_pmap(struct pmap *pmap)
 #else /* PAE */
 	lcr3(pmap_pdirpa(pmap, 0));
 #endif /* PAE */
+}
+
+/*
+ * Notify all other cpus to halt.
+ */
+
+void
+cpu_broadcast_halt(struct cpu_info *ci)
+{
+	x86_broadcast_ipi(X86_IPI_HALT);
+}
+
+/*
+ * Send a dummy ipi to a cpu to force it to run splraise()/spllower()
+ */
+
+void
+cpu_kick(struct cpu_info *ci)
+{
+	x86_send_ipi(ci, 0);
 }

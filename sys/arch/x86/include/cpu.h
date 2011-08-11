@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36 2011/08/10 06:40:35 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.37 2011/08/11 18:11:17 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -314,6 +314,8 @@ void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);
 void cpu_init_msrs(struct cpu_info *, bool);
 void cpu_load_pmap(struct pmap *);
+void cpu_broadcast_halt(void);
+void cpu_kick(struct cpu_info *);
 
 extern uint32_t cpus_attached;
 
