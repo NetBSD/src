@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.87 2011/08/11 07:33:25 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.88 2011/08/11 12:03:06 mbalmer Exp $
 
 .include <bsd.own.mk>
 
@@ -49,7 +49,6 @@ SUBDIR+=	procfs
 SUBDIR+=	ptyfs
 SUBDIR+=	puffs
 SUBDIR+=	putter
-SUBDIR+=	pwdog
 SUBDIR+=	scsiverbose
 SUBDIR+=	secmodel_bsd44
 SUBDIR+=	secmodel_overlay
@@ -179,6 +178,12 @@ SUBDIR+=	compat_aoutm68k
 #SUBDIR+=	compat_linux
 #SUBDIR+=	compat_sunos
 #SUBDIR+=	compat_svr4
+.endif
+
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "sparc64"
+SUBDIR+=	pwdog
 .endif
 
 .include <bsd.own.mk>
