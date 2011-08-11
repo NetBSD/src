@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/01/18 23:33:52 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.10 2011/08/11 23:15:40 joerg Exp $
 
 DRIVER=		xf86-video-intel
 DRIVER_NAME=	intel_drv
@@ -26,5 +26,8 @@ LDADD+=		-ldrm_intel
 .include "../Makefile.xf86-driver"
 
 SUBDIR= ch7017 ch7xxx ivch sil164 tfp410
+
+CWARNFLAGS.clang+=	-Wno-parentheses -Wno-tautological-compare \
+			-Wno-empty-body -Wno-error
 
 .include <bsd.subdir.mk>
