@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.34 2011/03/22 16:50:16 jmmv Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.35 2011/08/11 10:52:12 uch Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ FSPROTOS(puffs);
 FSPROTOS(rumpfs);
 FSPROTOS(sysvbfs);
 FSPROTOS(tmpfs);
+FSPROTOS(v7fs);
 
 #ifndef FSTEST_IMGNAME
 #define FSTEST_IMGNAME "image.fs"
@@ -164,7 +165,8 @@ do {									\
   ATF_TC_FSADD(p2k_ffs,MOUNT_PUFFS,func,desc)				\
   ATF_TC_FSADD(rumpfs,MOUNT_RUMPFS,func,desc)				\
   ATF_TC_FSADD(sysvbfs,MOUNT_SYSVBFS,func,desc)				\
-  ATF_TC_FSADD(tmpfs,MOUNT_TMPFS,func,desc)
+  ATF_TC_FSADD(tmpfs,MOUNT_TMPFS,func,desc)				\
+  ATF_TC_FSADD(v7fs,MOUNT_V7FS,func,desc)
 
 #define ATF_TP_FSAPPLY(func)						\
   ATF_TP_FSADD(ext2fs,func);						\
@@ -177,7 +179,8 @@ do {									\
   ATF_TP_FSADD(p2k_ffs,func);						\
   ATF_TP_FSADD(rumpfs,func);						\
   ATF_TP_FSADD(sysvbfs,func);						\
-  ATF_TP_FSADD(tmpfs,func);
+  ATF_TP_FSADD(tmpfs,func);						\
+  ATF_TP_FSADD(v7fs,func);
 
 /*
  * Same as above, but generate a file system image first and perform
@@ -197,7 +200,8 @@ do {									\
   ATF_TC_FSADD_RO(msdosfs,MOUNT_MSDOS,func,desc,gen)			\
   ATF_TC_FSADD_RO(nfs,MOUNT_NFS,func,desc,gen)				\
   ATF_TC_FSADD_RO(nfsro,MOUNT_NFS,func,desc,gen)			\
-  ATF_TC_FSADD_RO(sysvbfs,MOUNT_SYSVBFS,func,desc,gen)
+  ATF_TC_FSADD_RO(sysvbfs,MOUNT_SYSVBFS,func,desc,gen)			\
+  ATF_TC_FSADD_RO(v7fs,MOUNT_V7FS,func,desc,gen)
 
 #define ATF_TP_FSAPPLY_RO(func)						\
   ATF_TP_FSADD(ext2fs,func);						\
@@ -206,7 +210,8 @@ do {									\
   ATF_TP_FSADD(msdosfs,func);						\
   ATF_TP_FSADD(nfs,func);						\
   ATF_TP_FSADD(nfsro,func);						\
-  ATF_TP_FSADD(sysvbfs,func);
+  ATF_TP_FSADD(sysvbfs,func);						\
+  ATF_TP_FSADD(v7fs,func);
 
 #define ATF_FSAPPLY(func,desc)						\
 	ATF_TC_FSAPPLY(func,desc);					\
@@ -254,6 +259,8 @@ atf_check_fstype(const atf_tc_t *tc, const char *fs)
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "sysvbfs") == 0)
 #define FSTYPE_TMPFS(tc)\
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "tmpfs") == 0)
+#define FSTYPE_V7FS(tc)\
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "v7fs") == 0)
 
 #define FSTEST_ENTER()							\
 	if (rump_sys_chdir(FSTEST_MNTNAME) == -1)			\
