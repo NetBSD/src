@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1088 2011/08/09 08:27:12 mbalmer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1089 2011/08/11 17:14:42 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1093 2011/08/09 08:26:18 mbalmer Exp
+ *	NetBSD: pcidevs,v 1.1094 2011/08/11 17:14:12 bouyer Exp
  */
 
 /*
@@ -4223,6 +4223,7 @@
 #define	PCI_PRODUCT_SIS_190	0x0190		/* 190 Ethernet */
 #define	PCI_PRODUCT_SIS_5597_VGA	0x0200		/* 5597/5598 Integrated VGA */
 #define	PCI_PRODUCT_SIS_300	0x0300		/* 300/305 AGP VGA */
+#define	PCI_PRODUCT_SIS_315PRO_VGA	0x0325		/* 315 Pro VGA */
 #define	PCI_PRODUCT_SIS_85C501	0x0406		/* 85C501 */
 #define	PCI_PRODUCT_SIS_85C496	0x0496		/* 85C496 */
 #define	PCI_PRODUCT_SIS_530HB	0x0530		/* 530 Host-PCI Bridge */
