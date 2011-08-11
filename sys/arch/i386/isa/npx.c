@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.141 2011/08/10 11:39:45 cherry Exp $	*/
+/*	$NetBSD: npx.c,v 1.142 2011/08/11 18:05:11 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.141 2011/08/10 11:39:45 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.142 2011/08/11 18:05:11 cherry Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -720,7 +720,10 @@ npxsave_lwp(struct lwp *l, bool save)
 		}
 		splx(s);
 #ifdef XEN
-		xen_send_ipi(oci, XEN_IPI_SYNCH_FPU);
+		if (xen_send_ipi(oci, XEN_IPI_SYNCH_FPU) != 0) {
+			panic("xen_send_ipi(%s, XEN_IPI_SYNCH_FPU) failed.",
+			    cpu_name(oci));
+		}
 #else /* XEN */
 		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
 #endif
