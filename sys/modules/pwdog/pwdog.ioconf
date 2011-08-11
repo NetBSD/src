@@ -1,0 +1,11 @@
+#	$NetBSD: pwdog.ioconf,v 1.1 2011/08/11 07:33:25 mbalmer Exp $
+
+ioconf		pwdog
+
+include		"conf/files"
+include		"dev/i2o/files.i2o"
+include		"dev/pci/files.pci"
+
+pseudo-root	pci*
+pwdog*		at pci?
+

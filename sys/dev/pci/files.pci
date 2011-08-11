@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.343 2011/08/04 14:43:55 jakllsch Exp $
+#	$NetBSD: files.pci,v 1.344 2011/08/11 07:33:24 mbalmer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1058,3 +1058,9 @@ file	dev/pci/cxdtv_boards.c	cxdtv
 device	coram: dtvbus, i2cbus, i2cexec, mt2131, cx24227
 attach	coram at pci
 file	dev/pci/coram.c		coram
+
+# QUANCOM Electronic GmbH PWDOG1
+device	pwdog: sysmon_envsys
+attach	pwdog at pci
+file	dev/pci/pwdog.c		pwdog
+
