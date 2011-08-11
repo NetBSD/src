@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.37 2011/05/22 04:27:15 rmind Exp $      */
+/*      $NetBSD: xenevt.c,v 1.38 2011/08/11 17:59:00 cherry Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.37 2011/05/22 04:27:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.38 2011/08/11 17:59:00 cherry Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -160,6 +160,7 @@ xenevtattach(int n)
 	ih->ih_fun = ih->ih_realfun = xenevt_processevt;
 	ih->ih_arg = ih->ih_realarg = NULL;
 	ih->ih_ipl_next = NULL;
+	ih->ih_cpu = curcpu();
 #ifdef MULTIPROCESSOR
 	if (!mpsafe) {
 		ih->ih_fun = intr_biglock_wrapper;
@@ -168,7 +169,7 @@ xenevtattach(int n)
 #endif /* MULTIPROCESSOR */
 
 	s = splhigh();
-	event_set_iplhandler(ih, level);
+	event_set_iplhandler(ih->ih_cpu, ih, level);
 	splx(s);
 }
 
@@ -178,7 +179,7 @@ xenevt_setipending(int l1, int l2)
 {
 	xenevt_ev1 |= 1UL << l1;
 	xenevt_ev2[l1] |= 1UL << l2;
-	curcpu()->ci_ipending |= 1 << IPL_HIGH;
+	curcpu()/*XXX*/->ci_ipending |= 1 << IPL_HIGH;
 }
 
 /* process pending events */
