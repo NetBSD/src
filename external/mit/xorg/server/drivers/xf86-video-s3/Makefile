@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2010/07/12 07:54:12 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.10 2011/08/11 23:15:40 joerg Exp $
 
 DRIVER=		xf86-video-s3
 DRIVER_NAME=	s3_drv
@@ -20,5 +20,7 @@ CPPFLAGS.s3_accel_newmmio.c+=	-DS3_NEWMMIO=1 \
 CPPFLAGS.s3_video.c+=		-DS3_NEWMMIO=1 \
 
 CPPFLAGS+=	-DPACKAGE_VERSION=\"${PACKAGE_VERSION}\"
+
+CWARNFLAGS.clang+=	-Wno-parentheses
 
 .include "../Makefile.xf86-driver"
