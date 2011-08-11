@@ -1,11 +1,9 @@
-# $NetBSD: Makefile.usermode,v 1.5 2011/08/10 01:32:43 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.6 2011/08/11 22:30:41 jmcneill Exp $
 
 MACHINE_ARCH=			usermode
 USETOOLS?=			no
 NEED_OWN_INSTALL_TARGET?=	no
 .include <bsd.own.mk>
-
-SYSTEM_LD=	${CC} -o netbsd ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
 
 ##
 ## (1) port identification
@@ -16,15 +14,15 @@ GENASSYM_CONF=	${USERMODE}/usermode/genassym.cf
 ##
 ## (2) compile settings
 ##
-DEFCOPTS=	-O2
+DEFCOPTS=	-O2 -fno-omit-frame-pointer
 CPPFLAGS+=	-Dusermode
 CPPFLAGS.init_main.c+=	-Dmain=kernmain
-AFLAGS+=	-x assembler-with-cpp
 
 ##
 ## (3) libkern and compat
 ##
 KERN_AS=	obj
+COMPAT_AS=	obj
 
 ##
 ## (4) local objects, compile rules, and dependencies
@@ -36,6 +34,17 @@ MD_SFILES=
 ##
 ## (5) link settings
 ##
+SYSTEM_LD=	@${_MKSHMSG} "   link  ${.CUTDIR:T}/${.TARGET}"; \
+		${_MKSHECHO}\
+		${CC} ${COPTS} -Wl,-Map,$@.map -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
+		${CC} ${COPTS} -Wl,-Map,$@.map -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
+
+newvers: vers.o
+vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh $S/conf/osrelease.sh
+	${_MKMSG_CREATE} vers.c
+	${HOST_SH} $S/conf/newvers.sh -n ${_NVFLAGS}
+	${_MKTARGET_COMPILE}
+	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 ##
 ## (6) port specific target dependencies

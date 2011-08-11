@@ -1,12 +1,10 @@
-# $NetBSD: GENERIC,v 1.6 2011/08/10 01:32:43 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.7 2011/08/11 22:30:41 jmcneill Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 maxusers 	32
-makeoptions	DEBUG="-g3"
-makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
 
 #options 	MEMSIZE=65536	# amount of memory to allocate (in KB)
 options 	MEMSIZE=131072
@@ -14,6 +12,10 @@ options 	MEMSIZE=131072
 options 	RTC_OFFSET=0
 options 	KTRACE
 options 	USERCONF
+
+options 	SYSVMSG
+options 	SYSVSEM
+options 	SYSVSHM
 
 #options 	DEBUG
 #options 	DIAGNOSTIC
@@ -25,6 +27,7 @@ options		NKMEMPAGES=256
 #options 	DDB_HISTORY_SIZE=512
 
 options 	COMPAT_BSDPTY
+options 	COMPAT_50
 
 file-system	FFS
 file-system	FDESC
