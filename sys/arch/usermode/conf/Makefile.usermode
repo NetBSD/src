@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.6 2011/08/11 22:30:41 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.7 2011/08/11 22:38:25 jmcneill Exp $
 
 MACHINE_ARCH=			usermode
 USETOOLS?=			no
@@ -38,13 +38,7 @@ SYSTEM_LD=	@${_MKSHMSG} "   link  ${.CUTDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${CC} ${COPTS} -Wl,-Map,$@.map -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
 		${CC} ${COPTS} -Wl,-Map,$@.map -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
-
-newvers: vers.o
-vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh $S/conf/osrelease.sh
-	${_MKMSG_CREATE} vers.c
-	${HOST_SH} $S/conf/newvers.sh -n ${_NVFLAGS}
-	${_MKTARGET_COMPILE}
-	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+NVFLAGS=	-n
 
 ##
 ## (6) port specific target dependencies
