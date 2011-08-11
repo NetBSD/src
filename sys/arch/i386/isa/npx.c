@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.142 2011/08/11 18:05:11 cherry Exp $	*/
+/*	$NetBSD: npx.c,v 1.143 2011/08/11 18:36:13 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.142 2011/08/11 18:05:11 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.143 2011/08/11 18:36:13 cherry Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.142 2011/08/11 18:05:11 cherry Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
