@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2011/01/17 15:57:04 pooka Exp $
+#	$NetBSD: Makefile,v 1.47 2011/08/11 21:23:09 jmcneill Exp $
 
 LIB=		compat
 NOPIC=		# defined
@@ -56,6 +56,16 @@ libinstall::
 .include <bsd.own.mk>
 .undef DESTDIR
 .include <bsd.lib.mk>
+
+lib${LIB}.o:: ${OBJS}
+	@echo building standard ${LIB} library
+	@rm -f lib${LIB}.o
+	@${LD} -r -o lib${LIB}.o `NM=${NM} ${LORDER} ${OBJS} | ${TSORT}`
+
+lib${LIB}.po:: ${POBJS}
+	@echo building profiled ${LIB} library
+	@rm -f lib${LIB}.po
+	@${LD} -r -o lib${LIB}.po `NM=${NM} ${LORDER} ${POBJS} | ${TSORT}`
 
 showsources: ${SRCS}
 	@echo ${.ALLSRC}
