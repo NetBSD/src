@@ -1,10 +1,12 @@
-# $NetBSD: GENERIC,v 1.7 2011/08/11 22:30:41 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.8 2011/08/11 23:04:43 jmcneill Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.8 $"
 maxusers 	32
+
+makeoptions	DEBUG="-g3"
 
 #options 	MEMSIZE=65536	# amount of memory to allocate (in KB)
 options 	MEMSIZE=131072
@@ -22,9 +24,6 @@ options 	SYSVSHM
 #options 	LOCKDEBUG
 
 options		NKMEMPAGES=256
-
-#options 	DDB
-#options 	DDB_HISTORY_SIZE=512
 
 options 	COMPAT_BSDPTY
 options 	COMPAT_50

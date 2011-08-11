@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.3 2009/10/21 21:12:04 rmind Exp $ */
+/* $NetBSD: cpu.h,v 1.4 2011/08/11 23:04:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -46,9 +46,7 @@ struct cpu_info {
 	int		ci_want_resched;
 	volatile int	ci_mtx_count;
 	volatile int	ci_mtx_oldspl;
-#if notyet
 	lwp_t		*ci_curlwp;
-#endif
 	lwp_t		*ci_stash;
 };
 
