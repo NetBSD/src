@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.8 2011/08/10 01:32:44 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.9 2011/08/11 23:04:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2011/08/10 01:32:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2011/08/11 23:04:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -61,6 +61,8 @@ typedef struct cpu_softc {
 	struct cpu_info	*sc_ci;
 } cpu_softc_t;
 
+static ucontext_t lwp0pcb;
+
 CFATTACH_DECL_NEW(cpu, sizeof(cpu_softc_t), cpu_match, cpu_attach, NULL, NULL);
 
 static int
@@ -86,9 +88,11 @@ cpu_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_ci = &cpu_info_primary;
 	sc->sc_ci->ci_dev = 0;
 	sc->sc_ci->ci_self = &cpu_info_primary;
-#if notyet
 	sc->sc_ci->ci_curlwp = &lwp0;
-#endif
+
+	if (getcontext(&lwp0pcb))
+		panic("getcontext failed");
+	uvm_lwp_setuarea(&lwp0, (vaddr_t)&lwp0pcb);
 }
 
 void
@@ -133,7 +137,7 @@ cpu_reboot(int howto, char *bootstr)
 void
 cpu_need_resched(struct cpu_info *ci, int flags)
 {
-	ci->ci_want_resched = 1;
+	ci->ci_want_resched |= flags;
 }
 
 void
