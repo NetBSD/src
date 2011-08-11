@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2010/11/23 08:22:34 mrg Exp $
+# $NetBSD: Makefile,v 1.5 2011/08/11 23:15:41 joerg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -42,6 +42,8 @@ CPPFLAGS+=	${X11FLAGS.DIX} \
 
 # XXX
 CPPFLAGS.xf86RandR12.c=	-Wno-error
+
+CWARNFLAGS.clang+=	-Wno-format
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
