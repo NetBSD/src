@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/12/22 09:12:42 nakayama Exp $
+#	$NetBSD: Makefile,v 1.6 2011/08/11 23:15:40 joerg Exp $
 
 DRIVER=		xf86-video-mach64
 DRIVER_NAME=	mach64_drv
@@ -26,5 +26,7 @@ CPPFLAGS+= -DAVOID_CPIO
 .endif
 
 MAN=		# defined
+
+CWARNFLAGS.clang+=	-Wno-pointer-sign
 
 .include "../Makefile.xf86-driver"

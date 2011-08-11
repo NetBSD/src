@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2011/01/06 03:29:12 macallan Exp $
+# $NetBSD: Makefile,v 1.8 2011/08/11 23:15:41 joerg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -36,6 +36,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${DESTDIR}${X11INCDIR}/pixman-1
 
 COPTS.xf86x86emu.c=	-Wno-error	# XXX?
+
+CWARNFLAGS.clang+=	-Wno-format
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2010/05/22 23:19:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2011/08/11 23:15:39 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,8 @@ SUBDIR=	drm kms
 
 PKGCONFIG=	libdrm
 PKGDIST=	${LIB}
+
+CWARNFLAGS.clang+=	-Wno-conversion -Wno-tautological-compare
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/07/18 07:01:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/08/11 23:15:39 joerg Exp $
 
 XCBUTIL=	image
 
@@ -12,3 +12,5 @@ LIBDPLIBS+=\
 	xcb-aux	${.CURDIR}/../aux
 
 CPPFLAGS+=	-I${X11SRCDIR.xcb-util}/aux
+
+CWARNFLAGS.clang+=	-Wno-return-type
