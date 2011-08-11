@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.6 2011/08/10 01:32:44 jmcneill Exp $ */
+/* $NetBSD: pmap.c,v 1.7 2011/08/11 22:26:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2011/08/10 01:32:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2011/08/11 22:26:18 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,7 @@ static struct pmap	pmap_kernel_store;
 struct pmap * const	kernel_pmap_ptr = &pmap_kernel_store;
 
 static uint8_t	*pmap_memory;
+static vsize_t	pmap_memory_size = 1024 * MEMSIZE;
 static vaddr_t	virtual_avail, virtual_end;
 static vaddr_t	pmap_maxkvaddr;
 
@@ -53,12 +54,12 @@ void		pmap_bootstrap(void);
 void
 pmap_bootstrap(void)
 {
-	pmap_memory = calloc(1, 1024 * MEMSIZE);
+	pmap_memory = calloc(1, pmap_memory_size);
 	if (pmap_memory == NULL)
 		panic("pmap_bootstrap: no memory");
 
 	virtual_avail = (vaddr_t)pmap_memory;
-	virtual_end = virtual_avail + sizeof(pmap_memory);
+	virtual_end = virtual_avail + pmap_memory_size;
 
 	uvm_page_physload(atop(virtual_avail),
 	    atop(virtual_end),
