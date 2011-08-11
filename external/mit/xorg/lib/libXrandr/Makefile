@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:31 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2011/08/11 23:15:39 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,8 @@ LIBDPLIBS=\
 	X11	${.CURDIR}/../libX11/dynamic
 
 PKGDIST=	${LIB}
+
+CWARNFLAGS.clang+=	-Wno-pointer-sign
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
