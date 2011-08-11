@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.26 2011/07/23 09:59:14 alnsn Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.27 2011/08/11 10:52:12 uch Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -575,7 +575,8 @@ attrs(const atf_tc_t *tc, const char *mp)
 		CHECK(st_atimespec.tv_sec);
 	}
 	CHECK(st_mtimespec.tv_sec);
-	if (!(FSTYPE_EXT2FS(tc) || FSTYPE_MSDOS(tc) || FSTYPE_SYSVBFS(tc))) {
+	if (!(FSTYPE_EXT2FS(tc) || FSTYPE_MSDOS(tc) ||
+	      FSTYPE_SYSVBFS(tc) || FSTYPE_V7FS(tc))) {
 		CHECK(st_atimespec.tv_nsec);
 		CHECK(st_mtimespec.tv_nsec);
 	}
