@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.317 2011/08/04 14:45:54 jakllsch Exp $
+# $NetBSD: ALL,v 1.318 2011/08/11 07:38:56 mbalmer Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.317 $"
+#ident 		"ALL-$Revision: 1.318 $"
 
 maxusers	64		# estimated number of users
 
@@ -495,6 +495,8 @@ pcmb*	at pci? dev ? function ?	# PCI-MCA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
+
+pwdog*	at pci? dev ? function ?	# QUANCOM PWDOG1
 
 agp*	at pchb?
 
