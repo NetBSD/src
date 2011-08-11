@@ -1,6 +1,11 @@
-# $NetBSD: mi,v 1.27 2011/08/11 07:33:25 mbalmer Exp $
+# $NetBSD: mi,v 1.28 2011/08/11 11:17:15 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
+#
+# IMPORTANT:	When you add module here, you have to add it twice to
+#		md.evbppc as well. evbppc does not use mi, because
+#		powerpc-4xx and powerpc-booke modules are incompatible.
+#		Sorry for any inconvenience this may cause, the management.
 #
 ./etc/mtree/set.modules				modules-sys-root	kmod
 ./stand/@MACHINE@				base-kernel-modules	kmod
