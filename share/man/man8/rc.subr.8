@@ -1,6 +1,6 @@
-.\" 	$NetBSD: rc.subr.8,v 1.28 2010/09/26 18:52:52 apb Exp $
+.\" 	$NetBSD: rc.subr.8,v 1.29 2011/08/11 22:52:46 apb Exp $
 .\"
-.\" Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 26, 2010
+.Dd August 11, 2011
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -60,7 +60,7 @@
 .It
 .Ic print_rc_metadata Ar string
 .It
-.Ic print_rc_normal Ar string
+.Ic print_rc_normal Oo Fl n Oc Ar string
 .It
 .Ic rc_usage Ar command Op Ar ...
 .It
@@ -315,7 +315,7 @@ is reserved for internal use by
 .Xr rc 8
 and
 .Nm .
-.It Ic print_rc_normal Ar string
+.It Ic print_rc_normal Oo Fl n Oc Ar string
 Print the specified
 .Ar string
 in such a way that it should be handled as normal output by the
@@ -327,11 +327,28 @@ then the
 .Ar string
 is printed to standard output.
 .Pp
-Ths intent is that a script that is run via the
-.Fn no_rc_postprocess
-function (so its output would ordinarily be invisible to the post-processor)
-can nevertheless arrange for the post-processor to see things printed with
-.Fn print_rc_normal.
+If the
+.Fl n
+flag is specified, then the string is printed without a newline.
+.Pp
+Intended use cases include:
+.Bl -bullet
+.It
+An rc.d script can use
+.Dq Sy print_rc_normal Fl n
+to print a partial line in such a way that it appears
+immediately instead of being buffered by
+.Xr rc 8 Ap s
+post-processor.
+.It
+An rc.d script that is run via the
+.Sy no_rc_postprocess
+function (so most of its output is invisible to
+.Xr rc 8 Ap s
+post-processor) can use
+.Sy print_rc_normal
+to force some of its output to be seen by the post-processor.
+.El
 .It Ic rc_usage Ar command Op Ar ...
 Print a usage message for
 .Sy $0 ,

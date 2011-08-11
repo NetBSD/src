@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.165 2010/06/04 18:42:54 christos Exp $
+# $NetBSD: rc,v 1.166 2011/08/11 22:52:47 apb Exp $
 #
 # rc --
 #	Run the scripts in /etc/rc.d with rcorder, and log output
@@ -23,6 +23,10 @@ fi
 _rc_conf_loaded=true
 
 : ${RC_LOG_FILE:="/var/run/rc.log"}
+
+# rc.subr redefines echo and printf.  Undo that here.
+unset echo ; unalias echo
+unset printf ; unalias printf
 
 if ! checkyesno rc_configured; then
 	echo "/etc/rc.conf is not configured.  Multiuser boot aborted."
@@ -194,9 +198,10 @@ rc_postprocess()
 			;;
 		*"${rc_metadata_prefix}"*)
 			# magic string is present, but not at the start of
-			# the line.  Treat it like two separate lines.
+			# the line.  Treat it as a partial line of
+			# ordinary data, followed by a line of metadata.
 			before="${line%"${rc_metadata_prefix}"*}"
-			rc_postprocess_plain_line "${before}"
+			rc_postprocess_partial_line "${before}"
 			after="${line#*"${rc_metadata_prefix}"}"
 			rc_postprocess_metadata "${after}"
 			;;
@@ -229,6 +234,22 @@ rc_postprocess_plain_line()
 		eval "$rc_silent_cmd"
 	else
 		printf "%s\n" "${line}"
+	fi
+}
+
+#
+# rc_postprocess_partial_line string
+#	This is just like rc_postprocess_plain_line, except that
+#	a newline is not appended to the string.
+#
+rc_postprocess_partial_line()
+{
+	local line="$1"
+	rc_log_message_n "${line}"
+	if $rc_silent; then
+		eval "$rc_silent_cmd"
+	else
+		printf "%s" "${line}"
 	fi
 }
 
@@ -284,6 +305,9 @@ rc_postprocess_metadata()
 			;;
 		esac
 		;;
+	nop)
+		# Do nothing.
+		;;
 	note)
 		rc_log_message "[NOTE: $args]"
 		;;
@@ -323,11 +347,22 @@ rc_postprocess_metadata()
 
 #
 # rc_log_message string [...]
-#	write a message to the log file, or buffer it for later.
+#	Write a message to the log file, or buffer it for later.
+#	This function appends a newline to the message.
 #
 rc_log_message()
 {
 	_rc_log_buffer="${_rc_log_buffer}${*}${nl}"
+	rc_log_flush
+}
+
+#
+# rc_log_message_n string [...]
+#	Just like rc_log_message, except without appending a newline.
+#
+rc_log_message_n()
+{
+	_rc_log_buffer="${_rc_log_buffer}${*}"
 	rc_log_flush
 }
 
