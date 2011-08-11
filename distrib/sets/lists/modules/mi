@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.29 2011/08/11 11:21:06 mbalmer Exp $
+# $NetBSD: mi,v 1.30 2011/08/11 12:03:58 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -115,8 +115,6 @@
 ./@MODULEDIR@/puffs/puffs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/putter				base-kernel-modules	kmod
 ./@MODULEDIR@/putter/putter.kmod		base-kernel-modules	kmod
-./@MODULEDIR@/pwdog				base-kernel-modules	kmod
-./@MODULEDIR@/pwdog/pwdog.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/scsiverbose			base-kernel-modules	kmod
 ./@MODULEDIR@/scsiverbose/scsiverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/sdt				base-kernel-modules	kmod,dtrace

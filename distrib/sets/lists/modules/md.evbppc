@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.7 2011/08/11 11:17:15 mbalmer Exp $
+# $NetBSD: md.evbppc,v 1.8 2011/08/11 12:03:58 mbalmer Exp $
 ./stand/powerpc-4xx						base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@					base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod
@@ -108,8 +108,6 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/puffs/puffs.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/putter				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/putter/putter.kmod		base-kernel-modules	kmod
-./stand/powerpc-4xx/@OSRELEASE@/modules/pwdog				base-kernel-modules	kmod
-./stand/powerpc-4xx/@OSRELEASE@/modules/pwdog/pwdog.kmod		base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/scsiverbose			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/scsiverbose/scsiverbose.kmod	base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/sdt				base-kernel-modules	kmod,dtrace
@@ -259,8 +257,6 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/puffs/puffs.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/putter				base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/putter/putter.kmod		base-kernel-modules	kmod
-./stand/powerpc-booke/@OSRELEASE@/modules/pwdog				base-kernel-modules	kmod
-./stand/powerpc-booke/@OSRELEASE@/modules/pwdog/pwdog.kmod		base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/scsiverbose			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/scsiverbose/scsiverbose.kmod	base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/sdt				base-kernel-modules	kmod,dtrace
