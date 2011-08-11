@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.60 2011/07/16 14:46:18 rmind Exp $	*/
+/*	$NetBSD: cpu.c,v 1.61 2011/08/11 18:11:17 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.60 2011/07/16 14:46:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.61 2011/08/11 18:11:17 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1176,4 +1176,27 @@ cpu_load_pmap(struct pmap *pmap)
 		splx(s);
 	}
 #endif /* __x86_64__ */
+}
+
+/*
+ * Notify all other cpus to halt.
+ */
+
+void
+cpu_broadcast_halt(void)
+{
+	xen_broadcast_ipi(XEN_IPI_HALT);
+}
+
+/*
+ * Send a dummy ipi to a cpu.
+ */
+
+void
+cpu_kick(struct cpu_info *ci)
+{
+	if (xen_send_ipi(ci, XEN_IPI_KICK) != 0) {
+		panic("xen_send_ipi(%s, XEN_IPI_KICK) failed\n",
+		    cpu_name(ci));
+	}
 }
