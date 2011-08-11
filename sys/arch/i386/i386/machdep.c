@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.707 2011/08/10 06:38:02 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.708 2011/08/11 18:11:17 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.707 2011/08/10 06:38:02 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.708 2011/08/11 18:11:17 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -955,11 +955,7 @@ haltsys:
 	}
 
 #ifdef MULTIPROCESSOR
-#ifdef XEN
-	xen_broadcast_ipi(XEN_IPI_HALT);
-#else /* XEN */
-	x86_broadcast_ipi(X86_IPI_HALT);
-#endif /* XEN */
+	cpu_broadcast_halt();
 #endif /* MULTIPROCESSOR */
 
 	if (howto & RB_HALT) {
