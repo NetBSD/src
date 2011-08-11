@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.144 2011/08/09 13:02:53 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.145 2011/08/11 22:37:57 jmcneill Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -281,9 +281,9 @@ ${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
 MKREPRO?=no
 
 .if ${MKREPRO} == "yes"
-_NVFLAGS=-r
+_NVFLAGS=${NVFLAGS} -r
 .else
-_NVFLAGS=
+_NVFLAGS=${NVFLAGS}
 .endif
 
 .if !target(vers.o)
