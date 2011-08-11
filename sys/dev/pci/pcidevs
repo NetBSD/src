@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1093 2011/08/09 08:26:18 mbalmer Exp $
+$NetBSD: pcidevs,v 1.1094 2011/08/11 17:14:12 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4216,6 +4216,7 @@ product SIS 182_SATA		0x0182	182 SATA Controller
 product SIS 190			0x0190	190 Ethernet
 product SIS 5597_VGA		0x0200	5597/5598 Integrated VGA
 product SIS 300			0x0300	300/305 AGP VGA
+product SIS 315PRO_VGA		0x0325	315 Pro VGA
 product SIS 85C501		0x0406	85C501
 product SIS 85C496		0x0496	85C496
 product SIS 530HB		0x0530	530 Host-PCI Bridge
