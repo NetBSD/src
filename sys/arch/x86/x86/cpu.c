@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.91 2011/08/11 18:11:17 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.92 2011/08/11 20:33:20 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.91 2011/08/11 18:11:17 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.92 2011/08/11 20:33:20 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1216,7 +1216,7 @@ cpu_load_pmap(struct pmap *pmap)
  */
 
 void
-cpu_broadcast_halt(struct cpu_info *ci)
+cpu_broadcast_halt(void)
 {
 	x86_broadcast_ipi(X86_IPI_HALT);
 }
