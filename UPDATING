@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.226 2011/08/06 23:07:14 mrg Exp $
+$NetBSD: UPDATING,v 1.227 2011/08/12 03:26:51 riastradh Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+20110806:
+	i386 and amd64 have been changed to use GCC 4.5.3, so any
+	objdir or DESTDIR for them should be deleted before updating.
+
 20110805:
 	The update to GCC 4.5.3 requires a non-trivial portion of
 	the tree to be cleaned.  Best to delete both objdir and
