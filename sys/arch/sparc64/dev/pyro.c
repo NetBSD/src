@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.9 2011/08/12 01:22:37 mrg Exp $	*/
+/*	$NetBSD: pyro.c,v 1.10 2011/08/12 06:41:50 mrg Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
 #define PDB_BUSMAP      0x02
 #define PDB_INTR        0x04
 #define PDB_CONF        0x08
-int pyro_debug = 0x4;
+int pyro_debug = 0x0 | PDB_INTR;
 #define DPRINTF(l, s)   do { if (pyro_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -546,7 +546,7 @@ pyro_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	int ino;
 
 	ino = INTINO(ihandle);
-	DPRINTF(PDB_INTR, ("%s: ih %lx; level %d ino %d", __func__, (u_long)ihandle, level, ino));
+	DPRINTF(PDB_INTR, ("%s: ih %lx; level %d ino %#x", __func__, (u_long)ihandle, level, ino));
 
 	if (level == IPL_NONE)
 		level = INTLEV(ihandle);
@@ -559,7 +559,8 @@ pyro_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	iclrbase = (uint64_t *)((uintptr_t)bus_space_vaddr(sc->sc_bustag, sc->sc_csrh) + 0x1400);
 	intrmapptr = &imapbase[ino];
 	intrclrptr = &iclrbase[ino];
-	DPRINTF(PDB_INTR, (" imapbase %p iclrbase %p mapptr %p clrptr %p\n", imapbase, iclrbase, intrmapptr, intrclrptr));
+	DPRINTF(PDB_INTR, (" mapptr %p clrptr %p\n", intrmapptr, intrclrptr));
+
 	ino |= INTVEC(ihandle);
 
 	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
@@ -570,10 +571,12 @@ pyro_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	ih->ih_map = intrmapptr;
 	ih->ih_clr = intrclrptr;
 
+	ih->ih_ivec = ihandle;
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
 	ih->ih_number = ino;
+	ih->ih_pending = 0;
 
 	intr_establish(ih->ih_pil, level != IPL_VM, ih);
 
@@ -602,9 +605,10 @@ pyro_intr_establish(bus_space_tag_t t, int ihandle, int level,
 		DPRINTF(PDB_INTR, ("; writing intrmap = %016qx",
 			(unsigned long long)imap));
 		imap = *intrmapptr;
-		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx\n",
-			(unsigned long long)imap));
 		ih->ih_number |= imap & INTMAP_INR;
+		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx, "
+				   "set ih_number to %x\n",
+				   (unsigned long long)imap, ih->ih_number));
 	}
  	if (intrclrptr) {
  		/* set state to IDLE */
