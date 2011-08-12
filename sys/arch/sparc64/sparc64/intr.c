@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.65 2011/07/27 21:50:16 nakayama Exp $ */
+/*	$NetBSD: intr.c,v 1.66 2011/08/12 06:34:56 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.65 2011/07/27 21:50:16 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.66 2011/08/12 06:34:56 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -57,6 +57,15 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.65 2011/07/27 21:50:16 nakayama Exp $");
 #include <machine/ctlreg.h>
 #include <machine/instr.h>
 #include <machine/trap.h>
+
+#ifdef DEBUG
+#define INTRDB_ESTABLISH   0x01
+#define INTRDB_REUSE       0x02
+static int sparc_intr_debug = 0x0;
+#define DPRINTF(l, s)   do { if (sparc_intr_debug & l) printf s; } while (0)
+#else
+#define DPRINTF(l, s)
+#endif
 
 /*
  * The following array is to used by locore.s to map interrupt packets
@@ -169,17 +178,26 @@ intr_establish(int level, bool mpsafe, struct intrhand *ih)
 {
 	struct intrhand *q = NULL;
 	int s;
+#ifdef DEBUG
+	int opil = ih->ih_pil;
+#endif
 
 	/*
 	 * This is O(N^2) for long chains, but chains are never long
 	 * and we do want to preserve order.
 	 */
+#ifdef DIAGNOSTIC
+	if (ih->ih_pil != level)
+		printf("%s: caller %p did not pre-set ih_pil\n",
+		    __func__, __builtin_return_address(0));
+	if (ih->ih_pending != 0)
+		printf("%s: caller %p did not pre-set ih_pending to zero\n",
+		    __func__, __builtin_return_address(0));
+#endif
 	ih->ih_pil = level; /* XXXX caller should have done this before */
 	ih->ih_pending = 0; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
-#ifdef DEBUG
-	printf("%s: level %x ivec %x\n", __func__, level, ih->ih_ivec);
-#endif
+
 	/*
 	 * no need for a separate counter if ivec == 0, in that case there's
 	 * either only one device using the interrupt level and there's already
@@ -191,6 +209,11 @@ intr_establish(int level, bool mpsafe, struct intrhand *ih)
 		evcnt_attach_dynamic(&ih->ih_cnt, EVCNT_TYPE_INTR,
 		    &intr_evcnts[level], "ivec", ih->ih_name);
 	}
+
+	/* opil because we overwrote it above with level */
+	DPRINTF(INTRDB_ESTABLISH, 
+	    ("%s: level %x ivec %x inumber %x pil %x\n",
+	     __func__, level, ih->ih_ivec, ih->ih_number, opil));
 
 #ifdef MULTIPROCESSOR
 	if (!mpsafe) {
@@ -219,10 +242,9 @@ intr_establish(int level, bool mpsafe, struct intrhand *ih)
 			 * Interrupt is already there.  We need to create a
 			 * new interrupt handler and interpose it.
 			 */
-#ifdef NOT_DEBUG
-			printf("intr_establish: intr reused %x\n", 
-				ih->ih_number);
-#endif
+			DPRINTF(INTRDB_REUSE,
+			    ("intr_establish: intr reused %x\n",
+			     ih->ih_number));
 			if (q->ih_fun != intr_list_handler) {
 				nih = (struct intrhand *)
 					malloc(sizeof(struct intrhand),
