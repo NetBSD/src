@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.62 2010/10/29 16:13:51 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.63 2011/08/12 04:14:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.62 2010/10/29 16:13:51 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.63 2011/08/12 04:14:00 riastradh Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -133,9 +133,57 @@ int
 psshfs_node_setattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct vattr *va, const struct puffs_cred *pcr)
 {
-	PSSHFSAUTOVAR(pu);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
+	uint32_t reqid;
+	struct puffs_framebuf *pb;
 	struct vattr kludgeva;
 	struct puffs_node *pn = opc;
+	struct psshfs_node *psn = pn->pn_data;
+	int rv;
+
+	/*
+	 * If we cached the remote attributes recently enough, and this
+	 * setattr operation would change nothing that sftp actually
+	 * records, then we can skip the sftp request.  So first check
+	 * whether we have the attributes cached, and then compare
+	 * every field that we might send to the sftp server.
+	 */
+
+	if (!psn->attrread || REFRESHTIMEOUT(pctx, time(NULL)-psn->attrread))
+		goto setattr;
+
+#define CHECK(FIELD, TYPE) do {						\
+	if ((va->FIELD != (TYPE)PUFFS_VNOVAL) &&			\
+	    (va->FIELD != pn->pn_va.FIELD))				\
+		goto setattr;						\
+} while (0)
+
+#define CHECKID(FIELD, TYPE, DOMANGLE, MINE, MANGLED) do {		\
+	if ((va->FIELD != (TYPE)PUFFS_VNOVAL) &&			\
+	    (pn->pn_va.FIELD !=						\
+		((pctx->DOMANGLE && (va->FIELD == pctx->MINE))		\
+		    ? pctx->MANGLED					\
+		    : va->FIELD)))					\
+		goto setattr;						\
+} while (0)
+
+	CHECK(va_size, uint64_t);
+	CHECKID(va_uid, uid_t, domangleuid, myuid, mangleuid);
+	CHECKID(va_gid, gid_t, domanglegid, mygid, manglegid);
+	CHECK(va_mode, mode_t);
+	CHECK(va_atime.tv_sec, time_t);
+	CHECK(va_mtime.tv_sec, time_t);
+
+	/* Nothing to change.  */
+	return 0;
+
+#undef CHECK
+#undef CHECKID
+
+ setattr:
+	reqid = NEXTREQ(pctx);
+	pb = psbuf_makeout();
 
 	psbuf_req_str(pb, SSH_FXP_SETSTAT, reqid, PNPATH(pn));
 
@@ -156,16 +204,19 @@ psshfs_node_setattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 		else
 			kludgeva.va_atime.tv_sec = va->va_mtime.tv_sec;
 	}
-			
+
 	psbuf_put_vattr(pb, &kludgeva, pctx);
 	GETRESPONSE(pb, pctx->sshfd);
 
 	rv = psbuf_expect_status(pb);
-	if (rv == 0)
+	if (rv == 0) {
 		puffs_setvattr(&pn->pn_va, &kludgeva);
+		psn->attrread = time(NULL);
+	}
 
  out:
-	PSSHFSRETURN(rv);
+	puffs_framebuf_destroy(pb);
+	return rv;
 }
 
 int
