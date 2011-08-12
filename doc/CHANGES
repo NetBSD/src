@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1593 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1594 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1103,4 +1103,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	userland: Over 50 new manual pages. [jruoho 20110809]
 	pwdog(4): A new driver for QUANCOM Electronic PWDOG1 watchdog timer
 		cards. [mbalmer 20110811]
+	gpio(4), gpiosim(4): Build as modules. [mbalmer 20110812]
 
