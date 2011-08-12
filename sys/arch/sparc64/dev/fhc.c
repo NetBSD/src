@@ -1,4 +1,4 @@
-/*	$NetBSD: fhc.c,v 1.1 2011/07/29 08:37:36 mrg Exp $	*/
+/*	$NetBSD: fhc.c,v 1.2 2011/08/12 08:24:01 jdc Exp $	*/
 /*	$OpenBSD: fhc.c,v 1.17 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -273,7 +273,7 @@ fhc_intr_establish(bus_space_tag_t t, int ihandle, int level,
 		u_int64_t r;
 
 		r = *intrmapptr;
-		r |= INTMAP_V;
+		r |= INTMAP_V | (CPU_UPAID << INTMAP_TID_SHIFT);
 		*intrmapptr = r;
 		r = *intrmapptr;
 		ih->ih_number |= r & INTMAP_INR;
