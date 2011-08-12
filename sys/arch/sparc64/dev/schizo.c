@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.25 2011/07/20 12:06:00 macallan Exp $	*/
+/*	$NetBSD: schizo.c,v 1.26 2011/08/12 06:41:16 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -533,6 +533,8 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 	ih->ih_fun = handler;
 	ih->ih_pil = (1<<ipl);
 	ih->ih_number = INTVEC(schizo_pbm_read(pbm, mapoff));
+	ih->ih_pending = 0;
+
 	intr_establish(ipl, ipl != IPL_VM, ih);
 
 	schizo_pbm_write(pbm, mapoff,
@@ -787,6 +789,7 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
 	ih->ih_number = ino;
+	ih->ih_pending = 0;
 
 	DPRINTF(SDB_INTR, (
 	    "; installing handler %p arg %p with inr %x pil %u\n",
