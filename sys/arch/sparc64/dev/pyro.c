@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.8 2011/07/01 18:48:37 dyoung Exp $	*/
+/*	$NetBSD: pyro.c,v 1.9 2011/08/12 01:22:37 mrg Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -546,7 +546,7 @@ pyro_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	int ino;
 
 	ino = INTINO(ihandle);
-	DPRINTF(PDB_INTR, ("%s: ih %lx; level %d ino %d", __func__, (u_long)ih, level, ino));
+	DPRINTF(PDB_INTR, ("%s: ih %lx; level %d ino %d", __func__, (u_long)ihandle, level, ino));
 
 	if (level == IPL_NONE)
 		level = INTLEV(ihandle);
