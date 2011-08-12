@@ -1,8 +1,8 @@
-/* $NetBSD: gpio.c,v 1.34 2011/06/09 14:46:06 joerg Exp $ */
+/* $NetBSD: gpio.c,v 1.35 2011/08/12 08:00:52 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
- * Copyright (c) 2008, 2009, 2010 Marc Balmer <marc@msys.ch>
+ * Copyright (c) 2008, 2009, 2010, 2011 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.34 2011/06/09 14:46:06 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.35 2011/08/12 08:00:52 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -36,7 +36,9 @@ __KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.34 2011/06/09 14:46:06 joerg Exp $");
 #include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/kauth.h>
-
+#ifdef _MODULE
+#include <sys/module.h>
+#endif
 #include <dev/gpio/gpiovar.h>
 
 #include "locators.h"
@@ -61,19 +63,20 @@ struct gpio_softc {
 	LIST_HEAD(, gpio_name)	 sc_names;	/* named pins */
 };
 
-int	gpio_match(device_t, cfdata_t, void *);
-int	gpio_submatch(device_t, cfdata_t, const int *, void *);
-void	gpio_attach(device_t, device_t, void *);
-int	gpio_rescan(device_t, const char *, const int *);
-void	gpio_childdetached(device_t, device_t);
-bool	gpio_resume(device_t, const pmf_qual_t *);
-int	gpio_detach(device_t, int);
-int	gpio_search(device_t, cfdata_t, const int *, void *);
-int	gpio_print(void *, const char *);
-int	gpio_pinbyname(struct gpio_softc *, char *);
+static int	gpio_match(device_t, cfdata_t, void *);
+int		gpio_submatch(device_t, cfdata_t, const int *, void *);
+static void	gpio_attach(device_t, device_t, void *);
+static int	gpio_rescan(device_t, const char *, const int *);
+static void	gpio_childdetached(device_t, device_t);
+static bool	gpio_resume(device_t, const pmf_qual_t *);
+static int	gpio_detach(device_t, int);
+static int	gpio_search(device_t, cfdata_t, const int *, void *);
+static int	gpio_print(void *, const char *);
+static int	gpio_pinbyname(struct gpio_softc *, char *);
 
 /* Old API */
-int	gpio_ioctl_oapi(struct gpio_softc *, u_long, void *, int, kauth_cred_t);
+static int	gpio_ioctl_oapi(struct gpio_softc *, u_long, void *, int,
+    kauth_cred_t);
 
 CFATTACH_DECL3_NEW(gpio, sizeof(struct gpio_softc),
     gpio_match, gpio_attach, gpio_detach, NULL, gpio_rescan,
@@ -90,7 +93,7 @@ const struct cdevsw gpio_cdevsw = {
 
 extern struct cfdriver gpio_cd;
 
-int
+static int
 gpio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 1;
@@ -107,7 +110,7 @@ gpio_submatch(device_t parent, cfdata_t cf, const int *ip, void *aux)
 	return strcmp(ga->ga_dvname, cf->cf_name) == 0;
 }
 
-bool
+static bool
 gpio_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct gpio_softc *sc = device_private(self);
@@ -120,13 +123,13 @@ gpio_resume(device_t self, const pmf_qual_t *qual)
 	return true;
 }
 
-void
+static void
 gpio_childdetached(device_t self, device_t child)
 {
 	/* gpio(4) keeps no references to its children, so do nothing. */
 }
 
-int
+static int
 gpio_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct gpio_softc *sc = device_private(self);
@@ -136,7 +139,7 @@ gpio_rescan(device_t self, const char *ifattr, const int *locators)
 	return 0;
 }
 
-void
+static void
 gpio_attach(device_t parent, device_t self, void *aux)
 {
 	struct gpio_softc *sc = device_private(self);
@@ -159,7 +162,7 @@ gpio_attach(device_t parent, device_t self, void *aux)
 	gpio_rescan(self, "gpio", NULL);
 }
 
-int
+static int
 gpio_detach(device_t self, int flags)
 {
 	int rc;
@@ -182,7 +185,7 @@ gpio_detach(device_t self, int flags)
 	return 0;
 }
 
-int
+static int
 gpio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct gpio_attach_args ga;
@@ -368,7 +371,7 @@ gpioclose(dev_t dev, int flag, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 gpio_pinbyname(struct gpio_softc *sc, char *gp_name)
 {
         struct gpio_name *nm;
@@ -405,7 +408,7 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		    device_xname(sc->sc_dev)));
 		return EBUSY;
 	}
-	
+
 	cred = kauth_cred_get();
 
 	switch (cmd) {
@@ -548,7 +551,7 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
 		    NULL, NULL, NULL, NULL))
 			return EPERM;
-                
+
 		attach = (struct gpio_attach *)data;
 		LIST_FOREACH(gdev, &sc->sc_devs, sc_next) {
 			if (strcmp(device_xname(gdev->sc_dev),
@@ -632,7 +635,7 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				return EINVAL;
 		} else
 			pin = set->gp_pin;
-		
+
 		if (pin < 0 || pin >= sc->sc_npins)
 			return EINVAL;
 		if (sc->sc_pins[pin].pin_mapped)
@@ -657,7 +660,7 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
     kauth_cred_t cred)
 {
@@ -774,3 +777,43 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 	}
 	return 0;
 }
+
+#ifdef _MODULE
+MODULE(MODULE_CLASS_DRIVER, gpio, NULL);
+
+#include "ioconf.c"
+
+static int
+gpio_modcmd(modcmd_t cmd, void *opaque)
+{
+	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
+	int error;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(cfdriver_ioconf_gpio,
+		    cfattach_ioconf_gpio, cfdata_ioconf_gpio);
+		if (error) {
+			aprint_error("%s: unable to init component\n",
+			    gpio_cd.cd_name);
+			return error;
+		}
+		error = devsw_attach(gpio_cd.cd_name, NULL, &bmajor,
+		    &gpio_cdevsw, &cmajor);
+		if (error) {
+			aprint_error("%s: unable to register devsw\n",
+			    gpio_cd.cd_name);
+			return config_fini_component(cfdriver_ioconf_gpio,
+			    cfattach_ioconf_gpio, cfdata_ioconf_gpio);
+		}
+		return 0;
+	case MODULE_CMD_FINI:
+		config_fini_component(cfdriver_ioconf_gpio,
+		    cfattach_ioconf_gpio, cfdata_ioconf_gpio);
+		devsw_detach(NULL, &gpio_cdevsw);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+#endif
