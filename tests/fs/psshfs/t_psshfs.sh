@@ -1,4 +1,4 @@
-# $NetBSD: t_psshfs.sh,v 1.5 2011/03/31 12:56:03 pooka Exp $
+# $NetBSD: t_psshfs.sh,v 1.6 2011/08/12 04:14:00 riastradh Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -235,6 +235,33 @@ ls_cleanup() {
 	stop_ssh
 }
 
+atf_test_case setattr_cache cleanup
+setattr_cache_head() {
+	atf_set "descr" "Checks that setattr caches"
+	# Don't wait for the eternity that atf usually waits.  Twenty
+	# seconds should be good enough, except maybe on a VAX...
+	atf_set "timeout" 20
+}
+setattr_cache_body() {
+	require_puffs
+	start_ssh
+	atf_check -s exit:0 mkdir root
+	atf_check -s exit:0 mkdir mnt
+	mount_psshfs root mnt
+	atf_check -s exit:0 -x ': > mnt/loser'
+	atf_check -s exit:0 -o save:stat stat mnt/loser
+	# Oops -- this doesn't work.  We need to stop the child of the
+	# sshd that is handling the sftp session.
+	atf_check -s exit:0 kill -STOP $(cat sshd.pid)
+	atf_check -s exit:0 -x ': > mnt/loser'
+	atf_check -s exit:0 -o file:stat stat mnt/loser
+}
+setattr_cache_cleanup() {
+	umount mnt
+	kill -CONT $(cat sshd.pid)
+	stop_ssh
+}
+
 # -------------------------------------------------------------------------
 # Initialization.
 # -------------------------------------------------------------------------
@@ -243,4 +270,5 @@ atf_init_test_cases() {
 	atf_add_test_case inode_nos
 	atf_add_test_case pwd
 	atf_add_test_case ls
+	#atf_add_test_case setattr_cache
 }
