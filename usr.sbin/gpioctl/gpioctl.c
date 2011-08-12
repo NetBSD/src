@@ -1,7 +1,7 @@
-/* $NetBSD: gpioctl.c,v 1.8 2009/09/25 20:27:50 mbalmer Exp $ */
+/* $NetBSD: gpioctl.c,v 1.9 2011/08/12 08:02:33 mbalmer Exp $ */
 
 /*
- * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
+ * Copyright (c) 2008, 2010 Marc Balmer <mbalmer@openbsd.org>
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -40,15 +40,14 @@ char *dev;
 int devfd = -1;
 int quiet = 0;
 
-void	getinfo(void);
-void	gpioread(int, char *);
-void	gpiowrite(int, char *, int);
-void	gpioset(int pin, char *name, int flags, char *alias);
-void	gpiounset(int pin, char *name);
-void	devattach(char *, int, u_int32_t);
-void	devdetach(char *);
-
-__dead void usage(void);
+static void getinfo(void);
+static void gpioread(int, char *);
+static void gpiowrite(int, char *, int);
+static void gpioset(int pin, char *name, int flags, char *alias);
+static void gpiounset(int pin, char *name);
+static void devattach(char *, int, u_int32_t);
+static void devdetach(char *);
+static void usage(void);
 
 extern long long strtonum(const char *numstr, long long minval,
     long long maxval, const char **errstrp);
@@ -187,7 +186,7 @@ main(int argc, char *argv[])
 	return EXIT_SUCCESS;
 }
 
-void
+static void
 getinfo(void)
 {
 	struct gpio_info info;
@@ -201,7 +200,7 @@ getinfo(void)
 	printf("%s: %d pins\n", dev, info.gpio_npins);
 }
 
-void
+static void
 gpioread(int pin, char *gp_name)
 {
 	struct gpio_req req;
@@ -224,7 +223,7 @@ gpioread(int pin, char *gp_name)
 		printf("pin %d: state %d\n", pin, req.gp_value);
 }
 
-void
+static void
 gpiowrite(int pin, char *gp_name, int value)
 {
 	struct gpio_req req;
@@ -257,7 +256,7 @@ gpiowrite(int pin, char *gp_name, int value)
 		    (value < 2 ? value : 1 - req.gp_value));
 }
 
-void
+static void
 gpioset(int pin, char *name, int fl, char *alias)
 {
 	struct gpio_set set;
@@ -299,7 +298,7 @@ gpioset(int pin, char *name, int fl, char *alias)
 	printf("\n");
 }
 
-void
+static void
 gpiounset(int pin, char *name)
 {
 	struct gpio_set set;
@@ -314,7 +313,7 @@ gpiounset(int pin, char *name)
 		err(EXIT_FAILURE, "GPIOUNSET");
 }
 
-void
+static void
 devattach(char *dvname, int offset, u_int32_t mask)
 {
 	struct gpio_attach attach;
@@ -327,7 +326,7 @@ devattach(char *dvname, int offset, u_int32_t mask)
 		err(EXIT_FAILURE, "GPIOATTACH");
 }
 
-void
+static void
 devdetach(char *dvname)
 {
 	struct gpio_attach attach;
@@ -338,19 +337,20 @@ devdetach(char *dvname)
 		err(EXIT_FAILURE, "GPIODETACH");
 }
 
-void
+static void
 usage(void)
 {
-	extern char *__progname;
+	const char *progname;
 
+	progname = getprogname();
 	fprintf(stderr, "usage: %s [-q] device [pin] [0 | 1 | 2 | "
-	    "on | off | toggle]\n", __progname);
+	    "on | off | toggle]\n", progname);
 	fprintf(stderr, "       %s [-q] device pin set [flags] [name]\n",
-	    __progname);
-	fprintf(stderr, "       %s [-q] device pin unset\n", __progname);
+	    progname);
+	fprintf(stderr, "       %s [-q] device pin unset\n", progname);
 	fprintf(stderr, "       %s [-q] device attach device offset mask\n",
-	    __progname);
-	fprintf(stderr, "       %s [-q] device detach device\n", __progname);
+	    progname);
+	fprintf(stderr, "       %s [-q] device detach device\n", progname);
 
 	exit(EXIT_FAILURE);
 }
