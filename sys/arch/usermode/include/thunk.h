@@ -1,7 +1,7 @@
-/* $NetBSD: cpu.h,v 1.5 2011/08/12 00:57:24 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.1 2011/08/12 00:57:24 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,60 +26,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARCH_USERMODE_INCLUDE_CPU_H
-#define _ARCH_USERMODE_INCLUDE_CPU_H
+#ifndef _ARCH_USERMODE_INCLUDE_THUNK_H
+#define _ARCH_USERMODE_INCLUDE_THUNK_H
 
-#include <sys/device.h>
-#include <sys/cpu_data.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/ucontext.h>
 
-#include <machine/intrdefs.h>
-#include <machine/thunk.h>
+int	thunk_setitimer(int, const struct itimerval *, struct itimerval *);
+int	thunk_gettimeofday(struct timeval *, void *);
+int	thunk_usleep(useconds_t);
 
-extern void	cpu_signotify(struct lwp *);
-extern void	cpu_need_proftick(struct lwp *);
+void	thunk_exit(int);
+void	thunk_abort(void);
 
-struct cpu_info {
-	device_t	ci_dev;
-	struct cpu_info	*ci_self;
-	struct cpu_info	*ci_next;
-	struct cpu_data	ci_data;
-	u_int		ci_cpuid;
-	int		ci_want_resched;
-	volatile int	ci_mtx_count;
-	volatile int	ci_mtx_oldspl;
-	lwp_t		*ci_curlwp;
-	lwp_t		*ci_stash;
-};
+int	thunk_getcontext(ucontext_t *);
+int	thunk_setcontext(const ucontext_t *);
+void	thunk_makecontext(ucontext_t *, void (*)(void), int, void (*)(void *), void *); 
+int	thunk_swapcontext(ucontext_t *, ucontext_t *);
 
-__inline static struct cpu_info * __attribute__((__unused__))
-usermode_curcpu(void)
-{
-	extern struct cpu_info cpu_info_primary;
+int	thunk_getchar(void);
+void	thunk_putchar(int);
 
-	return &cpu_info_primary;
-}
-
-__inline static void
-usermode_delay(unsigned int ms)
-{
-	thunk_usleep(ms);
-}
-
-#define	curcpu()	usermode_curcpu()
-#define cpu_number()	0
-
-#define cpu_proc_fork(p1, p2)
-
-#define delay(ms)	usermode_delay(ms)
-#define DELAY(ms)	usermode_delay(ms)
-
-/* XXXJDM */
-struct clockframe {
-	uint8_t cf_dummy;
-};
-
-#define CLKF_USERMODE(frame)	0
-#define CLKF_PC(frame)		0
-#define CLKF_INTR(frame)	0
-
-#endif /* !_ARCH_USERMODE_INCLUDE_CPU_H */
+#endif /* !_ARCH_USERMODE_INCLUDE_THUNK_H */
