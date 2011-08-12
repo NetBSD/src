@@ -1,6 +1,8 @@
+.\" $NetBSD: ixg.4,v 1.2 2011/08/12 23:40:00 wiz Exp $
+.\"
 .\" Copyright (c) 2001-2008, Intel Corporation
 .\" All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions are met:
 .\"
@@ -29,7 +31,6 @@
 .\"
 .\" * Other names and brands may be claimed as the property of others.
 .\"
-.\" $NetBSD: ixg.4,v 1.1 2011/08/12 22:00:12 dyoung Exp $
 .\" $FreeBSD: src/share/man/man4/ixgbe.4,v 1.3 2010/12/19 23:54:31 yongari Exp $
 .\"
 .Dd July 25, 2011
@@ -37,7 +38,7 @@
 .Os
 .Sh NAME
 .Nm ixg
-.Nd "Intel(R) 10Gb Ethernet driver"
+.Nd Intel(R) 10Gb Ethernet driver
 .Sh SYNOPSIS
 .Cd "ixg* at pci? dev ? function ?"
 .Sh DESCRIPTION
@@ -56,7 +57,8 @@ Support for Jumbo Frames is provided via the interface MTU setting.
 Selecting an MTU larger than 1500 bytes with the
 .Xr ifconfig 8
 utility configures the adapter to receive and transmit Jumbo Frames.
-On .Nx ,
+On
+.Nx ,
 the maximum MTU size for Jumbo Frames is 9000 bytes.
 .Pp
 This driver version supports VLANs.
@@ -69,13 +71,13 @@ driver supports the following cards:
 .Pp
 .Bl -bullet -compact
 .It
-Intel(R) 10 Gigabit XF SR/AF Dual Port Server Adapter 
+Intel(R) 10 Gigabit XF SR/AF Dual Port Server Adapter
 .It
 Intel(R) 10 Gigabit XF SR/LR Server Adapter
 .It
 Intel(R) 82598EB 10 Gigabit AF Network Connection
 .It
-Intel(R) 82598EB 10 Gigabit AT CX4 Network Connection                  
+Intel(R) 82598EB 10 Gigabit AT CX4 Network Connection
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
