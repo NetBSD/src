@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.46 2011/08/10 15:56:01 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.47 2011/08/12 06:40:10 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.46 2011/08/10 15:56:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.47 2011/08/12 06:40:10 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.46 2011/08/10 15:56:01 hannken Exp 
 #include <uvm/uvm_extern.h>
 
 #include <fs/union/union.h>
+#include <miscfs/specfs/specdev.h>
 
 /* must be power of two, otherwise change UNION_HASH() */
 #define NHASH 32
@@ -342,6 +343,7 @@ union_allocvp(
 	struct vnode *vp, *xlowervp = NULLVP;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	voff_t uppersz, lowersz;
+	dev_t rdev;
 	int hash = 0;
 	int vflag, iflag;
 	int try;
@@ -556,10 +558,19 @@ loop:
 
 	(*vpp)->v_vflag |= vflag;
 	(*vpp)->v_iflag |= iflag;
-	if (uppervp)
+	rdev = NODEV;
+	if (uppervp) {
 		(*vpp)->v_type = uppervp->v_type;
-	else
+		if (uppervp->v_type == VCHR || uppervp->v_type == VBLK)
+			rdev = uppervp->v_rdev;
+	} else {
 		(*vpp)->v_type = lowervp->v_type;
+		if (lowervp->v_type == VCHR || lowervp->v_type == VBLK)
+			rdev = lowervp->v_rdev;
+	}
+	if (rdev != NODEV)
+		spec_node_init(*vpp, rdev);
+
 	un = VTOUNION(*vpp);
 	un->un_vnode = *vpp;
 	un->un_uppervp = uppervp;
