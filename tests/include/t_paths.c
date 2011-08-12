@@ -1,4 +1,4 @@
-/*	$NetBSD: t_paths.c,v 1.7 2011/07/23 14:28:28 hannken Exp $ */
+/*	$NetBSD: t_paths.c,v 1.8 2011/08/12 03:59:44 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_paths.c,v 1.7 2011/07/23 14:28:28 hannken Exp $");
+__RCSID("$NetBSD: t_paths.c,v 1.8 2011/08/12 03:59:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -79,7 +79,7 @@ static const struct {
 	{ _PATH_MIXER,		PATH_DEV		},
 	{ _PATH_MIXER0,		PATH_DEV		},
 	{ _PATH_NOLOGIN,	PATH_FILE		},
-	{ _PATH_POWER,		PATH_DEV		},
+	{ _PATH_POWER,		PATH_DEV | PATH_ROOT	},
 	{ _PATH_PRINTCAP,	PATH_FILE		},
 	{ _PATH_PUD,		PATH_DEV | PATH_ROOT	},
 	{ _PATH_PUFFS,		PATH_DEV | PATH_ROOT	},
