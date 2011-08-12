@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.344 2011/08/11 07:33:24 mbalmer Exp $
+#	$NetBSD: files.pci,v 1.345 2011/08/12 22:02:56 dyoung Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -654,6 +654,21 @@ attach	gsip at pci
 device	stge: ether, ifnet, arp, mii, mii_bitbang
 attach	stge at pci
 file	dev/pci/if_stge.c		stge
+
+# Intel i82598 & i82599 10-Gigabit Ethernet
+device	ixg: ether, ifnet, arp
+attach	ixg at pci
+file	dev/pci/ixgbe/ixgbe.c		ixg
+file	dev/pci/ixgbe/ixgbe_netbsd.c	ixg
+file	dev/pci/ixgbe/ixgbe_82598.c	ixg
+file	dev/pci/ixgbe/ixgbe_82599.c	ixg
+file	dev/pci/ixgbe/ixgbe_api.c	ixg
+file	dev/pci/ixgbe/ixgbe_common.c	ixg
+file	dev/pci/ixgbe/ixgbe_mbx.c	ixg
+file	dev/pci/ixgbe/ixgbe_phy.c	ixg
+file	dev/pci/ixgbe/ixgbe_vf.c	ixg
+# This appears to be the driver for virtual instances of i82599.
+#file	dev/pci/ixgbe/ixv.c		ixg
 
 # Intel i8254x Gigabit Ethernet
 device	wm: ether, ifnet, arp, mii, mii_bitbang
