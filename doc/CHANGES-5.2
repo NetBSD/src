@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.98 2011/08/09 19:04:14 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.99 2011/08/12 20:59:04 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5500,4 +5500,22 @@ external/ibm-public/postfix/dist/src/util/sys_defs.h patch
 	- The "sendmail -t" command reported "protocol error" instead of
 	  "file too large", "no space left on device" etc.
 	[tron, ticket #1653]
+
+sys/arch/xen/xen/xbdback_xenbus.c		1.42-1.44 via patch
+
+	Several fixes to the continuation engine. Fixes a DIAGNOSTIC
+	panic under some circumstances.
+	[bouyer, ticket #1654]
+
+sys/dev/usb/ohci.c				1.218
+
+	If the host controller has a TD that the driver doesn't know about,
+	ignore it instead of calling panic. PR#30398.
+	[jmcneill, ticket #1655]
+
+sbin/drvctl/drvctl.8				1.11-1.12
+sbin/drvctl/drvctl.c				1.11-1.12
+
+	Add -t and -p options to drvctl(8).
+	[jmcneill, ticket #1656]
 
