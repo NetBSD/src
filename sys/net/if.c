@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.250 2011/01/18 20:33:45 rmind Exp $	*/
+/*	$NetBSD: if.c,v 1.251 2011/08/12 22:09:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.250 2011/01/18 20:33:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.251 2011/08/12 22:09:36 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -246,6 +246,12 @@ struct ifnet *
 if_alloc(u_char type)
 {
 	return malloc(sizeof(struct ifnet), M_DEVBUF, M_WAITOK|M_ZERO);
+}
+
+void
+if_free(struct ifnet *ifp)
+{
+	free(ifp, M_DEVBUF);
 }
 
 void
