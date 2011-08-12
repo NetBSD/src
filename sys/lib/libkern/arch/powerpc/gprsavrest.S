@@ -29,7 +29,7 @@
 
 #include <powerpc/asm.h>
 
-__RCSID("$NetBSD: gprsavrest.S,v 1.2 2011/07/02 23:36:02 mrg Exp $")
+__RCSID("$NetBSD: gprsavrest.S,v 1.3 2011/08/12 14:48:00 matt Exp $")
 
 #ifndef RESTGPR
 #define RESTGPR(n)	RESTOREXGPR(_restgpr_,n,_x)
@@ -64,8 +64,8 @@ __RCSID("$NetBSD: gprsavrest.S,v 1.2 2011/07/02 23:36:02 mrg Exp $")
 	RESTGPR(28)
 	RESTGPR(29)
 	RESTGPR(30)
-	lwz	0,4(11)
 	RESTGPR(31)
+	lwz	0,4(11)
 	mtlr	0
 	mr	1,11
 	blr
