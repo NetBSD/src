@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.8 2011/08/11 23:04:43 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.9 2011/08/12 12:59:13 jmcneill Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 maxusers 	32
 
 makeoptions	DEBUG="-g3"
@@ -43,5 +43,6 @@ mainbus0	at root
 cpu0		at mainbus?
 clock0		at mainbus?
 ttycons0	at mainbus?
+ld0		at mainbus?
 
 pseudo-device	loop
