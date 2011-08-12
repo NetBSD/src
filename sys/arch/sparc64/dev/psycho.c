@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.109 2011/07/20 12:06:00 macallan Exp $	*/
+/*	$NetBSD: psycho.c,v 1.110 2011/08/12 06:38:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.109 2011/07/20 12:06:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.110 2011/08/12 06:38:35 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -704,6 +704,7 @@ psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
 	ih->ih_fun = handler;
 	ih->ih_pil = (1<<ipl);
 	ih->ih_number = INTVEC(*(ih->ih_map));
+	ih->ih_pending = 0;
 	intr_establish(ipl, ipl != IPL_VM, ih);
 	*(ih->ih_map) |= INTMAP_V|(CPU_UPAID << INTMAP_TID_SHIFT);
 }
@@ -1304,6 +1305,7 @@ found:
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
 	ih->ih_number = ino | sc->sc_ign;
+	ih->ih_pending = 0;
 
 	DPRINTF(PDB_INTR, (
 	    "; installing handler %p arg %p with ino %u pil %u\n",
