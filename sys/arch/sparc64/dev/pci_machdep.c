@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.73 2011/07/01 18:48:36 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.74 2011/08/12 06:04:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.73 2011/07/01 18:48:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.74 2011/08/12 06:04:41 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -153,24 +153,17 @@ pci_make_tag(pci_chipset_tag_t pc, int b, int d, int f)
 	 * then we're obviously on the wrong bus.  So go up one
 	 * level.
 	 */
-#ifdef DEBUG
-	if (sparc_pci_debug & SPDB_PROBE) {
-		printf("curnode %x %s\n", node,
-			prom_getpropstringA(node, "name", name, sizeof(name)));
-	}
-#endif
+	DPRINTF(SPDB_PROBE, ("curnode %x %s\n", node,
+		prom_getpropstringA(node, "name", name, sizeof(name))));
 #if 0
 	while ((OF_getprop(OF_parent(node), "bus-range", (void *)&busrange,
 		sizeof(busrange)) == sizeof(busrange)) &&
 		(b < busrange[0] || b > busrange[1])) {
 		/* Out of range, go up one */
 		node = OF_parent(node);
-#ifdef DEBUG
-		if (sparc_pci_debug & SPDB_PROBE) {
-			printf("going up to node %x %s\n", node,
-			prom_getpropstringA(node, "name", name, sizeof(name)));
-		}
-#endif
+		DPRINTF(SPDB_PROBE, printf("going up to node %x %s\n",
+		    node,
+		    prom_getpropstringA(node, "name", name, sizeof(name))));
 	}
 #endif	
 	node = prom_firstchild(node);
@@ -183,13 +176,8 @@ pci_make_tag(pci_chipset_tag_t pc, int b, int d, int f)
 	 */
 	for (node = ((node)); node; node = prom_nextsibling(node)) {
 
-#ifdef DEBUG
-		if (sparc_pci_debug & SPDB_PROBE) {
-			printf("checking node %x %s\n", node,
-			prom_getpropstringA(node, "name", name, sizeof(name)));
-			
-		}
-#endif
+		DPRINTF(SPDB_PROBE, ("checking node %x %s\n", node,
+			prom_getpropstringA(node, "name", name, sizeof(name))));
 
 #if 1
 		/*
@@ -207,13 +195,9 @@ pci_make_tag(pci_chipset_tag_t pc, int b, int d, int f)
 				break;
 			/* Go down 1 level */
 			node = prom_firstchild(node);
-#ifdef DEBUG
-			if (sparc_pci_debug & SPDB_PROBE) {
-				printf("going down to node %x %s\n", node,
-					prom_getpropstringA(node, "name",
-							name, sizeof(name)));
-			}
-#endif
+			DPRINTF(SPDB_PROBE, ("going down to node %x %s\n", node,
+			    prom_getpropstringA(node, "name", name,
+				sizeof(name))));
 		}
 #endif /*1*/
 		/* 
