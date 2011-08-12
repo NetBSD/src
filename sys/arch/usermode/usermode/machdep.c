@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.10 2011/08/10 01:32:44 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.11 2011/08/12 11:37:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2011/08/10 01:32:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2011/08/12 11:37:04 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2011/08/10 01:32:44 jmcneill Exp $"
 
 #include <dev/mm.h>
 
+#include <machine/thunk.h>
+
 #include "opt_memsize.h"
 
 char machine[] = "usermode";
@@ -50,7 +52,10 @@ int		usermode_x = IPL_NONE;
 /* XXX */
 int		physmem = MEMSIZE * 1024 / PAGE_SIZE;
 
+static char **saved_argv;
+
 void	main(int argc, char *argv[]);
+void	usermode_reboot(void);
 
 void
 main(int argc, char *argv[])
@@ -59,6 +64,8 @@ main(int argc, char *argv[])
 	extern void pmap_bootstrap(void);
 	extern void kernmain(void);
 	int i, j, r, tmpopt = 0;
+
+	saved_argv = argv;
 
 	ttycons_consinit();
 
@@ -83,6 +90,20 @@ main(int argc, char *argv[])
 	pmap_bootstrap();
 
 	kernmain();
+}
+
+void
+usermode_reboot(void)
+{
+	struct itimerval itimer;
+
+	/* make sure the timer is turned off */
+	memset(&itimer, 0, sizeof(itimer));
+	thunk_setitimer(ITIMER_REAL, &itimer, NULL);
+
+	if (thunk_execv(saved_argv[0], saved_argv) == -1)
+		thunk_abort();
+	/* NOTREACHED */
 }
 
 void

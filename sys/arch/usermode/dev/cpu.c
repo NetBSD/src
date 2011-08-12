@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.10 2011/08/12 00:57:24 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.11 2011/08/12 11:37:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2011/08/12 00:57:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11 2011/08/12 11:37:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -108,6 +108,8 @@ cpu_configure(void)
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	extern void usermode_reboot(void);
+
 	splhigh();
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN)
@@ -124,10 +126,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	printf("rebooting...\n");
 
-	/*
-	 * XXXJDM If we've panic'd, make sure we dump a core
-	 */
-	thunk_abort();
+	usermode_reboot();
 
 	/* NOTREACHED */
 }

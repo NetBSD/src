@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.1 2011/08/12 00:57:24 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.2 2011/08/12 11:37:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -47,5 +47,7 @@ int	thunk_swapcontext(ucontext_t *, ucontext_t *);
 
 int	thunk_getchar(void);
 void	thunk_putchar(int);
+
+int	thunk_execv(const char *, char * const []);
 
 #endif /* !_ARCH_USERMODE_INCLUDE_THUNK_H */

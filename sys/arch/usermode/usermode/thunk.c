@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.1 2011/08/12 00:57:24 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.2 2011/08/12 11:37:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.1 2011/08/12 00:57:24 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.2 2011/08/12 11:37:05 jmcneill Exp $");
 
 #include <machine/thunk.h>
 
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: thunk.c,v 1.1 2011/08/12 00:57:24 jmcneill Exp $");
 #include <stdlib.h>
 #include <time.h>
 #include <ucontext.h>
+#include <unistd.h>
 
 int
 thunk_setitimer(int which, const struct itimerval *value,
@@ -108,3 +109,10 @@ thunk_putchar(int c)
 	putchar(c);
 	fflush(stdout);
 }
+
+int
+thunk_execv(const char *path, char * const argv[])
+{
+	return execv(path, argv);
+}
+
