@@ -1,4 +1,4 @@
-/* $NetBSD: ttycons.c,v 1.3 2009/11/27 03:23:14 rmind Exp $ */
+/* $NetBSD: ttycons.c,v 1.4 2011/08/12 00:57:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.3 2009/11/27 03:23:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.4 2011/08/12 00:57:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.3 2009/11/27 03:23:14 rmind Exp $");
 #include <dev/cons.h>
 
 #include <machine/mainbus.h>
+#include <machine/thunk.h>
 
 static int	ttycons_match(device_t, cfdata_t, void *);
 static void	ttycons_attach(device_t, device_t, void *);
@@ -94,15 +95,13 @@ ttycons_consinit(void)
 int
 ttycons_cngetc(dev_t dev)
 {
-	extern int getchar(void);
-	return getchar();
+	return thunk_getchar();
 }
 
 void
 ttycons_cnputc(dev_t dev, int c)
 {
-	extern void putchar(int);
-	putchar(c);
+	thunk_putchar(c);
 }
 
 void
