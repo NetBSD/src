@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.6 2011/08/12 05:00:29 mrg Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.7 2011/08/12 06:38:18 mrg Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -59,12 +59,15 @@ void	ebus_mainbus_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(ebus_mainbus, sizeof(struct ebus_softc),
     ebus_mainbus_match, ebus_mainbus_attach, NULL, NULL);
 
-int ebus_mainbus_bus_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
-    vaddr_t, bus_space_handle_t *);
-void *ebus_mainbus_intr_establish(bus_space_tag_t, int, int,
+static int ebus_mainbus_bus_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	vaddr_t, bus_space_handle_t *);
+static void *ebus_mainbus_intr_establish(bus_space_tag_t, int, int,
 	int (*)(void *), void *, void (*)(void));
-bus_space_tag_t ebus_mainbus_alloc_bus_tag(struct ebus_softc *, bus_space_tag_t, int);
-void ebus_mainbus_intr_ack(struct intrhand *);
+static bus_space_tag_t ebus_mainbus_alloc_bus_tag(struct ebus_softc *,
+	bus_space_tag_t, int);
+#ifdef SUN4V
+static void ebus_mainbus_intr_ack(struct intrhand *);
+#endif
 
 int
 ebus_mainbus_match(struct device *parent, cfdata_t cf, void *aux)
@@ -115,8 +118,10 @@ ebus_mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	sc->sc_memtag = ebus_mainbus_alloc_bus_tag(sc, ma->ma_bustag, PCI_MEMORY_BUS_SPACE);
-	sc->sc_iotag = ebus_mainbus_alloc_bus_tag(sc, ma->ma_bustag, PCI_IO_BUS_SPACE);
+	sc->sc_memtag = ebus_mainbus_alloc_bus_tag(sc, ma->ma_bustag,
+						   PCI_MEMORY_BUS_SPACE);
+	sc->sc_iotag = ebus_mainbus_alloc_bus_tag(sc, ma->ma_bustag,
+						  PCI_IO_BUS_SPACE);
 	sc->sc_childbustag = sc->sc_memtag;
 	sc->sc_dmatag = ma->ma_dmatag;
 
@@ -131,11 +136,13 @@ ebus_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	switch (error) {
 	case 0:
 		immp = &sc->sc_intmapmask;
+		nmapmask = 1;
 		error = prom_getprop(node, "interrupt-map-mask",
 			    sizeof(struct ebus_interrupt_map_mask), &nmapmask,
 			    (void **)&immp);
 		if (error)
-			panic("could not get ebus interrupt-map-mask");
+			panic("could not get ebus interrupt-map-mask: error %d",
+			      error);
 		if (nmapmask != 1)
 			panic("ebus interrupt-map-mask is broken");
 		break;
@@ -170,8 +177,10 @@ ebus_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
-bus_space_tag_t
-ebus_mainbus_alloc_bus_tag(struct ebus_softc *sc, bus_space_tag_t parent, int type)
+static bus_space_tag_t
+ebus_mainbus_alloc_bus_tag(struct ebus_softc *sc,
+			   bus_space_tag_t parent,
+			   int type)
 {
 	struct sparc_bus_space_tag *bt;
 
@@ -256,7 +265,7 @@ ss = 0;
 	return (EINVAL);
 }
 
-void *
+static void *
 ebus_mainbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	int (*handler)(void *), void *arg, void (*fastvec)(void) /* ignored */)
 {
@@ -339,6 +348,7 @@ ebus_mainbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
 	ih->ih_number = ino;
+	ih->ih_pending = 0;
 
 	intr_establish(ih->ih_pil, level != IPL_VM, ih);
 
@@ -358,7 +368,7 @@ ebus_mainbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 
 #ifdef SUN4V
 
-void
+static void
 ebus_mainbus_intr_ack(struct intrhand *ih)
 {
 	hv_intr_setstate(ih->ih_number, INTR_IDLE);
