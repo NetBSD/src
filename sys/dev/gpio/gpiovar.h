@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.10 2009/08/21 12:53:42 mbalmer Exp $ */
+/* $NetBSD: gpiovar.h,v 1.11 2011/08/12 08:00:52 mbalmer Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.3 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -65,16 +65,16 @@ int gpiobus_print(void *, const char *);
 
 /* Attach devices connected to the GPIO pins */
 struct gpio_attach_args {
-	void *			ga_gpio;
-	int			ga_offset;
-	u_int32_t		ga_mask;
-	char			*ga_dvname;
+	void		*ga_gpio;
+	int		 ga_offset;
+	u_int32_t	 ga_mask;
+	char		*ga_dvname;
 };
 
 /* GPIO pin map */
 struct gpio_pinmap {
-	int *	pm_map;			/* pin map */
-	int	pm_size;		/* map size */
+	int		*pm_map;		/* pin map */
+	int		 pm_size;		/* map size */
 };
 
 struct gpio_dev {
@@ -95,7 +95,6 @@ int	gpio_pin_read(void *, struct gpio_pinmap *, int);
 void	gpio_pin_write(void *, struct gpio_pinmap *, int, int);
 void	gpio_pin_ctl(void *, struct gpio_pinmap *, int, int);
 int	gpio_pin_caps(void *, struct gpio_pinmap *, int);
-
 int	gpio_npins(u_int32_t);
 
 #endif	/* !_DEV_GPIO_GPIOVAR_H_ */
