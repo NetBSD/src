@@ -1,7 +1,7 @@
-/* $NetBSD: gpioctl.c,v 1.9 2011/08/12 08:02:33 mbalmer Exp $ */
+/* $NetBSD: gpioctl.c,v 1.10 2011/08/12 08:06:23 mbalmer Exp $ */
 
 /*
- * Copyright (c) 2008, 2010 Marc Balmer <mbalmer@openbsd.org>
+ * Copyright (c) 2008, 2010 Marc Balmer <mbalmer@NetBSD.org>
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
