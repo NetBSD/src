@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.11 2011/08/12 11:37:04 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.12 2011/08/12 12:59:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2011/08/12 11:37:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2011/08/12 12:59:13 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,6 +53,7 @@ int		usermode_x = IPL_NONE;
 int		physmem = MEMSIZE * 1024 / PAGE_SIZE;
 
 static char **saved_argv;
+char *usermode_root_image_path = NULL;
 
 void	main(int argc, char *argv[]);
 void	usermode_reboot(void);
@@ -70,6 +71,10 @@ main(int argc, char *argv[])
 	ttycons_consinit();
 
 	for (i = 1; i < argc; i++) {
+		if (argv[i][0] != '-') {
+			usermode_root_image_path = argv[i];
+			continue;
+		}
 		for (j = 1; argv[i][j] != '\0'; j++) {
 			r = 0;
 			BOOT_FLAG(argv[i][j], r);

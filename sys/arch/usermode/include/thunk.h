@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.2 2011/08/12 11:37:04 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.3 2011/08/12 12:59:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,6 +31,8 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/stat.h>
+#include <sys/fcntl.h>
 #include <sys/ucontext.h>
 
 int	thunk_setitimer(int, const struct itimerval *, struct itimerval *);
@@ -49,5 +51,11 @@ int	thunk_getchar(void);
 void	thunk_putchar(int);
 
 int	thunk_execv(const char *, char * const []);
+
+int	thunk_open(const char *, int, mode_t);
+int	thunk_fstat(int, struct stat *);
+ssize_t	thunk_pread(int, void *, size_t, off_t);
+ssize_t	thunk_pwrite(int, const void *, size_t, off_t);
+int	thunk_fsync(int);
 
 #endif /* !_ARCH_USERMODE_INCLUDE_THUNK_H */

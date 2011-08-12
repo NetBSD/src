@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.2 2011/08/12 11:37:05 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.3 2011/08/12 12:59:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.2 2011/08/12 11:37:05 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.3 2011/08/12 12:59:13 jmcneill Exp $");
 
 #include <machine/thunk.h>
 
 #include <assert.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -116,3 +117,32 @@ thunk_execv(const char *path, char * const argv[])
 	return execv(path, argv);
 }
 
+int
+thunk_open(const char *path, int flags, mode_t mode)
+{
+	return open(path, flags, mode);
+}
+
+int
+thunk_fstat(int fd, struct stat *sb)
+{
+	return fstat(fd, sb);
+}
+
+ssize_t
+thunk_pread(int d, void *buf, size_t nbytes, off_t offset)
+{
+	return pread(d, buf, nbytes, offset);
+}
+
+ssize_t
+thunk_pwrite(int d, const void *buf, size_t nbytes, off_t offset)
+{
+	return pwrite(d, buf, nbytes, offset);
+}
+
+int
+thunk_fsync(int fd)
+{
+	return fsync(fd);
+}
