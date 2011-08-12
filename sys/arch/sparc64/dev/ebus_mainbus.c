@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.5 2011/07/01 18:48:36 dyoung Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.6 2011/08/12 05:00:29 mrg Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ ebus_mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 		for (i = 0; i < pyro_cd.cd_ndevs; i++) {
 			device_t dt = pyro_cd.cd_devs[i];
-			psc = (struct pyro_softc *)dt;
+			psc = device_private(dt);
 			if (psc && psc->sc_ign == sc->sc_ign) {
 				sc->sc_bust = psc->sc_bustag;
 				sc->sc_csr = psc->sc_csr;
