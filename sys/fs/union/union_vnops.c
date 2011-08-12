@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.43 2011/08/10 06:27:02 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.44 2011/08/12 14:36:29 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.43 2011/08/10 06:27:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.44 2011/08/12 14:36:29 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.43 2011/08/10 06:27:02 hannken Exp
 
 #include <fs/union/union.h>
 #include <miscfs/genfs/genfs.h>
+#include <miscfs/specfs/specdev.h>
 
 int union_lookup(void *);
 int union_create(void *);
@@ -128,6 +129,7 @@ int union_islocked(void *);
 int union_pathconf(void *);
 int union_advlock(void *);
 int union_strategy(void *);
+int union_bwrite(void *);
 int union_getpages(void *);
 int union_putpages(void *);
 int union_kqfilter(void *);
@@ -175,6 +177,7 @@ const struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_unlock_desc, union_unlock },		/* unlock */
 	{ &vop_bmap_desc, union_bmap },			/* bmap */
 	{ &vop_strategy_desc, union_strategy },		/* strategy */
+	{ &vop_bwrite_desc, union_bwrite },		/* bwrite */
 	{ &vop_print_desc, union_print },		/* print */
 	{ &vop_islocked_desc, union_islocked },		/* islocked */
 	{ &vop_pathconf_desc, union_pathconf },		/* pathconf */
@@ -182,9 +185,6 @@ const struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_getpages_desc, union_getpages },		/* getpages */
 	{ &vop_putpages_desc, union_putpages },		/* putpages */
 	{ &vop_kqfilter_desc, union_kqfilter },		/* kqfilter */
-#ifdef notdef
-	{ &vop_bwrite_desc, union_bwrite },		/* bwrite */
-#endif
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc union_vnodeop_opv_desc =
@@ -195,6 +195,9 @@ const struct vnodeopv_desc union_vnodeop_opv_desc =
 		union_fixup(un); \
 	} \
 }
+#define NODE_IS_SPECIAL(vp) \
+	((vp)->v_type == VBLK || (vp)->v_type == VCHR || \
+	(vp)->v_type == VSOCK || (vp)->v_type == VFIFO)
 
 static void
 union_fixup(struct union_node *un)
@@ -695,24 +698,28 @@ union_close(void *v)
 	} */ *ap = v;
 	struct union_node *un = VTOUNION(ap->a_vp);
 	struct vnode *vp;
+	int error;
+	bool do_lock;
 
 	vp = un->un_uppervp;
-	if (vp == NULLVP) {
-#ifdef UNION_DIAGNOSTIC
-		if (un->un_openl <= 0)
-			panic("union: un_openl cnt");
-#endif
+	if (vp != NULLVP) {
+		do_lock = false;
+	} else {
+		KASSERT(un->un_openl > 0);
 		--un->un_openl;
 		vp = un->un_lowervp;
+		do_lock = true;
 	}
 
-#ifdef DIAGNOSTIC
-	if (vp == NULLVP)
-		panic("union_close empty union vnode");
-#endif
-
+	KASSERT(vp != NULLVP);
 	ap->a_vp = vp;
-	return (VCALL(vp, VOFFSET(vop_close), ap));
+	if (do_lock)
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = VCALL(vp, VOFFSET(vop_close), ap);
+	if (do_lock)
+		VOP_UNLOCK(vp);
+
+	return error;
 }
 
 /*
@@ -944,20 +951,14 @@ union_setattr(void *v)
 			union_newsize(ap->a_vp, vap->va_size, VNOVAL);
 	} else {
 		KASSERT(un->un_lowervp != NULLVP);
-		switch (un->un_lowervp->v_type) {
- 		case VCHR:
- 		case VBLK:
- 		case VSOCK:
- 		case VFIFO:
+		if (NODE_IS_SPECIAL(un->un_lowervp)) {
 			if (size_only &&
 			    (vap->va_size == 0 || vap->va_size == VNOVAL))
 				error = 0;
 			else
 				error = EROFS;
-			break;
-		default:
+		} else {
 			error = EROFS;
-			break;
 		}
 	}
 
@@ -1023,20 +1024,14 @@ union_write(void *v)
 	vp = UPPERVP(ap->a_vp);
 	if (vp == NULLVP) {
 		vp = LOWERVP(ap->a_vp);
-		KASSERT(vp != NULL);
-		switch (vp->v_type) {
-		case VBLK:
-		case VCHR:
-		case VSOCK:
-		case VFIFO:
+		if (NODE_IS_SPECIAL(vp)) {
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			error = VOP_WRITE(vp, ap->a_uio, ap->a_ioflag,
 			    ap->a_cred);
 			VOP_UNLOCK(vp);
 			return error;
-		default:
-			panic("union: missing upper layer in write");
 		}
+		panic("union: missing upper layer in write");
 	}
 
 	FIXUP(un);
@@ -1137,11 +1132,16 @@ union_fsync(void *v)
 	 * they're locked; otherwise, pass it through to the
 	 * underlying layer.
 	 */
+	if (ap->a_vp->v_type == VBLK || ap->a_vp->v_type == VCHR) {
+		error = spec_fsync(v);
+		if (error)
+			return error;
+	}
+
 	if (ap->a_flags & FSYNC_RECLAIM)
 		return 0;
 
 	targetvp = OTHERVP(ap->a_vp);
-
 	if (targetvp != NULLVP) {
 		int dolock = (targetvp == LOWERVP(ap->a_vp));
 
@@ -1885,12 +1885,6 @@ union_advlock(void *v)
 	return (VCALL(ovp, VOFFSET(vop_advlock), ap));
 }
 
-
-/*
- * XXX - vop_strategy must be hand coded because it has no
- * vnode in its arguments.
- * This goes away with a merged VM/buffer cache.
- */
 int
 union_strategy(void *v)
 {
@@ -1904,12 +1898,37 @@ union_strategy(void *v)
 #ifdef DIAGNOSTIC
 	if (ovp == NULLVP)
 		panic("union_strategy: nil vp");
-	if (((bp->b_flags & B_READ) == 0) &&
-	    (ovp == LOWERVP(bp->b_vp)))
-		panic("union_strategy: writing to lowervp");
+	if (!NODE_IS_SPECIAL(ovp)) {
+		if (((bp->b_flags & B_READ) == 0) &&
+		    (ovp == LOWERVP(bp->b_vp)))
+			panic("union_strategy: writing to lowervp");
+	}
 #endif
 
 	return (VOP_STRATEGY(ovp, bp));
+}
+
+int
+union_bwrite(void *v)
+{
+	struct vop_bwrite_args /* {
+		struct vnode *a_vp;
+		struct buf *a_bp;
+	} */ *ap = v;
+	struct vnode *ovp = OTHERVP(ap->a_vp);
+	struct buf *bp = ap->a_bp;
+
+#ifdef DIAGNOSTIC
+	if (ovp == NULLVP)
+		panic("union_bwrite: nil vp");
+	if (!NODE_IS_SPECIAL(ovp)) {
+		if (((bp->b_flags & B_READ) == 0) &&
+		    (ovp == LOWERVP(bp->b_vp)))
+			panic("union_strategy: writing to lowervp");
+	}
+#endif
+
+	return (VOP_BWRITE(ovp, bp));
 }
 
 int
