@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.3 2009/11/27 03:23:14 rmind Exp $ */
+/* $NetBSD: mainbus.c,v 1.4 2011/08/12 12:59:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2009/11/27 03:23:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2011/08/12 12:59:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -49,6 +49,8 @@ typedef struct mainbus_softc {
 
 CFATTACH_DECL_NEW(mainbus, sizeof(mainbus_softc_t),
     mainbus_match, mainbus_attach, NULL, NULL);
+
+extern char *usermode_root_image_path;
 
 static int
 mainbus_match(device_t parent, cfdata_t match, void *opaque)
@@ -74,6 +76,12 @@ mainbus_attach(device_t parent, device_t self, void *opaque)
 	config_found_ia(self, "thunkbus", &taa, mainbus_print);
 	taa.taa_type = THUNKBUS_TYPE_TTYCONS;
 	config_found_ia(self, "thunkbus", &taa, mainbus_print);
+
+	if (usermode_root_image_path) {
+		taa.taa_type = THUNKBUS_TYPE_DISKIMAGE;
+		taa.u.diskimage.path = usermode_root_image_path;
+		config_found_ia(self, "thunkbus", &taa, mainbus_print);
+	}
 }
 
 static int
