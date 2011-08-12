@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.2 2011/07/25 15:58:44 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.3 2011/08/12 17:40:49 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -43,6 +43,30 @@ typedef uint32_t bus_size_t;
  */
 typedef struct bus_space_tag *bus_space_tag_t;
 typedef u_long	bus_space_handle_t;
+
+struct amigappc_bus_dma_segment;
+struct amigappc_bus_dma_tag;
+struct amigappc_bus_dmamap;
+typedef struct amigappc_bus_dma_segment bus_dma_segment_t;
+typedef struct amigappc_bus_dma_tag bus_dma_tag_t;
+typedef struct amigappc_bus_dmamap bus_dmamap_t;
+
+struct amigappc_bus_dma_tag {
+	int dummy;
+};
+
+struct amigappc_bus_dma_segment {
+	bus_addr_t	ds_addr;
+	bus_size_t	ds_len;
+};
+
+struct amigappc_bus_dmamap {
+	bus_size_t		dm_maxsegsz;
+	bus_size_t		dm_mapsize;
+	int			dm_nsegs;
+	bus_dma_segment_t	*dm_segs;
+	/* TBD */
+};
 
 /* unpublic, but needed by method implementors */
 
