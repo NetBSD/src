@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.8 2011/08/11 12:03:58 mbalmer Exp $
+# $NetBSD: md.evbppc,v 1.9 2011/08/12 08:00:52 mbalmer Exp $
 ./stand/powerpc-4xx						base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@					base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod
@@ -54,6 +54,10 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/flash/flash.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/fss				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/fss/fss.kmod			base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/gpio				base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/gpio/gpio.kmod			base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/gpiosim				base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/gpiosim/gpiosim.kmod		base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/kernfs				base-kernel-modules	kmod
@@ -203,6 +207,10 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/flash/flash.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/fss				base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/fss/fss.kmod			base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/gpio				base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/gpio/gpio.kmod		base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/gpiosim			base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/gpiosim/gpiosim.kmod		base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/kernfs				base-kernel-modules	kmod

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.30 2011/08/11 12:03:58 mbalmer Exp $
+# $NetBSD: mi,v 1.31 2011/08/12 08:00:52 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -61,6 +61,10 @@
 ./@MODULEDIR@/flash/flash.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/fss				base-kernel-modules	kmod
 ./@MODULEDIR@/fss/fss.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/gpio				base-kernel-modules	kmod
+./@MODULEDIR@/gpio/gpio.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/gpiosim				base-kernel-modules	kmod
+./@MODULEDIR@/gpiosim/gpiosim.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/hfs				base-kernel-modules	kmod
 ./@MODULEDIR@/hfs/hfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/kernfs				base-kernel-modules	kmod

@@ -1,8 +1,8 @@
-/* $NetBSD: gpiosim.c,v 1.7 2009/12/06 22:33:44 dyoung Exp $ */
+/* $NetBSD: gpiosim.c,v 1.8 2011/08/12 08:00:52 mbalmer Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
- * Copyright (c) 2007, 2008, 2009 Marc Balmer <marc@msys.ch>
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011 Marc Balmer <marc@msys.ch>
  * All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -24,9 +24,11 @@
 #include <sys/device.h>
 #include <sys/gpio.h>
 #include <sys/malloc.h>
+#ifdef _MODULE
+#include <sys/module.h>
+#endif
 #include <sys/sysctl.h>
 #include <sys/ioccom.h>
-
 #include <dev/gpio/gpiovar.h>
 
 #define	GPIOSIM_NPINS	32
@@ -41,22 +43,22 @@ struct gpiosim_softc {
 	struct sysctllog	*sc_log;
 };
 
-int	gpiosim_match(device_t, cfdata_t, void *);
-void	gpiosimattach(int);
-void	gpiosim_attach(device_t, device_t, void *);
-int	gpiosim_detach(device_t, int);
-int	gpiosim_sysctl(SYSCTLFN_PROTO);
+static int	gpiosim_match(device_t, cfdata_t, void *);
+void		gpiosimattach(int);
+static void	gpiosim_attach(device_t, device_t, void *);
+static int	gpiosim_detach(device_t, int);
+static int	gpiosim_sysctl(SYSCTLFN_PROTO);
 
-int	gpiosim_pin_read(void *, int);
-void	gpiosim_pin_write(void *, int, int);
-void	gpiosim_pin_ctl(void *, int, int);
+static int	gpiosim_pin_read(void *, int);
+static void	gpiosim_pin_write(void *, int, int);
+static void	gpiosim_pin_ctl(void *, int, int);
 
 CFATTACH_DECL_NEW(gpiosim, sizeof(struct gpiosim_softc), gpiosim_match,
     gpiosim_attach, gpiosim_detach, NULL);
 
 extern struct cfdriver gpiosim_cd;
 
-int
+static int
 gpiosim_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
@@ -82,7 +84,7 @@ gpiosimattach(int num)
 	}
 }
 
-void
+static void
 gpiosim_attach(device_t parent, device_t self, void *aux)
 {
 	struct gpiosim_softc *sc = device_private(self);
@@ -148,7 +150,7 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
 	sc->sc_gdev = config_found_ia(self, "gpiobus", &gba, gpiobus_print);
 }
 
-int
+static int
 gpiosim_detach(device_t self, int flags)
 {
 	struct gpiosim_softc *sc = device_private(self);
@@ -165,7 +167,7 @@ gpiosim_detach(device_t self, int flags)
 	return 0;
 }
 
-int
+static int
 gpiosim_sysctl(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
@@ -186,7 +188,7 @@ gpiosim_sysctl(SYSCTLFN_ARGS)
 	return 0;
 }
 
-int
+static int
 gpiosim_pin_read(void *arg, int pin)
 {
 	struct gpiosim_softc *sc = arg;
@@ -197,7 +199,7 @@ gpiosim_pin_read(void *arg, int pin)
 		return GPIO_PIN_LOW;
 }
 
-void
+static void
 gpiosim_pin_write(void *arg, int pin, int value)
 {
 	struct gpiosim_softc *sc = arg;
@@ -208,10 +210,87 @@ gpiosim_pin_write(void *arg, int pin, int value)
 		sc->sc_state |= (1 << pin);
 }
 
-void
+static void
 gpiosim_pin_ctl(void *arg, int pin, int flags)
 {
 	struct gpiosim_softc *sc = arg;
 
 	sc->sc_gpio_pins[pin].pin_flags = flags;
 }
+
+#ifdef _MODULE
+MODULE(MODULE_CLASS_DRIVER, gpiosim, "gpio");
+
+static const struct cfiattrdata gpiobus_iattrdata = {
+	"gpiobus", 0, { { NULL, NULL, 0 },}
+};
+static const struct cfiattrdata *const gpiosim_attrs[] = {
+	&gpiobus_iattrdata, NULL
+};
+CFDRIVER_DECL(gpiosim, DV_DULL, gpiosim_attrs);
+extern struct cfattach gpiosim_ca;
+static int gpiosimloc[] = {
+	-1,
+	-1,
+	-1
+};
+static struct cfdata gpiosim_cfdata[] = {
+	{
+		.cf_name = "gpiosim",
+		.cf_atname = "gpiosim",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = gpiosimloc,
+		.cf_flags = 0,
+		.cf_pspec = NULL,
+	},
+	{ NULL }
+};
+
+static int
+gpiosim_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_cfdriver_attach(&gpiosim_cd);
+		if (error)
+			return error;
+
+		error = config_cfattach_attach(gpiosim_cd.cd_name,
+		    &gpiosim_ca);
+		if (error) {
+			config_cfdriver_detach(&gpiosim_cd);
+			aprint_error("%s: unable to register cfattach\n",
+				gpiosim_cd.cd_name);
+			return error;
+		}
+
+		error = config_cfdata_attach(gpiosim_cfdata, 1);
+		if (error) {
+			config_cfattach_detach(gpiosim_cd.cd_name,
+			    &gpiosim_ca);
+			config_cfdriver_detach(&gpiosim_cd);
+			aprint_error("%s: unable to register cfdata\n",
+				gpiosim_cd.cd_name);
+			return error;
+		}
+		(void)config_attach_pseudo(gpiosim_cfdata);
+		return 0;
+	case MODULE_CMD_FINI:
+		error = config_cfdata_detach(gpiosim_cfdata);
+		if (error)
+			return error;
+
+		config_cfattach_detach(gpiosim_cd.cd_name, &gpiosim_ca);
+		config_cfdriver_detach(&gpiosim_cd);
+		return 0;
+	case MODULE_CMD_AUTOUNLOAD:
+		/* no auto-unload */
+		return EBUSY;
+	default:
+		return ENOTTY;
+	}
+}
+#endif
