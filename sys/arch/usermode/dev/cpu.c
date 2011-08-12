@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.11 2011/08/12 11:37:04 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.12 2011/08/12 12:59:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11 2011/08/12 11:37:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2011/08/12 12:59:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -323,8 +323,12 @@ cpu_rootconf(void)
 {
 	device_t rdev;
 
-	rdev = device_find_by_xname("md0");
+	rdev = device_find_by_xname("ld0");
+	if (rdev == NULL)
+		rdev = device_find_by_xname("md0");
 
+	aprint_normal("boot device: %s\n",
+	    rdev ? device_xname(rdev) : "<unknown>");
 	setroot(rdev, 0);
 }
 
