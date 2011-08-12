@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.8 2011/08/12 00:57:23 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.9 2011/08/12 11:22:11 jmcneill Exp $
 
 MACHINE_ARCH=			usermode
 USETOOLS?=			no
@@ -45,6 +45,12 @@ NVFLAGS=	-n
 ##
 ## (6) port specific target dependencies
 ##
+
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	@rm -f i386 && \
+		ln -s $S/arch/i386/include i386
+.endif
 
 thunk.o: ${USERMODE}/usermode/thunk.c
 	${CC} ${COPTS} -I${.CURDIR} -c -o $@ ${USERMODE}/usermode/thunk.c
