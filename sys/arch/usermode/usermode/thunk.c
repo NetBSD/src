@@ -1,7 +1,7 @@
-/* $NetBSD: cpu.h,v 1.5 2011/08/12 00:57:24 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.1 2011/08/12 00:57:24 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,60 +26,85 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARCH_USERMODE_INCLUDE_CPU_H
-#define _ARCH_USERMODE_INCLUDE_CPU_H
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: thunk.c,v 1.1 2011/08/12 00:57:24 jmcneill Exp $");
 
-#include <sys/device.h>
-#include <sys/cpu_data.h>
-
-#include <machine/intrdefs.h>
 #include <machine/thunk.h>
 
-extern void	cpu_signotify(struct lwp *);
-extern void	cpu_need_proftick(struct lwp *);
+#include <assert.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <ucontext.h>
 
-struct cpu_info {
-	device_t	ci_dev;
-	struct cpu_info	*ci_self;
-	struct cpu_info	*ci_next;
-	struct cpu_data	ci_data;
-	u_int		ci_cpuid;
-	int		ci_want_resched;
-	volatile int	ci_mtx_count;
-	volatile int	ci_mtx_oldspl;
-	lwp_t		*ci_curlwp;
-	lwp_t		*ci_stash;
-};
-
-__inline static struct cpu_info * __attribute__((__unused__))
-usermode_curcpu(void)
+int
+thunk_setitimer(int which, const struct itimerval *value,
+    struct itimerval *ovalue)
 {
-	extern struct cpu_info cpu_info_primary;
-
-	return &cpu_info_primary;
+	return setitimer(which, value, ovalue);
 }
 
-__inline static void
-usermode_delay(unsigned int ms)
+int
+thunk_gettimeofday(struct timeval *tp, void *tzp)
 {
-	thunk_usleep(ms);
+	return gettimeofday(tp, tzp);
 }
 
-#define	curcpu()	usermode_curcpu()
-#define cpu_number()	0
+int
+thunk_usleep(useconds_t microseconds)
+{
+	return usleep(microseconds);
+}
 
-#define cpu_proc_fork(p1, p2)
+void
+thunk_exit(int status)
+{
+	return exit(status);
+}
 
-#define delay(ms)	usermode_delay(ms)
-#define DELAY(ms)	usermode_delay(ms)
+void
+thunk_abort(void)
+{
+	abort();
+}
 
-/* XXXJDM */
-struct clockframe {
-	uint8_t cf_dummy;
-};
+int
+thunk_getcontext(ucontext_t *ucp)
+{
+	return getcontext(ucp);
+}
 
-#define CLKF_USERMODE(frame)	0
-#define CLKF_PC(frame)		0
-#define CLKF_INTR(frame)	0
+int
+thunk_setcontext(const ucontext_t *ucp)
+{
+	return setcontext(ucp);
+}
 
-#endif /* !_ARCH_USERMODE_INCLUDE_CPU_H */
+void
+thunk_makecontext(ucontext_t *ucp, void (*func)(), int argc,
+    void (*arg1)(void *), void *arg2)
+{
+	assert(argc == 2);
+
+	makecontext(ucp, func, argc, arg1, arg2);
+}
+
+int
+thunk_swapcontext(ucontext_t *oucp, ucontext_t *ucp)
+{
+	return swapcontext(oucp, ucp);
+}
+
+int
+thunk_getchar(void)
+{
+	return getchar();
+}
+
+void
+thunk_putchar(int c)
+{
+	putchar(c);
+	fflush(stdout);
+}

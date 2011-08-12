@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.7 2011/08/11 22:38:25 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.8 2011/08/12 00:57:23 jmcneill Exp $
 
 MACHINE_ARCH=			usermode
 USETOOLS?=			no
@@ -18,6 +18,8 @@ DEFCOPTS=	-O2 -fno-omit-frame-pointer
 CPPFLAGS+=	-Dusermode
 CPPFLAGS.init_main.c+=	-Dmain=kernmain
 
+CPPFLAGS.thunk.c+=	-U_KERNEL -I/usr/include
+
 ##
 ## (3) libkern and compat
 ##
@@ -27,14 +29,14 @@ COMPAT_AS=	obj
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
-MD_OBJS=
-MD_CFILES=
+MD_OBJS=	thunk.o
+MD_CFILES=	${USERMODE}/usermode/thunk.c
 MD_SFILES=
 
 ##
 ## (5) link settings
 ##
-SYSTEM_LD=	@${_MKSHMSG} "   link  ${.CUTDIR:T}/${.TARGET}"; \
+SYSTEM_LD=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${CC} ${COPTS} -Wl,-Map,$@.map -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
 		${CC} ${COPTS} -Wl,-Map,$@.map -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
@@ -43,6 +45,9 @@ NVFLAGS=	-n
 ##
 ## (6) port specific target dependencies
 ##
+
+thunk.o: ${USERMODE}/usermode/thunk.c
+	${CC} ${COPTS} -I${.CURDIR} -c -o $@ ${USERMODE}/usermode/thunk.c
 
 ##
 ## (7) misc settings

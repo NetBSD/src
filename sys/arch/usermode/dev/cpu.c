@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.9 2011/08/11 23:04:44 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.10 2011/08/12 00:57:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2011/08/11 23:04:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2011/08/12 00:57:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2011/08/11 23:04:44 jmcneill Exp $");
 #include <machine/cpu.h>
 #include <machine/mainbus.h>
 #include <machine/pcb.h>
+#include <machine/thunk.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
@@ -90,7 +91,7 @@ cpu_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_ci->ci_self = &cpu_info_primary;
 	sc->sc_ci->ci_curlwp = &lwp0;
 
-	if (getcontext(&lwp0pcb))
+	if (thunk_getcontext(&lwp0pcb))
 		panic("getcontext failed");
 	uvm_lwp_setuarea(&lwp0, (vaddr_t)&lwp0pcb);
 }
@@ -107,13 +108,10 @@ cpu_configure(void)
 void
 cpu_reboot(int howto, char *bootstr)
 {
-	extern void exit(int);
-	extern void abort(void);
-
 	splhigh();
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN)
-		exit(0);
+		thunk_exit(0);
 
 	if (howto & RB_HALT) {
 		printf("\n");
@@ -129,7 +127,7 @@ cpu_reboot(int howto, char *bootstr)
 	/*
 	 * XXXJDM If we've panic'd, make sure we dump a core
 	 */
-	abort();
+	thunk_abort();
 
 	/* NOTREACHED */
 }
@@ -176,10 +174,10 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	ci->ci_stash = oldlwp;
 	curlwp = newlwp;
 	if (oldpcb) {
-		if (swapcontext(&oldpcb->pcb_ucp, &newpcb->pcb_ucp))
+		if (thunk_swapcontext(&oldpcb->pcb_ucp, &newpcb->pcb_ucp))
 			panic("swapcontext failed: %d", errno);
 	} else {
-		if (setcontext(&newpcb->pcb_ucp))
+		if (thunk_setcontext(&newpcb->pcb_ucp))
 			panic("setcontext failed: %d", errno);
 	}
 
@@ -225,14 +223,13 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 void
 cpu_idle(void)
 {
-	extern int usleep(useconds_t);
 	struct cpu_info *ci = curcpu();
 
 	if (ci->ci_want_resched)
 		return;
 
 #if notyet
-	usleep(10000);
+	thunk_usleep(10000);
 #endif
 }
 
@@ -294,13 +291,13 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	} else
 		pcb->pcb_needfree = false;
 
-	if (getcontext(&pcb->pcb_ucp))
+	if (thunk_getcontext(&pcb->pcb_ucp))
 		panic("getcontext failed: %d", errno);
 	pcb->pcb_ucp.uc_stack.ss_sp = stack;
 	pcb->pcb_ucp.uc_stack.ss_size = stacksize;
 	pcb->pcb_ucp.uc_link = NULL;
 	pcb->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU;
-	makecontext(&pcb->pcb_ucp, (void (*)(void))cpu_lwp_trampoline,
+	thunk_makecontext(&pcb->pcb_ucp, (void (*)(void))cpu_lwp_trampoline,
 	    2, func, arg);
 }
 

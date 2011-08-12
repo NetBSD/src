@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.2 2009/10/21 16:06:59 snj Exp $ */
+/* $NetBSD: pcb.h,v 1.3 2011/08/12 00:57:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,11 +31,6 @@
 
 #include <sys/cdefs.h>
 #include <sys/ucontext.h>
-
-extern int	getcontext(ucontext_t *);
-extern int	setcontext(const ucontext_t *);
-extern void	makecontext(ucontext_t *, void (*)(void), int, ...);
-extern int	swapcontext(ucontext_t *, const ucontext_t *);
 
 struct pcb {
 	ucontext_t	pcb_ucp;

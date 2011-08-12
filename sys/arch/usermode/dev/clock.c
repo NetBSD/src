@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.5 2011/08/10 01:32:44 jmcneill Exp $ */
+/* $NetBSD: clock.c,v 1.6 2011/08/12 00:57:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2011/08/10 01:32:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2011/08/12 00:57:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2011/08/10 01:32:44 jmcneill Exp $");
 #include <sys/time.h>
 
 #include <machine/mainbus.h>
+#include <machine/thunk.h>
 
 static int	clock_match(device_t, cfdata_t, void *);
 static void	clock_attach(device_t, device_t, void *);
@@ -47,8 +48,6 @@ static u_int	clock_getcounter(struct timecounter *);
 typedef struct clock_softc {
 	device_t	sc_dev;
 } clock_softc_t;
-
-extern int	setitimer(int, const struct itimerval *, struct itimerval *);
 
 static struct timecounter clock_timecounter = {
 	clock_getcounter,	/* get_timecount */
@@ -91,7 +90,7 @@ clock_attach(device_t parent, device_t self, void *opaque)
 	itimer.it_interval.tv_sec = 0;
 	itimer.it_interval.tv_usec = 10000;
 	itimer.it_value = itimer.it_interval;
-	(void)setitimer(ITIMER_REAL, &itimer, NULL);
+	thunk_setitimer(ITIMER_REAL, &itimer, NULL);
 
 	tc_init(&clock_timecounter);
 }
@@ -114,9 +113,8 @@ clock_intr(int notused)
 static u_int
 clock_getcounter(struct timecounter *tc)
 {
-	extern int gettimeofday(struct timeval *, void *);
 	struct timeval tv;
 
-	gettimeofday(&tv, NULL);
+	thunk_gettimeofday(&tv, NULL);
 	return tv.tv_sec * 1000000 + tv.tv_usec;
 }
