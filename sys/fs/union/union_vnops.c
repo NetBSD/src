@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.44 2011/08/12 14:36:29 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.45 2011/08/12 17:41:17 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.44 2011/08/12 14:36:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.45 2011/08/12 17:41:17 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1235,13 +1235,7 @@ union_link(void *v)
 
 	dun = VTOUNION(ap->a_dvp);
 
-#ifdef DIAGNOSTIC
-	if (!(ap->a_cnp->cn_flags & LOCKPARENT)) {
-		printf("union_link called without LOCKPARENT set!\n");
-		error = EIO; /* need some error code for "caller is a bozo" */
-	} else
-#endif
-
+	KASSERT((ap->a_cnp->cn_flags & LOCKPARENT) != 0);
 
 	if (ap->a_dvp->v_op != ap->a_vp->v_op) {
 		vp = ap->a_vp;
@@ -1680,17 +1674,6 @@ union_lock(void *v)
 		flags = (flags & ~LK_SHARED) | LK_EXCLUSIVE;
 	}
 
-	/*
-	 * Need to do real lockmgr-style locking here.
-	 * in the mean time, draining won't work quite right,
-	 * which could lead to a few race conditions.
-	 * the following test was here, but is not quite right, we
-	 * still need to take the lock:
-	if ((flags & LK_TYPE_MASK) == LK_DRAIN)
-		return (0);
-	 */
-
-	un = VTOUNION(vp);
 start:
 	un = VTOUNION(vp);
 
@@ -1718,22 +1701,14 @@ start:
 
 	/* XXX ignores LK_NOWAIT */
 	if (un->un_flags & UN_LOCKED) {
-#ifdef DIAGNOSTIC
-		if (curproc && un->un_pid == curproc->p_pid &&
-			    un->un_pid > -1 && curproc->p_pid > -1)
-			panic("union: locking against myself");
-#endif
+		KASSERT(curlwp == NULL || un->un_lwp == NULL ||
+		    un->un_lwp != curlwp);
 		un->un_flags |= UN_WANTED;
 		tsleep(&un->un_flags, PINOD, "unionlk2", 0);
 		goto start;
 	}
 
-#ifdef DIAGNOSTIC
-	if (curproc)
-		un->un_pid = curproc->p_pid;
-	else
-		un->un_pid = -1;
-#endif
+	un->un_lwp = curlwp;
 
 	un->un_flags |= UN_LOCKED;
 	return (0);
@@ -1759,13 +1734,9 @@ union_unlock(void *v)
 	} */ *ap = v;
 	struct union_node *un = VTOUNION(ap->a_vp);
 
-#ifdef DIAGNOSTIC
-	if ((un->un_flags & UN_LOCKED) == 0)
-		panic("union: unlock unlocked node");
-	if (curproc && un->un_pid != curproc->p_pid &&
-			curproc->p_pid > -1 && un->un_pid > -1)
-		panic("union: unlocking other process's union node");
-#endif
+	KASSERT((un->un_flags & UN_LOCKED) != 0);
+	KASSERT(curlwp == NULL || un->un_lwp == NULL ||
+	    un->un_lwp == curlwp);
 
 	un->un_flags &= ~UN_LOCKED;
 
@@ -1779,9 +1750,7 @@ union_unlock(void *v)
 		wakeup( &un->un_flags);
 	}
 
-#ifdef DIAGNOSTIC
-	un->un_pid = 0;
-#endif
+	un->un_lwp = NULL;
 
 	return (0);
 }
@@ -1895,15 +1864,9 @@ union_strategy(void *v)
 	struct vnode *ovp = OTHERVP(ap->a_vp);
 	struct buf *bp = ap->a_bp;
 
-#ifdef DIAGNOSTIC
-	if (ovp == NULLVP)
-		panic("union_strategy: nil vp");
-	if (!NODE_IS_SPECIAL(ovp)) {
-		if (((bp->b_flags & B_READ) == 0) &&
-		    (ovp == LOWERVP(bp->b_vp)))
-			panic("union_strategy: writing to lowervp");
-	}
-#endif
+	KASSERT(ovp != NULLVP);
+	if (!NODE_IS_SPECIAL(ovp))
+		KASSERT((bp->b_flags & B_READ) || ovp != LOWERVP(bp->b_vp));
 
 	return (VOP_STRATEGY(ovp, bp));
 }
@@ -1918,15 +1881,9 @@ union_bwrite(void *v)
 	struct vnode *ovp = OTHERVP(ap->a_vp);
 	struct buf *bp = ap->a_bp;
 
-#ifdef DIAGNOSTIC
-	if (ovp == NULLVP)
-		panic("union_bwrite: nil vp");
-	if (!NODE_IS_SPECIAL(ovp)) {
-		if (((bp->b_flags & B_READ) == 0) &&
-		    (ovp == LOWERVP(bp->b_vp)))
-			panic("union_strategy: writing to lowervp");
-	}
-#endif
+	KASSERT(ovp != NULLVP);
+	if (!NODE_IS_SPECIAL(ovp))
+		KASSERT((bp->b_flags & B_READ) || ovp != LOWERVP(bp->b_vp));
 
 	return (VOP_BWRITE(ovp, bp));
 }

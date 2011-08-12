@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.19 2011/08/07 06:01:51 hannken Exp $	*/
+/*	$NetBSD: union.h,v 1.20 2011/08/12 17:41:17 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -121,7 +121,7 @@ struct union_node {
 	struct vnode		**un_dircache;	/* cached union stack */
 	off_t			un_uppersz;	/* size of upper object */
 	off_t			un_lowersz;	/* size of lower object */
-	pid_t			un_pid;		/* DIAGNOSTIC only */
+	lwp_t			*un_lwp;		/* DIAGNOSTIC only */
 };
 
 #define UN_WANTED	0x01

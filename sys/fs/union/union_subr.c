@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.47 2011/08/12 06:40:10 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.48 2011/08/12 17:41:17 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.47 2011/08/12 06:40:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.48 2011/08/12 17:41:17 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -437,13 +437,9 @@ loop:
 			 * the lock on (uppervp) no other
 			 * process can hold the lock on (un).
 			 */
-#ifdef DIAGNOSTIC
-			if ((un->un_flags & UN_LOCKED) == 0)
-				panic("union: . not locked");
-			else if (curproc && un->un_pid != curproc->p_pid &&
-				    un->un_pid > -1 && curproc->p_pid > -1)
-				panic("union: allocvp not lock owner");
-#endif
+			KASSERT((un->un_flags & UN_LOCKED) != 0);
+			KASSERT(curlwp == NULL || un->un_lwp == NULL ||
+			    un->un_lwp == curlwp);
 		} else {
 			if (un->un_flags & UN_LOCKED) {
 				vrele(UNIONTOV(un));
@@ -454,12 +450,7 @@ loop:
 			}
 			un->un_flags |= UN_LOCKED;
 
-#ifdef DIAGNOSTIC
-			if (curproc)
-				un->un_pid = curproc->p_pid;
-			else
-				un->un_pid = -1;
-#endif
+			un->un_lwp = curlwp;
 		}
 
 		/*
@@ -588,12 +579,7 @@ loop:
 
 	if (un->un_uppervp)
 		un->un_flags |= UN_ULOCK;
-#ifdef DIAGNOSTIC
-	if (curproc)
-		un->un_pid = curproc->p_pid;
-	else
-		un->un_pid = -1;
-#endif
+	un->un_lwp = curlwp;
 	if (dvp && cnp && (lowervp != NULLVP)) {
 		un->un_hash = cnp->cn_hash;
 		un->un_path = malloc(cnp->cn_namelen+1, M_TEMP, M_WAITOK);
