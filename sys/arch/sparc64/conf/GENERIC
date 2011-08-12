@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.143 2011/08/07 14:00:08 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.144 2011/08/12 06:55:45 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.143 $"
+#ident 		"GENERIC-$Revision: 1.144 $"
 
 maxusers	64
 
@@ -860,6 +860,7 @@ btsco* at bthub?
 audiocs*	at sbus? slot ? offset ?	# SUNW,CS4231
 audiocs*	at ebus?			# SUNW,CS4231 in U5/U10
 autri*		at pci? dev ? function ?	# Blade 100 'sound'
+auacer*		at pci? dev ? function ?	# Ultra45
 
 audio*		at audiobus?
 
