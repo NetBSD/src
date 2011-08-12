@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.8 2011/07/13 04:47:16 dyoung Exp $	*/
+/*	$NetBSD: pio.h,v 1.9 2011/08/12 22:22:49 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define	_ALPHA_PIO_H_
 
 #include <sys/cdefs.h>
-#include <machine/bus_defs.h>
+#include <machine/bus_user.h>
 
 #ifdef _KERNEL
 #error This file is for userspace only.

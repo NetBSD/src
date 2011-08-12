@@ -1,4 +1,4 @@
-/* $NetBSD: bus_defs.h,v 1.1 2011/07/01 17:09:58 dyoung Exp $ */
+/* $NetBSD: bus_defs.h,v 1.2 2011/08/12 22:22:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -61,16 +61,12 @@
 #define	_ALPHA_BUS_DEFS_H_
 
 #include <sys/types.h>
+#include <machine/bus_user.h>
+
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdbool.h>
 #endif
 #include <sys/stdint.h>
-
-/*
- * Addresses (in bus space).
- */
-typedef u_long bus_addr_t;
-typedef u_long bus_size_t;
 
 #ifdef _KERNEL
 
@@ -243,25 +239,7 @@ struct alpha_bus_space {
 			    bus_space_handle_t, bus_size_t, bus_size_t);
 };
 
-/*
- * Translation of an Alpha bus address; INTERNAL USE ONLY.
- */
-struct alpha_bus_space_translation {
-	bus_addr_t	abst_bus_start;	/* start of bus window */
-	bus_addr_t	abst_bus_end;	/* end of bus window */
-	paddr_t		abst_sys_start;	/* start of sysBus window */
-	paddr_t		abst_sys_end;	/* end of sysBus window */
-	int		abst_addr_shift;/* address shift */
-	int		abst_size_shift;/* size shift */
-	int		abst_flags;	/* flags; see below */
-};
-
-#define	ABST_BWX		0x01	/* use BWX to access the bus */
-#define	ABST_DENSE		0x02	/* space is dense */
-
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
-#define	BUS_SPACE_MAP_LINEAR		0x02
-#define	BUS_SPACE_MAP_PREFETCHABLE     	0x04
 
 #ifdef _KERNEL
 

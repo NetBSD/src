@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.62 2011/08/07 02:18:56 mrg Exp $
+# $NetBSD: md.alpha,v 1.63 2011/08/12 22:22:49 dyoung Exp $
 ./usr/include/alpha				comp-c-include
 ./usr/include/alpha/_G_config.h			comp-obsolete		obsolete
 ./usr/include/alpha/alpha_cpu.h			comp-c-include
@@ -9,6 +9,7 @@
 ./usr/include/alpha/autoconf.h			comp-c-include
 ./usr/include/alpha/bswap.h			comp-c-include
 ./usr/include/alpha/bus.h			comp-c-include		obsolete
+./usr/include/alpha/bus_user.h			comp-c-include
 ./usr/include/alpha/bwx.h			comp-c-include
 ./usr/include/alpha/cdefs.h			comp-c-include
 ./usr/include/alpha/cfbreg.h			comp-c-include
