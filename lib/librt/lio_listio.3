@@ -1,4 +1,4 @@
-.\" $NetBSD: lio_listio.3,v 1.4 2011/08/12 21:18:51 apb Exp $
+.\" $NetBSD: lio_listio.3,v 1.5 2011/08/12 23:40:43 wiz Exp $
 .\"
 .\" Copyright (c) 2003 Tim J. Robbins
 .\" All rights reserved.
@@ -120,9 +120,8 @@ The
 function will fail if:
 .Bl -tag -width Er
 .It Bq Er EAGAIN
-There are not enough resources to enqueue the requests.
-.It Bq Er EAGAIN
-The request would cause the system-wide limit
+There are not enough resources to enqueue the requests; or
+the request would cause the system-wide limit
 .Dv AIO_MAX
 to be exceeded.
 .It Bq Er EINTR
