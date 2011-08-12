@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.21 2011/03/06 08:28:10 tteras Exp $	*/
+/*	$NetBSD: privsep.c,v 1.21.2.1 2011/08/12 05:46:06 tteras Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -67,6 +67,7 @@
 #include "admin.h"
 #include "sockmisc.h"
 #include "privsep.h"
+#include "session.h"
 
 static int privsep_sock[2] = { -1, -1 };
 
@@ -193,6 +194,13 @@ privsep_recv(sock, bufp, lenp)
 	return 0;
 }
 
+static int
+privsep_do_exit(void *ctx, int fd)
+{
+	kill(getpid(), SIGTERM);
+	return 0;
+}
+
 int
 privsep_init(void)
 {
@@ -273,6 +281,7 @@ privsep_init(void)
 			    strerror(errno));
 			return -1;
 		}
+		monitor_fd(privsep_sock[1], privsep_do_exit, NULL, 0);
 
 		return 0;
 		break;
