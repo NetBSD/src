@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.261 2010/03/28 20:46:18 snj Exp $ */
+/*	$NetBSD: wdc.c,v 1.262 2011/08/13 16:02:48 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.261 2010/03/28 20:46:18 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.262 2011/08/13 16:02:48 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -880,6 +880,7 @@ wdcintr(void *arg)
 	}
 #endif
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
+	KASSERT(xfer->c_intr != NULL);
 	ret = xfer->c_intr(chp, xfer, 1);
 	if (ret == 0) /* irq was not for us, still waiting for irq */
 		chp->ch_flags |= ATACH_IRQ_WAIT;
@@ -1332,6 +1333,7 @@ wdctimeout(void *arg)
 		callout_reset(&chp->ch_callout, hz, wdctimeout, chp);
 		xfer->c_flags |= C_TIMEOU;
 		chp->ch_flags &= ~ATACH_IRQ_WAIT;
+		KASSERT(xfer->c_intr != NULL);
 		xfer->c_intr(chp, xfer, 1);
 	} else
 		__wdcerror(chp, "missing untimeout");
