@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.708 2011/08/11 18:11:17 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.709 2011/08/13 12:09:38 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.708 2011/08/11 18:11:17 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.709 2011/08/13 12:09:38 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1194,8 +1194,10 @@ initgdt(union descriptor *tgdt)
 		npte = pmap_pa2pte((vaddr_t)gdt - KERNBASE);
 		npte |= PG_RO | pg_nx | PG_V;
 
+		xpq_queue_lock();
 		xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
 		xpq_flush_queue();
+		xpq_queue_unlock();
 	}
 
 	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
