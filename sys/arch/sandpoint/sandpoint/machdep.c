@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 2011/06/20 07:18:07 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58 2011/08/13 21:04:05 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2011/06/20 07:18:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2011/08/13 21:04:05 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -420,7 +420,7 @@ module_init_md(void)
 	while (bi < biend) {
 		printf("module %s at 0x%08x size %x\n", 
 		    bi->kmod, bi->base, bi->len);
-		/* module_prime((void *)bi->base, bi->len); */
+		/* module_prime(bi->kmod, (void *)bi->base, bi->len); */
 		bi += 1;
 	}
 }
