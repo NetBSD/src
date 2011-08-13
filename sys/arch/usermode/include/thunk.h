@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.4 2011/08/13 10:33:52 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.5 2011/08/13 12:06:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,6 +39,8 @@
 
 int	thunk_setitimer(int, const struct itimerval *, struct itimerval *);
 int	thunk_gettimeofday(struct timeval *, void *);
+int	thunk_clock_gettime(clockid_t, struct timespec *);
+int	thunk_clock_getres(clockid_t, struct timespec *);
 int	thunk_usleep(useconds_t);
 
 void	thunk_exit(int);
