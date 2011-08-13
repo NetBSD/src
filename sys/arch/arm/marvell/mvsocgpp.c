@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocgpp.c,v 1.2 2011/01/24 21:07:28 jakllsch Exp $	*/
+/*	$NetBSD: mvsocgpp.c,v 1.3 2011/08/13 15:38:47 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsocgpp.c,v 1.2 2011/01/24 21:07:28 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsocgpp.c,v 1.3 2011/08/13 15:38:47 jakllsch Exp $");
 
 #include "gpio.h"
 
@@ -284,10 +284,11 @@ gpio_pic_find_pending_irqs(struct pic_softc *pic)
 	pending &= (0xff << mvsocgpp_pic->group);
 	pending &= (MVSOCGPP_READ(sc, MVSOCGPP_GPIOIM(pin)) |
 		    MVSOCGPP_READ(sc, MVSOCGPP_GPIOILM(pin)));
+
 	if (pending == 0)
 		return 0;
-	pic_mark_pending_sources(pic, 0, pending);
-	return 1;
+
+	return pic_mark_pending_sources(pic, 0, pending);
 }
 
 static void
