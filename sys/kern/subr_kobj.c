@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.43 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.44 2011/08/13 21:04:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.43 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.44 2011/08/13 21:04:06 christos Exp $");
 
 #include "opt_modular.h"
 
@@ -82,7 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.43 2011/07/17 20:54:52 joerg Exp $")
 
 static int	kobj_relocate(kobj_t, bool);
 static int	kobj_checksyms(kobj_t, bool);
-static void	kobj_error(const char *, ...);
+static void	kobj_error(const char *, int, kobj_t, const char *, ...)
+    __printflike(4, 5);
 static void	kobj_jettison(kobj_t);
 static void	kobj_free(kobj_t, void *, size_t);
 static void	kobj_close(kobj_t);
@@ -98,7 +99,7 @@ extern struct vm_map *module_map;
  *	the complete size of the object is known.
  */
 int
-kobj_load_mem(kobj_t *kop, void *base, ssize_t size)
+kobj_load_mem(kobj_t *kop, const char *name, void *base, ssize_t size)
 {
 	kobj_t ko;
 
@@ -108,6 +109,7 @@ kobj_load_mem(kobj_t *kop, void *base, ssize_t size)
 	}
 
 	ko->ko_type = KT_MEMORY;
+	kobj_setname(ko, name);
 	ko->ko_source = base;
 	ko->ko_memsize = size;
 	ko->ko_read = kobj_read_mem;
@@ -176,22 +178,26 @@ kobj_load(kobj_t ko)
 	 * Read the elf header from the file.
 	 */
 	error = ko->ko_read(ko, (void **)&hdr, sizeof(*hdr), 0, true);
-	if (error != 0)
+	if (error != 0) {
+		kobj_error(__func__, __LINE__, ko, "read failed %d", error);
 		goto out;
+	}
 	if (memcmp(hdr->e_ident, ELFMAG, SELFMAG) != 0) {
-		kobj_error("not an ELF object");
+		kobj_error(__func__, __LINE__, ko, "not an ELF object");
 		error = ENOEXEC;
 		goto out;
 	}
 
 	if (hdr->e_ident[EI_VERSION] != EV_CURRENT ||
 	    hdr->e_version != EV_CURRENT) {
-		kobj_error("unsupported file version");
+		kobj_error(__func__, __LINE__, ko,
+		    "unsupported file version %d", hdr->e_ident[EI_VERSION]);
 		error = ENOEXEC;
 		goto out;
 	}
 	if (hdr->e_type != ET_REL) {
-		kobj_error("unsupported file type");
+		kobj_error(__func__, __LINE__, ko, "unsupported file type %d",
+		    hdr->e_type);
 		error = ENOEXEC;
 		goto out;
 	}
@@ -204,7 +210,8 @@ kobj_load(kobj_t ko)
 #error not defined
 #endif
 	default:
-		kobj_error("unsupported machine");
+		kobj_error(__func__, __LINE__, ko, "unsupported machine %d",
+		    hdr->e_machine);
 		error = ENOEXEC;
 		goto out;
 	}
@@ -220,12 +227,14 @@ kobj_load(kobj_t ko)
 	ko->ko_shdrsz = hdr->e_shnum * hdr->e_shentsize;
 	if (ko->ko_shdrsz == 0 || hdr->e_shoff == 0 ||
 	    hdr->e_shentsize != sizeof(Elf_Shdr)) {
+		kobj_error(__func__, __LINE__, ko, "bad sizes");
 		error = ENOEXEC;
 		goto out;
 	}
 	error = ko->ko_read(ko, (void **)&shdr, ko->ko_shdrsz, hdr->e_shoff,
 	    true);
 	if (error != 0) {
+		kobj_error(__func__, __LINE__, ko, "read failed %d", error);
 		goto out;
 	}
 	ko->ko_shdr = shdr;
@@ -258,19 +267,21 @@ kobj_load(kobj_t ko)
 		}
 	}
 	if (ko->ko_nprogtab == 0) {
-		kobj_error("file has no contents");
+		kobj_error(__func__, __LINE__, ko, "file has no contents");
 		error = ENOEXEC;
 		goto out;
 	}
 	if (nsym != 1) {
 		/* Only allow one symbol table for now */
-		kobj_error("file has no valid symbol table");
+		kobj_error(__func__, __LINE__, ko,
+		    "file has no valid symbol table");
 		error = ENOEXEC;
 		goto out;
 	}
 	if (symstrindex < 0 || symstrindex > hdr->e_shnum ||
 	    shdr[symstrindex].sh_type != SHT_STRTAB) {
-		kobj_error("file has invalid symbol strings");
+		kobj_error(__func__, __LINE__, ko,
+		    "file has invalid symbol strings");
 		error = ENOEXEC;
 		goto out;
 	}
@@ -283,6 +294,7 @@ kobj_load(kobj_t ko)
 		    sizeof(*ko->ko_progtab), KM_SLEEP);
 		if (ko->ko_progtab == NULL) {
 			error = ENOMEM;
+			kobj_error(__func__, __LINE__, ko, "out of memory");
 			goto out;
 		}
 	}
@@ -291,6 +303,7 @@ kobj_load(kobj_t ko)
 		    sizeof(*ko->ko_reltab), KM_SLEEP);
 		if (ko->ko_reltab == NULL) {
 			error = ENOMEM;
+			kobj_error(__func__, __LINE__, ko, "out of memory");
 			goto out;
 		}
 	}
@@ -299,11 +312,12 @@ kobj_load(kobj_t ko)
 		    sizeof(*ko->ko_relatab), KM_SLEEP);
 		if (ko->ko_relatab == NULL) {
 			error = ENOMEM;
+			kobj_error(__func__, __LINE__, ko, "out of memory");
 			goto out;
 		}
 	}
 	if (symtabindex == -1) {
-		kobj_error("lost symbol table index");
+		kobj_error(__func__, __LINE__, ko, "lost symbol table index");
 		goto out;
 	}
 
@@ -312,13 +326,14 @@ kobj_load(kobj_t ko)
 	 */
 	ko->ko_symcnt = shdr[symtabindex].sh_size / sizeof(Elf_Sym);
 	if (ko->ko_symcnt == 0) {
-		kobj_error("no symbol table");
+		kobj_error(__func__, __LINE__, ko, "no symbol table");
 		goto out;
 	}
 	error = ko->ko_read(ko, (void **)&ko->ko_symtab,
 	    ko->ko_symcnt * sizeof(Elf_Sym),
 	    shdr[symtabindex].sh_offset, true);
 	if (error != 0) {
+		kobj_error(__func__, __LINE__, ko, "read failed %d", error);
 		goto out;
 	}
 
@@ -327,12 +342,13 @@ kobj_load(kobj_t ko)
 	 */
 	ko->ko_strtabsz = shdr[symstrindex].sh_size;
 	if (ko->ko_strtabsz == 0) {
-		kobj_error("no symbol strings");
+		kobj_error(__func__, __LINE__, ko, "no symbol strings");
 		goto out;
 	}
 	error = ko->ko_read(ko, (void *)&ko->ko_strtab, ko->ko_strtabsz,
 	    shdr[symstrindex].sh_offset, true);
 	if (error != 0) {
+		kobj_error(__func__, __LINE__, ko, "read failed %d", error);
 		goto out;
 	}
 
@@ -342,6 +358,8 @@ kobj_load(kobj_t ko)
 	error = kobj_renamespace(ko->ko_symtab, ko->ko_symcnt,
 	    &ko->ko_strtab, &ko->ko_strtabsz);
 	if (error != 0) {
+		kobj_error(__func__, __LINE__, ko, "renamespace failed %d",
+		    error);
 		goto out;
 	}
 
@@ -355,6 +373,8 @@ kobj_load(kobj_t ko)
 		    shdr[hdr->e_shstrndx].sh_size,
 		    shdr[hdr->e_shstrndx].sh_offset, true);
 		if (error != 0) {
+			kobj_error(__func__, __LINE__, ko, "read failed %d",
+			    error);
 			goto out;
 		}
 	}
@@ -384,7 +404,7 @@ kobj_load(kobj_t ko)
 	 * can get the bounds and gdb can associate offsets with modules.
 	 */
 	if (mapsize == 0) {
-		kobj_error("no text/data/bss");
+		kobj_error(__func__, __LINE__, ko, "no text/data/bss");
 		goto out;
 	}
 	if (ko->ko_type == KT_MEMORY) {
@@ -393,6 +413,7 @@ kobj_load(kobj_t ko)
 		mapbase = uvm_km_alloc(module_map, round_page(mapsize),
 		    0, UVM_KMF_WIRED | UVM_KMF_EXEC);
 		if (mapbase == 0) {
+			kobj_error(__func__, __LINE__, ko, "out of memory");
 			error = ENOMEM;
 			goto out;
 		}
@@ -417,7 +438,8 @@ kobj_load(kobj_t ko)
 				addr = (void *)(shdr[i].sh_offset +
 				    (vaddr_t)ko->ko_source);
 				if (((vaddr_t)addr & alignmask) != 0) {
-					kobj_error("section %d not aligned\n",
+					kobj_error(__func__, __LINE__, ko,
+					    "section %d not aligned",
 					    i);
 					goto out;
 				}
@@ -433,12 +455,15 @@ kobj_load(kobj_t ko)
 				error = ko->ko_read(ko, &addr,
 				    shdr[i].sh_size, shdr[i].sh_offset, false);
 				if (error != 0) {
+					kobj_error(__func__, __LINE__, ko,
+					    "read failed %d", error);
 					goto out;
 				}
 			} else if (ko->ko_type == KT_MEMORY &&
 			    shdr[i].sh_size != 0) {
-			    	kobj_error("non-loadable BSS section in "
-			    	    "pre-loaded module");
+			    	kobj_error(__func__, __LINE__, ko,
+				    "non-loadable BSS "
+				    "section in pre-loaded module");
 				error = EINVAL;
 			    	goto out;
 			} else {
@@ -475,6 +500,8 @@ kobj_load(kobj_t ko)
 				    ko->ko_reltab[rl].size,
 				    shdr[i].sh_offset, true);
 				if (error != 0) {
+					kobj_error(__func__, __LINE__, ko,
+					    "read failed %d", error);
 					goto out;
 				}
 			}
@@ -493,6 +520,8 @@ kobj_load(kobj_t ko)
 				    shdr[i].sh_size,
 				    shdr[i].sh_offset, true);
 				if (error != 0) {
+					kobj_error(__func__, __LINE__, ko,
+					    "read failed %d", error);
 					goto out;
 				}
 			}
@@ -556,9 +585,9 @@ kobj_unload(kobj_t ko)
 	if (ko->ko_loaded) {
 		error = kobj_machdep(ko, (void *)ko->ko_address, ko->ko_size,
 		    false);
-		if (error != 0) {
-			kobj_error("machine dependent deinit failed");
-		}
+		if (error != 0)
+			kobj_error(__func__, __LINE__, ko,
+			    "machine dependent deinit failed %d", error);
 	}
 	if (ko->ko_address != 0 && ko->ko_type != KT_MEMORY) {
 		uvm_km_free(module_map, ko->ko_address, round_page(ko->ko_size),
@@ -618,7 +647,7 @@ kobj_affix(kobj_t ko, const char *name)
 	KASSERT(ko->ko_ksyms == false);
 	KASSERT(ko->ko_loaded == false);
 
-	strlcpy(ko->ko_name, name, sizeof(ko->ko_name));
+	kobj_setname(ko, name);
 
 	/* Cache addresses of undefined symbols. */
 	error = kobj_checksyms(ko, true);
@@ -649,9 +678,9 @@ kobj_affix(kobj_t ko, const char *name)
 	if (error == 0) {
 		error = kobj_machdep(ko, (void *)ko->ko_address, ko->ko_size,
 		    true);
-		if (error != 0) {
-			kobj_error("machine dependent init failed");
-		}
+		if (error != 0)
+			kobj_error(__func__, __LINE__, ko,
+			    "machine dependent init failed %d", error);
 		ko->ko_loaded = true;
 	}
 
@@ -758,7 +787,7 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx)
 	switch (ELF_ST_BIND(sym->st_info)) {
 	case STB_LOCAL:
 		/* Local, but undefined? huh? */
-		kobj_error("local symbol undefined");
+		kobj_error(__func__, __LINE__, ko, "local symbol undefined");
 		return 0;
 
 	case STB_GLOBAL:
@@ -767,14 +796,15 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx)
 
 		/* Force a lookup failure if the symbol name is bogus. */
 		if (*symbol == 0) {
-			kobj_error("bad symbol name");
+			kobj_error(__func__, __LINE__, ko, "bad symbol name");
 			return 0;
 		}
 
 		return (uintptr_t)sym->st_value;
 
 	case STB_WEAK:
-		kobj_error("weak symbols not supported\n");
+		kobj_error(__func__, __LINE__, ko,
+		    "weak symbols not supported");
 		return 0;
 
 	default:
@@ -834,7 +864,8 @@ kobj_checksyms(kobj_t ko, bool undefined)
 		if (ksyms_getval_unlocked(NULL, name, &rval,
 		    KSYMS_EXTERN) != 0) {
 			if (undefined) {
-				kobj_error("symbol `%s' not found", name);
+				kobj_error(__func__, __LINE__, ko,
+				    "symbol `%s' not found", name);
 				error = ENOEXEC;
 			}
 			continue;
@@ -862,7 +893,8 @@ kobj_checksyms(kobj_t ko, bool undefined)
 		    strncmp(name, "__stop_link_set_", 16)) {
 		    	continue;
 		}
-		kobj_error("global symbol `%s' redefined\n", name);
+		kobj_error(__func__, __LINE__, ko,
+		    "global symbol `%s' redefined", name);
 		error = ENOEXEC;
 	}
 
@@ -953,35 +985,35 @@ kobj_relocate(kobj_t ko, bool local)
  *	Utility function: log an error.
  */
 static void
-kobj_error(const char *fmt, ...)
+kobj_error(const char *fname, int lnum, kobj_t ko, const char *fmt, ...)
 {
 	va_list ap;
 
+	printf("%s, %d: [%s]: linker error: ", fname, lnum, ko->ko_name);
 	va_start(ap, fmt);
-	printf("WARNING: linker error: ");
 	vprintf(fmt, ap);
-	printf("\n");
 	va_end(ap);
+	printf("\n");
 }
 
 static int
 kobj_read_mem(kobj_t ko, void **basep, size_t size, off_t off,
-	bool allocate)
+    bool allocate)
 {
 	void *base = *basep;
 	int error;
 
 	if (ko->ko_memsize != -1 && off + size > ko->ko_memsize) {
-		kobj_error("kobj_read_mem: preloaded object short");
+		kobj_error(__func__, __LINE__, ko, "preloaded object short");
 		error = EINVAL;
 		base = NULL;
 	} else if (allocate) {
 		base = (uint8_t *)ko->ko_source + off;
 		error = 0;
 	} else if ((uint8_t *)base != (uint8_t *)ko->ko_source + off) {
-		kobj_error("kobj_read_mem: object not aligned");
-		kobj_error("source=%p base=%p off=%d size=%zd",
-		    ko->ko_source, base, (int)off, size);
+		kobj_error(__func__, __LINE__, ko, "object not aligned");
+		kobj_error(__func__, __LINE__, ko, "source=%p base=%p off=%d "
+		    "size=%zd", ko->ko_source, base, (int)off, size);
 		error = EINVAL;
 	} else {
 		/* Nothing to do.  Loading in-situ. */
@@ -1007,10 +1039,37 @@ kobj_free(kobj_t ko, void *base, size_t size)
 		kmem_free(base, size);
 }
 
+extern char module_base[];
+
+void
+kobj_setname(kobj_t ko, const char *name)
+{
+	const char *d = name, *dots = "";
+	size_t len, dlen;
+
+	for (char *s = module_base; *d == *s; d++, s++)
+		continue;
+
+	if (d == name)
+		name = "";
+	else
+		name = "%M";
+	dlen = strlen(d);
+	len = dlen + strlen(name);
+	if (len >= sizeof(ko->ko_name)) {
+		len = (len - sizeof(ko->ko_name)) + 5; /* dots + NUL */
+		if (dlen >= len) {
+			d += len;
+			dots = "/...";
+		}
+	}
+	snprintf(ko->ko_name, sizeof(ko->ko_name), "%s%s%s", name, dots, d);
+}
+
 #else	/* MODULAR */
 
 int
-kobj_load_mem(kobj_t *kop, void *base, ssize_t size)
+kobj_load_mem(kobj_t *kop, const char *name, void *base, ssize_t size)
 {
 
 	return ENOSYS;
@@ -1039,6 +1098,13 @@ kobj_affix(kobj_t ko, const char *name)
 
 int
 kobj_find_section(kobj_t ko, const char *name, void **addr, size_t *size)
+{
+
+	panic("not modular");
+}
+
+void
+kobj_setname(kobj_t ko, const char *name)
 {
 
 	panic("not modular");

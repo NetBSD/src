@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.79 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.80 2011/08/13 21:04:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.79 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.80 2011/08/13 21:04:06 christos Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1179,7 +1179,7 @@ module_do_unload(const char *name, bool load_requires_force)
  *	list.
  */
 int
-module_prime(void *base, size_t size)
+module_prime(const char *name, void *base, size_t size)
 {
 	module_t *mod;
 	int error;
@@ -1189,7 +1189,7 @@ module_prime(void *base, size_t size)
 		return ENOMEM;
 	}
 
-	error = kobj_load_mem(&mod->mod_kobj, base, size);
+	error = kobj_load_mem(&mod->mod_kobj, name, base, size);
 	if (error != 0) {
 		kmem_free(mod, sizeof(*mod));
 		module_error("unable to load object pushed by boot loader");
