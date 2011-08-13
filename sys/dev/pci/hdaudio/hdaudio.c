@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.12 2011/07/09 16:01:31 riastradh Exp $ */
+/* $NetBSD: hdaudio.c,v 1.13 2011/08/13 16:08:23 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.12 2011/07/09 16:01:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.13 2011/08/13 16:08:23 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -866,8 +866,16 @@ fail:
 int
 hdaudio_detach(struct hdaudio_softc *sc, int flags)
 {
+	int error;
+
 	/* Disable interrupts */
 	hdaudio_intr_disable(sc);
+
+	error = config_detach_children(sc->sc_dev, flags);
+	if (error != 0) {
+		hdaudio_intr_enable(sc);
+		return error;
+	}
 
 	mutex_destroy(&sc->sc_corb_mtx);
 	mutex_destroy(&sc->sc_stream_mtx);
