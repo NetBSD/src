@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.151 2011/06/25 05:45:12 nonaka Exp $	 */
+/*	$NetBSD: rtld.c,v 1.152 2011/08/13 22:24:24 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.151 2011/06/25 05:45:12 nonaka Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.152 2011/08/13 22:24:24 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -403,8 +403,10 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	debug = 1;
 	dbg(("sp = %p, argc = %ld, argv = %p <%s> relocbase %p", sp,
 	    (long)sp[2], &sp[3], (char *) sp[3], (void *)relocbase));
+#if 0
 	dbg(("got is at %p, dynamic is at %p", _GLOBAL_OFFSET_TABLE_,
 	    &_DYNAMIC));
+#endif
 	dbg(("_ctype_ is %p", _ctype_));
 #endif
 
