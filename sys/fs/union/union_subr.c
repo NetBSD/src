@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.48 2011/08/12 17:41:17 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.49 2011/08/13 10:48:14 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.48 2011/08/12 17:41:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.49 2011/08/13 10:48:14 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,10 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.48 2011/08/12 17:41:17 hannken Exp 
 	(((((unsigned long) (u)) + ((unsigned long) l)) >> 8) & (NHASH-1))
 
 static LIST_HEAD(unhead, union_node) unhead[NHASH];
-static int unvplock[NHASH];
+static kmutex_t unheadlock[NHASH];
 
-static int union_list_lock(int);
-static void union_list_unlock(int);
 void union_updatevp(struct union_node *, struct vnode *, struct vnode *);
 static int union_relookup(struct union_mount *, struct vnode *,
 			       struct vnode **, struct componentname *,
@@ -121,9 +119,10 @@ union_init(void)
 {
 	int i;
 
-	for (i = 0; i < NHASH; i++)
+	for (i = 0; i < NHASH; i++) {
 		LIST_INIT(&unhead[i]);
-	memset(unvplock, 0, sizeof(unvplock));
+		mutex_init(&unheadlock[i], MUTEX_DEFAULT, IPL_NONE);
+	}
 }
 
 /*
@@ -132,36 +131,13 @@ union_init(void)
 void
 union_done(void)
 {
+	int i;
+
+	for (i = 0; i < NHASH; i++)
+		mutex_destroy(&unheadlock[i]);
 
 	/* Make sure to unset the readdir hook. */
 	vn_union_readdir_hook = NULL;
-}
-
-static int
-union_list_lock(int ix)
-{
-
-	if (unvplock[ix] & UN_LOCKED) {
-		unvplock[ix] |= UN_WANTED;
-		(void) tsleep(&unvplock[ix], PINOD, "unionlk", 0);
-		return (1);
-	}
-
-	unvplock[ix] |= UN_LOCKED;
-
-	return (0);
-}
-
-static void
-union_list_unlock(int ix)
-{
-
-	unvplock[ix] &= ~UN_LOCKED;
-
-	if (unvplock[ix] & UN_WANTED) {
-		unvplock[ix] &= ~UN_WANTED;
-		wakeup(&unvplock[ix]);
-	}
 }
 
 void
@@ -186,11 +162,9 @@ union_updatevp(struct union_node *un, struct vnode *uppervp,
 	}
 
 	if (lhash != uhash)
-		while (union_list_lock(lhash))
-			continue;
+		mutex_enter(&unheadlock[lhash]);
 
-	while (union_list_lock(uhash))
-		continue;
+	mutex_enter(&unheadlock[uhash]);
 
 	if (ohash != nhash || !docache) {
 		if (un->un_flags & UN_CACHED) {
@@ -200,7 +174,7 @@ union_updatevp(struct union_node *un, struct vnode *uppervp,
 	}
 
 	if (ohash != nhash)
-		union_list_unlock(ohash);
+		mutex_exit(&unheadlock[ohash]);
 
 	if (un->un_lowervp != lowervp) {
 		if (un->un_lowervp) {
@@ -237,7 +211,7 @@ union_updatevp(struct union_node *un, struct vnode *uppervp,
 		un->un_flags |= UN_CACHED;
 	}
 
-	union_list_unlock(nhash);
+	mutex_exit(&unheadlock[nhash]);
 }
 
 void
@@ -394,8 +368,7 @@ loop:
 			break;
 		}
 
-		while (union_list_lock(hash))
-			continue;
+		mutex_enter(&unheadlock[hash]);
 
 		for (un = unhead[hash].lh_first; un != 0;
 					un = un->un_cache.le_next) {
@@ -407,14 +380,14 @@ loop:
 				vp = UNIONTOV(un);
 				mutex_enter(vp->v_interlock);
 				if (vget(vp, 0)) {
-					union_list_unlock(hash);
+					mutex_exit(&unheadlock[hash]);
 					goto loop;
 				}
 				break;
 			}
 		}
 
-		union_list_unlock(hash);
+		mutex_exit(&unheadlock[hash]);
 
 		if (un)
 			break;
@@ -528,8 +501,7 @@ loop:
 	}
 
 	if (docache) {
-		while (union_list_lock(hash))
-			continue;
+		mutex_enter(&unheadlock[hash]);
 		LIST_FOREACH(un1, &unhead[hash], un_cache) {
 			if (un1->un_lowervp == lowervp &&
 			    un1->un_uppervp == uppervp &&
@@ -538,7 +510,7 @@ loop:
 				 * Another thread beat us, push back freshly
 				 * allocated vnode and retry.
 				 */
-				union_list_unlock(hash);
+				mutex_exit(&unheadlock[hash]);
 				ungetnewvnode(*vpp);
 				goto loop;
 			}
@@ -603,7 +575,7 @@ loop:
 
 out:
 	if (docache)
-		union_list_unlock(hash);
+		mutex_exit(&unheadlock[hash]);
 
 	return (error);
 }
@@ -616,13 +588,12 @@ union_freevp(struct vnode *vp)
 
 	hash = UNION_HASH(un->un_uppervp, un->un_lowervp);
 
-	while (union_list_lock(hash))
-		continue;
+	mutex_enter(&unheadlock[hash]);
 	if (un->un_flags & UN_CACHED) {
 		un->un_flags &= ~UN_CACHED;
 		LIST_REMOVE(un, un_cache);
 	}
-	union_list_unlock(hash);
+	mutex_exit(&unheadlock[hash]);
 
 	if (un->un_pvp != NULLVP)
 		vrele(un->un_pvp);
@@ -1060,13 +1031,12 @@ union_removed_upper(struct union_node *un)
 
 	hash = UNION_HASH(un->un_uppervp, un->un_lowervp);
 
-	while (union_list_lock(hash))
-		continue;
+	mutex_enter(&unheadlock[hash]);
 	if (un->un_flags & UN_CACHED) {
 		un->un_flags &= ~UN_CACHED;
 		LIST_REMOVE(un, un_cache);
 	}
-	union_list_unlock(hash);
+	mutex_exit(&unheadlock[hash]);
 
 	if (un->un_flags & UN_ULOCK) {
 		un->un_flags &= ~UN_ULOCK;
