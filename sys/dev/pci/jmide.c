@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.10 2011/04/04 20:37:56 dyoung Exp $	*/
+/*	$NetBSD: jmide.c,v 1.11 2011/08/13 16:04:09 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.10 2011/04/04 20:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.11 2011/08/13 16:04:09 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ jmide_match(device_t parent, cfdata_t match, void *aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_JMICRON) {
 		if (jmide_lookup(pa->pa_id))
-			return (4); /* highter than ahcisata */
+			return (4); /* higher than ahcisata */
 	}
 	return (0);
 }
