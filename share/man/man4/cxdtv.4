@@ -1,4 +1,4 @@
-.\" $NetBSD: cxdtv.4,v 1.1 2011/08/13 22:00:35 wiz Exp $
+.\" $NetBSD: cxdtv.4,v 1.2 2011/08/13 22:21:28 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Os
 .Sh NAME
 .Nm cxdtv
-.Nd digital video driver for Conexant CX32880 based cards
+.Nd digital video driver for Conexant CX2388x based cards
 .Sh SYNOPSIS
 .Cd "cxdtv* at pci? dev ? function ?"
 .Cd "iic* at cxdtv?"
@@ -40,7 +40,7 @@
 The
 .Nm
 driver provides support for digital video cards based on the
-Conexant CX32880 DTV interface chips.
+Conexant CX23881, CX23882, CX23883, and CX23884 multimedia bridges.
 .Pp
 Supported cards include:
 .Bl -bullet -offset indent
@@ -67,3 +67,8 @@ driver was written by
 and
 .An Jared D. McNeill
 .Aq jmcneill@NetBSD.org .
+.Sh BUGS
+The
+.Nm
+driver lacks support for analog video capture, analog audio capture,
+FM tuning, and the IR receiver.
