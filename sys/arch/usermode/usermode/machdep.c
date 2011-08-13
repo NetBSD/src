@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.12 2011/08/12 12:59:13 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.13 2011/08/13 10:31:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2011/08/12 12:59:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2011/08/13 10:31:24 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -93,6 +93,8 @@ main(int argc, char *argv[])
 	uvmexp.ncolors = 2;
 
 	pmap_bootstrap();
+
+	splraise(IPL_HIGH);
 
 	kernmain();
 }
