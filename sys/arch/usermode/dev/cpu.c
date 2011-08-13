@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.14 2011/08/13 12:18:54 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.15 2011/08/13 14:06:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2011/08/13 12:18:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2011/08/13 14:06:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -68,7 +68,7 @@ typedef struct cpu_softc {
 	struct cpu_info	*sc_ci;
 } cpu_softc_t;
 
-static ucontext_t lwp0pcb;
+static struct pcb lwp0pcb;
 
 CFATTACH_DECL_NEW(cpu, sizeof(cpu_softc_t), cpu_match, cpu_attach, NULL, NULL);
 
@@ -93,10 +93,6 @@ cpu_attach(device_t parent, device_t self, void *opaque)
 
 	sc->sc_dev = self;
 	sc->sc_ci = &cpu_info_primary;
-
-	if (thunk_getcontext(&lwp0pcb))
-		panic("getcontext failed");
-	uvm_lwp_setuarea(&lwp0, (vaddr_t)&lwp0pcb);
 }
 
 void
@@ -316,6 +312,11 @@ void
 cpu_startup(void)
 {
 	banner();
+
+	memset(&lwp0pcb, 0, sizeof(lwp0pcb));
+	if (thunk_getcontext(&lwp0pcb.pcb_ucp))
+		panic("getcontext failed");
+	uvm_lwp_setuarea(&lwp0, (vaddr_t)&lwp0pcb);
 }
 
 void
