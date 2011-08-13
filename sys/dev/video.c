@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.26 2010/12/26 23:41:45 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.27 2011/08/13 02:49:06 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.26 2010/12/26 23:41:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.27 2011/08/13 02:49:06 jakllsch Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -1781,49 +1781,55 @@ videowrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 
-static void
-buf32tobuf(const void *data, struct v4l2_buffer *buf)
-{
-	const struct v4l2_buffer32 *b32 = data;
+/*
+ * Before 64-bit time_t, timeval's tv_sec was 'long'.  Thus on LP64 ports
+ * v4l2_buffer is the same size and layout as before.  However it did change
+ * on LP32 ports, and we thus handle this difference here for "COMPAT_50".
+ */
 
-	buf->index = b32->index;
-	buf->type = b32->type;
-	buf->bytesused = b32->bytesused;
-	buf->flags = b32->flags;
-	buf->field = b32->field;
-	buf->timestamp.tv_sec = b32->timestamp.tv_sec;
-	buf->timestamp.tv_usec = b32->timestamp.tv_usec;
-	buf->timecode = b32->timecode;
-	buf->sequence = b32->sequence;
-	buf->memory = b32->memory;
-	buf->m.offset = b32->m.offset;
+#ifndef _LP64
+static void
+buf50tobuf(const void *data, struct v4l2_buffer *buf)
+{
+	const struct v4l2_buffer50 *b50 = data;
+
+	buf->index = b50->index;
+	buf->type = b50->type;
+	buf->bytesused = b50->bytesused;
+	buf->flags = b50->flags;
+	buf->field = b50->field;
+	timeval50_to_timeval(&b50->timestamp, &buf->timestamp);
+	buf->timecode = b50->timecode;
+	buf->sequence = b50->sequence;
+	buf->memory = b50->memory;
+	buf->m.offset = b50->m.offset;
 	/* XXX: Handle userptr */
-	buf->length = b32->length;
-	buf->input = b32->input;
-	buf->reserved = b32->reserved;
+	buf->length = b50->length;
+	buf->input = b50->input;
+	buf->reserved = b50->reserved;
 }
 
 static void
-buftobuf32(void *data, const struct v4l2_buffer *buf)
+buftobuf50(void *data, const struct v4l2_buffer *buf)
 {
-	struct v4l2_buffer32 *b32 = data;
+	struct v4l2_buffer50 *b50 = data;
 
-	b32->index = buf->index;
-	b32->type = buf->type;
-	b32->bytesused = buf->bytesused;
-	b32->flags = buf->flags;
-	b32->field = buf->field;
-	b32->timestamp.tv_sec = (uint32_t)buf->timestamp.tv_sec;
-	b32->timestamp.tv_usec = buf->timestamp.tv_usec;
-	b32->timecode = buf->timecode;
-	b32->sequence = buf->sequence;
-	b32->memory = buf->memory;
-	b32->m.offset = buf->m.offset;
+	b50->index = buf->index;
+	b50->type = buf->type;
+	b50->bytesused = buf->bytesused;
+	b50->flags = buf->flags;
+	b50->field = buf->field;
+	timeval_to_timeval50(&buf->timestamp, &b50->timestamp);
+	b50->timecode = buf->timecode;
+	b50->sequence = buf->sequence;
+	b50->memory = buf->memory;
+	b50->m.offset = buf->m.offset;
 	/* XXX: Handle userptr */
-	b32->length = buf->length;
-	b32->input = buf->input;
-	b32->reserved = buf->reserved;
+	b50->length = buf->length;
+	b50->input = buf->input;
+	b50->reserved = buf->reserved;
 }
+#endif
 
 int
 videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
@@ -1841,10 +1847,14 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct v4l2_control *control;
 	struct v4l2_queryctrl *query;
 	struct v4l2_requestbuffers *reqbufs;
-	struct v4l2_buffer *buf, bufspace;
+	struct v4l2_buffer *buf;
 	v4l2_std_id *stdid;
 	enum v4l2_buf_type *typep;
-	int *ip, error;
+	int *ip;
+#ifndef _LP64
+	struct v4l2_buffer bufspace;
+	int error;
+#endif
 
 	sc = device_private(device_lookup(&video_cd, VIDEOUNIT(dev)));
 
@@ -1960,27 +1970,33 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case VIDIOC_QUERYBUF:
 		buf = data;
 		return video_query_buf(sc, buf);
-	case VIDIOC_QUERYBUF32:
-		buf32tobuf(data, buf = &bufspace);
+#ifndef _LP64
+	case VIDIOC_QUERYBUF50:
+		buf50tobuf(data, buf = &bufspace);
 		if ((error = video_query_buf(sc, buf)) != 0)
 			return error;
-		buftobuf32(data, buf);
+		buftobuf50(data, buf);
 		return 0;
+#endif
 	case VIDIOC_QBUF:
 		buf = data;
 		return video_queue_buf(sc, buf);
-	case VIDIOC_QBUF32:
-		buf32tobuf(data, buf = &bufspace);
+#ifndef _LP64
+	case VIDIOC_QBUF50:
+		buf50tobuf(data, buf = &bufspace);
 		return video_queue_buf(sc, buf);
+#endif
 	case VIDIOC_DQBUF:
 		buf = data;
 		return video_dequeue_buf(sc, buf);
-	case VIDIOC_DQBUF32:
-		buf32tobuf(data, buf = &bufspace);
+#ifndef _LP64
+	case VIDIOC_DQBUF50:
+		buf50tobuf(data, buf = &bufspace);
 		if ((error = video_dequeue_buf(sc, buf)) != 0)
 			return error;
-		buftobuf32(data, buf);
+		buftobuf50(data, buf);
 		return 0;
+#endif
 	case VIDIOC_STREAMON:
 		typep = data;
 		return video_stream_on(sc, *typep);
@@ -2023,9 +2039,11 @@ video_ioctl_str(u_long cmd)
 	case VIDIOC_QUERYBUF:
 		str = "VIDIOC_QUERYBUF";
 		break;
-	case VIDIOC_QUERYBUF32:
-		str = "VIDIOC_QUERYBUF32";
+#ifndef _LP64
+	case VIDIOC_QUERYBUF50:
+		str = "VIDIOC_QUERYBUF50";
 		break;
+#endif
 	case VIDIOC_G_FBUF:
 		str = "VIDIOC_G_FBUF";
 		break;
@@ -2038,15 +2056,19 @@ video_ioctl_str(u_long cmd)
 	case VIDIOC_QBUF:
 		str = "VIDIOC_QBUF";
 		break;
-	case VIDIOC_QBUF32:
-		str = "VIDIOC_QBUF32";
+#ifndef _LP64
+	case VIDIOC_QBUF50:
+		str = "VIDIOC_QBUF50";
 		break;
+#endif
 	case VIDIOC_DQBUF:
 		str = "VIDIOC_DQBUF";
 		break;
-	case VIDIOC_DQBUF32:
-		str = "VIDIOC_DQBUF32";
+#ifndef _LP64
+	case VIDIOC_DQBUF50:
+		str = "VIDIOC_DQBUF50";
 		break;
+#endif
 	case VIDIOC_STREAMON:
 		str = "VIDIOC_STREAMON";
 		break;
