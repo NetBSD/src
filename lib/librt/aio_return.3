@@ -1,4 +1,4 @@
-.\" $NetBSD: aio_return.3,v 1.4 2010/05/17 19:22:31 jruoho Exp $
+.\" $NetBSD: aio_return.3,v 1.5 2011/08/13 11:10:31 jmcneill Exp $
 .\"
 .\" Copyright (c) 1999 Softweyr LLC.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/lib/libc/sys/aio_return.2,v 1.19 2006/10/07 10:49:20 trhodes Exp $
 .\"
-.Dd May 17, 2010
+.Dd August 13, 2011
 .Dt AIO_RETURN 3
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@
 .Lb librt
 .Sh SYNOPSIS
 .In aio.h
-.Ft int
+.Ft ssize_t
 .Fn aio_return "struct aiocb *aiocbp"
 .Sh DESCRIPTION
 The
