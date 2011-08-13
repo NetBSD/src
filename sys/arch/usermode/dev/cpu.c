@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.13 2011/08/13 10:31:24 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.14 2011/08/13 12:18:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2011/08/13 10:31:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2011/08/13 12:18:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -315,16 +315,7 @@ cpu_initclocks(void)
 void
 cpu_startup(void)
 {
-	char pbuf[9];
-
 	banner();
-
-	printf("%s%s", copyright, version);
-	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
 }
 
 void
