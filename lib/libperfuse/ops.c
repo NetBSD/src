@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.38 2011/08/09 09:06:52 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.39 2011/08/13 23:12:15 christos Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -343,7 +343,7 @@ node_lookup_dir_nodot(pu, opc, name, namelen, pnp)
 
 	namelen = PNPLEN(dpn) + 1 + namelen + 1;
 	if ((path = malloc(namelen)) == NULL)
-		DERR(EX_OSERR, "malloc failed");
+		DERR(EX_OSERR, "%s: malloc failed", __func__);
 	(void)snprintf(path, namelen, "%s/%s", 
 		       perfuse_node_path((puffs_cookie_t)dpn), name);
 
@@ -609,7 +609,7 @@ fuse_to_dirent(pu, opc, fd, fd_len)
 	
 			dents = PERFUSE_NODE_DATA(opc)->pnd_dirent;
 			if ((dents = realloc(dents, dents_len)) == NULL)
-				DERR(EX_OSERR, "malloc failed");
+				DERR(EX_OSERR, "%s: malloc failed", __func__);
 
 			PERFUSE_NODE_DATA(opc)->pnd_dirent = dents;
 			PERFUSE_NODE_DATA(opc)->pnd_dirent_len = dents_len;
@@ -831,7 +831,7 @@ perfuse_fs_init(pu)
 	ps = puffs_getspecific(pu);
 	
         if (puffs_mount(pu, ps->ps_target, ps->ps_mountflags, ps->ps_root) != 0)
-                DERR(EX_OSERR, "puffs_mount failed");
+                DERR(EX_OSERR, "%s: puffs_mount failed", __func__);
 
 	/*
 	 * Linux 2.6.34.1 sends theses flags:
@@ -2388,7 +2388,7 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 		pnd->pnd_all_fd = realloc(pnd->pnd_all_fd, 
 					  pnd->pnd_all_fd_len + fd_len);
 		if (pnd->pnd_all_fd  == NULL)
-			DERR(EX_OSERR, "malloc failed");
+			DERR(EX_OSERR, "%s: malloc failed", __func__);
 
 		afdp = (char *)(void *)pnd->pnd_all_fd + pnd->pnd_all_fd_len;
 		(void)memcpy(afdp, fd, fd_len);
