@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.30 2011/08/13 11:41:57 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.31 2011/08/13 12:09:38 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.30 2011/08/13 11:41:57 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.31 2011/08/13 12:09:38 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -668,11 +668,12 @@ bootstrap_again:
 	    (UPAGES + 1) * NBPG);
 
 	/* Finally, flush TLB. */
+	xpq_queue_lock();
 	xpq_queue_tlb_flush();
+	xpq_queue_unlock();
 
 	return (init_tables + ((count + l2_4_count) * PAGE_SIZE));
 }
-
 
 /*
  * Build a new table and switch to it
@@ -690,6 +691,8 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	vaddr_t page, avail, text_end, map_end;
 	int i;
 	extern char __data_start;
+
+	xpq_queue_lock();
 
 	__PRINTK(("xen_bootstrap_tables(%#" PRIxVADDR ", %#" PRIxVADDR ","
 	    " %d, %d)\n",
@@ -1024,6 +1027,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 		pte++;
 	}
 	xpq_flush_queue();
+	xpq_queue_unlock();
 }
 
 
@@ -1054,6 +1058,7 @@ xen_set_user_pgd(paddr_t page)
 	struct mmuext_op op;
 	int s = splvm();
 
+	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 	op.cmd = MMUEXT_NEW_USER_BASEPTR;
 	op.arg1.mfn = xpmap_phys_to_machine_mapping[page >> PAGE_SHIFT];
