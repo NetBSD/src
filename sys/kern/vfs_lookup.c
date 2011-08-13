@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.188 2011/08/10 05:42:32 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.189 2011/08/13 19:40:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.188 2011/08/10 05:42:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.189 2011/08/13 19:40:02 riastradh Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1217,6 +1217,20 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			/* namei_follow unlocks it (ugh) so rele, not put */
 			vrele(foundobj);
 			foundobj = NULL;
+
+			/*
+			 * If we followed a symlink to `/' and there
+			 * are no more components after the symlink,
+			 * we're done with the loop and what we found
+			 * is the searchdir.
+			 */
+			if (cnp->cn_nameptr[0] == '\0') {
+				foundobj = searchdir;
+				searchdir = NULL;
+				cnp->cn_flags |= ISLASTCN;
+				break;
+			}
+
 			continue;
 		}
 
