@@ -1,4 +1,4 @@
-.\"	$NetBSD: window.1,v 1.22 2011/08/13 14:02:48 jakllsch Exp $
+.\"	$NetBSD: window.1,v 1.23 2011/08/13 14:11:16 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,9 +40,7 @@
 .Nd window environment
 .Sh SYNOPSIS
 .Nm
-.Op Fl d
-.Op Fl f
-.Op Fl t
+.Op Fl dft
 .Op Fl c Ar command
 .Op Fl e Ar escape-char
 .Sh DESCRIPTION
@@ -61,7 +59,9 @@ release that provides
 .Nm .
 Use
 .Xr tmux 1
-instead, or install the misc/window package from
+instead, or install the
+.Pa pkgsrc/misc/window
+package from
 .Xr pkgsrc 7 .
 .Pp
 A window is a rectangular portion of the physical terminal
@@ -90,23 +90,16 @@ the terminal screen are created by default.
 .Pp
 The command-line options are:
 .Bl -tag -width Fl
-.It Fl d
-Ignore
-.Pa .windowrc
-and create the two default
-windows instead.
-.It Fl f
-Fast.
-Don't perform any startup action.
-.It Fl t
-Turn on terse mode (see
-.Ic terse
-command below).
 .It Fl c Ar command
 Execute the string
 .Ar command
 as a long command (see below)
 before doing anything else.
+.It Fl d
+Ignore
+.Pa .windowrc
+and create the two default
+windows instead.
 .It Fl e Ar escape-char
 Set the escape character to
 .Ar escape-char  .
@@ -117,6 +110,13 @@ where
 .Ar X
 is any character, meaning
 .No control\- Ns Ar X  .
+.It Fl f
+Fast.
+Don't perform any startup action.
+.It Fl t
+Turn on terse mode (see
+.Ic terse
+command below).
 .El
 .Pp
 Windows can overlap and are framed as necessary.
