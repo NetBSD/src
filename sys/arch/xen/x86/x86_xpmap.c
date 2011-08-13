@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.31 2011/08/13 12:09:38 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.32 2011/08/13 20:24:19 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.31 2011/08/13 12:09:38 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.32 2011/08/13 20:24:19 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -185,7 +185,7 @@ xpq_queue_unlock(void)
 bool
 xpq_queue_locked(void)
 {
-	return xpq_queue_locked();
+	return simple_lock_held(&xpq_lock);
 }
 #endif /* MULTIPROCESSOR */
 
