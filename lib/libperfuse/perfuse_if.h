@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.13 2011/05/30 14:50:08 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.14 2011/08/13 23:12:15 christos Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -81,7 +81,8 @@ extern int perfuse_diagflags;
 	char strerrbuf[BUFSIZ];						\
 									\
 	(void)strerror_r(errno, strerrbuf, sizeof(strerrbuf));		\
-	(void)sprintf(fmterr, "%s: %s\n", fmt, strerrbuf);		\
+	(void)snprintf(fmterr, sizeof(fmterr), "%s: %s\n", fmt, 	\
+	    strerrbuf);							\
 									\
 	if (perfuse_diagflags & PDF_SYSLOG)				\
 		syslog(LOG_ERR, fmterr, ## __VA_ARGS__);		\
@@ -90,7 +91,7 @@ extern int perfuse_diagflags;
 		(void)fprintf(stderr,  fmterr, ## __VA_ARGS__);		\
 		abort();						\
 	} else {							\
-		errx(status, fmt, ## __VA_ARGS__);			\
+		err(status, fmt, ## __VA_ARGS__);			\
 	}								\
 } while (0 /* CONSTCOND */)
 
@@ -102,16 +103,17 @@ extern int perfuse_diagflags;
 } while (0 /* CONSTCOND */)
 
 #define DWARN(fmt, ...) do {						\
-	char fmterr[BUFSIZ];						\
-	char strerrbuf[BUFSIZ];						\
 									\
-	(void)strerror_r(errno, strerrbuf, sizeof(strerrbuf));		\
-	(void)sprintf(fmterr, "%s: %s\n", fmt, strerrbuf);		\
+	if (perfuse_diagflags & PDF_SYSLOG) {				\
+		char fmterr[BUFSIZ];					\
+		char strerrbuf[BUFSIZ];					\
 									\
-	if (perfuse_diagflags & PDF_SYSLOG)				\
+		(void)strerror_r(errno, strerrbuf, sizeof(strerrbuf));	\
+		(void)sprintf(fmterr, "%s: %s\n", fmt, strerrbuf);	\
 		syslog(LOG_WARNING, fmterr, ## __VA_ARGS__);		\
+	}								\
 									\
-	warn(fmterr, ## __VA_ARGS__);					\
+	warn(fmt, ## __VA_ARGS__);					\
 } while (0 /* CONSTCOND */)
 
 /*

@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.17 2011/08/09 06:58:33 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.18 2011/08/13 23:12:15 christos Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -57,7 +57,7 @@ init_state(void)
 	char opts[1024];
 
 	if ((ps = malloc(sizeof(*ps))) == NULL)
-		DERR(EX_OSERR, "malloc failed");
+		DERR(EX_OSERR, "%s: malloc failed", __func__);
 
 	(void)memset(ps, 0, sizeof(*ps));
 	ps->ps_max_write = UINT_MAX;
@@ -164,7 +164,7 @@ perfuse_open(path, flags, mode)
 
 		if ((sv[0] = socket(PF_LOCAL, SOCK_DGRAM, 0)) == -1) {
 #ifdef PERFUSE_DEBUG
-			DWARN("%s:%d socket failed: %s", __func__, __LINE__);
+			DWARN("%s: %d socket failed", __func__, __LINE__);
 #endif
 			return -1;
 		}
@@ -412,7 +412,7 @@ perfuse_init(pc, pmi)
 
 	if (pmi->pmi_source) {
 		if ((ps->ps_source = strdup(pmi->pmi_source)) == NULL)
-			DERR(EX_OSERR, "strdup failed");
+			DERR(EX_OSERR, "%s: strdup failed", __func__);
 
 		source = ps->ps_source;
 	}
@@ -422,20 +422,20 @@ perfuse_init(pc, pmi)
 
 		ps->ps_filesystemtype = strdup(pmi->pmi_filesystemtype);
 		if (ps->ps_filesystemtype == NULL)
-			DERR(EX_OSERR, "strdup failed");
+			DERR(EX_OSERR, "%s: strdup failed", __func__);
 
 		len = sizeof("perfuse|") + strlen(ps->ps_filesystemtype) + 1;
 		if ((fstype = malloc(len)) == NULL)
-			DERR(EX_OSERR, "malloc failed");
+			DERR(EX_OSERR, "%s: malloc failed", __func__);
 
 		(void)sprintf(fstype, "perfuse|%s", ps->ps_filesystemtype);
 	} else {
 		if ((fstype = strdup("perfuse")) == NULL)
-			DERR(EX_OSERR, "strdup failed");
+			DERR(EX_OSERR, "%s: strdup failed", __func__);
 	}
 
 	if ((ps->ps_target = strdup(pmi->pmi_target)) == NULL)
-		DERR(EX_OSERR, "strdup failed");
+		DERR(EX_OSERR, "%s: strdup failed", __func__);
 
 	ps->ps_mountflags = pmi->pmi_mountflags;
 
@@ -508,7 +508,7 @@ perfuse_init(pc, pmi)
 		puffs_flags |= PUFFS_FLAG_OPDUMP;
 
 	if ((pu = puffs_init(pops, source, fstype, ps, puffs_flags)) == NULL)
-		DERR(EX_OSERR, "puffs_init failed");
+		DERR(EX_OSERR, "%s: puffs_init failed", __func__);
 
 	ps->ps_pu = pu;
 
@@ -594,7 +594,7 @@ perfuse_mainloop(pu)
 
 	ps->ps_flags |= PS_INLOOP;
 	if (puffs_mainloop(ps->ps_pu) != 0) {
-		DERR(EX_OSERR, "puffs_mainloop failed");
+		DERR(EX_OSERR, "%s: failed", __func__);
 		return -1;
 	}
 

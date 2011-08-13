@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.12 2011/06/28 16:19:16 manu Exp $ */
+/*  $NetBSD: subr.c,v 1.13 2011/08/13 23:12:15 christos Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -58,10 +58,10 @@ perfuse_new_pn(pu, name, parent)
 	struct perfuse_node_data *pnd;
 
 	if ((pnd = malloc(sizeof(*pnd))) == NULL)
-		DERR(EX_OSERR, "malloc failed");
+		DERR(EX_OSERR, "%s: malloc failed", __func__);
 
 	if ((pn = puffs_pn_new(pu, pnd)) == NULL)
-		DERR(EX_SOFTWARE, "puffs_pn_new failed");
+		DERR(EX_SOFTWARE, "%s: puffs_pn_new failed", __func__);
 
 	(void)memset(pnd, 0, sizeof(*pnd));
 	pnd->pnd_rfh = FUSE_UNKNOWN_FH;
