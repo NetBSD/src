@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.178 2011/08/13 18:13:44 christos Exp $	*/
+/*	$NetBSD: tulip.c,v 1.179 2011/08/13 19:23:34 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.178 2011/08/13 18:13:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.179 2011/08/13 19:23:34 jakllsch Exp $");
 
 
 #include <sys/param.h>
@@ -827,7 +827,7 @@ tlp_start(struct ifnet *ifp)
 		if (ifp->if_flags & IFF_DEBUG) {
 			printf("     txsoft %p transmit chain:\n", txs);
 			for (seg = sc->sc_txnext;; seg = TULIP_NEXTTX(seg)) {
-				txd = sc->sc_txdescs[seg];
+				txd = &sc->sc_txdescs[seg];
 				printf("     descriptor %d:\n", seg);
 				printf("       td_status:   0x%08x\n",
 				    le32toh(txd->td_status));
@@ -1437,7 +1437,7 @@ tlp_txintr(struct tulip_softc *sc)
 			struct tulip_desc *txd;
 			printf("    txsoft %p transmit chain:\n", txs);
 			for (i = txs->txs_firstdesc;; i = TULIP_NEXTTX(i)) {
-				txd = sc->sc_txdescs[i];
+				txd = &sc->sc_txdescs[i];
 				printf("     descriptor %d:\n", i);
 				printf("       td_status:   0x%08x\n",
 				    le32toh(txd->td_status));
