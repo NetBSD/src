@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.4 2011/08/13 10:33:52 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.5 2011/08/13 12:06:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.4 2011/08/13 10:33:52 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.5 2011/08/13 12:06:23 jmcneill Exp $");
 
 #include <machine/thunk.h>
 
@@ -52,6 +52,18 @@ int
 thunk_gettimeofday(struct timeval *tp, void *tzp)
 {
 	return gettimeofday(tp, tzp);
+}
+
+int
+thunk_clock_gettime(clockid_t clock_id, struct timespec *tp)
+{
+	return clock_gettime(clock_id, tp);
+}
+
+int
+thunk_clock_getres(clockid_t clock_id, struct timespec *res)
+{
+	return clock_getres(clock_id, res);
 }
 
 int

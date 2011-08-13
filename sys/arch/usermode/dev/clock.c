@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.7 2011/08/13 10:31:24 jmcneill Exp $ */
+/* $NetBSD: clock.c,v 1.8 2011/08/13 12:06:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2011/08/13 10:31:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2011/08/13 12:06:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -39,23 +39,28 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2011/08/13 10:31:24 jmcneill Exp $");
 #include <machine/mainbus.h>
 #include <machine/thunk.h>
 
+#include <dev/clock_subr.h>
+
 static int	clock_match(device_t, cfdata_t, void *);
 static void	clock_attach(device_t, device_t, void *);
 
 static void 	clock_intr(int);
 static u_int	clock_getcounter(struct timecounter *);
 
+static int	clock_todr_gettime(struct todr_chip_handle *, struct timeval *);
+
 typedef struct clock_softc {
-	device_t	sc_dev;
+	device_t		sc_dev;
+	struct todr_chip_handle	sc_todr;
 } clock_softc_t;
 
 static struct timecounter clock_timecounter = {
 	clock_getcounter,	/* get_timecount */
 	0,			/* no poll_pps */
 	~0u,			/* counter_mask */
-	1000000,		/* frequency */
-	"gettimeofday",		/* name */
-	100,			/* quality */
+	0,			/* frequency */
+	"CLOCK_MONOTONIC",	/* name */
+	-100,			/* quality */
 	NULL,			/* prev */
 	NULL,			/* next */
 };
@@ -79,11 +84,15 @@ clock_attach(device_t parent, device_t self, void *opaque)
 {
 	clock_softc_t *sc = device_private(self);
 	struct itimerval itimer;
+	struct timespec res;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
 	sc->sc_dev = self;
+
+	sc->sc_todr.todr_gettime = clock_todr_gettime;
+	todr_attach(&sc->sc_todr);
 
 	(void)signal(SIGALRM, clock_intr);
 
@@ -92,6 +101,10 @@ clock_attach(device_t parent, device_t self, void *opaque)
 	itimer.it_value = itimer.it_interval;
 	thunk_setitimer(ITIMER_REAL, &itimer, NULL);
 
+	if (thunk_clock_getres(CLOCK_MONOTONIC, &res) == 0 && res.tv_nsec > 0) {
+		clock_timecounter.tc_quality = 1000;
+		clock_timecounter.tc_frequency = 1000000000 / res.tv_nsec;
+	}
 	tc_init(&clock_timecounter);
 }
 
@@ -111,8 +124,14 @@ clock_intr(int notused)
 static u_int
 clock_getcounter(struct timecounter *tc)
 {
-	struct timeval tv;
+	struct timespec ts;
 
-	thunk_gettimeofday(&tv, NULL);
-	return tv.tv_sec * 1000000 + tv.tv_usec;
+	thunk_clock_gettime(CLOCK_MONOTONIC, &ts);
+	return ts.tv_nsec;
+}
+
+static int
+clock_todr_gettime(struct todr_chip_handle *tch, struct timeval *tv)
+{
+	return thunk_gettimeofday(tv,  NULL);
 }
