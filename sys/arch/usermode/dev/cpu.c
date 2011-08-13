@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.12 2011/08/12 12:59:13 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.13 2011/08/13 10:31:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2011/08/12 12:59:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2011/08/13 10:31:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -54,7 +54,13 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2011/08/12 12:59:13 jmcneill Exp $");
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);
 
-struct cpu_info cpu_info_primary;
+struct cpu_info cpu_info_primary = {
+	.ci_dev = 0,
+	.ci_self = &cpu_info_primary,
+	.ci_idepth = -1,
+	.ci_curlwp = &lwp0,
+};
+
 char cpu_model[48] = "virtual processor";
 
 typedef struct cpu_softc {
@@ -87,9 +93,6 @@ cpu_attach(device_t parent, device_t self, void *opaque)
 
 	sc->sc_dev = self;
 	sc->sc_ci = &cpu_info_primary;
-	sc->sc_ci->ci_dev = 0;
-	sc->sc_ci->ci_self = &cpu_info_primary;
-	sc->sc_ci->ci_curlwp = &lwp0;
 
 	if (thunk_getcontext(&lwp0pcb))
 		panic("getcontext failed");
@@ -125,6 +128,10 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	printf("rebooting...\n");
+
+#if defined(DIAGNOSTIC) || defined(DEBUG)
+	thunk_abort();
+#endif
 
 	usermode_reboot();
 
@@ -310,6 +317,8 @@ cpu_startup(void)
 {
 	char pbuf[9];
 
+	banner();
+
 	printf("%s%s", copyright, version);
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -335,6 +344,11 @@ cpu_rootconf(void)
 bool
 cpu_intr_p(void)
 {
-	printf("cpu_intr_p\n");
-	return false;
+	int idepth;
+
+	kpreempt_disable();
+	idepth = curcpu()->ci_idepth;
+	kpreempt_enable();
+
+	return (idepth >= 0);
 }
