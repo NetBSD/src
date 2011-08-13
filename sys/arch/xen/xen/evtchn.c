@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.50 2011/08/11 17:59:00 cherry Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.51 2011/08/13 17:23:42 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.50 2011/08/11 17:59:00 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.51 2011/08/13 17:23:42 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -336,9 +336,7 @@ bind_vcpu_to_evtch(cpuid_t vcpu)
 {
 	evtchn_op_t op;
 	evtchn_port_t evtchn;
-	int s;
 
-	s = splhigh();
 	mutex_spin_enter(&evtchn_lock);
 
 	evtchn = vcpu_ipi_to_evtch[vcpu];
@@ -355,7 +353,6 @@ bind_vcpu_to_evtch(cpuid_t vcpu)
 	evtch_bindcount[evtchn]++;
 
 	mutex_spin_exit(&evtchn_lock);
-	splx(s);
     
 	return evtchn;
 }
@@ -364,9 +361,8 @@ int
 bind_virq_to_evtch(int virq)
 {
 	evtchn_op_t op;
-	int evtchn, s;
+	int evtchn;
 
-	s = splhigh();
 	mutex_spin_enter(&evtchn_lock);
 
 	/* 
@@ -379,6 +375,7 @@ bind_virq_to_evtch(int virq)
 	struct cpu_info *ci = curcpu();
 
 	if (virq == VIRQ_DEBUG && ci != &cpu_info_primary) {
+		mutex_spin_exit(&evtchn_lock);
 		return -1;
 	}
 
@@ -402,7 +399,6 @@ bind_virq_to_evtch(int virq)
 	evtch_bindcount[evtchn]++;
 
 	mutex_spin_exit(&evtchn_lock);
-	splx(s);
     
 	return evtchn;
 }
@@ -412,7 +408,6 @@ unbind_virq_from_evtch(int virq)
 {
 	evtchn_op_t op;
 	int evtchn;
-	int s;
 
 	struct cpu_info *ci = curcpu();
 
@@ -427,7 +422,6 @@ unbind_virq_from_evtch(int virq)
 		return -1;
 	}
 
-	s = splhigh();
 	mutex_spin_enter(&evtchn_lock);
 
 	evtch_bindcount[evtchn]--;
@@ -441,7 +435,6 @@ unbind_virq_from_evtch(int virq)
 	}
 
 	mutex_spin_exit(&evtchn_lock);
-	splx(s);
 
 	return evtchn;
 }
@@ -451,13 +444,12 @@ int
 bind_pirq_to_evtch(int pirq)
 {
 	evtchn_op_t op;
-	int evtchn, s;
+	int evtchn;
 
 	if (pirq >= NR_PIRQS) {
 		panic("pirq %d out of bound, increase NR_PIRQS", pirq);
 	}
 
-	s = splhigh();
 	mutex_spin_enter(&evtchn_lock);
 
 	evtchn = pirq_to_evtch[pirq];
@@ -478,7 +470,6 @@ bind_pirq_to_evtch(int pirq)
 	evtch_bindcount[evtchn]++;
 
 	mutex_spin_exit(&evtchn_lock);
-	splx(s);
     
 	return evtchn;
 }
@@ -488,7 +479,6 @@ unbind_pirq_from_evtch(int pirq)
 {
 	evtchn_op_t op;
 	int evtchn = pirq_to_evtch[pirq];
-	int s = splhigh();
 
 	mutex_spin_enter(&evtchn_lock);
 
@@ -503,7 +493,6 @@ unbind_pirq_from_evtch(int pirq)
 	}
 
 	mutex_spin_exit(&evtchn_lock);
-	splx(s);
 
 	return evtchn;
 }
@@ -650,7 +639,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 		 * is more explicitly implemented.
 		 */
 		evts->ev_cpu = ci; 
-		mutex_init(&evtlock[evtch], MUTEX_DEFAULT, IPL_VM);
+		mutex_init(&evtlock[evtch], MUTEX_DEFAULT, IPL_HIGH);
 		evtsource[evtch] = evts;
 		if (evname)
 			strncpy(evts->ev_evname, evname,
