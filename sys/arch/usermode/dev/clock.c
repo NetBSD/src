@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.6 2011/08/12 00:57:24 jmcneill Exp $ */
+/* $NetBSD: clock.c,v 1.7 2011/08/13 10:31:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2011/08/12 00:57:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2011/08/13 10:31:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -101,13 +101,11 @@ clock_intr(int notused)
 	extern int usermode_x;
 	struct clockframe cf;
 
-#if notyet
-	/* XXXJDM */
-	if (usermode_x > IPL_SOFTCLOCK)
-		return;
-#endif
+	curcpu()->ci_idepth++;
 
 	hardclock(&cf);
+
+	curcpu()->ci_idepth--;
 }
 
 static u_int

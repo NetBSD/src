@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.2 2009/10/21 16:06:59 snj Exp $ */
+/* $NetBSD: lock.h,v 1.3 2011/08/13 10:31:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,16 +32,29 @@
 __inline static void
 __cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
 {
+	*lockp = __SIMPLELOCK_UNLOCKED;
+}
+
+__inline static int
+__cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
+{
+	if (*lockp == __SIMPLELOCK_LOCKED)
+		return 0;
+	*lockp = __SIMPLELOCK_LOCKED;
+	return 1;
 }
 
 __inline static void
 __cpu_simple_lock(__cpu_simple_lock_t *lockp)
 {
+	while (!__cpu_simple_lock_try(lockp))
+		;
 }
 
 __inline static void
 __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 {
+	*lockp = __SIMPLELOCK_UNLOCKED;
 }
 
 __inline static int
@@ -54,12 +67,6 @@ __inline static int
 __SIMPLELOCK_UNLOCKED_P(__cpu_simple_lock_t *lockp)
 {
 	return *lockp == __SIMPLELOCK_UNLOCKED;
-}
-
-__inline static int
-__cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
-{
-	return __SIMPLELOCK_UNLOCKED;
 }
 
 #endif /* !_ARCH_USERMODE_INCLUDE_LOCK_H */
