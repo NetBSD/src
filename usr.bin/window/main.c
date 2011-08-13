@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2011/08/13 14:02:48 jakllsch Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2011/08/13 14:11:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 2011/08/13 14:02:48 jakllsch Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2011/08/13 14:11:16 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ void
 usage(void)
 {
 	(void) fprintf(stderr,
-	    "usage: %s [-d] [-f] [-t] [-c command] [-e escape-char]\n",
+	    "usage: %s [-dft] [-c command] [-e escape-char]\n",
 	    getprogname());
 	exit(1);
 }
