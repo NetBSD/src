@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.7 2011/08/11 22:26:18 jmcneill Exp $ */
+/* $NetBSD: pmap.c,v 1.8 2011/08/13 10:31:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2011/08/11 22:26:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8 2011/08/13 10:31:24 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,12 +70,6 @@ pmap_bootstrap(void)
 	virtual_avail += PAGE_SIZE;
 
 	pmap_maxkvaddr = VM_MIN_KERNEL_ADDRESS;
-#if 0
-	kmeminit_nkmempages();
-	bufsz = buf_memcalc();
-	if (buf_setvalimit(bufsz))
-		panic("pmap_bootstrap: buf_setvalimit failed\n");
-#endif
 }
 
 void
@@ -172,7 +166,8 @@ bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	/* XXXJDM */
-	*pap = va;
+	if (pap)
+		*pap = va;
 	return true;
 }
 
