@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.42 2011/03/09 23:10:07 joerg Exp $	 */
+/*	$NetBSD: map_object.c,v 1.43 2011/08/13 22:25:20 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.42 2011/03/09 23:10:07 joerg Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.43 2011/08/13 22:25:20 christos Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -185,24 +185,28 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 			if (nsegs < 2)
 				segs[nsegs] = phdr;
 			++nsegs;
-			dbg(("%s: PT_LOAD %p", obj->path, phdr));
+			dbg(("%s: %s %p phsize %zu", obj->path, "PT_LOAD",
+			    (void *)(uintptr_t)phdr->p_vaddr, phdr->p_memsz));
 			break;
 
 		case PT_PHDR:
 			phdr_vaddr = phdr->p_vaddr;
 			phdr_memsz = phdr->p_memsz;
-			dbg(("%s: PT_PHDR %p phsize %zu", obj->path,
-			    (void *)(uintptr_t)phdr_vaddr, phdr_memsz));
+			dbg(("%s: %s %p phsize %zu", obj->path, "PT_PHDR",
+			    (void *)(uintptr_t)phdr->p_vaddr, phdr->p_memsz));
 			break;
 		
 		case PT_DYNAMIC:
 			obj->dynamic = (void *)(uintptr_t)phdr->p_vaddr;
- 			dbg(("%s: PT_DYNAMIC %p", obj->path, obj->dynamic));
+			dbg(("%s: %s %p phsize %zu", obj->path, "PT_DYNAMIC",
+			    (void *)(uintptr_t)phdr->p_vaddr, phdr->p_memsz));
 			break;
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 		case PT_TLS:
 			phtls = phdr;
+			dbg(("%s: %s %p phsize %zu", obj->path, "PT_TLS",
+			    (void *)(uintptr_t)phdr->p_vaddr, phdr->p_memsz));
 			break;
 #endif
 		}
