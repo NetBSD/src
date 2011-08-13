@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.57 2011/06/25 05:45:12 nonaka Exp $	 */
+/*	$NetBSD: symbol.c,v 1.58 2011/08/13 22:24:57 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.57 2011/06/25 05:45:12 nonaka Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.58 2011/08/13 22:24:57 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -255,7 +255,7 @@ _rtld_symlook_obj(const char *name, unsigned long hash,
 		assert(symnum < obj->nchains);
 		symp = obj->symtab + symnum;
 		strp = obj->strtab + symp->st_name;
-		rdbg(("check \"%s\" vs \"%s\" in %p", name, strp, obj));
+		rdbg(("check \"%s\" vs \"%s\" in %s", name, strp, obj->path));
 		if (name[1] != strp[1] || strcmp(name, strp))
 			continue;
 		if (symp->st_shndx != SHN_UNDEF)
