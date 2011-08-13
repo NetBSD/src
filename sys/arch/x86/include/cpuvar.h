@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.44 2011/06/12 03:35:50 rmind Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.45 2011/08/13 12:37:30 cherry Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,11 @@
 #define	_X86_CPUVAR_H_
 
 struct cpu_functions {
+#ifndef XEN
 	int (*start)(struct cpu_info *, paddr_t);
+#else /* XEN */
+   	int (*start)(struct cpu_info *, vaddr_t);
+#endif /* XEN */
 	int (*stop)(struct cpu_info *);
 	void (*cleanup)(struct cpu_info *);
 };
