@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.1 2011/08/12 12:59:13 jmcneill Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.2 2011/08/13 10:33:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.1 2011/08/12 12:59:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.2 2011/08/13 10:33:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.1 2011/08/12 12:59:13 jmcneill Exp
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/disk.h>
+#include <sys/kmem.h>
 
 #include <dev/ldvar.h>
 
@@ -48,11 +49,19 @@ static int	ld_thunkbus_ldstart(struct ld_softc *, struct buf *);
 static int	ld_thunkbus_lddump(struct ld_softc *, void *, int, int);
 static int	ld_thunkbus_ldflush(struct ld_softc *, int);
 
+static void	ld_thunkbus_complete(int, siginfo_t *, void *);
+
 struct ld_thunkbus_softc {
 	struct ld_softc	sc_ld;
 
 	int		sc_fd;
 	struct stat	sc_st;
+};
+
+struct ld_thunkbus_transfer {
+	struct ld_thunkbus_softc *tt_sc;
+	struct aiocb	tt_aio;
+	struct buf	*tt_bp;
 };
 
 CFATTACH_DECL_NEW(ld_thunkbus, sizeof(struct ld_thunkbus_softc),
@@ -78,6 +87,7 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 	struct ld_softc *ld = &sc->sc_ld;
 	struct thunkbus_attach_args *taa = opaque;
 	const char *path = taa->u.diskimage.path;
+	struct sigaction sa;
 
 	ld->sc_dv = self;
 
@@ -96,34 +106,90 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 
 	ld->sc_flags = LDF_ENABLED;
 	ld->sc_maxxfer = sc->sc_st.st_blksize;
-	ld->sc_secsize = 1;
-	ld->sc_secperunit = sc->sc_st.st_size;
+	ld->sc_secsize = 512;
+	ld->sc_secperunit = sc->sc_st.st_size / 512;
 	ld->sc_maxqueuecnt = 1;
 	ld->sc_start = ld_thunkbus_ldstart;
 	ld->sc_dump = ld_thunkbus_lddump;
 	ld->sc_flush = ld_thunkbus_ldflush;
 
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART|SA_SIGINFO;
+	sa.sa_sigaction = ld_thunkbus_complete;
+	if (thunk_sigaction(SIGIO, &sa, NULL) == -1)
+		panic("couldn't register SIGIO handler: %d", errno);
+
 	ldattach(ld);
+}
+
+static void
+ld_thunkbus_complete(int sig, siginfo_t *info, void *ctx)
+{
+	struct ld_thunkbus_transfer *tt;
+	struct ld_thunkbus_softc *sc;
+	struct buf *bp;
+
+	curcpu()->ci_idepth++;
+
+	if (info->si_signo == SIGIO) {
+		tt = info->si_value.sival_ptr;
+		sc = tt->tt_sc;
+		bp = tt->tt_bp;
+		if (thunk_aio_error(&tt->tt_aio) == 0 &&
+		    thunk_aio_return(&tt->tt_aio) != -1) {
+			bp->b_resid = 0;
+		} else {
+			bp->b_error = errno;
+			bp->b_resid = bp->b_bcount;
+		}
+
+		kmem_free(tt, sizeof(*tt));
+
+		if (bp->b_error)
+			printf("errpr!\n");
+
+		lddone(&sc->sc_ld, bp);
+	}
+
+	curcpu()->ci_idepth--;
 }
 
 static int
 ld_thunkbus_ldstart(struct ld_softc *ld, struct buf *bp)
 {
 	struct ld_thunkbus_softc *sc = (struct ld_thunkbus_softc *)ld;
-	ssize_t len;
+	struct ld_thunkbus_transfer *tt;
+	int error;
+
+	tt = kmem_alloc(sizeof(*tt), KM_SLEEP);
+	if (tt == NULL)
+		return ENOMEM;
+
+	tt->tt_sc = sc;
+	tt->tt_bp = bp;
+	memset(&tt->tt_aio, 0, sizeof(tt->tt_aio));
+	tt->tt_aio.aio_fildes = sc->sc_fd;
+	tt->tt_aio.aio_buf = bp->b_data;
+	tt->tt_aio.aio_nbytes = bp->b_bcount;
+	tt->tt_aio.aio_offset = bp->b_rawblkno * ld->sc_secsize;
+
+	tt->tt_aio.aio_sigevent.sigev_notify = SIGEV_SIGNAL;
+	tt->tt_aio.aio_sigevent.sigev_signo = SIGIO;
+	tt->tt_aio.aio_sigevent.sigev_value.sival_ptr = tt;
+
+#if 0
+	device_printf(sc->sc_ld.sc_dv, "%s off=%lld count=%lld\n",
+	    (bp->b_flags & B_READ) ? "rd" : "wr",
+	    (long long)bp->b_rawblkno,
+	    (long long)bp->b_bcount);
+#endif
 
 	if (bp->b_flags & B_READ)
-		len = thunk_pread(sc->sc_fd, bp->b_data, bp->b_bcount,
-		    bp->b_rawblkno);
+		error = thunk_aio_read(&tt->tt_aio);
 	else
-		len = thunk_pwrite(sc->sc_fd, bp->b_data, bp->b_bcount,
-		    bp->b_rawblkno);
+		error = thunk_aio_write(&tt->tt_aio);
 
-	if (len == -1)
-		return errno;
-	else if (len != bp->b_bcount)
-		panic("%s: short xfer", __func__);
-	return 0;
+	return error == -1 ? errno : 0;
 }
 
 static int
