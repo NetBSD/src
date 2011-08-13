@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj_vfs.c,v 1.5 2011/08/06 08:11:09 mbalmer Exp $	*/
+/*	$NetBSD: subr_kobj_vfs.c,v 1.6 2011/08/13 21:04:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include <sys/vnode.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.5 2011/08/06 08:11:09 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.6 2011/08/13 21:04:07 christos Exp $");
 
 static void
 kobj_close_vfs(kobj_t ko)
@@ -166,6 +166,7 @@ kobj_load_vfs(kobj_t *kop, const char *path, const bool nochroot)
 	}
 
 	ko->ko_type = KT_VNODE;
+	kobj_setname(ko, path);
 	ko->ko_source = nd.ni_vp;
 	ko->ko_read = kobj_read_vfs;
 	ko->ko_close = kobj_close_vfs;

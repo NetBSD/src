@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_impl.h,v 1.2 2009/11/27 17:54:11 pooka Exp $	*/
+/*	$NetBSD: kobj_impl.h,v 1.3 2011/08/13 21:04:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@ struct kobj {
 
 #ifdef _KERNEL
 int	kobj_load(kobj_t);
+void	kobj_setname(kobj_t, const char *);
 #endif
 
 #endif	/* _SYS_KOBJ_IMPL_H_ */

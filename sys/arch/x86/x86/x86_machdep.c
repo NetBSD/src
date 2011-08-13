@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.55 2011/08/11 18:11:17 cherry Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.56 2011/08/13 21:04:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.55 2011/08/11 18:11:17 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.56 2011/08/13 21:04:05 christos Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -160,7 +160,8 @@ module_init_md(void)
 			aprint_debug("Prep module path=%s len=%d pa=%x\n", 
 			    bi->path, bi->len, bi->base);
 			KASSERT(trunc_page(bi->base) == bi->base);
-			module_prime((void *)((uintptr_t)bi->base + KERNBASE),
+			module_prime(bi->path,
+			    (void *)((uintptr_t)bi->base + KERNBASE),
 			    bi->len);
 			break;
 		case BI_MODULE_IMAGE:
