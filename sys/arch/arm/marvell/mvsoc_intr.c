@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_intr.c,v 1.2 2010/12/20 00:25:28 matt Exp $	*/
+/*	$NetBSD: mvsoc_intr.c,v 1.3 2011/08/13 15:38:47 jakllsch Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_intr.c,v 1.2 2010/12/20 00:25:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_intr.c,v 1.3 2011/08/13 15:38:47 jakllsch Exp $");
 
 #define _INTR_PRIVATE
 
@@ -129,10 +129,11 @@ mvsoc_bridge_pic_find_pending_irqs(struct pic_softc *pic)
 
 	pending =
 	    read_mlmbreg(MVSOC_MLMB_MLMBICR) & read_mlmbreg(MVSOC_MLMB_MLMBIMR);
+
 	if (pending == 0)
 		return 0;
-	pic_mark_pending_sources(pic, 0, pending);
-	return 1;
+
+	return pic_mark_pending_sources(pic, 0, pending);
 }
 
 /* ARGSUSED */
