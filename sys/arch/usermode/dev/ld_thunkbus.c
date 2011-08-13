@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.2 2011/08/13 10:33:52 jmcneill Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.3 2011/08/13 10:58:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.2 2011/08/13 10:33:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.3 2011/08/13 10:58:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -49,13 +49,19 @@ static int	ld_thunkbus_ldstart(struct ld_softc *, struct buf *);
 static int	ld_thunkbus_lddump(struct ld_softc *, void *, int, int);
 static int	ld_thunkbus_ldflush(struct ld_softc *, int);
 
-static void	ld_thunkbus_complete(int, siginfo_t *, void *);
+static void	ld_thunkbus_sig(int, siginfo_t *, void *);
+static void	ld_thunkbus_complete(void *);
+
+struct ld_thunkbus_transfer;
 
 struct ld_thunkbus_softc {
 	struct ld_softc	sc_ld;
 
 	int		sc_fd;
 	struct stat	sc_st;
+	void		*sc_ih;
+
+	struct ld_thunkbus_transfer *sc_curtt;
 };
 
 struct ld_thunkbus_transfer {
@@ -113,9 +119,12 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 	ld->sc_dump = ld_thunkbus_lddump;
 	ld->sc_flush = ld_thunkbus_ldflush;
 
+	sc->sc_ih = softint_establish(SOFTINT_BIO,
+	    ld_thunkbus_complete, sc);
+
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART|SA_SIGINFO;
-	sa.sa_sigaction = ld_thunkbus_complete;
+	sa.sa_sigaction = ld_thunkbus_sig;
 	if (thunk_sigaction(SIGIO, &sa, NULL) == -1)
 		panic("couldn't register SIGIO handler: %d", errno);
 
@@ -123,35 +132,44 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 }
 
 static void
-ld_thunkbus_complete(int sig, siginfo_t *info, void *ctx)
+ld_thunkbus_sig(int sig, siginfo_t *info, void *ctx)
 {
 	struct ld_thunkbus_transfer *tt;
 	struct ld_thunkbus_softc *sc;
-	struct buf *bp;
 
 	curcpu()->ci_idepth++;
 
 	if (info->si_signo == SIGIO) {
 		tt = info->si_value.sival_ptr;
 		sc = tt->tt_sc;
-		bp = tt->tt_bp;
-		if (thunk_aio_error(&tt->tt_aio) == 0 &&
-		    thunk_aio_return(&tt->tt_aio) != -1) {
-			bp->b_resid = 0;
-		} else {
-			bp->b_error = errno;
-			bp->b_resid = bp->b_bcount;
-		}
-
-		kmem_free(tt, sizeof(*tt));
-
-		if (bp->b_error)
-			printf("errpr!\n");
-
-		lddone(&sc->sc_ld, bp);
+		sc->sc_curtt = tt;
+		softint_schedule(sc->sc_ih);
 	}
 
 	curcpu()->ci_idepth--;
+}
+
+static void
+ld_thunkbus_complete(void *arg)
+{
+	struct ld_thunkbus_softc *sc = arg;
+	struct ld_thunkbus_transfer *tt = sc->sc_curtt;
+	struct buf *bp = tt->tt_bp;
+
+	if (thunk_aio_error(&tt->tt_aio) == 0 &&
+	    thunk_aio_return(&tt->tt_aio) != -1) {
+		bp->b_resid = 0;
+	} else {
+		bp->b_error = errno;
+		bp->b_resid = bp->b_bcount;
+	}
+
+	kmem_free(tt, sizeof(*tt));
+
+	if (bp->b_error)
+		printf("errpr!\n");
+
+	lddone(&sc->sc_ld, bp);
 }
 
 static int
