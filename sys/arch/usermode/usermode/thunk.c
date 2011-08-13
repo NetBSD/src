@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.3 2011/08/12 12:59:13 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.4 2011/08/13 10:33:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.3 2011/08/12 12:59:13 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.4 2011/08/13 10:33:52 jmcneill Exp $");
 
 #include <machine/thunk.h>
 
@@ -36,6 +36,7 @@ __RCSID("$NetBSD: thunk.c,v 1.3 2011/08/12 12:59:13 jmcneill Exp $");
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <time.h>
 #include <ucontext.h>
 #include <unistd.h>
@@ -145,4 +146,34 @@ int
 thunk_fsync(int fd)
 {
 	return fsync(fd);
+}
+
+int
+thunk_sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
+{
+	return sigaction(sig, act, oact);
+}
+
+int
+thunk_aio_read(struct aiocb *aiocbp)
+{
+	return aio_read(aiocbp);
+}
+
+int
+thunk_aio_write(struct aiocb *aiocbp)
+{
+	return aio_write(aiocbp);
+}
+
+int
+thunk_aio_error(const struct aiocb *aiocbp)
+{
+	return aio_error(aiocbp);
+}
+
+int
+thunk_aio_return(struct aiocb *aiocbp)
+{
+	return aio_return(aiocbp);
 }

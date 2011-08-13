@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.9 2011/08/12 11:22:11 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.10 2011/08/13 10:33:52 jmcneill Exp $
 
 MACHINE_ARCH=			usermode
 USETOOLS?=			no
@@ -14,6 +14,8 @@ GENASSYM_CONF=	${USERMODE}/usermode/genassym.cf
 ##
 ## (2) compile settings
 ##
+USERMODE_LIBS=	-lrt
+
 DEFCOPTS=	-O2 -fno-omit-frame-pointer
 CPPFLAGS+=	-Dusermode
 CPPFLAGS.init_main.c+=	-Dmain=kernmain
@@ -38,8 +40,8 @@ MD_SFILES=
 ##
 SYSTEM_LD=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
-		${CC} ${COPTS} -Wl,-Map,$@.map -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
-		${CC} ${COPTS} -Wl,-Map,$@.map -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
+		${CC} ${COPTS} -Wl,-Map,$@.map -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o ${USERMODE_LIBS}; \
+		${CC} ${COPTS} -Wl,-Map,$@.map -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o ${USERMODE_LIBS}
 NVFLAGS=	-n
 
 ##
