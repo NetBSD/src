@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.177 2011/07/09 23:18:05 christos Exp $	*/
+/*	$NetBSD: tulip.c,v 1.178 2011/08/13 18:13:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.177 2011/07/09 23:18:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.178 2011/08/13 18:13:44 christos Exp $");
 
 
 #include <sys/param.h>
@@ -667,6 +667,7 @@ tlp_start(struct ifnet *ifp)
 	struct tulip_txsoft *txs, *last_txs = NULL;
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx, lasttx = 1, ofree, seg;
+	struct tulip_desc *txd;
 
 	DPRINTF(sc, ("%s: tlp_start: sc_flags 0x%08x, if_flags 0x%08x\n",
 	    device_xname(sc->sc_dev), sc->sc_flags, ifp->if_flags));
@@ -803,11 +804,12 @@ tlp_start(struct ifnet *ifp)
 			 * yet.  That could cause a race condition.
 			 * We'll do it below.
 			 */
-			sc->sc_txdescs[nexttx].td_status =
+			txd = &sc->sc_txdescs[nexttx];
+			txd->td_status =
 			    (nexttx == firsttx) ? 0 : htole32(TDSTAT_OWN);
-			sc->sc_txdescs[nexttx].td_bufaddr1 =
+			txd->td_bufaddr1 =
 			    htole32(dmamap->dm_segs[seg].ds_addr);
-			sc->sc_txdescs[nexttx].td_ctl =
+			txd->td_ctl =
 			    htole32((dmamap->dm_segs[seg].ds_len <<
 			        TDCTL_SIZE1_SHIFT) | sc->sc_tdctl_ch |
 				(nexttx == (TULIP_NTXDESC - 1) ?
@@ -825,15 +827,16 @@ tlp_start(struct ifnet *ifp)
 		if (ifp->if_flags & IFF_DEBUG) {
 			printf("     txsoft %p transmit chain:\n", txs);
 			for (seg = sc->sc_txnext;; seg = TULIP_NEXTTX(seg)) {
+				txd = sc->sc_txdescs[seg];
 				printf("     descriptor %d:\n", seg);
 				printf("       td_status:   0x%08x\n",
-				    le32toh(sc->sc_txdescs[seg].td_status));
+				    le32toh(txd->td_status));
 				printf("       td_ctl:      0x%08x\n",
-				    le32toh(sc->sc_txdescs[seg].td_ctl));
+				    le32toh(txd->td_ctl));
 				printf("       td_bufaddr1: 0x%08x\n",
-				    le32toh(sc->sc_txdescs[seg].td_bufaddr1));
+				    le32toh(txd->td_bufaddr1));
 				printf("       td_bufaddr2: 0x%08x\n",
-				    le32toh(sc->sc_txdescs[seg].td_bufaddr2));
+				    le32toh(txd->td_bufaddr2));
 				if (seg == lasttx)
 					break;
 			}
@@ -1431,15 +1434,17 @@ tlp_txintr(struct tulip_softc *sc)
 #ifdef TLP_DEBUG
 		if (ifp->if_flags & IFF_DEBUG) {
 			int i;
+			struct tulip_desc *txd;
 			printf("    txsoft %p transmit chain:\n", txs);
 			for (i = txs->txs_firstdesc;; i = TULIP_NEXTTX(i)) {
+				txd = sc->sc_txdescs[i];
 				printf("     descriptor %d:\n", i);
 				printf("       td_status:   0x%08x\n",
-				    le32toh(sc->sc_txdescs[i].td_status));
+				    le32toh(txd->td_status));
 				printf("       td_ctl:      0x%08x\n",
-				    le32toh(sc->sc_txdescs[i].td_ctl));
+				    le32toh(txd->td_ctl));
 				printf("       td_bufaddr1: 0x%08x\n",
-				    le32toh(sc->sc_txdescs[i].td_bufaddr1));
+				    le32toh(txd->td_bufaddr1));
 				printf("       td_bufaddr2: 0x%08x\n",
 				    le32toh(sc->sc_txdescs[i].td_bufaddr2));
 				if (i == txs->txs_lastdesc)
@@ -1780,9 +1785,9 @@ tlp_init(struct ifnet *ifp)
 	 */
 	memset(sc->sc_txdescs, 0, sizeof(sc->sc_txdescs));
 	for (i = 0; i < TULIP_NTXDESC; i++) {
-		sc->sc_txdescs[i].td_ctl = htole32(sc->sc_tdctl_ch);
-		sc->sc_txdescs[i].td_bufaddr2 =
-		    htole32(TULIP_CDTXADDR(sc, TULIP_NEXTTX(i)));
+		struct tulip_desc *txd = &sc->sc_txdescs[i];
+		txd->td_ctl = htole32(sc->sc_tdctl_ch);
+		txd->td_bufaddr2 = htole32(TULIP_CDTXADDR(sc, TULIP_NEXTTX(i)));
 	}
 	sc->sc_txdescs[TULIP_NTXDESC - 1].td_ctl |= htole32(sc->sc_tdctl_er);
 	TULIP_CDTXSYNC(sc, 0, TULIP_NTXDESC,
@@ -2559,6 +2564,7 @@ tlp_filter_setup(struct tulip_softc *sc)
 	struct ether_multistep step;
 	volatile uint32_t *sp;
 	struct tulip_txsoft *txs;
+	struct tulip_desc *txd;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	uint32_t hash, hashsize;
 	int cnt, nexttx;
@@ -2756,10 +2762,10 @@ tlp_filter_setup(struct tulip_softc *sc)
 	txs->txs_mbuf = NULL;
 
 	nexttx = sc->sc_txnext;
-	sc->sc_txdescs[nexttx].td_status = 0;
-	sc->sc_txdescs[nexttx].td_bufaddr1 = htole32(TULIP_CDSPADDR(sc));
-	sc->sc_txdescs[nexttx].td_ctl =
-	    htole32((TULIP_SETUP_PACKET_LEN << TDCTL_SIZE1_SHIFT) |
+	txd = &sc->sc_txdescs[nexttx];
+	txd->td_status = 0;
+	txd->td_bufaddr1 = htole32(TULIP_CDSPADDR(sc));
+	txd->td_ctl = htole32((TULIP_SETUP_PACKET_LEN << TDCTL_SIZE1_SHIFT) |
 	    sc->sc_filtmode | TDCTL_Tx_SET | sc->sc_setup_fsls |
 	    TDCTL_Tx_IC | sc->sc_tdctl_ch |
 	    (nexttx == (TULIP_NTXDESC - 1) ? sc->sc_tdctl_er : 0));
@@ -2770,18 +2776,16 @@ tlp_filter_setup(struct tulip_softc *sc)
 	if (ifp->if_flags & IFF_DEBUG) {
 		printf("     filter_setup %p transmit chain:\n", txs);
 		printf("     descriptor %d:\n", nexttx);
-		printf("       td_status:   0x%08x\n",
-		    le32toh(sc->sc_txdescs[nexttx].td_status));
-		printf("       td_ctl:      0x%08x\n",
-		    le32toh(sc->sc_txdescs[nexttx].td_ctl));
+		printf("       td_status:   0x%08x\n", le32toh(txd->td_status));
+		printf("       td_ctl:      0x%08x\n", le32toh(txd->td_ctl));
 		printf("       td_bufaddr1: 0x%08x\n",
-		    le32toh(sc->sc_txdescs[nexttx].td_bufaddr1));
+		    le32toh(txd->td_bufaddr1));
 		printf("       td_bufaddr2: 0x%08x\n",
-		    le32toh(sc->sc_txdescs[nexttx].td_bufaddr2));
+		    le32toh(txd->td_bufaddr2));
 	}
 #endif
 
-	sc->sc_txdescs[nexttx].td_status = htole32(TDSTAT_OWN);
+	txd->td_status = htole32(TDSTAT_OWN);
 	TULIP_CDTXSYNC(sc, nexttx, 1,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
