@@ -1,4 +1,4 @@
-/* $NetBSD: mcontext.h,v 1.2 2009/10/21 16:06:59 snj Exp $ */
+/* $NetBSD: mcontext.h,v 1.3 2011/08/13 14:51:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,10 +29,14 @@
 #ifndef _ARCH_USERMODE_INCLUDE_MCONTEXT_H
 #define _ARCH_USERMODE_INCLUDE_MCONTEXT_H
 
+#include <machine/vmparam.h>
+
 typedef struct {
+	uint8_t	__unknown[PAGE_SIZE];
 } mcontext_t;
 
 typedef struct {
+	uint8_t	__unknown[PAGE_SIZE];
 } mcontext32_t;
 
 #endif /* !_ARCH_USERMODE_INCLUDE_MCONTEXT_H */
