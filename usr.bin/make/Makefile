@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2011/06/22 02:49:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.55 2011/08/14 13:06:09 christos Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -36,7 +36,10 @@ SUBDIR+= unit-tests
 .include <bsd.subdir.mk>
 
 CPPFLAGS+= -DMAKE_NATIVE
-COPTS.var.c+= -Wno-cast-qual
+COPTS.var.c += -Wno-cast-qual
+COPTS.job.c += -Wno-format-nonliteral
+COPTS.parse.c += -Wno-format-nonliteral
+COPTS.var.c += -Wno-format-nonliteral
 
 .ifdef TOOLDIR
 # this is a native netbsd build, 
@@ -49,8 +52,3 @@ DPADD+=${LIBUTIL}
 # A simple unit-test driver to help catch regressions
 accept test:
 	cd ${.CURDIR}/unit-tests && ${.MAKE} -r -m / TEST_MAKE=${TEST_MAKE:U${.OBJDIR}/${PROG:T}} ${.TARGET}
-
-# XXX
-.if ${HAVE_GCC} == 45
-COPTS.compat.c+=	-Wno-error
-.endif

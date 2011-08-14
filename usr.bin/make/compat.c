@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.82 2010/11/25 21:31:09 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.83 2011/08/14 13:06:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.82 2010/11/25 21:31:09 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.83 2011/08/14 13:06:09 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.82 2010/11/25 21:31:09 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.83 2011/08/14 13:06:09 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -347,7 +347,7 @@ again:
 		useShell = 1;
 		goto again;
 	}
-	av = (const char **)mav;
+	av = (void *)mav;
     }
 
     local = TRUE;
