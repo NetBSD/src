@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rap.c,v 1.6 2006/05/10 21:53:15 mrg Exp $");
+__RCSID("$NetBSD: rap.c,v 1.7 2011/08/14 12:35:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -86,7 +86,7 @@ smb_rap_parserqparam(const char *s, char **next, int *rlen)
 		s = np;
 	}
 	*rlen = len;
-	*(const char**)next = s;
+	memcpy(next, &s, sizeof(s));
 	return 0;
 }
 
@@ -116,7 +116,7 @@ smb_rap_parserpparam(const char *s, char **next, int *rlen)
 		s = np;
 	}
 	*rlen = len;
-	*(const char**)next = s;
+	memcpy(next, &s, sizeof(s));
 	return 0;
 }
 
@@ -147,7 +147,7 @@ smb_rap_parserpdata(const char *s, char **next, int *rlen)
 		s = np;
 	}
 	*rlen = len;
-	*(const char**)next = s;
+	memcpy(next, &s, sizeof(s));
 	return 0;
 }
 
