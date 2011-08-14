@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.c,v 1.3 2011/06/07 14:56:12 bouyer Exp $ */
+/* $NetBSD: quota2.c,v 1.4 2011/08/14 12:32:01 christos Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -98,7 +98,7 @@ quota2_alloc_quota(union dinode * dp, struct bufarea *hbp,
 			errexit("INTERNAL ERROR: "
 			    "addfreeq2e didn't fill free list\n");
 	}
-	if (off < sblock->fs_bsize) {
+	if (off < (uint64_t)sblock->fs_bsize) {
 		/* in the header block */
 		bp = hbp;
 	} else {
@@ -162,7 +162,7 @@ quota2_walk_list(union dinode *dp, struct bufarea *hbp, uint64_t *offp, void *a,
 			dirty(bp);
 		if (ret & Q2WL_ABORT)
 			return FSCK_EXIT_CHECK_FAILED;
-		if (off != iswap64(*offp)) {
+		if ((uint64_t)off != iswap64(*offp)) {
 			/* callback changed parent's pointer, redo */
 			dirty(obp);
 			off = iswap64(*offp);
@@ -204,7 +204,7 @@ quota2_list_check(uint64_t *offp, struct quota2_entry *q2e, uint64_t off,
 		/* check that we're in the right hash entry */
 		if (*hash < 0)
 			return 0;
-		if (*hash == (iswap32(q2e->q2e_uid) & q2h_hash_mask))
+		if ((uint32_t)*hash == (iswap32(q2e->q2e_uid) & q2h_hash_mask))
 			return 0;
 
 		pwarn("QUOTA uid %d IN WRONG HASH LIST %d",
