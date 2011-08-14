@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.127 2011/07/05 14:07:12 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.128 2011/08/14 02:31:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.127 2011/07/05 14:07:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128 2011/08/14 02:31:08 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1966,7 +1966,6 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 /*
  * pmap_pdp_ctor: constructor for the PDP cache.
  */
-
 int
 pmap_pdp_ctor(void *arg, void *v, int flags)
 {
@@ -2041,7 +2040,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	object = (vaddr_t)v;
 	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
 		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
-		/* remap this page RO */
+		/* FIXME: This should use pmap_protect() .. */
 		pmap_kenter_pa(object, pdirpa, VM_PROT_READ, 0);
 		pmap_update(pmap_kernel());
 		/*
@@ -3655,30 +3654,28 @@ startover:
 /* see pmap.h */
 
 /*
- * pmap_write_protect: write-protect pages in a pmap
+ * pmap_write_protect: write-protect pages in a pmap.
  */
-
 void
 pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
-	int i;
-	pt_entry_t *ptes, *epte;
-	pt_entry_t *spte;
-	pd_entry_t * const *pdes;
-	vaddr_t blockend, va;
-	pt_entry_t opte;
+	pt_entry_t *ptes;
+	pt_entry_t * const *pdes;
 	struct pmap *pmap2;
+	vaddr_t blockend, va;
 
 	KASSERT(curlwp->l_md.md_gc_pmap != pmap);
 
-	kpreempt_disable();
-	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);	/* locks pmap */
-
-	/* should be ok, but just in case ... */
 	sva &= PG_FRAME;
 	eva &= PG_FRAME;
 
+	/* Acquire pmap. */
+	kpreempt_disable();
+	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
+
 	for (va = sva ; va < eva ; va = blockend) {
+		pt_entry_t *spte, *epte;
+		int i;
 
 		blockend = (va & L2_FRAME) + NBPD_L2;
 		if (blockend > eva)
@@ -3699,21 +3696,17 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				continue;
 		}
 
-		/* empty block? */
-		if (!pmap_pdes_valid(va, pdes, NULL))
+		/* Is it a valid block? */
+		if (!pmap_pdes_valid(va, pdes, NULL)) {
 			continue;
-
-#ifdef DIAGNOSTIC
-		if (va >= VM_MAXUSER_ADDRESS &&
-		    va < VM_MAX_ADDRESS)
-			panic("pmap_write_protect: PTE space");
-#endif
+		}
+		KASSERT(va < VM_MAXUSER_ADDRESS || va >= VM_MAX_ADDRESS);
 
 		spte = &ptes[pl1_i(va)];
 		epte = &ptes[pl1_i(blockend)];
 
 		for (/*null */; spte < epte ; spte++) {
-			pt_entry_t npte;
+			pt_entry_t opte, npte;
 
 			do {
 				opte = *spte;
@@ -3722,10 +3715,9 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				}
 				npte = opte & ~PG_RW;
 			} while (pmap_pte_cas(spte, opte, npte) != opte);
-			if ((opte & PG_M) != 0) {
-				vaddr_t tva;
 
-				tva = x86_ptob(spte - ptes);
+			if ((opte & PG_M) != 0) {
+				vaddr_t tva = x86_ptob(spte - ptes);
 				pmap_tlb_shootdown(pmap, tva, opte,
 				    TLBSHOOT_WRITE_PROTECT);
 			}
@@ -3733,57 +3725,47 @@ next:;
 		}
 	}
 
-	pmap_unmap_ptes(pmap, pmap2);	/* unlocks pmap */
+	/* Release pmap. */
+	pmap_unmap_ptes(pmap, pmap2);
 	kpreempt_enable();
 }
 
 /*
- * end of protection functions
- */
-
-/*
- * pmap_unwire: clear the wired bit in the PTE
+ * pmap_unwire: clear the wired bit in the PTE.
  *
- * => mapping should already be in map
+ * => Mapping should already be present.
  */
-
 void
 pmap_unwire(struct pmap *pmap, vaddr_t va)
 {
-	pt_entry_t *ptes;
+	pt_entry_t *ptes, *ptep, opte;
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
 
+	/* Acquire pmap. */
 	kpreempt_disable();
-	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);	/* locks pmap */
+	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 
-	if (pmap_pdes_valid(va, pdes, NULL)) {
-		pt_entry_t *ptep = &ptes[pl1_i(va)];
-		pt_entry_t opte = *ptep;
-
-#ifdef DIAGNOSTIC
-		if (!pmap_valid_entry(opte))
-			panic("pmap_unwire: invalid (unmapped) va 0x%lx", va);
-#endif
-		if ((opte & PG_W) != 0) {
-			pt_entry_t npte = opte & ~PG_W;
-
-			opte = pmap_pte_testset(ptep, npte);
-			pmap_stats_update_bypte(pmap, npte, opte);
-		}
-#ifdef DIAGNOSTIC
-		else {
-			printf("pmap_unwire: wiring for pmap %p va 0x%lx "
-			       "didn't change!\n", pmap, va);
-		}
-#endif
-		pmap_unmap_ptes(pmap, pmap2);		/* unlocks map */
-	}
-#ifdef DIAGNOSTIC
-	else {
+	if (!pmap_pdes_valid(va, pdes, NULL)) {
 		panic("pmap_unwire: invalid PDE");
 	}
-#endif
+
+	ptep = &ptes[pl1_i(va)];
+	opte = *ptep;
+	KASSERT(pmap_valid_entry(opte));
+
+	if (opte & PG_W) {
+		pt_entry_t npte = opte & ~PG_W;
+
+		opte = pmap_pte_testset(ptep, npte);
+		pmap_stats_update_bypte(pmap, npte, opte);
+	} else {
+		printf("pmap_unwire: wiring for pmap %p va 0x%lx "
+		    "did not change!\n", pmap, va);
+	}
+
+	/* Release pmap. */
+	pmap_unmap_ptes(pmap, pmap2);
 	kpreempt_enable();
 }
 
@@ -3832,20 +3814,13 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 
 	KASSERT(pmap_initialized);
 	KASSERT(curlwp->l_md.md_gc_pmap != pmap);
+	KASSERT(va < VM_MAX_KERNEL_ADDRESS);
+	KASSERTMSG(va != (vaddr_t)PDP_BASE && va != (vaddr_t)APDP_BASE,
+	    ("pmap_enter: trying to map over PDP/APDP!"));
+	KASSERTMSG(va < VM_MIN_KERNEL_ADDRESS ||
+	    pmap_valid_entry(pmap->pm_pdir[pl_i(va, PTP_LEVELS)]),
+	    ("pmap_enter: missing kernel PTP for VA %lx!", va));
 
-#ifdef DIAGNOSTIC
-	/* sanity check: totally out of range? */
-	if (va >= VM_MAX_KERNEL_ADDRESS)
-		panic("pmap_enter: too big");
-
-	if (va == (vaddr_t) PDP_BASE || va == (vaddr_t) APDP_BASE)
-		panic("pmap_enter: trying to map over PDP/APDP!");
-
-	/* sanity check: kernel PTPs should already have been pre-allocated */
-	if (va >= VM_MIN_KERNEL_ADDRESS &&
-	    !pmap_valid_entry(pmap->pm_pdir[pl_i(va, PTP_LEVELS)]))
-		panic("pmap_enter: missing kernel PTP for va %lx!", va);
-#endif /* DIAGNOSTIC */
 #ifdef XEN
 	KASSERT(domid == DOMID_SELF || pa == 0);
 #endif /* XEN */
