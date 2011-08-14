@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.16 2011/07/07 10:49:38 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.17 2011/08/14 13:27:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.16 2011/07/07 10:49:38 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.17 2011/08/14 13:27:47 christos Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -848,7 +848,7 @@ print_language_string(sdp_data_t *data)
 		return;
 	}
 
-	n = iconv(ih, (const char **)&src, &srcleft, &dst, &dstleft);
+	n = iconv(ih, (void *)&src, &srcleft, &dst, &dstleft);
 
 	iconv_close(ih);
 
