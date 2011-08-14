@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.3 2011/05/13 01:52:13 christos Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.4 2011/08/14 09:06:12 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: fsmagic.c,v 1.62 2010/09/20 20:16:08 rrt Exp $")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.3 2011/05/13 01:52:13 christos Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.4 2011/08/14 09:06:12 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -69,22 +69,18 @@ __RCSID("$NetBSD: fsmagic.c,v 1.3 2011/05/13 01:52:13 christos Exp $");
 private int
 bad_link(struct magic_set *ms, int err, char *buf)
 {
-	const char *errfmt;
 	int mime = ms->flags & MAGIC_MIME;
 	if ((mime & MAGIC_MIME_TYPE) &&
 	    file_printf(ms, "application/x-symlink")
 	    == -1)
 		return -1;
 	else if (!mime) {
-		if (err == ELOOP)
-			errfmt = "symbolic link in a loop";
-		else
-			errfmt = "broken symbolic link to `%s'";
 		if (ms->flags & MAGIC_ERROR) {
-			file_error(ms, err, errfmt, buf);
+			file_error(ms, err,
+			    "broken symbolic link to `%s'", buf);
 			return -1;
 		} 
-		if (file_printf(ms, errfmt, buf) == -1)
+		if (file_printf(ms, "broken symbolic link to `%s'", buf) == -1)
 			return -1;
 	}
 	return 1;
