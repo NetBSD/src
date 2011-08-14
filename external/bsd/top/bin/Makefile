@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/02/03 15:34:38 roy Exp $
+#	$NetBSD: Makefile,v 1.6 2011/08/14 12:48:02 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -36,4 +36,5 @@ commands.c: sigdesc.h
 config.h: config.h.in
 	${TOOL_SED} -e s/@MACHINE@/${MACHINE}/ < $? > $@
 
+COPTS.display.c = -Wno-format-nonliteral
 .include <bsd.prog.mk>
