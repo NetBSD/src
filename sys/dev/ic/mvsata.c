@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.8 2011/03/10 03:35:37 jakllsch Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.9 2011/08/14 16:50:49 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.8 2011/03/10 03:35:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.9 2011/08/14 16:50:49 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
@@ -146,7 +146,7 @@ static void mvsata_atapi_done(struct ata_channel *, struct ata_xfer *);
 static void mvsata_atapi_polldsc(void *);
 #endif
 
-static int mvsata_edma_inqueue(struct mvsata_port *, struct ata_bio *, void *);
+static int mvsata_edma_enqueue(struct mvsata_port *, struct ata_bio *, void *);
 static int mvsata_edma_handle(struct mvsata_port *, struct ata_xfer *);
 static int mvsata_edma_wait(struct mvsata_port *, struct ata_xfer *, int);
 static void mvsata_edma_timeout(void *);
@@ -1059,7 +1059,7 @@ again:
 
 			if (xfer->c_flags & C_POLL)
 				sc->sc_enable_intr(mvport, 0 /*off*/);
-			error = mvsata_edma_inqueue(mvport, ata_bio,
+			error = mvsata_edma_enqueue(mvport, ata_bio,
 			    (char *)xfer->c_databuf + xfer->c_skip);
 			if (error) {
 				if (error == EINVAL) {
@@ -2313,12 +2313,12 @@ mvsata_atapi_polldsc(void *arg)
 
 
 /*
- * XXXX: Shall we need lock for race condition in mvsata_edma_inqueue{,_gen2}(),
+ * XXXX: Shall we need lock for race condition in mvsata_edma_enqueue{,_gen2}(),
  * if supported queuing command by atabus?  The race condition will not happen
  * if this is called only to the thread of atabus.
  */
 static int
-mvsata_edma_inqueue(struct mvsata_port *mvport, struct ata_bio *ata_bio,
+mvsata_edma_enqueue(struct mvsata_port *mvport, struct ata_bio *ata_bio,
 		    void *databuf)
 {
 	struct mvsata_softc *sc = device_private(MVSATA_DEV2(mvport));
@@ -2329,7 +2329,7 @@ mvsata_edma_inqueue(struct mvsata_port *mvport, struct ata_bio *ata_bio,
 	uint32_t reg;
 	int quetag, erqqip, erqqop, next, rv, i;
 
-	DPRINTFN(2, ("%s:%d:%d: mvsata_edma_inqueue:"
+	DPRINTFN(2, ("%s:%d:%d: mvsata_edma_enqueue:"
 	    " blkno=0x%" PRIx64 ", nbytes=%d, flags=0x%x\n",
 	    device_xname(MVSATA_DEV2(mvport)), mvport->port_hc->hc,
 	    mvport->port, ata_bio->blkno, ata_bio->nbytes, ata_bio->flags));
