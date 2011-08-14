@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.72 2011/08/14 20:20:59 apb Exp $
+#	$NetBSD: configure.ac,v 1.73 2011/08/14 20:22:42 apb Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -79,7 +79,7 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/param.h \
 # Find headers that may not be available.
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(sys/mtio.h sys/sysmacros.h sys/syslimits.h \
-	getopt.h features.h malloc.h sys/poll.h stddef.h)
+	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h)
 AC_CHECK_HEADERS(sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h \
 	sys/endian.h sys/featuretest.h err.h inttypes.h libgen.h paths.h \
 	stdint.h util.h resolv.h arpa/nameser.h,,
@@ -229,5 +229,8 @@ main(void)
         [AC_MSG_WARN([cross compiling: not checking farseln])]
     )
 ])
+
+# Variables substituted via @VARNAME@ in defs.mk.in
+AC_SUBST(HAVE_PTHREAD_H, $ac_cv_header_pthread_h)
 
 AC_OUTPUT
