@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.96 2011/07/12 16:40:41 joerg Exp $
+#	$NetBSD: Makefile,v 1.97 2011/08/14 10:53:17 christos Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -81,6 +81,8 @@ NBCOMPATLIB=	-L${COMPATOBJDIR} -lnbcompat
 .if make(install)
 SUBDIR+=USD.doc
 .endif
+
+COPTS.printf.c = -Wno-format-nonliteral
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
