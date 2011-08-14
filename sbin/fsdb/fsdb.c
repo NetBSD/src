@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.41 2011/06/09 21:23:30 christos Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.42 2011/08/14 12:30:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.41 2011/06/09 21:23:30 christos Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.42 2011/08/14 12:30:04 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -280,8 +280,7 @@ cmdloop(void)
 		         * el_parse returns -1 to signal that it's not been
 		         * handled internally.
 		         */
-			if (el_parse(elptr, cmd_argc,
-				     (const char **)cmd_argv) != -1)
+			if (el_parse(elptr, cmd_argc, (void *)cmd_argv) != -1)
 				continue;
 			known = 0;
 			for (cmdp = cmds; cmdp->cmd; cmdp++) {
