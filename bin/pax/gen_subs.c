@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.34 2008/02/24 20:42:46 joerg Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.35 2011/08/14 10:49:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.34 2008/02/24 20:42:46 joerg Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.35 2011/08/14 10:49:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,25 @@ __RCSID("$NetBSD: gen_subs.c,v 1.34 2008/02/24 20:42:46 joerg Exp $");
 #define UT_GRPSIZE	6
 
 /*
+ * convert time to string
+ */
+static void
+formattime(char *buf, size_t buflen, time_t when)
+{
+	int error;
+	struct tm tm;
+	(void)localtime_r(&when, &tm);
+
+	if (when + SIXMONTHS <= time(NULL))
+		error = strftime(buf, buflen, OLDFRMT, &tm);
+	else
+		error = strftime(buf, buflen, CURFRMT, &tm);
+
+	if (error == 0)
+		buf[0] = '\0';
+}
+
+/*
  * ls_list()
  *	list the members of an archive in ls format
  */
@@ -93,7 +112,7 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 	struct stat *sbp;
 	char f_mode[MODELEN];
 	char f_date[DATELEN];
-	const char *timefrmt, *user, *group;
+	const char *user, *group;
 
 	/*
 	 * if not verbose, just print the file name
@@ -113,16 +132,10 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 	/*
 	 * time format based on age compared to the time pax was started.
 	 */
-	if ((sbp->st_mtime + SIXMONTHS) <= now)
-		timefrmt = OLDFRMT;
-	else
-		timefrmt = CURFRMT;
-
+	formattime(f_date, sizeof(f_date), arcn->sb.st_mtime);
 	/*
 	 * print file mode, link count, uid, gid and time
 	 */
-	if (strftime(f_date,DATELEN,timefrmt,localtime(&(sbp->st_mtime))) == 0)
-		f_date[0] = '\0';
 	user = user_from_uid(sbp->st_uid, 0);
 	group = group_from_gid(sbp->st_gid, 0);
 	(void)fprintf(fp, "%s%2lu %-*s %-*s ", f_mode,
@@ -162,19 +175,8 @@ ls_tty(ARCHD *arcn)
 {
 	char f_date[DATELEN];
 	char f_mode[MODELEN];
-	const char *timefrmt;
 
-	if ((arcn->sb.st_mtime + SIXMONTHS) <= time((time_t *)NULL))
-		timefrmt = OLDFRMT;
-	else
-		timefrmt = CURFRMT;
-
-	/*
-	 * convert time to string, and print
-	 */
-	if (strftime(f_date, DATELEN, timefrmt,
-	    localtime(&(arcn->sb.st_mtime))) == 0)
-		f_date[0] = '\0';
+	formattime(f_date, sizeof(f_date), arcn->sb.st_mtime);
 	strmode(arcn->sb.st_mode, f_mode);
 	tty_prnt("%s%s %s\n", f_mode, f_date, arcn->name);
 	return;
