@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.45 2011/06/12 03:35:57 rmind Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.46 2011/08/14 12:37:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.45 2011/06/12 03:35:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.46 2011/08/14 12:37:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1043,9 +1043,9 @@ wapbl_advance(size_t size, size_t off, off_t old, size_t delta)
 	off_t new;
 
 	/* Define acceptable ranges for inputs. */
-	KASSERT(delta <= size);
-	KASSERT((old == 0) || (old >= off));
-	KASSERT(old < (size + off));
+	KASSERT(delta <= (size_t)size);
+	KASSERT((old == 0) || ((size_t)old >= off));
+	KASSERT(old < (off_t)(size + off));
 
 	if ((old == 0) && (delta != 0))
 		new = off + delta;
@@ -1060,8 +1060,8 @@ wapbl_advance(size_t size, size_t off, off_t old, size_t delta)
 	KASSERT((delta != (size)) || (new == old));
 
 	/* Define acceptable ranges for output. */
-	KASSERT((new == 0) || (new >= off));
-	KASSERT(new < (size + off));
+	KASSERT((new == 0) || ((size_t)new >= off));
+	KASSERT((size_t)new < (size + off));
 	return new;
 }
 
