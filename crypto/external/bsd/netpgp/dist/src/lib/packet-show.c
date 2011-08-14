@@ -60,7 +60,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-show.c,v 1.20 2010/11/15 08:50:32 agc Exp $");
+__RCSID("$NetBSD: packet-show.c,v 1.21 2011/08/14 11:19:51 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -451,7 +451,6 @@ add_str_from_octet_map(pgp_text_t *map, char *str, uint8_t octet)
 static unsigned 
 add_bitmap_entry(pgp_text_t *map, const char *str, uint8_t bit)
 {
-	const char     *fmt_unknown = "Unknown bit(0x%x)";
 
 	if (str && !add_str(&map->known, str)) {
 		/*
@@ -468,14 +467,11 @@ add_bitmap_entry(pgp_text_t *map, const char *str, uint8_t bit)
 		 * be replaced in the output by 2 chars of hex, so the length
 		 * will be correct
 		 */
-		unsigned         len = (unsigned)(strlen(fmt_unknown) + 1);
 		char		*newstr;
-
-		if ((newstr = calloc(1, len)) == NULL) {
+		if (asprintf(&newstr, "Unknown bit(0x%x)", bit) == -1) {
 			(void) fprintf(stderr, "add_bitmap_entry: bad alloc\n");
 			return 0;
 		}
-		(void) snprintf(newstr, len, fmt_unknown, bit);
 		if (!add_str(&map->unknown, newstr)) {
 			return 0;
 		}
