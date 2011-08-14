@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.6.10.3 2011/08/12 20:55:55 riz Exp $ */
+/* $NetBSD: drvctl.c,v 1.6.10.4 2011/08/14 23:44:48 riz Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -228,13 +228,14 @@ extract_property(prop_dictionary_t dict, const char *prop)
 	while (p) {
 		cur = p;
 		p = strtok_r(NULL, "/", &ep);
+		obj = prop_dictionary_get(dict, cur);
+		if (obj == NULL)
+			exit(EXIT_FAILURE);
 		if (p) {
-			if (prop_dictionary_get_dict(dict, cur, &dict) == false)
+			if (prop_object_type(obj) != PROP_TYPE_DICTIONARY)
 				exit(EXIT_FAILURE);
+			dict = obj;
 		} else {
-			obj = prop_dictionary_get(dict, cur);
-			if (obj == NULL)
-				exit(EXIT_FAILURE);
 			switch (prop_object_type(obj)) {
 			case PROP_TYPE_BOOL:
 				printf("%s\n",
