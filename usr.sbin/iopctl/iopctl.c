@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.20 2011/08/14 17:54:55 christos Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.21 2011/08/14 23:13:43 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.20 2011/08/14 17:54:55 christos Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.21 2011/08/14 23:13:43 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -353,6 +353,7 @@ showddmid(char **argv)
 	i2ostrvis(p.di.revlevel, sizeof(p.di.revlevel), ident, sizeof(ident));
 	show("module revision", "%s", ident);
 	show("serial # format", "%d", p.di.snformat);
+	__CTASSERT(sizeof(serial) == sizeof(p.di.serialnumber));
 	memcpy(serial, &p.di.serialnumber, sizeof(serial));
 	show("serial #", "%08x%08x%08x", serial[0], serial[1], serial[2]);
 }
