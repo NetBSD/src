@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated automatically from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.25 2010/01/21 12:55:04 tsutsui Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.26 2011/08/14 20:25:01 apb Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -365,6 +365,9 @@
 
 /* Define if you have the `pread' function. */
 #undef HAVE_PREAD
+
+/* Define if you have the <pthread.h> header file. */
+#undef HAVE_PTHREAD_H
 
 /* Define if you have the `putc_unlocked' function. */
 #undef HAVE_PUTC_UNLOCKED
