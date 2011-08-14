@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.8 2011/08/12 08:00:52 mbalmer Exp $ */
+/* $NetBSD: gpiosim.c,v 1.9 2011/08/14 18:49:17 mbalmer Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -263,17 +263,16 @@ gpiosim_modcmd(modcmd_t cmd, void *opaque)
 		if (error) {
 			config_cfdriver_detach(&gpiosim_cd);
 			aprint_error("%s: unable to register cfattach\n",
-				gpiosim_cd.cd_name);
+			    gpiosim_cd.cd_name);
 			return error;
 		}
-
 		error = config_cfdata_attach(gpiosim_cfdata, 1);
 		if (error) {
 			config_cfattach_detach(gpiosim_cd.cd_name,
 			    &gpiosim_ca);
 			config_cfdriver_detach(&gpiosim_cd);
 			aprint_error("%s: unable to register cfdata\n",
-				gpiosim_cd.cd_name);
+			    gpiosim_cd.cd_name);
 			return error;
 		}
 		(void)config_attach_pseudo(gpiosim_cfdata);
