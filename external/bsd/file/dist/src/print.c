@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.1.1.2 2011/05/12 20:46:53 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.2 2011/08/14 09:06:12 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: print.c,v 1.69 2010/07/21 16:47:18 christos Exp $")
 #else
-__RCSID("$NetBSD: print.c,v 1.1.1.2 2011/05/12 20:46:53 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.2 2011/08/14 09:06:12 christos Exp $");
 #endif
 #endif  /* lint */
 
@@ -58,7 +58,7 @@ file_mdump(struct magic *m)
 	private const char optyp[] = { FILE_OPS };
 
 	(void) fprintf(stderr, "[%u", m->lineno);
-	(void) fprintf(stderr, ">>>>>>>> %u" + 8 - (m->cont_level & 7),
+	(void) fprintf(stderr, "%.*s %u", (m->cont_level & 7) + 1, ">>>>>>>>",
 		       m->offset);
 
 	if (m->flag & INDIR) {
