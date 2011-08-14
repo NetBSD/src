@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_datablock.c,v 1.4 2011/07/18 21:51:49 apb Exp $	*/
+/*	$NetBSD: v7fs_datablock.c,v 1.5 2011/08/14 09:02:07 apb Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_datablock.c,v 1.4 2011/07/18 21:51:49 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_datablock.c,v 1.5 2011/08/14 09:02:07 apb Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -63,15 +63,15 @@ __KERNEL_RCSID(0, "$NetBSD: v7fs_datablock.c,v 1.4 2011/07/18 21:51:49 apb Exp $
 #endif
 
 static int v7fs_datablock_deallocate(struct v7fs_self *, v7fs_daddr_t);
-static int loop1(struct v7fs_self *, v7fs_daddr_t, size_t *,
+static int v7fs_loop1(struct v7fs_self *, v7fs_daddr_t, size_t *,
     int (*)(struct v7fs_self *, void *, v7fs_daddr_t, size_t), void *);
-static int loop2(struct v7fs_self *, v7fs_daddr_t, size_t *,
+static int v7fs_loop2(struct v7fs_self *, v7fs_daddr_t, size_t *,
     int (*)(struct v7fs_self *, void *, v7fs_daddr_t, size_t), void *);
-static v7fs_daddr_t link(struct v7fs_self *, v7fs_daddr_t, int);
-static v7fs_daddr_t add_leaf(struct v7fs_self *, v7fs_daddr_t, int);
-static v7fs_daddr_t unlink(struct v7fs_self *, v7fs_daddr_t, int);
-static v7fs_daddr_t remove_leaf(struct v7fs_self *, v7fs_daddr_t, int);
-static v7fs_daddr_t remove_self(struct v7fs_self *, v7fs_daddr_t);
+static v7fs_daddr_t v7fs_link(struct v7fs_self *, v7fs_daddr_t, int);
+static v7fs_daddr_t v7fs_add_leaf(struct v7fs_self *, v7fs_daddr_t, int);
+static v7fs_daddr_t v7fs_unlink(struct v7fs_self *, v7fs_daddr_t, int);
+static v7fs_daddr_t v7fs_remove_leaf(struct v7fs_self *, v7fs_daddr_t, int);
+static v7fs_daddr_t v7fs_remove_self(struct v7fs_self *, v7fs_daddr_t);
 
 #ifdef V7FS_DATABLOCK_DEBUG
 void daddr_map_dump(const struct v7fs_daddr_map *);
@@ -286,7 +286,7 @@ v7fs_datablock_foreach(struct v7fs_self *fs, struct v7fs_inode *p,
 	if (!datablock_number_sanity(fs, blk))
 		return EIO;
 
-	if ((ret = loop1(fs, blk, &filesize, func, ctx)))
+	if ((ret = v7fs_loop1(fs, blk, &filesize, func, ctx)))
 		return ret;
 
 	/* Index 2 */
@@ -294,7 +294,7 @@ v7fs_datablock_foreach(struct v7fs_self *fs, struct v7fs_inode *p,
 	if (!datablock_number_sanity(fs, blk))
 		return EIO;
 
-	if ((ret = loop2(fs, blk, &filesize, func, ctx)))
+	if ((ret = v7fs_loop2(fs, blk, &filesize, func, ctx)))
 		return ret;
 
 	/* Index 3 */
@@ -303,11 +303,11 @@ v7fs_datablock_foreach(struct v7fs_self *fs, struct v7fs_inode *p,
 		return EIO;
 
 	for (i = 0; i < V7FS_DADDR_PER_BLOCK; i++) {
-		blk2 = link(fs, blk, i);
+		blk2 = v7fs_link(fs, blk, i);
 		if (!datablock_number_sanity(fs, blk))
 			return EIO;
 
-		if ((ret = loop2(fs, blk2, &filesize, func, ctx)))
+		if ((ret = v7fs_loop2(fs, blk2, &filesize, func, ctx)))
 			return ret;
 	}
 
@@ -315,7 +315,7 @@ v7fs_datablock_foreach(struct v7fs_self *fs, struct v7fs_inode *p,
 }
 
 static int
-loop2(struct v7fs_self *fs, v7fs_daddr_t listblk, size_t *filesize,
+v7fs_loop2(struct v7fs_self *fs, v7fs_daddr_t listblk, size_t *filesize,
     int (*func)(struct v7fs_self *, void *, v7fs_daddr_t, size_t), void *ctx)
 {
 	v7fs_daddr_t blk;
@@ -323,10 +323,10 @@ loop2(struct v7fs_self *fs, v7fs_daddr_t listblk, size_t *filesize,
 	size_t j;
 
 	for (j = 0; j < V7FS_DADDR_PER_BLOCK; j++) {
-		blk = link(fs, listblk, j);
+		blk = v7fs_link(fs, listblk, j);
 		if (!datablock_number_sanity(fs, blk))
 			return EIO;
-		if ((ret = loop1(fs, blk, filesize, func, ctx)))
+		if ((ret = v7fs_loop1(fs, blk, filesize, func, ctx)))
 			return ret;
 	}
 
@@ -334,7 +334,7 @@ loop2(struct v7fs_self *fs, v7fs_daddr_t listblk, size_t *filesize,
 }
 
 static int
-loop1(struct v7fs_self *fs, v7fs_daddr_t listblk, size_t *filesize,
+v7fs_loop1(struct v7fs_self *fs, v7fs_daddr_t listblk, size_t *filesize,
     int (*func)(struct v7fs_self *, void *, v7fs_daddr_t, size_t), void *ctx)
 {
 	v7fs_daddr_t blk;
@@ -343,7 +343,7 @@ loop1(struct v7fs_self *fs, v7fs_daddr_t listblk, size_t *filesize,
 	size_t k;
 
 	for (k = 0; k < V7FS_DADDR_PER_BLOCK; k++, *filesize -= V7FS_BSIZE) {
-		blk = link(fs, listblk, k);
+		blk = v7fs_link(fs, listblk, k);
 		if (!datablock_number_sanity(fs, blk))
 			return EIO;
 		last = *filesize <= V7FS_BSIZE;
@@ -374,15 +374,16 @@ v7fs_datablock_last(struct v7fs_self *fs, struct v7fs_inode *inode,
 		blk = inode->addr[map.index[0]];
 		break;
 	case 1: /*Index1 */
-		blk = link(fs, addr[V7FS_NADDR_INDEX1], map.index[0]);
+		blk = v7fs_link(fs, addr[V7FS_NADDR_INDEX1], map.index[0]);
 		break;
 	case 2: /*Index2 */
-		blk = link(fs, link(fs, addr[V7FS_NADDR_INDEX2], map.index[0]),
-		    map.index[1]);
+		blk = v7fs_link(fs, v7fs_link(fs,
+		    addr[V7FS_NADDR_INDEX2], map.index[0]), map.index[1]);
 		break;
 	case 3: /*Index3 */
-		blk = link(fs, link(fs, link(fs, addr[V7FS_NADDR_INDEX3],
-		    map.index[0]), map.index[1]), map.index[2]);
+		blk = v7fs_link(fs, v7fs_link(fs, v7fs_link(fs,
+		    addr[V7FS_NADDR_INDEX3], map.index[0]), map.index[1]),
+		    map.index[2]);
 		break;
 	}
 
@@ -427,18 +428,19 @@ v7fs_datablock_expand(struct v7fs_self *fs, struct v7fs_inode *inode, size_t sz)
 			case 1:
 				DPRINTF("0->1\n");
 				inode->addr[V7FS_NADDR_INDEX1] = idxblk;
-				blk = add_leaf(fs, idxblk, 0);
+				blk = v7fs_add_leaf(fs, idxblk, 0);
 				break;
 			case 2:
 				DPRINTF("1->2\n");
 				inode->addr[V7FS_NADDR_INDEX2] = idxblk;
-				blk = add_leaf(fs, add_leaf(fs, idxblk, 0), 0);
+				blk = v7fs_add_leaf(fs, v7fs_add_leaf(fs,
+				    idxblk, 0), 0);
 				break;
 			case 3:
 				DPRINTF("2->3\n");
 				inode->addr[V7FS_NADDR_INDEX3] = idxblk;
-				blk = add_leaf(fs, add_leaf(fs, add_leaf(fs,
-				    idxblk, 0), 0), 0);
+				blk = v7fs_add_leaf(fs, v7fs_add_leaf(fs,
+				    v7fs_add_leaf(fs, idxblk, 0), 0), 0);
 				break;
 			}
 		} else {
@@ -452,27 +454,33 @@ v7fs_datablock_expand(struct v7fs_self *fs, struct v7fs_inode *inode, size_t sz)
 				break;
 			case 1:
 				idxblk = inode->addr[V7FS_NADDR_INDEX1];
-				blk = add_leaf(fs, idxblk, newmap.index[0]);
+				blk = v7fs_add_leaf(fs, idxblk,
+				    newmap.index[0]);
 				break;
 			case 2:
 				idxblk = inode->addr[V7FS_NADDR_INDEX2];
-				if (oldmap.index[0] != newmap.index[0])
-					add_leaf(fs, idxblk, newmap.index[0]);
-				blk = add_leaf(fs, link(fs,idxblk,
+				if (oldmap.index[0] != newmap.index[0]) {
+					v7fs_add_leaf(fs, idxblk,
+					    newmap.index[0]);
+				}
+				blk = v7fs_add_leaf(fs, v7fs_link(fs,idxblk,
 				    newmap.index[0]), newmap.index[1]);
 				break;
 			case 3:
 				idxblk = inode->addr[V7FS_NADDR_INDEX3];
 
-				if (oldmap.index[0] != newmap.index[0])
-					add_leaf(fs, idxblk, newmap.index[0]);
+				if (oldmap.index[0] != newmap.index[0]) {
+					v7fs_add_leaf(fs, idxblk,
+					    newmap.index[0]);
+				}
 
-				if (oldmap.index[1] != newmap.index[1])
-					add_leaf(fs, link(fs, idxblk,
+				if (oldmap.index[1] != newmap.index[1]) {
+					v7fs_add_leaf(fs, v7fs_link(fs, idxblk,
 					    newmap.index[0]), newmap.index[1]);
-				blk = add_leaf(fs, link(fs, link(fs, idxblk,
-				    newmap.index[0]), newmap.index[1]),
-				    newmap.index[2]);
+				}
+				blk = v7fs_add_leaf(fs, v7fs_link(fs,
+				    v7fs_link(fs, idxblk, newmap.index[0]),
+				    newmap.index[1]), newmap.index[2]);
 				break;
 			}
 		}
@@ -489,7 +497,7 @@ v7fs_datablock_expand(struct v7fs_self *fs, struct v7fs_inode *inode, size_t sz)
 }
 
 static v7fs_daddr_t
-link(struct v7fs_self *fs, v7fs_daddr_t listblk, int n)
+v7fs_link(struct v7fs_self *fs, v7fs_daddr_t listblk, int n)
 {
 	v7fs_daddr_t *list;
 	v7fs_daddr_t blk;
@@ -510,7 +518,7 @@ link(struct v7fs_self *fs, v7fs_daddr_t listblk, int n)
 }
 
 static v7fs_daddr_t
-add_leaf(struct v7fs_self *fs, v7fs_daddr_t up, int idx)
+v7fs_add_leaf(struct v7fs_self *fs, v7fs_daddr_t up, int idx)
 {
 	v7fs_daddr_t newblk;
 	v7fs_daddr_t *daddr_list;
@@ -569,22 +577,23 @@ v7fs_datablock_contract(struct v7fs_self *fs, struct v7fs_inode *inode,
 				idxblk = inode->addr[V7FS_NADDR_INDEX1];
 				inode->addr[V7FS_NADDR_INDEX1] = 0;
 				error = v7fs_datablock_deallocate(fs,
-				    remove_self(fs, idxblk));
+				    v7fs_remove_self(fs, idxblk));
 				break;
 			case 1: /*2->1 */
 				DPRINTF("2->1\n");
 				idxblk = inode->addr[V7FS_NADDR_INDEX2];
 				inode->addr[V7FS_NADDR_INDEX2] = 0;
 				error = v7fs_datablock_deallocate(fs,
-				    remove_self(fs, remove_self(fs, idxblk)));
+				    v7fs_remove_self(fs, v7fs_remove_self(fs,
+				    idxblk)));
 				break;
 			case 2:/*3->2 */
 				DPRINTF("3->2\n");
 				idxblk = inode->addr[V7FS_NADDR_INDEX3];
 				inode->addr[V7FS_NADDR_INDEX3] = 0;
 				error = v7fs_datablock_deallocate(fs,
-				    remove_self(fs, remove_self(fs,
-					remove_self(fs, idxblk))));
+				    v7fs_remove_self(fs, v7fs_remove_self(fs,
+					v7fs_remove_self(fs, idxblk))));
 				break;
 			}
 		} else {
@@ -597,17 +606,17 @@ v7fs_datablock_contract(struct v7fs_self *fs, struct v7fs_inode *inode,
 			case 1:
 				DPRINTF("[1] %d\n", oldmap.index[0]);
 				idxblk = inode->addr[V7FS_NADDR_INDEX1];
-				remove_leaf(fs, idxblk, oldmap.index[0]);
+				v7fs_remove_leaf(fs, idxblk, oldmap.index[0]);
 
 				break;
 			case 2:
 				DPRINTF("[2] %d %d\n", oldmap.index[0],
 				    oldmap.index[1]);
 				idxblk = inode->addr[V7FS_NADDR_INDEX2];
-				remove_leaf(fs, link(fs, idxblk,
+				v7fs_remove_leaf(fs, v7fs_link(fs, idxblk,
 				    oldmap.index[0]), oldmap.index[1]);
 				if (oldmap.index[0] != newmap.index[0]) {
-					remove_leaf(fs, idxblk,
+					v7fs_remove_leaf(fs, idxblk,
 					    oldmap.index[0]);
 				}
 				break;
@@ -615,16 +624,17 @@ v7fs_datablock_contract(struct v7fs_self *fs, struct v7fs_inode *inode,
 				DPRINTF("[2] %d %d %d\n", oldmap.index[0],
 				    oldmap.index[1], oldmap.index[2]);
 				idxblk = inode->addr[V7FS_NADDR_INDEX3];
-				remove_leaf(fs, link(fs, link(fs, idxblk,
-				    oldmap.index[0]), oldmap.index[1]),
-				    oldmap.index[2]);
+				v7fs_remove_leaf(fs, v7fs_link(fs,
+				    v7fs_link(fs, idxblk, oldmap.index[0]),
+				    oldmap.index[1]), oldmap.index[2]);
 
 				if (oldmap.index[1] != newmap.index[1])	{
-					remove_leaf(fs, link(fs, idxblk,
-					    oldmap.index[0]), oldmap.index[1]);
+					v7fs_remove_leaf(fs, v7fs_link(fs,
+					    idxblk, oldmap.index[0]),
+					    oldmap.index[1]);
 				}
 				if (oldmap.index[0] != newmap.index[0]) {
-					remove_leaf(fs, idxblk,
+					v7fs_remove_leaf(fs, idxblk,
 					    oldmap.index[0]);
 				}
 				break;
@@ -639,7 +649,7 @@ v7fs_datablock_contract(struct v7fs_self *fs, struct v7fs_inode *inode,
 }
 
 static v7fs_daddr_t
-unlink(struct v7fs_self *fs, v7fs_daddr_t idxblk, int n)
+v7fs_unlink(struct v7fs_self *fs, v7fs_daddr_t idxblk, int n)
 {
 	v7fs_daddr_t *daddr_list;
 	v7fs_daddr_t blk;
@@ -657,7 +667,7 @@ unlink(struct v7fs_self *fs, v7fs_daddr_t idxblk, int n)
 }
 
 static v7fs_daddr_t
-remove_self(struct v7fs_self *fs, v7fs_daddr_t up)
+v7fs_remove_self(struct v7fs_self *fs, v7fs_daddr_t up)
 {
 	v7fs_daddr_t down;
 
@@ -665,7 +675,7 @@ remove_self(struct v7fs_self *fs, v7fs_daddr_t up)
 		return 0;
 
 	/* At 1st, remove from datablock list. */
-	down = unlink(fs, up, 0);
+	down = v7fs_unlink(fs, up, 0);
 
 	/* link self to freelist. */
 	v7fs_datablock_deallocate(fs, up);
@@ -674,7 +684,7 @@ remove_self(struct v7fs_self *fs, v7fs_daddr_t up)
 }
 
 static v7fs_daddr_t
-remove_leaf(struct v7fs_self *fs, v7fs_daddr_t up, int n)
+v7fs_remove_leaf(struct v7fs_self *fs, v7fs_daddr_t up, int n)
 {
 	v7fs_daddr_t down;
 
@@ -682,7 +692,7 @@ remove_leaf(struct v7fs_self *fs, v7fs_daddr_t up, int n)
 		return 0;
 
 	/* At 1st, remove from datablock list. */
-	down = unlink(fs, up, n);
+	down = v7fs_unlink(fs, up, n);
 
 	/* link leaf to freelist. */
 	v7fs_datablock_deallocate(fs, down);
