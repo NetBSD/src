@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.48 2011/06/09 19:57:52 christos Exp $	*/
+/*	$NetBSD: pass1.c,v 1.49 2011/08/14 12:32:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.48 2011/06/09 19:57:52 christos Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.49 2011/08/14 12:32:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ static ino_t lastino;
 void
 pass1(void)
 {
-	ino_t inumber, inosused, ninosused;
+	ino_t inumber, inosused, ninosused, ii;
 	size_t inospace;
 	int c;
 	daddr_t i, cgd;
@@ -169,7 +169,7 @@ pass1(void)
 		/*
 		 * Scan the allocated inodes.
 		 */
-		for (i = 0; i < inosused; i++, inumber++) {
+		for (ii = 0; ii < inosused; ii++, inumber++) {
 			if (inumber < ROOTINO) {
 				(void)getnextinode(inumber);
 				continue;
@@ -177,7 +177,7 @@ pass1(void)
 			checkinode(inumber, &idesc);
 		}
 		lastino += 1;
-		if (inosused < sblock->fs_ipg || inumber == lastino)
+		if (inosused < (ino_t)sblock->fs_ipg || inumber == lastino)
 			continue;
 		/*
 		 * If we were not able to determine in advance which inodes
@@ -185,7 +185,7 @@ pass1(void)
 		 * to the size necessary to describe the inodes that we
 		 * really found.
 		 */
-		if (lastino < (c * sblock->fs_ipg))
+		if (lastino < (c * (ino_t)sblock->fs_ipg))
 			ninosused = 0;
 		else
 			ninosused = lastino - (c * sblock->fs_ipg);
@@ -328,7 +328,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		 * will detect any garbage after symlink string.
 		 */
 		if ((sblock->fs_maxsymlinklen < 0) ||
-		    (size < sblock->fs_maxsymlinklen) ||
+		    (size < (uint64_t)sblock->fs_maxsymlinklen) ||
 		    (isappleufs && (size < APPLEUFS_MAXSYMLINKLEN)) ||
 		    (sblock->fs_maxsymlinklen == 0 && DIP(dp, blocks) == 0)) {
 			if (is_ufs2)

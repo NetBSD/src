@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.47 2011/06/09 19:57:52 christos Exp $	*/
+/*	$NetBSD: pass2.c,v 1.48 2011/08/14 12:32:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.47 2011/06/09 19:57:52 christos Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.48 2011/08/14 12:32:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ pass2(void)
 	struct inodesc curino;
 	union dinode dino;
 	int i, maxblk;
+	unsigned ii;
 	char pathbuf[MAXPATHLEN + 1];
 
 	rinfo = inoinfo(ROOTINO);
@@ -236,13 +237,13 @@ pass2(void)
 			if (!is_ufs2) {
 				dino.dp1.di_mode = iswap16(IFDIR);
 				dino.dp1.di_size = iswap64(inp->i_isize);
-				for (i = 0; i < inp->i_numblks; i++)
-					dino.dp1.di_db[i] = inp->i_blks[i];
+				for (ii = 0; ii < inp->i_numblks; ii++)
+					dino.dp1.di_db[ii] = inp->i_blks[ii];
 			} else {
 				dino.dp2.di_mode = iswap16(IFDIR);
 				dino.dp2.di_size = iswap64(inp->i_isize);
-				for (i = 0; i < inp->i_numblks; i++)
-					dino.dp2.di_db[i] = inp->i_blks[i];
+				for (ii = 0; ii < inp->i_numblks; ii++)
+					dino.dp2.di_db[ii] = inp->i_blks[ii];
 			}
 			curino.id_number = inp->i_number;
 			curino.id_parent = inp->i_parent;
