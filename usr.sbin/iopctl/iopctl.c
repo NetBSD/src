@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.19 2009/04/15 08:40:59 lukem Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.20 2011/08/14 17:54:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.19 2009/04/15 08:40:59 lukem Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.20 2011/08/14 17:54:55 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -234,7 +234,7 @@ getparam(int tid, int group, void *pbuf, int pbufsize)
 		errx(EXIT_FAILURE, "I2O_UTIL_PARAMS_GET failed (FAIL)");
 	if (rf->reqstatus != 0)
 		errx(EXIT_FAILURE, "I2O_UTIL_PARAMS_GET failed (%d)",
-		    ((struct i2o_reply *)buf)->reqstatus);
+		    rf->reqstatus);
 }	
 
 void
@@ -343,6 +343,7 @@ showddmid(char **argv)
 		char padding[128];
 	} __packed p;
 	char ident[128];
+	uint32_t serial[3];
 
 	getparam(gettid(argv), I2O_PARAM_DDM_IDENTITY, &p, sizeof(p));
 
@@ -352,9 +353,8 @@ showddmid(char **argv)
 	i2ostrvis(p.di.revlevel, sizeof(p.di.revlevel), ident, sizeof(ident));
 	show("module revision", "%s", ident);
 	show("serial # format", "%d", p.di.snformat);
-	show("serial #", "%08x%08x%08x", *(u_int32_t *)&p.di.serialnumber[0],
-	    *(u_int32_t *)&p.di.serialnumber[4],
-	    *(u_int32_t *)&p.di.serialnumber[8]);
+	memcpy(serial, &p.di.serialnumber, sizeof(serial));
+	show("serial #", "%08x%08x%08x", serial[0], serial[1], serial[2]);
 }
 
 void
