@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.7 2009/01/30 23:46:03 lukem Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.8 2011/08/14 09:07:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.7 2009/01/30 23:46:03 lukem Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.8 2011/08/14 09:07:15 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -505,7 +505,6 @@ __format_grouped_double(double value, int *flags,
 	char		*rslt;
 	char		*avalue;
 	int		avalue_size;
-	char		fmt[32];
 
 	size_t		bufsize;
 	char		*bufend;
@@ -546,14 +545,13 @@ __format_grouped_double(double value, int *flags,
 		left_prec += get_groups(left_prec, grouping);
 
 	/* convert to string */
-	snprintf(fmt, sizeof(fmt), "%%%d.%df", left_prec + right_prec + 1,
-	    right_prec);
-	avalue_size = asprintf(&avalue, fmt, value);
+	avalue_size = asprintf(&avalue, "%*.*f", left_prec + right_prec + 1,
+	    right_prec, value);
 	if (avalue_size < 0)
 		return (NULL);
 
 	/* make sure that we've enough space for result string */
-	bufsize = strlen(avalue)*2+1;
+	bufsize = avalue_size * 2 + 1;
 	rslt = malloc(bufsize);
 	if (rslt == NULL) {
 		free(avalue);
@@ -577,6 +575,7 @@ __format_grouped_double(double value, int *flags,
 		avalue_size -= (right_prec + 1);
 	}
 
+        /* XXX: Why not use %' instead? */
 	if ((*flags & NEED_GROUPING) &&
 	    thousands_sep != '\0' &&	/* XXX: need investigation */
 	    *grouping != CHAR_MAX &&
