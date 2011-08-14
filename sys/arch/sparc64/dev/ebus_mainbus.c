@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.7 2011/08/12 06:38:18 mrg Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.8 2011/08/14 08:14:00 mrg Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -344,6 +344,7 @@ ebus_mainbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	ih->ih_map = intrmapptr;
 	ih->ih_clr = intrclrptr;
 
+	ih->ih_ivec = ihandle;
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
