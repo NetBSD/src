@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.73 2010/09/20 11:49:48 ahoka Exp $	*/
+/*	$NetBSD: ping6.c,v 1.74 2011/08/14 12:09:35 christos Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.73 2010/09/20 11:49:48 ahoka Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.74 2011/08/14 12:09:35 christos Exp $");
 #endif
 #endif
 
@@ -1192,7 +1192,7 @@ pinger(void)
 	struct iovec iov[2];
 	int i, cc;
 	struct icmp6_nodeinfo *nip;
-	int seq;
+	uint16_t seq;
 
 	if (npackets && ntransmitted >= npackets)
 		return(-1);	/* no more transmission */
@@ -1202,60 +1202,47 @@ pinger(void)
 	memset(icp, 0, sizeof(*icp));
 	icp->icmp6_cksum = 0;
 	seq = ntransmitted++;
+	seq = ntohs(seq);
 	CLR(seq % mx_dup_ck);
 
 	if (options & F_FQDN) {
-		icp->icmp6_type = ICMP6_NI_QUERY;
 		icp->icmp6_code = ICMP6_NI_SUBJ_IPV6;
 		nip->ni_qtype = htons(NI_QTYPE_FQDN);
 		nip->ni_flags = htons(0);
 
-		memcpy(nip->icmp6_ni_nonce, nonce,
-		    sizeof(nip->icmp6_ni_nonce));
-		*(u_int16_t *)nip->icmp6_ni_nonce = ntohs(seq);
-
 		memcpy(&outpack[ICMP6_NIQLEN], &dst.sin6_addr,
 		    sizeof(dst.sin6_addr));
 		cc = ICMP6_NIQLEN + sizeof(dst.sin6_addr);
-		datalen = 0;
 	} else if (options & F_FQDNOLD) {
 		/* packet format in 03 draft - no Subject data on queries */
-		icp->icmp6_type = ICMP6_NI_QUERY;
 		icp->icmp6_code = 0;	/* code field is always 0 */
 		nip->ni_qtype = htons(NI_QTYPE_FQDN);
 		nip->ni_flags = htons(0);
 
-		memcpy(nip->icmp6_ni_nonce, nonce,
-		    sizeof(nip->icmp6_ni_nonce));
-		*(u_int16_t *)nip->icmp6_ni_nonce = ntohs(seq);
-
 		cc = ICMP6_NIQLEN;
-		datalen = 0;
 	} else if (options & F_NODEADDR) {
-		icp->icmp6_type = ICMP6_NI_QUERY;
 		icp->icmp6_code = ICMP6_NI_SUBJ_IPV6;
 		nip->ni_qtype = htons(NI_QTYPE_NODEADDR);
 		nip->ni_flags = naflags;
 
-		memcpy(nip->icmp6_ni_nonce, nonce,
-		    sizeof(nip->icmp6_ni_nonce));
-		*(u_int16_t *)nip->icmp6_ni_nonce = ntohs(seq);
-
 		memcpy(&outpack[ICMP6_NIQLEN], &dst.sin6_addr,
 		    sizeof(dst.sin6_addr));
 		cc = ICMP6_NIQLEN + sizeof(dst.sin6_addr);
-		datalen = 0;
 	} else if (options & F_SUPTYPES) {
-		icp->icmp6_type = ICMP6_NI_QUERY;
 		icp->icmp6_code = ICMP6_NI_SUBJ_FQDN;	/*empty*/
 		nip->ni_qtype = htons(NI_QTYPE_SUPTYPES);
 		/* we support compressed bitmap */
 		nip->ni_flags = NI_SUPTYPE_FLAG_COMPRESS;
 
+		cc = ICMP6_NIQLEN;
+	} else
+		cc = 0;	/* XXX: gcc */
+
+	if (options & (F_FQDN|F_FQDNOLD|F_NODEADDR|F_SUPTYPES)) {
+		icp->icmp6_type = ICMP6_NI_QUERY;
 		memcpy(nip->icmp6_ni_nonce, nonce,
 		    sizeof(nip->icmp6_ni_nonce));
-		*(u_int16_t *)nip->icmp6_ni_nonce = ntohs(seq);
-		cc = ICMP6_NIQLEN;
+		memcpy(nip->icmp6_ni_nonce, &seq, sizeof(seq));
 		datalen = 0;
 	} else {
 		icp->icmp6_type = ICMP6_ECHO_REQUEST;
@@ -1504,7 +1491,8 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			}
 		}
 	} else if (icp->icmp6_type == ICMP6_NI_REPLY && mynireply(ni)) {
-		seq = ntohs(*(u_int16_t *)ni->icmp6_ni_nonce);
+		memcpy(&seq, ni->icmp6_ni_nonce, sizeof(seq));
+		seq = ntohs(seq);
 		++nreceived;
 		if (TST(seq % mx_dup_ck)) {
 			++nrepeats;
@@ -1562,7 +1550,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			} else {
 				i = 0;
 				while (cp < end) {
-					if (dnsdecode((const u_char **)&cp, end,
+					if (dnsdecode((void *)&cp, end,
 					    (const u_char *)(ni + 1), dnsname,
 					    sizeof(dnsname)) == NULL) {
 						printf("???");
