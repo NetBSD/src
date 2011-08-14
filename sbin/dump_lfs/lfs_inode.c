@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.14 2008/07/20 01:20:22 lukem Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.15 2011/08/14 12:13:24 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.14 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.15 2011/08/14 12:13:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,11 @@ int is_ufs2 = 0;
 int
 fs_read_sblock(char *superblock)
 {
-	char tbuf[LFS_SBPAD];
+	union {
+		char tbuf[LFS_SBPAD];
+		struct lfs lfss;
+	} u;
+
 	int ns = 0;
 	off_t sboff = LFS_LABELPAD;
 
@@ -105,23 +109,24 @@ fs_read_sblock(char *superblock)
 	/*
 	 * Read the secondary and take the older of the two
 	 */
-	rawread(fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]), tbuf, LFS_SBPAD);
+	rawread(fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]), u.tbuf,
+	    sizeof(u.tbuf));
 #ifdef notyet
 	if (ns)
-		lfs_sb_swap(tbuf, tbuf, 0);
+		lfs_sb_swap(u.tbuf, u.tbuf, 0);
 #endif
-	if (((struct lfs *)tbuf)->lfs_magic != LFS_MAGIC) {
+	if (u.lfss.lfs_magic != LFS_MAGIC) {
 		msg("Warning: secondary superblock at 0x%" PRIx64 " bad magic\n",
 			fsbtodb(sblock, (off_t)sblock->lfs_sboffs[1]));
 	} else {
 		if (sblock->lfs_version > 1) {
-			if (((struct lfs *)tbuf)->lfs_serial < sblock->lfs_serial) {
-				memcpy(sblock, tbuf, LFS_SBPAD);
+			if (u.lfss.lfs_serial < sblock->lfs_serial) {
+				memcpy(sblock, u.tbuf, sizeof(u.tbuf));
 				sboff = fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]);
 			}
 		} else {
-			if (((struct lfs *)tbuf)->lfs_otstamp < sblock->lfs_otstamp) {
-				memcpy(sblock, tbuf, LFS_SBPAD);
+			if (u.lfss.lfs_otstamp < sblock->lfs_otstamp) {
+				memcpy(sblock, u.tbuf, sizeof(u.tbuf));
 				sboff = fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]);
 			}
 		}
