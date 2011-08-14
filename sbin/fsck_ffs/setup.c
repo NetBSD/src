@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.93 2011/06/09 19:57:52 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.94 2011/08/14 12:32:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.93 2011/06/09 19:57:52 christos Exp $");
+__RCSID("$NetBSD: setup.c,v 1.94 2011/08/14 12:32:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -503,15 +503,13 @@ setup(const char *dev, const char *origdev)
 	numdirs = sblock->fs_cstotal.cs_ndir;
 	if (numdirs < 1024)
 		numdirs = 1024;
-	if (numdirs > maxino + 1)
+	if ((ino_t)numdirs > maxino + 1)
 		numdirs = maxino + 1;
 	dirhash = numdirs;
 	inplast = 0;
 	listmax = numdirs + 10;
-	inpsort = (struct inoinfo **)calloc((unsigned)listmax,
-	    sizeof(struct inoinfo *));
-	inphead = (struct inoinfo **)calloc((unsigned)numdirs,
-	    sizeof(struct inoinfo *));
+	inpsort = calloc((unsigned)listmax, sizeof(*inpsort));
+	inphead = calloc((unsigned)numdirs, sizeof(*inphead));
 	if (inpsort == NULL || inphead == NULL) {
 		pwarn("cannot alloc %u bytes for inphead\n", 
 		    (unsigned)(numdirs * sizeof(struct inoinfo *)));
@@ -555,7 +553,8 @@ setup(const char *dev, const char *origdev)
 		    q2h_hash_shift < 15;
 		    q2h_hash_shift++) {
 			if ((sizeof(uint64_t) << (q2h_hash_shift + 1)) +
-			    sizeof(struct quota2_header) > sblock->fs_bsize)
+			    sizeof(struct quota2_header) >
+			    (size_t)sblock->fs_bsize)
 				break;
 		}
 		q2h_hash_mask = (1 << q2h_hash_shift) - 1;
