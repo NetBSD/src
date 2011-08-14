@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.17 2010/12/13 17:35:08 pooka Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.18 2011/08/14 12:15:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.17 2010/12/13 17:35:08 pooka Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.18 2011/08/14 12:15:15 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -150,7 +150,7 @@ at_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 	if (ntohs(nr.nr_firstnet) > ntohs(sat->sat_addr.s_net) ||
 	    ntohs(nr.nr_lastnet) < ntohs(sat->sat_addr.s_net))
 		errx(EXIT_FAILURE, "AppleTalk address is not in range");
-	*((struct netrange *)&sat->sat_zero) = nr;
+	memcpy(&sat->sat_zero, &nr, sizeof(nr));
 
 	/* Copy the new address to a temporary input environment */
 
