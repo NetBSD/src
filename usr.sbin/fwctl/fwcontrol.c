@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcontrol.c,v 1.13 2011/01/04 20:45:13 christos Exp $	*/
+/*	$NetBSD: fwcontrol.c,v 1.14 2011/08/14 17:42:23 christos Exp $	*/
 /*
  * Copyright (C) 2002
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -34,7 +34,7 @@
  */
 #include <sys/cdefs.h>
 //__FBSDID("$FreeBSD: src/usr.sbin/fwcontrol/fwcontrol.c,v 1.23 2006/10/26 22:33:38 imp Exp $");
-__RCSID("$NetBSD: fwcontrol.c,v 1.13 2011/01/04 20:45:13 christos Exp $");
+__RCSID("$NetBSD: fwcontrol.c,v 1.14 2011/08/14 17:42:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -91,8 +91,11 @@ usage(void)
 static void
 fweui2eui64(const struct fw_eui64 *fweui, struct eui64 *eui)
 {
-	*(uint32_t*)&(eui->octet[0]) = htonl(fweui->hi);
-	*(uint32_t*)&(eui->octet[4]) = htonl(fweui->lo);
+	uint32_t hi, lo;
+	hi = htonl(fweui->hi);
+	lo = htonl(fweui->lo);
+	memcpy(&eui->octet[0], &hi, sizeof(hi));
+	memcpy(&eui->octet[4], &lo, sizeof(lo));
 }
 
 static void
@@ -1027,8 +1030,11 @@ main(int argc, char **argv)
 	 * Set the fwmem target for a node to argument "-m"
 	 */
 	if (set_fwmem_target) {
-		eui.hi = ntohl(*(uint32_t*)&(target.octet[0]));
-		eui.lo = ntohl(*(uint32_t*)&(target.octet[4]));
+		uint32_t hi, lo;
+		memcpy(&hi, &target.octet[0], sizeof(hi));
+		memcpy(&lo, &target.octet[4], sizeof(lo));
+		eui.hi = ntohl(hi);
+		eui.lo = ntohl(lo);
 		sysctl_set_int("hw.fwmem.eui64_hi", eui.hi);
 		sysctl_set_int("hw.fwmem.eui64_lo", eui.lo);
 	}

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2011/06/22 02:49:45 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2011/08/14 17:42:23 christos Exp $
 
 WARNS?=5
 PROG=	fwctl
@@ -11,8 +11,3 @@ SDIR= ${.CURDIR}/../../sys
 CPPFLAGS+=-I${.CURDIR} -I${SDIR}
 
 .include <bsd.prog.mk>
-
-# XXX
-.if ${HAVE_GCC} == 45
-COPTS.fwcontrol.c+=	-fno-strict-aliasing
-.endif
