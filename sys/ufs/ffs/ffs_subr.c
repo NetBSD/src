@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.46 2011/03/06 17:08:38 bouyer Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.47 2011/08/14 12:37:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.46 2011/03/06 17:08:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.47 2011/08/14 12:37:09 christos Exp $");
 
 #include <sys/param.h>
 
@@ -308,7 +308,7 @@ ffs_clusteracct(struct fs *fs, struct cg *cgp, int32_t blkno, int cnt)
 	 */
 	start = blkno + 1;
 	end = start + fs->fs_contigsumsize;
-	if (end >= ufs_rw32(cgp->cg_nclusterblks, needswap))
+	if ((uint32_t)end >= ufs_rw32(cgp->cg_nclusterblks, needswap))
 		end = ufs_rw32(cgp->cg_nclusterblks, needswap);
 	mapp = &freemapp[start / NBBY];
 	map = *mapp++;
