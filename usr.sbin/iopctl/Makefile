@@ -1,11 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/22 02:49:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/08/14 17:54:55 christos Exp $
 
 PROG=	iopctl
 MAN=	iopctl.8
 
 .include <bsd.prog.mk>
-
-# XXX
-.if ${HAVE_GCC} == 45
-COPTS.iopctl.c+=	-fno-strict-aliasing
-.endif
