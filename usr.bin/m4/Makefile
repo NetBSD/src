@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2011/06/22 05:23:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2011/08/14 12:59:25 christos Exp $
 #
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
@@ -25,8 +25,3 @@ tokenizer.o: parser.h
 CLEANFILES+=parser.c parser.h tokenizer.o
 
 .include <bsd.prog.mk>
-
-# XXX
-.if ${HAVE_GCC} == 45
-COPTS.main.c+=	-Wno-error
-.endif
