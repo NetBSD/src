@@ -1,5 +1,5 @@
 /*	$OpenBSD: main.c,v 1.77 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: main.c,v 1.39 2009/11/06 15:13:27 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.40 2011/08/14 12:59:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.39 2009/11/06 15:13:27 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.40 2011/08/14 12:59:25 christos Exp $");
 #include <assert.h>
 #include <signal.h>
 #include <err.h>
@@ -572,7 +572,7 @@ inspect(int c, char *tp)
 		return NULL;
 	}
 
-	p = ohash_find(&macros, ohash_qlookupi(&macros, name, (const char **)&tp));
+	p = ohash_find(&macros, ohash_qlookupi(&macros, name, (void *)&tp));
 	if (p == NULL)
 		return NULL;
 	if (macro_getdef(p) == NULL)
