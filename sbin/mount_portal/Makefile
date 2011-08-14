@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2009/12/05 20:11:02 pooka Exp $
+#	$NetBSD: Makefile,v 1.25 2011/08/14 11:34:11 christos Exp $
 #	@(#)Makefile	8.3 (Berkeley) 3/27/94
 
 .include <bsd.own.mk>
@@ -12,6 +12,8 @@ MAN=	mount_portal.8
 
 DPADD+=${LIBUTIL} ${LIBPUFFS}
 LDADD+=-lutil -lpuffs
+
+COPTS.pt_filter.c = -Wno-format-nonliteral
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
