@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.59 2011/08/06 17:25:03 rmind Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.60 2011/08/14 01:20:33 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.59 2011/08/06 17:25:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.60 2011/08/14 01:20:33 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -99,8 +99,7 @@ uvm_analloc(void)
  * => anon must be removed from the amap (if anon was in an amap).
  * => amap must be locked; we may drop and re-acquire the lock here.
  */
-
-static void
+static bool
 uvm_anon_dispose(struct vm_anon *anon)
 {
 	struct vm_page *pg = anon->an_page;
@@ -159,7 +158,7 @@ uvm_anon_dispose(struct vm_anon *anon)
 			if (pg->flags & PG_BUSY) {
 				pg->flags |= PG_RELEASED;
 				mutex_obj_hold(anon->an_lock);
-				return;
+				return false;
 			}
 			mutex_enter(&uvm_pageqlock);
 			uvm_pagefree(pg);
@@ -186,6 +185,7 @@ uvm_anon_dispose(struct vm_anon *anon)
 	uvm_anon_dropswap(anon);
 	uvmpdpol_anfree(anon);
 	UVMHIST_LOG(maphist,"<- done!",0,0,0,0);
+	return true;
 }
 
 /*
@@ -214,13 +214,22 @@ uvm_anon_free(struct vm_anon *anon)
 void
 uvm_anon_freelst(struct vm_amap *amap, struct vm_anon *anonlst)
 {
-	struct vm_anon *anon = anonlst;
+	struct vm_anon *anon = anonlst, *prev = NULL, *next;
 
 	KASSERT(mutex_owned(amap->am_lock));
 
 	while (anon) {
-		uvm_anon_dispose(anon);
-		anon = anon->an_link;
+		next = anon->an_link;
+		if (!uvm_anon_dispose(anon)) {
+			/* Do not free this anon. */
+			if (prev) {
+				prev->an_link = next;
+			} else {
+				anonlst = next;
+			}
+		}
+		prev = anon;
+		anon = next;
 	}
 	amap_unlock(amap);
 
