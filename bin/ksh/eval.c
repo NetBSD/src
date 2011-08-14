@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.12 2009/11/24 16:00:42 seanb Exp $	*/
+/*	$NetBSD: eval.c,v 1.13 2011/08/14 10:40:25 christos Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.12 2009/11/24 16:00:42 seanb Exp $");
+__RCSID("$NetBSD: eval.c,v 1.13 2011/08/14 10:40:25 christos Exp $");
 #endif
 
 
@@ -185,6 +185,7 @@ expand(cp, wp, f)
 
 	x.split = 0;	/* XXX gcc */
 	x.str = NULL;	/* XXX gcc */
+	x.u.strv = NULL;/* XXX gcc */
 	if (cp == NULL)
 		internal_errorf(1, "expand(NULL)");
 	/* for alias, readonly, set, typeset commands */
@@ -714,7 +715,7 @@ varsub(xp, sp, word, stypep, slenp)
 	if (sp[0] == '\0')	/* Bad variable name */
 		return -1;
 
-	xp->var = (struct tbl *) 0;
+	xp->var = NULL;
 
 	/* ${#var}, string length or array size */
 	if (sp[0] == '#' && (c = sp[1]) != '\0') {
@@ -785,10 +786,12 @@ varsub(xp, sp, word, stypep, slenp)
 			return -1;
 		}
 		if (e->loc->argc == 0) {
+			xp->u.strv = NULL;
 			xp->str = null;
 			state = c == '@' ? XNULLSUB : XSUB;
 		} else {
-			xp->u.strv = (const char **) e->loc->argv + 1;
+			char **t = &e->loc->argv[1];
+			xp->u.strv = (void *)(uintptr_t)t;
 			xp->str = *xp->u.strv++;
 			xp->split = c == '@'; /* $@ */
 			state = XARG;
