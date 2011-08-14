@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.28 2010/11/24 17:40:41 christos Exp $	*/
+/*	$NetBSD: at.c,v 1.29 2011/08/14 13:41:17 christos Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -72,7 +72,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 #if 0
 static char rcsid[] = "$OpenBSD: at.c,v 1.15 1998/06/03 16:20:26 deraadt Exp $";
 #else
-__RCSID("$NetBSD: at.c,v 1.28 2010/11/24 17:40:41 christos Exp $");
+__RCSID("$NetBSD: at.c,v 1.29 2011/08/14 13:41:17 christos Exp $");
 #endif
 #endif
 
@@ -466,7 +466,15 @@ list_jobs(void)
 
 		runtimer = 60 * (time_t)ctm;
 		runtime = *localtime(&runtimer);
+#if 1
+		/*
+		 * Provide a consistent date/time format instead of a
+		 * locale-specific one that might have 2 digit years
+		 */
+		(void)strftime(timestr, TIMESIZE, "%T %F", &runtime);
+#else
 		(void)strftime(timestr, TIMESIZE, "%X %x", &runtime);
+#endif
 		if (first) {
 			(void)printf("%-*s  %-*s  %-*s  %s\n",
 			    (int)strlen(timestr), "Date",
