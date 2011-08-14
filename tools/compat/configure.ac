@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.71 2010/01/15 11:26:25 asau Exp $
+#	$NetBSD: configure.ac,v 1.72 2011/08/14 20:20:59 apb Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -24,7 +24,7 @@ AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
 
 # Autoheader header and footer
-AH_TOP([/*      $NetBSD: configure.ac,v 1.71 2010/01/15 11:26:25 asau Exp $    */
+AH_TOP([/*      $][NetBSD$    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__])
@@ -80,13 +80,14 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/param.h \
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(sys/mtio.h sys/sysmacros.h sys/syslimits.h \
 	getopt.h features.h malloc.h sys/poll.h stddef.h)
-AC_CHECK_HEADERS(sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h sys/endian.h \
-	sys/featuretest.h err.h inttypes.h libgen.h paths.h stdint.h util.h \
-	resolv.h arpa/nameser.h,,
+AC_CHECK_HEADERS(sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h \
+	sys/endian.h sys/featuretest.h err.h inttypes.h libgen.h paths.h \
+	stdint.h util.h resolv.h arpa/nameser.h,,
 	[test -f include/$ac_header || touch include/$ac_header])
 AC_CHECK_HEADERS(rpc/types.h netconfig.h,,
 	[echo '#include "nbtool_config.h"' >include/$ac_header.new
-	echo '#include "'$srcdir/../../include/$ac_header'"' >>include/$ac_header.new
+	echo '#include "'$srcdir/../../include/$ac_header'"' \
+		>>include/$ac_header.new
 	if cmp include/$ac_header.new include/$ac_header >/dev/null 2>&1; then
 		rm -f include/$ac_header.new
 	else
@@ -148,8 +149,8 @@ AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	esetfunc fgetln flock fpurge __fpurge futimes getopt getopt_long \
 	group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
-	mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb pwrite \
-	raise_default_signal random setenv \
+	mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb \
+	pwrite raise_default_signal random setenv \
 	setgroupent setprogname setpassent snprintf strlcat strlcpy strmode \
 	strndup strsep strsuftoll strtoll \
 	user_from_uid uid_from_user vasprintf vasnprintf vsnprintf)
@@ -167,11 +168,15 @@ AC_CHECK_DECLS([lchflags, lchmod, lchown],,,[
 #include <unistd.h>
 ])
 
-AC_CHECK_DECLS([htobe16, htobe32, htobe64, htole16, htole32, htole64, be16toh, be32toh, be64toh, le16toh, le32toh, le64toh],,, [#include <sys/types.h>])
+AC_CHECK_DECLS([htobe16, htobe32, htobe64, htole16, htole32, htole64,
+		be16toh, be32toh, be64toh, le16toh, le32toh, le64toh],,,
+		[#include <sys/types.h>])
 
 AC_CHECK_DECLS([bswap16, bswap32, bswap64],,, [#include <machine/bswap.h>])
 
-AC_CHECK_DECLS([be16enc, le16enc, be16dec, le16dec, be32enc, le32enc, be32dec, le32dec, be64enc, le64enc, be64dec, le64dec],,, [#include <sys/endian.h>])
+AC_CHECK_DECLS([be16enc, le16enc, be16dec, le16dec, be32enc, le32enc,
+		be32dec, le32dec, be64enc, le64enc, be64dec, le64dec],,,
+		[#include <sys/endian.h>])
 
 AC_CHECK_DECLS([fstatvfs],,, [#include <sys/statvfs.h>])
 
