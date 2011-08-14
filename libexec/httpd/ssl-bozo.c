@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.8 2010/05/15 06:48:27 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.9 2011/08/14 11:38:11 christos Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.13 2010/05/12 12:24:58 rtr Exp $	*/
 
@@ -79,7 +79,7 @@ bozo_ssl_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
 
 	unsigned int sslcode = ERR_get_error();
 	do {
-		const char *sslfmt = "SSL Error: %s:%s:%s";
+#define	sslfmt "SSL Error: %s:%s:%s"
 
 		if (httpd->logstderr || isatty(STDERR_FILENO)) {
 			fprintf(stderr, sslfmt,
