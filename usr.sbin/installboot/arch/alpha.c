@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.20 2009/10/26 14:26:25 tsutsui Exp $	*/
+/*	$NetBSD: alpha.c,v 1.21 2011/08/14 17:50:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.20 2009/10/26 14:26:25 tsutsui Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.21 2011/08/14 17:50:17 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -440,8 +440,7 @@ static void
 check_sparc(const struct alpha_boot_block * const bb, const char *when)
 {
 	uint16_t bb16[256];
-	const char * const wmsg =
-	    "%s sparc %s 0x%04x invalid, expected 0x%04x";
+#define wmsg "%s sparc %s 0x%04x invalid, expected 0x%04x"
 
 	memcpy(bb16, bb, sizeof(bb16));
 	if (compute_sunsum(bb16) != bb16[255])
