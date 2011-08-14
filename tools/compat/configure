@@ -2552,7 +2552,7 @@ fi
 fi
 
 for ac_header in sys/mtio.h sys/sysmacros.h sys/syslimits.h \
-	getopt.h features.h malloc.h sys/poll.h stddef.h
+	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 echo "$as_me:2558: checking for $ac_header" >&5
@@ -2600,9 +2600,9 @@ EOF
 fi
 done
 
-for ac_header in sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h sys/endian.h \
-	sys/featuretest.h err.h inttypes.h libgen.h paths.h stdint.h util.h \
-	resolv.h arpa/nameser.h
+for ac_header in sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h \
+	sys/endian.h sys/featuretest.h err.h inttypes.h libgen.h paths.h \
+	stdint.h util.h resolv.h arpa/nameser.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 echo "$as_me:2608: checking for $ac_header" >&5
@@ -2699,7 +2699,8 @@ EOF
 
 else
   echo '#include "nbtool_config.h"' >include/$ac_header.new
-	echo '#include "'$srcdir/../../include/$ac_header'"' >>include/$ac_header.new
+	echo '#include "'$srcdir/../../include/$ac_header'"' \
+		>>include/$ac_header.new
 	if cmp include/$ac_header.new include/$ac_header >/dev/null 2>&1; then
 		rm -f include/$ac_header.new
 	else
@@ -2715,28 +2716,28 @@ for ac_header in sys/types.h sys/stat.h stdlib.h string.h memory.h strings.h \
                   inttypes.h stdint.h unistd.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:2718: checking for $ac_header" >&5
+echo "$as_me:2719: checking for $ac_header" >&5
 echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 2724 "configure"
+#line 2725 "configure"
 #include "confdefs.h"
 $ac_includes_default
 #include <$ac_header>
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:2730: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:2731: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:2733: \$? = $ac_status" >&5
+  echo "$as_me:2734: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:2736: \"$ac_try\"") >&5
+  { (eval echo "$as_me:2737: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:2739: \$? = $ac_status" >&5
+  echo "$as_me:2740: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   eval "$as_ac_Header=yes"
 else
@@ -2746,7 +2747,7 @@ eval "$as_ac_Header=no"
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:2749: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "$as_me:2750: result: `eval echo '${'$as_ac_Header'}'`" >&5
 echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
 if test `eval echo '${'$as_ac_Header'}'` = yes; then
   cat >>confdefs.h <<EOF
@@ -2756,13 +2757,13 @@ EOF
 fi
 done
 
-echo "$as_me:2759: checking for size_t" >&5
+echo "$as_me:2760: checking for size_t" >&5
 echo $ECHO_N "checking for size_t... $ECHO_C" >&6
 if test "${ac_cv_type_size_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 2765 "configure"
+#line 2766 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -2777,16 +2778,16 @@ if (sizeof (size_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:2780: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:2781: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:2783: \$? = $ac_status" >&5
+  echo "$as_me:2784: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:2786: \"$ac_try\"") >&5
+  { (eval echo "$as_me:2787: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:2789: \$? = $ac_status" >&5
+  echo "$as_me:2790: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_size_t=yes
 else
@@ -2796,7 +2797,7 @@ ac_cv_type_size_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:2799: result: $ac_cv_type_size_t" >&5
+echo "$as_me:2800: result: $ac_cv_type_size_t" >&5
 echo "${ECHO_T}$ac_cv_type_size_t" >&6
 if test $ac_cv_type_size_t = yes; then
   :
@@ -2808,13 +2809,13 @@ EOF
 
 fi
 
-echo "$as_me:2811: checking for id_t" >&5
+echo "$as_me:2812: checking for id_t" >&5
 echo $ECHO_N "checking for id_t... $ECHO_C" >&6
 if test "${ac_cv_type_id_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 2817 "configure"
+#line 2818 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -2829,16 +2830,16 @@ if (sizeof (id_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:2832: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:2833: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:2835: \$? = $ac_status" >&5
+  echo "$as_me:2836: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:2838: \"$ac_try\"") >&5
+  { (eval echo "$as_me:2839: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:2841: \$? = $ac_status" >&5
+  echo "$as_me:2842: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_id_t=yes
 else
@@ -2848,7 +2849,7 @@ ac_cv_type_id_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:2851: result: $ac_cv_type_id_t" >&5
+echo "$as_me:2852: result: $ac_cv_type_id_t" >&5
 echo "${ECHO_T}$ac_cv_type_id_t" >&6
 if test $ac_cv_type_id_t = yes; then
 
@@ -2857,13 +2858,13 @@ cat >>confdefs.h <<EOF
 EOF
 
 fi
-echo "$as_me:2860: checking for long long" >&5
+echo "$as_me:2861: checking for long long" >&5
 echo $ECHO_N "checking for long long... $ECHO_C" >&6
 if test "${ac_cv_type_long_long+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 2866 "configure"
+#line 2867 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -2878,16 +2879,16 @@ if (sizeof (long long))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:2881: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:2882: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:2884: \$? = $ac_status" >&5
+  echo "$as_me:2885: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:2887: \"$ac_try\"") >&5
+  { (eval echo "$as_me:2888: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:2890: \$? = $ac_status" >&5
+  echo "$as_me:2891: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_long_long=yes
 else
@@ -2897,7 +2898,7 @@ ac_cv_type_long_long=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:2900: result: $ac_cv_type_long_long" >&5
+echo "$as_me:2901: result: $ac_cv_type_long_long" >&5
 echo "${ECHO_T}$ac_cv_type_long_long" >&6
 if test $ac_cv_type_long_long = yes; then
 
@@ -2906,13 +2907,13 @@ cat >>confdefs.h <<EOF
 EOF
 
 fi
-echo "$as_me:2909: checking for u_long" >&5
+echo "$as_me:2910: checking for u_long" >&5
 echo $ECHO_N "checking for u_long... $ECHO_C" >&6
 if test "${ac_cv_type_u_long+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 2915 "configure"
+#line 2916 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -2927,16 +2928,16 @@ if (sizeof (u_long))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:2930: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:2931: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:2933: \$? = $ac_status" >&5
+  echo "$as_me:2934: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:2936: \"$ac_try\"") >&5
+  { (eval echo "$as_me:2937: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:2939: \$? = $ac_status" >&5
+  echo "$as_me:2940: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_u_long=yes
 else
@@ -2946,7 +2947,7 @@ ac_cv_type_u_long=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:2949: result: $ac_cv_type_u_long" >&5
+echo "$as_me:2950: result: $ac_cv_type_u_long" >&5
 echo "${ECHO_T}$ac_cv_type_u_long" >&6
 if test $ac_cv_type_u_long = yes; then
 
@@ -2955,13 +2956,13 @@ cat >>confdefs.h <<EOF
 EOF
 
 fi
-echo "$as_me:2958: checking for u_char" >&5
+echo "$as_me:2959: checking for u_char" >&5
 echo $ECHO_N "checking for u_char... $ECHO_C" >&6
 if test "${ac_cv_type_u_char+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 2964 "configure"
+#line 2965 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -2976,16 +2977,16 @@ if (sizeof (u_char))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:2979: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:2980: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:2982: \$? = $ac_status" >&5
+  echo "$as_me:2983: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:2985: \"$ac_try\"") >&5
+  { (eval echo "$as_me:2986: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:2988: \$? = $ac_status" >&5
+  echo "$as_me:2989: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_u_char=yes
 else
@@ -2995,7 +2996,7 @@ ac_cv_type_u_char=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:2998: result: $ac_cv_type_u_char" >&5
+echo "$as_me:2999: result: $ac_cv_type_u_char" >&5
 echo "${ECHO_T}$ac_cv_type_u_char" >&6
 if test $ac_cv_type_u_char = yes; then
 
@@ -3004,13 +3005,13 @@ cat >>confdefs.h <<EOF
 EOF
 
 fi
-echo "$as_me:3007: checking for u_short" >&5
+echo "$as_me:3008: checking for u_short" >&5
 echo $ECHO_N "checking for u_short... $ECHO_C" >&6
 if test "${ac_cv_type_u_short+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3013 "configure"
+#line 3014 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3025,16 +3026,16 @@ if (sizeof (u_short))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3028: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3029: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3031: \$? = $ac_status" >&5
+  echo "$as_me:3032: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3034: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3035: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3037: \$? = $ac_status" >&5
+  echo "$as_me:3038: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_u_short=yes
 else
@@ -3044,7 +3045,7 @@ ac_cv_type_u_short=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3047: result: $ac_cv_type_u_short" >&5
+echo "$as_me:3048: result: $ac_cv_type_u_short" >&5
 echo "${ECHO_T}$ac_cv_type_u_short" >&6
 if test $ac_cv_type_u_short = yes; then
 
@@ -3053,13 +3054,13 @@ cat >>confdefs.h <<EOF
 EOF
 
 fi
-echo "$as_me:3056: checking for u_int" >&5
+echo "$as_me:3057: checking for u_int" >&5
 echo $ECHO_N "checking for u_int... $ECHO_C" >&6
 if test "${ac_cv_type_u_int+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3062 "configure"
+#line 3063 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3074,16 +3075,16 @@ if (sizeof (u_int))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3077: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3078: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3080: \$? = $ac_status" >&5
+  echo "$as_me:3081: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3083: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3084: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3086: \$? = $ac_status" >&5
+  echo "$as_me:3087: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_u_int=yes
 else
@@ -3093,7 +3094,7 @@ ac_cv_type_u_int=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3096: result: $ac_cv_type_u_int" >&5
+echo "$as_me:3097: result: $ac_cv_type_u_int" >&5
 echo "${ECHO_T}$ac_cv_type_u_int" >&6
 if test $ac_cv_type_u_int = yes; then
 
@@ -3102,13 +3103,13 @@ cat >>confdefs.h <<EOF
 EOF
 
 fi
-echo "$as_me:3105: checking for u_quad_t" >&5
+echo "$as_me:3106: checking for u_quad_t" >&5
 echo $ECHO_N "checking for u_quad_t... $ECHO_C" >&6
 if test "${ac_cv_type_u_quad_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3111 "configure"
+#line 3112 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3123,16 +3124,16 @@ if (sizeof (u_quad_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3126: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3127: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3129: \$? = $ac_status" >&5
+  echo "$as_me:3130: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3132: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3133: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3135: \$? = $ac_status" >&5
+  echo "$as_me:3136: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_u_quad_t=yes
 else
@@ -3142,7 +3143,7 @@ ac_cv_type_u_quad_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3145: result: $ac_cv_type_u_quad_t" >&5
+echo "$as_me:3146: result: $ac_cv_type_u_quad_t" >&5
 echo "${ECHO_T}$ac_cv_type_u_quad_t" >&6
 if test $ac_cv_type_u_quad_t = yes; then
 
@@ -3152,13 +3153,13 @@ EOF
 
 fi
 
-echo "$as_me:3155: checking for socklen_t" >&5
+echo "$as_me:3156: checking for socklen_t" >&5
 echo $ECHO_N "checking for socklen_t... $ECHO_C" >&6
 if test "${ac_cv_type_socklen_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3161 "configure"
+#line 3162 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -3175,16 +3176,16 @@ if (sizeof (socklen_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3178: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3179: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3181: \$? = $ac_status" >&5
+  echo "$as_me:3182: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3184: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3185: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3187: \$? = $ac_status" >&5
+  echo "$as_me:3188: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_socklen_t=yes
 else
@@ -3194,7 +3195,7 @@ ac_cv_type_socklen_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3197: result: $ac_cv_type_socklen_t" >&5
+echo "$as_me:3198: result: $ac_cv_type_socklen_t" >&5
 echo "${ECHO_T}$ac_cv_type_socklen_t" >&6
 if test $ac_cv_type_socklen_t = yes; then
 
@@ -3204,13 +3205,13 @@ EOF
 
 fi
 
-	echo "$as_me:3207: checking for uint8_t" >&5
+	echo "$as_me:3208: checking for uint8_t" >&5
 echo $ECHO_N "checking for uint8_t... $ECHO_C" >&6
 if test "${ac_cv_type_uint8_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3213 "configure"
+#line 3214 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3225,16 +3226,16 @@ if (sizeof (uint8_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3228: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3229: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3231: \$? = $ac_status" >&5
+  echo "$as_me:3232: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3234: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3235: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3237: \$? = $ac_status" >&5
+  echo "$as_me:3238: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_uint8_t=yes
 else
@@ -3244,19 +3245,19 @@ ac_cv_type_uint8_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3247: result: $ac_cv_type_uint8_t" >&5
+echo "$as_me:3248: result: $ac_cv_type_uint8_t" >&5
 echo "${ECHO_T}$ac_cv_type_uint8_t" >&6
 if test $ac_cv_type_uint8_t = yes; then
   :
 else
 
-		echo "$as_me:3253: checking for u_int8_t" >&5
+		echo "$as_me:3254: checking for u_int8_t" >&5
 echo $ECHO_N "checking for u_int8_t... $ECHO_C" >&6
 if test "${ac_cv_type_u_int8_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3259 "configure"
+#line 3260 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3271,16 +3272,16 @@ if (sizeof (u_int8_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3274: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3275: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3277: \$? = $ac_status" >&5
+  echo "$as_me:3278: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3280: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3281: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3283: \$? = $ac_status" >&5
+  echo "$as_me:3284: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_u_int8_t=yes
 else
@@ -3290,7 +3291,7 @@ ac_cv_type_u_int8_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3293: result: $ac_cv_type_u_int8_t" >&5
+echo "$as_me:3294: result: $ac_cv_type_u_int8_t" >&5
 echo "${ECHO_T}$ac_cv_type_u_int8_t" >&6
 if test $ac_cv_type_u_int8_t = yes; then
 
@@ -3299,20 +3300,20 @@ cat >>confdefs.h <<\EOF
 EOF
 
 else
-  { { echo "$as_me:3302: error: cannot find a suitable type for uint8_t" >&5
+  { { echo "$as_me:3303: error: cannot find a suitable type for uint8_t" >&5
 echo "$as_me: error: cannot find a suitable type for uint8_t" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 fi
 
-	echo "$as_me:3309: checking for u_int8_t" >&5
+	echo "$as_me:3310: checking for u_int8_t" >&5
 echo $ECHO_N "checking for u_int8_t... $ECHO_C" >&6
 if test "${ac_cv_type_u_int8_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3315 "configure"
+#line 3316 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3327,16 +3328,16 @@ if (sizeof (u_int8_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3330: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3331: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3333: \$? = $ac_status" >&5
+  echo "$as_me:3334: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3336: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3337: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3339: \$? = $ac_status" >&5
+  echo "$as_me:3340: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_u_int8_t=yes
 else
@@ -3346,19 +3347,19 @@ ac_cv_type_u_int8_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3349: result: $ac_cv_type_u_int8_t" >&5
+echo "$as_me:3350: result: $ac_cv_type_u_int8_t" >&5
 echo "${ECHO_T}$ac_cv_type_u_int8_t" >&6
 if test $ac_cv_type_u_int8_t = yes; then
   :
 else
 
-		echo "$as_me:3355: checking for uint8_t" >&5
+		echo "$as_me:3356: checking for uint8_t" >&5
 echo $ECHO_N "checking for uint8_t... $ECHO_C" >&6
 if test "${ac_cv_type_uint8_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3361 "configure"
+#line 3362 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3373,16 +3374,16 @@ if (sizeof (uint8_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3376: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3377: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3379: \$? = $ac_status" >&5
+  echo "$as_me:3380: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3382: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3383: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3385: \$? = $ac_status" >&5
+  echo "$as_me:3386: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_uint8_t=yes
 else
@@ -3392,7 +3393,7 @@ ac_cv_type_uint8_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3395: result: $ac_cv_type_uint8_t" >&5
+echo "$as_me:3396: result: $ac_cv_type_uint8_t" >&5
 echo "${ECHO_T}$ac_cv_type_uint8_t" >&6
 if test $ac_cv_type_uint8_t = yes; then
 
@@ -3401,20 +3402,20 @@ cat >>confdefs.h <<\EOF
 EOF
 
 else
-  { { echo "$as_me:3404: error: cannot find a suitable type for u_int8_t" >&5
+  { { echo "$as_me:3405: error: cannot find a suitable type for u_int8_t" >&5
 echo "$as_me: error: cannot find a suitable type for u_int8_t" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 fi
 
-	echo "$as_me:3411: checking for uint16_t" >&5
+	echo "$as_me:3412: checking for uint16_t" >&5
 echo $ECHO_N "checking for uint16_t... $ECHO_C" >&6
 if test "${ac_cv_type_uint16_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3417 "configure"
+#line 3418 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3429,16 +3430,16 @@ if (sizeof (uint16_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3432: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3433: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3435: \$? = $ac_status" >&5
+  echo "$as_me:3436: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3438: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3439: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3441: \$? = $ac_status" >&5
+  echo "$as_me:3442: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_uint16_t=yes
 else
@@ -3448,19 +3449,19 @@ ac_cv_type_uint16_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3451: result: $ac_cv_type_uint16_t" >&5
+echo "$as_me:3452: result: $ac_cv_type_uint16_t" >&5
 echo "${ECHO_T}$ac_cv_type_uint16_t" >&6
 if test $ac_cv_type_uint16_t = yes; then
   :
 else
 
-		echo "$as_me:3457: checking for u_int16_t" >&5
+		echo "$as_me:3458: checking for u_int16_t" >&5
 echo $ECHO_N "checking for u_int16_t... $ECHO_C" >&6
 if test "${ac_cv_type_u_int16_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3463 "configure"
+#line 3464 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3475,16 +3476,16 @@ if (sizeof (u_int16_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3478: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3479: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3481: \$? = $ac_status" >&5
+  echo "$as_me:3482: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3484: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3485: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3487: \$? = $ac_status" >&5
+  echo "$as_me:3488: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_u_int16_t=yes
 else
@@ -3494,7 +3495,7 @@ ac_cv_type_u_int16_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3497: result: $ac_cv_type_u_int16_t" >&5
+echo "$as_me:3498: result: $ac_cv_type_u_int16_t" >&5
 echo "${ECHO_T}$ac_cv_type_u_int16_t" >&6
 if test $ac_cv_type_u_int16_t = yes; then
 
@@ -3503,20 +3504,20 @@ cat >>confdefs.h <<\EOF
 EOF
 
 else
-  { { echo "$as_me:3506: error: cannot find a suitable type for uint16_t" >&5
+  { { echo "$as_me:3507: error: cannot find a suitable type for uint16_t" >&5
 echo "$as_me: error: cannot find a suitable type for uint16_t" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 fi
 
-	echo "$as_me:3513: checking for u_int16_t" >&5
+	echo "$as_me:3514: checking for u_int16_t" >&5
 echo $ECHO_N "checking for u_int16_t... $ECHO_C" >&6
 if test "${ac_cv_type_u_int16_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3519 "configure"
+#line 3520 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3531,16 +3532,16 @@ if (sizeof (u_int16_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3534: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3535: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3537: \$? = $ac_status" >&5
+  echo "$as_me:3538: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3540: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3541: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3543: \$? = $ac_status" >&5
+  echo "$as_me:3544: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_u_int16_t=yes
 else
@@ -3550,19 +3551,19 @@ ac_cv_type_u_int16_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3553: result: $ac_cv_type_u_int16_t" >&5
+echo "$as_me:3554: result: $ac_cv_type_u_int16_t" >&5
 echo "${ECHO_T}$ac_cv_type_u_int16_t" >&6
 if test $ac_cv_type_u_int16_t = yes; then
   :
 else
 
-		echo "$as_me:3559: checking for uint16_t" >&5
+		echo "$as_me:3560: checking for uint16_t" >&5
 echo $ECHO_N "checking for uint16_t... $ECHO_C" >&6
 if test "${ac_cv_type_uint16_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3565 "configure"
+#line 3566 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3577,16 +3578,16 @@ if (sizeof (uint16_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3580: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3581: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3583: \$? = $ac_status" >&5
+  echo "$as_me:3584: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3586: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3587: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3589: \$? = $ac_status" >&5
+  echo "$as_me:3590: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_uint16_t=yes
 else
@@ -3596,7 +3597,7 @@ ac_cv_type_uint16_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3599: result: $ac_cv_type_uint16_t" >&5
+echo "$as_me:3600: result: $ac_cv_type_uint16_t" >&5
 echo "${ECHO_T}$ac_cv_type_uint16_t" >&6
 if test $ac_cv_type_uint16_t = yes; then
 
@@ -3605,20 +3606,20 @@ cat >>confdefs.h <<\EOF
 EOF
 
 else
-  { { echo "$as_me:3608: error: cannot find a suitable type for u_int16_t" >&5
+  { { echo "$as_me:3609: error: cannot find a suitable type for u_int16_t" >&5
 echo "$as_me: error: cannot find a suitable type for u_int16_t" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 fi
 
-	echo "$as_me:3615: checking for uint32_t" >&5
+	echo "$as_me:3616: checking for uint32_t" >&5
 echo $ECHO_N "checking for uint32_t... $ECHO_C" >&6
 if test "${ac_cv_type_uint32_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3621 "configure"
+#line 3622 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3633,16 +3634,16 @@ if (sizeof (uint32_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3636: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3637: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3639: \$? = $ac_status" >&5
+  echo "$as_me:3640: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3642: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3643: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3645: \$? = $ac_status" >&5
+  echo "$as_me:3646: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_uint32_t=yes
 else
@@ -3652,19 +3653,19 @@ ac_cv_type_uint32_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3655: result: $ac_cv_type_uint32_t" >&5
+echo "$as_me:3656: result: $ac_cv_type_uint32_t" >&5
 echo "${ECHO_T}$ac_cv_type_uint32_t" >&6
 if test $ac_cv_type_uint32_t = yes; then
   :
 else
 
-		echo "$as_me:3661: checking for u_int32_t" >&5
+		echo "$as_me:3662: checking for u_int32_t" >&5
 echo $ECHO_N "checking for u_int32_t... $ECHO_C" >&6
 if test "${ac_cv_type_u_int32_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3667 "configure"
+#line 3668 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3679,16 +3680,16 @@ if (sizeof (u_int32_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3682: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3683: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3685: \$? = $ac_status" >&5
+  echo "$as_me:3686: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3688: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3689: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3691: \$? = $ac_status" >&5
+  echo "$as_me:3692: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_u_int32_t=yes
 else
@@ -3698,7 +3699,7 @@ ac_cv_type_u_int32_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3701: result: $ac_cv_type_u_int32_t" >&5
+echo "$as_me:3702: result: $ac_cv_type_u_int32_t" >&5
 echo "${ECHO_T}$ac_cv_type_u_int32_t" >&6
 if test $ac_cv_type_u_int32_t = yes; then
 
@@ -3707,20 +3708,20 @@ cat >>confdefs.h <<\EOF
 EOF
 
 else
-  { { echo "$as_me:3710: error: cannot find a suitable type for uint32_t" >&5
+  { { echo "$as_me:3711: error: cannot find a suitable type for uint32_t" >&5
 echo "$as_me: error: cannot find a suitable type for uint32_t" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 fi
 
-	echo "$as_me:3717: checking for u_int32_t" >&5
+	echo "$as_me:3718: checking for u_int32_t" >&5
 echo $ECHO_N "checking for u_int32_t... $ECHO_C" >&6
 if test "${ac_cv_type_u_int32_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3723 "configure"
+#line 3724 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3735,16 +3736,16 @@ if (sizeof (u_int32_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3738: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3739: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3741: \$? = $ac_status" >&5
+  echo "$as_me:3742: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3744: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3745: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3747: \$? = $ac_status" >&5
+  echo "$as_me:3748: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_u_int32_t=yes
 else
@@ -3754,19 +3755,19 @@ ac_cv_type_u_int32_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3757: result: $ac_cv_type_u_int32_t" >&5
+echo "$as_me:3758: result: $ac_cv_type_u_int32_t" >&5
 echo "${ECHO_T}$ac_cv_type_u_int32_t" >&6
 if test $ac_cv_type_u_int32_t = yes; then
   :
 else
 
-		echo "$as_me:3763: checking for uint32_t" >&5
+		echo "$as_me:3764: checking for uint32_t" >&5
 echo $ECHO_N "checking for uint32_t... $ECHO_C" >&6
 if test "${ac_cv_type_uint32_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3769 "configure"
+#line 3770 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3781,16 +3782,16 @@ if (sizeof (uint32_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3784: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3785: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3787: \$? = $ac_status" >&5
+  echo "$as_me:3788: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3790: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3791: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3793: \$? = $ac_status" >&5
+  echo "$as_me:3794: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_uint32_t=yes
 else
@@ -3800,7 +3801,7 @@ ac_cv_type_uint32_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3803: result: $ac_cv_type_uint32_t" >&5
+echo "$as_me:3804: result: $ac_cv_type_uint32_t" >&5
 echo "${ECHO_T}$ac_cv_type_uint32_t" >&6
 if test $ac_cv_type_uint32_t = yes; then
 
@@ -3809,20 +3810,20 @@ cat >>confdefs.h <<\EOF
 EOF
 
 else
-  { { echo "$as_me:3812: error: cannot find a suitable type for u_int32_t" >&5
+  { { echo "$as_me:3813: error: cannot find a suitable type for u_int32_t" >&5
 echo "$as_me: error: cannot find a suitable type for u_int32_t" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 fi
 
-	echo "$as_me:3819: checking for uint64_t" >&5
+	echo "$as_me:3820: checking for uint64_t" >&5
 echo $ECHO_N "checking for uint64_t... $ECHO_C" >&6
 if test "${ac_cv_type_uint64_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3825 "configure"
+#line 3826 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3837,16 +3838,16 @@ if (sizeof (uint64_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3840: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3841: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3843: \$? = $ac_status" >&5
+  echo "$as_me:3844: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3846: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3847: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3849: \$? = $ac_status" >&5
+  echo "$as_me:3850: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_uint64_t=yes
 else
@@ -3856,19 +3857,19 @@ ac_cv_type_uint64_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3859: result: $ac_cv_type_uint64_t" >&5
+echo "$as_me:3860: result: $ac_cv_type_uint64_t" >&5
 echo "${ECHO_T}$ac_cv_type_uint64_t" >&6
 if test $ac_cv_type_uint64_t = yes; then
   :
 else
 
-		echo "$as_me:3865: checking for u_int64_t" >&5
+		echo "$as_me:3866: checking for u_int64_t" >&5
 echo $ECHO_N "checking for u_int64_t... $ECHO_C" >&6
 if test "${ac_cv_type_u_int64_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3871 "configure"
+#line 3872 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3883,16 +3884,16 @@ if (sizeof (u_int64_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3886: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3887: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3889: \$? = $ac_status" >&5
+  echo "$as_me:3890: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3892: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3893: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3895: \$? = $ac_status" >&5
+  echo "$as_me:3896: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_u_int64_t=yes
 else
@@ -3902,7 +3903,7 @@ ac_cv_type_u_int64_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3905: result: $ac_cv_type_u_int64_t" >&5
+echo "$as_me:3906: result: $ac_cv_type_u_int64_t" >&5
 echo "${ECHO_T}$ac_cv_type_u_int64_t" >&6
 if test $ac_cv_type_u_int64_t = yes; then
 
@@ -3911,20 +3912,20 @@ cat >>confdefs.h <<\EOF
 EOF
 
 else
-  { { echo "$as_me:3914: error: cannot find a suitable type for uint64_t" >&5
+  { { echo "$as_me:3915: error: cannot find a suitable type for uint64_t" >&5
 echo "$as_me: error: cannot find a suitable type for uint64_t" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 fi
 
-	echo "$as_me:3921: checking for u_int64_t" >&5
+	echo "$as_me:3922: checking for u_int64_t" >&5
 echo $ECHO_N "checking for u_int64_t... $ECHO_C" >&6
 if test "${ac_cv_type_u_int64_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3927 "configure"
+#line 3928 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3939,16 +3940,16 @@ if (sizeof (u_int64_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3942: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3943: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3945: \$? = $ac_status" >&5
+  echo "$as_me:3946: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3948: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3949: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3951: \$? = $ac_status" >&5
+  echo "$as_me:3952: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_u_int64_t=yes
 else
@@ -3958,19 +3959,19 @@ ac_cv_type_u_int64_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:3961: result: $ac_cv_type_u_int64_t" >&5
+echo "$as_me:3962: result: $ac_cv_type_u_int64_t" >&5
 echo "${ECHO_T}$ac_cv_type_u_int64_t" >&6
 if test $ac_cv_type_u_int64_t = yes; then
   :
 else
 
-		echo "$as_me:3967: checking for uint64_t" >&5
+		echo "$as_me:3968: checking for uint64_t" >&5
 echo $ECHO_N "checking for uint64_t... $ECHO_C" >&6
 if test "${ac_cv_type_uint64_t+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 3973 "configure"
+#line 3974 "configure"
 #include "confdefs.h"
 $ac_includes_default
 int
@@ -3985,16 +3986,16 @@ if (sizeof (uint64_t))
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:3988: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:3989: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:3991: \$? = $ac_status" >&5
+  echo "$as_me:3992: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:3994: \"$ac_try\"") >&5
+  { (eval echo "$as_me:3995: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:3997: \$? = $ac_status" >&5
+  echo "$as_me:3998: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_type_uint64_t=yes
 else
@@ -4004,7 +4005,7 @@ ac_cv_type_uint64_t=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:4007: result: $ac_cv_type_uint64_t" >&5
+echo "$as_me:4008: result: $ac_cv_type_uint64_t" >&5
 echo "${ECHO_T}$ac_cv_type_uint64_t" >&6
 if test $ac_cv_type_uint64_t = yes; then
 
@@ -4013,7 +4014,7 @@ cat >>confdefs.h <<\EOF
 EOF
 
 else
-  { { echo "$as_me:4016: error: cannot find a suitable type for u_int64_t" >&5
+  { { echo "$as_me:4017: error: cannot find a suitable type for u_int64_t" >&5
 echo "$as_me: error: cannot find a suitable type for u_int64_t" >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -4021,13 +4022,13 @@ fi
 fi
 
 # Struct members.
-echo "$as_me:4024: checking for DIR.dd_fd" >&5
+echo "$as_me:4025: checking for DIR.dd_fd" >&5
 echo $ECHO_N "checking for DIR.dd_fd... $ECHO_C" >&6
 if test "${ac_cv_member_DIR_dd_fd+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4030 "configure"
+#line 4031 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #include <dirent.h>
@@ -4043,16 +4044,16 @@ return 0;
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:4046: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:4047: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:4049: \$? = $ac_status" >&5
+  echo "$as_me:4050: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:4052: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4053: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4055: \$? = $ac_status" >&5
+  echo "$as_me:4056: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_member_DIR_dd_fd=yes
 else
@@ -4062,7 +4063,7 @@ ac_cv_member_DIR_dd_fd=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:4065: result: $ac_cv_member_DIR_dd_fd" >&5
+echo "$as_me:4066: result: $ac_cv_member_DIR_dd_fd" >&5
 echo "${ECHO_T}$ac_cv_member_DIR_dd_fd" >&6
 if test $ac_cv_member_DIR_dd_fd = yes; then
 
@@ -4071,13 +4072,13 @@ cat >>confdefs.h <<EOF
 EOF
 
 fi
-echo "$as_me:4074: checking for DIR.__dd_fd" >&5
+echo "$as_me:4075: checking for DIR.__dd_fd" >&5
 echo $ECHO_N "checking for DIR.__dd_fd... $ECHO_C" >&6
 if test "${ac_cv_member_DIR___dd_fd+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4080 "configure"
+#line 4081 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #include <dirent.h>
@@ -4093,16 +4094,16 @@ return 0;
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:4096: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:4097: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:4099: \$? = $ac_status" >&5
+  echo "$as_me:4100: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:4102: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4103: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4105: \$? = $ac_status" >&5
+  echo "$as_me:4106: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_member_DIR___dd_fd=yes
 else
@@ -4112,7 +4113,7 @@ ac_cv_member_DIR___dd_fd=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:4115: result: $ac_cv_member_DIR___dd_fd" >&5
+echo "$as_me:4116: result: $ac_cv_member_DIR___dd_fd" >&5
 echo "${ECHO_T}$ac_cv_member_DIR___dd_fd" >&6
 if test $ac_cv_member_DIR___dd_fd = yes; then
 
@@ -4121,13 +4122,13 @@ cat >>confdefs.h <<EOF
 EOF
 
 fi
-echo "$as_me:4124: checking for struct dirent.d_namlen" >&5
+echo "$as_me:4125: checking for struct dirent.d_namlen" >&5
 echo $ECHO_N "checking for struct dirent.d_namlen... $ECHO_C" >&6
 if test "${ac_cv_member_struct_dirent_d_namlen+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4130 "configure"
+#line 4131 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #include <dirent.h>
@@ -4143,16 +4144,16 @@ return 0;
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:4146: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:4147: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:4149: \$? = $ac_status" >&5
+  echo "$as_me:4150: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:4152: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4153: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4155: \$? = $ac_status" >&5
+  echo "$as_me:4156: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_member_struct_dirent_d_namlen=yes
 else
@@ -4162,7 +4163,7 @@ ac_cv_member_struct_dirent_d_namlen=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:4165: result: $ac_cv_member_struct_dirent_d_namlen" >&5
+echo "$as_me:4166: result: $ac_cv_member_struct_dirent_d_namlen" >&5
 echo "${ECHO_T}$ac_cv_member_struct_dirent_d_namlen" >&6
 if test $ac_cv_member_struct_dirent_d_namlen = yes; then
 
@@ -4172,13 +4173,13 @@ EOF
 
 fi
 
-echo "$as_me:4175: checking for struct stat.st_flags" >&5
+echo "$as_me:4176: checking for struct stat.st_flags" >&5
 echo $ECHO_N "checking for struct stat.st_flags... $ECHO_C" >&6
 if test "${ac_cv_member_struct_stat_st_flags+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4181 "configure"
+#line 4182 "configure"
 #include "confdefs.h"
 #include <sys/stat.h>
 
@@ -4193,16 +4194,16 @@ return 0;
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:4196: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:4197: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:4199: \$? = $ac_status" >&5
+  echo "$as_me:4200: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:4202: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4203: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4205: \$? = $ac_status" >&5
+  echo "$as_me:4206: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_member_struct_stat_st_flags=yes
 else
@@ -4212,7 +4213,7 @@ ac_cv_member_struct_stat_st_flags=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:4215: result: $ac_cv_member_struct_stat_st_flags" >&5
+echo "$as_me:4216: result: $ac_cv_member_struct_stat_st_flags" >&5
 echo "${ECHO_T}$ac_cv_member_struct_stat_st_flags" >&6
 if test $ac_cv_member_struct_stat_st_flags = yes; then
 
@@ -4221,13 +4222,13 @@ cat >>confdefs.h <<EOF
 EOF
 
 fi
-echo "$as_me:4224: checking for struct stat.st_gen" >&5
+echo "$as_me:4225: checking for struct stat.st_gen" >&5
 echo $ECHO_N "checking for struct stat.st_gen... $ECHO_C" >&6
 if test "${ac_cv_member_struct_stat_st_gen+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4230 "configure"
+#line 4231 "configure"
 #include "confdefs.h"
 #include <sys/stat.h>
 
@@ -4242,16 +4243,16 @@ return 0;
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:4245: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:4246: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:4248: \$? = $ac_status" >&5
+  echo "$as_me:4249: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:4251: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4252: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4254: \$? = $ac_status" >&5
+  echo "$as_me:4255: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_member_struct_stat_st_gen=yes
 else
@@ -4261,7 +4262,7 @@ ac_cv_member_struct_stat_st_gen=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:4264: result: $ac_cv_member_struct_stat_st_gen" >&5
+echo "$as_me:4265: result: $ac_cv_member_struct_stat_st_gen" >&5
 echo "${ECHO_T}$ac_cv_member_struct_stat_st_gen" >&6
 if test $ac_cv_member_struct_stat_st_gen = yes; then
 
@@ -4270,13 +4271,13 @@ cat >>confdefs.h <<EOF
 EOF
 
 fi
-echo "$as_me:4273: checking for struct stat.st_birthtime" >&5
+echo "$as_me:4274: checking for struct stat.st_birthtime" >&5
 echo $ECHO_N "checking for struct stat.st_birthtime... $ECHO_C" >&6
 if test "${ac_cv_member_struct_stat_st_birthtime+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4279 "configure"
+#line 4280 "configure"
 #include "confdefs.h"
 #include <sys/stat.h>
 
@@ -4291,16 +4292,16 @@ return 0;
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:4294: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:4295: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:4297: \$? = $ac_status" >&5
+  echo "$as_me:4298: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:4300: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4301: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4303: \$? = $ac_status" >&5
+  echo "$as_me:4304: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_member_struct_stat_st_birthtime=yes
 else
@@ -4310,7 +4311,7 @@ ac_cv_member_struct_stat_st_birthtime=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:4313: result: $ac_cv_member_struct_stat_st_birthtime" >&5
+echo "$as_me:4314: result: $ac_cv_member_struct_stat_st_birthtime" >&5
 echo "${ECHO_T}$ac_cv_member_struct_stat_st_birthtime" >&6
 if test $ac_cv_member_struct_stat_st_birthtime = yes; then
 
@@ -4319,13 +4320,13 @@ cat >>confdefs.h <<EOF
 EOF
 
 fi
-echo "$as_me:4322: checking for struct stat.st_birthtimensec" >&5
+echo "$as_me:4323: checking for struct stat.st_birthtimensec" >&5
 echo $ECHO_N "checking for struct stat.st_birthtimensec... $ECHO_C" >&6
 if test "${ac_cv_member_struct_stat_st_birthtimensec+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4328 "configure"
+#line 4329 "configure"
 #include "confdefs.h"
 #include <sys/stat.h>
 
@@ -4340,16 +4341,16 @@ return 0;
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:4343: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:4344: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:4346: \$? = $ac_status" >&5
+  echo "$as_me:4347: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:4349: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4350: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4352: \$? = $ac_status" >&5
+  echo "$as_me:4353: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_member_struct_stat_st_birthtimensec=yes
 else
@@ -4359,7 +4360,7 @@ ac_cv_member_struct_stat_st_birthtimensec=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:4362: result: $ac_cv_member_struct_stat_st_birthtimensec" >&5
+echo "$as_me:4363: result: $ac_cv_member_struct_stat_st_birthtimensec" >&5
 echo "${ECHO_T}$ac_cv_member_struct_stat_st_birthtimensec" >&6
 if test $ac_cv_member_struct_stat_st_birthtimensec = yes; then
 
@@ -4368,13 +4369,13 @@ cat >>confdefs.h <<EOF
 EOF
 
 fi
-echo "$as_me:4371: checking for struct stat.st_atim" >&5
+echo "$as_me:4372: checking for struct stat.st_atim" >&5
 echo $ECHO_N "checking for struct stat.st_atim... $ECHO_C" >&6
 if test "${ac_cv_member_struct_stat_st_atim+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4377 "configure"
+#line 4378 "configure"
 #include "confdefs.h"
 #include <sys/stat.h>
 
@@ -4389,16 +4390,16 @@ return 0;
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:4392: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:4393: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:4395: \$? = $ac_status" >&5
+  echo "$as_me:4396: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:4398: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4399: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4401: \$? = $ac_status" >&5
+  echo "$as_me:4402: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_member_struct_stat_st_atim=yes
 else
@@ -4408,7 +4409,7 @@ ac_cv_member_struct_stat_st_atim=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:4411: result: $ac_cv_member_struct_stat_st_atim" >&5
+echo "$as_me:4412: result: $ac_cv_member_struct_stat_st_atim" >&5
 echo "${ECHO_T}$ac_cv_member_struct_stat_st_atim" >&6
 if test $ac_cv_member_struct_stat_st_atim = yes; then
 
@@ -4417,13 +4418,13 @@ cat >>confdefs.h <<EOF
 EOF
 
 fi
-echo "$as_me:4420: checking for struct stat.st_mtimensec" >&5
+echo "$as_me:4421: checking for struct stat.st_mtimensec" >&5
 echo $ECHO_N "checking for struct stat.st_mtimensec... $ECHO_C" >&6
 if test "${ac_cv_member_struct_stat_st_mtimensec+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4426 "configure"
+#line 4427 "configure"
 #include "confdefs.h"
 #include <sys/stat.h>
 
@@ -4438,16 +4439,16 @@ return 0;
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:4441: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:4442: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:4444: \$? = $ac_status" >&5
+  echo "$as_me:4445: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:4447: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4448: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4450: \$? = $ac_status" >&5
+  echo "$as_me:4451: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_member_struct_stat_st_mtimensec=yes
 else
@@ -4457,7 +4458,7 @@ ac_cv_member_struct_stat_st_mtimensec=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:4460: result: $ac_cv_member_struct_stat_st_mtimensec" >&5
+echo "$as_me:4461: result: $ac_cv_member_struct_stat_st_mtimensec" >&5
 echo "${ECHO_T}$ac_cv_member_struct_stat_st_mtimensec" >&6
 if test $ac_cv_member_struct_stat_st_mtimensec = yes; then
 
@@ -4467,13 +4468,13 @@ EOF
 
 fi
 
-echo "$as_me:4470: checking for struct statvfs.f_iosize" >&5
+echo "$as_me:4471: checking for struct statvfs.f_iosize" >&5
 echo $ECHO_N "checking for struct statvfs.f_iosize... $ECHO_C" >&6
 if test "${ac_cv_member_struct_statvfs_f_iosize+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4476 "configure"
+#line 4477 "configure"
 #include "confdefs.h"
 #include <sys/statvfs.h>
 
@@ -4488,16 +4489,16 @@ return 0;
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:4491: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:4492: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:4494: \$? = $ac_status" >&5
+  echo "$as_me:4495: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:4497: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4498: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4500: \$? = $ac_status" >&5
+  echo "$as_me:4501: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_member_struct_statvfs_f_iosize=yes
 else
@@ -4507,7 +4508,7 @@ ac_cv_member_struct_statvfs_f_iosize=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:4510: result: $ac_cv_member_struct_statvfs_f_iosize" >&5
+echo "$as_me:4511: result: $ac_cv_member_struct_statvfs_f_iosize" >&5
 echo "${ECHO_T}$ac_cv_member_struct_statvfs_f_iosize" >&6
 if test $ac_cv_member_struct_statvfs_f_iosize = yes; then
 
@@ -4518,13 +4519,13 @@ EOF
 fi
 
 # Global variable decls.
-echo "$as_me:4521: checking whether optind is declared" >&5
+echo "$as_me:4522: checking whether optind is declared" >&5
 echo $ECHO_N "checking whether optind is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_optind+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4527 "configure"
+#line 4528 "configure"
 #include "confdefs.h"
 
 #include <stdio.h>
@@ -4543,16 +4544,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:4546: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:4547: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:4549: \$? = $ac_status" >&5
+  echo "$as_me:4550: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:4552: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4553: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4555: \$? = $ac_status" >&5
+  echo "$as_me:4556: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_optind=yes
 else
@@ -4562,7 +4563,7 @@ ac_cv_have_decl_optind=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:4565: result: $ac_cv_have_decl_optind" >&5
+echo "$as_me:4566: result: $ac_cv_have_decl_optind" >&5
 echo "${ECHO_T}$ac_cv_have_decl_optind" >&6
 if test $ac_cv_have_decl_optind = yes; then
 
@@ -4576,13 +4577,13 @@ else
 EOF
 
 fi
-echo "$as_me:4579: checking whether optreset is declared" >&5
+echo "$as_me:4580: checking whether optreset is declared" >&5
 echo $ECHO_N "checking whether optreset is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_optreset+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4585 "configure"
+#line 4586 "configure"
 #include "confdefs.h"
 
 #include <stdio.h>
@@ -4601,16 +4602,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:4604: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:4605: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:4607: \$? = $ac_status" >&5
+  echo "$as_me:4608: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:4610: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4611: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4613: \$? = $ac_status" >&5
+  echo "$as_me:4614: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_optreset=yes
 else
@@ -4620,7 +4621,7 @@ ac_cv_have_decl_optreset=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:4623: result: $ac_cv_have_decl_optreset" >&5
+echo "$as_me:4624: result: $ac_cv_have_decl_optreset" >&5
 echo "${ECHO_T}$ac_cv_have_decl_optreset" >&6
 if test $ac_cv_have_decl_optreset = yes; then
 
@@ -4635,13 +4636,13 @@ EOF
 
 fi
 
-echo "$as_me:4638: checking whether sys_signame is declared" >&5
+echo "$as_me:4639: checking whether sys_signame is declared" >&5
 echo $ECHO_N "checking whether sys_signame is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_sys_signame+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4644 "configure"
+#line 4645 "configure"
 #include "confdefs.h"
 #include <signal.h>
 
@@ -4657,16 +4658,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:4660: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:4661: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:4663: \$? = $ac_status" >&5
+  echo "$as_me:4664: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:4666: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4667: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4669: \$? = $ac_status" >&5
+  echo "$as_me:4670: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_sys_signame=yes
 else
@@ -4676,7 +4677,7 @@ ac_cv_have_decl_sys_signame=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:4679: result: $ac_cv_have_decl_sys_signame" >&5
+echo "$as_me:4680: result: $ac_cv_have_decl_sys_signame" >&5
 echo "${ECHO_T}$ac_cv_have_decl_sys_signame" >&6
 if test $ac_cv_have_decl_sys_signame = yes; then
 
@@ -4694,13 +4695,13 @@ fi
 # Library functions (where a .h check isn't enough).
 # The Ultrix 4.2 mips builtin alloca declared by alloca.h only works
 # for constant arguments.  Useless!
-echo "$as_me:4697: checking for working alloca.h" >&5
+echo "$as_me:4698: checking for working alloca.h" >&5
 echo $ECHO_N "checking for working alloca.h... $ECHO_C" >&6
 if test "${ac_cv_working_alloca_h+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4703 "configure"
+#line 4704 "configure"
 #include "confdefs.h"
 #include <alloca.h>
 int
@@ -4712,16 +4713,16 @@ char *p = (char *) alloca (2 * sizeof (int));
 }
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:4715: \"$ac_link\"") >&5
+if { (eval echo "$as_me:4716: \"$ac_link\"") >&5
   (eval $ac_link) 2>&5
   ac_status=$?
-  echo "$as_me:4718: \$? = $ac_status" >&5
+  echo "$as_me:4719: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:4721: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4722: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4724: \$? = $ac_status" >&5
+  echo "$as_me:4725: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_working_alloca_h=yes
 else
@@ -4731,7 +4732,7 @@ ac_cv_working_alloca_h=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 fi
-echo "$as_me:4734: result: $ac_cv_working_alloca_h" >&5
+echo "$as_me:4735: result: $ac_cv_working_alloca_h" >&5
 echo "${ECHO_T}$ac_cv_working_alloca_h" >&6
 if test $ac_cv_working_alloca_h = yes; then
 
@@ -4741,13 +4742,13 @@ EOF
 
 fi
 
-echo "$as_me:4744: checking for alloca" >&5
+echo "$as_me:4745: checking for alloca" >&5
 echo $ECHO_N "checking for alloca... $ECHO_C" >&6
 if test "${ac_cv_func_alloca_works+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4750 "configure"
+#line 4751 "configure"
 #include "confdefs.h"
 #ifdef __GNUC__
 # define alloca __builtin_alloca
@@ -4779,16 +4780,16 @@ char *p = (char *) alloca (1);
 }
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:4782: \"$ac_link\"") >&5
+if { (eval echo "$as_me:4783: \"$ac_link\"") >&5
   (eval $ac_link) 2>&5
   ac_status=$?
-  echo "$as_me:4785: \$? = $ac_status" >&5
+  echo "$as_me:4786: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:4788: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4789: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4791: \$? = $ac_status" >&5
+  echo "$as_me:4792: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_func_alloca_works=yes
 else
@@ -4798,7 +4799,7 @@ ac_cv_func_alloca_works=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 fi
-echo "$as_me:4801: result: $ac_cv_func_alloca_works" >&5
+echo "$as_me:4802: result: $ac_cv_func_alloca_works" >&5
 echo "${ECHO_T}$ac_cv_func_alloca_works" >&6
 
 if test $ac_cv_func_alloca_works = yes; then
@@ -4819,13 +4820,13 @@ cat >>confdefs.h <<\EOF
 #define C_ALLOCA 1
 EOF
 
-echo "$as_me:4822: checking whether \`alloca.c' needs Cray hooks" >&5
+echo "$as_me:4823: checking whether \`alloca.c' needs Cray hooks" >&5
 echo $ECHO_N "checking whether \`alloca.c' needs Cray hooks... $ECHO_C" >&6
 if test "${ac_cv_os_cray+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4828 "configure"
+#line 4829 "configure"
 #include "confdefs.h"
 #if defined(CRAY) && ! defined(CRAY2)
 webecray
@@ -4843,18 +4844,18 @@ fi
 rm -f conftest*
 
 fi
-echo "$as_me:4846: result: $ac_cv_os_cray" >&5
+echo "$as_me:4847: result: $ac_cv_os_cray" >&5
 echo "${ECHO_T}$ac_cv_os_cray" >&6
 if test $ac_cv_os_cray = yes; then
   for ac_func in _getb67 GETB67 getb67; do
     as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:4851: checking for $ac_func" >&5
+echo "$as_me:4852: checking for $ac_func" >&5
 echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
 if eval "test \"\${$as_ac_var+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4857 "configure"
+#line 4858 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char $ac_func (); below.  */
@@ -4885,16 +4886,16 @@ f = $ac_func;
 }
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:4888: \"$ac_link\"") >&5
+if { (eval echo "$as_me:4889: \"$ac_link\"") >&5
   (eval $ac_link) 2>&5
   ac_status=$?
-  echo "$as_me:4891: \$? = $ac_status" >&5
+  echo "$as_me:4892: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:4894: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4895: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4897: \$? = $ac_status" >&5
+  echo "$as_me:4898: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   eval "$as_ac_var=yes"
 else
@@ -4904,7 +4905,7 @@ eval "$as_ac_var=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 fi
-echo "$as_me:4907: result: `eval echo '${'$as_ac_var'}'`" >&5
+echo "$as_me:4908: result: `eval echo '${'$as_ac_var'}'`" >&5
 echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
 if test `eval echo '${'$as_ac_var'}'` = yes; then
 
@@ -4918,7 +4919,7 @@ fi
   done
 fi
 
-echo "$as_me:4921: checking stack direction for C alloca" >&5
+echo "$as_me:4922: checking stack direction for C alloca" >&5
 echo $ECHO_N "checking stack direction for C alloca... $ECHO_C" >&6
 if test "${ac_cv_c_stack_direction+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -4927,7 +4928,7 @@ else
   ac_cv_c_stack_direction=0
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4930 "configure"
+#line 4931 "configure"
 #include "confdefs.h"
 int
 find_stack_direction ()
@@ -4950,15 +4951,15 @@ main ()
 }
 _ACEOF
 rm -f conftest$ac_exeext
-if { (eval echo "$as_me:4953: \"$ac_link\"") >&5
+if { (eval echo "$as_me:4954: \"$ac_link\"") >&5
   (eval $ac_link) 2>&5
   ac_status=$?
-  echo "$as_me:4956: \$? = $ac_status" >&5
+  echo "$as_me:4957: \$? = $ac_status" >&5
   (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:4958: \"$ac_try\"") >&5
+  { (eval echo "$as_me:4959: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:4961: \$? = $ac_status" >&5
+  echo "$as_me:4962: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_c_stack_direction=1
 else
@@ -4970,7 +4971,7 @@ fi
 rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
 fi
-echo "$as_me:4973: result: $ac_cv_c_stack_direction" >&5
+echo "$as_me:4974: result: $ac_cv_c_stack_direction" >&5
 echo "${ECHO_T}$ac_cv_c_stack_direction" >&6
 
 cat >>confdefs.h <<EOF
@@ -4983,20 +4984,20 @@ for ac_func in atoll asprintf asnprintf basename devname dirfd dirname \
 	esetfunc fgetln flock fpurge __fpurge futimes getopt getopt_long \
 	group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
-	mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb pwrite \
-	raise_default_signal random setenv \
+	mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb \
+	pwrite raise_default_signal random setenv \
 	setgroupent setprogname setpassent snprintf strlcat strlcpy strmode \
 	strndup strsep strsuftoll strtoll \
 	user_from_uid uid_from_user vasprintf vasnprintf vsnprintf
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:4993: checking for $ac_func" >&5
+echo "$as_me:4994: checking for $ac_func" >&5
 echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
 if eval "test \"\${$as_ac_var+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 4999 "configure"
+#line 5000 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char $ac_func (); below.  */
@@ -5027,16 +5028,16 @@ f = $ac_func;
 }
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:5030: \"$ac_link\"") >&5
+if { (eval echo "$as_me:5031: \"$ac_link\"") >&5
   (eval $ac_link) 2>&5
   ac_status=$?
-  echo "$as_me:5033: \$? = $ac_status" >&5
+  echo "$as_me:5034: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:5036: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5037: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5039: \$? = $ac_status" >&5
+  echo "$as_me:5040: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   eval "$as_ac_var=yes"
 else
@@ -5046,7 +5047,7 @@ eval "$as_ac_var=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 fi
-echo "$as_me:5049: result: `eval echo '${'$as_ac_var'}'`" >&5
+echo "$as_me:5050: result: `eval echo '${'$as_ac_var'}'`" >&5
 echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
 if test `eval echo '${'$as_ac_var'}'` = yes; then
   cat >>confdefs.h <<EOF
@@ -5056,13 +5057,13 @@ EOF
 fi
 done
 
-echo "$as_me:5059: checking whether user_from_uid is declared" >&5
+echo "$as_me:5060: checking whether user_from_uid is declared" >&5
 echo $ECHO_N "checking whether user_from_uid is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_user_from_uid+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5065 "configure"
+#line 5066 "configure"
 #include "confdefs.h"
 
 #include <pwd.h>
@@ -5079,16 +5080,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5082: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5083: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5085: \$? = $ac_status" >&5
+  echo "$as_me:5086: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5088: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5089: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5091: \$? = $ac_status" >&5
+  echo "$as_me:5092: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_user_from_uid=yes
 else
@@ -5098,7 +5099,7 @@ ac_cv_have_decl_user_from_uid=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5101: result: $ac_cv_have_decl_user_from_uid" >&5
+echo "$as_me:5102: result: $ac_cv_have_decl_user_from_uid" >&5
 echo "${ECHO_T}$ac_cv_have_decl_user_from_uid" >&6
 if test $ac_cv_have_decl_user_from_uid = yes; then
 
@@ -5112,13 +5113,13 @@ else
 EOF
 
 fi
-echo "$as_me:5115: checking whether uid_from_user is declared" >&5
+echo "$as_me:5116: checking whether uid_from_user is declared" >&5
 echo $ECHO_N "checking whether uid_from_user is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_uid_from_user+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5121 "configure"
+#line 5122 "configure"
 #include "confdefs.h"
 
 #include <pwd.h>
@@ -5135,16 +5136,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5138: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5139: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5141: \$? = $ac_status" >&5
+  echo "$as_me:5142: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5144: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5145: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5147: \$? = $ac_status" >&5
+  echo "$as_me:5148: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_uid_from_user=yes
 else
@@ -5154,7 +5155,7 @@ ac_cv_have_decl_uid_from_user=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5157: result: $ac_cv_have_decl_uid_from_user" >&5
+echo "$as_me:5158: result: $ac_cv_have_decl_uid_from_user" >&5
 echo "${ECHO_T}$ac_cv_have_decl_uid_from_user" >&6
 if test $ac_cv_have_decl_uid_from_user = yes; then
 
@@ -5168,13 +5169,13 @@ else
 EOF
 
 fi
-echo "$as_me:5171: checking whether pwcache_userdb is declared" >&5
+echo "$as_me:5172: checking whether pwcache_userdb is declared" >&5
 echo $ECHO_N "checking whether pwcache_userdb is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_pwcache_userdb+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5177 "configure"
+#line 5178 "configure"
 #include "confdefs.h"
 
 #include <pwd.h>
@@ -5191,16 +5192,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5194: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5195: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5197: \$? = $ac_status" >&5
+  echo "$as_me:5198: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5200: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5201: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5203: \$? = $ac_status" >&5
+  echo "$as_me:5204: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_pwcache_userdb=yes
 else
@@ -5210,7 +5211,7 @@ ac_cv_have_decl_pwcache_userdb=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5213: result: $ac_cv_have_decl_pwcache_userdb" >&5
+echo "$as_me:5214: result: $ac_cv_have_decl_pwcache_userdb" >&5
 echo "${ECHO_T}$ac_cv_have_decl_pwcache_userdb" >&6
 if test $ac_cv_have_decl_pwcache_userdb = yes; then
 
@@ -5225,13 +5226,13 @@ EOF
 
 fi
 
-echo "$as_me:5228: checking whether group_from_gid is declared" >&5
+echo "$as_me:5229: checking whether group_from_gid is declared" >&5
 echo $ECHO_N "checking whether group_from_gid is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_group_from_gid+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5234 "configure"
+#line 5235 "configure"
 #include "confdefs.h"
 
 #include <grp.h>
@@ -5248,16 +5249,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5251: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5252: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5254: \$? = $ac_status" >&5
+  echo "$as_me:5255: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5257: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5258: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5260: \$? = $ac_status" >&5
+  echo "$as_me:5261: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_group_from_gid=yes
 else
@@ -5267,7 +5268,7 @@ ac_cv_have_decl_group_from_gid=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5270: result: $ac_cv_have_decl_group_from_gid" >&5
+echo "$as_me:5271: result: $ac_cv_have_decl_group_from_gid" >&5
 echo "${ECHO_T}$ac_cv_have_decl_group_from_gid" >&6
 if test $ac_cv_have_decl_group_from_gid = yes; then
 
@@ -5281,13 +5282,13 @@ else
 EOF
 
 fi
-echo "$as_me:5284: checking whether gid_from_group is declared" >&5
+echo "$as_me:5285: checking whether gid_from_group is declared" >&5
 echo $ECHO_N "checking whether gid_from_group is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_gid_from_group+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5290 "configure"
+#line 5291 "configure"
 #include "confdefs.h"
 
 #include <grp.h>
@@ -5304,16 +5305,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5307: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5308: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5310: \$? = $ac_status" >&5
+  echo "$as_me:5311: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5313: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5314: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5316: \$? = $ac_status" >&5
+  echo "$as_me:5317: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_gid_from_group=yes
 else
@@ -5323,7 +5324,7 @@ ac_cv_have_decl_gid_from_group=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5326: result: $ac_cv_have_decl_gid_from_group" >&5
+echo "$as_me:5327: result: $ac_cv_have_decl_gid_from_group" >&5
 echo "${ECHO_T}$ac_cv_have_decl_gid_from_group" >&6
 if test $ac_cv_have_decl_gid_from_group = yes; then
 
@@ -5337,13 +5338,13 @@ else
 EOF
 
 fi
-echo "$as_me:5340: checking whether pwcache_groupdb is declared" >&5
+echo "$as_me:5341: checking whether pwcache_groupdb is declared" >&5
 echo $ECHO_N "checking whether pwcache_groupdb is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_pwcache_groupdb+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5346 "configure"
+#line 5347 "configure"
 #include "confdefs.h"
 
 #include <grp.h>
@@ -5360,16 +5361,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5363: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5364: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5366: \$? = $ac_status" >&5
+  echo "$as_me:5367: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5369: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5370: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5372: \$? = $ac_status" >&5
+  echo "$as_me:5373: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_pwcache_groupdb=yes
 else
@@ -5379,7 +5380,7 @@ ac_cv_have_decl_pwcache_groupdb=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5382: result: $ac_cv_have_decl_pwcache_groupdb" >&5
+echo "$as_me:5383: result: $ac_cv_have_decl_pwcache_groupdb" >&5
 echo "${ECHO_T}$ac_cv_have_decl_pwcache_groupdb" >&6
 if test $ac_cv_have_decl_pwcache_groupdb = yes; then
 
@@ -5394,13 +5395,13 @@ EOF
 
 fi
 
-echo "$as_me:5397: checking whether strndup is declared" >&5
+echo "$as_me:5398: checking whether strndup is declared" >&5
 echo $ECHO_N "checking whether strndup is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_strndup+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5403 "configure"
+#line 5404 "configure"
 #include "confdefs.h"
 #include <string.h>
 
@@ -5416,16 +5417,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5419: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5420: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5422: \$? = $ac_status" >&5
+  echo "$as_me:5423: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5425: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5426: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5428: \$? = $ac_status" >&5
+  echo "$as_me:5429: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_strndup=yes
 else
@@ -5435,7 +5436,7 @@ ac_cv_have_decl_strndup=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5438: result: $ac_cv_have_decl_strndup" >&5
+echo "$as_me:5439: result: $ac_cv_have_decl_strndup" >&5
 echo "${ECHO_T}$ac_cv_have_decl_strndup" >&6
 if test $ac_cv_have_decl_strndup = yes; then
 
@@ -5450,13 +5451,13 @@ EOF
 
 fi
 
-echo "$as_me:5453: checking whether strsuftoll is declared" >&5
+echo "$as_me:5454: checking whether strsuftoll is declared" >&5
 echo $ECHO_N "checking whether strsuftoll is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_strsuftoll+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5459 "configure"
+#line 5460 "configure"
 #include "confdefs.h"
 #include <stdlib.h>
 
@@ -5472,16 +5473,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5475: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5476: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5478: \$? = $ac_status" >&5
+  echo "$as_me:5479: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5481: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5482: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5484: \$? = $ac_status" >&5
+  echo "$as_me:5485: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_strsuftoll=yes
 else
@@ -5491,7 +5492,7 @@ ac_cv_have_decl_strsuftoll=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5494: result: $ac_cv_have_decl_strsuftoll" >&5
+echo "$as_me:5495: result: $ac_cv_have_decl_strsuftoll" >&5
 echo "${ECHO_T}$ac_cv_have_decl_strsuftoll" >&6
 if test $ac_cv_have_decl_strsuftoll = yes; then
 
@@ -5506,13 +5507,13 @@ EOF
 
 fi
 
-echo "$as_me:5509: checking whether lchflags is declared" >&5
+echo "$as_me:5510: checking whether lchflags is declared" >&5
 echo $ECHO_N "checking whether lchflags is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_lchflags+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5515 "configure"
+#line 5516 "configure"
 #include "confdefs.h"
 
 #include <sys/stat.h>
@@ -5530,16 +5531,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5533: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5534: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5536: \$? = $ac_status" >&5
+  echo "$as_me:5537: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5539: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5540: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5542: \$? = $ac_status" >&5
+  echo "$as_me:5543: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_lchflags=yes
 else
@@ -5549,7 +5550,7 @@ ac_cv_have_decl_lchflags=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5552: result: $ac_cv_have_decl_lchflags" >&5
+echo "$as_me:5553: result: $ac_cv_have_decl_lchflags" >&5
 echo "${ECHO_T}$ac_cv_have_decl_lchflags" >&6
 if test $ac_cv_have_decl_lchflags = yes; then
 
@@ -5563,13 +5564,13 @@ else
 EOF
 
 fi
-echo "$as_me:5566: checking whether lchmod is declared" >&5
+echo "$as_me:5567: checking whether lchmod is declared" >&5
 echo $ECHO_N "checking whether lchmod is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_lchmod+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5572 "configure"
+#line 5573 "configure"
 #include "confdefs.h"
 
 #include <sys/stat.h>
@@ -5587,16 +5588,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5590: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5591: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5593: \$? = $ac_status" >&5
+  echo "$as_me:5594: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5596: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5597: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5599: \$? = $ac_status" >&5
+  echo "$as_me:5600: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_lchmod=yes
 else
@@ -5606,7 +5607,7 @@ ac_cv_have_decl_lchmod=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5609: result: $ac_cv_have_decl_lchmod" >&5
+echo "$as_me:5610: result: $ac_cv_have_decl_lchmod" >&5
 echo "${ECHO_T}$ac_cv_have_decl_lchmod" >&6
 if test $ac_cv_have_decl_lchmod = yes; then
 
@@ -5620,13 +5621,13 @@ else
 EOF
 
 fi
-echo "$as_me:5623: checking whether lchown is declared" >&5
+echo "$as_me:5624: checking whether lchown is declared" >&5
 echo $ECHO_N "checking whether lchown is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_lchown+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5629 "configure"
+#line 5630 "configure"
 #include "confdefs.h"
 
 #include <sys/stat.h>
@@ -5644,16 +5645,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5647: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5648: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5650: \$? = $ac_status" >&5
+  echo "$as_me:5651: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5653: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5654: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5656: \$? = $ac_status" >&5
+  echo "$as_me:5657: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_lchown=yes
 else
@@ -5663,7 +5664,7 @@ ac_cv_have_decl_lchown=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5666: result: $ac_cv_have_decl_lchown" >&5
+echo "$as_me:5667: result: $ac_cv_have_decl_lchown" >&5
 echo "${ECHO_T}$ac_cv_have_decl_lchown" >&6
 if test $ac_cv_have_decl_lchown = yes; then
 
@@ -5678,13 +5679,13 @@ EOF
 
 fi
 
-echo "$as_me:5681: checking whether htobe16 is declared" >&5
+echo "$as_me:5682: checking whether htobe16 is declared" >&5
 echo $ECHO_N "checking whether htobe16 is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_htobe16+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5687 "configure"
+#line 5688 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 
@@ -5700,16 +5701,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5703: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5704: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5706: \$? = $ac_status" >&5
+  echo "$as_me:5707: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5709: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5710: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5712: \$? = $ac_status" >&5
+  echo "$as_me:5713: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_htobe16=yes
 else
@@ -5719,7 +5720,7 @@ ac_cv_have_decl_htobe16=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5722: result: $ac_cv_have_decl_htobe16" >&5
+echo "$as_me:5723: result: $ac_cv_have_decl_htobe16" >&5
 echo "${ECHO_T}$ac_cv_have_decl_htobe16" >&6
 if test $ac_cv_have_decl_htobe16 = yes; then
 
@@ -5733,13 +5734,13 @@ else
 EOF
 
 fi
-echo "$as_me:5736: checking whether htobe32 is declared" >&5
+echo "$as_me:5737: checking whether htobe32 is declared" >&5
 echo $ECHO_N "checking whether htobe32 is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_htobe32+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5742 "configure"
+#line 5743 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 
@@ -5755,16 +5756,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5758: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5759: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5761: \$? = $ac_status" >&5
+  echo "$as_me:5762: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5764: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5765: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5767: \$? = $ac_status" >&5
+  echo "$as_me:5768: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_htobe32=yes
 else
@@ -5774,7 +5775,7 @@ ac_cv_have_decl_htobe32=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5777: result: $ac_cv_have_decl_htobe32" >&5
+echo "$as_me:5778: result: $ac_cv_have_decl_htobe32" >&5
 echo "${ECHO_T}$ac_cv_have_decl_htobe32" >&6
 if test $ac_cv_have_decl_htobe32 = yes; then
 
@@ -5788,13 +5789,13 @@ else
 EOF
 
 fi
-echo "$as_me:5791: checking whether htobe64 is declared" >&5
+echo "$as_me:5792: checking whether htobe64 is declared" >&5
 echo $ECHO_N "checking whether htobe64 is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_htobe64+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5797 "configure"
+#line 5798 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 
@@ -5810,16 +5811,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5813: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5814: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5816: \$? = $ac_status" >&5
+  echo "$as_me:5817: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5819: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5820: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5822: \$? = $ac_status" >&5
+  echo "$as_me:5823: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_htobe64=yes
 else
@@ -5829,7 +5830,7 @@ ac_cv_have_decl_htobe64=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5832: result: $ac_cv_have_decl_htobe64" >&5
+echo "$as_me:5833: result: $ac_cv_have_decl_htobe64" >&5
 echo "${ECHO_T}$ac_cv_have_decl_htobe64" >&6
 if test $ac_cv_have_decl_htobe64 = yes; then
 
@@ -5843,13 +5844,13 @@ else
 EOF
 
 fi
-echo "$as_me:5846: checking whether htole16 is declared" >&5
+echo "$as_me:5847: checking whether htole16 is declared" >&5
 echo $ECHO_N "checking whether htole16 is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_htole16+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5852 "configure"
+#line 5853 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 
@@ -5865,16 +5866,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5868: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5869: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5871: \$? = $ac_status" >&5
+  echo "$as_me:5872: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5874: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5875: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5877: \$? = $ac_status" >&5
+  echo "$as_me:5878: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_htole16=yes
 else
@@ -5884,7 +5885,7 @@ ac_cv_have_decl_htole16=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5887: result: $ac_cv_have_decl_htole16" >&5
+echo "$as_me:5888: result: $ac_cv_have_decl_htole16" >&5
 echo "${ECHO_T}$ac_cv_have_decl_htole16" >&6
 if test $ac_cv_have_decl_htole16 = yes; then
 
@@ -5898,13 +5899,13 @@ else
 EOF
 
 fi
-echo "$as_me:5901: checking whether htole32 is declared" >&5
+echo "$as_me:5902: checking whether htole32 is declared" >&5
 echo $ECHO_N "checking whether htole32 is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_htole32+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5907 "configure"
+#line 5908 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 
@@ -5920,16 +5921,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5923: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5924: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5926: \$? = $ac_status" >&5
+  echo "$as_me:5927: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5929: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5930: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5932: \$? = $ac_status" >&5
+  echo "$as_me:5933: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_htole32=yes
 else
@@ -5939,7 +5940,7 @@ ac_cv_have_decl_htole32=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5942: result: $ac_cv_have_decl_htole32" >&5
+echo "$as_me:5943: result: $ac_cv_have_decl_htole32" >&5
 echo "${ECHO_T}$ac_cv_have_decl_htole32" >&6
 if test $ac_cv_have_decl_htole32 = yes; then
 
@@ -5953,13 +5954,13 @@ else
 EOF
 
 fi
-echo "$as_me:5956: checking whether htole64 is declared" >&5
+echo "$as_me:5957: checking whether htole64 is declared" >&5
 echo $ECHO_N "checking whether htole64 is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_htole64+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 5962 "configure"
+#line 5963 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 
@@ -5975,16 +5976,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:5978: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:5979: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:5981: \$? = $ac_status" >&5
+  echo "$as_me:5982: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:5984: \"$ac_try\"") >&5
+  { (eval echo "$as_me:5985: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:5987: \$? = $ac_status" >&5
+  echo "$as_me:5988: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_htole64=yes
 else
@@ -5994,7 +5995,7 @@ ac_cv_have_decl_htole64=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:5997: result: $ac_cv_have_decl_htole64" >&5
+echo "$as_me:5998: result: $ac_cv_have_decl_htole64" >&5
 echo "${ECHO_T}$ac_cv_have_decl_htole64" >&6
 if test $ac_cv_have_decl_htole64 = yes; then
 
@@ -6008,13 +6009,13 @@ else
 EOF
 
 fi
-echo "$as_me:6011: checking whether be16toh is declared" >&5
+echo "$as_me:6012: checking whether be16toh is declared" >&5
 echo $ECHO_N "checking whether be16toh is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_be16toh+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6017 "configure"
+#line 6018 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 
@@ -6030,16 +6031,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6033: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6034: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6036: \$? = $ac_status" >&5
+  echo "$as_me:6037: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6039: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6040: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6042: \$? = $ac_status" >&5
+  echo "$as_me:6043: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_be16toh=yes
 else
@@ -6049,7 +6050,7 @@ ac_cv_have_decl_be16toh=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6052: result: $ac_cv_have_decl_be16toh" >&5
+echo "$as_me:6053: result: $ac_cv_have_decl_be16toh" >&5
 echo "${ECHO_T}$ac_cv_have_decl_be16toh" >&6
 if test $ac_cv_have_decl_be16toh = yes; then
 
@@ -6063,13 +6064,13 @@ else
 EOF
 
 fi
-echo "$as_me:6066: checking whether be32toh is declared" >&5
+echo "$as_me:6067: checking whether be32toh is declared" >&5
 echo $ECHO_N "checking whether be32toh is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_be32toh+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6072 "configure"
+#line 6073 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 
@@ -6085,16 +6086,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6088: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6089: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6091: \$? = $ac_status" >&5
+  echo "$as_me:6092: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6094: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6095: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6097: \$? = $ac_status" >&5
+  echo "$as_me:6098: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_be32toh=yes
 else
@@ -6104,7 +6105,7 @@ ac_cv_have_decl_be32toh=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6107: result: $ac_cv_have_decl_be32toh" >&5
+echo "$as_me:6108: result: $ac_cv_have_decl_be32toh" >&5
 echo "${ECHO_T}$ac_cv_have_decl_be32toh" >&6
 if test $ac_cv_have_decl_be32toh = yes; then
 
@@ -6118,13 +6119,13 @@ else
 EOF
 
 fi
-echo "$as_me:6121: checking whether be64toh is declared" >&5
+echo "$as_me:6122: checking whether be64toh is declared" >&5
 echo $ECHO_N "checking whether be64toh is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_be64toh+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6127 "configure"
+#line 6128 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 
@@ -6140,16 +6141,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6143: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6144: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6146: \$? = $ac_status" >&5
+  echo "$as_me:6147: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6149: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6150: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6152: \$? = $ac_status" >&5
+  echo "$as_me:6153: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_be64toh=yes
 else
@@ -6159,7 +6160,7 @@ ac_cv_have_decl_be64toh=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6162: result: $ac_cv_have_decl_be64toh" >&5
+echo "$as_me:6163: result: $ac_cv_have_decl_be64toh" >&5
 echo "${ECHO_T}$ac_cv_have_decl_be64toh" >&6
 if test $ac_cv_have_decl_be64toh = yes; then
 
@@ -6173,13 +6174,13 @@ else
 EOF
 
 fi
-echo "$as_me:6176: checking whether le16toh is declared" >&5
+echo "$as_me:6177: checking whether le16toh is declared" >&5
 echo $ECHO_N "checking whether le16toh is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_le16toh+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6182 "configure"
+#line 6183 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 
@@ -6195,16 +6196,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6198: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6199: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6201: \$? = $ac_status" >&5
+  echo "$as_me:6202: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6204: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6205: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6207: \$? = $ac_status" >&5
+  echo "$as_me:6208: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_le16toh=yes
 else
@@ -6214,7 +6215,7 @@ ac_cv_have_decl_le16toh=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6217: result: $ac_cv_have_decl_le16toh" >&5
+echo "$as_me:6218: result: $ac_cv_have_decl_le16toh" >&5
 echo "${ECHO_T}$ac_cv_have_decl_le16toh" >&6
 if test $ac_cv_have_decl_le16toh = yes; then
 
@@ -6228,13 +6229,13 @@ else
 EOF
 
 fi
-echo "$as_me:6231: checking whether le32toh is declared" >&5
+echo "$as_me:6232: checking whether le32toh is declared" >&5
 echo $ECHO_N "checking whether le32toh is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_le32toh+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6237 "configure"
+#line 6238 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 
@@ -6250,16 +6251,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6253: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6254: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6256: \$? = $ac_status" >&5
+  echo "$as_me:6257: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6259: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6260: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6262: \$? = $ac_status" >&5
+  echo "$as_me:6263: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_le32toh=yes
 else
@@ -6269,7 +6270,7 @@ ac_cv_have_decl_le32toh=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6272: result: $ac_cv_have_decl_le32toh" >&5
+echo "$as_me:6273: result: $ac_cv_have_decl_le32toh" >&5
 echo "${ECHO_T}$ac_cv_have_decl_le32toh" >&6
 if test $ac_cv_have_decl_le32toh = yes; then
 
@@ -6283,13 +6284,13 @@ else
 EOF
 
 fi
-echo "$as_me:6286: checking whether le64toh is declared" >&5
+echo "$as_me:6287: checking whether le64toh is declared" >&5
 echo $ECHO_N "checking whether le64toh is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_le64toh+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6292 "configure"
+#line 6293 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 
@@ -6305,16 +6306,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6308: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6309: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6311: \$? = $ac_status" >&5
+  echo "$as_me:6312: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6314: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6315: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6317: \$? = $ac_status" >&5
+  echo "$as_me:6318: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_le64toh=yes
 else
@@ -6324,7 +6325,7 @@ ac_cv_have_decl_le64toh=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6327: result: $ac_cv_have_decl_le64toh" >&5
+echo "$as_me:6328: result: $ac_cv_have_decl_le64toh" >&5
 echo "${ECHO_T}$ac_cv_have_decl_le64toh" >&6
 if test $ac_cv_have_decl_le64toh = yes; then
 
@@ -6339,13 +6340,13 @@ EOF
 
 fi
 
-echo "$as_me:6342: checking whether bswap16 is declared" >&5
+echo "$as_me:6343: checking whether bswap16 is declared" >&5
 echo $ECHO_N "checking whether bswap16 is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_bswap16+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6348 "configure"
+#line 6349 "configure"
 #include "confdefs.h"
 #include <machine/bswap.h>
 
@@ -6361,16 +6362,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6364: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6365: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6367: \$? = $ac_status" >&5
+  echo "$as_me:6368: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6370: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6371: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6373: \$? = $ac_status" >&5
+  echo "$as_me:6374: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_bswap16=yes
 else
@@ -6380,7 +6381,7 @@ ac_cv_have_decl_bswap16=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6383: result: $ac_cv_have_decl_bswap16" >&5
+echo "$as_me:6384: result: $ac_cv_have_decl_bswap16" >&5
 echo "${ECHO_T}$ac_cv_have_decl_bswap16" >&6
 if test $ac_cv_have_decl_bswap16 = yes; then
 
@@ -6394,13 +6395,13 @@ else
 EOF
 
 fi
-echo "$as_me:6397: checking whether bswap32 is declared" >&5
+echo "$as_me:6398: checking whether bswap32 is declared" >&5
 echo $ECHO_N "checking whether bswap32 is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_bswap32+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6403 "configure"
+#line 6404 "configure"
 #include "confdefs.h"
 #include <machine/bswap.h>
 
@@ -6416,16 +6417,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6419: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6420: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6422: \$? = $ac_status" >&5
+  echo "$as_me:6423: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6425: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6426: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6428: \$? = $ac_status" >&5
+  echo "$as_me:6429: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_bswap32=yes
 else
@@ -6435,7 +6436,7 @@ ac_cv_have_decl_bswap32=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6438: result: $ac_cv_have_decl_bswap32" >&5
+echo "$as_me:6439: result: $ac_cv_have_decl_bswap32" >&5
 echo "${ECHO_T}$ac_cv_have_decl_bswap32" >&6
 if test $ac_cv_have_decl_bswap32 = yes; then
 
@@ -6449,13 +6450,13 @@ else
 EOF
 
 fi
-echo "$as_me:6452: checking whether bswap64 is declared" >&5
+echo "$as_me:6453: checking whether bswap64 is declared" >&5
 echo $ECHO_N "checking whether bswap64 is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_bswap64+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6458 "configure"
+#line 6459 "configure"
 #include "confdefs.h"
 #include <machine/bswap.h>
 
@@ -6471,16 +6472,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6474: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6475: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6477: \$? = $ac_status" >&5
+  echo "$as_me:6478: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6480: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6481: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6483: \$? = $ac_status" >&5
+  echo "$as_me:6484: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_bswap64=yes
 else
@@ -6490,7 +6491,7 @@ ac_cv_have_decl_bswap64=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6493: result: $ac_cv_have_decl_bswap64" >&5
+echo "$as_me:6494: result: $ac_cv_have_decl_bswap64" >&5
 echo "${ECHO_T}$ac_cv_have_decl_bswap64" >&6
 if test $ac_cv_have_decl_bswap64 = yes; then
 
@@ -6505,13 +6506,13 @@ EOF
 
 fi
 
-echo "$as_me:6508: checking whether be16enc is declared" >&5
+echo "$as_me:6509: checking whether be16enc is declared" >&5
 echo $ECHO_N "checking whether be16enc is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_be16enc+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6514 "configure"
+#line 6515 "configure"
 #include "confdefs.h"
 #include <sys/endian.h>
 
@@ -6527,16 +6528,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6530: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6531: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6533: \$? = $ac_status" >&5
+  echo "$as_me:6534: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6536: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6537: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6539: \$? = $ac_status" >&5
+  echo "$as_me:6540: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_be16enc=yes
 else
@@ -6546,7 +6547,7 @@ ac_cv_have_decl_be16enc=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6549: result: $ac_cv_have_decl_be16enc" >&5
+echo "$as_me:6550: result: $ac_cv_have_decl_be16enc" >&5
 echo "${ECHO_T}$ac_cv_have_decl_be16enc" >&6
 if test $ac_cv_have_decl_be16enc = yes; then
 
@@ -6560,13 +6561,13 @@ else
 EOF
 
 fi
-echo "$as_me:6563: checking whether le16enc is declared" >&5
+echo "$as_me:6564: checking whether le16enc is declared" >&5
 echo $ECHO_N "checking whether le16enc is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_le16enc+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6569 "configure"
+#line 6570 "configure"
 #include "confdefs.h"
 #include <sys/endian.h>
 
@@ -6582,16 +6583,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6585: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6586: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6588: \$? = $ac_status" >&5
+  echo "$as_me:6589: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6591: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6592: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6594: \$? = $ac_status" >&5
+  echo "$as_me:6595: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_le16enc=yes
 else
@@ -6601,7 +6602,7 @@ ac_cv_have_decl_le16enc=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6604: result: $ac_cv_have_decl_le16enc" >&5
+echo "$as_me:6605: result: $ac_cv_have_decl_le16enc" >&5
 echo "${ECHO_T}$ac_cv_have_decl_le16enc" >&6
 if test $ac_cv_have_decl_le16enc = yes; then
 
@@ -6615,13 +6616,13 @@ else
 EOF
 
 fi
-echo "$as_me:6618: checking whether be16dec is declared" >&5
+echo "$as_me:6619: checking whether be16dec is declared" >&5
 echo $ECHO_N "checking whether be16dec is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_be16dec+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6624 "configure"
+#line 6625 "configure"
 #include "confdefs.h"
 #include <sys/endian.h>
 
@@ -6637,16 +6638,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6640: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6641: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6643: \$? = $ac_status" >&5
+  echo "$as_me:6644: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6646: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6647: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6649: \$? = $ac_status" >&5
+  echo "$as_me:6650: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_be16dec=yes
 else
@@ -6656,7 +6657,7 @@ ac_cv_have_decl_be16dec=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6659: result: $ac_cv_have_decl_be16dec" >&5
+echo "$as_me:6660: result: $ac_cv_have_decl_be16dec" >&5
 echo "${ECHO_T}$ac_cv_have_decl_be16dec" >&6
 if test $ac_cv_have_decl_be16dec = yes; then
 
@@ -6670,13 +6671,13 @@ else
 EOF
 
 fi
-echo "$as_me:6673: checking whether le16dec is declared" >&5
+echo "$as_me:6674: checking whether le16dec is declared" >&5
 echo $ECHO_N "checking whether le16dec is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_le16dec+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6679 "configure"
+#line 6680 "configure"
 #include "confdefs.h"
 #include <sys/endian.h>
 
@@ -6692,16 +6693,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6695: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6696: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6698: \$? = $ac_status" >&5
+  echo "$as_me:6699: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6701: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6702: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6704: \$? = $ac_status" >&5
+  echo "$as_me:6705: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_le16dec=yes
 else
@@ -6711,7 +6712,7 @@ ac_cv_have_decl_le16dec=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6714: result: $ac_cv_have_decl_le16dec" >&5
+echo "$as_me:6715: result: $ac_cv_have_decl_le16dec" >&5
 echo "${ECHO_T}$ac_cv_have_decl_le16dec" >&6
 if test $ac_cv_have_decl_le16dec = yes; then
 
@@ -6725,13 +6726,13 @@ else
 EOF
 
 fi
-echo "$as_me:6728: checking whether be32enc is declared" >&5
+echo "$as_me:6729: checking whether be32enc is declared" >&5
 echo $ECHO_N "checking whether be32enc is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_be32enc+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6734 "configure"
+#line 6735 "configure"
 #include "confdefs.h"
 #include <sys/endian.h>
 
@@ -6747,16 +6748,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6750: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6751: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6753: \$? = $ac_status" >&5
+  echo "$as_me:6754: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6756: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6757: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6759: \$? = $ac_status" >&5
+  echo "$as_me:6760: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_be32enc=yes
 else
@@ -6766,7 +6767,7 @@ ac_cv_have_decl_be32enc=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6769: result: $ac_cv_have_decl_be32enc" >&5
+echo "$as_me:6770: result: $ac_cv_have_decl_be32enc" >&5
 echo "${ECHO_T}$ac_cv_have_decl_be32enc" >&6
 if test $ac_cv_have_decl_be32enc = yes; then
 
@@ -6780,13 +6781,13 @@ else
 EOF
 
 fi
-echo "$as_me:6783: checking whether le32enc is declared" >&5
+echo "$as_me:6784: checking whether le32enc is declared" >&5
 echo $ECHO_N "checking whether le32enc is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_le32enc+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6789 "configure"
+#line 6790 "configure"
 #include "confdefs.h"
 #include <sys/endian.h>
 
@@ -6802,16 +6803,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6805: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6806: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6808: \$? = $ac_status" >&5
+  echo "$as_me:6809: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6811: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6812: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6814: \$? = $ac_status" >&5
+  echo "$as_me:6815: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_le32enc=yes
 else
@@ -6821,7 +6822,7 @@ ac_cv_have_decl_le32enc=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6824: result: $ac_cv_have_decl_le32enc" >&5
+echo "$as_me:6825: result: $ac_cv_have_decl_le32enc" >&5
 echo "${ECHO_T}$ac_cv_have_decl_le32enc" >&6
 if test $ac_cv_have_decl_le32enc = yes; then
 
@@ -6835,13 +6836,13 @@ else
 EOF
 
 fi
-echo "$as_me:6838: checking whether be32dec is declared" >&5
+echo "$as_me:6839: checking whether be32dec is declared" >&5
 echo $ECHO_N "checking whether be32dec is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_be32dec+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6844 "configure"
+#line 6845 "configure"
 #include "confdefs.h"
 #include <sys/endian.h>
 
@@ -6857,16 +6858,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6860: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6861: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6863: \$? = $ac_status" >&5
+  echo "$as_me:6864: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6866: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6867: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6869: \$? = $ac_status" >&5
+  echo "$as_me:6870: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_be32dec=yes
 else
@@ -6876,7 +6877,7 @@ ac_cv_have_decl_be32dec=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6879: result: $ac_cv_have_decl_be32dec" >&5
+echo "$as_me:6880: result: $ac_cv_have_decl_be32dec" >&5
 echo "${ECHO_T}$ac_cv_have_decl_be32dec" >&6
 if test $ac_cv_have_decl_be32dec = yes; then
 
@@ -6890,13 +6891,13 @@ else
 EOF
 
 fi
-echo "$as_me:6893: checking whether le32dec is declared" >&5
+echo "$as_me:6894: checking whether le32dec is declared" >&5
 echo $ECHO_N "checking whether le32dec is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_le32dec+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6899 "configure"
+#line 6900 "configure"
 #include "confdefs.h"
 #include <sys/endian.h>
 
@@ -6912,16 +6913,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6915: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6916: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6918: \$? = $ac_status" >&5
+  echo "$as_me:6919: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6921: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6922: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6924: \$? = $ac_status" >&5
+  echo "$as_me:6925: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_le32dec=yes
 else
@@ -6931,7 +6932,7 @@ ac_cv_have_decl_le32dec=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6934: result: $ac_cv_have_decl_le32dec" >&5
+echo "$as_me:6935: result: $ac_cv_have_decl_le32dec" >&5
 echo "${ECHO_T}$ac_cv_have_decl_le32dec" >&6
 if test $ac_cv_have_decl_le32dec = yes; then
 
@@ -6945,13 +6946,13 @@ else
 EOF
 
 fi
-echo "$as_me:6948: checking whether be64enc is declared" >&5
+echo "$as_me:6949: checking whether be64enc is declared" >&5
 echo $ECHO_N "checking whether be64enc is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_be64enc+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 6954 "configure"
+#line 6955 "configure"
 #include "confdefs.h"
 #include <sys/endian.h>
 
@@ -6967,16 +6968,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:6970: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:6971: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:6973: \$? = $ac_status" >&5
+  echo "$as_me:6974: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:6976: \"$ac_try\"") >&5
+  { (eval echo "$as_me:6977: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:6979: \$? = $ac_status" >&5
+  echo "$as_me:6980: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_be64enc=yes
 else
@@ -6986,7 +6987,7 @@ ac_cv_have_decl_be64enc=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:6989: result: $ac_cv_have_decl_be64enc" >&5
+echo "$as_me:6990: result: $ac_cv_have_decl_be64enc" >&5
 echo "${ECHO_T}$ac_cv_have_decl_be64enc" >&6
 if test $ac_cv_have_decl_be64enc = yes; then
 
@@ -7000,13 +7001,13 @@ else
 EOF
 
 fi
-echo "$as_me:7003: checking whether le64enc is declared" >&5
+echo "$as_me:7004: checking whether le64enc is declared" >&5
 echo $ECHO_N "checking whether le64enc is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_le64enc+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 7009 "configure"
+#line 7010 "configure"
 #include "confdefs.h"
 #include <sys/endian.h>
 
@@ -7022,16 +7023,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:7025: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:7026: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:7028: \$? = $ac_status" >&5
+  echo "$as_me:7029: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:7031: \"$ac_try\"") >&5
+  { (eval echo "$as_me:7032: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:7034: \$? = $ac_status" >&5
+  echo "$as_me:7035: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_le64enc=yes
 else
@@ -7041,7 +7042,7 @@ ac_cv_have_decl_le64enc=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:7044: result: $ac_cv_have_decl_le64enc" >&5
+echo "$as_me:7045: result: $ac_cv_have_decl_le64enc" >&5
 echo "${ECHO_T}$ac_cv_have_decl_le64enc" >&6
 if test $ac_cv_have_decl_le64enc = yes; then
 
@@ -7055,13 +7056,13 @@ else
 EOF
 
 fi
-echo "$as_me:7058: checking whether be64dec is declared" >&5
+echo "$as_me:7059: checking whether be64dec is declared" >&5
 echo $ECHO_N "checking whether be64dec is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_be64dec+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 7064 "configure"
+#line 7065 "configure"
 #include "confdefs.h"
 #include <sys/endian.h>
 
@@ -7077,16 +7078,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:7080: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:7081: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:7083: \$? = $ac_status" >&5
+  echo "$as_me:7084: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:7086: \"$ac_try\"") >&5
+  { (eval echo "$as_me:7087: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:7089: \$? = $ac_status" >&5
+  echo "$as_me:7090: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_be64dec=yes
 else
@@ -7096,7 +7097,7 @@ ac_cv_have_decl_be64dec=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:7099: result: $ac_cv_have_decl_be64dec" >&5
+echo "$as_me:7100: result: $ac_cv_have_decl_be64dec" >&5
 echo "${ECHO_T}$ac_cv_have_decl_be64dec" >&6
 if test $ac_cv_have_decl_be64dec = yes; then
 
@@ -7110,13 +7111,13 @@ else
 EOF
 
 fi
-echo "$as_me:7113: checking whether le64dec is declared" >&5
+echo "$as_me:7114: checking whether le64dec is declared" >&5
 echo $ECHO_N "checking whether le64dec is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_le64dec+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 7119 "configure"
+#line 7120 "configure"
 #include "confdefs.h"
 #include <sys/endian.h>
 
@@ -7132,16 +7133,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:7135: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:7136: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:7138: \$? = $ac_status" >&5
+  echo "$as_me:7139: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:7141: \"$ac_try\"") >&5
+  { (eval echo "$as_me:7142: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:7144: \$? = $ac_status" >&5
+  echo "$as_me:7145: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_le64dec=yes
 else
@@ -7151,7 +7152,7 @@ ac_cv_have_decl_le64dec=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:7154: result: $ac_cv_have_decl_le64dec" >&5
+echo "$as_me:7155: result: $ac_cv_have_decl_le64dec" >&5
 echo "${ECHO_T}$ac_cv_have_decl_le64dec" >&6
 if test $ac_cv_have_decl_le64dec = yes; then
 
@@ -7166,13 +7167,13 @@ EOF
 
 fi
 
-echo "$as_me:7169: checking whether fstatvfs is declared" >&5
+echo "$as_me:7170: checking whether fstatvfs is declared" >&5
 echo $ECHO_N "checking whether fstatvfs is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_fstatvfs+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 7175 "configure"
+#line 7176 "configure"
 #include "confdefs.h"
 #include <sys/statvfs.h>
 
@@ -7188,16 +7189,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:7191: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:7192: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:7194: \$? = $ac_status" >&5
+  echo "$as_me:7195: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:7197: \"$ac_try\"") >&5
+  { (eval echo "$as_me:7198: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:7200: \$? = $ac_status" >&5
+  echo "$as_me:7201: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_fstatvfs=yes
 else
@@ -7207,7 +7208,7 @@ ac_cv_have_decl_fstatvfs=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:7210: result: $ac_cv_have_decl_fstatvfs" >&5
+echo "$as_me:7211: result: $ac_cv_have_decl_fstatvfs" >&5
 echo "${ECHO_T}$ac_cv_have_decl_fstatvfs" >&6
 if test $ac_cv_have_decl_fstatvfs = yes; then
 
@@ -7222,13 +7223,13 @@ EOF
 
 fi
 
-echo "$as_me:7225: checking whether setgroupent is declared" >&5
+echo "$as_me:7226: checking whether setgroupent is declared" >&5
 echo $ECHO_N "checking whether setgroupent is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_setgroupent+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 7231 "configure"
+#line 7232 "configure"
 #include "confdefs.h"
 
 #include <sys/types.h>
@@ -7247,16 +7248,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:7250: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:7251: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:7253: \$? = $ac_status" >&5
+  echo "$as_me:7254: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:7256: \"$ac_try\"") >&5
+  { (eval echo "$as_me:7257: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:7259: \$? = $ac_status" >&5
+  echo "$as_me:7260: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_setgroupent=yes
 else
@@ -7266,7 +7267,7 @@ ac_cv_have_decl_setgroupent=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:7269: result: $ac_cv_have_decl_setgroupent" >&5
+echo "$as_me:7270: result: $ac_cv_have_decl_setgroupent" >&5
 echo "${ECHO_T}$ac_cv_have_decl_setgroupent" >&6
 if test $ac_cv_have_decl_setgroupent = yes; then
 
@@ -7280,13 +7281,13 @@ else
 EOF
 
 fi
-echo "$as_me:7283: checking whether setpassent is declared" >&5
+echo "$as_me:7284: checking whether setpassent is declared" >&5
 echo $ECHO_N "checking whether setpassent is declared... $ECHO_C" >&6
 if test "${ac_cv_have_decl_setpassent+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 7289 "configure"
+#line 7290 "configure"
 #include "confdefs.h"
 
 #include <sys/types.h>
@@ -7305,16 +7306,16 @@ main ()
 }
 _ACEOF
 rm -f conftest.$ac_objext
-if { (eval echo "$as_me:7308: \"$ac_compile\"") >&5
+if { (eval echo "$as_me:7309: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  echo "$as_me:7311: \$? = $ac_status" >&5
+  echo "$as_me:7312: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:7314: \"$ac_try\"") >&5
+  { (eval echo "$as_me:7315: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:7317: \$? = $ac_status" >&5
+  echo "$as_me:7318: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_have_decl_setpassent=yes
 else
@@ -7324,7 +7325,7 @@ ac_cv_have_decl_setpassent=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:7327: result: $ac_cv_have_decl_setpassent" >&5
+echo "$as_me:7328: result: $ac_cv_have_decl_setpassent" >&5
 echo "${ECHO_T}$ac_cv_have_decl_setpassent" >&6
 if test $ac_cv_have_decl_setpassent = yes; then
 
@@ -7342,7 +7343,7 @@ fi
 # regcomp() and regexec() are also names of functions in the old V8
 # regexp package.  To avoid them, we need to find out who has regfree().
 
-echo "$as_me:7345: checking for regfree in -lregex" >&5
+echo "$as_me:7346: checking for regfree in -lregex" >&5
 echo $ECHO_N "checking for regfree in -lregex... $ECHO_C" >&6
 if test "${ac_cv_lib_regex_regfree+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -7350,7 +7351,7 @@ else
   ac_check_lib_save_LIBS=$LIBS
 LIBS="-lregex  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
-#line 7353 "configure"
+#line 7354 "configure"
 #include "confdefs.h"
 
 /* Override any gcc2 internal prototype to avoid an error.  */
@@ -7369,16 +7370,16 @@ regfree ();
 }
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:7372: \"$ac_link\"") >&5
+if { (eval echo "$as_me:7373: \"$ac_link\"") >&5
   (eval $ac_link) 2>&5
   ac_status=$?
-  echo "$as_me:7375: \$? = $ac_status" >&5
+  echo "$as_me:7376: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:7378: \"$ac_try\"") >&5
+  { (eval echo "$as_me:7379: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:7381: \$? = $ac_status" >&5
+  echo "$as_me:7382: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_lib_regex_regfree=yes
 else
@@ -7389,7 +7390,7 @@ fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:7392: result: $ac_cv_lib_regex_regfree" >&5
+echo "$as_me:7393: result: $ac_cv_lib_regex_regfree" >&5
 echo "${ECHO_T}$ac_cv_lib_regex_regfree" >&6
 if test $ac_cv_lib_regex_regfree = yes; then
   cat >>confdefs.h <<EOF
@@ -7400,7 +7401,7 @@ EOF
 
 fi
 
-echo "$as_me:7403: checking for library containing regfree" >&5
+echo "$as_me:7404: checking for library containing regfree" >&5
 echo $ECHO_N "checking for library containing regfree... $ECHO_C" >&6
 if test "${ac_cv_search_regfree+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -7408,7 +7409,7 @@ else
   ac_func_search_save_LIBS=$LIBS
 ac_cv_search_regfree=no
 cat >conftest.$ac_ext <<_ACEOF
-#line 7411 "configure"
+#line 7412 "configure"
 #include "confdefs.h"
 
 /* Override any gcc2 internal prototype to avoid an error.  */
@@ -7427,16 +7428,16 @@ regfree ();
 }
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:7430: \"$ac_link\"") >&5
+if { (eval echo "$as_me:7431: \"$ac_link\"") >&5
   (eval $ac_link) 2>&5
   ac_status=$?
-  echo "$as_me:7433: \$? = $ac_status" >&5
+  echo "$as_me:7434: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:7436: \"$ac_try\"") >&5
+  { (eval echo "$as_me:7437: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:7439: \$? = $ac_status" >&5
+  echo "$as_me:7440: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_search_regfree="none required"
 else
@@ -7448,7 +7449,7 @@ if test "$ac_cv_search_regfree" = no; then
   for ac_lib in rx posix; do
     LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
     cat >conftest.$ac_ext <<_ACEOF
-#line 7451 "configure"
+#line 7452 "configure"
 #include "confdefs.h"
 
 /* Override any gcc2 internal prototype to avoid an error.  */
@@ -7467,16 +7468,16 @@ regfree ();
 }
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:7470: \"$ac_link\"") >&5
+if { (eval echo "$as_me:7471: \"$ac_link\"") >&5
   (eval $ac_link) 2>&5
   ac_status=$?
-  echo "$as_me:7473: \$? = $ac_status" >&5
+  echo "$as_me:7474: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:7476: \"$ac_try\"") >&5
+  { (eval echo "$as_me:7477: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:7479: \$? = $ac_status" >&5
+  echo "$as_me:7480: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_search_regfree="-l$ac_lib"
 break
@@ -7489,7 +7490,7 @@ rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 fi
 LIBS=$ac_func_search_save_LIBS
 fi
-echo "$as_me:7492: result: $ac_cv_search_regfree" >&5
+echo "$as_me:7493: result: $ac_cv_search_regfree" >&5
 echo "${ECHO_T}$ac_cv_search_regfree" >&6
 if test "$ac_cv_search_regfree" != no; then
   test "$ac_cv_search_regfree" = "none required" || LIBS="$ac_cv_search_regfree $LIBS"
@@ -7499,13 +7500,13 @@ fi
 for ac_func in fparseln
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:7502: checking for $ac_func" >&5
+echo "$as_me:7503: checking for $ac_func" >&5
 echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
 if eval "test \"\${$as_ac_var+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 7508 "configure"
+#line 7509 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char $ac_func (); below.  */
@@ -7536,16 +7537,16 @@ f = $ac_func;
 }
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:7539: \"$ac_link\"") >&5
+if { (eval echo "$as_me:7540: \"$ac_link\"") >&5
   (eval $ac_link) 2>&5
   ac_status=$?
-  echo "$as_me:7542: \$? = $ac_status" >&5
+  echo "$as_me:7543: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:7545: \"$ac_try\"") >&5
+  { (eval echo "$as_me:7546: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:7548: \$? = $ac_status" >&5
+  echo "$as_me:7549: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   eval "$as_ac_var=yes"
 else
@@ -7555,22 +7556,22 @@ eval "$as_ac_var=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 fi
-echo "$as_me:7558: result: `eval echo '${'$as_ac_var'}'`" >&5
+echo "$as_me:7559: result: `eval echo '${'$as_ac_var'}'`" >&5
 echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
 if test `eval echo '${'$as_ac_var'}'` = yes; then
   cat >>confdefs.h <<EOF
 #define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
 EOF
 
-    echo "$as_me:7565: checking if fparseln seems to work" >&5
+    echo "$as_me:7566: checking if fparseln seems to work" >&5
 echo $ECHO_N "checking if fparseln seems to work... $ECHO_C" >&6
     if test "$cross_compiling" = yes; then
-  { echo "$as_me:7568: WARNING: cross compiling: not checking farseln" >&5
+  { echo "$as_me:7569: WARNING: cross compiling: not checking farseln" >&5
 echo "$as_me: WARNING: cross compiling: not checking farseln" >&2;}
 
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 7573 "configure"
+#line 7574 "configure"
 #include "confdefs.h"
 
 #define _NETBSD_SOURCE
@@ -7599,23 +7600,23 @@ main(void)
 
 _ACEOF
 rm -f conftest$ac_exeext
-if { (eval echo "$as_me:7602: \"$ac_link\"") >&5
+if { (eval echo "$as_me:7603: \"$ac_link\"") >&5
   (eval $ac_link) 2>&5
   ac_status=$?
-  echo "$as_me:7605: \$? = $ac_status" >&5
+  echo "$as_me:7606: \$? = $ac_status" >&5
   (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:7607: \"$ac_try\"") >&5
+  { (eval echo "$as_me:7608: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:7610: \$? = $ac_status" >&5
+  echo "$as_me:7611: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  echo "$as_me:7612: result: yes" >&5
+  echo "$as_me:7613: result: yes" >&5
 echo "${ECHO_T}yes" >&6
 else
   echo "$as_me: program exited with status $ac_status" >&5
 echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
-echo "$as_me:7618: result: no" >&5
+echo "$as_me:7619: result: no" >&5
 echo "${ECHO_T}no" >&6
 
 cat >>confdefs.h <<\EOF
@@ -7628,6 +7629,9 @@ fi
 
 fi
 done
+
+# Variables substituted via @VARNAME@ in defs.mk.in
+HAVE_PTHREAD_H=$ac_cv_header_pthread_h
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -7708,7 +7712,7 @@ DEFS=-DHAVE_CONFIG_H
 : ${CONFIG_STATUS=./config.status}
 ac_clean_files_save=$ac_clean_files
 ac_clean_files="$ac_clean_files $CONFIG_STATUS"
-{ echo "$as_me:7711: creating $CONFIG_STATUS" >&5
+{ echo "$as_me:7715: creating $CONFIG_STATUS" >&5
 echo "$as_me: creating $CONFIG_STATUS" >&6;}
 cat >$CONFIG_STATUS <<_ACEOF
 #! $SHELL
@@ -7880,7 +7884,7 @@ cat >>$CONFIG_STATUS <<\EOF
     echo "$ac_cs_version"; exit 0 ;;
   --he | --h)
     # Conflict between --help and --header
-    { { echo "$as_me:7883: error: ambiguous option: $1
+    { { echo "$as_me:7887: error: ambiguous option: $1
 Try \`$0 --help' for more information." >&5
 echo "$as_me: error: ambiguous option: $1
 Try \`$0 --help' for more information." >&2;}
@@ -7899,7 +7903,7 @@ Try \`$0 --help' for more information." >&2;}
     ac_need_defaults=false;;
 
   # This is an error.
-  -*) { { echo "$as_me:7902: error: unrecognized option: $1
+  -*) { { echo "$as_me:7906: error: unrecognized option: $1
 Try \`$0 --help' for more information." >&5
 echo "$as_me: error: unrecognized option: $1
 Try \`$0 --help' for more information." >&2;}
@@ -7936,7 +7940,7 @@ do
   # Handling of arguments.
   "defs.mk" ) CONFIG_FILES="$CONFIG_FILES defs.mk" ;;
   "nbtool_config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS nbtool_config.h" ;;
-  *) { { echo "$as_me:7939: error: invalid argument: $ac_config_target" >&5
+  *) { { echo "$as_me:7943: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
   esac
@@ -8027,6 +8031,7 @@ s,@OBJEXT@,$OBJEXT,;t t
 s,@CPP@,$CPP,;t t
 s,@BSHELL@,$BSHELL,;t t
 s,@ALLOCA@,$ALLOCA,;t t
+s,@HAVE_PTHREAD_H@,$HAVE_PTHREAD_H,;t t
 CEOF
 
 EOF
@@ -8136,7 +8141,7 @@ done; }
   esac
 
   if test x"$ac_file" != x-; then
-    { echo "$as_me:8139: creating $ac_file" >&5
+    { echo "$as_me:8144: creating $ac_file" >&5
 echo "$as_me: creating $ac_file" >&6;}
     rm -f "$ac_file"
   fi
@@ -8154,7 +8159,7 @@ echo "$as_me: creating $ac_file" >&6;}
       -) echo $tmp/stdin ;;
       [\\/$]*)
          # Absolute (can't be DOS-style, as IFS=:)
-         test -f "$f" || { { echo "$as_me:8157: error: cannot find input file: $f" >&5
+         test -f "$f" || { { echo "$as_me:8162: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          echo $f;;
@@ -8167,7 +8172,7 @@ echo "$as_me: error: cannot find input file: $f" >&2;}
            echo $srcdir/$f
          else
            # /dev/null tree
-           { { echo "$as_me:8170: error: cannot find input file: $f" >&5
+           { { echo "$as_me:8175: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          fi;;
@@ -8227,7 +8232,7 @@ for ac_file in : $CONFIG_HEADERS; do test "x$ac_file" = x: && continue
   * )   ac_file_in=$ac_file.in ;;
   esac
 
-  test x"$ac_file" != x- && { echo "$as_me:8230: creating $ac_file" >&5
+  test x"$ac_file" != x- && { echo "$as_me:8235: creating $ac_file" >&5
 echo "$as_me: creating $ac_file" >&6;}
 
   # First look for the input files in the build tree, otherwise in the
@@ -8238,7 +8243,7 @@ echo "$as_me: creating $ac_file" >&6;}
       -) echo $tmp/stdin ;;
       [\\/$]*)
          # Absolute (can't be DOS-style, as IFS=:)
-         test -f "$f" || { { echo "$as_me:8241: error: cannot find input file: $f" >&5
+         test -f "$f" || { { echo "$as_me:8246: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          echo $f;;
@@ -8251,7 +8256,7 @@ echo "$as_me: error: cannot find input file: $f" >&2;}
            echo $srcdir/$f
          else
            # /dev/null tree
-           { { echo "$as_me:8254: error: cannot find input file: $f" >&5
+           { { echo "$as_me:8259: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          fi;;
@@ -8368,7 +8373,7 @@ cat >>$CONFIG_STATUS <<\EOF
   rm -f $tmp/in
   if test x"$ac_file" != x-; then
     if cmp -s $ac_file $tmp/config.h 2>/dev/null; then
-      { echo "$as_me:8371: $ac_file is unchanged" >&5
+      { echo "$as_me:8376: $ac_file is unchanged" >&5
 echo "$as_me: $ac_file is unchanged" >&6;}
     else
       ac_dir=`$as_expr X"$ac_file" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
