@@ -1,4 +1,4 @@
-#	$NetBSD: defs.mk.in,v 1.9 2004/06/20 22:20:15 jmc Exp $
+#	$NetBSD: defs.mk.in,v 1.10 2011/08/14 20:22:42 apb Exp $
 
 COMPATOBJ:=	${.PARSEDIR}
 HOSTEXEEXT=	@EXEEXT@
@@ -18,3 +18,5 @@ HOST_CPPFLAGS+=	-I${COMPATOBJ} -I${COMPATOBJ}/include \
 
 DPADD+=		${COMPATOBJ}/libnbcompat.a
 LDADD+=		-L${COMPATOBJ} -lnbcompat @LIBS@
+
+HAVE_PTHREAD_H=	@HAVE_PTHREAD_H@
