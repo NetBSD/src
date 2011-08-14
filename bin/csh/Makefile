@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2011/07/01 03:58:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.31 2011/08/14 10:53:16 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -52,6 +52,9 @@ SUBDIR+=USD.doc
 .if defined(HAVE_GCC) && ${HAVE_GCC} == 4 && ${MACHINE_ARCH} == "vax"
 COPTS.parse.c+=	-O0
 .endif
+COPTS.printf.c = -Wno-format-nonliteral
+COPTS.proc.c = -Wno-format-nonliteral
+COPTS.strpct.c = -Wno-format-nonliteral
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
