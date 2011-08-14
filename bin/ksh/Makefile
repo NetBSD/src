@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2011/06/22 02:49:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.29 2011/08/14 10:40:25 christos Exp $
 
 WARNS=3
 
@@ -50,8 +50,3 @@ ksh.1: ksh.Man mkman
 CWARNFLAGS.clang+=	-Wno-format-security
 
 .include <bsd.prog.mk>
-
-# XXX
-.if ${HAVE_GCC} == 45
-COPTS.eval.c+=	-Wno-error
-.endif
