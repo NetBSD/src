@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.62 2009/03/15 07:48:36 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.63 2011/08/14 11:46:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.62 2009/03/15 07:48:36 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.63 2011/08/14 11:46:28 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -811,7 +811,7 @@ do_conversion(const char *fname)
 	int		 o_errno;
 	char		*base = NULL;
 	char		*cmd, *p, *lp;
-	const char	**argv;
+	char	       **argv;
 	StringList	*sl;
 
 	o_errno = errno;
@@ -860,10 +860,10 @@ do_conversion(const char *fname)
 
 	if (sl_add(sl, NULL) == -1)
 		goto cleanup_do_conv;
-	argv = (const char **)sl->sl_str;
+	argv = sl->sl_str;
 	free(cmd);
 	free(sl);
-	return(argv);
+	return (void *)(intptr_t)argv;
 
  cleanup_do_conv:
 	if (sl)
