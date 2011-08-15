@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.264 2011/02/20 10:26:26 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.265 2011/08/15 02:19:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5912,13 +5912,24 @@ Lfp_finish:
 	 std	%f30, [%o0 + FS_REGS + (4*30)]
 
 /*
- * We got a NULL struct fpstate * on the IPI.  We panic.
+ * We really should panic here but while we figure out what the bug is
+ * that a remote CPU gets a NULL struct fpstate *, this lets the system
+ * work at least seemingly stably.
  */
 Lfp_null_fpstate:
+#if 1
+	sethi	%hi(CPUINFO_VA), %o5
+	ldd	[%o5 + CPUINFO_SAVEFPSTATE_NULL], %o2
+	inccc   %o3
+	addx    %o2, 0, %o2
+	retl
+	 std	%o2, [%o5 + CPUINFO_SAVEFPSTATE_NULL]
+#else
 	ld	[%o5 + CPUINFO_CPUNO], %o1
 	sethi	%hi(Lpanic_savefpstate), %o0
 	call	_C_LABEL(panic)
 	 or	%o0, %lo(Lpanic_savefpstate), %o0
+#endif
 
 /*
  * Store the (now known nonempty) FP queue.
