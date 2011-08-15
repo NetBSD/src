@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.25 2011/01/05 02:18:15 riz Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.26 2011/08/15 00:24:19 dholland Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -1050,6 +1050,7 @@ markblk(mark_callback_t fn, union dinode * di, int bn, off_t o)
 {
 	int sz;
 	int nb;
+
 	if (o >= DIP(di,di_size))
 		return (0);
 	sz = dblksize(newsb, di, lblkno(newsb, o));
@@ -1076,6 +1077,7 @@ markiblk(mark_callback_t fn, union dinode * di, int bn, off_t o, int lev)
 	static int32_t *indirblks[3] = {
 		&indirblk1[0], &indirblk2[0], &indirblk3[0]
 	};
+
 	if (lev < 0)
 		return (markblk(fn, di, bn, o));
 	if (bn == 0) {
@@ -1144,6 +1146,7 @@ static void
 dblk_callback(union dinode * di, unsigned int inum, void *arg)
 {
 	mark_callback_t fn;
+
 	fn = (mark_callback_t) arg;
 	switch (DIP(di,di_mode) & IFMT) {
 	case IFLNK:
@@ -1190,7 +1193,6 @@ loadinodes(void)
 	struct ufs1_dinode *dp1 = NULL;
 	struct ufs2_dinode *dp2 = NULL;
 	
-
 	/* read inodes one fs block at a time and copy them */
 
 	inodes = alloconce(oldsb->fs_ncg * oldsb->fs_ipg *
@@ -1262,6 +1264,7 @@ fragmove(struct cg * cg, int base, unsigned int start, unsigned int n)
 {
 	int i;
 	int run;
+
 	run = 0;
 	for (i = 0; i <= n; i++) {
 		if ((i < n) && bit_is_clr(cg_blksfree(cg, 0), start + i)) {
@@ -1297,7 +1300,6 @@ static void
 evict_data(struct cg * cg, unsigned int minfrag, unsigned int nfrag)
 {
 	int base;	/* base of cg (in frags from beginning of fs) */
-
 
 	base = cgbase(oldsb, cg->cg_cgx);
 	/* Does the boundary fall in the middle of a block?  To avoid
@@ -1407,6 +1409,7 @@ static int
 movemap_blocks(int32_t * vec, int n)
 {
 	int rv;
+
 	rv = 0;
 	for (; n > 0; n--, vec++) {
 		if (blkmove[*vec] != *vec) {
@@ -1420,6 +1423,7 @@ static void
 moveblocks_callback(union dinode * di, unsigned int inum, void *arg)
 {
 	void *dblkptr, *iblkptr; /* XXX */
+
 	switch (DIP(di,di_mode) & IFMT) {
 	case IFLNK:
 		if (DIP(di,di_size) > oldsb->fs_maxsymlinklen) {
@@ -1432,8 +1436,10 @@ moveblocks_callback(union dinode * di, unsigned int inum, void *arg)
 			dblkptr = &(di->dp1.di_db[0]);
 			iblkptr = &(di->dp1.di_ib[0]);
 		}
-		/* don't || these two calls; we need their
-		 * side-effects */
+		/*
+		 * Don't || these two calls; we need their
+		 * side-effects.
+		 */
 		if (movemap_blocks(dblkptr, NDADDR)) {
 				iflags[inum] |= IF_DIRTY;
 			}
@@ -1450,6 +1456,7 @@ moveindir_callback(unsigned int off, unsigned int nfrag, unsigned int nbytes,
 		   int kind)
 {
 	int i;
+
 	if (kind == MDB_INDIR_PRE) {
 		int32_t blk[howmany(MAXBSIZE, sizeof(int32_t))];
 		readat(fsbtodb(oldsb, off), &blk[0], oldsb->fs_bsize);
