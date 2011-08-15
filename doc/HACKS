@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.115 2011/03/12 08:03:06 matt Exp $
+# $NetBSD: HACKS,v 1.116 2011/08/15 02:29:38 mrg Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -562,6 +562,25 @@ port	m68000
 	kcah
 
 
+port	sparc
+
+	hack	avoid NULL pointer derefs in savefpstate IPIs and GCC 4.5.3
+	cdate	Sun Aug 14 19:26:48 PDT 2011
+	who	mrg
+	file	sys/arch/sparc64/sparc/cpu.c : 1.234
+	file	sys/arch/sparc64/sparc/cpuvar.h : 1.90
+	file	sys/arch/sparc64/sparc/genassym.cf : 1.67
+	file	sys/arch/sparc64/sparc/locore.s : 1.265
+	descr
+		Something is wrong with GCC 4.5.3 and the savefpstate IPI.
+		Post newlock2 there was a bug where a lock was reduced from
+		IPL_SCHED to IPL_VM (?) and occasionally savefpstate IPI
+		would crash due to NULL IPI.  This was fixed by re-using the
+		right IPL value.  However, GCC 4.5.3 build kernels have the
+		same problems.  For now, the hack is re-instated.
+	kcah
+
+
 port	sparc64
 
 	hack	disable optimzations for uvm_bio.c on 32 bit kernels
@@ -573,6 +592,7 @@ port	sparc64
 		The sparc compiler miscompiles uvm_bio.c when using
 		any optimization. This results in ubc_release panics.
 	kcah
+
 
 port	mips
 
