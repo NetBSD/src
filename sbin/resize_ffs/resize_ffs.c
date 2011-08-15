@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.29 2011/08/15 00:30:25 dholland Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.30 2011/08/15 02:19:50 dholland Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.29 2011/08/15 00:30:25 dholland Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.30 2011/08/15 02:19:50 dholland Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: resize_ffs.c,v 1.29 2011/08/15 00:30:25 dholland Exp $");
 #include <unistd.h>
 
 /* new size of file system, in sectors */
-static uint64_t newsize;
+static int64_t newsize;
 
 /* fd open onto disk device or file */
 static int fd;
@@ -137,10 +137,10 @@ static unsigned char *iflags;
 				 * block. */
 
 /* resize_ffs works directly on dinodes, adapt blksize() */
-#define dblksize(fs, dip, lbn) \
-	(((lbn) >= NDADDR || DIP((dip), di_size) >= lblktosize(fs, (lbn) + 1)) \
+#define dblksize(fs, dip, lbn, filesize) \
+	(((lbn) >= NDADDR || (filesize) >= lblktosize(fs, (lbn) + 1)) \
 	    ? (fs)->fs_bsize						       \
-	    : (fragroundup(fs, blkoff(fs, DIP((dip), di_size)))))
+	    : (fragroundup(fs, blkoff(fs, (filesize)))))
 
 
 /*
@@ -645,7 +645,7 @@ find_freespace(unsigned int nfrags)
 	int cgn;		/* number of cg hand currently points into */
 	int fwc;		/* frag-within-cg number of frag hand points
 				 * to */
-	int run;		/* length of run of free frags seen so far */
+	unsigned int run;	/* length of run of free frags seen so far */
 	int secondpass;		/* have we wrapped from end of fs to
 				 * beginning? */
 	unsigned char *bits;	/* cg_blksfree()[] for cg hand points into */
@@ -1041,22 +1041,24 @@ map_inodes(void (*fn) (union dinode * di, unsigned int, void *arg),
 #define MDB_INDIR_PRE  2
 #define MDB_INDIR_POST 3
 
-typedef void (*mark_callback_t) (unsigned int blocknum, unsigned int nfrags,
+typedef void (*mark_callback_t) (off_t blocknum, unsigned int nfrags,
 				 unsigned int blksize, int opcode);
 
 /* Helper function - handles a data block.  Calls the callback
  * function and returns number of bytes occupied in file (actually,
  * rounded up to a frag boundary).  The name is historical.  */
 static int
-markblk(mark_callback_t fn, union dinode * di, int bn, off_t o)
+markblk(mark_callback_t fn, union dinode * di, off_t bn, off_t o)
 {
 	int sz;
 	int nb;
+	off_t filesize;
 
-	if (o >= DIP(di,di_size))
+	filesize = DIP(di,di_size);
+	if (o >= filesize)
 		return (0);
-	sz = dblksize(newsb, di, lblkno(newsb, o));
-	nb = (sz > DIP(di,di_size) - o) ? DIP(di,di_size) - o : sz;
+	sz = dblksize(newsb, di, lblkno(newsb, o), filesize);
+	nb = (sz > filesize - o) ? filesize - o : sz;
 	if (bn)
 		(*fn) (bn, numfrags(newsb, sz), nb, MDB_DATA);
 	return (sz);
@@ -1068,10 +1070,11 @@ markblk(mark_callback_t fn, union dinode * di, int bn, off_t o)
  * For the sake of update_for_data_move(), we read the indirect block
  * _after_ making the _PRE callback.  The name is historical.  */
 static int
-markiblk(mark_callback_t fn, union dinode * di, int bn, off_t o, int lev)
+markiblk(mark_callback_t fn, union dinode * di, off_t bn, off_t o, int lev)
 {
 	int i;
 	int j;
+	unsigned k;
 	int tot;
 	static int32_t indirblk1[howmany(MAXBSIZE, sizeof(int32_t))];
 	static int32_t indirblk2[howmany(MAXBSIZE, sizeof(int32_t))];
@@ -1091,8 +1094,8 @@ markiblk(mark_callback_t fn, union dinode * di, int bn, off_t o, int lev)
 	(*fn) (bn, newsb->fs_frag, newsb->fs_bsize, MDB_INDIR_PRE);
 	readat(fsbtodb(newsb, bn), indirblks[lev], newsb->fs_bsize);
 	if (needswap)
-		for (i = 0; i < howmany(MAXBSIZE, sizeof(int32_t)); i++)
-			indirblks[lev][i] = bswap32(indirblks[lev][i]);
+		for (k = 0; k < howmany(MAXBSIZE, sizeof(int32_t)); k++)
+			indirblks[lev][k] = bswap32(indirblks[lev][k]);
 	tot = 0;
 	for (i = 0; i < NINDIR(newsb); i++) {
 		j = markiblk(fn, di, indirblks[lev][i], o, lev - 1);
@@ -1148,11 +1151,13 @@ static void
 dblk_callback(union dinode * di, unsigned int inum, void *arg)
 {
 	mark_callback_t fn;
+	off_t filesize;
 
+	filesize = DIP(di,di_size);
 	fn = (mark_callback_t) arg;
 	switch (DIP(di,di_mode) & IFMT) {
 	case IFLNK:
-		if (DIP(di,di_size) > newsb->fs_maxsymlinklen) {
+		if (filesize > newsb->fs_maxsymlinklen) {
 	case IFDIR:
 	case IFREG:
 			map_inode_data_blocks(di, fn);
@@ -1264,7 +1269,7 @@ mark_move(unsigned int from, unsigned int to, unsigned int n)
 static void
 fragmove(struct cg * cg, int base, unsigned int start, unsigned int n)
 {
-	int i;
+	unsigned int i;
 	int run;
 
 	run = 0;
@@ -1299,7 +1304,7 @@ fragmove(struct cg * cg, int base, unsigned int start, unsigned int n)
  *  lurking here.
  */
 static void
-evict_data(struct cg * cg, unsigned int minfrag, unsigned int nfrag)
+evict_data(struct cg * cg, unsigned int minfrag, int nfrag)
 {
 	int base;	/* base of cg (in frags from beginning of fs) */
 
@@ -1377,7 +1382,7 @@ perform_data_move(void)
 	maxrun = sizeof(buf) / newsb->fs_fsize;
 	run = 0;
 	for (i = 0; i < oldsb->fs_size; i++) {
-		if ((blkmove[i] == i) ||
+		if ((blkmove[i] == (unsigned)i /*XXX cast*/) ||
 		    (run >= maxrun) ||
 		    ((run > 0) &&
 			(blkmove[i] != blkmove[i - 1] + 1))) {
@@ -1389,7 +1394,7 @@ perform_data_move(void)
 			}
 			run = 0;
 		}
-		if (blkmove[i] != i)
+		if (blkmove[i] != (unsigned)i /*XXX cast*/)
 			run++;
 	}
 	if (run > 0) {
@@ -1414,7 +1419,7 @@ movemap_blocks(int32_t * vec, int n)
 
 	rv = 0;
 	for (; n > 0; n--, vec++) {
-		if (blkmove[*vec] != *vec) {
+		if (blkmove[*vec] != (unsigned)*vec /*XXX cast*/) {
 			*vec = blkmove[*vec];
 			rv++;
 		}
@@ -1424,19 +1429,20 @@ movemap_blocks(int32_t * vec, int n)
 static void
 moveblocks_callback(union dinode * di, unsigned int inum, void *arg)
 {
-	void *dblkptr, *iblkptr; /* XXX */
+	int32_t *dblkptr, *iblkptr;
 
 	switch (DIP(di,di_mode) & IFMT) {
 	case IFLNK:
-		if (DIP(di,di_size) <= oldsb->fs_maxsymlinklen) {
+		if ((off_t)DIP(di,di_size) <= oldsb->fs_maxsymlinklen) {
 			break;
 		}
 		/* FALLTHROUGH */
 	case IFDIR:
 	case IFREG:
 		if (is_ufs2) {
-			dblkptr = &(di->dp2.di_db[0]);
-			iblkptr = &(di->dp2.di_ib[0]);
+			/* XXX these are not int32_t and this is WRONG! */
+			dblkptr = (void *) &(di->dp2.di_db[0]);
+			iblkptr = (void *) &(di->dp2.di_ib[0]);
 		} else {
 			dblkptr = &(di->dp1.di_db[0]);
 			iblkptr = &(di->dp1.di_ib[0]);
@@ -1456,10 +1462,10 @@ moveblocks_callback(union dinode * di, unsigned int inum, void *arg)
 }
 
 static void
-moveindir_callback(unsigned int off, unsigned int nfrag, unsigned int nbytes,
+moveindir_callback(off_t off, unsigned int nfrag, unsigned int nbytes,
 		   int kind)
 {
-	int i;
+	unsigned int i;
 
 	if (kind == MDB_INDIR_PRE) {
 		int32_t blk[howmany(MAXBSIZE, sizeof(int32_t))];
@@ -1602,8 +1608,8 @@ evict_inodes(struct cg * cg)
 static void
 perform_inode_move(void)
 {
-	int i;
-	int ni;
+	unsigned int i;
+	unsigned int ni;
 
 	ni = oldsb->fs_ipg * oldsb->fs_ncg;
 	for (i = 0; i < ni; i++) {
@@ -1644,7 +1650,7 @@ update_dirents(char *buf, int nb)
  *  directory to point to new inode locations.
  */
 static void
-update_dir_data(unsigned int bn, unsigned int size, unsigned int nb, int kind)
+update_dir_data(off_t bn, unsigned int size, unsigned int nb, int kind)
 {
 	if (kind == MDB_DATA) {
 		union {
@@ -2022,7 +2028,7 @@ write_sbs(void)
 	}
 }
 
-static uint32_t
+static off_t
 get_dev_size(char *dev_name)
 {
 	struct dkwedge_info dkw;
@@ -2068,7 +2074,7 @@ main(int argc, char **argv)
 		switch (ch) {
 		case 's':
 			SFlag = 1;
-			newsize = (size_t)strtoul(optarg, NULL, 10);
+			newsize = strtoll(optarg, NULL, 10);
 			if(newsize < 1) {
 				usage();
 			}
