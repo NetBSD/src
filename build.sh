@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.245 2011/08/08 22:15:42 jmcneill Exp $
+#	$NetBSD: build.sh,v 1.246 2011/08/15 14:48:00 wiz Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -596,7 +596,7 @@ usage()
 	fi
 	cat <<_usage_
 
-Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
+Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
                 [-D dest] [-j njob] [-M obj] [-m mach] [-N noisy]
                 [-O obj] [-R release] [-S seed] [-T tools]
                 [-V var=[value]] [-w wrapper] [-X x11src] [-Y extsrcsrc]
@@ -634,46 +634,46 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
     params              Display various make(1) parameters.
 
  Options:
-    -a arch     Set MACHINE_ARCH to arch.  [Default: deduced from MACHINE]
-    -B buildId  Set BUILDID to buildId.
-    -C cdextras Append cdextras to CDEXTRA variable for inclusion on CD-ROM.
-    -D dest     Set DESTDIR to dest.  [Default: destdir.MACHINE]
-    -E          Set "expert" mode; disables various safety checks.
-                Should not be used without expert knowledge of the build system.
-    -h          Print this help message.
-    -j njob     Run up to njob jobs in parallel; see make(1) -j.
-    -M obj      Set obj root directory to obj; sets MAKEOBJDIRPREFIX.
-                Unsets MAKEOBJDIR.
-    -m mach     Set MACHINE to mach; not required if NetBSD native.
-    -N noisy    Set the noisyness (MAKEVERBOSE) level of the build:
-                    0   Minimal output ("quiet")
-                    1   Describe what is occurring
-                    2   Describe what is occurring and echo the actual command
-                    3   Ignore the effect of the "@" prefix in make commands
-                    4   Trace shell commands using the shell's -x flag
-                [Default: 2]
-    -n          Show commands that would be executed, but do not execute them.
-    -O obj      Set obj root directory to obj; sets a MAKEOBJDIR pattern.
-                Unsets MAKEOBJDIRPREFIX.
-    -o          Set MKOBJDIRS=no; do not create objdirs at start of build.
-    -R release  Set RELEASEDIR to release.  [Default: releasedir]
-    -r          Remove contents of TOOLDIR and DESTDIR before building.
-    -S seed     Set BUILDSEED to seed.  [Default: NetBSD-majorversion]
-    -T tools    Set TOOLDIR to tools.  If unset, and TOOLDIR is not set in
-                the environment, ${toolprefix}make will be (re)built unconditionally.
-    -U          Set MKUNPRIVED=yes; build without requiring root privileges,
-                install from an UNPRIVED build with proper file permissions.
-    -u          Set MKUPDATE=yes; do not run "make cleandir" first.
-                Without this, everything is rebuilt, including the tools.
-    -V v=[val]  Set variable \`v' to \`val'.
-    -w wrapper  Create ${toolprefix}make script as wrapper.
-                [Default: \${TOOLDIR}/bin/${toolprefix}make-\${MACHINE}]
-    -X x11src   Set X11SRCDIR to x11src.  [Default: /usr/xsrc]
-    -x          Set MKX11=yes; build X11 from X11SRCDIR
-    -Y extsrcsrc
-                Set EXTSRCSRCDIR to extsrcsrc.  [Default: /usr/extsrc]
-    -y          Set MKEXTSRC=yes; build extsrc from EXTSRCSRCDIR
-    -Z v        Unset ("zap") variable \`v'.
+    -a arch        Set MACHINE_ARCH to arch.  [Default: deduced from MACHINE]
+    -B buildid     Set BUILDID to buildid.
+    -C cdextras    Append cdextras to CDEXTRA variable for inclusion on CD-ROM.
+    -D dest        Set DESTDIR to dest.  [Default: destdir.MACHINE]
+    -E             Set "expert" mode; disables various safety checks.
+                   Should not be used without expert knowledge of the build system.
+    -h             Print this help message.
+    -j njob        Run up to njob jobs in parallel; see make(1) -j.
+    -M obj         Set obj root directory to obj; sets MAKEOBJDIRPREFIX.
+                   Unsets MAKEOBJDIR.
+    -m mach        Set MACHINE to mach; not required if NetBSD native.
+    -N noisy       Set the noisyness (MAKEVERBOSE) level of the build:
+                       0   Minimal output ("quiet")
+                       1   Describe what is occurring
+                       2   Describe what is occurring and echo the actual command
+                       3   Ignore the effect of the "@" prefix in make commands
+                       4   Trace shell commands using the shell's -x flag
+                   [Default: 2]
+    -n             Show commands that would be executed, but do not execute them.
+    -O obj         Set obj root directory to obj; sets a MAKEOBJDIR pattern.
+                   Unsets MAKEOBJDIRPREFIX.
+    -o             Set MKOBJDIRS=no; do not create objdirs at start of build.
+    -R release     Set RELEASEDIR to release.  [Default: releasedir]
+    -r             Remove contents of TOOLDIR and DESTDIR before building.
+    -S seed        Set BUILDSEED to seed.  [Default: NetBSD-majorversion]
+    -T tools       Set TOOLDIR to tools.  If unset, and TOOLDIR is not set in
+                   the environment, ${toolprefix}make will be (re)built
+                   unconditionally.
+    -U             Set MKUNPRIVED=yes; build without requiring root privileges,
+                   install from an UNPRIVED build with proper file permissions.
+    -u             Set MKUPDATE=yes; do not run "make cleandir" first.
+                   Without this, everything is rebuilt, including the tools.
+    -V var=[value] Set variable \`var' to \`value'.
+    -w wrapper     Create ${toolprefix}make script as wrapper.
+                   [Default: \${TOOLDIR}/bin/${toolprefix}make-\${MACHINE}]
+    -X x11src      Set X11SRCDIR to x11src.  [Default: /usr/xsrc]
+    -x             Set MKX11=yes; build X11 from X11SRCDIR
+    -Y extsrcsrc   Set EXTSRCSRCDIR to extsrcsrc.  [Default: /usr/extsrc]
+    -y             Set MKEXTSRC=yes; build extsrc from EXTSRCSRCDIR
+    -Z var         Unset ("zap") variable \`var'.
 
 _usage_
 	exit 1
@@ -681,7 +681,7 @@ _usage_
 
 parseoptions()
 {
-	opts='a:B:C:D:Ehj:M:m:N:nO:oR:rS:T:UuV:w:xX:yY:Z:'
+	opts='a:B:C:D:Ehj:M:m:N:nO:oR:rS:T:UuV:w:X:xY:yZ:'
 	opt_a=no
 
 	if type getopts >/dev/null 2>&1; then
@@ -1387,7 +1387,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.245 2011/08/08 22:15:42 jmcneill Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.246 2011/08/15 14:48:00 wiz Exp $
 # with these arguments: ${_args}
 #
 
@@ -1573,11 +1573,11 @@ installworld()
 # since the rump kernel is a closed namespace apart from calls to rumpuser.
 # Therefore, if ld complains only about rumpuser symbols, rump kernel
 # linking was successful.
-# 
+#
 # We test that rump links with a number of component configurations.
 # These attempt to mimic what is encountered in the full build.
 # See list below.  The list should probably be either autogenerated
-# or managed elsewhere.  But keep it here until a better idea arises.
+# or managed elsewhere; keep it here until a better idea arises.
 #
 # Above all, note that THIS IS NOT A SUBSTITUTE FOR A FULL BUILD.
 #
