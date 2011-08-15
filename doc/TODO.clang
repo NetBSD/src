@@ -1,9 +1,9 @@
-$NetBSD: TODO.clang,v 1.2 2011/08/15 10:09:59 joerg Exp $
+$NetBSD: TODO.clang,v 1.3 2011/08/15 10:58:54 wiz Exp $
 
 Hacks for the clang integration
 -------------------------------
 
-"-no-integrated-as" is src/sys/arch/amd64 and src/sys/arch/i386
+"-no-integrated-as" in src/sys/arch/amd64 and src/sys/arch/i386
 to compensate for the missing .code16 support in LLVM MC
 and slightly different encoding of the lock stubs.
 
