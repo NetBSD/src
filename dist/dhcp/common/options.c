@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: options.c,v 1.6 2006/05/11 09:29:39 mrg Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: options.c,v 1.7 2011/08/15 21:12:43 christos Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #define DHCP_OPTION_DATA
@@ -499,19 +499,26 @@ int cons_options (inpacket, outpacket, lease, client_state,
 	   honor it. */
 
 	if (mms) {
-		main_buffer_size = mms - DHCP_FIXED_LEN;
+		if (mms < 576)
+			/* Enforce a minimum packet size... */
+			main_buffer_size = mms - DHCP_FIXED_LEN;
+		else if (mms > 1500)
+			/*
+			 * TODO: Packets longer than 1500 bytes really
+			 * should be allowed, but it requires upstream
+			 * changes to the way the packet is allocated.  For
+			 * now, we forbid them.  They won't be needed very
+			 * often anyway.
+			 */
+			main_buffer_size = 1500 - DHCP_FIXED_LEN;
+		else
+			main_buffer_size = mms - DHCP_FIXED_LEN;
 
-		/* Enforce a minimum packet size... */
-		if (main_buffer_size < (576 - DHCP_FIXED_LEN))
-			main_buffer_size = 576 - DHCP_FIXED_LEN;
 	} else if (bootpp) {
-		if (inpacket) {
-			main_buffer_size =
-				inpacket -> packet_length - DHCP_FIXED_LEN;
-			if (main_buffer_size < 64)
-				main_buffer_size = 64;
-		} else
-			main_buffer_size = 64;
+		main_buffer_size = 64;
+		if (inpacket != NULL &&
+		    (inpacket->packet_length >= 64 + DHCP_FIXED_NON_UDP))
+			main_buffer_size = inpacket->packet_length - DHCP_FIXED_NON_UDP;
 	} else
 		main_buffer_size = 576 - DHCP_FIXED_LEN;
 
