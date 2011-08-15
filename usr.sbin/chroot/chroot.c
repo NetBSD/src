@@ -1,4 +1,4 @@
-/*	$NetBSD: chroot.c,v 1.15 2008/07/21 13:36:57 lukem Exp $	*/
+/*	$NetBSD: chroot.c,v 1.16 2011/08/15 14:43:17 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: chroot.c,v 1.15 2008/07/21 13:36:57 lukem Exp $");
+__RCSID("$NetBSD: chroot.c,v 1.16 2011/08/15 14:43:17 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,7 +179,7 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: chroot [-g group] [-G group,group,...] "
+	(void)fprintf(stderr, "usage: chroot [-G group,group,...] [-g group] "
 	    "[-u user] newroot [command]\n");
 	exit(1);
 }
