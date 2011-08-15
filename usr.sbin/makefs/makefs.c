@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.29 2011/07/18 22:52:37 tron Exp $	*/
+/*	$NetBSD: makefs.c,v 1.30 2011/08/15 14:45:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.29 2011/07/18 22:52:37 tron Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.30 2011/08/15 14:45:01 wiz Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -316,10 +316,10 @@ usage(void)
 
 	prog = getprogname();
 	fprintf(stderr,
-"usage: %s [-t fs-type] [-o fs-options] [-d debug-mask] [-B endian]\n"
-"\t[-S sector-size] [-M minimum-size] [-m maximum-size] [-s image-size]\n"
-"\t[-b free-blocks] [-f free-files] [-F mtree-specfile] [-x]\n"
-"\t[-N userdb-dir] image-file directory\n",
+"usage: %s [-x] [-B endian] [-b free-blocks] [-d debug-mask]\n"
+"\t[-F mtree-specfile] [-f free-files] [-M minimum-size]\n"
+"\t[-m maximum-size] [-N userdb-dir] [-o fs-options] [-S sector-size]\n"
+"\t[-s image-size] [-t fs-type] image-file directory\n",
 	    prog);
 	exit(1);
 }
