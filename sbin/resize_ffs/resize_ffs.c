@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.27 2011/08/15 00:26:16 dholland Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.28 2011/08/15 00:27:50 dholland Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -143,7 +143,7 @@ static unsigned char *iflags;
 
 /*
  * Number of disk sectors per block/fragment
- */ 
+ */
 #define NSPB(fs)	(fsbtodb((fs),1) << (fs)->fs_fragshift)
 #define NSPF(fs)	(fsbtodb((fs),1))
 
@@ -493,8 +493,8 @@ initcg(int cgn)
 		cg->cg_old_niblk = cg->cg_niblk;
 		cg->cg_niblk = 0;
 		cg->cg_initediblk = 0;
-	
-	
+
+
 		cg->cg_old_ncyl = newsb->fs_old_cpg;
 		/* Update the cg_old_ncyl value for the last cylinder. */
 		if (cgn == newsb->fs_ncg - 1) {
@@ -545,7 +545,7 @@ initcg(int cgn)
 	cg->cg_cs.cs_nifree = newsb->fs_ipg;
 	cg->cg_cs.cs_nbfree = dlow / newsb->fs_frag;
 	cg->cg_cs.cs_nffree = 0;
-	
+
 	/* This is the simplest way of doing this; we perhaps could
 	 * compute the correct cg_blktot()[] and cg_blks()[] values
 	 * other ways, but it would be complicated and hardly seems
@@ -554,7 +554,7 @@ initcg(int cgn)
 	 * below for the post-inode data area, is that the pre-sb data
 	 * area always starts at 0, and thus is block-aligned, and
 	 * always ends at the sb, which is block-aligned.) */
-	if ((newsb->fs_old_flags & FS_FLAGS_UPDATED) == 0)	
+	if ((newsb->fs_old_flags & FS_FLAGS_UPDATED) == 0)
 		for (i = 0; i < dlow; i += newsb->fs_frag) {
 			old_cg_blktot(cg, 0)[old_cbtocylno(newsb, i)]++;
 			old_cg_blks(newsb, cg,
@@ -951,7 +951,7 @@ grow(void)
 		    newsb->fs_old_spc);
 		newsb->fs_ncg = howmany(newsb->fs_old_ncyl, newsb->fs_old_cpg);
 	}
-	
+
 	/* Does the last cg end before the end of its inode area? There is no
 	 * reason why this couldn't be handled, but it would complicate a lot
 	 * of code (in all file system code - fsck, kernel, etc) because of the
@@ -1192,20 +1192,20 @@ loadinodes(void)
 	int imax, ino, i, j;
 	struct ufs1_dinode *dp1 = NULL;
 	struct ufs2_dinode *dp2 = NULL;
-	
+
 	/* read inodes one fs block at a time and copy them */
 
 	inodes = alloconce(oldsb->fs_ncg * oldsb->fs_ipg *
 	    sizeof(union dinode), "inodes");
 	iflags = alloconce(oldsb->fs_ncg * oldsb->fs_ipg, "inode flags");
 	memset(iflags, 0, oldsb->fs_ncg * oldsb->fs_ipg);
-	
+
 	ibuf = nfmalloc(oldsb->fs_bsize,"inode block buf");
 	if (is_ufs2)
 		dp2 = (struct ufs2_dinode *)ibuf;
 	else
 		dp1 = (struct ufs1_dinode *)ibuf;
-	
+
 	for (ino = 0,imax = oldsb->fs_ipg * oldsb->fs_ncg; ino < imax; ) {
 		readat(fsbtodb(oldsb, ino_to_fsba(oldsb, ino)), ibuf,
 		    oldsb->fs_bsize);
@@ -1444,11 +1444,11 @@ moveblocks_callback(union dinode * di, unsigned int inum, void *arg)
 		 * side-effects.
 		 */
 		if (movemap_blocks(dblkptr, NDADDR)) {
-				iflags[inum] |= IF_DIRTY;
-			}
+			iflags[inum] |= IF_DIRTY;
+		}
 		if (movemap_blocks(iblkptr, NIADDR)) {
-				iflags[inum] |= IF_DIRTY;
-			}
+			iflags[inum] |= IF_DIRTY;
+		}
 		break;
 	}
 }
@@ -1525,7 +1525,7 @@ flush_inodes(void)
 		dp2 = (struct ufs2_dinode *)ibuf;
 	else
 		dp1 = (struct ufs1_dinode *)ibuf;
-	
+
 	for (i = 0; i < ni; i += m) {
 		if (iflags[i] & IF_BDIRTY) {
 			if (is_ufs2)
@@ -1550,7 +1550,7 @@ flush_inodes(void)
 						    &dp1[j]);
 					}
 				}
-				
+
 			writeat(fsbtodb(newsb, ino_to_fsba(newsb, i)),
 			    ibuf, newsb->fs_bsize);
 		}
@@ -1622,7 +1622,7 @@ update_dirents(char *buf, int nb)
 #define d ((struct direct *)buf)
 #define s32(x) (needswap?bswap32((x)):(x))
 #define s16(x) (needswap?bswap16((x)):(x))
-	
+
 	rv = 0;
 	while (nb > 0) {
 		if (inomove[s32(d->d_ino)] != s32(d->d_ino)) {
@@ -1704,7 +1704,7 @@ shrink(void)
 			    newsb->fs_old_spc) / NSPF(newsb);
 		} else
 			newsb->fs_size = newsb->fs_ncg * newsb->fs_fpg;
-		
+
 		printf("Warning: last cylinder group is too small;\n");
 		printf("    dropping it.  New size = %lu.\n",
 		    (unsigned long int) fsbtodb(newsb, newsb->fs_size));
@@ -2027,7 +2027,7 @@ get_dev_size(char *dev_name)
 	struct partition *pp;
 	struct disklabel lp;
 	size_t ptn;
-	
+
 	/* Get info about partition/wedge */
 	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == -1) {
 		if (ioctl(fd, DIOCGDINFO, &lp) == -1)
@@ -2057,11 +2057,11 @@ main(int argc, char **argv)
 
 	char *special;
 	char reply[5];
-	
+
 	newsize = 0;
 	ExpertFlag = 0;
 	SFlag = 0;
-	
+
 	while ((ch = getopt(argc, argv, "s:y")) != -1) {
 		switch (ch) {
 		case 's':
@@ -2099,7 +2099,7 @@ main(int argc, char **argv)
 			exit(EXIT_SUCCESS);
 		}
 	}
-	
+
 	fd = open(special, O_RDWR, 0);
 	if (fd < 0)
 		err(EXIT_FAILURE, "Can't open `%s'", special);
@@ -2111,7 +2111,7 @@ main(int argc, char **argv)
 			err(EXIT_FAILURE,
 			    "Can't resize file system, newsize not known.");
 	}
-	
+
 	oldsb = (struct fs *) & sbbuf;
 	newsb = (struct fs *) (SBLOCKSIZE + (char *) &sbbuf);
 	for (where = search[i = 0]; search[i] != -1; where = search[++i]) {
