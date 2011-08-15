@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.86 2010/11/23 04:33:10 christos Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.87 2011/08/15 17:01:28 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.86 2010/11/23 04:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.87 2011/08/15 17:01:28 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,8 +300,10 @@ wi_pcmcia_enable(device_t self, int onoff)
 		DELAY(1000);
 	} else {
 		pcmcia_function_disable(psc->sc_pf);
-		pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
-		sc->sc_ih = 0;
+		if (sc->sc_ih != NULL) {
+			pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+			sc->sc_ih = NULL;
+		}
 	}
 
 	return 0;
@@ -391,6 +393,7 @@ static int
 wi_pcmcia_detach(device_t self, int flags)
 {
 	struct wi_pcmcia_softc *psc = device_private(self);
+	struct wi_softc *sc = &psc->sc_wi;
 	int error;
 
 	if (psc->sc_state != WI_PCMCIA_ATTACHED)
@@ -399,6 +402,9 @@ wi_pcmcia_detach(device_t self, int flags)
 	error = wi_detach(&psc->sc_wi);
 	if (error != 0)
 		return (error);
+
+	if (sc->sc_ih != NULL)
+		pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
 
 	pcmcia_function_unconfigure(psc->sc_pf);
 
