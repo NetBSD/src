@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.30 2011/08/15 02:19:50 dholland Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.31 2011/08/15 02:22:46 dholland Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.30 2011/08/15 02:19:50 dholland Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.31 2011/08/15 02:22:46 dholland Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -1157,11 +1157,13 @@ dblk_callback(union dinode * di, unsigned int inum, void *arg)
 	fn = (mark_callback_t) arg;
 	switch (DIP(di,di_mode) & IFMT) {
 	case IFLNK:
-		if (filesize > newsb->fs_maxsymlinklen) {
+		if (filesize <= newsb->fs_maxsymlinklen) {
+			break;
+		}
+		/* FALLTHROUGH */
 	case IFDIR:
 	case IFREG:
-			map_inode_data_blocks(di, fn);
-		}
+		map_inode_data_blocks(di, fn);
 		break;
 	}
 }
@@ -1956,7 +1958,7 @@ rescan_inomaps(int cgn)
 			break;
 		case IFDIR:
 			cg->cg_cs.cs_ndir++;
-			/* fall through */
+			/* FALLTHROUGH */
 		default:
 			set_bits(cg_inosused(cg, 0), iwc, 1);
 			break;
@@ -2126,8 +2128,8 @@ main(int argc, char **argv)
 		readat(where / DEV_BSIZE, oldsb, SBLOCKSIZE);
 		switch (oldsb->fs_magic) {
 		case FS_UFS2_MAGIC:
-			/* FALLTHROUGH */
 			is_ufs2 = 1;
+			/* FALLTHROUGH */
 		case FS_UFS1_MAGIC:
 			needswap = 0;
 			break;
