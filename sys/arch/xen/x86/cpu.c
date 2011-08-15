@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.62 2011/08/13 12:37:30 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.63 2011/08/15 20:14:52 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62 2011/08/13 12:37:30 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.63 2011/08/15 20:14:52 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1292,8 +1292,5 @@ cpu_broadcast_halt(void)
 void
 cpu_kick(struct cpu_info *ci)
 {
-	if (xen_send_ipi(ci, XEN_IPI_KICK) != 0) {
-		panic("xen_send_ipi(%s, XEN_IPI_KICK) failed\n",
-		    cpu_name(ci));
-	}
+	xen_send_ipi(ci, XEN_IPI_KICK);
 }
