@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.26 2011/08/15 00:24:19 dholland Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.27 2011/08/15 00:26:16 dholland Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -1426,7 +1426,10 @@ moveblocks_callback(union dinode * di, unsigned int inum, void *arg)
 
 	switch (DIP(di,di_mode) & IFMT) {
 	case IFLNK:
-		if (DIP(di,di_size) > oldsb->fs_maxsymlinklen) {
+		if (DIP(di,di_size) <= oldsb->fs_maxsymlinklen) {
+			break;
+		}
+		/* FALLTHROUGH */
 	case IFDIR:
 	case IFREG:
 		if (is_ufs2) {
@@ -1446,7 +1449,6 @@ moveblocks_callback(union dinode * di, unsigned int inum, void *arg)
 		if (movemap_blocks(iblkptr, NIADDR)) {
 				iflags[inum] |= IF_DIRTY;
 			}
-		}
 		break;
 	}
 }
