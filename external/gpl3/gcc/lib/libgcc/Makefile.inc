@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2011/07/07 01:27:47 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2011/08/15 09:19:21 mrg Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -27,8 +27,6 @@ CPPFLAGS+=	-I${DIST} -I${DIST}/gcc/cp -I${DIST}/gcc/config -I${GCCARCHXX} -I.
 _TRADITIONAL_CPP=
 COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 .endif
-
-.if !defined(MKNATIVE_LIBGCC_NEW)
 
 #
 # Old style libgcc build procedure.
@@ -132,14 +130,6 @@ ${G_LIB2_DIVMOD_FUNCS:=.pico}:
 dp-bit.c: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
 	printf '#define FLOAT\n#include <fp-bit.c>\n' >${.TARGET}
-
-.else	# defined(MKNATIVE_LIBGCC_NEW)
-
-#
-# New style libgcc build procedure.
-#
-
-.endif	# defined(MKNATIVE_LIBGCC_NEW)
 
 #
 # Common rules.
