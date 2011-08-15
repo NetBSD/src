@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.233 2011/07/17 23:18:23 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.234 2011/08/15 02:19:44 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.233 2011/07/17 23:18:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.234 2011/08/15 02:19:44 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -346,9 +346,14 @@ cpu_init_evcnt(struct cpu_info *cpi)
 
 	/*
 	 * Setup the per-cpu counters.
+	 *
+	 * The "savefp null" counter should go away when the NULL
+	 * struct fpstate * bug is fixed.
 	 */
 	evcnt_attach_dynamic(&cpi->ci_savefpstate, EVCNT_TYPE_MISC,
 			     NULL, cpu_name(cpi), "savefp ipi");
+	evcnt_attach_dynamic(&cpi->ci_savefpstate_null, EVCNT_TYPE_MISC,
+			     NULL, cpu_name(cpi), "savefp null ipi");
 	evcnt_attach_dynamic(&cpi->ci_xpmsg_mutex_fail, EVCNT_TYPE_MISC,
 			     NULL, cpu_name(cpi), "IPI mutex_trylock fail");
 	evcnt_attach_dynamic(&cpi->ci_xpmsg_mutex_fail_call, EVCNT_TYPE_MISC,
@@ -647,7 +652,6 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	/* Mask any CPUs that are not ready */
 	cpuset &= cpu_ready_mask;
 
-	/* prevent interrupts that grab the kernel lock */
 #if 0
 	mutex_spin_enter(&xpmsg_mutex);
 #else
@@ -664,9 +668,17 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	 */
 	pil = (getpsr() & PSR_PIL) >> 8;
 	
-	if (cold || pil < 13)
+	if (cold || pil <= IPL_SCHED)
 		mutex_spin_enter(&xpmsg_mutex);
 	else {
+#ifdef DEBUG
+		u_int pc;
+
+		/* warn about xcall at high IPL */
+		__asm("mov %%i7, %0" : "=r" (pc) : );
+		printf_nolog("%d: xcall at lvl %u from 0x%x\n",
+		    cpu_number(), pil, pc);
+#endif
 		while (mutex_tryenter(&xpmsg_mutex) == 0) {
 			cpuinfo.ci_xpmsg_mutex_fail.ev_count++;
 			if (cpuinfo.msg.tag) {
