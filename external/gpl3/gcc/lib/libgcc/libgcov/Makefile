@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 06:02:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/08/15 09:19:21 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOPIC=		# defined
@@ -18,34 +18,14 @@ LIBGCOVSRCS=	${G_LIBGCOV:=.c}
 CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 CPPFLAGS+=	-Wno-stack-protector
 
-.if !defined(MKNATIVE_LIBGCC_NEW)
-
 DPSRCS+=	${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
 SRCS+=		${LIBGCOVSRCS}
-
-.else	# defined(MKNATIVE_LIBGCC_NEW)
-
-.include "../Makefile.srcs"
-
-# New style.
-SRCS=		${SRCS.libgcov.a}
-TMPLSRCS=	${TMPLSRCS.libgcov.a}
-TMPLFPSRCS=	${TMPLFPSRCS.libgcov.a}
-TMPLASMSRCS=	${TMPLASMSRCS.libgcov.a}
-
-.include "../Makefile.wrapper"
-
-.endif	# defined(MKNATIVE_LIBGCC_NEW)
-
-.if !defined(MKNATIVE_LIBGCC_NEW)
 
 CLEANFILES+=	${LIBGCOVSRCS}
 
 ${LIBGCOVSRCS}: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
 	printf '#define L${.PREFIX}\n#include <libgcov.c>\n' >${.TARGET}
-
-.endif	# !defined(MKNATIVE_LIBGCC_NEW)
 
 .include <bsd.lib.mk>
 .else

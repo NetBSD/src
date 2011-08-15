@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/07/10 02:39:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/08/15 09:19:21 mrg Exp $
 
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
@@ -21,8 +21,6 @@ SHLIB_MINOR=	0
 LDFLAGS+=	-nodefaultlibs
 LDFLAGS+=	-Wl,--version-script=${.OBJDIR}/libgcc.map
 
-.if !defined(MKNATIVE_LIBGCC_NEW)
-
 # XXX handle this better?
 .if ${MACHINE_CPU} == "mips" && !(${MKSOFTFLOAT} != "no")
 G_LIB2ADD+=	${GNUHOSTDIST}/gcc/config/floatunsidf.c \
@@ -31,20 +29,6 @@ G_LIB2ADD+=	${GNUHOSTDIST}/gcc/config/floatunsidf.c \
 
 SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} \
 		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS}
-
-.else	# defined(MKNATIVE_LIBGCC_NEW)
-
-.include "../Makefile.srcs"
-
-# New style.
-TMPLSRCS=	${TMPLSRCS.libgcc_s.so}
-TMPLFPSRCS=	${TMPLFPSRCS.libgcc_s.so}
-TMPLASMSRCS=	${TMPLASMSRCS.libgcc_s.so}
-SRCS=		${SRCS.libgcc_s.so}
-
-.include "../Makefile.wrapper"
-
-.endif	# defined(MKNATIVE_LIBGCC_NEW)
 
 COPTS.unwind-dw2.c = -Wno-stack-protector
 

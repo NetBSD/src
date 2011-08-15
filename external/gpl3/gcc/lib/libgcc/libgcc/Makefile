@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/07/10 02:39:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/08/15 09:19:21 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -10,8 +10,6 @@ LIB=		gcc
 .if ${MKGCC} != "no"
 
 .cc: # disable .cc->NULL transform
-
-.if !defined(MKNATIVE_LIBGCC_NEW)
 
 # XXX handle this better?
 .if ${MACHINE} == "emips"
@@ -35,23 +33,8 @@ BUILDSYMLINKS+=	${GNUHOSTDIST}/gcc/config/rs6000/${file:S/.S$/.asm/} ${file}
 .endfor
 .   endif
 
-.else	# defined(MKNATIVE_LIBGCC_NEW)
-
-.include "../Makefile.srcs"
-
-# New style.
-TMPLSRCS=	${TMPLSRCS.libgcc.a}
-TMPLFPSRCS=	${TMPLFPSRCS.libgcc.a}
-TMPLASMSRCS=	${TMPLASMSRCS.libgcc.a}
-SRCS=		${SRCS.libgcc.a}
-
-.include "../Makefile.wrapper"
-
-.endif	# defined(MKNATIVE_LIBGCC_NEW)
-
 .include <bsd.lib.mk>
 
-.if !defined(MKNATIVE_LIBGCC_NEW)
 
 CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 
@@ -82,8 +65,6 @@ CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 	rm -f ${.TARGET}.tmp2
 .endif
 	rm -f ${.TARGET}.tmp1
-
-.endif	# !defined(MKNATIVE_LIBGCC_NEW)
 
 .else
 .include <bsd.prog.mk> # do nothing

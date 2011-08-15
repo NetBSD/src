@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 06:02:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/08/15 09:19:21 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -11,24 +11,8 @@ LIB=		gcc_eh
 
 .cc: # disable .cc->NULL transform
 
-.if !defined(MKNATIVE_LIBGCC_NEW)
-
 SRCS+=		${LIB2_EH}
 COPTS.unwind-dw2.c = -Wno-stack-protector
-
-.else	# defined(MKNATIVE_LIBGCC_NEW)
-
-.include "../Makefile.srcs"
-
-# New style.
-TMPLSRCS=	${TMPLSRCS.libgcc_eh.a}
-TMPLFPSRCS=	${TMPLFPSRCS.libgcc_eh.a}
-TMPLASMSRCS=	${TMPLASMSRCS.libgcc_eh.a}
-SRCS=		${SRCS.libgcc_eh.a}
-
-.include "../Makefile.wrapper"
-
-.endif	# defined(MKNATIVE_LIBGCC_NEW)
 
 .include <bsd.lib.mk>
 
