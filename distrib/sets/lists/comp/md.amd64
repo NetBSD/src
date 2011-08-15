@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.128 2011/07/26 16:10:16 joerg Exp $
+# $NetBSD: md.amd64,v 1.129 2011/08/15 15:14:00 wiz Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -79,16 +79,21 @@
 ./usr/include/clang-3.0/xmmintrin.h		comp-c-include		llvm
 ./usr/include/emmintrin.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.1/emmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/emmintrin.h		comp-obsolete		gcc=45,obsolete
 ./usr/include/gcc-4.1/mm_malloc.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/mm_malloc.h		comp-obsolete		gcc=45,obsolete
 ./usr/include/gcc-4.1/mmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/mmintrin.h		comp-obsolete		gcc=45,obsolete
 ./usr/include/gcc-4.1/pmmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/pmmintrin.h		comp-obsolete		gcc=45,obsolete
 ./usr/include/gcc-4.1/xmmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/xmmintrin.h		comp-obsolete		gcc=45,obsolete
 ./usr/include/gcc-4.5/abmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/ammintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/avxintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/bmmintrin.h		comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/cross-stdarg.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/cpuid.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.5/cross-stdarg.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/emmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/fma4intrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/ia32intrin.h		comp-c-include		gcccmds,gcc=45
