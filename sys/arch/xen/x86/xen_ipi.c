@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.3 2011/08/10 20:38:45 cherry Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.4 2011/08/15 20:17:12 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.3 2011/08/10 20:38:45 cherry Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.4 2011/08/15 20:17:12 cherry Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.3 2011/08/10 20:38:45 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.4 2011/08/15 20:17:12 cherry Exp $");
 
 #include <sys/types.h>
 
@@ -158,7 +158,7 @@ xen_send_ipi(struct cpu_info *ci, uint32_t ipimask)
 
 	KASSERT(ci != NULL || ci != curcpu());
 
-	if ((ci->ci_flags & CPUF_RUNNING) != 0) {
+	if ((ci->ci_flags & CPUF_RUNNING) == 0) {
 		return ENOENT;
 	}
 
