@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.88 2011/08/15 17:08:00 dyoung Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.89 2011/08/15 18:04:59 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.88 2011/08/15 17:08:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.89 2011/08/15 18:04:59 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,13 +271,13 @@ wi_pcmcia_enable(device_t self, int onoff)
 	if (onoff) {
 		/* establish the interrupt. */
 		sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, wi_intr, sc);
-		if (!sc->sc_ih)
+		if (sc->sc_ih == NULL)
 			return EIO;
 
 		error = pcmcia_function_enable(pf);
 		if (error) {
 			pcmcia_intr_disestablish(pf, sc->sc_ih);
-			sc->sc_ih = 0;
+			sc->sc_ih = NULL;
 			return EIO;
 		}
 
