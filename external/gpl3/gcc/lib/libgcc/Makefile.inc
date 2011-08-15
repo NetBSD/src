@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2011/08/15 09:19:21 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2011/08/15 18:31:20 mrg Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -17,6 +17,7 @@ GCCARCHXX=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libstdc++-v3/arch/${MACHINE_ARC
 GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_USE_COLLECT2} ${G_INCLUDES}
 CPPFLAGS+=	-I${.CURDIR} -I${GCCARCHLIBGCC}
 CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
+CPPFLAGS+=	${GCPPFLAGS:M-m*} ${GCPPFLAGS:M-f*}
 CPPFLAGS+=	${G_EXTRA_HEADERS:M/*:H:u:S/^/-I/g}
 CPPFLAGS+=	-I${DIST} -I${DIST}/gcc/cp -I${DIST}/gcc/config -I${GCCARCHXX} -I.
 
