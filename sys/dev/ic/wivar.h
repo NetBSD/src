@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.64 2010/11/23 04:33:09 christos Exp $	*/
+/*	$NetBSD: wivar.h,v 1.65 2011/08/15 18:24:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,6 +31,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/mutex.h>
+#include <sys/condvar.h>
+#include <sys/lwp.h>
 
 /* Radio capture format for Prism. */
 
@@ -166,6 +170,12 @@ struct wi_softc	{
 	/* number of transmissions pending at each data rate */
 	u_int8_t		sc_txpending[IEEE80211_RATE_MAXSIZE];
 	struct callout		sc_rssadapt_ch;
+	kmutex_t		sc_ioctl_mtx;
+	kcondvar_t		sc_ioctl_cv;
+	bool			sc_ioctl_gone;
+	unsigned int		sc_ioctl_nwait;
+	unsigned int		sc_ioctl_depth;
+	lwp_t			*sc_ioctl_lwp;
 };
 
 #define	sc_if		sc_ec.ec_if
