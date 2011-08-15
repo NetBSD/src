@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.28 2011/08/15 00:27:50 dholland Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.29 2011/08/15 00:30:25 dholland Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,6 +36,8 @@
  */
 
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: resize_ffs.c,v 1.29 2011/08/15 00:30:25 dholland Exp $");
+
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
