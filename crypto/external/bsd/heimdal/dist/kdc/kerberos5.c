@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.1.1.1 2011/04/13 18:14:37 elric Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.2 2011/08/15 21:00:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan
@@ -1265,9 +1265,9 @@ _kdc_as_rep(krb5_context context,
  		ret = KRB5KRB_AP_ERR_SKEW;
  		kdc_log(context, config, 0,
 			"Too large time skew, "
-			"client time %s is out by %u > %u seconds -- %s",
-			client_time,
-			(unsigned)abs(kdc_time - p.patimestamp),
+			"client time %s is out by %jd > %jd seconds -- %s",
+			(intmax_t)client_time,
+			imaxabs(kdc_time - p.patimestamp),
 			context->max_skew,
 			client_name);
 
