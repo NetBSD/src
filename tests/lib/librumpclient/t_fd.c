@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fd.c,v 1.2 2011/02/20 13:27:46 pooka Exp $	*/
+/*	$NetBSD: t_fd.c,v 1.3 2011/08/15 15:19:08 gson Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@ ATF_TC_BODY(sigio, tc)
 	int ls;
 	int cs;
 	int fl;
+	int sc;
 
 	signal(SIGIO, gotsig);
 	RZ(system("rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet "
@@ -131,7 +132,9 @@ ATF_TC_BODY(sigio, tc)
 
 	ATF_REQUIRE_EQ(sigcnt, 0);
 	RL(rump_sys_connect(cs, (struct sockaddr *)&sin, sizeof(sin)));
-	ATF_REQUIRE_EQ(sigcnt, 1);
+	sc = sigcnt;
+	printf("sigcnt after connect: %d\n", sc);
+	ATF_REQUIRE_EQ(sc, 1);
 }
 
 ATF_TP_ADD_TCS(tp)
