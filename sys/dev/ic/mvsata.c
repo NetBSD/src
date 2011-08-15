@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.9 2011/08/14 16:50:49 jakllsch Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.10 2011/08/15 01:04:04 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.9 2011/08/14 16:50:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.10 2011/08/15 01:04:04 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.9 2011/08/14 16:50:49 jakllsch Exp $");
 #ifdef MVSATA_DEBUG
 #define DPRINTF(x)	if (mvsata_debug) printf x
 #define	DPRINTFN(n,x)	if (mvsata_debug >= (n)) printf x
-int	mvsata_debug = 3;
+int	mvsata_debug = 2;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -1216,10 +1216,6 @@ intr:
 	/* Wait for IRQ (either real or polled) */
 	if ((ata_bio->flags & ATA_POLL) == 0) {
 		chp->ch_flags |= ATACH_IRQ_WAIT;
-
-#if 1		/* XXXXX: Marvell SATA and mvsata(4) can accept next xfer. */
-		chp->ch_queue->active_xfer = NULL;
-#endif
 	} else {
 		/* Wait for at last 400ns for status bit to be valid */
 		delay(1);
@@ -1254,6 +1250,8 @@ mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	DPRINTFN(2, ("%s:%d: mvsata_bio_intr: drive=%d\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive));
 
+	chp->ch_flags &= ~(ATACH_IRQ_WAIT|ATACH_DMA_WAIT);
+
 	/* Is it not a transfer, but a control operation? */
 	if (!(xfer->c_flags & C_DMA) && drvp->state < READY) {
 		aprint_error_dev(atac->atac_dev,
@@ -1263,7 +1261,7 @@ mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	}
 
 	/*
-	 * if we missed an interrupt transfer, reset and restart.
+	 * If we missed an interrupt transfer, reset and restart.
 	 * Don't try to continue transfer, we may have missed cycles.
 	 */
 	if (xfer->c_flags & C_TIMEOU) {
@@ -1394,6 +1392,7 @@ mvsata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	ata_bio->bcount = xfer->c_bcount;
 
 	/* mark controller inactive and free xfer */
+	KASSERT(chp->ch_queue->active_xfer != NULL);
 	chp->ch_queue->active_xfer = NULL;
 	ata_free_xfer(chp, xfer);
 
@@ -1411,6 +1410,7 @@ static int
 mvsata_bio_ready(struct mvsata_port *mvport, struct ata_bio *ata_bio, int drive,
 		 int flags)
 {
+#if 0
 	struct ata_channel *chp = &mvport->port_ata_channel;
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
@@ -1510,6 +1510,9 @@ ctrldone:
 	drvp->state = 0;
 	MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_4BIT);
 	return -1;
+#endif
+	mvport->port_ata_channel.ch_drive[drive].state = READY;
+	return 0;
 }
 
 static void
@@ -2353,6 +2356,8 @@ mvsata_edma_enqueue(struct mvsata_port *mvport, struct ata_bio *ata_bio,
 	if (rv != 0)
 		return rv;
 
+	KASSERT(mvport->port_reqtbl[quetag].xfer == NULL);
+	KASSERT(chp->ch_queue->active_xfer != NULL);
 	mvport->port_reqtbl[quetag].xfer = chp->ch_queue->active_xfer;
 
 	/* setup EDMA Physical Region Descriptors (ePRD) Table Data */
@@ -2466,11 +2471,12 @@ mvsata_edma_handle(struct mvsata_port *mvport, struct ata_xfer *xfer1)
 #endif
 		crpb = mvport->port_crpb + erpqop;
 		quetag = CRPB_CHOSTQUETAG(le16toh(crpb->id));
-		xfer = chp->ch_queue->active_xfer =
-		    mvport->port_reqtbl[quetag].xfer;
+		KASSERT(chp->ch_queue->active_xfer != NULL);
+		xfer = chp->ch_queue->active_xfer;
+		KASSERT(xfer == mvport->port_reqtbl[quetag].xfer);
 #ifdef DIAGNOSTIC
 		if (xfer == NULL)
-			panic("unknwon response received: %s:%d:%d: tag 0x%x\n",
+			panic("unknown response received: %s:%d:%d: tag 0x%x\n",
 			    device_xname(MVSATA_DEV2(mvport)),
 			    mvport->port_hc->hc, mvport->port, quetag);
 #endif
@@ -2654,6 +2660,8 @@ mvsata_bdma_init(struct mvsata_port *mvport, struct scsipi_xfer *sc_xfer,
 	if (rv != 0)
 		return rv;
 
+	KASSERT(chp->ch_queue->active_xfer != NULL);
+	KASSERT(mvport->port_reqtbl[quetag].xfer == NULL);
 	mvport->port_reqtbl[quetag].xfer = chp->ch_queue->active_xfer;
 
 	/* setup EDMA Physical Region Descriptors (ePRD) Table Data */
