@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.26 2010/02/02 16:25:30 drochner Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.27 2011/08/15 14:31:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ void
 usage()
 {
 
-	fprintf(stderr, "usage: %s [-a addr] [-d] [-f dev] [-v]\n",
+	fprintf(stderr, "usage: %s [-dv] [-a addr] [-f dev]\n",
 	    getprogname());
 	exit(1);
 }
