@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.234 2010/11/23 04:33:09 christos Exp $	*/
+/*	$NetBSD: wi.c,v 1.235 2011/08/15 18:24:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.234 2010/11/23 04:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.235 2011/08/15 18:24:34 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -150,6 +150,11 @@ STATIC void wi_watchdog(struct ifnet *);
 STATIC int  wi_ioctl(struct ifnet *, u_long, void *);
 STATIC int  wi_media_change(struct ifnet *);
 STATIC void wi_media_status(struct ifnet *, struct ifmediareq *);
+
+static void wi_ioctl_init(struct wi_softc *);
+static int wi_ioctl_enter(struct wi_softc *);
+static void wi_ioctl_exit(struct wi_softc *);
+static void wi_ioctl_drain(struct wi_softc *);
 
 STATIC struct ieee80211_node *wi_node_alloc(struct ieee80211_node_table *);
 STATIC void wi_node_free(struct ieee80211_node *);
@@ -373,6 +378,8 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 	};
 	int s;
 
+	wi_ioctl_init(sc);
+
 	s = splnet();
 
 	/* Make sure interrupts are disabled. */
@@ -595,6 +602,7 @@ wi_detach(struct wi_softc *sc)
 	ieee80211_ifdetach(&sc->sc_ic);
 	if_detach(ifp);
 	splx(s);
+	wi_ioctl_drain(sc);
 	return 0;
 }
 
@@ -1289,6 +1297,67 @@ wi_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(&sc->sc_ic);
 }
 
+static int
+wi_ioctl_enter(struct wi_softc *sc)
+{
+	int rc = 0;
+
+	mutex_enter(&sc->sc_ioctl_mtx);
+	sc->sc_ioctl_nwait++;
+	while (sc->sc_ioctl_lwp != NULL && sc->sc_ioctl_lwp != curlwp) {
+		rc = sc->sc_ioctl_gone
+		    ? ENXIO
+		    : cv_wait_sig(&sc->sc_ioctl_cv, &sc->sc_ioctl_mtx);
+		if (rc != 0)
+			break;
+	}
+	if (rc == 0) {
+		sc->sc_ioctl_lwp = curlwp;
+		sc->sc_ioctl_depth++;
+	}
+	if (--sc->sc_ioctl_nwait == 0)
+		cv_signal(&sc->sc_ioctl_cv);
+	mutex_exit(&sc->sc_ioctl_mtx);
+	return rc;
+}
+
+static void
+wi_ioctl_exit(struct wi_softc *sc)
+{
+	KASSERT(sc->sc_ioctl_lwp == curlwp);
+	mutex_enter(&sc->sc_ioctl_mtx);
+	if (--sc->sc_ioctl_depth == 0) {
+		sc->sc_ioctl_lwp = NULL;
+		cv_signal(&sc->sc_ioctl_cv);
+	}
+	mutex_exit(&sc->sc_ioctl_mtx);
+}
+
+static void
+wi_ioctl_init(struct wi_softc *sc)
+{
+	mutex_init(&sc->sc_ioctl_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_ioctl_cv, device_xname(sc->sc_dev));
+}
+
+static void
+wi_ioctl_drain(struct wi_softc *sc)
+{
+	wi_ioctl_enter(sc);
+
+	mutex_enter(&sc->sc_ioctl_mtx);
+	sc->sc_ioctl_gone = true;
+	cv_broadcast(&sc->sc_ioctl_cv);
+	while (sc->sc_ioctl_nwait != 0)
+		cv_wait(&sc->sc_ioctl_cv, &sc->sc_ioctl_mtx);
+	mutex_exit(&sc->sc_ioctl_mtx);
+
+	wi_ioctl_exit(sc);
+
+	mutex_destroy(&sc->sc_ioctl_mtx);
+	cv_destroy(&sc->sc_ioctl_cv);
+}
+
 STATIC int
 wi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
@@ -1301,6 +1370,9 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		return ENXIO;
 
 	s = splnet();
+
+	if ((error = wi_ioctl_enter(sc)) != 0)
+		return error;
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
@@ -1374,6 +1446,7 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	}
 	wi_mend_flags(sc, ic->ic_state);
+	wi_ioctl_exit(sc);
 	splx(s);
 	return error;
 }
