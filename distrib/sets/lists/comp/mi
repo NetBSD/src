@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1661 2011/08/15 11:25:07 wiz Exp $
+#	$NetBSD: mi,v 1.1662 2011/08/15 15:14:00 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -72,6 +72,7 @@
 ./usr/bin/objdump				comp-util-bin		binutils
 ./usr/bin/pcc					comp-c-bin		pcc
 ./usr/bin/protoize				comp-c-bin		gcc=4,gcccmds
+./usr/bin/protoize                              comp-obsolete           gcc=45,obsolete
 ./usr/bin/ranlib				comp-util-bin		binutils
 ./usr/bin/rcs2log				comp-cvs-bin		cvs
 ./usr/bin/readelf				comp-util-bin		binutils
@@ -83,6 +84,7 @@
 ./usr/bin/unifdef				comp-util-bin
 ./usr/bin/unifdefall				comp-util-bin
 ./usr/bin/unprotoize				comp-c-bin		gcc=4,gcccmds
+./usr/bin/unprotoize                            comp-obsolete		gcc=45,obsolete
 ./usr/bin/xgettext				comp-c-bin
 ./usr/bin/xstr					comp-c-bin
 ./usr/bin/yacc					comp-c-bin
@@ -829,6 +831,7 @@
 ./usr/include/g++/bits/codecvt_specializations.h	comp-obsolete		gcc=4,obsolete
 ./usr/include/g++/bits/concept_check.h		comp-cxx-include	cxx
 ./usr/include/g++/bits/concurrence.h		comp-cxx-include	gcc=4,cxx
+./usr/include/g++/bits/concurrence.h            comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/bits/cpp_type_traits.h	comp-cxx-include	cxx
 ./usr/include/g++/bits/cpu_defines.h		comp-cxx-include	gcc=4,cxx
 ./usr/include/g++/bits/cpu_defines.h		comp-cxx-include	gcc=45,cxx
@@ -985,11 +988,17 @@
 ./usr/include/g++/debug/functions.h		comp-cxx-include	gcc=4,cxx
 ./usr/include/g++/debug/functions.h		comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/debug/hash_map		comp-cxx-include	gcc=4,cxx
+./usr/include/g++/debug/hash_map                comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/debug/hash_map.h		comp-cxx-include	gcc=4,cxx
+./usr/include/g++/debug/hash_map.h              comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/debug/hash_multimap.h		comp-cxx-include	gcc=4,cxx
+./usr/include/g++/debug/hash_multimap.h         comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/debug/hash_multiset.h		comp-cxx-include	gcc=4,cxx
+./usr/include/g++/debug/hash_multiset.h         comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/debug/hash_set		comp-cxx-include	gcc=4,cxx
+./usr/include/g++/debug/hash_set                comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/debug/hash_set.h		comp-cxx-include	gcc=4,cxx
+./usr/include/g++/debug/hash_set.h              comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/debug/list			comp-cxx-include	gcc=4,cxx
 ./usr/include/g++/debug/list			comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/debug/macros.h		comp-cxx-include	gcc=4,cxx
@@ -1047,9 +1056,11 @@
 ./usr/include/g++/ext/extptr_allocator.h	comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/ext/functional		comp-cxx-include	cxx
 ./usr/include/g++/ext/hash_fun.h		comp-cxx-include	gcc=4,cxx
+./usr/include/g++/ext/hash_fun.h                comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/ext/hash_map			comp-cxx-include	cxx
 ./usr/include/g++/ext/hash_set			comp-cxx-include	cxx
 ./usr/include/g++/ext/hashtable.h		comp-cxx-include	gcc=4,cxx
+./usr/include/g++/ext/hashtable.h               comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/ext/iterator			comp-cxx-include	cxx
 ./usr/include/g++/ext/malloc_allocator.h	comp-cxx-include	gcc=4,cxx
 ./usr/include/g++/ext/malloc_allocator.h	comp-cxx-include	gcc=45,cxx
@@ -1468,8 +1479,11 @@
 ./usr/include/g++/tr1/bessel_function.tcc	comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/beta_function.tcc		comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/bind_iterate.h		comp-cxx-include	gcc=4,cxx
+./usr/include/g++/tr1/bind_iterate.h            comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/tr1/bind_repeat.h		comp-cxx-include	gcc=4,cxx
+./usr/include/g++/tr1/bind_repeat.h             comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/tr1/boost_shared_ptr.h	comp-cxx-include	gcc=4,cxx
+./usr/include/g++/tr1/boost_shared_ptr.h        comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/tr1/ccomplex			comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/cctype			comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/cfenv			comp-cxx-include	gcc=45,cxx
@@ -1497,8 +1511,10 @@
 ./usr/include/g++/tr1/functional		comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/functional_hash.h		comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/functional_iterate.h	comp-cxx-include	gcc=4,cxx
+./usr/include/g++/tr1/functional_iterate.h      comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/tr1/gamma.tcc			comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/hashtable			comp-cxx-include	gcc=4,cxx
+./usr/include/g++/tr1/hashtable                 comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/tr1/hashtable.h		comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/hashtable_policy.h	comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/hypergeometric.tcc	comp-cxx-include	gcc=45,cxx
@@ -1510,15 +1526,19 @@
 ./usr/include/g++/tr1/memory			comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/modified_bessel_func.tcc	comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/mu_iterate.h		comp-cxx-include	gcc=4,cxx
+./usr/include/g++/tr1/mu_iterate.h              comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/tr1/poly_hermite.tcc		comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/poly_laguerre.tcc		comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/random			comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/random.h			comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/random.tcc		comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/ref_fwd.h			comp-cxx-include	gcc=4,cxx
+./usr/include/g++/tr1/ref_fwd.h                 comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/tr1/ref_wrap_iterate.h	comp-cxx-include	gcc=4,cxx
+./usr/include/g++/tr1/ref_wrap_iterate.h        comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/tr1/regex			comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/repeat.h			comp-cxx-include	gcc=4,cxx
+./usr/include/g++/tr1/repeat.h                  comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/tr1/riemann_zeta.tcc		comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/shared_ptr.h		comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/special_function_util.h	comp-cxx-include	gcc=45,cxx
@@ -1531,9 +1551,11 @@
 ./usr/include/g++/tr1/tuple			comp-cxx-include	gcc=4,cxx
 ./usr/include/g++/tr1/tuple			comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/tuple_iterate.h		comp-cxx-include	gcc=4,cxx
+./usr/include/g++/tr1/tuple_iterate.h           comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/tr1/type_traits		comp-cxx-include	gcc=4,cxx
 ./usr/include/g++/tr1/type_traits		comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/type_traits_fwd.h		comp-cxx-include	gcc=4,cxx
+./usr/include/g++/tr1/type_traits_fwd.h         comp-obsolete		gcc=45,obsolete
 ./usr/include/g++/tr1/unordered_map		comp-cxx-include	gcc=4,cxx
 ./usr/include/g++/tr1/unordered_map		comp-cxx-include	gcc=45,cxx
 ./usr/include/g++/tr1/unordered_map.h		comp-cxx-include	gcc=45,cxx
@@ -3698,6 +3720,7 @@
 ./usr/libdata/debug/usr/bin/printf.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/progress.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/protoize.debug	comp-c-debug		gcc=4,gcccmds,debug
+./usr/libdata/debug/usr/bin/protoize.debug      comp-obsolete		gcc=45,obsolete
 ./usr/libdata/debug/usr/bin/pwhash.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/qsafe.debug		comp-util-debug		crypto,debug
 ./usr/libdata/debug/usr/bin/qsieve.debug	comp-util-debug		crypto,debug
@@ -3793,6 +3816,7 @@
 ./usr/libdata/debug/usr/bin/uniq.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/units.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/unprotoize.debug	comp-c-debug		gcc=4,gcccmds,debug
+./usr/libdata/debug/usr/bin/unprotoize.debug    comp-obsolete		gcc=45,obsolete
 ./usr/libdata/debug/usr/bin/unvis.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/unzip.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/usbhidaction.debug	comp-util-debug		debug
