@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.87 2011/08/15 17:01:28 dyoung Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.88 2011/08/15 17:08:00 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.87 2011/08/15 17:01:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.88 2011/08/15 17:08:00 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,8 +256,8 @@ wi_pcmcia_match(device_t parent, cfdata_t match, void *aux)
 
 	if (pcmcia_product_lookup(pa, wi_pcmcia_products, wi_pcmcia_nproducts,
 	    sizeof(wi_pcmcia_products[0]), NULL))
-		return (1);
-	return (0);
+		return 1;
+	return 0;
 }
 
 static int
@@ -315,9 +315,9 @@ wi_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_iospace != 1 ||
 	    cfe->iospace[0].length < WI_IOSIZE)
-		return (EINVAL);
+		return EINVAL;
 	cfe->num_memspace = 0;
-	return (0);
+	return 0;
 }
 
 static void
@@ -397,18 +397,18 @@ wi_pcmcia_detach(device_t self, int flags)
 	int error;
 
 	if (psc->sc_state != WI_PCMCIA_ATTACHED)
-		return (0);
+		return 0;
 
 	error = wi_detach(&psc->sc_wi);
 	if (error != 0)
-		return (error);
+		return error;
 
 	if (sc->sc_ih != NULL)
 		pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
 
 	pcmcia_function_unconfigure(psc->sc_pf);
 
-	return (0);
+	return 0;
 }
 
 /*
