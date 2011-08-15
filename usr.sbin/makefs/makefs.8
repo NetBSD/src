@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.35 2011/07/22 13:04:00 wiz Exp $
+.\"	$NetBSD: makefs.8,v 1.36 2011/08/15 14:45:01 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 18, 2011
+.Dd August 13, 2011
 .Dt MAKEFS 8
 .Os
 .Sh NAME
@@ -42,10 +42,10 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl x
-.Op Fl B Ar byte-order
+.Op Fl B Ar endian
 .Op Fl b Ar free-blocks
 .Op Fl d Ar debug-mask
-.Op Fl F Ar specfile
+.Op Fl F Ar mtree-specfile
 .Op Fl f Ar free-files
 .Op Fl M Ar minimum-size
 .Op Fl m Ar maximum-size
@@ -67,9 +67,9 @@ No special devices or privileges are required to perform this task.
 .Pp
 The options are as follows:
 .Bl -tag -width flag
-.It Fl B Ar byte-order
+.It Fl B Ar endian
 Set the byte order of the image to
-.Ar byte-order .
+.Ar endian .
 Valid byte orders are
 .Ql 4321 ,
 .Ql big ,
@@ -97,9 +97,9 @@ Enable various levels of debugging, depending upon which bits are
 set in
 .Ar debug-mask .
 XXX: document these
-.It Fl F Ar specfile
+.It Fl F Ar mtree-specfile
 Use
-.Ar specfile
+.Ar mtree-specfile
 as an
 .Xr mtree 8
 .Sq specfile
@@ -156,13 +156,13 @@ Set the maximum size of the file system image to
 .Ar maximum-size .
 An error will be raised if the target file system needs to be larger
 than this to accommodate the provided directory tree.
-.It Fl N Ar dbdir
+.It Fl N Ar userdb-dir
 Use the user database text file
 .Pa master.passwd
 and group database text file
 .Pa group
 from
-.Ar dbdir ,
+.Ar userdb-dir ,
 rather than using the results from the system's
 .Xr getpwnam 3
 and
@@ -352,7 +352,7 @@ utility appeared in
 .Sh AUTHORS
 .An Luke Mewburn
 .Aq lukem@NetBSD.org
-(original program)
+(original program),
 .An Daniel Watt ,
 .An Walter Deignan ,
 .An Ryan Gabrys ,
@@ -360,4 +360,4 @@ utility appeared in
 .An Ram Vedam
 (cd9660 support),
 .An UCHIYAMA Yasushi
-(v7fs support)
+(v7fs support).
