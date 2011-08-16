@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.71 2011/07/31 15:39:28 matt Exp $
+#	$NetBSD: files.mips,v 1.72 2011/08/16 06:58:15 matt Exp $
 #
 
 defflag	opt_cputype.h		NOFPU FPEMUL
@@ -47,6 +47,7 @@ file	arch/mips/mips/pmap_segtab.c
 file	arch/mips/mips/pmap_tlb.c
 file	arch/mips/mips/trap.c			# trap handlers
 file	arch/mips/mips/syscall.c		# syscall entries
+file	arch/mips/mips/mips_dsp.c		mips32r2 | mips64r2
 file	arch/mips/mips/mips_fixup.c
 file	arch/mips/mips/mips_fpu.c
 file	arch/mips/mips/mips_machdep.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.231 2011/04/29 22:08:17 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.232 2011/08/16 06:58:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.231 2011/04/29 22:08:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.232 2011/08/16 06:58:15 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -111,7 +111,7 @@ const char * const trap_names[] = {
 	"r4k watch",
 	"mipsNN machine check",
 	"reserved 25",
-	"reserved 26",
+	"DSP exception",
 	"reserved 27",
 	"reserved 28",
 	"reserved 29",
@@ -599,6 +599,15 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		ksi.ksi_code = TRAP_BRKPT;
 		break; /* SIGNAL */
 	}
+	case T_DSP+T_USER:
+#if (MIPS32R2 + MIPS64R2) > 0
+		if (MIPS_HAS_DSP) {
+			dsp_load();
+			userret(l);
+			return; /* GEN */
+		}
+#endif /* (MIPS32R3 + MIPS64R2) > 0 */
+		/* FALLTHROUGH */
 	case T_RES_INST+T_USER:
 	case T_COP_UNUSABLE+T_USER:
 #if !defined(FPEMUL) && !defined(NOFPU)

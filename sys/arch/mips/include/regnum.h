@@ -1,4 +1,4 @@
-/*	$NetBSD: regnum.h,v 1.10 2011/02/08 20:20:19 rmind Exp $	*/
+/*	$NetBSD: regnum.h,v 1.11 2011/08/16 06:58:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,7 +108,7 @@
 #define _R_CAUSE	36
 #define	_R_PC		37
 
-#define _FPBASE	38
+#define _FPBASE		(_R_PC + 1)
 #define _R_F0		(_FPBASE+0)
 #define _R_F1		(_FPBASE+1)
 #define _R_F2		(_FPBASE+2)
@@ -142,3 +142,12 @@
 #define _R_F30		(_FPBASE+30)
 #define _R_F31		(_FPBASE+31)
 #define	_R_FSR		(_FPBASE+32)
+
+#define	_R_DSPBASE	(_R_FSR + 1)
+#define _R_MULLO1	(_R_DSPBASE + 0)
+#define _R_MULHI1	(_R_DSPBASE + 1)
+#define _R_MULLO2	(_R_DSPBASE + 2)
+#define _R_MULHI2	(_R_DSPBASE + 3)
+#define _R_MULLO3	(_R_DSPBASE + 4)
+#define _R_MULHI3	(_R_DSPBASE + 5)
+#define _R_DSPCTL	(_R_DSPBASE + 6)

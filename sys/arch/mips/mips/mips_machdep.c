@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.245 2011/07/31 15:39:29 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.246 2011/08/16 06:58:15 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.245 2011/07/31 15:39:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.246 2011/08/16 06:58:15 matt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -883,10 +883,23 @@ mips32r2_vector_init(const struct splsw *splsw)
 	      mips32r2_intr_end - mips32r2_tlb_miss);
 
 	/*
+	 * Let see if this cpu has DSP V2 ASE...
+	 */
+	uint32_t cp0flags = mips_options.mips_cpu->cpu_cp0flags;
+	if (mipsNN_cp0_config2_read() & MIPSNN_CFG2_M) {
+		const uint32_t cfg3 = mipsNN_cp0_config3_read();
+		if (cfg3 & MIPSNN_CFG3_ULRP) {
+			cp0flags |= MIPS_CP0FL_USERLOCAL;
+		}
+		if (cfg3 & MIPSNN_CFG3_DSP2P) {
+			mips_options.mips_cpu_flags |= CPU_MIPS_HAVE_DSP;
+		}
+	}
+	/*
 	 * If this CPU doesn't have a COP0 USERLOCAL register, at the end
 	 * of cpu_switch resume overwrite the instructions which update it.
 	 */
-	if (!(mips_options.mips_cpu->cpu_cp0flags & MIPS_CP0FL_USERLOCAL)) {
+	if (!(cp0flags & MIPS_CP0FL_USERLOCAL)) {
 		extern uint32_t mips32r2_cpu_switch_resume[];
 		for (uint32_t *insnp = mips32r2_cpu_switch_resume;; insnp++) {
 			KASSERT(insnp[0] != JR_RA);
@@ -1010,10 +1023,24 @@ mips64r2_vector_init(const struct splsw *splsw)
 	      mips64r2_intr_end - mips64r2_tlb_miss);
 
 	/*
+	 * Let see if this cpu has DSP V2 ASE...
+	 */
+	uint32_t cp0flags = mips_options.mips_cpu->cpu_cp0flags;
+	if (mipsNN_cp0_config2_read() & MIPSNN_CFG2_M) {
+		const uint32_t cfg3 = mipsNN_cp0_config3_read();
+		if (cfg3 & MIPSNN_CFG3_ULRP) {
+			cp0flags |= MIPS_CP0FL_USERLOCAL;
+		}
+		if (cfg3 & MIPSNN_CFG3_DSP2P) {
+			mips_options.mips_cpu_flags |= CPU_MIPS_HAVE_DSP;
+		}
+	}
+
+	/*
 	 * If this CPU doesn't have a COP0 USERLOCAL register, at the end
 	 * of cpu_switch resume overwrite the instructions which update it.
 	 */
-	if (!(mips_options.mips_cpu->cpu_cp0flags & MIPS_CP0FL_USERLOCAL)) {
+	if (!(cp0flags & MIPS_CP0FL_USERLOCAL)) {
 		extern uint32_t mips64r2_cpu_switch_resume[];
 		for (uint32_t *insnp = mips64r2_cpu_switch_resume;; insnp++) {
 			KASSERT(insnp[0] != JR_RA);
@@ -1408,6 +1435,9 @@ cpu_identify(device_t dev)
 			    MIPS_PRID_REV_MIN(fpu_id));
 		else
 			aprint_normal(" Rev. %d", MIPS_PRID_REV(fpu_id));
+	}
+	if (opts->mips_cpu_flags & MIPS_HAS_DSP) {
+		aprint_normal(" and DSPv2");
 	}
 	aprint_normal("\n");
 

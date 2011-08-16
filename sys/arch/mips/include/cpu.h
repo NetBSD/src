@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.104 2011/07/31 15:36:28 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.105 2011/08/16 06:58:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -104,6 +104,8 @@ struct cpu_info {
 	volatile u_int ci_softints;
 	struct evcnt ci_ev_fpu_loads;	/* fpu load counter */
 	struct evcnt ci_ev_fpu_saves;	/* fpu save counter */
+	struct evcnt ci_ev_dsp_loads;	/* dsp load counter */
+	struct evcnt ci_ev_dsp_saves;	/* dsp save counter */
 	struct evcnt ci_ev_tlbmisses;
 
 	/*
@@ -282,6 +284,7 @@ extern struct mips_options mips_options;
 #define	CPU_MIPS_HAVE_MxCR		0x2000	/* have mfcr, mtcr insns */
 #define	CPU_MIPS_LOONGSON2		0x4000
 #define	MIPS_NOT_SUPP			0x8000
+#define	CPU_MIPS_HAVE_DSP		0x10000
 
 #endif	/* !_LOCORE */
 
@@ -300,6 +303,7 @@ extern struct mips_options mips_options;
 # define MIPS_HAS_CLOCK		0
 # define MIPS_HAS_LLSC		0
 # define MIPS_HAS_LLADDR	0
+# define MIPS_HAS_DSP		0
 
 #elif defined(MIPS3) || defined(MIPS4)
 
@@ -322,6 +326,7 @@ extern struct mips_options mips_options;
 #  define MIPS_HAS_LLSC		(mips_options.mips_has_llsc)
 # endif	/* _LOCORE */
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+# define MIPS_HAS_DSP		0
 
 #elif defined(MIPS32)
 
@@ -336,6 +341,7 @@ extern struct mips_options mips_options;
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+# define MIPS_HAS_DSP		0
 
 #elif defined(MIPS32R2)
 
@@ -350,6 +356,7 @@ extern struct mips_options mips_options;
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+# define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
 
 #elif defined(MIPS64)
 
@@ -364,6 +371,7 @@ extern struct mips_options mips_options;
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+# define MIPS_HAS_DSP		0
 
 #elif defined(MIPS64R2)
 
@@ -378,6 +386,7 @@ extern struct mips_options mips_options;
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+# define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
 
 #endif
 
@@ -388,6 +397,7 @@ extern struct mips_options mips_options;
 #define	MIPS_HAS_R4K_MMU	(mips_options.mips_has_r4k_mmu)
 #define	MIPS_HAS_LLSC		(mips_options.mips_has_llsc)
 #define	MIPS_HAS_LLADDR		((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+# define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
 
 /* This test is ... rather bogus */
 #define	CPUISMIPS3	((mips_options.mips_cpu_arch & \
@@ -621,12 +631,21 @@ int	ustore_uint32_isync(void *, uint32_t);
 void	netintr(void);
 int	kdbpeek(vaddr_t);
 
+/* mips_dsp.c */
+void	dsp_init(void);
+void	dsp_discard(void);
+void	dsp_load(void);
+void	dsp_save(void);
+bool	dsp_used_p(void);
+extern const pcu_ops_t mips_dsp_ops;
+
 /* mips_fpu.c */
 void	fpu_init(void);
 void	fpu_discard(void);
 void	fpu_load(void);
 void	fpu_save(void);
 bool	fpu_used_p(void);
+extern const pcu_ops_t mips_fpu_ops;
 
 /* mips_machdep.c */
 void	dumpsys(void);

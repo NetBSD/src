@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.13 2011/05/02 00:29:54 rmind Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.14 2011/08/16 06:58:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.13 2011/05/02 00:29:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.14 2011/08/16 06:58:15 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -87,6 +87,13 @@ struct cpu_info cpu_info_store
 	.ci_tlb_slot = -1,
 #ifdef MULTIPROCESSOR
 	.ci_flags = CPUF_PRIMARY|CPUF_PRESENT|CPUF_RUNNING,
+#endif
+};
+
+const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
+	[PCU_FPU] = &mips_fpu_ops,
+#if (MIPS32R2 + MIPS64R2) > 0
+	[PCU_DSP] = &mips_dsp_ops,
 #endif
 };
 
@@ -231,6 +238,12 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 	evcnt_attach_dynamic(&ci->ci_ev_fpu_saves,
 		EVCNT_TYPE_MISC, NULL, xname,
 		"fpu saves");
+	evcnt_attach_dynamic(&ci->ci_ev_dsp_loads,
+		EVCNT_TYPE_MISC, NULL, xname,
+		"dsp loads");
+	evcnt_attach_dynamic(&ci->ci_ev_dsp_saves,
+		EVCNT_TYPE_MISC, NULL, xname,
+		"dsp saves");
 	evcnt_attach_dynamic(&ci->ci_ev_tlbmisses,
 		EVCNT_TYPE_TRAP, NULL, xname,
 		"tlb misses");
