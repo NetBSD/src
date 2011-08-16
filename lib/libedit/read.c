@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.66 2011/07/29 23:44:44 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.67 2011/08/16 16:25:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.66 2011/07/29 23:44:44 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.67 2011/08/16 16:25:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -491,7 +491,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 		while ((num = (*el->el_read.read_char)(el, cp)) == 1) {
 			/* make sure there is space for next character */
 			if (cp + 1 >= el->el_line.limit) {
-				idx = (cp - el->el_line.buffer);
+				idx = (size_t)(cp - el->el_line.buffer);
 				if (!ch_enlargebufs(el, (size_t)2))
 					break;
 				cp = &el->el_line.buffer[idx];
@@ -543,7 +543,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 		while ((num = (*el->el_read.read_char)(el, cp)) == 1) {
 			/* make sure there is space next character */
 			if (cp + 1 >= el->el_line.limit) {
-				idx = (cp - el->el_line.buffer);
+				idx = (size_t)(cp - el->el_line.buffer);
 				if (!ch_enlargebufs(el, (size_t)2))
 					break;
 				cp = &el->el_line.buffer[idx];

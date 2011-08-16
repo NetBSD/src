@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.12 2011/07/28 20:50:55 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.13 2011/08/16 16:25:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.12 2011/07/28 20:50:55 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.13 2011/08/16 16:25:15 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
@@ -57,7 +57,7 @@ el_getc(EditLine *el, char *cp)
 		el->el_flags &= ~IGNORE_EXTCHARS;
 
 	if (num_read > 0)
-		*cp = (unsigned char)wc;
+		*cp = (char)wc;
 	return num_read;
 }
 
@@ -237,7 +237,7 @@ el_set(EditLine *el, int op, ...)
 	case EL_PROMPT_ESC: /* el_pfunc_t, char */
 	case EL_RPROMPT_ESC: {
 		el_pfunc_t p = va_arg(ap, el_pfunc_t);
-		char c = va_arg(ap, int);
+		char c = (char)va_arg(ap, int);
 		ret = prompt_set(el, p, c, op, 0);
 		break;
 	}
@@ -277,7 +277,7 @@ el_get(EditLine *el, int op, ...)
 		char *c = va_arg(ap, char *);
 		wchar_t wc = 0;
 		ret = prompt_get(el, p, &wc, op);
-		*c = (unsigned char)wc;
+		*c = (char)wc;
 		break;
 	}
 
