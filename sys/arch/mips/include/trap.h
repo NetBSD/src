@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.17 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: trap.h,v 1.18 2011/08/16 06:58:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,6 +66,7 @@
 #define	T_VCEI			14	/* Virtual coherency exception */
 #define	T_FPE			15	/* Floating point exception */
 #define	T_WATCH			23	/* Watch address reference */
+#define	T_DSP			26	/* DSP exception */
 #define T_VCED			31	/* Virtual coherency data */
 
 #define	T_USER			0x20	/* user-mode flag or'ed with type */
