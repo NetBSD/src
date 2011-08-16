@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.7 2011/07/29 23:44:45 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.8 2011/08/16 16:25:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.7 2011/07/29 23:44:45 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.8 2011/08/16 16:25:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -379,7 +379,7 @@ terminal_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 					/* XXX strcpy is safe */
 	(void) strcpy(*str = &el->el_terminal.t_buf[el->el_terminal.t_loc],
 	    cap);
-	el->el_terminal.t_loc += (int)clen + 1;	/* one for \0 */
+	el->el_terminal.t_loc += (size_t)clen + 1;	/* one for \0 */
 	return;
 }
 
@@ -413,11 +413,11 @@ terminal_alloc_display(EditLine *el)
 	Char **b;
 	coord_t *c = &el->el_terminal.t_size;
 
-	b =  el_malloc(sizeof(*b) * (c->v + 1));
+	b =  el_malloc(sizeof(*b) * (size_t)(c->v + 1));
 	if (b == NULL)
 		return -1;
 	for (i = 0; i < c->v; i++) {
-		b[i] = el_malloc(sizeof(**b) * (c->h + 1));
+		b[i] = el_malloc(sizeof(**b) * (size_t)(c->h + 1));
 		if (b[i] == NULL) {
 			while (--i >= 0)
 				el_free(b[i]);
@@ -428,11 +428,11 @@ terminal_alloc_display(EditLine *el)
 	b[c->v] = NULL;
 	el->el_display = b;
 
-	b = el_malloc(sizeof(*b) * (c->v + 1));
+	b = el_malloc(sizeof(*b) * (size_t)(c->v + 1));
 	if (b == NULL)
 		return -1;
 	for (i = 0; i < c->v; i++) {
-		b[i] = el_malloc(sizeof(**b) * (c->h + 1));
+		b[i] = el_malloc(sizeof(**b) * (size_t)(c->h + 1));
 		if (b[i] == NULL) {
 			while (--i >= 0)
 				el_free(b[i]);
@@ -496,7 +496,8 @@ terminal_move_to_line(EditLine *el, int where)
 		while (del > 0) {
 			if (EL_HAS_AUTO_MARGINS &&
 			    el->el_display[el->el_cursor.v][0] != '\0') {
-                                size_t h = el->el_terminal.t_size.h - 1;
+                                size_t h = (size_t)
+				    (el->el_terminal.t_size.h - 1);
 #ifdef WIDECHAR
                                 for (; h > 0 &&
                                          el->el_display[el->el_cursor.v][h] ==

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.25 2011/07/29 15:16:33 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.26 2011/08/16 16:25:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.25 2011/07/29 15:16:33 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.26 2011/08/16 16:25:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -108,14 +108,14 @@ FUN(el,parse)(EditLine *el, int argc, const Char *argv[])
 
 		if (ptr == argv[0])
 			return 0;
-		l = ptr - argv[0] - 1;
+		l = (size_t)(ptr - argv[0] - 1);
 		tprog = el_malloc((l + 1) * sizeof(*tprog));
 		if (tprog == NULL)
 			return 0;
 		(void) Strncpy(tprog, argv[0], l);
 		tprog[l] = '\0';
 		ptr++;
-		l = el_match(el->el_prog, tprog);
+		l = (size_t)el_match(el->el_prog, tprog);
 		el_free(tprog);
 		if (!l)
 			return 0;
@@ -214,7 +214,7 @@ parse__escape(const Char **ptr)
 				}
 				c = (c << 3) | (ch - '0');
 			}
-			if ((c & 0xffffff00) != 0)
+			if ((c & (wint_t)0xffffff00) != (wint_t)0)
 				return -1;
 			--p;
 			break;

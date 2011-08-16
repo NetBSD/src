@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.28 2011/07/29 23:44:45 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.29 2011/08/16 16:25:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.28 2011/07/29 23:44:45 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.29 2011/08/16 16:25:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -175,7 +175,8 @@ c_setpat(EditLine *el)
 {
 	if (el->el_state.lastcmd != ED_SEARCH_PREV_HISTORY &&
 	    el->el_state.lastcmd != ED_SEARCH_NEXT_HISTORY) {
-		el->el_search.patlen = EL_CURSOR(el) - el->el_line.buffer;
+		el->el_search.patlen =
+		    (size_t)(EL_CURSOR(el) - el->el_line.buffer);
 		if (el->el_search.patlen >= EL_BUFSIZ)
 			el->el_search.patlen = EL_BUFSIZ - 1;
 		if (el->el_search.patlen != 0) {
@@ -386,9 +387,10 @@ ce_inc_search(EditLine *el, int dir)
 					/* avoid c_setpat */
 					el->el_state.lastcmd =
 					    (el_action_t) newdir;
-					ret = newdir == ED_SEARCH_PREV_HISTORY ?
+					ret = (el_action_t)
+					    (newdir == ED_SEARCH_PREV_HISTORY ?
 					    ed_search_prev_history(el, 0) :
-					    ed_search_next_history(el, 0);
+					    ed_search_next_history(el, 0));
 					if (ret != CC_ERROR) {
 						el->el_line.cursor = newdir ==
 						    ED_SEARCH_PREV_HISTORY ?
@@ -453,7 +455,7 @@ cv_search(EditLine *el, int dir)
 {
 	Char ch;
 	Char tmpbuf[EL_BUFSIZ];
-	int tmplen;
+	ssize_t tmplen;
 
 #ifdef ANCHOR
 	tmpbuf[0] = '.';
@@ -502,7 +504,7 @@ cv_search(EditLine *el, int dir)
 #endif
 		tmpbuf[tmplen] = '\0';
 		(void) Strncpy(el->el_search.patbuf, tmpbuf, EL_BUFSIZ - 1);
-		el->el_search.patlen = tmplen;
+		el->el_search.patlen = (size_t)tmplen;
 	}
 	el->el_state.lastcmd = (el_action_t) dir;	/* avoid c_setpat */
 	el->el_line.cursor = el->el_line.lastchar = el->el_line.buffer;
@@ -608,7 +610,7 @@ cv_csearch(EditLine *el, int direction, Int ch, int count, int tflag)
 	/* Save for ';' and ',' commands */
 	el->el_search.chacha = ch;
 	el->el_search.chadir = direction;
-	el->el_search.chatflg = tflag;
+	el->el_search.chatflg = (char)tflag;
 
 	cp = el->el_line.cursor;
 	while (count--) {
