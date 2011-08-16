@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.3 2011/08/16 05:28:44 christos Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -291,8 +291,10 @@ static	void	raw		(struct parse *, FILE *);
 static	void	cooked		(struct parse *, FILE *);
 static	void	authenticate	(struct parse *, FILE *);
 static	void	ntpversion	(struct parse *, FILE *);
-static	void	warning		(const char *, const char *, const char *);
-static	void	error		(const char *, const char *, const char *);
+static	void	warning		(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
+static	void	error		(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
 static	u_long	getkeyid	(const char *);
 static	void	atoascii	(const char *, size_t, char *, size_t);
 static	void	makeascii	(int, char *, FILE *);
@@ -757,7 +759,7 @@ openhost(
 
 	sockfd = socket(ai->ai_family, SOCK_DGRAM, 0);
 	if (sockfd == INVALID_SOCKET) {
-		error("socket", "", "");
+		error("socket");
 	}
 
 	
@@ -766,7 +768,7 @@ openhost(
 	{ int rbufsize = DATASIZE + 2048;	/* 2K for slop */
 	if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF,
 		       &rbufsize, sizeof(int)) == -1)
-	    error("setsockopt", "", "");
+	    error("setsockopt");
 	}
 # endif
 #endif
@@ -778,7 +780,7 @@ openhost(
 	if (connect(sockfd, (struct sockaddr *)ai->ai_addr,
 		    ai->ai_addrlen) == -1)
 #endif /* SYS_VXWORKS */
-	    error("connect", "", "");
+	    error("connect");
 	if (a_info == 0)
 		freeaddrinfo(ai);
 	havehost = 1;
@@ -800,7 +802,7 @@ sendpkt(
 		printf("Sending %zu octets\n", xdatalen);
 
 	if (send(sockfd, xdata, (size_t)xdatalen, 0) == -1) {
-		warning("write to %s failed", currenthost, "");
+		warning("write to %s failed", currenthost);
 		return -1;
 	}
 
@@ -880,7 +882,7 @@ getresponse(
 		n = select(sockfd+1, &fds, (fd_set *)0, (fd_set *)0, &tvo);
 
 		if (n == -1) {
-			warning("select fails", "", "");
+			warning("select fails");
 			return -1;
 		}
 		if (n == 0) {
@@ -914,7 +916,7 @@ getresponse(
 
 		n = recv(sockfd, (char *)&rpkt, sizeof(rpkt), 0);
 		if (n == -1) {
-			warning("read", "", "");
+			warning("read");
 			return -1;
 		}
 
@@ -2616,37 +2618,46 @@ ntpversion(
 }
 
 
+static void __attribute__((__format__(__printf__, 1, 0)))
+vwarning(const char *fmt, va_list ap)
+{
+	int serrno = errno;
+	(void) fprintf(stderr, "%s: ", progname);
+	vfprintf(stderr, fmt, ap);
+	(void) fprintf(stderr, ": %s", strerror(serrno));
+}
+
 /*
  * warning - print a warning message
  */
-static void
+static void __attribute__((__format__(__printf__, 1, 2)))
 warning(
 	const char *fmt,
-	const char *st1,
-	const char *st2
+	...
 	)
 {
-	(void) fprintf(stderr, "%s: ", progname);
-	(void) fprintf(stderr, fmt, st1, st2);
-	(void) fprintf(stderr, ": ");
-	perror("");
+	va_list ap;
+	va_start(ap, fmt);
+	vwarning(fmt, ap);
+	va_end(ap);
 }
 
 
 /*
  * error - print a message and exit
  */
-static void
+static void __attribute__((__format__(__printf__, 1, 2)))
 error(
 	const char *fmt,
-	const char *st1,
-	const char *st2
+	...
 	)
 {
-	warning(fmt, st1, st2);
+	va_list ap;
+	va_start(ap, fmt);
+	vwarning(fmt, ap);
+	va_end(ap);
 	exit(1);
 }
-
 /*
  * getkeyid - prompt the user for a keyid to use
  */
