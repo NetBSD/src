@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2009/05/24 23:20:22 dholland Exp $
+#	$NetBSD: Makefile,v 1.14 2011/08/16 11:28:18 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	trek
@@ -18,6 +18,8 @@ HIDEGAME=hidegame
 .if make(install)
 SUBDIR+=USD.doc
 .endif
+
+COPTS.getpar.c += -Wno-format-nonliteral
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
