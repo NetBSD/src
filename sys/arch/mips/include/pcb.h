@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.23 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.24 2011/08/16 06:58:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,6 +60,7 @@ struct pcb {
 	void *	pcb_onfault;		/* for copyin/copyout faults */
 	uint32_t pcb_ppl;		/* previous priority level */
 	struct fpreg pcb_fpregs;	/* saved floating point registers */
+	struct dspreg pcb_dspregs;	/* saved DSP registers */
 	struct pcb_faultinfo pcb_faultinfo;
 };
 
