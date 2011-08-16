@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.52 2011/06/12 03:35:44 rmind Exp $	*/
+/*	$NetBSD: types.h,v 1.53 2011/08/16 06:58:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -127,7 +127,8 @@ typedef struct label_t {
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #define	PCU_FPU		0
-#define	PCU_UNIT_COUNT	1
+#define	PCU_DSP		1
+#define	PCU_UNIT_COUNT	2
 #endif
 
 typedef __uint64_t		__cpuset_t;
