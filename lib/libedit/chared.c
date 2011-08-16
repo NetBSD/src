@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.34 2011/07/29 23:44:44 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.35 2011/08/16 16:25:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.34 2011/07/29 23:44:44 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.35 2011/08/16 16:25:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -63,8 +63,8 @@ cv_undo(EditLine *el)
 	size_t size;
 
 	/* Save entire line for undo */
-	size = el->el_line.lastchar - el->el_line.buffer;
-	vu->len = size;
+	size = (size_t)(el->el_line.lastchar - el->el_line.buffer);
+	vu->len = (ssize_t)size;
 	vu->cursor = (int)(el->el_line.cursor - el->el_line.buffer);
 	(void)memcpy(vu->buf, el->el_line.buffer, size * sizeof(*vu->buf));
 
@@ -84,7 +84,7 @@ cv_yank(EditLine *el, const Char *ptr, int size)
 {
 	c_kill_t *k = &el->el_chared.c_kill;
 
-	(void)memcpy(k->buf, ptr, size * sizeof(*k->buf));
+	(void)memcpy(k->buf, ptr, (size_t)size * sizeof(*k->buf));
 	k->last = k->buf + size;
 }
 
@@ -500,7 +500,7 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 	size_t sz, newsz;
 	Char *newbuffer, *oldbuf, *oldkbuf;
 
-	sz = el->el_line.limit - el->el_line.buffer + EL_LEAVE;
+	sz = (size_t)(el->el_line.limit - el->el_line.buffer + EL_LEAVE);
 	newsz = sz * 2;
 	/*
 	 * If newly required length is longer than current buffer, we need
@@ -655,8 +655,8 @@ c_gets(EditLine *el, Char *buf, const Char *prompt)
 	Char *cp = el->el_line.buffer;
 
 	if (prompt) {
-		len = Strlen(prompt);
-		(void)memcpy(cp, prompt, len * sizeof(*cp));
+		len = (ssize_t)Strlen(prompt);
+		(void)memcpy(cp, prompt, (size_t)len * sizeof(*cp));
 		cp += len;
 	}
 	len = 0;

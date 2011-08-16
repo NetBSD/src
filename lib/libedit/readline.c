@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.98 2011/07/29 23:44:44 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.99 2011/08/16 16:25:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.98 2011/07/29 23:44:44 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.99 2011/08/16 16:25:15 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -209,7 +209,7 @@ _getc_function(EditLine *el __attribute__((__unused__)), char *c)
 	i = (*rl_getc_function)(NULL);
 	if (i == -1)
 		return 0;
-	*c = i;
+	*c = (char)i;
 	return 1;
 }
 
@@ -551,7 +551,7 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 			break;
 		idx++;
 	}
-	len = idx - begin;
+	len = (size_t)idx - (size_t)begin;
 	if (sub && cmd[idx] == '?')
 		idx++;
 	if (sub && len == 0 && last_search_pat && *last_search_pat)
@@ -665,7 +665,7 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 			qchar = (offs > 0 && command[offs - 1] == '"')? '"':0;
 			ptr = get_history_event(command + offs, &idx, qchar);
 		}
-		has_mods = command[offs + idx] == ':';
+		has_mods = command[offs + (size_t)idx] == ':';
 	}
 
 	if (ptr == NULL && aptr == NULL)
@@ -1031,14 +1031,14 @@ history_arg_extract(int start, int end, const char *str)
 	    (size_t)end > max || start > end)
 		goto out;
 
-	for (i = start, len = 0; i <= (size_t)end; i++)
+	for (i = (size_t)start, len = 0; i <= (size_t)end; i++)
 		len += strlen(arr[i]) + 1;
 	len++;
 	result = el_malloc(len * sizeof(*result));
 	if (result == NULL)
 		goto out;
 
-	for (i = start, len = 0; i <= (size_t)end; i++) {
+	for (i = (size_t)start, len = 0; i <= (size_t)end; i++) {
 		(void)strcpy(result + len, arr[i]);
 		len += strlen(arr[i]);
 		if (i < (size_t)end)
@@ -1088,15 +1088,15 @@ history_tokenize(const char *str)
 		if (idx + 2 >= size) {
 			char **nresult;
 			size <<= 1;
-			nresult = el_realloc(result, size * sizeof(*nresult));
+			nresult = el_realloc(result, (size_t)size * sizeof(*nresult));
 			if (nresult == NULL) {
 				el_free(result);
 				return NULL;
 			}
 			result = nresult;
 		}
-		len = i - start;
-		temp = el_malloc((len + 1) * sizeof(*temp));
+		len = (size_t)i - (size_t)start;
+		temp = el_malloc((size_t)(len + 1) * sizeof(*temp));
 		if (temp == NULL) {
 			for (i = 0; i < idx; i++)
 				el_free(result[i]);
@@ -1196,7 +1196,7 @@ history_truncate_file (const char *filename, int nlines)
 				ret = errno;
 				break;
 			}
-			left = fread(buf, (size_t)1, sizeof(buf), fp);
+			left = (ssize_t)fread(buf, (size_t)1, sizeof(buf), fp);
 			if (ferror(fp)) {
 				ret = errno;
 				break;
@@ -1268,7 +1268,7 @@ history_truncate_file (const char *filename, int nlines)
 	}
 
 	for(;;) {
-		if ((left = fread(buf, (size_t)1, sizeof(buf), tp)) == 0) {
+		if ((left = (ssize_t)fread(buf, (size_t)1, sizeof(buf), tp)) == 0) {
 			if (ferror(fp))
 				ret = errno;
 			break;
@@ -1740,7 +1740,7 @@ _rl_completion_append_character_function(const char *dummy
     __attribute__((__unused__)))
 {
 	static char buf[2];
-	buf[0] = rl_completion_append_character;
+	buf[0] = (char)rl_completion_append_character;
 	buf[1] = '\0';
 	return buf;
 }
@@ -1856,7 +1856,7 @@ rl_insert(int count, int c)
 		rl_initialize();
 
 	/* XXX - int -> char conversion can lose on multichars */
-	arr[0] = c;
+	arr[0] = (char)c;
 	arr[1] = '\0';
 
 	for (; count > 0; count--)
@@ -1969,7 +1969,7 @@ void
 rl_redisplay(void)
 {
 	char a[2];
-	a[0] = e->el_tty.t_c[TS_IO][C_REPRINT];
+	a[0] = (char)e->el_tty.t_c[TS_IO][C_REPRINT];
 	a[1] = '\0';
 	el_push(e, a);
 }
@@ -1978,7 +1978,7 @@ int
 rl_get_previous_history(int count, int key)
 {
 	char a[2];
-	a[0] = key;
+	a[0] = (char)key;
 	a[1] = '\0';
 	while (count--)
 		el_push(e, a);
@@ -2033,7 +2033,7 @@ rl_stuff_char(int c)
 {
 	char buf[2];
 
-	buf[0] = c;
+	buf[0] = (char)c;
 	buf[1] = '\0';
 	el_insertstr(e, buf);
 }

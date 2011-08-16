@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.9 2011/07/29 23:44:44 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.10 2011/08/16 16:25:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.9 2011/07/29 23:44:44 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.10 2011/08/16 16:25:15 christos Exp $");
 #endif /* not lint && not SCCSID */
 #include "el.h"
 #include <stdlib.h>
@@ -89,7 +89,7 @@ ct_encode_string(const Char *s, ct_buffer_t *conv)
 
 	dst = conv->cbuff;
 	while (*s) {
-		used = conv->csize - (dst - conv->cbuff);
+		used = (ssize_t)(conv->csize - (size_t)(dst - conv->cbuff));
 		if (used < 5) {
 			used = dst - conv->cbuff;
 			ct_conv_buff_resize(conv, conv->csize + CT_BUFSIZ,
@@ -149,7 +149,7 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 	if (!conv->wsize)
 		return NULL;
 
-	wargv = el_malloc(argc * sizeof(*wargv));
+	wargv = el_malloc((size_t)argc * sizeof(*wargv));
 
 	for (i = 0, p = conv->wbuff; i < argc; ++i) {
 		if (!argv[i]) {   /* don't pass null pointers to mbstowcs */
@@ -157,14 +157,14 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 			continue;
 		} else {
 			wargv[i] = p;
-			bytes = mbstowcs(p, argv[i], bufspace);
+			bytes = (ssize_t)mbstowcs(p, argv[i], bufspace);
 		}
 		if (bytes == -1) {
 			el_free(wargv);
 			return NULL;
 		} else
 			bytes++;  /* include '\0' in the count */
-		bufspace -= bytes;
+		bufspace -= (size_t)bytes;
 		p += bytes;
 	}
 
@@ -221,7 +221,7 @@ ct_visual_string(const Char *s)
 	}
 	dst = buff;
 	while (*s) {
-		used = ct_visual_char(dst, buffsize - (dst - buff), *s);
+		used = ct_visual_char(dst, buffsize - (size_t)(dst - buff), *s);
 		if (used == -1) { /* failed to encode, need more buffer space */
 			used = dst - buff;
 			buffsize += CT_BUFSIZ;
