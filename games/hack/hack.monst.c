@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.monst.c,v 1.6 2003/04/02 18:36:38 jsm Exp $	*/
+/*	$NetBSD: hack.monst.c,v 1.7 2011/08/16 09:26:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.monst.c,v 1.6 2003/04/02 18:36:38 jsm Exp $");
+__RCSID("$NetBSD: hack.monst.c,v 1.7 2011/08/16 09:26:22 christos Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -142,3 +142,9 @@ const struct permonst pm_wizard = {
 const struct permonst pm_mail_daemon = {"mail daemon", '2', 100, 1, 10, 0, 0, 0};
 #endif	/* MAIL */
 const struct permonst pm_eel = {"giant eel", ';', 15, 6, -3, 3, 6, 0};
+
+void *
+monster_private(struct monst *mon)
+{
+	return mon->mextra;
+}
