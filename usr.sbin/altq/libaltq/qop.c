@@ -1,4 +1,4 @@
-/*	$NetBSD: qop.c,v 1.10 2011/01/04 09:14:42 wiz Exp $	*/
+/*	$NetBSD: qop.c,v 1.11 2011/08/16 12:49:13 christos Exp $	*/
 /*	$KAME: qop.c,v 1.11 2001/10/26 04:57:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -1196,20 +1196,20 @@ filt_disjoint(struct flow_filter *front, struct flow_filter *back)
 		if (!IN6_IS_ADDR_UNSPECIFIED(&front6->ff_flow6.fi6_src) &&
 		    !IN6_IS_ADDR_UNSPECIFIED(&back6->ff_flow6.fi6_src)) {
 			for (i=0; i<4; i++) {
-				mask = IN6ADDR32(&front6->ff_mask6.mask6_src, i)
-					& IN6ADDR32(&back6->ff_mask6.mask6_src, i);
-				if ((IN6ADDR32(&front6->ff_flow6.fi6_src, i) & mask) !=
-				    (IN6ADDR32(&back6->ff_flow6.fi6_src, i) & mask))
+				mask = IN6ADDR32_GET(&front6->ff_mask6.mask6_src, i)
+					& IN6ADDR32_GET(&back6->ff_mask6.mask6_src, i);
+				if ((IN6ADDR32_GET(&front6->ff_flow6.fi6_src, i) & mask) !=
+				    (IN6ADDR32_GET(&back6->ff_flow6.fi6_src, i) & mask))
 					return (1);
 			}
 		}
 		if (!IN6_IS_ADDR_UNSPECIFIED(&front6->ff_flow6.fi6_dst) &&
 		    !IN6_IS_ADDR_UNSPECIFIED(&back6->ff_flow6.fi6_dst)) {
 			for (i=0; i<4; i++) {
-				mask = IN6ADDR32(&front6->ff_mask6.mask6_dst, i)
-					& IN6ADDR32(&back6->ff_mask6.mask6_dst, i);
-				if ((IN6ADDR32(&front6->ff_flow6.fi6_dst, i) & mask) !=
-				    (IN6ADDR32(&back6->ff_flow6.fi6_dst, i) & mask))
+				mask = IN6ADDR32_GET(&front6->ff_mask6.mask6_dst, i)
+					& IN6ADDR32_GET(&back6->ff_mask6.mask6_dst, i);
+				if ((IN6ADDR32_GET(&front6->ff_flow6.fi6_dst, i) & mask) !=
+				    (IN6ADDR32_GET(&back6->ff_flow6.fi6_dst, i) & mask))
 				return (1);
 			}
 		}
@@ -1306,16 +1306,16 @@ filt_subset(struct flow_filter *front, struct flow_filter *back)
 				return (0);
 		} else if (!IN6_IS_ADDR_UNSPECIFIED(&back6->ff_flow6.fi6_src))
 			for (i=0; i<4; i++)
-				if (~IN6ADDR32(&front6->ff_mask6.mask6_src, i) &
-				    IN6ADDR32(&back6->ff_mask6.mask6_src, i))
+				if (~IN6ADDR32_GET(&front6->ff_mask6.mask6_src, i) &
+				    IN6ADDR32_GET(&back6->ff_mask6.mask6_src, i))
 					return (0);
 		if (IN6_IS_ADDR_UNSPECIFIED(&front6->ff_flow6.fi6_dst)) {
 			if (!IN6_IS_ADDR_UNSPECIFIED(&back6->ff_flow6.fi6_dst))
 				return (0);
 		} else if (!IN6_IS_ADDR_UNSPECIFIED(&back6->ff_flow6.fi6_dst))
 			for (i=0; i<4; i++)
-				if (~IN6ADDR32(&front6->ff_mask6.mask6_dst, i) &
-				    IN6ADDR32(&back6->ff_mask6.mask6_dst, i))
+				if (~IN6ADDR32_GET(&front6->ff_mask6.mask6_dst, i) &
+				    IN6ADDR32_GET(&back6->ff_mask6.mask6_dst, i))
 					return (0);
 
 		if (~front6->ff_mask6.mask6_tclass &
