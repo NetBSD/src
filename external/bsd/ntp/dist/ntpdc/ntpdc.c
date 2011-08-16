@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.3 2011/08/16 05:24:20 christos Exp $	*/
 
 /*
  * ntpdc - control and monitor your ntpd daemon
@@ -102,8 +102,10 @@ static	void	hostnames	(struct parse *, FILE *);
 static	void	setdebug	(struct parse *, FILE *);
 static	void	quit		(struct parse *, FILE *);
 static	void	version		(struct parse *, FILE *);
-static	void	warning		(const char *, const char *, const char *);
-static	void	error		(const char *, const char *, const char *);
+static	void	warning		(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
+static	void	error		(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
 static	u_long	getkeyid	(const char *);
 
 
@@ -571,14 +573,12 @@ openhost(
 	}
 
 	sockfd = socket(ai->ai_family, SOCK_DGRAM, 0);
-	if (sockfd == INVALID_SOCKET) {
-		error("socket", "", "");
-		exit(-1);
-	}
+	if (sockfd == INVALID_SOCKET)
+		error("socket");
 #else
 	sockfd = socket(ai->ai_family, SOCK_DGRAM, 0);
 	if (sockfd == -1)
-	    error("socket", "", "");
+	    error("socket");
 #endif /* SYS_WINNT */
 
 	
@@ -589,7 +589,7 @@ openhost(
 
 		if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF,
 			       &rbufsize, sizeof(int)) == -1)
-		    error("setsockopt", "", "");
+		    error("setsockopt");
 	}
 # endif
 #endif
@@ -601,7 +601,7 @@ openhost(
 	if (connect(sockfd, (struct sockaddr *)ai->ai_addr,
 		    ai->ai_addrlen) == -1)
 #endif /* SYS_VXWORKS */
-	    error("connect", "", "");
+	    error("connect");
 
 	freeaddrinfo(ai);
 	havehost = 1;
@@ -622,7 +622,7 @@ sendpkt(
 	)
 {
 	if (send(sockfd, xdata, xdatalen, 0) == -1) {
-		warning("write to %s failed", currenthost, "");
+		warning("write to %s failed", currenthost);
 		return -1;
 	}
 
@@ -697,7 +697,7 @@ getresponse(
 	n = select(sockfd+1, &fds, (fd_set *)0, (fd_set *)0, &tvo);
 
 	if (n == -1) {
-		warning("select fails", "", "");
+		warning("select fails");
 		return -1;
 	}
 	if (n == 0) {
@@ -728,7 +728,7 @@ getresponse(
 
 	n = recv(sockfd, (char *)&rpkt, sizeof(rpkt), 0);
 	if (n == -1) {
-		warning("read", "", "");
+		warning("read");
 		return -1;
 	}
 
@@ -1046,7 +1046,7 @@ again:
 		res = select(sockfd+1, &fds, (fd_set *)0, (fd_set *)0, &tvzero);
 
 		if (res == -1) {
-			warning("polling select", "", "");
+			warning("polling select");
 			return -1;
 		} else if (res > 0)
 
@@ -1951,34 +1951,44 @@ version(
 }
 
 
+static void __attribute__((__format__(__printf__, 1, 0)))
+vwarning(const char *fmt, va_list ap)
+{
+	int serrno = errno;
+	(void) fprintf(stderr, "%s: ", progname);
+	vfprintf(stderr, fmt, ap);
+	(void) fprintf(stderr, ": %s", strerror(serrno));
+}
+
 /*
  * warning - print a warning message
  */
-static void
+static void __attribute__((__format__(__printf__, 1, 2)))
 warning(
 	const char *fmt,
-	const char *st1,
-	const char *st2
+	...
 	)
 {
-	(void) fprintf(stderr, "%s: ", progname);
-	(void) fprintf(stderr, fmt, st1, st2);
-	(void) fprintf(stderr, ": ");
-	perror("");
+	va_list ap;
+	va_start(ap, fmt);
+	vwarning(fmt, ap);
+	va_end(ap);
 }
 
 
 /*
  * error - print a message and exit
  */
-static void
+static void __attribute__((__format__(__printf__, 1, 2)))
 error(
 	const char *fmt,
-	const char *st1,
-	const char *st2
+	...
 	)
 {
-	warning(fmt, st1, st2);
+	va_list ap;
+	va_start(ap, fmt);
+	vwarning(fmt, ap);
+	va_end(ap);
 	exit(1);
 }
 
