@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: omshell.c,v 1.5 2005/08/11 17:13:21 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: omshell.c,v 1.6 2011/08/16 16:36:38 christos Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include <time.h>
@@ -182,7 +182,7 @@ int main (int argc, char **argv, char **envp)
 	    check(status, "new_parse()");
 	    
 	    token = next_token (&val, (unsigned *)0, cfile);
-	    switch (token) {
+	    switch ((int)token) {
 		  default:
 		    parse_warn (cfile, "unknown token: %s", val);
 		    skip_to_semi (cfile);

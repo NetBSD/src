@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: ddns.c,v 1.7 2005/08/11 17:13:30 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: ddns.c,v 1.8 2011/08/16 16:36:38 christos Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -724,7 +724,7 @@ int ddns_removals (struct lease *lease)
 	      try_rev:
 		if (find_bound_string (&ddns_rev_name,
 				       lease -> scope, "ddns-rev-name")) {
-			if (ddns_remove_ptr(&ddns_rev_name) == NOERROR) {
+			if ((ns_rcode)ddns_remove_ptr(&ddns_rev_name) == NOERROR) {
 				unset (lease -> scope, "ddns-rev-name");
 				if (client_updated)
 					unset (lease -> scope,
