@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.12 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: file.c,v 1.13 2011/08/16 16:45:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: file.c,v 1.12 2009/10/20 00:51:13 snj Exp $");
+__RCSID("$NetBSD: file.c,v 1.13 2011/08/16 16:45:20 christos Exp $");
 #endif
 
 #include "os.h"
@@ -115,7 +115,10 @@ mopFileGetLX(buf, idx, cnt)
 	int i;
 
 	for (i = 0; i < cnt; i++) {
-		ret = ret*256 + buf[idx+cnt-1-i];
+		int j = idx + cnt - 1 - i;
+		if (j < 0)
+			abort();
+		ret = ret * 256 + buf[j];
 	}
 
 	return(ret);
@@ -130,7 +133,10 @@ mopFileGetBX(buf, idx, cnt)
 	int i;
 
 	for (i = 0; i < cnt; i++) {
-		ret = ret*256 + buf[idx+i];
+		int j = idx + i;
+		if (j < 0)
+			abort();
+		ret = ret * 256 + buf[j];
 	}
 
 	return(ret);
