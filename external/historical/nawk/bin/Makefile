@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/08/09 13:06:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2011/08/16 10:45:37 christos Exp $
 
 WARNS?= 4
 CWARNFLAGS.clang+=	-Wno-self-assign
@@ -20,6 +20,8 @@ YHEADER=	yes
 .if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS+=	-Wno-pointer-sign
 .endif
+COPTS.run.c += -Wno-format-nonliteral
+COPTS.tran.c += -Wno-format-nonliteral
 
 # info file originally from GNU awk 3.1.3, adjusted for nawk slightly
 .PATH:	${NETBSDSRCDIR}/external/gpl2/gawk/dist
