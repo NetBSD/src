@@ -1,4 +1,4 @@
-/*	$NetBSD: def.monst.h,v 1.8 2011/08/06 20:18:26 dholland Exp $	*/
+/*	$NetBSD: def.monst.h,v 1.9 2011/08/16 09:26:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -111,6 +111,8 @@ struct monst {
 
 extern struct monst *fmon;
 extern struct monst *fallen_down;
+
+extern void *monster_private(struct monst *);
 
 /* these are in mspeed */
 #define MSLOW 1 /* slow monster */
