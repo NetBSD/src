@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.14 2011/07/06 09:27:35 matt Exp $	*/
+/*	$NetBSD: copy.S,v 1.15 2011/08/16 06:55:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -499,9 +499,9 @@ LEAF(ustore_uint32_isync)
 	 PTR_S	v0, PCB_ONFAULT(v1)
 	INT_S	a1, 0(a0)			# store word
 	PTR_S	zero, PCB_ONFAULT(v1)
-	PTR_L	v1, _C_LABEL(mips_cache_ops) + MIPSX_FLUSHICACHE
+	PTR_L	t9, _C_LABEL(mips_cache_ops) + MIPSX_FLUSHICACHE
 	move	v0, zero
-	j	v1				# NOTE: must not clobber v0!
+	j	t9				# NOTE: must not clobber v0!
 	 li	a1, 4				# size of word
 END(ustore_uint32_isync)
 
