@@ -1,4 +1,4 @@
-/*	$NetBSD: qop_conf.c,v 1.3 2006/10/12 19:59:13 peter Exp $	*/
+/*	$NetBSD: qop_conf.c,v 1.4 2011/08/16 12:49:13 christos Exp $	*/
 /*	$KAME: qop_conf.c,v 1.3 2002/10/26 06:59:53 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -30,6 +30,7 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <altq/altq.h>
 #include "altq_qop.h"
