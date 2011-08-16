@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.1 2009/12/13 16:54:37 kardel Exp $	*/
+/*	$NetBSD: socket.c,v 1.2 2011/08/16 04:45:17 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -603,7 +603,7 @@ FIX_IPV6_RECVPKTINFO(isc_socket_t *sock)
 
 	if (setsockopt(sock->fd, IPPROTO_IPV6, IPV6_RECVPKTINFO,
 		       (void *)&on, sizeof(on)) < 0) {
-
+		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "setsockopt(%d, IPV6_RECVPKTINFO) "
 				 "%s: %s", sock->fd,

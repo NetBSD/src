@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2009/12/13 16:54:22 kardel Exp $	*/
+/*	$NetBSD: log.c,v 1.2 2011/08/16 04:45:17 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -1520,10 +1520,11 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 		    level_string[0] == '\0') {
 			if (level < ISC_LOG_CRITICAL)
 				snprintf(level_string, sizeof(level_string),
+					 "%s %d: ",
 					 isc_msgcat_get(isc_msgcat,
 							ISC_MSGSET_LOG,
 							ISC_MSG_LEVEL,
-							"level %d: "),
+							"level"),
 					 level);
 			else if (level > ISC_LOG_DYNAMIC)
 				snprintf(level_string, sizeof(level_string),
