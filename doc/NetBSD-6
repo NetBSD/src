@@ -7,7 +7,7 @@ with them with any feedback.
 Will be in 6.0
 --------------
 + ZFS - need an update on viability, needs work
-+ in-kernel iSCSI initiator, and user tools - libisns done, kernel portion near
++ in-kernel iSCSI initiator, and user tools - in othersrc, needs to be moved to src
 + 64-bit time_t
 + rump - pooka has declared interfaces stable
 + LVM/dmapper and tools
@@ -31,11 +31,12 @@ Will be in 6.0
 + automated test framework for testing releng autobuilds
 + full functionality for NPF - SMP-aware packet filter - rmind
 + fixed IPSEC NAT-T
-+ GPT-aware bootloader for i386/amd64
++ GPT-aware bootloader for i386/amd64 - jakllsch
++ gcc 4.5
++ clang - joerg
 
 Possibly in 6.0
 ---------------
-+ gcc 4.5+
 + mobile IPv6 - we have the mods, need application of same to the repo
 + kernel modules need work
 + Xen suspend/resume - jym working on it
@@ -54,4 +55,4 @@ Will not be in 6.0
 
 Alistair Crooks
 On behalf of core and releng teams
-Fri Mar 25 17:20:36 PDT 2011
+Mon Aug 15 07:41:56 PDT 2011
