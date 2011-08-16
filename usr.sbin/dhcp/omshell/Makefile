@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/06/22 02:49:45 mrg Exp $
+# $NetBSD: Makefile,v 1.4 2011/08/16 16:37:07 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -14,8 +14,3 @@ LDADD+=	${CTLOBJDIR}/libdhcpctl.a
 DPADD+=	${CTLOBJDIR}/libdhcpctl.a
 
 .include <bsd.prog.mk>
-
-# XXX
-.if ${HAVE_GCC} == 45
-COPTS.omshell.c+=	-Wno-error
-.endif
