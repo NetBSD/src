@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2011/05/26 12:56:33 joerg Exp $
+#	$NetBSD: Makefile,v 1.13 2011/08/16 08:07:12 christos Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -61,6 +61,8 @@ SRCS+=	${MACHINE_FAMILY}.c
 . else
 SRCS+=	generic.c
 . endif
+
+COPTS.db_output.c += -Wno-format-nonliteral
 
 # vers.c
 SRCS+=	vers.c
