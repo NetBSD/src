@@ -1,4 +1,4 @@
-/*	$NetBSD: assorted.c,v 1.18 2011/05/23 23:02:07 joerg Exp $	*/
+/*	$NetBSD: assorted.c,v 1.19 2011/08/16 11:26:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)assorted.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: assorted.c,v 1.18 2011/05/23 23:02:07 joerg Exp $");
+__RCSID("$NetBSD: assorted.c,v 1.19 2011/08/16 11:26:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,25 +152,25 @@ table(struct ship *from, struct ship *on,
 		send_rigg(on, rigg[0], rigg[1], rigg[2], rigg[3]);
 	switch (shot) {
 	case L_ROUND:
-		message = "firing round shot on $$";
+		message = "firing round";
 		break;
 	case L_GRAPE:
-		message = "firing grape shot on $$";
+		message = "firing grape";
 		break;
 	case L_CHAIN:
-		message = "firing chain shot on $$";
+		message = "firing chain";
 		break;
 	case L_DOUBLE:
-		message = "firing double shot on $$";
+		message = "firing double";
 		break;
 	case L_EXPLODE:
-		message = "exploding shot on $$";
+		message = "exploding";
 		break;
 	default:
 		errx(1, "Unknown shot type %d", shot);
 
 	}
-	makesignal(from, message, on);
+	makesignal(from, "%s shot on $$", on, message);
 	if (roll == 6 && rig) {
 		switch(Rhit) {
 		case 0:
