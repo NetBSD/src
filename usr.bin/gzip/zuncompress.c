@@ -1,4 +1,4 @@
-/*	$NetBSD: zuncompress.c,v 1.8 2010/11/06 21:42:32 mrg Exp $ */
+/*	$NetBSD: zuncompress.c,v 1.9 2011/08/16 03:21:47 christos Exp $ */
 
 /*-
  * Copyright (c) 1985, 1986, 1992, 1993
@@ -288,6 +288,8 @@ zread(void *cookie, char *rbp, int num)
 
 		/* Generate output characters in reverse order. */
 		while (zs->u.r.zs_code >= 256) {
+			if (zs->u.r.zs_stackp - de_stack >= HSIZE - 1)
+				return -1;
 			*zs->u.r.zs_stackp++ = tab_suffixof(zs->u.r.zs_code);
 			zs->u.r.zs_code = tab_prefixof(zs->u.r.zs_code);
 		}
