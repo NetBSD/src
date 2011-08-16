@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/03/12 14:19:25 tron Exp $
+# $NetBSD: Makefile,v 1.4 2011/08/16 07:57:21 christos Exp $
 
 .include <bsd.own.mk>
 WARNS?=	4
@@ -160,10 +160,9 @@ COPTS.cmd-server-info.c+=	-Wno-stack-protector
 COPTS.imsg-buffer.c+=		-Wno-stack-protector
 COPTS.imsg.c+=			-Wno-stack-protector
 COPTS.screen.c+=		-Wno-stack-protector
+COPTS.status.c+=		-Wno-format-nonliteral
 
 LDADD+=		-levent -lterminfo -lutil
 DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
-
-WARNS?=		0
 
 .include <bsd.prog.mk>
