@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.2 2010/12/04 23:08:36 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.3 2011/08/16 05:28:44 christos Exp $	*/
 
 #include "log.h"
 #include "sntp-opts.h"
@@ -32,7 +32,7 @@ void log_msg(const char *message, char type) {
 				break;
 		}
 
-		syslog(type, message);
+		syslog(type, "%s", message);
 	}
 }
 
@@ -48,7 +48,7 @@ void debug_msg(const char *message) {
 #ifdef LOG_PERROR
 			| LOG_PERROR
 #endif
-			| LOG_CONS, message);
+			| LOG_CONS, "%s", message);
 	}
 }
 
