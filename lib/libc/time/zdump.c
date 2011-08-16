@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.19 2011/01/15 12:31:57 martin Exp $	*/
+/*	$NetBSD: zdump.c,v 1.20 2011/08/16 07:51:46 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
-__RCSID("$NetBSD: zdump.c,v 1.19 2011/01/15 12:31:57 martin Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.20 2011/08/16 07:51:46 christos Exp $");
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -410,6 +410,15 @@ char *	argv[];
 	return EXIT_FAILURE;
 }
 
+static time_t
+ovfl_check(time_t t)
+{
+	if (t < 0 && t - 1 >= 0)
+		return t;
+	else
+		return t - 1;
+}
+
 static void
 setabsolutes(void)
 {
@@ -443,9 +452,7 @@ _("%s: use of -v on system with floating time_t other than float or double\n"),
 
 		absolute_max_time = t;
 		t = -t;
-		absolute_min_time = t - 1;
-		if (t < absolute_min_time)
-			absolute_min_time = t;
+		absolute_min_time = ovfl_check(t);
 	} else {
 		/*
 		** time_t is unsigned.
