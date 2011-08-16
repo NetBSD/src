@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.10 2009/08/12 08:07:27 dholland Exp $	*/
+/*	$NetBSD: extern.c,v 1.11 2011/08/16 11:14:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: extern.c,v 1.10 2009/08/12 08:07:27 dholland Exp $");
+__RCSID("$NetBSD: extern.c,v 1.11 2011/08/16 11:14:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,6 @@ bool	Debug,			/* set if debugging code on		*/
 	Saved;			/* set if game just saved		*/
 
 char	Initstr[INITSTR_SIZE];	/* initial string for error field	*/
-const char *C_fmt = "%-18.18s";	/* format for printing cards	*/
 const char *Fromfile = NULL;	/* startup file for game		*/
 static const char *const _cn[NUM_CARDS] = {/* Card name buffer		*/
 		"",
