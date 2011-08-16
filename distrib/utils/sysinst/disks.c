@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.113 2011/04/04 08:30:12 mbalmer Exp $ */
+/*	$NetBSD: disks.c,v 1.114 2011/08/16 13:58:21 wiz Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -832,7 +832,7 @@ fsck_preen(const char *disk, int ptn, const char *fsname)
 	ptn += 'a';
 	if (fsname == NULL)
 		return 0;
-	/* first check fsck program exists, if not assue ok */
+	/* first check fsck program exists, if not assume ok */
 	asprintf(&prog, "/sbin/fsck_%s", fsname);
 	if (prog == NULL)
 		return 0;
