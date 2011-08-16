@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1594 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1595 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1104,4 +1104,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	pwdog(4): A new driver for QUANCOM Electronic PWDOG1 watchdog timer
 		cards. [mbalmer 20110811]
 	gpio(4), gpiosim(4): Build as modules. [mbalmer 20110812]
+	mips: add support for MIPS DSP v2 ASE. [matt 20110815]
 
