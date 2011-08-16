@@ -362,7 +362,6 @@ next_code(struct archive_read_filter *self)
 	}
 
 	if (code > state->free_ent) {
-out:
 		/* An invalid code is a fatal error. */
 		archive_set_error(&(self->archive->archive), -1,
 		    "Invalid compressed data");
@@ -377,11 +376,6 @@ out:
 
 	/* Generate output characters in reverse order. */
 	while (code >= 256) {
-		// XXX: long -> ptrdiff_t, but don't want to bother with
-		// autoconf for now.
-		if (state->stackp - state->stack >=
-		    (long)(sizeof(state->stack) - 1))
-			goto out;
 		*state->stackp++ = state->suffix[code];
 		code = state->prefix[code];
 	}
