@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.115 2011/06/12 03:35:55 rmind Exp $ */
+/* $NetBSD: udf_subr.c,v 1.116 2011/08/16 14:29:16 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.115 2011/06/12 03:35:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.116 2011/08/16 14:29:16 mbalmer Exp $");
 #endif /* not lint */
 
 
@@ -6167,7 +6167,7 @@ udf_itimes(struct udf_node *udf_node, struct timespec *acc,
 	}
 
 	/* update birthtime if specified */
-	/* XXX we asume here that given birthtime is older than mod */
+	/* XXX we assume here that given birthtime is older than mod */
 	if (birth && (birth->tv_sec != VNOVAL)) {
 		udf_timespec_to_timestamp(birth, ctime);
 	}
