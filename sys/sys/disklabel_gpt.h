@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_gpt.h,v 1.7 2008/11/12 22:50:22 thorpej Exp $	*/
+/*	$NetBSD: disklabel_gpt.h,v 1.8 2011/08/16 14:03:16 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -82,8 +82,12 @@ struct gpt_ent {
 	uint16_t	ent_name[36];	/* partition name in UNICODE-16 */
 };
 
-#define	GPT_ENT_ATTR_PLATFORM	(1ULL << 0)	/* required for platform
-						   to function */
+#define	GPT_ENT_ATTR_REQUIRED_PARTITION		(1ULL << 0)
+					/* required for platform to function */
+#define	GPT_ENT_ATTR_NO_BLOCK_IO_PROTOCOL	(1ULL << 1)
+					/* UEFI won't recognize file system */
+#define	GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE	(1ULL << 2)
+					/* legacy BIOS boot partition */
 
 /*
  * Partition types defined by the EFI specification:
