@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jupiter.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: refclock_jupiter.c,v 1.3 2011/08/16 05:15:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003
@@ -904,7 +904,7 @@ jupiter_debug(peer, function, fmt, va_alist)
 #ifdef DEBUG
 	if (debug) {
 		fprintf(stdout, "%s: ", function);
-		fprintf(stdout, buffer);
+		fprintf(stdout, "%s", buffer);
 		fprintf(stdout, "\n");
 		fflush(stdout);
 	}

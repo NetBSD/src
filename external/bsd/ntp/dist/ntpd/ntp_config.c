@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.4 2011/08/16 05:15:21 christos Exp $	*/
 
 /* ntp_config.c
  *
@@ -2299,7 +2299,7 @@ config_access(
 		if ((RES_MSSNTP & flags) && !warned_signd) {
 			warned_signd = 1;
 			fprintf(stderr, "%s\n", signd_warning);
-			msyslog(LOG_WARNING, signd_warning);
+			msyslog(LOG_WARNING, "%s", signd_warning);
 		}
 	}
 }

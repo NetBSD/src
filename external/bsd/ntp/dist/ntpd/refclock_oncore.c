@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.4 2011/07/01 02:18:37 mrg Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.5 2011/08/16 05:15:21 christos Exp $	*/
 
 
 /*
@@ -4045,7 +4045,7 @@ oncore_log (
 
 	snprintf(Msg, sizeof(Msg), "ONCORE[%d]: %s", instance->unit,
 		 msg);
-	syslog(log_level, Msg);
+	syslog(log_level, "%s", Msg);
 
 	i = strlen(msg);
 

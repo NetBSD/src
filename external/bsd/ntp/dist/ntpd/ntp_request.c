@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.4 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.5 2011/08/16 05:15:21 christos Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -261,7 +261,7 @@ req_ack(
 	rpkt.auth_seq = AUTH_SEQ(0, 0);
 	rpkt.implementation = inpkt->implementation;
 	rpkt.request = inpkt->request;
-	rpkt.err_nitems = ERR_NITEMS(errcode, 0);
+	rpkt.err_nitems = ERR_NITEMS(errcode, 0); 
 	rpkt.mbz_itemsize = MBZ_ITEMSIZE(0);
 
 	/*
@@ -1693,7 +1693,7 @@ setclr_flags(
 		return;
 	}
 
-	flags = ((struct conf_sys_flags *)inpkt->data)->flags;
+	flags = inpkt->c_s_flags.flags;
 	flags = ntohl(flags);
 	
 	if (flags & ~(SYS_FLAG_BCLIENT | SYS_FLAG_PPS |
@@ -2048,7 +2048,7 @@ reset_stats(
 		return;
 	}
 
-	flags = ((struct reset_flags *)inpkt->data)->flags;
+	flags = inpkt->r_flags.flags;
 	flags = ntohl(flags);
      
 	if (flags & ~RESET_ALLFLAGS) {
@@ -2472,7 +2472,7 @@ set_request_keyid(
 		return;
 	}
 
-	keyid = ntohl(*((u_int32 *)(inpkt->data)));
+	keyid = ntohl(inpkt->ui);
 	info_auth_keyid = keyid;
 	req_ack(srcadr, inter, inpkt, INFO_OKAY);
 }
@@ -2501,7 +2501,7 @@ set_control_keyid(
 		return;
 	}
 
-	keyid = ntohl(*((u_int32 *)(inpkt->data)));
+	keyid = ntohl(inpkt->ui);
 	ctl_auth_keyid = keyid;
 	req_ack(srcadr, inter, inpkt, INFO_OKAY);
 }

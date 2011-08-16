@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/06/22 02:49:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2011/08/16 05:15:20 christos Exp $
 
 #NOGCCERROR=yes
 
@@ -90,13 +90,10 @@ ntpd.8: ntpd.1
 	${TOOL_SED} -e "s,NTPD 1,NTPD 8," $? > $@
 
 CLEANFILES+=ntpd.8
+COPTS.ntp_control.c+= -Wno-format-nonliteral
 
 .include <bsd.prog.mk>
 
 # kill default .y.c rule - to rebuild ntp_parser.c we need bison which is not part of the toolchain
 .y.c:
 
-# XXX
-.if ${HAVE_GCC} == 45
-COPTS.ntp_request.c+= -Wno-error -fno-strict-aliasing
-.endif

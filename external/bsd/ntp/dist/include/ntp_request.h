@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.h,v 1.1.1.1 2009/12/13 16:54:53 kardel Exp $	*/
+/*	$NetBSD: ntp_request.h,v 1.2 2011/08/16 05:15:20 christos Exp $	*/
 
 /*
  * ntp_request.h - definitions for the ntpd remote query facility
@@ -125,6 +125,44 @@ union addrun
 };
 
 /*
+ * Structure for carrying system flags.
+ */
+struct conf_sys_flags {
+	u_int32 flags;
+};
+
+/*
+ * System flags we can set/clear
+ */
+#define	SYS_FLAG_BCLIENT	0x01
+#define	SYS_FLAG_PPS		0x02
+#define SYS_FLAG_NTP		0x04
+#define SYS_FLAG_KERNEL		0x08
+#define SYS_FLAG_MONITOR	0x10
+#define SYS_FLAG_FILEGEN	0x20
+#define SYS_FLAG_AUTH		0x40
+#define SYS_FLAG_CAL		0x80
+
+/*
+ * Structure used for passing indication of flags to clear
+ */
+struct reset_flags {
+	u_int32 flags;
+};
+
+#define	RESET_FLAG_ALLPEERS	0x01
+#define	RESET_FLAG_IO		0x02
+#define	RESET_FLAG_SYS		0x04
+#define	RESET_FLAG_MEM		0x08
+#define	RESET_FLAG_TIMER	0x10
+#define	RESET_FLAG_AUTH		0x20
+#define	RESET_FLAG_CTL		0x40
+
+#define	RESET_ALLFLAGS \
+	(RESET_FLAG_ALLPEERS|RESET_FLAG_IO|RESET_FLAG_SYS \
+	|RESET_FLAG_MEM|RESET_FLAG_TIMER|RESET_FLAG_AUTH|RESET_FLAG_CTL)
+
+/*
  * A request packet.  These are almost a fixed length.
  */
 struct req_pkt {
@@ -134,8 +172,12 @@ struct req_pkt {
 	u_char request;			/* request number */
 	u_short err_nitems;		/* error code/number of data items */
 	u_short mbz_itemsize;		/* item size */
-	char data[MAXFILENAME + 48];	/* data area [32 prev](176 byte max) */
-					/* struct conf_peer must fit */
+	union {
+	    char data[MAXFILENAME + 48];/* data area [32 prev](176 byte max) */
+	    struct conf_sys_flags c_s_flags;
+	    struct reset_flags r_flags;
+	    u_int32_t ui;
+	};
 	l_fp tstamp;			/* time stamp, for authentication */
 	keyid_t keyid;			/* (optional) encryption key */
 	char mac[MAX_MAC_LEN-sizeof(keyid_t)]; /* (optional) auth code */
@@ -217,8 +259,8 @@ struct resp_pkt {
 
 #define	INFO_ERR(err_nitems)	((u_short)((ntohs(err_nitems)>>12)&0xf))
 #define	INFO_NITEMS(err_nitems)	((u_short)(ntohs(err_nitems)&0xfff))
-#define	ERR_NITEMS(err, nitems)	(htons((u_short)((((u_short)(err)<<12)&0xf000)\
-				|((u_short)(nitems)&0xfff))))
+#define _ERR_EN(err)		((u_short)(((err)&0xf)<<12))
+#define	ERR_NITEMS(err, nitems)	((u_short)htons(_ERR_EN(err)|(nitems&0xfff)))
 
 #define	INFO_MBZ(mbz_itemsize)	((ntohs(mbz_itemsize)>>12)&0xf)
 #define	INFO_ITEMSIZE(mbz_itemsize)	((u_short)(ntohs(mbz_itemsize)&0xfff))
@@ -618,25 +660,6 @@ struct conf_unpeer {
 };
 
 /*
- * Structure for carrying system flags.
- */
-struct conf_sys_flags {
-	u_int32 flags;
-};
-
-/*
- * System flags we can set/clear
- */
-#define	SYS_FLAG_BCLIENT	0x01
-#define	SYS_FLAG_PPS		0x02
-#define SYS_FLAG_NTP		0x04
-#define SYS_FLAG_KERNEL		0x08
-#define SYS_FLAG_MONITOR	0x10
-#define SYS_FLAG_FILEGEN	0x20
-#define SYS_FLAG_AUTH		0x40
-#define SYS_FLAG_CAL		0x80
-
-/*
  * Structure used for returning restrict entries
  */
 struct info_restrict {
@@ -718,25 +741,6 @@ struct old_info_monitor {
 	u_int v6_flag;		/* is this v6 or not */
 	struct in6_addr addr6;	/* host address  (v6)*/
 };
-
-/*
- * Structure used for passing indication of flags to clear
- */
-struct reset_flags {
-	u_int32 flags;
-};
-
-#define	RESET_FLAG_ALLPEERS	0x01
-#define	RESET_FLAG_IO		0x02
-#define	RESET_FLAG_SYS		0x04
-#define	RESET_FLAG_MEM		0x08
-#define	RESET_FLAG_TIMER	0x10
-#define	RESET_FLAG_AUTH		0x20
-#define	RESET_FLAG_CTL		0x40
-
-#define	RESET_ALLFLAGS \
-	(RESET_FLAG_ALLPEERS|RESET_FLAG_IO|RESET_FLAG_SYS \
-	|RESET_FLAG_MEM|RESET_FLAG_TIMER|RESET_FLAG_AUTH|RESET_FLAG_CTL)
 
 /*
  * Structure used to return information concerning the authentication
