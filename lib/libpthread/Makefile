@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.71 2010/12/24 12:41:42 skrll Exp $
+#	$NetBSD: Makefile,v 1.72 2011/08/16 10:36:30 christos Exp $
 #
 
 WARNS=	4
@@ -87,7 +87,8 @@ pthread_mutex.po: pthread_mutex.o
 	${_MKTARGET_CREATE}
 	cp pthread_mutex.o pthread_mutex.po
 
-COPTS.pthread.c += -Wno-stack-protector
+COPTS.pthread.c += -Wno-stack-protector -Wno-format-nonliteral
+COPTS.pthread_attr.c += -Wno-format-nonliteral
 
 MAN+=	affinity.3 pthread.3 \
 	pthread_attr.3 \
