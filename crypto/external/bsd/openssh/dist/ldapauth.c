@@ -1,5 +1,5 @@
-/*	$NetBSD: ldapauth.c,v 1.2 2011/08/16 09:42:21 christos Exp $	*/
-/* $Id: ldapauth.c,v 1.2 2011/08/16 09:42:21 christos Exp $
+/*	$NetBSD: ldapauth.c,v 1.3 2011/08/16 09:43:03 christos Exp $	*/
+/* $Id: ldapauth.c,v 1.3 2011/08/16 09:43:03 christos Exp $
  */
 
 /*
@@ -23,7 +23,7 @@
  *
  */
 #include "includes.h"
-__RCSID("$NetBSD: ldapauth.c,v 1.2 2011/08/16 09:42:21 christos Exp $");
+__RCSID("$NetBSD: ldapauth.c,v 1.3 2011/08/16 09:43:03 christos Exp $");
 
 #ifdef WITH_LDAP_PUBKEY
 #include <stdarg.h>
@@ -456,7 +456,6 @@ int ldap_ismember(ldap_opt_t * l, const char * user) {
         return FAILURE;
 
     /* build filter for LDAP request */
-/*###459 [cc] error: format not a string literal, argument types not checked%%%*/
     REQUEST_GROUP(filter, l->fgroup, user);
 
     if (ldap_search_st( l->ld, 
