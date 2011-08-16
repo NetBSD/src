@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.187 2011/04/06 13:30:33 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.188 2011/08/16 06:55:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -332,7 +332,7 @@ softint_cleanup:
 #if IPL_SCHED != IPL_HIGH
 	j	_C_LABEL(splhigh_noprof)
 #else
-	j	ra
+	jr	ra
 #endif
 	 PTR_ADDU sp, CALLFRAME_SIZ
 
@@ -412,7 +412,7 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	/*
 	 * Almost everything (all except sp) is restored so we can return.
 	 */
-	j	ra
+	jr	ra
 	 PTR_ADDU sp, CALLFRAME_SIZ
 END(softint_fast_dispatch)
 #endif /* __HAVE_FAST_SOFTINTS */
@@ -435,7 +435,7 @@ LEAF(lwp_oncpu)
 	li	v0, 0				# load success
 1:
 	PTR_S	zero, PCB_ONFAULT(t0)		# reset fault handler
-	j	ra				# and return.
+	jr	ra				# and return.
 	 nop
 END(lwp_oncpu)
 	
@@ -468,7 +468,7 @@ LEAF(savectx)
 	REG_S	ra, PCB_CONTEXT+SF_REG_RA(a0)
 	REG_S	v0, PCB_CONTEXT+SF_REG_SR(a0)
 	REG_EPILOGUE
-	j	ra
+	jr	ra
 	move	v0, zero
 END(savectx)
 
@@ -497,7 +497,7 @@ LEAF(setjmp)
 	REG_S	ra, SF_REG_RA(a0)
 	REG_S	v0, SF_REG_SR(a0)
 	REG_EPILOGUE
-	j	ra
+	jr	ra
 	move	v0, zero
 END(setjmp)
 
@@ -523,7 +523,7 @@ LEAF(longjmp)
 	REG_EPILOGUE
 	mtc0	v0, MIPS_COP_0_STATUS
 	COP0_SYNC
-	j	ra
+	jr	ra
 	 li	v0, 1
 END(longjmp)
 #endif
@@ -538,7 +538,7 @@ END(longjmp)
  */
 LEAF_NOPROFILE(mips_cp0_cause_read)
 	mfc0	v0, MIPS_COP_0_CAUSE
-	j	ra
+	jr	ra
 	 nop
 END(mips_cp0_cause_read)
 
@@ -560,7 +560,7 @@ END(mips_cp0_cause_write)
  */
 LEAF(mips_cp0_status_read)
 	mfc0	v0, MIPS_COP_0_STATUS
-	j	ra
+	jr	ra
 	 nop
 END(mips_cp0_status_read)
 
@@ -731,7 +731,7 @@ LEAF(mips_pagecopy)
 	bgtz		a2, 1b
 	PTR_ADDU	a0, 8*SZREG
 	.set	pop
-	j	ra
+	jr	ra
 	nop
 END(mips_pagecopy)
 
@@ -755,7 +755,7 @@ LEAF(mips_pagezero)
 	bgtz		a1,1b
 	PTR_ADDU	a0, 8*SZREG
 	.set	pop
-	j	ra
+	jr	ra
 	nop
 END(mips_pagezero)
 
@@ -813,7 +813,7 @@ XNESTED(logstacktrace)
 
 	REG_L	ra, XCALLFRAME_RA(sp)
 	PTR_ADDU sp, XCALLFRAME_SIZ
-	j	ra
+	jr	ra
 	nop
 #undef XCALLFRAME_RA
 #undef XCALLFRAME_SIZ
