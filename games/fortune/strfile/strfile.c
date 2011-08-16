@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.29 2009/08/12 06:06:28 dholland Exp $	*/
+/*	$NetBSD: strfile.c,v 1.30 2011/08/16 11:06:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -43,34 +43,33 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.29 2009/08/12 06:06:28 dholland Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.30 2011/08/16 11:06:34 christos Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
 
 /* n.b.: this file is used at build-time - i.e. during build.sh. */
 
-# include	<sys/types.h>
-# include	<sys/param.h>
-# include	<ctype.h>
-# include	<stdio.h>
-# include	<stdlib.h>
-# include	<string.h>
-# include	<time.h>
-# include	<unistd.h>
-# include	<inttypes.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+#include <inttypes.h>
+#include <err.h>
 
-# include	"strfile.h"
+#include "strfile.h"
 
-# ifndef MAXPATHLEN
-# define	MAXPATHLEN	1024
-# endif	/* MAXPATHLEN */
+#ifndef MAXPATHLEN
+#define	MAXPATHLEN	1024
+#endif	/* MAXPATHLEN */
 
 static uint32_t h2nl(uint32_t h);
 static void getargs(int argc, char **argv);
-static void usage(void);
-static void die(const char *str);
-static void dieperror(const char *fmt, char *file);
+static void usage(void) __attribute__((__noreturn__));
 static void add_offset(FILE *fp, off_t off);
 static void do_order(void);
 static int cmp_str(const void *vp1, const void *vp2);
@@ -127,7 +126,7 @@ h2nl(uint32_t h)
 			else if (((sz) + 1) % CHUNKSIZE == 0) \
 				ptr = realloc(ptr, ((sz) + CHUNKSIZE) * sizeof *ptr); \
 			if (ptr == NULL) \
-				die("out of space"); \
+				err(1, "out of space"); \
 		} while (0)
 
 typedef struct {
@@ -166,8 +165,6 @@ static STR *Firstch;			/* first chars of each string */
 
 void	add_offset(FILE *, off_t);
 int	cmp_str(const void *, const void *);
-void	die(const char *) NORETURN;
-void	dieperror(const char *, char *) NORETURN;
 void	do_order(void);
 void	fwrite_be_offt(off_t, FILE *);
 void	getargs(int, char *[]);
@@ -198,15 +195,15 @@ main(int ac, char **av)
 
 	/* sanity test */
 	if (sizeof(uint32_t) != 4)
-		die("sizeof(uint32_t) != 4");
+		errx(1, "sizeof(uint32_t) != 4");
 
 	getargs(ac, av);		/* evalute arguments */
 	dc = Delimch;
 	if ((inf = fopen(Infile, "r")) == NULL)
-		dieperror("open `%s'", Infile);
+		err(1, "open `%s'", Infile);
 
 	if ((outf = fopen(Outfile, "w")) == NULL)
-		dieperror("open `%s'", Outfile);
+		err(1, "open `%s'", Outfile);
 	if (!STORING_PTRS)
 		(void) fseek(outf, sizeof Tbl, SEEK_SET);
 
@@ -289,7 +286,7 @@ main(int ac, char **av)
 	}
 	fflush(outf);
 	if (ferror(outf))
-		dieperror("fwrite %s", Outfile);
+		err(1, "fwrite %s", Outfile);
 	(void) fclose(outf);
 	exit(0);
 }
@@ -353,24 +350,8 @@ static void
 usage(void)
 {
 	(void) fprintf(stderr,
-	    "strfile [-iorsx] [-c char] sourcefile [datafile]\n");
-	exit(1);
-}
-
-static void
-die(const char *str)
-{
-	fprintf(stderr, "strfile: %s\n", str);
-	exit(1);
-}
-
-static void
-dieperror(const char *fmt, char *file)
-{
-	fprintf(stderr, "strfile: ");
-	fprintf(stderr, fmt, file);
-	fprintf(stderr, ": ");
-	perror(NULL);
+	    "Usage: %s [-iorsx] [-c char] sourcefile [datafile]\n",
+	    getprogname());
 	exit(1);
 }
 
