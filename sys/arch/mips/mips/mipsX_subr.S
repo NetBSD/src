@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.52 2011/08/02 05:13:21 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.53 2011/08/16 06:55:12 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -334,6 +334,10 @@
  */
 VECTOR(MIPSX(tlb_miss), unknown)
 	.set	noat
+#ifdef MIPS3_LOONGSON2
+	li	k0, MIPS_DIAG_BTB_CLEAR
+	mtc0	k0, MIPS_COP_0_DIAG
+#endif
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
 	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#01: k1=hi of seg0tab
 	bltz	k0, MIPSX(kernelfault)		#02: k0<0 -> 4f (kernel fault)
@@ -360,9 +364,11 @@ MIPSX(tlb_miss_common):
 	_SLL	k1, WIRED_SHIFT			#14: chop top 2 bits (part 2a)
 	_SRL	k1, WIRED_SHIFT			#15: chop top 2 bits (part 2b)
 	_MTC0	k1, MIPS_COP_0_TLB_LO1		#16: lo1 is loaded
+#ifndef MIPS3_LOONGSON2
 	sll	$0, $0, 3			#17: standard nop (ehb)
 #ifdef MIPS3
 	nop					#18: extra nop for QED5230
+#endif
 #endif
 	tlbwr					#19: write to tlb
 	sll	$0, $0, 3			#1a: standard nop (ehb)
@@ -434,7 +440,7 @@ VECTOR(MIPSX(cache), unknown)
 	li	k1, MIPS_KSEG1_START			#04
 	or	k0, k1					#05
 	lui	k1, %hi(CPUVAR(CURLWP))			#06: k1=hi of curlwp
-	j	k0					#07
+	jr	k0					#07
 	 PTR_L	k1, %lo(CPUVAR(CURLWP))(k1)		#08: k1=lo of curlwp
 _VECTOR_END(MIPSX(cache))
 
@@ -475,7 +481,7 @@ VECTOR(MIPSX(exception), unknown)
 						#  we dont have to shift.
 	PTR_L	k0, 0(k0)			#09: get the function address
 	lui	k1, %hi(CPUVAR(CURLWP))		#0a: k1=hi of curlwp
-	j	k0				#0b: jump to the function
+	jr	k0				#0b: jump to the function
 	 PTR_L	k1, %lo(CPUVAR(CURLWP))(k1)	#0c: k1=lo of curlwp
 	nop					#0d
 	nop					#0e
@@ -510,7 +516,7 @@ VECTOR(MIPSX(intr), unknown)
 	PTR_LA	k0, MIPSX(kern_intr)		#07: nope, kernel intr
 1:
 	lui	k1, %hi(CPUVAR(CURLWP))		#09: k1=hi of curlwp
-	j	k0				#0a: jump to the function
+	jr	k0				#0a: jump to the function
 	 PTR_L	k1, %lo(CPUVAR(CURLWP))(k1)	#0b: k1=lo of curlwp
 	.set	at
 _VECTOR_END(MIPSX(intr))
@@ -995,6 +1001,10 @@ NESTED_NOPROFILE(MIPSX(user_reserved_insn), CALLFRAME_SIZ, ra)
 	/*
 	 * Save a minimum of registers to see if this is rdhwr $3,$29
 	 */
+#ifdef MIPS3_LOONGSON2
+	li	k0, MIPS_DIAG_BTB_CLEAR
+	mtc0	k0, MIPS_COP_0_DIAG
+#endif
 	/* K1 already has CURLWP */
 	PTR_L	k0, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	PTR_ADDU k0, USPACE - TF_SIZ - CALLFRAME_SIZ
@@ -1091,13 +1101,13 @@ MIPSX(user_gen_exception_common):
 	_MFC0	a3, MIPS_COP_0_EXC_PC		# 4th arg is exception PC
 	REG_S	t8, CALLFRAME_SIZ+TF_REG_T8(k0)	# will be MIPS_CURLWP
 	REG_S	t9, CALLFRAME_SIZ+TF_REG_T9(k0)
+	REG_S	v0, CALLFRAME_SIZ+TF_REG_MULLO(k0)
+	REG_S	v1, CALLFRAME_SIZ+TF_REG_MULHI(k0)
 	REG_S	gp, CALLFRAME_SIZ+TF_REG_GP(k0)
 	REG_S	sp, CALLFRAME_SIZ+TF_REG_SP(k0)
 	REG_S	s8, CALLFRAME_SIZ+TF_REG_S8(k0)
 	REG_S	ra, CALLFRAME_SIZ+TF_REG_RA(k0)
 	REG_S	a0, CALLFRAME_SIZ+TF_REG_SR(k0)
-	REG_S	v0, CALLFRAME_SIZ+TF_REG_MULLO(k0)
-	REG_S	v1, CALLFRAME_SIZ+TF_REG_MULHI(k0)
 	REG_S	a3, CALLFRAME_SIZ+TF_REG_EPC(k0)
 #ifdef __GP_SUPPORT__
 	PTR_LA	gp, _C_LABEL(_gp)		# switch to kernel GP
@@ -1873,7 +1883,7 @@ LEAF(MIPSX(tlb_read_indexed))
 	PTR_S	t3, TLBMASK_HI(a1)
 	INT_S	ta0, TLBMASK_LO0(a1)
 	INT_S	ta1, TLBMASK_LO1(a1)
-	j	ra
+	jr	ra
 	 INT_S	t2, TLBMASK_MASK(a1)
 END(MIPSX(tlb_read_indexed))
 
@@ -2299,6 +2309,10 @@ MIPSX(user_return):
 	REG_L	s6, CALLFRAME_SIZ+TF_REG_S6(sp)		# $22
 	REG_L	s7, CALLFRAME_SIZ+TF_REG_S7(sp)		# $23
 	REG_L	s8, CALLFRAME_SIZ+TF_REG_S8(sp)		# $30
+#ifdef MIPS3_LOONGSON2
+	li	t0, (MIPS_DIAG_BTB_CLEAR|MIPS_DIAG_ITLB_CLEAR)
+	mtc0	t0, MIPS_COP_0_DIAG
+#endif
 MIPSX(user_intr_return):
 #ifdef PARANOIA
 	PTR_L	t0, L_CPU(MIPS_CURLWP)
@@ -2355,7 +2369,8 @@ LEAF(MIPSX(setfunc_trampoline))
 	# Call the routine specified by cpu_setfunc()
 	# and return directly to user_return
 	PTR_LA	ra, MIPSX(user_return)
-	jr	s0
+	move	t9, s0
+	jr	t9
 	 move	a0, s1
 END(MIPSX(setfunc_trampoline))
 
@@ -2437,7 +2452,7 @@ MIPSX(resume):
 	PTR_L	v0, L_PRIVATE(a0)		# get lwp private
 	_MTC0	v0, MIPS_COP_0_TLB_CONTEXT, 4	# make available for rdhwr
 #endif
-	j	ra
+	jr	ra
 	 nop
 END(MIPSX(cpu_switch_resume))
 
@@ -2604,7 +2619,7 @@ LEAF(MIPSX(pagezero))
 	bgtz	a1, 1b
 	addu	a0, 64
 
-	j	ra
+	jr	ra
 	nop
 END(MIPSX(pagezero))
 #endif /* USE_64BIT_INSTRUCTIONS */

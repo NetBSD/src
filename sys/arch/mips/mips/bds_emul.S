@@ -1,4 +1,4 @@
-/*	$NetBSD: bds_emul.S,v 1.4 2011/02/26 11:27:59 tsutsui Exp $	*/
+/*	$NetBSD: bds_emul.S,v 1.5 2011/08/16 06:55:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,8 +66,8 @@ LEAF(mips_emul_branchdelayslot)
 
 	srl	t0, a0, 26-PTR_SCALESHIFT
 	andi	t0, 0x3F << PTR_SCALESHIFT
-	PTR_L	t0, bcemul_optbl(t0)
-	j	t0
+	PTR_L	t9, bcemul_optbl(t0)
+	jr	t9
 
 	.rdata
 bcemul_optbl:
@@ -173,7 +173,7 @@ bcemul_immed_prologue:
 	REG_PROLOGUE
 	REG_L	v0, TF_REG_ZERO(t1)		# load source
 	REG_EPILOGUE
-	j	ra				# execute the instruction
+	jr	ra				# execute the instruction
 
 bcemul_uimmed_prologue:
 	srl	t1, a0, 21-REG_SCALESHIFT	# rs (source)
@@ -186,7 +186,7 @@ bcemul_uimmed_prologue:
 	REG_PROLOGUE
 	REG_L	v0, TF_REG_ZERO(t1)		# load source
 	REG_EPILOGUE
-	j	ra
+	jr	ra
 
 #ifndef __mips_o32
 bcemul_daddi:
@@ -441,11 +441,12 @@ bcemul_special:
 	andi	t0, a0, 0x3f			# get special code
 	sll	t1, t0, 3			# calculate index in specialop
 	sll	t0, PTR_SCALESHIFT
-	PTR_LA	t9, bcemul_special_op(t1)
-	PTR_L	t0, bcemul_specialtbl(t0)
-	j	t0
+	PTR_LA	t0, bcemul_special_op(t1)
+	PTR_L	t9, bcemul_specialtbl(t0)
+	jr	t9
 
 bcemul_special_3op_prologue:
+	move	t9, t0
 	srl	t0, a0, 21-REG_SCALESHIFT	# rs (source1)
 	srl	t1, a0, 16-REG_SCALESHIFT	# rt (source2)
 	srl	t2, a0, 11-REG_SCALESHIFT	# rd (dest)
@@ -459,9 +460,10 @@ bcemul_special_3op_prologue:
 	REG_L	v0, TF_REG_ZERO(t0)		# load source1
 	REG_L	v1, TF_REG_ZERO(t1)		# load source2
 	REG_EPILOGUE
-	j	t9
+	jr	t9
 
 bcemul_special_2src_prologue:
+	move	t9, t0
 	srl	t0, a0, 21-REG_SCALESHIFT	# rs (source1)
 	srl	t1, a0, 16-REG_SCALESHIFT	# rt (source2)
 	andi	t0, REG_REGMASK
@@ -472,9 +474,10 @@ bcemul_special_2src_prologue:
 	REG_L	v0, TF_REG_ZERO(t0)		# load source1
 	REG_L	v1, TF_REG_ZERO(t1)		# load source2
 	REG_EPILOGUE
-	j	t9
+	jr	t9
 
 bcemul_special_genshift:
+	move	t9, t0
 	srl	t1, a0, 16-REG_SCALESHIFT	# rt (source)
 	srl	t2, a0, 11-REG_SCALESHIFT	# rd (dest)
 	srl	v1, a0, 6			# sa
@@ -606,7 +609,7 @@ bcemul_done:
 	REG_L	ra, CALLFRAME_RA(sp)
 	REG_L	s0, CALLFRAME_S0(sp)
 	PTR_ADDU sp, CALLFRAME_SIZ
-	j	ra
+	jr	ra
 
 /*
  * Send SIGILL, SIGFPE.

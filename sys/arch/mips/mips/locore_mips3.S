@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.101 2011/07/31 15:39:29 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.102 2011/08/16 06:55:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -158,7 +158,7 @@ XLEAF(mips64_wbflush)
 XLEAF(mips64r2_wbflush)
 	nop
 	sync
-	j	ra
+	jr	ra
 	 nop
 END(mips3_wbflush)
 
@@ -185,7 +185,7 @@ LEAF(mips_wait_idle)
 	nop
 	nop
 	nop
-	j	ra
+	jr	ra
 	 nop
 END(mips_wait_idle)
 
@@ -196,7 +196,7 @@ END(mips_wait_idle)
  */
 LEAF(mips3_cp0_compare_read)
 	mfc0	v0, MIPS_COP_0_COMPARE
-	j	ra
+	jr	ra
 	 nop
 END(mips3_cp0_compare_read)
 
@@ -217,7 +217,7 @@ END(mips3_cp0_compare_write)
  */
 LEAF(mips3_cp0_config_read)
 	mfc0	v0, MIPS_COP_0_CONFIG
-	j	ra
+	jr	ra
 	 nop
 END(mips3_cp0_config_read)
 
@@ -245,7 +245,7 @@ END(mips3_cp0_config_write)
  */
 LEAF(mipsNN_cp0_config1_read)
 	mfc0	v0, MIPS_COP_0_CONFIG, 1
-	j	ra
+	jr	ra
 	 nop
 END(mipsNN_cp0_config1_read)
 
@@ -266,7 +266,7 @@ END(mipsNN_cp0_config1_write)
  */
 LEAF(mipsNN_cp0_config2_read)
 	mfc0	v0, MIPS_COP_0_CONFIG, 2
-	j	ra
+	jr	ra
 	 nop
 END(mipsNN_cp0_config2_read)
 
@@ -277,7 +277,7 @@ END(mipsNN_cp0_config2_read)
  */
 LEAF(mipsNN_cp0_config3_read)
 	mfc0	v0, MIPS_COP_0_CONFIG, 3
-	j	ra
+	jr	ra
 	 nop
 END(mipsNN_cp0_config3_read)
 
@@ -407,7 +407,7 @@ END(mipsNN_cp0_watchhi_write)
  *	Set the value of the CP0 USERLOCAL (TLB_CONTEXT, select 2) register.
  */
 LEAF(mipsNN_cp0_hwrena_write)
-	j	ra
+	jr	ra
 	 mtc0	a0, MIPS_COP_0_HWRENA
 END(mipsNN_cp0_hwrena_write)
 
@@ -416,7 +416,7 @@ END(mipsNN_cp0_hwrena_write)
  *	Set the value of the CP0 USERLOCAL (TLB_CONTEXT, select 2) register.
  */
 LEAF(mipsNN_cp0_userlocal_write)
-	j	ra
+	jr	ra
 	 _MTC0	a0, MIPS_COP_0_TLB_CONTEXT, 2
 END(mipsNN_cp0_userlocal_write)
 #endif /* (MIPS32R2 + MIPS64R2) > 0 */
@@ -430,7 +430,7 @@ END(mipsNN_cp0_userlocal_write)
  */
 LEAF(mips3_cp0_count_read)
 	mfc0	v0, MIPS_COP_0_COUNT
-	j	ra
+	jr	ra
 	 nop
 END(mips3_cp0_count_read)
 WEAK_ALIAS(cpu_counter32, mips3_cp0_count_read)
@@ -452,7 +452,7 @@ END(mips3_cp0_count_write)
  */
 LEAF(mips3_cp0_wired_read)
 	mfc0	v0, MIPS_COP_0_TLB_WIRED
-	j	ra
+	jr	ra
 	 nop
 END(mips3_cp0_wired_read)
 
@@ -598,7 +598,7 @@ LEAF(badaddr64)
 	mtc0	t0, MIPS_COP_0_STATUS           # Restore KX
 	COP0_SYNC
 	PTR_S	zero, PCB_ONFAULT(v1)
-	j	ra
+	jr	ra
 	 move	v0, zero			# made it w/o errors
 END(badaddr64)
 
@@ -606,7 +606,7 @@ LEAF(baderr64)
 	mtc0	t0, MIPS_COP_0_STATUS		# Restore KX
 	COP0_SYNC
 	PTR_S	zero, PCB_ONFAULT(v1)
-	j	ra
+	jr	ra
 	 li	v0, -1
 END(baderr64)
 
@@ -638,7 +638,7 @@ LEAF(mips3_cp0_tlb_entry_hi_probe)
 	srl	v0, v0, 0
 #endif
 #endif /* __mips_o32 */
-	j	ra
+	jr	ra
 	 nop
 END(mips3_cp0_tlb_entry_hi_probe)
 
@@ -666,7 +666,7 @@ LEAF(mips3_cp0_tlb_entry_lo_probe)
 	srl	v0, v0, 0
 #endif
 #endif /* __mips_o32 */
-	j	ra
+	jr	ra
 	 nop
 END(mips3_cp0_tlb_entry_lo_probe)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.43 2011/02/26 15:41:32 tsutsui Exp $	*/
+/*	$NetBSD: fp.S,v 1.44 2011/08/16 06:55:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -151,29 +151,29 @@ NESTED(mips_emul_fp, CALLFRAME_SIZ, ra)
 single_op:
 	andi	v0, a0, 0x3F		# get FUNC field
 	sll	v0, v0, PTR_SCALESHIFT
-	PTR_L	v0, func_single_tbl(v0)
-	j	v0
+	PTR_L	t9, func_single_tbl(v0)
+	j	t9
 double_op:
 	andi	v0, a0, 0x3F		# get FUNC field
 	sll	v0, v0, PTR_SCALESHIFT
-	PTR_L	v0, func_double_tbl(v0)
-	j	v0
+	PTR_L	t9, func_double_tbl(v0)
+	j	t9
 single_fixed_op:
 	andi	v0, a0, 0x3F		# get FUNC field
 	sll	v0, v0, PTR_SCALESHIFT
-	PTR_L	v0, func_single_fixed_tbl(v0)
-	j	v0
+	PTR_L	t9, func_single_fixed_tbl(v0)
+	j	t9
 long_fixed_op:
 	andi	v0, a0, 0x3F		# get FUNC field
 	sll	v0, v0, PTR_SCALESHIFT
-	PTR_L	v0, func_long_fixed_tbl(v0)
-	j	v0
+	PTR_L	t9, func_long_fixed_tbl(v0)
+	j	t9
 #if (defined(__mips_n32) || defined(__mips_n64)) && 0
 paired_single_op:
 	andi	v0, a0, 0x3F		# get FUNC field
 	sll	v0, v0, PTR_SCALESHIFT
-	PTR_L	v0, func_paired_single_tbl(v0)
-	j	v0
+	PTR_L	t9, func_paired_single_tbl(v0)
+	j	t9
 #else
 #define	paired_single_op	ill
 #endif
@@ -766,8 +766,8 @@ ctoc1:
 branchc1:
 	srl	v0, a0, 16 - PTR_SCALESHIFT
 	andi	v0, v0, 0x1f << PTR_SCALESHIFT
-	PTR_L	v0, branchc1_tbl(v0)
-	j	v0
+	PTR_L	t9, branchc1_tbl(v0)
+	j	t9
 
 	.rdata
 branchc1_tbl:
