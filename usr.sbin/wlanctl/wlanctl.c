@@ -1,4 +1,4 @@
-/* $NetBSD: wlanctl.c,v 1.11 2009/04/19 01:53:17 lukem Exp $ */
+/* $NetBSD: wlanctl.c,v 1.12 2011/08/16 08:33:46 christos Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -75,7 +75,7 @@ static void
 print_rateset(struct ieee80211_rateset *rs, int txrate)
 {
 	int i, rate;
-	const char *fmt, *basic;
+	const char *basic;
 
 	printf("\trates");
 
@@ -85,12 +85,11 @@ print_rateset(struct ieee80211_rateset *rs, int txrate)
 			basic = "*";
 		else
 			basic = "";
-		if (i == txrate)
-			fmt = " [%s%d.%d]";
-		else
-			fmt = " %s%d.%d";
 		rate = 5 * (rs->rs_rates[i] & IEEE80211_RATE_VAL);
-		printf(fmt, basic, rate / 10, rate % 10);
+		if (i == txrate)
+			printf(" [%s%d.%d]", basic, rate / 10, rate % 10);
+		else
+			printf(" %s%d.%d", basic, rate / 10, rate % 10);
 	}
 	printf("\n");
 }
