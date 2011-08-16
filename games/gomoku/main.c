@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2010/03/29 05:16:08 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2011/08/16 11:10:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.25 2010/03/29 05:16:08 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2011/08/16 11:10:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,10 +94,6 @@ main(int argc, char **argv)
 	char *tmp;
 	int color, curmove, i, ch;
 	int input[2];
-	static const char *const fmt[2] = {
-		"%3d %-6s",
-		"%3d        %-6s"
-	};
 
 	/* Revoke setgid privileges */
 	setgid(getgid());
@@ -295,7 +291,8 @@ again:
 			break;
 		}
 		if (interactive) {
-			misclog(fmt[color], movenum, stoc(curmove));
+			misclog("%3d%s%-6s", movenum, color ? "        " : " ",
+			    stoc(curmove));
 		}
 		if ((i = makemove(color, curmove)) != MOVEOK)
 			break;
