@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_print.c,v 1.11 2011/01/04 10:05:55 wiz Exp $	*/
+/*	$NetBSD: pcnfsd_print.c,v 1.12 2011/08/16 14:29:16 mbalmer Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_print.c 1.7 92/01/24 19:58:58 SMI */
 /*
@@ -356,7 +356,7 @@ pr_start2(sys, pr, user, fname, opts, id)
 		msg_out("rpc.pcnfsd: su_popen failed");
 		return (PS_RES_FAIL);
 	}
-	req_id[0] = '\0';	/* asume failure */
+	req_id[0] = '\0';	/* assume failure */
 	while (fgets(resbuf, 255, fd) != NULL) {
 		i = strlen(resbuf);
 		if (i)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.19 2009/03/18 10:22:29 cegger Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.20 2011/08/16 14:29:16 mbalmer Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.19 2009/03/18 10:22:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.20 2011/08/16 14:29:16 mbalmer Exp $");
 
 #include "opt_use_poll.h"
 
@@ -453,7 +453,7 @@ ucbtp_adc_async(void *arg)
 			break;
 		case UCBADC_MEASUREMENT_PRESSURE:
 			sc->sm_measurement = UCBADC_MEASUREMENT_X;
-			/* measument complete. pass down to wsmouse_input */
+			/* measurement complete. pass down to wsmouse_input */
 			sc->sm_state = UCBADC_ADC_INPUT;
 			break;
 		}
