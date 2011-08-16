@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2010/02/03 15:34:39 roy Exp $
+#	$NetBSD: Makefile,v 1.21 2011/08/16 11:19:41 christos Exp $
 #	@(#)Makefile	5.12 (Berkeley) 5/30/93
 
 # EXTRA
@@ -73,5 +73,8 @@ DAT=larnmaze larnopts larn.help
 FILES=${DAT:S@^@${.CURDIR}/datfiles/@g}
 FILESDIR=/usr/share/games/larn
 .endif
+
+COPTS.display.c += -Wno-format-nonliteral
+COPTS.monster.c += -Wno-format-nonliteral
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: movem.c,v 1.7 2009/08/12 08:04:05 dholland Exp $	*/
+/*	$NetBSD: movem.c,v 1.8 2011/08/16 11:19:41 christos Exp $	*/
 
 /*
  * movem.c (move monster)		Larn is copyrighted 1986 by Noah Morgan.
@@ -12,7 +12,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: movem.c,v 1.7 2009/08/12 08:04:05 dholland Exp $");
+__RCSID("$NetBSD: movem.c,v 1.8 2011/08/16 11:19:41 christos Exp $");
 #endif				/* not lint */
 
 #include "header.h"
@@ -278,7 +278,7 @@ mmove(aa, bb, cc, dd)
 	int             aa, bb, cc, dd;
 {
 	int    tmp, i, flag;
-	const char *who = NULL, *p;
+	const char *who = NULL;
 
 	flag = 0;		/* set to 1 if monster hit by arrow trap */
 	if ((cc == playerx) && (dd == playery)) {
@@ -364,24 +364,22 @@ mmove(aa, bb, cc, dd)
 	if (c[BLINDCOUNT])
 		return;		/* if blind don't show where monsters are	 */
 	if (know[cc][dd] & 1) {
-		p = 0;
 		if (flag)
 			cursors();
 		switch (flag) {
 		case 1:
-			p = "\n%s hits the %s";
+			lprintf("\n%s hits the %s", who, monster[tmp].name);
+			beep();
 			break;
 		case 2:
-			p = "\n%s hits and kills the %s";
+			lprintf("\n%s hits and kills the %s",
+			    who, monster[tmp].name);
+			beep();
 			break;
 		case 3:
-			p = "\nThe %s%s gets teleported";
-			who = "";
-			break;
-		};
-		if (p) {
-			lprintf(p, who, monster[tmp].name);
+			lprintf("\nThe %s gets teleported", monster[tmp].name);
 			beep();
+			break;
 		}
 	}
 	/*
