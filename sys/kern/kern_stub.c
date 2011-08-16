@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.34 2011/07/06 18:24:26 dyoung Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.35 2011/08/16 23:32:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.34 2011/07/06 18:24:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.35 2011/08/16 23:32:15 dyoung Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -82,7 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.34 2011/07/06 18:24:26 dyoung Exp $"
 #include <sys/userconf.h>
 
 bool default_bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
-bool default_bus_space_handle_is_equal(bus_space_handle_t, bus_space_handle_t);
+bool default_bus_space_handle_is_equal(bus_space_tag_t, bus_space_handle_t,
+    bus_space_handle_t);
 
 /*
  * Nonexistent system call-- signal process (may want to handle it).  Flag
@@ -137,8 +138,9 @@ __weak_alias(bus_space_reservation_map, eopnotsupp);
 __weak_alias(bus_space_reservation_unmap, voidop);
 __weak_alias(bus_space_tag_create, eopnotsupp);
 __weak_alias(bus_space_tag_destroy, voidop);
-__weak_alias(bus_space_is_equal, default_bus_space_is_equal);
-__weak_alias(bus_space_handle_is_equal, default_bus_space_handle_is_equal);
+__strict_weak_alias(bus_space_is_equal, default_bus_space_is_equal);
+__strict_weak_alias(bus_space_handle_is_equal,
+    default_bus_space_handle_is_equal);
 __weak_alias(userconf_bootinfo, voidop);
 __weak_alias(userconf_init, voidop);
 __weak_alias(userconf_prompt, voidop);
@@ -277,7 +279,8 @@ nullop(void *v)
 }
 
 bool
-default_bus_space_handle_is_equal(bus_space_handle_t h1, bus_space_handle_t h2)
+default_bus_space_handle_is_equal(bus_space_tag_t t,
+    bus_space_handle_t h1, bus_space_handle_t h2)
 {
 
 	return memcmp(&h1, &h2, sizeof(h1)) == 0;
