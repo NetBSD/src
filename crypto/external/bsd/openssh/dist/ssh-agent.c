@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.6 2011/07/25 03:03:11 christos Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.7 2011/08/16 09:42:21 christos Exp $	*/
 /* $OpenBSD: ssh-agent.c,v 1.171 2010/11/21 01:01:13 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.6 2011/07/25 03:03:11 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.7 2011/08/16 09:42:21 christos Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -1101,6 +1101,29 @@ usage(void)
 	exit(1);
 }
 
+static void
+csh_setenv(const char *name, const char *value)
+{
+	printf("setenv %s %s;\n", name, value);
+}
+
+static void
+csh_unsetenv(const char *name)
+{
+	printf("unsetenv %s;\n", name);
+}
+
+static void
+sh_setenv(const char *name, const char *value)
+{
+	printf("%s=%s; export %s;\n", name, value, name);
+}
+
+static void
+sh_unsetenv(const char *name)
+{
+	printf("unset %s;\n", name);
+}
 int
 main(int ac, char **av)
 {
@@ -1108,7 +1131,6 @@ main(int ac, char **av)
 	int sock, fd, ch, result, saved_errno;
 	u_int nalloc;
 	char *shell, *pidstr, *agentsocket = NULL;
-	const char *format;
 	fd_set *readsetp = NULL, *writesetp = NULL;
 	struct sockaddr_un sunaddr;
 	struct rlimit rlim;
@@ -1118,6 +1140,8 @@ main(int ac, char **av)
 	char pidstrbuf[1 + 3 * sizeof pid];
 	struct timeval *tvp = NULL;
 	size_t len;
+	void (*f_setenv)(const char *, const char *);
+	void (*f_unsetenv)(const char *);
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
@@ -1173,6 +1197,13 @@ main(int ac, char **av)
 		    strncmp(shell + len - 3, "csh", 3) == 0)
 			c_flag = 1;
 	}
+	if (c_flag) {
+		f_setenv = csh_setenv;
+		f_unsetenv = csh_unsetenv;
+	} else {
+		f_setenv = sh_setenv;
+		f_unsetenv = sh_unsetenv;
+	}
 	if (k_flag) {
 		const char *errstr = NULL;
 
@@ -1193,9 +1224,8 @@ main(int ac, char **av)
 			perror("kill");
 			exit(1);
 		}
-		format = c_flag ? "unsetenv %s;\n" : "unset %s;\n";
-		printf(format, SSH_AUTHSOCKET_ENV_NAME);
-		printf(format, SSH_AGENTPID_ENV_NAME);
+		(*f_unsetenv)(SSH_AUTHSOCKET_ENV_NAME);
+		(*f_unsetenv)(SSH_AGENTPID_ENV_NAME);
 		printf("echo Agent pid %ld killed;\n", (long)pid);
 		exit(0);
 	}
@@ -1245,9 +1275,7 @@ main(int ac, char **av)
 	 */
 	if (d_flag) {
 		log_init(__progname, SYSLOG_LEVEL_DEBUG1, SYSLOG_FACILITY_AUTH, 1);
-		format = c_flag ? "setenv %s %s;\n" : "%s=%s; export %s;\n";
-		printf(format, SSH_AUTHSOCKET_ENV_NAME, socket_name,
-		    SSH_AUTHSOCKET_ENV_NAME);
+		(*f_setenv)(SSH_AUTHSOCKET_ENV_NAME, socket_name);
 		printf("echo Agent pid %ld;\n", (long)parent_pid);
 		goto skip;
 	}
@@ -1260,11 +1288,8 @@ main(int ac, char **av)
 		close(sock);
 		snprintf(pidstrbuf, sizeof pidstrbuf, "%ld", (long)pid);
 		if (ac == 0) {
-			format = c_flag ? "setenv %s %s;\n" : "%s=%s; export %s;\n";
-			printf(format, SSH_AUTHSOCKET_ENV_NAME, socket_name,
-			    SSH_AUTHSOCKET_ENV_NAME);
-			printf(format, SSH_AGENTPID_ENV_NAME, pidstrbuf,
-			    SSH_AGENTPID_ENV_NAME);
+			(*f_setenv)(SSH_AUTHSOCKET_ENV_NAME, socket_name);
+			(*f_setenv)(SSH_AGENTPID_ENV_NAME, pidstrbuf);
 			printf("echo Agent pid %ld;\n", (long)pid);
 			exit(0);
 		}
