@@ -1,4 +1,4 @@
-/* $NetBSD: auvitekvar.h,v 1.4 2011/08/09 01:42:24 jmcneill Exp $ */
+/* $NetBSD: auvitekvar.h,v 1.5 2011/08/16 23:35:55 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,6 +32,8 @@
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/kthread.h>
+
+#include <dev/dtv/dtvif.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
