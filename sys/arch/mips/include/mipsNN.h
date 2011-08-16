@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsNN.h,v 1.4 2006/03/20 18:31:29 gdamore Exp $	*/
+/*	$NetBSD: mipsNN.h,v 1.5 2011/08/16 06:58:15 matt Exp $	*/
 
 /*
  * Copyright 2000, 2001
@@ -233,7 +233,13 @@
 /* "M" (R): Configuration Register 4 present. */
 #define	MIPSNN_CFG3_M		0x80000000
 
-/* "DSPP" (R): DSPP ASE extension present. */
+/* "ULRP" (R): UserLocal register is implemented. */
+#define	MIPSNN_CFG3_ULRP	0x00002000
+
+/* "DSP2P" (R): DSP v2 ASE extension present. */
+#define	MIPSNN_CFG3_DSP2P	0x00000800
+
+/* "DSPP" (R): DSP ASE extension present. */
 #define	MIPSNN_CFG3_DSPP	0x00000400
 
 /* "LPA" (R): Large physical addresses implemented. (MIPS64 rev 2 only). */

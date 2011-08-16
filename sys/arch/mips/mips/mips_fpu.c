@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fpu.c,v 1.5 2011/05/02 00:29:54 rmind Exp $	*/
+/*	$NetBSD: mips_fpu.c,v 1.6 2011/08/16 06:58:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.5 2011/05/02 00:29:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.6 2011/08/16 06:58:15 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -50,16 +50,11 @@ static void mips_fpu_state_save(lwp_t *);
 static void mips_fpu_state_load(lwp_t *, bool);
 static void mips_fpu_state_release(lwp_t *);
 
-static const pcu_ops_t mips_fpu_ops = {
+const pcu_ops_t mips_fpu_ops = {
 	.pcu_id = PCU_FPU,
 	.pcu_state_save = mips_fpu_state_save,
 	.pcu_state_load = mips_fpu_state_load,
 	.pcu_state_release = mips_fpu_state_release
-};
-
-/* XXX */
-const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
-	[PCU_FPU] = &mips_fpu_ops
 };
 
 void
