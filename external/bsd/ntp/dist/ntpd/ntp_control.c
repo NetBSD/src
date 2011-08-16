@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.3 2011/07/01 02:18:54 mrg Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.4 2011/08/16 05:15:21 christos Exp $	*/
 
 /*
  * ntp_control.c - respond to control messages and send async traps
@@ -607,6 +607,7 @@ save_config(
 	 * allow timestamping of the saved config filename with
 	 * strftime() format such as:
 	 *   ntpq -c "saveconfig ntp-%Y%m%d-%H%M%S.conf"
+	 * XXX: Nice feature, but not too safe.
 	 */
 	if (0 == strftime(filename, sizeof(filename), filespec,
 			       localtime(&now)))
@@ -2946,7 +2947,7 @@ report_event(
 			    " %s", str);
 		}
 		NLOG(NLOG_SYSEVENT)
-		    msyslog(LOG_INFO, statstr);
+		    msyslog(LOG_INFO, "%s", statstr);
 	} else {
 
 		/*
@@ -2978,7 +2979,7 @@ report_event(
 			    " %s", str);
 		}
 		NLOG(NLOG_PEEREVENT)
-		    msyslog(LOG_INFO, statstr);
+		    msyslog(LOG_INFO, "%s", statstr);
 	}
 	record_proto_stats(statstr);
 #if DEBUG
