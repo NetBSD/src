@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.86 2011/06/23 12:16:03 nonaka Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.87 2011/08/16 23:30:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -61,6 +61,14 @@
 #include <sys/cdefs_elf.h>
 #else
 #include <sys/cdefs_aout.h>
+#endif
+
+#ifdef __GNUC__
+#define	__strict_weak_alias(alias,sym)					\
+	__unused static __typeof__(alias) *__weak_alias_##alias = &sym;	\
+	__weak_alias(alias,sym)
+#else
+#define	__strict_weak_alias(alias,sym) __weak_alias(alias,sym)
 #endif
 
 /*
