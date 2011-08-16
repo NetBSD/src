@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.181 2011/06/12 03:35:57 rmind Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.182 2011/08/16 22:33:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.181 2011/06/12 03:35:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.182 2011/08/16 22:33:38 yamt Exp $");
 
 #include "veriexec.h"
 
@@ -348,6 +348,7 @@ vn_close(struct vnode *vp, int flags, kauth_cred_t cred)
 
 	if (flags & FWRITE) {
 		mutex_enter(vp->v_interlock);
+		KASSERT(vp->v_writecount > 0);
 		vp->v_writecount--;
 		mutex_exit(vp->v_interlock);
 	}
