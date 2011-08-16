@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 		"returns the current position\n");
 	cur = lseek(fd, st.st_size-50, SEEK_DATA);
 	if (cur != st.st_size - 50) {
-		errx(EXIT_FAILURE"Seek data didn't give passed seek position "
+		errx(EXIT_FAILURE, "Seek data didn't give passed seek position "
 		    "back %" PRIi64 " should be %" PRIi64, cur, st.st_size-50);
 		return EXIT_FAILURE;
 	}
