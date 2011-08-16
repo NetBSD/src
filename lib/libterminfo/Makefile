@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2010/07/06 05:59:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2011/08/16 10:36:30 christos Exp $
 
 USE_SHLIBDIR=	yes
 
@@ -49,6 +49,7 @@ compiled_terms:
 		@echo "Generating compiled terminfo descriptions"
 		cd ${.CURDIR} && ${HOST_SH} ./genterms >compiled_terms.c
 
+COPTS.tparm.c = -Wno-format-nonliteral
 man: terminfo.5
 
 gen: hash compiled_terms man
