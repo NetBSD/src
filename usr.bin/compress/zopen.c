@@ -1,4 +1,4 @@
-/*	$NetBSD: zopen.c,v 1.13 2009/04/11 12:24:37 lukem Exp $	*/
+/*	$NetBSD: zopen.c,v 1.14 2011/08/16 03:24:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1986, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
-static char rcsid[] = "$NetBSD: zopen.c,v 1.13 2009/04/11 12:24:37 lukem Exp $";
+static char rcsid[] = "$NetBSD: zopen.c,v 1.14 2011/08/16 03:24:47 christos Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -519,7 +519,7 @@ zread(void *cookie, char *rbp, int num)
 		}
 		incode = code;
 
-		/* Special case for KwKwK string. */
+		/* Special case FOR kWkWk string. */
 		if (code >= free_ent) {
 			*stackp++ = finchar;
 			code = oldcode;
@@ -527,6 +527,10 @@ zread(void *cookie, char *rbp, int num)
 
 		/* Generate output characters in reverse order. */
 		while (code >= 256) {
+			if (stackp - de_stack >= HSIZE - 1) {
+				errno = EOVERFLOW;
+				return -1;
+			}
 			*stackp++ = tab_suffixof(code);
 			code = tab_prefixof(code);
 		}
