@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2011/05/26 12:56:33 joerg Exp $
+#	$NetBSD: Makefile,v 1.36 2011/08/16 12:03:31 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -18,6 +18,8 @@ CPPFLAGS+= -DIPSEC
 CPPFLAGS+= -I${NETBSDSRCDIR}/sys/dist/pf
 
 CWARNFLAGS.clang+=	-Wno-format
+COPTS.iso.c += -Wno-format-nonliteral
+COPTS.show.c += -Wno-format-nonliteral
 
 .PATH:  ${.CURDIR}/../../lib/libc/gen
 .PATH:  ${.CURDIR}/../../lib/libc/net
