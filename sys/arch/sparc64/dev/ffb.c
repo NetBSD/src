@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.44 2011/07/01 18:48:36 dyoung Exp $	*/
+/*	$NetBSD: ffb.c,v 1.45 2011/08/16 12:59:01 macallan Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.44 2011/07/01 18:48:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.45 2011/08/16 12:59:01 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -268,6 +268,12 @@ ffb_attach(struct ffb_softc *sc)
 	} else
 		try_edid = 1;
 
+#ifdef FFB_DEBUG
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_TGC);
+	printf("tgc: %08x\n", DAC_READ(sc, FFB_DAC_VALUE));
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_DAC_CTRL);
+	printf("dcl: %08x\n", DAC_READ(sc, FFB_DAC_VALUE));
+#endif
 	ffb_attach_i2c(sc);
 
 	/* Need to set asynchronous blank during DDC write/read */
@@ -608,19 +614,24 @@ ffb_ras_init(struct ffb_softc *sc)
 
 	if (sc->sc_width > 1280) {
 	DPRINTF(("ffb_ras_init: high resolution.\n"));
-		fbc = FFB_FBC_WB_B | FFB_FBC_WM_COMBINED | FFB_FBC_WE_FORCEON |
+		fbc = FFB_FBC_WM_COMBINED | FFB_FBC_WE_FORCEON |
 		    FFB_FBC_ZE_OFF | FFB_FBC_YE_OFF | FFB_FBC_XE_ON;
 	} else {
 	DPRINTF(("ffb_ras_init: standard resolution.\n"));
 		fbc = FFB_FBC_XE_OFF;
 	}
-	ffb_ras_fifo_wait(sc, 7);
+	ffb_ras_fifo_wait(sc, 8);
+	DPRINTF(("WID: %08x\n", FBC_READ(sc, FFB_FBC_WID)));
+	FBC_WRITE(sc, FFB_FBC_WID, 0x0);
 	FBC_WRITE(sc, FFB_FBC_PPC,
 	    FBC_PPC_VCE_DIS | FBC_PPC_TBE_OPAQUE | FBC_PPC_ACE_DIS | 
-	    FBC_PPC_APE_DIS | FBC_PPC_DCE_DIS | FBC_PPC_CS_CONST);
-	FBC_WRITE(sc, FFB_FBC_FBC,
-	    FFB_FBC_WB_A | FFB_FBC_RB_A | FFB_FBC_SB_BOTH |
-	    FFB_FBC_RGBE_MASK | fbc);
+	    FBC_PPC_APE_DIS | FBC_PPC_DCE_DIS | FBC_PPC_CS_CONST | 
+	    FBC_PPC_XS_WID);
+	    
+	fbc |= FFB_FBC_WB_A | FFB_FBC_RB_A | FFB_FBC_SB_BOTH |
+	       FFB_FBC_RGBE_MASK;
+        DPRINTF(("%s: fbc is %08x\n", __func__, fbc));
+        FBC_WRITE(sc, FFB_FBC_FBC, fbc);
 	FBC_WRITE(sc, FFB_FBC_ROP, FBC_ROP_NEW);
 	FBC_WRITE(sc, FFB_FBC_DRAWOP, FBC_DRAWOP_RECTANGLE);
 	FBC_WRITE(sc, FFB_FBC_PMASK, 0xffffffff);
@@ -1080,7 +1091,9 @@ ffb_init_screen(void *cookie, struct vcons_screen *scr,
 	 * software use vcons' putchar() based implementation
 	 */
 	scr->scr_flags |= VCONS_NO_COPYCOLS;
-
+#ifdef VCONS_DRAW_INTR
+        scr->scr_flags |= VCONS_DONT_READ;
+#endif
 	DPRINTF(("ffb_init_screen: addr: %08lx\n",(ulong)ri->ri_bits));
 
 	rasops_init(ri, sc->sc_height/8, sc->sc_width/8);
@@ -1342,10 +1355,13 @@ ffb_set_vmode(struct ffb_softc *sc, struct videomode *mode, int btype,
 	}
 
 	/* DAC Control and Timing Generator Control */
-	if (mode->flags & VID_PHSYNC) {
+	if (mode->flags & VID_PVSYNC) {
 		dcl = FFB_DAC_DAC_CTRL_POS_SYNC;
-		if (mode->flags & VID_NVSYNC) {
+		if (mode->flags & VID_NHSYNC) {
+#if 0
+/* XXX */
 			dcl |= FFB_DAC_DAC_CTRL_VSYNC_REV;
+#endif
 			tgc = 0;
 		} else {
 			tgc = FFB_DAC_TGC_EQUAL_DISABLE;
@@ -1360,6 +1376,7 @@ ffb_set_vmode(struct ffb_softc *sc, struct videomode *mode, int btype,
 		}
 	}
 #define EDID_VID_INP	sc->sc_edid_info.edid_video_input
+
 	if (!(EDID_VID_INP & EDID_VIDEO_INPUT_COMPOSITE_SYNC)) {
 		dcl |= FFB_DAC_DAC_CTRL_SYNC_G;
 		if (EDID_VID_INP & EDID_VIDEO_INPUT_SEPARATE_SYNCS)
@@ -1446,7 +1463,8 @@ ffb_set_vmode(struct ffb_softc *sc, struct videomode *mode, int btype,
 
 	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_TGC);
 	DAC_WRITE(sc, FFB_DAC_VALUE, tgc);
-
+	DPRINTF(("new tgc: %08x\n", tgc));
+    
 	*hres = mode->hdisplay;
 	*vres = mode->vdisplay;
 
