@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.63 2011/08/15 20:14:52 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.64 2011/08/16 02:59:16 dholland Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.63 2011/08/15 20:14:52 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64 2011/08/16 02:59:16 dholland Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1292,5 +1292,5 @@ cpu_broadcast_halt(void)
 void
 cpu_kick(struct cpu_info *ci)
 {
-	xen_send_ipi(ci, XEN_IPI_KICK);
+	(void)xen_send_ipi(ci, XEN_IPI_KICK);
 }
