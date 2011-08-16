@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.3 2011/08/16 01:14:57 elric Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.4 2011/08/16 02:59:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan
@@ -1268,7 +1268,7 @@ _kdc_as_rep(krb5_context context,
 			"client time %s is out by %jd > %jd seconds -- %s",
 			client_time,
 			imaxabs(kdc_time - p.patimestamp),
-			context->max_skew,
+			(intmax_t)context->max_skew,
 			client_name);
 
 		/*
