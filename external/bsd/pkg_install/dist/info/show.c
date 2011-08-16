@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.1.1.8 2011/02/18 22:32:30 aymeric Exp $	*/
+/*	$NetBSD: show.c,v 1.2 2011/08/16 08:29:15 christos Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: show.c,v 1.1.1.8 2011/02/18 22:32:30 aymeric Exp $");
+__RCSID("$NetBSD: show.c,v 1.2 2011/08/16 08:29:15 christos Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -77,24 +77,24 @@ typedef struct show_t {
  * pl_ent_t constants
  */
 static const show_t showv[] = {
-	{PLIST_FILE, "%s", "\tFile: %s"},
-	{PLIST_CWD, "@cwd %s", "\tCWD to: %s"},
-	{PLIST_CMD, "@exec %s", "\tEXEC '%s'"},
-	{PLIST_CHMOD, "@chmod %s", "\tCHMOD to %s"},
-	{PLIST_CHOWN, "@chown %s", "\tCHOWN to %s"},
-	{PLIST_CHGRP, "@chgrp %s", "\tCHGRP to %s"},
-	{PLIST_COMMENT, "@comment %s", "\tComment: %s"},
+	{PLIST_FILE, "", "\tFile: "},
+	{PLIST_CWD, "@cwd ", "\tCWD to: "},
+	{PLIST_CMD, "@exec ", "\tEXEC ''"},
+	{PLIST_CHMOD, "@chmod ", "\tCHMOD to "},
+	{PLIST_CHOWN, "@chown ", "\tCHOWN to "},
+	{PLIST_CHGRP, "@chgrp ", "\tCHGRP to "},
+	{PLIST_COMMENT, "@comment ", "\tComment: "},
 	{PLIST_IGNORE, "@ignore", "Ignore next file:"},
-	{PLIST_NAME, "@name %s", "\tPackage name: %s"},
-	{PLIST_UNEXEC, "@unexec %s", "\tUNEXEC '%s'"},
-	{PLIST_SRC, "@src: %s", "\tSRC to: %s"},
-	{PLIST_DISPLAY, "@display %s", "\tInstall message file: %s"},
-	{PLIST_PKGDEP, "@pkgdep %s", "\tPackage depends on: %s"},
-	{PLIST_DIR_RM, "@dirrm %s", "\tObsolete deinstall directory removal hint: %s"},
-	{PLIST_OPTION, "@option %s", "\tPackage has option: %s"},
-	{PLIST_PKGCFL, "@pkgcfl %s", "\tPackage conflicts with: %s"},
-	{PLIST_BLDDEP, "@blddep %s", "\tPackage depends exactly on: %s"},
-	{PLIST_PKGDIR, "@pkgdir %s", "\tManaged directory: %s"},
+	{PLIST_NAME, "@name ", "\tPackage name: "},
+	{PLIST_UNEXEC, "@unexec ", "\tUNEXEC ''"},
+	{PLIST_SRC, "@src: ", "\tSRC to: "},
+	{PLIST_DISPLAY, "@display ", "\tInstall message file: "},
+	{PLIST_PKGDEP, "@pkgdep ", "\tPackage depends on: "},
+	{PLIST_DIR_RM, "@dirrm ", "\tObsolete deinstall directory removal hint: "},
+	{PLIST_OPTION, "@option ", "\tPackage has option: "},
+	{PLIST_PKGCFL, "@pkgcfl ", "\tPackage conflicts with: "},
+	{PLIST_BLDDEP, "@blddep ", "\tPackage depends exactly on: "},
+	{PLIST_PKGDIR, "@pkgdir ", "\tManaged directory: "},
 	{-1, NULL, NULL}
 };
 
@@ -163,7 +163,9 @@ show_plist(const char *title, package_t *plist, pl_ent_t type)
 		if (p->type == type || type == PLIST_SHOW_ALL) {
 			switch (p->type) {
 			case PLIST_FILE:
-				printf(Quiet ? showv[p->type].sh_quiet : showv[p->type].sh_verbose, p->name);
+				printf("%s%s",
+				    Quiet ? showv[p->type].sh_quiet :
+				    showv[p->type].sh_verbose, p->name);
 				if (ign) {
 					if (!Quiet) {
 						printf(" (ignored)");
@@ -174,11 +176,14 @@ show_plist(const char *title, package_t *plist, pl_ent_t type)
 			case PLIST_CHMOD:
 			case PLIST_CHOWN:
 			case PLIST_CHGRP:
-				printf(Quiet ? showv[p->type].sh_quiet : showv[p->type].sh_verbose,
+				printf("%s%s",
+				    Quiet ?  showv[p->type].sh_quiet :
+				    showv[p->type].sh_verbose,
 				    p->name ? p->name : "(clear default)");
 				break;
 			case PLIST_IGNORE:
-				printf(Quiet ? showv[p->type].sh_quiet : showv[p->type].sh_verbose);
+				printf("%s", Quiet ? showv[p->type].sh_quiet :
+				    showv[p->type].sh_verbose);
 				ign = TRUE;
 				break;
 			case PLIST_CWD:
@@ -194,8 +199,10 @@ show_plist(const char *title, package_t *plist, pl_ent_t type)
 			case PLIST_PKGCFL:
 			case PLIST_BLDDEP:
 			case PLIST_PKGDIR:
-				printf(Quiet ? showv[p->type].sh_quiet : showv[p->type].sh_verbose,
-					(p->name) ? p->name : "(null)");
+				printf("%s%s",
+				    Quiet ? showv[p->type].sh_quiet :
+				    showv[p->type].sh_verbose,
+				    p->name ? p->name : "(null)");
 				break;
 			default:
 				warnx("unknown command type %d (%s)", p->type, p->name);
