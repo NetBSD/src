@@ -1,4 +1,4 @@
-/*	$NetBSD: altqd.c,v 1.9 2006/11/26 11:38:07 peter Exp $	*/
+/*	$NetBSD: altqd.c,v 1.10 2011/08/16 12:39:29 christos Exp $	*/
 /*	$KAME: altqd.c,v 1.10 2002/02/20 10:42:26 kjc Exp $	*/
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -114,7 +114,7 @@ sig_handler(int sig)
 int
 main(int argc, char **argv)
 {
-	int	i, c, maxfd, rval, qpsock;
+	int	i, c, maxfd, rval, qpsock, fd;
 	fd_set	fds, rfds;
 	FILE	*fp, *client[MAX_CLIENT];
 
@@ -216,8 +216,15 @@ main(int argc, char **argv)
 	FD_ZERO(&fds);
 	maxfd = 0;
 	if (fp != NULL) {
-		FD_SET(fileno(fp), &fds);
-		maxfd = MAX(maxfd, fileno(fp) + 1);
+	    fd = fileno(fp);
+	    if (fd == -1)
+		    LOG(LOG_ERR, 0, "bad file descriptor", QUIP_PATH);
+	} else
+		fd = -1;
+
+	if (fd != -1) {
+		FD_SET(fd, &fds);
+		maxfd = MAX(maxfd, fd + 1);
 	}
 	if (qpsock >= 0) {
 		FD_SET(qpsock, &fds);
@@ -252,7 +259,7 @@ main(int argc, char **argv)
 		 * if there is command input, read the input line,
 		 * parse it, and execute.
 		 */
-		if (fp && FD_ISSET(fileno(fp), &rfds)) {
+		if (fp && FD_ISSET(fd, &rfds)) {
 			rval = do_command(fp);
 			if (rval == 0) {
 				/* quit command or eof on input */
@@ -284,18 +291,18 @@ main(int argc, char **argv)
 			 * check input from a client via unix domain socket
 			 */
 			for (i = 0; i < MAX_CLIENT; i++) {
-				int fd;
+				int fd1;
 
 				if (client[i] == NULL)
 					continue;
-				fd = fileno(client[i]);
-				if (FD_ISSET(fd, &rfds)) {
+				fd1 = fileno(client[i]);
+				if (FD_ISSET(fd1, &rfds)) {
 					if (quip_input(client[i]) != 0 ||
 					    fflush(client[i]) != 0) {
 						/* connection closed */
 						fclose(client[i]);
 						client[i] = NULL;
-						FD_CLR(fd, &fds);
+						FD_CLR(fd1, &fds);
 					}
 				}
 			}
