@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2011/07/19 03:07:09 dholland Exp $	
+# $NetBSD: Makefile,v 1.5 2011/08/16 10:34:23 christos Exp $	
 
 .include <bsd.own.mk>
 
@@ -100,5 +100,6 @@ tokdefs.h: grammar.h
 	cp $? $@
 
 CLEANFILES+=	tokdefs.h
+COPTS.bpf_image.c = -Wno-format-nonliteral
 
 .include <bsd.lib.mk>
