@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_qop.h,v 1.5 2008/05/02 19:07:44 xtraeme Exp $	*/
+/*	$NetBSD: altq_qop.h,v 1.6 2011/08/16 12:49:13 christos Exp $	*/
 /*	$KAME: altq_qop.h,v 1.5 2002/02/12 10:14:01 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -246,8 +246,14 @@ extern int	daemonize;	/* log_write uses stderr if daemonize is 0 */
 #endif /* !RSVPD */
 
 #ifdef INET6
-/* a macro to handle v6 address in 32-bit fields */
-#define IN6ADDR32(a, i)	(*(u_int32_t *)(&(a)->s6_addr[(i)<<2]))
+static inline uint32_t IN6ADDR32_GET(const struct in6_addr *a, size_t i) {
+    uint32_t ret;
+    memcpy(&ret, &(a)->s6_addr[i << 2], sizeof(ret));
+    return ret;
+}
+static inline void IN6ADDR32_SET(struct in6_addr *a, size_t i, uint32_t val) {
+    memcpy(&(a)->s6_addr[i << 2], &val, sizeof(val));
+}
 #endif
 
 #endif /* _ALTQ_QOP_H_ */
