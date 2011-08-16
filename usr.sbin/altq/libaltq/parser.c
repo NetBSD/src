@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.10 2004/10/29 19:58:18 dsl Exp $	*/
+/*	$NetBSD: parser.c,v 1.11 2011/08/16 12:49:13 christos Exp $	*/
 /*	$KAME: parser.c,v 1.16 2002/02/20 10:40:39 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2002
@@ -843,10 +843,14 @@ get_ip6addr(char **cpp, struct in6_addr *addr, struct in6_addr *mask)
 		if (len > 0)
 			*cp = (0xff << (8 - len)) & 0xff;
 
-		IN6ADDR32(addr, 0) &= IN6ADDR32(mask, 0);
-		IN6ADDR32(addr, 1) &= IN6ADDR32(mask, 1);
-		IN6ADDR32(addr, 2) &= IN6ADDR32(mask, 2);
-		IN6ADDR32(addr, 3) &= IN6ADDR32(mask, 3);
+		IN6ADDR32_SET(addr, 0, IN6ADDR32_GET(mask, 0) &
+		    IN6ADDR32_GET(addr, 0));
+		IN6ADDR32_SET(addr, 1, IN6ADDR32_GET(mask, 1) &
+		    IN6ADDR32_GET(addr, 1));
+		IN6ADDR32_SET(addr, 2, IN6ADDR32_GET(mask, 2) &
+		    IN6ADDR32_GET(addr, 2));
+		IN6ADDR32_SET(addr, 3, IN6ADDR32_GET(mask, 3) &
+		    IN6ADDR32_GET(addr, 3));
 	} else
 		/* full mask */
 		memset(mask, 0xff, sizeof(struct in6_addr));

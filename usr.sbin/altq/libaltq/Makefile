@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2011/06/22 02:49:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2011/08/16 12:49:13 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -16,8 +16,3 @@ CPPFLAGS+= -DINET6
 .endif
 
 .include <bsd.lib.mk>
-
-# XXX
-.if ${HAVE_GCC} == 45
-COPTS.parser.c+=	-fno-strict-aliasing
-.endif
