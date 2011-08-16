@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.c,v 1.20 2011/07/29 15:16:33 christos Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.21 2011/08/16 16:25:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tokenizer.c,v 1.20 2011/07/29 15:16:33 christos Exp $");
+__RCSID("$NetBSD: tokenizer.c,v 1.21 2011/08/16 16:25:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -70,7 +70,7 @@ typedef enum {
 
 struct TYPE(tokenizer) {
 	Char	*ifs;		/* In field separator			 */
-	int	 argc, amax;	/* Current and maximum number of args	 */
+	size_t	 argc, amax;	/* Current and maximum number of args	 */
 	Char   **argv;		/* Argument list			 */
 	Char	*wptr, *wmax;	/* Space and limit on the word buffer	 */
 	Char	*wstart;	/* Beginning of next word		 */
@@ -201,7 +201,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 		if (ptr >= line->lastchar)
 			ptr = STR("");
 		if (ptr == line->cursor) {
-			cc = tok->argc;
+			cc = (int)tok->argc;
 			co = (int)(tok->wptr - tok->wstart);
 		}
 		switch (*ptr) {
@@ -391,14 +391,14 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 		}
 
 		if (tok->wptr >= tok->wmax - 4) {
-			size_t size = tok->wmax - tok->wspace + WINCR;
+			size_t size = (size_t)(tok->wmax - tok->wspace + WINCR);
 			Char *s = tok_realloc(tok->wspace,
 			    size * sizeof(*s));
 			if (s == NULL)
 				return -1;
 
 			if (s != tok->wspace) {
-				int i;
+				size_t i;
 				for (i = 0; i < tok->argc; i++) {
 				    tok->argv[i] =
 					(tok->argv[i] - tok->wspace) + s;
@@ -420,7 +420,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 	}
  tok_line_outok:
 	if (cc == -1 && co == -1) {
-		cc = tok->argc;
+		cc = (int)tok->argc;
 		co = (int)(tok->wptr - tok->wstart);
 	}
 	if (cursorc != NULL)
@@ -429,7 +429,7 @@ FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
 		*cursoro = co;
 	FUN(tok,finish)(tok);
 	*argv = (const Char **)tok->argv;
-	*argc = tok->argc;
+	*argc = (int)tok->argc;
 	return 0;
 }
 

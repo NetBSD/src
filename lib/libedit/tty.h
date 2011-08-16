@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.12 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.13 2011/08/16 16:25:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -431,7 +431,7 @@
 #define	C_MIN		23
 #define	C_TIME		24
 #define	C_NCC		25
-#define	C_SH(A)		(1 << (A))
+#define	C_SH(A)		((unsigned int)(1 << (A)))
 
 /*
  * Terminal dependend data structures

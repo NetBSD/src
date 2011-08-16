@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.39 2011/07/29 15:20:39 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.40 2011/08/16 16:25:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.39 2011/07/29 15:20:39 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.40 2011/08/16 16:25:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1235,8 +1235,9 @@ tty_stty(EditLine *el, int argc __attribute__((__unused__)), const Char **argv)
 			if (i != -1) {
 			    x = (el->el_tty.t_t[z][i].t_setmask & m->m_value)
 				?  '+' : '\0';
-			    x = (el->el_tty.t_t[z][i].t_clrmask & m->m_value)
-				? '-' : x;
+
+			    if (el->el_tty.t_t[z][i].t_clrmask & m->m_value)
+				x = '-';
 			} else {
 			    x = '\0';
 			}
@@ -1268,7 +1269,7 @@ tty_stty(EditLine *el, int argc __attribute__((__unused__)), const Char **argv)
 		switch (*s) {
 		case '+':
 		case '-':
-			x = *s++;
+			x = (char)*s++;
 			break;
 		default:
 			x = '\0';
@@ -1295,7 +1296,7 @@ tty_stty(EditLine *el, int argc __attribute__((__unused__)), const Char **argv)
 			c--;
 			c = tty__getcharindex(c);
 			assert(c != -1);
-			tios->c_cc[c] = v;
+			tios->c_cc[c] = (cc_t)v;
 			continue;
 		}
 		switch (x) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.39 2011/07/29 23:44:45 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.40 2011/08/16 16:25:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.39 2011/07/29 23:44:45 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.40 2011/08/16 16:25:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -426,7 +426,7 @@ vi_add(EditLine *el, Int c __attribute__((__unused__)))
 
 	cv_undo(el);
 
-	return ret;
+	return (el_action_t)ret;
 }
 
 
@@ -814,7 +814,7 @@ vi_match(EditLine *el, Int c __attribute__((__unused__)))
 	o_ch = el->el_line.cursor[i];
 	if (o_ch == 0)
 		return CC_ERROR;
-	delta = Strchr(match_chars, o_ch) - match_chars;
+	delta = (size_t)(Strchr(match_chars, o_ch) - match_chars);
 	c_ch = match_chars[delta ^ 1];
 	count = 1;
 	delta = 1 - (delta & 1) * 2;

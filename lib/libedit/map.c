@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.29 2011/07/29 15:16:33 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.30 2011/08/16 16:25:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.29 2011/07/29 15:16:33 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.30 2011/08/16 16:25:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1375,7 +1375,7 @@ map_bind(EditLine *el, int argc, const Char **argv)
 				map[(unsigned char) *in] = ED_SEQUENCE_LEAD_IN;
 			} else {
 				keymacro_clear(el, map, in);
-				map[(unsigned char) *in] = cmd;
+				map[(unsigned char) *in] = (el_action_t)cmd;
 			}
 		}
 		break;
@@ -1395,7 +1395,7 @@ protected int
 map_addfunc(EditLine *el, const Char *name, const Char *help, el_func_t func)
 {
 	void *p;
-	int nf = el->el_map.nfunc + 1;
+	size_t nf = (size_t)el->el_map.nfunc + 1;
 
 	if (name == NULL || help == NULL || func == NULL)
 		return -1;
@@ -1409,11 +1409,11 @@ map_addfunc(EditLine *el, const Char *name, const Char *help, el_func_t func)
 		return -1;
 	el->el_map.help = p;
 
-	nf = el->el_map.nfunc;
+	nf = (size_t)el->el_map.nfunc;
 	el->el_map.func[nf] = func;
 
 	el->el_map.help[nf].name = name;
-	el->el_map.help[nf].func = nf;
+	el->el_map.help[nf].func = (int)nf;
 	el->el_map.help[nf].description = help;
 	el->el_map.nfunc++;
 

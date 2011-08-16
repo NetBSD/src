@@ -1,4 +1,4 @@
-/*	$NetBSD: keymacro.c,v 1.6 2011/07/29 23:44:44 christos Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.7 2011/08/16 16:25:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: keymacro.c,v 1.6 2011/07/29 23:44:44 christos Exp $");
+__RCSID("$NetBSD: keymacro.c,v 1.7 2011/08/16 16:25:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -510,11 +510,11 @@ node_lookup(EditLine *el, const Char *str, keymacro_node_t *ptr, size_t cnt)
 			if (ptr->next != NULL)
 				/* not yet at leaf */
 				return (node_lookup(el, str + 1, ptr->next,
-				    used + cnt));
+				    (size_t)used + cnt));
 			else {
 			    /* next node is null so key should be complete */
 				if (str[1] == 0) {
-					size_t px = cnt + used;
+					size_t px = cnt + (size_t)used;
 					el->el_keymacro.buf[px] = '"';
 					el->el_keymacro.buf[px + 1] = '\0';
 					keymacro_kprint(el, el->el_keymacro.buf,
@@ -565,11 +565,11 @@ node_enum(EditLine *el, keymacro_node_t *ptr, size_t cnt)
 	    ptr->ch);
 	if (ptr->next == NULL) {
 		/* print this key and function */
-		el->el_keymacro.buf[cnt + used   ] = '"';
-		el->el_keymacro.buf[cnt + used + 1] = '\0';
+		el->el_keymacro.buf[cnt + (size_t)used   ] = '"';
+		el->el_keymacro.buf[cnt + (size_t)used + 1] = '\0';
 		keymacro_kprint(el, el->el_keymacro.buf, &ptr->val, ptr->type);
 	} else
-		(void) node_enum(el, ptr->next, cnt + used);
+		(void) node_enum(el, ptr->next, cnt + (size_t)used);
 
 	/* go to sibling if there is one */
 	if (ptr->sibling)

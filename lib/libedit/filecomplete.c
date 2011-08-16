@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.29 2011/07/29 23:44:44 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.30 2011/08/16 16:25:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.29 2011/07/29 23:44:44 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.30 2011/08/16 16:25:15 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -86,7 +86,8 @@ fn_tilde_expand(const char *txt)
 		if (temp == NULL)
 			return NULL;
 	} else {
-		len = temp - txt + 1;	/* text until string after slash */
+		/* text until string after slash */
+		len = (size_t)(temp - txt + 1);
 		temp = el_malloc(len * sizeof(*temp));
 		if (temp == NULL)
 			return NULL;
@@ -162,7 +163,7 @@ fn_filename_completion_function(const char *text, int state)
 			}
 			filename = nptr;
 			(void)strcpy(filename, temp);
-			len = temp - text;	/* including last slash */
+			len = (size_t)(temp - text);	/* including last slash */
 
 			nptr = el_realloc(dirname, (len + 1) *
 			    sizeof(*nptr));
@@ -371,7 +372,7 @@ fn_display_match_list (EditLine *el, char **matches, size_t num, size_t width)
 	 * Find out how many entries can be put on one line; count
 	 * with one space between strings the same way it's printed.
 	 */
-	cols = screenwidth / (width + 1);
+	cols = (size_t)screenwidth / (width + 1);
 	if (cols == 0)
 		cols = 1;
 
@@ -444,7 +445,7 @@ fn_complete(EditLine *el,
 	    && (!special_prefixes || !Strchr(special_prefixes, ctemp[-1]) ) )
 		ctemp--;
 
-	len = li->cursor - ctemp;
+	len = (size_t)(li->cursor - ctemp);
 	temp = el_malloc((len + 1) * sizeof(*temp));
 	(void)Strncpy(temp, ctemp, len);
 	temp[len] = '\0';
@@ -458,13 +459,15 @@ fn_complete(EditLine *el,
 
 	if (attempted_completion_function) {
 		int cur_off = (int)(li->cursor - li->buffer);
-		matches = (*attempted_completion_function) (ct_encode_string(temp, &el->el_scratch),
-		    (int)(cur_off - len), cur_off);
+		matches = (*attempted_completion_function)(
+		    ct_encode_string(temp, &el->el_scratch),
+		    cur_off - (int)len, cur_off);
 	} else
 		matches = 0;
 	if (!attempted_completion_function || 
 	    (over != NULL && !*over && !matches))
-		matches = completion_matches(ct_encode_string(temp, &el->el_scratch), complet_func);
+		matches = completion_matches(
+		    ct_encode_string(temp, &el->el_scratch), complet_func);
 
 	if (over != NULL)
 		*over = 0;
@@ -509,7 +512,7 @@ fn_complete(EditLine *el,
 					maxlen = match_len;
 			}
 			/* matches[1] through matches[i-1] are available */
-			matches_num = i - 1;
+			matches_num = (size_t)(i - 1);
 				
 			/* newline to get on next line from command line */
 			(void)fprintf(el->el_outfile, "\n");
