@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.6 2005/08/11 17:13:21 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.7 2011/08/16 16:36:38 christos Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -713,18 +713,23 @@ isc_result_t ddns_update_a (struct data_string *ddns_fwd_name,
 	result = minires_nupdate (&resolver_state, ISC_LIST_HEAD (updqueue));
 
 	if (result != ISC_R_SUCCESS) {
-		if (result == YXRRSET || result == YXDOMAIN ||
-		    result == NXRRSET || result == NXDOMAIN)
+		switch ((ns_rcode)result) {
+		case YXRRSET:
+		case YXDOMAIN:
+		case NXRRSET:
+		case NXDOMAIN:
 			log_error ("Forward map from %.*s to %s already in use",
 				   (int)ddns_fwd_name -> len,
 				   (const char *)ddns_fwd_name -> data,
 				   ddns_address);
-		else
+			break;
+		default:
 			log_error ("Can't update forward map %.*s to %s: %s",
 				   (int)ddns_fwd_name -> len,
 				   (const char *)ddns_fwd_name -> data,
 				   ddns_address, isc_result_totext (result));
-
+			break;
+		}
 	} else {
 		log_info ("Added new forward map from %.*s to %s",
 			  (int)ddns_fwd_name -> len,
