@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.20 2011/08/01 11:08:03 drochner Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.21 2011/08/17 00:59:47 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.20 2011/08/01 11:08:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.21 2011/08/17 00:59:47 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -371,18 +371,17 @@ pci_msi_establish(struct pci_attach_args *pa, int level,
 		  int (*func)(void *), void *arg)
 {
 	int co;
-	void *ih;
+	struct intrhand *ih;
 	struct msi_hdl *msih;
 	struct cpu_info *ci;
-	struct intrsource *s;
-	u_int32_t cr;
+	struct intrsource *is;
+	pcireg_t reg;
 
 	if (!pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSI, &co, 0))
 		return NULL;
 
-	ih = intr_establish(-1, &msi_pic, -1, IST_EDGE, level,
-			    func, arg, 0);
-	if (!ih)
+	ih = intr_establish(-1, &msi_pic, -1, IST_EDGE, level, func, arg, 0);
+	if (ih == NULL)
 		return NULL;
 
 	msih = malloc(sizeof(*msih), M_DEVBUF, M_WAITOK);
@@ -391,20 +390,23 @@ pci_msi_establish(struct pci_attach_args *pa, int level,
 	msih->tag = pa->pa_tag;
 	msih->co = co;
 
-	ci = msih->ih->ih_cpu;
-	s = ci->ci_isources[msih->ih->ih_slot];
-	cr = pci_conf_read(pa->pa_pc, pa->pa_tag, co);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, co + 4,
+	ci = ih->ih_cpu;
+	is = ci->ci_isources[ih->ih_slot];
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, co + PCI_MSI_CTL);
+	/* 0xfee00000 == IOAPIC_??? */
+	pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MADDR64_LO,
 		       0xfee00000 | ci->ci_cpuid << 12);
-	if (cr & 0x800000) {
-		pci_conf_write(pa->pa_pc, pa->pa_tag, co + 8, 0);
-		pci_conf_write(pa->pa_pc, pa->pa_tag, co + 12,
-			       s->is_idtvec | 0x4000);
+	if (reg & PCI_MSI_CTL_64BIT_ADDR) {
+		pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MADDR64_HI,
+		    0);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MDATA64,
+			       is->is_idtvec | 0x4000);
 	} else
-		pci_conf_write(pa->pa_pc, pa->pa_tag, co + 8,
-			       s->is_idtvec | 0x4000);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, co, 0x10000);
-	return ih;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MDATA,
+			       is->is_idtvec | 0x4000);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_CTL,
+	    PCI_MSI_CTL_MSI_ENABLE);
+	return msih;
 }
 
 void
@@ -412,7 +414,8 @@ pci_msi_disestablish(void *ih)
 {
 	struct msi_hdl *msih = ih;
 
-	pci_conf_write(msih->pc, msih->tag, msih->co, 0);
+	pci_conf_write(msih->pc, msih->tag, msih->co + PCI_MSI_CTL, 0);
 	intr_disestablish(msih->ih);
+	free(msih, M_DEVBUF);
 }
 #endif
