@@ -1,4 +1,4 @@
-/* $Id: cmd-display-message.c,v 1.1.1.1 2011/03/10 09:15:36 jmmv Exp $ */
+/* $Id: cmd-display-message.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -30,33 +30,45 @@ int	cmd_display_message_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_display_message_entry = {
 	"display-message", "display",
-	"[-p] " CMD_TARGET_CLIENT_USAGE " [message]",
-	CMD_ARG01, "p",
-	cmd_target_init,
-	cmd_target_parse,
-	cmd_display_message_exec,
-	cmd_target_free,
-	cmd_target_print
+	"c:pt:", 0, 1,
+	"[-p] [-c target-client] [-t target-pane] [message]",
+	0,
+	NULL,
+	NULL,
+	cmd_display_message_exec
 };
 
 int
 cmd_display_message_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
-	struct cmd_target_data	*data = self->data;
+	struct args		*args = self->args;
 	struct client		*c;
+	struct session		*s;
+	struct winlink		*wl;
+	struct window_pane	*wp;
 	const char		*template;
 	char			*msg;
 
-	if ((c = cmd_find_client(ctx, data->target)) == NULL)
+	if ((c = cmd_find_client(ctx, args_get(args, 'c'))) == NULL)
 		return (-1);
 
-	if (data->arg == NULL)
+	if (args_has(args, 't') != 0) {
+		wl = cmd_find_pane(ctx, args_get(args, 't'), &s, &wp);
+		if (wl == NULL)
+			return (-1);
+	} else {
+		s = NULL;
+		wl = NULL;
+		wp = NULL;
+	}
+
+	if (args->argc == 0)
 		template = "[#S] #I:#W, current pane #P - (%H:%M %d-%b-%y)";
 	else
-		template = data->arg;
+		template = args->argv[0];
 
-	msg = status_replace(c, NULL, template, time(NULL), 0);
-	if (cmd_check_flag(data->chflags, 'p'))
+	msg = status_replace(c, s, wl, wp, template, time(NULL), 0);
+	if (args_has(self->args, 'p'))
 		ctx->print(ctx, "%s", msg);
 	else
 		status_message_set(c, "%s", msg);

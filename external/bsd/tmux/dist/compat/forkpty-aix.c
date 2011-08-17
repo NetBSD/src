@@ -1,4 +1,4 @@
-/* $Id: forkpty-aix.c,v 1.1.1.1 2011/03/10 09:15:41 jmmv Exp $ */
+/* $Id: forkpty-aix.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -52,10 +52,10 @@ forkpty(int *master, unused char *name, struct termios *tio, struct winsize *ws)
 			ioctl(fd, TIOCNOTTY, NULL);
 			close(fd);
 		}
-		
+
 		if (setsid() < 0)
 			fatal("setsid");
-         
+
 		fd = open(_PATH_TTY, O_RDWR|O_NOCTTY);
 		if (fd >= 0)
 			fatalx("open succeeded (failed to disconnect)");

@@ -1,4 +1,4 @@
-/* $Id: xmalloc.c,v 1.1.1.1 2011/03/10 09:15:40 jmmv Exp $ */
+/* $Id: xmalloc.c,v 1.1.1.2 2011/08/17 18:40:05 jmmv Exp $ */
 
 /*
  * Copyright (c) 2004 Nicholas Marriott <nicm@users.sourceforge.net>

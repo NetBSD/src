@@ -1,4 +1,4 @@
-/* $Id: mode-key.c,v 1.1.1.1 2011/03/10 09:15:38 jmmv Exp $ */
+/* $Id: mode-key.c,v 1.1.1.2 2011/08/17 18:40:05 jmmv Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -40,7 +40,7 @@
  */
 
 /* Edit keys command strings. */
-struct mode_key_cmdstr mode_key_cmdstr_edit[] = {
+const struct mode_key_cmdstr mode_key_cmdstr_edit[] = {
 	{ MODEKEYEDIT_BACKSPACE, "backspace" },
 	{ MODEKEYEDIT_CANCEL, "cancel" },
 	{ MODEKEYEDIT_COMPLETE, "complete" },
@@ -63,7 +63,7 @@ struct mode_key_cmdstr mode_key_cmdstr_edit[] = {
 };
 
 /* Choice keys command strings. */
-struct mode_key_cmdstr mode_key_cmdstr_choice[] = {
+const struct mode_key_cmdstr mode_key_cmdstr_choice[] = {
 	{ MODEKEYCHOICE_CANCEL, "cancel" },
 	{ MODEKEYCHOICE_CHOOSE, "choose" },
 	{ MODEKEYCHOICE_DOWN, "down" },
@@ -77,11 +77,13 @@ struct mode_key_cmdstr mode_key_cmdstr_choice[] = {
 };
 
 /* Copy keys command strings. */
-struct mode_key_cmdstr mode_key_cmdstr_copy[] = {
+const struct mode_key_cmdstr mode_key_cmdstr_copy[] = {
 	{ MODEKEYCOPY_BACKTOINDENTATION, "back-to-indentation" },
 	{ MODEKEYCOPY_BOTTOMLINE, "bottom-line" },
 	{ MODEKEYCOPY_CANCEL, "cancel" },
 	{ MODEKEYCOPY_CLEARSELECTION, "clear-selection" },
+	{ MODEKEYCOPY_COPYLINE, "copy-line" },
+	{ MODEKEYCOPY_COPYENDOFLINE, "copy-end-of-line" },
 	{ MODEKEYCOPY_COPYSELECTION, "copy-selection" },
 	{ MODEKEYCOPY_DOWN, "cursor-down" },
 	{ MODEKEYCOPY_ENDOFLINE, "end-of-line" },
@@ -110,6 +112,7 @@ struct mode_key_cmdstr mode_key_cmdstr_copy[] = {
 	{ MODEKEYCOPY_SEARCHDOWN, "search-forward" },
 	{ MODEKEYCOPY_SEARCHREVERSE, "search-reverse" },
 	{ MODEKEYCOPY_SEARCHUP, "search-backward" },
+	{ MODEKEYCOPY_SELECTLINE, "select-line" },
 	{ MODEKEYCOPY_STARTNUMBERPREFIX, "start-number-prefix" },
 	{ MODEKEYCOPY_STARTOFLINE, "start-of-line" },
 	{ MODEKEYCOPY_STARTSELECTION, "begin-selection" },
@@ -123,6 +126,7 @@ struct mode_key_cmdstr mode_key_cmdstr_copy[] = {
 const struct mode_key_entry mode_key_vi_edit[] = {
 	{ '\003' /* C-c */,	0, MODEKEYEDIT_CANCEL },
 	{ '\010' /* C-h */, 	0, MODEKEYEDIT_BACKSPACE },
+	{ '\025' /* C-u	*/,	0, MODEKEYEDIT_DELETELINE },
 	{ '\011' /* Tab */,	0, MODEKEYEDIT_COMPLETE },
 	{ '\033' /* Escape */,	0, MODEKEYEDIT_SWITCHMODE },
 	{ '\r',			0, MODEKEYEDIT_ENTER },
@@ -197,6 +201,7 @@ const struct mode_key_entry mode_key_vi_copy[] = {
 	{ ':',			0, MODEKEYCOPY_GOTOLINE },
 	{ '?',			0, MODEKEYCOPY_SEARCHUP },
 	{ 'B',			0, MODEKEYCOPY_PREVIOUSSPACE },
+	{ 'D',			0, MODEKEYCOPY_COPYENDOFLINE },
 	{ 'E',			0, MODEKEYCOPY_NEXTSPACEEND },
 	{ 'F',			0, MODEKEYCOPY_JUMPBACK },
 	{ 'G',			0, MODEKEYCOPY_HISTORYBOTTOM },
@@ -322,6 +327,7 @@ const struct mode_key_entry mode_key_emacs_copy[] = {
 	{ '\005' /* C-e */,	0, MODEKEYCOPY_ENDOFLINE },
 	{ '\006' /* C-f */,	0, MODEKEYCOPY_RIGHT },
 	{ '\007' /* C-g */,	0, MODEKEYCOPY_CLEARSELECTION },
+	{ '\013' /* C-k */,	0, MODEKEYCOPY_COPYENDOFLINE },
 	{ '\016' /* C-n */,	0, MODEKEYCOPY_DOWN },
 	{ '\020' /* C-p */,	0, MODEKEYCOPY_UP },
 	{ '\022' /* C-r */,	0, MODEKEYCOPY_SEARCHUP },
@@ -384,7 +390,7 @@ mode_key_cmp(struct mode_key_binding *mbind1, struct mode_key_binding *mbind2)
 }
 
 const char *
-mode_key_tostring(struct mode_key_cmdstr *cmdstr, enum mode_key_cmd cmd)
+mode_key_tostring(const struct mode_key_cmdstr *cmdstr, enum mode_key_cmd cmd)
 {
 	for (; cmdstr->name != NULL; cmdstr++) {
 		if (cmdstr->cmd == cmd)
@@ -394,7 +400,7 @@ mode_key_tostring(struct mode_key_cmdstr *cmdstr, enum mode_key_cmd cmd)
 }
 
 enum mode_key_cmd
-mode_key_fromstring(struct mode_key_cmdstr *cmdstr, const char *name)
+mode_key_fromstring(const struct mode_key_cmdstr *cmdstr, const char *name)
 {
 	for (; cmdstr->name != NULL; cmdstr++) {
 		if (strcasecmp(cmdstr->name, name) == 0)
