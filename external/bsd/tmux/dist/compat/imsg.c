@@ -1,4 +1,4 @@
-/* $Id: imsg.c,v 1.2 2011/05/30 16:20:58 joerg Exp $ */
+/* $Id: imsg.c,v 1.3 2011/08/17 18:48:36 jmmv Exp $ */
 /*	$OpenBSD: imsg.c,v 1.3 2010/05/26 13:56:07 nicm Exp $	*/
 
 /*
