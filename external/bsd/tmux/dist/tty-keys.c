@@ -1,4 +1,4 @@
-/* $Id: tty-keys.c,v 1.3 2011/08/17 18:48:36 jmmv Exp $ */
+/* $Id: tty-keys.c,v 1.4 2011/08/17 19:28:36 jmmv Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -462,7 +462,7 @@ tty_keys_next(struct tty *tty)
 	}
 
 	/* Is this a mouse key press? */
-	switch (tty_keys_mouse(tty, buf, len, &size, &mouse)) {
+	switch (tty_keys_mouse(tty, (const char *)buf, len, &size, &mouse)) {
 	case 0:		/* yes */
 		evbuffer_drain(tty->event->input, size);
 		key = KEYC_MOUSE;

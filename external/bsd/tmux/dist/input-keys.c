@@ -1,4 +1,4 @@
-/* $Id: input-keys.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* $Id: input-keys.c,v 1.2 2011/08/17 19:28:36 jmmv Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -207,9 +207,12 @@ input_mouse(struct window_pane *wp, struct mouse_event *m)
 	if (wp->screen->mode & ALL_MOUSE_MODES) {
 		if (wp->screen->mode & MODE_MOUSE_UTF8) {
 			len = xsnprintf(buf, sizeof buf, "\033[M");
-			len += utf8_split2(m->b + 32, &buf[len]);
-			len += utf8_split2(m->x + 33, &buf[len]);
-			len += utf8_split2(m->y + 33, &buf[len]);
+			len += utf8_split2(m->b + 32,
+			    (unsigned char *)&buf[len]);
+			len += utf8_split2(m->x + 33,
+			    (unsigned char *)&buf[len]);
+			len += utf8_split2(m->y + 33,
+			    (unsigned char *)&buf[len]);
 		} else {
 			if (m->b > 223 || m->x >= 222 || m->y > 222)
 				return;

@@ -1,4 +1,4 @@
-/* $Id: window-copy.c,v 1.1.1.2 2011/08/17 18:40:05 jmmv Exp $ */
+/* $Id: window-copy.c,v 1.2 2011/08/17 19:28:36 jmmv Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1344,7 +1344,7 @@ window_copy_copy_selection(struct window_pane *wp)
 	off--;	/* remove final \n */
 
 	if (options_get_number(&global_options, "set-clipboard"))
-		screen_write_setselection(&wp->ictx.ctx, buf, off);
+		screen_write_setselection(&wp->ictx.ctx, (u_char *)buf, off);
 
 	/* Add the buffer to the stack. */
 	limit = options_get_number(&global_options, "buffer-limit");

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2011/08/17 18:51:10 jmmv Exp $
+# $NetBSD: Makefile,v 1.6 2011/08/17 19:28:36 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -11,8 +11,6 @@ PROG=		tmux
 MAN=		tmux.1
 
 WARNS?=	4
-CWARNFLAGS+=		-Wno-cast-qual
-CWARNFLAGS+=		-Wno-pointer-sign
 
 SRCS=		arguments.c
 SRCS+=		attributes.c
