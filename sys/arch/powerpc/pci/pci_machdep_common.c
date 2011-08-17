@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.13 2011/06/22 18:06:34 matt Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.14 2011/08/17 18:52:01 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.13 2011/06/22 18:06:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.14 2011/08/17 18:52:01 matt Exp $");
 
 #define _POWERPC_BUS_DMA_PRIVATE
 
@@ -212,6 +212,84 @@ genppc_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 bad:
 	*ihp = -1;
 	return 1;
+}
+
+int
+genppc_pci_msi_request(const struct pci_attach_args *pa,
+    pci_msi_handle_t *msihp, size_t nmsirq, int ipl, int capid)
+{
+	return EOPNOTSUPP;
+}
+
+int
+genppc_pci_msi_type(void *v, pci_msi_handle_t msih)
+{
+	panic("%s", __func__);
+}
+
+size_t
+genppc_pci_msi_available(void *v, pci_msi_handle_t msih)
+{
+	panic("%s", __func__);
+}
+
+const char *
+genppc_pci_msi_string(void *v, pci_msi_handle_t msih, size_t msirq)
+{
+	panic("%s", __func__);
+}
+
+const struct evcnt *
+genppc_pci_msi_evcnt(void *v, pci_msi_handle_t msih, size_t msirq)
+{
+	panic("%s", __func__);
+}
+
+void *
+genppc_pci_msi_establish(void *v, pci_msi_handle_t msih, size_t msirq,
+		    int ipl, int (*func)(void *), void *arg)
+{
+	panic("%s", __func__);
+}
+
+void *
+genppc_pci_msix_establish(void *v, pci_msi_handle_t msih, size_t vec,
+    size_t msirq, int ipl, int (*func)(void *), void *arg)
+{
+	panic("%s", __func__);
+}
+
+void
+genppc_pci_msi_disestablish(void *v, void *ih)
+{
+	panic("%s", __func__);
+}
+
+void
+genppc_pci_msi_free(void *v, pci_msi_handle_t msih, size_t msirq)
+{
+	panic("%s", __func__);
+}
+
+void
+genppc_pci_msi_release(void *v, pci_msi_handle_t msih)
+{
+	panic("%s", __func__);
+}
+
+void
+genppc_pci_chipset_msi_init(pci_chipset_tag_t pc)
+{
+	pc->pc_msi_request = genppc_pci_msi_request;
+	pc->pc_msi_type = genppc_pci_msi_type;
+	pc->pc_msi_available = genppc_pci_msi_available;
+	pc->pc_msi_evcnt = genppc_pci_msi_evcnt;
+	pc->pc_msi_string = genppc_pci_msi_string;
+	pc->pc_msi_establish = genppc_pci_msi_establish;
+	pc->pc_msix_establish = genppc_pci_msix_establish;
+	pc->pc_msi_disestablish = genppc_pci_msi_disestablish;
+	pc->pc_msi_free = genppc_pci_msi_free;
+	pc->pc_msi_release = genppc_pci_msi_release;
 }
 
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
