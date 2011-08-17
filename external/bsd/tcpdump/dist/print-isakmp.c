@@ -34,7 +34,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-isakmp.c,v 1.61 2008-02-05 19:34:25 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-isakmp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-isakmp.c,v 1.3 2011/08/17 10:48:02 christos Exp $");
 #endif
 #endif
 
@@ -2229,11 +2229,13 @@ ikev1_print(netdissect_options *ndo,
 	u_char np;
 	int i;
 	int phase;
+	uint32_t msgid;
 	
 	p = (const struct isakmp *)bp;
 	ep = ndo->ndo_snapend;
 	
-	phase = (*(u_int32_t *)base->msgid == 0) ? 1 : 2;
+	memcpy(&msgid, base->msgid, sizeof(msgid));
+	phase = (msgid == 0) ? 1 : 2;
 	if (phase == 1)
 		ND_PRINT((ndo," phase %d", phase));
 	else
@@ -2400,11 +2402,13 @@ ikev2_print(netdissect_options *ndo,
 	const u_char *ep;
 	u_char np;
 	int phase;
+	uint32_t msgid;
 
 	p = (const struct isakmp *)bp;
 	ep = ndo->ndo_snapend;
 
-	phase = (*(u_int32_t *)base->msgid == 0) ? 1 : 2;
+	memcpy(&msgid, base->msgid, sizeof(msgid));
+	phase = (msgid == 0) ? 1 : 2;
 	if (phase == 1)
 		ND_PRINT((ndo, " parent_sa"));
 	else

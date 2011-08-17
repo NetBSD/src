@@ -21,6 +21,97 @@
  * @(#) Header: /tcpdump/master/tcpdump/extract.h,v 1.25 2006-01-30 16:20:07 hannes Exp (LBL)
  */
 
+#ifdef __NetBSD__
+#include <string.h>
+
+/*
+ * Do it the portable way and let the compiler optimize the code
+ */
+static inline uint16_t EXTRACT_16BITS(const void *p)
+{
+	uint16_t t;
+	memcpy(&t, p, sizeof(t));
+	return ntohs(t);
+}
+
+static inline uint32_t EXTRACT_24BITS(const void *p)
+{
+	uint8_t t[3];
+	memcpy(t, p, sizeof(t));
+	return
+	    ((uint32_t)t[0] << 16) |
+	    ((uint32_t)t[1] << 8) |
+	    t[2];
+}
+
+static inline uint32_t EXTRACT_32BITS(const void *p)
+{
+	uint32_t t;
+	memcpy(&t, p, sizeof(t));
+	return ntohl(t);
+}
+
+static inline uint64_t EXTRACT_64BITS(const void *p)
+{
+	uint32_t t[2];
+	memcpy(&t[0], p, sizeof(t[0]));
+	memcpy(&t[1], (const uint8_t *)p + sizeof(t[0]), sizeof(t[1]));
+	return ((uint64_t)ntohl(t[0]) << 32) | ntohl(t[1]);
+}
+
+static inline uint8_t EXTRACT_LE_8BITS(const void *p)
+{
+	uint8_t t[1];
+	memcpy(t, p, sizeof(t));
+	return t[0];
+}
+
+static inline uint16_t EXTRACT_LE_16BITS(const void *p)
+{
+	uint8_t t[2];
+	memcpy(t, p, sizeof(t));
+	return
+	    ((uint16_t)t[1] << 8) |
+	    t[0];
+}
+
+static inline uint32_t EXTRACT_LE_24BITS(const void *p)
+{
+	uint8_t t[3];
+	memcpy(t, p, sizeof(t));
+	return
+	    ((uint32_t)t[2] << 16) |
+	    ((uint32_t)t[1] << 8) |
+	    t[0];
+}
+
+static inline uint32_t EXTRACT_LE_32BITS(const void *p)
+{
+	uint8_t t[4];
+	memcpy(t, p, sizeof(t));
+	return
+	    ((uint32_t)t[3] << 24) |
+	    ((uint32_t)t[2] << 16) |
+	    ((uint32_t)t[1] << 8) |
+	    t[0];
+}
+
+static inline uint64_t EXTRACT_LE_64BITS(const void *p)
+{
+	uint8_t t[8];
+	memcpy(&t, p, sizeof(t));
+	return
+	    ((uint64_t)t[7] << 56) |
+	    ((uint64_t)t[6] << 48) |
+	    ((uint64_t)t[5] << 40) |
+	    ((uint64_t)t[4] << 32) |
+	    ((uint64_t)t[3] << 24) |
+	    ((uint64_t)t[2] << 16) |
+	    ((uint64_t)t[1] << 8) |
+	    t[0];
+}
+
+#else /* Fast & Loose */
 /*
  * Macros to extract possibly-unaligned big-endian integral values.
  */
@@ -128,3 +219,4 @@ typedef struct {
 		     (u_int64_t)*((const u_int8_t *)(p) + 2) << 16 | \
 		     (u_int64_t)*((const u_int8_t *)(p) + 1) << 8 | \
 		     (u_int64_t)*((const u_int8_t *)(p) + 0)))
+#endif /* __NetBSD__ */
