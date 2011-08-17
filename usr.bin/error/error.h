@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.17 2011/05/21 00:43:31 christos Exp $	*/
+/*	$NetBSD: error.h,v 1.18 2011/08/17 13:11:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -203,6 +203,7 @@ extern boolean *touchedfiles;		/* which files we touched */
  */
 extern int language;
 extern char *currentfilename;
+extern char default_currentfilename[];
 
 /*
  * Macros for initializing arrays of string constants.
