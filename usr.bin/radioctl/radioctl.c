@@ -1,4 +1,4 @@
-/* $NetBSD: radioctl.c,v 1.9 2011/05/24 12:40:11 joerg Exp $ */
+/* $NetBSD: radioctl.c,v 1.10 2011/08/17 13:12:39 christos Exp $ */
 /* $OpenBSD: radioctl.c,v 1.5 2001/12/18 18:42:19 mickey Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: radioctl.c,v 1.9 2011/05/24 12:40:11 joerg Exp $");
+__RCSID("$NetBSD: radioctl.c,v 1.10 2011/08/17 13:12:39 christos Exp $");
 #endif
 
 #include <sys/ioctl.h>
@@ -360,7 +360,7 @@ str_to_long(char *str, int optval)
  */
 static int
 parse_opt(char *s, struct opt_t *o) {
-	const char *badvalue = "bad value `%s'";
+#define	badvalue "bad value `%s'"
 	char *topt = NULL;
 	int slen, optlen;
 
