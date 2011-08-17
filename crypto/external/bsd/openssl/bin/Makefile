@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/06/22 02:49:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/08/17 05:30:01 christos Exp $
 
 WARNS?=	2	# XXX -Wcast-qual
 
@@ -10,7 +10,7 @@ BINDIR=/usr/bin
 USE_FORT?= yes	# cryptographic software
 
 # RCSid:
-#	$Id: Makefile,v 1.4 2011/06/22 02:49:42 mrg Exp $
+#	$Id: Makefile,v 1.5 2011/08/17 05:30:01 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -112,9 +112,3 @@ FILESDIR=/usr/share/examples/openssl
 .endif
 
 .include <bsd.prog.mk>
-
-# XXX
-.if ${HAVE_GCC} == 45
-COPTS.s_server.c+= -Wno-error
-COPTS.s_client.c+= -Wno-error
-.endif
