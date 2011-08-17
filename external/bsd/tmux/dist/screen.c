@@ -1,4 +1,4 @@
-/* $Id: screen.c,v 1.2 2011/03/12 03:02:59 christos Exp $ */
+/* $Id: screen.c,v 1.3 2011/08/17 18:48:36 jmmv Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -41,6 +41,8 @@ screen_init(struct screen *s, u_int sx, u_int sy, u_int hlimit)
 	else
 		s->title = xstrdup("");
 
+	s->cstyle = 0;
+	s->ccolour = xstrdup("");
 	s->tabs = NULL;
 
 	screen_reinit(s);
@@ -72,6 +74,7 @@ screen_free(struct screen *s)
 	if (s->tabs != NULL)
 		xfree(s->tabs);
 	xfree(s->title);
+	xfree(s->ccolour);
 	grid_destroy(s->grid);
 }
 
@@ -88,6 +91,22 @@ screen_reset_tabs(struct screen *s)
 		fatal("bit_alloc failed");
 	for (i = 8; i < screen_size_x(s); i += 8)
 		bit_set(s->tabs, i);
+}
+
+/* Set screen cursor style. */
+void
+screen_set_cursor_style(struct screen *s, u_int style)
+{
+	if (style <= 4)
+		s->cstyle = style;
+}
+
+/* Set screen cursor colour. */
+void
+screen_set_cursor_colour(struct screen *s, const char *colour_string)
+{
+	xfree(s->ccolour);
+	s->ccolour = xstrdup(colour_string);
 }
 
 /* Set screen title. */
