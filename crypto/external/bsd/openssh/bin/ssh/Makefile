@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/06/22 02:49:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2011/08/17 05:32:09 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -36,8 +36,3 @@ DPADD+=	${LIBCOM_ERR} ${LIBROKEN} ${LIBUTIL}
 .endif
 
 .include <bsd.prog.mk>
-
-# XXX
-.if ${HAVE_GCC} == 45
-COPTS.clientloop.c+= -Wno-error
-.endif
