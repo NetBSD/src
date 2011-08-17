@@ -1,4 +1,4 @@
-/* $Id: cmd-display-panes.c,v 1.1.1.1 2011/03/10 09:15:37 jmmv Exp $ */
+/* $Id: cmd-display-panes.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -28,22 +28,21 @@ int	cmd_display_panes_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_display_panes_entry = {
 	"display-panes", "displayp",
+	"t:", 0, 0,
 	CMD_TARGET_CLIENT_USAGE,
-	0, "",
-	cmd_target_init,
-	cmd_target_parse,
-	cmd_display_panes_exec,
-	cmd_target_free,
-	cmd_target_print
+	0,
+	NULL,
+	NULL,
+	cmd_display_panes_exec
 };
 
 int
 cmd_display_panes_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
-	struct cmd_target_data	*data = self->data;
-	struct client		*c;
+	struct args	*args = self->args;
+	struct client	*c;
 
-	if ((c = cmd_find_client(ctx, data->target)) == NULL)
+	if ((c = cmd_find_client(ctx, args_get(args, 't'))) == NULL)
 		return (-1);
 
 	server_set_identify(c);

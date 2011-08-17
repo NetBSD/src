@@ -1,7 +1,7 @@
-/* $Id: forkpty-aix.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
+/* $Id: forkpty-hpux.c,v 1.1.1.1 2011/08/17 18:40:06 jmmv Exp $ */
 
 /*
- * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,17 +27,23 @@
 #include "tmux.h"
 
 pid_t
-forkpty(int *master, unused char *name, struct termios *tio, struct winsize *ws)
+forkpty(int *master, char *name, struct termios *tio, struct winsize *ws)
 {
-	int	slave, fd;
+	int	slave;
 	char   *path;
 	pid_t	pid;
 
-	if ((*master = open("/dev/ptc", O_RDWR|O_NOCTTY)) == -1)
+	if ((*master = open("/dev/ptmx", O_RDWR|O_NOCTTY)) == -1)
 		return (-1);
-
-	if ((path = ttyname(*master)) == NULL)
+	if (grantpt(*master) != 0)
 		goto out;
+	if (unlockpt(*master) != 0)
+		goto out;
+
+	if ((path = ptsname(*master)) == NULL)
+		goto out;
+	if (name != NULL)
+		strlcpy(name, path, TTY_NAME_MAX);
 	if ((slave = open(path, O_RDWR|O_NOCTTY)) == -1)
 		goto out;
 
@@ -47,28 +53,16 @@ forkpty(int *master, unused char *name, struct termios *tio, struct winsize *ws)
 	case 0:
 		close(*master);
 
-		fd = open(_PATH_TTY, O_RDWR|O_NOCTTY);
-		if (fd >= 0) {
-			ioctl(fd, TIOCNOTTY, NULL);
-			close(fd);
-		}
+		setsid();
+#ifdef TIOCSCTTY
+		if (ioctl(slave, TIOCSCTTY, NULL) == -1)
+			fatal("ioctl failed");
+#endif
 
-		if (setsid() < 0)
-			fatal("setsid");
-
-		fd = open(_PATH_TTY, O_RDWR|O_NOCTTY);
-		if (fd >= 0)
-			fatalx("open succeeded (failed to disconnect)");
-
-		fd = open(path, O_RDWR);
-		if (fd < 0)
-			fatal("open failed");
-		close(fd);
-
-		fd = open("/dev/tty", O_WRONLY);
-		if (fd < 0)
-			fatal("open failed");
-		close(fd);
+		if (ioctl(slave, I_PUSH, "ptem") == -1)
+			fatal("ioctl failed");
+		if (ioctl(slave, I_PUSH, "ldterm") == -1)
+			fatal("ioctl failed");
 
 		if (tio != NULL && tcsetattr(slave, TCSAFLUSH, tio) == -1)
 			fatal("tcsetattr failed");

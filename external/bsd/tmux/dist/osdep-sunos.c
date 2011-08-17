@@ -1,4 +1,4 @@
-/* $Id: osdep-sunos.c,v 1.1.1.1 2011/03/10 09:15:38 jmmv Exp $ */
+/* $Id: osdep-sunos.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
 
 /*
  * Copyright (c) 2009 Todd Carson <toc@daybefore.net>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <event.h>
 #include <fcntl.h>
 #include <procfs.h>
 #include <stdio.h>
@@ -62,4 +63,10 @@ osdep_get_name(int fd, char *tty)
 		return (NULL);
 
 	return (xstrdup(p.pr_fname));
+}
+
+struct event_base *
+osdep_event_init(void)
+{
+	return (event_init());
 }
