@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.8 2011/06/22 18:06:34 matt Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.9 2011/08/17 00:59:47 dyoung Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.8 2011/06/22 18:06:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.9 2011/08/17 00:59:47 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1179,8 +1179,8 @@ pq3pci_intr_handle_lookup(struct pq3pci_softc *sc,
 			break;
 		msictl = pci_conf_read(pa->pa_pc, pa->pa_tag, msioff);
 		msictl &= ~PCI_MSI_CTL_MSI_ENABLE;
-		msictl &= ~(PCI_MSI_CTL_MME_MASK << PCI_MSI_CTL_MME_SHIFT);
-		int rmsi = (msictl >> PCI_MSI_CTL_MMC_SHIFT) & PCI_MSI_CTL_MMC_MASK;
+		msictl &= ~PCI_MSI_CTL_MME_MASK;
+		int rmsi = __SHIFTOUT(msictl, PCI_MSI_CTL_MMC_MASK);
 		pci_conf_write(pa->pa_pc, pa->pa_tag, msioff, msictl);
 		pci_intr_handle_t handle = pq3pci_msi_alloc(IPL_VM, rmsi);
 		struct pq3pci_msihand * const msih = pq3pci_msi_lookup(handle);
