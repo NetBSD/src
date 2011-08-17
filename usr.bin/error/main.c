@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2011/05/21 00:43:42 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2011/08/17 13:11:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.20 2011/05/21 00:43:42 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2011/08/17 13:11:22 christos Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -68,7 +68,7 @@ Eptr **files;		/* array of pointers into errors*/
 boolean *touchedfiles;  /* which files we touched */
 int language = INCC;
 
-static char default_currentfilename[] = "????";
+char default_currentfilename[] = "????";
 char *currentfilename = default_currentfilename;
 
 boolean query = false;	/* query the operator if touch files */
