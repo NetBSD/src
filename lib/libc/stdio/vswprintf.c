@@ -1,4 +1,4 @@
-/*	$NetBSD: vswprintf.c,v 1.1 2005/05/14 23:51:02 christos Exp $	*/
+/*	$NetBSD: vswprintf.c,v 1.2 2011/08/17 09:53:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vswprintf.c,v 1.6 2005/02/21 19:41:44 fjoe Exp $");
 #else
-__RCSID("$NetBSD: vswprintf.c,v 1.1 2005/05/14 23:51:02 christos Exp $");
+__RCSID("$NetBSD: vswprintf.c,v 1.2 2011/08/17 09:53:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,7 +84,7 @@ vswprintf(wchar_t * __restrict s, size_t n, const wchar_t * __restrict fmt,
 	 * fputwc() did in __vfwprintf().
 	 */
 	mbs = initial;
-	nwc = mbsrtowcs(s, (const char **)&mbp, n, &mbs);
+	nwc = mbsrtowcs(s, (void *)&mbp, n, &mbs);
 	free(f._bf._base);
 	if (nwc == (size_t)-1) {
 		errno = EILSEQ;
