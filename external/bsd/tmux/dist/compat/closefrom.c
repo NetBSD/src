@@ -1,4 +1,4 @@
-/* $Id: closefrom.c,v 1.1.1.1 2011/03/10 09:15:41 jmmv Exp $ */
+/* $Id: closefrom.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
 
 /*
  * Copyright (c) 2004-2005 Todd C. Miller <Todd.Miller@courtesan.com>

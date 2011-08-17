@@ -1,4 +1,4 @@
-/* $Id: xterm-keys.c,v 1.1.1.1 2011/03/10 09:15:40 jmmv Exp $ */
+/* $Id: xterm-keys.c,v 1.1.1.2 2011/08/17 18:40:05 jmmv Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,8 +36,8 @@
  *
  * Rather than parsing them, just match against a table.
  *
- * There are two forms for F1-F4 (\\033O_P or \\033[1;_P). We accept either but
- * always output the latter (it comes first in the table).
+ * There are three forms for F1-F4 (\\033O_P and \\033O1;_P and \\033[1;_P).
+ * We accept any but always output the latter (it comes first in the table).
  */
 
 int	xterm_keys_match(const char *, const char *, size_t);
@@ -48,14 +48,18 @@ struct xterm_keys_entry {
 	const char	*template;
 };
 
-struct xterm_keys_entry xterm_keys_table[] = {
+const struct xterm_keys_entry xterm_keys_table[] = {
 	{ KEYC_F1,	"\033[1;_P" },
+	{ KEYC_F1,	"\033O1;_P" },
 	{ KEYC_F1,	"\033O_P" },
 	{ KEYC_F2,	"\033[1;_Q" },
+	{ KEYC_F2,	"\033O1;_Q" },
 	{ KEYC_F2,	"\033O_Q" },
 	{ KEYC_F3,	"\033[1;_R" },
+	{ KEYC_F3,	"\033O1;_R" },
 	{ KEYC_F3,	"\033O_R" },
 	{ KEYC_F4,	"\033[1;_S" },
+	{ KEYC_F4,	"\033O1;_S" },
 	{ KEYC_F4,	"\033O_S" },
 	{ KEYC_F5,	"\033[15;_~" },
 	{ KEYC_F6,	"\033[17;_~" },
@@ -140,8 +144,8 @@ xterm_keys_modifiers(const char *template, const char *buf, size_t len)
 int
 xterm_keys_find(const char *buf, size_t len, size_t *size, int *key)
 {
-	struct xterm_keys_entry	*entry;
-	u_int			 i;
+	const struct xterm_keys_entry	*entry;
+	u_int				 i;
 
 	for (i = 0; i < nitems(xterm_keys_table); i++) {
 		entry = &xterm_keys_table[i];
@@ -162,10 +166,10 @@ xterm_keys_find(const char *buf, size_t len, size_t *size, int *key)
 char *
 xterm_keys_lookup(int key)
 {
-	struct xterm_keys_entry	*entry;
-	u_int			 i;
-	int			 modifiers;
-	char			*out;
+	const struct xterm_keys_entry	*entry;
+	u_int				 i;
+	int				 modifiers;
+	char				*out;
 
 	modifiers = 1;
 	if (key & KEYC_SHIFT)
@@ -174,8 +178,6 @@ xterm_keys_lookup(int key)
 		modifiers += 2;
 	if (key & KEYC_CTRL)
 		modifiers += 4;
-	if (key & KEYC_ESCAPE)
-		modifiers += 8;
 
 	/*
 	 * If the key has no modifiers, return NULL and let it fall through to

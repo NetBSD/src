@@ -1,4 +1,4 @@
-/* $Id: cmd-capture-pane.c,v 1.1.1.1 2011/03/10 09:15:36 jmmv Exp $ */
+/* $Id: cmd-capture-pane.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "tmux.h"
@@ -30,35 +31,64 @@ int	cmd_capture_pane_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_capture_pane_entry = {
 	"capture-pane", "capturep",
-	CMD_BUFFER_PANE_USAGE,
-	0, "",
-	cmd_buffer_init,
-	cmd_buffer_parse,
-	cmd_capture_pane_exec,
-	cmd_buffer_free,
-	cmd_buffer_print
+	"b:E:S:t:", 0, 0,
+	"[-b buffer-index] [-E end-line] [-S start-line] [-t target-pane]",
+	0,
+	NULL,
+	NULL,
+	cmd_capture_pane_exec
 };
 
 int
 cmd_capture_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
-	struct cmd_buffer_data	*data = self->data;
+	struct args		*args = self->args;
 	struct window_pane	*wp;
-	char 			*buf, *line;
+	char 			*buf, *line, *cause;
 	struct screen		*s;
-	struct session		*sess;
-	u_int			 i, limit;
+	struct grid		*gd;
+	int			 buffer, n;
+	u_int			 i, limit, top, bottom, tmp;
 	size_t         		 len, linelen;
 
-	if (cmd_find_pane(ctx, data->target, &sess, &wp) == NULL)
+	if (cmd_find_pane(ctx, args_get(args, 't'), NULL, &wp) == NULL)
 		return (-1);
 	s = &wp->base;
+	gd = s->grid;
 
 	buf = NULL;
 	len = 0;
 
-	for (i = 0; i < screen_size_y(s); i++) {
-	       line = grid_view_string_cells(s->grid, 0, i, screen_size_x(s));
+	n = args_strtonum(args, 'S', SHRT_MIN, SHRT_MAX, &cause);
+	if (cause != NULL) {
+		top = gd->hsize;
+		xfree(cause);
+	} else if (n < 0 && (u_int) -n > gd->hsize)
+		top = 0;
+	else
+		top = gd->hsize + n;
+	if (top > gd->hsize + gd->sy - 1)
+		top = gd->hsize + gd->sy - 1;
+
+	n = args_strtonum(args, 'E', SHRT_MIN, SHRT_MAX, &cause);
+	if (cause != NULL) {
+		bottom = gd->hsize + gd->sy - 1;
+		xfree(cause);
+	} else if (n < 0 && (u_int) -n > gd->hsize)
+		bottom = 0;
+	else
+		bottom = gd->hsize + n;
+	if (bottom > gd->hsize + gd->sy - 1)
+		bottom = gd->hsize + gd->sy - 1;
+
+	if (bottom < top) {
+		tmp = bottom;
+		bottom = top;
+		top = tmp;
+	}
+
+	for (i = top; i <= bottom; i++) {
+	       line = grid_string_cells(s->grid, 0, i, screen_size_x(s));
 	       linelen = strlen(line);
 
 	       buf = xrealloc(buf, 1, len + linelen + 1);
@@ -69,15 +99,25 @@ cmd_capture_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 	       xfree(line);
 	}
 
-	limit = options_get_number(&sess->options, "buffer-limit");
-	if (data->buffer == -1) {
-		paste_add(&sess->buffers, buf, len, limit);
+	limit = options_get_number(&global_options, "buffer-limit");
+
+	if (!args_has(args, 'b')) {
+		paste_add(&global_buffers, buf, len, limit);
 		return (0);
 	}
-	if (paste_replace(&sess->buffers, data->buffer, buf, len) != 0) {
-		ctx->error(ctx, "no buffer %d", data->buffer);
+
+	buffer = args_strtonum(args, 'b', 0, INT_MAX, &cause);
+	if (cause != NULL) {
+		ctx->error(ctx, "buffer %s", cause);
+		xfree(cause);
+		return (-1);
+	}
+
+	if (paste_replace(&global_buffers, buffer, buf, len) != 0) {
+		ctx->error(ctx, "no buffer %d", buffer);
 		xfree(buf);
 		return (-1);
 	}
+
 	return (0);
 }

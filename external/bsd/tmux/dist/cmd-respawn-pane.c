@@ -1,7 +1,8 @@
-/* $Id: cmd-respawn-window.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* $Id: cmd-respawn-pane.c,v 1.1.1.1 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2011 Marcel P. Partap <mpartap@gmx.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,23 +24,23 @@
 #include "tmux.h"
 
 /*
- * Respawn a window (restart the command). Kill existing if -k given.
+ * Respawn a pane (restart the command). Kill existing if -k given.
  */
 
-int	cmd_respawn_window_exec(struct cmd *, struct cmd_ctx *);
+int	cmd_respawn_pane_exec(struct cmd *, struct cmd_ctx *);
 
-const struct cmd_entry cmd_respawn_window_entry = {
-	"respawn-window", "respawnw",
+const struct cmd_entry cmd_respawn_pane_entry = {
+	"respawn-pane", "respawnp",
 	"kt:", 0, 1,
-	"[-k] " CMD_TARGET_WINDOW_USAGE " [command]",
+	"[-k] " CMD_TARGET_PANE_USAGE " [command]",
 	0,
 	NULL,
 	NULL,
-	cmd_respawn_window_exec
+	cmd_respawn_pane_exec
 };
 
 int
-cmd_respawn_window_exec(struct cmd *self, struct cmd_ctx *ctx)
+cmd_respawn_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args		*args = self->args;
 	struct winlink		*wl;
@@ -50,18 +51,14 @@ cmd_respawn_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	const char		*cmd;
 	char		 	*cause;
 
-	if ((wl = cmd_find_window(ctx, args_get(args, 't'), &s)) == NULL)
+	if ((wl = cmd_find_pane(ctx, args_get(args, 't'), &s, &wp)) == NULL)
 		return (-1);
 	w = wl->window;
 
-	if (!args_has(self->args, 'k')) {
-		TAILQ_FOREACH(wp, &w->panes, entry) {
-			if (wp->fd == -1)
-				continue;
-			ctx->error(ctx,
-			    "window still active: %s:%d", s->name, wl->idx);
-			return (-1);
-		}
+	if (!args_has(self->args, 'k') && wp->fd != -1) {
+		ctx->error(ctx, "pane still active: %s:%u.%u",
+		    s->name, wl->idx, window_pane_index(w, wp));
+		return (-1);
 	}
 
 	environ_init(&env);
@@ -69,31 +66,22 @@ cmd_respawn_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	environ_copy(&s->environ, &env);
 	server_fill_environ(s, &env);
 
-	wp = TAILQ_FIRST(&w->panes);
-	TAILQ_REMOVE(&w->panes, wp, entry);
-	layout_free(w);
-	window_destroy_panes(w);
-	TAILQ_INSERT_HEAD(&w->panes, wp, entry);
-	window_pane_resize(wp, w->sx, w->sy);
+	window_pane_reset_mode(wp);
+	screen_reinit(&wp->base);
+	input_init(wp);
+
 	if (args->argc != 0)
 		cmd = args->argv[0];
 	else
 		cmd = NULL;
 	if (window_pane_spawn(wp, cmd, NULL, NULL, &env, s->tio, &cause) != 0) {
-		ctx->error(ctx, "respawn window failed: %s", cause);
+		ctx->error(ctx, "respawn pane failed: %s", cause);
 		xfree(cause);
 		environ_free(&env);
-		server_destroy_pane(wp);
 		return (-1);
 	}
-	layout_init(w);
-	window_pane_reset_mode(wp);
-	screen_reinit(&wp->base);
-	input_init(wp);
-	window_set_active_pane(w, wp);
-
-	recalculate_sizes();
-	server_redraw_window(w);
+	wp->flags |= PANE_REDRAW;
+	server_status_window(w);
 
 	environ_free(&env);
 	return (0);

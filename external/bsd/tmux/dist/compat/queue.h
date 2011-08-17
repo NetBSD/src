@@ -1,6 +1,6 @@
-/* $Id: queue.h,v 1.1.1.1 2011/03/10 09:15:41 jmmv Exp $ */
+/* $Id: queue.h,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
 /*	$OpenBSD: queue.h,v 1.31 2005/11/25 08:06:25 otto Exp $	*/
-/*	$NetBSD: queue.h,v 1.1.1.1 2011/03/10 09:15:41 jmmv Exp $	*/
+/*	$NetBSD: queue.h,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993

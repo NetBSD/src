@@ -1,4 +1,4 @@
-/* $Id: osdep-linux.c,v 1.1.1.1 2011/03/10 09:15:38 jmmv Exp $ */
+/* $Id: osdep-linux.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -19,7 +19,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <event.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "tmux.h"
@@ -56,4 +58,19 @@ osdep_get_name(int fd, unused char *tty)
 
 	fclose(f);
 	return (buf);
+}
+
+struct event_base *
+osdep_event_init(void)
+{
+	/*
+	 * On Linux, epoll doesn't work on /dev/null (yes, really).
+	 *
+	 * This has been commented because libevent versions up until the very
+	 * latest (1.4 git or 2.0.10) do not handle signals properly when using
+	 * poll or select, causing hangs.
+	 * 
+	 */
+	/* setenv("EVENT_NOEPOLL", "1", 1); */
+	return (event_init());
 }

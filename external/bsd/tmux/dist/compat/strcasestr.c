@@ -1,6 +1,6 @@
-/* $Id: strcasestr.c,v 1.1.1.1 2011/03/10 09:15:41 jmmv Exp $ */
+/* $Id: strcasestr.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
 /*	$OpenBSD: strcasestr.c,v 1.3 2006/03/31 05:34:55 deraadt Exp $	*/
-/*	$NetBSD: strcasestr.c,v 1.1.1.1 2011/03/10 09:15:41 jmmv Exp $	*/
+/*	$NetBSD: strcasestr.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993

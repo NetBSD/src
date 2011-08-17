@@ -1,4 +1,4 @@
-/* $Id: client.c,v 1.1.1.1 2011/03/10 09:15:36 jmmv Exp $ */
+/* $Id: client.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,6 +36,7 @@ struct imsgbuf	client_ibuf;
 struct event	client_event;
 const char     *client_exitmsg;
 int		client_exitval;
+enum msgtype	client_exittype;
 int		client_attached;
 
 int		client_connect(char *, int);
@@ -54,7 +55,7 @@ client_connect(char *path, int start_server)
 {
 	struct sockaddr_un	sa;
 	size_t			size;
-	int			fd, mode;
+	int			fd;
 
 	memset(&sa, 0, sizeof sa);
 	sa.sun_family = AF_UNIX;
@@ -84,10 +85,7 @@ client_connect(char *path, int start_server)
 		}
 	}
 
-	if ((mode = fcntl(fd, F_GETFL)) == -1)
-		fatal("fcntl failed");
-	if (fcntl(fd, F_SETFL, mode|O_NONBLOCK) == -1)
-		fatal("fcntl failed");
+	setblocking(fd, 0);
 	return (fd);
 
 failed:
@@ -103,6 +101,7 @@ client_main(int argc, char **argv, int flags)
 	struct cmd_list		*cmdlist;
 	struct msg_command_data	 cmddata;
 	int			 cmdflags, fd;
+	pid_t			 ppid;
 	enum msgtype		 msg;
 	char			*cause;
 
@@ -197,8 +196,14 @@ client_main(int argc, char **argv, int flags)
 	event_dispatch();
 
 	/* Print the exit message, if any, and exit. */
-	if (client_attached && client_exitmsg != NULL && !login_shell)
-		printf("[%s]\n", client_exitmsg);
+	if (client_attached) {
+		if (client_exitmsg != NULL && !login_shell)
+			printf("[%s]\n", client_exitmsg);
+
+		ppid = getppid();
+		if (client_exittype == MSG_DETACHKILL && ppid > 1)
+			kill(ppid, SIGHUP);
+	}
 	return (client_exitval);
 }
 
@@ -439,12 +444,17 @@ client_dispatch_attached(void)
 
 		log_debug("client got %d", imsg.hdr.type);
 		switch (imsg.hdr.type) {
+		case MSG_DETACHKILL:
 		case MSG_DETACH:
 			if (datalen != 0)
 				fatalx("bad MSG_DETACH size");
 
+			client_exittype = imsg.hdr.type;
+			if (imsg.hdr.type == MSG_DETACHKILL)
+				client_exitmsg = "detached and SIGHUP";
+			else
+				client_exitmsg = "detached";
 			client_write_server(MSG_EXITING, NULL, 0);
-			client_exitmsg = "detached";
 			break;
 		case MSG_EXIT:
 			if (datalen != 0 &&

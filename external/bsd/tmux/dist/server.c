@@ -1,4 +1,4 @@
-/* $Id: server.c,v 1.1.1.1 2011/03/10 09:15:39 jmmv Exp $ */
+/* $Id: server.c,v 1.1.1.2 2011/08/17 18:40:05 jmmv Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -50,6 +50,8 @@ int		 server_shutdown;
 struct event	 server_ev_accept;
 struct event	 server_ev_second;
 
+struct paste_stack global_buffers;
+
 int		 server_create_socket(void);
 void		 server_loop(void);
 int		 server_should_shutdown(void);
@@ -71,7 +73,7 @@ server_create_socket(void)
 	struct sockaddr_un	sa;
 	size_t			size;
 	mode_t			mask;
-	int			fd, mode;
+	int			fd;
 
 	memset(&sa, 0, sizeof sa);
 	sa.sun_family = AF_UNIX;
@@ -92,11 +94,7 @@ server_create_socket(void)
 
 	if (listen(fd, 16) == -1)
 		fatal("listen failed");
-
-	if ((mode = fcntl(fd, F_GETFL)) == -1)
-		fatal("fcntl failed");
-	if (fcntl(fd, F_SETFL, mode|O_NONBLOCK) == -1)
-		fatal("fcntl failed");
+	setblocking(fd, 0);
 
 	server_update_socket();
 
@@ -144,11 +142,13 @@ server_start(void)
 	log_debug("server started, pid %ld", (long) getpid());
 
 	ARRAY_INIT(&windows);
+	RB_INIT(&all_window_panes);
 	ARRAY_INIT(&clients);
 	ARRAY_INIT(&dead_clients);
 	RB_INIT(&sessions);
 	RB_INIT(&dead_sessions);
 	TAILQ_INIT(&session_groups);
+	ARRAY_INIT(&global_buffers);
 	mode_key_init_trees();
 	key_bindings_init();
 	utf8_build();
@@ -417,7 +417,7 @@ server_child_exited(pid_t pid, int status)
 		}
 	}
 
-	SLIST_FOREACH(job, &all_jobs, lentry) {
+	LIST_FOREACH(job, &all_jobs, lentry) {
 		if (pid == job->pid) {
 			job_died(job, status);	/* might free job */
 			break;
@@ -492,12 +492,8 @@ server_lock_server(void)
 
 	t = time(NULL);
 	RB_FOREACH(s, sessions, &sessions) {
-		if (s->flags & SESSION_UNATTACHED) {
-			if (gettimeofday(&s->activity_time, NULL) != 0)
-				fatal("gettimeofday failed");
+		if (s->flags & SESSION_UNATTACHED)
 			continue;
-		}
-
 		timeout = options_get_number(&s->options, "lock-after-time");
 		if (timeout <= 0 || t <= s->activity_time.tv_sec + timeout)
 			return;	/* not timed out */
@@ -517,12 +513,8 @@ server_lock_sessions(void)
 
 	t = time(NULL);
 	RB_FOREACH(s, sessions, &sessions) {
-		if (s->flags & SESSION_UNATTACHED) {
-			if (gettimeofday(&s->activity_time, NULL) != 0)
-				fatal("gettimeofday failed");
+		if (s->flags & SESSION_UNATTACHED)
 			continue;
-		}
-
 		timeout = options_get_number(&s->options, "lock-after-time");
 		if (timeout > 0 && t > s->activity_time.tv_sec + timeout) {
 			server_lock_session(s);

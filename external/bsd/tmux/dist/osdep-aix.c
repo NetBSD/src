@@ -1,8 +1,7 @@
-/* $Id: setenv.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
+/* $Id: osdep-aix.c,v 1.1.1.1 2011/08/17 18:40:05 jmmv Exp $ */
 
 /*
- * Copyright (c) 2010 Dagobert Michelsen
- * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,33 +16,20 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdlib.h>
-#include <string.h>
+#include <sys/types.h>
+
+#include <event.h>
 
 #include "tmux.h"
 
-int
-setenv(const char *name, const char *value, unused int overwrite)
+char *
+osdep_get_name(unused int fd, unused char *tty)
 {
-	char	*newval;
-
-	xasprintf(&newval, "%s=%s", name, value);
-	return (putenv(newval));
+	return (NULL);
 }
 
-int
-unsetenv(const char *name)
+struct event_base *
+osdep_event_init(void)
 {
-	char  **envptr;
-	int	namelen;
-
-	namelen = strlen(name);
-	for (envptr = environ; *envptr != NULL; envptr++) {
-		if (strncmp(name, *envptr, namelen) == 0 &&
-		    ((*envptr)[namelen] == '=' || (*envptr)[namelen] == '\0'))
-			break;
-	}
-	for (; *envptr != NULL; envptr++)
-		*envptr = *(envptr + 1);
-	return (0);
+	return (event_init());
 }

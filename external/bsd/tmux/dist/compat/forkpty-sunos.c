@@ -1,4 +1,4 @@
-/* $Id: forkpty-sunos.c,v 1.1.1.1 2011/03/10 09:15:41 jmmv Exp $ */
+/* $Id: forkpty-sunos.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -73,7 +73,7 @@ forkpty(int *master, char *name, struct termios *tio, struct winsize *ws)
 		dup2(slave, 1);
 		dup2(slave, 2);
 		if (slave > 2)
-			close(slave);		
+			close(slave);
 		return (0);
 	}
 

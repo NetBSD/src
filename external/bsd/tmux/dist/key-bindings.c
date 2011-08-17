@@ -1,4 +1,4 @@
-/* $Id: key-bindings.c,v 1.1.1.1 2011/03/10 09:15:38 jmmv Exp $ */
+/* $Id: key-bindings.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -106,6 +106,7 @@ key_bindings_init(void)
 		{ '!', 			  0, &cmd_break_pane_entry },
 		{ '"', 			  0, &cmd_split_window_entry },
 		{ '#', 			  0, &cmd_list_buffers_entry },
+		{ '$',			  0, &cmd_command_prompt_entry },
 		{ '%', 			  0, &cmd_split_window_entry },
 		{ '&', 			  0, &cmd_confirm_before_entry },
 		{ '(',                    0, &cmd_switch_client_entry },
@@ -187,9 +188,10 @@ key_bindings_init(void)
 
 		cmd = xmalloc(sizeof *cmd);
 		cmd->entry = table[i].entry;
-		cmd->data = NULL;
-		if (cmd->entry->init != NULL)
-			cmd->entry->init(cmd, table[i].key);
+		if (cmd->entry->key_binding != NULL)
+			cmd->entry->key_binding(cmd, table[i].key);
+		else
+			cmd->args = args_create(0);
 		TAILQ_INSERT_HEAD(&cmdlist->list, cmd, qentry);
 
 		key_bindings_add(

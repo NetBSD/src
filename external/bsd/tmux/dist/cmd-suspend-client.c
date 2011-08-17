@@ -1,4 +1,4 @@
-/* $Id: cmd-suspend-client.c,v 1.1.1.1 2011/03/10 09:15:37 jmmv Exp $ */
+/* $Id: cmd-suspend-client.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,29 +29,23 @@
 
 int	cmd_suspend_client_exec(struct cmd *, struct cmd_ctx *);
 
-struct cmd_suspend_client_data {
-	char	*name;
-	char	*target;
-};
-
 const struct cmd_entry cmd_suspend_client_entry = {
 	"suspend-client", "suspendc",
-	"[-c target-client]",
-	0, "",
-	cmd_target_init,
-	cmd_target_parse,
-	cmd_suspend_client_exec,
-	cmd_target_free,
-	cmd_target_print
+	"t:", 0, 0,
+	CMD_TARGET_CLIENT_USAGE,
+	0,
+	NULL,
+	NULL,
+	cmd_suspend_client_exec
 };
 
 int
 cmd_suspend_client_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
-	struct cmd_target_data	*data = self->data;
-	struct client		*c;
+	struct args	*args = self->args;
+	struct client	*c;
 
-	if ((c = cmd_find_client(ctx, data->target)) == NULL)
+	if ((c = cmd_find_client(ctx, args_get(args, 't'))) == NULL)
 		return (-1);
 
 	tty_stop_tty(&c->tty);

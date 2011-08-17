@@ -1,4 +1,4 @@
-/* $Id: osdep-netbsd.c,v 1.1.1.1 2011/03/10 09:15:38 jmmv Exp $ */
+/* $Id: osdep-netbsd.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -22,6 +22,7 @@
 #include <sys/sysctl.h>
 
 #include <errno.h>
+#include <event.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -33,6 +34,7 @@
 
 struct kinfo_proc2	*cmp_procs(struct kinfo_proc2 *, struct kinfo_proc2 *);
 char			*osdep_get_name(int, char *);
+struct event_base	*osdep_event_init(void);
 
 struct kinfo_proc2 *
 cmp_procs(struct kinfo_proc2 *p1, struct kinfo_proc2 *p2)
@@ -119,4 +121,10 @@ retry:
 error:
 	free(buf);
 	return (NULL);
+}
+
+struct event_base *
+osdep_event_init(void)
+{
+	return (event_init());
 }

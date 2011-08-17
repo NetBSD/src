@@ -1,4 +1,4 @@
-/* $Id: attributes.c,v 1.1.1.1 2011/03/10 09:15:36 jmmv Exp $ */
+/* $Id: attributes.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2009 Joshua Elsasser <josh@elsasser.org>

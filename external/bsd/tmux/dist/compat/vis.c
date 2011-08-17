@@ -1,3 +1,4 @@
+/* $Id: vis.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
 /*	$OpenBSD: vis.c,v 1.19 2005/09/01 17:15:49 millert Exp $ */
 /*-
  * Copyright (c) 1989, 1993
@@ -136,10 +137,10 @@ done:
 
 /*
  * strvis, strnvis, strvisx - visually encode characters from src into dst
- *	
+ *
  *	Dst must be 4 times the size of src to account for possible
  *	expansion.  The length of dst, not including the trailing NULL,
- *	is returned. 
+ *	is returned.
  *
  *	Strnvis will write no more than siz-1 bytes (and will NULL terminate).
  *	The number of bytes needed to fully encode the string is returned.
