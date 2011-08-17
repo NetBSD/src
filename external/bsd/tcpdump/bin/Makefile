@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/06/22 02:49:43 mrg Exp $	
+#	$NetBSD: Makefile,v 1.7 2011/08/17 10:48:02 christos Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
@@ -89,8 +89,3 @@ tcpdump.8: tcpdump.1.in
 	cp ${.ALLSRC} ${.TARGET}
 
 .include <bsd.prog.mk>
-
-# XXX
-.if ${HAVE_GCC} == 45
-COPTS+=	-fno-strict-aliasing
-.endif
