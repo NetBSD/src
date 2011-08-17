@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.23 2011/03/15 07:39:23 matt Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.24 2011/08/17 06:59:29 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.23 2011/03/15 07:39:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.24 2011/08/17 06:59:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,6 +399,59 @@ mips_emul_special3(uint32_t inst, struct trapframe *tf, uint32_t cause)
 	ksiginfo_t ksi;
 	const InstFmt instfmt = { .word = inst };
 	switch (instfmt.RType.func) {
+	case OP_LX: {
+		const intptr_t vaddr = tf->tf_regs[instfmt.RType.rs] 
+		    + tf->tf_regs[instfmt.RType.rt];
+		mips_reg_t r;
+		int error = EFAULT;
+		if (vaddr < 0) {
+		    addr_err:
+			send_sigsegv(vaddr, T_ADDR_ERR_LD, tf, cause);
+			return;
+		}
+		switch (instfmt.RType.shamt) {
+#if !defined(__mips_o32)
+		case OP_LX_LDX: {
+			uint64_t tmp64;
+			if (vaddr & 7)
+				goto addr_err;
+			error = copyin((void *)vaddr, &tmp64, sizeof(tmp64));
+			r = tmp64;
+			break;
+		}
+#endif
+		case OP_LX_LWX: {
+			int32_t tmp32;
+			if (vaddr & 3)
+				goto addr_err;
+			error = copyin((void *)vaddr, &tmp32, sizeof(tmp32));
+			r = tmp32;
+			break;
+		}
+		case OP_LX_LHX: {
+			int16_t tmp16;
+			if (vaddr & 1)
+				goto addr_err;
+			error = copyin((void *)vaddr, &tmp16, sizeof(tmp16));
+			r = tmp16;
+			break;
+		}
+		case OP_LX_LBUX: {
+			uint8_t tmp8;
+			error = copyin((void *)vaddr, &tmp8, sizeof(tmp8));
+			r = tmp8;
+			break;
+		}
+		default:
+			goto illopc;
+		}
+		if (error) {
+			send_sigsegv(vaddr, T_TLB_LD_MISS, tf, cause);
+			return;
+		}
+		tf->tf_regs[instfmt.RType.rd] = r;
+		break;
+	}
 	case OP_RDHWR:
 		switch (instfmt.RType.rd) {
 		case 29:
@@ -407,6 +460,7 @@ mips_emul_special3(uint32_t inst, struct trapframe *tf, uint32_t cause)
 			break;
 		}
 		/* FALLTHROUGH */
+	illopc:
 	default:
 		tf->tf_regs[_R_CAUSE] = cause;
 		tf->tf_regs[_R_BADVADDR] = tf->tf_regs[_R_PC];
