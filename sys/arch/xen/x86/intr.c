@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27.6.1 2011/06/03 13:27:41 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27.6.2 2011/08/17 09:40:40 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -119,7 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27.6.1 2011/06/03 13:27:41 cherry Exp $")
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/cpu.h>
-#include <sys/simplelock.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -152,28 +151,6 @@ int vect2irq[256] = {0};
 #if NPCI > 0
 #include <dev/pci/ppbreg.h>
 #endif
-
-/*
- * Recalculate the interrupt from scratch for an event source.
- */
-void
-intr_calculatemasks(struct evtsource *evts)
-{
-	struct intrhand *ih;
-
-#ifdef MULTIPROCESSOR /* on UP, #define	simple_lock_held(alp)	1 */
-	KASSERT(!simple_lock_held(&evts->ev_lock));
-#endif
-	simple_lock(&evts->ev_lock);
-	evts->ev_maxlevel = IPL_NONE;
-	evts->ev_imask = 0;
-	for (ih = evts->ev_handlers; ih != NULL; ih = ih->ih_evt_next) {
-		if (ih->ih_level > evts->ev_maxlevel)
-			evts->ev_maxlevel = ih->ih_level;
-		evts->ev_imask |= (1 << ih->ih_level);
-	}
-	simple_unlock(&evts->ev_lock);
-}
 
 /*
  * Fake interrupt handler structures for the benefit of symmetry with

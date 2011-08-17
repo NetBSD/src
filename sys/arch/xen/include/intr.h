@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.31.10.3 2011/08/04 09:07:46 cherry Exp $	*/
+/*	$NetBSD: intr.h,v 1.31.10.4 2011/08/17 09:40:39 cherry Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -33,18 +33,15 @@
 #ifndef _XEN_INTR_H_
 #define	_XEN_INTR_H_
 
-#ifndef _LOCORE
-#include <machine/cpu.h>
-#include <machine/pic.h>
 #include <machine/intrdefs.h>
 
-#include <sys/evcnt.h>
-#include <sys/types.h>
-#include <sys/simplelock.h>
-
+#ifndef _LOCORE
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
+#include <machine/cpu.h>
+#include <machine/pic.h>
+#include <sys/evcnt.h>
 
 #include "opt_xen.h"
 
@@ -57,9 +54,8 @@ struct evtsource {
 	uint32_t ev_imask;		/* interrupt mask */
 	struct intrhand *ev_handlers;	/* handler chain */
 	struct evcnt ev_evcnt;		/* interrupt counter */
+	struct cpu_info *ev_cpu;        /* cpu on which this event is bound */
 	char ev_evname[32];		/* event counter name */
-	struct cpu_info *ev_cpu;	/* cpu on which this event is bound */
-	struct simplelock ev_lock;	/* protects this structure */
 };
 
 /*
@@ -166,7 +162,6 @@ int intr_biglock_wrapper(void *);
 
 void intr_default_setup(void);
 int x86_nmi(void);
-void intr_calculatemasks(struct evtsource *);
 
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *, bool);
 void intr_disestablish(struct intrhand *);
@@ -185,9 +180,9 @@ void xen_ipi_init(void);
 int xen_send_ipi(struct cpu_info *, uint32_t);
 void xen_broadcast_ipi(uint32_t);
 #else
-#define xen_ipi_init(_1) do {} while(0) /* nothing */
-#define xen_send_ipi(_i1, _i2) do {} while(0) /* nothing */
-#define xen_broadcast_ipi(_i1) do {} while(0) /* nothing */
+#define xen_ipi_init(_1) ((void) 0) /* nothing */
+#define xen_send_ipi(_i1, _i2) (0) /* nothing */
+#define xen_broadcast_ipi(_i1) ((void) 0) /* nothing */
 #endif /* MULTIPROCESSOR */
 
 #endif /* !_LOCORE */

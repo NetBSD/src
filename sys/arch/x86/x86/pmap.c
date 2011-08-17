@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.121.2.4 2011/07/31 20:49:11 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.121.2.5 2011/08/17 09:40:39 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121.2.4 2011/07/31 20:49:11 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121.2.5 2011/08/17 09:40:39 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1619,10 +1619,6 @@ pmap_cpu_init_late(struct cpu_info *ci)
 		VM_PROT_READ | VM_PROT_WRITE, 0);
 
 	pmap_update(pmap_kernel());
-
-	xpq_queue_lock();
-	xpq_queue_pin_l3_table(xpmap_ptom_masked(ci->ci_pae_l3_pdirpa));
-	xpq_queue_unlock();
 #endif
 #if defined(XEN) && defined (__x86_64)
 	KASSERT(ci != NULL);

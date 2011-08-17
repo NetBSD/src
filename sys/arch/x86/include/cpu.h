@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34.2.3 2011/07/16 10:59:45 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34.2.4 2011/08/17 09:40:39 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,8 +65,6 @@
 
 #include <sys/cpu_data.h>
 #include <sys/evcnt.h>
-#include <sys/device_if.h> /* for device_t */
-
 #include <sys/device_if.h> /* for device_t */
 
 #ifdef XEN
@@ -316,6 +314,8 @@ void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);
 void cpu_init_msrs(struct cpu_info *, bool);
 void cpu_load_pmap(struct pmap *);
+void cpu_broadcast_halt(void);
+void cpu_kick(struct cpu_info *);
 
 extern uint32_t cpus_attached;
 
