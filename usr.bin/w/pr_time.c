@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_time.c,v 1.17 2009/04/14 07:41:36 lukem Exp $	*/
+/*	$NetBSD: pr_time.c,v 1.18 2011/08/17 13:48:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_time.c	8.2 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: pr_time.c,v 1.17 2009/04/14 07:41:36 lukem Exp $");
+__RCSID("$NetBSD: pr_time.c,v 1.18 2011/08/17 13:48:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,25 +62,22 @@ pr_attime(time_t *started, time_t *now)
 	int tnow_yday;
 	struct tm *tp;
 	time_t diff;
-	const char *fmt;
 
 	tnow_yday = localtime(now)->tm_yday;
 	tp = localtime(started);
 	diff = *now - *started;
 
-	/* If more than a week, use day-month-year. */
-	if (diff > SECSPERDAY * DAYSPERWEEK)
-		fmt = "%d%b%y";
+	if (diff > SECSPERDAY * DAYSPERWEEK) {
+		/* If more than a week, use day-month-year. */
+		(void)strftime(buf, sizeof(buf), "%d%b%y", tp);
+	} else if (tp->tm_yday != tnow_yday) {
+		/* If not today, use day-hour-am/pm. Damn SCCS */
+		(void)strftime(buf, sizeof(buf), "%a%" "I%p", tp);
+	} else {
+		/* Default is hh:mm{am,pm}. Damn SCCS */
+		(void)strftime(buf, sizeof(buf), "%l:%" "M%p", tp);
+	}
 
-	/* If not today, use day-hour-am/pm. */
-	else if (tp->tm_yday != tnow_yday)
-		fmt = "%a%" "I%p";
-
-	/* Default is hh:mm{am,pm}. */
-	else
-		fmt = "%l:%" "M%p";
-
-	(void)strftime(buf, sizeof(buf), fmt, tp);
 	buf[sizeof(buf) - 1] = '\0';
 	(void)fputs(buf, stdout);
 }
