@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: openpam_dispatch.c,v 1.4 2008/01/27 01:22:59 christos Exp $
+ * $Id: openpam_dispatch.c,v 1.5 2011/08/17 09:55:41 christos Exp $
  */
 
 #include <sys/param.h>
@@ -121,7 +121,7 @@ openpam_dispatch(pam_handle_t *pamh,
 			    _pam_sm_func_name[primitive], chain->module->path);
 #endif
 			r = (chain->module->func[primitive])(pamh, flags,
-			    chain->optc, (const char **)chain->optv);
+			    chain->optc, (void *)chain->optv);
 			pamh->current = NULL;
 #ifdef DEBUG
 			openpam_log(PAM_LOG_DEBUG, "%s: %s(): %s",
