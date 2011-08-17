@@ -111,11 +111,11 @@ unxz(int i, int o, char *pre, size_t prelen, off_t *bytes_in)
 				break;
 
 			default:
-				msg = "Unknown error (%d)";
+				maybe_errx("Unknown error (%d)", ret);
 				break;
 			}
+			maybe_errx("%s", msg);
 
-			maybe_errx(msg, ret);
 		}
 	}
 }
