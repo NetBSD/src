@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.6 2011/04/29 22:17:17 matt Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.7 2011/08/17 14:39:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.6 2011/04/29 22:17:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.7 2011/08/17 14:39:59 matt Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -42,12 +42,13 @@ __KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.6 2011/04/29 22:17:17 matt Exp $");
 #include <mips/cache.h>
 #include <mips/mips3_pte.h>
 #include <mips/regnum.h>
+#include <mips/mips_opcode.h>
 
-#define	INSN_LUI_P(insn)	(((insn) >> 26) == 017)
-#define	INSN_LW_P(insn)		(((insn) >> 26) == 043)
-#define	INSN_SW_P(insn)		(((insn) >> 26) == 053)
-#define	INSN_LD_P(insn)		(((insn) >> 26) == 067)
-#define	INSN_SD_P(insn)		(((insn) >> 26) == 077)
+#define	INSN_LUI_P(insn)	(((insn) >> 26) == OP_LUI)
+#define	INSN_LW_P(insn)		(((insn) >> 26) == OP_LW)
+#define	INSN_SW_P(insn)		(((insn) >> 26) == OP_SW)
+#define	INSN_LD_P(insn)		(((insn) >> 26) == OP_LD)
+#define	INSN_SD_P(insn)		(((insn) >> 26) == OP_SD)
 
 #define INSN_LOAD_P(insn)	(INSN_LD_P(insn) || INSN_LW_P(insn))
 #define INSN_STORE_P(insn)	(INSN_SD_P(insn) || INSN_SW_P(insn))
@@ -227,6 +228,118 @@ fixup_mips_jump(uint32_t *insnp, const struct mips_jump_fixup_info *jfi)
 	*insnp = insn;
 }
 
+intptr_t
+mips_fixup_addr(const uint32_t *stubp)
+{
+	/*
+	 * Stubs typically look like:
+	 *	lui	v0, %hi(sym)
+	 *	lX	t9, %lo(sym)(v0)
+	 *	[nop]
+	 *	jr	t9
+	 *	nop
+	 *
+	 * Or for loongson2:
+	 *	lui	v0, %hi(sym)
+	 *	lX	t9, %lo(sym)(v0)
+	 *	lui	at,0xcfff
+	 *	ori	at,at,0xffff
+	 *	and	t9,t9,at
+	 *	jr	t9
+	 *	move	at,at
+	 */
+	mips_reg_t regs[32];
+	uint32_t used = 0;
+	size_t n;
+	const char *errstr = "mips";
+	/*
+	 * This is basically a small MIPS emulator for those instructions
+	 * that might in a stub routine.
+	 */
+	for (n = 0; n < 16; n++) { 
+		const InstFmt insn = { .word = stubp[n] }; 
+		switch (insn.IType.op) {
+		case OP_LUI:
+			regs[insn.IType.rt] = (int16_t)insn.IType.imm << 16;
+			used |= (1 << insn.IType.rt);
+			break;
+#ifdef _LP64
+		case OP_LD:
+			if ((used & (1 << insn.IType.rs)) == 0) {
+				errstr = "LD";
+				goto out;
+			}
+			regs[insn.IType.rt] = *(const int64_t *)
+			    (regs[insn.IType.rs] + (int16_t)insn.IType.imm);
+			used |= (1 << insn.IType.rt);
+			break;
+#else
+		case OP_LW:
+			if ((used & (1 << insn.IType.rs)) == 0) {
+				errstr = "LW";
+				goto out;
+			}
+			regs[insn.IType.rt] = *(const int32_t *)
+			    (regs[insn.IType.rs] + (int16_t)insn.IType.imm);
+			used |= (1 << insn.IType.rt);
+			break;
+#endif
+		case OP_ORI:
+			if ((used & (1 << insn.IType.rs)) == 0) {
+				errstr = "ORI";
+				goto out;
+			}
+			regs[insn.IType.rt] |= insn.IType.imm;
+			used |= (1 << insn.IType.rt);
+			break;
+		case OP_SPECIAL:
+			switch (insn.RType.func) {
+			case OP_JR:
+				if ((used & (1 << insn.RType.rs)) == 0) {
+					errstr = "JR";
+					goto out;
+				}
+				if (stubp[n+1] != 0
+				    && stubp[n+1] != 0x00200825) {
+					n++;
+					errstr = "delay slot";
+					goto out;
+				}
+				return regs[insn.RType.rs];
+			case OP_AND:
+				if ((used & (1 << insn.RType.rs)) == 0
+				    || (used & (1 << insn.RType.rt)) == 0) {
+					errstr = "AND";
+					goto out;
+				}
+				regs[insn.RType.rd] =
+				    regs[insn.RType.rs] & regs[insn.RType.rt];
+				used |= (1 << insn.RType.rd);
+				break;
+			case OP_SLL:	/* nop */
+				if (insn.RType.rd != _R_ZERO) {
+					errstr = "NOP";
+					goto out;
+				}
+				break;
+			default:
+				errstr = "SPECIAL";
+				goto out;
+			}
+			break;
+		default:
+			errstr = "mips";
+			goto out;
+		}
+	}
+
+  out:
+	printf("%s: unexpected %s insn %#x at %p\n",
+	    __func__, errstr,
+	    stubp[n], &stubp[n]);
+	return 0;
+}
+
 void
 mips_fixup_stubs(uint32_t *start, uint32_t *end)
 {
@@ -263,43 +376,8 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 		    || stubp < __stub_start || __stub_end <= stubp)
 			continue;
 
-		/*
-		 * Stubs typically look like:
-		 *	lui	v0, %hi(sym)
-		 *	lX	t9, %lo(sym)(v0)
-		 *	[nop]
-		 *	jr	t9
-		 *	nop
-		 */
-		const uint32_t lui_insn = stubp[0];
-		const uint32_t load_insn = stubp[1];
-#ifdef DIAGNOSTIC
-		if (stubp[2] == 0) {
-			KASSERT(stubp[3] == 0x03200008);	/* jr t9 */
-			KASSERT(stubp[4] == 0);			/* nop */
-		} else {
-			KASSERT(stubp[2] == 0x03200008);	/* jr t9 */
-			KASSERT(stubp[3] == 0);			/* nop */
-		}
+		const intptr_t real_addr = mips_fixup_addr(stubp);
 
-		KASSERT(INSN_LUI_P(lui_insn));
-#ifdef _LP64
-		KASSERT(INSN_LD_P(load_insn));
-#else
-		KASSERT(INSN_LW_P(load_insn));
-#endif
-		const u_int lui_reg = (lui_insn >> 16) & 31;
-		const u_int load_reg = (load_insn >> 16) & 31;
-#endif
-		KASSERT(((load_insn >> 21) & 31) == lui_reg);
-		KASSERT(load_reg == _R_T9);
-
-		intptr_t load_addr = ((int16_t)lui_insn << 16) + (int16_t) load_insn;
-#ifdef _LP64
-		const intptr_t real_addr = *(int64_t *)load_addr;
-#else
-		const intptr_t real_addr = *(int32_t *)load_addr;
-#endif
 		/*
 		 * If the real_addr has been set yet, don't fix up.
 		 */
