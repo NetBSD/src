@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1662 2011/08/15 15:14:00 wiz Exp $
+#	$NetBSD: mi,v 1.1663 2011/08/17 07:22:34 manu Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4680,6 +4680,7 @@
 ./usr/share/man/cat2/fsync_range.0		comp-c-catman		.cat
 ./usr/share/man/cat2/ftruncate.0		comp-c-catman		.cat
 ./usr/share/man/cat2/futimes.0			comp-c-catman		.cat
+./usr/share/man/cat2/futimens.0			comp-c-catman		.cat
 ./usr/share/man/cat2/getcontext.0		comp-c-catman		.cat
 ./usr/share/man/cat2/getdents.0			comp-c-catman		.cat
 ./usr/share/man/cat2/getdirentries.0		comp-obsolete		obsolete
@@ -4865,6 +4866,7 @@
 ./usr/share/man/cat2/undelete.0			comp-c-catman		.cat
 ./usr/share/man/cat2/unlink.0			comp-c-catman		.cat
 ./usr/share/man/cat2/unmount.0			comp-c-catman		.cat
+./usr/share/man/cat2/utimensat.0		comp-c-catman		.cat
 ./usr/share/man/cat2/utimes.0			comp-c-catman		.cat
 ./usr/share/man/cat2/utrace.0			comp-c-catman		.cat
 ./usr/share/man/cat2/uuidgen.0			comp-c-catman		.cat
@@ -10864,6 +10866,7 @@
 ./usr/share/man/html2/fsync_range.html		comp-c-htmlman		html
 ./usr/share/man/html2/ftruncate.html		comp-c-htmlman		html
 ./usr/share/man/html2/futimes.html		comp-c-htmlman		html
+./usr/share/man/html2/futimens.html		comp-c-htmlman		html
 ./usr/share/man/html2/getcontext.html		comp-c-htmlman		html
 ./usr/share/man/html2/getdents.html		comp-c-htmlman		html
 ./usr/share/man/html2/getegid.html		comp-c-htmlman		html
@@ -11037,6 +11040,7 @@
 ./usr/share/man/html2/undelete.html		comp-c-htmlman		html
 ./usr/share/man/html2/unlink.html		comp-c-htmlman		html
 ./usr/share/man/html2/unmount.html		comp-c-htmlman		html
+./usr/share/man/html2/utimensat.html		comp-c-htmlman		html
 ./usr/share/man/html2/utimes.html		comp-c-htmlman		html
 ./usr/share/man/html2/utrace.html		comp-c-htmlman		html
 ./usr/share/man/html2/uuidgen.html		comp-c-htmlman		html
@@ -16822,6 +16826,7 @@
 ./usr/share/man/man2/fsync_range.2		comp-c-man		.man
 ./usr/share/man/man2/ftruncate.2		comp-c-man		.man
 ./usr/share/man/man2/futimes.2			comp-c-man		.man
+./usr/share/man/man2/futimens.2			comp-c-man		.man
 ./usr/share/man/man2/getcontext.2		comp-c-man		.man
 ./usr/share/man/man2/getdents.2			comp-c-man		.man
 ./usr/share/man/man2/getegid.2			comp-c-man		.man
@@ -17005,6 +17010,7 @@
 ./usr/share/man/man2/undelete.2			comp-c-man		.man
 ./usr/share/man/man2/unlink.2			comp-c-man		.man
 ./usr/share/man/man2/unmount.2			comp-c-man		.man
+./usr/share/man/man2/utimensat.2		comp-c-man		.man
 ./usr/share/man/man2/utimes.2			comp-c-man		.man
 ./usr/share/man/man2/utrace.2			comp-c-man		.man
 ./usr/share/man/man2/uuidgen.2			comp-c-man		.man
