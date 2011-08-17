@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.4 2011/06/25 20:27:01 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.5 2011/08/17 09:19:38 christos Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -860,7 +860,6 @@ retry_mode:
 		int arg;
 #endif
 		int d;
-		char *ap;
 		char hname[INET6_ADDRSTRLEN];
 
 		switch (u.ss.ss_family) {
@@ -903,7 +902,6 @@ retry_mode:
 			    ((unsigned int)p >> 8) & 0xff, p & 0xff);
 			break;
 		case AF_INET6:
-#define UC(b)	(((int)b)&0xff)
 			e = -1;
 			u.sin6.sin6_scope_id = 0;
 			if (getnameinfo(&u.sa, l,
@@ -915,17 +913,18 @@ retry_mode:
 					goto ouch;
 			}
 			if (e != FTP_OK) {
-				ap = (char *)(void *)&u.sin6.sin6_addr;
+				uint8_t aa[sizeof(u.sin6.sin6_addr)];
+				memcpy(aa, &u.sin6.sin6_addr, sizeof(aa));
+				p = ntohs(u.sin6.sin6_port);
 				e = ftp_cmd(conn,
 				    "LPRT %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\r\n",
 				    6, 16,
-				    UC(ap[0]), UC(ap[1]), UC(ap[2]), UC(ap[3]),
-				    UC(ap[4]), UC(ap[5]), UC(ap[6]), UC(ap[7]),
-				    UC(ap[8]), UC(ap[9]), UC(ap[10]), UC(ap[11]),
-				    UC(ap[12]), UC(ap[13]), UC(ap[14]), UC(ap[15]),
+				    aa[ 0], aa[ 1], aa[ 2], aa[ 3],
+				    aa[ 4], aa[ 5], aa[ 6], aa[ 7],
+				    aa[ 8], aa[ 9], aa[10], aa[11],
+				    aa[12], aa[13], aa[14], aa[15],
 				    2,
-				    ((unsigned int)ntohs(u.sin6.sin6_port) >> 8) & 0xff,
-				    ntohs(u.sin6.sin6_port)        & 0xff);
+				    ((unsigned int)p >> 8) & 0xff, p & 0xff);
 			}
 			break;
 		default:
