@@ -1857,7 +1857,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	char *buf=NULL;
 	fd_set readfds;
 	int ret=1,width;
-	int k,i;
+	int k,i, fdin;
 	unsigned long l;
 	SSL *con=NULL;
 	BIO *sbio;
@@ -1999,9 +1999,15 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 
 		if (!read_from_sslcon)
 			{
+			fdin = fileno(stdin);
+			if (fdin < 0)
+				{
+				BIO_printf(bio_err,"Bad fileno for stdin\n");
+				goto err;
+				}
 			FD_ZERO(&readfds);
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE) && !defined(OPENSSL_SYS_BEOS_R5)
-			openssl_fdset(fileno(stdin),&readfds);
+			openssl_fdset(fdin,&readfds);
 #endif
 			openssl_fdset(s,&readfds);
 			/* Note: under VMS with SOCKETSHR the second parameter is
@@ -2026,13 +2032,13 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 			/* Under BeOS-R5 the situation is similar to DOS */
 			tv.tv_sec = 1;
 			tv.tv_usec = 0;
-			(void)fcntl(fileno(stdin), F_SETFL, O_NONBLOCK);
+			(void)fcntl(fdin, F_SETFL, O_NONBLOCK);
 			i=select(width,(void *)&readfds,NULL,NULL,&tv);
-			if ((i < 0) || (!i && read(fileno(stdin), buf, 0) < 0))
+			if ((i < 0) || (!i && read(fdin, buf, 0) < 0))
 				continue;
-			if (read(fileno(stdin), buf, 0) >= 0)
+			if (read(fdin, buf, 0) >= 0)
 				read_from_terminal = 1;
-			(void)fcntl(fileno(stdin), F_SETFL, 0);
+			(void)fcntl(fdin, F_SETFL, 0);
 #else
 			if ((SSL_version(con) == DTLS1_VERSION) &&
 				DTLSv1_get_timeout(con, &timeout))
@@ -2048,7 +2054,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				}
 
 			if (i <= 0) continue;
-			if (FD_ISSET(fileno(stdin),&readfds))
+			if (FD_ISSET(fdin,&readfds))
 				read_from_terminal = 1;
 #endif
 			if (FD_ISSET(s,&readfds))
