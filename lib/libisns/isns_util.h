@@ -1,4 +1,4 @@
-/*	$NetBSD: isns_util.h,v 1.1.1.1 2011/01/16 01:22:50 agc Exp $	*/
+/*	$NetBSD: isns_util.h,v 1.2 2011/08/17 10:08:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #define ARRAY_ELEMS(a)	(sizeof(a)/sizeof((a)[0]))
 
 
+struct isns_config_s;
 int isns_issue_cmd(struct isns_config_s *, uint8_t);
 int isns_issue_cmd_with_data(struct isns_config_s *, uint8_t,
     uint8_t *, int);
