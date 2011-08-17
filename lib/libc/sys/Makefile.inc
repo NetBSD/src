@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.208 2011/08/08 12:08:53 manu Exp $
+#	$NetBSD: Makefile.inc,v 1.209 2011/08/17 07:22:33 manu Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -90,7 +90,7 @@ ASM=	access.S acct.S \
 	faccessat.S fchdir.S fchflags.S fchmod.S fchmodat.S fchown.S \
 		fchownat.S fchroot.S fexecve.S __fhopen40.S __fhstat50.S \
 		__fhstatvfs140.S fktrace.S flock.S fpathconf.S __fstat50.S \
-		fstatvfs1.S fstatat.S  __futimes50.S \
+		fstatvfs1.S fstatat.S  __futimes50.S futimens.S \
 	__getcwd.S __getdents30.S __getfh30.S getvfsstat.S getgroups.S\
 		__getitimer50.S __getlogin.S getpeername.S getpgid.S getpgrp.S \
 		getpriority.S getrlimit.S __getrusage50.S getsid.S \
@@ -315,6 +315,7 @@ MLINKS+=statvfs.2 fstatvfs1.2
 MLINKS+=syscall.2 __syscall.2
 MLINKS+=truncate.2 ftruncate.2
 MLINKS+=utimes.2 futimes.2 utimes.2 lutimes.2
+MLINKS+=utimes.2 futimens.2 utimes.2 utimensat.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
 MLINKS+=pipe.2 pipe2.2

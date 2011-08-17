@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.433 2011/08/08 12:08:53 manu Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.434 2011/08/17 07:22:34 manu Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.433 2011/08/08 12:08:53 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.434 2011/08/17 07:22:34 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3031,6 +3031,26 @@ sys___futimes50(struct lwp *l, const struct sys___futimes50_args *uap,
 	return (error);
 }
 
+int
+sys_futimens(struct lwp *l, const struct sys_futimens_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const struct timespec *) tptr;
+	} */
+	int error;
+	file_t *fp;
+
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
+		return (error);
+	error = do_sys_utimens(l, fp->f_data, NULL, 0, SCARG(uap, tptr),
+	    UIO_USERSPACE);
+	fd_putfile(SCARG(uap, fd));
+	return (error);
+}
+
 /*
  * Set the access and modification times given a path name; this
  * version does not follow links.
@@ -3058,6 +3078,20 @@ sys_utimensat(struct lwp *l, const struct sys_utimensat_args *uap,
 		syscallarg(const struct timespec *) tptr;
 		syscallarg(int) flag;
 	} */
+	int follow;
+	const struct timespec *tptr;
+
+	/*
+	 * Specified fd is not yet implemented
+	 */ 
+	if (SCARG(uap, fd) != AT_FDCWD)
+		return ENOSYS;
+
+	tptr = SCARG(uap, tptr);
+	follow = (SCARG(uap, flag) & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
+
+	return do_sys_utimens(l, NULL, SCARG(uap, path), follow,
+	    tptr, UIO_USERSPACE);
 
 	return ENOSYS;
 }
@@ -3066,8 +3100,8 @@ sys_utimensat(struct lwp *l, const struct sys_utimensat_args *uap,
  * Common routine to set access and modification times given a vnode.
  */
 int
-do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
-    const struct timeval *tptr, enum uio_seg seg)
+do_sys_utimens(struct lwp *l, struct vnode *vp, const char *path, int flag,
+    const struct timespec *tptr, enum uio_seg seg)
 {
 	struct vattr vattr;
 	int error, dorele = 0;
@@ -3092,18 +3126,19 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 		nanotime(&ts[0]);
 		ts[1] = ts[0];
 	} else {
-		struct timeval tv[2];
-
 		vanull = false;
 		if (seg != UIO_SYSSPACE) {
-			error = copyin(tptr, tv, sizeof (tv));
+			error = copyin(tptr, ts, sizeof (ts));
 			if (error != 0)
 				return error;
-			tptr = tv;
 		}
-		TIMEVAL_TO_TIMESPEC(&tptr[0], &ts[0]);
-		TIMEVAL_TO_TIMESPEC(&tptr[1], &ts[1]);
 	}
+
+	if (ts[0].tv_nsec == UTIME_NOW)
+		nanotime(&ts[0]);
+
+	if (ts[1].tv_nsec == UTIME_NOW)
+		nanotime(&ts[1]);
 
 	if (vp == NULL) {
 		/* note: SEG describes TPTR, not PATH; PATH is always user */
@@ -3117,10 +3152,16 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 	setbirthtime = (VOP_GETATTR(vp, &vattr, l->l_cred) == 0 &&
 	    timespeccmp(&ts[1], &vattr.va_birthtime, <));
 	vattr_null(&vattr);
-	vattr.va_atime = ts[0];
-	vattr.va_mtime = ts[1];
-	if (setbirthtime)
-		vattr.va_birthtime = ts[1];
+
+	if (ts[0].tv_nsec != UTIME_OMIT)
+		vattr.va_atime = ts[0];
+
+	if (ts[1].tv_nsec != UTIME_OMIT) {
+		vattr.va_mtime = ts[1];
+		if (setbirthtime)
+			vattr.va_birthtime = ts[1];
+	}
+
 	if (vanull)
 		vattr.va_vaflags |= VA_UTIMES_NULL;
 	error = VOP_SETATTR(vp, &vattr, l->l_cred);
@@ -3130,6 +3171,42 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 		vrele(vp);
 
 	return error;
+}
+
+int
+do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
+    const struct timeval *tptr, enum uio_seg seg)
+{
+	struct timespec ts[2];
+	struct timespec *tsptr = NULL;
+	int error;
+	
+	if (tptr != NULL) {
+		struct timeval tv[2];
+
+		if (seg != UIO_SYSSPACE) {
+			error = copyin(tptr, tv, sizeof (tv));
+			if (error != 0)
+				return error;
+			tptr = tv;
+		}
+
+		if ((tv[0].tv_usec == UTIME_NOW) || 
+		    (tv[0].tv_usec == UTIME_OMIT))
+			ts[0].tv_nsec = tv[0].tv_usec;
+		else
+			TIMEVAL_TO_TIMESPEC(&tptr[0], &ts[0]);
+
+		if ((tv[1].tv_usec == UTIME_NOW) || 
+		    (tv[1].tv_usec == UTIME_OMIT))
+			ts[1].tv_nsec = tv[1].tv_usec;
+		else
+			TIMEVAL_TO_TIMESPEC(&tptr[1], &ts[1]);
+
+		tsptr = &ts[0];	
+	}
+
+	return do_sys_utimens(l, vp, path, flag, tsptr, UIO_SYSSPACE);
 }
 
 /*

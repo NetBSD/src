@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.251 2011/08/08 12:08:53 manu Exp $
+	$NetBSD: syscalls.master,v 1.252 2011/08/17 07:22:34 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -923,3 +923,5 @@
 			    const char *path2); }
 471	STD  RUMP	{ int|sys||unlinkat(int fd, const char *path, \
 			    int flag); }
+472	STD  RUMP	{ int|sys||futimens(int fd, \
+			    const struct timespec *tptr); }
