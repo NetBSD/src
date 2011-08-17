@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.1.1.1 2009/12/13 16:54:32 kardel Exp $	*/
+/*	$NetBSD: time.c,v 1.2 2011/08/17 09:32:55 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -373,7 +373,7 @@ isc_time_secondsastimet(const isc_time_t *t, time_t *secondsp) {
 	    (time_t)0.5 != 0.5 &&	       /* Not a floating point type. */
 	    (i = (time_t)-1) != 4294967295u &&		       /* Is signed. */
 	    (seconds &
-	     (1U << (sizeof(time_t) * CHAR_BIT - 1))) != 0U) {   /* Negative. */
+	     (1ULL << (sizeof(time_t) * CHAR_BIT - 1))) != 0ULL) {   /* Negative. */
 		/*
 		 * This UNUSED() is here to shut up the IRIX compiler:
 		 *	variable "i" was set but never used
