@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.34 2009/10/21 21:12:07 rmind Exp $  */
+/*      $NetBSD: ps.c,v 1.35 2011/08/17 13:26:49 christos Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.34 2009/10/21 21:12:07 rmind Exp $");
+__RCSID("$NetBSD: ps.c,v 1.35 2011/08/17 13:26:49 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -282,11 +282,12 @@ comm2str(struct kinfo_proc2 *kp)
 		 * they are printed within parentheses.
 		 */
 		if (kp->p_flag & P_SYSTEM)
-			fmt = "[%s]";
+			fmt = "[]";
 		else
-			fmt = "(%s)";
+			fmt = "()";
 
-		snprintf(commstr, sizeof(commstr), fmt, kp->p_comm);
+		snprintf(commstr, sizeof(commstr), "%c%s%c", fmt[0],
+		    kp->p_comm, fmt[1]);
 	}
 
 	return commstr;
@@ -324,12 +325,10 @@ start2str(struct kinfo_proc2 *kp)
 	        time(&now);
 	if (now - u_start.tv_sec < 24 * SECSPERHOUR) {
 		/* I *hate* SCCS... */
-	        static char fmt[] = "%l:%" "M%p";
-	        strftime(startstr, sizeof(startstr) - 1, fmt, tp);
+	        strftime(startstr, sizeof(startstr) - 1, "%l:%" "M%p", tp);
 	} else if (now - u_start.tv_sec < 7 * SECSPERDAY) {
 	        /* I *hate* SCCS... */
-	        static char fmt[] = "%a%" "I%p";
-	        strftime(startstr, sizeof(startstr) - 1, fmt, tp);
+	        strftime(startstr, sizeof(startstr) - 1, "%a%" "I%p", tp);
 	} else  
 	        strftime(startstr, sizeof(startstr) - 1, "%e%b%y", tp);
 
