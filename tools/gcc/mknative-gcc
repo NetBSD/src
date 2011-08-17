@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.61 2011/07/03 12:26:02 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.62 2011/08/17 18:34:13 matt Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -617,6 +617,32 @@ get_gcc () {
 	esac
 	for f in $hfiles; do
 		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
+		if [ "${MACHINE_ARCH}" = "powerpc" -a "${f}" = "configargs" ]
+		then
+			ex <<__EOF__ $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h
+/configuration_arguments/ s/$//
+ya
+i
+#ifdef _SOFT_FLOAT_
+.
+pu
+s/";$/ -with-float=soft";/
+a
+#else
+#endif
+.
+. m +1
+/configure_default_options/ s/{ NULL.*$//
+a
+#ifdef _SOFT_FLOAT_
+  { "float", "soft" },
+#endif
+  { NULL, NULL }
+};
+.
+wq
+__EOF__
+		fi
 	done
 
 	# keep identical
