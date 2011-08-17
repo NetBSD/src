@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2007/11/21 15:39:34 jmmv Exp $
+#	$NetBSD: Makefile,v 1.3 2011/08/17 17:08:59 christos Exp $
 
 NOMAN=  	# defined
 
@@ -21,5 +21,7 @@ SRCS=		df.c strpct.c getmntinfo.c
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/include
 SRCS+=		humanize_number.c
 .endif
+
+COPTS.strpct.c += -Wno-format-nonliteral
 
 .include <bsd.test.mk>
