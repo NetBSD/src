@@ -1,4 +1,4 @@
-/*	$NetBSD: res_comp.c,v 1.10 2009/04/12 17:07:17 christos Exp $	*/
+/*	$NetBSD: res_comp.c,v 1.11 2011/08/17 09:53:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -75,7 +75,7 @@
 static const char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_comp.c,v 1.5 2005/07/28 06:51:50 marka Exp";
 #else
-__RCSID("$NetBSD: res_comp.c,v 1.10 2009/04/12 17:07:17 christos Exp $");
+__RCSID("$NetBSD: res_comp.c,v 1.11 2011/08/17 09:53:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,8 +135,8 @@ dn_comp(const char *src, u_char *dst, int dstsiz,
 	u_char **dnptrs, u_char **lastdnptr)
 {
 	return (ns_name_compress(src, dst, (size_t)dstsiz,
-				 (const u_char **)dnptrs,
-				 (const u_char **)lastdnptr));
+				 (void *)dnptrs,
+				 (void *)lastdnptr));
 }
 
 /*%
