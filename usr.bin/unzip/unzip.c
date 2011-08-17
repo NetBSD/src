@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.15 2011/07/14 06:35:30 wiz Exp $ */
+/* $NetBSD: unzip.c,v 1.16 2011/08/17 13:37:39 christos Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.15 2011/07/14 06:35:30 wiz Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.16 2011/08/17 13:37:39 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -823,7 +823,7 @@ list(struct archive *a, struct archive_entry *e)
 	time_t mtime;
 
 	mtime = archive_entry_mtime(e);
-	strftime(buf, sizeof(buf), "%m-%d-%g %R", localtime(&mtime));
+	strftime(buf, sizeof(buf), "%m-%d-%G %R", localtime(&mtime));
 
 	if (v_opt == 1) {
 		printf(" %8ju  %s   %s\n",
@@ -893,11 +893,11 @@ unzip(const char *fn)
 	    printf("Archive:  %s\n", fn);
 
 	if (v_opt == 1) {
-		printf("  Length     Date   Time    Name\n");
-		printf(" --------    ----   ----    ----\n");
+		printf("  Length       Date   Time    Name\n");
+		printf(" --------      ----   ----    ----\n");
 	} else if (v_opt == 2) {
-		printf(" Length   Method    Size  Ratio   Date   Time   CRC-32    Name\n");
-		printf("--------  ------  ------- -----   ----   ----   ------    ----\n");
+		printf(" Length   Method    Size  Ratio     Date   Time   CRC-32    Name\n");
+		printf("--------  ------  ------- -----     ----   ----   ------    ----\n");
 	}
 
 	total_size = 0;
@@ -922,12 +922,12 @@ unzip(const char *fn)
 	}
 
 	if (v_opt == 1) {
-		printf(" --------                   -------\n");
-		printf(" %8ju                   %ju file%s\n",
+		printf(" --------                     -------\n");
+		printf(" %8ju                     %ju file%s\n",
 		    total_size, file_count, file_count != 1 ? "s" : "");
 	} else if (v_opt == 2) {
-		printf("--------          -------  ---                            -------\n");
-		printf("%8ju          %7ju   0%%                            %ju file%s\n",
+		printf("--------          -------  ---                              -------\n");
+		printf("%8ju          %7ju   0%%                              %ju file%s\n",
 		    total_size, total_size, file_count,
 		    file_count != 1 ? "s" : "");
 	}
