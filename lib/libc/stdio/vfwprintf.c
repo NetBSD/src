@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.23 2010/12/16 17:42:27 wiz Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.24 2011/08/17 09:53:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.23 2010/12/16 17:42:27 wiz Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.24 2011/08/17 09:53:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -494,7 +494,7 @@ __wcsconv(wchar_t *wcsarg, int prec)
 	if (prec < 0) {
 		p = wcsarg;
 		mbs = initial;
-		nbytes = wcsrtombs(NULL, (const wchar_t **)&p, 0, &mbs);
+		nbytes = wcsrtombs(NULL, (void *)&p, 0, &mbs);
 		if (nbytes == (size_t)-1)
 			return (NULL);
 	} else {
@@ -524,7 +524,7 @@ __wcsconv(wchar_t *wcsarg, int prec)
 	/* Fill the output buffer. */
 	p = wcsarg;
 	mbs = initial;
-	if ((nbytes = wcsrtombs(convbuf, (const wchar_t **)&p,
+	if ((nbytes = wcsrtombs(convbuf, (void *)&p,
 	    nbytes, &mbs)) == (size_t)-1) {
 		free(convbuf);
 		return (NULL);
