@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.3 2011/08/17 00:45:55 jakllsch Exp $ */
+/*	$NetBSD: biosboot.c,v 1.4 2011/08/17 12:27:50 martin Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc. 
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.3 2011/08/17 00:45:55 jakllsch Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.4 2011/08/17 12:27:50 martin Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -212,7 +212,7 @@ biosboot(int fd)
 
 	hdr = gpt->map_data;
 
-	for (int j = 0; j < le32toh(hdr->hdr_entries); j++) {
+	for (uint32_t j = 0; j < le32toh(hdr->hdr_entries); j++) {
 		ent = (void*)((char*)tbl->map_data + j * le32toh(hdr->hdr_entsz));
 		ent->ent_attr &= ~GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
 	}
@@ -231,7 +231,7 @@ biosboot(int fd)
 
 	hdr = tpg->map_data;
 
-	for (int j = 0; j < le32toh(hdr->hdr_entries); j++) {
+	for (uint32_t j = 0; j < le32toh(hdr->hdr_entries); j++) {
 		ent = (void*)((char*)lbt->map_data + j * le32toh(hdr->hdr_entsz));
 		ent->ent_attr &= ~GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
 	}
