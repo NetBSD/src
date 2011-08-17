@@ -1,4 +1,4 @@
-/* $Id: input.c,v 1.3 2011/08/17 18:48:36 jmmv Exp $ */
+/* $Id: input.c,v 1.4 2011/08/17 19:28:36 jmmv Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1430,7 +1430,7 @@ input_dcs_dispatch(struct input_ctx *ictx)
 
 	/* Check for tmux prefix. */
 	if (ictx->input_len >= prefix_len &&
-	    strncmp(ictx->input_buf, prefix, prefix_len) == 0) {
+	    strncmp((const char *)ictx->input_buf, prefix, prefix_len) == 0) {
 		screen_write_rawstring(&ictx->ctx,
 		    ictx->input_buf + prefix_len, ictx->input_len - prefix_len);
 	}
@@ -1470,11 +1470,11 @@ input_exit_osc(struct input_ctx *ictx)
 	switch (option) {
 	case 0:
 	case 2:
-		screen_set_title(ictx->ctx.s, p);
+		screen_set_title(ictx->ctx.s, (const char *)p);
 		server_status_window(ictx->wp->window);
 		break;
 	case 12:
-		screen_set_cursor_colour(ictx->ctx.s, p);
+		screen_set_cursor_colour(ictx->ctx.s, (const char *)p);
 		break;
 	case 112:
 		if (*p == '\0') /* No arguments allowed. */
