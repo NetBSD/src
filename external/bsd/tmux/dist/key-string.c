@@ -1,4 +1,4 @@
-/* $Id: key-string.c,v 1.1.1.1 2011/03/10 09:15:38 jmmv Exp $ */
+/* $Id: key-string.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -25,7 +25,7 @@
 int	key_string_search_table(const char *);
 int	key_string_get_modifiers(const char **);
 
-struct {
+const struct {
 	const char     *string;
 	int	 	key;
 } key_string_table[] = {
@@ -147,7 +147,7 @@ key_string_lookup_string(const char *string)
 	/* Is this a standard ASCII key? */
 	if (string[1] == '\0') {
 		key = (u_char) string[0];
-		if (key < 32 || key > 126)
+		if (key < 32 || key == 127 || key > 255)
 			return (KEYC_NONE);
 	} else {
 		/* Otherwise look the key up in the table. */
@@ -213,7 +213,7 @@ key_string_lookup_key(int key)
 	}
 
 	/* Invalid keys are errors. */
-	if (key >= 127)
+	if (key == 127 || key > 255)
 		return (NULL);
 
 	/* Check for standard or control key. */
@@ -225,7 +225,9 @@ key_string_lookup_key(int key)
 	} else if (key >= 32 && key <= 126) {
 		tmp[0] = key;
 		tmp[1] = '\0';
-	}
+	} else if (key >= 128)
+		xsnprintf(tmp, sizeof tmp, "\\%o", key);
+
 	strlcat(out, tmp, sizeof out);
 	return (out);
 }
