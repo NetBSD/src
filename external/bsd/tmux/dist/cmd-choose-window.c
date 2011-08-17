@@ -1,4 +1,4 @@
-/* $Id: cmd-choose-window.c,v 1.1.1.1 2011/03/10 09:15:36 jmmv Exp $ */
+/* $Id: cmd-choose-window.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,13 +33,12 @@ void	cmd_choose_window_free(void *);
 
 const struct cmd_entry cmd_choose_window_entry = {
 	"choose-window", NULL,
+	"t:", 0, 1,
 	CMD_TARGET_WINDOW_USAGE " [template]",
-	CMD_ARG01, "",
-	cmd_target_init,
-	cmd_target_parse,
-	cmd_choose_window_exec,
-	cmd_target_free,
-	cmd_target_print
+	0,
+	NULL,
+	NULL,
+	cmd_choose_window_exec
 };
 
 struct cmd_choose_window_data {
@@ -51,13 +50,13 @@ struct cmd_choose_window_data {
 int
 cmd_choose_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
-	struct cmd_target_data		*data = self->data;
+	struct args			*args = self->args;
 	struct cmd_choose_window_data	*cdata;
 	struct session			*s;
 	struct winlink			*wl, *wm;
 	struct window			*w;
 	u_int			 	 idx, cur;
-	char				 flag, *title;
+	char				*flags, *title;
 	const char			*left, *right;
 
 	if (ctx->curclient == NULL) {
@@ -66,7 +65,7 @@ cmd_choose_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	}
 	s = ctx->curclient->session;
 
-	if ((wl = cmd_find_window(ctx, data->target, NULL)) == NULL)
+	if ((wl = cmd_find_window(ctx, args_get(args, 't'), NULL)) == NULL)
 		return (-1);
 
 	if (window_pane_set_mode(wl->window->active, &window_choose_mode) != 0)
@@ -80,20 +79,7 @@ cmd_choose_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 			cur = idx;
 		idx++;
 
-		flag = ' ';
-		if (wm->flags & WINLINK_ACTIVITY)
-			flag = '#';
-		else if (wm->flags & WINLINK_BELL)
-			flag = '!';
-		else if (wm->flags & WINLINK_CONTENT)
-			flag = '+';
-		else if (wm->flags & WINLINK_SILENCE)
-			flag = '~';
-		else if (wm == s->curw)
-			flag = '*';
-		else if (wm == TAILQ_FIRST(&s->lastw))
-			flag = '-';
-
+		flags = window_printable_flags(s, wm);
 		title = w->active->screen->title;
 		if (wm == wl)
 			title = w->active->base.title;
@@ -103,15 +89,17 @@ cmd_choose_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 			left = right = "";
 
 		window_choose_add(wl->window->active,
-		    wm->idx, "%3d: %s%c [%ux%u] (%u panes%s)%s%s%s",
-		    wm->idx, w->name, flag, w->sx, w->sy, window_count_panes(w),
+		    wm->idx, "%3d: %s%s [%ux%u] (%u panes%s)%s%s%s",
+		    wm->idx, w->name, flags, w->sx, w->sy, window_count_panes(w),
 		    w->active->fd == -1 ? ", dead" : "",
 		    left, title, right);
+
+		xfree(flags);
 	}
 
 	cdata = xmalloc(sizeof *cdata);
-	if (data->arg != NULL)
-		cdata->template = xstrdup(data->arg);
+	if (args->argc != 0)
+		cdata->template = xstrdup(args->argv[0]);
 	else
 		cdata->template = xstrdup("select-window -t '%%'");
 	cdata->session = s;

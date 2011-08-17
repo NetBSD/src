@@ -1,4 +1,4 @@
-/* $Id: input-keys.c,v 1.1.1.1 2011/03/10 09:15:38 jmmv Exp $ */
+/* $Id: input-keys.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -39,7 +39,7 @@ struct input_key_ent {
 #define INPUTKEY_CURSOR 0x2	/* cursor key */
 };
 
-struct input_key_ent input_keys[] = {
+const struct input_key_ent input_keys[] = {
 	/* Backspace key. */
 	{ KEYC_BSPACE,		"\177",		0 },
 
@@ -136,11 +136,11 @@ struct input_key_ent input_keys[] = {
 void
 input_key(struct window_pane *wp, int key)
 {
-	struct input_key_ent   *ike;
-	u_int			i;
-	size_t			dlen;
-	char		       *out;
-	u_char			ch;
+	const struct input_key_ent     *ike;
+	u_int				i;
+	size_t				dlen;
+	char			       *out;
+	u_char				ch;
 
 	log_debug2("writing key 0x%x", key);
 
@@ -201,11 +201,30 @@ input_key(struct window_pane *wp, int key)
 void
 input_mouse(struct window_pane *wp, struct mouse_event *m)
 {
-	char	out[8];
+	char	buf[10];
+	size_t	len;
 
-	if (wp->screen->mode & MODE_MOUSE) {
-		xsnprintf(out, sizeof out,
-		    "\033[M%c%c%c", m->b + 32, m->x + 33, m->y + 33);
-		bufferevent_write(wp->event, out, strlen(out));
+	if (wp->screen->mode & ALL_MOUSE_MODES) {
+		if (wp->screen->mode & MODE_MOUSE_UTF8) {
+			len = xsnprintf(buf, sizeof buf, "\033[M");
+			len += utf8_split2(m->b + 32, &buf[len]);
+			len += utf8_split2(m->x + 33, &buf[len]);
+			len += utf8_split2(m->y + 33, &buf[len]);
+		} else {
+			if (m->b > 223 || m->x >= 222 || m->y > 222)
+				return;
+			len = xsnprintf(buf, sizeof buf, "\033[M");
+			buf[len++] = m->b + 32;
+			buf[len++] = m->x + 33;
+			buf[len++] = m->y + 33;
+		}
+		bufferevent_write(wp->event, buf, len);
+	} else if ((m->b & MOUSE_BUTTON) != MOUSE_2) {
+		if (options_get_number(&wp->window->options, "mode-mouse") &&
+		    window_pane_set_mode(wp, &window_copy_mode) == 0) {
+			window_copy_init_from_pane(wp);
+			if (wp->mode->mouse != NULL)
+				wp->mode->mouse(wp, NULL, m);
+		}
 	}
 }
