@@ -32,11 +32,12 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.21 2011/04/06 20:24:16 christos Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.22 2011/08/17 08:06:38 christos Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 #include "version.h"
+#include <vis.h>
 
 TIME default_lease_time = 43200; /* 12 hours... */
 TIME max_lease_time = 86400; /* 24 hours... */
@@ -85,6 +86,14 @@ static int check_option_values(struct universe *universe, unsigned int opt,
 			       const char *ptr, size_t len);
 
 void do_release(struct client_state *);
+
+static void
+suspect(const char *name, const char *value)
+{
+	char buf[1024];
+	(void)strnvis(buf, sizeof(buf), value, VIS_WHITE);
+	log_error("suspect value in %s option (%s) - discarded", name, buf);
+}
 
 #if !defined (SMALL)
 static isc_result_t
@@ -2492,11 +2501,8 @@ void client_option_envadd (struct option_cache *oc,
 					client_envadd(es->client, es->prefix,
 						      name, "%s", value);
 				} else {
-					log_error("suspect value in %s "
-						  "option - discarded",
-						  name);
+					suspect(name, value);
 				}
-
 				data_string_forget (&data, MDL);
 			}
 		}
@@ -2576,9 +2582,7 @@ void script_write_params (client, prefix, lease)
 			client_envadd(client, prefix, "filename",
 				      "%s", lease->filename);
 		} else {
-			log_error("suspect value in %s "
-				  "option - discarded",
-				  lease->filename);
+			suspect("filename", lease->filename);
 		}
 	}
 
@@ -2589,9 +2593,7 @@ void script_write_params (client, prefix, lease)
 			client_envadd (client, prefix, "server_name",
 				       "%s", lease->server_name);
 		} else {
-			log_error("suspect value in %s "
-				  "option - discarded",
-				  lease->server_name);
+			suspect("server_mame", lease->server_name);
 		}
 	}
 	for (i = 0; i < lease -> options -> universe_count; i++) {
