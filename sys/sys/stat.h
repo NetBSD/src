@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.61 2011/08/08 12:08:54 manu Exp $	*/
+/*	$NetBSD: stat.h,v 1.62 2011/08/17 07:25:30 manu Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -207,6 +207,12 @@ struct stat {
 #endif /* _KERNEL */
 #endif /* _NETBSD_SOURCE */
 
+/*
+ * Special values for utimensat and futimens
+ */
+#define UTIME_NOW	((1 << 30) - 1)
+#define UTIME_OMIT	((1 << 30) - 2)
+
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
 
@@ -241,6 +247,8 @@ int	lchmod(const char *, mode_t);
 int     fstatat(int, const char *, struct stat *, int);
 int     utimensat(int, const char *, const struct timespec *, int);
 #endif
+
+int futimens(int, const struct timespec *);
 
 __END_DECLS
 
