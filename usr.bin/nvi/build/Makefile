@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2011/06/20 07:44:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2011/08/17 12:57:19 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -60,5 +60,8 @@ options_def.h: options.awk options.c
 .PATH: ${DIST}/common
 .PATH: ${DIST}/regex
 .PATH: ${DIST}/docs/vi.man
+
+COPTS.exf.c += -Wno-format-nonliteral
+COPTS.msg.c += -Wno-format-nonliteral
 
 .include <bsd.prog.mk>
