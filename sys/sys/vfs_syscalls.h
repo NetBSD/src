@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.15 2011/06/05 09:04:22 dsl Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.16 2011/08/17 09:29:59 manu Exp $        */
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -54,6 +54,8 @@ int do_sys_getvfsstat(struct lwp *, void *, size_t, int, int (*)(const void *, v
 
 int do_sys_utimes(struct lwp *, struct vnode *, const char *, int,
     const struct timeval *, enum uio_seg);
+int do_sys_utimens(struct lwp *, struct vnode *, const char *, int flag,
+    const struct timespec *, enum uio_seg);
 
 int	vfs_copyinfh_alloc(const void *, size_t, fhandle_t **);
 void	vfs_copyinfh_free(fhandle_t *);

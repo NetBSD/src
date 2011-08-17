@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.435 2011/08/17 08:31:27 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.436 2011/08/17 09:29:59 manu Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.435 2011/08/17 08:31:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.436 2011/08/17 09:29:59 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -117,8 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.435 2011/08/17 08:31:27 martin Ex
 static int change_flags(struct vnode *, u_long, struct lwp *);
 static int change_mode(struct vnode *, int, struct lwp *l);
 static int change_owner(struct vnode *, uid_t, gid_t, struct lwp *, int);
-int	do_sys_utimens(struct lwp *l, struct vnode *vp, const char *path,
-	    int flag, const struct timespec *tptr, enum uio_seg seg);
 
 /*
  * This table is used to maintain compatibility with 4.3BSD
