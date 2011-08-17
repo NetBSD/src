@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.9 2011/03/21 14:53:03 tnozaki Exp $ */
+/*	$NetBSD: ex_tag.c,v 1.10 2011/08/17 12:56:55 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -204,7 +204,7 @@ ex_tag_next(SCR *sp, EXCMD *cmdp)
 	if (tqp->current->msg) {
 	    INT2CHAR(sp, tqp->current->msg, tqp->current->mlen + 1,
 		     np, nlen);
-	    msgq(sp, M_INFO, np);
+	    msgq(sp, M_INFO, "%s", np);
 	}
 	return (0);
 }
