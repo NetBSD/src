@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/06/22 02:49:42 mrg Exp $
+# $NetBSD: Makefile,v 1.3 2011/08/17 09:30:13 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -11,8 +11,3 @@ SRCS=	man.c man_hash.c man_macro.c man_validate.c \
 MAN=	mandoc.3
 
 .include <bsd.lib.mk>
-
-# XXX
-.if ${HAVE_GCC} == 45
-COPTS.mdoc_validate.c+=	-Wno-error
-.endif
