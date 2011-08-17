@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.31 2011/08/16 19:53:03 dholland Exp $	*/
+/*	$NetBSD: strfile.c,v 1.32 2011/08/17 18:16:51 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.31 2011/08/16 19:53:03 dholland Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.32 2011/08/17 18:16:51 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -67,29 +67,13 @@ __RCSID("$NetBSD: strfile.c,v 1.31 2011/08/16 19:53:03 dholland Exp $");
 #define	MAXPATHLEN	1024
 #endif	/* MAXPATHLEN */
 
-static uint32_t h2nl(uint32_t h);
-static void getargs(int argc, char **argv);
-static void usage(void) __dead;
-static void add_offset(FILE *fp, off_t off);
-static void do_order(void);
-static int cmp_str(const void *vp1, const void *vp2);
-static void randomize(void);
-static void fwrite_be_offt(off_t off, FILE *f);
-
-static uint32_t
-h2nl(uint32_t h)
-{
-        unsigned char c[4];
-        uint32_t rv;
-
-        c[0] = (h >> 24) & 0xff;
-        c[1] = (h >> 16) & 0xff;
-        c[2] = (h >>  8) & 0xff;
-        c[3] = (h >>  0) & 0xff;
-        memcpy(&rv, c, sizeof rv);
-
-        return (rv);
-}
+#if defined(__NetBSD__) || defined(__dead)
+#define NORETURN	__dead
+#elif defined __GNUC__
+#define NORETURN	__attribute__((__noreturn__))
+#else
+#define NORETURN
+#endif
 
 /*
  *	This program takes a file composed of strings separated by
@@ -153,15 +137,15 @@ static STRFILE Tbl;			/* statistics table */
 
 static STR *Firstch;			/* first chars of each string */
 
-#ifdef __GNUC__
-#define NORETURN	__dead
-#else
-#define NORETURN
-#endif
 
-#ifndef __dead /* not NetBSD, presumably */
-#define __dead ;
-#endif
+static uint32_t h2nl(uint32_t h);
+static void getargs(int argc, char **argv);
+static void usage(void) NORETURN;
+static void add_offset(FILE *fp, off_t off);
+static void do_order(void);
+static int cmp_str(const void *vp1, const void *vp2);
+static void randomize(void);
+static void fwrite_be_offt(off_t off, FILE *f);
 
 void	add_offset(FILE *, off_t);
 int	cmp_str(const void *, const void *);
@@ -491,4 +475,19 @@ fwrite_be_offt(off_t off, FILE *f)
 		off >>= 8;
 	}
 	fwrite(c, sizeof(c), 1, f);
+}
+
+static uint32_t
+h2nl(uint32_t h)
+{
+        unsigned char c[4];
+        uint32_t rv;
+
+        c[0] = (h >> 24) & 0xff;
+        c[1] = (h >> 16) & 0xff;
+        c[2] = (h >>  8) & 0xff;
+        c[3] = (h >>  0) & 0xff;
+        memcpy(&rv, c, sizeof rv);
+
+        return (rv);
 }
