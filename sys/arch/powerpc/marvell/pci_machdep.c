@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 2011/06/22 18:06:34 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4 2011/08/17 18:52:01 matt Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.3 2011/06/22 18:06:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4 2011/08/17 18:52:01 matt Exp $");
 
 #include "gtpci.h"
 #include "pci.h"
@@ -68,6 +68,9 @@ struct genppc_pci_chipset genppc_gtpci0_chipset = {
 	.pc_intr_disestablish = genppc_pci_intr_disestablish,
 	.pc_intr_setattr = genppc_pci_intr_setattr,
 
+	.pc_msi_v = &genppc_gtpci0_chipset,
+	GENPPC_PCI_MSI_INITIALIZER,
+
 	.pc_conf_interrupt = gtpci_md_conf_interrupt,
 	.pc_decompose_tag = gtpci_decompose_tag,
 	.pc_conf_hook = gtpci_md_conf_hook,
@@ -88,6 +91,9 @@ struct genppc_pci_chipset genppc_gtpci1_chipset = {
 	.pc_intr_disestablish = genppc_pci_intr_disestablish,
 	.pc_intr_setattr = genppc_pci_intr_setattr,
 	.pc_intr_map = genppc_pci_intr_map,
+
+	.pc_msi_v = &genppc_gtpci1_chipset,
+	GENPPC_PCI_MSI_INITIALIZER,
 
 	.pc_conf_interrupt = gtpci_md_conf_interrupt,
 	.pc_decompose_tag = gtpci_decompose_tag,

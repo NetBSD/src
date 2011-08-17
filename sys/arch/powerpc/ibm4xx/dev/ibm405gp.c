@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.c,v 1.6 2011/06/22 18:06:34 matt Exp $	*/
+/*	$NetBSD: ibm405gp.c,v 1.7 2011/08/17 18:52:01 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm405gp.c,v 1.6 2011/06/22 18:06:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm405gp.c,v 1.7 2011/08/17 18:52:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,6 +76,9 @@ static struct genppc_pci_chipset genppc_ibm4xx_chipset = {
 	.pc_intr_establish =	genppc_pci_intr_establish,
 	.pc_intr_disestablish =	genppc_pci_intr_disestablish,
 	.pc_intr_setattr =	ibm4xx_pci_intr_setattr,
+
+	.pc_msi_v =		&genppc_ibm4xx_chipset,
+	GENPPC_PCI_MSI_INITIALIZER,
 
 	.pc_conf_interrupt =	ibm4xx_pci_conf_interrupt,
 	.pc_decompose_tag =	ibm4xx_pci_decompose_tag,
