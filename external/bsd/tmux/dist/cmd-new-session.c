@@ -1,4 +1,4 @@
-/* $Id: cmd-new-session.c,v 1.1.1.1 2011/03/10 09:15:37 jmmv Exp $ */
+/* $Id: cmd-new-session.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <pwd.h>
+#include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
@@ -29,119 +30,62 @@
  * Create a new session and attach to the current terminal unless -d is given.
  */
 
-int	cmd_new_session_parse(struct cmd *, int, char **, char **);
+int	cmd_new_session_check(struct args *);
 int	cmd_new_session_exec(struct cmd *, struct cmd_ctx *);
-void	cmd_new_session_free(struct cmd *);
-void	cmd_new_session_init(struct cmd *, int);
-size_t	cmd_new_session_print(struct cmd *, char *, size_t);
-
-struct cmd_new_session_data {
-	char	*target;
-	char	*newname;
-	char	*winname;
-	char	*cmd;
-	int	 flag_detached;
-};
 
 const struct cmd_entry cmd_new_session_entry = {
 	"new-session", "new",
-	"[-d] [-n window-name] [-s session-name] [-t target-session] [command]",
-	CMD_STARTSERVER|CMD_CANTNEST|CMD_SENDENVIRON, "",
-	cmd_new_session_init,
-	cmd_new_session_parse,
-	cmd_new_session_exec,
-	cmd_new_session_free,
-	cmd_new_session_print
+	"dn:s:t:x:y:", 0, 1,
+	"[-d] [-n window-name] [-s session-name] [-t target-session] "
+	"[-x width] [-y height] [command]",
+	CMD_STARTSERVER|CMD_CANTNEST|CMD_SENDENVIRON,
+	NULL,
+	cmd_new_session_check,
+	cmd_new_session_exec
 };
 
-/* ARGSUSED */
-void
-cmd_new_session_init(struct cmd *self, unused int arg)
-{
-	struct cmd_new_session_data	 *data;
-
-	self->data = data = xmalloc(sizeof *data);
-	data->flag_detached = 0;
-	data->target = NULL;
-	data->newname = NULL;
-	data->winname = NULL;
-	data->cmd = NULL;
-}
-
 int
-cmd_new_session_parse(struct cmd *self, int argc, char **argv, char **cause)
+cmd_new_session_check(struct args *args)
 {
-	struct cmd_new_session_data	*data;
-	int				 opt;
-
-	self->entry->init(self, KEYC_NONE);
-	data = self->data;
-
-	while ((opt = getopt(argc, argv, "ds:t:n:")) != -1) {
-		switch (opt) {
-		case 'd':
-			data->flag_detached = 1;
-			break;
-		case 's':
-			if (data->newname == NULL)
-				data->newname = xstrdup(optarg);
-			break;
-		case 't':
-			if (data->target == NULL)
-				data->target = xstrdup(optarg);
-			break;
-		case 'n':
-			if (data->winname == NULL)
-				data->winname = xstrdup(optarg);
-			break;
-		default:
-			goto usage;
-		}
-	}
-	argc -= optind;
-	argv += optind;
-	if (argc != 0 && argc != 1)
-		goto usage;
-
-	if (data->target != NULL && (argc == 1 || data->winname != NULL))
-		goto usage;
-
-	if (argc == 1)
-		data->cmd = xstrdup(argv[0]);
-
+	if (args_has(args, 't') && (args->argc != 0 || args_has(args, 'n')))
+		return (-1);
 	return (0);
-
-usage:
-	xasprintf(cause, "usage: %s %s", self->entry->name, self->entry->usage);
-
-	self->entry->free(self);
-	return (-1);
 }
 
 int
 cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
-	struct cmd_new_session_data	*data = self->data;
-	struct session			*s, *old_s, *groupwith;
-	struct window			*w;
-	struct window_pane		*wp;
-	struct environ			 env;
-	struct termios			 tio, *tiop;
-	struct passwd			*pw;
-	const char			*update, *cwd;
-	char				*overrides, *cmd, *cause;
-	int				 detached, idx;
-	u_int				 sx, sy, i;
+	struct args		*args = self->args;
+	struct session		*s, *old_s, *groupwith;
+	struct window		*w;
+	struct window_pane	*wp;
+	struct environ		 env;
+	struct termios		 tio, *tiop;
+	struct passwd		*pw;
+	const char		*newname, *target, *update, *cwd, *errstr;
+	char			*overrides, *cmd, *cause;
+	int			 detached, idx;
+	u_int			 sx, sy, i;
 
-	if (data->newname != NULL && session_find(data->newname) != NULL) {
-		ctx->error(ctx, "duplicate session: %s", data->newname);
-		return (-1);
+	newname = args_get(args, 's');
+	if (newname != NULL) {
+		if (!session_check_name(newname)) {
+			ctx->error(ctx, "bad session name: %s", newname);
+			return (-1);
+		}
+		if (session_find(newname) != NULL) {
+			ctx->error(ctx, "duplicate session: %s", newname);
+			return (-1);
+		}
 	}
 
-	groupwith = NULL;
-	if (data->target != NULL &&
-	    (groupwith = cmd_find_session(ctx, data->target)) == NULL)
-		return (-1);
+	target = args_get(args, 't');
+	if (target != NULL) {
+		groupwith = cmd_find_session(ctx, target, 0);
+		if (groupwith == NULL)
+			return (-1);
+	} else
+		groupwith = NULL;
 
 	/*
 	 * There are three cases:
@@ -162,7 +106,7 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	 */
 
 	/* Set -d if no client. */
-	detached = data->flag_detached;
+	detached = args_has(args, 'd');
 	if (ctx->cmdclient == NULL && ctx->curclient == NULL)
 		detached = 1;
 
@@ -213,6 +157,22 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	if (detached) {
 		sx = 80;
 		sy = 24;
+		if (args_has(args, 'x')) {
+			sx = strtonum(
+			    args_get(args, 'x'), 1, USHRT_MAX, &errstr);
+			if (errstr != NULL) {
+				ctx->error(ctx, "width %s", errstr);
+				return (-1);
+			}
+		}
+		if (args_has(args, 'y')) {
+			sy = strtonum(
+			    args_get(args, 'y'), 1, USHRT_MAX, &errstr);
+			if (errstr != NULL) {
+				ctx->error(ctx, "height %s", errstr);
+				return (-1);
+			}
+		}
 	} else if (ctx->cmdclient != NULL) {
 		sx = ctx->cmdclient->tty.sx;
 		sy = ctx->cmdclient->tty.sy;
@@ -228,10 +188,10 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 		sy = 1;
 
 	/* Figure out the command for the new window. */
-	if (data->target != NULL)
+	if (target != NULL)
 		cmd = NULL;
-	else if (data->cmd != NULL)
-		cmd = data->cmd;
+	else if (args->argc != 0)
+		cmd = args->argv[0];
 	else
 		cmd = options_get_string(&global_s_options, "default-command");
 
@@ -243,8 +203,7 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 	/* Create the new session. */
 	idx = -1 - options_get_number(&global_s_options, "base-index");
-	s = session_create(
-	    data->newname, cmd, cwd, &env, tiop, idx, sx, sy, &cause);
+	s = session_create(newname, cmd, cwd, &env, tiop, idx, sx, sy, &cause);
 	if (s == NULL) {
 		ctx->error(ctx, "create session failed: %s", cause);
 		xfree(cause);
@@ -253,11 +212,11 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	environ_free(&env);
 
 	/* Set the initial window name if one given. */
-	if (cmd != NULL && data->winname != NULL) {
+	if (cmd != NULL && args_has(args, 'n')) {
 		w = s->curw->window;
 
 		xfree(w->name);
-		w->name = xstrdup(data->winname);
+		w->name = xstrdup(args_get(args, 'n'));
 
 		options_set_number(&w->options, "automatic-rename", 0);
 	}
@@ -284,12 +243,14 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 			if (old_s != NULL)
 				ctx->cmdclient->last_session = old_s;
 			ctx->cmdclient->session = s;
+			session_update_activity(s);
 			server_redraw_client(ctx->cmdclient);
 		} else {
 			old_s = ctx->curclient->session;
 			if (old_s != NULL)
 				ctx->curclient->last_session = old_s;
 			ctx->curclient->session = s;
+			session_update_activity(s);
 			server_redraw_client(ctx->curclient);
 		}
 	}
@@ -313,40 +274,4 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	}
 
 	return (!detached);	/* 1 means don't tell command client to exit */
-}
-
-void
-cmd_new_session_free(struct cmd *self)
-{
-	struct cmd_new_session_data	*data = self->data;
-
-	if (data->newname != NULL)
-		xfree(data->newname);
-	if (data->winname != NULL)
-		xfree(data->winname);
-	if (data->cmd != NULL)
-		xfree(data->cmd);
-	xfree(data);
-}
-
-size_t
-cmd_new_session_print(struct cmd *self, char *buf, size_t len)
-{
-	struct cmd_new_session_data	*data = self->data;
-	size_t				 off = 0;
-
-	off += xsnprintf(buf, len, "%s", self->entry->name);
-	if (data == NULL)
-		return (off);
-	if (off < len && data->flag_detached)
-		off += xsnprintf(buf + off, len - off, " -d");
-	if (off < len && data->winname != NULL)
-		off += cmd_prarg(buf + off, len - off, " -n ", data->winname);
-	if (off < len && data->newname != NULL)
-		off += cmd_prarg(buf + off, len - off, " -s ", data->newname);
-	if (off < len && data->target != NULL)
-		off += cmd_prarg(buf + off, len - off, " -t ", data->target);
-	if (off < len && data->cmd != NULL)
-		off += cmd_prarg(buf + off, len - off, " ", data->cmd);
-	return (off);
 }

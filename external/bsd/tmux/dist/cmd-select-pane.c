@@ -1,4 +1,4 @@
-/* $Id: cmd-select-pane.c,v 1.1.1.1 2011/03/10 09:15:37 jmmv Exp $ */
+/* $Id: cmd-select-pane.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,62 +24,84 @@
  * Select pane.
  */
 
-void	cmd_select_pane_init(struct cmd *, int);
+void	cmd_select_pane_key_binding(struct cmd *, int);
 int	cmd_select_pane_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_select_pane_entry = {
 	"select-pane", "selectp",
-	"[-DLRU] " CMD_TARGET_PANE_USAGE,
-	0, "DLRU",
-	cmd_select_pane_init,
-	cmd_target_parse,
-	cmd_select_pane_exec,
-	cmd_target_free,
-	cmd_target_print
+	"lDLRt:U", 0, 0,
+	"[-lDLRU] " CMD_TARGET_PANE_USAGE,
+	0,
+	cmd_select_pane_key_binding,
+	NULL,
+	cmd_select_pane_exec
+};
+
+const struct cmd_entry cmd_last_pane_entry = {
+	"last-pane", "lastp",
+	"t:", 0, 0,
+	CMD_TARGET_WINDOW_USAGE,
+	0,
+	NULL,
+	NULL,
+	cmd_select_pane_exec
 };
 
 void
-cmd_select_pane_init(struct cmd *self, int key)
+cmd_select_pane_key_binding(struct cmd *self, int key)
 {
-	struct cmd_target_data	*data;
-
-	cmd_target_init(self, key);
-	data = self->data;
-
+	self->args = args_create(0);
 	if (key == KEYC_UP)
-		cmd_set_flag(&data->chflags, 'U');
+		args_set(self->args, 'U', NULL);
 	if (key == KEYC_DOWN)
-		cmd_set_flag(&data->chflags, 'D');
+		args_set(self->args, 'D', NULL);
 	if (key == KEYC_LEFT)
-		cmd_set_flag(&data->chflags, 'L');
+		args_set(self->args, 'L', NULL);
 	if (key == KEYC_RIGHT)
-		cmd_set_flag(&data->chflags, 'R');
+		args_set(self->args, 'R', NULL);
 	if (key == 'o')
-		data->target = xstrdup(":.+");
+		args_set(self->args, 't', ":.+");
 }
 
 int
 cmd_select_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
-	struct cmd_target_data	*data = self->data;
+	struct args		*args = self->args;
 	struct winlink		*wl;
 	struct window_pane	*wp;
 
-	if ((wl = cmd_find_pane(ctx, data->target, NULL, &wp)) == NULL)
+	if (self->entry == &cmd_last_pane_entry || args_has(args, 'l')) {
+		wl = cmd_find_window(ctx, args_get(args, 't'), NULL);
+		if (wl == NULL)
+			return (-1);
+
+		if (wl->window->last == NULL) {
+			ctx->error(ctx, "no last pane");
+			return (-1);
+		}
+
+		window_set_active_pane(wl->window, wl->window->last);
+		server_status_window(wl->window);
+		server_redraw_window_borders(wl->window);
+
+		return (0);
+	}
+
+	if ((wl = cmd_find_pane(ctx, args_get(args, 't'), NULL, &wp)) == NULL)
 		return (-1);
 
 	if (!window_pane_visible(wp)) {
-		ctx->error(ctx, "pane not visible: %s", data->target);
+		ctx->error(ctx, "pane not visible");
 		return (-1);
 	}
 
-	if (cmd_check_flag(data->chflags, 'L'))
+	if (args_has(self->args, 'L'))
 		wp = window_pane_find_left(wp);
-	else if (cmd_check_flag(data->chflags, 'R'))
+	else if (args_has(self->args, 'R'))
 		wp = window_pane_find_right(wp);
-	else if (cmd_check_flag(data->chflags, 'U'))
+	else if (args_has(self->args, 'U'))
 		wp = window_pane_find_up(wp);
-	else if (cmd_check_flag(data->chflags, 'D'))
+	else if (args_has(self->args, 'D'))
 		wp = window_pane_find_down(wp);
 	if (wp == NULL) {
 		ctx->error(ctx, "pane not found");

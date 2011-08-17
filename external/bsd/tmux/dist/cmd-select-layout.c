@@ -1,4 +1,4 @@
-/* $Id: cmd-select-layout.c,v 1.1.1.1 2011/03/10 09:15:37 jmmv Exp $ */
+/* $Id: cmd-select-layout.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,43 +24,60 @@
  * Switch window to selected layout.
  */
 
-void	cmd_select_layout_init(struct cmd *, int);
+void	cmd_select_layout_key_binding(struct cmd *, int);
 int	cmd_select_layout_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_select_layout_entry = {
 	"select-layout", "selectl",
-	CMD_TARGET_WINDOW_USAGE " [layout-name]",
-	CMD_ARG01, "",
-	cmd_select_layout_init,
-	cmd_target_parse,
-	cmd_select_layout_exec,
-	cmd_target_free,
-	cmd_target_print
+	"npt:", 0, 1,
+	"[-np] " CMD_TARGET_WINDOW_USAGE " [layout-name]",
+	0,
+	cmd_select_layout_key_binding,
+	NULL,
+	cmd_select_layout_exec
+};
+
+const struct cmd_entry cmd_next_layout_entry = {
+	"next-layout", "nextl",
+	"t:", 0, 0,
+	CMD_TARGET_WINDOW_USAGE,
+	0,
+	NULL,
+	NULL,
+	cmd_select_layout_exec
+};
+
+const struct cmd_entry cmd_previous_layout_entry = {
+	"previous-layout", "prevl",
+	"t:", 0, 0,
+	CMD_TARGET_WINDOW_USAGE,
+	0,
+	NULL,
+	NULL,
+	cmd_select_layout_exec
 };
 
 void
-cmd_select_layout_init(struct cmd *self, int key)
+cmd_select_layout_key_binding(struct cmd *self, int key)
 {
-	struct cmd_target_data	*data;
-
-	cmd_target_init(self, key);
-	data = self->data;
-
 	switch (key) {
-	case ('1' | KEYC_ESCAPE):
-		data->arg = xstrdup("even-horizontal");
+	case '1' | KEYC_ESCAPE:
+		self->args = args_create(1, "even-horizontal");
 		break;
-	case ('2' | KEYC_ESCAPE):
-		data->arg = xstrdup("even-vertical");
+	case '2' | KEYC_ESCAPE:
+		self->args = args_create(1, "even-vertical");
 		break;
-	case ('3' | KEYC_ESCAPE):
-		data->arg = xstrdup("main-horizontal");
+	case '3' | KEYC_ESCAPE:
+		self->args = args_create(1, "main-horizontal");
 		break;
-	case ('4' | KEYC_ESCAPE):
-		data->arg = xstrdup("main-vertical");
+	case '4' | KEYC_ESCAPE:
+		self->args = args_create(1, "main-vertical");
 		break;
-	case ('5' | KEYC_ESCAPE):
-		data->arg = xstrdup("tiled");
+	case '5' | KEYC_ESCAPE:
+		self->args = args_create(1, "tiled");
+		break;
+	default:
+		self->args = args_create(0);
 		break;
 	}
 }
@@ -68,26 +85,48 @@ cmd_select_layout_init(struct cmd *self, int key)
 int
 cmd_select_layout_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
-	struct cmd_target_data	*data = self->data;
-	struct winlink		*wl;
-	int			 layout;
+	struct args	*args = self->args;
+	struct winlink	*wl;
+	const char	*layoutname;
+	int		 next, previous, layout;
 
-	if ((wl = cmd_find_window(ctx, data->target, NULL)) == NULL)
+	if ((wl = cmd_find_window(ctx, args_get(args, 't'), NULL)) == NULL)
 		return (-1);
 
-	if (data->arg == NULL) {
+	next = self->entry == &cmd_next_layout_entry;
+	if (args_has(self->args, 'n'))
+		next = 1;
+	previous = self->entry == &cmd_previous_layout_entry;
+	if (args_has(self->args, 'p'))
+		previous = 1;
+
+	if (next || previous) {
+		if (next)
+			layout = layout_set_next(wl->window);
+		else
+			layout = layout_set_previous(wl->window);
+		ctx->info(ctx, "arranging in: %s", layout_set_name(layout));
+		return (0);
+	}
+
+	if (args->argc == 0)
 		layout = wl->window->lastlayout;
-		if (layout == -1)
-			return (0);
-	} else if ((layout = layout_set_lookup(data->arg)) != -1) {
+	else
+		layout = layout_set_lookup(args->argv[0]);
+	if (layout != -1) {
 		layout = layout_set_select(wl->window, layout);
 		ctx->info(ctx, "arranging in: %s", layout_set_name(layout));
-	} else {
-		if (layout_parse(wl->window, data->arg) == -1) {
-			ctx->error(ctx, "can't set layout: %s", data->arg);
+		return (0);
+	}
+
+	if (args->argc != 0) {
+		layoutname = args->argv[0];
+		if (layout_parse(wl->window, layoutname) == -1) {
+			ctx->error(ctx, "can't set layout: %s", layoutname);
 			return (-1);
 		}
-		ctx->info(ctx, "arranging in: %s", data->arg);
+		ctx->info(ctx, "arranging in: %s", layoutname);
+		return (0);
 	}
 
 	return (0);
