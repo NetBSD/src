@@ -163,12 +163,14 @@ read_capacity(uint64_t target, uint32_t lun, uint32_t *maxlba, uint32_t *blockle
 		iscsi_err(__FILE__, __LINE__, "READ_CAPACITY failed (status %#x)\n", args.status);
 		return -1;
 	}
-	*maxlba = ISCSI_NTOHL(*((uint32_t *) (data)));
-	*blocklen = ISCSI_NTOHL(*((uint32_t *) (data + 4)));
+	memcpy(maxlba, data, sizeof(*maxlba));
+	*maxlba = ISCSI_NTOHL(*maxlba);
 	if (*maxlba == 0) {
 		iscsi_err(__FILE__, __LINE__, "Device returned Maximum LBA of zero\n");
 		return -1;
 	}
+	memcpy(blocklen, data + 4, sizeof(*blocklen));
+	*blocklen = ISCSI_NTOHL(*blocklen);
 	if (*blocklen % 2) {
 		iscsi_err(__FILE__, __LINE__, "Device returned strange block len: %u\n", *blocklen);
 		return -1;
