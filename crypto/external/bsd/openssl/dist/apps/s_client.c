@@ -510,6 +510,7 @@ int MAIN(int argc, char **argv)
 	int cbuf_len,cbuf_off;
 	int sbuf_len,sbuf_off;
 	fd_set readfds,writefds;
+	int fdin, fdout;
 	short port=PORT;
 	int full_log=1;
 	char *host=SSL_HOST_NAME;
@@ -1402,6 +1403,18 @@ SSL_set_tlsext_status_ids(con, ids);
 		{
 		FD_ZERO(&readfds);
 		FD_ZERO(&writefds);
+		fdin = fileno(stdin);
+		if (fdin < 0)
+			{
+			BIO_printf(bio_err,"bad fileno for stdin\n");
+			goto shut;
+			}
+		fdout = fileno(stdout);
+		if (fdout < 0)
+			{
+			BIO_printf(bio_err,"bad fileno for stdout\n");
+			goto shut;
+			}
 
 		if ((SSL_version(con) == DTLS1_VERSION) &&
 			DTLSv1_get_timeout(con, &timeout))
@@ -1468,8 +1481,8 @@ SSL_set_tlsext_status_ids(con, ids);
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE) && !defined (OPENSSL_SYS_BEOS_R5)
 			if (tty_on)
 				{
-				if (read_tty)  openssl_fdset(fileno(stdin),&readfds);
-				if (write_tty) openssl_fdset(fileno(stdout),&writefds);
+				if (read_tty)  openssl_fdset(fdin,&readfds);
+				if (write_tty) openssl_fdset(fdout,&writefds);
 				}
 			if (read_ssl)
 				openssl_fdset(SSL_get_fd(con),&readfds);
@@ -1529,21 +1542,21 @@ SSL_set_tlsext_status_ids(con, ids);
 			/* Under BeOS-R5 the situation is similar to DOS */
 			i=0;
 			stdin_set = 0;
-			(void)fcntl(fileno(stdin), F_SETFL, O_NONBLOCK);
+			(void)fcntl(fdin, F_SETFL, O_NONBLOCK);
 			if(!write_tty) {
 				if(read_tty) {
 					tv.tv_sec = 1;
 					tv.tv_usec = 0;
 					i=select(width,(void *)&readfds,(void *)&writefds,
 						 NULL,&tv);
-					if (read(fileno(stdin), sbuf, 0) >= 0)
+					if (read(fdin, sbuf, 0) >= 0)
 						stdin_set = 1;
 					if (!i && (stdin_set != 1 || !read_tty))
 						continue;
 				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
 					 NULL,timeoutp);
 			}
-			(void)fcntl(fileno(stdin), F_SETFL, 0);
+			(void)fcntl(fdin, F_SETFL, 0);
 #else
 			i=select(width,(void *)&readfds,(void *)&writefds,
 				 NULL,timeoutp);
@@ -1634,7 +1647,7 @@ SSL_set_tlsext_status_ids(con, ids);
 		/* Assume Windows/DOS/BeOS can always write */
 		else if (!ssl_pending && write_tty)
 #else
-		else if (!ssl_pending && FD_ISSET(fileno(stdout),&writefds))
+		else if (!ssl_pending && FD_ISSET(fdout,&writefds))
 #endif
 			{
 #ifdef CHARSET_EBCDIC
@@ -1725,7 +1738,7 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 #elif defined(OPENSSL_SYS_BEOS_R5)
 		else if (stdin_set)
 #else
-		else if (FD_ISSET(fileno(stdin),&readfds))
+		else if (FD_ISSET(fdin,&readfds))
 #endif
 			{
 			if (crlf)
