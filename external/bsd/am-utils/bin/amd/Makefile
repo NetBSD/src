@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/06/22 02:49:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2011/08/17 09:03:47 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -44,10 +44,6 @@ LDADD+=	-lssl -lcrypto
 SRCS+=	info_nis.c
 .endif
 
-.if defined(HAVE_GCC)
-COPTS.amq_subr.c+=	-fno-strict-aliasing
-.endif
-
 # the following are not supported on NetBSD
 #	info_ldap.c info_nisplus.c ops_cachefs.c ops_efs.c ops_lofs.c ops_xfs.c
 MAN+=	amd.8
@@ -83,8 +79,3 @@ build_version.h: get_args.c
 
 
 .include <bsd.prog.mk>
-
-# XXX
-.if ${HAVE_GCC} == 45
-COPTS.readdir.c+=	-fno-strict-aliasing
-.endif
