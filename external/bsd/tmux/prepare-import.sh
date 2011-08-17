@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: prepare-import.sh,v 1.1 2011/03/10 09:10:41 jmmv Exp $
+# $NetBSD: prepare-import.sh,v 1.2 2011/08/17 18:37:59 jmmv Exp $
 #
 # Use this script to recreate the 'dist' subdirectory from a newly released
 # distfile.  The script takes care of unpacking the distfile, removing any
@@ -15,6 +15,8 @@ ProgName=${0##*/}
 
 CLEAN_PATTERNS=
 CLEAN_PATTERNS="${CLEAN_PATTERNS} [A-Z]*"
+CLEAN_PATTERNS="${CLEAN_PATTERNS} aclocal.m4"
+CLEAN_PATTERNS="${CLEAN_PATTERNS} etc"
 CLEAN_PATTERNS="${CLEAN_PATTERNS} configure*"
 
 err() {
@@ -57,13 +59,6 @@ cleanup_dist() {
 	( cd dist && rm -rf ${CLEAN_PATTERNS} )
 }
 
-extract_version() {
-	local version=$(grep '^VERSION[ \t]*=' dist/Makefile | \
-	    cut -d '=' -f 2 | sed -e 's,[ \t]*,,g')
-	log "Version is ${version}"
-	echo "${version}" >usr.bin/tmux/version.txt
-}
-
 diff_dirs() {
 	local old_dir="${1}"; shift
 	local new_dir="${1}"; shift
@@ -101,11 +96,10 @@ main() {
 
 	backup_dist
 	extract_distfile "${distfile}" "${distname}"
-	extract_version
 	cleanup_dist
 	diff_dirs dist.old dist
-	log "Don't forget to validate usr.bin/tmux/version.txt and to update" \
-	    "the version in doc/3RDPARTY"
+	log "Don't forget to update the -D flags in usr.bin/tmux/Makefile" \
+	    "and to update the version in doc/3RDPARTY"
 }
 
 main "${@}"
