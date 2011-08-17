@@ -1,4 +1,4 @@
-/*      $NetBSD: whois.c,v 1.34 2009/04/14 08:00:48 lukem Exp $   */
+/*      $NetBSD: whois.c,v 1.35 2011/08/17 13:57:12 christos Exp $   */
 /*	$OpenBSD: whois.c,v 1.28 2003/09/18 22:16:15 fgsch Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.34 2009/04/14 08:00:48 lukem Exp $");
+__RCSID("$NetBSD: whois.c,v 1.35 2011/08/17 13:57:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,15 +216,15 @@ whois(const char *query, const char *server, const char *port, int flags)
 
 	if (strcmp(server, "whois.denic.de") == 0 ||
 	    strcmp(server, "de.whois-servers.net") == 0)
-		fmt = "-T dn,ace -C ISO-8859-1 %s\r\n";
+		fmt = "-T dn,ace -C ISO-8859-1";
 	else
-		fmt = "%s\r\n";
+		fmt = "";
 
 	sfi = fdopen(s, "r");
 	sfo = fdopen(s, "w");
 	if (sfi == NULL || sfo == NULL)
 		err(1, "fdopen");
-	(void)fprintf(sfo, fmt, query);
+	(void)fprintf(sfo, "%s%s\r\n", fmt, query);
 	(void)fflush(sfo);
 	nhost = NULL;
 	while ((buf = fgetln(sfi, &len)) != NULL) {
