@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.102 2011/08/06 17:25:03 rmind Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.103 2011/08/17 20:46:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.102 2011/08/06 17:25:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.103 2011/08/17 20:46:27 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1039,17 +1039,11 @@ ReStart:
 			npg = NULL;
 		}
 		if (nanon == NULL || npg == NULL) {
-
-			/*
-			 * XXXCDC: we should cause fork to fail, but we can't.
-			 */
-
+			amap_unlock(amap);
 			if (nanon) {
 				nanon->an_ref--;
 				KASSERT(nanon->an_ref == 0);
-				uvm_anon_freelst(amap, nanon);
-			} else {
-				amap_unlock(amap);
+				uvm_anon_free(nanon);
 			}
 			uvm_wait("cownowpage");
 			goto ReStart;
