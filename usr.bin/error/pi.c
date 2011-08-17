@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.17 2009/08/13 06:59:37 dholland Exp $	*/
+/*	$NetBSD: pi.c,v 1.18 2011/08/17 13:11:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.17 2009/08/13 06:59:37 dholland Exp $");
+__RCSID("$NetBSD: pi.c,v 1.18 2011/08/17 13:11:22 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -364,7 +364,8 @@ pi(void)
 		cur_wordc += 1 + 3;
 		return (C_THISFILE);
 	}
-	if (strcmp(cur_wordv[1], "...") == 0) {
+	if (strcmp(cur_wordv[1], "...") == 0 && c_linenumber &&
+	    currentfilename != default_currentfilename) {
 		/*
 		 * have a continuation error message
 		 * of the form: ... message
