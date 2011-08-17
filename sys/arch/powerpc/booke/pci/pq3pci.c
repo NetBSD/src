@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.9 2011/08/17 00:59:47 dyoung Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.10 2011/08/17 18:52:00 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.9 2011/08/17 00:59:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.10 2011/08/17 18:52:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1468,6 +1468,22 @@ pq3pci_pci_chipset_init(struct pq3pci_softc *sc)
         pc->pc_intr_establish = pq3pci_intr_establish;
         pc->pc_intr_disestablish = pq3pci_intr_disestablish;
         pc->pc_conf_interrupt = pq3pci_conf_interrupt;
+
+	pc->pc_msi_v = sc;
+	genppc_pci_chipset_msi_init(pc);
+#if 0
+	pc->pc_msi_request = pq3pci_msi_request;
+	pc->pc_msi_available = pq3pci_msi_available;
+	pc->pc_msi_type = pq3pci_msi_type;
+	pc->pc_msi_string = pq3pci_msi_string;
+	pc->pc_msi_evcnt = genppc_pci_msi_evcnt;
+	pc->pc_msi_establish = pq3pci_msi_establish;
+	pc->pc_msix_establish = pq3pci_msix_establish;
+	pc->pc_msi_disestablish = pq3pci_msi_disestablish;
+	pc->pc_msi_release = pq3pci_msi_release;
+	pc->pc_msi_free = pq3pci_msi_free;
+#endif
+
         pc->pc_decompose_tag = pq3pci_decompose_tag;
         pc->pc_conf_hook = pq3pci_conf_hook;
 
