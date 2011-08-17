@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.678 2011/08/07 08:15:02 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.679 2011/08/17 09:18:38 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -52,6 +52,7 @@ TOOLCHAIN_MISSING?=	no
 .if ${MACHINE_ARCH} == "i386"     || \
     ${MACHINE_CPU}  == "mips"     || \
     ${MACHINE_ARCH} == "powerpc"  || \
+    ${MACHINE_ARCH} == "sparc"    || \
     ${MACHINE_ARCH} == "sparc64"  || \
     ${MACHINE_ARCH} == "x86_64"
 HAVE_GCC?=    45
