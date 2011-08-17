@@ -1,4 +1,4 @@
-/* $Id: tty-term.c,v 1.3 2011/08/17 18:48:36 jmmv Exp $ */
+/* $Id: tty-term.c,v 1.4 2011/08/17 19:28:36 jmmv Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -505,13 +505,13 @@ tty_term_string2(struct tty_term *term, enum tty_code_code code, int a, int b)
 const char *
 tty_term_ptr1(struct tty_term *term, enum tty_code_code code, const void *a)
 {
-	return (tparm((char *) tty_term_string(term, code), (long)a, 0, 0, 0, 0, 0, 0, 0, 0));
+	return (tparm(tty_term_string(term, code), (long)a, 0, 0, 0, 0, 0, 0, 0, 0));
 }
 
 const char *
 tty_term_ptr2(struct tty_term *term, enum tty_code_code code, const void *a, const void *b)
 {
-	return (tparm((char *) tty_term_string(term, code), (long)a, (long)b, 0, 0, 0, 0, 0, 0, 0));
+	return (tparm(tty_term_string(term, code), (long)a, (long)b, 0, 0, 0, 0, 0, 0, 0));
 }
 
 int
