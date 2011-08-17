@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.1 2011/01/06 01:08:48 jakllsch Exp $ */
+/*	$NetBSD: biosboot.c,v 1.2 2011/08/17 00:04:41 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc. 
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.1 2011/01/06 01:08:48 jakllsch Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.2 2011/08/17 00:04:41 jakllsch Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -66,8 +66,6 @@ static uint64_t size;
 static char *bootpath;
 static unsigned int entry;
 
-const uuid_t uuid_mbr_guid_default = MBR_GPT_GUID_DEFAULT;
-
 const char biosbootmsg[] = "biosboot [-c bootcode] [-i index] device ...";
 
 static void
@@ -83,7 +81,6 @@ read_boot(void)
 	int bfd, ret = 0;
 	struct mbr *buf;
 	struct stat st;
-	uuid_t uuid_patch_magic;
 
 	/* XXX how to do the following better? */
 	if (bootpath == NULL) {
@@ -109,31 +106,14 @@ read_boot(void)
 		goto fail;
 	}
 
-	if (st.st_size != secsz) {
-		warnx("%s: the bootcode does not match '%s' sector size",
-			bootpath, device_name);
-		goto fail;
-	}
-
-	if (read(bfd, buf, secsz) != st.st_size) {
-		warn("%s", bootpath);
-		goto fail;
-	}
-
-	if (le32toh(buf->mbr_sig) != MBR_SIG) {
-		warnx("%s: invalid MBR magic", bootpath);
-		goto fail;
-	}
-
-	uuid_dec_le(&buf->mbr_code[MBR_GPT_GUID_OFFSET], &uuid_patch_magic);
-
-	/*
-	 * The loader have to contain some magic in patchable area,
-	 * such we can be sure that we won't trash something important
-	 */
-	if (!uuid_equal(&uuid_patch_magic, &uuid_mbr_guid_default, NULL)) {
-		warnx("%s: the bootcode does not support required options",
+	if (st.st_size != MBR_DSN_OFFSET) {
+		warnx("%s: the bootcode does not match expected size",
 			bootpath);
+		goto fail;
+	}
+
+	if (read(bfd, buf, st.st_size) != st.st_size) {
+		warn("%s", bootpath);
 		goto fail;
 	}
 
@@ -156,8 +136,9 @@ biosboot(int fd)
 	map_t *tbl, *lbt;
 	map_t *mbrmap, *m;
 	struct mbr *mbr, *bootcode;
-	struct gpt_ent *pp;
-	uuid_t buuid;
+	struct gpt_hdr *hdr;
+	struct gpt_ent *ent;
+	int i;
 
 	/*
 	 * Parse and validate partition maps
@@ -209,7 +190,7 @@ biosboot(int fd)
 		if (m->map_type != MAP_TYPE_GPT_PART || m->map_index < 1)
 			continue;
 
-		pp = m->map_data;
+		ent = m->map_data;
 
 		/* first, prefer user selection */
 		if (entry > 0 && m->map_index == entry)
@@ -224,23 +205,49 @@ biosboot(int fd)
 	if (m == NULL) {
 		warnx("error: no bootable partition");
 		return;
-	} else
-		uuid_dec_le(pp->ent_guid, &buuid);
-
-#if 1
-	{
-		char *p;
-
-		uuid_to_string(&buuid, &p, NULL);
-		printf("Boot device:     %s\n", device_name);
-		printf("Partition GUID:  %s\n", p);
-		printf("Boot code:       %s\n", bootpath);
-
-		free(p);
 	}
-#endif
 
-	uuid_enc_le(&mbr->mbr_code[MBR_GPT_GUID_OFFSET], &buuid);
+	i = m->map_index - 1;
+
+
+	hdr = gpt->map_data;
+
+	for (int j = 0; j < le32toh(hdr->hdr_entries); j++) {
+		ent = (void*)((char*)tbl->map_data + j * le32toh(hdr->hdr_entsz));
+		ent->ent_attr &= ~GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
+	}
+
+	ent = (void*)((char*)tbl->map_data + i * le32toh(hdr->hdr_entsz));
+	ent->ent_attr |= GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
+
+	hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
+	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
+	hdr->hdr_crc_self = 0;
+	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
+
+	gpt_write(fd, gpt);
+	gpt_write(fd, tbl);
+
+
+	hdr = tpg->map_data;
+
+	for (int j = 0; j < le32toh(hdr->hdr_entries); j++) {
+		ent = (void*)((char*)lbt->map_data + j * le32toh(hdr->hdr_entsz));
+		ent->ent_attr &= ~GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
+	}
+
+	ent = (void*)((char*)lbt->map_data + i * le32toh(hdr->hdr_entsz));
+	ent->ent_attr |= GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
+
+	hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
+	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
+	hdr->hdr_crc_self = 0;
+	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
+
+	gpt_write(fd, lbt);
+	gpt_write(fd, tpg);
+
+
 	if (gpt_write(fd, mbrmap) == -1) {
 		warnx("error: cannot update Protective MBR");
 		return;
