@@ -1,4 +1,4 @@
-/* $NetBSD: xentests.c,v 1.1.2.2 2011/08/05 17:26:27 cherry Exp $ */
+/* $NetBSD: xentests.c,v 1.1.2.3 2011/08/17 09:40:40 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: xentests.c,v 1.1.2.2 2011/08/05 17:26:27 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xentests.c,v 1.1.2.3 2011/08/17 09:40:40 cherry Exp $");
 
 #include <sys/types.h>
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: xentests.c,v 1.1.2.2 2011/08/05 17:26:27 cherry Exp 
 #include <sys/kthread.h>
 #include <sys/mutex.h>
 #include <sys/sched.h>
+#include <sys/simplelock.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/xcall.h>

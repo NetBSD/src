@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.47.6.3 2011/08/04 13:04:20 cherry Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.47.6.4 2011/08/17 09:40:40 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.47.6.3 2011/08/04 13:04:20 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.47.6.4 2011/08/17 09:40:40 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.47.6.3 2011/08/04 13:04:20 cherry Exp $
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/reboot.h>
-#include <sys/simplelock.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm.h>
 
@@ -83,10 +83,13 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.47.6.3 2011/08/04 13:04:20 cherry Exp $
  * This lock protects updates to the following mapping and reference-count
  * arrays. The lock does not need to be acquired to read the mapping tables.
  */
-static struct simplelock evtchn_lock = SIMPLELOCK_INITIALIZER;
+static kmutex_t evtchn_lock;
 
 /* event handlers */
 struct evtsource *evtsource[NR_EVENT_CHANNELS];
+
+/* channel locks */
+static kmutex_t evtlock[NR_EVENT_CHANNELS];
 
 /* Reference counts for bindings to event channels XXX: redo for SMP */
 static uint8_t evtch_bindcount[NR_EVENT_CHANNELS];
@@ -249,7 +252,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		if (evtsource[evtch]->ev_cpu != ci) { 
 			/* facilitate spllower() on remote cpu */
 			struct cpu_info *rci = evtsource[evtch]->ev_cpu;
-			if (xen_send_ipi(rci, XEN_IPI_KICK)) {
+			if (xen_send_ipi(rci, XEN_IPI_KICK) != 0) {
 				panic("xen_send_ipi(%s, XEN_IPI_KICK) failed\n", cpu_name(rci));
 			}
 		}
@@ -260,7 +263,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	ci->ci_ilevel = evtsource[evtch]->ev_maxlevel;
 	iplmask = evtsource[evtch]->ev_imask;
 	sti();
-	simple_lock(&evtsource[evtch]->ev_lock);
+	mutex_spin_enter(&evtlock[evtch]);
 	ih = evtsource[evtch]->ev_handlers;
 	while (ih != NULL) {
 		if (ih->ih_level <= ilevel ||
@@ -273,7 +276,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 			hypervisor_set_ipending(ih->ih_cpu, iplmask,
 			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 			/* leave masked */
-			simple_unlock(&evtsource[evtch]->ev_lock);
+			mutex_spin_exit(&evtlock[evtch]);
 			goto splx;
 		}
 		iplmask &= ~IUNMASK(ci, ih->ih_level);
@@ -282,7 +285,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		ih_fun(ih->ih_arg, regs);
 		ih = ih->ih_evt_next;
 	}
-	simple_unlock(&evtsource[evtch]->ev_lock);
+	mutex_spin_exit(&evtlock[evtch]);
 	cli();
 	hypervisor_enable_event(evtch);
 splx:
@@ -333,10 +336,8 @@ bind_vcpu_to_evtch(cpuid_t vcpu)
 {
 	evtchn_op_t op;
 	evtchn_port_t evtchn;
-	int s;
 
-	s = splhigh();
-	simple_lock(&evtchn_lock);
+	mutex_spin_enter(&evtchn_lock);
 
 	evtchn = vcpu_ipi_to_evtch[vcpu];
 	if (evtchn == -1) {
@@ -351,8 +352,7 @@ bind_vcpu_to_evtch(cpuid_t vcpu)
 
 	evtch_bindcount[evtchn]++;
 
-	simple_unlock(&evtchn_lock);
-	splx(s);
+	mutex_spin_exit(&evtchn_lock);
     
 	return evtchn;
 }
@@ -361,10 +361,9 @@ int
 bind_virq_to_evtch(int virq)
 {
 	evtchn_op_t op;
-	int evtchn, s;
+	int evtchn;
 
-	s = splhigh();
-	simple_lock(&evtchn_lock);
+	mutex_spin_enter(&evtchn_lock);
 
 	/* 
 	 * XXX: The only per-cpu VIRQ we currently use is VIRQ_TIMER. 
@@ -376,6 +375,7 @@ bind_virq_to_evtch(int virq)
 	struct cpu_info *ci = curcpu();
 
 	if (virq == VIRQ_DEBUG && ci != &cpu_info_primary) {
+		mutex_spin_exit(&evtchn_lock);
 		return -1;
 	}
 
@@ -398,8 +398,7 @@ bind_virq_to_evtch(int virq)
 
 	evtch_bindcount[evtchn]++;
 
-	simple_unlock(&evtchn_lock);
-	splx(s);
+	mutex_spin_exit(&evtchn_lock);
     
 	return evtchn;
 }
@@ -409,7 +408,6 @@ unbind_virq_from_evtch(int virq)
 {
 	evtchn_op_t op;
 	int evtchn;
-	int s;
 
 	struct cpu_info *ci = curcpu();
 
@@ -424,8 +422,7 @@ unbind_virq_from_evtch(int virq)
 		return -1;
 	}
 
-	s = splhigh();
-	simple_lock(&evtchn_lock);
+	mutex_spin_enter(&evtchn_lock);
 
 	evtch_bindcount[evtchn]--;
 	if (evtch_bindcount[evtchn] == 0) {
@@ -437,8 +434,7 @@ unbind_virq_from_evtch(int virq)
 		virq_to_evtch[virq] = -1;
 	}
 
-	simple_unlock(&evtchn_lock);
-	splx(s);
+	mutex_spin_exit(&evtchn_lock);
 
 	return evtchn;
 }
@@ -448,14 +444,13 @@ int
 bind_pirq_to_evtch(int pirq)
 {
 	evtchn_op_t op;
-	int evtchn, s;
+	int evtchn;
 
 	if (pirq >= NR_PIRQS) {
 		panic("pirq %d out of bound, increase NR_PIRQS", pirq);
 	}
 
-	s = splhigh();
-	simple_lock(&evtchn_lock);
+	mutex_spin_enter(&evtchn_lock);
 
 	evtchn = pirq_to_evtch[pirq];
 	if (evtchn == -1) {
@@ -474,8 +469,7 @@ bind_pirq_to_evtch(int pirq)
 
 	evtch_bindcount[evtchn]++;
 
-	simple_unlock(&evtchn_lock);
-	splx(s);
+	mutex_spin_exit(&evtchn_lock);
     
 	return evtchn;
 }
@@ -485,9 +479,8 @@ unbind_pirq_from_evtch(int pirq)
 {
 	evtchn_op_t op;
 	int evtchn = pirq_to_evtch[pirq];
-	int s = splhigh();
 
-	simple_lock(&evtchn_lock);
+	mutex_spin_enter(&evtchn_lock);
 
 	evtch_bindcount[evtchn]--;
 	if (evtch_bindcount[evtchn] == 0) {
@@ -499,8 +492,7 @@ unbind_pirq_from_evtch(int pirq)
 		pirq_to_evtch[pirq] = -1;
 	}
 
-	simple_unlock(&evtchn_lock);
-	splx(s);
+	mutex_spin_exit(&evtchn_lock);
 
 	return evtchn;
 }
@@ -557,6 +549,29 @@ pirq_interrupt(void *arg)
 }
 
 #endif /* NPCI > 0 || NISA > 0 */
+
+
+/*
+ * Recalculate the interrupt from scratch for an event source.
+ */
+static void
+intr_calculatemasks(struct evtsource *evts, int evtch)
+{
+	struct intrhand *ih;
+
+#ifdef MULTIPROCESSOR
+	KASSERT(!mutex_owned(&evtlock[evtch]));
+#endif
+	mutex_spin_enter(&evtlock[evtch]);
+	evts->ev_maxlevel = IPL_NONE;
+	evts->ev_imask = 0;
+	for (ih = evts->ev_handlers; ih != NULL; ih = ih->ih_evt_next) {
+		if (ih->ih_level > evts->ev_maxlevel)
+			evts->ev_maxlevel = ih->ih_level;
+		evts->ev_imask |= (1 << ih->ih_level);
+	}
+	mutex_spin_exit(&evtlock[evtch]);
+}
 
 int
 event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
@@ -624,7 +639,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 		 * is more explicitly implemented.
 		 */
 		evts->ev_cpu = ci; 
-		simple_lock_init(&evts->ev_lock);
+		mutex_init(&evtlock[evtch], MUTEX_DEFAULT, IPL_HIGH);
 		evtsource[evtch] = evts;
 		if (evname)
 			strncpy(evts->ev_evname, evname,
@@ -637,7 +652,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	} else {
 		evts = evtsource[evtch];
 		/* sort by IPL order, higher first */
-		simple_lock(&evts->ev_lock);
+		mutex_spin_enter(&evtlock[evtch]);
 		for (ihp = &evts->ev_handlers; ; ihp = &((*ihp)->ih_evt_next)) {
 			if ((*ihp)->ih_level < ih->ih_level) {
 				/* insert before *ihp */
@@ -650,10 +665,10 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 				break;
 			}
 		}
-		simple_unlock(&evts->ev_lock);
+		mutex_spin_exit(&evtlock[evtch]);
 	}
 
-	intr_calculatemasks(evts);
+	intr_calculatemasks(evts, evtch);
 	splx(s);
 
 	return 0;
@@ -696,7 +711,7 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	if (evts == NULL)
 		return ENOENT;
 
-	simple_lock(&evts->ev_lock);
+	mutex_spin_enter(&evtlock[evtch]);
 	for (ihp = &evts->ev_handlers, ih = evts->ev_handlers;
 	    ih != NULL;
 	    ihp = &ih->ih_evt_next, ih = ih->ih_evt_next) {
@@ -704,11 +719,11 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 			break;
 	}
 	if (ih == NULL) {
-		simple_unlock(&evts->ev_lock);
+		mutex_spin_exit(&evtlock[evtch]);
 		return ENOENT;
 	}
 	*ihp = ih->ih_evt_next;
-	simple_unlock(&evts->ev_lock);
+	mutex_spin_exit(&evtlock[evtch]);
 
 	ipls = ci->ci_isources[ih->ih_level];
 	for (ihp = &ipls->ipl_handlers, ih = ipls->ipl_handlers;
@@ -726,7 +741,7 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 		free(evts, M_DEVBUF);
 		evtsource[evtch] = NULL;
 	} else {
-		intr_calculatemasks(evts);
+		intr_calculatemasks(evts, evtch);
 	}
 	return 0;
 }
