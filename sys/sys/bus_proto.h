@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_proto.h,v 1.5 2011/05/25 22:58:29 dyoung Exp $	*/
+/*	$NetBSD: bus_proto.h,v 1.6 2011/08/17 10:46:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001, 2007 The NetBSD Foundation, Inc.
@@ -297,6 +297,10 @@ void	bus_space_copy_region_stream_4(bus_space_tag_t, bus_space_handle_t,
 void	bus_space_copy_region_stream_8(bus_space_tag_t, bus_space_handle_t,
 				bus_size_t, bus_space_handle_t,
 				bus_size_t, bus_size_t);
+
+bool	bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
+bool	bus_space_handle_is_equal(bus_space_tag_t, bus_space_handle_t,
+    bus_space_handle_t);
 
 /*
  * bus_dma(9)
