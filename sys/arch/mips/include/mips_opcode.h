@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.16 2011/03/15 07:33:54 matt Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.17 2011/08/17 06:59:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -266,7 +266,13 @@ typedef union {
 /*
  * Values for the 'func' field when 'op' == OP_SPECIAL3.
  */
+#define	OP_LX		012		/* DSP */
 #define OP_RDHWR	073		/* MIPS32/64 r2 */
+
+#define	OP_LX_LWX	0		/* lwx */
+#define	OP_LX_LHX	4		/* lhx */
+#define	OP_LX_LBUX	6		/* lbux */
+#define	OP_LX_LDX	8		/* ldx */
 
 /*
  * Values for the 'func' field when 'op' == OP_BCOND.
