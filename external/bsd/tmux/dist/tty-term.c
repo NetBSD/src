@@ -1,4 +1,4 @@
-/* $Id: tty-term.c,v 1.2 2011/03/12 03:02:59 christos Exp $ */
+/* $Id: tty-term.c,v 1.3 2011/08/17 18:48:36 jmmv Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,10 +18,10 @@
 
 #include <sys/types.h>
 
-#ifdef HAVE_BROKEN_CURSES_H
-#include <ncurses.h>
-#else
+#ifdef HAVE_CURSES_H
 #include <curses.h>
+#else
+#include <ncurses.h>
 #endif
 #include <fnmatch.h>
 #include <stdlib.h>
@@ -33,19 +33,23 @@
 void	 tty_term_override(struct tty_term *, const char *);
 char	*tty_term_strip(const char *);
 
-struct tty_terms tty_terms = SLIST_HEAD_INITIALIZER(tty_terms);
+struct tty_terms tty_terms = LIST_HEAD_INITIALIZER(tty_terms);
 
-struct tty_term_code_entry tty_term_codes[NTTYCODE] = {
+const struct tty_term_code_entry tty_term_codes[NTTYCODE] = {
 	{ TTYC_ACSC, TTYCODE_STRING, "acsc" },
 	{ TTYC_AX, TTYCODE_FLAG, "AX" },
 	{ TTYC_BEL, TTYCODE_STRING, "bel" },
 	{ TTYC_BLINK, TTYCODE_STRING, "blink" },
 	{ TTYC_BOLD, TTYCODE_STRING, "bold" },
+	{ TTYC_CC, TTYCODE_STRING, "Cc" },
 	{ TTYC_CIVIS, TTYCODE_STRING, "civis" },
 	{ TTYC_CLEAR, TTYCODE_STRING, "clear" },
 	{ TTYC_CNORM, TTYCODE_STRING, "cnorm" },
 	{ TTYC_COLORS, TTYCODE_NUMBER, "colors" },
+	{ TTYC_CR, TTYCODE_STRING, "Cr" },
+	{ TTYC_CS1, TTYCODE_STRING, "Cs" },
 	{ TTYC_CSR, TTYCODE_STRING, "csr" },
+	{ TTYC_CSR1, TTYCODE_STRING, "Csr" },
 	{ TTYC_CUB, TTYCODE_STRING, "cub" },
 	{ TTYC_CUB1, TTYCODE_STRING, "cub1" },
 	{ TTYC_CUD, TTYCODE_STRING, "cud" },
@@ -63,6 +67,7 @@ struct tty_term_code_entry tty_term_codes[NTTYCODE] = {
 	{ TTYC_EL, TTYCODE_STRING, "el" },
 	{ TTYC_EL1, TTYCODE_STRING, "el1" },
 	{ TTYC_ENACS, TTYCODE_STRING, "enacs" },
+	{ TTYC_FSL, TTYCODE_STRING, "fsl" },
 	{ TTYC_HOME, TTYCODE_STRING, "home" },
 	{ TTYC_HPA, TTYCODE_STRING, "hpa" },
 	{ TTYC_ICH, TTYCODE_STRING, "ich" },
@@ -165,6 +170,7 @@ struct tty_term_code_entry tty_term_codes[NTTYCODE] = {
 	{ TTYC_KUP5, TTYCODE_STRING, "kUP5" },
 	{ TTYC_KUP6, TTYCODE_STRING, "kUP6" },
 	{ TTYC_KUP7, TTYCODE_STRING, "kUP7" },
+	{ TTYC_MS, TTYCODE_STRING, "Ms" },
 	{ TTYC_OP, TTYCODE_STRING, "op" },
 	{ TTYC_REV, TTYCODE_STRING, "rev" },
 	{ TTYC_RI, TTYCODE_STRING, "ri" },
@@ -175,14 +181,17 @@ struct tty_term_code_entry tty_term_codes[NTTYCODE] = {
 	{ TTYC_SETAB, TTYCODE_STRING, "setab" },
 	{ TTYC_SETAF, TTYCODE_STRING, "setaf" },
 	{ TTYC_SGR0, TTYCODE_STRING, "sgr0" },
+	{ TTYC_SITM, TTYCODE_STRING, "sitm" },
 	{ TTYC_SMACS, TTYCODE_STRING, "smacs" },
 	{ TTYC_SMCUP, TTYCODE_STRING, "smcup" },
 	{ TTYC_SMIR, TTYCODE_STRING, "smir" },
 	{ TTYC_SMKX, TTYCODE_STRING, "smkx" },
 	{ TTYC_SMSO, TTYCODE_STRING, "smso" },
 	{ TTYC_SMUL, TTYCODE_STRING, "smul" },
+	{ TTYC_TSL, TTYCODE_STRING, "tsl" },
 	{ TTYC_VPA, TTYCODE_STRING, "vpa" },
 	{ TTYC_XENL, TTYCODE_FLAG, "xenl" },
+	{ TTYC_XT, TTYCODE_FLAG, "XT" },
 };
 
 char *
@@ -217,13 +226,14 @@ tty_term_strip(const char *s)
 void
 tty_term_override(struct tty_term *term, const char *overrides)
 {
-	struct tty_term_code_entry	*ent;
-	struct tty_code			*code;
-	char				*termnext, *termstr, *entnext, *entstr;
-	char				*s, *ptr, *val;
-	const char			*errstr;
-	u_int				 i;
-	int				 n, removeflag;
+	const struct tty_term_code_entry	*ent;
+	struct tty_code				*code;
+	char					*termnext, *termstr;
+	char					*entnext, *entstr;
+	char					*s, *ptr, *val;
+	const char				*errstr;
+	u_int					 i;
+	int					 n, removeflag;
 
 	s = xstrdup(overrides);
 
@@ -253,7 +263,7 @@ tty_term_override(struct tty_term *term, const char *overrides)
 				entstr[strlen(entstr) - 1] = '\0';
 				removeflag = 1;
 			} else
-				continue;
+				val = xstrdup("");
 
 			for (i = 0; i < NTTYCODE; i++) {
 				ent = &tty_term_codes[i];
@@ -299,15 +309,15 @@ tty_term_override(struct tty_term *term, const char *overrides)
 struct tty_term *
 tty_term_find(char *name, int fd, const char *overrides, char **cause)
 {
-	struct tty_term			*term;
-	struct tty_term_code_entry	*ent;
-	struct tty_code			*code;
-	u_int				 i;
-	int		 		 n, error;
-	char				*s;
-	const char                      *acs;
+	struct tty_term				*term;
+	const struct tty_term_code_entry	*ent;
+	struct tty_code				*code;
+	u_int					 i;
+	int		 			 n, error;
+	char					*s;
+	const char				*acs;
 
-	SLIST_FOREACH(term, &tty_terms, entry) {
+	LIST_FOREACH(term, &tty_terms, entry) {
 		if (strcmp(term->name, name) == 0) {
 			term->references++;
 			return (term);
@@ -320,7 +330,7 @@ tty_term_find(char *name, int fd, const char *overrides, char **cause)
 	term->references = 1;
 	term->flags = 0;
 	memset(term->codes, 0, sizeof term->codes);
-	SLIST_INSERT_HEAD(&tty_terms, term, entry);
+	LIST_INSERT_HEAD(&tty_terms, term, entry);
 
 	/* Set up curses terminal. */
 	if (setupterm(name, fd, &error) != OK) {
@@ -426,6 +436,18 @@ tty_term_find(char *name, int fd, const char *overrides, char **cause)
 	for (; acs[0] != '\0' && acs[1] != '\0'; acs += 2)
 		term->acs[(u_char) acs[0]][0] = acs[1];
 
+	/* On terminals with xterm titles (XT), fill in tsl and fsl. */
+	if (tty_term_flag(term, TTYC_XT) &&
+	    !tty_term_has(term, TTYC_TSL) &&
+	    !tty_term_has(term, TTYC_FSL)) {
+		code = &term->codes[TTYC_TSL];
+		code->value.string = xstrdup("\033]0;");
+		code->type = TTYCODE_STRING;
+		code = &term->codes[TTYC_FSL];
+		code->value.string = xstrdup("\007");
+		code->type = TTYCODE_STRING;
+	}
+
 	return (term);
 
 error:
@@ -441,7 +463,7 @@ tty_term_free(struct tty_term *term)
 	if (--term->references != 0)
 		return;
 
-	SLIST_REMOVE(&tty_terms, term, tty_term, entry);
+	LIST_REMOVE(term, entry);
 
 	for (i = 0; i < NTTYCODE; i++) {
 		if (term->codes[i].type == TTYCODE_STRING)
@@ -478,6 +500,18 @@ const char *
 tty_term_string2(struct tty_term *term, enum tty_code_code code, int a, int b)
 {
 	return (tparm(tty_term_string(term, code), a, b, 0, 0, 0, 0, 0, 0, 0));
+}
+
+const char *
+tty_term_ptr1(struct tty_term *term, enum tty_code_code code, const void *a)
+{
+	return (tparm((char *) tty_term_string(term, code), (long)a, 0, 0, 0, 0, 0, 0, 0, 0));
+}
+
+const char *
+tty_term_ptr2(struct tty_term *term, enum tty_code_code code, const void *a, const void *b)
+{
+	return (tparm((char *) tty_term_string(term, code), (long)a, (long)b, 0, 0, 0, 0, 0, 0, 0));
 }
 
 int
