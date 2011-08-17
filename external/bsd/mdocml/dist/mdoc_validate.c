@@ -723,7 +723,7 @@ pre_bl(PRE_ARGS)
 			if (LIST_column == lt) {
 				n->norm->Bl.ncols = 
 					n->args->argv[i].sz;
-				n->norm->Bl.cols = (const char **)
+				n->norm->Bl.cols = (void *)
 					n->args->argv[i].value;
 			}
 		}
@@ -1537,7 +1537,7 @@ post_bl_head(POST_ARGS)
 		((size_t)mdoc->last->nchild * sizeof(char *));
 
 	mdoc->last->norm->Bl.ncols = np->args->argv[j].sz;
-	mdoc->last->norm->Bl.cols = (const char **)np->args->argv[j].value;
+	mdoc->last->norm->Bl.cols = (void *)np->args->argv[j].value;
 
 	for (i = 0, nn = mdoc->last->child; nn; i++) {
 		np->args->argv[j].value[i] = nn->string;
