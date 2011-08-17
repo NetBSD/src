@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.2 2011/08/17 00:04:41 jakllsch Exp $ */
+/*	$NetBSD: biosboot.c,v 1.3 2011/08/17 00:45:55 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc. 
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.2 2011/08/17 00:04:41 jakllsch Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.3 2011/08/17 00:45:55 jakllsch Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: biosboot.c,v 1.2 2011/08/17 00:04:41 jakllsch Exp $");
 #include "gpt.h"
 
 #define DEFAULT_BOOTDIR		"/usr/mdec"
-#define DEFAULT_BOOTCODE	"mbr_gpt"
+#define DEFAULT_BOOTCODE	"gptmbr.bin"
 
 static daddr_t start;
 static uint64_t size;
