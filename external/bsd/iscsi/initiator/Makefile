@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2011/06/22 02:49:42 mrg Exp $
+# $NetBSD: Makefile,v 1.5 2011/08/17 09:24:23 christos Exp $
 
 .sinclude "${.CURDIR}/../Makefile.inc"
 
@@ -26,8 +26,3 @@ DPADD+= ${LIBPROP}
 .endif
 
 .include <bsd.prog.mk>
-
-# XXX
-.if ${HAVE_GCC} == 45
-COPTS.iscsi-initiator.c+=	-fno-strict-aliasing
-.endif
