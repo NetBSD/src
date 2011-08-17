@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/20 07:43:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/08/17 09:03:47 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -12,10 +12,5 @@ MAN+=	amq.8
 
 CPPFLAGS+=	-I${DIST}
 LDADD+=		${LIBAMU}
-
-.if defined(HAVE_GCC)
-COPTS.amq_xdr.c+=	-fno-strict-aliasing
-COPTS.amq.c+=		-fno-strict-aliasing
-.endif
 
 .include <bsd.prog.mk>
