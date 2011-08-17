@@ -1,4 +1,4 @@
-/* $Id: layout-custom.c,v 1.1.1.1 2011/03/10 09:15:38 jmmv Exp $ */
+/* $Id: layout-custom.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -23,10 +23,21 @@
 
 #include "tmux.h"
 
+struct layout_cell     *layout_find_bottomright(struct layout_cell *);
 u_short			layout_checksum(const char *);
 int			layout_append(struct layout_cell *, char *, size_t);
 struct layout_cell     *layout_construct(struct layout_cell *, const char **);
 void			layout_assign(struct window_pane **, struct layout_cell *);
+
+/* Find the bottom-right cell. */
+struct layout_cell *
+layout_find_bottomright(struct layout_cell *lc)
+{
+	if (lc->type == LAYOUT_WINDOWPANE)
+		return (lc);
+	lc = TAILQ_LAST(&lc->cells, layout_cells);
+	return (layout_find_bottomright(lc));
+}
 
 /* Calculate layout checksum. */
 u_short

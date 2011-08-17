@@ -1,4 +1,4 @@
-/* $Id: cmd-choose-buffer.c,v 1.1.1.1 2011/03/10 09:15:36 jmmv Exp $ */
+/* $Id: cmd-choose-buffer.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,26 +33,24 @@ void	cmd_choose_buffer_free(void *);
 
 const struct cmd_entry cmd_choose_buffer_entry = {
 	"choose-buffer", NULL,
+	"t:", 0, 1,
 	CMD_TARGET_WINDOW_USAGE " [template]",
-	CMD_ARG01, "",
-	cmd_target_init,
-	cmd_target_parse,
-	cmd_choose_buffer_exec,
-	cmd_target_free,
-	cmd_target_print
+	0,
+	NULL,
+	NULL,
+	cmd_choose_buffer_exec
 };
 
 struct cmd_choose_buffer_data {
-	struct client	*client;
-	char   		*template;
+	struct client   *client;
+	char            *template;
 };
 
 int
 cmd_choose_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
-	struct cmd_target_data		*data = self->data;
+	struct args			*args = self->args;
 	struct cmd_choose_buffer_data	*cdata;
-	struct session			*s;
 	struct winlink			*wl;
 	struct paste_buffer		*pb;
 	u_int				 idx;
@@ -62,19 +60,18 @@ cmd_choose_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 		ctx->error(ctx, "must be run interactively");
 		return (-1);
 	}
-	s = ctx->curclient->session;
 
-	if ((wl = cmd_find_window(ctx, data->target, NULL)) == NULL)
+	if ((wl = cmd_find_window(ctx, args_get(args, 't'), NULL)) == NULL)
 		return (-1);
 
-	if (paste_get_top(&s->buffers) == NULL)
+	if (paste_get_top(&global_buffers) == NULL)
 		return (0);
 
 	if (window_pane_set_mode(wl->window->active, &window_choose_mode) != 0)
 		return (0);
 
 	idx = 0;
-	while ((pb = paste_walk_stack(&s->buffers, &idx)) != NULL) {
+	while ((pb = paste_walk_stack(&global_buffers, &idx)) != NULL) {
 		tmp = paste_print(pb, 50);
 		window_choose_add(wl->window->active, idx - 1,
 		    "%u: %zu bytes: \"%s\"", idx - 1, pb->size, tmp);
@@ -82,8 +79,8 @@ cmd_choose_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	}
 
 	cdata = xmalloc(sizeof *cdata);
-	if (data->arg != NULL)
-		cdata->template = xstrdup(data->arg);
+	if (args->argc != 0)
+		cdata->template = xstrdup(args->argv[0]);
 	else
 		cdata->template = xstrdup("paste-buffer -b '%%'");
 	cdata->client = ctx->curclient;

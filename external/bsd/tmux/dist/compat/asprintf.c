@@ -1,4 +1,4 @@
-/* $Id: asprintf.c,v 1.1.1.1 2011/03/10 09:15:41 jmmv Exp $ */
+/* $Id: asprintf.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
 
 /*
  * Copyright (c) 2006 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,35 +18,38 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#else
+#include <inttypes.h>
+#endif
 #include <string.h>
 
 #include "tmux.h"
 
 int
-asprintf(char **ret, const char *format, ...)
+asprintf(char **ret, const char *fmt, ...)
 {
 	va_list	ap;
 	int	n;
 
-	va_start(ap, format);
-	n = vasprintf(ret, format, ap);
+	va_start(ap, fmt);
+	n = vasprintf(ret, fmt, ap);
 	va_end(ap);
 
 	return (n);
 }
 
-#ifndef BROKEN_VSNPRINTF
 int
-vasprintf(char **ret, const char *format, va_list ap)
+vasprintf(char **ret, const char *fmt, va_list ap)
 {
 	int	 n;
 
-	if ((n = vsnprintf(NULL, 0, format, ap)) < 0)
+	if ((n = vsnprintf(NULL, 0, fmt, ap)) < 0)
 		goto error;
 
 	*ret = xmalloc(n + 1);
-	if ((n = vsnprintf(*ret, n + 1, format, ap)) < 0) {
+	if ((n = vsnprintf(*ret, n + 1, fmt, ap)) < 0) {
 		xfree(*ret);
 		goto error;
 	}
@@ -57,33 +60,3 @@ error:
 	*ret = NULL;
 	return (-1);
 }
-#else
-int
-vasprintf(char **ret, const char *fmt, va_list ap)
-{
-	va_list       aq;
-	size_t        len;
-	char         *buf;
-	int           n;
-
-	len = 64;
-	buf = xmalloc(len);
-
-	for (;;) {
-		va_copy(aq, ap);
-		n = vsnprintf(buf, len, fmt, aq);
-		va_end(aq);
-
-		if (n != -1) {
-			*ret = buf;
-			return (n);
-		}
-
-		if (len > SIZE_MAX / 2) {
-			xfree(buf);
-			return (-1);
-		}
-		len *= 2;
-	}
-}
-#endif
