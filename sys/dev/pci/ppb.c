@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.45 2011/01/10 14:19:36 cegger Exp $	*/
+/*	$NetBSD: ppb.c,v 1.46 2011/08/17 00:59:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.45 2011/01/10 14:19:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.46 2011/08/17 00:59:47 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,9 @@ ppb_fix_pcie(device_t self)
 		aprint_normal("2.0");
 		break;
 	default:
-		aprint_normal_dev(self, "version unsupported (0x%x)\n",
-		    (reg & PCI_PCIE_XCAP_VER_MASK) >> 16);
+		aprint_normal_dev(self,
+		    "version unsupported (0x%" PRIxMAX ")\n",
+		    __SHIFTOUT(reg, PCI_PCIE_XCAP_VER_MASK));
 		return;
 	}
 	aprint_normal(" <");
@@ -134,8 +135,8 @@ ppb_fix_pcie(device_t self)
 		aprint_normal("PCI/PCI-X to PCI-E Bridge");
 		break;
 	default:
-		aprint_normal("Device/Port Type 0x%x",
-		    (reg & PCI_PCIE_XCAP_TYPE_MASK) >> 20);
+		aprint_normal("Device/Port Type 0x%" PRIxMAX,
+		    __SHIFTOUT(reg, PCI_PCIE_XCAP_TYPE_MASK));
 		break;
 	}
 	aprint_normal(">\n");

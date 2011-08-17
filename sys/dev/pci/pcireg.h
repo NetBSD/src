@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.72 2011/06/06 18:27:12 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.73 2011/08/17 00:59:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -479,15 +479,28 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_VPD_DATAREG(ofs)	((ofs) + 4)
 #define	PCI_VPD_OPFLAG		0x80000000
 
-#define	PCI_MSI_CTL_PERVEC_MASK	0x01000000
-#define	PCI_MSI_CTL_64BIT_ADDR	0x00800000
-#define	PCI_MSI_CTL_MME_MASK	0x7
-#define	PCI_MSI_CTL_MME_SHIFT	20
-#define	PCI_MSI_CTL_MME(ofs)	(((ofs) & PCI_MSI_CTL_MME_MASK) << PCI_MSI_CTL_MME_SHIFT)
-#define	PCI_MSI_CTL_MMC_MASK	0x7
-#define	PCI_MSI_CTL_MMC_SHIFT	17
-#define	PCI_MSI_CTL_MMC(ofs)	(((ofs) >> PCI_MSI_CTL_MME_SHIFT) & PCI_MSI_CTL_MME_MASK)
-#define	PCI_MSI_CTL_MSI_ENABLE	0x00010000
+#define	PCI_MSI_CTL		0x0	/* Message Control Register offset */
+#define	PCI_MSI_MADDR		0x4	/* Message Address Register (least
+					 * significant bits) offset
+					 */
+#define	PCI_MSI_MADDR64_LO	0x4	/* 64-bit Message Address Register
+					 * (least significant bits) offset
+					 */
+#define	PCI_MSI_MADDR64_HI	0x8	/* 64-bit Message Address Register
+					 * (most significant bits) offset
+					 */
+#define	PCI_MSI_MDATA		0x8	/* Message Data Register offset */
+#define	PCI_MSI_MDATA64		0xC	/* 64-bit Message Data Register
+					 * offset
+					 */
+
+#define	PCI_MSI_CTL_MASK	__BITS(31, 16)
+#define	PCI_MSI_CTL_PERVEC_MASK	__SHIFTIN(__BIT(8), PCI_MSI_CTL_MASK)
+#define	PCI_MSI_CTL_64BIT_ADDR	__SHIFTIN(__BIT(7), PCI_MSI_CTL_MASK)
+#define	PCI_MSI_CTL_MME_MASK	__SHIFTIN(__BITS(6, 4), PCI_MSI_CTL_MASK)
+#define	PCI_MSI_CTL_MMC_MASK	__SHIFTIN(__BITS(3, 1), PCI_MSI_CTL_MASK)
+#define	PCI_MSI_CTL_MSI_ENABLE	__SHIFTIN(__BIT(0), PCI_MSI_CTL_MASK)
+
 /*
  * MSI Message Address is at offset 4.
  * MSI Message Upper Address (if 64bit) is at offset 8.
@@ -614,54 +627,60 @@ struct pci_msix_table_entry {
 /*
  * PCI Express; access via capability pointer.
  */
-#define PCI_PCIE_XCAP		0x00
-#define	PCI_PCIE_XCAP_VER_MASK	0x000f0000
-#define	 PCI_PCIE_XCAP_VER_1_0		0x00010000
-#define	 PCI_PCIE_XCAP_VER_2_0		0x00020000
-#define	PCI_PCIE_XCAP_TYPE_MASK	0x00f00000
-#define	 PCI_PCIE_XCAP_TYPE_PCIE_DEV	0x00000000
-#define	 PCI_PCIE_XCAP_TYPE_PCI_DEV	0x00100000
-#define	 PCI_PCIE_XCAP_TYPE_ROOT	0x00400000
-#define	 PCI_PCIE_XCAP_TYPE_UP		0x00500000
-#define	 PCI_PCIE_XCAP_TYPE_DOWN	0x00600000
-#define	 PCI_PCIE_XCAP_TYPE_PCIE2PCI	0x00700000
-#define	 PCI_PCIE_XCAP_TYPE_PCI2PCIE	0x00800000
-#define PCI_PCIE_XCAP_SI	0x01000000
-#define PCI_PCIE_DCAP		0x04
-#define PCI_PCIE_DCSR		0x08
-#define PCI_PCIE_DCSR_MAX_READ_REQ	0x7000
-#define PCI_PCIE_DCSR_ENA_NO_SNOOP	0x00000800
-#define PCI_PCIE_DCSR_CED	0x00010000
-#define PCI_PCIE_DCSR_NFED	0x00020000
-#define PCI_PCIE_DCSR_FED	0x00040000
-#define PCI_PCIE_DCSR_URD	0x00080000
+#define PCI_PCIE_XCAP		0x00	/* Capability List & Capabilities
+					 * Register
+					 */
+#define	PCI_PCIE_XCAP_MASK	__BITS(31, 16)
+/* Capability Version */
+#define PCI_PCIE_XCAP_VER_MASK	__SHIFTIN(__BITS(3, 0), PCI_PCIE_XCAP_MASK)
+#define	 PCI_PCIE_XCAP_VER_1_0		__SHIFTIN(1, PCI_PCIE_XCAP_VER_MASK)
+#define	 PCI_PCIE_XCAP_VER_2_0		__SHIFTIN(2, PCI_PCIE_XCAP_VER_MASK)
+#define	PCI_PCIE_XCAP_TYPE_MASK	__SHIFTIN(__BITS(7, 4), PCI_PCIE_XCAP_MASK)
+#define	 PCI_PCIE_XCAP_TYPE_PCIE_DEV	__SHIFTIN(0x0, PCI_PCIE_XCAP_TYPE_MASK)
+#define	 PCI_PCIE_XCAP_TYPE_PCI_DEV	__SHIFTIN(0x1, PCI_PCIE_XCAP_TYPE_MASK)
+#define	 PCI_PCIE_XCAP_TYPE_ROOT	__SHIFTIN(0x4, PCI_PCIE_XCAP_TYPE_MASK)
+#define	 PCI_PCIE_XCAP_TYPE_UP		__SHIFTIN(0x5, PCI_PCIE_XCAP_TYPE_MASK)
+#define	 PCI_PCIE_XCAP_TYPE_DOWN	__SHIFTIN(0x6, PCI_PCIE_XCAP_TYPE_MASK)
+#define	 PCI_PCIE_XCAP_TYPE_PCIE2PCI	__SHIFTIN(0x7, PCI_PCIE_XCAP_TYPE_MASK)
+#define	 PCI_PCIE_XCAP_TYPE_PCI2PCIE	__SHIFTIN(0x8, PCI_PCIE_XCAP_TYPE_MASK)
+#define PCI_PCIE_XCAP_SI	__SHIFTIN(__BIT(8), PCI_PCIE_XCAP_MASK)		/* Slot Implemented */
+#define PCI_PCIE_DCAP		0x04	/* Device Capabilities Register */
+#define PCI_PCIE_DCSR		0x08	/* Device Control & Status Register */
+#define PCI_PCIE_DCSR_MAX_READ_REQ	__BITS(14, 12)
+#define PCI_PCIE_DCSR_ENA_NO_SNOOP	__BIT(11)
+#define PCI_PCIE_DCSR_CED	__BIT(0 + 16)
+#define PCI_PCIE_DCSR_NFED	__BIT(1 + 16)
+#define PCI_PCIE_DCSR_FED	__BIT(2 + 16)
+#define PCI_PCIE_DCSR_URD	__BIT(3 + 16)
 #define PCI_PCIE_LCAP		0x0c
-#define PCI_PCIE_LCSR		0x10
-#define PCI_PCIE_LCSR_ASPM_L0S	0x00000001
-#define PCI_PCIE_LCSR_ASPM_L1	0x00000002
-#define PCI_PCIE_SLCAP		0x14
-#define PCI_PCIE_SLCAP_ABP	0x00000001
-#define PCI_PCIE_SLCAP_PCP	0x00000002
-#define PCI_PCIE_SLCAP_MSP	0x00000004
-#define PCI_PCIE_SLCAP_AIP	0x00000008
-#define PCI_PCIE_SLCAP_PIP	0x00000010
-#define PCI_PCIE_SLCAP_HPS	0x00000020
-#define PCI_PCIE_SLCAP_HPC	0x00000040
+#define PCI_PCIE_LCSR		0x10	/* Link Control & Status Register */
+#define PCI_PCIE_LCSR_ASPM_L0S	__BIT(0)
+#define PCI_PCIE_LCSR_ASPM_L1	__BIT(1)
+#define PCI_PCIE_SLCAP		0x14	/* Slot Capabilities Register */
+#define PCI_PCIE_SLCAP_ABP	__BIT(0)	/* Attention Button Present */
+#define PCI_PCIE_SLCAP_PCP	__BIT(1)	/* Power Controller Present */
+#define PCI_PCIE_SLCAP_MSP	__BIT(2)	/* MRL Sensor Present */
+#define PCI_PCIE_SLCAP_AIP	__BIT(3)	/* Attention Indicator
+						 * Present
+						 */
+#define PCI_PCIE_SLCAP_PIP	__BIT(4)	/* Power Indicator Present */
+#define PCI_PCIE_SLCAP_HPS	__BIT(5)	/* Hot-Plug Surprise */
+#define PCI_PCIE_SLCAP_HPC	__BIT(6)	/* Hot-Plug Capable */
 #define PCI_PCIE_SLCSR		0x18
-#define PCI_PCIE_SLCSR_ABE	0x00000001
-#define PCI_PCIE_SLCSR_PFE	0x00000002
-#define PCI_PCIE_SLCSR_MSE	0x00000004
-#define PCI_PCIE_SLCSR_PDE	0x00000008
-#define PCI_PCIE_SLCSR_CCE	0x00000010
-#define PCI_PCIE_SLCSR_HPE	0x00000020
-#define PCI_PCIE_SLCSR_ABP	0x00010000
-#define PCI_PCIE_SLCSR_PFD	0x00020000
-#define PCI_PCIE_SLCSR_MSC	0x00040000
-#define PCI_PCIE_SLCSR_PDC	0x00080000
-#define PCI_PCIE_SLCSR_CC	0x00100000
-#define PCI_PCIE_SLCSR_MS	0x00200000
-#define PCI_PCIE_SLCSR_PDS	0x00400000
-#define PCI_PCIE_SLCSR_LACS	0x01000000
+#define PCI_PCIE_SLCSR_ABE	__BIT(0)
+#define PCI_PCIE_SLCSR_PFE	__BIT(1)
+#define PCI_PCIE_SLCSR_MSE	__BIT(2)
+#define PCI_PCIE_SLCSR_PDE	__BIT(3)
+#define PCI_PCIE_SLCSR_CCE	__BIT(4)
+#define PCI_PCIE_SLCSR_HPE	__BIT(5)
+#define PCI_PCIE_SLCSR_ABP	__BIT(0 + 16)
+#define PCI_PCIE_SLCSR_PFD	__BIT(1 + 16)
+#define PCI_PCIE_SLCSR_MSC	__BIT(2 + 16)
+#define PCI_PCIE_SLCSR_PDC	__BIT(3 + 16)
+#define PCI_PCIE_SLCSR_CC	__BIT(4 + 16)
+#define PCI_PCIE_SLCSR_MS	__BIT(5 + 16)
+#define PCI_PCIE_SLCSR_PDS	__BIT(6 + 16)
+#define PCI_PCIE_SLCSR_LACS	__BIT(8 + 16)
 #define PCI_PCIE_RCR		0x1c
 #define PCI_PCIE_RSR		0x20
 #define PCI_PCIE_DCAP2		0x24

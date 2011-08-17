@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.87 2011/06/06 18:27:12 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.88 2011/08/17 00:59:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.87 2011/06/06 18:27:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.88 2011/08/17 00:59:47 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -965,8 +965,8 @@ pci_conf_print_msi_cap(const pcireg_t *regs, int capoff)
 
 	regs += o2i(capoff);
 	ctl = *regs++;
-	mmc = (ctl >> PCI_MSI_CTL_MMC_SHIFT) & PCI_MSI_CTL_MMC_MASK;
-	mme = (ctl >> PCI_MSI_CTL_MME_SHIFT) & PCI_MSI_CTL_MME_MASK;
+	mmc = __SHIFTOUT(ctl, PCI_MSI_CTL_MMC_MASK);
+	mme = __SHIFTOUT(ctl, PCI_MSI_CTL_MME_MASK);
 
 	printf("\n  PCI Message Signaled Interrupt\n");
 
