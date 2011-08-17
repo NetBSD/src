@@ -1,4 +1,4 @@
-/*	$NetBSD: isns_pdu.h,v 1.1.1.1 2011/01/16 01:22:50 agc Exp $	*/
+/*	$NetBSD: isns_pdu.h,v 1.2 2011/08/17 10:08:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
@@ -37,8 +37,10 @@
 #define _ISNS_PDU_H_
 
 #include <pthread.h>
+#include <string.h>
 
 #include "isns_defs.h"
+#include "isns_util.h"
 
 #define ISNSP_VERSION		(0x0001)
 
@@ -101,32 +103,36 @@ void isns_free_buffer(struct isns_buffer_s *);
 /*
  * TLV buffer access/manipulation-related macros.
  */
-#define ISNS_TLV_HDR_SIZE	8
+#define ISNS_TLV_HDR_SIZE	(sizeof(uint32_t) * 2)
 
 #define ISNS_PAD4_LEN(n)	(uint32_t)(((n)+3) & ~0x03)
 #define ISNS_PAD4_BYTES(n)	((4 - ((n) & 0x03)) & 0x03)
 
-#define ISNS_TLV_TAG_REF(_buf)					\
- 	(*(uint32_t *)(void *)(_buf))
-#define ISNS_TLV_GET_TAG(_buf)					\
-	isns_ntohl(ISNS_TLV_TAG_REF(_buf))
-#define ISNS_TLV_SET_TAG(_buf, _tag)				\
-	do {							\
-    		ISNS_TLV_TAG_REF(_buf) = isns_htonl(_tag);	\
-	} while (/* CONSTCOND */0)
+static inline uint32_t ISNS_TLV_GET_TAG(const void *buf) {
+	uint32_t tag;
+	memcpy(&tag, buf, sizeof(tag));
+	return isns_ntohl(tag);
+}
 
-#define ISNS_TLV_LEN_REF(_buf)					\
-	(*(uint32_t *)(void *)((uint8_t *)(_buf)+4))
-#define ISNS_TLV_GET_LEN(_buf)					\
-	isns_ntohl(ISNS_TLV_LEN_REF(_buf))
-#define ISNS_TLV_SET_LEN(_buf, _len)				\
-	do {							\
-		ISNS_TLV_LEN_REF(_buf) = isns_htonl(_len);	\
-	} while (/* CONSTCOND */0)
+static inline void ISNS_TLV_SET_TAG(void *buf, uint32_t tag) {
+	tag = isns_htonl(tag);
+	memcpy(buf, &tag, sizeof(tag));
+}
 
-#define ISNS_TLV_DATA_PTR(_buf)					\
-	((void *)((uint8_t *)(_buf)+8))
+static inline uint32_t ISNS_TLV_GET_LEN(const void *buf) {
+	uint32_t len;
+	memcpy(&len, (const uint8_t *)buf + sizeof(len), sizeof(len));
+	return isns_ntohl(len);
+}
 
+static inline void ISNS_TLV_SET_LEN(void *buf, uint32_t len) {
+	len = isns_htonl(len);
+	memcpy((uint8_t *)buf + sizeof(len), &len, sizeof(len));
+}
+
+static inline void *ISNS_TLV_DATA_PTR(void *buf) {
+	return (uint8_t *)buf + ISNS_TLV_HDR_SIZE;
+}
 
 /*
  * ISNS transaction and PDU structs.
