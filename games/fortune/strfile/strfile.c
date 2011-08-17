@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.32 2011/08/17 18:16:51 dholland Exp $	*/
+/*	$NetBSD: strfile.c,v 1.33 2011/08/17 18:17:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.32 2011/08/17 18:16:51 dholland Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.33 2011/08/17 18:17:40 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -146,15 +146,6 @@ static void do_order(void);
 static int cmp_str(const void *vp1, const void *vp2);
 static void randomize(void);
 static void fwrite_be_offt(off_t off, FILE *f);
-
-void	add_offset(FILE *, off_t);
-int	cmp_str(const void *, const void *);
-void	do_order(void);
-void	fwrite_be_offt(off_t, FILE *);
-void	getargs(int, char *[]);
-int	main(int, char *[]);
-void	randomize(void);
-void	usage(void) NORETURN;
 
 
 /*
