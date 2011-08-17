@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/02/16 01:31:33 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/08/17 15:32:20 christos Exp $
 #	$FreeBSD: head/usr.bin/grep/Makefile 210389 2010-07-22 19:11:57Z gabor $
 #	$OpenBSD: Makefile,v 1.6 2003/06/25 15:00:04 millert Exp $
 
@@ -33,5 +33,8 @@ NLS=	C.msg \
 	ru_RU.KOI8-R.msg \
 	uk_UA.UTF-8.msg \
 	zh_CN.UTF-8.msg
+
+COPTS.grep.c += -Wno-format-nonliteral
+COPTS.util.c += -Wno-format-nonliteral
 
 .include <bsd.prog.mk>
