@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.16 2011/08/17 13:37:39 christos Exp $ */
+/* $NetBSD: unzip.c,v 1.17 2011/08/18 11:29:27 christos Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.16 2011/08/17 13:37:39 christos Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.17 2011/08/18 11:29:27 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -70,6 +70,7 @@ static int		 q_opt;		/* quiet */
 static int		 t_opt;		/* test */
 static int		 u_opt;		/* update */
 static int		 v_opt;		/* verbose/list */
+static const char *	 y_str = "";	/* 4 digit year */
 
 /* time when unzip started */
 static time_t		 now;
@@ -821,9 +822,14 @@ list(struct archive *a, struct archive_entry *e)
 {
 	char buf[20];
 	time_t mtime;
+	struct tm *tm;
 
 	mtime = archive_entry_mtime(e);
-	strftime(buf, sizeof(buf), "%m-%d-%G %R", localtime(&mtime));
+	tm = localtime(&mtime);
+	if (*y_str)
+		strftime(buf, sizeof(buf), "%m-%d-%G %R", tm);
+	else
+		strftime(buf, sizeof(buf), "%m-%d-%g %R", tm);
 
 	if (v_opt == 1) {
 		printf(" %8ju  %s   %s\n",
@@ -893,11 +899,11 @@ unzip(const char *fn)
 	    printf("Archive:  %s\n", fn);
 
 	if (v_opt == 1) {
-		printf("  Length       Date   Time    Name\n");
-		printf(" --------      ----   ----    ----\n");
+		printf("  Length     %sDate   Time    Name\n", y_str);
+		printf(" --------    %s----   ----    ----\n", y_str);
 	} else if (v_opt == 2) {
-		printf(" Length   Method    Size  Ratio     Date   Time   CRC-32    Name\n");
-		printf("--------  ------  ------- -----     ----   ----   ------    ----\n");
+		printf(" Length   Method    Size  Ratio   %sDate   Time   CRC-32    Name\n", y_str);
+		printf("--------  ------  ------- -----   %s----   ----   ------    ----\n", y_str);
 	}
 
 	total_size = 0;
@@ -922,13 +928,13 @@ unzip(const char *fn)
 	}
 
 	if (v_opt == 1) {
-		printf(" --------                     -------\n");
-		printf(" %8ju                     %ju file%s\n",
-		    total_size, file_count, file_count != 1 ? "s" : "");
+		printf(" --------                   %s-------\n", y_str);
+		printf(" %8ju                   %s%ju file%s\n",
+		    total_size, y_str, file_count, file_count != 1 ? "s" : "");
 	} else if (v_opt == 2) {
-		printf("--------          -------  ---                              -------\n");
-		printf("%8ju          %7ju   0%%                              %ju file%s\n",
-		    total_size, total_size, file_count,
+		printf("--------          -------  ---                            %s-------\n", y_str);
+		printf("%8ju          %7ju   0%%                            %s%ju file%s\n",
+		    total_size, total_size, y_str, file_count,
 		    file_count != 1 ? "s" : "");
 	}
 
@@ -949,11 +955,12 @@ unzip(const char *fn)
 	}
 }
 
-static void
+static void __dead
 usage(void)
 {
 
-	fprintf(stderr, "usage: unzip [-aCcfjLlnopqtuv] [-d dir] [-x pattern] zipfile\n");
+	fprintf(stderr, "Usage: %s [-aCcfjLlnopqtuvy] [-d dir] [-x pattern] "
+	    "zipfile\n", getprogname());
 	exit(1);
 }
 
@@ -963,7 +970,7 @@ getopts(int argc, char *argv[])
 	int opt;
 
 	optreset = optind = 1;
-	while ((opt = getopt(argc, argv, "aCcd:fjLlnopqtuvx:")) != -1)
+	while ((opt = getopt(argc, argv, "aCcd:fjLlnopqtuvyx:")) != -1)
 		switch (opt) {
 		case 'a':
 			a_opt = 1;
@@ -1014,6 +1021,9 @@ getopts(int argc, char *argv[])
 			break;
 		case 'x':
 			add_pattern(&exclude, optarg);
+			break;
+		case 'y':
+			y_str = "  ";
 			break;
 		default:
 			usage();

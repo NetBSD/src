@@ -25,9 +25,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: revision 180125$
-.\" $NetBSD: unzip.1,v 1.7 2009/09/06 20:19:59 wiz Exp $
+.\" $NetBSD: unzip.1,v 1.8 2011/08/18 11:29:27 christos Exp $
 .\"
-.Dd September 6, 2009
+.Dd August 18, 2011
 .Dt UNZIP 1
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Nd extract files from a ZIP archive
 .Sh SYNOPSIS
 .Nm
-.Op Fl aCcfjLlnopqtuv
+.Op Fl aCcfjLlnopqtuvy
 .Op Fl d Ar dir
 .Op Fl x Ar pattern
 .Ar zipfile
@@ -104,6 +104,8 @@ content of the archive.
 .It Fl x Ar pattern
 Exclude files matching the pattern
 .Ar pattern .
+.It Fl y
+Print four digit years in listings instead of two.
 .El
 .Pp
 Note that only one of
