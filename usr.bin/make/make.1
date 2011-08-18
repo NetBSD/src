@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.193 2011/06/30 20:09:42 wiz Exp $
+.\"	$NetBSD: make.1,v 1.194 2011/08/18 15:36:51 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd May 29, 2011
+.Dd August 18, 2011
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -126,7 +126,7 @@ Turn on debugging, and specify which portions of
 .Nm
 are to print debugging information.
 Unless the flags are preceded by
-.Ql -
+.Ql \-
 they are added to the
 .Va MAKEFLAGS
 environment variable and will be processed by any child make processes.
@@ -1330,7 +1330,7 @@ For the purposes of the
 modifier, the words are indexed both forwards using positive integers
 (where index 1 represents the first word),
 and backwards using negative integers
-(where index -1 represents the last word).
+(where index \-1 represents the last word).
 .Pp
 The
 .Ar range
@@ -1693,6 +1693,7 @@ or
 Usage in conjunction with
 .Ic .MAKE
 is the most likely case.
+In "meta" mode, the target is out-of-date if the meta file is missing.
 .It Ic .NOMETA
 Do not create a meta file for the target.
 Meta files are also not created for
@@ -1944,8 +1945,8 @@ character when used outside of any quoting characters.
 Example:
 .Bd -literal
 \&.SHELL: name=ksh path=/bin/ksh hasErrCtl=true \e
-	check="set -e" ignore="set +e" \e
-	echo="set -v" quiet="set +v" filter="set +v" \e
+	check="set \-e" ignore="set +e" \e
+	echo="set \-v" quiet="set +v" filter="set +v" \e
 	echoFlag=v errFlag=e newline="'\en'"
 .Ed
 .It Ic .SILENT
@@ -1966,7 +1967,7 @@ Example:
 .Bd -literal
 \&.SUFFIXES: .o
 \&.c.o:
-	cc -o ${.TARGET} -c ${.IMPSRC}
+	cc \-o ${.TARGET} \-c ${.IMPSRC}
 .Ed
 .El
 .Sh ENVIRONMENT
