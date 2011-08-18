@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.33 2011/08/02 14:06:15 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.34 2011/08/18 02:08:06 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.33 2011/08/02 14:06:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.34 2011/08/18 02:08:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1542,7 +1542,7 @@ dbcool_setup(device_t self)
 
 #ifdef DBCOOL_DEBUG
 		ret = sysctl_createv(&sc->sc_sysctl_log, 0, NULL,
-			(const struct sysctlnode **)&node,
+			(void *)&node,
 			CTLFLAG_READWRITE, CTLTYPE_INT, "reg_select", NULL,
 			sysctl_dbcool_reg_select,
 			0, sc, sizeof(int),
@@ -1551,7 +1551,7 @@ dbcool_setup(device_t self)
 			node->sysctl_data = sc;
 
 		ret = sysctl_createv(&sc->sc_sysctl_log, 0, NULL,
-			(const struct sysctlnode **)&node,
+			(void *)&node,
 			CTLFLAG_READWRITE, CTLTYPE_INT, "reg_access", NULL,
 			sysctl_dbcool_reg_access,
 			0, sc, sizeof(int),
