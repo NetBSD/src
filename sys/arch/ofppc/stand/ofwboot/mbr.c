@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.1 2009/09/11 12:00:12 phx Exp $	*/
+/*	$NetBSD: mbr.c,v 1.2 2011/08/18 09:03:28 phx Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -48,7 +48,6 @@ get_long(const void *p)
 	return cp[0] | (cp[1] << 8) | (cp[2] << 16) | (cp[3] << 24);
 }
 
-
 /*
  * Find a valid MBR disklabel.
  */
@@ -81,10 +80,10 @@ search_mbr_label(struct of_dev *devp, u_long off, char *buf,
 #endif
 		    ) {
 			poff = get_long(&p->mbrp_start) + off0;
-			if (strategy(devp, F_READ, poff + LABELSECTOR,
+			if (strategy(devp, F_READ, poff + MBR_LABELSECTOR,
 				     DEV_BSIZE, buf, &read) == 0
 			    && read == DEV_BSIZE) {
-				if (!getdisklabel(buf, lp)) {
+				if (getdisklabel(buf, lp) == NULL) {
 					recursion--;
 					return 0;
 				}

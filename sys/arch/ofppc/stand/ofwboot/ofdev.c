@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.17 2009/09/11 12:00:12 phx Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.18 2011/08/18 09:03:28 phx Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -96,13 +96,12 @@ filename(char *str, char *ppart)
 				for (cp = lp;
 				     --cp >= str && *cp != '/' && *cp != ':';)
 					;
-				if (cp >= str && *cp == ':') {
 
+				if (cp >= str && *cp == ':') {
 					/*
 					 * found some arguments,
 					 * make OFW ignore them.
 					 */
-
 					*cp = 0;
 					for (cp = lp; *--cp && *cp != ',';)
 						;
@@ -122,7 +121,7 @@ filename(char *str, char *ppart)
 
 int
 strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
-	 size_t *rsize)
+    size_t *rsize)
 {
 	struct of_dev *dev = devdata;
 	u_quad_t pos;
@@ -150,7 +149,9 @@ strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 }
 
 static int
-devopen_dummy(struct open_file *of, ...) {
+devopen_dummy(struct open_file *of, ...)
+{
+
 	return -1;
 }
 
@@ -186,7 +187,6 @@ static struct of_dev ofdev = {
 char opened_name[256];
 int floppyboot;
 
-
 int
 devopen(struct open_file *of, const char *name, char **file)
 {
@@ -204,6 +204,7 @@ devopen(struct open_file *of, const char *name, char **file)
 		panic("devopen");
 	if (of->f_flags != F_READ)
 		return EPERM;
+
 	strcpy(fname, name);
 	cp = filename(fname, &partition);
 	if (cp) {
@@ -213,6 +214,7 @@ devopen(struct open_file *of, const char *name, char **file)
 	}
 	if (!cp || !*buf)
 		strcpy(buf, DEFAULT_KERNEL);
+
 	if (!*fname)
 		strcpy(fname, bootdev);
 	DPRINTF("fname=%s\n", fname);
@@ -230,74 +232,75 @@ devopen(struct open_file *of, const char *name, char **file)
 	if (partition) {
 		*file += 2;
 	}
+
 	if ((handle = OF_finddevice(fname)) == -1) {
 		DPRINTF("OF_finddevice(\"%s\") failed\n", fname);
 		return ENOENT;
 	}
+
 	if (OF_getprop(handle, "name", buf, sizeof buf) < 0)
 		return ENXIO;
 	floppyboot = !strcmp(buf, "floppy");
 	if (OF_getprop(handle, "device_type", buf, sizeof buf) < 0)
 		return ENXIO;
 	if (!strcmp(buf, "block")) {
-
 		/*
 		 * For block devices, indicate raw partition
 		 * (:0 in OpenFirmware)
 		 */
-
 		strcat(fname, ":0");
 	}
+
 	DPRINTF("calling OF_open(fname=%s)\n", fname);
 	if ((handle = OF_open(fname)) == -1)
 		return ENXIO;
 	memset(&ofdev, 0, sizeof ofdev);
 	ofdev.handle = handle;
+
 	if (!strcmp(buf, "block")) {
 		ofdev.type = OFDEV_DISK;
 		ofdev.bsize = DEV_BSIZE;
 
-		/* First try to find a disklabel without MBR/RDB partitions */
-		if (strategy(&ofdev, F_READ,
-			     LABELSECTOR, DEV_BSIZE, buf, &read) != 0
-		    || read != DEV_BSIZE
-		    || getdisklabel(buf, &label)) {
+		/* First try to read a disklabel from a NetBSD MBR partition */
+		error = search_mbr_label(&ofdev, 0, buf, &label, 0);
 
-			/* Else try MBR partitions */
-			error = search_mbr_label(&ofdev, 0, buf, &label, 0);
-			if (error && error != ERDLAB)
-				goto bad;
-
-			/* and finally try RDB partitions */
+		if (error == ERDLAB) {
+			/* Try to construct a disklabel from RDB partitions */
 			error = search_rdb_label(&ofdev, buf, &label);
-			if (error && error != ERDLAB)
-				goto bad;
+
+			if (error == ERDLAB) {
+				/* At last read a raw NetBSD disklabel */
+				error = strategy(&ofdev, F_READ, LABELSECTOR,
+				    DEV_BSIZE, buf, &read);
+				if (error == 0 && read != DEV_BSIZE)
+					error = EIO;
+				if (error == 0)
+					if (getdisklabel(buf, &label) != NULL)
+						error = ERDLAB;
+			}
 		}
 
 		if (error == ERDLAB) {
 			if (partition) {
-
 				/*
-				 * User specified a parititon,
+				 * User specified a partition,
 				 * but there is none.
 				 */
-
 				goto bad;
 			}
-
 			/* No label, just use complete disk */
 			ofdev.partoff = 0;
-		} else {
-			part = partition ? partition - 'a' : 0;
-			ofdev.partoff = label.d_partitions[part].p_offset;
-			if (label.d_partitions[part].p_fstype == FS_RAID) {
-#define RF_PROTECTED_SECTORS 64
-				ofdev.partoff += RF_PROTECTED_SECTORS;
-				DPRINTF("devopen: found RAID partition, "
-				    "adjusting offset to %lx\n", ofdev.partoff);
-			}
-		}
+		} else if (error != 0)
+			goto bad;
 
+		part = partition ? partition - 'a' : 0;
+		ofdev.partoff = label.d_partitions[part].p_offset;
+		if (label.d_partitions[part].p_fstype == FS_RAID) {
+#define RF_PROTECTED_SECTORS 64
+			ofdev.partoff += RF_PROTECTED_SECTORS;
+			DPRINTF("devopen: found RAID partition, "
+			    "adjusting offset to %lx\n", ofdev.partoff);
+		}
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
 		file_system[0] = file_system_ufs;
@@ -306,6 +309,7 @@ devopen(struct open_file *of, const char *name, char **file)
 		nfsys = 3;
 		return 0;
 	}
+
 	if (!strcmp(buf, "network")) {
 		ofdev.type = OFDEV_NET;
 		of->f_dev = devsw;
@@ -316,8 +320,9 @@ devopen(struct open_file *of, const char *name, char **file)
 			goto bad;
 		return 0;
 	}
+
 	error = EFTYPE;
-bad:
+    bad:
 	OF_close(handle);
 	ofdev.handle = -1;
 	return error;
