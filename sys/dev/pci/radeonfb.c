@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.45 2011/07/21 15:25:14 njoly Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.46 2011/08/18 02:09:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.45 2011/07/21 15:25:14 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.46 2011/08/18 02:09:44 christos Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 8
 
@@ -828,8 +828,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 		/* and make up the list */
 		dp->rd_wsscreenlist.nscreens = 1;
-		dp->rd_wsscreenlist.screens =
-		    (const struct wsscreen_descr **)&dp->rd_wsscreens;
+		dp->rd_wsscreenlist.screens = (void *)&dp->rd_wsscreens;
 
 		vcons_init(&dp->rd_vd, dp, dp->rd_wsscreens,
 		    &radeonfb_accessops);
