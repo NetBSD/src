@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.7 2011/06/18 20:05:56 joerg Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.8 2011/08/18 02:44:45 christos Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -231,10 +231,9 @@ check		: CHECK var returns eol {
 		    vars[command.returns[0].return_index].name,
 		    returns_enum_names[command.returns[1].return_type]);
 
-	if (((command.returns[1].return_type == arg_byte) &&
+	if (((command.returns[1].return_type == ret_byte) &&
 	     (vars[command.returns[0].return_index].type != ret_byte)) ||
-	    ((command.returns[1].return_type == arg_static) &&
-	     (vars[command.returns[0].return_index].type != ret_string)))
+	    vars[command.returns[0].return_index].type != ret_string)
 		err(1, "Var type %s (%d) does not match return type %s (%d)",
 		    returns_enum_names[vars[command.returns[0].return_index].type],
 		    vars[command.returns[0].return_index].type,
@@ -1329,7 +1328,7 @@ write_cmd_pipe_args(args_state_t type, void *data)
 		var_data = data;
 		len = var_data->len;
 		cmd = var_data->value;
-		if (var_data->type == arg_byte)
+		if (type == arg_byte)
 			send_type = ret_byte;
 		else
 			send_type = ret_string;
