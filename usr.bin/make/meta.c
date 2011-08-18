@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.20 2011/06/22 21:13:12 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.21 2011/08/18 00:00:21 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1253,6 +1253,12 @@ meta_oodate(GNode *gn, Boolean oodate)
 			fname, (char *)Lst_Datum(Lst_First(missingFiles)));
 	    oodate = TRUE;
 	    Lst_Destroy(missingFiles, (FreeProc *)free);
+	}
+    } else {
+	if ((gn->type & OP_META)) {
+	    if (DEBUG(META))
+		fprintf(debug_file, "%s: required but missing\n", fname);
+	    oodate = TRUE;
 	}
     }
     if (oodate && ignoreOODATE) {
