@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.74 2011/04/29 22:14:35 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.75 2011/08/18 21:04:23 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.74 2011/04/29 22:14:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.75 2011/08/18 21:04:23 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -753,7 +753,7 @@ inst_branch(int inst)
 	i.word = inst;
 	delslt = 0;
 	switch (i.JType.op) {
-	case OP_BCOND:
+	case OP_REGIMM:
 	case OP_J:
 	case OP_JAL:
 	case OP_BEQ:
