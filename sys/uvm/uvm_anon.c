@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.61 2011/08/18 14:13:02 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.62 2011/08/18 14:13:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.61 2011/08/18 14:13:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.62 2011/08/18 14:13:59 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -431,7 +431,7 @@ void
 uvm_anon_release(struct vm_anon *anon)
 {
 	struct vm_page *pg = anon->an_page;
-	kmutex_t *lock;
+	bool success;
 
 	KASSERT(mutex_owned(anon->an_lock));
 	KASSERT(pg != NULL);
@@ -445,13 +445,13 @@ uvm_anon_release(struct vm_anon *anon)
 	mutex_enter(&uvm_pageqlock);
 	uvm_pagefree(pg);
 	mutex_exit(&uvm_pageqlock);
-	mutex_exit(anon->an_lock);
-
 	KASSERT(anon->an_page == NULL);
-
+	/* dispose should succeed as no one can reach this anon anymore. */
+	success = uvm_anon_dispose(anon);
+	KASSERT(success);
+	mutex_exit(anon->an_lock);
 	/* Note: extra reference is held for PG_RELEASED case. */
-	lock = anon->an_lock;
+	mutex_obj_free(anon->an_lock);
 	anon->an_lock = NULL;
 	uvm_anon_free(anon);
-	mutex_obj_free(lock);
 }
