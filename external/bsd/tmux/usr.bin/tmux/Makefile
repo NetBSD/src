@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2011/08/17 19:28:36 jmmv Exp $
+# $NetBSD: Makefile,v 1.7 2011/08/18 19:05:54 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,10 @@ PROG=		tmux
 MAN=		tmux.1
 
 WARNS?=	4
+COPTS.cmd-server-info.c+=	-Wno-stack-protector
+COPTS.imsg-buffer.c+=		-Wno-stack-protector
+COPTS.imsg.c+=			-Wno-stack-protector
+COPTS.screen.c+=		-Wno-stack-protector
 
 SRCS=		arguments.c
 SRCS+=		attributes.c
