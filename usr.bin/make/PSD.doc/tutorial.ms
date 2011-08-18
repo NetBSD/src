@@ -1,4 +1,4 @@
-.\"	$NetBSD: tutorial.ms,v 1.10 2004/06/27 19:12:33 uwe Exp $
+.\"	$NetBSD: tutorial.ms,v 1.11 2011/08/18 15:19:30 sjg Exp $
 .\" Copyright (c) 1988, 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -114,14 +114,15 @@
 .nr g4 \\n(.s
 .sp -1
 .\" .st cf
-\D's -1u'\D't 5u'
+\D't 5u'
 .sp -1
-\h'50u'\D'l 71u 0u'\D'l 50u 50u'\D'l 0u 71u'\D'l -50u 50u'\D'l -71u 0u'\D'l -50u -50u'\D'l 0u -71u'\D'l 50u -50u'
+\h'50u'
 .sp -1
 \D't 3u'
 .sp -1
 .sp 7u
-\h'53u'\D'p 14 68u 0u 46u 46u 0u 68u -46u 46u -68u 0u -47u -46u 0u -68u 47u -46u'
+\h'53u'
+\d\D'p -0.19i 0.0i 0.0i -0.13i 0.30i 0.0i 0.0i 0.13i'
 .sp -1
 .ft R
 .ps 6
@@ -131,7 +132,7 @@
 \h'85u'\v'0.85n'\h-\w\\*(g9u/2u\&\\*(g9
 .sp |\\n(g8u
 .sp 166u
-\D't 3u'\D's -1u'
+\D't 3u'
 .br
 .po
 .rt 
