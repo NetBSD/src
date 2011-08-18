@@ -1,4 +1,4 @@
-/*	$NetBSD: parseutils.c,v 1.5 2008/12/14 17:03:43 christos Exp $	*/
+/*	$NetBSD: parseutils.c,v 1.6 2011/08/18 13:20:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -52,13 +52,22 @@ gettrailer(char *arg)
 {
 	char *options;
 
-	if ((options = strchr(arg, ' ')) == NULL)
+	for (options = arg; *options; options++) {
+		switch (*options) {
+		case ' ':
+		case '\t':
+			*options++ = '\0';
+			break;
+		default:
+			continue;
+		}
+		break;
+	}
+	if (*options == '\0')
 		return "";
-	else
-		*options++ = '\0';
 
-	/* trim leading blanks */
-	while (*options && *options == ' ')
+	/* trim leading blanks/tabs */
+	while (*options == ' ' || *options == '\t')
 		options++;
 
 	return options;
