@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.35 2011/07/01 18:53:45 dyoung Exp $	*/
+/*	$NetBSD: crime.c,v 1.36 2011/08/18 02:56:21 macallan Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.35 2011/07/01 18:53:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.36 2011/08/18 02:56:21 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.35 2011/07/01 18:53:45 dyoung Exp $");
 
 #define DISABLE_CRIME_WATCHDOG
 
-static int	crime_match(struct device *, struct cfdata *, void *);
-static void	crime_attach(struct device *, struct device *, void *);
+static int	crime_match(device_t, struct cfdata *, void *);
+static void	crime_attach(device_t, device_t, void *);
 void		crime_bus_reset(void);
 void		crime_watchdog_reset(void);
 void		crime_watchdog_disable(void);
@@ -72,7 +72,7 @@ void		*crime_intr_establish(int, int, int (*)(void *), void *);
 static bus_space_tag_t crm_iot;
 static bus_space_handle_t crm_ioh;
 
-CFATTACH_DECL(crime, sizeof(struct crime_softc),
+CFATTACH_DECL_NEW(crime, sizeof(struct crime_softc),
     crime_match, crime_attach, NULL, NULL);
 
 #define CRIME_NINTR 32 	/* XXX */
@@ -83,7 +83,7 @@ struct {
 } crime[CRIME_NINTR];
 
 static int
-crime_match(struct device *parent, struct cfdata *match, void *aux)
+crime_match(device_t parent, struct cfdata *match, void *aux)
 {
 
 	/*
@@ -96,14 +96,16 @@ crime_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-crime_attach(struct device *parent, struct device *self, void *aux)
+crime_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct cpu_info * const ci = curcpu();
+	struct crime_softc *sc = device_private(self);
 	uint64_t crm_id;
 	uint64_t baseline, endline;
 	uint32_t startctr, endctr, cps;
 
+	sc->sc_dev = self;
 	crm_iot = SGIMIPS_BUS_SPACE_CRIME;
 
 	if (bus_space_map(crm_iot, ma->ma_addr, 0 /* XXX */,

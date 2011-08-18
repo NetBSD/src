@@ -1,4 +1,4 @@
-/*	$NetBSD: crimevar.h,v 1.8 2011/07/01 18:53:45 dyoung Exp $	*/
+/*	$NetBSD: crimevar.h,v 1.9 2011/08/18 02:56:21 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -35,7 +35,7 @@
 #include <sys/bus.h>
 
 struct crime_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 };
 
 void crime_intr_mask(unsigned int);
