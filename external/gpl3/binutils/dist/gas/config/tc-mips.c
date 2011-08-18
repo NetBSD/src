@@ -749,6 +749,9 @@ enum fix_vr4120_class
   NUM_FIX_VR4120_CLASSES
 };
 
+/* ...likewise -mtrap-zero-jump.  */
+static bfd_boolean mips_trap_zero_jump;
+
 /* ...likewise -mfix-loongson2f-jump.  */
 static bfd_boolean mips_fix_loongson2f_jump;
 
@@ -2756,6 +2759,35 @@ fix_loongson2f (struct mips_cl_insn * ip)
     fix_loongson2f_jump (ip);
 }
 
+static void
+trap_zero_jump (struct mips_cl_insn * ip)
+{
+  if (strcmp (ip->insn_mo->name, "j") == 0
+      || strcmp (ip->insn_mo->name, "jr") == 0
+      || strcmp (ip->insn_mo->name, "jalr") == 0)
+    {
+      int sreg;
+
+      if (mips_opts.warn_about_macros)
+        return;
+
+      sreg = EXTRACT_OPERAND (RS, *ip);
+      if (mips_opts.isa == ISA_MIPS32
+          || mips_opts.isa == ISA_MIPS32R2
+          || mips_opts.isa == ISA_MIPS64
+          || mips_opts.isa == ISA_MIPS64R2)  
+	{
+	  expressionS ep;
+	  ep.X_op = O_constant;
+	  ep.X_add_number = 4096;
+	  macro_build (&ep, "tltiu", "s,j", sreg, BFD_RELOC_LO16);
+	}
+      else if (mips_opts.isa != ISA_UNKNOWN
+	       && mips_opts.isa != ISA_MIPS1)
+	macro_build (NULL, "teq", "s,t", sreg, 0);
+  }
+}
+
 /* Output an instruction.  IP is the instruction information.
    ADDRESS_EXPR is an operand of the instruction to be used with
    RELOC_TYPE.  */
@@ -2771,6 +2803,8 @@ append_insn (struct mips_cl_insn *ip, expressionS *address_expr,
 
   if (mips_fix_loongson2f)
     fix_loongson2f (ip);
+  if (mips_trap_zero_jump)
+    trap_zero_jump (ip);
 
   /* Mark instruction labels in mips16 mode.  */
   mips16_mark_labels ();
@@ -11336,9 +11370,14 @@ struct option md_longopts[] =
   {"msingle-float", no_argument, NULL, OPTION_SINGLE_FLOAT},
   {"mdouble-float", no_argument, NULL, OPTION_DOUBLE_FLOAT},
   
+#define OPTION_TRAP_ZERO_JUMP (OPTION_MISC_BASE + 20)
+#define OPTION_NO_TRAP_ZERO_JUMP (OPTION_MISC_BASE + 21)
+  {"mtrap-zero-jump", no_argument, NULL, OPTION_TRAP_ZERO_JUMP},
+  {"mno-trap-zero-jump", no_argument, NULL, OPTION_NO_TRAP_ZERO_JUMP},
+
   /* ELF-specific options.  */
 #ifdef OBJ_ELF
-#define OPTION_ELF_BASE    (OPTION_MISC_BASE + 20)
+#define OPTION_ELF_BASE    (OPTION_MISC_BASE + 22)
 #define OPTION_CALL_SHARED (OPTION_ELF_BASE + 0)
   {"KPIC",        no_argument, NULL, OPTION_CALL_SHARED},
   {"call_shared", no_argument, NULL, OPTION_CALL_SHARED},
@@ -11628,6 +11667,14 @@ md_parse_option (int c, char *arg)
 
     case OPTION_MNO_SYM32:
       mips_opts.sym32 = FALSE;
+      break;
+
+    case OPTION_TRAP_ZERO_JUMP:
+      mips_trap_zero_jump = TRUE;
+      break;
+
+    case OPTION_NO_TRAP_ZERO_JUMP:
+      mips_trap_zero_jump = FALSE;
       break;
 
 #ifdef OBJ_ELF
