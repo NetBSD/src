@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.318 2011/08/11 07:38:56 mbalmer Exp $
+# $NetBSD: ALL,v 1.319 2011/08/18 20:55:20 jakllsch Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.318 $"
+#ident 		"ALL-$Revision: 1.319 $"
 
 maxusers	64		# estimated number of users
 
@@ -472,7 +472,7 @@ elanpar*	at elansc?
 elanpex*	at elansc?
 
 # Temperatures
-amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
+amdtemp* at pchb?			# AMD CPU Temperature sensors
 
 # PCI bridges
 amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
