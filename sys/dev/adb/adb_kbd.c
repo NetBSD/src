@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.14 2011/07/28 16:28:12 macallan Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.15 2011/08/18 02:18:40 christos Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.14 2011/07/28 16:28:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.15 2011/08/18 02:18:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -667,14 +667,14 @@ adbkbd_setup_sysctl(struct adbkbd_softc *sc)
 	       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
 	ret = sysctl_createv(NULL, 0, NULL,
-	    (const struct sysctlnode **)&node, 
+	    (void *)&node, 
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
 	    CTLTYPE_INT, "middle", "middle mouse button", adbkbd_sysctl_mid, 
 		    1, sc, 0, CTL_MACHDEP, me->sysctl_num, CTL_CREATE, 
 		    CTL_EOL);
 
 	ret = sysctl_createv(NULL, 0, NULL, 
-	    (const struct sysctlnode **)&node, 
+	    (void *)&node, 
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
 	    CTLTYPE_INT, "right", "right mouse button", adbkbd_sysctl_right, 
 		    2, sc, 0, CTL_MACHDEP, me->sysctl_num, CTL_CREATE, 
