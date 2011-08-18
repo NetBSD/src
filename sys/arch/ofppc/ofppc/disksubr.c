@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.22 2010/12/31 21:50:28 phx Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.23 2011/08/18 08:55:43 phx Exp $	*/
 
 /*-
  * Copyright (c) 2010 Frank Wille.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.22 2010/12/31 21:50:28 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23 2011/08/18 08:55:43 phx Exp $");
 
 #include "opt_disksubr.h"
 
@@ -231,7 +231,6 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 {
 	struct adostype adt;
 	struct buf *bp;
-	struct disklabel *dlp;
 	struct partition *pp = NULL;
 	struct partblock *pbp;
 	struct rdblock *rbp;
@@ -246,7 +245,7 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	if (lp->d_partitions[RAW_PART].p_size == 0)
 		lp->d_partitions[RAW_PART].p_size = 0x1fffffff;
 	lp->d_partitions[RAW_PART].p_offset = 0;
-	/* if no 'a' partition, default it to copy of 'c' as BSDFFS */
+	/* if no 'a' partition, default is to copy from 'c' as BSDFFS */
 	if (lp->d_partitions[0].p_size == 0) {
 		lp->d_partitions[0].p_size = lp->d_partitions[RAW_PART].p_size;
 		lp->d_partitions[0].p_offset = 0;
@@ -281,7 +280,7 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 #ifdef SD_C_ADJUSTS_NR
 		bp->b_blkno *= (lp->d_secsize / DEV_BSIZE);
 #endif
-		strat(bp);
+		(*strat)(bp);
 
 		if (biowait(bp)) {
 			msg = "rdb scan I/O error";
@@ -294,30 +293,19 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 			else
 				msg = "rdb bad checksum";
 		}
-		/* Check for native NetBSD label? */
-		dlp = (struct disklabel *)((char*)bp->b_data + LABELOFFSET);
-		if (dlp->d_magic == DISKMAGIC) {
-			if (dkcksum(dlp))
-				msg = "NetBSD disk label corrupted";
-			else {
-				/* remember block and continue searching? */
-				*lp = *dlp;
-				brelse(bp, 0);
-				return msg;
-			}
-		}
 	}
+
 	if (nextb == RDB_MAXBLOCKS) {
 		if (msg == NULL)
 			msg = "no disk label";
 		goto done;
-	} else if (msg) {
+	} else if (msg != NULL)
 		/*
 		 * maybe we found an invalid one before a valid.
 		 * clear err.
 		 */
 		msg = NULL;
-	}
+
 	osdep->rdblock = nextb;
 
 	/* RDB present, clear disklabel partition table before doing PART blks */
@@ -442,16 +430,16 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		case ADT_NETBSDROOT:
 			pp = &lp->d_partitions[0];
 			if (pp->p_size) {
-				printf("WARN: more than one root, ignoring\n");
-				osdep->rdblock = RDBNULL;	/* invlidate cpulab */
+				printf("more than one root, ignoring\n");
+				osdep->rdblock = RDBNULL; /* invalidate cpulab */
 				continue;
 			}
 			break;
 		case ADT_NETBSDSWAP:
 			pp = &lp->d_partitions[1];
 			if (pp->p_size) {
-				printf("WARN: more than one swap, ignoring\n");
-				osdep->rdblock = RDBNULL;	/* invlidate cpulab */
+				printf("more than one swap, ignoring\n");
+				osdep->rdblock = RDBNULL; /* invalidate cpulab */
 				continue;
 			}
 			break;
@@ -747,41 +735,44 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	bp->b_cylinder = 1 / lp->d_secpercyl;
 	(*strat)(bp);
 
-	/* no valid RDB found */
-	osdep->rdblock = RDBNULL;
-
-	/* XXX cd_start is abused as a flag for fictious disklabel */
-	osdep->cd_start = -1;
-
 	if (biowait(bp)) {
 		msg = "I/O error reading block zero";
 		goto done;
 	}
 
+	/* no valid RDB found */
+	osdep->rdblock = RDBNULL;
+
+	/* XXX cd_start is abused as a flag for fictitious disklabel */
+	osdep->cd_start = -1;
+
 	osdep->cd_labelsector = LABELSECTOR;
 	osdep->cd_labeloffset = LABELOFFSET;
 
-	if (read_netbsd_label(dev, strat, lp, osdep))
-		osdep->cd_start = 0;
-	else {
-		if (bswap16(*(u_int16_t *)((char *)bp->b_data +
-		    MBR_MAGIC_OFFSET)) == MBR_MAGIC) {
-			/* read_dos_label figures out labelsector/offset */
-			msg = read_dos_label(dev, strat, lp, osdep);
-			if (!msg)
-				osdep->cd_start = 0;
-		} else {
+	if (bswap16(*(u_int16_t *)((char *)bp->b_data + MBR_MAGIC_OFFSET))
+	    == MBR_MAGIC) {
+		/*
+		 * We've got an MBR partitioned disk.
+		 * read_dos_label figures out labelsector/offset itself
+		 */
+		msg = read_dos_label(dev, strat, lp, osdep);
+	} else {
 #ifdef RDB_PART
-			/* scan for RDB partitions */
-			msg = read_rdb_label(dev, strat, lp, osdep);
+		/* scan for RDB partitions */
+		msg = read_rdb_label(dev, strat, lp, osdep);
 #else
-			msg = "no disk label";
+		msg = "no NetBSD disk label";
 #endif
-			osdep->cd_start = 0;	/* XXX for now */
+		if (msg != NULL) {
+			/* try reading a raw NetBSD disklabel at last */
+			if (read_netbsd_label(dev, strat, lp, osdep))
+				msg = NULL;
 		}
 	}
+	if (msg == NULL)
+		osdep->cd_start = 0;
 
-done:
+    done:
 	brelse(bp, 0);
 	return msg;
 }
@@ -849,16 +840,14 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	int error;
 	struct disklabel label;
 
-	/* If RDB was present, we don't support writing them yet. */
-	if (osdep->rdblock != RDBNULL)
-		return EINVAL;
-
 	/*
-	 * Try to re-read a disklabel, in case he changed the MBR.
+	 * Try to re-read a disklabel, in case the MBR was modified.
 	 */
 	label = *lp;
 	readdisklabel(dev, strat, &label, osdep);
-	if (osdep->cd_start < 0)
+
+	/* If RDB was present, we don't support writing them yet. */
+	if (osdep->rdblock != RDBNULL)
 		return EINVAL;
 
 	/* get a buffer and initialize it */
@@ -886,7 +875,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	(*strat)(bp);
 	error = biowait(bp);
 
-done:
+    done:
 	brelse(bp, 0);
 
 	return error;
