@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.64 2011/06/05 08:42:59 dsl Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.65 2011/08/18 02:26:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.64 2011/06/05 08:42:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.65 2011/08/18 02:26:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -63,7 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.64 2011/06/05 08:42:59 dsl Exp $")
 
 #include <compat/linux/common/linux_sched.h>
 
-static int linux_clone_nptl(struct lwp *, const struct linux_sys_clone_args *, register_t *);
+static int linux_clone_nptl(struct lwp *, const struct linux_sys_clone_args *,
+    register_t *);
+
+#if DEBUG_LINUX
+#define DPRINTF(x) uprintf x
+#else
+#define DPRINTF(x)
+#endif
 
 static void
 linux_child_return(void *arg)
@@ -72,18 +79,20 @@ linux_child_return(void *arg)
 	struct proc *p = l->l_proc;
 	struct linux_emuldata *led = l->l_emuldata;
 	void *ctp = led->led_child_tidptr;
+	int error;
 
 	if (ctp) {
-		if (copyout(&p->p_pid, ctp, sizeof(p->p_pid)) != 0)
+		if ((error = copyout(&p->p_pid, ctp, sizeof(p->p_pid))) != 0)
 			printf("%s: LINUX_CLONE_CHILD_SETTID "
-			    "failed (child_tidptr = %p, tid = %d)\n",
-			    __func__, ctp, p->p_pid);
+			    "failed (child_tidptr = %p, tid = %d error =%d)\n",
+			    __func__, ctp, p->p_pid, error);
 	}
 	child_return(arg);
 }
 
 int
-linux_sys_clone(struct lwp *l, const struct linux_sys_clone_args *uap, register_t *retval)
+linux_sys_clone(struct lwp *l, const struct linux_sys_clone_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) flags;
@@ -100,7 +109,7 @@ linux_sys_clone(struct lwp *l, const struct linux_sys_clone_args *uap, register_
 	 * We don't support the Linux CLONE_PID or CLONE_PTRACE flags.
 	 */
 	if (SCARG(uap, flags) & (LINUX_CLONE_PID|LINUX_CLONE_PTRACE))
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * Thread group implies shared signals. Shared signals
@@ -108,17 +117,16 @@ linux_sys_clone(struct lwp *l, const struct linux_sys_clone_args *uap, register_
 	 */
 	if (SCARG(uap, flags) & LINUX_CLONE_THREAD
 	    && (SCARG(uap, flags) & LINUX_CLONE_SIGHAND) == 0)
-		return (EINVAL);
+		return EINVAL;
 	if (SCARG(uap, flags) & LINUX_CLONE_SIGHAND
 	    && (SCARG(uap, flags) & LINUX_CLONE_VM) == 0)
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * The thread group flavor is implemented totally differently.
 	 */
-	if (SCARG(uap, flags) & LINUX_CLONE_THREAD) {
+	if (SCARG(uap, flags) & LINUX_CLONE_THREAD)
 		return linux_clone_nptl(l, uap, retval);
-	}
 
 	flags = 0;
 	if (SCARG(uap, flags) & LINUX_CLONE_VM)
@@ -134,7 +142,7 @@ linux_sys_clone(struct lwp *l, const struct linux_sys_clone_args *uap, register_
 
 	sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
 	if (sig < 0 || sig >= LINUX__NSIG)
-		return (EINVAL);
+		return EINVAL;
 	sig = linux_to_native_signo[sig];
 
 	if (SCARG(uap, flags) & LINUX_CLONE_CHILD_SETTID) {
@@ -149,8 +157,10 @@ linux_sys_clone(struct lwp *l, const struct linux_sys_clone_args *uap, register_
 	 * that makes this adjustment is a noop.
 	 */
 	if ((error = fork1(l, flags, sig, SCARG(uap, stack), 0,
-	    linux_child_return, NULL, retval, &p)) != 0)
+	    linux_child_return, NULL, retval, &p)) != 0) {
+		DPRINTF(("%s: fork1: error %d\n", __func__, error));
 		return error;
+	}
 
 	return 0;
 }
@@ -183,7 +193,7 @@ linux_clone_nptl(struct lwp *l, const struct linux_sys_clone_args *uap, register
 	tnprocs = atomic_inc_uint_nv(&nprocs);
 	if (__predict_false(tnprocs >= maxproc) ||
 	    kauth_authorize_process(l->l_cred, KAUTH_PROCESS_FORK, p,
-				    KAUTH_ARG(tnprocs), NULL, NULL) != 0) {
+	    KAUTH_ARG(tnprocs), NULL, NULL) != 0) {
 		atomic_dec_uint(&nprocs);
 		return EAGAIN;
 	}
@@ -195,9 +205,9 @@ linux_clone_nptl(struct lwp *l, const struct linux_sys_clone_args *uap, register
 	}
 
 	error = lwp_create(l, p, uaddr, LWP_DETACHED | LWP_PIDLID,
-			   SCARG(uap, stack), 0, child_return, NULL, &l2,
-			   l->l_class);
+	    SCARG(uap, stack), 0, child_return, NULL, &l2, l->l_class);
 	if (__predict_false(error)) {
+		DPRINTF(("%s: lwp_create error=%d\n", __func__, error));
 		atomic_dec_uint(&nprocs);
 		uvm_uarea_free(uaddr);
 		return error;
@@ -212,23 +222,25 @@ linux_clone_nptl(struct lwp *l, const struct linux_sys_clone_args *uap, register
 
 	/* LINUX_CLONE_PARENT_SETTID: store child's TID in parent's memory */
 	if (flags & LINUX_CLONE_PARENT_SETTID) {
-		if (copyout(&lid, parent_tidptr, sizeof(lid)) != 0)
+		if ((error = copyout(&lid, parent_tidptr, sizeof(lid))) != 0)
 			printf("%s: LINUX_CLONE_PARENT_SETTID "
-			    "failed (parent_tidptr = %p tid = %d)\n",
-			    __func__, parent_tidptr, lid);
+			    "failed (parent_tidptr = %p tid = %d error=%d)\n",
+			    __func__, parent_tidptr, lid, error);
 	}
 
 	/* LINUX_CLONE_CHILD_SETTID: store child's TID in child's memory  */
 	if (flags & LINUX_CLONE_CHILD_SETTID) {
-		if (copyout(&lid, child_tidptr, sizeof(lid)) != 0)
+		if ((error = copyout(&lid, child_tidptr, sizeof(lid))) != 0)
 			printf("%s: LINUX_CLONE_CHILD_SETTID "
-			    "failed (child_tidptr = %p, tid = %d)\n",
-			    __func__, child_tidptr, lid);
+			    "failed (child_tidptr = %p, tid = %d error=%d)\n",
+			    __func__, child_tidptr, lid, error);
 	}
 
 	if (flags & LINUX_CLONE_SETTLS) {
 		error = LINUX_LWP_SETPRIVATE(l2, tls);
 		if (error) {
+			DPRINTF(("%s: LINUX_LWP_SETPRIVATE %d\n", __func__,
+			    error));
 			lwp_exit(l2);
 			return error;
 		}
@@ -366,10 +378,8 @@ sched_native2linux(int native_policy, struct sched_param *native_params,
 		KASSERT(prio <= SCHED_PRI_MAX);
 		KASSERT(linux_params != NULL);
 
-#ifdef DEBUG_LINUX
-		printf("native2linux: native: policy %d, priority %d\n",
-		    native_policy, prio);
-#endif
+		DPRINTF(("%s: native: policy %d, priority %d\n",
+		    __func__, native_policy, prio));
 
 		if (native_policy == SCHED_OTHER) {
 			linux_params->sched_priority = 0;
@@ -380,10 +390,8 @@ sched_native2linux(int native_policy, struct sched_param *native_params,
 			    / (SCHED_PRI_MAX - SCHED_PRI_MIN)
 			    + LINUX_SCHED_RTPRIO_MIN;
 		}
-#ifdef DEBUG_LINUX
-		printf("native2linux: linux: policy %d, priority %d\n",
-		    -1, linux_params->sched_priority);
-#endif
+		DPRINTF(("%s: linux: policy %d, priority %d\n",
+		    __func__, -1, linux_params->sched_priority));
 	}
 
 	return 0;
@@ -448,18 +456,14 @@ linux_sys_sched_getparam(struct lwp *l, const struct linux_sys_sched_getparam_ar
 	error = do_sched_getparam(0, SCARG(uap, pid), &policy, &sp);
 	if (error)
 		goto out;
-#ifdef DEBUG_LINUX
-	printf("getparam: native: policy %d, priority %d\n",
-	    policy, sp.sched_priority);
-#endif
+	DPRINTF(("%s: native: policy %d, priority %d\n",
+	    __func__, policy, sp.sched_priority));
 
 	error = sched_native2linux(policy, &sp, NULL, &lp);
 	if (error)
 		goto out;
-#ifdef DEBUG_LINUX
-	printf("getparam: linux: policy %d, priority %d\n",
-	    policy, lp.sched_priority);
-#endif
+	DPRINTF(("%s: linux: policy %d, priority %d\n",
+	    __func__, policy, lp.sched_priority));
 
 	error = copyout(&lp, SCARG(uap, sp), sizeof(lp));
 	if (error)
@@ -489,18 +493,14 @@ linux_sys_sched_setscheduler(struct lwp *l, const struct linux_sys_sched_setsche
 	error = copyin(SCARG(uap, sp), &lp, sizeof(lp));
 	if (error)
 		goto out;
-#ifdef DEBUG_LINUX
-	printf("setscheduler: linux: policy %d, priority %d\n",
-	    SCARG(uap, policy), lp.sched_priority);
-#endif
+	DPRINTF(("%s: linux: policy %d, priority %d\n",
+	    __func__, SCARG(uap, policy), lp.sched_priority));
 
 	error = sched_linux2native(SCARG(uap, policy), &lp, &policy, &sp);
 	if (error)
 		goto out;
-#ifdef DEBUG_LINUX
-	printf("setscheduler: native: policy %d, priority %d\n",
-	    policy, sp.sched_priority);
-#endif
+	DPRINTF(("%s: native: policy %d, priority %d\n",
+	    __func__, policy, sp.sched_priority));
 
 	error = do_sched_setparam(0, SCARG(uap, pid), policy, &sp);
 	if (error)
@@ -692,8 +692,6 @@ linux_sys_sched_setaffinity(struct lwp *l, const struct linux_sys_sched_setaffin
 	}
 
 	/* Let's ignore it */
-#ifdef DEBUG_LINUX
-	printf("linux_sys_sched_setaffinity\n");
-#endif
+	DPRINTF(("%s\n", __func__));
 	return 0;
 }
