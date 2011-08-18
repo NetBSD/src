@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.11 2011/08/01 12:28:53 mbalmer Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.12 2011/08/18 02:18:40 christos Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.11 2011/08/01 12:28:53 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.12 2011/08/18 02:18:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -179,17 +179,17 @@ adbms_attach(device_t parent, device_t self, void *aux)
 	/* print out the type of mouse we have */
 	switch (sc->sc_adbdev->handler_id) {
 	case ADBMS_100DPI:
-		printf("%d-button, %d dpi mouse\n", sc->sc_buttons,
-		    (int)(sc->sc_res));
+		printf("%d-button, %u dpi mouse\n", sc->sc_buttons,
+		    sc->sc_res);
 		break;
 	case ADBMS_200DPI:
 		sc->sc_res = 200;
-		printf("%d-button, %d dpi mouse\n", sc->sc_buttons,
-		    (int)(sc->sc_res));
+		printf("%d-button, %u dpi mouse\n", sc->sc_buttons,
+		    sc->sc_res);
 		break;
 	case ADBMS_MSA3:
-		printf("Mouse Systems A3 mouse, %d-button, %d dpi\n",
-		    sc->sc_buttons, (int)(sc->sc_res));
+		printf("Mouse Systems A3 mouse, %d-button, %u dpi\n",
+		    sc->sc_buttons, sc->sc_res);
 		break;
 	case ADBMS_USPEED:
 		printf("MicroSpeed mouse, default parameters\n");
@@ -235,8 +235,8 @@ adbms_attach(device_t parent, device_t self, void *aux)
 				printf("unknown device");
 				break;
 			}
-			printf(" <%s> %d-button, %d dpi\n", sc->sc_devid,
-			    sc->sc_buttons, (int)(sc->sc_res));
+			printf(" <%s> %d-button, %u dpi\n", sc->sc_devid,
+			    sc->sc_buttons, sc->sc_res);
 		}
 		break;
 	default:
@@ -390,6 +390,7 @@ adbms_init_mouse(struct adbms_softc *sc)
 		memcpy(buffer, sc->sc_buffer, len);
 
 		if (sc->sc_msg_len == 8) {
+			uint16_t res;
 			/* we have a true EMP device */
 #ifdef ADB_PRINT_EMP
 		
@@ -397,10 +398,11 @@ adbms_init_mouse(struct adbms_softc *sc)
 			    buffer[0], buffer[1], buffer[2], buffer[3],
 			    buffer[4], buffer[5], buffer[6], buffer[7]);
 #endif
+			memcpy(sc->sc_devid, &buffer[0], 4);
+			memcpy(&res, &buffer[4], sizeof(res));
+			sc->sc_res = res;
 			sc->sc_class = buffer[6];
 			sc->sc_buttons = buffer[7];
-			sc->sc_res = (int)*(short *)&buffer[4];
-				memcpy(sc->sc_devid, &(buffer[0]), 4);
 		} else if (buffer[0] == 0x9a &&
 		    ((buffer[1] == 0x20) || (buffer[1] == 0x21))) {
 			/*
