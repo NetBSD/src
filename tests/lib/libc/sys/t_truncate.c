@@ -1,4 +1,4 @@
-/* $NetBSD: t_truncate.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $ */
+/* $NetBSD: t_truncate.c,v 1.2 2011/08/18 19:48:03 dholland Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_truncate.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $");
+__RCSID("$NetBSD: t_truncate.c,v 1.2 2011/08/18 19:48:03 dholland Exp $");
 
 #include <sys/stat.h>
 
@@ -160,7 +160,7 @@ ATF_TC_BODY(truncate_err, tc)
 	ATF_REQUIRE_ERRNO(ENOENT, truncate("/a/b/c/d/e/f/g", 999) == -1);
 
 	errno = 0;
-	ATF_REQUIRE_ERRNO(EACCES, truncate("/root/.profile", 999) == -1);
+	ATF_REQUIRE_ERRNO(EACCES, truncate("/usr/bin/fpr", 999) == -1);
 }
 
 ATF_TP_ADD_TCS(tp)
