@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.114 2010/07/07 01:30:35 chs Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.115 2011/08/18 02:21:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.114 2010/07/07 01:30:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.115 2011/08/18 02:21:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ linux_e_lwp_fork(struct lwp *l1, struct lwp *l2)
 {
 	struct linux_emuldata *led2;
 
-	led2 = kmem_zalloc(sizeof(struct linux_emuldata), KM_SLEEP);
+	led2 = kmem_zalloc(sizeof(*led2), KM_SLEEP);
 	l2->l_emuldata = led2;
 }
 
@@ -202,5 +202,5 @@ linux_e_lwp_exit(struct lwp *l)
 
 	led = l->l_emuldata;
 	l->l_emuldata = NULL;
-	kmem_free(led, sizeof (struct linux_emuldata));
+	kmem_free(led, sizeof(*led));
 }
