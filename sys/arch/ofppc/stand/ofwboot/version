@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.11 2009/09/11 12:00:12 phx Exp $
+$NetBSD: version,v 1.12 2011/08/18 09:03:28 phx Exp $
 
 1.1:		Boot program for OpenFirmware; initial revision
 1.2:		Boot program rearrangement
@@ -11,3 +11,4 @@ $NetBSD: version,v 1.11 2009/09/11 12:00:12 phx Exp $
 1.9:		Add support for auto-detection of 64bit CPUs
 1.10:		Change note to indicate real mode, add ldscript to support 7046
 1.11:		Support for RDB partitions.
+1.12:		Fixed MBR support, which had been broken in 1.11.
