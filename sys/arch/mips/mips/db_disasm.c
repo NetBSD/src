@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.23 2011/07/10 23:21:58 matt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.24 2011/08/18 21:04:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.23 2011/07/10 23:21:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.24 2011/08/18 21:04:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.23 2011/07/10 23:21:58 matt Exp $");
 #include <ddb/db_sym.h>
 
 static const char * const op_name[64] = {
-/* 0 */ "spec", "bcond","j",	"jal",	"beq",	"bne",	"blez", "bgtz",
+/* 0 */ "spec", "regimm","j",	"jal",	"beq",	"bne",	"blez", "bgtz",
 /* 8 */ "addi", "addiu","slti", "sltiu","andi", "ori",	"xori", "lui",
 /*16 */ "cop0", "cop1", "cop2", "cop3", "beql", "bnel", "blezl","bgtzl",
 /*24 */ "daddi","daddiu","ldl", "ldr",	"op34", "op35", "op36", "op37",
@@ -77,11 +77,11 @@ static const char * const spec2_name[4] = {		/* QED RM4650, R5000, etc. */
 /* 0 */ "mad", "madu", "mul", "spec3"
 };
 
-static const char * const bcond_name[32] = {
+static const char * const regimm_name[32] = {
 /* 0 */ "bltz", "bgez", "bltzl", "bgezl", "?", "?", "?", "?",
 /* 8 */ "tgei", "tgeiu", "tlti", "tltiu", "teqi", "?", "tnei", "?",
 /*16 */ "bltzal", "bgezal", "bltzall", "bgezall", "?", "?", "?", "?",
-/*24 */ "?", "?", "?", "?", "?", "?", "?", "?",
+/*24 */ "?", "?", "?", "?", "bposge32", "?", "?", "?",
 };
 
 static const char * const cop1_name[64] = {
@@ -296,8 +296,8 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 			
 		break;
 
-	case OP_BCOND:
-		db_printf("%s\t%s,", bcond_name[i.IType.rt],
+	case OP_REGIMM:
+		db_printf("%s\t%s,", regimm_name[i.IType.rt],
 		    reg_name[i.IType.rs]);
 		goto pr_displ;
 

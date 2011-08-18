@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.232 2011/08/16 06:58:15 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.233 2011/08/18 21:04:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.232 2011/08/16 06:58:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.233 2011/08/18 21:04:23 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -1016,7 +1016,7 @@ mips3_eret:
 			}
 			break;
 
-		case OP_BCOND:
+		case OP_REGIMM:
 		case OP_J:
 		case OP_JAL:
 		case OP_BEQ:

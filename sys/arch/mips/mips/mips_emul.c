@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.24 2011/08/17 06:59:29 matt Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.25 2011/08/18 21:04:23 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.24 2011/08/17 06:59:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.25 2011/08/18 21:04:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ mips_emul_branch(struct trapframe *tf, vaddr_t instpc, uint32_t fpuCSR,
 			    __func__, "non-branch", inst.word, instpc);
 		break;
 
-	case OP_BCOND:
+	case OP_REGIMM:
 		switch ((int)inst.IType.rt) {
 		case OP_BLTZ:
 		case OP_BLTZAL:

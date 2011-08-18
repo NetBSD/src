@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.17 2011/08/17 06:59:28 matt Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.18 2011/08/18 21:04:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -115,7 +115,7 @@ typedef union {
  * Values for the 'op' field.
  */
 #define OP_SPECIAL	000
-#define OP_BCOND	001
+#define OP_REGIMM	001
 #define OP_J		002
 #define OP_JAL		003
 #define OP_BEQ		004
@@ -275,7 +275,7 @@ typedef union {
 #define	OP_LX_LDX	8		/* ldx */
 
 /*
- * Values for the 'func' field when 'op' == OP_BCOND.
+ * Values for the 'func' field when 'op' == OP_REGIMM.
  */
 #define OP_BLTZ		000
 #define OP_BGEZ		001
