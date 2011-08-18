@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.56 2011/08/03 04:11:15 manu Exp $ */
+/* $NetBSD: cp.c,v 1.57 2011/08/18 08:11:58 manu Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.56 2011/08/03 04:11:15 manu Exp $");
+__RCSID("$NetBSD: cp.c,v 1.57 2011/08/18 08:11:58 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,13 +196,6 @@ main(int argc, char *argv[])
 	/* Copy the umask for explicit mode setting. */
 	myumask = umask(0);
 	(void)umask(myumask);
-
-	/* 
-	 * Warn that system extended attributes will not be preserved 
-	 * if not root
-	 */
-	if ((myuid != 0) && pflag)
-		warnx("system extended attribute will not be preserved");
 
 	/* Save the target base in "to". */
 	target = argv[--argc];
