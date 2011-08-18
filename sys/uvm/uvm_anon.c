@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.60 2011/08/14 01:20:33 rmind Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.61 2011/08/18 14:13:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.60 2011/08/14 01:20:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.61 2011/08/18 14:13:02 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -214,22 +214,19 @@ uvm_anon_free(struct vm_anon *anon)
 void
 uvm_anon_freelst(struct vm_amap *amap, struct vm_anon *anonlst)
 {
-	struct vm_anon *anon = anonlst, *prev = NULL, *next;
+	struct vm_anon *anon;
+	struct vm_anon **anonp = &anonlst;
 
 	KASSERT(mutex_owned(amap->am_lock));
-
-	while (anon) {
-		next = anon->an_link;
+	while ((anon = *anonp) != NULL) {
 		if (!uvm_anon_dispose(anon)) {
 			/* Do not free this anon. */
-			if (prev) {
-				prev->an_link = next;
-			} else {
-				anonlst = next;
-			}
+			*anonp = anon->an_link;
+			/* Note: clears an_ref as well. */
+			anon->an_link = NULL;
+		} else {
+			anonp = &anon->an_link;
 		}
-		prev = anon;
-		anon = next;
 	}
 	amap_unlock(amap);
 
