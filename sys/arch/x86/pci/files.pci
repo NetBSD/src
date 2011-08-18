@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.12 2011/06/15 06:43:20 jruoho Exp $
+#	$NetBSD: files.pci,v 1.13 2011/08/18 20:55:20 jakllsch Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -7,7 +7,9 @@ file 	arch/x86/pci/aapic.c		aapic
 file	arch/x86/pci/agp_machdep.c	agp
 
 # PCI-Host bridge chipsets
-device	pchb:	pcibus, agpbus, agp_ali, agp_amd, agp_amd64, agp_i810,
+define amdtempbus {}
+device	pchb:	pcibus, agpbus, amdtempbus,
+		agp_ali, agp_amd, agp_amd64, agp_i810,
 		agp_intel, agp_sis, agp_via
 attach	pchb at pci
 file	arch/x86/pci/pchb.c		pchb		needs-flag
@@ -27,7 +29,7 @@ file    arch/x86/pci/amdpcib_hpet.c		amdpcib_hpet
 
 # AMD Processors -- Miscellaneous Control
 device	amdtemp: sysmon_envsys
-attach	amdtemp at pci
+attach	amdtemp at amdtempbus
 file	arch/x86/pci/amdtemp.c		amdtemp
 
 # PCI-LPC bridges
