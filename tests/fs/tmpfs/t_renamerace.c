@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.12 2011/01/04 18:46:21 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.13 2011/08/18 21:44:55 riastradh Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -102,8 +102,6 @@ ATF_TC_BODY(renamerace2, tc)
 	/* usually triggers in <<1s for me */
 	sleep(4);
 	quittingtime = 1;
-
-	atf_tc_expect_timeout("PR kern/36681");
 
 	pthread_join(pt[0], NULL);
 	pthread_join(pt[1], NULL);
