@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.9 2008/04/28 20:23:06 martin Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.10 2011/08/18 02:32:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -343,7 +343,7 @@ test___getcwd()
 	CHECK("/", __getcwd(kbuf, 0xdeadbeef), -1, ERANGE); /* large negative */
 	CHECK("/", __getcwd(kbuf, 0x7000beef), 2, 0); /* large positive, rounds down */
 	CHECK("/", __getcwd(kbuf, 0x10000), 2, 0); /* slightly less large positive, rounds down */
-	CHECK("/", __getcwd(kbuf+0x100000, sizeof(kbuf)), -1, EFAULT); /* outside address space */	
+	CHECK("/", __getcwd((void *)0x10000, sizeof(kbuf)), -1, EFAULT); /* outside address space */	
 	CHECK("/", __getcwd(0, 30), -1, EFAULT);
 	CHECK("/", __getcwd((void*)0xdeadbeef, 30), -1, EFAULT);
 	CHECK("/", __getcwd(kbuf, 2), 2, 0);
