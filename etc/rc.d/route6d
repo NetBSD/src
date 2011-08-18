@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: route6d,v 1.8 2011/08/17 16:39:29 gdt Exp $
+# $NetBSD: route6d,v 1.9 2011/08/18 16:46:14 uwe Exp $
 #
 
 # PROVIDE: route6d
-# REQUIRE: network mountcritlocal mountcritremote
+# REQUIRE: network mountcritlocal
 # BEFORE:  NETWORKING
 
 $_rc_subr_loaded . /etc/rc.subr
