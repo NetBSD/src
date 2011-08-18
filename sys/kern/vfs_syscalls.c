@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.436 2011/08/17 09:29:59 manu Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.437 2011/08/18 19:34:47 manu Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.436 2011/08/17 09:29:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.437 2011/08/18 19:34:47 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3131,6 +3131,9 @@ do_sys_utimens(struct lwp *l, struct vnode *vp, const char *path, int flag,
 			error = copyin(tptr, ts, sizeof (ts));
 			if (error != 0)
 				return error;
+		} else {
+			ts[0] = tptr[0];
+			ts[1] = tptr[1];
 		}
 	}
 
