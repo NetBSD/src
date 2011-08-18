@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.101 2011/06/12 03:36:03 rmind Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.102 2011/08/18 14:17:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.101 2011/06/12 03:36:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.102 2011/08/18 14:17:08 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -300,6 +300,8 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 #endif /* defined(VMSWAP) */
 	}
 	for (i = 0; i < npages; i++) {
+		bool anon_disposed = false; /* XXX gcc */
+
 		pg = pgs[i];
 		KASSERT(swap || pg->uobject == uobj);
 		UVMHIST_LOG(ubchist, "pg %p", pg, 0,0,0);
@@ -318,6 +320,9 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 			}
 			mutex_enter(slock);
 			mutex_enter(&uvm_pageqlock);
+			anon_disposed = (pg->flags & PG_RELEASED) != 0;
+			KASSERT(!anon_disposed || pg->uobject != NULL ||
+			    pg->uanon->an_ref == 0);
 		}
 #endif /* defined(VMSWAP) */
 
@@ -399,8 +404,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 		 */
 
 		if (swap) {
-			if (pg->uobject == NULL && pg->uanon->an_ref == 0 &&
-			    (pg->flags & PG_RELEASED) != 0) {
+			if (pg->uobject == NULL && anon_disposed) {
 				mutex_exit(&uvm_pageqlock);
 				uvm_anon_release(pg->uanon);
 			} else {
