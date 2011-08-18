@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.45 2011/08/16 12:59:01 macallan Exp $	*/
+/*	$NetBSD: ffb.c,v 1.46 2011/08/18 12:53:25 macallan Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.45 2011/08/16 12:59:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.46 2011/08/18 12:53:25 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -268,7 +268,7 @@ ffb_attach(struct ffb_softc *sc)
 	} else
 		try_edid = 1;
 
-#ifdef FFB_DEBUG
+#if FFB_DEBUG > 0
 	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_TGC);
 	printf("tgc: %08x\n", DAC_READ(sc, FFB_DAC_VALUE));
 	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_DAC_CTRL);
