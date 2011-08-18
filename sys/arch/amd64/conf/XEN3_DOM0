@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.70 2011/07/23 21:12:57 jakllsch Exp $
+# $NetBSD: XEN3_DOM0,v 1.71 2011/08/18 20:55:21 jakllsch Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -293,7 +293,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
 # Hardware monitors
 
-amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
+amdtemp* at pchb?			# AMD CPU Temperature sensors
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
