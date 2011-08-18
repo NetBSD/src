@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.26 2011/07/01 18:22:08 dyoung Exp $ */
+/*	$NetBSD: pchb.c,v 1.27 2011/08/18 20:55:20 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.26 2011/07/01 18:22:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.27 2011/08/18 20:55:20 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -439,6 +439,8 @@ pchbattach(device_t parent, device_t self, void *aux)
 		memset(&pba.pba_intrtag, 0, sizeof(pba.pba_intrtag));
 		config_found_ia(self, "pcibus", &pba, pcibusprint);
 	}
+
+	config_found_ia(self, "amdtempbus", aux, NULL);
 }
 
 int
