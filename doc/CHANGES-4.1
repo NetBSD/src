@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.226 2011/07/16 00:45:58 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.227 2011/08/19 22:28:57 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4488,4 +4488,12 @@ dist/bind/lib/dns/include/dns/rdataset.h		patch
 
 	Patch bind to address CVE-2011-2464.
 	[spz, ticket #1431]
+
+src/usr.bin/compress/zopen.c					1.14-1.15
+src/usr.bin/gzip/zuncompress.c					1.9-1.11
+xsrc/xfree/xc/extras/freetype2/src/lzw/zopen.c			1.2
+xsrc/xfree/xc/lib/font/fontfile/decompress.c			1.2
+
+	Address CVE-2011-2895, buffer overflow in decompression.
+	[joerg, ticket #1433]
 
