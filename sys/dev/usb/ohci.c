@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.196.4.1 2011/08/12 20:52:25 riz Exp $	*/
+/*	$NetBSD: ohci.c,v 1.196.4.2 2011/08/19 19:45:39 riz Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.196.4.1 2011/08/12 20:52:25 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.196.4.2 2011/08/19 19:45:39 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1330,8 +1330,8 @@ ohci_softintr(void *v)
 			DPRINTFN(5,("add ITD %p\n", sitd));
 			continue;
 		}
-		device_printf(sc->sc_dev, "WARNING: addr 0x%08lx not found\n",
-		    (u_long)done);
+		printf("%s: WARNING: addr 0x%08lx not found\n",
+		    device_xname(sc->sc_dev), (u_long)done);
 		break;
 	}
 
