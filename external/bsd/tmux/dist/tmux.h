@@ -1,4 +1,4 @@
-/* $Id: tmux.h,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
+/* $Id: tmux.h,v 1.2 2011/08/19 09:06:05 christos Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1696,7 +1696,8 @@ void	 status_update_jobs(struct client *);
 void	 status_set_window_at(struct client *, u_int);
 int	 status_redraw(struct client *);
 char	*status_replace(struct client *, struct session *,
-	     struct winlink *, struct window_pane *, const char *, time_t, int);
+	     struct winlink *, struct window_pane *, const char *, time_t, int)
+    __attribute__((__format__(__strftime__, 5, 0)));
 void printflike2 status_message_set(struct client *, const char *, ...);
 void	 status_message_clear(struct client *);
 int	 status_message_redraw(struct client *);

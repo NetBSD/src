@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2011/08/18 19:05:54 jmmv Exp $
+# $NetBSD: Makefile,v 1.8 2011/08/19 09:06:05 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -208,5 +208,10 @@ CPPFLAGS+=	-DHAVE_DIRFD=1
 
 LDADD+=		-levent -lterminfo -lutil -lm
 DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
+
+COPTS.cmd-display-message.c += -Wno-format-nonliteral
+COPTS.cmd-pipe-pane.c += -Wno-format-nonliteral
+COPTS.server-client.c += -Wno-format-nonliteral
+COPTS.status.c += -Wno-format-nonliteral
 
 .include <bsd.prog.mk>

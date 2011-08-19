@@ -1,4 +1,4 @@
-/* $Id: cmd-display-message.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* $Id: cmd-display-message.c,v 1.2 2011/08/19 09:06:05 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -63,7 +63,7 @@ cmd_display_message_exec(struct cmd *self, struct cmd_ctx *ctx)
 	}
 
 	if (args->argc == 0)
-		template = "[#S] #I:#W, current pane #P - (%H:%M %d-%b-%y)";
+		template = "[#S] #I:#W, current pane #P - (%H:%M %d-%b-%Y)";
 	else
 		template = args->argv[0];
 
