@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.4 2011/08/19 08:25:07 christos Exp $ */
+/* $NetBSD: spdmem.c,v 1.5 2011/08/19 09:46:10 wiz Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.4 2011/08/19 08:25:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.5 2011/08/19 09:46:10 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,7 +124,7 @@ static const uint16_t spdmem_cycle_frac[] = {
 };
 
 /* Format string for timing info */
-#define	LATENCY	"tAA-tRCD-tRP-tRAS: %d-%d-%d-%d\n";
+#define	LATENCY	"tAA-tRCD-tRP-tRAS: %d-%d-%d-%d\n"
 
 /* sysctl stuff */
 static int hw_node = CTL_EOL;
