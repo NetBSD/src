@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/08/18 17:02:49 christos Exp $
+# $NetBSD: Makefile,v 1.3 2011/08/19 08:26:20 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -11,7 +11,6 @@ SRCS=	spdmem_i2c.c
 .PATH:	${S}/dev/ic
 
 SRCS+=	spdmem.c
-COPTS.spdmem.c += -Wno-format-nonliteral
 
 WARNS=	4
 
