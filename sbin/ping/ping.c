@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.94 2011/08/09 12:55:19 joerg Exp $	*/
+/*	$NetBSD: ping.c,v 1.95 2011/08/19 08:35:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.94 2011/08/09 12:55:19 joerg Exp $");
+__RCSID("$NetBSD: ping.c,v 1.95 2011/08/19 08:35:40 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -445,12 +445,12 @@ main(int argc, char *argv[])
 
 	loc_addr.sin_family = AF_INET;
 	loc_addr.sin_len = sizeof(struct sockaddr_in);
-	loc_addr.sin_addr.s_addr = htonl((127<<24)+1);
+	loc_addr.sin_addr.s_addr = htonl((127 << 24) + 1);
 
 	if (datalen >= (int)PHDR_LEN)	/* can we time them? */
 		pingflags |= F_TIMING;
 	packlen = datalen + 60 + 76;	/* MAXIP + MAXICMP */
-	if ((packet = (u_char *)malloc(packlen)) == NULL)
+	if ((packet = malloc(packlen)) == NULL)
 		err(1, "Out of memory");
 
 	if (pingflags & F_PING_FILLED) {
@@ -685,11 +685,11 @@ doit(void)
 
 		if (ntransmitted < npackets && d_last > 0) {
 			/* send if within 100 usec or late for next packet */
-			sec = diffsec(&next_tx,&now);
+			sec = diffsec(&next_tx, &now);
 			if (sec <= 0.0001 ||
 			    (lastrcvd && (pingflags & F_FLOOD))) {
 				pinger();
-				sec = diffsec(&next_tx,&now);
+				sec = diffsec(&next_tx, &now);
 			}
 			if (sec < 0.0)
 				sec = 0.0;
@@ -859,7 +859,7 @@ pinger(void)
 
 	opack_icmp.icmp_type = ICMP_ECHO;
 	opack_icmp.icmp_id = ident;
-	tv32.tv32_sec = htonl(now.tv_sec);
+	tv32.tv32_sec = (uint32_t)htonl(now.tv_sec);
 	tv32.tv32_usec = htonl(now.tv_usec);
 	if (pingflags & F_TIMING)
 		(void) memcpy(&opack_icmp.icmp_data[0], &tv32, sizeof(tv32));
@@ -995,7 +995,7 @@ pr_pack(u_char *buf,
 			struct tv32 tv32;
 
 			(void) memcpy(&tv32, icp->icmp_data, sizeof(tv32));
-			tv.tv_sec = ntohl(tv32.tv32_sec);
+			tv.tv_sec = (uint32_t)ntohl(tv32.tv32_sec);
 			tv.tv_usec = ntohl(tv32.tv32_usec);
 			triptime = diffsec(&last_rx, &tv);
 			tsum += triptime;
@@ -1242,7 +1242,7 @@ static double
 diffsec(struct timeval *timenow,
 	struct timeval *then)
 {
-	return ((timenow->tv_sec - then->tv_sec)*1.0
+	return ((uint32_t)(timenow->tv_sec - then->tv_sec) * 1.0
 		+ (timenow->tv_usec - then->tv_usec)/1000000.0);
 }
 
