@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.1,v 1.1.2.31 2011/08/08 19:47:38 riz Exp $
+# $NetBSD: CHANGES-5.1.1,v 1.1.2.32 2011/08/19 20:59:07 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.1.1
 release:
@@ -2499,4 +2499,14 @@ sys/sys/socketvar.h				1.126 via patch
 
 	Prevent NFS server hang under load.  PR#45093.
 	[bouyer, ticket #1644]
+
+xsrc/external/mit/freetype/dist/src/lzw/ftzopen.c		1.4
+xsrc/external/mit/libXfont/dist/src/fontfile/decompress.c 	1.2-1.3
+src/usr.bin/compress/zopen.c					1.14-1.15
+src/usr.bin/gzip/zuncompress.c					1.9-1.11
+xsrc/xfree/xc/extras/freetype2/src/lzw/zopen.c			1.2
+xsrc/xfree/xc/lib/font/fontfile/decompress.c			1.2
+
+	Address CVE-2011-2895, buffer overflow in decompression.
+	[joerg, ticket #1661]
 
