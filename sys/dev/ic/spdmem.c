@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.3 2011/08/01 03:49:52 pgoyette Exp $ */
+/* $NetBSD: spdmem.c,v 1.4 2011/08/19 08:25:07 christos Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.3 2011/08/01 03:49:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.4 2011/08/19 08:25:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,7 +124,7 @@ static const uint16_t spdmem_cycle_frac[] = {
 };
 
 /* Format string for timing info */
-static const char* latency="tAA-tRCD-tRP-tRAS: %d-%d-%d-%d\n";
+#define	LATENCY	"tAA-tRCD-tRP-tRAS: %d-%d-%d-%d\n";
 
 /* sysctl stuff */
 static int hw_node = CTL_EOL;
@@ -554,7 +554,7 @@ decode_sdram(const struct sysctlnode *node, device_t self, struct spdmem *s,
 		if (s->sm_sdr.sdr_tCAS & (1 << i))
 			tAA = i;
 	tAA++;
-	aprint_verbose_dev(self, latency, tAA, s->sm_sdr.sdr_tRCD,
+	aprint_verbose_dev(self, LATENCY, tAA, s->sm_sdr.sdr_tRCD,
 	    s->sm_sdr.sdr_tRP, s->sm_sdr.sdr_tRAS);
 
 	decode_voltage_refresh(self, s);
@@ -596,7 +596,7 @@ decode_ddr(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 #define __DDR_ROUND(scale, field)	\
 		((scale * s->sm_ddr.field + cycle_time - 1) / cycle_time)
 
-	aprint_verbose_dev(self, latency, tAA, __DDR_ROUND(250, ddr_tRCD),
+	aprint_verbose_dev(self, LATENCY, tAA, __DDR_ROUND(250, ddr_tRCD),
 		__DDR_ROUND(250, ddr_tRP), __DDR_ROUND(1000, ddr_tRAS));
 
 #undef	__DDR_ROUND
@@ -640,7 +640,7 @@ decode_ddr2(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 #define __DDR2_ROUND(scale, field)	\
 		((scale * s->sm_ddr2.field + cycle_time - 1) / cycle_time)
 
-	aprint_verbose_dev(self, latency, tAA, __DDR2_ROUND(250, ddr2_tRCD),
+	aprint_verbose_dev(self, LATENCY, tAA, __DDR2_ROUND(250, ddr2_tRCD),
 		__DDR2_ROUND(250, ddr2_tRP), __DDR2_ROUND(1000, ddr2_tRAS));
 
 #undef	__DDR_ROUND
@@ -691,7 +691,7 @@ decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 
 #define	__DDR3_CYCLES(field) (s->sm_ddr3.field / s->sm_ddr3.ddr3_tCKmin)
 
-	aprint_verbose_dev(self, latency, __DDR3_CYCLES(ddr3_tAAmin),
+	aprint_verbose_dev(self, LATENCY, __DDR3_CYCLES(ddr3_tAAmin),
 		__DDR3_CYCLES(ddr3_tRCDmin), __DDR3_CYCLES(ddr3_tRPmin), 
 		(s->sm_ddr3.ddr3_tRAS_msb * 256 + s->sm_ddr3.ddr3_tRAS_lsb) /
 		    s->sm_ddr3.ddr3_tCKmin);
@@ -725,7 +725,7 @@ decode_fbdimm(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 
 #define	__FBDIMM_CYCLES(field) (s->sm_fbd.field / s->sm_fbd.fbdimm_tCKmin)
 
-	aprint_verbose_dev(self, latency, __FBDIMM_CYCLES(fbdimm_tAAmin),
+	aprint_verbose_dev(self, LATENCY, __FBDIMM_CYCLES(fbdimm_tAAmin),
 		__FBDIMM_CYCLES(fbdimm_tRCDmin), __FBDIMM_CYCLES(fbdimm_tRPmin), 
 		(s->sm_fbd.fbdimm_tRAS_msb * 256 +
 			s->sm_fbd.fbdimm_tRAS_lsb) /
