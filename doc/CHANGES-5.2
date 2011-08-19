@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.100 2011/08/14 23:45:15 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.101 2011/08/19 20:56:08 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5523,4 +5523,19 @@ sbin/drvctl/drvctl.c				patch
 
 	Build fix for ticket 1656.
 	[jmcneill, ticket #1659]
+
+sys/dev/usb/ohci.c				patch
+
+	Build fix for ticket 1655.
+	[jmcneill, ticket #1663]
+
+xsrc/external/mit/freetype/dist/src/lzw/ftzopen.c		1.4
+xsrc/external/mit/libXfont/dist/src/fontfile/decompress.c 	1.2-1.3
+src/usr.bin/compress/zopen.c					1.14-1.15
+src/usr.bin/gzip/zuncompress.c					1.9-1.11
+xsrc/xfree/xc/extras/freetype2/src/lzw/zopen.c			1.2
+xsrc/xfree/xc/lib/font/fontfile/decompress.c			1.2
+
+	Address CVE-2011-2895, buffer overflow in decompression.
+	[joerg, ticket #1661]
 
