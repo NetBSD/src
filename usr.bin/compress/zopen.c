@@ -1,4 +1,4 @@
-/*	$NetBSD: zopen.c,v 1.12 2008/02/21 02:50:11 joerg Exp $	*/
+/*	$NetBSD: zopen.c,v 1.12.18.1 2011/08/19 20:58:33 riz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1986, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
-static char rcsid[] = "$NetBSD: zopen.c,v 1.12 2008/02/21 02:50:11 joerg Exp $";
+static char rcsid[] = "$NetBSD: zopen.c,v 1.12.18.1 2011/08/19 20:58:33 riz Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -486,7 +486,7 @@ zread(void *cookie, char *rbp, int num)
 	block_compress = maxbits & BLOCK_MASK;
 	maxbits &= BIT_MASK;
 	maxmaxcode = 1L << maxbits;
-	if (maxbits > BITS) {
+	if (maxbits > BITS || maxbits < 12) {
 		errno = EFTYPE;
 		return (-1);
 	}
@@ -497,14 +497,7 @@ zread(void *cookie, char *rbp, int num)
 		tab_suffixof(code) = (char_type) code;
 	}
 	free_ent = block_compress ? FIRST : 256;
-
-	finchar = oldcode = getcode(zs);
-	if (oldcode == -1)	/* EOF already? */
-		return (0);	/* Get out of here */
-
-	/* First code must be 8 bits = char. */
-	*bp++ = (u_char)finchar;
-	count--;
+	oldcode = -1;
 	stackp = de_stack;
 
 	while ((code = getcode(zs)) > -1) {
@@ -513,17 +506,28 @@ zread(void *cookie, char *rbp, int num)
 			for (code = 255; code >= 0; code--)
 				tab_prefixof(code) = 0;
 			clear_flg = 1;
-			free_ent = FIRST - 1;
-			if ((code = getcode(zs)) == -1)	/* O, untimely death! */
-				break;
+			free_ent = FIRST;
+			oldcode = -1;
+			continue;
 		}
 		incode = code;
 
-		/* Special case for KwKwK string. */
+		/* Special case for kWkWk string. */
 		if (code >= free_ent) {
+			if (code > free_ent || oldcode == -1) {
+				/* Bad stream. */
+				errno = EINVAL;
+				return (-1);
+			}
 			*stackp++ = finchar;
 			code = oldcode;
 		}
+		/*
+		 * The above condition ensures that code < free_ent.
+		 * The construction of tab_prefixof in turn guarantees that
+		 * each iteration decreases code and therefore stack usage is
+		 * bound by 1 << BITS - 256.
+		 */
 
 		/* Generate output characters in reverse order. */
 		while (code >= 256) {
@@ -540,7 +544,7 @@ middle:		do {
 		} while (stackp > de_stack);
 
 		/* Generate the new entry. */
-		if ((code = free_ent) < maxmaxcode) {
+		if ((code = free_ent) < maxmaxcode && oldcode != -1) {
 			tab_prefixof(code) = (u_short) oldcode;
 			tab_suffixof(code) = finchar;
 			free_ent = code + 1;
