@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.23 2011/02/02 15:21:34 vanhu Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.24 2011/08/19 05:36:47 tteras Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -307,6 +307,7 @@ hexstring	0x{hexdigit}+
 <S_INI>remote		{ BEGIN S_RMT; YYDB; return(REMOTE); }
 <S_RMT>anonymous	{ YYD; return(ANONYMOUS); }
 <S_RMT>inherit		{ YYD; return(INHERIT); }
+<S_RMT>{semi}		{ BEGIN S_INI; YYDB; return(EOS); }
 	/* remote spec */
 <S_RMT>{bcl}		{ BEGIN S_RMTS; return(BOC); }
 <S_RMTS>{ecl}		{ BEGIN S_INI; return(EOC); }
