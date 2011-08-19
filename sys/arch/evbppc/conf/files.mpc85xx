@@ -1,4 +1,4 @@
-#	$NetBSD: files.mpc85xx,v 1.6 2011/07/25 05:45:08 matt Exp $
+#	$NetBSD: files.mpc85xx,v 1.7 2011/08/19 02:18:26 matt Exp $
 #
 # mpc85xx-specific configuration info
 
@@ -45,6 +45,7 @@ device	pq3pcie: pcibus
 attach	pq3pci at cpunode with pq3pci_cpunode
 attach	pq3pcie at cpunode with pq3pcie_cpunode
 file	arch/powerpc/booke/pci/pq3pci.c		pq3pci_cpunode | pq3pcie_cpunode
+file	arch/powerpc/pci/pci_machdep_common.c	pci
 file	arch/powerpc/pci/pci_module.c		pci & modular
 
 device	mkclock: mk48txx
