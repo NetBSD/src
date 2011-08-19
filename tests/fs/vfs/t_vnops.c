@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.27 2011/08/11 10:52:12 uch Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.28 2011/08/19 01:25:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -534,6 +534,17 @@ symlink_zerolen(const atf_tc_t *tc, const char *mp)
 }
 
 static void
+symlink_root(const atf_tc_t *tc, const char *mp)
+{
+
+	USES_SYMLINKS;
+
+	RL(rump_sys_chdir(mp));
+	RL(rump_sys_symlink("/", "foo"));
+	RL(rump_sys_chdir("foo"));
+}
+
+static void
 attrs(const atf_tc_t *tc, const char *mp)
 {
 	struct stat sb, sb2;
@@ -827,6 +838,7 @@ ATF_TC_FSAPPLY(create_nametoolong, "create file with name too long");
 ATF_TC_FSAPPLY(create_exist, "create with O_EXCL");
 ATF_TC_FSAPPLY(rename_nametoolong, "rename to file with name too long");
 ATF_TC_FSAPPLY(symlink_zerolen, "symlink with 0-len target");
+ATF_TC_FSAPPLY(symlink_root, "symlink to root directory");
 ATF_TC_FSAPPLY(attrs, "check setting attributes works");
 ATF_TC_FSAPPLY(fcntl_lock, "check fcntl F_SETLK");
 ATF_TC_FSAPPLY(fcntl_getlock_pids,"fcntl F_GETLK w/ many procs, PR kern/44494");
@@ -847,6 +859,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(create_exist);
 	ATF_TP_FSAPPLY(rename_nametoolong);
 	ATF_TP_FSAPPLY(symlink_zerolen);
+	ATF_TP_FSAPPLY(symlink_root);
 	ATF_TP_FSAPPLY(attrs);
 	ATF_TP_FSAPPLY(fcntl_lock);
 	ATF_TP_FSAPPLY(fcntl_getlock_pids);
