@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.173 2011/07/21 03:13:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.174 2011/08/20 22:16:56 plunky Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -76,12 +76,13 @@ SUBDIR+=	../gnu/lib/libobjc4
 . else
 SUBDIR+=	../external/gpl3/gcc/lib/libobjc
 . endif
-.endif
-
+. if ${HAVE_GCC} >= 45 && !defined(MLIBDIR)
 # Should probably move GMP, MPFR and MPC builds into the GCC >= 4.5
 # specific build area, but we get better parallelism this way.
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && !defined(MLIBDIR)
 SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
+SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
+SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
+. endif
 .endif
 
 #
@@ -133,10 +134,6 @@ SUBDIR+=	../external/gpl3/gcc/lib/libsupc++
 . endif
 .endif
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && !defined(MLIBDIR)
-SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
-.endif
-
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
@@ -164,10 +161,6 @@ SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
 .endif
 
 SUBDIR+=	librumphijack
-
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && !defined(MLIBDIR)
-SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
-.endif
 
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
