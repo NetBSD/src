@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.7 2010/07/20 19:24:11 jakllsch Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.8 2011/08/20 16:03:48 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -137,9 +137,13 @@ struct ahci_r_fis {
 #define AHCI_PI		0x0c /* Port implemented: one bit per port */
 
 #define AHCI_VS		0x10 /* AHCI version */
-#define 	AHCI_VS_10	0x00010000 /* AHCI spec 1.0 */
-#define 	AHCI_VS_11	0x00010100 /* AHCI spec 1.1 */
-#define 	AHCI_VS_12	0x00010200 /* AHCI spec 1.2 */
+#define		AHCI_VS_095	0x00000905 /* AHCI spec 0.95 */
+#define		AHCI_VS_100	0x00010000 /* AHCI spec 1.0 */
+#define		AHCI_VS_110	0x00010100 /* AHCI spec 1.1 */
+#define		AHCI_VS_120	0x00010200 /* AHCI spec 1.2 */
+#define		AHCI_VS_130	0x00010300 /* AHCI spec 1.3 */
+#define AHCI_VS_MJR(v) ((unsigned int)__SHIFTOUT(v, __BITS(31, 16)))
+#define AHCI_VS_MNR(v) ((unsigned int)__SHIFTOUT(v, __BITS(15, 8)) * 10 + (unsigned int)__SHIFTOUT(v, __BITS(7, 0) * 1))
 
 #define AHCI_CC_CTL	0x14 /* command completion coalescing control */
 #define 	AHCI_CC_TV_MASK	0xffff0000 /* timeout value */
