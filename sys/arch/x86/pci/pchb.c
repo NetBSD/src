@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.28 2011/08/20 19:06:57 jakllsch Exp $ */
+/*	$NetBSD: pchb.c,v 1.29 2011/08/20 19:43:47 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.28 2011/08/20 19:06:57 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.29 2011/08/20 19:43:47 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,8 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.28 2011/08/20 19:06:57 jakllsch Exp $");
 #include <dev/pci/agpvar.h>
 
 #include <arch/x86/pci/pchbvar.h>
-
-#include "rnd.h"
 
 #define PCISET_BRIDGETYPE_MASK	0x3
 #define PCISET_TYPE_COMPAT	0x1
