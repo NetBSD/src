@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.5 2011/08/13 12:06:23 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.6 2011/08/20 20:14:04 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -61,6 +61,7 @@ int	thunk_fstat(int, struct stat *);
 ssize_t	thunk_pread(int, void *, size_t, off_t);
 ssize_t	thunk_pwrite(int, const void *, size_t, off_t);
 int	thunk_fsync(int);
+int	thunk_mkstemp(const char *);
 
 int	thunk_sigaction(int, const struct sigaction *, struct sigaction *);
 
@@ -68,5 +69,7 @@ int	thunk_aio_read(struct aiocb *);
 int	thunk_aio_write(struct aiocb *);
 int	thunk_aio_error(const struct aiocb *);
 int	thunk_aio_return(struct aiocb *);
+
+void *	thunk_sbrk(intptr_t len);
 
 #endif /* !_ARCH_USERMODE_INCLUDE_THUNK_H */
