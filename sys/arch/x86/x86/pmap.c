@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.121.2.5 2011/08/17 09:40:39 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.121.2.6 2011/08/20 19:22:47 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121.2.5 2011/08/17 09:40:39 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121.2.6 2011/08/20 19:22:47 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1503,10 +1503,18 @@ pmap_prealloc_lowmem_ptps(void)
 			HYPERVISOR_update_va_mapping (newp + KERNBASE,
 			    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
 		xpq_queue_lock();
+		/* Update the pmap_kernel() L4 shadow */
 		xpq_queue_pte_update (
 		    xpmap_ptom_masked(pdes_pa)
 		    + (pl_i(0, level) * sizeof (pd_entry_t)),
 		    xpmap_ptom_masked(newp) | PG_RW | PG_u | PG_V);
+
+		/* sync to per-cpu PD */
+		xpq_queue_pte_update(
+			xpmap_ptom_masked(cpu_info_primary.ci_kpm_pdirpa +
+			    pl_i(0, PTP_LEVELS) *
+			    sizeof(pd_entry_t)),
+			pmap_kernel()->pm_pdir[pl_i(0, PTP_LEVELS)]);
 		xpq_queue_unlock();
 		pmap_pte_flush();
 
@@ -1515,15 +1523,6 @@ pmap_prealloc_lowmem_ptps(void)
 			break;
 		pdes_pa = newp;
 	}
-
-	/* sync to per-cpu PD */
-	xpq_queue_lock();
-	xpq_queue_pte_update(
-		xpmap_ptom_masked(ci_pdirpa(&cpu_info_primary,
-					    pl_i(0, PTP_LEVELS))),
-				  pmap_kernel()->pm_pdir[pl_i(0, PTP_LEVELS)]);
-	xpq_queue_unlock();
-	pmap_pte_flush();
 #else /* XEN */
 	pd_entry_t *pdes;
 
@@ -1580,7 +1579,7 @@ pmap_init(void)
 /*
  * pmap_cpu_init_late: perform late per-CPU initialization.
  */
-
+#ifndef XEN
 void
 pmap_cpu_init_late(struct cpu_info *ci)
 {
@@ -1620,31 +1619,8 @@ pmap_cpu_init_late(struct cpu_info *ci)
 
 	pmap_update(pmap_kernel());
 #endif
-#if defined(XEN) && defined (__x86_64)
-	KASSERT(ci != NULL);
-
-	ci->ci_kpm_pdir = (pd_entry_t *)uvm_km_alloc(kernel_map,
-						     PAGE_SIZE, 0, UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_NOWAIT);
-	if (ci->ci_kpm_pdir == NULL) {
-		panic("%s: failed to allocate L4 per-cpu PD for CPU %d\n",
-		      __func__, cpu_index(ci));
-	}
-	ci->ci_kpm_pdirpa = vtophys((vaddr_t) ci->ci_kpm_pdir);
-	KASSERT(ci->ci_kpm_pdirpa != 0);
-
-	cpu_load_pmap(pmap_kernel());
-
-	pmap_kenter_pa((vaddr_t)ci->ci_kpm_pdir, ci->ci_kpm_pdirpa,
-		VM_PROT_READ, 0);
-
-	pmap_update(pmap_kernel());
-
-	xpq_queue_lock();
-	xpq_queue_pin_l4_table(xpmap_ptom_masked(ci->ci_kpm_pdirpa));
-	xpq_queue_unlock();
-
-#endif /* defined(XEN) && defined (__x86_64__) */
 }
+#endif
 
 /*
  * p v _ e n t r y   f u n c t i o n s
@@ -4163,7 +4139,6 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 #ifdef XEN
 	int s = splvm(); /* protect xpq_* */
 #endif
-
 	for (level = lvl; level > 1; level--) {
 		if (level == PTP_LEVELS){
 			pdep = pmap_kernel()->pm_pdir;
@@ -4179,6 +4154,7 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 
 		for (i = index; i <= endindex; i++) {
 			pt_entry_t pte;
+
 			KASSERT(!pmap_valid_entry(pdep[i]));
 			pmap_get_physpage(va, &pa);
 			pte = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
@@ -4186,18 +4162,25 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			xpq_queue_lock();
 			switch (level) {
 			case PTP_LEVELS: 
-#ifdef __x86_64__
-				/* update the per-cpu L4 */
-				xpq_queue_pte_update(
-					xpmap_ptom(ci_pdirpa(&cpu_info_primary, i)), pte);
-#endif /* __x86_64__ */
+#if defined(PAE) || defined(__x86_64__)
+				if (i >= PDIR_SLOT_KERN) {
+					/* update per-cpu PMDs on all cpus */
+					CPU_INFO_ITERATOR cii;
+					struct cpu_info *ci;
+					for (CPU_INFO_FOREACH(cii, ci)) {
+						if (ci == NULL) {
+							continue;
+						}
 #ifdef PAE
-				if (i > L2_SLOT_KERN) {
-					/* update real kernel PD too */
-					xpq_queue_pte_update(
-						xpmap_ptetomach(&pmap_kl2pd[l2tol2(i)]), pte);
+						xpq_queue_pte_update(
+							xpmap_ptetomach(&ci->ci_kpm_pdir[l2tol2(i)]), pte);
+#elif defined(__x86_64__)
+						xpq_queue_pte_update(
+							xpmap_ptetomach(&ci->ci_kpm_pdir[i]), pte);
+#endif /* PAE */
+					}
 				}
-#endif
+#endif /* PAE || __x86_64__ */
 				/* FALLTHROUGH */
 
 			default: /* All other levels */

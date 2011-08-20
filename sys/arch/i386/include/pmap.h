@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.109.2.1 2011/07/31 20:49:11 cherry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.109.2.2 2011/08/20 19:22:46 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -277,7 +277,7 @@
  * mapping, because it points to the shadow PD. Use the kernel PD instead,
  * which is static
  */
-#define APDP_PDE	(&pmap_kl2pd[l2tol2(PDIR_SLOT_APTE)])
+#define APDP_PDE	(&curcpu()->ci_kpm_pdir[l2tol2(PDIR_SLOT_APTE)])
 #define APDP_PDE_SHADOW	(L2_BASE + PDIR_SLOT_APTE)
 #else /* PAE && XEN */
 #define APDP_PDE	(L2_BASE + PDIR_SLOT_APTE)
@@ -439,13 +439,6 @@ pmap_pte_flush(void)
 }
 
 #endif
-
-#ifdef PAE
-/* Address of the static kernel's L2 page */
-pd_entry_t *pmap_kl2pd;
-paddr_t pmap_kl2paddr;
-#endif
-
 
 struct trapframe;
 

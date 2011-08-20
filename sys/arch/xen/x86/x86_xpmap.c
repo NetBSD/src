@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.26.2.6 2011/08/17 09:40:40 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.26.2.7 2011/08/20 19:22:47 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.6 2011/08/17 09:40:40 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.7 2011/08/20 19:22:47 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -751,8 +751,9 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	memset (bt_pgd, 0, PAGE_SIZE);
 	avail = new_pgd + PAGE_SIZE;
 #if PTP_LEVELS > 3
-	/* per-cpu "shadow" pmd */
+	/* per-cpu L4 PD */
 	pd_entry_t *bt_cpu_pgd = bt_pgd;
+	/* pmap_kernel() "shadow" L4 PD */
 	bt_pgd = (pd_entry_t *) avail;
 	memset(bt_pgd, 0, PAGE_SIZE);
 	avail += PAGE_SIZE;
@@ -909,8 +910,9 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	 * pde[L2_SLOT_KERN] always point to the shadow.
 	 */
 	memcpy(&pde[L2_SLOT_KERN + NPDPG], &pde[L2_SLOT_KERN], PAGE_SIZE);
-	pmap_kl2pd = &pde[L2_SLOT_KERN + NPDPG];
-	pmap_kl2paddr = (u_long)pmap_kl2pd - KERNBASE;
+	cpu_info_primary.ci_kpm_pdir = &pde[L2_SLOT_KERN + NPDPG];
+	cpu_info_primary.ci_kpm_pdirpa =
+	    (vaddr_t) cpu_info_primary.ci_kpm_pdir - KERNBASE;
 
 	/*
 	 * We don't enter a recursive entry from the L3 PD. Instead,
@@ -1012,7 +1014,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	}
 #elif defined(__x86_64__)
 	if (final) {
-		/* save the address of the shadow L4 pgd page */
+		/* save the address of the real per-cpu L4 pgd page */
 		cpu_info_primary.ci_kpm_pdir = bt_cpu_pgd;
 		cpu_info_primary.ci_kpm_pdirpa = ((paddr_t) bt_cpu_pgd - KERNBASE);
 	}

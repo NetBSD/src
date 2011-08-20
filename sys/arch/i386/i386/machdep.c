@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.702.2.4 2011/08/07 19:48:07 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.702.2.5 2011/08/20 19:22:46 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.702.2.4 2011/08/07 19:48:07 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.702.2.5 2011/08/20 19:22:46 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1437,7 +1437,7 @@ init386(paddr_t first_avail)
 	avail_start = first_avail;
 	avail_end = ctob(xen_start_info.nr_pages) + XPMAP_OFFSET;
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
-	pmap_pa_end = avail_end;
+	pmap_pa_end = pmap_pa_start + ctob(xen_start_info.nr_pages);
 	mem_clusters[0].start = avail_start;
 	mem_clusters[0].size = avail_end - avail_start;
 	mem_cluster_cnt++;
