@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.8 2011/08/20 16:03:48 jakllsch Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.9 2011/08/20 16:08:07 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -115,8 +115,9 @@ struct ahci_r_fis {
 #define		AHCI_CAP_SAM	0x00040000 /* AHCI-only */
 #define		AHCI_CAP_NZO	0x00080000 /* Non-zero DMA offset (reserved) */
 #define		AHCI_CAP_IS	0x00f00000 /* Interface speed */
-#define		AHCI_CAP_IS_GEN1	0x00100000 /* 1.5 GB/s */
-#define		AHCI_CAP_IS_GEN2	0x00200000 /* 1.5 and 3 GB/s */
+#define		AHCI_CAP_IS_GEN1	0x00100000 /* 1.5 Gb/s */
+#define		AHCI_CAP_IS_GEN2	0x00200000 /* 3.0 Gb/s */
+#define		AHCI_CAP_IS_GEN3	0x00300000 /* 6.0 Gb/s */
 #define		AHCI_CAP_CLO	0x01000000 /* Command list override */
 #define		AHCI_CAP_AL	0x02000000 /* Single Activitly LED */
 #define		AHCI_CAP_ALP	0x04000000 /* Agressive link power management */
