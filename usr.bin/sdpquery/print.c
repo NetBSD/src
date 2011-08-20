@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.17 2011/08/14 13:27:47 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.18 2011/08/20 09:18:47 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.17 2011/08/14 13:27:47 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.18 2011/08/20 09:18:47 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -85,7 +85,9 @@ static void print_string(sdp_data_t *);
 static void print_string_list(sdp_data_t *);
 static void print_url(sdp_data_t *);
 static void print_profile_version(sdp_data_t *);
+static void print_codeset_string(const char *, size_t, const char *);
 static void print_language_string(sdp_data_t *);
+static void print_utf8_string(sdp_data_t *);
 
 static void print_service_class_id_list(sdp_data_t *);
 static void print_protocol_descriptor(sdp_data_t *);
@@ -251,8 +253,8 @@ attr_t bp_attrs[] = {	/* Basic Printing */
 	{ 0x0354, "XHTML-PrintImageFormatsSupported",	print_string_list },
 	{ 0x0356, "ColorSupported",			print_bool },
 	{ 0x0358, "1284ID",				print_1284id },
-	{ 0x035a, "PrinterName",			print_string },
-	{ 0x035c, "PrinterLocation",			print_string },
+	{ 0x035a, "PrinterName",			print_utf8_string },
+	{ 0x035c, "PrinterLocation",			print_utf8_string },
 	{ 0x035e, "DuplexSupported",			print_bool },
 	{ 0x0360, "MediaTypesSupported",		print_string_list },
 	{ 0x0362, "MaxMediaWidth",			print_uint16d },
@@ -263,7 +265,7 @@ attr_t bp_attrs[] = {	/* Basic Printing */
 	{ 0x0372, "DirectPrintingRUISupported",		print_bool },
 	{ 0x0374, "ReferencePrintingTopURL",		print_url },
 	{ 0x0376, "DirectPrintingTopURL",		print_url },
-	{ 0x037a, "DeviceName",				print_string },
+	{ 0x037a, "DeviceName",				print_utf8_string },
 };
 
 attr_t bi_attrs[] = {	/* Basic Imaging */
@@ -307,9 +309,9 @@ attr_t hid_attrs[] = {	/* Human Interface Device */
 
 attr_t hcr_attrs[] = {	/* Hardcopy Cable Replacement */
 	{ 0x0300, "1284ID",				print_1284id },
-	{ 0x0302, "DeviceName",				print_string },
-	{ 0x0304, "FriendlyName",			print_string },
-	{ 0x0306, "DeviceLocation",			print_string },
+	{ 0x0302, "DeviceName",				print_utf8_string },
+	{ 0x0304, "FriendlyName",			print_utf8_string },
+	{ 0x0306, "DeviceLocation",			print_utf8_string },
 };
 
 attr_t pnp_attrs[] = {	/* Device ID */
@@ -825,6 +827,30 @@ print_profile_version(sdp_data_t *data)
 	printf("v%d.%d\n", (v >> 8), (v & 0xff));
 }
 
+static void
+print_codeset_string(const char *src, size_t srclen, const char *codeset)
+{
+	char buf[50], *dst;
+	iconv_t ih;
+	size_t n, dstlen;
+
+	dst = buf;
+	dstlen = sizeof(buf);
+
+	ih = iconv_open(nl_langinfo(CODESET), codeset);
+	if (ih == (iconv_t)-1) {
+		printf("Can't convert %s string\n", codeset);
+		return;
+	}
+
+	n = iconv(ih, &src, &srclen, &dst, &dstlen);
+
+	iconv_close(ih);
+
+	printf("\"%.*s%s\n", (int)(sizeof(buf) - dstlen), buf,
+	    (srclen > 0 ? " ..." : "\""));
+}
+
 /*
  * This should only be called through print_language_attribute() which
  * sets codeset of the string to be printed.
@@ -832,31 +858,26 @@ print_profile_version(sdp_data_t *data)
 static void
 print_language_string(sdp_data_t *data)
 {
-	char buf[50], *dst, *src;
-	iconv_t ih;
-	size_t n, srcleft, dstleft;
+	char *str;
+	size_t len;
 
-	if (!sdp_get_str(data, &src, &srcleft))
+	if (!sdp_get_str(data, &str, &len))
 		return;
 
-	dst = buf;
-	dstleft = sizeof(buf);
+	print_codeset_string(str, len, language[current].codeset);
+}
 
-	ih = iconv_open(nl_langinfo(CODESET), language[current].codeset);
-	if (ih == (iconv_t)-1) {
-		printf("Can't convert %s string\n", language[current].codeset);
+
+static void
+print_utf8_string(sdp_data_t *data)
+{
+	char *str;
+	size_t len;
+
+	if (!sdp_get_str(data, &str, &len))
 		return;
-	}
 
-	n = iconv(ih, (void *)&src, &srcleft, &dst, &dstleft);
-
-	iconv_close(ih);
-
-	if (Nflag || n > 0)
-		printf("(%s) ", language[current].codeset);
-
-	printf("\"%.*s%s\n", (int)(sizeof(buf) - dstleft), buf,
-	    (srcleft > 0 ? " ..." : "\""));
+	print_codeset_string(str, len, "UTF-8");
 }
 
 static void
