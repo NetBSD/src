@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 2011/08/17 14:52:09 dyoung Exp $	*/
+/*	$NetBSD: bus.h,v 1.8 2011/08/20 06:00:14 he Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -159,8 +159,15 @@ void	bus_space_trim(bus_space_tag_t, bus_space_reservation_t *, bus_size_t,
 #include <sys/bus_proto.h>
 
 #include <machine/bus_funcs.h>
-#else
+
+#else /* !__HAVE_NEW_STYLE_BUS_H */
+
 #include <machine/bus.h>
-#endif
+
+bool	bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
+bool	bus_space_handle_is_equal(bus_space_tag_t, bus_space_handle_t,
+    bus_space_handle_t);
+
+#endif /* __HAVE_NEW_STYLE_BUS_H */
 
 #endif	/* _SYS_BUS_H_ */
