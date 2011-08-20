@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.29 2011/08/20 19:43:47 jakllsch Exp $ */
+/*	$NetBSD: pchb.c,v 1.30 2011/08/20 19:49:55 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.29 2011/08/20 19:43:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.30 2011/08/20 19:49:55 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,9 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.29 2011/08/20 19:43:47 jakllsch Exp $");
 #define I82424_BCTL_PCIMEM_BURSTEN	0x01
 #define I82424_BCTL_PCI_BURSTEN		0x02
 
-int	pchbmatch(device_t, cfdata_t, void *);
-void	pchbattach(device_t, device_t, void *);
-int	pchbdetach(device_t, int);
+static int	pchbmatch(device_t, cfdata_t, void *);
+static void	pchbattach(device_t, device_t, void *);
+static int	pchbdetach(device_t, int);
 
 static bool	pchb_resume(device_t, const pmf_qual_t *);
 static bool	pchb_suspend(device_t, const pmf_qual_t *);
@@ -79,7 +79,7 @@ static bool	pchb_suspend(device_t, const pmf_qual_t *);
 CFATTACH_DECL3_NEW(pchb, sizeof(struct pchb_softc),
     pchbmatch, pchbattach, pchbdetach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
-int
+static int
 pchbmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -91,7 +91,7 @@ pchbmatch(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
-int
+static int
 pchb_get_bus_number(pci_chipset_tag_t pc, pcitag_t tag)
 {
 	pcireg_t dev_id;
@@ -146,7 +146,7 @@ pchb_get_bus_number(pci_chipset_tag_t pc, pcitag_t tag)
 	return -1;
 }
 
-void
+static void
 pchbattach(device_t parent, device_t self, void *aux)
 {
 	struct pchb_softc *sc = device_private(self);
@@ -443,7 +443,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 	config_found_ia(self, "amdtempbus", aux, NULL);
 }
 
-int
+static int
 pchbdetach(device_t self, int flags)
 {
 	int rc;
