@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.27 2011/08/18 20:55:20 jakllsch Exp $ */
+/*	$NetBSD: pchb.c,v 1.28 2011/08/20 19:06:57 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.27 2011/08/18 20:55:20 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.28 2011/08/20 19:06:57 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -168,6 +168,8 @@ pchbattach(device_t parent, device_t self, void *aux)
 	attachflags = pa->pa_flags;
 
 	sc->sc_dev = self;
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_tag = pa->pa_tag;
 
 	/*
 	 * Print out a description, and configure certain chipsets which
