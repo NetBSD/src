@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.174 2011/08/20 22:16:56 plunky Exp $
+#	$NetBSD: Makefile,v 1.175 2011/08/20 22:23:47 plunky Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -95,10 +95,11 @@ SUBDIR+=	.WAIT
 SUBDIR+=	libcurses	# depends on libterminfo
 SUBDIR+=	libdm		# depends on libprop
 SUBDIR+=	libedit		# depends on libterminfo
+SUBDIR+=	libperfuse	# depends on libpuffs
 SUBDIR+=	libquota	# depends on libprop and librpcsvc
 SUBDIR+=	librefuse	# depends on libpuffs
-SUBDIR+=	libperfuse	# depends on libpuffs
 SUBDIR+=	librumpuser	# depends on libpthread
+SUBDIR+=	librumphijack	# depends on librumpclient and libpthread
 
 .if (${MKNPF} != "no")
 SUBDIR+=	libnpf		# depends on libprop
@@ -138,15 +139,14 @@ SUBDIR+=	../external/gpl3/gcc/lib/libsupc++
 SUBDIR+=	.WAIT
 
 SUBDIR+=	libform		# depends on libcurses
+SUBDIR+=	libmenu		# depends on libcurses
+SUBDIR+=	libradius	# depends on libcrypto if (${MKCRYPTO} != "no")
+SUBDIR+=	librump		# depends on librumpuser
 
 .if (${MKKERBEROS} != "no")
 SUBDIR+=	../crypto/external/bsd/heimdal/lib	# depends on libcrypto
 							# libedit, libterminfo,
 .endif
-
-SUBDIR+=	libmenu		# depends on libcurses
-SUBDIR+=	libradius	# depends on libcrypto if (${MKCRYPTO} != "no")
-SUBDIR+=	librump		# depends on librumpuser
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/openssh/lib # depends on libcrypto, libz
@@ -160,14 +160,20 @@ SUBDIR+=	../external/bsd/fetch/lib	# depends on libssl
 SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
 .endif
 
-SUBDIR+=	librumphijack
-
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
 SUBDIR+=	librumpdev	# depends on librump
 SUBDIR+=	librumpnet	# depends on librump
 SUBDIR+=	librumpvfs	# depends on librump
+
+.if (${MKPAM} != "no")
+SUBDIR+=	libpam		# depends on heimdal
+.endif
+
+.if (${MKCRYPTO} != "no")
+SUBDIR+=	../crypto/external/bsd/libsaslc	# depends on heimdal, openssl
+.endif
 
 #==================== 4th library dependency barrier ====================
 SUBDIR+=	.WAIT
@@ -178,16 +184,5 @@ SUBDIR+=	libukfs		# depends on librumpvfs, librump
 SUBDIR+=	.WAIT
 
 SUBDIR+=	libp2k		# depends on libukfs, librumpvfs, libpuffs
-
-.if (${MKPAM} != "no")
-SUBDIR+=	libpam		# depends on libkafs, libkrb5, ...
-.endif
-
-#==================== 6th library dependency barrier ====================
-SUBDIR+=	.WAIT
-
-.if (${MKCRYPTO} != "no")
-SUBDIR+=	../crypto/external/bsd/libsaslc		# depends on gssapi
-.endif
 
 .include <bsd.subdir.mk>
