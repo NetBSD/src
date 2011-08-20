@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.31 2011/08/20 19:56:31 jakllsch Exp $ */
+/*	$NetBSD: pchb.c,v 1.32 2011/08/20 20:01:08 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.31 2011/08/20 19:56:31 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.32 2011/08/20 20:01:08 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,12 +72,16 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.31 2011/08/20 19:56:31 jakllsch Exp $");
 static int	pchbmatch(device_t, cfdata_t, void *);
 static void	pchbattach(device_t, device_t, void *);
 static int	pchbdetach(device_t, int);
+static int	pchbrescan(device_t, const char *, const int *);
+static void	pchbchilddet(device_t, device_t);
 
 static bool	pchb_resume(device_t, const pmf_qual_t *);
 static bool	pchb_suspend(device_t, const pmf_qual_t *);
 
+static void	pchb_amdtempbus_configure(struct pchb_softc *);
+
 CFATTACH_DECL3_NEW(pchb, sizeof(struct pchb_softc),
-    pchbmatch, pchbattach, pchbdetach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
+    pchbmatch, pchbattach, pchbdetach, NULL, pchbrescan, pchbchilddet, DVF_DETACH_SHUTDOWN);
 
 static int
 pchbmatch(device_t parent, cfdata_t match, void *aux)
@@ -166,8 +170,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 	attachflags = pa->pa_flags;
 
 	sc->sc_dev = self;
-	sc->sc_pc = pa->pa_pc;
-	sc->sc_tag = pa->pa_tag;
+	sc->sc_pa = *pa;
 
 	/*
 	 * Print out a description, and configure certain chipsets which
@@ -440,7 +443,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 		config_found_ia(self, "pcibus", &pba, pcibusprint);
 	}
 
-	config_found_ia(self, "amdtempbus", aux, NULL);
+	pchb_amdtempbus_configure(sc);
 }
 
 static int
@@ -456,6 +459,28 @@ pchbdetach(device_t self, int flags)
 	return 0;
 }
 
+static int
+pchbrescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct pchb_softc *sc = device_private(self);
+
+	if (ifattr_match(ifattr, "amdtempbus"))
+		pchb_amdtempbus_configure(sc);
+
+	return 0;
+}
+
+static void
+pchbchilddet(device_t self, device_t child)
+{
+	struct pchb_softc *sc = device_private(self);
+
+	if (sc->sc_amdtempbus == child) {
+		sc->sc_amdtempbus = NULL;
+		return;
+	}
+}
+
 static bool
 pchb_suspend(device_t dv, const pmf_qual_t *qual)
 {
@@ -464,8 +489,8 @@ pchb_suspend(device_t dv, const pmf_qual_t *qual)
 	pcitag_t tag;
 	int off;
 
-	pc = sc->sc_pc;
-	tag = sc->sc_tag;
+	pc = sc->sc_pa.pa_pc;
+	tag = sc->sc_pa.pa_tag;
 
 	for (off = 0x40; off <= 0xff; off += 4)
 		sc->sc_pciconfext[(off - 0x40) / 4] = pci_conf_read(pc, tag, off);
@@ -481,11 +506,20 @@ pchb_resume(device_t dv, const pmf_qual_t *qual)
 	pcitag_t tag;
 	int off;
 
-	pc = sc->sc_pc;
-	tag = sc->sc_tag;
+	pc = sc->sc_pa.pa_pc;
+	tag = sc->sc_pa.pa_tag;
 
 	for (off = 0x40; off <= 0xff; off += 4)
 		pci_conf_write(pc, tag, off, sc->sc_pciconfext[(off - 0x40) / 4]);
 
 	return true;
+}
+
+static void
+pchb_amdtempbus_configure(struct pchb_softc *sc)
+{
+	if (sc->sc_amdtempbus != NULL)
+		return;
+
+	sc->sc_amdtempbus = config_found_ia(sc->sc_dev, "amdtempbus", &sc->sc_pa, NULL);
 }
