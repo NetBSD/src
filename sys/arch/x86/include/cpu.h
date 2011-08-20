@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34.2.4 2011/08/17 09:40:39 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34.2.5 2011/08/20 19:22:47 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -180,12 +180,14 @@ struct cpu_info {
 	pd_entry_t *	ci_pae_l3_pdir; /* VA pointer to L3 PD */
 #endif
 
-#if defined(XEN) && defined(__x86_64__)
+#if defined(XEN) && (defined(PAE) || defined(__x86_64__))
 	/* Currently active user PGD (can't use rcr3() with Xen) */
-	pd_entry_t *	ci_kpm_pdir;	/* per-cpu L4 PD (va) */
-	paddr_t		ci_kpm_pdirpa; /* per-cpu L4 PD (pa) */
+	pd_entry_t *	ci_kpm_pdir;	/* per-cpu PMD (va) */
+	paddr_t		ci_kpm_pdirpa; /* per-cpu PMD (pa) */
+#if defined(__x86_64__)
 	paddr_t		ci_xen_current_user_pgd;
-#endif
+#endif /* __x86_64__ */
+#endif /* XEN et.al */
 
 	char *ci_doubleflt_stack;
 	char *ci_ddbipi_stack;
@@ -231,11 +233,6 @@ struct cpu_info {
 	int		ci_want_resched __aligned(64);
 	int		ci_padout __aligned(64);
 };
-
-#ifdef __x86_64__
-#define ci_pdirpa(ci, index) \
-	((ci)->ci_kpm_pdirpa + (index) * sizeof(pd_entry_t))
-#endif /* __x86_64__ */
 
 /*
  * Macros to handle (some) trapframe registers for common x86 code.

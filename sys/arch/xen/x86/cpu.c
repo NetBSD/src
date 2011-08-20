@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.56.2.6 2011/08/17 09:40:39 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.56.2.7 2011/08/20 19:22:47 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.6 2011/08/17 09:40:39 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.7 2011/08/20 19:22:47 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1022,7 +1022,11 @@ xen_init_i386_vcpuctxt(struct cpu_info *ci,
 	 * Use pmap_kernel() L4 PD directly, until we setup the
 	 * per-cpu L4 PD in pmap_cpu_init_late()
 	 */
+#ifdef PAE
+	initctx->ctrlreg[3] = xpmap_ptom(ci->ci_pae_l3_pdirpa);
+#else /* PAE */
 	initctx->ctrlreg[3] = xpmap_ptom(pcb->pcb_cr3);
+#endif /* PAE */
 	initctx->ctrlreg[4] = /* CR4_PAE |  */CR4_OSFXSR | CR4_OSXMMEXCPT;
 
 
@@ -1262,20 +1266,12 @@ cpu_load_pmap(struct pmap *pmap)
 	new_pgd = pmap->pm_pdir;
 
 	xpq_queue_lock();
-	/* Copy source pmap L4 PDEs (in user addr. range) to shadow */
+
+	/* Copy user pmap L4 PDEs (in user addr. range) to per-cpu L4 */
 	for (i = 0; i < PDIR_SLOT_PTE; i++) {
 		xpq_queue_pte_update(l3_shadow_pa + i * sizeof(pd_entry_t), new_pgd[i]);
 	}
 
-	/* Copy kernel mappings */
-	new_pgd = pmap_kernel()->pm_pdir;
-	for (i = PDIR_SLOT_KERN; i < nkptp[PTP_LEVELS - 1]; i++) {
-		xpq_queue_pte_update(l3_shadow_pa + i * sizeof(pd_entry_t), new_pgd[i]);
-	}
-
-	xpq_queue_unlock();
-	tlbflush();
-	xpq_queue_lock();
 	if (__predict_true(pmap != pmap_kernel())) {
 		xen_set_user_pgd(pmap_pdirpa(pmap, 0));
 		ci->ci_xen_current_user_pgd = pmap_pdirpa(pmap, 0);
@@ -1285,10 +1281,118 @@ cpu_load_pmap(struct pmap *pmap)
 		ci->ci_xen_current_user_pgd = 0;
 	}
 	xpq_queue_unlock();
+
+	tlbflush();
+
 	splx(s);
 
 #endif /* __x86_64__ */
 }
+
+/*
+ * pmap_cpu_init_late: perform late per-CPU initialization.
+ */
+
+void
+pmap_cpu_init_late(struct cpu_info *ci)
+{
+#if defined(PAE) || defined(__x86_64__)
+	/*
+	 * The BP has already its own PD page allocated during early
+	 * MD startup.
+	 */
+
+	if (ci == &cpu_info_primary)
+		return;
+
+	KASSERT(ci != NULL);
+
+#ifdef PAE
+	{
+		int ret;
+		struct pglist pg;
+		struct vm_page *vmap;
+
+		/*
+		 * Allocate a page for the per-CPU L3 PD. cr3 being 32 bits, PA musts
+		 * resides below the 4GB boundary.
+		 */
+		ret = uvm_pglistalloc(PAGE_SIZE, 0,
+		    0x100000000ULL, 32, 0, &pg, 1, 0);
+
+		vmap = TAILQ_FIRST(&pg);
+
+		if (ret != 0 || vmap == NULL)
+			panic("%s: failed to allocate L3 pglist for CPU %d (ret %d)\n",
+			    __func__, cpu_index(ci), ret);
+
+		ci->ci_pae_l3_pdirpa = vmap->phys_addr;
+
+		ci->ci_pae_l3_pdir = (paddr_t *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+
+		if (ci->ci_pae_l3_pdir == NULL)
+			panic("%s: failed to allocate L3 PD for CPU %d\n",
+			    __func__, cpu_index(ci));
+		pmap_kenter_pa((vaddr_t)ci->ci_pae_l3_pdir, ci->ci_pae_l3_pdirpa,
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
+	}
+	/* Initialise L2 entries 0 - 2: Point them to pmap_kernel() */
+	ci->ci_pae_l3_pdir[0] =
+	    xpmap_ptom_masked(pmap_kernel()->pm_pdirpa[0]) | PG_V;
+	ci->ci_pae_l3_pdir[1] =
+	    xpmap_ptom_masked(pmap_kernel()->pm_pdirpa[1]) | PG_V;
+	ci->ci_pae_l3_pdir[2] =
+	    xpmap_ptom_masked(pmap_kernel()->pm_pdirpa[2]) | PG_V;
+#endif /* PAE */
+
+	ci->ci_kpm_pdir = (pd_entry_t *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_NOWAIT);
+
+	if (ci->ci_kpm_pdir == NULL) {
+		panic("%s: failed to allocate L4 per-cpu PD for CPU %d\n",
+		      __func__, cpu_index(ci));
+	}
+	ci->ci_kpm_pdirpa = vtophys((vaddr_t) ci->ci_kpm_pdir);
+	KASSERT(ci->ci_kpm_pdirpa != 0);
+	/*
+	 * Copy over kernel pmd entries from boot
+	 * cpu. XXX:locking/races
+	 */
+
+	memcpy(ci->ci_kpm_pdir,
+	    &pmap_kernel()->pm_pdir[PDIR_SLOT_KERN],
+	    nkptp[PTP_LEVELS - 1] * sizeof(pd_entry_t));
+
+	/* Xen wants R/O */
+	pmap_kenter_pa((vaddr_t)ci->ci_kpm_pdir, ci->ci_kpm_pdirpa,
+	    VM_PROT_READ, 0);
+
+#ifdef PAE
+	/* Initialise L3 entry 3. This mapping is shared across all
+	 * pmaps and is static, ie; loading a new pmap will not update
+	 * this entry.
+	 */
+	
+	ci->ci_pae_l3_pdir[3] = xpmap_ptom_masked(ci->ci_kpm_pdirpa) | PG_V;
+
+	/* Mark L3 R/O (Xen wants this) */
+	pmap_kenter_pa((vaddr_t)ci->ci_pae_l3_pdir, ci->ci_pae_l3_pdirpa,
+		VM_PROT_READ, 0);
+
+	xpq_queue_lock();
+	xpq_queue_pin_l3_table(xpmap_ptom_masked(ci->ci_pae_l3_pdirpa));
+	xpq_queue_unlock();
+
+#elif defined(__x86_64__)	
+	xpq_queue_lock();
+	xpq_queue_pin_l4_table(xpmap_ptom_masked(ci->ci_kpm_pdirpa));
+	xpq_queue_unlock();
+#endif /* PAE */
+#endif /* defined(PAE) || defined(__x86_64__) */
+}
+
+
 
 /*
  * Notify all other cpus to halt.
@@ -1307,5 +1411,5 @@ cpu_broadcast_halt(void)
 void
 cpu_kick(struct cpu_info *ci)
 {
-	xen_send_ipi(ci, XEN_IPI_KICK);
+	(void)xen_send_ipi(ci, XEN_IPI_KICK);
 }
