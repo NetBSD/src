@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.5 2011/08/13 12:06:23 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.6 2011/08/20 20:14:04 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.5 2011/08/13 12:06:23 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.6 2011/08/20 20:14:04 reinoud Exp $");
 
 #include <machine/thunk.h>
 
@@ -161,6 +161,12 @@ thunk_fsync(int fd)
 }
 
 int
+thunk_mkstemp(const char *template)
+{
+	return mkstemp(template);
+}
+
+int
 thunk_sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
 {
 	return sigaction(sig, act, oact);
@@ -189,3 +195,10 @@ thunk_aio_return(struct aiocb *aiocbp)
 {
 	return aio_return(aiocbp);
 }
+
+void *
+thunk_sbrk(intptr_t len)
+{
+	return sbrk(len);
+}
+
