@@ -1,4 +1,4 @@
-/*	$$NetBSD: pwdog.c,v 1.1 2011/08/11 07:33:24 mbalmer Exp $ */
+/*	$$NetBSD: pwdog.c,v 1.2 2011/08/20 07:32:34 mbalmer Exp $ */
 /*	$OpenBSD: pwdog.c,v 1.7 2010/04/08 00:23:53 tedu Exp $ */
 
 /*
@@ -26,8 +26,6 @@
 #include <sys/module.h>
 #endif
 #include <sys/systm.h>
-
-/* #include <machine/bus.h> */
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -159,7 +157,10 @@ pwdog_setmode(struct sysmon_wdog *smw)
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, PWDOG_DISABLE, 0);
 		break;
 	default:
-		/* NB:  the timer period set by the user is ignored */
+		/*
+		 * NB: the timer period set by the user is ignored
+		 * since the period can only be set in hardware.
+		 */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, PWDOG_ACTIVATE, 0);
 	}
 	return 0;
