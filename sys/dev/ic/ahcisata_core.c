@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.31 2011/01/10 11:18:14 tsutsui Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.32 2011/08/20 16:03:48 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.31 2011/01/10 11:18:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.32 2011/08/20 16:03:48 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -211,6 +211,7 @@ ahci_attach(struct ahci_softc *sc)
 	struct ata_channel *chp;
 	int error;
 	int dmasize;
+	char buf[128];
 	void *cmdhp;
 	void *cmdtblp;
 
@@ -221,25 +222,37 @@ ahci_attach(struct ahci_softc *sc)
 	sc->sc_atac.atac_nchannels = (ahci_cap & AHCI_CAP_NPMASK) + 1;
 	sc->sc_ncmds = ((ahci_cap & AHCI_CAP_NCS) >> 8) + 1;
 	ahci_rev = AHCI_READ(sc, AHCI_VS);
-	aprint_normal("%s: AHCI revision ", AHCINAME(sc));
-	switch(ahci_rev) {
-	case AHCI_VS_10:
-		aprint_normal("1.0");
-		break;
-	case AHCI_VS_11:
-		aprint_normal("1.1");
-		break;
-	case AHCI_VS_12:
-		aprint_normal("1.2");
-		break;
-	default:
-		aprint_normal("0x%x", ahci_rev);
-		break;
-	}
+	snprintb(buf, sizeof(buf), "\177\020"
+			/* "f\000\005NP\0" */
+			"b\005SXS\0"
+			"b\006EMS\0"
+			"b\007CCCS\0"
+			/* "f\010\005NCS\0" */
+			"b\015PSC\0"
+			"b\016SSC\0"
+			"b\017PMD\0"
+			"b\020FBSS\0"
+			"b\021SPM\0"
+			"b\022SAM\0"
+			"b\023SNZO\0"
+			"f\024\003ISS\0"
+			"=\001Gen1\0"
+			"=\002Gen2\0"
+			"=\003Gen3\0"
+			"b\030SCLO\0"
+			"b\031SAL\0"
+			"b\032SALP\0"
+			"b\033SSS\0"
+			"b\034SMPS\0"
+			"b\035SSNTF\0"
+			"b\036SNCQ\0"
+			"b\037S64A\0"
+			"\0", ahci_cap);
+	aprint_normal_dev(sc->sc_atac.atac_dev, "AHCI revision %u.%u"
+	    ", %d ports, %d slots, CAP %s\n",
+	    AHCI_VS_MJR(ahci_rev), AHCI_VS_MNR(ahci_rev),
+	    sc->sc_atac.atac_nchannels, sc->sc_ncmds, buf);
 
-	aprint_normal(", %d ports, %d command slots, features 0x%x\n",
-	    sc->sc_atac.atac_nchannels, sc->sc_ncmds,
-	    ahci_cap & ~(AHCI_CAP_NPMASK|AHCI_CAP_NCS));
 	sc->sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DMA | ATAC_CAP_UDMA;
 	sc->sc_atac.atac_cap |= sc->sc_atac_capflags;
 	sc->sc_atac.atac_pio_cap = 4;
