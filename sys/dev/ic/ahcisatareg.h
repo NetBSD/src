@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.9 2011/08/20 16:08:07 jakllsch Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.10 2011/08/20 16:10:02 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -175,6 +175,18 @@ struct ahci_r_fis {
 #define		AHCI_EMC_RST	0x00000200 /* Reset */
 #define		AHCI_EMC_TM	0x00000100 /* Transmit message */
 #define		AHCI_EMC_MR	0x00000001 /* Message received */
+
+#define AHCI_CAP2	0x24 /* HBA Capabilities Extended */
+#define		AHCI_CAP2_APST	0x00000004
+#define		AHCI_CAP2_NVMP	0x00000002
+#define		AHCI_CAP2_BOH	0x00000001
+
+#define AHCI_BOHC	0x28 /* BIOS/OS Handoff Control and Status */
+#define		AHCI_BOHC_BB	0x00000010
+#define		AHCI_BOHC_OOC	0x00000008
+#define		AHCI_BOHC_SOOE	0x00000004
+#define		AHCI_BOHC_OOS	0x00000002
+#define		AHCI_BOHC_BOS	0x00000001
 
 /* Per-port registers */
 #define AHCI_P_OFFSET(port) (0x80 * (port))
