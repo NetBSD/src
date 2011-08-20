@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.30 2011/08/20 19:49:55 jakllsch Exp $ */
+/*	$NetBSD: pchb.c,v 1.31 2011/08/20 19:56:31 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.30 2011/08/20 19:49:55 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.31 2011/08/20 19:56:31 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,7 +91,7 @@ pchbmatch(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
-static int
+int
 pchb_get_bus_number(pci_chipset_tag_t pc, pcitag_t tag)
 {
 	pcireg_t dev_id;
