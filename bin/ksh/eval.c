@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.13 2011/08/14 10:40:25 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.14 2011/08/21 21:24:34 dholland Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,12 +6,13 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.13 2011/08/14 10:40:25 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.14 2011/08/21 21:24:34 dholland Exp $");
 #endif
 
+#include <stdint.h>
+#include <pwd.h>
 
 #include "sh.h"
-#include <pwd.h>
 #include "ksh_dir.h"
 #include "ksh_stat.h"
 

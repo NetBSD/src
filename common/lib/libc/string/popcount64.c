@@ -1,4 +1,4 @@
-/*	$NetBSD: popcount64.c,v 1.5 2009/08/05 15:04:15 joerg Exp $	*/
+/*	$NetBSD: popcount64.c,v 1.6 2011/08/21 21:25:04 dholland Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: popcount64.c,v 1.5 2009/08/05 15:04:15 joerg Exp $");
+__RCSID("$NetBSD: popcount64.c,v 1.6 2011/08/21 21:25:04 dholland Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <limits.h>
+#include <stdint.h>
 #include <strings.h>
 #else
 #include <lib/libkern/libkern.h>
