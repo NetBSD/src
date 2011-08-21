@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_dlc.c,v 1.6 2008/08/06 15:01:24 plunky Exp $	*/
+/*	$NetBSD: rfcomm_dlc.c,v 1.7 2011/08/21 14:20:34 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_dlc.c,v 1.6 2008/08/06 15:01:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_dlc.c,v 1.7 2011/08/21 14:20:34 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -187,7 +187,7 @@ rfcomm_dlc_close(struct rfcomm_dlc *dlc, int err)
 /*
  * rfcomm_dlc_timeout(dlc)
  *
- * DLC timeout function is schedUled when we sent any of SABM,
+ * DLC timeout function is scheduled when we sent any of SABM,
  * DISC, MCC_MSC, or MCC_PN and should be cancelled when we get
  * the relevant response. There is nothing to do but shut this
  * DLC down.
