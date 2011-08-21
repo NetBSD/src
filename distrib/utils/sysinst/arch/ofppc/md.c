@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2011/04/04 08:30:39 mbalmer Exp $	*/
+/*	$NetBSD: md.c,v 1.9 2011/08/21 13:40:08 phx Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -297,8 +297,7 @@ int
 md_post_newfs(void)
 {
 
-	/* just in case */
-	run_program(RUN_DISPLAY, "/sbin/umount /targetroot/boot");
+	/* No bootblock. We use ofwboot from a partition visiable by OFW. */
 	return 0;
 }
 
@@ -316,25 +315,16 @@ md_post_extract(void)
 	    "/tmp/bootinfo.txt", version, bootinfo_mbr);
 
 	if (!nobootfix) {
-		snprintf(bootdev, sizeof bootdev, "/dev/r%s%c", diskdev,
-		    'a'+bootpart_fat12);
-		snprintf(bootbdev, sizeof bootbdev, "/dev/%s%c", diskdev,
-		    'a'+bootpart_fat12);
-
-		if (nonewfsmsdos == 0)
-			run_program(RUN_DISPLAY, "/sbin/newfs_msdos %s",
-			    bootdev);
-		run_program(RUN_DISPLAY, "/sbin/mount_msdos %s /mnt2",
-		    bootbdev);
-		run_program(RUN_DISPLAY, "/bin/mkdir -p /mnt2/ppc");
-		run_program(RUN_DISPLAY, "/bin/mkdir -p /mnt2/netbsd");
+		run_program(RUN_DISPLAY, "/bin/mkdir -p /%s/boot/ppc",
+		    target_prefix());
+		run_program(RUN_DISPLAY, "/bin/mkdir -p /%s/boot/netbsd",
+		    target_prefix());
 		run_program(RUN_DISPLAY, "/bin/cp /usr/mdec/ofwboot "
-		    "/mnt2/netbsd");
+		    "/%s/boot/netbsd", target_prefix());
 		run_program(RUN_DISPLAY, "/bin/cp /tmp/bootinfo.txt "
-		    "/mnt2/ppc");
-		run_program(RUN_DISPLAY,
-		    "/bin/cp /usr/mdec/ofwboot /mnt2/ofwboot");
-		run_program(RUN_DISPLAY, "/sbin/umount /mnt2");
+		    "/%s/boot/ppc", target_prefix());
+		run_program(RUN_DISPLAY, "/bin/cp /usr/mdec/ofwboot "
+		    "/%s/boot/ofwboot", target_prefix());
 	}
 
 	if (!noprepfix) {
