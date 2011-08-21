@@ -2153,7 +2153,7 @@ convert_code_r(p)
 	    {
 		u_int i;
 		int jt, jf;
-#define ljerr "%s for block-local relative jump: off=%d"
+static const char ljerr[] = "%s for block-local relative jump: off=%d";
 
 #if 0
 		printf("code=%x off=%d %x %x\n", src->s.code,
