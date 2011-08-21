@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.96 2011/08/20 14:38:09 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.97 2011/08/21 06:39:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.96 2011/08/20 14:38:09 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.97 2011/08/21 06:39:09 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -1242,6 +1242,8 @@ static double
 diffsec(struct timeval *timenow,
 	struct timeval *then)
 {
+	if (timenow->tv_sec == 0)
+		return -1;
 	return ((int32_t)((uint32_t)timenow->tv_sec - (uint32_t)then->tv_sec)
 	    * 1.0 + (timenow->tv_usec - then->tv_usec)/1000000.0);
 }
