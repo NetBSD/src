@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2011/08/14 09:38:05 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2011/08/21 08:40:31 christos Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -39,7 +39,7 @@ __COPYRIGHT(
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.24 2011/08/14 09:38:05 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2011/08/21 08:40:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,6 +105,8 @@ const char *prompt;			/* command-line prompt */
 const char *dps = "*";		/* default command-line prompt */
 
 
+static const char usage[] = "Usage: %s [-] [-sxE] [-p string] [name]\n";
+
 /* ed: line editor */
 int
 main(int ac, char *av[])
@@ -136,9 +138,7 @@ top:
 			ere = REG_EXTENDED;
 			break;
 		default:
-			fprintf(stderr, 
-			    "Usage: %s [-] [-sxE] [-p string] [name]\n",
-			    getprogname());
+			fprintf(stderr, usage, getprogname());
 			exit(1);
 			/* NOTREACHED */
 		}
