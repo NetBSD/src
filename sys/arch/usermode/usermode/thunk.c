@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.7 2011/08/21 15:10:57 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.8 2011/08/21 17:11:59 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.7 2011/08/21 15:10:57 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.8 2011/08/21 17:11:59 reinoud Exp $");
 
 #include <machine/thunk.h>
 
@@ -161,7 +161,7 @@ thunk_fsync(int fd)
 }
 
 int
-thunk_mkstemp(const char *template)
+thunk_mkstemp(char *template)
 {
 	return mkstemp(template);
 }
@@ -207,3 +207,10 @@ thunk_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
 	return mmap(addr, len, prot, flags, fd, offset);
 }
+
+int
+thunk_mprotect(void *addr, size_t len, int prot)
+{
+	return mprotect(addr, len, prot);
+}
+
