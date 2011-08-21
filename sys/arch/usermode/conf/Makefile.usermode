@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.10 2011/08/13 10:33:52 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.11 2011/08/21 15:06:27 reinoud Exp $
 
 MACHINE_ARCH=			usermode
 USETOOLS?=			no
@@ -40,8 +40,8 @@ MD_SFILES=
 ##
 SYSTEM_LD=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
-		${CC} ${COPTS} -Wl,-Map,$@.map -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o ${USERMODE_LIBS}; \
-		${CC} ${COPTS} -Wl,-Map,$@.map -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o ${USERMODE_LIBS}
+		${CC} ${COPTS} -Wl,-Map,$@.map,-Bstatic -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o ${USERMODE_LIBS}; \
+		${CC} ${COPTS} -Wl,-Map,$@.map,-Bstatic -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o ${USERMODE_LIBS}
 NVFLAGS=	-n
 
 ##
