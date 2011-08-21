@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.6 2011/08/20 20:14:04 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.7 2011/08/21 15:10:57 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.6 2011/08/20 20:14:04 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.7 2011/08/21 15:10:57 reinoud Exp $");
 
 #include <machine/thunk.h>
 
@@ -202,3 +202,8 @@ thunk_sbrk(intptr_t len)
 	return sbrk(len);
 }
 
+void *
+thunk_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
+{
+	return mmap(addr, len, prot, flags, fd, offset);
+}
