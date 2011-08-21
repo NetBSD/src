@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.5 2011/04/04 08:30:39 mbalmer Exp $	*/
+/*	$NetBSD: md.h,v 1.6 2011/08/21 15:21:46 phx Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,6 +72,8 @@
 #define DEFUSRSIZE	256	/* Default /usr size, if /home */
 #define XNEEDMB		120	/* Extra megs for full X installation */
 
+/* allow using tmpfs for /tmp instead of mfs */
+#define HAVE_TMPFS
 
 /*
  *  Default filesets to fetch and install during installation
