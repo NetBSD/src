@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.17 2011/08/16 11:14:04 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.18 2011/08/21 08:50:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.17 2011/08/16 11:14:04 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.18 2011/08/21 08:50:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ show_card(int y, int x, CARD c, CARD *lc)
 	*lc = c;
 }
 
-#define	Score_fmt "%4d"
+static const char Score_fmt[] = "%4d";
 
 void
 prscore(bool for_real)
