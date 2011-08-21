@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.51 2011/05/30 13:03:56 joerg Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.51.2.1 2011/08/21 11:24:10 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.51 2011/05/30 13:03:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.51.2.1 2011/08/21 11:24:10 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -663,7 +663,9 @@ out_loop:
 		 * those first!
 		 */
 		s2 = splvm();
+		xpq_queue_lock();
 		xpq_flush_queue();
+		xpq_queue_unlock();		
 		splx(s2);
 		/* now decrease reservation */
 		xenguest_handle(reservation.extent_start) = xennet_pages;
