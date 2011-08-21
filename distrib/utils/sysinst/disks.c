@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.115 2011/08/16 18:28:41 wiz Exp $ */
+/*	$NetBSD: disks.c,v 1.116 2011/08/21 15:06:41 phx Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -747,15 +747,18 @@ make_fstab(void)
 
 	if (tmp_ramdisk_size != 0) {
 #ifdef HAVE_TMPFS
-		scripting_fprintf(f, "tmpfs\t\t/tmp\ttmpfs\trw,-m=1777,-s=%d\n",
+		scripting_fprintf(f, "tmpfs\t\t/tmp\ttmpfs\trw,-m=1777,-s=%"
+		    PRIi64 "\n",
 		    tmp_ramdisk_size * 512);
 #else
 		if (swap_dev != -1)
-			scripting_fprintf(f, "/dev/%s%c\t\t/tmp\tmfs\trw,-s=%d\n",
-				diskdev, 'a' + swap_dev, tmp_ramdisk_size);
+			scripting_fprintf(f, "/dev/%s%c\t\t/tmp\tmfs\trw,-s=%"
+			    PRIi64 "\n",
+			    diskdev, 'a' + swap_dev, tmp_ramdisk_size);
 		else
-			scripting_fprintf(f, "swap\t\t/tmp\tmfs\trw,-s=%d\n",
-				tmp_ramdisk_size);
+			scripting_fprintf(f, "swap\t\t/tmp\tmfs\trw,-s=%"
+			    PRIi64 "\n",
+			    tmp_ramdisk_size);
 #endif
 	}
 
