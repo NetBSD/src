@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.437 2011/08/18 19:34:47 manu Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.438 2011/08/22 22:09:07 enami Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.437 2011/08/18 19:34:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.438 2011/08/22 22:09:07 enami Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3137,10 +3137,13 @@ do_sys_utimens(struct lwp *l, struct vnode *vp, const char *path, int flag,
 		}
 	}
 
-	if (ts[0].tv_nsec == UTIME_NOW)
+	if (ts[0].tv_nsec == UTIME_NOW) {
 		nanotime(&ts[0]);
-
-	if (ts[1].tv_nsec == UTIME_NOW)
+		if (ts[1].tv_nsec == UTIME_NOW) {
+			vanull = true;
+			ts[1] = ts[0];
+		}
+	} else if (ts[1].tv_nsec == UTIME_NOW)
 		nanotime(&ts[1]);
 
 	if (vp == NULL) {
