@@ -1,4 +1,4 @@
-/* $Id: colour.c,v 1.2 2011/08/22 06:52:35 he Exp $ */
+/* $Id: colour.c,v 1.3 2011/08/22 09:19:51 he Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -113,7 +113,7 @@ colour_rgb_find(struct colour_rgb *rgb)
 
 	colour = 16;
 	lowest = UINT_MAX;
-	for (i = 1; i < 240; i++) {
+	for (i = 0; i < 240; i++) {
 		distance = colour_rgb_distance(&colour_rgb_256[i], rgb);
 		if (distance < lowest) {
 			lowest = distance;
