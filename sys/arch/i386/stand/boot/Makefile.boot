@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.54 2011/07/01 01:26:16 mrg Exp $
+# $NetBSD: Makefile.boot,v 1.55 2011/08/22 09:43:08 mrg Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -50,6 +50,8 @@ KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 CPUFLAGS=  -march=i386 -mtune=i386
 .endif
 .endif
+
+CFLAGS+=   -mno-sse -mno-sse2 -mno-sse3
 
 COPTS+=    -ffreestanding
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
