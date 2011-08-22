@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.11 2011/08/22 21:45:38 jmcneill Exp $ */
+/* $NetBSD: pmap.c,v 1.12 2011/08/22 21:59:09 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2011/08/22 21:45:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2011/08/22 21:59:09 reinoud Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_memsize.h"
@@ -121,15 +121,18 @@ pmap_bootstrap(void)
 	aprint_debug("  end of init. data at %p\n", &edata);
 	aprint_debug("1st end of data     at %p\n", &end);
 	aprint_debug("CUR end data        at %p\n", thunk_sbrk(0));
-	assert(&end == thunk_sbrk(0));
 
 	/* calculate sections of the kernel (R+X) */
-	kmem_k_start = (paddr_t) PAGE_SIZE * (atop(_init)   );
-	kmem_k_end   = (paddr_t) PAGE_SIZE * (atop(&etext) + 1);
+	kmem_k_start = (vaddr_t) PAGE_SIZE * (atop(_init)   );
+	kmem_k_end   = (vaddr_t) PAGE_SIZE * (atop(&etext) + 1);
 
 	/* read only section (for userland R, kernel RW) */
-	kmem_data_start = (paddr_t) PAGE_SIZE * (atop(&etext));
-	kmem_data_end   = (paddr_t) PAGE_SIZE * (atop(&end) + 1);
+	kmem_data_start = (vaddr_t) PAGE_SIZE * (atop(&etext));
+	kmem_data_end   = (vaddr_t) PAGE_SIZE * (atop(&end) + 1);
+	if (kmem_data_end > (vaddr_t) thunk_sbrk(0)) {
+		aprint_debug("sbrk() has advanced, catching up\n");
+		kmem_data_end = (vaddr_t) PAGE_SIZE * (atop(thunk_sbrk(0))+1);
+	}
 
 #ifdef DIAGNOSTIC
 	if (kmem_k_end >= kmem_data_start) {
@@ -272,9 +275,9 @@ pmap_bootstrap(void)
 
 	aprint_debug("leaving pmap_bootstrap:\n");
 	aprint_debug("\t%"PRIu64" MB of physical pages left\n",
-		(uint64_t)(free_end - (free_start + fpos))/1024/1024);
+		(uint64_t) (free_end - (free_start + fpos))/1024/1024);
 	aprint_debug("\t%"PRIu64" MB of kmem left\n",
-		(uint64_t)(kmem_ext_end - kmem_ext_cur_end)/1024/1024);
+		(uint64_t) (kmem_ext_end - kmem_ext_cur_end)/1024/1024);
 }
 
 void
@@ -354,13 +357,17 @@ pv_get(pmap_t pmap, int ppn, int lpn)
 
 	/* If the head entry's free use that. */
 	pv = &pv_table[ppn];
+printf("pmap %p, ppn %d, lpn %d, pv %p\n", pmap, ppn, lpn, pv);
 	if (pv->pv_pmap == NULL) {
 		UVMHIST_LOG(pmaphist, "<-- head (pv=%p)", pv, 0, 0, 0);
 		pmap->pm_stats.resident_count++;
 		return pv;
 	}
+printf("pmap = %p, pv->pv_pmap = %p\n", pmap, pv->pv_pmap);
 	/* If this mapping exists already, use that. */
+printf("pv_get: mapping exists\n");
 	for (pv = pv; pv != NULL; pv = pv->pv_next) {
+printf("pv = %p\n", pv);
 		if (pv->pv_pmap == pmap && pv->pv_lpn == lpn) {
 			UVMHIST_LOG(pmaphist, "<-- existing (pv=%p)",
 			    pv, 0, 0, 0);
@@ -479,6 +486,7 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 	pv->pv_lpn    = lpn;
 	pv->pv_prot   = prot;
 	pv->pv_vflags = 0;
+	pv->pv_next   = NULL;
 	if (flags & PMAP_WIRED)
 		pv->pv_vflags |= PV_WIRED;
 
