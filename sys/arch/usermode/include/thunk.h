@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.8 2011/08/21 17:11:59 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.9 2011/08/22 15:30:16 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -73,6 +73,7 @@ int	thunk_aio_return(struct aiocb *);
 
 void *	thunk_sbrk(intptr_t len);
 void *	thunk_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset);
+int	thunk_munmap(void *Addr, size_t len);
 int	thunk_mprotect(void *addr, size_t len, int prot);
 
 #endif /* !_ARCH_USERMODE_INCLUDE_THUNK_H */
