@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.391 2011/06/30 18:15:13 matt Exp $
+#	$NetBSD: Makefile,v 1.392 2011/08/22 18:54:05 jym Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -630,7 +630,7 @@ snap_md_post: .PHONY check_DESTDIR check_RELEASEDIR snap_post
 clean:
 	-rm -rf ${CDROM.dir} ${CDROM.pathlist} ${OBSOLETE.dir}
 
-SUBDIR=	rc.d mtree
+SUBDIR=	defaults rc.d mtree
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
