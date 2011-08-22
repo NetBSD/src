@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.438 2011/08/22 22:09:07 enami Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.439 2011/08/22 22:12:34 enami Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.438 2011/08/22 22:09:07 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.439 2011/08/22 22:12:34 enami Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3092,8 +3092,6 @@ sys_utimensat(struct lwp *l, const struct sys_utimensat_args *uap,
 
 	return do_sys_utimens(l, NULL, SCARG(uap, path), follow,
 	    tptr, UIO_USERSPACE);
-
-	return ENOSYS;
 }
 
 /*
