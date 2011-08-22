@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.2.2.3 2011/08/20 19:22:47 cherry Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.2.2.4 2011/08/22 17:39:19 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.2.2.3 2011/08/20 19:22:47 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.2.2.4 2011/08/22 17:39:19 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -212,7 +212,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 
 	/* the kernel's pmap is always accessible */
 	if (pmap == pmap_kernel()) {
-		mutex_enter(pmap->pm_lock);
 		*pmap2 = NULL;
 		*ptepp = PTE_BASE;
 		*pdeppp = normal_pdes;
@@ -327,7 +326,6 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 {
 
 	if (pmap == pmap_kernel()) {
-		mutex_exit(pmap->pm_lock);
 		return;
 	}
 	KASSERT(kpreempt_disabled());
