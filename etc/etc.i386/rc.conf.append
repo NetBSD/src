@@ -1,4 +1,4 @@
-#	$NetBSD: rc.conf,v 1.1 2011/08/22 18:54:06 jym Exp $
+#	$NetBSD: rc.conf.append,v 1.1 2011/08/22 20:48:39 jym Exp $
 #
 # Arch-specific rc.conf(5) configuration.
 
