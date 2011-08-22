@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.11 2011/08/21 15:06:27 reinoud Exp $
+# $NetBSD: Makefile.usermode,v 1.12 2011/08/22 15:27:32 reinoud Exp $
 
 MACHINE_ARCH=			usermode
 USETOOLS?=			no
@@ -16,7 +16,7 @@ GENASSYM_CONF=	${USERMODE}/usermode/genassym.cf
 ##
 USERMODE_LIBS=	-lrt
 
-DEFCOPTS=	-O2 -fno-omit-frame-pointer
+DEFCOPTS=	-fno-omit-frame-pointer
 CPPFLAGS+=	-Dusermode
 CPPFLAGS.init_main.c+=	-Dmain=kernmain
 
