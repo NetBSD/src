@@ -1,4 +1,4 @@
-/* $NetBSD: t_fmemopen.c,v 1.2 2010/11/03 16:10:22 christos Exp $ */
+/* $NetBSD: t_fmemopen.c,v 1.3 2011/08/22 00:33:16 dholland Exp $ */
 
 /*-
  * Copyright (c)2010 Takehiko NOZAKI,
@@ -50,6 +50,7 @@
 #endif
 
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <limits.h>
 #include <stdlib.h>
