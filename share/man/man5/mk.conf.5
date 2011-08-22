@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.56 2011/08/06 08:49:04 wiz Exp $
+.\"	$NetBSD: mk.conf.5,v 1.57 2011/08/22 02:37:15 dholland Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 6, 2011
+.Dd August 22, 2011
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -424,6 +424,15 @@ built and installed.
 .YorN
 Indicates whether the Kerberos v5 infrastructure
 (libraries and support programs) is built and installed.
+Caution: the default
+.Xr pam 8
+configuration requires that Kerberos be present even if not used.
+Do not install a userland without Kerberos without also either
+updating the
+.Xr pam.conf 5
+files or disabling PAM via
+.Sy MKPAM .
+Otherwise all logins will fail.
 .DFLTy
 .
 .It Sy MKKMOD
