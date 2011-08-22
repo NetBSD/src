@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/08/22 18:54:06 jym Exp $
+#	$NetBSD: Makefile,v 1.5 2011/08/22 20:48:38 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -11,9 +11,10 @@ CONFIGFILES+=	rc_conf
 FILESNAME_rc_conf=	rc.conf
 FILESBUILD_rc_conf=	yes
 
+# If present, rc.conf.append is added to the end of the default rc.conf file
 RCCONF_SRCS=	${.CURDIR}/rc.conf
-.if exists(../etc.${MACHINE}/rc.conf)
-RCCONF_SRCS+=	${.CURDIR}/../etc.${MACHINE}/rc.conf
+.if exists(../etc.${MACHINE}/rc.conf.append)
+RCCONF_SRCS+=	${.CURDIR}/../etc.${MACHINE}/rc.conf.append
 .endif
 
 rc_conf: ${RCCONF_SRCS}
