@@ -1,4 +1,4 @@
-# $NetBSD: std.usermode,v 1.4 2011/08/21 15:08:43 reinoud Exp $
+# $NetBSD: std.usermode,v 1.5 2011/08/22 15:26:55 reinoud Exp $
 
 machine usermode
 include "conf/std"
@@ -9,7 +9,7 @@ options 	EXEC_ELF64
 options 	EXEC_SCRIPT
 
 # Defaults
-options		NKMEMPAGES=256
+options		NKMEMPAGES=2048
 #options		NKMEMPAGES_MAX_DEFAULT=2048
 
 defflag opt_xen.h	DO_NOT_DEFINE
