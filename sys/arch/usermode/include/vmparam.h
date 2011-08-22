@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.3 2009/10/21 16:06:59 snj Exp $ */
+/* $NetBSD: vmparam.h,v 1.4 2011/08/22 15:36:23 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,21 +30,27 @@
 #define _ARCH_USERMODE_INCLUDE_VMPARAM_H
 
 #include </usr/include/machine/vmparam.h>
+#include <machine/pmap.h>
 #include "opt_memsize.h"
 
-#undef VM_MIN_ADDRESS
-#define VM_MIN_ADDRESS 0
-
-#undef VM_MAX_ADDRESS
-#define VM_MAX_ADDRESS (MEMSIZE*1024)
+extern paddr_t kmem_k_start, kmem_k_end;
+extern paddr_t kmem_data_start, kmem_data_end;
+extern paddr_t kmem_ext_start, kmem_ext_end;
+extern paddr_t kmem_user_start, kmem_user_end;
 
 #undef VM_MIN_KERNEL_ADDRESS
-#define VM_MIN_KERNEL_ADDRESS	0
+#define VM_MIN_KERNEL_ADDRESS	kmem_k_start
 
 #undef VM_MAX_KERNEL_ADDRESS
-#define VM_MAX_KERNEL_ADDRESS (MEMSIZE*1024)
+#define VM_MAX_KERNEL_ADDRESS 	kmem_ext_end
+
+#undef VM_MIN_ADDRESS
+#define VM_MIN_ADDRESS		kmem_k_start
+
+#undef VM_MAX_ADDRESS
+#define VM_MAX_ADDRESS		kmem_user_end
 
 #undef VM_MAXUSER_ADDRESS
-#define VM_MAXUSER_ADDRESS (MEMSIZE*1024)
+#define VM_MAXUSER_ADDRESS	kmem_user_end
 
 #endif /* !_ARCH_USERMODE_INCLUDE_VMPARAM_H */
