@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.7 $
+ *       $Revision: 1.8 $
  *
  *****************************************************************************/
 
@@ -126,6 +126,7 @@ isprint(int ch)
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
 
 #include <ctype.h>
+#include <stdint.h>
 
 /* Not building kernel code, so use libc */
 #define ACPI_USE_STANDARD_HEADERS
