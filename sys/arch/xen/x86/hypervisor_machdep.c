@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.14.2.3 2011/08/17 09:40:39 cherry Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.14.2.4 2011/08/22 16:48:03 cherry Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.14.2.3 2011/08/17 09:40:39 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.14.2.4 2011/08/22 16:48:03 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,8 +140,8 @@ evt_set_pending(struct cpu_info *ci, unsigned int port, unsigned int l1i,
 	int *ret = args;
 
 	if (evtsource[port]) {
-		hypervisor_set_ipending(ci, evtsource[port]->ev_imask,
-		    l1i, l2i);
+		hypervisor_set_ipending(evtsource[port]->ev_cpu,
+		    evtsource[port]->ev_imask, l1i, l2i);
 		evtsource[port]->ev_evcnt.ev_count++;
 		if (*ret == 0 && ci->ci_ilevel <
 		    evtsource[port]->ev_maxlevel)
