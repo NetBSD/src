@@ -1,12 +1,12 @@
-# $NetBSD: GENERIC,v 1.10 2011/08/21 15:08:43 reinoud Exp $
+# $NetBSD: GENERIC,v 1.11 2011/08/22 15:28:34 reinoud Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.10 $"
+#ident 		"GENERIC-$Revision: 1.11 $"
 maxusers 	32
 
-makeoptions	DEBUG="-g3"
+makeoptions	DEBUG="-O1 -g3"
 
 #options 	MEMSIZE=65536	# amount of memory to allocate (in KB)
 options 	MEMSIZE=131072	# amount of memory to use for userland (in KB)
@@ -19,8 +19,8 @@ options 	SYSVMSG
 options 	SYSVSEM
 options 	SYSVSHM
 
-#options 	DEBUG
-#options 	DIAGNOSTIC
+options 	DEBUG
+options 	DIAGNOSTIC
 #options 	LOCKDEBUG
 
 options 	COMPAT_BSDPTY
