@@ -1,4 +1,4 @@
-/* $NetBSD: t_join.c,v 1.5 2010/11/30 18:38:54 joerg Exp $ */
+/* $NetBSD: t_join.c,v 1.6 2011/08/22 00:35:07 dholland Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,10 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_join.c,v 1.5 2010/11/30 18:38:54 joerg Exp $");
+__RCSID("$NetBSD: t_join.c,v 1.6 2011/08/22 00:35:07 dholland Exp $");
 
 #include <errno.h>
 #include <pthread.h>
+#include <stdint.h>
 
 #include <atf-c.h>
 

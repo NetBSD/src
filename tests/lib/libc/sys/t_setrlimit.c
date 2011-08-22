@@ -1,4 +1,4 @@
-/* $NetBSD: t_setrlimit.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $ */
+/* $NetBSD: t_setrlimit.c,v 1.2 2011/08/22 00:33:16 dholland Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_setrlimit.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $");
+__RCSID("$NetBSD: t_setrlimit.c,v 1.2 2011/08/22 00:33:16 dholland Exp $");
 
 #include <sys/resource.h>
 #include <sys/mman.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: t_setrlimit.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $");
 #include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
