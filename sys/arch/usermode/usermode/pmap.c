@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.9 2011/08/22 15:36:23 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.10 2011/08/22 16:22:16 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2011/08/22 15:36:23 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10 2011/08/22 16:22:16 reinoud Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_memsize.h"
@@ -387,7 +387,8 @@ static void
 pmap_page_activate(struct pv_entry *pv)
 {
 	paddr_t pa = pv->pv_ppn * PAGE_SIZE;
-	vaddr_t va = pv->pv_lpn * PAGE_SIZE + kmem_k_start;
+	vaddr_t va = pv->pv_lpn * PAGE_SIZE + kmem_k_start; /* XXX V->A make new var */
+
 	void *addr;
 
 	addr = thunk_mmap((void *) va, PAGE_SIZE, pv->pv_mmap_ppl,
@@ -448,7 +449,7 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 
 	/* to page numbers */
 	ppn = atop(pa);
-	lpn = atop(va - kmem_k_start);	/* XXX make new var */
+	lpn = atop(va - kmem_k_start);	/* XXX V->A make new var */
 #ifdef DIAGNOSTIC
 	if ((va < kmem_k_start) || (va > kmem_user_end))
 		panic("pmap_do_enter: invalid va isued\n");
@@ -536,10 +537,18 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
-	/* XXXJDM */
-	if (pap)
-		*pap = va;
+	struct pv_entry *pv;
+	UVMHIST_FUNC("pmap_extract");
+	UVMHIST_CALLED(pmaphist);
+
+	/* TODO protect against roque values */
 printf("pmap_extract: extracting va %p\n", (void *) va);
+	pv = pmap->pm_entries[atop(va - kmem_k_start)];	/* XXX V->A make new var */
+
+	if (pv == NULL)
+		return false;
+
+	*pap = ptoa(pv->pv_ppn);
 	return true;
 }
 
@@ -584,7 +593,7 @@ pmap_deactivate(struct lwp *l)
 void
 pmap_zero_page(paddr_t pa)
 {
-printf("pmap_zero_page\n");
+printf("pmap_zero_page: pa %p\n", (void *) pa);
 }
 
 void
