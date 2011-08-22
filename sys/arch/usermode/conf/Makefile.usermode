@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.12 2011/08/22 15:27:32 reinoud Exp $
+# $NetBSD: Makefile.usermode,v 1.13 2011/08/22 21:45:38 jmcneill Exp $
 
 MACHINE_ARCH=			usermode
 USETOOLS?=			no
@@ -20,7 +20,7 @@ DEFCOPTS=	-fno-omit-frame-pointer
 CPPFLAGS+=	-Dusermode
 CPPFLAGS.init_main.c+=	-Dmain=kernmain
 
-CPPFLAGS.thunk.c+=	-U_KERNEL -I/usr/include
+CPPFLAGS.thunk.c+=	-U_KERNEL -I/usr/include 
 
 ##
 ## (3) libkern and compat
@@ -55,7 +55,7 @@ NVFLAGS=	-n
 .endif
 
 thunk.o: ${USERMODE}/usermode/thunk.c
-	${CC} ${COPTS} -I${.CURDIR} -c -o $@ ${USERMODE}/usermode/thunk.c
+	${CC} ${CPPFLAGS.thunk.c} -c -o $@ ${USERMODE}/usermode/thunk.c
 
 ##
 ## (7) misc settings

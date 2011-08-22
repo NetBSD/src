@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.4 2011/08/22 15:36:23 reinoud Exp $ */
+/* $NetBSD: vmparam.h,v 1.5 2011/08/22 21:45:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,6 @@
 #ifndef _ARCH_USERMODE_INCLUDE_VMPARAM_H
 #define _ARCH_USERMODE_INCLUDE_VMPARAM_H
 
-#include </usr/include/machine/vmparam.h>
 #include <machine/pmap.h>
 #include "opt_memsize.h"
 
@@ -38,19 +37,39 @@ extern paddr_t kmem_data_start, kmem_data_end;
 extern paddr_t kmem_ext_start, kmem_ext_end;
 extern paddr_t kmem_user_start, kmem_user_end;
 
-#undef VM_MIN_KERNEL_ADDRESS
 #define VM_MIN_KERNEL_ADDRESS	kmem_k_start
-
-#undef VM_MAX_KERNEL_ADDRESS
 #define VM_MAX_KERNEL_ADDRESS 	kmem_ext_end
-
-#undef VM_MIN_ADDRESS
 #define VM_MIN_ADDRESS		kmem_k_start
-
-#undef VM_MAX_ADDRESS
 #define VM_MAX_ADDRESS		kmem_user_end
-
-#undef VM_MAXUSER_ADDRESS
 #define VM_MAXUSER_ADDRESS	kmem_user_end
+
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
+#define VM_PHYSSEG_MAX		1
+#define	VM_NFREELIST		1
+#define	VM_FREELIST_DEFAULT	0
+
+#define	USRSTACK		VM_MAXUSER_ADDRESS
+
+#if defined(__i386__) 
+#define	PAGE_SHIFT		12
+#define	PAGE_SIZE		(1 << PAGE_SHIFT)
+#define	PAGE_MASK		(PAGE_SIZE - 1)
+#define	MAXSSIZ			(64 * 1024 * 1024)
+#define	MAXTSIZ			(64 * 1024 * 1024)
+#define	MAXDSIZ			(3U * 1024 * 1024 * 1024)
+#define DFLSSIZ			(2 * 1024 * 1024)
+#define	DFLDSIZ			(256 * 1024 * 1024)
+#elif defined(__x86_64__)
+#define	PAGE_SHIFT		12
+#define	PAGE_SIZE		(1 << PAGE_SHIFT)
+#define	PAGE_MASK		(PAGE_SIZE - 1)
+#define	MAXSSIZ			(128 * 1024 * 1024)
+#define	MAXTSIZ			(64 * 1024 * 1024)
+#define	MAXDSIZ			(8L * 1024 * 1024 * 1024)
+#define DFLSSIZ			(4 * 1024 * 1024)
+#define	DFLDSIZ			(256 * 1024 * 1024)
+#else
+#error "platform not supported"
+#endif
 
 #endif /* !_ARCH_USERMODE_INCLUDE_VMPARAM_H */

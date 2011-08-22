@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.10 2011/08/22 16:22:16 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.11 2011/08/22 21:45:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10 2011/08/22 16:22:16 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2011/08/22 21:45:38 jmcneill Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_memsize.h"
@@ -272,9 +272,9 @@ pmap_bootstrap(void)
 
 	aprint_debug("leaving pmap_bootstrap:\n");
 	aprint_debug("\t%"PRIu64" MB of physical pages left\n",
-		(free_end - (free_start + fpos))/1024/1024);
+		(uint64_t)(free_end - (free_start + fpos))/1024/1024);
 	aprint_debug("\t%"PRIu64" MB of kmem left\n",
-		(kmem_ext_end - kmem_ext_cur_end)/1024/1024);
+		(uint64_t)(kmem_ext_end - kmem_ext_cur_end)/1024/1024);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: ansi.h,v 1.2 2009/10/21 16:06:59 snj Exp $ */
+/* $NetBSD: ansi.h,v 1.3 2011/08/22 21:45:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,6 +29,29 @@
 #ifndef _ARCH_USERMODE_INCLUDE_ANSI_H
 #define _ARCH_USERMODE_INCLUDE_ANSI_H
 
-#include </usr/include/machine/ansi.h>
+#include <sys/cdefs.h>
+#include <machine/int_types.h>
+
+#define _BSD_TIME_T_		__int64_t
+#define _BSD_CLOCKID_T_		int
+#define _BSD_TIMER_T_		int
+#define _BSD_SUSECONDS_T_	int
+#define _BSD_USECONDS_T_	unsigned int
+#define _BSD_WCHAR_T_		int
+#define _BSD_WINT_T_		int
+
+#if defined(__i386__)
+#define _BSD_CLOCK_T_		unsigned long
+#define _BSD_PTRDIFF_T_		int
+#define _BSD_SIZE_T_		unsigned int
+#define _BSD_SSIZE_T_		int
+#elif defined(__x86_64__)
+#define _BSD_CLOCK_T_		unsigned int
+#define _BSD_PTRDIFF_T_		long
+#define _BSD_SIZE_T_		unsigned long
+#define _BSD_SSIZE_T_		long
+#else
+#error "platform not supported"
+#endif
 
 #endif /* !_ARCH_USERMODE_INCLUDE_ANSI_H */
