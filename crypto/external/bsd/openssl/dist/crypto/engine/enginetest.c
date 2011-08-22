@@ -56,6 +56,7 @@
  *
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <openssl/e_os2.h>
