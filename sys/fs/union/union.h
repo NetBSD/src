@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.20 2011/08/12 17:41:17 hannken Exp $	*/
+/*	$NetBSD: union.h,v 1.21 2011/08/23 07:39:37 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -144,7 +144,7 @@ extern int union_dowhiteout(struct union_node *, kauth_cred_t);
 extern int union_mkshadow(struct union_mount *, struct vnode *,
     struct componentname *, struct vnode **);
 extern int union_mkwhiteout(struct union_mount *, struct vnode *,
-    struct componentname *, char *);
+    struct componentname *, struct union_node *);
 extern int union_vn_create(struct vnode **, struct union_node *,
     struct lwp *);
 extern int union_cn_close(struct vnode *, int, kauth_cred_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.49 2011/08/13 10:48:14 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.50 2011/08/23 07:39:37 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.49 2011/08/13 10:48:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.50 2011/08/23 07:39:37 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,10 +106,7 @@ static LIST_HEAD(unhead, union_node) unhead[NHASH];
 static kmutex_t unheadlock[NHASH];
 
 void union_updatevp(struct union_node *, struct vnode *, struct vnode *);
-static int union_relookup(struct union_mount *, struct vnode *,
-			       struct vnode **, struct componentname *,
-			       struct componentname *, char **,
-			       const char *, int);
+static int union_do_lookup(struct vnode *, struct componentname *, kauth_cred_t,    const char *, u_long);
 int union_vn_close(struct vnode *, int, kauth_cred_t, struct lwp *);
 static void union_dircache_r(struct vnode *, struct vnode ***, int *);
 struct vnode *union_dircache(struct vnode *, struct lwp *);
@@ -755,54 +752,50 @@ union_copyup(struct union_node *un, int docopy, kauth_cred_t cred,
 
 }
 
+/*
+ * Prepare the creation of a new node in the upper layer.
+ *
+ * (dvp) is the directory in which to create the new node.
+ * it is locked on entry and exit.
+ * (cnp) is the componentname to be created.
+ * (cred, path, hash) are credentials, path and its hash to fill (cnp).
+ */
 static int
-union_relookup(
-	struct union_mount *um,
-	struct vnode *dvp,
-	struct vnode **vpp,
-	struct componentname *cnp,
-	struct componentname *cn,
-	char **pnbuf_ret,
-	const char *path,
-	int pathlen)
+union_do_lookup(struct vnode *dvp, struct componentname *cnp, kauth_cred_t cred,
+    const char *path, u_long hash)
 {
 	int error;
-	char *pnbuf;
+	const char *cp;
+	struct vnode *vp;
 
-	/*
-	 * A new componentname structure must be faked up because
-	 * there is no way to know where the upper level cnp came
-	 * from or what it is being used for.  This must duplicate
-	 * some of the work done by NDINIT, some of the work done
-	 * by namei, some of the work done by lookup and some of
-	 * the work done by VOP_LOOKUP when given a CREATE flag.
-	 * Conclusion: Horrible.
-	 */
-	cn->cn_namelen = pathlen;
-	if ((cn->cn_namelen + 1) > MAXPATHLEN)
-		return (ENAMETOOLONG);
-	pnbuf = PNBUF_GET();
-	memcpy(pnbuf, path, cn->cn_namelen);
-	pnbuf[cn->cn_namelen] = '\0';
-	*pnbuf_ret = pnbuf;
-
-	cn->cn_nameiop = CREATE;
-	cn->cn_flags = (LOCKPARENT|ISLASTCN);
-	if (um->um_op == UNMNT_ABOVE)
-		cn->cn_cred = cnp->cn_cred;
-	else
-		cn->cn_cred = um->um_cred;
-	cn->cn_nameptr = pnbuf;
-	cn->cn_hash = cnp->cn_hash;
-	cn->cn_consume = cnp->cn_consume;
-
-	error = relookup(dvp, vpp, cn, 0);
-	if (error) {
-		PNBUF_PUT(pnbuf);
-		*pnbuf_ret = NULL;
+	cnp->cn_nameiop = CREATE;
+	cnp->cn_flags = LOCKPARENT | ISLASTCN;
+	cnp->cn_cred = cred;
+	cnp->cn_nameptr = path;
+	cnp->cn_namelen = strlen(path);
+	if (hash == 0) {
+		cp = NULL;
+		cnp->cn_hash = namei_hash(cnp->cn_nameptr, &cp);
+		KASSERT(*cp == 0);
+	} else {
+		cnp->cn_hash = hash;
 	}
 
-	return (error);
+	error = VOP_LOOKUP(dvp, &vp, cnp);
+
+	if (error == 0) {
+		KASSERT(vp != NULL);
+		VOP_ABORTOP(dvp, cnp);
+		if (dvp != vp)
+			vput(vp);
+		else
+			vrele(vp);
+		error = EEXIST;
+	} else if (error == EJUSTRETURN) {
+		error = 0;
+	}
+
+	return error;
 }
 
 /*
@@ -829,22 +822,20 @@ union_mkshadow(struct union_mount *um, struct vnode *dvp,
 	struct componentname cn;
 	char *pnbuf;
 
+	if (cnp->cn_namelen + 1 > MAXPATHLEN)
+		return ENAMETOOLONG;
+	pnbuf = PNBUF_GET();
+	memcpy(pnbuf, cnp->cn_nameptr, cnp->cn_namelen);
+	pnbuf[cnp->cn_namelen] = '\0';
+
 	vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-	error = union_relookup(um, dvp, vpp, cnp, &cn, &pnbuf,
-			cnp->cn_nameptr, cnp->cn_namelen);
+
+	error = union_do_lookup(dvp, &cn,
+	    (um->um_op == UNMNT_ABOVE ? cnp->cn_cred : um->um_cred), pnbuf, 0);
 	if (error) {
 		VOP_UNLOCK(dvp);
-		return (error);
-	}
-
-	if (*vpp) {
-		VOP_ABORTOP(dvp, &cn);
 		PNBUF_PUT(pnbuf);
-		if (dvp != *vpp)
-			VOP_UNLOCK(dvp);
-		vput(*vpp);
-		*vpp = NULLVP;
-		return (EEXIST);
+		return error;
 	}
 
 	/*
@@ -862,7 +853,7 @@ union_mkshadow(struct union_mount *um, struct vnode *dvp,
 	vref(dvp);
 	error = VOP_MKDIR(dvp, vpp, &cn, &va);
 	PNBUF_PUT(pnbuf);
-	return (error);
+	return error;
 }
 
 /*
@@ -873,39 +864,23 @@ union_mkshadow(struct union_mount *um, struct vnode *dvp,
  * (dvp) is the directory in which to create the whiteout.
  * it is locked on entry and exit.
  * (cnp) is the componentname to be created.
+ * (un) holds the path and its hash to be created.
  */
 int
 union_mkwhiteout(struct union_mount *um, struct vnode *dvp,
-	struct componentname *cnp, char *path)
+	struct componentname *cnp, struct union_node *un)
 {
 	int error;
-	struct vnode *wvp;
 	struct componentname cn;
-	char *pnbuf;
 
-	VOP_UNLOCK(dvp);
-	vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-	error = union_relookup(um, dvp, &wvp, cnp, &cn, &pnbuf,
-			       path, strlen(path));
+	error = union_do_lookup(dvp, &cn,
+	    (um->um_op == UNMNT_ABOVE ? cnp->cn_cred : um->um_cred),
+	    un->un_path, un->un_hash);
 	if (error)
-		return (error);
-
-	if (wvp) {
-		VOP_ABORTOP(dvp, &cn);
-		PNBUF_PUT(pnbuf);
-		if (dvp != wvp)
-			VOP_UNLOCK(dvp);
-		vput(wvp);
-		return (EEXIST);
-	}
+		return error;
 
 	error = VOP_WHITEOUT(dvp, &cn, CREATE);
-	if (error) {
-		VOP_ABORTOP(dvp, &cn);
-	}
-
-	PNBUF_PUT(pnbuf);
-	return (error);
+	return error;
 }
 
 /*
@@ -914,7 +889,7 @@ union_mkwhiteout(struct union_mount *um, struct vnode *dvp,
  * in spirit to calling vn_open but it avoids calling namei().
  * the problem with calling namei is that a) it locks too many
  * things, and b) it doesn't start at the "right" directory,
- * whereas relookup is told where to start.
+ * whereas union_do_lookup is told where to start.
  */
 int
 union_vn_create(struct vnode **vpp, struct union_node *un, struct lwp *l)
@@ -927,46 +902,16 @@ union_vn_create(struct vnode **vpp, struct union_node *un, struct lwp *l)
 	int error;
 	int cmode = UN_FILEMODE & ~l->l_proc->p_cwdi->cwdi_cmask;
 	struct componentname cn;
-	char *pnbuf;
 
 	*vpp = NULLVP;
 
-	/*
-	 * Build a new componentname structure (for the same
-	 * reasons outlines in union_mkshadow).
-	 * The difference here is that the file is owned by
-	 * the current user, rather than by the person who
-	 * did the mount, since the current user needs to be
-	 * able to write the file (that's why it is being
-	 * copied in the first place).
-	 */
-	cn.cn_namelen = strlen(un->un_path);
-	if ((cn.cn_namelen + 1) > MAXPATHLEN)
-		return (ENAMETOOLONG);
-	pnbuf = PNBUF_GET();
-	memcpy(pnbuf, un->un_path, cn.cn_namelen+1);
-	cn.cn_nameiop = CREATE;
-	cn.cn_flags = (LOCKPARENT|ISLASTCN);
-	cn.cn_cred = l->l_cred;
-	cn.cn_nameptr = pnbuf;
-	cn.cn_hash = un->un_hash;
-	cn.cn_consume = 0;
-
 	vn_lock(un->un_dirvp, LK_EXCLUSIVE | LK_RETRY);
-	error = relookup(un->un_dirvp, &vp, &cn, 0);
-	if (error) {
-		PNBUF_PUT(pnbuf);
-		VOP_UNLOCK(un->un_dirvp);
-		return (error);
-	}
 
-	if (vp) {
-		VOP_ABORTOP(un->un_dirvp, &cn);
-		PNBUF_PUT(pnbuf);
-		if (un->un_dirvp != vp)
-			VOP_UNLOCK(un->un_dirvp);
-		vput(vp);
-		return (EEXIST);
+	error = union_do_lookup(un->un_dirvp, &cn, l->l_cred,
+	    un->un_path, un->un_hash);
+	if (error) {
+		VOP_UNLOCK(un->un_dirvp);
+		return error;
 	}
 
 	/*
@@ -983,21 +928,19 @@ union_vn_create(struct vnode **vpp, struct union_node *un, struct lwp *l)
 	vap->va_type = VREG;
 	vap->va_mode = cmode;
 	vref(un->un_dirvp);
-	if ((error = VOP_CREATE(un->un_dirvp, &vp, &cn, vap)) != 0) {
-		PNBUF_PUT(pnbuf);
-		return (error);
-	}
+	error = VOP_CREATE(un->un_dirvp, &vp, &cn, vap);
+	if (error)
+		return error;
 
-	if ((error = VOP_OPEN(vp, fmode, cred)) != 0) {
+	error = VOP_OPEN(vp, fmode, cred);
+	if (error) {
 		vput(vp);
-		PNBUF_PUT(pnbuf);
-		return (error);
+		return error;
 	}
 
 	vp->v_writecount++;
 	*vpp = vp;
-	PNBUF_PUT(pnbuf);
-	return (0);
+	return 0;
 }
 
 int
@@ -1240,7 +1183,6 @@ union_check_rmdir(struct union_node *un, kauth_cred_t cred)
 			cn.cn_nameptr = dp->d_name;
 			cn.cn_namelen = dp->d_namlen;
 			cn.cn_hash = 0;
-			cn.cn_consume = 0;
 			error = VOP_LOOKUP(un->un_uppervp, &tvp, &cn);
 			if (error == ENOENT && (cn.cn_flags & ISWHITEOUT)) {
 				error = 0;
