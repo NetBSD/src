@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.45 2011/08/12 17:41:17 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.46 2011/08/23 07:39:37 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.45 2011/08/12 17:41:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.46 2011/08/23 07:39:37 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1211,7 +1211,7 @@ union_remove(void *v)
 		FIXUP(dun);
 		error = union_mkwhiteout(
 			MOUNTTOUNIONMOUNT(UNIONTOV(dun)->v_mount),
-			dun->un_uppervp, ap->a_cnp, un->un_path);
+			dun->un_uppervp, ap->a_cnp, un);
 		vput(ap->a_dvp);
 		vput(ap->a_vp);
 	}
@@ -1488,7 +1488,7 @@ union_rmdir(void *v)
 		FIXUP(dun);
 		error = union_mkwhiteout(
 			MOUNTTOUNIONMOUNT(UNIONTOV(dun)->v_mount),
-			dun->un_uppervp, ap->a_cnp, un->un_path);
+			dun->un_uppervp, ap->a_cnp, un);
 		vput(ap->a_dvp);
 		vput(ap->a_vp);
 	}
