@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.31 2011/08/06 23:25:19 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.32 2011/08/23 17:09:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.31 2011/08/06 23:25:19 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.32 2011/08/23 17:09:11 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -1637,7 +1637,7 @@ cd9660_level1_convert_filename(const char *oldname, char *newname, int is_file)
 
 	while (*oldname != '\0') {
 		/* Handle period first, as it is special */
-		if (*oldname == '.') {
+		if (*oldname == '.' && extlen < 3) {
 			if (found_ext) {
 				*newname++ = '_';
 				extlen ++;
@@ -1652,8 +1652,7 @@ cd9660_level1_convert_filename(const char *oldname, char *newname, int is_file)
 			    *oldname == ',' && strlen(oldname) == 4)
 				break;
 			/* Enforce 12.3 / 8 */
-			if (((namelen == 8) && !found_ext) ||
-			    (found_ext && extlen == 3)) {
+			if (namelen == 8 && !found_ext)
 				break;
 			}
 
@@ -1698,7 +1697,7 @@ cd9660_level2_convert_filename(const char *oldname, char *newname, int is_file)
 	int extlen = 0;
 	int found_ext = 0;
 
-	while (*oldname != '\0') {
+	while (*oldname != '\0' && namelen + extlen < 30) {
 		/* Handle period first, as it is special */
 		if (*oldname == '.') {
 			if (found_ext) {
@@ -1717,8 +1716,6 @@ cd9660_level2_convert_filename(const char *oldname, char *newname, int is_file)
 			/* cut RISC OS file type off ISO name */
 			if (diskStructure.archimedes_enabled &&
 			    *oldname == ',' && strlen(oldname) == 4)
-				break;
-			if ((namelen + extlen) == 30)
 				break;
 
 			 if (islower((unsigned char)*oldname))
