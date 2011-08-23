@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.207 2011/07/08 20:59:53 uwe Exp $
+#	$NetBSD: bsd.sys.mk,v 1.208 2011/08/23 05:22:25 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -60,7 +60,7 @@ CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
 CXXFLAGS+=	${${ACTIVE_CXX} == "gcc":? -Wno-non-template-friend -Wno-pmf-conversions :}
 .endif
 .if ${WARNS} > 3 && defined(HAVE_GCC)
-CFLAGS+=	-Wsign-compare
+CFLAGS+=	-Wsign-compare -Wformat=2
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wpointer-sign :}
 .endif
 .if (defined(HAVE_GCC) && ${HAVE_GCC} == 45 \
