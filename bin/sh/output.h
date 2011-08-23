@@ -1,4 +1,4 @@
-/*	$NetBSD: output.h,v 1.22 2010/10/29 17:06:53 stacktic Exp $	*/
+/*	$NetBSD: output.h,v 1.23 2011/08/23 09:59:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,16 +67,17 @@ void flushall(void);
 void flushout(struct output *);
 void freestdout(void);
 void outfmt(struct output *, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
+    __attribute__((__format__(__printf__, 2, 3)));
 void out1fmt(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));
+    __attribute__((__format__(__printf__, 1, 2)));
 #ifdef DEBUG
 void debugprintf(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));
+    __attribute__((__format__(__printf__, 1, 2)));
 #endif
 void fmtstr(char *, size_t, const char *, ...)
-    __attribute__((__format__(__printf__,3,4)));
-void doformat(struct output *, const char *, va_list);
+    __attribute__((__format__(__printf__, 3, 4)));
+void doformat(struct output *, const char *, va_list)
+    __attribute__((__format__(__printf__, 2, 0)));
 int xwrite(int, char *, int);
 int xioctl(int, unsigned long, char *);
 
