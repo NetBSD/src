@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.102 2011/08/18 14:17:08 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.103 2011/08/23 03:00:35 oki Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.102 2011/08/18 14:17:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.103 2011/08/23 03:00:35 oki Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -300,7 +300,9 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 #endif /* defined(VMSWAP) */
 	}
 	for (i = 0; i < npages; i++) {
+#if defined(VMSWAP)
 		bool anon_disposed = false; /* XXX gcc */
+#endif /* defined(VMSWAP) */
 
 		pg = pgs[i];
 		KASSERT(swap || pg->uobject == uobj);
