@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.33 2011/08/23 19:17:07 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.34 2011/08/23 19:57:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.33 2011/08/23 19:17:07 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.34 2011/08/23 19:57:24 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -1635,9 +1635,9 @@ cd9660_level1_convert_filename(const char *oldname, char *newname, int is_file)
 	int extlen = 0;
 	int found_ext = 0;
 
-	while (*oldname != '\0') {
+	while (*oldname != '\0' && extlen < 3) {
 		/* Handle period first, as it is special */
-		if (*oldname == '.' && extlen < 3) {
+		if (*oldname == '.') {
 			if (found_ext) {
 				*newname++ = '_';
 				extlen ++;
