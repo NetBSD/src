@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.16 2011/08/23 18:36:08 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.17 2011/08/23 21:55:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.16 2011/08/23 18:36:08 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.17 2011/08/23 21:55:21 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/ansi.h>
@@ -256,6 +256,12 @@ int
 thunk_sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
 {
 	return sigaction(sig, act, oact);
+}
+
+void
+thunk_signal(int sig, void (*func)(int))
+{
+	signal(sig, func);
 }
 
 int
