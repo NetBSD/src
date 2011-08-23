@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.16 2011/08/23 12:06:14 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.17 2011/08/23 12:36:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,9 +27,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2011/08/23 12:06:14 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2011/08/23 12:36:20 jmcneill Exp $");
 
-#include "opt_uvmhist.h"
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
 
@@ -41,10 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2011/08/23 12:06:14 reinoud Exp $");
 #include <machine/thunk.h>
 
 #include <uvm/uvm.h>
-#include <uvm/uvm_stat.h>
-#include <uvm/uvm_page.h>
-#include <uvm/uvm_pmap.h>
-
 
 struct pv_entry {
 	struct 	pv_entry *pv_next;
@@ -288,8 +283,6 @@ pmap_bootstrap(void)
 void
 pmap_init(void)
 {
-	UVMHIST_FUNC("pmap_init");
-	UVMHIST_CALLED(pmaphist);
 	/* All deferred to pmap_create, because malloc() is nice. */
 printf("pmap_init\n\n\n");
 }
@@ -373,22 +366,15 @@ pv_get(pmap_t pmap, int ppn, int lpn)
 {
 	struct pv_entry *pv;
 
-	UVMHIST_FUNC("pv_get");
-	UVMHIST_CALLED(pmaphist);
-	UVMHIST_LOG(pmaphist, "(pmap=%p, ppn=%d, lpn=%d)", pmap, ppn, lpn, 0);
-
 	/* If the head entry's free use that. */
 	pv = &pv_table[ppn];
 	if (pv->pv_pmap == NULL) {
-		UVMHIST_LOG(pmaphist, "<-- head (pv=%p)", pv, 0, 0, 0);
 		pmap->pm_stats.resident_count++;
 		return pv;
 	}
 	/* If this mapping exists already, use that. */
 	for (pv = pv; pv != NULL; pv = pv->pv_next) {
 		if (pv->pv_pmap == pmap && pv->pv_lpn == lpn) {
-			UVMHIST_LOG(pmaphist, "<-- existing (pv=%p)",
-			    pv, 0, 0, 0);
 			return pv;
 		}
 	}
@@ -404,7 +390,6 @@ panic("pv_get: multiple\n");
 	pv->pv_next = pv_table[ppn].pv_next;
 	pv_table[ppn].pv_next = pv;
 	pmap->pm_stats.resident_count++;
-	UVMHIST_LOG(pmaphist, "<-- new (pv=%p)", pv, 0, 0, 0);
 
 	return pv;
 }
@@ -432,9 +417,6 @@ pv_update(struct pv_entry *pv)
 	int pflags;
 	int mmap_ppl;
 
-	UVMHIST_FUNC("pv_update");
-	UVMHIST_CALLED(pmaphist);
-
 	/* get our per-physical-page flags */
 	pflags = pv_table[pv->pv_ppn].pv_pflags;
 
@@ -455,9 +437,6 @@ static void
 pmap_update_page(int ppn)
 {
 	struct pv_entry *pv;
-
-	UVMHIST_FUNC("pmap_update_page");
-	UVMHIST_CALLED(pmaphist);
 
 	for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next) {
 		if (pv->pv_pmap != NULL) {
@@ -548,10 +527,6 @@ pv_release(pmap_t pmap, int ppn, int lpn)
 {
 	struct pv_entry *pv, *npv;
 
-	UVMHIST_FUNC("pv_release");
-	UVMHIST_CALLED(pmaphist);
-	UVMHIST_LOG(pmaphist, "(pmap=%p, ppn=%d, lpn=%d)", pmap, ppn, lpn, 0);
-
 printf("pv_release ppn %d, lpn %d\n", ppn, lpn);
 	pv = &pv_table[ppn];
 	/*
@@ -563,13 +538,11 @@ printf("pv_release ppn %d, lpn %d\n", ppn, lpn);
 	if (pmap == pv->pv_pmap && lpn == pv->pv_lpn) {
 		npv = pv->pv_next;
 		if (npv) {
-			UVMHIST_LOG(pmaphist, "pv=%p; pull-up", pv, 0, 0, 0);
 			/* Pull up first entry from chain. */
 			memcpy(pv, npv, offsetof(struct pv_entry, pv_pflags));
 			pv->pv_pmap->pm_entries[pv->pv_lpn] = pv;
 			pv_free(npv);
 		} else {
-			UVMHIST_LOG(pmaphist, "pv=%p; empty", pv, 0, 0, 0);
 			memset(pv, 0, offsetof(struct pv_entry, pv_pflags));
 		}
 	} else {
@@ -579,7 +552,6 @@ printf("pv_release ppn %d, lpn %d\n", ppn, lpn);
 			pv = npv;
 		}
 		KASSERT(npv != NULL);
-		UVMHIST_LOG(pmaphist, "pv=%p; tail", pv, 0, 0, 0);
 		pv->pv_next = npv->pv_next;
 		pv_free(npv);
 	}
@@ -593,13 +565,9 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	int slpn, elpn, lpn, s;
 	struct pv_entry *pv;
 
-	UVMHIST_FUNC("pmap_remove");
-	UVMHIST_CALLED(pmaphist);
 printf("pmap_remove() called\n");
 
 	slpn = atop(sva); elpn = atop(eva);
-	UVMHIST_LOG(pmaphist, "clearing from lpn %d to lpn %d in pmap %p",
-	       slpn, elpn - 1, pmap, 0);
 	s = splvm();
 	for (lpn = slpn; lpn < elpn; lpn++) {
 		pv = pmap->pm_entries[lpn];
@@ -641,8 +609,6 @@ bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	struct pv_entry *pv;
-	UVMHIST_FUNC("pmap_extract");
-	UVMHIST_CALLED(pmaphist);
 
 	/* TODO protect against roque values */
 printf("pmap_extract: extracting va %p\n", (void *) va);
