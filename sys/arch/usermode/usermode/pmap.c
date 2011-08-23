@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.15 2011/08/23 11:36:11 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.16 2011/08/23 12:06:14 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2011/08/23 11:36:11 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2011/08/23 12:06:14 reinoud Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_memsize.h"
@@ -90,7 +90,8 @@ static void	pmap_update_page(int ppn);
 
 static struct 	pv_entry *pv_get(pmap_t pmap, int ppn, int lpn);
 static struct 	pv_entry *pv_alloc(void);
-//static void	pv_free(struct pv_entry *pv);
+static void	pv_free(struct pv_entry *pv);
+void		pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva);
 
 /* exposed to signal handler */
 vaddr_t kmem_k_start, kmem_k_end;
@@ -361,13 +362,11 @@ pv_alloc(void)
 	return malloc(sizeof(struct pv_entry), M_VMPMAP, M_NOWAIT | M_ZERO);
 }
 
-#if 0
 static void
 pv_free(struct pv_entry *pv)
 {
 	free(pv, M_VMPMAP);
 }
-#endif
 
 static struct pv_entry *
 pv_get(pmap_t pmap, int ppn, int lpn)
@@ -421,7 +420,7 @@ pmap_page_activate(struct pv_entry *pv)
 	addr = thunk_mmap((void *) va, PAGE_SIZE, pv->pv_mmap_ppl,
 		MAP_FILE | MAP_FIXED,
 		mem_fh, pa);
-printf("page_activate: (va %p, pa %p, ppl %d) -> %p\n", (void *) va, (void *) pa, pv->pv_mmap_ppl, (void *) addr);
+aprint_debug("page_activate: (va %p, pa %p, ppl %d) -> %p\n", (void *) va, (void *) pa, pv->pv_mmap_ppl, (void *) addr);
 	if (addr != (void *) va)
 		panic("pmap_page_activate: mmap failed");
 }
@@ -538,14 +537,86 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
-printf("pmap_enter %p : v %p, p %p, prot %d, flags %d\n", (void *) pmap, (void *) va, (void *) pa, (int) prot, (int) flags);
+	aprint_debug("pmap_enter %p : v %p, p %p, prot %d, flags %d\n",
+		(void *) pmap, (void *) va, (void *) pa, (int) prot, (int) flags);
 	return pmap_do_enter(pmap, va, pa, prot, flags, 0);
+}
+
+/* release the pv_entry for a mapping.  Code derived also from hp300 pmap */
+static void
+pv_release(pmap_t pmap, int ppn, int lpn)
+{
+	struct pv_entry *pv, *npv;
+
+	UVMHIST_FUNC("pv_release");
+	UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pmap=%p, ppn=%d, lpn=%d)", pmap, ppn, lpn, 0);
+
+printf("pv_release ppn %d, lpn %d\n", ppn, lpn);
+	pv = &pv_table[ppn];
+	/*
+	 * If it is the first entry on the list, it is actually
+	 * in the header and we must copy the following entry up
+	 * to the header.  Otherwise we must search the list for
+	 * the entry.  In either case we free the now unused entry.
+	 */
+	if (pmap == pv->pv_pmap && lpn == pv->pv_lpn) {
+		npv = pv->pv_next;
+		if (npv) {
+			UVMHIST_LOG(pmaphist, "pv=%p; pull-up", pv, 0, 0, 0);
+			/* Pull up first entry from chain. */
+			memcpy(pv, npv, offsetof(struct pv_entry, pv_pflags));
+			pv->pv_pmap->pm_entries[pv->pv_lpn] = pv;
+			pv_free(npv);
+		} else {
+			UVMHIST_LOG(pmaphist, "pv=%p; empty", pv, 0, 0, 0);
+			memset(pv, 0, offsetof(struct pv_entry, pv_pflags));
+		}
+	} else {
+		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
+			if (pmap == npv->pv_pmap && lpn == npv->pv_lpn)
+				break;
+			pv = npv;
+		}
+		KASSERT(npv != NULL);
+		UVMHIST_LOG(pmaphist, "pv=%p; tail", pv, 0, 0, 0);
+		pv->pv_next = npv->pv_next;
+		pv_free(npv);
+	}
+	pmap->pm_entries[lpn] = NULL;
+	pmap->pm_stats.resident_count--;
 }
 
 void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
-panic("pmap_remove() called\n");
+	int slpn, elpn, lpn, s;
+	struct pv_entry *pv;
+
+	UVMHIST_FUNC("pmap_remove");
+	UVMHIST_CALLED(pmaphist);
+printf("pmap_remove() called\n");
+
+	slpn = atop(sva); elpn = atop(eva);
+	UVMHIST_LOG(pmaphist, "clearing from lpn %d to lpn %d in pmap %p",
+	       slpn, elpn - 1, pmap, 0);
+	s = splvm();
+	for (lpn = slpn; lpn < elpn; lpn++) {
+		pv = pmap->pm_entries[lpn];
+		if (pv != NULL) {
+			if (pmap->pm_flags & PM_ACTIVE) {
+printf("pmap_remove: haven't removed old mmap yet\n");
+//				MEMC_WRITE(pv->pv_deactivate);
+//				cpu_cache_flush();
+			}
+			pmap->pm_entries[lpn] = NULL;
+			if (pv->pv_vflags & PV_WIRED)
+				pmap->pm_stats.wired_count--;
+			pv_release(pmap, pv->pv_ppn, lpn);
+		}
+	}
+	splx(s);
+
 }
 
 void
@@ -591,7 +662,8 @@ printf("pmap_extract: extracting va %p\n", (void *) va);
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
-printf("pmap_kenter_pa : v %p, p %p, prot %d, flags %d\n", (void *) va, (void *) pa, (int) prot, (int) flags);
+	aprint_debug("pmap_kenter_pa : v %p, p %p, prot %d, flags %d\n",
+		(void *) va, (void *) pa, (int) prot, (int) flags);
 	pmap_do_enter(pmap_kernel(),  va, pa, prot, prot | PMAP_WIRED, 1);
 }
 
@@ -682,7 +754,9 @@ panic("pmap_phys_address not implemented\n");
 vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
-printf("pmap_growkernel: till %p (adding %"PRIu64" KB)\n", (void *) maxkvaddr, (uint64_t) (maxkvaddr - kmem_ext_cur_end)/1024);
+	aprint_debug("pmap_growkernel: till %p (adding %"PRIu64" KB)\n",
+		(void *) maxkvaddr,
+		(uint64_t) (maxkvaddr - kmem_ext_cur_end)/1024);
 	if (maxkvaddr > kmem_ext_end)
 		return kmem_ext_end;
 	kmem_ext_cur_end = maxkvaddr;
