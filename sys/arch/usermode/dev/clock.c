@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.8 2011/08/13 12:06:22 jmcneill Exp $ */
+/* $NetBSD: clock.c,v 1.9 2011/08/23 14:37:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2011/08/13 12:06:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2011/08/23 14:37:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -84,7 +84,7 @@ clock_attach(device_t parent, device_t self, void *opaque)
 {
 	clock_softc_t *sc = device_private(self);
 	struct itimerval itimer;
-	struct timespec res;
+	long tcres;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -101,9 +101,10 @@ clock_attach(device_t parent, device_t self, void *opaque)
 	itimer.it_value = itimer.it_interval;
 	thunk_setitimer(ITIMER_REAL, &itimer, NULL);
 
-	if (thunk_clock_getres(CLOCK_MONOTONIC, &res) == 0 && res.tv_nsec > 0) {
+	tcres = thunk_clock_getres_monotonic();
+	if (tcres > 0) {
 		clock_timecounter.tc_quality = 1000;
-		clock_timecounter.tc_frequency = 1000000000 / res.tv_nsec;
+		clock_timecounter.tc_frequency = 1000000000 / tcres;
 	}
 	tc_init(&clock_timecounter);
 }
