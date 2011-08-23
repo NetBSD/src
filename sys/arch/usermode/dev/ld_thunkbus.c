@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.4 2011/08/23 15:56:12 jmcneill Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.5 2011/08/23 17:12:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.4 2011/08/23 15:56:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.5 2011/08/23 17:12:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -64,7 +64,6 @@ struct ld_thunkbus_softc {
 	struct ld_softc	sc_ld;
 
 	int		sc_fd;
-	struct stat	sc_st;
 	void		*sc_ih;
 
 	struct ld_thunkbus_transfer sc_tt;
@@ -94,6 +93,7 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 	struct thunkbus_attach_args *taa = opaque;
 	const char *path = taa->u.diskimage.path;
 	struct sigaction sa;
+	ssize_t size, blksize;
 
 	ld->sc_dv = self;
 
@@ -102,18 +102,18 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 		aprint_error(": couldn't open %s: %d\n", path, errno);
 		return;
 	}
-	if (thunk_fstat(sc->sc_fd, &sc->sc_st) == -1) {
+	if (thunk_fstat_getsize(sc->sc_fd, &size, &blksize) == -1) {
 		aprint_error(": couldn't stat %s: %d\n", path, errno);
 		return;
 	}
 
 	aprint_naive("\n");
-	aprint_normal(": %s (%lld)\n", path, (long long)sc->sc_st.st_size);
+	aprint_normal(": %s (%lld)\n", path, (long long)size);
 
 	ld->sc_flags = LDF_ENABLED;
-	ld->sc_maxxfer = sc->sc_st.st_blksize;
+	ld->sc_maxxfer = blksize;
 	ld->sc_secsize = 512;
-	ld->sc_secperunit = sc->sc_st.st_size / 512;
+	ld->sc_secperunit = size / ld->sc_secsize;
 	ld->sc_maxqueuecnt = 1;
 	ld->sc_start = ld_thunkbus_ldstart;
 	ld->sc_dump = ld_thunkbus_lddump;
