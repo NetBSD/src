@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.9 2011/08/23 14:37:50 jmcneill Exp $ */
+/* $NetBSD: clock.c,v 1.10 2011/08/23 16:09:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2011/08/23 14:37:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2011/08/23 16:09:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,7 +45,7 @@ static int	clock_match(device_t, cfdata_t, void *);
 static void	clock_attach(device_t, device_t, void *);
 
 static void 	clock_intr(int);
-static u_int	clock_getcounter(struct timecounter *);
+static unsigned int clock_getcounter(struct timecounter *);
 
 static int	clock_todr_gettime(struct todr_chip_handle *, struct timeval *);
 
@@ -122,17 +122,24 @@ clock_intr(int notused)
 	curcpu()->ci_idepth--;
 }
 
-static u_int
+static unsigned int
 clock_getcounter(struct timecounter *tc)
 {
-	struct timespec ts;
-
-	thunk_clock_gettime(CLOCK_MONOTONIC, &ts);
-	return ts.tv_nsec;
+	return thunk_getcounter();
 }
 
 static int
 clock_todr_gettime(struct todr_chip_handle *tch, struct timeval *tv)
 {
-	return thunk_gettimeofday(tv,  NULL);
+	struct thunk_timeval ttv;
+	int error;
+
+	error = thunk_gettimeofday(&ttv, NULL);
+	if (error)
+		return error;
+
+	tv->tv_sec = ttv.tv_sec;
+	tv->tv_usec = ttv.tv_usec;
+
+	return 0;
 }

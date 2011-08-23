@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.10 2011/08/23 14:37:50 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.11 2011/08/23 16:09:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,9 +38,14 @@
 #include <sys/aio.h>
 #include <sys/mman.h>
 
+struct thunk_timeval {
+	int64_t tv_sec;
+	int32_t tv_usec;
+};
+
 int	thunk_setitimer(int, const struct itimerval *, struct itimerval *);
-int	thunk_gettimeofday(struct timeval *, void *);
-int	thunk_clock_gettime(clockid_t, struct timespec *);
+int	thunk_gettimeofday(struct thunk_timeval *, void *);
+unsigned int thunk_getcounter(void);
 long	thunk_clock_getres_monotonic(void);
 int	thunk_usleep(useconds_t);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.11 2011/08/23 14:37:50 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.12 2011/08/23 16:09:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.11 2011/08/23 14:37:50 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.12 2011/08/23 16:09:27 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/ansi.h>
@@ -54,15 +54,34 @@ thunk_setitimer(int which, const struct itimerval *value,
 }
 
 int
-thunk_gettimeofday(struct timeval *tp, void *tzp)
+thunk_gettimeofday(struct thunk_timeval *tp, void *tzp)
 {
-	return gettimeofday(tp, tzp);
+	struct timeval tv;
+	int error;
+
+	error = gettimeofday(&tv, tzp);
+	if (error)
+		return error;
+
+	tp->tv_sec = tv.tv_sec;
+	tp->tv_usec = tv.tv_usec;
+
+	return 0;
 }
 
-int
-thunk_clock_gettime(clockid_t clock_id, struct timespec *tp)
+unsigned int
+thunk_getcounter(void)
 {
-	return clock_gettime(clock_id, tp);
+	struct timespec ts;
+	int error;
+
+	error = clock_gettime(CLOCK_MONOTONIC, &ts);
+	if (error) {
+		perror("clock_gettime CLOCK_MONOTONIC");
+		abort();
+	}
+
+	return (unsigned int)(ts.tv_sec * 1000000000ULL + ts.tv_nsec);
 }
 
 long
