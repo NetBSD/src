@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.13 2011/08/23 16:16:26 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.14 2011/08/23 17:00:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.13 2011/08/23 16:16:26 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.14 2011/08/23 17:00:36 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/ansi.h>
@@ -46,11 +46,49 @@ __RCSID("$NetBSD: thunk.c,v 1.13 2011/08/23 16:16:26 jmcneill Exp $");
 
 #include "../include/thunk.h"
 
-int
-thunk_setitimer(int which, const struct itimerval *value,
-    struct itimerval *ovalue)
+static void
+thunk_to_timeval(const struct thunk_timeval *ttv, struct timeval *tv)
 {
-	return setitimer(which, value, ovalue);
+	tv->tv_sec = ttv->tv_sec;
+	tv->tv_usec = ttv->tv_usec;
+}
+
+static void
+thunk_from_timeval(const struct timeval *tv, struct thunk_timeval *ttv)
+{
+	ttv->tv_sec = tv->tv_sec;
+	ttv->tv_usec = tv->tv_usec;
+}
+
+static void
+thunk_to_itimerval(const struct thunk_itimerval *tit, struct itimerval *it)
+{
+	thunk_to_timeval(&tit->it_interval, &it->it_interval);
+	thunk_to_timeval(&tit->it_value, &it->it_value);
+}
+
+static void
+thunk_from_itimerval(const struct itimerval *it, struct thunk_itimerval *tit)
+{
+	thunk_from_timeval(&it->it_interval, &tit->it_interval);
+	thunk_from_timeval(&it->it_value, &tit->it_value);
+}
+
+int
+thunk_setitimer(int which, const struct thunk_itimerval *value,
+    struct thunk_itimerval *ovalue)
+{
+	struct itimerval it, oit;
+	int error;
+
+	thunk_to_itimerval(value, &it);
+	error = setitimer(which, &it, &oit);
+	if (error)
+		return error;
+	if (ovalue)
+		thunk_from_itimerval(&oit, ovalue);
+
+	return 0;
 }
 
 int
@@ -63,8 +101,7 @@ thunk_gettimeofday(struct thunk_timeval *tp, void *tzp)
 	if (error)
 		return error;
 
-	tp->tv_sec = tv.tv_sec;
-	tp->tv_usec = tv.tv_usec;
+	thunk_from_timeval(&tv, tp);
 
 	return 0;
 }

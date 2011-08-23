@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.10 2011/08/23 16:09:27 jmcneill Exp $ */
+/* $NetBSD: clock.c,v 1.11 2011/08/23 17:00:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2011/08/23 16:09:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2011/08/23 17:00:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -83,7 +83,7 @@ static void
 clock_attach(device_t parent, device_t self, void *opaque)
 {
 	clock_softc_t *sc = device_private(self);
-	struct itimerval itimer;
+	struct thunk_itimerval itimer;
 	long tcres;
 
 	aprint_naive("\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.13 2011/08/13 10:31:24 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.14 2011/08/23 17:00:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2011/08/13 10:31:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2011/08/23 17:00:36 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 void
 usermode_reboot(void)
 {
-	struct itimerval itimer;
+	struct thunk_itimerval itimer;
 
 	/* make sure the timer is turned off */
 	memset(&itimer, 0, sizeof(itimer));
