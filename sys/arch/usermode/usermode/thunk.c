@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.12 2011/08/23 16:09:27 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.13 2011/08/23 16:16:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.12 2011/08/23 16:09:27 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.13 2011/08/23 16:16:26 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/ansi.h>
@@ -195,6 +195,12 @@ int
 thunk_mkstemp(char *template)
 {
 	return mkstemp(template);
+}
+
+int
+thunk_unlink(const char *path)
+{
+	return unlink(path);
 }
 
 int
