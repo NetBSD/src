@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.98 2011/08/07 05:56:32 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.99 2011/08/23 07:40:32 hannken Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.98 2011/08/07 05:56:32 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.99 2011/08/23 07:40:32 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -664,6 +664,7 @@ rump_vop_lookup(void *v)
 	struct etfs *et;
 	bool dotdot = (cnp->cn_flags & ISDOTDOT) != 0;
 	int rv = 0;
+	const char *cp;
 
 	*vpp = NULL;
 
@@ -694,8 +695,17 @@ rump_vop_lookup(void *v)
 		if (found) {
 			rn = et->et_rn;
 			cnp->cn_consume += et->et_keylen - cnp->cn_namelen;
-			if (rn->rn_va.va_type != VDIR)
+			/*
+			 * consume trailing slashes if any and clear
+			 * REQUIREDIR if we consumed the full path.
+			 */
+			cp = &cnp->cn_nameptr[cnp->cn_namelen];
+			cp += cnp->cn_consume;
+			KASSERT(*cp == '\0' || *cp == '/');
+			if (*cp == '\0' && rn->rn_va.va_type != VDIR)
 				cnp->cn_flags &= ~REQUIREDIR;
+			while (*cp++ == '/')
+				cnp->cn_consume++;
 			goto getvnode;
 		}
 	}
