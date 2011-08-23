@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/08/23 12:54:05 pgoyette Exp $
+# $NetBSD: Makefile,v 1.2 2011/08/23 12:55:50 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -9,6 +9,5 @@ IOCONF=	if_rum.ioconf
 SRCS=	if_rum.c
 
 WARNS=	4
-#CWARNFLAGS+=	-Wno-sign-compare
 
 .include <bsd.kmodule.mk>
