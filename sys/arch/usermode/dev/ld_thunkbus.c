@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.3 2011/08/13 10:58:32 jmcneill Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.4 2011/08/23 15:56:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.3 2011/08/13 10:58:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.4 2011/08/23 15:56:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -52,7 +52,13 @@ static int	ld_thunkbus_ldflush(struct ld_softc *, int);
 static void	ld_thunkbus_sig(int, siginfo_t *, void *);
 static void	ld_thunkbus_complete(void *);
 
-struct ld_thunkbus_transfer;
+struct ld_thunkbus_softc;
+
+struct ld_thunkbus_transfer {
+	struct ld_thunkbus_softc *tt_sc;
+	struct aiocb	tt_aio;
+	struct buf	*tt_bp;
+};
 
 struct ld_thunkbus_softc {
 	struct ld_softc	sc_ld;
@@ -61,13 +67,7 @@ struct ld_thunkbus_softc {
 	struct stat	sc_st;
 	void		*sc_ih;
 
-	struct ld_thunkbus_transfer *sc_curtt;
-};
-
-struct ld_thunkbus_transfer {
-	struct ld_thunkbus_softc *tt_sc;
-	struct aiocb	tt_aio;
-	struct buf	*tt_bp;
+	struct ld_thunkbus_transfer sc_tt;
 };
 
 CFATTACH_DECL_NEW(ld_thunkbus, sizeof(struct ld_thunkbus_softc),
@@ -142,7 +142,6 @@ ld_thunkbus_sig(int sig, siginfo_t *info, void *ctx)
 	if (info->si_signo == SIGIO) {
 		tt = info->si_value.sival_ptr;
 		sc = tt->tt_sc;
-		sc->sc_curtt = tt;
 		softint_schedule(sc->sc_ih);
 	}
 
@@ -153,7 +152,7 @@ static void
 ld_thunkbus_complete(void *arg)
 {
 	struct ld_thunkbus_softc *sc = arg;
-	struct ld_thunkbus_transfer *tt = sc->sc_curtt;
+	struct ld_thunkbus_transfer *tt = &sc->sc_tt;
 	struct buf *bp = tt->tt_bp;
 
 	if (thunk_aio_error(&tt->tt_aio) == 0 &&
@@ -163,8 +162,6 @@ ld_thunkbus_complete(void *arg)
 		bp->b_error = errno;
 		bp->b_resid = bp->b_bcount;
 	}
-
-	kmem_free(tt, sizeof(*tt));
 
 	if (bp->b_error)
 		printf("errpr!\n");
@@ -176,12 +173,8 @@ static int
 ld_thunkbus_ldstart(struct ld_softc *ld, struct buf *bp)
 {
 	struct ld_thunkbus_softc *sc = (struct ld_thunkbus_softc *)ld;
-	struct ld_thunkbus_transfer *tt;
+	struct ld_thunkbus_transfer *tt = &sc->sc_tt;
 	int error;
-
-	tt = kmem_alloc(sizeof(*tt), KM_SLEEP);
-	if (tt == NULL)
-		return ENOMEM;
 
 	tt->tt_sc = sc;
 	tt->tt_bp = bp;
