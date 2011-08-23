@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.22 2011/08/23 15:12:31 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.23 2011/08/23 15:35:53 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2011/08/23 15:12:31 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2011/08/23 15:35:53 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2011/08/23 15:12:31 reinoud Exp $");
 #include <sys/mutex.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <machine/thunk.h>
 
 #include <uvm/uvm.h>
@@ -77,6 +78,8 @@ static int phys_npages = 0;
 static int pm_nentries = 0;
 static uint64_t pm_entries_size = 0;
 
+static struct pool pmap_pool;
+
 /* forwards */
 void		pmap_bootstrap(void);
 static void	pmap_page_activate(struct pv_entry *pv);
@@ -86,7 +89,8 @@ static void	pmap_update_page(int ppn);
 static struct 	pv_entry *pv_get(pmap_t pmap, int ppn, int lpn);
 static struct 	pv_entry *pv_alloc(void);
 static void	pv_free(struct pv_entry *pv);
-void		pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva);
+//void	pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva);
+static void	pmap_deferred_init(void);
 
 /* exposed to signal handler */
 vaddr_t kmem_k_start, kmem_k_end;
@@ -294,40 +298,44 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 	*vendp   = kmem_ext_end;	/* max available */
 }
 
-/* XXXJDM */
-static struct pmap_list {
-	bool used;
-	struct pmap pmap;
-} pmap_list[128];
+static void
+pmap_deferred_init(void)
+{
+	/* XXX we COULD realloc our pv_table etc with malloc() but for what? */
+
+	/* create pmap pool */
+	pool_init(&pmap_pool, sizeof(struct pmap), 0, 0, 0,
+	    "pmappool", NULL, IPL_NONE);
+}
 
 pmap_t
 pmap_create(void)
 {
-	int i;
+	static int pmap_initialised = 0;
+	struct pmap *pmap;
 
-panic("pmap_create\n");
-printf("pmap_create\n");
-	for (i = 0; i < __arraycount(pmap_list); i++)
-		if (pmap_list[i].used == false) {
-			pmap_list[i].used = true;
-			return &pmap_list[i].pmap;
-		}
+	if (!pmap_initialised) {
+		pmap_deferred_init();
+		pmap_initialised = 1;
+	}
 
-	printf("pmap_create: out of space\n");
-	return NULL;
+	aprint_debug("pmap_create\n");
+	pmap = pool_get(&pmap_pool, PR_WAITOK);
+	memset(pmap, 0, sizeof(*pmap));
+		
+	pmap->pm_count = 1;
+	pmap->pm_flags = 0;
+	pmap->pm_entries = (struct pv_entry **) malloc(
+		pm_entries_size, M_VMPMAP,
+		M_WAITOK | M_ZERO);
+
+	return pmap;
 }
 
 void
 pmap_destroy(pmap_t pmap)
 {
-	int i;
-
-aprint_debug("pmap_destroy\n");
-	for (i = 0; i < __arraycount(pmap_list); i++)
-		if (pmap == &pmap_list[i].pmap) {
-			pmap_list[i].used = false;
-			break;
-		}
+aprint_debug("pmap_destroy not implemented!\n");
 }
 
 void
