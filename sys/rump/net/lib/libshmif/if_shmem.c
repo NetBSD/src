@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.40 2011/08/07 14:03:16 rmind Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.41 2011/08/23 22:00:57 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.40 2011/08/07 14:03:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.41 2011/08/23 22:00:57 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -293,7 +293,7 @@ rump_shmif_create(const char *path, int *ifnum)
 			return error;
 	}
 
-	unit = vmem_xalloc(shmif_units, 1, 0, 0, 0, 0, 0,
+	unit = vmem_xalloc(shmif_units, 1, 0, 0, 0, 0, ~(vmem_addr_t)0,
 	    VM_INSTANTFIT | VM_SLEEP) - 1;
 
 	if ((error = allocif(unit, &sc)) != 0) {
@@ -332,11 +332,9 @@ shmif_clone(struct if_clone *ifc, int unit)
 	 * Otherwise the wildcard-side of things might get the same one.
 	 * This is slightly offset-happy due to vmem.  First, we offset
 	 * the range of unit numbers by +1 since vmem cannot deal with
-	 * ranges starting from 0.  Second, since vmem_xalloc() allocates
-	 * from [min,max) (half-*open* interval), we need to add one extra
-	 * to the one extra we add to maxaddr.  Talk about uuuh.
+	 * ranges starting from 0.  Talk about uuuh.
 	 */
-	unit2 = vmem_xalloc(shmif_units, 1, 0, 0, 0, unit+1, unit+3,
+	unit2 = vmem_xalloc(shmif_units, 1, 0, 0, 0, unit+1, unit+1,
 	    VM_SLEEP | VM_INSTANTFIT);
 	KASSERT(unit2-1 == unit);
 
