@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.20 2011/08/23 13:37:32 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.21 2011/08/23 14:23:08 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 2011/08/23 13:37:32 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2011/08/23 14:23:08 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -136,10 +136,10 @@ pmap_bootstrap(void)
 
 #ifdef DIAGNOSTIC
 	if (kmem_k_end >= kmem_data_start) {
-		printf("end of kernel and kernel exec could clash\n");
-		printf("   kmem_k_end = %p, kmem_data_start = %p\n",
+		aprint_debug("end of kernel and kernel exec could clash\n");
+		aprint_debug("   kmem_k_end = %p, kmem_data_start = %p\n",
 			(void *) kmem_k_end, (void *) kmem_data_start);
-		printf("fixing\n");
+		aprint_debug("fixing\n");
 	}
 #endif
 	/* on clash move RO segment so that all code is executable */
@@ -148,7 +148,7 @@ pmap_bootstrap(void)
 
 	/* claim an area for kernel data space growth (over dim) */
 	kmem_ext_start   = kmem_data_end;
-	kmem_ext_end     = kmem_ext_start + NKMEMPAGES * PAGE_SIZE;
+	kmem_ext_end     = kmem_ext_start + (physmem/2) * PAGE_SIZE;
 
 	/* claim an area for userland */
 	kmem_user_start = kmem_ext_end;
@@ -284,7 +284,6 @@ void
 pmap_init(void)
 {
 	/* All deferred to pmap_create, because malloc() is nice. */
-printf("pmap_init\n\n\n");
 }
 
 /* return kernel space start and end (including growth) */
@@ -323,7 +322,7 @@ pmap_destroy(pmap_t pmap)
 {
 	int i;
 
-printf("pmap_destroy\n");
+aprint_debug("pmap_destroy\n");
 	for (i = 0; i < __arraycount(pmap_list); i++)
 		if (pmap == &pmap_list[i].pmap) {
 			pmap_list[i].used = false;
@@ -334,7 +333,7 @@ printf("pmap_destroy\n");
 void
 pmap_reference(pmap_t pmap)
 {
-printf("pmap_reference %p\n", (void *) pmap);
+aprint_debug("pmap_reference %p\n", (void *) pmap);
 }
 
 long
@@ -527,7 +526,7 @@ pv_release(pmap_t pmap, int ppn, int lpn)
 {
 	struct pv_entry *pv, *npv;
 
-printf("pv_release ppn %d, lpn %d\n", ppn, lpn);
+aprint_debug("pv_release ppn %d, lpn %d\n", ppn, lpn);
 	pv = &pv_table[ppn];
 	/*
 	 * If it is the first entry on the list, it is actually
@@ -565,7 +564,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	int slpn, elpn, lpn, s;
 	struct pv_entry *pv;
 
-printf("pmap_remove() called\n");
+aprint_debug("pmap_remove() called\n");
 
 	slpn = atop(sva); elpn = atop(eva);
 	s = splvm();
@@ -573,7 +572,7 @@ printf("pmap_remove() called\n");
 		pv = pmap->pm_entries[lpn];
 		if (pv != NULL) {
 			if (pmap->pm_flags & PM_ACTIVE) {
-printf("pmap_remove: haven't removed old mmap yet\n");
+aprint_debug("pmap_remove: haven't removed old mmap yet\n");
 //				MEMC_WRITE(pv->pv_deactivate);
 //				cpu_cache_flush();
 			}
@@ -596,13 +595,13 @@ panic("pmap_remove_all() called\n");
 void
 pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
-printf("pmap_protect called\n");
+aprint_debug("pmap_protect not implemented\n");
 }
 
 void
 pmap_unwire(pmap_t pmap, vaddr_t va)
 {
-printf("pmap_unwire called\n'");
+aprint_debug("pmap_unwire called not implemented\n'");
 }
 
 bool
@@ -611,7 +610,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	struct pv_entry *pv;
 
 	/* TODO protect against roque values */
-printf("pmap_extract: extracting va %p\n", (void *) va);
+	aprint_debug("pmap_extract: extracting va %p\n", (void *) va);
 	pv = pmap->pm_entries[atop(va - kmem_k_start)];	/* XXX V->A make new var */
 
 	if (pv == NULL)
@@ -636,32 +635,32 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 void
 pmap_kremove(vaddr_t va, vsize_t size)
 {
-printf("pmap_kremove called\n'");
+aprint_debug("pmap_kremove not implented\n'");
 }
 
 void
 pmap_copy(pmap_t dst_map, pmap_t src_map, vaddr_t dst_addr, vsize_t len,
     vaddr_t src_addr)
 {
-printf("pmap_copy called\n");
+aprint_debug("pmap_copy not implemented\n");
 }
 
 void
 pmap_update(pmap_t pmap)
 {
-printf("pmap_update called\n");
+aprint_debug("pmap_update not implemented\n");
 }
 
 void
 pmap_activate(struct lwp *l)
 {
-printf("pmap_activate\n");
+aprint_debug("pmap_activate not implemented\n");
 }
 
 void
 pmap_deactivate(struct lwp *l)
 {
-printf("pmap_deactivate\n");
+aprint_debug("pmap_deactivate not implemented\n");
 }
 
 /* XXX braindead zero_page implementation but it works for now */
@@ -682,47 +681,47 @@ pmap_zero_page(paddr_t pa)
 void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
-printf("pmap_copy_page\n");
+aprint_debug("pmap_copy_page not implemented\n");
 }
 
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
-printf("pmap_page_protect\n");
+aprint_debug("pmap_page_protect not implemented\n");
 }
 
 bool
 pmap_clear_modify(struct vm_page *pg)
 {
-printf("pmap_clear_modify\n");
+aprint_debug("pmap_clear_modify not implemented\n");
 	return true;
 }
 
 bool
 pmap_clear_reference(struct vm_page *pg)
 {
-printf("pmap_clear_reference\n");
+aprint_debug("pmap_clear_reference not implemented\n");
 	return true;
 }
 
 bool
 pmap_is_modified(struct vm_page *pg)
 {
-printf("pmap_is_modified\n");
+aprint_debug("pmap_is_modified not implemented\n");
 	return false;
 }
 
 bool
 pmap_is_referenced(struct vm_page *pg)
 {
-printf("pmap_is_referenced\n");
+aprint_debug("pmap_is_referenced not implemented\n");
 	return false;
 }
 
 paddr_t
 pmap_phys_address(paddr_t cookie)
 {
-panic("pmap_phys_address not implemented\n");
+	panic("pmap_phys_address not implemented\n");
 	return ptoa(cookie);
 }
 
