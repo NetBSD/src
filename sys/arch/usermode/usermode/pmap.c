@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.23 2011/08/23 15:35:53 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.24 2011/08/23 16:16:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2011/08/23 15:35:53 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2011/08/23 16:16:26 jmcneill Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -180,6 +180,9 @@ pmap_bootstrap(void)
 	mem_fh = thunk_mkstemp(mem_name);
 	if (mem_fh < 0)
 		panic("pmap_bootstrap: can't create memory file\n");
+	/* unlink the file so space is freed when we quit */
+	if (thunk_unlink(mem_name) == -1)
+		panic("pmap_bootstrap: can't unlink %s", mem_name);
 
 	/* file_len is the backing store length, nothing to do with placement */
 	file_len = 1024 * MEMSIZE;
