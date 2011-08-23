@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.10 2011/08/22 21:45:38 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.11 2011/08/23 14:37:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.10 2011/08/22 21:45:38 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.11 2011/08/23 14:37:50 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/ansi.h>
@@ -65,10 +65,17 @@ thunk_clock_gettime(clockid_t clock_id, struct timespec *tp)
 	return clock_gettime(clock_id, tp);
 }
 
-int
-thunk_clock_getres(clockid_t clock_id, struct timespec *res)
+long
+thunk_clock_getres_monotonic(void)
 {
-	return clock_getres(clock_id, res);
+	struct timespec res;
+	int error;
+
+	error = clock_getres(CLOCK_MONOTONIC, &res);
+	if (error)
+		return -1;
+
+	return res.tv_nsec;
 }
 
 int
