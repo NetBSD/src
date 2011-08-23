@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.4 2011/08/03 17:34:27 matt Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.5 2011/08/23 08:10:08 oki Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.4 2011/08/03 17:34:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.5 2011/08/23 08:10:08 oki Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -734,7 +734,7 @@ ralink_eth_hw_init(ralink_eth_softc_t *sc)
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_SGC2,
 		0x00000000);
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_PFC1,
-		0x00405555);	/* check VLAN tag on port forward */);
+		0x00405555);	/* check VLAN tag on port forward */
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_VLANI0,
 		0x00002001);
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_PVIDC0,
@@ -764,38 +764,38 @@ ralink_eth_hw_init(ralink_eth_softc_t *sc)
 	/* do some mii magic  TODO: define these registers/bits */
 	/* lower down PHY 10Mbps mode power */
 	/* select local register */
-	ralink_eth_mii_write(&sc->sc_dev, 0, 31, 0x8000);
+	ralink_eth_mii_write(sc->sc_dev, 0, 31, 0x8000);
 
 	for (i=0;i<5;i++){
 		/* set TX10 waveform coefficient */
-		ralink_eth_mii_write(&sc->sc_dev, i, 26, 0x1601);
+		ralink_eth_mii_write(sc->sc_dev, i, 26, 0x1601);
 
 		/* set TX100/TX10 AD/DA current bias */
-		ralink_eth_mii_write(&sc->sc_dev, i, 29, 0x7058);
+		ralink_eth_mii_write(sc->sc_dev, i, 29, 0x7058);
 
 		/* set TX100 slew rate control */
-		ralink_eth_mii_write(&sc->sc_dev, i, 30, 0x0018);
+		ralink_eth_mii_write(sc->sc_dev, i, 30, 0x0018);
 	}
 
 	/* PHY IOT */
 
 	/* select global register */
-	ralink_eth_mii_write(&sc->sc_dev, 0, 31, 0x0);
+	ralink_eth_mii_write(sc->sc_dev, 0, 31, 0x0);
 
 	/* tune TP_IDL tail and head waveform */
-	ralink_eth_mii_write(&sc->sc_dev, 0, 22, 0x052f);
+	ralink_eth_mii_write(sc->sc_dev, 0, 22, 0x052f);
 
 	/* set TX10 signal amplitude threshold to minimum */
-	ralink_eth_mii_write(&sc->sc_dev, 0, 17, 0x0fe0);
+	ralink_eth_mii_write(sc->sc_dev, 0, 17, 0x0fe0);
 
 	/* set squelch amplitude to higher threshold */
-	ralink_eth_mii_write(&sc->sc_dev, 0, 18, 0x40ba);
+	ralink_eth_mii_write(sc->sc_dev, 0, 18, 0x40ba);
 
 	/* longer TP_IDL tail length */
-	ralink_eth_mii_write(&sc->sc_dev, 0, 14, 0x65);
+	ralink_eth_mii_write(sc->sc_dev, 0, 14, 0x65);
 
 	/* select local register */
-	ralink_eth_mii_write(&sc->sc_dev, 0, 31, 0x8000);
+	ralink_eth_mii_write(sc->sc_dev, 0, 31, 0x8000);
 #else
 	/* GE1 + GigSW */
 	fe_write(sc, RA_FE_MDIO_CFG1,
@@ -1571,7 +1571,7 @@ ralink_eth_mdio_enable(ralink_eth_softc_t *sc, bool enable)
 	else
 		data |= GPIOMODE_MDIO;
 
-	sy_write(sc, RA__GPIOMODE, data);
+	sy_write(sc, RA_SYSCTL_GPIOMODE, data);
 }
 #else
 #define ralink_eth_mdio_enable(sc, enable)
@@ -1612,7 +1612,7 @@ ralink_eth_mii_tick(void *arg)
 static int
 ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg)
 {
-	const ralink_eth_softc_t *sc = device_private(self);
+	ralink_eth_softc_t *sc = device_private(self);
 	KASSERT(sc != NULL);
 #if 0
 	printf("%s() phy_addr: %d  phy_reg: %d\n", __func__, phy_addr, phy_reg);
@@ -1642,7 +1642,7 @@ ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg)
 
 #if defined(RT3050) || defined(RT3052)
 	sw_write(sc, RA_ETH_SW_PCTL0,
-		PCTL0_RD_CMD | PCTL0_REG(phy_reg) | PCTL0_ADDR(phy_addr);
+		PCTL0_RD_CMD | PCTL0_REG(phy_reg) | PCTL0_ADDR(phy_addr));
 #else
 	fe_write(sc, RA_FE_MDIO_ACCESS,
 		MDIO_ACCESS_PHY_ADDR(phy_addr) | MDIO_ACCESS_REG(phy_reg));
@@ -1680,7 +1680,7 @@ ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg)
 static void
 ralink_eth_mii_write(device_t self, int phy_addr, int phy_reg, int val)
 {
-	const ralink_eth_softc_t *sc = device_private(self);
+	ralink_eth_softc_t *sc = device_private(self);
 	KASSERT(sc != NULL);
 #if 0
 	printf("%s() phy_addr: %d  phy_reg: %d  val: 0x%04x\n",
