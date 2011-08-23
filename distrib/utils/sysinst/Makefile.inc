@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.53 2011/06/20 07:43:56 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.54 2011/08/23 10:26:07 christos Exp $
 #
 # Makefile for sysinst
 
@@ -49,6 +49,13 @@ CPPFLAGS+=-DINET6
 .if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.label.c+=	-Wno-pointer-sign
 .endif
+COPTS.main.c += -Wno-format-nonliteral
+COPTS.disks.c += -Wno-format-nonliteral
+COPTS.util.c += -Wno-format-nonliteral
+COPTS.label.c += -Wno-format-nonliteral
+COPTS.target.c += -Wno-format-nonliteral
+COPTS.mbr.c += -Wno-format-nonliteral
+COPTS.bsddisklabel.c += -Wno-format-nonliteral
 
 # Host to ftp from.  Default:
 #	"ftp.NetBSD.org"
