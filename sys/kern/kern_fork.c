@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.184 2011/05/14 18:50:07 rmind Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.185 2011/08/23 13:01:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.184 2011/05/14 18:50:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.185 2011/08/23 13:01:25 christos Exp $");
 
 #include "opt_ktrace.h"
 
@@ -423,7 +423,14 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	lwp_create(l1, p2, uaddr, (flags & FORK_PPWAIT) ? LWP_VFORK : 0,
 	    stack, stacksize, (func != NULL) ? func : child_return, arg, &l2,
 	    l1->l_class);
-	lwp_setprivate(l2, l1->l_private);
+
+	/*
+	 * Inherit l_private from the parent.
+	 * Note that we cannot use lwp_setprivate() here since that
+	 * also sets the CPU TLS register, which is incorrect if the
+	 * process has changed that without letting the kernel know.
+	 */
+	l2->l_private = l1->l_private;
 
 	/*
 	 * If emulation has a process fork hook, call it now.
