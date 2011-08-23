@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.13 2011/08/23 00:52:33 jmcneill Exp $ */
+/* $NetBSD: pmap.c,v 1.14 2011/08/23 10:41:47 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2011/08/23 00:52:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2011/08/23 10:41:47 reinoud Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_memsize.h"
@@ -357,17 +357,13 @@ pv_get(pmap_t pmap, int ppn, int lpn)
 
 	/* If the head entry's free use that. */
 	pv = &pv_table[ppn];
-printf("pmap %p, ppn %d, lpn %d, pv %p\n", pmap, ppn, lpn, pv);
 	if (pv->pv_pmap == NULL) {
 		UVMHIST_LOG(pmaphist, "<-- head (pv=%p)", pv, 0, 0, 0);
 		pmap->pm_stats.resident_count++;
 		return pv;
 	}
-printf("pmap = %p, pv->pv_pmap = %p\n", pmap, pv->pv_pmap);
 	/* If this mapping exists already, use that. */
-printf("pv_get: mapping exists\n");
 	for (pv = pv; pv != NULL; pv = pv->pv_next) {
-printf("pv = %p\n", pv);
 		if (pv->pv_pmap == pmap && pv->pv_lpn == lpn) {
 			UVMHIST_LOG(pmaphist, "<-- existing (pv=%p)",
 			    pv, 0, 0, 0);
@@ -375,7 +371,7 @@ printf("pv = %p\n", pv);
 		}
 	}
 	/* Otherwise, allocate a new entry and link it in after the head. */
-	panic("pv_get: no multiple mappings yet\n");
+	panic("pv_get: multiple mapped page ppn %d, lpn %d\n", ppn, lpn);
 #if 0
 	pv = pv_alloc();
 	if (pv == NULL)
