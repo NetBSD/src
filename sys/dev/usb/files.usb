@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.113 2011/07/30 12:19:12 jmcneill Exp $
+#	$NetBSD: files.usb,v 1.114 2011/08/23 16:16:43 christos Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -9,6 +9,7 @@ defflag	opt_usb.h	USB_FRAG_DMA_WORKAROUND
 defflag	opt_usb.h	EHCI_DEBUG OHCI_DEBUG UHCI_DEBUG UHUB_DEBUG USB_DEBUG
 
 defflag	opt_uvideo.h	UVIDEO_DEBUG
+defflag	opt_umass.h	UMASS_DEBUG
 
 define	usbroothubif { }
 define	usbdevif { [port = -1], [configuration = -1], [interface = -1],
