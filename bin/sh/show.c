@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.27 2010/11/14 19:36:07 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.28 2011/08/23 10:01:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,13 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.27 2010/11/14 19:36:07 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.28 2011/08/23 10:01:32 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "shell.h"
 #include "parser.h"
@@ -297,9 +298,12 @@ void
 tracev(const char *fmt, va_list va)
 {
 #ifdef DEBUG
+	va_list ap;
 	if (debug != 1 || !tracefile)
 		return;
-	(void) vfprintf(tracefile, fmt, va);
+	va_copy(ap, va);
+	(void) vfprintf(tracefile, fmt, ap);
+	va_end(ap);
 #endif
 }
 
@@ -400,7 +404,7 @@ opentrace(void)
 		strcat(s, "/trace");
 	}
 #else
-	scopy("./trace", s);
+	snprintf(s, sizeof(s), "./trace.%d", (int)getpid());
 #endif /* not_this_way */
 	if (tracefile) {
 		if (!freopen(s, "a", tracefile)) {
