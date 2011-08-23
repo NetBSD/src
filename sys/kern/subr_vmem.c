@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.59 2011/07/26 13:09:11 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.60 2011/08/23 22:00:57 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.59 2011/07/26 13:09:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.60 2011/08/23 22:00:57 dyoung Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -171,7 +171,7 @@ struct vmem_btag {
 #define	BT_TYPE_BUSY		4
 #define	BT_ISSPAN_P(bt)	((bt)->bt_type <= BT_TYPE_SPAN_STATIC)
 
-#define	BT_END(bt)	((bt)->bt_start + (bt)->bt_size)
+#define	BT_END(bt)	((bt)->bt_start + (bt)->bt_size - 1)
 
 typedef struct vmem_btag bt_t;
 
@@ -717,12 +717,14 @@ vmem_rehash(vmem_t *vm, size_t newhashsize, vm_flag_t flags)
  */
 
 static vmem_addr_t
-vmem_fit(const bt_t *bt, vmem_size_t size, vmem_size_t align, vmem_size_t phase,
-    vmem_size_t nocross, vmem_addr_t minaddr, vmem_addr_t maxaddr)
+vmem_fit(const bt_t const *bt, vmem_size_t size, vmem_size_t align,
+    vmem_size_t phase, vmem_size_t nocross,
+    vmem_addr_t minaddr, vmem_addr_t maxaddr)
 {
 	vmem_addr_t start;
 	vmem_addr_t end;
 
+	KASSERT(size > 0);
 	KASSERT(bt->bt_size >= size); /* caller's responsibility */
 
 	/*
@@ -735,10 +737,10 @@ vmem_fit(const bt_t *bt, vmem_size_t size, vmem_size_t align, vmem_size_t phase,
 		start = minaddr;
 	}
 	end = BT_END(bt);
-	if (end > maxaddr - 1) {
-		end = maxaddr - 1;
+	if (end > maxaddr) {
+		end = maxaddr;
 	}
-	if (start >= end) {
+	if (start > end) {
 		return VMEM_ADDR_NULL;
 	}
 
@@ -750,13 +752,13 @@ vmem_fit(const bt_t *bt, vmem_size_t size, vmem_size_t align, vmem_size_t phase,
 		KASSERT(align < nocross);
 		start = VMEM_ALIGNUP(start - phase, nocross) + phase;
 	}
-	if (start < end && end - start >= size) {
+	if (start <= end && end - start >= size - 1) {
 		KASSERT((start & (align - 1)) == phase);
 		KASSERT(!VMEM_CROSS_P(start, start + size - 1, nocross));
 		KASSERT(minaddr <= start);
-		KASSERT(maxaddr == 0 || start + size <= maxaddr);
+		KASSERT(maxaddr == 0 || start + size - 1 <= maxaddr);
 		KASSERT(bt->bt_start <= start);
-		KASSERT(start + size <= BT_END(bt));
+		KASSERT(BT_END(bt) - start >= size - 1);
 		return start;
 	}
 	return VMEM_ADDR_NULL;
@@ -887,13 +889,14 @@ vmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags)
 	}
 #endif /* defined(QCACHE) */
 
-	return vmem_xalloc(vm, size, 0, 0, 0, 0, 0, flags);
+	return vmem_xalloc(vm, size, 0, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX,
+	    flags);
 }
 
 vmem_addr_t
-vmem_xalloc(vmem_t *vm, vmem_size_t size0, vmem_size_t align, vmem_size_t phase,
-    vmem_size_t nocross, vmem_addr_t minaddr, vmem_addr_t maxaddr,
-    vm_flag_t flags)
+vmem_xalloc(vmem_t *vm, const vmem_size_t size0, vmem_size_t align,
+    const vmem_size_t phase, const vmem_size_t nocross,
+    const vmem_addr_t minaddr, const vmem_addr_t maxaddr, const vm_flag_t flags)
 {
 	struct vmem_freelist *list;
 	struct vmem_freelist *first;
@@ -918,7 +921,7 @@ vmem_xalloc(vmem_t *vm, vmem_size_t size0, vmem_size_t align, vmem_size_t phase,
 	KASSERT((nocross & (nocross - 1)) == 0);
 	KASSERT((align == 0 && phase == 0) || phase < align);
 	KASSERT(nocross == 0 || nocross >= size);
-	KASSERT(maxaddr == 0 || minaddr < maxaddr);
+	KASSERT(minaddr <= maxaddr);
 	KASSERT(!VMEM_CROSS_P(phase, phase + size - 1, nocross));
 
 	if (align == 0) {
@@ -1005,7 +1008,7 @@ retry:
 	}
 #endif
 	if (align != vm->vm_quantum_mask + 1 || phase != 0 ||
-	    nocross != 0 || minaddr != 0 || maxaddr != 0) {
+	    nocross != 0) {
 
 		/*
 		 * XXX should try to import a region large enough to
@@ -1014,6 +1017,7 @@ retry:
 
 		goto fail;
 	}
+	/* XXX eeek, minaddr & maxaddr not respected */
 	if (vmem_import(vm, size, flags) == 0) {
 		goto retry;
 	}
@@ -1118,7 +1122,7 @@ vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 	/* coalesce */
 	t = CIRCLEQ_NEXT(bt, bt_seglist);
 	if (t != NULL && t->bt_type == BT_TYPE_FREE) {
-		KASSERT(BT_END(bt) == t->bt_start);
+		KASSERT(BT_END(bt) < t->bt_start);	/* YYY */
 		bt_remfree(vm, t);
 		bt_remseg(vm, t);
 		bt->bt_size += t->bt_size;
@@ -1126,7 +1130,7 @@ vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 	}
 	t = CIRCLEQ_PREV(bt, bt_seglist);
 	if (t != NULL && t->bt_type == BT_TYPE_FREE) {
-		KASSERT(BT_END(t) == bt->bt_start);
+		KASSERT(BT_END(t) < bt->bt_start);	/* YYY */
 		bt_remfree(vm, t);
 		bt_remseg(vm, t);
 		bt->bt_size += t->bt_size;
@@ -1321,7 +1325,7 @@ vmem_whatis_lookup(vmem_t *vm, uintptr_t addr)
 		if (BT_ISSPAN_P(bt)) {
 			continue;
 		}
-		if (bt->bt_start <= addr && addr < BT_END(bt)) {
+		if (bt->bt_start <= addr && addr <= BT_END(bt)) {
 			return bt;
 		}
 	}
@@ -1367,9 +1371,21 @@ vmem_print(uintptr_t addr, const char *modif, void (*pr)(const char *, ...))
 }
 #endif /* defined(DDB) */
 
-#if !defined(_KERNEL)
+#if defined(_KERNEL)
+#define vmem_printf printf
+#else
 #include <stdio.h>
-#endif /* !defined(_KERNEL) */
+#include <stdarg.h>
+
+static void
+vmem_printf(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+#endif
 
 #if defined(VMEM_SANITY)
 
@@ -1381,9 +1397,9 @@ vmem_check_sanity(vmem_t *vm)
 	KASSERT(vm != NULL);
 
 	CIRCLEQ_FOREACH(bt, &vm->vm_seglist, bt_seglist) {
-		if (bt->bt_start >= BT_END(bt)) {
+		if (bt->bt_start > BT_END(bt)) {
 			printf("corrupted tag\n");
-			bt_dump(bt, (void *)printf);
+			bt_dump(bt, vmem_printf);
 			return false;
 		}
 	}
@@ -1395,11 +1411,11 @@ vmem_check_sanity(vmem_t *vm)
 			if (BT_ISSPAN_P(bt) != BT_ISSPAN_P(bt2)) {
 				continue;
 			}
-			if (bt->bt_start < BT_END(bt2) &&
-			    bt2->bt_start < BT_END(bt)) {
+			if (bt->bt_start <= BT_END(bt2) &&
+			    bt2->bt_start <= BT_END(bt)) {
 				printf("overwrapped tags\n");
-				bt_dump(bt, (void *)printf);
-				bt_dump(bt2, (void *)printf);
+				bt_dump(bt, vmem_printf);
+				bt_dump(bt2, vmem_printf);
 				return false;
 			}
 		}
@@ -1446,14 +1462,33 @@ main(void)
 		printf("vmem_create\n");
 		exit(EXIT_FAILURE);
 	}
-	vmem_dump(vm, (void *)printf);
+	vmem_dump(vm, vmem_printf);
 
 	p = vmem_add(vm, 100, 200, VM_SLEEP);
+	assert(p != VMEM_ADDR_NULL);
 	p = vmem_add(vm, 2000, 1, VM_SLEEP);
-	p = vmem_add(vm, 40000, 0x10000000>>12, VM_SLEEP);
+	assert(p != VMEM_ADDR_NULL);
+	p = vmem_add(vm, 40000, 65536, VM_SLEEP);
+	assert(p != VMEM_ADDR_NULL);
 	p = vmem_add(vm, 10000, 10000, VM_SLEEP);
+	assert(p != VMEM_ADDR_NULL);
 	p = vmem_add(vm, 500, 1000, VM_SLEEP);
-	vmem_dump(vm, (void *)printf);
+	assert(p != VMEM_ADDR_NULL);
+	p = vmem_add(vm, 0xffffff00, 0x100, VM_SLEEP);
+	assert(p != VMEM_ADDR_NULL);
+	p = vmem_xalloc(vm, 0x101, 0, 0, 0,
+	    0xffffff00, 0xffffffff, strat|VM_SLEEP);
+	assert(p == VMEM_ADDR_NULL);
+	p = vmem_xalloc(vm, 0x100, 0, 0, 0,
+	    0xffffff01, 0xffffffff, strat|VM_SLEEP);
+	assert(p == VMEM_ADDR_NULL);
+	p = vmem_xalloc(vm, 0x100, 0, 0, 0,
+	    0xffffff00, 0xfffffffe, strat|VM_SLEEP);
+	assert(p == VMEM_ADDR_NULL);
+	p = vmem_xalloc(vm, 0x100, 0, 0, 0,
+	    0xffffff00, 0xffffffff, strat|VM_SLEEP);
+	assert(p != VMEM_ADDR_NULL);
+	vmem_dump(vm, vmem_printf);
 	for (;;) {
 		struct reg *r;
 		int t = rand() % 100;
@@ -1478,12 +1513,10 @@ main(void)
 				    nocross)) {
 					nocross = 0;
 				}
-				minaddr = rand() % 50000;
-				maxaddr = rand() % 70000;
-				if (minaddr > maxaddr) {
-					minaddr = 0;
-					maxaddr = 0;
-				}
+				do {
+					minaddr = rand() % 50000;
+					maxaddr = rand() % 70000;
+				} while (minaddr > maxaddr);
 				printf("=== xalloc %" PRIu64
 				    " align=%" PRIu64 ", phase=%" PRIu64
 				    ", nocross=%" PRIu64 ", min=%" PRIu64
@@ -1502,7 +1535,7 @@ main(void)
 				p = vmem_alloc(vm, sz, strat|VM_SLEEP);
 			}
 			printf("-> %" PRIu64 "\n", (uint64_t)p);
-			vmem_dump(vm, (void *)printf);
+			vmem_dump(vm, vmem_printf);
 			if (p == VMEM_ADDR_NULL) {
 				if (x) {
 					continue;
@@ -1528,7 +1561,7 @@ main(void)
 				vmem_free(vm, r->p, r->sz);
 			}
 			total -= r->sz;
-			vmem_dump(vm, (void *)printf);
+			vmem_dump(vm, vmem_printf);
 			*r = reg[nreg - 1];
 			nreg--;
 			nfree++;
