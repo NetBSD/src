@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.54.6.2 2011/07/25 17:29:43 cherry Exp $	*/
+/*	$NetBSD: clock.c,v 1.54.6.3 2011/08/23 16:19:12 cherry Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.6.2 2011/07/25 17:29:43 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.6.3 2011/08/23 16:19:12 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -38,12 +38,14 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.6.2 2011/07/25 17:29:43 cherry Exp $"
 #include <sys/timetc.h>
 #include <sys/timevar.h>
 #include <sys/kernel.h>
+#include <sys/mutex.h>
 #include <sys/device.h>
 #include <sys/sysctl.h>
 
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
+#include <xen/xen3-public/vcpu.h>
 #include <machine/cpu_counter.h>
 
 #include <dev/clock_subr.h>
@@ -80,6 +82,8 @@ struct shadow {
 /* Per CPU shadow time values */
 static volatile struct shadow ci_shadow[MAXCPUS];
 
+static kmutex_t tmutex; /* Protects volatile variables, below */
+
 /* The time when the last hardclock(9) call should have taken place,
  * per cpu.
  */
@@ -90,7 +94,7 @@ static volatile uint64_t vcpu_system_time[MAXCPUS];
  * back to maintain the illusion that hardclock(9) was called when it
  * was supposed to be, not when Xen got around to scheduling us.
  */
-static volatile uint64_t xen_clock_bias[MAXCPUS];
+static volatile uint64_t xen_clock_bias;
 
 #ifdef DOM0OPS
 /* If we're dom0, send our time to Xen every minute or so. */
@@ -245,18 +249,17 @@ static void
 xen_wall_time(struct timespec *wt)
 {
 	uint64_t nsec;
-	int s;
 	struct cpu_info *ci = &cpu_info_primary;
 	volatile struct shadow *shadow = &ci_shadow[ci->ci_cpuid];
 
-	s = splhigh();
+	mutex_enter(&tmutex);
 	get_time_values_from_xen(ci);
 	*wt = shadow->ts;
 	nsec = wt->tv_nsec;
 
 	/* Under Xen3, this is the wall time less system time */
 	nsec += get_system_time();
-	splx(s);
+	mutex_exit(&tmutex);
 	wt->tv_sec += nsec / 1000000000L;
 	wt->tv_nsec = nsec % 1000000000L;
 }
@@ -282,8 +285,6 @@ xen_rtc_set(todr_chip_handle_t todr, struct timeval *tvp)
 #else
 	xen_platform_op_t op;
 #endif
-	int s;
-
 	if (xendomain_is_privileged()) {
  		/* needs to set the RTC chip too */
  		struct clock_ymdhms dt;
@@ -298,9 +299,9 @@ xen_rtc_set(todr_chip_handle_t todr, struct timeval *tvp)
 		/* XXX is rtc_offset handled correctly everywhere? */
 		op.u.settime.secs	 = tvp->tv_sec;
 		op.u.settime.nsecs	 = tvp->tv_usec * 1000;
-		s = splhigh();
+		mutex_enter(&tmutex);
 		op.u.settime.system_time = get_system_time();
-		splx(s);
+		mutex_exit(&tmutex);
 #if __XEN_INTERFACE_VERSION__ < 0x00030204
 		return HYPERVISOR_dom0_op(&op);
 #else
@@ -355,18 +356,17 @@ xen_delay(unsigned int n)
 		return;
 	} else {
 		uint64_t when;
-		int s;
 		/* for large delays, shadow->system_time is OK */
 		
-		s = splhigh();
+		mutex_enter(&tmutex);
 		get_time_values_from_xen(ci);
 		when = shadow->system_time + n * 1000;
 		while (shadow->system_time < when) {
-			splx(s);
-			s = splhigh();
+			mutex_exit(&tmutex);
+			mutex_enter(&tmutex);
 			get_time_values_from_xen(ci);
 		}
-		splx(s);
+		mutex_exit(&tmutex);
 	}
 }
 
@@ -416,11 +416,10 @@ u_int
 xen_get_timecount(struct timecounter *tc)
 {
 	uint64_t ns;
-	int s;
 
-	s = splhigh();
-	ns = get_system_time() - xen_clock_bias[0];
-	splx(s);
+	mutex_enter(&tmutex);
+	ns = get_system_time() - xen_clock_bias;
+	mutex_exit(&tmutex);
 
 	return (u_int)ns;
 }
@@ -437,13 +436,15 @@ static struct evcnt hardclock_called[MAXCPUS];
 void
 xen_initclocks(void)
 {
-	int evtch;
+	int err, evtch;
 	static bool tcdone = false;
+
+	struct vcpu_set_periodic_timer hardclock_period = { NS_PER_TICK };
 
 	struct cpu_info *ci = curcpu();
 	volatile struct shadow *shadow = &ci_shadow[ci->ci_cpuid];
 
-	xen_clock_bias[ci->ci_cpuid] = 0;
+	xen_clock_bias = 0;
 
 	evcnt_attach_dynamic(&hardclock_called[ci->ci_cpuid],
 			     EVCNT_TYPE_INTR,
@@ -462,9 +463,17 @@ xen_initclocks(void)
 	get_time_values_from_xen(ci);
 	vcpu_system_time[ci->ci_cpuid] = shadow->system_time;
 	if (!tcdone) { /* Do this only once */
+		mutex_init(&tmutex, MUTEX_DEFAULT, IPL_HIGH);
 		tc_init(&xen_timecounter);
 	}
 	/* The splhigh requirements start here. */
+
+	/* Set hardclock() frequency */
+	err = HYPERVISOR_vcpu_op(VCPUOP_set_periodic_timer,
+				 ci->ci_cpuid,
+				 &hardclock_period);
+
+	KASSERT(err == 0);
 
 	event_set_handler(evtch, (int (*)(void *))xen_timer_handler,
 	    ci, IPL_CLOCK, "clock");
@@ -493,42 +502,29 @@ static int
 xen_timer_handler(void *arg, struct intrframe *regs)
 {
 	int64_t delta;
-	int s, ticks_done;
 	struct cpu_info *ci = curcpu();
+	KASSERT(arg == ci);
+	mutex_enter(&tmutex);
 
-	s = splhigh();
-#if 0
-	get_time_values_from_xen(ci);
-#endif
 	delta = (int64_t)(get_vcpu_time(ci) - vcpu_system_time[ci->ci_cpuid]);
 
-	splx(s);
+	mutex_exit(&tmutex);
 
-	ticks_done = 0;
 	/* Several ticks may have passed without our being run; catch up. */
 	while (delta >= (int64_t)NS_PER_TICK) {
-		++ticks_done;
-		s = splhigh();
+		mutex_enter(&tmutex);
 		vcpu_system_time[ci->ci_cpuid] += NS_PER_TICK;
-		xen_clock_bias[ci->ci_cpuid] = (delta -= NS_PER_TICK);
-		splx(s);
+		xen_clock_bias = (delta -= NS_PER_TICK);
+		mutex_exit(&tmutex);
 		hardclock((struct clockframe *)regs);
 		hardclock_called[ci->ci_cpuid].ev_count++;
 	}
 	
-	if (xen_clock_bias[ci->ci_cpuid]) {
-		s = splhigh();
- 		xen_clock_bias[ci->ci_cpuid] = 0;
-		splx(s);
+	if (xen_clock_bias) {
+		mutex_enter(&tmutex);
+		xen_clock_bias = 0;
+		mutex_exit(&tmutex);
 	}
-
-	/*
-	 * Re-arm the timer here, if needed; Xen's auto-ticking while runnable
-	 * is useful only for HZ==100, and even then may be out of phase with
-	 * the vcpu_system_time[ci->ci_cpuid] steps.
-	 */
-	if (ticks_done != 0)
-		HYPERVISOR_set_timer_op(vcpu_system_time[ci->ci_cpuid] + NS_PER_TICK);
 
 	return 0;
 }
@@ -542,7 +538,6 @@ void
 idle_block(void)
 {
 	int r;
-	struct cpu_info *ci = curcpu();
 
 	/*
 	 * We set the timer to when we expect the next timer
@@ -550,9 +545,11 @@ idle_block(void)
 	 * easily find out when we will have more work (callouts) to
 	 * process from hardclock.
 	 */
-	r = HYPERVISOR_set_timer_op(vcpu_system_time[ci->ci_cpuid] + NS_PER_TICK);
-	if (r == 0)
-		HYPERVISOR_block();
+	r = 0; //HYPERVISOR_set_timer_op(vcpu_system_time[ci->ci_cpuid] + NS_PER_TICK);
+	if (r == 0) {
+		HYPERVISOR_yield();
+		__sti();
+	}
 	else
 		__sti();
 }
