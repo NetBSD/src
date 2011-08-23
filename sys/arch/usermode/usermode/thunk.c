@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.15 2011/08/23 17:12:32 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.16 2011/08/23 18:36:08 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.15 2011/08/23 17:12:32 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.16 2011/08/23 18:36:08 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/ansi.h>
@@ -188,8 +188,8 @@ thunk_getchar(void)
 void
 thunk_putchar(int c)
 {
-	putchar(c);
-	fflush(stdout);
+	char wc = (char) c;
+	write(1, &wc, 1);
 }
 
 int
