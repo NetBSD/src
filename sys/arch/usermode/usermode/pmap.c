@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.21 2011/08/23 14:23:08 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.22 2011/08/23 15:12:31 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2011/08/23 14:23:08 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2011/08/23 15:12:31 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -673,7 +673,7 @@ pmap_zero_page(paddr_t pa)
 	aprint_debug("pmap_zero_page: pa %p\n", (void *) pa);
 
 	memset(blob, 0, PAGE_SIZE);
-	num = thunk_pwrite(mem_fh, blob, PAGE_SIZE, pa*PAGE_SIZE);
+	num = thunk_pwrite(mem_fh, blob, PAGE_SIZE, pa);
 	if (num != PAGE_SIZE)
 		panic("pmap_zero_page couldn't write out\n");
 }
