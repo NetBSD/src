@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem.9,v 1.9 2010/12/02 12:54:13 wiz Exp $
+.\"	$NetBSD: vmem.9,v 1.10 2011/08/23 22:00:57 dyoung Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -228,9 +228,13 @@ Request a resource which doesn't cross
 .Fa nocross
 aligned boundary.
 .It Fa minaddr
-If non-zero, specify the minimum address which can be allocated.
+Specify the minimum address which can be allocated, or
+.Dv VMEM_ADDR_MIN
+if the caller does not care.
 .It Fa maxaddr
-If non-zero, specify the maximum address + 1 which can be allocated.
+Specify the maximum address which can be allocated, or
+.Dv VMEM_ADDR_MAX
+if the caller does not care.
 .It Fa flags
 A bitwise OR of an allocation strategy and a sleep flag.
 .Pp
