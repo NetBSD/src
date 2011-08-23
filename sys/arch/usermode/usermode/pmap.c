@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.14 2011/08/23 10:41:47 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.15 2011/08/23 11:36:11 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2011/08/23 10:41:47 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2011/08/23 11:36:11 reinoud Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_memsize.h"
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2011/08/23 10:41:47 reinoud Exp $");
 #include <sys/param.h>
 #include <sys/mutex.h>
 #include <sys/buf.h>
+#include <sys/malloc.h>
 #include <machine/thunk.h>
 
 #include <uvm/uvm.h>
@@ -86,7 +87,10 @@ void		pmap_bootstrap(void);
 static void	pmap_page_activate(struct pv_entry *pv);
 static void	pv_update(struct pv_entry *pv);
 static void	pmap_update_page(int ppn);
-static struct pv_entry *pv_get(pmap_t pmap, int ppn, int lpn);
+
+static struct 	pv_entry *pv_get(pmap_t pmap, int ppn, int lpn);
+static struct 	pv_entry *pv_alloc(void);
+//static void	pv_free(struct pv_entry *pv);
 
 /* exposed to signal handler */
 vaddr_t kmem_k_start, kmem_k_end;
@@ -283,6 +287,10 @@ pmap_bootstrap(void)
 void
 pmap_init(void)
 {
+	UVMHIST_FUNC("pmap_init");
+	UVMHIST_CALLED(pmaphist);
+	/* All deferred to pmap_create, because malloc() is nice. */
+printf("pmap_init\n\n\n");
 }
 
 /* return kernel space start and end (including growth) */
@@ -304,6 +312,7 @@ pmap_create(void)
 {
 	int i;
 
+panic("pmap_create\n");
 printf("pmap_create\n");
 	for (i = 0; i < __arraycount(pmap_list); i++)
 		if (pmap_list[i].used == false) {
@@ -347,6 +356,20 @@ pmap_wired_count(pmap_t pmap)
 }
 
 static struct pv_entry *
+pv_alloc(void)
+{
+	return malloc(sizeof(struct pv_entry), M_VMPMAP, M_NOWAIT | M_ZERO);
+}
+
+#if 0
+static void
+pv_free(struct pv_entry *pv)
+{
+	free(pv, M_VMPMAP);
+}
+#endif
+
+static struct pv_entry *
 pv_get(pmap_t pmap, int ppn, int lpn)
 {
 	struct pv_entry *pv;
@@ -371,8 +394,10 @@ pv_get(pmap_t pmap, int ppn, int lpn)
 		}
 	}
 	/* Otherwise, allocate a new entry and link it in after the head. */
-	panic("pv_get: multiple mapped page ppn %d, lpn %d\n", ppn, lpn);
-#if 0
+	printf("pv_get: multiple mapped page ppn %d, lpn %d\n", ppn, lpn);
+assert(ppn < phys_npages);
+assert(ppn >= 0);
+panic("pv_get: multiple\n");
 	pv = pv_alloc();
 	if (pv == NULL)
 		return NULL;
@@ -381,7 +406,6 @@ pv_get(pmap_t pmap, int ppn, int lpn)
 	pv_table[ppn].pv_next = pv;
 	pmap->pm_stats.resident_count++;
 	UVMHIST_LOG(pmaphist, "<-- new (pv=%p)", pv, 0, 0, 0);
-#endif
 
 	return pv;
 }
@@ -521,21 +545,25 @@ printf("pmap_enter %p : v %p, p %p, prot %d, flags %d\n", (void *) pmap, (void *
 void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
+panic("pmap_remove() called\n");
 }
 
 void
 pmap_remove_all(pmap_t pmap)
 {
+panic("pmap_remove_all() called\n");
 }
 
 void
 pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
+printf("pmap_protect called\n");
 }
 
 void
 pmap_unwire(pmap_t pmap, vaddr_t va)
 {
+printf("pmap_unwire called\n'");
 }
 
 bool
@@ -570,17 +598,20 @@ printf("pmap_kenter_pa : v %p, p %p, prot %d, flags %d\n", (void *) va, (void *)
 void
 pmap_kremove(vaddr_t va, vsize_t size)
 {
+printf("pmap_kremove called\n'");
 }
 
 void
 pmap_copy(pmap_t dst_map, pmap_t src_map, vaddr_t dst_addr, vsize_t len,
     vaddr_t src_addr)
 {
+printf("pmap_copy called\n");
 }
 
 void
 pmap_update(pmap_t pmap)
 {
+printf("pmap_update called\n");
 }
 
 void
@@ -592,6 +623,7 @@ printf("pmap_activate\n");
 void
 pmap_deactivate(struct lwp *l)
 {
+printf("pmap_deactivate\n");
 }
 
 void
@@ -603,40 +635,47 @@ printf("pmap_zero_page: pa %p\n", (void *) pa);
 void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
+printf("pmap_copy_page\n");
 }
 
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
+printf("pmap_page_protect\n");
 }
 
 bool
 pmap_clear_modify(struct vm_page *pg)
 {
+printf("pmap_clear_modify\n");
 	return true;
 }
 
 bool
 pmap_clear_reference(struct vm_page *pg)
 {
+printf("pmap_clear_reference\n");
 	return true;
 }
 
 bool
 pmap_is_modified(struct vm_page *pg)
 {
+printf("pmap_is_modified\n");
 	return false;
 }
 
 bool
 pmap_is_referenced(struct vm_page *pg)
 {
+printf("pmap_is_referenced\n");
 	return false;
 }
 
 paddr_t
 pmap_phys_address(paddr_t cookie)
 {
+panic("pmap_phys_address not implemented\n");
 	return ptoa(cookie);
 }
 
