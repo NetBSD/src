@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.97 2011/08/14 10:53:17 christos Exp $
+#	$NetBSD: Makefile,v 1.98 2011/08/23 10:47:06 christos Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -83,6 +83,7 @@ SUBDIR+=USD.doc
 .endif
 
 COPTS.printf.c = -Wno-format-nonliteral
+COPTS.jobs.c = -Wno-format-nonliteral
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
