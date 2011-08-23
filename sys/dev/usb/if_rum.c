@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.36 2011/02/22 00:58:08 jmcneill Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.37 2011/08/23 12:33:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.36 2011/02/22 00:58:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.37 2011/08/23 12:33:50 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -843,7 +843,8 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
 
-	if (len < RT2573_RX_DESC_SIZE + sizeof (struct ieee80211_frame_min)) {
+	if (len < (int)(RT2573_RX_DESC_SIZE +
+		        sizeof(struct ieee80211_frame_min))) {
 		DPRINTF(("%s: xfer too short %d\n", device_xname(sc->sc_dev),
 		    len));
 		ifp->if_ierrors++;
@@ -1303,7 +1304,7 @@ rum_start(struct ifnet *ifp)
 				break;
 			}
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
-			if (m0->m_len < sizeof(struct ether_header) &&
+			if (m0->m_len < (int)sizeof(struct ether_header) &&
 			    !(m0 = m_pullup(m0, sizeof(struct ether_header))))
 				continue;
 
@@ -1929,7 +1930,7 @@ static int
 rum_bbp_init(struct rum_softc *sc)
 {
 #define N(a)	(sizeof (a) / sizeof ((a)[0]))
-	int i, ntries;
+	unsigned int i, ntries;
 	uint8_t val;
 
 	/* wait for BBP to be ready */
@@ -1969,7 +1970,7 @@ rum_init(struct ifnet *ifp)
 	struct rum_rx_data *data;
 	uint32_t tmp;
 	usbd_status error = 0;
-	int i, ntries;
+	unsigned int i, ntries;
 
 	if ((sc->sc_flags & RT2573_FWLOADED) == 0) {
 		if (rum_attachhook(sc))
