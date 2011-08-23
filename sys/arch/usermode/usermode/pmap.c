@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.17 2011/08/23 12:36:20 jmcneill Exp $ */
+/* $NetBSD: pmap.c,v 1.18 2011/08/23 12:46:58 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2011/08/23 12:36:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2011/08/23 12:46:58 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -291,7 +291,7 @@ printf("pmap_init\n\n\n");
 void
 pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
-	*vstartp = kmem_ext_start;	/* min to map in */
+	*vstartp = kmem_ext_cur_start;	/* min to map in */
 	*vendp   = kmem_ext_end;	/* max available */
 }
 
