@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.84 2011/06/18 21:18:46 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.85 2011/08/23 10:04:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.84 2011/06/18 21:18:46 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.85 2011/08/23 10:04:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -426,6 +426,7 @@ expbackq(union node *cmd, int quoted, int flag)
 	char const *syntax = quoted? DQSYNTAX : BASESYNTAX;
 	int saveherefd;
 	int quotes = flag & (EXP_FULL | EXP_CASE);
+	int nnl;
 
 	INTOFF;
 	saveifs = ifsfirst;
@@ -443,6 +444,7 @@ expbackq(union node *cmd, int quoted, int flag)
 
 	p = in.buf;
 	lastc = '\0';
+	nnl = 0;
 	for (;;) {
 		if (--in.nleft < 0) {
 			if (in.fd < 0)
@@ -456,16 +458,20 @@ expbackq(union node *cmd, int quoted, int flag)
 		}
 		lastc = *p++;
 		if (lastc != '\0') {
-			if (quotes && syntax[(int)lastc] == CCTL)
-				STPUTC(CTLESC, dest);
-			STPUTC(lastc, dest);
+			if (lastc == '\n')
+				nnl++;
+			else {
+				CHECKSTRSPACE(nnl + 2, dest);
+				while (nnl > 0) {
+					nnl--;
+					USTPUTC('\n', dest);
+				}
+				if (quotes && syntax[(int)lastc] == CCTL)
+					USTPUTC(CTLESC, dest);
+				USTPUTC(lastc, dest);
+			}
 		}
 	}
-
-	/* Eat all trailing newlines */
-	p = stackblock() + startloc;
-	while (dest > p && dest[-1] == '\n')
-		STUNPUTC(dest);
 
 	if (in.fd >= 0)
 		close(in.fd);
