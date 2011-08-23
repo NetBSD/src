@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.47 2010/11/03 22:28:31 dyoung Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.48 2011/08/23 12:53:29 pgoyette Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,11 +89,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.47 2010/11/03 22:28:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.48 2011/08/23 12:53:29 pgoyette Exp $");
 
 #if defined(__NetBSD__)
+#ifndef _MODULE
 #include "opt_inet.h"
 #include "rnd.h"
+#endif
 #endif
 
 
@@ -102,6 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.47 2010/11/03 22:28:31 dyoung Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
+#include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
@@ -1454,4 +1457,33 @@ axe_stop(struct ifnet *ifp, int disable)
 	}
 
 	sc->axe_link = 0;
+}
+
+MODULE(MODULE_CLASS_DRIVER, if_axe, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+if_axe_modcmd(modcmd_t cmd, void *aux)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_if_axe,
+		    cfattach_ioconf_if_axe, cfdata_ioconf_if_axe);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_if_axe,
+		    cfattach_ioconf_if_axe, cfdata_ioconf_if_axe);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }

@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.37 2011/08/23 12:33:50 pgoyette Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.38 2011/08/23 12:53:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.37 2011/08/23 12:33:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.38 2011/08/23 12:53:29 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.37 2011/08/23 12:33:50 pgoyette Exp $")
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 
@@ -2295,5 +2296,34 @@ rum_activate(device_t self, enum devact act)
 		return 0;
 	default:
 		return 0;
+	}
+}
+
+MODULE(MODULE_CLASS_DRIVER, if_rum, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+if_rum_modcmd(modcmd_t cmd, void *aux)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_if_rum,
+		    cfattach_ioconf_if_rum, cfdata_ioconf_if_rum);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_if_rum,
+		    cfattach_ioconf_if_rum, cfdata_ioconf_if_rum);
+#endif
+		return error;
+	default:
+		return ENOTTY;
 	}
 }
