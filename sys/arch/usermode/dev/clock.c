@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.11 2011/08/23 17:00:36 jmcneill Exp $ */
+/* $NetBSD: clock.c,v 1.12 2011/08/23 21:56:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2011/08/23 17:00:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2011/08/23 21:56:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -44,7 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2011/08/23 17:00:36 jmcneill Exp $");
 static int	clock_match(device_t, cfdata_t, void *);
 static void	clock_attach(device_t, device_t, void *);
 
-static void 	clock_intr(int);
+static void	clock_softint(void *);
+static void 	clock_signal(int);
 static unsigned int clock_getcounter(struct timecounter *);
 
 static int	clock_todr_gettime(struct todr_chip_handle *, struct timeval *);
@@ -52,6 +53,7 @@ static int	clock_todr_gettime(struct todr_chip_handle *, struct timeval *);
 typedef struct clock_softc {
 	device_t		sc_dev;
 	struct todr_chip_handle	sc_todr;
+	void			*sc_ih;
 } clock_softc_t;
 
 static struct timecounter clock_timecounter = {
@@ -64,6 +66,8 @@ static struct timecounter clock_timecounter = {
 	NULL,			/* prev */
 	NULL,			/* next */
 };
+
+static struct clock_softc *clock_sc;
 
 CFATTACH_DECL_NEW(clock, sizeof(clock_softc_t),
     clock_match, clock_attach, NULL, NULL);
@@ -89,12 +93,16 @@ clock_attach(device_t parent, device_t self, void *opaque)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	KASSERT(clock_sc == NULL);
+	clock_sc = sc;
+
 	sc->sc_dev = self;
+	sc->sc_ih = softint_establish(SOFTINT_CLOCK, clock_softint, sc);
 
 	sc->sc_todr.todr_gettime = clock_todr_gettime;
 	todr_attach(&sc->sc_todr);
 
-	(void)signal(SIGALRM, clock_intr);
+	thunk_signal(SIGALRM, clock_signal);
 
 	itimer.it_interval.tv_sec = 0;
 	itimer.it_interval.tv_usec = 10000;
@@ -110,16 +118,21 @@ clock_attach(device_t parent, device_t self, void *opaque)
 }
 
 static void
-clock_intr(int notused)
+clock_signal(int notused)
 {
-	extern int usermode_x;
-	struct clockframe cf;
-
 	curcpu()->ci_idepth++;
 
-	hardclock(&cf);
+	softint_schedule(clock_sc->sc_ih);
 
 	curcpu()->ci_idepth--;
+}
+
+static void
+clock_softint(void *priv)
+{
+	struct clockframe cf;
+
+	hardclock(&cf);
 }
 
 static unsigned int
