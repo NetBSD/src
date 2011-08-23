@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.14 2011/08/23 17:12:32 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.15 2011/08/23 21:55:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -76,6 +76,7 @@ int	thunk_mkstemp(char *);
 int	thunk_unlink(const char *);
 
 int	thunk_sigaction(int, const struct sigaction *, struct sigaction *);
+void	thunk_signal(int, void (*)(int));
 
 int	thunk_aio_read(struct aiocb *);
 int	thunk_aio_write(struct aiocb *);
