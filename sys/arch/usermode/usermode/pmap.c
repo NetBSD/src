@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.24 2011/08/23 16:16:26 jmcneill Exp $ */
+/* $NetBSD: pmap.c,v 1.25 2011/08/23 18:37:51 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2011/08/23 16:16:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2011/08/23 18:37:51 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -158,6 +158,15 @@ pmap_bootstrap(void)
 	kmem_user_start = kmem_ext_end;
 	kmem_user_end   = kmem_user_start + 1024 * MEMSIZE;
 	/* TODO make a better user space size estimate */
+
+	/* claim dummy space over all we need just to make fun of sbrk */
+	addr = thunk_mmap((void*) kmem_data_end,
+		kmem_user_end - kmem_data_end,
+		PROT_NONE,
+		MAP_ANON | MAP_FIXED,
+		-1, 0);
+	if (addr != (void *) kmem_data_end)
+		panic("pmap_bootstrap: protection barrier failed\n");
 
 	if (kmem_user_end < kmem_user_start)
 		panic("pmap_bootstrap: to small memorysize specified");
