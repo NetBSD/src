@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.12 2011/08/22 21:59:09 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.13 2011/08/23 00:52:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2011/08/22 21:59:09 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2011/08/23 00:52:33 jmcneill Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_memsize.h"
@@ -519,7 +519,7 @@ int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 printf("pmap_enter %p : v %p, p %p, prot %d, flags %d\n", (void *) pmap, (void *) va, (void *) pa, (int) prot, (int) flags);
-	return pmap_do_enter(pmap_kernel(),  va, pa, prot, prot, 1);
+	return pmap_do_enter(pmap, va, pa, prot, flags, 0);
 }
 
 void
