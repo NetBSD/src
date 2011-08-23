@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.32 2011/08/23 17:09:11 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.33 2011/08/23 19:17:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.32 2011/08/23 17:09:11 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.33 2011/08/23 19:17:07 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -1651,15 +1651,15 @@ cd9660_level1_convert_filename(const char *oldname, char *newname, int is_file)
 			if (diskStructure.archimedes_enabled &&
 			    *oldname == ',' && strlen(oldname) == 4)
 				break;
+
 			/* Enforce 12.3 / 8 */
 			if (namelen == 8 && !found_ext)
 				break;
-			}
 
 			if (islower((unsigned char)*oldname))
 				*newname++ = toupper((unsigned char)*oldname);
 			else if (isupper((unsigned char)*oldname)
-				    || isdigit((unsigned char)*oldname))
+			    || isdigit((unsigned char)*oldname))
 				*newname++ = *oldname;
 			else
 				*newname++ = '_';
@@ -1669,7 +1669,7 @@ cd9660_level1_convert_filename(const char *oldname, char *newname, int is_file)
 			else
 				namelen++;
 		}
-		oldname ++;
+		oldname++;
 	}
 	if (is_file) {
 		if (!found_ext && !diskStructure.omit_trailing_period)
