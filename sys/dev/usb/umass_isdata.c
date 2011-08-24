@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.20 2011/08/23 16:16:43 christos Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.21 2011/08/24 11:28:50 mbalmer Exp $	*/
 
 /*
  * TODO:
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.20 2011/08/23 16:16:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.21 2011/08/24 11:28:50 mbalmer Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_umass.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
