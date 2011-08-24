@@ -1,0 +1,12 @@
+# $NetBSD: GDIUM64,v 1.1 2011/08/24 16:02:26 matt Exp $
+#
+include "arch/evbmips/conf/GDIUM"
+
+makeoptions	LP64="yes"
+
+options 	EXEC_ELF64
+options 	COMPAT_NETBSD32
+#no options 	SYMTAB_SPACE
+#options 	SYMTAB_SPACE=470000	# size for embedded symbol table
+
+#options 	UVMHIST, UVMHIST_PRINT
