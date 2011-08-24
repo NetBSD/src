@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2011/07/10 00:03:53 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2011/08/24 19:03:02 macallan Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2011/07/10 00:03:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2011/08/24 19:03:02 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -194,7 +194,7 @@ gdium_pci_attach_hook(device_t parent, device_t self,
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init(int argc, char **argv, char **envp, void *callvec)
+mach_init(int argc, char **argv, char **envp32, void *callvec)
 {
 	struct gdium_config *gc = &gdium_configuration;
 	void *kernend;
@@ -204,7 +204,8 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 #endif
 	int i;
 	psize_t memsize;
-
+	char *envp[128];
+	int32_t *eptrs = (int32_t *)envp32; 
 	extern char edata[], end[];
 
 	/*
@@ -212,6 +213,19 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 	 */
 	kernend = (void *)mips_round_page(end);
 	memset(edata, 0, (char *)kernend - edata);
+
+	/*
+	 * the pointer array in envp32 is 32bit - we need to sign extend them
+	 * and put them into a list of actual pointers
+	 * Only strictly necessary on LP64 but it doesn't hurt in LP32, runs only
+	 * once at startup and I'd rather not pollute this file with another
+	 * #ifdef orgy
+	 */
+	i = 0;
+	while ((eptrs[i] != 0) && (i < 128)) {
+		envp[i] = (char *)(intptr_t)eptrs[i];	/* sign extend */
+		i++;
+	}
 
 	/*
 	 * Set up the exception vectors and CPU-specific function
@@ -255,7 +269,7 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 			break;
 		}
 	}
-	
+
 	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
 		curcpu()->ci_cpu_freq /= 2;
 
