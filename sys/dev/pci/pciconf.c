@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.32 2010/12/11 18:21:14 matt Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.33 2011/08/24 20:27:35 dyoung Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.32 2010/12/11 18:21:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.33 2011/08/24 20:27:35 dyoung Exp $");
 
 #include "opt_pci.h"
 
@@ -211,13 +211,10 @@ get_mem_desc(pciconf_bus_t *pb, bus_size_t size)
 static int
 probe_bus(pciconf_bus_t *pb)
 {
-	int device, maxdevs;
-#ifdef __PCI_BUS_DEVORDER
-	char devs[32];
-	int  i;
-#endif
+	int device;
+	uint8_t devs[32];
+	int i, n;
 
-	maxdevs = pci_bus_maxdevs(pb->pc, pb->busno);
 	pb->ndevs = 0;
 	pb->niowin = 0;
 	pb->nmemwin = 0;
@@ -232,16 +229,14 @@ probe_bus(pciconf_bus_t *pb)
 	pb->min_maxlat = 0x100;	/* we are looking for the minimum */
 	pb->bandwidth_used = 0;
 
-#ifdef __PCI_BUS_DEVORDER
-	pci_bus_devorder(pb->pc, pb->busno, devs);
-	for (i = 0; (device = devs[i]) < 32 && device >= 0; i++) {
-#else
-	for (device = 0; device < maxdevs; device++) {
-#endif
+	n = pci_bus_devorder(pb->pc, pb->busno, devs, __arraycount(devs));
+	for (i = 0; i < n; i++) {
 		pcitag_t tag;
 		pcireg_t id, bhlcr;
 		int function, nfunction;
 		int confmode;
+
+		device = devs[i];
 
 		tag = pci_make_tag(pb->pc, pb->busno, device, 0);
 		if (pci_conf_debug) {

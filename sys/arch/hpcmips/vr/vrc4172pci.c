@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pci.c,v 1.14 2011/05/17 17:34:49 dyoung Exp $	*/
+/*	$NetBSD: vrc4172pci.c,v 1.15 2011/08/24 20:27:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172pci.c,v 1.14 2011/05/17 17:34:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172pci.c,v 1.15 2011/08/24 20:27:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ static void	vrc4172pci_attach(struct device *, struct device *, void *);
 static void	vrc4172pci_attach_hook(struct device *, struct device *,
 		    struct pcibus_attach_args *);
 static int	vrc4172pci_bus_maxdevs(pci_chipset_tag_t, int);
-static int	vrc4172pci_bus_devorder(pci_chipset_tag_t, int, char *);
+static int	vrc4172pci_bus_devorder(pci_chipset_tag_t, int, uint8_t *, int);
 static pcitag_t	vrc4172pci_make_tag(pci_chipset_tag_t, int, int, int);
 static void	vrc4172pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *,
 		    int *, int *);
@@ -224,15 +224,13 @@ vrc4172pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 }
 
 int
-vrc4172pci_bus_devorder(pci_chipset_tag_t pc, int busno, char *devs)
+vrc4172pci_bus_devorder(pci_chipset_tag_t pc, int busno, uint8_t *devs,
+    int maxdevs)
 {
-	int i;
-
-	*devs++ = 0;
-	for (i = 1; i < 32; i++)
-		*devs++ = -1;
-
-	return (1);
+	if (maxdevs <= 0)
+		return 0;
+	devs[0] = 0;
+	return 1;
 }
 
 pcitag_t

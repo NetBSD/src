@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.18 2011/05/17 17:34:50 dyoung Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.19 2011/08/24 20:27:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpciu.c,v 1.18 2011/05/17 17:34:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpciu.c,v 1.19 2011/08/24 20:27:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ static int	vrpciu_intr(void *);
 static void	vrpciu_attach_hook(struct device *, struct device *,
 		    struct pcibus_attach_args *);
 static int	vrpciu_bus_maxdevs(pci_chipset_tag_t, int);
-static int	vrpciu_bus_devorder(pci_chipset_tag_t, int, char *);
+static int	vrpciu_bus_devorder(pci_chipset_tag_t, int, uint8_t *, int);
 static pcitag_t	vrpciu_make_tag(pci_chipset_tag_t, int, int, int);
 static void	vrpciu_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
 		    int *);
@@ -358,32 +358,41 @@ vrpciu_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 }
 
 int
-vrpciu_bus_devorder(pci_chipset_tag_t pc, int busno, char *devs)
+vrpciu_bus_devorder(pci_chipset_tag_t pc, int busno, uint8_t *devs, int maxdevs)
 {
-	int i, dev;
+	int dev, i, n;
+	uint8_t *devn;
 	char priorities[32];
 	static pcireg_t ids[] = {
 		/* these devices should be attached first */
 		PCI_ID_CODE(PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VRC4173_BCU),
 	};
 
+	n = MIN(32, maxdevs);
+	if (n <= 0)
+		return 0;
+
+	devn = devs + n;
+
 	/* scan PCI devices and check the id table */
 	memset(priorities, 0, sizeof(priorities));
 	for (dev = 0; dev < 32; dev++) {
 		pcireg_t id;
-		id = pci_conf_read(pc, pci_make_tag(pc, 0, dev, 0),PCI_ID_REG);
-		for (i = 0; i < sizeof(ids)/sizeof(*ids); i++)
+		id = pci_conf_read(pc, pci_make_tag(pc, 0, dev, 0), PCI_ID_REG);
+		for (i = 0; i < __arraycount(ids); i++)
 			if (id == ids[i])
 				priorities[dev] = 1;
 	}
 
 	/* fill order array */
-	for (i = 1; 0 <= i; i--)
-		for (dev = 0; dev < 32; dev++)
-			if (priorities[dev] == i)
+	for (i = 1; 0 <= i; i--) {
+		for (dev = 0; dev < 32; dev++) {
+			if (priorities[dev] == i && devs != devn)
 				*devs++ = dev;
+		}
+	}
 
-	return (32);
+	return n;
 }
 
 pcitag_t

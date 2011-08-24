@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.345 2011/08/12 22:02:56 dyoung Exp $
+#	$NetBSD: files.pci,v 1.346 2011/08/24 20:27:35 dyoung Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -21,6 +21,7 @@ file	dev/pci/pci.c			pci			needs-flag
 file	dev/pci/pci_map.c		pci
 file	dev/pci/pci_quirks.c		pci
 file	dev/pci/pci_subr.c		pci
+file	dev/pci/pci_stub.c		pci
 file	dev/pci/pci_usrreq.c		pci
 file	dev/pci/pciconf.c		pci & pci_netbsd_configure
 

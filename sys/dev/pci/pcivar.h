@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.94 2011/06/22 18:03:30 matt Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.95 2011/08/24 20:27:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -320,6 +320,7 @@ int	pci_chipset_tag_create(pci_chipset_tag_t, uint64_t,
 	                       const struct pci_overrides *,
 	                       void *, pci_chipset_tag_t *);
 void	pci_chipset_tag_destroy(pci_chipset_tag_t);
+int	pci_bus_devorder(pci_chipset_tag_t, int, uint8_t *, int);
 
 /*
  * Device abstraction for inheritance by elanpci(4), for example.
