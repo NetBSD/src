@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.6 2011/08/24 10:57:48 reinoud Exp $ */
+/* $NetBSD: vmparam.h,v 1.7 2011/08/24 11:26:43 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,8 +37,8 @@ extern paddr_t kmem_ext_start, kmem_ext_end;
 extern paddr_t kmem_user_start, kmem_user_end;
 
 #define VM_MIN_KERNEL_ADDRESS	kmem_k_start
-#define VM_MAX_KERNEL_ADDRESS 	kmem_ext_end
-#define VM_MIN_ADDRESS		kmem_k_start
+#define VM_MAX_KERNEL_ADDRESS 	kmem_k_end
+#define VM_MIN_ADDRESS		kmem_ext_start
 #define VM_MAX_ADDRESS		kmem_user_end
 #define VM_MAXUSER_ADDRESS	kmem_user_end
 
