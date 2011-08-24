@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.591 2011/07/25 05:32:11 jruoho Exp $
+$NetBSD: usbdevs,v 1.592 2011/08/24 19:39:05 veego Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1499,6 +1499,7 @@ product HTC ANDROID		0x0ffe	Android
 /* Huawei Technologies products */
 product HUAWEI MOBILE		0x1001	Huawei Mobile
 product HUAWEI E220  		0x1003	Huawei E220
+product HUAWEI E1750	  	0x140c	Huawei E1750
 product HUAWEI E1750INIT  	0x1446	Huawei E1750 USB CD
 product HUAWEI K3765  		0x1465	Huawei K3765
 product HUAWEI E1820  		0x14ac	Huawei E1820
