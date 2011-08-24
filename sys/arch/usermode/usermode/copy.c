@@ -1,4 +1,4 @@
-/* $NetBSD: copy.c,v 1.2 2009/10/21 16:07:00 snj Exp $ */
+/* $NetBSD: copy.c,v 1.3 2011/08/24 20:03:19 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,14 +27,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.2 2009/10/21 16:07:00 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.3 2011/08/24 20:03:19 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
+#include <sys/param.h>		// tmp
+#include <uvm/uvm.h>		// tmp
+#include <uvm/uvm_pmap.h>	// tmp
 
 int
 copyin(const void *uaddr, void *kaddr, size_t len)
 {
+printf("copyin uaddr %p, kaddr %p, len %d\n", uaddr, kaddr, (int) len);
 	memcpy(kaddr, uaddr, len);
 	return 0;
 }
@@ -42,6 +46,9 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 int
 copyout(const void *kaddr, void *uaddr, size_t len)
 {
+printf("copyout kaddr %p, uaddr %p, len %d\n", kaddr, uaddr, (int) len);
+printf("curlwp pmap = %p\n", curlwp->l_proc->p_vmspace->vm_map.pmap);
+
 	memcpy(uaddr, kaddr, len);
 	return 0;
 }
