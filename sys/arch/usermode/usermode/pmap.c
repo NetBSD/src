@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.26 2011/08/24 11:02:31 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.27 2011/08/24 11:30:59 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2011/08/24 11:02:31 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2011/08/24 11:30:59 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -414,7 +414,7 @@ static void
 pmap_page_activate(struct pv_entry *pv)
 {
 	paddr_t pa = pv->pv_ppn * PAGE_SIZE;
-	vaddr_t va = pv->pv_lpn * PAGE_SIZE + kmem_ext_start; /* XXX V->A make new var */
+	vaddr_t va = pv->pv_lpn * PAGE_SIZE + VM_MIN_ADDRESS; /* V->A */
 
 	void *addr;
 
@@ -471,7 +471,7 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 
 	/* to page numbers */
 	ppn = atop(pa);
-	lpn = atop(va - kmem_ext_start);	/* XXX V->A make new var */
+	lpn = atop(va - VM_MIN_ADDRESS);	/* V->A */
 #ifdef DIAGNOSTIC
 	if ((va < kmem_k_start) || (va > kmem_user_end))
 		panic("pmap_do_enter: invalid va isued\n");
@@ -630,7 +630,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 
 	/* TODO protect against roque values */
 	aprint_debug("pmap_extract: extracting va %p\n", (void *) va);
-	pv = pmap->pm_entries[atop(va - kmem_ext_start)];	/* XXX V->A make new var */
+	pv = pmap->pm_entries[atop(va - VM_MIN_ADDRESS)]; /* V->A */
 
 	if (pv == NULL)
 		return false;
