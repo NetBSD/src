@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.136 2011/08/03 01:58:30 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.137 2011/08/24 12:15:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.136 2011/08/03 01:58:30 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.137 2011/08/24 12:15:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -554,6 +554,21 @@ purge_tree(struct sysctlnode *rnode)
 	rnode->sysctl_desc = NULL;
 }
 
+static void __attribute__((__format__(__printf__, 3, 4)))
+appendprintf(char **bp, size_t *lbp, const char *fmt, ...)
+{
+	int r;
+	va_list ap;
+
+	va_start(ap, fmt);
+	r = vsnprintf(*bp, *lbp, fmt, ap);
+	va_end(ap);
+	if (r < 0 || (size_t)r > *lbp)
+		r = *lbp;
+	*bp += r;
+	*lbp -= r;
+}
+
 /*
  * ********************************************************************
  * print this node and any others underneath it
@@ -565,35 +580,31 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 {
 	struct sysctlnode *node;
 	int rc;
-	size_t ni, sz;
-	char *sp, *dp, n[20];
+	size_t ni, sz, ldp, lsp;
+	char *sp, *dp, *tsp, *tdp;
 	const struct handlespec *p;
 
-	sp = &gsname[strlen(gsname)];
-	dp = &gdname[strlen(gdname)];
+	sp = tsp = &gsname[strlen(gsname)];
+	dp = tdp = &gdname[strlen(gdname)];
+	ldp = sizeof(gdname) - (dp - gdname);
+	lsp = sizeof(gsname) - (sp - gsname);
 
 	if (sp != &gsname[0] && dp == &gdname[0]) {
 		/*
 		 * aw...shucks.  now we must play catch up
 		 */
-		for (ni = 0; ni < namelen; ni++) {
-			(void)snprintf(n, sizeof(n), "%d", name[ni]);
-			if (ni > 0)
-				strncat(gdname, ".", sizeof(gdname));
-			strncat(gdname, n, sizeof(gdname));
-		}
+		for (ni = 0; ni < namelen; ni++)
+			appendprintf(&tdp, &ldp, "%s%d", ni > 0 ? "." : "",
+			    name[ni]);
 	}
 
 	if (pnode == NULL)
 		pnode = &my_root;
 	else if (add) {
-		snprintf(n, sizeof(n), "%d", pnode->sysctl_num);
-		if (namelen > 1) {
-			strncat(gsname, sep, sizeof(gsname));
-			strncat(gdname, ".", sizeof(gdname));
-		}
-		strncat(gsname, pnode->sysctl_name, sizeof(gsname));
-		strncat(gdname, n, sizeof(gdname));
+		appendprintf(&tsp, &lsp, "%s%s", namelen > 1 ? sep : "", 
+			pnode->sysctl_name);
+		appendprintf(&tdp, &ldp, "%s%d", namelen > 1 ? "." : "", 
+			pnode->sysctl_num);
 	}
 
 	if (Mflag && pnode != &my_root) {
