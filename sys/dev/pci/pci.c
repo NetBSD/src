@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.140 2011/05/17 17:34:54 dyoung Exp $	*/
+/*	$NetBSD: pci.c,v 1.141 2011/08/24 20:27:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.140 2011/05/17 17:34:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.141 2011/08/24 20:27:35 dyoung Exp $");
 
 #include "opt_pci.h"
 
@@ -542,18 +542,13 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 	const struct pci_quirkdata *qd;
 	pcireg_t id, bhlcr;
 	pcitag_t tag;
-#ifdef __PCI_BUS_DEVORDER
-	char devs[32];
-	int i;
-#endif
+	uint8_t devs[32];
+	int i, n;
 
-#ifdef __PCI_BUS_DEVORDER
-	pci_bus_devorder(sc->sc_pc, sc->sc_bus, devs);
-	for (i = 0; (device = devs[i]) < 32 && device >= 0; i++)
-#else
-	for (device = 0; device < sc->sc_maxndevs; device++)
-#endif
-	{
+	n = pci_bus_devorder(sc->sc_pc, sc->sc_bus, devs, __arraycount(devs));
+	for (i = 0; i < n; i++) {
+		device = devs[i];
+
 		if ((locators[PCICF_DEV] != PCICF_DEV_DEFAULT) &&
 		    (locators[PCICF_DEV] != device))
 			continue;
