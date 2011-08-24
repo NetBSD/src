@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.15 2011/08/13 14:06:54 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.16 2011/08/24 19:55:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2011/08/13 14:06:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2011/08/24 19:55:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2011/08/13 14:06:54 jmcneill Exp $");
 #include <sys/lwp.h>
 #include <sys/cpu.h>
 #include <sys/mbuf.h>
+#include <sys/msgbuf.h>
 
 #include <dev/cons.h>
 
@@ -69,6 +70,7 @@ typedef struct cpu_softc {
 } cpu_softc_t;
 
 static struct pcb lwp0pcb;
+static void *msgbuf;
 
 CFATTACH_DECL_NEW(cpu, sizeof(cpu_softc_t), cpu_match, cpu_attach, NULL, NULL);
 
@@ -311,6 +313,12 @@ cpu_initclocks(void)
 void
 cpu_startup(void)
 {
+
+	msgbuf = thunk_malloc(PAGE_SIZE);
+	if (msgbuf == NULL)
+		panic("couldn't allocate msgbuf");
+	initmsgbuf(msgbuf, PAGE_SIZE);
+
 	banner();
 
 	memset(&lwp0pcb, 0, sizeof(lwp0pcb));
