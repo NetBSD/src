@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.17 2011/08/23 21:55:21 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.18 2011/08/24 10:56:44 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.17 2011/08/23 21:55:21 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.18 2011/08/24 10:56:44 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/ansi.h>
@@ -286,6 +286,18 @@ int
 thunk_aio_return(struct aiocb *aiocbp)
 {
 	return aio_return(aiocbp);
+}
+
+void *
+thunk_malloc(size_t len)
+{
+	return malloc(len);
+}
+
+void
+thunk_free(void *addr)
+{
+	free(addr);
 }
 
 void *
