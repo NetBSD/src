@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.30 2011/08/24 12:54:46 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.31 2011/08/24 20:13:07 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2011/08/24 12:54:46 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.31 2011/08/24 20:13:07 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -70,6 +70,8 @@ struct pmap {
 static struct pv_entry *pv_table;
 static struct pmap	pmap_kernel_store;
 struct pmap * const	kernel_pmap_ptr = &pmap_kernel_store;
+
+static pmap_t active_pmap = NULL;
 
 static char  mem_name[20] = "";
 static int   mem_fh;
@@ -141,7 +143,9 @@ pmap_bootstrap(void)
 	uvm_len = kmem_len + barrier_len + user_len + barrier_len + 2*PAGE_SIZE;
 	mem_uvm = thunk_malloc(uvm_len);
 	/* make page aligned */
-	mpos = round_page((vaddr_t) mem_uvm) + PAGE_SIZE;
+	mpos = round_page((vaddr_t) mem_uvm);// + PAGE_SIZE;
+	if (!((void *) mpos >= mem_uvm))
+		panic("pmap_bootstrap: mpos miscalculation");
 
 	/* low barrier (---) */
 	mpos += barrier_len;
@@ -337,6 +341,7 @@ pmap_create(void)
 	pmap->pm_entries = (struct pv_entry **) malloc(
 		pm_entries_size, M_VMPMAP,
 		M_WAITOK | M_ZERO);
+	aprint_debug("\tpmap %p\n", pmap);
 
 	return pmap;
 }
@@ -427,7 +432,6 @@ pmap_page_activate(struct pv_entry *pv)
 		panic("pmap_page_activate: mmap failed");
 }
 
-
 static void
 pv_update(struct pv_entry *pv)
 {
@@ -456,6 +460,8 @@ pmap_update_page(uintptr_t ppn)
 	struct pv_entry *pv;
 
 	for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next) {
+		aprint_debug("pmap_update_page: ppn %"PRIdPTR", pv->pv_map = %p\n",
+			ppn, pv->pv_pmap);
 		if (pv->pv_pmap != NULL) {
 			pv_update(pv);
 			pmap_page_activate(pv);
@@ -668,19 +674,54 @@ aprint_debug("pmap_copy not implemented\n");
 void
 pmap_update(pmap_t pmap)
 {
-aprint_debug("pmap_update not implemented\n");
+	aprint_debug("pmap_update (dummy)\n");
 }
 
 void
 pmap_activate(struct lwp *l)
 {
-aprint_debug("pmap_activate not implemented\n");
+	struct proc *p = l->l_proc;
+	pmap_t pmap;
+
+	pmap = p->p_vmspace->vm_map.pmap;
+	aprint_debug("pmap_activate for lwp %p, pmap = %p\n", l, pmap);
+
+	if (pmap == pmap_kernel())
+		return; /* kernel pmap is always active */
+
+	KASSERT(active_pmap == NULL);
+	KASSERT((pmap->pm_flags & PM_ACTIVE) == 0);
+
+	active_pmap = pmap;
+	pmap->pm_flags |= PM_ACTIVE;
 }
 
 void
 pmap_deactivate(struct lwp *l)
 {
-aprint_debug("pmap_deactivate not implemented\n");
+	struct proc *p = l->l_proc;
+	pmap_t pmap;
+	int i;
+
+	pmap = p->p_vmspace->vm_map.pmap;
+	aprint_debug("pmap_DEactivate for lwp %p, pmap = %p\n", l, pmap);
+
+	if (pmap == pmap_kernel())
+		return; /* kernel pmap is always active */
+
+	KASSERT(pmap == active_pmap);
+	KASSERT(pmap->pm_flags & PM_ACTIVE);
+
+	active_pmap = NULL;
+	pmap->pm_flags &=~ PM_ACTIVE;
+	for (i = 0; i < 1024; i++) {
+		if (pmap->pm_entries[i] != NULL) {
+			aprint_debug("pmap_deactivate: TODO unmap memory!\n");
+//			MEMC_WRITE(pmap->pm_entries[i]->pv_deactivate);
+		}
+	}
+	/* dummy */
+	cpu_cache_flush();
 }
 
 /* XXX braindead zero_page implementation but it works for now */
