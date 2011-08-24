@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.7 2011/08/17 14:39:59 matt Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.8 2011/08/24 15:11:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.7 2011/08/17 14:39:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.8 2011/08/24 15:11:52 matt Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -280,7 +280,8 @@ mips_fixup_addr(const uint32_t *stubp)
 				goto out;
 			}
 			regs[insn.IType.rt] = *(const int32_t *)
-			    (regs[insn.IType.rs] + (int16_t)insn.IType.imm);
+			    ((intptr_t)regs[insn.IType.rs]
+			    + (int16_t)insn.IType.imm);
 			used |= (1 << insn.IType.rt);
 			break;
 #endif
