@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.6 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.7 2011/08/24 20:27:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -31,11 +31,6 @@
  */
 
 /*
- * We want to control both device probe order.
- */
-#define	__PCI_BUS_DEVORDER
-
-/*
  * Types provided to machine-independent PCI code
  */
 typedef struct hpcmips_pci_chipset *pci_chipset_tag_t;
@@ -57,7 +52,7 @@ struct hpcmips_pci_chipset {
 	void (*pc_attach_hook)(struct device *, struct device *,
 	    struct pcibus_attach_args *);
 	int (*pc_bus_maxdevs)(pci_chipset_tag_t, int);
-	int (*pc_bus_devorder)(pci_chipset_tag_t, int, char *);
+	int (*pc_bus_devorder)(pci_chipset_tag_t, int, uint8_t *, int);
 	pcitag_t (*pc_make_tag)(pci_chipset_tag_t, int, int, int);
 	void (*pc_decompose_tag)(pci_chipset_tag_t, pcitag_t, int *, int *,
 	    int *);
@@ -79,10 +74,6 @@ struct hpcmips_pci_chipset {
     (*(pba)->pba_pc->pc_attach_hook)((p), (s), (pba))
 #define	pci_bus_maxdevs(c, b)						\
     (*(c)->pc_bus_maxdevs)((c), (b))
-#ifdef __PCI_BUS_DEVORDER
-#define	pci_bus_devorder(c, b, d)					\
-    (*(c)->pc_bus_devorder)((c), (b), (d))
-#endif
 #define	pci_make_tag(c, b, d, f)					\
     (*(c)->pc_make_tag)((c), (b), (d), (f))
 #define	pci_decompose_tag(c, t, bp, dp, fp)				\
