@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.45 2011/08/07 17:39:34 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.46 2011/08/24 20:49:34 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.45 2011/08/07 17:39:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.46 2011/08/24 20:49:34 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -954,14 +954,21 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj)
 }
 
 /*
- * Increment consumer index and move on to the next request.
+ * Increment consumer index and move on to the next request. In case index
+ * leads to ring overflow, bail out.
  */
 static void *
 xbdback_co_main_incr(struct xbdback_instance *xbdi, void *obj)
 {
 	(void)obj;
-	xbdi->xbdi_ring.ring_n.req_cons++;
-	xbdi->xbdi_cont = xbdback_co_main_loop;
+	blkif_back_ring_t *ring = &xbdi->xbdi_ring.ring_n;
+
+	ring->req_cons++;
+	if (RING_REQUEST_CONS_OVERFLOW(ring, ring->req_cons))
+		xbdi->xbdi_cont = NULL;
+	else
+		xbdi->xbdi_cont = xbdback_co_main_loop;
+
 	return xbdi;
 }
 
