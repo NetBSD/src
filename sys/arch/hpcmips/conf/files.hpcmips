@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.105 2011/03/16 13:23:41 tsutsui Exp $
+#	$NetBSD: files.hpcmips,v 1.106 2011/08/24 20:27:36 dyoung Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -454,5 +454,7 @@ file arch/hpcmips/vr/flash_vrip.c	flash_vrip	needs-flag
 device optpoint : wsmousedev
 attach optpoint at txspiif
 file arch/hpcmips/dev/optpoint.c	optpoint
+
+file arch/hpcmips/pci/pci_machdep.c
 
 include "arch/hpcmips/conf/majors.hpcmips"
