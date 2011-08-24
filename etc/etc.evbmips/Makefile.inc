@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2011/08/01 23:18:10 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2011/08/24 16:03:34 matt Exp $
 #
 #	etc.evbmips/Makefile.inc -- evbmips-specific etc Makefile targets
 #
@@ -22,6 +22,7 @@ BUILD_KERNELS+=		INSTALL_XLSATX32 INSTALL_XLSATX64
 
 .if ${MACHINE_ARCH} == "mips64el"
 KERNEL_SETS+=		P5064-64
+KERNEL_SETS+=		GDIUM64
 .endif
 .else
 KERNEL_SETS=		ALCHEMY DB120 DBAU1500 DBAU1550 MALTA RB433UAH
