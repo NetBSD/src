@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.4.12.8 2011/05/26 22:32:39 jym Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.4.12.9 2011/08/24 21:37:05 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.8 2011/05/26 22:32:39 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.9 2011/08/24 21:37:05 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -218,29 +218,39 @@ tsc_get_timecount(struct timecounter *tc)
 }
 
 /*
- * this function sets up the machdep.sleep_state sysctl equivalent
- * for guest domains with no ACPI support
- * This sysctl mimics the ACPI one, except it should be used only for 
- * Xen's save/restore functionalities of guest domains
+ * this function sets up the machdep.xen.suspend sysctl(7) that
+ * controls domain suspend/save.
  */
 void
-sysctl_xen_sleepstate_setup(void) {
-
-	int ret;
+sysctl_xen_sleepstate_setup(void)
+{
+	const struct sysctlnode *node = NULL;
 
 	/*
-	 * dom0 implements sleep_state support through ACPI
-	 * it should not call this function to register
-	 * machdep.sleep_state sysctl
+	 * dom0 implements sleep support through ACPI. It should not call this
+	 * this function to register a suspend interface.
 	 */
 	KASSERT(!(xendomain_is_dom0()));
 
-	ret = sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READWRITE,
-	     CTLTYPE_INT, "sleep_state", NULL, sysctl_xen_sleepstate, 0,
-	     NULL, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-	
-	if (ret)
-		aprint_error("sysctl_createv failed: %d\n", ret);
+	sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, &node, &node,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "xen",
+	    SYSCTL_DESCR("Xen top level node"),
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &node, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "suspend",
+	    SYSCTL_DESCR("Suspend/save control of current Xen domain"),
+	    NULL, sysctl_xen_sleepstate, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
 }
 
 static int
