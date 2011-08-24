@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.20 2011/08/16 07:51:46 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.21 2011/08/24 07:51:31 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
-__RCSID("$NetBSD: zdump.c,v 1.20 2011/08/16 07:51:46 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.21 2011/08/24 07:51:31 christos Exp $");
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -138,7 +138,7 @@ static char	elsieid[] = "@(#)zdump.c	8.9";
 #if HAVE_GETTEXT
 #define _(msgid) gettext(msgid)
 #else /* !HAVE_GETTEXT */
-#define _(msgid) __UNCONST(msgid)
+#define _(msgid) msgid
 #endif /* !HAVE_GETTEXT */
 #endif /* !defined _ */
 
@@ -212,7 +212,7 @@ const char * const	abbrp;
 const char * const	zone;
 {
 	register const char *	cp;
-	register char *		wp;
+	register const char *	wp;
 
 	if (warned)
 		return;
