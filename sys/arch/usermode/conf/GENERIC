@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.12 2011/08/23 12:27:01 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.13 2011/08/24 10:59:10 jmcneill Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.12 $"
+#ident 		"GENERIC-$Revision: 1.13 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
@@ -29,6 +29,7 @@ options 	COMPAT_50
 file-system	FFS
 file-system	FDESC
 file-system	KERNFS
+file-system	PROCFS
 file-system	TMPFS
 
 options 	INET
