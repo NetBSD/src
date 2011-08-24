@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.27 2011/08/24 11:30:59 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.28 2011/08/24 11:41:00 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2011/08/24 11:30:59 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2011/08/24 11:41:00 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -415,13 +415,13 @@ pmap_page_activate(struct pv_entry *pv)
 {
 	paddr_t pa = pv->pv_ppn * PAGE_SIZE;
 	vaddr_t va = pv->pv_lpn * PAGE_SIZE + VM_MIN_ADDRESS; /* V->A */
-
 	void *addr;
 
+	aprint_debug("page_activate: (va %p, pa %p, ppl %d) -> %p\n",
+		(void *) va, (void *) pa, pv->pv_mmap_ppl, (void *) addr);
 	addr = thunk_mmap((void *) va, PAGE_SIZE, pv->pv_mmap_ppl,
 		MAP_FILE | MAP_FIXED,
 		mem_fh, pa);
-aprint_debug("page_activate: (va %p, pa %p, ppl %d) -> %p\n", (void *) va, (void *) pa, pv->pv_mmap_ppl, (void *) addr);
 	if (addr != (void *) va)
 		panic("pmap_page_activate: mmap failed");
 }
