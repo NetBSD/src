@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.29 2011/08/24 11:50:28 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.30 2011/08/24 12:54:46 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2011/08/24 11:50:28 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2011/08/24 12:54:46 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -143,11 +143,6 @@ pmap_bootstrap(void)
 	/* make page aligned */
 	mpos = round_page((vaddr_t) mem_uvm) + PAGE_SIZE;
 
-	/* calculate KVM section (RW-) */
-	kmem_ext_start = mpos;
-	mpos += kmem_len;
-	kmem_ext_end   = mpos;
-
 	/* low barrier (---) */
 	mpos += barrier_len;
 
@@ -159,6 +154,11 @@ pmap_bootstrap(void)
 
 	/* upper barrier (---) */
 	mpos += barrier_len;
+
+	/* calculate KVM section (RW-) */
+	kmem_ext_start = mpos;
+	mpos += kmem_len;
+	kmem_ext_end   = mpos;
 
 #if 0
 	/* protect complete UVM area (---) */
@@ -197,7 +197,7 @@ pmap_bootstrap(void)
 	if (wlen != 1)
 		panic("pmap_bootstrap: can't grow file\n");
 
-	/* (un)protect the current kernel and data sections */
+	/* protect the current kernel section */
 	/* XXX kernel stack? */
 	err = thunk_mprotect((void *) kmem_k_start, kmem_k_end - kmem_k_start,
 		PROT_READ | PROT_EXEC);
@@ -210,6 +210,7 @@ pmap_bootstrap(void)
 
 	phys_npages = (free_end - free_start) / PAGE_SIZE;
 	pv_table_size = round_page(phys_npages * sizeof(struct pv_entry));
+
 	aprint_debug("claiming %"PRIu64" KB of pv_table for "
 		"%"PRIdPTR" pages of physical memory\n",
 		(uint64_t) pv_table_size/1024, (uintptr_t) phys_npages);
@@ -233,7 +234,7 @@ pmap_bootstrap(void)
 	fpos += pv_table_size;
 
 	/* set up kernel pmap */
-	pm_nentries = (kmem_user_end - kmem_ext_start) / PAGE_SIZE;
+	pm_nentries = (VM_MAX_ADDRESS - VM_MIN_ADDRESS) / PAGE_SIZE;
 	pm_entries_size = round_page(pm_nentries * sizeof(struct pv_entry *));
 	aprint_debug("pmap va->pa lookup table is %"PRIu64" KB for %d logical pages\n",
 		pm_entries_size/1024, pm_nentries);
@@ -473,7 +474,7 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 	ppn = atop(pa);
 	lpn = atop(va - VM_MIN_ADDRESS);	/* V->A */
 #ifdef DIAGNOSTIC
-	if ((va < kmem_k_start) || (va > kmem_user_end))
+	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_ADDRESS))
 		panic("pmap_do_enter: invalid va isued\n");
 #endif
 
