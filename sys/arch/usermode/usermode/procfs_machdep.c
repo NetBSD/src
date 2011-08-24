@@ -1,7 +1,7 @@
-/* $NetBSD: ptrace.h,v 1.4 2011/08/24 10:59:10 jmcneill Exp $ */
+/* $NetBSD: procfs_machdep.c,v 1.1 2011/08/24 10:59:37 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,11 +26,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARCH_USERMODE_INCLUDE_PTRACE_H
-#define _ARCH_USERMODE_INCLUDE_PTRACE_H
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: procfs_machdep.c,v 1.1 2011/08/24 10:59:37 jmcneill Exp $");
 
-#include </usr/include/machine/ptrace.h>
-#undef __HAVE_PTRACE_MACHDEP
-#undef __HAVE_PROCFS_MACHDEP
+#include <sys/param.h>
+#include <sys/systm.h>
 
-#endif /* !_ARCH_USERMODE_INCLUDE_PTRACE_H */
+#include <miscfs/procfs/procfs.h>
+
+int
+procfs_getcpuinfstr(char *bf, int *len)
+{
+	*len = 0;
+	return 0;
+}
