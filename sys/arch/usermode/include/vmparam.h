@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.5 2011/08/22 21:45:38 jmcneill Exp $ */
+/* $NetBSD: vmparam.h,v 1.6 2011/08/24 10:57:48 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,6 @@
 #include "opt_memsize.h"
 
 extern paddr_t kmem_k_start, kmem_k_end;
-extern paddr_t kmem_data_start, kmem_data_end;
 extern paddr_t kmem_ext_start, kmem_ext_end;
 extern paddr_t kmem_user_start, kmem_user_end;
 
