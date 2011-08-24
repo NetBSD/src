@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.31 2011/08/24 20:13:07 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.32 2011/08/24 20:13:56 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.31 2011/08/24 20:13:07 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2011/08/24 20:13:56 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -721,7 +721,7 @@ pmap_deactivate(struct lwp *l)
 		}
 	}
 	/* dummy */
-	cpu_cache_flush();
+//	cpu_cache_flush();
 }
 
 /* XXX braindead zero_page implementation but it works for now */
