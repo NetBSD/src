@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8548CDS,v 1.1.2.1 2011/01/07 01:40:36 matt Exp $
+#	$NetBSD: MPC8548CDS,v 1.1.2.2 2011/08/24 00:09:30 matt Exp $
 #
 #	MPC8548CDS -- everything that's currently supported
 #
@@ -7,9 +7,12 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8548CDS-$Revision: 1.1.2.1 $"
+ident 		"MPC8548CDS-$Revision: 1.1.2.2 $"
 
 maxusers	32
+
+makeoptions	NEED_BINARY="yes"
+makeoptions	NEED_UBOOTIMAGE="yes"
 
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
