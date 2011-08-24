@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.246 2011/08/16 06:58:15 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.247 2011/08/24 16:01:53 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.246 2011/08/16 06:58:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.247 2011/08/24 16:01:53 matt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -191,6 +191,10 @@ int	cpu_dump(void);
 
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 static void mips_watchpoint_init(void);
+#endif
+
+#if defined(_LP64) && defined(ENABLE_MIPS_16KB_PAGE)
+vaddr_t mips_vm_maxuser_address = MIPS_VM_MAXUSER_ADDRESS;
 #endif
 
 #if defined(MIPS3_PLUS)
@@ -1357,6 +1361,16 @@ mips3_tlb_probe(void)
 		opts->mips3_tlb_vpn_mask <<= 2;
 		opts->mips3_tlb_vpn_mask >>= 2;
 		opts->mips3_tlb_pfn_mask = mips3_cp0_tlb_entry_lo_probe();
+#if defined(_LP64) && defined(ENABLE_MIPS_16KB_PAGE)
+		/*
+		 * 16KB pages could cause our page table being able to address
+		 * a larger address space than the actual chip supports.  So
+		 * we need to limit the address space to what it can really
+		 * address.
+		 */
+		if (mips_vm_maxuser_address > opts->mips3_tlb_vpn_mask + 1)
+			mips_vm_maxuser_address = opts->mips3_tlb_vpn_mask + 1;
+#endif
 	}
 }
 #endif

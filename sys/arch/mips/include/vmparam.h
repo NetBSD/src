@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.49 2011/07/21 23:03:39 macallan Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.50 2011/08/24 16:01:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -155,7 +155,12 @@
  */
 #define VM_MIN_ADDRESS		((vaddr_t)0x00000000)
 #ifdef _LP64
-#define VM_MAXUSER_ADDRESS	((vaddr_t) 1L << (4*PGSHIFT-8))
+#define MIPS_VM_MAXUSER_ADDRESS	((vaddr_t) 1L << (4*PGSHIFT-8))
+#ifdef ENABLE_MIPS_16KB_PAGE
+#define VM_MAXUSER_ADDRESS	mips_vm_maxuser_address
+#else
+#define VM_MAXUSER_ADDRESS	MIPS_VM_MAXUSER_ADDRESS
+#endif
 							/* 0x0000010000000000 */
 #define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 3L << 62)	/* 0xC000000000000000 */
@@ -197,6 +202,9 @@
 #ifdef _KERNEL
 #define	UVM_KM_VMFREELIST	mips_poolpage_vmfreelist
 extern int mips_poolpage_vmfreelist;
+#ifdef ENABLE_MIPS_16KB_PAGE
+extern vaddr_t mips_vm_maxuser_address;
+#endif
 #endif
 
 #endif /* ! _MIPS_VMPARAM_H_ */
