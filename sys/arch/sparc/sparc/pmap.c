@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.343 2011/06/18 02:05:08 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.344 2011/08/24 02:51:13 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.343 2011/06/18 02:05:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.344 2011/08/24 02:51:13 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3501,7 +3501,7 @@ pmap_bootstrap4m(void *top)
 	extern char etext[];
 	extern char kernel_text[];
 	vaddr_t va;
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 	vsize_t off;
 	size_t cpuinfo_len = sizeof(struct cpu_info);
 	uint8_t *cpuinfo_data;
@@ -4542,14 +4542,14 @@ pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp, struct segmap *sp,
 		if (pm->pm_ctx)
 			tlb_flush_region(VRTOVA(vr), pm->pm_ctxnum,
 					 PMAP_CPUSET(pm));
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 		/* Invalidate level 1 PTP entries on all CPUs */
 		for (; n < sparc_ncpus; n++) {
 			if ((cpus[n]->flags & CPUFLG_HATCHED) == 0)
 				continue;
 #endif
 			setpgt4m(&pm->pm_reg_ptps[n][vr], SRMMU_TEINVALID);
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 		}
 #endif
 
@@ -6376,7 +6376,7 @@ pmap_enu4m(struct pmap *pm, vaddr_t va, vm_prot_t prot, int flags,
 			setpgt4m(&ptd[i], SRMMU_TEINVALID);
 
 		/* Replicate segment allocation in each CPU's region table */
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 		for (i = 0; i < sparc_ncpus; i++)
 #else
 		i = 0;
