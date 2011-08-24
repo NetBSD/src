@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.25 2011/08/23 18:37:51 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.26 2011/08/24 11:02:31 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2011/08/23 18:37:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2011/08/24 11:02:31 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -43,10 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2011/08/23 18:37:51 reinoud Exp $");
 #include <uvm/uvm.h>
 
 struct pv_entry {
-	struct 	pv_entry *pv_next;
-	pmap_t	pv_pmap;
-	int	pv_ppn;		/* physical page number */
-	int	pv_lpn;		/* logical page number  */
+	struct 		pv_entry *pv_next;
+	pmap_t		pv_pmap;
+	uintptr_t	pv_ppn;		/* physical page number */
+	uintptr_t	pv_lpn;		/* logical page number  */
 	vm_prot_t	pv_prot;	/* logical protection */
 	int		pv_mmap_ppl;	/* programmed protection */
 	uint8_t		pv_vflags;	/* per mapping flags */
@@ -71,8 +71,9 @@ static struct pv_entry *pv_table;
 static struct pmap	pmap_kernel_store;
 struct pmap * const	kernel_pmap_ptr = &pmap_kernel_store;
 
-static char mem_name[20] = "";
-static int mem_fh;
+static char  mem_name[20] = "";
+static int   mem_fh;
+static void *mem_uvm;	/* keeps all memory managed by UVM */
 
 static int phys_npages = 0;
 static int pm_nentries = 0;
@@ -84,17 +85,15 @@ static struct pool pmap_pool;
 void		pmap_bootstrap(void);
 static void	pmap_page_activate(struct pv_entry *pv);
 static void	pv_update(struct pv_entry *pv);
-static void	pmap_update_page(int ppn);
+static void	pmap_update_page(uintptr_t ppn);
 
-static struct 	pv_entry *pv_get(pmap_t pmap, int ppn, int lpn);
+static struct 	pv_entry *pv_get(pmap_t pmap, uintptr_t ppn, uintptr_t lpn);
 static struct 	pv_entry *pv_alloc(void);
 static void	pv_free(struct pv_entry *pv);
-//void	pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva);
 static void	pmap_deferred_init(void);
 
 /* exposed to signal handler */
 vaddr_t kmem_k_start, kmem_k_end;
-vaddr_t kmem_data_start, kmem_data_end;
 vaddr_t kmem_ext_start, kmem_ext_end;
 vaddr_t kmem_user_start, kmem_user_end;
 vaddr_t kmem_ext_cur_start, kmem_ext_cur_end;
@@ -106,13 +105,16 @@ pmap_bootstrap(void)
 	ssize_t fpos, file_len;
 	ssize_t pv_fpos, pm_fpos;
 	ssize_t wlen;
-	uint64_t pv_table_size;
-	paddr_t free_start, free_end;
+	ssize_t kmem_len, user_len, barrier_len, uvm_len;
+	ssize_t pv_table_size;
+	vaddr_t free_start, free_end;
+	vaddr_t mpos;
 	paddr_t pa;
 	vaddr_t va;
+	uintptr_t pg;
 	void *addr;
 	char dummy;
-	int pg, err;
+	int err;
 
 	extern void _init(void);	/* start of kernel               */
 	extern int etext;		/* end of the kernel             */
@@ -126,56 +128,52 @@ pmap_bootstrap(void)
 	aprint_debug("1st end of data     at %p\n", &end);
 	aprint_debug("CUR end data        at %p\n", thunk_sbrk(0));
 
-	/* calculate sections of the kernel (R+X) */
+	/* calculate memory lengths */
+	kmem_len    = (physmem/2) * PAGE_SIZE;
+	user_len    = MEMSIZE * 1024;
+	barrier_len = 2 * 1024 * 1024;
+
+	/* calculate kernel section (R-X) */
 	kmem_k_start = (vaddr_t) PAGE_SIZE * (atop(_init)   );
 	kmem_k_end   = (vaddr_t) PAGE_SIZE * (atop(&etext) + 1);
 
-	/* read only section (for userland R, kernel RW) */
-	kmem_data_start = (vaddr_t) PAGE_SIZE * (atop(&etext));
-	kmem_data_end   = (vaddr_t) PAGE_SIZE * (atop(&end) + 1);
-	if (kmem_data_end > (vaddr_t) thunk_sbrk(0)) {
-		aprint_debug("sbrk() has advanced, catching up\n");
-		kmem_data_end = (vaddr_t) PAGE_SIZE * (atop(thunk_sbrk(0))+1);
-	}
+	/* claim memory with 2 pages more */
+	uvm_len = kmem_len + barrier_len + user_len + barrier_len + 2*PAGE_SIZE;
+	mem_uvm = thunk_malloc(uvm_len);
+	/* make page aligned */
+	mpos = round_page((vaddr_t) mem_uvm) + PAGE_SIZE;
 
-#ifdef DIAGNOSTIC
-	if (kmem_k_end >= kmem_data_start) {
-		aprint_debug("end of kernel and kernel exec could clash\n");
-		aprint_debug("   kmem_k_end = %p, kmem_data_start = %p\n",
-			(void *) kmem_k_end, (void *) kmem_data_start);
-		aprint_debug("fixing\n");
-	}
-#endif
-	/* on clash move RO segment so that all code is executable */
-	if (kmem_k_end >= kmem_data_start)
-		kmem_data_start = kmem_k_end;
+	/* calculate KVM section (RW-) */
+	kmem_ext_start = mpos;
+	mpos += kmem_len;
+	kmem_ext_end   = mpos;
 
-	/* claim an area for kernel data space growth (over dim) */
-	kmem_ext_start   = kmem_data_end;
-	kmem_ext_end     = kmem_ext_start + (physmem/2) * PAGE_SIZE;
+	/* low barrier (---) */
+	mpos += barrier_len;
 
-	/* claim an area for userland */
-	kmem_user_start = kmem_ext_end;
-	kmem_user_end   = kmem_user_start + 1024 * MEMSIZE;
+	/* claim an area for userland (---/R--/RW-/RWX) */
+	kmem_user_start = mpos;
+	mpos += user_len;
+	kmem_user_end   = mpos;
 	/* TODO make a better user space size estimate */
 
-	/* claim dummy space over all we need just to make fun of sbrk */
-	addr = thunk_mmap((void*) kmem_data_end,
-		kmem_user_end - kmem_data_end,
+	/* upper barrier (---) */
+	mpos += barrier_len;
+
+#if 0
+	/* protect complete UVM area (---) */
+	addr = thunk_mmap((void*) mem_uvm,
+		uvm_len,
 		PROT_NONE,
 		MAP_ANON | MAP_FIXED,
 		-1, 0);
-	if (addr != (void *) kmem_data_end)
-		panic("pmap_bootstrap: protection barrier failed\n");
-
-	if (kmem_user_end < kmem_user_start)
-		panic("pmap_bootstrap: to small memorysize specified");
+	if (addr != (void *) mem_uvm)
+		panic("pmap_bootstrap: uvm space protection barrier failed\n");
+#endif
 
 	aprint_debug("\nMemory summary\n");
 	aprint_debug("\tkmem_k_start\t%p\n",    (void *) kmem_k_start);
 	aprint_debug("\tkmem_k_end\t%p\n",      (void *) kmem_k_end);
-	aprint_debug("\tkmem_data_start\t%p\n", (void *) kmem_data_start);
-	aprint_debug("\tkmem_data_end\t%p\n",   (void *) kmem_data_end);
 	aprint_debug("\tkmem_ext_start\t%p\n",  (void *) kmem_ext_start);
 	aprint_debug("\tkmem_ext_end\t%p\n",    (void *) kmem_ext_end);
 	aprint_debug("\tkmem_user_start\t%p\n", (void *) kmem_user_start);
@@ -204,9 +202,6 @@ pmap_bootstrap(void)
 	err = thunk_mprotect((void *) kmem_k_start, kmem_k_end - kmem_k_start,
 		PROT_READ | PROT_EXEC);
 	assert(err == 0);
-	err = thunk_mprotect((void *) kmem_k_end, kmem_data_end - kmem_k_end,
-		PROT_READ | PROT_WRITE);
-	assert(err == 0);
 
 	/* set up pv_table; bootstrap problem! */
 	fpos = 0;
@@ -216,7 +211,8 @@ pmap_bootstrap(void)
 	phys_npages = (free_end - free_start) / PAGE_SIZE;
 	pv_table_size = round_page(phys_npages * sizeof(struct pv_entry));
 	aprint_debug("claiming %"PRIu64" KB of pv_table for "
-		"%d pages of physical memory\n", pv_table_size/1024, phys_npages);
+		"%"PRIdPTR" pages of physical memory\n",
+		(uint64_t) pv_table_size/1024, (uintptr_t) phys_npages);
 
 	kmem_ext_cur_start = kmem_ext_start;
 	pv_fpos = fpos;
@@ -237,7 +233,7 @@ pmap_bootstrap(void)
 	fpos += pv_table_size;
 
 	/* set up kernel pmap */
-	pm_nentries = (kmem_user_end - kmem_k_start) / PAGE_SIZE;
+	pm_nentries = (kmem_user_end - kmem_ext_start) / PAGE_SIZE;
 	pm_entries_size = round_page(pm_nentries * sizeof(struct pv_entry *));
 	aprint_debug("pmap va->pa lookup table is %"PRIu64" KB for %d logical pages\n",
 		pm_entries_size/1024, pm_nentries);
@@ -381,7 +377,7 @@ pv_free(struct pv_entry *pv)
 }
 
 static struct pv_entry *
-pv_get(pmap_t pmap, int ppn, int lpn)
+pv_get(pmap_t pmap, uintptr_t ppn, uintptr_t lpn)
 {
 	struct pv_entry *pv;
 
@@ -398,7 +394,8 @@ pv_get(pmap_t pmap, int ppn, int lpn)
 		}
 	}
 	/* Otherwise, allocate a new entry and link it in after the head. */
-	printf("pv_get: multiple mapped page ppn %d, lpn %d\n", ppn, lpn);
+	printf("pv_get: multiple mapped page ppn %"PRIdPTR", lpn %"PRIdPTR"\n",
+		 ppn, lpn);
 assert(ppn < phys_npages);
 assert(ppn >= 0);
 panic("pv_get: multiple\n");
@@ -417,7 +414,7 @@ static void
 pmap_page_activate(struct pv_entry *pv)
 {
 	paddr_t pa = pv->pv_ppn * PAGE_SIZE;
-	vaddr_t va = pv->pv_lpn * PAGE_SIZE + kmem_k_start; /* XXX V->A make new var */
+	vaddr_t va = pv->pv_lpn * PAGE_SIZE + kmem_ext_start; /* XXX V->A make new var */
 
 	void *addr;
 
@@ -453,7 +450,7 @@ pv_update(struct pv_entry *pv)
 
 /* update mapping of a physical page */
 static void
-pmap_update_page(int ppn)
+pmap_update_page(uintptr_t ppn)
 {
 	struct pv_entry *pv;
 
@@ -468,12 +465,13 @@ pmap_update_page(int ppn)
 static int
 pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, int unmanaged)
 {
-	int ppn, lpn, s;
 	struct pv_entry *pv, *ppv;
+	uintptr_t ppn, lpn;
+	int s;
 
 	/* to page numbers */
 	ppn = atop(pa);
-	lpn = atop(va - kmem_k_start);	/* XXX V->A make new var */
+	lpn = atop(va - kmem_ext_start);	/* XXX V->A make new var */
 #ifdef DIAGNOSTIC
 	if ((va < kmem_k_start) || (va > kmem_user_end))
 		panic("pmap_do_enter: invalid va isued\n");
@@ -542,11 +540,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 /* release the pv_entry for a mapping.  Code derived also from hp300 pmap */
 static void
-pv_release(pmap_t pmap, int ppn, int lpn)
+pv_release(pmap_t pmap, uintptr_t ppn, uintptr_t lpn)
 {
 	struct pv_entry *pv, *npv;
 
-aprint_debug("pv_release ppn %d, lpn %d\n", ppn, lpn);
+aprint_debug("pv_release ppn %"PRIdPTR", lpn %"PRIdPTR"\n", ppn, lpn);
 	pv = &pv_table[ppn];
 	/*
 	 * If it is the first entry on the list, it is actually
@@ -581,8 +579,9 @@ aprint_debug("pv_release ppn %d, lpn %d\n", ppn, lpn);
 void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
-	int slpn, elpn, lpn, s;
+	uintptr_t slpn, elpn, lpn;
 	struct pv_entry *pv;
+	int s;
 
 aprint_debug("pmap_remove() called\n");
 
@@ -631,7 +630,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 
 	/* TODO protect against roque values */
 	aprint_debug("pmap_extract: extracting va %p\n", (void *) va);
-	pv = pmap->pm_entries[atop(va - kmem_k_start)];	/* XXX V->A make new var */
+	pv = pmap->pm_entries[atop(va - kmem_ext_start)];	/* XXX V->A make new var */
 
 	if (pv == NULL)
 		return false;
