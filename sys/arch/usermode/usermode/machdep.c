@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.14 2011/08/23 17:00:36 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.15 2011/08/25 11:06:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2011/08/23 17:00:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2011/08/25 11:06:29 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2011/08/23 17:00:36 jmcneill Exp $"
 #include <machine/thunk.h>
 
 #include "opt_memsize.h"
+#include "opt_sdl.h"
 
 char machine[] = "usermode";
 char machine_arch[] = "usermode";
@@ -61,6 +62,9 @@ void	usermode_reboot(void);
 void
 main(int argc, char *argv[])
 {
+#if defined(SDL)
+	extern int genfb_thunkbus_cnattach(void);
+#endif
 	extern void ttycons_consinit(void);
 	extern void pmap_bootstrap(void);
 	extern void kernmain(void);
@@ -68,7 +72,10 @@ main(int argc, char *argv[])
 
 	saved_argv = argv;
 
-	ttycons_consinit();
+#if defined(SDL)
+	if (genfb_thunkbus_cnattach() == 0)
+#endif
+		ttycons_consinit();
 
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {
