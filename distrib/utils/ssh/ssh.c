@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.4 2011/05/19 22:12:35 tsutsui Exp $	*/
+/*	$NetBSD: ssh.c,v 1.5 2011/08/25 16:54:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -207,7 +207,7 @@ runfile(FILE *cfp)
 	exitcode = 0;
 	for (;;) {
 		if (iflag) {
-			fprintf(stderr, prompt);
+			fprintf(stderr, "%s", prompt);
 			fflush(stderr);
 		}
 
