@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/08/17 09:32:55 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2011/08/25 16:29:39 joerg Exp $
 
 LIBISPRIVATE=yes
 
@@ -40,5 +40,7 @@ SRCS=   assertions.c               \
         thread.c                   \
         time.c                     \
         sockaddr.c
+
+COPTS.log.c+=	-Wno-format-nonliteral
 
 .include <bsd.lib.mk>
