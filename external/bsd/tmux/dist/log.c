@@ -1,4 +1,4 @@
-/* $Id: log.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* $Id: log.c,v 1.2 2011/08/25 16:41:51 joerg Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -85,7 +85,6 @@ log_close(void)
 void
 log_vwrite(int pri, const char *msg, va_list ap)
 {
-	char	*fmt;
 	FILE	*f = log_file;
 
 	switch (log_type) {
@@ -96,12 +95,11 @@ log_vwrite(int pri, const char *msg, va_list ap)
 			f = stderr;
 		/* FALLTHROUGH */
 	case LOG_TYPE_FILE:
-		if (asprintf(&fmt, "%s\n", msg) == -1)
+		if (vfprintf(f, msg, ap) == -1)
 			exit(1);
-		if (vfprintf(f, fmt, ap) == -1)
+		if (putc('\n', f) == -1)
 			exit(1);
 		fflush(f);
-		free(fmt);
 		break;
 	}
 }
