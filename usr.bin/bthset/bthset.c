@@ -1,4 +1,4 @@
-/*	$NetBSD: bthset.c,v 1.5 2009/05/12 18:39:55 plunky Exp $	*/
+/*	$NetBSD: bthset.c,v 1.6 2011/08/25 16:19:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,12 +33,13 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: bthset.c,v 1.5 2009/05/12 18:39:55 plunky Exp $");
+__RCSID("$NetBSD: bthset.c,v 1.6 2011/08/25 16:19:23 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <sys/uio.h>
 
 #include <assert.h>
 #include <bluetooth.h>
@@ -427,23 +428,26 @@ do_server(int fd, short ev, void *arg)
 int
 send_rfcomm(const char *msg, ...)
 {
-	char buf[128], fmt[128];
+	struct iovec iov[3];
+	char buf[128];
 	va_list ap;
-	int len;
-
-	va_start(ap, msg);
 
 	if (verbose) {
-		snprintf(fmt, sizeof(fmt), "< %s\n", msg);
-		vprintf(fmt, ap);
+		fputs("< ", stdout);
+		va_start(ap, msg);
+		vprintf(msg, ap);
+		va_end(ap);
+		putchar('\n');
 	}
 
-	snprintf(fmt, sizeof(fmt), "\r\n%s\r\n", msg);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
-	len = send(rf, buf, strlen(buf), 0);
-
+	iov[0].iov_base = iov[2].iov_base = __UNCONST("\r\n");
+	iov[0].iov_len = iov[2].iov_len = 2;
+	va_start(ap, msg);
+	iov[1].iov_base = buf;
+	iov[1].iov_len = vsnprintf(buf, sizeof(buf), msg, ap);
 	va_end(ap);
-	return len;
+
+	return writev(rf, iov, __arraycount(iov));
 }
 
 /*
