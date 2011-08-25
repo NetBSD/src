@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.317 2011/08/08 12:08:53 manu Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.318 2011/08/25 19:14:07 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.317 2011/08/08 12:08:53 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.318 2011/08/25 19:14:07 reinoud Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -370,8 +370,17 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 		newerror = (*execsw[i]->es_makecmds)(l, epp);
 
 		if (!newerror) {
-			/* Seems ok: check that entry point is sane */
+			/* Seems ok: check that entry point is not too high */
 			if (epp->ep_entry > VM_MAXUSER_ADDRESS) {
+				aprint_verbose("check_exec: rejecting due to "
+					"too high entry address\n");
+				error = ENOEXEC;
+				break;
+			}
+			/* Seems ok: check that entry point is not too low */
+			if (epp->ep_entry < VM_MIN_ADDRESS) {
+				aprint_verbose("check_exec: rejecting due to "
+					"too low entry address\n");
 				error = ENOEXEC;
 				break;
 			}
@@ -380,6 +389,8 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 			if ((epp->ep_tsize > MAXTSIZ) ||
 			    (epp->ep_dsize > (u_quad_t)l->l_proc->p_rlimit
 						    [RLIMIT_DATA].rlim_cur)) {
+				aprint_debug("check_exec: rejecting due to "
+					"limits\n");
 				error = ENOMEM;
 				break;
 			}
