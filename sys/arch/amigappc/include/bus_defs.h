@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.3 2011/08/12 17:40:49 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.4 2011/08/25 02:05:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -26,10 +26,6 @@
 
 #ifndef _AMIGAPPC_BUS_DEFS_H_
 #define _AMIGAPPC_BUS_DEFS_H_
-
-#include <sys/types.h>
-
-/* for public use: */
 
 /*
  * Memory addresses (in bus space)
