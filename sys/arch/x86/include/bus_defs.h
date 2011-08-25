@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.1 2011/07/01 17:10:01 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.2 2011/08/25 15:06:10 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,12 @@ typedef	struct bus_space_tag *bus_space_tag_t;
 struct bus_space_tag {
 	int					bst_type;
 	bus_space_tag_t				bst_super;
+	/* bst_present: bitmap indicating overrides present (1) in *this* tag,
+	 * bst_exists: bitmap indicating overrides present (1) in *this* tag
+	 * or in an ancestor's tag (follow bst_super to ancestors)
+	 */
 	uint64_t				bst_present;
+	uint64_t				bst_exists;
 	const struct bus_space_overrides	*bst_ov;
 	void					*bst_ctx;
 };
