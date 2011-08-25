@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.4 2011/08/25 15:37:00 joerg Exp $	*/
 /* $OpenBSD: log.c,v 1.41 2008/06/10 04:50:25 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,8 +36,9 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.3 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.4 2011/08/25 15:37:00 joerg Exp $");
 #include <sys/types.h>
+#include <sys/uio.h>
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -302,8 +303,10 @@ do_log(LogLevel level, const char *fmt, va_list args)
 #ifdef SYSLOG_DATA_INIT
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 #endif
-	char msgbuf[MSGBUFSIZ];
-	char fmtbuf[4 * sizeof(msgbuf) + 1];
+	size_t len, len2;
+	int len3;
+	char msgbuf[MSGBUFSIZ], *msgbufp;
+	char visbuf[MSGBUFSIZ * 4 + 1];
 	const char *txt = NULL;
 	int pri = LOG_INFO;
 	int saved_errno = errno;
@@ -345,24 +348,33 @@ do_log(LogLevel level, const char *fmt, va_list args)
 		pri = LOG_ERR;
 		break;
 	}
+	len = sizeof(msgbuf);
+	msgbufp = msgbuf;
 	if (txt != NULL) {
-		snprintf(fmtbuf, sizeof(fmtbuf), "%s: %s", txt, fmt);
-		vsnprintf(msgbuf, sizeof(msgbuf), fmtbuf, args);
-	} else {
-		vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
+		len2 = strlen(txt);
+		if (len2 >= len)
+			len2 = len - 1;
+		memcpy(msgbufp, txt, len2);
+		msgbufp += len2;
+		*msgbufp++ = '\0';
+		len -= len2 + 1;
 	}
-	strvis(fmtbuf, msgbuf, VIS_SAFE|VIS_OCTAL);
+	vsnprintf(msgbufp, len, fmt, args);
+	len3 = strvis(visbuf, msgbuf, VIS_SAFE|VIS_OCTAL);
 	if (log_on_stderr) {
-		snprintf(msgbuf, sizeof msgbuf, "%s\r\n", fmtbuf);
-		write(STDERR_FILENO, msgbuf, strlen(msgbuf));
+		struct iovec iov[] = {
+			{ visbuf, len3 },
+			{ __UNCONST("\r\n"), 2 },
+		};
+		writev(STDERR_FILENO, iov, __arraycount(iov));
 	} else {
 #ifdef SYSLOG_DATA_INIT
 		openlog_r(argv0 ? argv0 : __progname, LOG_PID, log_facility, &sdata);
-		syslog_r(pri, &sdata, "%.500s", fmtbuf);
+		syslog_r(pri, &sdata, "%.500s", visbuf);
 		closelog_r(&sdata);
 #else
 		openlog(argv0 ? argv0 : __progname, LOG_PID, log_facility);
-		syslog(pri, "%.500s", fmtbuf);
+		syslog(pri, "%.500s", visbuf);
 		closelog();
 #endif
 	}
