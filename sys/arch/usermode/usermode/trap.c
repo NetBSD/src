@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.5 2011/08/25 15:02:54 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.6 2011/08/25 19:06:03 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.5 2011/08/25 15:02:54 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.6 2011/08/25 19:06:03 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,7 +84,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	vaddr_t onfault;
 	int kmem, rv;
 
-printf("trap\n");
+	aprint_debug("trap\n");
 	if ((info->si_signo == SIGSEGV) || (info->si_signo == SIGBUS)) {
 		l = curlwp;
 		p = l->l_proc;
@@ -130,8 +130,8 @@ printf("trap\n");
 		}
 
 		pcb->pcb_onfault = NULL;
-		/* XXX atype?? */
-atype = PROT_WRITE;
+		/* XXX TODO determine atype?? */
+atype = PROT_READ | PROT_WRITE;
 		rv = uvm_fault(vm_map, (vaddr_t) va, atype);
 		pcb->pcb_onfault = (void *) onfault;
 		if (rv) {
