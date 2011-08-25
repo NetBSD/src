@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.54 2011/08/23 10:26:07 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.55 2011/08/25 16:47:16 christos Exp $
 #
 # Makefile for sysinst
 
@@ -56,6 +56,7 @@ COPTS.label.c += -Wno-format-nonliteral
 COPTS.target.c += -Wno-format-nonliteral
 COPTS.mbr.c += -Wno-format-nonliteral
 COPTS.bsddisklabel.c += -Wno-format-nonliteral
+COPTS.md.c += -Wno-format-nonliteral
 
 # Host to ftp from.  Default:
 #	"ftp.NetBSD.org"
