@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.3 2011/08/12 00:57:24 jmcneill Exp $ */
+/* $NetBSD: pcb.h,v 1.4 2011/08/25 14:24:48 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,9 +32,23 @@
 #include <sys/cdefs.h>
 #include <sys/ucontext.h>
 
+/*
+ * Trap frame.  Pushed onto the kernel stack on a trap (synchronous exception).
+ * XXX move to frame.h?
+ */
+
+typedef struct trapframe {
+	int		tf_reason;	/* XXX unused */
+	vaddr_t		tf_pc;		/* return address */
+	uintptr_t	tf_out[8];	/* to transport info */
+} trapframe_t;
+
+
 struct pcb {
 	ucontext_t	pcb_ucp;
 	bool		pcb_needfree;
+	struct trapframe *pcb_tf;	/* XXX */
+	void *		pcb_onfault;	/* on fault handler */
 };
 
 #endif /* !_ARCH_USERMODE_INCLUDE_PCB_H */
