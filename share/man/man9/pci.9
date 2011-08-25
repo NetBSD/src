@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.34 2011/05/30 01:48:40 dyoung Exp $
+.\"     $NetBSD: pci.9,v 1.35 2011/08/25 02:01:32 dyoung Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,12 +27,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 5, 2011
+.Dd August 24, 2011
 .Dt PCI 9
 .Os
 .Sh NAME
 .Nm PCI ,
 .Nm pci_activate ,
+.Nm pci_bus_devorder ,
 .Nm pci_chipset_tag_create ,
 .Nm pci_chipset_tag_destroy ,
 .Nm pci_conf_read ,
@@ -67,6 +68,9 @@
 .In dev/pci/pcivar.h
 .In dev/pci/pcireg.h
 .In dev/pci/pcidevs.h
+.Ft int
+.Fn pci_bus_devorder "pci_chipset_tag_t pc" "int bus" "uint8_t *devs" \
+"int maxdevs"
 .Ft int
 .Fn pci_activate "pci_chipset_tag_t pc" "pcitag_t tag" "device_t dev" \
 "int (*wakeup)(pci_chipset_tag_t pc, pcitag_t tag" \
@@ -252,6 +256,27 @@ It contains the following members:
 .El
 .Sh FUNCTIONS
 .Bl -tag -width compact
+.It Fn pci_bus_devorder "pc" "bus" "devs" "maxdevs"
+Tell how many devices a PCI bus driver should probe
+and in what order.
+If
+.Fa maxdevs
+is less than or equal to zero, return 0 and
+do not modify
+.Fa devs .
+Otherwise, return
+.Fa maxdevs
+or the number of devices on
+.Fa bus
+to probe, whichever is less, and copy to
+.Fa devs
+each of the PCI device numbers to probe in the order that they
+should be probed.
+.Fn pci_bus_devorder
+will not copy more than
+.Fa maxdevs
+device numbers to
+.Fa devs .
 .It Fn pci_activate "pc" "tag" "dev" "fun"
 Attempt to bring the device to state D0.
 If the device is not in the D0 state call
