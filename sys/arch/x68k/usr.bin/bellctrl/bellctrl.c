@@ -1,4 +1,4 @@
-/*	$NetBSD: bellctrl.c,v 1.12 2011/05/19 21:26:39 tsutsui Exp $	*/
+/*	$NetBSD: bellctrl.c,v 1.13 2011/08/25 17:00:55 christos Exp $	*/
 
 /*
  * bellctrl - OPM bell controller (for NetBSD/X680x0)
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bellctrl.c,v 1.12 2011/05/19 21:26:39 tsutsui Exp $");
+__RCSID("$NetBSD: bellctrl.c,v 1.13 2011/08/25 17:00:55 christos Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -25,9 +25,8 @@ __RCSID("$NetBSD: bellctrl.c,v 1.12 2011/05/19 21:26:39 tsutsui Exp $");
 	if (i >= argc) \
 		break; \
 
-int bell_setting;
-char *progName;
-struct opm_voice voice;
+static int bell_setting;
+static struct opm_voice voice;
 
 static struct opm_voice bell_voice = DEFAULT_BELL_VOICE;
 
@@ -36,13 +35,13 @@ static struct bell_info values = {
 };
 
 /* function prototype */
-int is_number(const char *, int);
-void set_bell_vol(int);
-void set_bell_pitch(int);
-void set_bell_dur(int);
-void set_voice_param(const char *, int);
-void set_bell_param(void);
-int usage(const char *, const char *);
+static int is_number(const char *, int);
+static void set_bell_vol(int);
+static void set_bell_pitch(int);
+static void set_bell_dur(int);
+static void set_voice_param(const char *, int);
+static void set_bell_param(void);
+static void usage(void) __dead;
 
 int
 main(int argc, char **argv)
@@ -51,11 +50,10 @@ main(int argc, char **argv)
 	int percent;
 	int i;
 
-	progName = argv[0];
 	bell_setting = 0;
 
 	if (argc < 2)
-		usage(NULL, NULL);
+		usage();
 
 	for (i = 1; i < argc; ) {
 		arg = argv[i++];
@@ -137,13 +135,16 @@ main(int argc, char **argv)
 			/*
 			 * set voice parameter
 			 */
-			if (i >= argc)
-				usage("missing -v argument", NULL);
+			if (i >= argc) {
+				warnx("Missing -v argument");
+				usage();
+			}
 			arg = nextarg(i, argv);
 			set_voice_param(arg, 0);
 			i++;
 		} else {
-			usage("unknown option %s", arg);
+			warnx("Unknown option %s", arg);
+			usage();
 		}
 	}
 
@@ -153,7 +154,7 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-int
+static int
 is_number(const char *arg, int maximum)
 {
 	const char *p;
@@ -168,28 +169,28 @@ is_number(const char *arg, int maximum)
 	return 1;
 }
 
-void
+static void
 set_bell_vol(int percent)
 {
 	values.volume = percent;
 	bell_setting++;
 }
 
-void
+static void
 set_bell_pitch(int pitch)
 {
 	values.pitch = pitch;
 	bell_setting++;
 }
 
-void
+static void
 set_bell_dur(int duration)
 {
 	values.msec = duration;
 	bell_setting++;
 }
 
-void
+static void
 set_voice_param(const char *path, int flag)
 {
 	int fd;
@@ -214,7 +215,7 @@ set_voice_param(const char *path, int flag)
 	close(fd);
 }
 
-void
+static void
 set_bell_param(void)
 {
 	int fd;
@@ -238,16 +239,10 @@ set_bell_param(void)
 	close(fd);
 }
 
-int
-usage(const char *fmt, const char *arg)
+static void
+usage(void)
 {
-	if (fmt) {
-		fprintf(stderr, "%s:  ", progName);
-		fprintf(stderr, fmt, arg);
-		fprintf(stderr, "\n\n");
-	}
-
-	fprintf(stderr, "usage:  %s option ...\n", progName);
+	fprintf(stderr, "Usage: %s option ...\n", getprogname());
 	fprintf(stderr, "	To turn bell off:\n");
 	fprintf(stderr, "\t-b				b off"
 	                "			   b 0\n");
