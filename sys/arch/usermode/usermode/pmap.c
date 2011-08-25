@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.35 2011/08/25 15:06:09 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.36 2011/08/25 19:06:58 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2011/08/25 15:06:09 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 2011/08/25 19:06:58 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -86,6 +86,7 @@ static struct pool pmap_pool;
 /* forwards */
 void		pmap_bootstrap(void);
 static void	pmap_page_activate(struct pv_entry *pv);
+static void	pmap_page_deactivate(struct pv_entry *pv);
 static void	pv_update(struct pv_entry *pv);
 static void	pmap_update_page(uintptr_t ppn);
 
@@ -428,12 +429,28 @@ pmap_page_activate(struct pv_entry *pv)
 	void *addr;
 
 	addr = thunk_mmap((void *) va, PAGE_SIZE, pv->pv_mmap_ppl,
-		MAP_FILE | MAP_FIXED,
+		MAP_FILE | MAP_FIXED | MAP_SHARED,
 		mem_fh, pa);
 	aprint_debug("page_activate: (va %p, pa %p, ppl %d) -> %p\n",
 		(void *) va, (void *) pa, pv->pv_mmap_ppl, (void *) addr);
 	if (addr != (void *) va)
 		panic("pmap_page_activate: mmap failed");
+}
+
+static void
+pmap_page_deactivate(struct pv_entry *pv)
+{
+	paddr_t pa = pv->pv_ppn * PAGE_SIZE;
+	vaddr_t va = pv->pv_lpn * PAGE_SIZE + VM_MIN_ADDRESS; /* L->V */
+	void *addr;
+
+	addr = thunk_mmap((void *) va, PAGE_SIZE, PROT_NONE,
+		MAP_FILE | MAP_FIXED | MAP_SHARED,
+		mem_fh, pa);
+	aprint_debug("page_deactivate: (va %p, pa %p, ppl %d) -> %p\n",
+		(void *) va, (void *) pa, pv->pv_mmap_ppl, (void *) addr);
+	if (addr != (void *) va)
+		panic("pmap_page_deactivate: mmap failed");
 }
 
 static void
@@ -605,7 +622,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		pv = pmap->pm_entries[lpn];
 		if (pv != NULL) {
 			if (pmap->pm_flags & PM_ACTIVE) {
-aprint_debug("pmap_remove: haven't removed old mmap yet\n");
+				pmap_page_deactivate(pv);
 //				MEMC_WRITE(pv->pv_deactivate);
 //				cpu_cache_flush();
 			}
@@ -722,7 +739,7 @@ pmap_deactivate(struct lwp *l)
 	pmap->pm_flags &=~ PM_ACTIVE;
 	for (i = 0; i < 1024; i++) {
 		if (pmap->pm_entries[i] != NULL) {
-			aprint_debug("pmap_deactivate: TODO unmap memory!\n");
+			pmap_page_deactivate(pmap->pm_entries[i]);
 //			MEMC_WRITE(pmap->pm_entries[i]->pv_deactivate);
 		}
 	}
