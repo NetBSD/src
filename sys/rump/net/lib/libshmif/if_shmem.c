@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.41 2011/08/23 22:00:57 dyoung Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.42 2011/08/25 15:14:19 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.41 2011/08/23 22:00:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.42 2011/08/25 15:14:19 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -293,8 +293,8 @@ rump_shmif_create(const char *path, int *ifnum)
 			return error;
 	}
 
-	unit = vmem_xalloc(shmif_units, 1, 0, 0, 0, 0, ~(vmem_addr_t)0,
-	    VM_INSTANTFIT | VM_SLEEP) - 1;
+	unit = vmem_xalloc(shmif_units, 1, 0, 0, 0,
+	    VMEM_ADDR_MIN, VMEM_ADDR_MAX, VM_INSTANTFIT | VM_SLEEP) - 1;
 
 	if ((error = allocif(unit, &sc)) != 0) {
 		if (path)
