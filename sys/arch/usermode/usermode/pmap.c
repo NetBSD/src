@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.32 2011/08/24 20:13:56 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.33 2011/08/25 10:46:59 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2011/08/24 20:13:56 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2011/08/25 10:46:59 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -551,7 +551,7 @@ pv_release(pmap_t pmap, uintptr_t ppn, uintptr_t lpn)
 {
 	struct pv_entry *pv, *npv;
 
-aprint_debug("pv_release ppn %"PRIdPTR", lpn %"PRIdPTR"\n", ppn, lpn);
+	aprint_debug("pv_release ppn %"PRIdPTR", lpn %"PRIdPTR"\n", ppn, lpn);
 	pv = &pv_table[ppn];
 	/*
 	 * If it is the first entry on the list, it is actually
@@ -590,7 +590,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	struct pv_entry *pv;
 	int s;
 
-aprint_debug("pmap_remove() called\n");
+	aprint_debug("pmap_remove() called\n");
 
 	slpn = atop(sva); elpn = atop(eva);
 	s = splvm();
