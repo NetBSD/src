@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.5 2011/08/23 17:12:32 jmcneill Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.6 2011/08/25 19:08:35 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.5 2011/08/23 17:12:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.6 2011/08/25 19:08:35 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -164,7 +164,7 @@ ld_thunkbus_complete(void *arg)
 	}
 
 	if (bp->b_error)
-		printf("errpr!\n");
+		printf("error!\n");
 
 	lddone(&sc->sc_ld, bp);
 }
@@ -189,8 +189,9 @@ ld_thunkbus_ldstart(struct ld_softc *ld, struct buf *bp)
 	tt->tt_aio.aio_sigevent.sigev_value.sival_ptr = tt;
 
 #if 0
-	device_printf(sc->sc_ld.sc_dv, "%s off=%lld count=%lld\n",
+	device_printf(sc->sc_ld.sc_dv, "%s addr %p, off=%lld, count=%lld\n",
 	    (bp->b_flags & B_READ) ? "rd" : "wr",
+	    bp->b_data,
 	    (long long)bp->b_rawblkno,
 	    (long long)bp->b_bcount);
 #endif
