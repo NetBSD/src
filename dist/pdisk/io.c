@@ -92,7 +92,6 @@ char* get_string(int eos);
 int my_getch(void);
 void my_ungetch(int c);
 
-
 //
 // Routines
 //
@@ -150,7 +149,7 @@ get_okay(const char *prompt, int default_value)
     int		c;
 
     flush_to_newline(0);
-    printf(prompt);
+    printf("%s", prompt);
 
     for (;;) {
 	c = my_getch();
@@ -168,7 +167,7 @@ get_okay(const char *prompt, int default_value)
 	    return 0;
 	} else {
 	    flush_to_newline(0);
-	    printf(prompt);
+	    printf("%s", prompt);
 	}
     }
     return -1;
@@ -181,7 +180,7 @@ get_command(const char *prompt, int promptBeforeGet, int *command)
     int		c;
 
     if (promptBeforeGet) {
-	printf(prompt);
+	printf("%s", prompt);
     }	
     for (;;) {
 	c = my_getch();
@@ -191,7 +190,7 @@ get_command(const char *prompt, int promptBeforeGet, int *command)
 	} else if (c == ' ' || c == '\t') {
 	    // skip blanks and tabs
 	} else if (c == '\n') {
-	    printf(prompt);
+	    printf("%s", prompt);
 	} else {
 	    *command = c;
 	    return 1;
@@ -216,7 +215,7 @@ get_number_argument(const char *prompt, long *number, long default_value)
 	    // skip blanks and tabs
 	} else if (c == '\n') {
 	    if (default_value == kDefault) {
-		printf(prompt);
+		printf("%s", prompt);
 	    } else {
 		my_ungetch(c);
 		*number = default_value;
@@ -295,7 +294,7 @@ get_string_argument(const char *prompt, char **string, int reprompt)
 	    // skip blanks and tabs
 	} else if (c == '\n') {
 	    if (reprompt) {
-		printf(prompt);
+		printf("%s", prompt);
 	    } else {
 		my_ungetch(c);
 		*string = NULL;
