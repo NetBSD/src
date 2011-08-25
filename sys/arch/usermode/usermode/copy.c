@@ -1,4 +1,4 @@
-/* $NetBSD: copy.c,v 1.3 2011/08/24 20:03:19 reinoud Exp $ */
+/* $NetBSD: copy.c,v 1.4 2011/08/25 19:07:45 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.3 2011/08/24 20:03:19 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.4 2011/08/25 19:07:45 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.3 2011/08/24 20:03:19 reinoud Exp $");
 int
 copyin(const void *uaddr, void *kaddr, size_t len)
 {
-printf("copyin uaddr %p, kaddr %p, len %d\n", uaddr, kaddr, (int) len);
+	aprint_debug("copyin uaddr %p, kaddr %p, len %d\n", uaddr, kaddr, (int) len);
 	memcpy(kaddr, uaddr, len);
 	return 0;
 }
@@ -46,9 +46,7 @@ printf("copyin uaddr %p, kaddr %p, len %d\n", uaddr, kaddr, (int) len);
 int
 copyout(const void *kaddr, void *uaddr, size_t len)
 {
-printf("copyout kaddr %p, uaddr %p, len %d\n", kaddr, uaddr, (int) len);
-printf("curlwp pmap = %p\n", curlwp->l_proc->p_vmspace->vm_map.pmap);
-
+	aprint_debug("copyout kaddr %p, uaddr %p, len %d\n", kaddr, uaddr, (int) len);
 	memcpy(uaddr, kaddr, len);
 	return 0;
 }
@@ -84,6 +82,10 @@ int
 kcopy(const void *src, void *dst, size_t len)
 {
 	memcpy(dst, src, len);
+#ifdef DEBUG
+	if (memcmp(dst, src, len) != 0)
+		panic("kcopy not finished correctly\n");
+#endif
 	return 0;
 }
 
