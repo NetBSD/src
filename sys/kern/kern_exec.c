@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.318 2011/08/25 19:14:07 reinoud Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.319 2011/08/25 19:54:30 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.318 2011/08/25 19:14:07 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.319 2011/08/25 19:54:30 reinoud Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -389,7 +389,7 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 			if ((epp->ep_tsize > MAXTSIZ) ||
 			    (epp->ep_dsize > (u_quad_t)l->l_proc->p_rlimit
 						    [RLIMIT_DATA].rlim_cur)) {
-				aprint_debug("check_exec: rejecting due to "
+				aprint_verbose("check_exec: rejecting due to "
 					"limits\n");
 				error = ENOMEM;
 				break;
