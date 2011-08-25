@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.12 2011/05/26 12:56:27 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2011/08/25 17:05:45 joerg Exp $
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client and server
-CWARNFLAGS.clang+=	-Wno-comment -Wno-empty-body -Wno-format-extra-args
+CWARNFLAGS.clang+=	-Wno-empty-body -Wno-format-extra-args
 
 WARNS?=	0
 
@@ -14,7 +14,8 @@ CPPFLAGS+= -DNETBSD4 -DUSE_SASL_AUTH \
 	-I${PFIX_DISTDIR}/src/dns -I${PFIX_DISTDIR}/src/global \
 	-I${PFIX_DISTDIR}/src/master -I${PFIX_DISTDIR}/src/util \
 	-I${PFIX_DISTDIR}/src/tls -I${PFIX_DISTDIR}/src/milter \
-	-I${PFIX_DISTDIR}/src/xsasl
+	-I${PFIX_DISTDIR}/src/xsasl \
+	${${ACTIVE_CC} == "clang":?-Wno-comment:}
 
 CPPFLAGS+= -DUSE_SASL_AUTH
 CPPFLAGS+= -DDEF_SERVER_SASL_TYPE=\"dovecot\"
