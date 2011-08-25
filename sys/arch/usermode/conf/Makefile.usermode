@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.13 2011/08/22 21:45:38 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.14 2011/08/25 11:06:29 jmcneill Exp $
 
 MACHINE_ARCH=			usermode
 USETOOLS?=			no
@@ -15,12 +15,22 @@ GENASSYM_CONF=	${USERMODE}/usermode/genassym.cf
 ## (2) compile settings
 ##
 USERMODE_LIBS=	-lrt
+USERMODE_CPPFLAGS=-U_KERNEL -I/usr/include
+USERMODE_CPPFLAGS+=${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
 
 DEFCOPTS=	-fno-omit-frame-pointer
 CPPFLAGS+=	-Dusermode
 CPPFLAGS.init_main.c+=	-Dmain=kernmain
 
-CPPFLAGS.thunk.c+=	-U_KERNEL -I/usr/include 
+OPT_SDL=	%SDL%
+.if !empty(OPT_SDL)
+SDL_CFLAGS!=	sdl-config --cflags
+SDL_LIBS!=	sdl-config --libs
+USERMODE_LIBS+=	-Wl,-Bdynamic ${SDL_LIBS}
+.endif
+
+CPPFLAGS.thunk.c+=	${USERMODE_CPPFLAGS}
+CPPFLAGS.thunk_sdl.c+=	${SDL_CFLAGS} ${USERMODE_CPPFLAGS}
 
 ##
 ## (3) libkern and compat
@@ -33,6 +43,10 @@ COMPAT_AS=	obj
 ##
 MD_OBJS=	thunk.o
 MD_CFILES=	${USERMODE}/usermode/thunk.c
+.if !empty(OPT_SDL)
+MD_OBJS+=	thunk_sdl.o
+MD_CFILES+=	${USERMODE}/usermode/thunk_sdl.c
+.endif
 MD_SFILES=
 
 ##
@@ -56,6 +70,9 @@ NVFLAGS=	-n
 
 thunk.o: ${USERMODE}/usermode/thunk.c
 	${CC} ${CPPFLAGS.thunk.c} -c -o $@ ${USERMODE}/usermode/thunk.c
+
+thunk_sdl.o: ${USERMODE}/usermode/thunk_sdl.c
+	${CC} ${CPPFLAGS.thunk_sdl.c} -c -o $@ ${USERMODE}/usermode/thunk_sdl.c
 
 ##
 ## (7) misc settings

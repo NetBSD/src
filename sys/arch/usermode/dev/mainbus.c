@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.4 2011/08/12 12:59:13 jmcneill Exp $ */
+/* $NetBSD: mainbus.c,v 1.5 2011/08/25 11:06:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_sdl.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2011/08/12 12:59:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2011/08/25 11:06:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -72,8 +76,15 @@ mainbus_attach(device_t parent, device_t self, void *opaque)
 
 	taa.taa_type = THUNKBUS_TYPE_CPU;
 	config_found_ia(self, "thunkbus", &taa, mainbus_print);
+
+#if defined(SDL)
+	taa.taa_type = THUNKBUS_TYPE_GENFB;
+	config_found_ia(self, "thunkbus", &taa, mainbus_print);
+#endif
+
 	taa.taa_type = THUNKBUS_TYPE_CLOCK;
 	config_found_ia(self, "thunkbus", &taa, mainbus_print);
+
 	taa.taa_type = THUNKBUS_TYPE_TTYCONS;
 	config_found_ia(self, "thunkbus", &taa, mainbus_print);
 

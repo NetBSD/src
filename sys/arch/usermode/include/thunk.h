@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.16 2011/08/24 10:56:45 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.17 2011/08/25 11:06:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -89,5 +89,11 @@ void *	thunk_sbrk(intptr_t len);
 void *	thunk_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset);
 int	thunk_munmap(void *addr, size_t len);
 int	thunk_mprotect(void *addr, size_t len, int prot);
+
+char *	thunk_getenv(const char *);
+
+int	thunk_sdl_init(unsigned int, unsigned int, unsigned short);
+void *	thunk_sdl_getfb(size_t);
+int	thunk_sdl_getchar(void);
 
 #endif /* !_ARCH_USERMODE_INCLUDE_THUNK_H */

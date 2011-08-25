@@ -1,9 +1,10 @@
-# $NetBSD: files.usermode,v 1.5 2011/08/24 10:59:10 jmcneill Exp $
+# $NetBSD: files.usermode,v 1.6 2011/08/25 11:06:29 jmcneill Exp $
 
 maxpartitions 8
 maxusers 8 16 64
 
 defparam opt_memsize.h				MEMSIZE
+defflag opt_sdl.h				SDL
 
 define	thunkbus { }
 
@@ -25,6 +26,9 @@ file	arch/usermode/dev/ttycons.c		ttycons
 
 attach	ld at thunkbus with ld_thunkbus
 file	arch/usermode/dev/ld_thunkbus.c		ld_thunkbus
+
+attach	genfb at thunkbus with genfb_thunkbus
+file	arch/usermode/dev/genfb_thunkbus.c	genfb_thunkbus
 
 file	arch/usermode/usermode/copy.c
 file	arch/usermode/usermode/machdep.c
