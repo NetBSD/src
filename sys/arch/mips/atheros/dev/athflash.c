@@ -1,4 +1,4 @@
-/* $NetBSD: athflash.c,v 1.4 2011/07/01 18:40:00 dyoung Exp $ */
+/* $NetBSD: athflash.c,v 1.5 2011/08/25 02:36:03 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athflash.c,v 1.4 2011/07/01 18:40:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athflash.c,v 1.5 2011/08/25 02:36:03 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -194,6 +194,7 @@ flash_probe(struct device *parent, struct cfdata *cf, void *aux)
 static void
 flash_attach(struct device *parent, struct device *self, void *aux)
 {
+	char nbuf[32];
 	struct flash_softc		*sc = (void *) self;
 	struct arbus_attach_args	*aa = aux;
 	int				i;
@@ -230,18 +231,17 @@ flash_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	KASSERT(flash_ids[i].name != NULL);
-	printf(": %s ", flash_ids[i].name);
-	if (i >= 0x100000)
-		printf("(%d MB)", flash_ids[i].flash_size >> 20);
-	else
-		printf("(%d KB)", flash_ids[i].flash_size >> 10);
+	printf(": %s", flash_ids[i].name);
+	if (humanize_number(nbuf, sizeof(nbuf), flash_ids[i].flash_size, "B",
+	    1024) > 0)
+		printf(" (%s)", nbuf);
 
 	/*
 	 * determine size of the largest block
 	 */
 	sc->sc_size = flash_ids[i].flash_size;
 	sc->sc_sector_size = flash_ids[i].sector_size;
-	
+
 	if ((sc->sc_buf = malloc(sc->sc_sector_size, M_DEVBUF, M_NOWAIT))
 	    == NULL) {
 		printf(": can't alloc buffer space\n");
