@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2011/04/15 18:05:42 elric Exp $
+# $NetBSD: Makefile,v 1.5 2011/08/25 15:30:54 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,8 @@ SRCS+= msg.c
 SRCS+= parser.c
 SRCS+= saslc.c
 SRCS+= xsess.c
+
+COPTS.msg.c = -Wno-format-nonliteral
 
 CPPFLAGS+=-I${EXTDIST}/include
 MAN=libsaslc.3
