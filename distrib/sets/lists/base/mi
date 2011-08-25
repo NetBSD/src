@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.947 2011/08/15 15:13:59 wiz Exp $
+# $NetBSD: mi,v 1.948 2011/08/25 15:29:04 dyoung Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -140,21 +140,21 @@
 ./libdata/firmware/if_iwi/ipw2200-sniffer.fw	base-firmware-root
 ./libdata/firmware/if_iwn			base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-1000-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-1000-ucode	base-firmware-root
-./libdata/firmware/if_iwn/iwlwifi-1000-3.ucode	base-firmare-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-4965-ucode	base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-5000-ucode	base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-5150-ucode	base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-1000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-4965-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-5000-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-5150-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-6000-ucode	base-firmware-root
+./libdata/firmware/if_iwn/iwlwifi-1000-3.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-4965-1.ucode	base-obsolete		obsolete
 ./libdata/firmware/if_iwn/iwlwifi-4965-2.ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-5000-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-5000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-5000-1.ucode	base-obsolete		obsolete
 ./libdata/firmware/if_iwn/iwlwifi-5000-2.ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-5150-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-5150-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-5150-2.ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-6000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-6000-4.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000g2a-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-6000g2a-ucode	base-firmware-root
@@ -168,10 +168,10 @@
 ./libdata/firmware/if_otus/otus-main		base-firmware-root
 ./libdata/firmware/if_wpi			base-firmware-root
 ./libdata/firmware/if_wpi/LICENSE.ipw3945-ucode	base-obsolete	obsolete
-./libdata/firmware/if_wpi/README.ipw3945-ucode	base-obsolete	obsolete
-./libdata/firmware/if_wpi/ipw3945.ucode		base-obsolete	obsolete
 ./libdata/firmware/if_wpi/LICENSE.iwlwifi-3945-ucode	base-firmware-root
+./libdata/firmware/if_wpi/README.ipw3945-ucode	base-obsolete	obsolete
 ./libdata/firmware/if_wpi/README.iwlwifi-3945-ucode	base-firmware-root
+./libdata/firmware/if_wpi/ipw3945.ucode		base-obsolete	obsolete
 ./libdata/firmware/if_wpi/iwlwifi-3945.ucode		base-firmware-root
 ./libdata/firmware/ral				base-firmware-root
 ./libdata/firmware/ral/ral-license		base-firmware-root
@@ -946,49 +946,49 @@
 ./usr/libdata/debug/usr/libexec/uucp		base-obsolete		obsolete
 ./usr/libdata/debug/usr/mdec			base-sys-usr
 ./usr/libdata/debug/usr/sbin			base-sys-usr
-./usr/libdata/firmware				base-sys-usr
-./usr/libdata/firmware/radeon			base-sys-usr
-./usr/libdata/firmware/radeon/CEDAR_me.bin	base-sys-usr
-./usr/libdata/firmware/radeon/CEDAR_pfp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/CEDAR_rlc.bin	base-sys-usr
-./usr/libdata/firmware/radeon/CYPRESS_me.bin	base-sys-usr
-./usr/libdata/firmware/radeon/CYPRESS_pfp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/CYPRESS_rlc.bin	base-sys-usr
-./usr/libdata/firmware/radeon/JUNIPER_me.bin	base-sys-usr
-./usr/libdata/firmware/radeon/JUNIPER_pfp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/JUNIPER_rlc.bin	base-sys-usr
-./usr/libdata/firmware/radeon/R100_cp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/R200_cp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/R300_cp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/R420_cp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/R520_cp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/R600_me.bin	base-sys-usr
-./usr/libdata/firmware/radeon/R600_pfp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/R600_rlc.bin	base-sys-usr
-./usr/libdata/firmware/radeon/R700_rlc.bin	base-sys-usr
-./usr/libdata/firmware/radeon/REDWOOD_me.bin	base-sys-usr
-./usr/libdata/firmware/radeon/REDWOOD_pfp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/REDWOOD_rlc.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RS600_cp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RS690_cp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RS780_me.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RS780_pfp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV610_me.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV610_pfp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV620_me.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV620_pfp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV630_me.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV630_pfp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV635_me.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV635_pfp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV670_me.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV670_pfp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV710_me.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV710_pfp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV730_me.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV730_pfp.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV770_me.bin	base-sys-usr
-./usr/libdata/firmware/radeon/RV770_pfp.bin	base-sys-usr
+./usr/libdata/firmware				base-firmware-usr
+./usr/libdata/firmware/radeon			base-firmware-usr
+./usr/libdata/firmware/radeon/CEDAR_me.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/CEDAR_pfp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/CEDAR_rlc.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/CYPRESS_me.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/CYPRESS_pfp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/CYPRESS_rlc.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/JUNIPER_me.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/JUNIPER_pfp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/JUNIPER_rlc.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/R100_cp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/R200_cp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/R300_cp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/R420_cp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/R520_cp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/R600_me.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/R600_pfp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/R600_rlc.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/R700_rlc.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/REDWOOD_me.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/REDWOOD_pfp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/REDWOOD_rlc.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RS600_cp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RS690_cp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RS780_me.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RS780_pfp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV610_me.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV610_pfp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV620_me.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV620_pfp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV630_me.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV630_pfp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV635_me.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV635_pfp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV670_me.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV670_pfp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV710_me.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV710_pfp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV730_me.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV730_pfp.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV770_me.bin	base-firmware-usr
+./usr/libdata/firmware/radeon/RV770_pfp.bin	base-firmware-usr
 ./usr/libdata/ldscripts				base-c-usr
 ./usr/libdata/lint				base-c-usr
 ./usr/libexec					base-sys-usr
@@ -1730,8 +1730,8 @@
 ./usr/share/i18n/csmapper/BIG5/UCS@SIP%ETen.mps		base-sysutil-share	nls
 ./usr/share/i18n/csmapper/BIG5/UCS@SIP%HKSCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CBM			base-sysutil-share
-./usr/share/i18n/csmapper/CBM/CBMINT%UCS.mps		base-sysutil-share
-./usr/share/i18n/csmapper/CBM/UCS%CBMINT.mps		base-sysutil-share
+./usr/share/i18n/csmapper/CBM/CBMINT%UCS.mps		base-sysutil-share	nls
+./usr/share/i18n/csmapper/CBM/UCS%CBMINT.mps		base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CNS			base-sysutil-share
 ./usr/share/i18n/csmapper/CNS/CNS11643-1%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CNS/CNS11643-2%UCS.mps	base-sysutil-share	nls
