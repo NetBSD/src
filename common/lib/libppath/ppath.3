@@ -1,5 +1,5 @@
-.\"	$NetBSD: ppath.3,v 1.1 2011/08/25 14:55:36 dyoung Exp $
-.\"	$Id: ppath.3,v 1.1 2011/08/25 14:55:36 dyoung Exp $
+.\"	$NetBSD: ppath.3,v 1.2 2011/08/25 15:12:38 wiz Exp $
+.\"	$Id: ppath.3,v 1.2 2011/08/25 15:12:38 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd August 24, 2011
-.Dt ppath 3
+.Dt PPATH 3
 .Os
 .Sh NAME
 .Nm ppath ,
@@ -125,7 +125,7 @@ in a property list.
 The abstract function
 .Fn E
 evaluates
-a property-list path against a 
+a property-list path against a
 .Vt prop_object_t ,
 .Va o ,
 to yield a
@@ -169,7 +169,6 @@ The programmer may think of property-list paths as working similarly
 to paths in a file system, where property arrays and dictionaries
 correspond to directories, and all other property types correspond
 to files.
-.Pp
 .Sh DATA TYPES
 .Nm
 provides two opaque types:
@@ -177,13 +176,13 @@ provides two opaque types:
 .It Vt ppath_component_t
 A property-list path component: a single key or index.
 .Nm
-counts references to a 
+counts references to a
 .Vt ppath_component_t
 and reclaims its storage when there are no more references.
 .It Vt ppath_t
 An array of zero or more property-list path components.
 .Nm
-counts references to a 
+counts references to a
 .Vt ppath_t
 and reclaims its storage when there are no more references.
 .El
@@ -251,13 +250,13 @@ If
 is the empty path or
 .Dv NULL ,
 return
-.Dv NULL.
+.Dv NULL .
 Otherwise, remove the last component from
 .Fa p
 and return
 .Fa p ,
 and if
-.Fa pcp 
+.Fa pcp
 is not
 .Dv NULL ,
 write the removed component to
