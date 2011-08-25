@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.33 2011/08/25 10:46:59 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.34 2011/08/25 14:37:57 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2011/08/25 10:46:59 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2011/08/25 14:37:57 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -93,6 +93,8 @@ static struct 	pv_entry *pv_get(pmap_t pmap, uintptr_t ppn, uintptr_t lpn);
 static struct 	pv_entry *pv_alloc(void);
 static void	pv_free(struct pv_entry *pv);
 static void	pmap_deferred_init(void);
+
+extern void	setup_signal_handlers(void);
 
 /* exposed to signal handler */
 vaddr_t kmem_k_start, kmem_k_end;
@@ -164,7 +166,7 @@ pmap_bootstrap(void)
 	mpos += kmem_len;
 	kmem_ext_end   = mpos;
 
-#if 0
+#if 1
 	/* protect complete UVM area (---) */
 	addr = thunk_mmap((void*) mem_uvm,
 		uvm_len,
@@ -319,6 +321,8 @@ pmap_deferred_init(void)
 	/* create pmap pool */
 	pool_init(&pmap_pool, sizeof(struct pmap), 0, 0, 0,
 	    "pmappool", NULL, IPL_NONE);
+
+	setup_signal_handlers();
 }
 
 pmap_t
@@ -661,7 +665,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 void
 pmap_kremove(vaddr_t va, vsize_t size)
 {
-aprint_debug("pmap_kremove not implented\n'");
+	pmap_remove(pmap_kernel(), va, va + size);
 }
 
 void
