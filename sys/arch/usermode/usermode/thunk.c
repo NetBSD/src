@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.18 2011/08/24 10:56:44 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.19 2011/08/25 11:06:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.18 2011/08/24 10:56:44 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.19 2011/08/25 11:06:29 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/ansi.h>
@@ -165,7 +165,7 @@ thunk_setcontext(const ucontext_t *ucp)
 }
 
 void
-thunk_makecontext(ucontext_t *ucp, void (*func)(), int argc,
+thunk_makecontext(ucontext_t *ucp, void (*func)(void), int argc,
     void (*arg1)(void *), void *arg2)
 {
 	assert(argc == 2);
@@ -324,3 +324,8 @@ thunk_mprotect(void *addr, size_t len, int prot)
 	return mprotect(addr, len, prot);
 }
 
+char *
+thunk_getenv(const char *name)
+{
+	return getenv(name);
+}
