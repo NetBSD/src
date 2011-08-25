@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.34 2011/08/25 14:37:57 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.35 2011/08/25 15:06:09 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2011/08/25 14:37:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2011/08/25 15:06:09 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -424,7 +424,7 @@ static void
 pmap_page_activate(struct pv_entry *pv)
 {
 	paddr_t pa = pv->pv_ppn * PAGE_SIZE;
-	vaddr_t va = pv->pv_lpn * PAGE_SIZE + VM_MIN_ADDRESS; /* V->A */
+	vaddr_t va = pv->pv_lpn * PAGE_SIZE + VM_MIN_ADDRESS; /* L->V */
 	void *addr;
 
 	addr = thunk_mmap((void *) va, PAGE_SIZE, pv->pv_mmap_ppl,
@@ -482,7 +482,7 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 
 	/* to page numbers */
 	ppn = atop(pa);
-	lpn = atop(va - VM_MIN_ADDRESS);	/* V->A */
+	lpn = atop(va - VM_MIN_ADDRESS);	/* V->L */
 #ifdef DIAGNOSTIC
 	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_ADDRESS))
 		panic("pmap_do_enter: invalid va isued\n");
@@ -594,9 +594,12 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	struct pv_entry *pv;
 	int s;
 
-	aprint_debug("pmap_remove() called\n");
+	slpn = atop(sva - VM_MIN_ADDRESS);	/* V->L */
+ 	elpn = atop(eva - VM_MIN_ADDRESS);	/* V->L */
 
-	slpn = atop(sva); elpn = atop(eva);
+	aprint_debug("pmap_remove() called from "
+		"lpn %"PRIdPTR" to lpn %"PRIdPTR"\n", slpn, elpn);
+
 	s = splvm();
 	for (lpn = slpn; lpn < elpn; lpn++) {
 		pv = pmap->pm_entries[lpn];
@@ -613,7 +616,6 @@ aprint_debug("pmap_remove: haven't removed old mmap yet\n");
 		}
 	}
 	splx(s);
-
 }
 
 void
@@ -641,7 +643,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 
 	/* TODO protect against roque values */
 	aprint_debug("pmap_extract: extracting va %p\n", (void *) va);
-	pv = pmap->pm_entries[atop(va - VM_MIN_ADDRESS)]; /* V->A */
+	pv = pmap->pm_entries[atop(va - VM_MIN_ADDRESS)]; /* V->L */
 
 	if (pv == NULL)
 		return false;
