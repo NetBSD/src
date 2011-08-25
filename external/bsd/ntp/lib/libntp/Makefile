@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/08/29 18:52:59 kardel Exp $
+#	$NetBSD: Makefile,v 1.3 2011/08/25 16:29:39 joerg Exp $
 
 LIBISPRIVATE=yes
 
@@ -23,5 +23,7 @@ SRCS=systime.c a_md5encrypt.c adjtime.c atoint.c atolfp.c atouint.c audio.c \
      recvbuff.c refnumtoa.c snprintf.c socktoa.c socktohost.c ssl_init.c \
      statestr.c strdup.c strstr.c syssignal.c tsftomsu.c tstotv.c tvtots.c \
      uglydate.c uinttoa.c ymd2yd.c 
+
+COPTS.msyslog.c+= -Wno-format-nonliteral
 
 .include <bsd.lib.mk>
