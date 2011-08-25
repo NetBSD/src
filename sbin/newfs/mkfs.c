@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.109 2011/03/06 17:08:16 bouyer Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.110 2011/08/25 16:17:58 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.109 2011/03/06 17:08:16 bouyer Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.110 2011/08/25 16:17:58 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -677,7 +677,7 @@ mkfs(const char *fsys, int fi, int fo,
 			continue;
 		}
 		/* Print superblock numbers */
-		len = printf(" %*" PRIu64 "," + !col, fld_width,
+		len = printf("%s%*" PRIu64 ",", col ? " " : "", fld_width,
 		    (uint64_t)fsbtodb(&sblock, cgsblock(&sblock, cylno)));
 		col += len;
 		if (col + len < max_cols)
