@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2011/08/14 11:34:11 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2011/08/25 16:12:37 joerg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/19/93
 
 USE_FORT?= yes	# network client/server
@@ -14,6 +14,7 @@ DPADD+=	${LIBUTIL}
 MLINKS=	routed.8 rdisc.8
 #COPTS+=-g -DDEBUG -Wall
 
+COPTS.main.c = -Wno-format-nonliteral
 COPTS.trace.c = -Wno-format-nonliteral
 
 .include <bsd.prog.mk>
