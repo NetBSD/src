@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.40 2010/08/06 09:14:40 dholland Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.41 2011/08/25 16:18:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.40 2010/08/06 09:14:40 dholland Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.41 2011/08/25 16:18:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,7 @@ mvaddselstr(int y, int x0, int item, int curitem,
 /*
  * Likewise but a printf.
  */
-static void
+static void __attribute__((__format__(__printf__, 6, 7)))
 mvselprintw(int y, int x0, int item, int curitem,
 	    size_t width, const char *fmt, ...)
 {
@@ -296,7 +296,7 @@ down(int *posp, int *scrollp, int max, int visible)
 /*
  * Complain briefly.
  */
-static void
+static void __attribute__((__format__(__printf__, 3, 4)))
 oops(int y, int x, const char *fmt, ...)
 {
 	int oy, ox;
