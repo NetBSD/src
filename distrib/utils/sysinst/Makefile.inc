@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.55 2011/08/25 16:47:16 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.56 2011/08/25 17:39:58 joerg Exp $
 #
 # Makefile for sysinst
 
@@ -55,6 +55,7 @@ COPTS.util.c += -Wno-format-nonliteral
 COPTS.label.c += -Wno-format-nonliteral
 COPTS.target.c += -Wno-format-nonliteral
 COPTS.mbr.c += -Wno-format-nonliteral
+COPTS.msg_defs.c += -Wno-format-nonliteral
 COPTS.bsddisklabel.c += -Wno-format-nonliteral
 COPTS.md.c += -Wno-format-nonliteral
 
