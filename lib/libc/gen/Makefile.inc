@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.179 2011/08/03 04:11:16 manu Exp $
+#	$NetBSD: Makefile.inc,v 1.180 2011/08/25 18:20:22 joerg Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -43,6 +43,7 @@ COPTS.execvp.c = -Wno-stack-protector
 COPTS.execl.c = -Wno-stack-protector
 COPTS.execle.c = -Wno-stack-protector
 COPTS.execlp.c = -Wno-stack-protector
+COPTS.syslog.c = -Wno-format-nonliteral
 
 # machine-dependent gen sources
 # m-d Makefile.inc must include sources for:
