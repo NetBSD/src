@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2010/02/06 23:45:26 he Exp $
+#	$NetBSD: Makefile,v 1.18 2011/08/25 15:50:45 joerg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	sail
@@ -10,5 +10,8 @@ DPADD=	${LIBCURSES} ${LIBTERMINFO}
 LDADD=	-lcurses -lterminfo
 HIDEGAME=hidegame
 SETGIDGAME=yes
+
+COPTS.pl_7.c+=	-Wno-format-nonliteral
+COPTS.sync.c+=	-Wno-format-nonliteral
 
 .include <bsd.prog.mk>
