@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.49 2011/08/25 02:27:31 pgoyette Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.50 2011/08/25 02:29:08 pgoyette Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.49 2011/08/25 02:27:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.50 2011/08/25 02:29:08 pgoyette Exp $");
 
 #if defined(__NetBSD__)
 #ifndef _MODULE
@@ -211,8 +211,6 @@ static void	axe_unlock_mii(struct axe_softc *sc);
 
 static void	axe_ax88178_init(struct axe_softc *);
 static void	axe_ax88772_init(struct axe_softc *);
-
-extern int usbdebug;	/* XXX */
 
 /* Get exclusive access to the MII registers */
 static void
@@ -1475,10 +1473,8 @@ if_axe_modcmd(modcmd_t cmd, void *aux)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		usbdebug++; /* XXX */
 		error = config_init_component(cfdriver_ioconf_axe,
 		    cfattach_ioconf_axe, cfdata_ioconf_axe);
-		usbdebug--; /* XXX */
 #endif
 		return error;
 	case MODULE_CMD_FINI:
