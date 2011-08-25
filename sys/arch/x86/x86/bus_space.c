@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.36 2011/07/25 20:34:07 dyoung Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.37 2011/08/25 15:08:49 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.36 2011/07/25 20:34:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.37 2011/08/25 15:08:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,9 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	bus_space_tag_t it;
 	int error;
 
-	for (it = t; it != NULL; it = it->bst_super) {
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_MAP) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
 		if ((it->bst_present & BUS_SPACE_OVERRIDE_MAP) == 0)
 			continue;
 		return (*it->bst_ov->ov_space_map)(it->bst_ctx, t, bpa, size,
@@ -187,7 +189,9 @@ bus_space_reservation_map(bus_space_tag_t t, bus_space_reservation_t *bsr,
 	bus_size_t size;
 	bus_space_tag_t it;
 
-	for (it = t; it != NULL; it = it->bst_super) {
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_RESERVATION_MAP) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
 		if ((it->bst_present & BUS_SPACE_OVERRIDE_RESERVATION_MAP) == 0)
 			continue;
 		return (*it->bst_ov->ov_space_reservation_map)(it->bst_ctx, t,
@@ -251,7 +255,9 @@ bus_space_reserve(bus_space_tag_t t,
 	int error;
 	bus_space_tag_t it;
 
-	for (it = t; it != NULL; it = it->bst_super) {
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_RESERVE) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
 		if ((it->bst_present & BUS_SPACE_OVERRIDE_RESERVE) == 0)
 			continue;
 		return (*it->bst_ov->ov_space_reserve)(it->bst_ctx, t,
@@ -298,7 +304,9 @@ bus_space_reserve_subregion(bus_space_tag_t t,
 	int error;
 	bus_space_tag_t it;
 
-	for (it = t; it != NULL; it = it->bst_super) {
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_RESERVE_SUBREGION) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
 		if ((it->bst_present & BUS_SPACE_OVERRIDE_RESERVE_SUBREGION) ==
 		    0)
 			continue;
@@ -350,7 +358,9 @@ bus_space_release(bus_space_tag_t t, bus_space_reservation_t *bsr)
 	struct extent *ex;
 	bus_space_tag_t it;
 
-	for (it = t; it != NULL; it = it->bst_super) {
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_RELEASE) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
 		if ((it->bst_present & BUS_SPACE_OVERRIDE_RELEASE) == 0)
 			continue;
 		(*it->bst_ov->ov_space_release)(it->bst_ctx, t, bsr);
@@ -386,7 +396,9 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	bus_space_tag_t it;
 	int error;
 
-	for (it = t; it != NULL; it = it->bst_super) {
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_ALLOC) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
 		if ((it->bst_present & BUS_SPACE_OVERRIDE_ALLOC) == 0)
 			continue;
 		return (*it->bst_ov->ov_space_alloc)(it->bst_ctx, t,
@@ -572,7 +584,9 @@ bus_space_reservation_unmap(bus_space_tag_t t, const bus_space_handle_t bsh,
 {
 	bus_space_tag_t it;
 
-	for (it = t; it != NULL; it = it->bst_super) {
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_RESERVATION_UNMAP) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
 		if ((it->bst_present & BUS_SPACE_OVERRIDE_RESERVATION_UNMAP) ==
 		    0)
 			continue;
@@ -592,7 +606,9 @@ bus_space_unmap(bus_space_tag_t t, const bus_space_handle_t bsh,
 	bus_space_reservation_t bsr;
 	bus_space_tag_t it;
 
-	for (it = t; it != NULL; it = it->bst_super) {
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_UNMAP) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
 		if ((it->bst_present & BUS_SPACE_OVERRIDE_UNMAP) == 0)
 			continue;
 		(*it->bst_ov->ov_space_unmap)(it->bst_ctx, t, bsh, size);
@@ -610,7 +626,9 @@ bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	bus_space_tag_t it;
 
-	for (it = t; it != NULL; it = it->bst_super) {
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_FREE) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
 		if ((it->bst_present & BUS_SPACE_OVERRIDE_FREE) == 0)
 			continue;
 		(*it->bst_ov->ov_space_free)(it->bst_ctx, t, bsh, size);
@@ -933,6 +951,7 @@ bus_space_tag_create(bus_space_tag_t obst, const uint64_t present,
 	}
 
 	bst->bst_ov = ov;
+	bst->bst_exists = obst->bst_exists | present;
 	bst->bst_present = present;
 	bst->bst_ctx = ctx;
 
