@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.h,v 1.3 2011/08/12 12:59:13 jmcneill Exp $ */
+/* $NetBSD: mainbus.h,v 1.4 2011/08/25 11:06:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,6 +35,7 @@ struct thunkbus_attach_args {
 #define THUNKBUS_TYPE_CLOCK	1
 #define THUNKBUS_TYPE_TTYCONS	2
 #define	THUNKBUS_TYPE_DISKIMAGE	3
+#define THUNKBUS_TYPE_GENFB	4
 
 	union {
 		struct {
