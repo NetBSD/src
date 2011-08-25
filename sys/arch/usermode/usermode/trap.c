@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.2 2009/10/21 16:07:00 snj Exp $ */
+/* $NetBSD: trap.c,v 1.3 2011/08/25 14:37:57 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,14 +27,127 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.2 2009/10/21 16:07:00 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.3 2011/08/25 14:37:57 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <uvm/uvm_extern.h>
+#include <machine/cpu.h>
+//#include <machine/ctlreg.h>
+//#include <machine/trap.h>
+//#include <machine/instr.h>
+#include <machine/pcb.h>
+#include <machine/pmap.h>
+//#include <machine/userret.h>
+#include <machine/thunk.h>
+
+
+void setup_signal_handlers(void);
+static void mem_access_handler(int sig, siginfo_t *info, void *ctx);
+
+static struct sigaction sa;
+extern int errno;
 
 void
 startlwp(void *arg)
 {
+
 }
+
+void
+setup_signal_handlers(void)
+{
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART | SA_SIGINFO;
+	sa.sa_sigaction = mem_access_handler;
+	if (thunk_sigaction(SIGSEGV, &sa, NULL) == -1)
+		panic("couldn't register SIGSEGV handler : %d", errno);
+	if (thunk_sigaction(SIGBUS, &sa, NULL) == -1)
+		panic("couldn't register SIGBUS handler : %d", errno);
+}
+
+static struct trapframe kernel_tf;
+
+static void
+mem_access_handler(int sig, siginfo_t *info, void *ctx)
+{
+	struct proc *p;
+	struct lwp *l;
+	struct pcb *pcb;
+	struct vmspace *vm;
+	struct vm_map *vm_map;
+	struct trapframe *tf;
+	vm_prot_t atype;
+	vaddr_t va;
+	vaddr_t onfault;
+	int kmem, rv;
+
+printf("trap\n");
+	if ((info->si_signo == SIGSEGV) || (info->si_signo == SIGBUS)) {
+		l = curlwp;
+		p = l->l_proc;
+		pcb = lwp_getpcb(l);
+		onfault = (vaddr_t) pcb->pcb_onfault;
+		vm = p->p_vmspace;
+
+#if 0
+		printf("SIGSEGV or SIGBUS!\n");
+		printf("\tsi_signo = %d\n", info->si_signo);
+		printf("\tsi_errno = %d\n", info->si_errno);
+		printf("\tsi_code  = %d\n", info->si_code);
+		if (info->si_code == SEGV_MAPERR) {
+			printf("\t\tSEGV_MAPERR\n");
+		}
+		if (info->si_code == SEGV_ACCERR) {
+			printf("\t\tSEGV_ACCERR\n");
+		}
+		if (info->si_code == BUS_ADRALN) {
+			printf("\t\tBUS_ADRALN\n");
+		}
+		if (info->si_code == BUS_ADRERR) {
+			printf("\t\tBUS_ADRERR\n");
+		}
+		if (info->si_code == BUS_OBJERR) {
+			printf("\t\tBUS_OBJERR\n");
+		}
+		printf("\tsi_addr = %p\n", info->si_addr);
+		printf("\tsi_trap = %d\n", info->si_trap);
+#endif
+
+		va = (vaddr_t) info->si_addr;
+		va = trunc_page(va);
+
+		kmem = 1;
+		vm_map = kernel_map;
+		if ((va >= VM_MIN_ADDRESS) && (va <= VM_MAXUSER_ADDRESS)) {
+			kmem = 0;
+			vm_map = &vm->vm_map;
+		}
+
+		pcb->pcb_onfault = NULL;
+		/* XXX atype?? */
+atype = PROT_WRITE;
+		rv = uvm_fault(vm_map, (vaddr_t) va, atype);
+		pcb->pcb_onfault = (void *) onfault;
+		if (rv) {
+			/* something got wrong */
+			if (kmem) {
+				/* copyin / copyout */
+				if (!onfault)
+					panic("kernel fault");
+
+				/* jump to given onfault */
+				tf = &kernel_tf;
+				memset(tf, 0, sizeof(struct trapframe));
+				tf->tf_pc = onfault;
+				tf->tf_out[0] = (rv == EACCES) ? EFAULT : rv;
+				return;
+			}
+			panic("should deliver a trap to the process");
+		}
+
+	}
+}
+
