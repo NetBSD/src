@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fd.c,v 1.3 2011/08/15 15:19:08 gson Exp $	*/
+/*	$NetBSD: t_fd.c,v 1.4 2011/08/25 18:46:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ ATF_TC_BODY(sigio, tc)
 	RL(rump_sys_connect(cs, (struct sockaddr *)&sin, sizeof(sin)));
 	sc = sigcnt;
 	printf("sigcnt after connect: %d\n", sc);
-	ATF_REQUIRE_EQ(sc, 1);
+	ATF_REQUIRE(sc >= 1);
 }
 
 ATF_TP_ADD_TCS(tp)
