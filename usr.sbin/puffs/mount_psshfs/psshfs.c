@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.63 2011/05/19 15:07:16 riastradh Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.64 2011/08/25 19:49:05 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.63 2011/05/19 15:07:16 riastradh Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.64 2011/08/25 19:49:05 jakllsch Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -64,6 +64,8 @@ __RCSID("$NetBSD: psshfs.c,v 1.63 2011/05/19 15:07:16 riastradh Exp $");
 static int	pssh_connect(struct puffs_usermount *, int);
 static void	psshfs_loopfn(struct puffs_usermount *);
 static void	usage(void);
+static char *	cleanhostname(char *);
+static char *	colon(char *);
 static void	add_ssharg(char ***, int *, const char *);
 static void	psshfs_notify(struct puffs_usermount *, int, int);
 
@@ -71,6 +73,37 @@ static void	psshfs_notify(struct puffs_usermount *, int, int);
 
 unsigned int max_reads;
 static int sighup;
+
+static char *
+cleanhostname(char *host)
+{
+	if (*host == '[' && host[strlen(host) - 1] == ']') {
+		host[strlen(host) - 1] = '\0';
+		return (host + 1);
+	} else
+		return host;
+}
+
+static char *
+colon(char *cp)
+{
+	int flag = 0;
+
+	if (*cp == '[')
+		flag = 1;
+
+	for (; *cp; ++cp) {
+		if (*cp == '@' && *(cp+1) == '[')
+			flag = 1;
+		if (*cp == ']' && *(cp+1) == ':' && flag)
+			return (cp+1);
+		if (*cp == ':' && !flag)
+			return (cp);
+		if (*cp == '/')
+			return NULL;
+	}
+	return NULL;
+}
 
 static void
 add_ssharg(char ***sshargs, int *nargs, const char *arg)
@@ -113,8 +146,9 @@ main(int argc, char *argv[])
 	struct vattr *rva;
 	mntoptparse_t mp;
 	char **sshargs;
-	char *userhost;
-	char *hostpath;
+	char *user;
+	char *host;
+	char *path;
 	int mntflags, pflags, ch;
 	int detach;
 	int exportfs, refreshival, numconnections;
@@ -243,15 +277,33 @@ main(int argc, char *argv[])
 	pctx.refreshival = refreshival;
 	pctx.numconnections = numconnections;
 
-	userhost = argv[0];
-	hostpath = strchr(userhost, ':');
-	if (hostpath) {
-		*hostpath++ = '\0';
-		pctx.mountpath = hostpath;
-	} else
-		pctx.mountpath = ".";
+	user = strdup(argv[0]);
+	if ((host = strrchr(user, '@')) == NULL) {
+		host = user;
+	} else {
+		*host++ = '\0';		/* break at the '@' */
+		if (user[0] == '\0') {
+			fprintf(stderr, "Missing username\n");
+			usage();
+		}
+		add_ssharg(&sshargs, &nargs, "-l");
+		add_ssharg(&sshargs, &nargs, user);
+	}
 
-	add_ssharg(&sshargs, &nargs, argv[0]);
+	if ((path = colon(host)) != NULL) {
+		*path++ = '\0';		/* break at the ':' */
+		pctx.mountpath = path;
+	} else {
+		pctx.mountpath = ".";
+	}
+
+	host = cleanhostname(host);
+	if (host[0] == '\0') {
+		fprintf(stderr, "Missing hostname\n");
+		usage();
+	}
+
+	add_ssharg(&sshargs, &nargs, host);
 	add_ssharg(&sshargs, &nargs, "sftp");
 	pctx.sshargs = sshargs;
 
