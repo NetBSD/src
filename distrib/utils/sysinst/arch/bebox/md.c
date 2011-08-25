@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.55 2011/04/04 08:30:20 mbalmer Exp $ */
+/*	$NetBSD: md.c,v 1.56 2011/08/25 15:42:33 kiyohara Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -102,12 +102,6 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
-	/* Sector forwarding / badblocks ... */
-	if (*doessf) {
-		printf ("%s", msg_string (MSG_dobad144));
-		return run_program(RUN_DISPLAY, "/usr/sbin/bad144 %s 0",
-		    diskdev);
-	}
 	return 0;
 }
 
@@ -119,11 +113,6 @@ md_post_disklabel(void)
 int
 md_post_newfs(void)
 {
-	/* boot blocks ... */
-	printf (msg_string(MSG_dobootblks), diskdev);
-	run_program(RUN_DISPLAY,
-	    "/usr/mdec/installboot -v /usr/mdec/biosboot.sym /dev/r%sa",
-	    diskdev);
 	return 0;
 }
 
