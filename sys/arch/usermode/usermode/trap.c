@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.4 2011/08/25 14:38:56 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.5 2011/08/25 15:02:54 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.4 2011/08/25 14:38:56 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.5 2011/08/25 15:02:54 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -124,6 +124,9 @@ printf("trap\n");
 		if ((va >= VM_MIN_ADDRESS) && (va <= VM_MAXUSER_ADDRESS)) {
 			kmem = 0;
 			vm_map = &vm->vm_map;
+		}
+		if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_ADDRESS)) {
+			panic("peeing outside the box!");
 		}
 
 		pcb->pcb_onfault = NULL;
