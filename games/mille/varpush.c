@@ -1,4 +1,4 @@
-/*	$NetBSD: varpush.c,v 1.10 2009/05/25 23:34:50 dholland Exp $	*/
+/*	$NetBSD: varpush.c,v 1.11 2011/08/26 09:01:07 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)varpush.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: varpush.c,v 1.10 2009/05/25 23:34:50 dholland Exp $");
+__RCSID("$NetBSD: varpush.c,v 1.11 2011/08/26 09:01:07 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,12 +70,12 @@ varpush(int file, ssize_t (*func)(int, const struct iovec *, int))
 	};
 
 	if (((func)(file, vec, sizeof(vec) / sizeof(vec[0]))) < 0) {
-		error(strerror(errno));
+		error("%s", strerror(errno));
 		return FALSE;
 	}
 	if (func == readv) {
 		if ((read(file, (void *) &temp, sizeof temp)) < 0) {
-			error(strerror(errno));
+			error("%s", strerror(errno));
 			return FALSE;
 		}
 		Topcard = &Deck[temp];
@@ -96,7 +96,7 @@ over:
 	} else {
 		temp = Topcard - Deck;
 		if ((write(file, (void *) &temp, sizeof temp)) < 0) {
-			error(strerror(errno));
+			error("%s", strerror(errno));
 			return FALSE;
 		}
 	}
