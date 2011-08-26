@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.21 2011/05/23 23:01:17 joerg Exp $	*/
+/*	$NetBSD: rogue.h,v 1.22 2011/08/26 06:18:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -466,7 +466,7 @@ void	check_gold_seeker(object *);
 boolean	check_imitator(object *);
 void	check_message(void);
 int	check_up(void);
-void	clean_up(const char *) __attribute__((__noreturn__));
+void	clean_up(const char *) __dead;
 void	clear_level(void);
 void	cnfs(void);
 int	coin_toss(void);
@@ -483,7 +483,7 @@ void	drop(void);
 int	drop_check(void);
 void	eat(void);
 void	edit_opts(void);
-void	error_save(int) __attribute__((__noreturn__));
+void	error_save(int) __dead;
 void	fight(boolean);
 boolean	flame_broil(object *);
 void	free_object(object *);
@@ -526,7 +526,7 @@ boolean	is_direction(short, short *);
 boolean	is_passable(int, int);
 boolean	is_vowel(short);
 void	kick_into_pack(void);
-void	killed_by(const object *, short) __attribute__((__noreturn__));
+void	killed_by(const object *, short) __dead;
 long	lget_number(const char *);
 void	light_passage(int, int);
 void	light_up_room(int);
@@ -534,7 +534,7 @@ boolean	m_confuse(object *);
 void	make_level(void);
 void	make_scroll_titles(void);
 boolean	md_df(const char *);
-void	md_exit(int) __attribute__((__noreturn__));
+void	md_exit(int) __dead;
 void	md_gct(struct rogue_time *);
 int	md_get_file_id(const char *);
 void	md_gfmt(const char *, struct rogue_time *);
@@ -547,8 +547,7 @@ void	md_shell(const char *);
 void	md_sleep(int);
 void	md_slurp(void);
 /*void	message(const char *, boolean);*/
-void	messagef(boolean, const char *, ...)
-		__attribute__((__format__(__printf__, 2, 3)));
+void	messagef(boolean, const char *, ...) __printflike(2, 3);
 void	mix_colors(void);
 int	mon_can_go(const object *, short, short);
 int	mon_damage(object *, short);
@@ -577,7 +576,7 @@ void	put_mons(void);
 void	put_objects(void);
 void	put_on_ring(void);
 void	put_player(short);
-void	put_scores(const object *, short) __attribute__((__noreturn__));
+void	put_scores(const object *, short) __dead;
 void	put_stairs(void);
 void	quaff(void);
 void	quit(boolean);
@@ -631,7 +630,7 @@ void	wake_up(object *);
 void	wanderer(void);
 void	wear(void);
 void	wield(void);
-void	win(void) __attribute__((__noreturn__));
+void	win(void) __dead;
 void	wizardize(void);
 long	xxx(boolean);
 void	xxxx(char *, short);
