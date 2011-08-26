@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.323 2011/08/26 09:29:16 reinoud Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.324 2011/08/26 12:52:01 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.323 2011/08/26 09:29:16 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.324 2011/08/26 12:52:01 jmcneill Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -780,7 +780,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		len += (arc4random() % PAGE_SIZE);
 #endif /* PAX_ASLR */
 
-#ifdef STACKLALIGN	/* arm, etc. */
+#ifdef STACKALIGN	/* arm, etc. */
 	len = STACKALIGN(len);	/* make the stack "safely" aligned */
 #else
 	len = ALIGN(len);	/* make the stack "safely" aligned */
