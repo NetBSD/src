@@ -1,4 +1,4 @@
-.\" $NetBSD: uhso.4,v 1.2 2010/03/06 22:00:22 wiz Exp $
+.\" $NetBSD: uhso.4,v 1.3 2011/08/26 07:56:00 plunky Exp $
 .\"
 .\" Copyright (c) 2009 Iain Hibbert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 6, 2010
+.Dd August 26, 2011
 .Dt UHSO 4
 .Os
 .Sh NAME
@@ -95,8 +95,13 @@ Apart from the Network port, which is attached as a network
 interface, the ports are attached as
 .Xr tty 4
 devices using the port number as the minor device number.
+In order to connect using
+.Xr pppd 8 ,
+the Modem tty should be used
+.Pq eg /dev/ttyHS0.08 .
 .Pp
-Before the Network port can be used, the modem needs to
+The Network port provides a direct IPv4 interface,
+but before this can be used the modem needs to
 be placed in connected mode and network settings subsequently
 retrieved using the proprietary
 .Qq _OWANCALL
