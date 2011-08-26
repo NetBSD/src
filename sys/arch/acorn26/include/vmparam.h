@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10 2010/11/06 15:42:43 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11 2011/08/26 09:10:41 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -82,6 +82,8 @@
 #define	VM_MIN_ADDRESS		((vm_offset_t)0x00008000)
 #define	VM_MAX_ADDRESS		((vm_offset_t)0x02000000 - KVM_SIZE)
 #define	VM_MAXUSER_ADDRESS	VM_MAX_ADDRESS
+
+#define VM_CHECK_MIN_ADDRESS
 
 /* Kernel VM range */
 #define	VM_MIN_KERNEL_ADDRESS	VM_MAX_ADDRESS
