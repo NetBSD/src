@@ -1,4 +1,4 @@
-/*	$NetBSD: back.h,v 1.17 2010/03/22 05:10:19 mrg Exp $	*/
+/*	$NetBSD: back.h,v 1.18 2011/08/26 06:18:16 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -139,14 +139,14 @@ void	clend(void);
 void	cline(void);
 int	count(void);
 void	curmove(int, int);
-void	errexit(const char *) __attribute__((__noreturn__));
+void	errexit(const char *) __dead;
 void	fancyc(int);
 void	fboard(void);
 void	fixtty(struct termios *);
 void	getarg(char ***);
 int	getcaps(const char *);
 void	getmove(void);
-void	getout(int) __attribute__((__noreturn__));
+void	getout(int) __dead;
 void	gwrite(void);
 void	init(void);
 int	main(int, char *[]);

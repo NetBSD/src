@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.h,v 1.18 2011/08/16 11:14:04 christos Exp $	*/
+/*	$NetBSD: mille.h,v 1.19 2011/08/26 06:18:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -237,9 +237,9 @@ void	calcmove(void);
 int	canplay(const PLAY *, const PLAY *, CARD);
 int	check_ext(bool);
 void	check_more(void);
-void	die(int) __attribute__((__noreturn__));
+void	die(int) __dead;
 void	domove(void);
-bool	error(const char *, ...);
+bool	error(const char *, ...) __printflike(1,2);
 void	extrapolate(PLAY *);
 void	finalscore(PLAY *);
 CARD	getcard(void);

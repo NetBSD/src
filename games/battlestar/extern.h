@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.32 2009/08/12 05:20:38 dholland Exp $ */
+/*	$NetBSD: extern.h,v 1.33 2011/08/26 06:18:17 dholland Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -333,8 +333,8 @@ int card(const char *, int);
 void chime(void);
 void crash(void);
 int cypher(void);
-void die(void) __attribute__((__noreturn__));
-void diesig(int) __attribute__((__noreturn__));
+void die(void) __dead;
+void diesig(int) __dead;
 void dig(void);
 void dooropen(void);
 int draw(void);
@@ -353,7 +353,7 @@ void kiss(void);
 int land(void);
 int launch(void);
 void light(void);
-void live(void) __attribute__((__noreturn__));
+void live(void) __dead;
 void love(void);
 int moveplayer(int, int);
 void murder(void);
