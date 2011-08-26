@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1663 2011/08/17 07:22:34 manu Exp $
+#	$NetBSD: mi,v 1.1664 2011/08/26 21:22:08 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2178,6 +2178,8 @@
 ./usr/include/pci.h				comp-c-include
 ./usr/include/perfuse.h				comp-c-include
 ./usr/include/poll.h				comp-c-include
+./usr/include/ppath/ppath.h			comp-c-include
+./usr/include/ppath/ppath_impl.h		comp-c-include
 ./usr/include/prop/plistref.h			comp-c-include
 ./usr/include/prop/prop_array.h			comp-c-include
 ./usr/include/prop/prop_bool.h			comp-c-include
@@ -2966,6 +2968,8 @@
 ./usr/lib/libposix.a				comp-c-lib
 ./usr/lib/libposix_g.a				-unknown-		debuglib
 ./usr/lib/libposix_p.a				comp-c-proflib		profile
+./usr/lib/libppath.a				comp-c-lib
+./usr/lib/libppath_p.a				comp-c-proflib		profile
 ./usr/lib/libprop.a				comp-c-lib
 ./usr/lib/libprop_g.a				-unknown-		debuglib
 ./usr/lib/libprop_p.a				comp-c-proflib		profile
@@ -4345,6 +4349,7 @@
 ./usr/libdata/lint/llib-lpci.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lperfuse.ln		comp-perfuse-lintlib	lint
 ./usr/libdata/lint/llib-lposix.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lppath.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lprop.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpthread.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpthread_dbg.ln		comp-c-lintlib		lint
@@ -8090,6 +8095,50 @@
 ./usr/share/man/cat3/prefresh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/printf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/printw.0			comp-c-catman		.cat
+./usr/share/man/cat3/ppath.0			comp-c-catman		.cat
+./usr/share/man/cat3/ppath_bool.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_component_at.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_component_idx.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_component_key.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_component_release.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_component_retain.0 	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_copy.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_copydel_bool.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_copydel_int64.0	comp-c-catman		.cat 
+./usr/share/man/cat3/ppath_copydel_object.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_copydel_uint64.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_copyset_bool.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_copyset_int64.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_copyset_object.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_copyset_uint64.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_create.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_delete_bool.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_delete_int64.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_delete_object.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_delete_uint64.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_get_bool.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_get_int64.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_get_object.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_get_uint64.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_idx.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_key.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_length.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_lookup.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_number.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_object.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_pop.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_push.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_push_idx.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_push_key.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_release.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_replace_idx.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_replace_key.0	comp-c-catman		.cat
+./usr/share/man/cat3/ppath_retain.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_set_bool.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_set_int64.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_set_object.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_set_uint64.0		comp-c-catman		.cat
+./usr/share/man/cat3/ppath_subpath.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_add.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_capacity.0	comp-c-catman		.cat
@@ -14166,6 +14215,50 @@
 ./usr/share/man/html3/prefresh.html		comp-c-htmlman		html
 ./usr/share/man/html3/printf.html		comp-c-htmlman		html
 ./usr/share/man/html3/printw.html		comp-c-htmlman		html
+./usr/share/man/html3/ppath.html		comp-c-htmlman		html
+./usr/share/man/html3/ppath_bool.html		comp-c-htmlman		html
+./usr/share/man/html3/ppath_component_at.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_component_idx.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_component_key.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_component_release.html	comp-c-htmlman	html
+./usr/share/man/html3/ppath_component_retain.html	comp-c-htmlman	html
+./usr/share/man/html3/ppath_copy.html		comp-c-htmlman		html
+./usr/share/man/html3/ppath_copydel_bool.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_copydel_int64.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_copydel_object.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_copydel_uint64.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_copyset_bool.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_copyset_int64.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_copyset_object.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_copyset_uint64.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_create.html		comp-c-htmlman		html
+./usr/share/man/html3/ppath_delete_bool.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_delete_int64.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_delete_object.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_delete_uint64.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_get_bool.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_get_int64.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_get_object.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_get_uint64.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_idx.html		comp-c-htmlman		html
+./usr/share/man/html3/ppath_key.html		comp-c-htmlman		html
+./usr/share/man/html3/ppath_length.html		comp-c-htmlman		html
+./usr/share/man/html3/ppath_lookup.html		comp-c-htmlman		html
+./usr/share/man/html3/ppath_number.html		comp-c-htmlman		html
+./usr/share/man/html3/ppath_object.html		comp-c-htmlman		html
+./usr/share/man/html3/ppath_pop.html		comp-c-htmlman		html
+./usr/share/man/html3/ppath_push.html		comp-c-htmlman		html
+./usr/share/man/html3/ppath_push_idx.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_push_key.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_release.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_replace_idx.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_replace_key.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_retain.html		comp-c-htmlman		html
+./usr/share/man/html3/ppath_set_bool.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_set_int64.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_set_object.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_set_uint64.html	comp-c-htmlman		html
+./usr/share/man/html3/ppath_subpath.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array.html		comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_add.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_capacity.html	comp-c-htmlman		html
@@ -20234,6 +20327,50 @@
 ./usr/share/man/man3/prefresh.3			comp-c-man		.man
 ./usr/share/man/man3/printf.3			comp-c-man		.man
 ./usr/share/man/man3/printw.3			comp-c-man		.man
+./usr/share/man/man3/ppath.3			comp-c-man		.man
+./usr/share/man/man3/ppath_bool.3		comp-c-man		.man
+./usr/share/man/man3/ppath_component_at.3	comp-c-man		.man
+./usr/share/man/man3/ppath_component_idx.3	comp-c-man		.man
+./usr/share/man/man3/ppath_component_key.3	comp-c-man		.man
+./usr/share/man/man3/ppath_component_release.3	comp-c-man		.man
+./usr/share/man/man3/ppath_component_retain.3	comp-c-man		.man
+./usr/share/man/man3/ppath_copy.3		comp-c-man		.man
+./usr/share/man/man3/ppath_copydel_bool.3	comp-c-man		.man
+./usr/share/man/man3/ppath_copydel_int64.3	comp-c-man		.man
+./usr/share/man/man3/ppath_copydel_object.3	comp-c-man		.man
+./usr/share/man/man3/ppath_copydel_uint64.3	comp-c-man		.man
+./usr/share/man/man3/ppath_copyset_bool.3	comp-c-man		.man
+./usr/share/man/man3/ppath_copyset_int64.3	comp-c-man		.man
+./usr/share/man/man3/ppath_copyset_object.3	comp-c-man		.man
+./usr/share/man/man3/ppath_copyset_uint64.3	comp-c-man		.man
+./usr/share/man/man3/ppath_create.3		comp-c-man		.man
+./usr/share/man/man3/ppath_delete_bool.3	comp-c-man		.man
+./usr/share/man/man3/ppath_delete_int64.3	comp-c-man		.man
+./usr/share/man/man3/ppath_delete_object.3	comp-c-man		.man
+./usr/share/man/man3/ppath_delete_uint64.3	comp-c-man		.man
+./usr/share/man/man3/ppath_get_bool.3		comp-c-man		.man
+./usr/share/man/man3/ppath_get_int64.3		comp-c-man		.man
+./usr/share/man/man3/ppath_get_object.3		comp-c-man		.man
+./usr/share/man/man3/ppath_get_uint64.3		comp-c-man		.man
+./usr/share/man/man3/ppath_idx.3		comp-c-man		.man
+./usr/share/man/man3/ppath_key.3		comp-c-man		.man
+./usr/share/man/man3/ppath_length.3		comp-c-man		.man
+./usr/share/man/man3/ppath_lookup.3		comp-c-man		.man
+./usr/share/man/man3/ppath_number.3		comp-c-man		.man
+./usr/share/man/man3/ppath_object.3		comp-c-man		.man
+./usr/share/man/man3/ppath_pop.3		comp-c-man		.man
+./usr/share/man/man3/ppath_push.3		comp-c-man		.man
+./usr/share/man/man3/ppath_push_idx.3		comp-c-man		.man
+./usr/share/man/man3/ppath_push_key.3		comp-c-man		.man
+./usr/share/man/man3/ppath_release.3		comp-c-man		.man
+./usr/share/man/man3/ppath_replace_idx.3	comp-c-man		.man
+./usr/share/man/man3/ppath_replace_key.3	comp-c-man		.man
+./usr/share/man/man3/ppath_retain.3		comp-c-man		.man
+./usr/share/man/man3/ppath_set_bool.3		comp-c-man		.man
+./usr/share/man/man3/ppath_set_int64.3		comp-c-man		.man
+./usr/share/man/man3/ppath_set_object.3		comp-c-man		.man
+./usr/share/man/man3/ppath_set_uint64.3		comp-c-man		.man
+./usr/share/man/man3/ppath_subpath.3		comp-c-man		.man
 ./usr/share/man/man3/prop_array.3		comp-c-man		.man
 ./usr/share/man/man3/prop_array_add.3		comp-c-man		.man
 ./usr/share/man/man3/prop_array_capacity.3	comp-c-man		.man
