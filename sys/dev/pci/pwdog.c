@@ -1,4 +1,4 @@
-/*	$$NetBSD: pwdog.c,v 1.3 2011/08/26 10:30:47 mbalmer Exp $ */
+/*	$$NetBSD: pwdog.c,v 1.4 2011/08/26 13:29:56 mbalmer Exp $ */
 /*	$OpenBSD: pwdog.c,v 1.7 2010/04/08 00:23:53 tedu Exp $ */
 
 /*
@@ -54,6 +54,7 @@ static int pwdog_match(device_t, cfdata_t, void *);
 static void pwdog_attach(device_t, device_t, void *);
 static int pwdog_detach(device_t, int);
 static bool pwdog_suspend(device_t, const pmf_qual_t *);
+static bool pwdog_resume(device_t, const pmf_qual_t *);
 static int pwdog_setmode(struct sysmon_wdog *);
 static int pwdog_tickle(struct sysmon_wdog *);
 
@@ -96,7 +97,7 @@ pwdog_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	pmf_device_register(self, pwdog_suspend, NULL);
+	pmf_device_register(self, pwdog_suspend, pwdog_resume);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PWDOG_DISABLE, 0);
 
 	sc->sc_smw.smw_name = device_xname(self);
@@ -116,6 +117,7 @@ pwdog_detach(device_t self, int flags)
 {
 	struct pwdog_softc *sc = device_private(self);
 
+	/* XXX check flags & DETACH_FORCE (or DETACH_SHUTDOWN)? */
 	if (sc->sc_smw_valid) {
 		if ((sc->sc_smw.smw_mode & WDOG_MODE_MASK)
 		    != WDOG_MODE_DISARMED)
@@ -130,6 +132,23 @@ pwdog_detach(device_t self, int flags)
 	if (sc->sc_iosize)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 	return 0;
+}
+
+static bool
+pwdog_resume(device_t self, const pmf_qual_t *qual)
+{
+	struct pwdog_softc *sc = device_private(self);
+
+	if (sc->sc_smw_valid == false)
+		return true;
+
+	/*
+	 * suspend is inhibited when the watchdog timer was armed,
+	 * so when we end up here, the watchdog is disabled; program the
+	 * hardware accordingly.
+	 */
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PWDOG_DISABLE, 0);
+	return true;
 }
 
 static bool
