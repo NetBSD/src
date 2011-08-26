@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.16 2011/08/06 20:18:26 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.17 2011/08/26 06:18:17 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ void done1(int);
 void done_in_by(struct monst *);
 void done(const char *);
 void clearlocks(void);
-void hang_up(int) __attribute__((__noreturn__));
+void hang_up(int) __dead;
 char *eos(char *);
 void charcat(char *, int);
 void prscore(int, char **);
@@ -208,8 +208,7 @@ void mklev(void);
 /* hack.main.c */
 void glo(int);
 void askname(void);
-void impossible(const char *, ...)
-    __attribute__((__format__(__printf__, 1, 2)));
+void impossible(const char *, ...) __printflike(1, 2);
 void stop_occupation(void);
 
 /* hack.makemon.c */
@@ -312,13 +311,12 @@ int dodip(void);
 
 /* hack.pri.c */
 void swallowed(void);
-void panic(const char *, ...)
-    __attribute__((__format__(__printf__, 1, 2)));
+void panic(const char *, ...) __printflike(1, 2);
 void atl(int, int, int);
 void on_scr(int, int);
 void tmp_at(schar, schar);
 void Tmp_at(schar, schar);
-void setclipped(void) __attribute__((__noreturn__));
+void setclipped(void) __dead;
 void at(xchar, xchar, int);
 void prme(void);
 int doredraw(void);
@@ -423,10 +421,8 @@ void addtopl(const char *);
 void more(void);
 void cmore(const char *);
 void clrlin(void);
-void pline(const char *, ...)
-    __attribute__((__format__(__printf__, 1, 2)));
-void vpline(const char *, va_list)
-    __attribute__((__format__(__printf__, 1, 0)));
+void pline(const char *, ...) __printflike(1, 2);
+void vpline(const char *, va_list) __printflike(1, 0);
 void putsym(int);
 void putstr(const char *);
 
@@ -453,15 +449,14 @@ void drown(void);
 void gettty(void);
 void settty(const char *);
 void setftty(void);
-void error(const char *, ...)
-    __attribute__((__format__(__printf__, 1, 2),__noreturn__));
+void error(const char *, ...) __printflike(1, 2);
 void getlin(char *);
 void getret(void);
 void cgetret(const char *);
 void xwaitforspace(const char *);
 char *parse(void);
 char readchar(void);
-void end_of_input(void) __attribute__((__noreturn__));
+void end_of_input(void) __dead;
 
 /* hack.u_init.c */
 void u_init(void);

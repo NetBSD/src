@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.15 2009/08/12 08:44:45 dholland Exp $	*/
+/*	$NetBSD: score.c,v 1.16 2011/08/26 06:18:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.15 2009/08/12 08:44:45 dholland Exp $");
+__RCSID("$NetBSD: score.c,v 1.16 2011/08/26 06:18:17 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static void center(short, const char *);
 static int get_value(const object *);
 static void id_all(void);
 static void sell_pack(void);
-static void sf_error(void) __attribute__((__noreturn__));
+static void sf_error(void) __dead;
 
 void
 killed_by(const object *monster, short other)
