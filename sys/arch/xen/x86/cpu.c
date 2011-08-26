@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.56.2.7 2011/08/20 19:22:47 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.56.2.8 2011/08/26 13:33:34 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.7 2011/08/20 19:22:47 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.8 2011/08/26 13:33:34 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1253,10 +1253,10 @@ cpu_load_pmap(struct pmap *pmap)
 	int i, s;
 	pd_entry_t *new_pgd;
 	struct cpu_info *ci;
-	paddr_t l3_shadow_pa;
+	paddr_t l4_pd_ma;
 
 	ci = curcpu();
-	l3_shadow_pa = xpmap_ptom_masked(ci->ci_kpm_pdirpa);
+	l4_pd_ma = xpmap_ptom_masked(ci->ci_kpm_pdirpa);
 
 	/*
 	 * Map user space address in kernel space and load
@@ -1269,15 +1269,15 @@ cpu_load_pmap(struct pmap *pmap)
 
 	/* Copy user pmap L4 PDEs (in user addr. range) to per-cpu L4 */
 	for (i = 0; i < PDIR_SLOT_PTE; i++) {
-		xpq_queue_pte_update(l3_shadow_pa + i * sizeof(pd_entry_t), new_pgd[i]);
+		xpq_queue_pte_update(l4_pd_ma + i * sizeof(pd_entry_t), new_pgd[i]);
 	}
 
 	if (__predict_true(pmap != pmap_kernel())) {
-		xen_set_user_pgd(pmap_pdirpa(pmap, 0));
+		xen_set_user_pgd(ci->ci_kpm_pdirpa);
 		ci->ci_xen_current_user_pgd = pmap_pdirpa(pmap, 0);
 	}
 	else {
-		xpq_queue_pt_switch(l3_shadow_pa);
+		xpq_queue_pt_switch(l4_pd_ma);
 		ci->ci_xen_current_user_pgd = 0;
 	}
 	xpq_queue_unlock();
