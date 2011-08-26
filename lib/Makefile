@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.175 2011/08/20 22:23:47 plunky Exp $
+#	$NetBSD: Makefile,v 1.176 2011/08/26 21:22:10 dyoung Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -95,6 +95,7 @@ SUBDIR+=	.WAIT
 SUBDIR+=	libcurses	# depends on libterminfo
 SUBDIR+=	libdm		# depends on libprop
 SUBDIR+=	libedit		# depends on libterminfo
+SUBDIR+=	libppath	# depends on libprop
 SUBDIR+=	libperfuse	# depends on libpuffs
 SUBDIR+=	libquota	# depends on libprop and librpcsvc
 SUBDIR+=	librefuse	# depends on libpuffs

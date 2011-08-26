@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.184 2011/07/26 16:10:16 joerg Exp $
+# $NetBSD: shl.mi,v 1.185 2011/08/26 21:22:09 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -102,6 +102,7 @@
 ./usr/lib/libpci_pic.a				comp-c-piclib
 ./usr/lib/libperfuse_pic.a			comp-perfuse-piclib
 ./usr/lib/libposix_pic.a			comp-c-piclib
+./usr/lib/libppath_pic.a			comp-c-piclib
 ./usr/lib/libprop_pic.a				comp-c-piclib
 ./usr/lib/libpthread_dbg_pic.a			comp-c-piclib
 ./usr/lib/libpthread_pic.a			comp-c-piclib
@@ -310,6 +311,7 @@
 ./usr/libdata/debug/usr/lib/libpci.so.2.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libperfuse.so.0.0.debug	comp-perfuse-debug	debug
 ./usr/libdata/debug/usr/lib/libposix.so.0.1.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libppath.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libprop.so.1.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libpthread.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libpthread_dbg.so.2.0.debug	comp-sys-debug	debug
