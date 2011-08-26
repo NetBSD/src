@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.15 2010/04/04 00:08:49 christos Exp $	*/
+/*	$NetBSD: save.c,v 1.16 2011/08/26 09:01:07 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.15 2010/04/04 00:08:49 christos Exp $");
+__RCSID("$NetBSD: save.c,v 1.16 2011/08/26 09:01:07 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,7 @@ over:
 		return FALSE;
 
 	if ((outfd = creat(buf, 0644)) < 0) {
-		error(strerror(errno));
+		error("%s", strerror(errno));
 		return FALSE;
 	}
 	mvwaddstr(Score, ERR_Y, ERR_X, buf);
