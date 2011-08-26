@@ -1,9 +1,8 @@
-/*	$$NetBSD: pwdog.c,v 1.2 2011/08/20 07:32:34 mbalmer Exp $ */
+/*	$$NetBSD: pwdog.c,v 1.3 2011/08/26 10:30:47 mbalmer Exp $ */
 /*	$OpenBSD: pwdog.c,v 1.7 2010/04/08 00:23:53 tedu Exp $ */
 
 /*
- * Copyright (c) 2011 Marc Balmer <mbalmer@NetBSD.org>
- * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
+ * Copyright (c) 2006, 2011 Marc Balmer <mbalmer@NetBSD.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -55,8 +54,8 @@ static int pwdog_match(device_t, cfdata_t, void *);
 static void pwdog_attach(device_t, device_t, void *);
 static int pwdog_detach(device_t, int);
 static bool pwdog_suspend(device_t, const pmf_qual_t *);
-static int pwdog_setmode(struct sysmon_wdog *smw);
-static int pwdog_tickle(struct sysmon_wdog *smw);
+static int pwdog_setmode(struct sysmon_wdog *);
+static int pwdog_tickle(struct sysmon_wdog *);
 
 CFATTACH_DECL_NEW(
     pwdog,
