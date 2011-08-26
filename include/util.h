@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.56 2011/07/17 20:54:34 joerg Exp $	*/
+/*	$NetBSD: util.h,v 1.57 2011/08/26 01:48:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -99,7 +99,7 @@ int		pw_copyx(int, int, struct passwd *, struct passwd *,
     char *, size_t) __RENAME(__pw_copyx50);
 #endif
 void		pw_edit(int, const char *);
-void		pw_error(const char *, int, int);
+__dead void	pw_error(const char *, int, int);
 void		pw_getconf(char *, size_t, const char *, const char *);
 #ifndef __LIBC12_SOURCE__
 void		pw_getpwconf(char *, size_t, const struct passwd *,
