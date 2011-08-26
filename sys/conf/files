@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1024 2011/08/09 01:42:24 jmcneill Exp $
+#	$NetBSD: files,v 1.1025 2011/08/26 19:07:13 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -77,6 +77,8 @@ defflag	opt_pool.h		POOL_DIAGNOSTIC
 defparam opt_poollog.h		POOL_LOGSIZE
 
 defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
+
+defflag	opt_exec.h		DEBUG_EXEC
 
 defflag	opt_execfmt.h		EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32
 				EXEC_ELF64 EXEC_SCRIPT

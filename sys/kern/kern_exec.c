@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.324 2011/08/26 12:52:01 jmcneill Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.325 2011/08/26 19:07:13 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,8 +59,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.324 2011/08/26 12:52:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.325 2011/08/26 19:07:13 jmcneill Exp $");
 
+#include "opt_exec.h"
 #include "opt_ktrace.h"
 #include "opt_modular.h"
 #include "opt_syscall_debug.h"
