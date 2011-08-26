@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.9 2011/08/14 18:49:17 mbalmer Exp $ */
+/* $NetBSD: gpiosim.c,v 1.10 2011/08/26 15:00:07 mbalmer Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -19,6 +19,7 @@
  */
 
 /* 32 bit wide GPIO simulator  */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -36,7 +37,7 @@
 struct gpiosim_softc {
 	device_t		sc_dev;
 	device_t		sc_gdev;	/* gpio that attaches here */
-	u_int32_t		sc_state;
+	uint32_t		sc_state;
 	struct gpio_chipset_tag	sc_gpio_gc;
 	gpio_pin_t		sc_gpio_pins[GPIOSIM_NPINS];
 
