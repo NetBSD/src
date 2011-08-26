@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.13 2009/08/12 05:17:57 dholland Exp $	*/
+/*	$NetBSD: save.c,v 1.14 2011/08/26 06:18:16 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.13 2009/08/12 05:17:57 dholland Exp $");
+__RCSID("$NetBSD: save.c,v 1.14 2011/08/26 06:18:16 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ static const char type[] = "'.\nType \"backgammon ";
 static const char rec[] = "\" to recover your game.\n\n";
 static const char cantrec[] = "Can't recover file:  ";
 
-static void norec(const char *) __attribute__((__noreturn__));
+static void norec(const char *) __dead;
 
 void
 save(int n)
