@@ -1,4 +1,4 @@
-/*	$NetBSD: inventory.c,v 1.14 2009/08/12 08:44:45 dholland Exp $	*/
+/*	$NetBSD: inventory.c,v 1.15 2011/08/26 06:18:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)inventory.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: inventory.c,v 1.14 2009/08/12 08:44:45 dholland Exp $");
+__RCSID("$NetBSD: inventory.c,v 1.15 2011/08/26 06:18:17 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -470,8 +470,7 @@ struct sbuf {
 
 static void sbuf_init(struct sbuf *s, char *buf, size_t maxlen);
 static void sbuf_addstr(struct sbuf *s, const char *str);
-static void sbuf_addf(struct sbuf *s, const char *fmt, ...)
-	__attribute__((__format__(__printf__, 2, 3)));
+static void sbuf_addf(struct sbuf *s, const char *fmt, ...) __printflike(2,3);
 static void desc_count(struct sbuf *s, int n);
 static void desc_called(struct sbuf *s, const object *);
 

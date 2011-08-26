@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.36 2010/08/06 09:14:40 dholland Exp $ */
+/*	$NetBSD: extern.h,v 1.37 2011/08/26 06:18:18 dholland Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -313,13 +313,13 @@ int boarding(struct ship *, int);
 void unboard(struct ship *, struct ship *, int);
 
 /* pl_1.c */
-void leave(int) __attribute__((__noreturn__));
-void choke(int) __attribute__((__noreturn__));
+void leave(int) __dead;
+void choke(int) __dead;
 void child(int);
 
 /* pl_2.c */
 void newturn(int);
-void play(void) __attribute__((__noreturn__));
+void play(void) __dead;
 
 /* pl_3.c */
 void acceptcombat(void);
@@ -344,10 +344,8 @@ void loadplayer(void);
 /* pl_7.c */
 void initscreen(void);
 void cleanupscreen(void);
-void Signal(const char *, struct ship *, ...)
-	 __attribute__((__format__(__printf__,1,3)));
-void Msg(const char *, ...)
-	 __attribute__((__format__(__printf__,1,2)));
+void Signal(const char *, struct ship *, ...) __printflike(1,3);
+void Msg(const char *, ...) __printflike(1,2);
 int sgetch(const char *, struct ship *, int);
 void sgetstr(const char *, char *, int);
 void centerview(void);
@@ -365,9 +363,8 @@ void pl_main(void);
 /* sync.c */
 void fmtship(char *, size_t, const char *, struct ship *);
 void makesignal(struct ship *, const char *, struct ship *, ...)
-	 __attribute__((__format__(__printf__,2,4)));
-void makemsg(struct ship *, const char *, ...)
-	 __attribute__((__format__(__printf__,2,3)));
+	__printflike(2,4);
+void makemsg(struct ship *, const char *, ...) __printflike(2, 3);
 int sync_exists(int);
 int sync_open(void);
 void sync_close(int);

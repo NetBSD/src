@@ -1,4 +1,4 @@
-/*	$NetBSD: cribbage.h,v 1.15 2009/08/12 05:48:04 dholland Exp $	*/
+/*	$NetBSD: cribbage.h,v 1.16 2011/08/26 06:18:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -56,8 +56,7 @@ extern  BOOLEAN		quiet;			/* if suppress random mess */
 
 extern  char		explan[];		/* string for explanation */
 
-void	 addmsg(const char *, ...)
-    __attribute__((__format__(__printf__, 1, 2)));
+void	 addmsg(const char *, ...) __printflike(1, 2);
 int	 adjust(const CARD [], CARD);
 int	 anymove(const CARD [], int, int);
 void	 bye(void);
@@ -75,15 +74,14 @@ void	 instructions(void);
 int	 is_one(CARD, const CARD [], int);
 void	 makedeck(CARD []);
 void	 makeknown(const CARD [], int);
-void	 msg(const char *, ...)
-    __attribute__((__format__(__printf__, 1, 2)));
+void	 msg(const char *, ...) __printflike(1, 2);
 int	 msgcard(CARD, BOOLEAN);
 int	 number(int, int, const char *);
 int	 pegscore(CARD, const CARD [], int, int);
 int	 plyrhand(const CARD [], const char *);
 void	 prcard(WINDOW *, int, int, CARD, BOOLEAN);
 void	 prhand(const CARD [], int, WINDOW *, BOOLEAN);
-void	 receive_intr(int) __attribute__((__noreturn__));
+void	 receive_intr(int) __dead;
 int	 scorehand(const CARD [], CARD, int, BOOLEAN, BOOLEAN);
 void	 shuffle(CARD []);
 void	 sorthand(CARD [], int);
