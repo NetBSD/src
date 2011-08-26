@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.595 2011/07/26 16:10:15 joerg Exp $
+# $NetBSD: shl.mi,v 1.596 2011/08/26 21:22:08 dyoung Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -49,6 +49,9 @@
 ./lib/libm.so					base-sys-shlib		dynamicroot
 ./lib/libm.so.0					base-sys-shlib		dynamicroot
 ./lib/libm.so.0.10				base-sys-shlib		dynamicroot
+./lib/libppath.so				base-sys-shlib		dynamicroot
+./lib/libppath.so.0				base-sys-shlib		dynamicroot
+./lib/libppath.so.0.0				base-sys-shlib		dynamicroot
 ./lib/libprop.so				base-sys-shlib		dynamicroot
 ./lib/libprop.so.1				base-sys-shlib		dynamicroot
 ./lib/libprop.so.1.1				base-sys-shlib		dynamicroot
@@ -361,6 +364,9 @@
 ./usr/lib/libposix.so				base-sys-shlib
 ./usr/lib/libposix.so.0				base-sys-shlib
 ./usr/lib/libposix.so.0.1			base-sys-shlib
+./usr/lib/libppath.so				base-sys-shlib
+./usr/lib/libppath.so.0				base-sys-shlib
+./usr/lib/libppath.so.0.0			base-sys-shlib
 ./usr/lib/libprop.so				base-sys-shlib
 ./usr/lib/libprop.so.1				base-sys-shlib
 ./usr/lib/libprop.so.1.1			base-sys-shlib

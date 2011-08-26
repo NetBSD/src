@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.948 2011/08/25 15:29:04 dyoung Exp $
+# $NetBSD: mi,v 1.949 2011/08/26 21:22:07 dyoung Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -870,6 +870,7 @@
 ./usr/include/openpgpsdk			base-obsolete		obsolete
 ./usr/include/openssl				base-c-usr
 ./usr/include/pcap				base-c-usr
+./usr/include/ppath				base-c-usr
 ./usr/include/prop				base-c-usr
 ./usr/include/protocols				base-c-usr
 ./usr/include/quota				base-c-usr

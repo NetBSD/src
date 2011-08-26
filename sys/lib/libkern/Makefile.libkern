@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.13 2011/03/24 17:05:44 bouyer Exp $
+#	$NetBSD: Makefile.libkern,v 1.14 2011/08/26 21:22:10 dyoung Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -32,6 +32,7 @@ CPPFLAGS+=	-I$M ${KERNCPPFLAGS} ${KERNMISCCPPFLAGS}
 .include "${.PARSEDIR}/../../../common/lib/libc/Makefile.inc"
 .include "${.PARSEDIR}/../../../common/lib/libutil/Makefile.inc"
 .include "${.PARSEDIR}/../../../common/lib/libprop/Makefile.inc"
+.include "${.PARSEDIR}/../../../common/lib/libppath/Makefile.inc"
 .include "${.PARSEDIR}/../../../common/lib/libquota/Makefile.inc"
 
 CPPFLAGS+=	-I${KERNDIR}/../../../common/include
@@ -63,6 +64,8 @@ SRCS+=	bswap64.c
 .endif
 SRCS+=	md4c.c md5c.c rmd160.c sha1.c sha2.c
 SRCS+=	pmatch.c arc4random.c bcd.c mcount.c mertwist.c crc32.c
+
+SRCS+=	ppath_kmem_alloc.c
 
 SRCS+=	strsep.c strstr.c
 SRCS+=	strlcpy.c strlcat.c
