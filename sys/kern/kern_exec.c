@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.320 2011/08/26 06:56:11 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.321 2011/08/26 09:07:48 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.320 2011/08/26 06:56:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.321 2011/08/26 09:07:48 reinoud Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -377,7 +377,7 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 				error = ENOEXEC;
 				break;
 			}
-#if VM_MIN_ADDRESS > 0
+#ifdef VM_CHECK_MIN_ADDRESS
 			/* Seems ok: check that entry point is not too low */
 			if (epp->ep_entry < VM_MIN_ADDRESS) {
 				aprint_verbose("check_exec: rejecting due to "
