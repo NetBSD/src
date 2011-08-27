@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.59 2011/01/29 02:16:52 christos Exp $ */
+/* $NetBSD: date.c,v 1.60 2011/08/27 12:55:09 joerg Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.59 2011/01/29 02:16:52 christos Exp $");
+__RCSID("$NetBSD: date.c,v 1.60 2011/08/27 12:55:09 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,11 +66,11 @@ __RCSID("$NetBSD: date.c,v 1.59 2011/01/29 02:16:52 christos Exp $");
 static time_t tval;
 static int aflag, jflag, rflag, nflag;
 
-static void badformat(void);
-static void badtime(void);
-static void badvalue(const char *);
+__dead static void badformat(void);
+__dead static void badtime(void);
+__dead static void badvalue(const char *);
 static void setthetime(const char *);
-static void usage(void) __attribute__((__noreturn__));
+__dead static void usage(void);
 
 int
 main(int argc, char *argv[])
