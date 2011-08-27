@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.2 2009/10/21 16:07:00 snj Exp $ */
+/* $NetBSD: syscall.c,v 1.3 2011/08/27 21:17:26 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,21 +27,37 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2 2009/10/21 16:07:00 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3 2011/08/27 21:17:26 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/lwp.h>
+#include <sys/sched.h>
+#include <sys/userret.h>
+#include <machine/pcb.h>
 
 void	syscall(void);
 
 void
 child_return(void *arg)
 {
+printf("child returned! arg %p\n", arg);
+printf("xxx now what? switch to `userland' i.e. new code?\n");
+	lwp_t *l = arg;
+//	struct pcb *pcb = lwp_getpcb(l);
+//	struct trapframe *frame = pcb->pcb_tf;
+
+/* XXX? */
+	//frame->tf_r0 = 0;
+
+	mi_userret(l);
+//	ktrsysret(SYS_fork, 0, 0);
 }
 
 void
 syscall(void)
 {
+printf("syscall called !\n");
 }
