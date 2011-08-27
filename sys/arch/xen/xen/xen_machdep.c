@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.4.12.9 2011/08/24 21:37:05 jym Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.4.12.10 2011/08/27 15:56:48 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.9 2011/08/24 21:37:05 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.10 2011/08/27 15:56:48 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.9 2011/08/24 21:37:05 jym Exp
 #include <sys/pmf.h>
 
 #include <xen/hypervisor.h>
+#include <xen/shutdown_xenbus.h>
 
 #define DPRINTK(x) printk x
 #if 0
@@ -77,7 +78,7 @@ u_int	tsc_get_timecount(struct timecounter *);
 
 uint64_t tsc_freq;	/* XXX */
 
-static int sysctl_xen_sleepstate(SYSCTLFN_ARGS);
+static int sysctl_xen_suspend(SYSCTLFN_ARGS);
 static void xen_suspend_domain(void);
 static void xen_prepare_suspend(void);
 static void xen_prepare_resume(void);
@@ -222,7 +223,7 @@ tsc_get_timecount(struct timecounter *tc)
  * controls domain suspend/save.
  */
 void
-sysctl_xen_sleepstate_setup(void)
+sysctl_xen_suspend_setup(void)
 {
 	const struct sysctlnode *node = NULL;
 
@@ -232,30 +233,30 @@ sysctl_xen_sleepstate_setup(void)
 	 */
 	KASSERT(!(xendomain_is_dom0()));
 
-	sysctl_createv(clog, 0, NULL, &node,
+	sysctl_createv(NULL, 0, NULL, &node,
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "machdep", NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_MACHDEP, CTL_EOL);
 
-	sysctl_createv(clog, 0, &node, &node,
+	sysctl_createv(NULL, 0, &node, &node,
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "xen",
 	    SYSCTL_DESCR("Xen top level node"),
 	    NULL, 0, NULL, 0,
 	    CTL_CREATE, CTL_EOL);
 
-	sysctl_createv(clog, 0, &node, &node,
+	sysctl_createv(NULL, 0, &node, &node,
 	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "suspend",
-	    SYSCTL_DESCR("Suspend/save control of current Xen domain"),
-	    NULL, sysctl_xen_sleepstate, 0, NULL, 0,
+	    SYSCTL_DESCR("Suspend/save current Xen domain"),
+	    sysctl_xen_suspend, 0, NULL, 0,
 	    CTL_CREATE, CTL_EOL);
 }
 
 static int
-sysctl_xen_sleepstate(SYSCTLFN_ARGS) {
-
+sysctl_xen_suspend(SYSCTLFN_ARGS)
+{
 	int error, t;
 	struct sysctlnode node;
 
@@ -265,6 +266,10 @@ sysctl_xen_sleepstate(SYSCTLFN_ARGS) {
 
 	if (error || newp == NULL)
 		return error;
+
+	/* only allow domain to suspend when dom0 instructed to do so */
+	if (xen_suspend_allow == false)
+		return EAGAIN;
 
 	xen_suspend_domain();
 
@@ -276,8 +281,8 @@ sysctl_xen_sleepstate(SYSCTLFN_ARGS) {
  * Last operations before suspending domain
  */
 static void
-xen_prepare_suspend(void) {
-
+xen_prepare_suspend(void)
+{
 	kpreempt_disable();
 
 	/*
@@ -315,8 +320,8 @@ xen_prepare_suspend(void) {
  * First operations before restoring domain context
  */
 static void
-xen_prepare_resume(void) {
-
+xen_prepare_resume(void)
+{
 	/* map the new shared_info page */
 	if (HYPERVISOR_update_va_mapping((vaddr_t)HYPERVISOR_shared_info,
 	    xen_start_info.shared_info | PG_RW | PG_V,
@@ -341,6 +346,8 @@ xen_prepare_resume(void) {
 	DPRINTK(("preparing domain resume\n"));
 	aprint_verbose("preparing domain resume\n");
 
+	xen_suspend_allow = false;
+
 	xen_resumeclocks();
 
 	kpreempt_enable();
@@ -348,8 +355,8 @@ xen_prepare_resume(void) {
 }
 
 static void
-xen_suspend_domain(void) {
-
+xen_suspend_domain(void)
+{
 	paddr_t mfn;
 	int s = splvm();
 
