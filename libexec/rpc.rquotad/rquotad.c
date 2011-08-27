@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.27 2011/03/24 17:05:43 bouyer Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.28 2011/08/27 15:46:59 joerg Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.27 2011/03/24 17:05:43 bouyer Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.28 2011/08/27 15:46:59 joerg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -35,13 +35,12 @@ __RCSID("$NetBSD: rquotad.c,v 1.27 2011/03/24 17:05:43 bouyer Exp $");
 #include <rpcsvc/rquota.h>
 #include <arpa/inet.h>
 
-void rquota_service(struct svc_req *request, SVCXPRT *transp);
-void ext_rquota_service(struct svc_req *request, SVCXPRT *transp);
-void sendquota(struct svc_req *request, int vers, SVCXPRT *transp);
-void cleanup(int);
-int main(int, char *[]);
+static void rquota_service(struct svc_req *request, SVCXPRT *transp);
+static void ext_rquota_service(struct svc_req *request, SVCXPRT *transp);
+static void sendquota(struct svc_req *request, int vers, SVCXPRT *transp);
+__dead static void cleanup(int);
 
-int from_inetd = 1;
+static int from_inetd = 1;
 
 static uint32_t
 qlim2rqlim(uint64_t lim)
@@ -52,7 +51,7 @@ qlim2rqlim(uint64_t lim)
 		return (lim + 1);
 }
 
-void 
+static void 
 cleanup(int dummy)
 {
 
@@ -122,7 +121,7 @@ main(int argc, char *argv[])
 	exit(1);
 }
 
-void 
+static void
 rquota_service(struct svc_req *request, SVCXPRT *transp)
 {
 	switch (request->rq_proc) {
@@ -143,7 +142,7 @@ rquota_service(struct svc_req *request, SVCXPRT *transp)
 		exit(0);
 }
 
-void 
+static void
 ext_rquota_service(struct svc_req *request, SVCXPRT *transp)
 {
 	switch (request->rq_proc) {
@@ -165,7 +164,7 @@ ext_rquota_service(struct svc_req *request, SVCXPRT *transp)
 }
 
 /* read quota for the specified id, and send it */
-void 
+static void
 sendquota(struct svc_req *request, int vers, SVCXPRT *transp)
 {
 	struct getquota_args getq_args;
