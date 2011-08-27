@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/recover.c,v 1.8 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: recover.c,v 1.3 2007/12/18 21:46:47 riz Exp $");
+__RCSID("$NetBSD: recover.c,v 1.4 2011/08/27 17:38:16 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -48,7 +48,7 @@ static int recoverable;
 
 const char recovermsg[] = "recover device ...";
 
-static void
+__dead static void
 usage_recover(void)
 {
 

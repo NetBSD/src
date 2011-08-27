@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.7 2009/03/12 22:59:03 dyoung Exp $");
+__RCSID("$NetBSD: label.c,v 1.8 2011/08/27 17:38:16 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -54,7 +54,7 @@ const char labelmsg1[] = "label -a <-l label | -f file> device ...";
 const char labelmsg2[] = "label [-b lba] [-i index] [-s lba]";
 const char labelmsg3[] = "      [-t uuid] <-l label | -f file> device ...";
 
-static void
+__dead static void
 usage_label(void)
 {
 	fprintf(stderr,
