@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.18 2011/08/27 21:15:07 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.19 2011/08/27 21:43:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_cpu.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18 2011/08/27 21:15:07 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2011/08/27 21:43:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -49,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18 2011/08/27 21:15:07 reinoud Exp $");
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
-
-#define CPU_DEBUG
 
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);
