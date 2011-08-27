@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.247 2011/08/24 16:01:53 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.248 2011/08/27 16:54:14 bouyer Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.247 2011/08/24 16:01:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.248 2011/08/27 16:54:14 bouyer Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -1358,6 +1358,7 @@ mips3_tlb_probe(void)
 	opts->mips3_tlb_pg_mask = mips3_cp0_tlb_page_mask_probe();
 	if (CPUIS64BITS) {
 		opts->mips3_tlb_vpn_mask = mips3_cp0_tlb_entry_hi_probe();
+		opts->mips3_tlb_vpn_mask |= PAGE_MASK;
 		opts->mips3_tlb_vpn_mask <<= 2;
 		opts->mips3_tlb_vpn_mask >>= 2;
 		opts->mips3_tlb_pfn_mask = mips3_cp0_tlb_entry_lo_probe();
