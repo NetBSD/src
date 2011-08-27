@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.97 2011/08/21 06:39:09 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.98 2011/08/27 18:40:18 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.97 2011/08/21 06:39:09 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.98 2011/08/27 18:40:18 joerg Exp $");
 #endif
 
 #include <stdio.h>
@@ -128,8 +128,8 @@ __RCSID("$NetBSD: ping.c,v 1.97 2011/08/21 06:39:09 christos Exp $");
  *	for duplicates.
  */
 #define MAX_DUP_CHK     (8 * 2048)
-u_char	rcvd_tbl[MAX_DUP_CHK/8];
-int     nrepeats = 0;
+static u_char	rcvd_tbl[MAX_DUP_CHK/8];
+static int     nrepeats = 0;
 #define A(seq)	rcvd_tbl[(seq/8)%sizeof(rcvd_tbl)]  /* byte in array */
 #define B(seq)	(1 << (seq & 0x07))	/* bit in byte */
 #define SET(seq) (A(seq) |= B(seq))
@@ -142,20 +142,20 @@ struct tv32 {
 };
 
 
-u_char	*packet;
-int	packlen;
-int	pingflags = 0, options;
-int	pongflags = 0;
-char	*fill_pat;
+static u_char	*packet;
+static int	packlen;
+static int	pingflags = 0, options;
+static int	pongflags = 0;
+static char	*fill_pat;
 
-int s;					/* Socket file descriptor */
-int sloop;				/* Socket file descriptor/loopback */
+static int s;					/* Socket file descriptor */
+static int sloop;				/* Socket file descriptor/loopback */
 
 #define PHDR_LEN sizeof(struct tv32)	/* size of timestamp header */
-struct sockaddr_in whereto, send_addr;	/* Who to ping */
-struct sockaddr_in src_addr;		/* from where */
-struct sockaddr_in loc_addr;		/* 127.1 */
-int datalen = 64 - PHDR_LEN;		/* How much data */
+static struct sockaddr_in whereto, send_addr;	/* Who to ping */
+static struct sockaddr_in src_addr;		/* from where */
+static struct sockaddr_in loc_addr;		/* 127.1 */
+static int datalen = 64 - PHDR_LEN;		/* How much data */
 
 #ifndef __NetBSD__
 static char *progname;
@@ -163,7 +163,7 @@ static char *progname;
 #define	setprogname(name)	((void)(progname = (name)))
 #endif
 
-char hostname[MAXHOSTNAMELEN];
+static char hostname[MAXHOSTNAMELEN];
 
 static struct {
 	struct ip	o_ip;
@@ -174,40 +174,39 @@ static struct {
 	} o_u;
 } out_pack;
 #define	opack_icmp	out_pack.o_u.u_icmp
-struct ip *opack_ip;
+static struct ip *opack_ip;
 
-char optspace[MAX_IPOPTLEN];		/* record route space */
-int optlen;
+static char optspace[MAX_IPOPTLEN];		/* record route space */
+static int optlen;
 
+static int npackets;				/* total packets to send */
+static int preload;				/* number of packets to "preload" */
+static int ntransmitted;			/* output sequence # = #sent */
+static int ident;				/* our ID, in network byte order */
 
-int npackets;				/* total packets to send */
-int preload;				/* number of packets to "preload" */
-int ntransmitted;			/* output sequence # = #sent */
-int ident;				/* our ID, in network byte order */
+static int nreceived;				/* # of packets we got back */
 
-int nreceived;				/* # of packets we got back */
+static double interval;			/* interval between packets */
+static struct timeval interval_tv;
+static double tmin = 999999999.0;
+static double tmax = 0.0;
+static double tsum = 0.0;			/* sum of all times */
+static double tsumsq = 0.0;
+static double maxwait = 0.0;
 
-double interval;			/* interval between packets */
-struct timeval interval_tv;
-double tmin = 999999999.0;
-double tmax = 0.0;
-double tsum = 0.0;			/* sum of all times */
-double tsumsq = 0.0;
-double maxwait = 0.0;
+static int bufspace = IP_MAXPACKET;
 
-int bufspace = IP_MAXPACKET;
-
-struct timeval now, clear_cache, last_tx, next_tx, first_tx;
-struct timeval last_rx, first_rx;
-int lastrcvd = 1;			/* last ping sent has been received */
+static struct timeval now, clear_cache, last_tx, next_tx, first_tx;
+static struct timeval last_rx, first_rx;
+static int lastrcvd = 1;			/* last ping sent has been received */
 
 static struct timeval jiggle_time;
 static int jiggle_cnt, total_jiggled, jiggle_direction = -1;
 
-static void doit(void);
+__dead static void doit(void);
 static void prefinish(int);
 static void prtsig(int);
-static void finish(int);
+__dead static void finish(int);
 static void summary(int);
 static void pinger(void);
 static void fill(void);
@@ -226,7 +225,7 @@ static int pr_icmph(struct icmp *, struct sockaddr_in *, int);
 static void jiggle(int), jiggle_flush(int);
 static void gethost(const char *, const char *,
 		    struct sockaddr_in *, char *, int);
-static void usage(void);
+__dead static void usage(void);
 
 int
 main(int argc, char *argv[])
