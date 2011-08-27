@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.50 2011/01/04 23:31:29 wiz Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.51 2011/08/27 16:29:51 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996, 1997\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.50 2011/01/04 23:31:29 wiz Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.51 2011/08/27 16:29:51 joerg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -68,7 +68,7 @@ static	const char *ccdconf = _PATH_CCDCONF;
 static	char *core;
 static	char *kernel;
 
-struct	flagval {
+static struct	flagval {
 	const char *fv_flag;
 	int	fv_val;
 } flagvaltab[] = {
@@ -102,7 +102,7 @@ static	int flags_to_val(char *);
 static	int pathtounit(char *, int *);
 static	void print_ccd_info(struct ccd_softc *, kvm_t *);
 static	char *resolve_ccdname(char *);
-static	void usage(void);
+__dead static	void usage(void);
 
 int
 main(int argc, char *argv[])
