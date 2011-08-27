@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.56 2011/04/04 18:24:56 ahoka Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.57 2011/08/27 19:25:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.56 2011/04/04 18:24:56 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.57 2011/08/27 19:25:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.56 2011/04/04 18:24:56 ahoka Ex
 #include <sys/ktrace.h>
 #include <sys/kmem.h>
 #include <sys/envsys.h>
+#include <sys/wdog.h>
 
 #ifdef __sparc__
 #include <dev/sun/fbio.h>
@@ -279,6 +280,14 @@ netbsd32_to_u_long(netbsd32_u_long *s32p, u_long *p, u_long cmd)
 	*p = (u_long)*s32p;
 }
 
+static inline void
+netbsd32_to_wdog_conf(struct netbsd32_wdog_conf *s32p, struct wdog_conf *p, u_long cmd)
+{
+
+	p->wc_names = (char *)NETBSD32PTR64(s32p->wc_names);
+	p->wc_count = s32p->wc_count;
+}
+
 /*
  * handle ioctl conversions from 64-bit kernel -> netbsd32
  */
@@ -433,6 +442,14 @@ netbsd32_from_plistref(struct plistref *p, struct netbsd32_plistref *s32p, u_lon
 
 	NETBSD32PTR32(s32p->pref_plist, p->pref_plist);
 	s32p->pref_len = p->pref_len;
+}
+
+static inline void
+netbsd32_from_wdog_conf(struct wdog_conf *p, struct netbsd32_wdog_conf *s32p, u_long cmd)
+{
+
+	NETBSD32PTR32(s32p->wc_names, p->wc_names);
+	s32p->wc_count = p->wc_count;
 }
 
 static inline void
@@ -742,6 +759,9 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 		IOCTL_STRUCT_CONV_TO(ENVSYS_SETDICTIONARY, plistref);
 	case ENVSYS_REMOVEPROPS32:
 		IOCTL_STRUCT_CONV_TO(ENVSYS_REMOVEPROPS, plistref);
+
+	case WDOGIOC_GWDOGS32:
+		IOCTL_STRUCT_CONV_TO(WDOGIOC_GWDOGS, wdog_conf);
 
 	default:
 #ifdef NETBSD32_MD_IOCTL
