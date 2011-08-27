@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.49 2010/02/24 13:56:07 hannken Exp $	*/
+/*	$NetBSD: fsck.c,v 1.50 2011/08/27 17:34:44 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.49 2010/02/24 13:56:07 hannken Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.50 2011/08/27 17:34:44 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,7 +89,7 @@ static void maketypelist(char *);
 static void catopt(char **, const char *);
 static void mangle(char *, int *, const char ** volatile *, int *);
 static const char *getfslab(const char *);
-static void usage(void);
+__dead static void usage(void);
 static void *isok(struct fstab *);
 
 int
