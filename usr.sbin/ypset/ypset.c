@@ -1,4 +1,4 @@
-/*	$NetBSD: ypset.c,v 1.16 2004/09/07 13:20:41 jrf Exp $	*/
+/*	$NetBSD: ypset.c,v 1.17 2011/08/27 22:41:35 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypset.c,v 1.16 2004/09/07 13:20:41 jrf Exp $");
+__RCSID("$NetBSD: ypset.c,v 1.17 2011/08/27 22:41:35 joerg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -47,15 +47,12 @@ __RCSID("$NetBSD: ypset.c,v 1.16 2004/09/07 13:20:41 jrf Exp $");
 #include <rpcsvc/ypclnt.h>
 #include <arpa/inet.h>
 
-int	main __P((int, char *[]));
-static void usage __P((void));
-static void gethostaddr __P((const char *, struct in_addr *));
-static int bind_tohost __P((struct sockaddr_in *, char *, char *));
+__dead static void usage(void);
+static void gethostaddr(const char *, struct in_addr *);
+static int bind_tohost(struct sockaddr_in *, char *, char *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct sockaddr_in sin;
 	char *domainname;
@@ -95,9 +92,7 @@ main(argc, argv)
 }
 
 static void
-gethostaddr(host, ia)
-	const char *host;
-	struct in_addr *ia;
+gethostaddr(const char *host, struct in_addr *ia)
 {
 	struct hostent *hp;
 
@@ -112,9 +107,7 @@ gethostaddr(host, ia)
 }
 
 static int
-bind_tohost(sin, dom, server)
-	struct sockaddr_in *sin;
-	char *dom, *server;
+bind_tohost(struct sockaddr_in *sin, char *dom, char *server)
 {
 	struct ypbind_setdom ypsd;
 	struct timeval tv;
@@ -158,7 +151,7 @@ bind_tohost(sin, dom, server)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void) fprintf(stderr, "usage: %s [-h host ] [-d domain] server\n",
 	    getprogname());
