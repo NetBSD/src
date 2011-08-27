@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.16 2011/08/24 19:55:35 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.17 2011/08/27 20:49:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2011/08/24 19:55:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17 2011/08/27 20:49:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -156,9 +156,13 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	struct cpu_info *ci = curcpu();
 
 #ifdef CPU_DEBUG
-	printf("cpu_switchto [%s] -> [%s]\n",
+	printf("cpu_switchto [%s,pid=%d,lid=%d] -> [%s,pid=%d,lid=%d]\n",
 	    oldlwp ? oldlwp->l_name : "none",
-	    newlwp ? newlwp->l_name : "none");
+	    oldlwp ? oldlwp->l_proc->p_pid : -1,
+	    oldlwp ? oldlwp->l_lid : -1,
+	    newlwp ? newlwp->l_name : "none",
+	    newlwp ? newlwp->l_proc->p_pid : -1,
+	    newlwp ? newlwp->l_lid : -1);
 	if (oldpcb) {
 		printf("    oldpcb uc_link=%p, uc_stack.ss_sp=%p, "
 		    "uc_stack.ss_size=%d\n",
@@ -202,9 +206,6 @@ cpu_dumpconf(void)
 void
 cpu_signotify(struct lwp *l)
 {
-#ifdef CPU_DEBUG
-	printf("cpu_signotify\n");
-#endif
 }
 
 void
