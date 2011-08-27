@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.265 2011/04/26 08:22:17 he Exp $
+#	$NetBSD: bsd.prog.mk,v 1.266 2011/08/27 18:35:20 joerg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -475,6 +475,7 @@ LINKSMODE?= ${BINMODE}
 .include <bsd.links.mk>
 .include <bsd.sys.mk>
 .include <bsd.dep.mk>
+.include <bsd.clang-analyze.mk>
 
 cleanextra: .PHONY
 .if defined(CLEANFILES) && !empty(CLEANFILES)

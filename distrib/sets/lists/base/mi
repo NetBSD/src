@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.949 2011/08/26 21:22:07 dyoung Exp $
+# $NetBSD: mi,v 1.950 2011/08/27 18:35:19 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3739,6 +3739,7 @@
 ./usr/share/misc/vgrindefs.db			base-groff-share	share
 ./usr/share/mk					base-util-share
 ./usr/share/mk/bsd.README			base-mk-share		share
+./usr/share/mk/bsd.clang-analyze.mk		base-mk-share		share
 ./usr/share/mk/bsd.crypto.mk			base-obsolete		obsolete
 ./usr/share/mk/bsd.dep.mk			base-mk-share		share
 ./usr/share/mk/bsd.depall.mk			base-obsolete		obsolete
