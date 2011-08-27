@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.14 2011/04/10 09:49:13 blymn Exp $
+# $NetBSD: Makefile,v 1.15 2011/08/27 18:55:51 dyoung Exp $
 
 .include <bsd.own.mk>
 
 TESTS_SUBDIRS=	csu libbluetooth libc libcurses libevent libm \
-		libobjc libposix libprop libpthread \
+		libobjc libposix libppath libprop libpthread \
 		librt librumpclient librumphijack libutil semaphore
 
 .if ${MKCRYPTO} != "no"

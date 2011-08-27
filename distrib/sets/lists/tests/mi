@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.377 2011/08/25 15:34:05 dyoung Exp $
+# $NetBSD: mi,v 1.378 2011/08/27 18:55:52 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -558,6 +558,8 @@
 ./usr/libdata/debug/usr/tests/lib/libposix/posix1/t_rename.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libposix/posix2			tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libposix/posix2/t_rename.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libppath				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libppath/t_ppath.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libprop				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libprop/t_basic.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread				tests-lib-debug
@@ -2261,6 +2263,9 @@
 ./usr/tests/lib/libposix/posix2			tests-lib-tests		atf
 ./usr/tests/lib/libposix/posix2/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libposix/posix2/t_rename	tests-lib-tests		atf
+./usr/tests/lib/libppath			tests-lib-tests		atf
+./usr/tests/lib/libppath/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libppath/t_ppath		tests-lib-tests		atf
 ./usr/tests/lib/libprop				tests-lib-tests		atf
 ./usr/tests/lib/libprop/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/libprop/t_basic			tests-lib-tests		atf
