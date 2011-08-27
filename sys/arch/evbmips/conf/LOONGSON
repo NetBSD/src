@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.1 2011/08/27 13:42:44 bouyer Exp $
+# $NetBSD: LOONGSON,v 1.2 2011/08/27 17:05:57 bouyer Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.1 $"
+#ident 		"GDIUM-$Revision: 1.2 $"
 
 maxusers	16
 
@@ -179,6 +179,7 @@ com1		at isa? port 0x3f8 irq 4	# Fuloong 2F only (IR port)
 
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
+options  	WDC_NO_IDS #workaround CS5536+JMH330 interrupt disable bug
 
 # ATA (IDE) bus support
 atabus* at ata?
