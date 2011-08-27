@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.6 2010/12/23 14:58:13 mlelstv Exp $      */
+/*        $NetBSD: dm_table.c,v 1.7 2011/08/27 17:10:05 ahoka Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -176,8 +176,8 @@ dm_table_destroy(dm_table_head_t * head, uint8_t table_id)
 /*
  * Return length of active table in device.
  */
-uint64_t
-dm_table_size(dm_table_head_t * head)
+static inline uint64_t
+dm_table_size_impl(dm_table_head_t * head, int table)
 {
 	dm_table_t *tbl;
 	dm_table_entry_t *table_en;
@@ -186,7 +186,7 @@ dm_table_size(dm_table_head_t * head)
 
 	length = 0;
 
-	id = dm_table_busy(head, DM_TABLE_ACTIVE);
+	id = dm_table_busy(head, table);
 
 	/* Select active table */
 	tbl = &head->tables[id];
@@ -202,6 +202,25 @@ dm_table_size(dm_table_head_t * head)
 
 	return length;
 }
+
+/*
+ * Return length of active table in device.
+ */
+uint64_t
+dm_table_size(dm_table_head_t * head)
+{
+	return dm_table_size_impl(head, DM_TABLE_ACTIVE);
+}
+
+/*
+ * Return length of active table in device.
+ */
+uint64_t
+dm_inactive_table_size(dm_table_head_t * head)
+{
+	return dm_table_size_impl(head, DM_TABLE_INACTIVE);
+}
+
 /*
  * Return combined disk geometry
  */
