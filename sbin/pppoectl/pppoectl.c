@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.22 2011/07/01 02:51:52 joerg Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.23 2011/08/27 18:44:44 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.22 2011/07/01 02:51:52 joerg Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.23 2011/08/27 18:44:44 joerg Exp $");
 #endif
 
 
@@ -52,30 +52,30 @@ __RCSID("$NetBSD: pppoectl.c,v 1.22 2011/07/01 02:51:52 joerg Exp $");
 #include <sysexits.h>
 #include <unistd.h>
 
-static void usage(void);
-static void print_error(const char *ifname, int error, const char * str);
+__dead static void usage(void);
+__dead static void print_error(const char *ifname, int error, const char * str);
 static void print_vals(const char *ifname, int phase, struct spppauthcfg *sp,
 	int lcp_timeout, time_t idle_timeout, int authfailures, 
 	int max_auth_failures, u_int maxalive, time_t max_noreceive);
-const char *phase_name(int phase);
-const char *proto_name(int proto);
-const char *authflags(int flags);
-static void pppoectl_argument(char *arg);
+static const char *phase_name(int phase);
+static const char *proto_name(int proto);
+static const char *authflags(int flags);
+static static void pppoectl_argument(char *arg);
 
-int hz = 0;
+static int hz = 0;
 
-int set_auth, set_lcp, set_idle_to, set_auth_failure, set_dns,
+static int set_auth, set_lcp, set_idle_to, set_auth_failure, set_dns,
     clear_auth_failure_count, set_keepalive;
-int maxalive = -1;
-int max_noreceive = -1;
-struct spppauthcfg spr;
-struct sppplcpcfg lcp;
-struct spppstatus status;
-struct spppidletimeout timeout;
-struct spppauthfailurestats authfailstats;
-struct spppauthfailuresettings authfailset;
-struct spppdnssettings dnssettings;
-struct spppkeepalivesettings keepalivesettings;
+static int maxalive = -1;
+static int max_noreceive = -1;
+static struct spppauthcfg spr;
+static struct sppplcpcfg lcp;
+static struct spppstatus status;
+static struct spppidletimeout timeout;
+static struct spppauthfailurestats authfailstats;
+static struct spppauthfailuresettings authfailset;
+static struct spppdnssettings dnssettings;
+static struct spppkeepalivesettings keepalivesettings;
 
 int
 main(int argc, char **argv)
@@ -571,7 +571,7 @@ print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeou
 #endif
 }
 
-const char *
+static const char *
 phase_name(int phase)
 {
 	switch (phase) {
@@ -584,7 +584,7 @@ phase_name(int phase)
 	return "illegal";
 }
 
-const char *
+static const char *
 proto_name(int proto)
 {
 	static char buf[12];
@@ -597,7 +597,7 @@ proto_name(int proto)
 	return buf;
 }
 
-const char *
+static const char *
 authflags(int flags)
 {
 	static char buf[32];
