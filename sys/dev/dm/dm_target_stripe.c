@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.14 2011/06/02 17:49:40 haad Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.15 2011/08/27 17:09:09 ahoka Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ dm_target_stripe_modcmd(modcmd_t cmd, void *arg)
 		dmt->deps = &dm_target_stripe_deps;
 		dmt->destroy = &dm_target_stripe_destroy;
 		dmt->upcall = &dm_target_stripe_upcall;
+		dmt->secsize = &dm_target_stripe_secsize;
 
 		r = dm_target_insert(dmt);
 
@@ -156,7 +157,7 @@ dm_target_stripe_init(dm_dev_t * dmv, void **target_config, char *params)
 
 		tlc = kmem_alloc(sizeof(*tlc), KM_NOSLEEP);
 		if ((tlc->pdev = dm_pdev_insert(argv[strpi])) == NULL)
-			return ENOENT; 
+			return ENOENT;
 		tlc->offset = atoi(argv[strpi+1]);
 
 		/* Insert striping device to linked list. */
@@ -281,7 +282,7 @@ dm_target_stripe_sync(dm_table_entry_t * table_en)
 			    &cmd, FREAD|FWRITE, kauth_cred_get())) != 0)
 			return err;
 	}
-	
+
 	return err;
 
 }
@@ -344,7 +345,7 @@ dm_target_stripe_upcall(dm_table_entry_t * table_en, struct buf * bp)
 }
 /*
  * Compute physical block size
- * For a stripe target we chose the maximum sector size of all 
+ * For a stripe target we chose the maximum sector size of all
  * stripe devices. For the supported power-of-2 sizes this is equivalent
  * to the least common multiple.
  */
