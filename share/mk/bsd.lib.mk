@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.314 2011/04/11 23:03:38 joerg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.315 2011/08/27 18:35:20 joerg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -776,5 +776,6 @@ LINKSMODE?= ${LIBMODE}
 .include <bsd.inc.mk>
 .include <bsd.links.mk>
 .include <bsd.dep.mk>
+.include <bsd.clang-analyze.mk>
 
 ${TARGETS}:	# ensure existence
