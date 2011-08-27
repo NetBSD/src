@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: create.c,v 1.4 2011/01/06 17:42:10 jakllsch Exp $");
+__RCSID("$NetBSD: create.c,v 1.5 2011/08/27 17:38:16 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@ static int primary_only;
 
 const char createmsg[] = "create [-fp] device ...";
 
-static void
+__dead static void
 usage_create(void)
 {
 

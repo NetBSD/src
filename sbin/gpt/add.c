@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.10 2011/01/06 17:51:28 riz Exp $");
+__RCSID("$NetBSD: add.c,v 1.11 2011/08/27 17:38:16 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ static unsigned int entry;
 const char addmsg[] = "add [-b lba] [-i index] [-s lba] [-t type] "
 	"device ...";
 
-static void
+__dead static void
 usage_add(void)
 {
 

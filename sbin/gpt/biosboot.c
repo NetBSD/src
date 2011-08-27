@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.4 2011/08/17 12:27:50 martin Exp $ */
+/*	$NetBSD: biosboot.c,v 1.5 2011/08/27 17:38:16 joerg Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc. 
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.4 2011/08/17 12:27:50 martin Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.5 2011/08/27 17:38:16 joerg Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -68,7 +68,7 @@ static unsigned int entry;
 
 const char biosbootmsg[] = "biosboot [-c bootcode] [-i index] device ...";
 
-static void
+__dead static void
 usage_biosboot(void)
 {
 	fprintf(stderr, "usage: %s %s\n", getprogname(), biosbootmsg);
