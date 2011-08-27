@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.37 2011/08/26 11:16:50 jmcneill Exp $ */
+/* $NetBSD: pmap.c,v 1.38 2011/08/27 17:59:24 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2011/08/26 11:16:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2011/08/27 17:59:24 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -638,7 +638,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 void
 pmap_remove_all(pmap_t pmap)
 {
-aprint_debug("pmap_remove_all not implemented\n");
+aprint_debug("pmap_remove_all() called\n");
 }
 
 void
@@ -665,7 +665,8 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	if (pv == NULL)
 		return false;
 
-	*pap = ptoa(pv->pv_ppn);
+	if (pap)
+		*pap = ptoa(pv->pv_ppn);
 	return true;
 }
 
