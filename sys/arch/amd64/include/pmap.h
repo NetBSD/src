@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25 2011/08/13 12:09:38 cherry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26 2011/08/27 16:23:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -177,6 +177,7 @@
  */
 
 #define PTE_BASE  ((pt_entry_t *) (L4_SLOT_PTE * NBPD_L4))
+#define KERN_BASE  ((pt_entry_t *) (L4_SLOT_KERN * NBPD_L4))
 #define APTE_BASE ((pt_entry_t *) (VA_SIGN_NEG((L4_SLOT_APTE * NBPD_L4))))
 
 #define L1_BASE		PTE_BASE
