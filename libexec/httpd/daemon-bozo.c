@@ -1,4 +1,4 @@
-/*	$NetBSD: daemon-bozo.c,v 1.13 2011/03/29 07:22:31 jmmv Exp $	*/
+/*	$NetBSD: daemon-bozo.c,v 1.14 2011/08/27 15:33:59 joerg Exp $	*/
 
 /*	$eterna: daemon-bozo.c,v 1.22 2010/06/21 06:45:45 mrg Exp $	*/
 
@@ -77,7 +77,7 @@ sigchild(int signo)
 /* Signal handler to exit in a controlled manner.  This ensures that
  * any atexit(3) handlers are properly executed. */
 /* ARGSUSED */
-static void
+BOZO_DEAD static void
 controlled_exit(int signo)
 {
 
