@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.16.8.2 2011/05/02 22:49:56 jym Exp $ */
+/* $NetBSD: piixpcib.c,v 1.16.8.3 2011/08/27 15:37:26 jym Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -36,14 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.16.8.2 2011/05/02 22:49:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.16.8.3 2011/08/27 15:37:26 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/sysctl.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <machine/frame.h>
 #include <machine/bioscall.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.659.2.7 2011/05/02 22:49:55 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.659.2.8 2011/08/27 15:37:25 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,10 +67,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.659.2.7 2011/05/02 22:49:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.659.2.8 2011/08/27 15:37:25 jym Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
+#include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
 #include "opt_cpureset_delay.h"
@@ -90,7 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.659.2.7 2011/05/02 22:49:55 jym Exp $"
 #include "isa.h"
 #include "pci.h"
 
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
@@ -98,9 +98,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.659.2.7 2011/05/02 22:49:55 jym Exp $"
 #include <sys/kernel.h>
 #include <sys/cpu.h>
 #include <sys/exec.h>
+#include <sys/fcntl.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
+#include <sys/kauth.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
@@ -123,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.659.2.7 2011/05/02 22:49:55 jym Exp $"
 #endif
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
@@ -210,7 +212,7 @@ uint32_t arch_i386_xbox_memsize = 0;
 #include "cardbus.h"
 #if NCARDBUS > 0
 /* For rbus_min_start hint. */
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/cardbus/rbus.h>
 #include <machine/rbus_machdep.h>
 #endif
@@ -527,7 +529,7 @@ i386_proc0_tss_ldt_init(void)
 #ifndef XEN
 	lldt(pmap_kernel()->pm_ldt_sel);
 #else
-	HYPERVISOR_fpu_taskswitch();
+	HYPERVISOR_fpu_taskswitch(1);
 	XENPRINTF(("lwp tss sp %p ss %04x/%04x\n",
 	    (void *)pcb->pcb_esp0,
 	    GSEL(GDATA_SEL, SEL_KPL),
@@ -552,11 +554,17 @@ i386_switch_context(lwp_t *l)
 	pcb = lwp_getpcb(l);
 	ci = curcpu();
 	if (ci->ci_fpused) {
-		HYPERVISOR_fpu_taskswitch();
+		HYPERVISOR_fpu_taskswitch(1);
 		ci->ci_fpused = 0;
 	}
 
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
+
+	/* Update TLS segment pointers */
+	update_descriptor(&ci->ci_gdt[GUFS_SEL],
+			  (union descriptor *) &pcb->pcb_fsd);
+	update_descriptor(&ci->ci_gdt[GUGS_SEL], 
+			  (union descriptor *) &pcb->pcb_gsd);
 
 	physop.cmd = PHYSDEVOP_SET_IOPL;
 	physop.u.set_iopl.iopl = pcb->pcb_iopl;
@@ -947,8 +955,8 @@ haltsys:
 	}
 
 #ifdef MULTIPROCESSOR
-	x86_broadcast_ipi(X86_IPI_HALT);
-#endif
+	cpu_broadcast_halt();
+#endif /* MULTIPROCESSOR */
 
 	if (howto & RB_HALT) {
 #if NACPICA > 0
@@ -1121,14 +1129,18 @@ trap_info_t xen_idt[MAX_XEN_IDT];
 int xen_idt_idx;
 #endif
 
-#ifndef XEN
 void cpu_init_idt(void)
 {
+#ifndef XEN
 	struct region_descriptor region;
 	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region);
-}
+#else /* XEN */
+	XENPRINTF(("HYPERVISOR_set_trap_table %p\n", xen_idt));
+	if (HYPERVISOR_set_trap_table(xen_idt))
+		panic("HYPERVISOR_set_trap_table %p failed\n", xen_idt);
 #endif /* !XEN */
+}
 
 void
 initgdt(union descriptor *tgdt)
@@ -1164,7 +1176,30 @@ initgdt(union descriptor *tgdt)
 	lgdt(&region);
 #else /* !XEN */
 	frames[0] = xpmap_ptom((uint32_t)gdt - KERNBASE) >> PAGE_SHIFT;
-	pmap_kenter_pa((vaddr_t)gdt, (uint32_t)gdt - KERNBASE, VM_PROT_READ, 0);
+	{	/*
+		 * Enter the gdt page RO into the kernel map. We can't
+		 * use pmap_kenter_pa() here, because %fs is not
+		 * usable until the gdt is loaded, and %fs is used as
+		 * the base pointer for curcpu() and curlwp(), both of
+		 * which are in the callpath of pmap_kenter_pa().
+		 * So we mash up our own - this is MD code anyway.
+		 *
+		 * XXX: review this once we have finegrained locking
+		 * for xpq.
+		 */
+		pt_entry_t *pte, npte;
+		pt_entry_t pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
+
+		pte = kvtopte((vaddr_t)gdt);
+		npte = pmap_pa2pte((vaddr_t)gdt - KERNBASE);
+		npte |= PG_RO | pg_nx | PG_V;
+
+		xpq_queue_lock();
+		xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
+		xpq_flush_queue();
+		xpq_queue_unlock();
+	}
+
 	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
 	    NGDT));
 	if (HYPERVISOR_set_gdt(frames, NGDT /* XXX is it right ? */))
@@ -1577,10 +1612,7 @@ init386(paddr_t first_avail)
 	xen_idt[xen_idt_idx].address = (uint32_t)&IDTVEC(svr4_fasttrap);
 	xen_idt_idx++;
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
-
-	XENPRINTF(("HYPERVISOR_set_trap_table %p\n", xen_idt));
-	if (HYPERVISOR_set_trap_table(xen_idt))
-		panic("HYPERVISOR_set_trap_table %p failed\n", xen_idt);
+	cpu_init_idt();
 #endif /* XEN */
 
 	init386_ksyms();
@@ -1859,7 +1891,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 				memcpy(
 					&pcb->pcb_savefpu.sv_xmm,
 					&mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
-					sizeof (&pcb->pcb_savefpu.sv_xmm));
+					sizeof (pcb->pcb_savefpu.sv_xmm));
 			} else {
 				/* This is a weird corner case */
 				process_xmm_to_s87((struct savexmm *)
@@ -1893,4 +1925,35 @@ cpu_initclocks(void)
 {
 
 	(*initclock_func)();
+}
+
+#define	DEV_IO 14		/* iopl for compat_10 */
+
+int
+mm_md_open(dev_t dev, int flag, int mode, struct lwp *l)
+{
+
+	switch (minor(dev)) {
+	case DEV_IO:
+		/*
+		 * This is done by i386_iopl(3) now.
+		 *
+		 * #if defined(COMPAT_10) || defined(COMPAT_FREEBSD)
+		 */
+		if (flag & FWRITE) {
+			struct trapframe *fp;
+			int error;
+
+			error = kauth_authorize_machdep(l->l_cred,
+			    KAUTH_MACHDEP_IOPL, NULL, NULL, NULL, NULL);
+			if (error)
+				return (error);
+			fp = curlwp->l_md.md_regs;
+			fp->tf_eflags |= PSL_IOPL;
+		}
+		break;
+	default:
+		break;
+	}
+	return 0;
 }

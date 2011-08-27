@@ -1,4 +1,4 @@
-/* $NetBSD: ym_pnpbios.c,v 1.14.18.2 2009/11/01 13:58:35 jym Exp $ */
+/* $NetBSD: ym_pnpbios.c,v 1.14.18.3 2011/08/27 15:37:27 jym Exp $ */
 /*
  * Copyright (c) 1999
  *	Matthias Drochner.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.14.18.2 2009/11/01 13:58:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.14.18.3 2011/08/27 15:37:27 jym Exp $");
 
 #include "mpu_ym.h"
 
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.14.18.2 2009/11/01 13:58:35 jym Exp
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.14.18.2 2009/11/01 13:58:35 jym Exp
 int ym_pnpbios_match(device_t, cfdata_t, void *);
 void ym_pnpbios_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ym_pnpbios, sizeof(struct ym_softc),
+CFATTACH_DECL_NEW(ym_pnpbios, sizeof(struct ym_softc),
     ym_pnpbios_match, ym_pnpbios_attach, NULL, NULL);
 
 int
@@ -86,6 +86,8 @@ ym_pnpbios_attach(device_t parent, device_t self,
 	struct ym_softc *sc = device_private(self);
 	struct ad1848_softc *ac = &sc->sc_ad1848.sc_ad1848;
 	struct pnpbiosdev_attach_args *aa = aux;
+
+	ac->sc_dev = self;
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0,
 				&sc->sc_iot, &sc->sc_sb_ioh) != 0) {

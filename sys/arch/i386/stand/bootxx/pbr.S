@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.16.14.2 2011/01/10 00:37:32 jym Exp $	*/
+/*	$NetBSD: pbr.S,v 1.16.14.3 2011/08/27 15:37:27 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -97,8 +97,9 @@
  * sector we were loaded from (if we were loaded by NetBSD mbr code).
  * In any case we have to re-read sector zero of the disk and hunt
  * through the BIOS partition table for the NetBSD partition.
- * However, if there's a magic number in %eax, then %ecx:%ebx
- * contains the sector we were loaded from.
+ *
+ * Or, we may have been loaded by a GPT hybrid MBR, handoff state is
+ * specified in T13 EDD-4 annex A.
  */
 
 	.text
@@ -121,19 +122,16 @@ ENTRY(start)
 
 	. = start + MBR_AFTERBPB	/* skip BPB */
 start0:
+	xor	%cx, %cx		/* don't trust values of ds, es or ss */
+	mov	%cx, %ss
+	mov	%cx, %sp
+	mov	%cx, %es
 #ifndef BOOT_FROM_FAT
-	movl	%eax, %edi		/* move %eax magic out of the way */
-#endif
-	xor	%ax, %ax		/* don't trust values of ds, es or ss */
-	mov	%ax, %ds
-	mov	%ax, %es
-	mov	%ax, %ss
-	mov	$0xfffc, %sp
-
-#ifndef BOOT_FROM_FAT
-	cmpl	$X86_MBR_GPT_MAGIC, %edi /* did mbr_gpt leave us a LBA? */
+	cmpl	$0x54504721, %eax	/* did a GPT hybrid MBR start us? */
 	je	boot_gpt
 #endif
+	mov	%cx, %ds
+	xor	%ax, %ax
 
 	/* A 'reset disk system' request is traditional here... */
 	push	%dx			/* some BIOS zap %dl here :-( */
@@ -141,7 +139,7 @@ start0:
 	pop	%dx
 
 	/* Read from start of disk */
-	movw	$0x0001, %cx		/* track zero sector 1 */
+	incw	%cx			/* track zero sector 1 */
 	movb	%ch, %dh		/* dh = head = 0 */
 	call	chs_read
 
@@ -368,10 +366,12 @@ chs_read:
 
 #ifndef BOOT_FROM_FAT
 boot_gpt:
-	/* 64-bit LBA in %ecx:%ebx */
-	movl	%ebx, lba_sector
-	movl	%ecx, lba_sector + 4
-	movl	%ebx, %ebp
+	movl	(20+32+0)(%si), %ebp
+	movl	(20+32+4)(%si), %edi
+	movw	%cx, %ds
+	movl	%ebp, lba_sector + 0
+	movl	%edi, lba_sector + 4
+	movl	%ebp, %esi
 	jmp	boot_lba
 #endif
 

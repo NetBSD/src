@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.24.2.4 2011/03/28 23:04:54 jym Exp $	*/
+/*	$NetBSD: tsc.c,v 1.24.2.5 2011/08/27 15:37:30 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.24.2.4 2011/03/28 23:04:54 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.24.2.5 2011/08/27 15:37:30 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sigcode.S,v 1.1 2006/02/09 19:18:56 manu Exp $ */
+/*	$NetBSD: linux32_sigcode.S,v 1.1.94.1 2011/08/27 15:37:22 jym Exp $ */
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -13,7 +13,7 @@ NENTRY(linux32_sigcode)
 	 movl    $LINUX32_SYS_exit,%eax
 	 int     $0x80
   
-	.balign 16,,
+	.balign 16
 NENTRY(linux32_rt_sigcode)
 	 call    *LINUX32_RT_SF_HANDLER(%esp)
 	 leal    LINUX32_RT_SF_UC(%esp),%ebx # scp
@@ -22,7 +22,7 @@ NENTRY(linux32_rt_sigcode)
 	 int     $0x80
 	 movl    $LINUX32_SYS_exit,%eax
 	 int     $0x80
-	.balign 16,,
+	.balign 16
 	 .globl  _C_LABEL(linux32_esigcode)
 _C_LABEL(linux32_esigcode): 
 

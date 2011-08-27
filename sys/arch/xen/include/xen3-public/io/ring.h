@@ -1,4 +1,4 @@
-/* $NetBSD: ring.h,v 1.11 2008/08/22 15:28:11 cegger Exp $ */
+/* $NetBSD: ring.h,v 1.11.8.1 2011/08/27 15:37:31 jym Exp $ */
 /******************************************************************************
  * ring.h
  * 
@@ -60,7 +60,7 @@ typedef unsigned int RING_IDX;
  * power of two (so we can mask with (size-1) to loop around).
  */
 #define __RING_SIZE(_s, _sz) \
-    (__RD32(((_sz) - (long)(_s)->ring + (long)(_s)) / sizeof((_s)->ring[0])))
+    (__RD32(((_sz) - offsetof(__typeof__(*(_s)), ring)) / sizeof((_s)->ring[0])))
 
 /*
  * Macros to make the correct C datatypes for a new kind of ring.

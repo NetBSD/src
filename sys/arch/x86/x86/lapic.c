@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.43.2.1 2010/10/24 22:48:19 jym Exp $	*/
+/*	$NetBSD: lapic.c,v 1.43.2.2 2011/08/27 15:37:30 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.43.2.1 2010/10/24 22:48:19 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.43.2.2 2011/08/27 15:37:30 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -144,11 +144,6 @@ lapic_enable(void)
 }
 
 void
-lapic_suspend(void)
-{
-}
-
-void
 lapic_set_lvt(void)
 {
 	struct cpu_info *ci = curcpu();
@@ -226,10 +221,8 @@ lapic_boot_init(paddr_t lapic_base)
 #ifdef MULTIPROCESSOR
 	idt_vec_reserve(LAPIC_IPI_VECTOR);
 	idt_vec_set(LAPIC_IPI_VECTOR, Xintr_lapic_ipi);
-	idt_vec_reserve(LAPIC_TLB_MCAST_VECTOR);
-	idt_vec_set(LAPIC_TLB_MCAST_VECTOR, Xintr_lapic_tlb_mcast);
-	idt_vec_reserve(LAPIC_TLB_BCAST_VECTOR);
-	idt_vec_set(LAPIC_TLB_BCAST_VECTOR, Xintr_lapic_tlb_bcast);
+	idt_vec_reserve(LAPIC_TLB_VECTOR);
+	idt_vec_set(LAPIC_TLB_VECTOR, Xintr_lapic_tlb);
 #endif
 	idt_vec_reserve(LAPIC_SPURIOUS_VECTOR);
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);

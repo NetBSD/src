@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_pnpbios.c,v 1.11 2008/03/07 17:15:51 cube Exp $ */
+/* $NetBSD: lpt_pnpbios.c,v 1.11.18.1 2011/08/27 15:37:26 jym Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_pnpbios.c,v 1.11 2008/03/07 17:15:51 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pnpbios.c,v 1.11.18.1 2011/08/27 15:37:26 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_pnpbios.c,v 1.11 2008/03/07 17:15:51 cube Exp $"
 #include <sys/proc.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

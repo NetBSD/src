@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.31.2.9 2011/05/07 17:39:47 jym Exp $	*/
+/*	$NetBSD: xencons.c,v 1.31.2.10 2011/08/27 15:37:32 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.31.2.9 2011/05/07 17:39:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.31.2.10 2011/08/27 15:37:32 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.31.2.9 2011/05/07 17:39:47 jym Exp $")
 #include <sys/kauth.h>
 #include <sys/kernel.h>
 
-#include <machine/stdarg.h>
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>

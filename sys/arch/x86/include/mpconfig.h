@@ -1,4 +1,4 @@
-/*	$NetBSD: mpconfig.h,v 1.10.18.3 2010/10/24 22:48:16 jym Exp $	*/
+/*	$NetBSD: mpconfig.h,v 1.10.18.4 2011/08/27 15:37:29 jym Exp $	*/
 
 /*
  * Definitions originally from the mpbios code, but now used for ACPI
@@ -11,7 +11,7 @@
 /*
  * XXX
  */
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/pci/pcivar.h>
 #include <machine/pci_machdep.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: xbox.c,v 1.4.14.1 2010/10/24 22:48:06 jym Exp $ */
+/* $NetBSD: xbox.c,v 1.4.14.2 2011/08/27 15:37:29 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,13 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.4.14.1 2010/10/24 22:48:06 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.4.14.2 2011/08/27 15:37:29 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <arch/i386/include/xbox.h>
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.4.2.3 2010/10/24 22:48:22 jym Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.4.2.4 2011/08/27 15:37:32 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.4.2.3 2010/10/24 22:48:22 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.4.2.4 2011/08/27 15:37:32 jym Exp $");
 
 
 #include <sys/types.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.4.2.3 2010/10/24 22:48:22 jym 
  * functions to map a bunch of pages from foreign domains in our kernel VM
  * space, do I/O to it, and unmap it.
  *
- * At boot time, we grap some kernel VM space that we'll use to map the foreign
+ * At boot time, we grab some kernel VM space that we'll use to map the foreign
  * pages. We also maintain a virtual to machine mapping table to give back
  * the appropriate address to bus_dma if requested.
  * If no more VM space is available, we return an error. The caller can then

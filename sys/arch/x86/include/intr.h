@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.35.12.4 2011/05/02 22:49:57 jym Exp $	*/
+/*	$NetBSD: intr.h,v 1.35.12.5 2011/08/27 15:37:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,8 @@ struct intrstub {
 
 struct intrsource {
 	int is_maxlevel;		/* max. IPL for this source */
-	int is_pin;			/* IRQ for legacy; pin for IO APIC */
+	int is_pin;			/* IRQ for legacy; pin for IO APIC,
+					   -1 for MSI */
 	struct intrhand *is_handlers;	/* handler chain */
 	struct pic *is_pic;		/* originating PIC */
 	void *is_recurse;		/* entry for spllower */

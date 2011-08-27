@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.21.4.2 2011/03/29 20:42:57 jym Exp $
+#	$NetBSD: majors.amd64,v 1.21.4.3 2011/08/27 15:37:23 jym Exp $
 #
 # Device majors for amd64
 #
@@ -100,6 +100,6 @@ device-major	xenevt		char 141		xenevt
 device-major	xbd		char 142 block 142	xbd
 device-major	xencons		char 143		xencons
 
-# Majors up to 143 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.

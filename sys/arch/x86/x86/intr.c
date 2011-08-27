@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.58.2.6 2011/05/02 22:49:57 jym Exp $	*/
+/*	$NetBSD: intr.c,v 1.58.2.7 2011/08/27 15:37:30 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.58.2.6 2011/05/02 22:49:57 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.58.2.7 2011/08/27 15:37:30 jym Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -480,7 +480,8 @@ intr_allocate_slot(struct pic *pic, int pin, int level,
 			if ((isp = ci->ci_isources[slot]) == NULL) {
 				continue;
 			}
-			if (isp->is_pic == pic && isp->is_pin == pin) {
+			if (isp->is_pic == pic &&
+			    pin != -1 && isp->is_pin == pin) {
 				*idt_slot = isp->is_idtvec;
 				*index = slot;
 				*cip = ci;

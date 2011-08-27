@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.17.8.3 2009/11/01 21:43:28 jym Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.17.8.4 2011/08/27 15:37:31 jym Exp $	*/
 
 /*
  *
@@ -44,8 +44,9 @@ void call_xenevt_event(int);
 int event_set_handler(int, int (*func)(void *), void *, int, const char *);
 int event_remove_handler(int, int (*func)(void *), void *);
 
+struct cpu_info;
 struct intrhand;
-void event_set_iplhandler(struct intrhand *, int);
+void event_set_iplhandler(struct cpu_info *, struct intrhand *, int);
 
 extern int debug_port;
 extern int xen_debug_handler(void *);
@@ -54,6 +55,8 @@ int bind_virq_to_evtch(int);
 int bind_pirq_to_evtch(int);
 int unbind_pirq_from_evtch(int);
 int unbind_virq_from_evtch(int);
+
+evtchn_port_t bind_vcpu_to_evtch(cpuid_t);
 
 struct pintrhand {
 	int pirq;

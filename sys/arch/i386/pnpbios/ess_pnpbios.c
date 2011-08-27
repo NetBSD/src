@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_pnpbios.c,v 1.17.14.4 2010/10/24 22:48:04 jym Exp $	*/
+/*	$NetBSD: ess_pnpbios.c,v 1.17.14.5 2011/08/27 15:37:26 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.17.14.4 2010/10/24 22:48:04 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.17.14.5 2011/08/27 15:37:26 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.17.14.4 2010/10/24 22:48:04 jym Ex
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

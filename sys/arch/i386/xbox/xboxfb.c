@@ -1,4 +1,4 @@
-/*	$NetBSD: xboxfb.c,v 1.12.8.2 2011/01/10 00:37:35 jym Exp $	*/
+/*	$NetBSD: xboxfb.c,v 1.12.8.3 2011/08/27 15:37:29 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxfb.c,v 1.12.8.2 2011/01/10 00:37:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxfb.c,v 1.12.8.3 2011/08/27 15:37:29 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: xboxfb.c,v 1.12.8.2 2011/01/10 00:37:35 jym Exp $");
 
 #include <uvm/uvm_extern.h>
 /* #include <machine/autoconf.h> */
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/xbox.h>
 
 #include <dev/pci/pcivar.h>

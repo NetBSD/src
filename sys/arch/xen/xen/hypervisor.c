@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.43.2.7 2011/05/07 17:39:47 jym Exp $ */
+/* $NetBSD: hypervisor.c,v 1.43.2.8 2011/08/27 15:37:32 jym Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.7 2011/05/07 17:39:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.8 2011/08/27 15:37:32 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.7 2011/05/07 17:39:47 jym Exp 
 #include <xen/evtchn.h>
 #include <xen/xen3-public/version.h>
 
+#include <sys/cpu.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/tree.h>
@@ -180,10 +181,19 @@ hypervisor_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct hypervisor_attach_args *haa = aux;
 
-	if (strcmp(haa->haa_busname, "hypervisor") == 0)
+	if (strncmp(haa->haa_busname, "hypervisor", sizeof("hypervisor")) == 0)
 		return 1;
 	return 0;
 }
+
+#ifdef MULTIPROCESSOR
+static int
+hypervisor_vcpu_print(void *aux, const char *parent)
+{
+	/* Unconfigured cpus are ignored quietly. */
+	return (QUIET);
+}
+#endif /* MULTIPROCESSOR */
 
 /*
  * Attach the hypervisor.
@@ -192,6 +202,7 @@ void
 hypervisor_attach(device_t parent, device_t self, void *aux)
 {
 	int xen_version;
+
 #if NPCI >0
 #ifdef PCI_BUS_FIXUP
 	int pci_maxbus = 0;
@@ -213,10 +224,33 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	memset(&hac, 0, sizeof(hac));
 	hac.hac_vcaa.vcaa_name = "vcpu";
 	hac.hac_vcaa.vcaa_caa.cpu_number = 0;
-	hac.hac_vcaa.vcaa_caa.cpu_role = CPU_ROLE_SP;
-	hac.hac_vcaa.vcaa_caa.cpu_func = 0;
+	hac.hac_vcaa.vcaa_caa.cpu_role = CPU_ROLE_BP;
+	hac.hac_vcaa.vcaa_caa.cpu_func = NULL; /* See xen/x86/cpu.c:vcpu_attach() */
 	config_found_ia(self, "xendevbus", &hac.hac_vcaa, hypervisor_print);
 
+#ifdef MULTIPROCESSOR
+
+	/* 
+	 * The xenstore contains the configured number of vcpus.
+	 * The xenstore however, is not accessible until much later in
+	 * the boot sequence. We therefore bruteforce check for
+	 * allocated vcpus (See: cpu.c:vcpu_match()) by iterating
+	 * through the maximum supported by NetBSD MP.
+	 */
+	cpuid_t vcpuid;
+
+	for (vcpuid = 1; vcpuid < maxcpus; vcpuid++) {
+		memset(&hac, 0, sizeof(hac));
+		hac.hac_vcaa.vcaa_name = "vcpu";
+		hac.hac_vcaa.vcaa_caa.cpu_number = vcpuid;
+		hac.hac_vcaa.vcaa_caa.cpu_role = CPU_ROLE_AP;
+		hac.hac_vcaa.vcaa_caa.cpu_func = NULL; /* See xen/x86/cpu.c:vcpu_attach() */
+		if (NULL == config_found_ia(self, "xendevbus", &hac.hac_vcaa, hypervisor_vcpu_print)) {
+			break;
+		}
+	}
+
+#endif /* MULTIPROCESSOR */
 	events_init();
 
 #if NXENBUS > 0
@@ -243,7 +277,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		hac.hac_acpi.aa_memt = x86_bus_space_mem;
 		hac.hac_acpi.aa_pc = NULL;
 		hac.hac_acpi.aa_pciflags =
-			PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+			PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 			PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 			PCI_FLAGS_MWI_OKAY;
 		hac.hac_acpi.aa_ic = &x86_isa_chipset;
@@ -259,7 +293,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #else
 	hac.hac_pba.pba_dmat64 = NULL;
 #endif /* _LP64 */
-	hac.hac_pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
+	hac.hac_pba.pba_flags = PCI_FLAGS_MEM_OKAY | PCI_FLAGS_IO_OKAY;
 	hac.hac_pba.pba_bridgetag = NULL;
 	hac.hac_pba.pba_bus = 0;
 #if NACPICA > 0 && defined(ACPI_SCANPCI)

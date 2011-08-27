@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.7.12.3 2011/03/28 23:58:11 jym Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.7.12.4 2011/08/27 15:37:28 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@
  * BOOTP for IP address - bootp()
  */
 
-#include <machine/stdarg.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/if.h>

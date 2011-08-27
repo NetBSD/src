@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.30.4.5 2011/03/28 23:04:33 jym Exp $	*/
+/*	$NetBSD: fpu.c,v 1.30.4.6 2011/08/27 15:37:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,13 +100,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.30.4.5 2011/03/28 23:04:33 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.30.4.6 2011/08/27 15:37:22 jym Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
@@ -114,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.30.4.5 2011/03/28 23:04:33 jym Exp $");
 #include <sys/vmmeter.h>
 #include <sys/kernel.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/cpufunc.h>
@@ -406,7 +407,14 @@ fpusave_lwp(struct lwp *l, bool save)
 			break;
 		}
 		splx(s);
+#ifdef XEN
+		if (xen_send_ipi(oci, XEN_IPI_SYNCH_FPU) != 0) {
+			panic("xen_send_ipi(%s, XEN_IPI_SYNCH_FPU) failed.",
+			    cpu_name(oci));
+		}
+#else /* XEN */
 		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
+#endif
 		while (pcb->pcb_fpcpu == oci && ticks == hardclock_ticks) {
 			x86_pause();
 			spins++;

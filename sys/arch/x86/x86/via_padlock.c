@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.10.2.4 2011/03/28 23:04:54 jym Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.10.2.5 2011/08/27 15:37:30 jym Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.10.2.4 2011/03/28 23:04:54 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.10.2.5 2011/08/27 15:37:30 jym Exp $");
 
 #ifdef _KERNEL_OPT
 # include "rnd.h"
@@ -313,14 +313,14 @@ via_padlock_crypto_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 			}
 			ses->swd = swd;
 
-			swd->sw_ictx = malloc(axf->auth_hash->ctxsize,
+			swd->sw_ictx = malloc(axf->ctxsize,
 			    M_CRYPTO_DATA, M_NOWAIT);
 			if (swd->sw_ictx == NULL) {
 				via_padlock_crypto_freesession(sc, sesn);
 				return (ENOMEM);
 			}
 
-			swd->sw_octx = malloc(axf->auth_hash->ctxsize,
+			swd->sw_octx = malloc(axf->ctxsize,
 			    M_CRYPTO_DATA, M_NOWAIT);
 			if (swd->sw_octx == NULL) {
 				via_padlock_crypto_freesession(sc, sesn);
@@ -365,7 +365,7 @@ via_padlock_crypto_freesession(void *arg, uint64_t tid)
 {
 	struct via_padlock_softc *sc = arg;
 	struct swcr_data *swd;
-	const struct auth_hash *axf;
+	const struct swcr_auth_hash *axf;
 	int sesn;
 	uint32_t sid = ((uint32_t)tid) & 0xffffffff;
 
@@ -379,7 +379,7 @@ via_padlock_crypto_freesession(void *arg, uint64_t tid)
 
 	if (sc->sc_sessions[sesn].swd) {
 		swd = sc->sc_sessions[sesn].swd;
-		axf = swd->sw_axf->auth_hash;
+		axf = swd->sw_axf;
 
 		if (swd->sw_ictx) {
 			memset(swd->sw_ictx, 0, axf->ctxsize);

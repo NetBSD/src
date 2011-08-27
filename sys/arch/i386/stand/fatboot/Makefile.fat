@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.fat,v 1.3.8.2 2009/11/01 13:58:36 jym Exp $
+#	$NetBSD: Makefile.fat,v 1.3.8.3 2011/08/27 15:37:27 jym Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -9,6 +9,8 @@ LIBCRT0=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing
+
+AFLAGS.fatboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 PIE_CFLAGS=
 PIE_LDFLAGS=

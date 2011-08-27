@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.16.18.2 2009/11/01 13:58:35 jym Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.16.18.3 2011/08/27 15:37:27 jym Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.16.18.2 2009/11/01 13:58:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.16.18.3 2011/08/27 15:37:27 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.16.18.2 2009/11/01 13:58:35 jym Ex
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -55,7 +55,7 @@ void wss_pnpbios_attach(device_t, device_t, void *);
 int wss_pnpbios_hints_index(const char *);
 
 
-CFATTACH_DECL(wss_pnpbios, sizeof(struct wss_softc),
+CFATTACH_DECL_NEW(wss_pnpbios, sizeof(struct wss_softc),
     wss_pnpbios_match, wss_pnpbios_attach, NULL, NULL);
 
 struct wss_pnpbios_hint {
@@ -128,6 +128,7 @@ wss_pnpbios_attach(device_t parent, device_t self,
 		return;
 	}
 
+	sc->sc_ad1848.sc_ad1848.sc_dev = self;
 	sc->wss_ic = aa->ic;
 
 	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->wss_irq, NULL)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18.2.4 2011/03/28 23:58:11 jym Exp $	*/
+/*	$NetBSD: main.c,v 1.18.2.5 2011/08/27 15:37:28 jym Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -76,6 +76,7 @@ const struct bootblk_command commands[] = {
 	{ "multiboot",  command_multiboot },
 	{ "load",	module_add },
 	{ "vesa",	command_vesa },
+	{ "userconf",	userconf_add },
 	{ NULL,		NULL },
 };
 
@@ -201,6 +202,7 @@ command_help(char *arg)
 	       "multiboot [filename] [<args>]\n"
 	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
+	       "userconf {command}\n"
 	       "help|?\n"
 	       "quit\n");
 }

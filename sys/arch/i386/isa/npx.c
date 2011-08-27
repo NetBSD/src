@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.134.4.2 2011/01/10 00:37:31 jym Exp $	*/
+/*	$NetBSD: npx.c,v 1.134.4.3 2011/08/27 15:37:26 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.134.4.2 2011/01/10 00:37:31 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.134.4.3 2011/08/27 15:37:26 jym Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.134.4.2 2011/01/10 00:37:31 jym Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
@@ -159,8 +160,8 @@ static int	x86fpflags_to_ksiginfo(uint32_t flags);
 static int	npxdna(struct cpu_info *);
 
 #ifdef XEN
-#define	clts()
-#define	stts()
+#define	clts() HYPERVISOR_fpu_taskswitch(0)
+#define	stts() HYPERVISOR_fpu_taskswitch(1)
 #endif
 
 static	enum npx_type		npx_type;
@@ -190,9 +191,7 @@ static int
 npxdna_empty(struct cpu_info *ci)
 {
 
-#ifndef XEN
 	panic("npxdna vector not initialized");
-#endif
 	return 0;
 }
 
@@ -507,7 +506,9 @@ npxintr(void *arg, struct intrframe *frame)
 		 * Currently, we treat this like an asynchronous interrupt, but
 		 * this has disadvantages.
 		 */
+		mutex_enter(proc_lock);
 		psignal(l->l_proc, SIGFPE);
+		mutex_exit(proc_lock);
 	}
 
 	kpreempt_enable();
@@ -719,7 +720,14 @@ npxsave_lwp(struct lwp *l, bool save)
 			break;
 		}
 		splx(s);
+#ifdef XEN
+		if (xen_send_ipi(oci, XEN_IPI_SYNCH_FPU) != 0) {
+			panic("xen_send_ipi(%s, XEN_IPI_SYNCH_FPU) failed.",
+			    cpu_name(oci));
+		}
+#else /* XEN */
 		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
+#endif
 		while (pcb->pcb_fpcpu == oci &&
 		    ticks == hardclock_ticks) {
 			x86_pause();

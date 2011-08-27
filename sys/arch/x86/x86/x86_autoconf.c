@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.35.8.4 2011/03/28 23:04:54 jym Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.35.8.5 2011/08/27 15:37:31 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.35.8.4 2011/03/28 23:04:54 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.35.8.5 2011/08/27 15:37:31 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -718,13 +718,14 @@ device_register(device_t dev, void *aux)
 					gfb_cb.gcc_set_mapreg = 
 					    x86_genfb_set_mapreg;
 					prop_dictionary_set_uint64(dict,
-					    "cmap_callback", (uint64_t)&gfb_cb);
+					    "cmap_callback",
+					    (uint64_t)(uintptr_t)&gfb_cb);
 				}
 				if (fbinfo->physaddr != 0) {
 					mode_cb.gmc_setmode = x86_genfb_setmode;
 					prop_dictionary_set_uint64(dict,
 					    "mode_callback",
-					    (uint64_t)&mode_cb);
+					    (uint64_t)(uintptr_t)&mode_cb);
 				}
 
 #if NWSDISPLAY > 0 && NGENFB > 0
@@ -750,7 +751,7 @@ device_register(device_t dev, void *aux)
 			pmf_cb.gpc_suspend = x86_genfb_suspend;
 			pmf_cb.gpc_resume = x86_genfb_resume;
 			prop_dictionary_set_uint64(dict,
-			    "pmf_callback", (uint64_t)&pmf_cb);
+			    "pmf_callback", (uint64_t)(uintptr_t)&pmf_cb);
 #ifdef VGA_POST
 			vga_posth = vga_post_init(pa->pa_bus, pa->pa_device,
 			    pa->pa_function);

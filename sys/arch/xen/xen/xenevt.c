@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.30.2.3 2010/10/24 22:48:23 jym Exp $      */
+/*      $NetBSD: xenevt.c,v 1.30.2.4 2011/08/27 15:37:33 jym Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,12 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.30.2.3 2010/10/24 22:48:23 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.30.2.4 2011/08/27 15:37:33 jym Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/file.h>
@@ -42,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.30.2.3 2010/10/24 22:48:23 jym Exp $");
 #include <sys/conf.h>
 #include <sys/intr.h>
 #include <sys/kmem.h>
-#include <sys/simplelock.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -103,7 +103,8 @@ const struct cdevsw xenevt_cdevsw = {
 #define BYTES_PER_PORT (sizeof(evtchn_port_t) / sizeof(uint8_t))
 
 struct xenevt_d {
-	struct simplelock lock;
+	kmutex_t lock;
+	kcondvar_t cv;
 	STAILQ_ENTRY(xenevt_d) pendingq;
 	bool pending;
 	evtchn_port_t ring[2048]; 
@@ -119,9 +120,8 @@ static struct xenevt_d *devevent[NR_EVENT_CHANNELS];
 
 /* pending events */
 static void *devevent_sih;
-struct simplelock devevent_pending_lock = SIMPLELOCK_INITIALIZER;
-STAILQ_HEAD(, xenevt_d) devevent_pending =
-    STAILQ_HEAD_INITIALIZER(devevent_pending);
+static kmutex_t devevent_lock;
+static STAILQ_HEAD(, xenevt_d) devevent_pending;
 
 static void xenevt_donotify(struct xenevt_d *);
 static void xenevt_record(struct xenevt_d *, evtchn_port_t);
@@ -142,6 +142,8 @@ xenevtattach(int n)
 	bool mpsafe = (level != IPL_VM);
 #endif /* MULTIPROCESSOR */
 
+	mutex_init(&devevent_lock, MUTEX_DEFAULT, IPL_HIGH);
+	STAILQ_INIT(&devevent_pending);
 
 	devevent_sih = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))xenevt_notify, NULL);
@@ -158,6 +160,7 @@ xenevtattach(int n)
 	ih->ih_fun = ih->ih_realfun = xenevt_processevt;
 	ih->ih_arg = ih->ih_realarg = NULL;
 	ih->ih_ipl_next = NULL;
+	ih->ih_cpu = curcpu();
 #ifdef MULTIPROCESSOR
 	if (!mpsafe) {
 		ih->ih_fun = intr_biglock_wrapper;
@@ -166,7 +169,7 @@ xenevtattach(int n)
 #endif /* MULTIPROCESSOR */
 
 	s = splhigh();
-	event_set_iplhandler(ih, level);
+	event_set_iplhandler(ih->ih_cpu, ih, level);
 	splx(s);
 }
 
@@ -176,7 +179,7 @@ xenevt_setipending(int l1, int l2)
 {
 	xenevt_ev1 |= 1UL << l1;
 	xenevt_ev2[l1] |= 1UL << l2;
-	curcpu()->ci_ipending |= 1 << IPL_HIGH;
+	curcpu()/*XXX*/->ci_ipending |= 1 << IPL_HIGH;
 }
 
 /* process pending events */
@@ -218,10 +221,11 @@ xenevt_event(int port)
 			return;
 		}
 
-		simple_lock(&devevent_pending_lock);
+		mutex_enter(&devevent_lock);
 		STAILQ_INSERT_TAIL(&devevent_pending, d, pendingq);
-		simple_unlock(&devevent_pending_lock);
 		d->pending = true;
+		mutex_exit(&devevent_lock);
+
 		softint_schedule(devevent_sih);
 	}
 }
@@ -229,43 +233,31 @@ xenevt_event(int port)
 void
 xenevt_notify(void)
 {
+	struct xenevt_d *d;
 
-	int s = splhigh();
-	simple_lock(&devevent_pending_lock);
-	while (/* CONSTCOND */ 1) {
-		struct xenevt_d *d;
-
+	for (;;) {
+		mutex_enter(&devevent_lock);
 		d = STAILQ_FIRST(&devevent_pending);
 		if (d == NULL) {
+			mutex_exit(&devevent_lock);
 			break;
 		}
 		STAILQ_REMOVE_HEAD(&devevent_pending, pendingq);
-		simple_unlock(&devevent_pending_lock);
-		splx(s);
-
 		d->pending = false;
-		xenevt_donotify(d);
+		mutex_exit(&devevent_lock);
 
-		s = splhigh();
-		simple_lock(&devevent_pending_lock);
+		xenevt_donotify(d);
 	}
-	simple_unlock(&devevent_pending_lock);
-	splx(s);
 }
 
 static void
 xenevt_donotify(struct xenevt_d *d)
 {
-	int s;
 
-	s = splsoftserial();
-	simple_lock(&d->lock);
-	 
+	mutex_enter(&d->lock);
 	selnotify(&d->sel, 0, 1);
-	wakeup(&d->ring_read);
-
-	simple_unlock(&d->lock);
-	splx(s);
+	cv_broadcast(&d->cv);
+	mutex_exit(&d->lock);
 }
 
 static void
@@ -303,7 +295,8 @@ xenevtopen(dev_t dev, int flags, int mode, struct lwp *l)
 			return error;
 
 		d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK | M_ZERO);
-		simple_lock_init(&d->lock);
+		mutex_init(&d->lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
+		cv_init(&d->cv, "xenevt");
 		selinit(&d->sel);
 		return fd_clone(fp, fd, flags, &xenevt_fileops, d);
 	case DEV_XSD:
@@ -380,8 +373,10 @@ xenevt_fclose(struct file *fp)
 		}
 	}
 	seldestroy(&d->sel);
-	free(d, M_DEVBUF);
+	cv_destroy(&d->cv);
+	mutex_destroy(&d->lock);
 	fp->f_data = NULL;
+	free(d, M_DEVBUF);
 
 	return (0);
 }
@@ -391,15 +386,11 @@ xenevt_fread(struct file *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
 	struct xenevt_d *d = fp->f_data;
-	int error;
+	int error, ring_read, ring_write;
 	size_t len, uio_len;
-	int ring_read;
-	int ring_write;
-	int s;
 
 	error = 0;
-	s = splsoftserial();
-	simple_lock(&d->lock);
+	mutex_enter(&d->lock);
 	while (error == 0) {
 		ring_read = d->ring_read;
 		ring_write = d->ring_write;
@@ -411,18 +402,16 @@ xenevt_fread(struct file *fp, off_t *offp, struct uio *uio,
 		}
 
 		/* nothing to read */
-		if (fp->f_flag & FNONBLOCK) {
-			error = EAGAIN;
+		if ((fp->f_flag & FNONBLOCK) == 0) {
+			error = cv_wait_sig(&d->cv, &d->lock);
 		} else {
-			error = ltsleep(&d->ring_read, PRIBIO | PCATCH,
-			    "xenevt", 0, &d->lock);
+			error = EAGAIN;
 		}
 	}
 	if (error == 0 && (d->flags & XENEVT_F_OVERFLOW)) {
 		error = EFBIG;
 	}
-	simple_unlock(&d->lock);
-	splx(s);
+	mutex_exit(&d->lock);
 
 	if (error) {
 		return error;
@@ -452,11 +441,9 @@ xenevt_fread(struct file *fp, off_t *offp, struct uio *uio,
 	ring_read = (ring_read + len) & XENEVT_RING_MASK;
 
 done:
-	s = splsoftserial();
-	simple_lock(&d->lock);
+	mutex_enter(&d->lock);
 	d->ring_read = ring_read;
-	simple_unlock(&d->lock);
-	splx(s);
+	mutex_exit(&d->lock);
 
 	return 0;
 }
@@ -591,10 +578,8 @@ xenevt_fpoll(struct file *fp, int events)
 {
 	struct xenevt_d *d = fp->f_data;
 	int revents = events & (POLLOUT | POLLWRNORM); /* we can always write */
-	int s;
 
-	s = splsoftserial();
-	simple_lock(&d->lock);
+	mutex_enter(&d->lock);
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (d->ring_read != d->ring_write) {
 			revents |= events & (POLLIN | POLLRDNORM);
@@ -603,7 +588,6 @@ xenevt_fpoll(struct file *fp, int events)
 			selrecord(curlwp, &d->sel);
 		}
 	}
-	simple_unlock(&d->lock);
-	splx(s);
+	mutex_exit(&d->lock);
 	return (revents);
 }

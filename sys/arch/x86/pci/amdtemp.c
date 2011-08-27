@@ -1,7 +1,7 @@
-/*      $NetBSD: amdtemp.c,v 1.6.4.3 2009/11/01 13:58:17 jym Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.6.4.4 2011/08/27 15:37:30 jym Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
-/* 
+/*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -48,21 +48,23 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.6.4.3 2009/11/01 13:58:17 jym Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.6.4.4 2011/08/27 15:37:30 jym Exp $ ");
 
 #include <sys/param.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
-#include <dev/sysmon/sysmonvar.h>
+#include <sys/module.h>
 
-#include <sys/bus.h>
-#include <sys/cpu.h>
 #include <machine/specialreg.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 /*
  * AMD K8:
@@ -79,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.6.4.3 2009/11/01 13:58:17 jym Exp $ ")
  * http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/41256.pdf
  */
 
-/* AMD Proessors, Function 3 -- Miscellaneous Control
+/* AMD Processors, Function 3 -- Miscellaneous Control
  */
 
 /* Function 3 Registers */
@@ -104,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.6.4.3 2009/11/01 13:58:17 jym Exp $ ")
 
 
 /*
- * AMD Family 10h Processorcs, Function 3 -- Miscellaneous Control
+ * AMD Family 10h Processors, Function 3 -- Miscellaneous Control
  */
 
 /* Function 3 Registers */
@@ -114,7 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.6.4.3 2009/11/01 13:58:17 jym Exp $ ")
 #define F10_TEMP_CURTEMP	(1 << 21)
 
 /*
- * Revision Guide for AMD NPT Family 0Fh Processors, 
+ * Revision Guide for AMD NPT Family 0Fh Processors,
  * Publication # 33610, Revision 3.30, February 2008
  */
 #define K8_SOCKET_F	1	/* Server */
@@ -156,6 +158,7 @@ struct amdtemp_softc {
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t *sc_sensor;
+	size_t sc_sensor_len;
 
         char sc_rev;
         int8_t sc_numsensors;
@@ -164,8 +167,9 @@ struct amdtemp_softc {
 };
 
 
-static int amdtemp_match(device_t, cfdata_t, void *);
+static int  amdtemp_match(device_t, cfdata_t, void *);
 static void amdtemp_attach(device_t, device_t, void *);
+static int  amdtemp_detach(device_t, int);
 
 static void amdtemp_k8_init(struct amdtemp_softc *, pcireg_t);
 static void amdtemp_k8_setup_sensors(struct amdtemp_softc *, int);
@@ -175,8 +179,8 @@ static void amdtemp_family10_init(struct amdtemp_softc *);
 static void amdtemp_family10_setup_sensors(struct amdtemp_softc *, int);
 static void amdtemp_family10_refresh(struct sysmon_envsys *, envsys_data_t *);
 
-CFATTACH_DECL_NEW(amdtemp, sizeof(struct amdtemp_softc), 
-	amdtemp_match, amdtemp_attach, NULL, NULL);
+CFATTACH_DECL_NEW(amdtemp, sizeof(struct amdtemp_softc),
+	amdtemp_match, amdtemp_attach, amdtemp_detach, NULL);
 
 static int
 amdtemp_match(device_t parent, cfdata_t match, void *aux)
@@ -192,13 +196,14 @@ amdtemp_match(device_t parent, cfdata_t match, void *aux)
 	case PCI_PRODUCT_AMD_AMD64_MISC:
 	case PCI_PRODUCT_AMD_AMD64_F10_MISC:
 	case PCI_PRODUCT_AMD_AMD64_F11_MISC:
+	case PCI_PRODUCT_AMD_F14_NB:
 		break;
 	default:
 		return 0;
 	}
 
-	cpu_signature = pci_conf_read(pa->pa_pc, pa->pa_tag,
-				CPUID_FAMILY_MODEL_R);
+	cpu_signature = pci_conf_read(pa->pa_pc,
+	    pa->pa_tag, CPUID_FAMILY_MODEL_R);
 
 	/* This CPUID northbridge register has been introduced
 	 * in Revision F */
@@ -220,7 +225,7 @@ amdtemp_match(device_t parent, cfdata_t match, void *aux)
 
 
 	/* Not yet supported CPUs */
-	if (family >= 0x12)
+	if (family > 0x14)
 		return 0;
 
 	return 2;	/* supercede pchb(4) */
@@ -232,22 +237,25 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 	struct amdtemp_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pcireg_t cpu_signature;
-	size_t len;
 	int error;
 	uint8_t i;
 
 	aprint_naive("\n");
 	aprint_normal(": AMD CPU Temperature Sensors");
 
-	cpu_signature = pci_conf_read(pa->pa_pc, pa->pa_tag,
-				CPUID_FAMILY_MODEL_R);
+	cpu_signature = pci_conf_read(pa->pa_pc,
+	    pa->pa_tag, CPUID_FAMILY_MODEL_R);
 
 	/* If we hit this, then match routine is wrong. */
 	KASSERT(cpu_signature != 0x0);
 
-	sc->sc_family = CPUID2FAMILY(cpu_signature)
-		+ CPUID2EXTFAMILY(cpu_signature);
+	sc->sc_family = CPUID2FAMILY(cpu_signature);
+	sc->sc_family += CPUID2EXTFAMILY(cpu_signature);
+
 	KASSERT(sc->sc_family >= 0xf);
+
+	sc->sc_sme = NULL;
+	sc->sc_sensor = NULL;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -260,6 +268,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 
 	case 0x10: /* AMD Barcelona/Phenom */
 	case 0x11: /* AMD Griffin */
+	case 0x14: /* AMD Fusion */
 		amdtemp_family10_init(sc);
 		break;
 
@@ -275,10 +284,11 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 		aprint_debug_dev(self, "Workaround enabled\n");
 
 	sc->sc_sme = sysmon_envsys_create();
-	len = sizeof(envsys_data_t) * sc->sc_numsensors;
-	sc->sc_sensor = kmem_zalloc(len, KM_NOSLEEP);
-	if (!sc->sc_sensor)
-		goto bad2;
+	sc->sc_sensor_len = sizeof(envsys_data_t) * sc->sc_numsensors;
+	sc->sc_sensor = kmem_zalloc(sc->sc_sensor_len, KM_SLEEP);
+
+	if (sc->sc_sensor == NULL)
+		goto bad;
 
 	switch (sc->sc_family) {
 	case 0xf:
@@ -286,6 +296,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 		break;
 	case 0x10:
 	case 0x11:
+	case 0x14:
 		amdtemp_family10_setup_sensors(sc, device_unit(self));
 		break;
 	}
@@ -311,6 +322,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 		break;
 	case 0x10:
 	case 0x11:
+	case 0x14:
 		sc->sc_sme->sme_refresh = amdtemp_family10_refresh;
 		break;
 	}
@@ -322,15 +334,34 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+	(void)pmf_device_register(self, NULL, NULL);
 
 	return;
 
 bad:
-	kmem_free(sc->sc_sensor, len);
-bad2:
-	sysmon_envsys_destroy(sc->sc_sme);
+	if (sc->sc_sme != NULL) {
+		sysmon_envsys_destroy(sc->sc_sme);
+		sc->sc_sme = NULL;
+	}
+
+	if (sc->sc_sensor != NULL) {
+		kmem_free(sc->sc_sensor, sc->sc_sensor_len);
+		sc->sc_sensor = NULL;
+	}
+}
+
+static int
+amdtemp_detach(device_t self, int flags)
+{
+	struct amdtemp_softc *sc = device_private(self);
+
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
+
+	if (sc->sc_sensor != NULL)
+		kmem_free(sc->sc_sensor, sc->sc_sensor_len);
+
+	return 0;
 }
 
 static void
@@ -454,7 +485,7 @@ amdtemp_k8_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 static void
 amdtemp_family10_init(struct amdtemp_softc *sc)
 {
-	aprint_normal(" (Family10h / Family11h)");
+	aprint_normal(" (Family%02xh)", sc->sc_family);
 
 	sc->sc_numsensors = 1;
 }
@@ -473,7 +504,7 @@ amdtemp_family10_setup_sensors(struct amdtemp_softc *sc, int dv_unit)
 	sc->sc_sensor[0].state = ENVSYS_SVALID;
 
 	snprintf(sc->sc_sensor[0].desc, sizeof(sc->sc_sensor[0].desc),
-		"CPU%u Sensor0", dv_unit);
+		"cpu%u temperature", dv_unit);
 }
 
 
@@ -484,11 +515,40 @@ amdtemp_family10_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	pcireg_t status;
 	uint32_t value;
 
-	status = pci_conf_read(sc->sc_pc, sc->sc_pcitag, F10_TEMPERATURE_CTL_R);
+	status = pci_conf_read(sc->sc_pc,
+	    sc->sc_pcitag, F10_TEMPERATURE_CTL_R);
 
 	value = (status >> 21);
 
 	edata->state = ENVSYS_SVALID;
-	/* envsys(4) wants uK... convert from Celsius. */
-	edata->value_cur = (value * 125000) + 273150000;
+	edata->value_cur = (value * 125000) + 273150000; /* From C to uK. */
+}
+
+MODULE(MODULE_CLASS_DRIVER, amdtemp, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+amdtemp_modcmd(modcmd_t cmd, void *aux)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_amdtemp,
+		    cfattach_ioconf_amdtemp, cfdata_ioconf_amdtemp);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_amdtemp,
+		    cfattach_ioconf_amdtemp, cfdata_ioconf_amdtemp);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }

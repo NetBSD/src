@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.21.8.8 2011/05/02 22:49:58 jym Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.21.8.9 2011/08/27 15:37:31 jym Exp $	*/
 
 /*
  *
@@ -36,6 +36,16 @@
 
 #define	INVALID_P2M_ENTRY	(~0UL)
 
+#ifdef MULTIPROCESSOR
+void xpq_queue_lock(void);
+void xpq_queue_unlock(void);
+bool xpq_queue_locked(void);
+#else /* MULTIPROCESSOR */
+#define xpq_queue_lock() do {} while(0) /* nothing */
+#define xpq_queue_unlock() do {} while(0) /* nothing */
+#define xpq_queue_locked() (true) /* Always true for UP */
+#endif /* MULTIPROCESSOR */
+
 void xpq_queue_machphys_update(paddr_t, paddr_t);
 void xpq_queue_invlpg(vaddr_t);
 void xpq_queue_pte_update(paddr_t, pt_entry_t);
@@ -46,6 +56,13 @@ void xpq_queue_tlb_flush(void);
 void xpq_queue_pin_table(paddr_t, int);
 void xpq_queue_unpin_table(paddr_t);
 int  xpq_update_foreign(paddr_t, pt_entry_t, int);
+void xen_vcpu_mcast_invlpg(vaddr_t, vaddr_t, uint32_t);
+void xen_vcpu_bcast_invlpg(vaddr_t, vaddr_t);
+void xen_mcast_tlbflush(uint32_t);
+void xen_bcast_tlbflush(void);
+void xen_mcast_invlpg(vaddr_t, uint32_t);
+void xen_bcast_invlpg(vaddr_t);
+
 
 #define xpq_queue_pin_l1_table(pa)	\
 	xpq_queue_pin_table(pa, MMUEXT_PIN_L1_TABLE)

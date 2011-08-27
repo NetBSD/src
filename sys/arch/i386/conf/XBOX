@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.15.4.3 2011/03/29 20:42:58 jym Exp $
+# $NetBSD: XBOX,v 1.15.4.4 2011/08/27 15:37:24 jym Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -33,7 +33,7 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions 	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 options 	COMPAT_30	# NetBSD 3.0
@@ -94,7 +94,7 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
-agp* 	at pchb?
+agp*	at pchb?
 
 # ISA bus support
 isa0	at pcib?
@@ -110,7 +110,7 @@ wsdisplay*	at xboxfb? console ?
 # XBOX X3LCD console
 #x3lcd0		at isa0
 #x3lcd0		at mainbus?
-#wsdisplay* 	at x3lcd0 console ?
+#wsdisplay*	at x3lcd0 console ?
 
 # I2C/SMBus support
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
@@ -237,10 +237,6 @@ ucom*	at uplcom? portno ?
 
 uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
-
-# Xbox Controller
-xboxcontroller* at uhub? port ? configuration ?
-wsmouse* at xboxcontroller? mux 0
 
 # USB Generic driver
 ugen*	at uhub? port ?

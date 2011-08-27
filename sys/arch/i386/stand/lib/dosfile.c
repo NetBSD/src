@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.14 2008/12/14 17:03:43 christos Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.14.2.1 2011/08/27 15:37:28 jym Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -72,7 +72,7 @@ dos2errno(void)
 	return err;
 }
 
-int
+__compactcall int
 dos_open(const char *path, struct open_file *f)
 {
 	struct dosfile *df;
@@ -94,7 +94,7 @@ dos_open(const char *path, struct open_file *f)
 	return 0;
 }
 
-int
+__compactcall int
 dos_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 {
 	struct dosfile *df;
@@ -156,7 +156,7 @@ dos_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 	return 0;
 }
 
-int
+__compactcall int
 dos_close(struct open_file *f)
 {
 	struct dosfile *df;
@@ -169,13 +169,13 @@ dos_close(struct open_file *f)
 	return 0;
 }
 
-int
+__compactcall int
 dos_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 	return EROFS;
 }
 
-int
+__compactcall int
 dos_stat(struct open_file *f, struct stat *sb)
 {
 	struct dosfile *df;
@@ -189,7 +189,7 @@ dos_stat(struct open_file *f, struct stat *sb)
 	return 0;
 }
 
-off_t
+__compactcall off_t
 dos_seek(struct open_file *f, off_t offset, int where)
 {
 	struct dosfile *df;

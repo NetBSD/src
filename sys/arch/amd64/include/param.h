@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10.2.1 2010/10/24 22:47:53 jym Exp $	*/
+/*	$NetBSD: param.h,v 1.10.2.2 2011/08/27 15:37:23 jym Exp $	*/
 
 #ifdef __x86_64__
 
@@ -118,7 +118,6 @@
 
 #define btop(x)				x86_btop(x)
 #define ptob(x)				x86_ptob(x)
-#define round_pdr(x)			x86_round_pdr(x)
 
 #define mstohz(ms) ((ms + 0UL) * hz / 1000)
 

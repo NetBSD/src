@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.15.32.3 2010/10/24 22:48:18 jym Exp $	*/
+/*	$NetBSD: consinit.c,v 1.15.32.4 2011/08/27 15:37:30 jym Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.15.32.3 2010/10/24 22:48:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.15.32.4 2011/08/27 15:37:30 jym Exp $");
 
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/bootinfo.h>
 #include <arch/x86/include/genfb_machdep.h>
 

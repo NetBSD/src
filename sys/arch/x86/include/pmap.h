@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21.2.10 2011/05/26 22:26:52 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21.2.11 2011/08/27 15:37:29 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -121,10 +121,10 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
 /*
  * the pmap structure
  *
- * note that the pm_obj contains the simple_lock, the reference count,
+ * note that the pm_obj contains the lock pointer, the reference count,
  * page list, and number of PTPs within the pmap.
  *
- * pm_lock is the same as the spinlock for vm object 0. Changes to
+ * pm_lock is the same as the lock for vm object 0.  Changes to
  * the other objects may only be made if that lock has been taken
  * (the other object locks are only used when uvm_pagealloc is called)
  *
@@ -135,6 +135,7 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
 struct pmap {
 	struct uvm_object pm_obj[PTP_LEVELS-1]; /* objects for lvl >= 1) */
 #define	pm_lock	pm_obj[0].vmobjlock
+	kmutex_t pm_obj_lock[PTP_LEVELS-1];	/* locks for pm_objs */
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
 	paddr_t pm_pdirpa[PDP_SIZE];	/* PA of PDs (read-only after create) */
@@ -153,6 +154,8 @@ struct pmap {
 	uint32_t pm_cpus;		/* mask of CPUs using pmap */
 	uint32_t pm_kernel_cpus;	/* mask of CPUs using kernel part
 					 of pmap */
+	uint64_t pm_ncsw;		/* for assertions */
+	struct vm_page *pm_gc_ptp;	/* pages from pmap g/c */
 };
 
 /* macro to access pm_pdirpa slots */
@@ -240,10 +243,32 @@ int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
 
 u_int		x86_mmap_flags(paddr_t);
 
+bool		pmap_is_curpmap(struct pmap *);
+
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
-void	pmap_tlb_shootdown(pmap_t, vaddr_t, vaddr_t, pt_entry_t);
-void	pmap_tlb_shootwait(void);
+typedef enum tlbwhy {
+	TLBSHOOT_APTE,
+	TLBSHOOT_KENTER,
+	TLBSHOOT_KREMOVE,
+	TLBSHOOT_FREE_PTP1,
+	TLBSHOOT_FREE_PTP2,
+	TLBSHOOT_REMOVE_PTE,
+	TLBSHOOT_REMOVE_PTES,
+	TLBSHOOT_SYNC_PV1,
+	TLBSHOOT_SYNC_PV2,
+	TLBSHOOT_WRITE_PROTECT,
+	TLBSHOOT_ENTER,
+	TLBSHOOT_UPDATE,
+	TLBSHOOT_BUS_DMA,
+	TLBSHOOT_BUS_SPACE,
+	TLBSHOOT__MAX,
+} tlbwhy_t;
+
+void		pmap_tlb_init(void);
+void		pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, tlbwhy_t);
+void		pmap_tlb_shootnow(void);
+void		pmap_tlb_intr(void);
 
 #define	__HAVE_PMAP_EMAP
 
@@ -365,7 +390,6 @@ kvtopte(vaddr_t va)
 
 paddr_t vtophys(vaddr_t);
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
-void	pmap_cpu_init_early(struct cpu_info *);
 void	pmap_cpu_init_late(struct cpu_info *);
 bool	sse2_idlezero_page(void *);
 
@@ -414,8 +438,10 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 {
         int s = splvm();
 
+	xpq_queue_lock();
         xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
         xpq_flush_queue();
+	xpq_queue_unlock();
         splx(s);
 }
 
@@ -425,6 +451,9 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 
 paddr_t	vtomach(vaddr_t);
 #define vtomfn(va) (vtomach(va) >> PAGE_SHIFT)
+
+void	pmap_apte_flush(struct pmap *);
+void	pmap_unmap_apdp(void);
 
 #endif	/* XEN */
 
@@ -438,19 +467,6 @@ bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
-
-/*
- * TLB shootdown mailbox.
- */
-
-struct pmap_mbox {
-	volatile void		*mb_pointer;
-	volatile uintptr_t	mb_addr1;
-	volatile uintptr_t	mb_addr2;
-	volatile uintptr_t	mb_head;
-	volatile uintptr_t	mb_tail;
-	volatile uintptr_t	mb_global;
-};
 
 #endif /* _KERNEL */
 

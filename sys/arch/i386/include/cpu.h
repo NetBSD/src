@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.176 2008/12/29 19:59:09 pooka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.176.2.1 2011/08/27 15:37:25 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,6 +68,7 @@ x86_curlwp(void)
 	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_curlwp)));
 	return l;
 }
+
 __inline static void __unused
 cpu_set_curpri(int pri)
 {

@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.27.12.4 2011/03/28 23:04:49 jym Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.27.12.5 2011/08/27 15:37:29 jym Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,11 @@
 #define	_X86_CPUVAR_H_
 
 struct cpu_functions {
+#ifndef XEN
 	int (*start)(struct cpu_info *, paddr_t);
+#else /* XEN */
+   	int (*start)(struct cpu_info *, vaddr_t);
+#endif /* XEN */
 	int (*stop)(struct cpu_info *);
 	void (*cleanup)(struct cpu_info *);
 };
@@ -96,9 +100,7 @@ struct cpufeature_attach_args {
 #include "opt_multiprocessor.h"
 #endif /* defined(_KERNEL_OPT) */
 
-#ifdef MULTIPROCESSOR
 extern uint32_t cpus_running;
-#endif
 
 int x86_ipi(int, int, int);
 void x86_self_ipi(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.21.2.4 2011/03/28 23:04:50 jym Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.21.2.5 2011/08/27 15:37:30 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,12 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.21.2.4 2011/03/28 23:04:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.21.2.5 2011/08/27 15:37:30 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/extent.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -156,42 +157,62 @@ int
 bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 		int flags, bus_space_handle_t *bshp)
 {
+	bus_space_reservation_t bsr;
+	bus_space_tag_t it;
 	int error;
-	struct extent *ex;
 
-	/*
-	 * Pick the appropriate extent map.
-	 */
-	if (x86_bus_space_is_io(t)) {
-		if (flags & BUS_SPACE_MAP_LINEAR)
-			return (EOPNOTSUPP);
-		ex = ioport_ex;
-	} else if (x86_bus_space_is_mem(t))
-		ex = iomem_ex;
-	else
-		panic("x86_memio_map: bad bus space tag");
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_MAP) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_MAP) == 0)
+			continue;
+		return (*it->bst_ov->ov_space_map)(it->bst_ctx, t, bpa, size,
+		    flags, bshp);
+	}
 
-	/*
-	 * Before we go any further, let's make sure that this
-	 * region is available.
-	 */
-	error = extent_alloc_region(ex, bpa, size,
-	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0));
-	if (error)
-		return (error);
+	error = bus_space_reserve(t, bpa, size, flags, &bsr);
+	if (error != 0)
+		return error;
+
+	error = bus_space_reservation_map(t, &bsr, flags, bshp);
+	if (error != 0)
+		bus_space_release(t, &bsr);
+
+	return error;
+}
+
+int
+bus_space_reservation_map(bus_space_tag_t t, bus_space_reservation_t *bsr,
+    int flags, bus_space_handle_t *bshp)
+{
+	bus_addr_t bpa;
+	bus_size_t size;
+	bus_space_tag_t it;
+
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_RESERVATION_MAP) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_RESERVATION_MAP) == 0)
+			continue;
+		return (*it->bst_ov->ov_space_reservation_map)(it->bst_ctx, t,
+		    bsr, flags, bshp);
+	}
+
+	bpa = bus_space_reservation_addr(bsr);
+	size = bus_space_reservation_size(bsr);
 
 	/*
 	 * For I/O space, that's all she wrote.
 	 */
 	if (x86_bus_space_is_io(t)) {
 		*bshp = bpa;
-		return (0);
+		return 0;
 	}
 
 #ifndef XEN
 	if (bpa >= IOM_BEGIN && (bpa + size) != 0 && (bpa + size) <= IOM_END) {
 		*bshp = (bus_space_handle_t)ISA_HOLE_VADDR(bpa);
-		return(0);
+		return 0;
 	}
 #endif	/* !XEN */
 
@@ -199,17 +220,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = x86_mem_add_mapping(bpa, size, flags, bshp);
-	if (error) {
-		if (extent_free(ex, bpa, size, EX_NOWAIT |
-		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
-			printf("x86_memio_map: pa 0x%jx, size 0x%jx\n",
-			    (uintmax_t)bpa, (uintmax_t)size);
-			printf("x86_memio_map: can't free region\n");
-		}
-	}
-
-	return (error);
+	return x86_mem_add_mapping(bpa, size, flags, bshp);
 }
 
 int
@@ -235,13 +246,73 @@ _x86_memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 }
 
 int
-bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
-		bus_size_t size, bus_size_t alignment, bus_size_t boundary,
-		int flags, bus_addr_t *bpap, bus_space_handle_t *bshp)
+bus_space_reserve(bus_space_tag_t t,
+    bus_addr_t bpa,
+    bus_size_t size,
+    int flags, bus_space_reservation_t *bsrp)
 {
+	struct extent *ex;
+	int error;
+	bus_space_tag_t it;
+
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_RESERVE) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_RESERVE) == 0)
+			continue;
+		return (*it->bst_ov->ov_space_reserve)(it->bst_ctx, t,
+		    bpa, size, flags, bsrp);
+	}
+
+	/*
+	 * Pick the appropriate extent map.
+	 */
+	if (x86_bus_space_is_io(t)) {
+		if (flags & BUS_SPACE_MAP_LINEAR)
+			return (EOPNOTSUPP);
+		ex = ioport_ex;
+	} else if (x86_bus_space_is_mem(t))
+		ex = iomem_ex;
+	else
+		panic("x86_memio_alloc: bad bus space tag");
+
+	/*
+	 * Before we go any further, let's make sure that this
+	 * region is available.
+	 */
+	error = extent_alloc_region(ex, bpa, size,
+	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0));
+
+	if (error != 0)
+		return error;
+
+	bus_space_reservation_init(bsrp, bpa, size);
+
+	return 0;
+}
+
+int
+bus_space_reserve_subregion(bus_space_tag_t t,
+    bus_addr_t rstart, bus_addr_t rend,
+    const bus_size_t size, const bus_size_t alignment,
+    const bus_size_t boundary,
+    const int flags, bus_space_reservation_t *bsrp)
+{
+	bus_space_reservation_t bsr;
 	struct extent *ex;
 	u_long bpa;
 	int error;
+	bus_space_tag_t it;
+
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_RESERVE_SUBREGION) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_RESERVE_SUBREGION) ==
+		    0)
+			continue;
+		return (*it->bst_ov->ov_space_reserve_subregion)(it->bst_ctx, t,
+		    rstart, rend, size, alignment, boundary, flags, bsrp);
+	}
 
 	/*
 	 * Pick the appropriate extent map.
@@ -258,7 +329,9 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	/*
 	 * Sanity check the allocation against the extent's boundaries.
 	 */
-	if (rstart < ex->ex_start || rend > ex->ex_end)
+	rstart = MAX(rstart, ex->ex_start);
+	rend = MIN(rend, ex->ex_end);
+	if (rstart >= rend)
 		panic("x86_memio_alloc: bad region start/end");
 
 	/*
@@ -272,31 +345,82 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	if (error)
 		return (error);
 
+	bus_space_reservation_init(&bsr, bpa, size);
+
+	*bsrp = bsr;
+
+	return 0;
+}
+
+void
+bus_space_release(bus_space_tag_t t, bus_space_reservation_t *bsr)
+{
+	struct extent *ex;
+	bus_space_tag_t it;
+
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_RELEASE) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_RELEASE) == 0)
+			continue;
+		(*it->bst_ov->ov_space_release)(it->bst_ctx, t, bsr);
+		return;
+	}
+
 	/*
-	 * For I/O space, that's all she wrote.
+	 * Pick the appropriate extent map.
 	 */
 	if (x86_bus_space_is_io(t)) {
-		*bshp = *bpap = bpa;
-		return (0);
+		ex = ioport_ex;
+	} else if (x86_bus_space_is_mem(t))
+		ex = iomem_ex;
+	else
+		panic("x86_memio_alloc: bad bus space tag");
+
+	if (extent_free(ex, bus_space_reservation_addr(bsr),
+	    bus_space_reservation_size(bsr), EX_NOWAIT |
+	    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
+		printf("%s: pa 0x%jx, size 0x%jx\n", __func__,
+		    (uintmax_t)bus_space_reservation_addr(bsr),
+		    (uintmax_t)bus_space_reservation_size(bsr));
+		printf("%s: can't free region\n", __func__);
+	}
+}
+
+int
+bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
+		bus_size_t size, bus_size_t alignment, bus_size_t boundary,
+		int flags, bus_addr_t *bpap, bus_space_handle_t *bshp)
+{
+	bus_space_reservation_t bsr;
+	bus_space_tag_t it;
+	int error;
+
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_ALLOC) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_ALLOC) == 0)
+			continue;
+		return (*it->bst_ov->ov_space_alloc)(it->bst_ctx, t,
+		    rstart, rend, size, alignment, boundary, flags, bpap, bshp);
 	}
 
 	/*
-	 * For memory space, map the bus physical address to
-	 * a kernel virtual address.
+	 * Do the requested allocation.
 	 */
-	error = x86_mem_add_mapping(bpa, size, flags, bshp);
-	if (error) {
-		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
-		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
-			printf("x86_memio_alloc: pa 0x%jx, size 0x%jx\n",
-			    (uintmax_t)bpa, (uintmax_t)size);
-			printf("x86_memio_alloc: can't free region\n");
-		}
-	}
+	error = bus_space_reserve_subregion(t, rstart, rend, size, alignment,
+	    boundary, flags, &bsr);
 
-	*bpap = bpa;
+	if (error != 0)
+		return error;
 
-	return (error);
+	error = bus_space_reservation_map(t, &bsr, flags, bshp);
+	if (error != 0)
+		bus_space_release(t, &bsr);
+
+	*bpap = bus_space_reservation_addr(&bsr);
+
+	return error;
 }
 
 int
@@ -410,10 +534,10 @@ _x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
 	}
 }
 
-void
-bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
+static void
+bus_space_reservation_unmap1(bus_space_tag_t t, const bus_space_handle_t bsh,
+    const bus_size_t size, bus_addr_t *bpap)
 {
-	struct extent *ex;
 	u_long va, endva;
 	bus_addr_t bpa;
 
@@ -421,11 +545,8 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	 * Find the correct extent and bus physical address.
 	 */
 	if (x86_bus_space_is_io(t)) {
-		ex = ioport_ex;
 		bpa = bsh;
 	} else if (x86_bus_space_is_mem(t)) {
-		ex = iomem_ex;
-
 		if (bsh >= atdevbase && (bsh + size) != 0 &&
 		    (bsh + size) <= (atdevbase + IOM_SIZE)) {
 			bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
@@ -452,21 +573,67 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 	} else
 		panic("x86_memio_unmap: bad bus space tag");
-
 ok:
-	if (extent_free(ex, bpa, size,
-	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
-		printf("x86_memio_unmap: %s 0x%jx, size 0x%jx\n",
-		    x86_bus_space_is_io(t) ? "port" : "pa",
-		    (uintmax_t)bpa, (uintmax_t)size);
-		printf("x86_memio_unmap: can't free region\n");
+	if (bpap != NULL)
+		*bpap = bpa;
+}
+
+void
+bus_space_reservation_unmap(bus_space_tag_t t, const bus_space_handle_t bsh,
+    const bus_size_t size)
+{
+	bus_space_tag_t it;
+
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_RESERVATION_UNMAP) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_RESERVATION_UNMAP) ==
+		    0)
+			continue;
+		(*it->bst_ov->ov_space_reservation_unmap)(it->bst_ctx,
+		    t, bsh, size);
+		return;
 	}
+
+	bus_space_reservation_unmap1(t, bsh, size, NULL);
+}
+
+void
+bus_space_unmap(bus_space_tag_t t, const bus_space_handle_t bsh,
+    const bus_size_t size)
+{
+	bus_addr_t addr;
+	bus_space_reservation_t bsr;
+	bus_space_tag_t it;
+
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_UNMAP) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_UNMAP) == 0)
+			continue;
+		(*it->bst_ov->ov_space_unmap)(it->bst_ctx, t, bsh, size);
+		return;
+	}
+
+	bus_space_reservation_unmap1(t, bsh, size, &addr);
+
+	bus_space_reservation_init(&bsr, addr, size);
+	bus_space_release(t, &bsr);
 }
 
 void
 bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
+	bus_space_tag_t it;
 
+	if ((t->bst_exists & BUS_SPACE_OVERRIDE_FREE) == 0)
+		;	/* skip override */
+	else for (it = t; it != NULL; it = it->bst_super) {
+		if ((it->bst_present & BUS_SPACE_OVERRIDE_FREE) == 0)
+			continue;
+		(*it->bst_ov->ov_space_free)(it->bst_ctx, t, bsh, size);
+		return;
+	}
 	/* bus_space_unmap() does all that we need to do. */
 	bus_space_unmap(t, bsh, size);
 }
@@ -719,4 +886,79 @@ bus_space_vaddr(bus_space_tag_t tag, bus_space_handle_t bsh)
 {
 
 	return x86_bus_space_is_mem(tag) ? (void *)bsh : NULL;
+}
+
+static const void *
+bit_to_function_pointer(const struct bus_space_overrides *ov, uint64_t bit)
+{
+	switch (bit) {
+	case BUS_SPACE_OVERRIDE_MAP:
+		return ov->ov_space_map;
+	case BUS_SPACE_OVERRIDE_UNMAP:
+		return ov->ov_space_unmap;
+	case BUS_SPACE_OVERRIDE_ALLOC:
+		return ov->ov_space_alloc;
+	case BUS_SPACE_OVERRIDE_FREE:
+		return ov->ov_space_free;
+	case BUS_SPACE_OVERRIDE_RESERVE:
+		return ov->ov_space_reserve;
+	case BUS_SPACE_OVERRIDE_RELEASE:
+		return ov->ov_space_release;
+	case BUS_SPACE_OVERRIDE_RESERVATION_MAP:
+		return ov->ov_space_reservation_map;
+	case BUS_SPACE_OVERRIDE_RESERVATION_UNMAP:
+		return ov->ov_space_reservation_unmap;
+	case BUS_SPACE_OVERRIDE_RESERVE_SUBREGION:
+		return ov->ov_space_reserve_subregion;
+	default:
+		return NULL;
+	}
+}
+
+void
+bus_space_tag_destroy(bus_space_tag_t bst)
+{
+	kmem_free(bst, sizeof(struct bus_space_tag));
+}
+
+int
+bus_space_tag_create(bus_space_tag_t obst, const uint64_t present,
+    const uint64_t extpresent, const struct bus_space_overrides *ov, void *ctx,
+    bus_space_tag_t *bstp)
+{
+	uint64_t bit, bits, nbits;
+	bus_space_tag_t bst;
+	const void *fp;
+
+	if (ov == NULL || present == 0 || extpresent != 0)
+		return EINVAL;
+
+	bst = kmem_alloc(sizeof(struct bus_space_tag), KM_SLEEP);
+
+	if (bst == NULL)
+		return ENOMEM;
+
+	bst->bst_super = obst;
+	bst->bst_type = obst->bst_type;
+
+	for (bits = present; bits != 0; bits = nbits) {
+		nbits = bits & (bits - 1);
+		bit = nbits ^ bits;
+		if ((fp = bit_to_function_pointer(ov, bit)) == NULL) {
+			printf("%s: missing bit %" PRIx64 "\n", __func__, bit);
+			goto einval;
+		}
+	}
+
+	bst->bst_ov = ov;
+	bst->bst_exists = obst->bst_exists | present;
+	bst->bst_present = present;
+	bst->bst_ctx = ctx;
+
+	*bstp = bst;
+
+	return 0;
+einval:
+	kmem_free(bst, sizeof(struct bus_space_tag));
+	return EINVAL;
 }

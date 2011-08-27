@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.36.8.4 2011/03/29 20:42:59 jym Exp $
+# $NetBSD: Makefile.boot,v 1.36.8.5 2011/08/27 15:37:27 jym Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -6,6 +6,8 @@ NOMAN=
 PROG?= boot
 NEWVERSWHAT?= "BIOS Boot"
 VERSIONFILE?= ${.CURDIR}/../version
+
+AFLAGS.biosboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 SOURCES?= biosboot.S boot2.c conf.c devopen.c exec.c
 SRCS= ${SOURCES}
@@ -34,8 +36,6 @@ BINMODE=444
 LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start
 CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
 CPPFLAGS+= -I ${.OBJDIR}
-#CPPFLAGS+= -DDEBUG_MEMSIZE
-#CPPFLAGS+= -DBOOT_MSG_COM0
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
 
@@ -47,13 +47,11 @@ CPUFLAGS=  -m32
 LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 .else
-.if ${HAVE_GCC} == 3
-CPUFLAGS=  -mcpu=i386
-.else
 CPUFLAGS=  -march=i386 -mtune=i386
 .endif
 .endif
-.endif
+
+CFLAGS+=   -mno-sse -mno-sse2 -mno-sse3
 
 COPTS+=    -ffreestanding
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
@@ -76,6 +74,8 @@ CPPFLAGS+= -DPASS_BIOSGEOM
 CPPFLAGS+= -DPASS_MEMMAP
 #CPPFLAGS+= -DBOOTPASSWD
 CPPFLAGS+= -DEPIA_HACK
+#CPPFLAGS+= -DDEBUG_MEMSIZE
+#CPPFLAGS+= -DBOOT_MSG_COM0
 
 # The biosboot code is linked to 'virtual' address of zero and is
 # loaded at physical address 0x10000.
@@ -85,7 +85,7 @@ SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
 SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
 SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 CPPFLAGS+=	-Wno-pointer-sign
 .endif
 

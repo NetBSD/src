@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_isa.c,v 1.19.18.2 2009/11/01 13:58:34 jym Exp $	*/
+/*	$NetBSD: npx_isa.c,v 1.19.18.3 2011/08/27 15:37:26 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,13 +67,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.19.18.2 2009/11/01 13:58:34 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.19.18.3 2011/08/27 15:37:26 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpufunc.h>
 #include <machine/intr.h>
 #include <machine/specialreg.h>

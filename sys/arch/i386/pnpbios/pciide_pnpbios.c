@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.26 2008/04/16 22:15:17 cegger Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.26.18.1 2011/08/27 15:37:27 jym Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.26 2008/04/16 22:15:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.26.18.1 2011/08/27 15:37:27 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/wdcreg.h>
 #include <dev/isa/isavar.h>

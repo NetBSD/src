@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.2.8 2011/05/02 22:49:57 jym Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.2.9 2011/08/27 15:37:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -67,6 +67,11 @@
 #include <sys/evcnt.h>
 #include <sys/device_if.h> /* for device_t */
 
+#ifdef XEN
+#include <xen/xen3-public/xen.h>
+#include <xen/xen3-public/event_channel.h>
+#endif /* XEN */
+
 struct intrsource;
 struct pmap;
 struct device;
@@ -95,7 +100,6 @@ struct cpu_info {
 	 */
 	struct cpu_info *ci_next;	/* next cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
-	struct pmap_cpu *ci_pmap_cpu;	/* per-CPU pmap data */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
 	int	ci_fpused;		/* XEN: FPU was used by curlwp */
@@ -118,6 +122,7 @@ struct cpu_info {
 	int ci_curldt;		/* current LDT descriptor */
 	int ci_nintrhand;	/* number of H/W interrupt handlers */
 	uint64_t ci_scratch;
+	uintptr_t ci_pmap_data[128 / sizeof(uintptr_t)];
 
 #ifdef XEN
 	struct iplsource  *ci_isources[NIPL];
@@ -177,13 +182,20 @@ struct cpu_info {
 
 #if defined(XEN) && defined(__x86_64__)
 	/* Currently active user PGD (can't use rcr3() with Xen) */
+	pd_entry_t *	ci_kpm_pdir;	/* per-cpu L4 PD (va) */
+	paddr_t		ci_kpm_pdirpa; /* per-cpu L4 PD (pa) */
 	paddr_t		ci_xen_current_user_pgd;
 #endif
 
 	char *ci_doubleflt_stack;
 	char *ci_ddbipi_stack;
 
+#ifndef XEN
 	struct evcnt ci_ipi_events[X86_NIPI];
+#else   /* XEN */
+	struct evcnt ci_ipi_events[XEN_NIPIS];
+	evtchn_port_t ci_ipi_evtchn;
+#endif  /* XEN */
 
 	device_t	ci_frequency;	/* Frequency scaling technology */
 	device_t	ci_padlock;	/* VIA PadLock private storage */
@@ -219,6 +231,11 @@ struct cpu_info {
 	int		ci_want_resched __aligned(64);
 	int		ci_padout __aligned(64);
 };
+
+#ifdef __x86_64__
+#define ci_pdirpa(ci, index) \
+	((ci)->ci_kpm_pdirpa + (index) * sizeof(pd_entry_t))
+#endif /* __x86_64__ */
 
 /*
  * Macros to handle (some) trapframe registers for common x86 code.
@@ -297,16 +314,13 @@ void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);
 void cpu_init_msrs(struct cpu_info *, bool);
 void cpu_load_pmap(struct pmap *);
+void cpu_broadcast_halt(void);
+void cpu_kick(struct cpu_info *);
 
 extern uint32_t cpus_attached;
-#ifndef XEN
+
 #define	curcpu()		x86_curcpu()
 #define	curlwp			x86_curlwp()
-#else
-/* XXX initgdt() calls pmap_kenter_pa() which calls splvm() before %fs is set */
-#define curcpu()		(&cpu_info_primary)
-#define curlwp			curcpu()->ci_curlwp
-#endif
 #define	curpcb			((struct pcb *)lwp_getpcb(curlwp))
 
 /*

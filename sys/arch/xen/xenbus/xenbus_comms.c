@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.12.2.4 2011/07/25 00:18:28 jym Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.12.2.5 2011/08/27 15:37:33 jym Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.12.2.4 2011/07/25 00:18:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.12.2.5 2011/08/27 15:37:33 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -228,8 +228,8 @@ xb_init_comms(device_t dev)
 }
 
 void
-xb_suspend_comms(device_t dev) {
-
+xb_suspend_comms(device_t dev)
+{
 	int err;
 	int evtchn;
 
@@ -239,7 +239,6 @@ xb_suspend_comms(device_t dev) {
 
 	err = event_remove_handler(evtchn, wake_waiting, NULL);
 	aprint_verbose_dev(dev, "removed event channel %d\n", evtchn);
-
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmos.c,v 1.6.10.2 2009/11/01 13:58:34 jym Exp $	*/
+/*	$NetBSD: cmos.c,v 1.6.10.3 2011/08/27 15:37:26 jym Exp $	*/
 
 /*
  * Copyright (C) 2003 JONE System Co., Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.6.10.2 2009/11/01 13:58:34 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.6.10.3 2011/08/27 15:37:26 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.6.10.2 2009/11/01 13:58:34 jym Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/isa/isareg.h>

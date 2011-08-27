@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.123.2.5 2011/03/28 23:04:33 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.123.2.6 2011/08/27 15:37:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123.2.5 2011/03/28 23:04:33 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123.2.6 2011/08/27 15:37:22 jym Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -156,6 +156,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123.2.5 2011/03/28 23:04:33 jym Exp $"
 #endif
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
@@ -523,6 +524,12 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_QUAD, "tsc_freq", NULL,
 		       NULL, 0, &tsc_freq, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "pae",
+		       SYSCTL_DESCR("Whether the kernel uses PAE"),
+		       NULL, 1, NULL, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
 void
@@ -712,7 +719,7 @@ haltsys:
 #endif /* XEN */
 	}
 
-	x86_broadcast_ipi(X86_IPI_HALT);
+	cpu_broadcast_halt();
 
 	if (howto & RB_HALT) {
 #if NACPICA > 0
@@ -1833,6 +1840,27 @@ int
 valid_user_selector(struct lwp *l, uint64_t seg, char *ldtp, int len)
 {
 	return memseg_baseaddr(l, seg, ldtp, len, NULL);
+}
+
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+	extern int start, __data_start;
+	const vaddr_t v = (vaddr_t)ptr;
+
+	if (v >= (vaddr_t)&start && v < (vaddr_t)kern_end) {
+		*handled = true;
+		if (v < (vaddr_t)&__data_start && (prot & VM_PROT_WRITE))
+			return EFAULT;
+
+	} else if (v >= module_start && v < module_end) {
+		*handled = true;
+		if (!uvm_map_checkprot(module_map, v, v + 1, prot))
+			return EFAULT;
+	} else {
+		*handled = false;
+	}
+	return 0;
 }
 
 /*
