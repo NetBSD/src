@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.15 2010/12/23 14:58:13 mlelstv Exp $      */
+/*        $NetBSD: dm_target.c,v 1.16 2011/08/27 17:06:08 ahoka Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -149,6 +149,16 @@ int
 dm_target_insert(dm_target_t * dm_target)
 {
 	dm_target_t *dmt;
+
+	/* Sanity check for any missing function */
+	KASSERT(dmt->init != NULL);
+	KASSERT(dmt->status != NULL);
+	KASSERT(dmt->strategy != NULL);
+	KASSERT(dmt->deps != NULL);
+	KASSERT(dmt->destroy != NULL);
+	KASSERT(dmt->upcall != NULL);
+	KASSERT(dmt->sync != NULL);
+	KASSERT(dmt->secsize != NULL);
 
 	mutex_enter(&dm_target_mutex);
 
