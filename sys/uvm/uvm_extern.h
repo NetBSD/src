@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.174 2011/06/16 09:21:03 hannken Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.175 2011/08/27 09:11:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -706,7 +706,8 @@ void			uvm_obj_init(struct uvm_object *,
 			    const struct uvm_pagerops *, bool, u_int);
 void			uvm_obj_setlock(struct uvm_object *, kmutex_t *);
 void			uvm_obj_destroy(struct uvm_object *, bool);
-int			uvm_obj_wirepages(struct uvm_object *, off_t, off_t);
+int			uvm_obj_wirepages(struct uvm_object *, off_t, off_t,
+			    struct pglist *);
 void			uvm_obj_unwirepages(struct uvm_object *, off_t, off_t);
 
 /* uvm_page.c */
