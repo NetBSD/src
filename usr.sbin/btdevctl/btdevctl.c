@@ -1,4 +1,4 @@
-/*	$NetBSD: btdevctl.c,v 1.9 2011/03/20 19:46:13 plunky Exp $	*/
+/*	$NetBSD: btdevctl.c,v 1.10 2011/08/27 22:24:14 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 __COPYRIGHT("@(#) Copyright (c) 2006 The NetBSD Foundation, Inc.\
   @(#) Copyright (c) 2006 Itronix, Inc.\
   All rights reserved.");
-__RCSID("$NetBSD: btdevctl.c,v 1.9 2011/03/20 19:46:13 plunky Exp $");
+__RCSID("$NetBSD: btdevctl.c,v 1.10 2011/08/27 22:24:14 joerg Exp $");
 
 #include <prop/proplib.h>
 #include <sys/ioctl.h>
@@ -54,10 +54,9 @@ __RCSID("$NetBSD: btdevctl.c,v 1.9 2011/03/20 19:46:13 plunky Exp $");
 
 #define BTHUB_PATH		"/dev/bthub"
 
-int main(int, char *[]);
-void usage(void);
-char *uppercase(const char *);
-int bthub_pioctl(unsigned long, prop_dictionary_t);
+__dead static void usage(void);
+static char *uppercase(const char *);
+static int bthub_pioctl(unsigned long, prop_dictionary_t);
 
 int
 main(int argc, char *argv[])
@@ -211,7 +210,7 @@ main(int argc, char *argv[])
 	exit(EXIT_SUCCESS);
 }
 
-void
+static void
 usage(void)
 {
 
@@ -231,7 +230,7 @@ usage(void)
 	exit(EXIT_FAILURE);
 }
 
-char *
+static char *
 uppercase(const char *arg)
 {
 	char *str, *ptr;
@@ -246,7 +245,7 @@ uppercase(const char *arg)
 	return str;
 }
 
-int
+static int
 bthub_pioctl(unsigned long cmd, prop_dictionary_t dict)
 {
 	int fd;
