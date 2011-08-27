@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.262 2011/08/13 16:02:48 jakllsch Exp $ */
+/*	$NetBSD: wdc.c,v 1.263 2011/08/27 17:05:58 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,9 +58,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.262 2011/08/13 16:02:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.263 2011/08/27 17:05:58 bouyer Exp $");
 
 #include "opt_ata.h"
+#include "opt_wdc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,8 +299,22 @@ wdc_drvprobe(struct ata_channel *chp)
 		return;
 	}
 
+	s = splbio();
 	/* for ATA/OLD drives, wait for DRDY, 3s timeout */
 	for (i = 0; i < mstohz(3000); i++) {
+		/*
+		 * select drive 1 first, so that master is selected on
+		 * exit from the loop
+		 */
+		if (chp->ch_drive[1].drive_flags & (DRIVE_ATA|DRIVE_OLD)) {
+			if (wdc->select)
+				wdc->select(chp,1);
+			bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh],
+			    0, WDSD_IBM | 0x10);
+			delay(10);	/* 400ns delay */
+			st1 = bus_space_read_1(wdr->cmd_iot,
+			    wdr->cmd_iohs[wd_status], 0);
+		}
 		if (chp->ch_drive[0].drive_flags & (DRIVE_ATA|DRIVE_OLD)) {
 			if (wdc->select)
 				wdc->select(chp,0);
@@ -310,15 +325,6 @@ wdc_drvprobe(struct ata_channel *chp)
 			    wdr->cmd_iohs[wd_status], 0);
 		}
 
-		if (chp->ch_drive[1].drive_flags & (DRIVE_ATA|DRIVE_OLD)) {
-			if (wdc->select)
-				wdc->select(chp,1);
-			bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh],
-			    0, WDSD_IBM | 0x10);
-			delay(10);	/* 400ns delay */
-			st1 = bus_space_read_1(wdr->cmd_iot,
-			    wdr->cmd_iohs[wd_status], 0);
-		}
 
 		if (((chp->ch_drive[0].drive_flags & (DRIVE_ATA|DRIVE_OLD))
 			== 0 ||
@@ -327,9 +333,16 @@ wdc_drvprobe(struct ata_channel *chp)
 			== 0 ||
 		    (st1 & WDCS_DRDY)))
 			break;
+#ifdef WDC_NO_IDS
+		/* cannot tsleep here (can't enable IPL_BIO interrups),
+		 * delay instead
+		 */
+		delay(1000000 / hz);
+#else
+#error "NEED WDC_NO_IDS"
 		tsleep(&params, PRIBIO, "atadrdy", 1);
+#endif
 	}
-	s = splbio();
 	if ((st0 & WDCS_DRDY) == 0)
 		chp->ch_drive[0].drive_flags &= ~(DRIVE_ATA|DRIVE_OLD);
 	if ((st1 & WDCS_DRDY) == 0)
@@ -689,16 +702,22 @@ wdcprobe1(struct ata_channel *chp, int poll)
 	DELAY(2000);
 	(void) bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_error], 0);
 	bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr, WDCTL_4BIT);
+#ifdef WDC_NO_IDS
+	ret_value = __wdcwait_reset(chp, ret_value, RESET_POLL);
+#else
 	splx(s);
-
 	ret_value = __wdcwait_reset(chp, ret_value, poll);
+	s = splbio();
+#endif
 	ATADEBUG_PRINT(("%s:%d: after reset, ret_value=0x%d\n",
 	    device_xname(chp->ch_atac->atac_dev), chp->ch_channel,
 	    ret_value), DEBUG_PROBE);
 
 	/* if reset failed, there's nothing here */
-	if (ret_value == 0)
+	if (ret_value == 0) {
+		splx(s);
 		return 0;
+	}
 
 	/*
 	 * Test presence of drives. First test register signatures looking
@@ -732,7 +751,6 @@ wdcprobe1(struct ata_channel *chp, int poll)
 		 * sc & sn are supposted to be 0x1 for ATAPI but in some cases
 		 * we get wrong values here, so ignore it.
 		 */
-		s = splbio();
 		if (cl == 0x14 && ch == 0xeb) {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
 		} else {
@@ -740,8 +758,18 @@ wdcprobe1(struct ata_channel *chp, int poll)
 			if ((wdc->cap & WDC_CAPABILITY_PREATA) != 0)
 				chp->ch_drive[drive].drive_flags |= DRIVE_OLD;
 		}
-		splx(s);
 	}
+	/*
+	 * Select an existing drive before lowering spl, some WDC_NO_IDS
+	 * devices incorrectly assert IRQ on nonexistent slave
+	 */
+	if (ret_value & 0x01) {
+		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
+		    WDSD_IBM);
+		(void)bus_space_read_1(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_status], 0);
+	}
+	splx(s);
 	return (ret_value);
 }
 
@@ -908,7 +936,6 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 #if NATA_DMA || NATA_PIOBM
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 #endif
-
 	TAILQ_INIT(&reset_xfer);
 
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
@@ -1006,6 +1033,9 @@ wdcreset(struct ata_channel *chp, int poll)
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	int drv_mask1, drv_mask2;
 
+#ifdef WDC_NO_IDS
+	poll = RESET_POLL;
+#endif
 	wdc->reset(chp, poll);
 
 	drv_mask1 = (chp->ch_drive[0].drive_flags & DRIVE) ? 0x01:0x00;
@@ -1066,7 +1096,7 @@ __wdcwait_reset(struct ata_channel *chp, int drv_mask, int poll)
 	u_int8_t sc0 = 0, sn0 = 0, cl0 = 0, ch0 = 0;
 	u_int8_t sc1 = 0, sn1 = 0, cl1 = 0, ch1 = 0;
 #endif
-
+	KASSERT(poll == 1);
 	if (poll)
 		nloop = WDCNDELAY_RST;
 	else
@@ -1475,12 +1505,16 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		drive_flags = chp->ch_drive[xfer->c_drive].drive_flags;
 	}
 
+#ifdef WDC_NO_IDS
+	wflags = AT_POLL;
+#else
 	if ((ata_c->flags & (AT_WAIT | AT_POLL)) == (AT_WAIT | AT_POLL)) {
 		/* both wait and poll, we can tsleep here */
 		wflags = AT_WAIT | AT_POLL;
 	} else {
 		wflags = AT_POLL;
 	}
+#endif
 
  again:
 	ATADEBUG_PRINT(("__wdccommand_intr %s:%d:%d\n",
