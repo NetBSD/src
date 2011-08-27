@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.327 2011/08/27 18:07:10 reinoud Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.328 2011/08/27 18:11:48 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.327 2011/08/27 18:07:10 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.328 2011/08/27 18:11:48 reinoud Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -855,9 +855,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	{
 		size_t j;
 		struct exec_vmcmd *vp = &pack.ep_vmcmds.evs_cmds[0];
-		DPRINTF(("vmcmds %u\n", pack.ep_vmcmds.evs_used);
+		DPRINTF(("vmcmds %u\n", pack.ep_vmcmds.evs_used));
 		for (j = 0; j < pack.ep_vmcmds.evs_used; j++) {
-			DPRINTF("vmcmd[%zu] = vmcmd_map_%s %#"
+			DPRINTF(("vmcmd[%zu] = vmcmd_map_%s %#"
 			    PRIxVADDR"/%#"PRIxVSIZE" fd@%#"
 			    PRIxVSIZE" prot=0%o flags=%d\n", j,
 			    vp[j].ev_proc == vmcmd_map_pagedvn ?
