@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.64 2011/06/23 20:55:08 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.65 2011/08/27 09:06:58 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd March 18, 2011
+.Dd August 27, 2011
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1164,6 +1164,9 @@ The currently defined protocols and names are:
 .It Sy Protocol name	Variable name	Type	Changeable
 .It arp	down	integer	yes
 .It arp	keep	integer	yes
+.It arp	log_movements	integer	yes
+.It arp	log_permanent_modify	integer	yes
+.It arp	log_wrong_iface	integer	yes
 .It arp	prune	integer	yes
 .It arp	refresh	integer	yes
 .It carp	allow	integer	yes
