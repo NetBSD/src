@@ -1,4 +1,4 @@
-.\"     $NetBSD: resize_ffs.8,v 1.10 2011/01/05 02:18:15 riz Exp $
+.\"     $NetBSD: resize_ffs.8,v 1.11 2011/08/27 16:34:57 christos Exp $
 .\"
 .\" As its sole author, I explicitly place this man page in the public
 .\" domain.  Anyone may use it in any way for any purpose (though I would
@@ -24,8 +24,7 @@
 .Nm
 resizes a file system.
 .Ar special
-is the name of the raw disk device or file where the file system resides;
-(Sectors are almost always 512 bytes, and
+is the name of the raw disk device or file where the file system resides.
 .Nm
 can both grow and shrink file systems.
 When growing, the disk device
@@ -60,6 +59,8 @@ The options are as follows:
 .It Fl s
 Specify the file system size to which the file system should be
 resized.
+The size is given as the count of disk sectors, usually 512 bytes. To see the 
+exact value, have a look at the disk specification or the disklabel.
 Mostly used to shrink file systems.
 .It Fl y
 Disable sanity questions made by

@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.31 2011/08/15 02:22:46 dholland Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.32 2011/08/27 16:34:57 christos Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.31 2011/08/15 02:22:46 dholland Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.32 2011/08/27 16:34:57 christos Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -322,7 +322,7 @@ loadcgs(void)
 	char *cgp;
 
 	cgblksz = roundup(oldsb->fs_cgsize, oldsb->fs_fsize);
-	cgs = nfmalloc(oldsb->fs_ncg * sizeof(struct cg *), "cg pointers");
+	cgs = nfmalloc(oldsb->fs_ncg * sizeof(*cgs), "cg pointers");
 	cgp = alloconce(oldsb->fs_ncg * cgblksz, "cgs");
 	cgflags = nfmalloc(oldsb->fs_ncg, "cg flags");
 	csums = nfmalloc(oldsb->fs_cssize, "cg summary");
@@ -611,7 +611,7 @@ initcg(int cgn)
 	if (is_ufs2 == 0)
 		/* Write out the cleared inodes. */
 		writeat(fsbtodb(newsb, cgimin(newsb, cgn)), zinodes,
-		    newsb->fs_ipg * sizeof(struct ufs1_dinode));
+		    newsb->fs_ipg * sizeof(*zinodes));
 	/* Dirty the cg. */
 	cgflags[cgn] |= CGF_DIRTY;
 }
@@ -862,10 +862,8 @@ csum_fixup(void)
 	 * on disk at this point; the csum info will be written to the
 	 * then-current fs_csaddr as part of the final flush. */
 	newloc = find_freespace(ntot);
-	if (newloc < 0) {
-		printf("Sorry, no space available for new csums\n");
-		exit(EXIT_FAILURE);
-	}
+	if (newloc < 0)
+		errx(EXIT_FAILURE, "Sorry, no space available for new csums");
 	for (i = 0, f = newsb->fs_csaddr, t = newloc; i < ntot; i++, f++, t++) {
 		if (i < nold) {
 			free_frag(f);
@@ -926,16 +924,15 @@ grow(void)
 	/* Update the timestamp. */
 	newsb->fs_time = timestamp();
 	/* Allocate and clear the new-inode area, in case we add any cgs. */
-	zinodes = alloconce(newsb->fs_ipg * sizeof(struct ufs1_dinode),
-                            "zeroed inodes");
-	memset(zinodes, 0, newsb->fs_ipg * sizeof(struct ufs1_dinode));
+	zinodes = alloconce(newsb->fs_ipg * sizeof(*zinodes), "zeroed inodes");
+	memset(zinodes, 0, newsb->fs_ipg * sizeof(*zinodes));
 	/* Update the size. */
 	newsb->fs_size = dbtofsb(newsb, newsize);
 	/* Did we actually not grow?  (This can happen if newsize is less than
 	 * a frag larger than the old size - unlikely, but no excuse to
 	 * misbehave if it happens.) */
 	if (newsb->fs_size == oldsb->fs_size) {
-		printf("New fs size %"PRIu64" = odl fs size %"PRIu64
+		printf("New fs size %"PRIu64" = old fs size %"PRIu64
 		    ", not growing.\n", newsb->fs_size, oldsb->fs_size);
 		return;
 	}
@@ -977,7 +974,7 @@ grow(void)
 	   cgs. */
 	if (newsb->fs_ncg > oldsb->fs_ncg) {
 		char *cgp;
-		cgs = nfrealloc(cgs, newsb->fs_ncg * sizeof(struct cg *),
+		cgs = nfrealloc(cgs, newsb->fs_ncg * sizeof(*cgs),
                                 "cg pointers");
 		cgflags = nfrealloc(cgflags, newsb->fs_ncg, "cg flags");
 		memset(cgflags + oldsb->fs_ncg, 0,
@@ -1228,7 +1225,7 @@ loadinodes(void)
 						    bswap32(dp2[i].di_db[j]);
 				}
 				memcpy(&inodes[ino].dp2, &dp2[i],
-				    sizeof(struct ufs2_dinode));
+				    sizeof(inodes[ino].dp2));
 			} else {
 				if (needswap) {
 					ffs_dinode1_swap(&(dp1[i]), &(dp1[i]));
@@ -1237,7 +1234,7 @@ loadinodes(void)
 						    bswap32(dp1[i].di_db[j]);
 				}
 				memcpy(&inodes[ino].dp1, &dp1[i],
-				    sizeof(struct ufs1_dinode));
+				    sizeof(inodes[ino].dp1));
 			}
 			    if (++ino > imax)
 				    errx(EXIT_FAILURE,
@@ -1249,11 +1246,10 @@ loadinodes(void)
 /*
  * Report a file-system-too-full problem.
  */
-static void
+__dead static void
 toofull(void)
 {
-	printf("Sorry, would run out of data blocks\n");
-	exit(EXIT_FAILURE);
+	errx(EXIT_FAILURE, "Sorry, would run out of data blocks");
 }
 /*
  * Record a desire to move "n" frags from "from" to "to".
@@ -1584,11 +1580,9 @@ evict_inodes(struct cg * cg)
 	for (i = 0; i < newsb->fs_ipg; i++, inum++) {
 		if (DIP(inodes + inum,di_mode) != 0) {
 			fi = find_freeinode();
-			if (fi < 0) {
-				printf("Sorry, inodes evaporated - "
-				    "file system probably needs fsck\n");
-				exit(EXIT_FAILURE);
-			}
+			if (fi < 0)
+				errx(EXIT_FAILURE, "Sorry, inodes evaporated - "
+				    "file system probably needs fsck");
 			inomove[inum] = fi;
 			clr_bits(cg_inosused(cg, 0), i, 1);
 			set_bits(cg_inosused(cgs[ino_to_cg(newsb, fi)], 0),
@@ -1720,11 +1714,9 @@ shrink(void)
 		    (unsigned long int) fsbtodb(newsb, newsb->fs_size));
 	}
 	/* Let's make sure we're not being shrunk into oblivion. */
-	if (newsb->fs_ncg < 1) {
-		printf("Size too small - file system would "
-		    "have no cylinders\n");
-		exit(EXIT_FAILURE);
-	}
+	if (newsb->fs_ncg < 1)
+		errx(EXIT_FAILURE, "Size too small - file system would "
+		    "have no cylinders");
 	/* Initialize for block motion. */
 	blkmove_init();
 	/* Update csum size, then fix up for the new size */
@@ -1778,10 +1770,8 @@ shrink(void)
 			slop += cgs[i]->cg_cs.cs_nifree;
 		for (; i < oldsb->fs_ncg; i++)
 			slop -= oldsb->fs_ipg - cgs[i]->cg_cs.cs_nifree;
-		if (slop < 0) {
-			printf("Sorry, would run out of inodes\n");
-			exit(EXIT_FAILURE);
-		}
+		if (slop < 0)
+			errx(EXIT_FAILURE, "Sorry, would run out of inodes");
 	}
 	/* Copy data, then update pointers to data.  See the comment
 	 * header on perform_data_move for ordering considerations. */
@@ -2165,11 +2155,9 @@ main(int argc, char **argv)
 
 	oldsb->fs_qbmask = ~(int64_t) oldsb->fs_bmask;
 	oldsb->fs_qfmask = ~(int64_t) oldsb->fs_fmask;
-	if (oldsb->fs_ipg % INOPB(oldsb)) {
-		(void)fprintf(stderr, "ipg[%d] %% INOPB[%d] != 0\n",
+	if (oldsb->fs_ipg % INOPB(oldsb))
+		errx(EXIT_FAILURE, "ipg[%d] %% INOPB[%d] != 0",
 		    (int) oldsb->fs_ipg, (int) INOPB(oldsb));
-		exit(EXIT_FAILURE);
-	}
 	/* The superblock is bigger than struct fs (there are trailing
 	 * tables, of non-fixed size); make sure we copy the whole
 	 * thing.  SBLOCKSIZE may be an over-estimate, but we do this
