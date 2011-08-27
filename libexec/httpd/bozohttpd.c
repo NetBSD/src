@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.27 2011/03/29 07:22:31 jmmv Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.28 2011/08/27 15:33:59 joerg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.176 2010/09/20 22:26:28 mrg Exp $	*/
 
@@ -153,10 +153,6 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
-
-#ifndef __attribute__
-#define __attribute__(x)
-#endif /* __attribute__ */
 
 #include "bozohttpd.h"
 
@@ -1412,9 +1408,10 @@ bozo_process_request(bozo_httpreq_t *request)
 		request->hr_first_byte_pos = 0;
 		request->hr_last_byte_pos = sb.st_size - 1;
 	}
-	debug((httpd, DEBUG_FAT, "have_range %d first_pos %qd last_pos %qd",
+	debug((httpd, DEBUG_FAT, "have_range %d first_pos %lld last_pos %lld",
 	    request->hr_have_range,
-	    request->hr_first_byte_pos, request->hr_last_byte_pos));
+	    (long long)request->hr_first_byte_pos,
+	    (long long)request->hr_last_byte_pos));
 	if (request->hr_have_range)
 		bozo_printf(httpd, "%s 206 Partial Content\r\n",
 				request->hr_proto);
@@ -1848,7 +1845,7 @@ bozodgetln(bozohttpd_t *httpd, int fd, ssize_t *lenp,
 
 	}
 	httpd->getln_buffer[len] = '\0';
-	debug((httpd, DEBUG_OBESE, "bozodgetln returns: ``%s'' with len %d",
+	debug((httpd, DEBUG_OBESE, "bozodgetln returns: ``%s'' with len %zd",
 	       httpd->getln_buffer, len));
 	*lenp = len;
 	return httpd->getln_buffer;

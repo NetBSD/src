@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2011/03/29 07:22:31 jmmv Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2011/08/27 15:33:59 joerg Exp $	*/
 
 /*	$eterna: main.c,v 1.4 2010/07/11 00:34:28 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -47,10 +47,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifndef __attribute__
-#define __attribute__(x)
-#endif /* __attribute__ */
-
 #include "bozohttpd.h"
 
 /* variables and functions */
@@ -59,7 +55,7 @@
 #endif
 
 /* print a usage message, and then exit */
-static void
+BOZO_DEAD static void
 usage(bozohttpd_t *httpd, char *progname)
 {
 	bozo_warn(httpd, "usage: %s [options] slashdir [virtualhostname]",

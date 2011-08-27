@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.11 2011/08/21 10:45:33 hannken Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.12 2011/08/27 15:33:59 joerg Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.13 2010/05/12 12:24:58 rtr Exp $	*/
 
@@ -64,7 +64,7 @@ typedef struct sslinfo_t {
  * the error provided by the caller at the point of error it pops and
  * prints all errors from the SSL error queue.
  */
-static void
+BOZO_DEAD static void
 bozo_ssl_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
 {
         va_list ap;

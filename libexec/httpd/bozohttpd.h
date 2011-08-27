@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.18 2011/03/29 07:22:31 jmmv Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.19 2011/08/27 15:33:59 joerg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.37 2010/09/20 22:26:28 mrg Exp $	*/
 
@@ -172,11 +172,16 @@ void	debug__(bozohttpd_t *, int, const char *, ...)
 #define	debug(x)	
 #endif /* NO_DEBUG */
 
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define BOZO_PRINTFLIKE(x,y) __attribute__((__format__(__printf__, x,y)))
+#define BOZO_DEAD __attribute__((__noreturn__))
+#endif
+
 void	bozo_warn(bozohttpd_t *, const char *, ...)
-		__attribute__((__format__(__printf__, 2, 3)));
+		BOZO_PRINTFLIKE(2, 3);
 void	bozo_err(bozohttpd_t *, int, const char *, ...)
-		__attribute__((__format__(__printf__, 3, 4)))
-		__attribute__((__noreturn__));
+		BOZO_PRINTFLIKE(3, 4)
+		BOZO_DEAD;
 int	bozo_http_error(bozohttpd_t *, int, bozo_httpreq_t *, const char *);
 
 int	bozo_check_special_files(bozo_httpreq_t *, const char *);
