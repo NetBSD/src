@@ -1,4 +1,4 @@
-/* $NetBSD: copy.c,v 1.4 2011/08/25 19:07:45 reinoud Exp $ */
+/* $NetBSD: copy.c,v 1.5 2011/08/27 17:57:14 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,13 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.4 2011/08/25 19:07:45 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.5 2011/08/27 17:57:14 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
-#include <sys/param.h>		// tmp
-#include <uvm/uvm.h>		// tmp
-#include <uvm/uvm_pmap.h>	// tmp
+
+/* XXX until strnlen(3) has been added to the kernel, we *could* panic on it */
+#define strnlen(str, maxlen) min(strlen((str)), maxlen)
 
 int
 copyin(const void *uaddr, void *kaddr, size_t len)
@@ -54,27 +54,30 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 int
 copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
+	len = min(strnlen(uaddr, len), len) + 1;
 	strncpy(kaddr, uaddr, len);
 	if (done)
-		*done = min(strlen(uaddr), len);
+		*done = len;
 	return 0;
 }
 
 int
 copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
+	len = min(strnlen(kaddr, len), len) + 1;
 	strncpy(uaddr, kaddr, len);
 	if (done)
-		*done = min(strlen(kaddr), len);
+		*done = len;
 	return 0;
 }
 
 int
 copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
 {
+	len = min(strnlen(kfaddr, len), len) + 1;
 	strncpy(kdaddr, kfaddr, len);
 	if (done)
-		*done = min(strlen(kfaddr), len);
+		*done = len;
 	return 0;
 }
 
