@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.35 2011/04/04 18:24:56 ahoka Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.36 2011/08/27 19:25:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -392,3 +392,10 @@ struct netbsd32_vnd_ioctl50 {
 #define ENVSYS_GETDICTIONARY32	_IOWR('E', 0, struct netbsd32_plistref)
 #define ENVSYS_SETDICTIONARY32	_IOWR('E', 1, struct netbsd32_plistref)
 #define ENVSYS_REMOVEPROPS32	_IOWR('E', 2, struct netbsd32_plistref)
+
+/* from <sys/wdog.h> */
+struct netbsd32_wdog_conf {
+	netbsd32_charp	wc_names;
+	int		wc_count;
+};
+#define WDOGIOC_GWDOGS32	_IOWR('w', 5, struct netbsd32_wdog_conf)
