@@ -1,4 +1,4 @@
-/*	$NetBSD: apmlabel.c,v 1.1.1.1 2007/03/05 23:06:53 dillo Exp $	*/
+/*	$NetBSD: apmlabel.c,v 1.2 2011/08/27 16:10:51 joerg Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: apmlabel.c,v 1.1.1.1 2007/03/05 23:06:53 dillo Exp $");
+__RCSID("$NetBSD: apmlabel.c,v 1.2 2011/08/27 16:10:51 joerg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -55,17 +55,16 @@ __RCSID("$NetBSD: apmlabel.c,v 1.1.1.1 2007/03/05 23:06:53 dillo Exp $");
 #include "dkcksum.h"
 #include "extern.h"
 
-int	main(int, char **);
-void	usage(void);
-void	getlabel(int);
-void	setlabel(int, int);
-int	getparts(int, int);
-struct apple_drvr_map *convert_drvr_map(unsigned char *);
-struct apple_part_map_entry *convert_part_map_entry(unsigned char *);
+__dead static void	usage(void);
+static void	getlabel(int);
+static void	setlabel(int, int);
+static int	getparts(int, int);
+static struct apple_drvr_map *convert_drvr_map(unsigned char *);
+static struct apple_part_map_entry *convert_part_map_entry(unsigned char *);
 
-struct disklabel label;
+static struct disklabel label;
 
-void
+static void
 getlabel(int sd)
 {
 
@@ -81,7 +80,7 @@ getlabel(int sd)
 		label.d_npartitions = getrawpartition() + 1;
 }
 
-void
+static void
 setlabel(int sd, int doraw)
 {
 	int one = 1;
@@ -98,7 +97,7 @@ setlabel(int sd, int doraw)
 
 }
 
-int
+static int
 getparts(int sd, int verbose)
 {
 	unsigned char		buf[DEV_BSIZE];
@@ -235,7 +234,7 @@ getparts(int sd, int verbose)
 	return (changed);
 }
 
-struct apple_drvr_map *
+static struct apple_drvr_map *
 convert_drvr_map(unsigned char *buf)
 {
 	struct apple_drvr_map *drvr;
@@ -259,7 +258,7 @@ convert_drvr_map(unsigned char *buf)
 	return drvr;
 }
 
-struct apple_part_map_entry *
+static struct apple_part_map_entry *
 convert_part_map_entry(unsigned char *buf)
 {
 	struct apple_part_map_entry *part;
@@ -285,7 +284,7 @@ convert_part_map_entry(unsigned char *buf)
 	return part;
 }
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-fqrw] rawdisk\n",
