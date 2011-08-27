@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.39 2009/02/13 01:37:23 lukem Exp $	*/
+/*	$NetBSD: mknod.c,v 1.40 2011/08/27 18:37:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: mknod.c,v 1.39 2009/02/13 01:37:23 lukem Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.40 2011/08/27 18:37:41 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,8 +63,7 @@ __RCSID("$NetBSD: mknod.c,v 1.39 2009/02/13 01:37:23 lukem Exp $");
 static int gid_name(const char *, gid_t *);
 static portdev_t callPack(pack_t *, int, u_long *);
 
-	int	main(int, char *[]);
-static	void	usage(void);
+__dead static	void	usage(void);
 
 #ifdef KERN_DRIVERS
 static struct kinfo_drivers *kern_drivers;
