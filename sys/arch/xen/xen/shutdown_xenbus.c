@@ -1,4 +1,4 @@
-/*	$Id: shutdown_xenbus.c,v 1.5.8.3 2009/11/01 21:43:28 jym Exp $	*/
+/*	$Id: shutdown_xenbus.c,v 1.5.8.4 2011/08/27 15:56:48 jym Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shutdown_xenbus.c,v 1.5.8.3 2009/11/01 21:43:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shutdown_xenbus.c,v 1.5.8.4 2011/08/27 15:56:48 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -130,6 +130,7 @@ again:
 	} else if (strcmp(reqstr, "reboot") == 0) {
 		sysmon_pswitch_event(&xenbus_reset, PSWITCH_EVENT_PRESSED);
 	} else if (strcmp(reqstr, "suspend") == 0) {
+		xen_suspend_allow = true;
 		sysmon_pswitch_event(&xenbus_sleep, PSWITCH_EVENT_PRESSED);
 	} else {
 		printf("ignore shutdown request: %s\n", reqstr);
@@ -145,6 +146,7 @@ static struct xenbus_watch xenbus_shutdown_watch = {
 void
 shutdown_xenbus_setup(void)
 {
+	xen_suspend_allow = false;
 
 	if (sysmon_pswitch_register(&xenbus_power) != 0 ||
 	    sysmon_pswitch_register(&xenbus_reset) != 0 ||
