@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.17 2011/08/27 20:49:36 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.18 2011/08/27 21:15:07 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17 2011/08/27 20:49:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18 2011/08/27 21:15:07 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17 2011/08/27 20:49:36 jmcneill Exp $");
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
 
-/* #define CPU_DEBUG */
+#define CPU_DEBUG
 
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);
@@ -269,6 +269,9 @@ cpu_lwp_free2(struct lwp *l)
 static void
 cpu_lwp_trampoline(void (*func)(void *), void *arg)
 {
+#ifdef CPU_DEBUG
+	printf("cpu_lwp_trampoline called with func %p, arg %p\n", (void *) func, arg);
+#endif
 	lwp_startup(curcpu()->ci_stash, curlwp);
 
 	func(arg);
