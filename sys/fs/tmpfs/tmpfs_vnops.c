@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.89 2011/08/18 21:42:18 riastradh Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.90 2011/08/27 15:32:28 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.89 2011/08/18 21:42:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.90 2011/08/27 15:32:28 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -103,9 +103,7 @@ const struct vnodeopv_entry_desc tmpfs_vnodeop_entries[] = {
 	{ &vop_bwrite_desc,		tmpfs_bwrite },
 	{ &vop_getpages_desc,		tmpfs_getpages },
 	{ &vop_putpages_desc,		tmpfs_putpages },
-#if TMPFS_WHITEOUT
 	{ &vop_whiteout_desc,		tmpfs_whiteout },
-#endif
 	{ NULL, NULL }
 };
 
@@ -713,11 +711,15 @@ tmpfs_remove(void *v)
 
 	/*
 	 * Remove the entry from the directory (drops the link count) and
-	 * destroy it.  Note: the inode referred by it will not be destroyed
+	 * destroy it or replace it with a whiteout.
+	 * Note: the inode referred by it will not be destroyed
 	 * until the vnode is reclaimed/recycled.
 	 */
 	tmpfs_dir_detach(dvp, de);
-	tmpfs_free_dirent(VFS_TO_TMPFS(vp->v_mount), de);
+	if (ap->a_cnp->cn_flags & DOWHITEOUT)
+		tmpfs_dir_attach(dvp, de, TMPFS_NODE_WHITEOUT);
+	else
+		tmpfs_free_dirent(VFS_TO_TMPFS(vp->v_mount), de);
 	error = 0;
 out:
 	/* Drop the references and unlock the vnodes. */
@@ -2103,12 +2105,19 @@ tmpfs_rmdir(void *v)
 	KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
 
 	/*
-	 * Directories with more than two entries ('.' and '..') cannot
-	 * be removed.
+	 * Directories with more than two non-whiteout
+	 * entries ('.' and '..') cannot be removed.
 	 */
 	if (node->tn_size > 0) {
-		error = ENOTEMPTY;
-		goto out;
+		KASSERT(error == 0);
+		TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
+			if (de->td_node != TMPFS_NODE_WHITEOUT) {
+				error = ENOTEMPTY;
+				break;
+			}
+		}
+		if (error)
+			goto out;
 	}
 
 	/* Lookup the directory entry (check the cached hint first). */
@@ -2136,10 +2145,22 @@ tmpfs_rmdir(void *v)
 	cache_purge(dvp);
 
 	/*
-	 * Destroy the directory entry.  Note: the inode referred by it
-	 * will not be destroyed until the vnode is reclaimed.
+	 * Destroy the directory entry or replace it with a whiteout.
+	 * Note: the inode referred by it will not be destroyed
+	 * until the vnode is reclaimed.
 	 */
-	tmpfs_free_dirent(tmp, de);
+	if (ap->a_cnp->cn_flags & DOWHITEOUT)
+		tmpfs_dir_attach(dvp, de, TMPFS_NODE_WHITEOUT);
+	else
+		tmpfs_free_dirent(tmp, de);
+
+	/* Destroy the whiteout entries from the node. */
+	while ((de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir)) != NULL) {
+		KASSERT(de->td_node == TMPFS_NODE_WHITEOUT);
+		tmpfs_dir_detach(vp, de);
+		tmpfs_free_dirent(tmp, de);
+	}
+
 	KASSERT(node->tn_links == 0);
 out:
 	/* Release the nodes. */
@@ -2507,7 +2528,6 @@ tmpfs_putpages(void *v)
 	return error;
 }
 
-#ifdef TMPFS_WHITEOUT
 int
 tmpfs_whiteout(void *v)
 {
@@ -2544,7 +2564,6 @@ tmpfs_whiteout(void *v)
 	}
 	return 0;
 }
-#endif
 
 int
 tmpfs_print(void *v)
