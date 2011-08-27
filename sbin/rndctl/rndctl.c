@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.19 2009/04/05 12:06:33 lukem Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.20 2011/08/27 18:48:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.19 2009/04/05 12:06:33 lukem Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.20 2011/08/27 18:48:59 joerg Exp $");
 #endif
 
 
@@ -52,7 +52,7 @@ typedef struct {
 	u_int32_t a_type;
 } arg_t;
 
-arg_t source_types[] = {
+static const arg_t source_types[] = {
 	{ "???",     RND_TYPE_UNKNOWN },
 	{ "disk",    RND_TYPE_DISK },
 	{ "net",     RND_TYPE_NET },
@@ -62,13 +62,13 @@ arg_t source_types[] = {
 	{ NULL,      0 }
 };
 
-static void usage(void);
-u_int32_t find_type(char *name);
-const char *find_name(u_int32_t);
-void do_ioctl(rndctl_t *);
-char * strflags(u_int32_t);
-void do_list(int, u_int32_t, char *);
-void do_stats(void);
+__dead static void usage(void);
+static u_int32_t find_type(const char *name);
+static const char *find_name(u_int32_t);
+static void do_ioctl(rndctl_t *);
+static char * strflags(u_int32_t);
+static void do_list(int, u_int32_t, char *);
+static void do_stats(void);
 
 static void
 usage(void)
@@ -81,10 +81,10 @@ usage(void)
 	exit(1);
 }
 
-u_int32_t
-find_type(char *name)
+static u_int32_t
+find_type(const char *name)
 {
-	arg_t *a;
+	const arg_t *a;
 
 	a = source_types;
 
@@ -98,10 +98,10 @@ find_type(char *name)
 	return (0);
 }
 
-const char *
+static const char *
 find_name(u_int32_t type)
 {
-	arg_t *a;
+	const arg_t *a;
 
 	a = source_types;
 
@@ -115,7 +115,7 @@ find_name(u_int32_t type)
 	return ("???");
 }
 
-void
+static void
 do_ioctl(rndctl_t *rctl)
 {
 	int fd;
@@ -132,7 +132,7 @@ do_ioctl(rndctl_t *rctl)
 	close(fd);
 }
 
-char *
+static char *
 strflags(u_int32_t fl)
 {
 	static char str[512];
@@ -156,7 +156,7 @@ strflags(u_int32_t fl)
 
 #define HEADER "Source                 Bits Type      Flags\n"
 
-void
+static void
 do_list(int all, u_int32_t type, char *name)
 {
 	rndstat_t rstat;
@@ -216,8 +216,8 @@ do_list(int all, u_int32_t type, char *name)
 	close(fd);
 }
 
-void
-do_stats()
+static void
+do_stats(void)
 {
 	rndpoolstat_t rs;
 	int fd;
