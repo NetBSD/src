@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.18.2.3 2010/10/24 22:48:16 jym Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.2.2.2 2011/08/27 15:59:49 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -80,22 +80,23 @@
 typedef paddr_t bus_addr_t;
 typedef size_t bus_size_t;
 
+struct bus_space_tag;
+typedef	struct bus_space_tag *bus_space_tag_t;
+
 struct bus_space_tag {
-	int bst_type;
+	int					bst_type;
+	bus_space_tag_t				bst_super;
+	/* bst_present: bitmap indicating overrides present (1) in *this* tag,
+	 * bst_exists: bitmap indicating overrides present (1) in *this* tag
+	 * or in an ancestor's tag (follow bst_super to ancestors)
+	 */
+	uint64_t				bst_present;
+	uint64_t				bst_exists;
+	const struct bus_space_overrides	*bst_ov;
+	void					*bst_ctx;
 };
 
-typedef	struct bus_space_tag *bus_space_tag_t;
 typedef	vaddr_t bus_space_handle_t;
-
-extern bus_space_tag_t x86_bus_space_mem;
-extern bus_space_tag_t x86_bus_space_io;
-
-bool	bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
-
-int	_x86_memio_map(bus_space_tag_t t, bus_addr_t addr,
-	    bus_size_t size, int flags, bus_space_handle_t *bshp);
-void	_x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
-	    bus_size_t size, bus_addr_t *);
 
 typedef struct x86_bus_dma_tag		*bus_dma_tag_t;
 typedef struct x86_bus_dmamap		*bus_dmamap_t;
@@ -139,7 +140,5 @@ struct x86_bus_dmamap {
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
-
-#include <sys/bus_proto.h>
 
 #endif /* _X86_BUS_H_ */

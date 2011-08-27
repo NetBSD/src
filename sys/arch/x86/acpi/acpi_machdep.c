@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.23.2.4 2011/03/28 23:04:50 jym Exp $	*/
+/* $NetBSD: acpi_machdep.c,v 1.2.2.2 2011/08/27 15:59:49 jym Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,15 +40,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.23.2.4 2011/03/28 23:04:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.2.2.2 2011/08/27 15:59:49 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/cpufunc.h>
 
 #include <dev/acpi/acpica.h>
@@ -77,17 +77,7 @@ extern uint32_t cpus_attached;
 ACPI_STATUS
 acpi_md_OsInitialize(void)
 {
-
-	/* Nothing to do, yet. */
-	return (AE_OK);
-}
-
-ACPI_STATUS
-acpi_md_OsTerminate(void)
-{
-
-	/* Nothing to do, yet. */
-	return (AE_OK);
+	return AE_OK;
 }
 
 ACPI_PHYSICAL_ADDRESS
@@ -179,10 +169,13 @@ sci_override:
 	 */
 	ih = intr_establish(irq, pic, pin, trigger, IPL_TTY,
 	    (int (*)(void *)) ServiceRoutine, Context, false);
+
 	if (ih == NULL)
-		return (AE_NO_MEMORY);
+		return AE_NO_MEMORY;
+
 	*cookiep = ih;
-	return (AE_OK);
+
+	return AE_OK;
 }
 
 void
@@ -195,20 +188,19 @@ ACPI_STATUS
 acpi_md_OsMapMemory(ACPI_PHYSICAL_ADDRESS PhysicalAddress,
     uint32_t Length, void **LogicalAddress)
 {
+	int rv;
 
-	if (_x86_memio_map(x86_bus_space_mem, PhysicalAddress, Length,
-	    0, (bus_space_handle_t *) LogicalAddress) == 0)
-		return (AE_OK);
+	rv = _x86_memio_map(x86_bus_space_mem, PhysicalAddress,
+	    Length, 0, (bus_space_handle_t *)LogicalAddress);
 
-	return (AE_NO_MEMORY);
+	return (rv != 0) ? AE_NO_MEMORY : AE_OK;
 }
 
 void
 acpi_md_OsUnmapMemory(void *LogicalAddress, uint32_t Length)
 {
-
 	(void) _x86_memio_unmap(x86_bus_space_mem,
-	    (bus_space_handle_t) LogicalAddress, Length, NULL);
+	    (bus_space_handle_t)LogicalAddress, Length, NULL);
 }
 
 ACPI_STATUS
@@ -219,10 +211,10 @@ acpi_md_OsGetPhysicalAddress(void *LogicalAddress,
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t) LogicalAddress, &pa)) {
 		*PhysicalAddress = pa;
-		return (AE_OK);
+		return AE_OK;
 	}
 
-	return (AE_ERROR);
+	return AE_ERROR;
 }
 
 BOOLEAN
@@ -236,7 +228,7 @@ acpi_md_OsReadable(void *Pointer, uint32_t Length)
 	eva = round_page((vaddr_t) Pointer + Length);
 
 	if (sva < VM_MIN_KERNEL_ADDRESS)
-		return (FALSE);
+		return FALSE;
 
 	for (; sva < eva; sva += PAGE_SIZE) {
 		pte = kvtopte(sva);
@@ -246,7 +238,7 @@ acpi_md_OsReadable(void *Pointer, uint32_t Length)
 		}
 	}
 
-	return (rv);
+	return rv;
 }
 
 BOOLEAN
@@ -260,7 +252,7 @@ acpi_md_OsWritable(void *Pointer, uint32_t Length)
 	eva = round_page((vaddr_t) Pointer + Length);
 
 	if (sva < VM_MIN_KERNEL_ADDRESS)
-		return (FALSE);
+		return FALSE;
 
 	for (; sva < eva; sva += PAGE_SIZE) {
 		pte = kvtopte(sva);
@@ -270,7 +262,7 @@ acpi_md_OsWritable(void *Pointer, uint32_t Length)
 		}
 	}
 
-	return (rv);
+	return rv;
 }
 
 void
