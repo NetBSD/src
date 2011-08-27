@@ -1,4 +1,4 @@
-/*	$NetBSD: pack_dev.c,v 1.10 2009/02/13 01:37:23 lukem Exp $	*/
+/*	$NetBSD: pack_dev.c,v 1.11 2011/08/27 18:37:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: pack_dev.c,v 1.10 2009/02/13 01:37:23 lukem Exp $");
+__RCSID("$NetBSD: pack_dev.c,v 1.11 2011/08/27 18:37:41 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -241,7 +241,7 @@ pack_bsdos(int n, u_long numbers[], const char **error)
 
 		/* list of formats and pack functions */
 		/* this list must be sorted lexically */
-struct format {
+static struct format {
 	const char	*name;
 	pack_t		*pack;
 } formats[] = {
