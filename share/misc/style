@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.47 2010/10/30 20:12:32 christos Exp $ */
+/* $NetBSD: style,v 1.48 2011/08/27 17:48:11 joerg Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.47 2010/10/30 20:12:32 christos Exp $");
+__RCSID("$NetBSD: style,v 1.48 2011/08/27 17:48:11 joerg Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -122,7 +122,6 @@ static char *function(int, int, float, int);
 static int dirinfo(const char *, struct stat *, struct dirent *,
 		   struct statfs *, int *, char **[]);
 static void usage(void) __dead;	/* declare functions that don't return dead */
-int main(int, char *[]);
 
 /*
  * Macros are capitalized, parenthesized, and should avoid side-effects.
