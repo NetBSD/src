@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.h,v 1.10 2008/04/28 20:23:09 martin Exp $ */
+/*	$NetBSD: wsconsctl.h,v 1.11 2011/08/27 19:01:34 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -91,6 +91,5 @@ void display_put_values(int);
 #ifndef YYEMPTY
 int yyparse(void);
 #endif
-void yyerror(const char *);
 int yylex(void);
 void map_scan_setinput(char *);
