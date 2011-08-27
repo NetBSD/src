@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21.8.4 2010/10/24 22:48:21 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21.8.5 2011/08/27 15:37:32 jym Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -151,24 +151,6 @@ int vect2irq[256] = {0};
 #if NPCI > 0
 #include <dev/pci/ppbreg.h>
 #endif
-
-/*
- * Recalculate the interrupt from scratch for an event source.
- */
-void
-intr_calculatemasks(struct evtsource *evts)
-{
-	struct intrhand *ih;
-
-	evts->ev_maxlevel = IPL_NONE;
-	evts->ev_imask = 0;
-	for (ih = evts->ev_handlers; ih != NULL; ih = ih->ih_evt_next) {
-		if (ih->ih_level > evts->ev_maxlevel)
-			evts->ev_maxlevel = ih->ih_level;
-		evts->ev_imask |= (1 << ih->ih_level);
-	}
-
-}
 
 /*
  * Fake interrupt handler structures for the benefit of symmetry with

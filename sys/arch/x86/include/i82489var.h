@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.12 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.12.14.1 2011/08/27 15:37:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,11 +76,8 @@ extern void Xrecurse_lapic_ipi(void);
 extern void Xresume_lapic_ipi(void);
 #define LAPIC_IPI_VECTOR			0xe0
 
-extern void Xintr_lapic_tlb_bcast(void);
-#define LAPIC_TLB_BCAST_VECTOR			0xe1
-
-extern void Xintr_lapic_tlb_mcast(void);
-#define LAPIC_TLB_MCAST_VECTOR			0xe2
+extern void Xintr_lapic_tlb(void);
+#define LAPIC_TLB_VECTOR			0xe1
 
 /*
  * Vector used for local apic timer interrupts.
@@ -112,8 +109,6 @@ struct cpu_info;
 extern void lapic_boot_init(paddr_t);
 extern void lapic_set_lvt(void);
 extern void lapic_enable(void);
-extern void lapic_suspend(void);
-extern void lapic_resume(void);
 extern void lapic_calibrate_timer(struct cpu_info *ci);
 extern void lapic_initclocks(void);
 

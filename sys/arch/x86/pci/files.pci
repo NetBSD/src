@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.7.8.3 2011/05/02 22:49:57 jym Exp $
+#	$NetBSD: files.pci,v 1.7.8.4 2011/08/27 15:37:30 jym Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -7,7 +7,9 @@ file 	arch/x86/pci/aapic.c		aapic
 file	arch/x86/pci/agp_machdep.c	agp
 
 # PCI-Host bridge chipsets
-device	pchb:	pcibus, agpbus, agp_ali, agp_amd, agp_amd64, agp_i810,
+define amdtempbus {}
+device	pchb:	pcibus, agpbus, amdtempbus,
+		agp_ali, agp_amd, agp_amd64, agp_i810,
 		agp_intel, agp_sis, agp_via
 attach	pchb at pci
 file	arch/x86/pci/pchb.c		pchb		needs-flag
@@ -27,7 +29,7 @@ file    arch/x86/pci/amdpcib_hpet.c		amdpcib_hpet
 
 # AMD Processors -- Miscellaneous Control
 device	amdtemp: sysmon_envsys
-attach	amdtemp at pci
+attach	amdtemp at amdtempbus
 file	arch/x86/pci/amdtemp.c		amdtemp
 
 # PCI-LPC bridges
@@ -39,9 +41,10 @@ define	fwhichbus {}
 define	hpetichbus {}
 device	ichlpcib: acpipmtimer, isabus, sysmon_wdog, fwhichbus, hpetichbus, gpiobus
 attach	ichlpcib at pci
-attach	hpet at hpetichbus with ichlpcib_hpet
-
 file 	arch/x86/pci/ichlpcib.c 	ichlpcib
+
+attach	hpet at hpetichbus with ichlpcib_hpet
+file    arch/x86/pci/ichlpcib_hpet.c	ichlpcib_hpet
 
 device	fwhrng
 attach	fwhrng at fwhichbus

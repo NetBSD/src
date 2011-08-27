@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.62.2.5 2011/03/28 23:04:51 jym Exp $	*/
+/*	$NetBSD: cpu.c,v 1.62.2.6 2011/08/27 15:37:30 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62.2.5 2011/03/28 23:04:51 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62.2.6 2011/08/27 15:37:30 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -155,6 +155,7 @@ struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
 	.ci_curldt = -1,
+	.ci_cpumask = 1,
 #ifdef TRAPLOG
 	.ci_tlog_base = &tlog_primary,
 #endif /* !TRAPLOG */
@@ -171,7 +172,7 @@ static void	tss_init(struct i386tss *, void *, void *);
 static void	cpu_init_idle_lwp(struct cpu_info *);
 
 uint32_t cpus_attached = 0;
-uint32_t cpus_running = 0;
+uint32_t cpus_running = 1;
 
 uint32_t cpu_feature[5]; /* X86 CPUID feature bits
 			  *	[0] basic features %edx
@@ -407,7 +408,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
 		cpu_set_tss_gates(ci);
-		pmap_cpu_init_early(ci);
 		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
@@ -448,6 +448,11 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		);
 	}
 
+	/*
+	 * Postpone the "cpufeaturebus" scan.
+	 * It is safe to scan the pseudo-bus
+	 * only after all CPUs have attached.
+	 */
 	(void)config_defer(self, cpu_defer);
 }
 
@@ -776,6 +781,7 @@ cpu_hatch(void *v)
 	/* Because the text may have been patched in x86_patch(). */
 	wbinvd();
 	x86_flush();
+	tlbflushg();
 
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
@@ -1131,6 +1137,12 @@ cpu_resume(device_t dv, const pmf_qual_t *qual)
 static bool
 cpu_shutdown(device_t dv, int how)
 {
+	struct cpu_softc *sc = device_private(dv);
+	struct cpu_info *ci = sc->sc_info;
+
+	if (ci->ci_flags & CPUF_BSP)
+		return false;
+
 	return cpu_suspend(dv, NULL);
 }
 
@@ -1197,4 +1209,24 @@ cpu_load_pmap(struct pmap *pmap)
 #else /* PAE */
 	lcr3(pmap_pdirpa(pmap, 0));
 #endif /* PAE */
+}
+
+/*
+ * Notify all other cpus to halt.
+ */
+
+void
+cpu_broadcast_halt(void)
+{
+	x86_broadcast_ipi(X86_IPI_HALT);
+}
+
+/*
+ * Send a dummy ipi to a cpu to force it to run splraise()/spllower()
+ */
+
+void
+cpu_kick(struct cpu_info *ci)
+{
+	x86_send_ipi(ci, 0);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: gcscehci.c,v 1.4.10.3 2010/10/24 22:48:03 jym Exp $ */
+/* $NetBSD: gcscehci.c,v 1.4.10.4 2011/08/27 15:37:26 jym Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.4.10.3 2010/10/24 22:48:03 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.4.10.4 2011/08/27 15:37:26 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.4.10.3 2010/10/24 22:48:03 jym Exp $"
 #include <sys/proc.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpufunc.h>
 
 #include <dev/pci/pcidevs.h>

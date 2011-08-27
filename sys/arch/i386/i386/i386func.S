@@ -1,4 +1,4 @@
-/*	$NetBSD: i386func.S,v 1.15 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: i386func.S,v 1.15.12.1 2011/08/27 15:37:25 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.15 2008/05/25 15:56:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.15.12.1 2011/08/27 15:37:25 jym Exp $");
 
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -99,13 +99,12 @@ END(lcr3)
  *
  * (the alternatives not quoted above are not an option here.)
  *
- * If PGE is not in use, we reload CR3 for the benefit of
- * pre-P6-family processors.
+ * If PGE is not in use, we reload CR3.
  */
 ENTRY(tlbflushg)
-	testl	$CPUID_PGE, _C_LABEL(cpu_feature)
-	jz	1f
 	movl	%cr4, %eax
+	testl	$CR4_PGE, %eax
+	jz	1f
 	movl	%eax, %edx
 	andl	$~CR4_PGE, %edx
 	movl	%edx, %cr4

@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.64.8.3 2010/10/24 22:48:04 jym Exp $ */
+/* $NetBSD: pnpbios.c,v 1.64.8.4 2011/08/27 15:37:27 jym Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.64.8.3 2010/10/24 22:48:04 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.64.8.4 2011/08/27 15:37:27 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1074,7 +1074,7 @@ pnp_scan(const uint8_t **bufp, size_t maxlen,
 				DPRINTF(("\ttag startdep flags %02x\n",
 				    len ? res->r_pri : ISAPNP_DEP_ACCEPTABLE));
 
-				if (r->dependant_link) {
+				if (r->dependent_link) {
 					aprint_normal("second dep?\n");
 					return (-1);
 				}
@@ -1092,11 +1092,11 @@ pnp_scan(const uint8_t **bufp, size_t maxlen,
 						       new, 1);
 					if (rv < 0) {
 						aprint_normal("error in"
-						    " dependant function\n");
+						    " dependent function\n");
 						free(new, M_DEVBUF);
 						return (-1);
 					}
-					last->dependant_link = new;
+					last->dependent_link = new;
 					last = new;
 				} while (rv > 0);
 				continue;

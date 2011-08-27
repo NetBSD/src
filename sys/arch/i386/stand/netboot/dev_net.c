@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.12.138.2 2009/11/01 13:58:44 jym Exp $	 */
+/*	$NetBSD: dev_net.c,v 1.12.138.3 2011/08/27 15:37:28 jym Exp $	 */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -41,7 +41,6 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 #include <lib/libsa/bootparam.h>
-#include <machine/stdarg.h>
 
 #include <netif/netif_small.h>
 

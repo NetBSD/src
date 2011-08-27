@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.24.2.2 2009/11/01 13:58:16 jym Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.24.2.3 2011/08/27 15:37:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.24.2.2 2009/11/01 13:58:16 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.24.2.3 2011/08/27 15:37:29 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,26 +96,29 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.24.2.2 2009/11/01 13:58:16 jym Exp
 static int _isa_dma_may_bounce(bus_dma_tag_t, bus_dmamap_t, int, int *);
 
 struct x86_bus_dma_tag isa_bus_dma_tag = {
-	0,				/* _tag_needs_free */
-	ISA_DMA_BOUNCE_THRESHOLD,	/* _bounce_thresh */
-	0,				/* _bounce_alloc_lo */
-	ISA_DMA_BOUNCE_THRESHOLD,	/* _bounce_alloc_hi */
-	_isa_dma_may_bounce,
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	_bus_dmamap_sync,
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
-	_bus_dmatag_subregion,
-	_bus_dmatag_destroy,
+	._tag_needs_free	= 0,
+	._bounce_thresh		= ISA_DMA_BOUNCE_THRESHOLD,
+	._bounce_alloc_lo	= 0,
+	._bounce_alloc_hi	= ISA_DMA_BOUNCE_THRESHOLD,
+	._may_bounce		= _isa_dma_may_bounce,
+
+	._dmamap_create		= _bus_dmamap_create,
+	._dmamap_destroy	= _bus_dmamap_destroy,
+	._dmamap_load		= _bus_dmamap_load,
+	._dmamap_load_mbuf	= _bus_dmamap_load_mbuf,
+	._dmamap_load_uio	= _bus_dmamap_load_uio,
+	._dmamap_load_raw	= _bus_dmamap_load_raw,
+	._dmamap_unload		= _bus_dmamap_unload,
+	._dmamap_sync 		= _bus_dmamap_sync,
+
+	._dmamem_alloc		= _bus_dmamem_alloc,
+	._dmamem_free		= _bus_dmamem_free,
+	._dmamem_map		= _bus_dmamem_map,
+	._dmamem_unmap		= _bus_dmamem_unmap,
+	._dmamem_mmap		= _bus_dmamem_mmap,
+
+	._dmatag_subregion	= _bus_dmatag_subregion,
+	._dmatag_destroy	= _bus_dmatag_destroy,
 };
 
 #define	IDTVEC(name)	__CONCAT(X,name)

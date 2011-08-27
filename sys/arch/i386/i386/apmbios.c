@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.c,v 1.13.2.4 2011/05/02 22:49:55 jym Exp $ */
+/*	$NetBSD: apmbios.c,v 1.13.2.5 2011/08/27 15:37:24 jym Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.13.2.4 2011/05/02 22:49:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.13.2.5 2011/08/27 15:37:24 jym Exp $");
 
 #include "opt_apm.h"
 
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.13.2.4 2011/05/02 22:49:55 jym Exp $")
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/stdarg.h>
 #include <machine/cpufunc.h>
 #include <machine/gdt.h>
 #include <machine/psl.h>

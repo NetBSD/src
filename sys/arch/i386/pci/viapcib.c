@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.11.8.1 2009/11/01 13:58:35 jym Exp $ */
+/* $NetBSD: viapcib.c,v 1.11.8.2 2011/08/27 15:37:26 jym Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,14 +55,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.11.8.1 2009/11/01 13:58:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.11.8.2 2011/08/27 15:37:26 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/proc.h>
-#include <sys/simplelock.h>
+#include <sys/mutex.h>
 #include <sys/bus.h>
 
 #include <dev/pci/pcireg.h>
@@ -92,7 +91,7 @@ struct viapcib_softc {
 
 	int sc_revision;
 
-	struct simplelock sc_lock;
+	kmutex_t sc_lock;
 };
 
 static int	viapcib_match(device_t, cfdata_t, void *);
@@ -172,7 +171,7 @@ viapcib_attach(device_t parent, device_t self, void *opaque)
 		goto core_pcib;
 	}
 
-	simple_lock_init(&sc->sc_lock);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	val = pci_conf_read(pa->pa_pc, pa->pa_tag, SMB_HOST_CONFIG);
 	if ((val & 0x10000) == 0) {
@@ -233,7 +232,7 @@ static int
 viapcib_wait(struct viapcib_softc *sc)
 {
 	int rv, timeout;
-	uint8_t val;
+	uint8_t val = 0;
 
 	timeout = VIAPCIB_SMBUS_TIMEOUT;
 	rv = 0;
@@ -281,13 +280,10 @@ viapcib_busy(struct viapcib_softc *sc)
 static int
 viapcib_acquire_bus(void *opaque, int flags)
 {
-	struct viapcib_softc *sc;
+	struct viapcib_softc *sc = (struct viapcib_softc *)opaque;
 
 	DPRINTF(("viapcib_i2c_acquire_bus(%p, 0x%x)\n", opaque, flags));
-
-	sc = (struct viapcib_softc *)opaque;
-
-	simple_lock(&sc->sc_lock);
+	mutex_enter(&sc->sc_lock);
 
 	return 0;
 }
@@ -295,15 +291,10 @@ viapcib_acquire_bus(void *opaque, int flags)
 static void
 viapcib_release_bus(void *opaque, int flags)
 {
-	struct viapcib_softc *sc;
+	struct viapcib_softc *sc = (struct viapcib_softc *)opaque;
 
+	mutex_exit(&sc->sc_lock);
 	DPRINTF(("viapcib_i2c_release_bus(%p, 0x%x)\n", opaque, flags));
-
-	sc = (struct viapcib_softc *)opaque;
-
-	simple_unlock(&sc->sc_lock);
-
-	return;
 }
 
 static int

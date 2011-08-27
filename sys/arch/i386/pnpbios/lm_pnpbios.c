@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_pnpbios.c,v 1.14 2008/04/28 20:23:25 martin Exp $ */
+/*	$NetBSD: lm_pnpbios.c,v 1.14.14.1 2011/08/27 15:37:26 jym Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.14 2008/04/28 20:23:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.14.14.1 2011/08/27 15:37:26 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.14 2008/04/28 20:23:25 martin Exp $
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

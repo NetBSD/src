@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15.8.3 2011/03/29 20:43:00 jym Exp $
+#	$NetBSD: Makefile,v 1.15.8.4 2011/08/27 15:37:28 jym Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -8,6 +8,9 @@ NOMAN=	# defined
 NEWVERSWHAT=	"PXE Boot"
 STARTFILE=	${PXESTART}
 RELOC=		0x0
+
+AFLAGS.pxe_call.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.start_pxe.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 .if (${BASE} != "pxeboot_ia32")
 .PATH.c: ${.CURDIR}/../pxeboot

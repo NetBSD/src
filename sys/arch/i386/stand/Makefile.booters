@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.77.2.5 2011/05/02 22:49:57 jym Exp $
+#	$NetBSD: Makefile.booters,v 1.77.2.6 2011/08/27 15:37:27 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -16,14 +16,10 @@ LIBC=		# nothing
 .if ${MACHINE_ARCH} == "x86_64"
 CPUFLAGS= -m32
 .else
-.if ${HAVE_GCC} == 3
-CPUFLAGS=  -mcpu=i386
-.else
 CPUFLAGS=  -march=i386 -mtune=i386
 .endif
 .endif
-.endif
-COPTS=	-Os -ffreestanding
+COPTS=	${OPT_SIZE.${ACTIVE_CC}}
 
 I386_STAND_DIR?= $S/arch/i386/stand
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.29.2.5 2011/03/28 23:04:55 jym Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.29.2.6 2011/08/27 15:37:31 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.29.2.5 2011/03/28 23:04:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.29.2.6 2011/08/27 15:37:31 jym Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -60,17 +60,21 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.29.2.5 2011/03/28 23:04:55 jym Exp
 #include <dev/splash/splash.h>
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8042reg.h>
+#include <dev/mm.h>
 
 #include <machine/bootinfo.h>
 #include <machine/vmparam.h>
 
 #include <uvm/uvm_extern.h>
 
+#include "acpica.h"
+#if NACPICA > 0
+#include <dev/acpi/acpivar.h>
+#endif
+
 void (*x86_cpu_idle)(void);
 static bool x86_cpu_idle_ipi;
 static char x86_cpu_idle_text[16];
-
-int check_pa_acc(paddr_t, vm_prot_t);
 
 /* --------------------------------------------------------------------- */
 
@@ -111,10 +115,10 @@ lookup_bootinfo(int type)
 }
 
 /*
- * check_pa_acc: check if given pa is accessible.
+ * mm_md_physacc: check if given pa is accessible.
  */
 int
-check_pa_acc(paddr_t pa, vm_prot_t prot)
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
 	extern phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 	extern int mem_cluster_cnt;
@@ -128,7 +132,6 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 			return 0;
 		}
 	}
-
 	return kauth_authorize_machdep(kauth_cred_get(),
 	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
 }
@@ -157,7 +160,8 @@ module_init_md(void)
 			aprint_debug("Prep module path=%s len=%d pa=%x\n", 
 			    bi->path, bi->len, bi->base);
 			KASSERT(trunc_page(bi->base) == bi->base);
-			module_prime((void *)((uintptr_t)bi->base + KERNBASE),
+			module_prime(bi->path,
+			    (void *)((uintptr_t)bi->base + KERNBASE),
 			    bi->len);
 			break;
 		case BI_MODULE_IMAGE:
@@ -201,10 +205,9 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	if (l == ci->ci_data.cpu_idlelwp) {
 		if (ci == cur)
 			return;
-#ifndef XEN /* XXX review when Xen gets MP support */
-		if (x86_cpu_idle_ipi != false)
-			x86_send_ipi(ci, 0);
-#endif
+		if (x86_cpu_idle_ipi != false) {
+			cpu_kick(ci);
+		}
 		return;
 	}
 
@@ -225,7 +228,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 		return;
 	}
 	if ((flags & RESCHED_IMMED) != 0) {
-		x86_send_ipi(ci, 0);
+		cpu_kick(ci);
 	}
 }
 
@@ -236,7 +239,7 @@ cpu_signotify(struct lwp *l)
 	KASSERT(kpreempt_disabled());
 	aston(l, X86_AST_GENERIC);
 	if (l->l_cpu != curcpu())
-		x86_send_ipi(l->l_cpu, 0);
+		cpu_kick(l->l_cpu);
 }
 
 void
@@ -360,7 +363,7 @@ x86_cpu_idle_init(void)
 	else
 		x86_cpu_idle_set(x86_cpu_idle_mwait, "mwait", false);
 #else
-	x86_cpu_idle_set(x86_cpu_idle_xen, "xen", false);
+	x86_cpu_idle_set(x86_cpu_idle_xen, "xen", true);
 #endif
 }
 
@@ -896,6 +899,19 @@ void
 x86_reset(void)
 {
 	uint8_t b;
+
+#if NACPICA > 0
+	/*
+	 * If ACPI is active, try to reset using the reset register
+	 * defined in the FADT.
+	 */
+	if (acpi_active) {
+		if (acpi_reset() == 0) {
+			delay(500000); /* wait 0.5 sec to see if that did it */
+		}
+	}
+#endif
+
 	/*
 	 * The keyboard controller has 4 random output pins, one of which is
 	 * connected to the RESET pin on the CPU in many PCs.  We tell the

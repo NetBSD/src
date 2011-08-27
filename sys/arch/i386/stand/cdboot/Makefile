@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.8.8.3 2011/01/10 00:37:32 jym Exp $
+#	$NetBSD: Makefile,v 1.8.8.4 2011/08/27 15:37:27 jym Exp $
 
 S=		${.CURDIR}/../../../..
+
+AFLAGS.cdboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 NOMAN=		# defined
 .include <bsd.own.mk>

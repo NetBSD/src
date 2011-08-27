@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.28.24.3 2011/03/28 23:58:11 jym Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.28.24.4 2011/08/27 15:37:28 jym Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -80,7 +80,6 @@
 #include <fs/cd9660/iso.h>
 
 #include <lib/libsa/saerrno.h>
-#include <machine/stdarg.h>
 #include <machine/cpu.h>
 
 #include "libi386.h"

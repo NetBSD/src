@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.80.2.2 2011/03/28 23:58:10 jym Exp $
+#	$NetBSD: genassym.cf,v 1.80.2.3 2011/08/27 15:37:25 jym Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ endif
 include <machine/tlog.h>
 
 
-include <x86/bus.h>
+include <sys/bus.h>
 
 define	PAGE_SIZE		PAGE_SIZE
 
@@ -285,11 +285,8 @@ endif
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
-define	CPU_INFO_PMAP_CPU	offsetof(struct cpu_info, ci_pmap_cpu)
 define	CPU_INFO_TLBSTATE	offsetof(struct cpu_info, ci_tlbstate)
 define	TLBSTATE_VALID		TLBSTATE_VALID
-define	TLBSTATE_LAZY		TLBSTATE_LAZY
-define	TLBSTATE_STALE		TLBSTATE_STALE
 define	CPU_INFO_TLB_EVCNT	offsetof(struct cpu_info, ci_tlb_evcnt)
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
@@ -423,15 +420,6 @@ define	RW_HAS_WAITERS		RW_HAS_WAITERS
 define	RW_THREAD		RW_THREAD
 define	RW_READER		RW_READER
 define	RW_WRITER		RW_WRITER
-
-define	MB_POINTER		offsetof(struct pmap_mbox, mb_pointer)
-define	MB_GLOBAL		offsetof(struct pmap_mbox, mb_global)
-define	MB_ADDR1		offsetof(struct pmap_mbox, mb_addr1)
-define	MB_ADDR2		offsetof(struct pmap_mbox, mb_addr2)
-define	MB_HEAD			offsetof(struct pmap_mbox, mb_head)
-define	MB_TAIL			offsetof(struct pmap_mbox, mb_tail)
-
-define	PM_CPUS			offsetof(struct pmap, pm_cpus)
 
 define	EV_COUNT		offsetof(struct evcnt, ev_count)
 

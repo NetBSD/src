@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.10.24.1 2010/10/24 22:47:52 jym Exp $
+#	$NetBSD: Makefile,v 1.10.24.2 2011/08/27 15:37:23 jym Exp $
 
 INCSDIR= /usr/include/amd64
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	bootinfo.h bswap.h bus.h byte_swap.h \
+	bootinfo.h bswap.h byte_swap.h \
 	cdefs.h cpu.h cpufunc.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
@@ -20,10 +20,10 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	param.h pcb.h pci_machdep.h pio.h pmap.h pmc.h proc.h \
 	profile.h psl.h pte.h ptrace.h \
 	reg.h rwlock.h \
-	segments.h setjmp.h signal.h specialreg.h stdarg.h sysarch.h \
+	segments.h setjmp.h signal.h specialreg.h sysarch.h \
 	trap.h tss.h types.h \
 	userret.h \
-	varargs.h vmparam.h \
+	vmparam.h \
 	wchar_limits.h
 
 .include <bsd.kinc.mk>
