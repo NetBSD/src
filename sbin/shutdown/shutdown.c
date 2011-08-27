@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.54 2011/02/16 19:33:48 wiz Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.55 2011/08/27 18:54:39 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.54 2011/02/16 19:33:48 wiz Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.55 2011/08/27 18:54:39 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,12 +99,12 @@ static char *bootstr;
 static void badtime(void) __dead;
 static void die_you_gravy_sucking_pig_dog(void) __dead;
 static void doitfast(void);
-void dorcshutdown(void);
+static void dorcshutdown(void);
 static void finish(int) __dead;
 static void getoffset(char *);
-static void loop(void);
+static void loop(void) __dead;
 static void nolog(void);
-static void timeout(int);
+static void timeout(int) __dead;
 static void timewarn(time_t);
 static void usage(void) __dead;
 
@@ -250,7 +250,7 @@ main(int argc, char *argv[])
 #endif
 }
 
-void
+static void
 loop(void)
 {
 	const struct interval *tp;
@@ -294,7 +294,7 @@ loop(void)
 
 static jmp_buf alarmbuf;
 
-void
+static void
 timewarn(time_t timeleft)
 {
 	static int first;
@@ -435,7 +435,7 @@ die_you_gravy_sucking_pig_dog(void)
 
 #define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
 
-void
+static void
 getoffset(char *timearg)
 {
 	struct tm *lt;
@@ -515,7 +515,7 @@ getoffset(char *timearg)
 		errx(1, "time is already past");
 }
 
-void
+static void
 dorcshutdown(void)
 {
 	(void)printf("\r\nAbout to run shutdown hooks...\r\n");
@@ -528,7 +528,7 @@ dorcshutdown(void)
 }
 
 #define	FSMSG	"fastboot file for fsck\n"
-void
+static void
 doitfast(void)
 {
 	int fastfd;
@@ -541,7 +541,7 @@ doitfast(void)
 }
 
 #define	NOMSG	"\n\nNO LOGINS: System going down at "
-void
+static void
 nolog(void)
 {
 	int logfd;
