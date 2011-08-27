@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbmips,v 1.6 2007/03/20 08:52:01 dyoung Exp $
+#	$NetBSD: files.evbmips,v 1.7 2011/08/27 13:34:29 bouyer Exp $
 
 # maxpartitions must be the first item in files.${ARCH}
 maxpartitions 16
@@ -19,5 +19,10 @@ defparam	ETHADDR
 
 # Console glue.
 file	dev/cons.c
+
+# PMON suport
+defflag	PMON
+file	arch/mips/pmon/pmon.c		pmon
+file	arch/mips/pmon/pmon32.S		pmon
 
 include	"arch/evbmips/conf/majors.evbmips"
