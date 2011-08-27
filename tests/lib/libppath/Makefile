@@ -1,11 +1,12 @@
-# $Id: Makefile,v 1.1 2011/08/25 19:09:46 dyoung Exp $
+# $Id: Makefile,v 1.2 2011/08/27 18:55:52 dyoung Exp $
 
 .include <bsd.own.mk>
 
-LIBPPATH != make -V .OBJDIR -C $(.CURDIR)/../lib
+TESTSDIR=	${TESTSBASE}/lib/libppath
 
-TESTS_C=t_ppath t_proplib
-SRCS.t_proplib=t_proplib.c personnel.c personnel.h
+#LIBPPATH != make -V .OBJDIR -C $(.CURDIR)/../lib
+
+TESTS_C=t_ppath
 SRCS.t_ppath=t_ppath.c personnel.c personnel.h
 CPPFLAGS+=-I$(.OBJDIR)
 
@@ -19,8 +20,9 @@ CPPFLAGS+=-I$(.OBJDIR)
 
 CLEANFILES+=personnel.c personnel.h
 
-LDADD+=-L$(LIBPPATH) -lppath -lprop
-DPADD+=$(LIBPPATH)/libppath.a
+#LDADD+=-L$(LIBPPATH)
+LDADD+=-lppath -lprop
+#DPADD+=$(LIBPPATH)/libppath.a
 
 .include <bsd.test.mk>
-.include "../mk/tags.mk"
+#.include "../mk/tags.mk"
