@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_pci.c,v 1.21 2011/07/26 08:59:37 mrg Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.22 2011/08/27 20:02:18 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.21 2011/07/26 08:59:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.22 2011/08/27 20:02:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ static pcitag_t igsfb_pci_constag;
 static int	igsfb_pci_match(device_t, cfdata_t, void *);
 static void	igsfb_pci_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(igsfb_pci, sizeof(struct igsfb_softc),
+CFATTACH_DECL_NEW(igsfb_pci, sizeof(struct igsfb_softc),
     igsfb_pci_match, igsfb_pci_attach, NULL, NULL);
 
 
