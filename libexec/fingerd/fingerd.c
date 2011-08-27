@@ -1,4 +1,4 @@
-/*	$NetBSD: fingerd.c,v 1.25 2009/03/14 13:59:28 lukem Exp $	*/
+/*	$NetBSD: fingerd.c,v 1.26 2011/08/27 15:08:58 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fingerd.c,v 1.25 2009/03/14 13:59:28 lukem Exp $");
+__RCSID("$NetBSD: fingerd.c,v 1.26 2011/08/27 15:08:58 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,8 +58,7 @@ __RCSID("$NetBSD: fingerd.c,v 1.25 2009/03/14 13:59:28 lukem Exp $");
 #include <string.h>
 #include "pathnames.h"
 
-void err(const char *, ...);
-int main(int, char *[]);
+__dead static void my_err(const char *, ...);
 
 int
 main(int argc, char *argv[])
@@ -117,17 +116,17 @@ main(int argc, char *argv[])
 			break;
 		case '?':
 		default:
-			err("illegal option -- %c", optopt);
+			my_err("illegal option -- %c", optopt);
 		}
 		if (ac >= ENTRIES)
-			err("Too many options provided");
+			my_err("Too many options provided");
 	}
 
 
 	if (logging) {
 		sval = sizeof(ss);
 		if (getpeername(0, (struct sockaddr *)&ss, &sval) < 0)
-			err("getpeername: %s", strerror(errno));
+			my_err("getpeername: %s", strerror(errno));
 		(void)getnameinfo((struct sockaddr *)&ss, sval,
 				hostbuf, sizeof(hostbuf), NULL, 0, 0);
 		lp = hostbuf;
@@ -150,7 +149,7 @@ main(int argc, char *argv[])
 	}
 
 	if (ac >= ENTRIES)
-		err("Too many options provided");
+		my_err("Too many options provided");
 	av[ac++] = __UNCONST("--");
 	comp = &av[1];
 	for (lp = line, ap = &av[ac]; ac < ENTRIES;) {
@@ -195,7 +194,7 @@ main(int argc, char *argv[])
 	}
 
 	if (pipe(p) < 0)
-		err("pipe: %s", strerror(errno));
+		my_err("pipe: %s", strerror(errno));
 
 	switch(fork()) {
 	case 0:
@@ -205,14 +204,14 @@ main(int argc, char *argv[])
 			(void) close(p[1]);
 		}
 		execv(prog, comp);
-		err("execv: %s: %s", prog, strerror(errno));
+		my_err("execv: %s: %s", prog, strerror(errno));
 		_exit(1);
 	case -1:
-		err("fork: %s", strerror(errno));
+		my_err("fork: %s", strerror(errno));
 	}
 	(void) close(p[1]);
 	if (!(fp = fdopen(p[0], "r")))
-		err("fdopen: %s", strerror(errno));
+		my_err("fdopen: %s", strerror(errno));
 	while ((ch = getc(fp)) != EOF) {
 		if (ch == '\n')
 			putchar('\r');
@@ -221,8 +220,8 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-void
-err(const char *fmt, ...)
+static void
+my_err(const char *fmt, ...)
 {
 	va_list ap;
 
