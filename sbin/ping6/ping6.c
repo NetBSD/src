@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.74 2011/08/14 12:09:35 christos Exp $	*/
+/*	$NetBSD: ping6.c,v 1.75 2011/08/27 18:43:24 joerg Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.74 2011/08/14 12:09:35 christos Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.75 2011/08/27 18:43:24 joerg Exp $");
 #endif
 #endif
 
@@ -189,7 +189,7 @@ struct tv32 {
 #define F_SUPTYPES	0x80000
 #define F_NOMINMTU	0x100000
 #define F_NOUSERDATA	(F_NODEADDR | F_FQDN | F_FQDNOLD | F_SUPTYPES)
-u_int options;
+static u_int options;
 
 #define IN6LEN		sizeof(struct in6_addr)
 #define SA6LEN		sizeof(struct sockaddr_in6)
@@ -203,81 +203,80 @@ u_int options;
  * to 8192 for complete accuracy...
  */
 #define	MAX_DUP_CHK	(8 * 8192)
-int mx_dup_ck = MAX_DUP_CHK;
-char rcvd_tbl[MAX_DUP_CHK / 8];
+static int mx_dup_ck = MAX_DUP_CHK;
+static char rcvd_tbl[MAX_DUP_CHK / 8];
 
-struct addrinfo *res;
-struct sockaddr_in6 dst;	/* who to ping6 */
-struct sockaddr_in6 src;	/* src addr of this packet */
-socklen_t srclen;
-int datalen = DEFDATALEN;
-int s;				/* socket file descriptor */
-u_char outpack[MAXPACKETLEN];
-char BSPACE = '\b';		/* characters written for flood */
-char DOT = '.';
-char *hostname;
-int ident;			/* process id to identify our packets */
-u_int8_t nonce[8];		/* nonce field for node information */
-int hoplimit = -1;		/* hoplimit */
-int pathmtu = 0;		/* path MTU for the destination.  0 = unspec. */
+static struct addrinfo *res;
+static struct sockaddr_in6 dst;	/* who to ping6 */
+static struct sockaddr_in6 src;	/* src addr of this packet */
+static socklen_t srclen;
+static int datalen = DEFDATALEN;
+static int s;				/* socket file descriptor */
+static u_char outpack[MAXPACKETLEN];
+static char BSPACE = '\b';		/* characters written for flood */
+static char DOT = '.';
+static char *hostname;
+static int ident;			/* process id to identify our packets */
+static u_int8_t nonce[8];		/* nonce field for node information */
+static int hoplimit = -1;		/* hoplimit */
 
 /* counters */
-long npackets;			/* max packets to transmit */
-long nreceived;			/* # of packets we got back */
-long nrepeats;			/* number of duplicates */
-long ntransmitted;		/* sequence # for outbound packets = #sent */
-struct timeval interval = {1, 0}; /* interval between packets */
+static long npackets;			/* max packets to transmit */
+static long nreceived;			/* # of packets we got back */
+static long nrepeats;			/* number of duplicates */
+static long ntransmitted;		/* sequence # for outbound packets = #sent */
+static struct timeval interval = {1, 0}; /* interval between packets */
 
 /* timing */
-int timing;			/* flag to do timing */
-double tmin = 999999999.0;	/* minimum round trip time */
-double tmax = 0.0;		/* maximum round trip time */
-double tsum = 0.0;		/* sum of all times, for doing average */
-double tsumsq = 0.0;		/* sum of all times squared, for std. dev. */
+static int timing;			/* flag to do timing */
+static double tmin = 999999999.0;	/* minimum round trip time */
+static double tmax = 0.0;		/* maximum round trip time */
+static double tsum = 0.0;		/* sum of all times, for doing average */
+static double tsumsq = 0.0;		/* sum of all times squared, for std. dev. */
 
 /* for node addresses */
-u_short naflags;
+static u_short naflags;
 
 /* for ancillary data(advanced API) */
-struct msghdr smsghdr;
-struct iovec smsgiov;
-char *scmsg = 0;
+static struct msghdr smsghdr;
+static struct iovec smsgiov;
+static char *scmsg = 0;
 
-volatile sig_atomic_t seenalrm;
-volatile sig_atomic_t seenint;
+static volatile sig_atomic_t seenalrm;
+static volatile sig_atomic_t seenint;
 #ifdef SIGINFO
-volatile sig_atomic_t seeninfo;
+static volatile sig_atomic_t seeninfo;
 #endif
 
-void	 fill(char *, char *);
-int	 get_hoplim(struct msghdr *);
-int	 get_pathmtu(struct msghdr *);
-struct in6_pktinfo *get_rcvpktinfo(struct msghdr *);
-void	 onsignal(int);
-void	 retransmit(void);
-void	 onint(int);
-size_t	 pingerlen(void);
-int	 pinger(void);
-const char *pr_addr(struct sockaddr *, int);
-void	 pr_icmph(struct icmp6_hdr *, u_char *);
-void	 pr_iph(struct ip6_hdr *);
-void	 pr_suptypes(struct icmp6_nodeinfo *, size_t);
-void	 pr_nodeaddr(struct icmp6_nodeinfo *, int);
-int	 myechoreply(const struct icmp6_hdr *);
-int	 mynireply(const struct icmp6_nodeinfo *);
-char *dnsdecode(const u_char **, const u_char *, const u_char *,
+static void	 fill(char *, char *);
+static int	 get_hoplim(struct msghdr *);
+static int	 get_pathmtu(struct msghdr *);
+static struct in6_pktinfo *get_rcvpktinfo(struct msghdr *);
+static void	 onsignal(int);
+static void	 retransmit(void);
+__dead static void	 onint(int);
+static size_t	 pingerlen(void);
+static int	 pinger(void);
+static const char *pr_addr(struct sockaddr *, int);
+static void	 pr_icmph(struct icmp6_hdr *, u_char *);
+static void	 pr_iph(struct ip6_hdr *);
+static void	 pr_suptypes(struct icmp6_nodeinfo *, size_t);
+static void	 pr_nodeaddr(struct icmp6_nodeinfo *, int);
+static int	 myechoreply(const struct icmp6_hdr *);
+static int	 mynireply(const struct icmp6_nodeinfo *);
+static char *dnsdecode(const u_char **, const u_char *, const u_char *,
 	char *, size_t);
-void	 pr_pack(u_char *, int, struct msghdr *);
-void	 pr_exthdrs(struct msghdr *);
-void	 pr_ip6opt(void *);
-void	 pr_rthdr(void *);
-int	 pr_bitrange(u_int32_t, int, int);
-void	 pr_retip(struct ip6_hdr *, u_char *);
-void	 summary(void);
-void	 tvsub(struct timeval *, struct timeval *);
-int	 setpolicy(int, char *);
-char	*nigroup(char *);
-void	 usage(void);
+static void	 pr_pack(u_char *, int, struct msghdr *);
+static void	 pr_exthdrs(struct msghdr *);
+static void	 pr_ip6opt(void *);
+static void	 pr_rthdr(void *);
+static int	 pr_bitrange(u_int32_t, int, int);
+static void	 pr_retip(struct ip6_hdr *, u_char *);
+static void	 summary(void);
+static void	 tvsub(struct timeval *, struct timeval *);
+static int	 setpolicy(int, char *);
+static char	*nigroup(char *);
+__dead static void	 usage(void);
 
 int
 main(int argc, char *argv[])
@@ -1107,7 +1106,7 @@ main(int argc, char *argv[])
 	exit(nreceived == 0);
 }
 
-void
+static void
 onsignal(int sig)
 {
 
@@ -1130,7 +1129,7 @@ onsignal(int sig)
  * retransmit --
  *	This routine transmits another ping6.
  */
-void
+static void
 retransmit(void)
 {
 	struct itimerval itimer;
@@ -1166,7 +1165,7 @@ retransmit(void)
  * of the data portion are used to hold a UNIX "timeval" struct in VAX
  * byte-order, to compute the round-trip time.
  */
-size_t
+static size_t
 pingerlen(void)
 {
 	size_t l;
@@ -1185,7 +1184,7 @@ pingerlen(void)
 	return l;
 }
 
-int
+static int
 pinger(void)
 {
 	struct icmp6_hdr *icp;
@@ -1287,7 +1286,7 @@ pinger(void)
 	return(0);
 }
 
-int
+static int
 myechoreply(const struct icmp6_hdr *icp)
 {
 	if (ntohs(icp->icmp6_id) == ident)
@@ -1296,7 +1295,7 @@ myechoreply(const struct icmp6_hdr *icp)
 		return 0;
 }
 
-int
+static int
 mynireply(const struct icmp6_nodeinfo *nip)
 {
 	if (memcmp(nip->icmp6_ni_nonce + sizeof(u_int16_t),
@@ -1307,7 +1306,7 @@ mynireply(const struct icmp6_nodeinfo *nip)
 		return 0;
 }
 
-char *
+static char *
 dnsdecode(const u_char **sp, const u_char *ep, const u_char *base, char *buf,
 	  size_t bufsiz)
 {
@@ -1375,7 +1374,7 @@ dnsdecode(const u_char **sp, const u_char *ep, const u_char *base, char *buf,
  * which arrive ('tis only fair).  This permits multiple copies of this
  * program to be run without having intermingled output (or statistics!).
  */
-void
+static void
 pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 {
 #define safeputc(c)	printf((isprint((c)) ? "%c" : "\\%03o"), c)
@@ -1654,7 +1653,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 #undef safeputc
 }
 
-void
+static void
 pr_exthdrs(struct msghdr *mhdr)
 {
 	struct cmsghdr *cm;
@@ -1684,7 +1683,7 @@ pr_exthdrs(struct msghdr *mhdr)
 	}
 }
 
-void
+static void
 pr_ip6opt(void *extbuf)
 {
 	struct ip6_hbh *ext;
@@ -1736,7 +1735,7 @@ pr_ip6opt(void *extbuf)
 	return;
 }
 
-void
+static void
 pr_rthdr(void *extbuf)
 {
 	struct in6_addr *in6;
@@ -1769,7 +1768,7 @@ pr_rthdr(void *extbuf)
 
 }
 
-int
+static int
 pr_bitrange(u_int32_t v, int soff, int ii)
 {
 	int off;
@@ -1815,7 +1814,7 @@ pr_bitrange(u_int32_t v, int soff, int ii)
 	return ii;
 }
 
-void
+static void
 pr_suptypes(struct icmp6_nodeinfo *ni /* ni->qtype must be SUPTYPES */,
 	    size_t nilen)
 {
@@ -1881,7 +1880,7 @@ pr_suptypes(struct icmp6_nodeinfo *ni /* ni->qtype must be SUPTYPES */,
 	}
 }
 
-void
+static void
 pr_nodeaddr(struct icmp6_nodeinfo *ni, /* ni->qtype must be NODEADDR */
 	    int nilen)
 {
@@ -1947,7 +1946,7 @@ pr_nodeaddr(struct icmp6_nodeinfo *ni, /* ni->qtype must be NODEADDR */
 	}
 }
 
-int
+static int
 get_hoplim(struct msghdr *mhdr)
 {
 	struct cmsghdr *cm;
@@ -1966,7 +1965,7 @@ get_hoplim(struct msghdr *mhdr)
 	return(-1);
 }
 
-struct in6_pktinfo *
+static struct in6_pktinfo *
 get_rcvpktinfo(struct msghdr *mhdr)
 {
 	struct cmsghdr *cm;
@@ -1985,7 +1984,7 @@ get_rcvpktinfo(struct msghdr *mhdr)
 	return(NULL);
 }
 
-int
+static int
 get_pathmtu(struct msghdr *mhdr)
 {
 #ifdef IPV6_RECVPATHMTU
@@ -2045,7 +2044,7 @@ get_pathmtu(struct msghdr *mhdr)
  *	Subtract 2 timeval structs:  out = out - in.  Out is assumed to
  * be >= in.
  */
-void
+static void
 tvsub(struct timeval *out, struct timeval *in)
 {
 	if ((out->tv_usec -= in->tv_usec) < 0) {
@@ -2060,7 +2059,7 @@ tvsub(struct timeval *out, struct timeval *in)
  *	SIGINT handler.
  */
 /* ARGSUSED */
-void
+static void
 onint(int notused)
 {
 	summary();
@@ -2076,7 +2075,7 @@ onint(int notused)
  * summary --
  *	Print out statistics.
  */
-void
+static void
 summary(void)
 {
 
@@ -2130,7 +2129,7 @@ static const char *nircode[] = {
  * pr_icmph --
  *	Print a descriptive string about an ICMP header.
  */
-void
+static void
 pr_icmph(struct icmp6_hdr *icp, u_char *end)
 {
 	char ntop_buf[INET6_ADDRSTRLEN];
@@ -2360,7 +2359,7 @@ pr_icmph(struct icmp6_hdr *icp, u_char *end)
  * pr_iph --
  *	Print an IP6 header.
  */
-void
+static void
 pr_iph(struct ip6_hdr *ip6)
 {
 	u_int32_t flow = ip6->ip6_flow & IPV6_FLOWLABEL_MASK;
@@ -2388,7 +2387,7 @@ pr_iph(struct ip6_hdr *ip6)
  *	Return an ascii host address as a dotted quad and optionally with
  * a hostname.
  */
-const char *
+static const char *
 pr_addr(struct sockaddr *addr, int addrlen)
 {
 	static char buf[NI_MAXHOST];
@@ -2407,7 +2406,7 @@ pr_addr(struct sockaddr *addr, int addrlen)
  * pr_retip --
  *	Dump some info on a returned (via ICMPv6) IPv6 packet.
  */
-void
+static void
 pr_retip(struct ip6_hdr *ip6, u_char *end)
 {
 	u_char *cp = (u_char *)ip6, nh;
@@ -2487,7 +2486,7 @@ pr_retip(struct ip6_hdr *ip6, u_char *end)
 	return;
 }
 
-void
+static void
 fill(char *bp, char *patp)
 {
 	int ii, jj, kk;
@@ -2520,7 +2519,7 @@ fill(char *bp, char *patp)
 
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
-int
+static int
 setpolicy(int so, char *policy)
 {
 	char *buf;
@@ -2541,7 +2540,7 @@ setpolicy(int so, char *policy)
 #endif
 #endif
 
-char *
+static char *
 nigroup(char *name)
 {
 	char *p;
@@ -2585,7 +2584,7 @@ nigroup(char *name)
 	return strdup(hbuf);
 }
 
-void
+static void
 usage(void)
 {
 	(void)fprintf(stderr,
