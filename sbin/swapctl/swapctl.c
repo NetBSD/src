@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.35 2009/09/24 16:15:20 apb Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.36 2011/08/27 18:57:50 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -64,7 +64,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swapctl.c,v 1.35 2009/09/24 16:15:20 apb Exp $");
+__RCSID("$NetBSD: swapctl.c,v 1.36 2011/08/27 18:57:50 joerg Exp $");
 #endif
 
 
@@ -88,7 +88,7 @@ __RCSID("$NetBSD: swapctl.c,v 1.35 2009/09/24 16:15:20 apb Exp $");
 
 #include "swapctl.h"
 
-int	command;
+static int	command;
 
 /*
  * Commands for swapctl(8).  These are mutually exclusive.
@@ -121,45 +121,45 @@ do { \
 /*
  * Option flags, and the commands with which they are valid.
  */
-int	kflag;		/* display in 1K^x blocks */
+static int	kflag;		/* display in 1K^x blocks */
 #define	KFLAG_CMDS	(CMD_l | CMD_s)
 #define MFLAG_CMDS	(CMD_l | CMD_s)
 #define GFLAG_CMDS	(CMD_l | CMD_s)
 
-int	hflag;		/* display with humanize_number */
+static int	hflag;		/* display with humanize_number */
 #define HFLAG_CMDS	(CMD_l | CMD_s)
 
-int	pflag;		/* priority was specified */
+static int	pflag;		/* priority was specified */
 #define	PFLAG_CMDS	(CMD_A | CMD_a | CMD_c)
 
-char	*tflag;		/* swap device type (blk, noblk, auto) */
-int	autoflag;	/* 1, if tflag is "auto" */
+static char	*tflag;		/* swap device type (blk, noblk, auto) */
+static int	autoflag;	/* 1, if tflag is "auto" */
 #define	TFLAG_CMDS	(CMD_A | CMD_U)
 
-int	fflag;		/* first swap becomes dump */
+static int	fflag;		/* first swap becomes dump */
 #define	FFLAG_CMDS	(CMD_A)
 
-int	oflag;		/* only autoset dump device */
+static int	oflag;		/* only autoset dump device */
 #define	OFLAG_CMDS	(CMD_A)
 
-int	nflag;		/* no execute, just print actions */
+static int	nflag;		/* no execute, just print actions */
 #define	NFLAG_CMDS	(CMD_A | CMD_U)
 
-int	pri;		/* uses 0 as default pri */
+static int	pri;		/* uses 0 as default pri */
 
 static	void change_priority(char *);
 static	int  add_swap(char *, int);
 static	int  delete_swap(char *);
 static	void set_dumpdev(char *);
 static	int get_dumpdev(void);
-static	void do_fstab(int);
+__dead static	void do_fstab(int);
 static	int check_fstab(void);
 static	void do_localdevs(int);
 static	void do_localdisk(const char *, int);
 static	int do_wedgesofdisk(int fd, int);
 static	int do_partitionsofdisk(const char *, int fd, int);
-static	void usage(void);
-static	void swapon_command(int, char **);
+__dead static	void usage(void);
+__dead static	void swapon_command(int, char **);
 #if 0
 static	void swapoff_command(int, char **);
 #endif
