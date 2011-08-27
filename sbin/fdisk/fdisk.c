@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.131 2011/05/08 14:22:16 pgoyette Exp $ */
+/*	$NetBSD: fdisk.c,v 1.132 2011/08/27 17:16:01 joerg Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.131 2011/05/08 14:22:16 pgoyette Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.132 2011/08/27 17:16:01 joerg Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -140,14 +140,14 @@ struct {
 #define LBUF 100
 static char lbuf[LBUF];
 
-const char *disk = _PATH_DEFDISK;
+static const char *disk = _PATH_DEFDISK;
 
-struct disklabel disklabel;		/* disk parameters */
+static struct disklabel disklabel;		/* disk parameters */
 
-struct mbr_sector mboot;
+static struct mbr_sector mboot;
 
-const char *boot_dir = DEFAULT_BOOTDIR;
-char *boot_path = 0;			/* name of file we actually opened */
+static const char *boot_dir = DEFAULT_BOOTDIR;
+static char *boot_path = NULL;			/* name of file we actually opened */
 
 #ifdef BOOTSEL
 #define BOOTSEL_OPTIONS	"B"
@@ -191,15 +191,15 @@ char *boot_path = 0;			/* name of file we actually opened */
  */
 
 /* Disks reported geometry and overall size from device driver */
-unsigned int cylinders, sectors, heads;
-daddr_t disksectors;
+static unsigned int cylinders, sectors, heads;
+static daddr_t disksectors;
 #define cylindersectors (heads * sectors)
 
 /* Geometry from the BIOS */
-unsigned int dos_cylinders;
-unsigned int dos_heads;
-unsigned int dos_sectors;
-daddr_t dos_disksectors;
+static unsigned int dos_cylinders;
+static unsigned int dos_heads;
+static unsigned int dos_sectors;
+static daddr_t dos_disksectors;
 #define dos_cylindersectors (dos_heads * dos_sectors)
 #define dos_totalsectors (dos_heads * dos_sectors * dos_cylinders)
 
@@ -212,96 +212,96 @@ daddr_t dos_disksectors;
 #define MAXCYL		1024	/* Usual limit is 1023 */
 #define	MAXHEAD		256	/* Usual limit is 255 */
 #define	MAXSECTOR	63
-int partition = -1;
+static int partition = -1;
 
 /* Alignment of partition, and offset if first sector unusable */
-unsigned int ptn_alignment;	/* default dos_cylindersectors */
-unsigned int ptn_0_offset;	/* default dos_sectors */
+static unsigned int ptn_alignment;	/* default dos_cylindersectors */
+static unsigned int ptn_0_offset;	/* default dos_sectors */
 
-int fd = -1, wfd = -1, *rfd = &fd;
-char *disk_file = NULL;
-char *disk_type = NULL;
+static int fd = -1, wfd = -1, *rfd = &fd;
+static char *disk_file = NULL;
+static char *disk_type = NULL;
 
-int a_flag;		/* set active partition */
-int i_flag;		/* init bootcode */
-int u_flag;		/* update partition data */
-int v_flag;		/* more verbose */
-int sh_flag;		/* Output data as shell defines */
-int f_flag;		/* force --not interactive */
-int s_flag;		/* set id,offset,size */
-int b_flag;		/* Set cyl, heads, secs (as c/h/s) */
-int B_flag;		/* Edit/install bootselect code */
-int E_flag;		/* extended partition number */
-int b_cyl, b_head, b_sec;  /* b_flag values. */
+static int a_flag;		/* set active partition */
+static int i_flag;		/* init bootcode */
+static int u_flag;		/* update partition data */
+static int v_flag;		/* more verbose */
+static int sh_flag;		/* Output data as shell defines */
+static int f_flag;		/* force --not interactive */
+static int s_flag;		/* set id,offset,size */
+static int b_flag;		/* Set cyl, heads, secs (as c/h/s) */
+static int B_flag;		/* Edit/install bootselect code */
+static int E_flag;		/* extended partition number */
+static int b_cyl, b_head, b_sec;  /* b_flag values. */
 
 #if !HAVE_NBTOOL_CONFIG_H
-int F_flag = 0;
+static int F_flag = 0;
 #else
 /* Tool - force 'file' mode to avoid unsupported functions and ioctls */
-int F_flag = 1;
+static int F_flag = 1;
 #endif
 
-struct gpt_hdr gpt1, gpt2;	/* GUID partition tables */
+static struct gpt_hdr gpt1, gpt2;	/* GUID partition tables */
 
-struct mbr_sector bootcode[8192 / sizeof (struct mbr_sector)];
-int bootsize;		/* actual size of bootcode */
-int boot_installed;	/* 1 if we've copied code into the mbr */
+static struct mbr_sector bootcode[8192 / sizeof (struct mbr_sector)];
+static int bootsize;		/* actual size of bootcode */
+static int boot_installed;	/* 1 if we've copied code into the mbr */
 
 #if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
 #define USE_DISKLIST
-struct disklist *dl;
+static struct disklist *dl;
 #endif
 
 
 #define KNOWN_SYSIDS	(sizeof(mbr_ptypes)/sizeof(mbr_ptypes[0]))
 
-void	usage(void);
-void	print_s0(int);
-void	print_part(struct mbr_sector *, int, daddr_t);
-void	print_mbr_partition(struct mbr_sector *, int, daddr_t, daddr_t, int);
-void	print_pbr(daddr_t, int, uint8_t);
-int	is_all_zero(const unsigned char *, size_t);
-void	printvis(int, const char *, const char *, size_t);
-int	read_boot(const char *, void *, size_t, int);
-void	init_sector0(int);
-void	intuit_translated_geometry(void);
-void	get_bios_geometry(void);
-void	get_extended_ptn(void);
-static void get_ptn_alignmemt(void);
+__dead static void	usage(void);
+static void	print_s0(int);
+static void	print_part(struct mbr_sector *, int, daddr_t);
+static void	print_mbr_partition(struct mbr_sector *, int, daddr_t, daddr_t, int);
+static void	print_pbr(daddr_t, int, uint8_t);
+static int	is_all_zero(const unsigned char *, size_t);
+static void	printvis(int, const char *, const char *, size_t);
+static int	read_boot(const char *, void *, size_t, int);
+static void	init_sector0(int);
+static void	intuit_translated_geometry(void);
+static void	get_bios_geometry(void);
+static void	get_extended_ptn(void);
+static static void get_ptn_alignmemt(void);
 #if defined(USE_DISKLIST)
-void	get_diskname(const char *, char *, size_t);
+static void	get_diskname(const char *, char *, size_t);
 #endif
-int	change_part(int, int, int, daddr_t, daddr_t, char *);
-void	print_geometry(void);
-int	first_active(void);
-void	change_active(int);
-void	change_bios_geometry(void);
-void	dos(int, unsigned char *, unsigned char *, unsigned char *);
-int	open_disk(int);
-int	read_disk(daddr_t, void *);
-int	write_disk(daddr_t, void *);
-int	get_params(void);
-int	read_s0(daddr_t, struct mbr_sector *);
-int	write_mbr(void);
-int	read_gpt(daddr_t, struct gpt_hdr *);
-int	delete_gpt(struct gpt_hdr *);
-int	yesno(const char *, ...);
-int64_t	decimal(const char *, int64_t, int, int64_t, int64_t);
+static int	change_part(int, int, int, daddr_t, daddr_t, char *);
+static void	print_geometry(void);
+static int	first_active(void);
+static void	change_active(int);
+static void	change_bios_geometry(void);
+static void	dos(int, unsigned char *, unsigned char *, unsigned char *);
+static int	open_disk(int);
+static int	read_disk(daddr_t, void *);
+static int	write_disk(daddr_t, void *);
+static int	get_params(void);
+static int	read_s0(daddr_t, struct mbr_sector *);
+static int	write_mbr(void);
+static int	read_gpt(daddr_t, struct gpt_hdr *);
+static int	delete_gpt(struct gpt_hdr *);
+static int	yesno(const char *, ...);
+static int64_t	decimal(const char *, int64_t, int, int64_t, int64_t);
 #define DEC_SEC		1		/* asking for a sector number */
 #define	DEC_RND		2		/* round to end of first track */
 #define	DEC_RND_0	4		/* convert 0 to size of a track */
 #define DEC_RND_DOWN	8		/* subtract 1 track */
 #define DEC_RND_DOWN_2	16		/* subtract 2 tracks */
-void	string(const char *, int, char *);
-int	ptn_id(const char *, int *);
-int	type_match(const void *, const void *);
-const char *get_type(int);
-int	get_mapping(int, unsigned int *, unsigned int *, unsigned int *, unsigned long *);
+static void	string(const char *, int, char *);
+static int	ptn_id(const char *, int *);
+static int	type_match(const void *, const void *);
+static const char *get_type(int);
+static int	get_mapping(int, unsigned int *, unsigned int *, unsigned int *, unsigned long *);
 #ifdef BOOTSEL
-daddr_t	configure_bootsel(daddr_t);
-void	install_bootsel(int);
-daddr_t	get_default_boot(void);
-void	set_default_boot(daddr_t);
+static daddr_t	configure_bootsel(daddr_t);
+static void	install_bootsel(int);
+static daddr_t	get_default_boot(void);
+static void	set_default_boot(daddr_t);
 #endif
 
 static void
@@ -595,7 +595,7 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-void
+static void
 usage(void)
 {
 	int indent = 7 + (int)strlen(getprogname()) + 1;
@@ -632,7 +632,7 @@ ext_offset(int part)
 	return offset;
 }
 
-void
+static void
 print_s0(int which)
 {
 	int part;
@@ -708,7 +708,7 @@ print_s0(int which)
 	}
 }
 
-void
+static void
 print_part(struct mbr_sector *boot, int part, daddr_t offset)
 {
 	struct mbr_partition *partp;
@@ -768,7 +768,7 @@ pr_cyls(daddr_t sector, int is_end)
 	printf("/%lu/%lu", head, sect + 1);
 }
 
-void
+static void
 print_mbr_partition(struct mbr_sector *boot, int part,
     daddr_t offset, daddr_t exoffset, int indent)
 {
@@ -868,7 +868,7 @@ print_mbr_partition(struct mbr_sector *boot, int part,
 }
 
 /* Print a line with a label and a vis-encoded string */
-void
+static void
 printvis(int indent, const char *label, const char *buf, size_t size)
 {
 	char *visbuf;
@@ -883,7 +883,7 @@ printvis(int indent, const char *label, const char *buf, size_t size)
 }
 
 /* Check whether a buffer contains all bytes zero */
-int
+static int
 is_all_zero(const unsigned char *p, size_t size)
 {
 
@@ -910,7 +910,7 @@ is_all_zero(const unsigned char *p, size_t size)
  * two bytes is a layering violation, but it can be very useful in
  * diagnosing boot failures.
  */
-void
+static void
 print_pbr(daddr_t sector, int indent, uint8_t part_type)
 {
 	struct mbr_sector pboot;
@@ -991,7 +991,7 @@ print_pbr(daddr_t sector, int indent, uint8_t part_type)
 #undef PBR_ERROR
 }
 
-int
+static int
 read_boot(const char *name, void *buf, size_t len, int err_exit)
 {
 	int bfd, ret;
@@ -1045,7 +1045,7 @@ read_boot(const char *name, void *buf, size_t len, int err_exit)
 	return 0;
 }
 
-void
+static void
 init_sector0(int zappart)
 {
 	int i;
@@ -1075,7 +1075,7 @@ init_sector0(int zappart)
 		memset(&mboot.mbr_parts[i], 0, sizeof(mboot.mbr_parts[i]));
 }
 
-void
+static void
 get_extended_ptn(void)
 {
 	struct mbr_partition *mp;
@@ -1135,9 +1135,9 @@ get_extended_ptn(void)
 }
 
 #if defined(USE_DISKLIST)
-void	    
+static void
 get_diskname(const char *fullname, char *diskname, size_t size)
-{	       
+{
 	const char *p, *p2;
 	size_t len;
 
@@ -1210,7 +1210,7 @@ get_ptn_alignmemt(void)
 	}
 }
 
-void
+static void
 get_bios_geometry(void)
 {
 #if defined(USE_DISKLIST)
@@ -1263,7 +1263,7 @@ get_bios_geometry(void)
 }
 
 #ifdef BOOTSEL
-daddr_t
+static daddr_t
 get_default_boot(void)
 {
 	unsigned int id;
@@ -1317,7 +1317,7 @@ get_default_boot(void)
 	return DEFAULT_ACTIVE;
 }
 
-void
+static void
 set_default_boot(daddr_t default_ptn)
 {
 	int p;
@@ -1373,7 +1373,7 @@ set_default_boot(daddr_t default_ptn)
 	mboot.mbr_bootsel.mbrbs_defkey = key[0];
 }
 
-void
+static void
 install_bootsel(int needed)
 {
 	struct mbr_bootsel *mbs = &mboot.mbr_bootsel;
@@ -1477,7 +1477,7 @@ install_bootsel(int needed)
 		mbs->mbrbs_flags = bootcode[0].mbr_bootsel.mbrbs_flags | ext13;
 }
 
-daddr_t
+static daddr_t
 configure_bootsel(daddr_t default_ptn)
 {
 	struct mbr_bootsel *mbs = &mboot.mbr_bootsel;
@@ -1570,7 +1570,7 @@ configure_bootsel(daddr_t default_ptn)
  * This routine is only used for non-x86 systems or when we fail to
  * get the BIOS geometry from the kernel.
  */
-void
+static void
 intuit_translated_geometry(void)
 {
 	uint32_t xcylinders;
@@ -1678,7 +1678,7 @@ intuit_translated_geometry(void)
  * absolute sectors for a given entry, or return -1 if it isn't present.
  * Note: for simplicity, the returned sector is 0-based.
  */
-int
+static int
 get_mapping(int i, unsigned int *cylinder, unsigned int *head, unsigned int *sector,
     unsigned long *absolute)
 {
@@ -1952,7 +1952,7 @@ check_ext_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 	return 0;
 }
 
-int
+static int
 change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 	char *bootmenu)
 {
@@ -2285,7 +2285,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 	return 1;
 }
 
-void
+static void
 print_geometry(void)
 {
 
@@ -2315,7 +2315,7 @@ print_geometry(void)
 }
 
 /* Find the first active partition, else return MBR_PART_COUNT */
-int
+static int
 first_active(void)
 {
 	struct mbr_partition *partp = &mboot.mbr_parts[0];
@@ -2327,7 +2327,7 @@ first_active(void)
 	return MBR_PART_COUNT;
 }
 
-void
+static void
 change_active(int which)
 {
 	struct mbr_partition *partp;
@@ -2360,7 +2360,7 @@ change_active(int which)
 		partp[active].mbrp_flag |= MBR_PFLAG_ACTIVE;
 }
 
-void
+static void
 change_bios_geometry(void)
 {
 	print_geometry();
@@ -2400,7 +2400,7 @@ change_bios_geometry(void)
 /***********************************************\
 * Change real numbers into strange dos numbers	*
 \***********************************************/
-void
+static void
 dos(int sector, unsigned char *cylinderp, unsigned char *headp,
     unsigned char *sectorp)
 {
@@ -2419,7 +2419,7 @@ dos(int sector, unsigned char *cylinderp, unsigned char *headp,
 	*sectorp = DOSSECT(sector + 1, cylinder);
 }
 
-int
+static int
 open_disk(int update)
 {
 	static char namebuf[MAXPATHLEN + 1];
@@ -2462,7 +2462,7 @@ open_disk(int update)
 	return (0);
 }
 
-int
+static int
 read_disk(daddr_t sector, void *buf)
 {
 
@@ -2473,7 +2473,7 @@ read_disk(daddr_t sector, void *buf)
 	return (read(*rfd, buf, 512));
 }
 
-int
+static int
 write_disk(daddr_t sector, void *buf)
 {
 
@@ -2496,7 +2496,7 @@ guess_geometry(daddr_t _sectors)
 		dos_cylinders = MAXCYL - 1;
 }
 
-int
+static int
 get_params(void)
 {
 	if (disk_type != NULL) {
@@ -2606,7 +2606,7 @@ validate_bootsel(struct mbr_bootsel *mbs)
 }
 #endif
 
-int
+static int
 read_s0(daddr_t offset, struct mbr_sector *boot)
 {
 	const char *tabletype = offset ? "extended" : "primary";
@@ -2669,7 +2669,7 @@ read_s0(daddr_t offset, struct mbr_sector *boot)
 	return 0;
 }
 
-int
+static int
 write_mbr(void)
 {
 	int flag, i;
@@ -2710,7 +2710,7 @@ write_mbr(void)
 	return rval;
 }
 
-int
+static int
 yesno(const char *str, ...)
 {
 	int ch, first;
@@ -2729,7 +2729,7 @@ yesno(const char *str, ...)
 	return (first == 'y' || first == 'Y');
 }
 
-int64_t
+static int64_t
 decimal(const char *prompt, int64_t dflt, int flags, int64_t minval, int64_t maxval)
 {
 	int64_t acc = 0;
@@ -2803,7 +2803,7 @@ decimal(const char *prompt, int64_t dflt, int flags, int64_t minval, int64_t max
 	}
 }
 
-int
+static int
 ptn_id(const char *prompt, int *extended)
 {
 	unsigned int acc = 0;
@@ -2839,7 +2839,7 @@ ptn_id(const char *prompt, int *extended)
 }
 
 #ifdef BOOTSEL
-void
+static void
 string(const char *prompt, int length, char *buf)
 {
 	int len;
@@ -2866,7 +2866,7 @@ string(const char *prompt, int length, char *buf)
 }
 #endif
 
-int
+static int
 type_match(const void *key, const void *item)
 {
 	const int *idp = key;
@@ -2879,7 +2879,7 @@ type_match(const void *key, const void *item)
 	return (0);
 }
 
-const char *
+static const char *
 get_type(int type)
 {
 	struct mbr_ptype *ptr;
@@ -2891,7 +2891,7 @@ get_type(int type)
 	return (ptr->name);
 }
 
-int
+static int
 read_gpt(daddr_t offset, struct gpt_hdr *gptp)
 {
 	char buf[512];
@@ -2923,7 +2923,7 @@ read_gpt(daddr_t offset, struct gpt_hdr *gptp)
 
 }
 
-int
+static int
 delete_gpt(struct gpt_hdr *gptp)
 {
 	char buf[512];
