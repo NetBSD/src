@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.25 2008/07/20 01:09:07 lukem Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.26 2011/08/27 15:40:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.25 2008/07/20 01:09:07 lukem Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.26 2011/08/27 15:40:31 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,20 +62,15 @@ __RCSID("$NetBSD: mail.local.c,v 1.25 2008/07/20 01:09:07 lukem Exp $");
 
 #include "pathnames.h"
 
-int	deliver __P((int, char *, int));
-void	logerr __P((int, const char *, ...))
-     __attribute__((__format__(__printf__, 2, 3)));
-void	logwarn __P((const char *, ...))
-     __attribute__((__format__(__printf__, 1, 2)));
-void	notifybiff __P((char *));
-int	store __P((const char *));
-void	usage __P((void));
-int	main __P((int, char **));
+static int	deliver(int, char *, int);
+__dead static void	logerr(int, const char *, ...) __printflike(2, 3);
+static void	logwarn(const char *, ...) __printflike(1, 2);
+static void	notifybiff(char *);
+static int	store(const char *);
+__dead static void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct passwd *pw;
 	int ch, fd, eval, lockfile = 0;
@@ -132,9 +127,8 @@ main(argc, argv)
 	exit (eval);
 }
 
-int
-store(from)
-	const char *from;
+static int
+store(const char *from)
 {
 	FILE *fp = NULL;	/* XXX gcc */
 	time_t tval;
@@ -180,11 +174,8 @@ store(from)
 	return(fd);
 }
 
-int
-deliver(fd, name, lockfile)
-	int fd;
-	char *name;
-	int lockfile;
+static int
+deliver(int fd, char *name, int lockfile)
 {
 	struct stat sb;
 	struct passwd pwres, *pw;
@@ -281,8 +272,7 @@ bad:
 }
 
 void
-notifybiff(msg)
-	char *msg;
+notifybiff(char *msg)
 {
 	static struct sockaddr_in addr;
 	static int f = -1;
@@ -313,13 +303,13 @@ notifybiff(msg)
 		logwarn("sendto biff: %s", strerror(errno));
 }
 
-void
-usage()
+static void
+usage(void)
 {
 	logerr(EX_USAGE, "usage: mail.local [-l] [-f from] user ...");
 }
 
-void
+static void
 logerr(int status, const char *fmt, ...)
 {
 	va_list ap;
@@ -330,10 +320,9 @@ logerr(int status, const char *fmt, ...)
 
 	exit(status);
 	/* NOTREACHED */
-	return;
 }
 
-void
+static void
 logwarn(const char *fmt, ...)
 {
 	va_list ap;
