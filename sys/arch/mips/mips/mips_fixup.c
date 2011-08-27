@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.8 2011/08/24 15:11:52 matt Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.9 2011/08/27 13:23:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.8 2011/08/24 15:11:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.9 2011/08/27 13:23:52 bouyer Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -239,7 +239,7 @@ mips_fixup_addr(const uint32_t *stubp)
 	 *	jr	t9
 	 *	nop
 	 *
-	 * Or for loongson2:
+	 * Or for loongson2 (
 	 *	lui	v0, %hi(sym)
 	 *	lX	t9, %lo(sym)(v0)
 	 *	lui	at,0xcfff
@@ -247,9 +247,16 @@ mips_fixup_addr(const uint32_t *stubp)
 	 *	and	t9,t9,at
 	 *	jr	t9
 	 *	move	at,at
+	 *   or:
+	 *	lui	v0, %hi(sym)
+	 *	lX	t9, %lo(sym)(v0)
+	 *	li	at, 0x3
+	 *	dmtc0	at, $22
+	 *	jr	t9
+	 *	nop
 	 */
 	mips_reg_t regs[32];
-	uint32_t used = 0;
+	uint32_t used = 1;
 	size_t n;
 	const char *errstr = "mips";
 	/*
@@ -292,6 +299,23 @@ mips_fixup_addr(const uint32_t *stubp)
 			}
 			regs[insn.IType.rt] |= insn.IType.imm;
 			used |= (1 << insn.IType.rt);
+			break;
+		case OP_COP0:
+			switch (insn.RType.rs) {
+			case OP_DMT:
+				if (insn.RType.rd != 22) {
+					errstr = "dmtc0 dst";
+					goto out;
+				}
+				if ((used & (1 << insn.RType.rt)) == 0) {
+					errstr = "dmtc0 src";
+					goto out;
+				}
+				break;
+			default:
+				errstr = "COP0";
+				goto out;
+			}
 			break;
 		case OP_SPECIAL:
 			switch (insn.RType.func) {
