@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.14 2011/01/06 16:30:40 jakllsch Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.15 2011/08/27 17:38:16 joerg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -777,7 +777,7 @@ static struct {
 	{ NULL, NULL }
 };
 
-static void
+__dead static void
 usage(void)
 {
 	extern const char addmsg[], biosbootmsg[], createmsg[], destroymsg[];
