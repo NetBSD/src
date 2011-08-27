@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.39 2009/03/16 02:18:39 lukem Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.40 2011/08/27 15:45:52 joerg Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.39 2009/03/16 02:18:39 lukem Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.40 2011/08/27 15:45:52 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,41 +113,38 @@ __RCSID("$NetBSD: rlogind.c,v 1.39 2009/03/16 02:18:39 lukem Exp $");
 
 #define		OPTIONS			"alnL"
 
-char	*env[2];
+static char	*env[2];
 #define	NMAX 30
-char	lusername[NMAX+1], rusername[NMAX+1];
+static char	lusername[NMAX+1], rusername[NMAX+1];
 static	char term[64] = "TERM=";
 #define	ENVSIZE	(sizeof("TERM=")-1)	/* skip null for concatenation */
-int	keepalive = 1;
-int	check_all = 0;
-int	log_success = 0;
+static int	keepalive = 1;
+static int	check_all = 0;
+static int	log_success = 0;
 
-struct	passwd *pwd;
+static struct	passwd *pwd;
 
-void	doit __P((int, struct sockaddr_storage *));
-int	control __P((int, char *, int));
-void	protocol __P((int, int));
-void	cleanup __P((int));
-void	fatal __P((int, const char *, int));
-int	do_rlogin __P((struct sockaddr *, char *));
-void	getstr __P((char *, int, const char *));
-void	setup_term __P((int));
+__dead static void	doit(int, struct sockaddr_storage *);
+static int	control(int, char *, int);
+static void	protocol(int, int);
+__dead static void	cleanup(int);
+__dead static void	fatal(int, const char *, int);
+static int	do_rlogin(struct sockaddr *, char *);
+static void	getstr(char *, int, const char *);
+static void	setup_term(int);
 #if 0
-int	do_krb_login __P((union sockunion *));
+static int	do_krb_login(union sockunion *);
 #endif
-void	usage __P((void));
-int	local_domain __P((char *));
-char	*topdomain __P((char *));
-int	main __P((int, char *[]));
+__dead static void	usage(void);
+static int	local_domain(char *);
+static char	*topdomain(char *);
 
 extern int __check_rhosts_file;
 extern char *__rcmd_errstr;	/* syslog hook from libc/net/rcmd.c */
 extern char **environ;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct sockaddr_storage from;
 	int ch, on;
@@ -230,18 +227,14 @@ main(argc, argv)
 #endif
 }
 
-int	child;
-int	netf;
-char	line[MAXPATHLEN];
-int	confirmed;
+static int	netf;
+static char	line[MAXPATHLEN];
+static int	confirmed;
 
-struct winsize win = { 0, 0, 0, 0 };
+static struct winsize win = { 0, 0, 0, 0 };
 
-
-void
-doit(f, fromp)
-	int f;
-	struct sockaddr_storage *fromp;
+static void
+doit(int f, struct sockaddr_storage *fromp)
 {
 	int master, pid, on = 1;
 	int authenticated = 0;
@@ -421,19 +414,16 @@ doit(f, fromp)
 	cleanup(0);
 }
 
-char	magic[2] = { 0377, 0377 };
-char	oobdata[] = {TIOCPKT_WINDOW};
+static char	magic[2] = { 0377, 0377 };
+static char	oobdata[] = {TIOCPKT_WINDOW};
 
 /*
  * Handle a "control" request (signaled by magic being present)
  * in the data stream.  For now, we are only willing to handle
  * window size changes.
  */
-int
-control(pty, cp, n)
-	int pty;
-	char *cp;
-	int n;
+static int
+control(int pty, char *cp, int n)
 {
 	struct winsize w;
 
@@ -452,9 +442,8 @@ control(pty, cp, n)
 /*
  * rlogin "protocol" machine.
  */
-void
-protocol(f, p)
-	int f, p;
+static void
+protocol(int f, int p)
 {
 	char pibuf[1024+1], fibuf[1024], *pbp = NULL, *fbp = NULL;
 					/* XXX gcc above */
@@ -571,9 +560,8 @@ protocol(f, p)
 	}
 }
 
-void
-cleanup(signo)
-	int signo;
+static void
+cleanup(int signo)
 {
 	char *p, c;
 
@@ -598,11 +586,8 @@ cleanup(signo)
 	exit(1);
 }
 
-void
-fatal(f, msg, syserr)
-	int f;
-	const char *msg;
-	int syserr;
+static void
+fatal(int f, const char *msg, int syserr)
 {
 	int len;
 	char buf[BUFSIZ], *bp, *ep;
@@ -625,10 +610,8 @@ fatal(f, msg, syserr)
 	exit(1);
 }
 
-int
-do_rlogin(dest, host)
-	struct sockaddr *dest;
-	char *host;
+static int
+do_rlogin(struct sockaddr *dest, char *host)
 {
 	int retval;
 
@@ -661,11 +644,8 @@ do_rlogin(dest, host)
 	return(retval);
 }
 
-void
-getstr(buf, cnt, errmsg)
-	char *buf;
-	int cnt;
-	const char *errmsg;
+static void
+getstr(char *buf, int cnt, const char *errmsg)
 {
 	char c;
 
@@ -679,9 +659,8 @@ getstr(buf, cnt, errmsg)
 }
 
 
-void
-setup_term(fd)
-	int fd;
+static void
+setup_term(int fd)
 {
 	char *cp = index(term+ENVSIZE, '/');
 	char *speed;
@@ -721,10 +700,11 @@ setup_term(fd)
 }
 
 
-void
-usage()
+static void
+usage(void)
 {
 	syslog(LOG_ERR, "usage: rlogind [-alnL]");
+	exit(1);
 }
 
 /*
@@ -735,9 +715,8 @@ usage()
  * assume that the host is local, as it will be
  * interpreted as such.
  */
-int
-local_domain(h)
-	char *h;
+static int
+local_domain(char *h)
 {
 	char localhost[MAXHOSTNAMELEN + 1];
 	char *p1, *p2;
@@ -752,9 +731,8 @@ local_domain(h)
 	return (0);
 }
 
-char *
-topdomain(h)
-	char *h;
+static char *
+topdomain(char *h)
 {
 	char *p;
 	char *maybe = NULL;
