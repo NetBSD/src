@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.132 2011/08/27 17:16:01 joerg Exp $ */
+/*	$NetBSD: fdisk.c,v 1.133 2011/08/27 20:49:03 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.132 2011/08/27 17:16:01 joerg Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.133 2011/08/27 20:49:03 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -267,7 +267,7 @@ static void	init_sector0(int);
 static void	intuit_translated_geometry(void);
 static void	get_bios_geometry(void);
 static void	get_extended_ptn(void);
-static static void get_ptn_alignmemt(void);
+static void	get_ptn_alignmemt(void);
 #if defined(USE_DISKLIST)
 static void	get_diskname(const char *, char *, size_t);
 #endif
