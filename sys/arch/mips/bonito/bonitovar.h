@@ -1,4 +1,4 @@
-/*	$NetBSD: bonitovar.h,v 1.4 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: bonitovar.h,v 1.5 2011/08/27 12:59:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -42,10 +42,15 @@ struct bonito_config {
 	uint32_t	bc_intEdge;
 	uint32_t	bc_intSteer;
 	uint32_t	bc_intPol;
+
+	/* PCI Attach hook , if needed */
+	void		(*bc_attach_hook)(device_t, device_t,
+			    struct pcibus_attach_args *);
+		 
 };
 
 #ifdef _KERNEL
-void	bonito_pci_init(pci_chipset_tag_t, struct bonito_config *);
+void	bonito_pci_init(pci_chipset_tag_t, const struct bonito_config *);
 
 void	bonito_iobc_wbinv_range(paddr_t, psize_t);
 void	bonito_iobc_inv_range(paddr_t, psize_t);

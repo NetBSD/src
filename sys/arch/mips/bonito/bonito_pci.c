@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_pci.c,v 1.9 2011/07/10 23:13:22 matt Exp $	*/
+/*	$NetBSD: bonito_pci.c,v 1.10 2011/08/27 12:59:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_pci.c,v 1.9 2011/07/10 23:13:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_pci.c,v 1.10 2011/08/27 12:59:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,11 +66,14 @@ pcireg_t	bonito_conf_read(void *, pcitag_t, int);
 void		bonito_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
-bonito_pci_init(pci_chipset_tag_t pc, struct bonito_config *bc)
+bonito_pci_init(pci_chipset_tag_t pc, const struct bonito_config *bc)
 {
 
-	pc->pc_conf_v = bc;
-	pc->pc_attach_hook = bonito_attach_hook;
+	pc->pc_conf_v = __UNCONST(bc);
+	if (bc->bc_attach_hook != NULL)
+		pc->pc_attach_hook = bc->bc_attach_hook;
+	else
+		pc->pc_attach_hook = bonito_attach_hook;
 	pc->pc_bus_maxdevs = bonito_bus_maxdevs;
 	pc->pc_make_tag = bonito_make_tag;
 	pc->pc_decompose_tag = bonito_decompose_tag;
