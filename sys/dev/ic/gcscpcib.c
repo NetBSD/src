@@ -1,4 +1,4 @@
-/* $NetBSD: gcscpcib.c,v 1.8 2009/09/27 18:31:58 jakllsch Exp $ */
+/* $NetBSD: gcscpcib.c,v 1.1 2011/08/27 12:47:49 bouyer Exp $ */
 /* $OpenBSD: gcscpcib.c,v 1.6 2007/11/17 17:02:47 mbalmer Exp $	*/
 
 /*
@@ -24,7 +24,7 @@
  * AMD CS5535/CS5536 series LPC bridge also containing timer, watchdog and GPIO.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.8 2009/09/27 18:31:58 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.1 2011/08/27 12:47:49 bouyer Exp $");
 
 #include "gpio.h"
 
@@ -37,19 +37,13 @@ __KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.8 2009/09/27 18:31:58 jakllsch Exp $"
 #include <sys/wdog.h>
 
 #include <sys/bus.h>
-#include <machine/cpufunc.h>
 
-#if NGPIO > 0
 #include <dev/gpio/gpiovar.h>
-#endif
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
-#include <arch/i386/pci/gcscpcibreg.h>
-#include <arch/x86/pci/pcibvar.h>
+#include <dev/ic/gcscpcibreg.h>
+#include <dev/ic/gcscpcibvar.h>
 
 /* define if you need to select MFGPT for watchdog manually (0-5). */
 /* #define AMD553X_WDT_FORCEUSEMFGPT 	0 */
@@ -65,51 +59,13 @@ __KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.8 2009/09/27 18:31:58 jakllsch Exp $"
 
 /* 1 bit replace (not support multiple bit)*/
 #define AMD553X_MFGPTx_NR_DISABLE(x, bit) \
-	( wrmsr(AMD553X_MFGPT_NR, rdmsr(AMD553X_MFGPT_NR) & ~((bit) << (x))) )
+	( gcsc_wrmsr(AMD553X_MFGPT_NR, gcsc_rdmsr(AMD553X_MFGPT_NR) & ~((bit) << (x))) )
 #define AMD553X_MFGPTx_NR_ENABLE(x, bit) \
-	( wrmsr(AMD553X_MFGPT_NR, rdmsr(AMD553X_MFGPT_NR) | ((bit) << (x))) )
+	( gcsc_wrmsr(AMD553X_MFGPT_NR, gcsc_rdmsr(AMD553X_MFGPT_NR) | ((bit) << (x))) )
 
 /* caliculate watchdog timer setting */
 #define	AMD553X_WDT_TICK (1<<(AMD553X_MFGPT_DIV_32K - AMD553X_MFGPT_PRESCALE))
 #define AMD553X_WDT_COUNTMAX	(0xffff / AMD553X_WDT_TICK)
-
-struct gcscpcib_softc {
-	/* we call pcibattach() which assumes softc starts like this: */
-	struct pcib_softc	sc_pcib;
-
-	pcireg_t		sc_pirqrc;
-
-	struct timecounter	sc_timecounter;
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-
-	/* Watchdog Timer */
-	struct sysmon_wdog	sc_smw;
-	int			sc_wdt_mfgpt;
-
-#if NGPIO > 0
-	/* GPIO interface */
-	bus_space_tag_t		sc_gpio_iot;
-	bus_space_handle_t	sc_gpio_ioh;
-	struct gpio_chipset_tag	sc_gpio_gc;
-	gpio_pin_t		sc_gpio_pins[AMD553X_GPIO_NPINS];
-#endif
-
-	/* SMbus/i2c interface */ 
-#if 0
-	bus_space_tag_t		sc_smbus_iot;
-        bus_space_handle_t	sc_smbus_ioh;
-	i2c_addr_t		sc_smbus_slaveaddr; /* address of smbus slave */
-	struct i2c_controller	sc_i2c;		/* i2c controller info */
-	krwlock_t		sc_smbus_rwlock;
-#endif
-};
-
-static int	gcscpcib_match(device_t, cfdata_t, void *);
-static void	gcscpcib_attach(device_t, device_t, void *);
-
-CFATTACH_DECL_NEW(gcscpcib, sizeof(struct gcscpcib_softc),
-	gcscpcib_match, gcscpcib_attach, NULL, NULL);
 
 static u_int	gcscpcib_get_timecount(struct timecounter *tc);
 static int	gscspcib_scan_mfgpt(struct gcscpcib_softc *sc);
@@ -126,29 +82,10 @@ static void	gcscpcib_gpio_pin_write(void *, int, int);
 static void	gcscpcib_gpio_pin_ctl(void *, int, int);
 #endif
 
-static int
-gcscpcib_match(device_t parent, cfdata_t match, void *aux)
-{ 
-	struct pci_attach_args *pa = aux;
-
-	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_BRIDGE ||
-	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_BRIDGE_ISA)
-		return 0;
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_NS_CS5535_ISA:
-	case PCI_PRODUCT_AMD_CS5536_PCIB:
-		return 2;	/* supersede pcib(4) */
-	}
-
-	return 0;
-}
-
-static void
-gcscpcib_attach(device_t parent, device_t self, void *aux)
+void
+gcscpcib_attach(device_t self, struct gcscpcib_softc *sc,
+    bus_space_tag_t iot)
 {
-	struct gcscpcib_softc *sc = device_private(self);
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	struct timecounter *tc = &sc->sc_timecounter;
 	bus_addr_t wdtbase;
 	int wdt = 0;
@@ -158,15 +95,10 @@ gcscpcib_attach(device_t parent, device_t self, void *aux)
 	int i, gpio;
 #endif
 
-	sc->sc_pcib.sc_pc = pa->pa_pc;
-	sc->sc_pcib.sc_tag = pa->pa_tag;
-	sc->sc_iot = pa->pa_iot;
+	sc->sc_iot = iot;
 #if NGPIO > 0
-	sc->sc_gpio_iot = pa->pa_iot;
+	sc->sc_gpio_iot = iot;
 #endif
-
-	/* Attach the PCI-ISA bridge at first */
-	pcibattach(parent, self, aux);
 
 	/* Attach the CS553[56] timer */
 	tc->tc_get_timecount = gcscpcib_get_timecount;
@@ -178,7 +110,7 @@ gcscpcib_attach(device_t parent, device_t self, void *aux)
 	tc_init(tc);
 
 	/* Attach the watchdog timer */
-	wdtbase = rdmsr(MSR_LBAR_MFGPT) & 0xffff;
+	wdtbase = gcsc_rdmsr(MSR_LBAR_MFGPT) & 0xffff;
 	if (bus_space_map(sc->sc_iot, wdtbase, 64, 0, &sc->sc_ioh)) {
 		aprint_error_dev(self, "can't map memory space for WDT\n");
 	} else {
@@ -215,7 +147,7 @@ gcscpcib_attach(device_t parent, device_t self, void *aux)
 gpio:
 #if NGPIO > 0
 	/* map GPIO I/O space */
-	gpiobase = rdmsr(MSR_LBAR_GPIO) & 0xffff;
+	gpiobase = gcsc_rdmsr(MSR_LBAR_GPIO) & 0xffff;
 	if (!bus_space_map(sc->sc_gpio_iot, gpiobase, 0xff, 0,
 	    &sc->sc_gpio_ioh)) {
 		aprint_normal(", GPIO");
@@ -265,7 +197,7 @@ gpio:
 static u_int
 gcscpcib_get_timecount(struct timecounter *tc)
 {
-        return rdmsr(AMD553X_TMC);
+        return gcsc_rdmsr(AMD553X_TMC);
 }
 
 /* Watchdog timer support functions */
@@ -330,7 +262,7 @@ gscspcib_wdog_update(struct gcscpcib_softc *sc, uint16_t count)
 		__func__, sc->sc_wdt_mfgpt, cnt,
 		bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 			 AMD553X_MFGPTX_CNT(sc->sc_wdt_mfgpt)), count,
-		(uint32_t)(rdmsr(AMD553X_MFGPT_NR))));
+		(uint32_t)(gcsc_rdmsr(AMD553X_MFGPT_NR))));
 }
 
 static void
