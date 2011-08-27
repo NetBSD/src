@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.45 2011/05/17 17:34:53 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.46 2011/08/27 09:32:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.45 2011/05/17 17:34:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.46 2011/08/27 09:32:11 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -191,56 +191,62 @@ struct {
  * of these functions.
  */
 struct x86_bus_dma_tag pci_bus_dma_tag = {
-	0,				/* tag_needs_free */
+	._tag_needs_free	= 0,
 #if defined(_LP64) || defined(PAE)
-	PCI32_DMA_BOUNCE_THRESHOLD,	/* bounce_thresh */
-	ISA_DMA_BOUNCE_THRESHOLD,	/* bounce_alloclo */
-	PCI32_DMA_BOUNCE_THRESHOLD,	/* bounce_allochi */
+	._bounce_thresh		= PCI32_DMA_BOUNCE_THRESHOLD,
+	._bounce_alloc_lo	= ISA_DMA_BOUNCE_THRESHOLD,
+	._bounce_alloc_hi	= PCI32_DMA_BOUNCE_THRESHOLD,
 #else
-	0,
-	0,
-	0,
+	._bounce_thresh		= 0,
+	._bounce_alloc_lo	= 0,
+	._bounce_alloc_hi	= 0,
 #endif
-	NULL,			/* _may_bounce */
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	_bus_dmamap_sync,
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
-	_bus_dmatag_subregion,
-	_bus_dmatag_destroy,
+	._may_bounce		= NULL,
+
+	._dmamap_create		= _bus_dmamap_create,
+	._dmamap_destroy	= _bus_dmamap_destroy,
+	._dmamap_load		= _bus_dmamap_load,
+	._dmamap_load_mbuf	= _bus_dmamap_load_mbuf,
+	._dmamap_load_uio	= _bus_dmamap_load_uio,
+	._dmamap_load_raw	= _bus_dmamap_load_raw,
+	._dmamap_unload		= _bus_dmamap_unload,
+	._dmamap_sync 		= _bus_dmamap_sync,
+
+	._dmamem_alloc		= _bus_dmamem_alloc,
+	._dmamem_free		= _bus_dmamem_free,
+	._dmamem_map		= _bus_dmamem_map,
+	._dmamem_unmap		= _bus_dmamem_unmap,
+	._dmamem_mmap		= _bus_dmamem_mmap,
+
+	._dmatag_subregion	= _bus_dmatag_subregion,
+	._dmatag_destroy	= _bus_dmatag_destroy,
 };
 
 #ifdef _LP64
 struct x86_bus_dma_tag pci_bus_dma64_tag = {
-	0,				/* tag_needs_free */
-	0,
-	0,
-	0,
-	NULL,			/* _may_bounce */
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	NULL,
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
-	_bus_dmatag_subregion,
-	_bus_dmatag_destroy,
+	._tag_needs_free	= 0,
+	._bounce_thresh		= 0,
+	._bounce_alloc_lo	= 0,
+	._bounce_alloc_hi	= 0,
+	._may_bounce		= NULL,
+
+	._dmamap_create		= _bus_dmamap_create,
+	._dmamap_destroy	= _bus_dmamap_destroy,
+	._dmamap_load		= _bus_dmamap_load,
+	._dmamap_load_mbuf	= _bus_dmamap_load_mbuf,
+	._dmamap_load_uio	= _bus_dmamap_load_uio,
+	._dmamap_load_raw	= _bus_dmamap_load_raw,
+	._dmamap_unload		= _bus_dmamap_unload,
+	._dmamap_sync 		= NULL,
+
+	._dmamem_alloc		= _bus_dmamem_alloc,
+	._dmamem_free		= _bus_dmamem_free,
+	._dmamem_map		= _bus_dmamem_map,
+	._dmamem_unmap		= _bus_dmamem_unmap,
+	._dmamem_mmap		= _bus_dmamem_mmap,
+
+	._dmatag_subregion	= _bus_dmatag_subregion,
+	._dmatag_destroy	= _bus_dmatag_destroy,
 };
 #endif
 
