@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.360 2011/06/12 03:35:41 rmind Exp $
+#	$NetBSD: files.i386,v 1.361 2011/08/27 12:47:49 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -213,8 +213,9 @@ file	arch/i386/pci/gscpcib.c		gscpcib
 
 # AMD Geode CS5535/CS5536 PCI-ISA bridge
 device	gcscpcib: isabus, sysmon_wdog, gpiobus
-attach	gcscpcib at pci
-file	arch/i386/pci/gcscpcib.c	gcscpcib
+attach	gcscpcib at pci with gcscpcib_pci
+file	arch/i386/pci/gcscpcib_pci.c	gcscpcib_pci
+file	dev/ic/gcscpcib.c		gcscpcib
 
 device	piixpcib: isabus, bioscall
 attach	piixpcib at pci
