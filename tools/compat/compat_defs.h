@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.79 2011/07/17 20:54:55 joerg Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.80 2011/08/27 18:33:22 joerg Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -114,6 +114,8 @@ struct group;
 #define __aconst
 #undef __dead
 #define __dead
+#undef __printflike
+#define __printflike(x,y)
 #undef __restrict
 #define __restrict
 #undef __unused
