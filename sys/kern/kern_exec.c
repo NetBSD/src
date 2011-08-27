@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.326 2011/08/27 17:51:38 reinoud Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.327 2011/08/27 18:07:10 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.326 2011/08/27 17:51:38 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.327 2011/08/27 18:07:10 reinoud Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -855,7 +855,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	{
 		size_t j;
 		struct exec_vmcmd *vp = &pack.ep_vmcmds.evs_cmds[0];
-		DPRINTF("vmcmds %u\n", pack.ep_vmcmds.evs_used);
+		DPRINTF(("vmcmds %u\n", pack.ep_vmcmds.evs_used);
 		for (j = 0; j < pack.ep_vmcmds.evs_used; j++) {
 			DPRINTF("vmcmd[%zu] = vmcmd_map_%s %#"
 			    PRIxVADDR"/%#"PRIxVSIZE" fd@%#"
@@ -868,7 +868,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 			    "zero" : "*unknown*",
 			    vp[j].ev_addr, vp[j].ev_len,
 			    vp[j].ev_offset, vp[j].ev_prot,
-			    vp[j].ev_flags);
+			    vp[j].ev_flags));
 		}
 	}
 #endif	/* DEBUG_EXEC */
@@ -893,10 +893,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		if (error) {
 			size_t j;
 			struct exec_vmcmd *vp = &pack.ep_vmcmds.evs_cmds[0];
-			DPRINTF("vmcmds %zu/%u, error %d\n", i, 
-			    pack.ep_vmcmds.evs_used, error);
+			DPRINTF(("vmcmds %zu/%u, error %d\n", i, 
+			    pack.ep_vmcmds.evs_used, error));
 			for (j = 0; j < pack.ep_vmcmds.evs_used; j++) {
-				DPRINTF("vmcmd[%zu] = vmcmd_map_%s %#"
+				DPRINTF(("vmcmd[%zu] = vmcmd_map_%s %#"
 				    PRIxVADDR"/%#"PRIxVSIZE" fd@%#"
 				    PRIxVSIZE" prot=0%o flags=%d\n", j,
 				    vp[j].ev_proc == vmcmd_map_pagedvn ?
@@ -907,9 +907,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 				    "zero" : "*unknown*",
 				    vp[j].ev_addr, vp[j].ev_len,
 				    vp[j].ev_offset, vp[j].ev_prot,
-				    vp[j].ev_flags);
+				    vp[j].ev_flags));
 				if (j == i)
-					DPRINTF("     ^--- failed\n");
+					DPRINTF(("     ^--- failed\n"));
 			}
 		}
 #endif /* DEBUG_EXEC */
@@ -1275,7 +1275,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	pathbuf_stringcopy_put(pb, pathstring);
 	pathbuf_destroy(pb);
 	PNBUF_PUT(resolvedpathbuf);
-	DPRINTF("%s finished\n", __func__);
+	DPRINTF(("%s finished\n", __func__));
 	return (EJUSTRETURN);
 
  bad:
