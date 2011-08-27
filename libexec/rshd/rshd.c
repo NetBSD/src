@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.47 2009/03/16 02:20:02 lukem Exp $	*/
+/*	$NetBSD: rshd.c,v 1.48 2011/08/27 17:46:34 joerg Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.47 2009/03/16 02:20:02 lukem Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.48 2011/08/27 17:46:34 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,19 +132,17 @@ static int pam_err;
 #define PAM_END
 #endif
 
-int	keepalive = 1;
-int	check_all;
-int	log_success;		/* If TRUE, log all successful accesses */
-int	sent_null;
+static int	keepalive = 1;
+static int	check_all;
+static int	log_success;		/* If TRUE, log all successful accesses */
+static int	sent_null;
 
-void	 doit(struct sockaddr *) __dead;
-void	 rshd_errx(int, const char *, ...)
-     __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
-void	 getstr(char *, int, const char *);
-int	 local_domain(char *);
-char	*topdomain(char *);
-void	 usage(void);
-int	 main(int, char *[]);
+__dead static void	 doit(struct sockaddr *);
+__dead static void	 rshd_errx(int, const char *, ...) __printflike(2, 3);
+static void	 getstr(char *, int, const char *);
+static int	 local_domain(char *);
+static char	*topdomain(char *);
+__dead static void	 usage(void);
 
 #define	OPTIONS	"aLln"
 extern int __check_rhosts_file;
@@ -237,15 +235,9 @@ main(int argc, char *argv[])
 	doit((struct sockaddr *)&from);
 }
 
-char	username[20] = "USER=";
-char	homedir[64] = "HOME=";
-char	shell[64] = "SHELL=";
-char	path[100] = "PATH=";
-char	*envinit[] =
-	    {homedir, shell, path, username, 0};
-char	**environ;
+extern char	**environ;
 
-void
+static void
 doit(struct sockaddr *fromp)
 {
 	struct passwd *pwd, pwres;
@@ -671,11 +663,14 @@ doit(struct sockaddr *fromp)
 		}
 	}
 #endif
+{
+	static char *envinit[] = { NULL };
 	environ = envinit;
-	(void)strlcat(homedir, pwd->pw_dir, sizeof(homedir));
-	(void)strlcat(path, _PATH_DEFPATH, sizeof(path));
-	(void)strlcat(shell, pwd->pw_shell, sizeof(shell));
-	(void)strlcat(username, pwd->pw_name, sizeof(username));
+}
+	setenv("PATH", _PATH_DEFPATH, 1);
+	setenv("HOME", pwd->pw_dir, 1);
+	setenv("SHELL", pwd->pw_shell, 1);
+	setenv("USER", pwd->pw_name, 1);
 #endif
 
 	cp = strrchr(pwd->pw_shell, '/');
@@ -717,7 +712,7 @@ badlogin:
 
 #include <stdarg.h>
 
-void
+static void
 rshd_errx(int error, const char *fmt, ...)
 {
 	va_list ap;
@@ -737,7 +732,7 @@ rshd_errx(int error, const char *fmt, ...)
 	exit(error);
 }
 
-void
+static void
 getstr(char *buf, int cnt, const char *err)
 {
 	char c;
@@ -759,7 +754,7 @@ getstr(char *buf, int cnt, const char *err)
  * assume that the host is local, as it will be
  * interpreted as such.
  */
-int
+static int
 local_domain(char *h)
 {
 	char localhost[MAXHOSTNAMELEN + 1];
@@ -775,7 +770,7 @@ local_domain(char *h)
 	return (0);
 }
 
-char *
+static char *
 topdomain(char *h)
 {
 	char *p, *maybe = NULL;
@@ -791,7 +786,7 @@ topdomain(char *h)
 	return (maybe);
 }
 
-void
+static void
 usage(void)
 {
 
