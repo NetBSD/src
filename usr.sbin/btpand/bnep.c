@@ -1,4 +1,4 @@
-/*	$NetBSD: bnep.c,v 1.10 2011/02/08 21:43:45 plunky Exp $	*/
+/*	$NetBSD: bnep.c,v 1.11 2011/08/27 22:30:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bnep.c,v 1.10 2011/02/08 21:43:45 plunky Exp $");
+__RCSID("$NetBSD: bnep.c,v 1.11 2011/08/27 22:30:44 joerg Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -49,7 +49,7 @@ static size_t bnep_recv_filter_multi_addr_rsp(channel_t *, uint8_t *, size_t);
 static bool bnep_pfilter(channel_t *, packet_t *);
 static bool bnep_mfilter(channel_t *, packet_t *);
 
-static uint8_t NAP_UUID[] = {
+static const uint8_t NAP_UUID[] = {
 	0x00, 0x00, 0x11, 0x16,
 	0x00, 0x00,
 	0x10, 0x00,
@@ -57,7 +57,7 @@ static uint8_t NAP_UUID[] = {
 	0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb
 };
 
-static uint8_t GN_UUID[] = {
+static const uint8_t GN_UUID[] = {
 	0x00, 0x00, 0x11, 0x17,
 	0x00, 0x00,
 	0x10, 0x00,
@@ -65,7 +65,7 @@ static uint8_t GN_UUID[] = {
 	0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb,
 };
 
-static uint8_t PANU_UUID[] = {
+static const uint8_t PANU_UUID[] = {
 	0x00, 0x00, 0x11, 0x15,
 	0x00, 0x00,
 	0x10, 0x00,
