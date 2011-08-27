@@ -736,6 +736,9 @@ m4_ifdef( [[M4_YY_NOT_IN_HEADER]],
 static yy_state_type yy_get_previous_state M4_YY_PARAMS( M4_YY_PROTO_ONLY_ARG );
 static yy_state_type yy_try_NUL_trans M4_YY_PARAMS( yy_state_type current_state  M4_YY_PROTO_LAST_ARG);
 static int yy_get_next_buffer M4_YY_PARAMS( M4_YY_PROTO_ONLY_ARG );
+#if defined(__GNUC__) && __GNUC__ >= 3
+__attribute__((__noreturn__))
+#endif
 static void yy_fatal_error M4_YY_PARAMS( yyconst char msg[] M4_YY_PROTO_LAST_ARG );
 ]])
 
