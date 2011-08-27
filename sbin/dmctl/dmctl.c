@@ -66,9 +66,8 @@ struct command {
 	int (*cmd_func)(int, char *[], libdm_task_t);
 };
 
-int     fd;                             /* file descriptor for device */
-const   char *dvname;                   /* device name */
-const   char *cmdname;                  /* command user issued */
+static const   char *dvname;            /* device name */
+static const   char *cmdname;           /* command user issued */
 
 static char * parse_stdin(char *);
 
@@ -84,9 +83,9 @@ static int dmctl_dev_deps(int, char *[], libdm_task_t);
 static int dmctl_list_devices(int, char *[], libdm_task_t);
 static int dmctl_table_reload(int, char *[], libdm_task_t);
 static int dmctl_table_status(int, char *[], libdm_task_t);
-void usage(void);
+__dead static void usage(void);
 
-struct command commands[] = {
+static struct command commands[] = {
 	{ "version",
 	  "Print driver and lib version.",
 	  NULL, DMCTL_CMD_REQ_NODEVNAME,
@@ -537,7 +536,7 @@ dmctl_table_status(int argc __unused, char *argv[] __unused, libdm_task_t task)
 	return 0;
 }
 
-void
+static void
 usage(void)
 {
 	int i;
