@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.19 2011/08/06 16:34:40 dholland Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.20 2011/08/27 16:34:38 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.19 2011/08/06 16:34:40 dholland Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.20 2011/08/27 16:34:38 joerg Exp $");
 #endif
 
 
@@ -78,36 +78,32 @@ struct command {
 	int open_flags;
 };
 
-struct command *lookup(const char *);
-void	usage(void);
-void	run(int, char *[]);
-void	showall(void);
+static struct command *lookup(const char *);
+__dead static void	usage(void);
+static void	run(int, char *[]);
+static void	showall(void);
 
-int	fd;				/* file descriptor for device */
-const	char *dvname;			/* device name */
-char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
-const	char *cmdname;			/* command user issued */
+static int	fd;				/* file descriptor for device */
+static const	char *dvname;			/* device name */
+static char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
+static const	char *cmdname;			/* command user issued */
 
-int dkw_sort(const void *, const void *);
-int yesno(const char *);
+static int dkw_sort(const void *, const void *);
+static int yesno(const char *);
 
-void	disk_getcache(int, char *[]);
-void	disk_setcache(int, char *[]);
-void	disk_synccache(int, char *[]);
-void	disk_keeplabel(int, char *[]);
-void	disk_badsectors(int, char *[]);
+static void	disk_getcache(int, char *[]);
+static void	disk_setcache(int, char *[]);
+static void	disk_synccache(int, char *[]);
+static void	disk_keeplabel(int, char *[]);
+static void	disk_badsectors(int, char *[]);
 
-void	disk_addwedge(int, char *[]);
-void	disk_delwedge(int, char *[]);
-void	disk_getwedgeinfo(int, char *[]);
-void	disk_listwedges(int, char *[]);
-void	disk_strategy(int, char *[]);
+static void	disk_addwedge(int, char *[]);
+static void	disk_delwedge(int, char *[]);
+static void	disk_getwedgeinfo(int, char *[]);
+static void	disk_listwedges(int, char *[]);
+static void	disk_strategy(int, char *[]);
 
-void	disk_foreachwedges(int, char *[], void (*)(struct dkwedge_list *));
-void	disk_listwedges_cb(struct dkwedge_list *);
-void	disk_getwedgeinfo_cb(struct dkwedge_info *);
-
-struct command commands[] = {
+static struct command commands[] = {
 	{ "getcache",
 	  "",
 	  disk_getcache,
@@ -186,7 +182,7 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-void
+static void
 run(int argc, char *argv[])
 {
 	struct command *command;
@@ -206,7 +202,7 @@ run(int argc, char *argv[])
 	(void)close(fd);
 }
 
-struct command *
+static struct command *
 lookup(const char *name)
 {
 	int i;
@@ -221,7 +217,7 @@ lookup(const char *name)
 	return &commands[i];
 }
 
-void
+static void
 usage(void)
 {
 	int i;
@@ -239,7 +235,7 @@ usage(void)
 	exit(1);
 }
 
-void
+static void
 showall(void)
 {
 	printf("strategy:\n");
@@ -259,7 +255,7 @@ showall(void)
 	run(0, NULL);
 }
 
-void
+static void
 disk_strategy(int argc, char *argv[])
 {
 	struct disk_strategy odks;
@@ -290,7 +286,7 @@ disk_strategy(int argc, char *argv[])
 	}
 }
 
-void
+static void
 disk_getcache(int argc, char *argv[])
 {
 	int bits;
@@ -316,7 +312,7 @@ disk_getcache(int argc, char *argv[])
 	    (bits & DKCACHE_SAVE) ? "" : "not ");
 }
 
-void
+static void
 disk_setcache(int argc, char *argv[])
 {
 	int bits;
@@ -346,7 +342,7 @@ disk_setcache(int argc, char *argv[])
 		err(1, "%s: setcache", dvname);
 }
 
-void
+static void
 disk_synccache(int argc, char *argv[])
 {
 	int force;
@@ -371,7 +367,7 @@ disk_synccache(int argc, char *argv[])
 		err(1, "%s: sync cache", dvname);
 }
 
-void
+static void
 disk_keeplabel(int argc, char *argv[])
 {
 	int keep;
@@ -391,7 +387,7 @@ disk_keeplabel(int argc, char *argv[])
 }
 
 
-void
+static void
 disk_badsectors(int argc, char *argv[])
 {
 	struct disk_badsectors *dbs, *dbs2, buffer[200];
@@ -539,7 +535,7 @@ disk_badsectors(int argc, char *argv[])
 	}
 }
 
-void
+static void
 disk_addwedge(int argc, char *argv[])
 {
 	struct dkwedge_info dkw;
@@ -588,7 +584,7 @@ disk_addwedge(int argc, char *argv[])
 
 }
 
-void
+static void
 disk_delwedge(int argc, char *argv[])
 {
 	struct dkwedge_info dkw;
@@ -605,7 +601,7 @@ disk_delwedge(int argc, char *argv[])
 		err(1, "%s: delwedge", dvname);
 }
 
-void
+static void
 disk_getwedgeinfo(int argc, char *argv[])
 {
 	struct dkwedge_info dkw;
@@ -622,7 +618,7 @@ disk_getwedgeinfo(int argc, char *argv[])
 	    dkw.dkw_devname, dkw.dkw_size, dkw.dkw_offset, dkw.dkw_ptype);
 }
 
-void
+static void
 disk_listwedges(int argc, char *argv[])
 {
 	struct dkwedge_info *dkw;
@@ -670,7 +666,7 @@ disk_listwedges(int argc, char *argv[])
 	}
 }
 
-int
+static int
 dkw_sort(const void *a, const void *b)
 {
 	const struct dkwedge_info *dkwa = a, *dkwb = b;
@@ -682,7 +678,7 @@ dkw_sort(const void *a, const void *b)
 /*
  * return YES, NO or -1.
  */
-int
+static int
 yesno(const char *p)
 {
 
