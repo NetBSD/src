@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.15 2009/04/23 01:36:56 lukem Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.16 2011/08/27 22:38:48 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.15 2009/04/23 01:36:56 lukem Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.16 2011/08/27 22:38:48 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,18 +53,17 @@ __RCSID("$NetBSD: cpuctl.c,v 1.15 2009/04/23 01:36:56 lukem Exp $");
 
 #include "cpuctl.h"
 
-u_int	getcpuid(char **);
-int	main(int, char **);
-void	usage(void);
+static u_int	getcpuid(char **);
+__dead static void	usage(void);
 
-void	cpu_identify(char **);
-void	cpu_list(char **);
-void	cpu_offline(char **);
-void	cpu_online(char **);
-void	cpu_intr(char **);
-void	cpu_nointr(char **);
+static void	cpu_identify(char **);
+static void	cpu_list(char **);
+static void	cpu_offline(char **);
+static void	cpu_online(char **);
+static void	cpu_intr(char **);
+static void	cpu_nointr(char **);
 
-struct cmdtab {
+static struct cmdtab {
 	const char	*label;
 	int	takesargs;
 	void	(*func)(char **);
@@ -78,7 +77,7 @@ struct cmdtab {
 	{ NULL, 0, NULL },
 };
 
-int	fd;
+static int	fd;
 
 int
 main(int argc, char **argv)
@@ -108,7 +107,7 @@ main(int argc, char **argv)
 	/* NOTREACHED */
 }
 
-void
+static void
 usage(void)
 {
 	const char *progname = getprogname();
@@ -123,7 +122,7 @@ usage(void)
 	/* NOTREACHED */
 }
 
-void
+static void
 cpu_online(char **argv)
 {
 	cpustate_t cs;
@@ -136,7 +135,7 @@ cpu_online(char **argv)
 		err(EXIT_FAILURE, "IOC_CPU_SETSTATE");
 }
 
-void
+static void
 cpu_offline(char **argv)
 {
 	cpustate_t cs;
@@ -149,7 +148,7 @@ cpu_offline(char **argv)
 		err(EXIT_FAILURE, "IOC_CPU_SETSTATE");
 }
 
-void
+static void
 cpu_intr(char **argv)
 {
 	cpustate_t cs;
@@ -162,7 +161,7 @@ cpu_intr(char **argv)
 		err(EXIT_FAILURE, "IOC_CPU_SETSTATE");
 }
 
-void
+static void
 cpu_nointr(char **argv)
 {
 	cpustate_t cs;
@@ -180,7 +179,7 @@ cpu_nointr(char **argv)
 	}
 }
 
-void
+static void
 cpu_identify(char **argv)
 {
 	char name[32];
@@ -211,7 +210,7 @@ cpu_identify(char **argv)
 	identifycpu(name);
 }
 
-u_int
+static u_int
 getcpuid(char **argv)
 {
 	char *argp;
@@ -229,7 +228,7 @@ getcpuid(char **argv)
 	return id;
 }
 
-void
+static void
 cpu_list(char **argv)
 {
 	const char *state, *intr;
