@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.25 2011/05/24 15:23:41 joerg Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.26 2011/08/27 17:07:49 ahoka Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -793,6 +793,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 			free(str, M_TEMP);
 
 			dm_dev_unbusy(dmv);
+			dm_target_unbusy(target);
 			return ret;
 		}
 		last_table = table_en;
