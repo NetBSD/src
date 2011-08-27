@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.10 2011/06/18 21:14:43 rmind Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.11 2011/08/27 09:11:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.10 2011/06/18 21:14:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.11 2011/08/27 09:11:53 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -123,7 +123,8 @@ uvm_obj_setlock(struct uvm_object *uo, kmutex_t *lockptr)
  * => caller must pass page-aligned start and end values
  */
 int
-uvm_obj_wirepages(struct uvm_object *uobj, off_t start, off_t end)
+uvm_obj_wirepages(struct uvm_object *uobj, off_t start, off_t end,
+    struct pglist *list)
 {
 	int i, npages, error;
 	struct vm_page *pgs[FETCH_PAGECOUNT], *pg = NULL;
@@ -177,6 +178,8 @@ uvm_obj_wirepages(struct uvm_object *uobj, off_t start, off_t end)
 		mutex_enter(&uvm_pageqlock);
 		for (i = 0; i < npages; i++) {
 			uvm_pagewire(pgs[i]);
+			if (list != NULL)
+				TAILQ_INSERT_TAIL(list, pgs[i], pageq.queue);
 		}
 		mutex_exit(&uvm_pageqlock);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.121 2011/07/30 06:19:02 uebayasi Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.122 2011/08/27 09:11:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.121 2011/07/30 06:19:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.122 2011/08/27 09:11:52 christos Exp $");
 
 #define SYSVSHM
 
@@ -268,7 +268,7 @@ shm_memlock(struct lwp *l, struct shmid_ds *shmseg, int shmid, int cmd)
 		    (shmseg->shm_perm.mode & SHMSEG_WIRED) == 0) {
 			/* Wire the object and map, then tag it */
 			error = uvm_obj_wirepages(shmseg->_shm_internal,
-			    0, size);
+			    0, size, NULL);
 			if (error)
 				return EIO;
 			error = uvm_map_pageable(&p->p_vmspace->vm_map,
@@ -734,7 +734,7 @@ sys_shmget(struct lwp *l, const struct sys_shmget_args *uap, register_t *retval)
 	shmseg->_shm_internal = uao_create(size, 0);
 	if (lockmem) {
 		/* Wire the pages and tag it */
-		error = uvm_obj_wirepages(shmseg->_shm_internal, 0, size);
+		error = uvm_obj_wirepages(shmseg->_shm_internal, 0, size, NULL);
 		if (error) {
 			uao_detach(shmseg->_shm_internal);
 			mutex_enter(&shm_lock);
