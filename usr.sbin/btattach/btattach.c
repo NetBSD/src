@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.c,v 1.11 2010/03/09 02:01:51 kiyohara Exp $	*/
+/*	$NetBSD: btattach.c,v 1.12 2011/08/27 22:17:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert.  All rights reserved.");
-__RCSID("$NetBSD: btattach.c,v 1.11 2010/03/09 02:01:51 kiyohara Exp $");
+__RCSID("$NetBSD: btattach.c,v 1.12 2011/08/27 22:17:53 joerg Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -47,13 +47,13 @@ __RCSID("$NetBSD: btattach.c,v 1.11 2010/03/09 02:01:51 kiyohara Exp $");
 #include "btattach.h"
 
 static void sighandler(int);
-static void usage(void);
+__dead static void usage(void);
 static void test(const char *, tcflag_t, tcflag_t);
 
 static int sigcount = 0;	/* signals received */
 static int opt_debug = 0;	/* global? */
 
-const struct devtype types[] = {
+static const struct devtype types[] = {
     {
 	.name = "bcm2035",
 	.line = "btuart",
