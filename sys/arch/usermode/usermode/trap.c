@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.6 2011/08/25 19:06:03 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.7 2011/08/27 18:01:37 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.6 2011/08/25 19:06:03 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.7 2011/08/27 18:01:37 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -83,8 +83,12 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	vaddr_t va;
 	vaddr_t onfault;
 	int kmem, rv;
+	static volatile int recurse = 0;
 
+	recurse++;
 	aprint_debug("trap\n");
+	if (recurse > 1)
+		printf("enter trap recursion level %d\n", recurse);
 	if ((info->si_signo == SIGSEGV) || (info->si_signo == SIGBUS)) {
 		l = curlwp;
 		p = l->l_proc;
@@ -121,7 +125,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 
 		kmem = 1;
 		vm_map = kernel_map;
-		if ((va >= VM_MIN_ADDRESS) && (va <= VM_MAXUSER_ADDRESS)) {
+		if ((va >= VM_MIN_ADDRESS) && (va < VM_MAXUSER_ADDRESS)) {
 			kmem = 0;
 			vm_map = &vm->vm_map;
 		}
@@ -146,11 +150,14 @@ atype = PROT_READ | PROT_WRITE;
 				memset(tf, 0, sizeof(struct trapframe));
 				tf->tf_pc = onfault;
 				tf->tf_out[0] = (rv == EACCES) ? EFAULT : rv;
+				recurse--;
 				return;
 			}
 			panic("should deliver a trap to the process");
 		}
-
+		if (recurse > 1)
+			printf("leaving trap recursion level %d\n", recurse);
+		recurse--;
 	}
 }
 
