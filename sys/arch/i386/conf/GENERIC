@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1048 2011/08/18 20:55:20 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.1049 2011/08/27 09:28:55 mbalmer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1048 $"
+#ident 		"GENERIC-$Revision: 1.1049 $"
 
 maxusers	64		# estimated number of users
 
@@ -456,7 +456,7 @@ fwhrng* at ichlpcib?		# Intel 82802 FWH Random Number Generator
 gcscpcib* at pci? dev ? function ?	# AMD CS5535/CS5536 PCI-ISA w/
 gpio*	at gcscpcib?			# timecounter, watchdog and GPIO
 #piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
-#gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
+gscpcib* at pci? dev ? function ?	# NS Geode SC1100 PCI-ISA w/ GPIO
 viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
 iic*	at viapcib?
 rdcpcib* at pci? dev ? function ?	# RDC Vortex86/PMX-1000 PCI-ISA w/
@@ -706,16 +706,20 @@ ld*	at iop? tid ?			# block devices
 dpti*	at iop? tid 0			# DPT/Adaptec control interface
 
 # GPIO devices
-#gpio*	at gscpcib?
+gpio*	at gscpcib?
 #gpio*	at gpiosim?
 
 # 1-Wire support
 #gpioow* 	at gpio? offset ? mask ?	# 1-wire bitbanging via gpio
-#gpioow* 	at gpio?
-#onewire*	at gpioow?
+gpioow* 	at gpio?
+onewire*	at gpioow?
 
 # 1-Wire devices
-#owtemp* 	at onewire?			# Temperature sensors
+owtemp* 	at onewire?			# Temperature sensors
+
+# i2c support
+gpioiic*	at gpio?
+iic*		at gpioiic?
 
 # Keylock support
 #gpiolock*	at gpio?
