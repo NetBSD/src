@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: remove.c,v 1.5 2009/02/07 17:21:44 uebayasi Exp $");
+__RCSID("$NetBSD: remove.c,v 1.6 2011/08/27 17:38:16 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -53,7 +53,7 @@ const char removemsg1[] = "remove -a device ...";
 const char removemsg2[] = "remove [-b lba] [-i index] [-s lba] "
 	"[-t type] device ...";
 
-static void
+__dead static void
 usage_remove(void)
 {
 

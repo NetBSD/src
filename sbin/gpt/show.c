@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.6 2011/01/06 16:30:40 jakllsch Exp $");
+__RCSID("$NetBSD: show.c,v 1.7 2011/08/27 17:38:16 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@ static int show_uuid = 0;
 
 const char showmsg[] = "show [-lu] device ...";
 
-static void
+__dead static void
 usage_show(void)
 {
 
