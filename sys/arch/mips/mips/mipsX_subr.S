@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.53 2011/08/16 06:55:12 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.54 2011/08/27 13:23:52 bouyer Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -330,8 +330,54 @@
  *
  * Don't check for invalid pte's here. We load them as well and
  * let the processor trap to load the correct value after service.
+ *
+ * Loongson2 processors don't have separate tlbmiss and xtlbmiss handlers;
+ * so we have to check for useg addresses in tlb_miss. The good news is that
+ * we can use 64 intructions form tlbmiss instead of 32.
+ * 
  *----------------------------------------------------------------------------
  */
+#ifdef MIPS3_LOONGSON2
+/* this loongson2-specific part is almost a copy of xtlb_miss */
+VECTOR(MIPSX(tlb_miss), unknown)
+	.set	noat
+	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
+#ifdef _LP64
+	nop					#01: nop
+	bltz	k0, MIPSX(kernelfault)		#02: k0<0 -> kernel fault
+	 PTR_SRL k1, k0, 31			#03: clear useg bits
+	beqz	k1, 1f				#04: k1==0 -> useg address
+	 PTR_SRL k1,k0,2*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2)+PGSHIFT #05: clear valid bits
+	bnez	k1, MIPSX(nopagetable)		#06: not legal address
+	 PTR_SRL k0, 2*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #05: k0=seg offset (almost)
+	lui	k1, %hi(CPUVAR(PMAP_SEGTAB))	#07: k1=hi of segtab
+	andi	k0, NBPG-(1<<PTR_SCALESHIFT)	#08: k0=seg offset (mask 0x3)
+	PTR_L	k1, %lo(CPUVAR(PMAP_SEGTAB))(k1)#09: k1=segment tab
+	PTR_ADDU k1, k0				#0a: k1=seg entry address
+	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#0b: k0=bad address (again)
+	PTR_L	k1, 0(k1)			#0c: k1=seg entry
+	b	MIPSX(tlb_miss_common)		#0d
+	 PTR_SRL k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #0e: k0=seg offset (almost)
+#endif /* LP64 */
+1: /* handle useg addresses */
+	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#0f: k1=hi of seg0tab
+	bltz	k0, MIPSX(kernelfault)		#10: k0<0 -> kernel fault
+	 dsrl	k0, 31				#11: clear low 31 bits
+	bnez	k0, MIPSX(nopagetable)		#12: not legal address
+	 PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1)#13: k1=segment tab base
+	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#14: k0=bad address (again)
+	nop					#15
+	b	MIPSX(tlb_miss_common)		#16
+	 PTR_SRL k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #17: k0=seg offset (almost)
+_VECTOR_END(MIPSX(tlb_miss))
+/* dummy xtlb_miss (also a placeholder for tlb_miss_common) */
+VECTOR(MIPSX(xtlb_miss), unknown)
+	lui	k0, %hi(_C_LABEL(panic))	#00
+	addiu	k0, %lo(_C_LABEL(panic))	#01
+	lui	a0, %hi(loongson2_xtlb_miss_str) #02
+	jr	k0				#03
+	 addiu	a0, %lo(loongson2_xtlb_miss_str) #04
+#else /* !MIPS3_LOONGSON2 */
 VECTOR(MIPSX(tlb_miss), unknown)
 	.set	noat
 #ifdef MIPS3_LOONGSON2
@@ -343,6 +389,7 @@ VECTOR(MIPSX(tlb_miss), unknown)
 	bltz	k0, MIPSX(kernelfault)		#02: k0<0 -> 4f (kernel fault)
 	 PTR_SRL k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2)#03: k0=seg offset (almost)
 	PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1)#04: k1=seg0tab
+#endif /* !MIPS3_LOONGSON2 */
 MIPSX(tlb_miss_common):
 #ifdef _LP64
 	beqz	k1, MIPSX(nopagetable)		#05: is there a pagetable?
@@ -380,8 +427,13 @@ MIPSX(tlb_miss_common):
 #endif
 	eret					#1f: return from exception
 	.set	at
+#ifdef MIPS3_LOONGSON2
+_VECTOR_END(MIPSX(xtlb_miss))
+#else
 _VECTOR_END(MIPSX(tlb_miss))
+#endif
 
+#ifndef MIPS3_LOONGSON2
 #if defined(USE_64BIT_CP0_FUNCTIONS)
 /*
  * mipsN_xtlb_miss routine
@@ -397,6 +449,9 @@ _VECTOR_END(MIPSX(tlb_miss))
  *
  * Don't check for invalid pte's here. We load them as well and
  * let the processor trap to load the correct value after service.
+ *
+ * Loongson2 CPUs don't have separate tlbmiss and xtlbmiss, so we have
+ * to check the address size here and branch to tlb_miss if needed.
  */
 VECTOR(MIPSX(xtlb_miss), unknown)
 	.set	noat
@@ -429,6 +484,7 @@ _VECTOR_END(MIPSX(xtlb_miss))
 #else
 	.space	128
 #endif /* USE_64BIT_CP0_FUNCTIONS */
+#endif /* !MIPS3_LOONGSON2 */
 
 /*
  * Vector to real handler in KSEG1.
@@ -1431,6 +1487,7 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 /*
  * Call the system call handler.
  */
+	.set	at
 	jalr	t9
 	 move	a0, MIPS_CURLWP			# 1st arg is curlwp
 
@@ -1446,7 +1503,6 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 	lui	ra, %hi(MIPSX(user_return))	# return directly to user return
 	j	_C_LABEL(ast)
 	 PTR_ADDIU ra, %lo(MIPSX(user_return))	# return directly to user return
-	.set	at
 END(MIPSX(systemcall))
 
 /*
@@ -1716,6 +1772,8 @@ END(MIPSX(tlb_invalid_exception))
 	.globl	_C_LABEL(MIPSX(exceptionentry_end))
 _C_LABEL(MIPSX(exceptionentry_end)):
 
+	.set	at
+
 /*--------------------------------------------------------------------------
  *
  * mipsN_tlb_set_asid --
@@ -1784,8 +1842,8 @@ LEAF(MIPSX(tlb_update))
 	tlbwi					# update slot found
 	COP0_SYNC
 #ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_ITLB_CLEAR
-	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
+	li	t1, MIPS_DIAG_ITLB_CLEAR
+	mtc0	t1, MIPS_COP_0_DIAG		# invalidate ITLB
 #elif defined(MIPS3)
 	nop					# required for QED5230
 	nop					# required for QED5230
@@ -1806,8 +1864,8 @@ LEAF(MIPSX(tlb_update))
 	tlbwi					# update slot found
 	COP0_SYNC
 #ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_ITLB_CLEAR
-	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
+	li	t1, MIPS_DIAG_ITLB_CLEAR
+	mtc0	t1, MIPS_COP_0_DIAG		# invalidate ITLB
 #elif defined(MIPS3)
 	nop					# required for QED5230
 	nop					# required for QED5230
@@ -1927,7 +1985,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	tlbwi
 	COP0_SYNC
 #ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_ITLB_CLEAR
+	li	v0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
 #elif defined(MIPS3)
 	nop
@@ -1997,7 +2055,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	COP0_SYNC
 
 #ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_ITLB_CLEAR
+	li	v0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
 #endif
 
@@ -2052,7 +2110,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_globals))
 	COP0_SYNC
 
 #ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_ITLB_CLEAR
+	li	v0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
 #endif
 
@@ -2100,7 +2158,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_all))
 	COP0_SYNC
 
 #ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_ITLB_CLEAR
+	li	v0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
 #endif
 
@@ -2261,14 +2319,12 @@ LEAF(MIPSX(tlb_enter))
 	COP0_SYNC
 
 	_MTC0	ta1, MIPS_COP_0_TLB_HI		# restore EntryHi
-
 #ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_ITLB_CLEAR
+	li	v0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
 #endif
-
-	JR_HB_RA
 	.set	at
+	JR_HB_RA
 END(MIPSX(tlb_enter))
 
 /*
@@ -2502,7 +2558,7 @@ LEAF(MIPSX(tlb_write_indexed))
 	COP0_SYNC
 
 #ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_ITLB_CLEAR
+	li	v0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
 #endif
 
@@ -2539,12 +2595,12 @@ LEAF_NOPROFILE(MIPSX(VCED))
 	cache	(CACHE_R4K_D | CACHEOP_R4K_HIT_INV), 0(k0)
 #ifdef DEBUG
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR
-	PTR_LA	k1, VCED_vaddr
+	PTR_LA	k1, MIPSX(VCED_vaddr)
 	PTR_S	k0, 0(k1)
 	_MFC0	k0, MIPS_COP_0_EXC_PC
-	PTR_LA	k1, VCED_epc
+	PTR_LA	k1, MIPSX(VCED_epc)
 	PTR_S	k0, 0(k1)
-	PTR_LA	k1, VCED_count		# count number of exceptions
+	PTR_LA	k1, MIPSX(VCED_count)	# count number of exceptions
 	PTR_SRL	k0, k0, 26		# position upper 4 bits of VA
 	and	k0, k0, 0x3c		# mask it off
 	PTR_ADDU k1, k0			# get address of count table
@@ -2557,14 +2613,14 @@ LEAF_NOPROFILE(MIPSX(VCED))
 
 #ifdef DEBUG
 	.data
-	.globl	_C_LABEL(VCED_count)
-_C_LABEL(VCED_count):
+	.globl	_C_LABEL(MIPSX(VCED_count))
+_C_LABEL(MIPSX(VCED_count)):
 	LONG_WORD	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	.globl	_C_LABEL(VCED_epc)
-_C_LABEL(VCED_epc):
+	.globl	_C_LABEL(MIPSX(VCED_epc))
+_C_LABEL(MIPSX(VCED_epc)):
 	PTR_WORD	0
-	.globl	_C_LABEL(VCED_vaddr)
-_C_LABEL(VCED_vaddr):
+	.globl	_C_LABEL(MIPSX(VCED_vaddr))
+_C_LABEL(MIPSX(VCED_vaddr)):
 	PTR_WORD	0
 	.text
 #endif
@@ -2577,9 +2633,9 @@ LEAF_NOPROFILE(MIPSX(VCEI))
 	cache	(CACHE_R4K_I | CACHEOP_R4K_HIT_INV), 0(k0)
 #ifdef DEBUG
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR
-	PTR_LA	k1, VCEI_vaddr
+	PTR_LA	k1, MIPSX(VCEI_vaddr)
 	PTR_S	k0, 0(k1)
-	PTR_LA	k1, VCEI_count		# count number of exceptions
+	PTR_LA	k1, MIPSX(VCEI_count)	# count number of exceptions
 	PTR_SRL	k0, k0, 26		# position upper 4 bits of VA
 	and	k0, k0, 0x3c		# mask it off
 	PTR_ADDU k1, k0			# get address of count table
@@ -2592,11 +2648,11 @@ LEAF_NOPROFILE(MIPSX(VCEI))
 
 #ifdef DEBUG
 	.data
-	.globl	_C_LABEL(VCEI_count)
-_C_LABEL(VCEI_count):
+	.globl	_C_LABEL(MIPSX(VCEI_count))
+_C_LABEL(MIPSX(VCEI_count)):
 	LONG_WORD	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	.globl	_C_LABEL(VCEI_vaddr)
-_C_LABEL(VCEI_vaddr):
+	.globl	_C_LABEL(MIPSX(VCEI_vaddr))
+_C_LABEL(MIPSX(VCEI_vaddr)):
 	PTR_WORD	0
 	.text
 #endif
@@ -2739,4 +2795,8 @@ MIPSX(excpt_sw):
 	PTR_WORD _C_LABEL(MIPSX(VCED))			# 31 v. coherence exception data
 #else
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 31
+#endif
+#ifdef MIPS3_LOONGSON2
+loongson2_xtlb_miss_str:
+	.string "loongson2_xtlb_miss"
 #endif

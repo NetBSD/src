@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_ras.S,v 1.3 2011/04/29 22:04:42 matt Exp $	*/
+/*	$NetBSD: lock_stubs_ras.S,v 1.4 2011/08/27 13:23:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -81,6 +81,20 @@
 	.set	noat
 
 /*
+ * to work around the branch prediction engine misbehavior of
+ * Loongson 2F processors we need to clear the branch target buffer before
+ * a j ra.  This requires extra instructions which don't fit in the RAS blocks,
+ * so do a PC-relative just to a block of code (this is the same size as
+ * a j ra) where we can let the assembler install the workaround.
+ */
+#ifdef MIPS3_LOONGSON2F
+#define J_RA	j loongson_return
+#else
+#define J_RA	j ra
+#endif
+
+
+/*
  * unsigned long ras_atomic_cas_ulong(volatile unsigned long *val,
  *     unsigned long old, unsigned long new);
  */
@@ -89,7 +103,7 @@
 
 EXPORT(_lock_ras_start)
 STATIC_LEAF(ras_atomic_cas_noupdate)
-	j	ra
+	J_RA
 	 move	v0, t0
 END(ras_atomic_cas_noupdate)
 
@@ -105,7 +119,7 @@ _atomic_cas_ulong_ras_start:
  	 nop
 	PTR_S	a2, (a0)	/* <- critical section end */
 _atomic_cas_ulong_ras_end:
-	j	ra
+	J_RA
 	 move	v0, a1
 END(ras_atomic_cas_ulong)
 
@@ -125,7 +139,7 @@ _atomic_cas_uint_ras_start:
  	 nop
 	INT_S	a2, (a0)	/* <- critical section end */
 _atomic_cas_uint_ras_end:
-	j	ra
+	J_RA
 	 move	v0, a1
 END(ras_atomic_cas_uint)
 
@@ -146,7 +160,7 @@ _ucas_ulong_ras_start:
 	LONG_S	a2, (a0)	/* <- critical section end */
 _ucas_ulong_ras_end:
 	PTR_S	zero, PCB_ONFAULT(v1)
-	j	ra
+	J_RA
 	 LONG_S	t0, 0(a3)
 END(_ucas_ulong_ras)
 
@@ -165,7 +179,7 @@ _ucas_uint_ras_start:
 	INT_S	a2, (a0)	/* <- critical section end */
 _ucas_uint_ras_end:
 	PTR_S	zero, PCB_ONFAULT(v1)
-	j	ra
+	J_RA
 	 INT_S	t0, 0(a3)
 END(_ucas_uint_ras)
 
@@ -184,7 +198,7 @@ _mutex_enter_ras_start:
 	 nop			
 	PTR_S	MIPS_CURLWP, (a0)/* <- critical section end */
 _mutex_enter_ras_end:
-	j	ra
+	J_RA
 	 nop
 END(ras_mutex_enter)
 
@@ -203,7 +217,7 @@ _mutex_exit_ras_start:
 	 nop			
 	PTR_S	zero, (a0)	/* <- critical section end */
 _mutex_exit_ras_exit:
-	j	ra
+	J_RA
 	 nop
 END(ras_mutex_exit)
 
@@ -222,6 +236,13 @@ END(ras_mutex_vector_exit)
 #endif	/* !LOCKDEBUG */
 
 	.p2align LOG2_MIPS_LOCK_RAS_SIZE	/* Get out of the RAS block */
+
+	.set at
+#ifdef MIPS3_LOONGSON2F
+loongson_return:
+	j	ra
+	 nop
+#endif
 
 /*
  * Patch up the given address.  We arrive here if we might have trapped

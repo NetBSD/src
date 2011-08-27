@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or.S,v 1.2 2009/12/14 00:39:00 matt Exp $	*/
+/*	$NetBSD: atomic_or.S,v 1.3 2011/08/27 13:23:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,9 +31,17 @@
 #include "atomic_op_asm.h"
 
 	.text
-	.set	noat
 	.set	noreorder
+#ifdef _KERNEL_OPT
+#include "opt_cputype.h"
+#ifndef MIPS3_LOONGSON2F
+	.set	noat
 	.set	nomacro
+#endif
+#else /* _KERNEL_OPT */
+	.set	noat
+	.set	nomacro
+#endif /* _KERNEL_OPT */
 
 LEAF(_atomic_or_32)
 1:	INT_LL		t0, 0(a0)

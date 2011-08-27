@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.2 2009/12/14 00:39:00 matt Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.3 2011/08/27 13:23:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,12 +30,21 @@
 #include <machine/asm.h>
 #include "atomic_op_asm.h"
 
-RCSID("$NetBSD: atomic_swap.S,v 1.2 2009/12/14 00:39:00 matt Exp $")
+RCSID("$NetBSD: atomic_swap.S,v 1.3 2011/08/27 13:23:52 bouyer Exp $")
 
 	.text
-	.set	noat
 	.set	noreorder
+#ifdef _KERNEL_OPT
+#include "opt_cputype.h"
+#ifndef MIPS3_LOONGSON2F
+	.set	noat
 	.set	nomacro
+#endif
+#else /* _KERNEL_OPT */
+	.set	noat
+	.set	nomacro
+#endif /* _KERNEL_OPT */
+
 
 LEAF(_atomic_swap_32)
 1:	INT_LL		v0, 0(a0)
