@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.28 2008/04/28 20:23:08 martin Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.29 2011/08/27 17:36:05 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.28 2008/04/28 20:23:08 martin Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.29 2011/08/27 17:36:05 joerg Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -57,13 +57,13 @@ __RCSID("$NetBSD: fsirand.c,v 1.28 2008/04/28 20:23:08 martin Exp $");
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
-static void usage(void);
+__dead static void usage(void);
 static void getsblock(int, const char *, struct fs *);
 static void fixinodes(int, struct fs *, struct disklabel *, int, long);
 static void statussig(int);
 
 int	needswap, ino, imax, is_ufs2;
-time_t	tstart;
+static time_t	tstart;
 
 static void
 usage(void)
@@ -199,7 +199,7 @@ fixinodes(int fd, struct fs *fs, struct disklabel *lab, int pflag, long xorval)
  * statussig():
  *	display current status
  */
-void
+static void
 statussig(int dummy)
 {
 	char	msgbuf[256];
