@@ -1,4 +1,4 @@
-/*	$NetBSD: bthcid.c,v 1.5 2009/10/05 12:34:26 plunky Exp $	*/
+/*	$NetBSD: bthcid.c,v 1.6 2011/08/27 22:26:05 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\
   Copyright (c) 2001-2002 Maksim Yevmenkin m_evmenkin@yahoo.com.\
   All rights reserved.");
-__RCSID("$NetBSD: bthcid.c,v 1.5 2009/10/05 12:34:26 plunky Exp $");
+__RCSID("$NetBSD: bthcid.c,v 1.6 2011/08/27 22:26:05 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -49,15 +49,15 @@ __RCSID("$NetBSD: bthcid.c,v 1.5 2009/10/05 12:34:26 plunky Exp $");
 
 #include "bthcid.h"
 
-const	char	*socket_name = BTHCID_SOCKET_NAME;
-	int	 detach = 1;
+static const char	*socket_name = BTHCID_SOCKET_NAME;
+static int		 detach = 1;
 
 static struct event	sighup_ev;
 static struct event	sigint_ev;
 static struct event	sigterm_ev;
 
-static void	process_signal(int, short, void *);
-static void	usage(void);
+__dead static void	process_signal(int, short, void *);
+__dead static void	usage(void);
 
 int
 main(int argc, char *argv[])
