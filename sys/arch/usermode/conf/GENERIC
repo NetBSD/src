@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.13 2011/08/24 10:59:10 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.14 2011/08/27 18:13:09 jmcneill Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.13 $"
+#ident 		"GENERIC-$Revision: 1.14 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
@@ -20,8 +20,9 @@ options 	SYSVSEM
 options 	SYSVSHM
 
 options 	DEBUG
+options 	DEBUG_EXEC
 options 	DIAGNOSTIC
-#options 	LOCKDEBUG
+options 	LOCKDEBUG
 
 options 	COMPAT_BSDPTY
 options 	COMPAT_50
