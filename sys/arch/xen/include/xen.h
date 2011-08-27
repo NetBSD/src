@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.30.8.5 2011/05/02 22:49:58 jym Exp $	*/
+/*	$NetBSD: xen.h,v 1.30.8.6 2011/08/27 15:44:09 jym Exp $	*/
 
 /*
  *
@@ -76,6 +76,8 @@ void	idle_block(void);
 void	sysctl_xen_sleepstate_setup(void);
 
 #if defined(XENDEBUG) || 1 /* XXX */
+#include <sys/stdarg.h>
+
 void printk(const char *, ...);
 void vprintk(const char *, _BSD_VA_LIST_);
 #endif

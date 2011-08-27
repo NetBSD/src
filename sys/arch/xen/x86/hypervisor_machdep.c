@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.11.8.8 2011/05/07 17:39:47 jym Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.11.8.9 2011/08/27 15:44:09 jym Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.11.8.8 2011/05/07 17:39:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.11.8.9 2011/08/27 15:44:09 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,13 +86,79 @@ static void update_p2m_frame_list_list(void);
 // #define PORT_DEBUG 4
 // #define EARLY_DEBUG_EVENT
 
+/* callback function type */
+typedef void (*iterate_func_t)(struct cpu_info *, unsigned int,
+			       unsigned int, unsigned int, void *);
+
+static inline void
+evt_iterate_bits(struct cpu_info *ci, volatile unsigned long *pendingl1,
+		 volatile unsigned long *pendingl2, 
+		 volatile unsigned long *mask,
+		 iterate_func_t iterate_pending, void *iterate_args)
+{
+
+	KASSERT(pendingl1 != NULL);
+	KASSERT(pendingl2 != NULL);
+	
+	unsigned long l1, l2;
+	unsigned int l1i, l2i, port;
+
+	l1 = xen_atomic_xchg(pendingl1, 0);
+	while ((l1i = xen_ffs(l1)) != 0) {
+		l1i--;
+		l1 &= ~(1UL << l1i);
+
+		l2 = pendingl2[l1i] & (mask != NULL ? ~mask[l1i] : -1UL);
+
+		if (mask != NULL) xen_atomic_setbits_l(&mask[l1i], l2);
+		xen_atomic_clearbits_l(&pendingl2[l1i], l2);
+
+		while ((l2i = xen_ffs(l2)) != 0) {
+			l2i--;
+			l2 &= ~(1UL << l2i);
+
+			port = (l1i << LONG_SHIFT) + l2i;
+
+			iterate_pending(ci, port, l1i, l2i, iterate_args);
+		}
+	}
+}
+
+/*
+ * Set per-cpu "pending" information for outstanding events that
+ * cannot be processed now.
+ */
+   
+static inline void
+evt_set_pending(struct cpu_info *ci, unsigned int port, unsigned int l1i,
+		unsigned int l2i, void *args)
+{
+
+	KASSERT(args != NULL);
+	KASSERT(ci != NULL);
+
+	int *ret = args;
+
+	if (evtsource[port]) {
+		hypervisor_set_ipending(ci, evtsource[port]->ev_imask,
+		    l1i, l2i);
+		evtsource[port]->ev_evcnt.ev_count++;
+		if (*ret == 0 && ci->ci_ilevel <
+		    evtsource[port]->ev_maxlevel)
+			*ret = 1;
+	}
+#ifdef DOM0OPS
+	else  {
+		/* set pending event */
+		xenevt_setipending(l1i, l2i);
+	}
+#endif
+}
+
 int stipending(void);
 int
 stipending(void)
 {
-	unsigned long l1;
-	unsigned long l2;
-	unsigned int l1i, l2i, port;
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
 	struct cpu_info *ci;
 	volatile struct vcpu_info *vci;
@@ -120,45 +186,16 @@ stipending(void)
 	 * we're only called after STIC, so we know that we'll have to
 	 * STI at the end
 	 */
+
 	while (vci->evtchn_upcall_pending) {
 		cli();
+
 		vci->evtchn_upcall_pending = 0;
-		/* NB. No need for a barrier here -- XCHG is a barrier
-		 * on x86. */
-		l1 = xen_atomic_xchg(&vci->evtchn_pending_sel, 0);
-		while ((l1i = xen_ffs(l1)) != 0) {
-			l1i--;
-			l1 &= ~(1UL << l1i);
 
-			l2 = s->evtchn_pending[l1i] & ~s->evtchn_mask[l1i];
-			/*
-			 * mask and clear event. More efficient than calling
-			 * hypervisor_mask/clear_event for each event.
-			 */
-			xen_atomic_setbits_l(&s->evtchn_mask[l1i], l2);
-			xen_atomic_clearbits_l(&s->evtchn_pending[l1i], l2);
-			while ((l2i = xen_ffs(l2)) != 0) {
-				l2i--;
-				l2 &= ~(1UL << l2i);
+		evt_iterate_bits(ci, &vci->evtchn_pending_sel,
+		    s->evtchn_pending, s->evtchn_mask,
+		    evt_set_pending, &ret);
 
-				port = (l1i << LONG_SHIFT) + l2i;
-				if (evtsource[port]) {
-					hypervisor_set_ipending(
-					    evtsource[port]->ev_imask,
-					    l1i, l2i);
-					evtsource[port]->ev_evcnt.ev_count++;
-					if (ret == 0 && ci->ci_ilevel <
-					    evtsource[port]->ev_maxlevel)
-						ret = 1;
-				}
-#ifdef DOM0OPS
-				else  {
-					/* set pending event */
-					xenevt_setipending(l1i, l2i);
-				}
-#endif
-			}
-		}
 		sti();
 	}
 
@@ -173,12 +210,42 @@ stipending(void)
 	return (ret);
 }
 
+/* Iterate through pending events and call the event handler */
+
+static inline void
+evt_do_hypervisor_callback(struct cpu_info *ci, unsigned int port,
+			   unsigned int l1i, unsigned int l2i, void *args)
+{
+	KASSERT(args != NULL);
+	KASSERT(ci == curcpu());
+
+	struct intrframe *regs = args;
+
+#ifdef PORT_DEBUG
+	if (port == PORT_DEBUG)
+		printf("do_hypervisor_callback event %d\n", port);
+#endif
+	if (evtsource[port])
+		call_evtchn_do_event(port, regs);
+#ifdef DOM0OPS
+	else  {
+		if (ci->ci_ilevel < IPL_HIGH) {
+			/* fast path */
+			int oipl = ci->ci_ilevel;
+			ci->ci_ilevel = IPL_HIGH;
+			call_xenevt_event(port);
+			ci->ci_ilevel = oipl;
+		} else {
+			/* set pending event */
+			xenevt_setipending(l1i, l2i);
+		}
+	}
+#endif
+}
+
 void
 do_hypervisor_callback(struct intrframe *regs)
 {
-	unsigned long l1;
-	unsigned long l2;
-	unsigned int l1i, l2i, port;
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
 	struct cpu_info *ci;
 	volatile struct vcpu_info *vci;
@@ -199,51 +266,10 @@ do_hypervisor_callback(struct intrframe *regs)
 
 	while (vci->evtchn_upcall_pending) {
 		vci->evtchn_upcall_pending = 0;
-		/* NB. No need for a barrier here -- XCHG is a barrier
-		 * on x86. */
-		l1 = xen_atomic_xchg(&vci->evtchn_pending_sel, 0);
-		while ((l1i = xen_ffs(l1)) != 0) {
-			l1i--;
-			l1 &= ~(1UL << l1i);
 
-			l2 = s->evtchn_pending[l1i] & ~s->evtchn_mask[l1i];
-			/*
-			 * mask and clear the pending events.
-			 * Doing it here for all event that will be processed
-			 * avoids a race with stipending (which can be called
-			 * though evtchn_do_event->splx) that could cause an
-			 * event to be both processed and marked pending.
-			 */
-			xen_atomic_setbits_l(&s->evtchn_mask[l1i], l2);
-			xen_atomic_clearbits_l(&s->evtchn_pending[l1i], l2);
-
-			while ((l2i = xen_ffs(l2)) != 0) {
-				l2i--;
-				l2 &= ~(1UL << l2i);
-
-				port = (l1i << LONG_SHIFT) + l2i;
-#ifdef PORT_DEBUG
-				if (port == PORT_DEBUG)
-					printf("do_hypervisor_callback event %d\n", port);
-#endif
-				if (evtsource[port])
-					call_evtchn_do_event(port, regs);
-#ifdef DOM0OPS
-				else  {
-					if (ci->ci_ilevel < IPL_HIGH) {
-						/* fast path */
-						int oipl = ci->ci_ilevel;
-						ci->ci_ilevel = IPL_HIGH;
-						call_xenevt_event(port);
-						ci->ci_ilevel = oipl;
-					} else {
-						/* set pending event */
-						xenevt_setipending(l1i, l2i);
-					}
-				}
-#endif
-			}
-		}
+		evt_iterate_bits(ci, &vci->evtchn_pending_sel,
+		    s->evtchn_pending, s->evtchn_mask,
+		    evt_do_hypervisor_callback, regs);
 	}
 
 #ifdef DIAGNOSTIC
@@ -303,11 +329,18 @@ hypervisor_clear_event(unsigned int ev)
 	xen_atomic_clear_bit(&s->evtchn_pending[0], ev);
 }
 
+static inline void
+evt_enable_event(struct cpu_info *ci, unsigned int port,  
+		 unsigned int l1i, unsigned int l2i, void *args)
+{
+	KASSERT(ci != NULL);
+	KASSERT(args == NULL);
+	hypervisor_enable_event(port);
+}
+
 void
 hypervisor_enable_ipl(unsigned int ipl)
 {
-	u_long l1, l2;
-	int l1i, l2i;
 	struct cpu_info *ci = curcpu();
 
 	/*
@@ -316,30 +349,16 @@ hypervisor_enable_ipl(unsigned int ipl)
 	 * we know that all callback for this event have been processed.
 	 */
 
-	l1 = ci->ci_isources[ipl]->ipl_evt_mask1;
-	ci->ci_isources[ipl]->ipl_evt_mask1 = 0;
-	while ((l1i = xen_ffs(l1)) != 0) {
-		l1i--;
-		l1 &= ~(1UL << l1i);
-		l2 = ci->ci_isources[ipl]->ipl_evt_mask2[l1i];
-		ci->ci_isources[ipl]->ipl_evt_mask2[l1i] = 0;
-		while ((l2i = xen_ffs(l2)) != 0) {
-			int evtch;
+	evt_iterate_bits(ci, &ci->ci_isources[ipl]->ipl_evt_mask1,
+	    ci->ci_isources[ipl]->ipl_evt_mask2, NULL, 
+	    evt_enable_event, NULL);
 
-			l2i--;
-			l2 &= ~(1UL << l2i);
-
-			evtch = (l1i << LONG_SHIFT) + l2i;
-			hypervisor_enable_event(evtch);
-		}
-	}
 }
 
 void
-hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
+hypervisor_set_ipending(struct cpu_info *ci, uint32_t iplmask, int l1, int l2)
 {
 	int ipl;
-	struct cpu_info *ci = curcpu();
 
 	/* set pending bit for the appropriate IPLs */	
 	ci->ci_ipending |= iplmask;
@@ -352,6 +371,8 @@ hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
 	ipl = ffs(iplmask);
 	KASSERT(ipl > 0);
 	ipl--;
+	KASSERT(ipl < NIPL);
+	KASSERT(ci->ci_isources[ipl] != NULL);
 	ci->ci_isources[ipl]->ipl_evt_mask1 |= 1UL << l1;
 	ci->ci_isources[ipl]->ipl_evt_mask2[l1] |= 1UL << l2;
 }
