@@ -1,4 +1,4 @@
-/*	$NetBSD: svhlabel.c,v 1.5 2009/04/06 12:33:11 lukem Exp $	*/
+/*	$NetBSD: svhlabel.c,v 1.6 2011/08/27 18:55:58 joerg Exp $	*/
 
 /*
  * Copyright (C) 2007 Stephen M. Rumble.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: svhlabel.c,v 1.5 2009/04/06 12:33:11 lukem Exp $");
+__RCSID("$NetBSD: svhlabel.c,v 1.6 2011/08/27 18:55:58 joerg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -59,8 +59,7 @@ __RCSID("$NetBSD: svhlabel.c,v 1.5 2009/04/06 12:33:11 lukem Exp $");
 #include "dkcksum.h"
 #include "extern.h"
 
-int		main(int, char **);
-static void	usage(void);
+__dead static void	usage(void);
 static void	getlabel(int);
 static void	setlabel(int, int);
 static int	getparts(int, int);
