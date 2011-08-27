@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.22 2010/12/23 20:07:13 christos Exp $      */
+/*        $NetBSD: dm.h,v 1.23 2011/08/27 17:07:49 ahoka Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ typedef struct dm_table dm_table_t;
 
 typedef struct dm_table_head {
 	/* Current active table is selected with this. */
-	int cur_active_table; 
+	int cur_active_table;
 	struct dm_table tables[2];
 
 	kmutex_t   table_mtx;
@@ -121,7 +121,7 @@ typedef struct dm_pdev {
  * It points to SLIST of device tables and mirrored, snapshoted etc. devices.
  */
 TAILQ_HEAD(dm_dev_head, dm_dev) dm_devs;
-				
+
 typedef struct dm_dev {
 	char name[DM_NAME_LEN];
 	char uuid[DM_UUID_LEN];
@@ -132,7 +132,7 @@ typedef struct dm_dev {
 
 	kmutex_t dev_mtx; /* mutex for generall device lock */
 	kcondvar_t dev_cv; /* cv for between ioctl synchronisation */
-	
+
 	uint32_t event_nr;
 	uint32_t ref_cnt;
 
@@ -141,10 +141,10 @@ typedef struct dm_dev {
 	dm_table_head_t table_head;
 
 	struct dm_dev_head upcalls;
-	
+
 	struct disk *diskp;
 	kmutex_t diskp_mtx;
-	
+
 	TAILQ_ENTRY(dm_dev) next_upcall; /* LIST of mirrored, snapshoted devices. */
 
 	TAILQ_ENTRY(dm_dev) next_devlist; /* Major device list. */
@@ -152,7 +152,7 @@ typedef struct dm_dev {
 
 /* Device types used for upcalls */
 #define DM_ZERO_DEV            (1 << 0)
-#define DM_ERROR_DEV           (1 << 1)	
+#define DM_ERROR_DEV           (1 << 1)
 #define DM_LINEAR_DEV          (1 << 2)
 #define DM_MIRROR_DEV          (1 << 3)
 #define DM_STRIPE_DEV          (1 << 4)
@@ -160,15 +160,15 @@ typedef struct dm_dev {
 #define DM_SNAPSHOT_ORIG_DEV   (1 << 6)
 #define DM_SPARE_DEV           (1 << 7)
 /* Set this device type only during dev remove ioctl. */
-#define DM_DELETING_DEV        (1 << 8) 
+#define DM_DELETING_DEV        (1 << 8)
 
 
 /* for zero, error : dm_target->target_config == NULL */
-				
+
 /*
  * Target config is initiated with target_init function.
  */
-				
+
 /* for linear : */
 typedef struct target_linear_config {
 	dm_pdev_t *pdev;
@@ -214,7 +214,7 @@ typedef struct target_snapshot_config {
 	dm_pdev_t *tsc_snap_dev;
 	/* cow dev is set only for persistent snapshot devices */
 	dm_pdev_t *tsc_cow_dev;
-	
+
 	uint64_t tsc_chunk_size;
 	uint32_t tsc_persistent_dev;
 } dm_target_snapshot_config_t;
@@ -233,7 +233,7 @@ typedef struct dm_target {
 
 	/* Destroy target_config area */
 	int (*destroy)(dm_table_entry_t *);
-	
+
 	int (*deps) (dm_table_entry_t *, prop_array_t);
 	/*
 	 * Status routine is called to get params string, which is target
@@ -245,10 +245,10 @@ typedef struct dm_target {
 	int (*sync)(dm_table_entry_t *);
 	int (*upcall)(dm_table_entry_t *, struct buf *);
 	int (*secsize)(dm_table_entry_t *, unsigned *);
-	
+
 	uint32_t version[3];
 	int ref_cnt;
-	
+
 	TAILQ_ENTRY(dm_target) dm_target_next;
 } dm_target_t;
 
@@ -315,7 +315,7 @@ int dm_target_linear_upcall(dm_table_entry_t *, struct buf *);
 int dm_target_linear_secsize(dm_table_entry_t *, unsigned *);
 
 /* Generic function used to convert char to string */
-uint64_t atoi(const char *); 
+uint64_t atoi(const char *);
 
 /* dm_target_stripe.c */
 int dm_target_stripe_init(dm_dev_t *, void**, char *);
@@ -333,6 +333,7 @@ int dm_target_stripe_secsize(dm_table_entry_t *, unsigned *);
 
 int dm_table_destroy(dm_table_head_t *, uint8_t);
 uint64_t dm_table_size(dm_table_head_t *);
+uint64_t dm_inactive_table_size(dm_table_head_t *);
 void dm_table_disksize(dm_table_head_t *, uint64_t *, unsigned *);
 dm_table_t * dm_table_get_entry(dm_table_head_t *, uint8_t);
 int dm_table_get_target_count(dm_table_head_t *, uint8_t);
