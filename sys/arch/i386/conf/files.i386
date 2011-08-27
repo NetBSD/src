@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.341.2.6 2011/05/02 22:49:55 jym Exp $
+#	$NetBSD: files.i386,v 1.341.2.7 2011/08/27 15:37:24 jym Exp $
 #
 # new style config file for i386 architecture
 #
@@ -79,7 +79,6 @@ file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file 	arch/i386/i386/longrun.c
-file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/trap.c

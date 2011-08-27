@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.54.8.2 2009/11/01 13:58:34 jym Exp $	*/
+/*	$NetBSD: lms.c,v 1.54.8.3 2011/08/27 15:37:26 jym Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,14 +24,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.54.8.2 2009/11/01 13:58:34 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.54.8.3 2011/08/27 15:37:26 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>

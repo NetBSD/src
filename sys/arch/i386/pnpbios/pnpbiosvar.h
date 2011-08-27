@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbiosvar.h,v 1.10.92.2 2009/11/01 13:58:35 jym Exp $ */
+/* $NetBSD: pnpbiosvar.h,v 1.10.92.3 2011/08/27 15:37:27 jym Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -70,7 +70,7 @@ struct pnpresources {
 	SIMPLEQ_HEAD(, pnp_io) io;
 	SIMPLEQ_HEAD(, pnp_irq) irq;
 	SIMPLEQ_HEAD(, pnp_dma) dma;
-	struct pnpresources *dependant_link;
+	struct pnpresources *dependent_link;
 	struct pnp_compatid *compatids;
 	char *longname;
 };

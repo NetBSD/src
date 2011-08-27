@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.7.10.3 2011/05/02 22:49:59 jym Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.7.10.4 2011/08/27 15:37:32 jym Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,13 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.10.3 2011/05/02 22:49:59 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.10.4 2011/08/27 15:37:32 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/bus_private.h>
 
 #include <dev/pci/pcivar.h>

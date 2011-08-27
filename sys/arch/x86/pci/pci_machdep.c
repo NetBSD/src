@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.34.14.4 2010/10/24 22:48:17 jym Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.34.14.5 2011/08/27 15:37:30 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.4 2010/10/24 22:48:17 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.5 2011/08/27 15:37:30 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -191,56 +191,62 @@ struct {
  * of these functions.
  */
 struct x86_bus_dma_tag pci_bus_dma_tag = {
-	0,				/* tag_needs_free */
+	._tag_needs_free	= 0,
 #if defined(_LP64) || defined(PAE)
-	PCI32_DMA_BOUNCE_THRESHOLD,	/* bounce_thresh */
-	ISA_DMA_BOUNCE_THRESHOLD,	/* bounce_alloclo */
-	PCI32_DMA_BOUNCE_THRESHOLD,	/* bounce_allochi */
+	._bounce_thresh		= PCI32_DMA_BOUNCE_THRESHOLD,
+	._bounce_alloc_lo	= ISA_DMA_BOUNCE_THRESHOLD,
+	._bounce_alloc_hi	= PCI32_DMA_BOUNCE_THRESHOLD,
 #else
-	0,
-	0,
-	0,
+	._bounce_thresh		= 0,
+	._bounce_alloc_lo	= 0,
+	._bounce_alloc_hi	= 0,
 #endif
-	NULL,			/* _may_bounce */
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	_bus_dmamap_sync,
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
-	_bus_dmatag_subregion,
-	_bus_dmatag_destroy,
+	._may_bounce		= NULL,
+
+	._dmamap_create		= _bus_dmamap_create,
+	._dmamap_destroy	= _bus_dmamap_destroy,
+	._dmamap_load		= _bus_dmamap_load,
+	._dmamap_load_mbuf	= _bus_dmamap_load_mbuf,
+	._dmamap_load_uio	= _bus_dmamap_load_uio,
+	._dmamap_load_raw	= _bus_dmamap_load_raw,
+	._dmamap_unload		= _bus_dmamap_unload,
+	._dmamap_sync 		= _bus_dmamap_sync,
+
+	._dmamem_alloc		= _bus_dmamem_alloc,
+	._dmamem_free		= _bus_dmamem_free,
+	._dmamem_map		= _bus_dmamem_map,
+	._dmamem_unmap		= _bus_dmamem_unmap,
+	._dmamem_mmap		= _bus_dmamem_mmap,
+
+	._dmatag_subregion	= _bus_dmatag_subregion,
+	._dmatag_destroy	= _bus_dmatag_destroy,
 };
 
 #ifdef _LP64
 struct x86_bus_dma_tag pci_bus_dma64_tag = {
-	0,				/* tag_needs_free */
-	0,
-	0,
-	0,
-	NULL,			/* _may_bounce */
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	NULL,
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
-	_bus_dmatag_subregion,
-	_bus_dmatag_destroy,
+	._tag_needs_free	= 0,
+	._bounce_thresh		= 0,
+	._bounce_alloc_lo	= 0,
+	._bounce_alloc_hi	= 0,
+	._may_bounce		= NULL,
+
+	._dmamap_create		= _bus_dmamap_create,
+	._dmamap_destroy	= _bus_dmamap_destroy,
+	._dmamap_load		= _bus_dmamap_load,
+	._dmamap_load_mbuf	= _bus_dmamap_load_mbuf,
+	._dmamap_load_uio	= _bus_dmamap_load_uio,
+	._dmamap_load_raw	= _bus_dmamap_load_raw,
+	._dmamap_unload		= _bus_dmamap_unload,
+	._dmamap_sync 		= NULL,
+
+	._dmamem_alloc		= _bus_dmamem_alloc,
+	._dmamem_free		= _bus_dmamem_free,
+	._dmamem_map		= _bus_dmamem_map,
+	._dmamem_unmap		= _bus_dmamem_unmap,
+	._dmamem_mmap		= _bus_dmamem_mmap,
+
+	._dmatag_subregion	= _bus_dmatag_subregion,
+	._dmatag_destroy	= _bus_dmatag_destroy,
 };
 #endif
 
@@ -644,7 +650,7 @@ not2:
 int
 pci_bus_flags(void)
 {
-	int rval = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	int rval = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	int device, maxndevs;
 	pcitag_t tag;
@@ -678,7 +684,7 @@ pci_bus_flags(void)
  disable_mem:
 	printf("Warning: broken PCI-Host bridge detected; "
 	    "disabling memory-mapped access\n");
-	rval &= ~(PCI_FLAGS_MEM_ENABLED|PCI_FLAGS_MRL_OKAY|PCI_FLAGS_MRM_OKAY|
+	rval &= ~(PCI_FLAGS_MEM_OKAY|PCI_FLAGS_MRL_OKAY|PCI_FLAGS_MRM_OKAY|
 	    PCI_FLAGS_MWI_OKAY);
 	return (rval);
 }

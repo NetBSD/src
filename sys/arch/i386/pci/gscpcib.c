@@ -1,4 +1,4 @@
-/*	$NetBSD: gscpcib.c,v 1.11.14.3 2010/10/24 22:48:03 jym Exp $	*/
+/*	$NetBSD: gscpcib.c,v 1.11.14.4 2011/08/27 15:37:26 jym Exp $	*/
 /*	$OpenBSD: gscpcib.c,v 1.3 2004/10/05 19:02:33 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.11.14.3 2010/10/24 22:48:03 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.11.14.4 2011/08/27 15:37:26 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -31,7 +31,7 @@ __KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.11.14.3 2010/10/24 22:48:03 jym Exp $"
 #include <sys/gpio.h>
 #include <sys/kernel.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

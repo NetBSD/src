@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.12.4.14 2011/05/02 22:49:58 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.12.4.15 2011/08/27 15:37:32 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.14 2011/05/02 22:49:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.15 2011/08/27 15:37:32 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.14 2011/05/02 22:49:58 jym Exp 
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/simplelock.h>
 
 #include <uvm/uvm.h>
 
@@ -152,7 +153,9 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 		pmap_pte_clearbits(ptp, PG_RW);
 	}
 	s = splvm();
+	xpq_queue_lock();
 	xpq_queue_set_ldt(base, entries);
+	xpq_queue_unlock();
 	splx(s);
 }
 
@@ -164,11 +167,35 @@ void xpq_debug_dump(void);
 static mmu_update_t xpq_queue[XPQUEUE_SIZE];
 static int xpq_idx = 0;
 
+#ifdef MULTIPROCESSOR
+static struct simplelock xpq_lock = SIMPLELOCK_INITIALIZER;
+
+void
+xpq_queue_lock(void)
+{
+	simple_lock(&xpq_lock);
+}
+
+void
+xpq_queue_unlock(void)
+{
+	simple_unlock(&xpq_lock);
+}
+
+bool
+xpq_queue_locked(void)
+{
+	return simple_lock_held(&xpq_lock);
+}
+#endif /* MULTIPROCESSOR */
+
+/* Must be called with xpq_lock held */
 void
 xpq_flush_queue(void)
 {
 	int i, ok, ret;
 
+	KASSERT(xpq_queue_locked());
 	XENPRINTK2(("flush queue %p entries %d\n", xpq_queue, xpq_idx));
 	for (i = 0; i < xpq_idx; i++)
 		XENPRINTK2(("%d: 0x%08" PRIx64 " 0x%08" PRIx64 "\n", i,
@@ -187,10 +214,12 @@ xpq_flush_queue(void)
 	xpq_idx = 0;
 }
 
+/* Must be called with xpq_lock held */
 static inline void
 xpq_increment_idx(void)
 {
 
+	KASSERT(xpq_queue_locked());
 	xpq_idx++;
 	if (__predict_false(xpq_idx == XPQUEUE_SIZE))
 		xpq_flush_queue();
@@ -201,6 +230,7 @@ xpq_queue_machphys_update(paddr_t ma, paddr_t pa)
 {
 	XENPRINTK2(("xpq_queue_machphys_update ma=0x%" PRIx64 " pa=0x%" PRIx64
 	    "\n", (int64_t)ma, (int64_t)pa));
+	KASSERT(xpq_queue_locked());
 	xpq_queue[xpq_idx].ptr = ma | MMU_MACHPHYS_UPDATE;
 	xpq_queue[xpq_idx].val = (pa - XPMAP_OFFSET) >> PAGE_SHIFT;
 	xpq_increment_idx();
@@ -214,6 +244,7 @@ xpq_queue_pte_update(paddr_t ptr, pt_entry_t val)
 {
 
 	KASSERT((ptr & 3) == 0);
+	KASSERT(xpq_queue_locked());
 	xpq_queue[xpq_idx].ptr = (paddr_t)ptr | MMU_NORMAL_PT_UPDATE;
 	xpq_queue[xpq_idx].val = val;
 	xpq_increment_idx();
@@ -226,6 +257,7 @@ void
 xpq_queue_pt_switch(paddr_t pa)
 {
 	struct mmuext_op op;
+	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	XENPRINTK2(("xpq_queue_pt_switch: 0x%" PRIx64 " 0x%" PRIx64 "\n",
@@ -240,6 +272,8 @@ void
 xpq_queue_pin_table(paddr_t pa, int lvl)
 {
 	struct mmuext_op op;
+
+	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	XENPRINTK2(("xpq_queue_pin_l%d_table: %#" PRIxPADDR "\n",
@@ -256,6 +290,8 @@ void
 xpq_queue_unpin_table(paddr_t pa)
 {
 	struct mmuext_op op;
+
+	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	XENPRINTK2(("xpq_queue_unpin_table: %#" PRIxPADDR "\n", pa));
@@ -269,6 +305,8 @@ void
 xpq_queue_set_ldt(vaddr_t va, uint32_t entries)
 {
 	struct mmuext_op op;
+
+	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	XENPRINTK2(("xpq_queue_set_ldt\n"));
@@ -284,6 +322,8 @@ void
 xpq_queue_tlb_flush(void)
 {
 	struct mmuext_op op;
+
+	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	XENPRINTK2(("xpq_queue_tlb_flush\n"));
@@ -296,20 +336,25 @@ void
 xpq_flush_cache(void)
 {
 	struct mmuext_op op;
-	int s = splvm();
+	int s = splvm(), err;
+
+	xpq_queue_lock();
 	xpq_flush_queue();
 
 	XENPRINTK2(("xpq_queue_flush_cache\n"));
 	op.cmd = MMUEXT_FLUSH_CACHE;
-	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_flush_cache");
-	splx(s);
+	if ((err = HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF)) < 0) {
+		panic("xpq_flush_cache, err %d", err);
+	}
+	xpq_queue_unlock();
+	splx(s); /* XXX: removeme */
 }
 
 void
 xpq_queue_invlpg(vaddr_t va)
 {
 	struct mmuext_op op;
+	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	XENPRINTK2(("xpq_queue_invlpg %#" PRIxVADDR "\n", va));
@@ -319,11 +364,134 @@ xpq_queue_invlpg(vaddr_t va)
 		panic("xpq_queue_invlpg");
 }
 
+void
+xen_mcast_invlpg(vaddr_t va, uint32_t cpumask)
+{
+	mmuext_op_t op;
+
+	KASSERT(xpq_queue_locked());
+
+	/* Flush pending page updates */
+	xpq_flush_queue();
+
+	op.cmd = MMUEXT_INVLPG_MULTI;
+	op.arg1.linear_addr = va;
+	op.arg2.vcpumask = &cpumask;
+
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
+		panic("xpq_queue_invlpg_all");
+	}
+
+	return;
+}
+
+void
+xen_bcast_invlpg(vaddr_t va)
+{
+	mmuext_op_t op;
+
+	/* Flush pending page updates */
+	KASSERT(xpq_queue_locked());
+	xpq_flush_queue();
+
+	op.cmd = MMUEXT_INVLPG_ALL;
+	op.arg1.linear_addr = va;
+
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
+		panic("xpq_queue_invlpg_all");
+	}
+
+	return;
+}
+
+/* This is a synchronous call. */
+void
+xen_mcast_tlbflush(uint32_t cpumask)
+{
+	mmuext_op_t op;
+
+	/* Flush pending page updates */
+	KASSERT(xpq_queue_locked());
+	xpq_flush_queue();
+
+	op.cmd = MMUEXT_TLB_FLUSH_MULTI;
+	op.arg2.vcpumask = &cpumask;
+
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
+		panic("xpq_queue_invlpg_all");
+	}
+
+	return;
+}
+
+/* This is a synchronous call. */
+void
+xen_bcast_tlbflush(void)
+{
+	mmuext_op_t op;
+
+	/* Flush pending page updates */
+	KASSERT(xpq_queue_locked());
+	xpq_flush_queue();
+
+	op.cmd = MMUEXT_TLB_FLUSH_ALL;
+
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
+		panic("xpq_queue_invlpg_all");
+	}
+
+	return;
+}
+
+/* This is a synchronous call. */
+void
+xen_vcpu_mcast_invlpg(vaddr_t sva, vaddr_t eva, uint32_t cpumask)
+{
+	KASSERT(eva > sva);
+
+	/* Flush pending page updates */
+	KASSERT(xpq_queue_locked());
+	xpq_flush_queue();
+
+	/* Align to nearest page boundary */
+	sva &= ~PAGE_MASK;
+	eva &= ~PAGE_MASK;
+
+	for ( ; sva <= eva; sva += PAGE_SIZE) {
+		xen_mcast_invlpg(sva, cpumask);
+	}
+
+	return;
+}
+
+/* This is a synchronous call. */
+void
+xen_vcpu_bcast_invlpg(vaddr_t sva, vaddr_t eva)
+{
+	KASSERT(eva > sva);
+
+	/* Flush pending page updates */
+	KASSERT(xpq_queue_locked());
+	xpq_flush_queue();
+
+	/* Align to nearest page boundary */
+	sva &= ~PAGE_MASK;
+	eva &= ~PAGE_MASK;
+
+	for ( ; sva <= eva; sva += PAGE_SIZE) {
+		xen_bcast_invlpg(sva);
+	}
+
+	return;
+}
+
 int
 xpq_update_foreign(paddr_t ptr, pt_entry_t val, int dom)
 {
 	mmu_update_t op;
 	int ok;
+
+	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	op.ptr = ptr;
@@ -498,9 +666,14 @@ bootstrap_again:
 	/* zero out free space after tables */
 	memset((void *)(init_tables + ((count + l2_4_count) * PAGE_SIZE)), 0,
 	    (UPAGES + 1) * NBPG);
+
+	/* Finally, flush TLB. */
+	xpq_queue_lock();
+	xpq_queue_tlb_flush();
+	xpq_queue_unlock();
+
 	return (init_tables + ((count + l2_4_count) * PAGE_SIZE));
 }
-
 
 /*
  * Build a new table and switch to it
@@ -508,8 +681,6 @@ bootstrap_again:
  * new_count is # of new tables (PTE only)
  * we assume areas don't overlap
  */
-
-
 static void
 xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	int old_count, int new_count, int final)
@@ -520,6 +691,8 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	vaddr_t page, avail, text_end, map_end;
 	int i;
 	extern char __data_start;
+
+	xpq_queue_lock();
 
 	__PRINTK(("xen_bootstrap_tables(%#" PRIxVADDR ", %#" PRIxVADDR ","
 	    " %d, %d)\n",
@@ -790,7 +963,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	xen_bt_set_readonly(new_pgd);
 #endif
 	/* Pin the PGD */
-	__PRINTK(("pin PGD\n"));
+	__PRINTK(("pin PGD: %"PRIxVADDR"\n", new_pgd - KERNBASE));
 #ifdef __x86_64__
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(new_pgd - KERNBASE));
 #elif PAE
@@ -854,6 +1027,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 		pte++;
 	}
 	xpq_flush_queue();
+	xpq_queue_unlock();
 }
 
 
@@ -884,6 +1058,7 @@ xen_set_user_pgd(paddr_t page)
 	struct mmuext_op op;
 	int s = splvm();
 
+	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 	op.cmd = MMUEXT_NEW_USER_BASEPTR;
 	op.arg1.mfn = pfn_to_mfn(page >> PAGE_SHIFT);

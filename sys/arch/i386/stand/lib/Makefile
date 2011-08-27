@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26.4.3 2011/03/29 20:42:59 jym Exp $
+#	$NetBSD: Makefile,v 1.26.4.4 2011/08/27 15:37:27 jym Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -10,6 +10,29 @@ I386_INCLUDE_DISK?= yes
 I386_INCLUDE_DOS?= no
 I386_INCLUDE_BUS?= no
 I386_INCLUDE_PS2?= yes
+
+AFLAGS.biosdelay.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosgetrtc.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosgetsystime.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosmca.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosmemps2.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosmem.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosmemx.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosreboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosvbe.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosvideomode.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.bios_disk.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.bios_pci.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.comio.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.conio.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.dos_file.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.dump_eax.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.message.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.message32.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.pvcopy.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.putstr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.putstr32.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.realprot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 CPPFLAGS= -I$S/lib/libsa ${I386CPPFLAGS} ${I386MISCCPPFLAGS}
 #CPPFLAGS+= -DDISK_DEBUG
@@ -24,7 +47,7 @@ SRCS+= pread.c menuutils.c parseutils.c
 SRCS+= bootinfo.c bootinfo_biosgeom.c bootinfo_memmap.c
 SRCS+= startprog.S multiboot.S
 SRCS+= biosgetsystime.S cpufunc.S bootmenu.c
-SRCS+= realprot.S message.S message32.S dump_eax.S pvcopy.S putstr.S
+SRCS+= realprot.S message.S message32.S dump_eax.S pvcopy.S putstr.S putstr32.S
 SRCS+= rasops.c vbe.c biosvbe.S
 .if (${I386_INCLUDE_DISK} == "yes")
 SRCS+= biosdisk.c biosdisk_ll.c bios_disk.S
@@ -50,3 +73,8 @@ lib${LIB}.o:: ${OBJS}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.o
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
+
+# XXX
+.if ${HAVE_GCC} == 45
+COPTS.biosdisk.c+=	-fno-strict-aliasing
+.endif

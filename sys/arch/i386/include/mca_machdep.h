@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.h,v 1.12.52.3 2011/05/02 22:49:56 jym Exp $	*/
+/*	$NetBSD: mca_machdep.h,v 1.12.52.4 2011/08/27 15:37:25 jym Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #define _I386_MCA_MACHDEP_H_
 
 #include <sys/device.h>	/* for device_t */
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * i386-specific definitions for MCA autoconfiguration.

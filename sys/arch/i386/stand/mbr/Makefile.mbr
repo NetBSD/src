@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mbr,v 1.14.8.3 2011/03/29 20:42:59 jym Exp $
+#	$NetBSD: Makefile.mbr,v 1.14.8.4 2011/08/27 15:37:28 jym Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -40,6 +40,9 @@ DPSRCS+=	machine x86
 CLEANFILES+=	${PROG}.tmp
 
 LOADADDR=	0x8800
+
+AFLAGS.mbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.gpt.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 ${PROG}: ${OBJS}
 	${_MKTARGET_LINK}

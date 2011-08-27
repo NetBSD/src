@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.11.4.6 2011/05/02 22:49:55 jym Exp $
+#	$NetBSD: XEN3_DOM0,v 1.11.4.7 2011/08/27 15:37:24 jym Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -14,7 +14,7 @@ maxusers	32		# estimated number of users
 
 #
 options 	XEN
-#options         __XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
+#options 	__XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
 
 # boot messages with MPBIOS, acpi and ioapic can be quite large
 options 	MSGBUFSIZE=24576
@@ -24,7 +24,7 @@ options 	DOM0OPS
 # to a domU, at the expense of a higher memory usage by the network stack.
 #options 	MCLSHIFT=12
 
-makeoptions 	CPUFLAGS="-march=i686"
+makeoptions	CPUFLAGS="-march=i686"
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
@@ -61,14 +61,14 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks
-options 	DEBUG		# expensive debugging checks/support 
+options 	DEBUG		# expensive debugging checks/support
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
-#makeoptions 	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG="-g"	# compile full symbol table
 options DDB_COMMANDONENTER="trace;show registers"
 
 # Compatibility options
@@ -236,7 +236,7 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
-agp* 	at pchb?
+agp*	at pchb?
 
 # ISA bus support
 isa0	at ichlpcib?
@@ -270,7 +270,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
 # Hardware monitors
 
-amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
+amdtemp* at pchb?			# AMD CPU Temperature sensors
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
@@ -300,9 +300,9 @@ an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
-bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
-bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
-bnx* 	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
+bce*	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
+bge*	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
+bnx*	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
 dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
@@ -316,7 +316,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
-iwn*    at pci? dev ? function ?        # Intel PRO/Wireless 4965AGN
+iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
@@ -393,19 +393,19 @@ dpti*	at iop? tid 0			# DPT/Adaptec control interface
 # a machine hang with some controllers.
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide*	at pci? dev ? function ?	# Acard IDE controllers
-aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
-ahcisata* 	at pci? dev ? function ?	# AHCI SATA controllers
-artsata* 	at pci? dev ? function ?	# Intel i31244 SATA controller
+aceride*	at pci? dev ? function ?	# Acer Lab IDE controllers
+ahcisata*	at pci? dev ? function ?	# AHCI SATA controllers
+artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
-geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
+geodeide*	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 ixpide* 	at pci? dev ? function ?	# ATI IXP IDE controllers
-jmide*		at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
-ahcisata* 	at jmide?
-optiide* 	at pci? dev ? function ?	# Opti IDE controllers
-piixide* 	at pci? dev ? function ?	# Intel IDE controllers
+jmide*		at pci? dev ? function ?	# JMicron PCI-e PATA/SATA controllers
+ahcisata*	at jmide?
+optiide*	at pci? dev ? function ?	# Opti IDE controllers
+piixide*	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
@@ -413,8 +413,8 @@ satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 schide* 	at pci? dev ? function ?	# Intel SCH IDE controllers
 siisata*	at pci? dev ? function ?	# SiI SteelVine controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
-slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
-svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
+slide*		at pci? dev ? function ?	# Symphony Labs IDE controllers
+svwsata*	at pci? dev ? function ?	# ServerWorks SATA controllers
 stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
@@ -512,115 +512,116 @@ vga*		at pci? dev ? function ?
 #machfb* 	at pci? dev ? function ? # ATI Mach64 framebuffer driver
 wsdisplay*	at vga? console ?
 #wsdisplay*	at pcdisplay? console ?
-#wsdisplay* 	at machfb? console ?
+#wsdisplay*	at machfb? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
 # USB Controller and Devices
 
 # PCI USB controllers
-ehci*   at pci? dev ? function ?        # Enhanced Host Controller
-ohci*   at pci? dev ? function ?        # Open Host Controller
-uhci*   at pci? dev ? function ?        # Universal Host Controller (Intel)
+ehci*	at pci? dev ? function ?	# Enhanced Host Controller
+ohci*	at pci? dev ? function ?	# Open Host Controller
+uhci*	at pci? dev ? function ?	# Universal Host Controller (Intel)
 
 # USB bus support
-usb*    at ehci?
-usb*    at ohci?
-usb*    at uhci?
+usb*	at ehci?
+usb*	at ohci?
+usb*	at uhci?
 
 # USB Hubs
-uhub*   at usb?
-uhub*   at uhub? port ?
+uhub*	at usb?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev* at uhub? port ? configuration ? interface ?
 
 # USB Mice
-ums*    at uhidev? reportid ?
+ums*	at uhidev? reportid ?
 wsmouse* at ums? mux 0
 
 # USB eGalax touch-panel
-uep*    at uhub? port ?
+uep*	at uhub? port ?
 wsmouse* at uep? mux 0
 
 # USB Keyboards
-ukbd*   at uhidev? reportid ?
-wskbd*  at ukbd? console ? mux 1
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
 
 # USB serial adapter
 ucycom* at uhidev? reportid ?
 
 # USB Generic HID devices
-uhid*   at uhidev? reportid ?
+uhid*	at uhidev? reportid ?
 
 # USB Printer
-ulpt*   at uhub? port ? configuration ? interface ?
+ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Modem
 umodem* at uhub? port ? configuration ?
-ucom*   at umodem?
+ucom*	at umodem?
 
 # Option N.V. Wireless WAN modems
 uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
-umass*  at uhub? port ? configuration ? interface ?
-wd*     at umass?
+umass*	at uhub? port ? configuration ? interface ?
+wd*	at umass?
 
 # USB audio
 uaudio* at uhub? port ? configuration ?
 
 # USB MIDI
-umidi* at uhub? port ? configuration ?
+umidi*	at uhub? port ? configuration ?
 
 # USB IrDA
 # USB-IrDA bridge spec
-uirda* at uhub? port ? configuration ? interface ?
+uirda*	at uhub? port ? configuration ? interface ?
 irframe* at uirda?
 
 # SigmaTel STIr4200 USB/IrDA Bridge
-ustir* at uhub? port ?
+ustir*	at uhub? port ?
 irframe* at ustir?
 
 # USB Ethernet adapters
-aue*    at uhub? port ?         # ADMtek AN986 Pegasus based adapters
-axe*    at uhub? port ?         # ASIX AX88172 based adapters
-cdce*   at uhub? port ?         # CDC, Ethernet Networking Control Model
-cue*    at uhub? port ?         # CATC USB-EL1201A based adapters
-kue*    at uhub? port ?         # Kawasaki LSI KL5KUSB101B based adapters
-udav*   at uhub? port ?         # Davicom DM9601 based adapters
-url*    at uhub? port ?         # Realtek RTL8150L based adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+axe*	at uhub? port ?		# ASIX AX88172 based adapters
+cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
+cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+udav*	at uhub? port ?		# Davicom DM9601 based adapters
+url*	at uhub? port ?		# Realtek RTL8150L based adapters
+urndis*	at uhub? port ?		# Microsoft RNDIS specification
 
 # USB 802.11 adapters
-atu*    at uhub? port ?         # Atmel AT76C50XX based adapters
+atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 
 # Prolific PL2301/PL2302 host-to-host adapter
-upl*    at uhub? port ?
+upl*	at uhub? port ?
 
 # Serial adapters
-ubsa*   at uhub? port ?         # Belkin serial adapter
-ucom*   at ubsa? portno ?
+ubsa*	at uhub? port ?		# Belkin serial adapter
+ucom*	at ubsa? portno ?
 
-uftdi*  at uhub? port ?         # FTDI FT8U100AX serial adapter
-ucom*   at uftdi? portno ?
+uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
+ucom*	at uftdi? portno ?
 
-umct*   at uhub? port ?         # MCT USB-RS232 serial adapter
-ucom*   at umct? portno ?
+umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
 
-uplcom* at uhub? port ?         # I/O DATA USB-RSAQ2 serial adapter
-ucom*   at uplcom? portno ?
+uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ?
 
-uvscom* at uhub? port ?         # SUNTAC Slipper U VS-10U serial adapter
-ucom*   at uvscom? portno ?
+uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
+ucom*	at uvscom? portno ?
 
 # Diamond Multimedia Rio 500
-urio*   at uhub? port ?
+urio*	at uhub? port ?
 
 # USB Handspring Visor
 uvisor* at uhub? port ?
-ucom*   at uvisor?
+ucom*	at uvisor?
 
 # Kyocera AIR-EDGE PHONE
 ukyopon* at uhub? port ?
@@ -633,14 +634,14 @@ uscanner* at uhub? port ?
 usscanner* at uhub? port ?
 
 # Y@P firmware loader
-uyap* at uhub? port ?
+uyap*	at uhub? port ?
 
 # D-Link DSB-R100 USB radio
-udsbr*  at uhub? port ?
-radio*  at udsbr?
+udsbr*	at uhub? port ?
+radio*	at udsbr?
 
 # USB Generic driver
-ugen*   at uhub? port ?
+ugen*	at uhub? port ?
 
 # PCI IEEE1394 controllers
 fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
@@ -704,6 +705,7 @@ midi*	at midibus?
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
+aubtfwl* at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub* at bt3c?
@@ -738,7 +740,7 @@ cinclude "arch/i386/conf/GENERIC.local"
 
 # Pseudo-Devices
 
-pseudo-device 	crypto		# /dev/crypto device
+pseudo-device	crypto		# /dev/crypto device
 pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
@@ -807,7 +809,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 # userland interface to drivers, including autoconf and properties retrieval
-pseudo-device   drvctl
+pseudo-device	drvctl
 
 # xen pseudo-devices
 pseudo-device	xenevt
@@ -826,9 +828,9 @@ pci*	at ppb? bus ?
 # pciback.hide=(bus:dev.fun)(bus:dev.func) to the dom0 kernel boot parameters.
 # bus and dev are 2-digits hex number, func is a single-digit number:
 # pciback.hide=(00:1a.0)(00:1a.1)(00:1a.7)
-pciback* at pci?                        #pci backend device
+pciback* at pci?			#pci backend device
 
-acpi0 		at hypervisor?
+acpi0		at hypervisor?
 options 	MPBIOS
 options 	MPDEBUG
 options 	MPVERBOSE
@@ -840,15 +842,15 @@ options 	ACPIVERBOSE
 ioapic* 	at mainbus? apid ?
 
 # ACPI devices
-acpiacad* 	at acpi?		# ACPI AC Adapter
-acpibat* 	at acpi?		# ACPI Battery
-acpibut* 	at acpi?		# ACPI Button
+acpiacad*	at acpi?		# ACPI AC Adapter
+acpibat*	at acpi?		# ACPI Battery
+acpibut*	at acpi?		# ACPI Button
 acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 # The ACPI Embedded Controller is generally configured via the special ECDT.
 # This is required as parts of the DSDT can reference the EC before the normal
 # attach phase.
 acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
-acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
-acpilid* 	at acpi?		# ACPI Lid Switch
+acpiecdt*	at acpi?		# ACPI Embedded Controller (early binding)
+acpilid*	at acpi?		# ACPI Lid Switch
 aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
 hpqlb*		at acpi?		# HP Quick Launch Buttons

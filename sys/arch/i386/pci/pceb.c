@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.22.14.1 2010/10/24 22:48:03 jym Exp $	*/
+/*	$NetBSD: pceb.c,v 1.22.14.2 2011/08/27 15:37:26 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.22.14.1 2010/10/24 22:48:03 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.22.14.2 2011/08/27 15:37:26 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/eisa/eisavar.h>

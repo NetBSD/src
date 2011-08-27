@@ -1,6 +1,10 @@
-# $NetBSD: Makefile.bootxx,v 1.33.8.3 2011/03/29 20:42:59 jym Exp $
+# $NetBSD: Makefile.bootxx,v 1.33.8.4 2011/08/27 15:37:27 jym Exp $
 
 S=	${.CURDIR}/../../../../..
+
+AFLAGS.bootxx.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.label.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.pbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 PIE_CFLAGS=
 PIE_LDFLAGS=
@@ -49,7 +53,8 @@ CPPFLAGS+= -DFS=${FS}
 # CPPFLAGS+= -DBOOT_MSG_COM0
 
 # Make sure we override any optimization options specified by the user
-COPTS=  -Os -momit-leaf-frame-pointer
+.include "${.PARSEDIR}/../Makefile.inc"
+COPTS=	${OPT_SIZE.${ACTIVE_CC}}
 DBG=
 
 CPPFLAGS+= -DNO_LBA_CHECK
@@ -63,15 +68,10 @@ LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 .else
 CPPFLAGS+= -DEPIA_HACK
-.if ${HAVE_GCC} == 3
-CPUFLAGS=  -mcpu=i386
-.else
 CPUFLAGS=  -march=i386 -mtune=i386
 .endif
 .endif
-.endif
 
-COPTS+=    -ffreestanding
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -I$S
