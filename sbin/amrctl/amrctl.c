@@ -44,18 +44,18 @@
 #define NATTEMPTS	5
 #define SLEEPTIME	100000	/* microseconds */
 
-int	nattempts = NATTEMPTS;	/* # of attempts before giving up */
-int	sleeptime = SLEEPTIME;	/* between attempts, in ms */
+static int	nattempts = NATTEMPTS;	/* # of attempts before giving up */
+static int	sleeptime = SLEEPTIME;	/* between attempts, in ms */
 
 #define AMR_BUFSIZE	1024
 
-int	enq_result = AMR_STATUS_FAILED;
-char	enq_buffer[AMR_BUFSIZE];
+static int	enq_result = AMR_STATUS_FAILED;
+static char	enq_buffer[AMR_BUFSIZE];
 
 #define AMR_MAX_NCTRLS	16
 #define AMR_MAX_NSDEVS	16
 
-u_int8_t	nschan = 0;
+static u_int8_t	nschan = 0;
 
 /*
  * Include lookup tables, and a function to match a code to a string.
@@ -67,15 +67,15 @@ u_int8_t	nschan = 0;
 /* #define AMR_DEFINE_TABLES */
 /* #include "amr_tables.h" */
 
-int amr_ioctl_enquiry(int, u_int8_t, u_int8_t, u_int8_t);
-void usage(char *);
-int describe_card(int, int, int);
-char * describe_property(u_int8_t, char *);
-const char * describe_state(int, u_int8_t);
-void describe_battery(int, int, int, int, int);
-void describe_one_volume(int, int, u_int32_t, u_int8_t, u_int8_t);
-void describe_one_drive(int, int, u_int8_t);
-void describe_drive(int, int, int, int, int);
+static int amr_ioctl_enquiry(int, u_int8_t, u_int8_t, u_int8_t);
+__dead static void usage(const char *);
+static int describe_card(int, int, int);
+static char * describe_property(u_int8_t, char *);
+static const char * describe_state(int, u_int8_t);
+static void describe_battery(int, int, int, int, int);
+static void describe_one_volume(int, int, u_int32_t, u_int8_t, u_int8_t);
+static void describe_one_drive(int, int, u_int8_t);
+static void describe_drive(int, int, int, int, int);
 
 /*
  * Offsets in an amr_user_ioctl.au_cmd [] array See amrio.h
@@ -151,7 +151,7 @@ static struct {
 
 #define NTAB(tab)	(sizeof tab / sizeof tab [0])
 
-int
+static int
 amr_ioctl_enquiry(int fd, u_int8_t cmd, u_int8_t cmdsub, u_int8_t cmdqual)
 {
 	struct amr_user_ioctl am;
@@ -184,8 +184,8 @@ amr_ioctl_enquiry(int fd, u_int8_t cmd, u_int8_t cmdsub, u_int8_t cmdqual)
 	return am.au_status;
 }
 
-void
-usage(char *prog)
+static void
+usage(const char *prog)
 {
 	fprintf(stderr, "usage: %s stat [-a num] [-b] "
 		"[-c ctlr|-f dev] [-g] [-l vol]\n\t\t"
@@ -208,7 +208,7 @@ usage(char *prog)
  * Card description
  */
 
-int
+static int
 describe_card(int fd, int verbosity, int globalparam)
 {
 	struct amr_enquiry *ae;
@@ -345,7 +345,7 @@ describe_card(int fd, int verbosity, int globalparam)
 
 }
 
-char *
+static char *
 describe_property(u_int8_t prop, char *buffer)
 {
 	size_t	i;
@@ -364,7 +364,7 @@ describe_property(u_int8_t prop, char *buffer)
 	return buffer;
 }
 
-const char *
+static const char *
 describe_state(int verbosity, u_int8_t state)
 {
 	size_t	i;
@@ -383,7 +383,7 @@ describe_state(int verbosity, u_int8_t state)
 /******************************************************************************
  * Battery status
  */
-void
+static void
 describe_battery(int fd, int verbosity, int fwint, int bflags, int globalparam)
 {
 	u_int8_t batt_status;
@@ -431,7 +431,7 @@ describe_battery(int fd, int verbosity, int fwint, int bflags, int globalparam)
  * Logical volumes
  */
 
-void
+static void
 describe_one_volume(int ldrv, int verbosity,
 		    u_int32_t size, u_int8_t state, u_int8_t prop)
 {
@@ -459,7 +459,7 @@ describe_one_volume(int ldrv, int verbosity,
  * Physical drives
  */
 
-void
+static void
 describe_one_drive(int pdrv, int verbosity, u_int8_t state)
 {
 	const char *statestr;
@@ -475,7 +475,7 @@ describe_one_drive(int pdrv, int verbosity, u_int8_t state)
 	}
 }
 
-void
+static void
 describe_drive(int verbosity, int fwint, int ldrv, int sbus, int sdev)
 {
 	int	drv, pdrv = -1;
