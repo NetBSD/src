@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.218 2011/08/09 21:07:14 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.219 2011/08/27 19:52:22 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.218 2011/08/09 21:07:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.219 2011/08/27 19:52:22 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1314,7 +1314,8 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 
 	if ((ca->ca_flags & DVF_PRIV_ALLOC) == 0 &&
 	    ca->ca_devsize < sizeof(struct device))
-		panic("config_devalloc: %s", cf->cf_atname);
+		panic("config_devalloc: %s (%zu < %zu)", cf->cf_atname,
+		    ca->ca_devsize, sizeof(struct device));
 
 	/* get memory for all device vars */
 	KASSERT((ca->ca_flags & DVF_PRIV_ALLOC) || ca->ca_devsize >= sizeof(struct device));
