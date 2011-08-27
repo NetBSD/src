@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17 2011/08/26 06:18:17 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.18 2011/08/27 23:42:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -449,7 +449,7 @@ void drown(void);
 void gettty(void);
 void settty(const char *);
 void setftty(void);
-void error(const char *, ...) __printflike(1, 2);
+void error(const char *, ...) __printflike(1, 2) __dead;
 void getlin(char *);
 void getret(void);
 void cgetret(const char *);
