@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.76 2011/06/30 00:37:07 enami Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.77 2011/08/27 15:32:28 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005-2011 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.76 2011/06/30 00:37:07 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.77 2011/08/27 15:32:28 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -343,7 +343,7 @@ tmpfs_alloc_file(vnode_t *dvp, vnode_t **vpp, struct vattr *vap,
 {
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(dvp->v_mount);
 	tmpfs_node_t *dnode = VP_TO_TMPFS_DIR(dvp), *node;
-	tmpfs_dirent_t *de;
+	tmpfs_dirent_t *de, *wde;
 	int error;
 
 	KASSERT(VOP_ISLOCKED(dvp));
@@ -381,8 +381,20 @@ tmpfs_alloc_file(vnode_t *dvp, vnode_t **vpp, struct vattr *vap,
 		goto out;
 	}
 
+	/* Remove whiteout before adding the new entry. */
+	if (cnp->cn_flags & ISWHITEOUT) {
+		wde = tmpfs_dir_lookup(dnode, cnp);
+		KASSERT(wde != NULL && wde->td_node == TMPFS_NODE_WHITEOUT);
+		tmpfs_dir_detach(dvp, wde);
+		tmpfs_free_dirent(tmp, wde);
+	}
+
 	/* Associate inode and attach the entry into the directory. */
 	tmpfs_dir_attach(dvp, de, node);
+
+	/* Make node opaque if requested. */
+	if (cnp->cn_flags & ISWHITEOUT)
+		node->tn_flags |= UF_OPAQUE;
 out:
 	vput(dvp);
 	return error;
@@ -444,8 +456,8 @@ tmpfs_dir_attach(vnode_t *dvp, tmpfs_dirent_t *de, tmpfs_node_t *node)
 	KASSERT(VOP_ISLOCKED(dvp));
 
 	/* Associate directory entry and the inode. */
+	de->td_node = node;
 	if (node != TMPFS_NODE_WHITEOUT) {
-		de->td_node = node;
 		KASSERT(node->tn_links < LINK_MAX);
 		node->tn_links++;
 
