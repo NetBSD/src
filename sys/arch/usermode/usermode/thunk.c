@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.19 2011/08/25 11:06:29 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.20 2011/08/27 21:14:15 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.19 2011/08/25 11:06:29 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.20 2011/08/27 21:14:15 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/ansi.h>
@@ -262,6 +262,12 @@ void
 thunk_signal(int sig, void (*func)(int))
 {
 	signal(sig, func);
+}
+
+int
+thunk_atexit(void (*function)(void))
+{
+	return atexit(function);
 }
 
 int
