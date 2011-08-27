@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.346 2011/08/24 20:27:35 dyoung Exp $
+#	$NetBSD: files.pci,v 1.347 2011/08/27 13:28:37 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1080,3 +1080,7 @@ device	pwdog: sysmon_envsys
 attach	pwdog at pci
 file	dev/pci/pwdog.c		pwdog
 
+# SIS 315 Pro frame buffer
+device  sisfb: wsemuldisplaydev, rasops8, rasops15, rasops16, rasops32, vcons
+attach  sisfb at pci
+file    dev/pci/sisfb.c		sisfb	needs-flag
