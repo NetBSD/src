@@ -1,4 +1,4 @@
-/* $NetBSD: gcscpcibreg.h,v 1.1 2008/01/09 14:23:47 xtraeme Exp $ */
+/* $NetBSD: gcscpcibreg.h,v 1.1 2011/08/27 12:47:49 bouyer Exp $ */
 /* $OpenBSD: glxpcib.c,v 1.6 2007/11/17 17:02:47 mbalmer Exp $	*/
 
 /*
@@ -23,8 +23,8 @@
  * Register definitions for the AMD CS5535/CS5536 Companion Device.
  */
 
-#ifndef _I386_PCI_GCSCPCIBREG_H_
-#define _I386_PCI_GCSCPCIBREG_H_
+#ifndef _IC_GCSCPCIBREG_H_
+#define _IC_GCSCPCIBREG_H_
 
 #define	AMD553X_REV		0x51400017
 #define	AMD553X_REV_MASK	0xff
@@ -138,4 +138,4 @@
 #define	AMD553X_GPIO_IN_NE_STS	0x48	/* input negative edge status */
 #define	AMD553X_GPIO_IN_PE_STS	0x4c	/* input positive edge status */
 
-#endif /* _I386_PCI_GCSCPCIBREG_H_ */
+#endif /* _IC_GCSCPCIBREG_H_ */
