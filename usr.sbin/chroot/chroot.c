@@ -1,4 +1,4 @@
-/*	$NetBSD: chroot.c,v 1.16 2011/08/15 14:43:17 wiz Exp $	*/
+/*	$NetBSD: chroot.c,v 1.17 2011/08/27 22:32:44 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: chroot.c,v 1.16 2011/08/15 14:43:17 wiz Exp $");
+__RCSID("$NetBSD: chroot.c,v 1.17 2011/08/27 22:32:44 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,16 +56,14 @@ __RCSID("$NetBSD: chroot.c,v 1.16 2011/08/15 14:43:17 wiz Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int	main(int, char **);
-void	usage(void) __dead;
-
-char	*user;		/* user to switch to before running program */
-char	*group;		/* group to switch to ... */
-char	*grouplist;	/* group list to switch to ... */
+static void	usage(void) __dead;
 
 int
 main(int argc, char *argv[])
 {
+	char	*user;		/* user to switch to before running program */
+	char	*group;		/* group to switch to ... */
+	char	*grouplist;	/* group list to switch to ... */
 	struct group	*gp;
 	struct passwd	*pw;
 	char		*endp, *p;
@@ -175,7 +173,7 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
 }
 
-void
+static void
 usage(void)
 {
 
