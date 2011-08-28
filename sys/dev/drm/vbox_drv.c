@@ -1,4 +1,4 @@
-/* $NetBSD: vbox_drv.c,v 1.1 2011/02/20 15:40:21 jmcneill Exp $ */
+/* $NetBSD: vbox_drv.c,v 1.2 2011/08/28 17:18:31 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vbox_drv.c,v 1.1 2011/02/20 15:40:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vbox_drv.c,v 1.2 2011/08/28 17:18:31 jmcneill Exp $");
 
 #include "drmP.h"
 #include "drm.h"
@@ -104,7 +104,7 @@ CFATTACH_DECL_NEW(
     NULL
 );
 
-MODULE(MODULE_CLASS_DRIVER, vboxdrm, NULL);
+MODULE(MODULE_CLASS_DRIVER, vboxdrm, "drm");
 
 #ifdef _MODULE
 #include "ioconf.c"
