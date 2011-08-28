@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.19 2011/08/28 19:37:15 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.20 2011/08/28 21:19:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -48,6 +48,16 @@ struct thunk_itimerval {
 	struct thunk_timeval it_value;
 };
 
+struct thunk_termios {
+	uint32_t c_iflag;
+	uint32_t c_oflag;
+	uint32_t c_cflag;
+	uint32_t c_lflag;
+	uint8_t c_cc[20];
+	int32_t c_ispeed;
+	int32_t c_ospeed;
+};
+
 int	thunk_setitimer(int, const struct thunk_itimerval *, struct thunk_itimerval *);
 int	thunk_gettimeofday(struct thunk_timeval *, void *);
 unsigned int thunk_getcounter(void);
@@ -62,6 +72,9 @@ int	thunk_setcontext(const ucontext_t *);
 void	thunk_makecontext(ucontext_t *, void (*)(void), int, void (*)(void *), void *); 
 void	thunk_makecontext_trapframe2go(ucontext_t *, void *func, void *trapframe);
 int	thunk_swapcontext(ucontext_t *, ucontext_t *);
+
+int	thunk_tcgetattr(int, struct thunk_termios *);
+int	thunk_tcsetattr(int, int, const struct thunk_termios *);
 
 int	thunk_getchar(void);
 void	thunk_putchar(int);
