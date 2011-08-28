@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.59 2010/12/20 00:25:47 matt Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.60 2011/08/28 18:48:14 jmcneill Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.59 2010/12/20 00:25:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.60 2011/08/28 18:48:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ get_proc_size_info(struct lwp *l, unsigned long *stext, unsigned long *etext, un
 			break;
 		}
 	}
-#ifdef LINUX_USRSTACK32
+#if defined(LINUX_USRSTACK32) && defined(USRSTACK32)
 	if (strcmp(p->p_emul->e_name, "linux32") == 0 &&
 	    LINUX_USRSTACK32 < USRSTACK32)
 		*sstack = (unsigned long)LINUX_USRSTACK32;
