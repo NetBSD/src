@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.47 2011/07/16 11:15:52 nakayama Exp $ */
+/*	$NetBSD: psl.h,v 1.48 2011/08/28 22:30:09 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -232,7 +232,7 @@
 /*
  * GCC pseudo-functions for manipulating PSR (primarily PIL field).
  */
-static __inline int
+static __inline __attribute__((__always_inline__)) int
 getpsr(void)
 {
 	int psr;
@@ -241,7 +241,7 @@ getpsr(void)
 	return (psr);
 }
 
-static __inline int
+static __inline __attribute__((__always_inline__)) int
 getmid(void)
 {
 	int mid;
@@ -250,14 +250,14 @@ getmid(void)
 	return ((mid >> 20) & 0x3);
 }
 
-static __inline void
+static __inline __attribute__((__always_inline__)) void
 setpsr(int newpsr)
 {
 	__asm volatile("wr %0,0,%%psr" : : "r" (newpsr) : "memory");
 	__asm volatile("nop; nop; nop");
 }
 
-static __inline void
+static __inline __attribute__((__always_inline__)) void
 spl0(void)
 {
 	int psr, oldipl;
@@ -284,7 +284,7 @@ spl0(void)
  * into the ipl field.)
  */
 #define	_SPLSET(name, newipl) \
-static __inline void name(void) \
+static __inline __attribute__((__always_inline__)) void name(void) \
 { \
 	int psr; \
 	__asm volatile("rd %%psr,%0" : "=r" (psr)); \
@@ -341,7 +341,7 @@ splraiseipl(ipl_cookie_t icookie)
 #define	splzs()		splraiseipl(makeiplcookie(IPL_ZS))
 
 /* splx does not have a return value */
-static __inline void
+static __inline __attribute__((__always_inline__)) void
 splx(int newipl)
 {
 	int psr;
