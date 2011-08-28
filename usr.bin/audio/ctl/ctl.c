@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.38 2009/04/11 10:43:09 lukem Exp $	*/
+/*	$NetBSD: ctl.c,v 1.39 2011/08/28 01:17:48 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ctl.c,v 1.38 2009/04/11 10:43:09 lukem Exp $");
+__RCSID("$NetBSD: ctl.c,v 1.39 2011/08/28 01:17:48 joerg Exp $");
 #endif
 
 
@@ -51,23 +51,22 @@ __RCSID("$NetBSD: ctl.c,v 1.38 2009/04/11 10:43:09 lukem Exp $");
 
 #include "libaudio.h"
 
-struct field *findfield (const char *name);
-void prfield (struct field *p, const char *sep);
-void rdfield (struct field *p, char *q);
-void getinfo (int fd);
-void audioctl_write (int, int, char *[]);
-void usage (void);
-int main (int argc, char **argv);
+static struct field *findfield(const char *name);
+static void prfield(const struct field *p, const char *sep);
+static void rdfield(struct field *p, char *q);
+static void getinfo(int fd);
+static void audioctl_write(int, int, char *[]);
+__dead static void usage(void);
 
-audio_device_t adev;
+static audio_device_t adev;
 
-audio_info_t info;
+static audio_info_t info;
 
-char encbuf[1000];
+static char encbuf[1000];
 
-int properties, fullduplex, rerror;
+static int properties, fullduplex, rerror;
 
-struct field {
+static struct field {
 	const char *name;
 	void *valp;
 	int format;
@@ -140,7 +139,7 @@ struct field {
 	{ .name = NULL },
 };
 
-static struct {
+static const struct {
 	const char *name;
 	u_int prop;
 } props[] = {
@@ -150,9 +149,8 @@ static struct {
 	{ .name = NULL },
 };
 
-struct field *
-findfield(name)
-	const char *name;
+static struct field *
+findfield(const char *name)
 {
 	int i;
 	for (i = 0; fields[i].name; i++)
@@ -161,10 +159,8 @@ findfield(name)
 	return 0;
 }
 
-void
-prfield(p, sep)
-	struct field *p;
-	const char *sep;
+static void
+prfield(const struct field *p, const char *sep)
 {
 	u_int v;
 	const char *cm, *encstr;
@@ -174,25 +170,25 @@ prfield(p, sep)
 		printf("%s%s", p->name, sep);
 	switch(p->format) {
 	case STRING:
-		printf("%s", (char*)p->valp);
+		printf("%s", (const char*)p->valp);
 		break;
 	case INT:
-		printf("%d", *(int*)p->valp);
+		printf("%d", *(const int*)p->valp);
 		break;
 	case UINT:
-		printf("%u", *(u_int*)p->valp);
+		printf("%u", *(const u_int*)p->valp);
 		break;
 	case XINT:
-		printf("0x%x", *(u_int*)p->valp);
+		printf("0x%x", *(const u_int*)p->valp);
 		break;
 	case UCHAR:
-		printf("%u", *(u_char*)p->valp);
+		printf("%u", *(const u_char*)p->valp);
 		break;
 	case ULONG:
-		printf("%lu", *(u_long*)p->valp);
+		printf("%lu", *(const u_long*)p->valp);
 		break;
 	case P_R:
-		v = *(u_int*)p->valp;
+		v = *(const u_int*)p->valp;
 		cm = "";
 		if (v & AUMODE_PLAY) {
 			if (v & AUMODE_PLAY_ALL)
@@ -235,10 +231,8 @@ prfield(p, sep)
 	}
 }
 
-void
-rdfield(p, q)
-	struct field *p;
-	char *q;
+static void
+rdfield(struct field *p, char *q)
 {
 	int enc;
 	u_int u;
@@ -289,9 +283,8 @@ rdfield(p, q)
 	p->flags |= SET;
 }
 
-void
-getinfo(fd)
-	int fd;
+static void
+getinfo(int fd)
 {
 	int pos, i;
 
@@ -322,8 +315,8 @@ getinfo(fd)
 		err(1, "AUDIO_GETINFO");
 }
 
-void
-usage()
+static void
+usage(void)
 {
 	const char *prog = getprogname();
 
@@ -334,9 +327,7 @@ usage()
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int fd, i, ch;
 	int aflag = 0, wflag = 0;
@@ -428,11 +419,8 @@ main(argc, argv)
 	exit(0);
 }
 
-void
-audioctl_write(fd, argc, argv)
-	int fd;
-	int argc;
-	char *argv[];
+static void
+audioctl_write(int fd, int argc, char *argv[])
 {
 	struct field *p;
 
