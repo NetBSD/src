@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2011/01/22 19:19:23 joerg Exp $
+#	$NetBSD: Makefile,v 1.38 2011/08/28 08:03:49 mrg Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c \
@@ -26,7 +26,7 @@ AFLAGS+=	-Wa,-32
 
 OBJS=${SRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
 
-LINKFLAGS=-N -e start
+LINKFLAGS=-N -e start -Map $@.map
 
 .MAIN: all
 realall: ${FILES}
@@ -43,6 +43,7 @@ boot.${RELOC}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${SIZE} ${.TARGET}.tmp
 	${OBJCOPY} -O binary ${.TARGET}.tmp ${.TARGET}
 	rm -f ${.TARGET}.tmp
+CLEANFILES+=	boot.${RELOC}.map
 .endfor
 
 # conjure up a magic header that is accepted by all Sun PROMS;
@@ -57,5 +58,6 @@ bootjs.net: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -o ${.TARGET} ${LINKFLAGS} -Ttext 300000 ${OBJS} \
 	    ${LIBSA} ${LIBZ} ${LIBKERN}
 	${SIZE} ${.TARGET}
+CLEANFILES+=	bootjs.net.map
 
 .include <bsd.prog.mk>
