@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.42.2.8 2011/08/27 15:37:32 jym Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.42.2.9 2011/08/28 22:34:26 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.42.2.8 2011/08/27 15:37:32 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.42.2.9 2011/08/28 22:34:26 jym Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -197,7 +197,7 @@ events_init(void)
 }
 
 bool
-events_suspend (void)
+events_suspend(void)
 {
 	int evtch;
 
@@ -205,6 +205,9 @@ events_suspend (void)
 
 	/* VIRQ_DEBUG is the last interrupt to remove */
 	evtch = unbind_virq_from_evtch(VIRQ_DEBUG);
+
+	KASSERT(evtch != -1);
+
 	hypervisor_mask_event(evtch);
 	/* Remove the non-NULL value set in events_init() */
 	evtsource[evtch] = NULL;
@@ -277,7 +280,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 					evtch >> LONG_SHIFT,
 					evtch & LONG_MASK);
 
-		if (evtsource[evtch]->ev_cpu != ci) { 
+		if (evtsource[evtch]->ev_cpu != ci) {
 			/* facilitate spllower() on remote cpu */
 			struct cpu_info *rci = evtsource[evtch]->ev_cpu;
 			if (xen_send_ipi(rci, XEN_IPI_KICK) != 0) {
@@ -285,7 +288,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 			}
 		}
 
-		/* leave masked */				     
+		/* leave masked */
 		return 0;
 	}
 	ci->ci_ilevel = evtsource[evtch]->ev_maxlevel;
@@ -381,7 +384,7 @@ bind_vcpu_to_evtch(cpuid_t vcpu)
 	evtch_bindcount[evtchn]++;
 
 	mutex_spin_exit(&evtchn_lock);
-    
+
 	return evtchn;
 }
 
@@ -393,9 +396,9 @@ bind_virq_to_evtch(int virq)
 
 	mutex_spin_enter(&evtchn_lock);
 
-	/* 
-	 * XXX: The only per-cpu VIRQ we currently use is VIRQ_TIMER. 
-	 * Please re-visit this implementation when others are used. 
+	/*
+	 * XXX: The only per-cpu VIRQ we currently use is VIRQ_TIMER.
+	 * Please re-visit this implementation when others are used.
 	 * Note: VIRQ_DEBUG is special-cased, and not used or bound on APs.
 	 * XXX: event->virq/ipi can be unified in a linked-list
 	 * implementation.
@@ -407,12 +410,14 @@ bind_virq_to_evtch(int virq)
 		return -1;
 	}
 
+	/* Get event channel from VIRQ */
 	if (virq == VIRQ_TIMER) {
 		evtchn = virq_timer_to_evtch[ci->ci_cpuid];
-	}
-	else {
+	} else {
 		evtchn = virq_to_evtch[virq];
 	}
+
+	/* Allocate a channel if there is none already allocated */
 	if (evtchn == -1) {
 		op.cmd = EVTCHNOP_bind_virq;
 		op.u.bind_virq.virq = virq;
@@ -420,14 +425,20 @@ bind_virq_to_evtch(int virq)
 		if (HYPERVISOR_event_channel_op(&op) != 0)
 			panic("Failed to bind virtual IRQ %d\n", virq);
 		evtchn = op.u.bind_virq.port;
+	}
 
+	/* Set event channel */
+	if (virq == VIRQ_TIMER) {
+		virq_timer_to_evtch[ci->ci_cpuid] = evtchn;
+	} else {
 		virq_to_evtch[virq] = evtchn;
 	}
 
+	/* Increase ref counter */
 	evtch_bindcount[evtchn]++;
 
 	mutex_spin_exit(&evtchn_lock);
-    
+
 	return evtchn;
 }
 
@@ -498,7 +509,7 @@ bind_pirq_to_evtch(int pirq)
 	evtch_bindcount[evtchn]++;
 
 	mutex_spin_exit(&evtchn_lock);
-    
+
 	return evtchn;
 }
 
@@ -658,13 +669,13 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 			panic("can't allocate fixed interrupt source");
 
 		evts->ev_handlers = ih;
-		/* 
+		/*
 		 * XXX: We're assuming here that ci is the same cpu as
 		 * the one on which this event/port is bound on. The
 		 * api needs to be reshuffled so that this assumption
 		 * is more explicitly implemented.
 		 */
-		evts->ev_cpu = ci; 
+		evts->ev_cpu = ci;
 		mutex_init(&evtlock[evtch], MUTEX_DEFAULT, IPL_HIGH);
 		evtsource[evtch] = evts;
 		if (evname)

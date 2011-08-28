@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.49.2.6 2011/08/27 15:37:32 jym Exp $	*/
+/*	$NetBSD: clock.c,v 1.49.2.7 2011/08/28 22:34:25 jym Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.2.6 2011/08/27 15:37:32 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.2.7 2011/08/28 22:34:25 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,11 +433,13 @@ xen_initclocks(void)
 }
 
 void
-xen_suspendclocks(void) {
-
+xen_suspendclocks(void)
+{
 	int evtch;
 
 	evtch = unbind_virq_from_evtch(VIRQ_TIMER);
+	KASSERT(evtch != -1);
+
 	hypervisor_mask_event(evtch);
 	event_remove_handler(evtch, (int (*)(void *))xen_timer_handler, NULL);
 
@@ -445,11 +447,13 @@ xen_suspendclocks(void) {
 }
 
 void
-xen_resumeclocks(void) {
-
+xen_resumeclocks(void)
+{
 	int evtch;
-
+       
 	evtch = bind_virq_to_evtch(VIRQ_TIMER);
+	KASSERT(evtch != -1);
+
 	event_set_handler(evtch, (int (*)(void *))xen_timer_handler,
 	    NULL, IPL_CLOCK, "clock");
 	hypervisor_enable_event(evtch);
