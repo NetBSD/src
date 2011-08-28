@@ -168,7 +168,7 @@ sisdrm_modcmd(modcmd_t cmd, void *arg)
 		return ENOTTY;
 	}
 
-	return 0;
+	return error;
 }
 
 #endif
