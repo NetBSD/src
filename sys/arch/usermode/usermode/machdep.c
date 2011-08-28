@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.16 2011/08/27 21:16:15 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.17 2011/08/28 19:39:42 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2011/08/27 21:16:15 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2011/08/28 19:39:42 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2011/08/27 21:16:15 reinoud Exp $")
 #include <sys/exec.h>
 #include <sys/buf.h>
 #include <sys/boot_flag.h>
+#include <sys/ucontext.h>
+#include <machine/pcb.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
@@ -134,7 +136,22 @@ consinit(void)
 void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
+	struct pcb *pcb = lwp_getpcb(l);
+
 printf("setregs called: lwp %p, exec package %p, stack %p\n", l, pack, (void *) stack);
+printf("cur pcb %p\n", pcb);
+printf("\tpcb->pcb_ucp.uc_stack.ss_sp   = %p\n", pcb->pcb_ucp.uc_stack.ss_sp);
+printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_ucp.uc_stack.ss_size);
+
+	pcb->pcb_ucp.uc_stack.ss_sp = (void *) stack;
+	pcb->pcb_ucp.uc_stack.ss_size = pack->ep_ssize;
+	thunk_makecontext_trapframe2go(&pcb->pcb_ucp, (void *) pack->ep_entry, &pcb->pcb_tf);
+
+printf("new pcb %p\n", pcb);
+printf("\tpcb->pcb_ucp.uc_stack.ss_sp   = %p\n", pcb->pcb_ucp.uc_stack.ss_sp);
+printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_ucp.uc_stack.ss_size);
+printf("\tpack->ep_entry                = %p\n", (void *) pack->ep_entry);
+printf("\t    argument                  = %p\n", &pcb->pcb_tf);
 }
 
 void
