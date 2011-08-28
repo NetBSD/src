@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/08/17 17:08:59 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2011/08/28 09:02:51 mbalmer Exp $
 
 NOMAN=  	# defined
 
@@ -11,8 +11,10 @@ TESTS_SH=	t_df
 BINDIR=		${TESTSDIR}
 PROG=		h_df
 .PATH:  	${NETBSDSRCDIR}/bin/df
-.PATH:  	${NETBSDSRCDIR}/bin/csh
-SRCS=		df.c strpct.c getmntinfo.c
+SRCS=		df.c getmntinfo.c
+
+LDADD+=		-lutil
+DPADD+=		${LIBUTIL}
 
 # Pass -DINTREE to make to test using humanize_number.c in source tree
 # directly instead of the one in libc.
