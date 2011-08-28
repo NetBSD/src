@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.46 2011/08/27 09:32:11 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.47 2011/08/28 04:59:37 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.46 2011/08/27 09:32:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.47 2011/08/28 04:59:37 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -418,17 +418,14 @@ pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 pcitag_t
 pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 {
+	pci_chipset_tag_t ipc;
 	pcitag_t tag;
 
-	if (pc != NULL) {
-		if ((pc->pc_present & PCI_OVERRIDE_MAKE_TAG) != 0) {
-			return (*pc->pc_ov->ov_make_tag)(pc->pc_ctx,
-			    pc, bus, device, function);
-		}
-		if (pc->pc_super != NULL) {
-			return pci_make_tag(pc->pc_super, bus, device,
-			    function);
-		}
+	for (ipc = pc; ipc != NULL; ipc = ipc->pc_super) {
+		if ((ipc->pc_present & PCI_OVERRIDE_MAKE_TAG) == 0)
+			continue;
+		return (*ipc->pc_ov->ov_make_tag)(ipc->pc_ctx,
+		    pc, bus, device, function);
 	}
 
 	switch (pci_mode) {
@@ -456,17 +453,14 @@ void
 pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
     int *bp, int *dp, int *fp)
 {
+	pci_chipset_tag_t ipc;
 
-	if (pc != NULL) {
-		if ((pc->pc_present & PCI_OVERRIDE_DECOMPOSE_TAG) != 0) {
-			(*pc->pc_ov->ov_decompose_tag)(pc->pc_ctx,
-			    pc, tag, bp, dp, fp);
-			return;
-		}
-		if (pc->pc_super != NULL) {
-			pci_decompose_tag(pc->pc_super, tag, bp, dp, fp);
-			return;
-		}
+	for (ipc = pc; ipc != NULL; ipc = ipc->pc_super) {
+		if ((ipc->pc_present & PCI_OVERRIDE_DECOMPOSE_TAG) == 0)
+			continue;
+		(*ipc->pc_ov->ov_decompose_tag)(ipc->pc_ctx,
+		    pc, tag, bp, dp, fp);
+		return;
 	}
 
 	switch (pci_mode) {
@@ -494,18 +488,16 @@ pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
 pcireg_t
 pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
+	pci_chipset_tag_t ipc;
 	pcireg_t data;
 	struct pci_conf_lock ocl;
 
 	KASSERT((reg & 0x3) == 0);
 
-	if (pc != NULL) {
-		if ((pc->pc_present & PCI_OVERRIDE_CONF_READ) != 0) {
-			return (*pc->pc_ov->ov_conf_read)(pc->pc_ctx,
-			    pc, tag, reg);
-		}
-		if (pc->pc_super != NULL)
-			return pci_conf_read(pc->pc_super, tag, reg);
+	for (ipc = pc; ipc != NULL; ipc = ipc->pc_super) {
+		if ((ipc->pc_present & PCI_OVERRIDE_CONF_READ) == 0)
+			continue;
+		return (*ipc->pc_ov->ov_conf_read)(ipc->pc_ctx, pc, tag, reg);
 	}
 
 #if defined(__i386__) && defined(XBOX)
@@ -526,20 +518,17 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
+	pci_chipset_tag_t ipc;
 	struct pci_conf_lock ocl;
 
 	KASSERT((reg & 0x3) == 0);
 
-	if (pc != NULL) {
-		if ((pc->pc_present & PCI_OVERRIDE_CONF_WRITE) != 0) {
-			(*pc->pc_ov->ov_conf_write)(pc->pc_ctx, pc, tag, reg,
-			    data);
-			return;
-		}
-		if (pc->pc_super != NULL) {
-			pci_conf_write(pc->pc_super, tag, reg, data);
-			return;
-		}
+	for (ipc = pc; ipc != NULL; ipc = ipc->pc_super) {
+		if ((ipc->pc_present & PCI_OVERRIDE_CONF_WRITE) == 0)
+			continue;
+		(*ipc->pc_ov->ov_conf_write)(ipc->pc_ctx, pc, tag, reg,
+		    data);
+		return;
 	}
 
 #if defined(__i386__) && defined(XBOX)
