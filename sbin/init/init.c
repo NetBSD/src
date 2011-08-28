@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.101 2011/08/27 17:43:42 joerg Exp $	*/
+/*	$NetBSD: init.c,v 1.102 2011/08/28 10:13:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.101 2011/08/27 17:43:42 joerg Exp $");
+__RCSID("$NetBSD: init.c,v 1.102 2011/08/28 10:13:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,12 +127,14 @@ typedef state_func_t (*state_t)(void);
 #define	CATATONIA	'c'
 
 static state_func_t single_user(void);
+#ifndef LETS_GET_SMALL
 static state_func_t runcom(void);
 static state_func_t read_ttys(void);
 static state_func_t multi_user(void);
 static state_func_t clean_ttys(void);
 static state_func_t catatonia(void);
 static state_func_t death(void);
+#endif
 
 static enum { AUTOBOOT, FASTBOOT } runcom_mode = AUTOBOOT;
 
@@ -155,32 +157,29 @@ typedef struct init_session {
 	struct	init_session *se_next;
 } session_t;
 
-static void free_session(session_t *);
-static session_t *new_session(session_t *, int, struct ttyent *);
-static session_t *sessions;
-
-static char **construct_argv(char *);
-static void start_window_system(session_t *);
 static void collect_child(pid_t, int);
-static pid_t start_getty(session_t *);
+static int clang;
 static void transition_handler(int);
 static void alrm_handler(int);
 static int has_securelevel(void);
+static int securelevel_present;
+
+#ifndef LETS_GET_SMALL
+static int do_setttyent(void);
+static void start_window_system(session_t *);
+static char **construct_argv(char *);
+static int setupargv(session_t *, struct ttyent *);
+static pid_t start_getty(session_t *);
+static void free_session(session_t *);
+static session_t *new_session(session_t *, int, struct ttyent *);
+static session_t *sessions;
 static void setsecuritylevel(int);
 static int getsecuritylevel(void);
-static int securelevel_present;
-static int setupargv(session_t *, struct ttyent *);
-static int clang;
-
 static int start_session_db(void);
 static void add_session(session_t *);
 static void del_session(session_t *);
 static session_t *find_session(pid_t);
 static DB *session_db;
-
-static int do_setttyent(void);
-
-#ifndef LETS_GET_SMALL
 static state_t requested_transition = runcom;
 
 static void clear_session_logs(session_t *, int);
@@ -1727,6 +1726,7 @@ mfs_dev(void)
 }
 #endif
 
+#ifndef LETS_GET_SMALL
 static int
 do_setttyent(void)
 {
@@ -1742,6 +1742,7 @@ do_setttyent(void)
 #endif /* CHROOT */
 		return setttyent();
 }
+#endif
 
 #if !defined(LETS_GET_SMALL) && defined(CHROOT)
 
