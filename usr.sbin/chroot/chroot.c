@@ -1,4 +1,4 @@
-/*	$NetBSD: chroot.c,v 1.17 2011/08/27 22:32:44 joerg Exp $	*/
+/*	$NetBSD: chroot.c,v 1.18 2011/08/28 08:32:47 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: chroot.c,v 1.17 2011/08/27 22:32:44 joerg Exp $");
+__RCSID("$NetBSD: chroot.c,v 1.18 2011/08/28 08:32:47 mbalmer Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,8 @@ main(int argc, char *argv[])
 	uid_t		uid;
 	int		ch, gids;
 
+	user = NULL;
+	group = NULL;
 	gid = 0;
 	uid = 0;
 	while ((ch = getopt(argc, argv, "G:g:u:")) != -1) {
