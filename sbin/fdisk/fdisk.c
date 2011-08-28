@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.133 2011/08/27 20:49:03 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.134 2011/08/28 15:46:26 gson Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.133 2011/08/27 20:49:03 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.134 2011/08/28 15:46:26 gson Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -292,7 +292,6 @@ static int64_t	decimal(const char *, int64_t, int, int64_t, int64_t);
 #define	DEC_RND_0	4		/* convert 0 to size of a track */
 #define DEC_RND_DOWN	8		/* subtract 1 track */
 #define DEC_RND_DOWN_2	16		/* subtract 2 tracks */
-static void	string(const char *, int, char *);
 static int	ptn_id(const char *, int *);
 static int	type_match(const void *, const void *);
 static const char *get_type(int);
@@ -302,6 +301,7 @@ static daddr_t	configure_bootsel(daddr_t);
 static void	install_bootsel(int);
 static daddr_t	get_default_boot(void);
 static void	set_default_boot(daddr_t);
+static void	string(const char *, int, char *);
 #endif
 
 static void
