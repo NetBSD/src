@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.4 2011/08/25 14:24:48 reinoud Exp $ */
+/* $NetBSD: pcb.h,v 1.5 2011/08/28 19:40:26 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,17 +38,17 @@
  */
 
 typedef struct trapframe {
-	int		tf_reason;	/* XXX unused */
-	vaddr_t		tf_pc;		/* return address */
-	uintptr_t	tf_out[8];	/* to transport info */
+	int		(*tf_syscall)(void *);	/* address to call for syscalls */
+	int		 tf_reason;		/* XXX unused */
+	uintptr_t	 tf_io[8];		/* to transport info */
 } trapframe_t;
 
 
 struct pcb {
-	ucontext_t	pcb_ucp;
-	bool		pcb_needfree;
-	struct trapframe *pcb_tf;	/* XXX */
-	void *		pcb_onfault;	/* on fault handler */
+	ucontext_t	 pcb_ucp;
+	bool		 pcb_needfree;
+	struct trapframe pcb_tf;	/* XXX */
+	void *		 pcb_onfault;	/* on fault handler */
 };
 
 #endif /* !_ARCH_USERMODE_INCLUDE_PCB_H */
