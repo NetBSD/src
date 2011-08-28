@@ -1,4 +1,4 @@
-.\" $NetBSD: gpioctl.8,v 1.9 2011/08/28 07:48:50 mbalmer Exp $
+.\" $NetBSD: gpioctl.8,v 1.10 2011/08/28 17:10:37 wiz Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Marc Balmer <marc@msys.ch>
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -25,14 +25,14 @@
 .Nm gpioctl
 .Op Fl q
 .Ar device
-attach
+.Cm attach
 .Ar device
 .Ar offset
 .Ar mask
 .Nm gpioctl
 .Op Fl q
 .Ar device
-detach
+.Cm detach
 .Ar device
 .Nm gpioctl
 .Op Fl q
@@ -48,20 +48,20 @@ detach
 .Op Fl q
 .Ar device
 .Ar pin
-pulse
+.Cm pulse
 .Op Ar frequency Op Ar duty cycle
 .Nm gpioctl
 .Op Fl q
 .Ar device
 .Ar pin
-set
+.Cm set
 .Op Ar flags
 .Op Ar name
 .Nm gpioctl
 .Op Fl q
 .Ar device
 .Ar pin
-unset
+.Cm unset
 .Sh DESCRIPTION
 The
 .Nm
@@ -222,6 +222,7 @@ command first appeared in
 and
 .Nx 4.0 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 program was written by
