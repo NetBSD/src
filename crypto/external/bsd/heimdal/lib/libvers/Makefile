@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:56 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/08/28 11:20:16 elric Exp $
 
 NOLINKLIB=	# defined
 NOPIC=		# defined
@@ -16,9 +16,9 @@ includes: print_version.h
 SRCS=		print_version.c
 DPSRCS=		print_version.h
  
-HOST_CPPFLAGS+=	-I${NETBSDSRCDIR}/include/heimdal -DHAVE_CONFIG_H
+HOST_CPPFLAGS+=	-I${HEIMBASE}/include -DHAVE_CONFIG_H
 
-make-print-version.lo: ${NETBSDSRCDIR}/include/heimdal/version.h
+make-print-version.lo: ${HEIMBASE}/include/version.h
 
 make-print-version: make-print-version.lo
 	${HOST_CC} ${HOST_LDFLAGS} -o ${.TARGET} ${.ALLSRC}
