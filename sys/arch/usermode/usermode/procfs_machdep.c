@@ -1,4 +1,4 @@
-/* $NetBSD: procfs_machdep.c,v 1.1 2011/08/24 10:59:37 jmcneill Exp $ */
+/* $NetBSD: procfs_machdep.c,v 1.2 2011/08/28 18:48:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: procfs_machdep.c,v 1.1 2011/08/24 10:59:37 jmcneill Exp $");
+__RCSID("$NetBSD: procfs_machdep.c,v 1.2 2011/08/28 18:48:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/mount.h>
 
 #include <miscfs/procfs/procfs.h>
 
