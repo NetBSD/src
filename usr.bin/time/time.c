@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.19 2008/07/21 14:19:26 lukem Exp $	*/
+/*	$NetBSD: time.c,v 1.20 2011/08/28 08:24:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: time.c,v 1.19 2008/07/21 14:19:26 lukem Exp $");
+__RCSID("$NetBSD: time.c,v 1.20 2011/08/28 08:24:42 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,8 +56,7 @@ __RCSID("$NetBSD: time.c,v 1.19 2008/07/21 14:19:26 lukem Exp $");
 
 #include "ext.h"
 
-int		main(int, char **);
-static void	usage(void);
+__dead static void	usage(void);
 static void	prl(long, const char *);
 static void	prtv(const char *, const char *, const struct timeval *,
     const char *);
@@ -174,7 +173,7 @@ main(int argc, char ** volatile argv)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage: %s [-clp] utility [argument ...]\n",
