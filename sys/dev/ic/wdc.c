@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.263 2011/08/27 17:05:58 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.264 2011/08/28 09:32:21 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.263 2011/08/27 17:05:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.264 2011/08/28 09:32:21 christos Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -299,7 +299,9 @@ wdc_drvprobe(struct ata_channel *chp)
 		return;
 	}
 
+#ifndef WDC_NO_IDS
 	s = splbio();
+#endif
 	/* for ATA/OLD drives, wait for DRDY, 3s timeout */
 	for (i = 0; i < mstohz(3000); i++) {
 		/*
@@ -338,11 +340,12 @@ wdc_drvprobe(struct ata_channel *chp)
 		 * delay instead
 		 */
 		delay(1000000 / hz);
-#else
-#error "NEED WDC_NO_IDS"
-		tsleep(&params, PRIBIO, "atadrdy", 1);
-#endif
 	}
+#else
+		tsleep(&params, PRIBIO, "atadrdy", 1);
+	}
+	s = splbio();
+#endif
 	if ((st0 & WDCS_DRDY) == 0)
 		chp->ch_drive[0].drive_flags &= ~(DRIVE_ATA|DRIVE_OLD);
 	if ((st1 & WDCS_DRDY) == 0)
@@ -1096,7 +1099,7 @@ __wdcwait_reset(struct ata_channel *chp, int drv_mask, int poll)
 	u_int8_t sc0 = 0, sn0 = 0, cl0 = 0, ch0 = 0;
 	u_int8_t sc1 = 0, sn1 = 0, cl1 = 0, ch1 = 0;
 #endif
-	KASSERT(poll == 1);
+	KASSERT(poll == RESET_POLL);
 	if (poll)
 		nloop = WDCNDELAY_RST;
 	else
@@ -1505,16 +1508,13 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		drive_flags = chp->ch_drive[xfer->c_drive].drive_flags;
 	}
 
-#ifdef WDC_NO_IDS
-	wflags = AT_POLL;
-#else
+#ifndef WDC_NO_IDS
 	if ((ata_c->flags & (AT_WAIT | AT_POLL)) == (AT_WAIT | AT_POLL)) {
 		/* both wait and poll, we can tsleep here */
 		wflags = AT_WAIT | AT_POLL;
-	} else {
-		wflags = AT_POLL;
-	}
+	} else
 #endif
+		wflags = AT_POLL;
 
  again:
 	ATADEBUG_PRINT(("__wdccommand_intr %s:%d:%d\n",
