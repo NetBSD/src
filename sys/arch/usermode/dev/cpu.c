@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.20 2011/08/28 00:40:10 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.21 2011/08/28 19:41:34 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_cpu.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.20 2011/08/28 00:40:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2011/08/28 19:41:34 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -269,12 +269,23 @@ cpu_lwp_free2(struct lwp *l)
 static void
 cpu_lwp_trampoline(void (*func)(void *), void *arg)
 {
+	struct pcb *pcb;
+
 #ifdef CPU_DEBUG
 	printf("cpu_lwp_trampoline called with func %p, arg %p\n", (void *) func, arg);
 #endif
 	lwp_startup(curcpu()->ci_stash, curlwp);
 
 	func(arg);
+
+printf("%s: setting ucontext on lwp %p\n", __func__, curlwp);
+pcb = lwp_getpcb(curlwp);
+printf("pcb %p\n", pcb);
+printf("\tpcb->pcb_ucp.uc_stack.ss_sp   = %p\n", pcb->pcb_ucp.uc_stack.ss_sp);
+printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_ucp.uc_stack.ss_size);
+
+	/* switch to userland */
+	thunk_setcontext(&pcb->pcb_ucp);
 
 	panic("%s: shouldn't return", __func__);
 }
