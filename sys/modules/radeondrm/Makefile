@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2011/08/28 15:40:50 jmcneill Exp $
+# $NetBSD: Makefile,v 1.10 2011/08/28 15:56:22 jmcneill Exp $
 
 .include "../Makefile.inc"
 
@@ -9,8 +9,6 @@ KMOD=   radeondrm
 IOCONF=	radeondrm.ioconf
 
 SRCS=	radeon_drv.c
-# XXX this one should be in a sub-driver to share with r128drm
-SRCS+=	ati_pcigart.c
 SRCS+=	r300_cmdbuf.c
 SRCS+=	r600_cp.c
 SRCS+=	r600_blit.c
