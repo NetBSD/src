@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.21 2011/08/28 19:41:34 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.22 2011/08/28 21:31:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_cpu.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2011/08/28 19:41:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22 2011/08/28 21:31:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -116,6 +116,9 @@ cpu_reboot(int howto, char *bootstr)
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN)
 		thunk_exit(0);
 
+	if (howto & RB_DUMP)
+		thunk_abort();
+
 	if (howto & RB_HALT) {
 		printf("\n");
 		printf("The operating system has halted.\n");
@@ -126,10 +129,6 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	printf("rebooting...\n");
-
-#if defined(DIAGNOSTIC) || defined(DEBUG)
-	thunk_abort();
-#endif
 
 	usermode_reboot();
 
