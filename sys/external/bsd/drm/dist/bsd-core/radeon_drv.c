@@ -201,7 +201,7 @@ radeondrm_detach(device_t self, int flags)
 CFATTACH_DECL_NEW(radeondrm, sizeof(struct drm_device),
     radeondrm_probe, radeondrm_attach, radeondrm_detach, NULL);
 
-MODULE(MODULE_CLASS_DRIVER, radeondrm, "drm");
+MODULE(MODULE_CLASS_DRIVER, radeondrm, "drm,ati_pcigart");
 
 #ifdef _MODULE
 #include "ioconf.c"

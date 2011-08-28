@@ -302,3 +302,13 @@ drm_ati_pcigart_init(struct drm_device *dev,
 	gart_info->bus_addr = bus_address;
 	return ret;
 }
+
+MODULE(MODULE_CLASS_MISC, ati_pcigart, "drm");
+
+static int
+ati_pcigart_modcmd(modcmd_t cmd, void *priv)
+{
+	if (cmd == MODULE_CMD_INIT || cmd == MODULE_CMD_FINI)
+		return 0;
+	return ENOTTY;
+}
