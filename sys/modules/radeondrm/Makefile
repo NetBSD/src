@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2010/05/27 07:27:35 mrg Exp $
+# $NetBSD: Makefile,v 1.9 2011/08/28 15:40:50 jmcneill Exp $
 
 .include "../Makefile.inc"
 
@@ -6,6 +6,7 @@
 .PATH:	${S}/external/bsd/drm/dist/shared-core
 
 KMOD=   radeondrm
+IOCONF=	radeondrm.ioconf
 
 SRCS=	radeon_drv.c
 # XXX this one should be in a sub-driver to share with r128drm
