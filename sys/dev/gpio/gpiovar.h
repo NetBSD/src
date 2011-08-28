@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.11 2011/08/12 08:00:52 mbalmer Exp $ */
+/* $NetBSD: gpiovar.h,v 1.12 2011/08/28 07:48:50 mbalmer Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.3 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -35,18 +35,22 @@ typedef struct gpio_chipset_tag {
 
 /* GPIO pin description */
 typedef struct gpio_pin {
-	int	pin_num;		/* number */
-	int	pin_caps;		/* capabilities */
-	int	pin_flags;		/* current configuration */
-	int	pin_state;		/* current state */
-	int	pin_mapped;		/* is mapped */
+	int			pin_num;	/* number */
+	int			pin_caps;	/* capabilities */
+	int			pin_flags;	/* current configuration */
+	int			pin_state;	/* current state */
+	int			pin_mapped;	/* is mapped */
+	callout_t		pin_pulse;	/* for pulsing */
+	int			pin_ticks_on;	/* "on" period */
+	int			pin_ticks_off;	/* "off" period */
+	gpio_chipset_tag_t	pin_gc;		/* reference the controller */
 } gpio_pin_t;
 
 /* Attach GPIO framework to the controller */
 struct gpiobus_attach_args {
-	gpio_chipset_tag_t	gba_gc;		/* underlying controller */
+	gpio_chipset_tag_t	 gba_gc;	/* underlying controller */
 	gpio_pin_t		*gba_pins;	/* pins array */
-	int			gba_npins;	/* total number of pins */
+	int			 gba_npins;	/* total number of pins */
 };
 
 int gpiobus_print(void *, const char *);
@@ -67,8 +71,9 @@ int gpiobus_print(void *, const char *);
 struct gpio_attach_args {
 	void		*ga_gpio;
 	int		 ga_offset;
-	u_int32_t	 ga_mask;
+	uint32_t	 ga_mask;
 	char		*ga_dvname;
+	int		 ga_nolock;
 };
 
 /* GPIO pin map */
@@ -88,13 +93,16 @@ struct gpio_name {
 	LIST_ENTRY(gpio_name)	gp_next;
 };
 
-int	gpio_pin_can_map(void *, int, u_int32_t);
-int	gpio_pin_map(void *, int, u_int32_t, struct gpio_pinmap *);
+int	gpio_pin_can_map(void *, int, uint32_t);
+int	gpio_pin_map(void *, int, uint32_t, struct gpio_pinmap *);
 void	gpio_pin_unmap(void *, struct gpio_pinmap *);
 int	gpio_pin_read(void *, struct gpio_pinmap *, int);
 void	gpio_pin_write(void *, struct gpio_pinmap *, int, int);
 void	gpio_pin_ctl(void *, struct gpio_pinmap *, int, int);
 int	gpio_pin_caps(void *, struct gpio_pinmap *, int);
-int	gpio_npins(u_int32_t);
+int	gpio_npins(uint32_t);
+
+int	gpio_lock(void *);
+void	gpio_unlock(void *);
 
 #endif	/* !_DEV_GPIO_GPIOVAR_H_ */

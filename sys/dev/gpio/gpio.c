@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.35 2011/08/12 08:00:52 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.36 2011/08/28 07:48:50 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,21 +19,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.35 2011/08/12 08:00:52 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.36 2011/08/28 07:48:50 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
  */
 
 #include <sys/param.h>
+#include <sys/callout.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/gpio.h>
+#include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/kmem.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/queue.h>
 #include <sys/kauth.h>
 #ifdef _MODULE
@@ -58,7 +62,9 @@ struct gpio_softc {
 	gpio_pin_t		*sc_pins;	/* pins array */
 	int			 sc_npins;	/* number of pins */
 
-	int			 sc_opened;
+	kmutex_t		 sc_mtx;
+	kcondvar_t		 sc_ioctl;	/* ioctl in progress */
+	int			 sc_ioctl_busy;	/* ioctl is busy */
 	LIST_HEAD(, gpio_dev)	 sc_devs;	/* devices */
 	LIST_HEAD(, gpio_name)	 sc_names;	/* named pins */
 };
@@ -73,6 +79,9 @@ static int	gpio_detach(device_t, int);
 static int	gpio_search(device_t, cfdata_t, const int *, void *);
 static int	gpio_print(void *, const char *);
 static int	gpio_pinbyname(struct gpio_softc *, char *);
+static void	gpio_pulse(void *);
+static int	gpio_ioctl(struct gpio_softc *, u_long, void *, int,
+    struct lwp *);
 
 /* Old API */
 static int	gpio_ioctl_oapi(struct gpio_softc *, u_long, void *, int,
@@ -85,10 +94,11 @@ CFATTACH_DECL3_NEW(gpio, sizeof(struct gpio_softc),
 dev_type_open(gpioopen);
 dev_type_close(gpioclose);
 dev_type_ioctl(gpioioctl);
+dev_type_ioctl(gpioioctl_locked);
 
 const struct cdevsw gpio_cdevsw = {
 	gpioopen, gpioclose, noread, nowrite, gpioioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER | D_MPSAFE
 };
 
 extern struct cfdriver gpio_cd;
@@ -144,7 +154,7 @@ gpio_attach(device_t parent, device_t self, void *aux)
 {
 	struct gpio_softc *sc = device_private(self);
 	struct gpiobus_attach_args *gba = aux;
-
+	int pin;
 	sc->sc_dev = self;
 	sc->sc_gc = gba->gba_gc;
 	sc->sc_pins = gba->gba_pins;
@@ -152,8 +162,15 @@ gpio_attach(device_t parent, device_t self, void *aux)
 
 	printf(": %d pins\n", sc->sc_npins);
 
+	for (pin = 0; pin < sc->sc_npins; pin++) {
+		callout_init(&sc->sc_pins[pin].pin_pulse, CALLOUT_MPSAFE);
+		callout_setfunc(&sc->sc_pins[pin].pin_pulse, gpio_pulse,
+		     &sc->sc_pins[pin]);
+	}
 	if (!pmf_device_register(self, NULL, gpio_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_VM);
+	cv_init(&sc->sc_ioctl, "gpioctl");
 
 	/*
 	 * Attach all devices that can be connected to the GPIO pins
@@ -165,11 +182,23 @@ gpio_attach(device_t parent, device_t self, void *aux)
 static int
 gpio_detach(device_t self, int flags)
 {
-	int rc;
+	struct gpio_softc *sc;
+	int pin, rc;
+
+	sc = device_private(self);
+
+	for (pin = 0; pin < sc->sc_npins; pin++) {
+		if (sc->sc_pins[pin].pin_state & GPIO_PIN_PULSE) {
+			callout_halt(&sc->sc_pins[pin].pin_pulse, NULL);
+			callout_destroy(&sc->sc_pins[pin].pin_pulse);
+			sc->sc_pins[pin].pin_state &= ~GPIO_PIN_PULSE;
+		}
+	}
 
 	if ((rc = config_detach_children(self, flags)) != 0)
 		return rc;
-
+	mutex_destroy(&sc->sc_mtx);
+	cv_destroy(&sc->sc_ioctl);
 #if 0
 	int maj, mn;
 
@@ -228,7 +257,7 @@ gpiobus_print(void *aux, const char *pnp)
 
 /* return 1 if all pins can be mapped, 0 if not */
 int
-gpio_pin_can_map(void *gpio, int offset, u_int32_t mask)
+gpio_pin_can_map(void *gpio, int offset, uint32_t mask)
 {
 	struct gpio_softc *sc = gpio;
 	int npins, pin, i;
@@ -250,7 +279,7 @@ gpio_pin_can_map(void *gpio, int offset, u_int32_t mask)
 }
 
 int
-gpio_pin_map(void *gpio, int offset, u_int32_t mask, struct gpio_pinmap *map)
+gpio_pin_map(void *gpio, int offset, uint32_t mask, struct gpio_pinmap *map)
 {
 	struct gpio_softc *sc = gpio;
 	int npins, pin, i;
@@ -320,7 +349,7 @@ gpio_pin_caps(void *gpio, struct gpio_pinmap *map, int pin)
 }
 
 int
-gpio_npins(u_int32_t mask)
+gpio_npins(uint32_t mask)
 {
 	int npins, i;
 
@@ -332,30 +361,47 @@ gpio_npins(u_int32_t mask)
 }
 
 int
+gpio_lock(void *data)
+{
+	struct gpio_softc *sc;
+	int error;
+
+	error = 0;
+	sc = (struct gpio_softc *)data;
+	mutex_enter(&sc->sc_mtx);
+	while (sc->sc_ioctl_busy) {
+		error = cv_wait_sig(&sc->sc_ioctl, &sc->sc_mtx);
+		if (error)
+			break;
+	}
+	if (!error)
+		sc->sc_ioctl_busy = 1;
+	mutex_exit(&sc->sc_mtx);
+	return error;
+}
+
+void
+gpio_unlock(void *data)
+{
+	struct gpio_softc *sc;
+
+	sc = (struct gpio_softc *)data;
+	mutex_enter(&sc->sc_mtx);
+	sc->sc_ioctl_busy = 0;
+	cv_signal(&sc->sc_ioctl);
+	mutex_exit(&sc->sc_mtx);
+}
+
+int
 gpioopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct gpio_softc *sc;
-	int ret;
 
 	sc = device_lookup_private(&gpio_cd, minor(dev));
 	if (sc == NULL)
 		return ENXIO;
-	DPRINTF(("%s: opening\n", device_xname(sc->sc_dev)));
-	if (sc->sc_opened) {
-		DPRINTF(("%s: already opened\n", device_xname(sc->sc_dev)));
-		return EBUSY;
-	}
 
-	if ((ret = gpiobus_open(sc->sc_gc, sc->sc_dev))) {
-		DPRINTF(("%s: gpiobus_open returned %d\n",
-		    device_xname(sc->sc_dev),
-		    ret));
-		return ret;
-	}
-
-	sc->sc_opened = 1;
-
-	return 0;
+	return gpiobus_open(sc->sc_gc, sc->sc_dev);
 }
 
 int
@@ -364,10 +410,7 @@ gpioclose(dev_t dev, int flag, int mode, struct lwp *l)
 	struct gpio_softc *sc;
 
 	sc = device_lookup_private(&gpio_cd, minor(dev));
-	DPRINTF(("%s: closing\n", device_xname(sc->sc_dev)));
-	(void)gpiobus_close(sc->sc_gc, sc->sc_dev);
-	sc->sc_opened = 0;
-
+	gpiobus_close(sc->sc_gc, sc->sc_dev);
 	return 0;
 }
 
@@ -382,25 +425,63 @@ gpio_pinbyname(struct gpio_softc *sc, char *gp_name)
         return -1;
 }
 
+static void
+gpio_pulse(void *arg)
+{
+	struct gpio_pin *pin;
+
+	pin = (struct gpio_pin *)arg;
+	if ((pin->pin_state & GPIO_PIN_PULSE) == 0)
+		return;
+
+	if (pin->pin_state & GPIO_PIN_HIGH) {
+		gpiobus_pin_write(pin->pin_gc, pin->pin_num, GPIO_PIN_LOW);
+		pin->pin_state &= ~GPIO_PIN_HIGH;
+		callout_schedule(&pin->pin_pulse, pin->pin_ticks_off);
+	} else {
+		gpiobus_pin_write(pin->pin_gc, pin->pin_num, GPIO_PIN_HIGH);
+		pin->pin_state |= GPIO_PIN_HIGH;
+		callout_schedule(&pin->pin_pulse, pin->pin_ticks_on);
+	}
+}
+
 int
 gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
+	int error;
 	struct gpio_softc *sc;
+
+	sc = device_lookup_private(&gpio_cd, minor(dev));
+
+	error = gpio_lock(sc);
+	if (error)
+		return error;
+
+	error = gpio_ioctl(sc, cmd, data, flag, l);
+	gpio_unlock(sc);
+	return error;
+}
+
+static int
+gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
+    struct lwp *l)
+{
 	gpio_chipset_tag_t gc;
 	struct gpio_info *info;
 	struct gpio_attach *attach;
 	struct gpio_attach_args ga;
 	struct gpio_dev *gdev;
 	struct gpio_req *req;
+	struct gpio_pulse *pulse;
 	struct gpio_name *nm;
 	struct gpio_set *set;
+	struct gpio_pin *gpin;
 	device_t dv;
 	cfdata_t cf;
 	kauth_cred_t cred;
 	int locs[GPIOCF_NLOCS];
 	int pin, value, flags, npins;
 
-	sc = device_lookup_private(&gpio_cd, minor(dev));
 	gc = sc->sc_gc;
 
 	if (cmd != GPIOINFO && !device_is_active(sc->sc_dev)) {
@@ -427,11 +508,9 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case GPIOREAD:
 		req = (struct gpio_req *)data;
 
-		if (req->gp_name[0] != '\0') {
+		if (req->gp_name[0] != '\0')
 			pin = gpio_pinbyname(sc, req->gp_name);
-			if (pin == -1)
-				return EINVAL;
-		} else
+		else
 			pin = req->gp_pin;
 
 		if (pin < 0 || pin >= sc->sc_npins)
@@ -451,11 +530,9 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		req = (struct gpio_req *)data;
 
-		if (req->gp_name[0] != '\0') {
+		if (req->gp_name[0] != '\0')
 			pin = gpio_pinbyname(sc, req->gp_name);
-			if (pin == -1)
-				return EINVAL;
-		} else
+		else
 			pin = req->gp_pin;
 
 		if (pin < 0 || pin >= sc->sc_npins)
@@ -473,11 +550,58 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (value != GPIO_PIN_LOW && value != GPIO_PIN_HIGH)
 			return EINVAL;
 
+		if (sc->sc_pins[pin].pin_state & GPIO_PIN_PULSE) {
+			callout_halt(&sc->sc_pins[pin].pin_pulse, NULL);
+			sc->sc_pins[pin].pin_state &= ~GPIO_PIN_PULSE;
+		}
 		gpiobus_pin_write(gc, pin, value);
 		/* return old value */
 		req->gp_value = sc->sc_pins[pin].pin_state;
 		/* update current value */
 		sc->sc_pins[pin].pin_state = value;
+		break;
+	case GPIOPULSE:
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+
+		pulse = (struct gpio_pulse *)data;
+		if (pulse->gp_name[0] != '\0')
+			pin = gpio_pinbyname(sc, pulse->gp_name);
+		else
+			pin = pulse->gp_pin;
+
+		if (pin < 0 || pin >= sc->sc_npins)
+			return EINVAL;
+
+		gpin = &sc->sc_pins[pin];
+		if (gpin->pin_mapped)
+			return EBUSY;
+
+		if (!(gpin->pin_flags & GPIO_PIN_SET) &&
+		    kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
+		    NULL, NULL, NULL, NULL))
+			return EPERM;
+
+		if (gpin->pin_flags & GPIO_PIN_PULSATE) {
+			gpiobus_pin_write(gc, pin, GPIO_PIN_HIGH);
+			gpin->pin_state = GPIO_PIN_PULSE;
+			return 0;
+		}
+
+		if (gpin->pin_state & GPIO_PIN_PULSE)
+			callout_halt(&gpin->pin_pulse, NULL);
+
+		gpin->pin_gc = gc;
+
+		gpin->pin_ticks_on = tvtohz(&pulse->gp_pulse_on);
+		gpin->pin_ticks_off = tvtohz(&pulse->gp_pulse_off);
+		if (gpin->pin_ticks_on == 0 || gpin->pin_ticks_off == 0) {
+			gpin->pin_ticks_on = hz / 2;
+			gpin->pin_ticks_off = hz / 2;
+		}
+		gpiobus_pin_write(gc, pin, GPIO_PIN_HIGH);
+		gpin->pin_state = GPIO_PIN_HIGH | GPIO_PIN_PULSE;
+		callout_schedule(&gpin->pin_pulse, gpin->pin_ticks_on);
 		break;
 	case GPIOTOGGLE:
 		if ((flag & FWRITE) == 0)
@@ -485,11 +609,9 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		req = (struct gpio_req *)data;
 
-		if (req->gp_name[0] != '\0') {
+		if (req->gp_name[0] != '\0')
 			pin = gpio_pinbyname(sc, req->gp_name);
-			if (pin == -1)
-				return EINVAL;
-		} else
+		else
 			pin = req->gp_pin;
 
 		if (pin < 0 || pin >= sc->sc_npins)
@@ -526,9 +648,10 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		ga.ga_dvname = attach->ga_dvname;
 		ga.ga_offset = attach->ga_offset;
 		ga.ga_mask = attach->ga_mask;
-		DPRINTF(("%s: attach %s with offset %d and mask 0x%02x\n",
-		    device_xname(sc->sc_dev), ga.ga_dvname, ga.ga_offset,
-		    ga.ga_mask));
+		ga.ga_nolock = 1;
+		DPRINTF(("%s: attach %s with offset %d and mask "
+		    "0x%02x\n", device_xname(sc->sc_dev), ga.ga_dvname,
+		    ga.ga_offset, ga.ga_mask));
 
 		locs[GPIOCF_OFFSET] = ga.ga_offset;
 		locs[GPIOCF_MASK] = ga.ga_mask;
@@ -546,7 +669,7 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				return EINVAL;
 		} else
 			return EINVAL;
-		break;
+		return 0;
 	case GPIODETACH:
 		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
 		    NULL, NULL, NULL, NULL))
@@ -566,7 +689,6 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			}
 		}
 		return EINVAL;
-		break;
 	case GPIOSET:
 		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
 		    NULL, NULL, NULL, NULL))
@@ -574,12 +696,11 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		set = (struct gpio_set *)data;
 
-		if (set->gp_name[0] != '\0') {
+		if (set->gp_name[0] != '\0')
 			pin = gpio_pinbyname(sc, set->gp_name);
-			if (pin == -1)
-				return EINVAL;
-		} else
+		else
 			pin = set->gp_pin;
+
 		if (pin < 0 || pin >= sc->sc_npins)
 			return EINVAL;
 		flags = set->gp_flags;
@@ -629,11 +750,9 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return EPERM;
 
 		set = (struct gpio_set *)data;
-		if (set->gp_name[0] != '\0') {
+		if (set->gp_name[0] != '\0')
 			pin = gpio_pinbyname(sc, set->gp_name);
-			if (pin == -1)
-				return EINVAL;
-		} else
+		else
 			pin = set->gp_pin;
 
 		if (pin < 0 || pin >= sc->sc_npins)
