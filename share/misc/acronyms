@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.206 2011/03/26 12:39:16 dholland Exp $
+$NetBSD: acronyms,v 1.207 2011/08/28 08:41:01 jnemeth Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -454,6 +454,7 @@ TIAVP	this is a volunteer project
 TIC	tonque in cheek
 TIL	today I learned
 TINC	there is no cabal
+TINLA	this is not legal advice
 TINWIS	this is not what I said
 TJM	that's just me
 TLA	three letter acronym
