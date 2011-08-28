@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.7 2011/08/28 05:32:41 dyoung Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.8 2011/08/28 06:08:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.7 2011/08/28 05:32:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.8 2011/08/28 06:08:15 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,12 +67,12 @@ void
 pci_addr_fixup(pci_chipset_tag_t pc, int maxbus)
 {
 	extern paddr_t avail_end;
-	const char *verbose_header = 
+	const char *verbose_header =
 		"[%s]-----------------------\n"
 		"  device vendor product\n"
 		"  register space address    size\n"
 		"--------------------------------------------\n";
-	const char *verbose_footer = 
+	const char *verbose_footer =
 		"--------------------------[%3d devices bogus]\n";
 	const struct {
 		bus_addr_t start;
@@ -88,7 +88,7 @@ pci_addr_fixup(pci_chipset_tag_t pc, int maxbus)
 	int error;
 
 	pciaddr.extent_mem = extent_create("PCI I/O memory space",
-					   PCIADDR_MEM_START, 
+					   PCIADDR_MEM_START,
 					   PCIADDR_MEM_END,
 					   M_DEVBUF, 0, 0, EX_NOWAIT);
 	KASSERT(pciaddr.extent_mem);
@@ -98,28 +98,28 @@ pci_addr_fixup(pci_chipset_tag_t pc, int maxbus)
 					    M_DEVBUF, 0, 0, EX_NOWAIT);
 	KASSERT(pciaddr.extent_port);
 
-	/* 
+	/*
 	 * 1. check & reserve system BIOS setting.
 	 */
 	aprint_debug(verbose_header, "System BIOS Setting");
 	pci_device_foreach(pc, maxbus, pciaddr_resource_reserve, NULL);
 	aprint_debug(verbose_footer, pciaddr.nbogus);
 
-	/* 
+	/*
 	 * 2. reserve non-PCI area.
 	 */
 	for (srp = system_reserve; srp->size; srp++) {
 		error = extent_alloc_region(pciaddr.extent_mem, srp->start,
-					    srp->size, 
-					    EX_NOWAIT| EX_MALLOCOK);	
+					    srp->size,
+					    EX_NOWAIT| EX_MALLOCOK);
 		if (error != 0) {
 			aprint_error("WARNING: can't reserve area for %s.\n",
 			       srp->name);
 		}
 	}
 
-	/* 
-	 * 3. determine allocation space 
+	/*
+	 * 3. determine allocation space
 	 */
 	start = x86_round_page(avail_end + 1);
 	if (start < PCIADDR_ISAMEM_RESERVE)
@@ -127,14 +127,14 @@ pci_addr_fixup(pci_chipset_tag_t pc, int maxbus)
 	pciaddr.mem_alloc_start = (start + 0x100000 + 1) & ~(0x100000 - 1);
 	pciaddr.port_alloc_start = PCIADDR_ISAPORT_RESERVE;
 	aprint_debug(" Physical memory end: 0x%08x\n PCI memory mapped I/O "
-			"space start: 0x%08x\n", (unsigned)avail_end, 
+			"space start: 0x%08x\n", (unsigned)avail_end,
 			(unsigned)pciaddr.mem_alloc_start);
 
 	if (pciaddr.nbogus == 0)
 		return; /* no need to fixup */
 
-	/* 
-	 * 4. do fixup 
+	/*
+	 * 4. do fixup
 	 */
 	aprint_debug(verbose_header, "PCIBIOS fixup stage");
 	pciaddr.nbogus = 0;
@@ -147,7 +147,7 @@ static void
 pciaddr_resource_reserve(pci_chipset_tag_t pc, pcitag_t tag,
     void *context)
 {
-		pciaddr_print_devid(pc, tag);
+	pciaddr_print_devid(pc, tag);
 	pciaddr_resource_manage(pc, tag,
 				pciaddr_do_resource_reserve,
 				&pciaddr);
@@ -157,7 +157,7 @@ static void
 pciaddr_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag,
     void *context)
 {
-		pciaddr_print_devid(pc, tag);
+	pciaddr_print_devid(pc, tag);
 	pciaddr_resource_manage(pc, tag,
 				pciaddr_do_resource_allocate,
 				&pciaddr);
@@ -192,7 +192,7 @@ pciaddr_resource_manage(pci_chipset_tag_t pc, pcitag_t tag,
 		break;
 	}
 	error = useport = usemem = 0;
-    
+
 	for (mapreg = reg_start; mapreg < reg_end; mapreg += width) {
 		/* inquire PCI device bus space requirement */
 		val = pci_conf_read(pc, tag, mapreg);
@@ -200,20 +200,20 @@ pciaddr_resource_manage(pci_chipset_tag_t pc, pcitag_t tag,
 
 		mask = pci_conf_read(pc, tag, mapreg);
 		pci_conf_write(pc, tag, mapreg, val);
-	
+
 		type = PCI_MAPREG_TYPE(val);
 		width = 4;
 		if (type == PCI_MAPREG_TYPE_MEM) {
-			if (PCI_MAPREG_MEM_TYPE(val) == 
+			if (PCI_MAPREG_MEM_TYPE(val) ==
 			    PCI_MAPREG_MEM_TYPE_64BIT) {
 				/* XXX We could examine the upper 32 bits
-				 * XXX of the BAR here, but we are totally 
-				 * XXX unprepared to handle a non-zero value, 
-				 * XXX either here or anywhere else in 
-				 * XXX i386-land. 
+				 * XXX of the BAR here, but we are totally
+				 * XXX unprepared to handle a non-zero value,
+				 * XXX either here or anywhere else in
+				 * XXX i386-land.
 				 * XXX So just arrange to not look at the
 				 * XXX upper 32 bits, lest we misinterpret
-				 * XXX it as a 32-bit BAR set to zero. 
+				 * XXX it as a 32-bit BAR set to zero.
 				 */
 			    width = 8;
 			}
@@ -222,7 +222,7 @@ pciaddr_resource_manage(pci_chipset_tag_t pc, pcitag_t tag,
 			size = PCI_MAPREG_IO_SIZE(mask);
 		}
 		addr = pciaddr_ioaddr(val);
-	
+
 		if (size == 0) /* unused register */
 			continue;
 
@@ -234,13 +234,13 @@ pciaddr_resource_manage(pci_chipset_tag_t pc, pcitag_t tag,
 		/* reservation/allocation phase */
 		error += (*func) (pc, tag, mapreg, ctx, type, &addr, size);
 
-		aprint_debug("\n\t%02xh %s 0x%08x 0x%08x", 
-				mapreg, type ? "port" : "mem ", 
+		aprint_debug("\n\t%02xh %s 0x%08x 0x%08x",
+				mapreg, type ? "port" : "mem ",
 				(unsigned int)addr, (unsigned int)size);
 	}
-    
+
 	/* enable/disable PCI device */
-	val = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);	
+	val = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	if (error == 0)
 		val |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
 			PCI_COMMAND_MASTER_ENABLE);
@@ -248,7 +248,7 @@ pciaddr_resource_manage(pci_chipset_tag_t pc, pcitag_t tag,
 		val &= ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
 			 PCI_COMMAND_MASTER_ENABLE);
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, val);
-    
+
 	if (error != 0)
 		pciaddr.nbogus++;
 
@@ -263,7 +263,7 @@ pciaddr_do_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag,
 	bus_addr_t start;
 	int error;
  	struct extent *ex;
- 
+
 	if (*addr != 0) /* no need to allocate */
 		return 0;
 
@@ -271,9 +271,9 @@ pciaddr_do_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag,
  	      pciaddrmap->extent_mem : pciaddrmap->extent_port);
 
 	/* XXX Don't allocate if device is AGP device to avoid conflict. */
-	if (device_is_agp(pc, tag)) 
+	if (device_is_agp(pc, tag))
 		return 0;
-	
+
 	start = (type == PCI_MAPREG_TYPE_MEM ?
 		 pciaddrmap->mem_alloc_start : pciaddrmap->port_alloc_start);
 
@@ -294,7 +294,7 @@ pciaddr_do_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag,
 	pci_conf_write(pc, tag, mapreg, *addr);
 	/* check */
 	aprint_debug("pci_addr_fixup: ");
-		pciaddr_print_devid(pc, tag);
+	pciaddr_print_devid(pc, tag);
 	if (pciaddr_ioaddr(pci_conf_read(pc, tag, mapreg)) != *addr) {
 		pci_conf_write(pc, tag, mapreg, 0); /* clear */
 		aprint_error("fixup failed. (new address=%#x)\n", (unsigned)*addr);
@@ -318,7 +318,7 @@ pciaddr_do_resource_reserve(pci_chipset_tag_t pc, pcitag_t tag,
 
 	ex = (type == PCI_MAPREG_TYPE_MEM ?
 	      pciaddrmap->extent_mem : pciaddrmap->extent_port);
-	
+
 	error = extent_alloc_region(ex, *addr, size, EX_NOWAIT| EX_MALLOCOK);
 	if (error) {
 		aprint_debug("Resource conflict.\n");
@@ -340,9 +340,9 @@ pciaddr_ioaddr(uint32_t val)
 void
 pciaddr_print_devid(pci_chipset_tag_t pc, pcitag_t tag)
 {
-	int bus, device, function;	
+	int bus, device, function;
 	pcireg_t id;
-	
+
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
 	aprint_debug("%03d:%02d:%d 0x%04x 0x%04x ", bus, device, function,
@@ -365,7 +365,7 @@ device_is_agp(pci_chipset_tag_t pc, pcitag_t tag)
 			    off != 0;
 			    off = PCI_CAPLIST_NEXT(rval) ) {
 				rval = pci_conf_read(pc, tag, off);
-				if (PCI_CAPLIST_CAP(rval) == PCI_CAP_AGP) 
+				if (PCI_CAPLIST_CAP(rval) == PCI_CAP_AGP)
 					return 1;
 			}
 		}
