@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.34 2011/08/28 15:56:21 jmcneill Exp $
+# $NetBSD: md.i386,v 1.35 2011/08/28 16:19:08 jmcneill Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -85,14 +85,16 @@
 ./@MODULEDIR@/itesio/itesio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/lg3303				base-kernel-modules	kmod
 ./@MODULEDIR@/lg3303/lg3303.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/mach64drm				base-kernel-modules	kmod
+./@MODULEDIR@/mach64drm/mach64drm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/mgadrm				base-kernel-modules	kmod
+./@MODULEDIR@/mgadrm/mgadrm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mt2131				base-kernel-modules	kmod
 ./@MODULEDIR@/mt2131/mt2131.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/nsclpcsio				base-kernel-modules	kmod
 ./@MODULEDIR@/nsclpcsio/nsclpcsio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/nxt2k				base-kernel-modules	kmod
 ./@MODULEDIR@/nxt2k/nxt2k.kmod			base-kernel-modules	kmod
-./@MODULEDIR@/radeondrm				base-kernel-modules	kmod
-./@MODULEDIR@/radeondrm/radeondrm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/odcm				base-kernel-modules	kmod
 ./@MODULEDIR@/odcm/odcm.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/pad				base-kernel-modules	kmod
@@ -103,6 +105,16 @@
 ./@MODULEDIR@/powernow/powernow.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/pwdog				base-kernel-modules	kmod
 ./@MODULEDIR@/pwdog/pwdog.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/r128drm				base-kernel-modules	kmod
+./@MODULEDIR@/r128drm/r128drm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/radeondrm				base-kernel-modules	kmod
+./@MODULEDIR@/radeondrm/radeondrm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/savagedrm				base-kernel-modules	kmod
+./@MODULEDIR@/savagedrm/savagedrm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/sisdrm				base-kernel-modules	kmod
+./@MODULEDIR@/sisdrm/sisdrm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/tdfxdrm				base-kernel-modules	kmod
+./@MODULEDIR@/tdfxdrm/tdfxdrm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/thinkpad				base-kernel-modules	kmod
 ./@MODULEDIR@/thinkpad/thinkpad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/tprof_amdpmi			base-kernel-modules	kmod
