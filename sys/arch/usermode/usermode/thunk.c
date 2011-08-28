@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.21 2011/08/28 19:37:16 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.22 2011/08/28 21:19:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.21 2011/08/28 19:37:16 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.22 2011/08/28 21:19:49 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/ansi.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: thunk.c,v 1.21 2011/08/28 19:37:16 reinoud Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <termios.h>
 #include <time.h>
 #include <ucontext.h>
 #include <unistd.h>
@@ -72,6 +73,36 @@ thunk_from_itimerval(const struct itimerval *it, struct thunk_itimerval *tit)
 {
 	thunk_from_timeval(&it->it_interval, &tit->it_interval);
 	thunk_from_timeval(&it->it_value, &tit->it_value);
+}
+
+static void
+thunk_to_termios(const struct thunk_termios *tt, struct termios *t)
+{
+	int i;
+
+	t->c_iflag = tt->c_iflag;
+	t->c_oflag = tt->c_oflag;
+	t->c_cflag = tt->c_cflag;
+	t->c_lflag = tt->c_lflag;
+	for (i = 0; i < __arraycount(t->c_cc); i++)
+		t->c_cc[i] = tt->c_cc[i];
+	t->c_ispeed = tt->c_ispeed;
+	t->c_ospeed= tt->c_ospeed;
+}
+
+static void
+thunk_from_termios(const struct termios *t, struct thunk_termios *tt)
+{
+	int i;
+
+	tt->c_iflag = t->c_iflag;
+	tt->c_oflag = t->c_oflag;
+	tt->c_cflag = t->c_cflag;
+	tt->c_lflag = t->c_lflag;
+	for (i = 0; i < __arraycount(tt->c_cc); i++)
+		tt->c_cc[i] = t->c_cc[i];
+	tt->c_ispeed = t->c_ispeed;
+	tt->c_ospeed= t->c_ospeed;
 }
 
 int
@@ -183,6 +214,28 @@ int
 thunk_swapcontext(ucontext_t *oucp, ucontext_t *ucp)
 {
 	return swapcontext(oucp, ucp);
+}
+
+int
+thunk_tcgetattr(int fd, struct thunk_termios *tt)
+{
+	struct termios t;
+	int error;
+
+	error = tcgetattr(fd, &t);
+	if (error)
+		return error;
+	thunk_from_termios(&t, tt);
+	return 0;
+}
+
+int
+thunk_tcsetattr(int fd, int action, const struct thunk_termios *tt)
+{
+	struct termios t;
+
+	thunk_to_termios(tt, &t);
+	return tcsetattr(fd, action, &t);
 }
 
 int
