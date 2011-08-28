@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.46 2011/05/30 14:34:58 joerg Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.47 2011/08/28 22:36:17 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.46 2011/05/30 14:34:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.47 2011/08/28 22:36:17 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -933,7 +933,7 @@ xennetback_ifstart(struct ifnet *ifp)
 	 * schedule batch of packets for the domain. To achieve this, we
 	 * schedule a soft interrupt, and just return. This way, the network
 	 * stack will enqueue all pending mbufs in the interface's send queue
-	 * before it is processed by the soft inetrrupt handler().
+	 * before it is processed by the soft interrupt handler().
 	 */
 	softint_schedule(xneti->xni_softintr);
 }
