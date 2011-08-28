@@ -1,4 +1,4 @@
-.\" $NetBSD: strpct.3,v 1.1 2011/08/28 07:45:14 christos Exp $
+.\" $NetBSD: strpct.3,v 1.2 2011/08/28 17:21:28 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,10 +49,10 @@ into a percentage representation with given number of digits of
 .Fa precision .
 .Sh RETURN VALUES
 .Fn strpct
-always returns a pointer to a NUL terminated formatted string which
+always returns a pointer to a NUL-terminated formatted string which
 is placed in
 .Fa buf
-and it is up to
+and is up to
 .Fa buflen
 characters.
 If there was an overflow, the formatted string will reflect that precision
@@ -68,10 +68,10 @@ strpct(buf, buflen, 1, 2, 0);
 .Fn strpct
 was originally implemented in
 .Xr csh 1 .
-It printed into a static buffer, was not locale aware, handled 
+It printed into a static buffer, was not locale aware, handled
 .Ft unsigned long
 numbers, and printed a
-.Dq % 
+.Dq %
 at the end of the number.
 Other programs such as
 .Xr df 1
@@ -80,4 +80,4 @@ and
 started using it.
 .Fn strpct
 appeared in
-.Nx 6 .
+.Nx 6.0 .
