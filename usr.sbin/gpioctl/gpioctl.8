@@ -1,6 +1,6 @@
-.\" $NetBSD: gpioctl.8,v 1.8 2011/08/12 08:02:33 mbalmer Exp $
+.\" $NetBSD: gpioctl.8,v 1.9 2011/08/28 07:48:50 mbalmer Exp $
 .\"
-.\" Copyright (c) 2009, 2010 Marc Balmer <marc@msys.ch>
+.\" Copyright (c) 2009, 2010, 2011 Marc Balmer <marc@msys.ch>
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd September 25, 2009
+.Dd August 21, 2011
 .Dt GPIOCTL 8
 .Os
 .Sh NAME
@@ -44,6 +44,12 @@ detach
 .Ar device
 .Ar pin
 .Op Ar on | off | toggle
+.Nm gpioctl
+.Op Fl q
+.Ar device
+.Ar pin
+pulse
+.Op Ar frequency Op Ar duty cycle
 .Nm gpioctl
 .Op Fl q
 .Ar device
@@ -92,7 +98,7 @@ To write to a pin, a value must be specified after the
 .Ar pin
 number.
 Values can be either 0 or 1.
-A value of 2 has a special meaning: it
+A value of 2
 .Dq toggles
 the pin, i.e. changes its state to the opposite.
 Instead of the numerical values, the word
@@ -101,6 +107,19 @@ Instead of the numerical values, the word
 or
 .Ar toggle
 can be used.
+.Pp
+To
+.Dq pulse
+a pin, use the pulse command line option with an optional frequency value
+in hertz and an optional duty cycle in percent.
+If no frequency is specified, 1 Hz is assumed.
+If no duty cycle is specified, 50% are assumed.
+If the underlying hardware is not capable of pulsing in hardware,
+pulsing is done in software using the
+.Xr callout 9
+facility.
+The frequency and duty cycle arguments are ignored for pins that are able to
+pulse in hardware.
 .Pp
 Only pins that have been configured at securelevel 0, typically during system
 startup, are accessible once the securelevel has been raised.
@@ -207,5 +226,5 @@ The
 .Nm
 program was written by
 .An Alexander Yurchenko Aq grange@openbsd.org .
-Device attachment was added by
+Device attachment and pulsing was added by
 .An Marc Balmer Aq marc@msys.ch .
