@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.10 2011/08/26 15:00:07 mbalmer Exp $ */
+/* $NetBSD: gpiosim.c,v 1.11 2011/08/28 11:36:17 jmcneill Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -245,7 +245,7 @@ static struct cfdata gpiosim_cfdata[] = {
 		.cf_flags = 0,
 		.cf_pspec = NULL,
 	},
-	{ NULL }
+	{ NULL, NULL, 0, FSTATE_NOTFOUND, NULL, 0, NULL }
 };
 
 static int
