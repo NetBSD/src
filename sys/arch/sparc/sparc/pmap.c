@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.344 2011/08/24 02:51:13 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.345 2011/08/28 10:26:15 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.344 2011/08/24 02:51:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.345 2011/08/28 10:26:15 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -614,12 +614,12 @@ sp_tlb_flush(int va, int ctx, int lvl)
 	__asm("lda	[%%o4]%0, %%o5" :: "n"(ASI_SRMMU));
 
 	/* Set new context and flush type bits */
-	__asm("andn	%o0, 0xfff, %o0");
-	__asm("sta	%%o1, [%%o4]%0" :: "n"(ASI_SRMMU));
-	__asm("or	%o0, %o2, %o0");
+	va &= ~0xfff;
+	__asm("sta	%1, [%%o4]%0" :: "n"(ASI_SRMMU), "r"(ctx));
+	va |= lvl;
 
 	/* Do the TLB flush */
-	__asm("sta	%%g0, [%%o0]%0" :: "n"(ASI_SRMMUFP));
+	__asm("sta	%%g0, [%1]%0" :: "n"(ASI_SRMMUFP), "r"(va));
 
 	/* Restore context */
 	__asm("sta	%%o5, [%%o4]%0" :: "n"(ASI_SRMMU));
@@ -689,7 +689,7 @@ smp_tlb_flush_context(int ctx, u_int cpuset)
 {
 
 	if (CPU_ISSUN4D) {
-		sp_tlb_flush(ctx, 0, ASI_SRMMUFP_L0);
+		sp_tlb_flush(0, ctx, ASI_SRMMUFP_L0);
 	} else
 		FXCALL3(sp_tlb_flush, ft_tlb_flush, 0, ctx, ASI_SRMMUFP_L0, cpuset);
 }
@@ -715,7 +715,7 @@ smp_tlb_flush_all(void)
 #define tlb_flush_page(va,ctx,s)	sp_tlb_flush(va,ctx,ASI_SRMMUFP_L3)
 #define tlb_flush_segment(va,ctx,s)	sp_tlb_flush(va,ctx,ASI_SRMMUFP_L2)
 #define tlb_flush_region(va,ctx,s)	sp_tlb_flush(va,ctx,ASI_SRMMUFP_L1)
-#define tlb_flush_context(ctx,s)	sp_tlb_flush(ctx,0,ASI_SRMMUFP_L0)
+#define tlb_flush_context(ctx,s)	sp_tlb_flush(0,ctx,ASI_SRMMUFP_L0)
 #define tlb_flush_all()			sp_tlb_flush_all()
 #endif /* MULTIPROCESSOR */
 
