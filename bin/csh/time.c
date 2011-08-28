@@ -1,4 +1,4 @@
-/* $NetBSD: time.c,v 1.17 2008/02/24 05:20:17 dholland Exp $ */
+/* $NetBSD: time.c,v 1.18 2011/08/28 07:49:16 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: time.c,v 1.17 2008/02/24 05:20:17 dholland Exp $");
+__RCSID("$NetBSD: time.c,v 1.18 2011/08/28 07:49:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,13 +44,13 @@ __RCSID("$NetBSD: time.c,v 1.17 2008/02/24 05:20:17 dholland Exp $");
 #include "csh.h"
 #include "extern.h"
 #endif
+#include <util.h>
 
 /*
  * C Shell - routines handling process timing and niceing
  */
 static void pdeltat(FILE *, struct timeval *, struct timeval *);
 static void pcsecs(FILE *, long);
-extern char *strpct(u_long, u_long, u_int);
 
 #ifndef NOT_CSH
 void
@@ -186,7 +186,9 @@ prusage(FILE *fp, struct rusage *r0, struct rusage *r1, struct timeval *e,
 		if (ms == 0) {
 			(void)fputs("0.0%", fp);
 		} else {
-			(void)fputs(strpct((ulong)t, (ulong)ms, 1), fp);
+			char pb[32];
+			(void)fputs(strpct(pb, sizeof(pb), t, ms, 1), fp);
+			(void)fputc('%', fp);
 		}
 		break;
 	    case 'R':		/* page reclaims */
