@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.h,v 1.8 2011/06/23 00:46:37 matt Exp $ */
+/* $NetBSD: gpio.h,v 1.9 2011/08/28 07:48:50 mbalmer Exp $ */
 /*	$OpenBSD: gpio.h,v 1.7 2008/11/26 14:51:20 mbalmer Exp $	*/
 /*
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
@@ -20,9 +20,12 @@
 #ifndef _SYS_GPIO_H_
 #define _SYS_GPIO_H_
 
+#include <sys/time.h>
+
 /* GPIO pin states */
 #define GPIO_PIN_LOW		0x00	/* low level (logical 0) */
 #define GPIO_PIN_HIGH		0x01	/* high level (logical 1) */
+#define GPIO_PIN_PULSE		0x02	/* pulsing, or-ed with state */
 
 /* Max name length of a pin */
 #define GPIOMAXNAME		64
@@ -51,25 +54,33 @@ struct gpio_info {
 
 /* GPIO pin request (read/write/toggle) */
 struct gpio_req {
-	char gp_name[GPIOMAXNAME];	/* pin name */
-	int gp_pin;			/* pin number */
-	int gp_value;			/* value */
+	char		gp_name[GPIOMAXNAME];	/* pin name */
+	int		gp_pin;			/* pin number */
+	int		gp_value;		/* value */
+};
+
+/* GPIO pulse request */
+struct gpio_pulse {
+	char		gp_name[GPIOMAXNAME];	/* pin name */
+	int		gp_pin;			/* pin number */
+	struct timeval	gp_pulse_on;		/* "on" period */
+	struct timeval	gp_pulse_off;		/* "off" period */
 };
 
 /* GPIO pin configuration */
 struct gpio_set {
-	char gp_name[GPIOMAXNAME];
-	int gp_pin;
-	int gp_caps;
-	int gp_flags;
-	char gp_name2[GPIOMAXNAME];	/* new name */
+	char	gp_name[GPIOMAXNAME];
+	int	gp_pin;
+	int	gp_caps;
+	int	gp_flags;
+	char	gp_name2[GPIOMAXNAME];	/* new name */
 };
 
 /* Attach/detach device drivers that use GPIO pins */
 struct gpio_attach {
-	char ga_dvname[16];	/* device name */
-	int ga_offset;		/* pin number */
-	u_int32_t ga_mask;	/* binary mask */
+	char		ga_dvname[16];	/* device name */
+	int		ga_offset;	/* pin number */
+	uint32_t	ga_mask;	/* binary mask */
 };
 
 /* GPIO pin control (old API) */
@@ -81,8 +92,8 @@ struct gpio_pin_ctl {
 
 /* GPIO pin operation (read/write/toggle) (old API) */
 struct gpio_pin_op {
-	int gp_pin;			/* pin number */
-	int gp_value;			/* value */
+	int gp_pin;		/* pin number */
+	int gp_value;		/* value */
 };
 
 #define GPIOINFO		_IOR('G', 0, struct gpio_info)
@@ -101,5 +112,6 @@ struct gpio_pin_op {
 #define GPIOTOGGLE		_IOWR('G', 9, struct gpio_req)
 #define GPIOATTACH		_IOWR('G', 10, struct gpio_attach)
 #define GPIODETACH		_IOWR('G', 11, struct gpio_attach)
+#define GPIOPULSE		_IOWR('G', 12, struct gpio_pulse)
 
 #endif	/* !_SYS_GPIO_H_ */
