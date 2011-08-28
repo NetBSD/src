@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.89 2011/08/12 08:00:53 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.90 2011/08/28 16:19:07 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -150,6 +150,7 @@ SUBDIR+=	pad
 .endif
 
 .if ${MACHINE_ARCH} == "i386"
+SUBDIR+=	ati_pcigart
 SUBDIR+=	azalia
 SUBDIR+=	compat_freebsd
 SUBDIR+=	compat_ibcs2
@@ -157,12 +158,18 @@ SUBDIR+=	compat_linux
 SUBDIR+=	compat_svr4
 SUBDIR+=	drm
 SUBDIR+=	i915drm
+SUBDIR+=	mach64drm
+SUBDIR+=	mgadrm
 SUBDIR+=	nsclpcsio
-SUBDIR+=	radeondrm
-SUBDIR+=	viadrm
 SUBDIR+=	pad
 SUBDIR+=	padlock
+SUBDIR+=	r128drm
+SUBDIR+=	radeondrm
+SUBDIR+=	savagedrm
+SUBDIR+=	sisdrm
+SUBDIR+=	tdfxdrm
 SUBDIR+=	viac7temp
+SUBDIR+=	viadrm
 .endif
 
 #

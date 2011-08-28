@@ -1,0 +1,9 @@
+#	$NetBSD: mgadrm.ioconf,v 1.1 2011/08/28 16:19:07 jmcneill Exp $
+
+ioconf mgadrm
+
+include "conf/files"
+
+pseudo-root drm*
+
+mgadrm* at drm?
