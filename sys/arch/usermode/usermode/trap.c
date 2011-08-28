@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.9 2011/08/28 00:40:10 jmcneill Exp $ */
+/* $NetBSD: trap.c,v 1.10 2011/08/28 19:38:20 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.9 2011/08/28 00:40:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.10 2011/08/28 19:38:20 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,12 +146,12 @@ atype = PROT_READ | PROT_WRITE;
 				/* copyin / copyout */
 				if (!onfault)
 					panic("kernel fault");
-
+				panic("%s: can't call onfault yet\n", __func__);
 				/* jump to given onfault */
 				tf = &kernel_tf;
 				memset(tf, 0, sizeof(struct trapframe));
-				tf->tf_pc = onfault;
-				tf->tf_out[0] = (rv == EACCES) ? EFAULT : rv;
+				// tf->tf_pc = onfault;
+				// tf->tf_io[0] = (rv == EACCES) ? EFAULT : rv;
 				recurse--;
 				return;
 			}
