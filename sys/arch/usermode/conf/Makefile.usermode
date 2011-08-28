@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.14 2011/08/25 11:06:29 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.15 2011/08/28 23:16:18 jmcneill Exp $
 
 MACHINE_ARCH=			usermode
 USETOOLS?=			no
@@ -68,8 +68,16 @@ NVFLAGS=	-n
 		ln -s $S/arch/i386/include i386
 .endif
 
+thunk.d: ${USERMODE}/usermode/thunk.c
+	${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
+	    ${CPPFLAGS.thunk.c} ${USERMODE}/usermode/thunk.c
+
 thunk.o: ${USERMODE}/usermode/thunk.c
 	${CC} ${CPPFLAGS.thunk.c} -c -o $@ ${USERMODE}/usermode/thunk.c
+
+thunk_sdl.d: ${USERMODE}/usermode/thunk.c
+	${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
+	    ${CPPFLAGS.thunk_sdl.c} ${USERMODE}/usermode/thunk_sdl.c
 
 thunk_sdl.o: ${USERMODE}/usermode/thunk_sdl.c
 	${CC} ${CPPFLAGS.thunk_sdl.c} -c -o $@ ${USERMODE}/usermode/thunk_sdl.c
