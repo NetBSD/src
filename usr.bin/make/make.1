@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.194 2011/08/18 15:36:51 sjg Exp $
+.\"	$NetBSD: make.1,v 1.195 2011/08/28 03:54:07 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd August 18, 2011
+.Dd August 28, 2011
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -799,6 +799,10 @@ This keyword causes them to be ignored for
 determining whether a target is out of date in "meta" mode.
 See also
 .Ic .NOMETA_CMP .
+.It Pa silent= Ar bf
+If
+.Va bf
+is True, when a .meta file is created, mark the target
 .El
 .It Va .MAKE.META.BAILIWICK
 In "meta" mode, provides a list of prefixes which

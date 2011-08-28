@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.21 2011/08/18 00:00:21 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.22 2011/08/28 03:54:07 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -64,6 +64,7 @@ static Boolean metaEnv = FALSE;		/* don't save env unless asked */
 static Boolean metaVerbose = FALSE;
 static Boolean metaIgnoreCMDs = FALSE;	/* ignore CMDs in .meta files */
 static Boolean metaCurdirOk = FALSE;	/* write .meta in .CURDIR Ok? */
+static Boolean metaSilent = FALSE;	/* if we have a .meta be SILENT */
 
 extern Boolean forceJobs;
 extern Boolean comatMake;
@@ -510,7 +511,11 @@ meta_create(BuildMon *pbm, GNode *gn)
 
     Var_Append(".MAKE.META.FILES", fname, VAR_GLOBAL);
     Var_Append(".MAKE.META.CREATED", fname, VAR_GLOBAL);
-    
+
+    gn->type |= OP_META;		/* in case anyone wants to know */
+    if (metaSilent) {
+	    gn->type |= OP_SILENT;
+    }
  out:
     for (i--; i >= 0; i--) {
 	if (p[i])
@@ -555,6 +560,9 @@ meta_init(const char *make_mode)
 	    useFilemon = FALSE;
 	if ((cp = strstr(make_mode, "curdirok="))) {
 	    metaCurdirOk = boolValue(&cp[9]);
+	}
+	if ((cp = strstr(make_mode, "silent="))) {
+	    metaSilent = boolValue(&cp[7]);
 	}
 	if (strstr(make_mode, "ignore-cmd"))
 	    metaIgnoreCMDs = TRUE;
