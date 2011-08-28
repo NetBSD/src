@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.15 2011/07/15 19:19:57 cliff Exp $	*/
+/*	$NetBSD: nand.c,v 1.16 2011/08/28 20:49:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.15 2011/07/15 19:19:57 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.16 2011/08/28 20:49:30 martin Exp $");
 
 #include "locators.h"
 
@@ -1372,7 +1372,7 @@ out:
 }
 
 int
-nand_flash_isbad(device_t self, flash_off_t ofs, bool *isbad)
+nand_flash_isbad(device_t self, flash_off_t ofs, bool *is_bad)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
@@ -1396,7 +1396,7 @@ nand_flash_isbad(device_t self, flash_off_t ofs, bool *isbad)
 	result = nand_isbad(self, ofs);
 	mutex_exit(&sc->sc_device_lock);
 
-	*isbad = result;
+	*is_bad = result;
 
 	return 0;
 }
