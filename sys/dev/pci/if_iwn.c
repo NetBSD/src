@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.57 2011/08/28 16:26:29 elric Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.58 2011/08/28 16:33:51 elric Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.57 2011/08/28 16:26:29 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.58 2011/08/28 16:33:51 elric Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -305,7 +305,7 @@ static void	iwn_fix_channel(struct ieee80211com *, struct mbuf *);
 #ifdef IWN_DEBUG
 #define DPRINTF(x)	do { if (iwn_debug > 0) printf x; } while (0)
 #define DPRINTFN(n, x)	do { if (iwn_debug >= (n)) printf x; } while (0)
-int iwn_debug = 100;
+int iwn_debug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
