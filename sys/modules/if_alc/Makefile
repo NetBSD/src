@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/23 00:36:51 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.2 2011/08/28 15:48:19 jmcneill Exp $
 
 .include "../Makefile.inc"
 
@@ -8,8 +8,6 @@ KMOD=	if_alc
 IOCONF=	if_alc.ioconf
 
 SRCS=	if_alc.c
-
-WARNS=	3
 
 CPPFLAGS+=	-DINET -DNVLAN=1
 

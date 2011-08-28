@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/02/21 11:16:47 cegger Exp $
+#	$NetBSD: Makefile,v 1.4 2011/08/28 15:48:19 jmcneill Exp $
 
 .include "../Makefile.inc"
 
@@ -93,8 +93,6 @@ SRCS+=	ar2133.c \
 	ar9285.c \
 	ar9285_attach.c \
 	ar9285_reset.c
-
-WARNS=		3
 
 .include "Makefile.inc"
 
