@@ -1,4 +1,4 @@
-/*	$NetBSD: wav.c,v 1.9 2009/06/18 02:37:27 mrg Exp $	*/
+/*	$NetBSD: wav.c,v 1.10 2011/08/28 01:17:47 joerg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2009 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wav.c,v 1.9 2009/06/18 02:37:27 mrg Exp $");
+__RCSID("$NetBSD: wav.c,v 1.10 2011/08/28 01:17:47 joerg Exp $");
 #endif
 
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: wav.c,v 1.9 2009/06/18 02:37:27 mrg Exp $");
 
 #include "libaudio.h"
 
-struct {
+static const struct {
 	int	wenc;
 	const char *wname;
 } wavencs[] = {
@@ -77,8 +77,6 @@ wav_enc_from_val(int encoding)
 	return (wavencs[i].wname);
 }
 
-extern int verbose;
-
 /*
  * sample header is:
  *
@@ -92,14 +90,8 @@ extern int verbose;
  * find a .wav header, etc. returns header length on success
  */
 ssize_t
-audio_wav_parse_hdr(hdr, sz, enc, prec, sample, channels, datasize)
-	void	*hdr;
-	size_t	sz;
-	u_int	*enc;
-	u_int	*prec;
-	u_int	*sample;
-	u_int	*channels;
-	size_t *datasize;
+audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
+    u_int *sample, u_int *channels, size_t *datasize)
 {
 	char	*where = hdr, *owhere;
 	wav_audioheaderpart part;

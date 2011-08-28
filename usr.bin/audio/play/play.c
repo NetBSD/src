@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.53 2010/12/29 18:48:40 wiz Exp $	*/
+/*	$NetBSD: play.c,v 1.54 2011/08/28 01:17:48 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001, 2002, 2010 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.53 2010/12/29 18:48:40 wiz Exp $");
+__RCSID("$NetBSD: play.c,v 1.54 2011/08/28 01:17:48 joerg Exp $");
 #endif
 
 
@@ -51,35 +51,32 @@ __RCSID("$NetBSD: play.c,v 1.53 2010/12/29 18:48:40 wiz Exp $");
 
 #include "libaudio.h"
 
-int main(int, char *[]);
-void usage(void);
-void play(char *);
-void play_fd(const char *, int);
-ssize_t audioctl_write_fromhdr(void *, size_t, int, size_t *, const char *);
-void cleanup(int) __dead;
+static void usage(void) __dead;
+static void play(char *);
+static void play_fd(const char *, int);
+static ssize_t audioctl_write_fromhdr(void *, size_t, int, size_t *, const char *);
+static void cleanup(int) __dead;
 
-audio_info_t	info;
-int	volume;
-int	balance;
-int	port;
-int	fflag;
-int	qflag;
+static audio_info_t	info;
+static int	volume;
+static int	balance;
+static int	port;
+static int	fflag;
+static int	qflag;
 int	verbose;
-int	sample_rate;
-int	encoding;
-char	*encoding_str;
-int	precision;
-int	channels;
+static int	sample_rate;
+static int	encoding;
+static char	*encoding_str;
+static int	precision;
+static int	channels;
 
-char	const *play_errstring = NULL;
-size_t	bufsize;
-int	audiofd;
-int	exitstatus = EXIT_SUCCESS;
+static char	const *play_errstring = NULL;
+static size_t	bufsize;
+static int	audiofd;
+static int	exitstatus = EXIT_SUCCESS;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	size_t	len;
 	int	ch;
@@ -204,9 +201,8 @@ main(argc, argv)
 	cleanup(0);
 }
 
-void
-cleanup(signo)
-	int signo;
+static void
+cleanup(int signo)
 {
 
 	(void)ioctl(audiofd, AUDIO_FLUSH, NULL);
@@ -218,9 +214,8 @@ cleanup(signo)
 	exit(exitstatus);
 }
 
-void
-play(file)
-	char *file;
+static void
+play(char *file)
 {
 	struct stat sb;
 	void *addr, *oaddr;
@@ -307,10 +302,8 @@ play(file)
 /*
  * play the file on the file descriptor fd
  */
-void
-play_fd(file, fd)
-	const char *file;
-	int     fd;
+static void
+play_fd(const char *file, int fd)
 {
 	char    *buffer = malloc(bufsize);
 	ssize_t hdrlen;
@@ -373,13 +366,8 @@ write_error:
  * XXX this should probably be mostly part of libaudio, but it
  * uses the local "info" variable. blah... fix me!
  */
-ssize_t
-audioctl_write_fromhdr(hdr, fsz, fd, datasize, file)
-	void	*hdr;
-	size_t	fsz;
-	int	fd;
-	size_t	*datasize;
-	const char	*file;
+static ssize_t
+audioctl_write_fromhdr(void *hdr, size_t fsz, int fd, size_t *datasize, const char *file)
 {
 	sun_audioheader	*sunhdr;
 	ssize_t	hdr_len = 0;
@@ -468,8 +456,8 @@ set_audio_mode:
 	return (hdr_len);
 }
 
-void
-usage()
+static void
+usage(void)
 {
 
 	fprintf(stderr, "Usage: %s [-hiqV] [options] files\n", getprogname());

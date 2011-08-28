@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.19 2008/05/29 14:51:27 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.20 2011/08/28 01:17:47 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: audio.c,v 1.19 2008/05/29 14:51:27 mrg Exp $");
+__RCSID("$NetBSD: audio.c,v 1.20 2011/08/28 01:17:47 joerg Exp $");
 #endif
 
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: audio.c,v 1.19 2008/05/29 14:51:27 mrg Exp $");
 
 /* what format am i? */
 
-struct {
+static const struct {
 	const char *fname;
 	int fno;
 } formats[] = {
@@ -67,8 +67,7 @@ struct {
 };
 
 int
-audio_format_from_str(str)
-	char *str;
+audio_format_from_str(char *str)
 {
 	int	i;
 
@@ -81,7 +80,7 @@ audio_format_from_str(str)
 
 
 /* back and forth between encodings */
-struct {
+static const struct {
 	const char *ename;
 	int eno;
 } encs[] = {
@@ -110,8 +109,7 @@ struct {
 
 
 const char *
-audio_enc_from_val(val)
-	int	val;
+audio_enc_from_val(int val)
 {
 	int	i;
 
@@ -122,8 +120,7 @@ audio_enc_from_val(val)
 }
 
 int
-audio_enc_to_val(enc)
-	const	char *enc;
+audio_enc_to_val(const char *enc)
 {
 	int	i;
 
@@ -137,9 +134,7 @@ audio_enc_to_val(enc)
 }
 
 void
-decode_int(arg, intp)
-	const char *arg;
-	int *intp;
+decode_int(const char *arg, int *intp)
 {
 	char	*ep;
 	int	ret;
@@ -154,9 +149,7 @@ decode_int(arg, intp)
 }
 
 void
-decode_time(arg, tvp)
-	const char *arg;
-	struct timeval *tvp;
+decode_time(const char *arg, struct timeval *tvp)
 {
 	char	*s, *colon, *dot;
 	char	*copy = strdup(arg);
@@ -206,9 +199,7 @@ decode_time(arg, tvp)
  * decode a string into an encoding value.
  */
 void
-decode_encoding(arg, encp)
-	const char *arg;
-	int *encp;
+decode_encoding(const char *arg, int *encp)
 {
 	size_t	len;
 	int i;
@@ -222,7 +213,7 @@ decode_encoding(arg, encp)
 	errx(1, "unknown encoding `%s'", arg);
 }
 
-const char *const audio_errlist[] = {
+static const char *const audio_errlist[] = {
 	"error zero",				/* nothing? */
 	"no audio entry",			/* AUDIO_ENOENT */
 	"short header",				/* AUDIO_ESHORTHDR */
@@ -233,8 +224,7 @@ const char *const audio_errlist[] = {
 };
 
 const char *
-audio_errstring(errval)
-	int	errval;
+audio_errstring(int errval)
 {
 
 	errval = -errval;

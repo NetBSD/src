@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.50 2010/12/29 18:49:41 wiz Exp $	*/
+/*	$NetBSD: record.c,v 1.51 2011/08/28 01:17:48 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003, 2005, 2010 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.50 2010/12/29 18:49:41 wiz Exp $");
+__RCSID("$NetBSD: record.c,v 1.51 2011/08/28 01:17:48 joerg Exp $");
 #endif
 
 
@@ -55,42 +55,39 @@ __RCSID("$NetBSD: record.c,v 1.50 2010/12/29 18:49:41 wiz Exp $");
 #include "libaudio.h"
 #include "auconv.h"
 
-audio_info_t info, oinfo;
-ssize_t	total_size = -1;
-const char *device;
-int	format = AUDIO_FORMAT_DEFAULT;
-char	*header_info;
-char	default_info[8] = { '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0' };
-int	audiofd, outfd;
-int	qflag, aflag, fflag;
+static audio_info_t info, oinfo;
+static ssize_t	total_size = -1;
+static const char *device;
+static int	format = AUDIO_FORMAT_DEFAULT;
+static char	*header_info;
+static char	default_info[8] = { '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0' };
+static int	audiofd, outfd;
+static int	qflag, aflag, fflag;
 int	verbose;
-int	monitor_gain, omonitor_gain;
-int	gain;
-int	balance;
-int	port;
-int	encoding;
-char	*encoding_str;
-int	precision;
-int	sample_rate;
-int	channels;
-struct timeval record_time;
-struct timeval start_time;
+static int	monitor_gain, omonitor_gain;
+static int	gain;
+static int	balance;
+static int	port;
+static int	encoding;
+static char	*encoding_str;
+static int	precision;
+static int	sample_rate;
+static int	channels;
+static struct timeval record_time;
+static struct timeval start_time;
 
-void (*conv_func) (u_char *, int);
+static void (*conv_func) (u_char *, int);
 
-void usage (void);
-int main (int, char *[]);
-int timeleft (struct timeval *, struct timeval *);
-void cleanup (int) __dead;
-int write_header_sun (void **, size_t *, int *);
-int write_header_wav (void **, size_t *, int *);
-void write_header (void);
-void rewrite_header (void);
+static void usage (void) __dead;
+static int timeleft (struct timeval *, struct timeval *);
+static void cleanup (int) __dead;
+static int write_header_sun (void **, size_t *, int *);
+static int write_header_wav (void **, size_t *, int *);
+static void write_header (void);
+static void rewrite_header (void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	u_char	*buffer;
 	size_t	len, bufsize = 0;
@@ -348,9 +345,7 @@ main(argc, argv)
 }
 
 int
-timeleft(start_tvp, record_tvp)
-	struct timeval *start_tvp;
-	struct timeval *record_tvp;
+timeleft(struct timeval *start_tvp, struct timeval *record_tvp)
 {
 	struct timeval now, diff;
 
@@ -362,8 +357,7 @@ timeleft(start_tvp, record_tvp)
 }
 
 void
-cleanup(signo)
-	int signo;
+cleanup(int signo)
 {
 
 	rewrite_header();
@@ -381,11 +375,8 @@ cleanup(signo)
 	exit(0);
 }
 
-int
-write_header_sun(hdrp, lenp, leftp)
-	void **hdrp;
-	size_t *lenp;
-	int *leftp;
+static int
+write_header_sun(void **hdrp, size_t *lenp, int *leftp)
 {
 	static int warned = 0;
 	static sun_audioheader auh;
@@ -478,11 +469,8 @@ write_header_sun(hdrp, lenp, leftp)
 	return 0;
 }
 
-int
-write_header_wav(hdrp, lenp, leftp)
-	void **hdrp;
-	size_t *lenp;
-	int *leftp;
+static int
+write_header_wav(void **hdrp, size_t *lenp, int *leftp)
 {
 	/*
 	 * WAV header we write looks like this:
@@ -709,8 +697,8 @@ fmt_pcm:
 	return 0;
 }
 
-void
-write_header()
+static void
+write_header(void)
 {
 	struct iovec iv[3];
 	int veclen, left, tlen;
@@ -759,8 +747,8 @@ write_header()
 		err(1, "could not write audio header");
 }
 
-void
-rewrite_header()
+static void
+rewrite_header(void)
 {
 
 	/* can't do this here! */
@@ -772,8 +760,8 @@ rewrite_header()
 	write_header();
 }
 
-void
-usage()
+static void
+usage(void)
 {
 
 	fprintf(stderr, "Usage: %s [-afhqV] [options] {files ...|-}\n",
