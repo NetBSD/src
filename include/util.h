@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.57 2011/08/26 01:48:39 joerg Exp $	*/
+/*	$NetBSD: util.h,v 1.58 2011/08/28 07:46:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -41,6 +41,7 @@
 #include <termios.h>
 #include <utmp.h>
 #include <utmpx.h>
+#include <stdint.h>
 #include <machine/ansi.h>
 
 #ifdef  _BSD_TIME_T_
@@ -117,6 +118,7 @@ int		snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 int		snprintb(char *, size_t, const char *, uint64_t);
 int		sockaddr_snprintf(char *, size_t, const char *,
     const struct sockaddr *);
+char 	       *strpct(char *, size_t, uintmax_t, uintmax_t, size_t);
 int		string_to_flags(char **, unsigned long *, unsigned long *);
 int		ttyaction(const char *, const char *, const char *);
 int		ttylock(const char *, int, pid_t *);
