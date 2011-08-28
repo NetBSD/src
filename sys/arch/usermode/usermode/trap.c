@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.8 2011/08/27 21:19:17 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.9 2011/08/28 00:40:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.8 2011/08/27 21:19:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.9 2011/08/28 00:40:10 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.8 2011/08/27 21:19:17 reinoud Exp $");
 
 void setup_signal_handlers(void);
 static void mem_access_handler(int sig, siginfo_t *info, void *ctx);
-static void exit_func(void);
 
 
 static struct sigaction sa;
@@ -57,14 +56,6 @@ extern int errno;
 void
 startlwp(void *arg)
 {
-}
-
-static void
-exit_func(void)
-{
-	if (panicstr == NULL)
-		child_return(curlwp);
-	panic("atexit() with panic `%s`", panicstr);
 }
 
 void
@@ -77,8 +68,6 @@ setup_signal_handlers(void)
 		panic("couldn't register SIGSEGV handler : %d", errno);
 	if (thunk_sigaction(SIGBUS, &sa, NULL) == -1)
 		panic("couldn't register SIGBUS handler : %d", errno);
-	if (thunk_atexit(exit_func))
-		panic("couldn't register atexit() handler : %d", errno);
 }
 
 static struct trapframe kernel_tf;

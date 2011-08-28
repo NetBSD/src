@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.19 2011/08/27 21:43:06 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.20 2011/08/28 00:40:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_cpu.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2011/08/27 21:43:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.20 2011/08/28 00:40:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -275,6 +275,8 @@ cpu_lwp_trampoline(void (*func)(void *), void *arg)
 	lwp_startup(curcpu()->ci_stash, curlwp);
 
 	func(arg);
+
+	panic("%s: shouldn't return", __func__);
 }
 
 void
