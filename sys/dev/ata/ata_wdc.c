@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.94 2011/08/27 17:05:57 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.95 2011/08/28 09:43:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.94 2011/08/27 17:05:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.95 2011/08/28 09:43:25 christos Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -179,12 +179,12 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	struct ata_bio *ata_bio = xfer->c_cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
-	int wait_flags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
+	int wait_flags;
 	const char *errstring;
 #ifdef WDC_NO_IDS
 	wait_flags = AT_POLL;
 #else
-#error "NEED WDC_NO_IDS"
+	wait_flags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
 #endif
 
 	ATADEBUG_PRINT(("wdc_ata_bio_start %s:%d:%d\n",
