@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.6 2011/07/01 18:22:08 dyoung Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.7 2011/08/28 05:32:41 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.6 2011/07/01 18:22:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.7 2011/08/28 05:32:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,17 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.6 2011/07/01 18:22:08 dyoung Ex
 
 struct pciaddr pciaddr;
 
-static int pciaddrverbose = 0;
-
-void	pciaddr_resource_reserve(pci_chipset_tag_t, pcitag_t, void *context);
-int	pciaddr_do_resource_reserve(pci_chipset_tag_t, pcitag_t, int,
+static void	pciaddr_resource_reserve(pci_chipset_tag_t, pcitag_t, void *);
+static int	pciaddr_do_resource_reserve(pci_chipset_tag_t, pcitag_t, int,
     				    void *, int, bus_addr_t *, bus_size_t);
-void	pciaddr_resource_allocate(pci_chipset_tag_t, pcitag_t, void *context);
-int	pciaddr_do_resource_allocate(pci_chipset_tag_t, pcitag_t, int,
+static void	pciaddr_resource_allocate(pci_chipset_tag_t, pcitag_t, void *);
+static int	pciaddr_do_resource_allocate(pci_chipset_tag_t, pcitag_t, int,
 				     void *, int, bus_addr_t *, bus_size_t);
-int	device_is_agp(pci_chipset_tag_t, pcitag_t);
-
-int	device_is_agp(pci_chipset_tag_t, pcitag_t);
+static int	device_is_agp(pci_chipset_tag_t, pcitag_t);
 
 #define PCIADDR_MEM_START	0x0
 #define PCIADDR_MEM_END		0xffffffff
@@ -147,22 +143,20 @@ pci_addr_fixup(pci_chipset_tag_t pc, int maxbus)
 
 }
 
-void
+static void
 pciaddr_resource_reserve(pci_chipset_tag_t pc, pcitag_t tag,
     void *context)
 {
-	if (pciaddrverbose)
 		pciaddr_print_devid(pc, tag);
 	pciaddr_resource_manage(pc, tag,
 				pciaddr_do_resource_reserve,
 				&pciaddr);
 }
 
-void
+static void
 pciaddr_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag,
     void *context)
 {
-	if (pciaddrverbose)
 		pciaddr_print_devid(pc, tag);
 	pciaddr_resource_manage(pc, tag,
 				pciaddr_do_resource_allocate,
@@ -184,15 +178,15 @@ pciaddr_resource_manage(pci_chipset_tag_t pc, pcitag_t tag,
 		aprint_error("WARNING: unknown PCI device header.");
 		pciaddr.nbogus++;
 		return;
-	case 0: 
+	case PCI_HDRTYPE_DEVICE:
 		reg_start = PCI_MAPREG_START;
 		reg_end   = PCI_MAPREG_END;
 		break;
-	case 1: /* PCI-PCI bridge */
+	case PCI_HDRTYPE_PPB: /* PCI-PCI bridge */
 		reg_start = PCI_MAPREG_START;
 		reg_end   = PCI_MAPREG_PPB_END;
 		break;
-	case 2: /* PCI-CardBus bridge */
+	case PCI_HDRTYPE_PCB: /* PCI-CardBus bridge */
 		reg_start = PCI_MAPREG_START;
 		reg_end   = PCI_MAPREG_PCB_END;
 		break;
@@ -229,7 +223,7 @@ pciaddr_resource_manage(pci_chipset_tag_t pc, pcitag_t tag,
 		}
 		addr = pciaddr_ioaddr(val);
 	
-		if (!size) /* unused register */
+		if (size == 0) /* unused register */
 			continue;
 
 		if (type == PCI_MAPREG_TYPE_MEM)
@@ -255,13 +249,13 @@ pciaddr_resource_manage(pci_chipset_tag_t pc, pcitag_t tag,
 			 PCI_COMMAND_MASTER_ENABLE);
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, val);
     
-	if (error)
+	if (error != 0)
 		pciaddr.nbogus++;
 
 	aprint_debug("\n\t\t[%s]\n", error ? "NG" : "OK");
 }
 
-int
+static int
 pciaddr_do_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag,
     int mapreg, void *ctx, int type, bus_addr_t *addr, bus_size_t size)
 {
@@ -270,22 +264,22 @@ pciaddr_do_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag,
 	int error;
  	struct extent *ex;
  
-	if (*addr) /* no need to allocate */
-		return (0);
+	if (*addr != 0) /* no need to allocate */
+		return 0;
 
  	ex = (type == PCI_MAPREG_TYPE_MEM ?
  	      pciaddrmap->extent_mem : pciaddrmap->extent_port);
 
 	/* XXX Don't allocate if device is AGP device to avoid conflict. */
 	if (device_is_agp(pc, tag)) 
-		return (0);
+		return 0;
 	
 	start = (type == PCI_MAPREG_TYPE_MEM ?
 		 pciaddrmap->mem_alloc_start : pciaddrmap->port_alloc_start);
 
 	if (start < ex->ex_start || start + size - 1 >= ex->ex_end) {
 		aprint_debug("No available resources. fixup failed\n");
-		return (1);
+		return 1;
 	}
 	error = extent_alloc_subregion(ex, start, ex->ex_end, size,
 				       size, 0,
@@ -293,26 +287,22 @@ pciaddr_do_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag,
 				       (u_long *)addr);
 	if (error) {
 		aprint_debug("No available resources. fixup failed\n");
-		return (1);
+		return 1;
 	}
 
 	/* write new address to PCI device configuration header */
 	pci_conf_write(pc, tag, mapreg, *addr);
 	/* check */
-	if (!pciaddrverbose)
-	{
-		aprint_verbose("pci_addr_fixup: ");
+	aprint_debug("pci_addr_fixup: ");
 		pciaddr_print_devid(pc, tag);
-	}
 	if (pciaddr_ioaddr(pci_conf_read(pc, tag, mapreg)) != *addr) {
 		pci_conf_write(pc, tag, mapreg, 0); /* clear */
 		aprint_error("fixup failed. (new address=%#x)\n", (unsigned)*addr);
-		return (1);
+		return 1;
 	}
-	if (!pciaddrverbose)
-		aprint_verbose("new address 0x%08x\n", (unsigned)*addr);
+	aprint_debug("new address 0x%08x\n", (unsigned)*addr);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -324,7 +314,7 @@ pciaddr_do_resource_reserve(pci_chipset_tag_t pc, pcitag_t tag,
 	int error;
 
 	if (*addr == 0)
-		return (1);
+		return 1;
 
 	ex = (type == PCI_MAPREG_TYPE_MEM ?
 	      pciaddrmap->extent_mem : pciaddrmap->extent_port);
@@ -333,18 +323,18 @@ pciaddr_do_resource_reserve(pci_chipset_tag_t pc, pcitag_t tag,
 	if (error) {
 		aprint_debug("Resource conflict.\n");
 		pci_conf_write(pc, tag, mapreg, 0); /* clear */
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 bus_addr_t
 pciaddr_ioaddr(uint32_t val)
 {
-	return ((PCI_MAPREG_TYPE(val) == PCI_MAPREG_TYPE_MEM)
+	return (PCI_MAPREG_TYPE(val) == PCI_MAPREG_TYPE_MEM)
 		? PCI_MAPREG_MEM_ADDR(val)
-		: PCI_MAPREG_IO_ADDR(val));
+		: PCI_MAPREG_IO_ADDR(val);
 }
 
 void
@@ -355,11 +345,11 @@ pciaddr_print_devid(pci_chipset_tag_t pc, pcitag_t tag)
 	
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
-	aprint_verbose("%03d:%02d:%d 0x%04x 0x%04x ", bus, device, function, 
+	aprint_debug("%03d:%02d:%d 0x%04x 0x%04x ", bus, device, function,
 	       PCI_VENDOR(id), PCI_PRODUCT(id));
 }
 
-int
+static int
 device_is_agp(pci_chipset_tag_t pc, pcitag_t tag)
 {
 	pcireg_t class, status, rval;
@@ -376,9 +366,9 @@ device_is_agp(pci_chipset_tag_t pc, pcitag_t tag)
 			    off = PCI_CAPLIST_NEXT(rval) ) {
 				rval = pci_conf_read(pc, tag, off);
 				if (PCI_CAPLIST_CAP(rval) == PCI_CAP_AGP) 
-					return (1);
+					return 1;
 			}
 		}
 	}
-	return (0);
+	return 0;
 }
