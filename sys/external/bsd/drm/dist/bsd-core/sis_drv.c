@@ -140,62 +140,35 @@ sisdrm_attach(device_t parent, device_t self, void *aux)
 CFATTACH_DECL_NEW(sisdrm, sizeof(struct drm_device),
     sisdrm_probe, sisdrm_attach, drm_detach, NULL);
 
+MODULE(MODULE_CLASS_DRIVER, sisdrm, "drm");
+
 #ifdef _MODULE
-
-MODULE(MODULE_CLASS_DRIVER, sisdrm, NULL);
-
-CFDRIVER_DECL(sisdrm, DV_DULL, NULL);
-extern struct cfattach sisdrm_ca;
-static int drmloc[] = { -1 };
-static struct cfparent drmparent = {
-	"drm", "vga", DVUNIT_ANY
-};
-static struct cfdata sisdrm_cfdata[] = {
-	{
-		.cf_name = "sisdrm",
-		.cf_atname = "sisdrm",
-		.cf_unit = 0,
-		.cf_fstate = FSTATE_STAR,
-		.cf_loc = drmloc,
-		.cf_flags = 0,
-		.cf_pspec = &drmparent,
-	},
-	{ NULL }
-};
+#include "ioconf.c"
+#endif
 
 static int
 sisdrm_modcmd(modcmd_t cmd, void *arg)
 {
-	int err;
+	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		err = config_cfdriver_attach(&sisdrm_cd);
-		if (err)
-			return err;
-		err = config_cfattach_attach("sisdrm", &sisdrm_ca);
-		if (err) {
-			config_cfdriver_detach(&sisdrm_cd);
-			return err;
-		}
-		err = config_cfdata_attach(sisdrm_cfdata, 1);
-		if (err) {
-			config_cfattach_detach("sisdrm", &sisdrm_ca);
-			config_cfdriver_detach(&sisdrm_cd);
-			return err;
-		}
-		return 0;
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_sisdrm,
+		    cfattach_ioconf_sisdrm, cfdata_ioconf_sisdrm);
+#endif
+		break;
 	case MODULE_CMD_FINI:
-		err = config_cfdata_detach(sisdrm_cfdata);
-		if (err)
-			return err;
-		config_cfattach_detach("sisdrm", &sisdrm_ca);
-		config_cfdriver_detach(&sisdrm_cd);
-		return 0;
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_sisdrm,
+		    cfattach_ioconf_sisdrm, cfdata_ioconf_sisdrm);
+#endif
+		break;
 	default:
 		return ENOTTY;
 	}
+
+	return 0;
 }
-#endif /* _MODULE */
 
 #endif

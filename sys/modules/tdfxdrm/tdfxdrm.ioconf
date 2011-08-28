@@ -1,0 +1,9 @@
+#	$NetBSD: tdfxdrm.ioconf,v 1.1 2011/08/28 16:19:08 jmcneill Exp $
+
+ioconf tdfxdrm
+
+include "conf/files"
+
+pseudo-root drm*
+
+tdfxdrm* at drm?
