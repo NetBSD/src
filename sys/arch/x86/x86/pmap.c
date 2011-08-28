@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.128 2011/08/14 02:31:08 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.129 2011/08/28 00:51:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128 2011/08/14 02:31:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.129 2011/08/28 00:51:21 dyoung Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1069,7 +1069,7 @@ pmap_emap_remove(vaddr_t sva, vsize_t len)
 	}
 }
 
-__weak_alias(pmap_kenter_ma, pmap_kenter_pa);
+__strict_weak_alias(pmap_kenter_ma, pmap_kenter_pa);
 
 #if defined(__x86_64__)
 /*
@@ -2882,7 +2882,7 @@ vtophys(vaddr_t va)
 	return (0);
 }
 
-__weak_alias(pmap_extract_ma, pmap_extract);
+__strict_weak_alias(pmap_extract_ma, pmap_extract);
 
 #ifdef XEN
 
@@ -3780,7 +3780,7 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
  * defined as macro in pmap.h
  */
 
-__weak_alias(pmap_enter, pmap_enter_default);
+__strict_weak_alias(pmap_enter, pmap_enter_default);
 
 int
 pmap_enter_default(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
