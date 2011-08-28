@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.23 2011/08/27 18:44:44 joerg Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.24 2011/08/28 08:43:02 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.23 2011/08/27 18:44:44 joerg Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.24 2011/08/28 08:43:02 mbalmer Exp $");
 #endif
 
 
@@ -60,7 +60,7 @@ static void print_vals(const char *ifname, int phase, struct spppauthcfg *sp,
 static const char *phase_name(int phase);
 static const char *proto_name(int proto);
 static const char *authflags(int flags);
-static static void pppoectl_argument(char *arg);
+static void pppoectl_argument(char *arg);
 
 static int hz = 0;
 
