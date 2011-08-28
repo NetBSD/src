@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.52 2011/08/28 22:36:17 jym Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.53 2011/08/28 22:55:52 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.52 2011/08/28 22:36:17 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.53 2011/08/28 22:55:52 jym Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -379,6 +379,7 @@ bind_virq_to_evtch(int virq)
 		return -1;
 	}
 
+	/* Get event channel from VIRQ */
 	if (virq == VIRQ_TIMER) {
 		evtchn = virq_timer_to_evtch[ci->ci_cpuid];
 	} else {
@@ -393,7 +394,12 @@ bind_virq_to_evtch(int virq)
 		if (HYPERVISOR_event_channel_op(&op) != 0)
 			panic("Failed to bind virtual IRQ %d\n", virq);
 		evtchn = op.u.bind_virq.port;
+	}
 
+	/* Set event channel */
+	if (virq == VIRQ_TIMER) {
+		virq_timer_to_evtch[ci->ci_cpuid] = evtchn;
+	} else {
 		virq_to_evtch[virq] = evtchn;
 	}
 
