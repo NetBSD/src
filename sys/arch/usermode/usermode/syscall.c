@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.3 2011/08/27 21:17:26 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.4 2011/08/28 19:39:05 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3 2011/08/27 21:17:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4 2011/08/28 19:39:05 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -36,24 +36,26 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3 2011/08/27 21:17:26 reinoud Exp $");
 #include <sys/lwp.h>
 #include <sys/sched.h>
 #include <sys/userret.h>
+#include <sys/ktrace.h>
+#include <sys/syscall.h>
 #include <machine/pcb.h>
+#include <machine/thunk.h>
 
 void	syscall(void);
 
 void
 child_return(void *arg)
 {
-printf("child returned! arg %p\n", arg);
-printf("xxx now what? switch to `userland' i.e. new code?\n");
 	lwp_t *l = arg;
 //	struct pcb *pcb = lwp_getpcb(l);
 //	struct trapframe *frame = pcb->pcb_tf;
 
-/* XXX? */
-	//frame->tf_r0 = 0;
+	/* XXX? */
+//	frame->registers[0] = 0;
 
+printf("child returned! arg %p\n", arg);
 	mi_userret(l);
-//	ktrsysret(SYS_fork, 0, 0);
+	ktrsysret(SYS_fork, 0, 0);
 }
 
 void
