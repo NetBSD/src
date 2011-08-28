@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.143 2011/06/23 20:54:24 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.144 2011/08/28 22:09:36 jym Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd June 9, 2010
+.Dd August 29, 2011
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -106,7 +106,7 @@ In general, sending a break on a serial console will activate
 There are also key sequences for each port that will activate
 .Nm
 from the keyboard:
-.Bl -tag -offset indent -width "mvme68k" -compact
+.Bl -tag -offset indent -width "xen domU" -compact
 .It alpha
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt] on PC style keyboards.
 .It amd64
@@ -169,7 +169,7 @@ keyboard.
 \*[Lt]Esc\*[Gt]-\*[Lt]Shift\*[Gt]-D on serial console.
 .It x68k
 Interrupt switch on the body.
-.It xen
+.It xen domU
 +++++
 (five plus signs)
 .It zaurus
