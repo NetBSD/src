@@ -1,4 +1,4 @@
-.\"     $NetBSD: resize_ffs.8,v 1.12 2011/08/28 17:15:16 wiz Exp $
+.\"     $NetBSD: resize_ffs.8,v 1.13 2011/08/28 21:25:11 wiz Exp $
 .\"
 .\" As its sole author, I explicitly place this man page in the public
 .\" domain.  Anyone may use it in any way for any purpose (though I would
@@ -34,7 +34,6 @@ simply extends the file system data structures into the new space.
 When shrinking,
 .Nm
 assumes this.
-It will not work correctly for file systems with other sector sizes.)
 .Nm
 has to copy anything that currently resides in the space being shrunk
 away; there must be enough space free on the file system for this to
@@ -60,6 +59,7 @@ The options are as follows:
 Specify the file system size to which the file system should be
 resized.
 The size is given as the count of disk sectors, usually 512 bytes.
+It will not work correctly for file systems with other sector sizes.
 To see the
 exact value, have a look at the disk specification or the disklabel.
 Mostly used to shrink file systems.
