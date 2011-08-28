@@ -1,4 +1,4 @@
-/* $NetBSD: ttycons.c,v 1.4 2011/08/12 00:57:24 jmcneill Exp $ */
+/* $NetBSD: ttycons.c,v 1.5 2011/08/28 21:21:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.4 2011/08/12 00:57:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.5 2011/08/28 21:21:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/termios.h>
 
 #include <dev/cons.h>
 
@@ -87,9 +88,19 @@ ttycons_attach(device_t parent, device_t self, void *opaque)
 void
 ttycons_consinit(void)
 {
+	struct thunk_termios t;
+
+	thunk_tcgetattr(0, &t);
+	t.c_lflag &= ~(ECHO|ICANON);
+	t.c_cc[VTIME] = 0;
+	t.c_cc[VMIN] = 1;
+	thunk_tcsetattr(0, TCSANOW, &t);
+
 	cn_tab = &ttycons_consdev;
 	cn_init_magic(&ttycons_cnm_state);
 	cn_set_magic("\047\001");
+
+
 }
 
 int
