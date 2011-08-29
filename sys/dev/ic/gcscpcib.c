@@ -1,4 +1,4 @@
-/* $NetBSD: gcscpcib.c,v 1.1 2011/08/27 12:47:49 bouyer Exp $ */
+/* $NetBSD: gcscpcib.c,v 1.2 2011/08/29 18:34:42 bouyer Exp $ */
 /* $OpenBSD: gcscpcib.c,v 1.6 2007/11/17 17:02:47 mbalmer Exp $	*/
 
 /*
@@ -24,7 +24,7 @@
  * AMD CS5535/CS5536 series LPC bridge also containing timer, watchdog and GPIO.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.1 2011/08/27 12:47:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.2 2011/08/29 18:34:42 bouyer Exp $");
 
 #include "gpio.h"
 
@@ -84,7 +84,7 @@ static void	gcscpcib_gpio_pin_ctl(void *, int, int);
 
 void
 gcscpcib_attach(device_t self, struct gcscpcib_softc *sc,
-    bus_space_tag_t iot)
+    bus_space_tag_t iot, int flags)
 {
 	struct timecounter *tc = &sc->sc_timecounter;
 	bus_addr_t wdtbase;
@@ -108,6 +108,9 @@ gcscpcib_attach(device_t self, struct gcscpcib_softc *sc,
 	tc->tc_quality = 1000;
 	tc->tc_priv = sc;
 	tc_init(tc);
+
+	if (flags & GCSCATTACH_NO_WDT)
+		goto gpio;
 
 	/* Attach the watchdog timer */
 	wdtbase = gcsc_rdmsr(MSR_LBAR_MFGPT) & 0xffff;
@@ -295,10 +298,11 @@ gcscpcib_wdog_enable(struct gcscpcib_softc *sc)
 			period * AMD553X_WDT_TICK);
 
 	/* enable watchdog action */
-	DPRINTF(("%s: enable watchdog action. (MFGPT0_CMP2= %d)\n", __func__,
+	DPRINTF(("%s: enable watchdog action. (MFGPT0_CMP2= %d)", __func__,
 	        bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 			 AMD553X_MFGPTX_CMP2(sc->sc_wdt_mfgpt))));
 	AMD553X_MFGPTx_NR_ENABLE(sc->sc_wdt_mfgpt, AMD553X_MFGPT0_C2_RSTEN);
+	DPRINTF((" AMD553X_MFGPT_NR 0x%" PRIx64 "\n", gcsc_rdmsr(AMD553X_MFGPT_NR)));
 }
 
 static int
