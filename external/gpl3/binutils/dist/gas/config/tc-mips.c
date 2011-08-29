@@ -2749,6 +2749,12 @@ fix_loongson2f_jump (struct mips_cl_insn * ip)
       ep.X_add_number = 0xffff;
       macro_build (&ep, "ori", "t,r,i", ATREG, ATREG, BFD_RELOC_LO16);
       macro_build (NULL, "and", "d,v,t", sreg, sreg, ATREG);
+      /* Hide these three instructions to avoid getting a ``macro expanded into
+         multiple instructions'' warning. */
+      if (mips_relax.sequence != 2)
+        mips_macro_warning.sizes[0] -= 3 * 4;
+      if (mips_relax.sequence != 1)
+        mips_macro_warning.sizes[1] -= 3 * 4;
     }
 }
 
