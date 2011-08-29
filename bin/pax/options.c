@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.110 2011/06/18 23:07:04 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.111 2011/08/29 14:47:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.110 2011/06/18 23:07:04 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.111 2011/08/29 14:47:47 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,18 +81,19 @@ static char flgch[] = FLGCH;	/* list of all possible flags (pax) */
 static OPLIST *ophead = NULL;	/* head for format specific options -x */
 static OPLIST *optail = NULL;	/* option tail */
 
+static int opt_add(const char *);
 static int no_op(void);
 static void printflg(unsigned int);
 static int c_frmt(const void *, const void *);
 static off_t str_offt(char *);
 static char *get_line(FILE *fp);
 static void pax_options(int, char **);
-static void pax_usage(void);
+__dead static void pax_usage(void);
 static void tar_options(int, char **);
-static void tar_usage(void);
+__dead static void tar_usage(void);
 #ifndef NO_CPIO
 static void cpio_options(int, char **);
-static void cpio_usage(void);
+__dead static void cpio_usage(void);
 #endif
 
 /* errors from get_line */
@@ -2054,7 +2055,7 @@ str_offt(char *val)
 	return num;
 }
 
-char *
+static char *
 get_line(FILE *f)
 {
 	char *name, *temp;
@@ -2095,7 +2096,7 @@ no_op(void)
  *	print the usage summary to the user
  */
 
-void
+static void
 pax_usage(void)
 {
 	fprintf(stderr,
@@ -2124,7 +2125,7 @@ pax_usage(void)
  *	print the usage summary to the user
  */
 
-void
+static void
 tar_usage(void)
 {
 	(void)fputs("usage: tar [-]{crtux}[-befhjklmopqvwzHOPSXZ014578] [archive] "
@@ -2141,7 +2142,7 @@ tar_usage(void)
  *	print the usage summary to the user
  */
 
-void
+static void
 cpio_usage(void)
 {
 
