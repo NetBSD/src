@@ -1,4 +1,4 @@
-/*	$NetBSD: cmp.c,v 1.17 2009/04/11 12:16:12 lukem Exp $	*/
+/*	$NetBSD: cmp.c,v 1.18 2011/08/29 14:14:11 joerg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cmp.c,v 1.17 2009/04/11 12:16:12 lukem Exp $");
+__RCSID("$NetBSD: cmp.c,v 1.18 2011/08/29 14:14:11 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: cmp.c,v 1.17 2009/04/11 12:16:12 lukem Exp $");
 
 int	lflag, sflag;
 
-static void usage(void);
+__dead static void usage(void);
 
 int
 main(int argc, char *argv[])
