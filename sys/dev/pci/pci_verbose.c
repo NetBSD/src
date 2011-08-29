@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_verbose.c,v 1.7 2010/07/25 14:14:25 pgoyette Exp $	*/
+/*	$NetBSD: pci_verbose.c,v 1.8 2011/08/29 14:47:08 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.7 2010/07/25 14:14:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.8 2011/08/29 14:47:08 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.7 2010/07/25 14:14:25 pgoyette Exp
 #ifdef _KERNEL
 static int pciverbose_modcmd(modcmd_t, void *);
 
-MODULE(MODULE_CLASS_MISC, pciverbose, NULL);
+MODULE(MODULE_CLASS_MISC, pciverbose, "pci");
 
 static int
 pciverbose_modcmd(modcmd_t cmd, void *arg)

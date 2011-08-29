@@ -1,4 +1,4 @@
-/*	$$NetBSD: pwdog.c,v 1.4 2011/08/26 13:29:56 mbalmer Exp $ */
+/*	$$NetBSD: pwdog.c,v 1.5 2011/08/29 14:47:08 jmcneill Exp $ */
 /*	$OpenBSD: pwdog.c,v 1.7 2010/04/08 00:23:53 tedu Exp $ */
 
 /*
@@ -194,7 +194,7 @@ pwdog_tickle(struct sysmon_wdog *smw)
 }
 
 #ifdef _MODULE
-MODULE(MODULE_CLASS_DRIVER, pwdog, NULL);
+MODULE(MODULE_CLASS_DRIVER, pwdog, "pci");
 
 #include "ioconf.c"
 
