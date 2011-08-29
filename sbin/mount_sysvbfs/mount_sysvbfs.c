@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_sysvbfs.c,v 1.7 2008/09/04 12:07:58 pooka Exp $	*/
+/*	$NetBSD: mount_sysvbfs.c,v 1.8 2011/08/29 14:35:02 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mount_sysvbfs.c,v 1.7 2008/09/04 12:07:58 pooka Exp $");
+__RCSID("$NetBSD: mount_sysvbfs.c,v 1.8 2011/08/29 14:35:02 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,7 +62,7 @@ static const struct mntopt mopts[] = {
 	MOPT_NULL,
 };
 
-static void
+__dead static void
 sysvbfs_usage(void)
 {
 

@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.32 2010/12/14 17:46:21 pooka Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.33 2011/08/29 14:34:59 joerg Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.32 2010/12/14 17:46:21 pooka Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.33 2011/08/29 14:34:59 joerg Exp $");
 #endif
 
 #include <err.h>
@@ -114,7 +114,7 @@ static int	 verify_disklabel(int);
 static int	 verify_ffs(int);
 static int	 verify_reenter(struct params *);
 
-static void	 usage(void);
+__dead static void	 usage(void);
 
 /* Verbose Framework */
 unsigned	verbose = 0;
