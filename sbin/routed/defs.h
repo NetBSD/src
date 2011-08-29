@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.25 2009/10/26 02:53:15 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.26 2011/08/29 14:35:04 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -552,7 +552,7 @@ struct msg_limit {
 extern void	msglim(struct msg_limit *, naddr,
 		       const char *, ...) PATTRIB(3,4);
 #define	LOGERR(msg) msglog(msg ": %s", strerror(errno))
-extern void	logbad(int, const char *, ...) PATTRIB(2,3);
+__dead extern void	logbad(int, const char *, ...) PATTRIB(2,3);
 #define	BADERR(dump,msg) logbad(dump,msg ": %s", strerror(errno))
 #ifdef DEBUG
 #define	DBGERR(dump,msg) BADERR(dump,msg)

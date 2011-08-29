@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.65 2011/08/06 20:46:42 dholland Exp $	*/
+/*	$NetBSD: tape.c,v 1.66 2011/08/29 14:35:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.65 2011/08/06 20:46:42 dholland Exp $");
+__RCSID("$NetBSD: tape.c,v 1.66 2011/08/29 14:35:03 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ static void	 setdumpnum(void);
 static void	 terminateinput(void);
 static void	 xtrfile(char *, long);
 static void	 xtrlnkfile(char *, long);
-static void	 xtrlnkskip(char *, long);
+__dead static void	 xtrlnkskip(char *, long);
 static void	 xtrskip(char *, long);
 static void	 swap_header(struct s_spcl *);
 static void	 swap_old_header(struct s_ospcl *);

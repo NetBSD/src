@@ -1,4 +1,4 @@
-/* $NetBSD: bioctl.c,v 1.14 2011/05/25 15:34:19 joerg Exp $ */
+/* $NetBSD: bioctl.c,v 1.15 2011/08/29 14:34:58 joerg Exp $ */
 /* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.14 2011/05/25 15:34:19 joerg Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.15 2011/08/29 14:34:58 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -76,7 +76,7 @@ struct locator {
 	int lun;
 };
 
-static void 	usage(void);
+__dead static void 	usage(void);
 static void	bio_alarm(int, int, char **);
 static void	bio_show_common(int, int, char **);
 static int	bio_show_volumes(struct biotmp *);

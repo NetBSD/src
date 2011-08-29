@@ -1,4 +1,4 @@
-/* $NetBSD: mount_filecore.c,v 1.19 2008/08/05 20:57:45 pooka Exp $ */
+/* $NetBSD: mount_filecore.c,v 1.20 2011/08/29 14:35:01 joerg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -104,7 +104,7 @@ static const struct mntopt mopts[] = {
 };
 
 int	mount_filecore(int argc, char **argv);
-static void	usage(void);
+__dead static void	usage(void);
 
 #ifndef MOUNT_NOMAIN
 int
