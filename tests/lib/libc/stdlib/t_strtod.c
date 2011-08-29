@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.24 2011/07/08 05:10:05 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.25 2011/08/29 12:50:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.24 2011/07/08 05:10:05 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.25 2011/08/29 12:50:50 jruoho Exp $");
 
 #include <sys/utsname.h>
 
@@ -274,10 +274,6 @@ ATF_TC_BODY(strtod_round, tc)
 	 * May fail under QEMU; cf. PR misc/44767.
 	 */
 	ATF_REQUIRE(uname(&utsname) == 0);
-
-	if (strcmp(utsname.machine, "amd64") == 0 &&
-	    system("cpuctl identify 0 | grep -q QEMU") == 0)
-		atf_tc_expect_fail("PR misc/44767");
 
 	const char *val =
 	    "1.00000011920928977282585492503130808472633361816406";
