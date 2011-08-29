@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1666 2011/08/29 12:37:52 jruoho Exp $
+#	$NetBSD: mi,v 1.1667 2011/08/29 16:45:54 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3362,6 +3362,7 @@
 ./usr/libdata/debug/sbin/cgdconfig.debug	comp-sysutil-debug	crypto,debug
 ./usr/libdata/debug/sbin/chown.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/clri.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/devpubd.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dhclient.debug		comp-dhclient-debug	debug
 ./usr/libdata/debug/sbin/dhcpcd.debug		comp-dhcpcd-debug	debug
 ./usr/libdata/debug/sbin/disklabel.debug	comp-sysutil-debug	debug
