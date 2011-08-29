@@ -3,6 +3,8 @@ h_run()
 {
 	file="$(atf_get_srcdir)/tests/${1}"
 
+	export COLUMNS=80
+	export LINES=24
 	$(atf_get_srcdir)/director \
 	    -T $(atf_get_srcdir) \
 	    -t atf \
