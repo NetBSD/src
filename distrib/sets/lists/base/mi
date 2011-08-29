@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.950 2011/08/27 18:35:19 joerg Exp $
+# $NetBSD: mi,v 1.951 2011/08/29 11:38:48 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -183,18 +183,21 @@
 ./libdata/firmware/rum/rum-rt2573		base-firmware-root
 ./libdata/firmware/upgt				base-firmware-root
 ./libdata/firmware/zyd				base-firmware-root
-./libdata/firmware/zyd/zd1211-licence		base-obsolete	obsolete
+./libdata/firmware/zyd/zd1211-licence		base-obsolete			obsolete
 ./libdata/firmware/zyd/zd1211-license		base-firmware-root
 ./libdata/firmware/zyd/zyd-zd1211		base-firmware-root
 ./libdata/firmware/zyd/zyd-zd1211b		base-firmware-root
 ./libexec					base-sys-root
+./libexec/devpubd-hooks				base-sysutil-root
+./libexec/devpubd-hooks/01-makedev		base-sysutil-root
+./libexec/devpubd-run-hooks			base-sysutil-root
 ./libexec/dhcpcd-hooks				base-dhcpcd-root
 ./libexec/dhcpcd-hooks/01-test			base-dhcpcd-root
 ./libexec/dhcpcd-hooks/02-dump			base-dhcpcd-root
 ./libexec/dhcpcd-hooks/10-mtu			base-dhcpcd-root
-./libexec/dhcpcd-hooks/10-resolv.conf		base-obsolete obsolete
-./libexec/dhcpcd-hooks/14-lookup-hostname	base-obsolete obsolete
-./libexec/dhcpcd-hooks/15-hostname		base-obsolete obsolete
+./libexec/dhcpcd-hooks/10-resolv.conf		base-obsolete			obsolete
+./libexec/dhcpcd-hooks/14-lookup-hostname	base-obsolete			obsolete
+./libexec/dhcpcd-hooks/15-hostname		base-obsolete			obsolete
 ./libexec/dhcpcd-hooks/20-resolv.conf		base-dhcpcd-root
 ./libexec/dhcpcd-hooks/29-lookup-hostname	base-dhcpcd-root
 ./libexec/dhcpcd-hooks/30-hostname		base-dhcpcd-root
@@ -221,6 +224,7 @@
 ./sbin/chown					base-sysutil-root
 ./sbin/rump.cgdconfig				base-sysutil-root	crypto
 ./sbin/clri					base-sysutil-root
+./sbin/devpubd					base-sysutil-root
 ./sbin/dhclient					base-dhclient-root
 ./sbin/dhclient-script				base-dhclient-root
 ./sbin/dhcpcd					base-dhcpcd-root

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.90 2011/08/26 21:22:10 dyoung Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.91 2011/08/29 11:38:48 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -74,6 +74,7 @@
 ./libdata/firmware/zyd
 ./libexec
 ./libexec/dhcpcd-hooks
+./libexec/devpubd-hooks
 ./libexec/resolvconf
 ./mnt
 ./rescue
