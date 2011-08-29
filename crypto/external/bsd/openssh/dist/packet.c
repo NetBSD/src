@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.6 2011/07/25 03:03:10 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.7 2011/08/29 21:08:54 joerg Exp $	*/
 /* $OpenBSD: packet.c,v 1.172 2010/11/13 23:27:50 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.6 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.7 2011/08/29 21:08:54 joerg Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
@@ -251,7 +251,7 @@ packet_set_timeout(int timeout, int count)
 		active_state->packet_timeout_ms = timeout * count * 1000;
 }
 
-static void
+__dead static void
 packet_stop_discard(void)
 {
 	if (active_state->packet_discard_mac) {
