@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.12 2011/08/29 13:15:54 jmcneill Exp $ */
+/* $NetBSD: trap.c,v 1.13 2011/08/29 14:59:09 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.12 2011/08/29 13:15:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13 2011/08/29 14:59:09 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,11 +49,12 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.12 2011/08/29 13:15:54 jmcneill Exp $");
 //#include <machine/userret.h>
 
 
+/* forwards and externals */
 void setup_signal_handlers(void);
 static void mem_access_handler(int sig, siginfo_t *info, void *ctx);
 
-
-static struct sigaction sa;
+extern void pmap_get_current_protection(pmap_t pmap, vaddr_t va,
+	vm_prot_t *cur_prot, vm_prot_t *prot);
 extern int errno;
 
 void
@@ -64,6 +65,8 @@ startlwp(void *arg)
 void
 setup_signal_handlers(void)
 {
+	static struct sigaction sa;
+
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART | SA_SIGINFO;
 	sa.sa_sigaction = mem_access_handler;
@@ -84,7 +87,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	struct vmspace *vm;
 	struct vm_map *vm_map;
 	struct trapframe *tf;
-	vm_prot_t atype;
+	vm_prot_t cur_prot, prot, atype;
 	vaddr_t va;
 	vaddr_t onfault;
 	int kmem, rv;
@@ -104,7 +107,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		onfault = (vaddr_t) pcb->pcb_onfault;
 		vm = p->p_vmspace;
 
-#if 0
+#if 1
 		printf("SIGSEGV or SIGBUS!\n");
 		printf("\tsi_signo = %d\n", info->si_signo);
 		printf("\tsi_errno = %d\n", info->si_errno);
@@ -141,17 +144,39 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 			panic("peeing outside the box!");
 		}
 
-		/* XXX TODO determine atype?? */
-atype = PROT_READ;
-again:
-		pcb->pcb_onfault = NULL;
-		rv = uvm_fault(vm_map, (vaddr_t) va, atype);
-		pcb->pcb_onfault = (void *) onfault;
-if (rv) printf("uvm_fault rv = %d\n", rv);
-if (rv == EACCES) {
-	atype |= PROT_WRITE | PROT_EXEC;
-	goto again;
-}
+		/* determine accesstype */
+		pmap_get_current_protection(vm_map->pmap, va, &cur_prot, &prot);
+		rv = 0;
+		if ((prot == VM_PROT_NONE) && (cur_prot == VM_PROT_NONE)) {
+			/* not mapped in yet */
+printf("was not mapped in yet --> faulting read first\n");
+			pcb->pcb_onfault = NULL;
+			rv = uvm_fault(vm_map, (vaddr_t) va, VM_PROT_READ);
+			pcb->pcb_onfault = (void *) onfault;
+
+			/* update accesstypes */
+			pmap_get_current_protection(vm_map->pmap, va, &cur_prot, &prot);
+		}
+
+		/* if no error, its map-able */
+		if (rv == 0) {
+			atype = VM_PROT_NONE;			/* assume read */
+			if (prot & PROT_EXEC)
+				atype |= VM_PROT_EXECUTE;	/* could well be execute */
+			if ((prot & PROT_WRITE) && (cur_prot & VM_PROT_READ))
+				atype = VM_PROT_WRITE;	/* if it had write access */
+
+printf("%sva %p, prot = %d, cur_prot = %d ==> atype = %d\n", kmem?"kmem, ":"", (void *) va, prot, cur_prot, atype);
+			if (atype != VM_PROT_NONE) {
+				pcb->pcb_onfault = NULL;
+				rv = uvm_fault(vm_map, (vaddr_t) va, atype);
+				pcb->pcb_onfault = (void *) onfault;
+			}
+		}
+
+		if (rv)
+			aprint_debug("uvm_fault returned error %d\n", rv);
+
 		if (rv) {
 			/* something got wrong */
 			if (kmem) {
