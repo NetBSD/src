@@ -1,4 +1,4 @@
-/* $NetBSD: acpidump.c,v 1.4 2011/02/17 10:18:05 jmcneill Exp $ */
+/* $NetBSD: acpidump.c,v 1.5 2011/08/29 20:38:54 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpidump.c,v 1.4 2011/02/17 10:18:05 jmcneill Exp $");
+__RCSID("$NetBSD: acpidump.c,v 1.5 2011/08/29 20:38:54 joerg Exp $");
 
 
 #include <sys/param.h>
@@ -48,7 +48,7 @@ int	sflag;	/* Skip tables with bad checksums */
 int	tflag;	/* Dump contents of SDT tables */
 int	vflag;	/* Use verbose messages */
 
-static void
+__dead static void
 usage(void)
 {
 	const char *progname = getprogname();

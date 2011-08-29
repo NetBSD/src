@@ -1,4 +1,4 @@
-/*	$NetBSD: btpand.c,v 1.5 2009/05/13 03:21:41 christos Exp $	*/
+/*	$NetBSD: btpand.c,v 1.6 2011/08/29 20:38:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008-2009 Iain Hibbert. All rights reserved.");
-__RCSID("$NetBSD: btpand.c,v 1.5 2009/05/13 03:21:41 christos Exp $");
+__RCSID("$NetBSD: btpand.c,v 1.6 2011/08/29 20:38:55 joerg Exp $");
 
 #include <sys/wait.h>
 
@@ -78,9 +78,9 @@ static const struct {
 	},
 };
 
-static void main_exit(int);
+__dead static void main_exit(int);
 static void main_detach(void);
-static void usage(void);
+__dead static void usage(void);
 
 int
 main(int argc, char *argv[])

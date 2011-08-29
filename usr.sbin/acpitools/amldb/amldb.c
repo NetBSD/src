@@ -1,4 +1,4 @@
-/*	$NetBSD: amldb.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $	*/
+/*	$NetBSD: amldb.c,v 1.3 2011/08/29 20:38:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/amldb.c,v 1.3 2001/10/22 17:25:32 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: amldb.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $");
+__RCSID("$NetBSD: amldb.c,v 1.3 2011/08/29 20:38:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -145,7 +145,7 @@ load_dsdt(const char *dsdtfile)
 	return (0);
 }
 
-static void
+__dead static void
 usage(const char *progname)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: altqd.c,v 1.10 2011/08/16 12:39:29 christos Exp $	*/
+/*	$NetBSD: altqd.c,v 1.11 2011/08/29 20:38:54 joerg Exp $	*/
 /*	$KAME: altqd.c,v 1.10 2002/02/20 10:42:26 kjc Exp $	*/
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -79,7 +79,7 @@
 
 static volatile sig_atomic_t gotsig_hup, gotsig_int, gotsig_term;
 
-static void usage(void);
+__dead static void usage(void);
 static void sig_handler(int);
 
 static void

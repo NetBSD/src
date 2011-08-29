@@ -1,4 +1,4 @@
-/* $NetBSD: ac.c,v 1.23 2006/05/26 02:16:17 jnemeth Exp $ */
+/* $NetBSD: ac.c,v 1.24 2011/08/29 20:38:53 joerg Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ac.c,v 1.23 2006/05/26 02:16:17 jnemeth Exp $");
+__RCSID("$NetBSD: ac.c,v 1.24 2011/08/29 20:38:53 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -134,7 +134,7 @@ static void		show_today(struct user_list *, struct utmp_list *,
 static void		show_users(struct user_list *);
 static struct user_list	*update_user(struct user_list *, char *, time_t);
 static int		compare(const void *, const void *);
-static void		usage(void);
+__dead static void	usage(void);
 
 /*
  * open wtmp or die
