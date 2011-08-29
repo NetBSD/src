@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.23 2009/04/15 00:23:28 lukem Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.24 2011/08/29 20:38:54 joerg Exp $");
 #endif
 
 /*
@@ -114,7 +114,7 @@ PRIVATE void dovend_rfc1048(struct bootp *, struct host *, int32);
 PRIVATE void handle_reply(void);
 PRIVATE void handle_request(void);
 PRIVATE void sendreply(int forward, int32 dest_override);
-PRIVATE void usage(void);
+__dead PRIVATE void usage(void);
 int main(int, char **);
 
 /*

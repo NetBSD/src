@@ -1,4 +1,4 @@
-/*	$NetBSD: tbrconfig.c,v 1.3 2001/08/16 07:48:15 itojun Exp $	*/
+/*	$NetBSD: tbrconfig.c,v 1.4 2011/08/29 20:38:54 joerg Exp $	*/
 /*	$KAME: tbrconfig.c,v 1.3 2001/05/08 04:36:39 itojun Exp $	*/
 /*
  * Copyright (C) 2000
@@ -44,7 +44,7 @@
 
 #define	ALTQ_DEVICE	"/dev/altq/altq"
 
-static void usage(void);
+__dead static void usage(void);
 static u_long atobps(const char *s);
 static u_long atobytes(const char *s);
 static u_int size_bucket(const char *ifname, const u_int rate);
