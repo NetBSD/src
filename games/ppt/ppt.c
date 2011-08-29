@@ -1,4 +1,4 @@
-/*	$NetBSD: ppt.c,v 1.18 2009/08/12 08:24:20 dholland Exp $	*/
+/*	$NetBSD: ppt.c,v 1.19 2011/08/29 20:30:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)ppt.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: ppt.c,v 1.18 2009/08/12 08:24:20 dholland Exp $");
+__RCSID("$NetBSD: ppt.c,v 1.19 2011/08/29 20:30:37 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: ppt.c,v 1.18 2009/08/12 08:24:20 dholland Exp $");
 static void putppt(int);
 static int getppt(const char *);
 
-static void
+__dead static void
 usage(void)
 {
 	extern char *__progname;
@@ -127,8 +127,7 @@ main(int argc, char **argv)
 }
 
 static void
-putppt(c)
-	int c;
+putppt(int c)
 {
 	int i;
 

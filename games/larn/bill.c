@@ -1,4 +1,4 @@
-/*	$NetBSD: bill.c,v 1.10 2009/08/12 08:04:05 dholland Exp $	 */
+/*	$NetBSD: bill.c,v 1.11 2011/08/29 20:30:37 joerg Exp $	 */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)bill.c	5.2 (Berkeley) 5/28/91";
 #else
-__RCSID("$NetBSD: bill.c,v 1.10 2009/08/12 08:04:05 dholland Exp $");
+__RCSID("$NetBSD: bill.c,v 1.11 2011/08/29 20:30:37 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ static const char *mail[] = {
  */
 
 void
-mailbill()
+mailbill(void)
 {
 	int    i;
 	char   fname[32];
