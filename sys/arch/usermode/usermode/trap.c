@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.11 2011/08/29 12:42:19 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.12 2011/08/29 13:15:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.11 2011/08/29 12:42:19 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.12 2011/08/29 13:15:54 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,7 +91,10 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	static volatile int recurse = 0;
 
 	recurse++;
-	aprint_debug("trap\n");
+	aprint_debug("trap lwp=%p pid=%d lid=%d\n",
+	    curlwp,
+	    curlwp->l_proc->p_pid,
+	    curlwp->l_lid);
 	if (recurse > 1)
 		printf("enter trap recursion level %d\n", recurse);
 	if ((info->si_signo == SIGSEGV) || (info->si_signo == SIGBUS)) {
