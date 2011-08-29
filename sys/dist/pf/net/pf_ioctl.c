@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.43 2011/01/19 19:58:02 drochner Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.44 2011/08/29 09:50:04 jmcneill Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.43 2011/01/19 19:58:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.44 2011/08/29 09:50:04 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1370,7 +1370,6 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 		struct pfioc_rule	*pr = (struct pfioc_rule *)addr;
 		struct pf_ruleset	*ruleset;
 		struct pf_rule		*rule, *tail;
-		struct pf_pooladdr	*pa;
 		int			 rs_num;
 
 		pr->anchor[sizeof(pr->anchor) - 1] = 0;
@@ -1830,20 +1829,20 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 	}
 
 	case DIOCCLRSTATES: {
-		struct pf_state		*s, *nexts;
+		struct pf_state		*ps, *nexts;
 		struct pfioc_state_kill *psk = (struct pfioc_state_kill *)addr;
 		int			 killed = 0;
 
-		for (s = RB_MIN(pf_state_tree_id, &tree_id); s; s = nexts) {
-			nexts = RB_NEXT(pf_state_tree_id, &tree_id, s);
+		for (ps = RB_MIN(pf_state_tree_id, &tree_id); ps; ps = nexts) {
+			nexts = RB_NEXT(pf_state_tree_id, &tree_id, ps);
 
 			if (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
-			    s->kif->pfik_name)) {
+			    ps->kif->pfik_name)) {
 #if NPFSYNC
 				/* don't send out individual delete messages */
-				s->sync_flags = PFSTATE_NOSYNC;
+				ps->sync_flags = PFSTATE_NOSYNC;
 #endif
-				pf_unlink_state(s);
+				pf_unlink_state(ps);
 				killed++;
 			}
 		}
@@ -1855,16 +1854,16 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 	}
 
 	case DIOCKILLSTATES: {
-		struct pf_state		*s, *nexts;
+		struct pf_state		*ps, *nexts;
 		struct pf_state_key	*sk;
 		struct pf_state_host	*src, *dst;
 		struct pfioc_state_kill	*psk = (struct pfioc_state_kill *)addr;
 		int			 killed = 0;
 
-		for (s = RB_MIN(pf_state_tree_id, &tree_id); s;
-		    s = nexts) {
-			nexts = RB_NEXT(pf_state_tree_id, &tree_id, s);
-			sk = s->state_key;
+		for (ps = RB_MIN(pf_state_tree_id, &tree_id); ps;
+		    ps = nexts) {
+			nexts = RB_NEXT(pf_state_tree_id, &tree_id, ps);
+			sk = ps->state_key;
 
 			if (sk->direction == PF_OUT) {
 				src = &sk->lan;
@@ -1893,13 +1892,13 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 			    psk->psk_dst.port[0], psk->psk_dst.port[1],
 			    dst->port)) &&
 			    (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
-			    s->kif->pfik_name))) {
+			    ps->kif->pfik_name))) {
 #if NPFSYNC > 0
 				/* send immediate delete of state */
-				pfsync_delete_state(s);
-				s->sync_flags |= PFSTATE_NOSYNC;
+				pfsync_delete_state(ps);
+				ps->sync_flags |= PFSTATE_NOSYNC;
 #endif
-				pf_unlink_state(s);
+				pf_unlink_state(ps);
 				killed++;
 			}
 		}
@@ -1945,22 +1944,22 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 
 	case DIOCGETSTATE: {
 		struct pfioc_state	*ps = (struct pfioc_state *)addr;
-		struct pf_state		*s;
+		struct pf_state		*pfs;
 		u_int32_t		 nr;
 
 		nr = 0;
-		RB_FOREACH(s, pf_state_tree_id, &tree_id) {
+		RB_FOREACH(pfs, pf_state_tree_id, &tree_id) {
 			if (nr >= ps->nr)
 				break;
 			nr++;
 		}
-		if (s == NULL) {
+		if (pfs == NULL) {
 			error = EBUSY;
 			break;
 		}
 
 		pf_state_export((struct pfsync_state *)&ps->state,
-		    s->state_key, s);
+		    pfs->state_key, pfs);
 		break;
 	}
 
@@ -2006,9 +2005,9 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 	}
 
 	case DIOCGETSTATUS: {
-		struct pf_status *s = (struct pf_status *)addr;
-		bcopy(&pf_status, s, sizeof(struct pf_status));
-		pfi_fill_oldstatus(s);
+		struct pf_status *ps = (struct pf_status *)addr;
+		bcopy(&pf_status, ps, sizeof(struct pf_status));
+		pfi_fill_oldstatus(ps);
 		break;
 	}
 
@@ -3136,7 +3135,7 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 
 	case DIOCKILLSRCNODES: {
 		struct pf_src_node	*sn;
-		struct pf_state		*s;
+		struct pf_state		*ps;
 		struct pfioc_src_node_kill *psnk = \
 			(struct pfioc_src_node_kill *) addr;
 		int			killed = 0;
@@ -3152,12 +3151,12 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 				      &sn->raddr, sn->af)) {
 				/* Handle state to src_node linkage */
 				if (sn->states != 0) {
-					RB_FOREACH(s, pf_state_tree_id, 
+					RB_FOREACH(ps, pf_state_tree_id, 
 					    &tree_id) {
-						if (s->src_node == sn)
-							s->src_node = NULL;
-						if (s->nat_src_node == sn)
-							s->nat_src_node = NULL;
+						if (ps->src_node == sn)
+							ps->src_node = NULL;
+						if (ps->nat_src_node == sn)
+							ps->nat_src_node = NULL;
 					}
 					sn->states = 0;
 				}
@@ -3174,12 +3173,12 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 	}
 
 	case DIOCSETHOSTID: {
-		u_int32_t	*hostid = (u_int32_t *)addr;
+		u_int32_t	*hid = (u_int32_t *)addr;
 
-		if (*hostid == 0)
+		if (*hid == 0)
 			pf_status.hostid = arc4random();
 		else
-			pf_status.hostid = *hostid;
+			pf_status.hostid = *hid;
 		break;
 	}
 

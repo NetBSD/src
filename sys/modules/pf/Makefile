@@ -1,11 +1,10 @@
-# $NetBSD: Makefile,v 1.2 2011/08/28 15:40:50 jmcneill Exp $
+# $NetBSD: Makefile,v 1.3 2011/08/29 09:50:04 jmcneill Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/dist/pf/net ${S}/dist/pf/netinet
 
 KMOD=   pf
-WARNS=	1
 
 SRCS=	if_compat.c
 SRCS+=	if_pflog.c
