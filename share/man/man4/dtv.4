@@ -1,4 +1,4 @@
-.\" $NetBSD: dtv.4,v 1.2 2011/08/14 20:42:09 wiz Exp $
+.\" $NetBSD: dtv.4,v 1.3 2011/08/29 10:41:10 jruoho Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Os
 .Sh NAME
 .Nm dtv
-.Nd DVB (digital video broadcasting) programming interface
+.Nd interface for digital television
 .Sh SYNOPSIS
 .Cd "dtv* at dtvbus?"
 .Pp
@@ -40,38 +40,63 @@
 .In dev/dtv/dtvio_demux.h
 .In dev/dtv/dtvio_frontend.h
 .Sh DESCRIPTION
-The
+The machine-independent
 .Nm
-driver provides support for a subset of the Linux DVB (digital
-video broadcasting) APIs; in particular,
+interface provides support for digital television
+.Pq Dv DTV .
+A subset of the Linux Digital Video Broadcasting
+.Pq Dv DVB
+.Dv APIs
+is supported.
+In particular,
 .Nm
-provides the DVB Frontend API and the DVB Demux Device.
+provides the DVB frontend and demodulator
+.Dv APIs .
+.Sh SUPPORTED DEVICES
+The following machine-independent devices are supported:
+.Bl -tag -width "auvitek(4) " -offset indent
+.It Xr auvitek 4
+Auvitek AU0828-based video capture cards
+.It Xr coram 4
+Hauppauge WinTV-HVR-1250
+.It Xr xdtv 4
+Conexant CX2388X-based DTV cards
+.It Xr emdtv 4
+EM28XX-based DTV cards
+.El
+.Pp
+Note that the
+.Nm
+device drivers are generally only available as kernel modules; see
+.Xr module 7
+and
+.Xr modload 8
+for additional details.
 .Sh FILES
 .Bl -tag -width 28n
 .It Pa /dev/dvb/adapterN/frontend0
 The frontend device, for controlling the tuner and demodulator hardware.
 .It Pa /dev/dvb/adapterN/demux0
-The demux device, for controlling the DVB hardware's filters.
+The demux device, for controlling the hardware filters.
 .It Pa /dev/dvb/adapterN/dvr0
-Digital video recording device
+Digital video recording device.
 .El
 .Sh SEE ALSO
-.Xr auvitek 4 ,
-.Xr coram 4 ,
-.Xr cxdtv 4 ,
-.Xr emdtv 4 ,
+.Xr video 9
+.Pp
 .Pa pkgsrc/multimedia/dvb-apps ,
 .Pa pkgsrc/multimedia/mplayer ,
-.Pa http://linuxtv.org/downloads/v4l-dvb-apis/dvbapi.html
+.Rs
+.%T Linux Media Infrastructure API.
+.%T Part II. Linux DVB API
+.%D 2011
+.%U http://linuxtv.org/downloads/v4l-dvb-apis/dvbapi.html
+.Re
 .Sh HISTORY
 The
 .Nm
-device driver first appeared in
+interface first appeared in
 .Nx 6.0 .
 .Sh AUTHORS
-.An -nosplit
-The
-.Nm
-driver was written by
 .An Jared D. McNeill
-.Aq jmcneill@NetBSD.org .
+.Aq jmcneill@invisible.ca
