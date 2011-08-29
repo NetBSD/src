@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.5 2011/02/08 21:59:50 plunky Exp $	*/
+/*	$NetBSD: client.c,v 1.6 2011/08/29 20:38:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: client.c,v 1.5 2011/02/08 21:59:50 plunky Exp $");
+__RCSID("$NetBSD: client.c,v 1.6 2011/08/29 20:38:55 joerg Exp $");
 
 #include <bluetooth.h>
 #include <errno.h>
@@ -36,7 +36,7 @@ __RCSID("$NetBSD: client.c,v 1.5 2011/02/08 21:59:50 plunky Exp $");
 #include "btpand.h"
 #include "bnep.h"
 
-static void client_down(channel_t *);
+__dead static void client_down(channel_t *);
 static void client_query(void);
 
 void

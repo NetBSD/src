@@ -1,4 +1,4 @@
-/*	$NetBSD: altqstat.c,v 1.7 2006/10/28 11:43:02 peter Exp $	*/
+/*	$NetBSD: altqstat.c,v 1.8 2011/08/29 20:38:54 joerg Exp $	*/
 /*	$KAME: altqstat.c,v 1.8 2002/10/27 03:19:35 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -55,9 +55,9 @@ char *qdisc_name = NULL;
 
 stat_loop_t *stat_loop;
 
-static void sig_handler(int);
+__dead static void sig_handler(int);
 static void alrm_handler(int);
-static void usage(void);
+__dead static void usage(void);
 
 static void
 sig_handler(int sig)

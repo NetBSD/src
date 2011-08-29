@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.29 2009/04/15 00:40:01 lukem Exp $       */
+/*      $NetBSD: catman.c,v 1.30 2011/08/29 20:38:55 joerg Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,6 @@ int dowhatis = 0;
 
 TAG *defp;	/* pointer to _default list */
 
-int		main(int, char * const *);
 static void	setdefentries(char *, char *, const char *);
 static void	uniquepath(void);
 static void	catman(void);
@@ -70,7 +69,7 @@ static void	setcatsuffix(char *, const char *, const char *);
 static void	makecat(const char *, const char *, const char *, const char *);
 static void	makewhatis(void);
 static void	dosystem(const char *);
-static void	usage(void);
+__dead static void	usage(void);
 
 
 int
