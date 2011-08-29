@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 2011/08/28 07:45:13 christos Exp $
+#	$NetBSD: Makefile,v 1.65 2011/08/29 12:37:53 jruoho Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -79,5 +79,6 @@ MLINKS+=efun.3 evasprintf.3
 MLINKS+=stat_flags.3 string_to_flags.3
 MLINKS+=stat_flags.3 flags_to_string.3
 MLINKS+=snprintb.3 snprintb_m.3
+MLINKS+=util.3 libutil.3
 
 .include <bsd.lib.mk>
