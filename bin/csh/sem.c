@@ -1,4 +1,4 @@
-/* $NetBSD: sem.c,v 1.28 2007/07/16 18:26:10 christos Exp $ */
+/* $NetBSD: sem.c,v 1.29 2011/08/29 14:51:17 joerg Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sem.c,v 1.28 2007/07/16 18:26:10 christos Exp $");
+__RCSID("$NetBSD: sem.c,v 1.29 2011/08/29 14:51:17 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: sem.c,v 1.28 2007/07/16 18:26:10 christos Exp $");
 #include "extern.h"
 #include "proc.h"
 
-static void vffree(int);
+__dead static void vffree(int);
 static Char *splicepipe(struct command *t, Char *);
 static void doio(struct command *t, int *, int *);
 static void chkclob(char *);

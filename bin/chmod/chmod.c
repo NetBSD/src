@@ -1,4 +1,4 @@
-/* $NetBSD: chmod.c,v 1.35 2010/01/22 05:41:36 snj Exp $ */
+/* $NetBSD: chmod.c,v 1.36 2011/08/29 14:51:17 joerg Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.35 2010/01/22 05:41:36 snj Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.36 2011/08/29 14:51:17 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,8 +58,7 @@ __RCSID("$NetBSD: chmod.c,v 1.35 2010/01/22 05:41:36 snj Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int	main(int, char *[]);
-void	usage(void);
+__dead static void	usage(void);
 
 int
 main(int argc, char *argv[])
@@ -203,7 +202,7 @@ done:	argv += optind;
 	/* NOTREACHED */
 }
 
-void
+static void
 usage(void)
 {
 	(void)fprintf(stderr,
