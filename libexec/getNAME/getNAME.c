@@ -1,4 +1,4 @@
-/*	$NetBSD: getNAME.c,v 1.26 2008/07/20 01:09:07 lukem Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.27 2011/08/29 20:41:06 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, Christos Zoulas.  All rights reserved.
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.26 2008/07/20 01:09:07 lukem Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.27 2011/08/29 20:41:06 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ static void remcomma(char *, size_t *);
 static void remquote(char *, size_t *);
 static void fixxref(char *, size_t *);
 static void split(char *, char *);
-static void usage(void);
+__dead static void usage(void);
 
 int main(int, char *[]);
 

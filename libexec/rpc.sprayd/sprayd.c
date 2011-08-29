@@ -1,4 +1,4 @@
-/*	$NetBSD: sprayd.c,v 1.15 2009/10/21 01:07:46 snj Exp $	*/
+/*	$NetBSD: sprayd.c,v 1.16 2011/08/29 20:41:06 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sprayd.c,v 1.15 2009/10/21 01:07:46 snj Exp $");
+__RCSID("$NetBSD: sprayd.c,v 1.16 2011/08/29 20:41:06 joerg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -40,11 +40,9 @@ __RCSID("$NetBSD: sprayd.c,v 1.15 2009/10/21 01:07:46 snj Exp $");
 #include <rpc/rpc.h>
 #include <rpcsvc/spray.h>
 
-static void cleanup(int);
-static void die(int);
+__dead static void cleanup(int);
+__dead static void die(int);
 static void spray_service(struct svc_req *, SVCXPRT *);
-
-int main(int, char *[]);
 
 static int from_inetd = 1;
 

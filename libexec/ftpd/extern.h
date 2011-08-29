@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.61 2009/07/13 19:05:40 roy Exp $	*/
+/*	$NetBSD: extern.h,v 1.62 2011/08/29 20:41:06 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -124,8 +124,8 @@ FILE   *dataconn(const char *, off_t, const char *);
 void	delete(const char *);
 int	display_file(const char *, int);
 const char **do_conversion(const char *);
-void	dologout(int);
-void	fatal(const char *);
+__dead void	dologout(int);
+__dead void	fatal(const char *);
 void	feat(void);
 void	format_path(char *, const char *);
 int	ftpd_pclose(FILE *);

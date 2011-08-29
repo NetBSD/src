@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.38 2010/04/29 20:13:46 hubertf Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.39 2011/08/29 20:41:07 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.38 2010/04/29 20:13:46 hubertf Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.39 2011/08/29 20:41:07 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,13 +115,13 @@ struct formats;
 
 static const char *errtomsg(int);
 static void	nak(int);
-static void	tftp(struct tftphdr *, int);
-static void	usage(void) __attribute__((__noreturn__));
+__dead static void	tftp(struct tftphdr *, int);
+__dead static void	usage(void);
 static char	*verifyhost(struct sockaddr *);
-static void	justquit(int);
+__dead static void	justquit(int);
 static void	recvfile(struct formats *, int, int);
 static void	sendfile(struct formats *, int, int);
-static void	timer(int);
+__dead static void	timer(int);
 static const char *opcode(int);
 static int	validate_access(char **, int);
 

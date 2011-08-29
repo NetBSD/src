@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.118 2011/07/04 08:07:30 manu Exp $	*/
+/*	$NetBSD: puffs.h,v 1.119 2011/08/29 20:48:36 joerg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -615,7 +615,7 @@ void	puffs_set_namemod(struct puffs_usermount *, pu_namemod_fn);
 void	puffs_set_errnotify(struct puffs_usermount *, pu_errnotify_fn);
 void	puffs_kernerr_log(struct puffs_usermount *, uint8_t, int,
 			  const char *, puffs_cookie_t);
-void	puffs_kernerr_abort(struct puffs_usermount *, uint8_t, int,
+__dead void	puffs_kernerr_abort(struct puffs_usermount *, uint8_t, int,
 			    const char *, puffs_cookie_t);
 void	puffs_set_prepost(struct puffs_usermount *,
 			  pu_prepost_fn, pu_prepost_fn);
