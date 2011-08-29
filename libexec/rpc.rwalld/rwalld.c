@@ -1,4 +1,4 @@
-/* $NetBSD: rwalld.c,v 1.20 2006/05/09 20:18:07 mrg Exp $ */
+/* $NetBSD: rwalld.c,v 1.21 2011/08/29 20:41:06 joerg Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rwalld.c,v 1.20 2006/05/09 20:18:07 mrg Exp $");
+__RCSID("$NetBSD: rwalld.c,v 1.21 2011/08/29 20:41:06 joerg Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
@@ -64,9 +64,7 @@ static int from_inetd = 1;
 static void cleanup(int);
 static void wallprog_1(struct svc_req *, SVCXPRT *);
 
-int main(int, char *[]);
-
-static void
+__dead static void
 cleanup(int n)
 {
 

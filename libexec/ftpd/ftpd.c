@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.194 2009/07/13 19:05:40 roy Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.195 2011/08/29 20:41:06 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.194 2009/07/13 19:05:40 roy Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.195 2011/08/29 20:41:06 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -249,9 +249,9 @@ static char	*gunique(const char *);
 static void	 login_utmp(const char *, const char *, const char *,
 		     struct sockinet *);
 static void	 logremotehost(struct sockinet *);
-static void	 lostconn(int);
-static void	 toolong(int);
-static void	 sigquit(int);
+__dead static void	 lostconn(int);
+__dead static void	 toolong(int);
+__dead static void	 sigquit(int);
 static void	 sigurg(int);
 static int	 handleoobcmd(void);
 static int	 receive_data(FILE *, FILE *);
