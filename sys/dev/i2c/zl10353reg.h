@@ -1,4 +1,4 @@
-/*	$NetBSD */
+/*	$NetBSD: zl10353reg.h,v 1.2 2011/08/29 11:16:36 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.

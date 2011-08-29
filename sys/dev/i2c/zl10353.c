@@ -1,4 +1,4 @@
-/*	$NetBSD */
+/*	$NetBSD: zl10353.c,v 1.2 2011/08/29 11:16:35 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zl10353.c,v 1.1 2011/08/29 11:14:15 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zl10353.c,v 1.2 2011/08/29 11:16:35 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
