@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.7 2011/08/09 01:42:24 jmcneill Exp $ */
+/* $NetBSD: cxdtv.c,v 1.8 2011/08/29 14:47:08 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.7 2011/08/09 01:42:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.8 2011/08/29 14:47:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1164,7 +1164,7 @@ cxdtv_card_init_hd5500(struct cxdtv_softc *sc)
 	delay(200000);
 }
 
-MODULE(MODULE_CLASS_DRIVER, cxdtv, "tvpll,nxt2k,lg3303");
+MODULE(MODULE_CLASS_DRIVER, cxdtv, "tvpll,nxt2k,lg3303,pci");
 
 #ifdef _MODULE
 #include "ioconf.c"
