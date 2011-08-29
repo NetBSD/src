@@ -1,4 +1,4 @@
-/*	$NetBSD: biff.c,v 1.10 2008/07/21 14:19:21 lukem Exp $	*/
+/*	$NetBSD: biff.c,v 1.11 2011/08/29 14:24:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)biff.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: biff.c,v 1.10 2008/07/21 14:19:21 lukem Exp $");
+__RCSID("$NetBSD: biff.c,v 1.11 2011/08/29 14:24:03 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: biff.c,v 1.10 2008/07/21 14:19:21 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-static void usage(void);
+__dead static void usage(void);
 
 int
 main(int argc, char *argv[])

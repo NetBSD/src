@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.29 2011/08/14 13:41:17 christos Exp $	*/
+/*	$NetBSD: at.c,v 1.30 2011/08/29 14:24:03 joerg Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -72,7 +72,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 #if 0
 static char rcsid[] = "$OpenBSD: at.c,v 1.15 1998/06/03 16:20:26 deraadt Exp $";
 #else
-__RCSID("$NetBSD: at.c,v 1.29 2011/08/14 13:41:17 christos Exp $");
+__RCSID("$NetBSD: at.c,v 1.30 2011/08/29 14:24:03 joerg Exp $");
 #endif
 #endif
 
@@ -91,8 +91,8 @@ char atverify = 0;		/* verify time instead of queuing job */
 
 /* Function declarations */
 
-static void sigc	(int);
-static void alarmc	(int);
+__dead static void sigc	(int);
+__dead static void alarmc	(int);
 static char *cwdname	(void);
 static int  nextjob	(void);
 static void writefile	(time_t, unsigned char);
