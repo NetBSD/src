@@ -1,4 +1,4 @@
-/* $NetBSD: mt.c,v 1.46 2008/07/20 00:52:40 lukem Exp $ */
+/* $NetBSD: mt.c,v 1.47 2011/08/29 14:46:01 joerg Exp $ */
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.46 2008/07/20 00:52:40 lukem Exp $");
+__RCSID("$NetBSD: mt.c,v 1.47 2011/08/29 14:46:01 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ struct commands {
 };
 
 #define CMD(a)	a, sizeof(a) - 1
-const struct commands com[] = {
+static const struct commands com[] = {
 	{ CMD("asf"),		MTIOCTOP,     MTASF,      1,  0 },
 	{ CMD("blocksize"),	MTIOCTOP,     MTSETBSIZ,  1,  0 },
 	{ CMD("bsf"),		MTIOCTOP,     MTBSF,      1,  1 },
@@ -104,10 +104,9 @@ const struct commands com[] = {
 	{ .c_name = NULL }
 };
 
-void printreg(const char *, u_int, const char *);
-void status(struct mtget *);
-void usage(void);
-int main(int, char *[]);
+static void printreg(const char *, u_int, const char *);
+static void status(struct mtget *);
+__dead static void usage(void);
 
 int
 main(int argc, char *argv[])
@@ -234,7 +233,7 @@ main(int argc, char *argv[])
 #include <tahoe/vba/cyreg.h>
 #endif
 
-const struct tape_desc {
+static const struct tape_desc {
 	short	t_type;		/* type of magtape device */
 	const	char *t_name;	/* printing name */
 	const	char *t_dsbits;	/* "drive status" register */
@@ -256,7 +255,7 @@ const struct tape_desc {
 /*
  * Interpret the status buffer returned
  */
-void
+static void
 status(struct mtget *bp)
 {
 	const struct tape_desc *mt;
@@ -287,7 +286,7 @@ status(struct mtget *bp)
 /*
  * Print a register a la the %b format of the kernel's printf.
  */
-void
+static void
 printreg(const char *s, u_int v, const char *bits)
 {
 	int any, i;
@@ -315,7 +314,7 @@ printreg(const char *s, u_int v, const char *bits)
 	}
 }
 
-void
+static void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-f device] command [count]\n",
