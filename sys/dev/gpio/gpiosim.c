@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.11 2011/08/28 11:36:17 jmcneill Exp $ */
+/* $NetBSD: gpiosim.c,v 1.12 2011/08/29 15:14:04 mbalmer Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -219,9 +219,9 @@ gpiosim_pin_ctl(void *arg, int pin, int flags)
 	sc->sc_gpio_pins[pin].pin_flags = flags;
 }
 
-#ifdef _MODULE
 MODULE(MODULE_CLASS_DRIVER, gpiosim, "gpio");
 
+#ifdef _MODULE
 static const struct cfiattrdata gpiobus_iattrdata = {
 	"gpiobus", 0, { { NULL, NULL, 0 },}
 };
@@ -247,14 +247,17 @@ static struct cfdata gpiosim_cfdata[] = {
 	},
 	{ NULL, NULL, 0, FSTATE_NOTFOUND, NULL, 0, NULL }
 };
+#endif
 
 static int
 gpiosim_modcmd(modcmd_t cmd, void *opaque)
 {
+#ifdef _MODULE
 	int error = 0;
-
+#endif
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
 		error = config_cfdriver_attach(&gpiosim_cd);
 		if (error)
 			return error;
@@ -276,15 +279,18 @@ gpiosim_modcmd(modcmd_t cmd, void *opaque)
 			    gpiosim_cd.cd_name);
 			return error;
 		}
-		(void)config_attach_pseudo(gpiosim_cfdata);
+		config_attach_pseudo(gpiosim_cfdata);
+#endif
 		return 0;
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
 		error = config_cfdata_detach(gpiosim_cfdata);
 		if (error)
 			return error;
 
 		config_cfattach_detach(gpiosim_cd.cd_name, &gpiosim_ca);
 		config_cfdriver_detach(&gpiosim_cd);
+#endif
 		return 0;
 	case MODULE_CMD_AUTOUNLOAD:
 		/* no auto-unload */
@@ -293,4 +299,3 @@ gpiosim_modcmd(modcmd_t cmd, void *opaque)
 		return ENOTTY;
 	}
 }
-#endif
