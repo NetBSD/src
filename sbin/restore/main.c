@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 2008/07/20 01:20:23 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2011/08/29 14:35:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.33 2008/07/20 01:20:23 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 2011/08/29 14:35:03 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ int	dotflag = 0;
 FILE *Mtreefile = NULL;
 
 static	void obsolete(int *, char **[]);
-static	void usage(void);
+__dead static	void usage(void);
 
 int
 main(int argc, char *argv[])

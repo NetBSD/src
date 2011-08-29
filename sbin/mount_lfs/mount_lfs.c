@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.33 2008/08/05 20:57:45 pooka Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.34 2011/08/29 14:35:01 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.33 2008/08/05 20:57:45 pooka Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.34 2011/08/29 14:35:01 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,10 +71,10 @@ static const struct mntopt mopts[] = {
 	MOPT_NULL,
 };
 
-static void	usage(void);
+__dead static void	usage(void);
 
 #ifdef WANT_CLEANER
-static void	invoke_cleaner(char *);
+__dead static void	invoke_cleaner(char *);
 static void	kill_daemon(char *);
 static void	kill_cleaner(char *);
 #endif /* WANT_CLEANER */
