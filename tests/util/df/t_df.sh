@@ -1,4 +1,4 @@
-# $NetBSD: t_df.sh,v 1.9 2011/08/29 04:55:58 gson Exp $
+# $NetBSD: t_df.sh,v 1.10 2011/08/29 17:31:41 gson Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -91,51 +91,51 @@ hflag_head() {
 }
 hflag_body() {
 	cat >expout <<EOF
-Filesystem        Size       Used      Avail %Cap Mounted on
-filer:/           1.1T       132M       1.1T   0% /filer
-filer:/           1.1T         0B       1.1T   0% /filer
-filer:/           1.1T       229G       918G  20% /filer
-filer:/           1.1T       688G       459G  60% /filer
-filer:/           1.1T       1.1T        57G  95% /filer
-filer:/           1.1T       1.1T         0B 100% /filer
-filer:/           1.1T         0B       1.1T   0% /filer
-filer:/           1.1T       229G       860G  21% /filer
-filer:/           1.1T       688G       401G  63% /filer
-filer:/           1.1T       1.1T         0B 100% /filer
-filer:/           1.1T       1.1T       -57G 105% /filer
-filer:/           1.1T         0B       1.0T   0% /filer
-filer:/           1.1T       229G       803G  22% /filer
-filer:/           1.1T       688G       344G  66% /filer
-filer:/           1.1T       1.1T       -57G 105% /filer
-filer:/           1.1T       1.1T      -115G 111% /filer
-filer:/           1.1T         0B       975G   0% /filer
-filer:/           1.1T       229G       746G  23% /filer
-filer:/           1.1T       688G       287G  70% /filer
-filer:/           1.1T       1.1T      -115G 111% /filer
-filer:/           1.1T       1.1T      -172G 117% /filer
-/dev/ld0g         1.2T        17G       1.1T   1% /anon-root
-/dev/ld0g         1.2T         0B       1.2T   0% /anon-root
-/dev/ld0g         1.2T       250G       998G  20% /anon-root
-/dev/ld0g         1.2T       749G       499G  60% /anon-root
-/dev/ld0g         1.2T       1.2T        62G  95% /anon-root
-/dev/ld0g         1.2T       1.2T         0B 100% /anon-root
-/dev/ld0g         1.2T         0B       1.2T   0% /anon-root
-/dev/ld0g         1.2T       250G       936G  21% /anon-root
-/dev/ld0g         1.2T       749G       437G  63% /anon-root
-/dev/ld0g         1.2T       1.2T         0B 100% /anon-root
-/dev/ld0g         1.2T       1.2T       -62G 105% /anon-root
-/dev/ld0g         1.2T         0B       1.1T   0% /anon-root
-/dev/ld0g         1.2T       250G       874G  22% /anon-root
-/dev/ld0g         1.2T       749G       374G  66% /anon-root
-/dev/ld0g         1.2T       1.2T       -62G 105% /anon-root
-/dev/ld0g         1.2T       1.2T      -125G 111% /anon-root
-/dev/ld0g         1.2T         0B       1.0T   0% /anon-root
-/dev/ld0g         1.2T       250G       811G  23% /anon-root
-/dev/ld0g         1.2T       749G       312G  70% /anon-root
-/dev/ld0g         1.2T       1.2T      -125G 111% /anon-root
-/dev/ld0g         1.2T       1.2T      -187G 117% /anon-root
-/dev/strpct        20T        10T        10T  50% /strpct
-/dev/wd0e          10G       2.7G       7.3G  27% /mount/windows/C
+Filesystem         Size       Used      Avail %Cap Mounted on
+filer:/            1.1T       132M       1.1T   0% /filer
+filer:/            1.1T         0B       1.1T   0% /filer
+filer:/            1.1T       229G       918G  20% /filer
+filer:/            1.1T       688G       459G  60% /filer
+filer:/            1.1T       1.1T        57G  95% /filer
+filer:/            1.1T       1.1T         0B 100% /filer
+filer:/            1.1T         0B       1.1T   0% /filer
+filer:/            1.1T       229G       860G  21% /filer
+filer:/            1.1T       688G       401G  63% /filer
+filer:/            1.1T       1.1T         0B 100% /filer
+filer:/            1.1T       1.1T       -57G 105% /filer
+filer:/            1.1T         0B       1.0T   0% /filer
+filer:/            1.1T       229G       803G  22% /filer
+filer:/            1.1T       688G       344G  66% /filer
+filer:/            1.1T       1.1T       -57G 105% /filer
+filer:/            1.1T       1.1T      -115G 111% /filer
+filer:/            1.1T         0B       975G   0% /filer
+filer:/            1.1T       229G       746G  23% /filer
+filer:/            1.1T       688G       287G  70% /filer
+filer:/            1.1T       1.1T      -115G 111% /filer
+filer:/            1.1T       1.1T      -172G 117% /filer
+/dev/ld0g          1.2T        17G       1.1T   1% /anon-root
+/dev/ld0g          1.2T         0B       1.2T   0% /anon-root
+/dev/ld0g          1.2T       250G       998G  20% /anon-root
+/dev/ld0g          1.2T       749G       499G  60% /anon-root
+/dev/ld0g          1.2T       1.2T        62G  95% /anon-root
+/dev/ld0g          1.2T       1.2T         0B 100% /anon-root
+/dev/ld0g          1.2T         0B       1.2T   0% /anon-root
+/dev/ld0g          1.2T       250G       936G  21% /anon-root
+/dev/ld0g          1.2T       749G       437G  63% /anon-root
+/dev/ld0g          1.2T       1.2T         0B 100% /anon-root
+/dev/ld0g          1.2T       1.2T       -62G 105% /anon-root
+/dev/ld0g          1.2T         0B       1.1T   0% /anon-root
+/dev/ld0g          1.2T       250G       874G  22% /anon-root
+/dev/ld0g          1.2T       749G       374G  66% /anon-root
+/dev/ld0g          1.2T       1.2T       -62G 105% /anon-root
+/dev/ld0g          1.2T       1.2T      -125G 111% /anon-root
+/dev/ld0g          1.2T         0B       1.0T   0% /anon-root
+/dev/ld0g          1.2T       250G       811G  23% /anon-root
+/dev/ld0g          1.2T       749G       312G  70% /anon-root
+/dev/ld0g          1.2T       1.2T      -125G 111% /anon-root
+/dev/ld0g          1.2T       1.2T      -187G 117% /anon-root
+/dev/strpct         20T        10T        10T  50% /strpct
+/dev/wd0e           10G       2.7G       7.3G  27% /mount/windows/C
 EOF
 	atf_check -s eq:0 -o file:expout -e empty \
 	    -x "BLOCKSIZE=1k $(atf_get_srcdir)/h_df -hn"
