@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.5 2011/08/28 19:40:26 reinoud Exp $ */
+/* $NetBSD: pcb.h,v 1.6 2011/08/29 12:37:53 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,16 +38,17 @@
  */
 
 typedef struct trapframe {
-	int		(*tf_syscall)(void *);	/* address to call for syscalls */
+	int		(*tf_syscall)(lwp_t *, struct trapframe *);
 	int		 tf_reason;		/* XXX unused */
 	uintptr_t	 tf_io[8];		/* to transport info */
 } trapframe_t;
 
 
 struct pcb {
-	ucontext_t	 pcb_ucp;
+	ucontext_t	 pcb_ucp;		/* lwp switchframe */
+	ucontext_t	 pcb_userland_ucp;	/* userland switchframe */
 	bool		 pcb_needfree;
-	struct trapframe pcb_tf;	/* XXX */
+	struct trapframe pcb_tf;
 	void *		 pcb_onfault;	/* on fault handler */
 };
 
