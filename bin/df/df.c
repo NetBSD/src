@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.87 2011/08/28 08:20:58 christos Exp $ */
+/*	$NetBSD: df.c,v 1.88 2011/08/29 00:36:20 enami Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.87 2011/08/28 08:20:58 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.88 2011/08/29 00:36:20 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -448,7 +448,6 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 			(void)printf("Filesystem %s Used Available Capacity "
 			    "Mounted on\n", header);
 		} else {
-			printf("%d %d\n", maxwidth, headerlen);
 			(void)printf("%-*.*s %s       Used      Avail %%Cap",
 			    maxwidth - (headerlen - 10),
 			    maxwidth - (headerlen - 10),
