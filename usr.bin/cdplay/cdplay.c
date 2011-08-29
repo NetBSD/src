@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.42 2009/04/11 11:52:35 lukem Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.43 2011/08/29 14:00:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.42 2009/04/11 11:52:35 lukem Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.43 2011/08/29 14:00:54 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -90,7 +90,7 @@ enum cmd {
 	CMD_VOLUME,
 };
 
-struct cmdtab {
+static struct cmdtab {
 	enum cmd	command;
 	const char	*name;
 	unsigned int	min;
@@ -134,17 +134,18 @@ struct cmdtab {
 
 #define	CD_MAX_TRACK	99	/* largest 2 digit BCD number */
 
-struct cd_toc_entry toc_buffer[CD_MAX_TRACK + 1];
+static struct cd_toc_entry toc_buffer[CD_MAX_TRACK + 1];
 
-const char *cdname;
-int     fd = -1;
-int     msf = 1;
-int	shuffle;
-int	interactive = 1;
-int	digital = 0;
-int	tbvalid = 0;
-struct	itimerval itv_timer;
-struct {
+static const char *cdname;
+static int     fd = -1;
+static int     msf = 1;
+static int	shuffle;
+static int	interactive = 1;
+static int	digital = 0;
+static int	tbvalid = 0;
+static struct	itimerval itv_timer;
+
+static struct {
 	const char *auname;
 	u_char *audata, *aubuf;
 	int afd;
@@ -155,40 +156,38 @@ struct {
 	int read_errors;
 }      da;
 
-History *hist;
-HistEvent he;
-EditLine *elptr;
+static History *hist;
+static HistEvent he;
+static EditLine *elptr;
 
-int	get_vol(int *, int *);
-int	get_status(int *, int *, int *, int *, int *);
-void	help(void);
-int	info(const char *);
-void	lba2msf(u_long, u_int *, u_int *, u_int *);
-int 	main(int, char **);
-u_int	msf2lba(u_int, u_int, u_int);
-int	opencd(void);
-int	openaudio(void);
-const char   *parse(char *, int *);
-int	play(const char *, int);
-int	play_blocks(int, int);
-int	play_digital(int, int);
-int	play_msf(int, int, int, int, int, int);
-int	play_track(int, int, int, int);
-int	print_status(const char *);
-void	print_track(struct cd_toc_entry *);
-const char	*prompt(void);
-int	readaudio(int, int, int, u_char *);
-int	read_toc_entrys(int);
-int	run(int, const char *);
-int	setvol(int, int);
-void	sig_timer(int);
-int	skip(int, int);
-const char	*strstatus(int);
-void 	usage(void);
+static int	get_status(int *, int *, int *, int *, int *);
+static void	help(void);
+static int	info(const char *);
+static void	lba2msf(u_long, u_int *, u_int *, u_int *);
+static u_int	msf2lba(u_int, u_int, u_int);
+static int	opencd(void);
+static int	openaudio(void);
+static const char   *parse(char *, int *);
+static int	play(const char *, int);
+static int	play_blocks(int, int);
+static int	play_digital(int, int);
+static int	play_msf(int, int, int, int, int, int);
+static int	play_track(int, int, int, int);
+static int	print_status(const char *);
+static void	print_track(struct cd_toc_entry *);
+static const char	*prompt(void);
+static int	readaudio(int, int, int, u_char *);
+static int	read_toc_entrys(int);
+static int	run(int, const char *);
+static int	setvol(int, int);
+static void	sig_timer(int);
+static int	skip(int, int);
+static const char	*strstatus(int);
+__dead static void 	usage(void);
 
-void	toc2msf(u_int, u_int *, u_int *, u_int *);
-int	toc2lba(u_int);
-void	addmsf(u_int *, u_int *, u_int *, u_int, u_int, u_int);
+static void	toc2msf(u_int, u_int *, u_int *, u_int *);
+static int	toc2lba(u_int);
+static void	addmsf(u_int *, u_int *, u_int *, u_int, u_int, u_int);
 
 int
 main(int argc, char **argv)
@@ -314,7 +313,7 @@ main(int argc, char **argv)
 	/* NOTREACHED */
 }
 
-void
+static void
 usage(void)
 {
 
@@ -323,7 +322,7 @@ usage(void)
 	/* NOTREACHED */
 }
 
-void
+static void
 help(void)
 {
 	const struct cmdtab *c, *mc;
@@ -345,7 +344,7 @@ help(void)
 	    "The plain target address is taken as a synonym for play.\n");
 }
 
-int
+static int
 run(int cmd, const char *arg)
 {
 	int l, r, rv;
@@ -600,7 +599,7 @@ run(int cmd, const char *arg)
 	return (rv);
 }
 
-int
+static int
 play(const char *arg, int fromuser)
 {
 	int rv, start, end, istart, iend, blk, len, relend;
@@ -823,7 +822,7 @@ Clean_up:
 	return (0);
 }
 
-void
+static void
 sig_timer(int sig)
 {
 	int aulen, auwr, fpw;
@@ -861,7 +860,7 @@ sig_timer(int sig)
 	setitimer(ITIMER_REAL, &itv_timer, NULL);
 }
 
-int
+static int
 skip(int dir, int fromuser)
 {
 	char str[16];
@@ -899,7 +898,7 @@ skip(int dir, int fromuser)
 	return (play(str, 0));
 }
 
-const char *
+static const char *
 strstatus(int sts)
 {
 	const char *str;
@@ -931,7 +930,7 @@ strstatus(int sts)
 	return (str);
 }
 
-int
+static int
 print_status(const char *arg)
 {
 	struct cd_sub_channel_info data;
@@ -992,7 +991,7 @@ print_status(const char *arg)
 ;	return (0);
 }
 
-int
+static int
 info(const char *arg)
 {
 	struct ioc_toc_header h;
@@ -1020,7 +1019,7 @@ info(const char *arg)
 	return (0);
 }
 
-void
+static void
 lba2msf(u_long lba, u_int *m, u_int *s, u_int *f)
 {
 
@@ -1032,14 +1031,14 @@ lba2msf(u_long lba, u_int *m, u_int *s, u_int *f)
 	*f = lba % 75;
 }
 
-u_int
+static u_int
 msf2lba(u_int m, u_int s, u_int f)
 {
 
 	return (((m * 60) + s) * 75 + f) - 150;
 }
 
-void
+static void
 print_track(struct cd_toc_entry *e)
 {
 	int block, next, len;
@@ -1079,7 +1078,7 @@ print_track(struct cd_toc_entry *e)
 	    (e->control & 4) ? "data" : "audio");
 }
 
-int
+static int
 play_track(int tstart, int istart, int tend, int iend)
 {
 	struct ioc_play_track t;
@@ -1106,7 +1105,7 @@ play_track(int tstart, int istart, int tend, int iend)
 	return (rv);
 }
 
-int
+static int
 play_blocks(int blk, int len)
 {
 	struct ioc_play_blocks t;
@@ -1120,9 +1119,8 @@ play_blocks(int blk, int len)
 	return (rv);
 }
 
-int
-play_digital(start, end)
-	int start, end;
+static int
+play_digital(int start, int end)
 {
 	da.lba_start = start;
 	da.lba_end = --end;
@@ -1130,7 +1128,7 @@ play_digital(start, end)
 	return (0);
 }
 
-int
+static int
 setvol(int left, int right)
 {
 	struct ioc_vol v;
@@ -1146,7 +1144,7 @@ setvol(int left, int right)
 	return (rv);
 }
 
-int
+static int
 read_toc_entrys(int len)
 {
 	struct ioc_read_toc_entry t;
@@ -1163,7 +1161,7 @@ read_toc_entrys(int len)
 	return (rv);
 }
 
-int
+static int
 play_msf(int start_m, int start_s, int start_f, int end_m, int end_s,
 	 int end_f)
 {
@@ -1185,7 +1183,7 @@ play_msf(int start_m, int start_s, int start_f, int end_m, int end_s,
 	return (rv);
 }
 
-int
+static int
 get_status(int *trk, int *idx, int *min, int *sec, int *frame)
 {
 	struct ioc_read_subchannel s;
@@ -1253,14 +1251,14 @@ get_status(int *trk, int *idx, int *min, int *sec, int *frame)
 	return (s.data->header.audio_status);
 }
 
-const char *
+static const char *
 prompt(void)
 {
 
 	return ("cdplay> ");
 }
 
-const char *
+static const char *
 parse(char *buf, int *cmd)
 {
 	const struct cmdtab *c, *mc;
@@ -1317,7 +1315,7 @@ parse(char *buf, int *cmd)
 	return (p);
 }
 
-int
+static int
 opencd(void)
 {
 	char devbuf[80];
@@ -1341,8 +1339,8 @@ opencd(void)
 	return (1);
 }
 
-int
-openaudio()
+static int
+openaudio(void)
 {
 	audio_info_t ai;
 	audio_encoding_t ae;
@@ -1387,10 +1385,8 @@ openaudio()
 	return (1);
 }
 
-int
-readaudio(afd, lba, blocks, data)
-	int afd, lba, blocks;
-	u_char *data;
+static int
+readaudio(int afd, int lba, int blocks, u_char *data)
 {
 	struct scsireq sc;
 	int rc;
@@ -1425,7 +1421,7 @@ readaudio(afd, lba, blocks, data)
 	return CDDA_SIZE * blocks;
 }
 
-void
+static void
 toc2msf(u_int i, u_int *m, u_int *s, u_int *f)
 {
 	struct cd_toc_entry *ctep;
@@ -1443,7 +1439,7 @@ toc2msf(u_int i, u_int *m, u_int *s, u_int *f)
 	}
 }
 
-int
+static int
 toc2lba(u_int i)
 {
 	struct cd_toc_entry *ctep;
@@ -1463,7 +1459,7 @@ toc2lba(u_int i)
 	}
 }
 
-void
+static void
 addmsf(u_int *m, u_int *s, u_int *f, u_int m2, u_int s2, u_int f2)
 {
 	*f += f2;
