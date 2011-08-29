@@ -1,4 +1,4 @@
-/* $NetBSD: t_floor.c,v 1.6 2011/07/07 11:04:30 jruoho Exp $ */
+/* $NetBSD: t_floor.c,v 1.7 2011/08/29 12:50:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_floor.c,v 1.6 2011/07/07 11:04:30 jruoho Exp $");
+__RCSID("$NetBSD: t_floor.c,v 1.7 2011/08/29 12:50:50 jruoho Exp $");
 
 #include <sys/utsname.h>
 
@@ -62,10 +62,6 @@ ATF_TC_BODY(floor, tc)
 	 * This may fail under QEMU; see PR misc/44767.
 	 */
 	ATF_REQUIRE(uname(&utsname) == 0);
-
-	if (strcmp(utsname.machine, "amd64") == 0 &&
-	    system("cpuctl identify 0 | grep -q QEMU") == 0)
-		atf_tc_expect_fail("PR misc/44767");
 
 	for (i = 0; i < n; i++) {
 

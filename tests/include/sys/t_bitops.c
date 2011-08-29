@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.8 2011/07/07 11:04:30 jruoho Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.9 2011/08/29 12:50:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bitops.c,v 1.8 2011/07/07 11:04:30 jruoho Exp $");
+__RCSID("$NetBSD: t_bitops.c,v 1.9 2011/08/29 12:50:50 jruoho Exp $");
 
 #include <atf-c.h>
 
@@ -173,10 +173,6 @@ ATF_TC_BODY(ilog2_log2, tc)
 	 * This may fail under QEMU; see PR misc/44767.
 	 */
 	ATF_REQUIRE(uname(&utsname) == 0);
-
-	if (strcmp(utsname.machine, "amd64") == 0 &&
-	    system("cpuctl identify 0 | grep -q QEMU") == 0)
-		atf_tc_expect_fail("PR misc/44767");
 
 	for (i = 1; i < UINT32_MAX; i += UINT16_MAX) {
 
