@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.38 2011/08/27 17:59:24 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.39 2011/08/29 14:59:09 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2011/08/27 17:59:24 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2011/08/29 14:59:09 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -90,6 +90,8 @@ static void	pmap_page_deactivate(struct pv_entry *pv);
 static void	pv_update(struct pv_entry *pv);
 static void	pmap_update_page(uintptr_t ppn);
 
+void pmap_get_current_protection(pmap_t pmap, vaddr_t va,
+	vm_prot_t *cur_prot, vm_prot_t *prot);
 static struct 	pv_entry *pv_get(pmap_t pmap, uintptr_t ppn, uintptr_t lpn);
 static struct 	pv_entry *pv_alloc(void);
 static void	pv_free(struct pv_entry *pv);
@@ -421,6 +423,39 @@ panic("pv_get: multiple\n");
 	return pv;
 }
 
+void
+pmap_get_current_protection(pmap_t pmap, vaddr_t va,
+	vm_prot_t *cur_prot, vm_prot_t *prot)
+{
+	struct pv_entry *pv;
+
+	uintptr_t lpn;
+
+	aprint_debug("pmap_get_current_protection pmap %p, va %p\n", pmap, (void *) va);
+#ifdef DIAGNOSTIC
+	if ((va < VM_MIN_ADDRESS) || (va >= VM_MAX_ADDRESS))
+		panic("pmap_do_enter: invalid va isued\n");
+#endif
+
+	lpn = atop(va - VM_MIN_ADDRESS);	/* V->L */
+
+	/* raise interupt level */
+	pv = pmap->pm_entries[lpn];
+	if (pv == NULL) {
+		*cur_prot = *prot = VM_PROT_NONE;
+		return;
+	}
+
+	*prot = pv->pv_prot;
+	*cur_prot = VM_PROT_NONE;
+	if (pv->pv_mmap_ppl & PROT_READ)
+		*cur_prot |= VM_PROT_READ;
+	if (pv->pv_mmap_ppl & PROT_WRITE)
+		*cur_prot |= VM_PROT_WRITE;
+	if (pv->pv_mmap_ppl & PROT_EXEC)
+		*cur_prot |= VM_PROT_EXECUTE;
+}
+
 static void
 pmap_page_activate(struct pv_entry *pv)
 {
@@ -660,6 +695,10 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 
 	/* TODO protect against roque values */
 	aprint_debug("pmap_extract: extracting va %p\n", (void *) va);
+#ifdef DIAGNOSTIC
+	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_ADDRESS))
+		panic("pmap_extract: invalid va isued\n");
+#endif
 	pv = pmap->pm_entries[atop(va - VM_MIN_ADDRESS)]; /* V->L */
 
 	if (pv == NULL)
