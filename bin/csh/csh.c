@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.41 2008/07/20 00:52:39 lukem Exp $ */
+/* $NetBSD: csh.c,v 1.42 2011/08/29 14:51:17 joerg Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.41 2008/07/20 00:52:39 lukem Exp $");
+__RCSID("$NetBSD: csh.c,v 1.42 2011/08/29 14:51:17 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ static int writef(void *, const char *, int);
 static int closef(void *);
 static int srccat(Char *, Char *);
 static int srcfile(const char *, int, int);
-static void phup(int);
+__dead static void phup(int);
 static void srcunit(int, int, int);
 static void mailchk(void);
 #ifndef _PATH_DEFPATH

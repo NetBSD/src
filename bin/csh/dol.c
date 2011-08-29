@@ -1,4 +1,4 @@
-/* $NetBSD: dol.c,v 1.26 2007/07/16 18:26:09 christos Exp $ */
+/* $NetBSD: dol.c,v 1.27 2011/08/29 14:51:17 joerg Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dol.c,v 1.26 2007/07/16 18:26:09 christos Exp $");
+__RCSID("$NetBSD: dol.c,v 1.27 2011/08/29 14:51:17 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ static int dolwcnt;		/* :wx -> 10000, else 1 */
 static void Dfix2(Char **);
 static Char *Dpack(Char *, Char *);
 static int Dword(void);
-static void dolerror(Char *);
+__dead static void dolerror(Char *);
 static int DgetC(int);
 static void Dgetdol(void);
 static void fixDolMod(void);

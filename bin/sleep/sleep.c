@@ -1,4 +1,4 @@
-/* $NetBSD: sleep.c,v 1.23 2010/10/09 04:57:30 mrg Exp $ */
+/* $NetBSD: sleep.c,v 1.24 2011/08/29 14:51:19 joerg Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.23 2010/10/09 04:57:30 mrg Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.24 2011/08/29 14:51:19 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,9 +53,8 @@ __RCSID("$NetBSD: sleep.c,v 1.23 2010/10/09 04:57:30 mrg Exp $");
 #include <time.h>
 #include <unistd.h>
 
-static void alarmhandle(int);
-static void usage(void);
-int main(int, char *[]);
+__dead static void alarmhandle(int);
+__dead static void usage(void);
 
 static volatile sig_atomic_t report_requested;
 static void
@@ -64,7 +63,6 @@ report_request(int signo __unused)
 
 	report_requested = 1;
 }
-
 
 int
 main(int argc, char *argv[])
@@ -144,7 +142,7 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
 }
 
-void
+static void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s seconds\n", getprogname());
@@ -153,7 +151,7 @@ usage(void)
 }
 
 /* ARGSUSED */
-void
+static void
 alarmhandle(int i)
 {
 	_exit(EXIT_SUCCESS);

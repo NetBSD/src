@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.37 2008/09/10 19:00:51 christos Exp $ */
+/* $NetBSD: test.c,v 1.38 2011/08/29 14:51:19 joerg Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.37 2008/09/10 19:00:51 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.38 2011/08/29 14:51:19 joerg Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -156,7 +156,7 @@ static const struct t_op mop2[] = {
 static char **t_wp;
 static struct t_op const *t_wp_op;
 
-static void syntax(const char *, const char *);
+__dead static void syntax(const char *, const char *);
 static int oexpr(enum token);
 static int aexpr(enum token);
 static int nexpr(enum token);
