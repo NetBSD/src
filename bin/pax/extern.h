@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.57 2011/06/18 23:07:04 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.58 2011/08/29 14:47:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -204,7 +204,6 @@ extern int sep;
 extern int havechd;
 void options(int, char **);
 OPLIST * opt_next(void);
-int opt_add(const char *);
 int bad_opt(void);
 int mkpath(char *);
 char *chdname;
@@ -264,9 +263,6 @@ extern const char *argv0;
 extern FILE *listf;
 extern char *tempfile;
 extern char *tempbase;
-
-int main(int, char **);
-void sig_cleanup(int);
 
 /*
  * sel_subs.c

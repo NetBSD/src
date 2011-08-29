@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.46 2011/06/18 23:07:04 christos Exp $	*/
+/*	$NetBSD: pax.c,v 1.47 2011/08/29 14:47:48 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.46 2011/06/18 23:07:04 christos Exp $");
+__RCSID("$NetBSD: pax.c,v 1.47 2011/08/29 14:47:48 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -337,7 +337,7 @@ main(int argc, char **argv)
  *	never....
  */
 
-void
+__dead static void
 sig_cleanup(int which_sig)
 {
 	/*

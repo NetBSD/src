@@ -1,4 +1,4 @@
-/* $NetBSD: rmdir.c,v 1.25 2008/07/20 00:52:40 lukem Exp $ */
+/* $NetBSD: rmdir.c,v 1.26 2011/08/29 14:49:38 joerg Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rmdir.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rmdir.c,v 1.25 2008/07/20 00:52:40 lukem Exp $");
+__RCSID("$NetBSD: rmdir.c,v 1.26 2011/08/29 14:49:38 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,8 @@ __RCSID("$NetBSD: rmdir.c,v 1.25 2008/07/20 00:52:40 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int	rm_path(char *);
-void	usage(void);
-int	main(int, char *[]);
+static int	rm_path(char *);
+__dead static void	usage(void);
 
 int
 main(int argc, char *argv[])
@@ -93,7 +92,7 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
 }
 
-int
+static int
 rm_path(char *path)
 {
 	char *p;
@@ -113,7 +112,7 @@ rm_path(char *path)
 	return (0);
 }
 
-void
+static void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-p] directory ...\n", getprogname());

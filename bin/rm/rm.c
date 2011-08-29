@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.49 2009/02/14 08:05:04 lukem Exp $ */
+/* $NetBSD: rm.c,v 1.50 2011/08/29 14:48:46 joerg Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.49 2009/02/14 08:05:04 lukem Exp $");
+__RCSID("$NetBSD: rm.c,v 1.50 2011/08/29 14:48:46 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,15 +59,14 @@ __RCSID("$NetBSD: rm.c,v 1.49 2009/02/14 08:05:04 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int dflag, eval, fflag, iflag, Pflag, stdin_ok, vflag, Wflag;
+static int dflag, eval, fflag, iflag, Pflag, stdin_ok, vflag, Wflag;
 
-int	check(char *, char *, struct stat *);
-void	checkdot(char **);
-void	rm_file(char **);
-int	rm_overwrite(char *, struct stat *);
-void	rm_tree(char **);
-void	usage(void);
-int	main(int, char *[]);
+static int	check(char *, char *, struct stat *);
+static void	checkdot(char **);
+static void	rm_file(char **);
+static int	rm_overwrite(char *, struct stat *);
+static void	rm_tree(char **);
+__dead static void	usage(void);
 
 /*
  * For the sake of the `-f' flag, check whether an error number indicates the
@@ -147,7 +146,7 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
 }
 
-void
+static void
 rm_tree(char **argv)
 {
 	FTS *fts;
@@ -261,7 +260,7 @@ rm_tree(char **argv)
 	fts_close(fts);
 }
 
-void
+static void
 rm_file(char **argv)
 {
 	struct stat sb;
@@ -371,7 +370,7 @@ rm_file(char **argv)
  * rm_overwrite will return 0 on success.
  */
 
-int
+static int
 rm_overwrite(char *file, struct stat *sbp)
 {
 	struct stat sb;
@@ -492,7 +491,7 @@ err:	eval = 1;
 	return 1;
 }
 
-int
+static int
 check(char *path, char *name, struct stat *sp)
 {
 	int ch, first;
@@ -540,7 +539,7 @@ check(char *path, char *name, struct stat *sp)
  * trailing slashes have been removed, we'll remove them here.
  */
 #define ISDOT(a) ((a)[0] == '.' && (!(a)[1] || ((a)[1] == '.' && !(a)[2])))
-void
+static void
 checkdot(char **argv)
 {
 	char *p, **save, **t;
@@ -571,7 +570,7 @@ checkdot(char **argv)
 	}
 }
 
-void
+static void
 usage(void)
 {
 
