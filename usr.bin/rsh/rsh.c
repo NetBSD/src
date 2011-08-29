@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.32 2010/10/02 09:24:16 gson Exp $	*/
+/*	$NetBSD: rsh.c,v 1.33 2011/08/29 14:22:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.32 2010/10/02 09:24:16 gson Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.33 2011/08/29 14:22:46 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,12 +75,11 @@ int	remerr;
 
 static int sigs[] = { SIGINT, SIGTERM, SIGQUIT };
 
-char   *copyargs(char **);
-void	sendsig(int);
-int	checkfd(struct pollfd *, int);
-void	talk(int, sigset_t *, pid_t, int);
-void	usage(void);
-int	main(int, char **);
+static char   *copyargs(char **);
+static void	sendsig(int);
+static int	checkfd(struct pollfd *, int);
+static void	talk(int, sigset_t *, pid_t, int);
+__dead static void	usage(void);
 #ifdef IN_RCMD
 int	 orcmd(char **, int, const char *,
     const char *, const char *, int *);
@@ -298,7 +297,7 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-int
+static int
 checkfd(struct pollfd *fdp, int outfd)
 {
 	int nr, nw;
@@ -336,7 +335,7 @@ checkfd(struct pollfd *fdp, int outfd)
 	}
 }
 
-void
+static void
 talk(int nflag, sigset_t *oset, __pid_t pid, int rem)
 {
 	int nr, nw, nfds;
@@ -426,7 +425,7 @@ done:
 	while (nfds);
 }
 
-void
+static void
 sendsig(int sig)
 {
 	char signo;
@@ -436,7 +435,7 @@ sendsig(int sig)
 }
 
 
-char *
+static char *
 copyargs(char **argv)
 {
 	int cc;
@@ -458,7 +457,7 @@ copyargs(char **argv)
 	return (args);
 }
 
-void
+static void
 usage(void)
 {
 
