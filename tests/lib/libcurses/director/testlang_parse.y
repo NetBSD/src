@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.8 2011/08/18 02:44:45 christos Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.9 2011/08/29 12:49:37 christos Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -41,6 +41,7 @@
 #include <sys/syslimits.h>
 #include <time.h>
 #include <vis.h>
+#include <stdint.h>
 #include "returns.h"
 
 #define YYDEBUG 1
@@ -226,16 +227,18 @@ check		: CHECK var returns eol {
 		err(1, "Undefined variable in check statement, line %zu"
 		    " of file %s", line, cur_file);
 
-	if (verbose)
+	if (verbose) {
 		fprintf(stderr, "Checking contents of variable %s for %s\n",
 		    vars[command.returns[0].return_index].name,
 		    returns_enum_names[command.returns[1].return_type]);
+	}
 
 	if (((command.returns[1].return_type == ret_byte) &&
 	     (vars[command.returns[0].return_index].type != ret_byte)) ||
 	    vars[command.returns[0].return_index].type != ret_string)
 		err(1, "Var type %s (%d) does not match return type %s (%d)",
-		    returns_enum_names[vars[command.returns[0].return_index].type],
+		    returns_enum_names[
+		    vars[command.returns[0].return_index].type],
 		    vars[command.returns[0].return_index].type,
 		    returns_enum_names[command.returns[1].return_type],
 		    command.returns[1].return_type);
@@ -263,11 +266,12 @@ check		: CHECK var returns eol {
 
 	case ret_string:
 	case ret_number:
-		if (verbose)
+		if (verbose) {
 			fprintf(stderr, " %s == returned %s\n",
 			    (const char *)command.returns[1].return_value,
 			    (const char *)
 			    vars[command.returns[0].return_index].value);
+		}
 		validate_variable(0, ret_string,
 		    command.returns[1].return_value,
 		    command.returns[0].return_index, 0);
@@ -296,8 +300,9 @@ delay		: DELAY numeric eol {
 	if (sscanf($2, "%d", &input_delay) == 0)
 		err(1, "delay specification %s could not be converted to "
 		    "numeric at line %zu of file %s", $2, line, cur_file);
-	if (verbose)
+	if (verbose) {
 		fprintf(stderr, "Set input delay to %d ms\n", input_delay);
+	}
 
 	if (input_delay < DELAY_MIN)
 		input_delay = 1000 * DELAY_MIN; /* ms to ns */
@@ -308,6 +313,11 @@ delay		: DELAY numeric eol {
 	 */
 	delay_spec.tv_sec = input_delay / 1000;
 	delay_spec.tv_nsec = (input_delay - 1000 * delay_spec.tv_sec) * 1000;
+	if (verbose) {
+		fprintf(stderr, "set delay to %jd.%jd\n",
+		    (intmax_t)delay_spec.tv_sec, 
+		    (intmax_t)delay_spec.tv_nsec);
+	}
 
 	init_parse_variables(0);
  }
@@ -464,10 +474,11 @@ numeric_or(char *n1, char *n2)
 	result = i1 | i2;
 	asprintf(&ret, "%lu", result);
 
-	if (verbose)
+	if (verbose) {
 		fprintf(stderr, "numeric or of 0x%lx (%s) and 0x%lx (%s)"
 		    " results in 0x%lx (%s)\n",
 		    i1, n1, i2, n2, result, ret);
+	}
 
 	return ret;
 }
@@ -518,8 +529,7 @@ assign_var(char *varname)
 	if ((name = malloc(strlen(varname) + 1)) == NULL)
 		err(1, "Alloc of varname failed");
 
-	if ((temp = (var_t *) realloc(vars, sizeof(var_t) * (nvars + 1)))
-	    == NULL) {
+	if ((temp = realloc(vars, sizeof(*temp) * (nvars + 1))) == NULL) {
 		free(name);
 		err(1, "Realloc of vars array failed");
 	}
@@ -544,9 +554,10 @@ assign_arg(args_state_t arg_type, void *arg)
 	char *str = arg;
 	returns_t *ret;
 
-	if (verbose)
-		printf("function is >%s<, adding arg >%s< type %s\n",
+	if (verbose) {
+		fprintf(stderr, "function is >%s<, adding arg >%s< type %s\n",
 		       command.function, str, args_enum_names[arg_type]);
+	}
 
 	cur.arg_type = arg_type;
 	switch (arg_type) {
@@ -580,7 +591,7 @@ assign_arg(args_state_t arg_type, void *arg)
 		strcpy(cur.arg_string, arg);
 	}
 
-	temp = realloc(command.args, sizeof(args_t) * (command.nargs + 1));
+	temp = realloc(command.args, sizeof(*temp) * (command.nargs + 1));
 	if (temp == NULL)
 		err(1, "Failed to reallocate args");
 	command.args = temp;
@@ -627,8 +638,7 @@ assign_rets(returns_enum_t ret_type, void *ret)
 			cur.return_index = assign_var(ret);
 	}
 
-	temp = realloc(command.returns,
-		       sizeof(returns_t) * (command.nrets + 1));
+	temp = realloc(command.returns, sizeof(*temp) * (command.nrets + 1));
 	if (temp == NULL)
 		err(1, "Failed to reallocate returns");
 	command.returns = temp;
@@ -687,6 +697,7 @@ compare_streams(char *filename, bool discard)
 	struct pollfd fds[2];
 	int nfd, check_fd;
 	ssize_t result;
+	size_t offs;
 
 	/*
 	 * Don't prepend check path iff check file has an absolute
@@ -714,10 +725,8 @@ compare_streams(char *filename, bool discard)
 
 	fds[0].fd = check_fd;
 	fds[0].events = POLLIN;
-	fds[0].revents = 0;
 	fds[1].fd = master;
 	fds[1].events = POLLIN;
-	fds[1].revents = 0;
 
 	nfd = 2;
 	/*
@@ -727,12 +736,16 @@ compare_streams(char *filename, bool discard)
 	if (saved_output.count > 0)
 		nfd = 1;
 
-	while (poll(&fds[0], nfd, 500) == nfd) {
-		if ((result = read(check_fd, &ref, 1)) < 1) {
-			if (result != 0) {
-				err(2, "Bad read on file %s", check_file);
-			} else {
-				break;
+	offs = 0;
+	while (poll(fds, nfd, 500) == nfd) {
+		if (fds[0].revents & POLLIN) {
+			if ((result = read(check_fd, &ref, 1)) < 1) {
+				if (result != 0) {
+					err(2,
+					    "Bad read on file %s", check_file);
+				} else {
+					break;
+				}
 			}
 		}
 
@@ -744,28 +757,30 @@ compare_streams(char *filename, bool discard)
 			if (saved_output.count == 0)
 				nfd = 2;
 		} else {
-			if (read(master, &data, 1) < 1)
-				err(2, "Bad read on slave pty");
+			if (fds[0].revents & POLLIN) {
+				if (read(master, &data, 1) < 1)
+					err(2, "Bad read on slave pty");
+			} else
+				continue;
 		}
 
 		if (verbose) {
 			fprintf(stderr, "Comparing reference byte 0x%x (%c)"
-				" against slave byte 0x%x (%c)\n", ref,
-				(ref >= ' ')? ref : '-',
-				data, (data >= ' ')? data : '-');
+				" against slave byte 0x%x (%c)\n",
+				ref, (ref >= ' ') ? ref : '-',
+				data, (data >= ' ' )? data : '-');
 		}
 
 		if (ref != data) {
-			warnx("%s, %zu: refresh data from slave does "
-			    "not match expected from file %s",
-			    cur_file, line, check_file);
-
-			if (!verbose)
-				exit(2);
+			errx(2, "%s, %zu: refresh data from slave does "
+			    "not match expected from file %s offs %zu "
+			    "[reference 0x%x (%c) != slave 0x%x (%c)]",
+			    cur_file, line, check_file, offs,
+			    ref, (ref >= ' ') ? ref : '-',
+			    data, (data >= ' ') ? data : '-');
 		}
 
-		fds[0].revents = 0;
-		fds[1].revents = 0;
+		offs++;
 	}
 
 
@@ -779,15 +794,13 @@ compare_streams(char *filename, bool discard)
 		saved_output.readp = 0;
 	}
 
-	fds[0].revents = 0;
-	fds[1].revents = 0;
 	if ((result = poll(&fds[0], 2, 0)) != 0) {
 		if (result == -1)
 			err(2, "poll of file descriptors failed");
 
 		if ((fds[1].revents & POLLIN) == POLLIN) {
 			save_slave_output(true);
-		} else {
+		} else if ((fds[0].revents & POLLIN) == POLLIN) {
 			/*
 			 * handle excess in file if it exists.  Poll
 			 * says there is data until EOF is read.
@@ -802,8 +815,6 @@ compare_streams(char *filename, bool discard)
 			if (result > 0) {
 				excess(check_file, 0, __func__, "", drain,
 				    result);
-				if (!verbose)
-					exit(2);
 			}
 		}
 	}
@@ -843,14 +854,16 @@ do_function_call(size_t nresults)
 		err(2, "expected return type of ret_count but received %s",
 		    returns_enum_names[returns_count.return_type]);
 
-	if (verbose)
+	if (verbose) {
 		fprintf(stderr, "Expect %zu results from slave, slave "
-			"reported %zu\n", nresults, returns_count.return_len);
+		    "reported %zu\n", nresults, returns_count.return_len);
+	}
 
 	if ((no_input == false) && (do_input == 1)) {
-		if (verbose)
+		if (verbose) {
 			fprintf(stderr, "doing input with inputstr >%s<\n",
-				input_str);
+			    input_str);
+		}
 
 		if (input_str == NULL)
 			errx(2, "%s, %zu: Call to input function "
@@ -858,31 +871,35 @@ do_function_call(size_t nresults)
 
 		fds[0].fd = slvpipe[READ_PIPE];
 		fds[0].events = POLLIN;
+		fds[1].fd = master;
+		fds[1].events = POLLOUT;
  		p = input_str;
 		save_slave_output(false);
 		while(*p != '\0') {
-			if (verbose) {
-				fprintf(stderr, "Writing char >%c< to slave\n",
-					*p);
-				fflush(stderr);
-			}
-
 			nanosleep(&delay_spec, NULL);
-
-			write(master, p, 1);
-			save_slave_output(false);
-
-			p++;
-			fds[0].revents = 0;
-
-			/* check for slave function returning unexpectedly */
-			if ((poll(&fds[0], 1, 10) > 0) && (*p != '\0')) {
+			if (poll(fds, 2, 0) < 0)
+				err(2, "poll failed");
+			if (fds[0].revents & POLLIN) {
 				warnx("%s, %zu: Slave function "
 				    "returned before end of input string",
 				    cur_file, line);
 				break;
 			}
+			if ((fds[1].revents & POLLOUT) == 0)
+				continue;
+			if (verbose) {
+				fprintf(stderr, "Writing char >%c< to slave\n",
+				    *p);
+			}
+			if (write(master, p, 1) != 1) {
+				warn("%s, %zu: Slave function write error",
+				    cur_file, line);
+				break;
+			}
+			p++;
+
 		}
+		save_slave_output(false);
 
 		if (verbose) {
 			fprintf(stderr, "Input done.\n");
@@ -893,18 +910,15 @@ do_function_call(size_t nresults)
 		input_str = NULL;
 	}
 
-	if (verbose) {
+	if (verbose && 0) {
 		fds[0].fd = slvpipe[READ_PIPE];
 		fds[0].events = POLLIN;
-		fds[0].revents = 0;
 
 		fds[1].fd = slvpipe[WRITE_PIPE];
 		fds[1].events = POLLOUT;
-		fds[1].revents = 0;
 
 		fds[2].fd = master;
 		fds[2].events = POLLIN | POLLOUT;
-		fds[2].revents = 0;
 
 		i = poll(&fds[0], 3, 1000);
 		fprintf(stderr, "Poll returned %zu\n", i);
@@ -982,8 +996,9 @@ write_func_and_args(void)
 {
 	int i;
 
-	if (verbose)
+	if (verbose) {
 		fprintf(stderr, "calling function >%s<\n", command.function);
+	}
 
 	write_cmd_pipe(command.function);
 	for (i = 0; i < command.nargs; i++) {
@@ -1050,7 +1065,6 @@ init_parse_variables(int initial)
 	 */
 	slave_pty.fd = master;
 	slave_pty.events = POLLIN;
-	slave_pty.revents = 0;
 	result = poll(&slave_pty, 1, 0);
 
 	if (result < 0)
@@ -1129,11 +1143,12 @@ validate_reference(int i, void *data)
 	if (command.returns[i].return_type != ret_byte)
 		response = data;
 
-	if (verbose)
+	if (1 || verbose) {
 		fprintf(stderr,
-			"validate_reference: return type of %s, value %s \n",
-			returns_enum_names[varp->type],
-			(const char *)varp->value);
+		    "validate_reference: return type of %s, value %s \n",
+		    returns_enum_names[varp->type],
+		    (const char *)varp->value);
+	}
 
 	switch (varp->type) {
 	case ret_string:
@@ -1167,12 +1182,13 @@ validate_type(returns_enum_t expected, returns_t *value, int check)
 		    (check == 0)? "matching" : "not matching",
 		    returns_enum_names[value->return_type], line, cur_file);
 
-	if (verbose)
+	if (verbose) {
 		fprintf(stderr, "Validate expected type %s %s %s line %zu"
-			" of file %s\n",
-			returns_enum_names[expected],
-			(check == 0)? "matching" : "not matching",
-			returns_enum_names[value->return_type], line, cur_file);
+		    " of file %s\n",
+		    returns_enum_names[expected],
+		    (check == 0)? "matching" : "not matching",
+		    returns_enum_names[value->return_type], line, cur_file);
+	}
 }
 
 /*
@@ -1184,15 +1200,16 @@ validate_return(const char *expected, const char *value, int check)
 {
 	if (((check == 0) && strcmp(expected, value) != 0) ||
 	    ((check == 1) && strcmp(expected, value) == 0))
-		err(1, "Validate expected %s %s %s line %zu of file %s",
+		errx(1, "Validate expected %s %s %s line %zu of file %s",
 		    expected,
 		    (check == 0)? "matching" : "not matching", value,
 		    line, cur_file);
-	if (verbose)
+	if (verbose) {
 		fprintf(stderr, "Validated expected value %s %s %s "
-			"at line %zu of file %s\n", expected,
-			(check == 0)? "matches" : "does not match",
-			value, line, cur_file);
+		    "at line %zu of file %s\n", expected,
+		    (check == 0)? "matches" : "does not match",
+		    value, line, cur_file);
+	}
 }
 
 /*
@@ -1206,7 +1223,7 @@ validate_byte(returns_t *expected, returns_t *value, int check)
 	 * No chance of a match if lengths differ...
 	 */
 	if ((check == 0) && (expected->return_len != value->return_len))
-	    err(1, "Byte validation failed, length mismatch");
+	    errx(1, "Byte validation failed, length mismatch");
 
 	/*
 	 * If check is 0 then we want to throw an error IFF the byte streams
@@ -1218,14 +1235,15 @@ validate_byte(returns_t *expected, returns_t *value, int check)
 	    ((check == 1) && (expected->return_len == value->return_len) &&
 	     memcmp(expected->return_value, value->return_value,
 		    value->return_len) == 0))
-		err(1, "Validate expected %s byte stream at line %zu"
+		errx(1, "Validate expected %s byte stream at line %zu"
 		    "of file %s",
 		    (check == 0)? "matching" : "not matching", line, cur_file);
-	if (verbose)
+	if (verbose) {
 		fprintf(stderr, "Validated expected %s byte stream "
-			"at line %zu of file %s\n",
-			(check == 0)? "matching" : "not matching",
-			line, cur_file);
+		    "at line %zu of file %s\n",
+		    (check == 0)? "matching" : "not matching",
+		    line, cur_file);
+	}
 }
 
 /*
@@ -1259,12 +1277,13 @@ validate_variable(int ret, returns_enum_t type, const void *value, int i,
 			    (check == 0)? "expected" : "not matching",
 			    (const char *)value,
 			    line, cur_file);
-		if (verbose)
+		if (verbose) {
 			fprintf(stderr, "Variable %s contains %s value "
-				"%s at line %zu of file %s\n",
-				varptr->name,
-				(check == 0)? "expected" : "not matching",
-				(const char *)varptr->value, line, cur_file);
+			    "%s at line %zu of file %s\n",
+			    varptr->name,
+			    (check == 0)? "expected" : "not matching",
+			    (const char *)varptr->value, line, cur_file);
+		}
 	} else {
 		if ((check == 0) && (retval->return_len != varptr->len))
 			err(1, "Byte validation failed, length mismatch");
@@ -1283,11 +1302,12 @@ validate_variable(int ret, returns_enum_t type, const void *value, int i,
 			    " of file %s",
 			    (check == 0)? "matching" : "not matching",
 			    line, cur_file);
-		if (verbose)
+		if (verbose) {
 			fprintf(stderr, "Validated expected %s byte stream "
-				"at line %zu of file %s\n",
-				(check == 0)? "matching" : "not matching",
-				line, cur_file);
+			    "at line %zu of file %s\n",
+			    (check == 0)? "matching" : "not matching",
+			    line, cur_file);
+		}
 	}
 }
 
@@ -1351,23 +1371,26 @@ write_cmd_pipe_args(args_state_t type, void *data)
 			send_type = ret_string;
 	}
 
-	if (verbose)
+	if (verbose) {
 		fprintf(stderr, "Writing type %s to command pipe\n",
-			returns_enum_names[send_type]);
+		    returns_enum_names[send_type]);
+	}
 
 	if (write(cmdpipe[WRITE_PIPE], &send_type, sizeof(int)) < 0)
 		err(1, "command pipe write for type failed");
 
-	if (verbose)
+	if (verbose) {
 		fprintf(stderr, "Writing length %d to command pipe\n", len);
+	}
 
 	if (write(cmdpipe[WRITE_PIPE], &len, sizeof(int)) < 0)
 		err(1, "command pipe write for length failed");
 
 	if (len > 0) {
-		if (verbose)
+		if (verbose) {
 			fprintf(stderr, "Writing data >%s< to command pipe\n",
-				(const char *)cmd);
+			    (const char *)cmd);
+		}
 		if (write(cmdpipe[WRITE_PIPE], cmd, len) < 0)
 			err(1, "command pipe write of data failed");
 	}
@@ -1396,17 +1419,15 @@ read_cmd_pipe(returns_t *response)
 	rfd[1].events = POLLIN;
 
 	do {
-		rfd[0].revents = 0;
-		rfd[1].revents = 0;
-
 		if (poll(rfd, 2, 4000) == 0)
 			errx(2, "%s, %zu: Command pipe read timeout",
 			    cur_file, line);
 
 		if ((rfd[1].revents & POLLIN) == POLLIN) {
-			if (verbose)
+			if (verbose) {
 				fprintf(stderr,
-					"draining output from slave\n");
+				    "draining output from slave\n");
+			}
 			save_slave_output(false);
 		}
 	}
@@ -1421,9 +1442,10 @@ read_cmd_pipe(returns_t *response)
 			err(1, "command pipe read for length failed");
 		response->return_len = len;
 
-		if (verbose)
+		if (verbose) {
 			fprintf(stderr,
-				"Reading %d bytes from command pipe\n", len);
+			    "Reading %d bytes from command pipe\n", len);
+		}
 
 		if ((response->return_value = malloc(len + 1)) == NULL)
 			err(1, "Failed to alloc memory for cmd pipe read");
@@ -1435,9 +1457,10 @@ read_cmd_pipe(returns_t *response)
 			str = response->return_value;
 			str[len] = '\0';
 
-			if (verbose)
+			if (verbose) {
 				fprintf(stderr, "Read data >%s< from pipe\n",
-					(const char *)response->return_value);
+				    (const char *)response->return_value);
+			}
 		}
 	} else {
 		response->return_value = NULL;
@@ -1448,9 +1471,10 @@ read_cmd_pipe(returns_t *response)
 			response->return_len = len;
 		}
 
-		if (verbose)
+		if (verbose) {
 			fprintf(stderr, "Read type %s from pipe\n",
-				returns_enum_names[type]);
+			    returns_enum_names[type]);
+		}
 	}
 }
 
@@ -1463,29 +1487,25 @@ read_cmd_pipe(returns_t *response)
 static void
 save_slave_output(bool discard)
 {
-	struct pollfd fd;
 	char *new_data, drain[MAX_DRAIN];
 	size_t to_allocate;
 	ssize_t result;
 	size_t i;
 
-	fd.fd = master;
-	fd.events = POLLIN;
-	fd.revents = 0;
-
 	result = 0;
-	while (1) {
+	for (;;) {
 		if (result == -1)
 			err(2, "poll of slave pty failed");
 		result = MAX_DRAIN;
-		if ((result = read(master, &drain, result)) < 0) {
+		if ((result = read(master, drain, result)) < 0) {
 			if (errno == EAGAIN)
 				break;
 			else
 				err(2, "draining slave pty failed");
 		}
+		if (result == 0)
+			abort();
 
-		fd.revents = 0;
 		if (!discard) {
 			if ((size_t)result >
 			    (saved_output.allocated - saved_output.count)) {
@@ -1505,7 +1525,8 @@ save_slave_output(bool discard)
 				    saved_output.allocated);
 				for (i = 0; i < (size_t)result; i++) {
 					fprintf(stderr, "Saving slave output "
-					    "0x%x (%c)\n", drain[i],
+					    "at %zu: 0x%x (%c)\n",
+					    saved_output.count + i, drain[i],
 					    (drain[i] >= ' ')? drain[i] : '-');
 				}
 			}
@@ -1521,7 +1542,7 @@ save_slave_output(bool discard)
 			}
 		} else {
 			if (verbose) {
-				for (i=0; i < (size_t)result; i++) {
+				for (i = 0; i < (size_t)result; i++) {
 					fprintf(stderr, "Discarding slave "
 					    "output 0x%x (%c)\n",
 					    drain[i],
