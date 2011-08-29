@@ -1,4 +1,4 @@
-/* $NetBSD: gcscpcib_pci.c,v 1.1 2011/08/27 12:47:49 bouyer Exp $ */
+/* $NetBSD: gcscpcib_pci.c,v 1.2 2011/08/29 18:34:42 bouyer Exp $ */
 /* $OpenBSD: gcscpcib.c,v 1.6 2007/11/17 17:02:47 mbalmer Exp $	*/
 
 /*
@@ -25,7 +25,7 @@
  * machine-dependent attachement.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscpcib_pci.c,v 1.1 2011/08/27 12:47:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscpcib_pci.c,v 1.2 2011/08/29 18:34:42 bouyer Exp $");
 
 
 #include <sys/param.h>
@@ -92,7 +92,7 @@ gcscpcib_pci_attach(device_t parent, device_t self, void *aux)
 	/* Attach the PCI-ISA bridge at first */
 	pcibattach(parent, self, aux);
 	/* then attach gcscpcib itself */
-	gcscpcib_attach(self, &sc->sc_gcscpcib, pa->pa_iot);
+	gcscpcib_attach(self, &sc->sc_gcscpcib, pa->pa_iot, 0);
 }
 
 uint64_t
