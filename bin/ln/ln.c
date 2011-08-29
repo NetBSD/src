@@ -1,4 +1,4 @@
-/* $NetBSD: ln.c,v 1.34 2008/07/20 00:52:40 lukem Exp $ */
+/* $NetBSD: ln.c,v 1.35 2011/08/29 14:38:30 joerg Exp $ */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-__RCSID("$NetBSD: ln.c,v 1.34 2008/07/20 00:52:40 lukem Exp $");
+__RCSID("$NetBSD: ln.c,v 1.35 2011/08/29 14:38:30 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,19 +54,18 @@ __RCSID("$NetBSD: ln.c,v 1.34 2008/07/20 00:52:40 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int	fflag;				/* Unlink existing files. */
-int	hflag;				/* Check new name for symlink first. */
-int	iflag;				/* Interactive mode. */
-int	sflag;				/* Symbolic, not hard, link. */
-int	vflag;                          /* Verbose output */
+static int	fflag;				/* Unlink existing files. */
+static int	hflag;				/* Check new name for symlink first. */
+static int	iflag;				/* Interactive mode. */
+static int	sflag;				/* Symbolic, not hard, link. */
+static int	vflag;                          /* Verbose output */
 
 					/* System link call. */
-int (*linkf)(const char *, const char *);
-char   linkch;
+static int (*linkf)(const char *, const char *);
+static char   linkch;
 
-int	linkit(const char *, const char *, int);
-void	usage(void);
-int	main(int, char *[]);
+static int	linkit(const char *, const char *, int);
+__dead static void	usage(void);
 
 int
 main(int argc, char *argv[])
@@ -150,7 +149,7 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
 }
 
-int
+static int
 linkit(const char *target, const char *source, int isdir)
 {
 	struct stat sb;
@@ -219,7 +218,7 @@ linkit(const char *target, const char *source, int isdir)
 	return (0);
 }
 
-void
+static void
 usage(void)
 {
 
