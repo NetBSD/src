@@ -1,4 +1,4 @@
-# $NetBSD: t_df.sh,v 1.8 2011/08/28 19:09:34 gson Exp $
+# $NetBSD: t_df.sh,v 1.9 2011/08/29 04:55:58 gson Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,7 @@ normal_head() {
 }
 normal_body() {
 	cat >expout <<EOF
-Filesystem   1K-blocks       Used      Avail  %Cap Mounted on
+Filesystem    1K-blocks       Used      Avail %Cap Mounted on
 filer:/      1202716672     135168 1202581504   0% /filer
 filer:/      1202716672          0 1202716672   0% /filer
 filer:/      1202716672  240543334  962173337  20% /filer
