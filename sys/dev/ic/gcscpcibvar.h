@@ -1,4 +1,4 @@
-/* $NetBSD: gcscpcibvar.h,v 1.1 2011/08/27 12:47:49 bouyer Exp $ */
+/* $NetBSD: gcscpcibvar.h,v 1.2 2011/08/29 18:34:42 bouyer Exp $ */
 /* $OpenBSD: gcscpcib.c,v 1.6 2007/11/17 17:02:47 mbalmer Exp $	*/
 
 /*
@@ -45,7 +45,8 @@ struct gcscpcib_softc {
 #endif
 };
 
-void gcscpcib_attach(device_t, struct gcscpcib_softc *, bus_space_tag_t);
+void gcscpcib_attach(device_t, struct gcscpcib_softc *, bus_space_tag_t, int);
+#define GCSCATTACH_NO_WDT	0x0001 /* do not attach watchdog */
 
 uint64_t gcsc_rdmsr(uint);
 void     gcsc_wrmsr(uint, uint64_t);
