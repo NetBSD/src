@@ -27,7 +27,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpgw.c,v 1.14 2009/04/15 00:23:28 lukem Exp $");
+__RCSID("$NetBSD: bootpgw.c,v 1.15 2011/08/29 20:38:55 joerg Exp $");
 #endif
 
 /*
@@ -84,7 +84,7 @@ __RCSID("$NetBSD: bootpgw.c,v 1.14 2009/04/15 00:23:28 lukem Exp $");
  * Externals, forward declarations, and global variables
  */
 
-static void usage(void);
+__dead static void usage(void);
 static void handle_reply(void);
 static void handle_request(void);
 int main(int, char **);
