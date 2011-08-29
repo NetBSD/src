@@ -1,4 +1,4 @@
-#	$NetBSD: files.pf,v 1.5 2009/09/14 10:36:50 degroote Exp $
+#	$NetBSD: files.pf,v 1.6 2011/08/29 09:50:04 jmcneill Exp $
 
 defpseudo pf:		ifnet
 defpseudo pflog:	ifnet
@@ -20,7 +20,3 @@ file	dist/pf/net/pf_mtag.c		pf
 file	dist/pf/netinet/tcp_rndiss.c	pf
 
 makeoptions	pf	CPPFLAGS+="-I$S/dist/pf"
-
-makeoptions	pf	"CWARNFLAGS.pf.c"+="-Wno-shadow"
-makeoptions	pf	"CWARNFLAGS.pf_ioctl.c"+="-Wno-shadow"
-makeoptions	pf	"CWARNFLAGS.pf_norm.c"+="-Wno-shadow"

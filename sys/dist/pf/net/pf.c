@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.65 2011/05/03 18:28:45 dyoung Exp $	*/
+/*	$NetBSD: pf.c,v 1.66 2011/08/29 09:50:04 jmcneill Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.65 2011/05/03 18:28:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.66 2011/08/29 09:50:04 jmcneill Exp $");
 
 #include "pflog.h"
 
@@ -3436,14 +3436,14 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		    (r->rule_flag & PFRULE_RETURN)) &&
 		    !(th->th_flags & TH_RST)) {
 			u_int32_t	 ack = ntohl(th->th_seq) + pd->p_len;
-			struct ip	*h = mtod(m, struct ip *);
+			struct ip	*hip = mtod(m, struct ip *);
 
 #ifdef __NetBSD__
 			if (pf_check_proto_cksum(m, direction, off,
-			    ntohs(h->ip_len) - off, IPPROTO_TCP, AF_INET))
+			    ntohs(hip->ip_len) - off, IPPROTO_TCP, AF_INET))
 #else
 			if (pf_check_proto_cksum(m, off,
-			    ntohs(h->ip_len) - off, IPPROTO_TCP, AF_INET))
+			    ntohs(hip->ip_len) - off, IPPROTO_TCP, AF_INET))
 #endif /* !__NetBSD__ */
 				REASON_SET(&reason, PFRES_PROTCKSUM);
 			else {
@@ -3877,14 +3877,14 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			(*state)->src.state = PF_TCPS_PROXY_DST;
 	}
 	if ((*state)->src.state == PF_TCPS_PROXY_DST) {
-		struct pf_state_host *src, *dst;
+		struct pf_state_host *psrc, *pdst;
 
 		if (direction == PF_OUT) {
-			src = &(*state)->state_key->gwy;
-			dst = &(*state)->state_key->ext;
+			psrc = &(*state)->state_key->gwy;
+			pdst = &(*state)->state_key->ext;
 		} else {
-			src = &(*state)->state_key->ext;
-			dst = &(*state)->state_key->lan;
+			psrc = &(*state)->state_key->ext;
+			pdst = &(*state)->state_key->lan;
 		}
 		if (direction == (*state)->state_key->direction) {
 			if (((th->th_flags & (TH_SYN|TH_ACK)) != TH_ACK) ||
@@ -3896,8 +3896,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			(*state)->src.max_win = MAX(ntohs(th->th_win), 1);
 			if ((*state)->dst.seqhi == 1)
 				(*state)->dst.seqhi = htonl(arc4random());
-			pf_send_tcp((*state)->rule.ptr, pd->af, &src->addr,
-			    &dst->addr, src->port, dst->port,
+			pf_send_tcp((*state)->rule.ptr, pd->af, &psrc->addr,
+			    &pdst->addr, psrc->port, pdst->port,
 			    (*state)->dst.seqhi, 0, TH_SYN, 0,
 			    (*state)->src.mss, 0, 0, (*state)->tag, NULL, NULL);
 			REASON_SET(reason, PFRES_SYNPROXY);
@@ -3915,8 +3915,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			    ntohl(th->th_ack), ntohl(th->th_seq) + 1,
 			    TH_ACK, (*state)->src.max_win, 0, 0, 0,
 			    (*state)->tag, NULL, NULL);
-			pf_send_tcp((*state)->rule.ptr, pd->af, &src->addr,
-			    &dst->addr, src->port, dst->port,
+			pf_send_tcp((*state)->rule.ptr, pd->af, &psrc->addr,
+			    &pdst->addr, psrc->port, pdst->port,
 			    (*state)->src.seqhi + 1, (*state)->src.seqlo + 1,
 			    TH_ACK, (*state)->dst.max_win, 0, 0, 1,
 			    0, NULL, NULL);
