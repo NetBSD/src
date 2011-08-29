@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.68 2011/03/15 03:52:37 erh Exp $	*/
+/*	$NetBSD: ls.c,v 1.69 2011/08/29 14:44:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.68 2011/03/15 03:52:37 erh Exp $");
+__RCSID("$NetBSD: ls.c,v 1.69 2011/08/29 14:44:21 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,6 +111,17 @@ int f_stream;			/* stream format */
 int f_type;			/* add type character for non-regular files */
 int f_typedir;			/* add type character for directories */
 int f_whiteout;			/* show whiteout entries */
+
+__dead static void
+usage(void)
+{
+
+	(void)fprintf(stderr,
+	    "usage: %s [-AaBbCcdFfghikLlMmnopqRrSsTtuWwx1] [file ...]\n",
+	    getprogname());
+	exit(EXIT_FAILURE);
+	/* NOTREACHED */
+}
 
 int
 ls_main(int argc, char *argv[])

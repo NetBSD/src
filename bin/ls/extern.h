@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.16 2006/12/14 20:09:36 he Exp $	*/
+/*	$NetBSD: extern.h,v 1.17 2011/08/29 14:44:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,4 +51,3 @@ void	 printlong(DISPLAY *);
 void	 printscol(DISPLAY *);
 void	 printstream(DISPLAY *);
 int	 safe_print(const char *);
-void	 usage(void);
