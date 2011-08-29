@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 2011/08/26 06:18:17 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 2011/08/29 20:30:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -36,7 +36,7 @@ void act_ignore_altar(void);
 void act_open_chest(int, int);
 
 /* bill.c */
-void mailbill(void);
+__dead void mailbill(void);
 
 /* config.c */
 
