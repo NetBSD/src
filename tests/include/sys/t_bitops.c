@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.9 2011/08/29 12:50:50 jruoho Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.10 2011/08/29 17:39:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,13 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bitops.c,v 1.9 2011/08/29 12:50:50 jruoho Exp $");
+__RCSID("$NetBSD: t_bitops.c,v 1.10 2011/08/29 17:39:54 jruoho Exp $");
 
 #include <atf-c.h>
 
 #include <sys/cdefs.h>
 #include <sys/bitops.h>
-#include <sys/utsname.h>
 
 #include <math.h>
 #include <stdlib.h>
@@ -165,15 +164,12 @@ ATF_TC_HEAD(ilog2_log2, tc)
 
 ATF_TC_BODY(ilog2_log2, tc)
 {
-	struct utsname utsname;
 	double  x, y;
 	uint64_t i;
 
 	/*
 	 * This may fail under QEMU; see PR misc/44767.
 	 */
-	ATF_REQUIRE(uname(&utsname) == 0);
-
 	for (i = 1; i < UINT32_MAX; i += UINT16_MAX) {
 
 		x = log2(i);
