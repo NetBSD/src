@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.10 2011/08/28 19:38:20 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.11 2011/08/29 12:42:19 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.10 2011/08/28 19:38:20 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.11 2011/08/29 12:42:19 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -35,15 +35,18 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.10 2011/08/28 19:38:20 reinoud Exp $");
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/userret.h>
+#include <sys/errno.h>
+
 #include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
+#include <machine/pcb.h>
+#include <machine/pmap.h>
+#include <machine/thunk.h>
+
 //#include <machine/ctlreg.h>
 //#include <machine/trap.h>
 //#include <machine/instr.h>
-#include <machine/pcb.h>
-#include <machine/pmap.h>
 //#include <machine/userret.h>
-#include <machine/thunk.h>
 
 
 void setup_signal_handlers(void);
@@ -135,11 +138,17 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 			panic("peeing outside the box!");
 		}
 
-		pcb->pcb_onfault = NULL;
 		/* XXX TODO determine atype?? */
-atype = PROT_READ | PROT_WRITE;
+atype = PROT_READ;
+again:
+		pcb->pcb_onfault = NULL;
 		rv = uvm_fault(vm_map, (vaddr_t) va, atype);
 		pcb->pcb_onfault = (void *) onfault;
+if (rv) printf("uvm_fault rv = %d\n", rv);
+if (rv == EACCES) {
+	atype |= PROT_WRITE | PROT_EXEC;
+	goto again;
+}
 		if (rv) {
 			/* something got wrong */
 			if (kmem) {
