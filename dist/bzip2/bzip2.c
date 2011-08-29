@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2.c,v 1.8 2009/04/11 11:10:43 lukem Exp $	*/
+/*	$NetBSD: bzip2.c,v 1.9 2011/08/29 13:51:38 joerg Exp $	*/
 
 
 /*-----------------------------------------------------------*/
@@ -804,7 +804,7 @@ void ioError ( void )
 
 
 /*---------------------------------------------*/
-static 
+NORETURN static 
 void mySignalCatcher ( IntNative n )
 {
    fprintf ( stderr,
@@ -816,7 +816,7 @@ void mySignalCatcher ( IntNative n )
 
 /*---------------------------------------------*/
 #ifndef SMALL
-static 
+NORETURN static 
 void mySIGSEGVorSIGBUScatcher ( IntNative n )
 {
    if (opMode == OM_Z)
