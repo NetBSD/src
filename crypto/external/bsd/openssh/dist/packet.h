@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.h,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
+/*	$NetBSD: packet.h,v 1.5 2011/08/29 21:08:54 joerg Exp $	*/
 /* $OpenBSD: packet.h,v 1.55 2010/11/13 23:27:50 djm Exp $ */
 
 /*
@@ -69,7 +69,7 @@ void	*packet_get_raw(u_int *length_ptr);
 void	*packet_get_string(u_int *length_ptr);
 char	*packet_get_cstring(u_int *length_ptr);
 void	*packet_get_string_ptr(u_int *length_ptr);
-void     packet_disconnect(const char *fmt,...) __attribute__((format(printf, 1, 2)));
+__dead void     packet_disconnect(const char *fmt,...) __attribute__((format(printf, 1, 2)));
 void     packet_send_debug(const char *fmt,...) __attribute__((format(printf, 1, 2)));
 
 void	 set_newkeys(int mode);

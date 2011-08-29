@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.8 2011/07/25 03:03:11 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.9 2011/08/29 21:08:54 joerg Exp $	*/
 /* $OpenBSD: sshconnect2.c,v 1.186 2010/11/29 23:45:51 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.8 2011/07/25 03:03:11 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.9 2011/08/29 21:08:54 joerg Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -284,10 +284,10 @@ struct Authmethod {
 };
 
 void	input_userauth_success(int, u_int32_t, void *);
-void	input_userauth_success_unexpected(int, u_int32_t, void *);
+__dead void	input_userauth_success_unexpected(int, u_int32_t, void *);
 void	input_userauth_failure(int, u_int32_t, void *);
 void	input_userauth_banner(int, u_int32_t, void *);
-void	input_userauth_error(int, u_int32_t, void *);
+__dead void	input_userauth_error(int, u_int32_t, void *);
 void	input_userauth_info_req(int, u_int32_t, void *);
 void	input_userauth_pk_ok(int, u_int32_t, void *);
 void	input_userauth_passwd_changereq(int, u_int32_t, void *);
