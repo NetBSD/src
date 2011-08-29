@@ -1,4 +1,4 @@
-/*	$NetBSD: ed.h,v 1.34 2009/07/26 02:06:37 dholland Exp $	*/
+/*	$NetBSD: ed.h,v 1.35 2011/08/29 14:51:18 joerg Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
 /*
@@ -223,8 +223,8 @@ char *get_sbuf_line(line_t *);
 int get_shell_command(void);
 int get_stream_line(FILE *);
 int get_tty_line(void);
-void handle_hup(int);
-void handle_int(int);
+__dead void handle_hup(int);
+__dead void handle_int(int);
 void handle_winch(int);
 int has_trailing_escape(char *, char *);
 void init_buffers(void);
@@ -243,7 +243,7 @@ int put_des_char(int, FILE *);
 char *put_sbuf_line(char *);
 int put_stream_line(FILE *, char *, int);
 int put_tty_line(char *, int, long, int);
-void quit(int);
+__dead void quit(int);
 long read_file(char *, long);
 long read_stream(FILE *, long);
 int search_and_replace(pattern_t *, int, int);

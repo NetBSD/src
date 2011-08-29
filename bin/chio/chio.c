@@ -1,4 +1,4 @@
-/* $NetBSD: chio.c,v 1.30 2008/07/20 00:52:39 lukem Exp $ */
+/* $NetBSD: chio.c,v 1.31 2011/08/29 14:51:17 joerg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998, 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.30 2008/07/20 00:52:39 lukem Exp $");
+__RCSID("$NetBSD: chio.c,v 1.31 2011/08/29 14:51:17 joerg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: chio.c,v 1.30 2008/07/20 00:52:39 lukem Exp $");
 #include "pathnames.h"
 
 int main(int, char *[]);
-static void usage(void);
+__dead static void usage(void);
 static void cleanup(void);
 static int parse_element_type(const char *);
 static int parse_element_unit(const char *);

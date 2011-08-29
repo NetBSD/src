@@ -1,4 +1,4 @@
-/* $NetBSD: pwd.c,v 1.21 2008/07/20 00:52:40 lukem Exp $ */
+/* $NetBSD: pwd.c,v 1.22 2011/08/29 14:51:19 joerg Exp $ */
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pwd.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: pwd.c,v 1.21 2008/07/20 00:52:40 lukem Exp $");
+__RCSID("$NetBSD: pwd.c,v 1.22 2011/08/29 14:51:19 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: pwd.c,v 1.21 2008/07/20 00:52:40 lukem Exp $");
 #include <unistd.h>
 
 static char *getcwd_logical(void);
-static void usage(void);
+__dead static void usage(void);
 
 /*
  * Note that EEE Std 1003.1, 2003 requires that the default be -L.

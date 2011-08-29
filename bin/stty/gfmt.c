@@ -1,4 +1,4 @@
-/* $NetBSD: gfmt.c,v 1.16 2003/08/07 09:05:41 agc Exp $ */
+/* $NetBSD: gfmt.c,v 1.17 2011/08/29 14:51:19 joerg Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)gfmt.c	8.6 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: gfmt.c,v 1.16 2003/08/07 09:05:41 agc Exp $");
+__RCSID("$NetBSD: gfmt.c,v 1.17 2011/08/29 14:51:19 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: gfmt.c,v 1.16 2003/08/07 09:05:41 agc Exp $");
 #include "stty.h"
 #include "extern.h"
 
-static void gerr(char *);
+__dead static void gerr(char *);
 
 static void
 gerr(char *s)
