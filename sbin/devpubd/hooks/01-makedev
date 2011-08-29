@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# $NetBSD: 01-makedev,v 1.1 2011/08/29 11:38:48 mrg Exp $
+#
+# Try to create a device node if it doesn't exist
+#
+
+event="$1"
+device="$2"
+
+case $event in
+device-attach)
+	cd /dev && sh MAKEDEV -u "$device" 2>/dev/null
+	;;
+esac
