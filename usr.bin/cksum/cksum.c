@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.44 2009/01/02 09:42:51 lukem Exp $	*/
+/*	$NetBSD: cksum.c,v 1.45 2011/08/29 14:12:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.44 2009/01/02 09:42:51 lukem Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.45 2011/08/29 14:12:29 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -142,9 +142,9 @@ const struct hash {
 	{ .progname = NULL, },
 };
 
-int	hash_digest_file(char *, const struct hash *, int);
-void	requirehash(const char *);
-void	usage(void);
+static int	hash_digest_file(char *, const struct hash *, int);
+__dead static void	requirehash(const char *);
+__dead static void	usage(void);
 
 int
 main(int argc, char **argv)
@@ -497,7 +497,7 @@ main(int argc, char **argv)
 	exit(rval);
 }
 
-int
+static int
 hash_digest_file(char *fn, const struct hash *hash, int normal)
 {
 	char *cp;
@@ -516,14 +516,14 @@ hash_digest_file(char *fn, const struct hash *hash, int normal)
 	return 0;
 }
 
-void
+static void
 requirehash(const char *flg)
 {
 	warnx("%s flag requires `-a algorithm'", flg);
 	usage();
 }
 
-void
+static void
 usage(void)
 {
 	const char fileargs[] = "[file ... | -c [-w] [sumfile]]";
