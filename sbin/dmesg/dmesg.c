@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.26 2008/07/20 01:20:22 lukem Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.27 2011/08/29 14:34:59 joerg Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.26 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.27 2011/08/29 14:34:59 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,13 +57,13 @@ __RCSID("$NetBSD: dmesg.c,v 1.26 2008/07/20 01:20:22 lukem Exp $");
 #include <vis.h>
 
 #ifndef SMALL
-struct nlist nl[] = {
+static struct nlist nl[] = {
 #define	X_MSGBUF	0
 	{ .n_name = "_msgbufp" },
 	{ .n_name = NULL },
 };
 
-void	usage(void);
+__dead static void	usage(void);
 
 #define	KREAD(addr, var) \
 	kvm_read(kd, addr, &var, sizeof(var)) != sizeof(var)
@@ -193,7 +193,7 @@ main(int argc, char *argv[])
 }
 
 #ifndef SMALL
-void
+static void
 usage(void)
 {
 

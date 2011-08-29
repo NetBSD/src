@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.42 2011/08/14 12:30:04 christos Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.43 2011/08/29 14:34:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.42 2011/08/14 12:30:04 christos Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.43 2011/08/29 14:34:59 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: fsdb.c,v 1.42 2011/08/14 12:30:04 christos Exp $");
 #include "fsck.h"
 #include "extern.h"
 
-static void usage(void);
+__dead static void usage(void);
 static int cmdloop(void);
 static char *prompt(EditLine *);
 static int scannames(struct inodesc *);
