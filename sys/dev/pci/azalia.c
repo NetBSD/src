@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.76 2011/08/28 15:40:49 jmcneill Exp $	*/
+/*	$NetBSD: azalia.c,v 1.77 2011/08/29 14:47:07 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.76 2011/08/28 15:40:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.77 2011/08/29 14:47:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -2406,7 +2406,7 @@ azalia_params2fmt(const audio_params_t *param, uint16_t *fmt)
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, azalia, NULL);
+MODULE(MODULE_CLASS_DRIVER, azalia, "pci");
 
 #ifdef _MODULE
 #include "ioconf.c"

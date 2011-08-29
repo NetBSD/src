@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.8 2011/08/09 01:42:24 jmcneill Exp $ */
+/* $NetBSD: coram.c,v 1.9 2011/08/29 14:47:08 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.8 2011/08/09 01:42:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.9 2011/08/29 14:47:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1100,7 +1100,7 @@ coram_sram_ch_setup(struct coram_softc *sc, struct coram_sram_ch *csc,
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, coram, "cx24227,mt2131");
+MODULE(MODULE_CLASS_DRIVER, coram, "cx24227,mt2131,pci");
 
 #ifdef _MODULE
 #include "ioconf.c"

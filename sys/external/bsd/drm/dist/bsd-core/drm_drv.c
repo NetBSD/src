@@ -1122,7 +1122,7 @@ drm_linux_ioctl(DRM_STRUCTPROC *p, struct linux_ioctl_args* args)
 #if defined(__NetBSD__)
 /* Module support */
 
-MODULE(MODULE_CLASS_MISC, drm, NULL);
+MODULE(MODULE_CLASS_MISC, drm, "pci");
 
 static int
 drm_modcmd(modcmd_t cmd, void *arg)

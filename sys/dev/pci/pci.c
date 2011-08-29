@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.141 2011/08/24 20:27:35 dyoung Exp $	*/
+/*	$NetBSD: pci.c,v 1.142 2011/08/29 14:47:08 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.141 2011/08/24 20:27:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.142 2011/08/29 14:47:08 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.141 2011/08/24 20:27:35 dyoung Exp $");
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -972,4 +973,14 @@ pci_child_register(device_t child)
 	    pci_child_resume, pci_child_shutdown, pci_child_deregister);
 
 	return true;
+}
+
+MODULE(MODULE_CLASS_DRIVER, pci, NULL);
+
+static int
+pci_modcmd(modcmd_t cmd, void *priv)
+{
+	if (cmd == MODULE_CMD_INIT || cmd == MODULE_CMD_FINI)
+		return 0;
+	return ENOTTY;
 }

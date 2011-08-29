@@ -2640,7 +2640,7 @@ alc_iff(struct alc_softc *sc)
 	CSR_WRITE_4(sc, ALC_MAC_CFG, rxcfg);
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_alc, NULL);
+MODULE(MODULE_CLASS_DRIVER, if_alc, "pci");
 
 #ifdef _MODULE
 #include "ioconf.c"

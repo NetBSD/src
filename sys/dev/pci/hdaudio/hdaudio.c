@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.13 2011/08/13 16:08:23 jakllsch Exp $ */
+/* $NetBSD: hdaudio.c,v 1.14 2011/08/29 14:47:09 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.13 2011/08/13 16:08:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.14 2011/08/29 14:47:09 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1571,7 +1571,7 @@ hdaudioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	return err;
 }
 
-MODULE(MODULE_CLASS_DRIVER, hdaudio, NULL);
+MODULE(MODULE_CLASS_DRIVER, hdaudio, "pci");
 
 #ifdef _MODULE
 #include "ioconf.c"

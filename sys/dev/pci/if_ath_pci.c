@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.42 2011/07/26 20:51:23 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.43 2011/08/29 14:47:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.42 2011/07/26 20:51:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.43 2011/08/29 14:47:08 jmcneill Exp $");
 
 /*
  * PCI/Cardbus front-end for the Atheros Wireless LAN controller driver.
@@ -278,7 +278,7 @@ ath_pci_setup(struct ath_pci_softc *sc)
 	return true;
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_ath_pci, "ath");
+MODULE(MODULE_CLASS_DRIVER, if_ath_pci, "ath,pci");
 
 #ifdef _MODULE
 #include "ioconf.c"
