@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2011/08/24 16:03:34 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2011/08/29 18:32:18 bouyer Exp $
 #
 #	etc.evbmips/Makefile.inc -- evbmips-specific etc Makefile targets
 #
@@ -22,6 +22,8 @@ BUILD_KERNELS+=		INSTALL_XLSATX32 INSTALL_XLSATX64
 
 .if ${MACHINE_ARCH} == "mips64el"
 KERNEL_SETS+=		P5064-64
+KERNEL_SETS+=		LOONGSON
+BUILD_KERNELS+=		INSTALL_LOONGSON
 KERNEL_SETS+=		GDIUM64
 .endif
 .else
