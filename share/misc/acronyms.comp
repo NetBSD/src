@@ -1,12 +1,14 @@
-$NetBSD: acronyms.comp,v 1.126 2011/06/14 05:43:37 jruoho Exp $
+$NetBSD: acronyms.comp,v 1.127 2011/08/29 16:28:38 jruoho Exp $
 
 3WHS	three-way handshake
+8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
 AAA	authentication, authorization, accounting
 AAT	average access time
 ABI	application binary interface
 ABR	available bit rate
 AC	alternating current
+ACI	adjacent channel interferer
 ACID	atomicity, consistency, isolation, durability
 ACK	acknowledgement
 ACK	Amsterdam compiler kit
@@ -85,6 +87,7 @@ AV	anti virus
 AVL	Adelson-Velsky-Landis
 AVX	advanced vector extensions
 AWK	Aho, Werner, and Kernighan
+BA	byte align
 BAL	basic assembly language
 BAR	base address register
 BBS	bulletin board system
@@ -94,10 +97,11 @@ BCR	byte counte register
 BCS	base configuration space
 BD	baud
 BDD	binary decision diagram
+BDI	bit deinterleave
 BDUF	big design up front
 BEDO	burst extended data output
 BER	basic encoding rules
-BER	bit error rate
+BER	bit error {rate, ratio}
 BFD	binary {file, format} descriptor
 BFKL	big fscking kernel lock
 BFS	breadth-first search
@@ -128,6 +132,7 @@ BPF	Berkeley packet filter
 BPI	bits per inch
 BPM	business process modelling
 BPS	bits per second
+BPSK	binary phase shift keying
 BQS	Berkeley quality software
 BRE	basic regular expression
 BS	binary sequence
@@ -151,6 +156,7 @@ CA	certificate authority
 CAD	computer-aided design
 CAM	computer assisted manufacturing
 CAM	content addressable memory
+CAM	conditional access module
 CARP	common address redundancy protocol
 CAS	(atomic) compare and swap
 CAS	computer algebra system
@@ -161,6 +167,7 @@ CAV	constant angular velocity (as opposed to CLV)
 CBC	cipher block chaining
 CBR	constant bit rate
 CCD	charge coupled device
+CCI	co-channel interferer
 CC	carbon coby
 CD	compact disc
 CD	cache disable
@@ -202,12 +209,15 @@ CN	{common, canonical} name
 CNC	computer numerical control
 CNR	carrier to noise ratio
 COF	current operating frequency
+COFDM	coded orthogonal frequency division multiplexing
 COFF	common object file format
 COM	component object model
 COMA	cache-only memory architecture
 CORBA	common object request broker architecture
 COW	copy-on-write
+CP	continuous pilot
 CPB	core performance boost
+CPE	common phase error
 CPG	clock pulse generator
 CPL	current privilege level
 CPLD	complex programmable logic device
@@ -216,6 +226,7 @@ CPT	command pass through
 CPU	central processing unit
 CR	carriage return
 CRC	cyclic redundancy check
+CRL	carrier recovery loop
 CRLF	carriage return line feed
 CRT	cathode ray tube
 CS	computer science
@@ -223,9 +234,11 @@ CS	cable select
 CS	chip select
 CS	code segment
 CSI	common system interface
+CSI	channel state information
 CSMA	carrier sense multiple access
 CSMA/CA	carrier sense multiple access with collision avoidance
 CSMA/CD	carrier sense multiple access with collision detection
+CSR	control [and] status registers
 CSS	cascading style sheets
 CSV	comma-separated values
 CTM	close to metal
@@ -236,6 +249,7 @@ CV	control voltage
 CVS	concurrent versions system
 DA	destination address
 DAA	distributed application architecture
+DAB	digital audio broadcasting
 DAC	discretionary access control
 DAC	digital [to] analog converter
 DAO	disk at once
@@ -244,6 +258,7 @@ DAT	digital audio tape
 DAT	dynamic acceleration technology
 DB	database
 DBA	dynamic bandwidth allocation
+DBB	data bus buffer
 DBC	design by contract
 DBL	dynamic buffer limiting
 DBMS	database management system
@@ -293,6 +308,7 @@ DLL	dynamic link library
 DMA	direct memory access
 DMI	desktop management interface
 DMS	document management system
+DMT	discrete multitone modulation
 DNARD	Digital network appliance reference design
 DNS	domain name system
 DOE	distributed object environment
@@ -344,6 +360,7 @@ ECP	enhanced capability port
 ECS	enhanced chip set
 ECS	extended configuration space
 EDAT	enhanced dynamic acceleration technology
+EDGE	explicit data graph execution
 EDID	extended display identification data
 EDO	extended data out
 EDS	electronical data sheet
@@ -392,6 +409,7 @@ FEC	forward error correction
 FET	field-effect transistor
 FFH	functional fixed hardware
 FFI	foreign function interface
+FFM	focus follows mouse
 FFS	fast file system
 FFS	find first set
 FFT	fast Fourier transform
@@ -461,6 +479,7 @@ HCF	halt and catch fire
 HDD	hard disk drive
 HDCP	high-bandwidth digital content protection
 HDL	hardware description language
+HDTV	high-definition television
 HF	high frequency
 HFM	highest frequency mode
 HID	human interface device
@@ -495,6 +514,7 @@ ICE	internal compiler error
 ICE	in-circuit emulator
 ICMP	Internet control message protocol
 ICT	information and communications technology
+ICW	initialization command word
 IDA	Intel dynamic acceleration
 IDE	integrated drive electronics
 IDE	integrated development environment
@@ -507,6 +527,7 @@ IEC	international electrotechnical commission
 IEEE	Institute [of] Electrical [and] Electronics Engineers
 IESG	Internet Engineering Steering Group
 IETF	Internet Engineering Task Force
+IF	intermediate frequency
 IFCM	isochronous flow control mode
 IGD	Internet gateway device
 IGMP	Internet group management protocol
@@ -519,6 +540,7 @@ IM	instant messaging
 IMC	integrated memory controller
 IMCR	interrupt mode configuration register
 IMAP	Internet mail access protocol
+IMR	interrupt mask register
 IMS	information management system
 INCITS	international committee on information technology standards
 IO	input/output
@@ -537,6 +559,7 @@ IRC	Internet relay chat
 IRDA	infrared data association
 IRQ	interrupt request
 IRQL	interrupt request level
+IRR	interrupt request register
 IRTF	Internet research task force
 IS	information system
 ISA	industry standard architecture
@@ -549,6 +572,7 @@ ISO	international standards organization
 ISOC	Internet society
 ISP	Internet service provider
 ISR	interrupt service routine
+ISR	in-service register
 IST	interrupt stack table
 ISV	independent software vendor
 IT	information technology
@@ -593,6 +617,7 @@ LFN	long file names
 LFO	low-frequency oscillation
 LFS	log-structured file system
 LFU	least frequently used
+LHP	loop heat pipe
 LIFO	last in, first out
 LILO	last in, last out
 LILO	Linux loader
@@ -668,6 +693,7 @@ ML	machine learning
 ML	markup language
 ML	maximum likelihood
 MLC	multi-level cell
+MLHP	micro loop heat pipe
 MMIC	monolithic microwave integrated circuit
 MMIO	memory mapped input/output
 MMU	memory management unit
@@ -795,6 +821,7 @@ PAX	portable archive exchange
 PBE	pending break encoding
 PBE	programming by example
 PC	personal computer
+PC	program counter
 PCB	printed circuit board
 PCC	Portable C Compiler
 PCD	page-level cache disable
@@ -815,6 +842,7 @@ PDP	page descriptor page
 PDS	product data sheet
 PDU	protocol data unit
 PE	protection enable
+PECI	platform environment control interface
 PEP	protocol extension protocol
 PER	packed encoding rules
 PERL	practical extraction [and] report language
@@ -843,7 +871,7 @@ PLL	phase locked loop
 PLRU	pseudo LRU
 PLTM	package level thermal management
 PM	power management
-PM	pulse modulation
+PM	{phase, pulse} modulation
 PME	power management event
 PMI	platform management interrupt
 PMIO	port-mapped input/output
@@ -991,6 +1019,7 @@ SCI	system control interrupt
 SCI	scalable coherent interface
 SCSI	small computer system interface
 SCTP	stream control transmission protocol
+SDI	symbol deinterleave
 SDK	software development kit
 SDL	simple declarative language
 SDRAM	synchronous dynamic random access memory
@@ -1028,6 +1057,7 @@ SNR	signal [to] noise ratio
 SOA	service oriented architecture
 SOAP	simple object access protocol
 SOC	system on chip
+SOF	start of frame
 SOHO	small office / home office
 SOL	serial over LAN
 SP	stack pointer
@@ -1065,8 +1095,10 @@ SVG	scalable vector graphics
 SVGA	super video graphics {array,adapter}
 SVM	secure virtual machine
 SVM	support vector machine
+SVR	System V Release
 SWF	Shockwave Flash
 SWIG	simplified wrapper [and] interface generator
+SYR	symbol timing recovery
 TA	transmitter address
 TA	test assertion
 TAI	international atomic time
@@ -1112,17 +1144,21 @@ TP	transaction processing
 TPM	trusted platform module
 TPM	transactions per minute
 TPR	task priority register
+TPS	transmission parameters signaling
 TR	token ring
 TR	task register
+TRL	timing recovery loop
 TRNG	true random number generator
 TS	time stamp
 TS	time series
+TS	transport stream
 TS	terminal services
 TSC	time stamp counter
 TSD	time stamp disable
 TSL	test, set, lock
 TSO	time sharing option
 TSP	time stamp protocol
+TSP	time synchronization protocol
 TSP	tunnel setup protocol
 TSP	traveling salesman problem
 TSS	task state segment
@@ -1211,6 +1247,7 @@ WIFI    wireless fidelity
 WLAN	wireless local area network
 WDT	watchdog timer
 WM	write miss
+WMI	Windows management instrumentation
 WOL	wake on LAN
 WOR	wake on ring
 WORM	write once read many
