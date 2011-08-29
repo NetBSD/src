@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2009/05/25 00:37:27 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2011/08/29 20:30:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.22 2009/05/25 00:37:27 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 2011/08/29 20:30:37 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,13 +153,11 @@ __RCSID("$NetBSD: main.c,v 1.22 2009/05/25 00:37:27 dholland Exp $");
 
 jmp_buf env;
 
-static void
+__dead static void
 usage(const char *av0)
 {
 	errx(1, "Usage: %s [-fs]", av0);
 }
-
-int main(int, char **);
 
 int
 main(int argc, char **argv)
