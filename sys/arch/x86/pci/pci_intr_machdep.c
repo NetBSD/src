@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.22 2011/08/17 14:56:55 dyoung Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.23 2011/08/29 22:41:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.22 2011/08/17 14:56:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.23 2011/08/29 22:41:52 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -115,20 +115,16 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
-	pci_chipset_tag_t pc;
+	pci_chipset_tag_t ipc, pc = pa->pa_pc;
 #if NIOAPIC > 0 || NACPICA > 0
 	int rawpin = pa->pa_rawintrpin;
 	int bus, dev, func;
 #endif
 
-	if ((pc = pa->pa_pc) != NULL) {
-		if ((pc->pc_present & PCI_OVERRIDE_INTR_MAP) != 0)
-			return (*pc->pc_ov->ov_intr_map)(pc->pc_ctx, pa, ihp);
-		if (pc->pc_super != NULL) {
-			struct pci_attach_args paclone = *pa;
-			paclone.pa_pc = pc->pc_super;
-			return pci_intr_map(&paclone, ihp);
-		}
+	for (ipc = pc; ipc != NULL; ipc = ipc->pc_super) {
+		if ((ipc->pc_present & PCI_OVERRIDE_INTR_MAP) == 0)
+			continue;
+		return (*ipc->pc_ov->ov_intr_map)(ipc->pc_ctx, pa, ihp);
 	}
 
 	if (pin == 0) {
@@ -217,12 +213,12 @@ bad:
 const char *
 pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
+	pci_chipset_tag_t ipc;
 
-	if (pc != NULL) {
-		if ((pc->pc_present & PCI_OVERRIDE_INTR_STRING) != 0)
-			return (*pc->pc_ov->ov_intr_string)(pc->pc_ctx, pc, ih);
-		if (pc->pc_super != NULL)
-			return pci_intr_string(pc->pc_super, ih);
+	for (ipc = pc; ipc != NULL; ipc = ipc->pc_super) {
+		if ((ipc->pc_present & PCI_OVERRIDE_INTR_STRING) == 0)
+			continue;
+		return (*ipc->pc_ov->ov_intr_string)(ipc->pc_ctx, pc, ih);
 	}
 
 	return intr_string(ih & ~MPSAFE_MASK);
@@ -232,12 +228,12 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 const struct evcnt *
 pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
+	pci_chipset_tag_t ipc;
 
-	if (pc != NULL) {
-		if ((pc->pc_present & PCI_OVERRIDE_INTR_EVCNT) != 0)
-			return (*pc->pc_ov->ov_intr_evcnt)(pc->pc_ctx, pc, ih);
-		if (pc->pc_super != NULL)
-			return pci_intr_evcnt(pc->pc_super, ih);
+	for (ipc = pc; ipc != NULL; ipc = ipc->pc_super) {
+		if ((ipc->pc_present & PCI_OVERRIDE_INTR_EVCNT) == 0)
+			continue;
+		return (*ipc->pc_ov->ov_intr_evcnt)(ipc->pc_ctx, pc, ih);
 	}
 
 	/* XXX for now, no evcnt parent reported */
@@ -273,16 +269,13 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 	struct ioapic_softc *ioapic;
 #endif
 	bool mpsafe;
+	pci_chipset_tag_t ipc;
 
-	if (pc != NULL) {
-		if ((pc->pc_present & PCI_OVERRIDE_INTR_ESTABLISH) != 0) {
-			return (*pc->pc_ov->ov_intr_establish)(pc->pc_ctx,
-			    pc, ih, level, func, arg);
-		}
-		if (pc->pc_super != NULL) {
-			return pci_intr_establish(pc->pc_super, ih, level, func,
-			    arg);
-		}
+	for (ipc = pc; ipc != NULL; ipc = ipc->pc_super) {
+		if ((ipc->pc_present & PCI_OVERRIDE_INTR_ESTABLISH) == 0)
+			continue;
+		return (*ipc->pc_ov->ov_intr_establish)(ipc->pc_ctx,
+		    pc, ih, level, func, arg);
 	}
 
 	pic = &i8259_pic;
@@ -312,17 +305,13 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 void
 pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
+	pci_chipset_tag_t ipc;
 
-	if (pc != NULL) {
-		if ((pc->pc_present & PCI_OVERRIDE_INTR_ESTABLISH) != 0) {
-			(*pc->pc_ov->ov_intr_disestablish)(pc->pc_ctx,
-			    pc, cookie);
-			return;
-		}
-		if (pc->pc_super != NULL) {
-			pci_intr_disestablish(pc->pc_super, cookie);
-			return;
-		}
+	for (ipc = pc; ipc != NULL; ipc = ipc->pc_super) {
+		if ((ipc->pc_present & PCI_OVERRIDE_INTR_DISESTABLISH) == 0)
+			continue;
+		(*ipc->pc_ov->ov_intr_disestablish)(ipc->pc_ctx, pc, cookie);
+		return;
 	}
 
 	intr_disestablish(cookie);
