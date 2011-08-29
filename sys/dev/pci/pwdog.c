@@ -1,4 +1,4 @@
-/*	$$NetBSD: pwdog.c,v 1.5 2011/08/29 14:47:08 jmcneill Exp $ */
+/*	$$NetBSD: pwdog.c,v 1.6 2011/08/29 15:06:49 mbalmer Exp $ */
 /*	$OpenBSD: pwdog.c,v 1.7 2010/04/08 00:23:53 tedu Exp $ */
 
 /*
@@ -193,33 +193,36 @@ pwdog_tickle(struct sysmon_wdog *smw)
 	return 0;
 }
 
-#ifdef _MODULE
 MODULE(MODULE_CLASS_DRIVER, pwdog, "pci");
 
+#ifdef _MODULE
 #include "ioconf.c"
+#endif
 
 static int
 pwdog_modcmd(modcmd_t cmd, void *opaque)
 {
 	int error;
 
+	error = 0;
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
 		error = config_init_component(cfdriver_ioconf_pwdog,
 		    cfattach_ioconf_pwdog, cfdata_ioconf_pwdog);
-		if (error) {
+		if (error)
 			aprint_error("%s: unable to init component\n",
 			    pwdog_cd.cd_name);
-			return error;
-		}
-		return 0;
+#endif
+		break;
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
 		config_fini_component(cfdriver_ioconf_pwdog,
 		    cfattach_ioconf_pwdog, cfdata_ioconf_pwdog);
-		return 0;
+#endif
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
 	}
+	return error;
 }
-
-#endif /* _MODULE */
