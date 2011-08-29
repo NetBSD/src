@@ -1,4 +1,4 @@
-/* $NetBSD: identd.c,v 1.32 2009/01/18 00:37:53 lukem Exp $ */
+/* $NetBSD: identd.c,v 1.33 2011/08/29 20:41:06 joerg Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: identd.c,v 1.32 2009/01/18 00:37:53 lukem Exp $");
+__RCSID("$NetBSD: identd.c,v 1.33 2011/08/29 20:41:06 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -61,9 +61,9 @@ static int   check_noident(const char *);
 static int   check_userident(const char *, char *, size_t);
 static void  random_string(char *, size_t);
 static int   change_format(const char *, struct passwd *, char *, size_t);
-static void  timeout_handler(int);
-static void  fatal(const char *);
-static void  die(const char *, ...);
+__dead static void  timeout_handler(int);
+__dead static void  fatal(const char *);
+__dead static void  die(const char *, ...);
 
 static int   bflag, eflag, fflag, iflag, Iflag;
 static int   lflag, Lflag, nflag, Nflag, rflag;
