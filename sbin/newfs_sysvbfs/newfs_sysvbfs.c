@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_sysvbfs.c,v 1.7 2009/04/11 07:37:50 lukem Exp $	*/
+/*	$NetBSD: newfs_sysvbfs.c,v 1.8 2011/08/29 14:35:03 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <fs/sysvbfs/bfs.h>
 
-static void usage(void);
+__dead static void usage(void);
 static int bfs_newfs(int, uint32_t);
 
 int

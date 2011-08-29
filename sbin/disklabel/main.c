@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2011/01/06 21:39:01 apb Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2011/08/29 14:34:59 joerg Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.24 2011/01/06 21:39:01 apb Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2011/08/29 14:34:59 joerg Exp $");
 #endif
 #endif	/* not lint */
 
@@ -173,7 +173,7 @@ static int		 editit(const char *);
 static char		*skip(char *);
 static char		*word(char *);
 static int		 getasciilabel(FILE *, struct disklabel *);
-static void		 usage(void);
+__dead static void	 usage(void);
 static int		 qsort_strcmp(const void *, const void *);
 static int		 getulong(const char *, char, char **,
     unsigned long *, unsigned long);

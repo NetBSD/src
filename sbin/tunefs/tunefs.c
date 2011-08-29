@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.43 2011/03/06 17:08:17 bouyer Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.44 2011/08/29 14:35:04 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.43 2011/03/06 17:08:17 bouyer Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.44 2011/08/29 14:35:04 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ static	void	change_log_info(long long);
 static	void	getsb(struct fs *, const char *);
 static	int	openpartition(const char *, int, char *, size_t);
 static	void	show_log_info(void);
-static	void	usage(void);
+__dead static	void	usage(void);
 
 int
 main(int argc, char *argv[])

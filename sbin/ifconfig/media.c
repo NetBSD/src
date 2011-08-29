@@ -1,6 +1,6 @@
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: media.c,v 1.5 2010/12/13 17:35:08 pooka Exp $");
+__RCSID("$NetBSD: media.c,v 1.6 2011/08/29 14:35:00 joerg Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -92,7 +92,7 @@ static const struct kwinst mediakw[] = {
 struct pkw kwmedia = PKW_INITIALIZER(&kwmedia, "media keywords", NULL, NULL,
     mediakw, __arraycount(mediakw), NULL);
 
-static void
+__dead static void
 media_error(int type, const char *val, const char *opt)
 {
 	errx(EXIT_FAILURE, "unknown %s media %s: %s",

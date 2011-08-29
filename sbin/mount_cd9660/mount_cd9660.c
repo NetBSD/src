@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.31 2009/10/07 20:42:09 pooka Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.32 2011/08/29 14:35:00 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.31 2009/10/07 20:42:09 pooka Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.32 2011/08/29 14:35:00 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ static const struct mntopt mopts[] = {
 	MOPT_NULL,
 };
 
-static void	usage(void);
+__dead static void	usage(void);
 
 #ifndef MOUNT_NOMAIN
 int

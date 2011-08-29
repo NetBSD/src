@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.22 2009/10/26 02:53:15 christos Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.23 2011/08/29 14:35:04 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -63,7 +63,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
  The Regents of the University of California.  All rights reserved.");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: rtquery.c,v 1.22 2009/10/26 02:53:15 christos Exp $");
+__RCSID("$NetBSD: rtquery.c,v 1.23 2011/08/29 14:35:04 joerg Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -132,7 +132,7 @@ static void query_loop(char *argv[], int) __dead;
 static int getnet(char *, struct netinfo *);
 static u_int std_mask(u_int);
 static int parse_quote(char **, const char *, char *, char *, int);
-static void usage(void);
+__dead static void usage(void);
 
 
 int

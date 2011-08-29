@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.137 2011/08/24 12:15:44 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.138 2011/08/29 14:35:04 joerg Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.137 2011/08/24 12:15:44 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.138 2011/08/29 14:35:04 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,7 @@ static void display_string(const struct sysctlnode *, const char *,
 static void display_struct(const struct sysctlnode *, const char *,
 			   const void *, size_t, int);
 static void hex_dump(const unsigned char *, size_t);
-static void usage(void);
+__dead static void usage(void);
 static void parse(char *, regex_t *, size_t *);
 static void parse_create(char *);
 static void parse_destroy(char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.131 2011/07/01 02:54:51 joerg Exp $	*/
+/*	$NetBSD: route.c,v 1.132 2011/08/29 14:35:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.131 2011/07/01 02:54:51 joerg Exp $");
+__RCSID("$NetBSD: route.c,v 1.132 2011/08/29 14:35:03 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ static int flushroutes(int, char *const [], int);
 static int prefixlen(const char *, struct sou *);
 #ifndef SMALL
 static void interfaces(void);
-static void monitor(void);
+__dead static void monitor(void);
 static int print_getmsg(struct rt_msghdr *, int, struct sou *);
 static const char *linkstate(struct if_msghdr *);
 static sup readtag(sup, const char *);

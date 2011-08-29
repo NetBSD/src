@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.92 2011/01/13 11:57:02 pooka Exp $	*/
+/*	$NetBSD: mount.c,v 1.93 2011/08/29 14:35:00 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.92 2011/01/13 11:57:02 pooka Exp $");
+__RCSID("$NetBSD: mount.c,v 1.93 2011/08/29 14:35:00 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ static void	mangle(char *, int *, const char ** volatile *, int *);
 static int	mountfs(const char *, const char *, const char *,
 		    int, const char *, const char *, int, char *, size_t);
 static void	prmount(struct statvfs *);
-static void	usage(void);
+__dead static void	usage(void);
 
 
 /* Map from mount otions to printable formats. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_puffs.c,v 1.3 2010/05/21 11:59:38 pooka Exp $	*/
+/*	$NetBSD: mount_puffs.c,v 1.4 2011/08/29 14:35:02 joerg Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_puffs.c,v 1.3 2010/05/21 11:59:38 pooka Exp $");
+__RCSID("$NetBSD: mount_puffs.c,v 1.4 2011/08/29 14:35:02 joerg Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -51,7 +51,7 @@ const struct mntopt getargmopt[] = {
 	MOPT_NULL,
 };
 
-static void
+__dead static void
 usage(void)
 {
 

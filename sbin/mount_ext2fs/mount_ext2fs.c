@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ext2fs.c,v 1.21 2008/08/05 20:57:45 pooka Exp $	*/
+/*	$NetBSD: mount_ext2fs.c,v 1.22 2011/08/29 14:35:00 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_ext2fs.c,v 1.21 2008/08/05 20:57:45 pooka Exp $");
+__RCSID("$NetBSD: mount_ext2fs.c,v 1.22 2011/08/29 14:35:00 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: mount_ext2fs.c,v 1.21 2008/08/05 20:57:45 pooka Exp $");
 #include "mountprog.h"
 #include "mount_ext2fs.h"
 
-static void	ext2fs_usage(void);
+__dead static void	ext2fs_usage(void);
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,

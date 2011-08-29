@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.12 2011/08/07 13:00:35 jmcneill Exp $ */
+/* $NetBSD: drvctl.c,v 1.13 2011/08/29 14:34:59 joerg Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -43,7 +43,7 @@
 	(((mode) == 'd' || (mode) == 'r') ? O_RDWR			\
 					  : O_RDONLY)
 
-static void usage(void);
+__dead static void usage(void);
 static void extract_property(prop_dictionary_t, const char *);
 static void list_children(int, char *, bool, bool, int);
 

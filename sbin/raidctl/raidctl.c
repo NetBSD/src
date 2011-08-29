@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.52 2011/02/19 07:11:10 enami Exp $   */
+/*      $NetBSD: raidctl.c,v 1.53 2011/08/29 14:35:03 joerg Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.52 2011/02/19 07:11:10 enami Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.53 2011/08/29 14:35:03 joerg Exp $");
 #endif
 
 
@@ -70,7 +70,7 @@ static  void rf_get_device_status(int);
 static	void rf_output_configuration(int, const char *);
 static  void get_component_number(int, char *, int *, int *);
 static  void rf_fail_disk(int, char *, int);
-static  void usage(void);
+__dead static  void usage(void);
 static  void get_component_label(int, char *);
 static  void set_component_label(int, char *);
 static  void init_component_labels(int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ptyfs.c,v 1.11 2011/05/21 20:05:02 riastradh Exp $	*/
+/*	$NetBSD: mount_ptyfs.c,v 1.12 2011/08/29 14:35:02 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_ptyfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_ptyfs.c,v 1.11 2011/05/21 20:05:02 riastradh Exp $");
+__RCSID("$NetBSD: mount_ptyfs.c,v 1.12 2011/08/29 14:35:02 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ int	main(int, char *[]);
 int	mount_ptyfs(int argc, char **argv);
 
 static gid_t	getgrp(const char *name);
-static void	usage(void);
+__dead static void	usage(void);
 
 #ifndef MOUNT_NOMAIN
 int

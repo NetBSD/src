@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_hfs.c,v 1.8 2008/08/05 20:57:45 pooka Exp $	*/
+/*	$NetBSD: mount_hfs.c,v 1.9 2011/08/29 14:35:01 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ __COPYRIGHT("@(#) Copyright (c) 2005 Yevgeny Binder.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mount_hfs.c,v 1.8 2008/08/05 20:57:45 pooka Exp $");
+__RCSID("$NetBSD: mount_hfs.c,v 1.9 2011/08/29 14:35:01 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,7 +89,7 @@ static const struct mntopt mopts[] = {
 };
 
 int	main(int, char *[]);
-static void	usage(void);
+__dead static void	usage(void);
 
 #ifndef MOUNT_NOMAIN
 int

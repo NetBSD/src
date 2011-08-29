@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.3 2009/12/19 16:01:25 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.4 2011/08/29 14:35:02 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.3 2009/12/19 16:01:25 pooka Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.4 2011/08/29 14:35:02 joerg Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -54,7 +54,7 @@ struct portal_node {
 	int fd;
 };
 
-static void usage(void);
+__dead static void usage(void);
 
 PUFFSOP_PROTOS(portal);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.79 2011/06/09 19:57:52 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.80 2011/08/29 14:34:59 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.79 2011/06/09 19:57:52 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.80 2011/08/29 14:34:59 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ volatile sig_atomic_t	returntosingle = 0;
 
 static int	argtoi(int, const char *, const char *, int);
 static int	checkfilesys(const char *, const char *, int);
-static void	usage(void);
+__dead static void	usage(void);
 
 int
 main(int argc, char *argv[])
