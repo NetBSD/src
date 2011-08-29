@@ -1,5 +1,5 @@
 include start
-call OK addnstr "abdcefg" 5
-refresh
+call OK addnstr "abcdefg" 5
+call OK refresh
 # should be the same as addstr
-compare addstr
+compare addstr.chk
