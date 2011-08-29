@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.7 2011/07/25 08:51:10 joerg Exp $	*/
+/*	$NetBSD: ssh.c,v 1.8 2011/08/29 21:08:54 joerg Exp $	*/
 /* $OpenBSD: ssh.c,v 1.356 2011/01/06 22:23:53 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh.c,v 1.7 2011/07/25 08:51:10 joerg Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.8 2011/08/29 21:08:54 joerg Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -184,7 +184,7 @@ extern u_int muxclient_command;
 
 /* Prints a help message to the user.  This function never returns. */
 
-static void
+__dead static void
 usage(void)
 {
 	fprintf(stderr,
@@ -984,7 +984,7 @@ ssh_confirm_remote_forward(int type, u_int32_t seq, void *ctxt)
 	}
 }
 
-static void
+__dead static void
 client_cleanup_stdio_fwd(int id, void *arg)
 {
 	debug("stdio forwarding: done");
