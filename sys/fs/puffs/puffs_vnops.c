@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.154 2011/07/04 08:07:30 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.155 2011/08/29 04:12:45 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.154 2011/07/04 08:07:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.155 2011/08/29 04:12:45 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -839,6 +839,18 @@ puffs_vnop_getattr(void *v)
 	struct puffs_node *pn = VPTOPP(vp);
 	int error = 0;
 
+	/*
+	 * A lock is required so that we do not race with 
+	 * setattr, write and fsync when changing vp->v_size.
+	 * This is critical, since setting a stall smaler value
+	 * triggers a file truncate in uvm_vnp_setsize(), which
+	 * most of the time means data corruption (a chunk of
+	 * data is replaced by zeroes). This can be removed if
+	 * we decide one day that VOP_GETATTR must operate on 
+	 * a locked vnode.
+	 */
+	mutex_enter(&pn->pn_sizemtx);
+
 	REFPN(pn);
 	vap = ap->a_vap;
 
@@ -889,6 +901,9 @@ puffs_vnop_getattr(void *v)
  out:
 	puffs_releasenode(pn);
 	PUFFS_MSG_RELEASE(getattr);
+	
+	mutex_exit(&pn->pn_sizemtx);
+
 	return error;
 }
 
@@ -901,6 +916,8 @@ dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int flags)
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct puffs_node *pn = vp->v_data;
 	int error = 0;
+
+	KASSERT(!(flags & SETATTR_CHSIZE) || mutex_owned(&pn->pn_sizemtx));
 
 	if ((vp->v_mount->mnt_flag & MNT_RDONLY) &&
 	    (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL
@@ -972,8 +989,14 @@ puffs_vnop_setattr(void *v)
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
+	struct puffs_node *pn = ap->a_vp->v_data;
+	int error;
 
-	return dosetattr(ap->a_vp, ap->a_vap, ap->a_cred, SETATTR_CHSIZE);
+	mutex_enter(&pn->pn_sizemtx);
+	error = dosetattr(ap->a_vp, ap->a_vap, ap->a_cred, SETATTR_CHSIZE);
+	mutex_exit(&pn->pn_sizemtx);
+
+	return error;
 }
 
 static __inline int
@@ -1023,6 +1046,7 @@ puffs_vnop_inactive(void *v)
 	int error;
 
 	pnode = vp->v_data;
+	mutex_enter(&pnode->pn_sizemtx);
 
 	if (doinact(pmp, pnode->pn_stat & PNODE_DOINACT)) {
 		flushvncache(vp, 0, 0, false);
@@ -1045,6 +1069,7 @@ puffs_vnop_inactive(void *v)
 		*ap->a_recycle = true;
 	}
 
+	mutex_exit(&pnode->pn_sizemtx);
 	VOP_UNLOCK(vp);
 
 	return 0;
@@ -1328,14 +1353,15 @@ puffs_vnop_fsync(void *v)
 	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, fsync);
 	struct vnode *vp = ap->a_vp;
-	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct puffs_node *pn = VPTOPP(vp);
+	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	int error, dofaf;
 
+	mutex_enter(&pn->pn_sizemtx);
 	error = flushvncache(vp, ap->a_offlo, ap->a_offhi,
 	    (ap->a_flags & FSYNC_WAIT) == FSYNC_WAIT);
 	if (error)
-		return error;
+		goto out;
 
 	/*
 	 * HELLO!  We exit already here if the user server does not
@@ -1343,8 +1369,9 @@ puffs_vnop_fsync(void *v)
 	 * has references neither in the kernel or the fs server.
 	 * Otherwise we continue to issue fsync() forward.
 	 */
+	error = 0;
 	if (!EXISTSOP(pmp, FSYNC) || (pn->pn_stat & PNODE_DYING))
-		return 0;
+		goto out;
 
 	dofaf = (ap->a_flags & FSYNC_WAIT) == 0 || ap->a_flags == FSYNC_LAZY;
 	/*
@@ -1377,6 +1404,8 @@ puffs_vnop_fsync(void *v)
 
 	error = checkerr(pmp, error, __func__);
 
+out:
+	mutex_exit(&pn->pn_sizemtx);
 	return error;
 }
 
@@ -1902,6 +1931,7 @@ puffs_vnop_write(void *v)
 	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, write);
 	struct vnode *vp = ap->a_vp;
+	struct puffs_node *pn = VPTOPP(vp);
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct uio *uio = ap->a_uio;
 	size_t tomove, argsize;
@@ -1912,6 +1942,8 @@ puffs_vnop_write(void *v)
 
 	error = uflags = 0;
 	write_msg = NULL;
+
+	mutex_enter(&pn->pn_sizemtx);
 
 	if (vp->v_type == VREG && PUFFS_USE_PAGECACHE(pmp)) {
 		ubcflags = UBC_WRITE | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp);
@@ -2034,6 +2066,7 @@ puffs_vnop_write(void *v)
 		puffs_msgmem_release(park_write);
 	}
 
+	mutex_exit(&pn->pn_sizemtx);
 	return error;
 }
 
