@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2recover.c,v 1.8 2011/05/24 12:18:03 joerg Exp $	*/
+/*	$NetBSD: bzip2recover.c,v 1.9 2011/08/29 20:41:22 joerg Exp $	*/
 
 
 /*-----------------------------------------------------------*/
@@ -112,7 +112,7 @@ static void tooManyBlocks ( Int32 max_handled_blocks );
 /*---------------------------------------------------*/
 
 /*---------------------------------------------*/
-static void readError ( void )
+__dead static void readError ( void )
 {
    fprintf ( stderr,
              "%s: I/O error reading `%s', possible reason follows.\n",
@@ -125,7 +125,7 @@ static void readError ( void )
 
 
 /*---------------------------------------------*/
-static void writeError ( void )
+__dead static void writeError ( void )
 {
    fprintf ( stderr,
              "%s: I/O error reading `%s', possible reason follows.\n",
@@ -138,7 +138,7 @@ static void writeError ( void )
 
 
 /*---------------------------------------------*/
-static void mallocFail ( Int32 n )
+__dead static void mallocFail ( Int32 n )
 {
    fprintf ( stderr,
              "%s: malloc failed on request for %d bytes.\n",
@@ -150,7 +150,7 @@ static void mallocFail ( Int32 n )
 
 
 /*---------------------------------------------*/
-static void tooManyBlocks ( Int32 max_handled_blocks )
+__dead static void tooManyBlocks ( Int32 max_handled_blocks )
 {
    fprintf ( stderr,
              "%s: `%s' appears to contain more than %d blocks\n",
