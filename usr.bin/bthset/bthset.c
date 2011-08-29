@@ -1,4 +1,4 @@
-/*	$NetBSD: bthset.c,v 1.6 2011/08/25 16:19:23 joerg Exp $	*/
+/*	$NetBSD: bthset.c,v 1.7 2011/08/29 13:47:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: bthset.c,v 1.6 2011/08/25 16:19:23 joerg Exp $");
+__RCSID("$NetBSD: bthset.c,v 1.7 2011/08/29 13:47:16 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -62,45 +62,44 @@ __RCSID("$NetBSD: bthset.c,v 1.6 2011/08/25 16:19:23 joerg Exp $");
 
 #define RING_INTERVAL	5	/* seconds */
 
-int  main(int, char *[]);
-void usage(void);
+__dead static void usage(void);
 
-void do_signal(int, short, void *);
-void do_ring(int, short, void *);
-void do_mixer(int, short, void *);
-void do_rfcomm(int, short, void *);
-void do_server(int, short, void *);
-int send_rfcomm(const char *, ...);
+static void do_signal(int, short, void *);
+static void do_ring(int, short, void *);
+static void do_mixer(int, short, void *);
+static void do_rfcomm(int, short, void *);
+static void do_server(int, short, void *);
+static int send_rfcomm(const char *, ...);
 
-int init_mixer(struct btsco_info *, const char *);
-int init_rfcomm(struct btsco_info *);
-int init_server(struct btsco_info *, int);
+static int init_mixer(struct btsco_info *, const char *);
+static int init_rfcomm(struct btsco_info *);
+static int init_server(struct btsco_info *, int);
 
-void remove_pid(void);
-int write_pid(void);
+static void remove_pid(void);
+static int write_pid(void);
 
-struct event sigint_ev;		/* bye bye */
-struct event sigusr1_ev;	/* start ringing */
-struct event sigusr2_ev;	/* stop ringing */
-struct event mixer_ev;		/* mixer changed */
-struct event rfcomm_ev;		/* headset speaks */
-struct event server_ev;		/* headset connecting */
-struct event ring_ev;		/* ring timer */
+static struct event sigint_ev;		/* bye bye */
+static struct event sigusr1_ev;	/* start ringing */
+static struct event sigusr2_ev;	/* stop ringing */
+static struct event mixer_ev;		/* mixer changed */
+static struct event rfcomm_ev;		/* headset speaks */
+static struct event server_ev;		/* headset connecting */
+static struct event ring_ev;		/* ring timer */
 
-mixer_ctrl_t vgs;	/* speaker control */
-mixer_ctrl_t vgm;	/* mic control */
-int ringing;		/* we are ringing */
-int verbose;		/* copy to stdout */
-int mx;			/* mixer fd */
-int rf;			/* rfcomm connection fd */
-int ag;			/* rfcomm gateway fd */
-sdp_session_t ss;	/* SDP server session */
+static mixer_ctrl_t vgs;	/* speaker control */
+static mixer_ctrl_t vgm;	/* mic control */
+static int ringing;		/* we are ringing */
+static int verbose;		/* copy to stdout */
+static int mx;			/* mixer fd */
+static int rf;			/* rfcomm connection fd */
+static int ag;			/* rfcomm gateway fd */
+static sdp_session_t ss;	/* SDP server session */
 
-char *command;		/* answer command */
-char *pidfile;		/* PID file name */
+static char *command;		/* answer command */
+static char *pidfile;		/* PID file name */
 
 /* Headset Audio Gateway service record */
-uint8_t hset_data[] = {
+static uint8_t hset_data[] = {
 	0x09, 0x00, 0x00,	//  uint16	ServiceRecordHandle
 	0x0a, 0x00, 0x00, 0x00,	//  uint32	0x00000000
 	0x00,
@@ -141,8 +140,8 @@ uint8_t hset_data[] = {
 	0x77, 0x61, 0x79
 };
 
-sdp_data_t hset_record =	{ hset_data + 0, hset_data + 91 };
-sdp_data_t hset_channel =	{ hset_data + 36, hset_data + 37 };
+static sdp_data_t hset_record =	{ hset_data + 0, hset_data + 91 };
+static sdp_data_t hset_channel =	{ hset_data + 36, hset_data + 37 };
 
 int
 main(int ac, char *av[])
@@ -239,7 +238,7 @@ main(int ac, char *av[])
 	err(EXIT_FAILURE, "event_dispatch");
 }
 
-void
+static void
 usage(void)
 {
 
@@ -257,7 +256,7 @@ usage(void)
 	exit(EXIT_FAILURE);
 }
 
-void
+static void
 do_signal(int s, short ev, void *arg)
 {
 
@@ -277,7 +276,7 @@ do_signal(int s, short ev, void *arg)
 	}
 }
 
-void
+static void
 do_ring(int s, short ev, void *arg)
 {
 	static struct timeval tv = { RING_INTERVAL, 0 };
@@ -293,7 +292,7 @@ do_ring(int s, short ev, void *arg)
  * The mixer device has been twiddled. We check mic and speaker
  * settings and send the appropriate commands to the headset,
  */
-void
+static void
 do_mixer(int s, short ev, void *arg)
 {
 	mixer_ctrl_t mc;
@@ -325,7 +324,7 @@ do_mixer(int s, short ev, void *arg)
 /*
  * RFCOMM socket event.
  */
-void
+static void
 do_rfcomm(int fd, short ev, void *arg)
 {
 	char buf[128];
@@ -392,7 +391,7 @@ do_rfcomm(int fd, short ev, void *arg)
 /*
  * got an incoming connection on the AG socket.
  */
-void
+static void
 do_server(int fd, short ev, void *arg)
 {
 	bdaddr_t *raddr = arg;
@@ -425,7 +424,7 @@ do_server(int fd, short ev, void *arg)
 /*
  * send a message to the RFCOMM socket
  */
-int
+static int
 send_rfcomm(const char *msg, ...)
 {
 	struct iovec iov[3];
@@ -453,7 +452,7 @@ send_rfcomm(const char *msg, ...)
 /*
  * Initialise mixer event
  */
-int
+static int
 init_mixer(struct btsco_info *info, const char *mixer)
 {
 
@@ -489,7 +488,7 @@ init_mixer(struct btsco_info *info, const char *mixer)
 /*
  * Initialise RFCOMM socket
  */
-int
+static int
 init_rfcomm(struct btsco_info *info)
 {
 	struct sockaddr_bt addr;
@@ -522,7 +521,7 @@ init_rfcomm(struct btsco_info *info)
 /*
  * Initialise server socket
  */
-int
+static int
 init_server(struct btsco_info *info, int channel)
 {
 	struct sockaddr_bt addr;
@@ -561,7 +560,7 @@ init_server(struct btsco_info *info, int channel)
 	return 0;
 }
 
-void
+static void
 remove_pid(void)
 {
 
@@ -571,7 +570,7 @@ remove_pid(void)
 	unlink(pidfile);
 }
 
-int
+static int
 write_pid(void)
 {
 	char *buf;
