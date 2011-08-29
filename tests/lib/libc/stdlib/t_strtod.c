@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.25 2011/08/29 12:50:50 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.26 2011/08/29 17:39:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,9 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.25 2011/08/29 12:50:50 jruoho Exp $");
-
-#include <sys/utsname.h>
+__RCSID("$NetBSD: t_strtod.c,v 1.26 2011/08/29 17:39:54 jruoho Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -265,16 +263,12 @@ ATF_TC_BODY(strtod_round, tc)
 {
 #if defined(__i386__) || defined(__amd64__) || defined(__sparc__)
 
-	struct utsname utsname;
-
 	/*
 	 * Test that strtod(3) honors the current rounding mode.
 	 * The used value is somewhere near 1 + DBL_EPSILON + FLT_EPSILON.
 	 *
 	 * May fail under QEMU; cf. PR misc/44767.
 	 */
-	ATF_REQUIRE(uname(&utsname) == 0);
-
 	const char *val =
 	    "1.00000011920928977282585492503130808472633361816406";
 

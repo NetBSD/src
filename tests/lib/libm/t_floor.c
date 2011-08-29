@@ -1,4 +1,4 @@
-/* $NetBSD: t_floor.c,v 1.7 2011/08/29 12:50:50 jruoho Exp $ */
+/* $NetBSD: t_floor.c,v 1.8 2011/08/29 17:39:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,9 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_floor.c,v 1.7 2011/08/29 12:50:50 jruoho Exp $");
-
-#include <sys/utsname.h>
+__RCSID("$NetBSD: t_floor.c,v 1.8 2011/08/29 17:39:54 jruoho Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -53,7 +51,6 @@ ATF_TC_HEAD(floor, tc)
 
 ATF_TC_BODY(floor, tc)
 {
-	struct utsname utsname;
 	const int n = 10240;
 	double x, y;
 	int i;
@@ -61,8 +58,6 @@ ATF_TC_BODY(floor, tc)
 	/*
 	 * This may fail under QEMU; see PR misc/44767.
 	 */
-	ATF_REQUIRE(uname(&utsname) == 0);
-
 	for (i = 0; i < n; i++) {
 
 		x = i + 0.999999999;
