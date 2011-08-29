@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.19 2011/06/30 20:09:41 wiz Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.20 2011/08/29 04:12:45 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.19 2011/06/30 20:09:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.20 2011/08/29 04:12:45 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -155,6 +155,7 @@ puffs_getvnode(struct mount *mp, puffs_cookie_t ck, enum vtype type,
 		}
 		KASSERT(pnc != NULL);
 	}
+	mutex_init(&pnode->pn_sizemtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_exit(&pmp->pmp_lock);
 
 	vp->v_data = pnode;
@@ -463,6 +464,7 @@ puffs_releasenode(struct puffs_node *pn)
 	if (--pn->pn_refcount == 0) {
 		mutex_exit(&pn->pn_mtx);
 		mutex_destroy(&pn->pn_mtx);
+		mutex_destroy(&pn->pn_sizemtx);
 		seldestroy(&pn->pn_sel);
 		pool_put(&puffs_pnpool, pn);
 	} else {
