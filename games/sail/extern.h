@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.37 2011/08/26 06:18:18 dholland Exp $ */
+/*	$NetBSD: extern.h,v 1.38 2011/08/29 20:30:37 joerg Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -358,7 +358,7 @@ void startup(void);
 /* pl_main.c */
 void pl_main_init(void);
 void pl_main_uninit(void);
-void pl_main(void);
+__dead void pl_main(void);
 
 /* sync.c */
 void fmtship(char *, size_t, const char *, struct ship *);
