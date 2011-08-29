@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.36 2011/08/28 07:48:50 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.37 2011/08/29 15:14:04 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.36 2011/08/28 07:48:50 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.37 2011/08/29 15:14:04 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -897,19 +897,22 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 	return 0;
 }
 
-#ifdef _MODULE
 MODULE(MODULE_CLASS_DRIVER, gpio, NULL);
 
+#ifdef _MODULE
 #include "ioconf.c"
+#endif
 
 static int
 gpio_modcmd(modcmd_t cmd, void *opaque)
 {
+#ifdef _MODULE
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
 	int error;
-
+#endif
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
 		error = config_init_component(cfdriver_ioconf_gpio,
 		    cfattach_ioconf_gpio, cfdata_ioconf_gpio);
 		if (error) {
@@ -925,14 +928,16 @@ gpio_modcmd(modcmd_t cmd, void *opaque)
 			return config_fini_component(cfdriver_ioconf_gpio,
 			    cfattach_ioconf_gpio, cfdata_ioconf_gpio);
 		}
+#endif
 		return 0;
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
 		config_fini_component(cfdriver_ioconf_gpio,
 		    cfattach_ioconf_gpio, cfdata_ioconf_gpio);
 		devsw_detach(NULL, &gpio_cdevsw);
+#endif
 		return 0;
 	default:
 		return ENOTTY;
 	}
 }
-#endif
