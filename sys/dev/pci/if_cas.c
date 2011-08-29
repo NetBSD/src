@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.13 2011/01/07 11:17:22 jmcneill Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.14 2011/08/29 14:47:08 jmcneill Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.13 2011/01/07 11:17:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.14 2011/08/29 14:47:08 jmcneill Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -2068,7 +2068,7 @@ cas_start(struct ifnet *ifp)
 	sc->sc_tx_prod = bix;
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_cas, NULL);
+MODULE(MODULE_CLASS_DRIVER, if_cas, "pci");
 
 #ifdef _MODULE
 #include "ioconf.c"
