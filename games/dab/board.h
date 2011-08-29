@@ -1,4 +1,4 @@
-/*	$NetBSD: board.h,v 1.2 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: board.h,v 1.3 2011/08/29 20:30:37 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ class BOARD {
     void games(size_t i, const PLAYER& p);		// Post games
     void total(size_t i, const PLAYER& p);		// Post totals
     void ties(const PLAYER& p);				// Post ties
-    void abort(const char *s, ...) const;		// Algorithm error
+    __dead void abort(const char *s, ...) const;	// Algorithm error
 
 
   private:
