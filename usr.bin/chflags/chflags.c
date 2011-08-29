@@ -1,4 +1,4 @@
-/*	$NetBSD: chflags.c,v 1.15 2008/07/21 14:19:21 lukem Exp $	*/
+/*	$NetBSD: chflags.c,v 1.16 2011/08/29 14:05:08 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "from: @(#)chflags.c	8.5 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chflags.c,v 1.15 2008/07/21 14:19:21 lukem Exp $");
+__RCSID("$NetBSD: chflags.c,v 1.16 2011/08/29 14:05:08 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: chflags.c,v 1.15 2008/07/21 14:19:21 lukem Exp $");
 #include <unistd.h>
 #include <util.h>
 
-void	usage(void);
+__dead static void	usage(void);
 
 int
 main(int argc, char *argv[])
@@ -191,7 +191,7 @@ main(int argc, char *argv[])
 	exit(rval);
 }
 
-void
+static void
 usage(void)
 {
 
