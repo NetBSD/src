@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.157 2011/07/03 08:57:43 mrg Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.158 2011/08/29 17:31:50 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.157 2011/07/03 08:57:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.158 2011/08/29 17:31:50 jmcneill Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -600,7 +600,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 #endif
 			}
 		}
-		p->p_trace_enabled = trace_is_enabled(p);
+		t->p_trace_enabled = trace_is_enabled(t);
 
 		/*
 		 * Pick up the LWPID, if supplied.  There are two cases:
