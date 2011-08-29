@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1597 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1598 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1107,3 +1107,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	mips: add support for MIPS DSP v2 ASE. [matt 20110815]
 	sparc: Switch to GCC 4.5.3  [mrg 20110817]
 	tmux(1): Import of tmux 1.5.  [jmmv 20110817]
+	devpubd(8): Add a device publishing daemon, written by Jared D.
+		McNeill.  [mrg 20110827]
