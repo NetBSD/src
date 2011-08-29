@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.81 2009/08/18 04:02:39 dogcow Exp $	*/
+/*	$NetBSD: savecore.c,v 1.82 2011/08/29 14:30:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.81 2009/08/18 04:02:39 dogcow Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.82 2011/08/29 14:30:38 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ extern FILE *zopen(const char *fname, const char *mode);
 #define	KREAD(kd, addr, p)\
 	(kvm_read(kd, addr, (char *)(p), sizeof(*(p))) != sizeof(*(p)))
 
-struct nlist current_nl[] = {	/* Namelist for currently running system. */
+static struct nlist current_nl[] = {	/* Namelist for currently running system. */
 #define	X_DUMPDEV	0
 	{ .n_name = "_dumpdev" },
 #define	X_DUMPLO	1
@@ -110,11 +110,11 @@ struct nlist current_nl[] = {	/* Namelist for currently running system. */
 	{ .n_name = "_ksyms_symtabs" },
 	{ .n_name = NULL },
 };
-int cursyms[] = { X_DUMPDEV, X_DUMPLO, X_VERSION, X_DUMPMAG, X_DUMPCDEV, -1 };
-int dumpsyms[] = { X_TIME_SECOND, X_TIME, X_DUMPSIZE, X_VERSION, X_PANICSTR,
+static int cursyms[] = { X_DUMPDEV, X_DUMPLO, X_VERSION, X_DUMPMAG, X_DUMPCDEV, -1 };
+static int dumpsyms[] = { X_TIME_SECOND, X_TIME, X_DUMPSIZE, X_VERSION, X_PANICSTR,
     X_DUMPMAG, X_SYMSZ, X_STRSZ, X_KHDR, X_SYMTABS, -1 };
 
-struct nlist dump_nl[] = {	/* Name list for dumped system. */
+static struct nlist dump_nl[] = {	/* Name list for dumped system. */
 	{ .n_name = "_dumpdev" },	/* Entries MUST be the same as */
 	{ .n_name = "_dumplo" },	/*	those in current_nl[].  */
 	{ .n_name = "_time_second" },
@@ -135,41 +135,39 @@ struct nlist dump_nl[] = {	/* Name list for dumped system. */
 };
 
 /* Types match kernel declarations. */
-off_t	dumplo;				/* where dump starts on dumpdev */
-u_int32_t dumpmag;			/* magic number in dump */
-int	dumpsize;			/* amount of memory dumped */
-off_t dumpbytes;			/* in bytes */
+static off_t	dumplo;				/* where dump starts on dumpdev */
+static u_int32_t dumpmag;			/* magic number in dump */
+static int	dumpsize;			/* amount of memory dumped */
+static off_t dumpbytes;			/* in bytes */
 
-const char	*kernel;		/* name of used kernel */
-char	*dirname;			/* directory to save dumps in */
-char	*ddname;			/* name of dump device */
-dev_t	dumpdev;			/* dump device */
-dev_t	dumpcdev = NODEV;		/* dump device (char equivalent) */
-int	dumpfd;				/* read/write descriptor on dev */
-kvm_t	*kd_dump;			/* kvm descriptor on dev	*/
-time_t	now;				/* current date */
-char	panic_mesg[1024];
-long	panicstr;
-char	vers[1024];
-char	gzmode[3];
+static const char	*kernel;		/* name of used kernel */
+static char	*dirname;			/* directory to save dumps in */
+static char	*ddname;			/* name of dump device */
+static dev_t	dumpdev;			/* dump device */
+static dev_t	dumpcdev = NODEV;		/* dump device (char equivalent) */
+static int	dumpfd;				/* read/write descriptor on dev */
+static kvm_t	*kd_dump;			/* kvm descriptor on dev	*/
+static time_t	now;				/* current date */
+static char	panic_mesg[1024];
+static long	panicstr;
+static char	vers[1024];
+static char	gzmode[3];
 
 static int	clear, compress, force, verbose;	/* flags */
 
-void	check_kmem(void);
-int	check_space(void);
-void	clear_dump(void);
-int	Create(char *, int);
-int	dump_exists(void);
-char	*find_dev(dev_t, mode_t);
-int	get_crashtime(void);
-void	kmem_setup(void);
-void	Lseek(int, off_t, int);
-int	main(int, char *[]);
-int	Open(const char *, int rw);
-char	*rawname(char *s);
-void	save_core(void);
-void	usage(void);
-void	Write(int, void *, int);
+static void	check_kmem(void);
+static int	check_space(void);
+static void	clear_dump(void);
+static int	Create(char *, int);
+static int	dump_exists(void);
+static char	*find_dev(dev_t, mode_t);
+static int	get_crashtime(void);
+static void	kmem_setup(void);
+static void	Lseek(int, off_t, int);
+static int	Open(const char *, int rw);
+static char	*rawname(char *s);
+static void	save_core(void);
+__dead static void	usage(void);
 
 int
 main(int argc, char *argv[])
@@ -259,7 +257,7 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-void
+static void
 kmem_setup(void)
 {
 	kvm_t *kd_kern;
@@ -392,7 +390,7 @@ kmem_setup(void)
 	kvm_close(kd_kern);
 }
 
-void
+static void
 check_kmem(void)
 {
 	char *cp, *bufdata;
@@ -490,7 +488,7 @@ nomsguf:
 	}
 }
 
-int
+static int
 dump_exists(void)
 {
 	u_int32_t newdumpmag;
@@ -525,7 +523,7 @@ dump_exists(void)
 	return (1);
 }
 
-void
+static void
 clear_dump(void)
 {
 	if (kvm_dump_inval(kd_dump) == -1)
@@ -534,7 +532,7 @@ clear_dump(void)
 
 }
 
-char buf[1024 * 1024];
+static char buf[1024 * 1024];
 
 static void
 save_kernel(int ofd, FILE *fp, char *path)
@@ -673,7 +671,7 @@ save_ksyms(int ofd, FILE *fp, char *path)
 	return 0;
 }
 
-void
+static void
 save_core(void)
 {
 	FILE *fp;
@@ -815,7 +813,7 @@ err2:			syslog(LOG_WARNING,
 	sleep(1);
 }
 
-char *
+static char *
 find_dev(dev_t dev, mode_t type)
 {
 	DIR *dfd;
@@ -854,7 +852,7 @@ find_dev(dev_t dev, mode_t type)
 	exit(1);
 }
 
-char *
+static char *
 rawname(char *s)
 {
 	char *sl;
@@ -874,7 +872,7 @@ rawname(char *s)
 	return (sl);
 }
 
-int
+static int
 get_crashtime(void)
 {
 	time_t dumptime;			/* Time the dump was taken. */
@@ -902,7 +900,7 @@ get_crashtime(void)
 	return (1);
 }
 
-int
+static int
 check_space(void)
 {
 	FILE *fp;
@@ -945,7 +943,7 @@ check_space(void)
 	return (1);
 }
 
-int
+static int
 Open(const char *name, int rw)
 {
 	int fd;
@@ -957,7 +955,7 @@ Open(const char *name, int rw)
 	return (fd);
 }
 
-void
+static void
 Lseek(int fd, off_t off, int flag)
 {
 	off_t ret;
@@ -969,7 +967,7 @@ Lseek(int fd, off_t off, int flag)
 	}
 }
 
-int
+static int
 Create(char *file, int mode)
 {
 	int fd;
@@ -982,18 +980,7 @@ Create(char *file, int mode)
 	return (fd);
 }
 
-void
-Write(int fd, void *bp, int size)
-{
-	int n;
-
-	if ((n = write(fd, bp, size)) < size) {
-		syslog(LOG_ERR, "write: %s", strerror(n == -1 ? errno : EIO));
-		exit(1);
-	}
-}
-
-void
+static void
 usage(void)
 {
 	(void)syslog(LOG_ERR,
