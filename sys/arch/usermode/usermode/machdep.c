@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.17 2011/08/28 19:39:42 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.18 2011/08/29 12:46:58 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2011/08/28 19:39:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2011/08/29 12:46:58 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,19 +137,24 @@ void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct pcb *pcb = lwp_getpcb(l);
+	ucontext_t *ucp = &pcb->pcb_userland_ucp;
 
 printf("setregs called: lwp %p, exec package %p, stack %p\n", l, pack, (void *) stack);
-printf("cur pcb %p\n", pcb);
+printf("current stat of pcb %p\n", pcb);
 printf("\tpcb->pcb_ucp.uc_stack.ss_sp   = %p\n", pcb->pcb_ucp.uc_stack.ss_sp);
 printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_ucp.uc_stack.ss_size);
+printf("\tpcb->pcb_userland_ucp.uc_stack.ss_sp   = %p\n", pcb->pcb_userland_ucp.uc_stack.ss_sp);
+printf("\tpcb->pcb_userland_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_userland_ucp.uc_stack.ss_size);
 
-	pcb->pcb_ucp.uc_stack.ss_sp = (void *) stack;
-	pcb->pcb_ucp.uc_stack.ss_size = pack->ep_ssize;
-	thunk_makecontext_trapframe2go(&pcb->pcb_ucp, (void *) pack->ep_entry, &pcb->pcb_tf);
+	ucp->uc_stack.ss_sp = (void *) stack;
+	ucp->uc_stack.ss_size = pack->ep_ssize;
+	thunk_makecontext_trapframe2go(ucp, (void *) pack->ep_entry, &pcb->pcb_tf);
 
-printf("new pcb %p\n", pcb);
+printf("updated pcb %p\n", pcb);
 printf("\tpcb->pcb_ucp.uc_stack.ss_sp   = %p\n", pcb->pcb_ucp.uc_stack.ss_sp);
 printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_ucp.uc_stack.ss_size);
+printf("\tpcb->pcb_userland_ucp.uc_stack.ss_sp   = %p\n", pcb->pcb_userland_ucp.uc_stack.ss_sp);
+printf("\tpcb->pcb_userland_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_userland_ucp.uc_stack.ss_size);
 printf("\tpack->ep_entry                = %p\n", (void *) pack->ep_entry);
 printf("\t    argument                  = %p\n", &pcb->pcb_tf);
 }
