@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.18 2010/11/22 21:04:28 pooka Exp $	*/
+/*	$NetBSD: extern.h,v 1.19 2011/08/29 14:51:18 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ void pos_in(void);
 void pos_out(void);
 void summary(void);
 void summaryx(int);
-void terminate(int);
+__dead void terminate(int);
 void unblock(void);
 void unblock_close(void);
 ssize_t bwrite(IO *, const void *, size_t);

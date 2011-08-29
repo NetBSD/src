@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.75 2010/05/31 03:18:33 rmind Exp $	*/
+/*	$NetBSD: ps.c,v 1.76 2011/08/29 14:51:18 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.75 2010/05/31 03:18:33 rmind Exp $");
+__RCSID("$NetBSD: ps.c,v 1.76 2011/08/29 14:51:18 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ static struct kinfo_proc2
 static char	*kludge_oldps_options(char *);
 static int	 pscomp(const void *, const void *);
 static void	 scanvars(void);
-static void	 usage(void);
+__dead static void	 usage(void);
 static int	 parsenum(const char *, const char *);
 int		 main(int, char *[]);
 
