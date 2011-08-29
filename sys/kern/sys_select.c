@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.35 2011/08/09 06:36:51 hannken Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.36 2011/08/29 00:39:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.35 2011/08/09 06:36:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.36 2011/08/29 00:39:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.35 2011/08/09 06:36:51 hannken Exp 
 #include <sys/atomic.h>
 #include <sys/socketvar.h>
 #include <sys/sleepq.h>
+#include <sys/sysctl.h>
 
 /* Flags for lwp::l_selflag. */
 #define	SEL_RESET	0	/* awoken, interrupted, or not yet polling */
@@ -147,6 +148,7 @@ static syncobj_t select_sobj = {
 };
 
 static selcluster_t	*selcluster[SELCLUSTERS] __read_mostly;
+static int		direct_select __read_mostly = 0;
 
 /*
  * Select system call.
@@ -378,9 +380,7 @@ selscan(char *bits, const int nfd, const size_t ni, register_t *retval)
 	fd_mask *ibitp, *obitp;
 	int msk, i, j, fd, n;
 	file_t *fp;
-	kmutex_t *lock;
 
-	lock = curlwp->l_selcluster->sc_lock;
 	ibitp = (fd_mask *)(bits + ni * 0);
 	obitp = (fd_mask *)(bits + ni * 3);
 	n = 0;
@@ -408,15 +408,15 @@ selscan(char *bits, const int nfd, const size_t ni, register_t *retval)
 				fd_putfile(fd);
 			}
 			if (obits != 0) {
-#ifndef NO_DIRECT_SELECT
-				if (obits != *ibitp)
+				if (direct_select) {
+					kmutex_t *lock;
+					lock = curlwp->l_selcluster->sc_lock;
 					mutex_spin_enter(lock);
-				*obitp |= obits;
-				if (obits != *ibitp)
+					*obitp |= obits;
 					mutex_spin_exit(lock);
-#else
-				*obitp |= obits;
-#endif
+				} else {
+					*obitp |= obits;
+				}
 			}
 			ibitp++;
 			obitp++;
@@ -715,15 +715,15 @@ selnotify(struct selinfo *sip, int events, long knhint)
 			 */
 			l = sip->sel_lwp;
 			oflag = l->l_selflag;
-#ifndef NO_DIRECT_SELECT
-			if (!sel_setevents(l, sip, events)) {
+
+			if (!direct_select) {
+				l->l_selflag = SEL_RESET;
+			} else if (!sel_setevents(l, sip, events)) {
 				/* No events to return. */
 				mutex_spin_exit(lock);
 				return;
 			}
-#else
-			l->l_selflag = SEL_RESET;
-#endif
+
 			/*
 			 * If thread is sleeping, wake it up.  If it's not
 			 * yet asleep, it will notice the change in state
@@ -931,4 +931,24 @@ pollsock(struct socket *so, const struct timespec *tsp, int events)
 	if (error == EWOULDBLOCK)
 		error = 0;
 	return (error);
+}
+
+/*
+ * System control nodes.
+ */
+SYSCTL_SETUP(sysctl_select_setup, "sysctl select setup")
+{
+	const struct sysctlnode *node = NULL;
+
+	sysctl_createv(clog, 0, NULL, &node,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "kern", NULL,
+		NULL, 0, NULL, 0,
+		CTL_KERN, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "direct_select",
+		SYSCTL_DESCR("Enable/disable direct select (for testing)"),
+		NULL, 0, &direct_select, 0,
+		CTL_CREATE, CTL_EOL);
 }
