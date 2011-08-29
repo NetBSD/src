@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.69 2011/05/23 20:49:35 joerg Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.70 2011/08/29 20:48:36 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -114,7 +114,7 @@ int rumpuser_getnhostcpu(void);
 
 /* rumpuser_pth */
 void rumpuser_thrinit(kernel_lockfn, kernel_unlockfn, int);
-void rumpuser_biothread(void *);
+__dead void rumpuser_biothread(void *);
 
 int  rumpuser_thread_create(void *(*f)(void *), void *, const char *, int,
 			    void **);
