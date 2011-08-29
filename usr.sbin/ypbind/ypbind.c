@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.88 2011/05/25 04:59:22 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.89 2011/08/29 20:38:55 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.88 2011/05/25 04:59:22 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.89 2011/08/29 20:38:55 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1152,7 +1152,7 @@ checkwork(void)
 ////////////////////////////////////////////////////////////
 // main
 
-static void
+__dead static void
 usage(void)
 {
 	const char *opt = "";

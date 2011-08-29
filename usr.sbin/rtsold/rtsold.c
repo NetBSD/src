@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.35 2009/04/11 07:51:59 lukem Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.36 2011/08/29 20:38:55 joerg Exp $	*/
 /*	$KAME: rtsold.c,v 1.77 2004/01/03 01:35:13 itojun Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ static struct timeval *rtsol_check_timer __P((void));
 #ifndef SMALL
 static void rtsold_set_dump_file __P((int));
 #endif
-static void usage __P((char *));
+__dead static void usage(char *);
 
 int
 main(int argc, char **argv)
