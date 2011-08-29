@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.4 2011/06/11 18:03:18 christos Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.5 2011/08/29 12:46:03 christos Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -4088,7 +4088,7 @@ cmd_scrollok(int nargs, char **args)
 		return;
 	}
 
-	if (sscanf(args[0], "%d", &flag) == 0) {
+	if (sscanf(args[1], "%d", &flag) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -5620,7 +5620,7 @@ void
 cmd_wtimeout(int nargs, char **args)
 {
 	WINDOW *win;
-	int delay;
+	int tval;
 
 	if (check_arg_count(nargs, 2) == 1)
 		return;
@@ -5631,13 +5631,13 @@ cmd_wtimeout(int nargs, char **args)
 		return;
 	}
 
-	if (sscanf(args[1], "%d", &delay) == 0) {
+	if (sscanf(args[1], "%d", &tval) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
 	}
 
-	wtimeout(win, delay); /* void return */
+	wtimeout(win, tval); /* void return */
 	report_count(1);
 	report_return(OK);
 }
