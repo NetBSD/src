@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.37 2010/02/16 23:20:30 mlelstv Exp $ */
+/* $NetBSD: setup.c,v 1.38 2011/08/29 18:43:20 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -367,8 +367,8 @@ setup(const char *dev)
 		}
 	}
 	if (fs->lfs_fbmask != (1 << fs->lfs_fbshift) - 1) {
-		pwarn("INCORRECT FFMASK=%" PRId64 " IN SUPERBLOCK",
-		    fs->lfs_ffmask);
+		pwarn("INCORRECT FBMASK=%" PRId64 " IN SUPERBLOCK",
+		    fs->lfs_fbmask);
 		fs->lfs_fbmask = (1 << fs->lfs_fbshift) - 1;
 		if (preen)
 			printf(" (FIXED)\n");
