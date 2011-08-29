@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.22 2011/08/28 21:31:41 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.23 2011/08/29 12:46:58 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_cpu.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22 2011/08/28 21:31:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23 2011/08/29 12:46:58 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -277,14 +277,11 @@ cpu_lwp_trampoline(void (*func)(void *), void *arg)
 
 	func(arg);
 
-printf("%s: setting ucontext on lwp %p\n", __func__, curlwp);
-pcb = lwp_getpcb(curlwp);
-printf("pcb %p\n", pcb);
-printf("\tpcb->pcb_ucp.uc_stack.ss_sp   = %p\n", pcb->pcb_ucp.uc_stack.ss_sp);
-printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_ucp.uc_stack.ss_size);
+	pcb = lwp_getpcb(curlwp);
 
 	/* switch to userland */
-	thunk_setcontext(&pcb->pcb_ucp);
+printf("switching to userland\n");
+	thunk_setcontext(&pcb->pcb_userland_ucp);
 
 	panic("%s: shouldn't return", __func__);
 }
@@ -294,7 +291,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
 	extern int errno;
-	struct pcb *pcb = lwp_getpcb(l2);
+	struct pcb *pcb1 = lwp_getpcb(l1);
+	struct pcb *pcb2 = lwp_getpcb(l2);
 
 #ifdef CPU_DEBUG
 	printf("cpu_lwp_fork [%s/%p] -> [%s/%p] stack=%p stacksize=%d\n",
@@ -303,21 +301,25 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	    stack, (int)stacksize);
 #endif
 
+	/* copy the PCB and its switchframes from parent */
+	memcpy(pcb2, pcb1, sizeof(struct pcb));
+
 	/* XXXJDM */
 	if (stack == NULL) {
 		stack = malloc(PAGE_SIZE, M_TEMP, M_NOWAIT);
 		stacksize = PAGE_SIZE;
-		pcb->pcb_needfree = true;
+		pcb2->pcb_needfree = true;
 	} else
-		pcb->pcb_needfree = false;
+		pcb2->pcb_needfree = false;
 
-	if (thunk_getcontext(&pcb->pcb_ucp))
+	if (thunk_getcontext(&pcb2->pcb_ucp))
 		panic("getcontext failed: %d", errno);
-	pcb->pcb_ucp.uc_stack.ss_sp = stack;
-	pcb->pcb_ucp.uc_stack.ss_size = stacksize;
-	pcb->pcb_ucp.uc_link = NULL;
-	pcb->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU;
-	thunk_makecontext(&pcb->pcb_ucp, (void (*)(void))cpu_lwp_trampoline,
+
+	pcb2->pcb_ucp.uc_stack.ss_sp = stack;
+	pcb2->pcb_ucp.uc_stack.ss_size = stacksize;
+	pcb2->pcb_ucp.uc_link = NULL;
+	pcb2->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU;
+	thunk_makecontext(&pcb2->pcb_ucp, (void (*)(void))cpu_lwp_trampoline,
 	    2, func, arg);
 }
 
@@ -326,6 +328,7 @@ cpu_initclocks(void)
 {
 }
 
+int syscall(lwp_t *l, struct trapframe *tr);
 void
 cpu_startup(void)
 {
@@ -341,6 +344,11 @@ cpu_startup(void)
 	if (thunk_getcontext(&lwp0pcb.pcb_ucp))
 		panic("getcontext failed");
 	uvm_lwp_setuarea(&lwp0, (vaddr_t)&lwp0pcb);
+
+	/* init trapframe (going nowhere!), maybe a panic func? */
+	lwp0pcb.pcb_tf.tf_syscall = syscall;
+	memcpy(&lwp0pcb.pcb_userland_ucp, &lwp0pcb.pcb_ucp, sizeof(ucontext_t));
+//	thunk_makecontext_trapframe2go(&lwp0pcb.pcb_userland_ucp, NULL, NULL);
 }
 
 void
