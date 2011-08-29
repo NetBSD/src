@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.33 2008/07/21 14:19:21 lukem Exp $	*/
+/*	$NetBSD: chpass.c,v 1.34 2011/08/29 14:08:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.33 2008/07/21 14:19:21 lukem Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.34 2011/08/29 14:08:39 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,9 +73,9 @@ void	(*Pw_error)(const char *, int, int);
 extern	int _yp_check(char **);	/* buried deep inside libc */
 #endif
 
-void	baduser(void);
-void	cleanup(void);
-void	usage(void);
+__dead static void	baduser(void);
+static void	cleanup(void);
+__dead static void	usage(void);
 
 int
 main(int argc, char **argv)
@@ -290,14 +290,14 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-void
+static void
 baduser(void)
 {
 
 	errx(1, "%s", strerror(EACCES));
 }
 
-void
+static void
 usage(void)
 {
 
@@ -308,7 +308,7 @@ usage(void)
 	exit(1);
 }
 
-void
+static void
 cleanup(void)
 {
 
