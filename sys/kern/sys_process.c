@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.158 2011/08/29 17:31:50 jmcneill Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.159 2011/08/30 22:45:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.158 2011/08/29 17:31:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.159 2011/08/30 22:45:55 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -1051,6 +1051,7 @@ process_stoptrace(void)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc, *pp;
+	int sig;
 
 	mutex_enter(proc_lock);
 	mutex_enter(p->p_lock);
@@ -1072,7 +1073,8 @@ process_stoptrace(void)
 	 * from userret().
 	 */
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
-	(void)issignal(l);
+	if ((sig = issignal(l)) != 0)
+		postsig(sig);
 	mutex_exit(p->p_lock);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
