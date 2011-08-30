@@ -1,4 +1,4 @@
-/*	$NetBSD: yppoll.c,v 1.14 2008/01/25 19:58:54 christos Exp $	*/
+/*	$NetBSD: yppoll.c,v 1.15 2011/08/30 17:06:22 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppoll.c,v 1.14 2008/01/25 19:58:54 christos Exp $");
+__RCSID("$NetBSD: yppoll.c,v 1.15 2011/08/30 17:06:22 plunky Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -201,7 +201,7 @@ get_remote_info(const char *indomain, const char *inmap, const char *server,
 		clnt_perror(client, "yp_order: clnt_call");
 
 	*outorder = ypro.ordernum;
-	xdr_free(xdr_ypresp_order, (void *)&ypro);
+	xdr_free((xdrproc_t)xdr_ypresp_order, (void *)&ypro);
 
 	r = ypprot_err(ypro.status);
 	if (r == RPC_SUCCESS) {
@@ -214,7 +214,7 @@ get_remote_info(const char *indomain, const char *inmap, const char *server,
 		r = ypprot_err(yprm.status);
 		if (r == 0)
 			*outname = (char *)strdup(yprm.master);
-		xdr_free(xdr_ypresp_master, (void *)&yprm);
+		xdr_free((xdrproc_t)xdr_ypresp_master, (void *)&yprm);
 	}
 	clnt_destroy(client);
 	return r;

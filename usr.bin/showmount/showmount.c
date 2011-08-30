@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.18 2011/02/27 10:11:27 mbalmer Exp $	*/
+/*	$NetBSD: showmount.c,v 1.19 2011/08/30 17:06:21 plunky Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1995\
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-__RCSID("$NetBSD: showmount.c,v 1.18 2011/02/27 10:11:27 mbalmer Exp $");
+__RCSID("$NetBSD: showmount.c,v 1.19 2011/08/30 17:06:21 plunky Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -153,16 +153,16 @@ main(int argc, char **argv)
 
 	if (rpcs & DODUMP)
 		if ((estat = tcp_callrpc(host, RPCPROG_MNT, mntvers,
-			 RPCMNT_DUMP, xdr_void, (char *)0,
-			 xdr_mntdump, (char *)&mntdump)) != 0) {
+			 RPCMNT_DUMP, (xdrproc_t)xdr_void, (char *)0,
+			 (xdrproc_t)xdr_mntdump, (char *)&mntdump)) != 0) {
 			fprintf(stderr, "showmount: Can't do Mountdump rpc: ");
 			clnt_perrno(estat);
 			exit(1);
 		}
 	if (rpcs & DOEXPORTS)
 		if ((estat = tcp_callrpc(host, RPCPROG_MNT, mntvers,
-			 RPCMNT_EXPORT, xdr_void, (char *)0,
-			 xdr_exports, (char *)&exports)) != 0) {
+			 RPCMNT_EXPORT, (xdrproc_t)xdr_void, (char *)0,
+			 (xdrproc_t)xdr_exports, (char *)&exports)) != 0) {
 			fprintf(stderr, "showmount: Can't do Exports rpc: ");
 			clnt_perrno(estat);
 			exit(1);

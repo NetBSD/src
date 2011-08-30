@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.89 2011/08/29 20:38:55 joerg Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.90 2011/08/30 17:06:22 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.89 2011/08/29 20:38:55 joerg Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.90 2011/08/30 17:06:22 plunky Exp $");
 #endif
 
 #include <sys/types.h>
@@ -576,14 +576,14 @@ ypbindprog_2(struct svc_req *rqstp, register SVCXPRT *transp)
 
 	switch (rqstp->rq_proc) {
 	case YPBINDPROC_NULL:
-		xdr_argument = xdr_void;
-		xdr_result = xdr_void;
+		xdr_argument = (xdrproc_t)xdr_void;
+		xdr_result = (xdrproc_t)xdr_void;
 		local = ypbindproc_null_2;
 		break;
 
 	case YPBINDPROC_DOMAIN:
-		xdr_argument = xdr_ypdomain_wrap_string;
-		xdr_result = xdr_ypbind_resp;
+		xdr_argument = (xdrproc_t)xdr_ypdomain_wrap_string;
+		xdr_result = (xdrproc_t)xdr_ypbind_resp;
 		local = ypbindproc_domain_2;
 		break;
 
@@ -601,8 +601,8 @@ ypbindprog_2(struct svc_req *rqstp, register SVCXPRT *transp)
 			return;
 		}
 
-		xdr_argument = xdr_ypbind_setdom;
-		xdr_result = xdr_void;
+		xdr_argument = (xdrproc_t)xdr_ypbind_setdom;
+		xdr_result = (xdrproc_t)xdr_void;
 		local = ypbindproc_setdom_2;
 		break;
 
@@ -663,7 +663,7 @@ sunrpc_setup(void)
 	rmtca.xdr_args = NULL;		/* set at call time */
 	rmtca.args_ptr = NULL;		/* set at call time */
 	rmtcr.port_ptr = &rmtcr_port;
-	rmtcr.xdr_results = xdr_bool;
+	rmtcr.xdr_results = (xdrproc_t)xdr_bool;
 	rmtcr.results_ptr = (caddr_t)(void *)&rmtcr_outval;
 }
 
@@ -874,7 +874,7 @@ recv_again:
 	(void)memset(&msg, 0, sizeof(msg));
 	msg.acpted_rply.ar_verf = _null_auth;
 	msg.acpted_rply.ar_results.where = (caddr_t)(void *)&rmtcr;
-	msg.acpted_rply.ar_results.proc = xdr_rmtcallres;
+	msg.acpted_rply.ar_results.proc = (xdrproc_t)xdr_rmtcallres;
 
 try_again:
 	fromlen = sizeof(struct sockaddr);
@@ -905,7 +905,7 @@ try_again:
 		}
 	}
 	xdr.x_op = XDR_FREE;
-	msg.acpted_rply.ar_results.proc = xdr_void;
+	msg.acpted_rply.ar_results.proc = (xdrproc_t)xdr_void;
 	xdr_destroy(&xdr);
 
 	return RPC_SUCCESS;
@@ -929,7 +929,7 @@ recv_again:
 	(void)memset(&msg, 0, sizeof(msg));
 	msg.acpted_rply.ar_verf = _null_auth;
 	msg.acpted_rply.ar_results.where = (caddr_t)(void *)&res;
-	msg.acpted_rply.ar_results.proc = xdr_bool;
+	msg.acpted_rply.ar_results.proc = (xdrproc_t)xdr_bool;
 
 try_again:
 	fromlen = sizeof (struct sockaddr);
@@ -959,7 +959,7 @@ try_again:
 		}
 	}
 	xdr.x_op = XDR_FREE;
-	msg.acpted_rply.ar_results.proc = xdr_void;
+	msg.acpted_rply.ar_results.proc = (xdrproc_t)xdr_void;
 	xdr_destroy(&xdr);
 
 	return RPC_SUCCESS;
@@ -977,7 +977,7 @@ nag_servers(struct domain *dom)
 	XDR xdr;
 
 	DPRINTF("nag_servers\n");
-	rmtca.xdr_args = xdr_ypdomain_wrap_string;
+	rmtca.xdr_args = (xdrproc_t)xdr_ypdomain_wrap_string;
 	rmtca.args_ptr = (caddr_t)(void *)&dom_name;
 
 	(void)memset(&xdr, 0, sizeof xdr);
