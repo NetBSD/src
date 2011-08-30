@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.182 2011/07/23 11:38:28 jym Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.183 2011/08/30 12:39:59 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.182 2011/07/23 11:38:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.183 2011/08/30 12:39:59 bouyer Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -587,6 +587,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 				    "sector"),
 		       NULL, LABELOFFSET, NULL, 0,
 		       CTL_KERN, KERN_LABELOFFSET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "labelusesmbr",
+		       SYSCTL_DESCR("disklabel is inside MBR partition"),
+		       NULL, LABELUSESMBR, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "lwp",

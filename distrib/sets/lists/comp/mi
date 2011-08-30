@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1667 2011/08/29 16:45:54 njoly Exp $
+#	$NetBSD: mi,v 1.1668 2011/08/30 12:39:50 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6644,6 +6644,7 @@
 ./usr/share/man/cat3/getifaddrs.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getlabeloffset.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getlabelsector.0		comp-c-catman		.cat
+./usr/share/man/cat3/getlabelusesmbr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getlastlogx.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getline.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getloadavg.0		comp-c-catman		.cat
@@ -12804,6 +12805,7 @@
 ./usr/share/man/html3/getifaddrs.html		comp-c-htmlman		html
 ./usr/share/man/html3/getlabeloffset.html	comp-c-htmlman		html
 ./usr/share/man/html3/getlabelsector.html	comp-c-htmlman		html
+./usr/share/man/html3/getlabelusesmbr.html	comp-c-htmlman		html
 ./usr/share/man/html3/getlastlogx.html		comp-c-htmlman		html
 ./usr/share/man/html3/getline.html		comp-c-htmlman		html
 ./usr/share/man/html3/getloadavg.html		comp-c-htmlman		html
@@ -18880,6 +18882,7 @@
 ./usr/share/man/man3/getifaddrs.3		comp-c-man		.man
 ./usr/share/man/man3/getlabeloffset.3		comp-c-man		.man
 ./usr/share/man/man3/getlabelsector.3		comp-c-man		.man
+./usr/share/man/man3/getlabelusesmbr.3		comp-c-man		.man
 ./usr/share/man/man3/getlastlogx.3		comp-c-man		.man
 ./usr/share/man/man3/getline.3			comp-c-man		.man
 ./usr/share/man/man3/getloadavg.3		comp-c-man		.man

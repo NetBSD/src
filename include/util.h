@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.58 2011/08/28 07:46:13 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.59 2011/08/30 12:39:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -70,6 +70,7 @@ pid_t		forkpty(int *, char *, struct termios *, struct winsize *);
 const char     *getbootfile(void);
 off_t		getlabeloffset(void);
 int		getlabelsector(void);
+int		getlabelusesmbr(void);
 int		getmaxpartitions(void);
 int		getrawpartition(void);
 #ifndef __LIBC12_SOURCE__

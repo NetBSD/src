@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65 2011/08/29 12:37:53 jruoho Exp $
+#	$NetBSD: Makefile,v 1.66 2011/08/30 12:39:52 bouyer Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -38,6 +38,7 @@ YPREFIX=__pd
 .include "compat/Makefile.inc"
 
 MLINKS+=getlabelsector.3 getlabeloffset.3
+MLINKS+=getlabelsector.3 getlabelusesmbr.3
 MLINKS+=login.3 logout.3
 MLINKS+=login.3 logwtmp.3
 MLINKS+=login_cap.3 login_getclass.3

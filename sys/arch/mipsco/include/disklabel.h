@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.7 2002/01/28 23:09:54 lukem Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.8 2011/08/30 12:39:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Wayne Knowles.     All rights reserved.
@@ -43,6 +43,7 @@
  * Partition 10 - whole disk
  */
 
+#define LABELUSESMBR	0	/* no MBR partitionning */
 #define LABELSECTOR	1
 #define LABELOFFSET	0
 #define MAXPARTITIONS	8	/* XXX - NetBSD Compatibility */

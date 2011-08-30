@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.8 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.9 2011/08/30 12:39:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -36,6 +36,7 @@
  * size of the boot block must be at least 8KB.
  */
 #define	BBMINSIZE	8192		/* minimum size of boot block      */
+#define LABELUSESMBR	0			/* no MBR partitionning */
 #define LABELSECTOR	0		/* `natural' start of boot block   */
 #define LABELOFFSET	516		/* offset of disk label in bytes,
 					   relative to start of boot block */

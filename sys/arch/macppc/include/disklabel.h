@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.14 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.15 2011/08/30 12:39:56 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -96,6 +96,7 @@
 #ifndef	_MACHINE_DISKLABEL_H_
 #define	_MACHINE_DISKLABEL_H_
 
+#define LABELUSESMBR	1		/* use MBR partitionning */
 #define	LABELSECTOR	0		/* sector containing label */
 #define	LABELOFFSET	64		/* offset of label in sector */
 #define	MBR_LABELSECTOR	1		/* sector containing label - in MBR */

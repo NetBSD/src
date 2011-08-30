@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2011/08/29 14:34:59 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2011/08/30 12:39:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.25 2011/08/29 14:34:59 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2011/08/30 12:39:52 bouyer Exp $");
 #endif
 #endif	/* not lint */
 
@@ -186,9 +186,11 @@ static int set_writable_fd = -1;
 #if HAVE_NBTOOL_CONFIG_H
 #define GETLABELOFFSET()	LABELOFFSET
 #define GETLABELSECTOR()	LABELSECTOR
+#define GETLABELUSESMBR()	LABELUSESMBR
 #else /* HAVE_NBTOOL_CONFIG_H */
 #define GETLABELOFFSET()	getlabeloffset()
 #define GETLABELSECTOR()	getlabelsector()
+#define GETLABELUSESMBR()	getlabelusesmbr()
 #endif
 
 /* Default location for label - only used if we don't find one to update */
@@ -272,9 +274,11 @@ main(int argc, char *argv[])
 		WRITE, INTERACT, DELETE
 	} op = UNSPEC, old_op;
 
-#ifdef USE_MBR
-	mflag = 1;
-#endif
+	mflag = GETLABELUSESMBR();
+	if (mflag < 0) {
+		warn("getlabelusesmbr() failed");
+		mflag = LABELUSESMBR;
+	}
 #if HAVE_NBTOOL_CONFIG_H
 	/* We must avoid doing any ioctl requests */
 	Fflag = rflag = 1;

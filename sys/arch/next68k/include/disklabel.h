@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.6 2005/12/11 12:18:25 christos Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.7 2011/08/30 12:39:57 bouyer Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -43,9 +43,11 @@
  * The NetBSD disklabel is located in the last sector of the next68k label
  * area, so that it can coexists with a next68k v3 label
  */
+#define LABELUSESMBR	0	/* no MBR partitionning */
 #define	LABELSECTOR	15	/* sector containing label */
 #define	LABELOFFSET	0	/* offset of label in sector */
 #else
+#define LABELUSESMBR	0	/* no MBR partitionning */
 #define LABELSECTOR 0
 #define LABELOFFSET 0
 #endif /* 0 */

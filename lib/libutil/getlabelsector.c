@@ -1,4 +1,4 @@
-/*	$NetBSD: getlabelsector.c,v 1.3 2005/09/17 01:51:21 elad Exp $	*/
+/*	$NetBSD: getlabelsector.c,v 1.4 2011/08/30 12:39:52 bouyer Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getlabelsector.c,v 1.3 2005/09/17 01:51:21 elad Exp $");
+__RCSID("$NetBSD: getlabelsector.c,v 1.4 2011/08/30 12:39:52 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
@@ -72,4 +72,17 @@ getlabeloffset(void)
 		return (-1);
 
 	return ((off_t)offset);
+}
+
+int
+getlabelusesmbr(void)
+{
+	int use;
+	size_t uselen;
+
+	if (sysctlbyname("kern.labelusesmbr", &use, &uselen,
+	    NULL, (size_t)0) < 0)
+		return (-1);
+
+	return use;
 }
