@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.39 2011/08/29 14:59:09 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.40 2011/08/30 10:29:34 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2011/08/29 14:59:09 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2011/08/30 10:29:34 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -411,7 +411,6 @@ pv_get(pmap_t pmap, uintptr_t ppn, uintptr_t lpn)
 		 ppn, lpn);
 assert(ppn < phys_npages);
 assert(ppn >= 0);
-panic("pv_get: multiple\n");
 	pv = pv_alloc();
 	if (pv == NULL)
 		return NULL;
