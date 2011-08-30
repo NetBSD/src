@@ -1,4 +1,4 @@
-/*	$NetBSD: mopdef.c,v 1.4 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: mopdef.c,v 1.5 2011/08/30 19:49:10 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopdef.c,v 1.4 2009/10/20 00:51:13 snj Exp $");
+__RCSID("$NetBSD: mopdef.c,v 1.5 2011/08/30 19:49:10 joerg Exp $");
 #endif
 
 #define MOPDEF_SURPESS_EXTERN
@@ -40,7 +40,7 @@ char lp_802_proto[5] = MOP_K_PROTO_802_LP; /* Loopback 802.2           */
 
 #if 0
 int
-mopdef_dummy()
+mopdef_dummy(void)
 {
 	/* Just to keep them as variables */
 	return(dl_mcst[0]-rc_mcst[0]-

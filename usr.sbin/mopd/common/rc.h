@@ -1,4 +1,4 @@
-/*	$NetBSD: rc.h,v 1.6 2009/11/17 18:58:07 drochner Exp $	*/
+/*	$NetBSD: rc.h,v 1.7 2011/08/30 19:49:11 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: rc.h,v 1.6 2009/11/17 18:58:07 drochner Exp $
+ *	$NetBSD: rc.h,v 1.7 2011/08/30 19:49:11 joerg Exp $
  *
  */
 
@@ -31,7 +31,7 @@
 #define _RC_H_
 
 __BEGIN_DECLS
-void	mopDumpRC        __P((FILE *, const u_char *, int));
+void	mopDumpRC(FILE *, const u_char *, int);
 __END_DECLS
 
 #endif /* _RC_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.2 2008/04/28 20:24:17 martin Exp $	*/
+/*	$NetBSD: log.h,v 1.3 2011/08/30 19:49:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,14 +34,10 @@
 
 __BEGIN_DECLS
 extern int mopInteractive;
-void	mopLogErr __P((const char *, ...))
-    __attribute__((__format__(__printf__, 1, 2))); 
-void	mopLogErrX __P((const char *, ...))
-    __attribute__((__format__(__printf__, 1, 2))); 
-void	mopLogWarn __P((const char *, ...))
-    __attribute__((__format__(__printf__, 1, 2))); 
-void	mopLogWarnX __P((const char *, ...))
-    __attribute__((__format__(__printf__, 1, 2))); 
+void	mopLogErr(const char *, ...) __dead __printflike(1, 2);
+void	mopLogErrX(const char *, ...) __dead __printflike(1, 2);
+void	mopLogWarn(const char *, ...) __printflike(1, 2);
+void	mopLogWarnX(const char *, ...) __printflike(1, 2);
 __END_DECLS
 
 #endif /* _LOG_H_ */
