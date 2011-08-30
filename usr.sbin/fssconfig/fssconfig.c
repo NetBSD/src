@@ -1,4 +1,4 @@
-/*	$NetBSD: fssconfig.c,v 1.7 2011/02/24 09:38:58 hannken Exp $	*/
+/*	$NetBSD: fssconfig.c,v 1.8 2011/08/30 18:30:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -45,13 +45,13 @@
 
 #include <dev/fssvar.h>
 
-int	vflag = 0;
-int	xflag = 0;
+static int	vflag = 0;
+static int	xflag = 0;
 
-void	config(int, char **);
-void	unconfig(int, char **);
-void	list(int, char **);
-void	usage(void);
+static void	config(int, char **);
+static void	unconfig(int, char **);
+static void	list(int, char **);
+__dead static void	usage(void);
 
 int
 main(int argc, char **argv)
@@ -93,7 +93,7 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-void
+static void
 config(int argc, char **argv)
 {
 	int fd, isreg, istmp, ispersistent;
@@ -182,7 +182,7 @@ configure:
 		list(1, argv);
 }
 
-void
+static void
 unconfig(int argc, char **argv)
 {
 	int fd;
@@ -201,7 +201,7 @@ unconfig(int argc, char **argv)
 		err(1, "%s: FSSIOCCLR", full);
 }
 
-void
+static void
 list(int argc, char **argv)
 {
 	int n, fd, flags;
@@ -265,7 +265,7 @@ list(int argc, char **argv)
 	}
 }
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "%s",
