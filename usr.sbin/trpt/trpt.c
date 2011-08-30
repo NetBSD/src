@@ -1,4 +1,4 @@
-/*	$NetBSD: trpt.c,v 1.26 2009/04/19 00:26:18 lukem Exp $	*/
+/*	$NetBSD: trpt.c,v 1.27 2011/08/30 20:49:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2005, 2006 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.26 2009/04/19 00:26:18 lukem Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.27 2011/08/30 20:49:29 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,7 @@ __RCSID("$NetBSD: trpt.c,v 1.26 2009/04/19 00:26:18 lukem Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
-struct nlist nl[] = {
+static struct nlist nl[] = {
 #define	N_HARDCLOCK_TICKS	0
 	{ "_hardclock_ticks", 0, 0, 0, 0 },
 #define	N_TCP_DEBUG		1
@@ -138,18 +138,17 @@ static n_time ntime;
 static int aflag, follow, sflag, tflag;
 
 /* see sys/netinet/tcp_debug.c */
-struct  tcp_debug tcp_debug[TCP_NDEBUG];
-int tcp_debx;
+static struct  tcp_debug tcp_debug[TCP_NDEBUG];
+static int tcp_debx;
 
-int	main(int, char *[]);
-void	dotrace(caddr_t);
-void	tcp_trace(short, short, struct tcpcb *, struct tcpcb *,
+static void	dotrace(caddr_t);
+static void	tcp_trace(short, short, struct tcpcb *, struct tcpcb *,
 	    int, void *, int);
-int	numeric(const void *, const void *);
-void	usage(void);
+static int	numeric(const void *, const void *);
+__dead static void	usage(void);
 
-kvm_t	*kd;
-int     use_sysctl;
+static kvm_t	*kd;
+static int     use_sysctl;
 
 int
 main(int argc, char *argv[])
@@ -277,7 +276,7 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-void
+static void
 dotrace(caddr_t tcpcb)
 {
 	struct tcp_debug *td;
@@ -380,7 +379,7 @@ dotrace(caddr_t tcpcb)
  * Tcp debug routines
  */
 /*ARGSUSED*/
-void
+static void
 tcp_trace(short act, short ostate, struct tcpcb *atp, struct tcpcb *tp,
     int family, void *packet, int req)
 {
@@ -550,7 +549,7 @@ skipact:
 	}
 }
 
-int
+static int
 numeric(const void *v1, const void *v2)
 {
 	const caddr_t *c1 = v1;
@@ -567,7 +566,7 @@ numeric(const void *v1, const void *v2)
 	return (rv);
 }
 
-void
+static void
 usage(void)
 {
 
