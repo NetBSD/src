@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1051 2011/08/30 12:13:25 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.1052 2011/08/30 13:03:17 mbalmer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1051 $"
+#ident 		"GENERIC-$Revision: 1.1052 $"
 
 maxusers	64		# estimated number of users
 
@@ -441,7 +441,6 @@ pci*	at elansc? bus ?
 
 # System Controllers
 elansc* at mainbus? bus ?		# AMD Elan SC520 System Controller
-gpio*	at elansc?
 
 # Temperatures
 amdtemp* at pchb?			# AMD CPU Temperature sensors
@@ -454,7 +453,7 @@ ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-LPC w/ timecounter,
 fwhrng* at ichlpcib?		# Intel 82802 FWH Random Number Generator
 #hpet*	at ichlpcib?
 gcscpcib* at pci? dev ? function ?	# AMD CS5535/CS5536 PCI-ISA w/
-gpio*	at gcscpcib?			# timecounter, watchdog and GPIO
+					# timecounter, watchdog and GPIO
 #piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 gscpcib* at pci? dev ? function ?	# NS Geode SC1100 PCI-ISA w/ GPIO
 viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
@@ -681,7 +680,6 @@ iic*	at piixpm?			# SMBus on PIIX4
 
 # PC87366 hardware monitor
 #nsclpcsio*	at isa?
-#gpio*		at nsclpcsio?
 
 # Abit uGuru Hardware system monitor
 #ug0	at isa? port 0xe0
@@ -706,8 +704,7 @@ ld*	at iop? tid ?			# block devices
 dpti*	at iop? tid 0			# DPT/Adaptec control interface
 
 # GPIO devices
-gpio*	at gscpcib?
-#gpio*	at gpiosim?
+gpio*	at gpiobus?
 
 # 1-Wire support
 #gpioow* 	at gpio? offset ? mask ?	# 1-wire bitbanging via gpio
