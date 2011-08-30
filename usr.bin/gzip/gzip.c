@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.104 2011/08/17 14:07:31 christos Exp $	*/
+/*	$NetBSD: gzip.c,v 1.105 2011/08/30 23:06:00 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
@@ -30,7 +30,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006\
  Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.104 2011/08/17 14:07:31 christos Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.105 2011/08/30 23:06:00 joerg Exp $");
 #endif /* not lint */
 
 /*
@@ -185,17 +185,13 @@ static	int	exit_value = 0;		/* exit value */
 
 static	char	*infile;		/* name of file coming in */
 
-static	void	maybe_err(const char *fmt, ...)
-    __attribute__((__noreturn__,__format__(__printf__, 1, 2)));
+static	void	maybe_err(const char *fmt, ...) __printflike(1, 2) __dead;
 #if !defined(NO_BZIP2_SUPPORT) || !defined(NO_PACK_SUPPORT) ||	\
     !defined(NO_XZ_SUPPORT)
-static	void	maybe_errx(const char *fmt, ...)
-    __attribute__((__noreturn__,__format__(__printf__, 1, 2)));
+static	void	maybe_errx(const char *fmt, ...) __printflike(1, 2) __dead;
 #endif
-static	void	maybe_warn(const char *fmt, ...)
-    __attribute__((__format__(__printf__, 1, 2)));
-static	void	maybe_warnx(const char *fmt, ...)
-    __attribute__((__format__(__printf__, 1, 2)));
+static	void	maybe_warn(const char *fmt, ...) __printflike(1, 2);
+static	void	maybe_warnx(const char *fmt, ...) __printflike(1, 2);
 static	enum filetype file_gettype(u_char *);
 #ifdef SMALL
 #define gz_compress(if, of, sz, fn, tm) gz_compress(if, of, sz)
@@ -210,8 +206,8 @@ static	void	handle_stdin(void);
 static	void	handle_stdout(void);
 static	void	print_ratio(off_t, off_t, FILE *);
 static	void	print_list(int fd, off_t, const char *, time_t);
-static	void	usage(void);
-static	void	display_version(void);
+__dead static	void	usage(void);
+__dead static	void	display_version(void);
 static	const suffixes_t *check_suffix(char *, int);
 static	ssize_t	read_retry(int, void *, size_t);
 
@@ -243,8 +239,6 @@ static	off_t	unpack(int, int, char *, size_t, off_t *);
 #ifndef NO_XZ_SUPPORT
 static	off_t	unxz(int, int, char *, size_t, off_t *);
 #endif
-
-int main(int, char *p[]);
 
 #ifdef SMALL
 #define getopt_long(a,b,c,d,e) getopt(a,b,c)
