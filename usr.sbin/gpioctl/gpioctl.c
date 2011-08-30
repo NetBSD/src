@@ -1,4 +1,4 @@
-/* $NetBSD: gpioctl.c,v 1.11 2011/08/28 07:48:50 mbalmer Exp $ */
+/* $NetBSD: gpioctl.c,v 1.12 2011/08/30 18:50:48 joerg Exp $ */
 
 /*
  * Copyright (c) 2008, 2010 Marc Balmer <mbalmer@NetBSD.org>
@@ -36,9 +36,9 @@
 #include <string.h>
 #include <unistd.h>
 
-char *dev;
-int devfd = -1;
-int quiet = 0;
+static char *dev;
+static int devfd = -1;
+static int quiet = 0;
 
 static void getinfo(void);
 static void gpioread(int, char *);
@@ -48,12 +48,12 @@ static void gpioset(int pin, char *name, int flags, char *alias);
 static void gpiounset(int pin, char *name);
 static void devattach(char *, int, uint32_t);
 static void devdetach(char *);
-static void usage(void);
+__dead static void usage(void);
 
 extern long long strtonum(const char *numstr, long long minval,
     long long maxval, const char **errstrp);
 
-const struct bitstr {
+static const struct bitstr {
 	unsigned int mask;
 	const char *string;
 } pinflags[] = {
