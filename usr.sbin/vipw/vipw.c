@@ -1,4 +1,4 @@
-/*	$NetBSD: vipw.c,v 1.14 2009/04/19 00:44:49 lukem Exp $	*/
+/*	$NetBSD: vipw.c,v 1.15 2011/08/30 20:52:10 joerg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)vipw.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: vipw.c,v 1.14 2009/04/19 00:44:49 lukem Exp $");
+__RCSID("$NetBSD: vipw.c,v 1.15 2011/08/30 20:52:10 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,11 +57,10 @@ __RCSID("$NetBSD: vipw.c,v 1.14 2009/04/19 00:44:49 lukem Exp $");
 #include <errno.h>
 #include <util.h>
 
-int	main __P((int, char **));
-static void	copyfile __P((int, int));
-static void	usage __P((void));
+static void	copyfile(int, int);
+__dead static void	usage(void);
 
-char mpwd[MAXPATHLEN], mpwdl[MAXPATHLEN];
+static char mpwd[MAXPATHLEN], mpwdl[MAXPATHLEN];
 
 int
 main(int argc, char *argv[])
