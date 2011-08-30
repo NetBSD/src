@@ -1,4 +1,4 @@
-.\" $NetBSD: dtviic.4,v 1.3 2011/08/30 06:51:27 jruoho Exp $
+.\" $NetBSD: dtviic.4,v 1.4 2011/08/30 11:24:38 jruoho Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -117,20 +117,24 @@ XCeive XC3028 analog and digital tuner
 Xceive XC5000 analog and digital tuner
 .El
 .Sh FILES
-.Bl -bullet
+.Bl -bullet -offset indent
 .It
 .Pa dvb-fe-nxt2004.fw
-needed by nxt2k
+needed by
+.Nm nxt2k
 .It
+.Pa xc3028-v27.fw
+or
 .Pa xc3028L-v36.fw
 (provided by
 .Pa pkgsrc/sysutils/xc3028l-firmware )
-or
-.Pa xc3028-v27.fw
-needed by xc3028
+needed by
+.Nm xc3028
 .It
 .Pa dvb-fe-xc5000-1.6.114.fw
-needed by xc5k, provided by
+needed by
+.Nm xc5k ,
+provided by the
 .Pa pkgsrc/sysutils/xc5k-firmware
 .El
 .Sh SEE ALSO
