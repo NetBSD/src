@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.38 2011/08/30 07:54:15 macallan Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.39 2011/08/30 14:22:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -90,6 +90,23 @@ struct netbsd32_format_op {
 #define DIOCWFORMAT32	_IOWR('d', 106, struct netbsd32_format_op)
 #endif
 
+/* from <net/bpf.h> */
+struct netbsd32_bpf_program {
+	u_int bf_len;
+	netbsd32_pointer_t bf_insns;
+};
+
+struct netbsd32_bpf_dltlist {
+	u_int bfl_len;
+	netbsd32_pointer_t bfl_list;
+};
+
+#define	BIOCSETF32	_IOW('B',103, struct netbsd32_bpf_program)
+#define BIOCSTCPF32	_IOW('B',114, struct netbsd32_bpf_program)
+#define BIOCSUDPF32	_IOW('B',115, struct netbsd32_bpf_program)
+#define BIOCGDLTLIST32	_IOWR('B',119, struct netbsd32_bpf_dltlist)
+
+
 struct netbsd32_wsdisplay_addscreendata {
 	int idx; /* screen index */
 	netbsd32_charp screentype;
@@ -129,9 +146,6 @@ dev/wscons/wsconsio.h:228:#define	WSDISPLAYIO_SCURSOR	_IOW('W', 74, struct wsdis
 
 dev/wscons/wsconsio.h:241:#define WSDISPLAYIO_SFONT	_IOW('W', 77, struct wsdisplay_font)
 
-net/bpf.h:127:#define	BIOCSETF	_IOW('B',103, struct bpf_program)
-net/bpf.h:138:#define BIOCSTCPF	_IOW('B',114, struct bpf_program)
-net/bpf.h:139:#define BIOCSUDPF	_IOW('B',115, struct bpf_program)
 net/if_ppp.h:110:#define PPPIOCSPASS	_IOW('t', 71, struct bpf_program) /* set pass filter */
 net/if_ppp.h:111:#define PPPIOCSACTIVE	_IOW('t', 70, struct bpf_program) /* set active filt */
 
