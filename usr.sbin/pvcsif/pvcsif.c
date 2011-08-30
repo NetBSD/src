@@ -1,4 +1,4 @@
-/*	$NetBSD: pvcsif.c,v 1.4 2007/01/16 17:32:05 hubertf Exp $	*/
+/*	$NetBSD: pvcsif.c,v 1.5 2011/08/30 21:27:00 joerg Exp $	*/
 
 /*
  * Copyright (C) 1998
@@ -40,8 +40,8 @@
 
 #include <net/if_atm.h>
 
-void usage __P((void));
-void list_all __P((void));
+__dead static void usage(void);
+static void list_all(void);
 
 void usage(void)
 {
@@ -94,7 +94,7 @@ main(int argc, char **argv)
 	return (0);
 }
 
-void
+static void
 list_all(void)
 {
 	struct if_nameindex *ifn_list, *ifnp;
