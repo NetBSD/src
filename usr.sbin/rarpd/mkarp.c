@@ -1,4 +1,4 @@
-/*	$NetBSD: mkarp.c,v 1.8 2009/04/18 08:50:23 lukem Exp $ */
+/*	$NetBSD: mkarp.c,v 1.9 2011/08/30 20:25:18 joerg Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: mkarp.c,v 1.8 2009/04/18 08:50:23 lukem Exp $");
+__RCSID("$NetBSD: mkarp.c,v 1.9 2011/08/30 20:25:18 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ __RCSID("$NetBSD: mkarp.c,v 1.8 2009/04/18 08:50:23 lukem Exp $");
 
 int	rtmsg(int, int, struct rt_msghdr *, struct sockaddr_inarp *, 
 	      struct sockaddr_dl *);
-struct	{
+static struct {
 	struct	rt_msghdr m_rtm;
 	char	m_space[512];
 }	m_rtmsg;
