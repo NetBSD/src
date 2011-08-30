@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.26.2.7 2011/08/20 19:22:47 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.26.2.8 2011/08/30 12:53:46 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.7 2011/08/20 19:22:47 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.8 2011/08/30 12:53:46 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -164,11 +164,13 @@ void xpq_debug_dump(void);
 #endif
 
 #define XPQUEUE_SIZE 2048
-static mmu_update_t xpq_queue[XPQUEUE_SIZE];
-static int xpq_idx = 0;
+static mmu_update_t xpq_queue_array[MAXCPUS][XPQUEUE_SIZE];
+static int xpq_idx_array[MAXCPUS];
 
 #ifdef MULTIPROCESSOR
 static struct simplelock xpq_lock = SIMPLELOCK_INITIALIZER;
+
+extern struct cpu_info * (*xpq_cpu)(void);
 
 void
 xpq_queue_lock(void)
@@ -195,7 +197,11 @@ xpq_flush_queue(void)
 {
 	int i, ok, ret;
 
+	mmu_update_t *xpq_queue = xpq_queue_array[xpq_cpu()->ci_cpuid];
+	int xpq_idx = xpq_idx_array[xpq_cpu()->ci_cpuid];
+
 	KASSERT(xpq_queue_locked());
+
 	XENPRINTK2(("flush queue %p entries %d\n", xpq_queue, xpq_idx));
 	for (i = 0; i < xpq_idx; i++)
 		XENPRINTK2(("%d: 0x%08" PRIx64 " 0x%08" PRIx64 "\n", i,
@@ -211,7 +217,7 @@ xpq_flush_queue(void)
 			   xpq_queue[i].ptr, xpq_queue[i].val);
 		panic("HYPERVISOR_mmu_update failed, ret: %d\n", ret);
 	}
-	xpq_idx = 0;
+	xpq_idx_array[xpq_cpu()->ci_cpuid] = 0;
 }
 
 /* Must be called with xpq_lock held */
@@ -220,14 +226,17 @@ xpq_increment_idx(void)
 {
 
 	KASSERT(xpq_queue_locked());
-	xpq_idx++;
-	if (__predict_false(xpq_idx == XPQUEUE_SIZE))
+
+	if (__predict_false(++xpq_idx_array[xpq_cpu()->ci_cpuid] == XPQUEUE_SIZE))
 		xpq_flush_queue();
 }
 
 void
 xpq_queue_machphys_update(paddr_t ma, paddr_t pa)
 {
+	mmu_update_t *xpq_queue = xpq_queue_array[xpq_cpu()->ci_cpuid];
+	int xpq_idx = xpq_idx_array[xpq_cpu()->ci_cpuid];
+
 	XENPRINTK2(("xpq_queue_machphys_update ma=0x%" PRIx64 " pa=0x%" PRIx64
 	    "\n", (int64_t)ma, (int64_t)pa));
 	KASSERT(xpq_queue_locked());
@@ -242,6 +251,9 @@ xpq_queue_machphys_update(paddr_t ma, paddr_t pa)
 void
 xpq_queue_pte_update(paddr_t ptr, pt_entry_t val)
 {
+
+	mmu_update_t *xpq_queue = xpq_queue_array[xpq_cpu()->ci_cpuid];
+	int xpq_idx = xpq_idx_array[xpq_cpu()->ci_cpuid];
 
 	KASSERT((ptr & 3) == 0);
 	KASSERT(xpq_queue_locked());
@@ -507,6 +519,9 @@ xpq_debug_dump(void)
 {
 	int i;
 
+	mmu_update_t *xpq_queue = xpq_queue_array[xpq_cpu()->ci_cpuid];
+	int xpq_idx = xpq_idx_array[xpq_cpu()->ci_cpuid];
+
 	XENPRINTK2(("idx: %d\n", xpq_idx));
 	for (i = 0; i < xpq_idx; i++) {
 		snprintf(XBUF, sizeof(XBUF), "%" PRIx64 " %08" PRIx64,
@@ -578,6 +593,8 @@ xen_pmap_bootstrap(void)
 	long mapsize;
 	vaddr_t bootstrap_tables, init_tables;
 
+	memset(xpq_idx_array, 0, sizeof xpq_idx_array);
+	
 	xpmap_phys_to_machine_mapping =
 	    (unsigned long *)xen_start_info.mfn_list;
 	init_tables = xen_start_info.pt_base;
