@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.41 2011/08/30 10:37:42 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.42 2011/08/30 10:44:06 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2011/08/30 10:37:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2011/08/30 10:44:06 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -356,7 +356,24 @@ pmap_create(void)
 void
 pmap_destroy(pmap_t pmap)
 {
-aprint_debug("pmap_destroy not implemented!\n");
+	int i;
+
+	/* if multiple references exist just remove a reference */
+	aprint_debug("pmap_destroy %p\n", pmap);
+	if (--pmap->pm_count > 0)
+		return;
+
+	/* safe guard against silly errors */
+	KASSERT((pmap->pm_flags & PM_ACTIVE) == 0);
+	KASSERT(pmap->pm_stats.resident_count == 0);
+	KASSERT(pmap->pm_stats.wired_count == 0);
+#ifdef DIAGNOSTIC
+	for (i = 0; i < pm_nentries; i++)
+		if (pmap->pm_entries[i] != NULL)
+			panic("pmap_destroy: pmap isn't empty");
+#endif
+	free((void *)pmap->pm_entries, M_VMPMAP);
+	pool_put(&pmap_pool, pmap);
 }
 
 void
