@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2003/08/07 11:25:27 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 2011/08/30 19:27:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -52,7 +52,7 @@ struct info {
 
 int        ksearch(char ***, struct info *);
 int        msearch(char ***, struct info *);
-void       printjob(void);
+void       printjob(void) __dead;
 void       recvjob(void);
 void       sttyclearflags(struct termios *tp, int flags);
 void       sttysetflags(struct termios *tp, int flags);
