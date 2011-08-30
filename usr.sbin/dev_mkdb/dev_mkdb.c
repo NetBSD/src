@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.27 2009/04/15 01:01:06 lukem Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.28 2011/08/30 10:04:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.27 2009/04/15 01:01:06 lukem Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.28 2011/08/30 10:04:50 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,9 +59,9 @@ __RCSID("$NetBSD: dev_mkdb.c,v 1.27 2009/04/15 01:01:06 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-static void	usage(void) __unused;
+static void	usage(void) __dead;
 
-HASHINFO openinfo = {
+static HASHINFO openinfo = {
 	4096,		/* bsize */
 	128,		/* ffactor */
 	1024,		/* nelem */
