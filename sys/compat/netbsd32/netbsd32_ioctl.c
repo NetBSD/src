@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.57 2011/08/27 19:25:35 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.58 2011/08/30 07:06:39 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.57 2011/08/27 19:25:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.58 2011/08/30 07:06:39 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,12 @@ static inline void netbsd32_from_sioc_vif_req(struct sioc_vif_req *,
 static inline void netbsd32_from_sioc_sg_req(struct sioc_sg_req *,
 					       struct netbsd32_sioc_sg_req *,
 					       u_long);
+
+/* wsdisplay stuff */
+static inline void netbsd32_to_wsdisplay_addscreendata(
+ 			struct netbsd32_wsdisplay_addscreendata *,
+			struct wsdisplay_addscreendata *,
+			u_long);
 
 /* convert to/from different structures */
 
@@ -286,6 +292,17 @@ netbsd32_to_wdog_conf(struct netbsd32_wdog_conf *s32p, struct wdog_conf *p, u_lo
 
 	p->wc_names = (char *)NETBSD32PTR64(s32p->wc_names);
 	p->wc_count = s32p->wc_count;
+}
+
+/* wsdisplay stuff */
+static inline void
+netbsd32_to_wsdisplay_addscreendata(struct netbsd32_wsdisplay_addscreendata *asd32,
+					       struct wsdisplay_addscreendata *asd,
+					       u_long cmd)
+{
+	asd->screentype = (char *)NETBSD32PTR64(asd32->screentype);
+	asd->emul = (char *)NETBSD32PTR64(asd32->emul);
+	asd->idx = asd32->idx;
 }
 
 /*
@@ -450,6 +467,17 @@ netbsd32_from_wdog_conf(struct wdog_conf *p, struct netbsd32_wdog_conf *s32p, u_
 
 	NETBSD32PTR32(s32p->wc_names, p->wc_names);
 	s32p->wc_count = p->wc_count;
+}
+
+/* wsdisplay stuff */
+static inline void
+netbsd32_from_wsdisplay_addscreendata(struct wsdisplay_addscreendata *asd,
+					struct netbsd32_wsdisplay_addscreendata *asd32,
+					u_long cmd)
+{
+	NETBSD32PTR32(asd32->screentype, asd->screentype);
+	NETBSD32PTR32(asd32->emul, asd->emul);
+	asd32->idx = asd->idx;
 }
 
 static inline void
@@ -762,6 +790,9 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 
 	case WDOGIOC_GWDOGS32:
 		IOCTL_STRUCT_CONV_TO(WDOGIOC_GWDOGS, wdog_conf);
+
+	case WSDISPLAYIO_ADDSCREEN32:
+		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_ADDSCREEN, wsdisplay_addscreendata);
 
 	default:
 #ifdef NETBSD32_MD_IOCTL
