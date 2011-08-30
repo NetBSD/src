@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.121 2011/08/30 17:06:21 plunky Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.122 2011/08/30 20:00:58 joerg Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.121 2011/08/30 17:06:21 plunky Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.122 2011/08/30 20:00:58 joerg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -164,57 +164,57 @@ struct fhreturn {
 };
 
 /* Global defs */
-static char    *add_expdir __P((struct dirlist **, char *, int));
-static void add_dlist __P((struct dirlist **, struct dirlist *,
-    struct grouplist *, int));
-static void add_mlist __P((char *, char *, int));
-static int check_dirpath __P((const char *, size_t, char *));
-static int check_options __P((const char *, size_t, struct dirlist *));
-static int chk_host __P((struct dirlist *, struct sockaddr *, int *, int *));
-static int del_mlist __P((char *, char *, struct sockaddr *));
-static struct dirlist *dirp_search __P((struct dirlist *, char *));
-static int do_nfssvc __P((const char *, size_t, struct exportlist *,
-    struct grouplist *, int, struct uucred *, char *, int, struct statvfs *));
-static int do_opt __P((const char *, size_t, char **, char **,
-    struct exportlist *, struct grouplist *, int *, int *, struct uucred *));
-static struct exportlist *ex_search __P((fsid_t *));
-static int parse_directory __P((const char *, size_t, struct grouplist *,
-    int, char *, struct exportlist **, struct statvfs *));
-static int parse_host_netgroup __P((const char *, size_t, struct exportlist *,
-    struct grouplist *, char *, int *, struct grouplist **));
-static struct exportlist *get_exp __P((void));
-static void free_dir __P((struct dirlist *));
-static void free_exp __P((struct exportlist *));
-static void free_grp __P((struct grouplist *));
-static void free_host __P((struct hostlist *));
-static void get_exportlist __P((int));
-static int get_host __P((const char *, size_t, const char *,
-    struct grouplist *));
-static struct hostlist *get_ht __P((void));
-static void get_mountlist __P((void));
-static int get_net __P((char *, struct netmsk *, int));
-static void free_exp_grp __P((struct exportlist *, struct grouplist *));
-static struct grouplist *get_grp __P((void));
-static void hang_dirp __P((struct dirlist *, struct grouplist *,
-    struct exportlist *, int));
-static void mntsrv __P((struct svc_req *, SVCXPRT *));
-static void nextfield __P((char **, char **));
-static void parsecred __P((char *, struct uucred *));
-static int put_exlist __P((struct dirlist *, XDR *, struct dirlist *, int *));
-static int scan_tree __P((struct dirlist *, struct sockaddr *));
-static void send_umntall __P((int));
-static int umntall_each __P((caddr_t, struct sockaddr_in *));
-static int xdr_dir __P((XDR *, char *));
-static int xdr_explist __P((XDR *, caddr_t));
-static int xdr_fhs __P((XDR *, caddr_t));
-static int xdr_mlist __P((XDR *, caddr_t));
-static int bitcmp __P((void *, void *, int));
-static int netpartcmp __P((struct sockaddr *, struct sockaddr *, int));
-static int sacmp __P((struct sockaddr *, struct sockaddr *));
-static int allones __P((struct sockaddr_storage *, int));
-static int countones __P((struct sockaddr *));
-static void bind_resv_port __P((int, sa_family_t, in_port_t));
-static void no_nfs(int);
+static char    *add_expdir(struct dirlist **, char *, int);
+static void add_dlist(struct dirlist **, struct dirlist *,
+    struct grouplist *, int);
+static void add_mlist(char *, char *, int);
+static int check_dirpath(const char *, size_t, char *);
+static int check_options(const char *, size_t, struct dirlist *);
+static int chk_host(struct dirlist *, struct sockaddr *, int *, int *);
+static int del_mlist(char *, char *, struct sockaddr *);
+static struct dirlist *dirp_search(struct dirlist *, char *);
+static int do_nfssvc(const char *, size_t, struct exportlist *,
+    struct grouplist *, int, struct uucred *, char *, int, struct statvfs *);
+static int do_opt(const char *, size_t, char **, char **,
+    struct exportlist *, struct grouplist *, int *, int *, struct uucred *);
+static struct exportlist *ex_search(fsid_t *);
+static int parse_directory(const char *, size_t, struct grouplist *,
+    int, char *, struct exportlist **, struct statvfs *);
+static int parse_host_netgroup(const char *, size_t, struct exportlist *,
+    struct grouplist *, char *, int *, struct grouplist **);
+static struct exportlist *get_exp(void);
+static void free_dir(struct dirlist *);
+static void free_exp(struct exportlist *);
+static void free_grp(struct grouplist *);
+static void free_host(struct hostlist *);
+static void get_exportlist(int);
+static int get_host(const char *, size_t, const char *,
+    struct grouplist *);
+static struct hostlist *get_ht(void);
+static void get_mountlist(void);
+static int get_net(char *, struct netmsk *, int);
+static void free_exp_grp(struct exportlist *, struct grouplist *);
+static struct grouplist *get_grp(void);
+static void hang_dirp(struct dirlist *, struct grouplist *,
+    struct exportlist *, int);
+static void mntsrv(struct svc_req *, SVCXPRT *);
+static void nextfield(char **, char **);
+static void parsecred(char *, struct uucred *);
+static int put_exlist(struct dirlist *, XDR *, struct dirlist *, int *);
+static int scan_tree(struct dirlist *, struct sockaddr *);
+__dead static void send_umntall(int);
+static int umntall_each(caddr_t, struct sockaddr_in *);
+static int xdr_dir(XDR *, char *);
+static int xdr_explist(XDR *, caddr_t);
+static int xdr_fhs(XDR *, caddr_t);
+static int xdr_mlist(XDR *, caddr_t);
+static int bitcmp(void *, void *, int);
+static int netpartcmp(struct sockaddr *, struct sockaddr *, int);
+static int sacmp(struct sockaddr *, struct sockaddr *);
+static int allones(struct sockaddr_storage *, int);
+static int countones(struct sockaddr *);
+static void bind_resv_port(int, sa_family_t, in_port_t);
+__dead static void no_nfs(int);
 static struct exportlist *exphead;
 static struct mountlist *mlhead;
 static struct grouplist *grphead;
@@ -244,9 +244,8 @@ static const int ninumeric = NI_NUMERICHOST;
 
 static int      debug = 0;
 #if 0
-static void SYSLOG __P((int, const char *,...));
+static void SYSLOG(int, const char *,...);
 #endif
-int main __P((int, char *[]));
 
 /*
  * If this is non-zero, -noresvport and -noresvmnt are implied for
@@ -263,9 +262,7 @@ static int noprivports;
  * and "-n" to allow nonroot mount.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	SVCXPRT *udptransp, *tcptransp, *udp6transp, *tcp6transp;
 	struct netconfig *udpconf, *tcpconf, *udp6conf, *tcp6conf;
@@ -475,9 +472,7 @@ main(argc, argv)
  * The mount rpc service
  */
 void
-mntsrv(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+mntsrv(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	struct exportlist *ep;
 	struct dirlist *dp;
@@ -661,9 +656,7 @@ out:
  * Xdr conversion for a dirpath string
  */
 static int
-xdr_dir(xdrsp, dirp)
-	XDR *xdrsp;
-	char *dirp;
+xdr_dir(XDR *xdrsp, char *dirp)
 {
 
 	return (xdr_string(xdrsp, &dirp, RPCMNT_PATHLEN));
@@ -673,9 +666,7 @@ xdr_dir(xdrsp, dirp)
  * Xdr routine to generate file handle reply
  */
 static int
-xdr_fhs(xdrsp, cp)
-	XDR *xdrsp;
-	caddr_t cp;
+xdr_fhs(XDR *xdrsp, caddr_t cp)
 {
 	struct fhreturn *fhrp = (struct fhreturn *) cp;
 	long ok = 0, len, auth;
@@ -704,9 +695,7 @@ xdr_fhs(xdrsp, cp)
 }
 
 int
-xdr_mlist(xdrsp, cp)
-	XDR *xdrsp;
-	caddr_t cp;
+xdr_mlist(XDR *xdrsp, caddr_t cp)
 {
 	struct mountlist *mlp;
 	int trueval = 1;
@@ -734,9 +723,7 @@ xdr_mlist(xdrsp, cp)
  * Xdr conversion for export list
  */
 int
-xdr_explist(xdrsp, cp)
-	XDR *xdrsp;
-	caddr_t cp;
+xdr_explist(XDR *xdrsp, caddr_t cp)
 {
 	struct exportlist *ep;
 	int falseval = 0;
@@ -770,11 +757,7 @@ errout:
  * directory paths.  Assumes SIGHUP has already been masked.
  */
 int
-put_exlist(dp, xdrsp, adp, putdefp)
-	struct dirlist *dp;
-	XDR *xdrsp;
-	struct dirlist *adp;
-	int *putdefp;
+put_exlist(struct dirlist *dp, XDR *xdrsp, struct dirlist *adp, int *putdefp)
 {
 	struct grouplist *grp;
 	struct hostlist *hp;
@@ -832,14 +815,8 @@ put_exlist(dp, xdrsp, adp, putdefp)
 }
 
 static int
-parse_host_netgroup(line, lineno, ep, tgrp, cp, has_host, grp)
-	const char *line;
-	size_t lineno;
-	struct exportlist *ep;
-	struct grouplist *tgrp;
-	char *cp;
-	int *has_host;
-	struct grouplist **grp;
+parse_host_netgroup(const char *line, size_t lineno, struct exportlist *ep,
+    struct grouplist *tgrp, char *cp, int *has_host, struct grouplist **grp)
 {
 	const char *hst, *usr, *dom;
 	int netgrp;
@@ -879,14 +856,8 @@ bad:
 }
 
 static int
-parse_directory(line, lineno, tgrp, got_nondir, cp, ep, fsp)
-	const char *line;
-	size_t lineno;
-	struct grouplist *tgrp;
-	int got_nondir;
-	char *cp;
-	struct exportlist **ep;
-	struct statvfs *fsp;
+parse_directory(const char *line, size_t lineno, struct grouplist *tgrp,
+    int got_nondir, char *cp, struct exportlist **ep, struct statvfs *fsp)
 {
 	if (!check_dirpath(line, lineno, cp))
 		return 0;
@@ -942,8 +913,7 @@ parse_directory(line, lineno, tgrp, got_nondir, cp, ep, fsp)
  */
 /* ARGSUSED */
 void
-get_exportlist(n)
-	int n;
+get_exportlist(int n)
 {
 	struct exportlist *ep, *ep2;
 	struct grouplist *grp, *tgrp;
@@ -1198,7 +1168,7 @@ nextline:
  * Allocate an export list element
  */
 static struct exportlist *
-get_exp()
+get_exp(void)
 {
 	struct exportlist *ep;
 
@@ -1211,7 +1181,7 @@ get_exp()
  * Allocate a group list element
  */
 static struct grouplist *
-get_grp()
+get_grp(void)
 {
 	struct grouplist *gp;
 
@@ -1224,9 +1194,7 @@ get_grp()
  * Clean up upon an error in get_exportlist().
  */
 static void
-free_exp_grp(ep, grp)
-	struct exportlist *ep;
-	struct grouplist *grp;
+free_exp_grp(struct exportlist *ep, struct grouplist *grp)
 {
 	struct grouplist *tgrp;
 
@@ -1243,8 +1211,7 @@ free_exp_grp(ep, grp)
  * Search the export list for a matching fs.
  */
 static struct exportlist *
-ex_search(fsid)
-	fsid_t *fsid;
+ex_search(fsid_t *fsid)
 {
 	struct exportlist *ep;
 
@@ -1262,10 +1229,7 @@ ex_search(fsid)
  * Add a directory path to the list.
  */
 static char *
-add_expdir(dpp, cp, len)
-	struct dirlist **dpp;
-	char *cp;
-	int len;
+add_expdir(struct dirlist **dpp, char *cp, int len)
 {
 	struct dirlist *dp;
 
@@ -1284,11 +1248,8 @@ add_expdir(dpp, cp, len)
  * and update the entry for host.
  */
 void
-hang_dirp(dp, grp, ep, flags)
-	struct dirlist *dp;
-	struct grouplist *grp;
-	struct exportlist *ep;
-	int flags;
+hang_dirp(struct dirlist *dp, struct grouplist *grp, struct exportlist *ep,
+    int flags)
 {
 	struct hostlist *hp;
 	struct dirlist *dp2;
@@ -1334,11 +1295,8 @@ hang_dirp(dp, grp, ep, flags)
  * for the new directory or adding the new node.
  */
 static void
-add_dlist(dpp, newdp, grp, flags)
-	struct dirlist **dpp;
-	struct dirlist *newdp;
-	struct grouplist *grp;
-	int flags;
+add_dlist(struct dirlist **dpp, struct dirlist *newdp, struct grouplist *grp,
+    int flags)
 {
 	struct dirlist *dp;
 	struct hostlist *hp;
@@ -1389,9 +1347,7 @@ add_dlist(dpp, newdp, grp, flags)
  * Search for a dirpath on the export point.
  */
 static struct dirlist *
-dirp_search(dp, dirp)
-	struct dirlist *dp;
-	char *dirp;
+dirp_search(struct dirlist *dp, char *dirp)
 {
 	int cmp;
 
@@ -1585,11 +1541,8 @@ sacmp(struct sockaddr *sa1, struct sockaddr *sa2)
  * Scan for a host match in a directory tree.
  */
 static int
-chk_host(dp, saddr, defsetp, hostsetp)
-	struct dirlist *dp;
-	struct sockaddr *saddr;
-	int *defsetp;
-	int *hostsetp;
+chk_host(struct dirlist *dp, struct sockaddr *saddr, int *defsetp,
+    int *hostsetp)
 {
 	struct hostlist *hp;
 	struct grouplist *grp;
@@ -1632,9 +1585,7 @@ chk_host(dp, saddr, defsetp, hostsetp)
  * Scan tree for a host that matches the address.
  */
 static int
-scan_tree(dp, saddr)
-	struct dirlist *dp;
-	struct sockaddr *saddr;
+scan_tree(struct dirlist *dp, struct sockaddr *saddr)
 {
 	int defset, hostset;
 
@@ -1653,8 +1604,7 @@ scan_tree(dp, saddr)
  * Traverse the dirlist tree and free it up.
  */
 static void
-free_dir(dp)
-	struct dirlist *dp;
+free_dir(struct dirlist *dp)
 {
 
 	if (dp) {
@@ -1671,15 +1621,9 @@ free_dir(dp)
  * -<option> <value>
  */
 static int
-do_opt(line, lineno, cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
-	const char *line;
-	size_t lineno;
-	char **cpp, **endcpp;
-	struct exportlist *ep;
-	struct grouplist *grp;
-	int *has_hostp;
-	int *exflagsp;
-	struct uucred *cr;
+do_opt(const char *line, size_t lineno, char **cpp, char **endcpp,
+    struct exportlist *ep, struct grouplist *grp, int *has_hostp,
+    int *exflagsp, struct uucred *cr)
 {
 	char *cpoptarg, *cpoptend;
 	char *cp, *cpopt, savedc, savedc2;
@@ -1803,11 +1747,8 @@ do_opt(line, lineno, cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
  * addresses for a hostname.
  */
 static int
-get_host(line, lineno, cp, grp)
-	const char *line;
-	size_t lineno;
-	const char *cp;
-	struct grouplist *grp;
+get_host(const char *line, size_t lineno, const char *cp,
+    struct grouplist *grp)
 {
 	struct addrinfo *ai, hints;
 	int ecode;
@@ -1851,8 +1792,7 @@ get_host(line, lineno, cp, grp)
  * Free up an exports list component
  */
 static void
-free_exp(ep)
-	struct exportlist *ep;
+free_exp(struct exportlist *ep)
 {
 
 	if (ep->ex_defdir) {
@@ -1871,8 +1811,7 @@ free_exp(ep)
  * Free hosts.
  */
 static void
-free_host(hp)
-	struct hostlist *hp;
+free_host(struct hostlist *hp)
 {
 	struct hostlist *hp2;
 
@@ -1884,7 +1823,7 @@ free_host(hp)
 }
 
 static struct hostlist *
-get_ht()
+get_ht(void)
 {
 	struct hostlist *hp;
 
@@ -1898,16 +1837,9 @@ get_ht()
  * Do the nfssvc syscall to push the export info into the kernel.
  */
 static int
-do_nfssvc(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
-	const char *line;
-	size_t lineno;
-	struct exportlist *ep;
-	struct grouplist *grp;
-	int exflags;
-	struct uucred *anoncrp;
-	char *dirp;
-	int dirplen;
-	struct statvfs *fsb;
+do_nfssvc(const char *line, size_t lineno, struct exportlist *ep,
+    struct grouplist *grp, int exflags, struct uucred *anoncrp,
+    char *dirp, int dirplen, struct statvfs *fsb)
 {
 	struct sockaddr *addrp;
 	struct sockaddr_storage ss;
@@ -2005,10 +1937,7 @@ skip:
  * Translate a net address.
  */
 static int
-get_net(cp, net, maskflg)
-	char *cp;
-	struct netmsk *net;
-	int maskflg;
+get_net(char *cp, struct netmsk *net, int maskflg)
 {
 	struct netent *np;
 	char *nname, *p, *prefp;
@@ -2127,9 +2056,7 @@ fail:
  * Parse out the next white space separated field
  */
 static void
-nextfield(cp, endcp)
-	char **cp;
-	char **endcp;
+nextfield(char **cp, char **endcp)
 {
 	char *p;
 
@@ -2150,9 +2077,7 @@ nextfield(cp, endcp)
  * Parse a description of a credential.
  */
 static void
-parsecred(namelist, cr)
-	char *namelist;
-	struct uucred *cr;
+parsecred(char *namelist, struct uucred *cr)
 {
 	char *username;
 	int cnt;
@@ -2230,7 +2155,7 @@ parsecred(namelist, cr)
  * Routines that maintain the remote mounttab
  */
 static void
-get_mountlist()
+get_mountlist(void)
 {
 	struct mountlist *mlp, **mlpp;
 	char *host, *dirp, *cp;
@@ -2261,9 +2186,7 @@ get_mountlist()
 }
 
 static int
-del_mlist(hostp, dirp, saddr)
-	char *hostp, *dirp;
-	struct sockaddr *saddr;
+del_mlist(char *hostp, char *dirp, struct sockaddr *saddr)
 {
 	struct mountlist *mlp, **mlpp;
 	struct mountlist *mlp2;
@@ -2326,9 +2249,7 @@ cont:
 }
 
 static void
-add_mlist(hostp, dirp, flags)
-	char *hostp, *dirp;
-	int flags;
+add_mlist(char *hostp, char *dirp, int flags)
 {
 	struct mountlist *mlp, **mlpp;
 	FILE *mlfile;
@@ -2363,8 +2284,7 @@ add_mlist(hostp, dirp, flags)
  */
 /* ARGSUSED */
 static void
-send_umntall(n)
-	int n;
+send_umntall(int n)
 {
 	(void)clnt_broadcast(RPCPROG_MNT, RPCMNT_VER1, RPCMNT_UMNTALL,
 	    (xdrproc_t)xdr_void, NULL, (xdrproc_t)xdr_void, NULL,
@@ -2373,9 +2293,7 @@ send_umntall(n)
 }
 
 static int
-umntall_each(resultsp, raddr)
-	caddr_t resultsp;
-	struct sockaddr_in *raddr;
+umntall_each(caddr_t resultsp, struct sockaddr_in *raddr)
 {
 	return (1);
 }
@@ -2384,8 +2302,7 @@ umntall_each(resultsp, raddr)
  * Free up a group list.
  */
 static void
-free_grp(grp)
-	struct grouplist *grp;
+free_grp(struct grouplist *grp)
 {
 
 	if (grp->gr_type == GT_HOST) {
@@ -2419,10 +2336,7 @@ SYSLOG(int pri, const char *fmt,...)
  * Check options for consistency.
  */
 static int
-check_options(line, lineno, dp)
-	const char *line;
-	size_t lineno;
-	struct dirlist *dp;
+check_options(const char *line, size_t lineno, struct dirlist *dp)
 {
 
 	if (dp == NULL) {
@@ -2464,10 +2378,7 @@ check_options(line, lineno, dp)
  * if no symbolic links are found.
  */
 static int
-check_dirpath(line, lineno, dirp)
-	const char *line;
-	size_t lineno;
-	char *dirp;
+check_dirpath(const char *line, size_t lineno, char *dirp)
 {
 	char *cp;
 	struct stat sb;
