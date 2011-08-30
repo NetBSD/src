@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.37 2011/08/30 07:06:39 macallan Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.38 2011/08/30 07:54:15 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -36,6 +36,7 @@
 #include <dev/vndvar.h>
 
 #include <dev/wscons/wsconsio.h>
+#include <net80211/ieee80211_ioctl.h>
 
 /* we define some handy macros here... */
 #define IOCTL_STRUCT_CONV_TO(cmd, type)	\
@@ -95,6 +96,19 @@ struct netbsd32_wsdisplay_addscreendata {
 	netbsd32_charp emul;
 };
 #define	WSDISPLAYIO_ADDSCREEN32	_IOW('W', 78, struct netbsd32_wsdisplay_addscreendata)
+
+/* the first member must be matched with struct ifreq */
+struct netbsd32_ieee80211_nwkey {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	int		i_wepon;		/* wep enabled flag */
+	int		i_defkid;		/* default encrypt key id */
+	struct {
+		int		i_keylen;
+		netbsd32_charp	i_keydat;
+	}		i_key[IEEE80211_WEP_NKID];
+};
+#define	SIOCS80211NWKEY32		 _IOW('i', 232, struct netbsd32_ieee80211_nwkey)
+#define	SIOCG80211NWKEY32		_IOWR('i', 233, struct netbsd32_ieee80211_nwkey)
 
 /* can wait! */
 #if 0
