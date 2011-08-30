@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.46 2011/08/30 11:53:22 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.47 2011/08/30 11:57:20 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.46 2011/08/30 11:53:22 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 2011/08/30 11:57:20 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -929,10 +929,14 @@ pmap_is_modified(struct vm_page *page)
 }
 
 bool
-pmap_is_referenced(struct vm_page *pg)
+pmap_is_referenced(struct vm_page *page)
 {
-aprint_debug("pmap_is_referenced not implemented\n");
-	return false;
+	intptr_t ppn;
+
+	ppn = atop(VM_PAGE_TO_PHYS(page));
+	aprint_debug("pmap_is_referenced page %"PRIiPTR"\n", ppn);
+
+	return (pv_table[ppn].pv_pflags & PV_REFERENCED) != 0;
 }
 
 paddr_t
