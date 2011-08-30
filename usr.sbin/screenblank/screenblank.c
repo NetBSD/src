@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.28 2008/07/21 13:36:59 lukem Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.29 2011/08/30 20:33:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996-2002\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.28 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.29 2011/08/30 20:33:30 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -68,9 +68,9 @@ __RCSID("$NetBSD: screenblank.c,v 1.28 2008/07/21 13:36:59 lukem Exp $");
 
 #include "pathnames.h"
 
-u_long	setvideo = WSDISPLAYIO_SVIDEO;		/* "set video" ioctl */
-int	videoon  = WSDISPLAYIO_VIDEO_ON;	/* value for "on" */
-int	videooff = WSDISPLAYIO_VIDEO_OFF;	/* value for "off" */
+static u_long	setvideo = WSDISPLAYIO_SVIDEO;		/* "set video" ioctl */
+static int	videoon  = WSDISPLAYIO_VIDEO_ON;	/* value for "on" */
+static int	videooff = WSDISPLAYIO_VIDEO_OFF;	/* value for "off" */
 
 struct	dev_stat {
 	LIST_ENTRY(dev_stat) ds_link;	/* linked list */
@@ -79,15 +79,14 @@ struct	dev_stat {
 	time_t	ds_atime;		/* time device last accessed */
 	time_t	ds_mtime;		/* time device last modified */
 };
-LIST_HEAD(ds_list, dev_stat) ds_list;
+static LIST_HEAD(ds_list, dev_stat) ds_list;
 
-int	main(int, char *[]);
 static	void add_dev(const char *, int);
 static	void change_state(int);
 static	void cvt_arg(char *, struct timespec *);
-static	void sighandler(int);
+__dead static	void sighandler(int);
 static	int is_graphics_fb(struct dev_stat *);
-static	void usage(void);
+__dead static	void usage(void);
 
 int
 main(int argc, char *argv[])
