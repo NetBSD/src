@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.58 2011/08/30 07:06:39 macallan Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.59 2011/08/30 07:54:15 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.58 2011/08/30 07:06:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.59 2011/08/30 07:54:15 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,6 +305,23 @@ netbsd32_to_wsdisplay_addscreendata(struct netbsd32_wsdisplay_addscreendata *asd
 	asd->idx = asd32->idx;
 }
 
+static inline void
+netbsd32_to_ieee80211_nwkey(struct netbsd32_ieee80211_nwkey *nwk32,
+					       struct ieee80211_nwkey *nwk,
+					       u_long cmd)
+{
+	int i;
+
+	strncpy(nwk->i_name, nwk32->i_name, IFNAMSIZ);
+	nwk->i_wepon = nwk32->i_wepon;
+	nwk->i_defkid = nwk32->i_defkid;
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		nwk->i_key[i].i_keylen = nwk32->i_key[i].i_keylen;
+		nwk->i_key[i].i_keydat =
+		    NETBSD32PTR64(nwk32->i_key[i].i_keydat);
+	}
+}
+
 /*
  * handle ioctl conversions from 64-bit kernel -> netbsd32
  */
@@ -478,6 +495,23 @@ netbsd32_from_wsdisplay_addscreendata(struct wsdisplay_addscreendata *asd,
 	NETBSD32PTR32(asd32->screentype, asd->screentype);
 	NETBSD32PTR32(asd32->emul, asd->emul);
 	asd32->idx = asd->idx;
+}
+
+static inline void
+netbsd32_from_ieee80211_nwkey(struct ieee80211_nwkey *nwk,
+				struct netbsd32_ieee80211_nwkey *nwk32,
+				u_long cmd)
+{
+	int i;
+
+	strncpy(nwk32->i_name, nwk->i_name, IFNAMSIZ);
+	nwk32->i_wepon = nwk->i_wepon;
+	nwk32->i_defkid = nwk->i_defkid;
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		nwk32->i_key[i].i_keylen = nwk->i_key[i].i_keylen;
+		NETBSD32PTR32(nwk32->i_key[i].i_keydat,
+				nwk->i_key[i].i_keydat);
+	}
 }
 
 static inline void
@@ -793,6 +827,9 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 
 	case WSDISPLAYIO_ADDSCREEN32:
 		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_ADDSCREEN, wsdisplay_addscreendata);
+
+	case SIOCS80211NWKEY32:
+		IOCTL_STRUCT_CONV_TO(SIOCG80211NWKEY, ieee80211_nwkey);
 
 	default:
 #ifdef NETBSD32_MD_IOCTL
