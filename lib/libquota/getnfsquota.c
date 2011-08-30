@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsquota.c,v 1.1 2011/03/24 17:05:43 bouyer Exp $	*/
+/*	$NetBSD: getnfsquota.c,v 1.2 2011/08/30 17:06:20 plunky Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: getnfsquota.c,v 1.1 2011/03/24 17:05:43 bouyer Exp $");
+__RCSID("$NetBSD: getnfsquota.c,v 1.2 2011/08/30 17:06:20 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,15 +151,15 @@ getnfsquota(const char *mp, struct ufs_quota_entry *qv,
 	ext_gq_args.gqa_id = id;
 	ext_gq_args.gqa_type = rpcqtype;
 	ret = callaurpc(host, RQUOTAPROG, EXT_RQUOTAVERS,
-	    RQUOTAPROC_GETQUOTA, xdr_ext_getquota_args, &ext_gq_args,
-	    xdr_getquota_rslt, &gq_rslt);
+	    RQUOTAPROC_GETQUOTA, (xdrproc_t)xdr_ext_getquota_args,
+	    &ext_gq_args, (xdrproc_t)xdr_getquota_rslt, &gq_rslt);
 	if (ret == RPC_PROGVERSMISMATCH && rpcqtype == RQUOTA_USRQUOTA) {
 		/* try RQUOTAVERS */
 		gq_args.gqa_pathp = path;
 		gq_args.gqa_uid = id;
 		ret = callaurpc(host, RQUOTAPROG, RQUOTAVERS,
-		    RQUOTAPROC_GETQUOTA, xdr_getquota_args, &gq_args,
-		    xdr_getquota_rslt, &gq_rslt);
+		    RQUOTAPROC_GETQUOTA, (xdrproc_t)xdr_getquota_args,
+		    &gq_args, (xdrproc_t)xdr_getquota_rslt, &gq_rslt);
 	}
 	free(host);
 
