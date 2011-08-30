@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.3 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4 2011/08/30 12:39:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@
 /* 'p'-partition is mostly familiar with EWS-UX */
 #define	RAW_PART	15
 
+#define LABELUSESMBR	0	/* no MBR partitionning */
 #define	LABELSECTOR	9	/* See ews4800mips/disksubr/disksubr_conv.c */
 #define	LABELOFFSET	0
 

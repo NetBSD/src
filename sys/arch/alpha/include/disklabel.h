@@ -1,4 +1,4 @@
-/* $NetBSD: disklabel.h,v 1.10 2009/11/23 13:40:09 pooka Exp $ */
+/* $NetBSD: disklabel.h,v 1.11 2011/08/30 12:39:52 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1999 Christopher G. Demetriou
@@ -34,6 +34,7 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
+#define LABELUSESMBR	0			/* no MBR partitionning */
 #define	LABELSECTOR	0			/* sector containing label */
 #define	LABELOFFSET	64			/* offset of label in sector */
 #define	MAXPARTITIONS	8			/* number of partitions */
