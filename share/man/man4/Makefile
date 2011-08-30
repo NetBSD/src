@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.566 2011/08/29 10:48:57 jruoho Exp $
+#	$NetBSD: Makefile,v 1.567 2011/08/30 05:40:38 jruoho Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -21,7 +21,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	clockctl.4 cltp.4 cmdide.4 cmpci.4 cms.4 cnw.4 \
 	com.4 crypto.4 cs80bus.4 cuda.4 cypide.4 \
 	ddb.4 ddc.4 de.4 dge.4 dk.4 dm.4 dmoverio.4 \
-	dmphy.4 dpt.4 dpti.4 drm.4 drum.4 dtv.4 \
+	dmphy.4 dpt.4 dpti.4 drm.4 drum.4 dtv.4 dtviic.4 \
 	eap.4 ebus.4 edc.4 elmc.4 emuxki.4 en.4 envsys.4 ep.4 esh.4 esis.4 \
 	esa.4 esiop.4 esm.4 eso.4 et.4 etherip.4 etphy.4 exphy.4 \
 	fast_ipsec.4 fd.4 finsio.4 flash.4 fpa.4 fms.4 fss.4 fujbp.4 fxp.4 \
@@ -142,6 +142,17 @@ MAN+=	gpioow.4 onewire.4 owtemp.4
 
 # machine-independent Xen devices
 MAN+=	pciback.4 xbd.4 xbdback.4 xenbus.4 xennet.4 xpci.4 xvif.4
+
+# DTV I2C modules
+MLINKS+=dtviic.4 au8522.4 \
+	dtviic.4 cx24227.4 \
+	dtviic.4 lg3303.4 \
+	dtviic.4 mt2131.4 \
+	dtviic.4 nxt2k.4 \
+	dtviic.4 zl10353.4 \
+	dtviic.4 tvpll.4 \
+	dtviic.4 xc3028.4 \
+	dtviic.4 xc5k.4
 
 # DRM devices
 MLINKS+=drm.4 i915drm.4
