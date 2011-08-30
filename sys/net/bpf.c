@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.165 2011/06/10 00:10:35 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.166 2011/08/30 14:22:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.165 2011/06/10 00:10:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.166 2011/08/30 14:22:22 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -142,6 +142,7 @@ static int	bpf_setif(struct bpf_d *, struct ifreq *);
 static void	bpf_timed_out(void *);
 static inline void
 		bpf_wakeup(struct bpf_d *);
+static int	bpf_hdrlen(struct bpf_d *);
 static void	catchpacket(struct bpf_d *, u_char *, u_int, u_int,
     void *(*)(void *, const void *, size_t), struct timespec *);
 static void	reset_d(struct bpf_d *);
@@ -409,6 +410,10 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	d->bd_seesent = 1;
 	d->bd_feedback = 0;
 	d->bd_pid = l->l_proc->p_pid;
+#ifdef _LP64
+	if (curproc->p_flag & PK_32)
+		d->bd_compat32 = 1;
+#endif
 	getnanotime(&d->bd_btime);
 	d->bd_atime = d->bd_mtime = d->bd_btime;
 	callout_init(&d->bd_callout, 0);
@@ -738,6 +743,12 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	 */
 	KERNEL_LOCK(1, NULL);
 	d->bd_pid = curproc->p_pid;
+#ifdef _LP64
+	if (curproc->p_flag & PK_32)
+		d->bd_compat32 = 1;
+	else
+		d->bd_compat32 = 0;
+#endif
 
 	s = splnet();
 	if (d->bd_state == BPF_WAITING)
@@ -1519,6 +1530,23 @@ _bpf_mtap_sl_out(struct bpf_if *bp, u_char *chdr, struct mbuf *m)
 	m_freem(m);
 }
 
+static int
+bpf_hdrlen(struct bpf_d *d)
+{
+	int hdrlen = d->bd_bif->bif_hdrlen;
+	/*
+	 * Compute the length of the bpf header.  This is not necessarily
+	 * equal to SIZEOF_BPF_HDR because we want to insert spacing such
+	 * that the network layer header begins on a longword boundary (for
+	 * performance reasons and to alleviate alignment restrictions).
+	 */
+#ifdef _LP64
+	if (d->bd_compat32)
+		return (BPF_WORDALIGN32(hdrlen + SIZEOF_BPF_HDR32) - hdrlen);
+	else
+#endif
+		return (BPF_WORDALIGN(hdrlen + SIZEOF_BPF_HDR) - hdrlen);
+}
 /*
  * Move the packet data from interface memory (pkt) into the
  * store buffer.  Return 1 if it's time to wakeup a listener (buffer full),
@@ -1532,8 +1560,11 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
     void *(*cpfn)(void *, const void *, size_t), struct timespec *ts)
 {
 	struct bpf_hdr *hp;
+#ifdef _LP64
+	struct bpf_hdr32 *hp32;
+#endif
 	int totlen, curlen;
-	int hdrlen = d->bd_bif->bif_hdrlen;
+	int hdrlen = bpf_hdrlen(d);
 	int do_wakeup = 0;
 
 	++d->bd_ccount;
@@ -1551,7 +1582,12 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	/*
 	 * Round up the end of the previous packet to the next longword.
 	 */
-	curlen = BPF_WORDALIGN(d->bd_slen);
+#ifdef _LP64
+	if (d->bd_compat32)
+		curlen = BPF_WORDALIGN32(d->bd_slen);
+	else
+#endif
+		curlen = BPF_WORDALIGN(d->bd_slen);
 	if (curlen + totlen > d->bd_bufsize) {
 		/*
 		 * This packet will overflow the storage buffer.
@@ -1582,15 +1618,33 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	/*
 	 * Append the bpf header.
 	 */
-	hp = (struct bpf_hdr *)((char *)d->bd_sbuf + curlen);
-	hp->bh_tstamp.tv_sec = ts->tv_sec;
-	hp->bh_tstamp.tv_usec = ts->tv_nsec / 1000;
-	hp->bh_datalen = pktlen;
-	hp->bh_hdrlen = hdrlen;
-	/*
-	 * Copy the packet data into the store buffer and update its length.
-	 */
-	(*cpfn)((u_char *)hp + hdrlen, pkt, (hp->bh_caplen = totlen - hdrlen));
+#ifdef _LP64
+	if (d->bd_compat32) {
+		hp32 = (struct bpf_hdr32 *)((char *)d->bd_sbuf + curlen);
+		hp32->bh_tstamp.tv_sec = ts->tv_sec;
+		hp32->bh_tstamp.tv_usec = ts->tv_nsec / 1000;
+		hp32->bh_datalen = pktlen;
+		hp32->bh_hdrlen = hdrlen;
+		/*
+		 * Copy the packet data into the store buffer and update its length.
+		 */
+		(*cpfn)((u_char *)hp32 + hdrlen, pkt,
+		    (hp32->bh_caplen = totlen - hdrlen));
+	} else
+#endif
+	{
+		hp = (struct bpf_hdr *)((char *)d->bd_sbuf + curlen);
+		hp->bh_tstamp.tv_sec = ts->tv_sec;
+		hp->bh_tstamp.tv_usec = ts->tv_nsec / 1000;
+		hp->bh_datalen = pktlen;
+		hp->bh_hdrlen = hdrlen;
+		/*
+		 * Copy the packet data into the store buffer and update
+		 * its length.
+		 */
+		(*cpfn)((u_char *)hp + hdrlen, pkt,
+		    (hp->bh_caplen = totlen - hdrlen));
+	}
 	d->bd_slen = curlen + totlen;
 
 	/*
@@ -1667,14 +1721,7 @@ _bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 
 	*bp->bif_driverp = 0;
 
-	/*
-	 * Compute the length of the bpf header.  This is not necessarily
-	 * equal to SIZEOF_BPF_HDR because we want to insert spacing such
-	 * that the network layer header begins on a longword boundary (for
-	 * performance reasons and to alleviate alignment restrictions).
-	 */
-	bp->bif_hdrlen = BPF_WORDALIGN(hdrlen + SIZEOF_BPF_HDR) - hdrlen;
-
+	bp->bif_hdrlen = hdrlen;
 #if 0
 	printf("bpf: %s attached\n", ifp->if_xname);
 #endif
@@ -1732,13 +1779,7 @@ _bpf_change_type(struct ifnet *ifp, u_int dlt, u_int hdrlen)
 
 	bp->bif_dlt = dlt;
 
-	/*
-	 * Compute the length of the bpf header.  This is not necessarily
-	 * equal to SIZEOF_BPF_HDR because we want to insert spacing such
-	 * that the network layer header begins on a longword boundary (for
-	 * performance reasons and to alleviate alignment restrictions).
-	 */
-	bp->bif_hdrlen = BPF_WORDALIGN(hdrlen + SIZEOF_BPF_HDR) - hdrlen;
+	bp->bif_hdrlen = hdrlen;
 }
 
 /*
