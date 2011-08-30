@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.44 2011/08/29 09:50:04 jmcneill Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.45 2011/08/30 19:05:12 jmcneill Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.44 2011/08/29 09:50:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.45 2011/08/30 19:05:12 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2221,10 +2221,10 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 	}
 
 	case DIOCADDALTQ: {
-		struct pfioc_altq	*pa = (struct pfioc_altq *)addr;
+		struct pfioc_altq	*paa = (struct pfioc_altq *)addr;
 		struct pf_altq		*altq, *a;
 
-		if (pa->ticket != ticket_altqs_inactive) {
+		if (paa->ticket != ticket_altqs_inactive) {
 			error = EBUSY;
 			break;
 		}
@@ -2233,7 +2233,7 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 			error = ENOMEM;
 			break;
 		}
-		bcopy(&pa->altq, altq, sizeof(struct pf_altq));
+		bcopy(&paa->altq, altq, sizeof(struct pf_altq));
 
 		/*
 		 * if this is for a queue, find the discipline and
@@ -2261,33 +2261,33 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 		}
 
 		TAILQ_INSERT_TAIL(pf_altqs_inactive, altq, entries);
-		bcopy(altq, &pa->altq, sizeof(struct pf_altq));
+		bcopy(altq, &paa->altq, sizeof(struct pf_altq));
 		break;
 	}
 
 	case DIOCGETALTQS: {
-		struct pfioc_altq	*pa = (struct pfioc_altq *)addr;
+		struct pfioc_altq	*paa = (struct pfioc_altq *)addr;
 		struct pf_altq		*altq;
 
-		pa->nr = 0;
+		paa->nr = 0;
 		TAILQ_FOREACH(altq, pf_altqs_active, entries)
-			pa->nr++;
-		pa->ticket = ticket_altqs_active;
+			paa->nr++;
+		paa->ticket = ticket_altqs_active;
 		break;
 	}
 
 	case DIOCGETALTQ: {
-		struct pfioc_altq	*pa = (struct pfioc_altq *)addr;
+		struct pfioc_altq	*paa = (struct pfioc_altq *)addr;
 		struct pf_altq		*altq;
 		u_int32_t		 nr;
 
-		if (pa->ticket != ticket_altqs_active) {
+		if (paa->ticket != ticket_altqs_active) {
 			error = EBUSY;
 			break;
 		}
 		nr = 0;
 		altq = TAILQ_FIRST(pf_altqs_active);
-		while ((altq != NULL) && (nr < pa->nr)) {
+		while ((altq != NULL) && (nr < paa->nr)) {
 			altq = TAILQ_NEXT(altq, entries);
 			nr++;
 		}
@@ -2295,7 +2295,7 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 			error = EBUSY;
 			break;
 		}
-		bcopy(altq, &pa->altq, sizeof(struct pf_altq));
+		bcopy(altq, &paa->altq, sizeof(struct pf_altq));
 		break;
 	}
 
