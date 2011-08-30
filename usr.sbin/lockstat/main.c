@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2009/04/16 06:14:13 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2011/08/30 19:20:20 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.17 2009/04/16 06:14:13 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2011/08/30 19:20:20 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -88,7 +88,7 @@ typedef struct name {
 	int		mask; 
 } name_t;
 
-const name_t locknames[] = {
+static const name_t locknames[] = {
 	{ "adaptive_mutex", LB_ADAPTIVE_MUTEX },
 	{ "spin_mutex", LB_SPIN_MUTEX },
 	{ "rwlock", LB_RWLOCK },
@@ -98,14 +98,14 @@ const name_t locknames[] = {
 	{ NULL, 0 }
 };
 
-const name_t eventnames[] = {
+static const name_t eventnames[] = {
 	{ "spin", LB_SPIN },
 	{ "sleep_exclusive", LB_SLEEP1 },
 	{ "sleep_shared", LB_SLEEP2 },
 	{ NULL, 0 },
 };
 
-const name_t alltypes[] = {
+static const name_t alltypes[] = {
 	{ "Adaptive mutex spin", LB_ADAPTIVE_MUTEX | LB_SPIN },
 	{ "Adaptive mutex sleep", LB_ADAPTIVE_MUTEX | LB_SLEEP1 },
 	{ "Spin mutex spin", LB_SPIN_MUTEX | LB_SPIN },
@@ -118,43 +118,43 @@ const name_t alltypes[] = {
 	{ NULL, 0 }
 };
 
-const name_t xtypes[] = {
+static const name_t xtypes[] = {
 	{ "Spin", LB_SPIN },
 	{ "Sleep (writer)", LB_SLEEP1 },
 	{ "Sleep (reader)", LB_SLEEP2 },
 	{ NULL, 0 }
 };
 
-locklist_t	locklist;
-locklist_t	freelist;
-locklist_t	sortlist;
+static locklist_t	locklist;
+static locklist_t	freelist;
+static locklist_t	sortlist;
 
-lsbuf_t		*bufs;
-lsdisable_t	ld;
-bool		lflag;
-bool		fflag;
-int		nbufs;
-bool		cflag;
-bool		xflag;
-int		lsfd;
-int		displayed;
-int		bin64;
-double		tscale;
-double		cscale;
-double		cpuscale[sizeof(ld.ld_freq) / sizeof(ld.ld_freq[0])];
-FILE		*outfp;
+static lsbuf_t		*bufs;
+static lsdisable_t	ld;
+static bool		lflag;
+static bool		fflag;
+static int		nbufs;
+static bool		cflag;
+static bool		xflag;
+static int		lsfd;
+static int		displayed;
+static int		bin64;
+static double		tscale;
+static double		cscale;
+static double		cpuscale[sizeof(ld.ld_freq) / sizeof(ld.ld_freq[0])];
+static FILE		*outfp;
 
-void	findsym(findsym_t, char *, uintptr_t *, uintptr_t *, bool);
-void	spawn(int, char **);
-void	display(int, const char *name);
-void	listnames(const name_t *);
-void	collapse(bool, bool);
-int	matchname(const name_t *, char *);
-void	makelists(int, int);
-void	nullsig(int);
-void	usage(void);
-int	ncpu(void);
-lock_t	*morelocks(void);
+static void	findsym(findsym_t, char *, uintptr_t *, uintptr_t *, bool);
+static void	spawn(int, char **);
+static void	display(int, const char *name);
+__dead static void	listnames(const name_t *);
+static void	collapse(bool, bool);
+static int	matchname(const name_t *, char *);
+static void	makelists(int, int);
+static void	nullsig(int);
+__dead static void	usage(void);
+static int	ncpu(void);
+static lock_t	*morelocks(void);
 
 int
 main(int argc, char **argv)
@@ -386,7 +386,7 @@ main(int argc, char **argv)
 	exit(EXIT_SUCCESS);
 }
 
-void
+static void
 usage(void)
 {
 
@@ -415,14 +415,14 @@ usage(void)
 	exit(EXIT_FAILURE);
 }
 
-void
+static void
 nullsig(int junk)
 {
 
 	(void)junk;
 }
 
-void
+static void
 listnames(const name_t *name)
 {
 
@@ -432,7 +432,7 @@ listnames(const name_t *name)
 	exit(EXIT_SUCCESS);
 }
 
-int
+static int
 matchname(const name_t *name, char *string)
 {
 	int empty, mask;
@@ -465,7 +465,7 @@ matchname(const name_t *name, char *string)
 /*
  * Return the number of CPUs in the running system.
  */
-int
+static int
 ncpu(void)
 {
 	int rv, mib[2];
@@ -483,7 +483,7 @@ ncpu(void)
 /*
  * Call into the ELF parser and look up a symbol by name or by address.
  */
-void
+static void
 findsym(findsym_t find, char *name, uintptr_t *start, uintptr_t *end, bool chg)
 {
 	uintptr_t tend, sa, ea;
@@ -527,7 +527,7 @@ findsym(findsym_t find, char *name, uintptr_t *start, uintptr_t *end, bool chg)
  * so that the caller can use Ctrl-C to stop tracing early and still get
  * useful results.
  */
-void
+static void
 spawn(int argc, char **argv)
 {
 	pid_t pid;
@@ -552,7 +552,7 @@ spawn(int argc, char **argv)
 /*
  * Allocate a new block of lock_t structures.
  */
-lock_t *
+static lock_t *
 morelocks(void)
 {
 	const int batch = 32;
@@ -569,7 +569,7 @@ morelocks(void)
 /*
  * Collapse addresses from unique objects.
  */
-void
+static void
 collapse(bool func, bool lock)
 {
 	lsbuf_t *lb, *max;
@@ -590,7 +590,7 @@ collapse(bool func, bool lock)
  * From the kernel supplied data, construct two dimensional lists of locks
  * and event buffers, indexed by lock type and sorted by event type.
  */
-void
+static void
 makelists(int mask, int event)
 {
 	lsbuf_t *lb, *lb2, *max;
@@ -714,7 +714,7 @@ makelists(int mask, int event)
 /*
  * Display a summary table for one lock type / event type pair.
  */
-void
+static void
 display(int mask, const char *name)
 {
 	lock_t *l;
