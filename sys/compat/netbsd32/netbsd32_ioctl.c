@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.59 2011/08/30 07:54:15 macallan Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.60 2011/08/30 14:22:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.59 2011/08/30 07:54:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.60 2011/08/30 14:22:22 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.59 2011/08/30 07:54:15 macallan
 #include <net/if.h>
 #include <net/route.h>
 
+#include <net/bpf.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/igmp.h>
@@ -294,6 +295,22 @@ netbsd32_to_wdog_conf(struct netbsd32_wdog_conf *s32p, struct wdog_conf *p, u_lo
 	p->wc_count = s32p->wc_count;
 }
 
+static inline void
+netbsd32_to_bpf_program(struct netbsd32_bpf_program *s32p, struct bpf_program *p, u_long cmd)
+{
+
+	p->bf_insns = (void *)NETBSD32PTR64(s32p->bf_insns);
+	p->bf_len = s32p->bf_len;
+}
+
+static inline void
+netbsd32_to_bpf_dltlist(struct netbsd32_bpf_dltlist *s32p, struct bpf_dltlist *p, u_long cmd)
+{
+
+	p->bfl_list = (void *)NETBSD32PTR64(s32p->bfl_list);
+	p->bfl_len = s32p->bfl_len;
+}
+
 /* wsdisplay stuff */
 static inline void
 netbsd32_to_wsdisplay_addscreendata(struct netbsd32_wsdisplay_addscreendata *asd32,
@@ -512,6 +529,22 @@ netbsd32_from_ieee80211_nwkey(struct ieee80211_nwkey *nwk,
 		NETBSD32PTR32(nwk32->i_key[i].i_keydat,
 				nwk->i_key[i].i_keydat);
 	}
+}
+
+static inline void
+netbsd32_from_bpf_program(struct bpf_program *p, struct netbsd32_bpf_program *s32p, u_long cmd)
+{
+
+	NETBSD32PTR32(s32p->bf_insns, p->bf_insns);
+	s32p->bf_len = p->bf_len;
+}
+
+static inline void
+netbsd32_from_bpf_dltlist(struct bpf_dltlist *p, struct netbsd32_bpf_dltlist *s32p, u_long cmd)
+{
+
+	NETBSD32PTR32(s32p->bfl_list, p->bfl_list);
+	s32p->bfl_len = p->bfl_len;
 }
 
 static inline void
@@ -824,6 +857,15 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 
 	case WDOGIOC_GWDOGS32:
 		IOCTL_STRUCT_CONV_TO(WDOGIOC_GWDOGS, wdog_conf);
+
+	case BIOCSETF32:
+		IOCTL_STRUCT_CONV_TO(BIOCSETF, bpf_program);
+	case BIOCSTCPF32:
+		IOCTL_STRUCT_CONV_TO(BIOCSTCPF, bpf_program);
+	case BIOCSUDPF32:
+		IOCTL_STRUCT_CONV_TO(BIOCSUDPF, bpf_program);
+	case BIOCGDLTLIST32:
+		IOCTL_STRUCT_CONV_TO(BIOCGDLTLIST, bpf_dltlist);
 
 	case WSDISPLAYIO_ADDSCREEN32:
 		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_ADDSCREEN, wsdisplay_addscreendata);
