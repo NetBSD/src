@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush_svc.c,v 1.9 2009/10/21 00:01:57 snj Exp $	*/
+/*	$NetBSD: yppush_svc.c,v 1.10 2011/08/30 17:06:22 plunky Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppush_svc.c,v 1.9 2009/10/21 00:01:57 snj Exp $");
+__RCSID("$NetBSD: yppush_svc.c,v 1.10 2011/08/30 17:06:22 plunky Exp $");
 #endif
 
 /*
@@ -92,14 +92,14 @@ yppush_xfrrespprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 	_rpcsvcdirty = 1;
 	switch (rqstp->rq_proc) {
 	case YPPUSHPROC_NULL:
-		xdr_argument = xdr_void;
-		xdr_result = xdr_void;
+		xdr_argument = (xdrproc_t)xdr_void;
+		xdr_result = (xdrproc_t)xdr_void;
 		local = yppushproc_null_1_svc;
 		break;
 
 	case YPPUSHPROC_XFRRESP:
-		xdr_argument = xdr_yppushresp_xfr;
-		xdr_result = xdr_void;
+		xdr_argument = (xdrproc_t)xdr_yppushresp_xfr;
+		xdr_result = (xdrproc_t)xdr_void;
 		local = yppushproc_xfrresp_1_svc;
 		break;
 
