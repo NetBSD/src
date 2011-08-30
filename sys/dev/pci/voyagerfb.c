@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.7 2011/01/22 15:14:28 cegger Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.8 2011/08/30 01:21:03 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.7 2011/01/22 15:14:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.8 2011/08/30 01:21:03 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -795,11 +795,13 @@ voyagerfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 			 * to copy line by line here
 			 * should probably use a command sequence
 			 */
+			ys += (height - ri->ri_font->fontheight);
+			yd += (height - ri->ri_font->fontheight);
 			for (i = 0; i < nrows; i++) {
 				voyagerfb_bitblt(sc, x, ys, x, yd, width, 
 				    ri->ri_font->fontheight, ROP_COPY);
-				ys += ri->ri_font->fontheight;
-				yd += ri->ri_font->fontheight;
+				ys -= ri->ri_font->fontheight;
+				yd -= ri->ri_font->fontheight;
 			}
 		} else
 			voyagerfb_bitblt(sc, x, ys, x, yd, width, height, 
