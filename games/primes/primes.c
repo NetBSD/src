@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.c,v 1.18 2010/05/13 17:52:12 tnozaki Exp $	*/
+/*	$NetBSD: primes.c,v 1.19 2011/08/30 02:58:04 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: primes.c,v 1.18 2010/05/13 17:52:12 tnozaki Exp $");
+__RCSID("$NetBSD: primes.c,v 1.19 2011/08/30 02:58:04 jakllsch Exp $");
 #endif
 #endif /* not lint */
 
@@ -305,11 +305,10 @@ primes(ubig start, ubig stop)
 		/* note highest useful factor and sieve spot */
 		if (stop-start > TABSIZE+TABSIZE) {
 			tab_lim = &table[TABSIZE]; /* sieve it all */
-			fact_lim = (int)sqrt(
-					(double)(start)+TABSIZE+TABSIZE+1.0);
+			fact_lim = sqrt((double)(start)+TABSIZE+TABSIZE+1.0);
 		} else {
 			tab_lim = &table[(stop-start)/2]; /* partial sieve */
-			fact_lim = (int)sqrt((double)(stop)+1.0);
+			fact_lim = sqrt((double)(stop)+1.0);
 		}
 		/* sieve for factors >= 17 */
 		factor = 17;	/* 17 is first prime to use */
