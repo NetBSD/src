@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 2003/08/07 11:25:27 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 2011/08/30 19:27:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ void	doabort(int, char **);
 void	down(int, char **);
 void	enable(int, char **);
 void	help(int, char **);
-void	quit(int, char **);
+void	quit(int, char **) __dead;
 void	restart(int, char **);
 void	startcmd(int, char **);
 void	status(int, char **);

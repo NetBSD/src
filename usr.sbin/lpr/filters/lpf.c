@@ -1,4 +1,4 @@
-/*	$NetBSD: lpf.c,v 1.13 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: lpf.c,v 1.14 2011/08/30 19:27:37 joerg Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lpf.c,v 1.13 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: lpf.c,v 1.14 2011/08/30 19:27:37 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,22 +57,21 @@ __RCSID("$NetBSD: lpf.c,v 1.13 2008/07/21 13:36:58 lukem Exp $");
 #define MAXWIDTH  132
 #define MAXREP    10
 
-char	buf[MAXREP][MAXWIDTH];
-int	maxcol[MAXREP] = {-1};
-int	lineno;
-int	width = 132;	/* default line length */
-int	length = 66;	/* page length */
-int	indent;		/* indentation length */
-int	npages = 1;
-int	literal;	/* print control characters */
-char	*name;		/* user's login name */
-char	*host;		/* user's machine name */
-char	*acctfile;	/* accounting information file */
-int	crnl;		/* \n -> \r\n */
-int	need_cr;
+static char	buf[MAXREP][MAXWIDTH];
+static int	maxcol[MAXREP] = {-1};
+static int	lineno;
+static int	width = 132;	/* default line length */
+static int	length = 66;	/* page length */
+static int	indent;		/* indentation length */
+static int	npages = 1;
+static int	literal;	/* print control characters */
+static char	*name;		/* user's login name */
+static char	*host;		/* user's machine name */
+static char	*acctfile;	/* accounting information file */
+static int	crnl;		/* \n -> \r\n */
+static int	need_cr;
 
-int main(int, char *[]);
-void usage(void);
+__dead static void usage(void);
 
 int
 main(int argc, char *argv[])
@@ -226,7 +225,7 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-void
+static void
 usage(void)
 {
         fprintf(stderr,
