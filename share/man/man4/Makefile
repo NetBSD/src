@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.567 2011/08/30 05:40:38 jruoho Exp $
+#	$NetBSD: Makefile,v 1.568 2011/08/30 05:59:44 jruoho Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -177,7 +177,6 @@ MLINKS+=audio.4 audioctl.4
 MLINKS+=audio.4 mixer.4
 MLINKS+=audio.4 sound.4
 MLINKS+=bha.4 bt.4
-MLINKS+=bktr.4 tuner.4
 MLINKS+=bktr.4 vbi.4
 MLINKS+=cardbus.4 cardslot.4
 MLINKS+=cardbus.4 cbb.4
