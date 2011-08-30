@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.10 2009/10/23 03:25:36 snj Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.11 2011/08/30 12:39:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -33,6 +33,7 @@
 /* number of boot pieces , ie xxboot bootxx */
 #define NUMBOOT		0
 
+#define LABELUSESMBR	0			/* no MBR partitionning */
 #define LABELSECTOR     0                       /* sector containing label */
 #define LABELOFFSET	0			/* offset of label in sector */
 #define MAXPARTITIONS	8			/* number of partitions */

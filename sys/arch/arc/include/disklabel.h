@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.10 2009/11/23 13:40:09 pooka Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.11 2011/08/30 12:39:53 bouyer Exp $	*/
 /*	$OpenBSD: disklabel.h,v 1.14 1999/03/23 16:36:17 millert Exp $	*/
 /*	NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp 	*/
 
@@ -35,6 +35,7 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
+#define LABELUSESMBR	1		/* use MBR partitionning */
 #define	LABELSECTOR	1		/* sector containing label */
 #define	LABELOFFSET	0		/* offset of label in sector */
 #define	MAXPARTITIONS	16		/* number of partitions */
