@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.21 2011/08/14 23:13:43 dholland Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.22 2011/08/30 19:03:25 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.21 2011/08/14 23:13:43 dholland Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.22 2011/08/30 19:03:25 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -51,23 +51,21 @@ __RCSID("$NetBSD: iopctl.c,v 1.21 2011/08/14 23:13:43 dholland Exp $");
 #include <dev/i2o/i2o.h>
 #include <dev/i2o/iopio.h>
 
-const char	*class2str(int);
-void	getparam(int, int, void *, int);
-int	gettid(char **);
-int	main(int, char **);
-int	show(const char *, const char *, ...)
-    __attribute__((__format__(__printf__, 2, 3)));
-void	i2ostrvis(const u_char *, int, char *, int);
-void	usage(void);
+static const char	*class2str(int);
+static void	getparam(int, int, void *, int);
+static int	gettid(char **);
+static int	show(const char *, const char *, ...) __printflike(2, 3);
+static void	i2ostrvis(const u_char *, int, char *, int);
+static void	usage(void) __dead;
 
-void	reconfig(char **);
-void	showdevid(char **);
-void	showddmid(char **);
-void	showlct(char **);
-void	showstatus(char **);
-void	showtidmap(char **);
+static void	reconfig(char **);
+static void	showdevid(char **);
+static void	showddmid(char **);
+static void	showlct(char **);
+static void	showstatus(char **);
+static void	showtidmap(char **);
 
-struct {
+static struct {
 	int	class;
 	const char	*caption;
 } const i2oclass[] = {
@@ -87,7 +85,7 @@ struct {
 	{ I2O_CLASS_BUS_ADAPTER_PORT, "bus adapter port" },
 };
 
-struct {
+static struct {
 	const char	*label;
 	int	takesargs;
 	void	(*func)(char **);
@@ -100,9 +98,9 @@ struct {
 	{ "showtidmap",	0, showtidmap },
 };
 
-int	fd;
-char	buf[32768];
-struct	i2o_status status;
+static int	fd;
+static char	buf[32768];
+static struct	i2o_status status;
 
 int
 main(int argc, char **argv)
@@ -153,7 +151,7 @@ main(int argc, char **argv)
 	/* NOTREACHED */
 }
 
-void
+static void
 usage(void)
 {
 
@@ -163,7 +161,7 @@ usage(void)
 	/* NOTREACHED */
 }
 
-int
+static int
 show(const char *hdr, const char *fmt, ...)
 {
 	int i;
@@ -178,7 +176,7 @@ show(const char *hdr, const char *fmt, ...)
 	return (i);
 }
 
-const char *
+static const char *
 class2str(int class)
 {
 	size_t i;
@@ -190,7 +188,7 @@ class2str(int class)
 	return ("unknown");
 }
 
-void
+static void
 getparam(int tid, int group, void *pbuf, int pbufsize)
 {
 	struct ioppt pt;
@@ -237,7 +235,7 @@ getparam(int tid, int group, void *pbuf, int pbufsize)
 		    rf->reqstatus);
 }	
 
-void
+static void
 showlct(char **argv)
 {
 	struct iovec iov;
@@ -291,7 +289,7 @@ showlct(char **argv)
 	}
 }
 
-void
+static void
 showstatus(char **argv)
 {
 	char ident[sizeof(status.productid) + 1];
@@ -333,7 +331,7 @@ showstatus(char **argv)
 	    le32toh(status.currentpriviobase));
 }
 
-void
+static void
 showddmid(char **argv)
 {
 	struct {
@@ -358,7 +356,7 @@ showddmid(char **argv)
 	show("serial #", "%08x%08x%08x", serial[0], serial[1], serial[2]);
 }
 
-void
+static void
 showdevid(char **argv)
 {
 	struct {
@@ -392,7 +390,7 @@ showdevid(char **argv)
 	show("revision level", "<%s>", ident);
 }
 
-void
+static void
 reconfig(char **argv)
 {
 
@@ -400,7 +398,7 @@ reconfig(char **argv)
 		err(EXIT_FAILURE, "IOPIOCRECONFIG");
 }
 
-void
+static void
 showtidmap(char **argv)
 {
 	struct iovec iov;
@@ -421,7 +419,7 @@ showtidmap(char **argv)
 			printf("%s\ttid %d\n", it->it_dvname, it->it_tid);
 }
 
-void
+static void
 i2ostrvis(const u_char *src, int slen, char *dst, int dlen)
 {
 	int hc, lc, i, nit;
@@ -455,7 +453,7 @@ i2ostrvis(const u_char *src, int slen, char *dst, int dlen)
 	dst[lc] = '\0';
 }
 
-int
+static int
 gettid(char **argv)
 {
 	char *argp;
