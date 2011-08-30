@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.24 2009/10/20 00:51:14 snj Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.25 2011/08/30 21:10:28 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedbm.c,v 1.24 2009/10/20 00:51:14 snj Exp $");
+__RCSID("$NetBSD: makedbm.c,v 1.25 2011/08/30 21:10:28 joerg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -50,13 +50,12 @@ __RCSID("$NetBSD: makedbm.c,v 1.24 2009/10/20 00:51:14 snj Exp $");
 #include "ypdb.h"
 #include "ypdef.h"
 
-int	main(int, char *[]);
-void	usage(void);
-int	add_record(DBM *, const char *, const char *, int);
-char	*file_date(char *);
-void	list_database(char *);
-void	create_database(char *, char *, char *, char *, char *, char *,
-			int, int, int);
+__dead static void	usage(void);
+static int	add_record(DBM *, const char *, const char *, int);
+static char	*file_date(char *);
+static void	list_database(char *);
+static void	create_database(char *, char *, char *, char *, char *,
+			        char *, int, int, int);
 
 int
 main(int argc, char *argv[])
@@ -143,7 +142,7 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-int
+static int
 add_record(DBM *db, const char *str1, const char *str2, int check)
 {
 	datum key, val;
@@ -169,7 +168,7 @@ add_record(DBM *db, const char *str1, const char *str2, int check)
 	return 0;
 }
 
-char *
+static char *
 file_date(char *filename)
 {
 	struct stat finfo;
@@ -190,7 +189,7 @@ file_date(char *filename)
 	return datestr;
 }
 
-void
+static void
 list_database(char *database)
 {
 	DBM *db;
@@ -220,7 +219,7 @@ list_database(char *database)
 	ypdb_close(db);
 }
 
-void
+static void
 create_database(char *infile, char *database, char *yp_input_file,
 		char *yp_output_file, char *yp_master_name,
 		char *yp_domain_name, int bflag, int lflag, int sflag)
@@ -346,7 +345,7 @@ bad_record:
 	}
 }
 
-void
+static void
 usage(void)
 {
 
