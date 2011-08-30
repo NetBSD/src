@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.44 2011/08/30 11:31:57 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.45 2011/08/30 11:40:46 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2011/08/30 11:31:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 2011/08/30 11:40:46 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -696,7 +696,7 @@ aprint_debug("pmap_remove_all() called\n");
 void
 pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
-aprint_debug("pmap_protect not implemented\n");
+aprint_debug("pmap_protect not implemented sva %p, eva %p, prot %d\n", (void *) sva, (void *) eva, prot);
 }
 
 void
