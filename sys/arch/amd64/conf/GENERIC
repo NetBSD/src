@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.336 2011/08/30 12:13:25 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.337 2011/08/30 13:07:30 mbalmer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.336 $"
+#ident 		"GENERIC-$Revision: 1.337 $"
 
 maxusers	64		# estimated number of users
 
@@ -500,6 +500,22 @@ ld*	at iop? tid ?			# block devices
 # XXX dpti.c wants a processor type that is not assigned for x86-64
 #dpti*	at iop? tid 0			# DPT/Adaptec control interface
 
+# GPIO devices
+#gpio*		at gpiobus?
+#gpioow*	at gpio?
+#onewire*	at gpioow?
+
+# 1- Wire support
+#gpioow*	at gpio? offset ? mask ?	# 1-wire bitbanging via gpio
+#gpioow*	at gpio?
+#onewire*	at gpioow?
+
+# I2C support
+#gpioiic*	at gpio?
+#iic*		at gpioiic?
+
+# Keylock support
+#gpiolock*	at gpio?
 
 # SCSI Controllers and Devices
 
