@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.43 2011/08/30 10:58:41 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.44 2011/08/30 11:31:57 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2011/08/30 10:58:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2011/08/30 11:31:57 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -825,10 +825,56 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 aprint_debug("pmap_copy_page not implemented\n");
 }
 
+/* change access permissions on a given physical page */
 void
-pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
+pmap_page_protect(struct vm_page *page, vm_prot_t prot)
 {
-aprint_debug("pmap_page_protect not implemented\n");
+	intptr_t ppn;
+	struct pv_entry *pv, *npv;
+
+	ppn = atop(VM_PAGE_TO_PHYS(page));
+	aprint_debug("pmap_page_protect page %"PRIiPTR" to prot %d\n", ppn, prot);
+
+	if (prot == VM_PROT_NONE) {
+		/* visit all mappings */
+		npv = pv = &pv_table[ppn];
+		while (pv != NULL && pv->pv_pmap != NULL) {
+			/* skip unmanaged entries */
+			if (pv->pv_vflags & PV_UNMANAGED) {
+				pv = pv->pv_next;
+				continue;
+			}
+
+			/* if in an active pmap deactivate */
+			if (pv->pv_pmap->pm_flags & PM_ACTIVE)
+				pmap_page_deactivate(pv);
+
+			/* if not on the head, remember our next */
+			if (pv != &pv_table[ppn])
+				npv = pv->pv_next;
+
+			/* remove from pmap */
+			pv->pv_pmap->pm_entries[pv->pv_lpn] = NULL;
+			if (pv->pv_vflags & PV_WIRED)
+				pv->pv_pmap->pm_stats.wired_count--;
+			pv_release(pv->pv_pmap, ppn, pv->pv_lpn);
+
+			pv = npv;
+		}
+	} else if (prot != VM_PROT_ALL) {
+		/* visit all mappings */
+		for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next) {
+			/* if managed and in a pmap restrict access */
+			if ((pv->pv_pmap != NULL) &&
+			    ((pv->pv_vflags & PV_UNMANAGED) == 0)) {
+				pv->pv_prot &= prot;
+				pv_update(pv);
+				/* if in active pmap (re)activate page */
+				if (pv->pv_pmap->pm_flags & PM_ACTIVE)
+					pmap_page_activate(pv);
+			}
+		}
+	}
 }
 
 bool
