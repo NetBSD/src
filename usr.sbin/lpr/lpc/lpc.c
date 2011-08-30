@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.c,v 1.25 2009/01/18 09:57:26 lukem Exp $	*/
+/*	$NetBSD: lpc.c,v 1.26 2011/08/30 19:27:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpc.c,v 1.25 2009/01/18 09:57:26 lukem Exp $");
+__RCSID("$NetBSD: lpc.c,v 1.26 2011/08/30 19:27:37 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,9 +82,9 @@ History	*hist;
 HistEvent he;
 EditLine *elptr;
 
-static void		 cmdscanner(int);
+__dead static void	 cmdscanner(int);
 static struct cmd	*getcmd(const char *);
-static void		 intr(int);
+__dead static void	 intr(int);
 static void		 makeargv(void);
 static int		 ingroup(const char *);
 int			 main(int, char *p[]);

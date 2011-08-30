@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.22 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: pac.c,v 1.23 2011/08/30 19:27:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pac.c,v 1.22 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: pac.c,v 1.23 2011/08/30 19:27:37 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,8 +98,7 @@ static struct	hent *enter(const char *);
 static struct	hent *lookup(const char *);
 static int	qucmp(const void *, const void *);
 static void	rewrite(void);
-static void	usage(void);
-int		main(int, char * const []);
+static void	usage(void) __dead;
 
 int
 main(int argc, char *const argv[])
