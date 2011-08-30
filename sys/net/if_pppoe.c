@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.96 2010/04/05 07:22:23 joerg Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.97 2011/08/30 22:23:06 rjs Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.96 2010/04/05 07:22:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.97 2011/08/30 22:23:06 rjs Exp $");
 
 #include "pppoe.h"
 #include "opt_pfil_hooks.h"
@@ -87,7 +87,7 @@ struct pppoetag {
 #define	PPPOE_TAG_RELAYSID	0x0110		/* relay session id */
 #define	PPPOE_TAG_SNAME_ERR	0x0201		/* service name error */
 #define	PPPOE_TAG_ACSYS_ERR	0x0202		/* AC system error */
-#define	PPPOE_TAG_GENERIC_ERR	0x0203		/* gerneric error */
+#define	PPPOE_TAG_GENERIC_ERR	0x0203		/* generic error */
 
 #define	PPPOE_CODE_PADI		0x09		/* Active Discovery Initiation */
 #define	PPPOE_CODE_PADO		0x07		/* Active Discovery Offer */
