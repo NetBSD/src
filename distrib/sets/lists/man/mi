@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1334 2011/08/29 10:48:57 jruoho Exp $
+# $NetBSD: mi,v 1.1335 2011/08/30 05:40:38 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -811,6 +811,7 @@
 ./usr/share/man/cat4/attimer.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atu.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atw.0			man-sys-catman		.cat
+./usr/share/man/cat4/au8522.0			man-sys-catman		.cat
 ./usr/share/man/cat4/auacer.0			man-sys-catman		.cat
 ./usr/share/man/cat4/audio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/audiocs.0			man-sys-catman		.cat
@@ -891,6 +892,7 @@
 ./usr/share/man/cat4/cs80bus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cuda.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cue.0			man-sys-catman		.cat
+./usr/share/man/cat4/cx24227.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cypide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cz.0			man-sys-catman		.cat
@@ -1229,6 +1231,7 @@
 ./usr/share/man/cat4/lc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ld.0			man-sys-catman		.cat
 ./usr/share/man/cat4/le.0			man-sys-catman		.cat
+./usr/share/man/cat4/lg3303.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lii.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lkm.0			man-obsolete		obsolete
 ./usr/share/man/cat4/lm.0			man-sys-catman		.cat
@@ -1288,6 +1291,7 @@
 ./usr/share/man/cat4/mr.0			man-obsolete		obsolete
 ./usr/share/man/cat4/msk.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mskc.0			man-sys-catman		.cat
+./usr/share/man/cat4/mt2131.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mtd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mtio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/multicast.0		man-sys-catman		.cat
@@ -1335,6 +1339,7 @@
 ./usr/share/man/cat4/ntwo.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ntwoc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/null.0			man-sys-catman		.cat
+./usr/share/man/cat4/nxt2k.0			man-sys-catman		.cat
 ./usr/share/man/cat4/oak.0			man-sys-catman		.cat
 ./usr/share/man/cat4/oboe.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ofisa.0			man-sys-catman		.cat
@@ -1638,6 +1643,7 @@
 ./usr/share/man/cat4/tty.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tun.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tuner.0			man-sys-catman		.cat
+./usr/share/man/cat4/tvpll.0			man-sys-catman		.cat
 ./usr/share/man/cat4/twa.0			man-sys-catman		.cat
 ./usr/share/man/cat4/twe.0			man-sys-catman		.cat
 ./usr/share/man/cat4/txp.0			man-sys-catman		.cat
@@ -1822,6 +1828,8 @@
 ./usr/share/man/cat4/xbd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbdback.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbox.0			man-sys-catman		.cat
+./usr/share/man/cat4/xc3028.0			man-sys-catman		.cat
+./usr/share/man/cat4/xc5k.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xenbus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xennet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xge.0			man-sys-catman		.cat
@@ -1832,6 +1840,7 @@
 ./usr/share/man/cat4/yds.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ym.0			man-sys-catman		.cat
 ./usr/share/man/cat4/zero.0			man-sys-catman		.cat
+./usr/share/man/cat4/zl10353.0			man-sys-catman		.cat
 ./usr/share/man/cat4/zs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/zsc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/zstty.0			man-sys-catman		.cat
@@ -3623,6 +3632,7 @@
 ./usr/share/man/html4/attimer.html		man-sys-htmlman		html
 ./usr/share/man/html4/atu.html			man-sys-htmlman		html
 ./usr/share/man/html4/atw.html			man-sys-htmlman		html
+./usr/share/man/html4/au8522.html		man-sys-htmlman		html
 ./usr/share/man/html4/auacer.html		man-sys-htmlman		html
 ./usr/share/man/html4/audio.html		man-sys-htmlman		html
 ./usr/share/man/html4/audiocs.html		man-sys-htmlman		html
@@ -3700,6 +3710,7 @@
 ./usr/share/man/html4/cs80bus.html		man-sys-htmlman		html
 ./usr/share/man/html4/cuda.html			man-sys-htmlman		html
 ./usr/share/man/html4/cue.html			man-sys-htmlman		html
+./usr/share/man/html4/cx24227.html		man-sys-htmlman		html
 ./usr/share/man/html4/cy.html			man-sys-htmlman		html
 ./usr/share/man/html4/cypide.html		man-sys-htmlman		html
 ./usr/share/man/html4/cz.html			man-sys-htmlman		html
@@ -4005,6 +4016,7 @@
 ./usr/share/man/html4/ld.html			man-sys-htmlman		html
 ./usr/share/man/html4/le.html			man-sys-htmlman		html
 ./usr/share/man/html4/lii.html			man-sys-htmlman		html
+./usr/share/man/html4/lg3303.html		man-sys-htmlman		html
 ./usr/share/man/html4/lkm.html			man-obsolete		obsolete
 ./usr/share/man/html4/lm.html			man-sys-htmlman		html
 ./usr/share/man/html4/lmc.html			man-sys-htmlman		html
@@ -4058,6 +4070,7 @@
 ./usr/share/man/html4/mr.html			man-obsolete		obsolete
 ./usr/share/man/html4/msk.html			man-sys-htmlman		html
 ./usr/share/man/html4/mskc.html			man-sys-htmlman		html
+./usr/share/man/html4/mt2131.html		man-sys-htmlman		html
 ./usr/share/man/html4/mtd.html			man-sys-htmlman		html
 ./usr/share/man/html4/mtio.html			man-sys-htmlman		html
 ./usr/share/man/html4/multicast.html		man-sys-htmlman		html
@@ -4101,6 +4114,7 @@
 ./usr/share/man/html4/ntwo.html			man-sys-htmlman		html
 ./usr/share/man/html4/ntwoc.html		man-sys-htmlman		html
 ./usr/share/man/html4/null.html			man-sys-htmlman		html
+./usr/share/man/html4/nxt2k.html		man-sys-htmlman		html
 ./usr/share/man/html4/oak.html			man-sys-htmlman		html
 ./usr/share/man/html4/oboe.html			man-sys-htmlman		html
 ./usr/share/man/html4/ofisa.html		man-sys-htmlman		html
@@ -4373,6 +4387,7 @@
 ./usr/share/man/html4/tty.html			man-sys-htmlman		html
 ./usr/share/man/html4/tun.html			man-sys-htmlman		html
 ./usr/share/man/html4/tuner.html		man-sys-htmlman		html
+./usr/share/man/html4/tvpll.html		man-sys-htmlman		html
 ./usr/share/man/html4/twa.html			man-sys-htmlman		html
 ./usr/share/man/html4/twe.html			man-sys-htmlman		html
 ./usr/share/man/html4/txp.html			man-sys-htmlman		html
@@ -4551,6 +4566,8 @@
 ./usr/share/man/html4/xbd.html			man-sys-htmlman		html
 ./usr/share/man/html4/xbdback.html		man-sys-htmlman		html
 ./usr/share/man/html4/xbox.html			man-sys-htmlman		html
+./usr/share/man/html4/xc3028.html		man-sys-htmlman		html
+./usr/share/man/html4/xc5k.html			man-sys-htmlman		html
 ./usr/share/man/html4/xenbus.html		man-sys-htmlman		html
 ./usr/share/man/html4/xennet.html		man-sys-htmlman		html
 ./usr/share/man/html4/xge.html			man-sys-htmlman		html
@@ -4561,6 +4578,7 @@
 ./usr/share/man/html4/yds.html			man-sys-htmlman		html
 ./usr/share/man/html4/ym.html			man-sys-htmlman		html
 ./usr/share/man/html4/zero.html			man-sys-htmlman		html
+./usr/share/man/html4/zl10353.html		man-sys-htmlman		html
 ./usr/share/man/html4/zs.html			man-sys-htmlman		html
 ./usr/share/man/html4/zsc.html			man-sys-htmlman		html
 ./usr/share/man/html4/zstty.html		man-sys-htmlman		html
@@ -6204,6 +6222,7 @@
 ./usr/share/man/man4/attimer.4			man-sys-man		.man
 ./usr/share/man/man4/atu.4			man-sys-man		.man
 ./usr/share/man/man4/atw.4			man-sys-man		.man
+./usr/share/man/man4/au8522.4			man-sys-man		.man
 ./usr/share/man/man4/auacer.4			man-sys-man		.man
 ./usr/share/man/man4/audio.4			man-sys-man		.man
 ./usr/share/man/man4/audiocs.4			man-sys-man		.man
@@ -6284,6 +6303,7 @@
 ./usr/share/man/man4/cs80bus.4			man-sys-man		.man
 ./usr/share/man/man4/cuda.4			man-sys-man		.man
 ./usr/share/man/man4/cue.4			man-sys-man		.man
+./usr/share/man/man4/cx24227.4			man-sys-man		.man
 ./usr/share/man/man4/cy.4			man-sys-man		.man
 ./usr/share/man/man4/cypide.4			man-sys-man		.man
 ./usr/share/man/man4/cz.4			man-sys-man		.man
@@ -6623,6 +6643,7 @@
 ./usr/share/man/man4/ld.4			man-sys-man		.man
 ./usr/share/man/man4/le.4			man-sys-man		.man
 ./usr/share/man/man4/lii.4			man-sys-man		.man
+./usr/share/man/man4/lg3303.4			man-sys-man		.man
 ./usr/share/man/man4/lkm.4			man-obsolete 		obsolete
 ./usr/share/man/man4/lm.4			man-sys-man		.man
 ./usr/share/man/man4/lmc.4			man-sys-man		.man
@@ -6681,6 +6702,7 @@
 ./usr/share/man/man4/mr.4			man-obsolete		obsolete
 ./usr/share/man/man4/msk.4			man-sys-man		.man
 ./usr/share/man/man4/mskc.4			man-sys-man		.man
+./usr/share/man/man4/mt2131.4			man-sys-man		.man
 ./usr/share/man/man4/mtd.4			man-sys-man		.man
 ./usr/share/man/man4/mtio.4			man-sys-man		.man
 ./usr/share/man/man4/multicast.4		man-sys-man		.man
@@ -6728,6 +6750,7 @@
 ./usr/share/man/man4/ntwo.4			man-sys-man		.man
 ./usr/share/man/man4/ntwoc.4			man-sys-man		.man
 ./usr/share/man/man4/null.4			man-sys-man		.man
+./usr/share/man/man4/nxt2k.4			man-sys-man		.man
 ./usr/share/man/man4/oak.4			man-sys-man		.man
 ./usr/share/man/man4/oboe.4			man-sys-man		.man
 ./usr/share/man/man4/ofisa.4			man-sys-man		.man
@@ -7031,6 +7054,7 @@
 ./usr/share/man/man4/tty.4			man-sys-man		.man
 ./usr/share/man/man4/tun.4			man-sys-man		.man
 ./usr/share/man/man4/tuner.4			man-sys-man		.man
+./usr/share/man/man4/tvpll.4			man-sys-man		.man
 ./usr/share/man/man4/twa.4			man-sys-man		.man
 ./usr/share/man/man4/twe.4			man-sys-man		.man
 ./usr/share/man/man4/txp.4			man-sys-man		.man
@@ -7215,6 +7239,8 @@
 ./usr/share/man/man4/xbd.4			man-sys-man		.man
 ./usr/share/man/man4/xbdback.4			man-sys-man		.man
 ./usr/share/man/man4/xbox.4			man-sys-man		.man
+./usr/share/man/man4/xc3028.4			man-sys-man		.man
+./usr/share/man/man4/xc5k.4			man-sys-man		.man
 ./usr/share/man/man4/xenbus.4			man-sys-man		.man
 ./usr/share/man/man4/xennet.4			man-sys-man		.man
 ./usr/share/man/man4/xge.4			man-sys-man		.man
@@ -7225,6 +7251,7 @@
 ./usr/share/man/man4/yds.4			man-sys-man		.man
 ./usr/share/man/man4/ym.4			man-sys-man		.man
 ./usr/share/man/man4/zero.4			man-sys-man		.man
+./usr/share/man/man4/zl10353.4			man-sys-man		.man
 ./usr/share/man/man4/zs.4			man-sys-man		.man
 ./usr/share/man/man4/zsc.4			man-sys-man		.man
 ./usr/share/man/man4/zstty.4			man-sys-man		.man

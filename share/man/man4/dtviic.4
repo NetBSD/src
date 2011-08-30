@@ -1,4 +1,4 @@
-.\" $NetBSD: dtvi2c.4,v 1.3 2011/08/29 15:35:29 jruoho Exp $
+.\" $NetBSD: dtviic.4,v 1.1 2011/08/30 05:40:38 jruoho Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,13 +27,21 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 29, 2011
-.Dt DTVI2C 4
+.Dd August 30, 2011
+.Dt DTVIIC 4
 .Os
 .Sh NAME
-.Nm dtvi2c
-.Nd Inter IC (I2C) modules for
-.Ic dtv
+.Nm dtvi2c ,
+.Nm au8522 ,
+.Nm cx24227 ,
+.Nm lg3303 ,
+.Nm mt2131 ,
+.Nm nxt2k ,
+.Nm zl10353 ,
+.Nm tvpll ,
+.Nm xc3028 ,
+.Nm xc5k
+.Nd Inter IC (I2C) modules for DTV
 .Sh DESCRIPTION
 The
 .Nm
@@ -83,26 +91,30 @@ transfers or
 high speed transfers).
 .El
 .Pp
-The currently supported modules are:
+The supported demodulators include:
 .Bl -tag -width 10n -offset indent
-.It Ic au8522
+.It Nm au8522
 Auvitek AU8522 ATSC/QAM64/QAM256 demodulator
-.It Ic cx24227
+.It Nm cx24227
 Conexant CX24227 ATSC/QAM64/QAM256 demodulator
-.It Ic lg3303
+.It Nm lg3303
 LG LGDT3303 ATSC/QAM64/QAM256 demodulator
-.It Ic mt2131
+.It Nm mt2131
 MicroTune MT2131 ATSC demodulator
-.It Ic nxt2k
-XXX description
+.It Nm nxt2k
+NxtWave Communications NXT2004 ATSC demodulator
+.It Nm zl10353
+Zarlink ZL10353 (Intel CE623x) COFDM/DVB demodulator
+.El
+.Pp
+The supported tuners are:
+.Bl -tag -width 10n -offset indent
 .It Ic tvpll
 Generic PLL-based tuners
-.It Ic xc3028
+.It Nm xc3028
 XCeive XC3028 analog and digital tuner
-.It Ic xc5k
+.It Nm xc5k
 Xceive XC5000 analog and digital tuner
-.It Ic zl10353
-Zarlink ZL10353 (Intel CE623x) demodulator
 .El
 .Sh FILES
 .Bl -bullet
@@ -123,7 +135,8 @@ needed by xc5k, provided by
 .El
 .Sh SEE ALSO
 .Xr dtv 4 ,
-.Xr iic 4
+.Xr iic 4 ,
+.Xr module 7
 .Sh HISTORY
 The
 .Nm
@@ -131,9 +144,7 @@ modules first appeared in
 .Nx 6.0 .
 .Sh AUTHORS
 .An -nosplit
-The
-.Nm
-modules were written by
+Authors include
 .An Jared D. McNeill
 .Aq jmcneill@NetBSD.org ,
 .An Jonathan A. Kollasch
