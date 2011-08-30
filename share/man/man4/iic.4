@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.7 2011/08/30 06:27:17 wiz Exp $
+.\"	$NetBSD: iic.4,v 1.8 2011/08/30 07:44:37 mbalmer Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -37,6 +37,7 @@
 .Cd "iic0 at ausmbus0             # evbmips "
 .Cd "iic0 at cuda0                # macppc "
 .Cd "iic0 at gpiic?               # evbppc "
+.Cd "iic* at gpioiic?             # amd64 i386 "
 .Cd "iic* at gtiic?               # evbppc "
 .Cd "iic* at gxiic?               # evbarm "
 .Cd "iic* at ichsmb?              # amd64 i386 "
@@ -118,6 +119,8 @@ Intel ICH SMBus controller
 .It Xr iomdiic 4
 .It Xr iopiic 4
 .It Xr ki2c 4
+.It Xr gpioiic 4
+GPIO bit-banging
 .It Xr nfsmb 4
 NVIDIA nForce 2/3/4 SMBus controller and SMBus driver
 .It Xr ociic 4
