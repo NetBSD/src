@@ -1,4 +1,4 @@
-/*	$NetBSD: put.h,v 1.6 2009/11/17 18:58:07 drochner Exp $	*/
+/*	$NetBSD: put.h,v 1.7 2011/08/30 19:49:11 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: put.h,v 1.6 2009/11/17 18:58:07 drochner Exp $
+ *	$NetBSD: put.h,v 1.7 2011/08/30 19:49:11 joerg Exp $
  *
  */
 
@@ -31,13 +31,13 @@
 #define _PUT_H_
 
 __BEGIN_DECLS
-void	mopPutChar __P((u_char *, int *, u_char));
-void	mopPutShort __P((u_char *, int *, u_short));
-void	mopPutLong __P((u_char *, int *, u_int32_t));
-void	mopPutMulti __P((u_char *, int *, const u_char *, int));
-void	mopPutTime __P((u_char *, int *, time_t));
-void	mopPutHeader __P((u_char *, int *, const u_char *, const u_char *, u_short, int));
-void	mopPutLength __P((u_char *, int, u_short));
+void	mopPutChar(u_char *, int *, u_char);
+void	mopPutShort(u_char *, int *, u_short);
+void	mopPutLong(u_char *, int *, u_int32_t);
+void	mopPutMulti(u_char *, int *, const u_char *, int);
+void	mopPutTime(u_char *, int *, time_t);
+void	mopPutHeader(u_char *, int *, const u_char *, const u_char *, u_short, int);
+void	mopPutLength(u_char *, int, u_short);
 __END_DECLS
 
 #endif /* _PUT_H_ */
