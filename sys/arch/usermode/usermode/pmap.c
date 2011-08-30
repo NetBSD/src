@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.45 2011/08/30 11:40:46 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.46 2011/08/30 11:53:22 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 2011/08/30 11:40:46 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.46 2011/08/30 11:53:22 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -508,11 +508,12 @@ pmap_page_deactivate(struct pv_entry *pv)
 static void
 pv_update(struct pv_entry *pv)
 {
-	int pflags;
+	int pflags, vflags;
 	int mmap_ppl;
 
 	/* get our per-physical-page flags */
 	pflags = pv_table[pv->pv_ppn].pv_pflags;
+	vflags = pv_table[pv->pv_ppn].pv_vflags;
 
 	/* create referenced/modified emulation */
 	if ((pv->pv_prot & VM_PROT_WRITE) &&
@@ -523,6 +524,11 @@ pv_update(struct pv_entry *pv)
 		mmap_ppl = PROT_READ;
 	else
 		mmap_ppl = PROT_NONE;
+
+	/* unmanaged pages are special; they dont track r/m */
+	if (vflags & PV_UNMANAGED)
+		mmap_ppl = PROT_READ | PROT_WRITE;
+
 	pv->pv_mmap_ppl = mmap_ppl;
 }
 
@@ -588,9 +594,7 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 	if (unmanaged) {
 		/* dont track r/m */
 		pv->pv_vflags |= PV_UNMANAGED;
-		ppv->pv_pflags |= PV_MODIFIED | PV_REFERENCED;	/* XXX */
 	} else {
-		/* XXX flag it dirty(?) if prot write? */
 		if (flags & VM_PROT_WRITE)
 			ppv->pv_pflags |= PV_REFERENCED | PV_MODIFIED;
 		else if (flags & (VM_PROT_ALL))
