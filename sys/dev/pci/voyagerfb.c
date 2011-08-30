@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.8 2011/08/30 01:21:03 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.9 2011/08/30 02:53:01 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.8 2011/08/30 01:21:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.9 2011/08/30 02:53:01 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -601,9 +601,16 @@ voyagerfb_bitblt(struct voyagerfb_softc *sc, int xs, int ys, int xd, int yd,
 	if (xd <= xs) {
 		/* left to right */
 	} else {
+		/*
+		 * According to the manual this flag reverses only the blitter's
+		 * X direction. At least on my Gdium it also reverses the Y
+		 * direction
+		 */ 
 		cmd |= SM502_CTRL_R_TO_L;
-		xs += he - 1;
+		xs += wi - 1;
 		xd += wi - 1;
+		ys += he - 1;
+		yd += he - 1;
 	}
 	
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_CONTROL, cmd);
