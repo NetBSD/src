@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.55 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: lpd.c,v 1.56 2011/08/30 19:27:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.55 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.56 2011/08/30 19:27:37 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,11 +127,11 @@ int	blist_addrs;
 
 int			main(int, char **);
 static void		reapchild(int);
-static void		mcleanup(int);
+__dead static void	mcleanup(int);
 static void		doit(void);
 static void		startup(void);
 static void		chkhost(struct sockaddr *, int);
-static void		usage(void);
+__dead static void	usage(void);
 static struct pollfd	*socksetup(int, int, const char *, int *);
 
 uid_t	uid, euid;
