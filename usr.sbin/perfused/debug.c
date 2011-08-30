@@ -1,4 +1,4 @@
-/*  $NetBSD: debug.c,v 1.3 2010/09/15 01:51:44 manu Exp $ */
+/*  $NetBSD: debug.c,v 1.4 2011/08/30 20:17:00 joerg Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -35,9 +35,7 @@
 
 #ifdef PERFUSE_DEBUG
 void
-perfuse_hexdump(addr, len)
-	char *addr;
-	size_t len;
+perfuse_hexdump(const char *addr, size_t len)
 {
 	unsigned int i, j, k;
 

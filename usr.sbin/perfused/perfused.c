@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.13 2011/05/30 14:50:08 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.14 2011/08/30 20:17:01 joerg Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -56,7 +56,6 @@ static int parse_debug(char *);
 static void siginfo_handler(int);
 static int parse_options(int, char **);
 static void get_mount_info(int, struct perfuse_mount_info *, int);
-int main(int, char **);
 
 /*
  * Flags for new_mount()
@@ -67,10 +66,7 @@ int main(int, char **);
 
 
 static int
-access_mount(mnt, uid, ro)
-	const char *mnt;
-	uid_t uid;
-	int ro;
+access_mount(const char *mnt, uid_t uid, int ro)
 {
 	struct stat st;
 	mode_t mode;
@@ -95,10 +91,7 @@ access_mount(mnt, uid, ro)
 }
 
 static void
-get_mount_info(fd, pmi, sock_type)
-	int fd;
-	struct perfuse_mount_info *pmi;
-	int sock_type;
+get_mount_info(int fd, struct perfuse_mount_info *pmi, int sock_type)
 {
 	struct perfuse_mount_out *pmo;
 	struct sockcred cred;
@@ -199,9 +192,7 @@ get_mount_info(fd, pmi, sock_type)
 }
 
 static void
-new_mount(fd, pmnt_flags)
-	int fd;
-	int pmnt_flags;
+new_mount(int fd, int pmnt_flags)
 {
 	struct puffs_usermount *pu;
 	struct perfuse_mount_info pmi;
@@ -288,8 +279,7 @@ new_mount(fd, pmnt_flags)
 }
 
 static int 
-parse_debug(optstr)
-	char *optstr;
+parse_debug(char *optstr)
 {
 	int retval = PDF_SYSLOG;
 	char *opt;
@@ -327,8 +317,7 @@ parse_debug(optstr)
 
 /* ARGSUSED0 */
 static void
-siginfo_handler(sig)
-	int sig;
+siginfo_handler(int sig)
 {
 	static int old_flags = 0;
 	int swap;
@@ -343,9 +332,7 @@ siginfo_handler(sig)
 }
 
 static int
-parse_options(argc, argv)
-	int argc;
-	char **argv;
+parse_options(int argc, char **argv)
 {
 	int ch;
 	int foreground = 0;
@@ -383,9 +370,7 @@ parse_options(argc, argv)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int s;
 	int sock_type;

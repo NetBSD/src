@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.15 2011/08/09 07:00:13 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.16 2011/08/30 20:17:01 joerg Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -111,10 +111,7 @@ perfuse_open_sock(void)
 
 
 void *
-perfuse_recv_early(fd, sockcred, sockcred_len)
-	int fd;
-	struct sockcred *sockcred;
-	size_t sockcred_len;
+perfuse_recv_early(int fd, struct sockcred *sockcred, size_t sockcred_len)
 {
 	struct fuse_out_header foh;
 	size_t len;
@@ -169,12 +166,8 @@ perfuse_recv_early(fd, sockcred, sockcred_len)
 
 
 perfuse_msg_t *
-perfuse_new_pb (pu, opc, opcode, payload_len, cred)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	int opcode;
-	size_t payload_len;
-	const struct puffs_cred *cred;
+perfuse_new_pb (struct puffs_usermount *pu, puffs_cookie_t opc, int opcode,
+    size_t payload_len, const struct puffs_cred *cred)
 {
 	struct puffs_framebuf *pb;
 	struct fuse_in_header *fih;
@@ -236,11 +229,8 @@ perfuse_new_pb (pu, opc, opcode, payload_len, cred)
  * This xchg_pb_inloop() variant allow early communication.
  */
 static int
-xchg_pb_early(pu, pb, fd, reply)
-	struct puffs_usermount *pu;
-	struct puffs_framebuf *pb;
-	int fd;
-	enum perfuse_xchg_pb_reply reply;
+xchg_pb_early(struct puffs_usermount *pu, struct puffs_framebuf *pb, int fd,
+    enum perfuse_xchg_pb_reply reply)
 {
 	int done;
 	int error;
@@ -268,11 +258,8 @@ xchg_pb_early(pu, pb, fd, reply)
 }
 
 static int
-xchg_pb_inloop(pu, pb, fd, reply)
-	struct puffs_usermount *pu;
-	struct puffs_framebuf *pb;
-	int fd;
-	enum perfuse_xchg_pb_reply reply;
+xchg_pb_inloop(struct puffs_usermount *pu, struct puffs_framebuf *pb, int fd,
+    enum perfuse_xchg_pb_reply reply)
 {
 	struct puffs_cc *pcc;
 	int error;
@@ -288,11 +275,8 @@ xchg_pb_inloop(pu, pb, fd, reply)
 }
 
 int
-perfuse_xchg_pb(pu, pm, expected_len, reply)
-	struct puffs_usermount *pu;
-	perfuse_msg_t *pm;
-	size_t expected_len;
-	enum perfuse_xchg_pb_reply reply;
+perfuse_xchg_pb(struct puffs_usermount *pu, perfuse_msg_t *pm,
+    size_t expected_len, enum perfuse_xchg_pb_reply reply)
 {
 	struct puffs_framebuf *pb = (struct puffs_framebuf *)(void *)pm;
 	int fd;
@@ -378,8 +362,7 @@ perfuse_xchg_pb(pu, pm, expected_len, reply)
 
 
 struct fuse_in_header *
-perfuse_get_inhdr(pm)
-	perfuse_msg_t *pm;
+perfuse_get_inhdr(perfuse_msg_t *pm)
 {
 	struct puffs_framebuf *pb;
 	struct fuse_in_header *fih;
@@ -399,8 +382,7 @@ perfuse_get_inhdr(pm)
 }
 
 struct fuse_out_header *
-perfuse_get_outhdr(pm)
-	perfuse_msg_t *pm;
+perfuse_get_outhdr(perfuse_msg_t *pm)
 {
 	struct puffs_framebuf *pb;
 	struct fuse_out_header *foh;
@@ -420,8 +402,7 @@ perfuse_get_outhdr(pm)
 }
 
 char *
-perfuse_get_inpayload(pm)
-	perfuse_msg_t *pm;
+perfuse_get_inpayload(perfuse_msg_t *pm)
 {
 	struct puffs_framebuf *pb;
 	struct fuse_in_header *fih;
@@ -448,8 +429,7 @@ perfuse_get_inpayload(pm)
 }
 
 char *
-perfuse_get_outpayload(pm)
-	perfuse_msg_t *pm;
+perfuse_get_outpayload(perfuse_msg_t *pm)
 {
 	struct puffs_framebuf *pb;
 	struct fuse_out_header *foh;
@@ -490,11 +470,8 @@ perfuse_get_outpayload(pm)
 
 /* ARGSUSED0 */
 int
-perfuse_readframe(pu, pufbuf, fd, done)
-	struct puffs_usermount *pu;
-	struct puffs_framebuf *pufbuf;
-	int fd;
-	int *done;
+perfuse_readframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
+    int fd, int *done)
 {
 	struct fuse_out_header foh;
 	size_t len;
@@ -583,11 +560,8 @@ perfuse_readframe(pu, pufbuf, fd, done)
 
 /* ARGSUSED0 */
 int
-perfuse_writeframe(pu, pufbuf, fd, done)
-	struct puffs_usermount *pu;
-	struct puffs_framebuf *pufbuf;
-	int fd;
-	int *done;
+perfuse_writeframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
+    int fd, int *done)
 {
 	size_t len;
 	ssize_t written;
@@ -632,11 +606,8 @@ perfuse_writeframe(pu, pufbuf, fd, done)
 
 /* ARGSUSED0 */
 int
-perfuse_cmpframe(pu, pb1, pb2, match)
-	struct puffs_usermount *pu;
-	struct puffs_framebuf *pb1;
-	struct puffs_framebuf *pb2;
-	int *match;
+perfuse_cmpframe(struct puffs_usermount *pu, struct puffs_framebuf *pb1,
+    struct puffs_framebuf *pb2, int *match)
 {
 	struct fuse_in_header *fih;
 	struct fuse_out_header *foh;
@@ -657,9 +628,7 @@ perfuse_cmpframe(pu, pb1, pb2, match)
 
 /* ARGSUSED0 */
 void
-perfuse_gotframe(pu, pb)
-	struct puffs_usermount *pu;
-	struct puffs_framebuf *pb;
+perfuse_gotframe(struct puffs_usermount *pu, struct puffs_framebuf *pb)
 {
 	struct fuse_out_header *foh;
 	size_t len;
@@ -677,10 +646,7 @@ perfuse_gotframe(pu, pb)
 }
 
 void
-perfuse_fdnotify(pu, fd, what)
-	struct puffs_usermount *pu;
-	int fd;
-	int what;
+perfuse_fdnotify(struct puffs_usermount *pu, int fd, int what)
 {
 	if (fd != (int)(long)perfuse_getspecific(pu))
 		DERRX(EX_SOFTWARE, "%s: unexpected notification for fd = %d",
@@ -700,14 +666,10 @@ perfuse_fdnotify(pu, fd, what)
 		DPRINTF("Exit");
 	
 	exit(0);
-	
-	/* NOTREACHED */
-	return;
 }
 
 void
-perfuse_umount(pu)
-	struct puffs_usermount *pu;
+perfuse_umount(struct puffs_usermount *pu)
 {
 	int fd;
 

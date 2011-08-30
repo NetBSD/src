@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.h,v 1.4 2011/05/30 14:50:08 manu Exp $ */
+/*  $NetBSD: perfused.h,v 1.5 2011/08/30 20:17:01 joerg Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -37,7 +37,7 @@
 __BEGIN_DECLS
 
 #ifdef PERFUSE_DEBUG
-void perfuse_hexdump(char *, size_t);
+void perfuse_hexdump(const char *, size_t);
 const char *perfuse_opname(int);
 extern int perfuse_diagflags;
 #endif /* PERFUSE_DEBUG */
@@ -51,7 +51,7 @@ int perfuse_writeframe(struct puffs_usermount *,
 int perfuse_cmpframe(struct puffs_usermount *, 
      struct puffs_framebuf *, struct puffs_framebuf *, int *);
 void perfuse_gotframe(struct puffs_usermount *, struct puffs_framebuf *);
-void perfuse_fdnotify(struct puffs_usermount *, int, int);
+void perfuse_fdnotify(struct puffs_usermount *, int, int) __dead;
 
 struct fuse_out_header *perfuse_get_outhdr(perfuse_msg_t *);
 struct fuse_in_header *perfuse_get_inhdr(perfuse_msg_t *);
