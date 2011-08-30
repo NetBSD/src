@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.27 2011/08/15 14:31:58 wiz Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.28 2011/08/30 20:51:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,17 +44,16 @@
 
 #define USBDEV "/dev/usb"
 
-int verbose = 0;
-int showdevs = 0;
+static int verbose = 0;
+static int showdevs = 0;
 
-void usage(void);
-void usbdev(int f, int a, int rec);
-void usbdump(int f);
-void dumpone(char *name, int f, int addr);
-int main(int, char **);
+__dead static void usage(void);
+static void usbdev(int f, int a, int rec);
+static void usbdump(int f);
+static void dumpone(char *name, int f, int addr);
 
-void
-usage()
+static void
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s [-dv] [-a addr] [-f dev]\n",
@@ -62,10 +61,10 @@ usage()
 	exit(1);
 }
 
-char done[USB_MAX_DEVICES];
-int indent;
+static char done[USB_MAX_DEVICES];
+static int indent;
 #define MAXLEN USB_MAX_ENCODED_STRING_LEN /* assume can't grow over UTF-8 */
-char vendor[MAXLEN], product[MAXLEN], serial[MAXLEN];
+static char vendor[MAXLEN], product[MAXLEN], serial[MAXLEN];
 
 static void
 u2t(const char *utf8str, char *termstr)
@@ -93,7 +92,7 @@ u2t(const char *utf8str, char *termstr)
 	strcpy(termstr, "(invalid)");
 }
 
-void
+static void
 usbdev(int f, int a, int rec)
 {
 	struct usb_device_info di;
@@ -170,7 +169,7 @@ usbdev(int f, int a, int rec)
 	}
 }
 
-void
+static void
 usbdump(int f)
 {
 	int a;
@@ -181,7 +180,7 @@ usbdump(int f)
 	}
 }
 
-void
+static void
 dumpone(char *name, int f, int addr)
 {
 	if (verbose)
