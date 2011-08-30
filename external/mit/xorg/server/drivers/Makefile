@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59 2011/07/21 10:20:25 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.60 2011/08/30 04:22:56 macallan Exp $
 
 # xf86-input drivers
 
@@ -147,6 +147,13 @@ SUBDIR+= \
 	xf86-video-wsfb
 .endif	# ${MACHINE} == "dreamcast"
 
+.if ${MACHINE} == "evbmips"
+SUBDIR+= \
+	xf86-video-siliconmotion \
+	xf86-video-sis \
+	xf86-video-wsfb
+.endif	# ${MACHINE} == "evbmips"
+
 .if ${MACHINE} == "ews4800mips"
 SUBDIR+= \
 	xf86-video-wsfb
@@ -254,7 +261,7 @@ SUBDIR+= \
 .if ${MACHINE} == "zaurus"
 SUBDIR+= \
 	xf86-video-wsfb
-.endif ${MACHINE} == "zaurus"
+.endif # ${MACHINE} == "zaurus"
 
 # broken with xorg-server 1.6
 # x86
