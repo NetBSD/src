@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.55 2009/07/13 19:05:42 roy Exp $	*/
+/*	$NetBSD: printjob.c,v 1.56 2011/08/30 19:27:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.55 2009/07/13 19:05:42 roy Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.56 2011/08/30 19:27:37 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ static char	tempfile[] = "errsXXXXXX"; /* file name for filter output */
 static char	tempremote[] = "remoteXXXXXX"; /* file name for remote filter */
 static char	width[10] = "-w";	/* page width in static characters */
 
-static void	abortpr(int);
+__dead static void	abortpr(int);
 static void	banner(char *, char *);
 static int	dofork(int);
 static int	dropit(int);

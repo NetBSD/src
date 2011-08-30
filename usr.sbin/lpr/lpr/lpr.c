@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.44 2011/01/20 15:48:11 ginsbach Exp $	*/
+/*	$NetBSD: lpr.c,v 1.45 2011/08/30 19:27:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.44 2011/01/20 15:48:11 ginsbach Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.45 2011/08/30 19:27:37 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ static struct stat statb;
 
 static void	 card(int, const char *);
 static void	 chkprinter(const char *);
-static void	 cleanup(int);
+static void	 cleanup(int) __dead;
 static void	 copy(int, const char *);
 static char	*itoa(int);
 static const char	*linked(const char *);
