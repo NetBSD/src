@@ -1,4 +1,4 @@
-/*	$NetBSD: pvctxctl.c,v 1.6 2009/04/19 08:53:37 lukem Exp $	*/
+/*	$NetBSD: pvctxctl.c,v 1.7 2011/08/30 21:28:27 joerg Exp $	*/
 
 /*
  * Copyright (C) 1998
@@ -42,7 +42,7 @@
 #include <net/if_atm.h>
 
 static int str2vc(char *str, int *vpi, int *vci);
-static void usage(void);
+__dead static void usage(void);
 
 static void 
 usage(void)
@@ -53,16 +53,6 @@ usage(void)
 	exit(1);
 }
 
-int vpi = 0;
-int vci = 0;
-int joint_vpi = 0;
-int joint_vci = 0;
-int pcr = 0;
-int llcsnap = ATM_PH_LLCSNAP;
-int getinfo = 1;
-int subinterface = 0;
-int verbose = 1;
-
 int
 main(int argc, char **argv)
 {
@@ -70,6 +60,15 @@ main(int argc, char **argv)
 	int s, ch;
 	long bandwidth;
 	char *if_name, *cp;
+	int vpi = 0;
+	int vci = 0;
+	int joint_vpi = 0;
+	int joint_vci = 0;
+	int pcr = 0;
+	int llcsnap = ATM_PH_LLCSNAP;
+	int getinfo = 1;
+	int subinterface = 0;
+	int verbose = 1;
 
 	if (argc < 2)
 		usage();
