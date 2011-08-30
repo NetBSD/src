@@ -1,4 +1,4 @@
-/*	$NetBSD: irdaattach.c,v 1.8 2009/04/16 02:11:44 lukem Exp $	*/
+/*	$NetBSD: irdaattach.c,v 1.9 2011/08/30 19:07:07 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,8 +46,7 @@
 #include <unistd.h>
 #include <util.h>
 
-int	main(int, char **);
-void	usage(void);
+__dead static void	usage(void);
 
 int
 main(int argc, char **argv)
@@ -157,8 +156,8 @@ main(int argc, char **argv)
 		sigsuspend(&nsigset);
 }
 
-void
-usage()
+static void
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s [-d donglename] [-fhHlmnp] ttyname\n",

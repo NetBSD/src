@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.59 2011/02/14 02:43:37 enami Exp $	*/
+/*	$NetBSD: iostat.c,v 1.60 2011/08/30 19:06:06 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.59 2011/02/14 02:43:37 enami Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.60 2011/08/30 19:06:06 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,8 @@ __RCSID("$NetBSD: iostat.c,v 1.59 2011/02/14 02:43:37 enami Exp $");
 /* Namelist and memory files. */
 char	*nlistf, *memf;
 
-int		hz, reps, interval;
+int		hz;
+static int	reps, interval;
 static int	todo = 0;
 static int	defdrives;
 static int	winlines = 20;
@@ -118,11 +119,9 @@ static void drive_statsx(double);
 static void sig_header(int);
 static volatile int do_header;
 static void header(void);
-static void usage(void);
+__dead static void usage(void);
 static void display(void);
 static int selectdrives(int, char *[]);
-
-int main(int, char *[]);
 
 int
 main(int argc, char *argv[])
@@ -248,7 +247,7 @@ sig_header(int signo)
 }
 
 static void
-header()
+header(void)
 {
 	size_t i;
 
