@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.40 2011/08/30 10:29:34 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.41 2011/08/30 10:37:42 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2011/08/30 10:29:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2011/08/30 10:37:42 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -362,7 +362,8 @@ aprint_debug("pmap_destroy not implemented!\n");
 void
 pmap_reference(pmap_t pmap)
 {
-aprint_debug("pmap_reference %p\n", (void *) pmap);
+	aprint_debug("pmap_reference %p\n", (void *) pmap);
+	pmap->pm_count++;
 }
 
 long
