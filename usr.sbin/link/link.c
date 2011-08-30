@@ -1,4 +1,4 @@
-/*	$NetBSD: link.c,v 1.4 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: link.c,v 1.5 2011/08/30 19:18:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: link.c,v 1.4 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: link.c,v 1.5 2011/08/30 19:18:17 joerg Exp $");
 #endif
 
 #include <locale.h>
@@ -42,13 +42,10 @@ __RCSID("$NetBSD: link.c,v 1.4 2008/07/21 13:36:58 lukem Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
-int		main __P((int, char *[]));
-static void	usage __P((void));
+__dead static void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 
 	(void)setlocale(LC_ALL, "");
@@ -66,7 +63,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage: link file1 file2\n");
