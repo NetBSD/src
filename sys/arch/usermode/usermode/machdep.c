@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.18 2011/08/29 12:46:58 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.19 2011/08/30 16:06:20 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2011/08/29 12:46:58 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2011/08/30 16:06:20 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -149,6 +149,12 @@ printf("\tpcb->pcb_userland_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_userlan
 	ucp->uc_stack.ss_sp = (void *) stack;
 	ucp->uc_stack.ss_size = pack->ep_ssize;
 	thunk_makecontext_trapframe2go(ucp, (void *) pack->ep_entry, &pcb->pcb_tf);
+
+#ifdef __i386__
+int *reg;
+reg = (int *) &ucp->uc_mcontext;
+reg[8] = l->l_proc->p_psstrp;	/* _REG_EBX */
+#endif
 
 printf("updated pcb %p\n", pcb);
 printf("\tpcb->pcb_ucp.uc_stack.ss_sp   = %p\n", pcb->pcb_ucp.uc_stack.ss_sp);
