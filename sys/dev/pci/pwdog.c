@@ -1,4 +1,4 @@
-/*	$$NetBSD: pwdog.c,v 1.6 2011/08/29 15:06:49 mbalmer Exp $ */
+/*	$$NetBSD: pwdog.c,v 1.7 2011/08/30 07:22:12 mbalmer Exp $ */
 /*	$OpenBSD: pwdog.c,v 1.7 2010/04/08 00:23:53 tedu Exp $ */
 
 /*
@@ -21,9 +21,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#ifdef _MODULE
 #include <sys/module.h>
-#endif
 #include <sys/systm.h>
 
 #include <dev/pci/pcivar.h>

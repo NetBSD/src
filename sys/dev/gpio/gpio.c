@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.37 2011/08/29 15:14:04 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.38 2011/08/30 07:22:11 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.37 2011/08/29 15:14:04 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.38 2011/08/30 07:22:11 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -40,9 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.37 2011/08/29 15:14:04 mbalmer Exp $");
 #include <sys/condvar.h>
 #include <sys/queue.h>
 #include <sys/kauth.h>
-#ifdef _MODULE
 #include <sys/module.h>
-#endif
 #include <dev/gpio/gpiovar.h>
 
 #include "locators.h"

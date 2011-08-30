@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.12 2011/08/29 15:14:04 mbalmer Exp $ */
+/* $NetBSD: gpiosim.c,v 1.13 2011/08/30 07:22:12 mbalmer Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -25,9 +25,7 @@
 #include <sys/device.h>
 #include <sys/gpio.h>
 #include <sys/malloc.h>
-#ifdef _MODULE
 #include <sys/module.h>
-#endif
 #include <sys/sysctl.h>
 #include <sys/ioccom.h>
 #include <dev/gpio/gpiovar.h>
