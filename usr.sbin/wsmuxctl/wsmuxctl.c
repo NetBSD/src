@@ -1,4 +1,4 @@
-/* $NetBSD: wsmuxctl.c,v 1.10 2008/04/28 20:24:17 martin Exp $ */
+/* $NetBSD: wsmuxctl.c,v 1.11 2011/08/30 21:03:31 joerg Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,12 +41,11 @@
 
 #include <dev/wscons/wsconsio.h>
 
-static void usage(void);
-int main(int, char**);
+__dead static void usage(void);
 
-const char *ctlpath = "/dev/wsmuxctl";
+static const char *ctlpath = "/dev/wsmuxctl";
 
-const char *devnames[] = { "?", "wsmouse", "wskbd", "wsmux" };
+static const char *devnames[] = { "?", "wsmouse", "wskbd", "wsmux" };
 
 static void
 usage(void)
