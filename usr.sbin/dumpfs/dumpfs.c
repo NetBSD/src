@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.57 2010/02/27 12:07:40 mlelstv Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.58 2011/08/30 18:24:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.57 2010/02/27 12:07:40 mlelstv Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.58 2011/08/30 18:24:17 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,21 +66,21 @@ __RCSID("$NetBSD: dumpfs.c,v 1.57 2010/02/27 12:07:40 mlelstv Exp $");
 #include <unistd.h>
 #include <util.h>
 
-union fsun {
+static union fsun {
 	struct fs fs;
 	char pad[MAXBSIZE];
 } fsun;
 #define	afs	fsun.fs
 
-uint16_t opostblsave[32*8];
+static uint16_t opostblsave[32*8];
 
-union {
+static union {
 	struct cg cg;
 	char pad[MAXBSIZE];
 } cgun;
 #define	acg	cgun.cg
 
-union {
+static union {
 	struct wapbl_wc_header wh;
 	struct wapbl_wc_null wn;
 	char pad[MAXBSIZE];
@@ -101,29 +101,28 @@ union {
     opt_cg_summary | opt_superblock | opt_journal )
 #define DFLT_OPTS	(opt_superblock | opt_cg_summary | opt_cg_info | opt_verbose)
 
-long	dev_bsize = 512;
-int	needswap, printold, is_ufs2;
-int	Fflag;
+static long	dev_bsize = 512;
+static int	needswap, printold, is_ufs2;
+static int	Fflag;
 
-uint	opt_flags;
+static uint	opt_flags;
 
-int	dumpfs(const char *);
-int	print_superblock(struct fs *, uint16_t *, const char *, int, off_t);
-int	print_cgsum(const char *, int);
-int	print_cginfo(const char *, int);
-int	print_inodes(const char *, int, int, int);
-int	print_alt_super(const char *, int);
-int	print_journal(const char *, int);
-void	print_journal_header(const char *);
-off_t	print_journal_entries(const char *, size_t);
-int	dumpcg(const char *, int, int);
-int	main(int, char **);
-int	openpartition(const char *, int, char *, size_t);
-void	pbits(int, void *, int);
-void	usage(void);
-void	print_ufs1_inode(int, int, void *);
-void	print_ufs2_inode(int, int, void *);
-void	fix_superblock(struct fs *, uint16_t *);
+static int	dumpfs(const char *);
+static int	print_superblock(struct fs *, uint16_t *, const char *, int, off_t);
+static int	print_cgsum(const char *, int);
+static int	print_cginfo(const char *, int);
+static int	print_inodes(const char *, int, int, int);
+static int	print_alt_super(const char *, int);
+static int	print_journal(const char *, int);
+static void	print_journal_header(const char *);
+static off_t	print_journal_entries(const char *, size_t);
+static int	dumpcg(const char *, int, int);
+static int	openpartition(const char *, int, char *, size_t);
+static void	pbits(int, void *, int);
+__dead static void	usage(void);
+static void	print_ufs1_inode(int, int, void *);
+static void	print_ufs2_inode(int, int, void *);
+static void	fix_superblock(struct fs *, uint16_t *);
 
 int
 main(int argc, char *argv[])
@@ -165,7 +164,7 @@ main(int argc, char *argv[])
 }
 
 
-int
+static int
 dumpfs(const char *name)
 {
 	static const off_t sblock_try[] = SBLOCKSEARCH;
@@ -247,7 +246,7 @@ dumpfs(const char *name)
 	return rval;
 }
 
-void
+static void
 fix_superblock(struct fs *fs, uint16_t *opostbl)
 {
 	if (needswap &&
@@ -286,7 +285,7 @@ fix_superblock(struct fs *fs, uint16_t *opostbl)
 		fs->fs_old_nrpos = 8;
 }
 
-int
+static int
 print_superblock(struct fs *fs, uint16_t *opostbl,
     const char *name, int fd, off_t sblock)
 {
@@ -465,7 +464,7 @@ print_superblock(struct fs *fs, uint16_t *opostbl,
 	return 0;
 }
 
-int
+static int
 print_cgsum(const char *name, int fd)
 {
 	struct csum *ccsp;
@@ -507,7 +506,7 @@ print_cgsum(const char *name, int fd)
 	return 0;
 }
 
-int
+static int
 print_alt_super(const char *name, int fd)
 {
 	union fsun alt;
@@ -534,7 +533,7 @@ print_alt_super(const char *name, int fd)
 	return 0;
 }
 
-int
+static int
 print_cginfo(const char *name, int fd)
 {
 	int i;
@@ -550,7 +549,7 @@ print_cginfo(const char *name, int fd)
 	return 0;
 }
 
-int
+static int
 print_inodes(const char *name, int fd, int c, int n)
 {
 	void *ino_buf = malloc(afs.fs_bsize);
@@ -576,7 +575,7 @@ print_inodes(const char *name, int fd, int c, int n)
 	return 0;
 }
 
-int
+static int
 dumpcg(const char *name, int fd, int c)
 {
 	off_t cur;
@@ -655,7 +654,7 @@ dumpcg(const char *name, int fd, int c)
 	return (0);
 }
 
-void
+static void
 print_ufs1_inode(int inum, int i_off, void *ibuf)
 {
 	struct ufs1_dinode *i = ibuf;
@@ -682,7 +681,7 @@ print_ufs1_inode(int inum, int i_off, void *ibuf)
 		i->di_gen, i->di_uid, i->di_gid);
 }
 
-void
+static void
 print_ufs2_inode(int inum, int i_off, void *ibuf)
 {
 	struct ufs2_dinode *i = ibuf;
@@ -706,7 +705,7 @@ print_ufs2_inode(int inum, int i_off, void *ibuf)
 		i->di_gen, i->di_uid, i->di_gid);
 }
 
-void
+static void
 pbits(int offset, void *vp, int max)
 {
 	int i;
@@ -728,7 +727,7 @@ pbits(int offset, void *vp, int max)
 	printf("\n");
 }
 
-int
+static int
 print_journal(const char *name, int fd)
 {
 	daddr_t off;
@@ -825,7 +824,7 @@ wapbl_type_string(unsigned t)
 	return buf;
 }
 
-void
+static void
 print_journal_header(const char *name)
 {
 	printf("  type %s len %d  version %u\n",
@@ -844,7 +843,7 @@ print_journal_header(const char *name)
 		(long long)awh.wc_circ_off, (long long)awh.wc_circ_size);
 }
 
-off_t
+static off_t
 print_journal_entries(const char *name, size_t blklen)
 {
 	int i, n;
@@ -901,7 +900,7 @@ print_journal_entries(const char *name, size_t blklen)
 	return len + blklen;
 }
 
-void
+static void
 usage(void)
 {
 
@@ -909,7 +908,7 @@ usage(void)
 	exit(1);
 }
 
-int
+static int
 openpartition(const char *name, int flags, char *device, size_t devicelen)
 {
 	char		rawspec[MAXPATHLEN], *p;
