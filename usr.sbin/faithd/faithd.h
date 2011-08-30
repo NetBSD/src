@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.h,v 1.10 2010/11/26 18:58:43 christos Exp $	*/
+/*	$NetBSD: faithd.h,v 1.11 2011/08/30 21:14:06 joerg Exp $	*/
 /*	$KAME: faithd.h,v 1.9 2002/05/09 09:41:24 itojun Exp $	*/
 
 /*
@@ -33,14 +33,12 @@
 extern char logname[];
 extern int dflag;
 
-extern void tcp_relay(int, int, const char *);
+extern void tcp_relay(int, int, const char *) __dead;
 extern void ftp_relay(int, int);
 extern int ftp_active(int, int, int *, int *);
 extern int ftp_passive(int, int, int *, int *);
-extern void exit_success(const char *, ...)
-	__attribute__((__format__(__printf__, 1, 2)));
-extern void exit_failure(const char *, ...)
-	__attribute__((__format__(__printf__, 1, 2)));
+extern void exit_success(const char *, ...) __dead __printflike(1, 2);
+extern void exit_failure(const char *, ...) __dead __printflike(1, 2);
 
 #define DEFAULT_PORT_NAME	"telnet"
 #define DEFAULT_DIR	"/usr/libexec"

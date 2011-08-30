@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.33 2010/11/26 18:58:43 christos Exp $	*/
+/*	$NetBSD: faithd.c,v 1.34 2011/08/30 21:14:06 joerg Exp $	*/
 /*	$KAME: faithd.c,v 1.62 2003/08/19 21:20:33 itojun Exp $	*/
 
 /*
@@ -95,19 +95,18 @@ static char *configfile = NULL;
 
 static int inetd_main(int, char **);
 static int daemon_main(int, char **);
-static void play_service(int);
+static void play_service(int) __dead;
 static void play_child(int, struct sockaddr *);
 static int faith_prefix(struct sockaddr *);
 static int map6to4(struct sockaddr_in6 *, struct sockaddr_in *);
 static void sig_child(int);
-static void sig_terminate(int);
+static void sig_terminate(int) __dead;
 static void start_daemon(void);
-static void exit_stderr(const char *, ...)
-	__attribute__((__format__(__printf__, 1, 2)));
+static void exit_stderr(const char *, ...) __printflike(1, 2) __dead;
 static void grab_myaddrs(void);
 static void free_myaddrs(void);
 static void update_myaddrs(void);
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 int
 main(int argc, char **argv)
@@ -675,7 +674,7 @@ sig_child(int sig)
 			    (long)pid, status);
 }
 
-void
+static void
 /*ARGSUSED*/
 sig_terminate(int sig)
 {
