@@ -1,4 +1,4 @@
-/*	$NetBSD: stdethers.c,v 1.18 2009/10/20 00:51:14 snj Exp $	*/
+/*	$NetBSD: stdethers.c,v 1.19 2011/08/30 21:10:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdethers.c,v 1.18 2009/10/20 00:51:14 snj Exp $");
+__RCSID("$NetBSD: stdethers.c,v 1.19 2011/08/30 21:10:29 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -45,8 +45,7 @@ __RCSID("$NetBSD: stdethers.c,v 1.18 2009/10/20 00:51:14 snj Exp $");
 
 #include "protos.h"
 
-int	main(int, char *[]);
-void	usage(void);
+__dead static void	usage(void);
 
 
 int
@@ -90,7 +89,7 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-void
+static void
 usage(void)
 {
 
