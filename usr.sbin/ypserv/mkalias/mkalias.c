@@ -1,4 +1,4 @@
-/*	$NetBSD: mkalias.c,v 1.17 2009/10/20 00:51:14 snj Exp $ */
+/*	$NetBSD: mkalias.c,v 1.18 2011/08/30 21:10:28 joerg Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mkalias.c,v 1.17 2009/10/20 00:51:14 snj Exp $");
+__RCSID("$NetBSD: mkalias.c,v 1.18 2011/08/30 21:10:28 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,13 +52,12 @@ __RCSID("$NetBSD: mkalias.c,v 1.17 2009/10/20 00:51:14 snj Exp $");
 #include "ypdb.h"
 #include "ypdef.h"
 
-void	capitalize(char *, int);
-int	check_host(char *, char *, int, int, int);
-int	main(int, char *[]);
-void	split_address(char *, int, char *, char *);
-void	usage(void);
+static void	capitalize(char *, int);
+static int	check_host(char *, char *, int, int, int);
+static void	split_address(char *, int, char *, char *);
+__dead static void	usage(void);
 
-void
+static void
 split_address(char *address, int len, char *user, char *host)
 {
 	char *c, *s, *r;
@@ -95,7 +94,7 @@ split_address(char *address, int len, char *user, char *host)
 	}
 }
 
-int
+static int
 check_host(char *address, char *host, int dflag, int uflag, int Eflag)
 {
 	u_char answer[PACKETSZ];
@@ -119,7 +118,7 @@ check_host(char *address, char *host, int dflag, int uflag, int Eflag)
 	return(status == -1);
 }
 
-void
+static void
 capitalize(char *name, int len)
 {
 	char last = ' ';
@@ -331,7 +330,7 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr,
