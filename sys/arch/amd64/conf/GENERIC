@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.334 2011/08/18 20:55:21 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.335 2011/08/30 08:01:13 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.334 $"
+#ident 		"GENERIC-$Revision: 1.335 $"
 
 maxusers	64		# estimated number of users
 
@@ -1032,8 +1032,8 @@ video* at videobus?
 # TV cards
 
 # Brooktree 848/849/878/879 based TV cards
-bktr* at pci? dev ? function ?
-radio* at bktr?
+#bktr* at pci? dev ? function ?
+#radio* at bktr?
 
 # Conexant CX2388[0-3]-based DTV cards
 #cxdtv* at pci? dev ? function ?
