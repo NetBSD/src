@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.18 2009/04/17 14:02:21 lukem Exp $ */
+/* $NetBSD: moused.c,v 1.19 2011/08/30 20:03:50 joerg Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.18 2009/04/17 14:02:21 lukem Exp $");
+__RCSID("$NetBSD: moused.c,v 1.19 2011/08/30 20:03:50 joerg Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -133,11 +133,11 @@ typedef struct {
 
 /* global variables */
 
-int	dbg = 0;
-int	nodaemon = FALSE;
-int	background = FALSE;
-int	identify = ID_NONE;
-const char *pidfile = "/var/run/moused.pid";
+static int	dbg = 0;
+static int	nodaemon = FALSE;
+static int	background = FALSE;
+static int	identify = ID_NONE;
+static const char *pidfile = "/var/run/moused.pid";
 
 /* local variables */
 
@@ -438,9 +438,9 @@ static jmp_buf env;
 /* function prototypes */
 
 static void	moused(const char *);
-static void	hup(int sig);
-static void	cleanup(int sig);
-static void	usage(void);
+__dead static void	hup(int sig);
+__dead static void	cleanup(int sig);
+__dead static void	usage(void);
 
 static int	r_identify(void);
 static const char *r_if(int type);
@@ -468,7 +468,7 @@ static void wsev(int ty, int val);
 
 static int kidspad(u_char rxc, mousestatus_t *act);
 
-static void
+__printflike(1, 2) static void
 debug(const char *fmt, ...)
 {
 	va_list ap;
@@ -479,7 +479,7 @@ debug(const char *fmt, ...)
 	va_end(ap);
 }
 
-static void
+__dead __printflike(2, 3) static void
 logerr(int e, const char *fmt, ...)
 {
 	va_list ap;
@@ -496,7 +496,7 @@ logerr(int e, const char *fmt, ...)
 	va_end(ap);
 }
 
-static void
+__printflike(1, 2) static void
 logwarn(const char *fmt, ...)
 {
 	va_list ap;
@@ -512,7 +512,7 @@ logwarn(const char *fmt, ...)
 	va_end(ap);
 }
 
-static void
+__printflike(1, 2) static void
 logwarnx(const char *fmt, ...)
 {
 	va_list ap;
@@ -2152,7 +2152,7 @@ r_timestamp(mousestatus_t *act)
     tv2.tv_sec = rodent.clickthreshold/1000;
     tv2.tv_usec = (rodent.clickthreshold%1000)*1000;
     timersub(&tv1, &tv2, &tv); 
-    debug("tv:  %ld %ld", tv.tv_sec, tv.tv_usec);
+    debug("tv:  %ld %ld", tv.tv_sec, (long)tv.tv_usec);
 
     /* 3 button emulation timeout */
     tv2.tv_sec = rodent.button2timeout/1000;
@@ -2165,7 +2165,7 @@ r_timestamp(mousestatus_t *act)
             if (act->button & button) {
                 /* the button is down */
     		debug("  :  %ld %ld", 
-		    bstate[i].tv.tv_sec, bstate[i].tv.tv_usec);
+		    bstate[i].tv.tv_sec, (long)bstate[i].tv.tv_usec);
 		if (timercmp(&tv, &bstate[i].tv, >)) {
                     bstate[i].count = 1;
                 } else {
