@@ -1,4 +1,4 @@
-.\"	$NetBSD: auvitek.4,v 1.5 2011/08/14 15:21:46 wiz Exp $
+.\"	$NetBSD: auvitek.4,v 1.6 2011/08/30 07:23:05 jruoho Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 14, 2011
+.Dd August 30, 2011
 .Dt AUVITEK 4
 .Os
 .Sh NAME
@@ -68,10 +68,13 @@ The following cards are supported by the
 .Nm
 driver:
 .Pp
-.Bl -column
-.It Em "Vendor        Chip           Decoder    Tuner"
-.It    "Hauppauge     WinTV-HVR-850  AU8522     XC5000"
-.It    "Hauppauge     WinTV-HVR-950Q AU8522     XC5000"
+.Bl -column -offset indent \
+"Hauppauge WinTV-HVR-950Q  " \
+"              " \
+"              "
+.It Sy "Device" Ta Sy "Decoder" Ta Sy "Tuner"
+.It "Hauppauge WinTV-HVR-850" Ta Xr au8522 4 Ta Xr xc5k 4
+.It "Hauppauge WinTV-HVR-950Q" Ta Xr au8522 4 Ta Xr xc5k 4
 .El
 .Pp
 Cards with an XC5000 tuner require the firmware provided by the
@@ -80,9 +83,11 @@ package to function properly.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr dtv 4 ,
+.Xr dtviic 4 ,
 .Xr ehci 4 ,
 .Xr uaudio 4 ,
-.Xr video 4 ,
+.Xr video 4
+.Pp
 .Pa pkgsrc/sysutils/xc5k-firmware
 .Sh HISTORY
 The
