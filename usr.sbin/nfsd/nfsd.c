@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.57 2009/12/21 05:06:55 christos Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.58 2011/08/30 20:07:31 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.57 2009/12/21 05:06:55 christos Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.58 2011/08/30 20:07:31 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,14 +86,13 @@ do {									\
     fprintf(stderr,(s), ## args);					\
     fprintf(stderr, "\n");						\
 } while (/*CONSTCOND*/0)
-int	debug = 1;
+static int	debug = 1;
 #else
-int	debug = 0;
+static int	debug = 0;
 #endif
 
-int	main __P((int, char **));
-void	nonfs __P((int));
-void	usage __P((void));
+static void	nonfs(int);
+__dead static void	usage(void);
 
 static void *
 worker(void *dummy)
@@ -135,9 +134,7 @@ worker(void *dummy)
  * followed by "n" which is the number of nfsd threads to create
  */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct nfsd_args nfsdargs;
 	struct addrinfo *ai_udp, *ai_tcp, *ai_udp6, *ai_tcp6, hints;
@@ -570,16 +567,15 @@ main(argc, argv)
 	}
 }
 
-void
-usage()
+static void
+usage(void)
 {
 	(void)fprintf(stderr, "usage: nfsd %s\n", USAGE);
 	exit(1);
 }
 
-void
-nonfs(signo)
-	int signo;
+static void
+nonfs(int signo)
 {
 	syslog(LOG_ERR, "missing system call: NFS not available.");
 }
