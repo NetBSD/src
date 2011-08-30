@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.13 2009/04/19 07:54:08 lukem Exp $	*/
+/*	$NetBSD: mld6.c,v 1.14 2011/08/30 21:18:11 joerg Exp $	*/
 /*	$KAME: mld6.c,v 1.9 2000/12/04 06:29:37 itojun Exp $	*/
 
 /*
@@ -54,20 +54,20 @@
 #include <string.h>
 #include <err.h>
 
-struct msghdr m;
-struct sockaddr_in6 dst;
-struct mld6_hdr mldh;
-struct in6_addr maddr = IN6ADDR_ANY_INIT, any = IN6ADDR_ANY_INIT;
-struct ipv6_mreq mreq;
-u_short ifindex;
-int sock;
+static struct msghdr m;
+static struct sockaddr_in6 dst;
+static struct mld6_hdr mldh;
+static struct in6_addr maddr = IN6ADDR_ANY_INIT, any = IN6ADDR_ANY_INIT;
+static struct ipv6_mreq mreq;
+static u_short ifindex;
+static int sock;
 
 #define QUERY_RESPONSE_INTERVAL 10000
 
-void make_msg(int index, struct in6_addr *addr, u_int type);
-void usage(void);
-void dump(int);
-void quit(int);
+static void make_msg(int index, struct in6_addr *addr, u_int type);
+__dead static void usage(void);
+static void dump(int);
+__dead static void quit(int);
 
 int
 main(int argc, char *argv[])
@@ -153,7 +153,7 @@ main(int argc, char *argv[])
 	}
 }
 
-void
+static void
 make_msg(int idx, struct in6_addr *addr, u_int type)
 {
 	static struct iovec iov[2];
@@ -244,7 +244,7 @@ make_msg(int idx, struct in6_addr *addr, u_int type)
 #endif 
 }
 
-void
+static void
 dump(int s)
 {
 	int i;
@@ -287,7 +287,7 @@ dump(int s)
 }
 
 /* ARGSUSED */
-void
+static void
 quit(int signum) {
 	mreq.ipv6mr_multiaddr = any;
 	mreq.ipv6mr_interface = ifindex;
@@ -298,8 +298,8 @@ quit(int signum) {
 	exit(0);
 }
 
-void
-usage()
+static void
+usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-dr] ifname [addr]\n", getprogname());
 	exit(1);
