@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.246 2011/08/15 14:48:00 wiz Exp $
+#	$NetBSD: build.sh,v 1.247 2011/08/30 12:04:12 apb Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -743,7 +743,7 @@ parseoptions()
 		-M)
 			eval ${optargcmd}; resolvepath OPTARG
 			case "${OPTARG}" in
-			\$*)	usage "-M argument must not begin with '$'"
+			\$*)	usage "-M argument must not begin with '\$'"
 				;;
 			*\$*)	# can use resolvepath, but can't set TOP_objdir
 				resolvepath OPTARG
@@ -782,7 +782,7 @@ parseoptions()
 		-O)
 			eval ${optargcmd}
 			case "${OPTARG}" in
-			*\$*)	usage "-O argument must not contain '$'"
+			*\$*)	usage "-O argument must not contain '\$'"
 				;;
 			*)	resolvepath OPTARG
 				TOP_objdir="${OPTARG}"
@@ -1387,7 +1387,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.246 2011/08/15 14:48:00 wiz Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.247 2011/08/30 12:04:12 apb Exp $
 # with these arguments: ${_args}
 #
 
