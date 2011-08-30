@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.42 2011/08/30 10:44:06 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.43 2011/08/30 10:58:41 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2011/08/30 10:44:06 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2011/08/30 10:58:41 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -832,10 +832,29 @@ aprint_debug("pmap_page_protect not implemented\n");
 }
 
 bool
-pmap_clear_modify(struct vm_page *pg)
+pmap_clear_modify(struct vm_page *page)
 {
-aprint_debug("pmap_clear_modify not implemented\n");
-	return true;
+	struct pv_entry *pv;
+	uintptr_t ppn;
+	bool rv;
+
+	ppn = atop(VM_PAGE_TO_PHYS(page));
+	rv = pmap_is_modified(page);
+
+	aprint_debug("pmap_clear_modify page %"PRIiPTR"\n", ppn);
+
+	/* if marked modified, clear it in all the pmap's referencing it */
+	if (rv) {
+		/* if its marked modified in a kernel mapping, don't clear it */
+		for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next)
+			if (pv->pv_pmap == pmap_kernel() &&
+			    (pv->pv_prot & VM_PROT_WRITE))
+				return rv;
+		/* clear it */
+		pv_table[ppn].pv_pflags &= ~PV_MODIFIED;
+		pmap_update_page(ppn);
+	}
+	return rv;
 }
 
 bool
@@ -846,10 +865,17 @@ aprint_debug("pmap_clear_reference not implemented\n");
 }
 
 bool
-pmap_is_modified(struct vm_page *pg)
+pmap_is_modified(struct vm_page *page)
 {
-aprint_debug("pmap_is_modified not implemented\n");
-	return false;
+	intptr_t ppn;
+	bool rv;
+
+	ppn = atop(VM_PAGE_TO_PHYS(page));
+	rv = (pv_table[ppn].pv_pflags & PV_MODIFIED) != 0;
+
+	aprint_debug("pmap_is_modified page %"PRIiPTR" : %s\n", ppn, rv?"yes":"no");
+
+	return rv;
 }
 
 bool
