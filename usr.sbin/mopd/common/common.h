@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.8 2009/11/17 18:58:07 drochner Exp $	*/
+/*	$NetBSD: common.h,v 1.9 2011/08/30 19:49:10 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: common.h,v 1.8 2009/11/17 18:58:07 drochner Exp $
+ *	$NetBSD: common.h,v 1.9 2011/08/30 19:49:10 joerg Exp $
  *
  */
 
@@ -53,11 +53,11 @@ struct if_info {
 	int	trans;			/* Transport type Ethernet/802.3   */
 	u_char	eaddr[6];		/* Ethernet addr of this interface */
 	char	if_name[IFNAME_SIZE];	/* Interface Name		   */
-	int	(*iopen) __P((const char *, int, u_short, int));
+	int	(*iopen)(const char *, int, u_short, int);
 					/* Interface Open Routine	   */
-	int	(*write) __P((int, const u_char *, int, int));
+	int	(*write)(int, const u_char *, int, int);
 					/* Interface Write Routine	   */
-	void	(*read) __P((void));	/* Interface Read Routine          */
+	void	(*read)(void);	/* Interface Read Routine          */
 	struct if_info *next;		/* Next Interface		   */
 };
 
