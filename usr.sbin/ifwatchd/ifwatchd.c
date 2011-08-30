@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.25 2011/02/04 14:31:23 martin Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.26 2011/08/30 18:57:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 enum event { ARRIVAL, DEPARTURE, UP, DOWN, CARRIER, NO_CARRIER };
 
 /* local functions */
-static void usage(void);
+__dead static void usage(void);
 static void dispatch(void*, size_t);
 static void check_addrs(char *cp, int addrs, enum event ev);
 static void invoke_script(struct sockaddr *sa, struct sockaddr *dst, enum event ev, int ifindex, const char *ifname_hint);
@@ -110,7 +110,7 @@ struct interface_data {
 	int last_carrier_status;
 	char * ifname;
 };
-SLIST_HEAD(,interface_data) ifs = SLIST_HEAD_INITIALIZER(ifs);
+static SLIST_HEAD(,interface_data) ifs = SLIST_HEAD_INITIALIZER(ifs);
 
 int
 main(int argc, char **argv)
