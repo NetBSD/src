@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.120 2009/10/11 16:30:19 pooka Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.121 2011/08/30 17:06:21 plunky Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.120 2009/10/11 16:30:19 pooka Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.121 2011/08/30 17:06:21 plunky Exp $");
 #endif
 #endif				/* not lint */
 
@@ -522,7 +522,7 @@ mntsrv(rqstp, transp)
 	ret = 0;
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
-		if (!svc_sendreply(transp, xdr_void, NULL))
+		if (!svc_sendreply(transp, (xdrproc_t)xdr_void, NULL))
 			syslog(LOG_ERR, "Can't send reply");
 		return;
 	case MOUNTPROC_MNT:
@@ -550,7 +550,7 @@ mntsrv(rqstp, transp)
 			if (debug)
 				(void)fprintf(stderr, "-> stat failed on %s\n",
 				    rdirpath);
-			if (!svc_sendreply(transp, xdr_long, (caddr_t) &bad))
+			if (!svc_sendreply(transp, (xdrproc_t)xdr_long, (caddr_t) &bad))
 				syslog(LOG_ERR, "Can't send reply");
 			return;
 		}
@@ -585,7 +585,7 @@ mntsrv(rqstp, transp)
 			if (getfh(rdirpath, &fhr.fhr_fh, &fh_size) < 0) {
 				bad = errno;
 				syslog(LOG_ERR, "Can't get fh for %s", rdirpath);
-				if (!svc_sendreply(transp, xdr_long,
+				if (!svc_sendreply(transp, (xdrproc_t)xdr_long,
 				    (char *)&bad))
 					syslog(LOG_ERR, "Can't send reply");
 				goto out;
@@ -593,13 +593,13 @@ mntsrv(rqstp, transp)
 			if ((fhr.fhr_vers == 1 && fh_size > NFSX_V2FH) ||
 			    fh_size > NFSX_V3FHMAX) {
 				bad = EINVAL; /* XXX */
-				if (!svc_sendreply(transp, xdr_long,
+				if (!svc_sendreply(transp, (xdrproc_t)xdr_long,
 				    (char *)&bad))
 					syslog(LOG_ERR, "Can't send reply");
 				goto out;
 			}
 			fhr.fhr_fhsize = fh_size;
-			if (!svc_sendreply(transp, xdr_fhs, (char *) &fhr))
+			if (!svc_sendreply(transp, (xdrproc_t)xdr_fhs, (char *) &fhr))
 				syslog(LOG_ERR, "Can't send reply");
 			if (!lookup_failed)
 				add_mlist(host, rdirpath, hostset);
@@ -608,14 +608,14 @@ mntsrv(rqstp, transp)
 			if (debug)
 				(void)fprintf(stderr, "Mount successful.\n");
 		} else {
-			if (!svc_sendreply(transp, xdr_long, (caddr_t) &bad))
+			if (!svc_sendreply(transp, (xdrproc_t)xdr_long, (caddr_t) &bad))
 				syslog(LOG_ERR, "Can't send reply");
 		}
 out:
 		(void)sigprocmask(SIG_UNBLOCK, &sighup_mask, NULL);
 		return;
 	case MOUNTPROC_DUMP:
-		if (!svc_sendreply(transp, xdr_mlist, NULL))
+		if (!svc_sendreply(transp, (xdrproc_t)xdr_mlist, NULL))
 			syslog(LOG_ERR, "Can't send reply");
 		return;
 	case MOUNTPROC_UMNT:
@@ -630,7 +630,7 @@ out:
 			svcerr_weakauth(transp);
 			return;
 		}
-		if (!svc_sendreply(transp, xdr_void, NULL))
+		if (!svc_sendreply(transp, (xdrproc_t)xdr_void, NULL))
 			syslog(LOG_ERR, "Can't send reply");
 		return;
 	case MOUNTPROC_UMNTALL:
@@ -641,12 +641,12 @@ out:
 			svcerr_weakauth(transp);
 			return;
 		}
-		if (!svc_sendreply(transp, xdr_void, NULL))
+		if (!svc_sendreply(transp, (xdrproc_t)xdr_void, NULL))
 			syslog(LOG_ERR, "Can't send reply");
 		return;
 	case MOUNTPROC_EXPORT:
 	case MOUNTPROC_EXPORTALL:
-		if (!svc_sendreply(transp, xdr_explist, NULL))
+		if (!svc_sendreply(transp, (xdrproc_t)xdr_explist, NULL))
 			syslog(LOG_ERR, "Can't send reply");
 		return;
 
@@ -2367,7 +2367,8 @@ send_umntall(n)
 	int n;
 {
 	(void)clnt_broadcast(RPCPROG_MNT, RPCMNT_VER1, RPCMNT_UMNTALL,
-	    xdr_void, NULL, xdr_void, NULL, (resultproc_t)umntall_each);
+	    (xdrproc_t)xdr_void, NULL, (xdrproc_t)xdr_void, NULL,
+	    (resultproc_t)umntall_each);
 	exit(0);
 }
 

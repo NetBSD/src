@@ -1,4 +1,4 @@
-/*	$NetBSD: yppasswdd_mkpw.c,v 1.17 2009/10/20 00:51:14 snj Exp $	*/
+/*	$NetBSD: yppasswdd_mkpw.c,v 1.18 2011/08/30 17:06:22 plunky Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.org>
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.17 2009/10/20 00:51:14 snj Exp $");
+__RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.18 2011/08/30 17:06:22 plunky Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,7 +74,7 @@ make_passwd(yppasswd *argp, struct svc_req *rqstp, SVCXPRT *transp)
 
 #define REPLY(val)	do { \
 		int res = (val); \
-		if (!svc_sendreply(transp, xdr_int, (caddr_t)&res)) \
+		if (!svc_sendreply(transp, (xdrproc_t)xdr_int, (caddr_t)&res)) \
 			svcerr_systemerr(transp); \
 	} while (0)
 
