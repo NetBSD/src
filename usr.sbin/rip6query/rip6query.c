@@ -1,4 +1,4 @@
-/*	$NetBSD: rip6query.c,v 1.10 2004/01/05 23:23:38 jmmv Exp $	*/
+/*	$NetBSD: rip6query.c,v 1.11 2011/08/30 21:17:06 joerg Exp $	*/
 /*	$KAME: rip6query.c,v 1.17 2002/09/08 01:35:17 itojun Exp $	*/
 
 /*
@@ -57,23 +57,20 @@
 
 #define	DEFAULT_WAIT	5
 
-int	s;
-int	query_wait = DEFAULT_WAIT;
-struct sockaddr_in6 sin6;
-struct rip6	*ripbuf;
+static int	s;
+static int	query_wait = DEFAULT_WAIT;
+static struct sockaddr_in6 sin6;
+static struct rip6	*ripbuf;
 
 #define	RIPSIZE(n)	(sizeof(struct rip6) + (n-1) * sizeof(struct netinfo6))
 
-int main __P((int, char **));
-static void usage __P((void));
-static void sigalrm_handler __P((int));
-static const char *sa_n2a __P((struct sockaddr *));
-static const char *inet6_n2a __P((struct in6_addr *));
+__dead static void usage(void);
+__dead static void sigalrm_handler(int);
+static const char *sa_n2a(struct sockaddr *);
+static const char *inet6_n2a(struct in6_addr *);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct netinfo6 *np;
 	struct sockaddr_in6 fsock;
@@ -99,17 +96,14 @@ main(argc, argv)
 			break;
 		default:
 			usage();
-			exit(1);
 			/*NOTREACHED*/
 		}
 	}
 	argv += optind;
 	argc -= optind;
 
-	if (argc != 1) {
+	if (argc != 1)
 		usage();
-		exit(1);
-	}
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 		err(1, "socket");
@@ -184,15 +178,15 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: rip6query [-I iface] [-w wait] address\n");
+	exit(1);
 }
 
 /* getnameinfo() is preferred as we may be able to show ifindex as ifname */
 static const char *
-sa_n2a(sa)
-	struct sockaddr *sa;
+sa_n2a(struct sockaddr *sa)
 {
 	static char buf[NI_MAXHOST];
 
@@ -204,8 +198,7 @@ sa_n2a(sa)
 }
 
 static const char *
-inet6_n2a(addr)
-	struct in6_addr *addr;
+inet6_n2a(struct in6_addr *addr)
 {
 	static char buf[NI_MAXHOST];
 
@@ -213,8 +206,7 @@ inet6_n2a(addr)
 }
 
 static void
-sigalrm_handler(sig)
-	int sig;
+sigalrm_handler(int sig)
 {
 
 	_exit(0);
