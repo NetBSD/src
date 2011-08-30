@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1336 2011/08/30 05:51:15 jruoho Exp $
+# $NetBSD: mi,v 1.1337 2011/08/30 05:59:44 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1643,7 +1643,7 @@
 ./usr/share/man/cat4/trm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tty.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tun.0			man-sys-catman		.cat
-./usr/share/man/cat4/tuner.0			man-sys-catman		.cat
+./usr/share/man/cat4/tuner.0			man-obsolete		obsolete
 ./usr/share/man/cat4/tvpll.0			man-sys-catman		.cat
 ./usr/share/man/cat4/twa.0			man-sys-catman		.cat
 ./usr/share/man/cat4/twe.0			man-sys-catman		.cat
@@ -4388,7 +4388,7 @@
 ./usr/share/man/html4/trm.html			man-sys-htmlman		html
 ./usr/share/man/html4/tty.html			man-sys-htmlman		html
 ./usr/share/man/html4/tun.html			man-sys-htmlman		html
-./usr/share/man/html4/tuner.html		man-sys-htmlman		html
+./usr/share/man/html4/tuner.html		man-obsolete		obsolete
 ./usr/share/man/html4/tvpll.html		man-sys-htmlman		html
 ./usr/share/man/html4/twa.html			man-sys-htmlman		html
 ./usr/share/man/html4/twe.html			man-sys-htmlman		html
@@ -7056,7 +7056,7 @@
 ./usr/share/man/man4/trm.4			man-sys-man		.man
 ./usr/share/man/man4/tty.4			man-sys-man		.man
 ./usr/share/man/man4/tun.4			man-sys-man		.man
-./usr/share/man/man4/tuner.4			man-sys-man		.man
+./usr/share/man/man4/tuner.4			man-obsolete		obsolete
 ./usr/share/man/man4/tvpll.4			man-sys-man		.man
 ./usr/share/man/man4/twa.4			man-sys-man		.man
 ./usr/share/man/man4/twe.4			man-sys-man		.man
