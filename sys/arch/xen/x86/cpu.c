@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.56.2.8 2011/08/26 13:33:34 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.56.2.9 2011/08/30 12:53:46 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.8 2011/08/26 13:33:34 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.9 2011/08/30 12:53:46 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1104,7 +1104,14 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 
 }
 
-void
+/* curcpu() uses %fs - shim for until cpu_init_msrs(), below */
+static struct cpu_info *cpu_primary(void)
+{
+	return &cpu_info_primary;
+}
+struct cpu_info	* (*xpq_cpu)(void) = cpu_primary;
+
+	void
 cpu_init_msrs(struct cpu_info *ci, bool full)
 {
 #ifdef __x86_64__
@@ -1112,6 +1119,7 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 		HYPERVISOR_set_segment_base (SEGBASE_FS, 0);
 		HYPERVISOR_set_segment_base (SEGBASE_GS_KERNEL, (uint64_t) ci);
 		HYPERVISOR_set_segment_base (SEGBASE_GS_USER, 0);
+		xpq_cpu = x86_curcpu;
 	}
 #endif	/* __x86_64__ */
 

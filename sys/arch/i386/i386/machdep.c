@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.702.2.5 2011/08/20 19:22:46 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.702.2.6 2011/08/30 12:53:45 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.702.2.5 2011/08/20 19:22:46 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.702.2.6 2011/08/30 12:53:45 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -539,6 +539,9 @@ i386_proc0_tss_ldt_init(void)
 }
 
 #ifdef XEN
+/* Shim for curcpu() until %fs is ready */
+extern struct cpu_info	* (*xpq_cpu)(void);
+
 /*
  * Switch context:
  * - honor CR0_TS in saved CR0 and request DNA exception on FPU use
@@ -565,6 +568,12 @@ i386_switch_context(lwp_t *l)
 			  (union descriptor *) &pcb->pcb_fsd);
 	update_descriptor(&ci->ci_gdt[GUGS_SEL], 
 			  (union descriptor *) &pcb->pcb_gsd);
+
+	/* setup curcpu() to use %fs now */
+	/* XXX: find a way to do this, just once */
+	if (__predict_false(xpq_cpu != x86_curcpu)) {
+		xpq_cpu = x86_curcpu;
+	}
 
 	physop.cmd = PHYSDEVOP_SET_IOPL;
 	physop.u.set_iopl.iopl = pcb->pcb_iopl;
