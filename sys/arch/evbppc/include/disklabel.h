@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.6 2009/11/23 13:40:09 pooka Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.7 2011/08/30 12:39:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -37,6 +37,7 @@
 #define	RAW_PART	2		/* raw partition: XX?c */
 
 #ifdef EVBPPC_HAS_MBR
+#define LABELUSESMBR	1		/* use MBR partitionning */
 #define	LABELSECTOR	1		/* sector containing label */
 #define	LABELOFFSET	0		/* offset of label in sector */
 /* Pull in MBR partition definitions. */
@@ -46,6 +47,7 @@
 #include <sys/bootblock.h>
 #endif /* HAVE_NBTOOL_CONFIG_H */
 #else
+#define LABELUSESMBR	0		/* no MBR partitionning */
 #define	LABELSECTOR	0		/* sector containing label */
 #define	LABELOFFSET	64		/* offset of label in sector */
 #endif /* EVBPPC_HAS_MBR */

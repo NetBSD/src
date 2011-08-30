@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.4 2009/11/23 13:40:09 pooka Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.5 2011/08/30 12:39:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -32,7 +32,14 @@
 
 #ifndef _EVBMIPS_DISKLABEL_H_
 #define _EVBMIPS_DISKLABEL_H_
-
+#ifdef _KERNEL_OPT
+#include "opt_pmon.h"
+#endif
+#ifdef PMON
+#define LABELUSESMBR	1			/* use MBR partitionning */
+#else
+#define LABELUSESMBR	0			/* no MBR partitionning */
+#endif
 #define	LABELSECTOR	0			/* sector containing label */
 #define	LABELOFFSET	64			/* offset of label in sector */
 #define	MAXPARTITIONS	16			/* number of partitions */

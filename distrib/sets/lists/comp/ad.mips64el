@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.49 2011/08/28 07:48:18 christos Exp $
+# $NetBSD: ad.mips64el,v 1.50 2011/08/30 12:39:50 bouyer Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -1351,7 +1351,7 @@
 ./usr/libdata/debug/usr/lib/64/libukfs.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libumem.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/64/libusbhid.so.1.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libutil.so.7.18.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libutil.so.7.19.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libuutil.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/64/libwind.so.0.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/64/libwrap.so.1.0.debug	comp-net-debug	debug,compat
@@ -1500,7 +1500,7 @@
 ./usr/libdata/debug/usr/lib/o32/libukfs.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libumem.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libusbhid.so.1.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libutil.so.7.18.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libutil.so.7.19.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libuutil.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libwind.so.0.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/libwrap.so.1.0.debug	comp-net-debug	debug,compat

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.186 2011/08/28 07:48:18 christos Exp $
+# $NetBSD: shl.mi,v 1.187 2011/08/30 12:39:51 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -408,7 +408,7 @@
 ./usr/libdata/debug/usr/lib/libukfs.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libumem.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libusbhid.so.1.0.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libutil.so.7.18.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libutil.so.7.19.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libuutil.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libwind.so.0.0.debug		comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libwrap.so.1.0.debug	comp-net-debug	debug
