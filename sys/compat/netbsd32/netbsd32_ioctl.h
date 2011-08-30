@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.36 2011/08/27 19:25:35 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.37 2011/08/30 07:06:39 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -34,6 +34,8 @@
 
 #include <dev/dkvar.h>
 #include <dev/vndvar.h>
+
+#include <dev/wscons/wsconsio.h>
 
 /* we define some handy macros here... */
 #define IOCTL_STRUCT_CONV_TO(cmd, type)	\
@@ -86,6 +88,13 @@ struct netbsd32_format_op {
 #define DIOCRFORMAT32	_IOWR('d', 105, struct netbsd32_format_op)
 #define DIOCWFORMAT32	_IOWR('d', 106, struct netbsd32_format_op)
 #endif
+
+struct netbsd32_wsdisplay_addscreendata {
+	int idx; /* screen index */
+	netbsd32_charp screentype;
+	netbsd32_charp emul;
+};
+#define	WSDISPLAYIO_ADDSCREEN32	_IOW('W', 78, struct netbsd32_wsdisplay_addscreendata)
 
 /* can wait! */
 #if 0
