@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_proc.c,v 1.15 2011/07/01 03:09:29 joerg Exp $	*/
+/*	$NetBSD: ypserv_proc.c,v 1.16 2011/08/30 17:06:22 plunky Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_proc.c,v 1.15 2011/07/01 03:09:29 joerg Exp $");
+__RCSID("$NetBSD: ypserv_proc.c,v 1.16 2011/08/30 17:06:22 plunky Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -337,7 +337,7 @@ ypproc_all_2_svc(void *argp, struct svc_req *rqstp)
 
 	case 0:
 		/* CHILD: send result, then exit */
-		if (!svc_sendreply(rqstp->rq_xprt, ypdb_xdr_get_all, (void *)k))
+		if (!svc_sendreply(rqstp->rq_xprt, (xdrproc_t)ypdb_xdr_get_all, (void *)k))
 			svcerr_systemerr(rqstp->rq_xprt);
 
 		/* Note: no need to free args; we're exiting. */

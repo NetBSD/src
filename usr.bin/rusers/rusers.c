@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers.c,v 1.23 2006/05/11 01:25:23 mrg Exp $	*/
+/*	$NetBSD: rusers.c,v 1.24 2011/08/30 17:06:21 plunky Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers.c,v 1.23 2006/05/11 01:25:23 mrg Exp $");
+__RCSID("$NetBSD: rusers.c,v 1.24 2011/08/30 17:06:21 plunky Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -262,8 +262,9 @@ allhosts(void)
 
 	memset((char *)&up, 0, sizeof(up));
 	clnt_stat = rpc_broadcast(RUSERSPROG, RUSERSVERS_IDLE,
-	    RUSERSPROC_NAMES, xdr_void, NULL, xdr_utmpidlearr,
-	    (char *)&up, (resultproc_t)rusers_reply, "udp");
+	    RUSERSPROC_NAMES, (xdrproc_t)xdr_void, NULL,
+	    (xdrproc_t)xdr_utmpidlearr, (char *)&up,
+	    (resultproc_t)rusers_reply, "udp");
 	if (clnt_stat != RPC_SUCCESS && clnt_stat != RPC_TIMEDOUT)
 		errx(1, "%s", clnt_sperrno(clnt_stat));
 }

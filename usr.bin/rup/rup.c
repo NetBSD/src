@@ -1,4 +1,4 @@
-/*	$NetBSD: rup.c,v 1.27 2007/12/15 19:44:53 perry Exp $	*/
+/*	$NetBSD: rup.c,v 1.28 2011/08/30 17:06:21 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rup.c,v 1.27 2007/12/15 19:44:53 perry Exp $");
+__RCSID("$NetBSD: rup.c,v 1.28 2011/08/30 17:06:21 plunky Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -323,7 +323,7 @@ allhosts(void)
 	}
 
 	clnt_stat = rpc_broadcast(RSTATPROG, RSTATVERS_TIME, RSTATPROC_STATS,
-	    xdr_void, NULL, xdr_statstime, (caddr_t)(void *)&host_stat,
+	    (xdrproc_t)xdr_void, NULL, (xdrproc_t)xdr_statstime, (caddr_t)(void *)&host_stat,
 	    (resultproc_t)rstat_reply, "udp");
 	if (clnt_stat != RPC_SUCCESS && clnt_stat != RPC_TIMEDOUT)
 		errx(1, "%s", clnt_sperrno(clnt_stat));

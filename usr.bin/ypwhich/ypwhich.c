@@ -1,4 +1,4 @@
-/*	$NetBSD: ypwhich.c,v 1.18 2011/02/01 20:58:15 chuck Exp $	*/
+/*	$NetBSD: ypwhich.c,v 1.19 2011/08/30 17:06:21 plunky Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor
@@ -394,7 +394,7 @@ find_mapmaster(const char *host, const char *domain, const char *map,
 			(void)printf("%s %s\n", ypml->ypml_name,
 			    yprespmaster.master);
 		}
-		xdr_free(xdr_ypresp_master, (void *)&yprespmaster);
+		xdr_free((xdrproc_t)xdr_ypresp_master, (void *)&yprespmaster);
 	}
 	clnt_destroy(ypserv);
 

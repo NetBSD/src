@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.31 2009/11/19 22:27:26 christos Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.32 2011/08/30 17:06:21 plunky Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -791,8 +791,9 @@ do_mon(const char *hostname)
 	my_mon.mon_id.my_id.my_prog = NLM_PROG;
 	my_mon.mon_id.my_id.my_vers = NLM_SM;
 	my_mon.mon_id.my_id.my_proc = NLM_SM_NOTIFY;
-	if ((retval = callrpc(localhost, SM_PROG, SM_VERS, SM_MON, xdr_mon,
-	    (void *)&my_mon, xdr_sm_stat_res, (void *)&result)) != 0) {
+	if ((retval = callrpc(localhost, SM_PROG, SM_VERS, SM_MON,
+	    (xdrproc_t)xdr_mon, (void *)&my_mon,
+	    (xdrproc_t)xdr_sm_stat_res, (void *)&result)) != 0) {
 		syslog(LOG_WARNING, "rpc to statd failed (%s)",
 		    clnt_sperrno((enum clnt_stat)retval));
 		free(hp);

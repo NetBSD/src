@@ -1,4 +1,4 @@
-/*	$NetBSD: sprayd.c,v 1.16 2011/08/29 20:41:06 joerg Exp $	*/
+/*	$NetBSD: sprayd.c,v 1.17 2011/08/30 17:06:21 plunky Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sprayd.c,v 1.16 2011/08/29 20:41:06 joerg Exp $");
+__RCSID("$NetBSD: sprayd.c,v 1.17 2011/08/30 17:06:21 plunky Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -131,7 +131,7 @@ spray_service(struct svc_req *rqstp, SVCXPRT *transp)
 		/*FALLTHROUGH*/
 
 	case NULLPROC:
-		(void)svc_sendreply(transp, xdr_void, (char *)NULL);
+		(void)svc_sendreply(transp, (xdrproc_t)xdr_void, (char *)NULL);
 		return;
 
 	case SPRAYPROC_SPRAY:
@@ -150,7 +150,7 @@ spray_service(struct svc_req *rqstp, SVCXPRT *transp)
 		return;
 	}
 
-	if (!svc_sendreply(transp, xdr_spraycumul, (caddr_t)&scum)) {
+	if (!svc_sendreply(transp, (xdrproc_t)xdr_spraycumul, (caddr_t)&scum)) {
 		svcerr_systemerr(transp);
 		syslog(LOG_WARNING, "bad svc_sendreply");
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib_host.c,v 1.8 2009/04/19 06:06:39 lukem Exp $	*/
+/*	$NetBSD: yplib_host.c,v 1.9 2011/08/30 17:06:22 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yplib_host.c,v 1.8 2009/04/19 06:06:39 lukem Exp $");
+__RCSID("$NetBSD: yplib_host.c,v 1.9 2011/08/30 17:06:22 plunky Exp $");
 #endif
 
 #include <sys/param.h>
@@ -152,7 +152,7 @@ yp_match_host(CLIENT *client, char *indomain, char *inmap, const char *inkey,
 		memcpy(*outval, yprv.valdat.dptr, *outvallen);
 		(*outval)[*outvallen] = '\0';
 	}
-	xdr_free(xdr_ypresp_val, (char *)&yprv);
+	xdr_free((xdrproc_t)xdr_ypresp_val, (char *)&yprv);
 	return r;
 }
 
@@ -186,7 +186,7 @@ yp_first_host(CLIENT *client, char *indomain, char *inmap, char **outkey,
 		memcpy(*outval, yprkv.valdat.dptr, *outvallen);
 		(*outval)[*outvallen] = '\0';
 	}
-	xdr_free(xdr_ypresp_key_val, (char *)&yprkv);
+	xdr_free((xdrproc_t)xdr_ypresp_key_val, (char *)&yprkv);
 	return r;
 }
 
@@ -223,7 +223,7 @@ yp_next_host(CLIENT *client, char *indomain, char *inmap, char *inkey,
 		memcpy(*outval, yprkv.valdat.dptr, *outvallen);
 		(*outval)[*outvallen] = '\0';
 	}
-	xdr_free(xdr_ypresp_key_val, (char *)&yprkv);
+	xdr_free((xdrproc_t)xdr_ypresp_key_val, (char *)&yprkv);
 	return r;
 }
 
@@ -264,7 +264,7 @@ yp_order_host(CLIENT *client, char *indomain, char *inmap, int *outorder)
 		clnt_perror(client, "yp_order_host: clnt_call");
 
 	*outorder = ypro.ordernum;
-	xdr_free(xdr_ypresp_order, (char *)&ypro);
+	xdr_free((xdrproc_t)xdr_ypresp_order, (char *)&ypro);
 	return ypprot_err(ypro.status);
 }
 
@@ -288,7 +288,7 @@ yp_master_host(CLIENT *client, char *indomain, char *inmap, char **outname)
 	if (!(r = ypprot_err(yprm.status))) {
 		*outname = (char *)strdup(yprm.master);
 	}
-	xdr_free(xdr_ypresp_master, (char *)&yprm);
+	xdr_free((xdrproc_t)xdr_ypresp_master, (char *)&yprm);
 	return r;
 }
 

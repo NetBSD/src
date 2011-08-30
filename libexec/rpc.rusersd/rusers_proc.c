@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers_proc.c,v 1.26 2009/03/16 00:56:16 lukem Exp $	*/
+/*	$NetBSD: rusers_proc.c,v 1.27 2011/08/30 17:06:20 plunky Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers_proc.c,v 1.26 2009/03/16 00:56:16 lukem Exp $");
+__RCSID("$NetBSD: rusers_proc.c,v 1.27 2011/08/30 17:06:20 plunky Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -360,7 +360,7 @@ rusers_service(struct svc_req *rqstp, SVCXPRT *transp)
 
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
-		(void)svc_sendreply(transp, xdr_void, NULL);
+		(void)svc_sendreply(transp, (xdrproc_t)xdr_void, NULL);
 		goto leave;
 
 	case RUSERSPROC_NUM:

@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.28 2011/08/27 15:46:59 joerg Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.29 2011/08/30 17:06:20 plunky Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.28 2011/08/27 15:46:59 joerg Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.29 2011/08/30 17:06:20 plunky Exp $");
 #endif
 
 #include <sys/param.h>
@@ -126,7 +126,7 @@ rquota_service(struct svc_req *request, SVCXPRT *transp)
 {
 	switch (request->rq_proc) {
 	case NULLPROC:
-		(void)svc_sendreply(transp, xdr_void, (char *)NULL);
+		(void)svc_sendreply(transp, (xdrproc_t)xdr_void, (char *)NULL);
 		break;
 
 	case RQUOTAPROC_GETQUOTA:
@@ -147,7 +147,7 @@ ext_rquota_service(struct svc_req *request, SVCXPRT *transp)
 {
 	switch (request->rq_proc) {
 	case NULLPROC:
-		(void)svc_sendreply(transp, xdr_void, (char *)NULL);
+		(void)svc_sendreply(transp, (xdrproc_t)xdr_void, (char *)NULL);
 		break;
 
 	case RQUOTAPROC_GETQUOTA:
@@ -236,7 +236,7 @@ sendquota(struct svc_req *request, int vers, SVCXPRT *transp)
 		    qe[QUOTA_LIMIT_FILE].ufsqe_time - timev.tv_sec;
 	}
 out:
-	if (!svc_sendreply(transp, xdr_getquota_rslt, (char *)&getq_rslt))
+	if (!svc_sendreply(transp, (xdrproc_t)xdr_getquota_rslt, (char *)&getq_rslt))
 		svcerr_systemerr(transp);
 	if (!svc_freeargs(transp, xdr_getquota_args, (caddr_t)&getq_args)) {
 		syslog(LOG_ERR, "unable to free arguments");
