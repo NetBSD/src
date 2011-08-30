@@ -1,4 +1,4 @@
-.\" $NetBSD: dtv.4,v 1.7 2011/08/30 05:43:30 jruoho Exp $
+.\" $NetBSD: dtv.4,v 1.8 2011/08/30 07:08:47 jruoho Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,6 +57,8 @@ The following machine-independent devices are supported:
 .Bl -tag -width "auvitek(4) " -offset indent
 .It Xr auvitek 4
 Auvitek AU0828-based video capture cards
+.It Xr emdtv 4
+EM28XX-based DTV cards
 .\"
 .\" XXX: Uncomment once the stub-pages are actually installed.
 .\"
@@ -64,8 +66,6 @@ Auvitek AU0828-based video capture cards
 .\" Hauppauge WinTV-HVR-1250
 .\" .It Xr cxdtv 4
 .\" Conexant CX2388X-based DTV cards
-.\" .It Xr emdtv 4
-.\" EM28XX-based DTV cards
 .El
 .Pp
 Note that the
@@ -90,9 +90,9 @@ Digital video recording device.
 .Sh SEE ALSO
 .Xr auvitek 4 ,
 .Xr dtviic 4 ,
+.Xr emdtv 4 ,
 .\" coram 4 ,
 .\" cxdtv 4 ,
-.\" emdtv 4 ,
 .Xr video 9
 .Pp
 .Pa pkgsrc/multimedia/dvb-apps ,
