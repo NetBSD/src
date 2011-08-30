@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.32 2010/03/13 20:38:48 christos Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.33 2011/08/30 14:22:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -97,6 +97,9 @@ struct bpf_d {
 	struct timespec bd_atime;	/* access time */
 	struct timespec bd_mtime;	/* modification time */
 	struct timespec bd_btime;	/* birth time */
+#ifdef _LP64
+	int		bd_compat32;	/* 32-bit stream on LP64 system */
+#endif
 };
 
 

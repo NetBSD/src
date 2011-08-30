@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.57 2010/12/05 02:40:40 christos Exp $	*/
+/*	$NetBSD: bpf.h,v 1.58 2011/08/30 14:22:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -53,7 +53,10 @@ typedef	u_int bpf_u_int32;
  * even multiple of BPF_ALIGNMENT.
  */
 #define BPF_ALIGNMENT sizeof(long)
+#define BPF_ALIGNMENT32 sizeof(int)
+
 #define BPF_WORDALIGN(x) (((x)+(BPF_ALIGNMENT-1))&~(BPF_ALIGNMENT-1))
+#define BPF_WORDALIGN32(x) (((x)+(BPF_ALIGNMENT32-1))&~(BPF_ALIGNMENT32-1))
 
 #define BPF_MAXINSNS 512
 #define BPF_DFLTBUFSIZE (1024*1024)	/* default static upper limit */
@@ -152,8 +155,21 @@ struct bpf_timeval {
 	long tv_usec;
 };
 
+struct bpf_timeval32 {
+	int32_t tv_sec;
+	int32_t tv_usec;
+};
+
 struct bpf_hdr {
 	struct bpf_timeval bh_tstamp;	/* time stamp */
+	uint32_t	bh_caplen;	/* length of captured portion */
+	uint32_t	bh_datalen;	/* original length of packet */
+	uint16_t	bh_hdrlen;	/* length of bpf header (this struct
+					   plus alignment padding) */
+};
+
+struct bpf_hdr32 {
+	struct bpf_timeval32 bh_tstamp;	/* time stamp */
 	uint32_t	bh_caplen;	/* length of captured portion */
 	uint32_t	bh_datalen;	/* original length of packet */
 	uint16_t	bh_hdrlen;	/* length of bpf header (this struct
@@ -172,8 +188,10 @@ struct bpf_hdr {
     defined(__mips__) || defined(__ns32k__) || defined(__vax__) || \
     defined(__sh__) || (defined(__sparc__) && !defined(__sparc64__))
 #define SIZEOF_BPF_HDR 18
+#define SIZEOF_BPF_HDR32 18
 #else
 #define SIZEOF_BPF_HDR sizeof(struct bpf_hdr)
+#define SIZEOF_BPF_HDR32 sizeof(struct bpf_hdr32)
 #endif
 #endif
 
