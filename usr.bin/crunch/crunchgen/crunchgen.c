@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.79 2011/05/15 21:28:51 christos Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.80 2011/08/30 23:10:45 joerg Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.79 2011/05/15 21:28:51 christos Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.80 2011/08/30 23:10:45 joerg Exp $");
 #endif
 
 #include <stdlib.h>
@@ -83,45 +83,45 @@ typedef struct prog {
 
 /* global state */
 
-strlst_t *srcdirs = NULL;
-strlst_t *libs    = NULL;
-strlst_t *vars	  = NULL;
-prog_t   *progs   = NULL;
+static strlst_t *srcdirs = NULL;
+static strlst_t *libs    = NULL;
+static strlst_t *vars	  = NULL;
+static prog_t   *progs   = NULL;
 
-char line[MAXLINELEN];
+static char line[MAXLINELEN];
 
-char confname[MAXPATHLEN], infilename[MAXPATHLEN];
-char outmkname[MAXPATHLEN], outcfname[MAXPATHLEN], execfname[MAXPATHLEN];
-char cachename[MAXPATHLEN], curfilename[MAXPATHLEN];
-char curdir[MAXPATHLEN];
-char topdir[MAXPATHLEN];
-char libdir[MAXPATHLEN] = "/usr/lib";
-char dbg[MAXPATHLEN] = "-Os";
-int linenum = -1;
-int goterror = 0;
+static char confname[MAXPATHLEN], infilename[MAXPATHLEN];
+static char outmkname[MAXPATHLEN], outcfname[MAXPATHLEN], execfname[MAXPATHLEN];
+static char cachename[MAXPATHLEN], curfilename[MAXPATHLEN];
+static char curdir[MAXPATHLEN];
+static char topdir[MAXPATHLEN];
+static char libdir[MAXPATHLEN] = "/usr/lib";
+static char dbg[MAXPATHLEN] = "-Os";
+static int linenum = -1;
+static int goterror = 0;
 
-const char *pname = "crunchgen";
+static const char *pname = "crunchgen";
 
-int verbose, readcache, useobjs, oneobj;	/* options */
-int reading_cache;
-char *machine;
-char *makeobjdirprefix;
-char *makebin;
-char *makeflags;
+static int verbose, readcache, useobjs, oneobj;	/* options */
+static int reading_cache;
+static char *machine;
+static char *makeobjdirprefix;
+static char *makebin;
+static char *makeflags;
 
 /* general library routines */
 
-void status(const char *str);
-void out_of_memory(void);
-void add_string(strlst_t **listp, char *str);
-int is_dir(const char *pathname);
-int is_nonempty_file(const char *pathname);
+static void status(const char *str);
+__dead static void out_of_memory(void);
+static void add_string(strlst_t **listp, char *str);
+static int is_dir(const char *pathname);
+static int is_nonempty_file(const char *pathname);
 
 /* helper routines for main() */
 
-void usage(void);			
-void parse_conf_file(void);
-void gen_outputs(void);
+__dead static void usage(void);
+static void parse_conf_file(void);
+static void gen_outputs(void);
 
 extern char *crunched_skel[];
 
@@ -234,19 +234,19 @@ usage(void)
 
 /* helper routines for parse_conf_file */
 
-void parse_one_file(char *filename);
-void parse_line(char *line, int *fc, char **fv, int nf); 
-void add_srcdirs(int argc, char **argv);
-void add_progs(int argc, char **argv);
-void add_link(int argc, char **argv);
-void add_libs(int argc, char **argv);
-void add_special(int argc, char **argv);
+static void parse_one_file(char *filename);
+static void parse_line(char *line, int *fc, char **fv, int nf); 
+static void add_srcdirs(int argc, char **argv);
+static void add_progs(int argc, char **argv);
+static void add_link(int argc, char **argv);
+static void add_libs(int argc, char **argv);
+static void add_special(int argc, char **argv);
 
-prog_t *find_prog(char *str);
-void add_prog(char *progname);
+static prog_t *find_prog(char *str);
+static void add_prog(char *progname);
 
 
-void 
+static void 
 parse_conf_file(void)
 {
     if (!is_nonempty_file(infilename)) {
@@ -262,7 +262,7 @@ parse_conf_file(void)
 }
 
 
-void 
+static void 
 parse_one_file(char *filename)
 {
     char *fieldv[MAXFIELDS];
@@ -315,7 +315,7 @@ parse_one_file(char *filename)
 }
 
 
-void 
+static void 
 parse_line(char *pline, int *fc, char **fv, int nf)
 {
     char *p;
@@ -341,7 +341,7 @@ parse_line(char *pline, int *fc, char **fv, int nf)
 }
 
 
-void 
+static void 
 add_srcdirs(int argc, char **argv)
 {
     int i;
@@ -369,7 +369,7 @@ add_srcdirs(int argc, char **argv)
 }
 
 
-void 
+static void 
 add_progs(int argc, char **argv)
 {
     int i;
@@ -379,7 +379,7 @@ add_progs(int argc, char **argv)
 }
 
 
-void 
+static void 
 add_prog(char *progname)
 {
     prog_t *p1, *p2;
@@ -408,7 +408,7 @@ add_prog(char *progname)
 }
 
 
-void 
+static void 
 add_link(int argc, char **argv)
 {
     int i;
@@ -426,7 +426,7 @@ add_link(int argc, char **argv)
 }
 
 
-void 
+static void 
 add_libs(int argc, char **argv)
 {
     int i;
@@ -436,7 +436,7 @@ add_libs(int argc, char **argv)
 }
 
 
-void 
+static void 
 add_special(int argc, char **argv)
 {
     int i;
@@ -521,7 +521,7 @@ add_special(int argc, char **argv)
 }
 
 
-prog_t *
+static prog_t *
 find_prog(char *str)
 {
     prog_t *p;
@@ -542,22 +542,22 @@ find_prog(char *str)
 
 /* helper subroutines */
 
-void remove_error_progs(void);
-void fillin_program(prog_t *p);
-void gen_specials_cache(void);
-void gen_output_makefile(void);
-void gen_output_cfile(void);
+static void remove_error_progs(void);
+static void fillin_program(prog_t *p);
+static void gen_specials_cache(void);
+static void gen_output_makefile(void);
+static void gen_output_cfile(void);
 
-void fillin_program_objs(prog_t *p, char *path);
-void top_makefile_rules(FILE *outmk);
-void bottom_makefile_rules(FILE *outmk);
-void prog_makefile_rules(FILE *outmk, prog_t *p);
-void output_strlst(FILE *outf, strlst_t *lst);
-char *genident(char *str);
-char *dir_search(char *progname);
+static void fillin_program_objs(prog_t *p, char *path);
+static void top_makefile_rules(FILE *outmk);
+static void bottom_makefile_rules(FILE *outmk);
+static void prog_makefile_rules(FILE *outmk, prog_t *p);
+static void output_strlst(FILE *outf, strlst_t *lst);
+static char *genident(char *str);
+static char *dir_search(char *progname);
 
 
-void
+static void
 gen_outputs(void)
 {
     prog_t *p;
@@ -576,7 +576,7 @@ gen_outputs(void)
 }
 
 
-void
+static void
 fillin_program(prog_t *p)
 {
     char path[MAXPATHLEN];
@@ -668,7 +668,7 @@ fillin_program(prog_t *p)
     }
 }
 
-void
+static void
 fillin_program_objs(prog_t *p, char *dirpath)
 {
     char *obj, *cp;
@@ -738,7 +738,7 @@ fillin_program_objs(prog_t *p, char *dirpath)
     unlink(tempfname);
 }
 
-void
+static void
 remove_error_progs(void)
 {
     prog_t *p1, *p2;
@@ -760,7 +760,7 @@ remove_error_progs(void)
     }
 }
 
-void
+static void
 gen_specials_cache(void)
 {
     FILE *cachef;
@@ -797,7 +797,7 @@ gen_specials_cache(void)
 }
 
 
-void
+static void
 gen_output_makefile(void)
 {
     prog_t *p;
@@ -829,7 +829,7 @@ gen_output_makefile(void)
 }
 
 
-void
+static void
 gen_output_cfile(void)
 {
     char **cp;
@@ -873,7 +873,7 @@ gen_output_cfile(void)
 }
 
 
-char *
+static char *
 genident(char *str)
 {
     char *n,*s,*d;
@@ -898,7 +898,7 @@ genident(char *str)
 }
 
 
-char *
+static char *
 dir_search(char *progname)
 {
     char path[MAXPATHLEN];
@@ -913,7 +913,7 @@ dir_search(char *progname)
 }
 
 
-void
+static void
 top_makefile_rules(FILE *outmk)
 {
     prog_t *p;
@@ -966,13 +966,13 @@ top_makefile_rules(FILE *outmk)
 	    execfname);
 }
 
-void
+static void
 bottom_makefile_rules(FILE *outmk)
 {
 }
 
 
-void
+static void
 prog_makefile_rules(FILE *outmk, prog_t *p)
 {
     strlst_t *lst;
@@ -1060,7 +1060,7 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
 #endif
 }
 
-void
+static void
 output_strlst(FILE *outf, strlst_t *lst)
 {
     for (; lst != NULL; lst = lst->next)
@@ -1075,7 +1075,7 @@ output_strlst(FILE *outf, strlst_t *lst)
  *
  */
 
-void
+static void
 status(const char *str)
 {
     static int lastlen = 0;
@@ -1095,7 +1095,7 @@ status(const char *str)
 }
 
 
-void
+static void
 out_of_memory(void)
 {
     fprintf(stderr, "%s: %d: out of memory, stopping.\n", infilename, linenum);
@@ -1103,7 +1103,7 @@ out_of_memory(void)
 }
 
 
-void
+static void
 add_string(strlst_t **listp, char *str)
 {
     strlst_t *p1, *p2;
@@ -1128,7 +1128,7 @@ add_string(strlst_t **listp, char *str)
 }
 
 
-int
+static int
 is_dir(const char *pathname)
 {
     struct stat buf;
@@ -1138,7 +1138,7 @@ is_dir(const char *pathname)
     return S_ISDIR(buf.st_mode);
 }
 
-int
+static int
 is_nonempty_file(const char *pathname)
 {
     struct stat buf;
