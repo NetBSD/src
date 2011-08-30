@@ -1,4 +1,4 @@
-.\" $NetBSD: dtv.4,v 1.6 2011/08/29 11:23:53 jruoho Exp $
+.\" $NetBSD: dtv.4,v 1.7 2011/08/30 05:43:30 jruoho Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 14, 2011
+.Dd August 30, 2011
 .Dt DTV 4
 .Os
 .Sh NAME
@@ -75,6 +75,9 @@ device drivers are generally only available as kernel modules; see
 and
 .Xr modload 8
 for additional details.
+Refer to
+.Xr dtviic 4
+for details about the supported demodulators and tuners.
 .Sh FILES
 .Bl -tag -width 28n
 .It Pa /dev/dvb/adapterN/frontend0
@@ -86,6 +89,7 @@ Digital video recording device.
 .El
 .Sh SEE ALSO
 .Xr auvitek 4 ,
+.Xr dtviic 4 ,
 .\" coram 4 ,
 .\" cxdtv 4 ,
 .\" emdtv 4 ,
