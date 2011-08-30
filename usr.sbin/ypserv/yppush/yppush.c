@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.23 2011/02/01 20:59:41 chuck Exp $	*/
+/*	$NetBSD: yppush.c,v 1.24 2011/08/30 21:10:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor
@@ -89,11 +89,10 @@ int     verbo = 0;		/* verbose */
  * prototypes
  */
 
-int	main(int, char *[]);
-int	pushit(int, char *, int, char *, int, char *);
+static int	pushit(int, char *, int, char *, int, char *);
 void	push(char *, int, struct yppush_info *);
 void	_svc_run(void);
-void	usage(void);
+__dead static void	usage(void);
 
 
 /*
@@ -278,7 +277,7 @@ main(int argc, char *argv[])
 /*
  * usage: print usage and exit
  */
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-d domain] [-h host] [-v] map\n",
@@ -290,7 +289,7 @@ usage(void)
  * pushit: called from yp_all_host to push a specific host.
  * the key/value pairs are from the ypservers map.
  */
-int
+static int
 pushit(int instatus, char *inkey, int inkeylen, char *inval,
        int invallen, char *indata)
 {
