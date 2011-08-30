@@ -1,4 +1,4 @@
-/*	$NetBSD: comm.c,v 1.18 2009/11/28 03:56:38 darcy Exp $	*/
+/*	$NetBSD: comm.c,v 1.19 2011/08/30 21:36:38 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)comm.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: comm.c,v 1.18 2009/11/28 03:56:38 darcy Exp $");
+__RCSID("$NetBSD: comm.c,v 1.19 2011/08/30 21:36:38 joerg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -55,12 +55,12 @@ __RCSID("$NetBSD: comm.c,v 1.18 2009/11/28 03:56:38 darcy Exp $");
 
 #define	MAXLINELEN	(LINE_MAX + 1)
 
-const char *tabs[] = { "", "\t", "\t\t" };
+static const char *tabs[] = { "", "\t", "\t\t" };
 
-FILE   *file(const char *);
-void	show(FILE *, const char *, char *);
-void	usage(void);
-char   *getnextln(char *buf, FILE *);
+static FILE   *file(const char *);
+static void	show(FILE *, const char *, char *);
+__dead static void	usage(void);
+static char   *getnextln(char *buf, FILE *);
 
 int
 main(int argc, char **argv)
@@ -164,14 +164,14 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-void
+static void
 show(FILE *fp, const char *offset, char *buf)
 {
 	while (printf("%s%s\n", offset, buf) >= 0 && getnextln(buf, fp))
 		;
 }
 
-FILE *
+static FILE *
 file(const char *name)
 {
 	FILE *fp;
@@ -183,7 +183,7 @@ file(const char *name)
 	return (fp);
 }
 
-void
+static void
 usage(void)
 {
 
@@ -191,7 +191,7 @@ usage(void)
 	exit(1);
 }
 
-char *
+static char *
 getnextln(char *buf, FILE *fp)
 {
 	size_t i = 0;
