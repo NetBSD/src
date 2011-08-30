@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.42 2009/04/19 01:52:09 lukem Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.43 2011/08/30 21:01:50 joerg Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -68,7 +68,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 1999\
  Bill Paul.  All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.42 2009/04/19 01:52:09 lukem Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.43 2011/08/30 21:01:50 joerg Exp $");
 #endif
 
 struct wi_table {
@@ -96,35 +96,32 @@ struct wi_table {
 #define WI_APRATE_11		0x6E	/* 11 Mbps */
 
 #ifdef WI_RID_SCAN_APS
-static void wi_apscan		__P((char *));
-static int  get_if_flags	__P((int, const char *));
-static int  set_if_flags	__P((int, const char *, int));
+static void wi_apscan(char *);
+static int  get_if_flags(int, const char *);
+static int  set_if_flags(int, const char *, int);
 #endif
-static int  wi_getval		__P((char *, struct wi_req *));
-static void wi_setval		__P((char *, struct wi_req *));
-static void wi_printstr		__P((struct wi_req *));
-static void wi_setstr		__P((char *, int, char *));
-static void wi_setbytes		__P((char *, int, char *, int));
-static void wi_setword		__P((char *, int, int));
-static void wi_sethex		__P((char *, int, char *));
-static void wi_printwords	__P((struct wi_req *));
-static void wi_printbool	__P((struct wi_req *));
-static void wi_printhex		__P((struct wi_req *));
-static void wi_printbits	__P((struct wi_req *));
-static void wi_checkwifi	__P((char *));
-static void wi_dumpinfo		__P((char *));
-static void wi_printkeys	__P((struct wi_req *));
-static void wi_printvendor	__P((struct wi_req *));
-static void wi_dumpstats	__P((char *));
-static void usage		__P((void));
-static struct wi_table *
-	wi_optlookup __P((struct wi_table *, int));
-int main __P((int argc, char **argv));
+static int  wi_getval(char *, struct wi_req *);
+static void wi_setval(char *, struct wi_req *);
+static void wi_printstr(struct wi_req *);
+static void wi_setstr(char *, int, char *);
+static void wi_setbytes(char *, int, char *, int);
+static void wi_setword(char *, int, int);
+static void wi_sethex(char *, int, char *);
+static void wi_printwords(struct wi_req *);
+static void wi_printbool(struct wi_req *);
+static void wi_printhex(struct wi_req *);
+static void wi_printbits(struct wi_req *);
+static void wi_checkwifi(char *);
+static void wi_dumpinfo(char *);
+static void wi_printkeys(struct wi_req *);
+static void wi_printvendor(struct wi_req *);
+static void wi_dumpstats(char *);
+__dead static void usage(void);
+static struct wi_table *wi_optlookup(struct wi_table *, int);
 
 #ifdef WI_RID_SCAN_APS
-static int get_if_flags(s, name)
-	int		s;
-	const char	*name;
+static int
+get_if_flags(int s, const char *name)
 {
 	struct ifreq	ifreq;
 	int		flags;
@@ -137,10 +134,8 @@ static int get_if_flags(s, name)
 	return flags;
 }
 
-static int set_if_flags(s, name, flags)
-	int		s;
-	const char	*name;
-	int		flags;
+static int
+set_if_flags(int s, const char *name, int flags)
 {
 	struct ifreq ifreq;
 
@@ -152,8 +147,8 @@ static int set_if_flags(s, name, flags)
 	return 0;
 }
 
-static void wi_apscan(iface)
-	char			*iface;
+static void
+wi_apscan(char *iface)
 {
 	struct wi_req		wreq;
 	struct ifreq		ifr;
@@ -284,9 +279,8 @@ static void wi_apscan(iface)
 }
 #endif
 
-static int wi_getval(iface, wreq)
-	char			*iface;
-	struct wi_req		*wreq;
+static int
+wi_getval(char *iface, struct wi_req *wreq)
 {
 	struct ifreq		ifr;
 	int			s, error;
@@ -312,9 +306,8 @@ static int wi_getval(iface, wreq)
 	return error;
 }
 
-static void wi_setval(iface, wreq)
-	char			*iface;
-	struct wi_req		*wreq;
+static void
+wi_setval(char *iface, struct wi_req *wreq)
 {
 	struct ifreq		ifr;
 	int			s;
@@ -337,8 +330,8 @@ static void wi_setval(iface, wreq)
 	return;
 }
 
-void wi_printstr(wreq)
-	struct wi_req		*wreq;
+static void
+wi_printstr(struct wi_req *wreq)
 {
 	char			*ptr;
 	int			i;
@@ -365,10 +358,8 @@ void wi_printstr(wreq)
 	return;
 }
 
-void wi_setstr(iface, code, str)
-	char			*iface;
-	int			code;
-	char			*str;
+static void
+wi_setstr(char *iface, int code, char *str)
 {
 	struct wi_req		wreq;
 
@@ -387,11 +378,8 @@ void wi_setstr(iface, code, str)
 	return;
 }
 
-void wi_setbytes(iface, code, bytes, len)
-	char			*iface;
-	int			code;
-	char			*bytes;
-	int			len;
+static void
+wi_setbytes(char *iface, int code, char *bytes, int len)
 {
 	struct wi_req		wreq;
 
@@ -406,10 +394,8 @@ void wi_setbytes(iface, code, bytes, len)
 	return;
 }
 
-void wi_setword(iface, code, word)
-	char			*iface;
-	int			code;
-	int			word;
+static void
+wi_setword(char *iface, int code, int word)
 {
 	struct wi_req		wreq;
 
@@ -424,10 +410,8 @@ void wi_setword(iface, code, word)
 	return;
 }
 
-void wi_sethex(iface, code, str)
-	char			*iface;
-	int			code;
-	char			*str;
+static void
+wi_sethex(char *iface, int code, char *str)
 {
 	struct ether_addr	*addr;
 
@@ -440,8 +424,8 @@ void wi_sethex(iface, code, str)
 	return;
 }
 
-static void wi_printkeys(wreq)
-        struct wi_req           *wreq;
+static void
+wi_printkeys(struct wi_req *wreq)
 {
         int                     i, j, bn;
         struct wi_key           *k;
@@ -474,8 +458,8 @@ static void wi_printkeys(wreq)
         return;
 };
 
-void wi_printvendor(wreq)
-	struct wi_req		*wreq;
+static void
+wi_printvendor(struct wi_req *wreq)
 {
 	/* id
 	 * vendor
@@ -511,8 +495,8 @@ void wi_printvendor(wreq)
 	return;
 }	
 
-void wi_printwords(wreq)
-	struct wi_req		*wreq;
+static void
+wi_printwords(struct wi_req *wreq)
 {
 	int			i;
 
@@ -524,8 +508,8 @@ void wi_printwords(wreq)
 	return;
 }
 
-void wi_printbool(wreq)
-	struct wi_req		*wreq;
+static void
+wi_printbool(struct wi_req *wreq)
 {
 	if (le16toh(wreq->wi_val[0]))
 		printf("[ On ]");
@@ -535,8 +519,8 @@ void wi_printbool(wreq)
 	return;
 }
 
-void wi_printhex(wreq)
-	struct wi_req		*wreq;
+static void
+wi_printhex(struct wi_req *wreq)
 {
 	int			i;
 	unsigned char		*c;
@@ -554,8 +538,8 @@ void wi_printhex(wreq)
 	return;
 }
 
-void wi_printbits(wreq)
-	struct wi_req		*wreq;
+static void
+wi_printbits(struct wi_req *wreq)
 {
 	int			i;
 	int bits = le16toh(wreq->wi_val[0]);
@@ -626,9 +610,7 @@ static struct wi_table *wi_tables[] = {
 };
 
 static struct wi_table *
-wi_optlookup(table, opt)
-	struct wi_table *table;
-	int opt;
+wi_optlookup(struct wi_table *table, int opt)
 {
 	struct wi_table *wt;
 
@@ -638,8 +620,8 @@ wi_optlookup(table, opt)
 	return (NULL);
 }
 
-static void wi_checkwifi(iface)
-	char			*iface;
+static void
+wi_checkwifi(char *iface)
 {
 	struct ifreq		ifr;
 	struct ieee80211_nwid	nwid;
@@ -662,8 +644,8 @@ static void wi_checkwifi(iface)
 	close(s);
 }
 
-static void wi_dumpinfo(iface)
-	char			*iface;
+static void
+wi_dumpinfo(char *iface)
 {
 	struct wi_req		wreq;
 	int			i, has_wep;
@@ -754,8 +736,8 @@ static void wi_dumpinfo(iface)
 	return;
 }
 
-static void wi_dumpstats(iface)
-	char			*iface;
+static void
+wi_dumpstats(char *iface)
 {
 	struct wi_req		wreq;
 	struct wi_counters	*c;
@@ -814,7 +796,7 @@ static void wi_dumpstats(iface)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	fprintf(stderr,
@@ -826,9 +808,8 @@ usage()
 	exit(1);
 }
 
-int main(argc, argv)
-	int			argc;
-	char			*argv[];
+int
+main(int argc, char *argv[])
 {
 	struct wi_table *wt, **table;
 	char *iface;

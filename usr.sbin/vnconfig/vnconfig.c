@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.39 2011/02/08 20:20:28 rmind Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.40 2011/08/30 20:54:18 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -91,22 +91,18 @@
 #define VND_UNCONFIG	2
 #define VND_GET		3
 
-int	verbose = 0;
-int	readonly = 0;
-int	force = 0;
-int	compressed = 0;
-char	*tabname;
+static int	verbose = 0;
+static int	readonly = 0;
+static int	force = 0;
+static int	compressed = 0;
+static char	*tabname;
 
-int	config __P((char *, char *, char *, int));
-int	getgeom __P((struct vndgeom *, char *));
-int	main __P((int, char **));
-char   *rawdevice __P((char *));
-void	usage __P((void));
+static int	config(char *, char *, char *, int);
+static int	getgeom(struct vndgeom *, char *);
+__dead static void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, rv, action = VND_CONFIG;
 
@@ -237,10 +233,8 @@ main(argc, argv)
 	exit(rv);
 }
 
-int
-config(dev, file, geom, action)
-	char *dev, *file, *geom;
-	int action;
+static int
+config(char *dev, char *file, char *geom, int action)
 {
 	struct vnd_ioctl vndio;
 	struct disklabel *lp;
@@ -337,10 +331,8 @@ config(dev, file, geom, action)
 	return (rv < 0);
 }
 
-int
-getgeom(vng, cp)
-	struct vndgeom *vng;
-	char *cp;
+static int
+getgeom(struct vndgeom *vng, char *cp)
 {
 	char *secsize, *nsectors, *ntracks, *ncylinders;
 
@@ -381,8 +373,8 @@ getgeom(vng, cp)
 	return (0);
 }
 
-void
-usage()
+static void
+usage(void)
 {
 
 	(void)fprintf(stderr, "%s%s",
