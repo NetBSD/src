@@ -1,4 +1,4 @@
-/*	$NetBSD: mopchk.c,v 1.12 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: mopchk.c,v 1.13 2011/08/30 19:49:11 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopchk.c,v 1.12 2009/10/20 00:51:13 snj Exp $");
+__RCSID("$NetBSD: mopchk.c,v 1.13 2011/08/30 19:49:11 joerg Exp $");
 #endif
 
 /*
@@ -49,9 +49,8 @@ __RCSID("$NetBSD: mopchk.c,v 1.12 2009/10/20 00:51:13 snj Exp $");
  */
 struct if_info *iflist;
 
-void	Usage __P((void));
-int	main __P((int, char **));
-void	mopProcess __P((struct if_info *, u_char *));
+__dead static void	Usage(void);
+void	mopProcess(struct if_info *, u_char *);
 
 int     AllFlag = 0;		/* listen on "all" interfaces  */
 int	VersionFlag = 0;	/* Show version */
@@ -60,9 +59,7 @@ int	promisc = 0;		/* promisc mode not needed */
 extern char	version[];
 
 int
-main(argc, argv)
-	int     argc;
-	char  **argv;
+main(int argc, char  **argv)
 {
 	struct dllist dl;
 	int     op, i;
@@ -143,8 +140,8 @@ main(argc, argv)
 	return (0);
 }
 
-void
-Usage()
+static void
+Usage(void)
 {
 	(void) fprintf(stderr, "usage: %s [-a] [-v] [filename...]\n",
 	    getprogname());
@@ -156,8 +153,6 @@ Usage()
  * Doesn't actually do anything for mopchk(1)
  */
 void
-mopProcess(ii, pkt)
-	struct if_info *ii;
-	u_char *pkt;
+mopProcess(struct if_info *ii, u_char *pkt)
 {
 }

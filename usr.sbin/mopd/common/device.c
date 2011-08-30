@@ -1,4 +1,4 @@
-/*	$NetBSD: device.c,v 1.11 2009/11/17 18:58:07 drochner Exp $	*/
+/*	$NetBSD: device.c,v 1.12 2011/08/30 19:49:10 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: device.c,v 1.11 2009/11/17 18:58:07 drochner Exp $");
+__RCSID("$NetBSD: device.c,v 1.12 2011/08/30 19:49:10 joerg Exp $");
 #endif
 
 #include "os.h"
@@ -218,7 +218,7 @@ deviceInitOne(const char *ifname)
  * point to point.
  */
 void
-deviceInitAll()
+deviceInitAll(void)
 {
 #ifdef	DEV_NEW_CONF
 	struct sockaddr_dl *sdl;
