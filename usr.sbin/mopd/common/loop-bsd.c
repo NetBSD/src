@@ -1,4 +1,4 @@
-/*	$NetBSD: loop-bsd.c,v 1.10 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: loop-bsd.c,v 1.11 2011/08/30 19:49:10 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: loop-bsd.c,v 1.10 2009/10/20 00:51:13 snj Exp $");
+__RCSID("$NetBSD: loop-bsd.c,v 1.11 2011/08/30 19:49:10 joerg Exp $");
 #endif
 
 #include <errno.h>
@@ -48,9 +48,7 @@ __RCSID("$NetBSD: loop-bsd.c,v 1.10 2009/10/20 00:51:13 snj Exp $");
 #include "log.h"
 
 int
-mopOpenRC(p, trans)
-	struct if_info *p;
-	int	trans;
+mopOpenRC(struct if_info *p, int trans)
 {
 #ifndef NORC
 	return (*(p->iopen))(p->if_name,
@@ -63,9 +61,7 @@ mopOpenRC(p, trans)
 }
 
 int
-mopOpenDL(p, trans)
-	struct if_info *p;
-	int	trans;
+mopOpenDL(struct if_info *p, int trans)
 {
 #ifndef NODL
 	return (*(p->iopen))(p->if_name,
@@ -78,12 +74,12 @@ mopOpenDL(p, trans)
 }
 
 void
-mopReadRC()
+mopReadRC(void)
 {
 }
 
 void
-mopReadDL()
+mopReadDL(void)
 {
 }
 
@@ -93,14 +89,14 @@ mopReadDL()
  */
 struct if_info *iflist;
 
-void   mopProcess    __P((struct if_info *, u_char *));
+void   mopProcess(struct if_info *, u_char *);
 
 /*
  * Loop indefinitely listening for MOP requests on the
  * interfaces in 'iflist'.
  */
 void
-Loop()
+Loop(void)
 {
 	u_char *buf, *bp, *ep;
 	int     cc, n, m;

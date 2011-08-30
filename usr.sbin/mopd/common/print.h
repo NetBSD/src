@@ -1,4 +1,4 @@
-/*	$NetBSD: print.h,v 1.6 2009/11/17 18:58:07 drochner Exp $	*/
+/*	$NetBSD: print.h,v 1.7 2011/08/30 19:49:11 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: print.h,v 1.6 2009/11/17 18:58:07 drochner Exp $
+ *	$NetBSD: print.h,v 1.7 2011/08/30 19:49:11 joerg Exp $
  *
  */
 
@@ -31,16 +31,15 @@
 #define _PRINT_H_
 
 __BEGIN_DECLS
-void	mopPrintHWA	  __P((FILE *, const u_char *));
-void	mopPrintBPTY	  __P((FILE *, u_char));
-void	mopPrintPGTY      __P((FILE *, u_char));
-void	mopPrintOneline   __P((FILE *, const u_char *, int));
-void	mopPrintHeader    __P((FILE *, const u_char *, int));
-void	mopPrintMopHeader __P((FILE *, const u_char *, int));
-void	mopPrintDevice    __P((FILE *, u_char));
-void	mopPrintTime      __P((FILE *, const u_char *));
-void	mopPrintInfo      __P((FILE *, const u_char *, int *, u_short,
-			       u_char, int));
+void	mopPrintHWA(FILE *, const u_char *);
+void	mopPrintBPTY(FILE *, u_char);
+void	mopPrintPGTY(FILE *, u_char);
+void	mopPrintOneline(FILE *, const u_char *, int);
+void	mopPrintHeader(FILE *, const u_char *, int);
+void	mopPrintMopHeader(FILE *, const u_char *, int);
+void	mopPrintDevice(FILE *, u_char);
+void	mopPrintTime(FILE *, const u_char *);
+void	mopPrintInfo(FILE *, const u_char *, int *, u_short, u_char, int);
 __END_DECLS
 
 #endif /* _PRINT_H_ */

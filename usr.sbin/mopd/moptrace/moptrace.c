@@ -1,4 +1,4 @@
-/*	$NetBSD: moptrace.c,v 1.10 2009/10/20 00:51:14 snj Exp $	*/
+/*	$NetBSD: moptrace.c,v 1.11 2011/08/30 19:49:11 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: moptrace.c,v 1.10 2009/10/20 00:51:14 snj Exp $");
+__RCSID("$NetBSD: moptrace.c,v 1.11 2011/08/30 19:49:11 joerg Exp $");
 #endif
 
 /*
@@ -53,9 +53,8 @@ __RCSID("$NetBSD: moptrace.c,v 1.10 2009/10/20 00:51:14 snj Exp $");
  */
 struct if_info *iflist;
 
-void	Usage __P((void));
-int	main __P((int, char **));
-void	mopProcess __P((struct if_info *, u_char *));
+__dead static void	Usage(void);
+void	mopProcess(struct if_info *, u_char *);
 
 int     AllFlag = 0;		/* listen on "all" interfaces  */
 int     DebugFlag = 0;		/* print debugging messages    */
@@ -64,9 +63,7 @@ int	Not4Flag = 0;		/* Ignore MOP V4 messages      */
 int	promisc = 1;		/* Need promisc mode           */
 
 int
-main(argc, argv)
-	int     argc;
-	char  **argv;
+main(int argc, char  **argv)
 {
 	int     op;
 	char   *interface;
@@ -110,8 +107,8 @@ main(argc, argv)
 	return (0);
 }
 
-void
-Usage()
+static void
+Usage(void)
 {
 	(void) fprintf(stderr, "usage: %s -a [ -d ] [ -3 | -4 ]\n",
 		       getprogname());
@@ -124,9 +121,7 @@ Usage()
  * Process incoming packages.
  */
 void
-mopProcess(ii, pkt)
-	struct if_info *ii;
-	u_char *pkt;
+mopProcess(struct if_info *ii, u_char *pkt)
 {
 	int	 trans;
 

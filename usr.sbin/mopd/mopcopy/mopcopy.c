@@ -1,4 +1,4 @@
-/*	$NetBSD: mopcopy.c,v 1.4 2009/08/20 22:26:19 he Exp $	*/
+/*	$NetBSD: mopcopy.c,v 1.5 2011/08/30 19:49:11 joerg Exp $	*/
 
 /* mopcopy - Convert a Unix format kernel into something that
  * can be transfered via MOP.
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopcopy.c,v 1.4 2009/08/20 22:26:19 he Exp $");
+__RCSID("$NetBSD: mopcopy.c,v 1.5 2011/08/30 19:49:11 joerg Exp $");
 #endif
 
 #include "os.h"
@@ -89,7 +89,7 @@ struct exec ex, ex_swap;
 #endif
 
 int
-main (int argc, char **argv)
+main(int argc, char **argv)
 {
 	FILE   *out;		/* A FILE because that is easier. */
 	int	i, j;
