@@ -1,4 +1,4 @@
-/* $NetBSD: disklabel.h,v 1.3 2009/10/21 16:06:59 snj Exp $ */
+/* $NetBSD: disklabel.h,v 1.4 2011/08/31 12:56:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,5 +33,9 @@
 #undef DISKUNIT
 #undef DISKPART
 #undef DISKMINOR
+
+#ifndef LABELUSESMBR
+#define LABELUSESMBR 1
+#endif
 
 #endif /* !_ARCH_USERMODE_INCLUDE_DISKLABEL_H */
