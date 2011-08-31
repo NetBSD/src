@@ -27,7 +27,7 @@
  *	i4b remote monitor - private header
  *	-----------------------------------
  *
- *	$Id: monprivate.h,v 1.2 2002/09/20 15:15:49 mycroft Exp $
+ *	$Id: monprivate.h,v 1.3 2011/08/31 13:32:37 joerg Exp $
  *
  * $FreeBSD$
  *
@@ -193,7 +193,7 @@ int portno;
 
 #endif
 
-extern void do_exit ( int exitval );
+__dead extern void do_exit ( int exitval );
 extern void do_menu ( void );
 extern void init_screen ( void );
 extern void display_charge ( int pos, int charge );
