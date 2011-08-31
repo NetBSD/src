@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.38 2011/08/30 07:22:11 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.39 2011/08/31 12:07:26 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.38 2011/08/30 07:22:11 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.39 2011/08/31 12:07:26 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -63,6 +63,8 @@ struct gpio_softc {
 	kmutex_t		 sc_mtx;
 	kcondvar_t		 sc_ioctl;	/* ioctl in progress */
 	int			 sc_ioctl_busy;	/* ioctl is busy */
+	kcondvar_t		 sc_attach;	/* attach/detach in progress */
+	int			 sc_attach_busy;/* busy in attach/detach */
 	LIST_HEAD(, gpio_dev)	 sc_devs;	/* devices */
 	LIST_HEAD(, gpio_name)	 sc_names;	/* named pins */
 };
@@ -134,7 +136,40 @@ gpio_resume(device_t self, const pmf_qual_t *qual)
 static void
 gpio_childdetached(device_t self, device_t child)
 {
-	/* gpio(4) keeps no references to its children, so do nothing. */
+	struct gpio_dev *gdev;
+	struct gpio_softc *sc;
+	int error;
+
+	/*
+	 * gpio_childetached is serialized because it can be entered in
+	 * different ways concurrently, e.g. via the GPIODETACH ioctl and
+	 * drvctl(8) or modunload(8).
+	 */
+	sc = device_private(self);
+	error = 0;
+	mutex_enter(&sc->sc_mtx);
+	while (sc->sc_attach_busy) {
+		error = cv_wait_sig(&sc->sc_attach, &sc->sc_mtx);
+		if (error)
+			break;
+	}
+	if (!error)
+		sc->sc_attach_busy = 1;
+	mutex_exit(&sc->sc_mtx);
+	if (error)
+		return;
+
+	LIST_FOREACH(gdev, &sc->sc_devs, sc_next)
+		if (gdev->sc_dev == child) {
+			LIST_REMOVE(gdev, sc_next);
+			kmem_free(gdev, sizeof(struct gpio_dev));
+			break;
+		}
+
+	mutex_enter(&sc->sc_mtx);
+	sc->sc_attach_busy = 0;
+	cv_signal(&sc->sc_attach);
+	mutex_exit(&sc->sc_mtx);
 }
 
 static int
@@ -169,7 +204,7 @@ gpio_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&sc->sc_ioctl, "gpioctl");
-
+	cv_init(&sc->sc_attach, "gpioatch");
 	/*
 	 * Attach all devices that can be connected to the GPIO pins
 	 * described in the kernel configuration file.
@@ -478,7 +513,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 	cfdata_t cf;
 	kauth_cred_t cred;
 	int locs[GPIOCF_NLOCS];
-	int pin, value, flags, npins;
+	int error, pin, value, flags, npins;
 
 	gc = sc->sc_gc;
 
@@ -642,6 +677,19 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		if (!gpio_pin_can_map(sc, attach->ga_offset, attach->ga_mask))
 			return EBUSY;
 
+		error = 0;
+		mutex_enter(&sc->sc_mtx);
+		while (sc->sc_attach_busy) {
+			error = cv_wait_sig(&sc->sc_attach, &sc->sc_mtx);
+			if (error)
+				break;
+		}
+		if (!error)
+			sc->sc_attach_busy = 1;
+		mutex_exit(&sc->sc_mtx);
+		if (error)
+			return EBUSY;
+
 		ga.ga_gpio = sc;
 		ga.ga_dvname = attach->ga_dvname;
 		ga.ga_offset = attach->ga_offset;
@@ -664,27 +712,50 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 				gdev->sc_dev = dv;
 				LIST_INSERT_HEAD(&sc->sc_devs, gdev, sc_next);
 			} else
-				return EINVAL;
+				error = EINVAL;
 		} else
-			return EINVAL;
-		return 0;
+			error = EINVAL;
+		mutex_enter(&sc->sc_mtx);
+		sc->sc_attach_busy = 0;
+		cv_signal(&sc->sc_attach);
+		mutex_exit(&sc->sc_mtx);
+		return error;
 	case GPIODETACH:
 		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
 		    NULL, NULL, NULL, NULL))
 			return EPERM;
 
+		mutex_enter(&sc->sc_mtx);
+		while (sc->sc_attach_busy) {
+			error = cv_wait_sig(&sc->sc_attach, &sc->sc_mtx);
+			if (error)
+				break;
+		}
+		if (!error)
+			sc->sc_attach_busy = 1;
+		mutex_exit(&sc->sc_mtx);
+		if (error)
+			return EBUSY;
+
 		attach = (struct gpio_attach *)data;
 		LIST_FOREACH(gdev, &sc->sc_devs, sc_next) {
 			if (strcmp(device_xname(gdev->sc_dev),
 			    attach->ga_dvname) == 0) {
-				if (config_detach(gdev->sc_dev, 0) == 0) {
-					LIST_REMOVE(gdev, sc_next);
-					kmem_free(gdev,
-					    sizeof(struct gpio_dev));
+				mutex_enter(&sc->sc_mtx);
+				sc->sc_attach_busy = 0;
+				cv_signal(&sc->sc_attach);
+				mutex_exit(&sc->sc_mtx);
+
+				if (config_detach(gdev->sc_dev, 0) == 0)
 					return 0;
-				}
 				break;
 			}
+		}
+		if (gdev == NULL) {
+			mutex_enter(&sc->sc_mtx);
+			sc->sc_attach_busy = 0;
+			cv_signal(&sc->sc_attach);
+			mutex_exit(&sc->sc_mtx);
 		}
 		return EINVAL;
 	case GPIOSET:
