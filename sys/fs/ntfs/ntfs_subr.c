@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.45 2011/06/30 20:09:41 wiz Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.46 2011/08/31 18:31:02 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.45 2011/06/30 20:09:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.46 2011/08/31 18:31:02 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2015,7 +2015,7 @@ ntfs_runtocn(
 void
 ntfs_toupper_init(void)
 {
-	ntfs_toupper_tab = (wchar *) NULL;
+	ntfs_toupper_tab = NULL;
 	mutex_init(&ntfs_toupper_lock, MUTEX_DEFAULT, IPL_NONE);
 	ntfs_toupper_usecount = 0;
 }
