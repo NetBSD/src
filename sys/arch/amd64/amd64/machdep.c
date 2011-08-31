@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165 2011/08/27 16:23:44 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.166 2011/08/31 17:03:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2011/08/27 16:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 2011/08/31 17:03:17 christos Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -821,12 +821,17 @@ dump_misc_init(void)
 	printf("dump_misc_init: max_paddr = 0x%lx\n",
 	    (unsigned long)max_paddr);
 #endif
-
-	sparse_dump_physmap = (void*)uvm_km_alloc(kernel_map,
-	    roundup(max_paddr / (PAGE_SIZE * NBBY), PAGE_SIZE),
-	    PAGE_SIZE, UVM_KMF_WIRED|UVM_KMF_ZERO);
+	if (max_paddr != 0) {
+		printf("Your machine does not initialize mem_clusters; "
+		    "sparse_dumps disabled\n");
+		sparse_dump = 0;
+	} else {
+		sparse_dump_physmap = (void *)uvm_km_alloc(kernel_map,
+		    roundup(max_paddr / (PAGE_SIZE * NBBY), PAGE_SIZE),
+		    PAGE_SIZE, UVM_KMF_WIRED|UVM_KMF_ZERO);
+	}
 #endif
-	dump_headerbuf = (void*)uvm_km_alloc(kernel_map,
+	dump_headerbuf = (void *)uvm_km_alloc(kernel_map,
 	    dump_headerbuf_size,
 	    PAGE_SIZE, UVM_KMF_WIRED|UVM_KMF_ZERO);
 	/* XXXjld should check for failure here, disable dumps if so. */
@@ -920,7 +925,7 @@ dump_seg_iter(int (*callback)(paddr_t, paddr_t))
 		 * them could also break the assumption that a sparse
 		 * dump will always be smaller than a full one.
 		 */
-		if (sparse_dump) {
+		if (sparse_dump && sparse_dump_physmap) {
 			paddr_t p, start, end;
 			int lastset;
 
@@ -956,7 +961,7 @@ void
 dump_seg_prep(void)
 {
 #ifndef NO_SPARSE_DUMP
-	if (sparse_dump)
+	if (sparse_dump && sparse_dump_physmap)
 		cpu_dump_prep_sparse();
 #endif
 
