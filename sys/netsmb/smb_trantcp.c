@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.43 2009/09/04 01:41:06 tls Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.44 2011/08/31 18:31:04 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.43 2009/09/04 01:41:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.44 2011/08/31 18:31:04 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -563,7 +563,7 @@ smb_nbst_disconnect(struct smb_vc *vcp, struct lwp *l)
 		return ENOTCONN;
 	if ((so = nbp->nbp_tso) != NULL) {
 		nbp->nbp_flags &= ~NBF_CONNECTED;
-		nbp->nbp_tso = (struct socket *)NULL;
+		nbp->nbp_tso = NULL;
 		solock(so);
 		soshutdown(so, 2);
 		sounlock(so);

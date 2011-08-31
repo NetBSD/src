@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.37 2011/05/24 18:28:01 joerg Exp $ */
+/*	$NetBSD: twa.c,v 1.38 2011/08/31 18:31:02 plunky Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.37 2011/05/24 18:28:01 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.38 2011/08/31 18:31:02 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ static const struct twa_message	twa_aen_table[] = {
 	{0x00FD, "Handler lockup"},
 	{0x00FE, "Retrying PCI transfer"},
 	{0x00FF, "AEN queue is full"},
-	{0xFFFFFFFF, (char *)NULL}
+	{0xFFFFFFFF, NULL}
 };
 
 /* AEN severity table. */
@@ -260,7 +260,7 @@ static const char	*twa_aen_severity_table[] = {
 	"WARNING",
 	"INFO",
 	"DEBUG",
-	(char *)NULL
+	NULL
 };
 
 /* Error messages. */
@@ -377,7 +377,7 @@ static const struct twa_message	twa_error_table[] = {
 	{0x025B, "Invalid LBA offset specified in CreateUnit descriptor"},
 	{0x025C, "Invalid stripelet size specified in CreateUnit descriptor"},
 	{0x0260, "SMART attribute exceeded threshold"},
-	{0xFFFFFFFF, (char *)NULL}
+	{0xFFFFFFFF, NULL}
 };
 
 struct twa_pci_identity {
