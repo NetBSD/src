@@ -1,4 +1,4 @@
-/*	$NetBSD: deroff.c,v 1.8 2011/05/24 12:19:11 joerg Exp $	*/
+/*	$NetBSD: deroff.c,v 1.9 2011/08/31 13:38:19 joerg Exp $	*/
 
 /* taken from: OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp */
 
@@ -74,7 +74,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)deroff.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$NetBSD: deroff.c,v 1.8 2011/05/24 12:19:11 joerg Exp $";
+static const char rcsid[] = "$NetBSD: deroff.c,v 1.9 2011/08/31 13:38:19 joerg Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ static const char rcsid[] = "$NetBSD: deroff.c,v 1.8 2011/05/24 12:19:11 joerg E
 #define	MA 3	/* -man */
 
 #ifdef DEBUG
-char *mactab[] = { "-ms", "-mm", "-me", "-ma" };
+static char *mactab[] = { "-ms", "-mm", "-me", "-ma" };
 #endif /* DEBUG */
 
 #define	ONE 1
@@ -251,7 +251,7 @@ static int	 macsort(const void *, const void *);
 static int	 sizetab(const struct mactab *);
 static void	 getfname(void);
 static void	 textline(char *, int);
-static void	 work(void);
+static void	 work(void) __dead;
 static void	 regline(void (*)(char *, int), int);
 static void	 macro(void);
 static void	 tbl(void);
@@ -474,7 +474,7 @@ textline(char *str, int constant)
 	puts(str);
 }
 
-void
+static void
 work(void)
 {
 
@@ -1171,7 +1171,7 @@ outtbl(pacmac unused)
 	return 0;
 }
 
-int
+static int
 /*ARGSUSED*/
 so(pacmac unused)
 {
