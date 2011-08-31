@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.64 2011/08/30 21:26:11 joerg Exp $	*/
+/*	$NetBSD: route6d.c,v 1.65 2011/08/31 07:03:00 mbalmer Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.64 2011/08/30 21:26:11 joerg Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.65 2011/08/31 07:03:00 mbalmer Exp $");
 #endif
 
 #include <stdbool.h>
@@ -3126,7 +3126,7 @@ applyplen(struct in6_addr *ia, int plen)
 	}
 }
 
-static static const int pl2m[9] = {
+static const int pl2m[9] = {
 	0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff
 };
 
