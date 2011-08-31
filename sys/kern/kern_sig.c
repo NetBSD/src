@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.311 2011/08/31 16:05:44 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.312 2011/08/31 22:43:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.311 2011/08/31 16:05:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.312 2011/08/31 22:43:19 rmind Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -707,12 +707,9 @@ sigispending(struct lwp *l, int signo)
 	sigminusset(&l->l_sigmask, &tset);
 
 	if (signo == 0) {
-		if ((signo = firstsig(&tset)) != 0)
-			return signo;
-	} else if (sigismember(&tset, signo))
-		return signo;
-
-	return 0;
+		return firstsig(&tset);
+	}
+	return sigismember(&tset, signo) ? signo : 0;
 }
 
 #ifdef KERN_SA
