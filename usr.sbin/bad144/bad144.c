@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.27 2009/04/16 06:27:43 lukem Exp $	*/
+/*	$NetBSD: bad144.c,v 1.28 2011/08/31 16:24:59 plunky Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: bad144.c,v 1.27 2009/04/16 06:27:43 lukem Exp $");
+__RCSID("$NetBSD: bad144.c,v 1.28 2011/08/31 16:24:59 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -441,9 +441,9 @@ blkcopy(int f, daddr_t s1, daddr_t s2)
 {
 	int tries, n;
 
-	if (buf == (char *)NULL) {
+	if (buf == NULL) {
 		buf = malloc((unsigned)dp->d_secsize);
-		if (buf == (char *)NULL)
+		if (buf == NULL)
 			errx(20, "Out of memory");
 	}
 	for (tries = 0; tries < RETRIES; tries++) {

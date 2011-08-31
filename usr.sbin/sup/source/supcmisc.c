@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmisc.c,v 1.21 2010/10/20 17:05:54 christos Exp $	*/
+/*	$NetBSD: supcmisc.c,v 1.22 2011/08/31 16:25:00 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -331,7 +331,7 @@ notify(const char *fmt, ...)
 			(void)unlink(template);
 		} else
 			noteF = stdout;
-		tloc = time((time_t *) NULL);
+		tloc = time(NULL);
 		fprintf(noteF, "SUP Upgrade of %s at %s",
 		    collrelname, ctime(&tloc));
 		(void) fflush(noteF);

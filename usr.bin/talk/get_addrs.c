@@ -1,4 +1,4 @@
-/*	$NetBSD: get_addrs.c,v 1.8 2003/08/07 11:16:04 agc Exp $	*/
+/*	$NetBSD: get_addrs.c,v 1.9 2011/08/31 16:24:58 plunky Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)get_addrs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: get_addrs.c,v 1.8 2003/08/07 11:16:04 agc Exp $");
+__RCSID("$NetBSD: get_addrs.c,v 1.9 2011/08/31 16:24:58 plunky Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -56,7 +56,7 @@ get_addrs(my_machine_name, his_machine_name)
 	hp = gethostbyname(my_machine_name);
 	if (hp == NULL) {
 		fprintf(stderr, "talk: %s: ", my_machine_name);
-		herror((char *)NULL);
+		herror(NULL);
 		exit(1);
 	}
 	memmove((char *)&my_machine_addr, hp->h_addr, hp->h_length);
@@ -68,7 +68,7 @@ get_addrs(my_machine_name, his_machine_name)
 		hp = gethostbyname(his_machine_name);
 		if (hp == NULL) {
 			fprintf(stderr, "talk: %s: ", his_machine_name);
-			herror((char *)NULL);
+			herror(NULL);
 			exit(1);
 		}
 		memmove((char *) &his_machine_addr, hp->h_addr, hp->h_length);

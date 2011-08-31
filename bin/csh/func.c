@@ -1,4 +1,4 @@
-/* $NetBSD: func.c,v 1.37 2009/03/29 01:02:48 mrg Exp $ */
+/* $NetBSD: func.c,v 1.38 2011/08/31 16:24:54 plunky Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.37 2009/03/29 01:02:48 mrg Exp $");
+__RCSID("$NetBSD: func.c,v 1.38 2011/08/31 16:24:54 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -1121,7 +1121,7 @@ findlim(Char *cp)
 {
     const struct limits *lp, *res;
 
-    res = (struct limits *) NULL;
+    res = NULL;
     for (lp = limits; lp->limconst >= 0; lp++)
 	if (prefix(cp, str2short(lp->limname))) {
 	    if (res)

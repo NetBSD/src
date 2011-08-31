@@ -1,4 +1,4 @@
-/*	$NetBSD: varpush.c,v 1.11 2011/08/26 09:01:07 tron Exp $	*/
+/*	$NetBSD: varpush.c,v 1.12 2011/08/31 16:24:56 plunky Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)varpush.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: varpush.c,v 1.11 2011/08/26 09:01:07 tron Exp $");
+__RCSID("$NetBSD: varpush.c,v 1.12 2011/08/31 16:24:56 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ over:
 				goto over;
 			}
 			if (strcmp(buf, _PATH_DEVNULL) != 0)
-				setbuf(outf, (char *)NULL);
+				setbuf(outf, NULL);
 		}
 #endif
 	} else {

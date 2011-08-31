@@ -1,4 +1,4 @@
-/* $NetBSD: radioctl.c,v 1.11 2011/08/21 08:57:40 christos Exp $ */
+/* $NetBSD: radioctl.c,v 1.12 2011/08/31 16:24:58 plunky Exp $ */
 /* $OpenBSD: radioctl.c,v 1.5 2001/12/18 18:42:19 mickey Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: radioctl.c,v 1.11 2011/08/21 08:57:40 christos Exp $");
+__RCSID("$NetBSD: radioctl.c,v 1.12 2011/08/31 16:24:58 plunky Exp $");
 #endif
 
 #include <sys/ioctl.h>
@@ -349,7 +349,7 @@ str_to_long(char *str, int optval)
 	if (optval == OPTION_FREQUENCY)
 		val = (u_long)1000 * atof(str);
 	else
-		val = (u_long)strtol(str, (char **)NULL, 10);
+		val = (u_long)strtol(str, NULL, 10);
 
 	return val;
 }

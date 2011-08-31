@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.20 2009/08/12 05:29:40 dholland Exp $	*/
+/*	$NetBSD: mach.c,v 1.21 2011/08/31 16:24:55 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mach.c,v 1.20 2009/08/12 05:29:40 dholland Exp $");
+__RCSID("$NetBSD: mach.c,v 1.21 2011/08/31 16:24:55 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -257,7 +257,7 @@ get_line(char *q)
 	}
 	*p = '\0';
 	if (ch == EOF)
-		return((char *) NULL);
+		return (NULL);
 	return(q);
 }
 

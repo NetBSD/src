@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.29 2006/05/11 17:11:57 mrg Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.30 2011/08/31 16:24:58 plunky Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.29 2006/05/11 17:11:57 mrg Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.30 2011/08/31 16:24:58 plunky Exp $");
 #endif
 #endif
 
@@ -753,7 +753,7 @@ upcase(str)
 
 
 	ptr = (char *) malloc(strlen(str) + 1);
-	if (ptr == (char *) NULL) {
+	if (ptr == NULL) {
 		f_print(stderr, "malloc failed\n");
 		exit(1);
 	};

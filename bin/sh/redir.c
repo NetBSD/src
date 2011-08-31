@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.31 2011/02/17 15:13:49 pooka Exp $	*/
+/*	$NetBSD: redir.c,v 1.32 2011/08/31 16:24:55 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.31 2011/02/17 15:13:49 pooka Exp $");
+__RCSID("$NetBSD: redir.c,v 1.32 2011/08/31 16:24:55 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -270,7 +270,7 @@ openhere(union node *redir)
 			goto out;
 		}
 	}
-	if (forkshell((struct job *)NULL, (union node *)NULL, FORK_NOJOB) == 0) {
+	if (forkshell(NULL, NULL, FORK_NOJOB) == 0) {
 		close(pip[0]);
 		signal(SIGINT, SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);

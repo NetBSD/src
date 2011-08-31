@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.111 2011/08/29 14:47:47 joerg Exp $	*/
+/*	$NetBSD: options.c,v 1.112 2011/08/31 16:24:54 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.111 2011/08/29 14:47:47 joerg Exp $");
+__RCSID("$NetBSD: options.c,v 1.112 2011/08/31 16:24:54 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -1371,7 +1371,7 @@ tar_options(int argc, char **argv)
 		maxflt = 0;
 		break;
 	}
-	if (!fstdin && ((arcname == (char *)NULL) || (*arcname == '\0'))) {
+	if (!fstdin && ((arcname == NULL) || (*arcname == '\0'))) {
 		arcname = getenv("TAPE");
 		if ((arcname == NULL) || (*arcname == '\0'))
 			arcname = _PATH_DEFTAPE;

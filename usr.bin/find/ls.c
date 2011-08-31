@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.20 2008/12/29 00:53:43 christos Exp $	*/
+/*	$NetBSD: ls.c,v 1.21 2011/08/31 16:24:57 plunky Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ls.c,v 1.20 2008/12/29 00:53:43 christos Exp $");
+__RCSID("$NetBSD: ls.c,v 1.21 2011/08/31 16:24:57 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ printtime(time_t ftime)
 		(void)putchar(longstring[i]);
 
 #define	SIXMONTHS	((DAYSPERNYEAR / 2) * SECSPERDAY)
-	if (ftime + SIXMONTHS > time((time_t *)NULL))
+	if (ftime + SIXMONTHS > time(NULL))
 		for (i = 11; i < 16; ++i)
 			(void)putchar(longstring[i]);
 	else {

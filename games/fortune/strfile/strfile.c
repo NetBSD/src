@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.33 2011/08/17 18:17:40 dholland Exp $	*/
+/*	$NetBSD: strfile.c,v 1.34 2011/08/31 16:24:55 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.33 2011/08/17 18:17:40 dholland Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.34 2011/08/31 16:24:55 plunky Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -433,7 +433,7 @@ randomize(void)
 	off_t	tmp;
 	off_t	*sp;
 
-	srandom((int)(time((time_t *) NULL) + getpid()));
+	srandom((int)(time(NULL) + getpid()));
 
 	Tbl.str_flags |= STR_RANDOM;
 	cnt = Tbl.str_numstr;

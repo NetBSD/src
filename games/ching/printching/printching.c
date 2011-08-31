@@ -1,4 +1,4 @@
-/*	$NetBSD: printching.c,v 1.4 2009/08/12 05:40:04 dholland Exp $	*/
+/*	$NetBSD: printching.c,v 1.5 2011/08/31 16:24:55 plunky Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)ching.phx.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: printching.c,v 1.4 2009/08/12 05:40:04 dholland Exp $");
+__RCSID("$NetBSD: printching.c,v 1.5 2011/08/31 16:24:55 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ main(int argc, char **argv)
 		hexptr = fgets(hexstr, 6+1, stdin);
 	else
 		hexptr = argv[1];
-	if (hexptr == (char *)NULL || strlen(hexptr) != 6) {
+	if (hexptr == NULL || strlen(hexptr) != 6) {
 		fprintf(stderr, "What kind of a change is THAT?!?\n");
 		exit(1);
 	}
@@ -120,7 +120,7 @@ main(int argc, char **argv)
 		else
 			moving[i] = 0;
 	}
-	if ((chingf = fopen(_PATH_HEX, "r")) == (FILE *)NULL) {
+	if ((chingf = fopen(_PATH_HEX, "r")) == NULL) {
 		fprintf(stderr, "ching: can't read %s\n", _PATH_HEX);
 		exit(2);
 	}
@@ -227,7 +227,7 @@ phx(int hexagram, int flag)
 	 */
 	rewind(chingf);
 	for (;;) {
-		if (fgets(textln, sizeof(textln), chingf) == (char *)NULL) {
+		if (fgets(textln, sizeof(textln), chingf) == NULL) {
 			fprintf(stderr, "ching: Hexagram %d missing\n",
 			    hexagram);
 			exit(3);
@@ -251,7 +251,7 @@ phx(int hexagram, int flag)
 	 */
 	fputs(textln, stdout);
 	for (;;) {
-		if (fgets(textln, sizeof(textln), chingf) == (char *)NULL) {
+		if (fgets(textln, sizeof(textln), chingf) == NULL) {
 			fprintf(stderr, "ching: Hexagram %d malformed\n",
 			    hexagram);
 			exit(3);
@@ -295,7 +295,7 @@ phx(int hexagram, int flag)
 		else
 			allmoving = 0;
 		for (;;) {
-			if (fgets(textln, sizeof(textln), chingf) == (char *)NULL)
+			if (fgets(textln, sizeof(textln), chingf) == NULL)
 				break;
 			lp = &textln[0];
 			if (*lp++ == '.' && (*lp == 'L' || *lp == 'H')) {
@@ -315,7 +315,7 @@ phx(int hexagram, int flag)
 	if (*lp == 'A' && allmoving) {
 		fputs(textln, stdout);
 		for (;;) {
-			if (fgets(textln, sizeof(textln), chingf) == (char *)NULL)
+			if (fgets(textln, sizeof(textln), chingf) == NULL)
 				break;
 			lp = &textln[0];
 			if (*lp++ == '.' || *lp++ == 'H')

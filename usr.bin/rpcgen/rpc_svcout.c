@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_svcout.c,v 1.22 2004/06/20 22:20:16 jmc Exp $	*/
+/*	$NetBSD: rpc_svcout.c,v 1.23 2011/08/31 16:24:58 plunky Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_svcout.c 1.29 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_svcout.c,v 1.22 2004/06/20 22:20:16 jmc Exp $");
+__RCSID("$NetBSD: rpc_svcout.c,v 1.23 2011/08/31 16:24:58 plunky Exp $");
 #endif
 #endif
 
@@ -122,7 +122,7 @@ write_most(infile, netflag, nomain)
 		write_svc_aux(nomain);
 	}
 	/* write out dispatcher and stubs */
-	write_programs(nomain ? (char *) NULL : "static");
+	write_programs(nomain ? NULL : "static");
 
 	if (nomain)
 		return;
@@ -253,7 +253,7 @@ write_rest()
 {
 	f_print(fout, "\n");
 	if (inetdflag) {
-		f_print(fout, "\tif (%s == (SVCXPRT *)NULL) {\n", TRANSP);
+		f_print(fout, "\tif (%s == NULL) {\n", TRANSP);
 		(void) sprintf(_errbuf, "could not create a handle");
 		print_err_message("\t\t");
 		f_print(fout, "\t\texit(1);\n");
@@ -493,10 +493,10 @@ write_program(def, storage)
 			f_print(fout, "\tcase NULLPROC:\n");
 			if (Cflag) {
 			  	f_print(fout,
-					"\t\t(void) svc_sendreply(%s, (xdrproc_t)xdr_void, (char *)NULL);\n", TRANSP);
+					"\t\t(void) svc_sendreply(%s, (xdrproc_t)xdr_void, NULL);\n", TRANSP);
 			} else {
 			  	f_print(fout,
-					"\t\t(void) svc_sendreply(%s, xdr_void, (char *)NULL);\n",
+					"\t\t(void) svc_sendreply(%s, xdr_void, NULL);\n",
 					TRANSP);
 			}
 			print_return("\t\t");
@@ -951,7 +951,7 @@ write_rpc_svc_fg(infile, sp)
 	else {
 		f_print(fout, "%si = open(\"/dev/tty\", 2);\n", sp);
 		f_print(fout, "%sif (i >= 0) {\n", sp);
-		f_print(fout, "%s\t(void) ioctl(i, TIOCNOTTY, (char *)NULL);\n", sp);
+		f_print(fout, "%s\t(void) ioctl(i, TIOCNOTTY, NULL);\n", sp);
 		f_print(fout, "%s\t(void) close(i);\n", sp);
 		f_print(fout, "%s}\n", sp);
 	}

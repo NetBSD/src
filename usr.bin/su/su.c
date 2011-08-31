@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.68 2008/07/21 14:19:26 lukem Exp $	*/
+/*	$NetBSD: su.c,v 1.69 2011/08/31 16:24:58 plunky Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988\
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.68 2008/07/21 14:19:26 lukem Exp $");
+__RCSID("$NetBSD: su.c,v 1.69 2011/08/31 16:24:58 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -399,7 +399,7 @@ main(int argc, char **argv)
 
 #ifdef BSD4_4
 	if (pwd->pw_change || pwd->pw_expire)
-		(void)gettimeofday(&tp, (struct timezone *)NULL);
+		(void)gettimeofday(&tp, NULL);
 	if (pwd->pw_change) {
 		if (tp.tv_sec >= pwd->pw_change) {
 			(void)printf("%s -- %s's password has expired.\n",

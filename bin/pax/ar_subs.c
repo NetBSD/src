@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.55 2009/02/14 08:10:06 lukem Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.56 2011/08/31 16:24:54 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.55 2009/02/14 08:10:06 lukem Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.56 2011/08/31 16:24:54 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -211,7 +211,7 @@ list(void)
 	    ((*frmt->st_rd)() < 0))
 		return 1;
 
-	now = time((time_t *)NULL);
+	now = time(NULL);
 
 	/*
 	 * step through the archive until the format says it is done
@@ -277,7 +277,7 @@ list(void)
 	 * the patterns supplied by the user were all matched
 	 */
 	(void)(*frmt->end_rd)();
-	(void)sigprocmask(SIG_BLOCK, &s_mask, (sigset_t *)NULL);
+	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
 	ar_close();
 	pat_chk();
 
@@ -310,7 +310,7 @@ extract(void)
 	    ((*frmt->st_rd)() < 0) || (dir_start() < 0))
 		return 1;
 
-	now = time((time_t *)NULL);
+	now = time(NULL);
 #if !HAVE_NBTOOL_CONFIG_H
 	if (do_chroot)
 		(void)fdochroot(cwdfd);
@@ -519,7 +519,7 @@ extract(void)
 	 * to avoid chance for multiple entry into the cleanup code.
 	 */
 	(void)(*frmt->end_rd)();
-	(void)sigprocmask(SIG_BLOCK, &s_mask, (sigset_t *)NULL);
+	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
 	ar_close();
 	proc_dir();
 	pat_chk();
@@ -558,7 +558,7 @@ wr_archive(ARCHD *arcn, int is_app)
 		return 1;
 	wrf = frmt->wr;
 
-	now = time((time_t *)NULL);
+	now = time(NULL);
 
 	/*
 	 * When we are doing interactive rename, we store the mapping of names
@@ -721,7 +721,7 @@ wr_archive(ARCHD *arcn, int is_app)
 		(*frmt->end_wr)();
 		wr_fin();
 	}
-	(void)sigprocmask(SIG_BLOCK, &s_mask, (sigset_t *)NULL);
+	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
 	ar_close();
 	if (tflag)
 		proc_dir();
@@ -887,7 +887,7 @@ append(void)
 		 * not truncate the archive).
 		 */
 		wr_fin();
-		(void)sigprocmask(SIG_BLOCK, &s_mask, (sigset_t *)NULL);
+		(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
 		ar_close();
 	}
 	return res;
@@ -1148,7 +1148,7 @@ copy(void)
 	 * patterns were selected block off signals to avoid chance for
 	 * multiple entry into the cleanup code.
 	 */
-	(void)sigprocmask(SIG_BLOCK, &s_mask, (sigset_t *)NULL);
+	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
 	ar_close();
 	proc_dir();
 	ftree_chk();

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.17 2011/08/31 13:32:40 joerg Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.18 2011/08/31 16:25:00 plunky Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -335,7 +335,7 @@ init_transport(struct netconfig *nconf)
 		
 	my_xprt = (SVCXPRT *)svc_tli_create(fd, nconf, &taddr, RPC_MAXDATASIZE,
 	    RPC_MAXDATASIZE);
-	if (my_xprt == (SVCXPRT *)NULL) {
+	if (my_xprt == NULL) {
 		warnx("Could not create service for `%s'", nconf->nc_netid);
 		goto error;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: shots.c,v 1.11 2009/07/04 06:19:05 dholland Exp $	*/
+/*	$NetBSD: shots.c,v 1.12 2011/08/31 16:24:56 plunky Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shots.c,v 1.11 2009/07/04 06:19:05 dholland Exp $");
+__RCSID("$NetBSD: shots.c,v 1.12 2011/08/31 16:24:56 plunky Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -631,7 +631,7 @@ again:
 #ifdef BOOTS
 		if (pp->p_face != BOOT && pp->p_face != BOOT_PAIR) {
 #endif
-			checkdam(pp, (PLAYER *) NULL, (IDENT *) NULL,
+			checkdam(pp, NULL, NULL,
 				rand_num(pp->p_damage / 5), FALL);
 			pp->p_face = rand_dir();
 			showstat(pp);
@@ -732,7 +732,7 @@ chkshot(BULLET *bp, BULLET *next)
 					y, x, LEFTS,
 					(Maze[y][x] == GMINE) ?
 					GRENREQ : BULREQ,
-					(PLAYER *) NULL, TRUE, SPACE);
+					NULL, TRUE, SPACE);
 				Maze[y][x] = SPACE;
 				break;
 			}

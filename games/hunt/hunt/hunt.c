@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.39 2011/05/23 22:56:11 joerg Exp $	*/
+/*	$NetBSD: hunt.c,v 1.40 2011/08/31 16:24:56 plunky Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.39 2011/05/23 22:56:11 joerg Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.40 2011/08/31 16:24:56 plunky Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -624,10 +624,10 @@ start_driver(void)
 #else
 		if (use_port == NULL)
 #endif
-			execl(Driver, "HUNT", (char *) NULL);
+			execl(Driver, "HUNT", NULL);
 #ifdef INTERNET
 		else
-			execl(Driver, "HUNT", "-p", use_port, (char *) NULL);
+			execl(Driver, "HUNT", "-p", use_port, NULL);
 #endif
 		/* only get here if exec failed */
 		(void) kill(getppid(), SIGUSR1);	/* tell mom */

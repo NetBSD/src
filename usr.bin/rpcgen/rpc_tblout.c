@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_tblout.c,v 1.11 2004/06/20 22:20:16 jmc Exp $	*/
+/*	$NetBSD: rpc_tblout.c,v 1.12 2011/08/31 16:24:58 plunky Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_tblout.c 1.4 89/02/22 (C) 1988 SMI";
 #else
-__RCSID("$NetBSD: rpc_tblout.c,v 1.11 2004/06/20 22:20:16 jmc Exp $");
+__RCSID("$NetBSD: rpc_tblout.c,v 1.12 2011/08/31 16:24:58 plunky Exp $");
 #endif
 #endif
 
@@ -140,7 +140,7 @@ write_table(def)
 
 			/* argument info */
 			if (proc->arg_num > 1)
-				printit((char *) NULL, proc->args.argname);
+				printit(NULL, proc->args.argname);
 			else
 				/* do we have to do something special for
 				 * newstyle */

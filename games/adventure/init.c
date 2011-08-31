@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.19 2009/08/25 06:56:52 dholland Exp $	*/
+/*	$NetBSD: init.c,v 1.20 2011/08/31 16:24:55 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.19 2009/08/25 06:56:52 dholland Exp $");
+__RCSID("$NetBSD: init.c,v 1.20 2011/08/31 16:24:55 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -289,7 +289,7 @@ void
 startup(void)
 {
 	demo = Start();
-	srand((int) (time((time_t *) NULL)));	/* random seed */
+	srand((int)time(NULL));	/* random seed */
 #if 0
 	srand(371);		/* non-random seed */
 #endif

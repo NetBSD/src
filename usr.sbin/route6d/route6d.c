@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.65 2011/08/31 07:03:00 mbalmer Exp $	*/
+/*	$NetBSD: route6d.c,v 1.66 2011/08/31 16:24:59 plunky Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.65 2011/08/31 07:03:00 mbalmer Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.66 2011/08/31 16:24:59 plunky Exp $");
 #endif
 
 #include <stdbool.h>
@@ -560,7 +560,7 @@ init(void)
 	struct	addrinfo hints, *res;
 	char	port[NI_MAXSERV];
 
-	ifc = (struct ifc *)NULL;
+	ifc = NULL;
 	nifc = 0;
 	nindex2ifc = 0;	/*initial guess*/
 	index2ifc = NULL;
@@ -3261,7 +3261,7 @@ ifc_find(char *name)
 		if (strcmp(name, ifcp->ifc_name) == 0)
 			return ifcp;
 	}
-	return (struct ifc *)NULL;
+	return NULL;
 }
 
 static struct iff *

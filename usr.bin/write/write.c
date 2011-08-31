@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.25 2008/07/21 14:19:28 lukem Exp $	*/
+/*	$NetBSD: write.c,v 1.26 2011/08/31 16:24:58 plunky Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: write.c,v 1.25 2008/07/21 14:19:28 lukem Exp $");
+__RCSID("$NetBSD: write.c,v 1.26 2011/08/31 16:24:58 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,7 +242,7 @@ do_write(int ttyfd, const char *mytty, const uid_t myuid)
 		(void)strlcpy(host, "???", sizeof(host));
 	else
 		host[sizeof(host) - 1] = '\0';
-	now = time((time_t *)NULL);
+	now = time(NULL);
 	nows = ctime(&now);
 	nows[16] = '\0';
 	(void)printf("\r\n\a\a\aMessage from %s@%s on %s at %s ...\r\n",

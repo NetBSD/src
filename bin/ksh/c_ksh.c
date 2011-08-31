@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.16 2009/04/25 05:11:37 lukem Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.17 2011/08/31 16:24:54 plunky Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ksh.c,v 1.16 2009/04/25 05:11:37 lukem Exp $");
+__RCSID("$NetBSD: c_ksh.c,v 1.17 2011/08/31 16:24:54 plunky Exp $");
 #endif
 
 #include "sh.h"
@@ -1439,7 +1439,7 @@ c_bind(wp)
 	wp += builtin_opt.optind;
 
 	if (*wp == NULL)	/* list all */
-		rv = x_bind((char*)NULL, (char*)NULL, 0, list);
+		rv = x_bind(NULL, NULL, 0, list);
 
 	for (; *wp != NULL; wp++) {
 		cp = strchr(*wp, '=');
