@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.39 2011/08/31 12:07:26 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.40 2011/08/31 12:20:35 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.39 2011/08/31 12:07:26 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.40 2011/08/31 12:20:35 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -694,7 +694,6 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		ga.ga_dvname = attach->ga_dvname;
 		ga.ga_offset = attach->ga_offset;
 		ga.ga_mask = attach->ga_mask;
-		ga.ga_nolock = 1;
 		DPRINTF(("%s: attach %s with offset %d and mask "
 		    "0x%02x\n", device_xname(sc->sc_dev), ga.ga_dvname,
 		    ga.ga_offset, ga.ga_mask));
