@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.64 2011/08/25 19:49:05 jakllsch Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.65 2011/08/31 13:32:39 joerg Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.64 2011/08/25 19:49:05 jakllsch Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.65 2011/08/31 13:32:39 joerg Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: psshfs.c,v 1.64 2011/08/25 19:49:05 jakllsch Exp $");
 
 static int	pssh_connect(struct puffs_usermount *, int);
 static void	psshfs_loopfn(struct puffs_usermount *);
-static void	usage(void);
+__dead static void	usage(void);
 static char *	cleanhostname(char *);
 static char *	colon(char *);
 static void	add_ssharg(char ***, int *, const char *);
@@ -117,7 +117,7 @@ add_ssharg(char ***sshargs, int *nargs, const char *arg)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s "

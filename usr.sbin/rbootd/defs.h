@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.10 2011/02/08 20:20:28 rmind Exp $	*/
+/*	$NetBSD: defs.h,v 1.11 2011/08/31 13:32:40 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -158,7 +158,7 @@ void	 DebugOn __P((int));
 void	 DispPkt __P((RMPCONN *, int));
 void	 DoTimeout __P((void));
 void	 DspFlnm __P((u_int, char *));
-void	 Exit __P((int));
+void	 Exit __P((int)) __dead;
 CLIENT	*FindClient __P((RMPCONN *));
 RMPCONN	*FindConn __P((RMPCONN *));
 void	 FreeClients __P((void));

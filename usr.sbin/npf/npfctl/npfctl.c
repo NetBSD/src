@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.5 2011/02/02 02:20:25 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.6 2011/08/31 13:32:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.5 2011/02/02 02:20:25 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.6 2011/08/31 13:32:38 joerg Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -99,7 +99,7 @@ xstrdup(const char *s)
 	return p;
 }
 
-static void
+__dead static void
 usage(void)
 {
 	const char *progname = getprogname();

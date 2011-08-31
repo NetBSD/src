@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.9 2008/04/28 20:24:16 martin Exp $ */
+/* $NetBSD: main.c,v 1.10 2011/08/31 13:32:37 joerg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <netisdn/i4b_ioctl.h>
 #include "daicctl.h"
 
-static void usage(void);
+__dead static void usage(void);
 static void listall(int);
 
 int

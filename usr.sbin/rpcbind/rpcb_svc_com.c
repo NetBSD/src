@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.14 2009/01/18 10:17:37 lukem Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.15 2011/08/31 13:32:40 joerg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -1069,7 +1069,7 @@ netbuffree(struct netbuf *ap)
 extern bool_t __svc_clean_idle(fd_set *, int, bool_t);
 
 void
-my_svc_run()
+my_svc_run(void)
 {
 	size_t nfds;
 	struct pollfd pollfds[FD_SETSIZE];

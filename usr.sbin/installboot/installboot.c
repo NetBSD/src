@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.34 2010/01/14 17:49:32 drochner Exp $	*/
+/*	$NetBSD: installboot.c,v 1.35 2011/08/31 13:32:37 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.34 2010/01/14 17:49:32 drochner Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.35 2011/08/31 13:32:37 joerg Exp $");
 #endif	/* !__lint */
 
 #include <sys/ioctl.h>
@@ -53,11 +53,10 @@ __RCSID("$NetBSD: installboot.c,v 1.34 2010/01/14 17:49:32 drochner Exp $");
 
 #include "installboot.h"
 
-int		main(int, char *[]);
 static	void	getmachine(ib_params *, const char *, const char *);
 static	void	getfstype(ib_params *, const char *, const char *);
 static	void	parseoptions(ib_params *, const char *);
-static	void	usage(void);
+__dead static	void	usage(void);
 static	void	options_usage(void);
 static	void	machine_usage(void);
 static	void	fstype_usage(void);
