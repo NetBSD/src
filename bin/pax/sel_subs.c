@@ -1,4 +1,4 @@
-/*	$NetBSD: sel_subs.c,v 1.23 2009/12/21 12:44:48 christos Exp $	*/
+/*	$NetBSD: sel_subs.c,v 1.24 2011/08/31 16:24:54 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sel_subs.c,v 1.23 2009/12/21 12:44:48 christos Exp $");
+__RCSID("$NetBSD: sel_subs.c,v 1.24 2011/08/31 16:24:54 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ usr_add(char *str)
 		}
 		uid = (uid_t)pw->pw_uid;
 	} else
-		uid = (uid_t)strtoul(str+1, (char **)NULL, 10);
+		uid = (uid_t)strtoul(str+1, NULL, 10);
 	endpwent();
 
 	/*
@@ -246,7 +246,7 @@ grp_add(char *str)
 		}
 		gid = (gid_t)gr->gr_gid;
 	} else
-		gid = (gid_t)strtoul(str+1, (char **)NULL, 10);
+		gid = (gid_t)strtoul(str+1, NULL, 10);
 	endgrent();
 
 	/*
@@ -414,7 +414,7 @@ trng_add(char *str)
 	/*
 	 * start off with the current time
 	 */
-	pt->low_time = pt->high_time = time((time_t *)NULL);
+	pt->low_time = pt->high_time = time(NULL);
 	if (*str != '\0') {
 		/*
 		 * add lower limit

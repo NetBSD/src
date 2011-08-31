@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.pager.c,v 1.19 2011/08/06 20:42:43 dholland Exp $	*/
+/*	$NetBSD: hack.pager.c,v 1.20 2011/08/31 16:24:56 plunky Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.pager.c,v 1.19 2011/08/06 20:42:43 dholland Exp $");
+__RCSID("$NetBSD: hack.pager.c,v 1.20 2011/08/31 16:24:56 plunky Exp $");
 #endif				/* not lint */
 
 /* This file contains the command routine dowhatis() and a pager. */
@@ -392,7 +392,7 @@ page_file(const char *fnam, boolean silent)
 				if (!silent)
 					printf("Cannot open %s as stdin.\n", fnam);
 			} else {
-				execl(catmore, "page", (char *)NULL);
+				execl(catmore, "page", NULL);
 				if (!silent)
 					printf("Cannot exec %s.\n", catmore);
 			}
@@ -428,9 +428,9 @@ dosh(void)
 	char           *str;
 	if (child(0)) {
 		if ((str = getenv("SHELL")) != NULL)
-			execl(str, str, (char *)NULL);
+			execl(str, str, NULL);
 		else
-			execl("/bin/sh", "sh", (char *)NULL);
+			execl("/bin/sh", "sh", NULL);
 		pline("sh: cannot execute.");
 		exit(1);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.28 2009/10/17 22:26:13 christos Exp $	*/
+/*	$NetBSD: scm.c,v 1.29 2011/08/31 16:25:00 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -368,7 +368,7 @@ dobackoff(int *t, int *b)
 	if (*t == 0)
 		return (0);
 	s = *b * 30;
-	if (gettimeofday(&tt, (struct timezone *) NULL) >= 0)
+	if (gettimeofday(&tt, NULL) >= 0)
 		s += ((uint32_t)tt.tv_usec >> 8) % s;
 	if (*b < 32)
 		*b <<= 1;

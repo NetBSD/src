@@ -27,7 +27,7 @@
  *	i4b daemon - logging routines
  *	-----------------------------
  *
- *	$Id: log.c,v 1.7 2009/04/16 05:56:32 lukem Exp $ 
+ *	$Id: log.c,v 1.8 2011/08/31 16:24:59 plunky Exp $ 
  *
  * $FreeBSD$
  *
@@ -82,7 +82,7 @@ init_log(void)
 	
 		/* set unbuffered operation */
 	
-		setvbuf(logfp, (char *)NULL, _IONBF, 0);
+		setvbuf(logfp, NULL, _IONBF, 0);
 	}
 	else
 	{

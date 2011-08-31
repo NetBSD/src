@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.10 2009/10/31 21:54:01 dsl Exp $	*/
+/*	$NetBSD: history.c,v 1.11 2011/08/31 16:24:54 plunky Exp $	*/
 
 /*
  * command history
@@ -19,7 +19,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: history.c,v 1.10 2009/10/31 21:54:01 dsl Exp $");
+__RCSID("$NetBSD: history.c,v 1.11 2011/08/31 16:24:54 plunky Exp $");
 #endif
 
 
@@ -604,7 +604,7 @@ sethistfile(name)
 void
 init_histvec()
 {
-	if (histlist == (char **)NULL) {
+	if (histlist == NULL) {
 		histsize = HISTORYSIZE;
 		histlist = (char **)alloc(histsize*sizeof (char *), APERM);
 		histptr = histlist - 1;
