@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.9 2011/08/12 08:00:52 mbalmer Exp $
+# $NetBSD: md.evbppc,v 1.10 2011/08/31 13:25:49 mbalmer Exp $
 ./stand/powerpc-4xx						base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@					base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod
@@ -56,6 +56,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/fss/fss.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/gpio				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/gpio/gpio.kmod			base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/gpioow				base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/gpioow/gpioow.kmod		base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/gpiosim				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/gpiosim/gpiosim.kmod		base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod
@@ -92,6 +94,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ntfs/ntfs.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/null				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/null/null.kmod			base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/onewire				base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/onewire/onewire.kmod		base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/overlay				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/overlay/overlay.kmod		base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/pciverbose			base-kernel-modules	kmod
@@ -209,6 +213,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/fss/fss.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/gpio				base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/gpio/gpio.kmod		base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/gpioow				base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/gpioow/gpioow.kmod		base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/gpiosim			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/gpiosim/gpiosim.kmod		base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod
@@ -245,6 +251,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/ntfs/ntfs.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/null				base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/null/null.kmod			base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/onewire				base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/onewire/onewire.kmod		base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/overlay				base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/overlay/overlay.kmod		base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/pciverbose			base-kernel-modules	kmod
