@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.32 2011/05/10 07:04:17 mrg Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.33 2011/08/31 18:31:02 plunky Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.32 2011/05/10 07:04:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.33 2011/08/31 18:31:02 plunky Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -100,7 +100,7 @@ rf_MakeReconMap(RF_Raid_t *raidPtr, RF_SectorCount_t ru_sectors,
 	p->head = 0;
 
 	RF_Malloc(p->status, p->status_size * sizeof(RF_ReconMapListElem_t *), (RF_ReconMapListElem_t **));
-	RF_ASSERT(p->status != (RF_ReconMapListElem_t **) NULL);
+	RF_ASSERT(p->status != NULL);
 
 	(void) memset((char *) p->status, 0,
 	    p->status_size * sizeof(RF_ReconMapListElem_t *));
