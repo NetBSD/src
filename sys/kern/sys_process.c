@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.159 2011/08/30 22:45:55 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.160 2011/08/31 22:58:39 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.159 2011/08/30 22:45:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.160 2011/08/31 22:58:39 jmcneill Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -195,6 +195,7 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case PT_DETACH:
 	case PT_LWPINFO:
 	case PT_SYSCALL:
+	case PT_SYSCALLEMU:
 	case PT_DUMPCORE:
 		result = KAUTH_RESULT_ALLOW;
 		break;
@@ -370,6 +371,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	case  PT_DETACH:
 	case  PT_LWPINFO:
 	case  PT_SYSCALL:
+	case  PT_SYSCALLEMU:
 	case  PT_DUMPCORE:
 #ifdef PT_STEP
 	case  PT_STEP:
@@ -453,6 +455,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	case PT_DETACH:
 	case PT_KILL:
 	case PT_SYSCALL:
+	case PT_SYSCALLEMU:
 	case PT_ATTACH:
 	case PT_TRACE_ME:
 		pheld = 1;
@@ -712,6 +715,14 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			ksi.ksi_signo = signo;
 			kpsignal2(t, &ksi);
 		}
+		break;
+
+	case  PT_SYSCALLEMU:
+		if (!ISSET(t->p_slflag, PSL_SYSCALL) || t->p_stat != SSTOP) {
+			error = EINVAL;
+			break;
+		}
+		SET(t->p_slflag, PSL_SYSCALLEMU);
 		break;
 
 	case  PT_KILL:
