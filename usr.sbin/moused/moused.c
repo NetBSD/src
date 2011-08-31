@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.20 2011/08/31 07:17:44 gson Exp $ */
+/* $NetBSD: moused.c,v 1.21 2011/08/31 08:15:08 gson Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.20 2011/08/31 07:17:44 gson Exp $");
+__RCSID("$NetBSD: moused.c,v 1.21 2011/08/31 08:15:08 gson Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -2165,7 +2165,7 @@ r_timestamp(mousestatus_t *act)
             if (act->button & button) {
                 /* the button is down */
     		debug("  :  %ld %ld", 
-		    bstate[i].tv.tv_sec, (long)bstate[i].tv.tv_usec);
+		    (long)bstate[i].tv.tv_sec, (long)bstate[i].tv.tv_usec);
 		if (timercmp(&tv, &bstate[i].tv, >)) {
                     bstate[i].count = 1;
                 } else {
