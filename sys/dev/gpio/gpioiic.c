@@ -1,4 +1,4 @@
-/* $NetBSD: gpioiic.c,v 1.3 2011/07/23 09:03:38 mbalmer Exp $ */
+/* $NetBSD: gpioiic.c,v 1.4 2011/08/31 12:25:05 mbalmer Exp $ */
 /*	$OpenBSD: gpioiic.c,v 1.8 2008/11/24 12:12:12 mbalmer Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.3 2011/07/23 09:03:38 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.4 2011/08/31 12:25:05 mbalmer Exp $");
 
 /*
  * I2C bus bit-banging through GPIO pins.
@@ -64,12 +64,12 @@ void		gpioiic_i2c_release_bus(void *, int);
 int		gpioiic_i2c_send_start(void *, int);
 int		gpioiic_i2c_send_stop(void *, int);
 int		gpioiic_i2c_initiate_xfer(void *, i2c_addr_t, int);
-int		gpioiic_i2c_read_byte(void *, u_int8_t *, int);
-int		gpioiic_i2c_write_byte(void *, u_int8_t, int);
+int		gpioiic_i2c_read_byte(void *, uint8_t *, int);
+int		gpioiic_i2c_write_byte(void *, uint8_t, int);
 
-void		gpioiic_bb_set_bits(void *, u_int32_t);
-void		gpioiic_bb_set_dir(void *, u_int32_t);
-u_int32_t	gpioiic_bb_read_bits(void *);
+void		gpioiic_bb_set_bits(void *, uint32_t);
+void		gpioiic_bb_set_dir(void *, uint32_t);
+uint32_t	gpioiic_bb_read_bits(void *);
 
 CFATTACH_DECL_NEW(gpioiic, sizeof(struct gpioiic_softc),
 	gpioiic_match, gpioiic_attach, gpioiic_detach, NULL);
@@ -252,19 +252,19 @@ gpioiic_i2c_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
 }
 
 int
-gpioiic_i2c_read_byte(void *cookie, u_int8_t *bytep, int flags)
+gpioiic_i2c_read_byte(void *cookie, uint8_t *bytep, int flags)
 {
 	return i2c_bitbang_read_byte(cookie, bytep, flags, &gpioiic_bbops);
 }
 
 int
-gpioiic_i2c_write_byte(void *cookie, u_int8_t byte, int flags)
+gpioiic_i2c_write_byte(void *cookie, uint8_t byte, int flags)
 {
 	return i2c_bitbang_write_byte(cookie, byte, flags, &gpioiic_bbops);
 }
 
 void
-gpioiic_bb_set_bits(void *cookie, u_int32_t bits)
+gpioiic_bb_set_bits(void *cookie, uint32_t bits)
 {
 	struct gpioiic_softc *sc = cookie;
 
@@ -275,7 +275,7 @@ gpioiic_bb_set_bits(void *cookie, u_int32_t bits)
 }
 
 void
-gpioiic_bb_set_dir(void *cookie, u_int32_t bits)
+gpioiic_bb_set_dir(void *cookie, uint32_t bits)
 {
 	struct gpioiic_softc *sc = cookie;
 	int sda = sc->sc_sda;
@@ -291,11 +291,11 @@ gpioiic_bb_set_dir(void *cookie, u_int32_t bits)
 	}
 }
 
-u_int32_t
+uint32_t
 gpioiic_bb_read_bits(void *cookie)
 {
 	struct gpioiic_softc *sc = cookie;
-	u_int32_t bits = 0;
+	uint32_t bits = 0;
 
 	if (gpio_pin_read(sc->sc_gpio, &sc->sc_map,
 	    GPIOIIC_PIN_SDA) == GPIO_PIN_HIGH)
