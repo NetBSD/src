@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.166 2011/08/31 17:03:17 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.167 2011/08/31 18:52:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 2011/08/31 17:03:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2011/08/31 18:52:37 christos Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -821,7 +821,7 @@ dump_misc_init(void)
 	printf("dump_misc_init: max_paddr = 0x%lx\n",
 	    (unsigned long)max_paddr);
 #endif
-	if (max_paddr != 0) {
+	if (max_paddr == 0) {
 		printf("Your machine does not initialize mem_clusters; "
 		    "sparse_dumps disabled\n");
 		sparse_dump = 0;
