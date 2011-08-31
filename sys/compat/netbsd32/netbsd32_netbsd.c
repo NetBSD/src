@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.172 2011/07/05 14:21:46 njoly Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.173 2011/08/31 16:50:32 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.172 2011/07/05 14:21:46 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.173 2011/08/31 16:50:32 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2585,6 +2585,24 @@ netbsd32_pipe2(struct lwp *l, const struct netbsd32_pipe2_args *uap,
 	fd[0] = retval[0];
 	fd[1] = retval[1];
 	return copyout(fd, SCARG_P32(uap, fildes), sizeof(fd));
+}
+
+int
+netbsd32_dup3(struct lwp *l, const struct netbsd32_dup3_args *uap,
+	      register_t *retval)
+{
+	/* {
+		syscallarg(int) from;
+		syscallarg(int) to;
+		syscallarg(int) flags;
+	} */
+	struct sys_dup3_args ua;
+
+	NETBSD32TO64_UAP(from);
+	NETBSD32TO64_UAP(to);
+	NETBSD32TO64_UAP(flags);
+
+	return sys_dup3(l, &ua, retval);
 }
 
 /*
