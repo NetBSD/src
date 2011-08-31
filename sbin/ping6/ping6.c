@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.76 2011/08/31 22:05:57 riz Exp $	*/
+/*	$NetBSD: ping6.c,v 1.77 2011/08/31 22:27:26 christos Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.76 2011/08/31 22:05:57 riz Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.77 2011/08/31 22:27:26 christos Exp $");
 #endif
 #endif
 
@@ -1202,6 +1202,7 @@ pinger(void)
 	icp->icmp6_cksum = 0;
 	seq = ntransmitted++;
 	CLR(seq % mx_dup_ck);
+	seq = ntohs(seq);
 
 	if (options & F_FQDN) {
 		icp->icmp6_code = ICMP6_NI_SUBJ_IPV6;
@@ -1246,7 +1247,7 @@ pinger(void)
 		icp->icmp6_type = ICMP6_ECHO_REQUEST;
 		icp->icmp6_code = 0;
 		icp->icmp6_id = htons(ident);
-		icp->icmp6_seq = ntohs(seq);
+		icp->icmp6_seq = seq;
 		if (timing) {
 			struct timeval tv;
 			struct tv32 *tv32;
