@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.48 2011/08/30 12:02:38 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.49 2011/08/31 12:42:41 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48 2011/08/30 12:02:38 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 2011/08/31 12:42:41 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -89,9 +89,8 @@ static void	pmap_page_activate(struct pv_entry *pv);
 static void	pmap_page_deactivate(struct pv_entry *pv);
 static void	pv_update(struct pv_entry *pv);
 static void	pmap_update_page(uintptr_t ppn);
+bool		pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype);
 
-void pmap_get_current_protection(pmap_t pmap, vaddr_t va,
-	vm_prot_t *cur_prot, vm_prot_t *prot);
 static struct 	pv_entry *pv_get(pmap_t pmap, uintptr_t ppn, uintptr_t lpn);
 static struct 	pv_entry *pv_alloc(void);
 static void	pv_free(struct pv_entry *pv);
@@ -440,38 +439,101 @@ assert(ppn >= 0);
 	return pv;
 }
 
-void
-pmap_get_current_protection(pmap_t pmap, vaddr_t va,
-	vm_prot_t *cur_prot, vm_prot_t *prot)
+/*
+ * Check if the given page fault was our reference / modified emulation fault;
+ * if so return true otherwise return false and let uvm handle it
+ */
+bool
+pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 {
-	struct pv_entry *pv;
+	struct pv_entry *pv, *ppv;
+	uintptr_t lpn, ppn;
+	int prot, cur_prot, diff;
 
-	uintptr_t lpn;
+	/* get current protection settings */
 
-	aprint_debug("pmap_get_current_protection pmap %p, va %p\n", pmap, (void *) va);
-#ifdef DIAGNOSTIC
-	if ((va < VM_MIN_ADDRESS) || (va >= VM_MAX_ADDRESS))
-		panic("pmap_do_enter: invalid va isued\n");
-#endif
+	aprint_debug("pmap_fault pmap %p, va %p\n", pmap, (void *) va);
 
+	/* get logical page from vaddr */
 	lpn = atop(va - VM_MIN_ADDRESS);	/* V->L */
+	pv  = pmap->pm_entries[lpn];
 
-	/* raise interupt level */
-	pv = pmap->pm_entries[lpn];
+	/* not known! then it must be UVM's work */
 	if (pv == NULL) {
-		*cur_prot = *prot = VM_PROT_NONE;
-		return;
+aprint_debug("no mapping yet\n");
+		*atype = VM_PROT_READ;		/* assume it was a read */
+		return false;
 	}
 
-	*prot = pv->pv_prot;
-	*cur_prot = VM_PROT_NONE;
+	/* determine physical address and lookup 'root' pv_entry */
+	ppn = pv->pv_ppn;
+	ppv = &pv_table[ppn];
+
+	/* if unmanaged we just make sure it is there! */
+	if (ppv->pv_vflags & PV_UNMANAGED) {
+		printf("%s: oops warning unmanaged page %"PRIiPTR" faulted\n",
+			__func__, ppn);
+		/* atype not set */
+		pmap_page_activate(pv);
+		return true;
+	}
+
+	/* determine pmap access type (mmap doesnt need to be 1:1 on VM_PROT_) */
+	prot = pv->pv_prot;
+	cur_prot = VM_PROT_NONE;
 	if (pv->pv_mmap_ppl & PROT_READ)
-		*cur_prot |= VM_PROT_READ;
+		cur_prot |= VM_PROT_READ;
 	if (pv->pv_mmap_ppl & PROT_WRITE)
-		*cur_prot |= VM_PROT_WRITE;
+		cur_prot |= VM_PROT_WRITE;
 	if (pv->pv_mmap_ppl & PROT_EXEC)
-		*cur_prot |= VM_PROT_EXECUTE;
+		cur_prot |= VM_PROT_EXECUTE;
+
+	diff = prot & (prot ^ cur_prot);
+
+aprint_debug("prot = %d, cur_prot = %d, diff = %d\n", prot, cur_prot, diff);
+	*atype = VM_PROT_READ;  /* assume its a read error */
+	if (diff & VM_PROT_READ) {
+		if ((ppv->pv_pflags & PV_REFERENCED) == 0) {
+			ppv->pv_vflags |= PV_REFERENCED;
+			pmap_update_page(ppn);
+			return true;
+		}
+		return false;
+	}
+
+#if 0
+	/* this might be questionable */
+	if (diff & VM_PROT_EXECUTE) {
+		*atype = VM_PROT_EXECUTE; /* assume it was executing */
+		if (prot & VM_PROT_EXECUTE) {
+			if ((ppv->pv_pflags & PV_REFERENCED) == 0) {
+				ppv->pv_vflags |= PV_REFERENCED;
+				pmap_update_page(ppn);
+				return true;
+			}
+		}
+		return false;
+	}
+#endif
+
+	*atype = VM_PROT_WRITE; /* assume its a write error */
+	if (diff & VM_PROT_WRITE) {
+		if (prot & VM_PROT_WRITE) {
+aprint_debug("should be allowed to write\n");
+			if ((ppv->pv_pflags & PV_MODIFIED) == 0) {
+aprint_debug("was marked unmodified\n");
+				ppv->pv_vflags |= PV_MODIFIED;
+				pmap_update_page(ppn);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/* not due to our r/m handling, let uvm handle it ! */
+	return false;
 }
+
 
 static void
 pmap_page_activate(struct pv_entry *pv)
@@ -514,6 +576,10 @@ pv_update(struct pv_entry *pv)
 	/* get our per-physical-page flags */
 	pflags = pv_table[pv->pv_ppn].pv_pflags;
 	vflags = pv_table[pv->pv_ppn].pv_vflags;
+
+	KASSERT(PROT_READ == VM_PROT_READ);
+	KASSERT(PROT_WRITE == VM_PROT_WRITE);
+	KASSERT(PROT_EXEC == VM_PROT_EXECUTE);
 
 	/* create referenced/modified emulation */
 	if ((pv->pv_prot & VM_PROT_WRITE) &&
