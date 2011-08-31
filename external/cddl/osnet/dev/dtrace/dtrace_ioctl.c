@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_ioctl.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: dtrace_ioctl.c,v 1.3 2011/08/31 21:57:16 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -167,7 +167,7 @@ dtrace_ioctl(struct file *fp, u_long cmd, void *addr)
 		    "DTRACEIOC_AGGSNAP":"DTRACEIOC_BUFSNAP",
 		    cpu_number(), desc.dtbd_cpu);
 
-		if (desc.dtbd_cpu < 0 || desc.dtbd_cpu >= ncpu)
+		if (desc.dtbd_cpu >= ncpu)
 			return (ENOENT);
 
 		mutex_enter(&dtrace_lock);
