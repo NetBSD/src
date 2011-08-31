@@ -1,4 +1,4 @@
-/*	$NetBSD: sm502reg.h,v 1.1 2009/08/12 19:28:00 macallan Exp $	*/
+/*	$NetBSD: sm502reg.h,v 1.2 2011/08/31 16:45:07 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -58,9 +58,78 @@
 #define 	SM502_SYSCTL_DISABLE_HSYNC	0x40000000
 #define 	SM502_SYSCTL_DISABLE_VSYNC	0x80000000
 
+#define SM502_MISC_CONTROL		0x00000004
+/* each bit: 0 - GPIO, 1 - other stuff */
+#define SM502_GPIO0_CONTROL		0x00000008
+#define SM502_GPIO1_CONTROL		0x0000000c
+#define SM502_DRAM_CONTROL		0x00000010
+#define SM502_ARB_CONTROL		0x00000014
+#define SM502_COMMANDLIST_STATUS	0x00000024
+#define SM502_INTR_STATUS_R		0x00000028	/* on read */
+#define SM502_INTR_CLEAR_R		0x00000028	/* on write */
+	#define SM502_RINTR_ZV1		0x00000040	/* zoomed video 1 */
+	#define SM502_RINTR_UP		0x00000020	/* USB slave plug */
+	#define SM502_RINTR_ZV0		0x00000010	/* zoomed video 0 */
+	#define SM502_RINTR_CV		0x00000008	/* CRT vsync */
+	#define SM502_RINTR_US		0x00000004	/* USB slave */
+	#define SM502_RINTR_PV		0x00000002	/* panel vsync */
+	#define SM502_RINTR_CI		0x00000001	/* command interpreter */
+	
+#define SM502_INTR_STATUS		0x0000002c
+#define SM502_INTR_MASK			0x00000030
+	#define SM502_INTR_UP		0x80000000	/* USB slave plug */
+	#define SM502_INTR_GPIO54	0x40000000
+	#define SM502_INTR_GPIO53	0x20000000
+	#define SM502_INTR_GPIO52	0x10000000
+	#define SM502_INTR_GPIO51	0x08000000
+	#define SM502_INTR_GPIO50	0x04000000
+	#define SM502_INTR_GPIO49	0x02000000
+	#define SM502_INTR_GPIO48	0x01000000
+	#define SM502_INTR_I2C		0x00800000
+	#define SM502_INTR_PWM		0x00400000
+	#define SM502_INTR_RES		0x00200000	/* reserved */
+	#define SM502_INTR_DMA		0x00100000
+	#define SM502_INTR_PCI		0x00080000
+	#define SM502_INTR_I2S		0x00040000
+	#define SM502_INTR_AC97		0x00020000
+	#define SM502_INTR_US		0x00010000
+	#define SM502_INTR_RES2		0x0000c000	/* reserved */
+	#define SM502_INTR_UART1	0x00002000
+	#define SM502_INTR_UART0	0x00001000
+	#define SM502_INTR_CV		0x00000800	/* CRT vsync */
+	#define SM502_INTR_MC		0x00000400	/* microcontroller */
+	#define SM502_INTR_SSP1		0x00000200
+	#define SM502_INTR_SSP0		0x00000100
+	#define SM502_INTR_RES3		0x00000080	/* reserved */
+	#define SM502_INTR_UH		0x00000040	/* USB host */
+	#define SM502_INTR_RES4		0x00000020	/* reserved */
+	#define SM502_INTR_ZV1		0x00000010	/* zoomed video 1 */
+	#define SM502_INTR_2D		0x00000008	/* 2D engine */
+	#define SM502_INTR_ZV0		0x00000004	/* zoomed video 0 */
+	#define SM502_INTR_PV		0x00000002	/* panel vsync */
+	#define SM502_INTR_CI		0x00000001	/* command interpreter */
 
+#define SM502_DEBUG_CONTROL		0x00000034
+
+#define SM502_CURRENT_GATE		0x00000038
+#define SM502_CURRENT_CLOCK		0x0000003c
+#define SM502_POWER_MODE0_GATE		0x00000040
+#define SM502_POWER_MODE0_CLOCK		0x00000044
+#define SM502_POWER_MODE1_GATE		0x00000048
+#define SM502_POWER_MODE1_CLOCK		0x0000004c
+#define SM502_SLEEP_MODE_GATE		0x00000050
+#define SM502_POWER_MODE_CONTROL	0x00000054
+
+/* GPIO */
+#define SM502_GPIO_DATA0		0x00010000
+#define SM502_GPIO_DATA1		0x00010004
+#define SM502_GPIO_DIR0			0x00010008	/* 1 is output */
+#define SM502_GPIO_DIR1			0x0001000c
+#define SM502_GPIO_INTR_SETUP		0x00010010
+#define SM502_GPIO_INTR_STATUS		0x00010014	/* read */
+#define SM502_GPIO_INTR_CLEAR		0x00010014	/* write */
 /* Video Controller Registers */
-#define SM502_PANEL_DISP_CRTL	0x080000
+#define SM502_PANEL_DISP_CRTL			0x080000
 #define		SM502_PDC_8BIT			0x00000000
 #define		SM502_PDC_16BIT			0x00000001
 #define		SM502_PDC_32BIT			0x00000002
