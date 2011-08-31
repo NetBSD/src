@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_debug.c,v 1.3 2010/03/13 22:31:15 christos Exp $	*/
+/*	$NetBSD: dtrace_debug.c,v 1.4 2011/08/31 21:57:16 christos Exp $	*/
 
 /*-
  * Copyright (C) 2008 John Birrell <jb@freebsd.org>.
@@ -94,17 +94,17 @@ static char dtrace_debug_bufr[DTRACE_DEBUG_BUFR_SIZE];
 static volatile u_long	dtrace_debug_flag[MAXCPUS];
 
 static void
-dtrace_debug_lock(int cpu)
+dtrace_debug_lock(int xcpu)
 {
-	while (dtrace_cmpset_long(&dtrace_debug_flag[cpu], 0, 1) == 0)
+	while (dtrace_cmpset_long(&dtrace_debug_flag[xcpu], 0, 1) == 0)
 		/* Loop until the lock is obtained. */
 		;
 }
 
 static void
-dtrace_debug_unlock(int cpu)
+dtrace_debug_unlock(int xcpu)
 {
-	dtrace_debug_flag[cpu] = 0;
+	dtrace_debug_flag[xcpu] = 0;
 }
 
 static void
@@ -248,21 +248,21 @@ dtrace_debug_puts(const char *s)
  * Put a NUL-terminated ASCII number (base <= 36) in a buffer in reverse
  * order; return an optional length and a pointer to the last character
  * written in the buffer (i.e., the first character of the string).
- * The buffer pointed to by `nbuf' must have length >= MAXNBUF.
+ * The buffer pointed to by `xbuf' must have length >= MAXNBUF.
  */
 static char *
-dtrace_debug_ksprintn(char *nbuf, uintmax_t num, int base, int *lenp, int upper)
+dtrace_debug_ksprintn(char *xbuf, uintmax_t num, int base, int *lenp, int upper)
 {
 	char *p, c;
 
-	p = nbuf;
+	p = xbuf;
 	*p = '\0';
 	do {
 		c = hex2ascii(num % base);
 		*++p = upper ? toupper(c) : c;
 	} while (num /= base);
 	if (lenp)
-		*lenp = p - nbuf;
+		*lenp = p - xbuf;
 	return (p);
 }
 
@@ -271,7 +271,7 @@ dtrace_debug_ksprintn(char *nbuf, uintmax_t num, int base, int *lenp, int upper)
 static void
 dtrace_debug_vprintf(const char *fmt, va_list ap)
 {
-	char nbuf[MAXNBUF];
+	char xbuf[MAXNBUF];
 	const char *p, *percent, *q;
 	u_char *up;
 	int ch, n;
@@ -350,7 +350,7 @@ reswitch:	switch (ch = (u_char)*fmt++) {
 		case 'b':
 			num = (u_int)va_arg(ap, int);
 			p = va_arg(ap, char *);
-			for (q = dtrace_debug_ksprintn(nbuf, num, *p++, NULL, 0); *q;)
+			for (q = dtrace_debug_ksprintn(xbuf, num, *p++, NULL, 0); *q;)
 				dtrace_debug__putc(*q--);
 
 			if (num == 0)
@@ -522,7 +522,7 @@ number:
 				neg = 1;
 				num = -(intmax_t)num;
 			}
-			p = dtrace_debug_ksprintn(nbuf, num, base, &tmp, upper);
+			p = dtrace_debug_ksprintn(xbuf, num, base, &tmp, upper);
 			if (sharpflag && num != 0) {
 				if (base == 8)
 					tmp++;
