@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.91 2011/08/29 11:14:15 jruoho Exp $
+#	$NetBSD: Makefile,v 1.92 2011/08/31 13:25:50 mbalmer Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,7 @@ SUBDIR+=	filecore
 SUBDIR+=	flash
 SUBDIR+=	fss
 SUBDIR+=	gpio
+SUBDIR+=	gpioow
 SUBDIR+=	gpiosim
 SUBDIR+=	hfs
 SUBDIR+=	kernfs
@@ -42,6 +43,7 @@ SUBDIR+=	nfsserver
 SUBDIR+=	nilfs
 SUBDIR+=	ntfs
 SUBDIR+=	null
+SUBDIR+=	onewire
 SUBDIR+=	overlay
 SUBDIR+=	pciverbose
 SUBDIR+=	pf
