@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.14 2011/08/30 19:49:10 joerg Exp $	*/
+/*	$NetBSD: file.c,v 1.15 2011/08/31 13:09:10 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: file.c,v 1.14 2011/08/30 19:49:10 joerg Exp $");
+__RCSID("$NetBSD: file.c,v 1.15 2011/08/31 13:09:10 nakayama Exp $");
 #endif
 
 #include "os.h"
@@ -58,8 +58,10 @@ __RCSID("$NetBSD: file.c,v 1.14 2011/08/30 19:49:10 joerg Exp $");
 # endif
 #endif /* NOELF */
 
+#ifndef NOAOUT
 static int	getCLBYTES(int);
 static int	getMID(int, int);
+#endif
 
 const char *
 FileTypeName(mopd_imagetype type)
