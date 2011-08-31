@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.14 2009/04/16 05:59:56 lukem Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.15 2011/08/31 13:31:29 joerg Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lastlogin.c,v 1.14 2009/04/16 05:59:56 lukem Exp $");
+__RCSID("$NetBSD: lastlogin.c,v 1.15 2011/08/31 13:31:29 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -78,7 +78,6 @@ static size_t namelen = UT_NAMESIZE;
 static size_t linelen = UT_LINESIZE;
 static size_t hostlen = UT_HOSTSIZE;
 
-	int	main(int, char **);
 static	int	comparelog(const void *, const void *);
 static	void	output(struct output *);
 #ifdef SUPPORT_UTMP
@@ -92,12 +91,10 @@ static	void	dolastlogx(const char *, int, char *[]);
 static	void	push(struct output *);
 static	const char 	*gethost(struct output *);
 static	void	sortoutput(struct output *);
-static	void	usage(void);
+__dead static	void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	const char *logfile =
 #if defined(SUPPORT_UTMPX)
