@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.8 2011/07/17 20:54:33 joerg Exp $	*/
+/*	$NetBSD: fbt.c,v 1.9 2011/08/31 21:57:16 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -182,7 +182,7 @@ fbt_doubletrap(void)
 static int
 fbt_invop(uintptr_t addr, uintptr_t *stack, uintptr_t rval)
 {
-	solaris_cpu_t *cpu = &solaris_cpu[cpu_number()];
+	solaris_cpu_t *xcpu = &solaris_cpu[cpu_number()];
 	uintptr_t stack0, stack1, stack2, stack3, stack4;
 	fbt_probe_t *fbt = fbt_probetab[FBT_ADDR2NDX(addr)];
 
@@ -199,7 +199,7 @@ fbt_invop(uintptr_t addr, uintptr_t *stack, uintptr_t rval)
 				 * disabled.
 				 */
 				DTRACE_CPUFLAG_SET(CPU_DTRACE_NOFAULT);
-				cpu->cpu_dtrace_caller = stack[i++];
+				xcpu->cpu_dtrace_caller = stack[i++];
 				stack0 = stack[i++];
 				stack1 = stack[i++];
 				stack2 = stack[i++];
@@ -211,7 +211,7 @@ fbt_invop(uintptr_t addr, uintptr_t *stack, uintptr_t rval)
 				dtrace_probe(fbt->fbtp_id, stack0, stack1,
 				    stack2, stack3, stack4);
 
-				cpu->cpu_dtrace_caller = 0;
+				xcpu->cpu_dtrace_caller = 0;
 			} else {
 #ifdef __amd64__
 				/*
@@ -221,14 +221,14 @@ fbt_invop(uintptr_t addr, uintptr_t *stack, uintptr_t rval)
 				 * action is correct.
 				 */
 				DTRACE_CPUFLAG_SET(CPU_DTRACE_NOFAULT);
-				cpu->cpu_dtrace_caller = stack[0];
+				xcpu->cpu_dtrace_caller = stack[0];
 				DTRACE_CPUFLAG_CLEAR(CPU_DTRACE_NOFAULT |
 				    CPU_DTRACE_BADADDR);
 #endif
 
 				dtrace_probe(fbt->fbtp_id, fbt->fbtp_roffset,
 				    rval, 0, 0, 0);
-				cpu->cpu_dtrace_caller = 0;
+				xcpu->cpu_dtrace_caller = 0;
 			}
 
 			return (fbt->fbtp_rval);
@@ -792,12 +792,12 @@ fbt_ctfoff_init(dtrace_modctl_t *mod, mod_ctf_t *mc)
 }
 
 static ssize_t
-fbt_get_ctt_size(uint8_t version, const ctf_type_t *tp, ssize_t *sizep,
+fbt_get_ctt_size(uint8_t xversion, const ctf_type_t *tp, ssize_t *sizep,
     ssize_t *incrementp)
 {
 	ssize_t size, increment;
 
-	if (version > CTF_VERSION_1 &&
+	if (xversion > CTF_VERSION_1 &&
 	    tp->ctt_size == CTF_LSIZE_SENT) {
 		size = CTF_TYPE_LSIZE(tp);
 		increment = sizeof (ctf_type_t);

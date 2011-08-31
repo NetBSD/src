@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_load.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: dtrace_load.c,v 1.3 2011/08/31 21:57:16 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -81,7 +81,7 @@ dtrace_load(void *dummy)
 	dtrace_arena = vmem_create("dtrace", 1, INT_MAX, 1,
 			NULL, NULL, NULL, 0, VM_SLEEP, IPL_NONE);
 
-	dtrace_state_cache = kmem_cache_create("dtrace_state_cache",
+	dtrace_state_cache = kmem_cache_create(__UNCONST("dtrace_state_cache"),
 	    sizeof (dtrace_dstate_percpu_t) * NCPU, DTRACE_STATE_ALIGN,
 	    NULL, NULL, NULL, NULL, NULL, 0);
 

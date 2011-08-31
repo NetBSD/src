@@ -1448,7 +1448,7 @@ dtrace_dynvar(dtrace_dstate_t *dstate, uint_t nkeys,
 	uint64_t hashval = DTRACE_DYNHASH_VALID;
 	dtrace_dynhash_t *hash = dstate->dtds_hash;
 	dtrace_dynvar_t *free, *new_free, *next, *dvar, *start, *prev = NULL;
-	processorid_t me = curcpu_id, cpu = me;
+	processorid_t me = curcpu_id, xcpu = me;
 	dtrace_dstate_percpu_t *dcpu = &dstate->dtds_percpu[me];
 	size_t bucket, ksize;
 	size_t chunksize = dstate->dtds_chunksize;
@@ -1754,8 +1754,8 @@ retry:
 				case DTRACE_DSTATE_CLEAN: {
 					void *sp = &dstate->dtds_state;
 
-					if (++cpu >= NCPU)
-						cpu = 0;
+					if (++xcpu >= NCPU)
+						xcpu = 0;
 
 					if (dcpu->dtdsc_dirty != NULL &&
 					    nstate == DTRACE_DSTATE_EMPTY)
@@ -1764,9 +1764,9 @@ retry:
 					if (dcpu->dtdsc_rinsing != NULL)
 						nstate = DTRACE_DSTATE_RINSING;
 
-					dcpu = &dstate->dtds_percpu[cpu];
+					dcpu = &dstate->dtds_percpu[xcpu];
 
-					if (cpu != me)
+					if (xcpu != me)
 						goto retry;
 
 					(void) dtrace_cas32(sp,
@@ -2330,7 +2330,7 @@ dtrace_speculation(dtrace_state_t *state)
  * to the state transition diagram outlined in <sys/dtrace_impl.h>
  */
 static void
-dtrace_speculation_commit(dtrace_state_t *state, processorid_t cpu,
+dtrace_speculation_commit(dtrace_state_t *state, processorid_t xcpu,
     dtrace_specid_t which)
 {
 	dtrace_speculation_t *spec;
@@ -2343,13 +2343,13 @@ dtrace_speculation_commit(dtrace_state_t *state, processorid_t cpu,
 		return;
 
 	if (which > state->dts_nspeculations) {
-		cpu_core[cpu].cpuc_dtrace_flags |= CPU_DTRACE_ILLOP;
+		cpu_core[xcpu].cpuc_dtrace_flags |= CPU_DTRACE_ILLOP;
 		return;
 	}
 
 	spec = &state->dts_speculations[which - 1];
-	src = &spec->dtsp_buffer[cpu];
-	dest = &state->dts_buffer[cpu];
+	src = &spec->dtsp_buffer[xcpu];
+	dest = &state->dts_buffer[xcpu];
 
 	do {
 		current = spec->dtsp_state;
@@ -2468,7 +2468,7 @@ out:
  * according to the state transition diagram outlined in <sys/dtrace_impl.h>
  */
 static void
-dtrace_speculation_discard(dtrace_state_t *state, processorid_t cpu,
+dtrace_speculation_discard(dtrace_state_t *state, processorid_t xcpu,
     dtrace_specid_t which)
 {
 	dtrace_speculation_t *spec;
@@ -2479,12 +2479,12 @@ dtrace_speculation_discard(dtrace_state_t *state, processorid_t cpu,
 		return;
 
 	if (which > state->dts_nspeculations) {
-		cpu_core[cpu].cpuc_dtrace_flags |= CPU_DTRACE_ILLOP;
+		cpu_core[xcpu].cpuc_dtrace_flags |= CPU_DTRACE_ILLOP;
 		return;
 	}
 
 	spec = &state->dts_speculations[which - 1];
-	buf = &spec->dtsp_buffer[cpu];
+	buf = &spec->dtsp_buffer[xcpu];
 
 	do {
 		current = spec->dtsp_state;
@@ -2530,8 +2530,8 @@ static void
 dtrace_speculation_clean_here(dtrace_state_t *state)
 {
 	dtrace_icookie_t cookie;
-	processorid_t cpu = curcpu_id;
-	dtrace_buffer_t *dest = &state->dts_buffer[cpu];
+	processorid_t xcpu = curcpu_id;
+	dtrace_buffer_t *dest = &state->dts_buffer[xcpu];
 	dtrace_specid_t i;
 
 	cookie = dtrace_interrupt_disable();
@@ -2543,7 +2543,7 @@ dtrace_speculation_clean_here(dtrace_state_t *state)
 
 	for (i = 0; i < state->dts_nspeculations; i++) {
 		dtrace_speculation_t *spec = &state->dts_speculations[i];
-		dtrace_buffer_t *src = &spec->dtsp_buffer[cpu];
+		dtrace_buffer_t *src = &spec->dtsp_buffer[xcpu];
 
 		if (src->dtb_tomax == NULL)
 			continue;
@@ -2559,7 +2559,7 @@ dtrace_speculation_clean_here(dtrace_state_t *state)
 		if (src->dtb_offset == 0)
 			continue;
 
-		dtrace_speculation_commit(state, cpu, i + 1);
+		dtrace_speculation_commit(state, xcpu, i + 1);
 	}
 
 	dtrace_interrupt_enable(cookie);
@@ -5631,8 +5631,8 @@ dtrace_action_breakpoint(dtrace_ecb_t *ecb)
 	dtrace_probe_t *probe = ecb->dte_probe;
 	dtrace_provider_t *prov = probe->dtpr_provider;
 	char c[DTRACE_FULLNAMELEN + 80], *str;
-	char *msg = "dtrace: breakpoint action at probe ";
-	char *ecbmsg = " (ecb ";
+	const char *msg = "dtrace: breakpoint action at probe ";
+	const char *ecbmsg = " (ecb ";
 	uintptr_t mask = (0xf << (sizeof (uintptr_t) * NBBY / 4));
 	uintptr_t val = (uintptr_t)ecb;
 	int shift = (sizeof (uintptr_t) * NBBY) - 4, i = 0;
@@ -8035,7 +8035,7 @@ dtrace_probe_provide(dtrace_probedesc_t *desc, dtrace_provider_t *prv)
 		    mod_nbsd = kmem_zalloc(sizeof(*mod_nbsd), KM_SLEEP);
 		    mod_nbsd->mod_info = kmem_zalloc(sizeof(modinfo_t), KM_SLEEP);
 		    mod_nbsd->mod_refcnt = 1;
-		    *((char **)&mod_nbsd->mod_info->mi_name) = "netbsd";
+		    *((char **)(intptr_t)&mod_nbsd->mod_info->mi_name) = __UNCONST("netbsd");
 		}
 
 		kernconfig_lock();
@@ -10545,12 +10545,12 @@ dtrace_ecb_create(dtrace_state_t *state, dtrace_probe_t *probe,
 		 * of creating our own (saving both time and space).
 		 */
 		dtrace_ecb_t *cached = dtrace_ecb_create_cache;
-		dtrace_action_t *act = cached->dte_action;
+		dtrace_action_t *xact = cached->dte_action;
 
-		if (act != NULL) {
-			ASSERT(act->dta_refcnt > 0);
-			act->dta_refcnt++;
-			ecb->dte_action = act;
+		if (xact != NULL) {
+			ASSERT(xact->dta_refcnt > 0);
+			xact->dta_refcnt++;
+			ecb->dte_action = xact;
 			ecb->dte_action_last = cached->dte_action_last;
 			ecb->dte_needed = cached->dte_needed;
 			ecb->dte_size = cached->dte_size;
@@ -10700,7 +10700,7 @@ dtrace_buffer_activate(dtrace_state_t *state)
 
 static int
 dtrace_buffer_alloc(dtrace_buffer_t *bufs, size_t size, int flags,
-    processorid_t cpu)
+    processorid_t xcpu)
 {
 #if defined(sun)
 	cpu_t *cp;
@@ -10721,7 +10721,7 @@ dtrace_buffer_alloc(dtrace_buffer_t *bufs, size_t size, int flags,
 	cp = cpu_list;
 
 	do {
-		if (cpu != DTRACE_CPUALL && cpu != cp->cpu_id)
+		if (xcpu != DTRACE_CPUALL && xcpu != cp->cpu_id)
 			continue;
 
 		buf = &bufs[cp->cpu_id];
@@ -10758,7 +10758,7 @@ err:
 	cp = cpu_list;
 
 	do {
-		if (cpu != DTRACE_CPUALL && cpu != cp->cpu_id)
+		if (xcpu != DTRACE_CPUALL && xcpu != cp->cpu_id)
 			continue;
 
 		buf = &bufs[cp->cpu_id];
@@ -10794,7 +10794,7 @@ err:
 
 	ASSERT(MUTEX_HELD(&dtrace_lock));
 	for (CPU_INFO_FOREACH(cpuind, cinfo)) {
-		if (cpu != DTRACE_CPUALL && cpu != cpu_index(cinfo))
+		if (xcpu != DTRACE_CPUALL && xcpu != cpu_index(cinfo))
 			continue;
 
 		buf = &bufs[cpu_index(cinfo)];
@@ -10834,7 +10834,7 @@ err:
 	 * allocated before the failed allocation.
 	 */
 	for (CPU_INFO_FOREACH(cpuind, cinfo)) {
-		if (cpu != DTRACE_CPUALL && cpu != cpu_index(cinfo))
+		if (xcpu != DTRACE_CPUALL && xcpu != cpu_index(cinfo))
 			continue;
 
 		buf = &bufs[cpu_index(cinfo)];
@@ -11995,7 +11995,7 @@ dtrace_dof_difo(dof_hdr_t *dof, dof_sec_t *sec, dtrace_vstate_t *vstate,
 	size_t ttl = 0;
 	dof_difohdr_t *dofd;
 	uintptr_t daddr = (uintptr_t)dof;
-	size_t max = dtrace_difo_maxsize;
+	size_t maxx = dtrace_difo_maxsize;
 	int i, l, n;
 
 	static const struct {
@@ -12056,7 +12056,7 @@ dtrace_dof_difo(dof_hdr_t *dof, dof_sec_t *sec, dtrace_vstate_t *vstate,
 		    dofd->dofd_links[l])) == NULL)
 			goto err; /* invalid section link */
 
-		if (ttl + subsec->dofs_size > max) {
+		if (ttl + subsec->dofs_size > maxx) {
 			dtrace_dof_error(dof, "exceeds maximum size");
 			goto err;
 		}
@@ -12697,7 +12697,7 @@ dtrace_dof_options(dof_hdr_t *dof, dtrace_state_t *state)
 static int
 dtrace_dstate_init(dtrace_dstate_t *dstate, size_t size)
 {
-	size_t hashsize, maxper, min, chunksize = dstate->dtds_chunksize;
+	size_t hashsize, maxper, minn, chunksize = dstate->dtds_chunksize;
 	void *base;
 	uintptr_t limit;
 	dtrace_dynvar_t *dvar, *next, *start;
@@ -12711,8 +12711,8 @@ dtrace_dstate_init(dtrace_dstate_t *dstate, size_t size)
 	if ((dstate->dtds_chunksize = chunksize) == 0)
 		dstate->dtds_chunksize = DTRACE_DYNVAR_CHUNKSIZE;
 
-	if (size < (min = dstate->dtds_chunksize + sizeof (dtrace_dynhash_t)))
-		size = min;
+	if (size < (minn = dstate->dtds_chunksize + sizeof (dtrace_dynhash_t)))
+		size = minn;
 
 	if ((base = kmem_zalloc(size, KM_NOSLEEP)) == NULL)
 		return (ENOMEM);
@@ -13178,7 +13178,7 @@ static int
 dtrace_state_buffer(dtrace_state_t *state, dtrace_buffer_t *buf, int which)
 {
 	dtrace_optval_t *opt = state->dts_options, size;
-	processorid_t cpu = 0;;
+	processorid_t xcpu = 0;;
 	int flags = 0, rval;
 
 	ASSERT(MUTEX_HELD(&dtrace_lock));
@@ -13192,7 +13192,7 @@ dtrace_state_buffer(dtrace_state_t *state, dtrace_buffer_t *buf, int which)
 		return (0);
 
 	if (opt[DTRACEOPT_CPU] != DTRACEOPT_UNSET)
-		cpu = opt[DTRACEOPT_CPU];
+		xcpu = opt[DTRACEOPT_CPU];
 
 	if (which == DTRACEOPT_SPECSIZE)
 		flags |= DTRACEBUF_NOSWITCH;
@@ -13227,7 +13227,7 @@ dtrace_state_buffer(dtrace_state_t *state, dtrace_buffer_t *buf, int which)
 			return (E2BIG);
 		}
 
-		rval = dtrace_buffer_alloc(buf, size, flags, cpu);
+		rval = dtrace_buffer_alloc(buf, size, flags, xcpu);
 
 		if (rval != ENOMEM) {
 			opt[which] = size;
@@ -13291,7 +13291,7 @@ dtrace_state_prereserve(dtrace_state_t *state)
 }
 
 static int
-dtrace_state_go(dtrace_state_t *state, processorid_t *cpu)
+dtrace_state_go(dtrace_state_t *state, processorid_t *xcpu)
 {
 	dtrace_optval_t *opt = state->dts_options, sz, nspec;
 	dtrace_speculation_t *spec;
@@ -13379,7 +13379,7 @@ dtrace_state_go(dtrace_state_t *state, processorid_t *cpu)
 		state->dts_options[DTRACEOPT_GRABANON] =
 		    opt[DTRACEOPT_GRABANON];
 
-		*cpu = dtrace_anon.dta_beganon;
+		*xcpu = dtrace_anon.dta_beganon;
 
 		/*
 		 * If the anonymous state is active (as it almost certainly
@@ -13521,9 +13521,9 @@ dtrace_state_go(dtrace_state_t *state, processorid_t *cpu)
 	 * level) and to manually activate the buffer for this CPU.
 	 */
 	cookie = dtrace_interrupt_disable();
-	*cpu = curcpu_id;
-	ASSERT(state->dts_buffer[*cpu].dtb_flags & DTRACEBUF_INACTIVE);
-	state->dts_buffer[*cpu].dtb_flags &= ~DTRACEBUF_INACTIVE;
+	*xcpu = curcpu_id;
+	ASSERT(state->dts_buffer[*xcpu].dtb_flags & DTRACEBUF_INACTIVE);
+	state->dts_buffer[*xcpu].dtb_flags &= ~DTRACEBUF_INACTIVE;
 
 	dtrace_probe(dtrace_probeid_begin,
 	    (uint64_t)(uintptr_t)state, 0, 0, 0, 0);
@@ -13582,7 +13582,7 @@ out:
 }
 
 static int
-dtrace_state_stop(dtrace_state_t *state, processorid_t *cpu)
+dtrace_state_stop(dtrace_state_t *state, processorid_t *xcpu)
 {
 	dtrace_icookie_t cookie;
 
@@ -13622,7 +13622,7 @@ dtrace_state_stop(dtrace_state_t *state, processorid_t *cpu)
 	state->dts_reserve = 0;
 
 	cookie = dtrace_interrupt_disable();
-	*cpu = curcpu_id;
+	*xcpu = curcpu_id;
 	dtrace_probe(dtrace_probeid_end,
 	    (uint64_t)(uintptr_t)state, 0, 0, 0, 0);
 	dtrace_interrupt_enable(cookie);
@@ -15129,7 +15129,7 @@ dtrace_resume(void)
 #endif
 
 static int
-dtrace_cpu_setup(cpu_setup_t what, processorid_t cpu)
+dtrace_cpu_setup(cpu_setup_t what, processorid_t xcpu)
 {
 	ASSERT(MUTEX_HELD(&cpu_lock));
 	mutex_enter(&dtrace_lock);
