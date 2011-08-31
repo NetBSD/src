@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunsgen_ieee754.c,v 1.1 2011/07/09 02:30:27 matt Exp $	*/
+/*	$NetBSD: fixunsgen_ieee754.c,v 1.2 2011/08/31 22:36:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if !defined(FIXUNSNAME) && defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fixunsgen_ieee754.c,v 1.1 2011/07/09 02:30:27 matt Exp $");
+__RCSID("$NetBSD: fixunsgen_ieee754.c,v 1.2 2011/08/31 22:36:36 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <stddef.h>
@@ -64,9 +64,10 @@ FIXUNSNAME(__fixunsgen)(int exp, bool sign, size_t mant_dig, size_t fracbits,
 	/*
 	 * If it's less than 1 (negative exponent), it's going to round
 	 * to zero.  If the exponent is so large that it is a multiple of
-	 * 2^N, then x module 2^N will be 0.
+	 * 2^N, then x module 2^N will be 0.  (we use the fact treating a
+	 * negative value as unsigned will be greater than nonnegative value)
 	 */
-	if (__predict_false(exp < 0 || exp - mant_dig > sizeof(UINTXX_T)*8-1))
+	if (__predict_false((size_t)exp >= mant_dig + sizeof(UINTXX_T)*8))
 		return 0;
 
 	/*
