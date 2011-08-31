@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 2011/08/20 06:00:14 he Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 2011/08/31 20:04:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -79,6 +79,17 @@ enum bus_space_override_idx {
 #endif
 };
 
+enum bus_dma_override_idx {
+	  BUS_DMAMAP_OVERRIDE_CREATE	= __BIT(0)
+	, BUS_DMAMAP_OVERRIDE_DESTROY	= __BIT(1)
+	, BUS_DMAMAP_OVERRIDE_LOAD	= __BIT(2)
+	, BUS_DMAMAP_OVERRIDE_LOAD_MBUF	= __BIT(3)
+	, BUS_DMAMAP_OVERRIDE_LOAD_UIO	= __BIT(4)
+	, BUS_DMAMAP_OVERRIDE_LOAD_RAW	= __BIT(5)
+	, BUS_DMAMAP_OVERRIDE_UNLOAD	= __BIT(6)
+	, BUS_DMAMAP_OVERRIDE_SYNC	= __BIT(7)
+};
+
 /* Only add new members at the end of this struct! */
 struct bus_space_overrides {
 	int (*ov_space_map)(void *, bus_space_tag_t, bus_addr_t, bus_size_t,
@@ -119,10 +130,35 @@ struct bus_space_overrides {
 #endif
 };
 
+struct mbuf;
+struct uio;
+
+/* Only add new members at the end of this struct! */
+struct bus_dma_overrides {
+	int (*ov_dmamap_create)(void *, bus_dma_tag_t, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+	void (*ov_dmamap_destroy)(void *, bus_dma_tag_t, bus_dmamap_t);
+	int (*ov_dmamap_load)(void *, bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct lwp *, int);
+	int (*ov_dmamap_load_mbuf)(void *, bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
+	int (*ov_dmamap_load_uio)(void *, bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
+	int (*ov_dmamap_load_raw)(void *, bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
+	void (*ov_dmamap_unload)(void *, bus_dma_tag_t, bus_dmamap_t);
+	void (*ov_dmamap_sync)(void *, bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
+};
+
 int	bus_space_tag_create(bus_space_tag_t, uint64_t, uint64_t,
 	                     const struct bus_space_overrides *, void *,
 	                     bus_space_tag_t *);
 void	bus_space_tag_destroy(bus_space_tag_t);
+
+int bus_dma_tag_create(bus_dma_tag_t, uint64_t,
+    const struct bus_dma_overrides *, void *, bus_dma_tag_t *);
+void bus_dma_tag_destroy(bus_dma_tag_t);
 
 /* Reserve a region of bus space.  Reserved bus space cannot be allocated
  * with bus_space_alloc().  Reserved space has not been bus_space_map()'d.
