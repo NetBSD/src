@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.39 2011/06/06 16:50:46 drochner Exp $	*/
+/*	$NetBSD: ndp.c,v 1.40 2011/08/31 13:32:38 joerg Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ static void dump(struct in6_addr *, int);
 static struct in6_nbrinfo *getnbrinfo(struct in6_addr *, unsigned int, int);
 static char *ether_str(struct sockaddr_dl *);
 static int ndp_ether_aton(char *, u_char *);
-static void usage(void);
+__dead static void usage(void);
 static int rtmsg(int);
 static void ifinfo(char *, int, char **);
 static void rtrlist(void);

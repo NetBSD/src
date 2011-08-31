@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.16 2011/06/08 12:49:45 wiz Exp $ */
+/* $NetBSD: wsfontload.c,v 1.17 2011/08/31 13:32:42 joerg Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 #define DEFBITORDER	WSDISPLAY_FONTORDER_L2R
 #define DEFBYTEORDER	WSDISPLAY_FONTORDER_L2R
 
-static void usage(void);
+__dead static void usage(void);
 static int getencoding(char *);
 static const char *rgetencoding(int);
 static const char *rgetfontorder(int);

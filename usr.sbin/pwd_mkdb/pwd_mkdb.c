@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.53 2011/01/04 10:01:51 wiz Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.54 2011/08/31 13:32:39 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.53 2011/01/04 10:01:51 wiz Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.54 2011/08/31 13:32:39 joerg Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -167,13 +167,13 @@ static int	warning;
 static struct pwddb sdb, idb;
 
 
-void	bailout(void) __attribute__((__noreturn__));
+void	bailout(void) __dead;
 void	cp(const char *, const char *, mode_t);
 void	deldbent(struct pwddb *, int, void *);
-void	mkpw_error(const char *, ...);
+void	mkpw_error(const char *, ...) __dead;
 void	mkpw_warning(const char *, ...);
 int	getdbent(struct pwddb *, int, void *, struct passwd **);
-void	inconsistency(void);
+void	inconsistency(void) __dead;
 void	install(const char *, const char *);
 int	main(int, char **);
 void	putdbents(struct pwddb *, struct passwd *, const char *, int, int,
@@ -181,8 +181,8 @@ void	putdbents(struct pwddb *, struct passwd *, const char *, int, int,
 void	putyptoken(struct pwddb *);
 void	rm(const char *);
 int	scan(FILE *, struct passwd *, int *, int *);
-void	usage(void) __attribute__((__noreturn__));
-void	wr_error(const char *);
+void	usage(void) __dead;
+void	wr_error(const char *) __dead;
 uint32_t getversion(const char *);
 void	setversion(struct pwddb *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.117 2011/01/04 09:58:03 wiz Exp $	*/
+/*	$NetBSD: pstat.c,v 1.118 2011/08/31 13:32:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.117 2011/01/04 09:58:03 wiz Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.118 2011/08/31 13:32:39 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,7 @@ void	ttyprt(struct tty *);
 void	ufs_header(void);
 int	ufs_print(struct vnode *, int);
 int	ext2fs_print(struct vnode *, int);
-void	usage(void);
+__dead void	usage(void);
 void	vnode_header(void);
 int	vnode_print(struct vnode *, struct vnode *);
 void	vnodemode(void);

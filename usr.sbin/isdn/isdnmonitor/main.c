@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.11 2009/04/16 05:56:33 lukem Exp $ */
+/* $NetBSD: main.c,v 1.12 2011/08/31 13:32:37 joerg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ int getopt(int nargc, char * const nargv[], const char *ostr);
  */
 static int connect_local(char *sockpath);
 static int connect_remote(char *host, int portno);
-static void usage(void);
+__dead static void usage(void);
 static void mloop(void);
 static void handle_input(void);
 static void print_menu(void);
@@ -122,7 +122,7 @@ static FILE *lfp = NULL;
  *	Display usage and exit
  *---------------------------------------------------------------------------*/
 static void
-usage()
+usage(void)
 {
         fprintf(stderr, "\n");
         fprintf(stderr, "isdnmonitor - version %02d.%02d.%d, (protocol %02d.%02d)\n", VERSION, REL, STEP, MPROT_VERSION, MPROT_REL);
