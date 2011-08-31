@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *      $Id: main.c,v 1.7 2009/04/16 05:56:33 lukem Exp $ 
+ *      $Id: main.c,v 1.8 2011/08/31 13:30:44 joerg Exp $ 
  *
  * $FreeBSD$
  *
@@ -40,7 +40,7 @@
 #include "defs.h"
 #include "alias.h"
 
-static void usage( void );
+__dead static void usage( void );
 
 static int top_dis = 0;
 static int bot_dis = 0;
