@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.315 2011/07/17 20:54:53 joerg Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.316 2011/08/31 18:31:03 plunky Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.315 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.316 2011/08/31 18:31:03 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -4818,7 +4818,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	case AF_INET:
 		error = ip_output(m, sc->sc_ipopts, ro,
 		    (ip_mtudisc ? IP_MTUDISC : 0),
-		    (struct ip_moptions *)NULL, so);
+		    NULL, so);
 		break;
 #endif
 #ifdef INET6

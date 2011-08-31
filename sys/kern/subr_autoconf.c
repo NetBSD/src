@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.219 2011/08/27 19:52:22 martin Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.220 2011/08/31 18:31:02 plunky Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.219 2011/08/27 19:52:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.220 2011/08/31 18:31:02 plunky Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1074,8 +1074,8 @@ config_rootfound(const char *rootname, void *aux)
 {
 	cfdata_t cf;
 
-	if ((cf = config_rootsearch((cfsubmatch_t)NULL, rootname, aux)) != NULL)
-		return config_attach(ROOT, cf, aux, (cfprint_t)NULL);
+	if ((cf = config_rootsearch(NULL, rootname, aux)) != NULL)
+		return config_attach(ROOT, cf, aux, NULL);
 	aprint_error("root device %s not configured\n", rootname);
 	return NULL;
 }

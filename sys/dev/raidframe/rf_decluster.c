@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.22 2007/03/04 06:02:36 christos Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.23 2011/08/31 18:31:02 plunky Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.22 2007/03/04 06:02:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.23 2011/08/31 18:31:02 plunky Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -696,5 +696,5 @@ rf_FreeSpareTable(RF_Raid_t *raidPtr)
 		RF_Free(table[i], info->BlocksPerTable * sizeof(RF_SpareTableEntry_t));
 	}
 	RF_Free(table, info->TablesPerSpareRegion * sizeof(RF_SpareTableEntry_t *));
-	info->SpareTable = (RF_SpareTableEntry_t **) NULL;
+	info->SpareTable = NULL;
 }

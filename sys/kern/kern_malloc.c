@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.131 2010/05/05 02:20:42 christos Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.132 2011/08/31 18:31:02 plunky Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.131 2010/05/05 02:20:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.132 2011/08/31 18:31:02 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -363,7 +363,7 @@ kern_malloc(unsigned long size, struct malloc_type *ksp, int flags)
 	while (ksp->ks_memuse >= ksp->ks_limit) {
 		if (flags & M_NOWAIT) {
 			mutex_spin_exit(&malloc_lock);
-			return ((void *) NULL);
+			return (NULL);
 		}
 		if (ksp->ks_limblocks < 65535)
 			ksp->ks_limblocks++;

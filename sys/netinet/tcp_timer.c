@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.85 2011/04/20 13:35:52 gdt Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.86 2011/08/31 18:31:03 plunky Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.85 2011/04/20 13:35:52 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.86 2011/08/31 18:31:03 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -568,11 +568,11 @@ tcp_timer_keep(void *arg)
 			 * length to get a 4.2 host to respond.
 			 */
 			(void)tcp_respond(tp, tp->t_template,
-			    (struct mbuf *)NULL, NULL, tp->rcv_nxt - 1,
+			    NULL, NULL, tp->rcv_nxt - 1,
 			    tp->snd_una - 1, 0);
 		} else {
 			(void)tcp_respond(tp, tp->t_template,
-			    (struct mbuf *)NULL, NULL, tp->rcv_nxt,
+			    NULL, NULL, tp->rcv_nxt,
 			    tp->snd_una - 1, 0);
 		}
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepintvl);

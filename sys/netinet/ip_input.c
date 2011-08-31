@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.295 2011/05/03 17:44:31 dyoung Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.296 2011/08/31 18:31:03 plunky Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.295 2011/05/03 17:44:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.296 2011/08/31 18:31:03 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1405,7 +1405,7 @@ ip_forward(struct mbuf *m, int srcrt)
 
 	error = ip_output(m, NULL, &ipforward_rt,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
-	    (struct ip_moptions *)NULL, (struct socket *)NULL);
+	    NULL, NULL);
 
 	if (error)
 		IP_STATINC(IP_STAT_CANTFORWARD);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.114 2011/05/04 01:45:48 dyoung Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.115 2011/08/31 18:31:03 plunky Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.114 2011/05/04 01:45:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.115 2011/08/31 18:31:03 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -369,7 +369,7 @@ in6_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 {
 	struct in6pcb *in6p = v;
 	struct sockaddr_in6 lsin6;
-	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)NULL;
+	struct sockaddr_in6 *sin6 = NULL;
 	int error;
 
 	if (in6p->in6p_af != AF_INET6)

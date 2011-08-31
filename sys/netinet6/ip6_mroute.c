@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.100 2010/10/14 03:34:42 oki Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.101 2011/08/31 18:31:03 plunky Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.100 2010/10/14 03:34:42 oki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.101 2011/08/31 18:31:03 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -1911,8 +1911,7 @@ pim6_input(struct mbuf **mp, int *offp, int proto)
 #endif
 
 		looutput(mif6table[reg_mif_num].m6_ifp, m,
-			      (struct sockaddr *)__UNCONST(&dst),
-			      (struct rtentry *) NULL);
+			      (struct sockaddr *)__UNCONST(&dst), NULL);
 
 		/* prepare the register head to send to the mrouting daemon */
 		m = mcp;

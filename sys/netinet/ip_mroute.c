@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.119 2011/07/17 20:54:53 joerg Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.120 2011/08/31 18:31:03 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.119 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.120 2011/08/31 18:31:03 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1275,8 +1275,7 @@ static int
 socket_send(struct socket *s, struct mbuf *mm, struct sockaddr_in *src)
 {
 	if (s) {
-		if (sbappendaddr(&s->so_rcv, sintosa(src), mm,
-		    (struct mbuf *)NULL) != 0) {
+		if (sbappendaddr(&s->so_rcv, sintosa(src), mm, NULL) != 0) {
 			sorwakeup(s);
 			return (0);
 		}
@@ -1353,7 +1352,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			    (vifp->v_flags & VIFF_TUNNEL) ? "tunnel on " : "",
 			    vifp->v_ifp->if_xname);
 		}
-		return (ip_mdq(m, ifp, (struct mfc *)NULL, vifi));
+		return (ip_mdq(m, ifp, NULL, vifi));
 	}
 	if (rsvpdebug && ip->ip_p == IPPROTO_RSVP) {
 		printf("Warning: IPPROTO_RSVP from %x to %x without vif option\n",
@@ -2127,9 +2126,7 @@ tbf_send_packet(struct vif *vifp, struct mbuf *m)
 
 	if (vifp->v_flags & VIFF_TUNNEL) {
 		/* If tunnel options */
-		ip_output(m, (struct mbuf *)NULL, &vifp->v_route,
-		    IP_FORWARDING, (struct ip_moptions *)NULL,
-		    (struct socket *)NULL);
+		ip_output(m, NULL, &vifp->v_route, IP_FORWARDING, NULL, NULL);
 	} else {
 		/* if physical interface option, extract the options and then send */
 		struct ip_moptions imo;
@@ -3475,7 +3472,7 @@ pim_input(struct mbuf *m, ...)
 		reg_vif_num);
 	}
 	/* NB: vifp was collected above; can it change on us? */
-	looutput(vifp, m, (struct sockaddr *)&dst, (struct rtentry *)NULL);
+	looutput(vifp, m, (struct sockaddr *)&dst, NULL);
 
 	/* prepare the register head to send to the mrouting daemon */
 	m = mcp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.108 2011/04/24 18:46:23 rmind Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.109 2011/08/31 18:31:03 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.108 2011/04/24 18:46:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.109 2011/08/31 18:31:03 plunky Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -1313,7 +1313,7 @@ sbcreatecontrol(void *p, int size, int type, int level)
 	}
 
 	if ((m = m_get(M_DONTWAIT, MT_CONTROL)) == NULL)
-		return ((struct mbuf *) NULL);
+		return (NULL);
 	if (CMSG_SPACE(size) > MLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {

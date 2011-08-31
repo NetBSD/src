@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.142 2011/08/08 19:10:33 dyoung Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.143 2011/08/31 18:31:02 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.142 2011/08/08 19:10:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.143 2011/08/31 18:31:02 plunky Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -601,9 +601,9 @@ m_prepend(struct mbuf *m, int len, int how)
 	struct mbuf *mn;
 
 	MGET(mn, how, m->m_type);
-	if (mn == (struct mbuf *)NULL) {
+	if (mn == NULL) {
 		m_freem(m);
-		return ((struct mbuf *)NULL);
+		return (NULL);
 	}
 	if (m->m_flags & M_PKTHDR) {
 		M_MOVE_PKTHDR(mn, m);

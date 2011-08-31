@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.26 2009/02/07 20:41:30 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.27 2011/08/31 18:31:02 plunky Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.26 2009/02/07 20:41:30 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.27 2011/08/31 18:31:02 plunky Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -222,7 +222,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 				/* check to see if we found a creation func
 				 * for this stripe unit */
 
-				if (vfple->fn == (RF_VoidFuncPtr) NULL) {
+				if (vfple->fn == NULL) {
 					/* could not find creation function
 					 * for stripe unit so, let's see if we
 					 * can find one for each block in the
@@ -375,7 +375,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 				tmpvfple = failed_stripe->bvfple;
 				for (j = 0, physPtr = asm_p->physInfo; physPtr; physPtr = physPtr->next, j++) {
 					uFunc = vfple->fn; /* stripeUnitFuncs[stripeNum][j]; */
-					if (uFunc == (RF_VoidFuncPtr) NULL) {
+					if (uFunc == NULL) {
 						/* use bailout functions for
 						 * this stripe unit */
 						for (k = 0; k < physPtr->numSector; k++) {
