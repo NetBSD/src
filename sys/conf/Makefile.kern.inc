@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.147 2011/08/28 23:15:53 jmcneill Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.148 2011/08/31 20:16:43 plunky Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -94,6 +94,12 @@ CFLAGS+=	-fno-strict-aliasing
 
 .if ${USE_SSP:Uno} == "yes"
 COPTS.kern_ssp.c+=	-fno-stack-protector -D__SSP__
+.endif
+
+# for multi-cpu machines, cpu_hatch() straddles the init of
+# __stack_chk_guard, so ensure stack protection is disabled
+.if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64"
+COPTS.cpu.c+=		-fno-stack-protector
 .endif
 
 # If we want the bpendtsleep: label in kern_synch.c, we need to use
