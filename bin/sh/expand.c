@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.85 2011/08/23 10:04:39 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.86 2011/08/31 16:24:54 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.85 2011/08/23 10:04:39 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.86 2011/08/31 16:24:54 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,7 @@ void
 expandhere(union node *arg, int fd)
 {
 	herefd = fd;
-	expandarg(arg, (struct arglist *)NULL, 0);
+	expandarg(arg, NULL, 0);
 	xwrite(fd, stackblock(), expdest - stackblock());
 }
 
@@ -533,7 +533,7 @@ subevalvar(char *p, char *str, int strloc, int subtype, int startloc, int varfla
 	case VSQUESTION:
 		if (*p != CTLENDVAR) {
 			outfmt(&errout, "%s\n", startp);
-			error((char *)NULL);
+			error(NULL);
 		}
 		error("%.*s: parameter %snot set",
 		      (int)(p - str - 1),

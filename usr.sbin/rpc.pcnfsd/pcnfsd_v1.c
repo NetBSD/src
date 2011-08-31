@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_v1.c,v 1.3 1997/10/25 13:45:59 lukem Exp $	*/
+/*	$NetBSD: pcnfsd_v1.c,v 1.4 2011/08/31 16:24:59 plunky Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_v1.c 1.1 91/09/03 12:41:50 SMI */
 /*
@@ -100,7 +100,7 @@ pcnfsd_auth_1_svc(arg, req)
 #endif
 
 	p = get_password(uname);
-	if (p == (struct passwd *) NULL)
+	if (p == NULL)
 		return (&r);
 
 	c1 = strlen(pw);

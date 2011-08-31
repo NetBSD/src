@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.104 2011/06/20 08:27:15 enami Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.105 2011/08/31 16:25:00 plunky Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.104 2011/06/20 08:27:15 enami Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.105 2011/08/31 16:25:00 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -2671,7 +2671,7 @@ domark(int fd, short event, void *ev)
 	DPRINTF((D_CALL|D_EVENT), "domark()\n");
 
 	BLOCK_SIGNALS(omask, newmask);
-	now = time((time_t *)NULL);
+	now = time(NULL);
 	MarkSeq += TIMERINTVL;
 	if (MarkSeq >= MarkInterval) {
 		logmsg_async(LOG_INFO, NULL, "-- MARK --", ADDDATE|MARK);

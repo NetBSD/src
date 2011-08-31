@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.17 2009/08/12 08:07:27 dholland Exp $	*/
+/*	$NetBSD: move.c,v 1.18 2011/08/31 16:24:56 plunky Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.17 2009/08/12 08:07:27 dholland Exp $");
+__RCSID("$NetBSD: move.c,v 1.18 2011/08/31 16:24:56 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -469,7 +469,7 @@ over:
 				leaveok(Board, TRUE);
 				if ((outf = fopen(buf, "w")) == NULL)
 					warn("%s", buf);
-				setbuf(outf, (char *)NULL);
+				setbuf(outf, NULL);
 			}
 			Debug = !Debug;
 			break;

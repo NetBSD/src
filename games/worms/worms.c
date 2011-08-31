@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.20 2009/08/12 08:57:30 dholland Exp $	*/
+/*	$NetBSD: worms.c,v 1.21 2011/08/31 16:24:56 plunky Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.20 2009/08/12 08:57:30 dholland Exp $");
+__RCSID("$NetBSD: worms.c,v 1.21 2011/08/31 16:24:56 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,7 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "d:fl:n:t")) != -1)
 		switch(ch) {
 		case 'd':
-			if ((delay = (unsigned int)strtoul(optarg, (char **)NULL, 10)) < 1 || delay > 1000)
+			if ((delay = (unsigned int)strtoul(optarg, NULL, 10)) < 1 || delay > 1000)
 				errx(1, "invalid delay (1-1000)");
 			delay *= 1000;  /* ms -> us */
 			break;

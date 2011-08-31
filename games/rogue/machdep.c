@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2008/01/14 03:50:01 dholland Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2011/08/31 16:24:56 plunky Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)machdep.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: machdep.c,v 1.17 2008/01/14 03:50:01 dholland Exp $");
+__RCSID("$NetBSD: machdep.c,v 1.18 2011/08/31 16:24:56 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -481,7 +481,7 @@ md_shell(const char *shell)
 	case -1:
 		break;
 	case 0:
-		execl(shell, shell, (char *)NULL);
+		execl(shell, shell, NULL);
 		_exit(255);
 	default:
 		waitpid(pid, &w, 0);

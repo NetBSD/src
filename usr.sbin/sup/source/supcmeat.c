@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.38 2010/10/20 17:05:54 christos Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.39 2011/08/31 16:25:00 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -210,7 +210,7 @@ getcoll(void)
 		t = getcollhost(&tout, &backoff, &state, &nhosts);
 		if (t == NULL) {
 			finishup(SCMEOF);
-			notify((char *) NULL);
+			notify(NULL);
 			return;
 		}
 		t->Tmode = SCMEOF;
@@ -233,7 +233,7 @@ getcoll(void)
 		thisC->Clockfd = -1;
 	}
 	finishup(x);
-	notify((char *) NULL);
+	notify(NULL);
 }
 /***  Sign on to file server ***/
 
@@ -273,7 +273,7 @@ signon(TREE * t, int nhosts, int *tout)
 	x = msgsignonack();	/* receive signon ack from fileserver */
 	if (x != SCMOK)
 		goaway("Error reading signon reply from fileserver");
-	tloc = time((time_t *) NULL);
+	tloc = time(NULL);
 	vnotify("SUP Fileserver %d.%d (%s) %d on %s at %.8s\n",
 	    protver, pgmver, scmver, fspid, remotehost(), ctime(&tloc) + 11);
 	free(scmver);
@@ -374,7 +374,7 @@ setup(TREE * t)
 		t->Tmode = SCMOK;
 		doneack = FDONESRVERROR;
 		donereason = "Fileserver is busy";
-		(void) netcrypt((char *) NULL);
+		(void) netcrypt(NULL);
 		(void) msgdone();
 		return (TRUE);
 	default:
@@ -429,13 +429,13 @@ suplogin(void)
 		thisC->Clockfd = f;
 		vnotify("SUP Locked collection %s for exclusive access\n", collname);
 	}
-	logcrypt = (char *) NULL;
+	logcrypt = NULL;
 	loguser = thisC->Clogin;
 	logpswd = thisC->Cpswd;
 
 #ifndef	CRYPTING		/* Define CRYPTING for backwards compatibility
 				 * with old supfileservers */
-	if (thisC->Clogin != (char *) NULL)	/* othewise we only encrypt if
+	if (thisC->Clogin != NULL)		/* othewise we only encrypt if
 						 * there is a login id */
 #endif				/* CRYPTING */
 	{
@@ -444,9 +444,9 @@ suplogin(void)
 	}
 	x = msglogin();
 #ifndef CRYPTING
-	if (thisC->Clogin != (char *) NULL)
+	if (thisC->Clogin != NULL)
 #endif
-		(void) netcrypt((char *) NULL);	/* turn off encryption */
+		(void) netcrypt(NULL);		/* turn off encryption */
 	if (x != SCMOK)
 		goaway("Error sending login request to file server");
 	x = msglogack();
@@ -727,7 +727,7 @@ recvfiles(void)
 		x = msgsend();
 		if (x != SCMOK)
 			goaway("Error sending receive file request to file server");
-		(void) Tinsert(&upgradeT, (char *) NULL, FALSE);
+		(void) Tinsert(&upgradeT, NULL, FALSE);
 		x = msgrecv(recvone, &recvmore);
 		if (x != SCMOK)
 			goaway("Error receiving file from file server");
@@ -889,7 +889,7 @@ recvdir(TREE * t, int new, struct stat * statp)
 		(void) chown(t->Tname, t->Tuid, t->Tgid);
 		(void) chmod(t->Tname, t->Tmode & S_IMODE);
 	}
-	tbuf[0].tv_sec = time((time_t *) NULL);
+	tbuf[0].tv_sec = time(NULL);
 	tbuf[0].tv_usec = 0;
 	tbuf[1].tv_sec = t->Tmtime;
 	tbuf[1].tv_usec = 0;
@@ -968,7 +968,7 @@ recvreg(TREE * t, int new, struct stat * statp)
 			(void) chown(t->Tname, t->Tuid, t->Tgid);
 			(void) chmod(t->Tname, t->Tmode & S_IMODE);
 		}
-		tbuf[0].tv_sec = time((time_t *) NULL);
+		tbuf[0].tv_sec = time(NULL);
 		tbuf[0].tv_usec = 0;
 		tbuf[1].tv_sec = t->Tmtime;
 		tbuf[1].tv_usec = 0;
@@ -1021,7 +1021,7 @@ recvreg(TREE * t, int new, struct stat * statp)
 		(void) fclose(fout);
 		vnotify("SUP Backup of %s created\n", t->Tname);
 	}
-	x = copyfile(t->Tname, (char *) NULL);
+	x = copyfile(t->Tname, NULL);
 	if (x)
 		return (TRUE);
 	if ((t->Tflags & FNOACCT) == 0) {
@@ -1030,7 +1030,7 @@ recvreg(TREE * t, int new, struct stat * statp)
 		(void) chown(t->Tname, t->Tuid, t->Tgid);
 		(void) chmod(t->Tname, t->Tmode & S_IMODE);
 	}
-	tbuf[0].tv_sec = time((time_t *) NULL);
+	tbuf[0].tv_sec = time(NULL);
 	tbuf[0].tv_usec = 0;
 	tbuf[1].tv_sec = t->Tmtime;
 	tbuf[1].tv_usec = 0;
@@ -1362,14 +1362,14 @@ finishup(int x)
 		(void) strcpy(collrelname, collname);
 	}
 	dontjump = TRUE;	/* once here, no more longjmp */
-	(void) netcrypt((char *) NULL);
+	(void) netcrypt(NULL);
 	if (protver < 6) {
 		/* done with server */
 		if (x == SCMOK)
-			goaway((char *) NULL);
+			goaway(NULL);
 		(void) requestend();
 	}
-	tloc = time((time_t *) NULL);
+	tloc = time(NULL);
 	if (x != SCMOK) {
 		notify("SUP: Upgrade of %s aborted at %s",
 		    collrelname, ctime(&tloc) + 4);
@@ -1467,7 +1467,7 @@ done(int value, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	(void) netcrypt((char *) NULL);
+	(void) netcrypt(NULL);
 
 	if (fmt)
 		vsnprintf(buf, sizeof(buf), fmt, ap);
@@ -1475,11 +1475,11 @@ done(int value, const char *fmt, ...)
 	if (protver < 6) {
 		if (goawayreason)
 			free(goawayreason);
-		goawayreason = (fmt) ? estrdup(buf) : (char *) NULL;
+		goawayreason = (fmt) ? estrdup(buf) : NULL;
 		(void) msggoaway();
 	} else {
 		doneack = value;
-		donereason = (fmt) ? buf : (char *) NULL;
+		donereason = (fmt) ? buf : NULL;
 		(void) msgdone();
 	}
 	if (!dontjump)
@@ -1494,7 +1494,7 @@ goaway(const char *fmt, ...)
 
 	va_start(ap, fmt);
 
-	(void) netcrypt((char *) NULL);
+	(void) netcrypt(NULL);
 	if (fmt) {
 		vsnprintf(buf, sizeof(buf), fmt, ap);
 		goawayreason = buf;

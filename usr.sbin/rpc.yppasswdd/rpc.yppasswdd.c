@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.yppasswdd.c,v 1.16 2011/08/31 13:32:40 joerg Exp $	*/
+/*	$NetBSD: rpc.yppasswdd.c,v 1.17 2011/08/31 16:24:59 plunky Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.16 2011/08/31 13:32:40 joerg Exp $");
+__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.17 2011/08/31 16:24:59 plunky Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -142,7 +142,7 @@ yppasswddprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
-		(void)svc_sendreply(transp, (xdrproc_t)xdr_void, (char *) NULL);
+		(void)svc_sendreply(transp, (xdrproc_t)xdr_void, NULL);
 		return;
 
 	case YPPASSWDPROC_UPDATE:
