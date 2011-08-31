@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.13 2011/08/29 14:59:09 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.14 2011/08/31 12:42:41 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13 2011/08/29 14:59:09 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.14 2011/08/31 12:42:41 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,10 +52,11 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13 2011/08/29 14:59:09 reinoud Exp $");
 /* forwards and externals */
 void setup_signal_handlers(void);
 static void mem_access_handler(int sig, siginfo_t *info, void *ctx);
-
-extern void pmap_get_current_protection(pmap_t pmap, vaddr_t va,
-	vm_prot_t *cur_prot, vm_prot_t *prot);
 extern int errno;
+
+bool pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype);
+
+static int debug_fh;
 
 void
 startlwp(void *arg)
@@ -74,6 +75,8 @@ setup_signal_handlers(void)
 		panic("couldn't register SIGSEGV handler : %d", errno);
 	if (thunk_sigaction(SIGBUS, &sa, NULL) == -1)
 		panic("couldn't register SIGBUS handler : %d", errno);
+
+	debug_fh = thunk_open("/usr/sources/debug", O_RDWR | O_TRUNC | O_CREAT, 0666);
 }
 
 static struct trapframe kernel_tf;
@@ -81,33 +84,37 @@ static struct trapframe kernel_tf;
 static void
 mem_access_handler(int sig, siginfo_t *info, void *ctx)
 {
+	static volatile int recurse = 0;
 	struct proc *p;
 	struct lwp *l;
 	struct pcb *pcb;
 	struct vmspace *vm;
 	struct vm_map *vm_map;
 	struct trapframe *tf;
-	vm_prot_t cur_prot, prot, atype;
+	vm_prot_t atype;
 	vaddr_t va;
-	vaddr_t onfault;
+	void *onfault;
 	int kmem, rv;
-	static volatile int recurse = 0;
 
 	recurse++;
-	aprint_debug("trap lwp=%p pid=%d lid=%d\n",
-	    curlwp,
-	    curlwp->l_proc->p_pid,
-	    curlwp->l_lid);
 	if (recurse > 1)
 		printf("enter trap recursion level %d\n", recurse);
 	if ((info->si_signo == SIGSEGV) || (info->si_signo == SIGBUS)) {
 		l = curlwp;
 		p = l->l_proc;
 		pcb = lwp_getpcb(l);
-		onfault = (vaddr_t) pcb->pcb_onfault;
+		onfault = pcb->pcb_onfault;
 		vm = p->p_vmspace;
 
-#if 1
+#if 0
+		va = (vaddr_t) info->si_addr;
+		printf("trap lwp = %p pid = %d lid = %d, va = %p\n",
+		    curlwp,
+		    curlwp->l_proc->p_pid,
+		    curlwp->l_lid,
+		    (void *) va);
+#endif
+#if 0
 		printf("SIGSEGV or SIGBUS!\n");
 		printf("\tsi_signo = %d\n", info->si_signo);
 		printf("\tsi_errno = %d\n", info->si_errno);
@@ -134,50 +141,39 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		va = (vaddr_t) info->si_addr;
 		va = trunc_page(va);
 
+		/* sanity */
+		if ((va < VM_MIN_ADDRESS) || (va >= VM_MAX_ADDRESS))
+			panic("peeing outside the box!");
+
 		kmem = 1;
 		vm_map = kernel_map;
 		if ((va >= VM_MIN_ADDRESS) && (va < VM_MAXUSER_ADDRESS)) {
 			kmem = 0;
 			vm_map = &vm->vm_map;
 		}
-		if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_ADDRESS)) {
-			panic("peeing outside the box!");
-		}
 
-		/* determine accesstype */
-		pmap_get_current_protection(vm_map->pmap, va, &cur_prot, &prot);
+		/* can pmap handle it? on its own? (r/m) */
 		rv = 0;
-		if ((prot == VM_PROT_NONE) && (cur_prot == VM_PROT_NONE)) {
-			/* not mapped in yet */
-printf("was not mapped in yet --> faulting read first\n");
+		if (!pmap_fault(vm_map->pmap, va, &atype)) {
+			aprint_debug("pmap fault couldn't handle it! : "
+				"derived atype %d\n", atype);
 			pcb->pcb_onfault = NULL;
-			rv = uvm_fault(vm_map, (vaddr_t) va, VM_PROT_READ);
-			pcb->pcb_onfault = (void *) onfault;
-
-			/* update accesstypes */
-			pmap_get_current_protection(vm_map->pmap, va, &cur_prot, &prot);
+			rv = uvm_fault(vm_map, va, atype);
+			pcb->pcb_onfault = onfault;
 		}
 
-		/* if no error, its map-able */
-		if (rv == 0) {
-			atype = VM_PROT_NONE;			/* assume read */
-			if (prot & PROT_EXEC)
-				atype |= VM_PROT_EXECUTE;	/* could well be execute */
-			if ((prot & PROT_WRITE) && (cur_prot & VM_PROT_READ))
-				atype = VM_PROT_WRITE;	/* if it had write access */
-
-printf("%sva %p, prot = %d, cur_prot = %d ==> atype = %d\n", kmem?"kmem, ":"", (void *) va, prot, cur_prot, atype);
-			if (atype != VM_PROT_NONE) {
-				pcb->pcb_onfault = NULL;
-				rv = uvm_fault(vm_map, (vaddr_t) va, atype);
-				pcb->pcb_onfault = (void *) onfault;
-			}
-		}
-
-		if (rv)
-			aprint_debug("uvm_fault returned error %d\n", rv);
+#if 0
+//if (!rv) {
+//	static int off = 0;
+	printf("*va = %d\n", *((uint32_t *) va));
+	thunk_pwrite(debug_fh, (void *) va, PAGE_SIZE, va);
+//	off += PAGE_SIZE;
+//}
+#endif
 
 		if (rv) {
+			aprint_debug("uvm_fault returned error %d\n", rv);
+
 			/* something got wrong */
 			if (kmem) {
 				/* copyin / copyout */
@@ -194,6 +190,7 @@ printf("%sva %p, prot = %d, cur_prot = %d ==> atype = %d\n", kmem?"kmem, ":"", (
 			}
 			panic("should deliver a trap to the process");
 		}
+
 		if (recurse > 1)
 			printf("leaving trap recursion level %d\n", recurse);
 		recurse--;
