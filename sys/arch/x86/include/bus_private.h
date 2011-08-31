@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.12 2010/11/12 13:40:11 uebayasi Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.13 2011/08/31 20:21:06 dyoung Exp $	*/
 /*	NetBSD: bus.h,v 1.8 2005/03/09 19:04:46 matt Exp	*/
 
 /*-
@@ -192,6 +192,15 @@ _bus_virt_to_bus(struct pmap *pm, vaddr_t va)
 #endif
 
 struct x86_bus_dma_tag {
+	bus_dma_tag_t				bdt_super;
+	/* bdt_present: bitmap indicating overrides present (1) in *this* tag,
+	 * bdt_exists: bitmap indicating overrides present (1) in *this* tag
+	 * or in an ancestor's tag (follow bdt_super to ancestors)
+	 */
+	uint64_t				bdt_present;
+	uint64_t				bdt_exists;
+	const struct bus_dma_overrides		*bdt_ov;
+	void					*bdt_ctx;
 	/*
 	 * The `bounce threshold' is checked while we are loading
 	 * the DMA map.  If the physical address of the segment
