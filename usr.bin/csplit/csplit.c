@@ -1,4 +1,4 @@
-/*	$NetBSD: csplit.c,v 1.5 2009/07/13 19:05:40 roy Exp $	*/
+/*	$NetBSD: csplit.c,v 1.6 2011/08/31 13:35:46 joerg Exp $	*/
 /*	$FreeBSD: src/usr.bin/csplit/csplit.c,v 1.9 2004/03/22 11:15:03 tjr Exp$	*/
 
 /*-
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: csplit.c,v 1.5 2009/07/13 19:05:40 roy Exp $");
+__RCSID("$NetBSD: csplit.c,v 1.6 2011/08/31 13:35:46 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -78,24 +78,24 @@ static void	 usage(void) __dead;
 /*
  * Command line options
  */
-const char *prefix;		/* File name prefix */
-long	 sufflen;		/* Number of decimal digits for suffix */
-int	 sflag;			/* Suppress output of file names */
-int	 kflag;			/* Keep output if error occurs */
+static const char *prefix;		/* File name prefix */
+static long	 sufflen;		/* Number of decimal digits for suffix */
+static int	 sflag;			/* Suppress output of file names */
+static int	 kflag;			/* Keep output if error occurs */
 
 /*
  * Other miscellaneous globals (XXX too many)
  */
-long	 lineno;		/* Current line number in input file */
-long	 reps;			/* Number of repetitions for this pattern */
-long	 nfiles;		/* Number of files output so far */
-long	 maxfiles;		/* Maximum number of files we can create */
-char	 currfile[PATH_MAX];	/* Current output file */
-const char *infn;		/* Name of the input file */
-FILE	*infile;		/* Input file handle */
-FILE	*overfile;		/* Overflow file for toomuch() */
-off_t	 truncofs;		/* Offset this file should be truncated at */
-int	 doclean;		/* Should cleanup() remove output? */
+static long	 lineno;		/* Current line number in input file */
+static long	 reps;			/* Number of repetitions for this pattern */
+static long	 nfiles;		/* Number of files output so far */
+static long	 maxfiles;		/* Maximum number of files we can create */
+static char	 currfile[PATH_MAX];	/* Current output file */
+static const char *infn;		/* Name of the input file */
+static FILE	*infile;		/* Input file handle */
+static FILE	*overfile;		/* Overflow file for toomuch() */
+static off_t	 truncofs;		/* Offset this file should be truncated at */
+static int	 doclean;		/* Should cleanup() remove output? */
 
 int
 main(int argc, char *argv[])
@@ -224,7 +224,7 @@ usage(void)
 	exit(1);
 }
 
-static void
+__dead static void
 handlesig(int sig)
 {
 	char msg[BUFSIZ];
