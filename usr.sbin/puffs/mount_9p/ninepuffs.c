@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.23 2007/12/02 21:03:39 wiz Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.24 2011/08/31 13:32:39 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.23 2007/12/02 21:03:39 wiz Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.24 2011/08/31 13:32:39 joerg Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: ninepuffs.c,v 1.23 2007/12/02 21:03:39 wiz Exp $");
 
 #define DEFPORT_9P 564
 
-static void
+__dead static void
 usage(void)
 {
 

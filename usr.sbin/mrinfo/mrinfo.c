@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.28 2011/06/22 04:02:46 mrg Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.29 2011/08/31 13:32:38 joerg Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -80,7 +80,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.28 2011/06/22 04:02:46 mrg Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.29 2011/08/31 13:32:38 joerg Exp $");
 #endif
 #endif
 
@@ -111,10 +111,8 @@ void			ask2(u_int32_t dst);
 int			get_number(int *var, int deflt, char ***pargv,
 				   int *pargc);
 u_int32_t		host_addr(char *name);
-void			usage(void);
+__dead void			usage(void);
 
-/* to shut up -Wstrict-prototypes */
-int			main(int argc, char *argv[]);
 /* logit() prototyped in defs.h */
 
 

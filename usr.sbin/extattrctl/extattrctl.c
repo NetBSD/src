@@ -1,4 +1,4 @@
-/*	$NetBSD: extattrctl.c,v 1.3 2011/01/04 09:28:44 wiz Exp $	*/
+/*	$NetBSD: extattrctl.c,v 1.4 2011/08/31 13:32:36 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -64,7 +64,7 @@ rw32(uint32_t v)
 	return (v);
 }
 
-static void
+__dead static void
 usage(void)
 {
 
