@@ -1,4 +1,4 @@
-/* $NetBSD: onewire.c,v 1.13 2009/12/06 22:49:48 dyoung Exp $ */
+/* $NetBSD: onewire.c,v 1.14 2011/08/31 12:17:51 mbalmer Exp $ */
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.13 2009/12/06 22:49:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.14 2011/08/31 12:17:51 mbalmer Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.13 2009/12/06 22:49:48 dyoung Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/module.h>
 
 #include <dev/onewire/onewirereg.h>
 #include <dev/onewire/onewirevar.h>
@@ -102,7 +103,6 @@ onewire_attach(device_t parent, device_t self, void *aux)
 	rw_init(&sc->sc_rwlock);
 	TAILQ_INIT(&sc->sc_devs);
 
-	aprint_naive("\n");
 	aprint_normal("\n");
 
 	if (kthread_create(PRI_NONE, 0, NULL, onewire_thread, sc,
@@ -406,7 +406,7 @@ onewire_scan(struct onewire_softc *sc)
 		 * found a new one.
 		 */
 		present = 0;
-		TAILQ_FOREACH(d, &sc->sc_devs, d_list) {
+	 	TAILQ_FOREACH(d, &sc->sc_devs, d_list) {
 			if (d->d_rom == rom) {
 				d->d_present = 1;
 				present = 1;
@@ -444,4 +444,38 @@ onewire_scan(struct onewire_softc *sc)
 		}
 	}
 	onewire_unlock(sc);
+}
+
+MODULE(MODULE_CLASS_DRIVER, onewire, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+onewire_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error;
+
+	error = 0;
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_onewire,
+		    cfattach_ioconf_onewire, cfdata_ioconf_onewire);
+		if (error)
+			aprint_error("%s: unable to init component\n",
+			    onewire_cd.cd_name);
+#endif
+		break;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		config_fini_component(cfdriver_ioconf_onewire,
+		    cfattach_ioconf_onewire, cfdata_ioconf_onewire);
+#endif
+		break;
+	default:
+		error = ENOTTY;
+	}
+	return error;
 }
