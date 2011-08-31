@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.24 2007/10/10 20:42:21 ad Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.25 2011/08/31 18:31:02 plunky Exp $	*/
 
 /*
  *
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.24 2007/10/10 20:42:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.25 2011/08/31 18:31:02 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ coda_unsave(struct cnode *cp)
 	    } else {
 		CNODE_NEXT(ptrprev) = CNODE_NEXT(ptr);
 	    }
-	    CNODE_NEXT(cp) = (struct cnode *)NULL;
+	    CNODE_NEXT(cp) = NULL;
 
 	    return;
 	}

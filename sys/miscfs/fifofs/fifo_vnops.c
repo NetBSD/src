@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.69 2010/06/24 13:03:16 hannken Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.70 2011/08/31 18:31:03 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.69 2010/06/24 13:03:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.70 2011/08/31 18:31:03 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -675,7 +675,7 @@ const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_advlock_desc, genfs_einval },		/* advlock */
 	{ &vop_bwrite_desc, genfs_nullop },		/* bwrite */
 	{ &vop_putpages_desc, genfs_null_putpages },	/* putpages */
-	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
+	{ NULL, NULL }
 };
 const struct vnodeopv_desc fifo_vnodeop_opv_desc =
 	{ &fifo_vnodeop_p, fifo_vnodeop_entries };

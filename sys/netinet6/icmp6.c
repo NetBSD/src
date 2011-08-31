@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.156 2010/09/12 16:04:57 drochner Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.157 2011/08/31 18:31:03 plunky Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.156 2010/09/12 16:04:57 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.157 2011/08/31 18:31:03 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2306,7 +2306,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		bcopy(&reddst6, &sdst.sin6_addr, sizeof(struct in6_addr));
 		bcopy(&src6, &ssrc.sin6_addr, sizeof(struct in6_addr));
 		rtredirect((struct sockaddr *)&sdst, (struct sockaddr *)&sgw,
-			   (struct sockaddr *)NULL, RTF_GATEWAY | RTF_HOST,
+			   NULL, RTF_GATEWAY | RTF_HOST,
 			   (struct sockaddr *)&ssrc,
 			   &newrt);
 
@@ -2574,8 +2574,7 @@ noredhdropt:
 		= in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), ntohs(ip6->ip6_plen));
 
 	/* send the packet to outside... */
-	if (ip6_output(m, NULL, NULL, 0,
-		(struct ip6_moptions *)NULL, (struct socket *)NULL, NULL) != 0)
+	if (ip6_output(m, NULL, NULL, 0, NULL, NULL, NULL) != 0)
 		icmp6_ifstat_inc(ifp, ifs6_out_error);
 
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);

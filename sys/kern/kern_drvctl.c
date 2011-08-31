@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.31 2009/12/20 09:36:05 dsl Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.32 2011/08/31 18:31:02 plunky Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.31 2009/12/20 09:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.32 2011/08/31 18:31:02 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ listdevbyname(struct devlistargs *l)
 	int cnt = 0, idx, error = 0;
 
 	if (*l->l_devname == '\0')
-		d = (device_t)NULL;
+		d = NULL;
 	else if (memchr(l->l_devname, 0, sizeof(l->l_devname)) == NULL)
 		return EINVAL;
 	else if ((d = device_find_by_xname(l->l_devname)) == NULL)
