@@ -1,4 +1,4 @@
-/*	$NetBSD: col.c,v 1.16 2011/08/30 21:33:28 joerg Exp $	*/
+/*	$NetBSD: col.c,v 1.17 2011/08/31 16:24:57 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)col.c	8.5 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: col.c,v 1.16 2011/08/30 21:33:28 joerg Exp $");
+__RCSID("$NetBSD: col.c,v 1.17 2011/08/31 16:24:57 plunky Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -485,7 +485,7 @@ alloc_line(void)
 	int i;
 
 	if (!line_freelist) {
-		l = (LINE *)xmalloc((void *)NULL, sizeof(LINE) * NALLOC);
+		l = (LINE *)xmalloc(NULL, sizeof(LINE) * NALLOC);
 		line_freelist = l;
 		for (i = 1; i < NALLOC; i++, l++)
 			l->l_next = l + 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.23 2010/12/05 04:34:23 pgoyette Exp $	*/
+/*	$NetBSD: tetris.c,v 1.24 2011/08/31 16:24:56 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -259,7 +259,7 @@ main(int argc, char *argv[])
 				scr_msg(key_msg, 0);
 				scr_msg(msg, 1);
 				(void) fflush(stdout);
-			} while (rwait((struct timeval *)NULL) == -1);
+			} while (rwait(NULL) == -1);
 			scr_msg(msg, 0);
 			scr_msg(key_msg, 1);
 			place(curshape, pos, 0);

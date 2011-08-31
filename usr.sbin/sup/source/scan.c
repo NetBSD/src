@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.29 2011/01/04 10:23:40 wiz Exp $	*/
+/*	$NetBSD: scan.c,v 1.30 2011/08/31 16:25:00 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -373,7 +373,7 @@ makescanlists(void)
 		(void) fclose(f);
 	}
 	if (count == 0)
-		makescan((char *) NULL, (char *) NULL);
+		makescan(NULL, NULL);
 }
 
 static int
@@ -427,7 +427,7 @@ getscan(char *listfile, char *scanfile)
 {
 	listT = NULL;
 	if (!getscanfile(scanfile)) {	/* check for pre-scanned file list */
-		scantime = time((time_t *) NULL);
+		scantime = time(NULL);
 		doscan(listfile);	/* read list file and scan disk */
 	}
 }
@@ -450,7 +450,7 @@ doscan(char *listfile)
 	readlistfile(buf);	/* get contents of list file */
 	(void) Tprocess(upgT, listone, NULL);	/* build list of files
 						 * specified */
-	cdprefix((char *) NULL);
+	cdprefix(NULL);
 	Tfree(&upgT);
 	Tfree(&flagsT);
 	Tfree(&omitT);
@@ -518,11 +518,11 @@ readlistfile(char *fname)
 			break;
 		case LINCLUDE:
 			while (*(q = nxtarg(&p, " \t"))) {
-				cdprefix((char *) NULL);
+				cdprefix(NULL);
 				n = expand(q, speclist, SPECNUMBER);
 				for (i = 0; i < n && i < SPECNUMBER; i++) {
 					readlistfile(speclist[i]);
-					cdprefix((char *) NULL);
+					cdprefix(NULL);
 					free(speclist[i]);
 				}
 				cdprefix(prefix);
@@ -553,7 +553,7 @@ readlistfile(char *fname)
 			if (lt == LOMITANY)
 				(void) Tinsert(t, q, FALSE);
 			else
-				expTinsert(q, t, flags, (char *) NULL);
+				expTinsert(q, t, flags, NULL);
 		}
 	}
 	(void) fclose(f);
@@ -582,7 +582,7 @@ expTinsert(char *p, TREE ** t, int flags, char *exec)
 static int
 listone(TREE * t, void *v __unused)
 {				/* expand and add one name from upgrade list */
-	listentry(t->Tname, t->Tname, (char *) NULL, (t->Tflags & FALWAYS) != 0);
+	listentry(t->Tname, t->Tname, NULL, (t->Tflags & FALWAYS) != 0);
 	return (SCMOK);
 }
 
@@ -951,7 +951,7 @@ makescanfile(char *scanfile)
 		(void)unlink(tname);
 		goaway("Can't change %s to %s", tname, fname);
 	}
-	tbuf[0].tv_sec = time((time_t *) NULL);
+	tbuf[0].tv_sec = time(NULL);
 	tbuf[0].tv_usec = 0;
 	tbuf[1].tv_sec = scantime;
 	tbuf[1].tv_usec = 0;

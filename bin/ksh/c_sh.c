@@ -1,4 +1,4 @@
-/*	$NetBSD: c_sh.c,v 1.13 2009/04/25 05:11:37 lukem Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.14 2011/08/31 16:24:54 plunky Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_sh.c,v 1.13 2009/04/25 05:11:37 lukem Exp $");
+__RCSID("$NetBSD: c_sh.c,v 1.14 2011/08/31 16:24:54 plunky Exp $");
 #endif
 
 
@@ -697,7 +697,7 @@ c_unset(wp)
 			}
 			unset(vp, strchr(id, '[') ? 1 : 0);
 		} else {		/* unset function */
-			if (define(id, (struct op *) NULL))
+			if (define(id, NULL))
 				ret = 1;
 		}
 	return ret;

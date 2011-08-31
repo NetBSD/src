@@ -27,7 +27,7 @@
  *	i4b daemon - main program entry
  *	-------------------------------
  *
- *	$Id: main.c,v 1.12 2011/08/31 13:32:37 joerg Exp $ 
+ *	$Id: main.c,v 1.13 2011/08/31 16:24:59 plunky Exp $ 
  *
  * $FreeBSD$
  *
@@ -353,7 +353,7 @@ main(int argc, char **argv)
 			logit(LL_ERR, "ERROR, can't open acctfile %s for writing, terminating!", acctfile);
 			exit(1);
 		}
-		setvbuf(acctfp, (char *)NULL, _IONBF, 0);		
+		setvbuf(acctfp, NULL, _IONBF, 0);		
 	}
 
 	/* initialize alias processing */
@@ -790,7 +790,7 @@ reopenfiles(int dummy)
 			logit(LL_ERR, "ERROR, can't open acctfile %s for writing, terminating!", acctfile);
 			error_exit(1, "ERROR, can't open acctfile %s for writing, terminating!", acctfile);
 		}
-		setvbuf(acctfp, (char *)NULL, _IONBF, 0);
+		setvbuf(acctfp, NULL, _IONBF, 0);
 	}
 
 	if (uselogfile)
@@ -822,7 +822,7 @@ reopenfiles(int dummy)
 
 		/* set unbuffered operation */
 
-		setvbuf(logfp, (char *)NULL, _IONBF, 0);
+		setvbuf(logfp, NULL, _IONBF, 0);
 	}
 }
 

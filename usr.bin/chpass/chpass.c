@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.34 2011/08/29 14:08:39 joerg Exp $	*/
+/*	$NetBSD: chpass.c,v 1.35 2011/08/31 16:24:57 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.34 2011/08/29 14:08:39 joerg Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.35 2011/08/31 16:24:57 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -244,7 +244,7 @@ main(int argc, char **argv)
 #ifdef	YP
 	if (use_yp) {
 		if (pw_yp(pw, uid))
-			yppw_error((char *)NULL, 0, 1);
+			yppw_error(NULL, 0, 1);
 		else
 			exit(0);
 		/* Will not exit from this if. */

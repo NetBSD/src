@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.46 2011/03/17 19:43:34 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.47 2011/08/31 16:25:00 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -399,7 +399,7 @@ main(int argc, char **argv)
 #endif
 
 	logopen("supfile");
-	tloc = time((time_t *) NULL);
+	tloc = time(NULL);
 	loginfo("SUP File Server Version %d.%d (%s) starting at %s",
 	    PROTOVERSION, PGMVERSION, scmversion, fmttime(tloc));
 	if (live) {
@@ -680,7 +680,7 @@ init(int argc, char **argv)
 	if (netcrypt(PSWDCRYPT) != SCMOK)	/* encrypt password data */
 		quit(1, "Running non-crypting fileserver\n");
 	x = msglogin();
-	(void) netcrypt((char *) NULL);	/* turn off encryption */
+	(void) netcrypt(NULL);	/* turn off encryption */
 	if (x != SCMOK)
 		quit(1, "Error sending login request to file server\n");
 	x = msglogack();
@@ -718,7 +718,7 @@ answer(void)
 	goawayreason = NULL;
 	donereason = NULL;
 	lockfd = -1;
-	starttime = time((time_t *) NULL);
+	starttime = time(NULL);
 	if (!setjmp(sjbuf)) {
 		srvsignon();
 		srvsetup();
@@ -732,7 +732,7 @@ answer(void)
 				exit(0);
 			xargv[0] = "sup";
 			xargv[1] = "-X";
-			xargv[xargc] = (char *) NULL;
+			xargv[xargc] = NULL;
 			(void) dup2(netfile, 0);
 			(void) dup2(netfile, 1);
 			(void) dup2(netfile, 2);
@@ -1087,7 +1087,7 @@ docrypt(void)
 	x = msgcrypt();
 	if (x != SCMOK)
 		goaway("Error reading encryption test request from client");
-	(void) netcrypt((char *) NULL);
+	(void) netcrypt(NULL);
 	if (strcmp(crypttest, CRYPTTEST) != 0)
 		goaway("Client not encrypting data properly");
 	free(crypttest);
@@ -1107,7 +1107,7 @@ srvlogin(void)
 
 	(void) netcrypt(PSWDCRYPT);	/* encrypt acct name and password */
 	x = msglogin();
-	(void) netcrypt((char *) NULL);	/* turn off encryption */
+	(void) netcrypt(NULL);		/* turn off encryption */
 	if (x != SCMOK)
 		goaway("Error reading login request from client");
 	if (logcrypt) {
@@ -1468,15 +1468,15 @@ srvfinishup(time_t starttime)
 	time_t finishtime;
 	char *releasename;
 
-	(void) netcrypt((char *) NULL);
+	(void) netcrypt(NULL);
 	if (protver < 6) {
 		if (goawayreason != NULL)
 			free(goawayreason);
-		goawayreason = (char *) NULL;
+		goawayreason = NULL;
 		x = msggoaway();
 		doneack = FDONESUCCESS;
 		donereason = estrdup("Unknown");
-	} else if (goawayreason == (char *) NULL)
+	} else if (goawayreason == NULL)
 		x = msgdone();
 	else {
 		doneack = FDONEGOAWAY;
@@ -1500,7 +1500,7 @@ srvfinishup(time_t starttime)
 	else if (doneack != FDONESUCCESS)
 		logerr("%s: Reason %d: %s", remotehost(), doneack, donereason);
 	goawayreason = donereason;
-	cdprefix((char *) NULL);
+	cdprefix(NULL);
 	if (collname == NULL) {
 		logerr("%s: NULL collection in svrfinishup", remotehost());
 		return;
@@ -1508,7 +1508,7 @@ srvfinishup(time_t starttime)
 	(void) sprintf(lognam, FILELOGFILE, collname);
 	if ((logfd = open(lognam, O_APPEND | O_WRONLY, 0644)) < 0)
 		return;		/* can not open file up...error */
-	finishtime = time((time_t *) NULL);
+	finishtime = time(NULL);
 	p = tmpbuf;
 	(void) sprintf(p, "%s ", fmttime(lasttime));
 	p += strlen(p);
@@ -1587,8 +1587,8 @@ linkcheck(TREE * t, int d, int i)
 	h = Hlookup(inodeH, i, d);
 	if (h)
 		return (h->Htree);
-	Hinsert(inodeH, i, d, (char *) NULL, t);
-	return ((TREE *) NULL);
+	Hinsert(inodeH, i, d, NULL, t);
+	return (NULL);
 }
 
 char *
@@ -1604,7 +1604,7 @@ uconvert(int uid)
 	if (pw == NULL)
 		return ("");
 	p = estrdup(pw->pw_name);
-	Hinsert(uidH, uid, 0, p, (TREE *) NULL);
+	Hinsert(uidH, uid, 0, p, NULL);
 	return (p);
 }
 
@@ -1621,7 +1621,7 @@ gconvert(int gid)
 	if (gr == NULL)
 		return ("");
 	p = estrdup(gr->gr_name);
-	Hinsert(gidH, gid, 0, p, (TREE *) NULL);
+	Hinsert(gidH, gid, 0, p, NULL);
 	return (p);
 }
 
@@ -1809,7 +1809,7 @@ goaway(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	(void) netcrypt((char *) NULL);
+	(void) netcrypt(NULL);
 
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);

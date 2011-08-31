@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.20 2009/08/12 07:42:11 dholland Exp $	*/
+/*	$NetBSD: driver.c,v 1.21 2011/08/31 16:24:56 plunky Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.20 2009/08/12 07:42:11 dholland Exp $");
+__RCSID("$NetBSD: driver.c,v 1.21 2011/08/31 16:24:56 plunky Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -412,7 +412,7 @@ init(void)
 	fdset[2].fd = -1;
 #endif
 
-	Seed = getpid() + time((time_t *) NULL);
+	Seed = getpid() + time(NULL);
 	makemaze();
 #ifdef BOOTS
 	makeboots();
@@ -662,7 +662,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 		}
 		if (x > 0) {
 			(void) add_shot(len, pp->p_y, pp->p_x, pp->p_face, x,
-				(PLAYER *) NULL, TRUE, SPACE);
+				NULL, TRUE, SPACE);
 			(void) snprintf(Buf, sizeof(Buf), "%s detonated.",
 				pp->p_ident->i_name);
 			for (np = Player; np < End_player; np++)
@@ -710,7 +710,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 				y = rand_num(HEIGHT / 2) + HEIGHT / 4;
 			} while (Maze[y][x] != SPACE);
 			(void) add_shot(LAVA, y, x, LEFTS, volcano,
-				(PLAYER *) NULL, TRUE, SPACE);
+				NULL, TRUE, SPACE);
 			for (np = Player; np < End_player; np++)
 				message(np, "Volcano eruption.");
 			volcano = 0;
@@ -726,7 +726,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 			add_shot(DSHOT, y, x, rand_dir(),
 				shot_req[MINDSHOT +
 				rand_num(MAXBOMB - MINDSHOT)],
-				(PLAYER *) NULL, FALSE, SPACE);
+				NULL, FALSE, SPACE);
 		}
 #endif
 

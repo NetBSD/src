@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.34 2010/03/02 16:19:13 gdt Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.35 2011/08/31 16:24:58 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.34 2010/03/02 16:19:13 gdt Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.35 2011/08/31 16:24:58 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,7 +217,7 @@ pwlocal_process(const char *username, int argc, char **argv)
 	pw_copy(pfd, tfd, pw, &old_pw);
 
 	if (pw_mkdb(username, old_change == pw->pw_change) < 0)
-		pw_error((char *)NULL, 0, 1);
+		pw_error(NULL, 0, 1);
 
 	syslog(LOG_AUTH | LOG_INFO,
 	       "user %s (UID %lu) successfully changed "
@@ -328,7 +328,7 @@ local_chpw(uname)
 	pw_copy(pfd, tfd, pw, &old_pw);
 
 	if (pw_mkdb(uname, old_change == pw->pw_change) < 0)
-		pw_error((char *)NULL, 0, 1);
+		pw_error(NULL, 0, 1);
 
 	syslog(LOG_AUTH | LOG_INFO,
 	       "user %s (UID %lu) successfully changed "

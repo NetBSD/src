@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.20 2011/08/28 08:24:42 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.21 2011/08/31 16:24:58 plunky Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: time.c,v 1.20 2011/08/28 08:24:42 christos Exp $");
+__RCSID("$NetBSD: time.c,v 1.21 2011/08/31 16:24:58 plunky Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -105,7 +105,7 @@ main(int argc, char ** volatile argv)
 	if (argc < 1)
 		usage();
 
-	gettimeofday(&before, (struct timezone *)NULL);
+	gettimeofday(&before, NULL);
 	switch(pid = vfork()) {
 	case -1:			/* error */
 		err(EXIT_FAILURE, "Vfork failed");
@@ -122,7 +122,7 @@ main(int argc, char ** volatile argv)
 	(void)signal(SIGQUIT, SIG_IGN);
 	if ((pid = wait4(pid, &status, 0, &ru)) == -1)
 		err(EXIT_FAILURE, "wait4 %d failed", pid);
-	(void)gettimeofday(&after, (struct timezone *)NULL);
+	(void)gettimeofday(&after, NULL);
 	if (!WIFEXITED(status))
 		warnx("Command terminated abnormally.");
 	timersub(&after, &before, &after);

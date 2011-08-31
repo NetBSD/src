@@ -1,4 +1,4 @@
-/*	$NetBSD: help.c,v 1.6 2005/07/01 16:38:24 jmc Exp $	*/
+/*	$NetBSD: help.c,v 1.7 2011/08/31 16:24:55 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)help.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: help.c,v 1.6 2005/07/01 16:38:24 jmc Exp $");
+__RCSID("$NetBSD: help.c,v 1.7 2011/08/31 16:24:55 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ help(void)
 
 	while (!eof) {
 		for (i = 0; i < nlines - 3; i++) {
-			if (fgets(buf, sizeof(buf), fp) == (char *) NULL) {
+			if (fgets(buf, sizeof(buf), fp) == NULL) {
 				eof = 1;
 				break;
 			}

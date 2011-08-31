@@ -27,7 +27,7 @@
  *	i4b daemon - process handling routines
  *	--------------------------------------
  *
- *	$Id: process.c,v 1.3 2003/10/06 09:43:27 itojun Exp $ 
+ *	$Id: process.c,v 1.4 2011/08/31 16:24:59 plunky Exp $ 
  *
  * $FreeBSD$
  *
@@ -191,7 +191,7 @@ daemonize(void)
 
 		/* curses output && fork NEEDS controlling tty */
 		
-		if ((ioctl(STDIN_FILENO, TIOCSCTTY, (char *)NULL)) < 0)
+		if ((ioctl(STDIN_FILENO, TIOCSCTTY, NULL)) < 0)
 		{
 			logit(LL_ERR, "ERROR, cannot setup tty as controlling terminal: %s", strerror(errno));
 			exit(1);
