@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.310 2011/07/27 13:45:49 uebayasi Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.311 2011/08/31 16:05:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.310 2011/07/27 13:45:49 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.311 2011/08/31 16:05:44 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -688,10 +688,10 @@ sigclearall(struct proc *p, const sigset_t *mask, ksiginfoq_t *kq)
 /*
  * sigispending:
  *
- *	Return true if there are pending signals for the current LWP.  May
- *	be called unlocked provided that LW_PENDSIG is set, and that the
- *	signal has been posted to the appopriate queue before LW_PENDSIG is
- *	set.
+ *	Return the first signal number if there are pending signals for the
+ *	current LWP.  May be called unlocked provided that LW_PENDSIG is set,
+ *	and that the signal has been posted to the appopriate queue before
+ *	LW_PENDSIG is set.
  */ 
 int
 sigispending(struct lwp *l, int signo)
@@ -707,10 +707,10 @@ sigispending(struct lwp *l, int signo)
 	sigminusset(&l->l_sigmask, &tset);
 
 	if (signo == 0) {
-		if (firstsig(&tset) != 0)
-			return EINTR;
+		if ((signo = firstsig(&tset)) != 0)
+			return signo;
 	} else if (sigismember(&tset, signo))
-		return EINTR;
+		return signo;
 
 	return 0;
 }
