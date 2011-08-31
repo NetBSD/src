@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.21 2011/08/31 08:15:08 gson Exp $ */
+/* $NetBSD: moused.c,v 1.22 2011/08/31 16:32:48 christos Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.21 2011/08/31 08:15:08 gson Exp $");
+__RCSID("$NetBSD: moused.c,v 1.22 2011/08/31 16:32:48 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -70,6 +70,7 @@ __RCSID("$NetBSD: moused.c,v 1.21 2011/08/31 08:15:08 gson Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <stdint.h>
 #include <sys/un.h>
 #include <poll.h>
 #include <unistd.h>
@@ -2152,7 +2153,7 @@ r_timestamp(mousestatus_t *act)
     tv2.tv_sec = rodent.clickthreshold/1000;
     tv2.tv_usec = (rodent.clickthreshold%1000)*1000;
     timersub(&tv1, &tv2, &tv); 
-    debug("tv:  %ld %ld", (long)tv.tv_sec, (long)tv.tv_usec);
+    debug("tv:  %jd %jd", (intmax_t)tv.tv_sec, (intmax_t)tv.tv_usec);
 
     /* 3 button emulation timeout */
     tv2.tv_sec = rodent.button2timeout/1000;
@@ -2164,8 +2165,9 @@ r_timestamp(mousestatus_t *act)
         if (mask & 1) {
             if (act->button & button) {
                 /* the button is down */
-    		debug("  :  %ld %ld", 
-		    (long)bstate[i].tv.tv_sec, (long)bstate[i].tv.tv_usec);
+    		debug("  :  %jd %jd", 
+		    (intmax_t)bstate[i].tv.tv_sec,
+		    (intmax_t)bstate[i].tv.tv_usec);
 		if (timercmp(&tv, &bstate[i].tv, >)) {
                     bstate[i].count = 1;
                 } else {
