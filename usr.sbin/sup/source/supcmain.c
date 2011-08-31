@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.30 2009/10/17 20:46:03 christos Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.31 2011/08/31 16:25:00 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -725,7 +725,7 @@ init(int argc, char **argv)
 	Tfree(&collT);
 	if (firstC == NULL)
 		logquit(1, "No collections to upgrade");
-	timenow = time((time_t *) NULL);
+	timenow = time(NULL);
 	if (*supfname == '\0')
 		p = "standard input";
 	else if (sysflag)

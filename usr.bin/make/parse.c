@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.178 2011/05/17 21:56:51 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.179 2011/08/31 16:24:57 plunky Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.178 2011/05/17 21:56:51 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.179 2011/08/31 16:24:57 plunky Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.178 2011/05/17 21:56:51 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.179 2011/08/31 16:24:57 plunky Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1174,7 +1174,7 @@ ParseDoDependency(char *line)
     tOp = 0;
 
     specType = Not;
-    paths = (Lst)NULL;
+    paths = NULL;
 
     curTargs = Lst_Init(FALSE);
 
@@ -1344,7 +1344,7 @@ ParseDoDependency(char *line)
 				 &line[5]);
 		    goto out;
 		} else {
-		    if (paths == (Lst)NULL) {
+		    if (paths == NULL) {
 			paths = Lst_Init(FALSE);
 		    }
 		    (void)Lst_AtEnd(paths, path);

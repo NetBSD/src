@@ -1,4 +1,4 @@
-/*	$NetBSD: supmsg.c,v 1.17 2009/10/17 22:26:13 christos Exp $	*/
+/*	$NetBSD: supmsg.c,v 1.18 2011/08/31 16:25:00 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -187,7 +187,7 @@ msgsetup(void)
 			x = readint(&newonly);
 		if (x == SCMOK) {
 			if (protver < 6)
-				release = (char *) NULL;
+				release = NULL;
 			else
 				x = readstring(&release);
 		}
@@ -353,7 +353,7 @@ msgrefuse(void)
 		if (x == SCMOK)
 			x = Tprocess(refuseT, refuseone, NULL);
 		if (x == SCMOK)
-			x = writestring((char *) NULL);
+			x = writestring(NULL);
 		if (x == SCMOK)
 			x = writemend();
 	}
@@ -390,7 +390,7 @@ msglist(void)
 		if (x == SCMOK)
 			x = Tprocess(listT, listone, NULL);
 		if (x == SCMOK)
-			x = writestring((char *) NULL);
+			x = writestring(NULL);
 		if (x == SCMOK)
 			x = writeint((int) scantime);
 		if (x == SCMOK)
@@ -472,7 +472,7 @@ msgneed(void)
 		if (x == SCMOK)
 			x = Tprocess(needT, needone, NULL);
 		if (x == SCMOK)
-			x = writestring((char *) NULL);
+			x = writestring(NULL);
 		if (x == SCMOK)
 			x = writemend();
 	}
@@ -499,7 +499,7 @@ msgdeny(void)
 		if (x == SCMOK)
 			x = Tprocess(denyT, denyone, NULL);
 		if (x == SCMOK)
-			x = writestring((char *) NULL);
+			x = writestring(NULL);
 		if (x == SCMOK)
 			x = writemend();
 	} else {
@@ -555,7 +555,7 @@ msgrecv(int (*xferfile)(TREE *, va_list), ...)
 		x = writemsg(MSGRECV);
 		if (t == NULL) {
 			if (x == SCMOK)
-				x = writestring((char *) NULL);
+				x = writestring(NULL);
 			if (x == SCMOK)
 				x = writemend();
 			va_end(args);
@@ -582,11 +582,11 @@ msgrecv(int (*xferfile)(TREE *, va_list), ...)
 		if (x == SCMOK)
 			x = Tprocess(t->Tlink, writeone, NULL);
 		if (x == SCMOK)
-			x = writestring((char *) NULL);
+			x = writestring(NULL);
 		if (x == SCMOK)
 			x = Tprocess(t->Texec, writeone, NULL);
 		if (x == SCMOK)
-			x = writestring((char *) NULL);
+			x = writestring(NULL);
 		if (x == SCMOK)
 			x = (*xferfile) (t, args);
 		if (x == SCMOK)

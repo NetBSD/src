@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.101 2011/02/17 15:13:49 pooka Exp $	*/
+/*	$NetBSD: eval.c,v 1.102 2011/08/31 16:24:54 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.101 2011/02/17 15:13:49 pooka Exp $");
+__RCSID("$NetBSD: eval.c,v 1.102 2011/08/31 16:24:54 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -298,7 +298,7 @@ evaltree(union node *n, int flags)
 		do_etest = !(flags & EV_TESTED);
 		break;
 	case NCMD:
-		evalcommand(n, flags, (struct backcmd *)NULL);
+		evalcommand(n, flags, NULL);
 		do_etest = !(flags & EV_TESTED);
 		break;
 	default:

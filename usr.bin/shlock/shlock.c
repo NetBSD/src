@@ -1,4 +1,4 @@
-/*	$NetBSD: shlock.c,v 1.10 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: shlock.c,v 1.11 2011/08/31 16:24:58 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shlock.c,v 1.10 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: shlock.c,v 1.11 2011/08/31 16:24:58 plunky Exp $");
 #endif
 
 #include <sys/types.h>
@@ -125,7 +125,7 @@ xtmpfile(char *file, __pid_t pid, int uucpstyle)
 	static char	tempname[BUFSIZ];
 
 	sprintf(buf, "shlock%ld", (u_long)getpid());
-	if ((cp = strrchr(strcpy(tempname, file), '/')) != (char *)NULL) {
+	if ((cp = strrchr(strcpy(tempname, file), '/')) != NULL) {
 		*++cp = '\0';
 		(void) strcat(tempname, buf);
 	} else
@@ -143,7 +143,7 @@ openloop:
 			if (unlink(tempname) < 0) {
 				fprintf(stderr, E_unlk,
 					Pname, tempname, strerror(errno));
-				return((char *)NULL);
+				return (NULL);
 			}
 			/*
 			** Further profanity
@@ -152,7 +152,7 @@ openloop:
 		default:
 			fprintf(stderr, E_open,
 				Pname, tempname, strerror(errno));
-			return((char *)NULL);
+			return (NULL);
 		}
 	}
 
@@ -172,7 +172,7 @@ openloop:
 			fprintf(stderr, E_unlk,
 				Pname, tempname, strerror(errno));
 		}
-		return((char *)NULL);
+		return (NULL);
 	}
 	(void) close(fd);
 	return(tempname);
@@ -258,7 +258,7 @@ mklock(char *file, __pid_t pid, int uucpstyle)
 
 	dprintf("%s: trying lock <%s> for process %ld\n", Pname, file,
 	    (u_long)pid);
-	if ((tmp = xtmpfile(file, pid, uucpstyle)) == (char *)NULL)
+	if ((tmp = xtmpfile(file, pid, uucpstyle)) == NULL)
 		return(FALSE);
 
 linkloop:
@@ -309,7 +309,7 @@ int
 main(int ac, char **av)
 {
 	int	x;
-	char	*file = (char *)NULL;
+	char	*file = NULL;
 	pid_t	pid = 0;
 	int	uucpstyle = FALSE;	/* indicating UUCP style locks */
 	int	only_check = TRUE;	/* don't make a lock */
@@ -352,7 +352,7 @@ main(int ac, char **av)
 		}
 	}
 
-	if (file == (char *)NULL || (!only_check && pid <= 0)) {
+	if (file == NULL || (!only_check && pid <= 0)) {
 		bad_usage();
 	}
 
