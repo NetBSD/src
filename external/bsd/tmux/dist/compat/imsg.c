@@ -1,4 +1,4 @@
-/* $Id: imsg.c,v 1.3 2011/08/17 18:48:36 jmmv Exp $ */
+/* $Id: imsg.c,v 1.4 2011/08/31 20:13:31 plunky Exp $ */
 /*	$OpenBSD: imsg.c,v 1.3 2010/05/26 13:56:07 nicm Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ imsg_read(struct imsgbuf *ibuf)
 	struct cmsghdr		*cmsg;
 	union {
 		struct cmsghdr hdr;
-#ifdef __clang__
+#if defined(__clang__) || defined(__PCC__)
 		char	buf[128];
 #else
 		char	buf[CMSG_SPACE(sizeof(int) * 16)];
