@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.209 2011/07/27 14:35:34 uebayasi Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.210 2011/08/31 22:58:39 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.209 2011/07/27 14:35:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.210 2011/08/31 22:58:39 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -686,6 +686,8 @@ trace_is_enabled(struct proc *p)
 int
 trace_enter(register_t code, const register_t *args, int narg)
 {
+	int error = 0;
+
 #ifdef SYSCALL_DEBUG
 	scdebug_call(code, args);
 #endif /* SYSCALL_DEBUG */
@@ -694,10 +696,16 @@ trace_enter(register_t code, const register_t *args, int narg)
 
 #ifdef PTRACE
 	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
-	    (PSL_SYSCALL|PSL_TRACED))
+	    (PSL_SYSCALL|PSL_TRACED)) {
 		process_stoptrace();
+		if (curlwp->l_proc->p_slflag & PSL_SYSCALLEMU) {
+			/* tracer will emulate syscall for us */
+			error = EJUSTRETURN;
+			CLR(curlwp->l_proc->p_slflag, PSL_SYSCALLEMU);
+		}
+	}
 #endif
-	return 0;
+	return error;
 }
 
 /*

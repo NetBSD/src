@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.308 2011/07/27 13:20:07 uebayasi Exp $	*/
+/*	$NetBSD: proc.h,v 1.309 2011/08/31 22:58:39 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -378,6 +378,7 @@ struct proc {
 #define	PSL_FSTRACE	0x00010000 /* Debugger process being traced by procfs */
 #define	PSL_CHTRACED	0x00400000 /* Child has been traced & reparented */
 #define	PSL_SYSCALL	0x04000000 /* process has PT_SYSCALL enabled */
+#define	PSL_SYSCALLEMU	0x08000000 /* cancel in-progress syscall */
 
 /*
  * Kept in p_stflag and protected by p_stmutex.
