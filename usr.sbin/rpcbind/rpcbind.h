@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.h,v 1.4 2009/01/18 10:17:38 lukem Exp $	*/
+/*	$NetBSD: rpcbind.h,v 1.5 2011/08/31 13:32:40 joerg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -116,9 +116,9 @@ void *rpcbproc_taddr2uaddr_com(void *, struct svc_req *, SVCXPRT *,
 int create_rmtcall_fd(struct netconfig *);
 void rpcbproc_callit_com(struct svc_req *, SVCXPRT *, rpcvers_t,
 			      rpcvers_t);
-void my_svc_run(void);
+__dead void my_svc_run(void);
 
-void rpcbind_abort(void);
+__dead void rpcbind_abort(void);
 void reap(int);
 void toggle_verboselog(int);
 

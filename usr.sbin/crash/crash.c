@@ -1,4 +1,4 @@
-/*	$NetBSD: crash.c,v 1.3 2011/04/10 20:39:42 christos Exp $	*/
+/*	$NetBSD: crash.c,v 1.4 2011/08/31 13:32:36 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crash.c,v 1.3 2011/04/10 20:39:42 christos Exp $");
+__RCSID("$NetBSD: crash.c,v 1.4 2011/08/31 13:32:36 joerg Exp $");
 #endif /* not lint */
 
 #include <ddb/ddb.h>
@@ -301,7 +301,7 @@ cnputc(int c)
 	putc(c, ofp);
 }
 
-static void
+__dead static void
 usage(void)
 {
 

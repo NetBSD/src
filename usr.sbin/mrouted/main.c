@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2007/02/21 21:01:10 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2011/08/31 13:32:38 joerg Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("@(#) $NetBSD: main.c,v 1.23 2007/02/21 21:01:10 hubertf Exp $");
+__RCSID("@(#) $NetBSD: main.c,v 1.24 2011/08/31 13:32:38 joerg Exp $");
 #endif
 
 #include <ctype.h>
@@ -65,7 +65,7 @@ static int nhandlers = 0;
  * Forward declarations.
  */
 static void fasttimer(int);
-static void done(int);
+__dead static void done(int);
 static void dump(int);
 static void fdump(int);
 static void cdump(int);

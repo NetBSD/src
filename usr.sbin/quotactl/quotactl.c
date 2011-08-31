@@ -1,4 +1,4 @@
-/* $NetBSD: quotactl.c,v 1.4 2011/06/07 14:56:13 bouyer Exp $ */
+/* $NetBSD: quotactl.c,v 1.5 2011/08/31 13:32:40 joerg Exp $ */
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quotactl.c,v 1.4 2011/06/07 14:56:13 bouyer Exp $");
+__RCSID("$NetBSD: quotactl.c,v 1.5 2011/08/31 13:32:40 joerg Exp $");
 #endif /* not lint */
 
 /*
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: quotactl.c,v 1.4 2011/06/07 14:56:13 bouyer Exp $");
 
 #include <quota/quotaprop.h>
 
-void usage(void);
+__dead static void usage(void);
 
 #define READ_SIZE 4096
 
@@ -171,7 +171,7 @@ main(int argc, char * const argv[])
 }
 
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-D] [-x] mount point [file]\n",

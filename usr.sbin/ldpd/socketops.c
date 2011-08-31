@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.10 2011/06/16 14:48:30 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.11 2011/08/31 13:32:38 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ int	no_default_route = 1;
 
 void	recv_pdu(int);
 void	send_hello_alarm(int);
-void	bail_out(int);
+__dead static void bail_out(int);
 static int get_local_addr(struct sockaddr_dl *, struct in_addr *);
 
 int 
@@ -517,7 +517,7 @@ send_hello_alarm(int unused)
 	errno = olderrno;
 }
 
-void 
+static void 
 bail_out(int x)
 {
 	ldp_peer_holddown_all();

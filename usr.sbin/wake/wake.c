@@ -1,4 +1,4 @@
-/* $NetBSD: wake.c,v 1.12 2010/01/10 19:40:11 mbalmer Exp $ */
+/* $NetBSD: wake.c,v 1.13 2011/08/31 13:32:41 joerg Exp $ */
 
 /*
  * Copyright (C) 2006, 2007, 2008, 2009, 2010 Marc Balmer <marc@msys.ch>
@@ -64,7 +64,7 @@
 #define DESTADDR_COUNT 16
 #endif
 
-static void usage(void);
+__dead static void usage(void);
 static int wake(int, const char *);
 static int bind_if_to_bpf(char const *, int);
 static int find_ether(char *, size_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.38 2009/04/17 16:12:46 lukem Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.39 2011/08/31 13:32:38 joerg Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.38 2009/04/17 16:12:46 lukem Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.39 2011/08/31 13:32:38 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -163,7 +163,7 @@ int			print_stats(struct resp_buf *base,
 				    struct resp_buf *prev,
 				    struct resp_buf *new);
 void			check_vif_state(void);
-void			passive_mode(void);
+void			passive_mode(void) __dead;
 
 int			main(int argc, char *argv[]);
 /* logit() prototyped in defs.h */

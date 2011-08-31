@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.16 2011/03/14 12:03:45 pooka Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.17 2011/08/31 13:32:40 joerg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -105,7 +105,7 @@ const char rpcbind_unknown[] = "unknown";
 static int init_transport(struct netconfig *);
 static void rbllist_add(rpcprog_t, rpcvers_t, struct netconfig *,
     struct netbuf *);
-static void terminate(int);
+__dead static void terminate(int);
 static void parseargs(int, char *[]);
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: schedctl.c,v 1.14 2009/05/16 23:59:56 rmind Exp $	*/
+/*	$NetBSD: schedctl.c,v 1.15 2011/08/31 13:32:41 joerg Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: schedctl.c,v 1.14 2009/05/16 23:59:56 rmind Exp $");
+__RCSID("$NetBSD: schedctl.c,v 1.15 2011/08/31 13:32:41 joerg Exp $");
 #endif
 
 #include <stdio.h>
@@ -61,7 +61,7 @@ static void	sched_set(pid_t, lwpid_t, int, struct sched_param *, cpuset_t *);
 static void	thread_info(pid_t, lwpid_t);
 static cpuset_t	*makecpuset(char *);
 static char	*showcpuset(cpuset_t *);
-static void	usage(void);
+__dead static void	usage(void);
 
 static u_int	ncpu;
 

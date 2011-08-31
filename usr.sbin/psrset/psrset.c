@@ -1,4 +1,4 @@
-/*	$NetBSD: psrset.c,v 1.2 2009/01/18 10:04:15 lukem Exp $	*/
+/*	$NetBSD: psrset.c,v 1.3 2011/08/31 13:32:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psrset.c,v 1.2 2009/01/18 10:04:15 lukem Exp $");
+__RCSID("$NetBSD: psrset.c,v 1.3 2011/08/31 13:32:39 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: psrset.c,v 1.2 2009/01/18 10:04:15 lukem Exp $");
 #include <unistd.h>
 #include <ctype.h>
 
-static void	usage(void);
+__dead static void	usage(void);
 static int	eatopt(char **);
 static int	cmd_a(char **, int);
 static int	cmd_b(char **, int);

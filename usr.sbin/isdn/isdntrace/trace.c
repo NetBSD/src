@@ -35,7 +35,7 @@
  *	trace.c - print traces of D (B) channel activity for isdn4bsd
  *	-------------------------------------------------------------
  *
- *	$Id: trace.c,v 1.11 2011/05/24 13:02:37 joerg Exp $ 
+ *	$Id: trace.c,v 1.12 2011/08/31 13:32:38 joerg Exp $ 
  *
  * $FreeBSD$
  *
@@ -77,7 +77,7 @@ static struct stat fst;
 
 static void dumpbuf( int n, unsigned char *buf, struct i4b_trace_hdr *hdr, int raw );
 static int switch_driver( int value, int rx, int tx );
-static void usage( void );
+__dead static void usage( void );
 static void exit_hdl( void );
 static void reopenfiles( int );
 void add_datetime(char *filename, char *rfilename);
@@ -86,7 +86,7 @@ char * fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len);
 /*---------------------------------------------------------------------------*
  *	usage instructions
  *---------------------------------------------------------------------------*/
-void
+static void
 usage(void)
 {
 	fprintf(stderr,"\n");

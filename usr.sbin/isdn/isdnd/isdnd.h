@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.16 2009/04/16 05:56:32 lukem Exp $ 
+ *	$Id: isdnd.h,v 1.17 2011/08/31 13:32:37 joerg Exp $ 
  *
  * $FreeBSD$
  *
@@ -764,7 +764,7 @@ void display_disconnect ( struct cfg_entry *cep );
 void display_l12stat(int controller, int layer, int state);
 void display_tei(int controller, int tei);
 void display_updown ( struct cfg_entry *cep, int updown );
-void do_exit ( int exitval );
+__dead void do_exit ( int exitval );
 void do_menu ( void );
 int exec_answer ( struct cfg_entry *cep );
 int exec_connect_prog ( struct cfg_entry *cep, const char *prog, int link_down );
@@ -832,7 +832,7 @@ void unitlen_chkupd( struct cfg_entry *cep );
 void write_pid ( void );
 void yyerror ( const char *msg );
 
-void error_exit(int exitval, const char *fmt, ...);
+__dead void error_exit(int exitval, const char *fmt, ...) __printflike(2, 3);
 
 /* montior server module */
 void monitor_init(void);

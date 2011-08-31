@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syspuffs.c,v 1.11 2010/07/06 13:27:16 pooka Exp $	*/
+/*	$NetBSD: rump_syspuffs.c,v 1.12 2011/08/31 13:32:39 joerg Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -76,7 +76,7 @@ main(int argc, char *argv[])
 }
 #endif /* MOUNT_NOMAIN */
 
-static void
+__dead static void
 usage(void)
 {
 

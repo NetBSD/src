@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.118 2010/12/15 15:36:15 pooka Exp $	*/
+/*	$NetBSD: inetd.c,v 1.119 2011/08/31 13:32:37 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.118 2010/12/15 15:36:15 pooka Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.119 2011/08/31 13:32:37 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -345,7 +345,7 @@ static void	endconfig(void);
 static struct servtab *enter(struct servtab *);
 static void	freeconfig(struct servtab *);
 static struct servtab *getconfigent(void);
-static void	goaway(void);
+__dead static void	goaway(void);
 static void	machtime_dg(int, struct servtab *);
 static void	machtime_stream(int, struct servtab *);
 static char    *newstr(const char *);
@@ -359,7 +359,7 @@ static void	setup(struct servtab *);
 static char    *sskip(char **);
 static char    *skip(char **);
 static void	tcpmux(int, struct servtab *);
-static void	usage(void);
+__dead static void	usage(void);
 static void	register_rpc(struct servtab *);
 static void	unregister_rpc(struct servtab *);
 static void	bump_nofile(void);

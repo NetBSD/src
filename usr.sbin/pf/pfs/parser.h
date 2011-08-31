@@ -1,4 +1,4 @@
-/* $NetBSD: parser.h,v 1.1 2010/05/07 17:41:58 degroote Exp $ */
+/* $NetBSD: parser.h,v 1.2 2011/08/31 13:32:39 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 int yylex(void);
 void yyerror(const char*);
-void yyfatal(const char*);
+__dead void yyfatal(const char*);
 int parse(FILE*, struct pfioc_states*);
 int yyparse(void);
 

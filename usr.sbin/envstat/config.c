@@ -1,4 +1,4 @@
-/* 	$NetBSD: config.c,v 1.11 2011/06/08 16:11:25 pgoyette Exp $	*/
+/* 	$NetBSD: config.c,v 1.12 2011/08/31 13:32:36 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.11 2011/06/08 16:11:25 pgoyette Exp $");
+__RCSID("$NetBSD: config.c,v 1.12 2011/08/31 13:32:36 joerg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -62,7 +62,7 @@ enum {
 };
 
 static prop_dictionary_t cfdict, sensordict, refreshdict;
-static void config_errmsg(int, const char *, const char *);
+__dead static void config_errmsg(int, const char *, const char *);
 
 static void
 config_errmsg(int lvl, const char *key, const char *key2)

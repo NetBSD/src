@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.c,v 1.38 2009/04/18 13:05:54 lukem Exp $	*/
+/*	$NetBSD: rwhod.c,v 1.39 2011/08/31 13:32:41 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.38 2009/04/18 13:05:54 lukem Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.39 2011/08/31 13:32:41 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ static void	 getboottime(void);
 static void	 send_host_information(int);
 static void	 sighup(int);
 static void	 handleread(int);
-static void	 quit(const char *);
+__dead static void	 quit(const char *);
 static void	 rt_xaddrs(void *, void *, struct rt_addrinfo *);
 static int	 drop_privs(char *);
 static void	 usage(void) __dead;
