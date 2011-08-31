@@ -1,4 +1,4 @@
-/* $NetBSD: gpioow.c,v 1.12 2009/11/12 19:22:08 dyoung Exp $ */
+/* $NetBSD: gpioow.c,v 1.13 2011/08/31 12:23:32 mbalmer Exp $ */
 /*	$OpenBSD: gpioow.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.12 2009/11/12 19:22:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.13 2011/08/31 12:23:32 mbalmer Exp $");
 
 /*
  * 1-Wire bus bit-banging through GPIO pin.
@@ -28,6 +28,7 @@ __KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.12 2009/11/12 19:22:08 dyoung Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/gpio.h>
+#include <sys/module.h>
 
 #include <dev/gpio/gpiovar.h>
 
@@ -107,18 +108,20 @@ gpioow_attach(device_t parent, device_t self, void *aux)
 	if (gpio_pin_map(sc->sc_gpio, ga->ga_offset, ga->ga_mask,
 	    &sc->sc_map)) {
 		aprint_error(": can't map pins\n");
-		return;
+		goto finish;
 	}
 
 	/* Configure data pin */
 	caps = gpio_pin_caps(sc->sc_gpio, &sc->sc_map, GPIOOW_PIN_DATA);
 	if (!(caps & GPIO_PIN_OUTPUT)) {
 		aprint_error(": data pin is unable to drive output\n");
-		goto fail;
+		gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
+		goto finish;
 	}
 	if (!(caps & GPIO_PIN_INPUT)) {
 		aprint_error(": data pin is unable to read input\n");
-		goto fail;
+		gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
+		goto finish;
 	}
 	aprint_normal(": DATA[%d]", sc->sc_map.pm_map[GPIOOW_PIN_DATA]);
 	sc->sc_data = GPIO_PIN_OUTPUT;
@@ -149,10 +152,8 @@ gpioow_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error("%s: could not establish power handler\n",
 		    device_xname(self));
+finish:
 	return;
-
-fail:
-	gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
 }
 
 int
@@ -245,4 +246,38 @@ gpioow_bb_set(void *arg, int value)
 
 	gpio_pin_write(sc->sc_gpio, &sc->sc_map, GPIOOW_PIN_DATA,
 	    value ? GPIO_PIN_HIGH : GPIO_PIN_LOW);
+}
+
+MODULE(MODULE_CLASS_DRIVER, gpioow, "gpio,onewire");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+gpioow_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error;
+
+	error = 0;
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_gpioow,
+		    cfattach_ioconf_gpioow, cfdata_ioconf_gpioow);
+		if (error)
+			aprint_error("%s: unable to init component\n",
+			    gpioow_cd.cd_name);
+#endif
+		break;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		config_fini_component(cfdriver_ioconf_gpioow,
+		    cfattach_ioconf_gpioow, cfdata_ioconf_gpioow);
+#endif
+		break;
+	default:
+		error = ENOTTY;
+	}
+	return error;
 }
