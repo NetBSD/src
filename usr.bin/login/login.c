@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.97 2009/12/29 19:26:13 christos Exp $	*/
+/*	$NetBSD: login.c,v 1.98 2011/08/31 16:24:57 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.97 2009/12/29 19:26:13 christos Exp $");
+__RCSID("$NetBSD: login.c,v 1.98 2011/08/31 16:24:57 plunky Exp $");
 #endif /* not lint */
 
 /*
@@ -524,7 +524,7 @@ main(int argc, char *argv[])
 		_PASSWORD_WARNDAYS * SECSPERDAY);
 #endif
 
-	(void)gettimeofday(&now, (struct timezone *)NULL);
+	(void)gettimeofday(&now, NULL);
 	if (pwd->pw_expire) {
 		if (now.tv_sec >= pwd->pw_expire) {
 			(void)printf("Sorry -- your account has expired.\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.18 2009/10/17 20:46:03 christos Exp $	*/
+/*	$NetBSD: supscan.c,v 1.19 2011/08/31 16:25:00 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -191,14 +191,14 @@ main(int argc, char **argv)
 		basedir = c->Cbase;
 		prefix = c->Cprefix;
 		(void) chdir(basedir);
-		scantime = time((time_t *) NULL);
+		scantime = time(NULL);
 		if (!quiet)
 			printf("SUP Scan for %s starting at %s", collname,
 			    ctime(&scantime));
 		(void) fflush(stdout);
 		if (!setjmp(sjbuf)) {
 			makescanlists();	/* record names in scan files */
-			scantime = time((time_t *) NULL);
+			scantime = time(NULL);
 			if (!quiet)
 				printf("SUP Scan for %s completed at %s",
 				    collname, ctime(&scantime));
@@ -294,8 +294,7 @@ init(int argc, char **argv)
 			p = skipover(p, " \t=");
 			if (!localhost(p))
 				continue;
-			*c = getscancoll(filename, estrdup(collname),
-			    (char *) NULL);
+			*c = getscancoll(filename, estrdup(collname), NULL);
 			if (*c)
 				c = &((*c)->Cnext);
 		}
@@ -325,7 +324,7 @@ init(int argc, char **argv)
 	if (argc < 2 || argc > 3)
 		usage();
 	firstC = getscancoll(filename, estrdup(argv[1]),
-	    argc > 2 ? estrdup(argv[2]) : (char *) NULL);
+	    argc > 2 ? estrdup(argv[2]) : NULL);
 }
 
 static SCAN_COLLECTION *

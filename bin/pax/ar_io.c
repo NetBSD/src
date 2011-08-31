@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.52 2010/08/31 05:07:09 enami Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.53 2011/08/31 16:24:54 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -1431,7 +1431,7 @@ ar_next(void)
 	if (sigprocmask(SIG_BLOCK, &s_mask, &o_mask) < 0)
 		syswarn(0, errno, "Unable to set signal mask");
 	ar_close();
-	if (sigprocmask(SIG_SETMASK, &o_mask, (sigset_t *)NULL) < 0)
+	if (sigprocmask(SIG_SETMASK, &o_mask, NULL) < 0)
 		syswarn(0, errno, "Unable to restore signal mask");
 
 	if (done || !wr_trail || force_one_volume)

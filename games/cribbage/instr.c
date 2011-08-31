@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.c,v 1.12 2005/07/02 08:32:32 jmc Exp $	*/
+/*	$NetBSD: instr.c,v 1.13 2011/08/31 16:24:55 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)instr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: instr.c,v 1.12 2005/07/02 08:32:32 jmc Exp $");
+__RCSID("$NetBSD: instr.c,v 1.13 2011/08/31 16:24:55 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ instructions(void)
 			warn("dup2");
 			_exit(1);
 		}
-		execl("/bin/sh", "sh", "-c", path, (char *) NULL);
+		execl("/bin/sh", "sh", "-c", path, NULL);
 		warn(NULL);
 		_exit(1);
 	default:

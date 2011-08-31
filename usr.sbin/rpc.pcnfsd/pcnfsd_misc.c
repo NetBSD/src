@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_misc.c,v 1.12 2009/11/17 18:37:45 drochner Exp $	*/
+/*	$NetBSD: pcnfsd_misc.c,v 1.13 2011/08/31 16:24:59 plunky Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_misc.c 1.5 92/01/24 19:59:13 SMI */
 /*
@@ -124,9 +124,9 @@ get_password(usrnam)
 	setpwent();
 	if (shadowfile)
 		(void) setspent();	/* Setting the shadow password file */
-	if ((p = getpwnam(usrnam)) == (struct passwd *) NULL ||
-	    (shadowfile && (sp = getspnam(usrnam)) == (struct spwd *) NULL))
-		return ((struct passwd *) NULL);
+	if ((p = getpwnam(usrnam)) == NULL ||
+	    (shadowfile && (sp = getspnam(usrnam)) == NULL))
+		return (NULL);
 
 	if (shadowfile) {
 		pswd = sp->sp_pwdp;
@@ -136,8 +136,8 @@ get_password(usrnam)
 
 #else
 	p = getpwnam(usrnam);
-	if (p == (struct passwd *) NULL)
-		return ((struct passwd *) NULL);
+	if (p == NULL)
+		return (NULL);
 	pswd = p->pw_passwd;
 #endif
 
@@ -149,7 +149,7 @@ get_password(usrnam)
 		struct spwd *shadow = getspnam(usrnam);
 
 		if (!shadow)
-			return ((struct passwd *) NULL);
+			return (NULL);
 		pswd = shadow->sp_pwdp;
 	}
 #endif
@@ -166,17 +166,17 @@ get_password(usrnam)
 	}
 	endusershell();
 	if (!ok)
-		return ((struct passwd *) NULL);
+		return (NULL);
 #else
 /*
 * the best we can do is to ensure that the shell ends in "sh"
 */
 	ushell = localp.pw_shell;
 	if (strlen(ushell) < 2)
-		return ((struct passwd *) NULL);
+		return (NULL);
 	ushell += strlen(ushell) - 2;
 	if (strcmp(ushell, "sh"))
-		return ((struct passwd *) NULL);
+		return (NULL);
 
 #endif
 	return (&localp);
@@ -455,7 +455,7 @@ su_popen(user, cmd, maxtime)
 		(void) setgid(cached_gid);
 		(void) setuid(cached_uid);
 
-		(void) execl("/bin/sh", "sh", "-c", cmd, (char *) NULL);
+		(void) execl("/bin/sh", "sh", "-c", cmd, NULL);
 		_exit(255);
 	}
 	if (pid == -1) {

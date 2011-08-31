@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.27 2010/05/29 22:56:01 dholland Exp $	*/
+/*	$NetBSD: wump.c,v 1.28 2011/08/31 16:24:57 plunky Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: wump.c,v 1.27 2010/05/29 22:56:01 dholland Exp $");
+__RCSID("$NetBSD: wump.c,v 1.28 2011/08/31 16:24:57 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -781,7 +781,7 @@ puff of greasy black smoke! (poof)\n");
 			err(1, "open %s", _PATH_WUMPINFO);
 		if (dup2(fd, STDIN_FILENO) == -1)
 			err(1, "dup2");
-		(void)execl("/bin/sh", "sh", "-c", pager, (char *) NULL);
+		(void)execl("/bin/sh", "sh", "-c", pager, NULL);
 		err(1, "exec sh -c %s", pager);
 	case -1:
 		err(1, "fork");

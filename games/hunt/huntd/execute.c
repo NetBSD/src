@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.9 2009/07/04 04:29:54 dholland Exp $	*/
+/*	$NetBSD: execute.c,v 1.10 2011/08/31 16:24:56 plunky Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: execute.c,v 1.9 2009/07/04 04:29:54 dholland Exp $");
+__RCSID("$NetBSD: execute.c,v 1.10 2011/08/31 16:24:56 plunky Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -566,8 +566,7 @@ pickup(PLAYER *pp, int y, int x, int prob, int obj)
 		abort();
 	}
 	if (rand_num(100) < prob)
-		add_shot(obj, y, x, LEFTS, req, (PLAYER *) NULL,
-			TRUE, pp->p_face);
+		add_shot(obj, y, x, LEFTS, req, NULL, TRUE, pp->p_face);
 	else {
 		pp->p_ammo += req;
 		(void) snprintf(Buf, sizeof(Buf), "%3d", pp->p_ammo);

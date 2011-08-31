@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.54 2011/08/31 13:32:39 joerg Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.55 2011/08/31 16:24:59 plunky Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.54 2011/08/31 13:32:39 joerg Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.55 2011/08/31 16:24:59 plunky Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -345,7 +345,7 @@ main(int argc, char *argv[])
 	(void)sigaddset(&set, SIGINT);
 	(void)sigaddset(&set, SIGQUIT);
 	(void)sigaddset(&set, SIGTERM);
-	(void)sigprocmask(SIG_BLOCK, &set, (sigset_t *)NULL);
+	(void)sigprocmask(SIG_BLOCK, &set, NULL);
 
 	/* We don't care what the user wants. */
 	(void)umask(0);
@@ -1040,7 +1040,7 @@ putyptoken(struct pwddb *db)
 
 	key.data = __UNCONST(__yp_token);
 	key.size = strlen(__yp_token);
-	data.data = (u_char *)NULL;
+	data.data = NULL;
 	data.size = 0;
 
 	if ((*db->db->put)(db->db, &key, &data, R_NOOVERWRITE) == -1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.79 2010/12/13 16:54:04 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.80 2011/08/31 16:24:55 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.79 2010/12/13 16:54:04 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.80 2011/08/31 16:24:55 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -862,7 +862,7 @@ xxreadtoken(void)
 		}
 	}
 breakloop:
-	return readtoken1(c, BASESYNTAX, (char *)NULL, 0);
+	return readtoken1(c, BASESYNTAX, NULL, 0);
 #undef RETURN
 }
 
@@ -1611,7 +1611,7 @@ synerror(const char *msg)
 	else
 		outfmt(&errout, "%s: ", getprogname());
 	outfmt(&errout, "Syntax error: %s\n", msg);
-	error((char *)NULL);
+	error(NULL);
 	/* NOTREACHED */
 }
 
