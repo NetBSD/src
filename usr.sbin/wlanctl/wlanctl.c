@@ -1,4 +1,4 @@
-/* $NetBSD: wlanctl.c,v 1.12 2011/08/16 08:33:46 christos Exp $ */
+/* $NetBSD: wlanctl.c,v 1.13 2011/08/31 13:32:41 joerg Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -69,7 +69,7 @@ static void		print_capinfo(u_int16_t);
 static void		print_channel(u_int16_t, u_int16_t, u_int16_t);
 static void		print_node_flags(u_int32_t);
 static void		print_rateset(struct ieee80211_rateset *, int);
-static void		usage(void);
+__dead static void	usage(void);
 
 static void
 print_rateset(struct ieee80211_rateset *rs, int txrate)

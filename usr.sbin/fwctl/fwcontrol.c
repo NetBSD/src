@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcontrol.c,v 1.14 2011/08/14 17:42:23 christos Exp $	*/
+/*	$NetBSD: fwcontrol.c,v 1.15 2011/08/31 13:32:36 joerg Exp $	*/
 /*
  * Copyright (C) 2002
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -34,7 +34,7 @@
  */
 #include <sys/cdefs.h>
 //__FBSDID("$FreeBSD: src/usr.sbin/fwcontrol/fwcontrol.c,v 1.23 2006/10/26 22:33:38 imp Exp $");
-__RCSID("$NetBSD: fwcontrol.c,v 1.14 2011/08/14 17:42:23 christos Exp $");
+__RCSID("$NetBSD: fwcontrol.c,v 1.15 2011/08/31 13:32:36 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: fwcontrol.c,v 1.14 2011/08/14 17:42:23 christos Exp $");
 
 static void sysctl_set_int(const char *, int);
 
-static void
+__dead static void
 usage(void)
 {
 	fprintf(stderr,

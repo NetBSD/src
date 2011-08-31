@@ -27,7 +27,7 @@
  *	i4b daemon - main program entry
  *	-------------------------------
  *
- *	$Id: main.c,v 1.11 2009/04/16 05:56:32 lukem Exp $ 
+ *	$Id: main.c,v 1.12 2011/08/31 13:32:37 joerg Exp $ 
  *
  * $FreeBSD$
  *
@@ -49,10 +49,10 @@
 
 #ifdef I4B_NOTCPIP_MONITOR
 /* monitor via local socket */
-static void mloop(int sockfd);
+__dead static void mloop(int sockfd);
 #else /* I4B_NOTCPIP_MONITOR */
 /* monitor via local and tcp/ip socket */
-static void mloop(int localsock, int remotesock);
+__dead static void mloop(int localsock, int remotesock);
 #endif /* I4B_NOTCPIP_MONITOR */
 
 #else /* I4B_EXTERNAL_MONITOR */
@@ -65,7 +65,7 @@ static void kbdrdhdl(void);
 #endif
 
 static void isdnrdhdl(void);
-static void usage(void);
+__dead static void usage(void);
 
 #define MSG_BUF_SIZ	1024	/* message buffer size */
 
