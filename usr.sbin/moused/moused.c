@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.19 2011/08/30 20:03:50 joerg Exp $ */
+/* $NetBSD: moused.c,v 1.20 2011/08/31 07:17:44 gson Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.19 2011/08/30 20:03:50 joerg Exp $");
+__RCSID("$NetBSD: moused.c,v 1.20 2011/08/31 07:17:44 gson Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -2152,7 +2152,7 @@ r_timestamp(mousestatus_t *act)
     tv2.tv_sec = rodent.clickthreshold/1000;
     tv2.tv_usec = (rodent.clickthreshold%1000)*1000;
     timersub(&tv1, &tv2, &tv); 
-    debug("tv:  %ld %ld", tv.tv_sec, (long)tv.tv_usec);
+    debug("tv:  %ld %ld", (long)tv.tv_sec, (long)tv.tv_usec);
 
     /* 3 button emulation timeout */
     tv2.tv_sec = rodent.button2timeout/1000;
