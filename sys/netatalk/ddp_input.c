@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.25 2009/04/18 14:58:05 tsutsui Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.26 2011/08/31 18:31:03 plunky Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.25 2009/04/18 14:58:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.26 2011/08/31 18:31:03 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ atintr(void)
 			m_freem(m);
 			continue;
 		}
-		ddp_input(m, ifp, (struct elaphdr *) NULL, 2);
+		ddp_input(m, ifp, NULL, 2);
 	}
 
 	for (;;) {
@@ -122,7 +122,7 @@ atintr(void)
 		m_adj(m, SZ_ELAPHDR);
 
 		if (elhp->el_type == ELAP_DDPEXTEND) {
-			ddp_input(m, ifp, (struct elaphdr *) NULL, 1);
+			ddp_input(m, ifp, NULL, 1);
 		} else {
 			memcpy((void *) & elh, (void *) elhp, SZ_ELAPHDR);
 			ddp_input(m, ifp, &elh, 1);

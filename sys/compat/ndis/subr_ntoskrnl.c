@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ntoskrnl.c,v 1.20 2011/07/17 20:54:50 joerg Exp $	*/
+/*	$NetBSD: subr_ntoskrnl.c,v 1.21 2011/08/31 18:31:02 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.20 2011/07/17 20:54:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.21 2011/08/31 18:31:02 plunky Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -2108,7 +2108,7 @@ static int
 atoi(const char *str)
 {
 #ifdef __FreeBSD__
-	return (int)strtol(str, (char **)NULL, 10);
+	return (int)strtol(str, NULL, 10);
 #else
     int n;
 
@@ -2123,7 +2123,7 @@ static long
 atol(const char *str)
 {
 #ifdef __FreeBSD__
-	return strtol(str, (char **)NULL, 10);
+	return strtol(str, NULL, 10);
 #else
      long n;
 

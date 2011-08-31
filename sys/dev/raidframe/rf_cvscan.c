@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_cvscan.c,v 1.15 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_cvscan.c,v 1.16 2011/08/31 18:31:02 plunky Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,7 +35,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.15 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.16 2011/08/31 18:31:02 plunky Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include "rf_alloclist.h"
@@ -56,17 +56,17 @@ CheckCvscanState(RF_CvscanHeader_t *hdr)
 	long    i, key;
 	RF_DiskQueueData_t *tmp;
 
-	if (hdr->left != (RF_DiskQueueData_t *) NULL)
+	if (hdr->left != NULL)
 		RF_ASSERT(hdr->left->sectorOffset < hdr->cur_block);
 	for (key = hdr->cur_block, i = 0, tmp = hdr->left;
-	    tmp != (RF_DiskQueueData_t *) NULL;
+	    tmp != NULL;
 	    key = tmp->sectorOffset, i++, tmp = tmp->next)
 		RF_ASSERT(tmp->sectorOffset <= key
 		    && tmp->priority == hdr->nxt_priority && pri_ok(tmp->priority));
 	RF_ASSERT(i == hdr->left_cnt);
 
 	for (key = hdr->cur_block, i = 0, tmp = hdr->right;
-	    tmp != (RF_DiskQueueData_t *) NULL;
+	    tmp != NULL;
 	    key = tmp->sectorOffset, i++, tmp = tmp->next) {
 		RF_ASSERT(key <= tmp->sectorOffset);
 		RF_ASSERT(tmp->priority == hdr->nxt_priority);
@@ -75,7 +75,7 @@ CheckCvscanState(RF_CvscanHeader_t *hdr)
 	RF_ASSERT(i == hdr->right_cnt);
 
 	for (key = hdr->nxt_priority - 1, tmp = hdr->burner;
-	    tmp != (RF_DiskQueueData_t *) NULL;
+	    tmp != NULL;
 	    key = tmp->priority, tmp = tmp->next) {
 		RF_ASSERT(tmp);
 		RF_ASSERT(hdr);
@@ -94,8 +94,7 @@ PriorityInsert(RF_DiskQueueData_t **list_ptr, RF_DiskQueueData_t *req)
 	 * pointed to by the pointer that list_ptr points to * ie., list_ptr
 	 * is a grandparent of the first entry */
 
-	for (; (*list_ptr) != (RF_DiskQueueData_t *) NULL &&
-	    (*list_ptr)->priority > req->priority;
+	for (; (*list_ptr) != NULL && (*list_ptr)->priority > req->priority;
 	    list_ptr = &((*list_ptr)->next)) {
 	}
 	req->next = (*list_ptr);
@@ -111,8 +110,7 @@ ReqInsert(RF_DiskQueueData_t **list_ptr, RF_DiskQueueData_t *req, RF_CvscanArmDi
 	 * pointed to by the pointer that list_ptr points to * ie., list_ptr
 	 * is a grandparent of the first entry */
 
-	for (; (*list_ptr) != (RF_DiskQueueData_t *) NULL &&
-
+	for (; (*list_ptr) != NULL &&
 	    ((order == rf_cvscan_RIGHT && (*list_ptr)->sectorOffset <= req->sectorOffset)
 		|| (order == rf_cvscan_LEFT && (*list_ptr)->sectorOffset > req->sectorOffset));
 	    list_ptr = &((*list_ptr)->next)) {
@@ -127,7 +125,7 @@ static RF_DiskQueueData_t *
 ReqDequeue(RF_DiskQueueData_t **list_ptr)
 {
 	RF_DiskQueueData_t *ret = (*list_ptr);
-	if ((*list_ptr) != (RF_DiskQueueData_t *) NULL) {
+	if ((*list_ptr) != NULL) {
 		(*list_ptr) = (*list_ptr)->next;
 	}
 	return (ret);
@@ -139,7 +137,7 @@ static void
 ReBalance(RF_CvscanHeader_t *hdr)
 {
 	/* DO_CHECK_STATE(hdr); */
-	while (hdr->right != (RF_DiskQueueData_t *) NULL
+	while (hdr->right != NULL
 	    && hdr->right->sectorOffset < hdr->cur_block) {
 		hdr->right_cnt--;
 		hdr->left_cnt++;
@@ -154,12 +152,12 @@ static void
 Transfer(RF_DiskQueueData_t **to_list_ptr, RF_DiskQueueData_t **from_list_ptr)
 {
 	RF_DiskQueueData_t *gp;
-	for (gp = (*from_list_ptr); gp != (RF_DiskQueueData_t *) NULL;) {
+	for (gp = (*from_list_ptr); gp != NULL;) {
 		RF_DiskQueueData_t *p = gp->next;
 		PriorityInsert(to_list_ptr, gp);
 		gp = p;
 	}
-	(*from_list_ptr) = (RF_DiskQueueData_t *) NULL;
+	(*from_list_ptr) = NULL;
 }
 
 
@@ -224,18 +222,18 @@ rf_CvscanDequeue(void *q_in)
 	DO_CHECK_STATE(hdr);
 
 	if (hdr->left_cnt == 0 && hdr->right_cnt == 0)
-		return ((RF_DiskQueueData_t *) NULL);
+		return (NULL);
 
 	range = RF_MIN(hdr->range_for_avg, RF_MIN(hdr->left_cnt, hdr->right_cnt));
 	for (i = 0, tmp = hdr->left, sum_dist_left =
 	    ((hdr->direction == rf_cvscan_RIGHT) ? range * hdr->change_penalty : 0);
-	    tmp != (RF_DiskQueueData_t *) NULL && i < range;
+	    tmp != NULL && i < range;
 	    tmp = tmp->next, i++) {
 		sum_dist_left += hdr->cur_block - tmp->sectorOffset;
 	}
 	for (i = 0, tmp = hdr->right, sum_dist_right =
 	    ((hdr->direction == rf_cvscan_LEFT) ? range * hdr->change_penalty : 0);
-	    tmp != (RF_DiskQueueData_t *) NULL && i < range;
+	    tmp != NULL && i < range;
 	    tmp = tmp->next, i++) {
 		sum_dist_right += tmp->sectorOffset - hdr->cur_block;
 	}
@@ -256,13 +254,13 @@ rf_CvscanDequeue(void *q_in)
 	ReBalance(hdr);
 
 	if (hdr->left_cnt == 0 && hdr->right_cnt == 0
-	    && hdr->burner != (RF_DiskQueueData_t *) NULL) {
+	    && hdr->burner != NULL) {
 		/*
 		** restore low priority requests for next dequeue
 		*/
 		RF_DiskQueueData_t *burner = hdr->burner;
 		hdr->nxt_priority = burner->priority;
-		while (burner != (RF_DiskQueueData_t *) NULL
+		while (burner != NULL
 		    && burner->priority == hdr->nxt_priority) {
 			RF_DiskQueueData_t *next = burner->next;
 			RealEnqueue(hdr, burner);
@@ -291,13 +289,13 @@ rf_CvscanPeek(void *q_in)
 		range = RF_MIN(hdr->range_for_avg, RF_MIN(hdr->left_cnt, hdr->right_cnt));
 		for (i = 0, tmp = hdr->left, sum_dist_left =
 		    ((hdr->direction == rf_cvscan_RIGHT) ? range * hdr->change_penalty : 0);
-		    tmp != (RF_DiskQueueData_t *) NULL && i < range;
+		    tmp != NULL && i < range;
 		    tmp = tmp->next, i++) {
 			sum_dist_left += hdr->cur_block - tmp->sectorOffset;
 		}
 		for (i = 0, tmp = hdr->right, sum_dist_right =
 		    ((hdr->direction == rf_cvscan_LEFT) ? range * hdr->change_penalty : 0);
-		    tmp != (RF_DiskQueueData_t *) NULL && i < range;
+		    tmp != NULL && i < range;
 		    tmp = tmp->next, i++) {
 			sum_dist_right += tmp->sectorOffset - hdr->cur_block;
 		}
@@ -335,8 +333,8 @@ rf_CvscanCreate(RF_SectorCount_t sectPerDisk,
 	hdr->direction = rf_cvscan_RIGHT;
 	hdr->cur_block = 0;
 	hdr->left_cnt = hdr->right_cnt = 0;
-	hdr->left = hdr->right = (RF_DiskQueueData_t *) NULL;
-	hdr->burner = (RF_DiskQueueData_t *) NULL;
+	hdr->left = hdr->right = NULL;
+	hdr->burner = NULL;
 	DO_CHECK_STATE(hdr);
 
 	return ((void *) hdr);
@@ -357,21 +355,21 @@ PrintCvscanQueue(RF_CvscanHeader_t *hdr)
 	    (int) hdr->cur_block,
 	    (hdr->direction == rf_cvscan_LEFT) ? "LEFT" : "RIGHT");
 	printf("\tLeft(%d): ", hdr->left_cnt);
-	for (tmp = hdr->left; tmp != (RF_DiskQueueData_t *) NULL; tmp = tmp->next)
+	for (tmp = hdr->left; tmp != NULL; tmp = tmp->next)
 		printf("(%d,%ld,%d) ",
 		    (int) tmp->sectorOffset,
 		    (long) (tmp->sectorOffset + tmp->numSector),
 		    tmp->priority);
 	printf("\n");
 	printf("\tRight(%d): ", hdr->right_cnt);
-	for (tmp = hdr->right; tmp != (RF_DiskQueueData_t *) NULL; tmp = tmp->next)
+	for (tmp = hdr->right; tmp != NULL; tmp = tmp->next)
 		printf("(%d,%ld,%d) ",
 		    (int) tmp->sectorOffset,
 		    (long) (tmp->sectorOffset + tmp->numSector),
 		    tmp->priority);
 	printf("\n");
 	printf("\tBurner: ");
-	for (tmp = hdr->burner; tmp != (RF_DiskQueueData_t *) NULL; tmp = tmp->next)
+	for (tmp = hdr->burner; tmp != NULL; tmp = tmp->next)
 		printf("(%d,%ld,%d) ",
 		    (int) tmp->sectorOffset,
 		    (long) (tmp->sectorOffset + tmp->numSector),
