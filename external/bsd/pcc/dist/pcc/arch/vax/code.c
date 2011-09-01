@@ -1,5 +1,5 @@
-/*	Id: code.c,v 1.8 2009/02/08 16:55:08 ragge Exp 	*/	
-/*	$NetBSD: code.c,v 1.1.1.3 2010/06/03 18:57:32 plunky Exp $	*/
+/*	Id: code.c,v 1.17 2011/07/30 08:10:36 ragge Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.4 2011/09/01 12:46:51 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -36,101 +36,120 @@
 
 # include "pass1.h"
 
-short log2tab[] = {0, 0, 1, 2, 2, 3, 3, 3, 3};
-#define LOG2SZ 9
-
-void
-defalign(n) {
-	/* cause the alignment to become a multiple of n */
-	n /= SZCHAR;
-	if( lastloc != PROG && n > 1 ) printf( "	.align	%d\n", n >= 0 && n < LOG2SZ ? log2tab[n] : 0 );
-	}
-
 /*
- * output something to define the current position as label n
+ * Print out assembler segment name.
  */
 void
-deflab1(int n)
+setseg(int seg, char *name)
 {
-	printf(LABFMT ":\n", n);
+	switch (seg) {
+	case PROG: name = ".text"; break;
+	case DATA:
+	case LDATA: name = ".data"; break;
+	case STRNG:
+	case RDATA: name = ".section .rodata"; break;
+	case UDATA: break;
+	case PICLDATA:
+	case PICDATA:
+	case PICRDATA:
+	case TLSDATA:
+	case TLSUDATA:
+	case CTORS:
+	case DTORS:
+		uerror("FIXME: unsupported segment");
+	case NMSEG: 
+		printf("\t.section %s,\"aw\",@progbits\n", name);
+		return;
+	}
+	printf("\t%s\n", name);
 }
 
+/*
+ * Define everything needed to print out some data (or text).
+ * This means segment, alignment, visibility, etc.
+ */
 void
-efcode(){
+defloc(struct symtab *sp)
+{
+	char *name;
+
+	if ((name = sp->soname) == NULL)
+		name = exname(sp->sname);
+
+	if (sp->sclass == EXTDEF) {
+		printf("\t.globl %s\n", name);
+		printf("\t.type %s,@%s\n", name,
+		    ISFTN(sp->stype)? "function" : "object");
+	}
+	if (sp->slevel == 0)
+		printf("%s:\n", name);
+	else
+		printf(LABFMT ":\n", sp->soffset);
+}
+
+static int strtemp;
+
+void
+efcode()
+{
+	TWORD t;
+	NODE *p, *q;
+
 	/* code for the end of a function */
 	if (cftnsp->stype != STRTY+FTN && cftnsp->stype != UNIONTY+FTN)
 		return;
-	cerror("efcode");
 
-#ifdef notyet
-	if( strftn ){  /* copy output (in R2) to caller */
-		register NODE *l, *r;
-		register struct symtab *p;
-		register TWORD t;
-		register int j;
-		int i;
+	t = PTR+BTYPE(cftnsp->stype);
+	/* Create struct assignment */
+	q = tempnode(strtemp, t, 0, cftnsp->sap);
+	q = buildtree(UMUL, q, NIL);
+	p = block(REG, NIL, NIL, t, 0, cftnsp->sap);
+	regno(p) = R0;
+	p = buildtree(UMUL, p, NIL);
+	p = buildtree(ASSIGN, q, p);
+	ecomp(p);
 
-		p = &stab[curftn];
-		t = p->stype;
-		t = DECREF(t);
-
-		deflab( retlab );
-
-		i = getlab();	/* label for return area */
-		printf("	.data\n" );
-		printf("	.align	2\n" );
-		deflab1(i);
-		printf("\t.space  %d\n", tsize(t, p->dimoff, p->sizoff)/SZCHAR);
-		printf("	.text\n" );
-		psline();
-		printf("	movab	" LABFMT ",r1\n", i);
-
-		reached = 1;
-		l = block( REG, NIL, NIL, PTR|t, p->dimoff, p->sizoff );
-		l->rval = 1;  /* R1 */
-		l->lval = 0;  /* no offset */
-		r = block( REG, NIL, NIL, PTR|t, p->dimoff, p->sizoff );
-		r->rval = 0;  /* R0 */
-		r->lval = 0;
-		l = buildtree( UNARY MUL, l, NIL );
-		r = buildtree( UNARY MUL, r, NIL );
-		l = buildtree( ASSIGN, l, r );
-		l->op = FREE;
-		ecomp( l->left );
-		printf( "	movab	" LABFMT ",r0\n", i );
-		/* turn off strftn flag, so return sequence will be generated */
-		strftn = 0;
-		}
-	branch( retlab );
-	printf( "	.set	.R%d,0x%x\n", ftnno, ent_mask[reg_use] );
-	reg_use = 11;
-	p2bend();
-	fdefflag = 0;
-#endif
-	}
-
-void
-bfcode(struct symtab **a, int n)
-{
-	int i;
-
-	if (cftnsp->stype != STRTY+FTN && cftnsp->stype != UNIONTY+FTN)
-		return;
-	/* Function returns struct, adjust arg offset */
-	for (i = 0; i < n; i++)
-		a[i]->soffset += SZPOINT(INT);
+	/* put hidden arg in r0 on return */
+	q = tempnode(strtemp, INT, 0, 0);
+	p = block(REG, NIL, NIL, INT, 0, 0);
+	regno(p) = R0;
+        ecomp(buildtree(ASSIGN, p, q));
 }
 
 void
-bccode(){ /* called just before the first executable statment */
-		/* by now, the automatics and register variables are allocated */
-	SETOFF( autooff, SZINT );
-#if 0
-	/* set aside store area offset */
-	p2bbeg( autooff, regvar );
-	reg_use = (reg_use > regvar ? regvar : reg_use);
-#endif
+bfcode(struct symtab **sp, int n)
+{
+	struct symtab *sp2;
+	NODE *p, *q;
+	int i;
+
+	if (cftnsp->stype == STRTY+FTN || cftnsp->stype == UNIONTY+FTN) {
+		/* Move return address into temporary */
+		p = tempnode(0, INT, 0, 0);
+		strtemp = regno(p);
+		q = block(REG, 0, 0, INT, 0, 0);
+		regno(q) = R1;
+		ecomp(buildtree(ASSIGN, p, q));
 	}
+	if (xtemps == 0)
+		return;
+
+	/* put arguments in temporaries */
+	for (i = 0; i < n; i++) {
+		if (sp[i]->stype == STRTY || sp[i]->stype == UNIONTY ||
+		    cisreg(sp[i]->stype) == 0)
+			continue;
+		if (cqual(sp[i]->stype, sp[i]->squal) & VOL)
+			continue;
+		sp2 = sp[i];
+		p = tempnode(0, sp[i]->stype, sp[i]->sdf, sp[i]->sap);
+		p = buildtree(ASSIGN, p, nametree(sp2));
+		sp[i]->soffset = regno(p->n_left);
+		sp[i]->sflags |= STNODE;
+		ecomp(p);
+	}
+
+}
 
 void
 ejobcode( flag ){
@@ -141,6 +160,8 @@ ejobcode( flag ){
 void
 bjobcode()
 {
+	astypnames[INT] = astypnames[UNSIGNED] = "\t.long";
+	astypnames[SHORT] = astypnames[USHORT] = "\t.word";
 }
 
 #if 0
@@ -156,42 +177,6 @@ aoend(){
 	/* called after removing all automatics from stab */
 	}
 #endif
-
-void
-defnam( p ) register struct symtab *p; {
-	/* define the current location as the name p->sname */
-	char *n;
-
-	n = p->soname ? p->soname : exname(p->sname);
-	if( p->sclass == EXTDEF ){
-		printf( "	.globl	%s\n", n );
-		}
-	printf( "%s:\n", n );
-
-	}
-
-void
-bycode( t, i ){
-	/* put byte i+1 in a string */
-
-	i &= 07;
-	if( t < 0 ){ /* end of the string */
-		if( i != 0 ) printf( "\n" );
-		}
-
-	else { /* stash byte t into string */
-		if( i == 0 ) printf( "	.byte	" );
-		else printf( "," );
-		printf( "0x%x", t );
-		if( i == 07 ) printf( "\n" );
-		}
-	}
-
-int
-fldal( t ) unsigned t; { /* return the alignment of field of type t */
-	uerror( "illegal field type" );
-	return( ALINT );
-	}
 
 void
 fldty( p ) struct symtab *p; { /* fix up type of field p */
@@ -327,5 +312,102 @@ walkheap(start, limit)
 NODE *
 funcode(NODE *p)
 {
+	NODE *r, *l;
+
+	/* Fix function call arguments. On vax, just add funarg */
+	for (r = p->n_right; r->n_op == CM; r = r->n_left) {
+		if (r->n_right->n_op != STARG) {
+			r->n_right = intprom(r->n_right);
+			r->n_right = block(FUNARG, r->n_right, NIL,
+			    r->n_right->n_type, r->n_right->n_df,
+			    r->n_right->n_ap);
+		}
+	}
+	if (r->n_op != STARG) {
+		l = talloc();
+		*l = *r;
+		r->n_op = FUNARG;
+		r->n_left = l;
+		r->n_left = intprom(r->n_left);
+		r->n_type = r->n_left->n_type;
+	}
 	return p;
 }
+
+/*
+ * Generate the builtin code for FFS.
+ */
+NODE *
+builtin_ffs(NODE *f, NODE *a, TWORD t)
+{
+	NODE *p, *q, *r;
+
+	nfree(f);
+	p = tempnode(0, t, 0, 0);
+	r = block(XARG, ccopy(p), NIL, INT, 0, 0);
+	r->n_name = "=&r";
+	q = block(XARG, a, NIL, INT, 0, 0);
+	q->n_name = "g";
+	q = block(CM, r, q, INT, 0, 0);
+	q = block(XASM, q, block(ICON, 0, 0, STRTY, 0, 0), INT, 0, 0);
+	q->n_name = "ffs $0,$32,%1,%0;bneq 1f;mnegl $1,%0;1:;incl %0";
+	p = block(COMOP, q, p, t, 0, 0);
+	return p;
+}
+
+NODE *
+vax_builtin_return_address(NODE *f, NODE *a, TWORD t)
+{
+
+	if (a == NULL || a->n_op != ICON)
+		goto bad;
+
+	if (a->n_lval != 0)
+		werror("unsupported argument");
+
+	tfree(f);
+	tfree(a);
+
+	f = block(REG, NIL, NIL, INCREF(PTR+CHAR), 0, 0);
+	regno(f) = FPREG;
+	f = block(UMUL,
+		block(PLUS, f,
+		    bcon(16), INCREF(PTR+CHAR), 0, 0), NIL, PTR+CHAR, 0, 0);
+	f = makety(f, PTR+VOID, 0, 0, 0);
+
+	return f;
+bad:
+	uerror("bad argument to __builtin_return_address");
+	return bcon(0);
+}
+
+NODE *
+vax_builtin_frame_address(NODE *f, NODE *a, TWORD t)
+{
+	int nframes;
+
+	if (a == NULL || a->n_op != ICON)
+		goto bad;
+
+	nframes = a->n_lval;
+
+	tfree(f);
+	tfree(a);
+
+	f = block(REG, NIL, NIL, PTR+CHAR, 0, 0);
+	regno(f) = FPREG;
+
+	while (nframes--) {
+		f = block(UMUL,
+			block(PLUS, f,
+			    bcon(12), INCREF(PTR+CHAR), 0, 0),
+				NIL, PTR+CHAR, 0, 0);
+		f = makety(f, PTR+CHAR, 0, 0, 0);
+	}
+
+	return f;
+bad:
+	uerror("bad argument to __builtin_frame_address");
+	return bcon(0);
+}
+

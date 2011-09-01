@@ -118,7 +118,7 @@ set CCDIR=%PCCSRCDIR%\cc\cc
 set OSDIR=%PCCSRCDIR%\os\%TARGOS%
 set MACHDIR=%PCCSRCDIR%\arch\%MACH%
 set BISON_SIMPLE=%OSDIR%\bison.simple
-set CPPFLAGS=-DWIN32 -DGCC_COMPAT -DPCC_DEBUG -DCPP_DEBUG -DTARGOS=%TARGOS% -Dos_%TARGOS% -Dmach_%MACH% -DLIBEXECDIR=%LIBEXECDIR% -D_CRT_SECURE_NO_WARNINGS
+set CPPFLAGS=-DWIN32 -DGCC_COMPAT -DPCC_DEBUG -DTARGOS="%TARGOS%" -Dos_%TARGOS% -DTARGMACH="%MACH%" -Dmach_%MACH% -DLIBEXECDIR=%LIBEXECDIR% -D_CRT_SECURE_NO_WARNINGS
 
 del *.obj *.o *.exe
 
@@ -137,14 +137,14 @@ move y.tab.h cgram.h
 flex %CCOMDIR%\scan.l
 move lex.yy.c scan.c
 
-%CC% -o ccom.exe %CPPFLAGS% %CFLAGS% -I%CCOMDIR% -I%OSDIR% -I%MACHDIR% -I%MIPDIR% -I. %CCOMDIR%\main.c %MIPDIR%\compat.c scan.c cgram.c external.c %CCOMDIR%\optim.c %CCOMDIR%\pftn.c %CCOMDIR%\trees.c %CCOMDIR%\inline.c %CCOMDIR%\symtabs.c %CCOMDIR%\init.c %MACHDIR%\local.c %MACHDIR%\code.c %CCOMDIR%\stabs.c %CCOMDIR%\gcc_compat.c %MIPDIR%\match.c %MIPDIR%\reader.c %MIPDIR%\optim2.c %MIPDIR%\regs.c %MACHDIR%\local2.c %MACHDIR%\order.c %MACHDIR%\table.c %MIPDIR%\common.c "C:\Program Files\UnxUtils\usr\local\lib\libfl.lib"
+%CC% -o ccom.exe %CPPFLAGS% %CFLAGS% -I%CCOMDIR% -I%OSDIR% -I%MACHDIR% -I%MIPDIR% -I. %CCOMDIR%\main.c %MIPDIR%\compat.c scan.c cgram.c external.c %CCOMDIR%\optim.c %CCOMDIR%\builtins.c %CCOMDIR%\pftn.c %CCOMDIR%\trees.c %CCOMDIR%\inline.c %CCOMDIR%\symtabs.c %CCOMDIR%\init.c %MACHDIR%\local.c %MACHDIR%\code.c %CCOMDIR%\stabs.c %CCOMDIR%\gcc_compat.c %MIPDIR%\match.c %MIPDIR%\reader.c %MIPDIR%\optim2.c %MIPDIR%\regs.c %MACHDIR%\local2.c %MACHDIR%\order.c %MACHDIR%\table.c %MIPDIR%\common.c "C:\Program Files\UnxUtils\usr\local\lib\libfl.lib"
 
 if not '%PREFIX%' == '' goto prefixset
 set PREFIX=C:\Program Files\pcc
 :prefixset
 
 set PCCDESTDIR=%PREFIX%
-set LIBPCCDESTDIR=%PREFIX%\lib\i386-win32\0.9.9
+set LIBPCCDESTDIR=%PREFIX%\lib\i386-win32\1.1.0
 
 set LIBPCCDIR=%PCCLIBSSRCDIR%\libpcc
 %CC% -c %CPPFLAGS% %CFLAGS2% -I%LIBPCCDIR% %LIBPCCDIR%\_alloca.c

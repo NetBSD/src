@@ -1,5 +1,5 @@
-/*	Id: code.c,v 1.5 2008/01/01 17:31:00 ragge Exp 	*/	
-/*	$NetBSD: code.c,v 1.1.1.2 2010/06/03 18:57:21 plunky Exp $	*/
+/*	Id: code.c,v 1.8 2011/06/04 07:41:11 ragge Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.3 2011/09/01 12:46:41 plunky Exp $	*/
 /*
  * Copyright (c) 2006 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -71,16 +71,16 @@ cerror("efcode");
 	/* address of return struct is in eax */
 	/* create a call to memcpy() */
 	/* will get the result in eax */
-	p = block(REG, NIL, NIL, CHAR+PTR, 0, MKSUE(CHAR+PTR));
+	p = block(REG, NIL, NIL, CHAR+PTR, 0, 0);
 //	p->n_rval = EAX;
-	q = block(OREG, NIL, NIL, CHAR+PTR, 0, MKSUE(CHAR+PTR));
+	q = block(OREG, NIL, NIL, CHAR+PTR, 0, 0);
 //	q->n_rval = EBP;
 	q->n_lval = 8; /* return buffer offset */
-	p = block(CM, q, p, INT, 0, MKSUE(INT));
+	p = block(CM, q, p, INT, 0, 0);
 	sz = (tsize(STRTY, cftnsp->sdf, cftnsp->ssue)+SZCHAR-1)/SZCHAR;
-	p = block(CM, p, bcon(sz), INT, 0, MKSUE(INT));
+	p = block(CM, p, bcon(sz), INT, 0, 0);
 	p->n_right->n_name = "";
-	p = block(CALL, bcon(0), p, CHAR+PTR, 0, MKSUE(CHAR+PTR));
+	p = block(CALL, bcon(0), p, CHAR+PTR, 0, 0);
 	p->n_left->n_name = "memcpy";
 	p = clocal(p);
 	send_passt(IP_NODE, p);
@@ -103,15 +103,6 @@ cerror("bfcode");
 		a[i]->soffset += SZPOINT(INT);
 }
 
-
-/*
- * by now, the automatics and register variables are allocated
- */
-void
-bccode()
-{
-	SETOFF(autooff, SZINT);
-}
 
 /* called just before final exit */
 /* flag is 1 if errors, 0 if none */
@@ -157,16 +148,6 @@ bycode(int t, int i)
 			putchar(t);
 		}
 	}
-}
-
-/*
- * return the alignment of field of type t
- */
-int
-fldal(unsigned int t)
-{
-	uerror("illegal field type");
-	return(ALINT);
 }
 
 /* fix up type of field p */
