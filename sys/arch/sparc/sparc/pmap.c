@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.345 2011/08/28 10:26:15 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.346 2011/09/01 08:47:56 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.345 2011/08/28 10:26:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.346 2011/09/01 08:47:56 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -6671,8 +6671,8 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 	}
 	if (!owired) {
 		pmap_stats.ps_useless_changewire++;
-		return;
 		kpreempt_enable();
+		return;
 	}
 
 	pm->pm_stats.wired_count--;
