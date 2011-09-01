@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.20 2011/08/31 16:24:56 plunky Exp $	*/
+/*	$NetBSD: misc.c,v 1.21 2011/09/01 07:18:50 plunky Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -682,7 +682,7 @@ death(const char *how)
 	if (ch == 'Y') {
 		cleanup(FALSE);
 		execl(_PATH_GAMEPROG, "phantasia", "-s",
-		    (Wizard ? "-S" : NULL), NULL);
+		    (Wizard ? "-S" : (char *) NULL), (char *) NULL);
 		exit(0);
 		/* NOTREACHED */
 	}
