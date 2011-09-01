@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.34 2010/07/08 20:52:22 rmind Exp $	*/
+/*	$NetBSD: du.c,v 1.35 2011/09/01 13:37:33 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: du.c,v 1.34 2010/07/08 20:52:22 rmind Exp $");
+__RCSID("$NetBSD: du.c,v 1.35 2011/09/01 13:37:33 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,12 +61,12 @@ __RCSID("$NetBSD: du.c,v 1.34 2010/07/08 20:52:22 rmind Exp $");
 #include <unistd.h>
 #include <limits.h>
 
-int	linkchk(dev_t, ino_t);
-void	prstat(const char *, int64_t);
-void	usage(void);
+static int	linkchk(dev_t, ino_t);
+static void	prstat(const char *, int64_t);
+__dead static void	usage(void);
 
-int hflag;
-long blocksize;
+static int hflag;
+static long blocksize;
 
 int
 main(int argc, char *argv[])
@@ -248,7 +248,7 @@ main(int argc, char *argv[])
 	exit(rval);
 }
 
-void
+static void
 prstat(const char *fname, int64_t blocks)
 {
 	if (hflag) {
@@ -265,7 +265,7 @@ prstat(const char *fname, int64_t blocks)
 		    fname);
 }
 
-int
+static int
 linkchk(dev_t dev, ino_t ino)
 {
 	static struct entry {
@@ -340,7 +340,7 @@ linkchk(dev_t dev, ino_t ino)
 	return 0;
 }
 
-void
+static void
 usage(void)
 {
 

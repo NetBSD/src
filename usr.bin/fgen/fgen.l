@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.34 2010/02/08 20:14:55 eeh Exp $	*/
+/*	$NetBSD: fgen.l,v 1.35 2011/09/01 13:44:25 joerg Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -42,7 +42,7 @@
 #endif
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.34 2010/02/08 20:14:55 eeh Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.35 2011/09/01 13:44:25 joerg Exp $");
 #endif
 
 %}
@@ -68,41 +68,41 @@ tail	{white}
 #include <unistd.h>
 
 #include "fgen.h"
-TOKEN ltoken;
+static TOKEN ltoken;
 
 /*
  * Global variables that control the parse state.
  */
 
-struct fcode *dictionary = NULL;
-struct macro *aliases = NULL;
-int outf = 1; /* stdout */
-int state = 0;
-int nextfcode = 0x800; 
-int numbase = TOK_HEX;
-long outpos;
-char *outbuf = NULL;
-char *outfile, *infile;
+static struct fcode *dictionary = NULL;
+static struct macro *aliases = NULL;
+static int outf = 1; /* stdout */
+static int state = 0;
+static int nextfcode = 0x800; 
+static int numbase = TOK_HEX;
+static long outpos;
+static char *outbuf = NULL;
+static char *outfile, *infile;
 #define BUFCLICK	(1024*1024)
-size_t outbufsiz = 0;
-char *myname = NULL;
-int offsetsize = 8;
-int defining = 0;
-int tokenizer = 0;
-int need_end0 = 1;
+static size_t outbufsiz = 0;
+static char *myname = NULL;
+static int offsetsize = 8;
+static int defining = 0;
+static int tokenizer = 0;
+static int need_end0 = 1;
 
 #define PSTKSIZ		1024
-Cell parse_stack[PSTKSIZ];
-int parse_stack_ptr = 0;
+static Cell parse_stack[PSTKSIZ];
+static int parse_stack_ptr = 0;
 
-void	token_err(int, const char *, const char *, const char *, ...)
-	__attribute__((__format__(__printf__, 4, 5)));
-YY_DECL;
+static void	token_err(int, const char *, const char *, const char *, ...)
+    __printflike(4, 5) __dead;
+static YY_DECL;
 
-int debug = 0;
+static int debug = 0;
 #define ASSERT if (debug) assert
 #define STATE(y, x)	do { if (debug) printf( "%lx State %s: token `%s'\n", outpos, x, y); } while (0)
-int mark_fload = 0;
+static int mark_fload = 0;
 
 %}
 
@@ -302,29 +302,28 @@ emit-byte		{ ltoken.type = TOK_EMIT_BYTE; ltoken.text = yytext;
 %%
 
 /* Function definitions */
-void push(Cell);
-Cell pop(void);
-int depth(void);
-int fadd(struct fcode *, struct fcode *);
-struct fcode *flookup(struct fcode *, const char *);
-int aadd(struct macro *, struct macro *);
-struct macro *alookup(struct macro *, const char *);
-void initdic(void);
-void usage(const char *);
-void tokenize(YY_BUFFER_STATE);
-int emit(const char *);
-int spit(long);
-int offspit(long);
-void sspit(const char *);
-int apply_macros(YY_BUFFER_STATE, const char *);
-int main(int argc, char *argv[]);
-Cell cvt(const char *, char **, int base);
+static void push(Cell);
+static Cell pop(void);
+static int depth(void);
+static int fadd(struct fcode *, struct fcode *);
+static struct fcode *flookup(struct fcode *, const char *);
+static int aadd(struct macro *, struct macro *);
+static struct macro *alookup(struct macro *, const char *);
+static void initdic(void);
+__dead static void usage(const char *);
+static void tokenize(YY_BUFFER_STATE);
+static int emit(const char *);
+static int spit(long);
+static int offspit(long);
+static void sspit(const char *);
+static int apply_macros(YY_BUFFER_STATE, const char *);
+static Cell cvt(const char *, char **, int base);
 
 /*
  * Standard FCode names and numbers.  Includes standard
  * tokenizer aliases.
  */
-struct fcode fcodes[] = {
+static struct fcode fcodes[] = {
 		{ "end0",			0x0000, 0, NULL, NULL },
 		{ "b(lit)",			0x0010, 0, NULL, NULL },
 		{ "b(')",			0x0011, 0, NULL, NULL },
@@ -701,7 +700,7 @@ struct fcode fcodes[] = {
 /*
  * Default macros -- can be overridden by colon definitions.
  */
-struct macro macros[] = {
+static struct macro macros[] = {
 	{ "eval",	"evaluate", 0, NULL, NULL }, /* Build a more balanced tree */
 	{ "(.)",	"dup abs <# u#s swap sign u#>", 0, NULL, NULL },
 	{ "<<",		"lshift", 0, NULL, NULL },
@@ -746,7 +745,7 @@ struct macro macros[] = {
  * ASCII -> long int converter, eats `.'s
  */
 #define strtol(x, y, z)		cvt(x, y, z)
-Cell
+static Cell
 cvt(const char *s, char **e, int base)
 {
 	Cell v = 0;
@@ -782,7 +781,7 @@ cvt(const char *s, char **e, int base)
  * Parser stack control functions.
  */
 
-void
+static void
 push(Cell val)
 {
 	if (debug > 1)
@@ -794,7 +793,7 @@ push(Cell val)
 	}
 }
 
-Cell
+static Cell
 pop(void)
 {
 	ASSERT(parse_stack_ptr);
@@ -803,7 +802,7 @@ pop(void)
 	return parse_stack[--parse_stack_ptr];
 }
 
-int
+static int
 depth(void)
 {
 	return (parse_stack_ptr);
@@ -812,7 +811,7 @@ depth(void)
 /*
  * Insert fcode into dictionary.
  */
-int
+static int
 fadd(struct fcode *dict, struct fcode *new)
 {
 	int res = strcmp(dict->name, new->name);
@@ -854,7 +853,7 @@ fadd(struct fcode *dict, struct fcode *new)
 /*
  * Look for a code in the dictionary.
  */
-struct fcode *
+static struct fcode *
 flookup(struct fcode *dict, const char *str)
 {
 	int res;
@@ -876,7 +875,7 @@ flookup(struct fcode *dict, const char *str)
 /*
  * Insert alias into macros.
  */
-int
+static int
 aadd(struct macro *dict, struct macro *new)
 {
 	int res = strcmp(dict->name, new->name);
@@ -916,7 +915,7 @@ aadd(struct macro *dict, struct macro *new)
 /*
  * Look for a macro in the aliases.
  */
-struct macro *
+static struct macro *
 alookup(struct macro *dict, const char *str)
 {
 	int res;
@@ -936,7 +935,7 @@ alookup(struct macro *dict, const char *str)
  * Bootstrap the dictionary and then install
  * all the standard FCodes.
  */
-void
+static void
 initdic(void)
 {
 	struct fcode *code = fcodes;
@@ -967,7 +966,7 @@ initdic(void)
 
 }
 
-int
+static int
 apply_macros(YY_BUFFER_STATE yinput, const char *str)
 {
 	struct macro *xform = alookup(aliases, str);
@@ -987,7 +986,7 @@ apply_macros(YY_BUFFER_STATE yinput, const char *str)
 	return (xform != NULL);
 }
 
-void
+static void
 usage(const char *me)
 {
 	(void)fprintf(stderr, "%s: [-d level] [-o outfile] <infile>\n", me);
@@ -1077,7 +1076,7 @@ main(int argc, char *argv[])
  * be called recursively to parse mutiple levels of include files.
  */
 
-void
+static void
 tokenize(YY_BUFFER_STATE yinput)
 {
 	FILE *inf;
@@ -2071,7 +2070,7 @@ tokenize(YY_BUFFER_STATE yinput)
 /*
  * print a tokenizer error message
  */
-void
+static void
 token_err(int lineno, const char *file, const char *text, const char *fmt, ...)
 {
 	va_list ap;
@@ -2093,7 +2092,7 @@ token_err(int lineno, const char *file, const char *text, const char *fmt, ...)
  *
  * Fcode must be in dictionary.  No alias conversion done.
  */
-int
+static int
 emit(const char *str)
 {
 	struct fcode *code;
@@ -2114,7 +2113,7 @@ emit(const char *str)
  * It will spit out one zero byte or as many bytes as are
  * non-zero.
  */
-int
+static int
 spit(long n)
 {
 	int count = 1;
@@ -2137,7 +2136,7 @@ spit(long n)
 /*
  * Spit out an FCode string.
  */
-void
+static void
 sspit(const char *s)
 {
 	int len = strlen(s);
@@ -2158,7 +2157,7 @@ sspit(const char *s)
  * Bail if the value overflows.  This is a little complicated since
  * offsets can be negative numbers.
  */
-int
+static int
 offspit(long n)
 {
 
