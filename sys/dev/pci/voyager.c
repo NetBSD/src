@@ -1,7 +1,7 @@
-/*	$NetBSD: voyager.c,v 1.2 2011/09/01 00:06:42 macallan Exp $	*/
+/*	$NetBSD: voyager.c,v 1.3 2011/09/01 14:04:55 macallan Exp $	*/
 
 /*
- * Copyright (c) 2009 Michael Lorenz
+ * Copyright (c) 2009, 2011 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.2 2011/09/01 00:06:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.3 2011/09/01 14:04:55 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,11 @@ voyager_attach(device_t parent, device_t self, void *aux)
 
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_GPIO0_CONTROL);
 	if ((reg & GPIO_I2C_BITS) == 0) {
+		/* both bits as outputs */
+		reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DIR0);
+		reg |= GPIO_I2C_BITS;
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DIR0, reg);
+
 		/* Fill in the i2c tag */
 		sc->sc_i2c.ic_cookie = sc;
 		sc->sc_i2c.ic_acquire_bus = voyager_i2c_acquire_bus;
@@ -266,11 +271,19 @@ voyager_i2c_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
 static int
 voyager_i2c_read_byte(void *cookie, uint8_t *valp, int flags)
 {
-	return (i2c_bitbang_read_byte(cookie, valp, flags, &voyager_i2cbb_ops));
+	int ret;
+
+	ret = i2c_bitbang_read_byte(cookie, valp, flags, &voyager_i2cbb_ops);
+	return ret;
 }
 
 static int
 voyager_i2c_write_byte(void *cookie, uint8_t val, int flags)
 {
-	return (i2c_bitbang_write_byte(cookie, val, flags, &voyager_i2cbb_ops));
+	int ret;
+
+	ret = i2c_bitbang_write_byte(cookie, val, flags, &voyager_i2cbb_ops);
+	delay(500);
+	return ret;
 }
+
