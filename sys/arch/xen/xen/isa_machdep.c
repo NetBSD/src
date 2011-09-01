@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.25 2011/08/27 09:32:12 christos Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.26 2011/09/01 15:10:31 christos Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.25 2011/08/27 09:32:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.26 2011/09/01 15:10:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,24 +102,6 @@ struct x86_bus_dma_tag isa_bus_dma_tag = {
 	._bounce_alloc_lo	= 0,
 	._bounce_alloc_hi	= ISA_DMA_BOUNCE_THRESHOLD,
 	._may_bounce		= _isa_dma_may_bounce,
-
-	._dmamap_create		= _bus_dmamap_create,
-	._dmamap_destroy	= _bus_dmamap_destroy,
-	._dmamap_load		= _bus_dmamap_load,
-	._dmamap_load_mbuf	= _bus_dmamap_load_mbuf,
-	._dmamap_load_uio	= _bus_dmamap_load_uio,
-	._dmamap_load_raw	= _bus_dmamap_load_raw,
-	._dmamap_unload		= _bus_dmamap_unload,
-	._dmamap_sync 		= _bus_dmamap_sync,
-
-	._dmamem_alloc		= _bus_dmamem_alloc,
-	._dmamem_free		= _bus_dmamem_free,
-	._dmamem_map		= _bus_dmamem_map,
-	._dmamem_unmap		= _bus_dmamem_unmap,
-	._dmamem_mmap		= _bus_dmamem_mmap,
-
-	._dmatag_subregion	= _bus_dmatag_subregion,
-	._dmatag_destroy	= _bus_dmatag_destroy,
 };
 
 #define	IDTVEC(name)	__CONCAT(X,name)

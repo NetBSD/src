@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 2011/08/31 20:04:51 dyoung Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 2011/09/01 15:10:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -88,6 +88,13 @@ enum bus_dma_override_idx {
 	, BUS_DMAMAP_OVERRIDE_LOAD_RAW	= __BIT(5)
 	, BUS_DMAMAP_OVERRIDE_UNLOAD	= __BIT(6)
 	, BUS_DMAMAP_OVERRIDE_SYNC	= __BIT(7)
+	, BUS_DMAMEM_OVERRIDE_ALLOC	= __BIT(8)
+	, BUS_DMAMEM_OVERRIDE_FREE	= __BIT(9)
+	, BUS_DMAMEM_OVERRIDE_MAP	= __BIT(10)
+	, BUS_DMAMEM_OVERRIDE_UNMAP	= __BIT(11)
+	, BUS_DMAMEM_OVERRIDE_MMAP	= __BIT(12)
+	, BUS_DMATAG_OVERRIDE_SUBREGION	= __BIT(13)
+	, BUS_DMATAG_OVERRIDE_DESTROY	= __BIT(14)
 };
 
 /* Only add new members at the end of this struct! */
@@ -139,7 +146,7 @@ struct bus_dma_overrides {
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
 	void (*ov_dmamap_destroy)(void *, bus_dma_tag_t, bus_dmamap_t);
 	int (*ov_dmamap_load)(void *, bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct lwp *, int);
+	    bus_size_t, struct proc *, int);
 	int (*ov_dmamap_load_mbuf)(void *, bus_dma_tag_t, bus_dmamap_t,
 	    struct mbuf *, int);
 	int (*ov_dmamap_load_uio)(void *, bus_dma_tag_t, bus_dmamap_t,
@@ -149,6 +156,17 @@ struct bus_dma_overrides {
 	void (*ov_dmamap_unload)(void *, bus_dma_tag_t, bus_dmamap_t);
 	void (*ov_dmamap_sync)(void *, bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int);
+	int (*ov_dmamem_alloc)(void *, bus_dma_tag_t, bus_size_t, bus_size_t,
+	    bus_size_t, bus_dma_segment_t *, int, int *, int);
+	void (*ov_dmamem_free)(void *, bus_dma_tag_t, bus_dma_segment_t *, int);
+	int (*ov_dmamem_map)(void *, bus_dma_tag_t, bus_dma_segment_t *, int,
+	    size_t, void **, int);
+	void (*ov_dmamem_unmap)(void *, bus_dma_tag_t, void *, size_t);
+	paddr_t (*ov_dmamem_mmap)(void *, bus_dma_tag_t, bus_dma_segment_t *,
+	    int, off_t, int, int);
+	int (*ov_dmatag_subregion)(void *, bus_dma_tag_t, bus_addr_t,
+	    bus_addr_t, bus_dma_tag_t *, int);
+	void (*ov_dmatag_destroy)(void *, bus_dma_tag_t);
 };
 
 int	bus_space_tag_create(bus_space_tag_t, uint64_t, uint64_t,

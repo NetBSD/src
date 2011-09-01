@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.42 2011/08/27 09:32:12 christos Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.43 2011/09/01 15:10:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.42 2011/08/27 09:32:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.43 2011/09/01 15:10:31 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -106,24 +106,6 @@ struct x86_bus_dma_tag mca_bus_dma_tag = {
 	._bounce_alloc_lo	= 0,
 	._bounce_alloc_hi	= MCA_DMA_BOUNCE_THRESHOLD,
 	._may_bounce		= NULL,
-
-	._dmamap_create		= _bus_dmamap_create,
-	._dmamap_destroy	= _bus_dmamap_destroy,
-	._dmamap_load		= _bus_dmamap_load,
-	._dmamap_load_mbuf	= _bus_dmamap_load_mbuf,
-	._dmamap_load_uio	= _bus_dmamap_load_uio,
-	._dmamap_load_raw	= _bus_dmamap_load_raw,
-	._dmamap_unload		= _bus_dmamap_unload,
-	._dmamap_sync 		= _bus_dmamap_sync,
-
-	._dmamem_alloc		= _bus_dmamem_alloc,
-	._dmamem_free		= _bus_dmamem_free,
-	._dmamem_map		= _bus_dmamem_map,
-	._dmamem_unmap		= _bus_dmamem_unmap,
-	._dmamem_mmap		= _bus_dmamem_mmap,
-
-	._dmatag_subregion	= _bus_dmatag_subregion,
-	._dmatag_destroy	= _bus_dmatag_destroy,
 };
 
 /* Updated in mca_busprobe() if appropriate. */
@@ -477,7 +459,7 @@ mca_dmamap_create(bus_dma_tag_t t, bus_size_t size, int flags,
 	 * MCA DMA transfer can be maximum 65536 bytes long and must
 	 * be in one chunk. No specific boundary constraints are present.
 	 */
-	if ((error = _bus_dmamap_create(t, size, 1, 65536, 0, flags, dmamp)))
+	if ((error = bus_dmamap_create(t, size, 1, 65536, 0, flags, dmamp)))
 		return (error);
 
 	cookie = (struct x86_isa_dma_cookie *) (*dmamp)->_dm_cookie;
