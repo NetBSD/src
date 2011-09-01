@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_misc.c,v 1.13 2011/08/31 16:24:59 plunky Exp $	*/
+/*	$NetBSD: pcnfsd_misc.c,v 1.14 2011/09/01 07:18:51 plunky Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_misc.c 1.5 92/01/24 19:59:13 SMI */
 /*
@@ -455,7 +455,7 @@ su_popen(user, cmd, maxtime)
 		(void) setgid(cached_gid);
 		(void) setuid(cached_uid);
 
-		(void) execl("/bin/sh", "sh", "-c", cmd, NULL);
+		(void) execl("/bin/sh", "sh", "-c", cmd, (char *) NULL);
 		_exit(255);
 	}
 	if (pid == -1) {
