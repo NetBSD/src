@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.8 2011/09/01 12:15:07 christos Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.9 2011/09/01 12:29:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.8 2011/09/01 12:15:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.9 2011/09/01 12:29:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -88,8 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.8 2011/09/01 12:15:07 christos Exp $
 #include <sys/systm.h>
 #include <sys/vfs_syscalls.h>
 #include <sys/vnode.h>
-
-#include <uvm/uvm_swap.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
@@ -1018,14 +1016,6 @@ vfs_shutdown(void)
 		return;
 	}
 
-#if defined(_KERNEL) && !defined(_RUMPKERNEL)
-	/*
-	 * We need to turn off swap first before we unmount
-	 * /dev, because otherwise the spec_vnodes are bad.
-	 */
-	uvm_swap_shutdown(l);
-#endif
-
 	/* Unmount file systems. */
 	vfs_unmountall(l);
 }
@@ -1278,7 +1268,7 @@ vfs_mountedon(vnode_t *vp)
 	mutex_enter(&device_lock);
 	for (vq = specfs_hash[SPECHASH(vp->v_rdev)]; vq != NULL;
 	    vq = vq->v_specnext) {
-		if (vq->type != vp->type || vq->v_rdev != vp->v_rdev)
+		if (vq->v_type != vp->v_type || vq->v_rdev != vp->v_rdev)
 			continue;
 		if (vq->v_specmountpoint != NULL) {
 			error = EBUSY;
