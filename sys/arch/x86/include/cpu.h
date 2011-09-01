@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34.2.5 2011/08/20 19:22:47 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34.2.6 2011/09/01 08:04:46 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -176,7 +176,7 @@ struct cpu_info {
 #endif
 
 #ifdef PAE
-	uint32_t	ci_pae_l3_pdirpa; /* PA of L3 PD */
+	paddr_t	ci_pae_l3_pdirpa; /* PA of L3 PD */
 	pd_entry_t *	ci_pae_l3_pdir; /* VA pointer to L3 PD */
 #endif
 
