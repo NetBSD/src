@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.71 2010/11/21 17:57:24 pooka Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.72 2011/09/01 18:25:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.71 2010/11/21 17:57:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.72 2011/09/01 18:25:44 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -180,8 +180,9 @@ scdebug_ret(register_t code, int error, const register_t retval[])
 	    )
 		printf("OUT OF RANGE (%ld)", (long)code);
 	else
-		printf("%ld ret: err = %d, rv = 0x%lx,0x%lx", (long)code,
-		    error, (long)retval[0], (long)retval[1]);
+		printf("%ld ret %s: err = %d, rv = 0x%lx,0x%lx", (long)code,
+		    em->e_syscallnames[code], error,
+		    (long)retval[0], (long)retval[1]);
 	printf("\n");
 }
 #endif /* SYSCALL_DEBUG */
