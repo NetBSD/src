@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.10 2011/07/30 19:06:57 rjs Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.11 2011/09/01 14:39:03 jakllsch Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.10 2011/07/30 19:06:57 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.11 2011/09/01 14:39:03 jakllsch Exp $");
 
 #include "rnd.h"
 
@@ -980,6 +980,7 @@ mvgbe_init(struct ifnet *ifp)
 		return ENOBUFS;
 	}
 
+	MVGBE_WRITE(sc, MVGBE_MTU, 0);		/* hw reset value is wrong */
 	MVGBE_WRITE(sc, MVGBE_PSC,
 	    MVGBE_PSC_ANFC |			/* Enable Auto-Neg Flow Ctrl */
 	    MVGBE_PSC_RESERVED |		/* Must be set to 1 */
