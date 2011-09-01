@@ -1,6 +1,6 @@
 %{
-/*	Id: scan.l,v 1.91 2010/05/21 19:37:32 ragge Exp 	*/	
-/*	$NetBSD: scan.l,v 1.2 2010/12/16 17:42:26 wiz Exp $	*/
+/*	Id: scan.l,v 1.108 2011/06/07 12:43:36 plunky Exp 	*/	
+/*	$NetBSD: scan.l,v 1.3 2011/09/01 12:55:29 plunky Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -44,6 +44,7 @@ UL			({L}|\\u{H}{H}{H}{H}|\\U{H}{H}{H}{H}{H}{H}{H}{H})
 #include <errno.h>  
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #include "pass1.h"
 #include "cgram.h"
@@ -53,7 +54,7 @@ static NODE *charcon(void);
 static NODE *wcharcon(void);
 static void control(int);
 static void pragma(void);
-int notype, parbal, inattr, parlvl;
+int notype, parbal, inattr, parlvl, nodinit;
 static int resw(TWORD, int);
 
 #define	CPP_IDENT 	2
@@ -65,7 +66,7 @@ static int resw(TWORD, int);
 #else
 #define STABS_LINE(x)
 #endif
-#if defined(FLEX_SCANNER) && YY_FLEX_SUBMINOR_VERSION >= 31
+#if defined(FLEX_SCANNER) && YY_FLEX_SUBMINOR_VERSION == 31
 /* Hack to avoid unnecessary warnings */
 FILE *yyget_in  (void);
 FILE *yyget_out  (void);
@@ -92,7 +93,7 @@ extern void yyset_lineno (int);
 			}
 "asm"			{ return(C_ASM); }
 "auto"			{ 	return resw(AUTO, C_CLASS); }
-"_Bool"			{ 	return resw(BOOL_TYPE, C_TYPE); }
+"_Bool"			{ 	return resw(BOOL, C_TYPE); }
 "break"			{ return(C_BREAK); }
 "case"			{ return(C_CASE); }
 "char"			{ 	return resw(CHAR, C_TYPE); }
@@ -134,6 +135,14 @@ extern void yyset_lineno (int);
 
 			yylval.strp = addname(yytext);
 #ifdef GCC_COMPAT
+			if (doing_init && nodinit == 0) {
+				/* check for name: for old gcc compat */
+				while ((i = input()) == ' ' || i == '\t')
+					;
+				if (i == ':')
+					return(GCC_DESIG);
+				unput(i);
+			}
 			if ((i = gcc_keyword(yylval.strp, &yylval.nodep)) > 0)
 				return i;
 #endif
@@ -187,7 +196,7 @@ L?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 ("{"|"<%")		{ notype = 0; return('{'); }
 ("}"|"%>")		{ if (rpole) notype = 1; return('}'); }
 ","			{ if (parbal) notype = 0; return(','); }
-":"			{ return(':'); }
+":"			{ if (doing_init) nodinit--; return(':'); }
 "="			{ return('='); }
 "("			{ parbal++; notype = 0; return('('); }
 ")"			{	parbal--;
@@ -210,7 +219,7 @@ L?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 ">"			{ yylval.intval = GT; return(C_RELOP); }
 "^"			{ return('^'); }
 "|"			{ return('|'); }
-"?"			{ return('?'); }
+"?"			{ if (doing_init) nodinit++; return('?'); }
 ^#pragma[ \t].*		{ pragma(); }
 ^#ident[ \t].*		{ control(CPP_IDENT); }
 ^#line[ \t].*		{ control(CPP_LINE); }
@@ -246,11 +255,12 @@ resw(TWORD t, int rv)
 		return rv;
 
 	case C_QUALIFIER:
-		yylval.nodep = block(QUALIFIER, NIL, NIL, t, 0, 0);
+		yylval.nodep = block(QUALIFIER, NIL, NIL, 0, 0, 0);
+		yylval.nodep->n_qual = t;
 		return rv;
 
 	case C_TYPE:
-		yylval.nodep = mkty(t, 0, MKSUE(t));
+		yylval.nodep = mkty(t, 0, 0);
 		notype=1;
 		return(rv);
 
@@ -261,6 +271,39 @@ resw(TWORD t, int rv)
 }
 
 #ifndef SOFTFLOAT
+
+static long double
+typround(long double dc, char *e, TWORD *tw)
+{
+	int im = 0;
+
+	*tw = DOUBLE;
+	for (; *e; e++) {
+		switch (*e) {
+		case 'f':
+		case 'F':
+			*tw = FLOAT;
+			dc = (float)dc;
+			break;
+		case 'l':
+		case 'L':
+			*tw = LDOUBLE;
+			break;
+		case 'i':
+		case 'I':
+			im = 1;
+			break;
+		}
+	}
+	if (*tw == DOUBLE)
+		dc = (double)dc;
+#ifndef NO_COMPLEX
+	if (im)
+		*tw += (FIMAG-FLOAT);
+#endif
+	return dc;
+}
+
 /*
  * XXX floatcon() and fhexcon() should be in support libraries for
  * the target floating point.
@@ -272,38 +315,14 @@ f2(char *str)
 	NODE *p;
 	long double dc;
 	char *eptr;
-	int imag = 0;
 
 #ifdef HAVE_STRTOLD
 	dc = strtold(str, &eptr); /* XXX - avoid strtod() */
 #else
 	dc = strtod(str, &eptr); /* XXX - avoid strtod() */
 #endif
-	tw = DOUBLE;
-	for (; *eptr; eptr++) {
-		switch (*eptr) {
-		case 'f':
-		case 'F':
-			tw = FLOAT;
-			dc = (float)dc;
-			break;
-		case 'l':
-		case 'L':
-			tw = LDOUBLE;
-			break;
-		case 'i':
-		case 'I':
-			imag = 1;
-			break;
-		}
-	}
-	if (tw == DOUBLE)
-		dc = (double)dc;
-#ifndef NO_COMPLEX
-	if (imag)
-		tw += (FIMAG-FLOAT);
-#endif
-	p = block(FCON, NIL, NIL, tw, 0, MKSUE(tw));
+	dc = typround(dc, eptr, &tw);
+	p = block(FCON, NIL, NIL, tw, 0, 0);
 	p->n_dcon = dc;
 	return p;
 }
@@ -328,26 +347,47 @@ h2n(int ch)
 NODE *
 fhexcon(char *c)
 {
-	char buf[500];
-	unsigned long long num1, num2;
+	TWORD tw;
+	char *ep;
+	long double d;
+	int i, ed;
+	NODE *p;
 
-	/* XXX - convert it to a decimal float number and use strtod */
+	d = 0.0;
+	ed = 0;
 	c+= 2; /* skip 0x */
-	for (num1 = 0; *c != '.' && *c != 'p' && *c != 'P'; c++)
-		num1 = (num1 << 4) | h2n(*c);
+#define FSET(n) { d *= 2; if (i & n) d += 1.0; }
+	for (; *c != '.' && *c != 'p' && *c != 'P'; c++) {
+		i = h2n(*c);
+		FSET(8); FSET(4); FSET(2); FSET(1);
+	}
 	if (*c != '.' && *c != 'p' && *c != 'P')
 		cerror("fhexcon");
-	num2 = 0;
 	if (*c == '.') {
 		c++;
-		for (; *c != 'p' && *c != 'P'; c++)
-			num2 = (num2 << 4) | h2n(*c);
+		for (; *c != 'p' && *c != 'P'; c++) {
+			i = h2n(*c);
+			FSET(8); FSET(4); FSET(2); FSET(1);
+			ed -= 4;
+		}
 	}
 	if (*c != 'P' && *c != 'p')
 		cerror("fhexcon2");
 	c++;
-	snprintf(buf, sizeof(buf), "%llu.%lluE%s", num1, num2, c);
-	return f2(buf);
+	ed += strtol(c, &ep, 10);
+
+	/* avoid looping in vain. Idea from Fred J. Tydeman */
+	if (ed > 32769) ed = 32769;
+	if (ed < -32769) ed = -32769;
+
+	while (ed > 0)
+		d *= 2, ed--;
+	while (ed < 0)
+		d /= 2, ed++;
+	d = typround(d, ep, &tw);
+	p = block(FCON, NIL, NIL, tw, 0, 0);
+	p->n_dcon = d;
+	return p;
 }
 #endif
 
@@ -420,7 +460,7 @@ NODE *
 cvtdig(int radix)
 {
 	NODE *p;
-	TWORD ntype;
+	TWORD otype, ntype;
 	unsigned long long v;
 	char *ch = yytext;
 	int n, numl, numu;
@@ -454,19 +494,48 @@ cvtdig(int radix)
 	if (*ch)
 		uerror("constant has too many '%c'", *ch);
 
-	if (ntype == INT) {
-		/* v contains a number. Get type correct */
-		if (v > MAX_LONGLONG && radix != 10)
+	otype = ntype;
+	switch (ntype) {
+	case INT:
+	case LONG:
+	case LONGLONG:
+		if (radix == 10) {
+			if (otype == LONGLONG)
+				break;
+			if (v > MAX_LONG) { 
+				ntype = LONGLONG;
+				if (otype == LONG)
+					break;
+			} else if (v > MAX_INT)
+				ntype = LONG;
+		} else {
+			if (v > MAX_LONGLONG) {
+				ntype = ULONGLONG;
+				if (otype == LONGLONG)
+					break;
+			} else if (v > MAX_ULONG) {
+				ntype = LONGLONG;
+			} else if (v > MAX_LONG) {
+				ntype = ULONG;
+				if (otype == LONG)
+					break;
+			} else if (v > MAX_UNSIGNED) {
+				ntype = LONG;
+			} else if (v > MAX_INT)
+				ntype = UNSIGNED;
+		}
+		break;
+	case UNSIGNED:
+	case ULONG:
+		if (v > MAX_ULONG) {
 			ntype = ULONGLONG;
-		else if (v > MAX_ULONG)
-			ntype = LONGLONG;
-		else if (v > MAX_LONG && radix != 10)
+			if (otype == ULONG)
+				break;
+		} else if (v > MAX_UNSIGNED)
 			ntype = ULONG;
-		else if (v > MAX_UNSIGNED)
-			ntype = LONG;
-		else if (v > MAX_INT && radix != 10)
-			ntype = UNSIGNED;
-	}
+		break;	
+	}	
+
 	ntype = ctype(ntype);
 	p = xbcon(v, NULL, ntype);
 	ASGLVAL(p->n_slval, v);
@@ -577,57 +646,162 @@ bad:
 	werror("%s: illegal control", yytext);
 }
 
-/*
- * split a pragma string in parts.
- */
-static char **
-splitup(char *str)
-{
-	char *s, **ary;
-	int i;
-
-	/* count ws. at least needed array size, add 2 to terminate */
-	for (i = 2, s = str; *s; s++)
-		if (*s == ' ' || *s == '\t' ||
-		    *s == '(' || *s == ')' || *s == ',')
-			i++;
-	ary = tmpalloc(sizeof(char *)*i);
-	for (i = 0, s = strtok(str, " \t(,)"); s; s = strtok(NULL, " \t(,)"))
-		ary[i++] = s;
-	ary[i] = NULL;
-	return ary;
-}
-
 int pragma_allpacked;
 int pragma_packed, pragma_aligned;
 char *pragma_renamed;
 
+static int
+pragmas_weak(char *str)
+{
+	struct symtab *sp;
+	char *s1, *s2;
+
+	if ((s1 = pragtok(NULL)) == NULL)
+		return 1;
+	if ((s2 = pragtok(NULL)) == NULL) {
+		sp = lookup(addname(s1), SNORMAL);
+		sp->sap = attr_add(sp->sap, gcc_attr_parse(bdty(NAME, "weak")));
+	} else if (*s2 == '=') {
+		if ((s2 = pragtok(NULL)) == NULL)
+			return 1;
+		sp = lookup(addname(s2), SNORMAL);
+		sp->sap = attr_add(sp->sap, gcc_attr_parse(bdty(CALL,
+		    bdty(NAME, "aliasweak"), bdty(STRING, s1, 0))));
+	} else
+		return 1;
+	return 0;
+}
+
+char *pragstore;
+
+/* trivial tokenizer for pragmas */
+#define ps pragstore
+char *
+pragtok(char *sin)
+{
+	static char ss[2];
+	char *rv;
+
+	if (sin)
+		ps = sin;
+
+	for (; isspace((int)*ps); ps++)
+		;
+	if (*ps == 0)
+		return NULL;
+	for (rv = ps; isalpha((int)*ps) || isdigit((int)*ps) || *ps == '_'; ps++)
+		;
+	ss[0] = *ps;
+	if (rv == ps) {
+		rv = ss, ps++;
+	} else {
+		*ps = 0;
+		rv = tmpstrdup(rv);
+		*ps = ss[0];
+	}
+	return rv;
+}
+
+/* return 1 on error */
+int
+eat(int ch)
+{
+	char *s = pragtok(0);
+	return (s == 0 || *s != ch);
+}
+
+static int
+pragmas_alpack(char *t)
+{
+	char *s;
+	int ap;
+
+	ap = (s = pragtok(0)) ? atoi(s) : 1;
+	if (strcmp(t, "packed") == 0)
+		pragma_packed = ap;
+	else
+		pragma_aligned = ap;
+	return 0;
+}
+
+
+/*
+ * Packing control.
+ * still missing push/pop.
+ */
+static int
+pragmas_pack(char *t)
+{
+	char *s;
+
+	if (eat('('))
+		return 1;
+	s = pragtok(0);
+	if (*s == ')')
+		return pragma_allpacked = 0;
+
+	if (*s < '0' || *s > '9') /* no number */
+		return 1;
+	pragma_allpacked = atoi(s);
+	return eat(')');
+}
+
+static int
+pragmas_renamed(char *t)
+{
+	char *f = pragtok(0);
+
+	if (f == 0)
+		return 1;
+	pragma_renamed = newstring(f, strlen(f));
+	return 0;
+}
+
+static int
+pragmas_stdc(char *t)
+{
+	return 0; /* Just ignore */
+}
+
+struct pragmas {
+	char *name;
+	int (*fun)(char *);
+} pragmas[] = {
+	{ "pack", pragmas_pack },
+	{ "packed", pragmas_alpack },
+	{ "aligned", pragmas_alpack },
+	{ "rename", pragmas_renamed },
+#ifdef GCC_COMPAT
+	{ "GCC", pragmas_gcc },
+#endif
+	{ "STDC", pragmas_stdc },
+	{ "weak", pragmas_weak },
+	{ "ident", NULL },
+	{ 0 },
+};
 /*
  * got a full pragma line.  Split it up here.
  */
 static void
 pragma()
 {
-	char **ary;
+	struct pragmas *p;
+	char *t, *pt;
 
-	ary = splitup(yytext);
-	if (ary[1] == NULL)
-		goto bad;
-	if (strcmp(ary[1], "pack") == 0) {
-		pragma_allpacked = ary[2] ? atoi(ary[2]) : 0;
-	} else if (strcmp(ary[1], "packed") == 0) {
-		pragma_packed = ary[2] ? atoi(ary[2]) : 1;
-	} else if (strcmp(ary[1], "aligned") == 0) {
-		pragma_aligned = ary[2] ? atoi(ary[2]) : 1;
-	} else if (strcmp(ary[1], "rename") == 0) {
-		pragma_renamed = newstring(ary[2], strlen(ary[2]));
-	} else if (mypragma(ary)) {
-		return;
-	} else {
-bad:
-		if (Wunknown_pragmas)
-			werror("unknown pragma");
+	if ((t = pragtok(&yytext[7])) != NULL) {
+		pt = ps;
+		for (p = pragmas; p->name; p++) {
+			if (strcmp(t, p->name) == 0) {
+				if (p->fun && (*p->fun)(t))
+					uerror("bad argument to #pragma");
+				return;
+			}
+		}
+		ps = pt;
+		if (mypragma(t))
+			return;
 	}
+	warner(Wunknown_pragmas, t, ps);
 }
 
 void

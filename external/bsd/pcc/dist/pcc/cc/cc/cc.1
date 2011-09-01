@@ -1,6 +1,5 @@
-.\"	Id: cc.1,v 1.16 2010/04/05 14:24:06 reed Exp 	
-.\"	$NetBSD: cc.1,v 1.3 2010/06/03 19:07:59 plunky Exp $
-.\"	$OpenBSD$
+.\"	Id: cc.1,v 1.33 2011/08/28 11:57:45 plunky Exp 	
+.\"	$NetBSD: cc.1,v 1.4 2011/09/01 12:55:29 plunky Exp $
 .\"
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
 .\"
@@ -25,24 +24,28 @@
 .Nd front-end to the C compiler
 .Sh SYNOPSIS
 .Nm
-.Op Fl cEgkLMPOStvXx
+.Op Fl cEgkLMPStvX
+.Op Fl B Ns Ar prefix
+.Op Fl D Ar macro Ns Oo = Ns Ar value Oc
 .Op Fl fPIC
 .Op Fl fpic
+.Op Fl I Ar path
+.Op Fl include Ar file
+.Op Fl isystem Ar path
 .Op Fl m Ns Ar option
+.Op Fl nodefaultlibs
 .Op Fl nostartfiles
 .Op Fl nostdinc
 .Op Fl nostdlib
+.Op Fl O Ns Oo Ar level Oc
+.Op Fl o Ar outfile
 .Op Fl pg
 .Op Fl pthread
+.Op Fl shared
 .Op Fl static
-.Op Fl B Ar prefix
-.Op Fl D Ar macro[=value]
-.Op Fl d Ar option
-.Op Fl I Ar directory
-.Op Fl include Ar path
-.Op Fl isystem Ar path
-.Op Fl o Ar outfile
+.Op Fl U Ar macro
 .Op Fl Wl Ar flags
+.Op Fl x Ar language
 .Op Ar
 .Sh DESCRIPTION
 The
@@ -98,7 +101,7 @@ are passed directly to
 .\"
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl B Ar prefix
+.It Fl B Ns Ar prefix
 Define alternate prefix path for
 .Xr cpp 1 ,
 .Xr ccom 1 ,
@@ -112,7 +115,8 @@ Passed to the
 .Xr cpp 1
 preprocessor to not discard comments.
 .It Fl c
-Only compile or assemble and then stop.
+Stop after generating object code with
+.Xr as 1 .
 Do not link.
 The resulting object output is saved
 as a filename with a
@@ -123,16 +127,13 @@ option is used.
 Note: cannot be combined with
 .Fl o
 if multiple files are given.
-.It Fl D Ar macro[=value]
+.It Fl D Ar macro Ns Oo = Ns Ar value Oc
 Passed to the
 .Xr cpp 1
 preprocessor to define
-.Ar macro .
-.It Fl d Ar option
-Passed to the
-.Xr as 1
-assembler.
-.\" TODO: what is as -dfoo for?
+.Ar macro
+with an optional
+.Ar value .
 .It Fl E
 Stop after preprocessing with
 .Xr cpp 1 .
@@ -154,9 +155,8 @@ Send
 flag to
 .Xr ccom 1
 to create debug output.
-This unsets the
-.Fl O
-option.
+Debug information output can be disabled with
+.Fl g0 .
 .It Fl I Ar path
 Passed to the
 .Xr cpp 1
@@ -187,8 +187,11 @@ flag to
 .Xr cpp 1
 to generate dependencies for
 .Xr make 1 .
-.It Fl m Ns options
-Target-dependent option.
+.It Fl m Ns Ar option
+Target-dependent options.
+Multiple
+.Fl m
+options can be given, the following are supported:
 .Bl -tag -width PowerPC
 .It ARM
 \-mlittle-endian \-mbig-endian \-mfpe=fpa \-mfpe=vpf \-msoft-float \-march=armv1 \-march=armv2 \-march=armv2a \-march=armv3 \-march=armv4 \-march=armv4t \-march=armv4tej \-march=armv5 \-march=armv6 \-march=armv6t2 \-march=armv6kz \-march=armv6k \-march=armv7
@@ -201,24 +204,31 @@ Target-dependent option.
 .It Sparc64
 .It VAX
 .El
+.It Fl nodefaultlibs
+Do not link with the system default libraries (libc, etc.)
 .It Fl nostartfiles
 Do not link with the system startup files (crt0.c, etc.)
 .It Fl nostdinc
 Do not use the system include paths (/usr/include, etc.)
 .It Fl nostdlib
-Do not link with the system C library (libc).
-.\" implies -nostartfiles ??
-.It Fl O
-Enable optimizations.
-Currently passes
-.Fl xdeljumps
-and
+Do not link with the system default libraries or startup files.
+.It Fl O Ns Oo Ar level Oc
+Enable compiler optimizations.
+Currently, for levels higher than zero,
+this defines
+.Dv __OPTIMIZE__
+in the
+.Xr cpp 1
+preprocessor, and passes
+.Fl xdeljumps ,
 .Fl xtemps
+and
+.Fl xinline
 to
 .Xr ccom 1 .
-Note: this is unset if the
-.Fl g
-option is used.
+If no level is given the optimization level is increased, or
+optimizations can be disabled using
+.Fl O0 .
 .It Fl o Ar outfile
 Save result to
 .Ar outfile .
@@ -229,15 +239,15 @@ TODO
 .It Fl pg
 Enable profiling on the generated executable.
 .It Fl pthread
-Defines
-.Sy _PTHREADS
-preprocessor directive for
-.Xr cpp 1 .
-Uses
-.Sy \-lpthread
-for the
+Defines the
+.Dv _PTHREADS
+preprocessor identifier for
+.Xr cpp 1 , and
+adds
+.Fl lpthread
+to the
 .Xr ld 1
-linker.
+linker arguments.
 .It Fl S
 Stop after compilation by
 .Xr ccom 1 .
@@ -251,19 +261,18 @@ option is used.
 Note: cannot be combined with
 .Fl o
 if multiple files are given.
+.It Fl shared
+Create a shared object of the result.
+Tells the linker not to generate an executable.
 .It Fl static
 Do not use dynamic linkage.
 By default, it will link using the dynamic linker options
 and/or shared objects for the platform.
-.It Fl shared
-Create a shared object of the result.  Tells the linker not to 
-generate an executable.
 .It Fl t
-Passes
-.Fl t
-to
+Passed to
 .Xr cpp 1
-for traditional C preprocessor syntax.
+to suppress some default macro definitions and enable use
+of traditional C preprocessor syntax.
 .It Fl U Ar macro
 Passes to the
 .Xr cpp 1
@@ -277,13 +286,18 @@ Options for the linker.
 .\" what is ignored? llist?
 .It Fl X
 Don't remove temporary files on exit.
-.It Fl x
-May be used to give separate optimization flags to ccom, see
-.Fl O
-for options.
-.It Fl x Ar c
-Gcc compatibility option; specify that the language in use is
-.Ar c .
+.It Fl x Ar language
+GCC compatibility option; specify the language in use rather than
+interpreting the filename extension.
+Currently known language values are
+.Sy c ,
+.Sy c++
+and
+.Sy assembler-with-cpp .
+Any unknown
+.Fl x
+options are passed to
+.Xr ccom 1 .
 .El
 .Ss Predefined Macros
 A few
@@ -328,7 +342,8 @@ and
 .Sh HISTORY
 The
 .Nm
-command comes from the original Portable C Compiler by S. C. Johnson,
+command comes from the original Portable C Compiler by
+.An "S. C. Johnson" ,
 written in the late 70's.
 .Pp
 This product includes software developed or owned by Caldera

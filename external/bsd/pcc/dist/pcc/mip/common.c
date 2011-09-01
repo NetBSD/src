@@ -1,5 +1,5 @@
-/*	Id: common.c,v 1.92 2010/03/27 23:46:12 mickey Exp 	*/	
-/*	$NetBSD: common.c,v 1.2 2011/08/10 08:09:38 plunky Exp $	*/
+/*	Id: common.c,v 1.98 2011/08/20 21:54:33 plunky Exp 	*/	
+/*	$NetBSD: common.c,v 1.3 2011/09/01 12:55:30 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -147,6 +147,87 @@ werror(char *s, ...)
 	if (warniserr)
 		incerr();
 }
+
+#ifndef MKEXT
+
+bittype warnary[(NUMW/NUMBITS)+1], werrary[(NUMW/NUMBITS)+1];
+
+static char *warntxt[] = {
+	"conversion from '%s' to '%s' may alter its value", /* Wtruncate */
+	"function declaration isn't a prototype", /* Wstrict_prototypes */
+	"no previous prototype for `%s'", /* Wmissing_prototypes */
+	"return type defaults to `int'", /* Wimplicit_int */
+		 /* Wimplicit_function_declaration */
+	"implicit declaration of function '%s'",
+	"declaration of '%s' shadows a %s declaration", /* Wshadow */
+	"illegal pointer combination", /* Wpointer_sign */
+	"comparison between signed and unsigned", /* Wsign_compare */
+	"ignoring #pragma %s %s", /* Wunknown_pragmas */
+	"statement not reached", /* Wunreachable_code */
+};
+
+char *flagstr[] = {
+	"truncate", "strict-prototypes", "missing-prototypes", 
+	"implicit-int", "implicit-function-declaration", "shadow", 
+	"pointer-sign", "sign-compare", "unknown-pragmas", 
+	"unreachable-code", 
+};
+
+/*
+ * "emulate" the gcc warning flags.
+ */
+void
+Wflags(char *str)
+{
+	int i, flagval;
+
+	if (strncmp("no-", str, 3) == 0) {
+		str += 3;
+		flagval = 0;
+	} else
+		flagval = 1;
+	if (strcmp(str, "error") == 0) {
+		/* special */
+		for (i = 0; i < NUMW; i++)
+			BITSET(werrary, i);
+		return;
+	}
+	for (i = 0; i < NUMW; i++) {
+		if (strcmp(flagstr[i], str) != 0)
+			continue;
+		if (flagval)
+			BITSET(warnary, i);
+		else
+			BITCLEAR(warnary, i);
+		return;
+	}
+	fprintf(stderr, "unrecognised warning option '%s'\n", str);
+}
+
+/*
+ * Deal with gcc warnings.
+ */
+void
+warner(int type, ...)
+{
+	va_list ap;
+	char *w;
+
+	if (TESTBIT(warnary, type) == 0)
+		return; /* no warning */
+	if (TESTBIT(werrary, type)) {
+		w = "error";
+		incerr();
+	} else
+		w = "warning";
+
+	va_start(ap, type);
+	fprintf(stderr, "%s:%d: %s: ", ftitle, lineno, w);
+	vfprintf(stderr, warntxt[type], ap);
+	fprintf(stderr, "\n");
+	va_end(ap);
+}
+#endif /* MKEXT */
 
 #ifndef MKEXT
 static NODE *freelink;
@@ -403,7 +484,7 @@ tprint(FILE *fp, TWORD t, TWORD q)
 {
 	static char * tnames[] = {
 		"undef",
-		"farg",
+		"bool",
 		"char",
 		"uchar",
 		"short",
@@ -423,7 +504,7 @@ tprint(FILE *fp, TWORD t, TWORD q)
 		"moety",
 		"void",
 		"signed", /* pass1 */
-		"bool", /* pass1 */
+		"farg", /* pass1 */
 		"fimag", /* pass1 */
 		"dimag", /* pass1 */
 		"limag", /* pass1 */
@@ -471,7 +552,7 @@ struct balloc {
 	} a2;
 };
 
-#define ALIGNMENT offsetof(struct balloc, a2)
+#define	ALIGNMENT offsetof(struct balloc, a2)
 #define	ROUNDUP(x) (((x) + ((ALIGNMENT)-1)) & ~((ALIGNMENT)-1))
 
 static char *allocpole;
@@ -491,7 +572,7 @@ permalloc(int size)
 	if (size <= 0)
 		cerror("permalloc2");
 	if (allocleft < size) {
-		/* looses unused bytes */
+		/* loses unused bytes */
 		lostmem += allocleft;
 		if ((allocpole = malloc(MEMCHUNKSZ)) == NULL)
 			cerror("permalloc: out of memory");
@@ -702,4 +783,26 @@ listarg(NODE *p, int n, int *cnt)
 		r = n == 0 ? p : NIL;
 	}
 	return r;
+}
+
+/*
+ * Make a type unsigned, if possible.
+ */
+TWORD
+enunsign(TWORD t)
+{
+	if (BTYPE(t) >= CHAR && BTYPE(t) <= ULONGLONG)
+		t |= 1;
+	return t;
+}
+
+/*
+ * Make a type signed, if possible.
+ */
+TWORD
+deunsign(TWORD t)
+{
+	if (BTYPE(t) >= CHAR && BTYPE(t) <= ULONGLONG)
+		t &= ~1;
+	return t;
 }
