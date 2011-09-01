@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.157 2011/06/01 21:25:00 alnsn Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.158 2011/09/01 18:24:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.157 2011/06/01 21:25:00 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.158 2011/09/01 18:24:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ struct ktrace_entry {
 	void	*kte_buf;
 	size_t	kte_bufsz;	
 #define	KTE_SPACE		32
-	uint8_t kte_space[KTE_SPACE];
+	uint8_t kte_space[KTE_SPACE] __aligned(sizeof(register_t));
 };
 
 struct ktr_desc {
