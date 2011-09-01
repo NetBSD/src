@@ -22,6 +22,9 @@
 /* Using ELF ABI */
 #define ELFABI 
 
+/* Enable STABS debugging output */
+#define STABS 1
+
 /* Define to 1 if you have the `basename' function. */
 #define HAVE_BASENAME 1
 
@@ -119,22 +122,22 @@
 #define PACKAGE_NAME "pcc"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "pcc 0.9.9 [20100603]"
+#define PACKAGE_STRING "pcc 1.1.0.DEVEL"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pcc"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.9.9"
+#define PACKAGE_VERSION "1.1.0.DEVEL"
 
 /* Major version no */
-#define PCC_MAJOR 0
+#define PCC_MAJOR 1
 
 /* Minor version no */
-#define PCC_MINOR 9
+#define PCC_MINOR 1
 
 /* Minor minor version no */
-#define PCC_MINORMINOR 9
+#define PCC_MINORMINOR 0
 
 /* Using PE/COFF ABI */
 /* #undef PECOFFABI */
@@ -154,19 +157,13 @@
 /* Define if target defaults to LITTLE endian */
 /* #define TARGET_LITTLE_ENDIAN 1 */
 
-/* Target OS */
-#define TARGOS netbsd
-
-/* Target OS version */
-#define TARGOSVER 5
-
 /* Enable thread-local storage (TLS). */
-/* #undef TLS */
+#define TLS 1
 
 /* Version string */
-/* #define VERSSTR "pcc 0.9.9 for i386-unknown-netbsdelf5.99.29, plunky@galant Thu Jun  3 19:37:55 BST 2010" */
+/* #define VERSSTR "pcc 1.1.0.DEVEL 20110901 for i386-unknown-netbsdelf5.99.55" */
 
-/* Size of wide character type */
+/* Size of wide-character type in chars */
 #define WCHAR_SIZE 4
 
 /* Type to use for wide characters */
@@ -174,4 +171,4 @@
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
-/* #undef YYTEXT_POINTER */
+#define YYTEXT_POINTER 1
