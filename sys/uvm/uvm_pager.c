@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.103 2011/08/23 03:00:35 oki Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.104 2011/09/01 06:40:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.103 2011/08/23 03:00:35 oki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.104 2011/09/01 06:40:28 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -101,7 +101,8 @@ uvm_pager_init(void)
 	    false, NULL);
 	mutex_init(&pager_map_wanted_lock, MUTEX_DEFAULT, IPL_NONE);
 	pager_map_wanted = false;
-	emergva = uvm_km_alloc(kernel_map, round_page(MAXPHYS), 0,
+	emergva = uvm_km_alloc(kernel_map,
+	    round_page(MAXPHYS) + ptoa(uvmexp.ncolors), 0,
 	    UVM_KMF_VAONLY);
 #if defined(DEBUG)
 	if (emergva == 0)
@@ -139,10 +140,12 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 	vaddr_t cva;
 	struct vm_page *pp;
 	vm_prot_t prot;
-	const bool pdaemon = curlwp == uvm.pagedaemon_lwp;
+	const bool pdaemon = (curlwp == uvm.pagedaemon_lwp);
+	const u_int first_color = VM_PGCOLOR_BUCKET(*pps);
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d)", pps, npages,0,0);
+	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d, first_color=%u)",
+		pps, npages, first_color, 0);
 
 	/*
 	 * compute protection.  outgoing I/O only needs read
@@ -154,11 +157,12 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 		prot |= VM_PROT_WRITE;
 
 ReStart:
-	size = npages << PAGE_SHIFT;
+	size = ptoa(npages);
 	kva = 0;			/* let system choose VA */
 
-	if (uvm_map(pager_map, &kva, size, NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_FLAG_NOMERGE | (pdaemon ? UVM_FLAG_NOWAIT : 0)) != 0) {
+	if (uvm_map(pager_map, &kva, size, NULL, UVM_UNKNOWN_OFFSET,
+	    first_color, UVM_FLAG_COLORMATCH | UVM_FLAG_NOMERGE
+	    | (pdaemon ? UVM_FLAG_NOWAIT : 0)) != 0) {
 		if (pdaemon) {
 			mutex_enter(&pager_map_wanted_lock);
 			if (emerginuse) {
@@ -169,7 +173,7 @@ ReStart:
 			}
 			emerginuse = true;
 			mutex_exit(&pager_map_wanted_lock);
-			kva = emergva;
+			kva = emergva + ptoa(first_color);
 			/* The shift implicitly truncates to PAGE_SIZE */
 			KASSERT(npages <= (MAXPHYS >> PAGE_SHIFT));
 			goto enter;
@@ -188,9 +192,10 @@ ReStart:
 
 enter:
 	/* got it */
-	for (cva = kva ; size != 0 ; size -= PAGE_SIZE, cva += PAGE_SIZE) {
+	for (cva = kva; npages != 0; npages--, cva += PAGE_SIZE) {
 		pp = *pps++;
 		KASSERT(pp);
+		// KASSERT(!((VM_PAGE_TO_PHYS(pp) ^ cva) & uvmexp.colormask));
 		KASSERT(pp->flags & PG_BUSY);
 		pmap_kenter_pa(cva, VM_PAGE_TO_PHYS(pp), prot, 0);
 	}
@@ -210,7 +215,7 @@ enter:
 void
 uvm_pagermapout(vaddr_t kva, int npages)
 {
-	vsize_t size = npages << PAGE_SHIFT;
+	vsize_t size = ptoa(npages);
 	struct vm_map_entry *entries;
 	UVMHIST_FUNC("uvm_pagermapout"); UVMHIST_CALLED(maphist);
 
@@ -220,10 +225,10 @@ uvm_pagermapout(vaddr_t kva, int npages)
 	 * duplicate uvm_unmap, but add in pager_map_wanted handling.
 	 */
 
-	pmap_kremove(kva, npages << PAGE_SHIFT);
+	pmap_kremove(kva, size);
 	pmap_update(pmap_kernel());
 
-	if (kva == emergva) {
+	if ((kva & ~ptoa(uvmexp.colormask)) == emergva) {
 		mutex_enter(&pager_map_wanted_lock);
 		emerginuse = false;
 		wakeup(&emergva);
