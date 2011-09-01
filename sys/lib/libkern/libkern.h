@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.98 2011/07/05 01:56:45 matt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.99 2011/09/01 22:35:17 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -277,6 +277,7 @@ void	*memset(void *, int, size_t);
 char	*strcpy(char *, const char *);
 int	 strcmp(const char *, const char *);
 size_t	 strlen(const char *);
+size_t	 strnlen(const char *, size_t);
 char	*strsep(char **, const char *);
 #if __GNUC_PREREQ__(2, 95) && !defined(_STANDALONE)
 #define	strcpy(d, s)		__builtin_strcpy(d, s)
