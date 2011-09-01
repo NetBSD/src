@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.10 2011/08/15 01:04:04 jakllsch Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.11 2011/09/01 14:55:58 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.10 2011/08/15 01:04:04 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.11 2011/09/01 14:55:58 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1410,11 +1410,12 @@ static int
 mvsata_bio_ready(struct mvsata_port *mvport, struct ata_bio *ata_bio, int drive,
 		 int flags)
 {
-#if 0
 	struct ata_channel *chp = &mvport->port_ata_channel;
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
 	const char *errstring;
+
+	flags |= AT_POLL;	/* XXX */
 
 	/*
 	 * disable interrupts, all commands here should be quick
@@ -1510,9 +1511,6 @@ ctrldone:
 	drvp->state = 0;
 	MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_4BIT);
 	return -1;
-#endif
-	mvport->port_ata_channel.ch_drive[drive].state = READY;
-	return 0;
 }
 
 static void
