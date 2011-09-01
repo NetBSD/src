@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.27 2011/07/17 23:18:23 mrg Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.28 2011/09/01 08:43:24 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.27 2011/07/17 23:18:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.28 2011/09/01 08:43:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -140,9 +140,9 @@ clockintr_4m(void *cap)
 	 * For MP, we defer calling hardclock() to the schedintr so
 	 * that we call it on all cpus.
 	 */
-	kpreempt_disable();
 	if (cold)
 		return 0;
+	kpreempt_disable();
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&timerreg4m->t_limit);
 	tickle_tc();
