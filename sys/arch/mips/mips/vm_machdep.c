@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.139 2011/06/06 22:04:34 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.140 2011/09/01 06:41:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.139 2011/06/06 22:04:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.140 2011/09/01 06:41:38 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
@@ -272,50 +272,38 @@ cpu_lwp_free2(struct lwp *l)
 	(void)l;
 }
 
-static struct evcnt evcnt_vmapbuf =
-    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "vmapbuf", "calls");
-static struct evcnt evcnt_vmapbuf_adjustments =
-    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &evcnt_vmapbuf,
-	"vmapbuf", "adjustments");
-
 /*
  * Map a user I/O request into kernel virtual address space.
  */
 int
 vmapbuf(struct buf *bp, vsize_t len)
 {
-	struct pmap *upmap;
-	vaddr_t uva;	/* User VA (map from) */
 	vaddr_t kva;	/* Kernel VA (new to) */
-	paddr_t pa;	/* physical address */
-	vsize_t off;
-	vsize_t coloroff;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
-	evcnt_vmapbuf.ev_count++;
-	uva = mips_trunc_page(bp->b_saveaddr = bp->b_data);
-	coloroff = uva & ptoa(uvmexp.colormask);
-	if (coloroff)
-		evcnt_vmapbuf_adjustments.ev_count++;
-	off = (vaddr_t)bp->b_data - uva;
-	len = mips_round_page(off + len);
-	kva = uvm_km_alloc(phys_map, len + coloroff, ptoa(uvmexp.ncolors),
-	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	kva += coloroff;
+	vaddr_t uva = mips_trunc_page(bp->b_data);
+	const vaddr_t off = (vaddr_t)bp->b_data - uva;
+        len = mips_round_page(off + len);
+
+	kva = uvm_km_alloc(phys_map, len, atop(uva) & uvmexp.colormask,
+	    UVM_KMF_VAONLY | UVM_KMF_WAITVA | UVM_KMF_COLORMATCH);
+	KASSERT((atop(kva ^ uva) & uvmexp.colormask) == 0);
+	bp->b_saveaddr = bp->b_data;
 	bp->b_data = (void *)(kva + off);
-	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+	struct pmap * const upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	do {
+		paddr_t pa;	/* physical address */
 		if (pmap_extract(upmap, uva, &pa) == false)
 			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), kva, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter_pa(kva, pa, VM_PROT_READ | VM_PROT_WRITE,
+		    PMAP_WIRED);
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	} while (len);
-	pmap_update(vm_map_pmap(phys_map));
+	pmap_update(pmap_kernel());
 
 	return 0;
 }
@@ -327,19 +315,15 @@ void
 vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t kva;
-	vsize_t off;
-	vsize_t coloroff;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
 	kva = mips_trunc_page(bp->b_data);
-	coloroff = kva & ptoa(uvmexp.colormask);
-	off = (vaddr_t)bp->b_data - kva;
-	len = mips_round_page(off + len);
-	pmap_remove(vm_map_pmap(phys_map), kva, kva + len);
+	len = mips_round_page((vaddr_t)bp->b_data - kva + len);
+	pmap_kremove(kva, len);
 	pmap_update(pmap_kernel());
-	uvm_km_free(phys_map, kva - coloroff, len + coloroff, UVM_KMF_VAONLY);
+	uvm_km_free(phys_map, kva, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
