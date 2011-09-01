@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.125 2011/01/29 00:38:25 christos Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.126 2011/09/01 18:33:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.125 2011/01/29 00:38:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.126 2011/09/01 18:33:11 matt Exp $");
 
 #include "opt_veriexec.h"
 
@@ -782,7 +782,8 @@ veriexec_page_verify(struct veriexec_file_entry *vfe, struct vm_page *pg,
 
 	ctx = kmem_alloc(vfe->ops->context_size, KM_SLEEP);
 	fp = kmem_alloc(vfe->ops->hash_len, KM_SLEEP);
-	kva = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+	kva = uvm_km_alloc(kernel_map, PAGE_SIZE, VM_PGCOLOR_BUCKET(pg),
+	    UVM_KMF_COLORMATCH | UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	pmap_kenter_pa(kva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
 
