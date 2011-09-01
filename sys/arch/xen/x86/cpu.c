@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.56.2.9 2011/08/30 12:53:46 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.56.2.10 2011/09/01 08:04:46 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.9 2011/08/30 12:53:46 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.10 2011/09/01 08:04:46 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1023,9 +1023,9 @@ xen_init_i386_vcpuctxt(struct cpu_info *ci,
 	 * per-cpu L4 PD in pmap_cpu_init_late()
 	 */
 #ifdef PAE
-	initctx->ctrlreg[3] = xpmap_ptom(ci->ci_pae_l3_pdirpa);
+	initctx->ctrlreg[3] = xen_pfn_to_cr3(x86_btop(xpmap_ptom(ci->ci_pae_l3_pdirpa)));
 #else /* PAE */
-	initctx->ctrlreg[3] = xpmap_ptom(pcb->pcb_cr3);
+	initctx->ctrlreg[3] = xen_pfn_to_cr3(x86_btop(xpmap_ptom(pcb->pcb_cr3)));
 #endif /* PAE */
 	initctx->ctrlreg[4] = /* CR4_PAE |  */CR4_OSFXSR | CR4_OSXMMEXCPT;
 
@@ -1316,35 +1316,16 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	KASSERT(ci != NULL);
 
 #ifdef PAE
-	{
-		int ret;
-		struct pglist pg;
-		struct vm_page *vmap;
+	ci->ci_pae_l3_pdir = (paddr_t *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_NOWAIT);
 
-		/*
-		 * Allocate a page for the per-CPU L3 PD. cr3 being 32 bits, PA musts
-		 * resides below the 4GB boundary.
-		 */
-		ret = uvm_pglistalloc(PAGE_SIZE, 0,
-		    0x100000000ULL, 32, 0, &pg, 1, 0);
-
-		vmap = TAILQ_FIRST(&pg);
-
-		if (ret != 0 || vmap == NULL)
-			panic("%s: failed to allocate L3 pglist for CPU %d (ret %d)\n",
-			    __func__, cpu_index(ci), ret);
-
-		ci->ci_pae_l3_pdirpa = vmap->phys_addr;
-
-		ci->ci_pae_l3_pdir = (paddr_t *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-		    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
-
-		if (ci->ci_pae_l3_pdir == NULL)
-			panic("%s: failed to allocate L3 PD for CPU %d\n",
-			    __func__, cpu_index(ci));
-		pmap_kenter_pa((vaddr_t)ci->ci_pae_l3_pdir, ci->ci_pae_l3_pdirpa,
-		    VM_PROT_READ | VM_PROT_WRITE, 0);
+	if (ci->ci_pae_l3_pdir == NULL) {
+		panic("%s: failed to allocate L3 per-cpu PD for CPU %d\n",
+		      __func__, cpu_index(ci));
 	}
+	ci->ci_pae_l3_pdirpa = vtophys((vaddr_t) ci->ci_pae_l3_pdir);
+	KASSERT(ci->ci_pae_l3_pdirpa != 0);
+
 	/* Initialise L2 entries 0 - 2: Point them to pmap_kernel() */
 	ci->ci_pae_l3_pdir[0] =
 	    xpmap_ptom_masked(pmap_kernel()->pm_pdirpa[0]) | PG_V;
