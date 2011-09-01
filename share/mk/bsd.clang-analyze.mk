@@ -1,16 +1,8 @@
-# $NetBSD: bsd.clang-analyze.mk,v 1.1 2011/08/27 18:35:20 joerg Exp $
+# $NetBSD: bsd.clang-analyze.mk,v 1.2 2011/09/01 12:25:10 joerg Exp $
 
 .ifndef CLANG_ANALYZE_SRCS
 
-CLANG_ANALYZE_FLAGS+=	-Xclang -analyze \
-			-Xclang -analyzer-store=region \
-			-Xclang -analyzer-opt-analyze-nested-blocks \
-			-Xclang -analyzer-eagerly-assume \
-			-Xclang -analyzer-checker=core \
-			-Xclang -analyzer-checker=deadcode \
-			-Xclang -analyzer-checker=security \
-			-Xclang -analyzer-checker=unix \
-			-fsyntax-only
+CLANG_ANALYZE_FLAGS+=	--analyze
 
 .SUFFIXES: .c .cc .cpp .cxx .C .clang-analyzer
 
