@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.11 2011/09/01 14:39:03 jakllsch Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.12 2011/09/01 14:46:23 jakllsch Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.11 2011/09/01 14:39:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.12 2011/09/01 14:46:23 jakllsch Exp $");
 
 #include "rnd.h"
 
@@ -1842,14 +1842,14 @@ mvgbe_filter_setup(struct mvgbe_softc *sc)
 	struct ifnet *ifp= &sc->sc_ethercom.ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	uint32_t *dfut, *dfsmt, *dfomt;
+	uint32_t dfut[MVGBE_NDFUT], dfsmt[MVGBE_NDFSMT], dfomt[MVGBE_NDFOMT];
 	uint32_t pxc;
 	int i;
 	const uint8_t special[ETHER_ADDR_LEN] = {0x01,0x00,0x5e,0x00,0x00,0x00};
 
-	dfut = kmem_zalloc(sizeof(*dfut) * MVGBE_NDFUT, KM_SLEEP);
-	dfsmt = kmem_zalloc(sizeof(*dfsmt) * MVGBE_NDFSMT, KM_SLEEP);
-	dfomt = kmem_zalloc(sizeof(*dfomt) * MVGBE_NDFOMT, KM_SLEEP);
+	memset(dfut, 0, sizeof(dfut));
+	memset(dfsmt, 0, sizeof(dfsmt));
+	memset(dfomt, 0, sizeof(dfomt));
 
 	if (ifp->if_flags & (IFF_ALLMULTI|IFF_PROMISC)) {
 		goto allmulti;
@@ -1907,10 +1907,6 @@ set:
 	/* Set Destination Address Filter Multicast Tables */
 	MVGBE_WRITE_FILTER(sc, MVGBE_DFSMT, dfsmt, MVGBE_NDFSMT);
 	MVGBE_WRITE_FILTER(sc, MVGBE_DFOMT, dfomt, MVGBE_NDFOMT);
-
-	kmem_free(dfut, sizeof(dfut[0]) * MVGBE_NDFUT);
-	kmem_free(dfsmt, sizeof(dfsmt[0]) * MVGBE_NDFSMT);
-	kmem_free(dfomt, sizeof(dfsmt[0]) * MVGBE_NDFOMT);
 }
 
 #ifdef MVGBE_DEBUG
