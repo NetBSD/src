@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.117 2011/06/19 18:29:25 hannken Exp $	*/
+/*	$NetBSD: vm.c,v 1.118 2011/09/01 21:09:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.117 2011/06/19 18:29:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.118 2011/09/01 21:09:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -892,6 +892,12 @@ uvmpdpol_anfree(struct vm_anon *an)
 {
 
 	/* nada */
+}
+
+kmutex_t *
+uvmpd_trylockowner(struct vm_page *pg)
+{
+	return NULL;
 }
 
 /*
