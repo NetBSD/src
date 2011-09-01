@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.22 2011/08/28 21:19:49 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.23 2011/09/01 15:13:33 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.22 2011/08/28 21:19:49 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.23 2011/09/01 15:13:33 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/ansi.h>
@@ -199,7 +199,7 @@ void
 thunk_makecontext(ucontext_t *ucp, void (*func)(void), int argc,
     void (*arg1)(void *), void *arg2)
 {
-	assert(argc == 2);
+//	assert(argc == 2);
 
 	makecontext(ucp, func, argc, arg1, arg2);
 }
@@ -371,9 +371,24 @@ thunk_sbrk(intptr_t len)
 	return sbrk(len);
 }
 
+/* exposed to signal handler */
+extern vaddr_t kmem_k_start, kmem_k_end;
+extern vaddr_t kmem_ext_start, kmem_ext_end;
+extern vaddr_t kmem_user_start, kmem_user_end;
+extern vaddr_t kmem_ext_cur_start, kmem_ext_cur_end;
+
 void *
 thunk_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
+#ifdef DIAGNOSTIC
+	if (kmem_ext_end && (len <= 4096)) {
+		if (((vaddr_t) addr < kmem_user_start) || ((vaddr_t) addr >= kmem_ext_end)) {
+			printf("thunk mmap outside the box\n");
+			exit(1);
+		}
+	}
+#endif
+		
 	return mmap(addr, len, prot, flags, fd, offset);
 }
 
