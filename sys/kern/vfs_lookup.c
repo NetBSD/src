@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.189 2011/08/13 19:40:02 riastradh Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.190 2011/09/01 15:31:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.189 2011/08/13 19:40:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.190 2011/09/01 15:31:27 yamt Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1040,11 +1040,16 @@ unionlookup:
 	       (cnp->cn_flags & NOCROSSMOUNT) == 0) {
 		error = vfs_busy(mp, NULL);
 		if (error != 0) {
-			vput(foundobj);
+			if (searchdir != foundobj) {
+				vput(foundobj);
+			} else {
+				vrele(foundobj);
+			}
 			goto done;
 		}
-		KASSERT(searchdir != foundobj);
-		VOP_UNLOCK(searchdir);
+		if (searchdir != foundobj) {
+			VOP_UNLOCK(searchdir);
+		}
 		vput(foundobj);
 		error = VFS_ROOT(mp, &foundobj);
 		vfs_unbusy(mp, false, NULL);
@@ -1052,9 +1057,22 @@ unionlookup:
 			vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
 			goto done;
 		}
-		VOP_UNLOCK(foundobj);
-		vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
-		vn_lock(foundobj, LK_EXCLUSIVE | LK_RETRY);
+		/*
+		 * avoid locking vnodes from two filesystems because it's
+		 * prune to deadlock.  eg. when using puffs.
+		 * also, it isn't a good idea to propagate slowness of a
+		 * filesystem up to the root directory.
+		 * for now, only handle the common case.  (ie. foundobj is VDIR)
+		 */
+		if (foundobj->v_type == VDIR) {
+			vrele(searchdir);
+			*newsearchdir_ret = searchdir = foundobj;
+			vref(searchdir);
+		} else {
+			VOP_UNLOCK(foundobj);
+			vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
+			vn_lock(foundobj, LK_EXCLUSIVE | LK_RETRY);
+		}
 	}
 
 	*foundobj_ret = foundobj;
@@ -1240,9 +1258,11 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * Check for directory, if the component was
 		 * followed by a series of slashes.
 		 */
-		if ((foundobj->v_type != VDIR) && (cnp->cn_flags & REQUIREDIR)) {
-			KASSERT(foundobj != searchdir);
-			if (searchdir) {
+		if ((foundobj->v_type != VDIR) &&
+		    (cnp->cn_flags & REQUIREDIR)) {
+			if (searchdir == foundobj) {
+				vrele(searchdir);
+			} else {
 				vput(searchdir);
 			}
 			vput(foundobj);
@@ -1545,7 +1565,11 @@ do_lookup_for_nfsd_index(struct namei_state *state, struct vnode *startdir)
 	vref(startdir);
 	vn_lock(startdir, LK_EXCLUSIVE | LK_RETRY);
 	error = lookup_once(state, startdir, &startdir, &foundobj);
-	vput(startdir);
+	if (error == 0 && startdir == foundobj) {
+		vrele(startdir);
+	} else {
+		vput(startdir);
+	}
 	if (error) {
 		goto bad;
 	}
