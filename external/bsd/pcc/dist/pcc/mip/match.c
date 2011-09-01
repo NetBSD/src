@@ -1,5 +1,5 @@
-/*      Id: match.c,v 1.92 2010/05/14 11:47:09 ragge Exp    */	
-/*      $NetBSD: match.c,v 1.1.1.3 2010/06/03 18:57:54 plunky Exp $   */
+/*      Id: match.c,v 1.97 2011/08/12 19:20:24 plunky Exp    */	
+/*      $NetBSD: match.c,v 1.1.1.4 2011/09/01 12:47:13 plunky Exp $   */
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -74,7 +74,9 @@ int s2debug;
 
 extern char *ltyp[], *rtyp[];
 
+#ifdef PCC_DEBUG
 static char *srtyp[] = { "SRNOPE", "SRDIR", "SROREG", "SRREG" };
+#endif
 
 /*
  * return true if shape is appropriate for the node p
@@ -256,7 +258,7 @@ ttype(TWORD t, int tword)
 }
 
 #define FLDSZ(x)	UPKFSZ(x)
-#ifdef RTOLBYTES
+#if TARGET_ENDIAN == TARGET_LE
 #define	FLDSHF(x)	UPKFOFF(x)
 #else
 #define	FLDSHF(x)	(SZINT - FLDSZ(x) - UPKFOFF(x))
@@ -362,13 +364,11 @@ expand(NODE *p, int cookie, char *cp)
 
 	}
 
-NODE resc[4];
+NODE resc[NRESC];
 
 NODE *
 getlr(NODE *p, int c)
 {
-	NODE *q;
-
 	/* return the pointer to the left or right side of p, or p itself,
 	   depending on the optype of p */
 
@@ -382,12 +382,9 @@ getlr(NODE *p, int c)
 			c = 0;
 		else
 			c -= '0';
-		q = &resc[c];
-		q->n_op = REG;
-		q->n_type = p->n_type; /* XXX should be correct type */
-		q->n_rval = DECRA(p->n_reg, c);
-		q->n_su = p->n_su;
-		return q;
+		if (resc[c].n_op == FREE)
+			comperr("getlr: free node");
+		return &resc[c];
 
 	case 'L':
 		return( optype( p->n_op ) == LTYPE ? p : p->n_left );
@@ -581,7 +578,7 @@ findops(NODE *p, int cookie)
 
 		/* Help register assignment after SSA by preferring */
 		/* 2-op insns instead of 3-ops */
-		if (xssaflag && (q->rewrite & RLEFT) == 0 && shl == SRDIR)
+		if (xssa && (q->rewrite & RLEFT) == 0 && shl == SRDIR)
 			shl = SRREG;
 
 		if (q->needs & REWRITE)
@@ -1213,6 +1210,7 @@ treecmp(NODE *p1, NODE *p2)
 		return 0;
 
 	switch (p1->n_op) {
+	case SCONV:
 	case UMUL:
 		return treecmp(p1->n_left, p2->n_left);
 
@@ -1234,15 +1232,19 @@ treecmp(NODE *p1, NODE *p2)
 #ifdef notyet
 		/* SSA will put assignment in separate register */
 		/* Help out by accepting different regs here */
-		if (xssaflag)
+		if (xssa)
 			break;
 #endif
 	case REG:
 		if (p1->n_rval != p2->n_rval)
 			return 0;
 		break;
+	case LS:
+	case RS:
 	case PLUS:
 	case MINUS:
+	case MUL:
+	case DIV:
 		if (treecmp(p1->n_left, p2->n_left) == 0 ||
 		    treecmp(p1->n_right, p2->n_right) == 0)
 			return 0;

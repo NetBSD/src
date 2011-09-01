@@ -1,5 +1,5 @@
-/*	Id: regs.c,v 1.211 2010/05/27 20:05:11 ragge Exp 	*/	
-/*	$NetBSD: regs.c,v 1.1.1.3 2010/06/03 18:57:59 plunky Exp $	*/
+/*	Id: regs.c,v 1.227 2011/08/18 17:45:22 ragge Exp 	*/	
+/*	$NetBSD: regs.c,v 1.1.1.4 2011/09/01 12:47:17 plunky Exp $	*/
 /*
  * Copyright (c) 2005 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -148,6 +148,7 @@ static void insnwalk(NODE *p);
 #ifdef PCC_DEBUG
 int use_regw;
 int nodnum = 100;
+int ntsz, stktemp;
 #define	SETNUM(x)	(x)->nodnum = nodnum++
 #define	ASGNUM(x)	(x)->nodnum
 #else
@@ -254,6 +255,7 @@ nsucomp(NODE *p)
 
 	q = &table[TBLIDX(p->n_su)];
 
+#define	NNEEDS(a,b) ((q->needs & a)/b)
 	for (i = (q->needs & NACOUNT), nareg = 0; i; i -= NAREG)
 		nareg++;
 	for (i = (q->needs & NBCOUNT), nbreg = 0; i; i -= NBREG)
@@ -268,6 +270,9 @@ nsucomp(NODE *p)
 		nfreg++;
 	for (i = (q->needs & NGCOUNT), ngreg = 0; i; i -= NGREG)
 		ngreg++;
+
+	if (ntsz < NNEEDS(NTMASK, NTEMP) * szty(p->n_type))
+		ntsz = NNEEDS(NTMASK, NTEMP) * szty(p->n_type);
 
 	nxreg = nareg + nbreg + ncreg + ndreg + nereg + nfreg + ngreg;
 	nreg = nxreg;
@@ -426,7 +431,7 @@ trivially_colorable_p(int c, int *n)
 	return i;
 }
 
-static int
+int
 ncnt(int needs)
 {
 	int i = 0;
@@ -623,13 +628,9 @@ adjSet(REGW *u, REGW *v)
 				return 1;
 		}
 	}
-#ifdef notdef
-	if (u > v)
-		t = v, v = u, u = t;
-	w = edgehash[((intptr_t)u+(intptr_t)v) & (HASHSZ-1)];
-#else
+
 	w = edgehash[(u->nodnum+v->nodnum)& (HASHSZ-1)];
-#endif
+
 	for (; w; w = w->next) {
 		if ((u == w->u && v == w->v) || (u == w->v && v == w->u))
 			return 1;
@@ -638,23 +639,22 @@ adjSet(REGW *u, REGW *v)
 }
 
 /* Add a pair to adjset.  No check for dups */
-static void
+static int
 adjSetadd(REGW *u, REGW *v)
 {
 	struct AdjSet *w;
 	int x;
 
-#ifdef notdef
-	if (u > v)
-		t = v, v = u, u = t;
-	x = ((intptr_t)u+(intptr_t)v) & (HASHSZ-1);
-#else
 	x = (u->nodnum+v->nodnum)& (HASHSZ-1);
-#endif
+	for (w = edgehash[x]; w; w = w->next)
+		if ((u == w->u && v == w->v) || (u == w->v && v == w->u))
+			return 1;
+
 	w = tmpalloc(sizeof(struct AdjSet));
 	w->u = u, w->v = v;
 	w->next = edgehash[x];
 	edgehash[x] = w;
+	return 0;
 }
 
 /*
@@ -679,10 +679,8 @@ AddEdge(REGW *u, REGW *v)
 
 	if (u == v)
 		return;
-	if (adjSet(u, v))
+	if (adjSetadd(u, v))
 		return;
-
-	adjSetadd(u, v);
 
 #if 0
 	if (ONLIST(u) == &precolored || ONLIST(v) == &precolored)
@@ -927,6 +925,24 @@ addedge_r(NODE *p, REGW *w)
 }
 
 /*
+ * delete early clobber liveness. Only interesting on regs.
+ */
+static void
+delcl(NODE *p)
+{
+	int cw;
+
+	if (p->n_op == ICON && p->n_type == STRTY)
+		return;
+	cw = xasmcode(p->n_name);
+	if ((cw & XASMCONSTR) == 0 || !XASMISOUT(cw))
+		return;
+	if (XASMVAL(cw) != 'r')
+		return;
+	LIVEDEL(regno(p->n_left));
+}
+
+/*
  * add/del parameter from live set.
  */
 static void
@@ -934,7 +950,7 @@ setxarg(NODE *p)
 {
 	int i, ut = 0, in = 0;
 	REGW *rw;
-	int cw;
+	int c, cw;
 
 	if (p->n_op == ICON && p->n_type == STRTY)
 		return;
@@ -943,10 +959,16 @@ setxarg(NODE *p)
 	cw = xasmcode(p->n_name);
 	if (XASMISINP(cw))
 		in = 1;
-	if (XASMISOUT(cw))
+	if (XASMISOUT(cw) && !(cw & XASMCONSTR))
 		ut = 1;
 
-	switch (XASMVAL(cw)) {
+	c = XASMVAL(cw);
+
+#ifdef MYSETXARG
+	MYSETXARG;
+#endif
+
+	switch (c) {
 	case 'm':
 	case 'g':
 		/* must find all TEMPs/REGs and set them live */
@@ -967,13 +989,15 @@ setxarg(NODE *p)
 		addalledges(&rw[i]);
 		break;
 
-
 	case 'i':
 	case 'n':
 		break;
 	default:
 		comperr("bad ixarg %s", p->n_name);
 	}
+#ifdef MYSETXARG
+	MYSETXARG;
+#endif
 }
 
 /*
@@ -1094,16 +1118,18 @@ insnwalk(NODE *p)
 			case NLEFT:
 				addalledges(&ablock[rc->num]);
 				ONLY(lr, moveadd);
-				break;
-			case NOLEFT:
-				addedge_r(p->n_left, &ablock[rc->num]);
+				if (optype(o) != BITYPE)
+					break;
+				/* FALLTHROUGH */
+			case NORIGHT:
+				addedge_r(p->n_right, &ablock[rc->num]);
 				break;
 			case NRIGHT:
 				addalledges(&ablock[rc->num]);
 				ONLY(rr, moveadd);
-				break;
-			case NORIGHT:
-				addedge_r(p->n_right, &ablock[rc->num]);
+				/* FALLTHROUGH */
+			case NOLEFT:
+				addedge_r(p->n_left, &ablock[rc->num]);
 				break;
 			case NEVER:
 				addalledges(&ablock[rc->num]);
@@ -1247,7 +1273,7 @@ xasmionize(NODE *p, void *arg)
 		return; /* dummy end marker */
 
 	cw = xasmcode(p->n_name);
-	if (XASMVAL(cw) == 'n' || XASMVAL(cw) == 'm')
+	if (XASMVAL(cw) == 'n' /* || XASMVAL(cw) == 'm' */)
 		return; /* no flow analysis */
 	p = p->n_left;
 
@@ -1257,6 +1283,15 @@ xasmionize(NODE *p, void *arg)
 	b = regno(p);
 	if (XASMVAL(cw) == 'r' && p->n_op == TEMP)
 		addnotspill(b);
+	if (XASMVAL(cw) == 'm') {
+		if (p->n_op == UMUL && p->n_left->n_op == TEMP) {
+			p = p->n_left;
+			b = regno(p);
+			addnotspill(b);
+			cw &= ~(XASMASG|XASMINOUT);
+		} else
+			return;
+	}
 #define	MKTOFF(r)	((r) - tempmin + MAXREGS)
 	if (XASMISOUT(cw)) {
 		if (p->n_op == TEMP) {
@@ -1498,7 +1533,7 @@ LivenessAnalysis(struct p2env *p2e)
 {
 	struct basicblock *bb;
 	struct interpass *ip;
-	int i, bbnum;
+	int bbnum;
 
 	/*
 	 * generate the gen-killed sets for all basic blocks.
@@ -1519,8 +1554,10 @@ LivenessAnalysis(struct p2env *p2e)
 		}
 		memcpy(in[bbnum], gen[bbnum], BIT2BYTE(xbits));
 #ifdef PCC_DEBUG
-#define	PRTRG(x) printf("%d ", i < MAXREGS ? i : i + tempmin-MAXREGS)
+#define	PRTRG(x) printf("%d ", x < MAXREGS ? x : x + tempmin-MAXREGS)
 		if (rdebug) {
+			int i;
+
 			printf("basic block %d\ngen: ", bbnum);
 			for (i = 0; i < xbits; i++)
 				if (TESTBIT(gen[bbnum], i))
@@ -1535,6 +1572,7 @@ LivenessAnalysis(struct p2env *p2e)
 	}
 }
 
+
 /*
  * Build the set of interference edges and adjacency list.
  */
@@ -1544,7 +1582,6 @@ Build(struct p2env *p2e)
 	struct interpass *ipole = &p2e->ipole;
 	struct basicblock bbfake;
 	struct interpass *ip;
-	struct cfgnode *cn;
 	struct basicblock *bb;
 	bittype *saved;
 	int i, j, again;
@@ -1561,7 +1598,7 @@ Build(struct p2env *p2e)
 		bbfake.first = DLIST_NEXT(ipole, qelem);
 		DLIST_INIT(&p2e->bblocks, bbelem);
 		DLIST_INSERT_AFTER(&p2e->bblocks, &bbfake, bbelem);
-		SLIST_INIT(&bbfake.children);
+		bbfake.ch[0] = bbfake.ch[1] = NULL;
 	}
 
 	/* Just fetch space for the temporaries from stack */
@@ -1600,9 +1637,10 @@ livagain:
 		DLIST_FOREACH_REVERSE(bb, &p2e->bblocks, bbelem) {
 			i = bb->bbnum;
 			SETCOPY(saved, out[i], j, xbits);
-			SLIST_FOREACH(cn, &bb->children, cfgelem) {
-				SETSET(out[i], in[cn->bblock->bbnum], j, xbits);
-			}
+			if (bb->ch[0])
+				SETSET(out[i], in[bb->ch[0]->bblock->bbnum], j, xbits);
+			if (bb->ch[1])
+				SETSET(out[i], in[bb->ch[1]->bblock->bbnum], j, xbits);
 			SETCMP(again, saved, out[i], j, xbits);
 			SETCOPY(saved, in[i], j, xbits);
 			SETCOPY(in[i], out[i], j, xbits);
@@ -1661,6 +1699,7 @@ livagain:
 					flist(ip->ip_node->n_right,
 					    xasmconstr, 0);
 					listf(ip->ip_node->n_left, setxarg);
+					listf(ip->ip_node->n_left, delcl);
 				} else
 					insnwalk(ip->ip_node);
 			}
@@ -2043,6 +2082,41 @@ Coalesce(void)
 }
 
 static void
+coalasg(NODE *p, void *arg)
+{
+	NODE *l;
+	REGW *u;
+
+	if (p->n_op != ASSIGN || p->n_regw == NULL)
+		return;
+	l = p->n_left;
+	if (l->n_op == TEMP)
+		u = &nblock[regno(l)];
+	else if (l->n_op == REG)
+		u = &ablock[regno(l)];
+	else
+		return;
+
+	Combine(u, p->n_regw);
+	AddWorkList(u);
+}
+
+/*
+ * Coalesce assign to a left reg with the assign temp node itself.
+ * This has to be done before anything else.
+ */
+static void
+Coalassign(struct p2env *p2e)
+{
+	struct interpass *ip;
+
+	DLIST_FOREACH(ip, &p2env.ipole, qelem) {
+		if (ip->type == IP_NODE)
+			walkf(ip->ip_node, coalasg, 0);
+	}
+}
+
+static void
 FreezeMoves(REGW *u)
 {
 	MOVL *w, *o;
@@ -2214,6 +2288,12 @@ paint(NODE *p, void *arg)
 					p->n_reg |= ENCRA(COLOR(w), i);
 				w++;
 			}
+#ifdef notdef
+		if (p->n_op == ASSIGN && p->n_left->n_op == REG &&
+		    DECRA(p->n_reg, 0) != regno(p->n_left))
+			comperr("paint: %p clashing ASSIGN moves; %d != %d", p,
+			    DECRA(p->n_reg, 0), regno(p->n_left));
+#endif
 	} else
 		p->n_reg = -1;
 	if (p->n_op == TEMP) {
@@ -2243,17 +2323,23 @@ colfind(int okColors, REGW *r)
 		w = GetAlias(w);
 		if (ONLIST(w) != &coloredNodes && ONLIST(w) != &precolored)
 			continue; /* Not yet colored */
-		c = aliasmap(CLASS(w), COLOR(w));
-		if ((c & okColors) == 0) {
-			RDEBUG(("colfind: Failed coloring from %d\n", ASGNUM(w)));
+		if (CLASS(w) != CLASS(r))
+			comperr("colfind: move between classes");
+
+		for (c = 0; c < regK[CLASS(w)]; c++)
+			if (color2reg(c, CLASS(w)) == COLOR(w))
+				break;
+		if (c == regK[CLASS(w)])
+			comperr("colfind: out of reg number");
+
+		if (((1 << c) & okColors) == 0) {
+			RDEBUG(("colfind: Failed coloring as %d\n", ASGNUM(w)));
 			continue;
 		}
-		okColors &= c;
 		RDEBUG(("colfind: Recommend color from %d\n", ASGNUM(w)));
-		break;
-		
+		return COLOR(w);
 	}
-	return ffs(okColors)-1;
+	return color2reg(ffs(okColors)-1, CLASS(r));
 }
 
 static void
@@ -2296,8 +2382,7 @@ AssignColors(struct interpass *ip)
 			RDEBUG(("Spilling node %d\n", ASGNUM(w)));
 #endif
 		} else {
-			c = colfind(okColors, w);
-			COLOR(w) = color2reg(c, CLASS(w));
+			COLOR(w) = colfind(okColors, w);
 			PUSHWLIST(w, coloredNodes);
 #ifdef PCC_DEBUG
 			RDEBUG(("Coloring %d with %s, free %x\n",
@@ -2355,9 +2440,9 @@ longtemp(NODE *p, void *arg)
 			continue;
 		if (w->r_class == 0) {
 			w->r_color = BITOOR(freetemp(szty(p->n_type)));
-			w->r_class = 1;
+			w->r_class = FPREG;
 		}
-		l = mklnode(REG, 0, FPREG, INCREF(p->n_type));
+		l = mklnode(REG, 0, w->r_class, INCREF(p->n_type));
 		r = mklnode(ICON, w->r_color, 0, INT);
 		p->n_left = mkbinode(PLUS, l, r, INCREF(p->n_type));
 		p->n_op = UMUL;
@@ -2479,6 +2564,7 @@ temparg(struct interpass *ipole, REGW *w)
 {
 	struct interpass *ip;
 	NODE *p;
+	int reg;
 
 	ip = DLIST_NEXT(ipole, qelem); /* PROLOG */
 	while (ip->type != IP_DEFLAB)
@@ -2493,17 +2579,21 @@ temparg(struct interpass *ipole, REGW *w)
 		if (p->n_op != ASSIGN || p->n_left->n_op != TEMP)
 			comperr("temparg");
 #endif
+		if (p->n_op != ASSIGN || p->n_left->n_op != TEMP)
+			continue; /* unknown tree */
+
 		if (p->n_right->n_op != OREG)
 			continue; /* arg in register */
 		if (w != &nblock[regno(p->n_left)])
 			continue;
 		w->r_color = (int)p->n_right->n_lval;
+		reg = regno(p->n_right);
 		tfree(p);
 		/* Cannot DLIST_REMOVE here, would break basic blocks */
 		/* Make it a nothing instead */
 		ip->type = IP_ASM;
 		ip->ip_asm="";
-		return 1;
+		return reg;
 	}
 	return 0;
 }
@@ -2612,8 +2702,13 @@ if (p->n_reg == -1) goto foo;
 	} else {
 foo:		fprintf(fp, "REG ");
 		if (p->n_reg != -1) {
-			for (i = 0; i < n+1; i++)
-				fprintf(fp, "%s ", rnames[DECRA(p->n_reg, i)]);
+			for (i = 0; i < n+1; i++) {
+				int r = DECRA(p->n_reg, i);
+				if (r >= MAXREGS)
+					fprintf(fp, "<badreg> ");
+				else
+					fprintf(fp, "%s ", rnames[r]);
+			}
 		} else
 			fprintf(fp, "<undef>");
 	}
@@ -2657,7 +2752,6 @@ ngenregs(struct p2env *p2e)
 	 * Do some setup before doing the real thing.
 	 */
 	tempmin = p2e->ipp->ip_tmpnum;
-	tempmax = p2e->epp->ip_tmpnum;
 
 	/*
 	 * Allocate space for the permanent registers in the
@@ -2677,6 +2771,20 @@ ngenregs(struct p2env *p2e)
 		dontregs |= REGBIT(FPREG);
 #endif
 
+	/* Block for precolored nodes */
+	ablock = tmpalloc(sizeof(REGW)*MAXREGS);
+	memset(ablock, 0, sizeof(REGW)*MAXREGS);
+	for (i = 0; i < MAXREGS; i++) {
+		ablock[i].r_onlist = &precolored;
+		ablock[i].r_class = GCLASS(i); /* XXX */
+		ablock[i].r_color = i;
+#ifdef PCC_DEBUG
+		ablock[i].nodnum = i;
+#endif
+	}
+
+ssagain:
+	tempmax = p2e->epp->ip_tmpnum;
 #ifdef PCC_DEBUG
 	nodnum = tempmax;
 #endif
@@ -2693,17 +2801,6 @@ ngenregs(struct p2env *p2e)
 	}
 	live = tmpalloc(BIT2BYTE(xbits));
 
-	/* Block for precolored nodes */
-	ablock = tmpalloc(sizeof(REGW)*MAXREGS);
-	memset(ablock, 0, sizeof(REGW)*MAXREGS);
-	for (i = 0; i < MAXREGS; i++) {
-		ablock[i].r_onlist = &precolored;
-		ablock[i].r_class = GCLASS(i); /* XXX */
-		ablock[i].r_color = i;
-#ifdef PCC_DEBUG
-		ablock[i].nodnum = i;
-#endif
-	}
 #ifdef notyet
 	TMPMARK();
 #endif
@@ -2723,6 +2820,7 @@ onlyperm: /* XXX - should not have to redo all */
 	memset(live, 0, BIT2BYTE(xbits));
 	RPRINTIP(ipole);
 	DLIST_INIT(&initial, link);
+	ntsz = 0;
 	DLIST_FOREACH(ip, ipole, qelem) {
 		extern int thisline;
 		if (ip->type != IP_NODE)
@@ -2766,6 +2864,7 @@ onlyperm: /* XXX - should not have to redo all */
 	RDEBUG(("Build done\n"));
 	MkWorklist();
 	RDEBUG(("MkWorklist done\n"));
+	Coalassign(p2e);
 	do {
 		if (!WLISTEMPTY(simplifyWorklist))
 			Simplify();
@@ -2790,6 +2889,8 @@ onlyperm: /* XXX - should not have to redo all */
 			optimize(p2e);
 			if (beenhere++ == MAXLOOP)
 				comperr("cannot color graph - COLORMAP() bug?");
+			if (xssa)
+				goto ssagain;
 			goto recalc;
 		}
 	}
@@ -2841,6 +2942,7 @@ onlyperm: /* XXX - should not have to redo all */
 		ip = ipnode(p);
 		DLIST_INSERT_BEFORE(ipole->qelem.q_back, ip, qelem);
 	}
+	stktemp = BITOOR(freetemp(ntsz));
 	memcpy(p2e->epp->ipp_regs, p2e->ipp->ipp_regs, sizeof(p2e->epp->ipp_regs));
 	/* Done! */
 }

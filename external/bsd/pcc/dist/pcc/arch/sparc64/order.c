@@ -1,3 +1,6 @@
+/*	Id: order.c,v 1.7 2011/06/05 08:54:42 plunky Exp 	*/	
+/*	$NetBSD: order.c,v 1.1.1.4 2011/09/01 12:46:50 plunky Exp $	*/
+
 /*
  * Copyright (c) 2008 David Crawshaw <david@zentus.com>
  * 

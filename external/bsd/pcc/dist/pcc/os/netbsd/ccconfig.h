@@ -1,5 +1,5 @@
-/*	Id: ccconfig.h,v 1.16 2009/05/16 07:54:45 gmcgarry Exp 	*/	
-/*	$NetBSD: ccconfig.h,v 1.1.1.3 2010/06/03 18:57:59 plunky Exp $	*/
+/*	Id: ccconfig.h,v 1.20 2011/07/23 08:29:27 plunky Exp 	*/	
+/*	$NetBSD: ccconfig.h,v 1.1.1.4 2011/09/01 12:47:17 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -68,11 +68,15 @@
 #define	DYNLINKER { "-dynamic-linker", "/usr/libexec/ld.elf_so", NULL }
 
 #if defined(mach_amd64)
-#define CPPMDADD { "-D__x86_64__", NULL, }
+#define CPPMDADD \
+	{ "-D__x86_64__", "-D__x86_64", "-D__amd64__", "-D__amd64", \
+	  "-D__LP64__", "-D_LP64", NULL, }
 #elif defined(mach_arm)
 #define	CPPMDADD { "-D__arm__", NULL, }
 #elif defined(mach_i386)
 #define	CPPMDADD { "-D__i386__", NULL, }
+#define	PCC_SIZE_TYPE		"unsigned int"
+#define	PCC_PTRDIFF_TYPE	"int"
 #elif defined(mach_mips)
 #define	CPPMDADD { "-D__mips__", NULL, }
 #elif defined(mach_pdp10)
@@ -88,4 +92,12 @@
 #error defines for arch missing
 #endif
 
-#define	STABS
+#ifndef	PCC_WINT_TYPE
+#define	PCC_WINT_TYPE		"int"
+#endif
+#ifndef	PCC_SIZE_TYPE
+#define	PCC_SIZE_TYPE		"unsigned long"
+#endif
+#ifndef	PCC_PTRDIFF_TYPE
+#define	PCC_PTRDIFF_TYPE	"long"
+#endif

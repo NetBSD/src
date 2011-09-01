@@ -21,6 +21,9 @@
 /* Using ELF ABI */
 #undef ELFABI
 
+/* Enable STABS debugging output */
+#undef STABS
+
 /* Define to 1 if you have the `basename' function. */
 #undef HAVE_BASENAME
 
@@ -153,19 +156,13 @@
 /* Define if target defaults to LITTLE endian */
 #undef TARGET_LITTLE_ENDIAN
 
-/* Target OS */
-#undef TARGOS
-
-/* Target OS version */
-#undef TARGOSVER
-
 /* Enable thread-local storage (TLS). */
 #undef TLS
 
 /* Version string */
 #undef VERSSTR
 
-/* Size of wide character type */
+/* Size of wide-character type in chars */
 #undef WCHAR_SIZE
 
 /* Type to use for wide characters */

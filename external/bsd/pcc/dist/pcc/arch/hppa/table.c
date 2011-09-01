@@ -1,3 +1,5 @@
+/*	Id: table.c,v 1.15 2011/06/05 08:54:42 plunky Exp 	*/	
+/*	$NetBSD: table.c,v 1.1.1.3 2011/09/01 12:46:34 plunky Exp $	*/
 /*	$OpenBSD: table.c,v 1.2 2007/12/19 20:19:54 otto Exp $	*/
 
 /*

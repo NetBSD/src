@@ -1,5 +1,5 @@
-/*	Id: manifest.h,v 1.88 2009/08/13 08:01:28 gmcgarry Exp 	*/	
-/*	$NetBSD: manifest.h,v 1.1.1.3 2010/06/03 18:57:53 plunky Exp $	*/
+/*	Id: manifest.h,v 1.97 2011/08/31 18:02:24 plunky Exp 	*/	
+/*	$NetBSD: manifest.h,v 1.1.1.4 2011/09/01 12:47:12 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -62,7 +62,7 @@
  * Signed types must have bit 0 unset, unsigned types set (used below).
  */
 #define	UNDEF		0	/* free symbol table entry */
-#define	FARG		1 	/* function argument */
+#define	BOOL		1 	/* function argument */
 #define	CHAR		2
 #define	UCHAR		3
 #define	SHORT		4
@@ -78,7 +78,7 @@
 #define	LDOUBLE		14
 #define	STRTY		15
 #define	UNIONTY		16
-/* #define	ENUMTY		17 */
+#define	XTYPE		17	/* Extended target-specific type */
 /* #define	MOETY		18 */	/* member of enum */
 #define	VOID		19
 
@@ -115,9 +115,9 @@
 #define	ISLONGLONG(x)	((x) == LONGLONG || (x) == ULONGLONG)
 #define ISUNSIGNED(x)	(((x) <= ULONGLONG) && (((x) & 1) == (UNSIGNED & 1)))
 #define UNSIGNABLE(x)	(((x)<=ULONGLONG&&(x)>=CHAR) && !ISUNSIGNED(x))
-#define ENUNSIGN(x)	((x)|1)
-#define DEUNSIGN(x)	((x)&~1)
-#define ISINTEGER(x)	(((x) >= CHAR && (x) <= ULONGLONG) || (x) == BOOL)
+#define ENUNSIGN(x)	enunsign(x)
+#define DEUNSIGN(x)	deunsign(x)
+#define ISINTEGER(x)	((x) >= BOOL && (x) <= ULONGLONG)
 #define ISPTR(x)	(((x)&TMASK)==PTR)
 #define ISFTN(x)	(((x)&TMASK)==FTN)	/* is x a function type? */
 #define ISARY(x)	(((x)&TMASK)==ARY)	/* is x an array type? */
@@ -132,6 +132,12 @@
 #define NOFIT(x,y,z)	(((x)%(z) + (y)) > (z))
 		/* can y bits be added to x without overflowing z */
 
+/* Endianness.	Target is expected to TARGET_ENDIAN to one of these  */
+#define TARGET_LE	1
+#define TARGET_BE	2
+#define TARGET_PDP	3
+#define TARGET_ANY	4
+
 #ifndef SPECIAL_INTEGERS
 #define	ASGLVAL(lval, val)
 #endif
@@ -139,9 +145,9 @@
 /*
  * Pack and unpack field descriptors (size and offset)
  */
-#define PKFIELD(s,o)	(((o)<<6)| (s))
-#define UPKFSZ(v)	((v)&077)
-#define UPKFOFF(v)	((v)>>6)
+#define PKFIELD(s,o)	(((o)<<7)| (s))
+#define UPKFSZ(v)	((v)&0177)
+#define UPKFOFF(v)	((v)>>7)
 
 /*
  * Operator information
@@ -162,16 +168,6 @@
 
 #define SPFLG	040000
 
-/*
- * Location counters
- */
-#define PROG		0		/* (ro) program segment */
-#define DATA		1		/* (rw) data segment */
-#define RDATA		2		/* (ro) data segment */
-#define STRNG		3		/* (ro) string segment */
-#define	UDATA		4		/* (rw) uninitialized data */
-
-
 #define	regno(p)	((p)->n_rval)	/* register number */
 
 /*
@@ -181,12 +177,9 @@ extern int bdebug, tdebug, edebug;
 extern int ddebug, xdebug, f2debug;
 extern int iTflag, oTflag, kflag;
 extern int sflag, nflag, gflag, pflag;
-extern int Wstrict_prototypes, Wmissing_prototypes, Wimplicit_int,
-	Wimplicit_function_declaration, Wpointer_sign, Wshadow,
-	Wsign_compare, Wunknown_pragmas, Wunreachable_code, Wtruncate;
-extern int funsigned_char;
 extern int sspflag;
-extern int xssaflag, xtailcallflag, xtemps, xdeljumps, xdce;
+extern int xssa, xtailcall, xtemps, xdeljumps, xdce;
+extern int xuchar;
 
 int yyparse(void);
 void yyaccpt(void);
@@ -359,8 +352,27 @@ NODE *listarg(NODE *p, int n, int *cnt);
 void cerror(char *s, ...);
 void werror(char *s, ...);
 void uerror(char *s, ...);
-
+void mkdope(void);
+void tcheck(void);
 
 extern	int nerrors;		/* number of errors seen so far */
 extern	int warniserr;		/* treat warnings as errors */
+
+/* gcc warning stuff */
+#define	Wtruncate			0
+#define	Wstrict_prototypes		1
+#define	Wmissing_prototypes		2
+#define	Wimplicit_int			3
+#define	Wimplicit_function_declaration	4
+#define	Wshadow				5
+#define	Wpointer_sign			6
+#define	Wsign_compare			7
+#define	Wunknown_pragmas		8
+#define	Wunreachable_code		9
+#define	NUMW				10
+
+void warner(int type, ...);
+void Wflags(char *str);
+TWORD deunsign(TWORD t);
+TWORD enunsign(TWORD t);
 #endif

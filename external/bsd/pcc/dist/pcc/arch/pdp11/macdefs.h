@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.4 2009/01/24 21:43:49 gmcgarry Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.2 2010/06/03 18:57:25 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.7 2011/06/05 17:21:17 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.3 2011/09/01 12:46:45 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -115,9 +115,8 @@ typedef long long OFFSZ;
 #define BACKTEMP 		/* stack grows negatively for temporaries */
 
 #undef	FIELDOPS		/* no bit-field instructions */
-#define	RTOLBYTES		/* bytes are numbered right to left */
-
-#define ENUMSIZE(high,low) INT	/* enums are always stored in full int */
+#define TARGET_ENDIAN TARGET_LE /* XXX TARGET_PDP */
+#define	MYINSTRING
 
 /* Definitions mostly used in pass2 */
 

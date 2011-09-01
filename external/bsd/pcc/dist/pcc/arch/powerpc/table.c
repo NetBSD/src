@@ -1,5 +1,5 @@
-/*	Id: table.c,v 1.17 2009/03/06 06:43:51 gmcgarry Exp 	*/	
-/*	$NetBSD: table.c,v 1.1.1.3 2010/06/03 18:57:30 plunky Exp $	*/
+/*	Id: table.c,v 1.18 2010/11/26 17:06:31 ragge Exp 	*/	
+/*	$NetBSD: table.c,v 1.1.1.4 2011/09/01 12:46:49 plunky Exp $	*/
 /*-
  * Copyright (c) 2007 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -960,7 +960,7 @@ struct optab table[] = {
 { STASG,	INAREG|FOREFF,
 	SOREG|SNAME,	TANY,
 	SAREG,		TPTRTO|TANY,
-		NSPECIAL,	RRIGHT,
+		NSPECIAL,	RDEST,
 		"ZQ", },
 
 { ASSIGN,	FOREFF|INCREG | FEATURE_HARDFLOAT,

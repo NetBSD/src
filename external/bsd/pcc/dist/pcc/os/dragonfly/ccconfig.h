@@ -1,5 +1,5 @@
-/*	Id: ccconfig.h,v 1.6 2008/06/03 05:58:22 gmcgarry Exp 	*/	
-/*	$NetBSD: ccconfig.h,v 1.1.1.2 2010/06/03 18:57:59 plunky Exp $	*/
+/*	Id: ccconfig.h,v 1.8 2011/06/04 19:27:25 plunky Exp 	*/	
+/*	$NetBSD: ccconfig.h,v 1.1.1.3 2011/09/01 12:47:17 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -32,20 +32,34 @@
  * Various settings that controls how the C compiler works.
  */
 
+#include <sys/param.h>
+
 /* common cpp predefines */
 #define	CPPADD	{ "-D__DragonFly__", "-D__ELF__", NULL, }
 #define	DYNLINKER { "-dynamic-linker", "/usr/libexec/ld-elf.so.2", NULL }
+
+#if __DragonFly_version < 200202
 #define CRT0FILE "/usr/lib/gcc34/crt1.o"
 #define CRT0FILE_PROFILE "/usr/lib/gcc34/gcrt1.o"
 #define STARTFILES { "/usr/lib/gcc34/crti.o", "/usr/lib/gcc34/crtbegin.o", NULL }
 #define LIBCLIBS { "-lc", "-L/usr/lib/gcc34", "-lgcc", NULL }
 #define	ENDFILES { "/usr/lib/gcc34/crtend.o", "/usr/lib/gcc34/crtn.o", NULL }
+#else
+#define	CRT0FILE "/usr/lib/crt1.o"
+#define	CRT0FILE_PROFILE "/usr/lib/gcrt1.o"
+#define	STARTFILES { "/usr/lib/crti.o", "/usr/lib/gcc41/crtbegin.o", NULL }
+#define	LIBCLIBS { "-lc", "-L/usr/lib/gcc41", "-lgcc", NULL }
+#define	ENDFILES { "/usr/lib/gcc41/crtend.o", "/usr/lib/crtn.o", NULL }
+#endif
+
 #define STARTLABEL "_start"
 
 #if defined(mach_i386)
 #define	CPPMDADD { "-D__i386__", NULL, }
+#elif defined(mach_amd64)
+#define CPPMDADD \
+	{ "-D__x86_64__", "-D__x86_64", "-D__amd64__", "-D__amd64", \
+	  "-D__LP64__=1", "-D_LP64=1", NULL, }
 #else
 #error defines for arch missing
 #endif
-
-#define	STABS

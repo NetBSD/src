@@ -1,8 +1,8 @@
-/*	Id: cpp.h,v 1.43 2010/02/25 15:49:00 ragge Exp 	*/	
-/*	$NetBSD: cpp.h,v 1.1.1.3 2010/06/03 18:57:35 plunky Exp $	*/
+/*	Id: cpp.h,v 1.53 2011/08/30 20:12:21 plunky Exp 	*/	
+/*	$NetBSD: cpp.h,v 1.1.1.4 2011/09/01 12:46:54 plunky Exp $	*/
 
 /*
- * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
+ * Copyright (c) 2004,2010 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,8 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -34,17 +32,14 @@
 #include "config.h"
 
 typedef unsigned char usch;
-#ifdef YYTEXT_POINTER
-extern char *yytext;
-#else
-extern char yytext[];
-#endif
+extern usch yytext[];
 extern usch *stringbuf;
 
 extern	int	trulvl;
 extern	int	flslvl;
 extern	int	elflvl;
 extern	int	elslvl;
+extern	int	dflag;
 extern	int	tflag, Cflag, Pflag;
 extern	int	Mflag, dMflag;
 extern	usch	*Mfile;
@@ -58,15 +53,45 @@ extern	int	ofd;
 #ifndef CPPBUF
 #if defined(__pdp11__)
 #define CPPBUF  BUFSIZ
+#define	BUF_STACK
 #elif defined(WIN32)
 /* winxp seems to fail > 26608 bytes */
 #define CPPBUF	16384
 #else
-#define CPPBUF	65536
+#define CPPBUF	(65536*2)
 #endif
 #endif
 
+#define	MAXARGS	128	/* Max # of args to a macro. Should be enough */
+
 #define	NAMEMAX	CPPBUF	/* currently pushbackbuffer */
+#define	BBUFSZ	(NAMEMAX+CPPBUF+1)
+
+#define GCCARG	0xfd	/* has gcc varargs that may be replaced with 0 */
+#define VARG	0xfe	/* has varargs */
+#define OBJCT	0xff
+#define WARN	1	/* SOH, not legal char */
+#define CONC	2	/* STX, not legal char */
+#define SNUFF	3	/* ETX, not legal char */
+#define	EBLOCK	4	/* EOT, not legal char */
+
+/* Used in macro expansion */
+#define RECMAX	10000			/* max # of recursive macros */
+extern struct symtab *norep[RECMAX];
+extern int norepptr;
+extern unsigned short bptr[RECMAX];
+extern int bidx;
+#define	MKB(l,h)	(l+((h)<<8))
+
+/* quick checks for some characters */
+#define C_SPEC	001
+#define C_EP	002
+#define C_ID	004
+#define C_I	(C_SPEC|C_ID)		
+#define C_2	010		/* for yylex() tokenizing */
+#define	C_WSNL	020		/* ' ','\t','\r','\n' */
+#define	iswsnl(x) (spechr[x] & C_WSNL)
+extern char spechr[];
 
 /* definition for include file info */
 struct includ {
@@ -82,7 +107,11 @@ struct includ {
 	int idx;
 	void *incs;
 	const usch *fn;
-	usch bbuf[NAMEMAX+CPPBUF+1];
+#ifdef BUF_STACK
+	usch bbuf[BBUFSZ];
+#else
+	usch *bbuf;
+#endif
 } *ifiles;
 
 /* Symbol table entry  */
@@ -116,11 +145,20 @@ struct nd {
 #define nd_val n.val
 #define nd_uval n.uval
 
-struct recur;	/* not used outside cpp.c */
-int subst(struct symtab *, struct recur *);
 struct symtab *lookup(const usch *namep, int enterf);
 usch *gotident(struct symtab *nl);
 int slow;	/* scan slowly for new tokens */
+int defining;
+int submac(struct symtab *nl, int);
+int kfind(struct symtab *nl);
+int doexp(void);
+int donex(void);
+void ppdir(void);
+
+void define(void);
+void include(void);
+void include_next(void);
+void line(void);
 
 int pushfile(const usch *fname, const usch *fn, int idx, void *incs);
 void popfile(void);
@@ -151,6 +189,5 @@ void xerror(usch *);
 #define warning printf
 #define error printf
 #endif
-void expmac(struct recur *);
 int cinput(void);
 void getcmnt(void);

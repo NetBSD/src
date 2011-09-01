@@ -1,5 +1,5 @@
-/*	Id: local2.c,v 1.11 2008/11/22 16:12:25 ragge Exp 	*/	
-/*	$NetBSD: local2.c,v 1.1.1.3 2010/06/03 18:57:32 plunky Exp $	*/
+/*	Id: local2.c,v 1.27 2011/07/30 08:09:29 ragge Exp 	*/	
+/*	$NetBSD: local2.c,v 1.1.1.4 2011/09/01 12:46:51 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -48,11 +48,7 @@ static void acon(NODE *p);
 void
 prologue(struct interpass_prolog *ipp)
 {
-	if (ipp->ipp_vis)
-		printf("	.globl %s\n", ipp->ipp_name);
-	printf("	.align 4\n");
-	printf("%s:\n", ipp->ipp_name);
-	printf("	.word 0x%x\n", ipp->ipp_regs[0]);
+	printf("	.word 0x%llx\n", (unsigned long long)ipp->ipp_regs[0]);
 	if (p2maxautooff)
 		printf("	subl2 $%d,%%sp\n", p2maxautooff);
 }
@@ -115,94 +111,350 @@ hopcode( f, o ){
 char *
 rnames[] = {  /* keyed to register number tokens */
 
-	"r0", "r1", "r2", "r3", "r4", "r5",
-	"r6", "r7", "r8", "r9", "r10", "r11",
-	"ap", "fp", "sp", "pc",
+	"%r0", "%r1", "%r2", "%r3", "%r4", "%r5",
+	"%r6", "%r7", "%r8", "%r9", "%r10", "%r11",
+	"%ap", "%fp", "%sp", "%pc",
 	/* The concatenated regs has the name of the lowest */
-	"r0", "r1", "r2", "r3", "r4", "r5",
-	"r6", "r7", "r8", "r9", "r10"
+	"%r0", "%r1", "%r2", "%r3", "%r4", "%r5",
+	"%r6", "%r7", "%r8", "%r9", "%r10"
 	};
 
 int
-tlen(p) NODE *p;
+tlen(NODE *p)
 {
 	switch(p->n_type) {
-		case CHAR:
-		case UCHAR:
-			return(1);
+	case CHAR:
+	case UCHAR:
+		return(1);
 
-		case SHORT:
-		case USHORT:
-			return(2);
+	case SHORT:
+	case USHORT:
+		return(2);
 
-		case DOUBLE:
-		case LDOUBLE:
-		case LONGLONG:
-		case ULONGLONG:
-			return(8);
+	case DOUBLE:
+	case LONGLONG:
+	case ULONGLONG:
+		return(8);
 
-		default:
-			return(4);
-		}
-}
-
-static int
-mixtypes(NODE *p, NODE *q)
-{
-	TWORD tp, tq;
-
-	tp = p->n_type;
-	tq = q->n_type;
-
-	return( (tp==FLOAT || tp==DOUBLE) !=
-		(tq==FLOAT || tq==DOUBLE) );
+	default:
+		return(4);
+	}
 }
 
 void
 prtype(NODE *n)
 {
-	switch (n->n_type)
-		{
-		case DOUBLE:
-			printf("d");
-			return;
+	static char pt[] = { 0, 0, 'b', 'b', 'w', 'w', 'l', 'l', 0, 0,
+	    'q', 'q', 'f', 'd' };
+	TWORD t = n->n_type;
 
-		case FLOAT:
-			printf("f");
-			return;
+	if (ISPTR(t))
+		t = UNSIGNED;
 
-		case LONG:
-		case ULONG:
-		case INT:
-		case UNSIGNED:
-			printf("l");
-			return;
-
-		case SHORT:
-		case USHORT:
-			printf("w");
-			return;
-
-		case CHAR:
-		case UCHAR:
-			printf("b");
-			return;
-
-		default:
-			if ( !ISPTR( n->n_type ) ) cerror("zzzcode- bad type");
-			else {
-				printf("l");
-				return;
-				}
-		}
+	if (t > DOUBLE || pt[t] == 0)
+		comperr("prtype: bad type");
+	putchar(pt[t]);
 }
 
-void
-zzzcode( p, c ) register NODE *p; {
-	int m;
-	int val;
-	switch( c ){
+/*
+ * Emit conversions as given by the following table. Dest is always reg,
+ *   if it should be something else let peephole optimizer deal with it.
+ *   This code ensures type correctness in 32-bit registers.
+ *   XXX is that necessary?
+ *
+ * From				To
+ *	 char   uchar  short  ushort int    uint   ll    ull   float double
+ * char  movb   movb   cvtbw  cvtbw  cvtbl  cvtbl  A     A     cvtbf cvtbd
+ * uchar movb   movb   movzbw movzbw movzbl movzbl B     B     G     G
+ * short movb   movb   movw   movw   cvtwl  cvtwl  C(A)  C(A)  cvtwf cvtwd
+ * ushrt movb   movb   movw   movw   movzwl movzwl D(B)  D(B)  H     H
+ * int   movb   movb   movw   movw   movl   movl   E     E     cvtlf cvtld
+ * uint  movb   movb   movw   movw   movl   movl   F     F     I     I
+ * ll    movb   movb   movw   movw   movl   movl   movq  movq  J     K
+ * ull   movb   movb   movw   movw   movl   movl   movq  movq  L     M
+ * float cvtfb  cvtfb  cvtfw  cvtfw  cvtfl  cvtfl  N     O     movf  cvtfd
+ * doubl cvtdb  cvtdb  cvtdw  cvtdw  cvtdl  cvtdl  P     Q     cvtdf movd
+ *
+ *  A: cvtbl + sign extend
+ *  B: movzbl + zero extend
+ *  G: movzbw + cvtwX
+ *  H: movzwl + cvtwX
+ *  I: cvtld + addX
+ *  J: call __floatdisf
+ *  K: call __floatdidf
+ *  L: xxx + call __floatdisf
+ *  M: xxx + call __floatdidf
+ *  N: call __fixsfdi
+ *  O: call __fixunssfdi
+ *  P: call __fixdfdi
+ *  Q: call __fixunsdfdi
+ */
 
+#define	MVD	1 /* mov + dest type */
+#define	CVT	2 /* cvt + src type + dst type */
+#define	MVZ	3 /* movz + src type + dst type */
+#define	CSE	4 /* cvt + src type + l + sign extend upper */
+#define	MZE	5 /* movz + src type + l + zero extend upper */
+#define	MLE	6 /* movl + sign extend upper */
+#define	MLZ	7 /* movl + zero extend upper */
+#define	MZC	8 /* movz + cvt */
+
+static char scary[][10] = {
+	{ MVD, MVD, CVT, CVT, CVT, CVT, CSE, CSE, CVT, CVT },
+	{ MVD, MVD, MVZ, MVZ, MVZ, MVZ, MZE, MZE, MZC, MZC },
+	{ MVD, MVD, MVD, MVD, CVT, CVT, CSE, CSE, CVT, CVT },
+	{ MVD, MVD, MVD, MVD, MVZ, MVZ, MZE, MZE, MZC, MZC },
+	{ MVD, MVD, MVD, MVD, MVD, MVD, MLE, MLE, CVT, CVT },
+	{ MVD, MVD, MVD, MVD, MVD, MVD, MLZ, MLZ, 'I', 'I' },
+	{ MVD, MVD, MVD, MVD, MVD, MVD, MVD, MVD, 'J', 'K' },
+	{ MVD, MVD, MVD, MVD, MVD, MVD, MVD, MVD, 'L', 'M' },
+	{ CVT, CVT, CVT, CVT, CVT, CVT, 'N', 'O', MVD, CVT },
+	{ CVT, CVT, CVT, CVT, CVT, CVT, 'P', 'Q', CVT, MVD },
+};
+
+static void
+sconv(NODE *p)
+{
+	NODE *l = p->n_left;
+	TWORD ts, td;
+	int o;
+
+	/*
+	 * Source node may be in register or memory.
+	 * Result is always in register.
+	 */
+	ts = l->n_type;
+	if (ISPTR(ts))
+		ts = UNSIGNED;
+	td = p->n_type;
+	ts = ts < LONG ? ts-2 : ts-4;
+	td = td < LONG ? td-2 : td-4;
+
+	o = scary[ts][td];
+	switch (o) {
+	case MLE:
+	case MLZ:
+		expand(p, INAREG|INBREG, "\tmovl\tAL,A1\n");
+		break;
+
+	case MVD:
+		if (l->n_op == REG && regno(l) == regno(getlr(p, '1')))
+			break; /* unneccessary move */
+		expand(p, INAREG|INBREG, "\tmovZR\tAL,A1\n");
+		break;
+
+	case CSE:
+		expand(p, INAREG|INBREG, "\tcvtZLl\tAL,A1\n");
+		break;
+
+	case CVT:
+		expand(p, INAREG|INBREG, "\tcvtZLZR\tAL,A1\n");
+		break;
+
+	case MZE:
+		expand(p, INAREG|INBREG, "\tmovzZLl\tAL,A1\n");
+		break;
+
+	case MVZ:
+		expand(p, INAREG|INBREG, "\tmovzZLZR\tAL,A1\n");
+		break;
+
+	case MZC:
+		expand(p, INAREG|INBREG, "\tmovzZLl\tAL,A1\n");
+		expand(p, INAREG|INBREG, "\tcvtlZR\tA1,A1\n");
+		break;
+
+	case 'I': /* unsigned to double */
+		expand(p, INAREG|INBREG, "\tcvtld\tAL,A1\n");
+		printf("\tjgeq\t1f\n");
+		expand(p, INAREG|INBREG, "\taddd2\t$0d4.294967296e+9,A1\n");
+		printf("1:\n");
+		break;
+	default:
+		comperr("unsupported conversion %d", o);
+	}
+	switch (o) {
+	case MLE:
+	case CSE:
+		expand(p, INBREG, "\tashl\t$-31,A1,U1\n");
+		break;
+	case MLZ:
+	case MZE:
+		expand(p, INAREG|INBREG, "\tclrl\tU1\n");
+		break;
+	}
+}
+
+/*
+ * Assign a constant from p to q.  Both are expected to be leaves by now.
+ * This is for 64-bit integers.
+ */
+static void
+casg64(NODE *p)
+{
+	NODE *l, *r;
+	char *str;
+	int mneg = 1;
+	
+	l = p->n_left;
+	r = p->n_right;
+
+#ifdef PCC_DEBUG
+	if (r->n_op != ICON)
+		comperr("casg");
+#endif
+	if (r->n_name[0] != '\0') {
+		/* named constant, nothing to do */
+		str = "movq\tAR,AL";
+		mneg = 0;
+	} else if (r->n_lval == 0) {
+		str = "clrq\tAL";
+		mneg = 0;
+	} else if (r->n_lval < 0) {
+		if (r->n_lval >= -63) {
+			r->n_lval = -r->n_lval;
+			str = "mnegl\tAR,AL";
+		} else if (r->n_lval >= -128) {
+			str = "cvtbl\tAR,AL";
+		} else if (r->n_lval >= -32768) {
+			str = "cvtwl\tAR,AL";
+		} else if (r->n_lval >= -4294967296LL) {
+			str = "movl\tAR,AL";
+		} else {
+			str = "movq\tAR,AL";
+			mneg = 0;
+		}
+	} else {
+		mneg = 0;
+		if (r->n_lval <= 63 || r->n_lval > 4294967295LL) {
+			str = "movq\tAR,AL";
+		} else if (r->n_lval <= 255) {
+			str = "movzbl\tAR,AL\n\tclrl\tUL";
+		} else if (r->n_lval <= 65535) {
+			str = "movzwl\tAR,AL\n\tclrl\tUL";
+		} else /* if (r->n_lval <= 4294967295) */ {
+			str = "movl\tAR,AL\n\tclrl\tUL";
+		}
+	}
+	expand(p, FOREFF, str);
+	if (mneg)
+		expand(p, FOREFF, "\n\tmnegl $-1,UL");
+}
+
+/*
+ * Assign a constant from p to q.  Both are expected to be leaves by now.
+ * This is only for 32-bit integer types.
+ */
+static void
+casg(NODE *p)
+{
+	NODE *l, *r;
+	char *str;
+	
+	l = p->n_left;
+	r = p->n_right;
+
+#ifdef PCC_DEBUG
+	if (r->n_op != ICON)
+		comperr("casg");
+#endif
+	if (r->n_name[0] != '\0') {
+		/* named constant, nothing to do */
+		str = "movZL\tAR,AL";
+	} else if (r->n_lval == 0) {
+		str = "clrZL\tAL";
+	} else if (r->n_lval < 0) {
+		if (r->n_lval >= -63) {
+			r->n_lval = -r->n_lval;
+			str = "mnegZL\tAR,AL";
+		} else if (r->n_lval >= -128) {
+			if (l->n_type == CHAR)
+				str = "movb\tAR,AL";
+			else
+				str = "cvtbZL\tAR,AL";
+		} else if (r->n_lval >= -32768) {
+			if (l->n_type == SHORT)
+				str = "movw\tAR,AL";
+			else
+				str = "cvtwZL\tAR,AL";
+		} else
+			str = "movZL\tAR,AL";
+	} else {
+		if (r->n_lval <= 63 || r->n_lval > 65535) {
+			str = "movZL\tAR,AL";
+		} else if (r->n_lval <= 255) {
+			str = l->n_type < SHORT ?
+			    "movb\tAR,AL" : "movzbZL\tAR,AL";
+		} else /* if (r->n_lval <= 65535) */ {
+			str = l->n_type < INT ?
+			    "movw\tAR,AL" : "movzwZL\tAR,AL";
+		}
+	}
+	expand(p, FOREFF, str);
+}
+
+/*
+ * Emit code to compare two longlong numbers.
+ */
+static void
+twollcomp(NODE *p)
+{
+	int u;
+	int s = getlab2();
+	int e = p->n_label;
+	int cb1, cb2;
+
+	u = p->n_op;
+	switch (p->n_op) {
+	case NE:
+		cb1 = 0;
+		cb2 = NE;
+		break;
+	case EQ:
+		cb1 = NE;
+		cb2 = 0;
+		break;
+	case LE:
+	case LT:
+		u += (ULE-LE);
+		/* FALLTHROUGH */
+	case ULE:
+	case ULT:
+		cb1 = GT;
+		cb2 = LT;
+		break;
+	case GE:
+	case GT:
+		u += (ULE-LE);
+		/* FALLTHROUGH */
+	case UGE:
+	case UGT:
+		cb1 = LT;
+		cb2 = GT;
+		break;
+	
+	default:
+		cb1 = cb2 = 0; /* XXX gcc */
+	}
+	if (p->n_op >= ULE)
+		cb1 += 4, cb2 += 4;
+	expand(p, 0, "	cmpl UL,UR\n");
+	if (cb1) cbgen(cb1, s);
+	if (cb2) cbgen(cb2, e);
+	expand(p, 0, "	cmpl AL,AR\n");
+	cbgen(u, e);
+	deflab(s);
+}
+
+
+void
+zzzcode(NODE *p, int c)
+{
+	NODE *l, *r;
+	int m;
+	char *ch;
+
+	switch (c) {
 	case 'N':  /* logical ops, turned into 0-1 */
 		/* use register given by register 1 */
 		cbgen( 0, m=getlab2());
@@ -211,79 +463,20 @@ zzzcode( p, c ) register NODE *p; {
 		deflab( m );
 		return;
 
-	case 'A':
-		{
-		register NODE *l, *r;
-
-		if (xdebug) e2print(p, 0, &val, &val);
-		r = getlr(p, 'R');
-		if (optype(p->n_op) == LTYPE || p->n_op == UMUL) {
-			l = resc;
-			l->n_type = (r->n_type==FLOAT || r->n_type==DOUBLE ? DOUBLE : INT);
-		} else
-			l = getlr(p, 'L');
-		if (r->n_op == ICON  && r->n_name[0] == '\0') {
-			if (r->n_lval == 0) {
-				printf("clr");
-				prtype(l);
-				printf("	");
-				adrput(stdout, l);
-				return;
-			}
-			if (r->n_lval < 0 && r->n_lval >= -63) {
-				printf("mneg");
-				prtype(l);
-				r->n_lval = -r->n_lval;
-				goto ops;
-			}
-			r->n_type = (r->n_lval < 0 ?
-					(r->n_lval >= -128 ? CHAR
-					: (r->n_lval >= -32768 ? SHORT
-					: INT )) : r->n_type);
-			r->n_type = (r->n_lval >= 0 ?
-					(r->n_lval <= 63 ? INT
-					: ( r->n_lval <= 127 ? CHAR
-					: (r->n_lval <= 255 ? UCHAR
-					: (r->n_lval <= 32767 ? SHORT
-					: (r->n_lval <= 65535 ? USHORT
-					: INT ))))) : r->n_type );
-			}
-		if (l->n_op == REG && l->n_type != FLOAT && l->n_type != DOUBLE)
-			l->n_type = INT;
-		if (!mixtypes(l,r))
-			{
-			if (tlen(l) == tlen(r))
-				{
-				printf("mov");
-				prtype(l);
-				goto ops;
-				}
-			else if (tlen(l) > tlen(r) && ISUNSIGNED(r->n_type))
-				{
-				printf("movz");
-				}
-			else
-				{
-				printf("cvt");
-				}
-			}
+	case 'A': /* Assign a constant directly to a memory position */
+		printf("\t");
+		if (p->n_type < LONG || ISPTR(p->n_type))
+			casg(p);
 		else
-			{
-			printf("cvt");
-			}
-		prtype(r);
-		prtype(l);
-	ops:
-		printf("	");
-		adrput(stdout, r);
-		printf(",");
-		adrput(stdout, l);
-		return;
-		}
+			casg64(p);
+		printf("\n");
+		break;
+
+	case 'B': /* long long compare */
+		twollcomp(p);
+		break;
 
 	case 'C':	/* num words pushed on arg stack */
-		if (p->n_op == STCALL || p->n_op == USTCALL)
-			p->n_qual++;
 		printf("$%d", p->n_qual);
 		break;
 
@@ -327,11 +520,14 @@ zzzcode( p, c ) register NODE *p; {
 		return;
 		}
 
+	case 'G': /* emit conversion instructions */
+		sconv(p);
+		break;
+
 	case 'J': /* jump or ret? */
 		{
-			extern struct interpass_prolog *epp;
 			struct interpass *ip =
-			    DLIST_PREV((struct interpass *)epp, qelem);
+			    DLIST_PREV((struct interpass *)p2env.epp, qelem);
 			if (ip->type != IP_DEFLAB ||
 			    ip->ip_lbl != getlr(p, 'L')->n_lval)
 				expand(p, FOREFF, "jbr	LL");
@@ -353,12 +549,27 @@ zzzcode( p, c ) register NODE *p; {
 		return;
 		}
 
+	case 'O': /* print out emulated ops */
+		expand(p, FOREFF, "\tmovq	AR,-(%sp)\n");
+		expand(p, FOREFF, "\tmovq	AL,-(%sp)\n");
+		if (p->n_op == DIV && p->n_type == ULONGLONG) ch = "udiv";
+		else if (p->n_op == DIV) ch = "div";
+		else if (p->n_op == MOD && p->n_type == ULONGLONG) ch = "umod";
+		else if (p->n_op == MOD) ch = "mod";
+		else if (p->n_op == MUL) ch = "mul";
+		else ch = 0, comperr("ZO %d", p->n_op);
+		printf("\tcalls	$4,__%sdi3\n", ch);
+		break;
+
+
 	case 'Z':	/* complement mask for bit instr */
 		printf("$%Ld", ~p->n_right->n_lval);
 		return;
 
 	case 'U':	/* 32 - n, for unsigned right shifts */
-		printf("$" CONFMT, 32 - p->n_right->n_lval );
+		m = p->n_left->n_type == UCHAR ? 8 :
+		    p->n_left->n_type == USHORT ? 16 : 32;
+		printf("$" CONFMT, m - p->n_right->n_lval);
 		return;
 
 	case 'T':	/* rounded structure length for arguments */
@@ -373,17 +584,20 @@ zzzcode( p, c ) register NODE *p; {
 
 	case 'S':  /* structure assignment */
 		{
-			register NODE *l, *r;
 			register int size;
 
+			size = p->n_stsize;
 			l = r = NULL; /* XXX gcc */
 			if( p->n_op == STASG ){
 				l = p->n_left;
 				r = p->n_right;
 
 				}
-			else if( p->n_op == STARG ){  /* store an arg into a temporary */
-				l = getlr( p, '3' );
+			else if( p->n_op == STARG ){
+				/* store an arg into a temporary */
+				printf("\tsubl2 $%d,%%sp\n",
+				    size < 4 ? 4 : size);
+				l = mklnode(OREG, 0, SP, INT);
 				r = p->n_left;
 				}
 			else cerror( "STASG bad" );
@@ -391,8 +605,6 @@ zzzcode( p, c ) register NODE *p; {
 			if( r->n_op == ICON ) r->n_op = NAME;
 			else if( r->n_op == REG ) r->n_op = OREG;
 			else if( r->n_op != OREG ) cerror( "STASG-r" );
-
-			size = p->n_stsize;
 
 			if( size <= 0 || size > 65535 )
 				cerror("structure size <0=0 or >65535");
@@ -421,20 +633,22 @@ zzzcode( p, c ) register NODE *p; {
 
 			if( r->n_op == NAME ) r->n_op = ICON;
 			else if( r->n_op == OREG ) r->n_op = REG;
+			if (p->n_op == STARG)
+				tfree(l);
 
 			}
 		break;
 
 	default:
 		comperr("illegal zzzcode '%c'", c);
-		}
 	}
+}
 
 void
 rmove( int rt,int  rs, TWORD t ){
 	printf( "	%s	%s,%s\n",
 		(t==FLOAT ? "movf" : (t==DOUBLE ? "movd" : "movl")),
-		rnames[rs], rnames[rt] );
+		rnames[rt], rnames[rs] );
 	}
 
 #if 0
@@ -559,6 +773,24 @@ shtemp( p ) register NODE *p; {
 	return( p->n_op==NAME || p->n_op ==ICON || p->n_op == OREG || (p->n_op==UMUL && shumul(p->n_left, STARNM|SOREG)) );
 	}
 
+/*
+ * Shape matches for UMUL.  Cooperates with offstar().
+ */
+int
+shumul(NODE *p, int shape)
+{
+
+	if (x2debug)
+		printf("shumul(%p)\n", p);
+
+	/* Turns currently anything into OREG on vax */
+	if (shape & SOREG)
+		return SROREG;
+	return SRNOPE;
+}
+
+
+#ifdef notdef
 int
 shumul( p, shape ) register NODE *p; int shape; {
 	register int o;
@@ -575,7 +807,6 @@ shumul( p, shape ) register NODE *p; int shape; {
 		if (shape & STARNM)
 			return SRDIR;
 
-#ifdef notyet
 	if( ( o == INCR || o == ASG MINUS ) &&
 	    ( p->n_left->n_op == REG && p->n_right->n_op == ICON ) &&
 	    p->n_right->n_name[0] == '\0' )
@@ -613,10 +844,10 @@ shumul( p, shape ) register NODE *p; int shape; {
 			}
 		return( p->n_right->n_lval == o ? STARREG : 0);
 		}
-#endif
 
 	return( SRNOPE );
 	}
+#endif
 
 void
 adrcon( val ) CONSZ val; {
@@ -647,10 +878,33 @@ insput( p ) register NODE *p; {
 	cerror( "insput" );
 	}
 
+/*
+ * Write out the upper address, like the upper register of a 2-register
+ * reference, or the next memory location.
+ */
 void
-upput( p , size) register NODE *p; {
-	cerror( "upput" );
+upput(NODE *p, int size)
+{
+
+	size /= SZCHAR;
+	switch (p->n_op) {
+	case REG:
+		fprintf(stdout, "%s", rnames[regno(p)-16+1]);
+		break;
+
+	case NAME:
+	case OREG:
+		p->n_lval += size;
+		adrput(stdout, p);
+		p->n_lval -= size;
+		break;
+	case ICON:
+		fprintf(stdout, "$" CONFMT, p->n_lval >> 32);
+		break;
+	default:
+		comperr("upput bad op %d size %d", p->n_op, size);
 	}
+}
 
 void
 adrput(FILE *fp, NODE *p)
@@ -693,9 +947,10 @@ adrput(FILE *fp, NODE *p)
 			return;
 			}
 		if( r == AP ){  /* in the argument region */
-			if( p->n_lval <= 0 || p->n_name[0] != '\0' ) werror( "bad arg temp" );
+			if( p->n_lval <= 0 || p->n_name[0] != '\0' )
+				werror( "bad arg temp" );
 			printf( CONFMT, p->n_lval );
-			printf( "(ap)" );
+			printf( "(%%ap)" );
 			return;
 			}
 		if( p->n_lval != 0 || p->n_name[0] != '\0') acon( p );
@@ -840,13 +1095,13 @@ gencall( p, cookie ) register NODE *p; {
 	case 0:
 		break;
 	case 2:
-		printf( "	tst	(sp)+\n" );
+		printf( "	tst	(%sp)+\n" );
 		break;
 	case 4:
-		printf( "	cmp	(sp)+,(sp)+\n" );
+		printf( "	cmp	(%sp)+,(%sp)+\n" );
 		break;
 	default:
-		printf( "	add	$%d,sp\n", temp);
+		printf( "	add	$%d,%sp\n", temp);
 		}
    tbl */
 	return(m != MDONE);
@@ -884,44 +1139,128 @@ cbgen(int o, int lab)
 }
 
 static void
+mkcall(NODE *p, char *name)
+{
+	p->n_op = CALL;
+	p->n_right = mkunode(FUNARG, p->n_left, 0, p->n_left->n_type);
+	p->n_left = mklnode(ICON, 0, 0, FTN|p->n_type);
+	p->n_left->n_name = "__fixunsdfdi";
+}
+
+/* do local tree transformations and optimizations */
+static void
 optim2(NODE *p, void *arg)
 {
-	/* do local tree transformations and optimizations */
+	NODE *r, *s;
+	TWORD lt;
 
-	register NODE *r;
+	switch (p->n_op) {
+	case MOD:
+		if (p->n_type == USHORT || p->n_type == UCHAR) {
+			r = mkunode(SCONV, p->n_left, 0, UNSIGNED);
+			r = mkunode(FUNARG, r, 0, UNSIGNED);
+			s = mkunode(SCONV, p->n_right, 0, UNSIGNED);
+			s = mkunode(FUNARG, s, 0, UNSIGNED);
+			r = mkbinode(CM, r, s, INT);
+			s = mklnode(ICON, 0, 0, FTN|UNSIGNED);
+			s->n_name = "__urem";
+			p->n_left = mkbinode(CALL, s, r, UNSIGNED);
+			p->n_op = SCONV;
+		} else if (p->n_type == UNSIGNED) {
+			p->n_left = mkunode(FUNARG, p->n_left, 0, UNSIGNED);
+			p->n_right = mkunode(FUNARG, p->n_right, 0, UNSIGNED);
+			p->n_right = mkbinode(CM, p->n_left, p->n_right, INT);
+			p->n_left = mklnode(ICON, 0, 0, FTN|UNSIGNED);
+			p->n_left->n_name = "__urem";
+			p->n_op = CALL;
+		}
+		break;
 
-	switch( p->n_op ) {
+	case RS:
+		if (p->n_type == ULONGLONG) {
+			p->n_right = mkbinode(CM, 
+			    mkunode(FUNARG, p->n_left, 0, p->n_left->n_type),
+			    mkunode(FUNARG, p->n_right, 0, p->n_right->n_type),
+			    INT);
+			p->n_left = mklnode(ICON, 0, 0, FTN|p->n_type);
+			p->n_left->n_name = "__lshrdi3";
+			p->n_op = CALL;
+		} else if (p->n_type == INT) {
+			/* convert >> to << with negative shift count */
+			/* RS of char & short must use extv */
+			if (p->n_right->n_op == ICON) {
+				p->n_right->n_lval = -p->n_right->n_lval;
+			} else if (p->n_right->n_op == UMINUS) {
+				r = p->n_right->n_left;
+				nfree(p->n_right);
+				p->n_right = r;
+			} else {
+				p->n_right = mkunode(UMINUS, p->n_right,
+				    0, p->n_right->n_type);
+			}
+			p->n_op = LS;
+		}
+		break;
 
 	case AND:
 		/* commute L and R to eliminate compliments and constants */
-		if( (p->n_left->n_op==ICON&&p->n_left->n_name[0]==0) || p->n_left->n_op==COMPL ) {
+		if ((p->n_left->n_op == ICON && p->n_left->n_name[0] == 0) ||
+		    p->n_left->n_op==COMPL) {
 			r = p->n_left;
 			p->n_left = p->n_right;
 			p->n_right = r;
-			}
-#if 0
-	case ASG AND:
+		}
 		/* change meaning of AND to ~R&L - bic on pdp11 */
 		r = p->n_right;
-		if( r->op==ICON && r->name[0]==0 ) { /* compliment constant */
-			r->lval = ~r->lval;
-			}
-		else if( r->op==COMPL ) { /* ~~A => A */
-			r->op = FREE;
-			p->right = r->left;
-			}
-		else { /* insert complement node */
-			p->right = talloc();
-			p->right->op = COMPL;
-			p->right->rall = NOPREF;
-			p->right->type = r->type;
-			p->right->left = r;
-			p->right->right = NULL;
-			}
-		break;
-#endif
+		if (r->n_op == ICON && r->n_name[0] == 0) {
+			/* compliment constant */
+			r->n_lval = ~r->n_lval;
+		} else if (r->n_op == COMPL) { /* ~~A => A */
+			s = r->n_left;
+			nfree(r);
+			p->n_right = s;
+		} else { /* insert complement node */
+			p->n_right = mkunode(COMPL, r, 0, r->n_type);
 		}
+		break;
+	case SCONV:
+		lt = p->n_left->n_type;
+		switch (p->n_type) {
+		case LONGLONG:
+			if (lt == FLOAT)
+				mkcall(p, "__fixsfdi");
+			else if (lt == DOUBLE)
+				mkcall(p, "__fixdfdi");
+			break;
+		case ULONGLONG:
+			if (lt == FLOAT)
+				mkcall(p, "__fixunssfdi");
+			else if (lt == DOUBLE)
+				mkcall(p, "__fixunsdfdi");
+			break;
+		case FLOAT:
+			if (lt == LONGLONG)
+				mkcall(p, "__floatdisf");
+			else if (lt == ULONGLONG) {
+				p->n_left = mkunode(SCONV, p->n_left,0, DOUBLE);
+				p->n_type = FLOAT;
+				mkcall(p->n_left, "__floatunsdidf");
+			} else if (lt == UNSIGNED) {
+				/* insert an extra double-to-float sconv */
+				p->n_left = mkunode(SCONV, p->n_left,0, DOUBLE);
+			}
+			break;
+		case DOUBLE:
+			if (lt == LONGLONG)
+				mkcall(p, "__floatdidf");
+			else if (lt == ULONGLONG)
+				mkcall(p->n_left, "__floatunsdidf");
+			break;
+			
+		}
+		break;
 	}
+}
 
 void
 myreader(struct interpass *ipole)
@@ -973,7 +1312,8 @@ lastcall(NODE *p)
 		return;
 	for (p = p->n_right; p->n_op == CM; p = p->n_left)
 		size += argsiz(p->n_right);
-	size += argsiz(p);
+	if (p->n_op != ASSIGN)
+		size += argsiz(p);
 	op->n_qual = size; /* XXX */
 }
 
@@ -994,17 +1334,23 @@ int
 COLORMAP(int c, int *r)
 {
 	int num;
+	int a,b;
 
+	a = r[CLASSA];
+	b = r[CLASSB];
 	switch (c) {
 	case CLASSA:
 		/* there are 12 classa, so min 6 classb are needed to block */
-		num = r[CLASSB] * 2;
-		num += r[CLASSA];
+		num = b * 2;
+		num += a;
 		return num < 12;
 	case CLASSB:
-		/* 6 classa may block all classb */
-		num = r[CLASSB] + r[CLASSA];
-		return num < 6;
+		if (b > 3) return 0;
+		if (b > 2 && a) return 0;
+		if (b > 1 && a > 2) return 0;
+		if (b && a > 3) return 0;
+		if (a > 5) return 0;
+		return 1;
 	}
 	comperr("COLORMAP");
 	return 0; /* XXX gcc */
@@ -1034,4 +1380,15 @@ int
 myxasm(struct interpass *ip, NODE *p)
 {
 	return 0;
+}
+
+int
+xasmconstregs(char *s)
+{
+	int i;
+
+	for (i = 0; i < 16; i++)
+		if (strcmp(&rnames[i][1], s) == 0)
+			return i;
+	return -1;
 }

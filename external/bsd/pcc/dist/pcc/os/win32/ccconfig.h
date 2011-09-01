@@ -1,3 +1,6 @@
+/*	Id: ccconfig.h,v 1.16 2011/06/05 08:54:43 plunky Exp 	*/	
+/*	$NetBSD: ccconfig.h,v 1.1.1.3 2011/09/01 12:47:18 plunky Exp $	*/
+
 #ifndef LIBDIR
 #define LIBDIR "/usr/lib/"
 #endif
@@ -17,7 +20,7 @@
 #define ENDFILES { NULL }
 #define STARTFILES_S { LIBDIR "dllcrt2.o", NULL }
 #define ENDFILES_S { NULL }
-#define LIBCLIBS { "-lmoldname", "-lmingwex", "-lmsvcrt", "-lmingw32", "-luser32", "-lkernel32", "-lpcc", "-lmoldname", "-lmingwex", "-lmsvcrt", NULL }
+#define LIBCLIBS { "-lmoldname", "-lmingwex", "-lmingw32", "-lpcc", "-lmsvcrt", "-luser32", "-lkernel32", NULL }
 #endif
 
 #define CPPMDADD { "-D__i386__", NULL }

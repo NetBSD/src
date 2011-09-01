@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.5 2009/01/24 21:43:49 gmcgarry Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.3 2010/06/03 18:57:32 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.14 2011/07/28 11:04:14 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.4 2011/09/01 12:46:51 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -83,7 +83,7 @@
 /* Default char is signed */
 #undef  CHAR_UNSIGNED
 #define BOOL_TYPE       CHAR    /* what used to store _Bool */
-
+#define	HASP2ALIGN
 /*	size in which constants are converted */
 /*	should be long if feasable */
 
@@ -99,37 +99,23 @@ typedef unsigned long long U_CONSZ;
  */
 typedef long long OFFSZ;
 
-/* 	character set macro */
-
-# define  CCTRANS(x) x
-
 /* register cookie for stack poINTer */
 
-# define  STKREG 13
-# define ARGREG 12
-
-/*	maximum and minimum register variables */
-
-# define MAXRVAR 11
-# define MINRVAR 6
 
 /* show stack grows negatively */
 #define BACKAUTO
 #define BACKTEMP
 
 /* show field hardware support on VAX */
-#define FIELDOPS
+/* XXX notyet */
+#undef FIELDOPS
 
 /* bytes are numbered from right to left */
-#define RTOLBYTES
+#define TARGET_ENDIAN TARGET_LE
+#define	UNALIGNED_ACCESS
 
 /* we want prtree included */
 # define STDPRTREE
-# ifndef FORT
-# define ONEPASS
-#endif
-
-# define ENUMSIZE(high,low) INT
 
 /*	VAX-11/780 Registers */
 
@@ -180,7 +166,7 @@ extern int maxargs;
 
 # define BYTEOFF(x) ((x)&03)
 # define wdal(k) (BYTEOFF(k)==0)
-# define BITOOR(x) ((x)>>3)  /* bit offset to oreg offset */
+# define BITOOR(x) ((x))  /* bit offset to oreg offset XXX wrong */
 
 # define REGSZ 16
 
@@ -242,9 +228,10 @@ extern int maxargs;
 #define NUMCLASS        2       /* highest number of reg classes used */
 
 /* size, in registers, needed to hold thing of type t */
-#define	szty(t)	(((t) == DOUBLE || (t) == LDOUBLE || (t) == FLOAT || \
-	(t) == LONGLONG || (t) == ULONGLONG) ? 2 : 1)
+#define	szty(t)	(((t) == DOUBLE || (t) == LONGLONG || (t) == ULONGLONG) ? 2 : 1)
 #define FPREG	FP	/* frame pointer */
+#define STKREG	SP
+#define ARGREG	AP
 
 #define DECRA(x,y)      (((x) >> (y*6)) & 63)   /* decode encoded regs */
 #define ENCRD(x)        (x)             /* Encode dest reg in n_reg */
@@ -255,6 +242,26 @@ extern int maxargs;
 #define PCLASS(p)	(szty(p->n_type) == 2 ? SBREG : SAREG)
 #define RETREG(x)	(szty(x) == 2 ? XR0 : R0)
 #define GCLASS(x)	(x < XR0 ? CLASSA : CLASSB)
+int xasmconstregs(char *s);
+#define XASMCONSTREGS(x) xasmconstregs(x)
 int COLORMAP(int c, int *r);
 
 #define	SNCON		(MAXSPECIAL+1)	/* named constand */
+
+/*
+ * Builtins.
+ */
+#define TARGET_BUILTINS							\
+	{ "__builtin_frame_address", vax_builtin_frame_address, -1 },	\
+	{ "__builtin_return_address", vax_builtin_return_address, -1 },
+
+#define NODE struct node
+struct node;
+
+#define	TARGET_FFS		/* target-specific ffs */
+NODE *builtin_ffs(NODE *f, NODE *a, unsigned int t);
+
+NODE *vax_builtin_frame_address(NODE *f, NODE *a, unsigned int t);
+NODE *vax_builtin_return_address(NODE *f, NODE *a, unsigned int t);
+
+#undef NODE

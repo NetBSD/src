@@ -1,3 +1,6 @@
+/*	Id: table.c,v 1.29 2011/06/05 08:54:42 plunky Exp 	*/	
+/*	$NetBSD: table.c,v 1.1.1.3 2011/09/01 12:46:50 plunky Exp $	*/
+
 /*
  * Copyright (c) 2008 David Crawshaw <david@zentus.com>
  * 

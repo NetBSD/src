@@ -1,5 +1,5 @@
-/*	Id: inline.c,v 1.33 2010/04/30 11:21:22 ragge Exp 	*/	
-/*	$NetBSD: inline.c,v 1.1.1.3 2010/06/03 18:57:40 plunky Exp $	*/
+/*	Id: inline.c,v 1.46 2011/08/14 14:55:54 ragge Exp 	*/	
+/*	$NetBSD: inline.c,v 1.1.1.4 2011/09/01 12:46:59 plunky Exp $	*/
 /*
  * Copyright (c) 2003, 2008 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -40,6 +40,13 @@
  */
 static void printip(struct interpass *pole);
 
+struct ntds {
+	int temp;
+	TWORD type;
+	union dimfun *df;
+	struct attr *attr;
+};
+
 /*
  * ilink from ipole points to the next struct in the list of functions.
  */
@@ -50,7 +57,7 @@ static struct istat {
 #define	CANINL	1	/* function is possible to inline */
 #define	WRITTEN	2	/* function is written out */
 #define	REFD	4	/* Referenced but not yet written out */
-	int *args;	/* Array of arg temp numbers */
+	struct ntds *nt;/* Array of arg temp type data */
 	int nargs;	/* number of args in array */
 	int retval;	/* number of return temporary, if any */
 	struct interpass shead;
@@ -114,9 +121,7 @@ inline_addarg(struct interpass *ip)
 {
 	extern NODE *cftnod;
 
-#if 0
 	SDEBUG(("inline_addarg(%p)\n", ip));
-#endif
 	DLIST_INSERT_BEFORE(&cifun->shead, ip, qelem);
 	if (ip->type == IP_DEFLAB)
 		nlabs++;
@@ -156,26 +161,41 @@ inline_start(struct symtab *sp)
 /*
  * End of an inline function. In C99 an inline function declared "extern"
  * should also have external linkage and are therefore printed out.
- * But; this is the opposite for gcc inline functions, hence special
- * care must be taken to handle that specific case.
+ *
+ * Gcc inline syntax is a mess, see matrix below on emitting functions:
+ *		    without extern
+ *	-std=		-	gnu89	gnu99	
+ *	gcc 3.3.5:	ja	ja	ja
+ *	gcc 4.1.3:	ja	ja	ja
+ *	gcc 4.3.1	ja	ja	nej	
+ * 
+ *		     with extern
+ *	gcc 3.3.5:	nej	nej	nej
+ *	gcc 4.1.3:	nej	nej	nej
+ *	gcc 4.3.1	nej	nej	ja	
+ *
+ * The attribute gnu_inline sets gnu89 behaviour.
+ * Since pcc mimics gcc 4.3.1 that is the behaviour we emulate.
  */
 void
 inline_end()
 {
+	struct symtab *sp = cifun->sp;
 
 	SDEBUG(("inline_end()\n"));
 
 	if (sdebug)printip(&cifun->shead);
 	isinlining = 0;
 
-	if (gcc_get_attr(cifun->sp->ssue, GCC_ATYP_GNU_INLINE)) {
-		if (cifun->sp->sclass == EXTDEF)
-			cifun->sp->sclass = 0;
+	if (sp->sclass != STATIC &&
+	    (attr_find(sp->sap, GCC_ATYP_GNU_INLINE) || xgnu89)) {
+		if (sp->sclass == EXTDEF)
+			sp->sclass = 0;
 		else
-			cifun->sp->sclass = EXTDEF;
+			sp->sclass = EXTDEF;
 	}
 
-	if (cifun->sp->sclass == EXTDEF) {
+	if (sp->sclass == EXTDEF) {
 		cifun->flags |= REFD;
 		inline_prtout();
 	}
@@ -280,6 +300,7 @@ inline_prtout()
 	SLIST_FOREACH(w, &ipole, link) {
 		if ((w->flags & (REFD|WRITTEN)) == REFD &&
 		    !DLIST_ISEMPTY(&w->shead, qelem)) {
+			locctr(PROG, w->sp);
 			defloc(w->sp);
 			puto(w);
 			w->flags |= WRITTEN;
@@ -336,21 +357,21 @@ printip(struct interpass *pole)
 static int toff;
 
 static NODE *
-mnode(int *n, NODE *p)
+mnode(struct ntds *nt, NODE *p)
 {
 	NODE *q;
-	int num = *n + toff;
+	int num = nt->temp + toff;
 
 	if (p->n_op == CM) {
 		q = p->n_right;
-		q = tempnode(num, q->n_type, q->n_df, q->n_sue);
-		n--;
+		q = tempnode(num, nt->type, nt->df, nt->attr);
+		nt--;
 		p->n_right = buildtree(ASSIGN, q, p->n_right);
-		p->n_left = mnode(n, p->n_left);
+		p->n_left = mnode(nt, p->n_left);
 		p->n_op = COMOP;
 	} else {
 		p = pconvert(p);
-		q = tempnode(num, p->n_type, p->n_df, p->n_sue);
+		q = tempnode(num, nt->type, nt->df, nt->attr);
 		p = buildtree(ASSIGN, q, p);
 	}
 	return p;
@@ -377,20 +398,30 @@ inlinetree(struct symtab *sp, NODE *f, NODE *ap)
 	extern int crslab, tvaloff;
 	struct istat *is = findfun(sp);
 	struct interpass *ip, *ipf, *ipl;
-	int lmin, stksz, l0, l1, l2;
-	OFFSZ stkoff;
+	int lmin, l0, l1, l2, gainl;
 	NODE *p, *rp;
 
-	if (is == NULL) {
+	if (is == NULL || nerrors) {
 		inline_ref(sp); /* prototype of not yet declared inline ftn */
 		return NIL;
 	}
 
 	SDEBUG(("inlinetree(%p,%p) OK %d\n", f, ap, is->flags & CANINL));
 
-	if ((is->flags & CANINL) == 0 || xinline == 0) {
+	gainl = attr_find(sp->sap, GCC_ATYP_ALW_INL) != NULL;
+
+	if ((is->flags & CANINL) == 0 && gainl)
+		werror("cannot inline but always_inline");
+
+	if ((is->flags & CANINL) == 0 || (xinline == 0 && gainl == 0)) {
 		if (is->sp->sclass == STATIC || is->sp->sclass == USTATIC)
-			is->flags |= REFD; /* if static inline, emit */
+			inline_ref(sp);
+		return NIL;
+	}
+
+	if (isinlining && cifun->sp == sp) {
+		/* Do not try to inline ourselves */
+		inline_ref(sp);
 		return NIL;
 	}
 
@@ -401,7 +432,6 @@ inlinetree(struct symtab *sp, NODE *f, NODE *ap)
 	}
 #endif
 
-	stkoff = stksz = 0;
 	/* emit jumps to surround inline function */
 	branch(l0 = getlab());
 	plabel(l1 = getlab());
@@ -476,16 +506,16 @@ inlinetree(struct symtab *sp, NODE *f, NODE *ap)
 	branch(l2);
 	plabel(l0);
 
-	rp = block(GOTO, bcon(l1), NIL, INT, 0, MKSUE(INT));
+	rp = block(GOTO, bcon(l1), NIL, INT, 0, 0);
 	if (is->retval)
 		p = tempnode(is->retval + toff, DECREF(sp->stype),
-		    sp->sdf, sp->ssue);
+		    sp->sdf, sp->sap);
 	else
 		p = bcon(0);
 	rp = buildtree(COMOP, rp, p);
 
 	if (is->nargs) {
-		p = mnode(&is->args[is->nargs-1], ap);
+		p = mnode(&is->nt[is->nargs-1], ap);
 		rp = buildtree(COMOP, p, rp);
 	}
 
@@ -496,7 +526,9 @@ inlinetree(struct symtab *sp, NODE *f, NODE *ap)
 void
 inline_args(struct symtab **sp, int nargs)
 {
+	union arglist *al;
 	struct istat *cf;
+	TWORD t;
 	int i;
 
 	SDEBUG(("inline_args\n"));
@@ -506,13 +538,31 @@ inline_args(struct symtab **sp, int nargs)
 	 * - function has varargs
 	 * - function args are volatile, checked if no temp node is asg'd.
 	 */
+	/* XXX - this is ugly, invent something better */
+	if (cf->sp->sdf->dfun == NULL)
+		return; /* no prototype */
+	for (al = cf->sp->sdf->dfun; al->type != TNULL; al++) {
+		t = al->type;
+		if (t == TELLIPSIS)
+			return; /* cannot inline */
+		if (ISSOU(BTYPE(t)))
+			al++;
+		for (; t > BTMASK; t = DECREF(t))
+			if (ISARY(t) || ISFTN(t))
+				al++;
+	}
+
 	if (nargs) {
 		for (i = 0; i < nargs; i++)
 			if ((sp[i]->sflags & STNODE) == 0)
 				return; /* not temporary */
-		cf->args = permalloc(sizeof(int)*nargs);
-		for (i = 0; i < nargs; i++)
-			cf->args[i] = sp[i]->soffset;
+		cf->nt = permalloc(sizeof(struct ntds)*nargs);
+		for (i = 0; i < nargs; i++) {
+			cf->nt[i].temp = sp[i]->soffset;
+			cf->nt[i].type = sp[i]->stype;
+			cf->nt[i].df = sp[i]->sdf;
+			cf->nt[i].attr = sp[i]->sap;
+		}
 	}
 	cf->nargs = nargs;
 	cf->flags |= CANINL;

@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.10 2010/04/18 19:34:14 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.2 2010/06/03 18:57:08 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.21 2011/06/23 13:41:25 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.3 2011/09/01 12:46:28 plunky Exp $	*/
 /*
  * Copyright (c) 2008 Michael Shalayeff
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -82,17 +82,17 @@
 #define	MAX_USHORT	65535
 #define	MIN_INT		(-0x7fffffff-1)
 #define	MAX_INT		0x7fffffff
-#define	MAX_UNSIGNED	0xffffffff
-#define	MIN_LONG	MIN_LONGLONG
-#define	MAX_LONG	MAX_LONGLONG
-#define	MAX_ULONG	MAX_ULONGLONG
+#define	MAX_UNSIGNED	0xffffffffU
+#define	MIN_LONG	0x8000000000000000L
+#define	MAX_LONG	0x7fffffffffffffffL
+#define	MAX_ULONG	0xffffffffffffffffUL
 #define	MIN_LONGLONG	0x8000000000000000LL
 #define	MAX_LONGLONG	0x7fffffffffffffffLL
 #define	MAX_ULONGLONG	0xffffffffffffffffULL
 
 /* Default char is signed */
 #undef	CHAR_UNSIGNED
-#define	BOOL_TYPE	CHAR	/* what used to store _Bool */
+#define	BOOL_TYPE	UCHAR	/* what used to store _Bool */
 
 /*
  * Use large-enough types.
@@ -118,11 +118,11 @@ typedef long long OFFSZ;
 #define BACKTEMP 		/* stack grows negatively for temporaries */
 
 #undef	FIELDOPS		/* no bit-field instructions */
-#define	RTOLBYTES		/* bytes are numbered right to left */
-
-#define ENUMSIZE(high,low) INT	/* enums are always stored in full int */
+#define	TARGET_ENDIAN TARGET_LE	/* little-endian only */
 
 #define FINDMOPS	/* i386 has instructions that modifies memory */
+
+#define	CC_DIV_0	/* division by zero is safe in the compiler */
 
 /* Definitions mostly used in pass2 */
 
@@ -150,6 +150,7 @@ typedef long long OFFSZ;
  * The classes used on amd64 are:
  *	A - integer registers
  *	B - xmm registers
+ *	C - x87 registers
  */
 #define	RAX	000
 #define	RDX	001
@@ -185,7 +186,7 @@ typedef long long OFFSZ;
 #define	XMM14	036
 #define	XMM15	037
 
-#define	MAXREGS	040	/* 32 registers */
+#define	MAXREGS	050	/* 40 registers */
 
 #define	RSTATUS	\
 	SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG, SAREG|PERMREG,	\
@@ -195,10 +196,13 @@ typedef long long OFFSZ;
 	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,	\
 	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,	\
 	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,	\
-	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,
+	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,	\
+	SCREG, SCREG, SCREG, SCREG,  SCREG, SCREG, SCREG, SCREG,
+
 
 /* no overlapping registers at all */
 #define	ROVERLAP \
+	{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, \
 	{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, \
 	{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, \
 	{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, \
@@ -206,19 +210,21 @@ typedef long long OFFSZ;
 
 
 /* Return a register class based on the type of the node */
-#define PCLASS(p) (p->n_type >= FLOAT && p->n_type <= LDOUBLE ? SBREG : SAREG)
+#define PCLASS(p) (p->n_type == FLOAT || p->n_type == DOUBLE ? SBREG : \
+		   p->n_type == LDOUBLE ? SCREG : SAREG)
 
-#define	NUMCLASS 	2	/* highest number of reg classes used */
+#define	NUMCLASS 	3	/* highest number of reg classes used */
 
 int COLORMAP(int c, int *r);
-#define	GCLASS(x) (x < 16 ? CLASSA : CLASSB)
+#define	GCLASS(x) (x < 16 ? CLASSA : x < 32 ? CLASSB : CLASSC)
 #define DECRA(x,y)	(((x) >> (y*8)) & 255)	/* decode encoded regs */
 #define	ENCRD(x)	(x)		/* Encode dest reg in n_reg */
 #define ENCRA1(x)	((x) << 8)	/* A1 */
 #define ENCRA2(x)	((x) << 16)	/* A2 */
 #define ENCRA(x,y)	((x) << (8+y*8))	/* encode regs in int */
 
-#define	RETREG(x)	(x == FLOAT || x == DOUBLE || x == LDOUBLE ? XMM0 : RAX)
+#define	RETREG(x)	(x == FLOAT || x == DOUBLE ? XMM0 : \
+			 x == LDOUBLE ? 32 : RAX)
 
 /* XXX - to die */
 #define FPREG	RBP	/* frame pointer */
@@ -239,33 +245,19 @@ int COLORMAP(int c, int *r);
 /*
  * i386-specific symbol table flags.
  */
-#define	SSECTION	SLOCAL1
-#define	STLS		SLOCAL2
-#define	SNOUNDERSCORE	SLOCAL3
-#define SSTDCALL	SLOCAL2	
-#define SDLLINDIRECT	SLOCAL3
-
-/*
- * i386-specific node flags.
- */
-#define FSTDCALL	0x01
-
-/*
- * i386-specific interpass stuff.
- */
-
-#define TARGET_IPP_MEMBERS			\
-	int ipp_argstacksize;
+#define SBEENHERE	SLOCAL1
 
 /*
  * Extended assembler macros.
  */
-void targarg(char *w, void *arg);
+int xasmconstregs(char *);
+void targarg(char *w, void *arg, int n);
 #define	XASM_TARGARG(w, ary)	\
 	(w[1] == 'b' || w[1] == 'h' || w[1] == 'w' || w[1] == 'k' ? \
-	w++, targarg(w, ary), 1 : 0)
+	w++, targarg(w, ary, n), 1 : 0)
 int numconv(void *ip, void *p, void *q);
 #define	XASM_NUMCONV(ip, p, q)	numconv(ip, p, q)
+#define	XASMCONSTREGS(x)	xasmconstregs(x)
 
 /*
  * builtins.
@@ -283,10 +275,10 @@ int numconv(void *ip, void *p, void *q);
 
 #define NODE struct node
 struct node;
-NODE *amd64_builtin_stdarg_start(NODE *f, NODE *a);
-NODE *amd64_builtin_va_arg(NODE *f, NODE *a);
-NODE *amd64_builtin_va_end(NODE *f, NODE *a);
-NODE *amd64_builtin_va_copy(NODE *f, NODE *a);
-NODE *i386_builtin_frame_address(NODE *f, NODE *a);
-NODE *i386_builtin_return_address(NODE *f, NODE *a);
+NODE *amd64_builtin_stdarg_start(NODE *f, NODE *a, unsigned int);
+NODE *amd64_builtin_va_arg(NODE *f, NODE *a, unsigned int);
+NODE *amd64_builtin_va_end(NODE *f, NODE *a, unsigned int);
+NODE *amd64_builtin_va_copy(NODE *f, NODE *a, unsigned int);
+NODE *i386_builtin_frame_address(NODE *f, NODE *a, unsigned int);
+NODE *i386_builtin_return_address(NODE *f, NODE *a, unsigned int);
 #undef NODE

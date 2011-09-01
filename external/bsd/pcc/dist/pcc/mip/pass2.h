@@ -1,5 +1,5 @@
-/*	Id: pass2.h,v 1.124 2010/05/21 16:08:28 ragge Exp 	*/	
-/*	$NetBSD: pass2.h,v 1.1.1.3 2010/06/03 18:57:56 plunky Exp $	*/
+/*	Id: pass2.h,v 1.130 2011/08/12 19:24:40 plunky Exp 	*/	
+/*	$NetBSD: pass2.h,v 1.1.1.4 2011/09/01 12:47:14 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -42,7 +42,6 @@ typedef unsigned int bittype; /* XXX - for basicblock */
 #define	BIT2BYTE(a)	(((a) + 31) / 32)
 #endif
 #include "manifest.h"
-#include "protos.h"
 
 /* cookies, used as arguments to codgen */
 #define FOREFF	01		/* compute for effects only */
@@ -179,6 +178,7 @@ typedef unsigned int bittype; /* XXX - for basicblock */
 #define	NFCOUNT		0x0c000000
 #define	NGSL		0x10000000	/* Above 16 bit */
 #define	NGSR		0x20000000	/* Above 16 bit */
+#undef	NGREG	/* XXX - linux exposes NGREG to public */
 #define	NGREG		0x40000000	/* Above 16 bit */
 #define	NGCOUNT		0xc0000000
 
@@ -227,6 +227,7 @@ struct rspecial {
 };
 
 struct p2env;
+#define	NRESC 4
 extern	NODE resc[];
 extern	int p2autooff, p2maxautooff;
 
@@ -292,8 +293,24 @@ void oreg2(NODE *p, void *);
 int shumul(NODE *p, int);
 NODE *deluseless(NODE *p);
 int getlab2(void);
-
+int tshape(NODE *, int);
 void conput(FILE *, NODE *);
+int shtemp(NODE *p);
+int ttype(TWORD t, int tword);
+void expand(NODE *, int, char *);
+void hopcode(int, int);
+void adrcon(CONSZ);
+void zzzcode(NODE *, int);
+void insput(NODE *);
+void upput(NODE *, int);
+int tlen(NODE *p);
+int setbin(NODE *);
+int notoff(TWORD, int, CONSZ, char *);
+int fldexpand(NODE *, int, char **);
+void p2tree(NODE *p); 
+int flshape(NODE *p);
+int ncnt(int needs);
+
 
 extern	char *rnames[];
 extern	int rstatus[];
@@ -312,7 +329,9 @@ extern int regK[];
 #define	CLASSG	7
 
 /* used when parsing xasm codes */
-#define	XASMVAL(x)	((x) & 0377)	/* get val from codeword */
+#define	XASMVAL(x)	((x) & 0377)		/* get val from codeword */
+#define	XASMVAL1(x)	(((x) >> 16) & 0377)	/* get val from codeword */
+#define	XASMVAL2(x)	(((x) >> 24) & 0377)	/* get val from codeword */
 #define	XASMASG		0x100	/* = */
 #define	XASMCONSTR	0x200	/* & */
 #define	XASMINOUT	0x400	/* + */
@@ -329,7 +348,7 @@ int offset(NODE *p, int);
 
 extern	int lineno;
 extern	int fldshf, fldsz;
-extern	int lflag, x2debug, udebug, e2debug, odebug;
+extern	int x2debug, udebug, e2debug, odebug;
 extern	int rdebug, t2debug, s2debug, b2debug, c2debug;
 extern	int g2debug;
 extern	int kflag;
@@ -442,8 +461,8 @@ void optimize(struct p2env *);
 
 struct basicblock {
 	DLIST_ENTRY(basicblock) bbelem;
-	SLIST_HEAD(, cfgnode) children; /* CFG - children to this node */
 	SLIST_HEAD(, cfgnode) parents; /* CFG - parents to this node */
+	struct cfgnode *ch[2];		/* Child 1 (and 2) */
 	int bbnum;	/* this basic block number */
 	unsigned int dfnum; /* DFS-number */
 	unsigned int dfparent; /* Parent in DFS */

@@ -1,5 +1,5 @@
-/*	Id: local.c,v 1.7 2008/12/14 21:16:58 ragge Exp 	*/	
-/*	$NetBSD: local.c,v 1.1.1.3 2010/06/03 18:57:20 plunky Exp $	*/
+/*	Id: local.c,v 1.13 2011/06/05 10:29:10 ragge Exp 	*/	
+/*	$NetBSD: local.c,v 1.1.1.4 2011/09/01 12:46:41 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -172,7 +170,7 @@ clocal(NODE *p)
 		    l->n_type == ULONGLONG) {
 			/* float etc? */
 			p->n_left = block(SCONV, l, NIL,
-			    UNSIGNED, 0, MKSUE(UNSIGNED));
+			    UNSIGNED, 0, 0);
 			break;
 		}
 		/* if left is SCONV, cannot remove */
@@ -266,7 +264,7 @@ clocal(NODE *p)
 				cerror("unknown type %d", m);
 			}
 			l->n_type = m;
-			l->n_sue = MKSUE(m);
+			l->n_sue = 0;
 			nfree(p);
 			return l;
 		}
@@ -292,9 +290,9 @@ clocal(NODE *p)
 		if (o == MOD && p->n_type != CHAR && p->n_type != SHORT)
 			break;
 		/* make it an int division by inserting conversions */
-		p->n_left = block(SCONV, p->n_left, NIL, INT, 0, MKSUE(INT));
-		p->n_right = block(SCONV, p->n_right, NIL, INT, 0, MKSUE(INT));
-		p = block(SCONV, p, NIL, p->n_type, 0, MKSUE(p->n_type));
+		p->n_left = block(SCONV, p->n_left, NIL, INT, 0, 0);
+		p->n_right = block(SCONV, p->n_right, NIL, INT, 0, 0);
+		p = block(SCONV, p, NIL, p->n_type, 0, 0);
 		p->n_left->n_type = INT;
 		break;
 
@@ -308,7 +306,7 @@ clocal(NODE *p)
 		/* put return value in return reg */
 		p->n_op = ASSIGN;
 		p->n_right = p->n_left;
-		p->n_left = block(REG, NIL, NIL, p->n_type, 0, MKSUE(INT));
+		p->n_left = block(REG, NIL, NIL, p->n_type, 0, 0);
 		p->n_left->n_rval = RETREG(p->n_type);
 		break;
 
@@ -321,13 +319,13 @@ clocal(NODE *p)
 		if (p->n_type == LONGLONG || p->n_type == ULONGLONG) {
 			if (p->n_right->n_type != INT)
 				p->n_right = block(SCONV, p->n_right, NIL,
-				    INT, 0, MKSUE(INT));
+				    INT, 0, 0);
 			break;
 		}
 		if (p->n_right->n_type == CHAR || p->n_right->n_type == UCHAR)
 			break;
 		p->n_right = block(SCONV, p->n_right, NIL,
-		    CHAR, 0, MKSUE(CHAR));
+		    CHAR, 0, 0);
 		break;
 	}
 //printf("ut:\n");
@@ -349,7 +347,7 @@ myp2tree(NODE *p)
 
 	sp = inlalloc(sizeof(struct symtab));
 	sp->sclass = STATIC;
-	sp->ssue = MKSUE(p->n_type);
+	sp->ssue = 0;
 	sp->slevel = 1; /* fake numeric label */
 	sp->soffset = getlab();
 	sp->sflags = 0;
@@ -370,15 +368,6 @@ int
 andable(NODE *p)
 {
 	return(1);  /* all names can have & taken on them */
-}
-
-/*
- * at the end of the arguments of a ftn, set the automatic offset
- */
-void
-cendarg()
-{
-	autooff = AUTOINIT;
 }
 
 /*
@@ -460,7 +449,7 @@ cerror("spalloc");
  * print out a constant node
  * mat be associated with a label
  */
-void
+int
 ninval(NODE *p)
 {
 	struct symtab *q;
@@ -469,7 +458,7 @@ ninval(NODE *p)
 	p = p->n_left;
 	t = p->n_type;
 	if (t > BTMASK)
-		t = INT; /* pointer */
+		p->n_type = t = INT; /* pointer */
 
 	if (p->n_op != ICON)
 		cerror("ninval: init node not constant");
@@ -492,43 +481,9 @@ ninval(NODE *p)
 		printf("\n");
 		break;
 	default:
-		cerror("ninval");
+		return 0;
 	}
-}
-
-/*
- * print out an integer.
- */
-void
-inval(CONSZ word)
-{
-	word &= 0xffff;
-	printf("	.word 0%o\n", (int)word);
-}
-
-/* output code to initialize a floating point value */
-/* the proper alignment has been obtained */
-void
-finval(NODE *p)
-{
-	union { float f; double d; long double l; int i[3]; } u;
-
-cerror("finval");
-	switch (p->n_type) {
-	case LDOUBLE:
-		u.i[2] = 0;
-		u.l = (long double)p->n_dcon;
-		printf("\t.long\t0x%x,0x%x,0x%x\n", u.i[0], u.i[1], u.i[2]);
-		break;
-	case DOUBLE:
-		u.d = (double)p->n_dcon;
-		printf("\t.long\t0x%x,0x%x\n", u.i[0], u.i[1]);
-		break;
-	case FLOAT:
-		u.f = (float)p->n_dcon;
-		printf("\t.long\t0x%x\n", u.i[0]);
-		break;
-	}
+	return 1;
 }
 
 /* make a name look like an external name in the local machine */
@@ -632,9 +587,10 @@ setloc1(int locc)
  * Give target the opportunity of handling pragmas.
  */
 int
-mypragma(char **ary)
+mypragma(char *str)
 {
-	return 0; }
+	return 0;
+}
 
 /*
  * Called when a identifier has been declared, to give target last word.

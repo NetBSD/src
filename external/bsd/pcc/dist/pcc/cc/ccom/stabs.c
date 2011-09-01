@@ -1,5 +1,5 @@
-/*	Id: stabs.c,v 1.30 2009/06/14 11:43:41 ragge Exp 	*/	
-/*	$NetBSD: stabs.c,v 1.1.1.3 2010/06/03 18:57:43 plunky Exp $	*/
+/*	Id: stabs.c,v 1.32 2011/04/07 18:50:16 ragge Exp 	*/	
+/*	$NetBSD: stabs.c,v 1.1.1.4 2011/09/01 12:47:02 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -75,7 +75,7 @@ static struct stabtype {
 	struct stabtype *next;	/* linked list */
 	TWORD type;		/* pcc type number */
 	union dimfun *df;	/* dimension of arrays */
-	struct suedef *sue;	/* struct/union/enum declarations */
+	struct attr *ap;	/* struct/union/enum declarations */
 	int num;		/* local type number */
 } *stabhash[STABHASH];
 static int ntypes;
@@ -84,8 +84,8 @@ static int stablbl = 10;
 extern int inftn;
 
 void ptype(char *name, int num, int inhnum, long long min, long long max);
-struct stabtype *addtype(TWORD, union dimfun *, struct suedef *);
-struct stabtype *findtype(TWORD t, union dimfun *df, struct suedef *sue);
+struct stabtype *addtype(TWORD, union dimfun *, struct attr *);
+struct stabtype *findtype(TWORD t, union dimfun *df, struct attr *sue);
 void printtype(struct symtab *s, char *str, int len);
 void cprint(int p2, char *fmt, ...);
 
@@ -102,7 +102,7 @@ stabs_init()
 {
 	struct stabtype *st;
 
-#define	ADDTYPE(y) addtype(y, NULL, MKSUE(y))
+#define	ADDTYPE(y) addtype(y, NULL, 0)
 
 	ptype("int", ADDTYPE(INT)->num, INTNUM, MIN_INT, MAX_INT);
 
@@ -143,14 +143,14 @@ ptype(char *name, int num, int inhnum, long long min, long long max)
  * The search key is the (type, df, sue) triple.
  */
 struct stabtype *
-addtype(TWORD t, union dimfun *df, struct suedef *sue)
+addtype(TWORD t, union dimfun *df, struct attr *ap)
 {
 	struct stabtype *st;
 
 	st = permalloc(sizeof(struct stabtype));
 	st->type = t;
 	st->df = df;
-	st->sue = sue;
+	st->ap = ap;
 	st->num = ++ntypes;
 	st->next = stabhash[t & (STABHASH-1)];
 	stabhash[t & (STABHASH-1)] = st;
@@ -161,7 +161,7 @@ addtype(TWORD t, union dimfun *df, struct suedef *sue)
  * Search for a given type and return a type pointer (or NULL).
  */
 struct stabtype *
-findtype(TWORD t, union dimfun *df, struct suedef *sue)
+findtype(TWORD t, union dimfun *df, struct attr *ap)
 {
 	struct stabtype *st;
 	union dimfun *dw, *dx;
@@ -169,7 +169,7 @@ findtype(TWORD t, union dimfun *df, struct suedef *sue)
 
 	st = stabhash[t & (STABHASH-1)];
 	for (; st; st = st->next) {
-		if (t != st->type || sue != st->sue)
+		if (t != st->type || ap != st->ap)
 			continue;
 		/* Ok, type and sue matches, check dimensions */
 		if (st->df == NULL)
@@ -280,7 +280,7 @@ stabs_func(struct symtab *s)
 	printtype(s, str, sizeof(str));
 	cprint(1, "\t.stabs	\"%s:%c%s\",%d,0,%d,%s\n",
 	    curfun, s->sclass == STATIC ? 'f' : 'F', str,
-	    N_FUN, BIT2BYTE(s->ssue->suesize), curfun);
+	    N_FUN, 0, curfun);
 }
 
 /*
@@ -293,16 +293,16 @@ printtype(struct symtab *s, char *ostr, int len)
 {
 	struct stabtype *st;
 	union dimfun *df = s->sdf;
-	struct suedef *sue = s->ssue;
+	struct attr *ap = s->sap;
 	TWORD t = s->stype;
 	int op = 0;
 
 	/* Print out not-yet-found types */
 	if (ISFTN(t))
 		t = DECREF(t);
-	st = findtype(t, df, sue);
+	st = findtype(t, df, ap);
 	while (st == NULL && t > BTMASK) {
-		st = addtype(t, df, sue);
+		st = addtype(t, df, ap);
 		op+=snprintf(ostr+op, len - op, "%d=", st->num);
 		if (ISFTN(t))
 			ostr[op++] = 'f';
@@ -315,7 +315,7 @@ printtype(struct symtab *s, char *ostr, int len)
 		if (ISARY(t))
 			df++;
 		t = DECREF(t);
-		st = findtype(t, df, sue);
+		st = findtype(t, df, ap);
 		if (op > MAXPSTR-10)
 			cerror("printtype: too difficult expression");
 	}
@@ -330,19 +330,20 @@ stabs_newsym(struct symtab *s)
 	extern int fun_inline;
 	char *sname;
 	char ostr[MAXPSTR];
-	int suesize;
+	int suesize, sz;
 
 	if (ISFTN(s->stype))
 		return; /* functions are handled separate */
 
 	if (s->sclass == STNAME || s->sclass == UNAME || s->sclass == MOS ||
 	    s->sclass == ENAME || s->sclass == MOU || s->sclass == MOE ||
-	    s->sclass == TYPEDEF || (s->sclass & FIELD))
+	    s->sclass == TYPEDEF || (s->sclass & FIELD) || ISSOU(s->stype))
 		return; /* XXX - fix structs */
 
 	if ((sname = s->soname) == NULL)
 		sname = exname(s->sname);
-	suesize = BIT2BYTE(s->ssue->suesize);
+	sz = tsize(s->stype, s->sdf, s->sap);
+	suesize = BIT2BYTE(sz);
 	if (suesize > 32767)
 		suesize = 32767;
 	else if (suesize < -32768)
@@ -397,7 +398,7 @@ stabs_chgsym(struct symtab *s)
  * define a struct.
  */
 void
-stabs_struct(struct symtab *p, struct suedef *sue)
+stabs_struct(struct symtab *p, struct attr *ap)
 {
 }
 
