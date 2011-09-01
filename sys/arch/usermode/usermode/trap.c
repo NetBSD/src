@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.15 2011/09/01 15:03:41 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.16 2011/09/01 18:20:20 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.15 2011/09/01 15:03:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.16 2011/09/01 18:20:20 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,6 +56,7 @@ extern int errno;
 
 bool pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype);
 
+static stack_t sigstk;
 static int debug_fh;
 
 void
@@ -69,12 +70,18 @@ setup_signal_handlers(void)
 	static struct sigaction sa;
 
 	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART | SA_SIGINFO;
+	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
 	sa.sa_sigaction = mem_access_handler;
 	if (thunk_sigaction(SIGSEGV, &sa, NULL) == -1)
 		panic("couldn't register SIGSEGV handler : %d", errno);
 	if (thunk_sigaction(SIGBUS, &sa, NULL) == -1)
 		panic("couldn't register SIGBUS handler : %d", errno);
+	if ((sigstk.ss_sp = thunk_malloc(SIGSTKSZ)) == NULL)
+		panic("can't allocate signal stack space\n");
+	sigstk.ss_size  = SIGSTKSZ;
+	sigstk.ss_flags = 0;
+	if (thunk_sigaltstack(&sigstk, 0) < 0)
+		panic("can't set alternate stacksize : %d", errno);
 
 	debug_fh = thunk_open("/usr/sources/debug", O_RDWR | O_TRUNC | O_CREAT, 0666);
 }
@@ -108,7 +115,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		onfault = pcb->pcb_onfault;
 		vm = p->p_vmspace;
 
-#if 1
+#if 0
 		va = (vaddr_t) info->si_addr;
 		printf("trap lwp = %p pid = %d lid = %d, va = %p\n",
 		    curlwp,
