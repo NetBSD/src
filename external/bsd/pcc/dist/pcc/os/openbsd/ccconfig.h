@@ -1,5 +1,5 @@
-/*	Id: ccconfig.h,v 1.8 2008/12/19 08:08:48 ragge Exp 	*/	
-/*	$NetBSD: ccconfig.h,v 1.1.1.3 2010/06/03 18:57:59 plunky Exp $	*/
+/*	Id: ccconfig.h,v 1.10 2011/06/04 19:27:26 plunky Exp 	*/	
+/*	$NetBSD: ccconfig.h,v 1.1.1.4 2011/09/01 12:47:17 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -57,6 +57,3 @@
 #else
 #error defines for arch missing
 #endif
-
-#define ELFABI
-#define	STABS
