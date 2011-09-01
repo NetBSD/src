@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.46 2011/08/14 12:37:09 christos Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.47 2011/09/01 09:03:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.46 2011/08/14 12:37:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.47 2011/09/01 09:03:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -337,6 +337,8 @@ wapbl_start_flush_inodes(struct wapbl *wl, struct wapbl_replay *wr)
 	 * the same as the new log we just opened.
 	 */
 	KDASSERT(!wapbl_replay_isopen(wr));
+	KASSERT(wl->wl_devvp->v_type == VBLK);
+	KASSERT(wr->wr_devvp->v_type == VBLK);
 	KASSERT(wl->wl_devvp->v_rdev == wr->wr_devvp->v_rdev);
 	KASSERT(wl->wl_logpbn == wr->wr_logpbn);
 	KASSERT(wl->wl_circ_size == wr->wr_circ_size);
