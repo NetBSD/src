@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.101 2011/08/02 07:44:39 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.102 2011/09/01 16:41:48 plunky Exp $
 
 .include <bsd.init.mk>
 
@@ -187,7 +187,7 @@ LDFLAGS+=		-Wl,-rpath,${X11USRLIBDIR} -L=${X11USRLIBDIR}
 .cpp:
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	${CPP} -undef -traditional \
+	${CC} -E -undef -traditional - \
 	    ${CPPSCRIPTFLAGS_${.TARGET}:U${CPPSCRIPTFLAGS}} \
 	    < ${.IMPSRC} | ${X11TOOL_UNXCOMM} > ${.TARGET}
 
@@ -414,7 +414,7 @@ _X11MANTRANSFORM+= \
 _X11MANTRANSFORMCMD=	${TOOL_SED} -e 's/\\$$/\\ /' ${.IMPSRC}
 
 .if ${X11MANCPP} != "no"
-_X11MANTRANSFORMCMD+=	| ${CPP} -undef -traditional
+_X11MANTRANSFORMCMD+=	| ${CC} -E -undef -traditional -
 . for __def__ __value__ in ${_X11MANTRANSFORM}
 _X11MANTRANSFORMCMD+=	-D${__def__}=${__value__:C/%/ /gW}
 . endfor
