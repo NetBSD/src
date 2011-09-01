@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.51 2010/06/24 13:03:07 hannken Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.52 2011/09/01 12:44:10 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.51 2010/06/24 13:03:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.52 2011/09/01 12:44:10 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ linux_sys_getdents64(struct lwp *l, const struct linux_sys_getdents64_args *uap,
 
 	vp = (struct vnode *)fp->f_data;
 	if (vp->v_type != VDIR) {
-		error = EINVAL;
+		error = ENOTDIR;
 		goto out1;
 	}
 
