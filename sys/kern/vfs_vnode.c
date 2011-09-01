@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.9 2011/06/12 03:35:57 rmind Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.10 2011/09/01 09:04:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.9 2011/06/12 03:35:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.10 2011/09/01 09:04:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1131,7 +1131,7 @@ vrevoke(vnode_t *vp)
 		/* If clean or being cleaned, then ignore it. */
 		mutex_enter(vq->v_interlock);
 		if ((vq->v_iflag & (VI_CLEAN | VI_XLOCK)) != 0 ||
-		    vq->v_rdev != dev || vq->v_type != type) {
+		    vq->v_type != type || vq->v_rdev != dev) {
 			mutex_exit(vq->v_interlock);
 			vq = vq->v_specnext;
 			continue;
