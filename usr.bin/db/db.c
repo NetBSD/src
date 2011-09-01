@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.24 2009/01/28 05:48:49 lukem Exp $	*/
+/*	$NetBSD: db.c,v 1.25 2011/09/01 13:25:02 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002-2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.24 2009/01/28 05:48:49 lukem Exp $");
+__RCSID("$NetBSD: db.c,v 1.25 2011/09/01 13:25:02 joerg Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
@@ -71,25 +71,24 @@ typedef enum {
 	F_DECODE_VAL	= 1<<26,
 } flags_t;
 
-int	main(int, char *[]);
-void	db_print(DBT *, DBT *);
-int	db_dump(void);
-int	db_del(char *);
-int	db_get(char *);
-int	db_seq(char *);
-int	db_put(char *, char *);
-int	parseline(FILE *, const char *, char **, char **);
-int	encode_data(size_t, char *, char **);
-int	decode_data(char *, char **);
-void	parse_encode_decode_arg(const char *, int);
-int	parse_encode_option(char **);
-void	usage(void);
+static void	db_print(DBT *, DBT *);
+static int	db_dump(void);
+static int	db_del(char *);
+static int	db_get(char *);
+static int	db_seq(char *);
+static int	db_put(char *, char *);
+static int	parseline(FILE *, const char *, char **, char **);
+static int	encode_data(size_t, char *, char **);
+static int	decode_data(char *, char **);
+static void	parse_encode_decode_arg(const char *, int);
+static int	parse_encode_option(char **);
+__dead static void	usage(void);
 
-flags_t	 	 flags = 0;
-DB		*db;
-const char	*outputsep = "\t";
-int		 visflags = 0;
-const char	*extra_echars = NULL;
+static flags_t	 	 flags = 0;
+static DB		*db;
+static const char	*outputsep = "\t";
+static int		 visflags = 0;
+static const char	*extra_echars = NULL;
 
 int
 main(int argc, char *argv[])
@@ -378,7 +377,7 @@ main(int argc, char *argv[])
 	return (rv);
 }
 
-void
+static void
 db_print(DBT *key, DBT *val)
 {
 	int	len;
@@ -411,7 +410,7 @@ db_print(DBT *key, DBT *val)
 	printf("\n");
 }
 
-int
+static int
 db_dump(void)
 {
 	DBT	key, val;
@@ -447,7 +446,7 @@ db_makekey(DBT *key, char *keystr, int downcase, int decode)
 	}
 }
 
-int
+static int
 db_del(char *keystr)
 {
 	DBT	key;
@@ -477,7 +476,7 @@ db_del(char *keystr)
 	return (r);
 }
 
-int
+static int
 db_get(char *keystr)
 {
 	DBT	key, val;
@@ -507,7 +506,7 @@ db_get(char *keystr)
 	return (r);
 }
 
-int
+static int
 db_seq(char *keystr)
 {
 	DBT	key, val, want;
@@ -558,7 +557,7 @@ db_seq(char *keystr)
 	return (r);
 }
 
-int
+static int
 db_put(char *keystr, char *valstr)
 {
 	DBT	key, val;
@@ -590,7 +589,7 @@ db_put(char *keystr, char *valstr)
 	return (r);
 }
 
-int
+static int
 parseline(FILE *fp, const char *sep, char **kp, char **vp)
 {
 	size_t	len;
@@ -618,7 +617,7 @@ parseline(FILE *fp, const char *sep, char **kp, char **vp)
 	return (1);
 }
 
-int
+static int
 encode_data(size_t len, char *data, char **edata)
 {
 	static char	*buf = NULL;
@@ -641,7 +640,7 @@ encode_data(size_t len, char *data, char **edata)
 	}
 }
 
-int
+static int
 decode_data(char *data, char **ddata)
 {
 	char	*buf;
@@ -652,7 +651,7 @@ decode_data(char *data, char **ddata)
 	return (strunvisx(buf, data, (visflags & VIS_HTTPSTYLE)));
 }
 
-void
+static void
 parse_encode_decode_arg(const char *arg, int encode)
 {
 	if (! arg[0] || arg[1])
@@ -672,7 +671,7 @@ parse_encode_decode_arg(const char *arg, int encode)
 	return;
 }
 
-int
+static int
 parse_encode_option(char **arg)
 {
 	int	r = 0;
@@ -712,7 +711,7 @@ parse_encode_option(char **arg)
 	return (r);
 }
 
-void
+static void
 usage(void)
 {
 	const char *p = getprogname();
