@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.14 2011/06/07 13:30:35 plunky Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2011/09/01 13:00:14 plunky Exp $
 
 PCC_DIR:=${.PARSEDIR}
 PCC_DIST=${PCC_DIR}/dist/pcc
 PCC_LIBS=${PCC_DIR}/dist/pcc-libs
+
+# (these strings will be updated by the prepare-import.sh script)
+PCC_VERSION=1.1.0.DEVEL
+PCC_DATESTAMP=20110901
 
 TARGOS = netbsd
 
@@ -18,8 +22,7 @@ TARGMACH = ${MACHINE_ARCH}
 ERROR!= echo "ERROR: ${TARGMACH} not yet supported - write code!" >&2;echo
 .endif
 
-# this string will be updated by the prepare-import.sh script
-VERSSTR = PACKAGE_STRING " for ${TARGOS}-${TARGMACH}"
+VERSSTR="pcc ${PCC_VERSION} ${PCC_DATESTAMP} for ${TARGOS}-${TARGMACH}"
 
 CPPFLAGS+=	-DGCC_COMPAT
 CPPFLAGS+=	-DPCC_DEBUG
