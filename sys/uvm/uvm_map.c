@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.303 2011/08/06 17:25:03 rmind Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.304 2011/09/01 06:40:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.303 2011/08/06 17:25:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.304 2011/09/01 06:40:28 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -306,7 +306,7 @@ static vsize_t	uvm_kmapent_overhead(vsize_t);
 static void	uvm_map_entry_unwire(struct vm_map *, struct vm_map_entry *);
 static void	uvm_map_reference_amap(struct vm_map_entry *, int);
 static int	uvm_map_space_avail(vaddr_t *, vsize_t, voff_t, vsize_t, int,
-		    struct vm_map_entry *);
+		    int, struct vm_map_entry *);
 static void	uvm_map_unreference_amap(struct vm_map_entry *, int);
 
 int _uvm_map_sanity(struct vm_map *);
@@ -1875,7 +1875,7 @@ failed:
  */
 static int
 uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
-    vsize_t align, int topdown, struct vm_map_entry *entry)
+    vsize_t align, int flags, int topdown, struct vm_map_entry *entry)
 {
 	vaddr_t end;
 
@@ -1888,7 +1888,27 @@ uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
 	if (uoffset != UVM_UNKNOWN_OFFSET)
 		PMAP_PREFER(uoffset, start, length, topdown);
 #endif
-	if (align != 0) {
+	if ((flags & UVM_FLAG_COLORMATCH) != 0) {
+		KASSERT(align < uvmexp.ncolors);
+		if (uvmexp.ncolors > 1) {
+			const u_int colormask = uvmexp.colormask;
+			const u_int colorsize = colormask + 1;
+			vaddr_t hint = atop(*start);
+			const u_int color = hint & colormask;
+			if (color != align) {
+				hint -= color;	/* adjust to color boundary */
+				KASSERT((hint & colormask) == 0);
+				if (topdown) {
+					if (align > color)
+						hint -= colorsize;
+				} else {
+					if (align < color)
+						hint += colorsize;
+				}
+				*start = ptoa(hint + align); /* adjust to color */
+			}
+		}
+	} else if (align != 0) {
 		if ((*start & (align - 1)) != 0) {
 			if (topdown)
 				*start &= ~(align - 1);
@@ -1944,7 +1964,8 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 
 	UVMHIST_LOG(maphist, "(map=0x%x, hint=0x%x, len=%d, flags=0x%x)",
 	    map, hint, length, flags);
-	KASSERT((align & (align - 1)) == 0);
+	KASSERT((flags & UVM_FLAG_COLORMATCH) != 0 || (align & (align - 1)) == 0);
+	KASSERT((flags & UVM_FLAG_COLORMATCH) == 0 || align < uvmexp.ncolors);
 	KASSERT((flags & UVM_FLAG_FIXED) == 0 || align == 0);
 
 	uvm_map_check(map, "map_findspace entry");
@@ -2022,7 +2043,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 			 * See if given hint fits in this gap.
 			 */
 			switch (uvm_map_space_avail(&hint, length,
-			    uoffset, align, topdown, entry)) {
+			    uoffset, align, flags, topdown, entry)) {
 			case 1:
 				goto found;
 			case -1:
@@ -2053,7 +2074,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 
 	/* Check slot before any entry */
 	hint = topdown ? entry->next->start - length : entry->end;
-	switch (uvm_map_space_avail(&hint, length, uoffset, align,
+	switch (uvm_map_space_avail(&hint, length, uoffset, align, flags,
 	    topdown, entry)) {
 	case 1:
 		goto found;
@@ -2122,7 +2143,7 @@ nextgap:
 				hint = tmp->end;
 		}
 		switch (uvm_map_space_avail(&hint, length, uoffset, align,
-		    topdown, tmp)) {
+		    flags, topdown, tmp)) {
 		case 1:
 			entry = tmp;
 			goto found;
@@ -2144,7 +2165,7 @@ nextgap:
 		hint = prev->end;
 	}
 	switch (uvm_map_space_avail(&hint, length, uoffset, align,
-	    topdown, prev)) {
+	    flags, topdown, prev)) {
 	case 1:
 		entry = prev;
 		goto found;
@@ -2185,7 +2206,7 @@ nextgap:
 		hint = tmp->end;
 	}
 	switch (uvm_map_space_avail(&hint, length, uoffset, align,
-	    topdown, tmp)) {
+	    flags, topdown, tmp)) {
 	case 1:
 		entry = tmp;
 		goto found;
@@ -2211,7 +2232,7 @@ nextgap:
 
 		/* See if it fits. */
 		switch (uvm_map_space_avail(&hint, length, uoffset, align,
-		    topdown, entry)) {
+		    flags, topdown, entry)) {
 		case 1:
 			goto found;
 		case -1:
@@ -2393,7 +2414,8 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			for (va = entry->start; va < entry->end;
 			    va += PAGE_SIZE) {
 				if (pmap_extract(vm_map_pmap(map), va, NULL)) {
-					panic("uvm_unmap_remove: has mapping");
+					panic("%s: %#"PRIxVADDR" has mapping",
+					    __func__, va);
 				}
 			}
 
@@ -4703,7 +4725,7 @@ again:
 	KASSERT(va != 0);
 #else
 	error = uvm_map_prepare(map, 0, PAGE_SIZE, NULL, UVM_UNKNOWN_OFFSET,
-	    0, mapflags, &args);
+	    VM_PGCOLOR_BUCKET(pg), mapflags | UVM_FLAG_COLORMATCH, &args);
 	if (error) {
 		uvm_pagefree(pg);
 		return NULL;
