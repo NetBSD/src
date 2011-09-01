@@ -1,4 +1,4 @@
-/*	$NetBSD: voyager.c,v 1.1 2011/08/31 16:47:31 macallan Exp $	*/
+/*	$NetBSD: voyager.c,v 1.2 2011/09/01 00:06:42 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.1 2011/08/31 16:47:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.2 2011/09/01 00:06:42 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ static const struct i2c_bitbang_ops voyager_i2cbb_ops = {
 		0
 	}
 };
+#define GPIO_I2C_BITS ((1 << 6) | (1 << 13))
 
 static int
 voyager_match(device_t parent, cfdata_t match, void *aux)
@@ -120,6 +121,7 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	char devinfo[256];
 	struct voyager_attach_args	vaa;
 	struct i2cbus_attach_args iba;
+	uint32_t reg;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -154,19 +156,22 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	strcpy(vaa.vaa_name, "voyagerfb");
 	config_found_ia(sc->sc_dev, "voyagerbus", &vaa, voyager_print);
 
-	/* Fill in the i2c tag */
-	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = voyager_i2c_acquire_bus;
-	sc->sc_i2c.ic_release_bus = voyager_i2c_release_bus;
-	sc->sc_i2c.ic_send_start = voyager_i2c_send_start;
-	sc->sc_i2c.ic_send_stop = voyager_i2c_send_stop;
-	sc->sc_i2c.ic_initiate_xfer = voyager_i2c_initiate_xfer;
-	sc->sc_i2c.ic_read_byte = voyager_i2c_read_byte;
-	sc->sc_i2c.ic_write_byte = voyager_i2c_write_byte;
-	sc->sc_i2c.ic_exec = NULL;
-	mutex_init(&sc->sc_i2c_lock, MUTEX_DEFAULT, IPL_NONE);
-	iba.iba_tag = &sc->sc_i2c;
-	config_found_ia(self, "i2cbus", &iba, iicbus_print);
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_GPIO0_CONTROL);
+	if ((reg & GPIO_I2C_BITS) == 0) {
+		/* Fill in the i2c tag */
+		sc->sc_i2c.ic_cookie = sc;
+		sc->sc_i2c.ic_acquire_bus = voyager_i2c_acquire_bus;
+		sc->sc_i2c.ic_release_bus = voyager_i2c_release_bus;
+		sc->sc_i2c.ic_send_start = voyager_i2c_send_start;
+		sc->sc_i2c.ic_send_stop = voyager_i2c_send_stop;
+		sc->sc_i2c.ic_initiate_xfer = voyager_i2c_initiate_xfer;
+		sc->sc_i2c.ic_read_byte = voyager_i2c_read_byte;
+		sc->sc_i2c.ic_write_byte = voyager_i2c_write_byte;
+		sc->sc_i2c.ic_exec = NULL;
+		mutex_init(&sc->sc_i2c_lock, MUTEX_DEFAULT, IPL_NONE);
+		iba.iba_tag = &sc->sc_i2c;
+		config_found_ia(self, "i2cbus", &iba, iicbus_print);
+	}
 }
 
 static int
@@ -189,10 +194,8 @@ voyager_i2cbb_set_bits(void *cookie, uint32_t bits)
 	uint32_t reg;
 
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DATA0);
-	//printf("%s: %08x ->", __func__, reg);
-	reg &= ~((1 << 6) | (1 << 13));
+	reg &= ~GPIO_I2C_BITS;
 	reg |= bits;
-	//printf("%08x\n", reg);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DATA0, reg);
 }
 
@@ -203,10 +206,8 @@ voyager_i2cbb_set_dir(void *cookie, uint32_t bits)
 	uint32_t reg;
 
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DIR0);
-	//printf("%s: %08x ->", __func__, reg);
 	reg &= ~(1 << 13);
 	reg |= bits;
-	//printf("%08x\n", reg);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DIR0, reg);
 }
 
@@ -217,7 +218,6 @@ voyager_i2cbb_read(void *cookie)
 	uint32_t reg;
 
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DATA0);
-	//printf("%s: %08x\n", __func__, reg);
 	return reg;
 }
 
