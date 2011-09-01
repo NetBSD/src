@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.50 2011/08/31 22:16:54 rmind Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.51 2011/09/01 16:55:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.50 2011/08/31 22:16:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.51 2011/09/01 16:55:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1748,8 +1748,6 @@ genfs_do_directio(struct vmspace *vs, vaddr_t uva, size_t len, struct vnode *vp,
 	int error, rv, poff, koff;
 	const int pgoflags = PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED |
 		(rw == UIO_WRITE ? PGO_FREE : 0);
-	struct vm_page *pg;
-	kmutex_t *slock;
 
 	/*
 	 * For writes, verify that this range of the file already has fully
@@ -1803,24 +1801,13 @@ genfs_do_directio(struct vmspace *vs, vaddr_t uva, size_t len, struct vnode *vp,
 	map = &vs->vm_map;
 	upm = vm_map_pmap(map);
 	kpm = vm_map_pmap(kernel_map);
-	kva = uvm_km_alloc(kernel_map, klen, 0,
-			   UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	puva = trunc_page(uva);
+	kva = uvm_km_alloc(kernel_map, klen, atop(puva) & uvmexp.colormask,
+	    UVM_KMF_VAONLY | UVM_KMF_WAITVA | UVM_KMF_COLORMATCH);
 	for (poff = 0; poff < klen; poff += PAGE_SIZE) {
 		rv = pmap_extract(upm, puva + poff, &pa);
 		KASSERT(rv);
-		pg = PHYS_TO_VM_PAGE(pa);
-
-retry1:		/* XXX: Rework to not use managed-mappings.. */
-		mutex_enter(&uvm_pageqlock);
-		slock = uvmpd_trylockowner(pg);
-		mutex_exit(&uvm_pageqlock);
-		if (slock == NULL) {
-			kpause("gendiolk", false, 1, slock);
-			goto retry1;
-		}
-		pmap_enter(kpm, kva + poff, pa, prot, prot | PMAP_WIRED);
-		mutex_exit(slock);
+		pmap_kenter_pa(kva + poff, pa, prot, PMAP_WIRED);
 	}
 	pmap_update(kpm);
 
@@ -1836,24 +1823,7 @@ retry1:		/* XXX: Rework to not use managed-mappings.. */
 	 * Tear down the kernel mapping.
 	 */
 
-	for (koff = 0; koff < klen; koff += PAGE_SIZE) {
-		vaddr_t sva = kva + koff;
-
-		rv = pmap_extract(kpm, sva, &pa);
-		KASSERT(rv);
-		pg = PHYS_TO_VM_PAGE(pa);
-
-retry2:		/* XXX: Rework to not use managed-mappings.. */
-		mutex_enter(&uvm_pageqlock);
-		slock = uvmpd_trylockowner(pg);
-		mutex_exit(&uvm_pageqlock);
-		if (slock == NULL) {
-			kpause("gendiolk", false, 1, slock);
-			goto retry2;
-		}
-		pmap_remove(kpm, sva, sva + PAGE_SIZE);
-		mutex_exit(slock);
-	}
+	pmap_kremove(kva, klen);
 	pmap_update(kpm);
 	uvm_km_free(kernel_map, kva, klen, UVM_KMF_VAONLY);
 
