@@ -17,10 +17,10 @@
 
 set -e
 
-if [ ! -d work -o ! -d work/pcc -o ! -d work/pcc-libs ]; then
-	echo "checkout or unpack pcc and pcc-libs to work/ first, eg"
+if [ ! -d work -o ! -d work/pcc ]; then
+	echo "checkout or unpack pcc to work/ first, eg"
 	echo ""
-	echo "    cvs -d :pserver:anonymous@pcc.ludd.ltu.se:/cvsroot -f checkout -P -d work -N pcc pcc-libs"
+	echo "    cvs -d :pserver:anonymous@pcc.ludd.ltu.se:/cvsroot -f checkout -P -d work -N pcc"
 	echo ""
 	exit 1
 fi
@@ -46,7 +46,7 @@ done
 echo "====> Creating pcc \"config.h\" file..."
 mkdir work/tmp
 cd work/tmp
-env -i PATH=/bin:/usr/bin /bin/sh ../pcc/configure
+env -i PATH=/bin:/usr/bin /bin/sh ../pcc/configure --enable-tls
 cd ../..
 #
 # comment out items we provide at build time from Makefile.inc
@@ -65,12 +65,13 @@ sed -e "s,^\(#define[[:space:]]*VERSSTR[[:>:]].*\)\$,/* \1 */,"					\
 #
 datestamp=$(cat work/pcc/DATESTAMP)
 version=$(sed -n -e "/PACKAGE_VERSION/s/.*\"\(.*\)\"/\1/p" < work/config.h)
-sed -e "s,^VERSSTR=.*$,VERSSTR=\"pcc ${version} ${datestamp} for \${TARGMACH}-\${TARGOS}\","	\
+sed -e "/^PCC_DATESTAMP=/s/=.*$/=${datestamp}/"	\
+    -e "/^PCC_VERSION=/s/=.*$/=${version}/"	\
 	< Makefile.inc > work/Makefile.inc
 
 echo "====> Replacing pcc sources..."
 rm -Rf dist/pcc dist/pcc-libs
-mv work/pcc work/pcc-libs dist
+mv work/pcc dist
 if cmp -s work/config.h include/config.h; then :; else
     echo "====> Updating include/config.h..."
     mv work/config.h include/config.h
