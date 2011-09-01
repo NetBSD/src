@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.19 2011/08/30 16:06:20 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.20 2011/09/01 15:15:06 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2011/08/30 16:06:20 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2011/09/01 15:15:06 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,14 +146,29 @@ printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_ucp.uc_stack.ss_
 printf("\tpcb->pcb_userland_ucp.uc_stack.ss_sp   = %p\n", pcb->pcb_userland_ucp.uc_stack.ss_sp);
 printf("\tpcb->pcb_userland_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_userland_ucp.uc_stack.ss_size);
 
-	ucp->uc_stack.ss_sp = (void *) stack;
-	ucp->uc_stack.ss_size = pack->ep_ssize;
-	thunk_makecontext_trapframe2go(ucp, (void *) pack->ep_entry, &pcb->pcb_tf);
-
 #ifdef __i386__
-int *reg;
-reg = (int *) &ucp->uc_mcontext;
-reg[8] = l->l_proc->p_psstrp;	/* _REG_EBX */
+	uint *reg, i;
+	reg = (int *) &ucp->uc_mcontext;
+
+	for (i = 4; i < 11; i++)
+		reg[i] = 0;
+
+	ucp->uc_stack.ss_sp = (void *) (stack-4);	/* to prevent clearing */
+	ucp->uc_stack.ss_size = 0; //pack->ep_ssize;
+	thunk_makecontext(ucp, (void *) pack->ep_entry, 0, NULL, NULL);
+
+	/* patch up */
+	reg[ 8] = l->l_proc->p_psstrp;	/* _REG_EBX */
+	reg[17] = (stack);		/* _REG_UESP */
+
+#if 0
+const char *name[] = {"GS", "FS", "ES", "DS", "EDI", "ESI", "EBP", "ESP", "EBX", "EDX", "ECX", "EAX", "TRAPNO", "ERR", "EIP", "CS", "EFL", "UESP", "SS"};
+
+for (i =0; i < 19; i++)
+	printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], reg[i]);
+#endif
+#else
+#	error setregs() not yet `ported'/tweaked to this architecture
 #endif
 
 printf("updated pcb %p\n", pcb);
