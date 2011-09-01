@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.48 2011/08/27 17:48:11 joerg Exp $ */
+/* $NetBSD: style,v 1.49 2011/09/01 09:33:01 christos Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.48 2011/08/27 17:48:11 joerg Exp $");
+__RCSID("$NetBSD: style,v 1.49 2011/09/01 09:33:01 christos Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -353,6 +353,16 @@ function(int a1, int a2, float fl, int a4)
 	 *	(p = f()) == NULL
 	 * not:
 	 *	!(p = f())
+	 *
+	 * The notable exception here is varyadic functions. Since our
+	 * code is designed to compile and work on different environments
+	 * where we don't have control over the NULL definition (on NetBSD
+	 * it is defined as ((void *)0), but on other systems it can be
+	 * defined as (0) and both definitions are valid under ANSI C), it
+	 * it advised to cast NULL to a pointer on varyadic functions,
+	 * because on machines where sizeof(pointer) != sizeof(int) and in
+	 * the absence of a prototype in scope, passing an un-casted NULL,
+	 * will result in passing an int on the stack instead of a pointer.
 	 *
 	 * Don't use `!' for tests unless it's a boolean.
 	 * E.g. use "if (*p == '\0')", not "if (!*p)".
