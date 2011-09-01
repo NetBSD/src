@@ -1,5 +1,5 @@
-/*	Id: table.c,v 1.120 2010/05/14 11:49:59 ragge Exp 	*/	
-/*	$NetBSD: table.c,v 1.1.1.3 2010/06/03 18:57:16 plunky Exp $	*/
+/*	Id: table.c,v 1.137 2011/08/06 15:11:48 ragge Exp 	*/	
+/*	$NetBSD: table.c,v 1.1.1.4 2011/09/01 12:46:36 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -162,6 +162,13 @@ struct optab table[] = {
 
 /* short to something */
 
+/* convert (u)short to (u)short. */
+{ SCONV,	INAREG,
+	SAREG,	TSHORT|TUSHORT,
+	SAREG,	TSHORT|TUSHORT,
+		0,	RLEFT,
+		"", },
+
 /* convert short (in memory) to char */
 { SCONV,	INCH,
 	SNAME|SOREG,	TSHORT|TUSHORT,
@@ -256,19 +263,29 @@ struct optab table[] = {
 		NCSL|NCREG,	RESC1,
 		"	movl AL,A1\n	xorl U1,U1\n", },
 
-/* convert int (in memory) to double */
+/* convert signed int (in memory) to double */
 { SCONV,	INFL,
-	SOREG|SNAME,	TWORD,
+	SOREG|SNAME,	TSWORD,
 	SHFL,	TLDOUBLE|TDOUBLE|TFLOAT,
 		NDREG,	RESC1,
 		"	fildl AL\n", },
 
-/* convert int (in register) to double */
+/* convert signed int (in register) to double */
 { SCONV,	INFL,
-	SAREG,	TWORD,
+	SAREG,	TSWORD,
 	SHFL,	TLDOUBLE|TDOUBLE|TFLOAT,
-		NTEMP|NDREG,	RESC1,
+		NDREG,	RESC1,
 		"	pushl AL\n	fildl (%esp)\n	addl $4,%esp\n", },
+
+/* convert unsigned int (reg&mem) to double */
+{ SCONV,       INFL,
+	SOREG|SNAME|SAREG,	TUWORD,
+	SHFL,	TLDOUBLE|TDOUBLE|TFLOAT,
+		NDREG,	RESC1,
+		"	pushl $0\n"
+		"	pushl AL\n"
+		"	fildq (%esp)\n"
+		"	addl $8,%esp\n", },
 
 /* long long to something */
 
@@ -283,7 +300,7 @@ struct optab table[] = {
 { SCONV,	INCH,
 	SHLL,	TLL,
 	SANY,	TCHAR|TUCHAR,
-		NBREG|NBSL,	RESC1,
+		NBREG|NBSL|NTEMP,	RESC1,
 		"ZS", },
 
 /* convert (u)long long to (u)short (mem->reg) */
@@ -297,7 +314,7 @@ struct optab table[] = {
 { SCONV,	INAREG,
 	SHLL|SOREG|SNAME,	TLL,
 	SAREG,	TSHORT|TUSHORT,
-		NAREG|NASL,	RESC1,
+		NAREG|NASL|NTEMP,	RESC1,
 		"ZS", },
 
 /* convert long long to int (mem->reg) */
@@ -311,7 +328,7 @@ struct optab table[] = {
 { SCONV,	INAREG,
 	SHLL|SOREG|SNAME,	TLL,
 	SAREG,	TWORD|TPOINT,
-		NAREG|NASL,	RESC1,
+		NAREG|NASL|NTEMP,	RESC1,
 		"ZS", },
 
 /* convert long long (in memory) to floating */
@@ -354,14 +371,11 @@ struct optab table[] = {
 		"	subl $4,%esp\n	fistpl (%esp)\n	popl A1\n", },
 #endif
 
-/* convert float/double to (u)int. XXX should use NTEMP here */
+/* convert float/double to int. XXX should use NTEMP here */
 { SCONV,	INAREG,
 	SHFL,	TLDOUBLE|TDOUBLE|TFLOAT,
-	SAREG,	TWORD,
+	SAREG,	TSWORD,
 		NAREG,	RESC1,
-#ifdef notdef	/* Must round down and nothing else */
-		"	subl $4,%esp\n	fistpl (%esp)\n	popl A1\n", },
-#else
 		"	subl $12,%esp\n"
 		"	fnstcw (%esp)\n"
 		"	fnstcw 4(%esp)\n"
@@ -371,18 +385,27 @@ struct optab table[] = {
 		"	movl 8(%esp),A1\n"
 		"	fldcw 4(%esp)\n"
 		"	addl $12,%esp\n", },
-#endif
 
-/* convert float/double (in register) to (unsigned) long long */
-/* XXX - unsigned is not handled correct */
+/* convert float/double to unsigned int. XXX should use NTEMP here */
+{ SCONV,       INAREG,
+	SHFL,	TLDOUBLE|TDOUBLE|TFLOAT,
+	SAREG,	TUWORD,
+		NAREG,	RESC1,
+		"	subl $16,%esp\n"
+		"	fnstcw (%esp)\n"
+		"	fnstcw 4(%esp)\n"
+		"	movb $12,1(%esp)\n"
+		"	fldcw (%esp)\n"
+		"	fistpq 8(%esp)\n"
+		"	movl 8(%esp),A1\n"
+		"	fldcw 4(%esp)\n"
+		"	addl $16,%esp\n", },
+
+/* convert float/double (in register) to long long */
 { SCONV,	INLL,
 	SHFL,	TLDOUBLE|TDOUBLE|TFLOAT,
-	SHLL,	TLONGLONG|TULONGLONG,
+	SHLL,	TLONGLONG,
 		NCREG,	RESC1,
-#ifdef notdef	/* Must round down and nothing else */
-		"	subl $8,%esp\n	fistpq (%esp)\n"
-		"	popl A1\n	popl U1\n", },
-#else
 		"	subl $16,%esp\n"
 		"	fnstcw (%esp)\n"
 		"	fnstcw 4(%esp)\n"
@@ -393,7 +416,27 @@ struct optab table[] = {
 		"	movl 12(%esp),U1\n"
 		"	fldcw 4(%esp)\n"
 		"	addl $16,%esp\n", },
-#endif
+
+/* convert float/double (in register) to unsigned long long */
+{ SCONV,	INLL,
+	SHFL,	TLDOUBLE|TDOUBLE|TFLOAT,
+	SHLL,	TULONGLONG,
+		NCREG,	RESC1,
+		"	subl $16,%esp\n"
+		"	fnstcw (%esp)\n"
+		"	fnstcw 4(%esp)\n"
+		"	movb $15,1(%esp)\n"	/* 64-bit prec */
+		"	fldcw (%esp)\n"
+		"	movl $0x5f000000, 8(%esp)\n"	/* (float)(1<<63) */
+		"	fsubs 8(%esp)\n"	/* keep in range of fistpq */
+		"	fistpq 8(%esp)\n"
+		"	xorb $0x80,15(%esp)\n"	/* addq $1>>63 to 8(%esp) */
+		"	movl 8(%esp),A1\n"
+		"	movl 12(%esp),U1\n"
+		"	fldcw 4(%esp)\n"
+		"	addl $16,%esp\n", },
+ 
+
 
 /* slut sconv */
 
@@ -761,9 +804,9 @@ struct optab table[] = {
  */
 /* (u)longlong left shift is emulated */
 { LS,	INCREG,
-	SCREG|SNAME|SOREG|SCON, TLL,
-	SAREG|SNAME|SOREG|SCON, TINT, /* will be int */
-		NSPECIAL|NCREG|NCSL|NCSR,	RESC1,
+	SCREG,	TLL,
+	SHCH,	TCHAR|TUCHAR,
+		NSPECIAL,	RLEFT,
 		"ZO", },
 
 /* r/m <<= r */
@@ -808,9 +851,9 @@ struct optab table[] = {
 
 /* (u)longlong right shift is emulated */
 { RS,	INCREG,
-	SCREG|SNAME|SOREG|SCON, TLL,
-	SAREG|SNAME|SOREG|SCON, TINT, /* will be int */
-		NSPECIAL|NCREG|NCSL|NCSR,	RESC1,
+	SCREG,	TLL,
+	SHCH,	TCHAR|TUCHAR,
+		NSPECIAL,	RLEFT,
 		"ZO", },
 
 { RS,	INAREG|FOREFF,
@@ -967,10 +1010,16 @@ struct optab table[] = {
 		"	movb AR,AL\n", },
 
 { ASSIGN,	FOREFF|INLL,
-	SHLL|SNAME|SOREG,	TLL,
-	SHLL,			TLL,
+	SNAME|SOREG,	TLL,
+	SHLL,		TLL,
 		0,	RDEST,
 		"	movl AR,AL\n	movl UR,UL\n", },
+
+{ ASSIGN,	FOREFF|INLL,
+	SHLL,	TLL,
+	SHLL,	TLL,
+		0,	RDEST,
+		"ZH", },
 
 { ASSIGN,	FOREFF|INAREG,
 	SAREG|SNAME|SOREG,	TWORD|TPOINT,
@@ -996,45 +1045,6 @@ struct optab table[] = {
 		0,	RDEST,
 		"	movb AR,AL\n", },
 
-{ ASSIGN,	FOREFF|INBREG,
-	SFLD,		TCHAR|TUCHAR,
-	SBREG|SCON,	TCHAR|TUCHAR,
-		NAREG|NBREG,	RDEST,
-		"	movb AR,A2\n"
-		"	movzbl A2,A1\n"
-		"	andl $N,AL\n"
-		"	sall $H,A1\n"
-		"	andl $M,A1\n"
-		"	orl A1,AL\n"
-		"F	movb AR,AD\n"
-		"FZE", },
-
-{ ASSIGN,	FOREFF|INAREG,
-	SFLD,		TSHORT|TUSHORT,
-	SAREG|SCON,	TSHORT|TUSHORT,
-		NAREG,	RDEST,
-		"	movw AR,A1\n"
-		"	movzwl A1,ZN\n"
-		"	andl $N,AL\n"
-		"	sall $H,ZN\n"
-		"	andl $M,ZN\n"
-		"	orl ZN,AL\n"
-		"F	movw AR,AD\n"
-		"FZE", },
-
-{ ASSIGN,	FOREFF|INAREG,
-	SFLD,		TWORD,
-	SAREG|SNAME|SOREG|SCON,	TWORD,
-		NAREG,	RDEST,
-		"	movl AR,A1\n"
-		"	andl $N,AL\n"
-		"	sall $H,A1\n"
-		"	andl $M,A1\n"
-		"	orl A1,AL\n"
-		"ZB"
-		"F	movl AR,AD\n"
-		"FZE", },
-
 { ASSIGN,	INDREG|FOREFF,
 	SHFL,	TFLOAT|TDOUBLE|TLDOUBLE,
 	SHFL,	TFLOAT|TDOUBLE|TLDOUBLE,
@@ -1046,7 +1056,7 @@ struct optab table[] = {
 	SNAME|SOREG,	TLDOUBLE,
 	SHFL,	TFLOAT|TDOUBLE|TLDOUBLE,
 		0,	RDEST,
-		"	fst AL\n", },
+		"	fstpt AL\n	fldt AL\n", }, /* XXX */
 
 { ASSIGN,	FOREFF,
 	SNAME|SOREG,	TLDOUBLE,
@@ -1108,7 +1118,7 @@ struct optab table[] = {
 
 { STASG,	INAREG|FOREFF,
 	SOREG|SNAME,	TANY,
-	SAREG|SOREG|SNAME,	TPTRTO|TANY,
+	SAREG,		TPTRTO|TANY,
 		NSPECIAL,	RDEST,
 		"ZQ", },
 
@@ -1191,9 +1201,9 @@ struct optab table[] = {
 
 /* (u)longlong mul is emulated */
 { MUL,	INCREG,
-	SCREG|SNAME|SOREG|SCON, TLL,
-	SCREG|SNAME|SOREG|SCON, TLL,
-		NSPECIAL|NCREG|NCSL|NCSR,	RESC1,
+	SCREG,	TLL,
+	SCREG,	TLL,
+		NSPECIAL,	RDEST,
 		"ZO", },
 
 { MUL,	INAREG,
@@ -1309,23 +1319,8 @@ struct optab table[] = {
 { OPLOG,	FORCC,
 	SDREG,	TLDOUBLE|TDOUBLE|TFLOAT,
 	SDREG,	TLDOUBLE|TDOUBLE|TFLOAT,
-		NSPECIAL, 	0,
+		0, 	RNOP,
 		"ZG", },
-
-{ OPLOG,	FORCC,
-	SOREG|SNAME,	TDOUBLE|TFLOAT,
-	SDREG,	TLDOUBLE|TDOUBLE|TFLOAT,
-		NSPECIAL, 	0,
-		"ZG", },
-
-#if 0
-/* Ppro and later only */
-{ OPLOG,	FORCC,
-	SDREG,	TLDOUBLE|TDOUBLE|TFLOAT,
-	SDREG,	TLDOUBLE|TDOUBLE|TFLOAT,
-		0, 	RESCC,
-		"ZA	fucomip %st,%st(1)\n", },
-#endif
 
 { OPLOG,	FORCC,
 	SANY,	TANY,
@@ -1417,7 +1412,13 @@ struct optab table[] = {
 
 { OPLTYPE,	INLL,
 	SANY,	TANY,
-	SCREG|SCON|SOREG|SNAME,	TLL,
+	SCREG,	TLL,
+		NCREG,	RESC1,
+		"ZK", },
+
+{ OPLTYPE,	INLL,
+	SANY,	TANY,
+	SCON|SOREG|SNAME,	TLL,
 		NCREG,	RESC1,
 		"	movl UL,U1\n	movl AL,A1\n", },
 
@@ -1609,11 +1610,19 @@ struct optab table[] = {
 		0,	0,
 		"	subl $12,%esp\n	fstpt (%esp)\n", },
 
+#if defined(MACHOABI)
 { STARG,	FOREFF,
 	SAREG|SOREG|SNAME|SCON,	TANY,
 	SANY,	TSTRUCT,
 		NSPECIAL|NAREG,	0,
 		"ZF", },
+#else
+{ STARG,	FOREFF,
+	SAREG,	TPTRTO|TSTRUCT,
+	SANY,	TSTRUCT,
+		NSPECIAL,	0,
+		"ZF", },
+#endif
 
 # define DF(x) FORREW,SANY,TANY,SANY,TANY,REWRITE,x,""
 

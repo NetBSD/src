@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.30 2009/01/24 21:43:49 gmcgarry Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.3 2010/06/03 18:57:23 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.33 2011/06/05 10:19:24 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.4 2011/09/01 12:46:43 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -97,6 +95,7 @@
 #define TARGET_STDARGS
 #define	CHAR_UNSIGNED
 #define	BOOL_TYPE	INT
+#define	WORD_ADDRESSED
 
 /*
  * Use large-enough types.
@@ -113,9 +112,7 @@ typedef long long OFFSZ;
 #undef BACKTEMP 		/* stack grows negatively for temporaries */
 
 #undef	FIELDOPS		/* no bit-field instructions */
-#undef	RTOLBYTES		/* bytes are numbered left to right */
-
-#define ENUMSIZE(high,low) INT	/* enums are always stored in full int */
+#define TARGET_ENDIAN TARGET_BE
 
 /* Definitions mostly used in pass2 */
 

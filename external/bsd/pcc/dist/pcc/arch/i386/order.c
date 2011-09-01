@@ -1,5 +1,5 @@
-/*	Id: order.c,v 1.55 2009/08/16 07:39:57 ragge Exp 	*/	
-/*	$NetBSD: order.c,v 1.1.1.3 2010/06/03 18:57:16 plunky Exp $	*/
+/*	Id: order.c,v 1.60 2011/04/25 18:20:17 ragge Exp 	*/	
+/*	$NetBSD: order.c,v 1.1.1.4 2011/09/01 12:46:36 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -162,9 +162,8 @@ nspecial(struct optab *q)
 	case STASG:
 		{
 			static struct rspecial s[] = {
-				{ NEVER, ESI }, { NEVER, EDI },
-				{ NORIGHT, ESI }, { NORIGHT, EDI },
-				{ NOLEFT, ESI }, { NOLEFT, EDI },
+				{ NEVER, EDI },
+				{ NRIGHT, ESI }, { NOLEFT, ESI },
 				{ NOLEFT, ECX }, { NORIGHT, ECX },
 				{ NEVER, ECX }, { 0 } };
 			return s;
@@ -173,8 +172,14 @@ nspecial(struct optab *q)
 	case STARG:
 		{
 			static struct rspecial s[] = {
+#if defined(MACHOABI)
 				{ NEVER, EAX }, { NEVER, EDX },
 				{ NEVER, ECX }, { 0 } };
+
+#else
+				{ NEVER, EDI }, { NEVER, ECX },
+				{ NLEFT, ESI }, { 0 } };
+#endif
 			return s;
 		}
 
@@ -252,8 +257,8 @@ nspecial(struct optab *q)
 			return s;
 		} else if (q->lshape & SCREG) {
 			static struct rspecial s[] = {
-				{ NEVER, EAX }, { NEVER, EDX },
-				{ NEVER, ECX }, { NRES, EAXEDX }, { 0 } };
+				{ NLEFT, EAXEDX }, { NRIGHT, ECXESI },
+				{ NEVER, ESI }, { NRES, EAXEDX }, { 0 } };
 			return s;
 		}
 		break;
@@ -265,8 +270,8 @@ nspecial(struct optab *q)
 			return s;
 		} else if (q->visit & INCREG) {
 			static struct rspecial s[] = {
-				{ NEVER, EAX }, { NEVER, EDX },
-				{ NEVER, ECX }, { NRES, EAXEDX }, { 0 } };
+				{ NLEFT, EAXEDX }, { NRIGHT, CL },
+				{ NRES, EAXEDX }, { 0 } };
 			return s;
 		}
 		break;

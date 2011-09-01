@@ -1,3 +1,6 @@
+/*	Id: code.c,v 1.20 2011/06/23 13:41:25 ragge Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.4 2011/09/01 12:46:49 plunky Exp $	*/
+
 /*
  * Copyright (c) 2008 David Crawshaw <david@zentus.com>
  * 
@@ -16,43 +19,55 @@
 
 #include "pass1.h"
 
+/*
+ * Print out assembler segment name.
+ */
+void
+setseg(int seg, char *name)
+{
+	switch (seg) {
+	case PROG: name = ".text"; break;
+	case DATA:
+	case LDATA: name = ".data"; break;
+	case STRNG:
+	case RDATA: name = ".section .rodata"; break;
+	case UDATA: break;
+	case PICLDATA:
+	case PICDATA:
+	case PICRDATA:
+	case TLSDATA:
+	case TLSUDATA:
+	case CTORS:
+	case DTORS:
+		uerror("FIXME: unknown section");
+	case NMSEG: 
+		printf("\t.section %s,\"aw\",@progbits\n", name);
+		return;
+	}
+	printf("\t%s\n", name);
+}
+
+
 void
 defloc(struct symtab *sp)
 {
-	static char *loctbl[] = { "text", "data", "rodata" };
-	static int lastloc = -1;
 	TWORD t;
-	char *n;
-	int s;
-
-	if (sp == NULL)
-		return;
+	char *name;
 
 	t = sp->stype;
-	s = ISFTN(t) ? PROG : ISCON(cqual(t, sp->squal)) ? RDATA : DATA;
-	if (s != lastloc)
-		printf("\n\t.section \".%s\"\n", loctbl[s]);
-	lastloc = s;
-	if (s == PROG)
-		return;
 
-	switch (DEUNSIGN(sp->stype)) {
-		case CHAR:	s = 1;
-		case SHORT:	s = 2;
-		case INT:
-		case UNSIGNED:	s = 4;
-		default:	s = 8;
+	if ((name = sp->soname) == NULL)
+		name = exname(sp->sname);
+
+	if (!ISFTN(t)) {
+		printf("\t.type %s,#object\n", name);
+		printf("\t.size %s," CONFMT "\n", name,
+			tsize(sp->stype, sp->sdf, sp->sap) / SZCHAR);
 	}
-	printf("\t.align %d\n", s);
-
-	n = sp->soname ? sp->soname : sp->sname;
 	if (sp->sclass == EXTDEF)
-		printf("\t.global %s\n", n);
+		printf("\t.global %s\n", name);
 	if (sp->slevel == 0) {
-		printf("\t.type %s,#object\n", n);
-		printf("\t.size %s," CONFMT "\n", n,
-			tsize(sp->stype, sp->sdf, sp->ssue) / SZCHAR);
-		printf("%s:\n", n);
+		printf("%s:\n", name);
 	} else
 		printf(LABFMT ":\n", sp->soffset);
 }
@@ -73,9 +88,9 @@ bfcode(struct symtab **sp, int cnt)
 	/* Process the first six arguments. */
 	for (i=0; i < cnt && i < 6; i++) {
 		sym = sp[i];
-		q = block(REG, NIL, NIL, sym->stype, sym->sdf, sym->ssue);
+		q = block(REG, NIL, NIL, sym->stype, sym->sdf, sym->sap);
 		q->n_rval = RETREG_PRE(sym->stype) + i;
-		p = tempnode(0, sym->stype, sym->sdf, sym->ssue);
+		p = tempnode(0, sym->stype, sym->sdf, sym->sap);
 		sym->soffset = regno(p);
 		sym->sflags |= STNODE;
 		p = buildtree(ASSIGN, p, q);
@@ -85,7 +100,7 @@ bfcode(struct symtab **sp, int cnt)
 	/* Process the remaining arguments. */
 	for (off = V9RESERVE; i < cnt; i++) {
 		sym = sp[i];
-		p = tempnode(0, sym->stype, sym->sdf, sym->ssue);
+		p = tempnode(0, sym->stype, sym->sdf, sym->sap);
 		off = ALIGN(off, (tlen(p) - 1));
 		sym->soffset = off * SZCHAR;
 		off += tlen(p);
@@ -97,12 +112,6 @@ bfcode(struct symtab **sp, int cnt)
 }
 
 void
-bccode()
-{
-	SETOFF(autooff, SZINT);
-}
-
-void
 ejobcode(int flag)
 {
 }
@@ -110,6 +119,10 @@ ejobcode(int flag)
 void
 bjobcode()
 {
+	astypnames[USHORT] = astypnames[SHORT] = "\t.half";
+	astypnames[INT] = astypnames[UNSIGNED] = "\t.long";
+	astypnames[LONG] = astypnames[ULONG] = 
+	    astypnames[LONGLONG] = astypnames[ULONGLONG] = "\t.xword";
 }
 
 /*
@@ -134,7 +147,7 @@ moveargs(NODE *p, int *regp, int *stacksize)
 	/* XXX more than six FP args can and should be passed in registers. */
 	if (*regp > 5 && r->n_op != STARG) {
 		/* We are storing the stack offset in n_rval. */
-		r = block(FUNARG, r, NIL, r->n_type, r->n_df, r->n_sue);
+		r = block(FUNARG, r, NIL, r->n_type, r->n_df, r->n_ap);
 		/* Make sure we are appropriately aligned. */
 		*stacksize = ALIGN(*stacksize, (tlen(r) - 1));
 		r->n_rval = *stacksize;
@@ -142,7 +155,7 @@ moveargs(NODE *p, int *regp, int *stacksize)
 	} else if (r->n_op == STARG)
 		cerror("op STARG in moveargs");
 	else {
-		q = block(REG, NIL, NIL, r->n_type, r->n_df, r->n_sue);
+		q = block(REG, NIL, NIL, r->n_type, r->n_df, r->n_ap);
 
 		/*
 		 * The first six non-FP arguments go in the registers O0 - O5.
@@ -195,24 +208,24 @@ funcode(NODE *p)
 	if (stacksize != 0) {
 		stacksize = V9STEP(stacksize); /* 16-bit alignment. */
 
-		r = block(REG, NIL, NIL, INT, 0, MKSUE(INT));
+		r = block(REG, NIL, NIL, INT, 0, 0);
 		r->n_lval = 0;
 		r->n_rval = SP;
-		r = block(MINUS, r, bcon(stacksize), INT, 0, MKSUE(INT));
+		r = block(MINUS, r, bcon(stacksize), INT, 0, 0);
 
-		l = block(REG, NIL, NIL, INT, 0, MKSUE(INT));
+		l = block(REG, NIL, NIL, INT, 0, 0);
 		l->n_lval = 0;
 		l->n_rval = SP;
 		r = buildtree(ASSIGN, l, r);
 
 		p = buildtree(COMOP, r, p);
 
-		r = block(REG, NIL, NIL, INT, 0, MKSUE(INT));
+		r = block(REG, NIL, NIL, INT, 0, 0);
 		r->n_lval = 0;
 		r->n_rval = SP;
-		r = block(PLUS, r, bcon(stacksize), INT, 0, MKSUE(INT));
+		r = block(PLUS, r, bcon(stacksize), INT, 0, 0);
 
-		l = block(REG, NIL, NIL, INT, 0, MKSUE(INT));
+		l = block(REG, NIL, NIL, INT, 0, 0);
 		l->n_lval = 0;
 		l->n_rval = SP;
 		r = buildtree(ASSIGN, l, r);
@@ -221,13 +234,6 @@ funcode(NODE *p)
 
 	}
 	return p;
-}
-
-int
-fldal(unsigned int t)
-{
-	uerror("illegal field type");
-	return ALINT;
 }
 
 void
