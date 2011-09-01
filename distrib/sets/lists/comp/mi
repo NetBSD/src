@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1668 2011/08/30 12:39:50 bouyer Exp $
+#	$NetBSD: mi,v 1.1669 2011/09/01 13:08:17 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2956,9 +2956,9 @@
 ./usr/lib/libpcap.a				comp-c-lib
 ./usr/lib/libpcap_g.a				-unknown-		debuglib
 ./usr/lib/libpcap_p.a				comp-c-proflib		profile
-./usr/lib/libpcc.a				comp-c-lib		pcc
-./usr/lib/libpcc_g.a				-unknown-		pcc,debuglib
-./usr/lib/libpcc_p.a				comp-c-proflib		pcc,profile
+./usr/lib/libpcc.a				comp-obsolete		obsolete
+./usr/lib/libpcc_g.a				-unknown-		obsolete
+./usr/lib/libpcc_p.a				comp-obsolete		obsolete
 ./usr/lib/libpci.a				comp-c-lib
 ./usr/lib/libpci_g.a				-unknown-		debuglib
 ./usr/lib/libpci_p.a				comp-c-proflib		profile
@@ -4346,7 +4346,7 @@
 ./usr/libdata/lint/llib-lp2k.ln			comp-puffs-lintlib	lint
 ./usr/libdata/lint/llib-lpam.ln			comp-c-lintlib		lint,pam
 ./usr/libdata/lint/llib-lpcap.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-lpcc.ln			comp-c-lintlib		lint,pcc
+./usr/libdata/lint/llib-lpcc.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lpci.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lperfuse.ln		comp-perfuse-lintlib	lint
 ./usr/libdata/lint/llib-lposix.ln		comp-c-lintlib		lint

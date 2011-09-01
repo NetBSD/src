@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.187 2011/08/30 12:39:51 bouyer Exp $
+# $NetBSD: shl.mi,v 1.188 2011/09/01 13:08:19 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -98,7 +98,7 @@
 ./usr/lib/libp2k_pic.a				comp-puffs-piclib
 ./usr/lib/libpam_pic.a				comp-c-piclib		pam
 ./usr/lib/libpcap_pic.a				comp-c-piclib
-./usr/lib/libpcc_pic.a				comp-c-piclib		pcc
+./usr/lib/libpcc_pic.a				comp-obsolete		obsolete
 ./usr/lib/libpci_pic.a				comp-c-piclib
 ./usr/lib/libperfuse_pic.a			comp-perfuse-piclib
 ./usr/lib/libposix_pic.a			comp-c-piclib
