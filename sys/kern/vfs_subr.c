@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.424 2011/07/11 08:27:37 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.425 2011/09/01 09:04:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.424 2011/07/11 08:27:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.425 2011/09/01 09:04:08 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -508,7 +508,7 @@ vfinddev(dev_t dev, enum vtype type, vnode_t **vpp)
 
 	mutex_enter(&device_lock);
 	for (vp = specfs_hash[SPECHASH(dev)]; vp; vp = vp->v_specnext) {
-		if (dev == vp->v_rdev && type == vp->v_type)
+		if (type == vp->v_type && dev == vp->v_rdev)
 			break;
 	}
 	if (vp == NULL) {
@@ -543,7 +543,7 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 		for (vp = *vpp; vp != NULL;) {
 			mutex_enter(vp->v_interlock);
 			if ((vp->v_iflag & VI_CLEAN) != 0 ||
-			    dev != vp->v_rdev || type != vp->v_type) {
+			    type != vp->v_type || dev != vp->v_rdev) {
 				mutex_exit(vp->v_interlock);
 				vp = vp->v_specnext;
 				continue;
