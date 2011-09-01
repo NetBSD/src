@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.49 2011/08/31 12:42:41 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.50 2011/09/01 16:23:55 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 2011/08/31 12:42:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 2011/09/01 16:23:55 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -494,7 +494,7 @@ aprint_debug("prot = %d, cur_prot = %d, diff = %d\n", prot, cur_prot, diff);
 	*atype = VM_PROT_READ;  /* assume its a read error */
 	if (diff & VM_PROT_READ) {
 		if ((ppv->pv_pflags & PV_REFERENCED) == 0) {
-			ppv->pv_vflags |= PV_REFERENCED;
+			ppv->pv_pflags |= PV_REFERENCED;
 			pmap_update_page(ppn);
 			return true;
 		}
@@ -507,7 +507,7 @@ aprint_debug("prot = %d, cur_prot = %d, diff = %d\n", prot, cur_prot, diff);
 		*atype = VM_PROT_EXECUTE; /* assume it was executing */
 		if (prot & VM_PROT_EXECUTE) {
 			if ((ppv->pv_pflags & PV_REFERENCED) == 0) {
-				ppv->pv_vflags |= PV_REFERENCED;
+				ppv->pv_pflags |= PV_REFERENCED;
 				pmap_update_page(ppn);
 				return true;
 			}
@@ -522,7 +522,7 @@ aprint_debug("prot = %d, cur_prot = %d, diff = %d\n", prot, cur_prot, diff);
 aprint_debug("should be allowed to write\n");
 			if ((ppv->pv_pflags & PV_MODIFIED) == 0) {
 aprint_debug("was marked unmodified\n");
-				ppv->pv_vflags |= PV_MODIFIED;
+				ppv->pv_pflags |= PV_MODIFIED;
 				pmap_update_page(ppn);
 				return true;
 			}
