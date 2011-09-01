@@ -1,3 +1,5 @@
+/*	Id: code.c,v 1.26 2011/06/05 08:54:42 plunky Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.3 2011/09/01 12:46:32 plunky Exp $	*/
 /*	$OpenBSD: code.c,v 1.2 2007/11/22 15:06:43 stefan Exp $	*/
 
 /*
@@ -94,16 +96,16 @@ efcode()
 	/* address of return struct is in %ret0 */
 	/* create a call to memcpy() */
 	/* will get the result in %ret0 */
-	p = block(REG, NIL, NIL, CHAR+PTR, 0, MKSUE(CHAR+PTR));
+	p = block(REG, NIL, NIL, CHAR+PTR, 0, 0);
 	p->n_rval = RET0;
-	q = block(OREG, NIL, NIL, CHAR+PTR, 0, MKSUE(CHAR+PTR));
+	q = block(OREG, NIL, NIL, CHAR+PTR, 0, 0);
 	q->n_rval = FP;
 	q->n_lval = 8; /* return buffer offset */
-	p = block(CM, q, p, INT, 0, MKSUE(INT));
+	p = block(CM, q, p, INT, 0, 0);
 	sz = (tsize(STRTY, cftnsp->sdf, cftnsp->ssue)+SZCHAR-1)/SZCHAR;
-	p = block(CM, p, bcon(sz), INT, 0, MKSUE(INT));
+	p = block(CM, p, bcon(sz), INT, 0, 0);
 	p->n_right->n_name = "";
-	p = block(CALL, bcon(0), p, CHAR+PTR, 0, MKSUE(CHAR+PTR));
+	p = block(CALL, bcon(0), p, CHAR+PTR, 0, 0);
 	p->n_left->n_name = "memcpy";
 	p = clocal(p);
 	send_passt(IP_NODE, p);
@@ -177,15 +179,6 @@ bfcode(struct symtab **a, int cnt)
 }
 
 
-/*
- * by now, the automatics and register variables are allocated
- */
-void
-bccode()
-{
-	SETOFF(autooff, SZINT);
-}
-
 /* called just before final exit */
 /* flag is 1 if errors, 0 if none */
 void
@@ -203,16 +196,6 @@ bjobcode(void)
 	printf("\t.level\t1.1\n"
 	    "\t.import $global$, data\n"
 	    "\t.import $$dyncall, millicode\n");
-}
-
-/*
- * return the alignment of field of type t
- */
-int
-fldal(unsigned int t)
-{
-	uerror("illegal field type");
-	return(ALINT);
 }
 
 /* fix up type of field p */
@@ -248,8 +231,7 @@ funarg(NODE *p, int *n)
 
 	if (*n >= 4) {
 		*n += sz;
-		r = block(OREG, NIL, NIL, p->n_type|PTR, 0,
-		    MKSUE(p->n_type|PTR));
+		r = block(OREG, NIL, NIL, p->n_type|PTR, 0, 0);
 		r->n_rval = SP;
 		r->n_lval = -(32 + *n * 4);
 	} else {
