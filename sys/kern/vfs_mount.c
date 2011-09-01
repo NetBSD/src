@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.6 2011/06/12 03:35:56 rmind Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.7 2011/09/01 09:04:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.6 2011/06/12 03:35:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.7 2011/09/01 09:04:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1268,7 +1268,7 @@ vfs_mountedon(vnode_t *vp)
 	mutex_enter(&device_lock);
 	for (vq = specfs_hash[SPECHASH(vp->v_rdev)]; vq != NULL;
 	    vq = vq->v_specnext) {
-		if (vq->v_rdev != vp->v_rdev || vq->v_type != vp->v_type)
+		if (vq->v_type != vp->type || vq->v_rdev != vp->v_rdev)
 			continue;
 		if (vq->v_specmountpoint != NULL) {
 			error = EBUSY;
@@ -1295,7 +1295,6 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 	int d_type;
 
 	bvp = NULL;
-	dev = vp->v_rdev;
 	d_type = D_OTHER;
 
 	if (iskmemvp(vp))
@@ -1305,6 +1304,7 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 	case VCHR: {
 		const struct cdevsw *cdev;
 
+		dev = vp->v_rdev;
 		cdev = cdevsw_lookup(dev);
 		if (cdev != NULL) {
 			dev_t blkdev;
@@ -1325,6 +1325,7 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 	case VBLK: {
 		const struct bdevsw *bdev;
 
+		dev = vp->v_rdev;
 		bdev = bdevsw_lookup(dev);
 		if (bdev != NULL)
 			d_type = (bdev->d_flag & D_TYPEMASK);
