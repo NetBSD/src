@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.3 2011/08/31 16:24:58 plunky Exp $	*/
+/*	$NetBSD: edit.c,v 1.4 2011/09/01 07:18:51 plunky Exp $	*/
 /*	$OpenBSD: edit.c,v 1.14 2006/05/25 03:20:32 ray Exp $ */
 
 /*
@@ -41,7 +41,7 @@ edit(const char *filename)
 	switch (pid = fork()) {
 	case 0:
 		/* child */
-		execlp(editor, editor, filename, NULL);
+		execlp(editor, editor, filename, (void *)NULL);
 		warn("could not execute editor: %s", editor);
 		cleanup(filename);
 	case -1:
