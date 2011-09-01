@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.23 2011/09/01 15:13:33 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.24 2011/09/01 18:19:00 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.23 2011/09/01 15:13:33 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.24 2011/09/01 18:19:00 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/ansi.h>
@@ -315,6 +315,12 @@ int
 thunk_sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
 {
 	return sigaction(sig, act, oact);
+}
+
+int
+thunk_sigaltstack(const stack_t *ss, stack_t *oss)
+{
+	return sigaltstack(ss, oss);
 }
 
 void
