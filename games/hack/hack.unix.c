@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.unix.c,v 1.16 2011/08/31 16:24:56 plunky Exp $	*/
+/*	$NetBSD: hack.unix.c,v 1.17 2011/09/01 07:18:50 plunky Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.unix.c,v 1.16 2011/08/31 16:24:56 plunky Exp $");
+__RCSID("$NetBSD: hack.unix.c,v 1.17 2011/09/01 07:18:50 plunky Exp $");
 #endif				/* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */
@@ -506,7 +506,7 @@ readmail(void)
 	if (!(mr = getenv("MAILREADER")))
 		mr = DEF_MAILREADER;
 	if (child(1)) {
-		execl(mr, mr, NULL);
+		execl(mr, mr, (char *)NULL);
 		exit(1);
 	}
 #else	/* DEF_MAILREADER */
