@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/07/25 16:32:44 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/09/01 12:24:36 joerg Exp $
 
 LIB=	LLVMTarget
 
@@ -17,7 +17,6 @@ SRCS+=	Mangler.cpp \
 	TargetLoweringObjectFile.cpp \
 	TargetMachine.cpp \
 	TargetRegisterInfo.cpp \
-	TargetRegistry.cpp \
 	TargetSubtargetInfo.cpp
 
 .if defined(HOSTLIB)

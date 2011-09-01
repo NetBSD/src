@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/08/02 17:12:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/09/01 12:24:36 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -46,6 +46,7 @@ SRCS+=	APFloat.cpp \
 	StringPool.cpp \
 	StringRef.cpp \
 	SystemUtils.cpp \
+	TargetRegistry.cpp \
 	Timer.cpp \
 	ToolOutputFile.cpp \
 	Triple.cpp \

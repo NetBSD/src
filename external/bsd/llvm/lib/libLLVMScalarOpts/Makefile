@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/07/04 16:10:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/09/01 12:24:36 joerg Exp $
 
 LIB=	LLVMScalarOpts
 
@@ -36,7 +36,6 @@ SRCS+=	ADCE.cpp \
 	SimplifyCFGPass.cpp \
 	SimplifyLibCalls.cpp \
 	Sink.cpp \
-	TailDuplication.cpp \
 	TailRecursionElimination.cpp
 
 .if defined(HOSTLIB)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/07/05 17:22:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/09/01 12:24:35 joerg Exp $
 
 LIB=	LLVMARMDisassembler
 
@@ -9,8 +9,7 @@ CPPFLAGS+=	-I${ARM_OBJDIR} -I${LLVM_SRCDIR}/lib/Target/ARM
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/ARM/Disassembler
 
-SRCS+=	ARMDisassembler.cpp \
-	ARMDisassemblerCore.cpp
+SRCS+=	ARMDisassembler.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

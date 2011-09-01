@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/08/02 17:12:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/09/01 12:24:36 joerg Exp $
 
 LIB=	LLVMX86CodeGen
 
@@ -23,7 +23,8 @@ SRCS+=	SSEDomainFix.cpp \
 	X86SelectionDAGInfo.cpp \
 	X86Subtarget.cpp \
 	X86TargetMachine.cpp \
-	X86TargetObjectFile.cpp
+	X86TargetObjectFile.cpp \
+	X86VZeroUpper.cpp
 
 TABLEGEN_SRC=		X86.td
 TABLEGEN_INCLUDES=	-I${LLVM_SRCDIR}/lib/Target/X86

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/08/02 17:12:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2011/09/01 12:24:35 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -30,6 +30,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	IntrinsicLowering.cpp \
 	LLVMTargetMachine.cpp \
 	LatencyPriorityQueue.cpp \
+	LexicalScopes.cpp \
 	LiveDebugVariables.cpp \
 	LiveInterval.cpp \
 	LiveIntervalAnalysis.cpp \

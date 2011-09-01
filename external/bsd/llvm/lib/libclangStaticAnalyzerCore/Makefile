@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/08/02 17:12:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/09/01 12:24:37 joerg Exp $
 
 LIB=	clangStaticAnalyzerCore
 
@@ -14,20 +14,25 @@ SRCS+=	AggExprVisitor.cpp \
 	BugReporter.cpp \
 	BugReporterVisitors.cpp \
 	CFRefCount.cpp \
-	CXXExprEngine.cpp \
+	Checker.cpp \
 	CheckerContext.cpp \
 	CheckerHelpers.cpp \
 	CheckerManager.cpp \
+	CheckerRegistry.cpp \
 	CoreEngine.cpp \
 	Environment.cpp \
 	ExplodedGraph.cpp \
 	ExprEngine.cpp \
-	GRState.cpp \
+	ExprEngineC.cpp \
+	ExprEngineCXX.cpp \
+	ExprEngineCallAndReturn.cpp \
+	ExprEngineObjC.cpp \
 	HTMLDiagnostics.cpp \
 	MemRegion.cpp \
 	ObjCMessage.cpp \
 	PathDiagnostic.cpp \
 	PlistDiagnostics.cpp \
+	ProgramState.cpp \
 	RangeConstraintManager.cpp \
 	RegionStore.cpp \
 	SimpleConstraintManager.cpp \
