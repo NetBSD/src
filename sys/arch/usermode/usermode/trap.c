@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.14 2011/08/31 12:42:41 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.15 2011/09/01 15:03:41 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.14 2011/08/31 12:42:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.15 2011/09/01 15:03:41 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,6 +85,8 @@ static void
 mem_access_handler(int sig, siginfo_t *info, void *ctx)
 {
 	static volatile int recurse = 0;
+	static vaddr_t old_va, old_old_va = 0;
+
 	struct proc *p;
 	struct lwp *l;
 	struct pcb *pcb;
@@ -106,7 +108,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		onfault = pcb->pcb_onfault;
 		vm = p->p_vmspace;
 
-#if 0
+#if 1
 		va = (vaddr_t) info->si_addr;
 		printf("trap lwp = %p pid = %d lid = %d, va = %p\n",
 		    curlwp,
@@ -163,13 +165,14 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		}
 
 #if 0
-//if (!rv) {
-//	static int off = 0;
-	printf("*va = %d\n", *((uint32_t *) va));
+	if (old_old_va)
+		thunk_pwrite(debug_fh, (void *) old_old_va, PAGE_SIZE, old_old_va);
+	if (old_va)
+		thunk_pwrite(debug_fh, (void *) old_va, PAGE_SIZE, old_va);
 	thunk_pwrite(debug_fh, (void *) va, PAGE_SIZE, va);
-//	off += PAGE_SIZE;
-//}
 #endif
+	old_old_va = old_va;
+	old_va = va;
 
 		if (rv) {
 			aprint_debug("uvm_fault returned error %d\n", rv);
