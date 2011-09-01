@@ -1,5 +1,5 @@
-/*	Id: symtabs.c,v 1.18 2008/06/19 08:05:00 gmcgarry Exp 	*/	
-/*	$NetBSD: symtabs.c,v 1.1.1.2 2010/06/03 18:57:43 plunky Exp $	*/
+/*	Id: symtabs.c,v 1.24 2011/07/16 20:34:50 ragge Exp 	*/	
+/*	$NetBSD: symtabs.c,v 1.1.1.3 2011/09/01 12:47:02 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -51,6 +51,7 @@ int nametabs, namestrlen;
 static struct tree *firststr;
 int strtabs, strstrlen;
 static char *symtab_add(char *key, struct tree **, int *, int *);
+int lastloc = NOSEG;
 
 #define	P_BIT(key, bit) (key[bit >> 3] >> (bit & 7)) & 1
 #define	getree() permalloc(sizeof(struct tree))
@@ -350,8 +351,7 @@ hide(struct symtab *sym)
 	new->snext = tmpsyms[typ];
 	tmpsyms[typ] = new;
 
-	if (Wshadow)
-		werror("declaration of '%s' shadows previous", sym->sname);
+	warner(Wshadow, sym->sname, sym->slevel ? "local" : "global");
 
 #ifdef PCC_DEBUG
 	if (ddebug)
@@ -360,3 +360,96 @@ hide(struct symtab *sym)
 #endif
 	return new;
 }
+
+/*
+ * Extract correct segment for the specified symbol and call
+ * target routines to print it out.
+ * If symtab entry is specified, output alignment as well.
+ */
+void
+locctr(int seg, struct symtab *sp)
+{
+	struct attr *ga;
+
+	if (seg == NOSEG) {
+		;
+	} else if (sp == NULL) {
+		if (lastloc != seg)
+			setseg(seg, NULL);
+	} else if ((ga = attr_find(sp->sap, GCC_ATYP_SECTION)) != NULL) {
+		setseg(NMSEG, ga->sarg(0));
+		seg = NOSEG;
+	} else {
+		if (seg == DATA) {
+			if (ISCON(cqual(sp->stype, sp->squal)))
+				seg = RDATA;
+			else if (sp->sclass == STATIC)
+				seg = LDATA;
+		}
+		if (sp->sflags & STLS) {
+			if (seg == DATA || seg == LDATA)
+				seg = TLSDATA;
+			if (seg == UDATA) seg = TLSUDATA;
+		} else if (kflag) {
+			if (seg == DATA) seg = PICDATA;
+			if (seg == RDATA) seg = PICRDATA;
+			if (seg == LDATA) seg = PICLDATA;
+		}
+		if (lastloc != seg)
+			setseg(seg, NULL);
+	}
+	lastloc = seg;
+
+	/* setup alignment */
+#ifndef ALFTN
+#define	ALFTN	ALINT
+#endif
+	if (sp) {
+		int al;
+
+		if (ISFTN(sp->stype)) {
+			al = ALFTN;
+		} else
+			al = talign(sp->stype, sp->sap);
+		defalign(al);
+		symdirec(sp);
+	}
+}
+
+#ifndef MYALIGN
+void
+defalign(int al)
+{
+#ifdef	HASP2ALIGN
+#define	P2ALIGN(x)	ispow2(x)
+#else
+#define	P2ALIGN(x)	(x)
+#endif
+	if (al != ALCHAR)
+		printf("\t.align %d\n", P2ALIGN(al/ALCHAR));
+}
+#endif
+
+#ifndef MYDIREC
+/*
+ * Directives given as attributes to symbols.
+ */
+void
+symdirec(struct symtab *sp)
+{
+	struct attr *ga;
+	char *name;
+
+	if ((name = sp->soname) == NULL)
+		name = exname(sp->sname);
+	if ((ga = attr_find(sp->sap, GCC_ATYP_WEAK)) != NULL)
+		printf("\t.weak %s\n", name);
+	if ((ga = attr_find(sp->sap, GCC_ATYP_VISIBILITY)) &&
+	    strcmp(ga->sarg(0), "default"))
+		printf("\t.%s %s\n", ga->sarg(0), name);
+	if ((ga = attr_find(sp->sap, GCC_ATYP_ALIASWEAK))) {
+		printf("\t.weak %s\n", ga->sarg(0));
+		printf("\t.set %s,%s\n", ga->sarg(0), name);
+	}
+}
+#endif

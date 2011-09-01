@@ -1,5 +1,5 @@
-#	Id: Makefile.in,v 1.22 2009/11/14 16:27:23 ragge Exp 	
-#	$NetBSD: Makefile.in,v 1.1.1.2 2010/06/03 18:57:33 plunky Exp $
+#	Id: Makefile.in,v 1.28 2011/08/20 21:40:37 plunky Exp 	
+#	$NetBSD: Makefile.in,v 1.1.1.3 2011/09/01 12:46:52 plunky Exp $
 #
 # Makefile.in for the cc part of pcc.
 #
@@ -19,6 +19,7 @@ strip = @strip@
 CC = @CC@
 EXEEXT = @EXEEXT@
 TARGOS = @targos@
+TARGOSVER = @targosver@
 TARGMACH = @targmach@
 TARGET = @target@
 VERSION = @PACKAGE_VERSION@
@@ -28,7 +29,7 @@ CFLAGS = @CFLAGS@ @ADD_CFLAGS@
 CPPFLAGS = @CPPFLAGS@ -DLIBEXECDIR=\"${libexecdir}/\" \
 	@ADD_CPPFLAGS@ -DINCLUDEDIR=\"${includedir}/\" \
 	-DPCCINCDIR=\"${PCCINCDIR}/\" -DPCCLIBDIR=\"${PCCLIBDIR}/\" \
-	-Dos_${TARGOS} -DTARGMACH=${TARGMACH} -Dmach_${TARGMACH} \
+	-Dos_${TARGOS} -Dmach_${TARGMACH} -DTARGOSVER=${TARGOSVER} \
 	-I${top_builddir} -I${top_srcdir}/os/${TARGOS} -I${MIPDIR} -I${MDIR}
 LIBS = @LIBS@
 LDFLAGS = @LDFLAGS@
@@ -44,13 +45,13 @@ MDIR=${top_srcdir}/arch/$(TARGMACH)
 all: ${DEST}
 
 ${DEST}: $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@
+	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
 
 .c.o:
-	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 compat.o: $(MIPDIR)/compat.c
-	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MIPDIR)/compat.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(MIPDIR)/compat.c
 
 install:
 	test -z "${DESTDIR}$(bindir)" || mkdir -p "${DESTDIR}$(bindir)"
@@ -65,7 +66,7 @@ install:
 	test -z "${DESTDIR}$(PCCLIBDIR)" || mkdir -p "${DESTDIR}$(PCCLIBDIR)"
 
 clean:
-	/bin/rm -f  $(OBJS) ${DEST}
+	rm -f  $(OBJS) ${DEST}
 
 distclean: clean
-	/bin/rm -f  Makefile
+	rm -f  Makefile

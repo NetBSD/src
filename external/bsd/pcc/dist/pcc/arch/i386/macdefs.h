@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.73 2010/05/14 11:49:19 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.3 2010/06/03 18:57:15 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.83 2011/06/23 13:41:25 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.4 2011/09/01 12:46:36 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -99,7 +99,7 @@
 
 /* Default char is signed */
 #undef	CHAR_UNSIGNED
-#define	BOOL_TYPE	CHAR	/* what used to store _Bool */
+#define	BOOL_TYPE	UCHAR	/* what used to store _Bool */
 
 /*
  * Use large-enough types.
@@ -128,17 +128,17 @@ typedef long long OFFSZ;
 
 #ifdef MACHOABI
 #define STAB_LINE_ABSOLUTE	/* S_LINE fields use absolute addresses */
+#define	MYALIGN			/* user power-of-2 alignment */
 #endif
 
 #define BACKAUTO 		/* stack grows negatively for automatics */
 #define BACKTEMP 		/* stack grows negatively for temporaries */
 
 #undef	FIELDOPS		/* no bit-field instructions */
-#define	RTOLBYTES		/* bytes are numbered right to left */
-
-#define ENUMSIZE(high,low) INT	/* enums are always stored in full int */
+#define TARGET_ENDIAN TARGET_LE
 
 #define FINDMOPS	/* i386 has instructions that modifies memory */
+#define	CC_DIV_0	/* division by zero is safe in the compiler */
 
 /* Definitions mostly used in pass2 */
 
@@ -319,7 +319,6 @@ int COLORMAP(int c, int *r);
  * i386-specific symbol table flags.
  */
 #define	SSECTION	SLOCAL1
-#define	STLS		SLOCAL2
 #define SSTDCALL	SLOCAL2	
 #define SDLLINDIRECT	SLOCAL3
 
@@ -347,6 +346,8 @@ int numconv(void *ip, void *p, void *q);
 #define	XASM_NUMCONV(ip, p, q)	numconv(ip, p, q)
 int xasmconstregs(char *);
 #define	XASMCONSTREGS(x) xasmconstregs(x)
+#define	MYSETXARG if (XASMVAL(cw) == 'q') {	\
+	c = 'r'; addalledges(&ablock[ESI]); addalledges(&ablock[EDI]); }
 
 /*
  * builtins.
@@ -357,8 +358,8 @@ int xasmconstregs(char *);
 
 #define NODE struct node
 struct node;
-NODE *i386_builtin_frame_address(NODE *f, NODE *a);
-NODE *i386_builtin_return_address(NODE *f, NODE *a);
+NODE *i386_builtin_frame_address(NODE *f, NODE *a, unsigned int);
+NODE *i386_builtin_return_address(NODE *f, NODE *a, unsigned int);
 #undef NODE
 
 #if defined(MACHOABI)

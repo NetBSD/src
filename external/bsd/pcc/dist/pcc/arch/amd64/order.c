@@ -1,5 +1,5 @@
-/*	Id: order.c,v 1.7 2010/05/30 15:32:45 ragge Exp 	*/	
-/*	$NetBSD: order.c,v 1.1.1.2 2010/06/03 18:57:08 plunky Exp $	*/
+/*	Id: order.c,v 1.14 2011/02/18 17:08:31 ragge Exp 	*/	
+/*	$NetBSD: order.c,v 1.1.1.3 2011/09/01 12:46:28 plunky Exp $	*/
 /*
  * Copyright (c) 2008 Michael Shalayeff
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -58,7 +58,7 @@ findls(NODE *p, int check)
 		p = p->n_left; /* Ignore pointless SCONVs here */
 	if (p->n_op != LS || p->n_right->n_op != ICON)
 		return 0;
-	if ((c = p->n_right->n_lval) != 2 && c != 4 && c != 8)
+	if ((c = p->n_right->n_lval) != 1 && c != 2 && c != 3)
 		return 0;
 	if (check == 1 && p->n_left->n_op != REG)
 		return 0;
@@ -257,7 +257,13 @@ nspecial(struct optab *q)
 		break;
 
 	case MOD:
-		{
+		if (q->ltype & TUCHAR) {
+			static struct rspecial s[] = {
+				{ NEVER, RAX },
+				{ NLEFT, RAX }, { NRES, RAX },
+				{ NORIGHT, RAX }, { 0 } };
+			return s;
+		} else {
 			static struct rspecial s[] = {
 				{ NEVER, RAX }, { NEVER, RDX },
 				{ NLEFT, RAX }, { NRES, RDX },
@@ -266,39 +272,34 @@ nspecial(struct optab *q)
 		}
 		break;
 
-	case STASG:
 	case STARG:
 		{
 			static struct rspecial s[] = {
-				{ NEVER, RAX }, { NEVER, RDX },
-				{ NEVER, RCX }, { NEVER, RSI },
-				{ NEVER, RDI }, { NEVER, R08 },
-				{ NEVER, R09 }, { NEVER, R10 },
-				{ NEVER, R11 }, { 0 } };
+				{ NEVER, RDI }, 
+				{ NLEFT, RSI },
+				{ NEVER, RCX }, { 0 } };
 			return s;
 		}
 
-#if 0
-	case OPLOG:
+	case STASG:
 		{
-			static struct rspecial s[] = { { NEVER, EAX }, { 0 } };
+			static struct rspecial s[] = {
+				{ NEVER, RDI }, 
+				{ NRIGHT, RSI }, { NOLEFT, RSI },
+				{ NOLEFT, RCX }, { NORIGHT, RCX },
+				{ NEVER, RCX }, { 0 } };
 			return s;
 		}
 
 	case MUL:
-		if (q->lshape == SBREG) {
+		if (q->lshape == SAREG) {
 			static struct rspecial s[] = {
-				{ NEVER, AL }, { NEVER, AH },
-				{ NLEFT, AL }, { NRES, AL }, { 0 } };
-			return s;
-		} else if (q->lshape & SCREG) {
-			static struct rspecial s[] = {
-				{ NEVER, EAX }, { NEVER, EDX },
-				{ NEVER, ECX }, { NRES, RAX }, { 0 } };
+				{ NEVER, RAX },
+				{ NLEFT, RAX }, { NRES, RAX }, { 0 } };
 			return s;
 		}
 		break;
-#endif
+
 	case LS:
 	case RS:
 		{
@@ -330,20 +331,22 @@ setorder(NODE *p)
 int *
 livecall(NODE *p)
 {
-	static int r[] = { R09, R08, RCX, RDX, RSI, RDI, -1 };
+	static int r[NTEMPREG+1];
+	NODE *q;
+	int cr = 0;
+
+	if (optype(p->n_op) != BITYPE)
+		return r[0] = -1, r;
+
+	for (q = p->n_right; q->n_op == CM; q = q->n_left) {
+		if (q->n_right->n_op == ASSIGN &&
+		    q->n_right->n_left->n_op == REG)
+			r[cr++] = regno(q->n_right->n_left);
+	}
+	if (q->n_op == ASSIGN && q->n_left->n_op == REG)
+		r[cr++] = regno(q->n_left);
+	r[cr++] = -1;
 	return r;
-#if 0
-	static int r[] = { EAX, EBX, -1 };
-	int off = 1;
-
-#ifdef TLS
-	if (p->n_left->n_op == ICON &&
-	    strcmp(p->n_left->n_name, "___tls_get_addr@PLT") == 0)
-		off--;
-#endif
-
-	return kflag ? &r[off] : &r[2];
-#endif
 }
 
 /*

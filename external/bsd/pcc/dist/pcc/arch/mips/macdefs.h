@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.10 2009/01/24 21:43:49 gmcgarry Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.3 2010/06/03 18:57:19 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.16 2011/07/28 14:12:07 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.4 2011/09/01 12:46:40 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -36,7 +36,7 @@
  * Machine-dependent defines for both passes.
  */
 
-#if TARGOS == netbsd
+#if defined(os_netbsd)
 #define USE_GAS
 #endif
 
@@ -122,9 +122,8 @@ typedef long long OFFSZ;
 #define BACKTEMP 		/* stack grows negatively for temporaries */
 
 #undef	FIELDOPS		/* no bit-field instructions */
-#define RTOLBYTES 1		/* bytes are numbered right to left */
-
-#define ENUMSIZE(high,low) INT	/* enums are always stored in full int */
+#define TARGET_ENDIAN TARGET_LE
+#define	MYALIGN
 
 /* Definitions mostly used in pass2 */
 
@@ -339,13 +338,13 @@ extern int nargregs;
 
 #define TARGET_STDARGS
 #define TARGET_BUILTINS						\
-	{ "__builtin_stdarg_start", mips_builtin_stdarg_start },	\
-	{ "__builtin_va_arg", mips_builtin_va_arg },		\
-	{ "__builtin_va_end", mips_builtin_va_end },		\
-	{ "__builtin_va_copy", mips_builtin_va_copy },
+	{ "__builtin_stdarg_start", mips_builtin_stdarg_start, 2 },	\
+	{ "__builtin_va_arg", mips_builtin_va_arg, 2 },		\
+	{ "__builtin_va_end", mips_builtin_va_end, 1 },		\
+	{ "__builtin_va_copy", mips_builtin_va_copy, 2 },
 
 struct node;
-struct node *mips_builtin_stdarg_start(struct node *f, struct node *a);
-struct node *mips_builtin_va_arg(struct node *f, struct node *a);
-struct node *mips_builtin_va_end(struct node *f, struct node *a);
-struct node *mips_builtin_va_copy(struct node *f, struct node *a);
+struct node *mips_builtin_stdarg_start(struct node *f, struct node *a, unsigned int);
+struct node *mips_builtin_va_arg(struct node *f, struct node *a, unsigned int);
+struct node *mips_builtin_va_end(struct node *f, struct node *a, unsigned int);
+struct node *mips_builtin_va_copy(struct node *f, struct node *a, unsigned int);
