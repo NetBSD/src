@@ -1,4 +1,4 @@
-#	$NetBSD: files.loongson,v 1.1 2011/08/27 13:42:44 bouyer Exp $
+#	$NetBSD: files.loongson,v 1.2 2011/09/01 14:07:36 macallan Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -73,32 +73,12 @@ device	ykbec
 attach	ykbec at isa
 file	arch/evbmips/loongson/dev/kb3310.c		ykbec needs-flag
 
-# Silicon Motion SM502 master device
-#device	voyager {}: gpiobus
-#attach	voyager at pci
-#file	arch/loongson/dev/voyager.c			voyager
-
-# SM502 specific I2C bus bit-banging
-#device	gdiumiic: i2cbus, i2c_bitbang
-#attach	gdiumiic at gpio
-#file	arch/loongson/dev/gdiumiic.c			gdiumiic
-
 # Gdium ST7 controller
-#device	stsec
-#attach	stsec at i2c
-#file	arch/loongson/dev/stsec.c			stsec
-
-# Gdium M41T8x RTC
-#device	mfokclock
-#attach	mfokclock at i2c
-#file	arch/loongson/dev/m41t8xclock.c			mfokclock
+device	stvii
+attach	stvii at iic
+file	arch/evbmips/loongson/dev/stvii.c			stvii
+defflag opt_stvii.h STVII_DEBUG
 
 # SM502 OHCI
 #attach	ohci at voyager with ohci_voyager
 #file	arch/loongson/dev/ohci_voyager.c		ohci_voyager
-
-# Silicon Motion SM502/SM712 frame buffer
-#device	smfb: wsemuldisplaydev, rasops16
-#attach	smfb at pci with smfb_pci
-#attach	smfb at voyager with smfb_voyager
-#file	arch/loongson/dev/smfb.c			smfb	needs-flag
