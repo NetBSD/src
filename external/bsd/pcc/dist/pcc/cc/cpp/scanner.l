@@ -1,6 +1,6 @@
 %{
-/*	Id: scanner.l,v 1.49 2009/02/14 09:23:55 ragge Exp    */	
-/*	$NetBSD: scanner.l,v 1.1.1.3 2010/06/03 18:57:36 plunky Exp $   */
+/*	Id: scanner.l,v 1.50 2011/06/03 15:42:45 plunky Exp    */	
+/*	$NetBSD: scanner.l,v 1.1.1.4 2011/09/01 12:46:55 plunky Exp $   */
 
 /*
  * Copyright (c) 2004 Anders Magnusson. All rights reserved.
@@ -531,7 +531,7 @@ prtline()
 void
 cunput(int c)
 {
-#ifdef CPP_DEBUG
+#ifdef PCC_DEBUG
 	extern int dflag;
 	if (dflag)printf(": '%c'(%d)", c > 31 ? c : ' ', c);
 #endif

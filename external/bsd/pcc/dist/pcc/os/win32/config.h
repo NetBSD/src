@@ -25,8 +25,8 @@
 #define STDINC "%PCCDIR%\\include\\"
 #define LIBDIR "%PCCDIR%\\lib\\"
 #define INCLUDEDIR STDINC
-#define PCCLIBDIR "%PCCDIR%\\lib\\i386-win32\\0.9.9\\lib\\"
-#define PCCINCDIR "%PCCDIR%\\lib\\i386-win32\\0.9.9\\include\\"
+#define PCCLIBDIR "%PCCDIR%\\lib\\i386-win32\\1.1.0\\lib\\"
+#define PCCINCDIR "%PCCDIR%\\lib\\i386-win32\\1.1.0\\include\\"
 
 #if !defined(vsnprintf)
 #define vsnprintf _vsnprintf
@@ -66,16 +66,15 @@
 #define ISFLEX 1
 
 #define PACKAGE_NAME "pcc"
-#define PACKAGE_STRING "pcc 0.9.9"
+#define PACKAGE_STRING "pcc 1.1.0"
 #define PACKAGE_TARNAME "pcc"
-#define PACKAGE_VERSION "0.9.9"
-#define PCC_MAJOR 0
-#define PCC_MINOR 9
-#define PCC_MINORMINOR 9
+#define PACKAGE_VERSION "1.1.0"
+#define PCC_MAJOR 1
+#define PCC_MINOR 1
+#define PCC_MINORMINOR 0
 #define STDC_HEADERS 1
 #define TARGET_LITTLE_ENDIAN 1
-/* #define TARGOS win32 */
-#define VERSSTR "pcc 0.9.9 for win32, gmcgarry@pcc.ludd.ltu.se"
+#define VERSSTR "pcc 1.1.0 for win32, gmcgarry@pcc.ludd.ltu.se"
 #define WCHAR_SIZE 2
 #define WCHAR_TYPE USHORT
 #define YYTEXT_POINTER 1

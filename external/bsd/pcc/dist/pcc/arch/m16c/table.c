@@ -1,3 +1,6 @@
+/*	Id: table.c,v 1.35 2011/06/05 08:54:42 plunky Exp 	*/	
+/*	$NetBSD: table.c,v 1.1.1.2 2011/09/01 12:46:38 plunky Exp $	*/
+
 #include "pass2.h"
 
 # define ANYSIGNED TINT|TLONG|TCHAR
