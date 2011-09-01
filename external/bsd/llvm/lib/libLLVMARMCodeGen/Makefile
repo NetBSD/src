@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/07/25 16:32:43 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/09/01 12:24:35 joerg Exp $
 
 LIB=	LLVMARMCodeGen
 
@@ -54,7 +54,8 @@ TABLEGEN_OUTPUT= \
 	ARMGenCallingConv.inc|-gen-callingconv \
 	ARMGenSubtargetInfo.inc|-gen-subtarget \
 	ARMGenEDInfo.inc|-gen-enhanced-disassembly-info \
-	ARMGenDecoderTables.inc|-gen-arm-decoder
+	ARMGenDecoderTables.inc|-gen-arm-decoder \
+	ARMGenDisassemblerTables.inc|-gen-disassembler
 
 .include "${.PARSEDIR}/../../tablegen.mk"
 
