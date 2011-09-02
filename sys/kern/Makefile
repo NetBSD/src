@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2008/10/25 22:35:36 apb Exp $
+#	$NetBSD: Makefile,v 1.16 2011/09/02 22:15:16 dyoung Exp $
 #
 #	from: @(#)Makefile	8.2 (Berkeley) 3/21/94
 
@@ -18,6 +18,8 @@ VNODEIFSRC = vnode_if.sh vnode_if.src
 vnode_if.c ../sys/vnode_if.h: ${VNODEIFSRC}
 	${HOST_SH} vnode_if.sh vnode_if.src
 
+subr_vmem: subr_vmem.c
+	$(CC) -DVMEM_SANITY -g -Wall -o subr_vmem subr_vmem.c
 
 # Kernel tags:
 # Tags files are built in the top-level directory for each architecture,
