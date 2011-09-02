@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.42 2011/08/25 15:14:19 dyoung Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.43 2011/09/02 22:25:08 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.42 2011/08/25 15:14:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.43 2011/09/02 22:25:08 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -284,6 +284,7 @@ int
 rump_shmif_create(const char *path, int *ifnum)
 {
 	struct shmif_sc *sc;
+	vmem_addr_t t;
 	int unit, error;
 	int memfd = -1; /* XXXgcc */
 
@@ -293,8 +294,16 @@ rump_shmif_create(const char *path, int *ifnum)
 			return error;
 	}
 
-	unit = vmem_xalloc(shmif_units, 1, 0, 0, 0,
-	    VMEM_ADDR_MIN, VMEM_ADDR_MAX, VM_INSTANTFIT | VM_SLEEP) - 1;
+	error = vmem_xalloc(shmif_units, 1, 0, 0, 0,
+	    VMEM_ADDR_MIN, VMEM_ADDR_MAX, VM_INSTANTFIT | VM_SLEEP, &t);
+
+	if (error != 0) {
+		if (path)
+			rumpuser_close(memfd, NULL);
+		return error;
+	}
+
+	unit = t - 1;
 
 	if ((error = allocif(unit, &sc)) != 0) {
 		if (path)
@@ -325,7 +334,8 @@ rump_shmif_create(const char *path, int *ifnum)
 static int
 shmif_clone(struct if_clone *ifc, int unit)
 {
-	int unit2;
+	int rc;
+	vmem_addr_t unit2;
 
 	/*
 	 * Ok, we know the unit number, but we must still reserve it.
@@ -334,9 +344,9 @@ shmif_clone(struct if_clone *ifc, int unit)
 	 * the range of unit numbers by +1 since vmem cannot deal with
 	 * ranges starting from 0.  Talk about uuuh.
 	 */
-	unit2 = vmem_xalloc(shmif_units, 1, 0, 0, 0, unit+1, unit+1,
-	    VM_SLEEP | VM_INSTANTFIT);
-	KASSERT(unit2-1 == unit);
+	rc = vmem_xalloc(shmif_units, 1, 0, 0, 0, unit+1, unit+1,
+	    VM_SLEEP | VM_INSTANTFIT, &unit2);
+	KASSERT(rc == 0 && unit2-1 == unit);
 
 	return allocif(unit, NULL);
 }

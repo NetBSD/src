@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.156 2011/06/12 03:36:04 rmind Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.157 2011/09/02 22:25:08 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.156 2011/06/12 03:36:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.157 2011/09/02 22:25:08 dyoung Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -817,7 +817,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	struct vnode *vp;
 	int error, npages, nblocks, size;
 	long addr;
-	u_long result;
+	vmem_addr_t result;
 	struct vattr va;
 	const struct bdevsw *bdev;
 	dev_t dev;
@@ -980,8 +980,8 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	/*
 	 * now add the new swapdev to the drum and enable.
 	 */
-	result = vmem_alloc(swapmap, npages, VM_BESTFIT | VM_SLEEP);
-	if (result == 0)
+	error = vmem_alloc(swapmap, npages, VM_BESTFIT | VM_SLEEP, &result);
+	if (error != 0)
 		panic("swapdrum_add");
 	/*
 	 * If this is the first regular swap create the workqueue.
