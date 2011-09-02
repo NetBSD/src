@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.309 2011/08/31 22:58:39 jmcneill Exp $	*/
+/*	$NetBSD: proc.h,v 1.310 2011/09/02 20:10:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -290,6 +290,7 @@ struct proc {
 	sigpend_t	p_sigpend;	/* p: pending signals */
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
 	pid_t		p_ppid;		/* :: cached parent pid */
+	pid_t 		p_fpid;		/* :: forked pid */
 
 /*
  * End area that is zeroed on creation
@@ -374,6 +375,7 @@ struct proc {
  * These flags are kept in p_sflag and are protected by the proc_lock
  * and p_lock.  Access from process context only.
  */
+#define	PSL_TRACEFORK	0x00000001 /* traced process wants fork events */
 #define	PSL_TRACED	0x00000800 /* Debugged process being traced */
 #define	PSL_FSTRACE	0x00010000 /* Debugger process being traced by procfs */
 #define	PSL_CHTRACED	0x00400000 /* Child has been traced & reparented */
