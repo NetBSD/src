@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.43 2011/08/31 22:58:39 jmcneill Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.44 2011/09/02 20:10:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -34,22 +34,60 @@
 #ifndef	_SYS_PTRACE_H_
 #define	_SYS_PTRACE_H_
 
-#define	PT_TRACE_ME	0	/* child declares it's being traced */
-#define	PT_READ_I	1	/* read word in child's I space */
-#define	PT_READ_D	2	/* read word in child's D space */
-#define	PT_WRITE_I	4	/* write word in child's I space */
-#define	PT_WRITE_D	5	/* write word in child's D space */
-#define	PT_CONTINUE	7	/* continue the child */
-#define	PT_KILL		8	/* kill the child process */
-#define	PT_ATTACH	9	/* attach to running process */
-#define	PT_DETACH	10	/* detach from running process */
-#define	PT_IO		11	/* do I/O to/from the stopped process */
-#define	PT_DUMPCORE	12	/* make the child generate a core dump */
-#define	PT_LWPINFO	13	/* get info about the LWP */
-#define	PT_SYSCALL	14	/* stop on syscall entry/exit */
-#define	PT_SYSCALLEMU	15	/* cancel syscall, tracer will emulate it */
-#define	PT_FIRSTMACH	32	/* for machine-specific requests */
-#include <machine/ptrace.h>	/* machine-specific requests, if any */
+#define	PT_TRACE_ME		0	/* child declares it's being traced */
+#define	PT_READ_I		1	/* read word in child's I space */
+#define	PT_READ_D		2	/* read word in child's D space */
+#define	PT_WRITE_I		4	/* write word in child's I space */
+#define	PT_WRITE_D		5	/* write word in child's D space */
+#define	PT_CONTINUE		7	/* continue the child */
+#define	PT_KILL			8	/* kill the child process */
+#define	PT_ATTACH		9	/* attach to running process */
+#define	PT_DETACH		10	/* detach from running process */
+#define	PT_IO			11	/* do I/O to/from the stopped process */
+#define	PT_DUMPCORE		12	/* make child generate a core dump */
+#define	PT_LWPINFO		13	/* get info about the LWP */
+#define	PT_SYSCALL		14	/* stop on syscall entry/exit */
+#define	PT_SYSCALLEMU		15	/* cancel syscall, tracer emulates it */
+#define	PT_SET_EVENT_MASK	16	/* set the event mask, defined below */
+#define	PT_GET_EVENT_MASK	17	/* get the event mask, defined below */
+#define	PT_GET_PROCESS_STATE	18	/* get process state, defined below */
+
+#define	PT_FIRSTMACH		32	/* for machine-specific requests */
+#include <machine/ptrace.h>		/* machine-specific requests, if any */
+
+#define PT_STRINGS \
+/*  0 */    "PT_TRACE_ME", \
+/*  1 */    "PT_READ_I", \
+/*  2 */    "PT_READ_D", \
+/*  3 */    "*PT_INVALID_3*", \
+/*  4 */    "PT_WRITE_I", \
+/*  5 */    "PT_WRITE_D", \
+/*  6 */    "*PT_INVALID_6*", \
+/*  7 */    "PT_CONTINUE", \
+/*  8 */    "PT_KILL", \
+/*  9 */    "PT_ATTACH", \
+/* 10 */    "PT_DETACH", \
+/* 11 */    "PT_IO", \
+/* 12 */    "PT_DUMPCORE", \
+/* 13 */    "PT_LWPINFO", \
+/* 14 */    "PT_SYSCALL", \
+/* 15 */    "PT_SYSCALLEMU", \
+/* 16 */    "PT_SET_EVENT_MASK", \
+/* 17 */    "PT_GET_EVENT_MASK", \
+/* 18 */    "PT_GET_PROCESS_STATE",
+
+/* PT_{G,S}EVENT_MASK */
+typedef struct ptrace_event {
+	int	pe_set_event;
+} ptrace_event_t;
+
+/* PT_GET_PROCESS_STATE */
+typedef struct ptrace_state {
+	int	pe_report_event;
+	pid_t	pe_other_pid;
+} ptrace_state_t;
+
+#define	PTRACE_FORK	0x0001	/* Report forks */
 
 /*
  * Argument structure for PT_IO.
