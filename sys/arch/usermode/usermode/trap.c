@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.17 2011/09/02 10:11:43 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.18 2011/09/02 14:54:41 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.17 2011/09/02 10:11:43 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18 2011/09/02 14:54:41 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -199,6 +199,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 				return;
 			}
 			panic("should deliver a trap to the process");
+			/* XXX HOWTO see arm/arm/syscall.c illegal instruction signal */
 		}
 
 		if (recurse > 1)
