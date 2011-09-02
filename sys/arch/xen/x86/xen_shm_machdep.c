@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.9 2011/07/31 18:00:54 jym Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.10 2011/09/02 22:25:08 dyoung Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.9 2011/07/31 18:00:54 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.10 2011/09/02 22:25:08 dyoung Exp $");
 
 
 #include <sys/types.h>
@@ -122,7 +122,7 @@ xen_shm_map(int nentries, int domid, grant_ref_t *grefp, vaddr_t *vap,
 {
 	int s, i;
 	vaddr_t new_va;
-	u_long new_va_pg;
+	vmem_addr_t new_va_pg;
 	int err;
 	gnttab_map_grant_ref_t op[XENSHM_MAX_PAGES_PER_REQUEST];
 
@@ -151,9 +151,8 @@ xen_shm_map(int nentries, int domid, grant_ref_t *grefp, vaddr_t *vap,
 		return ENOMEM;
 	}
 	/* allocate the needed virtual space */
-	new_va_pg = vmem_alloc(xen_shm_arena, nentries,
-	    VM_INSTANTFIT | VM_NOSLEEP);
-	if (new_va_pg == 0) {
+	if (vmem_alloc(xen_shm_arena, nentries,
+	    VM_INSTANTFIT | VM_NOSLEEP, &new_va_pg) != 0) {
 #ifdef DEBUG
 		static struct timeval lasttime;
 #endif
