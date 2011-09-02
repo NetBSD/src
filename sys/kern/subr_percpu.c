@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.14 2011/07/27 14:35:34 uebayasi Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.15 2011/09/02 22:25:08 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.14 2011/07/27 14:35:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.15 2011/09/02 22:25:08 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -160,9 +160,9 @@ percpu_cpu_enlarge(size_t size)
  * percpu_backend_alloc: vmem import callback for percpu_offset_arena
  */
 
-static vmem_addr_t
-percpu_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
-    vm_flag_t vmflags)
+static int
+percpu_backend_alloc(void *dummy, vmem_size_t size, vmem_size_t *resultsize,
+    vm_flag_t vmflags, vmem_addr_t *addrp)
 {
 	unsigned int offset;
 	unsigned int nextoff;
@@ -171,7 +171,7 @@ percpu_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
 	KASSERT(dummy == NULL);
 
 	if ((vmflags & VM_NOSLEEP) != 0)
-		return VMEM_ADDR_NULL;
+		return ENOMEM;
 
 	size = roundup(size, PERCPU_IMPORT_SIZE);
 	mutex_enter(&percpu_allocation_lock);
@@ -182,7 +182,8 @@ percpu_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
 	percpu_cpu_enlarge(nextoff);
 
 	*resultsize = size;
-	return (vmem_addr_t)offset;
+	*addrp = (vmem_addr_t)offset;
+	return 0;
 }
 
 static void
@@ -252,11 +253,13 @@ percpu_init_cpu(struct cpu_info *ci)
 percpu_t *
 percpu_alloc(size_t size)
 {
-	unsigned int offset;
+	vmem_addr_t offset;
 	percpu_t *pc;
 
 	ASSERT_SLEEPABLE();
-	offset = vmem_alloc(percpu_offset_arena, size, VM_SLEEP | VM_BESTFIT);
+	if (vmem_alloc(percpu_offset_arena, size, VM_SLEEP | VM_BESTFIT,
+	    &offset) != 0)
+		return NULL;
 	pc = (percpu_t *)percpu_encrypt((uintptr_t)offset);
 	percpu_zero(pc, size);
 	return pc;

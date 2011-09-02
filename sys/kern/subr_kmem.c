@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.35 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.36 2011/09/02 22:25:08 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.35 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.36 2011/09/02 22:25:08 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -133,9 +133,9 @@ static void kmem_size_check(const void *, size_t);
 #define	kmem_size_check(p, sz)	/* nothing */
 #endif
 
-static vmem_addr_t kmem_backend_alloc(vmem_t *, vmem_size_t, vmem_size_t *,
-    vm_flag_t);
-static void kmem_backend_free(vmem_t *, vmem_addr_t, vmem_size_t);
+static int kmem_backend_alloc(void *, vmem_size_t, vmem_size_t *,
+    vm_flag_t, vmem_addr_t *);
+static void kmem_backend_free(void *, vmem_addr_t, vmem_size_t);
 static int kmem_kva_reclaim_callback(struct callback_entry *, void *, void *);
 
 CTASSERT(KM_SLEEP == PR_WAITOK);
@@ -163,9 +163,12 @@ kmf_to_vmf(km_flag_t kmflags)
 static void *
 kmem_poolpage_alloc(struct pool *pool, int prflags)
 {
+	vmem_addr_t addr;
+	int rc;
 
-	return (void *)vmem_alloc(kmem_arena, pool->pr_alloc->pa_pagesz,
-	    kmf_to_vmf(prflags) | VM_INSTANTFIT);
+	rc = vmem_alloc(kmem_arena, pool->pr_alloc->pa_pagesz,
+	    kmf_to_vmf(prflags) | VM_INSTANTFIT, &addr);
+	return (rc == 0) ? (void *)addr : NULL;
 
 }
 
@@ -208,8 +211,13 @@ kmem_alloc(size_t size, km_flag_t kmflags)
 		kmflags &= (KM_SLEEP | KM_NOSLEEP);
 		p = pool_cache_get(kc->kc_cache, kmflags);
 	} else {
-		p = (void *)vmem_alloc(kmem_arena, size,
-		    kmf_to_vmf(kmflags) | VM_INSTANTFIT);
+		vmem_addr_t addr;
+
+		if (vmem_alloc(kmem_arena, size,
+		    kmf_to_vmf(kmflags) | VM_INSTANTFIT, &addr) == 0)
+			p = (void *)addr;
+		else
+			p = NULL;
 	}
 	if (__predict_true(p != NULL)) {
 		kmem_poison_check(p, kmem_roundup_size(size));
@@ -335,9 +343,9 @@ kmem_roundup_size(size_t size)
 
 /* ---- uvm glue */
 
-static vmem_addr_t
-kmem_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
-    vm_flag_t vmflags)
+static int
+kmem_backend_alloc(void *dummy, vmem_size_t size, vmem_size_t *resultsize,
+    vm_flag_t vmflags, vmem_addr_t *addrp)
 {
 	uvm_flag_t uflags;
 	vaddr_t va;
@@ -355,14 +363,15 @@ kmem_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
 	*resultsize = size = round_page(size);
 	va = uvm_km_alloc(kernel_map, size, 0,
 	    uflags | UVM_KMF_WIRED | UVM_KMF_CANFAIL);
-	if (va != 0) {
-		kmem_poison_fill((void *)va, size);
-	}
-	return (vmem_addr_t)va;
+	if (va == 0)
+		return ENOMEM;
+	kmem_poison_fill((void *)va, size);
+	*addrp = (vmem_addr_t)va;
+	return 0;
 }
 
 static void
-kmem_backend_free(vmem_t *dummy, vmem_addr_t addr, vmem_size_t size)
+kmem_backend_free(void *dummy, vmem_addr_t addr, vmem_size_t size)
 {
 
 	KASSERT(dummy == NULL);

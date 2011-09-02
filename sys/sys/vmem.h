@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.h,v 1.13 2011/08/23 22:00:57 dyoung Exp $	*/
+/*	$NetBSD: vmem.h,v 1.14 2011/09/02 22:25:08 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -41,21 +41,20 @@ typedef unsigned int vm_flag_t;
 
 typedef	uintptr_t vmem_addr_t;
 typedef size_t vmem_size_t;
-#define	VMEM_ADDR_NULL	0
 #define	VMEM_ADDR_MIN	0
 #define	VMEM_ADDR_MAX	(~(vmem_addr_t)0)
 
 vmem_t *vmem_create(const char *, vmem_addr_t, vmem_size_t, vmem_size_t,
-    vmem_addr_t (*)(vmem_t *, vmem_size_t, vmem_size_t *, vm_flag_t),
-    void (*)(vmem_t *, vmem_addr_t, vmem_size_t), vmem_t *, vmem_size_t,
+    int (*)(void *, vmem_size_t, vmem_size_t *, vm_flag_t, vmem_addr_t *),
+    void (*)(void *, vmem_addr_t, vmem_size_t), void *, vmem_size_t,
     vm_flag_t, int);
 void vmem_destroy(vmem_t *);
-vmem_addr_t vmem_alloc(vmem_t *, vmem_size_t, vm_flag_t);
+int vmem_alloc(vmem_t *, vmem_size_t, vm_flag_t, vmem_addr_t *);
 void vmem_free(vmem_t *, vmem_addr_t, vmem_size_t);
-vmem_addr_t vmem_xalloc(vmem_t *, vmem_size_t, vmem_size_t, vmem_size_t,
-    vmem_size_t, vmem_addr_t, vmem_addr_t, vm_flag_t);
+int vmem_xalloc(vmem_t *, vmem_size_t, vmem_size_t, vmem_size_t,
+    vmem_size_t, vmem_addr_t, vmem_addr_t, vm_flag_t, vmem_addr_t *);
 void vmem_xfree(vmem_t *, vmem_addr_t, vmem_size_t);
-vmem_addr_t vmem_add(vmem_t *, vmem_addr_t, vmem_size_t, vm_flag_t);
+int vmem_add(vmem_t *, vmem_addr_t, vmem_size_t, vm_flag_t);
 vmem_size_t vmem_roundup_size(vmem_t *, vmem_size_t);
 bool vmem_reap(vmem_t *);
 void vmem_rehash_start(void);
