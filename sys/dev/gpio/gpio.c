@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.40 2011/08/31 12:20:35 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.41 2011/09/02 06:50:20 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.40 2011/08/31 12:20:35 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.41 2011/09/02 06:50:20 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -724,6 +724,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		    NULL, NULL, NULL, NULL))
 			return EPERM;
 
+		error = 0;
 		mutex_enter(&sc->sc_mtx);
 		while (sc->sc_attach_busy) {
 			error = cv_wait_sig(&sc->sc_attach, &sc->sc_mtx);
