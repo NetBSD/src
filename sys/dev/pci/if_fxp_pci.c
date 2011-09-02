@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.75 2011/05/17 17:34:54 dyoung Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.76 2011/09/02 03:16:18 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.75 2011/05/17 17:34:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.76 2011/09/02 03:16:18 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -100,18 +100,16 @@ static const struct fxp_pci_product {
 	uint32_t	fpp_prodid;	/* PCI product ID */
 	const char	*fpp_name;	/* device name */
 } fxp_pci_products[] = {
+	{ PCI_PRODUCT_INTEL_82552,
+	  "Intel i82552 10/100 Network Connection" },
 	{ PCI_PRODUCT_INTEL_82557,
 	  "Intel i82557 Ethernet" },
 	{ PCI_PRODUCT_INTEL_82559ER,
 	  "Intel i82559ER Ethernet" },
 	{ PCI_PRODUCT_INTEL_IN_BUSINESS,
 	  "Intel InBusiness Ethernet" },
-	{ PCI_PRODUCT_INTEL_82801BA_LAN,
-	  "Intel i82562 Ethernet" },
-	{ PCI_PRODUCT_INTEL_82801E_LAN_1,
-	  "Intel i82801E Ethernet" },
-	{ PCI_PRODUCT_INTEL_82801E_LAN_2,
-	  "Intel i82801E Ethernet" },
+	{ PCI_PRODUCT_INTEL_PRO_100,
+	  "Intel PRO/100 Ethernet" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VE_0,
 	  "Intel PRO/100 VE Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VE_1,
@@ -130,6 +128,12 @@ static const struct fxp_pci_product {
 	  "Intel PRO/100 VE Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VE_8,
 	  "Intel PRO/100 VE Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VE_9,
+	  "Intel PRO/100 VE Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VE_10,
+	  "Intel PRO/100 VE Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VE_11,
+	  "Intel PRO/100 VE Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VM_0,
 	  "Intel PRO/100 VM Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VM_1,
@@ -144,12 +148,40 @@ static const struct fxp_pci_product {
 	  "Intel PRO/100 VM (MOB) Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VM_6,
 	  "Intel PRO/100 VM Network Controller with 82562ET/EZ PHY" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VM_7,
+	  "Intel PRO/100 VM Network Connection" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VM_8,
+	  "Intel PRO/100 VM Network Connection" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VM_9,
+	  "Intel PRO/100 VM Network Connection" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VM_10,
+	  "Intel PRO/100 VM Network Connection" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VM_11,
+	  "Intel PRO/100 VM Network Connection" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VM_12,
+	  "Intel PRO/100 VM Network Connection" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VM_13,
+	  "Intel PRO/100 VM Network Connection" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VM_14,
+	  "Intel PRO/100 VM Network Connection" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VM_15,
+	  "Intel PRO/100 VM Network Connection" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VM_16,
+	  "Intel PRO/100 VM Network Connection" },
 	{ PCI_PRODUCT_INTEL_PRO_100_M,
 	  "Intel PRO/100 M Network Controller" },
+	{ PCI_PRODUCT_INTEL_82801BA_LAN,
+	  "Intel i82562 Ethernet" },
+	{ PCI_PRODUCT_INTEL_82801E_LAN_1,
+	  "Intel i82801E Ethernet" },
+	{ PCI_PRODUCT_INTEL_82801E_LAN_2,
+	  "Intel i82801E Ethernet" },
 	{ PCI_PRODUCT_INTEL_82801EB_LAN,
 	  "Intel 82801EB/ER (ICH5) Network Controller" },
 	{ PCI_PRODUCT_INTEL_82801FB_LAN,
-	  "Intel 82562EZ (ICH6)" },
+	  "Intel i82801FB LAN Controller" },
+	{ PCI_PRODUCT_INTEL_82801FB_LAN_2,
+	  "Intel i82801FB LAN Controller" },
 	{ PCI_PRODUCT_INTEL_82801G_LAN,
 	  "Intel 82801GB/GR (ICH7) Network Controller" },
 	{ PCI_PRODUCT_INTEL_82801GB_LAN,
@@ -369,7 +401,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 			sc->sc_flags &= ~FXPF_82559_RXCSUM;
 			sc->sc_flags |= FXPF_EXT_RFA;
 		}
-		if (sc->sc_rev >= FXP_REV_82551)
+		if (sc->sc_rev >= FXP_REV_82551_E)
 			chipname = "i82551 Ethernet";
 
 		/*
@@ -398,7 +430,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 		if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
 			sc->sc_flags |= FXPF_MWI;
 
-		if (sc->sc_rev >= FXP_REV_82551)
+		if (sc->sc_rev >= FXP_REV_82551_E)
 			chipname = "Intel i82551ER Ethernet";
 
 		aprint_normal(": %s, rev %d\n", chipname != NULL ? chipname :

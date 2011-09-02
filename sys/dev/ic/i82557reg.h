@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.24 2009/04/17 15:37:43 tsutsui Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.25 2011/09/02 03:16:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -529,4 +529,6 @@ struct fxp_stats {
 #define	FXP_REV_82559S_A	9
 #define	FXP_REV_82550		12
 #define	FXP_REV_82550_C		13
-#define	FXP_REV_82551		15
+#define	FXP_REV_82551_E		14	/* 82551 */
+#define	FXP_REV_82551_F		15
+#define	FXP_REV_82551_10	16	/* 82551 */
