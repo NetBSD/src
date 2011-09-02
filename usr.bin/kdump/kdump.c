@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.112 2011/06/01 21:28:32 alnsn Exp $	*/
+/*	$NetBSD: kdump.c,v 1.113 2011/09/02 20:11:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.112 2011/06/01 21:28:32 alnsn Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.113 2011/09/02 20:11:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,10 +81,7 @@ static int emul_changed = 0;
 #define small(v)	(((long)(v) >= 0) && ((long)(v) < 10))
 
 static const char * const ptrace_ops[] = {
-	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
-	"PT_WRITE_I",	"PT_WRITE_D",	"PT_WRITE_U",	"PT_CONTINUE",
-	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",	"PT_IO",
-	"PT_DUMPCORE",	"PT_LWPINFO", 	"PT_SYSCALL",
+	PT_STRINGS
 };
 
 #ifdef PT_MACHDEP_STRINGS
@@ -574,14 +571,13 @@ ktrsyscall(struct ktr_syscall *ktr)
 				else
 					output_long((long)*ap, 1);
 			} else {
-				if ((long)*ap >= 0 && *ap <
-				    (register_t)(sizeof(ptrace_ops) / sizeof(ptrace_ops[0])))
+				if ((long)*ap >= 0 && *ap < (register_t)
+				    __arraycount(ptrace_ops))
 					(void)printf("%s", ptrace_ops[*ap]);
 #ifdef PT_MACHDEP_STRINGS
 				else if (*ap >= PT_FIRSTMACH &&
-				    *ap - PT_FIRSTMACH <
-				    (register_t)(sizeof(ptrace_machdep_ops) /
-						sizeof(ptrace_machdep_ops[0])))
+				    *ap - PT_FIRSTMACH < (register_t)
+				    __arraycount(ptrace_machdep_ops))
 					(void)printf("%s", ptrace_machdep_ops[*ap - PT_FIRSTMACH]);
 #endif
 				else
