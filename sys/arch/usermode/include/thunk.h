@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.22 2011/09/02 14:55:22 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.23 2011/09/02 16:09:01 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -70,7 +70,7 @@ void	thunk_abort(void);
 int	thunk_getcontext(ucontext_t *);
 int	thunk_setcontext(const ucontext_t *);
 void	thunk_makecontext(ucontext_t *, void (*)(void), int, void (*)(void *), void *); 
-void	thunk_makecontext_1(ucontext_t *, void (*)(void), void *); 
+void	thunk_makecontext_trapframe2go(ucontext_t *, void *func, void *trapframe);
 int	thunk_swapcontext(ucontext_t *, ucontext_t *);
 
 int	thunk_tcgetattr(int, struct thunk_termios *);
