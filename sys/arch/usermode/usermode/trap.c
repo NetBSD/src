@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.16 2011/09/01 18:20:20 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.17 2011/09/02 10:11:43 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.16 2011/09/01 18:20:20 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.17 2011/09/02 10:11:43 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,13 +57,13 @@ extern int errno;
 bool pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype);
 
 static stack_t sigstk;
-static int debug_fh;
 
 void
 startlwp(void *arg)
 {
 }
 
+//static int debug_fh;
 void
 setup_signal_handlers(void)
 {
@@ -83,7 +83,7 @@ setup_signal_handlers(void)
 	if (thunk_sigaltstack(&sigstk, 0) < 0)
 		panic("can't set alternate stacksize : %d", errno);
 
-	debug_fh = thunk_open("/usr/sources/debug", O_RDWR | O_TRUNC | O_CREAT, 0666);
+//	debug_fh = thunk_open("/usr/sources/debug", O_RDWR | O_TRUNC | O_CREAT, 0666);
 }
 
 static struct trapframe kernel_tf;
