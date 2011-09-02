@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem.9,v 1.11 2011/08/23 22:14:51 wiz Exp $
+.\"	$NetBSD: vmem.9,v 1.12 2011/09/02 22:07:33 dyoung Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd August 23, 2011
+.Dd September 2, 2011
 .Dt VMEM 9
 .Os
 .\" ------------------------------------------------------------
@@ -39,25 +39,25 @@
 .Ft vmem_t *
 .Fn vmem_create \
 "const char *name" "vmem_addr_t base" "vmem_size_t size" "vmem_size_t quantum" \
-"vmem_addr_t (*allocfn)(vmem_t *, vmem_size_t, vmem_size_t *, vm_flag_t)" \
-"void (*freefn)(vmem_t *, vmem_addr_t, vmem_size_t)" \
-"vmem_t *source" "vmem_size_t qcache_max" "vm_flag_t flags" "int ipl"
+"int (*allocfn)(void *, vmem_size_t, vmem_size_t *, vm_flag_t, vmem_addr_t *)" \
+"void (*freefn)(void *, vmem_addr_t, vmem_size_t)" \
+"void *arg" "vmem_size_t qcache_max" "vm_flag_t flags" "int ipl"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.Ft vmem_addr_t
+.Ft int
 .Fn vmem_add \
-"vmem_t *vm" "vmem_addr_t addr" "vmem_size_t size" "vm_flag_t flags"
+"vmem_t *vm" "vmem_addr_t addr" "vmem_size_t size" "vm_flag_t flags" "vmem_addr_t *addrp"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.Ft vmem_addr_t
+.Ft int
 .Fn vmem_xalloc \
 "vmem_t *vm" "vmem_size_t size" "vmem_size_t align" \
 "vmem_size_t phase" "vmem_size_t nocross" "vmem_addr_t minaddr" \
-"vmem_addr_t maxaddr" "vm_flag_t flags"
+"vmem_addr_t maxaddr" "vm_flag_t flags" "vmem_addr_t *addrp"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft void
 .Fn vmem_xfree "vmem_t *vm" "vmem_addr_t addr" "vmem_size_t size"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.Ft vmem_addr_t
-.Fn vmem_alloc "vmem_t *vm" "vmem_size_t size" "vm_flag_t flags"
+.Ft int
+.Fn vmem_alloc "vmem_t *vm" "vmem_size_t size" "vm_flag_t flags" "vmem_addr_t *addrp"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft void
 .Fn vmem_free "vmem_t *vm" "vmem_addr_t addr" "vmem_size_t size"
@@ -81,11 +81,14 @@ creates a new vmem arena.
 The string to describe the vmem.
 .It Fa base
 The start address of the initial span.
-It can be
-.Dv VMEM_ADDR_NULL
+Pass
+.Dv 0
 if no initial span is required.
 .It Fa size
 The size of the initial span.
+Pass
+.Dv 0
+if no initial span is required.
 .It Fa quantum
 The smallest unit of allocation.
 .It Fa allocfn
@@ -100,10 +103,11 @@ to disable automatic imports.
 .Nm
 calls
 .Fo "(*allocfn)"
-.Fa source
+.Fa arg
 .Fa size
 .Fa "\*[Am]actualsize"
 .Fa flags
+.Fa "\*[Am]addrp"
 .Fc
 to import a span of size at least
 .Fa size .
@@ -114,42 +118,43 @@ as
 .Fn vmem_alloc .
 .Fa allocfn
 must return
-.Dv VMEM_ADDR_NULL
-to indicate failure, or
-else the starting address of the imported span.
+.Dv ENOMEM
+to indicate failure, or 0 on success.
 If
 .Fa allocfn
 succeeds, it must write the actual size of the allocation to
-.Fa actualsize .
+.Fa actualsize
+and the starting address of the imported span to
+.Fa addrp .
 The actual size will always be greater than or equal to the requested size.
 .It Fa freefn
 The callback function used to free spans to the backend arena.
 .Fa freefn
-may not be
+may be
 .Dv NULL
-unless
+even if
 .Fa allocfn
-is
+is not
 .Dv NULL .
 .Nm
 calls
-.Fn "(*freefn)" source addr size
+.Fn "(*freefn)" arg addr size
 to return to
-.Fa source
+.Fa arg
 a span of size
 .Fa size ,
 starting at
 .Fa addr ,
 that was previously allocated by
 .Fa allocfn .
-.It Fa source
+.It Fa arg
 The backend arena.
-.Fa source
+.Fa arg
 may be
 .Dv NULL .
 .Nm
 passes
-.Fa source
+.Fa arg
 as the first argument of
 .Fa allocfn
 and
@@ -180,8 +185,10 @@ starting at
 .Fa addr
 to the arena.
 Returns
-.Fa addr
-on success.
+0
+on success,
+.Dv ENOMEM
+on failure.
 .Fa flags
 should be one of:
 .Bl -tag -width VM_NOSLEEP
@@ -190,7 +197,7 @@ Can sleep until enough resources are available.
 .It Dv VM_NOSLEEP
 Don't sleep.
 Immediately return
-.Dv VMEM_ADDR_NULL
+.Dv ENOMEM
 if there are not enough resources available.
 .El
 .Pp
@@ -253,9 +260,16 @@ Can sleep until enough resources are available.
 .It Dv VM_NOSLEEP
 Don't sleep.
 Immediately return
-.Dv VMEM_ADDR_NULL
+.Dv ENOMEM
 if there are not enough resources available.
 .El
+.It Fa addrp
+On success, if
+.Fa addrp
+is not 
+.Dv NULL ,
+.Fn vmem_xalloc
+overwrites it with the start address of the allocated span.
 .El
 .Pp
 .\" ------------------------------------------------------------
@@ -309,9 +323,16 @@ Can sleep until enough resources are available.
 .It Dv VM_NOSLEEP
 Don't sleep.
 Immediately return
-.Dv VMEM_ADDR_NULL
+.Dv ENOMEM
 if there are not enough resources available.
 .El
+.It Fa addrp
+On success, if
+.Fa addrp
+is not 
+.Dv NULL ,
+.Fn vmem_alloc
+overwrites it with the start address of the allocated span.
 .El
 .Pp
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -358,9 +379,9 @@ On success,
 .Fn vmem_xalloc
 and
 .Fn vmem_alloc
-return an allocated vmem_addr_t.
+return 0.
 Otherwise,
-.Dv VMEM_ADDR_NULL
+.Dv ENOMEM
 is returned.
 .\" ------------------------------------------------------------
 .Sh CODE REFERENCES
@@ -388,17 +409,6 @@ This implementation of
 was written by
 .An YAMAMOTO Takashi .
 .Sh BUGS
-.Nm
-cannot manage a resource that starts at 0, because it reserves the
-address
-.Dv VMEM_ADDR_NULL
-.Pq 0
-for indicating errors.
-.Pp
-.Nm
-cannot manage a resource that ends at the maximum
-.Vt vmem_addr_t .
-This is an implementation limitation.
 .Pp
 .Nm
 relies on
