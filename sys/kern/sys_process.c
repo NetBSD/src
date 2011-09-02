@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.160 2011/08/31 22:58:39 jmcneill Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.161 2011/09/02 20:07:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.160 2011/08/31 22:58:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.161 2011/09/02 20:07:41 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -175,6 +175,9 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 #ifdef PT_SETFPREGS
 	case PT_SETFPREGS:
 #endif
+	case PT_SET_EVENT_MASK:
+	case PT_GET_EVENT_MASK:
+	case PT_GET_PROCESS_STATE:
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
 #endif
@@ -236,6 +239,8 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	struct uio uio;
 	struct iovec iov;
 	struct ptrace_io_desc piod;
+	struct ptrace_event pe;
+	struct ptrace_state ps;
 	struct ptrace_lwpinfo pl;
 	struct vmspace *vm;
 	int error, write, tmp, req, pheld;
@@ -376,6 +381,9 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 #ifdef PT_STEP
 	case  PT_STEP:
 #endif
+	case  PT_SET_EVENT_MASK:
+	case  PT_GET_EVENT_MASK:
+	case  PT_GET_PROCESS_STATE:
 		/*
 		 * You can't do what you want to the process if:
 		 *	(1) It's not being traced at all,
@@ -698,6 +706,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			t->p_opptr = NULL;
 		}
 	sendsig:
+		t->p_fpid = 0;
 		/* Finally, deliver the requested signal (or none). */
 		if (t->p_stat == SSTOP) {
 			/*
@@ -759,6 +768,37 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		SET(t->p_slflag, PSL_TRACED);
 		signo = SIGSTOP;
 		goto sendsig;
+
+	case  PT_GET_EVENT_MASK:
+		if (SCARG(uap, data) != sizeof(pe))
+			return EINVAL;
+		memset(&pe, 0, sizeof(pe));
+		pe.pe_set_event = ISSET(t->p_slflag, PSL_TRACEFORK) ? 
+			PTRACE_FORK : 0;
+		error = copyout(&pe, SCARG(uap, addr), sizeof(pe));
+		break;
+
+	case  PT_SET_EVENT_MASK:
+		if (SCARG(uap, data) != sizeof(pe))
+			return EINVAL;
+		if ((error = copyin(SCARG(uap, addr), &pe, sizeof(pe))) != 0)
+			return error;
+		if (pe.pe_set_event & PTRACE_FORK)
+			SET(t->p_slflag, PSL_TRACEFORK);
+		else
+			CLR(t->p_slflag, PSL_TRACEFORK);
+		break;
+
+	case  PT_GET_PROCESS_STATE:
+		if (SCARG(uap, data) != sizeof(ps))
+			return EINVAL;
+		memset(&ps, 0, sizeof(ps));
+		if (t->p_fpid) {
+			ps.pe_report_event = PTRACE_FORK;
+			ps.pe_other_pid = t->p_fpid;
+		}
+		error = copyout(&ps, SCARG(uap, addr), sizeof(ps));
+		break;
 
 	case PT_LWPINFO:
 		if (SCARG(uap, data) != sizeof(pl)) {
