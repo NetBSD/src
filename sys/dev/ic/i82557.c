@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.137 2011/03/30 17:52:45 jakllsch Exp $	*/
+/*	$NetBSD: i82557.c,v 1.138 2011/09/02 03:16:18 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.137 2011/03/30 17:52:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.138 2011/09/02 03:16:18 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -2329,6 +2329,7 @@ static const uint32_t fxp_ucode_d101ma[] = D101M_B_RCVBUNDLE_UCODE;
 static const uint32_t fxp_ucode_d101s[] = D101S_RCVBUNDLE_UCODE;
 static const uint32_t fxp_ucode_d102[] = D102_B_RCVBUNDLE_UCODE;
 static const uint32_t fxp_ucode_d102c[] = D102_C_RCVBUNDLE_UCODE;
+static const uint32_t fxp_ucode_d102e[] = D102_E_RCVBUNDLE_UCODE;
 
 #define	UCODE(x)	x, sizeof(x)/sizeof(uint32_t)
 
@@ -2356,6 +2357,12 @@ static const struct ucode {
 
 	{ FXP_REV_82550_C, UCODE(fxp_ucode_d102c),
 	  D102_C_CPUSAVER_DWORD, D102_C_CPUSAVER_BUNDLE_MAX_DWORD },
+
+	{ FXP_REV_82551_F, UCODE(fxp_ucode_d102e),
+	    D102_E_CPUSAVER_DWORD, D102_E_CPUSAVER_BUNDLE_MAX_DWORD },
+
+	{ FXP_REV_82551_10, UCODE(fxp_ucode_d102e),
+	    D102_E_CPUSAVER_DWORD, D102_E_CPUSAVER_BUNDLE_MAX_DWORD },
 
 	{ 0, NULL, 0, 0, 0 }
 };
