@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_emap.c,v 1.7 2010/04/25 15:54:14 ad Exp $	*/
+/*	$NetBSD: uvm_emap.c,v 1.8 2011/09/02 22:25:08 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.7 2010/04/25 15:54:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.8 2011/09/02 22:25:08 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -119,12 +119,16 @@ uvm_emap_sysinit(void)
 vaddr_t
 uvm_emap_alloc(vsize_t size, bool waitok)
 {
+	vmem_addr_t addr;
 
 	KASSERT(size > 0);
 	KASSERT(round_page(size) == size);
 
-	return vmem_alloc(uvm_emap_vmem, size,
-	    VM_INSTANTFIT | (waitok ? VM_SLEEP : VM_NOSLEEP));
+	if (vmem_alloc(uvm_emap_vmem, size,
+	    VM_INSTANTFIT | (waitok ? VM_SLEEP : VM_NOSLEEP), &addr) == 0)
+		return (vaddr_t)addr;
+
+	return (vaddr_t)0;
 }
 
 /*
