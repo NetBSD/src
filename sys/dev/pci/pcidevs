@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1095 2011/08/15 06:13:07 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1096 2011/09/02 03:09:48 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2379,6 +2379,7 @@ product INTEL 82540EP_LP	0x101e	i82540EP Gigabit Ethernet
 product INTEL 82545GM_COPPER	0x1026	i82545GM 1000baseT Ethernet
 product INTEL 82545GM_FIBER	0x1027	i82545GM 1000baseX Ethernet
 product INTEL 82545GM_SERDES	0x1028	i82545GM Gigabit Ethernet (SERDES)
+product INTEL PRO_100		0x1029	PRO/100 Ethernet
 product INTEL IN_BUSINESS	0x1030	InBusiness Fast Ethernet LAN Controller
 product INTEL PRO_100_VE_0	0x1031	PRO/100 VE Network Controller
 product INTEL PRO_100_VE_1	0x1032	PRO/100 VE Network Controller
@@ -2403,13 +2404,24 @@ product INTEL 82801H_IFE_LAN	0x104c	i82801H (IFE) LAN Controller
 product INTEL 82801H_M_LAN	0x104d	i82801H (M) LAN Controller
 product INTEL PRO_100_VM_6	0x1050	PRO/100 VM Network Controller w/ 82562ET/EZ PHY
 product INTEL 82801EB_LAN	0x1051	82801EB/ER 10/100 Ethernet
+product INTEL PRO_100_VM_7	0x1052	PRO/100 VM Network Connection
+product INTEL PRO_100_VM_8	0x1053	PRO/100 VM Network Connection
+product INTEL PRO_100_VM_9	0x1054	PRO/100 VM Network Connection
+product INTEL PRO_100_VM_10	0x1055	PRO/100 VM Network Connection
+product INTEL PRO_100_VM_11	0x1056	PRO/100 VM Network Connection
+product INTEL PRO_100_VM_12	0x1057	PRO/100 VM Network Connection
 product INTEL PRO_100_M		0x1059	PRO/100 M Network Controller
 product INTEL 82571EB_COPPER	0x105e	i82571EB 1000baseT Ethernet
 product INTEL 82571EB_FIBER	0x105f	i82571EB 1000baseX Ethernet
 product INTEL 82571EB_SERDES	0x1060	i82571EB Gigabit Ethernet (SERDES)
-product INTEL 82801FB_LAN	0x1064	82801FB 10/100 Ethernet
+product INTEL 82801FB_LAN_2	0x1064	82801FB 10/100 Ethernet
+product INTEL PRO_100_VE_9	0x1065	PRO/100 VE Ethernet
+product INTEL PRO_100_VM_13	0x1066	PRO/100 VM Network Connection
+product INTEL PRO_100_VM_14	0x1067	PRO/100 VM Network Connection
 product INTEL PRO_100_VE_5	0x1068	PRO/100 VE (LOM) Network Controller
 product INTEL 82801GB_LAN	0x1069	82801GB 10/100 Ethernet
+product INTEL PRO_100_VE_10	0x106a	PRO/100 VE Ethernet
+product INTEL PRO_100_VE_11	0x106b	PRO/100 VE Ethernet
 product INTEL 82547GI		0x1075	i82547GI Gigabit Ethernet
 product INTEL 82541GI		0x1076	i82541GI Gigabit Ethernet
 product INTEL 82541GI_MOBILE	0x1077	i82541GI Mobile Gigabit Ethernet
@@ -2424,9 +2436,11 @@ product INTEL 82572EI_SERDES	0x107f	i82572EI Gigabit Ethernet (SERDES)
 product INTEL 82546GB_PCIE	0x108a	PRO/1000MT (82546GB)
 product INTEL 82573E		0x108b	i82573E Gigabit Ethernet
 product INTEL 82573E_IAMT	0x108c	i82573E Gigabit Ethernet
+product INTEL PRO_100_VM_15	0x1091	PRO/100 VM Network Connection
 product INTEL PRO_100_VE_6	0x1092	PRO/100 VE Network Controller
 product INTEL PRO_100_VE_8	0x1093	PRO/100 VE Network Controller
 product INTEL PRO_100_VE_7	0x1094	PRO/100 VE Network Controller w/ 82562G PHY
+product INTEL PRO_100_VM_16	0x1095	PRO/100 VM Network Connection
 product INTEL 80K3LAN_CPR_DPT	0x1096	i80003 Dual 1000baseT Ethernet
 product INTEL 80K3LAN_FIB_DPT	0x1097	i80003 Dual 1000baseX Ethernet
 product INTEL 80K3LAN_SDS_DPT	0x1098	i80003 Dual Gigabit Ethernet (SERDES)
@@ -2471,6 +2485,7 @@ product INTEL 82599_COMBO_BACKPLANE	0x10F8	82599 (combined backplane; KR/KX4/KX)
 product INTEL 82599_CX4		0x10F9	82599 (CX4) 10 GbE Controller
 product INTEL 82599_SFP		0x10FB	82599 (SFI/SFP+) 10 GbE Controller
 product INTEL 82599_XAUI_LOM		0x10FC	82599 (XAUI/BX4) 10 GbE Controller
+product INTEL 82552		0x10fe	82552 10/100 Network Connection
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
 product INTEL 82815_DC100_GRAPH	0x1102	82815 Graphics
@@ -2715,6 +2730,7 @@ product INTEL 82801FB_EXP_1	0x2662	82801FB/FR PCI Express Port #1
 product INTEL 82801FB_EXP_2	0x2664	82801FB/FR PCI Express Port #2
 product INTEL 82801FB_HDA	0x2668	82801FB/FR High Definition Audio Controller
 product INTEL 82801FB_SMB	0x266a	82801FB/FR SMBus Controller
+product INTEL 82801FB_LAN	0x266c	82801FB LAN Controller
 product INTEL 82801FB_ACM	0x266d	82801FB/FR AC'97 Modem Controller
 product INTEL 82801FB_AC	0x266e	82801FB/FR AC'97 Audio Controller
 product INTEL 82801FB_IDE	0x266f	82801FB/FR IDE Controller
