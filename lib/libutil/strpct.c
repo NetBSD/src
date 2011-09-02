@@ -1,4 +1,4 @@
-/* $NetBSD: strpct.c,v 1.1 2011/08/28 07:45:14 christos Exp $ */
+/* $NetBSD: strpct.c,v 1.2 2011/09/02 10:13:44 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strpct.c,v 1.1 2011/08/28 07:45:14 christos Exp $");
+__RCSID("$NetBSD: strpct.c,v 1.2 2011/09/02 10:13:44 christos Exp $");
 
 #include <stdint.h>
 #include <locale.h>
@@ -56,7 +56,6 @@ strpct(char *buf, size_t bufsiz, uintmax_t numerator, uintmax_t denominator,
 	uintmax_t factor, result;
 	size_t u;
 
-	/* I should check for digit overflow here, too XXX */
 	factor = 100;
 	for (u = 0; u < digits; u++) {
 		/* watch out for overflow! */
@@ -84,7 +83,7 @@ strpct(char *buf, size_t bufsiz, uintmax_t numerator, uintmax_t denominator,
 	else {
 		factor /= 100;		/* undo initialization */
 
-		(void)snprintf(buf, sizeof(buf), "%ju%s%0*ju",
+		(void)snprintf(buf, bufsiz, "%ju%s%0*ju",
 		    result / factor, localeconv()->decimal_point, (int)u,
 		    result % factor);
 	}       
