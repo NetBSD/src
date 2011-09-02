@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.25 2011/09/02 14:55:22 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.26 2011/09/02 16:09:01 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.25 2011/09/02 14:55:22 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.26 2011/09/02 16:09:01 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/ansi.h>
@@ -205,9 +205,9 @@ thunk_makecontext(ucontext_t *ucp, void (*func)(void), int argc,
 }
 
 void
-thunk_makecontext_1(ucontext_t *ucp, void (*func)(void), void *arg)
+thunk_makecontext_trapframe2go(ucontext_t *ucp, void *func, void *trapframe)
 {
-	makecontext(ucp, func, 1, arg);
+	makecontext(ucp, func, 1, trapframe);
 }
 
 int
