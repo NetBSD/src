@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.185 2011/08/23 13:01:25 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.186 2011/09/02 20:06:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.185 2011/08/23 13:01:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.186 2011/09/02 20:06:29 christos Exp $");
 
 #include "opt_ktrace.h"
 
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.185 2011/08/23 13:01:25 christos Exp
 #include <sys/syscallargs.h>
 #include <sys/uidinfo.h>
 #include <sys/sdt.h>
+#include <sys/ptrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -218,6 +219,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	int		count;
 	vaddr_t		uaddr;
 	int		tnprocs;
+	int		tracefork;
 	int		error = 0;
 
 	p1 = l1->l_proc;
@@ -458,6 +460,35 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	LIST_INSERT_HEAD(&parent->p_children, p2, p_sibling);
 	p2->p_exitsig = exitsig;		/* signal for parent on exit */
 
+	tracefork = (p1->p_slflag & (PSL_TRACEFORK|PSL_TRACED)) ==
+	    (PSL_TRACEFORK|PSL_TRACED);
+	if (tracefork) {
+		p2->p_slflag |= PSL_TRACED;
+		p2->p_opptr = p2->p_pptr;
+		if (p2->p_pptr != p1->p_pptr) {
+			struct proc *parent1 = p2->p_pptr;
+
+			if (parent1->p_lock < p2->p_lock) {
+				if (!mutex_tryenter(parent1->p_lock)) {
+					mutex_exit(p2->p_lock);
+					mutex_enter(parent1->p_lock);
+				}
+			} else if (parent1->p_lock > p2->p_lock) {
+				mutex_enter(parent1->p_lock);
+			}
+			parent1->p_slflag |= PSL_CHTRACED;
+			proc_reparent(p2, p1->p_pptr);
+			if (parent1->p_lock != p2->p_lock)
+				mutex_exit(parent1->p_lock);
+		}
+
+		/*
+		 * Set ptrace status.
+		 */
+		p1->p_fpid = p2->p_pid;
+		p2->p_fpid = p1->p_pid;
+	}
+
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
 
@@ -537,6 +568,17 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	while (p2->p_lflag & PL_PPWAIT)
 		cv_wait(&p1->p_waitcv, proc_lock);
+
+        /*      
+         * Let the parent know that we are tracing its child.
+         */     
+	if (tracefork) {
+		ksiginfo_t ksi;
+                KSI_INIT_EMPTY(&ksi);
+                ksi.ksi_signo = SIGTRAP;
+                ksi.ksi_lid = l1->l_lid; 
+                kpsignal(p1, &ksi, NULL);
+	}
 
 	mutex_exit(proc_lock);
 
