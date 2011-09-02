@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.22 2011/08/28 03:54:07 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.23 2011/09/02 16:26:21 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1107,6 +1107,16 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    /* Ignore /etc/ files. */
 		    if (strncmp(p, "/etc/", 5) == 0)
 			break;
+
+		    if ((cp = strrchr(p, '/'))) {
+			cp++;
+			/*
+			 * We don't normally expect to see this,
+			 * but we do expect it to change.
+			 */
+			if (strcmp(cp, makeDependfile) == 0)
+			    break;
+		    }
 
 		    /*
 		     * The rest of the record is the file name.
