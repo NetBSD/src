@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.90 2011/04/14 00:35:35 rmind Exp $	*/
+/*	$NetBSD: fstat.c,v 1.91 2011/09/03 13:24:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.90 2011/04/14 00:35:35 rmind Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.91 2011/09/03 13:24:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -322,11 +322,15 @@ dofiles(struct kinfo_proc2 *p)
 	if (p->p_fd == 0 || p->p_cwdi == 0)
 		return;
 	if (!KVM_READ(p->p_fd, &filed, sizeof (filed))) {
-		warnx("can't read filedesc at %p for pid %d", (void *)(uintptr_t)p->p_fd, Pid);
+		warnx("can't read filedesc at %p for pid %d",
+		    (void *)(uintptr_t)p->p_fd, Pid);
 		return;
 	}
+	if (filed.fd_lastfile == -1)
+		return;
 	if (!KVM_READ(p->p_cwdi, &cwdi, sizeof(cwdi))) {
-		warnx("can't read cwdinfo at %p for pid %d", (void *)(uintptr_t)p->p_cwdi, Pid);
+		warnx("can't read cwdinfo at %p for pid %d",
+		    (void *)(uintptr_t)p->p_cwdi, Pid);
 		return;
 	}
 	if (!KVM_READ(filed.fd_dt, &dt, sizeof(dt))) {
@@ -335,7 +339,8 @@ dofiles(struct kinfo_proc2 *p)
 	}
 	if ((unsigned)filed.fd_lastfile >= dt.dt_nfiles ||
 	    filed.fd_freefile > filed.fd_lastfile + 1) {
-		dprintf("filedesc corrupted at %p for pid %d", (void *)(uintptr_t)p->p_fd, Pid);
+		dprintf("filedesc corrupted at %p for pid %d",
+		    (void *)(uintptr_t)p->p_fd, Pid);
 		return;
 	}
 	/*
@@ -476,7 +481,7 @@ vfilestat(struct vnode *vp, struct filestat *fsp)
 			break;
 		}
 	}
-	return (badtype);
+	return badtype;
 }
 
 static void
@@ -685,21 +690,21 @@ layer_filestat(struct vnode *vp, struct filestat *fsp)
 	if (!KVM_READ(VTOLAYER(vp), &layer_node, sizeof(layer_node))) {
 		dprintf("can't read layer_node at %p for pid %d",
 		    VTOLAYER(vp), Pid);
-		return ("error");
+		return "error";
 	}
 	if (!KVM_READ(vp->v_mount, &mount, sizeof(struct mount))) {
 		dprintf("can't read mount struct at %p for pid %d",
 		    vp->v_mount, Pid);
-		return ("error");
+		return "error";
 	}
 	vp = layer_node.layer_lowervp;
 	if (!KVM_READ(vp, &vn, sizeof(struct vnode))) {
 		dprintf("can't read vnode at %p for pid %d", vp, Pid);
-		return ("error");
+		return "error";
 	}
 	if ((badtype = vfilestat(&vn, fsp)) == NULL)
 		fsp->fsid = mount.mnt_stat.f_fsidx.__fsid_val[0];
-	return (badtype);
+	return badtype;
 }
 
 static char *
@@ -715,10 +720,10 @@ getmnton(struct mount *m)
 
 	for (mt = mhead; mt != NULL; mt = mt->next)
 		if (m == mt->m)
-			return (mt->mntonname);
+			return mt->mntonname;
 	if (!KVM_READ(m, &mount, sizeof(struct mount))) {
 		warnx("can't read mount table at %p", m);
-		return (NULL);
+		return NULL;
 	}
 	if ((mt = malloc(sizeof (struct mtab))) == NULL) {
 		err(1, "malloc(%u)", (unsigned int)sizeof(struct mtab));
@@ -728,7 +733,7 @@ getmnton(struct mount *m)
 	    MNAMELEN);
 	mt->next = mhead;
 	mhead = mt;
-	return (mt->mntonname);
+	return mt->mntonname;
 }
 
 #ifdef INET6
@@ -925,22 +930,42 @@ socktrans(struct socket *sock, int i)
 	case AF_LOCAL:
 		/* print address of pcb and connected pcb */
 		if (so.so_pcb) {
+			char shoconn[4], *cp;
+
 			(void)printf(" %lx", (long)so.so_pcb);
 			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&unpcb,
 			    sizeof(struct unpcb)) != sizeof(struct unpcb)){
 				dprintf("can't read unpcb at %p", so.so_pcb);
 				goto bad;
 			}
-			if (unpcb.unp_conn) {
-				char shoconn[4], *cp;
 
-				cp = shoconn;
-				if (!(so.so_state & SS_CANTRCVMORE))
-					*cp++ = '<';
-				*cp++ = '-';
-				if (!(so.so_state & SS_CANTSENDMORE))
-					*cp++ = '>';
-				*cp = '\0';
+			cp = shoconn;
+			if (!(so.so_state & SS_CANTRCVMORE))
+				*cp++ = '<';
+			*cp++ = '-';
+			if (!(so.so_state & SS_CANTSENDMORE))
+				*cp++ = '>';
+			*cp = '\0';
+			if (unpcb.unp_addr) {
+				struct sockaddr_un *sun = 
+					malloc(unpcb.unp_addrlen);
+				if (sun == NULL)
+				    err(1, "malloc(%zu)",
+					unpcb.unp_addrlen);
+				if (kvm_read(kd, (u_long)unpcb.unp_addr,
+				    sun, unpcb.unp_addrlen) !=
+				    (ssize_t)unpcb.unp_addrlen) {
+					dprintf("can't read sun at %p",
+					    unpcb.unp_addr);
+					free(sun);
+				} else {
+					(void)printf(" %s %s",
+					    shoconn, sun->sun_path);
+					free(sun);
+					break;
+				}
+			}
+			if (unpcb.unp_conn) {
 				(void)printf(" %s %lx", shoconn,
 				    (long)unpcb.unp_conn);
 			}
@@ -1037,8 +1062,8 @@ getfname(const char *filename)
 		warn("stat(%s)", filename);
 		return 0;
 	}
-	if ((cur = malloc(sizeof(DEVS))) == NULL) {
-		err(1, "malloc(%u)", (unsigned int)sizeof(DEVS));
+	if ((cur = malloc(sizeof(*cur))) == NULL) {
+		err(1, "malloc(%zu)", sizeof(*cur));
 	}
 	cur->next = devs;
 	devs = cur;
