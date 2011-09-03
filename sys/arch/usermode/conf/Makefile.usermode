@@ -1,6 +1,11 @@
-# $NetBSD: Makefile.usermode,v 1.17 2011/09/03 15:00:27 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.18 2011/09/03 18:42:13 jmcneill Exp $
 
+OPT_CPU_HOST=			%CPU_HOST%
+.if !empty(OPT_CPU_HOST)
+MACHINE_ARCH=			${OPT_CPU_HOST}
+.else
 MACHINE_ARCH=			usermode
+.endif
 USETOOLS?=			no
 NEED_OWN_INSTALL_TARGET?=	no
 .include <bsd.own.mk>
@@ -15,12 +20,17 @@ GENASSYM_CONF=	${USERMODE}/usermode/genassym.cf
 ## (2) compile settings
 ##
 USERMODE_HOSTOS!=uname -s
+USERMODE_HOSTMACHINE!=uname -m
 USERMODE_LIBS=	-lrt
-.if ${USERMODE_HOSTOS} == "Linux"
-USERMODE_LIBS+=	-lpthread
-.endif
 USERMODE_CPPFLAGS=-U_KERNEL -I/usr/include
 USERMODE_CPPFLAGS+=${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
+
+.if ${USERMODE_HOSTOS} == "Linux"
+USERMODE_LIBS+=	-lpthread
+CPPFLAGS+=-Dstrtoul=netbsd_strtoul
+CPPFLAGS+=-Dstrtoll=netbsd_strtoll
+CPPFLAGS+=-Dstrtoull=netbsd_strtoull
+.endif
 
 DEFCOPTS=	-fno-omit-frame-pointer
 CPPFLAGS+=	-Dusermode -D__NetBSD__ -Wno-unused-but-set-variable
@@ -42,8 +52,8 @@ CPPFLAGS.urkelvisor.c+=	${USERMODE_CPPFLAGS}
 ##
 ## (3) libkern and compat
 ##
-KERN_AS=	obj
-COMPAT_AS=	obj
+KERN_AS=	library
+COMPAT_AS=	library
 
 ##
 ## (4) local objects, compile rules, and dependencies
