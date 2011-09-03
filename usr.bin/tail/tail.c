@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tail.c,v 1.15 2011/09/03 09:02:20 christos Exp $");
+__RCSID("$NetBSD: tail.c,v 1.16 2011/09/03 10:59:11 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,9 +55,8 @@ __RCSID("$NetBSD: tail.c,v 1.15 2011/09/03 09:02:20 christos Exp $");
 int fflag, rflag, rval;
 const char *fname;
 
-int	main(int, char **);
 static void obsolete(char **);
-static void usage(void);
+static void usage(void) __dead;
 
 int
 main(int argc, char *argv[])
@@ -69,6 +68,7 @@ main(int argc, char *argv[])
 	int ch, first;
 	char *p;
 
+	setprogname(argv[0]);
 	off = 0;
 	/*
 	 * Tail's options are weird.  First, -n10 is the same as -n-10, not
@@ -133,7 +133,8 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (fflag && argc > 1)
-		xerrx(1, "-f and -F options only appropriate for a single file");
+		xerrx(1,
+		    "-f and -F options only appropriate for a single file");
 
 	/*
 	 * If displaying in reverse, don't permit follow option, and convert
@@ -298,6 +299,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: tail [-f | -F | -r] [-b # | -c # | -n #] [file ...]\n");
+	    "Usage: %s [-f | -F | -r] [-b # | -c # | -n #] [file ...]\n",
+	    getprogname());
 	exit(1);
 }
