@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.20 2011/09/01 15:15:06 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.21 2011/09/03 12:33:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_memsize.h"
+#include "opt_sdl.h"
+#include "opt_urkelvisor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2011/09/01 15:15:06 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2011/09/03 12:33:02 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,8 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2011/09/01 15:15:06 reinoud Exp $")
 
 #include <machine/thunk.h>
 
-#include "opt_memsize.h"
-#include "opt_sdl.h"
+#if defined(URKELVISOR)
+#include <machine/urkelvisor.h>
+#endif
 
 char machine[] = "usermode";
 char machine_arch[] = "usermode";
@@ -102,6 +107,10 @@ main(int argc, char *argv[])
 	uvmexp.ncolors = 2;
 
 	pmap_bootstrap();
+
+#if defined(URKELVISOR)
+	urkelvisor_init();
+#endif
 
 	splraise(IPL_HIGH);
 
