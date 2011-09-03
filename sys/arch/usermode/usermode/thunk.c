@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.26 2011/09/02 16:09:01 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.27 2011/09/03 15:00:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,13 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thunk.c,v 1.26 2011/09/02 16:09:01 reinoud Exp $");
+#ifdef __NetBSD__
+__RCSID("$NetBSD: thunk.c,v 1.27 2011/09/03 15:00:28 jmcneill Exp $");
+#endif
 
 #include <sys/types.h>
-#include <sys/ansi.h>
 
 #include <aio.h>
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -46,6 +48,10 @@ __RCSID("$NetBSD: thunk.c,v 1.26 2011/09/02 16:09:01 reinoud Exp $");
 #include <unistd.h>
 
 #include "../include/thunk.h"
+
+#ifndef __arraycount
+#define __arraycount(x)	(sizeof((x)) / sizeof((x)[0]))
+#endif
 
 static void
 thunk_to_timeval(const struct thunk_timeval *ttv, struct timeval *tv)
@@ -181,6 +187,12 @@ void
 thunk_abort(void)
 {
 	abort();
+}
+
+int
+thunk_geterrno(void)
+{
+	return errno;
 }
 
 int
@@ -377,24 +389,9 @@ thunk_sbrk(intptr_t len)
 	return sbrk(len);
 }
 
-/* exposed to signal handler */
-extern vaddr_t kmem_k_start, kmem_k_end;
-extern vaddr_t kmem_ext_start, kmem_ext_end;
-extern vaddr_t kmem_user_start, kmem_user_end;
-extern vaddr_t kmem_ext_cur_start, kmem_ext_cur_end;
-
 void *
 thunk_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
-#ifdef DIAGNOSTIC
-	if (kmem_ext_end && (len <= 4096)) {
-		if (((vaddr_t) addr < kmem_user_start) || ((vaddr_t) addr >= kmem_ext_end)) {
-			printf("thunk mmap outside the box\n");
-			exit(1);
-		}
-	}
-#endif
-		
 	return mmap(addr, len, prot, flags, fd, offset);
 }
 
