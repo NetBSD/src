@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.29 2009/04/13 23:33:25 lukem Exp $	*/
+/*	$NetBSD: forward.c,v 1.30 2011/09/03 09:02:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.29 2009/04/13 23:33:25 lukem Exp $");
+__RCSID("$NetBSD: forward.c,v 1.30 2011/09/03 09:02:20 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -180,7 +180,7 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 	if (fflag) {
 		kq = kqueue();
 		if (kq < 0)
-			err(1, "kqueue");
+			xerr(1, "kqueue");
 		action = ADD_EVENTS;
 	}
 
@@ -225,7 +225,7 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 
 		case USE_KQUEUE:
 			if (kevent(kq, NULL, 0, ev, 1, NULL) < 0)
-				err(1, "kevent");
+				xerr(1, "kevent");
 
 			if (ev[0].filter == EVFILT_VNODE) {
 				/* file was rotated, wait until it reappears */
@@ -305,7 +305,7 @@ rlines(FILE *fp, off_t off, struct stat *sbp)
 		start = mmap(NULL, (size_t)mmap_size, PROT_READ,
 			     MAP_FILE|MAP_SHARED, fileno(fp), mmap_offset);
 		if (start == MAP_FAILED) {
-			err(0, "%s: %s", fname, strerror(EFBIG));
+			xerr(0, "%s", fname);
 			return (1);
 		}
 
@@ -326,7 +326,7 @@ rlines(FILE *fp, off_t off, struct stat *sbp)
 			break;
 
 		if (munmap(start, mmap_size)) {
-			err(0, "%s: %s", fname, strerror(errno));
+			xerr(0, "%s", fname);
 			return (1);
 		}
 
@@ -344,7 +344,7 @@ rlines(FILE *fp, off_t off, struct stat *sbp)
 	WR(p, mmap_size - mmap_remaining);
 	file_remaining += mmap_size - mmap_remaining;
 	if (munmap(start, mmap_size)) {
-		err(0, "%s: %s", fname, strerror(errno));
+		xerr(0, "%s", fname);
 		return (1);
 	}
 
