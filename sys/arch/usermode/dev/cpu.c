@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.26 2011/09/03 15:00:28 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.27 2011/09/03 19:06:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_cpu.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2011/09/03 15:00:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27 2011/09/03 19:06:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -51,6 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2011/09/03 15:00:28 jmcneill Exp $");
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
+
+#if __GNUC_PREREQ__(4,4)
+#define cpu_unreachable()	__builtin_unreachable()
+#else
+#define cpu_unreachable()	do { thunk_abort(); } while (0)
+#endif
 
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);
@@ -133,7 +139,7 @@ cpu_reboot(int howto, char *bootstr)
 	usermode_reboot();
 
 	/* NOTREACHED */
-	__builtin_unreachable();
+	cpu_unreachable();
 }
 
 void
