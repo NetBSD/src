@@ -1,4 +1,4 @@
-# $NetBSD: std.usermode,v 1.5 2011/08/22 15:26:55 reinoud Exp $
+# $NetBSD: std.usermode,v 1.6 2011/09/03 12:28:45 jmcneill Exp $
 
 machine usermode
 include "conf/std"
@@ -7,6 +7,8 @@ options 	HZ=100
 options		EXEC_ELF32
 options 	EXEC_ELF64
 options 	EXEC_SCRIPT
+
+options 	URKELVISOR
 
 # Defaults
 options		NKMEMPAGES=2048
