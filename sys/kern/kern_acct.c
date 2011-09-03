@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.92 2011/05/01 01:15:18 rmind Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.93 2011/09/03 14:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.92 2011/05/01 01:15:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.93 2011/09/03 14:09:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,6 +411,8 @@ acct_process(struct lwp *l)
 	if (acct_state != ACCT_ACTIVE)
 		return 0;
 
+	memset(&acct, 0, sizeof(acct));	/* to zerofill padded data */
+
 	rw_enter(&acct_lock, RW_READER);
 
 	/* If accounting isn't enabled, don't bother */
@@ -434,7 +436,7 @@ acct_process(struct lwp *l)
 	 */
 
 	/* (1) The name of the command that ran */
-	memcpy(acct.ac_comm, p->p_comm, sizeof(acct.ac_comm));
+	strncpy(acct.ac_comm, p->p_comm, sizeof(acct.ac_comm));
 
 	/* (2) The amount of user and system time that was used */
 	mutex_enter(p->p_lock);
