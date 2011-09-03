@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.6 2011/08/25 19:08:35 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.7 2011/09/03 15:00:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.6 2011/08/25 19:08:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.7 2011/09/03 15:00:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -72,8 +72,6 @@ struct ld_thunkbus_softc {
 CFATTACH_DECL_NEW(ld_thunkbus, sizeof(struct ld_thunkbus_softc),
     ld_thunkbus_match, ld_thunkbus_attach, NULL, NULL);
 
-extern int errno;
-
 static int
 ld_thunkbus_match(device_t parent, cfdata_t match, void *opaque)
 {
@@ -99,11 +97,11 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 
 	sc->sc_fd = thunk_open(path, O_RDWR, 0);
 	if (sc->sc_fd == -1) {
-		aprint_error(": couldn't open %s: %d\n", path, errno);
+		aprint_error(": couldn't open %s: %d\n", path, thunk_geterrno());
 		return;
 	}
 	if (thunk_fstat_getsize(sc->sc_fd, &size, &blksize) == -1) {
-		aprint_error(": couldn't stat %s: %d\n", path, errno);
+		aprint_error(": couldn't stat %s: %d\n", path, thunk_geterrno());
 		return;
 	}
 
@@ -126,7 +124,7 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 	sa.sa_flags = SA_RESTART|SA_SIGINFO;
 	sa.sa_sigaction = ld_thunkbus_sig;
 	if (thunk_sigaction(SIGIO, &sa, NULL) == -1)
-		panic("couldn't register SIGIO handler: %d", errno);
+		panic("couldn't register SIGIO handler: %d", thunk_geterrno());
 
 	ldattach(ld);
 }
@@ -159,7 +157,7 @@ ld_thunkbus_complete(void *arg)
 	    thunk_aio_return(&tt->tt_aio) != -1) {
 		bp->b_resid = 0;
 	} else {
-		bp->b_error = errno;
+		bp->b_error = thunk_geterrno();
 		bp->b_resid = bp->b_bcount;
 	}
 
@@ -201,7 +199,7 @@ ld_thunkbus_ldstart(struct ld_softc *ld, struct buf *bp)
 	else
 		error = thunk_aio_write(&tt->tt_aio);
 
-	return error == -1 ? errno : 0;
+	return error == -1 ? thunk_geterrno() : 0;
 }
 
 static int
@@ -212,7 +210,7 @@ ld_thunkbus_lddump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 
 	len = thunk_pwrite(sc->sc_fd, data, blkcnt, blkno);
 	if (len == -1)
-		return errno;
+		return thunk_geterrno();
 	else if (len != blkcnt) {
 		device_printf(ld->sc_dv, "%s failed (short xfer)\n", __func__);
 		return EIO;
@@ -227,7 +225,7 @@ ld_thunkbus_ldflush(struct ld_softc *ld, int flags)
 	struct ld_thunkbus_softc *sc = (struct ld_thunkbus_softc *)ld;
 
 	if (thunk_fsync(sc->sc_fd) == -1)
-		return errno;
+		return thunk_geterrno();
 
 	return 0;
 }
