@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.16 2011/09/03 09:02:20 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.17 2011/09/03 10:59:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: read.c,v 1.16 2011/09/03 09:02:20 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.17 2011/09/03 10:59:10 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -82,7 +82,7 @@ displaybytes(FILE *fp, off_t off)
 	}
 	if (ferror(fp)) {
 		ierr();
-		return (1);
+		return 1;
 	}
 
 	if (rflag) {
@@ -115,7 +115,7 @@ displaybytes(FILE *fp, off_t off)
 		if ((len = p - sp) != 0)
 			WR(sp, len);
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -181,7 +181,7 @@ displaylines(FILE *fp, off_t off)
 	if (ferror(fp)) {
 		free(lines);
 		ierr();
-		return (1);
+		return 1;
 	}
 	if (cnt) {
 		lines[recno].l = sp;
@@ -206,5 +206,5 @@ displaylines(FILE *fp, off_t off)
 			WR(lines[cnt].l, lines[cnt].len);
 	}
 	free(lines);
-	return (0);
+	return 0;
 }
