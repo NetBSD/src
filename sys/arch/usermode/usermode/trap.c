@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.19 2011/09/03 15:00:28 jmcneill Exp $ */
+/* $NetBSD: trap.c,v 1.20 2011/09/03 15:33:56 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.19 2011/09/03 15:00:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.20 2011/09/03 15:33:56 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.19 2011/09/03 15:00:28 jmcneill Exp $");
 /* forwards and externals */
 void setup_signal_handlers(void);
 static void mem_access_handler(int sig, siginfo_t *info, void *ctx);
+static void illegal_instruction_handler(int sig, siginfo_t *info, void *ctx);
+extern int errno;
 
 bool pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype);
 
@@ -75,8 +77,14 @@ setup_signal_handlers(void)
 		panic("couldn't register SIGSEGV handler : %d",
 		    thunk_geterrno());
 	if (thunk_sigaction(SIGBUS, &sa, NULL) == -1)
-		panic("couldn't register SIGBUS handler : %d",
-		    thunk_geterrno());
+		panic("couldn't register SIGBUS handler : %d", thunk_geterrno());
+
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
+	sa.sa_sigaction = illegal_instruction_handler;
+	if (thunk_sigaction(SIGILL, &sa, NULL) == -1)
+		panic("couldn't register SIGILL handler : %d", thunk_geterrno());
+
 	if ((sigstk.ss_sp = thunk_malloc(SIGSTKSZ)) == NULL)
 		panic("can't allocate signal stack space\n");
 	sigstk.ss_size  = SIGSTKSZ;
@@ -119,7 +127,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 
 #if 0
 		va = (vaddr_t) info->si_addr;
-		printf("trap lwp = %p pid = %d lid = %d, va = %p\n",
+		printf("mem trap lwp = %p pid = %d lid = %d, va = %p\n",
 		    curlwp,
 		    curlwp->l_proc->p_pid,
 		    curlwp->l_lid,
@@ -130,31 +138,22 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		printf("\tsi_signo = %d\n", info->si_signo);
 		printf("\tsi_errno = %d\n", info->si_errno);
 		printf("\tsi_code  = %d\n", info->si_code);
-		if (info->si_code == SEGV_MAPERR) {
+		if (info->si_code == SEGV_MAPERR)
 			printf("\t\tSEGV_MAPERR\n");
-		}
-		if (info->si_code == SEGV_ACCERR) {
+		if (info->si_code == SEGV_ACCERR)
 			printf("\t\tSEGV_ACCERR\n");
-		}
-		if (info->si_code == BUS_ADRALN) {
+		if (info->si_code == BUS_ADRALN)
 			printf("\t\tBUS_ADRALN\n");
-		}
-		if (info->si_code == BUS_ADRERR) {
+		if (info->si_code == BUS_ADRERR)
 			printf("\t\tBUS_ADRERR\n");
-		}
-		if (info->si_code == BUS_OBJERR) {
+		if (info->si_code == BUS_OBJERR)
 			printf("\t\tBUS_OBJERR\n");
-		}
 		printf("\tsi_addr = %p\n", info->si_addr);
 		printf("\tsi_trap = %d\n", info->si_trap);
 #endif
 
 		va = (vaddr_t) info->si_addr;
 		va = trunc_page(va);
-
-		/* sanity */
-		if ((va < VM_MIN_ADDRESS) || (va >= VM_MAX_ADDRESS))
-			panic("peeing outside the box!");
 
 		kmem = 1;
 		vm_map = kernel_map;
@@ -172,6 +171,14 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 			rv = uvm_fault(vm_map, va, atype);
 			pcb->pcb_onfault = onfault;
 		}
+
+		/* sanity */
+		if ((va < VM_MIN_ADDRESS) || (va >= VM_MAX_ADDRESS))
+			panic("peeing outside the box!");
+
+		/* extra debug for now */
+		if (va == 0)
+			panic("NULL deref\n");
 
 #if 0
 	if (old_old_va)
@@ -210,3 +217,60 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	}
 }
 
+static void
+illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
+{
+	static volatile int recurse = 0;
+	struct proc *p;
+	struct lwp *l;
+	struct pcb *pcb;
+	vaddr_t va;
+
+	recurse++;
+	if (recurse > 1)
+		printf("enter trap recursion level %d\n", recurse);
+	if (info->si_signo == SIGILL) {
+		l = curlwp;
+		p = l->l_proc;
+		pcb = lwp_getpcb(l);
+
+#if 1
+		va = (vaddr_t) info->si_addr;
+		printf("illegal instruction trap lwp = %p pid = %d lid = %d, va = %p\n",
+		    curlwp,
+		    curlwp->l_proc->p_pid,
+		    curlwp->l_lid,
+		    (void *) va);
+#endif
+#if 1
+		printf("SIGILL!\n");
+		printf("\tsi_signo = %d\n", info->si_signo);
+		printf("\tsi_errno = %d\n", info->si_errno);
+		printf("\tsi_code  = %d\n", info->si_code);
+		if (info->si_code == ILL_ILLOPC)
+			printf("\t\tIllegal opcode");
+		if (info->si_code == ILL_ILLOPN)
+			printf("\t\tIllegal operand");
+		if (info->si_code == ILL_ILLADR)
+			printf("\t\tIllegal addressing mode");
+		if (info->si_code == ILL_ILLTRP)
+			printf("\t\tIllegal trap");
+		if (info->si_code == ILL_PRVOPC)
+			printf("\t\tPrivileged opcode");
+		if (info->si_code == ILL_PRVREG)
+			printf("\t\tPrivileged register");
+		if (info->si_code == ILL_COPROC)
+			printf("\t\tCoprocessor error");
+		if (info->si_code == ILL_BADSTK)
+			printf("\t\tInternal stack error");
+		printf("\tsi_addr = %p\n", info->si_addr);
+		printf("\tsi_trap = %d\n", info->si_trap);
+#endif
+
+		if (recurse > 1)
+			printf("leaving trap recursion level %d\n", recurse);
+		recurse--;
+
+		panic("illegal instruction encountered\n");
+	}
+}
