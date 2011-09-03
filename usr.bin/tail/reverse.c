@@ -1,4 +1,4 @@
-/*	$NetBSD: reverse.c,v 1.21 2011/09/03 09:02:20 christos Exp $	*/
+/*	$NetBSD: reverse.c,v 1.22 2011/09/03 10:35:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: reverse.c,v 1.21 2011/09/03 09:02:20 christos Exp $");
+__RCSID("$NetBSD: reverse.c,v 1.22 2011/09/03 10:35:13 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -122,7 +122,6 @@ r_reg(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 
 	if ((start = mmap(NULL, (size_t)size, PROT_READ,
 	    MAP_FILE|MAP_SHARED, fileno(fp), (off_t)0)) == (caddr_t)-1) {
-		errno = EFBIG;
 		xerr(0, "%s", fname);
 		return;
 	}
