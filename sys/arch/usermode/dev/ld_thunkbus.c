@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.7 2011/09/03 15:00:28 jmcneill Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.8 2011/09/03 19:07:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define BROKEN_SIGINFO
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.7 2011/09/03 15:00:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.8 2011/09/03 19:07:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -69,6 +71,10 @@ struct ld_thunkbus_softc {
 	struct ld_thunkbus_transfer sc_tt;
 };
 
+#ifdef BROKEN_SIGINFO
+struct ld_thunkbus_transfer *ld_thunkbus_tt;
+#endif
+
 CFATTACH_DECL_NEW(ld_thunkbus, sizeof(struct ld_thunkbus_softc),
     ld_thunkbus_match, ld_thunkbus_attach, NULL, NULL);
 
@@ -79,6 +85,12 @@ ld_thunkbus_match(device_t parent, cfdata_t match, void *opaque)
 
 	if (taa->taa_type != THUNKBUS_TYPE_DISKIMAGE)
 		return 0;
+
+#ifdef BROKEN_SIGINFO
+	/* We can only have one instance if siginfo doesn't work */
+	if (ld_thunkbus_tt != NULL)
+		return 0;
+#endif
 
 	return 1;
 }
@@ -104,6 +116,10 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 		aprint_error(": couldn't stat %s: %d\n", path, thunk_geterrno());
 		return;
 	}
+
+#ifdef BROKEN_SIGINFO
+	ld_thunkbus_tt = &sc->sc_tt;
+#endif
 
 	aprint_naive("\n");
 	aprint_normal(": %s (%lld)\n", path, (long long)size);
@@ -132,15 +148,22 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 static void
 ld_thunkbus_sig(int sig, siginfo_t *info, void *ctx)
 {
-	struct ld_thunkbus_transfer *tt;
+	struct ld_thunkbus_transfer *tt = NULL;
 	struct ld_thunkbus_softc *sc;
 
 	curcpu()->ci_idepth++;
 
 	if (info->si_signo == SIGIO) {
-		tt = info->si_value.sival_ptr;
-		sc = tt->tt_sc;
-		softint_schedule(sc->sc_ih);
+#ifdef BROKEN_SIGINFO
+		tt = ld_thunkbus_tt;
+#else
+		if (info->si_code == SI_ASYNCIO)
+			tt = info->si_value.sival_ptr;
+#endif
+		if (tt) {
+			sc = tt->tt_sc;
+			softint_schedule(sc->sc_ih);
+		}
 	}
 
 	curcpu()->ci_idepth--;
