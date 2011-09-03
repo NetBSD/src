@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.27 2011/09/03 15:00:28 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.28 2011/09/03 18:42:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,10 +28,11 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.27 2011/09/03 15:00:28 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.28 2011/09/03 18:42:13 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
+#include <sys/mman.h>
 
 #include <aio.h>
 #include <assert.h>
@@ -51,6 +52,10 @@ __RCSID("$NetBSD: thunk.c,v 1.27 2011/09/03 15:00:28 jmcneill Exp $");
 
 #ifndef __arraycount
 #define __arraycount(x)	(sizeof((x)) / sizeof((x)[0]))
+#endif
+
+#ifndef MAP_ANON
+#define MAP_ANON MAP_ANONYMOUS
 #endif
 
 static void
@@ -109,6 +114,40 @@ thunk_from_termios(const struct termios *t, struct thunk_termios *tt)
 		tt->c_cc[i] = t->c_cc[i];
 	tt->c_ispeed = t->c_ispeed;
 	tt->c_ospeed= t->c_ospeed;
+}
+
+static int
+thunk_to_native_prot(int prot)
+{
+	int nprot = PROT_NONE;
+
+	if (prot & THUNK_PROT_READ)
+		nprot |= PROT_READ;
+	if (prot & THUNK_PROT_WRITE)
+		nprot |= PROT_WRITE;
+	if (prot & THUNK_PROT_EXEC)
+		nprot |= PROT_EXEC;
+
+	return nprot;
+}
+
+static int
+thunk_to_native_mapflags(int flags)
+{
+	int nflags = 0;
+
+	if (flags & THUNK_MAP_ANON)
+		nflags |= MAP_ANON;
+	if (flags & THUNK_MAP_FIXED)
+		nflags |= MAP_FIXED;
+	if (flags & THUNK_MAP_FILE)
+		nflags |= MAP_FILE;
+	if (flags & THUNK_MAP_SHARED)
+		nflags |= MAP_SHARED;
+	if (flags & THUNK_MAP_PRIVATE)
+		nflags |= MAP_PRIVATE;
+
+	return nflags;
 }
 
 int
@@ -392,7 +431,16 @@ thunk_sbrk(intptr_t len)
 void *
 thunk_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
-	return mmap(addr, len, prot, flags, fd, offset);
+	int nflags, nprot;
+	void *a;
+
+	nprot = thunk_to_native_prot(prot);
+	nflags = thunk_to_native_mapflags(flags);
+
+	a = mmap(addr, len, nprot, nflags, fd, offset);
+	if (a == (void *)-1)
+		perror("mmap");
+	return a;
 }
 
 int
@@ -404,7 +452,17 @@ thunk_munmap(void *addr, size_t len)
 int
 thunk_mprotect(void *addr, size_t len, int prot)
 {
-	return mprotect(addr, len, prot);
+	int nprot;
+
+	nprot = thunk_to_native_prot(prot);
+
+	return mprotect(addr, len, nprot);
+}
+
+int
+thunk_posix_memalign(void **ptr, size_t alignment, size_t size)
+{
+	return posix_memalign(ptr, alignment, size);
 }
 
 char *
