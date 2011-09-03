@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.51 2011/09/03 12:28:46 jmcneill Exp $ */
+/* $NetBSD: pmap.c,v 1.52 2011/09/03 12:33:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 2011/09/03 12:28:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2011/09/03 12:33:03 jmcneill Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
-#include "opt_urkelvisor.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,10 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 2011/09/03 12:28:46 jmcneill Exp $");
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <machine/thunk.h>
-
-#ifdef URKELVISOR
-#include <machine/urkelvisor.h>
-#endif
 
 #include <uvm/uvm.h>
 
@@ -304,10 +299,6 @@ pmap_bootstrap(void)
 		(uint64_t) (free_end - (free_start + fpos))/1024/1024);
 	aprint_debug("\t%"PRIu64" MB of kmem left\n",
 		(uint64_t) (kmem_ext_end - kmem_ext_cur_end)/1024/1024);
-
-#ifdef URKELVISOR
-	urkelvisor_init();
-#endif
 }
 
 void
