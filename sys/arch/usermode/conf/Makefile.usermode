@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.16 2011/09/03 12:28:45 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.17 2011/09/03 15:00:27 jmcneill Exp $
 
 MACHINE_ARCH=			usermode
 USETOOLS?=			no
@@ -14,12 +14,16 @@ GENASSYM_CONF=	${USERMODE}/usermode/genassym.cf
 ##
 ## (2) compile settings
 ##
+USERMODE_HOSTOS!=uname -s
 USERMODE_LIBS=	-lrt
+.if ${USERMODE_HOSTOS} == "Linux"
+USERMODE_LIBS+=	-lpthread
+.endif
 USERMODE_CPPFLAGS=-U_KERNEL -I/usr/include
 USERMODE_CPPFLAGS+=${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
 
 DEFCOPTS=	-fno-omit-frame-pointer
-CPPFLAGS+=	-Dusermode
+CPPFLAGS+=	-Dusermode -D__NetBSD__ -Wno-unused-but-set-variable
 CPPFLAGS.init_main.c+=	-Dmain=kernmain
 
 OPT_SDL=	%SDL%
@@ -63,8 +67,8 @@ MD_CFILES+=	${USERMODE}/usermode/thunk_sdl.c
 ##
 SYSTEM_LD=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
-		${CC} ${COPTS} -Wl,-Map,$@.map,-Bstatic -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o ${USERMODE_LIBS}; \
-		${CC} ${COPTS} -Wl,-Map,$@.map,-Bstatic -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o ${USERMODE_LIBS}
+		${CC} -static ${COPTS} -Wl,-Map,$@.map -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o ${USERMODE_LIBS}; \
+		${CC} -static ${COPTS} -Wl,-Map,$@.map -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o ${USERMODE_LIBS}
 NVFLAGS=	-n
 
 ##

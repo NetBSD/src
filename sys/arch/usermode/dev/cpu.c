@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.25 2011/09/03 12:25:31 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.26 2011/09/03 15:00:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_cpu.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25 2011/09/03 12:25:31 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2011/09/03 15:00:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -133,6 +133,7 @@ cpu_reboot(int howto, char *bootstr)
 	usermode_reboot();
 
 	/* NOTREACHED */
+	__builtin_unreachable();
 }
 
 void
@@ -149,7 +150,6 @@ cpu_need_proftick(struct lwp *l)
 lwp_t *
 cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 {
-	extern int errno;
 	struct pcb *oldpcb = oldlwp ? lwp_getpcb(oldlwp) : NULL;
 	struct pcb *newpcb = lwp_getpcb(newlwp);
 	struct cpu_info *ci = curcpu();
@@ -182,10 +182,10 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	curlwp = newlwp;
 	if (oldpcb) {
 		if (thunk_swapcontext(&oldpcb->pcb_ucp, &newpcb->pcb_ucp))
-			panic("swapcontext failed: %d", errno);
+			panic("swapcontext failed");
 	} else {
 		if (thunk_setcontext(&newpcb->pcb_ucp))
-			panic("setcontext failed: %d", errno);
+			panic("setcontext failed");
 	}
 
 #ifdef CPU_DEBUG
@@ -290,7 +290,6 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	extern int errno;
 	struct pcb *pcb1 = lwp_getpcb(l1);
 	struct pcb *pcb2 = lwp_getpcb(l2);
 
@@ -313,7 +312,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		pcb2->pcb_needfree = false;
 
 	if (thunk_getcontext(&pcb2->pcb_ucp))
-		panic("getcontext failed: %d", errno);
+		panic("getcontext failed");
 
 	pcb2->pcb_ucp.uc_stack.ss_sp = stack;
 	pcb2->pcb_ucp.uc_stack.ss_size = stacksize;

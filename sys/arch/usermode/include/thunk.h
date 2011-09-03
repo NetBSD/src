@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.23 2011/09/02 16:09:01 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.24 2011/09/03 15:00:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,6 @@
 #include <sys/fcntl.h>
 #include <sys/ucontext.h>
 #include <sys/signal.h>
-#include <sys/aio.h>
 #include <sys/mman.h>
 
 struct thunk_timeval {
@@ -58,6 +57,8 @@ struct thunk_termios {
 	int32_t c_ospeed;
 };
 
+struct aiocb;
+
 int	thunk_setitimer(int, const struct thunk_itimerval *, struct thunk_itimerval *);
 int	thunk_gettimeofday(struct thunk_timeval *, void *);
 unsigned int thunk_getcounter(void);
@@ -66,6 +67,8 @@ int	thunk_usleep(useconds_t);
 
 void	thunk_exit(int);
 void	thunk_abort(void);
+
+int	thunk_geterrno(void);
 
 int	thunk_getcontext(ucontext_t *);
 int	thunk_setcontext(const ucontext_t *);

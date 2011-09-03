@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.18 2011/09/02 14:54:41 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.19 2011/09/03 15:00:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18 2011/09/02 14:54:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.19 2011/09/03 15:00:28 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18 2011/09/02 14:54:41 reinoud Exp $");
 /* forwards and externals */
 void setup_signal_handlers(void);
 static void mem_access_handler(int sig, siginfo_t *info, void *ctx);
-extern int errno;
 
 bool pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype);
 
@@ -73,15 +72,18 @@ setup_signal_handlers(void)
 	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
 	sa.sa_sigaction = mem_access_handler;
 	if (thunk_sigaction(SIGSEGV, &sa, NULL) == -1)
-		panic("couldn't register SIGSEGV handler : %d", errno);
+		panic("couldn't register SIGSEGV handler : %d",
+		    thunk_geterrno());
 	if (thunk_sigaction(SIGBUS, &sa, NULL) == -1)
-		panic("couldn't register SIGBUS handler : %d", errno);
+		panic("couldn't register SIGBUS handler : %d",
+		    thunk_geterrno());
 	if ((sigstk.ss_sp = thunk_malloc(SIGSTKSZ)) == NULL)
 		panic("can't allocate signal stack space\n");
 	sigstk.ss_size  = SIGSTKSZ;
 	sigstk.ss_flags = 0;
 	if (thunk_sigaltstack(&sigstk, 0) < 0)
-		panic("can't set alternate stacksize : %d", errno);
+		panic("can't set alternate stacksize : %d",
+		    thunk_geterrno());
 
 //	debug_fh = thunk_open("/usr/sources/debug", O_RDWR | O_TRUNC | O_CREAT, 0666);
 }

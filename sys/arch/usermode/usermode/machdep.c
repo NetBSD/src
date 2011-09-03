@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.21 2011/09/03 12:33:02 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.22 2011/09/03 15:00:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2011/09/03 12:33:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2011/09/03 15:00:28 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -177,7 +177,7 @@ for (i =0; i < 19; i++)
 	printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], reg[i]);
 #endif
 #else
-#	error setregs() not yet `ported'/tweaked to this architecture
+#	error setregs() not yet ported to this architecture
 #endif
 
 printf("updated pcb %p\n", pcb);

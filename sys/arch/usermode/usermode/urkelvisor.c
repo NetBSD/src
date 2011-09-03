@@ -1,4 +1,4 @@
-/* $NetBSD: urkelvisor.c,v 1.2 2011/09/03 12:48:22 jmcneill Exp $ */
+/* $NetBSD: urkelvisor.c,v 1.3 2011/09/03 15:00:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,14 +32,19 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: urkelvisor.c,v 1.2 2011/09/03 12:48:22 jmcneill Exp $");
+__RCSID("$NetBSD: urkelvisor.c,v 1.3 2011/09/03 15:00:28 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
+
+#ifdef __linux__
+#include <sys/user.h>
+#else
 #include <machine/reg.h>
+#endif
 
 #include <err.h>
 #include <errno.h>
@@ -49,16 +54,29 @@ __RCSID("$NetBSD: urkelvisor.c,v 1.2 2011/09/03 12:48:22 jmcneill Exp $");
 
 #include "../include/urkelvisor.h"
 
+#if defined(__linux__)
+#include <linux/ptrace.h>
+#define PT_SYSCALLEMU PTRACE_SYSEMU
+typedef intptr_t vaddr_t;
+#endif
+
 extern vaddr_t kmem_user_start, kmem_user_end;	/* usermode/pmap.c */
 
-#if defined(__i386__)
-#define R_SYSCALL(_regs)	((_regs)->r_eax)
-#define R_PC(_regs)		((_regs)->r_eip)
-#elif defined(__x86_64__)
-#define R_SYSCALL(_regs)	((_regs)->regs[_REG_RAX])
-#define R_PC(_regs)		((_regs)->regs[_REG_RIP])
+#if defined(__linux__)
+# define reg_struct		user_regs_struct
+# define R_SYSCALL(_regs)	((_regs)->orig_eax)
+# define R_PC(_regs)		((_regs)->eip)
 #else
-#error port me
+# define reg_struct		reg
+# if defined(__i386__)
+#  define R_SYSCALL(_regs)	((_regs)->r_eax)
+#  define R_PC(_regs)		((_regs)->r_eip)
+# elif defined(__x86_64__)
+#  define R_SYSCALL(_regs)	((_regs)->regs[_REG_RAX])
+#  define R_PC(_regs)		((_regs)->regs[_REG_RIP])
+# else
+#  error port me
+# endif
 #endif
 
 static int
@@ -77,20 +95,30 @@ wait_urkel(pid_t urkel_pid)
 	return status;
 }
 
+static void
+ptrace_getregs(pid_t urkel_pid, struct reg_struct *puregs)
+{
+#ifdef __linux__
+	ptrace(PT_GETREGS, urkel_pid, NULL, puregs);
+#else
+	ptrace(PT_GETREGS, urkel_pid, puregs, 0);
+#endif
+}
+
 static int
 handle_syscall(pid_t urkel_pid)
 {
-	struct reg uregs;
+	struct reg_struct uregs;
 	int sig = 0;
 
 	errno = 0;
-	ptrace(PT_GETREGS, urkel_pid, &uregs, 0);
+	ptrace_getregs(urkel_pid, &uregs);
 	if (errno)
 		err(EXIT_FAILURE, "ptrace(PT_GETREGS, %d, &uregs, 0) failed",
 		    urkel_pid);
 
 	if (R_PC(&uregs) >= kmem_user_start && R_PC(&uregs) < kmem_user_end) {
-		fprintf(stderr, "caught syscall %d\n", R_SYSCALL(&uregs));
+		fprintf(stderr, "caught syscall %d\n", (int)R_SYSCALL(&uregs));
 		errno = 0;
 		ptrace(PT_SYSCALLEMU, urkel_pid, NULL, 0);
 		if (errno)
