@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.312 2011/08/31 22:43:19 rmind Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.313 2011/09/03 19:33:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.312 2011/08/31 22:43:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.313 2011/09/03 19:33:40 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -1850,8 +1850,12 @@ issignal(struct lwp *l)
 		 */
 		if ((p->p_slflag & PSL_TRACED) != 0 &&
 		    (p->p_lflag & PL_PPWAIT) == 0 && signo != SIGKILL) {
-			/* Take the signal. */
-			(void)sigget(sp, NULL, signo, NULL);
+			/*
+			 * Take the signal, but don't remove it from the
+			 * siginfo queue, because the debugger can send
+			 * it later.
+			 */
+			sigdelset(&sp->sp_set, signo);
 			p->p_xstat = signo;
 
 			/* Emulation-specific handling of signal trace */
@@ -1966,6 +1970,7 @@ postsig(int signo)
 	sig_t		action;
 	sigset_t	*returnmask;
 	ksiginfo_t	ksi;
+	sigpend_t	*sp;
 
 	l = curlwp;
 	p = l->l_proc;
@@ -1993,7 +1998,12 @@ postsig(int signo)
 	 */
 	action = SIGACTION_PS(ps, signo).sa_handler;
 	l->l_ru.ru_nsignals++;
-	sigget(l->l_sigpendset, &ksi, signo, NULL);
+	if ((sp = l->l_sigpendset) == NULL) {
+		/* From the debugger */
+		sp = &p->p_sigpend;
+		sigaddset(&sp->sp_set, signo);
+	}
+	sigget(sp, &ksi, signo, NULL);
 
 	if (ktrpoint(KTR_PSIG)) {
 		mutex_exit(p->p_lock);
