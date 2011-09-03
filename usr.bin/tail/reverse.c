@@ -1,4 +1,4 @@
-/*	$NetBSD: reverse.c,v 1.22 2011/09/03 10:35:13 christos Exp $	*/
+/*	$NetBSD: reverse.c,v 1.23 2011/09/03 10:59:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: reverse.c,v 1.22 2011/09/03 10:35:13 christos Exp $");
+__RCSID("$NetBSD: reverse.c,v 1.23 2011/09/03 10:59:11 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -121,7 +121,7 @@ r_reg(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 	}
 
 	if ((start = mmap(NULL, (size_t)size, PROT_READ,
-	    MAP_FILE|MAP_SHARED, fileno(fp), (off_t)0)) == (caddr_t)-1) {
+	    MAP_FILE|MAP_SHARED, fileno(fp), (off_t)0)) == MAP_FAILED) {
 		xerr(0, "%s", fname);
 		return;
 	}
@@ -186,7 +186,7 @@ r_buf(FILE *fp)
 			}
 			tl = tl->next;
 			enomem += tl->len;
-		} else if ((tl = malloc(sizeof(BF))) == NULL ||
+		} else if ((tl = malloc(sizeof(*tl))) == NULL ||
 		    (tl->l = malloc(BSZ)) == NULL) {
 			if (tl)
 				free(tl);
@@ -229,9 +229,7 @@ r_buf(FILE *fp)
 	}
 
 	if (enomem) {
-		(void)fprintf(stderr,
-		    "tail: warning: %lld bytes discarded\n", (long long)enomem);
-		rval = 1;
+		xerrx(0, "Warning: %lld bytes discarded", (long long)enomem);
 	}
 
 	/*
