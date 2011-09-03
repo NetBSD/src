@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.24 2011/09/02 14:56:48 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.25 2011/09/03 12:25:31 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_cpu.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2011/09/02 14:56:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25 2011/09/03 12:25:31 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -286,7 +286,6 @@ printf("switching to userland\n");
 	panic("%s: shouldn't return", __func__);
 }
 
-extern void syscall(struct lwp *l);
 void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
@@ -322,8 +321,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU;
 	thunk_makecontext(&pcb2->pcb_ucp, (void (*)(void))cpu_lwp_trampoline,
 	    2, func, arg);
-	thunk_makecontext_1(&pcb2->pcb_syscall_ucp, (void (*)(void))syscall,
-		l2);
 }
 
 void
@@ -331,6 +328,7 @@ cpu_initclocks(void)
 {
 }
 
+int syscall(lwp_t *l, struct trapframe *tr);
 void
 cpu_startup(void)
 {
@@ -347,11 +345,10 @@ cpu_startup(void)
 		panic("getcontext failed");
 	uvm_lwp_setuarea(&lwp0, (vaddr_t)&lwp0pcb);
 
-	/* init switchframes */
+	/* init trapframe (going nowhere!), maybe a panic func? */
+	lwp0pcb.pcb_tf.tf_syscall = syscall;
 	memcpy(&lwp0pcb.pcb_userland_ucp, &lwp0pcb.pcb_ucp, sizeof(ucontext_t));
-	memcpy(&lwp0pcb.pcb_syscall_ucp,  &lwp0pcb.pcb_ucp, sizeof(ucontext_t));
-	thunk_makecontext_1(&lwp0pcb.pcb_syscall_ucp, (void (*)(void))syscall,
-		&lwp0);
+//	thunk_makecontext_trapframe2go(&lwp0pcb.pcb_userland_ucp, NULL, NULL);
 }
 
 void
