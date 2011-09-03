@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tail.c,v 1.14 2009/04/13 23:33:25 lukem Exp $");
+__RCSID("$NetBSD: tail.c,v 1.15 2011/09/03 09:02:20 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 		usage();						\
 	off = strtoll(optarg, &p, 10) * (units);			\
 	if (*p)								\
-		err(1, "illegal offset -- %s", optarg);			\
+		xerrx(1, "illegal offset -- %s", optarg);		\
 	switch(optarg[0]) {						\
 	case '+':							\
 		if (off)						\
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (fflag && argc > 1)
-		err(1, "-f and -F options only appropriate for a single file");
+		xerrx(1, "-f and -F options only appropriate for a single file");
 
 	/*
 	 * If displaying in reverse, don't permit follow option, and convert
@@ -235,7 +235,7 @@ obsolete(char *argv[])
 			/* Malloc space for dash, new option and argument. */
 			len = strlen(*argv);
 			if ((start = p = malloc(len + 3)) == NULL)
-				err(1, "%s", strerror(errno));
+				xerr(1, "malloc");
 			*p++ = '-';
 
 			/*
@@ -265,7 +265,7 @@ obsolete(char *argv[])
 				*p++ = 'n';
 				break;
 			default:
-				err(1, "illegal option -- %s", *argv);
+				xerrx(1, "illegal option -- %s", *argv);
 			}
 			*p++ = *argv[0];
 			(void)strcpy(p, ap);
