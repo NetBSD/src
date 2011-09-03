@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.52 2011/09/03 12:33:03 jmcneill Exp $ */
+/* $NetBSD: pmap.c,v 1.53 2011/09/03 18:42:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2011/09/03 12:33:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 2011/09/03 18:42:13 jmcneill Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -145,7 +145,9 @@ pmap_bootstrap(void)
 
 	/* claim memory with 2 pages more */
 	uvm_len = kmem_len + barrier_len + user_len + barrier_len + 2*PAGE_SIZE;
-	mem_uvm = thunk_malloc(uvm_len);
+	err = thunk_posix_memalign(&mem_uvm, PAGE_SIZE, uvm_len);
+	if (err)
+		panic("pmap_bootstrap: couldn't allocate uvm memory");
 	/* make page aligned */
 	mpos = round_page((vaddr_t) mem_uvm);// + PAGE_SIZE;
 	if (!((void *) mpos >= mem_uvm))
@@ -172,11 +174,11 @@ pmap_bootstrap(void)
 	/* protect complete UVM area (---) */
 	addr = thunk_mmap((void*) mem_uvm,
 		uvm_len,
-		PROT_NONE,
-		MAP_ANON | MAP_FIXED,
+		THUNK_PROT_NONE,
+		THUNK_MAP_ANON | THUNK_MAP_FIXED | THUNK_MAP_PRIVATE,
 		-1, 0);
 	if (addr != (void *) mem_uvm)
-		panic("pmap_bootstrap: uvm space protection barrier failed\n");
+		panic("pmap_bootstrap: uvm space protection barrier failed (%p)\n", (void *)addr);
 #endif
 
 	aprint_debug("\nMemory summary\n");
@@ -191,7 +193,7 @@ pmap_bootstrap(void)
 	aprint_debug("Creating memory mapped backend\n");
 
 	/* create memory file since mmap/maccess only can be on files */
-	strlcpy(mem_name, "/tmp/netbsd.XXXXX", sizeof(mem_name));
+	strlcpy(mem_name, "/tmp/netbsd.XXXXXX", sizeof(mem_name));
 	mem_fh = thunk_mkstemp(mem_name);
 	if (mem_fh < 0)
 		panic("pmap_bootstrap: can't create memory file\n");
@@ -208,7 +210,7 @@ pmap_bootstrap(void)
 	/* protect the current kernel section */
 	/* XXX kernel stack? */
 	err = thunk_mprotect((void *) kmem_k_start, kmem_k_end - kmem_k_start,
-		PROT_READ | PROT_EXEC);
+		THUNK_PROT_READ | THUNK_PROT_EXEC);
 	assert(err == 0);
 
 	/* set up pv_table; bootstrap problem! */
@@ -227,8 +229,8 @@ pmap_bootstrap(void)
 	pv_fpos = fpos;
 	pv_table = (struct pv_entry *) kmem_ext_cur_start;
 	addr = thunk_mmap(pv_table, pv_table_size,
-		PROT_READ | PROT_WRITE,
-		MAP_FILE | MAP_FIXED,
+		THUNK_PROT_READ | THUNK_PROT_WRITE,
+		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
 		mem_fh, pv_fpos);
 	if (addr != (void *) kmem_ext_start)
 		panic("pmap_bootstrap: can't map in pv table\n");
@@ -255,8 +257,8 @@ pmap_bootstrap(void)
 
 	pm_fpos = fpos;
 	addr = thunk_mmap(pmap->pm_entries, pm_entries_size,
-		PROT_READ | PROT_WRITE,
-		MAP_FILE | MAP_FIXED,
+		THUNK_PROT_READ | THUNK_PROT_WRITE,
+		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
 		mem_fh, pm_fpos);
 	if (addr != (void *) pmap->pm_entries)
 		panic("pmap_bootstrap: can't map in pmap entries\n");
@@ -481,11 +483,11 @@ aprint_debug("no mapping yet\n");
 	/* determine pmap access type (mmap doesnt need to be 1:1 on VM_PROT_) */
 	prot = pv->pv_prot;
 	cur_prot = VM_PROT_NONE;
-	if (pv->pv_mmap_ppl & PROT_READ)
+	if (pv->pv_mmap_ppl & THUNK_PROT_READ)
 		cur_prot |= VM_PROT_READ;
-	if (pv->pv_mmap_ppl & PROT_WRITE)
+	if (pv->pv_mmap_ppl & THUNK_PROT_WRITE)
 		cur_prot |= VM_PROT_WRITE;
-	if (pv->pv_mmap_ppl & PROT_EXEC)
+	if (pv->pv_mmap_ppl & THUNK_PROT_EXEC)
 		cur_prot |= VM_PROT_EXECUTE;
 
 	diff = prot & (prot ^ cur_prot);
@@ -543,7 +545,7 @@ pmap_page_activate(struct pv_entry *pv)
 	void *addr;
 
 	addr = thunk_mmap((void *) va, PAGE_SIZE, pv->pv_mmap_ppl,
-		MAP_FILE | MAP_FIXED | MAP_SHARED,
+		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
 		mem_fh, pa);
 	aprint_debug("page_activate: (va %p, pa %p, ppl %d) -> %p\n",
 		(void *) va, (void *) pa, pv->pv_mmap_ppl, (void *) addr);
@@ -558,8 +560,8 @@ pmap_page_deactivate(struct pv_entry *pv)
 	vaddr_t va = pv->pv_lpn * PAGE_SIZE + VM_MIN_ADDRESS; /* L->V */
 	void *addr;
 
-	addr = thunk_mmap((void *) va, PAGE_SIZE, PROT_NONE,
-		MAP_FILE | MAP_FIXED | MAP_SHARED,
+	addr = thunk_mmap((void *) va, PAGE_SIZE, THUNK_PROT_NONE,
+		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
 		mem_fh, pa);
 	aprint_debug("page_deactivate: (va %p, pa %p, ppl %d) -> %p\n",
 		(void *) va, (void *) pa, pv->pv_mmap_ppl, (void *) addr);
@@ -577,23 +579,23 @@ pv_update(struct pv_entry *pv)
 	pflags = pv_table[pv->pv_ppn].pv_pflags;
 	vflags = pv_table[pv->pv_ppn].pv_vflags;
 
-	KASSERT(PROT_READ == VM_PROT_READ);
-	KASSERT(PROT_WRITE == VM_PROT_WRITE);
-	KASSERT(PROT_EXEC == VM_PROT_EXECUTE);
+	KASSERT(THUNK_PROT_READ == VM_PROT_READ);
+	KASSERT(THUNK_PROT_WRITE == VM_PROT_WRITE);
+	KASSERT(THUNK_PROT_EXEC == VM_PROT_EXECUTE);
 
 	/* create referenced/modified emulation */
 	if ((pv->pv_prot & VM_PROT_WRITE) &&
 	    (pflags & PV_REFERENCED) && (pflags & PV_MODIFIED))
-		mmap_ppl = PROT_READ | PROT_WRITE;
+		mmap_ppl = THUNK_PROT_READ | THUNK_PROT_WRITE;
 	else if ((pv->pv_prot & (VM_PROT_READ | VM_PROT_EXECUTE)) &&
 		 (pflags & PV_REFERENCED))
-		mmap_ppl = PROT_READ;
+		mmap_ppl = THUNK_PROT_READ;
 	else
-		mmap_ppl = PROT_NONE;
+		mmap_ppl = THUNK_PROT_NONE;
 
 	/* unmanaged pages are special; they dont track r/m */
 	if (vflags & PV_UNMANAGED)
-		mmap_ppl = PROT_READ | PROT_WRITE;
+		mmap_ppl = THUNK_PROT_READ | THUNK_PROT_WRITE;
 
 	pv->pv_mmap_ppl = mmap_ppl;
 }
