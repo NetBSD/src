@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.30 2011/09/03 09:02:20 christos Exp $	*/
+/*	$NetBSD: forward.c,v 1.31 2011/09/03 10:59:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.30 2011/09/03 09:02:20 christos Exp $");
+__RCSID("$NetBSD: forward.c,v 1.31 2011/09/03 10:59:10 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -206,15 +206,15 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 			memset(ev, 0, sizeof(ev));
 			if (fflag == 2 && fileno(fp) != STDIN_FILENO) {
 				EV_SET(&ev[n], fileno(fp), EVFILT_VNODE,
-					EV_ADD | EV_ENABLE | EV_CLEAR,
-					NOTE_DELETE | NOTE_RENAME, 0, 0);
+				    EV_ADD | EV_ENABLE | EV_CLEAR,
+				    NOTE_DELETE | NOTE_RENAME, 0, 0);
 				n++;
 			}
 			EV_SET(&ev[n], fileno(fp), EVFILT_READ,
-				EV_ADD | EV_ENABLE, 0, 0, 0);
+			    EV_ADD | EV_ENABLE, 0, 0, 0);
 			n++;
 
-			if (kevent(kq, ev, n, NULL, 0, NULL) < 0) {
+			if (kevent(kq, ev, n, NULL, 0, NULL) == -1) {
 				close(kq);
 				kq = -1;
 				action = USE_SLEEP;
@@ -224,7 +224,7 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 			break;
 
 		case USE_KQUEUE:
-			if (kevent(kq, NULL, 0, ev, 1, NULL) < 0)
+			if (kevent(kq, NULL, 0, ev, 1, NULL) == -1)
 				xerr(1, "kevent");
 
 			if (ev[0].filter == EVFILT_VNODE) {
@@ -290,7 +290,7 @@ rlines(FILE *fp, off_t off, struct stat *sbp)
 #define MMAP_MAXSIZE  (10 * 1024 * 1024)
 
 	if (!(file_size = sbp->st_size))
-		return (0);
+		return 0;
 	file_remaining = file_size;
 
 	if (file_remaining > MMAP_MAXSIZE) {
@@ -306,7 +306,7 @@ rlines(FILE *fp, off_t off, struct stat *sbp)
 			     MAP_FILE|MAP_SHARED, fileno(fp), mmap_offset);
 		if (start == MAP_FAILED) {
 			xerr(0, "%s", fname);
-			return (1);
+			return 1;
 		}
 
 		mmap_remaining = mmap_size;
@@ -327,7 +327,7 @@ rlines(FILE *fp, off_t off, struct stat *sbp)
 
 		if (munmap(start, mmap_size)) {
 			xerr(0, "%s", fname);
-			return (1);
+			return 1;
 		}
 
 		if (mmap_offset >= MMAP_MAXSIZE) {
@@ -345,7 +345,7 @@ rlines(FILE *fp, off_t off, struct stat *sbp)
 	file_remaining += mmap_size - mmap_remaining;
 	if (munmap(start, mmap_size)) {
 		xerr(0, "%s", fname);
-		return (1);
+		return 1;
 	}
 
 	/*
@@ -355,7 +355,7 @@ rlines(FILE *fp, off_t off, struct stat *sbp)
 	 */
 	if (fseeko(fp, file_remaining, SEEK_SET) == -1) {
 		ierr();
-		return (1);
+		return 1;
 	}
-	return (0);
+	return 0;
 }
