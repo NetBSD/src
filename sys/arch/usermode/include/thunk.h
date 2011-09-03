@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.24 2011/09/03 15:00:28 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.25 2011/09/03 18:42:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,6 @@
 #include <sys/fcntl.h>
 #include <sys/ucontext.h>
 #include <sys/signal.h>
-#include <sys/mman.h>
 
 struct thunk_timeval {
 	int64_t tv_sec;
@@ -56,6 +55,17 @@ struct thunk_termios {
 	int32_t c_ispeed;
 	int32_t c_ospeed;
 };
+
+#define THUNK_MAP_ANON		0x0001
+#define THUNK_MAP_FIXED		0x0002
+#define THUNK_MAP_FILE		0x0004
+#define THUNK_MAP_SHARED	0x0010
+#define THUNK_MAP_PRIVATE	0x0020
+
+#define THUNK_PROT_NONE		0x00
+#define THUNK_PROT_READ		0x01
+#define THUNK_PROT_WRITE	0x02
+#define THUNK_PROT_EXEC		0x04
 
 struct aiocb;
 
@@ -108,6 +118,7 @@ void *	thunk_sbrk(intptr_t len);
 void *	thunk_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset);
 int	thunk_munmap(void *addr, size_t len);
 int	thunk_mprotect(void *addr, size_t len, int prot);
+int	thunk_posix_memalign(void **, size_t, size_t);
 
 char *	thunk_getenv(const char *);
 
