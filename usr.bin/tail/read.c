@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.15 2009/04/13 23:33:25 lukem Exp $	*/
+/*	$NetBSD: read.c,v 1.16 2011/09/03 09:02:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: read.c,v 1.15 2009/04/13 23:33:25 lukem Exp $");
+__RCSID("$NetBSD: read.c,v 1.16 2011/09/03 09:02:20 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ displaybytes(FILE *fp, off_t off)
 	char *sp;
 
 	if ((sp = p = malloc(off)) == NULL)
-		err(1, "%s", strerror(errno));
+		xerr(1, "malloc");
 
 	for (wrap = 0, ep = p + off; (ch = getc(fp)) != EOF;) {
 		*p = ch;
@@ -145,7 +145,7 @@ displaylines(FILE *fp, off_t off)
 
 	p = NULL;
 	if ((lines = malloc(off * sizeof(*lines))) == NULL)
-		err(1, "%s", strerror(errno));
+		xerr(1, "malloc");
 
 	memset(lines, 0, sizeof(*lines) * off);
 
@@ -155,7 +155,7 @@ displaylines(FILE *fp, off_t off)
 	while ((ch = getc(fp)) != EOF) {
 		if (++cnt > blen) {
 			if ((n = realloc(sp, blen + 1024)) == NULL)
-				err(1, "%s", strerror(errno));
+				xerr(1, "realloc");
 			sp = n;
 			blen += 1024;
 			p = sp + cnt - 1;
@@ -165,7 +165,7 @@ displaylines(FILE *fp, off_t off)
 			if (lines[recno].blen < cnt) {
 				if ((n = realloc(lines[recno].l,
 				    cnt + 256)) == NULL)
-					err(1, "%s", strerror(errno));
+					xerr(1, "realloc");
 				lines[recno].l = n;
 				lines[recno].blen = cnt + 256;
 			}
