@@ -1,4 +1,4 @@
-/*	$NetBSD: getlabelsector.c,v 1.4 2011/08/30 12:39:52 bouyer Exp $	*/
+/*	$NetBSD: getlabelsector.c,v 1.5 2011/09/04 12:34:49 jmcneill Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getlabelsector.c,v 1.4 2011/08/30 12:39:52 bouyer Exp $");
+__RCSID("$NetBSD: getlabelsector.c,v 1.5 2011/09/04 12:34:49 jmcneill Exp $");
 #endif
 
 #include <sys/param.h>
@@ -80,6 +80,7 @@ getlabelusesmbr(void)
 	int use;
 	size_t uselen;
 
+	uselen = sizeof(use);
 	if (sysctlbyname("kern.labelusesmbr", &use, &uselen,
 	    NULL, (size_t)0) < 0)
 		return (-1);
