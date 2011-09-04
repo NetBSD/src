@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.22 2011/09/03 15:00:28 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.23 2011/09/04 21:08:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2011/09/03 15:00:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2011/09/04 21:08:18 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2011/09/03 15:00:28 jmcneill Exp $"
 char machine[] = "usermode";
 char machine_arch[] = "usermode";
 
-int		usermode_x = IPL_NONE;
 /* XXX */
 int		physmem = MEMSIZE * 1024 / PAGE_SIZE;
 
