@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.53 2011/09/03 18:42:13 jmcneill Exp $ */
+/* $NetBSD: pmap.c,v 1.54 2011/09/04 21:04:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 2011/09/03 18:42:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 2011/09/04 21:04:42 jmcneill Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -550,7 +550,8 @@ pmap_page_activate(struct pv_entry *pv)
 	aprint_debug("page_activate: (va %p, pa %p, ppl %d) -> %p\n",
 		(void *) va, (void *) pa, pv->pv_mmap_ppl, (void *) addr);
 	if (addr != (void *) va)
-		panic("pmap_page_activate: mmap failed");
+		panic("pmap_page_activate: mmap failed (expected %p got %p): %d",
+		    (void *)va, addr, thunk_geterrno());
 }
 
 static void
