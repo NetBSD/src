@@ -1,4 +1,4 @@
-/*	$NetBSD: logname.c,v 1.9 2008/07/21 14:19:23 lukem Exp $	*/
+/*	$NetBSD: logname.c,v 1.10 2011/09/04 20:29:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)logname.c	8.2 (Berkeley) 4/3/94";
 #endif
-__RCSID("$NetBSD: logname.c,v 1.9 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: logname.c,v 1.10 2011/09/04 20:29:12 joerg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -48,13 +48,10 @@ __RCSID("$NetBSD: logname.c,v 1.9 2008/07/21 14:19:23 lukem Exp $");
 #include <unistd.h>
 #include <err.h>
 
-int	main __P((int, char **));
-void	usage __P((void));
+__dead  static void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	char *p;
@@ -80,8 +77,8 @@ main(argc, argv)
 	exit(0);
 }
 
-void
-usage()
+static void
+usage(void)
 {
 	(void)fprintf(stderr, "usage: logname\n");
 	exit(1);

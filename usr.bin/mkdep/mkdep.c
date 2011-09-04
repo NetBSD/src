@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.39 2011/06/30 20:09:42 wiz Exp $ */
+/* $NetBSD: mkdep.c,v 1.40 2011/09/04 20:30:06 joerg Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\
  All rights reserved.");
-__RCSID("$NetBSD: mkdep.c,v 1.39 2011/06/30 20:09:42 wiz Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.40 2011/09/04 20:30:06 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -72,8 +72,8 @@ typedef struct suff_list {
 } suff_list_t;
 
 /* tree of includes for -o processing */
-opt_t *opt;
-int width;
+static opt_t *opt;
+static int width;
 
 #define DEFAULT_PATH		_PATH_DEFPATH
 #define DEFAULT_FILENAME	".depend"
@@ -81,14 +81,13 @@ int width;
 static void save_for_optional(const char *, const char *);
 static int write_optional(int, opt_t *, int);
 
-
 static inline void *
 deconst(const void *p)
 {
 	return (const char *)p - (const char *)0 + (char *)0;
 }
 
-static void
+__dead static void
 usage(void)
 {
 	(void)fprintf(stderr,

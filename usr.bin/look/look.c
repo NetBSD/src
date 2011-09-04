@@ -1,4 +1,4 @@
-/*	$NetBSD: look.c,v 1.14 2009/04/26 15:55:50 christos Exp $	*/
+/*	$NetBSD: look.c,v 1.15 2011/09/04 20:29:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)look.c	8.2 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: look.c,v 1.14 2009/04/26 15:55:50 christos Exp $");
+__RCSID("$NetBSD: look.c,v 1.15 2011/09/04 20:29:32 joerg Exp $");
 #endif /* not lint */
 
 /*
@@ -84,20 +84,17 @@ __RCSID("$NetBSD: look.c,v 1.14 2009/04/26 15:55:50 christos Exp $");
 #define	FOLD(c)	(isascii(c) && isupper(c) ? tolower(c) : (c))
 #define	DICT(c)	(isascii(c) && isalnum(c) ? (c) : NO_COMPARE)
 
-int dflag, fflag;
+static int dflag, fflag;
 
-char	*binary_search __P((char *, char *, char *));
-int	 compare __P((char *, char *, char *));
-char	*linear_search __P((char *, char *, char *));
-int	 look __P((char *, char *, char *));
-int	 main __P((int, char **));
-void	 print_from __P((char *, char *, char *));
-void	 usage __P((void));
+static char	*binary_search(char *, char *, char *);
+static int	 compare(char *, char *, char *);
+static char	*linear_search(char *, char *, char *);
+static int	 look(char *, char *, char *);
+static void	 print_from(char *, char *, char *);
+__dead static void	 usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat sb;
 	int ch, fd, termchar;
@@ -156,9 +153,8 @@ main(argc, argv)
 	exit(look(string, front, back));
 }
 
-int
-look(string, front, back)
-	char *string, *front, *back;
+static int
+look(char *string, char *front, char *back)
 {
 	int ch;
 	char *readp, *writep;
@@ -224,9 +220,8 @@ look(string, front, back)
 #define	SKIP_PAST_NEWLINE(p, back) \
 	while (p < back && *p++ != '\n');
 
-char *
-binary_search(string, front, back)
-	char *string, *front, *back;
+static char *
+binary_search(char *string, char *front, char *back)
 {
 	char *p;
 
@@ -259,9 +254,8 @@ binary_search(string, front, back)
  * 	o front points at the first character in a line. 
  *	o front is before or at the first line to be printed.
  */
-char *
-linear_search(string, front, back)
-	char *string, *front, *back;
+static char *
+linear_search(char *string, char *front, char *back)
 {
 	while (front < back) {
 		switch (compare(string, front, back)) {
@@ -282,9 +276,8 @@ linear_search(string, front, back)
 /*
  * Print as many lines as match string, starting at front.
  */
-void 
-print_from(string, front, back)
-	char *string, *front, *back;
+static void 
+print_from(char *string, char *front, char *back)
 {
 	for (; front < back && compare(string, front, back) == EQUAL; ++front) {
 		for (; front < back && *front != '\n'; ++front)
@@ -308,9 +301,8 @@ print_from(string, front, back)
  * The string "s1" is null terminated.  The string s2 is '\n' terminated (or
  * "back" terminated).
  */
-int
-compare(s1, s2, back)
-	char *s1, *s2, *back;
+static int
+compare(char *s1, char *s2, char *back)
 {
 	int ch;
 
@@ -331,8 +323,8 @@ compare(s1, s2, back)
 	return (*s1 ? GREATER : EQUAL);
 }
 
-void
-usage()
+static void
+usage(void)
 {
 	(void)fprintf(stderr, "usage: look [-df] [-t char] string [file]\n");
 	exit(2);
