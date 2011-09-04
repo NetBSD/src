@@ -1,4 +1,4 @@
-/*	$NetBSD: gscpcib.c,v 1.16 2011/07/01 17:37:26 dyoung Exp $	*/
+/*	$NetBSD: gscpcib.c,v 1.17 2011/09/04 15:05:26 sborrill Exp $	*/
 /*	$OpenBSD: gscpcib.c,v 1.3 2004/10/05 19:02:33 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.16 2011/07/01 17:37:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.17 2011/09/04 15:05:26 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ gscpcib_childdetached(device_t self, device_t child)
 int
 gscpcib_rescan(device_t self, const char *ifattr, const int *loc)
 {
+#if NGPIO > 0
 	struct gscpcib_softc *sc = device_private(self);
 
 	/* Attach GPIO framework */
@@ -100,6 +101,8 @@ gscpcib_rescan(device_t self, const char *ifattr, const int *loc)
 		    &gba, gpiobus_print, NULL);
 		return 0;
 	}
+#endif
+
 	return pcibrescan(self, ifattr, loc);
 }
 
