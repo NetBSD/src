@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.22 2011/09/04 10:10:26 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.23 2011/09/04 13:25:22 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
-__RCSID("$NetBSD: zdump.c,v 1.22 2011/09/04 10:10:26 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.23 2011/09/04 13:25:22 christos Exp $");
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -302,7 +302,7 @@ char *	argv[];
 		else	cutarg = optarg;
 	if ((c != EOF && c != -1) ||
 		(optind == argc - 1 && strcmp(argv[optind], "=") == 0)) {
-			usage(progname, stderr, EXIT_FAILURE);
+			usage(stderr, EXIT_FAILURE);
 	}
 	if (vflag) {
 		if (cutarg != NULL) {
