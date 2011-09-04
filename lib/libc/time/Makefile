@@ -1,5 +1,5 @@
 # <pre>
-# @(#)Makefile	8.8
+# @(#)Makefile	8.11
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -12,7 +12,7 @@
 #	make zonenames
 # to get a list of the values you can use for LOCALTIME.
 
-LOCALTIME=	Factory
+LOCALTIME=	GMT
 
 # If you want something other than Eastern United States time as a template
 # for handling POSIX-style time zone environment variables,
@@ -116,7 +116,7 @@ LDLIBS=
 #  -DZIC_MAX_ABBR_LEN_WO_WARN=3
 #	(or some other number) to set the maximum time zone abbreviation length
 #	that zic will accept without a warning (the default is 6)
-GCC_DEBUG_FLAGS = -Dlint -g -O -fno-common \
+GCC_DEBUG_FLAGS = -Dlint -g -O3 -fno-common \
 	-Wall -Wcast-qual -Wconversion -Wmissing-prototypes \
 	-Wnested-externs -Wpointer-arith -Wshadow \
 	-Wtraditional # -Wstrict-prototypes -Wwrite-strings
@@ -262,15 +262,15 @@ MANS=		newctime.3 newstrftime.3 newtzset.3 time2posix.3 \
 DOCS=		README Theory $(MANS) date.1 Makefile
 PRIMARY_YDATA=	africa antarctica asia australasia \
 		europe northamerica southamerica
-YDATA=		$(PRIMARY_YDATA) pacificnew etcetera factory backward
-NDATA=		systemv
+YDATA=		$(PRIMARY_YDATA) pacificnew etcetera backward
+NDATA=		systemv factory
 SDATA=		solar87 solar88 solar89
 TDATA=		$(YDATA) $(NDATA) $(SDATA)
 TABDATA=	iso3166.tab zone.tab
 DATA=		$(YDATA) $(NDATA) $(SDATA) $(TABDATA) leapseconds yearistype.sh
 WEB_PAGES=	tz-art.htm tz-link.htm
 MISC=		usno1988 usno1989 usno1989a usno1995 usno1997 usno1998 \
-			itca.jpg $(WEB_PAGES) checktab.awk workman.sh \
+			$(WEB_PAGES) checktab.awk workman.sh \
 			zoneinfo2tdf.pl
 ENCHILADA=	$(DOCS) $(SOURCES) $(DATA) $(MISC)
 

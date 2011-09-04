@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.21 2011/08/24 07:51:31 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.22 2011/09/04 10:10:26 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -7,11 +7,11 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
-__RCSID("$NetBSD: zdump.c,v 1.21 2011/08/24 07:51:31 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.22 2011/09/04 10:10:26 christos Exp $");
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
-static char	elsieid[] = "@(#)zdump.c	8.9";
+static char	elsieid[] = "@(#)zdump.c	8.10";
 
 /*
 ** This code has been made independent of the rest of the time
@@ -245,13 +245,13 @@ const char * const	zone;
 }
 
 static void
-usage(const char *xprogname, FILE *stream, int status)
+usage(FILE *stream, int status)
 {
 	(void) fprintf(stream,
 _("%s: usage is %s [ --version ] [ --help ] [ -v ] [ -c [loyear,]hiyear ] zonename ...\n\
 \n\
 Report bugs to tz@elsie.nci.nih.gov.\n"),
-		       xprogname, xprogname);
+		       progname, progname);
 	exit(status);
 }
 
@@ -292,7 +292,7 @@ char *	argv[];
 			(void) printf("%s\n", elsieid);
 			exit(EXIT_SUCCESS);
 		} else if (strcmp(argv[i], "--help") == 0) {
-			usage(progname, stdout, EXIT_SUCCESS);
+			usage(stdout, EXIT_SUCCESS);
 		}
 	vflag = 0;
 	cutarg = NULL;
