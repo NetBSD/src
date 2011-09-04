@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.20 2011/09/03 15:33:56 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.21 2011/09/04 12:17:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.20 2011/09/03 15:33:56 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.21 2011/09/04 12:17:59 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -152,6 +152,10 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		printf("\tsi_trap = %d\n", info->si_trap);
 #endif
 
+		if (info->si_code == SI_NOINFO)
+			panic("received signal %d with no info",
+			    info->si_signo);
+
 		va = (vaddr_t) info->si_addr;
 		va = trunc_page(va);
 
@@ -174,7 +178,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 
 		/* sanity */
 		if ((va < VM_MIN_ADDRESS) || (va >= VM_MAX_ADDRESS))
-			panic("peeing outside the box!");
+			panic("peeing outside the box! (va=%p)", (void *)va);
 
 		/* extra debug for now */
 		if (va == 0)
