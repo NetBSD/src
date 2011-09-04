@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.105 2011/07/01 18:49:24 dyoung Exp $ */
+/*	$NetBSD: clock.c,v 1.106 2011/09/04 12:17:46 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.105 2011/07/01 18:49:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.106 2011/09/04 12:17:46 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -117,9 +117,9 @@ int timerok;
 static int statscheddiv;
 #endif
 
-static struct intrhand level10 = { .ih_fun = clockintr };
+static struct intrhand level10 = { .ih_fun = clockintr, .ih_pil = PIL_CLOCK };
 #ifndef MULTIPROCESSOR
-static struct intrhand level14 = { .ih_fun = statintr };
+static struct intrhand level14 = { .ih_fun = statintr, .ih_pil = PIL_STATCLOCK };
 static struct intrhand *schedint;
 #endif
 
