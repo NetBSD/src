@@ -1,4 +1,4 @@
-/*	$NetBSD: fpr.c,v 1.8 2008/07/21 14:19:22 lukem Exp $	*/
+/*	$NetBSD: fpr.c,v 1.9 2011/09/04 20:26:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)fpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: fpr.c,v 1.8 2008/07/21 14:19:22 lukem Exp $");
+__RCSID("$NetBSD: fpr.c,v 1.9 2011/09/04 20:26:17 joerg Exp $");
 #endif				/* not lint */
 
 #include <err.h>
@@ -73,113 +73,109 @@ struct column {
 }
         COLUMN;
 
-char    cc;
-char    saved;
-int     length;
-char   *text;
-int     highcol;
-COLUMN *line;
-int     maxpos;
-int     maxcol;
+static char    cc;
+static char    saved;
+static int     length;
+static char   *text;
+static int     highcol;
+static COLUMN *line;
+static int     maxpos;
+static int     maxcol;
 
-void	flush __P((void));
-void	get_text __P((void));
-void	init __P((void));
-int	main __P((int, char **));
-void	nospace __P((void));
-void	savech __P((int));
+static void	flush(void);
+static void	get_text(void);
+static void	init(void);
+__dead static void	nospace(void);
+static void	savech(int);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch;
 	char ateof;
 	int i;
 	int errorcount;
 
-
 	init();
 	errorcount = 0;
 	ateof = FALSE;
 
-	ch = getchar();
-	if (ch == EOF)
+	switch (ch = getchar()) {
+	case EOF:
 		exit(0);
-
-	if (ch == EOL) {
+	case EOL:
 		cc = NUL;
 		ungetc((int) EOL, stdin);
-	} else
-		if (ch == BLANK)
-			cc = NUL;
-		else
-			if (ch == '1')
-				cc = FF;
-			else
-				if (ch == '0')
-					cc = EOL;
-				else
-					if (ch == '+')
-						cc = CR;
-					else {
-						errorcount = 1;
-						cc = NUL;
-						ungetc(ch, stdin);
-					}
+		break;
+	case BLANK:
+		cc = NUL;
+		break;
+	case '1':
+		cc = FF;
+		break;
+	case '0':
+		cc = EOL;
+		break;
+	case '+':
+		cc = CR;
+		break;
+	default:
+		errorcount = 1;
+		cc = NUL;
+		ungetc(ch, stdin);
+		break;
+	}
 
 	while (!ateof) {
 		get_text();
-		ch = getchar();
-		if (ch == EOF) {
+		switch (ch = getchar()) {
+		case EOF:
 			flush();
 			ateof = TRUE;
-		} else
-			if (ch == EOL) {
-				flush();
-				cc = NUL;
-				ungetc((int) EOL, stdin);
-			} else
-				if (ch == BLANK) {
-					flush();
-					cc = NUL;
-				} else
-					if (ch == '1') {
-						flush();
-						cc = FF;
-					} else
-						if (ch == '0') {
-							flush();
-							cc = EOL;
-						} else
-							if (ch == '+') {
-								for (i = 0; i < length; i++)
-									savech(i);
-							} else {
-								errorcount++;
-								flush();
-								cc = NUL;
-								ungetc(ch, stdin);
-							}
+			break;
+		case EOL:
+			flush();
+			cc = NUL;
+			ungetc((int) EOL, stdin);
+			break;
+		case BLANK:
+			flush();
+			cc = NUL;
+			break;
+		case '1':
+			flush();
+			cc = FF;
+			break;
+		case '0':
+			flush();
+			cc = EOL;
+			break;
+		case '+':
+			for (i = 0; i < length; i++)
+				savech(i);
+			break;
+		default:
+			errorcount++;
+			flush();
+			cc = NUL;
+			ungetc(ch, stdin);
+			break;
+		}
 	}
 
-	if (errorcount == 1)
-		fprintf(stderr, "Illegal carriage control - 1 line.\n");
-	else
-		if (errorcount > 1)
-			fprintf(stderr, "Illegal carriage control - %d lines.\n", errorcount);
+	if (errorcount)
+		fprintf(stderr, "Illegal carriage control - %d line%s.\n",
+		    errorcount, errorcount == 1 ? "" : "s");
 
 	exit(0);
 }
 
-void
-init()
+static void
+init(void)
 {
 	COLUMN *cp;
 	COLUMN *cend;
 	char *sp;
-
 
 	length = 0;
 	maxpos = MAXCOL;
@@ -190,14 +186,14 @@ init()
 
 	highcol = -1;
 	maxcol = MAXCOL;
-	line = (COLUMN *) calloc(maxcol, (unsigned) sizeof(COLUMN));
+	line = calloc(maxcol, sizeof(COLUMN));
 	if (line == NULL)
 		nospace();
 	cp = line;
 	cend = line + (maxcol - 1);
 	while (cp <= cend) {
 		cp->width = INITWIDTH;
-		sp = calloc(INITWIDTH, (unsigned) sizeof(char));
+		sp = calloc(INITWIDTH, sizeof(char));
 		if (sp == NULL)
 			nospace();
 		cp->str = sp;
@@ -205,8 +201,8 @@ init()
 	}
 }
 
-void
-get_text()
+static void
+get_text(void)
 {
 	int i;
 	char ateol;
@@ -218,58 +214,61 @@ get_text()
 	ateol = FALSE;
 
 	while (!ateol) {
-		ch = getchar();
-		if (ch == EOL || ch == EOF)
+		switch (ch = getchar()) {
+		case EOL:
+		case EOF:
 			ateol = TRUE;
-		else
-			if (ch == TAB) {
-				pos = (1 + i / TABSIZE) * TABSIZE;
-				if (pos > maxpos) {
-					n = realloc(text, (unsigned)(pos + 10));
-					if (n == NULL)
-						nospace();
-					text = n;
-					maxpos = pos + 10;
-				}
-				while (i < pos) {
-					text[i] = BLANK;
-					i++;
-				}
-			} else
-				if (ch == BS) {
-					if (i > 0) {
-						i--;
-						savech(i);
-					}
-				} else
-					if (ch == CR) {
-						while (i > 0) {
-							i--;
-							savech(i);
-						}
-					} else
-						if (ch == FF || ch == VTAB) {
-							flush();
-							cc = ch;
-							i = 0;
-						} else {
-							if (i >= maxpos) {
-								n = realloc(text, (unsigned)(i + 10));
-								if (n == NULL)
-									nospace();
-								maxpos = i + 10;
-							}
-							text[i] = ch;
-							i++;
-						}
+			break;
+		case TAB:
+			pos = (1 + i / TABSIZE) * TABSIZE;
+			if (pos > maxpos) {
+				n = realloc(text, (unsigned)(pos + 10));
+				if (n == NULL)
+					nospace();
+				text = n;
+				maxpos = pos + 10;
+			}
+			while (i < pos) {
+				text[i] = BLANK;
+				i++;
+			}
+			break;
+		case BS:
+			if (i > 0) {
+				i--;
+				savech(i);
+			}
+			break;
+		case CR:
+			while (i > 0) {
+				i--;
+				savech(i);
+			}
+			break;
+		case FF:
+		case VTAB:
+			flush();
+			cc = ch;
+			i = 0;
+			break;
+		default:
+			if (i >= maxpos) {
+				n = realloc(text, (unsigned)(i + 10));
+				if (n == NULL)
+					nospace();
+				maxpos = i + 10;
+			}
+			text[i] = ch;
+			i++;
+			break;
+		}
 	}
 
 	length = i;
 }
 
-void
-savech(col)
-	int     col;
+static void
+savech(int col)
 {
 	char ch;
 	int oldmax;
@@ -289,8 +288,7 @@ savech(col)
 		highcol = col;
 
 	if (col >= maxcol) {
-		newline = (COLUMN *) realloc(line,
-		    (unsigned) (col + 10) * sizeof(COLUMN));
+		newline = realloc(line, (unsigned) (col + 10) * sizeof(COLUMN));
 		if (newline == NULL)
 			nospace();
 		line = newline;
@@ -301,7 +299,7 @@ savech(col)
 		while (cp <= cend) {
 			cp->width = INITWIDTH;
 			cp->count = 0;
-			sp = calloc(INITWIDTH, (unsigned) sizeof(char));
+			sp = calloc(INITWIDTH, sizeof(char));
 			if (sp == NULL)
 				nospace();
 			cp->str = sp;
@@ -321,8 +319,8 @@ savech(col)
 	cp->str[newcount - 1] = ch;
 }
 
-void
-flush()
+static void
+flush(void)
 {
 	int i;
 	int anchor;
@@ -351,31 +349,30 @@ flush()
 		if (height == 0) {
 			putchar(BLANK);
 			anchor++;
-		} else
-			if (height == 1) {
-				putchar(*(line[anchor].str));
-				line[anchor].count = 0;
-				anchor++;
-			} else {
-				i = anchor;
-				while (i < highcol && line[i + 1].count > 1)
-					i++;
-				for (j = anchor; j <= i; j++) {
-					height = line[j].count - 1;
-					putchar(line[j].str[height]);
-					line[j].count = height;
-				}
-				for (j = anchor; j <= i; j++)
-					putchar(BS);
+		} else if (height == 1) {
+			putchar(*(line[anchor].str));
+			line[anchor].count = 0;
+			anchor++;
+		} else {
+			i = anchor;
+			while (i < highcol && line[i + 1].count > 1)
+				i++;
+			for (j = anchor; j <= i; j++) {
+				height = line[j].count - 1;
+				putchar(line[j].str[height]);
+				line[j].count = height;
 			}
+			for (j = anchor; j <= i; j++)
+				putchar(BS);
+		}
 	}
 
 	putchar(EOL);
 	highcol = -1;
 }
 
-void
-nospace()
+static void
+nospace(void)
 {
 	errx(1, "Storage limit exceeded.");
 }
