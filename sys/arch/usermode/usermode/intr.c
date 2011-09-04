@@ -1,7 +1,7 @@
-/* $NetBSD: intr.h,v 1.3 2011/09/04 21:08:18 jmcneill Exp $ */
+/* $NetBSD: intr.c,v 1.1 2011/09/04 21:08:18 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,34 +26,39 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARCH_USERMODE_INCLUDE_INTR_H
-#define _ARCH_USERMODE_INCLUDE_INTR_H
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1 2011/09/04 21:08:18 jmcneill Exp $");
 
-#include <machine/intrdefs.h>
+#include <sys/types.h>
 
-int	splraise(int);
-void	spllower(int);
+#include <machine/intr.h>
+#include <machine/thunk.h>
 
-#define	spl0()		spllower(IPL_NONE)
-#define splx(x)		spllower(x)
+static int usermode_x = IPL_NONE;
+static bool usermode_sigalrm_blocked = false;
 
-typedef uint8_t ipl_t;
-typedef struct {
-	ipl_t _ipl;
-} ipl_cookie_t;
-
-static inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
+int
+splraise(int x)
 {
-	return (ipl_cookie_t){._ipl = ipl};
+	int oldx = usermode_x;
+
+	if (x > IPL_VM && usermode_sigalrm_blocked == false) {
+		thunk_sigblock(SIGALRM);
+		usermode_sigalrm_blocked = true;
+	}
+
+	usermode_x = x;
+
+	return oldx;
 }
 
-static inline int
-splraiseipl(ipl_cookie_t icookie)
+void
+spllower(int x)
 {
-	return splraise(icookie._ipl);
+	if (x <= IPL_VM && usermode_sigalrm_blocked == true) {
+		thunk_sigunblock(SIGALRM);
+		usermode_sigalrm_blocked = false;
+	}
+
+	usermode_x = x;
 }
-
-#include <sys/spl.h>
-
-#endif /* !_ARCH_USERMODE_INCLUDE_INTR_H */

@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.31 2011/09/04 20:49:59 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.32 2011/09/04 21:08:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.31 2011/09/04 20:49:59 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.32 2011/09/04 21:08:18 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -384,6 +384,26 @@ void
 thunk_signal(int sig, void (*func)(int))
 {
 	signal(sig, func);
+}
+
+int
+thunk_sigblock(int sig)
+{
+	sigset_t set;
+
+	sigemptyset(&set);
+	sigaddset(&set, sig);
+	return sigprocmask(SIG_BLOCK, &set, NULL);
+}
+
+int
+thunk_sigunblock(int sig)
+{
+	sigset_t set;
+
+	sigemptyset(&set);
+	sigaddset(&set, sig);
+	return sigprocmask(SIG_UNBLOCK, &set, NULL);
 }
 
 int
