@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.18.2.1 2011/06/23 14:19:50 cherry Exp $      */
+/*      $NetBSD: xengnt.c,v 1.18.2.2 2011/09/04 01:15:13 mhitch Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.18.2.1 2011/06/23 14:19:50 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.18.2.2 2011/09/04 01:15:13 mhitch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.18.2.1 2011/06/23 14:19:50 cherry Exp $
 #include <sys/queue.h>
 #include <sys/extent.h>
 #include <sys/kernel.h>
+#include <sys/mutex.h>
 #include <uvm/uvm.h>
 
 #include <xen/hypervisor.h>
@@ -61,6 +62,8 @@ grant_ref_t *gnt_entries;
 int last_gnt_entry;
 /* empty entry in the list */
 #define XENGNT_NO_ENTRY 0xffffffff
+
+static kmutex_t	gnt_mutex;
 
 /* VM address of the grant table */
 grant_entry_t *grant_table;
@@ -101,6 +104,7 @@ xengnt_init(void)
 		gnt_entries[i] = XENGNT_NO_ENTRY;
 
 	last_gnt_entry = 0;
+	mutex_init(&gnt_mutex, MUTEX_DEFAULT, IPL_VM);
 	xengnt_resume();
 
 }
@@ -192,13 +196,13 @@ static grant_ref_t
 xengnt_get_entry(void)
 {
 	grant_ref_t entry;
-	int s = splvm();
 	static struct timeval xengnt_nonmemtime;
 	static const struct timeval xengnt_nonmemintvl = {5,0};
 
+	mutex_enter(&gnt_mutex);
 	if (last_gnt_entry == 0) {
 		if (xengnt_more_entries()) {
-			splx(s);
+			mutex_exit(&gnt_mutex);
 			if (ratecheck(&xengnt_nonmemtime, &xengnt_nonmemintvl))
 				printf("xengnt_get_entry: out of grant "
 				    "table entries\n");
@@ -209,7 +213,7 @@ xengnt_get_entry(void)
 	last_gnt_entry--;
 	entry = gnt_entries[last_gnt_entry];
 	gnt_entries[last_gnt_entry] = XENGNT_NO_ENTRY;
-	splx(s);
+	mutex_exit(&gnt_mutex);
 	KASSERT(entry != XENGNT_NO_ENTRY);
 	KASSERT(last_gnt_entry >= 0);
 	KASSERT(last_gnt_entry <= gnt_max_grant_frames * NR_GRANT_ENTRIES_PER_PAGE);
@@ -222,13 +226,13 @@ xengnt_get_entry(void)
 static void
 xengnt_free_entry(grant_ref_t entry)
 {
-	int s = splvm();
+	mutex_enter(&gnt_mutex);
 	KASSERT(gnt_entries[last_gnt_entry] == XENGNT_NO_ENTRY);
 	KASSERT(last_gnt_entry >= 0);
 	KASSERT(last_gnt_entry <= gnt_max_grant_frames * NR_GRANT_ENTRIES_PER_PAGE);
 	gnt_entries[last_gnt_entry] = entry;
 	last_gnt_entry++;
-	splx(s);
+	mutex_exit(&gnt_mutex);
 }
 
 int
