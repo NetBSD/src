@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.h,v 1.12 2010/11/27 20:46:38 christos Exp $	*/
+/*	$NetBSD: hexdump.h,v 1.13 2011/09/04 20:27:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -81,10 +81,6 @@ extern enum _vflag vflag;
 
 void	 add(const char *);
 void	 addfile(char *);
-void	 badcnt(char *);
-void	 badconv(char *);
-void	 badfmt(const char *);
-void	 badsfmt(void);
 void	 bpad(PR *);
 void	 conv_c(PR *, u_char *);
 void	 conv_u(PR *, u_char *);
