@@ -1,4 +1,4 @@
-/* $NetBSD: qsafe.c,v 1.2 2009/01/18 01:34:30 lukem Exp $ */
+/* $NetBSD: qsafe.c,v 1.3 2011/09/04 20:55:43 joerg Exp $ */
 
 /*-
  * Copyright 1994 Phil Karn <karn@qualcomm.com>
@@ -61,7 +61,7 @@
 /* define DEBUGPRINT     1 */
 #define TRIAL_MINIMUM           (4)
 
-static void     usage(void);
+__dead static void     usage(void);
 
 /*
  * perform a Miller-Rabin primality test
