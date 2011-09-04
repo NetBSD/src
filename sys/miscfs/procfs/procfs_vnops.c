@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.181 2011/06/23 17:06:38 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.182 2011/09/04 17:32:10 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.181 2011/06/23 17:06:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.182 2011/09/04 17:32:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,6 +196,7 @@ static const struct proc_target proc_root_targets[] = {
 	{ DT_REG, N("devices"),     PFSdevices,        procfs_validfile_linux },
 	{ DT_REG, N("stat"),	    PFScpustat,        procfs_validfile_linux },
 	{ DT_REG, N("loadavg"),	    PFSloadavg,        procfs_validfile_linux },
+	{ DT_REG, N("version"),     PFSversion,        procfs_validfile_linux },
 #undef N
 };
 static const int nproc_root_targets =
@@ -736,6 +737,7 @@ procfs_getattr(void *v)
 	case PFSmounts:
 	case PFScpustat:
 	case PFSloadavg:
+	case PFSversion:
 		vap->va_nlink = 1;
 		vap->va_uid = vap->va_gid = 0;
 		break;
@@ -845,6 +847,7 @@ procfs_getattr(void *v)
 	case PFScpustat:
 	case PFSloadavg:
 	case PFSstatm:
+	case PFSversion:
 		vap->va_bytes = vap->va_size = 0;
 		break;
 	case PFSmap:
