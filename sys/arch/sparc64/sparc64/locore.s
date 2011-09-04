@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.337 2011/07/27 20:07:49 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.338 2011/09/04 12:17:13 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3133,7 +3133,7 @@ Lsoftint_regular:
 setup_sparcintr:
 	LDPTR	[%g5+IH_PEND], %g6	! Read pending flag
 	brnz,pn	%g6, ret_from_intr_vector ! Skip it if it's running
-	 ldub	[%g5+IH_PIL], %g6	! Read interrupt mask
+	 ldub	[%g5+IH_PIL], %g6	! Read interrupt level
 	sethi	%hi(CPUINFO_VA+CI_INTRPENDING), %g1
 	sll	%g6, PTRSHFT, %g3	! Find start of table for this IPL
 	or	%g1, %lo(CPUINFO_VA+CI_INTRPENDING), %g1
