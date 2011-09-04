@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.12 2011/08/06 11:12:05 wiz Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.13 2011/09/04 20:31:00 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.12 2011/08/06 11:12:05 wiz Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.13 2011/09/04 20:31:00 joerg Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -99,7 +99,7 @@ get_os_name(enum uboot_image_os os)
 	return "Unknown";
 }
 
-struct uboot_arch {
+static const struct uboot_arch {
 	enum uboot_image_arch arch;
 	const char *name;
 } uboot_arch[] = {
@@ -135,7 +135,7 @@ get_arch_name(enum uboot_image_arch arch)
 	return "Unknown";
 }
 
-struct uboot_type {
+static struct uboot_type {
 	enum uboot_image_type type;
 	const char *name;
 } uboot_type[] = {
@@ -171,7 +171,7 @@ get_type_name(enum uboot_image_type type)
 	return "Unknown";
 }
 
-struct uboot_comp {
+static struct uboot_comp {
 	enum uboot_image_comp comp;
 	const char *name;
 } uboot_comp[] = {
@@ -208,7 +208,7 @@ get_comp_name(enum uboot_image_comp comp)
 	return "Unknown";
 }
 
-static void
+__dead static void
 usage(void)
 {
 	fprintf(stderr, "usage: mkubootimage -A <arm|mips|mips64|powerpc>");
