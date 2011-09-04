@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.91 2011/08/12 06:41:15 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.92 2011/09/04 12:17:14 nakayama Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.91 2011/08/12 06:41:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.92 2011/09/04 12:17:14 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -260,7 +260,7 @@ sbus_attach(device_t parent, device_t self, void *aux)
 	ih->ih_clr = NULL; /* &sc->sc_sysio->therm_clr_int; */
 	ih->ih_fun = sbus_overtemp;
 	ipl = 1;
-	ih->ih_pil = (1<<ipl);
+	ih->ih_pil = ipl;
 	ih->ih_number = INTVEC(*(ih->ih_map));
 	ih->ih_pending = 0;
 	intr_establish(ipl, true, ih);
@@ -580,7 +580,7 @@ sbus_intr_establish(bus_space_tag_t t, int pri, int level,
 	ih->ih_arg = arg;
 	ih->ih_number = vec;
 	ih->ih_ivec = 0;
-	ih->ih_pil = (1<<ipl);
+	ih->ih_pil = ipl;
 	ih->ih_pending = 0;
 
 	intr_establish(ipl, level != IPL_VM, ih);
