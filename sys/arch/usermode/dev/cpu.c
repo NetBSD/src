@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.28 2011/09/04 20:54:52 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.29 2011/09/04 21:01:39 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_cpu.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28 2011/09/04 20:54:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29 2011/09/04 21:01:39 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -188,14 +188,14 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	curlwp = newlwp;
 
 	if (oldpcb) {
-		oldpcb->errno = thunk_geterrno();
+		oldpcb->pcb_errno = thunk_geterrno();
 		if (thunk_swapcontext(&oldpcb->pcb_ucp, &newpcb->pcb_ucp))
 			panic("swapcontext failed");
 	} else {
 		if (thunk_setcontext(&newpcb->pcb_ucp))
 			panic("setcontext failed");
 	}
-	thunk_seterrno(newpcb->errno);
+	thunk_seterrno(newpcb->pcb_errno);
 
 #ifdef CPU_DEBUG
 	printf("cpu_switchto: returning %p (was %p)\n", ci->ci_stash, oldlwp);
