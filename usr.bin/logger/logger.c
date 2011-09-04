@@ -1,4 +1,4 @@
-/*	$NetBSD: logger.c,v 1.14 2009/04/12 13:53:48 lukem Exp $	*/
+/*	$NetBSD: logger.c,v 1.15 2011/09/04 20:28:59 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)logger.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: logger.c,v 1.14 2009/04/12 13:53:48 lukem Exp $");
+__RCSID("$NetBSD: logger.c,v 1.15 2011/09/04 20:28:59 joerg Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -53,10 +53,9 @@ __RCSID("$NetBSD: logger.c,v 1.14 2009/04/12 13:53:48 lukem Exp $");
 #define	SYSLOG_NAMES
 #include <syslog.h>
 
-int	decode(const char *, const CODE *);
-int	pencode(char *);
-int	main(int, char **);
-void	usage(void);
+static int	decode(const char *, const CODE *);
+static int	pencode(char *);
+__dead static void	usage(void);
 
 /*
  * logger -- read and log utility
@@ -147,7 +146,7 @@ main(int argc, char *argv[])
 /*
  *  Decode a symbolic name to a numeric value
  */
-int
+static int
 pencode(char *s)
 {
 	char *save;
@@ -171,7 +170,7 @@ pencode(char *s)
 	return ((lev & LOG_PRIMASK) | (fac & LOG_FACMASK));
 }
 
-int
+static int
 decode(const char *name, const CODE *codetab)
 {
 	const CODE *c;
@@ -186,7 +185,7 @@ decode(const char *name, const CODE *codetab)
 	return (-1);
 }
 
-void
+static void
 usage(void)
 {
 
