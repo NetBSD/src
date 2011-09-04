@@ -1,4 +1,4 @@
-/*	$NetBSD: fold.c,v 1.16 2009/07/21 01:35:02 ahoka Exp $	*/
+/*	$NetBSD: fold.c,v 1.17 2011/09/04 20:24:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: fold.c,v 1.16 2009/07/21 01:35:02 ahoka Exp $");
+__RCSID("$NetBSD: fold.c,v 1.17 2011/09/04 20:24:59 joerg Exp $");
 #endif /* not lint */
 
 #include <limits.h>
@@ -55,13 +55,12 @@ __RCSID("$NetBSD: fold.c,v 1.16 2009/07/21 01:35:02 ahoka Exp $");
 
 #define	DEFLINEWIDTH	80
 
-	int	main(int, char **);
 static	void	fold(int);
 static	int	new_column_position(int, wint_t);
-static	void	usage(void);
+__dead static	void	usage(void);
 
-int count_bytes = 0;
-int split_words = 0;
+static int count_bytes = 0;
+static int split_words = 0;
 
 int
 main(int argc, char **argv)
