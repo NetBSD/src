@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.110 2011/08/12 06:38:35 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.111 2011/09/04 12:17:14 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.110 2011/08/12 06:38:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.111 2011/09/04 12:17:14 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -702,7 +702,7 @@ psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
 	ih->ih_map = mapper;
 	ih->ih_clr = clearer;
 	ih->ih_fun = handler;
-	ih->ih_pil = (1<<ipl);
+	ih->ih_pil = ipl;
 	ih->ih_number = INTVEC(*(ih->ih_map));
 	ih->ih_pending = 0;
 	intr_establish(ipl, ipl != IPL_VM, ih);

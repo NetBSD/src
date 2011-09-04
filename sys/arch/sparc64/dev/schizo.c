@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.26 2011/08/12 06:41:16 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.27 2011/09/04 12:17:14 nakayama Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -531,7 +531,7 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 	ih->ih_map = (uint64_t *)(uintptr_t)(intrregs + mapoff);
 	ih->ih_clr = (uint64_t *)(uintptr_t)(intrregs + clroff);
 	ih->ih_fun = handler;
-	ih->ih_pil = (1<<ipl);
+	ih->ih_pil = ipl;
 	ih->ih_number = INTVEC(schizo_pbm_read(pbm, mapoff));
 	ih->ih_pending = 0;
 
