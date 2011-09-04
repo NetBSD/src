@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.952 2011/09/04 16:09:18 christos Exp $
+# $NetBSD: mi,v 1.953 2011/09/04 21:28:02 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4307,11 +4307,9 @@
 ./usr/share/zoneinfo/America/Boa_Vista		base-sys-share		share
 ./usr/share/zoneinfo/America/Bogota		base-sys-share		share
 ./usr/share/zoneinfo/America/Boise		base-sys-share		share
-./usr/share/zoneinfo/America/Brazil		base-sys-share		share
 ./usr/share/zoneinfo/America/Buenos_Aires	base-sys-share		share
 ./usr/share/zoneinfo/America/Cambridge_Bay	base-sys-share		share
 ./usr/share/zoneinfo/America/Campo_Grande	base-sys-share		share
-./usr/share/zoneinfo/America/Canada		base-sys-share		share
 ./usr/share/zoneinfo/America/Cancun		base-sys-share		share
 ./usr/share/zoneinfo/America/Caracas		base-sys-share		share
 ./usr/share/zoneinfo/America/Catamarca		base-sys-share		share
@@ -4319,7 +4317,6 @@
 ./usr/share/zoneinfo/America/Cayman		base-sys-share		share
 ./usr/share/zoneinfo/America/Chicago		base-sys-share		share
 ./usr/share/zoneinfo/America/Chihuahua		base-sys-share		share
-./usr/share/zoneinfo/America/Chile		base-sys-share		share
 ./usr/share/zoneinfo/America/Coral_Harbour	base-sys-share		share
 ./usr/share/zoneinfo/America/Cordoba		base-sys-share		share
 ./usr/share/zoneinfo/America/Costa_Rica		base-sys-share		share
