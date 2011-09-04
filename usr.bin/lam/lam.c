@@ -1,4 +1,4 @@
-/*	$NetBSD: lam.c,v 1.7 2009/04/12 13:01:55 lukem Exp $	*/
+/*	$NetBSD: lam.c,v 1.8 2011/09/04 20:28:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)lam.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lam.c,v 1.7 2009/04/12 13:01:55 lukem Exp $");
+__RCSID("$NetBSD: lam.c,v 1.8 2011/09/04 20:28:09 joerg Exp $");
 #endif /* not lint */
 
 /*
@@ -65,21 +65,18 @@ struct	openfile {		/* open file structure */
 	const char *format;	/* printf(3) style string spec. */
 }	input[MAXOFILES];
 
-int	morefiles;		/* set by getargs(), changed by gatherline() */
-int	nofinalnl;		/* normally append \n to each output line */
-char	line[BIGBUFSIZ];
-char	*linep;
+static int	morefiles;		/* set by getargs(), changed by gatherline() */
+static int	nofinalnl;		/* normally append \n to each output line */
+static char	line[BIGBUFSIZ];
+static char	*linep;
 
-void	 error __P((const char *, const char *));
-char	*gatherline __P((struct openfile *));
-void	 getargs __P((char *[]));
-int	 main __P((int, char **));
-char	*pad __P((struct openfile *));
+__dead static void	 error(const char *, const char *);
+static char	*gatherline(struct openfile *);
+static void	 getargs(char *[]);
+static char	*pad(struct openfile *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct	openfile *ip;
 
@@ -99,9 +96,8 @@ main(argc, argv)
 	}
 }
 
-void
-getargs(av)
-	char *av[];
+static void
+getargs(char *av[])
 {
 	struct openfile *ip = input;
 	char *p, *c;
@@ -177,9 +173,8 @@ getargs(av)
 		ip->sepstring = "";
 }
 
-char *
-pad(ip)
-	struct openfile *ip;
+static char *
+pad(struct openfile *ip)
 {
 	char *lp = linep;
 
@@ -192,9 +187,8 @@ pad(ip)
 	return (lp);
 }
 
-char *
-gatherline(ip)
-	struct openfile *ip;
+static char *
+gatherline(struct openfile *ip)
 {
 	char s[BUFSIZ];
 	int c;
@@ -222,7 +216,7 @@ gatherline(ip)
 	return (lp);
 }
 
-void
+static void
 error(const char *msg, const char *s)
 {
 	warnx(msg, s);
