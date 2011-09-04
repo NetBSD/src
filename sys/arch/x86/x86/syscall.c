@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.4 2011/09/02 20:01:20 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5 2011/09/04 21:14:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4 2011/09/02 20:01:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2011/09/04 21:14:49 christos Exp $");
 
 #include "opt_sa.h"
 
@@ -144,8 +144,6 @@ syscall(struct trapframe *frame)
 		    &frame->tf_arg6, callp->sy_argsize - 6 * 8);
 		if (error != 0)
 			goto bad;
-		/* Refetch to avoid register spill to stack */
-		code = frame->tf_rax & (SYS_NSYSENT - 1);
 	}
 #else
 	if (callp->sy_argsize) {
@@ -165,7 +163,6 @@ syscall(struct trapframe *frame)
 
 	if (__predict_false(p->p_trace_enabled)
 	    && !__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
-		code = X86_TF_RAX(frame) & (SYS_NSYSENT - 1);
 		trace_exit(code, rval, error);
 	}
 
