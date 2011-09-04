@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.26 2011/09/04 20:15:57 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.27 2011/09/04 20:46:58 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -79,6 +79,7 @@ void	thunk_exit(int);
 void	thunk_abort(void);
 
 int	thunk_geterrno(void);
+void	thunk_seterrno(int err);
 
 int	thunk_getcontext(ucontext_t *);
 int	thunk_setcontext(const ucontext_t *);
