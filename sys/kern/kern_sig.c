@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.313 2011/09/03 19:33:40 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.314 2011/09/04 13:09:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.313 2011/09/03 19:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.314 2011/09/04 13:09:12 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -539,6 +539,40 @@ ksiginfo_queue_drain0(ksiginfoq_t *kq)
 	}
 }
 
+static bool
+siggetinfo(sigpend_t *sp, ksiginfo_t *out, int signo)
+{
+	ksiginfo_t *ksi;
+
+	if (sp == NULL)
+		goto out;
+
+	/* Find siginfo and copy it out. */
+	CIRCLEQ_FOREACH(ksi, &sp->sp_info, ksi_list) {
+		if (ksi->ksi_signo != signo)
+			continue;
+		CIRCLEQ_REMOVE(&sp->sp_info, ksi, ksi_list);
+		KASSERT((ksi->ksi_flags & KSI_FROMPOOL) != 0);
+		KASSERT((ksi->ksi_flags & KSI_QUEUED) != 0);
+		ksi->ksi_flags &= ~KSI_QUEUED;
+		if (out != NULL) {
+			memcpy(out, ksi, sizeof(*out));
+			out->ksi_flags &= ~(KSI_FROMPOOL | KSI_QUEUED);
+		}
+		ksiginfo_free(ksi);	/* XXXSMP */
+		return true;
+	}
+
+out:
+	/* If there is no siginfo, then manufacture it. */
+	if (out != NULL) {
+		KSI_INIT(out);
+		out->ksi_info._signo = signo;
+		out->ksi_info._code = SI_NOINFO;
+	}
+	return false;
+}
+
 /*
  * sigget:
  *
@@ -549,7 +583,6 @@ ksiginfo_queue_drain0(ksiginfoq_t *kq)
 int
 sigget(sigpend_t *sp, ksiginfo_t *out, int signo, const sigset_t *mask)
 {
-	ksiginfo_t *ksi;
 	sigset_t tset;
 
 	/* If there's no pending set, the signal is from the debugger. */
@@ -572,29 +605,8 @@ sigget(sigpend_t *sp, ksiginfo_t *out, int signo, const sigset_t *mask)
 	}
 
 	sigdelset(&sp->sp_set, signo);
-
-	/* Find siginfo and copy it out. */
-	CIRCLEQ_FOREACH(ksi, &sp->sp_info, ksi_list) {
-		if (ksi->ksi_signo != signo)
-			continue;
-		CIRCLEQ_REMOVE(&sp->sp_info, ksi, ksi_list);
-		KASSERT((ksi->ksi_flags & KSI_FROMPOOL) != 0);
-		KASSERT((ksi->ksi_flags & KSI_QUEUED) != 0);
-		ksi->ksi_flags &= ~KSI_QUEUED;
-		if (out != NULL) {
-			memcpy(out, ksi, sizeof(*out));
-			out->ksi_flags &= ~(KSI_FROMPOOL | KSI_QUEUED);
-		}
-		ksiginfo_free(ksi);	/* XXXSMP */
-		return signo;
-	}
 out:
-	/* If there is no siginfo, then manufacture it. */
-	if (out != NULL) {
-		KSI_INIT(out);
-		out->ksi_info._signo = signo;
-		out->ksi_info._code = SI_NOINFO;
-	}
+	(void)siggetinfo(sp, out, signo);
 	return signo;
 }
 
@@ -1779,8 +1791,9 @@ issignal(struct lwp *l)
 
 	for (;;) {
 		/* Discard any signals that we have decided not to take. */
-		if (signo != 0)
+		if (signo != 0) {
 			(void)sigget(sp, NULL, signo, NULL);
+		}
 
 		/* Bail out if we do not own the virtual processor */
 		if (l->l_flag & LW_SA && l->l_savp->savp_lwp != l)
@@ -1970,7 +1983,6 @@ postsig(int signo)
 	sig_t		action;
 	sigset_t	*returnmask;
 	ksiginfo_t	ksi;
-	sigpend_t	*sp;
 
 	l = curlwp;
 	p = l->l_proc;
@@ -1998,12 +2010,12 @@ postsig(int signo)
 	 */
 	action = SIGACTION_PS(ps, signo).sa_handler;
 	l->l_ru.ru_nsignals++;
-	if ((sp = l->l_sigpendset) == NULL) {
+	if (l->l_sigpendset == NULL) {
 		/* From the debugger */
-		sp = &p->p_sigpend;
-		sigaddset(&sp->sp_set, signo);
-	}
-	sigget(sp, &ksi, signo, NULL);
+		if (!siggetinfo(&l->l_sigpend, &ksi, signo))
+			(void)siggetinfo(&p->p_sigpend, &ksi, signo);
+	} else
+		sigget(l->l_sigpendset, &ksi, signo, NULL);
 
 	if (ktrpoint(KTR_PSIG)) {
 		mutex_exit(p->p_lock);
