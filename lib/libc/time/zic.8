@@ -1,4 +1,4 @@
-.\"	$NetBSD: zic.8,v 1.18 2010/05/30 07:57:08 wiz Exp $
+.\"	$NetBSD: zic.8,v 1.19 2011/09/04 10:10:26 christos Exp $
 .\" @(#)zic.8	7.22
 .Dd December 20, 2003
 .Dt ZIC 8
@@ -81,6 +81,9 @@ if they're to be used as part of a field.
 Any line that is blank (after comment stripping) is ignored.
 Non-blank lines are expected to be of one of three types:
 rule lines, zone lines, and link lines.
+.Pp
+Names (such as month names) must be in English and are case insensitive.
+Abbreviations, if used, must be unambiguous in context.
 .Pp
 A rule line has the form
 .Dl Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
@@ -422,6 +425,6 @@ specifying transition instants using universal time.
 .Xr ctime 3 ,
 .Xr tzfile 5 ,
 .Xr zdump 8
-.\" @(#)zic.8	8.5
+.\" @(#)zic.8	8.6
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
