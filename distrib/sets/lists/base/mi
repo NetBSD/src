@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.951 2011/08/29 11:38:48 mrg Exp $
+# $NetBSD: mi,v 1.952 2011/09/04 16:09:18 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4245,6 +4245,7 @@
 ./usr/share/zoneinfo/Africa/Gaborone		base-sys-share		share
 ./usr/share/zoneinfo/Africa/Harare		base-sys-share		share
 ./usr/share/zoneinfo/Africa/Johannesburg	base-sys-share		share
+./usr/share/zoneinfo/Africa/Juba		base-sys-share		share
 ./usr/share/zoneinfo/Africa/Kampala		base-sys-share		share
 ./usr/share/zoneinfo/Africa/Khartoum		base-sys-share		share
 ./usr/share/zoneinfo/Africa/Kigali		base-sys-share		share
@@ -4279,25 +4280,26 @@
 ./usr/share/zoneinfo/America/Anguilla		base-sys-share		share
 ./usr/share/zoneinfo/America/Antigua		base-sys-share		share
 ./usr/share/zoneinfo/America/Araguaina		base-sys-share		share
-./usr/share/zoneinfo/America/Argentina		base-sys-share
-./usr/share/zoneinfo/America/Argentina/Buenos_Aires	base-sys-share		share
-./usr/share/zoneinfo/America/Argentina/Catamarca	base-sys-share		share
-./usr/share/zoneinfo/America/Argentina/ComodRivadavia	base-sys-share		share
-./usr/share/zoneinfo/America/Argentina/Cordoba	base-sys-share		share
-./usr/share/zoneinfo/America/Argentina/Jujuy	base-sys-share		share
-./usr/share/zoneinfo/America/Argentina/La_Rioja	base-sys-share		share
-./usr/share/zoneinfo/America/Argentina/Mendoza	base-sys-share		share
-./usr/share/zoneinfo/America/Argentina/Rio_Gallegos	base-sys-share		share
-./usr/share/zoneinfo/America/Argentina/Salta	base-sys-share		share
-./usr/share/zoneinfo/America/Argentina/San_Juan	base-sys-share		share
-./usr/share/zoneinfo/America/Argentina/San_Luis	base-sys-share		share
-./usr/share/zoneinfo/America/Argentina/Tucuman	base-sys-share		share
-./usr/share/zoneinfo/America/Argentina/Ushuaia	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina			base-sys-share
+./usr/share/zoneinfo/America/Argentina/Buenos_Aires	base-sys-share	share
+./usr/share/zoneinfo/America/Argentina/Catamarca	base-sys-share	share
+./usr/share/zoneinfo/America/Argentina/ComodRivadavia	base-sys-share	share
+./usr/share/zoneinfo/America/Argentina/Cordoba		base-sys-share	share
+./usr/share/zoneinfo/America/Argentina/Jujuy		base-sys-share	share
+./usr/share/zoneinfo/America/Argentina/La_Rioja		base-sys-share	share
+./usr/share/zoneinfo/America/Argentina/Mendoza		base-sys-share	share
+./usr/share/zoneinfo/America/Argentina/Rio_Gallegos	base-sys-share	share
+./usr/share/zoneinfo/America/Argentina/Salta		base-sys-share	share
+./usr/share/zoneinfo/America/Argentina/San_Juan		base-sys-share	share
+./usr/share/zoneinfo/America/Argentina/San_Luis		base-sys-share	share
+./usr/share/zoneinfo/America/Argentina/Tucuman		base-sys-share	share
+./usr/share/zoneinfo/America/Argentina/Ushuaia		base-sys-share	share
 ./usr/share/zoneinfo/America/Aruba		base-sys-share		share
 ./usr/share/zoneinfo/America/Asuncion		base-sys-share		share
 ./usr/share/zoneinfo/America/Atikokan		base-sys-share		share
 ./usr/share/zoneinfo/America/Atka		base-sys-share		share
 ./usr/share/zoneinfo/America/Bahia		base-sys-share		share
+./usr/share/zoneinfo/America/Bahia_Banderas	base-sys-share		share
 ./usr/share/zoneinfo/America/Barbados		base-sys-share		share
 ./usr/share/zoneinfo/America/Belem		base-sys-share		share
 ./usr/share/zoneinfo/America/Belize		base-sys-share		share
@@ -4305,9 +4307,11 @@
 ./usr/share/zoneinfo/America/Boa_Vista		base-sys-share		share
 ./usr/share/zoneinfo/America/Bogota		base-sys-share		share
 ./usr/share/zoneinfo/America/Boise		base-sys-share		share
+./usr/share/zoneinfo/America/Brazil		base-sys-share		share
 ./usr/share/zoneinfo/America/Buenos_Aires	base-sys-share		share
 ./usr/share/zoneinfo/America/Cambridge_Bay	base-sys-share		share
 ./usr/share/zoneinfo/America/Campo_Grande	base-sys-share		share
+./usr/share/zoneinfo/America/Canada		base-sys-share		share
 ./usr/share/zoneinfo/America/Cancun		base-sys-share		share
 ./usr/share/zoneinfo/America/Caracas		base-sys-share		share
 ./usr/share/zoneinfo/America/Catamarca		base-sys-share		share
@@ -4315,6 +4319,7 @@
 ./usr/share/zoneinfo/America/Cayman		base-sys-share		share
 ./usr/share/zoneinfo/America/Chicago		base-sys-share		share
 ./usr/share/zoneinfo/America/Chihuahua		base-sys-share		share
+./usr/share/zoneinfo/America/Chile		base-sys-share		share
 ./usr/share/zoneinfo/America/Coral_Harbour	base-sys-share		share
 ./usr/share/zoneinfo/America/Cordoba		base-sys-share		share
 ./usr/share/zoneinfo/America/Costa_Rica		base-sys-share		share
@@ -4344,38 +4349,42 @@
 ./usr/share/zoneinfo/America/Halifax		base-sys-share		share
 ./usr/share/zoneinfo/America/Havana		base-sys-share		share
 ./usr/share/zoneinfo/America/Hermosillo		base-sys-share		share
-./usr/share/zoneinfo/America/Indiana		base-sys-share
-./usr/share/zoneinfo/America/Indiana/Indianapolis	base-sys-share		share
-./usr/share/zoneinfo/America/Indiana/Knox	base-sys-share		share
-./usr/share/zoneinfo/America/Indiana/Marengo	base-sys-share		share
-./usr/share/zoneinfo/America/Indiana/Petersburg	base-sys-share		share
-./usr/share/zoneinfo/America/Indiana/Tell_City	base-sys-share		share
-./usr/share/zoneinfo/America/Indiana/Vevay	base-sys-share		share
-./usr/share/zoneinfo/America/Indiana/Vincennes	base-sys-share		share
-./usr/share/zoneinfo/America/Indiana/Winamac	base-sys-share		share
-./usr/share/zoneinfo/America/Indianapolis	base-sys-share		share
+./usr/share/zoneinfo/America/Indiana			base-sys-share
+./usr/share/zoneinfo/America/Indiana/Indianapolis	base-sys-share	share
+./usr/share/zoneinfo/America/Indiana/Knox		base-sys-share	share
+./usr/share/zoneinfo/America/Indiana/Marengo		base-sys-share	share
+./usr/share/zoneinfo/America/Indiana/Petersburg		base-sys-share	share
+./usr/share/zoneinfo/America/Indiana/Tell_City		base-sys-share	share
+./usr/share/zoneinfo/America/Indiana/Vevay		base-sys-share	share
+./usr/share/zoneinfo/America/Indiana/Vincennes		base-sys-share	share
+./usr/share/zoneinfo/America/Indiana/Winamac		base-sys-share	share
+./usr/share/zoneinfo/America/Indianapolis		base-sys-share	share
 ./usr/share/zoneinfo/America/Inuvik		base-sys-share		share
 ./usr/share/zoneinfo/America/Iqaluit		base-sys-share		share
 ./usr/share/zoneinfo/America/Jamaica		base-sys-share		share
 ./usr/share/zoneinfo/America/Jujuy		base-sys-share		share
 ./usr/share/zoneinfo/America/Juneau		base-sys-share		share
-./usr/share/zoneinfo/America/Kentucky		base-sys-share
-./usr/share/zoneinfo/America/Kentucky/Louisville	base-sys-share		share
-./usr/share/zoneinfo/America/Kentucky/Monticello	base-sys-share		share
+./usr/share/zoneinfo/America/Kentucky			base-sys-share
+./usr/share/zoneinfo/America/Kentucky/Louisville	base-sys-share	share
+./usr/share/zoneinfo/America/Kentucky/Monticello	base-sys-share	share
 ./usr/share/zoneinfo/America/Knox_IN		base-sys-share		share
+./usr/share/zoneinfo/America/Kralendijk		base-sys-share		share
 ./usr/share/zoneinfo/America/La_Paz		base-sys-share		share
 ./usr/share/zoneinfo/America/Lima		base-sys-share		share
 ./usr/share/zoneinfo/America/Los_Angeles	base-sys-share		share
 ./usr/share/zoneinfo/America/Louisville		base-sys-share		share
+./usr/share/zoneinfo/America/Lower_Princes	base-sys-share		share
 ./usr/share/zoneinfo/America/Maceio		base-sys-share		share
 ./usr/share/zoneinfo/America/Managua		base-sys-share		share
 ./usr/share/zoneinfo/America/Manaus		base-sys-share		share
 ./usr/share/zoneinfo/America/Marigot		base-sys-share		share
 ./usr/share/zoneinfo/America/Martinique		base-sys-share		share
+./usr/share/zoneinfo/America/Matamoros		base-sys-share		share
 ./usr/share/zoneinfo/America/Mazatlan		base-sys-share		share
 ./usr/share/zoneinfo/America/Mendoza		base-sys-share		share
 ./usr/share/zoneinfo/America/Menominee		base-sys-share		share
 ./usr/share/zoneinfo/America/Merida		base-sys-share		share
+./usr/share/zoneinfo/America/Metlakatla		base-sys-share		share
 ./usr/share/zoneinfo/America/Mexico_City	base-sys-share		share
 ./usr/share/zoneinfo/America/Miquelon		base-sys-share		share
 ./usr/share/zoneinfo/America/Moncton		base-sys-share		share
@@ -4388,9 +4397,11 @@
 ./usr/share/zoneinfo/America/Nipigon		base-sys-share		share
 ./usr/share/zoneinfo/America/Nome		base-sys-share		share
 ./usr/share/zoneinfo/America/Noronha		base-sys-share		share
-./usr/share/zoneinfo/America/North_Dakota	base-sys-share
-./usr/share/zoneinfo/America/North_Dakota/Center	base-sys-share		share
-./usr/share/zoneinfo/America/North_Dakota/New_Salem	base-sys-share		share
+./usr/share/zoneinfo/America/North_Dakota		base-sys-share
+./usr/share/zoneinfo/America/North_Dakota/Beulah	base-sys-share	share
+./usr/share/zoneinfo/America/North_Dakota/Center	base-sys-share	share
+./usr/share/zoneinfo/America/North_Dakota/New_Salem	base-sys-share	share
+./usr/share/zoneinfo/America/Ojinaga		base-sys-share		share
 ./usr/share/zoneinfo/America/Panama		base-sys-share		share
 ./usr/share/zoneinfo/America/Pangnirtung	base-sys-share		share
 ./usr/share/zoneinfo/America/Paramaribo		base-sys-share		share
@@ -4407,13 +4418,15 @@
 ./usr/share/zoneinfo/America/Resolute		base-sys-share		share
 ./usr/share/zoneinfo/America/Rio_Branco		base-sys-share		share
 ./usr/share/zoneinfo/America/Rosario		base-sys-share		share
+./usr/share/zoneinfo/America/Santa_Isabel	base-sys-share		share
 ./usr/share/zoneinfo/America/Santarem		base-sys-share		share
 ./usr/share/zoneinfo/America/Santiago		base-sys-share		share
 ./usr/share/zoneinfo/America/Santo_Domingo	base-sys-share		share
 ./usr/share/zoneinfo/America/Sao_Paulo		base-sys-share		share
 ./usr/share/zoneinfo/America/Scoresbysund	base-sys-share		share
 ./usr/share/zoneinfo/America/Shiprock		base-sys-share		share
-./usr/share/zoneinfo/America/St_Barthelemy		base-sys-share		share
+./usr/share/zoneinfo/America/Sitka		base-sys-share		share
+./usr/share/zoneinfo/America/St_Barthelemy	base-sys-share		share
 ./usr/share/zoneinfo/America/St_Johns		base-sys-share		share
 ./usr/share/zoneinfo/America/St_Kitts		base-sys-share		share
 ./usr/share/zoneinfo/America/St_Lucia		base-sys-share		share
@@ -4436,6 +4449,7 @@
 ./usr/share/zoneinfo/Antarctica/Casey		base-sys-share		share
 ./usr/share/zoneinfo/Antarctica/Davis		base-sys-share		share
 ./usr/share/zoneinfo/Antarctica/DumontDUrville	base-sys-share		share
+./usr/share/zoneinfo/Antarctica/Macquarie	base-sys-share		share
 ./usr/share/zoneinfo/Antarctica/Mawson		base-sys-share		share
 ./usr/share/zoneinfo/Antarctica/McMurdo		base-sys-share		share
 ./usr/share/zoneinfo/Antarctica/Palmer		base-sys-share		share
@@ -4503,6 +4517,7 @@
 ./usr/share/zoneinfo/Asia/Manila		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Muscat		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Nicosia		base-sys-share		share
+./usr/share/zoneinfo/Asia/Novokuznetsk		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Novosibirsk		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Omsk			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Oral			base-sys-share		share
@@ -4787,6 +4802,7 @@
 ./usr/share/zoneinfo/Pacific/Apia		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Auckland		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Chatham		base-sys-share		share
+./usr/share/zoneinfo/Pacific/Chuuk		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Easter		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Efate		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Enderbury		base-sys-share		share
@@ -4812,6 +4828,7 @@
 ./usr/share/zoneinfo/Pacific/Pago_Pago		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Palau		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Pitcairn		base-sys-share		share
+./usr/share/zoneinfo/Pacific/Pohnpei		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Ponape		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Port_Moresby	base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Rarotonga		base-sys-share		share
