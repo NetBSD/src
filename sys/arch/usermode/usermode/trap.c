@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.21 2011/09/04 12:17:59 jmcneill Exp $ */
+/* $NetBSD: trap.c,v 1.22 2011/09/04 20:54:52 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.21 2011/09/04 12:17:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22 2011/09/04 20:54:52 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,6 +125,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		onfault = pcb->pcb_onfault;
 		vm = p->p_vmspace;
 
+		pcb->errno = thunk_geterrno();
 #if 0
 		va = (vaddr_t) info->si_addr;
 		printf("mem trap lwp = %p pid = %d lid = %d, va = %p\n",
@@ -215,10 +216,11 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 			/* XXX HOWTO see arm/arm/syscall.c illegal instruction signal */
 		}
 
-		if (recurse > 1)
-			printf("leaving trap recursion level %d\n", recurse);
-		recurse--;
+		thunk_seterrno(pcb->errno);
 	}
+	if (recurse > 1)
+		printf("leaving trap recursion level %d\n", recurse);
+	recurse--;
 }
 
 static void
