@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.99 2011/06/12 03:35:58 rmind Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.100 2011/09/04 17:32:10 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.99 2011/06/12 03:35:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.100 2011/09/04 17:32:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,6 +288,7 @@ procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid,
 	case PFSmounts:	/* /proc/mounts = -r--r--r-- */
 	case PFSloadavg:	/* /proc/loadavg = -r--r--r-- */
 	case PFSstatm:	/* /proc/N/statm = -r--r--r-- */
+	case PFSversion:	/* /proc/version = -r--r--r-- */
 		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
@@ -460,6 +461,10 @@ procfs_rw(void *v)
 
 	case PFSemul:
 		error = procfs_doemul(curl, p, pfs, uio);
+		break;
+
+	case PFSversion:
+		error = procfs_doversion(curl, p, pfs, uio);
 		break;
 
 #ifdef __HAVE_PROCFS_MACHDEP

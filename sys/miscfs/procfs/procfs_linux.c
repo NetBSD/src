@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.60 2011/08/28 18:48:14 jmcneill Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.61 2011/09/04 17:32:10 jmcneill Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.60 2011/08/28 18:48:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.61 2011/09/04 17:32:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,10 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.60 2011/08/28 18:48:14 jmcneill E
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/conf.h>
+#include <sys/sysctl.h>
 
 #include <miscfs/procfs/procfs.h>
 
 #include <compat/linux/common/linux_exec.h>
+#include <compat/linux32/common/linux32_sysctl.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
@@ -608,5 +610,104 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 		free(mtab, M_TEMP);
 	}
 
+	return error;
+}
+
+/*
+ * Linux compatible /proc/version. Only active when the -o linux
+ * mountflag is used.
+ */
+int
+procfs_doversion(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
+{
+	char *bf;
+	char lostype[20], losrelease[20], lversion[80];
+	const char *postype, *posrelease, *pversion;
+	const char *emulname = curlwp->l_proc->p_emul->e_name;
+	int len;
+	int error = 0;
+	int nm[4];
+	size_t buflen;
+
+	CTASSERT(EMUL_LINUX_KERN_OSTYPE == EMUL_LINUX32_KERN_OSTYPE);
+	CTASSERT(EMUL_LINUX_KERN_OSRELEASE == EMUL_LINUX32_KERN_OSRELEASE);
+	CTASSERT(EMUL_LINUX_KERN_VERSION == EMUL_LINUX32_KERN_VERSION);
+
+	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
+
+	sysctl_lock(false);
+
+	if (strncmp(emulname, "linux", 5) == 0) {
+		/*
+		 * Lookup the emulation ostype, osrelease, and version.
+		 * Since compat_linux and compat_linux32 can be built as
+		 * modules, we use sysctl to obtain the values instead of
+		 * using the symbols directly.
+		 */
+
+		if (strcmp(emulname, "linux32") == 0) {
+			nm[0] = CTL_EMUL;
+			nm[1] = EMUL_LINUX32;
+			nm[2] = EMUL_LINUX32_KERN;
+		} else {
+			nm[0] = CTL_EMUL;
+			nm[1] = EMUL_LINUX;
+			nm[2] = EMUL_LINUX_KERN;
+		}
+
+		nm[3] = EMUL_LINUX_KERN_OSTYPE;
+		buflen = sizeof(lostype);
+		error = sysctl_dispatch(nm, __arraycount(nm),
+		    lostype, &buflen,
+		    NULL, 0, NULL, NULL, NULL);
+		if (error)
+			goto out;
+
+		nm[3] = EMUL_LINUX_KERN_OSRELEASE;
+		buflen = sizeof(losrelease);
+		error = sysctl_dispatch(nm, __arraycount(nm),
+		    losrelease, &buflen,
+		    NULL, 0, NULL, NULL, NULL);
+		if (error)
+			goto out;
+
+		nm[3] = EMUL_LINUX_KERN_VERSION;
+		buflen = sizeof(lversion);
+		error = sysctl_dispatch(nm, __arraycount(nm),
+		    lversion, &buflen,
+		    NULL, 0, NULL, NULL, NULL);
+		if (error)
+			goto out;
+
+		postype = lostype;
+		posrelease = losrelease;
+		pversion = lversion;
+	} else {
+		postype = ostype;
+		posrelease = osrelease;
+		strlcpy(lversion, version, sizeof(lversion));
+		if (strchr(lversion, '\n'))
+			*strchr(lversion, '\n') = '\0';
+		pversion = lversion;
+	}
+
+	len = snprintf(bf, LBFSZ,
+		"%s version %s (%s@localhost) (gcc version %s) %s\n",
+		postype, posrelease, emulname,
+#ifdef __VERSION__
+		__VERSION__,
+#else
+		"unknown",
+#endif
+		pversion);
+
+	if (len == 0)
+		goto out;
+
+	error = uiomove_frombuf(bf, len, uio);
+out:
+	free(bf, M_TEMP);
+	sysctl_unlock();
 	return error;
 }
