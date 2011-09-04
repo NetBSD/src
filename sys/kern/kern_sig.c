@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.314 2011/09/04 13:09:12 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.315 2011/09/04 23:03:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.314 2011/09/04 13:09:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.315 2011/09/04 23:03:00 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -1868,7 +1868,8 @@ issignal(struct lwp *l)
 			 * siginfo queue, because the debugger can send
 			 * it later.
 			 */
-			sigdelset(&sp->sp_set, signo);
+			if (sp)
+				sigdelset(&sp->sp_set, signo);
 			p->p_xstat = signo;
 
 			/* Emulation-specific handling of signal trace */
