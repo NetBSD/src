@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.29 2011/09/04 20:15:57 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.30 2011/09/04 20:46:58 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.29 2011/09/04 20:15:57 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.30 2011/09/04 20:46:58 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -232,6 +232,12 @@ int
 thunk_geterrno(void)
 {
 	return errno;
+}
+
+void
+thunk_seterrno(int err)
+{
+	errno = err;
 }
 
 int
