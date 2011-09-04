@@ -1,5 +1,5 @@
 # <pre>
-# @(#)leapseconds	8.8
+# @(#)leapseconds	8.11
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -60,9 +60,9 @@ Leap	2008	Dec	31	23:59:60	+	S
 # FAX       : 33 (0) 1 40 51 22 91
 # Internet  : services.iers@obspm.fr
 #
-# Paris, 15 January 2009
+# Paris, 2 February 2011
 #
-# Bulletin C 37
+# Bulletin C 41
 #
 # To authorities responsible
 # for the measurement and
@@ -70,7 +70,7 @@ Leap	2008	Dec	31	23:59:60	+	S
 #
 # INFORMATION ON UTC - TAI
 #
-# NO positive leap second will be introduced at the end of June 2009.
+# NO positive leap second will be introduced at the end of June 2011.
 # The difference between Coordinated Universal Time UTC and the
 # International Atomic Time TAI is :		
 #
