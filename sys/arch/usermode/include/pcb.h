@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.9 2011/09/04 20:54:52 reinoud Exp $ */
+/* $NetBSD: pcb.h,v 1.10 2011/09/04 21:01:39 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,7 +52,7 @@ struct pcb {
 	struct trapframe pcb_tf;
 	void *		 pcb_onfault;		/* on fault handler */
 
-	int		 errno;			/* save/restore place */
+	int		 pcb_errno;		/* save/restore place */
 };
 
 #endif /* !_ARCH_USERMODE_INCLUDE_PCB_H */
