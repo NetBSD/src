@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.195 2011/08/29 20:41:06 joerg Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.196 2011/09/04 23:16:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.195 2011/08/29 20:41:06 joerg Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.196 2011/09/04 23:16:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -601,7 +601,8 @@ main(int argc, char *argv[])
 	memset((char *)&his_addr, 0, sizeof(his_addr));
 	addrlen = sizeof(his_addr.si_su);
 	if (getpeername(0, (struct sockaddr *)&his_addr.si_su, &addrlen) < 0) {
-		syslog(LOG_ERR, "getpeername (%s): %m",argv[0]);
+		syslog((errno == ENOTCONN) ? LOG_NOTICE : LOG_ERR,
+		    "getpeername (%s): %m",argv[0]);
 		exit(1);
 	}
 	his_addr.su_len = addrlen;
