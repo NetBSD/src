@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.13 2011/09/04 20:31:00 joerg Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.14 2011/09/04 20:35:07 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.13 2011/09/04 20:31:00 joerg Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.14 2011/09/04 20:35:07 joerg Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -63,7 +63,7 @@ static uint32_t image_entrypoint = 0;
 static char *image_name;
 static uint32_t image_magic = IH_MAGIC;
 
-struct uboot_os {
+static const struct uboot_os {
 	enum uboot_image_os os;
 	const char *name;
 } uboot_os[] = {
@@ -135,7 +135,7 @@ get_arch_name(enum uboot_image_arch arch)
 	return "Unknown";
 }
 
-static struct uboot_type {
+static const struct uboot_type {
 	enum uboot_image_type type;
 	const char *name;
 } uboot_type[] = {
@@ -171,7 +171,7 @@ get_type_name(enum uboot_image_type type)
 	return "Unknown";
 }
 
-static struct uboot_comp {
+static const struct uboot_comp {
 	enum uboot_image_comp comp;
 	const char *name;
 } uboot_comp[] = {
