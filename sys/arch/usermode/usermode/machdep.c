@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.23 2011/09/04 21:08:18 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.24 2011/09/05 18:31:04 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2011/09/04 21:08:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2011/09/05 18:31:04 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,12 +147,19 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	struct pcb *pcb = lwp_getpcb(l);
 	ucontext_t *ucp = &pcb->pcb_userland_ucp;
 
-printf("setregs called: lwp %p, exec package %p, stack %p\n", l, pack, (void *) stack);
-printf("current stat of pcb %p\n", pcb);
-printf("\tpcb->pcb_ucp.uc_stack.ss_sp   = %p\n", pcb->pcb_ucp.uc_stack.ss_sp);
-printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_ucp.uc_stack.ss_size);
-printf("\tpcb->pcb_userland_ucp.uc_stack.ss_sp   = %p\n", pcb->pcb_userland_ucp.uc_stack.ss_sp);
-printf("\tpcb->pcb_userland_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_userland_ucp.uc_stack.ss_size);
+#ifdef DEBUG_EXEC
+	printf("setregs called: lwp %p, exec package %p, stack %p\n",
+		l, pack, (void *) stack);
+	printf("current stat of pcb %p\n", pcb);
+	printf("\tpcb->pcb_ucp.uc_stack.ss_sp   = %p\n",
+		pcb->pcb_ucp.uc_stack.ss_sp);
+	printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n",
+		(int) pcb->pcb_ucp.uc_stack.ss_size);
+	printf("\tpcb->pcb_userland_ucp.uc_stack.ss_sp   = %p\n",
+		pcb->pcb_userland_ucp.uc_stack.ss_sp);
+	printf("\tpcb->pcb_userland_ucp.uc_stack.ss_size = %d\n",
+		(int) pcb->pcb_userland_ucp.uc_stack.ss_size);
+#endif
 
 #ifdef __i386__
 	uint *reg, i;
@@ -170,22 +177,31 @@ printf("\tpcb->pcb_userland_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_userlan
 	reg[17] = (stack);		/* _REG_UESP */
 
 #if 0
-const char *name[] = {"GS", "FS", "ES", "DS", "EDI", "ESI", "EBP", "ESP", "EBX", "EDX", "ECX", "EAX", "TRAPNO", "ERR", "EIP", "CS", "EFL", "UESP", "SS"};
+	/* register dump before call */
+	const char *name[] = {"GS", "FS", "ES", "DS", "EDI", "ESI", "EBP", "ESP",
+		"EBX", "EDX", "ECX", "EAX", "TRAPNO", "ERR", "EIP", "CS", "EFL",
+		"UESP", "SS"};
 
-for (i =0; i < 19; i++)
-	printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], reg[i]);
+	for (i =0; i < 19; i++)
+		printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], reg[i]);
 #endif
 #else
 #	error setregs() not yet ported to this architecture
 #endif
 
-printf("updated pcb %p\n", pcb);
-printf("\tpcb->pcb_ucp.uc_stack.ss_sp   = %p\n", pcb->pcb_ucp.uc_stack.ss_sp);
-printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_ucp.uc_stack.ss_size);
-printf("\tpcb->pcb_userland_ucp.uc_stack.ss_sp   = %p\n", pcb->pcb_userland_ucp.uc_stack.ss_sp);
-printf("\tpcb->pcb_userland_ucp.uc_stack.ss_size = %d\n", (int) pcb->pcb_userland_ucp.uc_stack.ss_size);
-printf("\tpack->ep_entry                = %p\n", (void *) pack->ep_entry);
-printf("\t    argument                  = %p\n", &pcb->pcb_tf);
+#ifdef DEBUG_EXEC
+	printf("updated pcb %p\n", pcb);
+	printf("\tpcb->pcb_ucp.uc_stack.ss_sp   = %p\n",
+		pcb->pcb_ucp.uc_stack.ss_sp);
+	printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n",
+		(int) pcb->pcb_ucp.uc_stack.ss_size);
+	printf("\tpcb->pcb_userland_ucp.uc_stack.ss_sp   = %p\n",
+		pcb->pcb_userland_ucp.uc_stack.ss_sp);
+	printf("\tpcb->pcb_userland_ucp.uc_stack.ss_size = %d\n",
+		(int) pcb->pcb_userland_ucp.uc_stack.ss_size);
+	printf("\tpack->ep_entry                = %p\n",
+		(void *) pack->ep_entry);
+#endif
 }
 
 void
