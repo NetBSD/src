@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.54 2011/09/04 21:04:42 jmcneill Exp $ */
+/* $NetBSD: pmap.c,v 1.55 2011/09/05 12:19:12 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 2011/09/04 21:04:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55 2011/09/05 12:19:12 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -301,6 +301,8 @@ pmap_bootstrap(void)
 		(uint64_t) (free_end - (free_start + fpos))/1024/1024);
 	aprint_debug("\t%"PRIu64" MB of kmem left\n",
 		(uint64_t) (kmem_ext_end - kmem_ext_cur_end)/1024/1024);
+
+	setup_signal_handlers();
 }
 
 void
@@ -325,8 +327,6 @@ pmap_deferred_init(void)
 	/* create pmap pool */
 	pool_init(&pmap_pool, sizeof(struct pmap), 0, 0, 0,
 	    "pmappool", NULL, IPL_NONE);
-
-	setup_signal_handlers();
 }
 
 pmap_t
