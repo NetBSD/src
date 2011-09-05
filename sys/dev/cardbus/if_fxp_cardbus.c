@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.48 2011/08/01 11:20:27 drochner Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.49 2011/09/05 04:36:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.48 2011/08/01 11:20:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.49 2011/09/05 04:36:50 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -113,7 +113,7 @@ fxp_cardbus_match(device_t parent, cfdata_t match,
 	struct cardbus_attach_args *ca = aux;
 
 	if (PCI_VENDOR(ca->ca_id) == PCI_VENDOR_INTEL &&
-	    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_INTEL_82557)
+	    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_INTEL_8255X)
 		return (1);
 
 	return (0);
