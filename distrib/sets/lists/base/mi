@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.953 2011/09/04 21:28:02 christos Exp $
+# $NetBSD: mi,v 1.954 2011/09/05 18:29:36 wiz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -20,15 +20,14 @@
 ./bin						base-sys-root
 ./bin/[						base-util-root
 ./bin/cat					base-util-root
+./bin/chgrp					base-util-root
 ./bin/chio					base-util-root
 ./bin/chmod					base-util-root
 ./bin/cp					base-util-root
 ./bin/cpio					base-util-root
 ./bin/csh					base-util-root
-./bin/chgrp					base-util-root
 ./bin/date					base-util-root
 ./bin/dd					base-util-root
-./bin/rump.dd					base-util-root
 ./bin/df					base-util-root
 ./bin/domainname				base-nis-root
 ./bin/echo					base-util-root
@@ -51,6 +50,7 @@
 ./bin/rm					base-util-root
 ./bin/rmail					base-obsolete		obsolete
 ./bin/rmdir					base-util-root
+./bin/rump.dd					base-util-root
 ./bin/sh					base-util-root
 ./bin/sleep					base-util-root
 ./bin/stty					base-util-root
@@ -94,8 +94,8 @@
 ./etc/defaults					base-sys-root
 ./etc/disklabels				base-obsolete		obsolete
 ./etc/fonts					base-x11-root
-./etc/fonts/conf.d				base-x11-root
 ./etc/fonts/conf.avail				base-x11-root
+./etc/fonts/conf.d				base-x11-root
 ./etc/iscsi					base-sysutil-root
 ./etc/kerberosIV				base-obsolete		obsolete
 ./etc/kerberosV					base-krb5-root
@@ -144,11 +144,15 @@
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-5000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-5150-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000-ucode	base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000g2a-ucode	base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-6050-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-1000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-4965-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-5000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-5150-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-6000-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-6000g2a-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-6050-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-1000-3.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-4965-1.ucode	base-obsolete		obsolete
 ./libdata/firmware/if_iwn/iwlwifi-4965-2.ucode	base-firmware-root
@@ -156,11 +160,7 @@
 ./libdata/firmware/if_iwn/iwlwifi-5000-2.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-5150-2.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-6000-4.ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000g2a-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-6000g2a-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-6000g2a-5.ucode	base-firmware-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-6050-ucode	base-firmware-root
-./libdata/firmware/if_iwn/README.iwlwifi-6050-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-6050-5.ucode	base-firmware-root
 ./libdata/firmware/if_otus			base-firmware-root
 ./libdata/firmware/if_otus/otus-init		base-firmware-root
@@ -203,12 +203,12 @@
 ./libexec/dhcpcd-hooks/30-hostname		base-dhcpcd-root
 ./libexec/dhcpcd-hooks/50-ntp.conf		base-dhcpcd-root
 ./libexec/dhcpcd-run-hooks			base-dhcpcd-root
+./libexec/lfs_cleanerd				base-sysutil-bin
 ./libexec/resolvconf				base-resolvconf-root
-./libexec/resolvconf/libc			base-resolvconf-root
 ./libexec/resolvconf/dnsmasq			base-resolvconf-root
+./libexec/resolvconf/libc			base-resolvconf-root
 ./libexec/resolvconf/named			base-resolvconf-root
 ./libexec/resolvconf/unbound			base-resolvconf-root
-./libexec/lfs_cleanerd				base-sysutil-bin
 ./mnt						base-sys-root
 ./rescue					base-sys-root
 ./root						base-sys-root
@@ -222,7 +222,6 @@
 ./sbin/ccdconfig				base-sysutil-root
 ./sbin/cgdconfig				base-sysutil-root	crypto
 ./sbin/chown					base-sysutil-root
-./sbin/rump.cgdconfig				base-sysutil-root	crypto
 ./sbin/clri					base-sysutil-root
 ./sbin/devpubd					base-sysutil-root
 ./sbin/dhclient					base-dhclient-root
@@ -231,8 +230,8 @@
 ./sbin/disklabel				base-sysutil-root
 ./sbin/dkctl					base-sysutil-root
 ./sbin/dkscan_bsdlabel				base-sysutil-root
-./sbin/dmesg					base-sysutil-root
 ./sbin/dmctl					base-sysutil-root
+./sbin/dmesg					base-sysutil-root
 ./sbin/dmsetup					base-lvm-root		lvm
 ./sbin/drvctl					base-sysutil-root
 ./sbin/dump					base-sysutil-root
@@ -253,7 +252,6 @@
 ./sbin/gpt					base-sysutil-root
 ./sbin/halt					base-sysutil-root
 ./sbin/ifconfig					base-netutil-root
-./sbin/rump.ifconfig					base-netutil-root
 ./sbin/init					base-sysutil-root
 ./sbin/ipf					base-ipf-root		ipfilter
 ./sbin/ipppctl					base-netutil-root
@@ -265,14 +263,11 @@
 ./sbin/modload					base-sysutil-root
 ./sbin/modstat					base-sysutil-root
 ./sbin/modunload				base-sysutil-root
-./sbin/rump.modload					base-sysutil-root
-./sbin/rump.modstat					base-sysutil-root
-./sbin/rump.modunload				base-sysutil-root
 ./sbin/mount					base-sysutil-root
 ./sbin/mount_ados				base-adosfs-root
 ./sbin/mount_cd9660				base-sysutil-root
-./sbin/mount_ext2fs				base-ext2fs-root
 ./sbin/mount_efs				base-efs-root
+./sbin/mount_ext2fs				base-ext2fs-root
 ./sbin/mount_fdesc				base-miscfs-root
 ./sbin/mount_ffs				base-sysutil-root
 ./sbin/mount_filecore				base-filecorefs-root
@@ -316,27 +311,33 @@
 ./sbin/pflogd					base-pf-root		pf
 ./sbin/pfs						base-pf-root		pf
 ./sbin/ping					base-netutil-root
-./sbin/rump.ping					base-netutil-root
 ./sbin/ping6					base-netutil-root	use_inet6
 ./sbin/poweroff					base-sysutil-root
 ./sbin/pppoectl					base-netutil-root
 ./sbin/quotacheck				base-obsolete		obsolete
 ./sbin/raidctl					base-sysutil-root
-./sbin/rump.raidctl					base-sysutil-root
 ./sbin/rcorder					base-sysutil-root
 ./sbin/rdump					base-sysutil-root
 ./sbin/rdump_lfs				base-sysutil-root
 ./sbin/reboot					base-sysutil-root
-./sbin/resolvconf				base-resolvconf-root
 ./sbin/resize_ffs				base-sysutil-root
 ./sbin/resize_lfs				base-sysutil-root
+./sbin/resolvconf				base-resolvconf-root
 ./sbin/restore					base-sysutil-root
 ./sbin/rndctl					base-sysutil-root
 ./sbin/route					base-netutil-root
-./sbin/rump.route					base-netutil-root
 ./sbin/routed					base-router-root
 ./sbin/rrestore					base-netutil-root
 ./sbin/rtsol					base-netutil-root	use_inet6
+./sbin/rump.cgdconfig				base-sysutil-root	crypto
+./sbin/rump.ifconfig					base-netutil-root
+./sbin/rump.modload					base-sysutil-root
+./sbin/rump.modstat					base-sysutil-root
+./sbin/rump.modunload				base-sysutil-root
+./sbin/rump.ping					base-netutil-root
+./sbin/rump.raidctl					base-sysutil-root
+./sbin/rump.route					base-netutil-root
+./sbin/rump.sysctl					base-sysutil-root
 ./sbin/savecore					base-sysutil-root
 ./sbin/scan_ffs					base-sysutil-root
 ./sbin/scan_lfs					base-sysutil-root
@@ -348,7 +349,6 @@
 ./sbin/swapctl					base-sysutil-root
 ./sbin/swapon					base-sysutil-root
 ./sbin/sysctl					base-sysutil-root
-./sbin/rump.sysctl					base-sysutil-root
 ./sbin/tbrconfig				base-router-root
 ./sbin/ttyflags					base-sysutil-root
 ./sbin/tunefs					base-sysutil-root
@@ -358,8 +358,8 @@
 ./sbin/vinum					base-obsolete		obsolete
 ./sbin/wdogctl					base-sysutil-root
 ./sbin/wsconsctl				base-sysutil-root
-./sbin/zpool					base-zfs-bin            zfs
 ./sbin/zfs					base-zfs-bin            zfs
+./sbin/zpool					base-zfs-bin            zfs
 ./stand						base-sys-root
 ./tmp						base-sys-root
 ./usr						base-sys-root
@@ -428,6 +428,7 @@
 ./usr/bin/diff3					base-util-bin
 ./usr/bin/dig					base-netutil-bin
 ./usr/bin/dirname				base-util-bin
+./usr/bin/dns-sd				base-mdns-bin		mdns
 ./usr/bin/dnsquery				base-obsolete	obsolete
 ./usr/bin/du					base-util-bin
 ./usr/bin/egrep					base-util-bin
@@ -436,8 +437,6 @@
 ./usr/bin/error					base-util-bin
 ./usr/bin/ex					base-util-bin
 ./usr/bin/expand				base-util-bin
-./usr/bin/gss					base-obsolete		obsolete
-./usr/bin/gsstool				base-krb5-bin		kerberos
 ./usr/bin/false					base-util-bin
 ./usr/bin/fgrep					base-util-bin
 ./usr/bin/file					base-util-bin
@@ -447,7 +446,6 @@
 ./usr/bin/fold					base-util-bin
 ./usr/bin/from					base-mail-bin
 ./usr/bin/fsplit				base-util-bin
-./usr/bin/hxtool				base-krb5-bin		kerberos
 ./usr/bin/fstat					base-util-bin
 ./usr/bin/ftp					base-netutil-bin
 ./usr/bin/gcpp					base-util-bin		gcccmds
@@ -459,6 +457,8 @@
 ./usr/bin/gkermit				base-util-bin
 ./usr/bin/grep					base-util-bin
 ./usr/bin/groups				base-util-bin
+./usr/bin/gss					base-obsolete		obsolete
+./usr/bin/gsstool				base-krb5-bin		kerberos
 ./usr/bin/gunzip				base-util-bin
 ./usr/bin/gzcat					base-util-bin
 ./usr/bin/gzexe					base-util-bin
@@ -468,6 +468,7 @@
 ./usr/bin/hexdump				base-util-bin
 ./usr/bin/host					base-netutil-bin
 ./usr/bin/hoststat				base-mailwrapper-bin
+./usr/bin/hxtool				base-krb5-bin		kerberos
 ./usr/bin/iconv					base-util-bin
 ./usr/bin/id					base-util-bin
 ./usr/bin/ident					base-util-bin
@@ -538,7 +539,6 @@
 ./usr/bin/md2					base-util-bin
 ./usr/bin/md4					base-util-bin
 ./usr/bin/md5					base-util-bin
-./usr/bin/dns-sd				base-mdns-bin		mdns
 ./usr/bin/merge					base-util-bin
 ./usr/bin/mesg					base-util-bin
 ./usr/bin/midiplay				base-audio-bin
@@ -560,7 +560,6 @@
 ./usr/bin/netpgpkeys				base-crypto-bin		crypto
 ./usr/bin/netpgpverify				base-crypto-bin		crypto
 ./usr/bin/netstat				base-netutil-bin
-./usr/bin/rump.netstat				base-netutil-bin
 ./usr/bin/newaliases				base-mailwrapper-bin
 ./usr/bin/newgrp				base-util-bin
 ./usr/bin/newsyslog				base-util-bin
@@ -586,11 +585,11 @@
 ./usr/bin/paxctl				base-obsolete		obsolete
 ./usr/bin/pcap-config				base-util-bin
 ./usr/bin/pgrep					base-util-bin
-./usr/bin/prenice				base-util-bin
 ./usr/bin/pigz					base-util-bin
 ./usr/bin/pkill					base-util-bin
 ./usr/bin/pmap					base-util-bin
 ./usr/bin/pr					base-util-bin
+./usr/bin/prenice				base-util-bin
 ./usr/bin/printenv				base-util-bin
 ./usr/bin/printf				base-util-bin
 ./usr/bin/progress				base-util-bin
@@ -621,10 +620,12 @@
 ./usr/bin/rpcinfo				base-rpcutil-bin
 ./usr/bin/rs					base-util-bin
 ./usr/bin/rsh					base-netutil-bin
-./usr/bin/rump_allserver			base-util-bin
 ./usr/bin/rump.dhcpclient			base-util-bin
-./usr/bin/rump_server			base-util-bin
 ./usr/bin/rump.halt			base-util-bin
+./usr/bin/rump.netstat				base-netutil-bin
+./usr/bin/rump.sockstat				base-util-bin
+./usr/bin/rump_allserver			base-util-bin
+./usr/bin/rump_server			base-util-bin
 ./usr/bin/rup					base-netutil-bin
 ./usr/bin/ruptime				base-netutil-bin
 ./usr/bin/rusers				base-netutil-bin
@@ -651,7 +652,6 @@
 ./usr/bin/skeyinit				base-util-bin		skey
 ./usr/bin/slogin				base-secsh-bin		crypto
 ./usr/bin/sockstat				base-util-bin
-./usr/bin/rump.sockstat				base-util-bin
 ./usr/bin/sort					base-util-bin
 ./usr/bin/spell					base-util-bin
 ./usr/bin/split					base-util-bin
@@ -689,7 +689,6 @@
 ./usr/bin/ul					base-util-bin
 ./usr/bin/uname					base-util-bin
 ./usr/bin/uncompress				base-util-bin
-./usr/bin/verify_krb5_conf			base-krb5-bin		kerberos
 ./usr/bin/unexpand				base-util-bin
 ./usr/bin/uniq					base-util-bin
 ./usr/bin/units					base-util-bin
@@ -714,6 +713,7 @@
 ./usr/bin/uuto					base-obsolete		obsolete
 ./usr/bin/uux					base-obsolete		obsolete
 ./usr/bin/vacation				base-mail-bin
+./usr/bin/verify_krb5_conf			base-krb5-bin		kerberos
 ./usr/bin/vi					base-util-bin
 ./usr/bin/videoctl				base-video-bin
 ./usr/bin/view					base-util-bin
@@ -784,6 +784,7 @@
 ./usr/include/dev/ofisa				base-obsolete		obsolete
 ./usr/include/dev/ofw				base-c-usr
 ./usr/include/dev/pci				base-c-usr
+./usr/include/dev/pci/hdaudio			base-c-usr
 ./usr/include/dev/pckbc				base-c-usr
 ./usr/include/dev/pcmcia			base-c-usr
 ./usr/include/dev/pud				base-c-usr
@@ -827,7 +828,6 @@
 ./usr/include/gcc-4.5				base-c-usr
 ./usr/include/gssapi				base-c-usr
 ./usr/include/gssapi/rpc			base-obsolete		obsolete
-./usr/include/dev/pci/hdaudio			base-c-usr
 ./usr/include/isofs				base-c-usr
 ./usr/include/isofs/cd9660			base-c-usr
 ./usr/include/kadm5				base-c-usr
@@ -853,6 +853,7 @@
 ./usr/include/miscfs/union			base-c-usr
 ./usr/include/msdosfs				base-c-usr
 ./usr/include/net				base-c-usr
+./usr/include/net/agr				base-c-usr
 ./usr/include/net80211				base-c-usr
 ./usr/include/netatalk				base-c-usr
 ./usr/include/netbt				base-c-usr
@@ -867,7 +868,6 @@
 ./usr/include/netnatm				base-c-usr
 ./usr/include/netns				base-obsolete		obsolete
 ./usr/include/netsmb				base-c-usr
-./usr/include/net/agr				base-c-usr
 ./usr/include/nfs				base-c-usr
 ./usr/include/ntfs				base-c-usr
 ./usr/include/objc				base-objc-usr
@@ -937,8 +937,6 @@
 ./usr/libdata/debug/bin				base-sys-usr
 ./usr/libdata/debug/libexec			base-sys-usr
 ./usr/libdata/debug/sbin			base-sys-usr
-./usr/libexec/ipropd-master			base-krb5-bin		kerberos
-./usr/libexec/ipropd-slave			base-krb5-bin		kerberos
 ./usr/libdata/debug/usr				base-sys-usr
 ./usr/libdata/debug/usr/bin			base-sys-usr
 ./usr/libdata/debug/usr/games			base-sys-usr
@@ -1017,6 +1015,8 @@
 ./usr/libexec/hpropd				base-krb5-bin		kerberos
 ./usr/libexec/httpd				base-netutil-bin
 ./usr/libexec/identd				base-netutil-bin
+./usr/libexec/ipropd-master			base-krb5-bin		kerberos
+./usr/libexec/ipropd-slave			base-krb5-bin		kerberos
 ./usr/libexec/kadmind				base-krb5-bin		kerberos
 ./usr/libexec/kdc				base-obsolete		obsolete
 ./usr/libexec/kfd				base-obsolete		obsolete
@@ -1117,8 +1117,8 @@
 ./usr/lkm/hfs.o					base-obsolete		obsolete
 ./usr/lkm/hfsp.o				base-obsolete		obsolete
 ./usr/lkm/if_ipl.o				base-obsolete		obsolete
-./usr/lkm/lfs.o					base-obsolete		obsolete
 ./usr/lkm/kernfs.o				base-obsolete		obsolete
+./usr/lkm/lfs.o					base-obsolete		obsolete
 ./usr/lkm/mfs.o					base-obsolete		obsolete
 ./usr/lkm/msdosfs.o				base-obsolete		obsolete
 ./usr/lkm/ntfs.o				base-obsolete		obsolete
@@ -1179,10 +1179,10 @@
 ./usr/sbin/dnssec-dsfromkey			base-bind-bin
 ./usr/sbin/dnssec-keyfromlabel			base-bind-bin
 ./usr/sbin/dnssec-keygen			base-bind-bin
-./usr/sbin/dnssec-revoke			base-bind-bin
 ./usr/sbin/dnssec-makekeyset			base-obsolete		obsolete
-./usr/sbin/dnssec-signkey			base-obsolete		obsolete
+./usr/sbin/dnssec-revoke			base-bind-bin
 ./usr/sbin/dnssec-settime			base-bind-bin
+./usr/sbin/dnssec-signkey			base-obsolete		obsolete
 ./usr/sbin/dnssec-signzone			base-bind-bin
 ./usr/sbin/download-vulnerability-list		base-pkgutil-bin	crypto
 ./usr/sbin/dtmfdecode				base-isdn-bin
@@ -1193,11 +1193,9 @@
 ./usr/sbin/editmap				base-obsolete		obsolete
 ./usr/sbin/edquota				base-sysutil-bin
 ./usr/sbin/envstat				base-sysutil-bin
-./usr/sbin/rump.envstat				base-sysutil-bin
 ./usr/sbin/eshconfig				base-sysutil-bin
 ./usr/sbin/etcupdate				base-sysutil-bin
 ./usr/sbin/extattrctl				base-sysutil-bin
-./usr/sbin/iprop-log				base-krb5-bin		kerberos
 ./usr/sbin/faithd				base-router-bin		inet6
 ./usr/sbin/fixmount				base-nfsclient-bin
 ./usr/sbin/flashctl				base-sysutil-bin
@@ -1212,10 +1210,7 @@
 ./usr/sbin/gettable				base-obsolete		obsolete
 ./usr/sbin/gifconfig				base-obsolete		obsolete
 ./usr/sbin/gpioctl				base-sysutil-bin
-./usr/sbin/kcm					base-krb5-bin		kerberos
 ./usr/sbin/greconfig				base-obsolete		obsolete
-./usr/sbin/kdigest				base-krb5-bin		kerberos
-./usr/sbin/kimpersonate				base-krb5-bin		kerberos
 ./usr/sbin/group				base-sysutil-bin
 ./usr/sbin/groupadd				base-sysutil-bin
 ./usr/sbin/groupdel				base-sysutil-bin
@@ -1241,6 +1236,7 @@
 ./usr/sbin/ipnat				base-ipf-bin		ipfilter
 ./usr/sbin/ippool				base-ipf-root		ipfilter
 ./usr/sbin/ipresend				base-ipf-bin		ipfilter
+./usr/sbin/iprop-log				base-krb5-bin		kerberos
 ./usr/sbin/ipsend				base-ipf-bin		ipfilter
 ./usr/sbin/iptest				base-ipf-bin		ipfilter
 ./usr/sbin/irdaattach				base-sysutil-bin
@@ -1254,7 +1250,10 @@
 ./usr/sbin/ispppcontrol				base-obsolete		obsolete
 ./usr/sbin/iwictl				base-sysutil-bin
 ./usr/sbin/kadmin				base-krb5-bin		kerberos
+./usr/sbin/kcm					base-krb5-bin		kerberos
 ./usr/sbin/kdc					base-krb5-bin		kerberos
+./usr/sbin/kdigest				base-krb5-bin		kerberos
+./usr/sbin/kimpersonate				base-krb5-bin		kerberos
 ./usr/sbin/kmpstat				base-obsolete		obsolete
 ./usr/sbin/kstash				base-krb5-bin		kerberos
 ./usr/sbin/ktutil				base-krb5-bin		kerberos
@@ -1360,7 +1359,6 @@
 ./usr/sbin/postqueue				base-postfix-bin	postfix
 ./usr/sbin/postsuper				base-postfix-bin	postfix
 ./usr/sbin/powerd				base-sysutil-bin
-./usr/sbin/rump.powerd				base-sysutil-bin
 ./usr/sbin/pppd					base-ppp-bin
 ./usr/sbin/pppdump				base-ppp-bin
 ./usr/sbin/pppoectl				base-obsolete		obsolete
@@ -1398,6 +1396,9 @@
 ./usr/sbin/rtadvd				base-router-bin		use_inet6
 ./usr/sbin/rtquery				base-netutil-bin
 ./usr/sbin/rtsold				base-netutil-bin	inet6
+./usr/sbin/rump.envstat				base-sysutil-bin
+./usr/sbin/rump.powerd				base-sysutil-bin
+./usr/sbin/rump.traceroute				base-netutil-bin
 ./usr/sbin/rump_cd9660				base-puffs-bin
 ./usr/sbin/rump_efs				base-puffs-bin
 ./usr/sbin/rump_ext2fs				base-puffs-bin
@@ -1415,6 +1416,7 @@
 ./usr/sbin/rump_v7fs				base-puffs-bin
 ./usr/sbin/rwhod				base-netutil-bin
 ./usr/sbin/sa					base-sysutil-bin
+./usr/sbin/schedctl				base-sysutil-bin
 ./usr/sbin/screenblank				base-sysutil-bin
 ./usr/sbin/scriptdump				base-obsolete		obsolete
 ./usr/sbin/sdpd					base-sysutil-bin
@@ -1424,7 +1426,6 @@
 ./usr/sbin/setencstat				base-sysutil-bin
 ./usr/sbin/setkey				base-obsolete		obsolete
 ./usr/sbin/setobjstat				base-sysutil-bin
-./usr/sbin/schedctl				base-sysutil-bin
 ./usr/sbin/sliplogin				base-slip-bin
 ./usr/sbin/slstats				base-slip-bin
 ./usr/sbin/smrsh				base-obsolete		obsolete
@@ -1454,7 +1455,6 @@
 ./usr/sbin/timed				base-timed-bin
 ./usr/sbin/timedc				base-timed-bin
 ./usr/sbin/traceroute				base-netutil-bin
-./usr/sbin/rump.traceroute				base-netutil-bin
 ./usr/sbin/traceroute6				base-netutil-bin	use_inet6
 ./usr/sbin/trpt					base-netutil-bin
 ./usr/sbin/trsp					base-obsolete		obsolete
@@ -1491,9 +1491,9 @@
 ./usr/sbin/ypset				base-nis-bin		yp
 ./usr/sbin/yptest				base-nis-bin		yp
 ./usr/sbin/ypxfr				base-nis-bin		yp
+./usr/sbin/zdb					base-zfs-bin		zfs
 ./usr/sbin/zdump				base-sysutil-bin
 ./usr/sbin/zic					base-sysutil-bin
-./usr/sbin/zdb					base-zfs-bin		zfs
 ./usr/share					base-sys-share
 ./usr/share/atf					base-atf-share		
 ./usr/share/atf/atf-run.hooks			base-atf-bin		share,atf
@@ -2157,9 +2157,9 @@
 ./usr/share/i18n/csmapper/MISC/UCS%TDS565.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/TCVN			base-sysutil-share
 ./usr/share/i18n/csmapper/TCVN/TCVN5712-1%UCS.mps	base-sysutil-share	nls
-./usr/share/i18n/csmapper/TCVN/VISCII%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/TCVN/UCS%TCVN5712-1.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/TCVN/UCS%VISCII.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/TCVN/VISCII%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/charset.pivot		base-sysutil-share	nls
 ./usr/share/i18n/csmapper/charset.pivot.pvdb	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/mapper.dir		base-sysutil-share	nls
@@ -2940,17 +2940,7 @@
 ./usr/share/locale/ja/LC_MESSAGES/grep.mo	base-util_locale-ja	nls,! bsdgrep
 ./usr/share/locale/ja/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/ja/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ja	nls
-./usr/share/locale/ja_JP.ISO2022-JP		base-obsolete		obsolete
-./usr/share/locale/ja_JP.ISO2022-JP/LC_CTYPE	base-obsolete		obsolete
-./usr/share/locale/ja_JP.ISO2022-JP2		base-obsolete		obsolete
-./usr/share/locale/ja_JP.ISO2022-JP2/LC_CTYPE	base-obsolete		obsolete
 ./usr/share/locale/ja_JP.ISO-2022-JP			base-locale-ja
-./usr/share/locale/ja_JP.ISO-2022-JP/LC_CTYPE		base-locale-ja		nls
-./usr/share/locale/ja_JP.ISO-2022-JP/LC_MESSAGES	base-locale-ja
-./usr/share/locale/ja_JP.ISO-2022-JP/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-ja	nls
-./usr/share/locale/ja_JP.ISO-2022-JP/LC_MONETARY	base-locale-ja		nls
-./usr/share/locale/ja_JP.ISO-2022-JP/LC_NUMERIC		base-locale-ja		nls
-./usr/share/locale/ja_JP.ISO-2022-JP/LC_TIME		base-locale-ja		nls
 ./usr/share/locale/ja_JP.ISO-2022-JP-2			base-locale-ja
 ./usr/share/locale/ja_JP.ISO-2022-JP-2/LC_CTYPE		base-locale-ja		nls
 ./usr/share/locale/ja_JP.ISO-2022-JP-2/LC_MESSAGES	base-locale-ja
@@ -2958,6 +2948,16 @@
 ./usr/share/locale/ja_JP.ISO-2022-JP-2/LC_MONETARY	base-locale-ja		nls
 ./usr/share/locale/ja_JP.ISO-2022-JP-2/LC_NUMERIC	base-locale-ja		nls
 ./usr/share/locale/ja_JP.ISO-2022-JP-2/LC_TIME		base-locale-ja		nls
+./usr/share/locale/ja_JP.ISO-2022-JP/LC_CTYPE		base-locale-ja		nls
+./usr/share/locale/ja_JP.ISO-2022-JP/LC_MESSAGES	base-locale-ja
+./usr/share/locale/ja_JP.ISO-2022-JP/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-ja	nls
+./usr/share/locale/ja_JP.ISO-2022-JP/LC_MONETARY	base-locale-ja		nls
+./usr/share/locale/ja_JP.ISO-2022-JP/LC_NUMERIC		base-locale-ja		nls
+./usr/share/locale/ja_JP.ISO-2022-JP/LC_TIME		base-locale-ja		nls
+./usr/share/locale/ja_JP.ISO2022-JP		base-obsolete		obsolete
+./usr/share/locale/ja_JP.ISO2022-JP/LC_CTYPE	base-obsolete		obsolete
+./usr/share/locale/ja_JP.ISO2022-JP2		base-obsolete		obsolete
+./usr/share/locale/ja_JP.ISO2022-JP2/LC_CTYPE	base-obsolete		obsolete
 ./usr/share/locale/ja_JP.SJIS			base-locale-ja
 ./usr/share/locale/ja_JP.SJIS/LC_CTYPE		base-locale-ja		nls
 ./usr/share/locale/ja_JP.SJIS/LC_MESSAGES	base-locale-ja
@@ -4188,6 +4188,9 @@
 ./usr/share/wscons/fonts			base-util-share
 ./usr/share/wscons/fonts/donna.816		base-util-share		share
 ./usr/share/wscons/fonts/flori.816		base-util-share		share
+./usr/share/wscons/fonts/latin2.808		base-util-share		share
+./usr/share/wscons/fonts/latin2.814		base-util-share		share
+./usr/share/wscons/fonts/latin2.816		base-util-share		share
 ./usr/share/wscons/fonts/orator.816		base-util-share		share
 ./usr/share/wscons/fonts/vt220h.808		base-util-share		share
 ./usr/share/wscons/fonts/vt220h.810		base-util-share		share
@@ -4197,9 +4200,6 @@
 ./usr/share/wscons/fonts/vt220l.810		base-util-share		share
 ./usr/share/wscons/fonts/vt220l.814		base-util-share		share
 ./usr/share/wscons/fonts/vt220l.816		base-util-share		share
-./usr/share/wscons/fonts/latin2.808		base-util-share		share
-./usr/share/wscons/fonts/latin2.814		base-util-share		share
-./usr/share/wscons/fonts/latin2.816		base-util-share		share
 ./usr/share/wscons/keymaps			base-util-share
 ./usr/share/wscons/keymaps/amikbd.pl.qwertz.iso8859-2	base-util-share		share
 ./usr/share/wscons/keymaps/mkbd.pt.iso8859-1	base-util-share		share
@@ -4307,9 +4307,11 @@
 ./usr/share/zoneinfo/America/Boa_Vista		base-sys-share		share
 ./usr/share/zoneinfo/America/Bogota		base-sys-share		share
 ./usr/share/zoneinfo/America/Boise		base-sys-share		share
+./usr/share/zoneinfo/America/Brazil		base-obsolete		obsolete
 ./usr/share/zoneinfo/America/Buenos_Aires	base-sys-share		share
 ./usr/share/zoneinfo/America/Cambridge_Bay	base-sys-share		share
 ./usr/share/zoneinfo/America/Campo_Grande	base-sys-share		share
+./usr/share/zoneinfo/America/Canada		base-obsolete		obsolete
 ./usr/share/zoneinfo/America/Cancun		base-sys-share		share
 ./usr/share/zoneinfo/America/Caracas		base-sys-share		share
 ./usr/share/zoneinfo/America/Catamarca		base-sys-share		share
@@ -4317,6 +4319,7 @@
 ./usr/share/zoneinfo/America/Cayman		base-sys-share		share
 ./usr/share/zoneinfo/America/Chicago		base-sys-share		share
 ./usr/share/zoneinfo/America/Chihuahua		base-sys-share		share
+./usr/share/zoneinfo/America/Chile		base-obsolete		obsolete
 ./usr/share/zoneinfo/America/Coral_Harbour	base-sys-share		share
 ./usr/share/zoneinfo/America/Cordoba		base-sys-share		share
 ./usr/share/zoneinfo/America/Costa_Rica		base-sys-share		share
