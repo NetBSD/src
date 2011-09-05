@@ -1,4 +1,4 @@
-/* $NetBSD: urkelvisor.c,v 1.4 2011/09/05 12:49:33 jmcneill Exp $ */
+/* $NetBSD: urkelvisor.c,v 1.5 2011/09/05 13:28:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,13 +32,14 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: urkelvisor.c,v 1.4 2011/09/05 12:49:33 jmcneill Exp $");
+__RCSID("$NetBSD: urkelvisor.c,v 1.5 2011/09/05 13:28:17 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
+#include <sys/syscall.h>
 
 #ifdef __linux__
 #include <sys/user.h>
@@ -50,6 +51,7 @@ __RCSID("$NetBSD: urkelvisor.c,v 1.4 2011/09/05 12:49:33 jmcneill Exp $");
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <signal.h>
 #include <unistd.h>
 
 #include "../include/urkelvisor.h"
@@ -98,27 +100,24 @@ wait_urkel(pid_t urkel_pid)
 static void
 ptrace_getregs(pid_t urkel_pid, struct reg_struct *puregs)
 {
+	errno = 0;
 #ifdef __linux__
 	ptrace(PT_GETREGS, urkel_pid, NULL, puregs);
 #else
 	ptrace(PT_GETREGS, urkel_pid, puregs, 0);
 #endif
-}
-
-static int
-handle_syscall(pid_t urkel_pid)
-{
-	struct reg_struct uregs;
-	int sig = 0;
-
-	errno = 0;
-	ptrace_getregs(urkel_pid, &uregs);
 	if (errno)
 		err(EXIT_FAILURE, "ptrace(PT_GETREGS, %d, &uregs, 0) failed",
 		    urkel_pid);
+}
 
-	if (R_PC(&uregs) >= kmem_user_start && R_PC(&uregs) < kmem_user_end) {
-		fprintf(stderr, "caught syscall %d\n", (int)R_SYSCALL(&uregs));
+static int
+handle_syscall(struct reg_struct *puregs, pid_t urkel_pid)
+{
+	int sig = 0;
+
+	if (R_PC(puregs) >= kmem_user_start && R_PC(puregs) < kmem_user_end) {
+		fprintf(stderr, "caught syscall %d\n", (int)R_SYSCALL(puregs));
 		errno = 0;
 		ptrace(PT_SYSCALLEMU, urkel_pid, NULL, 0);
 		if (errno)
@@ -134,6 +133,7 @@ handle_syscall(pid_t urkel_pid)
 static int
 urkelvisor(pid_t urkel_pid)
 {
+	struct reg_struct uregs;
 	int status, insyscall, sig;
 
 	insyscall = 0;
@@ -156,7 +156,8 @@ urkelvisor(pid_t urkel_pid)
 		if (WSTOPSIG(status) == SIGTRAP) {
 			insyscall = !insyscall;
 			if (insyscall) {
-				sig = handle_syscall(urkel_pid);
+				ptrace_getregs(urkel_pid, &uregs);
+				sig = handle_syscall(&uregs, urkel_pid);
 				if (sig)
 					insyscall = !insyscall;
 			}
@@ -191,7 +192,7 @@ urkelvisor_init(void)
 		if (errno)
 			err(EXIT_FAILURE,
 			    "ptrace(PT_TRACE_ME, 0, NULL, 0) failed");
-		wait(&status);
+		raise(SIGSTOP);
 		break;
 	default:
 		status = urkelvisor(child_pid);
