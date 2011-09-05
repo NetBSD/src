@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppya.c,v 1.4 2009/04/14 06:15:37 lukem Exp $	*/
+/*	$NetBSD: utoppya.c,v 1.5 2011/09/05 18:11:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ static void cmd_rename(int, char **);
 static void cmd_get(int, char **);
 static void cmd_put(int, char **);
 
-static struct toppy_command {
+static const struct toppy_command {
 	const char *tc_cmd;
 	void (*tc_handler)(int, char **);
 } toppy_commands[] = {
@@ -84,7 +84,7 @@ static struct toppy_command {
 	{NULL,		NULL}
 };
 
-static void
+__dead static void
 usage(void)
 {
 
@@ -97,7 +97,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct toppy_command *tc;
+	const struct toppy_command *tc;
 	const char *devpath;
 	int ch;
 
