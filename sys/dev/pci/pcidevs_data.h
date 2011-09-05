@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1090 2011/09/02 03:10:37 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1091 2011/09/05 04:32:52 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1096 2011/09/02 03:09:48 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1097 2011/09/05 04:31:43 msaitoh Exp
  */
 
 /*
@@ -3812,7 +3812,7 @@ static const uint16_t pci_products[] = {
 	    16997, 6923, 5838, 5515, 2439, 5413, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EEPRO100S, 
 	    16997, 6923, 5838, 12207, 5515, 2439, 5413, 0,
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82557, 
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8255X, 
 	    17000, 2439, 5413, 4527, 6151, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX, 
 	    17006, 17014, 6, 6151, 0,
@@ -10222,7 +10222,7 @@ static const char pci_words[] = { "."
 	    "Extended\0" /* 1 refs @ 16982 */
 	    "82596\0" /* 1 refs @ 16991 */
 	    "EE\0" /* 2 refs @ 16997 */
-	    "82557\0" /* 1 refs @ 17000 */
+	    "8255x\0" /* 1 refs @ 17000 */
 	    "82437FX\0" /* 1 refs @ 17006 */
 	    "(TSC)\0" /* 1 refs @ 17014 */
 	    "82371FB\0" /* 2 refs @ 17020 */
