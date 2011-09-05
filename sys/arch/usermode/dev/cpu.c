@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.32 2011/09/05 19:28:32 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.33 2011/09/05 20:54:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_cpu.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32 2011/09/05 19:28:32 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33 2011/09/05 20:54:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32 2011/09/05 19:28:32 reinoud Exp $");
 #else
 #define cpu_unreachable()	do { thunk_abort(); } while (0)
 #endif
+
+int cpu_lwp_inkernel = 1;
 
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);
@@ -186,6 +188,7 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 
 	ci->ci_stash = oldlwp;
 	curlwp = newlwp;
+	cpu_lwp_inkernel = curproc->p_vmspace->vm_map.pmap == pmap_kernel();
 
 	if (oldpcb) {
 		oldpcb->pcb_errno = thunk_geterrno();
