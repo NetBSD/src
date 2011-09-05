@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.13 2011/09/05 18:17:08 jmcneill Exp $ */
+/* $NetBSD: clock.c,v 1.14 2011/09/05 18:52:14 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2011/09/05 18:17:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2011/09/05 18:52:14 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,7 +45,7 @@ static int	clock_match(device_t, cfdata_t, void *);
 static void	clock_attach(device_t, device_t, void *);
 
 static void	clock_softint(void *);
-static void 	clock_signal(int);
+static void	clock_signal(int sig);
 static unsigned int clock_getcounter(struct timecounter *);
 
 static int	clock_todr_gettime(struct todr_chip_handle *, struct timeval *);
@@ -86,9 +86,9 @@ clock_match(device_t parent, cfdata_t match, void *opaque)
 static void
 clock_attach(device_t parent, device_t self, void *opaque)
 {
+	static struct sigaction sa;
 	clock_softc_t *sc = device_private(self);
 	struct thunk_itimerval itimer;
-	struct sigaction sa;
 	stack_t ss;
 	long tcres;
 
@@ -116,7 +116,9 @@ clock_attach(device_t parent, device_t self, void *opaque)
 	sigfillset(&sa.sa_mask);
 	sa.sa_handler = clock_signal;
 	sa.sa_flags = SA_ONSTACK;
-	thunk_sigaction(SIGALRM, &sa, NULL);
+	if (thunk_sigaction(SIGALRM, &sa, NULL) == -1)
+		panic("couldn't register SIGALRM handler : %d",
+		    thunk_geterrno());
 
 	itimer.it_interval.tv_sec = 0;
 	itimer.it_interval.tv_usec = 10000;
