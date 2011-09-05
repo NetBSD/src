@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.97 2011/08/30 22:23:06 rjs Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.98 2011/09/05 12:19:09 rjs Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.97 2011/08/30 22:23:06 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.98 2011/09/05 12:19:09 rjs Exp $");
 
 #include "pppoe.h"
 #include "opt_pfil_hooks.h"
@@ -85,6 +85,7 @@ struct pppoetag {
 #define	PPPOE_TAG_ACCOOKIE	0x0104		/* AC cookie */
 #define	PPPOE_TAG_VENDOR	0x0105		/* vendor specific */
 #define	PPPOE_TAG_RELAYSID	0x0110		/* relay session id */
+#define	PPPOE_TAG_MAX_PAYLOAD	0x0120		/* max payload */
 #define	PPPOE_TAG_SNAME_ERR	0x0201		/* service name error */
 #define	PPPOE_TAG_ACSYS_ERR	0x0202		/* AC system error */
 #define	PPPOE_TAG_GENERIC_ERR	0x0203		/* generic error */
@@ -895,7 +896,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 				return ENXIO;
 			}
 
-			if (sc->sc_sppp.pp_if.if_mtu >
+			if (sc->sc_sppp.pp_if.if_mtu !=
 			    eth_if->if_mtu - PPPOE_OVERHEAD) {
 				sc->sc_sppp.pp_if.if_mtu = eth_if->if_mtu -
 				    PPPOE_OVERHEAD;
@@ -1041,6 +1042,9 @@ pppoe_send_padi(struct pppoe_softc *sc)
 		l2 = strlen(sc->sc_concentrator_name);
 		len += 2 + 2 + l2;
 	}
+	if (sc->sc_sppp.pp_if.if_mtu > PPPOE_MAXMTU) {
+		len += 2 + 2 + 2;
+	}
 
 	/* allocate a buffer */
 	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);	/* header len + payload len */
@@ -1067,6 +1071,13 @@ pppoe_send_padi(struct pppoe_softc *sc)
 	PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
 	PPPOE_ADD_16(p, sizeof(sc));
 	memcpy(p, &sc, sizeof sc);
+	p += sizeof(sc);
+
+	if (sc->sc_sppp.pp_if.if_mtu > PPPOE_MAXMTU) {
+		PPPOE_ADD_16(p, PPPOE_TAG_MAX_PAYLOAD);
+		PPPOE_ADD_16(p, 2);
+		PPPOE_ADD_16(p, (uint16_t)sc->sc_sppp.pp_if.if_mtu);
+	}
 
 #ifdef PPPOE_DEBUG
 	p += sizeof sc;
@@ -1283,6 +1294,9 @@ pppoe_send_padr(struct pppoe_softc *sc)
 		len += 2 + 2 + sc->sc_ac_cookie_len;	/* AC cookie */
 	if (sc->sc_relay_sid_len > 0)
 		len += 2 + 2 + sc->sc_relay_sid_len;	/* Relay SID */
+	if (sc->sc_sppp.pp_if.if_mtu > PPPOE_MAXMTU) {
+		len += 2 + 2 + 2;
+	}
 	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);
 	if (!m0)
 		return ENOBUFS;
@@ -1311,6 +1325,13 @@ pppoe_send_padr(struct pppoe_softc *sc)
 	PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
 	PPPOE_ADD_16(p, sizeof(sc));
 	memcpy(p, &sc, sizeof sc);
+	p += sizeof(sc);
+
+	if (sc->sc_sppp.pp_if.if_mtu > PPPOE_MAXMTU) {
+		PPPOE_ADD_16(p, PPPOE_TAG_MAX_PAYLOAD);
+		PPPOE_ADD_16(p, 2);
+		PPPOE_ADD_16(p, (uint16_t)sc->sc_sppp.pp_if.if_mtu);
+	}
 
 #ifdef PPPOE_DEBUG
 	p += sizeof sc;

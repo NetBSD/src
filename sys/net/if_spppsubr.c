@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.121 2011/07/17 20:54:52 joerg Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.122 2011/09/05 12:19:09 rjs Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.121 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.122 2011/09/05 12:19:09 rjs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2000,12 +2000,6 @@ sppp_lcp_init(struct sppp *sp)
 	sp->pp_seq[IDX_LCP] = 0;
 	sp->pp_rseq[IDX_LCP] = 0;
 	sp->lcp.protos = 0;
-	if (sp->pp_if.if_mtu < PP_MTU) {
-		sp->lcp.mru = sp->pp_if.if_mtu;
-		sp->lcp.opts |= (1 << LCP_OPT_MRU);
-	} else
-		sp->lcp.mru = PP_MTU;
-	sp->lcp.their_mru = PP_MTU;
 
 	/*
 	 * Initialize counters and timeout values.  Note that we don't
@@ -2090,6 +2084,13 @@ sppp_lcp_down(struct sppp *sp)
 static void
 sppp_lcp_open(struct sppp *sp)
 {
+	if (sp->pp_if.if_mtu < PP_MTU) {
+		sp->lcp.mru = sp->pp_if.if_mtu;
+		sp->lcp.opts |= (1 << LCP_OPT_MRU);
+	} else
+		sp->lcp.mru = PP_MTU;
+	sp->lcp.their_mru = PP_MTU;
+
 	/*
 	 * If we are authenticator, negotiate LCP_AUTH
 	 */
