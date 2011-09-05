@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.23 2011/09/04 21:01:39 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.24 2011/09/05 11:10:36 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.23 2011/09/04 21:01:39 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.24 2011/09/05 11:10:36 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,6 +73,7 @@ setup_signal_handlers(void)
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
 	sa.sa_sigaction = mem_access_handler;
+	thunk_sigaddset(&sa.sa_mask, SIGALRM);
 	if (thunk_sigaction(SIGSEGV, &sa, NULL) == -1)
 		panic("couldn't register SIGSEGV handler : %d",
 		    thunk_geterrno());
@@ -82,6 +83,7 @@ setup_signal_handlers(void)
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
 	sa.sa_sigaction = illegal_instruction_handler;
+	thunk_sigaddset(&sa.sa_mask, SIGALRM);
 	if (thunk_sigaction(SIGILL, &sa, NULL) == -1)
 		panic("couldn't register SIGILL handler : %d", thunk_geterrno());
 
@@ -113,7 +115,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	vm_prot_t atype;
 	vaddr_t va;
 	void *onfault;
-	int kmem, rv;
+	int kmem, lwp_errno, rv;
 
 	recurse++;
 	if (recurse > 1)
@@ -125,7 +127,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		onfault = pcb->pcb_onfault;
 		vm = p->p_vmspace;
 
-		pcb->pcb_errno = thunk_geterrno();
+		lwp_errno = pcb->pcb_errno = thunk_geterrno();
 #if 0
 		va = (vaddr_t) info->si_addr;
 		printf("mem trap lwp = %p pid = %d lid = %d, va = %p\n",
@@ -216,7 +218,8 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 			/* XXX HOWTO see arm/arm/syscall.c illegal instruction signal */
 		}
 
-		thunk_seterrno(pcb->pcb_errno);
+		thunk_seterrno(lwp_errno);
+		pcb->pcb_errno = lwp_errno;
 	}
 	if (recurse > 1)
 		printf("leaving trap recursion level %d\n", recurse);
