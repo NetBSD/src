@@ -1,4 +1,4 @@
-/* $NetBSD: urkelvisor.c,v 1.3 2011/09/03 15:00:28 jmcneill Exp $ */
+/* $NetBSD: urkelvisor.c,v 1.4 2011/09/05 12:49:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: urkelvisor.c,v 1.3 2011/09/03 15:00:28 jmcneill Exp $");
+__RCSID("$NetBSD: urkelvisor.c,v 1.4 2011/09/05 12:49:33 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -169,8 +169,16 @@ urkelvisor(pid_t urkel_pid)
 void
 urkelvisor_init(void)
 {
+	char *enable;
 	pid_t child_pid;
 	int status;
+
+	/* env URKELVISOR=0 disables the urkelvisor */
+	enable = getenv("URKELVISOR");
+	if (enable && *enable == '0') {
+		fprintf(stderr, "%s: disabled\n", __func__);
+		return;
+	}
 
 	child_pid = fork();
 	switch (child_pid) {
