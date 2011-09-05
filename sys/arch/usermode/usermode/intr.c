@@ -1,4 +1,4 @@
-/* $NetBSD: intr.c,v 1.2 2011/09/05 11:12:51 jmcneill Exp $ */
+/* $NetBSD: intr.c,v 1.3 2011/09/05 18:17:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2 2011/09/05 11:12:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3 2011/09/05 18:17:44 jmcneill Exp $");
 
 #include <sys/types.h>
 
@@ -35,17 +35,11 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2 2011/09/05 11:12:51 jmcneill Exp $");
 #include <machine/thunk.h>
 
 static int usermode_x = IPL_NONE;
-static bool usermode_sigalrm_blocked = false;
 
 int
 splraise(int x)
 {
 	int oldx = usermode_x;
-
-	if (x > IPL_VM && usermode_sigalrm_blocked == false) {
-		thunk_sigblock(SIGALRM);
-		usermode_sigalrm_blocked = true;
-	}
 
 	if (x > usermode_x)
 		usermode_x = x;
@@ -56,11 +50,6 @@ splraise(int x)
 void
 spllower(int x)
 {
-	if (x <= IPL_VM && usermode_sigalrm_blocked == true) {
-		thunk_sigunblock(SIGALRM);
-		usermode_sigalrm_blocked = false;
-	}
-
 	if (usermode_x > x)
 		usermode_x = x;
 }
