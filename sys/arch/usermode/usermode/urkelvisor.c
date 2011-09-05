@@ -1,4 +1,4 @@
-/* $NetBSD: urkelvisor.c,v 1.5 2011/09/05 13:28:17 jmcneill Exp $ */
+/* $NetBSD: urkelvisor.c,v 1.6 2011/09/05 18:16:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: urkelvisor.c,v 1.5 2011/09/05 13:28:17 jmcneill Exp $");
+__RCSID("$NetBSD: urkelvisor.c,v 1.6 2011/09/05 18:16:34 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -153,16 +153,18 @@ urkelvisor(pid_t urkel_pid)
 
 		//fprintf(stderr, "syscall insyscall=%d status=%x\n",
 		//    insyscall, status);
-		if (WSTOPSIG(status) == SIGTRAP) {
-			insyscall = !insyscall;
-			if (insyscall) {
-				ptrace_getregs(urkel_pid, &uregs);
-				sig = handle_syscall(&uregs, urkel_pid);
-				if (sig)
-					insyscall = !insyscall;
+		if (WIFSTOPPED(status)) {
+			if (WSTOPSIG(status) == SIGTRAP) {
+				insyscall = !insyscall;
+				if (insyscall) {
+					ptrace_getregs(urkel_pid, &uregs);
+					sig = handle_syscall(&uregs, urkel_pid);
+					if (sig)
+						insyscall = !insyscall;
+				}
+			} else {
+				sig = WSTOPSIG(status);
 			}
-		} else {
-			sig = WSTOPSIG(status);
 		}
 	}
 }
