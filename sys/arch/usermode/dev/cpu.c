@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.30 2011/09/05 12:22:19 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.31 2011/09/05 12:40:38 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_cpu.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 2011/09/05 12:22:19 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 2011/09/05 12:40:38 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -159,6 +159,7 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	struct pcb *oldpcb = oldlwp ? lwp_getpcb(oldlwp) : NULL;
 	struct pcb *newpcb = lwp_getpcb(newlwp);
 	struct cpu_info *ci = curcpu();
+	int s;
 
 #ifdef CPU_DEBUG
 	printf("cpu_switchto [%s,pid=%d,lid=%d] -> [%s,pid=%d,lid=%d]\n",
@@ -184,7 +185,7 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	}
 #endif /* !CPU_DEBUG */
 
-	kpreempt_disable();
+	s = splsched();
 
 	ci->ci_stash = oldlwp;
 	curlwp = newlwp;
@@ -199,7 +200,7 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	}
 	thunk_seterrno(newpcb->pcb_errno);
 
-	kpreempt_enable();
+	splx(s);
 
 #ifdef CPU_DEBUG
 	printf("cpu_switchto: returning %p (was %p)\n", ci->ci_stash, oldlwp);
