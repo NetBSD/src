@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.31 2011/09/05 12:40:38 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.32 2011/09/05 19:28:32 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_cpu.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 2011/09/05 12:40:38 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32 2011/09/05 19:28:32 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -159,7 +159,6 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	struct pcb *oldpcb = oldlwp ? lwp_getpcb(oldlwp) : NULL;
 	struct pcb *newpcb = lwp_getpcb(newlwp);
 	struct cpu_info *ci = curcpu();
-	int s;
 
 #ifdef CPU_DEBUG
 	printf("cpu_switchto [%s,pid=%d,lid=%d] -> [%s,pid=%d,lid=%d]\n",
@@ -185,22 +184,19 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	}
 #endif /* !CPU_DEBUG */
 
-	s = splsched();
-
 	ci->ci_stash = oldlwp;
 	curlwp = newlwp;
 
 	if (oldpcb) {
 		oldpcb->pcb_errno = thunk_geterrno();
+		thunk_seterrno(newpcb->pcb_errno);
 		if (thunk_swapcontext(&oldpcb->pcb_ucp, &newpcb->pcb_ucp))
 			panic("swapcontext failed");
 	} else {
+		thunk_seterrno(newpcb->pcb_errno);
 		if (thunk_setcontext(&newpcb->pcb_ucp))
 			panic("setcontext failed");
 	}
-	thunk_seterrno(newpcb->pcb_errno);
-
-	splx(s);
 
 #ifdef CPU_DEBUG
 	printf("cpu_switchto: returning %p (was %p)\n", ci->ci_stash, oldlwp);
