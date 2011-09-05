@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.26 2011/09/05 12:04:40 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.27 2011/09/05 18:50:34 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.26 2011/09/05 12:04:40 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27 2011/09/05 18:50:34 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -174,6 +174,11 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		if (!pmap_fault(vm_map->pmap, va, &atype)) {
 			aprint_debug("pmap fault couldn't handle it! : "
 				"derived atype %d\n", atype);
+
+			/* extra debug for now */
+			if (pcb == 0)
+				panic("NULL pcb!\n");
+
 			pcb->pcb_onfault = NULL;
 			rv = uvm_fault(vm_map, va, atype);
 			pcb->pcb_onfault = onfault;
