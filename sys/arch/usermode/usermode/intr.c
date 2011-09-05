@@ -1,4 +1,4 @@
-/* $NetBSD: intr.c,v 1.1 2011/09/04 21:08:18 jmcneill Exp $ */
+/* $NetBSD: intr.c,v 1.2 2011/09/05 11:12:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1 2011/09/04 21:08:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2 2011/09/05 11:12:51 jmcneill Exp $");
 
 #include <sys/types.h>
 
@@ -47,7 +47,8 @@ splraise(int x)
 		usermode_sigalrm_blocked = true;
 	}
 
-	usermode_x = x;
+	if (x > usermode_x)
+		usermode_x = x;
 
 	return oldx;
 }
@@ -60,5 +61,6 @@ spllower(int x)
 		usermode_sigalrm_blocked = false;
 	}
 
-	usermode_x = x;
+	if (usermode_x > x)
+		usermode_x = x;
 }
