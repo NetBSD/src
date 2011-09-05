@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.76 2011/09/02 03:16:18 msaitoh Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.77 2011/09/05 04:36:50 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.76 2011/09/02 03:16:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.77 2011/09/05 04:36:50 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -102,8 +102,8 @@ static const struct fxp_pci_product {
 } fxp_pci_products[] = {
 	{ PCI_PRODUCT_INTEL_82552,
 	  "Intel i82552 10/100 Network Connection" },
-	{ PCI_PRODUCT_INTEL_82557,
-	  "Intel i82557 Ethernet" },
+	{ PCI_PRODUCT_INTEL_8255X,
+	  "Intel i8255x Ethernet" },
 	{ PCI_PRODUCT_INTEL_82559ER,
 	  "Intel i82559ER Ethernet" },
 	{ PCI_PRODUCT_INTEL_IN_BUSINESS,
@@ -378,7 +378,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
 
 	switch (fpp->fpp_prodid) {
-	case PCI_PRODUCT_INTEL_82557:
+	case PCI_PRODUCT_INTEL_8255X:
 	case PCI_PRODUCT_INTEL_IN_BUSINESS:
 
 		if (sc->sc_rev >= FXP_REV_82558_A4) {
