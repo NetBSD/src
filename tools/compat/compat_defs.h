@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.80 2011/08/27 18:33:22 joerg Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.81 2011/09/05 07:38:52 jdc Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -1035,8 +1035,10 @@ __GEN_ENDIAN_DEC(64, le)
 
 #undef BIG_ENDIAN
 #undef LITTLE_ENDIAN
+#undef PDP_ENDIAN
 #define BIG_ENDIAN 4321
 #define LITTLE_ENDIAN 1234
+#define PDP_ENDIAN 3412
 
 #undef BYTE_ORDER
 #if WORDS_BIGENDIAN
