@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2011/02/01 21:28:43 jym Exp $
+#	$NetBSD: Makefile,v 1.21 2011/09/05 09:57:02 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -26,12 +26,13 @@ EXTRA_DIST_FILES+=	${.CURDIR}/NetBSD.dist.tests
 EXTRA_DIST_FILES+=	${.CURDIR}/NetBSD.dist.extsrc
 .endif
 
-NetBSD.dist:	NetBSD.dist.tmp
-	cmp -s NetBSD.dist.tmp NetBSD.dist || { \
+NetBSD.dist.tmp=	${.OBJDIR}/NetBSD.dist.tmp
+NetBSD.dist:	${NetBSD.dist.tmp}
+	cmp -s ${NetBSD.dist.tmp} ${.TARGET} || { \
 		echo "Updating NetBSD.dist"; \
-		mv NetBSD.dist.tmp NetBSD.dist; \
+		mv ${NetBSD.dist.tmp} ${.TARGET}; \
 	}
-NetBSD.dist.tmp::
+${NetBSD.dist.tmp}::
 	${TOOL_CAT} ${.CURDIR}/NetBSD.dist.base ${EXTRA_DIST_FILES} > \
 	    ${.TARGET}
 
@@ -71,6 +72,6 @@ distrib-dirs: .PHONY check_DESTDIR NetBSD.dist
 .endif	# MKUNPRIVED							# }
 .endif	# DISTRIBUTION_DONE						# }
 
-CLEANFILES+=	NetBSD.dist NetBSD.dist.tmp
+CLEANFILES+=	NetBSD.dist ${NetBSD.dist.tmp}
 
 .include <bsd.prog.mk>
