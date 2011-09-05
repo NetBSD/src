@@ -1,4 +1,4 @@
-/* $NetBSD: urkelvisor.c,v 1.6 2011/09/05 18:16:34 jmcneill Exp $ */
+/* $NetBSD: urkelvisor.c,v 1.7 2011/09/05 20:54:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: urkelvisor.c,v 1.6 2011/09/05 18:16:34 jmcneill Exp $");
+__RCSID("$NetBSD: urkelvisor.c,v 1.7 2011/09/05 20:54:48 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -114,9 +114,20 @@ ptrace_getregs(pid_t urkel_pid, struct reg_struct *puregs)
 static int
 handle_syscall(struct reg_struct *puregs, pid_t urkel_pid)
 {
+	extern int cpu_lwp_inkernel;
 	int sig = 0;
+	int inkernel;
 
-	if (R_PC(puregs) >= kmem_user_start && R_PC(puregs) < kmem_user_end) {
+	errno = 0;
+	inkernel = ptrace(PT_READ_D, urkel_pid, &cpu_lwp_inkernel, 0);
+	if (errno)
+		err(EXIT_FAILURE, "ptrace(PT_READ_D, %d, %p, 0) failed",
+		    urkel_pid, &cpu_lwp_inkernel);
+
+	//fprintf(stderr, "%s: pid=%d pc=%p inkernel=%d\n",
+	//    __func__, urkel_pid, (void *)R_PC(puregs), inkernel);
+
+	if (!inkernel) {
 		fprintf(stderr, "caught syscall %d\n", (int)R_SYSCALL(puregs));
 		errno = 0;
 		ptrace(PT_SYSCALLEMU, urkel_pid, NULL, 0);
