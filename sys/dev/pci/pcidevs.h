@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1091 2011/09/02 03:10:37 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1092 2011/09/05 04:32:53 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1096 2011/09/02 03:09:48 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1097 2011/09/05 04:31:43 msaitoh Exp
  */
 
 /*
@@ -2513,7 +2513,7 @@
 #define	PCI_PRODUCT_INTEL_82596	0x1226		/* 82596 LAN Controller */
 #define	PCI_PRODUCT_INTEL_EEPRO100	0x1227		/* EE Pro 100 10/100 Fast Ethernet */
 #define	PCI_PRODUCT_INTEL_EEPRO100S	0x1228		/* EE Pro 100 Smart 10/100 Fast Ethernet */
-#define	PCI_PRODUCT_INTEL_82557	0x1229		/* 82557 Fast Ethernet LAN Controller */
+#define	PCI_PRODUCT_INTEL_8255X	0x1229		/* 8255x Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_82437FX	0x122d		/* 82437FX (TSC) System Controller */
 #define	PCI_PRODUCT_INTEL_82371FB_ISA	0x122e		/* 82371FB (PIIX) PCI-ISA Bridge */
 #define	PCI_PRODUCT_INTEL_82371FB_IDE	0x1230		/* 82371FB (PIIX) IDE Controller */
