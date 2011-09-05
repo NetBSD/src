@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.11 2011/09/05 11:25:29 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.12 2011/09/05 18:17:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.11 2011/09/05 11:25:29 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.12 2011/09/05 18:17:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -91,6 +91,7 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 	struct thunkbus_attach_args *taa = opaque;
 	const char *path = taa->u.diskimage.path;
 	struct sigaction sa;
+	stack_t ss;
 	ssize_t size, blksize;
 
 	ld->sc_dv = self;
@@ -120,8 +121,16 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_ih = softint_establish(SOFTINT_BIO,
 	    ld_thunkbus_complete, sc);
 
+	ss.ss_sp = thunk_malloc(SIGSTKSZ);
+	if (ss.ss_sp == NULL)
+		panic("%s: couldn't allocate signal stack", __func__);
+	ss.ss_size = SIGSTKSZ;
+	ss.ss_flags = 0;
+	if (thunk_sigaltstack(&ss, NULL) == -1)
+		panic("%s: couldn't setup signal stack", __func__);
+
 	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART | SA_SIGINFO;
+	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
 	sa.sa_sigaction = ld_thunkbus_sig;
 	thunk_sigaddset(&sa.sa_mask, SIGALRM);
 	if (thunk_sigaction(SIGIO, &sa, NULL) == -1)

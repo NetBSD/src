@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.12 2011/08/23 21:56:02 jmcneill Exp $ */
+/* $NetBSD: clock.c,v 1.13 2011/09/05 18:17:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2011/08/23 21:56:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2011/09/05 18:17:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -88,6 +88,8 @@ clock_attach(device_t parent, device_t self, void *opaque)
 {
 	clock_softc_t *sc = device_private(self);
 	struct thunk_itimerval itimer;
+	struct sigaction sa;
+	stack_t ss;
 	long tcres;
 
 	aprint_naive("\n");
@@ -102,7 +104,19 @@ clock_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_todr.todr_gettime = clock_todr_gettime;
 	todr_attach(&sc->sc_todr);
 
-	thunk_signal(SIGALRM, clock_signal);
+	ss.ss_sp = thunk_malloc(SIGSTKSZ);
+	if (ss.ss_sp == NULL)
+		panic("%s: couldn't allocate signal stack", __func__);
+	ss.ss_size = SIGSTKSZ;
+	ss.ss_flags = 0;
+	if (thunk_sigaltstack(&ss, NULL) == -1)
+		panic("%s: couldn't setup signal stack", __func__);
+
+	memset(&sa, 0, sizeof(sa));
+	sigfillset(&sa.sa_mask);
+	sa.sa_handler = clock_signal;
+	sa.sa_flags = SA_ONSTACK;
+	thunk_sigaction(SIGALRM, &sa, NULL);
 
 	itimer.it_interval.tv_sec = 0;
 	itimer.it_interval.tv_usec = 10000;
@@ -118,7 +132,7 @@ clock_attach(device_t parent, device_t self, void *opaque)
 }
 
 static void
-clock_signal(int notused)
+clock_signal(int sig)
 {
 	curcpu()->ci_idepth++;
 
