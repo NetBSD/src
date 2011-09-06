@@ -1,4 +1,4 @@
-/*	$NetBSD: set.c,v 1.14 2010/02/10 10:34:59 roy Exp $	*/
+/*	$NetBSD: set.c,v 1.15 2011/09/06 18:34:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: set.c,v 1.14 2010/02/10 10:34:59 roy Exp $");
+__RCSID("$NetBSD: set.c,v 1.15 2011/09/06 18:34:12 joerg Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -41,14 +41,14 @@ __RCSID("$NetBSD: set.c,v 1.14 2010/02/10 10:34:59 roy Exp $");
 
 #define	CHK(val, dft)	(val <= 0 ? dft : val)
 
-int	set_tabs __P((void));
+static int	set_tabs(void);
 
 /*
  * Reset the terminal mode bits to a sensible state.  Very useful after
  * a child program dies in raw mode.
  */
 void
-reset_mode()
+reset_mode(void)
 {
 	tcgetattr(STDERR_FILENO, &mode);
 
@@ -198,10 +198,9 @@ set_conversions(int usingupper)
 	mode.c_lflag |= (ECHOE | ECHOK);
 }
 
-#
 /* Output startup string. */
 void
-set_init()
+set_init(void)
 {
 	const char *bp;
 	int settle;
@@ -242,8 +241,8 @@ set_init()
  * This is done before if and is, so they can patch in case we blow this.
  * Return nonzero if we set any tab stops, zero if not.
  */
-int
-set_tabs()
+static int
+set_tabs(void)
 {
 	int c;
 	char *out;
