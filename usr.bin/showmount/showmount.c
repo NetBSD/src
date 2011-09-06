@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.19 2011/08/30 17:06:21 plunky Exp $	*/
+/*	$NetBSD: showmount.c,v 1.20 2011/09/06 18:30:56 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1995\
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-__RCSID("$NetBSD: showmount.c,v 1.19 2011/08/30 17:06:21 plunky Exp $");
+__RCSID("$NetBSD: showmount.c,v 1.20 2011/09/06 18:30:56 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -89,13 +89,12 @@ static struct mountlist *mntdump;
 static struct exportslist *exports;
 static int type = 0;
 
-int	main(int, char **);
-void	print_dump(struct mountlist *);
-void	usage(void);
-int	xdr_mntdump(XDR *, struct mountlist **);
-int	xdr_exports(XDR *, struct exportslist **);
-int	tcp_callrpc(const char *host, int prognum, int versnum, int procnum, 
-    xdrproc_t inproc, char *in, xdrproc_t outproc, char *out);
+static void	print_dump(struct mountlist *);
+__dead static void	usage(void);
+static int	xdr_mntdump(XDR *, struct mountlist **);
+static int	xdr_exports(XDR *, struct exportslist **);
+static int	tcp_callrpc(const char *host, int prognum, int versnum,
+    int procnum, xdrproc_t inproc, char *in, xdrproc_t outproc, char *out);
 
 /*
  * This command queries the NFS mount daemon for it's mount list and/or
@@ -212,7 +211,7 @@ main(int argc, char **argv)
  * use tcp as transport method in order to handle large replies.
  */
 
-int 
+static int
 tcp_callrpc(const char *host, int prognum, int versnum, int procnum,
     xdrproc_t inproc, char *in, xdrproc_t outproc, char *out)
 {
@@ -237,7 +236,7 @@ tcp_callrpc(const char *host, int prognum, int versnum, int procnum,
 /*
  * Xdr routine for retrieving the mount dump list
  */
-int
+static int
 xdr_mntdump(XDR *xdrsp, struct mountlist **mlp)
 {
 	struct mountlist *mp, **otp, *tp;
@@ -315,7 +314,7 @@ next:
 /*
  * Xdr routine to retrieve exports list
  */
-int
+static int
 xdr_exports(XDR *xdrsp, struct exportslist **exp)
 {
 	struct exportslist *ep;
@@ -356,8 +355,8 @@ xdr_exports(XDR *xdrsp, struct exportslist **exp)
 	return (1);
 }
 
-void
-usage()
+static void
+usage(void)
 {
 
 	fprintf(stderr, "usage: showmount [-ade3] host\n");
@@ -367,7 +366,7 @@ usage()
 /*
  * Print the binary tree in inorder so that output is sorted.
  */
-void
+static void
 print_dump(struct mountlist *mp)
 {
 
