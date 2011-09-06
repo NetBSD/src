@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.18 2011/09/06 18:42:13 joerg Exp $ */
+/* $NetBSD: unzip.c,v 1.19 2011/09/06 18:43:41 joerg Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.18 2011/09/06 18:42:13 joerg Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.19 2011/09/06 18:43:41 joerg Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -945,7 +945,7 @@ unzip(const char *fn)
 
 	if (t_opt) {
 		if (error_count > 0) {
-			errorx("%jd checksum error(s) found.", error_count);
+			errorx("%ju checksum error(s) found.", error_count);
 		}
 		else {
 			printf("No errors detected in compressed data of %s.\n",
