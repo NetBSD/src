@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.7 2008/07/21 14:19:27 lukem Exp $	*/
+/*	$NetBSD: tty.c,v 1.8 2011/09/06 18:34:57 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,20 +39,17 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tty.c,v 1.7 2008/07/21 14:19:27 lukem Exp $");
+__RCSID("$NetBSD: tty.c,v 1.8 2011/09/06 18:34:57 joerg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-int	main __P((int, char **));
-static void usage	__P((void));
+__dead static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch, sflag;
 	char *t;
@@ -76,9 +73,8 @@ main(argc, argv)
 	exit(t ? 0 : 1);
 }
 
-
 static void
-usage ()
+usage(void)
 {
 	fprintf(stderr, "usage: tty [-s]\n");
 	exit(2);
