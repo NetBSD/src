@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.2 2011/02/12 15:15:34 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.3 2011/09/06 01:51:44 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.2 2011/02/12 15:15:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.3 2011/09/06 01:51:44 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3041,7 +3041,7 @@ hdafg_stream_connect(struct hdafg_softc *sc, int mode)
 
 	KASSERT(mode == AUMODE_PLAY || mode == AUMODE_RECORD);
 
-	dfmt = COP_DIGITAL_CONVCTRL1_DIGEN;	/* TODO: AC3 */
+	dfmt = COP_DIGITAL_CONVCTRL1_DIGEN;
 
 	if (mode == AUMODE_PLAY)
 		fmt = hdaudio_stream_param(sc->sc_audiodev.ad_playback,
@@ -3216,7 +3216,7 @@ hdafg_bits_supported(struct hdafg_softc *sc, u_int bits)
 
 static bool
 hdafg_probe_encoding(struct hdafg_softc *sc,
-    u_int validbits, u_int precision, bool force)
+    u_int validbits, u_int precision, int encoding, bool force)
 {
 	struct audio_format f;
 	int i;
@@ -3227,7 +3227,7 @@ hdafg_probe_encoding(struct hdafg_softc *sc,
 	memset(&f, 0, sizeof(f));
 	f.driver_data = NULL;
 	f.mode = 0;
-	f.encoding = AUDIO_ENCODING_SLINEAR_LE;
+	f.encoding = encoding;
 	f.validbits = validbits;
 	f.precision = precision;
 	f.channels = 0;
@@ -3271,8 +3271,10 @@ static void
 hdafg_configure_encodings(struct hdafg_softc *sc)
 {
 	struct hdaudio_assoc *as = sc->sc_assocs;
+	struct hdaudio_widget *w;
 	struct audio_format f;
-	int nchan, i;
+	uint32_t stream_format;
+	int nchan, i, nid;
 
 	sc->sc_pchan = sc->sc_rchan = 0;
 
@@ -3295,20 +3297,43 @@ hdafg_configure_encodings(struct hdafg_softc *sc)
 		    hdafg_possible_rates[i]))
 			hda_print1(sc, " %uHz", hdafg_possible_rates[i]);
 
-	if (hdafg_probe_encoding(sc, 8, 16, false))
-		hda_print1(sc, " 8/16");
-	if (hdafg_probe_encoding(sc, 16, 16, false))
-		hda_print1(sc, " 16/16");
-	if (hdafg_probe_encoding(sc, 20, 32, false))
-		hda_print1(sc, " 20/32");
-	if (hdafg_probe_encoding(sc, 24, 32, false))
-		hda_print1(sc, " 24/32");
-	if (hdafg_probe_encoding(sc, 32, 32, false))
-		hda_print1(sc, " 32/32");
+	stream_format = sc->sc_p.stream_format;
+	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++) {
+		w = hdafg_widget_lookup(sc, nid);
+		if (w == NULL)
+			continue;
+		stream_format |= w->w_p.stream_format;
+	}
+	if (stream_format == 0) {
+		hda_print(sc,
+		    "WARNING: unsupported stream format mask 0x%X, assuming PCM\n",
+		    stream_format);
+		stream_format |= COP_STREAM_FORMAT_PCM;
+	}
+
+	if (stream_format & COP_STREAM_FORMAT_PCM) {
+		int e = AUDIO_ENCODING_SLINEAR_LE;
+		if (hdafg_probe_encoding(sc, 8, 16, e, false))
+			hda_print1(sc, " PCM8");
+		if (hdafg_probe_encoding(sc, 16, 16, e, false))
+			hda_print1(sc, " PCM16");
+		if (hdafg_probe_encoding(sc, 20, 32, e, false))
+			hda_print1(sc, " PCM20");
+		if (hdafg_probe_encoding(sc, 24, 32, e, false))
+			hda_print1(sc, " PCM24");
+		if (hdafg_probe_encoding(sc, 32, 32, e, false))
+			hda_print1(sc, " PCM32");
+	}
+
+	if (stream_format & COP_STREAM_FORMAT_AC3) {
+		int e = AUDIO_ENCODING_AC3;
+		if (hdafg_probe_encoding(sc, 16, 16, e, false))
+			hda_print1(sc, " AC3");
+	}
 
 	if (sc->sc_audiodev.ad_nformats == 0) {
-		hdafg_probe_encoding(sc, 16, 16, true);
-		hda_print1(sc, " 16/16*");
+		hdafg_probe_encoding(sc, 16, 16, AUDIO_ENCODING_SLINEAR_LE, true);
+		hda_print1(sc, " PCM16*");
 	}
 
 	/*
