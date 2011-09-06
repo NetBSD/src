@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.22 2009/01/03 03:43:21 yamt Exp $	*/
+/*	$NetBSD: auconv.c,v 1.23 2011/09/06 01:16:44 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.22 2009/01/03 03:43:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.23 2011/09/06 01:16:44 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -205,7 +205,8 @@ static const char *encoding_dbg_names[] = {
 	AudioEslinear, AudioEulinear,
 	AudioEmpeg_l1_stream, AudioEmpeg_l1_packets,
 	AudioEmpeg_l1_system, AudioEmpeg_l2_stream,
-	AudioEmpeg_l2_packets, AudioEmpeg_l2_system
+	AudioEmpeg_l2_packets, AudioEmpeg_l2_system,
+	AudioEac3
 };
 #endif
 
@@ -825,7 +826,7 @@ auconv_exact_match(const struct audio_format *formats, int nformats,
 		/**
 		 * XXX	we need encoding-dependent check.
 		 * XXX	Is to check precision/channels meaningful for
-		 *	MPEG encodings?
+		 *	MPEG/AC3 encodings?
 		 */
 		if (formats[i].validbits != param->validbits)
 			continue;
@@ -1036,6 +1037,7 @@ auconv_create_encodings(const struct audio_format *formats, int nformats,
 		case AUDIO_ENCODING_MPEG_L2_STREAM:
 		case AUDIO_ENCODING_MPEG_L2_PACKETS:
 		case AUDIO_ENCODING_MPEG_L2_SYSTEM:
+		case AUDIO_ENCODING_AC3:
 			ADD_ENCODING(formats[i].encoding,
 				     formats[i].precision, 0);
 			break;
@@ -1075,7 +1077,8 @@ auconv_add_encoding(int enc, int prec, int flags,
 		AudioEslinear, AudioEulinear,
 		AudioEmpeg_l1_stream, AudioEmpeg_l1_packets,
 		AudioEmpeg_l1_system, AudioEmpeg_l2_stream,
-		AudioEmpeg_l2_packets, AudioEmpeg_l2_system
+		AudioEmpeg_l2_packets, AudioEmpeg_l2_system,
+		AudioEac3
 	};
 	struct audio_encoding_set *set;
 	struct audio_encoding_set *new_buf;

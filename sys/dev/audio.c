@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.252 2010/11/20 18:03:49 tsutsui Exp $	*/
+/*	$NetBSD: audio.c,v 1.253 2011/09/06 01:16:44 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.252 2010/11/20 18:03:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.253 2011/09/06 01:16:44 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1845,6 +1845,7 @@ audio_fill_silence(struct audio_params *params, uint8_t *p, int n)
 	case AUDIO_ENCODING_MPEG_L2_STREAM:
 	case AUDIO_ENCODING_MPEG_L2_PACKETS:
 	case AUDIO_ENCODING_MPEG_L2_SYSTEM:
+	case AUDIO_ENCODING_AC3:
 	case AUDIO_ENCODING_ADPCM: /* is this right XXX */
 	case AUDIO_ENCODING_SLINEAR_LE:
 	case AUDIO_ENCODING_SLINEAR_BE:
@@ -2972,6 +2973,7 @@ audio_check_params(struct audio_params *p)
 	case AUDIO_ENCODING_MPEG_L2_STREAM:
 	case AUDIO_ENCODING_MPEG_L2_PACKETS:
 	case AUDIO_ENCODING_MPEG_L2_SYSTEM:
+	case AUDIO_ENCODING_AC3:
 		break;
 	default:
 		return EINVAL;

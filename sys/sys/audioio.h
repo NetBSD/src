@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.33 2009/09/29 15:58:54 sborrill Exp $	*/
+/*	$NetBSD: audioio.h,v 1.34 2011/09/06 01:16:43 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -132,6 +132,7 @@ typedef struct audio_offset {
 #define AUDIO_ENCODING_MPEG_L2_STREAM	15
 #define AUDIO_ENCODING_MPEG_L2_PACKETS	16
 #define AUDIO_ENCODING_MPEG_L2_SYSTEM	17
+#define AUDIO_ENCODING_AC3		18
 
 typedef struct audio_encoding {
 	int	index;
@@ -325,6 +326,7 @@ typedef struct mixer_ctrl {
 #define AudioEmpeg_l2_stream	"mpeg_l2_stream"
 #define AudioEmpeg_l2_packets	"mpeg_l2_packets"
 #define AudioEmpeg_l2_system	"mpeg_l2_system"
+#define AudioEac3		"ac3"
 
 #define AudioCinputs	"inputs"
 #define AudioCoutputs	"outputs"
