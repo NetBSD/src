@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.12 2010/02/03 15:34:46 roy Exp $	*/
+/*	$NetBSD: map.c,v 1.13 2011/09/06 18:34:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: map.c,v 1.12 2010/02/03 15:34:46 roy Exp $");
+__RCSID("$NetBSD: map.c,v 1.13 2011/09/06 18:34:12 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: map.c,v 1.12 2010/02/03 15:34:46 roy Exp $");
 #include <termios.h>
 #include "extern.h"
 
-int	baudrate __P((char *));
+static int	baudrate(char *);
 
 /* Baud rate conditionals for mapping. */
 #define	GT		0x01
@@ -64,7 +64,7 @@ typedef struct map {
 	int speed;		/* Baud rate to compare against. */
 } MAP;
 
-MAP *cur, *maplist;
+static MAP *cur, *maplist;
 
 /*
  * Syntax for -m:
@@ -72,9 +72,7 @@ MAP *cur, *maplist;
  * The baud rate tests are: >, <, @, =, !
  */
 void
-add_mapping(port, arg)
-	const char *port;
-	char *arg;
+add_mapping(const char *port, char *arg)
 {
 	MAP *mapp;
 	char *copy, *p, *termp;
@@ -188,8 +186,7 @@ badmopt:		errx(1, "illegal -m option format: %s", copy);
  * 'type'.
  */
 const char *
-mapped(type)
-	const char *type;
+mapped(const char *type)
 {
 	MAP *mapp;
 	int match;
@@ -224,9 +221,8 @@ mapped(type)
 	return (type);
 }
 
-int
-baudrate(rate)
-	char *rate;
+static int
+baudrate(char *rate)
 {
 
 	/* The baudrate number can be preceded by a 'B', which is ignored. */
