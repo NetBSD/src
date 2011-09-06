@@ -1,4 +1,4 @@
-/*	$NetBSD: invite.c,v 1.8 2009/04/13 23:43:36 lukem Exp $	*/
+/*	$NetBSD: invite.c,v 1.9 2011/09/06 18:32:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)invite.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: invite.c,v 1.8 2009/04/13 23:43:36 lukem Exp $");
+__RCSID("$NetBSD: invite.c,v 1.9 2011/09/06 18:32:03 joerg Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -57,11 +57,11 @@ __RCSID("$NetBSD: invite.c,v 1.8 2009/04/13 23:43:36 lukem Exp $");
  * These are used to delete the 
  * invitations.
  */
-int	local_id, remote_id;
-jmp_buf invitebuf;
+static int	local_id, remote_id;
+static jmp_buf invitebuf;
 
 void
-invite_remote()
+invite_remote(void)
 {
 	int new_sockt;
 	struct itimerval itimer;
@@ -117,8 +117,7 @@ invite_remote()
  * Routine called on interrupt to re-invite the callee
  */
 void
-re_invite(dummy)
-	int dummy;
+re_invite(int dummy)
 {
 
 	message("Ringing your party again");
@@ -146,7 +145,7 @@ static	const char *answers[] = {
  * Transmit the invitation and process the response
  */
 void
-announce_invite()
+announce_invite(void)
 {
 	CTL_RESPONSE response;
 
@@ -167,7 +166,7 @@ announce_invite()
  * Tell the daemon to remove your invitation
  */
 void
-send_delete()
+send_delete(void)
 {
 
 	msg.type = DELETE;

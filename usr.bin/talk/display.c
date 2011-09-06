@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.8 2009/04/13 23:43:36 lukem Exp $	*/
+/*	$NetBSD: display.c,v 1.9 2011/09/06 18:32:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: display.c,v 1.8 2009/04/13 23:43:36 lukem Exp $");
+__RCSID("$NetBSD: display.c,v 1.9 2011/09/06 18:32:03 joerg Exp $");
 #endif /* not lint */
 
 /*
@@ -55,8 +55,7 @@ int	curses_initialized = 0;
  * a argument of the form --foo at least once.
  */
 int
-max(a,b)
-	int a, b;
+max(int a, int b)
 {
 
 	return (a > b ? a : b);
@@ -67,10 +66,7 @@ max(a,b)
  * characters while we are at it.
  */
 void
-display(win, text, size)
-	xwin_t *win;
-	char *text;
-	int size;
+display(xwin_t *win, char *text, int size)
 {
 	int i;
 	char cch;
@@ -163,9 +159,7 @@ display(win, text, size)
  * Read the character at the indicated position in win
  */
 int
-readwin(win, line, col)
-	WINDOW *win;
-	int line, col;
+readwin(WINDOW *win, int line, int col)
 {
 	int oldline, oldcol;
 	int c;
@@ -182,9 +176,7 @@ readwin(win, line, col)
  * so that the current position is obvious
  */
 void
-xscroll(win, flag)
-	xwin_t *win;
-	int flag;
+xscroll(xwin_t *win, int flag)
 {
 
 	if (flag == -1) {

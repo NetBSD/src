@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.8 2009/04/13 23:43:36 lukem Exp $	*/
+/*	$NetBSD: ctl.c,v 1.9 2011/09/06 18:32:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ctl.c,v 1.8 2009/04/13 23:43:36 lukem Exp $");
+__RCSID("$NetBSD: ctl.c,v 1.9 2011/09/06 18:32:03 joerg Exp $");
 #endif /* not lint */
 
 /*
@@ -64,7 +64,7 @@ int	invitation_waiting = 0;
 CTL_MSG msg;
 
 void
-open_sockt()
+open_sockt(void)
 {
 	socklen_t length;
 
@@ -113,8 +113,7 @@ open_ctl()
 
 /* print_addr is a debug print routine */
 void
-print_addr(addr)
-	struct sockaddr_in addr;
+print_addr(struct sockaddr_in addr)
 {
 	int i;
 

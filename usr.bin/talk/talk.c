@@ -1,4 +1,4 @@
-/*	$NetBSD: talk.c,v 1.7 2008/07/21 14:19:26 lukem Exp $	*/
+/*	$NetBSD: talk.c,v 1.8 2011/09/06 18:32:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)talk.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: talk.c,v 1.7 2008/07/21 14:19:26 lukem Exp $");
+__RCSID("$NetBSD: talk.c,v 1.8 2011/09/06 18:32:03 joerg Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -59,12 +59,8 @@ __RCSID("$NetBSD: talk.c,v 1.7 2008/07/21 14:19:26 lukem Exp $");
  *		Modified to run under 4.1c by Peter Moore 3/17/83
  */
 
-int	main __P((int, char **));
-
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	setlocale(LC_ALL, "");
 
