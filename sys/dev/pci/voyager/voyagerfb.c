@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.2 2011/09/06 03:31:37 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.3 2011/09/06 06:27:14 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.2 2011/09/06 03:31:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.3 2011/09/06 06:27:14 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.2 2011/09/06 03:31:37 macallan Exp $
 #include <dev/i2c/i2cvar.h>
 #include <dev/pci/voyagervar.h>
 
+/* there are probably gdium-specific */
+#define GPIO_BACKLIGHT	0x20000000
+
 struct voyagerfb_softc {
 	device_t sc_dev;
 
@@ -81,6 +84,8 @@ struct voyagerfb_softc {
 	struct vcons_data vd;
 	uint8_t *sc_dataport;
 	int sc_mode;
+	int sc_bl_on, sc_bl_level;
+	void *sc_gpio_cookie;
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
@@ -132,6 +137,13 @@ struct wsdisplay_accessops voyagerfb_accessops = {
 	NULL,	/* pollc */
 	NULL	/* scroll */
 };
+
+static void	voyagerfb_brightness_up(device_t);
+static void	voyagerfb_brightness_down(device_t);
+/* set backlight level */
+static void	voyagerfb_set_backlight(struct voyagerfb_softc *, int);
+/* turn backlight on and off without messing with the level */
+static void	voyagerfb_switch_backlight(struct voyagerfb_softc *, int);
 
 /* wait for FIFO empty so we can feed it another command */
 static inline void
@@ -239,6 +251,16 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	    &voyagerfb_accessops);
 	sc->vd.init_screen = voyagerfb_init_screen;
 
+	/* backlight control */
+	sc->sc_gpio_cookie = device_private(parent);
+	voyager_write_gpio(sc->sc_gpio_cookie, 0xffffffff, GPIO_BACKLIGHT);
+	sc->sc_bl_on = 1;
+	sc->sc_bl_level = 255;
+	pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_UP,
+	    voyagerfb_brightness_up, TRUE);
+	pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_DOWN,
+	    voyagerfb_brightness_down, TRUE);
+
 	/* init engine here */
 	voyagerfb_init(sc);
 
@@ -298,6 +320,7 @@ voyagerfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct voyagerfb_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
 	struct vcons_screen *ms = vd->active;
+	struct wsdisplay_param  *param;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -347,6 +370,34 @@ voyagerfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		}
 		}
 		return 0;
+
+	case WSDISPLAYIO_GETPARAM:
+		param = (struct wsdisplay_param *)data;
+		switch (param->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			param->min = 0;
+			param->max = 255;
+			param->curval = sc->sc_bl_level;
+			return 0;
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			param->min = 0;
+			param->max = 1;
+			param->curval = sc->sc_bl_on;
+			return 0;
+		}
+		return EPASSTHROUGH;
+
+	case WSDISPLAYIO_SETPARAM:
+		param = (struct wsdisplay_param *)data;
+		switch (param->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			voyagerfb_set_backlight(sc, param->curval);
+			return 0;
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			voyagerfb_switch_backlight(sc,  param->curval);
+			return 0;
+		}
+		return EPASSTHROUGH;
 	}
 	return EPASSTHROUGH;
 }
@@ -817,4 +868,54 @@ voyagerfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 
 		voyagerfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
 	}
+}
+
+/* backlight control */
+static void
+voyagerfb_set_backlight(struct voyagerfb_softc *sc, int level)
+{
+
+	/*
+	 * should we do nothing when backlight is off, should we just store the
+	 * level and use it when turning back on or should we just flip sc_bl_on
+	 * and turn the backlight on?
+	 * For now turn it on so a crashed screensaver can't get the user stuck
+	 * with a dark screen as long as hotkeys work
+	 */
+	if (level > 255) level = 255;
+	if (level < 0) level = 0;
+	if (level == sc->sc_bl_level)
+		return;
+	sc->sc_bl_level = level;
+	if (sc->sc_bl_on == 0)
+		sc->sc_bl_on = 1;
+	level = 255 - level;
+	/* and here we would actually muck with the hardware */
+}
+
+static void
+voyagerfb_switch_backlight(struct voyagerfb_softc *sc, int on)
+{
+
+	if (on == sc->sc_bl_on)
+		return;
+	sc->sc_bl_on = on;
+	voyager_write_gpio(sc->sc_gpio_cookie, ~GPIO_BACKLIGHT, on ? GPIO_BACKLIGHT : 0);
+}
+	
+
+static void
+voyagerfb_brightness_up(device_t dev)
+{
+	struct voyagerfb_softc *sc = device_private(dev);
+
+	voyagerfb_set_backlight(sc, sc->sc_bl_level + 8);
+}
+
+static void
+voyagerfb_brightness_down(device_t dev)
+{
+	struct voyagerfb_softc *sc = device_private(dev);
+
+	voyagerfb_set_backlight(sc, sc->sc_bl_level - 8);
 }
