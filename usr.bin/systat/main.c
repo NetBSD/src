@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.45 2009/11/04 21:46:24 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.46 2011/09/06 18:31:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.45 2009/11/04 21:46:24 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.46 2011/09/06 18:31:44 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -93,8 +93,7 @@ static	WINDOW *wload;			/* one line window for load average */
 static void (*sv_stop_handler)(int);
 
 static void stop(int);
-static void usage(void);
-int main(int, char **);
+__dead static void usage(void);
 
 gid_t egid; /* XXX needed by initiostat() and initkre() */
 
