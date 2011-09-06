@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl_transact.c,v 1.10 2009/04/13 23:43:36 lukem Exp $	*/
+/*	$NetBSD: ctl_transact.c,v 1.11 2011/09/06 18:32:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ctl_transact.c,v 1.10 2009/04/13 23:43:36 lukem Exp $");
+__RCSID("$NetBSD: ctl_transact.c,v 1.11 2011/09/06 18:32:03 joerg Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -52,11 +52,7 @@ __RCSID("$NetBSD: ctl_transact.c,v 1.10 2009/04/13 23:43:36 lukem Exp $");
  * of time
  */
 void
-ctl_transact(target, tmsg, type, rp)
-	struct in_addr target;
-	CTL_MSG tmsg;
-	int type;
-	CTL_RESPONSE *rp;
+ctl_transact(struct in_addr target, CTL_MSG tmsg, int type, CTL_RESPONSE *rp)
 {
 	struct pollfd set[1];
 	int nready, cc;
