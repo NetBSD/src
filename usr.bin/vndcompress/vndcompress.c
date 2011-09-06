@@ -1,4 +1,4 @@
-/* $Id: vndcompress.c,v 1.6 2009/04/14 07:36:16 lukem Exp $ */
+/* $Id: vndcompress.c,v 1.7 2011/09/06 18:45:04 joerg Exp $ */
 
 /*
  * Copyright (c) 2005 by Florian Stoehr <netbsd@wolfnode.de>
@@ -60,12 +60,12 @@ enum opermodes {
  */
 static const char *cloop_sh = "#!/bin/sh\n" "#V2.0 Format\n" "insmod cloop.o file=$0 && mount -r -t iso9660 /dev/cloop $1\n" "exit $?\n";
 
-int opmode;
+static int opmode;
 
 /*
  * Print usage information, then exit program
  */
-void
+__dead static void
 usage(void)
 {
 	if (opmode == OM_COMPRESS) {
@@ -80,7 +80,7 @@ usage(void)
 /*
  * Compress a given file system
  */
-void
+static void
 vndcompress(const char *fs, const char *comp, uint32_t blocksize)
 {
 	int fd_in, fd_out;
@@ -243,7 +243,7 @@ vndcompress(const char *fs, const char *comp, uint32_t blocksize)
 /*
  * Read in header and offset table from compressed image
  */
-uint64_t *
+static uint64_t *
 readheader(int fd, struct cloop_header *clh, off_t *dstart)
 {
 	uint32_t offtable_size;
@@ -273,7 +273,7 @@ readheader(int fd, struct cloop_header *clh, off_t *dstart)
 /*
  * Decompress a given file system image
  */
-void
+static void
 vnduncompress(const char *comp, const char *fs)
 {
 	int fd_in, fd_out;

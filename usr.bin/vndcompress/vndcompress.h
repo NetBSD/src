@@ -1,4 +1,4 @@
-/* $Id: vndcompress.h,v 1.2 2008/02/18 03:34:04 dyoung Exp $ */
+/* $Id: vndcompress.h,v 1.3 2011/09/06 18:45:04 joerg Exp $ */
 
 /*
  * Copyright (c) 2005 by Florian Stoehr
@@ -50,11 +50,6 @@
 #include <machine/bswap.h>
 
 struct cloop_header;
-
-void usage(void);
-void vndcompress(const char *, const char *, uint32_t);
-uint64_t * readheader(int, struct cloop_header *, off_t *);
-void vnduncompress(const char *, const char *);
 
 /* Size of the shell command (Linux compatibility) */
 #define CLOOP_SH_SIZE 128
