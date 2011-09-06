@@ -1,4 +1,4 @@
-/* $NetBSD: urkelvisor.c,v 1.7 2011/09/05 20:54:48 jmcneill Exp $ */
+/* $NetBSD: urkelvisor.c,v 1.8 2011/09/06 09:55:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: urkelvisor.c,v 1.7 2011/09/05 20:54:48 jmcneill Exp $");
+__RCSID("$NetBSD: urkelvisor.c,v 1.8 2011/09/06 09:55:04 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -114,15 +114,12 @@ ptrace_getregs(pid_t urkel_pid, struct reg_struct *puregs)
 static int
 handle_syscall(struct reg_struct *puregs, pid_t urkel_pid)
 {
-	extern int cpu_lwp_inkernel;
+	vaddr_t pc;
 	int sig = 0;
 	int inkernel;
 
-	errno = 0;
-	inkernel = ptrace(PT_READ_D, urkel_pid, &cpu_lwp_inkernel, 0);
-	if (errno)
-		err(EXIT_FAILURE, "ptrace(PT_READ_D, %d, %p, 0) failed",
-		    urkel_pid, &cpu_lwp_inkernel);
+	pc = (vaddr_t)R_PC(puregs);
+	inkernel = !(pc >= kmem_user_start && pc < kmem_user_end);
 
 	//fprintf(stderr, "%s: pid=%d pc=%p inkernel=%d\n",
 	//    __func__, urkel_pid, (void *)R_PC(puregs), inkernel);

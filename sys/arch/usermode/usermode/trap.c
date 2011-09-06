@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.29 2011/09/06 09:38:27 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.30 2011/09/06 09:55:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.29 2011/09/06 09:38:27 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2011/09/06 09:55:04 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.29 2011/09/06 09:38:27 reinoud Exp $");
 //#include <machine/trap.h>
 //#include <machine/instr.h>
 //#include <machine/userret.h>
-
-extern int cpu_lwp_inkernel;
 
 /* forwards and externals */
 void setup_signal_handlers(void);
@@ -117,8 +115,6 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	vaddr_t va;
 	void *onfault;
 	int kmem, lwp_errno, rv;
-
-	cpu_lwp_inkernel++;
 
 	recurse++;
 	if (recurse > 1)
@@ -232,7 +228,6 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	if (recurse > 1)
 		printf("leaving trap recursion level %d\n", recurse);
 	recurse--;
-	cpu_lwp_inkernel--;
 }
 
 static void
@@ -244,7 +239,6 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 	struct pcb *pcb;
 	vaddr_t va;
 
-	cpu_lwp_inkernel++;
 	recurse++;
 	if (recurse > 1)
 		printf("enter trap recursion level %d\n", recurse);
@@ -292,5 +286,4 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 
 		panic("illegal instruction encountered\n");
 	}
-	cpu_lwp_inkernel--;
 }
