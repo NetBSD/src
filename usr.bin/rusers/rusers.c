@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers.c,v 1.24 2011/08/30 17:06:21 plunky Exp $	*/
+/*	$NetBSD: rusers.c,v 1.25 2011/09/06 18:29:35 joerg Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers.c,v 1.24 2011/08/30 17:06:21 plunky Exp $");
+__RCSID("$NetBSD: rusers.c,v 1.25 2011/09/06 18:29:35 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,19 +58,18 @@ __RCSID("$NetBSD: rusers.c,v 1.24 2011/08/30 17:06:21 plunky Exp $");
 
 #define MAX_INT 0x7fffffff
 
-struct timeval timeout = { 25, 0 };
-int longopt;
-int allopt;
+static struct timeval timeout = { 25, 0 };
+static int longopt;
+static int allopt;
 
-void	allhosts(void);
-int	main(int, char *[]);
-void	onehost(char *);
-void	remember_host(struct sockaddr *);
-int	rusers_reply(char *, struct netbuf *, struct netconfig *);
-int	search_host(struct sockaddr *);
-void	usage(void);
+static void	allhosts(void);
+static void	onehost(char *);
+static void	remember_host(struct sockaddr *);
+static int	rusers_reply(char *, struct netbuf *, struct netconfig *);
+static int	search_host(struct sockaddr *);
+__dead static void	usage(void);
 
-struct host_list {
+static struct host_list {
 	struct host_list *next;
 	int family;
 	union {
@@ -82,7 +81,7 @@ struct host_list {
 #define addr6 addr._addr6
 #define addr4 addr._addr4
 
-int
+static int
 search_host(struct sockaddr *sa)
 {
 	struct host_list *hp;
@@ -111,7 +110,7 @@ search_host(struct sockaddr *sa)
 	return(0);
 }
 
-void
+static void
 remember_host(struct sockaddr *sa)
 {
 	struct host_list *hp;
@@ -138,7 +137,7 @@ remember_host(struct sockaddr *sa)
 	hosts = hp;
 }
 
-int
+static int
 rusers_reply(char *replyp, struct netbuf *raddrp, struct netconfig *nconf)
 {
 	char host[NI_MAXHOST];
@@ -223,7 +222,7 @@ rusers_reply(char *replyp, struct netbuf *raddrp, struct netconfig *nconf)
 	return(0);
 }
 
-void
+static void
 onehost(char *host)
 {
 	struct utmpidlearr up;
@@ -254,7 +253,7 @@ onehost(char *host)
 	freeaddrinfo(ai);
 }
 
-void
+static void
 allhosts(void)
 {
 	struct utmpidlearr up;
@@ -269,7 +268,7 @@ allhosts(void)
 		errx(1, "%s", clnt_sperrno(clnt_stat));
 }
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-la] [hosts ...]\n", getprogname());
