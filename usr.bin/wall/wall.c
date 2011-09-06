@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.28 2009/04/14 07:54:51 lukem Exp $	*/
+/*	$NetBSD: wall.c,v 1.29 2011/09/06 18:45:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-__RCSID("$NetBSD: wall.c,v 1.28 2009/04/14 07:54:51 lukem Exp $");
+__RCSID("$NetBSD: wall.c,v 1.29 2011/09/06 18:45:21 joerg Exp $");
 #endif /* not lint */
 
 /*
@@ -67,21 +67,20 @@ __RCSID("$NetBSD: wall.c,v 1.28 2009/04/14 07:54:51 lukem Exp $");
 #include "utmpentry.h"
 #include "term_chk.h"
 
-void	addgroup(char *);
-void	makemsg(const char *);
-int	main(int, char **);
-void	usage(void);
+static void	addgroup(char *);
+static void	makemsg(const char *);
+__dead static void	usage(void);
 
-struct wallgroup {
+static struct wallgroup {
 	gid_t	gid;
 	char	*name;
 	char	**mem;
 	struct wallgroup *next;
 } *grouplist;
 
-int nobanner;
-size_t mbufsize;
-char *mbuf;
+static int nobanner;
+static size_t mbufsize;
+static char *mbuf;
 
 /* ARGSUSED */
 int
@@ -157,7 +156,7 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-void
+static void
 addgroup(char *name)
 {
 	int i;
@@ -188,7 +187,7 @@ addgroup(char *name)
 	grouplist = g;
 }
 
-void
+static void
 makemsg(const char *fname)
 {
 	int ch, cnt;
@@ -267,7 +266,7 @@ makemsg(const char *fname)
 	(void)fclose(fp);
 }
 
-void
+static void
 usage(void)
 {
 
