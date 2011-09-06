@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.34 2011/02/16 23:08:29 christos Exp $ */
+/*	$NetBSD: stat.c,v 1.35 2011/09/06 18:31:22 joerg Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.34 2011/02/16 23:08:29 christos Exp $");
+__RCSID("$NetBSD: stat.c,v 1.35 2011/09/06 18:31:22 joerg Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -174,18 +174,18 @@ __RCSID("$NetBSD: stat.c,v 1.34 2011/02/16 23:08:29 christos Exp $");
 #define SHOW_filename	'N'
 #define SHOW_sizerdev	'Z'
 
-void	usage(const char *);
-void	output(const struct stat *, const char *,
+static void	usage(const char *) __dead;
+static void	output(const struct stat *, const char *,
 	    const char *, int, int, int);
-int	format1(const struct stat *,	/* stat info */
+static int	format1(const struct stat *,	/* stat info */
 	    const char *,		/* the file name */
 	    const char *, int,		/* the format string itself */
 	    char *, size_t,		/* a place to put the output */
 	    int, int, int, int,		/* the parsed format */
 	    int, int, int);
 
-const char *timefmt;
-int linkfail;
+static const char *timefmt;
+static int linkfail;
 
 #define addchar(s, c, nl) \
 	do { \
@@ -349,7 +349,7 @@ main(int argc, char *argv[])
 	return (am_readlink ? linkfail : errs);
 }
 
-void
+static void
 usage(const char *synopsis)
 {
 
@@ -360,7 +360,7 @@ usage(const char *synopsis)
 /* 
  * Parses a format string.
  */
-void
+static void
 output(const struct stat *st, const char *file,
     const char *statfmt, int fn, int nonl, int quiet)
 {
@@ -553,7 +553,7 @@ output(const struct stat *st, const char *file,
 /*
  * Arranges output according to a single parsed format substring.
  */
-int
+static int
 format1(const struct stat *st,
     const char *file,
     const char *fmt, int flen,
