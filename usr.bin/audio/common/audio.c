@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.20 2011/08/28 01:17:47 joerg Exp $	*/
+/*	$NetBSD: audio.c,v 1.21 2011/09/06 22:41:53 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: audio.c,v 1.20 2011/08/28 01:17:47 joerg Exp $");
+__RCSID("$NetBSD: audio.c,v 1.21 2011/09/06 22:41:53 jmcneill Exp $");
 #endif
 
 
@@ -104,6 +104,7 @@ static const struct {
 	{ AudioEmpeg_l2_stream,	AUDIO_ENCODING_MPEG_L2_STREAM },
 	{ AudioEmpeg_l2_packets,AUDIO_ENCODING_MPEG_L2_PACKETS },
 	{ AudioEmpeg_l2_system,	AUDIO_ENCODING_MPEG_L2_SYSTEM },
+	{ AudioEac3,		AUDIO_ENCODING_AC3 },
 	{ NULL, -1 }
 };
 
