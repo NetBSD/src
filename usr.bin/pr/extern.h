@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 2009/04/13 00:37:05 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 2011/09/06 18:26:06 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -33,27 +33,10 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)extern.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: extern.h,v 1.5 2009/04/13 00:37:05 lukem Exp $
+ *	$NetBSD: extern.h,v 1.6 2011/09/06 18:26:06 joerg Exp $
  */
 
 extern int eoptind;
 extern char *eoptarg;
 
-void	 addnum __P((char *, int, int));
-int	 egetopt __P((int, char * const *, const char *));
-void	 flsh_errs __P((void));
-int	 horzcol __P((int, char **));
-int	 inln __P((FILE *, char *, int, int *, int, int *));
-int	 inskip __P((FILE *, int, int));
-void	 mfail __P((void));
-int	 mulfile __P((int, char **));
-FILE	*nxtfile __P((int, char **, const char **, char *, int));
-int	 onecol __P((int, char **));
-int	 otln __P((char *, int, int *, int *, int));
-void	 pfail __P((void));
-int	 prhead __P((char *, const char *, int));
-int	 prtail __P((int, int));
-int	 setup __P((int, char **));
-void	 terminate __P((int));
-void	 usage __P((void));
-int	 vertcol __P((int, char **));
+int	 egetopt(int, char * const *, const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: egetopt.c,v 1.8 2009/04/13 00:37:05 lukem Exp $	*/
+/*	$NetBSD: egetopt.c,v 1.9 2011/09/06 18:26:06 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)egetopt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: egetopt.c,v 1.8 2009/04/13 00:37:05 lukem Exp $");
+__RCSID("$NetBSD: egetopt.c,v 1.9 2011/09/06 18:26:06 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,13 +67,10 @@ int	eoptopt;		/* character checked for validity */
 char	*eoptarg;		/* argument associated with option */
 
 #define	BADCH	(int)'?'
-char EMSG[1] = { '\0' };
+static char EMSG[1] = { '\0' };
 
 int
-egetopt(nargc, nargv, ostr)
-	int nargc;
-	char * const *nargv;
-	const char *ostr;
+egetopt(int nargc, char * const *nargv, const char *ostr)
 {
 	static char *place = EMSG;	/* option letter processing */
 	char *oli;			/* option letter list index */
