@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.65 2009/08/22 23:31:16 christos Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.66 2011/09/06 01:19:34 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.65 2009/08/22 23:31:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.66 2011/09/06 01:19:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -352,6 +352,12 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			tmpinfo.play.encoding =
 			tmpinfo.record.encoding = AUDIO_ENCODING_ULINEAR_BE;
 			break;
+		case OSS_AFMT_AC3:
+			tmpinfo.play.precision =
+			tmpinfo.record.precision = 16;
+			tmpinfo.play.encoding =
+			tmpinfo.record.encoding = AUDIO_ENCODING_AC3;
+			break;
 		default:
 			DPRINTF(("%s: SNDCTL_DSP_SETFMT bad fmt %d\n",
 			     __func__, idat));
@@ -407,6 +413,9 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			break;
 		case AUDIO_ENCODING_ADPCM:
 			idat = OSS_AFMT_IMA_ADPCM;
+			break;
+		case AUDIO_ENCODING_AC3:
+			idat = OSS_AFMT_AC3;
 			break;
 		default:
 			DPRINTF(("%s: SOUND_PCM_READ_BITS bad encoding %d\n",
@@ -582,6 +591,9 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 				break;
 			case AUDIO_ENCODING_ADPCM:
 				idat |= OSS_AFMT_IMA_ADPCM;
+				break;
+			case AUDIO_ENCODING_AC3:
+				idat |= OSS_AFMT_AC3;
 				break;
 			default:
 				DPRINTF(("%s: SNDCTL_DSP_GETFMTS unknown %d\n",
