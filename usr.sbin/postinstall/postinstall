@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.122 2011/08/09 18:24:46 jmmv Exp $
+# $NetBSD: postinstall,v 1.123 2011/09/06 14:08:05 jym Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1805,7 +1805,7 @@ EOF
 	list)
 		echo "Source directory: ${SRC_DIR:-/}"
 		echo "Target directory: ${DEST_DIR:-/}"
-		if [ "${SRC_DIR}" != "${SRC_ARG}" ]; then
+		if $TGZMODE; then
 			echo " (extracted from: ${SRC_ARG})"
 		fi
 		list
@@ -1825,7 +1825,7 @@ EOF
 		# perform each check/fix
 		#
 		echo "Source directory: ${SRC_DIR:-/}"
-		if [ "${SRC_DIR}" != "${SRC_ARG}" ]; then
+		if $TGZMODE; then
 			echo " (extracted from: ${SRC_ARG})"
 		fi
 		echo "Target directory: ${DEST_DIR:-/}"
