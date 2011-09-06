@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.24 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.25 2011/09/06 01:20:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.24 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.25 2011/09/06 01:20:18 jmcneill Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -185,6 +185,12 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			tmpinfo.play.encoding =
 			tmpinfo.record.encoding = AUDIO_ENCODING_ULINEAR_BE;
 			break;
+		case AFMT_AC3:
+			tmpinfo.play.precision =
+			tmpinfo.record.precision = 16;
+			tmpinfo.play.encoding =
+			tmpinfo.record.encoding = AUDIO_ENCODING_AC3;
+			break;
 		default:
 			return EINVAL;
 		}
@@ -227,6 +233,9 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			break;
 		case AUDIO_ENCODING_ADPCM:
 			idat = AFMT_IMA_ADPCM;
+			break;
+		case AUDIO_ENCODING_AC3:
+			idat = AFMT_AC3;
 			break;
 		}
 		INTARG = idat;
@@ -327,6 +336,9 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 				break;
 			case AUDIO_ENCODING_ADPCM:
 				idat |= AFMT_IMA_ADPCM;
+				break;
+			case AUDIO_ENCODING_AC3:
+				idat |= AFMT_AC3;
 				break;
 			default:
 				break;
