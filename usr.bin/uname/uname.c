@@ -1,4 +1,4 @@
-/*	$NetBSD: uname.c,v 1.10 1998/11/09 13:24:05 kleink Exp $	*/
+/*	$NetBSD: uname.c,v 1.11 2011/09/06 18:35:13 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: uname.c,v 1.10 1998/11/09 13:24:05 kleink Exp $");
+__RCSID("$NetBSD: uname.c,v 1.11 2011/09/06 18:35:13 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,8 +47,7 @@ __RCSID("$NetBSD: uname.c,v 1.10 1998/11/09 13:24:05 kleink Exp $");
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
 
-int	main __P((int, char **));
-static void usage __P((void));
+__dead static void usage(void);
 
 /* Note that PRINT_MACHINE_ARCH is excluded from PRINT_ALL! */
 #define	PRINT_SYSNAME		0x01
@@ -61,9 +60,7 @@ static void usage __P((void));
     (PRINT_SYSNAME|PRINT_NODENAME|PRINT_RELEASE|PRINT_VERSION|PRINT_MACHINE)
 
 int
-main(argc, argv) 
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct utsname u;
 	char machine_arch[SYS_NMLN];
@@ -155,7 +152,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: uname [-amnprsv]\n");
 	exit(EXIT_FAILURE);
