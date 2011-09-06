@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.44 2008/01/16 09:21:33 tls Exp $	*/
+/*	$NetBSD: mdb.c,v 1.45 2011/09/06 18:16:38 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,7 +45,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdb.c,v 1.44 2008/01/16 09:21:33 tls Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.45 2011/09/06 18:16:38 joerg Exp $");
 #endif
 
 
@@ -233,7 +233,7 @@ write_menu_file (char *initcode)
 		"/* Prototypes */\n"
 		"int menu_init(void);\n"
 		"void process_menu(int, void *);\n"
-		"void __menu_initerror(void);\n"
+		"__dead void __menu_initerror(void);\n"
 		);
 
 	if (do_dynamic)
