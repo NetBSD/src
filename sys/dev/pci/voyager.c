@@ -1,4 +1,4 @@
-/*	$NetBSD: voyager.c,v 1.3 2011/09/01 14:04:55 macallan Exp $	*/
+/*	$NetBSD: voyager.c,v 1.4 2011/09/06 06:26:13 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.3 2011/09/01 14:04:55 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.4 2011/09/06 06:26:13 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ voyager_attach(device_t parent, device_t self, void *aux)
 		reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DIR0);
 		reg |= GPIO_I2C_BITS;
 		bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DIR0, reg);
-
+		
 		/* Fill in the i2c tag */
 		sc->sc_i2c.ic_cookie = sc;
 		sc->sc_i2c.ic_acquire_bus = voyager_i2c_acquire_bus;
@@ -287,3 +287,18 @@ voyager_i2c_write_byte(void *cookie, uint8_t val, int flags)
 	return ret;
 }
 
+/* gpio stuff */
+void
+voyager_write_gpio(void *cookie, uint32_t mask, uint32_t bits)
+{
+	struct voyager_softc *sc = cookie;
+	uint32_t reg;
+
+	/* don't interfere with i2c ops */
+	mutex_enter(&sc->sc_i2c_lock);
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DATA0);
+	reg &= mask;
+	reg |= bits;
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DATA0, reg);
+	mutex_exit(&sc->sc_i2c_lock);
+}
