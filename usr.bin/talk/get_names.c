@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.14 2009/04/13 23:43:36 lukem Exp $	*/
+/*	$NetBSD: get_names.c,v 1.15 2011/09/06 18:32:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: get_names.c,v 1.14 2009/04/13 23:43:36 lukem Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.15 2011/09/06 18:32:03 joerg Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -51,9 +51,7 @@ extern	CTL_MSG msg;
  * Determine the local and remote user, tty, and machines
  */
 void
-get_names(argc, argv)
-	int argc;
-	char *argv[];
+get_names(int argc, char *argv[])
 {
 	char hostname[MAXHOSTNAMELEN + 1];
 	const char *his_name, *my_name;
