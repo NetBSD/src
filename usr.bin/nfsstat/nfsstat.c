@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsstat.c,v 1.23 2009/04/12 23:34:11 lukem Exp $	*/
+/*	$NetBSD: nfsstat.c,v 1.24 2011/09/06 18:19:58 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\
 #if 0
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: nfsstat.c,v 1.23 2009/04/12 23:34:11 lukem Exp $");
+__RCSID("$NetBSD: nfsstat.c,v 1.24 2011/09/06 18:19:58 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: nfsstat.c,v 1.23 2009/04/12 23:34:11 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-struct nlist nl[] = {
+static struct nlist nl[] = {
 #define	N_NFSSTAT	0
 	{ "_nfsstats", 0, 0, 0, 0 },
 	{ "", 0, 0, 0, 0 },
@@ -80,7 +80,7 @@ struct nlist nl[] = {
 	MASK(WRITE) | MASK(RENAME)| MASK(ACCESS) | MASK(READDIR) |	\
 	MASK(READDIRPLUS))
 #define	OTHERMASK	(((1 << NFS_NPROCS) - 1) & ~ALLMASK)
-const struct shortprocs {
+static const struct shortprocs {
 	int mask;
 	const char *name;
 } shortprocs[] = {
@@ -97,22 +97,19 @@ const struct shortprocs {
 
 #define	NSHORTPROC	(sizeof(shortprocs)/sizeof(shortprocs[0]))
 
-void	catchalarm __P((int));
-void	getstats __P((struct nfsstats *));
-void	intpr __P((void));
-int	main __P((int, char **));
-void	printhdr __P((void));
-void	sidewaysintpr __P((u_int));
-void	usage __P((void));
+static void	catchalarm(int);
+static void	getstats(struct nfsstats *);
+static void	intpr(void);
+static void	printhdr(void);
+__dead static void	sidewaysintpr(u_int);
+__dead static void	usage(void);
 
-kvm_t  *kd;
-int     printall, clientinfo, serverinfo;
-u_long	nfsstataddr;
+static kvm_t  *kd;
+static int     printall, clientinfo, serverinfo;
+static u_long	nfsstataddr;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	u_int interval;
 	int ch;
@@ -178,9 +175,8 @@ main(argc, argv)
 	exit(0);
 }
 
-void
-getstats(ns)
-	struct nfsstats *ns;
+static void
+getstats(struct nfsstats *ns)
 {
 	size_t size;
 	int mib[3];
@@ -203,8 +199,8 @@ getstats(ns)
 /*
  * Print a description of the nfs stats.
  */
-void
-intpr()
+static void
+intpr(void)
 {
 	struct nfsstats nfsstats;
 	int64_t	total;
@@ -379,7 +375,7 @@ intpr()
 	}
 }
 
-u_char	signalled;			/* set if alarm goes off "early" */
+static u_char	signalled;			/* set if alarm goes off "early" */
 
 /*
  * Print a running summary of nfs statistics.
@@ -387,9 +383,8 @@ u_char	signalled;			/* set if alarm goes off "early" */
  * collected over that interval.  Assumes that interval is non-zero.
  * First line printed at top of screen is always cumulative.
  */
-void
-sidewaysintpr(interval)
-	u_int interval;
+static void
+sidewaysintpr(u_int interval)
 {
 	struct nfsstats nfsstats;
 	int hdrcnt, oldmask;
@@ -450,8 +445,8 @@ sidewaysintpr(interval)
 	/*NOTREACHED*/
 }
 
-void
-printhdr()
+static void
+printhdr(void)
 {
 	size_t i;
 
@@ -466,16 +461,15 @@ printhdr()
  * Called if an interval expires before sidewaysintpr has completed a loop.
  * Sets a flag to not wait for the alarm.
  */
-void
-catchalarm(dummy)
-	int dummy;
+static void
+catchalarm(int dummy)
 {
 
 	signalled = 1;
 }
 
-void
-usage()
+static void
+usage(void)
 {
 
 	(void)fprintf(stderr,
