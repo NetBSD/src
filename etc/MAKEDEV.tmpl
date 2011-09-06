@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.140 2011/08/06 12:29:39 jmcneill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.141 2011/09/06 10:54:03 apb Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -858,39 +858,39 @@ usb)
 	mkdev usb c %usb_chr% 255 444
 	;;
 
-usb*)
+usb[0-9]*)
 	unit=${i#usb}
 	usb=usb$unit
 	mkdev usb$unit c %usb_chr% $unit
 	;;
 
-uhid*)
+uhid[0-9]*)
 	unit=${i#uhid}
 	mkdev uhid$unit c %uhid_chr% $unit 666
 	;;
 
-ulpt*)
+ulpt[0-9]*)
 	unit=${i#ulpt}
 	mkdev ulpt$unit c %ulpt_chr% $unit
 	mkdev ulpn$unit c %ulpt_chr% $(($unit + 64))
 	;;
 
-urio*)
+urio[0-9]*)
 	unit=${i#urio}
 	mkdev urio$unit c %urio_chr% $unit 666
 	;;
 
-uscanner*)
+uscanner[0-9]*)
 	unit=${i#uscanner}
 	mkdev uscanner$unit c %uscanner_chr% $unit
 	;;
 
-utoppy*)
+utoppy[0-9]*)
 	unit=${i#utoppy}
 	mkdev utoppy$unit c %utoppy_chr% $unit
 	;;
 
-ttyHS*)
+ttyHS[0-9]*)
 	unit=${i#ttyHS}
 	for j in 00 01 02 03 04 05 06 07 08 09 10
 	do
@@ -901,21 +901,21 @@ ttyHS*)
 	done
 	;;
 
-ttyY*)
+ttyY[0-9]*)
 	unit=${i#ttyY}
 	mkdev ttyY$unit c %ucycom_chr% $(($unit + $dialin  )) "" "" $u_uucp
 	mkdev dtyY$unit c %ucycom_chr% $(($unit + $dialout )) "" "" $u_uucp
 	mkdev ctyY$unit c %ucycom_chr% $(($unit + $callunit)) "" "" $u_uucp
 	;;
 
-ttyU*)
+ttyU[0-9]*)
 	unit=${i#ttyU}
 	mkdev ttyU$unit c %ucom_chr% $(($unit + $dialin	 )) "" "" $u_uucp
 	mkdev dtyU$unit c %ucom_chr% $(($unit + $dialout )) "" "" $u_uucp
 	mkdev ctyU$unit c %ucom_chr% $(($unit + $callunit)) "" "" $u_uucp
 	;;
 
-ugen*)
+ugen[0-9]*)
 	unit=${i#ugen}
 	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
 	do
@@ -941,7 +941,7 @@ wskbd)
 	mkdev wskbd c %wsmux_chr% 1
 	;;
 
-wsmux*)
+wsmux[0-9]*)
 	unit=${i#wsmux}
 	mkdev wsmux$unit    c %wsmux_chr% $unit
 	mkdev wsmuxctl$unit c %wsmux_chr% $(($unit + 128)) 200
@@ -967,17 +967,17 @@ ttyEcfg)
 	mkdev ttyEcfg c %wsdisplay_chr% 255
 	;;
 
-ttyE*)
+ttyE[0-9]*)
 	unit=${i#ttyE}
 	mkdev ttyE$unit c %wsdisplay_chr% $unit
 	;;
 
-wsmouse*)
+wsmouse[0-9]*)
 	unit=${i#wsmouse}
 	mkdev wsmouse$unit c %wsmouse_chr% $unit
 	;;
 
-wskbd*)
+wskbd[0-9]*)
 	unit=${i#wskbd}
 	mkdev wskbd$unit c %wskbd_chr% $unit
 	;;
@@ -994,10 +994,8 @@ fd)
 	fi
 	;;
 
-wt*)
-	case $i in
-	wt*) name=wt;  unit=${i#wt};	chr=%wt_chr%;	blk=%wt_blk%;;
-	esac
+wt[0-9]*)
+	name=wt;  unit=${i#wt};	chr=%wt_chr%;	blk=%wt_blk%
 	for sub in $unit $(($unit+8)) $(($unit+16))
 	do
 		mkdev $name$sub		b $blk $(($sub + 0)) 660 $g_operator
@@ -1007,28 +1005,24 @@ wt*)
 	done
 	;;
 
-md*)
+md[0-9]*)
 	makedisk_minimal md ${i#md} %md_blk% %md_chr%
 	;;
 
-fss*)
-	case $i in
-	fss*) name=fss; unit=${i#fss};	blk=%fss_blk%;	chr=%fss_chr%
-	esac
+fss[0-9]*)
+	name=fss; unit=${i#fss};	blk=%fss_blk%;	chr=%fss_chr%
 	mkdev $name$unit	b $blk $unit 660 $g_operator
 	mkdev r$name$unit	c $chr $unit 660 $g_operator
 	;;
 
-ss*)
-	case $i in
-	ss*) name=ss;	unit=${i#ss};	chr=%ss_chr%;;
-	esac
+ss[0-9]*)
+	name=ss;	unit=${i#ss};	chr=%ss_chr%
 	mkdev $name$unit	c $chr $(($unit * 16 + 0)) 640 $g_operator
 	mkdev n$name$unit	c $chr $(($unit * 16 + 1)) 640 $g_operator
 	mkdev en$name$unit	c $chr $(($unit * 16 + 3)) 640 $g_operator
 	;;
 
-ccd*|cgd*|raid*|vnd*)
+ccd[0-9]*|cgd[0-9]*|raid[0-9]*|vnd[0-9]*)
 	case $i in
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=%ccd_blk%;	chr=%ccd_chr%;;
 	cgd*)	name=cgd;	unit=${i#cgd};	blk=%cgd_blk%;	chr=%cgd_chr%;;
@@ -1038,44 +1032,44 @@ ccd*|cgd*|raid*|vnd*)
 	%MKDISK% $name $unit $blk $chr
 	;;
 
-sd*)
+sd[0-9]*)
 	name=sd; unit=${i#sd};	blk=%sd_blk%;	chr=%sd_chr%
 	%MKDISK% $name $unit $blk $chr
 	;;
 
-ace*)
+ace[0-9]*)
 	name=ace; unit=${i#ace};	blk=%ace_blk%;		chr=%ace_chr%
 	%MKDISK% $name $unit $blk $chr
 	;;
 
-eflash*)
+eflash[0-9]*)
 	name=eflash; unit=${i#eflash};	blk=%eflash_blk%;	chr=%eflash_chr%
 	%MKDISK% $name $unit $blk $chr
 	;;
 
-wd*)
+wd[0-9]*)
 	name=wd; unit=${i#wd}; blk=%wd_blk%; chr=%wd_chr%
 	%MKDISK% $name $unit $blk $chr
 	;;
 
-fd*)
+fd[0-9]*)
 	name=fd; unit=${i#fd}; blk=%fd_blk%; chr=%fd_chr%
 	%MKDISK% $name $unit $blk $chr
 	;;
 
-ld*)
+ld[0-9]*)
 	name=ld; unit=${i#ld}; blk=%ld_blk%; chr=%ld_chr%
 	%MKDISK% $name $unit $blk $chr
 	;;
 
-flash*)
+flash[0-9]*)
 	unit=${i#flash}
 	flash=flash$unit
 	mkdev flash$unit b %flash_blk% $unit
 	mkdev rflash$unit c %flash_chr% $unit
 	;;
 
-altmem*)
+altmem[0-9]*)
 	name=altmem; unit=${i#altmem}; blk=%altmem_blk%; chr=%altmem_chr%
 	%MKDISK% $name $unit $blk $chr
 	;;
@@ -1084,22 +1078,22 @@ bio)
 	mkdev bio c %bio_chr% 0
 	;;
 
-ed*)
+ed[0-9]*)
 	name=ed; unit=${i#ed}; blk=%ed_blk%; chr=%ed_chr%
 	%MKDISK% $name $unit $blk $chr
 	;;
 
-ofdisk*)
+ofdisk[0-9]*)
 	name=ofdisk; unit=${i#ofdisk}; blk=%ofdisk_blk%; chr=%ofdisk_chr%
 	%MKDISK% $name $unit $blk $chr
 	;;
 
-xbd*)
+xbd[0-9]*)
 	name=xbd; unit=${i#xbd}; blk=%xbd_blk%; chr=%xbd_chr%
 	%MKDISK% $name $unit $blk $chr
 	;;
 
-dk*)
+dk[0-9]*)
 	name=dk; unit=${i#dk}; blk=%dk_blk%; chr=%dk_chr%
 	minor=0
 	while [ $minor -le ${i#dk} ]
@@ -1110,7 +1104,7 @@ dk*)
 	done
 	;;
 
-ttyCY*)
+ttyCY[0-9]*)
 	name=tyCY; chr=%cy_chr%; off=32
 	unit=${i#t${name}}
 	minor=$(($unit * $off))
@@ -1125,7 +1119,7 @@ ttyCY*)
 	done
 	;;
 
-ttyCZ*)
+ttyCZ[0-9]*)
 	name=tyCZ; chr=%cz_chr%; off=64
 	unit=${i#t${name}}
 	minor=$(($unit * $off))
@@ -1160,26 +1154,26 @@ tty0*|tty1*|tty[0-9])
 	mkdev dty$ounit c %com_chr% $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
-ttyC*)
+ttyC[0-9]*)
 		# some archs call com_chr ttyC traditionally
 	unit=${i#ttyC}; name=ttyC; dname=dtyC; chr=%com_chr%
 	mkdev  $name$unit c $chr $(($unit + $dialin )) "" "" $u_uucp
 	mkdev $dname$unit c $chr $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
-ttyh*)
+ttyh[0-9]*)
 	unit=${i#ttyh}; name=ttyh; dname=dtyh; chr=%sabtty_chr%
 	mkdev  $name$unit c $chr $(($unit + $dialin )) "" "" $u_uucp
 	mkdev $dname$unit c $chr $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
-ttyTX*)
+ttyTX[0-9]*)
 	unit=${i#ttyTX}; name=ttyTX0; dname=dtyTX0; chr=%txcom_chr%
 	mkdev  $name$unit c $chr $(($unit + $dialin )) "" "" $u_uucp
 	mkdev $dname$unit c $chr $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
-ttyZ*)
+ttyZ[0-9]*)
 	unit=${i#ttyZ}; name=ttyZ; dname=dtyZ; chr=%zstty_chr%
 	mkdev  $name$unit c $chr $(($unit + $dialin )) "" "" $u_uucp
 	mkdev $dname$unit c $chr $(($unit + $dialout)) "" "" $u_uucp
@@ -1202,7 +1196,7 @@ opty)
 	done
 	;;
 
-pty*)
+pty[0-9]*)
 	class=${i#pty}
 	d1="p q r s t u v w x y z P Q R S T"
 	if [ "$class" -ge 64 ]
@@ -1251,15 +1245,13 @@ pty*)
 	done
 	;;
 
-stic*)
+stic[0-9]*)
 	unit=${i#stic}
 	mkdev stic$unit c %stic_chr% $unit
 	;;
 
-st*)
-	case $i in
-	st*) name=st;	unit=${i#st};	chr=%st_chr%;	blk=%st_blk%;;
-	esac
+st[0-9]*)
+	name=st;	unit=${i#st};	chr=%st_chr%;	blk=%st_blk%
 	mkdev $name$unit	b $blk $(($unit * 16 + 0)) 660 $g_operator
 	mkdev n$name$unit	b $blk $(($unit * 16 + 1)) 660 $g_operator
 	mkdev e$name$unit	b $blk $(($unit * 16 + 2)) 660 $g_operator
@@ -1270,7 +1262,7 @@ st*)
 	mkdev enr$name$unit	c $chr $(($unit * 16 + 3)) 660 $g_operator
 	;;
 
-ses*|ch*|uk*)
+ses[0-9]*|ch[0-9]*|uk[0-9]*)
 	case $i in
 	ch*)	name=ch;	unit=${i#ch};	chr=%ch_chr%;;
 	uk*)	name=uk;	unit=${i#uk};	chr=%uk_chr%;;
@@ -1279,19 +1271,19 @@ ses*|ch*|uk*)
 	mkdev $name$unit c $chr $unit 640 $g_operator
 	;;
 
-cd*)
+cd[0-9]*)
 	makedisk_minimal cd ${i#cd} %cd_blk% %cd_chr%
 	;;
 
-mcd*)
+mcd[0-9]*)
 	makedisk_minimal mcd ${i#mcd} %mcd_blk% %mcd_chr%
 	;;
 
-gdrom*)
+gdrom[0-9]*)
 	makedisk_minimal gdrom ${i#gdrom} %gdrom_blk% %gdrom_chr%
 	;;
 
-lpt*|lpa*)
+lpt[0-9]*|lpa[0-9]*)
 	case $i in
 	lpt*) name=lpt; unit=${i#lpt};	chr=%lpt_chr%;	flags=0;;
 	lpa*) name=lpa; unit=${i#lpa};	chr=%lpt_chr%;	flags=128;;
@@ -1313,12 +1305,12 @@ bthub)
 	mkdev bthub c %bthub_chr% 0
 	;;
 
-tun*)
+tun[0-9]*)
 	unit=${i#tun}
 	mkdev tun$unit c %tun_chr% $unit
 	;;
 
-joy*)
+joy[0-9]*)
 	unit=${i#joy}
 	mkdev joy$unit c %joy_chr% $unit
 	;;
@@ -1357,7 +1349,7 @@ cpuctl)
 	mkdev cpuctl c %cpuctl_chr% 0 666
 	;;
 
-audio*)
+audio|audio[0-9]*)
 	unit=${i#audio}
 	audio=audio$unit
 	sound=sound$unit
@@ -1370,41 +1362,41 @@ audio*)
 	mkdev $audioctl c %audio_chr% $(($unit + 192))	666
 	;;
 
-hdaudio*)
+hdaudio[0-9]*)
 	unit=${i#hdaudio}
 	mkdev hdaudio$unit c %hdaudio_chr% $unit 644
 	;;
 
-gpio*)
+gpio[0-9]*)
 	unit=${i#gpio}
 	mkdev gpio$unit c %gpio_chr% $unit 644
 	;;
 
-rmidi*)
+rmidi[0-9]*)
 	unit=${i#rmidi}
 	mkdev rmidi$unit c %midi_chr% $unit 666
 	;;
 
-music*)
+music|music[0-9]*)
 	unit=${i#music}
 	: ${unit:-0}
 	mkdev music$unit     c %sequencer_chr% $(($unit + 0))	666
 	mkdev sequencer$unit c %sequencer_chr% $(($unit + 128)) 666
 	;;
 
-radio*)
+radio|radio[0-9]*)
 	unit=${i#radio}
 	: ${unit:-0}
 	mkdev radio$unit c %radio_chr% $unit 666
 	;;
 
-video*)
+video|video[0-9]*)
 	unit=${i#video}
 	: ${unit:-0}
 	mkdev video$unit c %video_chr% $unit 666
 	;;
 
-dtv*)
+dtv[0-9]*)
 	unit=${i#dtv}
 	makedir dvb 755
 	makedir dvb/adapter$unit 755
@@ -1413,7 +1405,7 @@ dtv*)
 	mkdev dvb/adapter$unit/dvr0 c %dtv_chr% $(($unit + 32)) 666
 	;;
 
-amr*)
+amr[0-9]*)
 	unit=${i#amr}
 	mkdev amr$unit c %amr_chr% $unit
 	;;
@@ -1429,7 +1421,7 @@ apm)
 	mkdev apmctl	c %apmdev_chr% 8 644
 	;;
 
-satlink*)
+satlink[0-9]*)
 	unit=${i#satlink}
 	mkdev satlink$unit c %satlink_chr% $unit 444
 	;;
@@ -1443,7 +1435,7 @@ cfs)
 	makedev cfs0
 	;;
 
-cfs*)
+cfs[0-9]*)
 	unit=${i#cfs}
 	mkdev cfs$unit c %vcoda_chr% $unit
 	;;
@@ -1454,7 +1446,7 @@ sysmon)
 	mkdev power	c %sysmon_chr% 2 640
 	;;
 
-scsibus*)
+scsibus[0-9]*)
 	unit=${i#scsibus}
 	mkdev scsibus$unit c %scsibus_chr% $unit 644
 	;;
@@ -1466,7 +1458,7 @@ bktr)
 	lndev	vbi0	vbi
 	;;
 
-bktr*)
+bktr[0-9]*)
 	unit=${i#bktr}
 	mkdev bktr$unit		c %bktr_chr% $(($unit + 0))	444
 	mkdev tuner$unit	c %bktr_chr% $(($unit + 16))	444
@@ -1477,37 +1469,37 @@ io)
 	mkdev		io	c %mem_chr% 14	600
 	;;
 
-iop*)
+iop[0-9]*)
 	unit=${i#iop}
 	mkdev iop$unit c %iop_chr% $unit
 	;;
 
-mlx*)
+mlx[0-9]*)
 	unit=${i#mlx}
 	mkdev mlx$unit c %mlx_chr% $unit
 	;;
 
-mly*)
+mly[0-9]*)
 	unit=${i#mly}
 	mkdev mly$unit c %mly_chr% $unit
 	;;
 
-twa*)
+twa[0-9]*)
 	unit=${i#twa}
 	mkdev twa$unit c %twa_chr% $unit
 	;;
 
-twe*)
+twe[0-9]*)
 	unit=${i#twe}
 	mkdev twe$unit c %twe_chr% $unit
 	;;
 
-icp*)
+icp[0-9]*)
 	unit=${i#icp}
 	mkdev icp$unit c %icp_chr% $unit
 	;;
 
-agp*)
+agp[0-9]*)
 	unit=${i#agp}
 	mkdev agp$unit c %agp_chr% $unit 644
 	if [ "$unit" = "0" ]; then
@@ -1515,17 +1507,17 @@ agp*)
 	fi
 	;;
 
-pci*)
+pci[0-9]*)
 	unit=${i#pci}
 	mkdev pci$unit c %pci_chr% $unit 640
 	;;
 
-dpti*)
+dpti[0-9]*)
 	unit=${i#dpti}
 	mkdev dpti$unit c %dpti_chr% $unit
 	;;
 
-dpt*)
+dpt[0-9]*)
 	unit=${i#dpt}
 	mkdev dpt$unit c %dpt_chr% $unit
 	;;
@@ -1548,22 +1540,22 @@ isdnctl)
 	mkdev isdnctl c %isdnctl_chr% 0
 	;;
 
-isdnbchan*)
+isdnbchan[0-9]*)
 	unit=${i#isdnbchan}
 	mkdev isdnbchan$unit c %isdnbchan_chr% $unit
 	;;
 
-isdnteld*)
+isdnteld[0-9]*)
 	unit=${i#isdnteld}
 	mkdev isdnteld$unit c %isdntel_chr% $(($unit + 64))
 	;;
 
-isdntel*)
+isdntel[0-9]*)
 	unit=${i#isdntel}
 	mkdev isdntel$unit c %isdntel_chr% $unit
 	;;
 
-isdntrc*)
+isdntrc[0-9]*)
 	unit=${i#isdntrc}
 	mkdev isdntrc$unit c %isdntrc_chr% $unit
 	;;
@@ -1572,7 +1564,7 @@ vmegen)
 	makedev vmegen0 vmegen1 vmegen2 vmegen3
 	;;
 
-vmegen*)
+vmegen[0-9]*)
 	unit=${i#vmegen}
 	mkdev vmegen$unit c %vmegeneric_chr% $(($unit * 16 + 0))
 	;;
@@ -1581,17 +1573,17 @@ wsfont)
 	mkdev wsfont c %wsfont_chr% 0
 	;;
 
-cir*)
+cir[0-9]*)
 	unit=${i#cir}
 	mkdev cir$unit c %cir_chr% $unit 666
 	;;
 
-irframe*)
+irframe[0-9]*)
 	unit=${i#irframe}
 	mkdev irframe$unit c %irframe_chr% $unit
 	;;
 
-fcom*)
+fcom[0-9]*)
 	unit=${i#fcom}
 	mkdev fcom$unit c %fcom_chr% $unit "" "" $u_uucp
 	;;
@@ -1600,7 +1592,7 @@ openfirm)
 	mkdev openfirm c %openfirm_chr% 0 444
 	;;
 
-pad*)
+pad[0-9]*)
 	unit=${i#pad}
 	mkdev pad$unit c %pad_chr% $unit 444
 	;;
@@ -1621,7 +1613,7 @@ nsmb)
 	makedev nsmb0 nsmb1 nsmb2 nsmb3
 	;;
 
-nsmb*)
+nsmb[0-9]*)
 	unit=${i#nsmb}
 	mkdev nsmb$unit c %nsmb_chr% $unit 644
 	;;
@@ -1638,23 +1630,23 @@ veriexec)
 	mkdev veriexec c %veriexec_chr% 0 600
 	;;
 
-ttyv*)
+ttyv[0-9]*)
 	unit=${i#ttyv}
 	mkdev ttyv$unit c %pc_chr% $unit
 	;;
 
 # arm, acorn32
-ttyv*)
+ttyv[0-9]*)
 	unit=${i#ttyv}
 	mkdev ttyv$unit c %physcon_chr% $unit
 	;;
 
-arcpp*)
+arcpp[0-9]*)
 	unit=${i#arcpp}
 	mkdev arcpp$unit c %arcpp_chr% $unit
 	;;
 
-par*)
+par[0-9]*)
 	unit=${i#par}
 	case $unit in
 	0)
@@ -1666,12 +1658,12 @@ par*)
 	esac
 	;;
 
-cpi*)
+cpi[0-9]*)
 	unit=${i#cpi}
 	mkdev cpi$unit c %cpi_chr% $unit
 	;;
 
-ite*|ttye*)
+ite[0-9]*|ttye[0-9]*)
 	case $i in
 	ite*)	unit=${i#ite};;
 	ttye*)	unit=${i#ttye};;
@@ -1679,27 +1671,27 @@ ite*|ttye*)
 	mkdev ttye$unit c %ite_chr% $unit
 	;;
 
-pms*)
+pms[0-9]*)
 	unit=${i#pms}
 	mkdev pms$unit c %opms_chr% $unit
 	;;
 
-qms*)
+qms[0-9]*)
 	unit=${i#qms}
 	mkdev qms$unit c %qms_chr% $unit
 	;;
 
-lms*)
+lms[0-9]*)
 	unit=${i#lms}
 	mkdev lms$unit c %lms_chr% $unit
 	;;
 
-mms*)
+mms[0-9]*)
 	unit=${i#mms}
 	mkdev mms$unit c %mms_chr% $unit
 	;;
 
-mouse-*)
+mouse-pms[0-9]*|mouse-qms[0-9]*)
 	case $i in
 	mouse-pms*) name=pms ;;
 	mouse-qms*) name=qms ;;
@@ -1720,12 +1712,12 @@ vidcconsole0)
 	mkdev vidcconsole0 c %vidcconsole_chr% 0 640
 	;;
 
-view*)
+view[0-9]*)
 	unit=${i#view}
 	mkdev view$unit c %view_chr% $unit 666
 	;;
 
-mouse*)
+mouse[0-9]*)
 	unit=${i#mouse}
 	case $unit in
 	0|1)
@@ -1761,7 +1753,7 @@ ptm)
 	mkdev ptm c %ptm_chr% 1 666
 	;;
 
-grf*)
+grf[0-9]*)
 	unit=${i#grf}
 	mkdev grf$unit c %grf_chr% $unit 666
 	;;
@@ -1770,24 +1762,24 @@ etvme)
 	mkdev etvme c %et_chr% 0
 	;;
 
-leo*)
+leo[0-9]*)
 	unit=${i#leo}
 	mkdev leo$unit c %leo_chr% $unit
 	;;
 
-scif*)
+scif[0-9]*)
 	unit=${i#scif}
 	mkdev scif$unit c %scif_chr% $(($unit + $dialin )) "" "" $u_uucp
 	mkdev dscif$unit c %scif_chr% $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
-sci*)
+sci[0-9]*)
 	unit=${i#sci}
 	mkdev sci$unit c %sci_chr% $(($unit + $dialin )) "" "" $u_uucp
 	mkdev dsci$unit c %sci_chr% $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
-maple*)
+maple[ABCD]|maple[ABCD][0-9]*)
 	case $i in
 	mapleA*) name="mapleA"; unit=0;;
 	mapleB*) name="mapleB"; unit=1;;
@@ -1798,7 +1790,7 @@ maple*)
 	mkdev $name$subunit c %maple_chr% $(($unit * 8 + 0$subunit))
 	;;
 
-mmem*)
+mmem[0-9]*)
 	unit=${i#mmem}
 	for pt in 0	# 1 2 3 4 ... 255
 	do
@@ -1809,7 +1801,7 @@ mmem*)
 	done
 	;;
 
-mlcd*)
+mlcd[0-9]*)
 	unit=${i#mlcd}
 	for pt in 0	# 1 2 3 4 ... 255
 	do
@@ -1817,12 +1809,12 @@ mlcd*)
 	done
 	;;
 
-ixpcom*)
+ixpcom[0-9]*)
 	unit=${i#ixpcom}
 	mkdev ixpcom$unit c %ixpcom_chr% $unit "" "" $u_uucp
 	;;
 
-epcom*)
+epcom[0-9]*)
 	unit=${i#epcom}
 	mkdev epcom$unit c %epcom_chr% $unit "" "" $u_uucp
 	;;
@@ -1835,47 +1827,47 @@ adb)
 	mkdev adb c %aed_chr% 0 666
 	;;
 
-asc*)
+asc[0-9]*)
 	unit=${i#asc}
 	mkdev asc$unit c %asc_chr% $unit 666
 	;;
 
-bwtwo*)
+bwtwo[0-9]*)
 	unit=${i#bwtwo}
 	mkdev bwtwo$unit c %bwtwo_chr% $unit 666
 	;;
 
-cgtwo*)
+cgtwo[0-9]*)
 	unit=${i#cgtwo}
 	mkdev cgtwo$unit c %cgtwo_chr% $unit 666
 	;;
 
-cgthree*)
+cgthree[0-9]*)
 	unit=${i#cgthree}
 	mkdev cgthree$unit c %cgthree_chr% $unit 666
 	;;
 
-cgfour*)
+cgfour[0-9]*)
 	unit=${i#cgfour}
 	mkdev cgfour$unit c %cgfour_chr% $unit 666
 	;;
 
-cgsix*)
+cgsix[0-9]*)
 	unit=${i#cgsix}
 	mkdev cgsix$unit c %cgsix_chr% $unit 666
 	;;
 
-cgeight*)
+cgeight[0-9]*)
 	unit=${i#cgeight}
 	mkdev cgeight$unit c %cgeight_chr% $unit 666
 	;;
 
-tcx*)
+tcx[0-9]*)
 	unit=${i#tcx}
 	mkdev tcx$unit c %tcx_chr% $unit 666
 	;;
 
-xd*|xy*)
+xd[0-9]*|xy[0-9]*)
 	case $i in
 	xd*)	name=xd; unit=${i#xd}; blk=%xd_blk%;	chr=%xd_chr%;;
 	xy*)	name=xy; unit=${i#xy}; blk=%xy_blk%;	chr=%xy_chr%;;
@@ -1883,7 +1875,7 @@ xd*|xy*)
 	%MKDISK% $name $unit $blk $chr
 	;;
 
-magma*)
+magma[0-9]*)
 	unit=${i#magma}
 	if [ 0$unit -gt 3 ]; then
 		warn "bad unit for $i: $unit"
@@ -1906,7 +1898,7 @@ magma*)
 	mkdev bpp${unit}1 c %mbpp_chr% $(($unit * 64 + 1))
 	;;
 
-clcd*)
+clcd[0-9]*)
 	unit=${i#clcd}
 	if [ 0$unit -gt 7 ]; then
 		warn "bad unit for $i: $unit"
@@ -1919,7 +1911,7 @@ clcd*)
 	done
 	;;
 
-spif*)
+spif[0-9]*)
 	unit=${i#spif}
 	if [ 0$unit -gt 3 ]; then
 		warn "bad unit for $i: $unit"
@@ -1932,17 +1924,17 @@ spif*)
 	mkdev bppS${unit}1 c 103 $(($unit * 64 + 1))
 	;;
 
-bpp*)
+bpp[0-9]*)
 	unit=${i#bpp}
 	mkdev bpp$unit c %bpp_chr% $(($unit + 0))
 	;;
 
-tctrl*)
+tctrl[0-9]*)
 	unit=${i#tctrl}
 	mkdev tctrl$unit c %tctrl_chr% $unit 666
 	;;
 
-bmd*)
+bmd[0-9]*)
 	unit=${i#bmd}
 	mkdev bmd${unit}a  b %bmd_blk% $(($unit * 8 + 0)) 640 $g_operator
 	mkdev bmd${unit}c  b %bmd_blk% $(($unit * 8 + 2)) 640 $g_operator
@@ -1954,7 +1946,7 @@ sram)
 	mkdev sram c %sram_chr% 0 644
 	;;
 
-pow*)
+pow[0-9]*)
 	unit=${i#pow}
 	case $unit in
 	0|1)
@@ -1969,18 +1961,18 @@ pow*)
 	esac
 	;;
 
-ttyS*)
+ttyS[0-9]*)
 	unit=${i#ttyS}
 	mkdev ttyS$unit c %sacom_chr% $(($unit + $dialin )) "" "" $u_uucp
 	mkdev dtyS$unit c %sacom_chr% $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
-atabus*)
+atabus[0-9]*)
 	unit=${i#atabus}
 	mkdev atabus$unit c %atabus_chr% $unit 644
 	;;
 
-drm*)
+drm[0-9]*)
 	unit=${i#drm}
 	makedir dri 755
 	mkdev dri/card$unit c %drm_chr% $unit 660
@@ -1994,19 +1986,19 @@ isv)
 	mkdev isv c %isv_chr% 0 644
 	;;
 
-tap*)
+tap|tap[0-9]*)
 	unit=${i#tap}
 	case "$unit" in
 	[0-9]*)
 		mkdev tap${unit} c %tap_chr% ${unit} 600
 		;;
-	*)
+	"")
 		mkdev tap c %tap_chr% 0xfffff 600
 		;;
 	esac
 	;;
 
-fw*)
+fw[0-9]*)
 	unit=${i#fw}
 	for j in 0 1 2 3
 	do
