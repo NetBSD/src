@@ -1,7 +1,7 @@
-/*	$NetBSD: voyagervar.h,v 1.1 2011/08/31 16:47:31 macallan Exp $	*/
+/*	$NetBSD: voyagervar.h,v 1.2 2011/09/06 06:26:13 macallan Exp $	*/
 
 /*
- * Copyright (c) 2009 Michael Lorenz
+ * Copyright (c) 2011 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagervar.h,v 1.1 2011/08/31 16:47:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagervar.h,v 1.2 2011/09/06 06:26:13 macallan Exp $");
 
 #ifndef VOYAGERVAR_H
 #define VOYAGERVAR_H
@@ -41,5 +41,7 @@ struct voyager_attach_args {
 	bus_addr_t		vaa_mem_pa;
 	char			vaa_name[32];
 };
+
+void voyager_write_gpio(void *, uint32_t, uint32_t);
 
 #endif
