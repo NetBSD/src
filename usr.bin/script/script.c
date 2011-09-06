@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.20 2011/06/08 13:51:13 yamt Exp $	*/
+/*	$NetBSD: script.c,v 1.21 2011/09/06 18:29:56 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.20 2011/06/08 13:51:13 yamt Exp $");
+__RCSID("$NetBSD: script.c,v 1.21 2011/09/06 18:29:56 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,26 +73,25 @@ struct stamp {
 	uint32_t scr_direction;	/* 'i', 'o', etc (also indicates endianness) */
 };
 
-FILE	*fscript;
-int	master, slave;
-int	child, subchild;
-int	outcc;
-int	usesleep, rawout;
-int	quiet, flush;
-const char *fname;
+static FILE	*fscript;
+static int	master, slave;
+static int	child, subchild;
+static int	outcc;
+static int	usesleep, rawout;
+static int	quiet, flush;
+static const char *fname;
 
-struct	termios tt;
+static struct	termios tt;
 
-void	done(void);
-void	dooutput(void);
-void	doshell(const char *);
-void	fail(void);
-void	finish(int);
-int	main(int, char **);
-void	scriptflush(int);
-void	record(FILE *, char *, size_t, int);
-void	consume(FILE *, off_t, char *, int);
-void	playback(FILE *);
+__dead static void	done(void);
+__dead static void	dooutput(void);
+__dead static void	doshell(const char *);
+__dead static void	fail(void);
+static void	finish(int);
+static void	scriptflush(int);
+static void	record(FILE *, char *, size_t, int);
+static void	consume(FILE *, off_t, char *, int);
+__dead static void	playback(FILE *);
 
 int
 main(int argc, char *argv[])
@@ -197,7 +196,7 @@ main(int argc, char *argv[])
 	return (0);
 }
 
-void
+static void
 finish(int signo)
 {
 	int die, pid, status;
@@ -211,7 +210,7 @@ finish(int signo)
 		done();
 }
 
-void
+static void
 dooutput(void)
 {
 	struct itimerval value;
@@ -247,7 +246,7 @@ dooutput(void)
 	done();
 }
 
-void
+static void
 scriptflush(int signo)
 {
 	if (outcc) {
@@ -256,7 +255,7 @@ scriptflush(int signo)
 	}
 }
 
-void
+static void
 doshell(const char *command)
 {
 	const char *shell;
@@ -278,16 +277,16 @@ doshell(const char *command)
 	fail();
 }
 
-void
-fail()
+static void
+fail(void)
 {
 
 	(void)kill(0, SIGTERM);
 	done();
 }
 
-void
-done()
+static void
+done(void)
 {
 	time_t tvec;
 
@@ -308,7 +307,7 @@ done()
 	exit(0);
 }
 
-void
+static void
 record(FILE *fp, char *buf, size_t cc, int direction)
 {
 	struct iovec iov[2];
@@ -328,7 +327,7 @@ record(FILE *fp, char *buf, size_t cc, int direction)
 		err(1, "writev");
 }
 
-void
+static void
 consume(FILE *fp, off_t len, char *buf, int reg)
 {
 	size_t l;
@@ -356,7 +355,7 @@ consume(FILE *fp, off_t len, char *buf, int reg)
 	} \
 } while (0/*CONSTCOND*/)
 
-void
+static void
 playback(FILE *fp)
 {
 	struct timespec tsi, tso;
