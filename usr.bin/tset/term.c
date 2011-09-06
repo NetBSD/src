@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.16 2010/02/03 15:34:46 roy Exp $	*/
+/*	$NetBSD: term.c,v 1.17 2011/09/06 18:34:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: term.c,v 1.16 2010/02/03 15:34:46 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.17 2011/09/06 18:34:12 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,10 +48,7 @@ __RCSID("$NetBSD: term.c,v 1.16 2010/02/03 15:34:46 roy Exp $");
 #include <unistd.h>
 #include "extern.h"
 
-char    *tbuf;      		/* Termcap entry. */
-
-const	char *askuser __P((const char *));
-char	*ttys __P((char *));
+static const	char *askuser(const char *);
 
 /*
  * Figure out what kind of terminal we're dealing with, and then read in
@@ -124,9 +121,8 @@ found:
 }
 
 /* Prompt the user for a terminal type. */
-const char *
-askuser(dflt)
-	const char *dflt;
+static const char *
+askuser(const char *dflt)
 {
 	static char answer[256];
 	char *p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tset.c,v 1.19 2010/02/10 10:34:31 roy Exp $	*/
+/*	$NetBSD: tset.c,v 1.20 2011/09/06 18:34:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: tset.c,v 1.19 2010/02/10 10:34:31 roy Exp $");
+__RCSID("$NetBSD: tset.c,v 1.20 2011/09/06 18:34:12 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -47,10 +47,9 @@ __RCSID("$NetBSD: tset.c,v 1.19 2010/02/10 10:34:31 roy Exp $");
 #include <unistd.h>
 #include "extern.h"
 
-int	main __P((int, char *[]));
-void	obsolete __P((char *[]));
-void	report __P((const char *, int, u_int));
-void	usage __P((void));
+static void	obsolete(char *[]);
+static void	report(const char *, int, u_int);
+__dead static void	usage(void);
 
 struct termios mode, oldmode;
 
@@ -58,9 +57,7 @@ int	isreset;		/* invoked as reset */
 int	nlines, ncolumns;	/* window size */
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 #ifdef TIOCGWINSZ
 	struct winsize win;
@@ -221,11 +218,8 @@ main(argc, argv)
 /*
  * Tell the user if a control key has been changed from the default value.
  */
-void
-report(name, which, def)
-	const char *name;
-	int which;
-	u_int def;
+static void
+report(const char *name, int which, u_int def)
 {
 	u_int old, new;
 
@@ -257,8 +251,7 @@ report(name, which, def)
  * This means that -e, -i and -k get default arguments supplied for them.
  */
 void
-obsolete(argv)
-	char *argv[];
+obsolete(char *argv[])
 {
 	static char earg[5] = { '-', 'e', '^', 'H', '\0' };
 	static char iarg[5] = { '-', 'i', '^', 'C', '\0' };
@@ -283,8 +276,8 @@ obsolete(argv)
 	}
 }
 
-void
-usage()
+static void
+usage(void)
 {
 	(void)fprintf(stderr,
 "usage: %s [-EIQrSs] [-] [-e ch] [-i ch] [-k ch] [-m mapping] [terminal]\n",
