@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.12 2011/09/01 14:46:23 jakllsch Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.13 2011/09/06 19:38:23 rjs Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.12 2011/09/01 14:46:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.13 2011/09/06 19:38:23 rjs Exp $");
 
 #include "rnd.h"
 
@@ -190,7 +190,7 @@ struct mvgbec_softc {
 
 	kmutex_t sc_mtx;
 
-	int sc_fix_tqtb;
+	int sc_flags;
 };
 
 struct mvgbe_softc {
@@ -286,6 +286,7 @@ struct mvgbe_port {
 	int irqs[3];
 	int flags;
 #define FLAGS_FIX_TQTB	(1 << 0)
+#define FLAGS_FIX_MTU	(1 << 1)
 } mvgbe_ports[] = {
 	{ MARVELL_DISCOVERY_II,		0, 3, { 32, 33, 34 }, 0 },
 	{ MARVELL_DISCOVERY_III,	0, 3, { 32, 33, 34 }, 0 },
@@ -294,13 +295,13 @@ struct mvgbe_port {
 	{ MARVELL_DISCOVERY_V,		0, ?, { }, 0 },
 	{ MARVELL_DISCOVERY_VI,		0, ?, { }, 0 },
 #endif
-	{ MARVELL_ORION_1_88F5082,	0, 1, { 21 }, 0 },
-	{ MARVELL_ORION_1_88F5180N,	0, 1, { 21 }, 0 },
-	{ MARVELL_ORION_1_88F5181,	0, 1, { 21 }, 0 },
-	{ MARVELL_ORION_1_88F5182,	0, 1, { 21 }, 0 },
-	{ MARVELL_ORION_2_88F5281,	0, 1, { 21 }, 0 },
-	{ MARVELL_ORION_1_88F6082,	0, 1, { 21 }, 0 },
-	{ MARVELL_ORION_1_88W8660,	0, 1, { 21 }, 0 },
+	{ MARVELL_ORION_1_88F5082,	0, 1, { 21 }, FLAGS_FIX_MTU },
+	{ MARVELL_ORION_1_88F5180N,	0, 1, { 21 }, FLAGS_FIX_MTU },
+	{ MARVELL_ORION_1_88F5181,	0, 1, { 21 }, FLAGS_FIX_MTU },
+	{ MARVELL_ORION_1_88F5182,	0, 1, { 21 }, FLAGS_FIX_MTU },
+	{ MARVELL_ORION_2_88F5281,	0, 1, { 21 }, FLAGS_FIX_MTU },
+	{ MARVELL_ORION_1_88F6082,	0, 1, { 21 }, FLAGS_FIX_MTU },
+	{ MARVELL_ORION_1_88W8660,	0, 1, { 21 }, FLAGS_FIX_MTU },
 
 	{ MARVELL_KIRKWOOD_88F6180,	0, 1, { 11 }, FLAGS_FIX_TQTB },
 	{ MARVELL_KIRKWOOD_88F6192,	0, 1, { 11 }, FLAGS_FIX_TQTB },
@@ -380,7 +381,7 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 		    mvgbe_ports[i].unit != mva->mva_unit)
 			continue;
 
-		sc->sc_fix_tqtb = mvgbe_ports[i].flags & FLAGS_FIX_TQTB;
+		sc->sc_flags = mvgbe_ports[i].flags;
 
 		for (j = 0; j < mvgbe_ports[i].ports; j++) {
 			gbea.mva_name = "mvgbe";
@@ -980,7 +981,8 @@ mvgbe_init(struct ifnet *ifp)
 		return ENOBUFS;
 	}
 
-	MVGBE_WRITE(sc, MVGBE_MTU, 0);		/* hw reset value is wrong */
+	if (csc->sc_flags & FLAGS_FIX_MTU)
+		MVGBE_WRITE(sc, MVGBE_MTU, 0);	/* hw reset value is wrong */
 	MVGBE_WRITE(sc, MVGBE_PSC,
 	    MVGBE_PSC_ANFC |			/* Enable Auto-Neg Flow Ctrl */
 	    MVGBE_PSC_RESERVED |		/* Must be set to 1 */
@@ -996,7 +998,7 @@ mvgbe_init(struct ifnet *ifp)
 	MVGBE_WRITE(sc, MVGBE_CRDP(0), MVGBE_RX_RING_ADDR(sc, 0));
 	MVGBE_WRITE(sc, MVGBE_TCQDP, MVGBE_TX_RING_ADDR(sc, 0));
 
-	if (csc->sc_fix_tqtb) {
+	if (csc->sc_flags & FLAGS_FIX_TQTB) {
 		/*
 		 * Queue 0 (offset 0x72700) must be programmed to 0x3fffffff.
 		 * And offset 0x72704 must be programmed to 0x03ffffff.
