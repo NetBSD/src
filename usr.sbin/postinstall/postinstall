@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.123 2011/09/06 14:08:05 jym Exp $
+# $NetBSD: postinstall,v 1.124 2011/09/06 14:13:46 jym Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1649,6 +1649,7 @@ main()
 {
 	TGZLIST=		# quoted list list of tgz files
 	SRC_ARGLIST=		# quoted list of one or more "-s" args
+	SRC_DIR="${SRC_ARG}"	# set default value for early usage()
 	N_SRC_ARGS=0		# number of "-s" args
 	TGZMODE=false		# true if "-s" specifies a tgz file
 	DIRMODE=false		# true if "-s" specified a directory
