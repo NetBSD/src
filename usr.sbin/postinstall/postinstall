@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.124 2011/09/06 14:13:46 jym Exp $
+# $NetBSD: postinstall,v 1.125 2011/09/06 21:39:30 jym Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -747,9 +747,32 @@ do_defaults()
 	op="$1"
 	failed=0
 
+	# Except for i386 and amd64, rc.conf(5) should be the same as the
+	# one obtained from a source directory
+	extra_scripts="rc.conf"
+	if [ "$MACHINE" = "i386" -o "$MACHINE" = "amd64" ]; then
+		if $SOURCEMODE; then
+			extra_scripts=	# clear
+
+			# Generate and compare the correct rc.conf(5) file
+			mkdir "${SCRATCHDIR}/defaults"
+
+			cat "${SRC_DIR}/etc/defaults/rc.conf" \
+			    "${SRC_DIR}/etc/etc.${MACHINE}/rc.conf.append" \
+			    > "${SCRATCHDIR}/defaults/rc.conf"
+
+			compare_dir "${op}" "${SCRATCHDIR}/defaults" \
+			    "${DEST_DIR}/etc/defaults" \
+			    444 \
+			    "rc.conf"
+			failed=$(( ${failed} + $? ))
+		fi
+	fi
+
 	compare_dir "$op" "${SRC_DIR}/etc/defaults" "${DEST_DIR}/etc/defaults" \
 		444 \
-		daily.conf monthly.conf rc.conf security.conf weekly.conf
+		daily.conf monthly.conf security.conf \
+		weekly.conf ${extra_scripts}
 	failed=$(( ${failed} + $? ))
 
 	find_file_in_dirlist pf.boot.conf "pf.boot.conf" \
