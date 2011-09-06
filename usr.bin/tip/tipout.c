@@ -1,4 +1,4 @@
-/*	$NetBSD: tipout.c,v 1.14 2006/12/14 17:09:43 christos Exp $	*/
+/*	$NetBSD: tipout.c,v 1.15 2011/09/06 18:33:01 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tipout.c,v 1.14 2006/12/14 17:09:43 christos Exp $");
+__RCSID("$NetBSD: tipout.c,v 1.15 2011/09/06 18:33:01 joerg Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: tipout.c,v 1.14 2006/12/14 17:09:43 christos Exp $");
 void	intEMT(void);
 void	intIOT(void);
 void	intSYS(void);
-void	intTERM(int);
+__dead static void	intTERM(int);
 
 /*
  * TIPOUT wait state routine --
@@ -96,7 +96,7 @@ intEMT(void)
 	(void)write(repdes[1], &reply, 1);	/* Now coprocess waits for us */
 }
 
-void
+static void
 /*ARGSUSED*/
 intTERM(int dummy __unused)
 {

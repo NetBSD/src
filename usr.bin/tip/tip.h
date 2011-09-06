@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.31 2010/01/28 14:15:18 mbalmer Exp $	*/
+/*	$NetBSD: tip.h,v 1.32 2011/09/06 18:33:01 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -264,7 +264,7 @@ extern unsigned char	evenpartab[];
 void	alrmtimeout(int);
 int	any(char, const char *);
 void	chdirectory(char);
-void	cleanup(int);
+void	cleanup(int) __dead;
 const char   *tip_connect(void);
 void	consh(char);
 char   *ctrl(char);
@@ -273,7 +273,7 @@ void	cu_put(char);
 void	cu_take(char);
 void	disconnect(const char *);
 char   *expand(char *);
-void	finish(char);
+void	finish(char) __dead;
 void	genbrk(char);
 void	getfl(char);
 char   *getremote(char *);
@@ -293,8 +293,8 @@ void	setscript(void);
 void	shell(char);
 void	suspend(char);
 void	tandem(const char *);
-void	tipabort(const char *);
-void	tipout(void);
+void	tipabort(const char *) __dead;
+void	tipout(void) __dead;
 int	ttysetup(speed_t);
 void	unraw(void);
 void	variable(char);
