@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.17 2011/08/18 11:29:27 christos Exp $ */
+/* $NetBSD: unzip.c,v 1.18 2011/09/06 18:42:13 joerg Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.17 2011/08/18 11:29:27 christos Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.18 2011/09/06 18:42:13 joerg Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -98,7 +98,7 @@ static int		 tty;
 static int noeol;
 
 /* fatal error message + errno */
-static void
+__dead __printflike(1, 2) static void
 error(const char *fmt, ...)
 {
 	va_list ap;
@@ -115,7 +115,7 @@ error(const char *fmt, ...)
 }
 
 /* fatal error message, no errno */
-static void
+__dead __printflike(1, 2) static void
 errorx(const char *fmt, ...)
 {
 	va_list ap;
@@ -133,7 +133,7 @@ errorx(const char *fmt, ...)
 
 #if 0
 /* non-fatal error message + errno */
-static void
+__printflike(1, 2) static void
 warning(const char *fmt, ...)
 {
 	va_list ap;
@@ -148,9 +148,8 @@ warning(const char *fmt, ...)
 	fprintf(stderr, ": %s\n", strerror(errno));
 }
 #endif
-
 /* non-fatal error message, no errno */
-static void
+__printflike(1, 2) static void
 warningx(const char *fmt, ...)
 {
 	va_list ap;
@@ -166,7 +165,7 @@ warningx(const char *fmt, ...)
 }
 
 /* informational message (if not -q) */
-static void
+__printflike(1, 2) static void
 info(const char *fmt, ...)
 {
 	va_list ap;
@@ -185,7 +184,7 @@ info(const char *fmt, ...)
 }
 
 /* debug message (if unzip_debug) */
-static void
+__printflike(1, 2) static void
 debug(const char *fmt, ...)
 {
 	va_list ap;
@@ -580,7 +579,7 @@ recheck:
 		/* simple case */
 		if (!a_opt || !text) {
 			if (write(fd, buffer, len) != len)
-				error("write('%s')", path);
+				error("write('%s')", *path);
 			continue;
 		}
 
@@ -946,7 +945,7 @@ unzip(const char *fn)
 
 	if (t_opt) {
 		if (error_count > 0) {
-			errorx("%d checksum error(s) found.", error_count);
+			errorx("%jd checksum error(s) found.", error_count);
 		}
 		else {
 			printf("No errors detected in compressed data of %s.\n",
