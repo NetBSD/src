@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.56 2011/09/06 08:44:39 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.57 2011/09/06 09:37:41 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.56 2011/09/06 08:44:39 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.57 2011/09/06 09:37:41 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -104,6 +104,8 @@ vaddr_t kmem_ext_start, kmem_ext_end;
 vaddr_t kmem_user_start, kmem_user_end;
 vaddr_t kmem_ext_cur_start, kmem_ext_cur_end;
 
+#define SPARSE_MEMFILE
+
 void
 pmap_bootstrap(void)
 {
@@ -119,7 +121,6 @@ pmap_bootstrap(void)
 	vaddr_t va;
 	uintptr_t pg;
 	void *addr;
-	char dummy;
 	int err;
 
 	extern void _init(void);	/* start of kernel               */
@@ -188,7 +189,7 @@ pmap_bootstrap(void)
 	aprint_debug("\tkmem_ext_end\t%p\n",    (void *) kmem_ext_end);
 	aprint_debug("\tkmem_user_start\t%p\n", (void *) kmem_user_start);
 	aprint_debug("\tkmem_user_end\t%p\n",   (void *) kmem_user_end);
-	aprint_debug("\n\n\n");
+	aprint_debug("\n\n");
 
 	aprint_debug("Creating memory mapped backend\n");
 
@@ -203,9 +204,32 @@ pmap_bootstrap(void)
 
 	/* file_len is the backing store length, nothing to do with placement */
 	file_len = 1024 * MEMSIZE;
-	wlen = thunk_pwrite(mem_fh, &dummy, 1, file_len - 1);
-	if (wlen != 1)
-		panic("pmap_bootstrap: can't grow file\n");
+
+#ifdef SPARSE_MEMFILE
+	{
+		char dummy;
+
+		wlen = thunk_pwrite(mem_fh, &dummy, 1, file_len - 1);
+		if (wlen != 1)
+			panic("pmap_bootstrap: can't grow file\n");
+	}
+#else
+	{
+		void *block;
+
+		printf("Creating memory file\r");
+		block = thunk_malloc(PAGE_SIZE);
+		if (!block)
+			panic("pmap_bootstrap: can't malloc writeout block");
+
+		for (pg = 0; pg < file_len; pg += PAGE_SIZE) {
+			wlen = thunk_pwrite(mem_fh, block, PAGE_SIZE, pg);
+			if (wlen != PAGE_SIZE)
+				panic("pmap_bootstrap: write fails, disc full?");
+		}
+		thunk_free(block);
+	}
+#endif
 
 	/* protect the current kernel section */
 	/* XXX kernel stack? */
