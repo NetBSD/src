@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.23 2008/07/21 14:19:28 lukem Exp $	*/
+/*	$NetBSD: whatis.c,v 1.24 2011/09/06 18:46:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: whatis.c,v 1.23 2008/07/21 14:19:28 lukem Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.24 2011/09/06 18:46:03 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,11 +62,10 @@ __RCSID("$NetBSD: whatis.c,v 1.23 2008/07/21 14:19:28 lukem Exp $");
 
 static int *found, foundman;
 
-int	main(int, char **);
-void	dashtrunc(char *, char *);
-int	match(char *, char *);
-void	usage(void);
-void	whatis(char **, char *, int);
+static void	dashtrunc(char *, char *);
+static int	match(char *, char *);
+__dead static void	usage(void);
+static void	whatis(char **, char *, int);
 
 int
 main(int argc, char **argv)
@@ -147,7 +146,7 @@ main(int argc, char **argv)
 	exit(rv);
 }
 
-void
+static void
 whatis(char **argv, char *path, int buildpath)
 {
 	char *end, *name, **p;
@@ -190,7 +189,7 @@ whatis(char **argv, char *path, int buildpath)
  * match --
  *	match a full word
  */
-int
+static int
 match(char *bp, char *str)
 {
 	int len;
@@ -227,7 +226,7 @@ match(char *bp, char *str)
  * dashtrunc --
  *	truncate a string at " - "
  */
-void
+static void
 dashtrunc(char *from, char *to)
 {
 	int ch;
@@ -242,7 +241,7 @@ dashtrunc(char *from, char *to)
  * usage --
  *	print usage message and die
  */
-void
+static void
 usage(void)
 {
 	(void)fprintf(stderr,
