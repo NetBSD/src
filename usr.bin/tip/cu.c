@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.20 2006/12/14 17:09:43 christos Exp $	*/
+/*	$NetBSD: cu.c,v 1.21 2011/09/06 18:33:01 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,13 +36,13 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.20 2006/12/14 17:09:43 christos Exp $");
+__RCSID("$NetBSD: cu.c,v 1.21 2011/09/06 18:33:01 joerg Exp $");
 #endif /* not lint */
 
 #include "tip.h"
 
-static void cuhelp(void);
-static void cuusage(void);
+__dead static void cuhelp(void);
+__dead static void cuusage(void);
 
 /*
  * Botch the interface to look like cu's

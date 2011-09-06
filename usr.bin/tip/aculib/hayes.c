@@ -1,4 +1,4 @@
-/*	$NetBSD: hayes.c,v 1.16 2009/01/18 07:12:39 lukem Exp $	*/
+/*	$NetBSD: hayes.c,v 1.17 2011/09/06 18:33:01 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: hayes.c,v 1.16 2009/01/18 07:12:39 lukem Exp $");
+__RCSID("$NetBSD: hayes.c,v 1.17 2011/09/06 18:33:01 joerg Exp $");
 #endif /* not lint */
 
 /*
@@ -73,7 +73,7 @@ static	void	error_rep(char);
 static	char	gobble(const char *);
 static	void	goodbye(void);
 static	int	hay_sync(void);
-static	void	sigALRM(int);
+__dead static	void	sigALRM(int);
 
 int
 /*ARGSUSED*/
