@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.141 2011/09/06 10:54:03 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.142 2011/09/06 13:34:44 apb Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -984,6 +984,7 @@ wskbd[0-9]*)
 
 fd)
 	if ! $fdesc_mounted; then
+		# Create the "fd" subdirectory, and devices "fd/0" to "fd/63"
 		makedir fd 755
 		n=0
 		while [ $n -lt 64 ]
@@ -1095,16 +1096,14 @@ xbd[0-9]*)
 
 dk[0-9]*)
 	name=dk; unit=${i#dk}; blk=%dk_blk%; chr=%dk_chr%
-	minor=0
-	while [ $minor -le ${i#dk} ]
-	do
-		mkdev r$name$minor c $chr $minor 0640 $g_operator
-		mkdev $name$minor b $blk  $minor 0640 $g_operator
-		minor=$(($minor + 1))
-	done
+	mkdev r$name$unit c $chr $unit 0640 $g_operator
+	mkdev $name$unit b $blk  $unit 0640 $g_operator
 	;;
 
 ttyCY[0-9]*)
+	# Each unit number creates 32 pairs of {tty,dty} device nodes:
+	# ttyCY0 => device nodes [td]tyCY000 to [td]tyCY031;
+	# ttyCY1 => device nodes [td]tyCY032 to [td]tyCY063;
 	name=tyCY; chr=%cy_chr%; off=32
 	unit=${i#t${name}}
 	minor=$(($unit * $off))
@@ -1120,6 +1119,9 @@ ttyCY[0-9]*)
 	;;
 
 ttyCZ[0-9]*)
+	# Each unit number creates 64 pairs of {tty,dty} device nodes:
+	# ttyCZ0 => device nodes [td]tyCZ0000 to [td]tyCZ0063;
+	# ttyCZ1 => device nodes [td]tyCZ0064 to [td]tyCZ0127;
 	name=tyCZ; chr=%cz_chr%; off=64
 	unit=${i#t${name}}
 	minor=$(($unit * $off))
@@ -1180,6 +1182,8 @@ ttyZ[0-9]*)
 	;;
 
 opty)
+	# Create 16 device nodes, [pt]typ0 to [pt]typf,
+	# same as "MAKEDEV pty0".
 	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
 	do
 		case $j in
@@ -1197,6 +1201,12 @@ opty)
 	;;
 
 pty[0-9]*)
+	# Each unit number creates up to 16 pairs of {tty,pty} device nodes:
+	# pty0 => 16 pairs, [tp]typ0 to [tp]typf
+	# pty1 => 16 pairs, [tp]tyq0 to [tp]tyqf
+	# pty16 => 16 pairs, [tp]typg to [tp]typv
+	# pty17 => 16 pairs, [tp]typw to [tp]typL
+	# pty18 => 14 pairs, [tp]typM to [tp]typZ
 	class=${i#pty}
 	d1="p q r s t u v w x y z P Q R S T"
 	if [ "$class" -ge 64 ]
@@ -1205,10 +1215,12 @@ pty[0-9]*)
 		continue
 	elif [ "$class" -lt 16 ]
 	then
+		# pty[p-zP-T][0-9a-f]
 		offset=0
 		mult=0
 		d2="0 1 2 3 4 5 6 7 8 9 a b c d e f"
 	else
+		# pty[p-zP-T][g-zA-Z]
 		class=$(($class - 16))
 		offset=256
 		mult=2
