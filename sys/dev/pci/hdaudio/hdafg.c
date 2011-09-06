@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.3 2011/09/06 01:51:44 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.4 2011/09/06 11:14:17 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.3 2011/09/06 01:51:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.4 2011/09/06 11:14:17 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3049,6 +3049,9 @@ hdafg_stream_connect(struct hdafg_softc *sc, int mode)
 	else
 		fmt = hdaudio_stream_param(sc->sc_audiodev.ad_capture,
 		    &sc->sc_rparam);
+
+	if (fmt & HDAUDIO_FMT_TYPE_NONPCM)
+		dfmt |= COP_DIGITAL_CONVCTRL1_NAUDIO;
 
 	for (i = 0; i < sc->sc_nassocs; i++) {
 		if (as[i].as_enable == false)
