@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.29 2011/02/22 15:03:30 pooka Exp $	*/
+/*	$NetBSD: touch.c,v 1.30 2011/09/06 18:33:18 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.29 2011/02/22 15:03:30 pooka Exp $");
+__RCSID("$NetBSD: touch.c,v 1.30 2011/09/06 18:33:18 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,24 +57,20 @@ __RCSID("$NetBSD: touch.c,v 1.29 2011/02/22 15:03:30 pooka Exp $");
 #include <tzfile.h>
 #include <unistd.h>
 
-int	main __P((int, char **));
-int	rw __P((char *, struct stat *, int));
-void	stime_arg1 __P((char *, struct timeval *));
-void	stime_arg2 __P((char *, int, struct timeval *));
-void	stime_file __P((char *, struct timeval *));
-void	usage __P((void));
+static void	stime_arg1(char *, struct timeval *);
+static void	stime_arg2(char *, int, struct timeval *);
+static void	stime_file(char *, struct timeval *);
+__dead static void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat sb;
 	struct timeval tv[2];
 	int aflag, cflag, hflag, mflag, ch, fd, len, rval, timeset;
 	char *p;
-	int (*change_file_times) __P((const char *, const struct timeval *));
-	int (*get_file_status) __P((const char *, struct stat *));
+	int (*change_file_times)(const char *, const struct timeval *);
+	int (*get_file_status)(const char *, struct stat *);
 
 	setlocale(LC_ALL, "");
 
@@ -197,10 +193,8 @@ main(argc, argv)
 
 #define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
 
-void
-stime_arg1(arg, tvp)
-	char *arg;
-	struct timeval *tvp;
+static void
+stime_arg1(char *arg, struct timeval *tvp)
 {
 	struct tm *t;
 	time_t tmptime;
@@ -263,11 +257,8 @@ terr:		errx(1,
 	tvp[0].tv_usec = tvp[1].tv_usec = 0;
 }
 
-void
-stime_arg2(arg, year, tvp)
-	char *arg;
-	int year;
-	struct timeval *tvp;
+static void
+stime_arg2(char *arg, int year, struct timeval *tvp)
 {
 	struct tm *t;
 	time_t tmptime;
@@ -299,10 +290,8 @@ stime_arg2(arg, year, tvp)
 	tvp[0].tv_usec = tvp[1].tv_usec = 0;
 }
 
-void
-stime_file(fname, tvp)
-	char *fname;
-	struct timeval *tvp;
+static void
+stime_file(char *fname, struct timeval *tvp)
 {
 	struct stat sb;
 
@@ -312,8 +301,8 @@ stime_file(fname, tvp)
 	TIMESPEC_TO_TIMEVAL(&tvp[1], &sb.st_mtimespec);
 }
 
-__dead void
-usage()
+static void
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: touch [-acfhm] [-r file] [-t time] file ...\n");
