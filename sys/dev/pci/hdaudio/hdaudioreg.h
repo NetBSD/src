@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudioreg.h,v 1.6 2011/09/06 01:51:44 jmcneill Exp $ */
+/* $NetBSD: hdaudioreg.h,v 1.7 2011/09/06 10:48:28 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -123,6 +123,9 @@
 #define	HDAUDIO_SD_FIFOW(x) 	HDAUDIO_SD_REG(0x0e, x)
 #define	HDAUDIO_SD_FIFOS(x) 	HDAUDIO_SD_REG(0x10, x)
 #define	HDAUDIO_SD_FMT(x)	HDAUDIO_SD_REG(0x12, x)
+#define	 HDAUDIO_FMT_TYPE_MASK	 0x8000
+#define	  HDAUDIO_FMT_TYPE_PCM	  0x0000
+#define	  HDAUDIO_FMT_TYPE_NONPCM 0x8000
 #define	 HDAUDIO_FMT_BASE_MASK	 0x4000
 #define	  HDAUDIO_FMT_BASE_48	  0x0000
 #define	  HDAUDIO_FMT_BASE_44	  0x4000
