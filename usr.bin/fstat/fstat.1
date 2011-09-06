@@ -1,4 +1,4 @@
-.\"	$NetBSD: fstat.1,v 1.27 2011/09/05 18:27:31 wiz Exp $
+.\"	$NetBSD: fstat.1,v 1.28 2011/09/06 11:31:47 christos Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
 .\"
-.Dd September 3, 2011
+.Dd September 5, 2011
 .Dt FSTAT 1
 .Os
 .Sh NAME
@@ -64,14 +64,7 @@ directory
 .Pa /usr/src
 resides, type
 .Dq Li fstat -f /usr/src .
-Note that this will not list
-.Dv AF_LOCAL
-domain sockets open in the file system.
-To find all the
-.Dv AF_LOCAL
-domain sockets, use
-.Nm
-to list all the sockets, and look for the ones that belong in the file system.
+Please see the BUGS section for issues with this option.
 .It Fl M
 Extract values associated with the name list from the specified core
 instead of the default
@@ -207,9 +200,11 @@ The remaining fields are protocol dependent.
 For TCP, it is the address of the tcpcb, and for UDP, the inpcb (socket pcb).
 For
 .Ux
-domain sockets, its the address of the socket pcb and the address
-of the connected pcb (if connected).
-Otherwise the protocol number and address of the socket itself are printed.
+domain sockets, its the address of the socket pcb and the name of the
+file if available.
+Otherwise the address of the connected pcb is printed (if connected).
+For other domains, the protocol number and address of the socket itself
+are printed.
 The attempt is to make enough information available to
 permit further analysis without duplicating
 .Xr netstat 1 .
@@ -219,10 +214,11 @@ For example, the addresses mentioned above are the addresses which the
 command would print for TCP, UDP, and
 .Ux
 domain.
-Note that since pipes are implemented using sockets, a pipe appears as a
-connected
+For kernels compiled with 
+.Dv PIPE_SOCKETPAIR
+pipes appear as connected
 .Ux
-domain stream socket.
+domain stream sockets.
 A unidirectional
 .Ux
 domain socket indicates the direction of flow with an arrow
@@ -268,3 +264,16 @@ descriptor changes,
 .Nm
 does not attempt to translate the internet address and port numbers into
 symbolic names.
+.Pp
+Note that the
+.Fl f
+option will not list
+.Ux
+domain sockets open in the file system, because the pathnames in the sockets
+may not be absolute and are not deterministic.
+To find all the
+.Ux
+domain sockets, use
+.Nm
+to list all the sockets, and look for the ones that maybe belong in the
+file system.
