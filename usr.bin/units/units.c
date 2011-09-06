@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.16 2009/04/14 05:55:12 lukem Exp $	*/
+/*	$NetBSD: units.c,v 1.17 2011/09/06 18:35:41 joerg Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -39,9 +39,9 @@
 
 #define PRIMITIVECHAR '!'
 
-const char *powerstring = "^";
+static const char *powerstring = "^";
 
-struct {
+static struct {
 	const char *uname;
 	const char *uval;
 }      unittable[MAXUNITS];
@@ -58,36 +58,34 @@ struct {
 }      prefixtable[MAXPREFIXES];
 
 
-const char *NULLUNIT = "";
+static const char *NULLUNIT = "";
 
-int unitcount;
-int prefixcount;
-
-
-int	addsubunit __P((const char *[], const char *));
-int	addunit __P((struct unittype *, const char *, int));
-void	cancelunit __P((struct unittype *));
-int	compare __P((const void *, const void *));
-int	compareproducts __P((const char **, const char **));
-int	compareunits __P((struct unittype *, struct unittype *));
-int	compareunitsreciprocal __P((struct unittype *, struct unittype *));
-int	completereduce __P((struct unittype *));
-void	initializeunit __P((struct unittype *));
-int	main __P((int, char **));
-void	readerror __P((int));
-void	readunits __P((const char *));
-int	reduceproduct __P((struct unittype *, int));
-int	reduceunit __P((struct unittype *));
-void	showanswer __P((struct unittype *, struct unittype *));
-void	showunit __P((struct unittype *));
-void	sortunit __P((struct unittype *));
-void	usage __P((void));
-void	zeroerror __P((void));
-char   *dupstr __P((const char *));
-const char *lookupunit __P((const char *));
+static int unitcount;
+static int prefixcount;
 
 
-char *
+static int	addsubunit(const char *[], const char *);
+static int	addunit(struct unittype *, const char *, int);
+static void	cancelunit(struct unittype *);
+static int	compare(const void *, const void *);
+static int	compareproducts(const char **, const char **);
+static int	compareunits(struct unittype *, struct unittype *);
+static int	compareunitsreciprocal(struct unittype *, struct unittype *);
+static int	completereduce(struct unittype *);
+static void	initializeunit(struct unittype *);
+static void	readerror(int);
+static void	readunits(const char *);
+static int	reduceproduct(struct unittype *, int);
+static int	reduceunit(struct unittype *);
+static void	showanswer(struct unittype *, struct unittype *);
+static void	showunit(struct unittype *);
+static void	sortunit(struct unittype *);
+__dead static void	usage(void);
+static void	zeroerror(void);
+static char   *dupstr(const char *);
+static const char *lookupunit(const char *);
+
+static char *
 dupstr(const char *str)
 {
 	char *ret;
@@ -99,14 +97,14 @@ dupstr(const char *str)
 }
 
 
-void 
+static void
 readerror(int linenum)
 {
 	warnx("Error in units file '%s' line %d", UNITSFILE, linenum);
 }
 
 
-void 
+static void
 readunits(const char *userfile)
 {
 	FILE *unitfile;
@@ -221,15 +219,14 @@ readunits(const char *userfile)
 	fclose(unitfile);
 }
 
-void 
+static void
 initializeunit(struct unittype * theunit)
 {
 	theunit->factor = 1.0;
 	theunit->numerator[0] = theunit->denominator[0] = NULL;
 }
 
-
-int 
+static int
 addsubunit(const char *product[], const char *toadd)
 {
 	const char **ptr;
@@ -245,8 +242,7 @@ addsubunit(const char *product[], const char *toadd)
 	return 0;
 }
 
-
-void 
+static void
 showunit(struct unittype * theunit)
 {
 	const char **ptr;
@@ -291,8 +287,7 @@ showunit(struct unittype * theunit)
 	printf("\n");
 }
 
-
-void 
+static void
 zeroerror()
 {
 	warnx("Unit reduces to zero");
@@ -305,7 +300,7 @@ zeroerror()
    Returns 0 for successful addition, nonzero on error.
 */
 
-int 
+static int
 addunit(struct unittype * theunit, const char *toadd, int flip)
 {
 	char *scratch, *savescr;
@@ -389,16 +384,14 @@ addunit(struct unittype * theunit, const char *toadd, int flip)
 	return 0;
 }
 
-
-int 
+static int
 compare(const void *item1, const void *item2)
 {
 	return strcmp(*(const char * const *) item1,
 		      *(const char * const *) item2);
 }
 
-
-void 
+static void
 sortunit(struct unittype * theunit)
 {
 	const char **ptr;
@@ -410,8 +403,7 @@ sortunit(struct unittype * theunit)
 	qsort(theunit->denominator, count, sizeof(char *), compare);
 }
 
-
-void 
+static void
 cancelunit(struct unittype * theunit)
 {
 	const char **den, **num;
@@ -447,7 +439,7 @@ cancelunit(struct unittype * theunit)
 static char buffer[100];	/* buffer for lookupunit answers with
 				   prefixes */
 
-const char *
+static const char *
 lookupunit(const char *unit)
 {
 	int i;
@@ -522,7 +514,7 @@ lookupunit(const char *unit)
 
 #define ERROR 4
 
-int 
+static int
 reduceproduct(struct unittype * theunit, int flip)
 {
 
@@ -565,7 +557,7 @@ reduceproduct(struct unittype * theunit, int flip)
    Returns 0 on success, or 1 on unknown unit error.
 */
 
-int 
+static int
 reduceunit(struct unittype * theunit)
 {
 	int ret;
@@ -579,8 +571,7 @@ reduceunit(struct unittype * theunit)
 	return 0;
 }
 
-
-int 
+static int
 compareproducts(const char **one, const char **two)
 {
 	while (*one || *two) {
@@ -603,7 +594,7 @@ compareproducts(const char **one, const char **two)
 
 /* Return zero if units are compatible, nonzero otherwise */
 
-int 
+static int
 compareunits(struct unittype * first, struct unittype * second)
 {
 	return
@@ -611,7 +602,7 @@ compareunits(struct unittype * first, struct unittype * second)
 	compareproducts(first->denominator, second->denominator);
 }
 
-int 
+static int
 compareunitsreciprocal(struct unittype * first, struct unittype * second)
 {
 	return
@@ -620,7 +611,7 @@ compareunitsreciprocal(struct unittype * first, struct unittype * second)
 }
 
 
-int 
+static int
 completereduce(struct unittype * unit)
 {
 	if (reduceunit(unit))
@@ -631,7 +622,7 @@ completereduce(struct unittype * unit)
 }
 
 
-void 
+static void
 showanswer(struct unittype * have, struct unittype * want)
 {
 	if (compareunits(have, want)) {
@@ -651,8 +642,8 @@ showanswer(struct unittype * have, struct unittype * want)
 }
 
 
-void 
-usage()
+static void
+usage(void)
 {
 	fprintf(stderr,
 	    "\nunits [-f unitsfile] [-q] [-v] [from-unit to-unit]\n");
@@ -661,7 +652,6 @@ usage()
 	fprintf(stderr, "    -v print version number\n");
 	exit(3);
 }
-
 
 int
 main(int argc, char **argv)
