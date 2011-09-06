@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.96 2011/06/12 03:36:04 rmind Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.97 2011/09/06 16:41:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.96 2011/06/12 03:36:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97 2011/09/06 16:41:55 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -250,7 +250,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 				UVMHIST_LOG(ubchist, "noalloc", 0,0,0,0);
 				return 0;
 			}
-			pg = uvm_pagealloc(uobj, offset, NULL, 0);
+			pg = uvm_pagealloc(uobj, offset, NULL,
+			    UVM_FLAG_COLORMATCH);
 			if (pg == NULL) {
 				if (flags & UFP_NOWAIT) {
 					UVMHIST_LOG(ubchist, "nowait",0,0,0,0);
@@ -261,7 +262,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 				mutex_enter(uobj->vmobjlock);
 				continue;
 			}
-			UVMHIST_LOG(ubchist, "alloced %p", pg,0,0,0);
+			UVMHIST_LOG(ubchist, "alloced %p (color %u)", pg,
+			    VM_PGCOLOR_BUCKET(pg), 0,0);
 			break;
 		} else if (flags & UFP_NOCACHE) {
 			UVMHIST_LOG(ubchist, "nocache",0,0,0,0);
@@ -275,7 +277,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 				return 0;
 			}
 			pg->flags |= PG_WANTED;
-			UVMHIST_LOG(ubchist, "wait %p", pg,0,0,0);
+			UVMHIST_LOG(ubchist, "wait %p (color %u)", pg,
+			    VM_PGCOLOR_BUCKET(pg), 0,0);
 			UVM_UNLOCK_AND_WAIT(pg, uobj->vmobjlock, 0,
 					    "uvn_fp2", 0);
 			mutex_enter(uobj->vmobjlock);
@@ -302,7 +305,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 		/* mark the page BUSY and we're done. */
 		pg->flags |= PG_BUSY;
 		UVM_PAGE_OWN(pg, "uvn_findpage");
-		UVMHIST_LOG(ubchist, "found %p", pg,0,0,0);
+		UVMHIST_LOG(ubchist, "found %p (color %u)",
+		    pg, VM_PGCOLOR_BUCKET(pg), 0,0);
 		break;
 	}
 	*pgp = pg;
