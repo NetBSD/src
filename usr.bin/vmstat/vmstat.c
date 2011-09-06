@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.182 2011/07/26 13:24:38 yamt Exp $ */
+/* $NetBSD: vmstat.c,v 1.183 2011/09/06 18:44:46 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.182 2011/07/26 13:24:38 yamt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.183 2011/09/06 18:44:46 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -316,7 +316,7 @@ void	getnlist(int);
 long	getuptime(void);
 void	printhdr(void);
 long	pct(long, long);
-void	usage(void);
+__dead static void	usage(void);
 void	doforkst(void);
 
 void	hist_traverse(int, const char *);
@@ -1881,7 +1881,7 @@ hist_dodump(struct kern_history *histp)
 		free(fn);
 }
 
-void
+static void
 usage(void)
 {
 
