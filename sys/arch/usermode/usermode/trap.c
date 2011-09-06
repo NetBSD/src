@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.28 2011/09/05 21:38:05 jmcneill Exp $ */
+/* $NetBSD: trap.c,v 1.29 2011/09/06 09:38:27 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28 2011/09/05 21:38:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.29 2011/09/06 09:38:27 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -165,6 +165,14 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		va = (vaddr_t) info->si_addr;
 		va = trunc_page(va);
 
+		/* sanity */
+		if ((va < VM_MIN_ADDRESS) || (va >= VM_MAX_ADDRESS))
+			panic("peeing outside the box! (va=%p)", (void *)va);
+
+		/* extra debug for now -> should issue signal */
+		if (va == 0)
+			panic("NULL deref\n");
+
 		kmem = 1;
 		vm_map = kernel_map;
 		if ((va >= VM_MIN_ADDRESS) && (va < VM_MAXUSER_ADDRESS)) {
@@ -186,14 +194,6 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 			rv = uvm_fault(vm_map, va, atype);
 			pcb->pcb_onfault = onfault;
 		}
-
-		/* sanity */
-		if ((va < VM_MIN_ADDRESS) || (va >= VM_MAX_ADDRESS))
-			panic("peeing outside the box! (va=%p)", (void *)va);
-
-		/* extra debug for now */
-		if (va == 0)
-			panic("NULL deref\n");
 
 #if 0
 	if (old_old_va)
