@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudioreg.h,v 1.5 2011/02/12 15:15:34 jmcneill Exp $ */
+/* $NetBSD: hdaudioreg.h,v 1.6 2011/09/06 01:51:44 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -183,6 +183,9 @@
 #define	   COP_AWCAP_TYPE_VENDOR_DEFINED	   0xf
 #define	 COP_SUPPORTED_PCM_SIZE_RATES		 0x0a
 #define	 COP_SUPPORTED_STREAM_FORMATS		 0x0b
+#define	  COP_STREAM_FORMAT_PCM			  (1 << 0)
+#define	  COP_STREAM_FORMAT_FLOAT32		  (1 << 1)
+#define	  COP_STREAM_FORMAT_AC3			  (1 << 2)
 #define	 COP_PIN_CAPABILITIES			 0x0c
 #define	  COP_PINCAP_IMPEDANCE_SENSE_CAPABLE	  (1 << 0)
 #define	  COP_PINCAP_TRIGGER_REQD		  (1 << 1)
