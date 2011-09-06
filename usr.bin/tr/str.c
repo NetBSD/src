@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.12 2009/04/13 23:50:49 lukem Exp $	*/
+/*	$NetBSD: str.c,v 1.13 2011/09/06 18:33:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.12 2009/04/13 23:50:49 lukem Exp $");
+__RCSID("$NetBSD: str.c,v 1.13 2011/09/06 18:33:46 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,17 +49,16 @@ __RCSID("$NetBSD: str.c,v 1.12 2009/04/13 23:50:49 lukem Exp $");
 
 #include "extern.h"
 
-static int	backslash __P((STR *));
-static int	bracket __P((STR *));
-static int	c_class __P((const void *, const void *));
-static void	genclass __P((STR *));
-static void	genequiv __P((STR *));
-static int	genrange __P((STR *));
-static void	genseq __P((STR *));
+static int	backslash(STR *);
+static int	bracket(STR *);
+static int	c_class(const void *, const void *);
+static void	genclass(STR *);
+static void	genequiv(STR *);
+static int	genrange(STR *);
+static void	genseq(STR *);
 
 int
-next(s)
-	STR *s;
+next(STR *s)
 {
 	int ch;
 
@@ -115,8 +114,7 @@ next(s)
 }
 
 static int
-bracket(s)
-	STR *s;
+bracket(STR *s)
 {
 	char *p;
 
@@ -149,11 +147,11 @@ bracket(s)
 
 typedef struct {
 	const char *name;
-	int (*func) __P((int));
+	int (*func)(int);
 	int *set;
 } CLASS;
 
-static CLASS classes[] = {
+static const CLASS classes[] = {
 	{ "alnum",  isalnum,  NULL, },
 	{ "alpha",  isalpha,  NULL, },
 	{ "blank",  isblank,  NULL, },
@@ -169,10 +167,9 @@ static CLASS classes[] = {
 };
 
 static void
-genclass(s)
-	STR *s;
+genclass(STR *s)
 {
-	int cnt, (*func) __P((int));
+	int cnt, (*func)(int);
 	CLASS *cp, tmp;
 	int *p;
 
@@ -195,8 +192,7 @@ genclass(s)
 }
 
 static int
-c_class(a, b)
-	const void *a, *b;
+c_class(const void *a, const void *b)
 {
 	return (strcmp(((const CLASS *)a)->name, ((const CLASS *)b)->name));
 }
@@ -206,8 +202,7 @@ c_class(a, b)
  * we just syntax check and grab the character.
  */
 static void
-genequiv(s)
-	STR *s;
+genequiv(STR *s)
 {
 	if (*s->str == '\\') {
 		s->equiv[0] = backslash(s);
@@ -225,8 +220,7 @@ genequiv(s)
 }
 
 static int
-genrange(s)
-	STR *s;
+genrange(STR *s)
 {
 	int stopval;
 	char *savestart;
@@ -244,8 +238,7 @@ genrange(s)
 }
 
 static void
-genseq(s)
-	STR *s;
+genseq(STR *s)
 {
 	char *ep;
 
@@ -287,8 +280,7 @@ genseq(s)
  * an escape code or a literal character.
  */
 static int
-backslash(s)
-	STR *s;
+backslash(STR *s)
 {
 	int ch, cnt, val;
 
