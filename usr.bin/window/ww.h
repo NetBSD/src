@@ -1,4 +1,4 @@
-/*	$NetBSD: ww.h,v 1.18 2009/04/14 08:50:06 lukem Exp $	*/
+/*	$NetBSD: ww.h,v 1.19 2011/09/06 18:46:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -353,13 +353,12 @@ void	wwinsline(struct ww *, int);
 void	wwiomux(void);
 void	wwlabel(struct ww *, struct ww *, int, char *, int);
 void	wwmove(struct ww *, int, int);
-void	wwprintf(struct ww *, const char *, ...)
-    __attribute__((__format__(__printf__, 2, 3)));
+void	wwprintf(struct ww *, const char *, ...) __printflike(2, 3);
 void	wwputc(char, struct ww *);
 void	wwputs(const char *, struct ww *);
 void	wwredraw(void);
 void	wwredrawwin1(struct ww *,int, int, int);
-void	wwquit(int);
+void	wwquit(int) __dead;
 void	wwreset(void);
 void	wwrint(void);
 void	wwscroll(struct ww *, int);
