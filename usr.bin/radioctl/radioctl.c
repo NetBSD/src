@@ -1,4 +1,4 @@
-/* $NetBSD: radioctl.c,v 1.12 2011/08/31 16:24:58 plunky Exp $ */
+/* $NetBSD: radioctl.c,v 1.13 2011/09/06 18:27:08 joerg Exp $ */
 /* $OpenBSD: radioctl.c,v 1.5 2001/12/18 18:42:19 mickey Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: radioctl.c,v 1.12 2011/08/31 16:24:58 plunky Exp $");
+__RCSID("$NetBSD: radioctl.c,v 1.13 2011/09/06 18:27:08 joerg Exp $");
 #endif
 
 #include <sys/ioctl.h>
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: radioctl.c,v 1.12 2011/08/31 16:24:58 plunky Exp $");
 #define RADIO_ENV	"RADIODEVICE"
 #define RADIODEVICE	"/dev/radio"
 
-const char *varname[] = {
+static const char *varname[] = {
 	"search",
 #define OPTION_SEARCH		0x00
 	"volume",
@@ -77,9 +77,9 @@ struct opt_t {
 	u_int32_t value;
 };
 
-const char *onchar = "on";
+static const char *onchar = "on";
 #define ONCHAR_LEN	2
-const char *offchar = "off";
+static const char *offchar = "off";
 #define OFFCHAR_LEN	3
 
 static struct radio_info ri;
@@ -94,7 +94,7 @@ static void	change_value(const struct opt_t);
 static void	update_value(int, u_int *, u_int);
 
 static void     warn_unsupported(int);
-static void	usage(void);
+__dead static void	usage(void);
 
 static void	show_verbose(const char *, int);
 static void	show_int_val(u_long, const char *, const char *, int);
