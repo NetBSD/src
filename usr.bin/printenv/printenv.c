@@ -1,4 +1,4 @@
-/*	$NetBSD: printenv.c,v 1.11 2009/07/25 08:20:24 dholland Exp $	*/
+/*	$NetBSD: printenv.c,v 1.12 2011/09/06 18:26:55 joerg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printenv.c	8.2 (Berkeley) 5/4/95";*/
-__RCSID("$NetBSD: printenv.c,v 1.11 2009/07/25 08:20:24 dholland Exp $");
+__RCSID("$NetBSD: printenv.c,v 1.12 2011/09/06 18:26:55 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: printenv.c,v 1.11 2009/07/25 08:20:24 dholland Exp $");
 #include <unistd.h>
 #include <err.h>
 
-void usage(void);
+__dead static void usage(void);
 
 /*
  * printenv
@@ -94,7 +94,7 @@ main(int argc, char *argv[])
 	exit(1);
 }
 
-void
+static void
 usage(void)
 {
 	(void)fprintf(stderr, "Usage: printenv [name]\n");
