@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.55 2011/09/05 12:19:12 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.56 2011/09/06 08:44:39 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55 2011/09/05 12:19:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.56 2011/09/06 08:44:39 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -451,8 +451,6 @@ pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 	struct pv_entry *pv, *ppv;
 	uintptr_t lpn, ppn;
 	int prot, cur_prot, diff;
-
-	/* get current protection settings */
 
 	aprint_debug("pmap_fault pmap %p, va %p\n", pmap, (void *) va);
 
