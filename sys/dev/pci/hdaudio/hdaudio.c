@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.14 2011/08/29 14:47:09 jmcneill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.15 2011/09/06 10:48:28 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.14 2011/08/29 14:47:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.15 2011/09/06 10:48:28 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1069,6 +1069,15 @@ uint16_t
 hdaudio_stream_param(struct hdaudio_stream *st, const audio_params_t *param)
 {
 	uint16_t fmt = 0;
+
+	switch (param->encoding) {
+	case AUDIO_ENCODING_AC3:
+		fmt |= HDAUDIO_FMT_TYPE_NONPCM;
+		break;
+	default:
+		fmt |= HDAUDIO_FMT_TYPE_PCM;
+		break;
+	}
 
 	switch (param->sample_rate) {
 	case 8000:
