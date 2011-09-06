@@ -1,5 +1,5 @@
 /*	$OpenBSD: misc.c,v 1.41 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: misc.c,v 1.21 2011/03/05 16:37:50 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.22 2011/09/06 18:16:01 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.21 2011/03/05 16:37:50 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.22 2011/09/06 18:16:01 joerg Exp $");
 #include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
@@ -240,19 +240,11 @@ getdiv(int n)
 	outfile[n] = NULL;
 }
 
-void
-onintr(int signo)
-{
-#define intrmessage	"m4: interrupted.\n"
-	write(STDERR_FILENO, intrmessage, sizeof(intrmessage)-1);
-	_exit(1);
-}
-
 /*
  * killdiv - get rid of the diversion files
  */
 void
-killdiv()
+killdiv(void)
 {
 	int n;
 
@@ -338,15 +330,6 @@ xstrdup(const char *s)
 	if (p == NULL)
 		err(1, "strdup");
 	return p;
-}
-
-void
-usage(void)
-{
-	fprintf(stderr, "usage: %s [-gPs] [-Dname[=value]] [-d flags] "
-			"[-I dirname] [-o filename]\n"
-			"\t[-t macro] [-Uname] [file ...]\n", getprogname());
-	exit(1);
 }
 
 int 
