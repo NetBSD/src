@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: patch.c,v 1.45 2007/04/18 21:52:24 sobrado Exp $
  * $DragonFly: src/usr.bin/patch/patch.c,v 1.10 2008/08/10 23:39:56 joerg Exp $
- * $NetBSD: patch.c,v 1.28 2011/03/26 21:45:48 dholland Exp $
+ * $NetBSD: patch.c,v 1.29 2011/09/06 18:25:14 joerg Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: patch.c,v 1.28 2011/03/26 21:45:48 dholland Exp $");
+__RCSID("$NetBSD: patch.c,v 1.29 2011/09/06 18:25:14 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -106,7 +106,7 @@ static bool	spew_output(void);
 static void	dump_line(LINENUM, bool);
 static bool	patch_match(LINENUM, LINENUM, LINENUM);
 static bool	similar(const char *, const char *, int);
-static void	usage(void);
+__dead static void	usage(void);
 
 /* true if -E was specified on command line.  */
 static bool	remove_empty_files = false;
