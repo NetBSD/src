@@ -1,4 +1,4 @@
-/*	$NetBSD: wrterm.c,v 1.8 2009/04/14 05:45:23 lukem Exp $	*/
+/*	$NetBSD: wrterm.c,v 1.9 2011/09/06 18:34:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)wrterm.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: wrterm.c,v 1.8 2009/04/14 05:45:23 lukem Exp $");
+__RCSID("$NetBSD: wrterm.c,v 1.9 2011/09/06 18:34:12 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,8 +49,7 @@ __RCSID("$NetBSD: wrterm.c,v 1.8 2009/04/14 05:45:23 lukem Exp $");
  * shell problems and omitting empty fields.
  */
 void
-wrtermcap(bp)
-	char *bp;
+wrtermcap(char *bp)
 {
 	int ch;
 	char *p;
