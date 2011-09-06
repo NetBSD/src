@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.40 2008/04/10 17:14:25 thorpej Exp $	*/
+/*	$NetBSD: extern.h,v 1.41 2011/09/06 18:31:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -88,13 +88,12 @@ void	 closetcp(WINDOW *);
 void	 command(char *);
 void	 df_all(char *);
 void	 df_some(char *);
-void	 die(int);
+void	 die(int) __dead;
 void	 disks_add(char *);
 void	 disks_remove(char *);
 void	 disks_drives(char *);
 void	 display(int);
-void	 error(const char *, ...)
-     __attribute__((__format__(__printf__, 1, 2)));
+void	 error(const char *, ...) __printflike(1, 2);
 void	 fetchbufcache(void);
 void	 fetchdf(void);
 void	 fetchicmp(void);
@@ -111,7 +110,7 @@ int	 fetch_cptime(u_int64_t *);
 void	 global_help(char *);
 void	 global_interval(char *);
 void	 global_load(char *);
-void	 global_quit(char *);
+void	 global_quit(char *) __dead;
 void	 global_stop(char *);
 void	 icmp_boot(char *);
 void	 icmp_run(char *);
@@ -138,7 +137,7 @@ void	 ip_boot(char *);
 void	 ip_run(char *);
 void	 ip_time(char *);
 void	 ip_zero(char *);
-void	 keyboard(void) __attribute__((__noreturn__));
+void	 keyboard(void) __dead;
 ssize_t	 kvm_ckread(const void *, void *, size_t, const char *);
 void	 labelbufcache(void);
 void	 labeldf(void);
@@ -164,7 +163,7 @@ void	 netstat_reset(char *);
 void	 netstat_show(char *);
 void	 netstat_tcp(char *);
 void	 netstat_udp(char *);
-void	 nlisterr(struct nlist []) __attribute__((__noreturn__));
+void	 nlisterr(struct nlist []) __dead;
 WINDOW	*openbufcache(void);
 WINDOW	*opendf(void);
 WINDOW	*openicmp(void);
