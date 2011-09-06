@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.71 2010/09/19 10:34:33 mrg Exp $
+.\"	$NetBSD: audio.4,v 1.72 2011/09/06 01:17:48 jmcneill Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 29, 2009
+.Dd September 5, 2011
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -396,6 +396,8 @@ two's complement signed linear encoding with big endian byte order
 unsigned linear encoding with little endian byte order
 .It Dv AUDIO_ENCODING_ULINEAR_BE
 unsigned linear encoding with big endian byte order
+.It Dv AUDIO_ENCODING_AC3
+Dolby Digital AC3
 .El
 .Pp
 The
