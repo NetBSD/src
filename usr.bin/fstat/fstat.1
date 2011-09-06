@@ -1,4 +1,4 @@
-.\"	$NetBSD: fstat.1,v 1.28 2011/09/06 11:31:47 christos Exp $
+.\"	$NetBSD: fstat.1,v 1.29 2011/09/06 19:22:05 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,7 +64,9 @@ directory
 .Pa /usr/src
 resides, type
 .Dq Li fstat -f /usr/src .
-Please see the BUGS section for issues with this option.
+Please see the
+.Sx BUGS
+section for issues with this option.
 .It Fl M
 Extract values associated with the name list from the specified core
 instead of the default
@@ -214,7 +216,7 @@ For example, the addresses mentioned above are the addresses which the
 command would print for TCP, UDP, and
 .Ux
 domain.
-For kernels compiled with 
+For kernels compiled with
 .Dv PIPE_SOCKETPAIR
 pipes appear as connected
 .Ux
