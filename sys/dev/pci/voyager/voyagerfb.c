@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.1 2011/08/31 16:47:31 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.2 2011/09/06 03:31:37 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.1 2011/08/31 16:47:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.2 2011/09/06 03:31:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,8 +311,8 @@ voyagerfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		    cmd, data, flag, l);
 
 	case WSDISPLAYIO_GET_BUSID:
-		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc,
-		    sc->sc_pcitag, data);
+		return wsdisplayio_busid_pci(device_parent(sc->sc_dev),
+		    sc->sc_pc, sc->sc_pcitag, data);
 
 	case WSDISPLAYIO_GINFO:
 		if (ms == NULL)
