@@ -1,4 +1,4 @@
-/*	$NetBSD: paste.c,v 1.15 2009/04/07 01:52:26 dholland Exp $	*/
+/*	$NetBSD: paste.c,v 1.16 2011/09/06 18:24:43 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	8.1 (Berkeley) 6/6/93";*/
-__RCSID("$NetBSD: paste.c,v 1.15 2009/04/07 01:52:26 dholland Exp $");
+__RCSID("$NetBSD: paste.c,v 1.16 2011/09/06 18:24:43 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,14 +52,14 @@ __RCSID("$NetBSD: paste.c,v 1.15 2009/04/07 01:52:26 dholland Exp $");
 #include <string.h>
 #include <unistd.h>
 
-void	parallel(int, char **);
-void	sequential(char **);
-int	tr(char *);
-void	usage(void);
+static void	parallel(int, char **);
+static void	sequential(char **);
+static int	tr(char *);
+__dead static void	usage(void);
 
-char dflt_delim[] = "\t";
-char *delim = dflt_delim;
-int delimcnt = 1;
+static char dflt_delim[] = "\t";
+static char *delim = dflt_delim;
+static int delimcnt = 1;
 
 int
 main(int argc, char **argv)
@@ -91,7 +91,7 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-void
+static void
 parallel(int argc, char **argv)
 {
 	char ch, *dp, *line;
@@ -157,7 +157,7 @@ parallel(int argc, char **argv)
 	free(fpp);
 }
 
-void
+static void
 sequential(char **argv)
 {
 	FILE *fp;
@@ -195,7 +195,7 @@ sequential(char **argv)
 	}
 }
 
-int
+static int
 tr(char *arg)
 {
 	int cnt;
@@ -225,8 +225,8 @@ tr(char *arg)
 	return(cnt);
 }
 
-void
-usage()
+static void
+usage(void)
 {
 	(void)fprintf(stderr, "paste: [-s] [-d delimiters] file ...\n");
 	exit(1);
