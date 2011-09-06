@@ -1,4 +1,4 @@
-/*	$NetBSD: nohup.c,v 1.14 2009/04/12 23:38:17 lukem Exp $	*/
+/*	$NetBSD: nohup.c,v 1.15 2011/09/06 18:24:15 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989\
 #if 0
 static char sccsid[] = "@(#)nohup.c	5.4 (Berkeley) 6/1/90";
 #endif
-__RCSID("$NetBSD: nohup.c,v 1.14 2009/04/12 23:38:17 lukem Exp $");
+__RCSID("$NetBSD: nohup.c,v 1.15 2011/09/06 18:24:15 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,9 +53,8 @@ __RCSID("$NetBSD: nohup.c,v 1.14 2009/04/12 23:38:17 lukem Exp $");
 #include <string.h>
 #include <errno.h>
 
-static void dofile __P((void));
-static void usage __P((void));
-int main __P((int, char **));
+static void dofile(void);
+__dead static void usage(void);
 
 /* nohup shall exit with one of the following values:
    126 - The utility was found but could not be invoked.
@@ -66,9 +65,7 @@ int main __P((int, char **));
 #define EXIT_MISC	127
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int exit_status;
 
@@ -100,7 +97,7 @@ main(argc, argv)
 }
 
 static void
-dofile()
+dofile(void)
 {
 	int fd;
 	char path[MAXPATHLEN];
@@ -138,7 +135,7 @@ dupit:	(void)lseek(fd, 0L, SEEK_END);
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: nohup utility [argument ...]\n");
 	exit(EXIT_MISC);
