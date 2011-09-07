@@ -1,4 +1,4 @@
-/*	$NetBSD: hpacel_acpi.c,v 1.2 2011/07/13 10:59:35 jruoho Exp $ */
+/*	$NetBSD: hpacel_acpi.c,v 1.3 2011/09/07 08:43:20 cegger Exp $ */
 
 /*-
  * Copyright (c) 2009, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpacel_acpi.c,v 1.2 2011/07/13 10:59:35 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpacel_acpi.c,v 1.3 2011/09/07 08:43:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -324,7 +324,7 @@ hpacel_reg_init(device_t self)
 	/*
 	 * Update the register information.
 	 */
-	(void)hpacel_reg_info(hdl);
+	(void)hpacel_reg_info(self);
 
 out:
 	if (ACPI_FAILURE(rv))
