@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.261 2011/04/03 22:29:26 dyoung Exp $	*/
+/*	$NetBSD: trap.c,v 1.262 2011/09/07 09:24:55 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.261 2011/04/03 22:29:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.262 2011/09/07 09:24:55 reinoud Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -542,7 +542,7 @@ kernelfault:
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
-		ksi.ksi_addr = (void *)rcr2();
+		ksi.ksi_addr = (void *) frame->tf_eip;
 		switch (type) {
 		case T_PRIVINFLT|T_USER:
 			ksi.ksi_code = ILL_PRVOPC;
