@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.133 2011/09/07 17:54:11 christos Exp $
+# $NetBSD: md.amd64,v 1.134 2011/09/07 20:26:14 riz Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -495,6 +495,7 @@
 ./usr/lib/i386/libdevmapper_pic.a		comp-c-piclib		compat,pic,lvm
 ./usr/lib/i386/libdm.a				comp-c-lib		compat
 ./usr/lib/i386/libdm.so				comp-sys-shlib		compat,pic
+./usr/lib/i386/libdm_g.a			-unknown-		compat,debuglib
 ./usr/lib/i386/libdm_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libdm_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libdns.a				comp-c-lib		compat
@@ -791,6 +792,7 @@
 ./usr/lib/i386/libposix_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libppath.a			comp-c-lib		compat
 ./usr/lib/i386/libppath.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libppath_g.a			-unknown-		compat,debuglib
 ./usr/lib/i386/libppath_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libppath_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libprop.a			comp-c-lib		compat
@@ -873,6 +875,7 @@
 ./usr/lib/i386/librumpdev_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/librumpdev_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/librumphijack.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/librumphijack_g.a		-unknown-		compat,debuglib
 ./usr/lib/i386/librumphijack_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/i386/librumpnet.a			comp-c-lib		compat
 ./usr/lib/i386/librumpnet.so			comp-sys-shlib		compat,pic
