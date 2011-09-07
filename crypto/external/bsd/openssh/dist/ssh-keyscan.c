@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.5 2011/07/25 03:03:11 christos Exp $	*/
-/* $OpenBSD: ssh-keyscan.c,v 1.84 2011/01/04 20:44:13 otto Exp $ */
+/*	$NetBSD: ssh-keyscan.c,v 1.6 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: ssh-keyscan.c,v 1.85 2011/03/15 10:36:02 okan Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -9,7 +9,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.5 2011/07/25 03:03:11 christos Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.6 2011/09/07 17:49:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -525,7 +525,7 @@ conloop(void)
 			seltime.tv_sec--;
 		}
 	} else
-		seltime.tv_sec = seltime.tv_usec = 0;
+		timerclear(&seltime);
 
 	r = xcalloc(read_wait_nfdset, sizeof(fd_mask));
 	e = xcalloc(read_wait_nfdset, sizeof(fd_mask));

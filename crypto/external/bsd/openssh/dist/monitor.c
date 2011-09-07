@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.c,v 1.6 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: monitor.c,v 1.110 2010/09/09 10:45:45 djm Exp $ */
+/*	$NetBSD: monitor.c,v 1.7 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: monitor.c,v 1.115 2011/06/23 23:35:42 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.6 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.7 2011/09/07 17:49:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: monitor.c,v 1.6 2011/07/25 03:03:10 christos Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
+#include <poll.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -49,6 +50,7 @@ __RCSID("$NetBSD: monitor.c,v 1.6 2011/07/25 03:03:10 christos Exp $");
 #include <skey.h>
 #endif
 
+#include "atomicio.h"
 #include "xmalloc.h"
 #include "ssh.h"
 #include "key.h"
@@ -171,6 +173,8 @@ int mm_answer_gss_accept_ctx(int, Buffer *);
 int mm_answer_gss_userok(int, Buffer *);
 int mm_answer_gss_checkmic(int, Buffer *);
 #endif
+
+static int monitor_read_log(struct monitor *);
 
 static Authctxt *authctxt;
 static BIGNUM *ssh1_challenge = NULL;	/* used for ssh1 rsa auth */
@@ -337,6 +341,10 @@ monitor_child_preauth(Authctxt *_authctxt, struct monitor *pmonitor)
 
 	debug3("preauth child monitor started");
 
+	close(pmonitor->m_recvfd);
+	close(pmonitor->m_log_sendfd);
+	pmonitor->m_log_sendfd = pmonitor->m_recvfd = -1;
+
 	authctxt = _authctxt;
 	memset(authctxt, 0, sizeof(*authctxt));
 
@@ -394,6 +402,10 @@ monitor_child_preauth(Authctxt *_authctxt, struct monitor *pmonitor)
 #endif
 	}
 
+	/* Drain any buffered messages from the child */
+	while (pmonitor->m_log_recvfd != -1 && monitor_read_log(pmonitor) == 0)
+		;
+
 	if (!authctxt->valid)
 		fatal("%s: authenticated invalid user", __func__);
 	if (strcmp(auth_method, "unknown") == 0)
@@ -403,6 +415,10 @@ monitor_child_preauth(Authctxt *_authctxt, struct monitor *pmonitor)
 	    __func__, authctxt->user);
 
 	mm_get_keystate(pmonitor);
+
+	close(pmonitor->m_sendfd);
+	close(pmonitor->m_log_recvfd);
+	pmonitor->m_sendfd = pmonitor->m_log_recvfd = -1;
 }
 
 static void
@@ -420,6 +436,9 @@ monitor_child_handler(int sig)
 void
 monitor_child_postauth(struct monitor *pmonitor)
 {
+	close(pmonitor->m_recvfd);
+	pmonitor->m_recvfd = -1;
+
 	monitor_set_child_handler(pmonitor->m_pid);
 	signal(SIGHUP, &monitor_child_handler);
 	signal(SIGTERM, &monitor_child_handler);
@@ -443,6 +462,9 @@ monitor_child_postauth(struct monitor *pmonitor)
 
 	for (;;)
 		monitor_read(pmonitor, mon_dispatch, NULL);
+
+	close(pmonitor->m_sendfd);
+	pmonitor->m_sendfd = -1;
 }
 
 void
@@ -454,6 +476,52 @@ monitor_sync(struct monitor *pmonitor)
 	}
 }
 
+static int
+monitor_read_log(struct monitor *pmonitor)
+{
+	Buffer logmsg;
+	u_int len, level;
+	char *msg;
+
+	buffer_init(&logmsg);
+
+	/* Read length */
+	buffer_append_space(&logmsg, 4);
+	if (atomicio(read, pmonitor->m_log_recvfd,
+	    buffer_ptr(&logmsg), buffer_len(&logmsg)) != buffer_len(&logmsg)) {
+		if (errno == EPIPE) {
+			debug("%s: child log fd closed", __func__);
+			close(pmonitor->m_log_recvfd);
+			pmonitor->m_log_recvfd = -1;
+			return -1;
+		}
+		fatal("%s: log fd read: %s", __func__, strerror(errno));
+	}
+	len = buffer_get_int(&logmsg);
+	if (len <= 4 || len > 8192)
+		fatal("%s: invalid log message length %u", __func__, len);
+
+	/* Read severity, message */
+	buffer_clear(&logmsg);
+	buffer_append_space(&logmsg, len);
+	if (atomicio(read, pmonitor->m_log_recvfd,
+	    buffer_ptr(&logmsg), buffer_len(&logmsg)) != buffer_len(&logmsg))
+		fatal("%s: log fd read: %s", __func__, strerror(errno));
+
+	/* Log it */
+	level = buffer_get_int(&logmsg);
+	msg = buffer_get_string(&logmsg, NULL);
+	if (log_level_name(level) == NULL)
+		fatal("%s: invalid log level %u (corrupted message?)",
+		    __func__, level);
+	do_log2(level, "%s [preauth]", msg);
+
+	buffer_free(&logmsg);
+	xfree(msg);
+
+	return 0;
+}
+
 int
 monitor_read(struct monitor *pmonitor, struct mon_table *ent,
     struct mon_table **pent)
@@ -461,6 +529,30 @@ monitor_read(struct monitor *pmonitor, struct mon_table *ent,
 	Buffer m;
 	int ret;
 	u_char type;
+	struct pollfd pfd[2];
+
+	for (;;) {
+		bzero(&pfd, sizeof(pfd));
+		pfd[0].fd = pmonitor->m_sendfd;
+		pfd[0].events = POLLIN;
+		pfd[1].fd = pmonitor->m_log_recvfd;
+		pfd[1].events = pfd[1].fd == -1 ? 0 : POLLIN;
+		if (poll(pfd, pfd[1].fd == -1 ? 1 : 2, -1) == -1) {
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+			fatal("%s: poll: %s", __func__, strerror(errno));
+		}
+		if (pfd[1].revents) {
+			/*
+			 * Drain all log messages before processing next
+			 * monitor request.
+			 */
+			monitor_read_log(pmonitor);
+			continue;
+		}
+		if (pfd[0].revents)
+			break;  /* Continues below */
+	}
 
 	buffer_init(&m);
 
@@ -621,6 +713,7 @@ mm_answer_pwnamallow(int sock, Buffer *m)
 	char *username;
 	struct passwd *pwent;
 	int allowed = 0;
+	u_int i;
 
 	debug3("%s", __func__);
 
@@ -658,8 +751,20 @@ mm_answer_pwnamallow(int sock, Buffer *m)
 
  out:
 	buffer_put_string(m, &options, sizeof(options));
-	if (options.banner != NULL)
-		buffer_put_cstring(m, options.banner);
+
+#define M_CP_STROPT(x) do { \
+		if (options.x != NULL) \
+			buffer_put_cstring(m, options.x); \
+	} while (0)
+#define M_CP_STRARRAYOPT(x, nx) do { \
+		for (i = 0; i < options.nx; i++) \
+			buffer_put_cstring(m, options.x[i]); \
+	} while (0)
+	/* See comment in servconf.h */
+	COPY_MATCH_STRING_OPTS();
+#undef M_CP_STROPT
+#undef M_CP_STRARRAYOPT
+	
 	debug3("%s: sending MONITOR_ANS_PWNAM: %d", __func__, allowed);
 	mm_request_send(sock, MONITOR_ANS_PWNAM, m);
 
@@ -1859,17 +1964,31 @@ mm_init_compression(struct mm_master *mm)
 /* XXX */
 
 #define FD_CLOSEONEXEC(x) do { \
-	if (fcntl(x, F_SETFD, 1) == -1) \
+	if (fcntl(x, F_SETFD, FD_CLOEXEC) == -1) \
 		fatal("fcntl(%d, F_SETFD)", x); \
 } while (0)
 
 static void
-monitor_socketpair(int *pair)
+monitor_openfds(struct monitor *mon, int do_logfds)
 {
+	int pair[2];
+
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1)
-		fatal("%s: socketpair", __func__);
+		fatal("%s: socketpair: %s", __func__, strerror(errno));
 	FD_CLOSEONEXEC(pair[0]);
 	FD_CLOSEONEXEC(pair[1]);
+	mon->m_recvfd = pair[0];
+	mon->m_sendfd = pair[1];
+
+	if (do_logfds) {
+		if (pipe(pair) == -1)
+			fatal("%s: pipe: %s", __func__, strerror(errno));
+		FD_CLOSEONEXEC(pair[0]);
+		FD_CLOSEONEXEC(pair[1]);
+		mon->m_log_recvfd = pair[0];
+		mon->m_log_sendfd = pair[1];
+	} else
+		mon->m_log_recvfd = mon->m_log_sendfd = -1;
 }
 
 #define MM_MEMSIZE	65536
@@ -1878,14 +1997,10 @@ struct monitor *
 monitor_init(void)
 {
 	struct monitor *mon;
-	int pair[2];
 
 	mon = xcalloc(1, sizeof(*mon));
 
-	monitor_socketpair(pair);
-
-	mon->m_recvfd = pair[0];
-	mon->m_sendfd = pair[1];
+	monitor_openfds(mon, 1);
 
 	/* Used to share zlib space across processes */
 	if (options.compression) {
@@ -1902,12 +2017,7 @@ monitor_init(void)
 void
 monitor_reinit(struct monitor *mon)
 {
-	int pair[2];
-
-	monitor_socketpair(pair);
-
-	mon->m_recvfd = pair[0];
-	mon->m_sendfd = pair[1];
+	monitor_openfds(mon, 0);
 }
 
 #ifdef GSSAPI
