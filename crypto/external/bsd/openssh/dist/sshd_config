@@ -1,12 +1,12 @@
-#	$NetBSD: sshd_config,v 1.7 2011/07/25 03:03:11 christos Exp $
-#	$OpenBSD: sshd_config,v 1.82 2010/09/06 17:10:19 naddy Exp $
+#	$NetBSD: sshd_config,v 1.8 2011/09/07 17:49:19 christos Exp $
+#	$OpenBSD: sshd_config,v 1.84 2011/05/23 03:30:07 djm Exp $
 
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.
 
 # The strategy used for options in the default sshd_config shipped with
 # OpenSSH is to specify options with their default value where
-# possible, but leave them commented.  Uncommented options change a
+# possible, but leave them commented.  Uncommented options override the
 # default value.
 
 #Port 22
@@ -43,7 +43,10 @@ LoginGraceTime 600
 
 #RSAAuthentication yes
 #PubkeyAuthentication yes
-#AuthorizedKeysFile	.ssh/authorized_keys
+
+# The default is to check both .ssh/authorized_keys and .ssh/authorized_keys2
+# but this is overridden so installations will only check .ssh/authorized_keys
+AuthorizedKeysFile	.ssh/authorized_keys
 
 # For this to work you will also need host keys in /etc/ssh/ssh_known_hosts
 #RhostsRSAAuthentication no

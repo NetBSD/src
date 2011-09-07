@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-rsa.c,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: auth-rsa.c,v 1.79 2010/12/03 23:55:27 djm Exp $ */
+/*	$NetBSD: auth-rsa.c,v 1.6 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: auth-rsa.c,v 1.80 2011/05/23 03:30:07 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-rsa.c,v 1.5 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: auth-rsa.c,v 1.6 2011/09/07 17:49:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -160,6 +160,108 @@ auth_rsa_challenge_dialog(Key *key)
 	return (success);
 }
 
+static int
+rsa_key_allowed_in_file(struct passwd *pw, char *file,
+    const BIGNUM *client_n, Key **rkey)
+{
+	char line[SSH_MAX_PUBKEY_BYTES];
+	int allowed = 0;
+	u_int bits;
+	FILE *f;
+	u_long linenum = 0;
+	Key *key;
+
+	debug("trying public RSA key file %s", file);
+	if ((f = auth_openkeyfile(file, pw, options.strict_modes)) == NULL)
+		return 0;
+
+	/*
+	 * Go though the accepted keys, looking for the current key.  If
+	 * found, perform a challenge-response dialog to verify that the
+	 * user really has the corresponding private key.
+	 */
+	key = key_new(KEY_RSA1);
+	while (read_keyfile_line(f, file, line, sizeof(line), &linenum) != -1) {
+		char *cp;
+		char *key_options;
+		int keybits;
+
+		/* Skip leading whitespace, empty and comment lines. */
+		for (cp = line; *cp == ' ' || *cp == '\t'; cp++)
+			;
+		if (!*cp || *cp == '\n' || *cp == '#')
+			continue;
+
+		/*
+		 * Check if there are options for this key, and if so,
+		 * save their starting address and skip the option part
+		 * for now.  If there are no options, set the starting
+		 * address to NULL.
+		 */
+		if (*cp < '0' || *cp > '9') {
+			int quoted = 0;
+			key_options = cp;
+			for (; *cp && (quoted || (*cp != ' ' && *cp != '\t')); cp++) {
+				if (*cp == '\\' && cp[1] == '"')
+					cp++;	/* Skip both */
+				else if (*cp == '"')
+					quoted = !quoted;
+			}
+		} else
+			key_options = NULL;
+
+		/* Parse the key from the line. */
+		if (hostfile_read_key(&cp, &bits, key) == 0) {
+			debug("%.100s, line %lu: non ssh1 key syntax",
+			    file, linenum);
+			continue;
+		}
+		/* cp now points to the comment part. */
+
+		/*
+		 * Check if the we have found the desired key (identified
+		 * by its modulus).
+		 */
+		if (BN_cmp(key->rsa->n, client_n) != 0)
+			continue;
+
+		/* check the real bits  */
+		keybits = BN_num_bits(key->rsa->n);
+		if (keybits < 0 || bits != (u_int)keybits)
+			logit("Warning: %s, line %lu: keysize mismatch: "
+			    "actual %d vs. announced %d.",
+			    file, linenum, BN_num_bits(key->rsa->n), bits);
+
+		/* Never accept a revoked key */
+		if (auth_key_is_revoked(key))
+			break;
+
+		/* We have found the desired key. */
+		/*
+		 * If our options do not allow this key to be used,
+		 * do not send challenge.
+		 */
+		if (!auth_parse_options(pw, key_options, file, linenum))
+			continue;
+		if (key_is_cert_authority)
+			continue;
+		/* break out, this key is allowed */
+		allowed = 1;
+		break;
+	}
+
+	/* Close the file. */
+	fclose(f);
+
+	/* return key if allowed */
+	if (allowed && rkey != NULL)
+		*rkey = key;
+	else
+		key_free(key);
+
+	return allowed;
+}
+
 /*
  * check if there's user key matching client_n,
  * return key if login is allowed, NULL otherwise
@@ -168,25 +270,18 @@ auth_rsa_challenge_dialog(Key *key)
 int
 auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 {
-	char line[SSH_MAX_PUBKEY_BYTES], *file;
-	int allowed = 0;
-	u_int bits;
-	FILE *f;
-	u_long linenum = 0;
-	Key *key;
-#ifdef WITH_LDAP_PUBKEY
-	ldap_key_t * k;
-	unsigned int i = 0;
-#endif
-
-	/* Temporarily use the user's uid. */
+	char *file;
+	u_int i, allowed = 0;
+ 
 	temporarily_use_uid(pw);
 
 #ifdef WITH_LDAP_PUBKEY
-	/* here is the job */
-	key = key_new(KEY_RSA1);
-
 	if (options.lpk.on) {
+	    u_int bits;
+	    ldap_key_t *k;
+	    /* here is the job */
+	    Key *key = key_new(KEY_RSA1);
+
 	    debug("[LDAP] trying LDAP first uid=%s", pw->pw_name);
 	    if ( ldap_ismember(&options.lpk, pw->pw_name) > 0) {
 		if ( (k = ldap_getuserkey(&options.lpk, pw->pw_name)) != NULL) {
@@ -264,105 +359,17 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 	    }
 	}
 #endif
-	/* The authorized keys. */
-	file = authorized_keys_file(pw);
-	debug("trying public RSA key file %s", file);
-	f = auth_openkeyfile(file, pw, options.strict_modes);
-	if (!f) {
+
+	for (i = 0; !allowed && i < options.num_authkeys_files; i++) {
+		file = expand_authorized_keys(
+		    options.authorized_keys_files[i], pw);
+		allowed = rsa_key_allowed_in_file(pw, file, client_n, rkey);
 		xfree(file);
-		restore_uid();
-		return (0);
 	}
 
-	/* Flag indicating whether the key is allowed. */
-	allowed = 0;
-
-	key = key_new(KEY_RSA1);
-
-	/*
-	 * Go though the accepted keys, looking for the current key.  If
-	 * found, perform a challenge-response dialog to verify that the
-	 * user really has the corresponding private key.
-	 */
-	while (read_keyfile_line(f, file, line, sizeof(line), &linenum) != -1) {
-		char *cp;
-		char *key_options;
-		int keybits;
-
-		/* Skip leading whitespace, empty and comment lines. */
-		for (cp = line; *cp == ' ' || *cp == '\t'; cp++)
-			;
-		if (!*cp || *cp == '\n' || *cp == '#')
-			continue;
-
-		/*
-		 * Check if there are options for this key, and if so,
-		 * save their starting address and skip the option part
-		 * for now.  If there are no options, set the starting
-		 * address to NULL.
-		 */
-		if (*cp < '0' || *cp > '9') {
-			int quoted = 0;
-			key_options = cp;
-			for (; *cp && (quoted || (*cp != ' ' && *cp != '\t')); cp++) {
-				if (*cp == '\\' && cp[1] == '"')
-					cp++;	/* Skip both */
-				else if (*cp == '"')
-					quoted = !quoted;
-			}
-		} else
-			key_options = NULL;
-
-		/* Parse the key from the line. */
-		if (hostfile_read_key(&cp, &bits, key) == 0) {
-			debug("%.100s, line %lu: non ssh1 key syntax",
-			    file, linenum);
-			continue;
-		}
-		/* cp now points to the comment part. */
-
-		/* Check if the we have found the desired key (identified by its modulus). */
-		if (BN_cmp(key->rsa->n, client_n) != 0)
-			continue;
-
-		/* check the real bits  */
-		keybits = BN_num_bits(key->rsa->n);
-		if (keybits < 0 || bits != (u_int)keybits)
-			logit("Warning: %s, line %lu: keysize mismatch: "
-			    "actual %d vs. announced %d.",
-			    file, linenum, BN_num_bits(key->rsa->n), bits);
-
-		/* Never accept a revoked key */
-		if (auth_key_is_revoked(key))
-			break;
-
-		/* We have found the desired key. */
-		/*
-		 * If our options do not allow this key to be used,
-		 * do not send challenge.
-		 */
-		if (!auth_parse_options(pw, key_options, file, linenum))
-			continue;
-		if (key_is_cert_authority)
-			continue;
-		/* break out, this key is allowed */
-		allowed = 1;
-		break;
-	}
-
-	/* Restore the privileged uid. */
 	restore_uid();
 
-	/* Close the file. */
-	xfree(file);
-	fclose(f);
-
-	/* return key if allowed */
-	if (allowed && rkey != NULL)
-		*rkey = key;
-	else
-		key_free(key);
-	return (allowed);
+	return allowed;
 }
 
 /*
