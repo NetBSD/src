@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.14 2011/09/07 18:21:41 riz Exp $	*/
+/*	$NetBSD: str.c,v 1.15 2011/09/07 22:59:19 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.14 2011/09/07 18:21:41 riz Exp $");
+__RCSID("$NetBSD: str.c,v 1.15 2011/09/07 22:59:19 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -151,6 +151,10 @@ typedef struct {
 	int *set;
 } CLASS;
 
+/*
+ * classes[] is modified in genclass after passing through bsearch,
+ * which would result in silently discarding of const.
+ */
 static CLASS classes[] = {
 	{ "alnum",  isalnum,  NULL, },
 	{ "alpha",  isalpha,  NULL, },
