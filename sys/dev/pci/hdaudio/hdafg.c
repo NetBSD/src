@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.4 2011/09/06 11:14:17 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.5 2011/09/07 00:16:40 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.4 2011/09/06 11:14:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.5 2011/09/07 00:16:40 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3100,6 +3100,15 @@ hdafg_stream_connect(struct hdafg_softc *sc, int mode)
 			if (as[i].as_activated == false)
 				c = 0;
 
+			/*
+			 * If a non-PCM stream is being connected, and the
+			 * converter doesn't support non-PCM streams, then
+			 * don't decode it
+			 */
+			if ((fmt & HDAUDIO_FMT_TYPE_NONPCM) &&
+			    !(w->w_p.stream_format & COP_STREAM_FORMAT_AC3))
+				c = 0;
+
 			hdaudio_command(sc->sc_codec, w->w_nid,
 			    CORB_SET_CONVERTER_FORMAT, fmt);
 			if (w->w_p.aw_cap & COP_AWCAP_DIGITAL) {
@@ -3118,7 +3127,8 @@ hdafg_stream_connect(struct hdafg_softc *sc, int mode)
 			}
 			hdaudio_command(sc->sc_codec, w->w_nid,
 			    CORB_SET_CONVERTER_STREAM_CHANNEL, c);
-			chn += COP_AWCAP_CHANNEL_COUNT(w->w_p.aw_cap);
+			if (c != 0)
+				chn += COP_AWCAP_CHANNEL_COUNT(w->w_p.aw_cap);
 		}
 
 		for (j = 0; j < HDAUDIO_MAXPINS; j++) {
