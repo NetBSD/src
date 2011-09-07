@@ -1,7 +1,7 @@
-/*	$NetBSD: stvii.c,v 1.1 2011/09/01 14:07:37 macallan Exp $	*/
+/*	$NetBSD: stvii.c,v 1.2 2011/09/07 13:37:49 macallan Exp $	*/
 
 /*-
- * Copyright (C) 2005 Michael Lorenz.
+ * Copyright (C) 2011 Michael Lorenz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stvii.c,v 1.1 2011/09/01 14:07:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stvii.c,v 1.2 2011/09/07 13:37:49 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,18 +92,19 @@ __KERNEL_RCSID(0, "$NetBSD: stvii.c,v 1.1 2011/09/01 14:07:37 macallan Exp $");
 struct stvii_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_i2c;
-	int sc_address;
+	int sc_address, sc_version;
 	int sc_sleep;
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor[BAT_NSENSORS];
 	struct sysmon_pswitch sc_sm_acpower;
 	struct sysmon_pswitch sc_sm_lid;
+	struct sysmon_pswitch sc_sm_powerbutton;
 };
 
 static void stvii_attach(device_t, device_t, void *);
 static int stvii_match(device_t, cfdata_t, void *);
 static void stvii_writereg(struct stvii_softc *, int, uint8_t);
-static uint8_t stvii_readreg(struct stvii_softc *, int);
+static int stvii_readreg(struct stvii_softc *, int);
 static void stvii_worker(void *);
 
 CFATTACH_DECL_NEW(stvii, sizeof(struct stvii_softc),
@@ -139,7 +140,7 @@ stvii_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": ST7 Microcontroller\n");
 	sc->sc_i2c = args->ia_tag;
 	ver = stvii_readreg(sc, ST7_VERSION);
-
+	sc->sc_version = ver;
 	aprint_normal_dev(sc->sc_dev, "firmware version %d.%d\n", (ver >> 4) & 0xf, ver & 0xf);
 #ifdef STVII_DEBUG
 	{
@@ -174,6 +175,12 @@ stvii_attach(device_t parent, device_t self, void *aux)
 	if (sysmon_pswitch_register(&sc->sc_sm_lid) != 0)
 		printf("%s: unable to register lid switch with sysmon\n",
 		    device_xname(sc->sc_dev));
+	memset(&sc->sc_sm_powerbutton, 0, sizeof(struct sysmon_pswitch));
+	sc->sc_sm_powerbutton.smpsw_name = "Power Button";
+	sc->sc_sm_powerbutton.smpsw_type = PSWITCH_TYPE_POWER;
+	if (sysmon_pswitch_register(&sc->sc_sm_powerbutton) != 0)
+		printf("%s: unable to register power button with sysmon\n",
+		    device_xname(sc->sc_dev));
 }
 
 static void
@@ -189,19 +196,26 @@ stvii_writereg(struct stvii_softc *sc, int reg, uint8_t val)
 	iic_release_bus(sc->sc_i2c, 0);
 }
 
-static uint8_t
+static int
 stvii_readreg(struct stvii_softc *sc, int reg)
 {
 	uint8_t inreg[1], outreg[1];
+	int ret = 1, bail = 0;
 
 	if ((reg < 0) || (reg > 5))
 		return 0xff;
 	inreg[0] = 0x77;
 	outreg[0] = reg;
 	iic_acquire_bus(sc->sc_i2c, 0);
-	iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_address, outreg,
-	    1, inreg, 1, 0);
+	while ((ret != 0) && (bail < 10)) {
+		ret = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
+		    sc->sc_address, outreg, 1, inreg, 1, 0);
+		bail++;
+		delay(10);
+	}
 	iic_release_bus(sc->sc_i2c, 0);
+	if (ret != 0)
+		return -1;
 	return inreg[0];
 }
 
@@ -219,13 +233,27 @@ static void
 stvii_worker(void *cookie)
 {
 	struct stvii_softc *sc = cookie;
-	uint8_t status = 0, st;
+	int status = 0, st;
 	int battery_level = 0, bl;
 	int ok = TRUE;
 
 	while (ok) {
 		st = stvii_readreg(sc, ST7_STATUS);
-		if (st != status) {
+		/*
+		 * I get i2c timeouts when the power button is pressed.
+		 * According to the linux driver this happens on firmware
+		 * version 0x13 and newer, mine is 0x16.
+		 * So, when we see read errors on the right version we assume
+		 * it's the power button as long as the lid is open
+		 * ( the button is inside the lid )
+		 */
+		if ((st == -1) && (sc->sc_version >= 0x13)) {
+			if ((status & (STS_LID_CLOSED | STS_POWER_BTN_DOWN) )
+			    == 0) {
+			    	st = status | STS_POWER_BTN_DOWN;
+			}
+		}
+		if ((st != -1) && (st != status)) {
 			if ((status ^ st) & STS_LID_CLOSED) {
 				sysmon_pswitch_event(&sc->sc_sm_lid, 
 				    ((st & STS_LID_CLOSED) ?
@@ -235,6 +263,12 @@ stvii_worker(void *cookie)
 			if ((status ^ st) & STS_AC_AVAILABLE) {
 				sysmon_pswitch_event(&sc->sc_sm_acpower, 
 				    ((st & STS_AC_AVAILABLE) ?
+				     PSWITCH_EVENT_PRESSED :
+				     PSWITCH_EVENT_RELEASED));
+			}
+			if ((status ^ st) & STS_POWER_BTN_DOWN) {
+				sysmon_pswitch_event(&sc->sc_sm_powerbutton, 
+				    ((st & STS_POWER_BTN_DOWN) ?
 				     PSWITCH_EVENT_PRESSED :
 				     PSWITCH_EVENT_RELEASED));
 			}
