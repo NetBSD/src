@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.31 2011/09/07 10:00:19 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.32 2011/09/07 10:19:40 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.31 2011/09/07 10:00:19 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32 2011/09/07 10:19:40 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -281,7 +281,6 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 		printf("\n");
 #endif
 
-		/* TODO MD host to NetBSD MD ucontext fixup */
 		/* TODO MD syscall pre-fixup  */
 		/* TODO system call issueing  */
 		/* TODO MD syscall post-fixup */
