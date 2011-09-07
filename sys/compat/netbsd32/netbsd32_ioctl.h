@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.39 2011/08/30 14:22:22 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.40 2011/09/07 02:35:00 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -126,6 +126,9 @@ struct netbsd32_ieee80211_nwkey {
 };
 #define	SIOCS80211NWKEY32		 _IOW('i', 232, struct netbsd32_ieee80211_nwkey)
 #define	SIOCG80211NWKEY32		_IOWR('i', 233, struct netbsd32_ieee80211_nwkey)
+
+/* for powerd */
+#define POWER_EVENT_RECVDICT32	_IOWR('P', 1, struct netbsd32_plistref)
 
 /* can wait! */
 #if 0

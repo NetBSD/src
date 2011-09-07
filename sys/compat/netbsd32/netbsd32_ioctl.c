@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.60 2011/08/30 14:22:22 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.61 2011/09/07 02:35:00 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.60 2011/08/30 14:22:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.61 2011/09/07 02:35:00 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -872,6 +872,9 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 
 	case SIOCS80211NWKEY32:
 		IOCTL_STRUCT_CONV_TO(SIOCG80211NWKEY, ieee80211_nwkey);
+
+	case POWER_EVENT_RECVDICT32:
+		IOCTL_STRUCT_CONV_TO(POWER_EVENT_RECVDICT, plistref);
 
 	default:
 #ifdef NETBSD32_MD_IOCTL
