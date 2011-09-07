@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.23 2011/09/06 01:16:44 jmcneill Exp $	*/
+/*	$NetBSD: auconv.c,v 1.24 2011/09/07 00:11:58 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.23 2011/09/06 01:16:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.24 2011/09/07 00:11:58 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -826,14 +826,16 @@ auconv_exact_match(const struct audio_format *formats, int nformats,
 		/**
 		 * XXX	we need encoding-dependent check.
 		 * XXX	Is to check precision/channels meaningful for
-		 *	MPEG/AC3 encodings?
+		 *	MPEG encodings?
 		 */
-		if (formats[i].validbits != param->validbits)
-			continue;
-		if (formats[i].precision != param->precision)
-			continue;
-		if (formats[i].channels != param->channels)
-			continue;
+		if (enc != AUDIO_ENCODING_AC3) {
+			if (formats[i].validbits != param->validbits)
+				continue;
+			if (formats[i].precision != param->precision)
+				continue;
+			if (formats[i].channels != param->channels)
+				continue;
+		}
 		if (!auconv_is_supported_rate(&formats[i],
 					      param->sample_rate))
 			continue;
