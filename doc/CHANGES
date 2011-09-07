@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1599 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1600 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1111,3 +1111,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		McNeill.  [mrg 20110827]
 	libc: Apply tzcode2011i [christos 20110904]
 	zoneinfo: Import tzdata2011i. [christos 20110904]
+	openssh: Import 5.9. [christos 20110907]
