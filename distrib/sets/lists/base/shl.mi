@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.598 2011/08/30 12:39:49 bouyer Exp $
+# $NetBSD: shl.mi,v 1.599 2011/09/07 17:54:11 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -643,8 +643,8 @@
 ./usr/lib/libsl.so.5.0				base-krb5-shlib		kerberos
 ./usr/lib/libss.so				base-obsolete		obsolete
 ./usr/lib/libssh.so				base-secsh-shlib	crypto
-./usr/lib/libssh.so.17				base-secsh-shlib	crypto
-./usr/lib/libssh.so.17.0			base-secsh-shlib	crypto
+./usr/lib/libssh.so.18				base-secsh-shlib	crypto
+./usr/lib/libssh.so.18.0			base-secsh-shlib	crypto
 ./usr/lib/libssl.so				base-crypto-shlib	crypto
 ./usr/lib/libssl.so.9				base-crypto-shlib	crypto
 ./usr/lib/libssl.so.9.0				base-crypto-shlib	crypto
