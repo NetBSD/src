@@ -1,4 +1,4 @@
-/*	$NetBSD: addrmatch.c,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
+/*	$NetBSD: addrmatch.c,v 1.4 2011/09/07 17:49:19 christos Exp $	*/
 /*	$OpenBSD: addrmatch.c,v 1.5 2010/02/26 20:29:54 djm Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: addrmatch.c,v 1.3 2010/11/21 18:29:48 adam Exp $");
+__RCSID("$NetBSD: addrmatch.c,v 1.4 2011/09/07 17:49:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -82,8 +82,8 @@ masklen_valid(int af, u_int masklen)
 static int
 addr_sa_to_xaddr(struct sockaddr *sa, socklen_t slen, struct xaddr *xa)
 {
-	struct sockaddr_in *in4 = (struct sockaddr_in *)sa;
-	struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)sa;
+	struct sockaddr_in *in4 = (struct sockaddr_in *)(void *)sa;
+	struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)(void *)sa;
 
 	memset(xa, '\0', sizeof(*xa));
 
@@ -313,7 +313,7 @@ static int
 addr_pton_cidr(const char *p, struct xaddr *n, u_int *l)
 {
 	struct xaddr tmp;
-	long unsigned int masklen = 999;
+	unsigned int masklen = 999;
 	char addrbuf[64], *mp, *cp;
 
 	/* Don't modify argument */

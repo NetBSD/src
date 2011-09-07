@@ -1,5 +1,5 @@
-/*	$NetBSD: authfile.h,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
-/* $OpenBSD: authfile.h,v 1.15 2010/08/04 05:42:47 djm Exp $ */
+/*	$NetBSD: authfile.h,v 1.4 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: authfile.h,v 1.16 2011/05/04 21:15:29 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -17,9 +17,11 @@
 #define AUTHFILE_H
 
 int	 key_save_private(Key *, const char *, const char *, const char *);
+int	 key_load_file(int, const char *, Buffer *);
 Key	*key_load_cert(const char *);
 Key	*key_load_public(const char *, char **);
 Key	*key_load_public_type(int, const char *, char **);
+Key	*key_parse_private(Buffer *, const char *, const char *, char **);
 Key	*key_load_private(const char *, const char *, char **);
 Key	*key_load_private_cert(int, const char *, const char *, int *);
 Key	*key_load_private_type(int, const char *, const char *, char **, int *);
