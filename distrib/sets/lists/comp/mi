@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1669 2011/09/01 13:08:17 plunky Exp $
+#	$NetBSD: mi,v 1.1670 2011/09/07 20:26:14 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2969,6 +2969,7 @@
 ./usr/lib/libposix_g.a				-unknown-		debuglib
 ./usr/lib/libposix_p.a				comp-c-proflib		profile
 ./usr/lib/libppath.a				comp-c-lib
+./usr/lib/libppath_g.a				-unknown-		debuglib
 ./usr/lib/libppath_p.a				comp-c-proflib		profile
 ./usr/lib/libprop.a				comp-c-lib
 ./usr/lib/libprop_g.a				-unknown-		debuglib
