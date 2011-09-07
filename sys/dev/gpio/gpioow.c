@@ -1,4 +1,4 @@
-/* $NetBSD: gpioow.c,v 1.13 2011/08/31 12:23:32 mbalmer Exp $ */
+/* $NetBSD: gpioow.c,v 1.14 2011/09/07 07:43:05 mbalmer Exp $ */
 /*	$OpenBSD: gpioow.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.13 2011/08/31 12:23:32 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.14 2011/09/07 07:43:05 mbalmer Exp $");
 
 /*
  * 1-Wire bus bit-banging through GPIO pin.
@@ -87,7 +87,7 @@ gpioow_match(device_t parent, cfdata_t cf, void *aux)
 
 	/* Check that we have enough pins */
 	if (gpio_npins(ga->ga_mask) != GPIOOW_NPINS) {
-		aprint_debug("%s: invalid pin mask 0x%02x/n", cf->cf_name,
+		aprint_debug("%s: invalid pin mask 0x%02x\n", cf->cf_name,
 		    ga->ga_mask);
 		return 0;
 	}

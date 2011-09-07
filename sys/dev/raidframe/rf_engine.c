@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.46 2011/05/11 18:13:12 mrg Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.47 2011/09/07 07:46:45 mbalmer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.46 2011/05/11 18:13:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.47 2011/09/07 07:46:45 mbalmer Exp $");
 
 #include <sys/errno.h>
 
@@ -664,7 +664,7 @@ ProcessNode(RF_DagNode_t *node, int context)
 		break;
 	case rf_panic:
 		/* an undo node failed!!! */
-		printf("UNDO of a node failed!!!/n");
+		printf("UNDO of a node failed!!!\n");
 		break;
 	default:
 		printf("node finished execution with an illegal status!!!\n");
