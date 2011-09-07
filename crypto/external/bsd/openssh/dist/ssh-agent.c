@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-agent.c,v 1.7 2011/08/16 09:42:21 christos Exp $	*/
-/* $OpenBSD: ssh-agent.c,v 1.171 2010/11/21 01:01:13 djm Exp $ */
+/*	$NetBSD: ssh-agent.c,v 1.8 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: ssh-agent.c,v 1.172 2011/06/03 01:37:40 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.7 2011/08/16 09:42:21 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.8 2011/09/07 17:49:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -1079,7 +1079,11 @@ cleanup_handler(int sig)
 static void
 check_parent_exists(void)
 {
-	if (parent_pid != -1 && kill(parent_pid, 0) < 0) {
+	/*
+	 * If our parent has exited then getppid() will return (pid_t)1,
+	 * so testing for that should be safe.
+	 */
+	if (parent_pid != -1 && getppid() != parent_pid) {
 		/* printf("Parent has died - Authentication agent exiting.\n"); */
 		cleanup_socket();
 		_exit(2);
