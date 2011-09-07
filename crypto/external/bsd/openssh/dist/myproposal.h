@@ -1,5 +1,5 @@
-/*	$NetBSD: myproposal.h,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: myproposal.h,v 1.27 2010/09/01 22:42:13 djm Exp $ */
+/*	$NetBSD: myproposal.h,v 1.5 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: myproposal.h,v 1.28 2011/08/02 01:22:11 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -58,7 +58,14 @@
 
 #ifdef UMAC_HAS_BEEN_UNBROKEN
 #define	KEX_DEFAULT_MAC \
-	"hmac-md5,hmac-sha1,umac-64@openssh.com,hmac-ripemd160," \
+	"hmac-md5," \
+	"hmac-sha1," \
+	"umac-64@openssh.com," \
+	"hmac-sha2-256," \
+	"hmac-sha2-256-96," \
+	"hmac-sha2-512," \
+	"hmac-sha2-512-96," \
+	"hmac-ripemd160," \
 	"hmac-ripemd160@openssh.com," \
 	"hmac-sha1-96,hmac-md5-96"
 #else

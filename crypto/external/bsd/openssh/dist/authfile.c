@@ -1,5 +1,5 @@
-/*	$NetBSD: authfile.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: authfile.c,v 1.87 2010/11/29 18:57:04 markus Exp $ */
+/*	$NetBSD: authfile.c,v 1.5 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: authfile.c,v 1.92 2011/06/14 22:49:18 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.5 2011/09/07 17:49:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -65,6 +65,8 @@ __RCSID("$NetBSD: authfile.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
 #include "rsa.h"
 #include "misc.h"
 #include "atomicio.h"
+
+#define MAX_KEY_FILE_SIZE	(1024 * 1024)
 
 /* Version identification string for SSH v1 identity files. */
 static const char authfile_id_string[] =
@@ -268,6 +270,7 @@ static Key *
 key_parse_public_rsa1(Buffer *blob, char **commentp)
 {
 	Key *pub;
+	Buffer copy;
 
 	/* Check that it is at least big enough to contain the ID string. */
 	if (buffer_len(blob) < sizeof(authfile_id_string)) {
@@ -284,31 +287,33 @@ key_parse_public_rsa1(Buffer *blob, char **commentp)
 		debug3("Incorrect RSA1 identifier");
 		return NULL;
 	}
-	buffer_consume(blob, sizeof(authfile_id_string));
+	buffer_init(&copy);
+	buffer_append(&copy, buffer_ptr(blob), buffer_len(blob));
+	buffer_consume(&copy, sizeof(authfile_id_string));
 
 	/* Skip cipher type and reserved data. */
-	(void) buffer_get_char(blob);	/* cipher type */
-	(void) buffer_get_int(blob);		/* reserved */
+	(void) buffer_get_char(&copy);		/* cipher type */
+	(void) buffer_get_int(&copy);		/* reserved */
 
 	/* Read the public key from the buffer. */
-	(void) buffer_get_int(blob);
+	(void) buffer_get_int(&copy);
 	pub = key_new(KEY_RSA1);
-	buffer_get_bignum(blob, pub->rsa->n);
-	buffer_get_bignum(blob, pub->rsa->e);
+	buffer_get_bignum(&copy, pub->rsa->n);
+	buffer_get_bignum(&copy, pub->rsa->e);
 	if (commentp)
-		*commentp = buffer_get_string(blob, NULL);
+		*commentp = buffer_get_string(&copy, NULL);
 	/* The encrypted private part is not parsed by this function. */
-	buffer_clear(blob);
+	buffer_free(&copy);
 
 	return pub;
 }
 
-/* Load the contents of a key file into a buffer */
-static int
+/* Load a key from a fd into a buffer */
+int
 key_load_file(int fd, const char *filename, Buffer *blob)
 {
+	u_char buf[1024];
 	size_t len;
-	u_char *cp;
 	struct stat st;
 
 	if (fstat(fd, &st) < 0) {
@@ -316,30 +321,45 @@ key_load_file(int fd, const char *filename, Buffer *blob)
 		    filename == NULL ? "" : filename,
 		    filename == NULL ? "" : " ",
 		    strerror(errno));
-		close(fd);
 		return 0;
 	}
-	if (st.st_size > 1*1024*1024) {
+	if ((st.st_mode & (S_IFSOCK|S_IFCHR|S_IFIFO)) == 0 &&
+	    st.st_size > MAX_KEY_FILE_SIZE) {
+ toobig:
 		error("%s: key file %.200s%stoo large", __func__,
 		    filename == NULL ? "" : filename,
 		    filename == NULL ? "" : " ");
-		close(fd);
 		return 0;
 	}
-	len = (size_t)st.st_size;		/* truncated */
-
 	buffer_init(blob);
-	cp = buffer_append_space(blob, len);
-
-	if (atomicio(read, fd, cp, len) != len) {
-		debug("%s: read from key file %.200s%sfailed: %.100s", __func__,
-		    filename == NULL ? "" : filename,
-		    filename == NULL ? "" : " ",
-		    strerror(errno));
+	for (;;) {
+		if ((len = atomicio(read, fd, buf, sizeof(buf))) == 0) {
+			if (errno == EPIPE)
+				break;
+			debug("%s: read from key file %.200s%sfailed: %.100s",
+			    __func__, filename == NULL ? "" : filename,
+			    filename == NULL ? "" : " ", strerror(errno));
+			buffer_clear(blob);
+			bzero(buf, sizeof(buf));
+			return 0;
+		}
+		buffer_append(blob, buf, len);
+		if (buffer_len(blob) > MAX_KEY_FILE_SIZE) {
+			buffer_clear(blob);
+			bzero(buf, sizeof(buf));
+			goto toobig;
+		}
+	}
+	bzero(buf, sizeof(buf));
+	if ((st.st_mode & (S_IFSOCK|S_IFCHR|S_IFIFO)) == 0 &&
+	    st.st_size != buffer_len(blob)) {
+		debug("%s: key file %.200s%schanged size while reading",
+		    __func__, filename == NULL ? "" : filename,
+		    filename == NULL ? "" : " ");
 		buffer_clear(blob);
-		close(fd);
 		return 0;
 	}
+
 	return 1;
 }
 
@@ -394,6 +414,7 @@ key_parse_private_rsa1(Buffer *blob, const char *passphrase, char **commentp)
 	CipherContext ciphercontext;
 	Cipher *cipher;
 	Key *prv = NULL;
+	Buffer copy;
 
 	/* Check that it is at least big enough to contain the ID string. */
 	if (buffer_len(blob) < sizeof(authfile_id_string)) {
@@ -410,41 +431,44 @@ key_parse_private_rsa1(Buffer *blob, const char *passphrase, char **commentp)
 		debug3("Incorrect RSA1 identifier");
 		return NULL;
 	}
-	buffer_consume(blob, sizeof(authfile_id_string));
+	buffer_init(&copy);
+	buffer_append(&copy, buffer_ptr(blob), buffer_len(blob));
+	buffer_consume(&copy, sizeof(authfile_id_string));
 
 	/* Read cipher type. */
-	cipher_type = buffer_get_char(blob);
-	(void) buffer_get_int(blob);	/* Reserved data. */
+	cipher_type = buffer_get_char(&copy);
+	(void) buffer_get_int(&copy);	/* Reserved data. */
 
 	/* Read the public key from the buffer. */
-	(void) buffer_get_int(blob);
+	(void) buffer_get_int(&copy);
 	prv = key_new_private(KEY_RSA1);
 
-	buffer_get_bignum(blob, prv->rsa->n);
-	buffer_get_bignum(blob, prv->rsa->e);
+	buffer_get_bignum(&copy, prv->rsa->n);
+	buffer_get_bignum(&copy, prv->rsa->e);
 	if (commentp)
-		*commentp = buffer_get_string(blob, NULL);
+		*commentp = buffer_get_string(&copy, NULL);
 	else
-		(void)buffer_get_string_ptr(blob, NULL);
+		(void)buffer_get_string_ptr(&copy, NULL);
 
 	/* Check that it is a supported cipher. */
 	cipher = cipher_by_number(cipher_type);
 	if (cipher == NULL) {
 		debug("Unsupported RSA1 cipher %d", cipher_type);
+		buffer_free(&copy);
 		goto fail;
 	}
 	/* Initialize space for decrypted data. */
 	buffer_init(&decrypted);
-	cp = buffer_append_space(&decrypted, buffer_len(blob));
+	cp = buffer_append_space(&decrypted, buffer_len(&copy));
 
 	/* Rest of the buffer is encrypted.  Decrypt it using the passphrase. */
 	cipher_set_key_string(&ciphercontext, cipher, passphrase,
 	    CIPHER_DECRYPT);
 	cipher_crypt(&ciphercontext, cp,
-	    buffer_ptr(blob), buffer_len(blob));
+	    buffer_ptr(&copy), buffer_len(&copy));
 	cipher_cleanup(&ciphercontext);
 	memset(&ciphercontext, 0, sizeof(ciphercontext));
-	buffer_clear(blob);
+	buffer_free(&copy);
 
 	check1 = buffer_get_char(&decrypted);
 	check2 = buffer_get_char(&decrypted);
@@ -612,6 +636,7 @@ key_parse_private_type(Buffer *blob, int type, const char *passphrase,
 	case KEY_UNSPEC:
 		return key_parse_private_pem(blob, type, passphrase, commentp);
 	default:
+		error("%s: cannot parse key type %d", __func__, type);
 		break;
 	}
 	return NULL;
@@ -656,11 +681,34 @@ key_load_private_type(int type, const char *filename, const char *passphrase,
 }
 
 Key *
+key_parse_private(Buffer *buffer, const char *filename,
+    const char *passphrase, char **commentp)
+{
+	Key *pub, *prv;
+
+	/* it's a SSH v1 key if the public key part is readable */
+	pub = key_parse_public_rsa1(buffer, commentp);
+	if (pub == NULL) {
+		prv = key_parse_private_type(buffer, KEY_UNSPEC,
+		    passphrase, NULL);
+		/* use the filename as a comment for PEM */
+		if (commentp && prv)
+			*commentp = xstrdup(filename);
+	} else {
+		key_free(pub);
+		/* key_parse_public_rsa1() has already loaded the comment */
+		prv = key_parse_private_type(buffer, KEY_RSA1, passphrase,
+		    NULL);
+	}
+	return prv;
+}
+
+Key *
 key_load_private(const char *filename, const char *passphrase,
     char **commentp)
 {
-	Key *pub, *prv;
-	Buffer buffer, pubcopy;
+	Key *prv;
+	Buffer buffer;
 	int fd;
 
 	fd = open(filename, O_RDONLY);
@@ -683,23 +731,7 @@ key_load_private(const char *filename, const char *passphrase,
 	}
 	close(fd);
 
-	buffer_init(&pubcopy);
-	buffer_append(&pubcopy, buffer_ptr(&buffer), buffer_len(&buffer));
-	/* it's a SSH v1 key if the public key part is readable */
-	pub = key_parse_public_rsa1(&pubcopy, commentp);
-	buffer_free(&pubcopy);
-	if (pub == NULL) {
-		prv = key_parse_private_type(&buffer, KEY_UNSPEC,
-		    passphrase, NULL);
-		/* use the filename as a comment for PEM */
-		if (commentp && prv)
-			*commentp = xstrdup(filename);
-	} else {
-		key_free(pub);
-		/* key_parse_public_rsa1() has already loaded the comment */
-		prv = key_parse_private_type(&buffer, KEY_RSA1, passphrase,
-		    NULL);
-	}
+	prv = key_parse_private(&buffer, filename, passphrase, commentp);
 	buffer_free(&buffer);
 	return prv;
 }
@@ -723,13 +755,19 @@ key_try_load_public(Key *k, const char *filename, char **commentp)
 			case '\0':
 				continue;
 			}
+			/* Abort loading if this looks like a private key */
+			if (strncmp(cp, "-----BEGIN", 10) == 0)
+				break;
 			/* Skip leading whitespace. */
 			for (; *cp && (*cp == ' ' || *cp == '\t'); cp++)
 				;
 			if (*cp) {
 				if (key_read(k, &cp) == 1) {
-					if (commentp)
-						*commentp=xstrdup(filename);
+					cp[strcspn(cp, "\r\n")] = '\0';
+					if (commentp) {
+						*commentp = xstrdup(*cp ?
+						    cp : filename);
+					}
 					fclose(f);
 					return 1;
 				}

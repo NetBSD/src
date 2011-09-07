@@ -1,5 +1,5 @@
-/*	$NetBSD: pathnames.h,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: pathnames.h,v 1.20 2010/08/31 11:54:45 djm Exp $ */
+/*	$NetBSD: pathnames.h,v 1.6 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: pathnames.h,v 1.22 2011/05/23 03:30:07 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

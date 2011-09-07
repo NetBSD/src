@@ -1,5 +1,5 @@
-/*	$NetBSD: log.c,v 1.4 2011/08/25 15:37:00 joerg Exp $	*/
-/* $OpenBSD: log.c,v 1.41 2008/06/10 04:50:25 dtucker Exp $ */
+/*	$NetBSD: log.c,v 1.5 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: log.c,v 1.42 2011/06/17 21:44:30 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.4 2011/08/25 15:37:00 joerg Exp $");
+__RCSID("$NetBSD: log.c,v 1.5 2011/09/07 17:49:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -56,6 +56,8 @@ static LogLevel log_level = SYSLOG_LEVEL_INFO;
 static int log_on_stderr = 1;
 static int log_facility = LOG_AUTH;
 static const char *argv0;
+static log_handler_fn *log_handler;
+static void *log_handler_ctx;
 
 extern char *__progname;
 
@@ -249,6 +251,9 @@ log_init(const char *av0, LogLevel level, SyslogFacility facility,
 		exit(1);
 	}
 
+	log_handler = NULL;
+	log_handler_ctx = NULL;
+
 	log_on_stderr = on_stderr;
 	if (on_stderr)
 		return;
@@ -298,18 +303,34 @@ log_init(const char *av0, LogLevel level, SyslogFacility facility,
 #define MSGBUFSIZ 1024
 
 void
+set_log_handler(log_handler_fn *handler, void *ctx)
+{
+	log_handler = handler;
+	log_handler_ctx = ctx;
+}
+
+void
+do_log2(LogLevel level, const char *fmt,...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	do_log(level, fmt, args);
+	va_end(args);
+}
+
+void
 do_log(LogLevel level, const char *fmt, va_list args)
 {
 #ifdef SYSLOG_DATA_INIT
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 #endif
-	size_t len, len2;
-	int len3;
-	char msgbuf[MSGBUFSIZ], *msgbufp;
+	char msgbuf[MSGBUFSIZ];
 	char visbuf[MSGBUFSIZ * 4 + 1];
 	const char *txt = NULL;
 	int pri = LOG_INFO;
 	int saved_errno = errno;
+	log_handler_fn *tmp_handler;
 
 	if (level > log_level)
 		return;
@@ -348,25 +369,22 @@ do_log(LogLevel level, const char *fmt, va_list args)
 		pri = LOG_ERR;
 		break;
 	}
-	len = sizeof(msgbuf);
-	msgbufp = msgbuf;
-	if (txt != NULL) {
-		len2 = strlen(txt);
-		if (len2 >= len)
-			len2 = len - 1;
-		memcpy(msgbufp, txt, len2);
-		msgbufp += len2;
-		*msgbufp++ = '\0';
-		len -= len2 + 1;
+	if (txt != NULL && log_handler == NULL) {
+		snprintf(visbuf, sizeof(visbuf), "%s: %s", txt, fmt);
+		vsnprintf(msgbuf, sizeof(msgbuf), visbuf, args);
+	} else {
+		vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
 	}
-	vsnprintf(msgbufp, len, fmt, args);
-	len3 = strvis(visbuf, msgbuf, VIS_SAFE|VIS_OCTAL);
-	if (log_on_stderr) {
-		struct iovec iov[] = {
-			{ visbuf, len3 },
-			{ __UNCONST("\r\n"), 2 },
-		};
-		writev(STDERR_FILENO, iov, __arraycount(iov));
+	strnvis(visbuf, sizeof(visbuf), msgbuf, VIS_SAFE|VIS_OCTAL);
+	if (log_handler != NULL) {
+		/* Avoid recursion */
+		tmp_handler = log_handler;
+		log_handler = NULL;
+		tmp_handler(level, visbuf, log_handler_ctx);
+		log_handler = tmp_handler;
+	} else if (log_on_stderr) {
+		snprintf(msgbuf, sizeof msgbuf, "%s\r\n", visbuf);
+		write(STDERR_FILENO, msgbuf, strlen(msgbuf));
 	} else {
 #ifdef SYSLOG_DATA_INIT
 		openlog_r(argv0 ? argv0 : __progname, LOG_PID, log_facility, &sdata);

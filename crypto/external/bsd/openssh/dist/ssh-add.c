@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-add.c,v 1.4 2011/07/25 03:03:11 christos Exp $	*/
-/* $OpenBSD: ssh-add.c,v 1.100 2010/08/31 12:33:38 djm Exp $ */
+/*	$NetBSD: ssh-add.c,v 1.5 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: ssh-add.c,v 1.101 2011/05/04 21:15:29 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-add.c,v 1.4 2011/07/25 03:03:11 christos Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.5 2011/09/07 17:49:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -142,8 +142,12 @@ add_file(AuthenticationConnection *ac, const char *filename)
 	char *comment = NULL;
 	char msg[1024], *certpath;
 	int fd, perms_ok, ret = -1;
+	Buffer keyblob;
 
-	if ((fd = open(filename, O_RDONLY)) < 0) {
+	if (strcmp(filename, "-") == 0) {
+		fd = STDIN_FILENO;
+		filename = "(stdin)";
+	} else if ((fd = open(filename, O_RDONLY)) < 0) {
 		perror(filename);
 		return -1;
 	}
@@ -152,18 +156,28 @@ add_file(AuthenticationConnection *ac, const char *filename)
 	 * Since we'll try to load a keyfile multiple times, permission errors
 	 * will occur multiple times, so check perms first and bail if wrong.
 	 */
-	perms_ok = key_perm_ok(fd, filename);
-	close(fd);
-	if (!perms_ok)
+	if (fd != STDIN_FILENO) {
+		perms_ok = key_perm_ok(fd, filename);
+		if (!perms_ok) {
+			close(fd);
+			return -1;
+		}
+	}
+	buffer_init(&keyblob);
+	if (!key_load_file(fd, filename, &keyblob)) {
+		buffer_free(&keyblob);
+		close(fd);
 		return -1;
+	}
+	close(fd);
 
 	/* At first, try empty passphrase */
-	private = key_load_private(filename, "", &comment);
+	private = key_parse_private(&keyblob, filename, "", &comment);
 	if (comment == NULL)
 		comment = xstrdup(filename);
 	/* try last */
 	if (private == NULL && pass != NULL)
-		private = key_load_private(filename, pass, NULL);
+		private = key_parse_private(&keyblob, filename, pass, NULL);
 	if (private == NULL) {
 		/* clear passphrase since it did not work */
 		clear_pass();
@@ -174,9 +188,11 @@ add_file(AuthenticationConnection *ac, const char *filename)
 			if (strcmp(pass, "") == 0) {
 				clear_pass();
 				xfree(comment);
+				buffer_free(&keyblob);
 				return -1;
 			}
-			private = key_load_private(filename, pass, &comment);
+			private = key_parse_private(&keyblob, filename, pass,
+			    &comment);
 			if (private != NULL)
 				break;
 			clear_pass();
@@ -184,6 +200,7 @@ add_file(AuthenticationConnection *ac, const char *filename)
 			    "Bad passphrase, try again for %.200s: ", comment);
 		}
 	}
+	buffer_free(&keyblob);
 
 	if (ssh_add_identity_constrained(ac, private, comment, lifetime,
 	    confirm)) {

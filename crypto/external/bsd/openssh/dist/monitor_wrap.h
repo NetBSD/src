@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.h,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.h,v 1.22 2009/03/05 07:18:19 djm Exp $ */
+/*	$NetBSD: monitor_wrap.h,v 1.5 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.h,v 1.23 2011/06/17 21:44:31 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -38,6 +38,7 @@ struct monitor;
 struct mm_master;
 struct Authctxt;
 
+void mm_log_handler(LogLevel, const char *, void *);
 int mm_is_monitor(void);
 DH *mm_choose_dh(int, int, int);
 int mm_key_sign(Key *, u_char **, u_int *, u_char *, u_int);

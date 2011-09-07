@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-gss.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
-/* $OpenBSD: auth2-gss.c,v 1.16 2007/10/29 00:52:45 dtucker Exp $ */
+/*	$NetBSD: auth2-gss.c,v 1.3 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: auth2-gss.c,v 1.17 2011/03/10 02:52:57 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-gss.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: auth2-gss.c,v 1.3 2011/09/07 17:49:19 christos Exp $");
 
 #ifdef GSSAPI
 
@@ -102,6 +102,7 @@ userauth_gssapi(Authctxt *authctxt)
 
 	if (!present) {
 		xfree(doid);
+		authctxt->server_caused_failure = 1;
 		return (0);
 	}
 
@@ -109,6 +110,7 @@ userauth_gssapi(Authctxt *authctxt)
 		if (ctxt != NULL)
 			ssh_gssapi_delete_ctx(&ctxt);
 		xfree(doid);
+		authctxt->server_caused_failure = 1;
 		return (0);
 	}
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.8 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: key.c,v 1.96 2011/02/04 00:44:21 djm Exp $ */
+/*	$NetBSD: key.c,v 1.9 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: key.c,v 1.97 2011/05/17 07:13:31 djm Exp $ */
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: key.c,v 1.8 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.9 2011/09/07 17:49:19 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 
@@ -1757,6 +1757,9 @@ key_to_certified(Key *k, int legacy)
 		k->type = legacy ? KEY_DSA_CERT_V00 : KEY_DSA_CERT;
 		return 0;
 	case KEY_ECDSA:
+		if (legacy)
+			fatal("%s: legacy ECDSA certificates are not supported",
+			    __func__);
 		k->cert = cert_new();
 		k->type = KEY_ECDSA_CERT;
 		return 0;

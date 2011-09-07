@@ -1,5 +1,5 @@
-/*	$NetBSD: channels.h,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: channels.h,v 1.104 2010/05/14 23:29:23 djm Exp $ */
+/*	$NetBSD: channels.h,v 1.5 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: channels.h,v 1.105 2011/06/22 22:08:42 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -276,7 +276,7 @@ int	 x11_connect_display(void);
 int	 x11_create_display_inet(int, int, int, u_int *, int **);
 void     x11_input_open(int, u_int32_t, void *);
 void	 x11_request_forwarding_with_spoofing(int, const char *, const char *,
-	     const char *);
+	     const char *, int);
 void	 deny_input_open(int, u_int32_t, void *);
 
 /* agent forwarding */

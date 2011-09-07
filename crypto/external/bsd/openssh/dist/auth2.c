@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: auth2.c,v 1.122 2010/08/31 09:58:37 djm Exp $ */
+/*	$NetBSD: auth2.c,v 1.5 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: auth2.c,v 1.123 2011/03/10 02:52:57 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.5 2011/09/07 17:49:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -287,6 +287,7 @@ input_userauth_request(int type, u_int32_t seq, void *ctxt)
 #endif
 
 	authctxt->postponed = 0;
+	authctxt->server_caused_failure = 0;
 
 	/* try to authenticate user */
 	m = authmethod_lookup(method);
@@ -351,7 +352,8 @@ userauth_finish(Authctxt *authctxt, int authenticated, const char *method)
 		authctxt->success = 1;
 	} else {
 		/* Allow initial try of "none" auth without failure penalty */
-		if (authctxt->attempt > 1 || strcmp(method, "none") != 0)
+		if (!authctxt->server_caused_failure &&
+		    (authctxt->attempt > 1 || strcmp(method, "none") != 0))
 			authctxt->failures++;
 		if (authctxt->failures >= options.max_authtries) {
 			packet_disconnect(AUTH_FAIL_MSG, authctxt->user);

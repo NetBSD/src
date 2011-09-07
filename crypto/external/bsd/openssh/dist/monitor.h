@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.h,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
-/* $OpenBSD: monitor.h,v 1.15 2008/11/04 08:22:13 djm Exp $ */
+/*	$NetBSD: monitor.h,v 1.3 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: monitor.h,v 1.16 2011/06/17 21:44:31 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -74,6 +74,8 @@ struct mm_master;
 struct monitor {
 	int			 m_recvfd;
 	int			 m_sendfd;
+	int			 m_log_recvfd;
+	int			 m_log_sendfd;
 	struct mm_master	*m_zback;
 	struct mm_master	*m_zlib;
 	struct Kex		**m_pkex;

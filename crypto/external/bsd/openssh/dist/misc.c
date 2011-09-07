@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.84 2010/11/21 01:01:13 djm Exp $ */
+/*	$NetBSD: misc.c,v 1.6 2011/09/07 17:49:19 christos Exp $	*/
+/* $OpenBSD: misc.c,v 1.85 2011/03/29 18:54:17 stevesk Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.5 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.6 2011/09/07 17:49:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -986,6 +986,20 @@ parse_ipqos(const char *cp)
 	if (*cp == '\0' || *ep != '\0' || val < 0 || val > 255)
 		return -1;
 	return val;
+}
+
+const char *
+iptos2str(int iptos)
+{
+	int i;
+	static char iptos_str[sizeof "0xff"];
+
+	for (i = 0; ipqos[i].name != NULL; i++) {
+		if (ipqos[i].value == iptos)
+			return ipqos[i].name;
+	}
+	snprintf(iptos_str, sizeof iptos_str, "0x%02x", iptos);
+	return iptos_str;
 }
 
 int
