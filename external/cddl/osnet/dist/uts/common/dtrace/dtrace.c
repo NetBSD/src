@@ -7801,6 +7801,7 @@ dtrace_probe_create(dtrace_provider_id_t prov, const char *mod,
 	dtrace_probe_t *probe, **probes;
 	dtrace_provider_t *provider = (dtrace_provider_t *)prov;
 	dtrace_id_t id;
+	vmem_addr_t offset;
 
 	if (provider == dtrace_provider) {
 		ASSERT(MUTEX_HELD(&dtrace_lock));
@@ -7808,8 +7809,9 @@ dtrace_probe_create(dtrace_provider_id_t prov, const char *mod,
 		mutex_enter(&dtrace_lock);
 	}
 
-	id = (dtrace_id_t)(uintptr_t)vmem_alloc(dtrace_arena, 1,
-	    VM_BESTFIT | VM_SLEEP);
+	if (vmem_alloc(dtrace_arena, 1, VM_BESTFIT | VM_SLEEP, &offset) != 0)
+		ASSERT(0);
+	id = (dtrace_id_t)(uintptr_t)offset;
 	probe = kmem_zalloc(sizeof (dtrace_probe_t), KM_SLEEP);
 
 	probe->dtpr_id = id;
@@ -9930,6 +9932,7 @@ dtrace_ecb_aggregation_create(dtrace_ecb_t *ecb, dtrace_actdesc_t *desc)
 	dtrace_recdesc_t *frec;
 	dtrace_aggid_t aggid;
 	dtrace_state_t *state = ecb->dte_state;
+	vmem_addr_t offset;
 
 	agg = kmem_zalloc(sizeof (dtrace_aggregation_t), KM_SLEEP);
 	agg->dtag_ecb = ecb;
@@ -10036,8 +10039,11 @@ success:
 	/*
 	 * We need to allocate an id for this aggregation.
 	 */
-	aggid = (dtrace_aggid_t)(uintptr_t)vmem_alloc(state->dts_aggid_arena, 1,
-	    VM_BESTFIT | VM_SLEEP);
+	if (vmem_alloc(state->dts_aggid_arena, 1, VM_BESTFIT | VM_SLEEP,
+	    &offset) != 0)
+		ASSERT(0);
+	aggid = (dtrace_aggid_t)(uintptr_t)offset;
+
 
 	if (aggid - 1 >= state->dts_naggregations) {
 		dtrace_aggregation_t **oaggs = state->dts_aggregations;
