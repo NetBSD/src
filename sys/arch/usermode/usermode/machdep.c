@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.24 2011/09/05 18:31:04 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.25 2011/09/07 10:10:10 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2011/09/05 18:31:04 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2011/09/07 10:10:10 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -142,10 +142,25 @@ consinit(void)
 }
 
 void
+sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prog)
+{
+	return 0;
+}
+
+
+#ifdef __i386__
+
+void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 	ucontext_t *ucp = &pcb->pcb_userland_ucp;
+	uint *reg, i;
 
 #ifdef DEBUG_EXEC
 	printf("setregs called: lwp %p, exec package %p, stack %p\n",
@@ -161,10 +176,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		(int) pcb->pcb_userland_ucp.uc_stack.ss_size);
 #endif
 
-#ifdef __i386__
-	uint *reg, i;
 	reg = (int *) &ucp->uc_mcontext;
-
 	for (i = 4; i < 11; i++)
 		reg[i] = 0;
 
@@ -185,9 +197,6 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	for (i =0; i < 19; i++)
 		printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], reg[i]);
 #endif
-#else
-#	error setregs() not yet ported to this architecture
-#endif
 
 #ifdef DEBUG_EXEC
 	printf("updated pcb %p\n", pcb);
@@ -204,13 +213,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 #endif
 }
 
-void
-sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-}
 
-int
-mm_md_physacc(paddr_t pa, vm_prot_t prog)
-{
-	return 0;
-}
+#else
+#	error setregs() not yet ported to this architecture
+#endif
+
