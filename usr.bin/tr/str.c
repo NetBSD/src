@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.13 2011/09/06 18:33:46 joerg Exp $	*/
+/*	$NetBSD: str.c,v 1.14 2011/09/07 18:21:41 riz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.13 2011/09/06 18:33:46 joerg Exp $");
+__RCSID("$NetBSD: str.c,v 1.14 2011/09/07 18:21:41 riz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -151,7 +151,7 @@ typedef struct {
 	int *set;
 } CLASS;
 
-static const CLASS classes[] = {
+static CLASS classes[] = {
 	{ "alnum",  isalnum,  NULL, },
 	{ "alpha",  isalpha,  NULL, },
 	{ "blank",  isblank,  NULL, },
