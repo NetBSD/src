@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.7 2011/09/07 13:07:21 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.8 2011/09/07 20:34:58 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.7 2011/09/07 13:07:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.8 2011/09/07 20:34:58 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3098,12 +3098,16 @@ hdafg_stream_connect(struct hdafg_softc *sc, int mode)
 
 			/*
 			 * If a non-PCM stream is being connected, and the
-			 * converter doesn't support non-PCM streams, then
-			 * don't decode it
+			 * analog converter doesn't support non-PCM streams,
+			 * then don't decode it
 			 */
-			if ((fmt & HDAUDIO_FMT_TYPE_NONPCM) &&
-			    !(w->w_p.stream_format & COP_STREAM_FORMAT_AC3))
-				c = 0;
+			if (!(w->w_p.aw_cap & COP_AWCAP_DIGITAL) &&
+			    !(w->w_p.stream_format & COP_STREAM_FORMAT_AC3) &&
+			    (fmt & HDAUDIO_FMT_TYPE_NONPCM)) {
+				hdaudio_command(sc->sc_codec, w->w_nid,
+				    CORB_SET_CONVERTER_STREAM_CHANNEL, 0);
+				continue;
+			}
 
 			hdaudio_command(sc->sc_codec, w->w_nid,
 			    CORB_SET_CONVERTER_FORMAT, fmt);
@@ -3131,8 +3135,7 @@ hdafg_stream_connect(struct hdafg_softc *sc, int mode)
 			}
 			hdaudio_command(sc->sc_codec, w->w_nid,
 			    CORB_SET_CONVERTER_STREAM_CHANNEL, c);
-			if (c != 0)
-				chn += COP_AWCAP_CHANNEL_COUNT(w->w_p.aw_cap);
+			chn += COP_AWCAP_CHANNEL_COUNT(w->w_p.aw_cap);
 		}
 
 		for (j = 0; j < HDAUDIO_MAXPINS; j++) {
@@ -3290,7 +3293,7 @@ hdafg_configure_encodings(struct hdafg_softc *sc)
 	struct hdaudio_assoc *as = sc->sc_assocs;
 	struct hdaudio_widget *w;
 	struct audio_format f;
-	uint32_t stream_format;
+	uint32_t stream_format, caps;
 	int nchan, i, nid;
 
 	sc->sc_pchan = sc->sc_rchan = 0;
@@ -3315,11 +3318,13 @@ hdafg_configure_encodings(struct hdafg_softc *sc)
 			hda_print1(sc, " %uHz", hdafg_possible_rates[i]);
 
 	stream_format = sc->sc_p.stream_format;
+	caps = 0;
 	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++) {
 		w = hdafg_widget_lookup(sc, nid);
 		if (w == NULL)
 			continue;
 		stream_format |= w->w_p.stream_format;
+		caps |= w->w_p.aw_cap;
 	}
 	if (stream_format == 0) {
 		hda_print(sc,
@@ -3342,7 +3347,8 @@ hdafg_configure_encodings(struct hdafg_softc *sc)
 			hda_print1(sc, " PCM32");
 	}
 
-	if (stream_format & COP_STREAM_FORMAT_AC3) {
+	if ((stream_format & COP_STREAM_FORMAT_AC3) ||
+	    (caps & COP_AWCAP_DIGITAL)) {
 		int e = AUDIO_ENCODING_AC3;
 		if (hdafg_probe_encoding(sc, 16, 16, e, false))
 			hda_print1(sc, " AC3");
