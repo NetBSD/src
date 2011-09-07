@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.30 2011/09/06 09:55:04 jmcneill Exp $ */
+/* $NetBSD: trap.c,v 1.31 2011/09/07 10:00:19 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2011/09/06 09:55:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.31 2011/09/07 10:00:19 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -233,15 +233,11 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 static void
 illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 {
-	static volatile int recurse = 0;
 	struct proc *p;
 	struct lwp *l;
 	struct pcb *pcb;
 	vaddr_t va;
 
-	recurse++;
-	if (recurse > 1)
-		printf("enter trap recursion level %d\n", recurse);
 	if (info->si_signo == SIGILL) {
 		l = curlwp;
 		p = l->l_proc;
@@ -278,11 +274,17 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 			printf("\t\tInternal stack error");
 		printf("\tsi_addr = %p\n", info->si_addr);
 		printf("\tsi_trap = %d\n", info->si_trap);
+
+		printf("%p : ", info->si_addr);
+		for (int i = 0; i < 10; i++)
+			printf("%02x ", *((uint8_t *) info->si_addr + i));
+		printf("\n");
 #endif
 
-		if (recurse > 1)
-			printf("leaving trap recursion level %d\n", recurse);
-		recurse--;
+		/* TODO MD host to NetBSD MD ucontext fixup */
+		/* TODO MD syscall pre-fixup  */
+		/* TODO system call issueing  */
+		/* TODO MD syscall post-fixup */
 
 		panic("illegal instruction encountered\n");
 	}
