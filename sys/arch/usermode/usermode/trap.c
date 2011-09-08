@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.35 2011/09/08 14:49:42 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.36 2011/09/08 15:13:27 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.35 2011/09/08 14:49:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.36 2011/09/08 15:13:27 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.35 2011/09/08 14:49:42 reinoud Exp $");
 #include <machine/cpu.h>
 #include <machine/pcb.h>
 #include <machine/pmap.h>
+#include <machine/machdep.h>
 #include <machine/thunk.h>
 
 
@@ -285,10 +286,10 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 		memcpy(&pcb->pcb_userland_ucp, uct, sizeof(ucontext_t));
 
 		/* if its a syscall, switch to the syscall entry */
-//		if (syscall_check_opcode(info->si_addr)) {
+		if (md_check_syscall_opcode(info->si_addr)) {
 			thunk_setcontext(&pcb->pcb_syscall_ucp);
 			/* NOT REACHED */
-//		}
+		}
 
 		panic("should deliver a trap to the process : illegal instruction "
 			"encountered\n");
