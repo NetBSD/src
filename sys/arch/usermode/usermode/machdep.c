@@ -1,6 +1,7 @@
-/* $NetBSD: machdep.c,v 1.25 2011/09/07 10:10:10 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.26 2011/09/08 15:10:59 reinoud Exp $ */
 
 /*-
+ * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
@@ -31,7 +32,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2011/09/07 10:10:10 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2011/09/08 15:10:59 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2011/09/07 10:10:10 reinoud Exp $")
 #include <uvm/uvm_page.h>
 
 #include <dev/mm.h>
-
+#include <machine/machdep.h>
 #include <machine/thunk.h>
 
 #if defined(URKELVISOR)
@@ -57,7 +58,7 @@ char machine[] = "usermode";
 char machine_arch[] = "usermode";
 
 /* XXX */
-int		physmem = MEMSIZE * 1024 / PAGE_SIZE;
+int	physmem = MEMSIZE * 1024 / PAGE_SIZE;
 
 static char **saved_argv;
 char *usermode_root_image_path = NULL;
@@ -211,6 +212,25 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	printf("\tpack->ep_entry                = %p\n",
 		(void *) pack->ep_entry);
 #endif
+}
+
+
+int
+md_check_syscall_opcode(void *ptr)
+{
+//	uint8_t  *p8;
+	uint16_t *p16;
+//	uint32_t *p32;
+
+	/* undefined instruction */
+	p16 = (uint16_t *) ptr;
+	if (*p16 == 0xff0f)
+		return 1;
+	if (*p16 == 0xff0b)
+		return 1;
+
+	/* TODO int $80 and sysenter */
+	return 0;
 }
 
 
