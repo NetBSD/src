@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2011/08/17 16:57:13 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2011/09/08 18:44:38 jmmv Exp $
 #
 .include <bsd.own.mk>
 
-NOATFFILE=	true
+ATFFILE=	no
 TESTSDIR=	${TESTSBASE}/lib/libcurses
 TESTS_C+=	slave
 
