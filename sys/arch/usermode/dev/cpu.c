@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.38 2011/09/08 12:37:28 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.39 2011/09/08 14:47:17 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.38 2011/09/08 12:37:28 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39 2011/09/08 14:47:17 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -291,13 +291,13 @@ cpu_lwp_trampoline(void (*func)(void *), void *arg)
 	pcb = lwp_getpcb(curlwp);
 
 	/* switch to userland */
-printf("switching to userland\n");
+printf("return of trampoline func, switching to userland\n");
 	thunk_setcontext(&pcb->pcb_userland_ucp);
 
 	panic("%s: shouldn't return", __func__);
 }
 
-extern int syscall(lwp_t *l);
+extern void syscall(void);
 void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
@@ -336,10 +336,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	/* set up the ucontext for the syscall */
 	pcb2->pcb_syscall_ucp.uc_flags = _UC_CPU;
-	pcb2->pcb_syscall_ucp.uc_link = NULL;
+	pcb2->pcb_syscall_ucp.uc_link = &pcb2->pcb_userland_ucp;
 	pcb2->pcb_syscall_ucp.uc_stack.ss_size = 0;	/* no stack move */
 	thunk_makecontext_1(&pcb2->pcb_syscall_ucp, (void (*)(void)) syscall,
-	    l2);
+	    NULL);
 }
 
 void
