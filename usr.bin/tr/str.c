@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.16 2011/09/08 01:18:05 christos Exp $	*/
+/*	$NetBSD: str.c,v 1.17 2011/09/08 01:18:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.16 2011/09/08 01:18:05 christos Exp $");
+__RCSID("$NetBSD: str.c,v 1.17 2011/09/08 01:18:44 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -297,26 +297,26 @@ backslash(STR *s)
 	if (ch != '\0')
 		++s->str;
 	switch (ch) {
-	    case 'a':			/* escape characters */
-		    return '\7';
-	    case 'b':
-		    return '\b';
-	    case 'e':
-		    return '\033';
-	    case 'f':
-		    return '\f';
-	    case 'n':
-		    return '\n';
-	    case 'r':
-		    return '\r';
-	    case 't':
-		    return '\t';
-	    case 'v':
-		    return '\13';
-	    case '\0':			/*  \" -> \ */
-		    s->state = EOS;
-		    return '\\';
-	    default:			/* \x" -> x */
-		    return ch;
+	case 'a':			/* escape characters */
+		return '\7';
+	case 'b':
+		return '\b';
+	case 'e':
+		return '\033';
+	case 'f':
+		return '\f';
+	case 'n':
+		return '\n';
+	case 'r':
+		return '\r';
+	case 't':
+		return '\t';
+	case 'v':
+		return '\13';
+	case '\0':			/*  \" -> \ */
+		s->state = EOS;
+		return '\\';
+	default:			/* \x" -> x */
+		return ch;
 	}
 }
