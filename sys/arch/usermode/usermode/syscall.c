@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.6 2011/09/08 12:01:22 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.7 2011/09/08 14:49:42 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6 2011/09/08 12:01:22 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2011/09/08 14:49:42 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -35,33 +35,77 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6 2011/09/08 12:01:22 reinoud Exp $");
 #include <sys/proc.h>
 #include <sys/lwp.h>
 #include <sys/sched.h>
-#include <sys/userret.h>
 #include <sys/ktrace.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
+#include <sys/syscallargs.h>
+
+#include <sys/userret.h>
 #include <machine/pcb.h>
 #include <machine/thunk.h>
 
-extern int syscall(lwp_t *l);
+extern void syscall(void);
+
+void userret(struct lwp *l);
+
+void
+userret(struct lwp *l)
+{
+	/* invoke MI userret code */
+	mi_userret(l);
+}
 
 void
 child_return(void *arg)
 {
 	lwp_t *l = arg;
 //	struct pcb *pcb = lwp_getpcb(l);
-//	struct trapframe *frame = pcb->pcb_tf;
 
 	/* XXX? */
 //	frame->registers[0] = 0;
 
-printf("child returned! arg %p\n", arg);
-	mi_userret(l);
+	printf("child return! lwp %p\n", l);
+	userret(l);
 	ktrsysret(SYS_fork, 0, 0);
 }
 
+void
+syscall(void)
+{	
+	lwp_t *l = curlwp;
+	struct pcb *pcb = lwp_getpcb(l);
+	ucontext_t *ucp = &pcb->pcb_userland_ucp;
+	uint *reg, i;
 
-int
-syscall(lwp_t *l)
-{
-printf("syscall called for lwp %p!\n", l);
-	return ENOENT;
+	l = curlwp;
+
+	printf("syscall called for lwp %p!\n", l);
+	reg = (int *) &ucp->uc_mcontext;
+#if 1
+	/* register dump before call */
+	const char *name[] = {"GS", "FS", "ES", "DS", "EDI", "ESI", "EBP", "ESP",
+		"EBX", "EDX", "ECX", "EAX", "TRAPNO", "ERR", "EIP", "CS", "EFL",
+		"UESP", "SS"};
+
+	for (i =0; i < 19; i++)
+		printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], reg[i]);
+#endif
+
+	/* system call accounting */
+	curcpu()->ci_data.cpu_nsyscall++;
+
+	/* XXX do we want do do emulation? */
+	LWP_CACHE_CREDS(l, l->l_proc);
+	/* TODO issue!! */
+
+	printf("syscall no. %d\n", reg[11]);
+/* skip instruction */
+reg[14] += 2;
+
+/* retval */
+reg[11] = 0;
+	printf("end of syscall : return to userland\n");
+	userret(l);
+printf("jump back to %p\n", (void *) reg[14]);
 }
+

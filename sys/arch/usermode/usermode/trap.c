@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.34 2011/09/08 11:56:48 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.35 2011/09/08 14:49:42 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34 2011/09/08 11:56:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.35 2011/09/08 14:49:42 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34 2011/09/08 11:56:48 reinoud Exp $");
 #include <machine/pmap.h>
 #include <machine/thunk.h>
 
-#include <sys/syscallvar.h>
-#include <sys/syscallargs.h>
 
 //#include <machine/ctlreg.h>
 //#include <machine/trap.h>
@@ -234,6 +232,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 static void
 illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 {
+	ucontext_t *uct = ctx;
 	struct proc *p;
 	struct lwp *l;
 	struct pcb *pcb;
@@ -282,23 +281,16 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 		printf("\n");
 #endif
 
-#if 0
-		/* MD syscall pre-fixup: extract `trapframe' from the MD ctx */
-		syscall_pre_fixup(info->si_addr, ctx, &pcb->pcb_tf);
+		/* copy this state to return to */
+		memcpy(&pcb->pcb_userland_ucp, uct, sizeof(ucontext_t));
 
-printf("retrieved opcode %"PRIiPTR"\n", opcode);
+		/* if its a syscall, switch to the syscall entry */
+//		if (syscall_check_opcode(info->si_addr)) {
+			thunk_setcontext(&pcb->pcb_syscall_ucp);
+			/* NOT REACHED */
+//		}
 
-		/* system call issueing  */
-		curcpu()->ci_data.cpu_nsyscall++;
-
-		/* XXX do we want do do emulation? */
-		LWP_CACHE_CREDS(l, l->l_proc);
-		syscall(l, &pcb->pcb_tf);
-
-		/* MD syscall post-fixup : convert `trapframe' back to MD ctx */
-		syscall_post_fixup(info->si_addr, ctx, &pcb->pcb_tf);
-#endif
-
-		panic("illegal instruction encountered\n");
+		panic("should deliver a trap to the process : illegal instruction "
+			"encountered\n");
 	}
 }
