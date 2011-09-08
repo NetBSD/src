@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.18 2011/09/08 01:19:52 christos Exp $	*/
+/*	$NetBSD: str.c,v 1.19 2011/09/08 12:00:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.18 2011/09/08 01:19:52 christos Exp $");
+__RCSID("$NetBSD: str.c,v 1.19 2011/09/08 12:00:26 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -168,7 +168,7 @@ static const CLASS classes[] = {
 static void
 genclass(STR *s)
 {
-	int cnt, (*func)(int);
+	int cnt;
 	const CLASS *cp;
 	CLASS tmp;
 	int *p;
@@ -180,12 +180,12 @@ genclass(STR *s)
 
 	if ((s->set = p = malloc((NCHARS + 1) * sizeof(*p))) == NULL)
 		err(1, "malloc");
-	for (cnt = 0, func = cp->func; cnt < NCHARS; ++cnt)
-		if ((func)(cnt))
+
+	for (cnt = 0; cnt < NCHARS; ++cnt)
+		if ((*cp->func)(cnt))
 			*p++ = cnt;
-		else
-			*p++ = 0;
-	*p = OOBCH;
+	*p++ = OOBCH;
+	memset(p, 0, NCHARS + 1 - (p - s->set));
 
 	s->cnt = 0;
 	s->state = SET;
