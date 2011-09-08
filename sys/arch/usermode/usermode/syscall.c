@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.5 2011/08/29 12:37:20 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.6 2011/09/08 12:01:22 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2011/08/29 12:37:20 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6 2011/09/08 12:01:22 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2011/08/29 12:37:20 reinoud Exp $");
 #include <machine/pcb.h>
 #include <machine/thunk.h>
 
-int syscall(lwp_t *l, struct trapframe *tr);
+extern int syscall(lwp_t *l);
 
 void
 child_return(void *arg)
@@ -60,8 +60,8 @@ printf("child returned! arg %p\n", arg);
 
 
 int
-syscall(lwp_t *l, struct trapframe *tr)
+syscall(lwp_t *l)
 {
-printf("syscall called for lwp %p, trapframe %p!\n", l, tr);
+printf("syscall called for lwp %p!\n", l);
 	return ENOENT;
 }
