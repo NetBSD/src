@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.39 2011/09/08 14:47:17 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.40 2011/09/08 15:13:27 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39 2011/09/08 14:47:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40 2011/09/08 15:13:27 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39 2011/09/08 14:47:17 reinoud Exp $");
 #include <machine/cpu.h>
 #include <machine/mainbus.h>
 #include <machine/pcb.h>
+#include <machine/machdep.h>
 #include <machine/thunk.h>
 
 #include <uvm/uvm_extern.h>
@@ -297,7 +298,6 @@ printf("return of trampoline func, switching to userland\n");
 	panic("%s: shouldn't return", __func__);
 }
 
-extern void syscall(void);
 void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
