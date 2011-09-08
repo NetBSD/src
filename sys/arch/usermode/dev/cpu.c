@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.35 2011/09/08 12:01:22 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.36 2011/09/08 12:08:13 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_cpu.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2011/09/08 12:01:22 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.36 2011/09/08 12:08:13 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -339,7 +339,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_syscall_ucp.uc_stack.ss_sp =
 		((uint8_t *) pcb2->pcb_syscall_ucp.uc_stack.ss_sp) - 4;
 	pcb2->pcb_syscall_ucp.uc_stack.ss_size = 0;
-
 	thunk_makecontext_1(&pcb2->pcb_syscall_ucp, (void (*)(void)) syscall,
 	    l2);
 }
@@ -352,7 +351,6 @@ cpu_initclocks(void)
 void
 cpu_startup(void)
 {
-
 	msgbuf = thunk_malloc(PAGE_SIZE);
 	if (msgbuf == NULL)
 		panic("couldn't allocate msgbuf");
