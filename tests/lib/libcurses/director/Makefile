@@ -2,7 +2,7 @@
 #
 .include <bsd.own.mk>
 
-NOATFFILE=	true
+ATFFILE=	no
 TESTSDIR=       ${TESTSBASE}/lib/libcurses
 TESTS_C+=	director
 

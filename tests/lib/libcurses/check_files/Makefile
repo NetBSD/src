@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.1 2011/04/10 09:55:09 blymn Exp $
+# $NetBSD: Makefile,v 1.2 2011/09/08 18:44:38 jmmv Exp $
 
 NOMAN=		# defined
 
 .include <bsd.own.mk>
 
-NOATFFILE=	true
+ATFFILE=	no
 
 TESTSDIR=	${TESTSBASE}/lib/libcurses
 
