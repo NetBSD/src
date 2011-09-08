@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.36 2011/09/08 15:13:27 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.37 2011/09/08 19:39:00 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.36 2011/09/08 15:13:27 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.37 2011/09/08 19:39:00 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -218,7 +218,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 				recurse--;
 				return;
 			}
-			panic("should deliver a trap to the process");
+			panic("%s: should deliver a trap to the process", __func__);
 			/* XXX HOWTO see arm/arm/syscall.c illegal instruction signal */
 		}
 
@@ -239,12 +239,14 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 	struct pcb *pcb;
 	vaddr_t va;
 
+	va = 0;
+
 	if (info->si_signo == SIGILL) {
 		l = curlwp;
 		p = l->l_proc;
 		pcb = lwp_getpcb(l);
 
-#if 1
+#if 0
 		va = (vaddr_t) info->si_addr;
 		printf("illegal instruction trap lwp = %p pid = %d lid = %d, va = %p\n",
 		    curlwp,
@@ -252,7 +254,7 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 		    curlwp->l_lid,
 		    (void *) va);
 #endif
-#if 1
+#if 0
 		printf("SIGILL!\n");
 		printf("\tsi_signo = %d\n", info->si_signo);
 		printf("\tsi_errno = %d\n", info->si_errno);
@@ -286,7 +288,7 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 		memcpy(&pcb->pcb_userland_ucp, uct, sizeof(ucontext_t));
 
 		/* if its a syscall, switch to the syscall entry */
-		if (md_check_syscall_opcode(info->si_addr)) {
+		if (md_syscall_check_opcode(info->si_addr)) {
 			thunk_setcontext(&pcb->pcb_syscall_ucp);
 			/* NOT REACHED */
 		}

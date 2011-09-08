@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.1 2011/09/08 15:11:42 reinoud Exp $ */
+/* $NetBSD: machdep.h,v 1.2 2011/09/08 19:38:59 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -26,6 +26,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	md_check_syscall_opcode(void *ptr);
+int	md_syscall_check_opcode(void *ptr);
+void	md_syscall_get_syscallnumber(ucontext_t *ucp, uint32_t *code);
+int	md_syscall_getargs(lwp_t *l, ucontext_t *ucp, int nargs, int argsize,
+		register_t *args);
+void	md_syscall_set_returnargs(lwp_t *l, ucontext_t *ucp, register_t *rval);
+void	md_syscall_inc_pc(ucontext_t *ucp);
+
 void	syscall(void);
 

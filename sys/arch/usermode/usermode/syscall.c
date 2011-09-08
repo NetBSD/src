@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.7 2011/09/08 14:49:42 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.8 2011/09/08 19:39:00 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2011/09/08 14:49:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.8 2011/09/08 19:39:00 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,8 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2011/09/08 14:49:42 reinoud Exp $");
 #include <sys/userret.h>
 #include <machine/pcb.h>
 #include <machine/thunk.h>
+#include <machine/machdep.h>
 
-extern void syscall(void);
 
 void userret(struct lwp *l);
 
@@ -73,39 +73,59 @@ void
 syscall(void)
 {	
 	lwp_t *l = curlwp;
+	const struct proc * const p = l->l_proc;
+	const struct sysent *callp;
 	struct pcb *pcb = lwp_getpcb(l);
 	ucontext_t *ucp = &pcb->pcb_userland_ucp;
-	uint *reg, i;
+	register_t copyargs[2+SYS_MAXSYSARGS];
+	register_t *args;
+	register_t rval[2];
+	uint32_t code;
+	uint nargs, argsize;
+	int error;
 
-	l = curlwp;
-
-	printf("syscall called for lwp %p!\n", l);
-	reg = (int *) &ucp->uc_mcontext;
-#if 1
-	/* register dump before call */
-	const char *name[] = {"GS", "FS", "ES", "DS", "EDI", "ESI", "EBP", "ESP",
-		"EBX", "EDX", "ECX", "EAX", "TRAPNO", "ERR", "EIP", "CS", "EFL",
-		"UESP", "SS"};
-
-	for (i =0; i < 19; i++)
-		printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], reg[i]);
-#endif
+//	printf("syscall called for lwp %p!\n", l);
 
 	/* system call accounting */
 	curcpu()->ci_data.cpu_nsyscall++;
+	LWP_CACHE_CREDS(l, l->l_proc);
 
 	/* XXX do we want do do emulation? */
-	LWP_CACHE_CREDS(l, l->l_proc);
-	/* TODO issue!! */
+	md_syscall_get_syscallnumber(ucp, &code);
+	code &= (SYS_NSYSENT -1);
 
-	printf("syscall no. %d\n", reg[11]);
-/* skip instruction */
-reg[14] += 2;
+	callp   = p->p_emul->e_sysent + code;
+	nargs   = callp->sy_narg;
+	argsize = callp->sy_argsize;
 
-/* retval */
-reg[11] = 0;
-	printf("end of syscall : return to userland\n");
+	printf("syscall no. %d, ", code);
+	printf("nargs %d, argsize %d =>  ", nargs, argsize);
+
+	args  = copyargs;
+	rval[0] = rval[1] = 0;
+	error = md_syscall_getargs(l, ucp, nargs, argsize, args);
+	if (!error) 
+		error = (*callp->sy_call)(l, args, rval);
+
+	printf("error = %d, rval[0] = %"PRIx32", retval[1] = %"PRIx32"\n",
+		error, (uint) rval[0], (uint) rval[1]);
+	switch (error) {
+	default:
+		rval[0] = error;
+//		rval[1] = 0;
+		/* fall trough */
+	case 0:
+		md_syscall_set_returnargs(l, ucp, rval);
+		/* fall trough */
+	case EJUSTRETURN:
+		md_syscall_inc_pc(ucp);
+		break;
+	case ERESTART:
+		/* nothing to do */
+		break;
+	}
+
+//	printf("end of syscall : return to userland\n");
 	userret(l);
-printf("jump back to %p\n", (void *) reg[14]);
 }
 
