@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.141 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.142 2011/09/08 18:15:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.141 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.142 2011/09/08 18:15:56 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -203,6 +203,7 @@ panic(const char *fmt, ...)
 	struct cpu_info *ci, *oci;
 	int bootopt;
 	va_list ap;
+	static char scratchstr[256]; /* stores panic message */
 
 	spldebug_stop();
 
@@ -242,18 +243,26 @@ panic(const char *fmt, ...)
 	} else
 		printf("Skipping crash dump on recursive panic\n");
 
-	if (!panicstr)
-		panicstr = fmt;
 	doing_shutdown = 1;
 
 	if (msgbufenabled && msgbufp->msg_magic == MSG_MAGIC)
 		panicstart = msgbufp->msg_bufx;
 
-	va_start(ap, fmt);
 	printf("panic: ");
-	vprintf(fmt, ap);
-	printf("\n");
+	if (panicstr == NULL) {
+		/* first time in panic - store fmt first for precaution */
+		panicstr = fmt;
+
+		va_start(ap, fmt);
+		vsnprintf(scratchstr, sizeof(scratchstr), fmt, ap);
+		printf("%s", scratchstr);
+		panicstr = scratchstr;
+	} else {
+		va_start(ap, fmt);
+		vprintf(fmt, ap);
+	}
 	va_end(ap);
+	printf("\n");
 
 	if (msgbufenabled && msgbufp->msg_magic == MSG_MAGIC)
 		panicend = msgbufp->msg_bufx;
