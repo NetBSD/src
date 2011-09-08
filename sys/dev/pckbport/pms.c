@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.32 2011/09/07 19:05:13 jakllsch Exp $ */
+/* $NetBSD: pms.c,v 1.33 2011/09/08 15:26:26 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.32 2011/09/07 19:05:13 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.33 2011/09/08 15:26:26 jakllsch Exp $");
 
 #include "opt_pms.h"
 
@@ -498,7 +498,7 @@ pmsinput(void *vsc, int data)
 	int newbuttons = 0;
 
 	if (!sc->sc_enabled) {
-		/* Interrupts are not expected.	 Discard the byte. */
+		/* Interrupts are not expected. Discard the byte. */
 		return;
 	}
 
@@ -585,9 +585,9 @@ pmsinput(void *vsc, int data)
 			dz = sc->packet[3] & 0xf;
 			if (dz >= 8)
 				dz -= 16;
-                	if (sc->packet[3] & PMS_4BUTMASK)
+			if (sc->packet[3] & PMS_4BUTMASK)
 				newbuttons |= 0x8;
-                	if (sc->packet[3] & PMS_5BUTMASK)
+			if (sc->packet[3] & PMS_5BUTMASK)
 				newbuttons |= 0x10;
 		} else {
 			DPRINTF(("pmsinput: why am I looking at this byte?\n"));
