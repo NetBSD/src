@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.15 2011/09/08 11:11:18 jmcneill Exp $ */
+/* $NetBSD: clock.c,v 1.16 2011/09/08 12:10:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_hz.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2011/09/08 11:11:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2011/09/08 12:10:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -46,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2011/09/08 11:11:18 jmcneill Exp $");
 static int	clock_match(device_t, cfdata_t, void *);
 static void	clock_attach(device_t, device_t, void *);
 
-static void	clock_softint(void *);
 static void	clock_signal(int sig);
 static unsigned int clock_getcounter(struct timecounter *);
 
@@ -55,7 +52,6 @@ static int	clock_todr_gettime(struct todr_chip_handle *, struct timeval *);
 typedef struct clock_softc {
 	device_t		sc_dev;
 	struct todr_chip_handle	sc_todr;
-	void			*sc_ih;
 } clock_softc_t;
 
 static struct timecounter clock_timecounter = {
@@ -90,7 +86,6 @@ clock_attach(device_t parent, device_t self, void *opaque)
 {
 	static struct sigaction sa;
 	clock_softc_t *sc = device_private(self);
-	struct thunk_itimerval itimer;
 	stack_t ss;
 	long tcres;
 
@@ -101,7 +96,6 @@ clock_attach(device_t parent, device_t self, void *opaque)
 	clock_sc = sc;
 
 	sc->sc_dev = self;
-	sc->sc_ih = softint_establish(SOFTINT_CLOCK, clock_softint, sc);
 
 	sc->sc_todr.todr_gettime = clock_todr_gettime;
 	todr_attach(&sc->sc_todr);
@@ -122,11 +116,6 @@ clock_attach(device_t parent, device_t self, void *opaque)
 		panic("couldn't register SIGALRM handler : %d",
 		    thunk_geterrno());
 
-	itimer.it_interval.tv_sec = 0;
-	itimer.it_interval.tv_usec = 1000000 / HZ;
-	itimer.it_value = itimer.it_interval;
-	thunk_setitimer(ITIMER_REAL, &itimer, NULL);
-
 	tcres = thunk_clock_getres_monotonic();
 	if (tcres > 0) {
 		clock_timecounter.tc_quality = 1000;
@@ -138,19 +127,13 @@ clock_attach(device_t parent, device_t self, void *opaque)
 static void
 clock_signal(int sig)
 {
-	curcpu()->ci_idepth++;
-
-	softint_schedule(clock_sc->sc_ih);
-
-	curcpu()->ci_idepth--;
-}
-
-static void
-clock_softint(void *priv)
-{
 	struct clockframe cf;
 
+	curcpu()->ci_idepth++;
+
 	hardclock(&cf);
+
+	curcpu()->ci_idepth--;
 }
 
 static unsigned int
