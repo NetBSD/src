@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.33 2011/09/07 14:03:49 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.34 2011/09/08 11:56:48 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.33 2011/09/07 14:03:49 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34 2011/09/08 11:56:48 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -100,7 +100,6 @@ setup_signal_handlers(void)
 //	debug_fh = thunk_open("/usr/sources/debug", O_RDWR | O_TRUNC | O_CREAT, 0666);
 }
 
-static struct trapframe kernel_tf;
 
 static void
 mem_access_handler(int sig, siginfo_t *info, void *ctx)
@@ -113,7 +112,6 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	struct pcb *pcb;
 	struct vmspace *vm;
 	struct vm_map *vm_map;
-	struct trapframe *tf;
 	vm_prot_t atype;
 	vaddr_t va;
 	void *onfault;
@@ -214,8 +212,8 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 					panic("kernel fault");
 				panic("%s: can't call onfault yet\n", __func__);
 				/* jump to given onfault */
-				tf = &kernel_tf;
-				memset(tf, 0, sizeof(struct trapframe));
+				// tf = &kernel_tf;
+				// memset(tf, 0, sizeof(struct trapframe));
 				// tf->tf_pc = onfault;
 				// tf->tf_io[0] = (rv == EACCES) ? EFAULT : rv;
 				recurse--;
