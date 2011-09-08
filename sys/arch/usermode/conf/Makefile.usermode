@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.19 2011/09/03 19:06:48 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.20 2011/09/08 11:53:18 jmcneill Exp $
 
 OPT_CPU_HOST=			%CPU_HOST%
 .if !empty(OPT_CPU_HOST)
@@ -22,7 +22,7 @@ GENASSYM_CONF=	${USERMODE}/usermode/genassym.cf
 USERMODE_HOSTOS!=uname -s
 USERMODE_HOSTMACHINE!=uname -m
 USERMODE_LIBS=	-lrt
-USERMODE_CPPFLAGS=-U_KERNEL -I/usr/include
+USERMODE_CPPFLAGS=${DEBUG} -U_KERNEL -I/usr/include
 USERMODE_CPPFLAGS+=${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
 
 .if ${USERMODE_HOSTOS} == "Linux"
