@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst.8,v 1.2 2008/04/30 13:10:57 martin Exp $
+.\"	$NetBSD: sysinst.8,v 1.3 2011/09/08 19:55:52 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 1, 2007
+.Dd September 8, 2011
 .Dt SYSINST 8
 .Os
 .Sh NAME
@@ -32,6 +32,9 @@
 .Nd install or upgrade a NetBSD system
 .Sh SYNOPSIS
 .Nm
+.Op Fl D
+.Op Fl f Ar deffile
+.Op Fl r Ar releasename
 .Sh DESCRIPTION
 .Nm
 is a menu-based program that may be used to install or upgrade a
@@ -45,6 +48,53 @@ from appropriate installation media.
 is usually not present on a
 .Nx
 system that has been fully installed.
+.Sh OPTIONS
+.Bl -tag
+.It Fl D
+Switch on debugging.
+.It Fl f Ar deffile
+Set a file for definitions other than the defaults.
+See
+.Sx DEFINITION FILE
+for its format.
+.It Fl r Ar releasename
+Set the releasename if it is different to the one compiled.
+Currently unused.
+.El
+.Sh DEFINITION FILE
+The definition file is used to set several other names and directories to search
+for.
+You can specify any of the options in the file.
+They are stored as
+.Dl option = value
+pairs.
+In this description, REL and MACH are the release and architecture
+respectively, determined by the image sysinst is used on.
+.Bl -column -offset indent ".Sy option name" ".Sy default value" ".Sy description"
+.It Sy "option name" Ta Sy "default value" Ta Sy "description"
+.It release Ta REL Ta Release name (also set by Fl r Ar releasename ) .
+.It machine Ta MACH Ta Machine architecture
+.It xfer dir Ta /usr/INSTALL Ta Transfer dir
+.It ext dir Ta "" Ta Extract dir (will usually be set later on)
+.It ftp host Ta "ftp.NetBSD.org" Ta ftp host for fetching files
+.It ftp dir Ta "pub/NetBSD/NetBSD-REL" Ta ftp directory for fetching files
+.It ftp prefix Ta "/MACH/binary/sets" Ta directory to look for sets.
+Not that
+this is used for all kinds of fetching (CDs, local FS, ...), not only ftp.
+.It ftp user Ta "ftp" Ta ftp user for connecting
+.It ftp pass Ta "" Ta ftp password
+.It ftp proxy Ta "" Ta ftp proxy
+.It nfs host Ta "" Ta nfs host for fetching via nfs
+.It nfs dir Ta "/bsd/release" Ta nfs directory for fetching files
+.It cd dev Ta "cd0a" Ta name of the CD device for fetching files
+.It fd dev Ta "/dev/fd0a" Ta name of floppy for fetching files
+.It local dev Ta "" Ta Other device to be mounted for fetching files
+.It local fs Ta "ffs" Ta FS-type for local dev
+.It local dir Ta "release" Ta Directory to look for in the mounted local fs
+.It targetroot mount Ta "/targetroot" Ta Directory to mount target root dir to
+.It dist postfix Ta ".tgz" Ta Suffix of set files to be extracted
+.It diskname Ta "mydisk" Ta Xr disktab 5 diskname to use for target disk
+.El
 .Sh SEE ALSO
 .Xr release 7 ,
 .Xr afterboot 8 ,
