@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.14 2011/09/05 18:52:14 reinoud Exp $ */
+/* $NetBSD: clock.c,v 1.15 2011/09/08 11:11:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_hz.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2011/09/05 18:52:14 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2011/09/08 11:11:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -121,7 +123,7 @@ clock_attach(device_t parent, device_t self, void *opaque)
 		    thunk_geterrno());
 
 	itimer.it_interval.tv_sec = 0;
-	itimer.it_interval.tv_usec = 10000;
+	itimer.it_interval.tv_usec = 1000000 / HZ;
 	itimer.it_value = itimer.it_interval;
 	thunk_setitimer(ITIMER_REAL, &itimer, NULL);
 
