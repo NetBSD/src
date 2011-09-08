@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.26 2011/09/08 15:10:59 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.27 2011/09/08 19:39:00 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -32,7 +32,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2011/09/08 15:10:59 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2011/09/08 19:39:00 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -214,13 +214,78 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 #endif
 }
 
+void
+md_syscall_get_syscallnumber(ucontext_t *ucp, uint32_t *code)
+{
+	uint *reg = (int *) &ucp->uc_mcontext;
+
+	*code = reg[11];			/* EAX */
+}
 
 int
-md_check_syscall_opcode(void *ptr)
+md_syscall_getargs(lwp_t *l, ucontext_t *ucp, int nargs, int argsize,
+	register_t *args)
 {
-//	uint8_t  *p8;
+	uint *reg = (int *) &ucp->uc_mcontext;
+	register_t *sp = (register_t *) reg[17];/* ESP */
+	int ret;
+	uint i;
+
+	i = 0;
+#if 0
+	reg = (int *) &ucp->uc_mcontext;
+	/* register dump before call */
+	const char *name[] = {"GS", "FS", "ES", "DS", "EDI", "ESI", "EBP", "ESP",
+		"EBX", "EDX", "ECX", "EAX", "TRAPNO", "ERR", "EIP", "CS", "EFL",
+		"UESP", "SS"};
+
+	for (i =0; i < 19; i++)
+		printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], reg[i]);
+	printf("\n");
+#endif
+
+	ret = copyin(sp + 1, args, argsize);
+
+#if 0
+	for (i = 0; i < nargs+4; i++)
+		printf("stack[%02d] = %"PRIx32"\n", i, (uint) sp[i]);
+#endif
+#if 0
+	for (i = 0; i < nargs; i++)
+		printf("arg[%02d] = %"PRIx32"\n", i, (uint) args[i]);
+	printf("\n");
+#endif
+
+	return ret;
+}
+
+void
+md_syscall_set_returnargs(lwp_t *l, ucontext_t *ucp, register_t *rval)
+{
+	uint *reg = (int *) &ucp->uc_mcontext;
+
+	/* set return parameters */
+	reg[11]	= rval[0];	/* EAX */
+	reg[ 9] = rval[1];	/* EDX */
+
+#if 0
+	uint i;
+	reg = (int *) &ucp->uc_mcontext;
+	/* register dump before call */
+	const char *name[] = {"GS", "FS", "ES", "DS", "EDI", "ESI", "EBP", "ESP",
+		"EBX", "EDX", "ECX", "EAX", "TRAPNO", "ERR", "EIP", "CS", "EFL",
+		"UESP", "SS"};
+
+	for (i =0; i < 19; i++)
+		printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], reg[i]);
+#endif
+
+}
+
+int
+md_syscall_check_opcode(void *ptr)
+{
 	uint16_t *p16;
-//	uint32_t *p32;
 
 	/* undefined instruction */
 	p16 = (uint16_t *) ptr;
@@ -231,6 +296,24 @@ md_check_syscall_opcode(void *ptr)
 
 	/* TODO int $80 and sysenter */
 	return 0;
+}
+
+void
+md_syscall_inc_pc(ucontext_t *ucp)
+{
+	uint *reg = (int *) &ucp->uc_mcontext;
+	uint16_t *p16;
+
+	/* advance program counter */
+	p16 = (uint16_t *) reg[14];
+	if (*p16 == 0xff0f)
+		reg[14] += 2;	/* EIP */
+	if (*p16 == 0xff0b)
+		reg[14] += 2;	/* EIP */
+
+	/* TODO int $80 and sysenter */
+
+	printf("jump back to %p\n", (void *) reg[14]);
 }
 
 
