@@ -1,4 +1,4 @@
-/* $NetBSD: intr.c,v 1.3 2011/09/05 18:17:44 jmcneill Exp $ */
+/* $NetBSD: intr.c,v 1.4 2011/09/08 11:13:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,22 +27,36 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3 2011/09/05 18:17:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4 2011/09/08 11:13:03 jmcneill Exp $");
 
 #include <sys/types.h>
 
 #include <machine/intr.h>
 #include <machine/thunk.h>
 
+/* #define INTR_USE_SIGPROCMASK */
+
 static int usermode_x = IPL_NONE;
+
+#ifdef INTR_USE_SIGPROCMASK
+static bool block_sigalrm = false;
+#endif
 
 int
 splraise(int x)
 {
 	int oldx = usermode_x;
 
-	if (x > usermode_x)
+	if (x > usermode_x) {
 		usermode_x = x;
+	}
+
+#ifdef INTR_USE_SIGPROCMASK
+	if (x >= IPL_SCHED && !block_sigalrm) {
+		thunk_sigblock(SIGALRM);
+		block_sigalrm = true;
+	}
+#endif
 
 	return oldx;
 }
@@ -52,4 +66,11 @@ spllower(int x)
 {
 	if (usermode_x > x)
 		usermode_x = x;
+
+#ifdef INTR_USE_SIGPROCMASK
+	if (x < IPL_SCHED && block_sigalrm) {
+		thunk_sigunblock(SIGALRM);
+		block_sigalrm = false;
+	}
+#endif
 }
