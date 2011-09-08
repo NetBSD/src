@@ -1,4 +1,4 @@
-/*	$NetBSD: pmsvar.h,v 1.9 2011/09/07 19:05:13 jakllsch Exp $	*/
+/*	$NetBSD: pmsvar.h,v 1.10 2011/09/08 15:27:50 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -50,7 +50,7 @@ struct pms_softc {		/* driver status information */
 	device_t sc_dev;
 
 	pckbport_tag_t sc_kbctag;
-	int sc_kbcslot;
+	pckbport_slot_t sc_kbcslot;
 
 	int sc_enabled;		/* input enabled? */
 	int inputstate;		/* number of bytes received for this packet */
@@ -74,4 +74,4 @@ struct pms_softc {		/* driver status information */
 #endif
 };
 
-#endif
+#endif /* _DEV_PCKBCPORT_PMSVAR_H_ */
