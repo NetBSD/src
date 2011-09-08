@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.9 2011/08/29 12:49:37 christos Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.10 2011/09/08 10:56:49 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -64,7 +64,16 @@ static int input_delay;
  * problems with input tests
  */
 #define DELAY_MIN 0.1
+
+/* time delay after a function call - allows the slave time to
+ * run the function and output data before we do other actions.
+ * Set this to 50ms.
+ */
+#define POST_CALL_DELAY 50
+
 static struct timespec delay_spec = {0, 1000 * DELAY_MIN};
+static struct timespec delay_post_call = {0, 1000 * POST_CALL_DELAY};
+
 static char *input_str;	/* string to feed in as input */
 static bool no_input;	/* don't need more input */
 
@@ -135,6 +144,7 @@ static void	set_var(returns_enum_t, char *, void *);
 static void	validate_reference(int, void *);
 static char	*numeric_or(char *, char *);
 static char	*get_numeric_var(const char *);
+static void	perform_delay(struct timespec *);
 
 static const char *input_functions[] = {
 	"inch", "getch", "getnstr", "getstr", "innstr", "instr", "mvgetnstr",
@@ -305,7 +315,7 @@ delay		: DELAY numeric eol {
 	}
 
 	if (input_delay < DELAY_MIN)
-		input_delay = 1000 * DELAY_MIN; /* ms to ns */
+		input_delay = DELAY_MIN;
 	/*
 	 * Fill in the timespec structure now ready for use later.
 	 * The delay is specified in milliseconds so convert to timespec
@@ -315,7 +325,7 @@ delay		: DELAY numeric eol {
 	delay_spec.tv_nsec = (input_delay - 1000 * delay_spec.tv_sec) * 1000;
 	if (verbose) {
 		fprintf(stderr, "set delay to %jd.%jd\n",
-		    (intmax_t)delay_spec.tv_sec, 
+		    (intmax_t)delay_spec.tv_sec,
 		    (intmax_t)delay_spec.tv_nsec);
 	}
 
@@ -481,6 +491,23 @@ numeric_or(char *n1, char *n2)
 	}
 
 	return ret;
+}
+
+/*
+ * Sleep for the specified time, handle the sleep getting interrupted
+ * by a signal.
+ */
+static void
+perform_delay(struct timespec *ts)
+{
+	struct timespec delay_copy, delay_remainder;
+
+	delay_copy = *ts;
+	while (nanosleep(&delay_copy, &delay_remainder) < 0) {
+		if (errno != EINTR)
+			err(2, "nanosleep returned error");
+		delay_copy = delay_remainder;
+	}
 }
 
 /*
@@ -837,7 +864,6 @@ do_function_call(size_t nresults)
 	size_t i;
 	struct pollfd fds[3];
 	returns_t response[MAX_RESULTS], returns_count;
-
 	assert(nresults <= MAX_RESULTS);
 
 	do_input = check_function_table(command.function, input_functions,
@@ -853,6 +879,8 @@ do_function_call(size_t nresults)
 	if (returns_count.return_type != ret_count)
 		err(2, "expected return type of ret_count but received %s",
 		    returns_enum_names[returns_count.return_type]);
+
+	perform_delay(&delay_post_call); /* let slave catch up */
 
 	if (verbose) {
 		fprintf(stderr, "Expect %zu results from slave, slave "
@@ -876,7 +904,8 @@ do_function_call(size_t nresults)
  		p = input_str;
 		save_slave_output(false);
 		while(*p != '\0') {
-			nanosleep(&delay_spec, NULL);
+			perform_delay(&delay_spec);
+
 			if (poll(fds, 2, 0) < 0)
 				err(2, "poll failed");
 			if (fds[0].revents & POLLIN) {
@@ -979,11 +1008,10 @@ do_function_call(size_t nresults)
 				response[i].return_type;
 		}
 	}
-#if 0
-	if (saved_output.count > 0)
+
+	if (verbose && (saved_output.count > 0))
 		excess(cur_file, line, __func__, " from slave",
 		    &saved_output.data[saved_output.readp], saved_output.count);
-#endif
 
 	init_parse_variables(0);
 }
@@ -1143,7 +1171,7 @@ validate_reference(int i, void *data)
 	if (command.returns[i].return_type != ret_byte)
 		response = data;
 
-	if (1 || verbose) {
+	if (verbose) {
 		fprintf(stderr,
 		    "validate_reference: return type of %s, value %s \n",
 		    returns_enum_names[varp->type],

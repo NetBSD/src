@@ -272,7 +272,7 @@ atf_init_test_cases()
 	atf_add_test_case addstr
 	atf_add_test_case addnstr
 	atf_add_test_case getch
-#	atf_add_test_case timeout	# This is racy; works with -v
+	atf_add_test_case timeout
 	atf_add_test_case window
 	atf_add_test_case wborder
 	atf_add_test_case box
