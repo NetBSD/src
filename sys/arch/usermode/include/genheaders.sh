@@ -51,6 +51,9 @@ EOF
 	elif [ "$hdr" = "ptrace.h" ]; then
 		echo "#undef __HAVE_PTRACE_MACHDEP" >> ${hdr}
 		echo "#undef __HAVE_PROCFS_MACHDEP" >> ${hdr}
+	elif [ "$hdr" = "param.h" ]; then
+		echo "#undef USPACE" >> ${hdr}
+		echo "#define USPACE (PAGE_SIZE*4)" >> ${hdr}
 	fi
 
 	echo >>${hdr}
