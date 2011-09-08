@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.37 2011/09/08 12:10:13 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.38 2011/09/08 12:37:28 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2011/09/08 12:10:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.38 2011/09/08 12:37:28 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -335,11 +335,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	    2, func, arg);
 
 	/* set up the ucontext for the syscall */
-	pcb2->pcb_ucp.uc_flags = _UC_CPU;
-	/* hack for it sets the stack anyway!! */
-	pcb2->pcb_syscall_ucp.uc_stack.ss_sp =
-		((uint8_t *) pcb2->pcb_syscall_ucp.uc_stack.ss_sp) - 4;
-	pcb2->pcb_syscall_ucp.uc_stack.ss_size = 0;
+	pcb2->pcb_syscall_ucp.uc_flags = _UC_CPU;
+	pcb2->pcb_syscall_ucp.uc_link = NULL;
+	pcb2->pcb_syscall_ucp.uc_stack.ss_size = 0;	/* no stack move */
 	thunk_makecontext_1(&pcb2->pcb_syscall_ucp, (void (*)(void)) syscall,
 	    l2);
 }
