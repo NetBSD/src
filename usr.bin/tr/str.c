@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.17 2011/09/08 01:18:44 christos Exp $	*/
+/*	$NetBSD: str.c,v 1.18 2011/09/08 01:19:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.17 2011/09/08 01:18:44 christos Exp $");
+__RCSID("$NetBSD: str.c,v 1.18 2011/09/08 01:19:52 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -183,6 +183,8 @@ genclass(STR *s)
 	for (cnt = 0, func = cp->func; cnt < NCHARS; ++cnt)
 		if ((func)(cnt))
 			*p++ = cnt;
+		else
+			*p++ = 0;
 	*p = OOBCH;
 
 	s->cnt = 0;
