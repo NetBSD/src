@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.33 2011/09/08 15:26:26 jakllsch Exp $ */
+/* $NetBSD: pms.c,v 1.34 2011/09/08 16:34:09 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.33 2011/09/08 15:26:26 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.34 2011/09/08 16:34:09 jakllsch Exp $");
 
 #include "opt_pms.h"
 
@@ -61,11 +61,11 @@ int pmsdebug = 1;
 #define DPRINTF(x)
 #endif
 
-const enum pms_type tries[] = {
+static const enum pms_type tries[] = {
 	PMS_SCROLL5, PMS_SCROLL3, PMS_STANDARD, PMS_UNKNOWN
 };
 
-const struct pms_protocol pms_protocols[] = {
+static const struct pms_protocol pms_protocols[] = {
 	{ { 0, 0, 0 }, 0, "unknown protocol" },
 	{ { 0, 0, 0 }, 0, "no scroll wheel (3 buttons)" },
 	{ { 200, 100, 80 }, 3, "scroll wheel (3 buttons)" },
@@ -75,9 +75,9 @@ const struct pms_protocol pms_protocols[] = {
 };
 
 
-int pmsprobe(device_t, cfdata_t, void *);
-void pmsattach(device_t, device_t, void *);
-void pmsinput(void *, int);
+static int pmsprobe(device_t, cfdata_t, void *);
+static void pmsattach(device_t, device_t, void *);
+static void pmsinput(void *, int);
 
 CFATTACH_DECL_NEW(pms, sizeof(struct pms_softc),
     pmsprobe, pmsattach, NULL, NULL);
@@ -86,14 +86,14 @@ static int	pms_protocol(pckbport_tag_t, pckbport_slot_t);
 static void	do_enable(struct pms_softc *);
 static void	do_disable(struct pms_softc *);
 static void	pms_reset_thread(void*);
-int	pms_enable(void *);
-int	pms_ioctl(void *, u_long, void *, int, struct lwp *);
-void	pms_disable(void *);
+static int	pms_enable(void *);
+static int	pms_ioctl(void *, u_long, void *, int, struct lwp *);
+static void	pms_disable(void *);
 
 static bool	pms_suspend(device_t, const pmf_qual_t *);
 static bool	pms_resume(device_t, const pmf_qual_t *);
 
-const struct wsmouse_accessops pms_accessops = {
+static const struct wsmouse_accessops pms_accessops = {
 	pms_enable,
 	pms_ioctl,
 	pms_disable,
@@ -166,7 +166,7 @@ pmsprobe(device_t parent, cfdata_t match, void *aux)
 	return 10;
 }
 
-void
+static void
 pmsattach(device_t parent, device_t self, void *aux)
 {
 	struct pms_softc *sc = device_private(self);
@@ -308,7 +308,7 @@ do_disable(struct pms_softc *sc)
 	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 }
 
-int
+static int
 pms_enable(void *v)
 {
 	struct pms_softc *sc = v;
@@ -326,7 +326,7 @@ pms_enable(void *v)
 	return 0;
 }
 
-void
+static void
 pms_disable(void *v)
 {
 	struct pms_softc *sc = v;
@@ -380,7 +380,7 @@ pms_resume(device_t dv, const pmf_qual_t *qual)
 	return true;
 }
 
-int
+static int
 pms_ioctl(void *v, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
@@ -489,7 +489,7 @@ pms_reset_thread(void *arg)
 #define PMS_4BUTMASK 0x10
 #define PMS_5BUTMASK 0x20
 
-void
+static void
 pmsinput(void *vsc, int data)
 {
 	struct pms_softc *sc = vsc;
