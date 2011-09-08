@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_pckbport.c,v 1.6 2011/07/01 18:50:41 dyoung Exp $ */
+/*	$NetBSD: ms_pckbport.c,v 1.7 2011/09/08 15:34:07 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_pckbport.c,v 1.6 2011/07/01 18:50:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_pckbport.c,v 1.7 2011/09/08 15:34:07 jakllsch Exp $");
 
 /*
  * Attach PS/2 mouse at pckbport aux port
@@ -152,7 +152,7 @@ ms_pckbport_iopen(struct device *self, int flags)
 	res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
 				cmd, 1, 0, 1, NULL);
 	if (res) {
-		printf("pms_enable: command error\n");
+		printf("%s: command error\n", __func__);
 		return (res);
 	}
 
