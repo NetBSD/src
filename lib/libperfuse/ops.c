@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.39 2011/08/13 23:12:15 christos Exp $ */
+/*  $NetBSD: ops.c,v 1.40 2011/09/09 15:45:28 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1487,13 +1487,21 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 {
 	perfuse_msg_t *pm;
 	struct perfuse_state *ps;
+	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
 	struct fuse_getattr_in *fgi;
 	struct fuse_attr_out *fao;
 	u_quad_t va_size;
 	int error;
 	
-	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
+	if (pnd->pnd_flags & PND_REMOVED)
 		return ENOENT;
+
+	/* 
+	 * Serialize size access, see comment in perfuse_node_setattr().
+	 */
+	while (pnd->pnd_flags & PND_INRESIZE)
+		requeue_request(pu, opc, PCQ_RESIZE);
+	pnd->pnd_flags |= PND_INRESIZE;
 
 	ps = puffs_getspecific(pu);
 	va_size = vap->va_size;
@@ -1513,10 +1521,21 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 		fgi->getattr_flags |= FUSE_GETATTR_FH;
 	}
 
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_RESIZE)
+		DPRINTF(">> %s %p %lld\n", __func__, (void *)opc, va_size);
+#endif
+
 	if ((error = xchg_msg(pu, opc, pm, sizeof(*fao), wait_reply)) != 0)
 		goto out;
 
 	fao = GET_OUTPAYLOAD(ps, pm, fuse_attr_out);
+
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_RESIZE)
+		DPRINTF("<< %s %p %lld -> %lld\n", __func__, (void *)opc, 
+			va_size, fao->attr.size);
+#endif
 
 	/* 
 	 * The message from filesystem has a cache timeout
@@ -1528,15 +1547,11 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 	 */
 	fuse_attr_to_vap(ps, vap, &fao->attr);
 
-	/*
-	 * If a write is in progress, do not trust filesystem opinion 
-	 * of file size, use the one from kernel.
-	 */
-	if ((PERFUSE_NODE_DATA(opc)->pnd_flags & PND_INWRITE) &&
-	    (va_size != (u_quad_t)PUFFS_VNOVAL))
-		vap->va_size = MAX(va_size, vap->va_size);;
 out:
 	ps->ps_destroy_msg(pm);
+
+	pnd->pnd_flags &= ~PND_INRESIZE;
+	(void)dequeue_requests(ps, opc, PCQ_RESIZE, DEQUEUE_ALL);
 
 	return error;
 }
@@ -1555,8 +1570,11 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	struct fuse_setattr_in *fsi;
 	struct fuse_attr_out *fao;
 	struct vattr *old_va;
-	u_quad_t va_size;
 	int error;
+#ifdef PERFUSE_DEBUG
+	struct vattr *old_vap;
+	int resize_debug = 0;
+#endif
 
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(opc);
@@ -1611,16 +1629,6 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 				old_va->va_type, vap->va_mode, pcr)) != 0)
 		return EACCES;
 	
-	/*
-	 * If a write is in progress, set the highest
-	 * value in the filesystem, otherwise we break 
-	 * IO_APPEND.
-	 */
-	va_size = vap->va_size;
-	if ((pnd->pnd_flags & PND_INWRITE) &&
-	    (va_size != (u_quad_t)PUFFS_VNOVAL))
-		va_size = MAX(va_size, old_va->va_size);
-
 	pm = ps->ps_new_msg(pu, opc, FUSE_SETATTR, sizeof(*fsi), pcr);
 	fsi = GET_INPAYLOAD(ps, pm, fuse_setattr_in);
 	fsi->valid = 0;
@@ -1634,9 +1642,19 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 		fsi->valid |= FUSE_FATTR_FH;
 	}
 
-	if (va_size != (u_quad_t)PUFFS_VNOVAL) {
-		fsi->size = va_size;
+	if (vap->va_size != (u_quad_t)PUFFS_VNOVAL) {
+		fsi->size = vap->va_size;
 		fsi->valid |= FUSE_FATTR_SIZE;
+
+		/* 
+		 * Serialize anything that can touch file size
+		 * to avoid reordered GETATTR and SETATTR.
+		 * Out of order SETATTR can report stale size,
+		 * which will cause the kernel to truncate the file.
+		 */
+		while (pnd->pnd_flags & PND_INRESIZE)
+			requeue_request(pu, opc, PCQ_RESIZE);
+		pnd->pnd_flags |= PND_INRESIZE;
 	}
 
 	/*
@@ -1696,7 +1714,7 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	 * Try to adapt and remove FATTR_ATIME|FATTR_MTIME
 	 * if we suspect a ftruncate().
 	 */ 
-	if ((va_size != (u_quad_t)PUFFS_VNOVAL) &&
+	if ((vap->va_size != (u_quad_t)PUFFS_VNOVAL) &&
 	    ((vap->va_mode == (mode_t)PUFFS_VNOVAL) &&
 	     (vap->va_uid == (uid_t)PUFFS_VNOVAL) &&
 	     (vap->va_gid == (gid_t)PUFFS_VNOVAL))) {
@@ -1716,6 +1734,19 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 		goto out;
 	}
 
+#ifdef PERFUSE_DEBUG
+	old_vap = puffs_pn_getvap((struct puffs_node *)opc);
+
+	if ((perfuse_diagflags & PDF_RESIZE) &&
+	    (old_vap->va_size != (u_quad_t)PUFFS_VNOVAL)) {
+		resize_debug = 1;
+
+		DPRINTF(">> %s %p %lld -> %lld\n", __func__, (void *)opc, 
+			puffs_pn_getvap((struct puffs_node *)opc)->va_size, 
+			fsi->size);
+	}
+#endif
+
 	if ((error = xchg_msg(pu, opc, pm, sizeof(*fao), wait_reply)) != 0)
 		goto out;
 
@@ -1723,11 +1754,22 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	 * Copy back the new values 
 	 */
 	fao = GET_OUTPAYLOAD(ps, pm, fuse_attr_out);
+
+#ifdef PERFUSE_DEBUG
+	if (resize_debug)
+		DPRINTF("<< %s %p %lld -> %lld\n", __func__, (void *)opc, 
+			old_vap->va_size, fao->attr.size);
+#endif
+
 	fuse_attr_to_vap(ps, old_va, &fao->attr);
 out:
-
 	if (pm != NULL)
 		ps->ps_destroy_msg(pm);
+
+	if (pnd->pnd_flags & PND_INRESIZE) {
+		pnd->pnd_flags &= ~PND_INRESIZE;
+		(void)dequeue_requests(ps, opc, PCQ_RESIZE, DEQUEUE_ALL);
+	}
 
 	return error;
 }
@@ -2781,6 +2823,7 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 {
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
+	const struct vattr *vap;
 	perfuse_msg_t *pm;
 	struct fuse_read_in *fri;
 	struct fuse_out_header *foh;
@@ -2789,7 +2832,12 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 	
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(opc);
+	vap = puffs_pn_getvap((struct puffs_node *)opc);
 	pm = NULL;
+
+	if (offset + *resid > vap->va_size)
+		DWARNX("%s %p read %lld@%d beyond EOF %lld\n",
+		       __func__, (void *)opc, offset, *resid, vap->va_size);
 
 	do {
 		size_t max_read;
@@ -2869,12 +2917,14 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	size_t data_len;
 	size_t payload_len;
 	size_t written;
+	int inresize;
 	int error;
 	
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(opc);
 	vap = puffs_pn_getvap((struct puffs_node *)opc);
 	written = 0;
+	inresize = 0;
 	pm = NULL;
 
 	if (vap->va_type == VDIR) 
@@ -2888,11 +2938,23 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 		requeue_request(pu, opc, PCQ_WRITE);
 	pnd->pnd_flags |= PND_INWRITE;
 
+	/* 
+	 * Serialize size access, see comment in perfuse_node_setattr().
+	 */
+	if (offset + *resid > vap->va_size) {
+		while (pnd->pnd_flags & PND_INRESIZE)
+			requeue_request(pu, opc, PCQ_RESIZE);
+		pnd->pnd_flags |= PND_INRESIZE;
+		inresize = 1;
+	}
+
 	/*
 	 * append flag: re-read the file size so that 
 	 * we get the latest value.
 	 */
 	if (ioflag & PUFFS_IO_APPEND) {
+		DWARNX("%s: PUFFS_IO_APPEND set, untested code", __func__);
+
 		if ((error = perfuse_node_getattr(pu, opc, vap, pcr)) != 0)
 			goto out;
 
@@ -2900,6 +2962,12 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	}
 
 	pm = NULL;
+
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_RESIZE)
+		DPRINTF(">> %s %p %lld \n", __func__,
+			(void *)opc, vap->va_size);
+#endif
 
 	do {
 		size_t max_write;
@@ -2967,11 +3035,31 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	if (*resid != 0)
 		error = EFBIG;
 
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_RESIZE) {
+		if (offset > (off_t)vap->va_size)
+			DPRINTF("<< %s %p %lld -> %lld\n", __func__, 
+				(void *)opc, vap->va_size, offset);
+		else
+			DPRINTF("<< %s %p \n", __func__, (void *)opc);
+	}
+#endif
+
 	/*
 	 * Update file size if we wrote beyond the end
 	 */
 	if (offset > (off_t)vap->va_size) 
 		vap->va_size = offset;
+
+	if (inresize) {
+#ifdef PERFUSE_DEBUG
+		if (!(pnd->pnd_flags & PND_INRESIZE))
+			DERRX(EX_SOFTWARE, "file write grow without resize");
+#endif
+		pnd->pnd_flags &= ~PND_INRESIZE;
+		(void)dequeue_requests(ps, opc, PCQ_RESIZE, DEQUEUE_ALL);
+	}
+
 
 	/*
 	 * Statistics
