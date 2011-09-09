@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.14 2011/08/30 20:17:01 joerg Exp $ */
+/*  $NetBSD: perfused.c,v 1.15 2011/09/09 15:45:28 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -308,6 +308,8 @@ parse_debug(char *optstr)
 			retval |= PDF_MISC;
 		else if (strcmp(opt, "filename") == 0)
 			retval |= PDF_FILENAME;
+		else if (strcmp(opt, "reize") == 0)
+			retval |= PDF_RESIZE;
 		else
 			DWARNX("unknown debug flag \"%s\"", opt);
 	}

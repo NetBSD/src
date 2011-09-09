@@ -1,10 +1,8 @@
-# $NetBSD: Makefile,v 1.3 2011/05/26 12:56:34 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2011/09/09 15:45:28 manu Exp $
 
 PROG=            perfused
 
-.ifdef DEBUG
 PERFUSE_OPT_DEBUG_FLAGS=   -g -DPERFUSE_DEBUG
-.endif
 
 CFLAGS+=        ${PERFUSE_OPT_DEBUG_FLAGS}
 SRCS=           perfused.c msg.c debug.c
