@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.8 2011/09/08 19:39:00 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.9 2011/09/09 12:44:27 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.8 2011/09/08 19:39:00 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2011/09/09 12:44:27 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,8 +84,6 @@ syscall(void)
 	uint nargs, argsize;
 	int error;
 
-//	printf("syscall called for lwp %p!\n", l);
-
 	/* system call accounting */
 	curcpu()->ci_data.cpu_nsyscall++;
 	LWP_CACHE_CREDS(l, l->l_proc);
@@ -98,24 +96,44 @@ syscall(void)
 	nargs   = callp->sy_narg;
 	argsize = callp->sy_argsize;
 
-	printf("syscall no. %d, ", code);
-	printf("nargs %d, argsize %d =>  ", nargs, argsize);
-
 	args  = copyargs;
 	rval[0] = rval[1] = 0;
 	error = md_syscall_getargs(l, ucp, nargs, argsize, args);
+
+#if 0
+	printf("syscall no. %d, ", code);
+	printf("nargs %d, argsize %d =>  ", nargs, argsize);
+
+	if (code == 3)
+		printf("read(%d, %p, %d) => ", (int) args[0],
+			(void *) args[1], (int) args[2]);
+	if (code == 4)
+		printf("write(%d, %p ('%s'), %d) => ",
+			(int) args[0], (void *) args[1],
+			(char *) args[1], (int) args[2]);
+	if (code == 5)
+		printf("open('%s', %d,...) => ", (char *) (args[0]),
+			(int) (args[1]));
+	if (code == 440)
+		printf("stat(%d, %p) => ", (uint32_t) args[0],
+			(void *) args[1]);
+#endif
+
 	if (!error) 
 		error = (*callp->sy_call)(l, args, rval);
 
-	printf("error = %d, rval[0] = %"PRIx32", retval[1] = %"PRIx32"\n",
-		error, (uint) rval[0], (uint) rval[1]);
+#if 0
+	if (code ==3)
+		printf("{'%s'} => ", (char *) args[1]);
+	printf("error = %d, rval[0] = 0x%"PRIx32", retval[1] = 0x%"PRIx32"\n",
+		error, (uint) (rval[0]), (uint) (rval[1]));
+#endif
+
 	switch (error) {
 	default:
-		rval[0] = error;
-//		rval[1] = 0;
 		/* fall trough */
 	case 0:
-		md_syscall_set_returnargs(l, ucp, rval);
+		md_syscall_set_returnargs(l, ucp, error, rval);
 		/* fall trough */
 	case EJUSTRETURN:
 		md_syscall_inc_pc(ucp);
