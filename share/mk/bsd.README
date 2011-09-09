@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.284 2011/06/30 18:13:51 matt Exp $
+#	$NetBSD: bsd.README,v 1.285 2011/09/09 10:08:14 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -856,6 +856,10 @@ FILESMODE_<fn>	File mode of the specific file <fn>.
 FILESDIR_<fn>	The location to install the specific file <fn>.
 
 FILESNAME_<fn>	Optional name to install <fn> as.
+
+FILESBUILD	If this variable is defined, then its value will be
+		used as the default for all FILESBUILD_<fn> variables.
+		Otherwise, the default will be "no".
 
 FILESBUILD_<fn>	A value different from "no" will add the file to the list of
 		targets to be built by `realall'.  Users of that variable
