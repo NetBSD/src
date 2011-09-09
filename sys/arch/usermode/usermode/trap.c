@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.37 2011/09/08 19:39:00 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.38 2011/09/09 12:21:57 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.37 2011/09/08 19:39:00 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.38 2011/09/09 12:21:57 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -118,7 +118,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 
 	recurse++;
 	if (recurse > 1)
-		printf("enter trap recursion level %d\n", recurse);
+		printf("%s: enter trap recursion level %d\n", __func__, recurse);
 	if ((info->si_signo == SIGSEGV) || (info->si_signo == SIGBUS)) {
 		l = curlwp;
 		p = l->l_proc;
@@ -218,7 +218,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 				recurse--;
 				return;
 			}
-			panic("%s: should deliver a trap to the process", __func__);
+			panic("%s: should deliver a trap to the process for va %p", __func__, (void *) va);
 			/* XXX HOWTO see arm/arm/syscall.c illegal instruction signal */
 		}
 
@@ -226,7 +226,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		pcb->pcb_errno = lwp_errno;
 	}
 	if (recurse > 1)
-		printf("leaving trap recursion level %d\n", recurse);
+		printf("%s: leaving trap recursion level %d\n", __func__, recurse);
 	recurse--;
 }
 
