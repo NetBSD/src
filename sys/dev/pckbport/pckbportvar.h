@@ -1,4 +1,4 @@
-/* $NetBSD: pckbportvar.h,v 1.8 2008/03/15 18:59:07 cube Exp $ */
+/* $NetBSD: pckbportvar.h,v 1.9 2011/09/09 14:00:01 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -82,9 +82,9 @@ void pckbport_set_inputhandler(pckbport_tag_t, pckbport_slot_t,
 				 pckbport_inputfcn, void *, const char *);
 
 void pckbport_flush(pckbport_tag_t, pckbport_slot_t);
-int pckbport_poll_cmd(pckbport_tag_t, pckbport_slot_t, u_char *, int,
+int pckbport_poll_cmd(pckbport_tag_t, pckbport_slot_t, const u_char *, int,
 			int, u_char *, int);
-int pckbport_enqueue_cmd(pckbport_tag_t, pckbport_slot_t, u_char *, int,
+int pckbport_enqueue_cmd(pckbport_tag_t, pckbport_slot_t, const u_char *, int,
 			   int, int, u_char *);
 int pckbport_poll_data(pckbport_tag_t, pckbport_slot_t);
 void pckbport_set_poll(pckbport_tag_t, pckbport_slot_t, int);
