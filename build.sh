@@ -1,7 +1,7 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.247 2011/08/30 12:04:12 apb Exp $
+#	$NetBSD: build.sh,v 1.248 2011/09/09 13:29:23 apb Exp $
 #
-# Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
+# Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -171,6 +171,9 @@ set_HOST_SH()
 	    bomb "HOST_SH=\"${HOST_SH}\" is not executable."
 }
 
+# initdefaults --
+# Set defaults before parsing command line options.
+#
 initdefaults()
 {
 	makeenv=
@@ -186,7 +189,19 @@ initdefaults()
 	[ -f share/mk/bsd.own.mk ] ||
 	    bomb "src/share/mk is missing; please re-fetch the source tree"
 
-	# Set LC_ALL=C before we try to parse the output from any command
+	# Set various environment variables to known defaults,
+	# to minimize (cross-)build problems observed "in the field".
+	#
+	# LC_ALL=C must be set before we try to parse the output from
+	# any command.  Other variables are set (or unset) here, before
+	# we parse command line arguments.
+	#
+	# These variables can be overridden via "-V var=value" if
+	# you know what you are doing.
+	#
+	unsetmakeenv INFODIR
+	unsetmakeenv LESSCHARSET
+	unsetmakeenv MAKEFLAGS
 	setmakeenv LC_ALL C
 
 	# Find information about the build platform.  This should be
@@ -237,10 +252,7 @@ initdefaults()
 	#
 	case "${uname_s}" in
 	Darwin | FreeBSD | CYGWIN*)
-		MAKEFLAGS=-X
-		;;
-	*)
-		MAKEFLAGS=
+		MAKEFLAGS="-X ${MAKEFLAGS}"
 		;;
 	esac
 
@@ -304,11 +316,6 @@ initdefaults()
 	#
 	setmakeenv MKARZERO "yes"
 
-	# Set various environment variables to known defaults,
-	# to minimize (cross-)build problems observed "in the field".
-	#
-	unsetmakeenv INFODIR
-	unsetmakeenv LESSCHARSET
 }
 
 getarch()
@@ -947,10 +954,14 @@ parseoptions()
 	#
 	makeenv="${makeenv} TOOLDIR MACHINE MACHINE_ARCH MAKEFLAGS"
 	[ -z "${BUILDID}" ] || makeenv="${makeenv} BUILDID"
-	MAKEFLAGS="-de -m ${TOP}/share/mk ${MAKEFLAGS} MKOBJDIRS=${MKOBJDIRS-yes}"
+	MAKEFLAGS="-de -m ${TOP}/share/mk ${MAKEFLAGS}"
+	MAKEFLAGS="${MAKEFLAGS} MKOBJDIRS=${MKOBJDIRS-yes}"
 	export MAKEFLAGS MACHINE MACHINE_ARCH
 }
 
+# sanitycheck --
+# Sanity check after parsing command line options, before rebuildmake.
+#
 sanitycheck()
 {
 	# If the PATH contains any non-absolute components (including,
@@ -1144,6 +1155,12 @@ rebuildmake()
 	fi
 }
 
+# validatemakeparams --
+# Perform some late sanity checks, after rebuildmake,
+# but before createmakewrapper or any real work.
+#
+# Also create the top-level obj directory.
+#
 validatemakeparams()
 {
 	if [ "${runcmd}" = "echo" ]; then
@@ -1387,7 +1404,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.247 2011/08/30 12:04:12 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.248 2011/09/09 13:29:23 apb Exp $
 # with these arguments: ${_args}
 #
 
