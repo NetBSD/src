@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2010/04/23 19:41:03 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2011/09/09 12:43:14 christos Exp $
 
 PROG=	tar
 SRCS=	bsdtar.c cmdline.c getdate.c read.c subst.c tree.c util.c write.c
@@ -13,5 +13,7 @@ tar.1: ${LIBARCHIVEDIR}/tar/bsdtar.1
 	${TOOL_CAT} ${LIBARCHIVEDIR}/tar/bsdtar.1 > $@
 
 SYMLINKS+=${BINDIR}/tar /usr/bin/tar
+
+COPTS.read.c += -Wno-format-nonliteral
 
 .include <bsd.prog.mk>
