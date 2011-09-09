@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.19 2011/09/09 15:35:22 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.20 2011/09/09 22:51:44 christos Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -175,13 +175,11 @@ perfuse_open(path, flags, mode)
 	 * Set a buffer lentgh large enough so that any FUSE packet
 	 * will fit.
 	 */
-	opt = FUSE_BUFSIZE;
+	opt = (uint32_t)FUSE_BUFSIZE;
 	optlen = sizeof(opt);
 	if (setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
 
-	opt = FUSE_BUFSIZE;
-	optlen = sizeof(opt);
 	if (setsockopt(sv[0], SOL_SOCKET, SO_RCVBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_RCVBUF to %d failed", __func__, opt);
 
@@ -208,23 +206,17 @@ perfuse_open(path, flags, mode)
 	 * Set a buffer lentgh large enough so that any FUSE packet
 	 * will fit.
 	 */
-	opt = 4 * FUSE_BUFSIZE;
+	opt = (uint32_t)(4 * FUSE_BUFSIZE);
 	optlen = sizeof(opt);
 	if (setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
 
-	opt = 4 * FUSE_BUFSIZE;
-	optlen = sizeof(opt);
 	if (setsockopt(sv[0], SOL_SOCKET, SO_RCVBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_RCVBUF to %d failed", __func__, opt);
 
-	opt = 4 * FUSE_BUFSIZE;
-	optlen = sizeof(opt);
 	if (setsockopt(sv[1], SOL_SOCKET, SO_SNDBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
 
-	opt = 4 * FUSE_BUFSIZE;
-	optlen = sizeof(opt);
 	if (setsockopt(sv[1], SOL_SOCKET, SO_RCVBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_RCVBUF to %d failed", __func__, opt);
 

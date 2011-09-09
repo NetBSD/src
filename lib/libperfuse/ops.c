@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.40 2011/09/09 15:45:28 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.41 2011/09/09 22:51:44 christos Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -847,7 +847,7 @@ perfuse_fs_init(pu)
 	fii = GET_INPAYLOAD(ps, pm, fuse_init_in);
 	fii->major = FUSE_KERNEL_VERSION;
 	fii->minor = FUSE_KERNEL_MINOR_VERSION;
-	fii->max_readahead = 32 * sysconf(_SC_PAGESIZE); 
+	fii->max_readahead = (unsigned int)(32 * sysconf(_SC_PAGESIZE));
 	fii->flags = (FUSE_ASYNC_READ|FUSE_POSIX_LOCKS|FUSE_ATOMIC_O_TRUNC);
 
 	if ((error = xchg_msg(pu, 0, pm, sizeof(*fio), wait_reply)) != 0)
@@ -1490,7 +1490,6 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
 	struct fuse_getattr_in *fgi;
 	struct fuse_attr_out *fao;
-	u_quad_t va_size;
 	int error;
 	
 	if (pnd->pnd_flags & PND_REMOVED)
@@ -1504,7 +1503,6 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 	pnd->pnd_flags |= PND_INRESIZE;
 
 	ps = puffs_getspecific(pu);
-	va_size = vap->va_size;
 
 	/*
 	 * FUSE_GETATTR_FH must be set in fgi->flags 
@@ -1523,7 +1521,8 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RESIZE)
-		DPRINTF(">> %s %p %lld\n", __func__, (void *)opc, va_size);
+		DPRINTF(">> %s %p %" PRIu64 "\n", __func__, (void *)opc,
+		    vap->va_size);
 #endif
 
 	if ((error = xchg_msg(pu, opc, pm, sizeof(*fao), wait_reply)) != 0)
@@ -1533,8 +1532,8 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RESIZE)
-		DPRINTF("<< %s %p %lld -> %lld\n", __func__, (void *)opc, 
-			va_size, fao->attr.size);
+		DPRINTF("<< %s %p %" PRIu64 " -> %" PRIu64 "\n", __func__,
+		    (void *)opc, vap->va_size, fao->attr.size);
 #endif
 
 	/* 
@@ -1741,9 +1740,10 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	    (old_vap->va_size != (u_quad_t)PUFFS_VNOVAL)) {
 		resize_debug = 1;
 
-		DPRINTF(">> %s %p %lld -> %lld\n", __func__, (void *)opc, 
-			puffs_pn_getvap((struct puffs_node *)opc)->va_size, 
-			fsi->size);
+		DPRINTF(">> %s %p %" PRIu64 " -> %" PRIu64 "\n", __func__,
+		    (void *)opc,
+		    puffs_pn_getvap((struct puffs_node *)opc)->va_size, 
+		    fsi->size);
 	}
 #endif
 
@@ -1757,8 +1757,8 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 
 #ifdef PERFUSE_DEBUG
 	if (resize_debug)
-		DPRINTF("<< %s %p %lld -> %lld\n", __func__, (void *)opc, 
-			old_vap->va_size, fao->attr.size);
+		DPRINTF("<< %s %p %" PRIu64 " -> %" PRIu64 "\n", __func__,
+		    (void *)opc, old_vap->va_size, fao->attr.size);
 #endif
 
 	fuse_attr_to_vap(ps, old_va, &fao->attr);
@@ -2836,8 +2836,9 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 	pm = NULL;
 
 	if (offset + *resid > vap->va_size)
-		DWARNX("%s %p read %lld@%d beyond EOF %lld\n",
-		       __func__, (void *)opc, offset, *resid, vap->va_size);
+		DWARNX("%s %p read %lld@%zu beyond EOF %" PRIu64 "\n",
+		       __func__, (void *)opc, (long long)offset,
+		       *resid, vap->va_size);
 
 	do {
 		size_t max_read;
@@ -2965,7 +2966,7 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RESIZE)
-		DPRINTF(">> %s %p %lld \n", __func__,
+		DPRINTF(">> %s %p %" PRIu64 "\n", __func__,
 			(void *)opc, vap->va_size);
 #endif
 
@@ -3038,8 +3039,8 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RESIZE) {
 		if (offset > (off_t)vap->va_size)
-			DPRINTF("<< %s %p %lld -> %lld\n", __func__, 
-				(void *)opc, vap->va_size, offset);
+			DPRINTF("<< %s %p %" PRIu64 " -> %lld\n", __func__, 
+				(void *)opc, vap->va_size, (long long)offset);
 		else
 			DPRINTF("<< %s %p \n", __func__, (void *)opc);
 	}
@@ -3135,7 +3136,7 @@ perfuse_node_getextattr(pu, opc, attrns, attrname, attrsize, attr, resid, pcr)
 
 	pm = ps->ps_new_msg(pu, opc, FUSE_GETXATTR, len, pcr);
 	fgi = GET_INPAYLOAD(ps, pm, fuse_getxattr_in);
-	fgi->size = (resid != NULL) ? *resid : 0;
+	fgi->size = (unsigned int)((resid != NULL) ? *resid : 0);
 	np = (char *)(void *)(fgi + 1);
 	(void)strlcpy(np, attrname, attrnamelen);
 	
@@ -3200,7 +3201,7 @@ perfuse_node_setextattr(pu, opc, attrns, attrname, attr, resid, pcr)
 
 	pm = ps->ps_new_msg(pu, opc, FUSE_SETXATTR, len, pcr);
 	fsi = GET_INPAYLOAD(ps, pm, fuse_setxattr_in);
-	fsi->size = *resid;
+	fsi->size = (unsigned int)*resid;
 	fsi->flags = 0;
 	np = (char *)(void *)(fsi + 1);
 	(void)strlcpy(np, attrname, attrnamelen);
@@ -3245,7 +3246,7 @@ perfuse_node_listextattr(pu, opc, attrns, attrsize, attrs, resid, flag, pcr)
 	pm = ps->ps_new_msg(pu, opc, FUSE_LISTXATTR, len, pcr);
 	fgi = GET_INPAYLOAD(ps, pm, fuse_getxattr_in);
 	if (resid != NULL)
-		fgi->size = *resid;
+		fgi->size = (unsigned int)*resid;
 	else
 		fgi->size = 0;
 	
