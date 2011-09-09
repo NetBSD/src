@@ -1,4 +1,4 @@
-/* $NetBSD: elantech.c,v 1.3 2008/12/30 10:44:30 jmcneill Exp $ */
+/* $NetBSD: elantech.c,v 1.4 2011/09/09 14:29:47 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elantech.c,v 1.3 2008/12/30 10:44:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elantech.c,v 1.4 2011/09/09 14:29:47 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,42 +132,6 @@ pms_sysctl_elantech(struct sysctllog **clog)
 
 err:
 	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
-}
-
-/* lifted from synaptics.c */
-static int
-pms_elantech_send_command(pckbport_tag_t tag, pckbport_slot_t slot,
-    uint8_t syn_cmd)
-{
-	uint8_t cmd[2];
-	int res;
-
-	cmd[0] = PMS_SET_SCALE11;
-	res = pckbport_poll_cmd(tag, slot, cmd, 1, 0, NULL, 0);
-	if (res)
-		return res;
-
-	/*
-	 * Need to send 4 Set Resolution commands, with the argument
-	 * encoded in the bottom most 2 bits.
-	 */
-	cmd[0] = PMS_SET_RES;
-	cmd[1] = syn_cmd >> 6;
-	res = pckbport_poll_cmd(tag, slot, cmd, 2, 0, NULL, 0);
-
-	cmd[0] = PMS_SET_RES;
-	cmd[1] = (syn_cmd & 0x30) >> 4;
-	res |= pckbport_poll_cmd(tag, slot, cmd, 2, 0, NULL, 0);
-
-	cmd[0] = PMS_SET_RES;
-	cmd[1] = (syn_cmd & 0x0c) >> 2;
-	res |= pckbport_poll_cmd(tag, slot, cmd, 2, 0, NULL, 0);
-
-	cmd[0] = PMS_SET_RES;
-	cmd[1] = (syn_cmd & 0x03);
-	res |= pckbport_poll_cmd(tag, slot, cmd, 2, 0, NULL, 0);
-
-	return res;
 }
 
 static int
@@ -383,7 +347,7 @@ pms_elantech_probe_init(void *opaque)
 		goto doreset;
 	}
 
-	res = pms_elantech_send_command(psc->sc_kbctag, psc->sc_kbcslot,
+	res = pms_sliced_command(psc->sc_kbctag, psc->sc_kbcslot,
 	    ELANTECH_FW_VERSION);
 	cmd[0] = PMS_SEND_DEV_STATUS;
 	res |= pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
