@@ -82,17 +82,23 @@ CONFIGURATION
    Environment variables
      Several environment variables control the behaviour of NetBSD builds.
 
-     HOST_SH           Path name to a POSIX-compliant shell.  If this is not
-                       set explicitly, then the default is set using heuris-
-                       tics dependent on the host platform, or from the shell
-                       under which build.sh is executed (if that can be deter-
-                       mined), or using the first copy of sh found in PATH.
-                       If the host system's /bin/sh is not POSIX-compliant, we
-                       suggest that you build using commands like
+     HOST_SH           Path name to a shell available on the host system and
+                       suitable for use during the build.  The NetBSD build
+                       system requires a modern Bourne-like shell with POSIX-
+                       compliant features, and also requires support for the
+                       ``local'' keyword to declare local variables in shell
+                       functions (which is a widely-implemented but non-stan-
+                       dardised feature).
 
-                             HOST_SH=/path/to/working/shell
-                             export HOST_SH
-                             ${HOST_SH} build.sh [options]
+                       Depending on the host system, a suitable shell may be
+                       /bin/sh, /usr/xpg4/bin/sh, /bin/ksh (provided it is a
+                       variant of ksh that supports the ``local'' keyword,
+                       such as ksh88, but not ksh93), or /usr/local/bin/bash.
+
+                       Most parts of the build require HOST_SH to be an abso-
+                       lute path; however, build.sh allows it to be a simple
+                       command name, which will be converted to an absolute
+                       path by searching the PATH.
 
      HOST_CC           Path name to C compiler used to create the toolchain.
 
@@ -629,11 +635,31 @@ BUILDING
                    those as well but currently does not.
 
    The "build.sh" script
-     This script file is a Bourne shell script designed to build the entire
-     NetBSD system on any host with a Bourne shell in /bin/sh, including many
-     that are not POSIX compliant.  Note that if a host system's /bin/sh is
-     unusually old and broken, the Korn Shell (/bin/ksh), if available, may be
-     a usable alternative.
+     This script file is a shell script designed to build the entire NetBSD
+     system on any host with a suitable modern shell and some common utili-
+     ties.  The required shell features are described under the HOST_SH vari-
+     able.
+
+     If a host system's default shell does support the required features, then
+     we suggest that you explicitly specify a suitable shell using a command
+     like
+
+           /path/to/suitable/shell build.sh [options]
+
+     The above command will usually enable build.sh to automatically set
+     HOST_SH=/path/to/suitable/shell, but if that fails, then the following
+     set of commands may be used instead:
+
+           HOST_SH=/path/to/suitable/shell
+           export HOST_SH
+           ${HOST_SH} build.sh [options]
+
+     If build.sh detects that it is being executed under an unsuitable shell,
+     it attempts to exec a suitable shell instead, or prints an error message.
+     If HOST_SH is not set explicitly, then build.sh sets a default using
+     heuristics dependent on the host platform, or from the shell under which
+     build.sh is executed (if that can be determined), or using the first copy
+     of sh found in PATH.
 
      All cross-compile builds, and most native builds, of the entire system
      should make use of build.sh rather than just running ``make''.  This way,
