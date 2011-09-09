@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.28 2011/09/09 12:44:27 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.29 2011/09/09 20:06:04 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -32,7 +32,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2011/09/09 12:44:27 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2011/09/09 20:06:04 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -200,7 +200,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	ucp->uc_stack.ss_sp = (void *) (stack-4);	/* to prevent clearing */
 	ucp->uc_stack.ss_size = 0; //pack->ep_ssize;
-	thunk_makecontext(ucp, (void *) pack->ep_entry, 0, NULL, NULL);
+	thunk_makecontext(ucp, (void *) pack->ep_entry, 0, NULL, NULL, NULL);
 
 	/* patch up */
 	reg[ 8] = l->l_proc->p_psstrp;	/* _REG_EBX */
