@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.57 2011/09/06 09:37:41 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.58 2011/09/09 12:28:05 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.57 2011/09/06 09:37:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 2011/09/09 12:28:05 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -52,10 +52,12 @@ struct pv_entry {
 	uint8_t		pv_vflags;	/* per mapping flags */
 #define PV_WIRED	0x01		/* wired mapping */
 #define PV_UNMANAGED	0x02		/* entered by pmap_kenter_ */
+#define PV_MAPPEDIN	0x04		/* is actually mapped */
 	uint8_t		pv_pflags;	/* per phys page flags */
 #define PV_REFERENCED	0x01
 #define PV_MODIFIED	0x02
 };
+
 
 /* this is a guesstimate of 16KB/process on amd64, or around 680+ mappings */
 #define PM_MIN_NENTRIES ((int) (16*1024 / sizeof(pv_entry)))
@@ -484,7 +486,7 @@ pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 
 	/* not known! then it must be UVM's work */
 	if (pv == NULL) {
-aprint_debug("no mapping yet\n");
+		aprint_debug("%s: no mapping yet\n", __func__);
 		*atype = VM_PROT_READ;		/* assume it was a read */
 		return false;
 	}
@@ -502,6 +504,16 @@ aprint_debug("no mapping yet\n");
 		return true;
 	}
 
+	/* if its not mapped in, we have a TBL fault */
+	if ((pv->pv_vflags & PV_MAPPEDIN) == 0) {
+		if (pv->pv_mmap_ppl != THUNK_PROT_NONE) {
+			printf("%s: tlb fault page lpn %"PRIiPTR"\n", __func__,
+				pv->pv_lpn);
+			pmap_page_activate(pv);
+			return true;
+		}
+	}
+
 	/* determine pmap access type (mmap doesnt need to be 1:1 on VM_PROT_) */
 	prot = pv->pv_prot;
 	cur_prot = VM_PROT_NONE;
@@ -514,7 +526,8 @@ aprint_debug("no mapping yet\n");
 
 	diff = prot & (prot ^ cur_prot);
 
-aprint_debug("prot = %d, cur_prot = %d, diff = %d\n", prot, cur_prot, diff);
+	aprint_debug("%s: prot = %d, cur_prot = %d, diff = %d\n",
+		__func__, prot, cur_prot, diff);
 	*atype = VM_PROT_READ;  /* assume its a read error */
 	if (diff & VM_PROT_READ) {
 		if ((ppv->pv_pflags & PV_REFERENCED) == 0) {
@@ -543,9 +556,9 @@ aprint_debug("prot = %d, cur_prot = %d, diff = %d\n", prot, cur_prot, diff);
 	*atype = VM_PROT_WRITE; /* assume its a write error */
 	if (diff & VM_PROT_WRITE) {
 		if (prot & VM_PROT_WRITE) {
-aprint_debug("should be allowed to write\n");
+			/* should be allowed to write */
 			if ((ppv->pv_pflags & PV_MODIFIED) == 0) {
-aprint_debug("was marked unmodified\n");
+				/* was marked unmodified */
 				ppv->pv_pflags |= PV_MODIFIED;
 				pmap_update_page(ppn);
 				return true;
@@ -574,6 +587,10 @@ pmap_page_activate(struct pv_entry *pv)
 	if (addr != (void *) va)
 		panic("pmap_page_activate: mmap failed (expected %p got %p): %d",
 		    (void *)va, addr, thunk_geterrno());
+
+	pv->pv_vflags &= ~PV_MAPPEDIN;
+	if (pv->pv_mmap_ppl != THUNK_PROT_NONE)
+		pv->pv_vflags |= PV_MAPPEDIN;
 }
 
 static void
@@ -590,6 +607,7 @@ pmap_page_deactivate(struct pv_entry *pv)
 		(void *) va, (void *) pa, pv->pv_mmap_ppl, (void *) addr);
 	if (addr != (void *) va)
 		panic("pmap_page_deactivate: mmap failed");
+	pv->pv_vflags &= ~PV_MAPPEDIN;
 }
 
 static void
@@ -608,13 +626,16 @@ pv_update(struct pv_entry *pv)
 
 	/* create referenced/modified emulation */
 	if ((pv->pv_prot & VM_PROT_WRITE) &&
-	    (pflags & PV_REFERENCED) && (pflags & PV_MODIFIED))
+	    (pflags & PV_REFERENCED) && (pflags & PV_MODIFIED)) {
 		mmap_ppl = THUNK_PROT_READ | THUNK_PROT_WRITE;
-	else if ((pv->pv_prot & (VM_PROT_READ | VM_PROT_EXECUTE)) &&
-		 (pflags & PV_REFERENCED))
+	} else if ((pv->pv_prot & (VM_PROT_READ | VM_PROT_EXECUTE)) &&
+		 (pflags & PV_REFERENCED)) {
 		mmap_ppl = THUNK_PROT_READ;
-	else
+		if (pv->pv_prot & VM_PROT_EXECUTE)
+			mmap_ppl |= THUNK_PROT_EXEC;
+	} else {
 		mmap_ppl = THUNK_PROT_NONE;
+	}
 
 	/* unmanaged pages are special; they dont track r/m */
 	if (vflags & PV_UNMANAGED)
