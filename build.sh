@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.248 2011/09/09 13:29:23 apb Exp $
+#	$NetBSD: build.sh,v 1.249 2011/09/09 18:48:34 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,15 +29,234 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #
-# Top level build wrapper, for a system containing no tools.
+# Top level build wrapper, to build or cross-build NetBSD.
 #
-# This script should run on any POSIX-compliant shell.  If the
-# first "sh" found in the PATH is a POSIX-compliant shell, then
-# you should not need to take any special action.  Otherwise, you
-# should set the environment variable HOST_SH to a POSIX-compliant
-# shell, and invoke build.sh with that shell.  (Depending on your
-# system, one of /bin/ksh, /usr/local/bin/bash, or /usr/xpg4/bin/sh
-# might be a suitable shell.)
+
+#
+# {{{ Begin shell feature tests.
+#
+# We try to determine whether or not this script is being run under
+# a shell that supports the features that we use.  If not, we try to
+# re-exec the script under another shell.  If we can't find another
+# suitable shell, then we print a message and exit.
+#
+
+errmsg=''		# error message, if not empty
+shelltest=false		# if true, exit after testing the shell
+re_exec_allowed=true	# if true, we may exec under another shell
+
+# Parse special command line options in $1.  These special options are
+# for internal use only, are not documented, and are not valid anywhere
+# other than $1.
+case "$1" in
+"--shelltest")
+    shelltest=true
+    re_exec_allowed=false
+    shift
+    ;;
+"--no-re-exec")
+    re_exec_allowed=false
+    shift
+    ;;
+esac
+
+# Solaris /bin/sh, and other SVR4 shells, do not support "!".
+# This is the first feature that we test, because subsequent
+# tests use "!".
+#
+if test -z "$errmsg"; then
+    if ( eval '! false' ) >/dev/null 2>&1 ; then
+	:
+    else
+	errmsg='Shell does not support "!".'
+    fi
+fi
+
+# Does the shell support functions?
+#
+if test -z "$errmsg"; then
+    if ! (
+	eval 'somefunction() { : ; }'
+	) >/dev/null 2>&1
+    then
+	errmsg='Shell does not support functions.'
+    fi
+fi
+
+# Does the shell support the "local" keyword for variables in functions?
+#
+# Local variables are not required by SUSv3, but some scripts run during
+# the NetBSD build use them.
+#
+# ksh93 fails this test; it uses an incompatible syntax involving the
+# keywords 'function' and 'typeset'.
+#
+if test -z "$errmsg"; then
+    if ! (
+	eval 'f() { local v=2; }; v=1; f && test x"$v" = x"1"'
+	) >/dev/null 2>&1
+    then
+	errmsg='Shell does not support the "local" keyword in functions.'
+    fi
+fi
+
+# Does the shell support ${var%suffix}, ${var#prefix}, and their variants?
+#
+# We don't bother testing for ${var+value}, ${var-value}, or their variants,
+# since shells without those are sure to fail other tests too.
+#
+if test -z "$errmsg"; then
+    if ! (
+	eval 'var=a/b/c ;
+	      test x"${var#*/};${var##*/};${var%/*};${var%%/*}" = \
+		   x"b/c;c;a/b;a" ;'
+	) >/dev/null 2>&1
+    then
+	errmsg='Shell does not support "${var%suffix}" or "${var#prefix}".'
+    fi
+fi
+
+# Does the shell support IFS?
+#
+# zsh in normal mode (as opposed to "emulate sh" mode) fails this test.
+#
+if test -z "$errmsg"; then
+    if ! (
+	eval 'IFS=: ; v=":a b::c" ; set -- $v ; IFS=+ ;
+		test x"$#;$1,$2,$3,$4;$*" = x"4;,a b,,c;+a b++c"'
+	) >/dev/null 2>&1
+    then
+	errmsg='Shell does not support IFS word splitting.'
+    fi
+fi
+
+# Does the shell support ${1+"$@"}?
+#
+# Some versions of zsh fail this test, even in "emulate sh" mode.
+#
+if test -z "$errmsg"; then
+    if ! (
+	eval 'set -- "a a a" "b b b"; set -- ${1+"$@"};
+	      test x"$#;$1;$2" = x"2;a a a;b b b";'
+	) >/dev/null 2>&1
+    then
+	errmsg='Shell does not support ${1+"$@"}.'
+    fi
+fi
+
+# Does the shell support $(...) command substitution?
+#
+if test -z "$errmsg"; then
+    if ! (
+	eval 'var=$(echo abc); test x"$var" = x"abc"'
+	) >/dev/null 2>&1
+    then
+	errmsg='Shell does not support "$(...)" command substitution.'
+    fi
+fi
+
+# Does the shell support $(...) command substitution with
+# unbalanced parentheses?
+#
+# Some shells known to fail this test are:  NetBSD /bin/ksh (as of 2009-12),
+# bash-3.1, pdksh-5.2.14, zsh-4.2.7 in "emulate sh" mode.
+#
+if test -z "$errmsg"; then
+    if ! (
+	eval 'var=$(case x in x) echo abc;; esac); test x"$var" = x"abc"'
+	) >/dev/null 2>&1
+    then
+	# XXX: This test is ignored because so many shells fail it; instead,
+	#      the NetBSD build avoids using the problematic construct.
+	: ignore 'Shell does not support "$(...)" with unbalanced ")".'
+    fi
+fi
+
+# Does the shell support getopts or getopt?
+#
+if test -z "$errmsg"; then
+    if ! (
+	eval 'type getopts || type getopt'
+	) >/dev/null 2>&1
+    then
+	errmsg='Shell does not support getopts or getopt.'
+    fi
+fi
+
+#
+# If shelltest is true, exit now, reporting wheher or not the shell is good.
+#
+if $shelltest; then
+    if test -n "$errmsg"; then
+	echo >&2 "$0: $errmsg"
+	exit 1
+    else
+	exit 0
+    fi
+fi
+
+#
+# If the shell was bad, try to exec a better shell, or report an error.
+#
+# Loops are broken by passing an extra "--no-re-exec" flag to the new
+# instance of this script.
+#
+if test -n "$errmsg"; then
+    if $re_exec_allowed; then
+	for othershell in \
+	    "${HOST_SH}" /usr/xpg4/bin/sh ksh ksh88 mksh pdksh bash dash
+	    # NOTE: some shells known not to work are:
+	    # any shell using csh syntax;
+	    # Solaris /bin/sh (missing many modern features);
+	    # ksh93 (incompatible syntax for local variables);
+	    # zsh (many differences, unless run in compatibility mode).
+	do
+	    test -n "$othershell" || continue
+	    if eval 'type "$othershell"' >/dev/null 2>&1 \
+		&& "$othershell" "$0" --shelltest >/dev/null 2>&1
+	    then
+		cat <<EOF
+$0: $errmsg
+$0: Retrying under $othershell
+EOF
+		HOST_SH="$othershell"
+		export HOST_SH
+		exec $othershell "$0" --no-re-exec "$@" # avoid ${1+"$@"}
+	    fi
+	    # If HOST_SH was set, but failed the test above,
+	    # then give up without trying any other shells.
+	    test x"${othershell}" = x"${HOST_SH}" && break
+	done
+    fi
+
+    #
+    # If we get here, then the shell is bad, and we either could not
+    # find a replacement, or were not allowed to try a replacement.
+    #
+    cat <<EOF
+$0: $errmsg
+
+The NetBSD build system requires a shell that supports modern POSIX
+features, as well as the "local" keyword in functions (which is a
+widely-implemented but non-standardised feature).
+
+Please re-run this script under a suitable shell.  For example:
+
+	/path/to/suitable/shell $0 ...
+
+The above command will usually enable build.sh to automatically set
+HOST_SH=/path/to/suitable/shell, but if that fails, then you may also
+need to explicitly set the HOST_SH environment variable, as follows:
+
+	HOST_SH=/path/to/suitable/shell
+	export HOST_SH
+	\${HOST_SH} $0 ...
+EOF
+    exit 1
+fi
+
+#
+# }}} End shell feature tests.
 #
 
 progname=${0##*/}
@@ -169,6 +388,13 @@ set_HOST_SH()
 	#
 	[ -x "${HOST_SH}" ] ||
 	    bomb "HOST_SH=\"${HOST_SH}\" is not executable."
+
+	# If HOST_SH fails tests, bomb.
+	# ("$0" may be a path that is no longer valid, because we have
+	# performed "cd $(dirname $0)", so don't use $0 here.)
+	#
+	"${HOST_SH}" build.sh --shelltest ||
+	    bomb "HOST_SH=\"${HOST_SH}\" failed functionality tests."
 }
 
 # initdefaults --
@@ -699,7 +925,7 @@ parseoptions()
 		optremcmd='shift $((${OPTIND} -1))'
 	else
 		type getopt >/dev/null 2>&1 ||
-		    bomb "/bin/sh shell is too old; try ksh or bash"
+		    bomb "Shell does not support getopts or getopt"
 
 		# Use old-style getopt(1) (doesn't handle whitespace in args).
 		#
@@ -1404,7 +1630,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.248 2011/09/09 13:29:23 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.249 2011/09/09 18:48:34 apb Exp $
 # with these arguments: ${_args}
 #
 
