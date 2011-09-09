@@ -104,7 +104,9 @@ CONFIGURATION
 
      MAKE              Path name to invoke make(1) as.
 
-     MAKEFLAGS         Flags to invoke make(1) with.
+     MAKEFLAGS         Flags to invoke make(1) with.  Note that build.sh
+                       ignores the value of MAKEFLAGS passed in the environ-
+                       ment, but allows MAKEFLAGS to be set via the -V option.
 
      MAKEOBJDIR        Directory to use as the .OBJDIR for the current direc-
                        tory.  The value is subjected to variable expansion by
@@ -231,11 +233,6 @@ CONFIGURATION
      MKINFO      Can be set to ``yes'' or ``no''.  Indicates whether GNU Info
                  files, used for the documentation for most of the compilation
                  tools, will be created and installed during a build.
-
-                 Default: ``yes''
-
-     MKKMOD      Can be set to ``yes'' or ``no''.  Indicates whether kernel
-                 modules are built and installed.
 
                  Default: ``yes''
 
@@ -534,10 +531,9 @@ BUILDING
                    ing.
 
                    The INSTALLSETS environment variable may be set to a list
-                   of distribution sets to be installed, separated by spaces.
-                   By default, all sets except ``etc'' and ``xetc'' are
-                   extracted, so most files in INSTALLWORLDDIR/etc will not
-                   be installed or modified.
+                   of distribution sets to be installed.  By default, all sets
+                   except ``etc'' and ``xetc'' are installed, so most files in
+                   INSTALLWORLDDIR/etc will not be installed or modified.
 
                    Note: Before performing this operation with
                    INSTALLWORLDDIR=/, it is highly recommended that you
@@ -671,8 +667,7 @@ BUILDING
 
      install=idir  Install the contents of DESTDIR to idir, using ``make
                    installworld''.  Note that files that are part of the
-                   ``etc'' or ``xetc'' sets will not be installed, unless
-                   overridden by the INSTALLSETS environment variable.
+                   ``etc'' or ``xetc'' sets will not be installed.
 
      kernel=kconf  Build a new kernel.  The kconf argument is the name of a
                    configuration file suitable for use by config(1).  If kconf
@@ -927,4 +922,4 @@ HISTORY
      The build.sh based build scheme was introduced for NetBSD 1.6 as
      USE_NEW_TOOLCHAIN, and re-worked to TOOLCHAIN_MISSING after that.
 
-NetBSD                            May 1, 2009                           NetBSD
+NetBSD                         September 9, 2011                        NetBSD
