@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.15 2011/08/14 08:19:04 christos Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.16 2011/09/09 15:45:28 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -40,18 +40,19 @@
  * Diagnostic flags. This global is used only for DPRINTF/DERR/DWARN
  */
 extern int perfuse_diagflags;
-#define PDF_FOREGROUND	0x001	/* we run in foreground */
-#define PDF_FUSE	0x002	/* Display FUSE reqeusts and reply */
-#define PDF_DUMP	0x004	/* Dump FUSE frames */
-#define PDF_PUFFS	0x008	/* Display PUFFS requets and reply */
-#define PDF_FH		0x010	/* File handles */
-#define PDF_RECLAIM	0x020	/* Reclaimed files */
-#define PDF_READDIR	0x040	/* readdir operations */
-#define PDF_REQUEUE	0x080	/* reueued messages */
-#define PDF_SYNC	0x100	/* fsync and dirty flags */
-#define PDF_MISC	0x200	/* Miscelaneous messages */
-#define PDF_SYSLOG	0x400	/* use syslog */
-#define PDF_FILENAME	0x800	/* File names */
+#define PDF_FOREGROUND	0x0001	/* we run in foreground */
+#define PDF_FUSE	0x0002	/* Display FUSE reqeusts and reply */
+#define PDF_DUMP	0x0004	/* Dump FUSE frames */
+#define PDF_PUFFS	0x0008	/* Display PUFFS requets and reply */
+#define PDF_FH		0x0010	/* File handles */
+#define PDF_RECLAIM	0x0020	/* Reclaimed files */
+#define PDF_READDIR	0x0040	/* readdir operations */
+#define PDF_REQUEUE	0x0080	/* reueued messages */
+#define PDF_SYNC	0x0100	/* fsync and dirty flags */
+#define PDF_MISC	0x0200	/* Miscelaneous messages */
+#define PDF_SYSLOG	0x0400	/* use syslog */
+#define PDF_FILENAME	0x0800	/* File names */
+#define PDF_RESIZE	0x1000	/* Resize operations */
 
 /*
  * Diagnostic functions
