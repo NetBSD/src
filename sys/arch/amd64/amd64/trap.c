@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66 2011/04/03 22:29:25 dyoung Exp $	*/
+/*	$NetBSD: trap.c,v 1.66.2.1 2011/09/09 08:14:39 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66 2011/04/03 22:29:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66.2.1 2011/09/09 08:14:39 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -733,7 +733,7 @@ frame_dump(struct trapframe *tf)
 	    (void *)tf->tf_r13, (void *)tf->tf_r14, (void *)tf->tf_r15);
 	printf("rbp %p  rbx %p  rax %p\n",
 	    (void *)tf->tf_rbp, (void *)tf->tf_rbx, (void *)tf->tf_rax);
-	printf("cs %p  ds %p  es %p  fs %p  gs %p  ss %p\n",
+	printf("cs %lx  ds %lx  es %lx  fs %lx  gs %lx  ss %lx\n",
 		tf->tf_cs & 0xffff, tf->tf_ds & 0xffff, tf->tf_es & 0xffff,
 		tf->tf_fs & 0xffff, tf->tf_gs & 0xffff, tf->tf_ss & 0xffff);
 	
