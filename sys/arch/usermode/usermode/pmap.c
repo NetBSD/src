@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.58 2011/09/09 12:28:05 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.59 2011/09/09 12:41:12 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 2011/09/09 12:28:05 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2011/09/09 12:41:12 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -452,10 +452,13 @@ pv_get(pmap_t pmap, uintptr_t ppn, uintptr_t lpn)
 		}
 	}
 	/* Otherwise, allocate a new entry and link it in after the head. */
-	printf("pv_get: multiple mapped page ppn %"PRIdPTR", lpn %"PRIdPTR"\n",
-		 ppn, lpn);
-assert(ppn < phys_npages);
-assert(ppn >= 0);
+	aprint_debug("pv_get: multiple mapped page ppn %"PRIdPTR", "
+		"lpn %"PRIdPTR"\n", ppn, lpn);
+
+	/* extra sanity */
+	assert(ppn < phys_npages);
+	assert(ppn >= 0);
+
 	pv = pv_alloc();
 	if (pv == NULL)
 		return NULL;
@@ -507,8 +510,8 @@ pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 	/* if its not mapped in, we have a TBL fault */
 	if ((pv->pv_vflags & PV_MAPPEDIN) == 0) {
 		if (pv->pv_mmap_ppl != THUNK_PROT_NONE) {
-			printf("%s: tlb fault page lpn %"PRIiPTR"\n", __func__,
-				pv->pv_lpn);
+			aprint_debug("%s: tlb fault page lpn %"PRIiPTR"\n",
+				__func__, pv->pv_lpn);
 			pmap_page_activate(pv);
 			return true;
 		}
