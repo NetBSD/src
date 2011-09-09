@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.43 2011/09/09 20:06:04 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.44 2011/09/09 20:14:33 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43 2011/09/09 20:06:04 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.44 2011/09/09 20:14:33 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -278,12 +278,18 @@ cpu_lwp_free2(struct lwp *l)
 }
 
 static void
-cpu_lwp_trampoline(void (*func)(void *), void *arg)
+cpu_lwp_trampoline(ucontext_t *ucp, void (*func)(void *), void *arg)
 {
 #ifdef CPU_DEBUG
 	printf("cpu_lwp_trampoline called with func %p, arg %p\n", (void *) func, arg);
 #endif
+	/* init lwp */
 	lwp_startup(curcpu()->ci_stash, curlwp);
+
+	/* adjust context so the next switch bypasses the trampoline */
+	thunk_makecontext(ucp, (void (*)(void)) func, 1, arg, NULL, NULL);
+
+	/* issue for the 1st time */
 	func(arg);
 }
 
@@ -321,7 +327,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_ucp.uc_link = &pcb2->pcb_userland_ucp;
 	pcb2->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU;
 	thunk_makecontext(&pcb2->pcb_ucp, (void (*)(void)) cpu_lwp_trampoline,
-	    2, func, arg, NULL);
+	    3, &pcb2->pcb_ucp, func, arg);
 
 	/* set up the ucontext for the syscall */
 	pcb2->pcb_syscall_ucp.uc_flags = _UC_CPU;
