@@ -1,4 +1,4 @@
-/*	$NetBSD: pmsvar.h,v 1.10 2011/09/08 15:27:50 jakllsch Exp $	*/
+/*	$NetBSD: pmsvar.h,v 1.11 2011/09/09 14:29:47 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -73,5 +73,7 @@ struct pms_softc {		/* driver status information */
 	} u;
 #endif
 };
+
+int pms_sliced_command(pckbport_tag_t, pckbport_slot_t, u_char);
 
 #endif /* _DEV_PCKBCPORT_PMSVAR_H_ */
