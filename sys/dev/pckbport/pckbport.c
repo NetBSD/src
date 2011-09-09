@@ -1,4 +1,4 @@
-/* $NetBSD: pckbport.c,v 1.13 2008/03/15 18:59:07 cube Exp $ */
+/* $NetBSD: pckbport.c,v 1.14 2011/09/09 14:00:01 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.13 2008/03/15 18:59:07 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.14 2011/09/09 14:00:01 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,8 +315,8 @@ pckbport_poll_cmd1(struct pckbport_tag *t, pckbport_slot_t slot,
 
 /* for use in autoconfiguration */
 int
-pckbport_poll_cmd(pckbport_tag_t t, pckbport_slot_t slot, u_char *cmd, int len,
-    int responselen, u_char *respbuf, int slow)
+pckbport_poll_cmd(pckbport_tag_t t, pckbport_slot_t slot, const u_char *cmd,
+    int len, int responselen, u_char *respbuf, int slow)
 {
 	struct pckbport_devcmd nc;
 
@@ -493,7 +493,7 @@ restart:
  * Put command into the device's command queue, return zero or errno.
  */
 int
-pckbport_enqueue_cmd(pckbport_tag_t t, pckbport_slot_t slot, u_char *cmd,
+pckbport_enqueue_cmd(pckbport_tag_t t, pckbport_slot_t slot, const u_char *cmd,
     int len, int responselen, int sync, u_char *respbuf)
 {
 	struct pckbport_slotdata *q = t->t_slotdata[slot];
