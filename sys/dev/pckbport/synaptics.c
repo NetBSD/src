@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.26 2011/01/29 20:37:24 cegger Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.27 2011/09/09 14:29:47 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.26 2011/01/29 20:37:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.27 2011/09/09 14:29:47 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,6 @@ struct synaptics_packet {
 	char	sp_down;	/* Down button status */
 };
 
-static int pms_synaptics_send_command(pckbport_tag_t, pckbport_slot_t, u_char);
 static void pms_synaptics_input(void *, int);
 static void pms_synaptics_process_packet(struct pms_softc *,
 		struct synaptics_packet *);
@@ -141,7 +140,7 @@ pms_synaptics_probe_init(void *vsc)
 	int res, ver_minor, ver_major;
 	struct sysctllog *clog = NULL;
 
-	res = pms_synaptics_send_command(psc->sc_kbctag, psc->sc_kbcslot,
+	res = pms_sliced_command(psc->sc_kbctag, psc->sc_kbcslot,
 	    SYNAPTICS_IDENTIFY_TOUCHPAD);
 	cmd[0] = PMS_SEND_DEV_STATUS;
 	res |= pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd, 1, 3,
@@ -180,7 +179,7 @@ pms_synaptics_probe_init(void *vsc)
 	}
 
 	/* Query the hardware capabilities. */
-	res = pms_synaptics_send_command(psc->sc_kbctag, psc->sc_kbcslot,
+	res = pms_sliced_command(psc->sc_kbctag, psc->sc_kbcslot,
 	    SYNAPTICS_READ_CAPABILITIES);
 	cmd[0] = PMS_SEND_DEV_STATUS;
 	res |= pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd, 1, 3,
@@ -214,7 +213,7 @@ pms_synaptics_probe_init(void *vsc)
 
 		/* Ask about extra buttons to detect up/down. */
 		if (sc->caps & SYNAPTICS_CAP_EXTNUM) {
-			res = pms_synaptics_send_command(psc->sc_kbctag,
+			res = pms_sliced_command(psc->sc_kbctag,
 			    psc->sc_kbcslot, SYNAPTICS_EXTENDED_QUERY);
 			cmd[0] = PMS_SEND_DEV_STATUS;
 			res |= pckbport_poll_cmd(psc->sc_kbctag,
@@ -290,7 +289,7 @@ pms_synaptics_enable(void *vsc)
 	 * Enable Absolute mode with W (width) reporting, and set
 	 * the packet rate to maximum (80 packets per second).
 	 */
-	res = pms_synaptics_send_command(psc->sc_kbctag, psc->sc_kbcslot,
+	res = pms_sliced_command(psc->sc_kbctag, psc->sc_kbcslot,
 	    SYNAPTICS_MODE_ABSOLUTE | SYNAPTICS_MODE_W | SYNAPTICS_MODE_RATE);
 	cmd[0] = PMS_SET_SAMPLE;
 	cmd[1] = SYNAPTICS_CMD_SET_MODE2;
@@ -614,39 +613,6 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 	*(int *)rnode->sysctl_data = t;
 
 	return (0);
-}
-
-static int
-pms_synaptics_send_command(pckbport_tag_t tag, pckbport_slot_t slot,
-    u_char syn_cmd)
-{
-	u_char cmd[2];
-	int res;
-
-	cmd[0] = PMS_SET_SCALE11;
-	res = pckbport_poll_cmd(tag, slot, cmd, 1, 0, NULL, 0);
-
-	/*
-	 * Need to send 4 Set Resolution commands, with the argument
-	 * encoded in the bottom most 2 bits.
-	 */
-	cmd[0] = PMS_SET_RES;
-	cmd[1] = syn_cmd >> 6;
-	res |= pckbport_poll_cmd(tag, slot, cmd, 2, 0, NULL, 0);
-
-	cmd[0] = PMS_SET_RES;
-	cmd[1] = (syn_cmd & 0x30) >> 4;
-	res |= pckbport_poll_cmd(tag, slot, cmd, 2, 0, NULL, 0);
-
-	cmd[0] = PMS_SET_RES;
-	cmd[1] = (syn_cmd & 0x0c) >> 2;
-	res |= pckbport_poll_cmd(tag, slot, cmd, 2, 0, NULL, 0);
-
-	cmd[0] = PMS_SET_RES;
-	cmd[1] = (syn_cmd & 0x03);
-	res |= pckbport_poll_cmd(tag, slot, cmd, 2, 0, NULL, 0);
-
-	return (res);
 }
 
 /* Masks for the first byte of a packet */

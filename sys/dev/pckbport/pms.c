@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.34 2011/09/08 16:34:09 jakllsch Exp $ */
+/* $NetBSD: pms.c,v 1.35 2011/09/09 14:29:47 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.34 2011/09/08 16:34:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.35 2011/09/09 14:29:47 jakllsch Exp $");
 
 #include "opt_pms.h"
 
@@ -224,7 +224,7 @@ pmsattach(device_t parent, device_t self, void *aux)
 
 	/* no interrupts until enabled */
 	cmd[0] = PMS_DEV_DISABLE;
-	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, 0, 0);
+	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, NULL, 0);
 	if (res)
 		aprint_error("pmsattach: disable error\n");
 	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
@@ -652,4 +652,29 @@ pmsinput(void *vsc, int data)
 		wakeup(&sc->sc_enabled);
 		return;
 	}
+}
+
+int
+pms_sliced_command(pckbport_tag_t tag, pckbport_slot_t slot, u_char scmd)
+{
+	u_char cmd[2];
+	int i, err, ret = 0;
+
+	cmd[0] = PMS_SET_SCALE11;
+	ret = pckbport_poll_cmd(tag, slot, cmd, 1, 0, NULL, 0);
+
+	/*
+	 * Need to send 4 Set Resolution commands, with the argument
+	 * encoded in the bottom most 2 bits.
+	 */
+	for (i = 6; i >= 0; i -= 2) {
+		cmd[0] = PMS_SET_RES;
+		cmd[1] = (scmd >> i) & 3;
+		err = pckbport_poll_cmd(tag, slot, cmd, 2, 0, NULL, 0);
+		if (ret == 0 && err != 0) {
+			ret = err;
+		}
+	}
+
+	return ret;
 }
