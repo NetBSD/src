@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.27 2011/09/08 19:39:00 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.28 2011/09/09 12:44:27 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -32,7 +32,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2011/09/08 19:39:00 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2011/09/09 12:44:27 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2011/09/08 19:39:00 reinoud Exp $")
 #include <sys/boot_flag.h>
 #include <sys/ucontext.h>
 #include <machine/pcb.h>
+#include <machine/psl.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
@@ -156,6 +157,22 @@ mm_md_physacc(paddr_t pa, vm_prot_t prog)
 
 #ifdef __i386__
 
+#if 0
+static void dump_regs(ucontext_t *ctx);
+
+static void
+dump_regs(register_t *reg)
+{
+	/* register dump before call */
+	const char *name[] = {"GS", "FS", "ES", "DS", "EDI", "ESI", "EBP", "ESP",
+		"EBX", "EDX", "ECX", "EAX", "TRAPNO", "ERR", "EIP", "CS", "EFL",
+		"UESP", "SS"};
+
+	for (i =0; i < 19; i++)
+		printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], reg[i]);
+}
+#endif
+
 void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
@@ -189,15 +206,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	reg[ 8] = l->l_proc->p_psstrp;	/* _REG_EBX */
 	reg[17] = (stack);		/* _REG_UESP */
 
-#if 0
-	/* register dump before call */
-	const char *name[] = {"GS", "FS", "ES", "DS", "EDI", "ESI", "EBP", "ESP",
-		"EBX", "EDX", "ECX", "EAX", "TRAPNO", "ERR", "EIP", "CS", "EFL",
-		"UESP", "SS"};
-
-	for (i =0; i < 19; i++)
-		printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], reg[i]);
-#endif
+	//dump_regs(reg);
 
 #ifdef DEBUG_EXEC
 	printf("updated pcb %p\n", pcb);
@@ -229,28 +238,15 @@ md_syscall_getargs(lwp_t *l, ucontext_t *ucp, int nargs, int argsize,
 	uint *reg = (int *) &ucp->uc_mcontext;
 	register_t *sp = (register_t *) reg[17];/* ESP */
 	int ret;
-	uint i;
 
-	i = 0;
-#if 0
-	reg = (int *) &ucp->uc_mcontext;
-	/* register dump before call */
-	const char *name[] = {"GS", "FS", "ES", "DS", "EDI", "ESI", "EBP", "ESP",
-		"EBX", "EDX", "ECX", "EAX", "TRAPNO", "ERR", "EIP", "CS", "EFL",
-		"UESP", "SS"};
-
-	for (i =0; i < 19; i++)
-		printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], reg[i]);
-	printf("\n");
-#endif
-
+	//dump_regs(reg);
 	ret = copyin(sp + 1, args, argsize);
 
 #if 0
+	int i;
 	for (i = 0; i < nargs+4; i++)
 		printf("stack[%02d] = %"PRIx32"\n", i, (uint) sp[i]);
-#endif
-#if 0
+
 	for (i = 0; i < nargs; i++)
 		printf("arg[%02d] = %"PRIx32"\n", i, (uint) args[i]);
 	printf("\n");
@@ -260,26 +256,23 @@ md_syscall_getargs(lwp_t *l, ucontext_t *ucp, int nargs, int argsize,
 }
 
 void
-md_syscall_set_returnargs(lwp_t *l, ucontext_t *ucp, register_t *rval)
+md_syscall_set_returnargs(lwp_t *l, ucontext_t *ucp,
+	int error, register_t *rval)
 {
-	uint *reg = (int *) &ucp->uc_mcontext;
+	register_t *reg = (register_t *) &ucp->uc_mcontext;
+
+	reg[16] &= ~PSL_C;		/* EFL */
+	if (error) {
+		rval[0] = error;
+		reg[16] |= PSL_C;	/* EFL */
+	}
 
 	/* set return parameters */
-	reg[11]	= rval[0];	/* EAX */
-	reg[ 9] = rval[1];	/* EDX */
+	reg[11]	= rval[0];		/* EAX */
+	if (!error)
+		reg[ 9] = rval[1];	/* EDX */
 
-#if 0
-	uint i;
-	reg = (int *) &ucp->uc_mcontext;
-	/* register dump before call */
-	const char *name[] = {"GS", "FS", "ES", "DS", "EDI", "ESI", "EBP", "ESP",
-		"EBX", "EDX", "ECX", "EAX", "TRAPNO", "ERR", "EIP", "CS", "EFL",
-		"UESP", "SS"};
-
-	for (i =0; i < 19; i++)
-		printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], reg[i]);
-#endif
-
+	//dump_regs(reg);
 }
 
 int
@@ -295,6 +288,7 @@ md_syscall_check_opcode(void *ptr)
 		return 1;
 
 	/* TODO int $80 and sysenter */
+
 	return 0;
 }
 
@@ -313,11 +307,11 @@ md_syscall_inc_pc(ucontext_t *ucp)
 
 	/* TODO int $80 and sysenter */
 
-	printf("jump back to %p\n", (void *) reg[14]);
+	// printf("jump back to %p\n", (void *) reg[14]);
 }
 
 
 #else
-#	error setregs() not yet ported to this architecture
+#	error machdep functions not yet ported to this architecture
 #endif
 
