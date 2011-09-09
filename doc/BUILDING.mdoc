@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.82 2011/09/09 13:29:23 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.83 2011/09/09 14:01:28 apb Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -466,6 +466,11 @@ object directory names as programs built to be run on the target.
 Indicates whether GNU Info files, used for the documentation for
 most of the compilation tools, will be created and installed during a
 build.
+.DFLTy
+.
+.It Sy MKKMOD
+.YorN
+Indicates whether kernel modules are built and installed.
 .DFLTy
 .
 .It Sy MKLINT
@@ -990,7 +995,7 @@ is not the root directory if cross compiling.
 .Pp
 The
 .Sy INSTALLSETS
-environment variable may be set to a list of
+environment variable may be set to a space-separated list of
 distribution sets to be installed.
 By default, all sets except
 .Dq etc
@@ -1261,7 +1266,8 @@ Note that files that are part of the
 .Dq etc
 or
 .Dq xetc
-sets will not be installed.
+sets will not be installed, unless overridden by
+the INSTALLSETS environment variable.
 .
 .It Sy kernel Ns = Ns Ar kconf
 Build a new kernel.
