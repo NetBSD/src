@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: run_make.sh,v 1.1.1.2 2011/09/10 21:19:11 christos Exp $
+# Id: run_make.sh,v 1.1 2010/06/08 09:00:39 tom Exp
 # vi:ts=4 sw=4:
 
 # do a test-compile on each of the ".c" files in the test-directory

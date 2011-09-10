@@ -1,3 +1,5 @@
+/*	$NetBSD: code_error.y,v 1.1.1.3 2011/09/10 21:22:09 christos Exp $	*/
+
 %%
 S: error
 %%
