@@ -634,6 +634,8 @@ uninstall-info: uninstall-info-recursive
 all-local: $(srcdir)/../build-aux/config.rpath
 
 $(srcdir)/../build-aux/config.rpath: $(srcdir)/config.rpath
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_build-aux_config.rpath:
 	cp $(srcdir)/config.rpath $(srcdir)/../build-aux/config.rpath
 
 # The AC_CONFIG_AUX_DIR argument in the tests/rpath*/configure.ac files is
