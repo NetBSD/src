@@ -1,11 +1,10 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.63 2011/06/05 23:09:15 christos Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.64 2011/09/10 16:57:35 apb Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
 
 ##### Basic targets
-clean:		cleanprog
 
 ##### Default values
 LIBATF_C?=	/usr/lib/libatf-c.a
@@ -123,9 +122,7 @@ MAN=	${HOSTPROG}.1
 
 realall: ${HOSTPROG}
 
-cleanprog: .PHONY
-	rm -f a.out [Ee]rrs mklog core *.core \
-	    ${HOSTPROG} ${OBJS} ${LOBJS} ${CLEANFILES}
+CLEANFILES+= a.out [Ee]rrs mklog core *.core ${HOSTPROG} ${OBJS} ${LOBJS}
 
 beforedepend:
 CFLAGS:=	${HOST_CFLAGS}
@@ -144,6 +141,7 @@ LINKSMODE?= ${BINMODE}
 .include <bsd.inc.mk>
 .include <bsd.links.mk>
 .include <bsd.dep.mk>
+.include <bsd.clean.mk>
 
 ${TARGETS}:	# ensure existence
 

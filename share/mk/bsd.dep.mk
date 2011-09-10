@@ -1,7 +1,6 @@
-#	$NetBSD: bsd.dep.mk,v 1.72 2011/04/10 16:52:36 joerg Exp $
+#	$NetBSD: bsd.dep.mk,v 1.73 2011/09/10 16:57:35 apb Exp $
 
 ##### Basic targets
-cleandir:	cleandepend
 realdepend:	beforedepend .depend afterdepend
 .ORDER:		beforedepend .depend afterdepend
 
@@ -62,9 +61,8 @@ ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 .endif # defined(SRCS)							# }
 
 ##### Clean rules
-cleandepend: .PHONY
 .if defined(SRCS)
-	rm -f .depend ${__DPSRCS.d} ${.CURDIR}/tags ${CLEANDEPEND}
+CLEANDIRFILES+= .depend ${__DPSRCS.d} ${.CURDIR}/tags ${CLEANDEPEND}
 .endif
 
 ##### Custom rules
@@ -75,3 +73,6 @@ tags: ${SRCS}
 	    ${TOOL_SED} "s;\${.CURDIR}/;;" > tags
 .endif
 .endif
+
+##### Pull in related .mk logic
+.include <bsd.clean.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.41 2010/02/03 15:34:44 roy Exp $
+#	$NetBSD: bsd.files.mk,v 1.42 2011/09/10 16:57:35 apb Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
@@ -118,9 +118,7 @@ ${_TL}: ${_SL}
 
 realall: ${BUILDSYMLINKS.t}
 
-cleandir: cleanbuildsymlinks
-cleanbuildsymlinks: .PHONY
-	rm -f ${BUILDSYMLINKS.t}
+CLEANDIRFILES+= ${BUILDSYMLINKS.t}
 
 .endif								# }
 
@@ -149,13 +147,12 @@ CLEANUUDECODE_FILES=${UUDECODE_FILES} ${UUDECODE_FILES:=.tmp}
 CLEANUUDECODE_FILES+=${UUDECODE_FILES_RENAME_${i}}
 .endfor
 
-clean: cleanuudecodefiles
-cleanuudecodefiles: .PHONY
-	rm -f ${CLEANUUDECODE_FILES}
+CLEANFILES+= ${CLEANUUDECODE_FILES}
 .endif								# }
 
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
 .include <bsd.sys.mk>
+.include <bsd.clean.mk>
 
 .endif	# !defined(_BSD_FILES_MK_)
