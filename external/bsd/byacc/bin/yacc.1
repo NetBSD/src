@@ -1,4 +1,4 @@
-.\"	$NetBSD: yacc.1,v 1.3 2010/12/24 23:28:14 christos Exp $
+.\"	$NetBSD: yacc.1,v 1.4 2011/09/10 21:38:59 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -31,9 +31,10 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)yacc.1	5.7 (Berkeley) 7/30/91
-.\"	$NetBSD: yacc.1,v 1.3 2010/12/24 23:28:14 christos Exp $
+.\"	from: Id: yacc.1,v 1.12 2011/09/08 00:40:44 tom Exp
+.\"	$NetBSD: yacc.1,v 1.4 2011/09/10 21:38:59 christos Exp $
 .\"
-.Dd December 23, 2010
+.Dd September 7, 2011
 .Dt YACC 1
 .Os
 .Sh NAME
@@ -43,7 +44,7 @@
 parser generator
 .Sh SYNOPSIS
 .Nm
-.Op Fl dglPrtVv
+.Op Fl dgilPrtVv
 .Op Fl b Ar prefix
 .Op Fl o Ar outputfile
 .Op Fl p Ar symbol_prefix
@@ -79,6 +80,7 @@ The
 option causes the header file
 .Pa y.tab.h
 to be written.
+It contains #define's for the token identifiers.
 .It Fl g
 The
 .Fl g
@@ -88,6 +90,26 @@ parser to be written to the file
 .Pa y.dot
 in graphviz format, ready to be processed by
 .Xr dot 1 .
+.It Fl i
+The 
+.Fl i
+option causes a supplementary header file
+.Pa y.tab.i
+to be written.
+It contains extern declarations
+and supplementary #define's as needed to map the conventional
+.Nm
+yy-prefixed names to whatever the
+.Fl p
+option may specify.
+The code file, e.g., 
+.Pa y.tab.c
+is modified to #include this file
+as well as the
+.Pa y.tab.h
+file, enforcing consistent usage of the symbols defined in those files.
+The supplementary header file makes it simpler to separate compilation
+of lex- and yacc-files.
 .It Fl l
 If the
 .Fl l
