@@ -1,4 +1,4 @@
-/*	$NetBSD: synapticsvar.h,v 1.4 2005/12/11 12:23:22 christos Exp $	*/
+/*	$NetBSD: synapticsvar.h,v 1.5 2011/09/10 18:38:20 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -39,14 +39,13 @@
 #define _DEV_PCKBCPORT_SYNAPTICSVAR_H_
 
 struct synaptics_softc {
-	struct proc *syn_thread;
 	int	caps;
 
 	int	flags;
 #define	SYN_FLAG_HAS_MIDDLE_BUTTON	(1 << 0)
 #define	SYN_FLAG_HAS_BUTTONS_4_5	(1 << 1)
 #define	SYN_FLAG_HAS_UP_DOWN_BUTTONS	(1 << 2)
-#define	SYN_FLAG_HAS_PASSTHROUGH	(1 << 3)	/* Not yet supported */
+#define	SYN_FLAG_HAS_PASSTHROUGH	(1 << 3)
 #define	SYN_FLAG_HAS_PALM_DETECT	(1 << 4)
 #define	SYN_FLAG_HAS_MULTI_FINGER	(1 << 5)
 
