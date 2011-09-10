@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.41 2011/09/09 22:51:44 christos Exp $ */
+/*  $NetBSD: ops.c,v 1.42 2011/09/10 10:06:10 tron Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -2835,7 +2835,7 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 	vap = puffs_pn_getvap((struct puffs_node *)opc);
 	pm = NULL;
 
-	if (offset + *resid > vap->va_size)
+	if ((u_quad_t)offset + *resid > vap->va_size)
 		DWARNX("%s %p read %lld@%zu beyond EOF %" PRIu64 "\n",
 		       __func__, (void *)opc, (long long)offset,
 		       *resid, vap->va_size);
@@ -2942,7 +2942,7 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	/* 
 	 * Serialize size access, see comment in perfuse_node_setattr().
 	 */
-	if (offset + *resid > vap->va_size) {
+	if ((u_quad_t)offset + *resid > vap->va_size) {
 		while (pnd->pnd_flags & PND_INRESIZE)
 			requeue_request(pu, opc, PCQ_RESIZE);
 		pnd->pnd_flags |= PND_INRESIZE;
