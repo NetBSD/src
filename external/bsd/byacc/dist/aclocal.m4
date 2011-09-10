@@ -1,4 +1,4 @@
-dnl $Id: aclocal.m4,v 1.1.1.3 2011/09/10 21:19:06 christos Exp $
+dnl Id: aclocal.m4,v 1.18 2011/09/05 23:45:06 tom Exp
 dnl Macros for byacc configure script (Thomas E. Dickey)
 dnl ---------------------------------------------------------------------------
 dnl Copyright 2004-2009,2010 Thomas E. Dickey
