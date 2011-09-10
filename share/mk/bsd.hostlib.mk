@@ -1,10 +1,9 @@
-#	$NetBSD: bsd.hostlib.mk,v 1.15 2011/08/05 09:36:28 plunky Exp $
+#	$NetBSD: bsd.hostlib.mk,v 1.16 2011/09/10 16:57:35 apb Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
 
 ##### Basic targets
-clean:		cleanlib
 
 ##### Default values
 CFLAGS+=	${COPTS}
@@ -44,9 +43,7 @@ lib${HOSTLIB}.a: ${OBJS} ${DPADD}
 
 realall: lib${HOSTLIB}.a
 
-cleanlib: .PHONY
-	rm -f a.out [Ee]rrs mklog core *.core \
-	    lib${HOSTLIB}.a ${OBJS} ${CLEANFILES}
+CLEANFILES+= a.out [Ee]rrs mklog core *.core lib${HOSTLIB}.a ${OBJS}
 
 beforedepend:
 CFLAGS:=	${HOST_CFLAGS}
@@ -55,5 +52,6 @@ CPPFLAGS:=	${HOST_CPPFLAGS}
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
 .include <bsd.dep.mk>
+.include <bsd.clean.mk>
 
 ${TARGETS}:	# ensure existence
