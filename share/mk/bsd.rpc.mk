@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.rpc.mk,v 1.11 2004/05/12 16:38:01 christos Exp $
+#	$NetBSD: bsd.rpc.mk,v 1.12 2011/09/10 16:57:35 apb Exp $
 
 .include <bsd.init.mk>
 
@@ -72,3 +72,4 @@ CLEANFILES+=	${RPC_CLNTFILES}
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
 .include <bsd.sys.mk>
+.include <bsd.clean.mk>

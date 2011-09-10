@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.108 2011/06/30 18:13:51 matt Exp $
+#	$NetBSD: bsd.man.mk,v 1.109 2011/09/10 16:57:35 apb Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -245,21 +245,15 @@ htmllinks::	${_t}
 ##### Clean rules
 .undef _F
 
-cleandir: cleanman
-.if !empty(CLEANFILES)
-	rm -f ${CLEANFILES}
-.endif
-
-cleanman: .PHONY
 .if !empty(MAN) && (${MKMAN} != "no")
 .if (${MKCATPAGES} != "no")
-	rm -f ${CATPAGES}
+CLEANDIRFILES+= ${CATPAGES}
 .endif
 .if !empty(MANSUFFIX)
-	rm -f ${MANPAGES} ${CATPAGES:S/${MANSUFFIX}$//}
+CLEANDIRFILES+= ${MANPAGES} ${CATPAGES:S/${MANSUFFIX}$//}
 .endif
 .if ${MKHTML} != "no"
-	rm -f ${HTMLPAGES}
+CLEANDIRFILES+= ${HTMLPAGES}
 .endif
 .endif
 # (XXX ${CATPAGES:S...} cleans up old .catN files where .catN.gz now used)
@@ -273,5 +267,6 @@ lintmanpages: ${MANPAGES}
 .include <bsd.obj.mk>
 .include <bsd.files.mk>
 .include <bsd.sys.mk>
+.include <bsd.clean.mk>
 
 ${TARGETS} catinstall maninstall htmlinstall: # ensure existence

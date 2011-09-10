@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.315 2011/08/27 18:35:20 joerg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.316 2011/09/10 16:57:35 apb Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -37,7 +37,6 @@ MKPROFILE:=	no
 ##### Basic targets
 .PHONY:		checkver libinstall
 realinstall:	checkver libinstall
-clean:		cleanlib
 
 ##### LIB specific flags.
 # XXX: This is needed for programs that link with .a libraries
@@ -596,14 +595,13 @@ lint: ${LOBJS}
 	${LINT} ${LINTFLAGS} ${LOBJS}
 .endif
 
-cleanlib: .PHONY
-	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
-	rm -f lib${LIB}.a ${STOBJS}
-	rm -f lib${LIB}_p.a ${POBJS}
-	rm -f lib${LIB}_g.a ${GOBJS}
-	rm -f lib${LIB}_pic.a lib${LIB}.so.* lib${LIB}.so ${_LIB.debug} ${SOBJS}
-	rm -f ${STOBJS:=.tmp} ${POBJS:=.tmp} ${SOBJS:=.tmp} ${GOBJS:=.tmp}
-	rm -f llib-l${LIB}.ln ${LOBJS}
+CLEANFILES+= a.out [Ee]rrs mklog core *.core
+CLEANFILES+= lib${LIB}.a ${STOBJS}
+CLEANFILES+= lib${LIB}_p.a ${POBJS}
+CLEANFILES+= lib${LIB}_g.a ${GOBJS}
+CLEANFILES+= lib${LIB}_pic.a lib${LIB}.so.* lib${LIB}.so ${_LIB.debug} ${SOBJS}
+CLEANFILES+= ${STOBJS:=.tmp} ${POBJS:=.tmp} ${SOBJS:=.tmp} ${GOBJS:=.tmp}
+CLEANFILES+= llib-l${LIB}.ln ${LOBJS}
 
 
 .if !target(libinstall)							# {
@@ -777,5 +775,6 @@ LINKSMODE?= ${LIBMODE}
 .include <bsd.links.mk>
 .include <bsd.dep.mk>
 .include <bsd.clang-analyze.mk>
+.include <bsd.clean.mk>
 
 ${TARGETS}:	# ensure existence
