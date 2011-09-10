@@ -1,3 +1,5 @@
+/*	$NetBSD: calc1.tab.h,v 1.1.1.3 2011/09/10 21:22:10 christos Exp $	*/
+
 #define DREG 257
 #define VREG 258
 #define CONST 259
