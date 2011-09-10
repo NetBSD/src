@@ -1,10 +1,10 @@
-/*	$NetBSD: reader.c,v 1.6 2010/12/25 23:43:30 christos Exp $	*/
-/* Id: reader.c,v 1.31 2010/11/26 12:30:40 tom Exp */
+/*	$NetBSD: reader.c,v 1.7 2011/09/10 21:29:04 christos Exp $	*/
+/* Id: reader.c,v 1.33 2011/09/06 22:56:53 tom Exp */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reader.c,v 1.6 2010/12/25 23:43:30 christos Exp $");
+__RCSID("$NetBSD: reader.c,v 1.7 2011/09/10 21:29:04 christos Exp $");
 
 /*  The line size must be a positive integer.  One hundred was chosen	*/
 /*  because few lines in Yacc input grammars exceed 100 characters.	*/
@@ -694,6 +694,8 @@ copy_param(int k)
 
     for (i = 0; (c = *cptr++) != '}'; i++)
     {
+	if (c == '\0')
+	    missing_brace();
 	if (c == EOF)
 	    unexpected_EOF();
 	buf[i] = (char)c;
@@ -2202,7 +2204,7 @@ print_grammar(void)
 void
 reader(void)
 {
-    write_section(banner);
+    write_section(code_file, banner);
     create_symbol_table();
     read_declarations();
     read_grammar();

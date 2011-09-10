@@ -1,14 +1,14 @@
-.\"	$NetBSD: yacc.1,v 1.3 2010/12/24 02:58:21 christos Exp $
+.\"	$NetBSD: yacc.1,v 1.4 2011/09/10 21:29:04 christos Exp $
 .\"
-.\" Id: yacc.1,v 1.11 2010/11/26 16:27:11 tom Exp
+.\" Id: yacc.1,v 1.12 2011/09/08 00:40:44 tom Exp
 .\"
 .\" .TH YACC 1 "July\ 15,\ 1990"
 .\" .UC 6
-.TH YACC 1 "November 26, 2010" "Berkeley Yacc" "User Commands"
+.TH YACC 1 "September 7, 2011" "Berkeley Yacc" "User Commands"
 .SH NAME
 Yacc \- an LALR(1) parser generator
 .SH SYNOPSIS
-.B yacc [ -dglrtv ] [ \-b
+.B yacc [ -dgilrtv ] [ \-b
 .I file_prefix
 .B ] [ \-p
 .I symbol_prefix
@@ -38,16 +38,31 @@ The default prefix is the character
 .TP
 .B \-d
 The \fB-d\fR option causes the header file
-.IR y.tab.h
+.BR y.tab.h
 to be written.
+It contains #define's for the token identifiers.
 .TP
 .B \-g
 The
 .B \-g
 option causes a graphical description of the generated LALR(1) parser to
 be written to the file
-.IR y.dot
+.BR y.dot
 in graphviz format, ready to be processed by dot(1).
+.TP
+.B \-i
+The \fB-i\fR option causes a supplementary header file
+.BR y.tab.i
+to be written.
+It contains extern declarations
+and supplementary #define's as needed to map the conventional \fIyacc\fP
+\fByy\fP-prefixed names to whatever the \fB-p\fP option may specify.
+The code file, e.g., \fBy.tab.c\fP is modified to #include this file
+as well as the \fBy.tab.h\fP file, enforcing consistent usage of the
+symbols defined in those files.
+.IP
+The supplementary header file makes it simpler to separate compilation
+of lex- and yacc-files.
 .TP
 .B \-l
 If the
@@ -75,7 +90,7 @@ option changes the prefix prepended to yacc-generated symbols to
 the string denoted by
 .IR symbol_prefix.
 The default prefix is the string
-.IR yy.
+.BR yy.
 .TP
 .B \-P
 create a reentrant parser, e.g., "%pure-parser".
