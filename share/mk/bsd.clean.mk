@@ -1,4 +1,4 @@
-# $NetBSD: bsd.clean.mk,v 1.1 2011/09/10 16:57:35 apb Exp $
+# $NetBSD: bsd.clean.mk,v 1.2 2011/09/10 19:25:10 apb Exp $
 
 # <bsd.clean.mk>
 #
@@ -56,5 +56,11 @@ __cleanuse: .USE
 	        false ; \
 	    fi }
 .endfor
+
+# Don't automatically load ".depend" files during "make clean"
+# or "make cleandir".
+.if make(clean) || make(cleandir)
+.MAKE.DEPENDFILE := .depend.no-such-file
+.endif
 
 .endif	# !defined(_BSD_CLEAN_MK)
