@@ -1,5 +1,3 @@
-/*	$NetBSD: pure_calc.tab.c,v 1.1.1.1 2010/12/23 23:36:28 christos Exp $	*/
-
 #ifndef lint
 static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 #endif
@@ -136,7 +134,6 @@ typedef int YYSTYPE;
 #define YYERROR_CALL(msg) yyerror(msg)
 
 extern int YYPARSE_DECL();
-extern int YYLEX_DECL();
 
 #define DIGIT 257
 #define LETTER 258
@@ -263,6 +260,10 @@ static const char *yyrule[] = {
 
 };
 #endif
+
+int      yydebug;
+int      yynerrs;
+
 /* define the initial stack-sizes */
 #ifdef YYSTACKSIZE
 #undef YYMAXDEPTH
@@ -278,9 +279,6 @@ static const char *yyrule[] = {
 
 #define YYINITSTACKSIZE 500
 
-int      yydebug;
-int      yynerrs;
-
 typedef struct {
     unsigned stacksize;
     short    *s_base;
@@ -291,6 +289,11 @@ typedef struct {
 } YYSTACKDATA;
 #line 63 "pure_calc.y"
  /* start of programs */
+
+#ifdef YYBYACC
+extern int YYLEX_DECL();
+static void YYERROR_DECL();
+#endif
 
 int
 main (void)
@@ -331,7 +334,7 @@ yylex(YYSTYPE *value)
     }
     return( c );
 }
-#line 333 "pure_calc.tab.c"
+#line 338 "pure_calc.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>		/* needed for printf */
@@ -356,18 +359,14 @@ static int yygrowstack(YYSTACKDATA *data)
         newsize = YYMAXDEPTH;
 
     i = data->s_mark - data->s_base;
-    newss = (data->s_base != 0)
-          ? (short *)realloc(data->s_base, newsize * sizeof(*newss))
-          : (short *)malloc(newsize * sizeof(*newss));
+    newss = (short *)realloc(data->s_base, newsize * sizeof(*newss));
     if (newss == 0)
         return -1;
 
     data->s_base = newss;
     data->s_mark = newss + i;
 
-    newvs = (data->l_base != 0)
-          ? (YYSTYPE *)realloc(data->l_base, newsize * sizeof(*newvs))
-          : (YYSTYPE *)malloc(newsize * sizeof(*newvs));
+    newvs = (YYSTYPE *)realloc(data->l_base, newsize * sizeof(*newvs));
     if (newvs == 0)
         return -1;
 
@@ -608,7 +607,7 @@ case 18:
 #line 60 "pure_calc.y"
 	{  yyval = base * yystack.l_mark[-1] + yystack.l_mark[0]; }
 break;
-#line 610 "pure_calc.tab.c"
+#line 611 "pure_calc.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;
