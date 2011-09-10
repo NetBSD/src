@@ -1,3 +1,5 @@
+/*	$NetBSD: pure_error.tab.c,v 1.1.1.3 2011/09/10 21:22:04 christos Exp $	*/
+
 #ifndef lint
 static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 #endif
