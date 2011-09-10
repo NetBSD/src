@@ -559,7 +559,8 @@ login method </td> </tr>
 address </td> </tr>
 
 <tr> <td> {client_connections} </td> <td> CONNECT </td> <td>
-Connection concurrency for this client </td> </tr>
+Connection concurrency for this client (zero if the client is
+excluded from all smtpd_client_* limits). </td> </tr>
 
 <tr> <td> {client_name} </td> <td> Always </td> <td> Client hostname
 <br> When address &rarr; name lookup or name &rarr; address
