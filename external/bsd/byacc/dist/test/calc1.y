@@ -1,5 +1,3 @@
-/*	$NetBSD: calc1.y,v 1.1.1.1 2010/12/23 23:36:29 christos Exp $	*/
-
 %{
 
 /* http://dinosaur.compilertools.net/yacc/index.html */
@@ -17,6 +15,7 @@ INTERVAL;
 
 INTERVAL vmul(double, double, INTERVAL);
 INTERVAL vdiv(double, double, INTERVAL);
+
 int dcheck(INTERVAL);
 
 double dreg[26];
@@ -172,6 +171,11 @@ vexp	: dexp
 	;
 
 %%	/* beginning of subroutines section */
+
+#ifdef YYBYACC
+extern int YYLEX_DECL();
+static void YYERROR_DECL();
+#endif
 
 #define BSZ 50			/* buffer size for floating point numbers */
 
