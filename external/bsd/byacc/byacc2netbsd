@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: byacc2netbsd,v 1.2 2011/09/10 21:18:00 christos Exp $
+#	$NetBSD: byacc2netbsd,v 1.3 2011/09/10 21:32:25 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,6 +41,7 @@
 #	$ run ./configure
 #	$ run make
 #	check the config file and copy it to /usr/src/external/bsd/byacc/include
+#	remove the version from SYSTEM_NAME
 #	check the manual page against our copy if there are new options and
 #	update
 
