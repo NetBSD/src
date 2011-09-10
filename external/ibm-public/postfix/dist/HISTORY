@@ -16634,3 +16634,17 @@ Apologies for any names omitted.
 	IP queries" even if the name has an alphanumerical prefix.
 	We play safe, and skip both RHSBL and RHSWL queries for
 	names ending in a numerical suffix.  File: smtpd/smtpd_check.c.
+
+20110811
+
+	Workaround: report a {client_connections} Milter macro value
+	of zero instead of garbage, when the remote SMTP client is
+	not subject to any smtpd_client_* limits. Problem reported
+	by Christian Roessner. File: smtpd/smtpd_state.c,
+	proto/MILTER_README.html.
+
+20110831
+
+	Bugfix: allow for Milters that send an SMTP server reply
+	without RFC 3463 enhanced status code. Reported by Vladimir
+	Vassiliev.  File: milter/milter8.c.
