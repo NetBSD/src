@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.tab.h,v 1.2 2009/10/29 00:56:20 christos Exp $	*/
+/*	$NetBSD: ftp.tab.h,v 1.3 2011/09/10 21:29:04 christos Exp $	*/
 
 #define A 257
 #define B 258

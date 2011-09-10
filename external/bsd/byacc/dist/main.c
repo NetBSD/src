@@ -1,17 +1,45 @@
-/*	$NetBSD: main.c,v 1.6 2010/12/25 23:43:30 christos Exp $	*/
-/* Id: main.c,v 1.30 2010/11/24 15:13:39 tom Exp */
+/*	$NetBSD: main.c,v 1.7 2011/09/10 21:29:04 christos Exp $	*/
+/* Id: main.c,v 1.36 2011/09/06 22:44:45 tom Exp */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.6 2010/12/25 23:43:30 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2011/09/10 21:29:04 christos Exp $");
 
 #include <signal.h>
 #include <unistd.h>		/* for _exit() */
 
 
+#if defined(HAVE_ATEXIT)
+# ifdef HAVE_MKSTEMP
+#  define USE_MKSTEMP 1
+# elif defined(HAVE_FCNTL_H)
+#  define USE_MKSTEMP 1
+#  include <fcntl.h>		/* for open(), O_EXCL, etc. */
+# else
+#  define USE_MKSTEMP 0
+# endif
+#else
+# define USE_MKSTEMP 0
+#endif
+
+#if USE_MKSTEMP
+#include <sys/types.h>
+#include <sys/stat.h>
+
+typedef struct _my_tmpfiles
+{
+    struct _my_tmpfiles *next;
+    char *name;
+}
+MY_TMPFILES;
+
+static MY_TMPFILES *my_tmpfiles;
+#endif /* USE_MKSTEMP */
+
 char dflag;
 char gflag;
+char iflag;
 char lflag;
 static char oflag;
 char rflag;
@@ -32,7 +60,9 @@ static char *file_prefix = default_file_prefix;
 
 char *code_file_name;
 char *input_file_name = empty_string;
-static char *defines_file_name;
+char *defines_file_name;
+char *externs_file_name;
+
 static char *graph_file_name;
 static char *output_file_name;
 static char *verbose_file_name;
@@ -41,6 +71,7 @@ FILE *action_file;	/*  a temp file, used to save actions associated    */
 			/*  with rules until the parser is written          */
 FILE *code_file;	/*  y.code.c (used when the -r option is specified) */
 FILE *defines_file;	/*  y.tab.h                                         */
+FILE *externs_file;	/*  y.tab.i                                         */
 FILE *input_file;	/*  the input file                                  */
 FILE *output_file;	/*  y.tab.c                                         */
 FILE *text_file;	/*  a temp file, used to save text until all        */
@@ -111,6 +142,9 @@ done(int k)
     if (dflag)
 	DO_FREE(defines_file_name);
 
+    if (iflag)
+	DO_FREE(externs_file_name);
+
     if (oflag)
 	DO_FREE(output_file_name);
 
@@ -166,6 +200,7 @@ usage(void)
 	,"Options:"
 	,"  -b file_prefix        set filename prefix (default \"y.\")"
 	,"  -d                    write definitions (y.tab.h)"
+	,"  -i                    write interface (y.tab.i)"
 	,"  -g                    write a graphical description"
 	,"  -l                    suppress #line directives"
 	,"  -o output_file        (default \"y.tab.c\")"
@@ -197,6 +232,10 @@ setflag(int ch)
 
     case 'g':
 	gflag = 1;
+	break;
+
+    case 'i':
+	iflag = 1;
 	break;
 
     case 'l':
@@ -314,10 +353,10 @@ getargs(int argc, char *argv[])
     input_file_name = argv[i];
 }
 
-char *
+void *
 allocate(size_t n)
 {
-    char *p;
+    void *p;
 
     p = NULL;
     if (n)
@@ -339,17 +378,22 @@ create_file_names(void)
 {
     size_t len;
     const char *defines_suffix;
+    const char *externs_suffix;
     char *prefix;
 
     prefix = NULL;
     defines_suffix = DEFINES_SUFFIX;
+    externs_suffix = EXTERNS_SUFFIX;
 
     /* compute the file_prefix from the user provided output_file_name */
     if (output_file_name != 0)
     {
 	if (!(prefix = strstr(output_file_name, ".tab.c"))
 	    && (prefix = strstr(output_file_name, ".c")))
+	{
 	    defines_suffix = ".h";
+	    externs_suffix = ".i";
+	}
     }
 
     if (prefix != NULL)
@@ -410,6 +454,11 @@ create_file_names(void)
 	}
     }
 
+    if (iflag)
+    {
+	CREATE_FILE_NAME(externs_file_name, externs_suffix);
+    }
+
     if (vflag)
     {
 	CREATE_FILE_NAME(verbose_file_name, VERBOSE_SUFFIX);
@@ -426,6 +475,134 @@ create_file_names(void)
     }
 }
 
+#if USE_MKSTEMP
+static void
+close_tmpfiles(void)
+{
+    while (my_tmpfiles != 0)
+    {
+	MY_TMPFILES *next = my_tmpfiles->next;
+
+	chmod(my_tmpfiles->name, 0644);
+	unlink(my_tmpfiles->name);
+
+	free(my_tmpfiles->name);
+	free(my_tmpfiles);
+
+	my_tmpfiles = next;
+    }
+}
+
+#ifndef HAVE_MKSTEMP
+static int
+my_mkstemp(char *temp)
+{
+    int fd;
+    char *dname;
+    char *fname;
+    char *name;
+
+    /*
+     * Split-up to use tempnam, rather than tmpnam; the latter (like
+     * mkstemp) is unusable on Windows.
+     */
+    if ((fname = strrchr(temp, '/')) != 0)
+    {
+	dname = strdup(temp);
+	dname[++fname - temp] = '\0';
+    }
+    else
+    {
+	dname = 0;
+	fname = temp;
+    }
+    if ((name = tempnam(dname, fname)) != 0)
+    {
+	fd = open(name, O_CREAT | O_EXCL | O_RDWR);
+	strcpy(temp, name);
+    }
+    else
+    {
+	fd = -1;
+    }
+
+    if (dname != 0)
+	free(dname);
+
+    return fd;
+}
+#define mkstemp(s) my_mkstemp(s)
+#endif
+
+#endif
+
+/*
+ * tmpfile() should be adequate, except that it may require special privileges
+ * to use, e.g., MinGW and Windows 7 where it tries to use the root directory.
+ */
+static FILE *
+open_tmpfile(const char *label)
+{
+    FILE *result;
+#if USE_MKSTEMP
+    int fd;
+    const char *tmpdir;
+    char *name;
+    const char *mark;
+
+    if ((tmpdir = getenv("TMPDIR")) == 0 || access(tmpdir, W_OK) != 0)
+    {
+#ifdef P_tmpdir
+	tmpdir = P_tmpdir;
+#else
+	tmpdir = "/tmp";
+#endif
+	if (access(tmpdir, W_OK) != 0)
+	    tmpdir = ".";
+    }
+
+    name = malloc(strlen(tmpdir) + 10 + strlen(label));
+
+    result = 0;
+    if (name != 0)
+    {
+	if ((mark = strrchr(label, '_')) == 0)
+	    mark = label + strlen(label);
+
+	sprintf(name, "%s/%.*sXXXXXX", tmpdir, (int)(mark - label), label);
+	fd = mkstemp(name);
+	if (fd >= 0)
+	{
+	    result = fdopen(fd, "w+");
+	    if (result != 0)
+	    {
+		MY_TMPFILES *item;
+
+		if (my_tmpfiles == 0)
+		{
+		    atexit(close_tmpfiles);
+		}
+
+		item = NEW(MY_TMPFILES);
+		NO_SPACE(item);
+
+		item->name = name;
+		NO_SPACE(item->name);
+
+		item->next = my_tmpfiles;
+		my_tmpfiles = item;
+	    }
+	}
+    }
+#else
+    result = tmpfile();
+#endif
+
+    if (result == 0)
+	open_error(label);
+    return result;
+}
+
 static void
 open_files(void)
 {
@@ -438,13 +615,8 @@ open_files(void)
 	    open_error(input_file_name);
     }
 
-    action_file = tmpfile();
-    if (action_file == 0)
-	open_error("action_file");
-
-    text_file = tmpfile();
-    if (text_file == 0)
-	open_error("text_file");
+    action_file = open_tmpfile("action_file");
+    text_file = open_tmpfile("text_file");
 
     if (vflag)
     {
@@ -475,9 +647,14 @@ open_files(void)
 	defines_file = fopen(defines_file_name, "w");
 	if (defines_file == 0)
 	    open_error(defines_file_name);
-	union_file = tmpfile();
-	if (union_file == 0)
-	    open_error("union_file");
+	union_file = open_tmpfile("union_file");
+    }
+
+    if (iflag)
+    {
+	externs_file = fopen(externs_file_name, "w");
+	if (externs_file == 0)
+	    open_error(externs_file_name);
     }
 
     output_file = fopen(output_file_name, "w");
