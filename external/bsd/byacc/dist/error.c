@@ -1,6 +1,4 @@
-/*	$NetBSD: error.c,v 1.1.1.2 2010/12/23 23:36:25 christos Exp $	*/
-
-/* Id: error.c,v 1.8 2010/11/24 15:10:20 tom Exp */
+/* $Id: error.c,v 1.1.1.3 2011/09/10 21:18:59 christos Exp $ */
 
 /* routines for printing error messages  */
 
@@ -25,6 +23,14 @@ open_error(const char *filename)
 {
     fprintf(stderr, "%s: f - cannot open \"%s\"\n", myname, filename);
     done(2);
+}
+
+void
+missing_brace(void)
+{
+    fprintf(stderr, "%s: e - line %d of \"%s\", missing '}'\n",
+	    myname, lineno, input_file_name);
+    done(1);
 }
 
 void

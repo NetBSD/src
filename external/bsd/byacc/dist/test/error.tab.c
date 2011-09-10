@@ -1,5 +1,3 @@
-/*	$NetBSD: error.tab.c,v 1.1.1.2 2010/12/23 23:36:28 christos Exp $	*/
-
 #ifndef lint
 static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 #endif
@@ -128,7 +126,6 @@ typedef int YYSTYPE;
 #define YYERROR_CALL(msg) yyerror(msg)
 
 extern int YYPARSE_DECL();
-extern int YYLEX_DECL();
 
 #define YYERRCODE 256
 static const short error_lhs[] = {                       -1,
@@ -171,6 +168,15 @@ static const char *yyrule[] = {
 
 };
 #endif
+
+int      yydebug;
+int      yynerrs;
+
+int      yyerrflag;
+int      yychar;
+YYSTYPE  yyval;
+YYSTYPE  yylval;
+
 /* define the initial stack-sizes */
 #ifdef YYSTACKSIZE
 #undef YYMAXDEPTH
@@ -186,9 +192,6 @@ static const char *yyrule[] = {
 
 #define YYINITSTACKSIZE 500
 
-int      yydebug;
-int      yynerrs;
-
 typedef struct {
     unsigned stacksize;
     short    *s_base;
@@ -197,16 +200,16 @@ typedef struct {
     YYSTYPE  *l_base;
     YYSTYPE  *l_mark;
 } YYSTACKDATA;
-int      yyerrflag;
-int      yychar;
-YYSTYPE  yyval;
-YYSTYPE  yylval;
-
 /* variables for the parser stack */
 static YYSTACKDATA yystack;
 #line 4 "error.y"
 
 #include <stdio.h>
+
+#ifdef YYBYACC
+extern int YYLEX_DECL();
+static void YYERROR_DECL();
+#endif
 
 int
 main(void)
@@ -226,7 +229,7 @@ yyerror(const char* s)
 {
     printf("%s\n", s);
 }
-#line 228 "error.tab.c"
+#line 233 "error.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>		/* needed for printf */
@@ -251,18 +254,14 @@ static int yygrowstack(YYSTACKDATA *data)
         newsize = YYMAXDEPTH;
 
     i = data->s_mark - data->s_base;
-    newss = (data->s_base != 0)
-          ? (short *)realloc(data->s_base, newsize * sizeof(*newss))
-          : (short *)malloc(newsize * sizeof(*newss));
+    newss = (short *)realloc(data->s_base, newsize * sizeof(*newss));
     if (newss == 0)
         return -1;
 
     data->s_base = newss;
     data->s_mark = newss + i;
 
-    newvs = (data->l_base != 0)
-          ? (YYSTYPE *)realloc(data->l_base, newsize * sizeof(*newvs))
-          : (YYSTYPE *)malloc(newsize * sizeof(*newvs));
+    newvs = (YYSTYPE *)realloc(data->l_base, newsize * sizeof(*newvs));
     if (newvs == 0)
         return -1;
 

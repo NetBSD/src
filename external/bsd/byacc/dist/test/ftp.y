@@ -1,5 +1,3 @@
-/*	$NetBSD: ftp.y,v 1.1.1.2 2010/12/23 23:36:28 christos Exp $	*/
-
 /*
  * Copyright (c) 1985, 1988 Regents of the University of California.
  * All rights reserved.
@@ -255,7 +253,7 @@ cmd:		USER SP username CRLF
 		}
 	|	NLST check_login SP STRING CRLF
 		= {
-			if ($2 && $4 != 0) 
+			if ($2 && $4 != 0)
 				send_file_list((char *) $4);
 			if ($4 != 0)
 				free((char *) $4);
@@ -489,8 +487,9 @@ cmd:		USER SP username CRLF
 					register struct tm *t;
 					t = gmtime(&stbuf.st_mtime);
 					reply(213,
-					    "19%02d%02d%02d%02d%02d%02d",
-					    t->tm_year, t->tm_mon+1, t->tm_mday,
+					    "%04d%02d%02d%02d%02d%02d",
+					    1900 + t->tm_year,
+					    t->tm_mon+1, t->tm_mday,
 					    t->tm_hour, t->tm_min, t->tm_sec);
 				}
 			}
@@ -517,7 +516,7 @@ rcmd:		RNFR check_login SP pathname CRLF
 			}
 		}
 	;
-		
+
 username:	STRING
 	;
 
@@ -531,7 +530,7 @@ password:	/* empty */
 byte_size:	NUMBER
 	;
 
-host_port:	NUMBER COMMA NUMBER COMMA NUMBER COMMA NUMBER COMMA 
+host_port:	NUMBER COMMA NUMBER COMMA NUMBER COMMA NUMBER COMMA
 		NUMBER COMMA NUMBER
 		= {
 			register char *a, *p;
@@ -687,6 +686,11 @@ check_login:	/* empty */
 	;
 
 %%
+
+#ifdef YYBYACC
+extern int YYLEX_DECL();
+static void YYERROR_DECL();
+#endif
 
 extern jmp_buf errcatch;
 
@@ -1177,7 +1181,11 @@ sizecmd(char *filename)
 		    (stbuf.st_mode&S_IFMT) != S_IFREG)
 			reply(550, "%s: not a plain file.", filename);
 		else
+#ifdef HAVE_LONG_LONG
+			reply(213, "%llu", (long long) stbuf.st_size);
+#else
 			reply(213, "%lu", stbuf.st_size);
+#endif
 		break;}
 	case TYPE_A: {
 		FILE *fin;

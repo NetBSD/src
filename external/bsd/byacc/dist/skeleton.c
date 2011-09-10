@@ -1,6 +1,4 @@
-/*	$NetBSD: skeleton.c,v 1.1.1.2 2010/12/23 23:36:26 christos Exp $	*/
-
-/* Id: skeleton.c,v 1.27 2010/11/26 17:24:00 tom Exp */
+/* $Id: skeleton.c,v 1.1.1.3 2011/09/10 21:19:03 christos Exp $ */
 
 #include "defs.h"
 
@@ -16,7 +14,7 @@
 /*  the body either are not useful outside of semantic actions or	*/
 /*  are conditional.							*/
 
-const char *banner[] =
+const char *const banner[] =
 {
     "#ifndef lint",
     "static const char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
@@ -37,15 +35,14 @@ const char *banner[] =
     0
 };
 
-const char *xdecls[] =
+const char *const xdecls[] =
 {
-    "extern int YYPARSE_DECL();",
-    "extern int YYLEX_DECL();",
     "",
+    "extern int YYPARSE_DECL();",
     0
 };
 
-const char *tables[] =
+const char *const tables[] =
 {
     "extern short yylhs[];",
     "extern short yylen[];",
@@ -64,8 +61,27 @@ const char *tables[] =
     0
 };
 
-const char *hdr_defs[] =
+const char *const global_vars[] =
 {
+    "",
+    "int      yydebug;",
+    "int      yynerrs;",
+    0
+};
+
+const char *const impure_vars[] =
+{
+    "",
+    "int      yyerrflag;",
+    "int      yychar;",
+    "YYSTYPE  yyval;",
+    "YYSTYPE  yylval;",
+    0
+};
+
+const char *const hdr_defs[] =
+{
+    "",
     "/* define the initial stack-sizes */",
     "#ifdef YYSTACKSIZE",
     "#undef YYMAXDEPTH",
@@ -81,9 +97,6 @@ const char *hdr_defs[] =
     "",
     "#define YYINITSTACKSIZE 500",
     "",
-    "int      yydebug;",
-    "int      yynerrs;",
-    "",
     "typedef struct {",
     "    unsigned stacksize;",
     "    short    *s_base;",
@@ -95,19 +108,14 @@ const char *hdr_defs[] =
     0
 };
 
-const char *hdr_vars[] =
+const char *const hdr_vars[] =
 {
-    "int      yyerrflag;",
-    "int      yychar;",
-    "YYSTYPE  yyval;",
-    "YYSTYPE  yylval;",
-    "",
     "/* variables for the parser stack */",
     "static YYSTACKDATA yystack;",
     0
 };
 
-const char *body_vars[] =
+const char *const body_vars[] =
 {
     "    int      yyerrflag;",
     "    int      yychar;",
@@ -119,7 +127,7 @@ const char *body_vars[] =
     0
 };
 
-const char *body_1[] =
+const char *const body_1[] =
 {
     "",
     "#if YYDEBUG",
@@ -145,18 +153,14 @@ const char *body_1[] =
     "        newsize = YYMAXDEPTH;",
     "",
     "    i = data->s_mark - data->s_base;",
-    "    newss = (data->s_base != 0)",
-    "          ? (short *)realloc(data->s_base, newsize * sizeof(*newss))",
-    "          : (short *)malloc(newsize * sizeof(*newss));",
+    "    newss = (short *)realloc(data->s_base, newsize * sizeof(*newss));",
     "    if (newss == 0)",
     "        return -1;",
     "",
     "    data->s_base = newss;",
     "    data->s_mark = newss + i;",
     "",
-    "    newvs = (data->l_base != 0)",
-    "          ? (YYSTYPE *)realloc(data->l_base, newsize * sizeof(*newvs))",
-    "          : (YYSTYPE *)malloc(newsize * sizeof(*newvs));",
+    "    newvs = (YYSTYPE *)realloc(data->l_base, newsize * sizeof(*newvs));",
     "    if (newvs == 0)",
     "        return -1;",
     "",
@@ -190,7 +194,7 @@ const char *body_1[] =
     0
 };
 
-const char *body_2[] =
+const char *const body_2[] =
 {
     "    int yym, yyn, yystate;",
     "#if YYDEBUG",
@@ -265,7 +269,7 @@ const char *body_2[] =
     0
 };
 
-const char *body_3[] =
+const char *const body_3[] =
 {
     "",
     "    goto yyerrlab;",
@@ -344,7 +348,7 @@ const char *body_3[] =
     0
 };
 
-const char *trailer[] =
+const char *const trailer[] =
 {
     "    }",
     "    yystack.s_mark -= yym;",
@@ -400,7 +404,7 @@ const char *trailer[] =
     0
 };
 
-const char *trailer_2[] =
+const char *const trailer_2[] =
 {
     "",
     "yyabort:",
@@ -415,22 +419,21 @@ const char *trailer_2[] =
 };
 
 void
-write_section(const char *section[])
+write_section(FILE * fp, const char *const section[])
 {
     int c;
     int i;
     const char *s;
-    FILE *f;
 
-    f = code_file;
     for (i = 0; (s = section[i]) != 0; ++i)
     {
-	++outline;
 	while ((c = *s) != 0)
 	{
-	    putc(c, f);
+	    putc(c, fp);
 	    ++s;
 	}
-	putc('\n', f);
+	if (fp == code_file)
+	    ++outline;
+	putc('\n', fp);
     }
 }

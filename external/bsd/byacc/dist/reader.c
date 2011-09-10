@@ -1,6 +1,4 @@
-/*	$NetBSD: reader.c,v 1.1.1.2 2010/12/23 23:36:26 christos Exp $	*/
-
-/* Id: reader.c,v 1.31 2010/11/26 12:30:40 tom Exp */
+/* $Id: reader.c,v 1.1.1.3 2011/09/10 21:19:06 christos Exp $ */
 
 #include "defs.h"
 
@@ -691,6 +689,8 @@ copy_param(int k)
 
     for (i = 0; (c = *cptr++) != '}'; i++)
     {
+	if (c == '\0')
+	    missing_brace();
 	if (c == EOF)
 	    unexpected_EOF();
 	buf[i] = (char)c;
@@ -2199,7 +2199,7 @@ print_grammar(void)
 void
 reader(void)
 {
-    write_section(banner);
+    write_section(code_file, banner);
     create_symbol_table();
     read_declarations();
     read_grammar();
