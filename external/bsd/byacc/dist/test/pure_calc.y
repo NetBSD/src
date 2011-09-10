@@ -1,5 +1,3 @@
-/*	$NetBSD: pure_calc.y,v 1.1.1.1 2010/12/23 23:36:27 christos Exp $	*/
-
 %{
 # include <stdio.h>
 # include <ctype.h>
@@ -63,6 +61,11 @@ number:  DIGIT
       ;
 
 %% /* start of programs */
+
+#ifdef YYBYACC
+extern int YYLEX_DECL();
+static void YYERROR_DECL();
+#endif
 
 int
 main (void)

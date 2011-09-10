@@ -1,3 +1,22 @@
+byacc (20110908) unstable; urgency=low
+
+  * add "-i" option.
+  * add error-check in reader.c
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Mon, 05 Sep 2011 20:05:51 -0400
+
+byacc (20101229) unstable; urgency=low
+
+  * fixes from Christos Zoulos
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Wed, 29 Dec 2010 13:03:50 -0500
+
+byacc (20101226) unstable; urgency=low
+
+  * portability fix for MinGW
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Sat, 25 Dec 2010 19:37:54 -0500
+
 byacc (20101127) unstable; urgency=low
 
   * corrected yyerror use of %parse-param data
