@@ -1,4 +1,6 @@
-/* $Id: lalr.c,v 1.1.1.2 2011/09/10 21:19:03 christos Exp $ */
+/*	$NetBSD: lalr.c,v 1.1.1.3 2011/09/10 21:22:00 christos Exp $	*/
+
+/* Id: lalr.c,v 1.9 2009/10/27 09:49:27 tom Exp */
 
 #include "defs.h"
 

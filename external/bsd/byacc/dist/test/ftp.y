@@ -1,3 +1,5 @@
+/*	$NetBSD: ftp.y,v 1.1.1.4 2011/09/10 21:22:06 christos Exp $	*/
+
 /*
  * Copyright (c) 1985, 1988 Regents of the University of California.
  * All rights reserved.

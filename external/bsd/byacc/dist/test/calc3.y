@@ -1,3 +1,5 @@
+/*	$NetBSD: calc3.y,v 1.1.1.3 2011/09/10 21:22:07 christos Exp $	*/
+
 %pure-parser
 
 %parse-param { int regs[26] }

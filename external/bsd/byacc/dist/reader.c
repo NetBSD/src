@@ -1,4 +1,6 @@
-/* $Id: reader.c,v 1.1.1.3 2011/09/10 21:19:06 christos Exp $ */
+/*	$NetBSD: reader.c,v 1.1.1.4 2011/09/10 21:22:02 christos Exp $	*/
+
+/* Id: reader.c,v 1.33 2011/09/06 22:56:53 tom Exp */
 
 #include "defs.h"
 

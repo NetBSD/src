@@ -1,4 +1,6 @@
-/* $Id: skeleton.c,v 1.1.1.3 2011/09/10 21:19:03 christos Exp $ */
+/*	$NetBSD: skeleton.c,v 1.1.1.4 2011/09/10 21:22:01 christos Exp $	*/
+
+/* Id: skeleton.c,v 1.31 2011/09/07 09:37:59 tom Exp */
 
 #include "defs.h"
 

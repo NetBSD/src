@@ -1,3 +1,5 @@
+/*	$NetBSD: ftp.tab.h,v 1.1.1.3 2011/09/10 21:22:08 christos Exp $	*/
+
 #define A 257
 #define B 258
 #define C 259

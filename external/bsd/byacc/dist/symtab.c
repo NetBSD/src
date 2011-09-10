@@ -1,4 +1,6 @@
-/* $Id: symtab.c,v 1.1.1.3 2011/09/10 21:19:02 christos Exp $ */
+/*	$NetBSD: symtab.c,v 1.1.1.4 2011/09/10 21:22:02 christos Exp $	*/
+
+/* Id: symtab.c,v 1.9 2010/11/24 15:12:29 tom Exp */
 
 #include "defs.h"
 

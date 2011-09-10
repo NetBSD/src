@@ -1,4 +1,6 @@
-/* $Id: main.c,v 1.1.1.3 2011/09/10 21:19:07 christos Exp $ */
+/*	$NetBSD: main.c,v 1.1.1.4 2011/09/10 21:22:00 christos Exp $	*/
+
+/* Id: main.c,v 1.36 2011/09/06 22:44:45 tom Exp */
 
 #include <signal.h>
 #include <unistd.h>		/* for _exit() */
