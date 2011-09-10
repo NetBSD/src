@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.91 2011/09/03 13:24:19 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.92 2011/09/10 18:35:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.91 2011/09/03 13:24:19 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.92 2011/09/10 18:35:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,6 +106,7 @@ __RCSID("$NetBSD: fstat.c,v 1.91 2011/09/03 13:24:19 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
+#include <util.h>
 
 #include "fstat.h"
 
@@ -358,7 +359,7 @@ dofiles(struct kinfo_proc2 *p)
 	 * ktrace vnode, if one
 	 */
 	if (p->p_tracep)
-		ftrans((struct file *)(intptr_t)p->p_tracep, TRACE);
+		ftrans(p->p_tracep, TRACE);
 #endif
 	/*
 	 * open files
@@ -398,15 +399,15 @@ ftrans(fdfile_t *fp, int i)
 	}
 	switch (file.f_type) {
 	case DTYPE_VNODE:
-		vtrans((struct vnode *)file.f_data, i, file.f_flag);
+		vtrans(file.f_data, i, file.f_flag);
 		break;
 	case DTYPE_SOCKET:
 		if (checkfile == 0)
-			socktrans((struct socket *)file.f_data, i);
+			socktrans(file.f_data, i);
 		break;
 	case DTYPE_PIPE:
 		if (checkfile == 0)
-			ptrans(&file, (struct pipe *)file.f_data, i);
+			ptrans(&file, file.f_data, i);
 		break;
 	case DTYPE_MISC:
 	case DTYPE_KQUEUE:
@@ -423,17 +424,22 @@ ftrans(fdfile_t *fp, int i)
 	}
 }
 
+static const char dead[] = "dead";
+
 static const char *
 vfilestat(struct vnode *vp, struct filestat *fsp)
 {
 	const char *badtype = NULL;
 
-	if (vp->v_type == VNON || vp->v_tag == VT_NON)
+	if (vp->v_type == VNON)
 		badtype = "none";
 	else if (vp->v_type == VBAD)
 		badtype = "bad";
 	else
 		switch (vp->v_tag) {
+		case VT_NON:
+			badtype = dead;
+			break;
 		case VT_UFS:
 		case VT_LFS:
 		case VT_MFS:
@@ -502,7 +508,7 @@ vtrans(struct vnode *vp, int i, int flag)
 		int fsmatch = 0;
 		DEVS *d;
 
-		if (badtype)
+		if (badtype && badtype != dead)
 			return;
 		for (d = devs; d != NULL; d = d->next)
 			if (d->fsid == fst.fsid) {
@@ -516,7 +522,13 @@ vtrans(struct vnode *vp, int i, int flag)
 			return;
 	}
 	PREFIX(i);
-	if (badtype) {
+	if (badtype == dead) {
+		char buf[1024];
+		(void)snprintb(buf, sizeof(buf), VNODE_FLAGBITS,
+		    vn.v_iflag | vn.v_vflag | vn.v_uflag);
+		(void)printf(" flags %s\n", buf);
+		return;
+	} else if (badtype) {
 		(void)printf(" -         -  %10s    -\n", badtype);
 		return;
 	}
