@@ -1,9 +1,8 @@
-#	$NetBSD: bsd.nls.mk,v 1.46 2006/03/16 18:43:34 jwise Exp $
+#	$NetBSD: bsd.nls.mk,v 1.47 2011/09/10 16:57:35 apb Exp $
 
 .include <bsd.init.mk>
 
 ##### Basic targets
-cleandir:	cleannls
 realinstall:	nlsinstall
 
 ##### Default values
@@ -62,11 +61,11 @@ nlsinstall::	${_F}
 .endif # ${MKNLS} != "no"
 
 ##### Clean rules
-cleannls: .PHONY
 .if ${MKNLS} != "no" && !empty(NLS)
-	rm -f ${NLSALL}
+CLEANDIRFILES+= ${NLSALL}
 .endif
 
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
 .include <bsd.sys.mk>
+.include <bsd.clean.mk>

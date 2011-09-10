@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.266 2011/08/27 18:35:20 joerg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.267 2011/09/10 16:57:35 apb Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -14,7 +14,6 @@
 
 ##### Basic targets
 realinstall:	proginstall scriptsinstall
-clean:		cleanprog
 
 .gdbinit:
 	rm -f .gdbinit
@@ -27,10 +26,7 @@ clean:		cleanprog
 	echo "source ${__gdbinit}" >> .gdbinit
 .endfor
 
-cleanobjs: .PHONY
-
-cleanprog: .PHONY cleanobjs cleanextra
-	rm -f a.out [Ee]rrs mklog core *.core .gdbinit
+CLEANFILES+= a.out [Ee]rrs mklog core *.core .gdbinit
 
 .if defined(SHAREDSTRINGS)
 CLEANFILES+=strings
@@ -352,14 +348,10 @@ MAN+=		${MAN.${_P}}
 
 realall: ${_P} ${_PROGDEBUG.${_P}}
 
-cleanprog: cleanprog-${_P}
-cleanprog-${_P}:
-	rm -f ${_P} ${_PROGDEBUG.${_P}}
+CLEANFILES+= ${_P} ${_PROGDEBUG.${_P}}
 
 .if defined(OBJS.${_P}) && !empty(OBJS.${_P})
-cleanobjs: cleanobjs-${_P}
-cleanobjs-${_P}:
-	rm -f ${OBJS.${_P}} ${LOBJS.${_P}}
+CLEANFILES+= ${OBJS.${_P}} ${LOBJS.${_P}}
 .endif
 
 _PROG_INSTALL+=	proginstall-${_P}
@@ -414,9 +406,7 @@ lint-${_P}: ${LOBJS.${_P}}
 
 .if defined(OBJS) && !empty(OBJS) && \
     (empty(PROGS) && empty(PROGS_CXX))
-cleanobjs: cleanobjs-plain
-cleanobjs-plain:
-	rm -f ${OBJS} ${LOBJS}
+CLEANFILES+= ${OBJS} ${LOBJS}
 .endif
 
 .if !target(proginstall)
@@ -476,11 +466,7 @@ LINKSMODE?= ${BINMODE}
 .include <bsd.sys.mk>
 .include <bsd.dep.mk>
 .include <bsd.clang-analyze.mk>
-
-cleanextra: .PHONY
-.if defined(CLEANFILES) && !empty(CLEANFILES)
-	rm -f ${CLEANFILES}
-.endif
+.include <bsd.clean.mk>
 
 ${TARGETS}:	# ensure existence
 

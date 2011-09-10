@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.102 2011/09/01 16:41:48 plunky Exp $
+#	$NetBSD: bsd.x11.mk,v 1.103 2011/09/10 16:57:35 apb Exp $
 
 .include <bsd.init.mk>
 
@@ -193,9 +193,7 @@ LDFLAGS+=		-Wl,-rpath,${X11USRLIBDIR} -L=${X11USRLIBDIR}
 
 realall: ${CPPSCRIPTS}
 
-clean: cleancppscripts
-cleancppscripts: .PHONY
-	rm -f ${CPPSCRIPTS}
+CLEANFILES+= ${CPPSCRIPTS}
 .endif								# }
 
 #
@@ -340,9 +338,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		< ${.IMPSRC} > ${.TARGET}.tmp && \
 	mv -f ${.TARGET}.tmp ${.TARGET}
 
-cleandir:	cleanpkgconfig
-cleanpkgconfig: .PHONY
-	rm -f ${_PKGCONFIG_FILES} ${_PKGCONFIG_FILES:C/$/.tmp/}
+CLEANDIRFILES+= ${_PKGCONFIG_FILES} ${_PKGCONFIG_FILES:C/$/.tmp/}
 .endif
 
 #
@@ -369,9 +365,7 @@ realinstall: appdefsinstall
 # .man page handling
 #
 .if (${MKMAN} != "no" && (${MAN:U} != "" || ${PROG:U} != ""))	# {
-cleandir: cleanx11man
-cleanx11man: .PHONY
-	rm -f ${MAN:U${PROG:D${PROG.1}}}
+CLEANDIRFILES+= ${MAN:U${PROG:D${PROG.1}}}
 .endif								# }
 
 .SUFFIXES:	.man .man.pre .1 .3 .4 .5 .7
@@ -430,3 +424,6 @@ _X11MANTRANSFORMCMD+=	${X11EXTRAMANDEFS}
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
 	${_X11MANTRANSFORMCMD} | ${X11TOOL_UNXCOMM} > ${.TARGET}
+
+##### Pull in related .mk logic
+.include <bsd.clean.mk>

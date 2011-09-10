@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.31 2011/07/14 18:12:35 matt Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.32 2011/09/10 16:57:35 apb Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -8,7 +8,6 @@ MKPIE=no
 .include <bsd.sys.mk>
 
 ##### Basic targets
-clean:		cleankmod
 realinstall:	kmodinstall
 
 KERN=		$S/kern
@@ -124,9 +123,7 @@ kmodinstall::	${_PROG}
 .endif # !target(kmodinstall)
 
 ##### Clean rules
-cleankmod: .PHONY
-	rm -f a.out [Ee]rrs mklog core *.core \
-		${PROG} ${OBJS} ${LOBJS} ${CLEANFILES}
+CLEANFILES+= a.out [Ee]rrs mklog core *.core ${PROG} ${OBJS} ${LOBJS}
 
 ##### Custom rules
 lint: ${LOBJS}
@@ -141,6 +138,7 @@ LINKSMODE?= ${KMODULEMODE}
 .include <bsd.man.mk>
 .include <bsd.links.mk>
 .include <bsd.dep.mk>
+.include <bsd.clean.mk>
 
 .-include "$S/arch/${MACHINE_CPU}/include/Makefile.inc"
 .-include "$S/arch/${MACHINE}/include/Makefile.inc"

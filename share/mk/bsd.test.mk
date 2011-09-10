@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.18 2011/05/14 17:47:28 jmmv Exp $
+# $NetBSD: bsd.test.mk,v 1.19 2011/09/10 16:57:35 apb Exp $
 #
 
 .include <bsd.init.mk>
@@ -36,13 +36,13 @@ MAN.${_T}?=	# empty
 
 .if defined(TESTS_SH)
 _TESTS+=		${TESTS_SH}
-CLEANFILES+=		${TESTS_SH}
+CLEANDIRFILES+=		${TESTS_SH}
 
 .  for _T in ${TESTS_SH}
 SCRIPTS+=		${_T}
 SCRIPTSDIR_${_T}=	${TESTSDIR}
 
-CLEANFILES+=		${_T}.tmp
+CLEANDIRFILES+=		${_T}.tmp
 
 TESTS_SH_SRC_${_T}?=	${_T}.sh
 ${_T}: ${TESTS_SH_SRC_${_T}}
@@ -61,7 +61,7 @@ FILES+=			Atffile
 FILESDIR_Atffile=	${TESTSDIR}
 
 .  if ${ATFFILE:tl} == "auto"
-CLEANFILES+=	Atffile Atffile.tmp
+CLEANDIRFILES+=	Atffile Atffile.tmp
 
 realall: Atffile
 Atffile: Makefile
@@ -83,10 +83,6 @@ Atffile: Makefile
 
 .if !empty(SCRIPTS) || !empty(PROGS) || !empty(PROGS_CXX)
 .  include <bsd.prog.mk>
-.else
-cleandir:	cleantest
-cleantest:	.PHONY
-	rm -f ${CLEANFILES}
 .endif
 
 #
@@ -118,7 +114,7 @@ TESTS_ENV += PATH=${TESTS_PATH:tW:S/ /:/g}
 
 _TESTS_FIFO = ${.OBJDIR}/atf-run.fifo
 _TESTS_LOG = ${.OBJDIR}/atf-run.log
-CLEANFILES += ${_TESTS_FIFO} ${_TESTS_LOG}
+CLEANDIRFILES += ${_TESTS_FIFO} ${_TESTS_LOG}
 
 .PHONY: test
 .if defined(TESTSDIR)
@@ -156,3 +152,6 @@ test:
 test:
 	@echo "*** No TESTSDIR defined; nothing to do."
 .endif
+
+##### Pull in related .mk logic
+.include <bsd.clean.mk>
