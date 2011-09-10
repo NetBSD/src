@@ -119,13 +119,19 @@ static void * eap_wsc_init(struct eap_sm *sm)
 		}
 	} else {
 		if (sm->user == NULL || sm->user->password == NULL) {
-			wpa_printf(MSG_INFO, "EAP-WSC: No AP PIN (password) "
-				   "configured for Enrollee functionality");
-			os_free(data);
-			return NULL;
+			/*
+			 * In theory, this should not really be needed, but
+			 * Windows 7 uses Registrar mode to probe AP's WPS
+			 * capabilities before trying to use Enrollee and fails
+			 * if the AP does not allow that probing to happen..
+			 */
+			wpa_printf(MSG_DEBUG, "EAP-WSC: No AP PIN (password) "
+				   "configured for Enrollee functionality - "
+				   "allow for probing capabilities (M1)");
+		} else {
+			cfg.pin = sm->user->password;
+			cfg.pin_len = sm->user->password_len;
 		}
-		cfg.pin = sm->user->password;
-		cfg.pin_len = sm->user->password_len;
 	}
 	cfg.assoc_wps_ie = sm->assoc_wps_ie;
 	cfg.peer_addr = sm->peer_addr;

@@ -101,7 +101,6 @@ struct wpa_driver_nl80211_data {
 	int disable_11b_rates;
 
 	unsigned int pending_remain_on_chan:1;
-	unsigned int pending_send_action:1;
 	unsigned int added_bridge:1;
 	unsigned int added_if_into_bridge:1;
 
@@ -702,12 +701,28 @@ static void mlme_event_deauth_disassoc(struct wpa_driver_nl80211_data *drv,
 	const u8 *bssid = NULL;
 	u16 reason_code = 0;
 
+	mgmt = (const struct ieee80211_mgmt *) frame;
+	if (len >= 24) {
+		bssid = mgmt->bssid;
+
+		if (drv->associated != 0 &&
+		    os_memcmp(bssid, drv->bssid, ETH_ALEN) != 0 &&
+		    os_memcmp(bssid, drv->auth_bssid, ETH_ALEN) != 0) {
+			/*
+			 * We have presumably received this deauth as a
+			 * response to a clear_state_mismatch() outgoing
+			 * deauth.  Don't let it take us offline!
+			 */
+			wpa_printf(MSG_DEBUG, "nl80211: Deauth received "
+				   "from Unknown BSSID " MACSTR " -- ignoring",
+				   MAC2STR(bssid));
+			return;
+		}
+	}
+
 	drv->associated = 0;
 	os_memset(&event, 0, sizeof(event));
 
-	mgmt = (const struct ieee80211_mgmt *) frame;
-	if (len >= 24)
-		bssid = mgmt->bssid;
 	/* Note: Same offset for Reason Code in both frame subtypes */
 	if (len >= 24 + sizeof(mgmt->u.deauth))
 		reason_code = le_to_host16(mgmt->u.deauth.reason_code);
@@ -2422,10 +2437,6 @@ retry:
 	wpa_hexdump(MSG_DEBUG, "  * IEs", params->ie, params->ie_len);
 	if (params->ie)
 		NLA_PUT(msg, NL80211_ATTR_IE, params->ie_len, params->ie);
-	/*
-	 * TODO: if multiple auth_alg options enabled, try them one by one if
-	 * the AP rejects authentication due to unknown auth alg
-	 */
 	if (params->auth_alg & WPA_AUTH_ALG_OPEN)
 		type = NL80211_AUTHTYPE_OPEN_SYSTEM;
 	else if (params->auth_alg & WPA_AUTH_ALG_SHARED)
@@ -5002,7 +5013,6 @@ static int wpa_driver_nl80211_send_action(void *priv, unsigned int freq,
 	wpa_printf(MSG_DEBUG, "nl80211: Action TX command accepted; "
 		   "cookie 0x%llx", (long long unsigned int) cookie);
 	drv->send_action_cookie = cookie;
-	drv->pending_send_action = 1;
 	ret = 0;
 
 nla_put_failure:

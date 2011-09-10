@@ -78,6 +78,11 @@ int hostapd_reload_config(struct hostapd_iface *iface)
 			   "after reloading configuration");
 	}
 
+	if (hapd->conf->ieee802_1x || hapd->conf->wpa)
+		hapd->drv.set_drv_ieee8021x(hapd, hapd->conf->iface, 1);
+	else
+		hapd->drv.set_drv_ieee8021x(hapd, hapd->conf->iface, 0);
+
 	if (hapd->conf->wpa && hapd->wpa_auth == NULL)
 		hostapd_setup_wpa(hapd);
 	else if (hapd->conf->wpa) {
@@ -97,6 +102,7 @@ int hostapd_reload_config(struct hostapd_iface *iface)
 	}
 
 	ieee802_11_set_beacon(hapd);
+	hostapd_update_wps(hapd);
 
 	if (hapd->conf->ssid.ssid_set &&
 	    hostapd_set_ssid(hapd, (u8 *) hapd->conf->ssid.ssid,
@@ -104,11 +110,6 @@ int hostapd_reload_config(struct hostapd_iface *iface)
 		wpa_printf(MSG_ERROR, "Could not set SSID for kernel driver");
 		/* try to continue */
 	}
-
-	if (hapd->conf->ieee802_1x || hapd->conf->wpa)
-		hapd->drv.set_drv_ieee8021x(hapd, hapd->conf->iface, 1);
-	else
-		hapd->drv.set_drv_ieee8021x(hapd, hapd->conf->iface, 0);
 
 	hostapd_config_free(oldconf);
 

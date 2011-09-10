@@ -25,6 +25,7 @@
 #include "common/wpa_ctrl.h"
 #include "radius/radius.h"
 #include "radius/radius_client.h"
+#include "wps/wps.h"
 #include "hostapd.h"
 #include "beacon.h"
 #include "ieee802_11_auth.h"
@@ -187,33 +188,6 @@ void ieee802_11_print_ssid(char *buf, const u8 *ssid, u8 len)
 			buf[i] = '.';
 	}
 	buf[len] = '\0';
-}
-
-
-/**
- * ieee802_11_send_deauth - Send Deauthentication frame
- * @hapd: hostapd BSS data
- * @addr: Address of the destination STA
- * @reason: Reason code for Deauthentication
- */
-void ieee802_11_send_deauth(struct hostapd_data *hapd, const u8 *addr,
-			    u16 reason)
-{
-	struct ieee80211_mgmt mgmt;
-
-	hostapd_logger(hapd, addr, HOSTAPD_MODULE_IEEE80211,
-		       HOSTAPD_LEVEL_DEBUG,
-		       "deauthenticate - reason %d", reason);
-	os_memset(&mgmt, 0, sizeof(mgmt));
-	mgmt.frame_control = IEEE80211_FC(WLAN_FC_TYPE_MGMT,
-					  WLAN_FC_STYPE_DEAUTH);
-	os_memcpy(mgmt.da, addr, ETH_ALEN);
-	os_memcpy(mgmt.sa, hapd->own_addr, ETH_ALEN);
-	os_memcpy(mgmt.bssid, hapd->own_addr, ETH_ALEN);
-	mgmt.u.deauth.reason_code = host_to_le16(reason);
-	if (hapd->drv.send_mgmt_frame(hapd, &mgmt, IEEE80211_HDRLEN +
-				       sizeof(mgmt.u.deauth)) < 0)
-		perror("ieee802_11_send_deauth: send");
 }
 
 
@@ -686,8 +660,8 @@ static u16 check_assoc_ies(struct hostapd_data *hapd, struct sta_info *sta,
 			   "Request - assume WPS is used");
 		sta->flags |= WLAN_STA_WPS;
 		wpabuf_free(sta->wps_ie);
-		sta->wps_ie = wpabuf_alloc_copy(elems.wps_ie + 4,
-						elems.wps_ie_len - 4);
+		sta->wps_ie = ieee802_11_vendor_ie_concat(ies, ies_len,
+							  WPS_IE_VENDOR_TYPE);
 		wpa_ie = NULL;
 		wpa_ie_len = 0;
 	} else if (hapd->conf->wps_state && wpa_ie == NULL) {
@@ -850,13 +824,6 @@ static void send_assoc_resp(struct hostapd_data *hapd, struct sta_info *sta,
 	p = hostapd_eid_supp_rates(hapd, reply->u.assoc_resp.variable);
 	/* Extended supported rates */
 	p = hostapd_eid_ext_supp_rates(hapd, p);
-	if (sta->flags & WLAN_STA_WMM)
-		p = hostapd_eid_wmm(hapd, p);
-
-#ifdef CONFIG_IEEE80211N
-	p = hostapd_eid_ht_capabilities(hapd, p);
-	p = hostapd_eid_ht_operation(hapd, p);
-#endif /* CONFIG_IEEE80211N */
 
 #ifdef CONFIG_IEEE80211R
 	if (status_code == WLAN_STATUS_SUCCESS) {
@@ -872,6 +839,25 @@ static void send_assoc_resp(struct hostapd_data *hapd, struct sta_info *sta,
 	if (status_code == WLAN_STATUS_ASSOC_REJECTED_TEMPORARILY)
 		p = hostapd_eid_assoc_comeback_time(hapd, sta, p);
 #endif /* CONFIG_IEEE80211W */
+
+#ifdef CONFIG_IEEE80211N
+	p = hostapd_eid_ht_capabilities(hapd, p);
+	p = hostapd_eid_ht_operation(hapd, p);
+#endif /* CONFIG_IEEE80211N */
+
+	if (sta->flags & WLAN_STA_WMM)
+		p = hostapd_eid_wmm(hapd, p);
+
+#ifdef CONFIG_WPS
+	if (sta->flags & WLAN_STA_WPS) {
+		struct wpabuf *wps = wps_build_assoc_resp_ie();
+		if (wps) {
+			os_memcpy(p, wpabuf_head(wps), wpabuf_len(wps));
+			p += wpabuf_len(wps);
+			wpabuf_free(wps);
+		}
+	}
+#endif /* CONFIG_WPS */
 
 	send_len += p - reply->u.assoc_resp.variable;
 

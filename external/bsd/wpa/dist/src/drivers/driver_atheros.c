@@ -74,6 +74,7 @@ struct madwifi_driver_data {
 
 static int madwifi_sta_deauth(void *priv, const u8 *own_addr, const u8 *addr,
 			      int reason_code);
+static int madwifi_set_privacy(void *priv, int enabled);
 
 static const char * athr_get_ioctl_name(int op)
 {
@@ -343,8 +344,11 @@ madwifi_set_ieee8021x(void *priv, struct wpa_bss_params *params)
 
 	if (!params->enabled) {
 		/* XXX restore state */
-		return set80211param(priv, IEEE80211_PARAM_AUTHMODE,
-			IEEE80211_AUTH_AUTO);
+		if (set80211param(priv, IEEE80211_PARAM_AUTHMODE,
+				  IEEE80211_AUTH_AUTO) < 0)
+			return -1;
+		/* IEEE80211_AUTH_AUTO ends up enabling Privacy; clear that */
+		return madwifi_set_privacy(drv, 0);
 	}
 	if (!params->wpa && !params->ieee802_1x) {
 		hostapd_logger(drv->hapd, NULL, HOSTAPD_MODULE_DRIVER,
@@ -1184,6 +1188,8 @@ madwifi_init(struct hostapd_data *hapd, struct wpa_init_params *params)
 
 	return drv;
 bad:
+	if (drv->sock_recv != NULL && drv->sock_recv != drv->sock_xmit)
+		l2_packet_deinit(drv->sock_recv);
 	if (drv->sock_xmit != NULL)
 		l2_packet_deinit(drv->sock_xmit);
 	if (drv->ioctl_sock >= 0)
@@ -1271,7 +1277,7 @@ madwifi_commit(void *priv)
 const struct wpa_driver_ops wpa_driver_atheros_ops = {
 	.name			= "atheros",
 	.hapd_init		= madwifi_init,
-	.deinit			= madwifi_deinit,
+	.hapd_deinit		= madwifi_deinit,
 	.set_ieee8021x		= madwifi_set_ieee8021x,
 	.set_privacy		= madwifi_set_privacy,
 	.set_key		= madwifi_set_key,

@@ -1,6 +1,6 @@
 /*
  * hostapd / WPS integration
- * Copyright (c) 2008-2009, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2008-2010, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -42,6 +42,7 @@ static void hostapd_wps_upnp_deinit(struct hostapd_data *hapd);
 
 static int hostapd_wps_probe_req_rx(void *ctx, const u8 *addr,
 				    const u8 *ie, size_t ie_len);
+static void hostapd_wps_ap_pin_timeout(void *eloop_data, void *user_ctx);
 
 
 static int hostapd_wps_new_psk_cb(void *ctx, const u8 *mac_addr, const u8 *psk,
@@ -421,20 +422,35 @@ static int hostapd_wps_cred_cb(void *ctx, const struct wps_credential *cred)
 }
 
 
+static void hostapd_wps_reenable_ap_pin(void *eloop_data, void *user_ctx)
+{
+	struct hostapd_data *hapd = eloop_data;
+
+	if (hapd->conf->ap_setup_locked)
+		return;
+
+	wpa_printf(MSG_DEBUG, "WPS: Re-enable AP PIN");
+	wpa_msg(hapd->msg_ctx, MSG_INFO, WPS_EVENT_AP_SETUP_UNLOCKED);
+	hapd->wps->ap_setup_locked = 0;
+	wps_registrar_update_ie(hapd->wps->registrar);
+}
+
+
 static void hostapd_pwd_auth_fail(struct hostapd_data *hapd,
 				  struct wps_event_pwd_auth_fail *data)
 {
-	FILE *f;
-
-	if (!data->enrollee)
+	if (!data->enrollee || hapd->conf->ap_pin == NULL)
 		return;
 
 	/*
 	 * Registrar failed to prove its knowledge of the AP PIN. Lock AP setup
-	 * if this happens multiple times.
+	 * for some time if this happens multiple times to slow down brute
+	 * force attacks.
 	 */
 	hapd->ap_pin_failures++;
-	if (hapd->ap_pin_failures < 4)
+	wpa_printf(MSG_DEBUG, "WPS: AP PIN authentication failure number %u",
+		   hapd->ap_pin_failures);
+	if (hapd->ap_pin_failures < 3)
 		return;
 
 	wpa_msg(hapd->msg_ctx, MSG_INFO, WPS_EVENT_AP_SETUP_LOCKED);
@@ -442,23 +458,22 @@ static void hostapd_pwd_auth_fail(struct hostapd_data *hapd,
 
 	wps_registrar_update_ie(hapd->wps->registrar);
 
-	if (hapd->conf->wps_cred_processing == 1)
-		return;
+	if (!hapd->conf->ap_setup_locked) {
+		if (hapd->ap_pin_lockout_time == 0)
+			hapd->ap_pin_lockout_time = 60;
+		else if (hapd->ap_pin_lockout_time < 365 * 24 * 60 * 60 &&
+			 (hapd->ap_pin_failures % 3) == 0)
+			hapd->ap_pin_lockout_time *= 2;
 
-	f = fopen(hapd->iface->config_fname, "a");
-	if (f == NULL) {
-		wpa_printf(MSG_WARNING, "WPS: Could not append to the current "
-			   "configuration file");
-		return;
+		wpa_printf(MSG_DEBUG, "WPS: Disable AP PIN for %u seconds",
+			   hapd->ap_pin_lockout_time);
+		eloop_cancel_timeout(hostapd_wps_reenable_ap_pin, hapd, NULL);
+		eloop_register_timeout(hapd->ap_pin_lockout_time, 0,
+				       hostapd_wps_reenable_ap_pin, hapd,
+				       NULL);
 	}
 
-	fprintf(f, "# WPS AP Setup Locked based on possible attack\n");
-	fprintf(f, "ap_setup_locked=1\n");
-	fclose(f);
-
-	/* TODO: dualband AP may need to update multiple configuration files */
-
-	wpa_printf(MSG_DEBUG, "WPS: AP configuration updated");
+	/* TODO: dualband AP may need to update other interfaces */
 }
 
 
@@ -667,6 +682,8 @@ int hostapd_init_wps(struct hostapd_data *hapd,
 
 void hostapd_deinit_wps(struct hostapd_data *hapd)
 {
+	eloop_cancel_timeout(hostapd_wps_reenable_ap_pin, hapd, NULL);
+	eloop_cancel_timeout(hostapd_wps_ap_pin_timeout, hapd, NULL);
 	if (hapd->wps == NULL)
 		return;
 #ifdef CONFIG_WPS_UPNP
@@ -683,6 +700,17 @@ void hostapd_deinit_wps(struct hostapd_data *hapd)
 	os_free(hapd->wps);
 	hapd->wps = NULL;
 	hostapd_wps_clear_ies(hapd);
+}
+
+
+void hostapd_update_wps(struct hostapd_data *hapd)
+{
+	if (hapd->wps == NULL)
+		return;
+	if (hapd->conf->wps_state)
+		wps_registrar_update_ie(hapd->wps->registrar);
+	else
+		hostapd_deinit_wps(hapd);
 }
 
 
@@ -771,9 +799,22 @@ static int hostapd_wps_probe_req_rx(void *ctx, const u8 *addr,
 {
 	struct hostapd_data *hapd = ctx;
 	struct wpabuf *wps_ie;
+	struct ieee802_11_elems elems;
 
 	if (hapd->wps == NULL)
 		return 0;
+
+	if (ieee802_11_parse_elems(ie, ie_len, &elems, 0) == ParseFailed) {
+		wpa_printf(MSG_DEBUG, "WPS: Could not parse ProbeReq from "
+			   MACSTR, MAC2STR(addr));
+		return 0;
+	}
+
+	if (elems.ssid && elems.ssid_len > 0 &&
+	    (elems.ssid_len != hapd->conf->ssid.ssid_len ||
+	     os_memcmp(elems.ssid, hapd->conf->ssid.ssid, elems.ssid_len) !=
+	     0))
+		return 0; /* Not for us */
 
 	wps_ie = ieee802_11_vendor_ie_concat(ie, ie_len, WPS_DEV_OUI_WFA);
 	if (wps_ie == NULL)
@@ -901,4 +942,79 @@ int hostapd_wps_get_mib_sta(struct hostapd_data *hapd, const u8 *addr,
 	if (hapd->wps == NULL)
 		return 0;
 	return wps_registrar_get_info(hapd->wps->registrar, addr, buf, buflen);
+}
+
+
+static void hostapd_wps_ap_pin_timeout(void *eloop_data, void *user_ctx)
+{
+	struct hostapd_data *hapd = eloop_data;
+	wpa_printf(MSG_DEBUG, "WPS: AP PIN timed out");
+	hostapd_wps_ap_pin_disable(hapd);
+}
+
+
+static void hostapd_wps_ap_pin_enable(struct hostapd_data *hapd, int timeout)
+{
+	wpa_printf(MSG_DEBUG, "WPS: Enabling AP PIN (timeout=%d)", timeout);
+	hapd->ap_pin_failures = 0;
+	hapd->conf->ap_setup_locked = 0;
+	if (hapd->wps->ap_setup_locked) {
+		wpa_msg(hapd->msg_ctx, MSG_INFO, WPS_EVENT_AP_SETUP_UNLOCKED);
+		hapd->wps->ap_setup_locked = 0;
+		wps_registrar_update_ie(hapd->wps->registrar);
+	}
+	eloop_cancel_timeout(hostapd_wps_ap_pin_timeout, hapd, NULL);
+	if (timeout > 0)
+		eloop_register_timeout(timeout, 0,
+				       hostapd_wps_ap_pin_timeout, hapd, NULL);
+}
+
+
+void hostapd_wps_ap_pin_disable(struct hostapd_data *hapd)
+{
+	wpa_printf(MSG_DEBUG, "WPS: Disabling AP PIN");
+	os_free(hapd->conf->ap_pin);
+	hapd->conf->ap_pin = NULL;
+#ifdef CONFIG_WPS_UPNP
+	upnp_wps_set_ap_pin(hapd->wps_upnp, NULL);
+#endif /* CONFIG_WPS_UPNP */
+	eloop_cancel_timeout(hostapd_wps_ap_pin_timeout, hapd, NULL);
+}
+
+
+const char * hostapd_wps_ap_pin_random(struct hostapd_data *hapd, int timeout)
+{
+	unsigned int pin;
+	char pin_txt[9];
+
+	pin = wps_generate_pin();
+	os_snprintf(pin_txt, sizeof(pin_txt), "%u", pin);
+	os_free(hapd->conf->ap_pin);
+	hapd->conf->ap_pin = os_strdup(pin_txt);
+#ifdef CONFIG_WPS_UPNP
+	upnp_wps_set_ap_pin(hapd->wps_upnp, pin_txt);
+#endif /* CONFIG_WPS_UPNP */
+	hostapd_wps_ap_pin_enable(hapd, timeout);
+	return hapd->conf->ap_pin;
+}
+
+
+const char * hostapd_wps_ap_pin_get(struct hostapd_data *hapd)
+{
+	return hapd->conf->ap_pin;
+}
+
+
+int hostapd_wps_ap_pin_set(struct hostapd_data *hapd, const char *pin,
+			   int timeout)
+{
+	os_free(hapd->conf->ap_pin);
+	hapd->conf->ap_pin = os_strdup(pin);
+	if (hapd->conf->ap_pin == NULL)
+		return -1;
+#ifdef CONFIG_WPS_UPNP
+	upnp_wps_set_ap_pin(hapd->wps_upnp, hapd->conf->ap_pin);
+#endif /* CONFIG_WPS_UPNP */
+	hostapd_wps_ap_pin_enable(hapd, timeout);
+	return 0;
 }

@@ -1,6 +1,6 @@
 /*
  * wpa_gui - WpaGui class
- * Copyright (c) 2005-2008, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2005-2010, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -712,7 +712,7 @@ void WpaGui::helpContents()
 void WpaGui::helpAbout()
 {
 	QMessageBox::about(this, "wpa_gui for wpa_supplicant",
-			   "Copyright (c) 2003-2008,\n"
+			   "Copyright (c) 2003-2010,\n"
 			   "Jouni Malinen <j@w1.fi>\n"
 			   "and contributors.\n"
 			   "\n"
@@ -971,17 +971,10 @@ void WpaGui::selectNetwork( const QString &sel )
 	char reply[10];
 	size_t reply_len = sizeof(reply);
 
-	if (cmd.compare(tr("Select any network"))) {
+	if (cmd.contains(QRegExp("^\\d+:")))
+		cmd.truncate(cmd.indexOf(':'));
+	else
 		cmd = "any";
-	} else {
-		int pos = cmd.indexOf(':');
-		if (pos < 0) {
-			printf("Invalid selectNetwork '%s'\n",
-			       cmd.toAscii().constData());
-			return;
-		}
-		cmd.truncate(pos);
-	}
 	cmd.prepend("SELECT_NETWORK ");
 	ctrlRequest(cmd.toAscii().constData(), reply, &reply_len);
 	triggerUpdate();
@@ -995,14 +988,12 @@ void WpaGui::enableNetwork(const QString &sel)
 	char reply[10];
 	size_t reply_len = sizeof(reply);
 
-	if (!cmd.startsWith("all")) {
-		int pos = cmd.indexOf(':');
-		if (pos < 0) {
-			printf("Invalid enableNetwork '%s'\n",
-			       cmd.toAscii().constData());
-			return;
-		}
-		cmd.truncate(pos);
+	if (cmd.contains(QRegExp("^\\d+:")))
+		cmd.truncate(cmd.indexOf(':'));
+	else if (!cmd.startsWith("all")) {
+		printf("Invalid editNetwork '%s'\n",
+		       cmd.toAscii().constData());
+		return;
 	}
 	cmd.prepend("ENABLE_NETWORK ");
 	ctrlRequest(cmd.toAscii().constData(), reply, &reply_len);
@@ -1016,14 +1007,12 @@ void WpaGui::disableNetwork(const QString &sel)
 	char reply[10];
 	size_t reply_len = sizeof(reply);
 
-	if (!cmd.startsWith("all")) {
-		int pos = cmd.indexOf(':');
-		if (pos < 0) {
-			printf("Invalid disableNetwork '%s'\n",
-			       cmd.toAscii().constData());
-			return;
-		}
-		cmd.truncate(pos);
+	if (cmd.contains(QRegExp("^\\d+:")))
+		cmd.truncate(cmd.indexOf(':'));
+	else if (!cmd.startsWith("all")) {
+		printf("Invalid editNetwork '%s'\n",
+		       cmd.toAscii().constData());
+		return;
 	}
 	cmd.prepend("DISABLE_NETWORK ");
 	ctrlRequest(cmd.toAscii().constData(), reply, &reply_len);
@@ -1036,14 +1025,8 @@ void WpaGui::editNetwork(const QString &sel)
 	QString cmd(sel);
 	int id = -1;
 
-	if (!cmd.compare(tr("Select any network"))) {
-		int pos = sel.indexOf(':');
-		if (pos < 0) {
-			printf("Invalid editNetwork '%s'\n",
-			       cmd.toAscii().constData());
-			return;
-		}
-		cmd.truncate(pos);
+	if (cmd.contains(QRegExp("^\\d+:"))) {
+		cmd.truncate(cmd.indexOf(':'));
 		id = cmd.toInt();
 	}
 
@@ -1114,17 +1097,12 @@ void WpaGui::removeNetwork(const QString &sel)
 	char reply[10];
 	size_t reply_len = sizeof(reply);
 
-	if (cmd.compare(tr("Select any network")))
+	if (cmd.contains(QRegExp("^\\d+:")))
+		cmd.truncate(cmd.indexOf(':'));
+	else if (!cmd.startsWith("all")) {
+		printf("Invalid editNetwork '%s'\n",
+		       cmd.toAscii().constData());
 		return;
-
-	if (!cmd.startsWith("all")) {
-		int pos = cmd.indexOf(':');
-		if (pos < 0) {
-			printf("Invalid removeNetwork '%s'\n",
-			       cmd.toAscii().constData());
-			return;
-		}
-		cmd.truncate(pos);
 	}
 	cmd.prepend("REMOVE_NETWORK ");
 	ctrlRequest(cmd.toAscii().constData(), reply, &reply_len);

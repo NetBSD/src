@@ -354,6 +354,7 @@ static void hostapd_config_free_bss(struct hostapd_bss_config *conf)
 
 	os_free(conf->ssid.wpa_passphrase);
 	os_free(conf->ssid.wpa_psk_file);
+	hostapd_config_free_wep(&conf->ssid.wep);
 #ifdef CONFIG_FULL_DYNAMIC_VLAN
 	os_free(conf->ssid.vlan_tagged_interface);
 #endif /* CONFIG_FULL_DYNAMIC_VLAN */
@@ -566,15 +567,15 @@ hostapd_get_eap_user(const struct hostapd_bss_config *conf, const u8 *identity,
 		return &wsc_enrollee;
 	}
 
-	if (conf->wps_state && conf->ap_pin &&
-	    identity_len == WSC_ID_REGISTRAR_LEN &&
+	if (conf->wps_state && identity_len == WSC_ID_REGISTRAR_LEN &&
 	    os_memcmp(identity, WSC_ID_REGISTRAR, WSC_ID_REGISTRAR_LEN) == 0) {
 		static struct hostapd_eap_user wsc_registrar;
 		os_memset(&wsc_registrar, 0, sizeof(wsc_registrar));
 		wsc_registrar.methods[0].method = eap_server_get_type(
 			"WSC", &wsc_registrar.methods[0].vendor);
 		wsc_registrar.password = (u8 *) conf->ap_pin;
-		wsc_registrar.password_len = os_strlen(conf->ap_pin);
+		wsc_registrar.password_len = conf->ap_pin ?
+			os_strlen(conf->ap_pin) : 0;
 		return &wsc_registrar;
 	}
 #endif /* CONFIG_WPS */

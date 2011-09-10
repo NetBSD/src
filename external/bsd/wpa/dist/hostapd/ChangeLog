@@ -1,5 +1,21 @@
 ChangeLog for hostapd
 
+2010-09-07 - v0.7.3
+	* fixed re-association after WPS not initializing WPA state machine in
+	  some cases
+	* fixed WPS IE update on reconfiguration
+	* fixed WPS code not to proxy Probe Request frames for foreign SSIDs
+	* added WPS workaround for open networks and some known interop issues
+	* fixed WPS Diffie-Hellman derivation to use correct public key length
+	* fixed FT RRB messages on big endian CPUs
+	* changed WPS protection for brute force AP PIN attacks to disable AP
+	  PIN only temporarily (but with increasing time) to avoid usability
+	  issues on Label-only devices
+	* added wps_ap_pin command for more secure handling of AP PIN
+	  operations (e.g., to generate a random AP PIN and only use it for
+	  short amount of time)
+	* fixed HT STBC negotiation
+
 2010-04-18 - v0.7.2
 	* fix WPS internal Registrar use when an external Registrar is also
 	  active

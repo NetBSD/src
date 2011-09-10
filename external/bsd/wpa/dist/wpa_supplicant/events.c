@@ -700,15 +700,7 @@ wpa_supplicant_pick_network(struct wpa_supplicant *wpa_s,
 static void wpa_supplicant_req_new_scan(struct wpa_supplicant *wpa_s,
 					int timeout_sec, int timeout_usec)
 {
-	if (wpa_s->scan_res_tried == 1 && wpa_s->conf->ap_scan == 1) {
-		/*
-		 * Quick recovery if the initial scan results were not
-		 * complete when fetched before the first scan request.
-		 */
-		wpa_s->scan_res_tried++;
-		timeout_sec = 0;
-		timeout_usec = 0;
-	} else if (!wpa_supplicant_enabled_networks(wpa_s->conf)) {
+	if (!wpa_supplicant_enabled_networks(wpa_s->conf)) {
 		/*
 		 * No networks are enabled; short-circuit request so
 		 * we don't wait timeout seconds before transitioning
@@ -884,6 +876,12 @@ static void wpa_supplicant_event_scan_results(struct wpa_supplicant *wpa_s,
 	struct wpa_bss *selected;
 	struct wpa_ssid *ssid = NULL;
 	struct wpa_scan_results *scan_res;
+	int ap = 0;
+
+#ifdef CONFIG_AP
+	if (wpa_s->ap_iface)
+		ap = 1;
+#endif /* CONFIG_AP */
 
 	wpa_supplicant_notify_scanning(wpa_s, 0);
 
@@ -891,7 +889,7 @@ static void wpa_supplicant_event_scan_results(struct wpa_supplicant *wpa_s,
 						   data ? &data->scan_info :
 						   NULL, 1);
 	if (scan_res == NULL) {
-		if (wpa_s->conf->ap_scan == 2)
+		if (wpa_s->conf->ap_scan == 2 || ap)
 			return;
 		wpa_printf(MSG_DEBUG, "Failed to get scan results - try "
 			   "scanning again");
@@ -906,19 +904,15 @@ static void wpa_supplicant_event_scan_results(struct wpa_supplicant *wpa_s,
 		return;
 	}
 
-	/*
-	 * Don't post the results if this was the initial cached
-	 * and there were no results.
-	 */
-	if (wpa_s->scan_res_tried == 1 && wpa_s->conf->ap_scan == 1 &&
-	    scan_res->num == 0) {
-		wpa_msg(wpa_s, MSG_DEBUG, "Cached scan results are "
-			"empty - not posting");
-	} else {
-		wpa_printf(MSG_DEBUG, "New scan results available");
-		wpa_msg_ctrl(wpa_s, MSG_INFO, WPA_EVENT_SCAN_RESULTS);
-		wpas_notify_scan_results(wpa_s);
+	if (ap) {
+		wpa_printf(MSG_DEBUG, "Ignore scan results in AP mode");
+		wpa_scan_results_free(scan_res);
+		return;
 	}
+
+	wpa_printf(MSG_DEBUG, "New scan results available");
+	wpa_msg_ctrl(wpa_s, MSG_INFO, WPA_EVENT_SCAN_RESULTS);
+	wpas_notify_scan_results(wpa_s);
 
 	wpas_notify_scan_done(wpa_s, 1);
 
@@ -1173,7 +1167,8 @@ static void wpa_supplicant_event_assoc(struct wpa_supplicant *wpa_s,
 		wpa_supplicant_scard_init(wpa_s, wpa_s->current_ssid);
 	}
 	wpa_sm_notify_assoc(wpa_s->wpa, bssid);
-	l2_packet_notify_auth_start(wpa_s->l2);
+	if (wpa_s->l2)
+		l2_packet_notify_auth_start(wpa_s->l2);
 
 	/*
 	 * Set portEnabled first to FALSE in order to get EAP state machine out
@@ -1309,6 +1304,7 @@ static void wpa_supplicant_event_disassoc(struct wpa_supplicant *wpa_s,
 	}
 	wpa_supplicant_mark_disassoc(wpa_s);
 	bgscan_deinit(wpa_s);
+	wpa_s->bgscan_ssid = NULL;
 #ifdef CONFIG_SME
 	if (authenticating &&
 	    (wpa_s->drv_flags & WPA_DRIVER_FLAGS_SME)) {
@@ -1593,7 +1589,7 @@ void wpa_supplicant_event(void *ctx, enum wpa_event_type event,
 	case EVENT_DISASSOC:
 		wpa_printf(MSG_DEBUG, "Disassociation notification");
 #ifdef CONFIG_AP
-		if (wpa_s->ap_iface && data) {
+		if (wpa_s->ap_iface && data && data->disassoc_info.addr) {
 			hostapd_notif_disassoc(wpa_s->ap_iface->bss[0],
 					       data->disassoc_info.addr);
 			break;
@@ -1611,7 +1607,7 @@ void wpa_supplicant_event(void *ctx, enum wpa_event_type event,
 				reason_code = data->deauth_info.reason_code;
 		}
 #ifdef CONFIG_AP
-		if (wpa_s->ap_iface && data) {
+		if (wpa_s->ap_iface && data && data->deauth_info.addr) {
 			hostapd_notif_disassoc(wpa_s->ap_iface->bss[0],
 					       data->deauth_info.addr);
 			break;

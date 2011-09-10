@@ -23,6 +23,7 @@
 #include "radius/radius.h"
 #include "radius/radius_client.h"
 #include "eap_server/eap.h"
+#include "eap_common/eap_wsc_common.h"
 #include "eapol_auth/eapol_auth_sm.h"
 #include "eapol_auth/eapol_auth_sm_i.h"
 #include "hostapd.h"
@@ -646,8 +647,7 @@ ieee802_1x_alloc_eapol_sm(struct hostapd_data *hapd, struct sta_info *sta)
 	if (sta->flags & WLAN_STA_PREAUTH)
 		flags |= EAPOL_SM_PREAUTH;
 	if (sta->wpa_sm) {
-		if (wpa_auth_sta_get_pmksa(sta->wpa_sm))
-			flags |= EAPOL_SM_USES_WPA;
+		flags |= EAPOL_SM_USES_WPA;
 		if (wpa_auth_sta_get_pmksa(sta->wpa_sm))
 			flags |= EAPOL_SM_FROM_PMKSA_CACHE;
 	}
@@ -1456,6 +1456,30 @@ static void ieee802_1x_rekey(void *eloop_ctx, void *timeout_ctx)
 static void ieee802_1x_eapol_send(void *ctx, void *sta_ctx, u8 type,
 				  const u8 *data, size_t datalen)
 {
+#ifdef CONFIG_WPS
+	struct sta_info *sta = sta_ctx;
+
+	if ((sta->flags & (WLAN_STA_WPS | WLAN_STA_MAYBE_WPS)) ==
+	    WLAN_STA_MAYBE_WPS) {
+		const u8 *identity;
+		size_t identity_len;
+		struct eapol_state_machine *sm = sta->eapol_sm;
+
+		identity = eap_get_identity(sm->eap, &identity_len);
+		if (identity &&
+		    ((identity_len == WSC_ID_ENROLLEE_LEN &&
+		      os_memcmp(identity, WSC_ID_ENROLLEE,
+				WSC_ID_ENROLLEE_LEN) == 0) ||
+		     (identity_len == WSC_ID_REGISTRAR_LEN &&
+		      os_memcmp(identity, WSC_ID_REGISTRAR,
+				WSC_ID_REGISTRAR_LEN) == 0))) {
+			wpa_printf(MSG_DEBUG, "WPS: WLAN_STA_MAYBE_WPS -> "
+				   "WLAN_STA_WPS");
+			sta->flags |= WLAN_STA_WPS;
+		}
+	}
+#endif /* CONFIG_WPS */
+
 	ieee802_1x_send(ctx, sta_ctx, type, data, datalen);
 }
 
@@ -1979,4 +2003,23 @@ static void ieee802_1x_finished(struct hostapd_data *hapd,
 			       HOSTAPD_LEVEL_DEBUG,
 			       "Added PMKSA cache entry (IEEE 802.1X)");
 	}
+
+#ifdef CONFIG_WPS
+	if (!success && (sta->flags & WLAN_STA_WPS)) {
+		/*
+		 * Many devices require deauthentication after WPS provisioning
+		 * and some may not be be able to do that themselves, so
+		 * disconnect the client here.
+		 */
+		wpa_printf(MSG_DEBUG, "WPS: Force disconnection after "
+			   "EAP-Failure");
+		/* Add a small sleep to increase likelihood of previously
+		 * requested EAP-Failure TX getting out before this should the
+		 * driver reorder operations.
+		 */
+		os_sleep(0, 10000);
+		ap_sta_disconnect(hapd, sta, sta->addr,
+				  WLAN_REASON_PREV_AUTH_NOT_VALID);
+	}
+#endif /* CONFIG_WPS */
 }
