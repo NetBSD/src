@@ -1,4 +1,4 @@
-$! Id: vmsbuild.com,v 1.1 2000/11/21 00:38:46 tom Exp
+$! $Id: vmsbuild.com,v 1.1.1.2 2011/09/10 21:18:59 christos Exp $
 $! VMS build-script for BYACC.  Requires installed C compiler
 $!
 $! Screen Configurations

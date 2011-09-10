@@ -1,5 +1,3 @@
-/*	$NetBSD: calc2.y,v 1.1.1.1 2010/12/23 23:36:30 christos Exp $	*/
-
 %parse-param { int regs[26] }
 %parse-param { int *base }
 
@@ -65,6 +63,11 @@ number:  DIGIT
       ;
 
 %% /* start of programs */
+
+#ifdef YYBYACC
+extern int YYLEX_DECL();
+static void YYERROR_DECL();
+#endif
 
 int
 main (void)

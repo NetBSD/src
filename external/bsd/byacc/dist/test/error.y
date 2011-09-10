@@ -1,10 +1,13 @@
-/*	$NetBSD: error.y,v 1.1.1.2 2010/12/23 23:36:27 christos Exp $	*/
-
 %%
 S: error
 %%
 
 #include <stdio.h>
+
+#ifdef YYBYACC
+extern int YYLEX_DECL();
+static void YYERROR_DECL();
+#endif
 
 int
 main(void)

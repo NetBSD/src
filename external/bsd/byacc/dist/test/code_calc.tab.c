@@ -1,5 +1,3 @@
-/*	$NetBSD: code_calc.tab.c,v 1.1.1.1 2010/12/23 23:36:27 christos Exp $	*/
-
 
 #ifndef yyparse
 #define yyparse    calc_parse

@@ -1,12 +1,135 @@
-2010-11-27  Thomas Dickey  <tom@crayon>
+2011-09-08  Thomas E. Dickey  <tom@invisible-island.net>
+
+	* package/debian/changelog, package/byacc.spec, VERSION: bump
+
+	* output.c:
+	fix some more interaction between -i and -d flags to ensure YYERRCODE
+	and YYSTYPE are declared, tested with cproto.
+
+2011-09-07  Thomas E. Dickey  <tom@invisible-island.net>
+
+	* yacc.1: document "-i" option.
+
+	* package/debian/changelog, package/byacc.spec, VERSION: bump
+
+	* output.c: fix an interaction between -i and -d
+
+	* test/code_error.code.c, test/error.tab.c, test/ftp.tab.c, test/grammar.tab.c, test/pure_calc.tab.c, test/pure_error.tab.c, test/calc.tab.c, test/calc1.tab.c, test/calc2.tab.c, test/calc3.tab.c, test/code_calc.code.c:
+	regen - changes for "-i" option move the global/impure variables near the
+	macros that may add a prefix, etc.
+
+	* skeleton.c, output.c, defs.h: changes to support "-i" option.
+
+2011-09-06  Thomas E. Dickey  <tom@invisible-island.net>
+
+	* reader.c: pass explicit file-pointer to write_section()
+
+	* main.c:
+	add "-i" option, to generate interface-file (suggested by Denis M. Wilson)
+
+2011-09-05  Thomas E. Dickey  <tom@invisible-island.net>
+
+	* configure: regen
+
+	* aclocal.m4:
+	resync with my-autoconf: CF_ANSI_CC_CHECK (check for $CFLAGS in $CC)
+	and CF_XOPEN_SOURCE (update aix, cygwin and netbsd checks)
+
+	* defs.h, error.c, reader.c:
+	add check for missing "}" on %parse-param and %lex-param lines (report by Denis M Wilson)
+
+2011-04-01  Thomas E. Dickey  <tom@invisible-island.net>
+
+	* config.sub: 2011-04-01
+
+2011-02-02  Thomas E. Dickey  <tom@invisible-island.net>
+
+	* config.guess: 2011-01-01
+
+2010-12-29  Thomas E. Dickey  <tom@invisible-island.net>
+
+	* defs.h, skeleton.c:
+	add const qualifier to skeleton data, per NetBSD changes (report by Christos Zoulas)
+
+	* defs.h:
+	mark all of the error-functions as non-returning (report by Christos Zoulas)
+
+	* test/grammar.tab.c, test/pure_calc.tab.c, test/pure_error.tab.c, test/calc.tab.c, test/calc1.tab.c, test/calc2.tab.c, test/calc3.tab.c, test/code_calc.code.c, test/code_error.code.c, test/error.tab.c, test/ftp.tab.c:
+	regen
+
+	* skeleton.c:
+	use only realloc() rather than realloc+malloc, agree that systems needing this
+	are very rare (prompted by NetBSD change).
+
+	* test/ftp.tab.c: regen
+
+2010-12-29  Christos.Zoulas
+
+	* test/ftp.y:
+	improve example, which was stuck in 19XX and assumed file sizes were longs.
+
+2010-12-29  Thomas E. Dickey  <tom@invisible-island.net>
+
+	* test/ftp.tab.c, test/grammar.tab.c, test/pure_calc.tab.c, test/pure_error.tab.c, test/calc.tab.c, test/calc1.tab.c, test/calc2.tab.c, test/calc3.tab.c, test/code_calc.code.c, test/code_error.code.c, test/error.tab.c:
+	regen
+
+	* test/pure_error.y, test/pure_calc.y, test/ftp.y, test/error.y, test/code_error.y, test/code_calc.y, test/calc.y, test/calc3.y, test/calc2.y, test/calc1.y:
+	use byacc's YYLEX_DECL/YYERROR_DECL symbols to prototype yylex/yyerror
+
+	* skeleton.c:
+	remove explicit prototype for yylex() via YYLEX_DECL() macro, since that
+	would prevent declaring yylex() static (request by Christos Zoulas).
+
+	* test/calc2.tab.c, test/calc3.tab.c: regen
+
+2010-12-29  Christos.Zoulas
+
+	* output.c: correct definition for YYERROR_DECL()
+
+2010-12-29  Thomas E. Dickey  <tom@invisible-island.net>
+
+	* package/debian/changelog, package/byacc.spec, VERSION: bump
+
+2010-12-26  Thomas E. Dickey  <tom@invisible-island.net>
+
+	* defs.h, main.c:
+	change return-type of allocate() to avoid warnings of alignment problems
+
+	* main.c: Solaris declares chmod() in <sys/stat.h>
+
+	* configure: regen
+
+	* main.c: ifdef'd use of fcntl.h
+
+	* configure.in: add configure checks for fcntl.h, atexit and mkstemp
+
+	* main.c: for cases where mkstemp() is not available, use tempnam/open
+
+	* aclocal.m4: add CF_MKSTEMP
+
+	* aclocal.m4:
+	improve quoting, deprecate ${name-value} in favor of standard ${name:-value}
+
+2010-12-25  Thomas E. Dickey  <tom@invisible-island.net>
+
+	* main.c:
+	start revising use of tmpfile(), to make this work with MinGW.  Start by
+	implementing a mkstemp() alternative - noting that mkstemp() also is broken
+	for MinGW.
+
+	* package/debian/changelog, package/byacc.spec, VERSION: bump
+
+2010-11-27  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* package/byacc.spec, package/debian/changelog, VERSION: bump
+
+	* test/calc2.tab.c, test/calc3.tab.c: regen
 
 	* output.c:
 	corrected use of %parse-param value in yyerror(); it doesn't use &yylval
 	(report by Clifford Yapp)
 
-2010-11-26  Thomas Dickey  <tom@crayon>
+2010-11-26  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* skeleton.c: typo
 
@@ -55,7 +178,7 @@
 
 	* package/debian/changelog, package/byacc.spec, VERSION: bump
 
-2010-11-24  Thomas Dickey  <tom@crayon>
+2010-11-24  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* main.c, defs.h, symtab.c, error.c: reduce global variables
 
@@ -65,7 +188,7 @@
 	amend fix for Redhat #112617 to still call default_action_warning() for
 	empty rules (report by Bruce Cran).
 
-2010-11-22  Thomas Dickey  <tom@crayon>
+2010-11-22  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* output.c:
 	add ifdef to guard against redefinition of YYSTYPE union (request by Clifford Yapp).
@@ -97,12 +220,20 @@
 
 	* package/debian/changelog, package/byacc.spec, VERSION: bump
 
-2010-06-10  Thomas Dickey  <tom@crayon>
+2010-09-28  Thomas E. Dickey  <tom@invisible-island.net>
+
+	* config.guess: 2010-09-24
+
+2010-09-10  Thomas E. Dickey  <tom@invisible-island.net>
+
+	* config.sub: 2010-09-11
+
+2010-06-10  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* yacc.1, package/debian/changelog, package/byacc.spec, VERSION:
 	bump to 2010/06/10
 
-2010-06-09  Thomas Dickey  <tom@crayon>
+2010-06-09  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* reader.c: free declarations in leak-testing code.
 
@@ -134,7 +265,7 @@
 	* test/ftp.tab.c, test/ftp.y, reader.c, symtab.c, verbose.c, lr0.c, main.c, mkpar.c, output.c, defs.h, closure.c:
 	fix warnings from clang --analyze
 
-2010-06-08  Thomas Dickey  <tom@crayon>
+2010-06-08  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* output.c: fix to build with c89, etc.
 
@@ -166,7 +297,7 @@
 	add check_make and check_lint rules to help validate the generated files
 	in the test-directory
 
-2010-06-07  Thomas Dickey  <tom@crayon>
+2010-06-07  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* test/pure_calc.tab.c, test/pure_error.tab.c: RCS_BASE
 
@@ -213,11 +344,11 @@
 	anyway.  This allows for better compatibility with yacc sources written
 	for bison.
 
-2010-06-07  Thomas Dickey  <tom@crayon>
+2010-06-07  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* VERSION: bump to 2010/06/07
 
-2010-06-06  Thomas Dickey  <tom@crayon>
+2010-06-06  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* test/calc.tab.c, configure: regen
 
@@ -268,12 +399,12 @@
 		c) CF_GCC_VERSION, ignore stderr
 		d) CF_GCC_WARNINGS, adjust options to work with c89 wrapper of gcc
 
-2010-04-20  Thomas Dickey  <tom@crayon>
+2010-04-20  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* package/debian/changelog, package/debian/compat, package/debian/control, package/debian/copyright, package/debian/docs, package/debian/postinst, package/debian/prerm, package/debian/rules, package/debian/watch:
 	scripts from Debian package
 
-2010-02-16  Thomas Dickey  <tom@crayon>
+2010-02-16  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* yacc.1: document -P and bison-extensions
 
@@ -325,24 +456,24 @@
 
 	* skeleton.c: fix a memory leak in the generated skeleton
 
-2010-01-01  Thomas Dickey  <tom@crayon>
+2010-01-01  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* package/debian/source/format: scripts from Debian package
 
-2009-12-31  Thomas Dickey  <tom@crayon>
+2009-12-31  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* config.guess: 2009-12-30
 
 	* config.sub: 2009-12-31
 
-2009-10-27  Thomas Dickey  <tom@crayon>
+2009-10-27  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* VERSION: 20091027
 
 	* output.c, mkpar.c, defs.h, lalr.c, closure.c, graph.c, lr0.c, verbose.c, main.c, reader.c:
 	strict compiler warnings
 
-2009-10-26  Thomas Dickey  <tom@crayon>
+2009-10-26  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* test/ftp.tab.c, test/grammar.tab.c, test/calc.tab.c, test/error.tab.c:
 	resync
@@ -357,44 +488,44 @@
 
 	* aclocal.m4: resync with my-autoconf
 
-2009-08-25  Thomas Dickey  <tom@crayon>
+2009-08-25  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* config.guess, config.sub: 2009-08-19
 
-2009-02-21  Thomas Dickey  <tom@crayon>
+2009-02-21  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* VERSION: bump
 
 	* output.c: restore "yylval" symbol, omitted in cleanup on 2008/8/25
 
-2008-12-26  Thomas Dickey  <tom@crayon>
+2008-12-26  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* configure: regen with autoconf-2.52 (patched)
 
-2008-12-25  Thomas Dickey  <tom@crayon>
+2008-12-25  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* test/error.tab.c, test/ftp.tab.c, test/grammar.tab.c, test/calc.tab.c:
 	regenerated
 
-2008-12-24  Thomas Dickey  <tom@crayon>
+2008-12-24  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* VERSION: bump
 
 	* skeleton.c:
 	remove ifdef-lint from goto yyerrlab, to quiet gcc warning
 
-2008-11-26  Thomas Dickey  <tom@crayon>
+2008-11-26  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* verbose.c, main.c, defs.h, mkpar.c, reader.c:
 	completed implementation of "%expect" (report by Perry E. Metzger).
 	add "%expect-rr", which is (unlike bison) allowable in LALR parsers.
 
-2008-11-24  Thomas Dickey  <tom@crayon>
+2008-11-24  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* closure.c, defs.h, error.c, graph.c, lalr.c, lr0.c, main.c, mkpar.c, output.c, reader.c, skeleton.c, symtab.c, verbose.c, warshall.c:
 	change indent-style (request by Perry E. Metzger)
 
-2008-08-27  Thomas Dickey  <tom@crayon>
+2008-08-27  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* test/calc.tab.c, test/error.tab.c, test/ftp.tab.c, test/grammar.tab.c:
 	better implementation of YYPARSE_PARAM, using YYPARSE_DECL() macro
@@ -433,12 +564,12 @@
 	* test/calc.tab.c, test/error.tab.c, test/ftp.tab.c, test/grammar.tab.c:
 	remove 'register' keywords
 
-2008-08-26  Thomas Dickey  <tom@crayon>
+2008-08-26  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* warshall.c, verbose.c, symtab.c, skeleton.c, reader.c, output.c, mkpar.c, main.c, lr0.c, lalr.c, graph.c, error.c, closure.c:
 	remove 'register' keywords
 
-2008-08-25  Thomas Dickey  <tom@crayon>
+2008-08-25  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* test/ftp.tab.c: regen'd
 
@@ -478,7 +609,7 @@
 
 	* makefile.in: add dependency on VERSION file.
 
-2008-08-24  Thomas Dickey  <tom@crayon>
+2008-08-24  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* VERSION: bump
 
@@ -496,18 +627,18 @@
 
 	* aclocal.m4: resync with my-autoconf (no major changes)
 
-2008-07-24  Thomas Dickey  <tom@crayon>
+2008-07-24  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* package/pkgsrc/Makefile, package/pkgsrc/distinfo:
 	scripts from NetBSD pkgsrc, for test-builds
 
-2008-03-14  Thomas Dickey  <tom@crayon>
+2008-03-14  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* config.sub: update to 2008-03-08
 
 	* config.guess: update to 2008-03-12
 
-2007-05-09  Thomas Dickey  <tom@crayon>
+2007-05-09  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* main.c: close graph, verbose files if opened, on exit.
 
@@ -534,19 +665,19 @@
 
 	* main.c: file_prefix did not always have a trailing null.
 
-2007-03-25  Thomas Dickey  <tom@crayon>
+2007-03-25  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* mkdirs.sh: improved version for "make -j"
 
-2006-12-22  Thomas Dickey  <tom@crayon>
+2006-12-22  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* config.guess: 2006/12/22
 
-2006-12-08  Thomas Dickey  <tom@crayon>
+2006-12-08  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* config.sub: 2006/12/08
 
-2005-08-13  Thomas Dickey  <tom@crayon>
+2005-08-13  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* main.c: add -V to usage message
 
@@ -565,23 +696,23 @@
 	Debian #322858 (don't close union_file, which contained data).
 	This feature is used in groff.
 
-2005-08-13  Thomas Dickey  <tom@crayon>
+2005-08-13  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* configure: regenerated
 
 	* aclocal.m4: improve checks for Intel compiler warnings
 
-2005-06-25  Thomas Dickey  <tom@crayon>
+2005-06-25  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* config.sub: 2005/6/2
 
 	* config.guess: 2005/5/27
 
-2005-05-05  Thomas Dickey  <tom@crayon>
+2005-05-05  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* defs.h: add a fallback for GCC_UNUSED
 
-2005-05-04  Thomas Dickey  <tom@crayon>
+2005-05-04  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* makefile.in: add "." to include-path to pickup config.h
 
@@ -636,7 +767,7 @@
 	add "-o" to usage message.  It is too long for a single line; rewrite usage()
 	to show one option per line.
 
-2005-05-03  Thomas Dickey  <tom@crayon>
+2005-05-03  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* main.c: add -o option, to work with scripts that assume bison.
 	simplify create_file_names() with a macro.
@@ -667,21 +798,21 @@
 	add graphical output of the LALR(1) automaton for graphviz,
 	associated with command-line option `-g'
 
-2005-04-16  Thomas Dickey  <tom@crayon>
+2005-04-16  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* config.sub: 2005/2/10
 
 	* config.guess: 2005/3/24
 
-2005-04-13  Thomas Dickey  <tom@crayon>
+2005-04-13  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* package/pkgsrc/PLIST: scripts from NetBSD pkgsrc, for test-builds
 
-2005-03-21  Thomas Dickey  <tom@crayon>
+2005-03-21  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* package/pkgsrc/DESCR: scripts from NetBSD pkgsrc, for test-builds
 
-2004-03-28  Thomas Dickey  <tom@crayon>
+2004-03-28  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* test/calc.tab.c, test/error.tab.c, test/ftp.tab.c, test/grammar.tab.c:
 	updates due to adding yyparse() prototype
@@ -743,32 +874,32 @@
 
 	* README: updated to note that this is not the original
 
-2004-03-24  Thomas Dickey  <tom@crayon>
+2004-03-24  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* test/grammar.y: RCS_BASE
 
-2004-02-23  Thomas Dickey  <tom@crayon>
+2004-02-23  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* config.sub: RCS_BASE
 
-2004-02-17  Thomas Dickey  <tom@crayon>
+2004-02-17  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* config.guess: RCS_BASE
 
-2003-11-29  Thomas Dickey  <tom@crayon>
+2003-11-29  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* install-sh: improved quoting
 
-2002-06-29  Thomas Dickey  <tom@crayon>
+2002-06-29  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* mkdirs.sh:
 	don't use character range, since some locales don't work as expected
 
-2001-06-22  Thomas Dickey  <tom@crayon>
+2001-06-22  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* install-sh: RCS_BASE
 
-2000-11-20  Thomas Dickey  <tom@crayon>
+2000-11-20  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* test/calc.y: RCS_BASE
 
@@ -776,26 +907,26 @@
 
 	* vmsbuild.com: original version
 
-2000-02-23  dickey
+2000-02-23  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* test/RCS, RCS: PERMIT FILE
 
-2000-02-14  Thomas Dickey  <tom@crayon>
+2000-02-14  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* main.c: fix for VMS port - making pathname for temp-file
 
 	* descrip.mms: original version
 
-2000-02-13  Thomas Dickey  <tom@crayon>
+2000-02-13  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* defs.h, verbose.c, reader.c, main.c, skeleton.c, warshall.c, symtab.c, closure.c, mkpar.c, lalr.c, lr0.c, output.c, error.c:
 	ansify
 
-1999-11-30  Thomas Dickey  <tom@crayon>
+1999-11-30  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* mkdirs.sh: RCS_BASE
 
-1995-01-01  Thomas Dickey  <tom@crayon>
+1995-01-01  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* config_h.in: RCS_BASE
 
@@ -847,7 +978,7 @@
 
 	* symtab.c, lalr.c, error.c: original version
 
-1990-01-16  Thomas Dickey  <tom@crayon>
+1990-01-16  Thomas E. Dickey  <tom@invisible-island.net>
 
 	* test/code_error.y, test/pure_error.y: RCS_BASE
 
