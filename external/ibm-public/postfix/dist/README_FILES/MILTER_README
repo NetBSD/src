@@ -339,8 +339,11 @@ Sendmail. See the workarounds section below for solutions.
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
     |{client_addr}       |Always                   |Client IP address         |
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |{client_connections}|CONNECT                  |Connection concurrency for|
-    |                    |                         |this client               |
+    |                    |                         |Connection concurrency for|
+    |                    |                         |this client (zero if the  |
+    |{client_connections}|CONNECT                  |client is excluded from   |
+    |                    |                         |all smtpd_client_*        |
+    |                    |                         |limits).                  |
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
     |                    |                         |Client hostname           |
     |                    |                         |When address -> name      |
