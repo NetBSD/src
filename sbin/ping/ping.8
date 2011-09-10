@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping.8,v 1.48 2011/09/10 20:04:28 christos Exp $
+.\"	$NetBSD: ping.8,v 1.49 2011/09/10 20:46:43 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,45 +39,19 @@
 packets to network hosts
 .Sh SYNOPSIS
 .Nm
-.Bk -words
-.Op Fl aCdDfLnoPqQrRv
-.Ek
-.Bk -words
+.Op Fl aCDdfLnoPQqRrv
 .Op Fl c Ar count
-.Ek
-.Bk -words
 .Op Fl E Ar policy
-.Ek
-.Bk -words
 .Op Fl g Ar gateway
-.Ek
-.Bk -words
 .Op Fl h Ar host
-.Ek
-.Bk -words
 .Op Fl i Ar interval
-.Ek
-.Bk -words
 .Op Fl I Ar srcaddr
-.Ek
-.Bk -words
 .Op Fl l Ar preload
-.Ek
-.Bk -words
 .Op Fl p Ar pattern
-.Ek
-.Bk -words
 .Op Fl s Ar packetsize
-.Ek
-.Bk -words
-.Op Fl t Ar tos
-.Ek
-.Bk -words
 .Op Fl T Ar ttl
-.Ek
-.Bk -words
+.Op Fl t Ar tos
 .Op Fl w Ar deadline
-.Ek
 .Ar host
 .Sh DESCRIPTION
 .Nm
@@ -103,24 +77,24 @@ Emit an audible beep (by sending an ascii BEL character to the
 standard error output) after each non-duplicate response is received.
 This is disabled for flood pings as it would probably cause temporary
 insanity.
+.It Fl C
+Send timestamps in compat format; two 32 bit words in little endian format,
+the first one representing seconds, and the second one representing
+microseconds.
 .It Fl c Ar count
 Stop after sending (and waiting the specified delay to receive)
 .Ar count
 .Tn ECHO_RESPONSE
 packets.
-.It Fl C
-Send timestamps in compat format; two 32 bit words in little endian format,
-the first one representing seconds, and the second one representing
-microseconds.
-.It Fl d
-Set the
-.Dv SO_DEBUG
-option on the socket being used.
 .It Fl D
 Set the
 .Dv Don't Fragment
 bit in the IP header.
 This can be used to determine the path MTU.
+.It Fl d
+Set the
+.Dv SO_DEBUG
+option on the socket being used.
 .It Fl E Ar policy
 Use IPsec policy specification string
 .Ar policy
@@ -151,6 +125,14 @@ This can be very hard on a network and should be used with caution.
 .It Fl g Ar gateway
 Use Loose Source Routing to send the ECHO_REQUEST packets via
 .Ar gateway .
+.It Fl h Ar host
+is an alternate way of specifying the target host instead of as the
+last argument.
+.It Fl I Ar srcaddr
+Set the source IP address to
+.Ar srcaddr
+which can be a hostname or an IP number.
+For multicast datagrams, it also specifies the outgoing interface.
 .It Fl i Ar interval
 Wait
 .Ar interval
@@ -158,14 +140,9 @@ seconds
 .Em between sending each packet .
 The default is to wait for one second between each packet,
 except when the -f option is used the wait interval is 0.01 seconds.
-.It Fl I Ar srcaddr
-Set the source IP address to
-.Ar srcaddr
-which can be a hostname or an IP number.
-For multicast datagrams, it also specifies the outgoing interface.
-.It Fl h Ar host
-is an alternate way of specifying the target host instead of as the
-last argument.
+.It Fl L
+Disable loopback when sending to multicast destinations,
+so the transmitting host doesn't see the ICMP requests.
 .It Fl l Ar preload
 If
 .Ar preload
@@ -174,14 +151,15 @@ is specified,
 sends that many packets as fast as possible before falling into its normal
 mode of behavior.
 Only the super-user may use this option.
-.It Fl L
-Disable loopback when sending to multicast destinations,
-so the transmitting host doesn't see the ICMP requests.
 .It Fl n
 Numeric output only.
 No attempt will be made to look up symbolic names for host addresses.
 .It Fl o
 Exit successfully after receiving one reply packet.
+.It Fl P
+Use a pseudo-random sequence for the data instead of the default,
+fixed sequence of incrementing 8-bit integers.
+This is useful to foil compression on PPP and other links.
 .It Fl p Ar pattern
 You may specify up to 16 ``pad'' bytes to fill out the packet you send.
 This is useful for diagnosing data-dependent problems in a network.
@@ -189,24 +167,13 @@ For example,
 .Dq Li \-p ff
 will cause the sent packet to be filled with all
 ones.
-.It Fl P
-Use a pseudo-random sequence for the data instead of the default,
-fixed sequence of incrementing 8-bit integers.
-This is useful to foil compression on PPP and other links.
+.It Fl Q
+Do not display responses such as Network Unreachable ICMP messages
+concerning the ECHO_REQUESTs sent.
 .It Fl q
 Quiet output.
 Nothing is displayed except the summary lines at startup time and
 when finished.
-.It Fl Q
-Do not display responses such as Network Unreachable ICMP messages
-concerning the ECHO_REQUESTs sent.
-.It Fl r
-Bypass the normal routing tables and send directly to a host on an attached
-network.
-If the host is not on a directly-attached network, an error is returned.
-This option can be used to ping a local host through an interface
-that has no route through it (e.g., after the interface was dropped by
-.Xr routed 8 ) .
 .It Fl R
 Record Route.
 Includes the
@@ -223,6 +190,13 @@ option.
 This is why it was necessary to invent
 .Xr traceroute 8 .
 Many hosts ignore or discard this option.
+.It Fl r
+Bypass the normal routing tables and send directly to a host on an attached
+network.
+If the host is not on a directly-attached network, an error is returned.
+This option can be used to ping a local host through an interface
+that has no route through it (e.g., after the interface was dropped by
+.Xr routed 8 ) .
 .It Fl s Ar packetsize
 Specifies the number of data bytes to be sent.
 The default is 56, which translates into 64
@@ -332,7 +306,7 @@ If the data space is at least
 .Nm
 uses the first
 .Dv sizeof(struct timespec)
-byres to include a timestamp to compute round trip times.
+bytes to include a timestamp to compute round trip times.
 Otherwise if the data space is at least eight bytes large (or the
 .Fl C
 flag is specified),
@@ -486,8 +460,8 @@ The
 flag conflicts with
 .Fx .
 The
-.Fl a , c , i , I ,
-.Fl l , p , P , s ,
+.Fl a , c , I , i ,
+.Fl l , P , p , s ,
 and
 .Fl t
 flags conflict with
