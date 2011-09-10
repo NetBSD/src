@@ -1323,6 +1323,7 @@ void wpa_supplicant_disassociate(struct wpa_supplicant *wpa_s,
 	eapol_sm_notify_config(wpa_s->eapol, NULL, NULL);
 	if (old_ssid != wpa_s->current_ssid)
 		wpas_notify_network_changed(wpa_s);
+	eloop_cancel_timeout(wpa_supplicant_timeout, wpa_s, NULL);
 }
 
 
@@ -1357,6 +1358,7 @@ void wpa_supplicant_deauthenticate(struct wpa_supplicant *wpa_s,
 	eapol_sm_notify_config(wpa_s->eapol, NULL, NULL);
 	if (old_ssid != wpa_s->current_ssid)
 		wpas_notify_network_changed(wpa_s);
+	eloop_cancel_timeout(wpa_supplicant_timeout, wpa_s, NULL);
 }
 
 
@@ -1392,13 +1394,15 @@ void wpa_supplicant_enable_network(struct wpa_supplicant *wpa_s,
 		}
 		if (wpa_s->reassociate)
 			wpa_supplicant_req_scan(wpa_s, 0, 0);
-	} else if (wpa_s->current_ssid == NULL && ssid->disabled) {
-		/*
-		 * Try to reassociate since there is no current configuration
-		 * and a new network was made available.
-		 */
-		wpa_s->reassociate = 1;
-		wpa_supplicant_req_scan(wpa_s, 0, 0);
+	} else if (ssid->disabled) {
+		if (wpa_s->current_ssid == NULL) {
+			/*
+			 * Try to reassociate since there is no current
+			 * configuration and a new network was made available.
+			 */
+			wpa_s->reassociate = 1;
+			wpa_supplicant_req_scan(wpa_s, 0, 0);
+		}
 
 		was_disabled = ssid->disabled;
 
