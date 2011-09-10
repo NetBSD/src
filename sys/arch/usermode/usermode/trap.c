@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.38 2011/09/09 12:21:57 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.39 2011/09/10 10:29:39 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.38 2011/09/09 12:21:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.39 2011/09/10 10:29:39 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -89,7 +89,7 @@ setup_signal_handlers(void)
 	if (thunk_sigaction(SIGBUS, &sa, NULL) == -1)
 		panic("couldn't register SIGBUS handler : %d", thunk_geterrno());
 
-	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
+	sa.sa_flags = SA_RESTART | SA_SIGINFO;
 	sa.sa_sigaction = illegal_instruction_handler;
 	thunk_sigemptyset(&sa.sa_mask);
 	thunk_sigaddset(&sa.sa_mask, SIGALRM);
