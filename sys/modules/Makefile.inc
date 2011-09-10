@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.4 2011/08/28 15:40:50 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2011/09/10 08:27:06 mbalmer Exp $
 
 S!=		cd ${.PARSEDIR}/..;pwd
-CPPFLAGS+=	-I${NETBSDSRCDIR}/common/include
+CPPFLAGS+=	-I${NETBSDSRCDIR}/common/include -DSYSCTL_INCLUDE_DESCR
 USE_FORT=	no
 WARNS?=		3
 
