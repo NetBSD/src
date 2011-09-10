@@ -1,10 +1,10 @@
-/*	$NetBSD: symtab.c,v 1.5 2010/12/25 23:43:30 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.6 2011/09/10 21:29:04 christos Exp $	*/
 /* Id: symtab.c,v 1.9 2010/11/24 15:12:29 tom Exp */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: symtab.c,v 1.5 2010/12/25 23:43:30 christos Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.6 2011/09/10 21:29:04 christos Exp $");
 
 /* TABLE_SIZE is the number of entries in the symbol table. */
 /* TABLE_SIZE must be a power of two.			    */

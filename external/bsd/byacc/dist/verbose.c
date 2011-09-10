@@ -1,10 +1,10 @@
-/*	$NetBSD: verbose.c,v 1.5 2010/12/25 23:43:30 christos Exp $	*/
+/*	$NetBSD: verbose.c,v 1.6 2011/09/10 21:29:04 christos Exp $	*/
 /* Id: verbose.c,v 1.9 2010/06/09 08:58:29 tom Exp */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: verbose.c,v 1.5 2010/12/25 23:43:30 christos Exp $");
+__RCSID("$NetBSD: verbose.c,v 1.6 2011/09/10 21:29:04 christos Exp $");
 
 static void log_conflicts(void);
 static void log_unused(void);

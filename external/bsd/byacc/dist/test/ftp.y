@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.y,v 1.3 2010/12/24 02:58:21 christos Exp $	*/
+/*	$NetBSD: ftp.y,v 1.4 2011/09/10 21:29:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988 Regents of the University of California.
@@ -17,7 +17,7 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  *	from: @(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89
- *	$NetBSD: ftp.y,v 1.3 2010/12/24 02:58:21 christos Exp $
+ *	$NetBSD: ftp.y,v 1.4 2011/09/10 21:29:04 christos Exp $
  */
 
 /*
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";
-static char rcsid[] = "$NetBSD: ftp.y,v 1.3 2010/12/24 02:58:21 christos Exp $";
+static char rcsid[] = "$NetBSD: ftp.y,v 1.4 2011/09/10 21:29:04 christos Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -259,7 +259,7 @@ cmd:		USER SP username CRLF
 		}
 	|	NLST check_login SP STRING CRLF
 		= {
-			if ($2 && $4 != 0) 
+			if ($2 && $4 != 0)
 				send_file_list((char *) $4);
 			if ($4 != 0)
 				free((char *) $4);
@@ -522,7 +522,7 @@ rcmd:		RNFR check_login SP pathname CRLF
 			}
 		}
 	;
-		
+
 username:	STRING
 	;
 
@@ -536,7 +536,7 @@ password:	/* empty */
 byte_size:	NUMBER
 	;
 
-host_port:	NUMBER COMMA NUMBER COMMA NUMBER COMMA NUMBER COMMA 
+host_port:	NUMBER COMMA NUMBER COMMA NUMBER COMMA NUMBER COMMA
 		NUMBER COMMA NUMBER
 		= {
 			register char *a, *p;
@@ -692,6 +692,11 @@ check_login:	/* empty */
 	;
 
 %%
+
+#ifdef YYBYACC
+extern int YYLEX_DECL();
+static void YYERROR_DECL();
+#endif
 
 extern jmp_buf errcatch;
 
@@ -1182,7 +1187,11 @@ sizecmd(char *filename)
 		    (stbuf.st_mode&S_IFMT) != S_IFREG)
 			reply(550, "%s: not a plain file.", filename);
 		else
-			reply(213, "%llu", (long long)stbuf.st_size);
+#ifdef HAVE_LONG_LONG
+			reply(213, "%llu", (long long) stbuf.st_size);
+#else
+			reply(213, "%lu", stbuf.st_size);
+#endif
 		break;}
 	case TYPE_A: {
 		FILE *fin;

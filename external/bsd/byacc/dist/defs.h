@@ -1,9 +1,9 @@
-/*	$NetBSD: defs.h,v 1.4 2010/12/24 02:58:20 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.5 2011/09/10 21:29:04 christos Exp $	*/
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-/* Id: defs.h,v 1.30 2010/11/26 15:19:36 tom Exp */
+/* Id: defs.h,v 1.35 2011/09/07 08:55:03 tom Exp */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -76,10 +76,12 @@
 #if defined(VMS)
 #define CODE_SUFFIX	"_code.c"
 #define	DEFINES_SUFFIX	"_tab.h"
+#define	EXTERNS_SUFFIX	"_tab.i"
 #define	OUTPUT_SUFFIX	"_tab.c"
 #else
 #define CODE_SUFFIX	".code.c"
 #define	DEFINES_SUFFIX	".tab.h"
+#define	EXTERNS_SUFFIX	".tab.i"
 #define	OUTPUT_SUFFIX	".tab.c"
 #endif
 #define	VERBOSE_SUFFIX	".output"
@@ -230,6 +232,7 @@ struct param
 
 extern char dflag;
 extern char gflag;
+extern char iflag;
 extern char lflag;
 extern char rflag;
 extern char tflag;
@@ -244,24 +247,29 @@ extern int outline;
 extern int exit_code;
 extern int pure_parser;
 
-extern const char * const banner[];
-extern const char * const xdecls[];
-extern const char * const tables[];
-extern const char * const hdr_defs[];
-extern const char * const hdr_vars[];
-extern const char * const body_1[];
-extern const char * const body_vars[];
-extern const char * const body_2[];
-extern const char * const body_3[];
-extern const char * const trailer[];
-extern const char * const trailer_2[];
+extern const char *const banner[];
+extern const char *const xdecls[];
+extern const char *const tables[];
+extern const char *const global_vars[];
+extern const char *const impure_vars[];
+extern const char *const hdr_defs[];
+extern const char *const hdr_vars[];
+extern const char *const body_1[];
+extern const char *const body_vars[];
+extern const char *const body_2[];
+extern const char *const body_3[];
+extern const char *const trailer[];
+extern const char *const trailer_2[];
 
 extern char *code_file_name;
 extern char *input_file_name;
+extern char *defines_file_name;
+extern char *externs_file_name;
 
 extern FILE *action_file;
 extern FILE *code_file;
 extern FILE *defines_file;
+extern FILE *externs_file;
 extern FILE *input_file;
 extern FILE *output_file;
 extern FILE *text_file;
@@ -353,36 +361,37 @@ extern void set_first_derives(void);
 
 /* error.c */
 extern void default_action_warning(void);
-extern void dollar_error(int a_lineno, char *a_line, char *a_cptr);
+extern void dollar_error(int a_lineno, char *a_line, char *a_cptr) GCC_NORETURN;
 extern void dollar_warning(int a_lineno, int i);
-extern void fatal(const char *msg);
-extern void illegal_character(char *c_cptr);
-extern void illegal_tag(int t_lineno, char *t_line, char *t_cptr);
-extern void no_grammar(void);
-extern void no_space(void);
-extern void open_error(const char *filename);
-extern void over_unionized(char *u_cptr);
+extern void fatal(const char *msg) GCC_NORETURN;
+extern void illegal_character(char *c_cptr) GCC_NORETURN;
+extern void illegal_tag(int t_lineno, char *t_line, char *t_cptr) GCC_NORETURN;
+extern void missing_brace(void) GCC_NORETURN;
+extern void no_grammar(void) GCC_NORETURN;
+extern void no_space(void) GCC_NORETURN;
+extern void open_error(const char *filename) GCC_NORETURN;
+extern void over_unionized(char *u_cptr) GCC_NORETURN;
 extern void prec_redeclared(void);
 extern void reprec_warning(char *s);
 extern void restarted_warning(void);
 extern void retyped_warning(char *s);
 extern void revalued_warning(char *s);
-extern __dead void syntax_error(int st_lineno, char *st_line, char *st_cptr) GCC_NORETURN;
-extern void terminal_lhs(int s_lineno);
-extern void terminal_start(char *s);
-extern void tokenized_start(char *s);
-extern void undefined_goal(char *s);
+extern void syntax_error(int st_lineno, char *st_line, char *st_cptr) GCC_NORETURN;
+extern void terminal_lhs(int s_lineno) GCC_NORETURN;
+extern void terminal_start(char *s) GCC_NORETURN;
+extern void tokenized_start(char *s) GCC_NORETURN;
+extern void undefined_goal(char *s) GCC_NORETURN;
 extern void undefined_symbol_warning(char *s);
-extern void unexpected_EOF(void);
-extern void unknown_rhs(int i);
-extern void unterminated_action(int a_lineno, char *a_line, char *a_cptr);
-extern void unterminated_comment(int c_lineno, char *c_line, char *c_cptr);
-extern void unterminated_string(int s_lineno, char *s_line, char *s_cptr);
-extern void unterminated_text(int t_lineno, char *t_line, char *t_cptr);
-extern void unterminated_union(int u_lineno, char *u_line, char *u_cptr);
-extern void untyped_lhs(void);
-extern void untyped_rhs(int i, char *s);
-extern void used_reserved(char *s);
+extern void unexpected_EOF(void) GCC_NORETURN;
+extern void unknown_rhs(int i) GCC_NORETURN;
+extern void unterminated_action(int a_lineno, char *a_line, char *a_cptr) GCC_NORETURN;
+extern void unterminated_comment(int c_lineno, char *c_line, char *c_cptr) GCC_NORETURN;
+extern void unterminated_string(int s_lineno, char *s_line, char *s_cptr) GCC_NORETURN;
+extern void unterminated_text(int t_lineno, char *t_line, char *t_cptr) GCC_NORETURN;
+extern void unterminated_union(int u_lineno, char *u_line, char *u_cptr) GCC_NORETURN;
+extern void untyped_lhs(void) GCC_NORETURN;
+extern void untyped_rhs(int i, char *s) GCC_NORETURN;
+extern void used_reserved(char *s) GCC_NORETURN;
 
 /* graph.c */
 extern void graph(void);
@@ -403,7 +412,7 @@ extern void show_rrhs(void);
 extern void show_shifts(void);
 
 /* main.c */
-extern char *allocate(size_t n);
+extern void *allocate(size_t n);
 extern void done(int k) GCC_NORETURN;
 
 /* mkpar.c */
@@ -417,7 +426,7 @@ extern void output(void);
 extern void reader(void);
 
 /* skeleton.c */
-extern void write_section(const char * const section[]);
+extern void write_section(FILE *fp, const char *const section[]);
 
 /* verbose.c */
 extern void verbose(void);

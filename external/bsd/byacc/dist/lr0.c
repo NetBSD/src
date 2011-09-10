@@ -1,10 +1,10 @@
-/*	$NetBSD: lr0.c,v 1.5 2010/12/25 23:43:30 christos Exp $	*/
+/*	$NetBSD: lr0.c,v 1.6 2011/09/10 21:29:04 christos Exp $	*/
 /* Id: lr0.c,v 1.12 2010/06/09 08:53:17 tom Exp */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lr0.c,v 1.5 2010/12/25 23:43:30 christos Exp $");
+__RCSID("$NetBSD: lr0.c,v 1.6 2011/09/10 21:29:04 christos Exp $");
 
 static core *new_state(int symbol);
 static Value_t get_state(int symbol);

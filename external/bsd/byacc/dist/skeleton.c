@@ -1,10 +1,10 @@
-/*	$NetBSD: skeleton.c,v 1.9 2010/12/25 23:43:30 christos Exp $	*/
-/* Id: skeleton.c,v 1.27 2010/11/26 17:24:00 tom Exp */
+/*	$NetBSD: skeleton.c,v 1.10 2011/09/10 21:29:04 christos Exp $	*/
+/* Id: skeleton.c,v 1.31 2011/09/07 09:37:59 tom Exp */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeleton.c,v 1.9 2010/12/25 23:43:30 christos Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.10 2011/09/10 21:29:04 christos Exp $");
 
 /*  The definition of yysccsid in the banner should be replaced with	*/
 /*  a #pragma ident directive if the target C compiler supports		*/
@@ -18,7 +18,7 @@ __RCSID("$NetBSD: skeleton.c,v 1.9 2010/12/25 23:43:30 christos Exp $");
 /*  the body either are not useful outside of semantic actions or	*/
 /*  are conditional.							*/
 
-const char * const banner[] =
+const char *const banner[] =
 {
     "#ifndef lint",
     "static const char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
@@ -45,8 +45,9 @@ const char * const banner[] =
     0
 };
 
-const char * const xdecls[] =
+const char *const xdecls[] =
 {
+    "",
     "extern int YYPARSE_DECL();",
 #ifdef notdef
     "extern int YYLEX_DECL();",
@@ -55,7 +56,7 @@ const char * const xdecls[] =
     0
 };
 
-const char * const tables[] =
+const char *const tables[] =
 {
     "extern short yylhs[];",
     "extern short yylen[];",
@@ -74,8 +75,27 @@ const char * const tables[] =
     0
 };
 
-const char * const hdr_defs[] =
+const char *const global_vars[] =
 {
+    "",
+    "int      yydebug;",
+    "int      yynerrs;",
+    0
+};
+
+const char *const impure_vars[] =
+{
+    "",
+    "int      yyerrflag;",
+    "int      yychar;",
+    "YYSTYPE  yyval;",
+    "YYSTYPE  yylval;",
+    0
+};
+
+const char *const hdr_defs[] =
+{
+    "",
     "/* define the initial stack-sizes */",
     "#ifdef YYSTACKSIZE",
     "#undef YYMAXDEPTH",
@@ -91,9 +111,6 @@ const char * const hdr_defs[] =
     "",
     "#define YYINITSTACKSIZE 500",
     "",
-    "int      yydebug;",
-    "int      yynerrs;",
-    "",
     "typedef struct {",
     "    unsigned stacksize;",
     "    short    *s_base;",
@@ -105,19 +122,14 @@ const char * const hdr_defs[] =
     0
 };
 
-const char * const hdr_vars[] =
+const char *const hdr_vars[] =
 {
-    "int      yyerrflag;",
-    "int      yychar;",
-    "YYSTYPE  yyval;",
-    "YYSTYPE  yylval;",
-    "",
     "/* variables for the parser stack */",
     "static YYSTACKDATA yystack;",
     0
 };
 
-const char * const body_vars[] =
+const char *const body_vars[] =
 {
     "    int      yyerrflag;",
     "    int      yychar;",
@@ -129,7 +141,7 @@ const char * const body_vars[] =
     0
 };
 
-const char * const body_1[] =
+const char *const body_1[] =
 {
     "",
     "#if YYDEBUG",
@@ -155,18 +167,14 @@ const char * const body_1[] =
     "        newsize = YYMAXDEPTH;",
     "",
     "    i = data->s_mark - data->s_base;",
-    "    newss = (data->s_base != 0)",
-    "          ? (short *)realloc(data->s_base, newsize * sizeof(*newss))",
-    "          : (short *)malloc(newsize * sizeof(*newss));",
+    "    newss = (short *)realloc(data->s_base, newsize * sizeof(*newss));",
     "    if (newss == 0)",
     "        return -1;",
     "",
     "    data->s_base = newss;",
     "    data->s_mark = newss + i;",
     "",
-    "    newvs = (data->l_base != 0)",
-    "          ? (YYSTYPE *)realloc(data->l_base, newsize * sizeof(*newvs))",
-    "          : (YYSTYPE *)malloc(newsize * sizeof(*newvs));",
+    "    newvs = (YYSTYPE *)realloc(data->l_base, newsize * sizeof(*newvs));",
     "    if (newvs == 0)",
     "        return -1;",
     "",
@@ -200,7 +208,7 @@ const char * const body_1[] =
     0
 };
 
-const char * const body_2[] =
+const char *const body_2[] =
 {
     "    int yym, yyn, yystate;",
     "#if YYDEBUG",
@@ -275,7 +283,7 @@ const char * const body_2[] =
     0
 };
 
-const char * const body_3[] =
+const char *const body_3[] =
 {
     "",
     "    goto yyerrlab;",
@@ -354,7 +362,7 @@ const char * const body_3[] =
     0
 };
 
-const char * const trailer[] =
+const char *const trailer[] =
 {
     "    }",
     "    yystack.s_mark -= yym;",
@@ -410,7 +418,7 @@ const char * const trailer[] =
     0
 };
 
-const char * const trailer_2[] =
+const char *const trailer_2[] =
 {
     "",
     "yyabort:",
@@ -425,22 +433,21 @@ const char * const trailer_2[] =
 };
 
 void
-write_section(const char * const section[])
+write_section(FILE * fp, const char *const section[])
 {
     int c;
     int i;
     const char *s;
-    FILE *f;
 
-    f = code_file;
     for (i = 0; (s = section[i]) != 0; ++i)
     {
-	++outline;
 	while ((c = *s) != 0)
 	{
-	    putc(c, f);
+	    putc(c, fp);
 	    ++s;
 	}
-	putc('\n', f);
+	if (fp == code_file)
+	    ++outline;
+	putc('\n', fp);
     }
 }
