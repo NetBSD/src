@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping.8,v 1.47 2006/03/21 22:54:46 pavel Exp $
+.\"	$NetBSD: ping.8,v 1.48 2011/09/10 20:04:28 christos Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd March 21, 2006
+.Dd September 10, 2011
 .Dt PING 8
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@ packets to network hosts
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl adDfLnoPqQrRv
+.Op Fl aCdDfLnoPqQrRv
 .Ek
 .Bk -words
 .Op Fl c Ar count
@@ -93,7 +93,7 @@ datagrams (``pings'') have an IP and
 .Tn ICMP
 header,
 followed by a
-.Dq struct timeval
+.Dq struct timespec
 and then an arbitrary number of ``pad'' bytes used to fill out the
 packet.
 The options are as follows:
@@ -108,6 +108,10 @@ Stop after sending (and waiting the specified delay to receive)
 .Ar count
 .Tn ECHO_RESPONSE
 packets.
+.It Fl C
+Send timestamps in compat format; two 32 bit words in little endian format,
+the first one representing seconds, and the second one representing
+microseconds.
 .It Fl d
 Set the
 .Dv SO_DEBUG
@@ -322,12 +326,20 @@ will always be 8 bytes more than the requested data space (the
 .Tn ICMP
 header).
 .Pp
-If the data space is at least eight bytes large,
+If the data space is at least 
+.Dv sizeof(struct timespec)
+(16) large,
+.Nm
+uses the first
+.Dv sizeof(struct timespec)
+byres to include a timestamp to compute round trip times.
+Otherwise if the data space is at least eight bytes large (or the
+.Fl C
+flag is specified),
 .Nm
 uses the first eight bytes of this space to include a timestamp to compute
 round trip times.
-If less than eight bytes of pad are specified,
-no round trip times are given.
+If there are not enough bytes of pad no round trip times are given.
 .Sh DUPLICATE AND DAMAGED PACKETS
 .Nm
 will report duplicate and damaged packets.
