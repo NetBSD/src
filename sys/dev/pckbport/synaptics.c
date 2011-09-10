@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.27 2011/09/09 14:29:47 jakllsch Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.28 2011/09/10 18:38:20 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.27 2011/09/09 14:29:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.28 2011/09/10 18:38:20 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ static void pms_synaptics_process_packet(struct pms_softc *,
 static void pms_sysctl_synaptics(struct sysctllog **);
 static int pms_sysctl_synaptics_verify(SYSCTLFN_ARGS);
 
-/* Controled by sysctl. */
+/* Controlled by sysctl. */
 static int synaptics_up_down_emul = 2;
 static int synaptics_up_down_motion_delta = 1;
 static int synaptics_gesture_move = 200;
@@ -136,7 +136,7 @@ pms_synaptics_probe_init(void *vsc)
 {
 	struct pms_softc *psc = vsc;
 	struct synaptics_softc *sc = &psc->u.synaptics;
-	u_char cmd[2], resp[3];
+	u_char cmd[1], resp[3];
 	int res, ver_minor, ver_major;
 	struct sysctllog *clog = NULL;
 
@@ -724,7 +724,7 @@ pms_synaptics_input(void *vsc, int data)
 	struct timeval diff;
 
 	if (!psc->sc_enabled) {
-		/* Interrupts are not expected.	 Discard the byte. */
+		/* Interrupts are not expected. Discard the byte. */
 		return;
 	}
 
@@ -775,7 +775,7 @@ pms_synaptics_input(void *vsc, int data)
 
 		if ((psc->packet[0] & 0xfc) == 0x84 &&
 		    (psc->packet[3] & 0xcc) == 0xc4) {
-			/* PS/2 passthrough */
+			/* W = SYNAPTICS_WIDTH_PASSTHROUGH, PS/2 passthrough */
 			pms_synaptics_passthrough(psc);
 		} else {
 			pms_synaptics_parse(psc);
