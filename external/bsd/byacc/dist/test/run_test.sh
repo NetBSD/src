@@ -1,5 +1,5 @@
 #!/bin/sh
-# Id: run_test.sh,v 1.6 2010/06/08 08:53:38 tom Exp
+# $Id: run_test.sh,v 1.1.1.3 2011/09/10 21:19:08 christos Exp $
 # vi:ts=4 sw=4:
 
 if test $# = 1
