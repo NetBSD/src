@@ -780,6 +780,8 @@ uninstall-info: uninstall-info-recursive
 all-local: ABOUT-NLS
 
 ABOUT-NLS: $(srcdir)/doc/nls.texi $(srcdir)/doc/matrix.texi
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_ABOUT-NLS:
 	rm -f $(srcdir)/ABOUT-NLS \
 	  && $(MAKEINFO) --output=$(srcdir)/ABOUT-NLS --no-header \
 	    -I $(srcdir)/doc --no-validate nls.texi
