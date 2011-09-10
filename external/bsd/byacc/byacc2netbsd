@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: byacc2netbsd,v 1.1 2009/10/29 00:56:35 christos Exp $
+#	$NetBSD: byacc2netbsd,v 1.2 2011/09/10 21:18:00 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,10 +34,10 @@
 #
 #	$ cd /some/where/temporary
 #	$ tar xpfz /new/byacc/release/tar/file
-#	$ sh /usr/src/external/bsd/byacc/dist/byacc2netbsd byacc-20091027 `pwd`
+#	$ sh /usr/src/external/bsd/byacc/dist/byacc2netbsd byacc-YYYYMMDD `pwd`
 #	$ cd src/external/bsd/byacc/dist
-#	$ cvs import -m "Import byacc 20091027" src/external/bsd/byacc/dist FLEX byacc-20091027
-#	$ cd ../../../../../byacc-20091027
+#	$ cvs import -m "Import byacc YYYYMMDD" src/external/bsd/byacc/dist DICKEY byacc-YYYYMMDD
+#	$ cd ../../../../../byacc-YYYYMMDD
 #	$ run ./configure
 #	$ run make
 #	check the config file and copy it to /usr/src/external/bsd/byacc/include
