@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_state.c,v 1.1.1.3 2011/03/02 19:32:38 tron Exp $	*/
+/*	$NetBSD: smtpd_state.c,v 1.1.1.4 2011/09/10 10:36:31 tron Exp $	*/
 
 /*++
 /* NAME
@@ -86,6 +86,7 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream,
     state->service = mystrdup(service);
     state->buffer = vstring_alloc(100);
     state->addr_buf = vstring_alloc(100);
+    state->conn_count = state->conn_rate = 0;
     state->error_count = 0;
     state->error_mask = 0;
     state->notify_mask = name_mask(VAR_NOTIFY_CLASSES, mail_error_masks,
