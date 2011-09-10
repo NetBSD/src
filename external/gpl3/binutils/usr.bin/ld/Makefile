@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/04/05 10:48:47 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2011/09/10 19:26:18 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -51,7 +51,7 @@ BUILDSYMLINKS+=	gen-doc.texi configdoc.texi
 ${PROG}.info: configdoc.texi bfdver.texi
 
 .for f in ${G_EMULATION_OFILES:S/^e//:R}
-.if exists(.depend.${f})
+.if exists(.depend.${f}) && !(make(clean) || make(cleandir))
 .include ".depend.${f}"
 .endif
 
