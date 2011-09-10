@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 2009/07/13 21:44:32 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 2011/09/10 18:34:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.7 2009/07/13 21:44:32 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.8 2011/09/10 18:34:40 christos Exp $");
 
 #define _KMEMUSER
 #include <stdbool.h>
@@ -59,23 +59,41 @@ __RCSID("$NetBSD: misc.c,v 1.7 2009/07/13 21:44:32 christos Exp $");
 #include "fstat.h"
 
 static struct nlist nl[] = {
-#define NL_KQUEUE	0
-    { .n_name = "kqueueops" },
-#define NL_MQUEUE	1
-    { .n_name = "mqops" },
-#define NL_PIPE		2
-    { .n_name = "pipeops" },
-#define NL_SOCKET	3
-    { .n_name = "socketops" },
-#define NL_VNOPS	4
-    { .n_name = "vnops" },
-#define NL_CRYPTO	5
-    { .n_name = "cryptofops" },
-#define NL_BPF		6
+#define NL_BPF		0
     { .n_name = "bpf_fileops", },
-#define NL_TAP		7
+#define NL_CRYPTO	1
+    { .n_name = "cryptofops" },
+#define NL_DMIO		2
+    { .n_name = "dmio_fileops", },
+#define NL_DRVCTL	3
+    { .n_name = "drvctl_fileops", },
+#define NL_DTV_DEMUX	4
+    { .n_name = "dtv_demux_fileops", },
+#define NL_FILEMON	5
+    { .n_name = "filemon_fileops", },
+#define NL_KQUEUE	6
+    { .n_name = "kqueueops" },
+#define NL_MQUEUE	7
+    { .n_name = "mqops" },
+#define NL_PIPE		8
+    { .n_name = "pipeops" },
+#define NL_PUTTER	9
+    { .n_name = "putter_fileops", },
+#define NL_SEM		10
+    { .n_name = "semops", },
+#define NL_SOCKET	11
+    { .n_name = "socketops" },
+#define NL_SVR4_NET	12
+    { .n_name = "svr4_netops" },
+#define NL_SVR4_32_NET	13
+    { .n_name = "svr4_32_netops" },
+#define NL_TAP		14
     { .n_name = "tap_fileops", },
-#define NL_MAX		8
+#define NL_VNOPS	15
+    { .n_name = "vnops" },
+#define NL_XENEVT	16
+    { .n_name = "xenevt_fileops" },
+#define NL_MAX		17
     { .n_name = NULL }
 };
 
@@ -166,8 +184,11 @@ pmisc(struct file *f, const char *name)
 	case NL_CRYPTO:
 		printf("* crypto %p\n", f->f_data);
 		return 0;
-	default:
+	case NL_MAX:
 		printf("* %s %p\n", name, f->f_data);
+		return 0;
+	default:
+		printf("* %s %p\n", nl[i].n_name, f->f_data);
 		return 0;
 	}
 }
