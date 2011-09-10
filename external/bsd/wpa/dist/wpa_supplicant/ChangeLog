@@ -1,5 +1,24 @@
 ChangeLog for wpa_supplicant
 
+2010-09-07 - v0.7.3
+	* fixed fallback from failed PMKSA caching into full EAP authentication
+	  [Bug 355]
+	* fixed issue with early D-Bus signals during initialization
+	* fixed X.509 name handling in internal TLS
+	* fixed WPS ER to use corrent Enrollee MAC Address in Credential
+	* fixed scanning routines ot improve AP selection for WPS
+	* added WPS workaround for open networks
+	* fixed WPS Diffie-Hellman derivation to use correct public key length
+	* fixed wpa_supplicant AP mode operations to ignore Supplicant and
+	  scan result events
+	* improved SME operations with nl80211
+	* fixed WPS ER event_id handling in some cases
+	* fixed some issues with bgscan simple to avoid unnecessary scans
+	* fixed issue with l2_packet_ndis overlapped writes corrupting stack
+	  [Bug 328]
+	* updated WinPcap to the latest stable version 4.1.2 in Windows
+	  installer
+
 2010-04-18 - v0.7.2
 	* nl80211: fixed number of issues with roaming
 	* avoid unnecessary roaming if multiple APs with similar signal

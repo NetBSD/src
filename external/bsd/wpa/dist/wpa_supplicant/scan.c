@@ -243,8 +243,8 @@ static void wpa_supplicant_scan(void *eloop_ctx, void *timeout_ctx)
 	struct wpa_ssid *ssid;
 	int scan_req = 0, ret;
 	struct wpabuf *wps_ie = NULL;
-	int wps = 0;
 #ifdef CONFIG_WPS
+	int wps = 0;
 	enum wps_request_type req_type = WPS_REQ_ENROLLEE_INFO;
 #endif /* CONFIG_WPS */
 	struct wpa_driver_scan_params params;
@@ -288,18 +288,6 @@ static void wpa_supplicant_scan(void *eloop_ctx, void *timeout_ctx)
 #ifdef CONFIG_WPS
 	wps = wpas_wps_in_use(wpa_s->conf, &req_type);
 #endif /* CONFIG_WPS */
-
-	if (wpa_s->scan_res_tried == 0 && wpa_s->conf->ap_scan == 1 &&
-	    !(wpa_s->drv_flags & WPA_DRIVER_FLAGS_USER_SPACE_MLME) &&
-	    wps != 2 && !wpa_s->conf->filter_ssids &&
-	    !wpa_s->connect_without_scan) {
-		wpa_s->scan_res_tried++;
-		wpa_printf(MSG_DEBUG, "Trying to get current scan results "
-			   "first without requesting a new scan to speed up "
-			   "initial association");
-		wpa_supplicant_event(wpa_s, EVENT_SCAN_RESULTS, NULL);
-		return;
-	}
 
 	scan_req = wpa_s->scan_req;
 	wpa_s->scan_req = 0;
@@ -426,8 +414,7 @@ static void wpa_supplicant_scan(void *eloop_ctx, void *timeout_ctx)
 		if (prev_state != wpa_s->wpa_state)
 			wpa_supplicant_set_state(wpa_s, prev_state);
 		wpa_supplicant_req_scan(wpa_s, 1, 0);
-	} else
-		wpa_s->scan_runs++;
+	}
 }
 
 
