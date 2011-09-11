@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.3 2011/07/05 21:59:19 spz Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.4 2011/09/11 18:55:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: masterdump.c,v 1.99.328.3 2011-06-21 20:15:47 each Exp */
+/* Id: masterdump.c,v 1.108 2011-06-08 22:13:50 each Exp */
 
 /*! \file */
 
@@ -76,6 +76,7 @@ struct dns_master_style {
 	unsigned int rdata_column;
 	unsigned int line_length;
 	unsigned int tab_width;
+	unsigned int split_width;
 };
 
 /*%
@@ -110,15 +111,16 @@ dns_master_style_default = {
 	DNS_STYLEFLAG_OMIT_TTL |
 	DNS_STYLEFLAG_TTL |
 	DNS_STYLEFLAG_COMMENT |
+	DNS_STYLEFLAG_RRCOMMENT |
 	DNS_STYLEFLAG_MULTILINE,
-	24, 24, 24, 32, 80, 8
+	24, 24, 24, 32, 80, 8, UINT_MAX
 };
 
 LIBDNS_EXTERNAL_DATA const dns_master_style_t
 dns_master_style_full = {
 	DNS_STYLEFLAG_COMMENT |
 	DNS_STYLEFLAG_RESIGN,
-	46, 46, 46, 64, 120, 8
+	46, 46, 46, 64, 120, 8, UINT_MAX
 };
 
 LIBDNS_EXTERNAL_DATA const dns_master_style_t
@@ -128,8 +130,9 @@ dns_master_style_explicitttl = {
 	DNS_STYLEFLAG_REL_OWNER |
 	DNS_STYLEFLAG_REL_DATA |
 	DNS_STYLEFLAG_COMMENT |
+	DNS_STYLEFLAG_RRCOMMENT |
 	DNS_STYLEFLAG_MULTILINE,
-	24, 32, 32, 40, 80, 8
+	24, 32, 32, 40, 80, 8, UINT_MAX
 };
 
 LIBDNS_EXTERNAL_DATA const dns_master_style_t
@@ -139,13 +142,13 @@ dns_master_style_cache = {
 	DNS_STYLEFLAG_MULTILINE |
 	DNS_STYLEFLAG_TRUST |
 	DNS_STYLEFLAG_NCACHE,
-	24, 32, 32, 40, 80, 8
+	24, 32, 32, 40, 80, 8, UINT_MAX
 };
 
 LIBDNS_EXTERNAL_DATA const dns_master_style_t
 dns_master_style_simple = {
 	0,
-	24, 32, 32, 40, 80, 8
+	24, 32, 32, 40, 80, 8, UINT_MAX
 };
 
 /*%
@@ -154,7 +157,7 @@ dns_master_style_simple = {
 LIBDNS_EXTERNAL_DATA const dns_master_style_t
 dns_master_style_debug = {
 	DNS_STYLEFLAG_REL_OWNER,
-	24, 32, 40, 48, 80, 8
+	24, 32, 40, 48, 80, 8, UINT_MAX
 };
 
 
@@ -375,7 +378,7 @@ ncache_summary(dns_rdataset_t *rdataset, isc_boolean_t omit_final_dot,
 				dns_rdataset_current(&rds, &rdata);
 				CHECK(str_totext(" ", target));
 				CHECK(dns_rdata_tofmttext(&rdata, dns_rootname,
-							  0, 0, " ", target));
+							  0, 0, 0, " ", target));
 				CHECK(str_totext("\n", target));
 			}
 		}
@@ -536,6 +539,7 @@ rdataset_totext(dns_rdataset_t *rdataset,
 						   ctx->style.flags,
 						   ctx->style.line_length -
 						       ctx->style.rdata_column,
+						   ctx->style.split_width,
 						   ctx->linebreak,
 						   target));
 
@@ -873,9 +877,8 @@ dump_rdatasets_text(isc_mem_t *mctx, dns_name_t *name,
 
 	for (i = 0; i < n; i++) {
 		dns_rdataset_t *rds = sorted[i];
-		if (ctx->style.flags & DNS_STYLEFLAG_TRUST) {
+		if (ctx->style.flags & DNS_STYLEFLAG_TRUST)
 			fprintf(f, "; %s\n", dns_trust_totext(rds->trust));
-		}
 		if (((rds->attributes & DNS_RDATASETATTR_NEGATIVE) != 0) &&
 		    (ctx->style.flags & DNS_STYLEFLAG_NCACHE) == 0) {
 			/* Omit negative cache entries */
@@ -1049,6 +1052,8 @@ dump_rdatasets_raw(isc_mem_t *mctx, dns_name_t *name,
 						   buffer, f);
 		}
 		dns_rdataset_disassociate(&rdataset);
+		if (result != ISC_R_SUCCESS)
+			return (result);
 	}
 
 	if (result == ISC_R_NOMORE)
@@ -1358,23 +1363,24 @@ dumptostreaminc(dns_dumpctx_t *dctx) {
 			isc_buffer_region(&buffer, &r);
 			isc_buffer_putuint32(&buffer, dns_masterformat_raw);
 			isc_buffer_putuint32(&buffer, DNS_RAWFORMAT_VERSION);
-			if (sizeof(now32) != sizeof(dctx->now)) {
-				/*
-				 * We assume isc_stdtime_t is a 32-bit integer,
-				 * which should be the case on most cases.
-				 * If it turns out to be uncommon, we'll need
-				 * to bump the version number and revise the
-				 * header format.
-				 */
-				isc_log_write(dns_lctx,
-					      ISC_LOGCATEGORY_GENERAL,
-					      DNS_LOGMODULE_MASTERDUMP,
-					      ISC_LOG_INFO,
-					      "dumping master file in raw "
-					      "format: stdtime is not 32bits");
-				now32 = 0;
-			} else
-				now32 = dctx->now;
+#if !defined(STDTIME_ON_32BITS) || (STDTIME_ON_32BITS + 0) != 1
+			/*
+			 * We assume isc_stdtime_t is a 32-bit integer,
+			 * which should be the case on most cases.
+			 * If it turns out to be uncommon, we'll need
+			 * to bump the version number and revise the
+			 * header format.
+			 */
+			isc_log_write(dns_lctx,
+				      ISC_LOGCATEGORY_GENERAL,
+				      DNS_LOGMODULE_MASTERDUMP,
+				      ISC_LOG_INFO,
+				      "dumping master file in raw "
+				      "format: stdtime is not 32bits");
+			now32 = 0;
+#else
+			now32 = dctx->now;
+#endif
 			isc_buffer_putuint32(&buffer, now32);
 			INSIST(isc_buffer_usedlength(&buffer) <=
 			       sizeof(rawheader));
@@ -1744,6 +1750,14 @@ dns_master_dumpnode(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 
 	result = dns_master_dumpnodetostream(mctx, db, version, node, name,
 					     style, f);
+	if (result != ISC_R_SUCCESS) {
+		isc_log_write(dns_lctx, ISC_LOGCATEGORY_GENERAL,
+			      DNS_LOGMODULE_MASTERDUMP, ISC_LOG_ERROR,
+			      "dumping master file: %s: dump: %s", filename,
+			      isc_result_totext(result));
+		(void)isc_stdio_close(f);
+		return (ISC_R_UNEXPECTED);
+	}
 
 	result = isc_stdio_close(f);
 	if (result != ISC_R_SUCCESS) {
@@ -1765,6 +1779,19 @@ dns_master_stylecreate(dns_master_style_t **stylep, unsigned int flags,
 		       unsigned int line_length, unsigned int tab_width,
 		       isc_mem_t *mctx)
 {
+	return (dns_master_stylecreate2(stylep, flags, ttl_column,
+					class_column, type_column,
+					rdata_column, line_length,
+					tab_width, 0xffffffff, mctx));
+}
+
+isc_result_t
+dns_master_stylecreate2(dns_master_style_t **stylep, unsigned int flags,
+			unsigned int ttl_column, unsigned int class_column,
+			unsigned int type_column, unsigned int rdata_column,
+			unsigned int line_length, unsigned int tab_width,
+			unsigned int split_width, isc_mem_t *mctx)
+{
 	dns_master_style_t *style;
 
 	REQUIRE(stylep != NULL && *stylep == NULL);
@@ -1779,6 +1806,7 @@ dns_master_stylecreate(dns_master_style_t **stylep, unsigned int flags,
 	style->rdata_column = rdata_column;
 	style->line_length = line_length;
 	style->tab_width = tab_width;
+	style->split_width = split_width;
 
 	*stylep = style;
 	return (ISC_R_SUCCESS);

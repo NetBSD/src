@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.3 2011/07/05 21:59:18 spz Exp $	*/
+/*	$NetBSD: config.c,v 1.4 2011/09/11 18:55:27 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.c,v 1.113.16.1.2.1 2011-06-02 23:47:28 tbox Exp */
+/* Id: config.c,v 1.119 2011-07-01 02:25:47 marka Exp */
 
 /*! \file */
 
@@ -211,7 +211,10 @@ options {\n\
 	check-srv-cname warn;\n\
 	zero-no-soa-ttl yes;\n\
 	update-check-ksk yes;\n\
+	serial-update-method increment;\n\
+	dnssec-update-mode maintain;\n\
 	dnssec-dnskey-kskonly no;\n\
+	dnssec-loadkeys-interval 60;\n\
 	try-tcp-refresh yes; /* BIND 8 compat */\n\
 };\n\
 "
@@ -379,6 +382,8 @@ ns_config_getzonetype(const cfg_obj_t *zonetypeobj) {
 		ztype = dns_zone_stub;
 	else if (strcasecmp(str, "static-stub") == 0)
 		ztype = dns_zone_staticstub;
+	else if (strcasecmp(str, "redirect") == 0)
+		ztype = dns_zone_redirect;
 	else
 		INSIST(0);
 	return (ztype);

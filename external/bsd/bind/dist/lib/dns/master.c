@@ -1,7 +1,7 @@
-/*	$NetBSD: master.c,v 1.4 2011/02/16 03:47:04 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.5 2011/09/11 18:55:35 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: master.c,v 1.178 2009-09-01 00:22:26 jinmei Exp */
+/* Id: master.c,v 1.180 2011-03-12 04:59:48 tbox Exp */
 
 /*! \file */
 
@@ -1206,9 +1206,10 @@ load_text(dns_loadctx_t *lctx) {
 						goto insist_and_cleanup;
 					}
 					ictx = lctx->inc;
-					line = isc_lex_getsourceline(lctx->lex);
 					source =
 					       isc_lex_getsourcename(lctx->lex);
+					line = isc_lex_getsourceline(lctx->lex);
+					POST(line);
 					continue;
 				}
 				/*
@@ -1418,8 +1419,9 @@ load_text(dns_loadctx_t *lctx) {
 					goto insist_and_cleanup;
 				}
 				ictx = lctx->inc;
-				line = isc_lex_getsourceline(lctx->lex);
 				source = isc_lex_getsourcename(lctx->lex);
+				line = isc_lex_getsourceline(lctx->lex);
+				POST(line);
 				continue;
 			}
 
@@ -2124,6 +2126,7 @@ load_raw(dns_loadctx_t *lctx) {
 
 		/* Empty read: currently, we do not use dumptime */
 		dumptime = isc_buffer_getuint32(&target);
+		POST(dumptime);
 
 		lctx->first = ISC_FALSE;
 	}
@@ -2296,7 +2299,6 @@ load_raw(dns_loadctx_t *lctx) {
 				isc_buffer_forward(&target, consumed_name);
 
 				rdcount -= i;
-				i = 0;
 
 				goto continue_read;
 			}
@@ -2680,7 +2682,6 @@ grow_rdatalist(int new_len, dns_rdatalist_t *old, int old_len,
 		return (NULL);
 
 	ISC_LIST_INIT(save);
-	this = ISC_LIST_HEAD(*current);
 	while ((this = ISC_LIST_HEAD(*current)) != NULL) {
 		ISC_LIST_UNLINK(*current, this, link);
 		ISC_LIST_APPEND(save, this, link);
@@ -2693,7 +2694,6 @@ grow_rdatalist(int new_len, dns_rdatalist_t *old, int old_len,
 	}
 
 	ISC_LIST_INIT(save);
-	this = ISC_LIST_HEAD(*glue);
 	while ((this = ISC_LIST_HEAD(*glue)) != NULL) {
 		ISC_LIST_UNLINK(*glue, this, link);
 		ISC_LIST_APPEND(save, this, link);

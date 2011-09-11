@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.h,v 1.3 2011/07/05 21:59:19 spz Exp $	*/
+/*	$NetBSD: masterdump.h,v 1.4 2011/09/11 18:55:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: masterdump.h,v 1.42.596.2 2011-06-02 23:47:35 tbox Exp */
+/* Id: masterdump.h,v 1.45 2011-05-26 07:56:39 marka Exp */
 
 #ifndef DNS_MASTERDUMP_H
 #define DNS_MASTERDUMP_H 1
@@ -331,6 +331,12 @@ dns_master_stylecreate(dns_master_style_t **style, unsigned int flags,
 		       unsigned int line_length, unsigned int tab_width,
 		       isc_mem_t *mctx);
 
+isc_result_t
+dns_master_stylecreate2(dns_master_style_t **style, unsigned int flags,
+		       unsigned int ttl_column, unsigned int class_column,
+		       unsigned int type_column, unsigned int rdata_column,
+		       unsigned int line_length, unsigned int tab_width,
+		       unsigned int split_width, isc_mem_t *mctx);
 void
 dns_master_styledestroy(dns_master_style_t **style, isc_mem_t *mctx);
 

@@ -1,6 +1,6 @@
-.\"	$NetBSD: dig.1,v 1.2 2011/02/16 03:46:45 christos Exp $
+.\"	$NetBSD: dig.1,v 1.3 2011/09/11 18:55:25 christos Exp $
 .\"
-.\" Copyright (C) 2004-2010 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2011 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: dig.1,v 1.54 2010-03-05 01:14:15 tbox Exp
+.\" Id: dig.1,v 1.55 2011-03-06 01:14:19 tbox Exp
 .\"
 .hy 0
 .ad l
@@ -360,6 +360,24 @@ option is enabled. If short form answers are requested, the default is not to sh
 Toggle the display of comment lines in the output. The default is to print comments.
 .RE
 .PP
+\fB+[no]rrcomments\fR
+.RS 4
+Toggle the display of per\-record comments in the output (for example, human\-readable key information about DNSKEY records). The default is not to print record comments unless multiline mode is active.
+.RE
+.PP
+\fB+split=W\fR
+.RS 4
+Split long hex\- or base64\-formatted fields in resource records into chunks of
+\fIW\fR
+characters (where
+\fIW\fR
+is rounded up to the nearest multiple of 4).
+\fI+nosplit\fR
+or
+\fI+split=0\fR
+causes fields not to be split at all. The default is 56 characters, or 44 characters when multiline mode is active.
+.RE
+.PP
 \fB+[no]stats\fR
 .RS 4
 This query option toggles the printing of statistics: when the query was made, the size of the reply and so on. The default behavior is to print the query statistics.
@@ -569,7 +587,7 @@ RFC1035.
 .PP
 There are probably too many query options.
 .SH "COPYRIGHT"
-Copyright \(co 2004\-2010 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004\-2011 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000\-2003 Internet Software Consortium.
 .br

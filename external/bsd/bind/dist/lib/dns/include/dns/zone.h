@@ -1,7 +1,7 @@
-/*	$NetBSD: zone.h,v 1.7 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.8 2011/09/11 18:55:39 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone.h,v 1.182 2010-12-18 01:56:22 each Exp */
+/* Id: zone.h,v 1.191 2011-07-06 01:36:32 each Exp */
 
 #ifndef DNS_ZONE_H
 #define DNS_ZONE_H 1
@@ -45,7 +45,8 @@ typedef enum {
 	dns_zone_stub,
 	dns_zone_staticstub,
 	dns_zone_key,
-	dns_zone_dlz
+	dns_zone_dlz,
+	dns_zone_redirect,
 } dns_zonetype_t;
 
 #define DNS_ZONEOPT_SERVERS	  0x00000001U	/*%< perform server checks */
@@ -94,6 +95,7 @@ typedef enum {
 #define DNS_ZONEKEY_MAINTAIN	0x00000002U	/*%< publish/sign on schedule */
 #define DNS_ZONEKEY_CREATE	0x00000004U	/*%< make keys when needed */
 #define DNS_ZONEKEY_FULLSIGN    0x00000008U     /*%< roll to new keys immediately */
+#define DNS_ZONEKEY_NORESIGN	0x00000010U	/*%< no automatic resigning */
 
 #ifndef DNS_ZONE_MINREFRESH
 #define DNS_ZONE_MINREFRESH		    300	/*%< 5 minutes */
@@ -558,9 +560,15 @@ dns_zone_setmasterswithkeys(dns_zone_t *zone,
 isc_result_t
 dns_zone_setalsonotify(dns_zone_t *zone, const isc_sockaddr_t *notify,
 		       isc_uint32_t count);
+isc_result_t
+dns_zone_setalsonotifywithkeys(dns_zone_t *zone, const isc_sockaddr_t *notify,
+							   dns_name_t **keynames, isc_uint32_t count);
 /*%<
  *	Set the list of additional servers to be notified when
  *	a zone changes.	 To clear the list use 'count = 0'.
+ *
+ *	dns_zone_alsonotifywithkeys() allows each notify address to
+ *	be associated with a TSIG key.
  *
  * Require:
  *\li	'zone' to be a valid zone.
@@ -1382,13 +1390,26 @@ dns_zonemgr_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 		   isc_timermgr_t *timermgr, isc_socketmgr_t *socketmgr,
 		   dns_zonemgr_t **zmgrp);
 /*%<
- * Create a zone manager.
+ * Create a zone manager.  Note: the zone manager will not be able to
+ * manage any zones until dns_zonemgr_setsize() has been run.
  *
  * Requires:
  *\li	'mctx' to be a valid memory context.
  *\li	'taskmgr' to be a valid task manager.
  *\li	'timermgr' to be a valid timer manager.
  *\li	'zmgrp'	to point to a NULL pointer.
+ */
+
+isc_result_t
+dns_zonemgr_setsize(dns_zonemgr_t *zmgr, int num_zones);
+/*%<
+ *	Set the size of the zone manager task pool.  This must be run
+ *	before zmgr can be used for managing zones.  Currently, it can only
+ *	be run once; the task pool cannot be resized.
+ *
+ * Requires:
+ *\li	zmgr is a valid zone manager.
+ *\li	zmgr->zonetasks has been initialized.
  */
 
 isc_result_t
@@ -1854,6 +1875,56 @@ dns_zone_dlzpostload(dns_zone_t *zone, dns_db_t *db);
  * Load the origin names for a writeable DLZ database.
  */
 
+isc_boolean_t
+dns_zone_isdynamic(dns_zone_t *zone, isc_boolean_t ignore_freeze);
+/*%
+ * Return true iff the zone is "dynamic", in the sense that the zone's
+ * master file (if any) is written by the server, rather than being
+ * updated manually and read by the server.
+ *
+ * This is true for slave zones, stub zones, key zones, and zones that
+ * allow dynamic updates either by having an update policy ("ssutable")
+ * or an "allow-update" ACL with a value other than exactly "{ none; }".
+ *
+ * If 'ignore_freeze' is true, then the zone which has had updates disabled
+ * will still report itself to be dynamic.
+ *
+ * Requires:
+ * \li	'zone' to be valid.
+ */
+
+isc_result_t
+dns_zone_setrefreshkeyinterval(dns_zone_t *zone, isc_uint32_t interval);
+/*%
+ * Sets the frequency, in minutes, with which the key repository will be
+ * checked to see if the keys for this zone have been updated.  Any value
+ * higher than 1440 minutes (24 hours) will be silently reduced.  A
+ * value of zero will return an out-of-range error.
+ *
+ * Requires:
+ * \li	'zone' to be valid.
+ */
+
+void
+dns_zone_setserialupdatemethod(dns_zone_t *zone, dns_updatemethod_t method);
+/*%
+ * Sets the update method to use when incrementing the zone serial number
+ * due to a DDNS update.  Valid options are dns_updatemethod_increment
+ * and dns_updatemethod_unixtime.
+ *
+ * Requires:
+ * \li	'zone' to be valid.
+ */
+
+dns_updatemethod_t
+dns_zone_getserialupdatemethod(dns_zone_t *zone);
+/*%
+ * Returns the update method to be used when incrementing the zone serial
+ * number due to a DDNS update.
+ *
+ * Requires:
+ * \li	'zone' to be valid.
+ */
 ISC_LANG_ENDDECLS
 
 #endif /* DNS_ZONE_H */

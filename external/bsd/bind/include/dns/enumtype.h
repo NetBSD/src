@@ -81,6 +81,7 @@ enum {
 	dns_rdatatype_unspec = 103,
 	dns_rdatatype_tkey = 249,
 	dns_rdatatype_tsig = 250,
+	dns_rdatatype_uri = 256,
 	dns_rdatatype_dlv = 32769,
 	dns_rdatatype_keydata = 65533,
 	dns_rdatatype_ixfr = 251,
@@ -143,6 +144,7 @@ enum {
 #define dns_rdatatype_unspec	((dns_rdatatype_t)dns_rdatatype_unspec)
 #define dns_rdatatype_tkey	((dns_rdatatype_t)dns_rdatatype_tkey)
 #define dns_rdatatype_tsig	((dns_rdatatype_t)dns_rdatatype_tsig)
+#define dns_rdatatype_uri	((dns_rdatatype_t)dns_rdatatype_uri)
 #define dns_rdatatype_dlv	((dns_rdatatype_t)dns_rdatatype_dlv)
 #define dns_rdatatype_keydata	((dns_rdatatype_t)dns_rdatatype_keydata)
 #define dns_rdatatype_ixfr	((dns_rdatatype_t)dns_rdatatype_ixfr)

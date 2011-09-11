@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc.c,v 1.3 2011/07/05 21:59:18 spz Exp $	*/
+/*	$NetBSD: rndc.c,v 1.4 2011/09/11 18:55:29 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc.c,v 1.131.20.1.2.1 2011-06-02 23:47:28 tbox Exp */
+/* Id: rndc.c,v 1.134 2011-03-21 15:39:05 each Exp */
 
 /*! \file */
 
@@ -116,6 +116,11 @@ command is one of the following:\n\
   thaw		Enable updates to all dynamic zones and reload them.\n\
   thaw zone [class [view]]\n\
 		Enable updates to a frozen dynamic zone and reload it.\n\
+  sync [-clear]	Dump changes to all dynamic zones to disk, and optionally\n\
+		remove their journal files.\n\
+  sync [-clear] zone [class [view]]\n\
+		Dump a single zone's changes to disk, and optionally\n\
+		remove its journal file.\n\
   notify zone [class [view]]\n\
 		Resend NOTIFY messages for the zone.\n\
   reconfig	Reload configuration file and new zones only.\n\
