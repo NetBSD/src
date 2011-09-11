@@ -1,7 +1,7 @@
-/*	$NetBSD: t_dst.c,v 1.2 2011/02/16 03:46:50 christos Exp $	*/
+/*	$NetBSD: t_dst.c,v 1.3 2011/09/11 18:55:30 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_dst.c,v 1.58 2009-09-01 00:22:25 jinmei Exp */
+/* Id: t_dst.c,v 1.60 2011-03-17 23:47:29 tbox Exp */
 
 #include <config.h>
 
@@ -266,8 +266,8 @@ dh(dns_name_t *name1, int id1, dns_name_t *name2, int id2, isc_mem_t *mctx,
 }
 
 static void
-io(dns_name_t *name, int id, int alg, int type, isc_mem_t *mctx,
-   isc_result_t exp_result, int *nfails, int *nprobs)
+io(dns_name_t *name, isc_uint16_t id, isc_uint16_t alg, int type,
+   isc_mem_t *mctx, isc_result_t exp_result, int *nfails, int *nprobs)
 {
 	dst_key_t	*key = NULL;
 	isc_result_t	ret;
@@ -279,7 +279,7 @@ io(dns_name_t *name, int id, int alg, int type, isc_mem_t *mctx,
 	if (p == NULL) {
 		t_info("getcwd failed %d\n", errno);
 		++*nprobs;
-		return;
+		goto failure;
 	}
 
 	ret = dst_key_fromfile(name, id, alg, type, current, mctx, &key);
@@ -287,7 +287,25 @@ io(dns_name_t *name, int id, int alg, int type, isc_mem_t *mctx,
 		t_info("dst_key_fromfile(%d) returned: %s\n",
 		       alg, dst_result_totext(ret));
 		++*nfails;
-		return;
+		goto failure;
+	}
+
+	if (dst_key_id(key) != id) {
+		t_info("key ID incorrect\n");
+		++*nfails;
+		goto failure;
+	}
+
+	if (dst_key_alg(key) != alg) {
+		t_info("key algorithm incorrect\n");
+		++*nfails;
+		goto failure;
+	}
+
+	if (dst_key_getttl(key) != 0) {
+		t_info("initial key TTL incorrect\n");
+		++*nfails;
+		goto failure;
 	}
 
 	ret = isc_file_mktemplate("/tmp/", tmp, sizeof(tmp));
@@ -295,14 +313,14 @@ io(dns_name_t *name, int id, int alg, int type, isc_mem_t *mctx,
 		t_info("isc_file_mktemplate failed %s\n",
 		       isc_result_totext(ret));
 		++*nprobs;
-		return;
+		goto failure;
 	}
 
 	ret = isc_dir_createunique(tmp);
 	if (ret != ISC_R_SUCCESS) {
 		t_info("mkdir failed %d\n", errno);
 		++*nprobs;
-		return;
+		goto failure;
 	}
 
 	ret = dst_key_tofile(key, type, tmp);
@@ -310,14 +328,48 @@ io(dns_name_t *name, int id, int alg, int type, isc_mem_t *mctx,
 		t_info("dst_key_tofile(%d) returned: %s\n",
 		       alg, dst_result_totext(ret));
 		++*nfails;
-		return;
+		goto failure;
 	}
 
 	if (dst_key_alg(key) != DST_ALG_DH)
 		use(key, mctx, exp_result, nfails);
 
+	/*
+	 * Skip the rest of this test if we weren't expecting
+	 * the read to be successful.
+	 */
+	if (exp_result != ISC_R_SUCCESS)
+		goto cleanup;
+
+	dst_key_setttl(key, 3600);
+	ret = dst_key_tofile(key, type, tmp);
+	if (ret != 0) {
+		t_info("dst_key_tofile(%d) returned: %s\n",
+		       alg, dst_result_totext(ret));
+		++*nfails;
+		goto failure;
+	}
+
+	/* Reread key to confirm TTL was changed */
+	dst_key_free(&key);
+	ret = dst_key_fromfile(name, id, alg, type, tmp, mctx, &key);
+	if (ret != ISC_R_SUCCESS) {
+		t_info("dst_key_fromfile(%d) returned: %s\n",
+		       alg, dst_result_totext(ret));
+		++*nfails;
+		goto failure;
+	}
+
+	if (dst_key_getttl(key) != 3600) {
+		t_info("modified key TTL incorrect\n");
+		++*nfails;
+		goto failure;
+	}
+
+ cleanup:
 	cleandir(tmp);
 
+ failure:
 	dst_key_free(&key);
 }
 

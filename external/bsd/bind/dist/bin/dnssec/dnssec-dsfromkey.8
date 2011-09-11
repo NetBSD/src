@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-dsfromkey.8,v 1.2 2011/02/16 03:46:45 christos Exp $
+.\"	$NetBSD: dnssec-dsfromkey.8,v 1.3 2011/09/11 18:55:26 christos Exp $
 .\"
-.\" Copyright (C) 2008-2010 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2008-2011 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: dnssec-dsfromkey.8,v 1.13 2010-12-24 01:14:20 tbox Exp
+.\" Id: dnssec-dsfromkey.8,v 1.14 2011-03-28 01:14:34 tbox Exp
 .\"
 .hy 0
 .ad l
@@ -73,6 +73,15 @@ files) in
 Zone file mode: in place of the keyfile name, the argument is the DNS domain name of a zone master file, which can be read from
 \fBfile\fR. If the zone name is the same as
 \fBfile\fR, then it may be omitted.
+.sp
+If
+\fBfile\fR
+is set to
+"\-", then the zone data is read from the standard input. This makes it possible to use the output of the
+\fBdig\fR
+command as input, as in:
+.sp
+\fBdig dnskey example.com | dnssec\-dsfromkey \-f \- example.com\fR
 .RE
 .PP
 \-A
@@ -141,5 +150,5 @@ RFC 4509.
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2008\-2010 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2008\-2011 Internet Systems Consortium, Inc. ("ISC")
 .br

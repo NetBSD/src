@@ -1,7 +1,7 @@
-/*	$NetBSD: zt.c,v 1.2 2011/02/16 03:47:05 christos Exp $	*/
+/*	$NetBSD: zt.c,v 1.3 2011/09/11 18:55:38 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zt.c,v 1.47 2007-06-19 23:47:16 tbox Exp */
+/* Id: zt.c,v 1.50 2011-03-21 23:47:21 tbox Exp */
 
 /*! \file */
 
@@ -294,12 +294,13 @@ freezezones(dns_zone_t *zone, void *uap) {
 	char classstr[DNS_RDATACLASS_FORMATSIZE];
 	char zonename[DNS_NAME_FORMATSIZE];
 	dns_view_t *view;
-	char *journal;
 	const char *vname;
 	const char *sep;
 	int level;
 
 	if (dns_zone_gettype(zone) != dns_zone_master)
+		return (ISC_R_SUCCESS);
+	if (!dns_zone_isdynamic(zone, ISC_TRUE))
 		return (ISC_R_SUCCESS);
 
 	frozen = dns_zone_getupdatedisabled(zone);
@@ -308,11 +309,6 @@ freezezones(dns_zone_t *zone, void *uap) {
 			result = DNS_R_FROZEN;
 		if (result == ISC_R_SUCCESS)
 			result = dns_zone_flush(zone);
-		if (result == ISC_R_SUCCESS) {
-			journal = dns_zone_getjournal(zone);
-			if (journal != NULL)
-				(void)isc_file_remove(journal);
-		}
 	} else {
 		if (frozen) {
 			result = dns_zone_load(zone);

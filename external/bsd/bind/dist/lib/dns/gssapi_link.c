@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi_link.c,v 1.2 2011/02/16 03:47:03 christos Exp $	*/
+/*	$NetBSD: gssapi_link.c,v 1.3 2011/09/11 18:55:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: gssapi_link.c,v 1.16 2011-01-11 23:47:13 tbox Exp
+ * Id: gssapi_link.c,v 1.17 2011-03-28 05:32:16 marka Exp
  */
 
 #include <config.h>
@@ -183,7 +183,7 @@ gssapi_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 	 * allocated space.
 	 */
 	isc_buffer_putmem(sig, gsig.value, gsig.length);
-	if (gsig.length != 0)
+	if (gsig.length != 0U)
 		gss_release_buffer(&minor, &gsig);
 
 	return (ISC_R_SUCCESS);
@@ -295,7 +295,7 @@ gssapi_restore(dst_key_t *key, const char *keystr) {
 	isc_result_t result;
 
 	len = strlen(keystr);
-	if ((len % 4) != 0)
+	if ((len % 4) != 0U)
 		return (ISC_R_BADBASE64);
 
 	len = (len / 4) * 3;
@@ -340,7 +340,7 @@ gssapi_dump(dst_key_t *key, isc_mem_t *mctx, char **buffer, int *length) {
 			major, minor);
 		return (ISC_R_FAILURE);
 	}
-	if (gssbuffer.length == 0)
+	if (gssbuffer.length == 0U)
 		return (ISC_R_FAILURE);
 	len = ((gssbuffer.length + 2)/3) * 4;
 	buf = isc_mem_get(mctx, len);

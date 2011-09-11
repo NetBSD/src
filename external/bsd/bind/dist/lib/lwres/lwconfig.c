@@ -1,7 +1,7 @@
-/*	$NetBSD: lwconfig.c,v 1.2 2011/02/16 03:47:18 christos Exp $	*/
+/*	$NetBSD: lwconfig.c,v 1.3 2011/09/11 18:55:43 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwconfig.c,v 1.48 2008-12-17 23:47:58 tbox Exp */
+/* Id: lwconfig.c,v 1.50 2011-03-12 04:59:49 tbox Exp */
 
 /*! \file */
 
@@ -591,6 +591,7 @@ lwres_conf_parse(lwres_context_t *ctx, const char *filename) {
 		stopchar = getword(fp, word, sizeof(word));
 		if (stopchar == EOF) {
 			rval = LWRES_R_SUCCESS;
+			POST(rval);
 			break;
 		}
 

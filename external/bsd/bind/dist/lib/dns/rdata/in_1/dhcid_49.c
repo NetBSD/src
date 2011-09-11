@@ -1,7 +1,7 @@
-/*	$NetBSD: dhcid_49.c,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: dhcid_49.c,v 1.3 2011/09/11 18:55:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2006, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dhcid_49.c,v 1.7 2009-12-04 22:06:37 tbox Exp */
+/* Id: dhcid_49.c,v 1.9 2011-03-05 23:52:31 tbox Exp */
 
 /* RFC 4701 */
 
@@ -54,8 +54,11 @@ totext_in_dhcid(ARGS_TOTEXT) {
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext("( " /*)*/, target));
-	RETERR(isc_base64_totext(&sr, tctx->width - 2, tctx->linebreak,
-				 target));
+	if (tctx->width == 0)   /* No splitting */
+		RETERR(isc_base64_totext(&sr, 60, "", target));
+	else
+		RETERR(isc_base64_totext(&sr, tctx->width - 2,
+					 tctx->linebreak, target));
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(/* ( */ " )", target));
 		if (rdata->length > 2) {

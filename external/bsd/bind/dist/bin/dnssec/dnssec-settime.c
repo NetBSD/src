@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-settime.c,v 1.2 2011/02/16 03:46:45 christos Exp $	*/
+/*	$NetBSD: dnssec-settime.c,v 1.3 2011/09/11 18:55:26 christos Exp $	*/
 
 /*
- * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-settime.c,v 1.28 2010-12-19 07:29:36 each Exp */
+/* Id: dnssec-settime.c,v 1.32 2011-06-02 20:24:45 each Exp */
 
 /*! \file */
 
@@ -68,6 +68,7 @@ usage(void) {
 	fprintf(stderr, "    -f:                 force update of old-style "
 						 "keys\n");
 	fprintf(stderr, "    -K directory:       set key file location\n");
+	fprintf(stderr, "    -L ttl:             set default key TTL\n");
 	fprintf(stderr, "    -v level:           set level of verbosity\n");
 	fprintf(stderr, "    -h:                 help\n");
 	fprintf(stderr, "Timing options:\n");
@@ -83,8 +84,7 @@ usage(void) {
 						     "deletion date\n");
 	fprintf(stderr, "Printing options:\n");
 	fprintf(stderr, "    -p C/P/A/R/I/D/all: print a particular time "
-						"value or values "
-						"[default: all]\n");
+						"value or values\n");
 	fprintf(stderr, "    -u:                 print times in unix epoch "
 						"format\n");
 	fprintf(stderr, "Output:\n");
@@ -140,11 +140,12 @@ main(int argc, char **argv) {
 	unsigned int 	size = 0;
 	isc_uint16_t	flags = 0;
 	int		prepub = -1;
+	dns_ttl_t	ttl = 0;
 	isc_stdtime_t	now;
 	isc_stdtime_t	pub = 0, act = 0, rev = 0, inact = 0, del = 0;
 	isc_boolean_t	setpub = ISC_FALSE, setact = ISC_FALSE;
 	isc_boolean_t	setrev = ISC_FALSE, setinact = ISC_FALSE;
-	isc_boolean_t	setdel = ISC_FALSE;
+	isc_boolean_t	setdel = ISC_FALSE, setttl = ISC_FALSE;
 	isc_boolean_t	unsetpub = ISC_FALSE, unsetact = ISC_FALSE;
 	isc_boolean_t	unsetrev = ISC_FALSE, unsetinact = ISC_FALSE;
 	isc_boolean_t	unsetdel = ISC_FALSE;
@@ -168,7 +169,7 @@ main(int argc, char **argv) {
 
 	isc_stdtime_get(&now);
 
-#define CMDLINE_FLAGS "A:D:E:fhI:i:K:P:p:R:S:uv:"
+#define CMDLINE_FLAGS "A:D:E:fhI:i:K:L:P:p:R:S:uv:"
 	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
 		switch (ch) {
 		case 'E':
@@ -231,6 +232,13 @@ main(int argc, char **argv) {
 				fatal("Failed to allocate memory for "
 				      "directory");
 			}
+			break;
+		case 'L':
+			if (strcmp(isc_commandline_argument, "none") == 0)
+				ttl = 0;
+			else
+				ttl = strtottl(isc_commandline_argument);
+			setttl = ISC_TRUE;
 			break;
 		case 'v':
 			verbose = strtol(isc_commandline_argument, &endp, 0);
@@ -514,6 +522,22 @@ main(int argc, char **argv) {
 		dst_key_settime(key, DST_TIME_DELETE, del);
 	else if (unsetdel)
 		dst_key_unsettime(key, DST_TIME_DELETE);
+
+	if (setttl)
+		dst_key_setttl(key, ttl);
+
+	/*
+	 * No metadata changes were made but we're forcing an upgrade
+	 * to the new format anyway: use "-P now -A now" as the default
+	 */
+	if (force && !changed) {
+		dst_key_settime(key, DST_TIME_PUBLISH, now);
+		dst_key_settime(key, DST_TIME_ACTIVATE, now);
+		changed = ISC_TRUE;
+	}
+
+	if (!changed && setttl)
+		changed = ISC_TRUE;
 
 	/*
 	 * Print out time values, if -p was used.
