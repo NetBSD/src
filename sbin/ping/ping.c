@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.100 2011/09/10 20:46:43 wiz Exp $	*/
+/*	$NetBSD: ping.c,v 1.101 2011/09/11 17:18:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.100 2011/09/10 20:46:43 wiz Exp $");
+__RCSID("$NetBSD: ping.c,v 1.101 2011/09/11 17:18:52 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -1335,7 +1335,7 @@ summary(int header)
 					    ntransmitted));
 	}
 	(void)printf("\n");
-	if (nreceived && (pingflags & F_TIMING)) {
+	if (nreceived && (pingflags & (F_TIMING|F_TIMING64))) {
 		double n = nreceived + nrepeats;
 		double avg = (tsum / n);
 		double variance = 0.0;
