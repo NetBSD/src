@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.32 2011/09/10 16:57:35 apb Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.33 2011/09/11 18:38:03 mbalmer Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -15,7 +15,7 @@ KERN=		$S/kern
 CFLAGS+=	-ffreestanding ${COPTS}
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -isystem $S -isystem $S/arch
 CPPFLAGS+=	-isystem ${S}/../common/include
-CPPFLAGS+=	-D_KERNEL -D_LKM -D_MODULE
+CPPFLAGS+=	-D_KERNEL -D_LKM -D_MODULE -DSYSCTL_INCLUDE_DESCR
 
 # XXX until the kernel is fixed again...
 .if defined(HAVE_GCC) || defined(HAVE_PCC)
