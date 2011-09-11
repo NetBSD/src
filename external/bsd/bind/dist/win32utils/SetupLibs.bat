@@ -18,10 +18,11 @@ rem SetupLibs.bat
 rem This script copys the openssl and libxml2 dlls into place.
 rem This script may be modified by updateopenssl.pl and/or updatelibxml2.pl.
 
-echo Copying the OpenSSL DLL.
+echo Copying the OpenSSL DLL and LICENSE.
 
 copy ..\..\openssl-0.9.8l\out32dll\libeay32.dll ..\Build\Release\
 copy ..\..\openssl-0.9.8l\out32dll\libeay32.dll ..\Build\Debug\
+copy ..\..\openssl-0.9.8l\LICENSE ..\Build\Release\OpenSSL-LICENSE
 
 echo Copying the libxml DLL.
 
