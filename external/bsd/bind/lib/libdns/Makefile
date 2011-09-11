@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/06/20 07:43:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/09/11 18:55:44 christos Exp $
 
 LIB=dns
 
@@ -31,6 +31,6 @@ SRCS=	acl.c acache.c adb.c byaddr.c cache.c callbacks.c compress.c \
 	request.c resolver.c result.c rootns.c rpz.c rriterator.c sdb.c soa.c \
 	ssu.c ssu_external.c stats.c tcpmsg.c time.c timer.c tkey.c tsig.c \
 	ttl.c private.c validator.c version.c view.c xfrin.c zone.c zonekey.c \
-	zt.c ${DNSSEC_SRCS}
+	zt.c sdlz.c update.c ${DNSSEC_SRCS}
 
 .include <bsd.lib.mk>

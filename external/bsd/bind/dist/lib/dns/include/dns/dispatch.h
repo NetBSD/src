@@ -1,7 +1,7 @@
-/*	$NetBSD: dispatch.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: dispatch.h,v 1.3 2011/09/11 18:55:38 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dispatch.h,v 1.62 2009-01-27 23:47:54 tbox Exp */
+/* Id: dispatch.h,v 1.64 2011-07-28 23:47:58 tbox Exp */
 
 #ifndef DNS_DISPATCH_H
 #define DNS_DISPATCH_H 1
@@ -247,6 +247,15 @@ dns_dispatch_getudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 		    unsigned int buckets, unsigned int increment,
 		    unsigned int attributes, unsigned int mask,
 		    dns_dispatch_t **dispp);
+
+isc_result_t
+dns_dispatch_getudp_dup(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
+		    isc_taskmgr_t *taskmgr, isc_sockaddr_t *localaddr,
+		    unsigned int buffersize,
+		    unsigned int maxbuffers, unsigned int maxrequests,
+		    unsigned int buckets, unsigned int increment,
+		    unsigned int attributes, unsigned int mask,
+		    dns_dispatch_t **dispp, dns_dispatch_t *dup);
 /*%<
  * Attach to existing dns_dispatch_t if one is found with dns_dispatchmgr_find,
  * otherwise create a new UDP dispatch.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.2 2011/02/16 03:47:03 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.3 2011/09/11 18:55:34 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: dst_api.c,v 1.57 2011-01-11 23:47:13 tbox Exp
+ * Id: dst_api.c,v 1.63 2011-08-18 23:46:34 tbox Exp
  */
 
 /*! \file */
@@ -93,6 +93,7 @@ static dst_key_t *	get_key_struct(dns_name_t *name,
 				       unsigned int protocol,
 				       unsigned int bits,
 				       dns_rdataclass_t rdclass,
+				       dns_ttl_t ttl,
 				       isc_mem_t *mctx);
 static isc_result_t	write_public_key(const dst_key_t *key, int type,
 					 const char *directory);
@@ -516,7 +517,7 @@ dst_key_fromnamedfile(const char *filename, const char *dirname,
 
 	key = get_key_struct(pubkey->key_name, pubkey->key_alg,
 			     pubkey->key_flags, pubkey->key_proto, 0,
-			     pubkey->key_class, mctx);
+			     pubkey->key_class, pubkey->key_ttl, mctx);
 	if (key == NULL) {
 		dst_key_free(&pubkey);
 		return (ISC_R_NOMEMORY);
@@ -714,7 +715,7 @@ dst_key_fromgssapi(dns_name_t *name, gss_ctx_id_t gssctx, isc_mem_t *mctx,
 	REQUIRE(keyp != NULL && *keyp == NULL);
 
 	key = get_key_struct(name, DST_ALG_GSSAPI, 0, DNS_KEYPROTO_DNSSEC,
-			     0, dns_rdataclass_in, mctx);
+			     0, dns_rdataclass_in, 0, mctx);
 	if (key == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -752,7 +753,7 @@ dst_key_fromlabel(dns_name_t *name, int alg, unsigned int flags,
 
 	CHECKALG(alg);
 
-	key = get_key_struct(name, alg, flags, protocol, 0, rdclass, mctx);
+	key = get_key_struct(name, alg, flags, protocol, 0, rdclass, 0, mctx);
 	if (key == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -806,7 +807,8 @@ dst_key_generate2(dns_name_t *name, unsigned int alg,
 
 	CHECKALG(alg);
 
-	key = get_key_struct(name, alg, flags, protocol, bits, rdclass, mctx);
+	key = get_key_struct(name, alg, flags, protocol, bits,
+			     rdclass, 0, mctx);
 	if (key == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -1212,7 +1214,7 @@ dst_key_restore(dns_name_t *name, unsigned int alg, unsigned int flags,
 	if (dst_t_func[alg]->restore == NULL)
 		return (ISC_R_NOTIMPLEMENTED);
 
-	key = get_key_struct(name, alg, flags, protocol, 0, rdclass, mctx);
+	key = get_key_struct(name, alg, flags, protocol, 0, rdclass, 0, mctx);
 	if (key == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -1236,7 +1238,7 @@ static dst_key_t *
 get_key_struct(dns_name_t *name, unsigned int alg,
 	       unsigned int flags, unsigned int protocol,
 	       unsigned int bits, dns_rdataclass_t rdclass,
-	       isc_mem_t *mctx)
+	       dns_ttl_t ttl, isc_mem_t *mctx)
 {
 	dst_key_t *key;
 	isc_result_t result;
@@ -1276,6 +1278,7 @@ get_key_struct(dns_name_t *name, unsigned int alg,
 	key->keydata.generic = NULL;
 	key->key_size = bits;
 	key->key_class = rdclass;
+	key->key_ttl = ttl;
 	key->func = dst_t_func[alg];
 	key->fmt_major = 0;
 	key->fmt_minor = 0;
@@ -1303,7 +1306,7 @@ dst_key_read_public(const char *filename, int type,
 	unsigned int opt = ISC_LEXOPT_DNSMULTILINE;
 	dns_rdataclass_t rdclass = dns_rdataclass_in;
 	isc_lexspecials_t specials;
-	isc_uint32_t ttl;
+	isc_uint32_t ttl = 0;
 	isc_result_t result;
 	dns_rdatatype_t keytype;
 
@@ -1403,6 +1406,8 @@ dst_key_read_public(const char *filename, int type,
 			      keyp);
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup;
+
+	dst_key_setttl(*keyp, ttl);
 
  cleanup:
 	if (lex != NULL)
@@ -1570,11 +1575,14 @@ write_public_key(const dst_key_t *key, int type, const char *directory) {
 
 	/* Now print the actual key */
 	ret = dns_name_print(key->key_name, fp);
-
 	fprintf(fp, " ");
 
+	if (key->key_ttl != 0)
+		fprintf(fp, "%d ", key->key_ttl);
+
 	isc_buffer_usedregion(&classb, &r);
-	isc_util_fwrite(r.base, 1, r.length, fp);
+	if ((unsigned)isc_util_fwrite(r.base, 1, r.length, fp) != r.length)
+	       ret = DST_R_WRITEERROR;
 
 	if ((type & DST_TYPE_KEY) != 0)
 		fprintf(fp, " KEY ");
@@ -1582,7 +1590,8 @@ write_public_key(const dst_key_t *key, int type, const char *directory) {
 		fprintf(fp, " DNSKEY ");
 
 	isc_buffer_usedregion(&textb, &r);
-	isc_util_fwrite(r.base, 1, r.length, fp);
+	if ((unsigned)isc_util_fwrite(r.base, 1, r.length, fp) != r.length)
+	       ret = DST_R_WRITEERROR;
 
 	fputc('\n', fp);
 	fflush(fp);
@@ -1661,7 +1670,7 @@ frombuffer(dns_name_t *name, unsigned int alg, unsigned int flags,
 	REQUIRE(mctx != NULL);
 	REQUIRE(keyp != NULL && *keyp == NULL);
 
-	key = get_key_struct(name, alg, flags, protocol, 0, rdclass, mctx);
+	key = get_key_struct(name, alg, flags, protocol, 0, rdclass, 0, mctx);
 	if (key == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -1780,5 +1789,6 @@ dst__entropy_status(void) {
 
 isc_buffer_t *
 dst_key_tkeytoken(const dst_key_t *key) {
+	REQUIRE(VALID_KEY(key));
 	return (key->key_tkeytoken);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.2 2011/02/16 03:47:05 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.3 2011/09/11 18:55:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: result.c,v 1.132 2011-01-11 23:47:13 tbox Exp */
+/* Id: result.c,v 1.133 2011-03-21 07:22:13 each Exp */
 
 /*! \file */
 
@@ -163,6 +163,7 @@ static const char *text[DNS_R_NRESULTS] = {
 	"not master",			       /*%< 105 DNS_R_NOTMASTER */
 	"broken trust chain",		       /*%< 106 DNS_R_BROKENCHAIN */
 	"expired",			       /*%< 106 DNS_R_EXPIRED */
+	"not dynamic",			       /*%< 107 DNS_R_NOTDYNAMIC */
 };
 
 static const char *rcode_text[DNS_R_NRCODERESULTS] = {

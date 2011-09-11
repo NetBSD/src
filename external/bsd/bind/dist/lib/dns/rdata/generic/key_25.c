@@ -1,7 +1,7 @@
-/*	$NetBSD: key_25.c,v 1.2 2011/02/16 03:47:08 christos Exp $	*/
+/*	$NetBSD: key_25.c,v 1.3 2011/09/11 18:55:39 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: key_25.c,v 1.53 2009-12-04 22:06:37 tbox Exp */
+/* Id: key_25.c,v 1.55 2011-03-05 23:52:31 tbox Exp */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -108,7 +108,7 @@ totext_key(ARGS_TOTEXT) {
 	if ((flags & 0xc000) == 0xc000)
 		return (ISC_R_SUCCESS);
 
-	if ((tctx->flags & DNS_STYLEFLAG_COMMENT) != 0 &&
+	if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0 &&
 	     algorithm == DNS_KEYALG_PRIVATEDNS) {
 		dns_name_t name;
 		dns_name_init(&name, NULL);
@@ -121,10 +121,13 @@ totext_key(ARGS_TOTEXT) {
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" (", target));
 	RETERR(str_totext(tctx->linebreak, target));
-	RETERR(isc_base64_totext(&sr, tctx->width - 2,
-				 tctx->linebreak, target));
+	if (tctx->width == 0)   /* No splitting */
+		RETERR(isc_base64_totext(&sr, 60, "", target));
+	else
+		RETERR(isc_base64_totext(&sr, tctx->width - 2,
+					 tctx->linebreak, target));
 
-	if ((tctx->flags & DNS_STYLEFLAG_COMMENT) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0)
 		RETERR(str_totext(tctx->linebreak, target));
 	else if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" ", target));
@@ -132,7 +135,7 @@ totext_key(ARGS_TOTEXT) {
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(")", target));
 
-	if ((tctx->flags & DNS_STYLEFLAG_COMMENT) != 0) {
+	if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0) {
 		isc_region_t tmpr;
 
 		RETERR(str_totext(" ; key id = ", target));

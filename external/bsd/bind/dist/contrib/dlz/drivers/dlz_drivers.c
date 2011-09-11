@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_drivers.c,v 1.2 2011/02/16 03:46:55 christos Exp $	*/
+/*	$NetBSD: dlz_drivers.c,v 1.3 2011/09/11 18:55:32 christos Exp $	*/
 
 /*
  * Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dlz_drivers.c,v 1.3 2010-12-18 01:56:20 each Exp */
+/* Id: dlz_drivers.c,v 1.4 2011-03-10 04:36:16 each Exp */
 
 /*! \file */
 
@@ -61,10 +61,6 @@
 
 #ifdef DLZ_ODBC
 #include <dlz/dlz_odbc_driver.h>
-#endif
-
-#ifdef DLZ_DLOPEN
-#include <dlz/dlz_dlopen_driver.h>
 #endif
 
 /*%
@@ -121,12 +117,6 @@ dlz_drivers_init(void) {
 		return (result);
 #endif
 
-#ifdef DLZ_DLOPEN
-	result = dlz_dlopen_init();
-	if (result != ISC_R_SUCCESS)
-		return (result);
-#endif
-
 	return (result);
 }
 
@@ -164,10 +154,6 @@ dlz_drivers_clear(void) {
 
 #ifdef DLZ_ODBC
         dlz_odbc_clear();
-#endif
-
-#ifdef DLZ_DLOPEN
-        dlz_dlopen_clear();
 #endif
 
 }

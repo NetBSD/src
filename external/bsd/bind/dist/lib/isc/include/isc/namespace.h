@@ -1,7 +1,7 @@
-/*	$NetBSD: namespace.h,v 1.2 2011/02/16 03:47:12 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.3 2011/09/11 18:55:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namespace.h,v 1.9 2010-12-04 13:25:59 marka Exp */
+/* Id: namespace.h,v 1.12 2011-08-23 17:02:53 each Exp */
 
 #ifndef ISCAPI_NAMESPACE_H
 #define ISCAPI_NAMESPACE_H 1
@@ -90,6 +90,7 @@
 #define isc_mempool_getfillcount isc__mempool_getfillcount
 
 #define isc_socket_create isc__socket_create
+#define isc_socket_dup isc__socket_dup
 #define isc_socket_attach isc__socket_attach
 #define isc_socket_detach isc__socket_detach
 #define isc_socketmgr_create isc__socketmgr_create
@@ -112,6 +113,7 @@
 #define isc_socket_listen isc__socket_listen
 #define isc_socket_accept isc__socket_accept
 #define isc_socket_connect isc__socket_connect
+#define isc_socket_getfd isc__socket_getfd
 #define isc_socket_getname isc__socket_getname
 #define isc_socket_gettag isc__socket_gettag
 #define isc_socket_getpeername isc__socket_getpeername

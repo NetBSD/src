@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_parse.c,v 1.2 2011/02/16 03:47:03 christos Exp $	*/
+/*	$NetBSD: dst_parse.c,v 1.3 2011/09/11 18:55:35 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,7 +33,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * Id: dst_parse.c,v 1.27 2010-12-23 04:07:58 marka Exp
+ * Id: dst_parse.c,v 1.29 2011-08-18 23:46:35 tbox Exp
  */
 
 #include <config.h>
@@ -643,9 +643,7 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 		}
 		isc_buffer_usedregion(&b, &r);
 
-		fprintf(fp, "%s ", s);
-		isc_util_fwrite(r.base, 1, r.length, fp);
-		fprintf(fp, "\n");
+	       fprintf(fp, "%s %.*s\n", s, (int)r.length, r.base);
 	}
 
 	/* Add the metadata tags */
@@ -663,14 +661,15 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 
 			isc_buffer_init(&b, buffer, sizeof(buffer));
 			result = dns_time32_totext(when, &b);
-			if (result != ISC_R_SUCCESS)
-				continue;
+		       if (result != ISC_R_SUCCESS) {
+			       fclose(fp);
+			       return (DST_R_INVALIDPRIVATEKEY);
+		       }
 
 			isc_buffer_usedregion(&b, &r);
 
-			fprintf(fp, "%s ", timetags[i]);
-			isc_util_fwrite(r.base, 1, r.length, fp);
-			fprintf(fp, "\n");
+		       fprintf(fp, "%s %.*s\n", timetags[i], (int)r.length,
+				r.base);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.2 2011/02/16 03:47:15 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.3 2011/09/11 18:55:42 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: file.c,v 1.39 2011-01-13 06:36:04 marka Exp */
+/* Id: file.c,v 1.40 2011-03-04 14:07:03 smann Exp */
 
 #include <config.h>
 
@@ -398,6 +398,23 @@ isc_file_exists(const char *pathname) {
 	REQUIRE(pathname != NULL);
 
 	return (ISC_TF(file_stats(pathname, &stats) == ISC_R_SUCCESS));
+}
+
+isc_result_t
+isc_file_isplainfile(const char *filename) {
+	/*
+	 * This function returns success if filename is a plain file.
+	 */
+	struct stat filestat;
+	memset(&filestat,0,sizeof(struct stat));
+
+	if ((stat(filename, &filestat)) == -1)
+		return(isc__errno2result(errno));
+
+	if(! S_ISREG(filestat.st_mode))
+		return(ISC_R_INVALIDFILE);
+
+	return(ISC_R_SUCCESS);
 }
 
 isc_boolean_t

@@ -1,7 +1,7 @@
-/*	$NetBSD: opt_41.c,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.3 2011/09/11 18:55:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: opt_41.c,v 1.35 2009-12-04 22:06:37 tbox Exp */
+/* Id: opt_41.c,v 1.37 2011-03-05 23:52:31 tbox Exp */
 
 /* Reviewed: Thu Mar 16 14:06:44 PST 2000 by gson */
 
@@ -78,8 +78,12 @@ totext_opt(ARGS_TOTEXT) {
 			RETERR(str_totext(tctx->linebreak, target));
 			or = r;
 			or.length = length;
-			RETERR(isc_base64_totext(&or, tctx->width - 2,
-						 tctx->linebreak, target));
+			if (tctx->width == 0)   /* No splitting */
+				RETERR(isc_base64_totext(&or, 60, "", target));
+			else
+				RETERR(isc_base64_totext(&or, tctx->width - 2,
+							 tctx->linebreak,
+							 target));
 			isc_region_consume(&r, length);
 			if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 				RETERR(str_totext(" )", target));

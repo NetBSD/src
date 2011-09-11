@@ -1,7 +1,7 @@
-/*	$NetBSD: rndc-confgen.c,v 1.2 2011/02/16 03:46:44 christos Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.3 2011/09/11 18:55:25 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc-confgen.c,v 1.5 2009-09-29 15:06:05 fdupont Exp */
+/* Id: rndc-confgen.c,v 1.7 2011-03-12 04:59:46 tbox Exp */
 
 /*! \file */
 
@@ -202,6 +202,7 @@ main(int argc, char **argv) {
 
 	argc -= isc_commandline_index;
 	argv += isc_commandline_index;
+	POST(argv);
 
 	if (argc > 0)
 		usage(1);

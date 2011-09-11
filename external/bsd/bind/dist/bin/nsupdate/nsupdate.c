@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.2 2011/02/16 03:46:47 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.3 2011/09/11 18:55:29 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsupdate.c,v 1.193 2011-01-10 05:32:03 marka Exp */
+/* Id: nsupdate.c,v 1.196 2011-05-23 22:25:32 each Exp */
 
 /*! \file */
 
@@ -147,7 +147,7 @@ static dns_name_t tmpzonename;
 static dns_name_t restart_master;
 static dns_tsig_keyring_t *gssring = NULL;
 static dns_tsigkey_t *tsigkey = NULL;
-static dst_key_t *sig0key;
+static dst_key_t *sig0key = NULL;
 static lwres_context_t *lwctx = NULL;
 static lwres_conf_t *lwconf;
 static isc_sockaddr_t *servers;
@@ -697,8 +697,10 @@ setup_keyfile(isc_mem_t *mctx, isc_log_t *lctx) {
 				keyfile, isc_result_totext(result));
 			return;
 		}
-	} else
+	} else {
 		dst_key_attach(dstkey, &sig0key);
+		dst_key_free(&dstkey);
+	}
 }
 
 static void
@@ -2262,6 +2264,7 @@ recvsoa(isc_task_t *task, isc_event_t *event) {
 	}
 	check_result(result, "dns_request_getresponse");
 	section = DNS_SECTION_ANSWER;
+	POST(section);
 	if (debugging)
 		show_message(stderr, rcvmsg, "Reply from SOA query:");
 
@@ -2880,6 +2883,9 @@ cleanup(void) {
 		realm = NULL;
 	}
 #endif
+
+	if (sig0key != NULL)
+		dst_key_free(&sig0key);
 
 	ddebug("Shutting down task manager");
 	isc_taskmgr_destroy(&taskmgr);

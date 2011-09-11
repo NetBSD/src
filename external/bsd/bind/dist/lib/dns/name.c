@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.3 2011/02/16 03:47:04 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.4 2011/09/11 18:55:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: name.c,v 1.174 2011-01-13 04:59:25 tbox Exp */
+/* Id: name.c,v 1.175 2011-03-11 06:11:23 marka Exp */
 
 /*! \file */
 
@@ -1026,12 +1026,13 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 		  const dns_name_t *origin, unsigned int options,
 		  isc_buffer_t *target)
 {
-	unsigned char *ndata, *label;
+	unsigned char *ndata, *label = NULL;
 	char *tdata;
 	char c;
 	ft_state state;
-	unsigned int value, count;
-	unsigned int n1, n2, tlen, nrem, nused, digits, labels, tused;
+	unsigned int value = 0, count = 0;
+	unsigned int n1 = 0, n2 = 0;
+	unsigned int tlen, nrem, nused, digits = 0, labels, tused;
 	isc_boolean_t done;
 	unsigned char *offsets;
 	dns_offsets_t odata;
@@ -1063,16 +1064,6 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 
 	INIT_OFFSETS(name, offsets, odata);
 	offsets[0] = 0;
-
-	/*
-	 * Initialize things to make the compiler happy; they're not required.
-	 */
-	n1 = 0;
-	n2 = 0;
-	label = NULL;
-	digits = 0;
-	value = 0;
-	count = 0;
 
 	/*
 	 * Make 'name' empty in case of failure.
@@ -1173,6 +1164,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 				return (DNS_R_BADLABELTYPE);
 			}
 			state = ft_escape;
+			POST(state);
 			/* FALLTHROUGH */
 		case ft_escape:
 			if (!isdigit(c & 0xff)) {
@@ -1238,6 +1230,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 			label = origin->ndata;
 			n1 = origin->length;
 			nrem -= n1;
+			POST(nrem);
 			while (n1 > 0) {
 				n2 = *label++;
 				INSIST(n2 <= 63); /* no bitstring support */

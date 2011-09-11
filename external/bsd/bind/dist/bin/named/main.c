@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.7 2011/02/16 03:46:46 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2011/09/11 18:55:27 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: main.c,v 1.180 2010-12-22 03:59:02 marka Exp */
+/* Id: main.c,v 1.183 2011-03-11 06:11:21 marka Exp */
 
 /*! \file */
 
@@ -53,6 +53,8 @@
 
 #include <dst/result.h>
 
+#include <dlz/dlz_dlopen_driver.h>
+
 /*
  * Defining NS_MAIN provides storage declarations (rather than extern)
  * for variables in named/globals.h.
@@ -83,10 +85,10 @@
  */
 /* #include "xxdb.h" */
 
+#ifdef CONTRIB_DLZ
 /*
- * Include DLZ drivers if appropriate.
+ * Include contributed DLZ drivers if appropriate.
  */
-#ifdef DLZ
 #include <dlz/dlz_drivers.h>
 #endif
 
@@ -562,6 +564,7 @@ parse_command_line(int argc, char *argv[]) {
 
 	argc -= isc_commandline_index;
 	argv += isc_commandline_index;
+	POST(argv);
 
 	if (argc > 0) {
 		usage();
@@ -858,9 +861,19 @@ setup(void) {
 	 */
 	/* xxdb_init(); */
 
-#ifdef DLZ
+#ifdef ISC_DLZ_DLOPEN
 	/*
-	 * Register any DLZ drivers.
+	 * Register the DLZ "dlopen" driver.
+	 */
+	result = dlz_dlopen_init(ns_g_mctx);
+	if (result != ISC_R_SUCCESS)
+		ns_main_earlyfatal("dlz_dlopen_init() failed: %s",
+				   isc_result_totext(result));
+#endif
+
+#if CONTRIB_DLZ
+	/*
+	 * Register any other contributed DLZ drivers.
 	 */
 	result = dlz_drivers_init();
 	if (result != ISC_R_SUCCESS)
@@ -884,11 +897,17 @@ cleanup(void) {
 	 */
 	/* xxdb_clear(); */
 
-#ifdef DLZ
+#ifdef CONTRIB_DLZ
 	/*
-	 * Unregister any DLZ drivers.
+	 * Unregister contributed DLZ drivers.
 	 */
 	dlz_drivers_clear();
+#endif
+#ifdef ISC_DLZ_DLOPEN
+	/*
+	 * Unregister "dlopen" DLZ driver.
+	 */
+	dlz_dlopen_clear();
 #endif
 
 	dns_name_destroy();

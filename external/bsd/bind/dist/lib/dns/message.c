@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.7 2011/07/05 21:59:19 spz Exp $	*/
+/*	$NetBSD: message.c,v 1.8 2011/09/11 18:55:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: message.c,v 1.254.186.3 2011-06-21 20:15:47 each Exp */
+/* Id: message.c,v 1.257 2011-06-08 22:13:50 each Exp */
 
 /*! \file */
 
@@ -1196,7 +1196,6 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 
 		skip_name_search = ISC_FALSE;
 		skip_type_search = ISC_FALSE;
-		free_name = ISC_FALSE;
 		free_rdataset = ISC_FALSE;
 
 		name = isc_mempool_get(msg->namepool);
@@ -2932,6 +2931,7 @@ dns_message_signer(dns_message_t *msg, dns_name_t *signer) {
 		dns_rdataset_current(msg->tsig, &rdata);
 
 		result = dns_rdata_tostruct(&rdata, &tsig, NULL);
+		INSIST(result == ISC_R_SUCCESS);
 		if (msg->tsigstatus != dns_rcode_noerror)
 			result = DNS_R_TSIGVERIFYFAILURE;
 		else if (tsig.error != dns_rcode_noerror)

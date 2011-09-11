@@ -1,7 +1,7 @@
-/*	$NetBSD: sshfp_44.c,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: sshfp_44.c,v 1.3 2011/09/11 18:55:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sshfp_44.c,v 1.9 2009-12-04 22:06:37 tbox Exp */
+/* Id: sshfp_44.c,v 1.11 2011-03-05 23:52:31 tbox Exp */
 
 /* RFC 4255 */
 
@@ -98,7 +98,11 @@ totext_sshfp(ARGS_TOTEXT) {
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" (", target));
 	RETERR(str_totext(tctx->linebreak, target));
-	RETERR(isc_hex_totext(&sr, tctx->width - 2, tctx->linebreak, target));
+	if (tctx->width == 0) /* No splitting */
+		RETERR(isc_hex_totext(&sr, 0, "", target));
+	else
+		RETERR(isc_hex_totext(&sr, tctx->width - 2,
+				      tctx->linebreak, target));
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" )", target));
 	return (ISC_R_SUCCESS);

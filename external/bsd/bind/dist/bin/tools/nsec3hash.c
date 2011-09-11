@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3hash.c,v 1.2 2011/02/16 03:46:54 christos Exp $	*/
+/*	$NetBSD: nsec3hash.c,v 1.3 2011/09/11 18:55:32 christos Exp $	*/
 
 /*
  * Copyright (C) 2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -61,7 +61,7 @@ check_result(isc_result_t result, const char *message) {
 }
 
 static void
-usage() {
+usage(void) {
 	fatal("salt hash iterations domain");
 }
 

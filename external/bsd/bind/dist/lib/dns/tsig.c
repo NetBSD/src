@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig.c,v 1.2 2011/02/16 03:47:05 christos Exp $	*/
+/*	$NetBSD: tsig.c,v 1.3 2011/09/11 18:55:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: tsig.c,v 1.147 2011-01-11 23:47:13 tbox Exp
+ * Id: tsig.c,v 1.148 2011-03-21 19:54:03 each Exp
  */
 /*! \file */
 #include <config.h>
@@ -621,7 +621,7 @@ restore_key(dns_tsig_keyring_t *ring, isc_stdtime_t now, FILE *fp) {
 	result = dns_tsigkey_createfromkey(name, algorithm, dstkey,
 					   ISC_TRUE, creator, inception,
 					   expire, ring->mctx, ring, NULL);
-	if (result != ISC_R_SUCCESS && dstkey != NULL)
+	if (dstkey != NULL)
 		dst_key_free(&dstkey);
 	return (result);
 }

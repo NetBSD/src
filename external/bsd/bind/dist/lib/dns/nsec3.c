@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec3.c,v 1.3 2011/07/05 21:59:19 spz Exp $	*/
+/*	$NetBSD: nsec3.c,v 1.4 2011/09/11 18:55:35 christos Exp $	*/
 
 /*
- * Copyright (C) 2006, 2008-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2008-2011  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec3.c,v 1.19.96.1 2011-06-21 20:15:48 each Exp */
+/* Id: nsec3.c,v 1.23 2011-06-10 01:51:09 each Exp */
 
 #include <config.h>
 
@@ -51,6 +51,7 @@
 
 #define OPTOUT(x) (((x) & DNS_NSEC3FLAG_OPTOUT) != 0)
 #define CREATE(x) (((x) & DNS_NSEC3FLAG_CREATE) != 0)
+#define INITIAL(x) (((x) & DNS_NSEC3FLAG_INITIAL) != 0)
 #define REMOVE(x) (((x) & DNS_NSEC3FLAG_REMOVE) != 0)
 
 static void
@@ -559,7 +560,7 @@ dns_nsec3_addnsec3(dns_db_t *db, dns_dbversion_t *version,
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdataset_t rdataset;
 	int pass;
-	isc_boolean_t exists;
+	isc_boolean_t exists = ISC_FALSE;
 	isc_boolean_t maybe_remove_unsecure = ISC_FALSE;
 	isc_uint8_t flags;
 	isc_buffer_t buffer;

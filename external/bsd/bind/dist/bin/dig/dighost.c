@@ -1,7 +1,7 @@
-/*	$NetBSD: dighost.c,v 1.7 2011/02/16 03:46:45 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.8 2011/09/11 18:55:25 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dighost.c,v 1.336 2010-12-09 00:54:33 marka Exp */
+/* Id: dighost.c,v 1.340 2011-03-11 06:11:20 marka Exp */
 
 /*! \file
  *  \note
@@ -568,10 +568,8 @@ make_server(const char *servname, const char *userarg) {
 	if (srv == NULL)
 		fatal("memory allocation failure in %s:%d",
 		      __FILE__, __LINE__);
-	strncpy(srv->servername, servname, MXNAME);
-	strncpy(srv->userarg, userarg, MXNAME);
-	srv->servername[MXNAME-1] = 0;
-	srv->userarg[MXNAME-1] = 0;
+	strlcpy(srv->servername, servname, MXNAME);
+	strlcpy(srv->userarg, userarg, MXNAME);
 	ISC_LINK_INIT(srv, link);
 	return (srv);
 }
@@ -1769,8 +1767,7 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 			dns_rdata_freestruct(&ns);
 
 			/* Initialize lookup if we've not yet */
-			debug("found NS %d %s", numLookups, namestr);
-			numLookups++;
+			debug("found NS %s", namestr);
 			if (!success) {
 				success = ISC_TRUE;
 				lookup_counter++;
@@ -1792,9 +1789,8 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 				domain = dns_fixedname_name(&lookup->fdomain);
 				dns_name_copy(name, domain, NULL);
 			}
-			srv = make_server(namestr, namestr);
-			debug("adding server %s", srv->servername);
-			ISC_LIST_APPEND(lookup->my_server_list, srv, link);
+			debug("adding server %s", namestr);
+			numLookups += getaddresses(lookup, namestr);
 			dns_rdata_reset(&rdata);
 		}
 	}
@@ -1810,17 +1806,25 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 	if (numLookups > 1) {
 		isc_uint32_t i, j;
 		dig_serverlist_t my_server_list;
+		dig_server_t *next;
 
 		ISC_LIST_INIT(my_server_list);
 
-		for (i = numLookups; i > 0; i--) {
+		i = numLookups;
+		for (srv = ISC_LIST_HEAD(lookup->my_server_list);
+		     srv != NULL;
+		     srv = ISC_LIST_HEAD(lookup->my_server_list)) {
+			INSIST(i > 0);
 			isc_random_get(&j);
 			j %= i;
-			srv = ISC_LIST_HEAD(lookup->my_server_list);
-			while (j-- > 0)
-				srv = ISC_LIST_NEXT(srv, link);
+			next = ISC_LIST_NEXT(srv, link);
+			while (j-- > 0 && next != NULL) {
+				srv = next;
+				next = ISC_LIST_NEXT(srv, link);
+			}
 			ISC_LIST_DEQUEUE(lookup->my_server_list, srv, link);
 			ISC_LIST_APPEND(my_server_list, srv, link);
+			i--;
 		}
 		ISC_LIST_APPENDLIST(lookup->my_server_list,
 				    my_server_list, link);
@@ -3541,6 +3545,31 @@ get_address(char *host, in_port_t port, isc_sockaddr_t *sockaddr) {
 	INSIST(count == 1);
 
 	return (ISC_R_SUCCESS);
+}
+
+int
+getaddresses(dig_lookup_t *lookup, const char *host) {
+	isc_result_t result;
+	isc_sockaddr_t sockaddrs[DIG_MAX_ADDRESSES];
+	isc_netaddr_t netaddr;
+	int count, i;
+	dig_server_t *srv;
+	char tmp[ISC_NETADDR_FORMATSIZE];
+
+	result = bind9_getaddresses(host, 0, sockaddrs,
+				    DIG_MAX_ADDRESSES, &count);
+	if (result != ISC_R_SUCCESS)
+		fatal("couldn't get address for '%s': %s",
+		      host, isc_result_totext(result));
+
+	for (i = 0; i < count; i++) {
+		isc_netaddr_fromsockaddr(&netaddr, &sockaddrs[i]);
+		isc_netaddr_format(&netaddr, tmp, sizeof(tmp));
+		srv = make_server(tmp, host);
+		ISC_LIST_APPEND(lookup->my_server_list, srv, link);
+	}
+
+	return count;
 }
 
 /*%

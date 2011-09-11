@@ -1,4 +1,4 @@
-/*	$NetBSD: rrsig_46.c,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: rrsig_46.c,v 1.3 2011/09/11 18:55:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rrsig_46.c,v 1.14 2011-01-13 04:59:26 tbox Exp */
+/* Id: rrsig_46.c,v 1.15 2011-03-05 19:39:07 each Exp */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -183,7 +183,10 @@ totext_rrsig(ARGS_TOTEXT) {
 	isc_region_consume(&sr, 4);
 	sprintf(buf, "%lu", ttl);
 	RETERR(str_totext(buf, target));
-	RETERR(str_totext(" ", target));
+
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+		RETERR(str_totext(" (", target));
+	RETERR(str_totext(tctx->linebreak, target));
 
 	/*
 	 * Sig exp.
@@ -191,10 +194,7 @@ totext_rrsig(ARGS_TOTEXT) {
 	exp = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
 	RETERR(dns_time32_totext(exp, target));
-
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" (", target));
-	RETERR(str_totext(tctx->linebreak, target));
+	RETERR(str_totext(" ", target));
 
 	/*
 	 * Time signed.
@@ -225,8 +225,11 @@ totext_rrsig(ARGS_TOTEXT) {
 	 * Sig.
 	 */
 	RETERR(str_totext(tctx->linebreak, target));
-	RETERR(isc_base64_totext(&sr, tctx->width - 2,
-				    tctx->linebreak, target));
+	if (tctx->width == 0)   /* No splitting */
+		RETERR(isc_base64_totext(&sr, 60, "", target));
+	else
+		RETERR(isc_base64_totext(&sr, tctx->width - 2,
+					 tctx->linebreak, target));
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" )", target));
 

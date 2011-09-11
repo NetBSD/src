@@ -1,4 +1,4 @@
-/*	$NetBSD: dst.h,v 1.2 2011/02/16 03:47:07 christos Exp $	*/
+/*	$NetBSD: dst.h,v 1.3 2011/09/11 18:55:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst.h,v 1.31 2011-01-11 23:47:14 tbox Exp */
+/* Id: dst.h,v 1.33 2011-03-21 19:54:03 each Exp */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
@@ -737,6 +737,26 @@ dst_key_setbits(dst_key_t *key, isc_uint16_t bits);
  *	"key" is a valid key.
  */
 
+void
+dst_key_setttl(dst_key_t *key, dns_ttl_t ttl);
+/*%<
+ * Set the default TTL to use when converting the key
+ * to a KEY or DNSKEY RR.
+ *
+ * Requires:
+ *	"key" is a valid key.
+ */
+
+dns_ttl_t
+dst_key_getttl(const dst_key_t *key);
+/*%<
+ * Get the default TTL to use when converting the key
+ * to a KEY or DNSKEY RR.
+ *
+ * Requires:
+ *	"key" is a valid key.
+ */
+
 isc_result_t
 dst_key_setflags(dst_key_t *key, isc_uint32_t flags);
 /*
@@ -846,6 +866,9 @@ dst_key_tkeytoken(const dst_key_t *key);
 /*%<
  * Return the token from the TKEY request, if any.  If this key was
  * not negotiated via TKEY, return NULL.
+ *
+ * Requires:
+ *	"key" is a valid key.
  */
 
 

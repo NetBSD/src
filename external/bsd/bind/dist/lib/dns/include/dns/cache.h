@@ -1,7 +1,7 @@
-/*	$NetBSD: cache.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: cache.h,v 1.3 2011/09/11 18:55:38 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cache.h,v 1.28 2009-01-09 23:47:46 tbox Exp */
+/* Id: cache.h,v 1.32 2011-08-02 23:47:52 tbox Exp */
 
 #ifndef DNS_CACHE_H
 #define DNS_CACHE_H 1
@@ -63,23 +63,36 @@ ISC_LANG_BEGINDECLS
  ***/
 
 isc_result_t
-dns_cache_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
+dns_cache_create(isc_mem_t *cmctx, isc_taskmgr_t *taskmgr,
 		 isc_timermgr_t *timermgr, dns_rdataclass_t rdclass,
 		 const char *db_type, unsigned int db_argc, char **db_argv,
 		 dns_cache_t **cachep);
 isc_result_t
-dns_cache_create2(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
+dns_cache_create2(isc_mem_t *cmctx, isc_taskmgr_t *taskmgr,
+		  isc_timermgr_t *timermgr, dns_rdataclass_t rdclass,
+		  const char *cachename, const char *db_type,
+		  unsigned int db_argc, char **db_argv, dns_cache_t **cachep);
+isc_result_t
+dns_cache_create3(isc_mem_t *cmctx, isc_mem_t *hmctx, isc_taskmgr_t *taskmgr,
 		  isc_timermgr_t *timermgr, dns_rdataclass_t rdclass,
 		  const char *cachename, const char *db_type,
 		  unsigned int db_argc, char **db_argv, dns_cache_t **cachep);
 /*%<
- * Create a new DNS cache.  dns_cache_create2() will create a named cache.
- * dns_cache_create() is a backward compatible version that internally specifies
- * an empty name.
+ * Create a new DNS cache.
+ *
+ * dns_cache_create2() will create a named cache.
+ *
+ * dns_cache_create3() will create a named cache using two separate memory
+ * contexts, one for cache data which can be cleaned and a separate one for
+ * memory allocated for the heap (which can grow without an upper limit and
+ * has no mechanism for shrinking).
+ *
+ * dns_cache_create() is a backward compatible version that internally
+ * specifies an empty cache name and a single memory context.
  *
  * Requires:
  *
- *\li	'mctx' is a valid memory context
+ *\li	'cmctx' (and 'hmctx' if applicable) is a valid memory context.
  *
  *\li	'taskmgr' is a valid task manager and 'timermgr' is a valid timer
  * 	manager, or both are NULL.  If NULL, no periodic cleaning of the
@@ -269,9 +282,27 @@ dns_cache_flush(dns_cache_t *cache);
  */
 
 isc_result_t
+dns_cache_flushnode(dns_cache_t *cache, dns_name_t *name,
+		    isc_boolean_t tree);
+/*
+ * Flush a given name from the cache.  If 'tree' is true, then
+ * also flush all names under 'name'.
+ *
+ * Requires:
+ *\li	'cache' to be valid.
+ *\li	'name' to be valid.
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ *\li	#ISC_R_NOMEMORY
+ *\li	other error returns.
+ */
+
+isc_result_t
 dns_cache_flushname(dns_cache_t *cache, dns_name_t *name);
 /*
- * Flushes a given name from the cache.
+ * Flush a given name from the cache.  Equivalent to
+ * dns_cache_flushpartial(cache, name, ISC_FALSE).
  *
  * Requires:
  *\li	'cache' to be valid.

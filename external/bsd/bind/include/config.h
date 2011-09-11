@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.in,v 1.143.8.1 2011-02-03 05:52:35 marka Exp */
+/* Id: config.h.in,v 1.147 2011-07-28 13:33:09 tbox Exp */
 
 /*! \file */
 
@@ -160,6 +160,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to enable the "filter-aaaa-on-v4" option. */
 /* #undef ALLOW_FILTER_AAAA_ON_V4 */
 
+/* define if ATF unit tests are to be built. */
+/* #undef ATF_TEST */
+
 /* Define if recvmsg() does not meet all of the BSD socket API specifications.
    */
 /* #undef BROKEN_RECVMSG */
@@ -219,7 +222,7 @@ int sigwait(const unsigned int *set, int *sig);
 #define HAVE_GSSAPI_GSSAPI_H 1
 
 /* Define to 1 if you have the <gssapi/gssapi_krb5.h> header file. */
-/* #undef HAVE_GSSAPI_GSSAPI_KRB5_H */
+#define HAVE_GSSAPI_GSSAPI_KRB5_H 1
 
 /* Define to 1 if you have the <gssapi.h> header file. */
 #define HAVE_GSSAPI_H 1
@@ -234,7 +237,7 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef HAVE_KERBEROSV5_KRB5_H */
 
 /* Define to 1 if you have the <krb5.h> header file. */
-/* #undef HAVE_KRB5_H */
+#define HAVE_KRB5_H 1
 
 /* Define to 1 if you have the <krb5/krb5.h> header file. */
 #define HAVE_KRB5_KRB5_H 1
@@ -250,9 +253,6 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `c_r' library (-lc_r). */
 /* #undef HAVE_LIBC_R */
-
-/* Define to 1 if you have the `dl' library (-ldl). */
-/* #undef HAVE_LIBDL */
 
 /* Define to 1 if you have the `nsl' library (-lnsl). */
 /* #undef HAVE_LIBNSL */
@@ -362,6 +362,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* Define to 1 if you have the `usleep' function. */
+#define HAVE_USLEEP 1
+
 /* return type of gai_strerror */
 #define IRS_GAISTRERROR_RETURN_T const char *
 
@@ -370,6 +373,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to the flags type used by getnameinfo(3). */
 #define IRS_GETNAMEINFO_FLAGS_T int
+
+/* Define to allow building of objects for dlopen(). */
+#define ISC_DLZ_DLOPEN 1
 
 /* Defined if extern char *optarg is not declared. */
 /* #undef NEED_OPTARG */
@@ -399,6 +405,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Sets which flag to pass to open/fcntl to make non-blocking
    (O_NDELAY/O_NONBLOCK). */
 #define PORT_NONBLOCK O_NONBLOCK
+
+/* The size of `void *', as computed by sizeof. */
+#define SIZEOF_VOID_P 8
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1

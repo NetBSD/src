@@ -1,7 +1,7 @@
-/*	$NetBSD: dns64.c,v 1.2 2011/02/16 03:47:03 christos Exp $	*/
+/*	$NetBSD: dns64.c,v 1.3 2011/09/11 18:55:34 christos Exp $	*/
 
 /*
- * Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dns64.c,v 1.6 2010-12-09 04:59:09 marka Exp */
+/* Id: dns64.c,v 1.8 2011-03-12 04:59:47 tbox Exp */
 
 #include <config.h>
 
@@ -255,6 +255,8 @@ dns_dns64_aaaaok(const dns_dns64_t *dns64, const isc_netaddr_t *reqaddr,
 		 */
 		if (dns64->excluded == NULL) {
 			answer = ISC_TRUE;
+			if (aaaaok == NULL)
+				goto done;
 			for (i = 0; i < aaaaoklen; i++)
 				aaaaok[i] = ISC_TRUE;
 			goto done;

@@ -1,7 +1,7 @@
-/*	$NetBSD: filter-aaaa.c,v 1.2 2011/02/16 03:46:52 christos Exp $	*/
+/*	$NetBSD: filter-aaaa.c,v 1.3 2011/09/11 18:55:31 christos Exp $	*/
 
 /*
- * Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,14 +16,17 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: filter-aaaa.c,v 1.2 2010-06-22 03:58:36 marka Exp */
+/* Id: filter-aaaa.c,v 1.4 2011-07-28 23:47:58 tbox Exp */
 
 #include <config.h>
+#include <isc/util.h>
 
 int
 main(int argc, char **argv) {
-	argc = argc;
-	argv = argv;
+
+	UNUSED(argc);
+	UNUSED(argv);
+
 #ifdef ALLOW_FILTER_AAAA_ON_V4
 	return (0);
 #else

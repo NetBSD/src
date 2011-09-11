@@ -1,7 +1,7 @@
-/*	$NetBSD: interfacemgr.c,v 1.2 2011/02/16 03:46:46 christos Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.3 2011/09/11 18:55:27 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,13 +17,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: interfacemgr.c,v 1.95 2009-01-17 23:47:42 tbox Exp */
+/* Id: interfacemgr.c,v 1.99 2011-07-28 11:16:04 marka Exp */
 
 /*! \file */
 
 #include <config.h>
 
 #include <isc/interfaceiter.h>
+#include <isc/os.h>
 #include <isc/string.h>
 #include <isc/task.h>
 #include <isc/util.h>
@@ -185,11 +186,14 @@ ns_interface_create(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr,
 {
 	ns_interface_t *ifp;
 	isc_result_t result;
+	int disp;
 
 	REQUIRE(NS_INTERFACEMGR_VALID(mgr));
+
 	ifp = isc_mem_get(mgr->mctx, sizeof(*ifp));
 	if (ifp == NULL)
 		return (ISC_R_NOMEMORY);
+
 	ifp->mgr = NULL;
 	ifp->generation = mgr->generation;
 	ifp->addr = *addr;
@@ -212,9 +216,11 @@ ns_interface_create(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr,
 		goto clientmgr_create_failure;
 	}
 
-	ifp->udpdispatch = NULL;
+	for (disp = 0; disp < MAX_UDP_DISPATCH; disp++)
+		ifp->udpdispatch[disp] = NULL;
 
 	ifp->tcpsocket = NULL;
+
 	/*
 	 * Create a single TCP client object.  It will replace itself
 	 * with a new one as soon as it gets a connection, so the actual
@@ -223,6 +229,7 @@ ns_interface_create(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr,
 	 */
 	ifp->ntcptarget = 1;
 	ifp->ntcpcurrent = 0;
+	ifp->nudpdispatch = 0;
 
 	ISC_LINK_INIT(ifp, link);
 
@@ -237,6 +244,7 @@ ns_interface_create(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr,
 
  clientmgr_create_failure:
 	DESTROYLOCK(&ifp->lock);
+
  lock_create_failure:
 	ifp->magic = 0;
 	isc_mem_put(mgr->mctx, ifp, sizeof(*ifp));
@@ -249,6 +257,7 @@ ns_interface_listenudp(ns_interface_t *ifp) {
 	isc_result_t result;
 	unsigned int attrs;
 	unsigned int attrmask;
+	int disp, i;
 
 	attrs = 0;
 	attrs |= DNS_DISPATCHATTR_UDP;
@@ -260,15 +269,25 @@ ns_interface_listenudp(ns_interface_t *ifp) {
 	attrmask = 0;
 	attrmask |= DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_TCP;
 	attrmask |= DNS_DISPATCHATTR_IPV4 | DNS_DISPATCHATTR_IPV6;
-	result = dns_dispatch_getudp(ifp->mgr->dispatchmgr, ns_g_socketmgr,
-				     ns_g_taskmgr, &ifp->addr,
-				     4096, 1000, 32768, 8219, 8237,
-				     attrs, attrmask, &ifp->udpdispatch);
-	if (result != ISC_R_SUCCESS) {
-		isc_log_write(IFMGR_COMMON_LOGARGS, ISC_LOG_ERROR,
-			      "could not listen on UDP socket: %s",
-			      isc_result_totext(result));
-		goto udp_dispatch_failure;
+
+	ifp->nudpdispatch = ISC_MIN(isc_os_ncpus(), MAX_UDP_DISPATCH);
+	for (disp = 0; disp < ifp->nudpdispatch; disp++) {
+		result = dns_dispatch_getudp_dup(ifp->mgr->dispatchmgr,
+						 ns_g_socketmgr,
+						 ns_g_taskmgr, &ifp->addr,
+						 4096, 1000, 32768, 8219, 8237,
+						 attrs, attrmask,
+						 &ifp->udpdispatch[disp],
+						 disp == 0
+						    ? NULL
+						    : ifp->udpdispatch[0]);
+		if (result != ISC_R_SUCCESS) {
+			isc_log_write(IFMGR_COMMON_LOGARGS, ISC_LOG_ERROR,
+				      "could not listen on UDP socket: %s",
+				      isc_result_totext(result));
+			goto udp_dispatch_failure;
+		}
+
 	}
 
 	result = ns_clientmgr_createclients(ifp->clientmgr, ns_g_cpus,
@@ -279,12 +298,17 @@ ns_interface_listenudp(ns_interface_t *ifp) {
 				 isc_result_totext(result));
 		goto addtodispatch_failure;
 	}
+
 	return (ISC_R_SUCCESS);
 
  addtodispatch_failure:
-	dns_dispatch_changeattributes(ifp->udpdispatch, 0,
-				      DNS_DISPATCHATTR_NOLISTEN);
-	dns_dispatch_detach(&ifp->udpdispatch);
+	for (i = disp - 1; i <= 0; i--) {
+		dns_dispatch_changeattributes(ifp->udpdispatch[i], 0,
+					      DNS_DISPATCHATTR_NOLISTEN);
+		dns_dispatch_detach(&(ifp->udpdispatch[i]));
+	}
+	ifp->nudpdispatch = 0;
+
  udp_dispatch_failure:
 	return (result);
 }
@@ -381,7 +405,7 @@ ns_interface_setup(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr,
 		}
 	}
 	*ifpret = ifp;
-	return (ISC_R_SUCCESS);
+	return (result);
 
  cleanup_interface:
 	ISC_LIST_UNLINK(ifp->mgr->interfaces, ifp, link);
@@ -398,15 +422,19 @@ ns_interface_shutdown(ns_interface_t *ifp) {
 static void
 ns_interface_destroy(ns_interface_t *ifp) {
 	isc_mem_t *mctx = ifp->mgr->mctx;
+	int disp;
+
 	REQUIRE(NS_INTERFACE_VALID(ifp));
 
 	ns_interface_shutdown(ifp);
 
-	if (ifp->udpdispatch != NULL) {
-		dns_dispatch_changeattributes(ifp->udpdispatch, 0,
-					      DNS_DISPATCHATTR_NOLISTEN);
-		dns_dispatch_detach(&ifp->udpdispatch);
-	}
+	for (disp = ifp->nudpdispatch; disp >= 0; disp--)
+		if (ifp->udpdispatch[disp] != NULL) {
+			dns_dispatch_changeattributes(ifp->udpdispatch[disp], 0,
+						    DNS_DISPATCHATTR_NOLISTEN);
+			dns_dispatch_detach(&(ifp->udpdispatch[disp]));
+		}
+
 	if (ifp->tcpsocket != NULL)
 		isc_socket_detach(&ifp->tcpsocket);
 
@@ -966,7 +994,6 @@ isc_boolean_t
 ns_interfacemgr_listeningon(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr) {
 	isc_sockaddr_t *old;
 
-	old = ISC_LIST_HEAD(mgr->listenon);
 	for (old = ISC_LIST_HEAD(mgr->listenon);
 	     old != NULL;
 	     old = ISC_LIST_NEXT(old, link))

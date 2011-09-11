@@ -221,11 +221,14 @@
  * the GSSAPI header.
  */
 
+#define ISC_PLATFORM_GSSAPIHEADER <gssapi/gssapi.h>
 
 /*
  * Defined to <gssapi_krb5.h> or <gssapi/gssapi_krb5.h> for how to
  * include the GSSAPI KRB5 header.
  */
+
+#define ISC_PLATFORM_GSSAPI_KRB5_HEADER <gssapi/gssapi_krb5.h>
 
 
 /*
@@ -233,6 +236,7 @@
  * the KRB5 header.
  */
 
+#define ISC_PLATFORM_KRB5HEADER <krb5/krb5.h>
 
 /*
  * Type used for resource limits.

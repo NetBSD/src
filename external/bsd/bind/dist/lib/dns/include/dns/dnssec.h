@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.3 2011/09/11 18:55:38 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec.h,v 1.42 2010-01-09 23:48:45 tbox Exp */
+/* Id: dnssec.h,v 1.46 2011-05-06 23:47:29 tbox Exp */
 
 #ifndef DNS_DNSSEC_H
 #define DNS_DNSSEC_H 1
@@ -222,6 +222,19 @@ dns_dnssec_selfsigns(dns_rdata_t *rdata, dns_name_t *name,
 		     isc_boolean_t ignoretime, isc_mem_t *mctx);
 
 
+isc_boolean_t
+dns_dnssec_signs(dns_rdata_t *rdata, dns_name_t *name,
+		 dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
+		 isc_boolean_t ignoretime, isc_mem_t *mctx);
+/*%<
+ * Verify that 'rdataset' is validly signed in 'sigrdataset' by
+ * the key in 'rdata'.
+ *
+ * dns_dnssec_selfsigns() requires that rdataset be a DNSKEY or KEY
+ * rrset.  dns_dnssec_signs() works on any rrset.
+ */
+
+
 isc_result_t
 dns_dnsseckey_create(isc_mem_t *mctx, dst_key_t **dstkey,
 		     dns_dnsseckey_t **dkp);
@@ -292,7 +305,7 @@ dns_dnssec_keylistfromrdataset(dns_name_t *origin,
 isc_result_t
 dns_dnssec_updatekeys(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *newkeys,
 		      dns_dnsseckeylist_t *removed, dns_name_t *origin,
-		      dns_ttl_t ttl, dns_diff_t *diff, isc_boolean_t allzsk,
+		      dns_ttl_t hint_ttl, dns_diff_t *diff, isc_boolean_t allzsk,
 		      isc_mem_t *mctx, void (*report)(const char *, ...));
 /*%<
  * Update the list of keys in 'keys' with new key information in 'newkeys'.
@@ -311,9 +324,11 @@ dns_dnssec_updatekeys(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *newkeys,
  * If 'allzsk' is true, we are allowing KSK-flagged keys to be used as
  * ZSKs.
  *
- * 'ttl' is the TTL of the DNSKEY RRset; if it is longer than the
- * time until a new key will be activated, then we have to delay the
- * key's activation.
+ * 'hint_ttl' is the TTL to use for the DNSKEY RRset if there is no
+ * existing RRset, and if none of the keys to be added has a default TTL
+ * (in which case we would use the shortest one).  If the TTL is longer
+ * than the time until a new key will be activated, then we have to delay
+ * the key's activation.
  *
  * 'report' points to a function for reporting status.
  *

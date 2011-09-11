@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.3 2011/07/05 21:59:19 spz Exp $	*/
+/*	$NetBSD: timer.c,v 1.4 2011/09/11 18:55:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: timer.c,v 1.95.302.1.2.1 2011-06-02 23:47:36 tbox Exp */
+/* Id: timer.c,v 1.98 2011-03-11 06:11:26 marka Exp */
 
 /*! \file */
 
@@ -335,7 +335,9 @@ schedule(isc__timer_t *timer, isc_time_t *now, isc_boolean_t signal_ok) {
 
 static inline void
 deschedule(isc__timer_t *timer) {
+#ifdef USE_TIMER_THREAD
 	isc_boolean_t need_wakeup = ISC_FALSE;
+#endif
 	isc__timermgr_t *manager;
 
 	/*
@@ -344,8 +346,10 @@ deschedule(isc__timer_t *timer) {
 
 	manager = timer->manager;
 	if (timer->index > 0) {
+#ifdef USE_TIMER_THREAD
 		if (timer->index == 1)
 			need_wakeup = ISC_TRUE;
+#endif
 		isc_heap_delete(manager->heap, timer->index);
 		timer->index = 0;
 		INSIST(manager->nscheduled > 0);
@@ -529,6 +533,7 @@ isc__timer_reset(isc_timer_t *timer0, isc_timertype_t type,
 	REQUIRE(VALID_TIMER(timer));
 	manager = timer->manager;
 	REQUIRE(VALID_MANAGER(manager));
+
 	if (expires == NULL)
 		expires = isc_time_epoch;
 	if (interval == NULL)
@@ -551,8 +556,6 @@ isc__timer_reset(isc_timer_t *timer0, isc_timertype_t type,
 		 */
 		isc_time_settoepoch(&now);
 	}
-
-	manager = timer->manager;
 
 	LOCK(&manager->lock);
 	LOCK(&timer->lock);

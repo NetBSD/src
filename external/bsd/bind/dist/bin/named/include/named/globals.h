@@ -1,7 +1,7 @@
-/*	$NetBSD: globals.h,v 1.2 2011/02/16 03:46:46 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.3 2011/09/11 18:55:29 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: globals.h,v 1.89 2010-09-15 12:07:55 marka Exp */
+/* Id: globals.h,v 1.91 2011-06-17 23:47:49 tbox Exp */
 
 #ifndef NAMED_GLOBALS_H
 #define NAMED_GLOBALS_H 1
@@ -28,6 +28,7 @@
 #include <isc/log.h>
 #include <isc/net.h>
 
+#include <isccfg/aclconf.h>
 #include <isccfg/cfg.h>
 
 #include <dns/zone.h>
@@ -104,6 +105,7 @@ EXTERN const char *		lwresd_g_resolvconffile	INIT("/etc"
 EXTERN isc_boolean_t		ns_g_conffileset	INIT(ISC_FALSE);
 EXTERN isc_boolean_t		lwresd_g_useresolvconf	INIT(ISC_FALSE);
 EXTERN isc_uint16_t		ns_g_udpsize		INIT(4096);
+EXTERN cfg_aclconfctx_t *	ns_g_aclconfctx		INIT(NULL);
 
 /*
  * Initial resource limits.

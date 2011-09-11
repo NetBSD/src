@@ -1,7 +1,7 @@
-/*	$NetBSD: rwlock.c,v 1.4 2011/02/16 03:47:11 christos Exp $	*/
+/*	$NetBSD: rwlock.c,v 1.5 2011/09/11 18:55:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rwlock.c,v 1.46 2009-01-18 23:48:14 tbox Exp */
+/* Id: rwlock.c,v 1.48 2011-03-12 04:59:49 tbox Exp */
 
 /*! \file */
 
@@ -369,6 +369,7 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 		}
 
 		cntflag = isc_atomic_xadd(&rwl->cnt_and_flag, READER_INCR);
+		POST(cntflag);
 		while (1) {
 			if ((rwl->cnt_and_flag & WRITER_ACTIVE) == 0)
 				break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.2 2011/02/16 03:47:05 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.3 2011/09/11 18:55:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: view.c,v 1.178 2011-01-13 09:53:04 marka Exp */
+/* Id: view.c,v 1.181 2011-08-02 20:36:12 each Exp */
 
 /*! \file */
 
@@ -197,6 +197,7 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	ISC_LIST_INIT(view->rpz_zones);
 	dns_fixedname_init(&view->dlv_fixed);
 	view->managed_keys = NULL;
+	view->redirect = NULL;
 #ifdef BIND9
 	view->new_zone_file = NULL;
 	view->new_zone_config = NULL;
@@ -432,6 +433,8 @@ destroy(dns_view_t *view) {
 	}
 	if (view->managed_keys != NULL)
 		dns_zone_detach(&view->managed_keys);
+	if (view->redirect != NULL)
+		dns_zone_detach(&view->redirect);
 	dns_view_setnewzones(view, ISC_FALSE, NULL, NULL);
 #endif
 	dns_fwdtable_destroy(&view->fwdtable);
@@ -500,6 +503,11 @@ view_flushanddetach(dns_view_t **viewp, isc_boolean_t flush) {
 			if (view->flush)
 				dns_zone_flush(view->managed_keys);
 			dns_zone_detach(&view->managed_keys);
+		}
+		if (view->redirect != NULL) {
+			if (view->flush)
+				dns_zone_flush(view->redirect);
+			dns_zone_detach(&view->redirect);
 		}
 #endif
 		done = all_done(view);
@@ -1162,7 +1170,7 @@ dns_view_findzonecut2(dns_view_t *view, dns_name_t *name, dns_name_t *fname,
 {
 	isc_result_t result;
 	dns_db_t *db;
-	isc_boolean_t is_cache, use_zone, try_hints, is_staticstub_zone;
+	isc_boolean_t is_cache, use_zone, try_hints;
 	dns_zone_t *zone;
 	dns_name_t *zfname;
 	dns_rdataset_t zrdataset, zsigrdataset;
@@ -1174,7 +1182,6 @@ dns_view_findzonecut2(dns_view_t *view, dns_name_t *name, dns_name_t *fname,
 	db = NULL;
 	zone = NULL;
 	use_zone = ISC_FALSE;
-	is_staticstub_zone = ISC_FALSE;
 	try_hints = ISC_FALSE;
 	zfname = NULL;
 
@@ -1190,11 +1197,8 @@ dns_view_findzonecut2(dns_view_t *view, dns_name_t *name, dns_name_t *fname,
 	 */
 #ifdef BIND9
 	result = dns_zt_find(view->zonetable, name, 0, NULL, &zone);
-	if (result == ISC_R_SUCCESS || result == DNS_R_PARTIALMATCH) {
+	if (result == ISC_R_SUCCESS || result == DNS_R_PARTIALMATCH)
 		result = dns_zone_getdb(zone, &db);
-		if (dns_zone_gettype(zone) == dns_zone_staticstub)
-			is_staticstub_zone = ISC_TRUE;
-	}
 #else
 	result = ISC_R_NOTFOUND;
 #endif
@@ -1393,6 +1397,7 @@ dns_viewlist_findzone(dns_viewlist_t *list, dns_name_t *name,
 		if (result == DNS_R_PARTIALMATCH) {
 			dns_zone_detach(zp);
 			result = ISC_R_NOTFOUND;
+			POST(result);
 		}
 
 		if (zone2 != NULL) {
@@ -1526,16 +1531,23 @@ dns_view_flushcache2(dns_view_t *view, isc_boolean_t fixuponly) {
 
 isc_result_t
 dns_view_flushname(dns_view_t *view, dns_name_t *name) {
+	return (dns_view_flushnode(view, name, ISC_FALSE));
+}
+
+isc_result_t
+dns_view_flushnode(dns_view_t *view, dns_name_t *name, isc_boolean_t tree) {
 
 	REQUIRE(DNS_VIEW_VALID(view));
 
-	if (view->adb != NULL)
-		dns_adb_flushname(view->adb, name);
-	if (view->cache == NULL)
-		return (ISC_R_SUCCESS);
-	if (view->resolver != NULL)
-		dns_resolver_flushbadcache(view->resolver, name);
-	return (dns_cache_flushname(view->cache, name));
+	if (!tree) {
+		if (view->adb != NULL)
+			dns_adb_flushname(view->adb, name);
+		if (view->cache == NULL)
+			return (ISC_R_SUCCESS);
+		if (view->resolver != NULL)
+			dns_resolver_flushbadcache(view->resolver, name);
+	}
+	return (dns_cache_flushnode(view->cache, name, tree));
 }
 
 isc_result_t

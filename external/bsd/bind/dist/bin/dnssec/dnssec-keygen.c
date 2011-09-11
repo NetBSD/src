@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.6 2011/02/16 03:46:45 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.7 2011/09/11 18:55:26 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-keygen.c,v 1.115 2010-12-23 04:07:59 marka Exp */
+/* Id: dnssec-keygen.c,v 1.118 2011-03-17 01:40:34 each Exp */
 
 /*! \file */
 
@@ -127,7 +127,9 @@ usage(void) {
 	fprintf(stderr, "    -f <keyflag>: KSK | REVOKE\n");
 	fprintf(stderr, "    -g <generator>: use specified generator "
 			"(DH only)\n");
+	fprintf(stderr, "    -L <ttl>: default key TTL\n");
 	fprintf(stderr, "    -p <protocol>: (default: 3 [dnssec])\n");
+	fprintf(stderr, "    -r <randomdev>: a file containing random data\n");
 	fprintf(stderr, "    -s <strength>: strength value this key signs DNS "
 			"records with (default: 0)\n");
 	fprintf(stderr, "    -T <rrtype>: DNSKEY | KEY (default: DNSKEY; "
@@ -136,8 +138,6 @@ usage(void) {
 	fprintf(stderr, "    -t <type>: "
 			"AUTHCONF | NOAUTHCONF | NOAUTH | NOCONF "
 			"(default: AUTHCONF)\n");
-	fprintf(stderr, "    -r <randomdev>: a file containing random data\n");
-
 	fprintf(stderr, "    -h: print usage and exit\n");
 	fprintf(stderr, "    -m <memory debugging mode>:\n");
 	fprintf(stderr, "       usage | trace | record | size | mctx\n");
@@ -229,6 +229,7 @@ main(int argc, char **argv) {
 	dns_rdataclass_t rdclass;
 	int		options = DST_TYPE_PRIVATE | DST_TYPE_PUBLIC;
 	int		dbits = 0;
+	dns_ttl_t	ttl = 0;
 	isc_boolean_t	use_default = ISC_FALSE, use_nsec3 = ISC_FALSE;
 	isc_stdtime_t	publish = 0, activate = 0, revoke = 0;
 	isc_stdtime_t	inactive = 0, delete = 0;
@@ -236,7 +237,7 @@ main(int argc, char **argv) {
 	int		prepub = -1;
 	isc_boolean_t	setpub = ISC_FALSE, setact = ISC_FALSE;
 	isc_boolean_t	setrev = ISC_FALSE, setinact = ISC_FALSE;
-	isc_boolean_t	setdel = ISC_FALSE;
+	isc_boolean_t	setdel = ISC_FALSE, setttl = ISC_FALSE;
 	isc_boolean_t	unsetpub = ISC_FALSE, unsetact = ISC_FALSE;
 	isc_boolean_t	unsetrev = ISC_FALSE, unsetinact = ISC_FALSE;
 	isc_boolean_t	unsetdel = ISC_FALSE;
@@ -255,7 +256,7 @@ main(int argc, char **argv) {
 	/*
 	 * Process memory debugging argument first.
 	 */
-#define CMDLINE_FLAGS "3A:a:b:Cc:D:d:E:eFf:Gg:hI:i:K:km:n:P:p:qR:r:S:s:T:t:v:"
+#define CMDLINE_FLAGS "3A:a:b:Cc:D:d:E:eFf:Gg:hI:i:K:kL:m:n:P:p:qR:r:S:s:T:t:v:"
 	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
 		switch (ch) {
 		case 'm':
@@ -337,6 +338,13 @@ main(int argc, char **argv) {
 			fatal("The -k option has been deprecated.\n"
 			      "To generate a key-signing key, use -f KSK.\n"
 			      "To generate a key with TYPE=KEY, use -T KEY.\n");
+			break;
+		case 'L':
+			if (strcmp(isc_commandline_argument, "none") == 0)
+				ttl = 0;
+			else
+				ttl = strtottl(isc_commandline_argument);
+			setttl = ISC_TRUE;
 			break;
 		case 'n':
 			nametype = isc_commandline_argument;
@@ -962,6 +970,10 @@ main(int argc, char **argv) {
 			dst_key_setprivateformat(key, 1, 2);
 		}
 
+		/* Set the default key TTL */
+		if (setttl)
+			dst_key_setttl(key, ttl);
+
 		/*
 		 * Do not overwrite an existing key, or create a key
 		 * if there is a risk of ID collision due to this key
@@ -977,12 +989,15 @@ main(int argc, char **argv) {
 
 			if (verbose > 0) {
 				isc_buffer_clear(&buf);
-				dst_key_buildfilename(key, 0, directory, &buf);
-				fprintf(stderr,
-					"%s: %s already exists, or might "
-					"collide with another key upon "
-					"revokation.  Generating a new key\n",
-					program, filename);
+				ret = dst_key_buildfilename(key, 0,
+							    directory, &buf);
+				if (ret == ISC_R_SUCCESS)
+					fprintf(stderr,
+						"%s: %s already exists, or "
+						"might collide with another "
+						"key upon revokation.  "
+						"Generating a new key\n",
+						program, filename);
 			}
 
 			dst_key_free(&key);
@@ -1003,6 +1018,9 @@ main(int argc, char **argv) {
 
 	isc_buffer_clear(&buf);
 	ret = dst_key_buildfilename(key, 0, NULL, &buf);
+	if (ret != ISC_R_SUCCESS)
+		fatal("dst_key_buildfilename returned: %s\n",
+		      isc_result_totext(ret));
 	printf("%s\n", filename);
 	dst_key_free(&key);
 	if (prevkey != NULL)

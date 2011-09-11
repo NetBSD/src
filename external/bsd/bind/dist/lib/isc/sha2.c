@@ -1,7 +1,7 @@
-/*	$NetBSD: sha2.c,v 1.3 2011/07/01 02:24:14 joerg Exp $	*/
+/*	$NetBSD: sha2.c,v 1.4 2011/09/11 18:55:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2005-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005-2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sha2.c,v 1.18 2009-10-22 02:21:31 each Exp */
+/* Id: sha2.c,v 1.20 2011-03-12 04:59:49 tbox Exp */
 
 /*	$FreeBSD: src/sys/crypto/sha2/sha2.c,v 1.2.2.2 2002/03/05 08:36:47 ume Exp $	*/
 /*	$KAME: sha2.c,v 1.8 2001/11/08 01:07:52 itojun Exp $	*/
@@ -694,6 +694,9 @@ void isc_sha256_transform(isc_sha256_t *context, const isc_uint32_t* data) {
 
 	/* Clean up */
 	a = b = c = d = e = f = g = h = T1 = 0;
+	/* Avoid compiler warnings */
+	POST(a); POST(b); POST(c); POST(d); POST(e); POST(f);
+	POST(g); POST(h); POST(T1);
 }
 
 #else /* ISC_SHA2_UNROLL_TRANSFORM */
@@ -775,6 +778,9 @@ isc_sha256_transform(isc_sha256_t *context, const isc_uint32_t* data) {
 
 	/* Clean up */
 	a = b = c = d = e = f = g = h = T1 = T2 = 0;
+	/* Avoid compiler warnings */
+	POST(a); POST(b); POST(c); POST(d); POST(e); POST(f);
+	POST(g); POST(h); POST(T1); POST(T2);
 }
 
 #endif /* ISC_SHA2_UNROLL_TRANSFORM */
@@ -811,6 +817,8 @@ isc_sha256_update(isc_sha256_t *context, const isc_uint8_t *data, size_t len) {
 			context->bitcount += len << 3;
 			/* Clean up: */
 			usedspace = freespace = 0;
+			/* Avoid compiler warnings: */
+			POST(usedspace); POST(freespace);
 			return;
 		}
 	}
@@ -829,6 +837,8 @@ isc_sha256_update(isc_sha256_t *context, const isc_uint8_t *data, size_t len) {
 	}
 	/* Clean up: */
 	usedspace = freespace = 0;
+	/* Avoid compiler warnings: */
+	POST(usedspace); POST(freespace);
 }
 
 void
@@ -899,6 +909,7 @@ isc_sha256_final(isc_uint8_t digest[], isc_sha256_t *context) {
 	/* Clean up state data: */
 	memset(context, 0, sizeof(*context));
 	usedspace = 0;
+	POST(usedspace);
 }
 
 /*** SHA-512: *********************************************************/
@@ -1005,6 +1016,9 @@ void isc_sha512_transform(isc_sha512_t *context, const isc_uint64_t* data) {
 
 	/* Clean up */
 	a = b = c = d = e = f = g = h = T1 = 0;
+	/* Avoid compiler warnings */
+	POST(a); POST(b); POST(c); POST(d); POST(e); POST(f);
+	POST(g); POST(h); POST(T1);
 }
 
 #else /* ISC_SHA2_UNROLL_TRANSFORM */
@@ -1084,6 +1098,9 @@ isc_sha512_transform(isc_sha512_t *context, const isc_uint64_t* data) {
 
 	/* Clean up */
 	a = b = c = d = e = f = g = h = T1 = T2 = 0;
+	/* Avoid compiler warnings */
+	POST(a); POST(b); POST(c); POST(d); POST(e); POST(f);
+	POST(g); POST(h); POST(T1); POST(T2);
 }
 
 #endif /* ISC_SHA2_UNROLL_TRANSFORM */
@@ -1119,6 +1136,8 @@ void isc_sha512_update(isc_sha512_t *context, const isc_uint8_t *data, size_t le
 			ADDINC128(context->bitcount, len << 3);
 			/* Clean up: */
 			usedspace = freespace = 0;
+			/* Avoid compiler warnings: */
+			POST(usedspace); POST(freespace);
 			return;
 		}
 	}
@@ -1137,6 +1156,8 @@ void isc_sha512_update(isc_sha512_t *context, const isc_uint8_t *data, size_t le
 	}
 	/* Clean up: */
 	usedspace = freespace = 0;
+	/* Avoid compiler warnings: */
+	POST(usedspace); POST(freespace);
 }
 
 void isc_sha512_last(isc_sha512_t *context) {
