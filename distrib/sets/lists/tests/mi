@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.380 2011/09/11 07:31:20 jruoho Exp $
+# $NetBSD: mi,v 1.381 2011/09/11 09:02:45 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -439,6 +439,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_fflush.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_fmemopen.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_fopen.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdio/t_fputc.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_format.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_popen.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_printf.debug		tests-lib-debug		debug,atf
@@ -2025,6 +2026,7 @@
 ./usr/tests/lib/libc/stdio/t_fflush		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdio/t_fmemopen		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdio/t_fopen		tests-lib-tests		atf
+./usr/tests/lib/libc/stdio/t_fputc		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdio/t_format		tests-obsolete		obsolete
 ./usr/tests/lib/libc/stdio/t_popen		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdio/t_printf		tests-lib-tests		atf
