@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.6 2007-09-26 03:22:43 marka Exp
+# Id: clean.sh,v 1.8 2011-08-03 23:47:48 tbox Exp
 
 #
 # Clean up after cache cleaner tests.
@@ -23,3 +23,4 @@
 
 rm -f dig.out.ns2
 rm -f */named.memstats
+rm -f ns2/named_dump.db

@@ -48,23 +48,40 @@ BIND 9
 	For a detailed list of user-visible changes from
 	previous releases, see the CHANGES file.
 
+BIND 9.9.0
+
+	BIND 9.9.0 includes a number of changes from BIND 9.6 and earlier
+	releases.  New features include:
+
+        - NXDOMAIN redirection.
+        - Improved scalability from using multiple threads to
+          listen for queries.
+        - New 'rndc flushtree' command clears all data under a given
+          name from the DNS cache.
+        - New 'rndc sync' command dumps pending changes in a dynamic zone
+          to disk without a freeze/thaw cycle.
+        - The 'also-notify' option now takes the same syntax as
+          'masters', so it can used named masterlists and TSIG keys.
+        - 'auto-dnssec' zones can now have NSEC3 parameters set prior
+          to signing.
+        - 'dnssec-signzone -D' writes an output file containing only DNSSEC
+          data, which can be included by the primary zone file.
+        - 'dnssec-signzone -R' forces removal of signatures that are
+          not expired but were created by a key which no longer exists.
+        - 'dnssec-signzone -X' allows a separate expiration date to
+          be specified for DNSKEY signatures from other signatures.
+        - New '-L' option to dnssec-keygen, dnssec-settime, and
+          dnssec-keyfromlabel sets the default TTL for the key.
+        - dnssec-dsfromkey now supports reading from standard input,
+          to make it easier to convert DNSKEY to DS.
+        - RFC 1918 reverse zones have been added to the empty-zones
+          table per RFC 6303.
+        - Dynamic updates can now optionally set the zone's SOA serial
+          number to the current UNIX time.
+
 BIND 9.8.0
 
-        BIND 9.8.0 includes a number of changes from BIND 9.7 and earlier
-        releases.  New features include:
-
-        - Built-in trust anchor for the root zone, which can be
-          switched on via "dnssec-validation auto;"
-        - Support for DNS64.
-        - Support for response policy zones (RPZ).
-        - Support for writable DLZ zones.
-        - Improved ease of configuration of GSS/TSIG for
-          interoperability with Active Directory
-        - Support for GOST signing algorithm for DNSSEC.
-        - Removed RTT Banding from server selection algorithm.
-        - New "static-stub" zone type.
-        - Allow configuration of resolver timeouts via
-          "resolver-query-timeout" option.
+	DNS64 support (AAAA synthesis only initially).
 
 BIND 9.7.0
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: genzone.sh,v 1.11 2009-02-26 06:09:19 marka Exp
+# Id: genzone.sh,v 1.13 2011-03-03 23:47:31 tbox Exp
 
 #
 # Set up a test zone
@@ -272,4 +272,9 @@ hip2			HIP	( 2 200100107B1A74DF365639CC39F1D578
 
 ; type 255
 ; TSIG is a meta-type and should never occur in master files.
+
+; type 256
+uri01			URI	10 20 "https://www.isc.org/"
+uri02			URI	30 40 "https://www.isc.org/HolyCowThisSureIsAVeryLongURIRecordIDontEvenKnowWhatSomeoneWouldEverWantWithSuchAThingButTheSpecificationRequiresThatWesupportItSoHereWeGoTestingItLaLaLaLaLaLaLaSeriouslyThoughWhyWouldYouEvenConsiderUsingAURIThisLongItSeemsLikeASillyIdeaButEnhWhatAreYouGonnaDo/"
+
 EOF

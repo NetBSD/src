@@ -15,23 +15,24 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.20.24.1.2.1 2011-06-02 23:47:33 tbox Exp
+# Id: clean.sh,v 1.25 2011-07-01 02:25:47 marka Exp
 
 #
 # Clean up after zone transfer tests.
 #
 
-rm -f dig.out.ns1 dig.out.ns2 dig.out.ns1.after ns1/*.jnl ns2/*.jnl \
-    ns1/example.db ns1/update.db ns1/other.db ns1/ddns.key
+rm -f ns1/*.jnl ns2/*.jnl
+rm -f ns1/example.db ns1/unixtime.db ns1/update.db ns1/other.db ns1/ddns.key
 rm -f nsupdate.out
 rm -f random.data
 rm -f ns2/example.bk
-rm -f ns2/update.bk
+rm -f ns2/update.bk ns2/update.alt.bk
 rm -f */named.memstats
 rm -f nsupdate.out
 rm -f ns3/example.db.jnl ns3/example.db
 rm -f ns3/nsec3param.test.db.signed.jnl ns3/nsec3param.test.db ns3/nsec3param.test.db.signed ns3/dsset-nsec3param.test.
 rm -f ns3/dnskey.test.db.signed.jnl ns3/dnskey.test.db ns3/dnskey.test.db.signed ns3/dsset-dnskey.test.
 rm -f ns3/K*
-rm -f dig.out.ns3.*
+rm -f dig.out.*
 rm -f jp.out.ns3.*
+rm -f Kxxx.*

@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- Id: man.dig.html,v 1.162.8.1.2.1 2011-06-09 03:41:09 tbox Exp -->
+<!-- Id: man.dig.html,v 1.177 2011-08-04 01:14:42 tbox Exp -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -52,7 +52,7 @@
 <div class="cmdsynopsis"><p><code class="command">dig</code>  [global-queryopt...] [query...]</p></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2609278"></a><h2>DESCRIPTION</h2>
+<a name="id2610137"></a><h2>DESCRIPTION</h2>
 <p><span><strong class="command">dig</strong></span>
       (domain information groper) is a flexible tool
       for interrogating DNS name servers.  It performs DNS lookups and
@@ -98,7 +98,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2609373"></a><h2>SIMPLE USAGE</h2>
+<a name="id2610232"></a><h2>SIMPLE USAGE</h2>
 <p>
       A typical invocation of <span><strong class="command">dig</strong></span> looks like:
       </p>
@@ -144,7 +144,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2610167"></a><h2>OPTIONS</h2>
+<a name="id2610480"></a><h2>OPTIONS</h2>
 <p>
       The <code class="option">-b</code> option sets the source IP address of the query
       to <em class="parameter"><code>address</code></em>.  This must be a valid
@@ -248,7 +248,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2662324"></a><h2>QUERY OPTIONS</h2>
+<a name="id2662227"></a><h2>QUERY OPTIONS</h2>
 <p><span><strong class="command">dig</strong></span>
       provides a number of query options which affect
       the way in which lookups are made and the results displayed.  Some of
@@ -410,8 +410,25 @@
 <dt><span class="term"><code class="option">+[no]comments</code></span></dt>
 <dd><p>
               Toggle the display of comment lines in the output.  The default
-              is to
-              print comments.
+              is to print comments.
+            </p></dd>
+<dt><span class="term"><code class="option">+[no]rrcomments</code></span></dt>
+<dd><p>
+              Toggle the display of per-record comments in the output (for
+              example, human-readable key information about DNSKEY records).
+              The default is not to print record comments unless multiline
+              mode is active.
+            </p></dd>
+<dt><span class="term"><code class="option">+split=W</code></span></dt>
+<dd><p>
+              Split long hex- or base64-formatted fields in resource
+              records into chunks of <em class="parameter"><code>W</code></em> characters
+              (where <em class="parameter"><code>W</code></em> is rounded up to the nearest
+              multiple of 4).
+              <em class="parameter"><code>+nosplit</code></em> or
+              <em class="parameter"><code>+split=0</code></em> causes fields not to be
+              split at all.  The default is 56 characters, or 44 characters
+              when multiline mode is active.
             </p></dd>
 <dt><span class="term"><code class="option">+[no]stats</code></span></dt>
 <dd><p>
@@ -579,7 +596,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2663338"></a><h2>MULTIPLE QUERIES</h2>
+<a name="id2663291"></a><h2>MULTIPLE QUERIES</h2>
 <p>
       The BIND 9 implementation of <span><strong class="command">dig </strong></span>
       supports
@@ -625,7 +642,7 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2663424"></a><h2>IDN SUPPORT</h2>
+<a name="id2663377"></a><h2>IDN SUPPORT</h2>
 <p>
       If <span><strong class="command">dig</strong></span> has been built with IDN (internationalized
       domain name) support, it can accept and display non-ASCII domain names.
@@ -639,14 +656,14 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2663452"></a><h2>FILES</h2>
+<a name="id2663405"></a><h2>FILES</h2>
 <p><code class="filename">/etc/resolv.conf</code>
     </p>
 <p><code class="filename">${HOME}/.digrc</code>
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2663474"></a><h2>SEE ALSO</h2>
+<a name="id2663427"></a><h2>SEE ALSO</h2>
 <p><span class="citerefentry"><span class="refentrytitle">host</span>(1)</span>,
       <span class="citerefentry"><span class="refentrytitle">named</span>(8)</span>,
       <span class="citerefentry"><span class="refentrytitle">dnssec-keygen</span>(8)</span>,
@@ -654,7 +671,7 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2663579"></a><h2>BUGS</h2>
+<a name="id2663464"></a><h2>BUGS</h2>
 <p>
       There are probably too many query options.
     </p>

@@ -110,6 +110,10 @@ SOURCE=..\controlconf.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\dlz_dlopen_driver.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\interfacemgr.c
 # End Source File
 # Begin Source File

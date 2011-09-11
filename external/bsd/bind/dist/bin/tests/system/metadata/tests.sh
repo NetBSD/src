@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.5 2009-12-02 17:54:45 each Exp
+# Id: tests.sh,v 1.9 2011-07-08 01:43:26 each Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -28,14 +28,14 @@ n=0
 echo "I:setting key timers"
 $SETTIME -A now+15s `cat rolling.key` > /dev/null
 
-inact=`sed 's/^K'${czone}'.+005+0*//' < inact.key`
-ksk=`sed 's/^K'${czone}'.+005+0*//' < ksk.key`
-pending=`sed 's/^K'${czone}'.+005+0*//' < pending.key`
-postrev=`sed 's/^K'${czone}'.+005+0*//' < postrev.key`
-prerev=`sed 's/^K'${czone}'.+005+0*//' < prerev.key`
-rolling=`sed 's/^K'${czone}'.+005+0*//' < rolling.key`
-standby=`sed 's/^K'${czone}'.+005+0*//' < standby.key`
-zsk=`sed 's/^K'${czone}'.+005+0*//' < zsk.key`
+inact=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < inact.key`
+ksk=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < ksk.key`
+pending=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < pending.key`
+postrev=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < postrev.key`
+prerev=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < prerev.key`
+rolling=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < rolling.key`
+standby=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < standby.key`
+zsk=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < zsk.key`
 
 ../../../tools/genrandom 400 $RANDFILE
 
@@ -46,8 +46,8 @@ $SIGNER -Sg -o $pzone $pfile > /dev/null 2>&1
 awk '$2 ~ /RRSIG/ {
         type = $3;
         getline;
-	id = $2;
-	if ($3 ~ /'${czone}'/) {
+	id = $3;
+	if ($4 ~ /'${czone}'/) {
 		print type, id
 	}
 }' < ${cfile}.signed > sigs
@@ -56,7 +56,7 @@ awk '$2 ~ /DNSKEY/ {
 	flags = $3;
 	while ($0 !~ /key id =/)
 		getline;
-	id = $6;
+	id = $NF;
 	print flags, id;
 }' < ${cfile}.signed > keys
 
@@ -130,6 +130,17 @@ $SIGNER  -Sg -o $czone -f ${cfile}.new ${cfile}.signed > /dev/null 2>&1
 echo "I:checking that standby KSK is now active ($n)"
 ret=0
 grep "DNSKEY $rolling"'$' sigs > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking update of an old-style key"
+ret=0
+# printing metadata should not work with an old-style key
+$SETTIME -pall `cat oldstyle.key` > /dev/null 2>&1 && ret=1
+$SETTIME -f `cat oldstyle.key` > /dev/null 2>&1 || ret=1
+# but now it should
+$SETTIME -pall `cat oldstyle.key` > /dev/null 2>&1 || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

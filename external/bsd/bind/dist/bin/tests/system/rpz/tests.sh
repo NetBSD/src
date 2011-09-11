@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.3.130.3 2011-06-09 03:17:11 marka Exp
+# Id: tests.sh,v 1.6 2011-06-09 03:10:17 marka Exp
 
 # test response policy zones (RPZ)
 

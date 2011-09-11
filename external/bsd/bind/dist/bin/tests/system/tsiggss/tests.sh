@@ -24,7 +24,7 @@ update add $host $cmd
 send
 EOF
     echo "I:testing update for $host $type $cmd"
-    $NSUPDATE -g ns1/update.txt || {
+    $NSUPDATE -g ns1/update.txt > /dev/null 2>&1 || {
 	echo "I:update failed for $host $type $cmd"
 	return 1
     }
@@ -55,13 +55,25 @@ test_update testdenied.example.nil. TXT "86400 TXT helloworld" "helloworld" || s
 
 echo "I:testing external update policy"
 test_update testcname.example.nil. TXT "86400 CNAME testdenied.example.nil" "testdenied" && status=1
-perl ./authsock.pl --type=CNAME --path=ns1/auth.sock --pidfile=authsock.pid --timeout=120 &
+perl ./authsock.pl --type=CNAME --path=ns1/auth.sock --pidfile=authsock.pid --timeout=120 > /dev/null 2>&1 &
 sleep 1
 test_update testcname.example.nil. TXT "86400 CNAME testdenied.example.nil" "testdenied" || status=1
 test_update testcname.example.nil. TXT "86400 A 10.53.0.13" "10.53.0.13" && status=1
 
+echo "I:testing external policy with SIG(0) key"
+ret=0
+$NSUPDATE -R random.data -k ns1/Kkey.example.nil.*.private <<END > /dev/null 2>&1 || ret=1
+server 10.53.0.1 5300
+zone example.nil
+update add fred.example.nil 120 cname foo.bar.
+send
+END
+output=`$DIG $DIGOPTS +short cname fred.example.nil.`
+[ -n "$output" ] || ret=1
+[ $ret -eq 0 ] || echo "I:failed"
+status=`expr $status + $ret`
+
 [ $status -eq 0 ] && echo "I:tsiggss tests all OK"
 
 kill `cat authsock.pid`
-
 exit $status
