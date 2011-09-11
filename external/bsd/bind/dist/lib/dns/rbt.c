@@ -1,7 +1,7 @@
-/*	$NetBSD: rbt.c,v 1.2 2011/02/16 03:47:04 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.3 2011/09/11 18:55:35 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt.c,v 1.146 2009-10-27 04:46:58 marka Exp */
+/* Id: rbt.c,v 1.148 2011-03-12 04:59:48 tbox Exp */
 
 /*! \file */
 
@@ -720,6 +720,7 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 		 */
 		compared = dns_namereln_none;
 		last_compared = NULL;
+		order = 0;
 	}
 
 	dns_fixedname_init(&fixedcallbackname);
@@ -1086,6 +1087,7 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 								&current_name,
 								&order,
 								&common_labels);
+					POST(compared);
 
 					last_compared = current;
 
@@ -1528,7 +1530,7 @@ rehash(dns_rbt_t *rbt) {
 
 	oldsize = rbt->hashsize;
 	oldtable = rbt->hashtable;
-	rbt->hashsize *= 2 + 1;
+	rbt->hashsize = rbt->hashsize * 2 + 1;
 	rbt->hashtable = isc_mem_get(rbt->mctx,
 				     rbt->hashsize * sizeof(dns_rbtnode_t *));
 	if (rbt->hashtable == NULL) {
@@ -1685,6 +1687,7 @@ dns_rbt_addonlevel(dns_rbtnode_t *node, dns_rbtnode_t *current, int order,
 	}
 
 	child = root;
+	POST(child);
 
 	dns_name_init(&add_name, add_offsets);
 	NODENAME(node, &add_name);

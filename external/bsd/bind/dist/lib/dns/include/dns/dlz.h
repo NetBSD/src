@@ -1,7 +1,7 @@
-/*	$NetBSD: dlz.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: dlz.h,v 1.3 2011/09/11 18:55:38 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2005-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2005-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -52,7 +52,7 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dlz.h,v 1.12 2010-12-20 23:47:21 tbox Exp */
+/* Id: dlz.h,v 1.14 2011-03-17 23:47:30 tbox Exp */
 
 /*! \file dns/dlz.h */
 
@@ -320,9 +320,9 @@ dns_dlzunregister(dns_dlzimplementation_t **dlzimp);
  */
 
 
-isc_result_t
-dns_dlz_writeablezone(dns_view_t *view, const char *zone_name);
-
+typedef isc_result_t dns_dlz_writeablezone_t(dns_view_t *view,
+					     const char *zone_name);
+dns_dlz_writeablezone_t dns_dlz_writeablezone;
 /*%<
  * creates a writeable DLZ zone. Must be called from within the
  * configure() method of a DLZ driver.

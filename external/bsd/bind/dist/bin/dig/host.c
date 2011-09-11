@@ -1,7 +1,7 @@
-/*	$NetBSD: host.c,v 1.2 2011/02/16 03:46:45 christos Exp $	*/
+/*	$NetBSD: host.c,v 1.3 2011/09/11 18:55:26 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: host.c,v 1.124 2010-11-16 05:38:30 marka Exp */
+/* Id: host.c,v 1.127 2011-03-11 06:11:20 marka Exp */
 
 /*! \file */
 
@@ -523,6 +523,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 		if ((msg->flags & DNS_MESSAGEFLAG_CD) != 0) {
 			printf("%scd", did_flag ? " " : "");
 			did_flag = ISC_TRUE;
+			POST(did_flag);
 		}
 		printf("; QUERY: %u, ANSWER: %u, "
 		       "AUTHORITY: %u, ADDITIONAL: %u\n",
@@ -826,8 +827,8 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 	if (isc_commandline_index >= argc)
 		show_usage();
 
-	strncpy(hostname, argv[isc_commandline_index], sizeof(hostname));
-	hostname[sizeof(hostname)-1]=0;
+	strlcpy(hostname, argv[isc_commandline_index], sizeof(hostname));
+
 	if (argc > isc_commandline_index + 1) {
 		set_nameserver(argv[isc_commandline_index+1]);
 		debug("server is %s", argv[isc_commandline_index+1]);

@@ -1,7 +1,7 @@
-/*	$NetBSD: control.h,v 1.2 2011/02/16 03:46:46 christos Exp $	*/
+/*	$NetBSD: control.h,v 1.3 2011/09/11 18:55:28 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: control.h,v 1.31 2010-08-16 22:21:06 marka Exp */
+/* Id: control.h,v 1.34 2011-08-02 20:36:12 each Exp */
 
 #ifndef NAMED_CONTROL_H
 #define NAMED_CONTROL_H 1
@@ -49,6 +49,7 @@
 #define NS_COMMAND_NOTRACE	"notrace"
 #define NS_COMMAND_FLUSH	"flush"
 #define NS_COMMAND_FLUSHNAME	"flushname"
+#define NS_COMMAND_FLUSHTREE	"flushtree"
 #define NS_COMMAND_STATUS	"status"
 #define NS_COMMAND_TSIGLIST	"tsig-list"
 #define NS_COMMAND_TSIGDELETE	"tsig-delete"
@@ -64,6 +65,7 @@
 #define NS_COMMAND_LOADKEYS 	"loadkeys"
 #define NS_COMMAND_ADDZONE	"addzone"
 #define NS_COMMAND_DELZONE	"delzone"
+#define NS_COMMAND_SYNC		"sync"
 
 isc_result_t
 ns_controls_create(ns_server_t *server, ns_controls_t **ctrlsp);
