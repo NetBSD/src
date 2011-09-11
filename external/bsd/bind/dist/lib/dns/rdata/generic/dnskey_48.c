@@ -1,7 +1,7 @@
-/*	$NetBSD: dnskey_48.c,v 1.2 2011/02/16 03:47:08 christos Exp $	*/
+/*	$NetBSD: dnskey_48.c,v 1.3 2011/09/11 18:55:39 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnskey_48.c,v 1.10 2009-12-04 22:06:37 tbox Exp */
+/* Id: dnskey_48.c,v 1.12 2011-03-05 23:52:31 tbox Exp */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -78,7 +78,8 @@ totext_dnskey(ARGS_TOTEXT) {
 	char buf[sizeof("64000")];
 	unsigned int flags;
 	unsigned char algorithm;
-	char namebuf[DNS_NAME_FORMATSIZE];
+	char algbuf[DNS_NAME_FORMATSIZE];
+	const char *keyinfo;
 
 	REQUIRE(rdata->type == 48);
 	REQUIRE(rdata->length != 0);
@@ -91,6 +92,13 @@ totext_dnskey(ARGS_TOTEXT) {
 	sprintf(buf, "%u", flags);
 	RETERR(str_totext(buf, target));
 	RETERR(str_totext(" ", target));
+	if ((flags & DNS_KEYFLAG_KSK) != 0) {
+		if (flags & DNS_KEYFLAG_REVOKE)
+			keyinfo = "revoked KSK";
+		else
+			keyinfo = "KSK";
+	} else
+		keyinfo = "ZSK";
 
 	/* protocol */
 	sprintf(buf, "%u", sr.base[0]);
@@ -108,23 +116,28 @@ totext_dnskey(ARGS_TOTEXT) {
 	if ((flags & 0xc000) == 0xc000)
 		return (ISC_R_SUCCESS);
 
-	if ((tctx->flags & DNS_STYLEFLAG_COMMENT) != 0 &&
+	if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0 &&
 	     algorithm == DNS_KEYALG_PRIVATEDNS) {
 		dns_name_t name;
 		dns_name_init(&name, NULL);
 		dns_name_fromregion(&name, &sr);
-		dns_name_format(&name, namebuf, sizeof(namebuf));
-	} else
-		namebuf[0] = 0;
+		dns_name_format(&name, algbuf, sizeof(algbuf));
+	} else {
+		dns_secalg_format((dns_secalg_t) algorithm, algbuf,
+				  sizeof(algbuf));
+	}
 
 	/* key */
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" (", target));
 	RETERR(str_totext(tctx->linebreak, target));
-	RETERR(isc_base64_totext(&sr, tctx->width - 2,
-				 tctx->linebreak, target));
+	if (tctx->width == 0)   /* No splitting */
+		RETERR(isc_base64_totext(&sr, 0, "", target));
+	else
+		RETERR(isc_base64_totext(&sr, tctx->width - 2,
+					 tctx->linebreak, target));
 
-	if ((tctx->flags & DNS_STYLEFLAG_COMMENT) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0)
 		RETERR(str_totext(tctx->linebreak, target));
 	else if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" ", target));
@@ -132,18 +145,17 @@ totext_dnskey(ARGS_TOTEXT) {
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(")", target));
 
-	if ((tctx->flags & DNS_STYLEFLAG_COMMENT) != 0) {
+	if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0) {
 		isc_region_t tmpr;
 
-		RETERR(str_totext(" ; key id = ", target));
+		RETERR(str_totext(" ; ", target));
+		RETERR(str_totext(keyinfo, target));
+		RETERR(str_totext("; alg = ", target));
+		RETERR(str_totext(algbuf, target));
+		RETERR(str_totext("; key id = ", target));
 		dns_rdata_toregion(rdata, &tmpr);
 		sprintf(buf, "%u", dst_region_computeid(&tmpr, algorithm));
 		RETERR(str_totext(buf, target));
-		if (algorithm == DNS_KEYALG_PRIVATEDNS) {
-			RETERR(str_totext(tctx->linebreak, target));
-			RETERR(str_totext("; alg = ", target));
-			RETERR(str_totext(namebuf, target));
-		}
 	}
 	return (ISC_R_SUCCESS);
 }

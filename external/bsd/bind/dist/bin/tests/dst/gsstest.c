@@ -1,4 +1,4 @@
-/*	$NetBSD: gsstest.c,v 1.2 2011/02/16 03:46:50 christos Exp $	*/
+/*	$NetBSD: gsstest.c,v 1.3 2011/09/11 18:55:30 christos Exp $	*/
 
 /*
  * Copyright (C) 2006, 2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gsstest.c,v 1.14 2011-01-08 01:26:01 each Exp */
+/* Id: gsstest.c,v 1.16 2011-03-28 05:14:51 marka Exp */
 
 #include <config.h>
 
@@ -105,23 +105,23 @@ console(isc_task_t *task, isc_event_t *event)
 
 	isc_event_free(&event);
 
-	while(1) {
+	for (;;) {
 		printf("\nCommand => ");
 		c = scanf("%s", buf);
 
-		if(c == EOF || strcmp(buf, "quit") == 0) {
+		if (c == EOF || strcmp(buf, "quit") == 0) {
 			isc_app_shutdown();
 			return;
 		}
 
-		if(strcmp(buf, "initctx") == 0) {
+		if (strcmp(buf, "initctx") == 0) {
 			ev = isc_event_allocate(mctx, (void *)1, 1, initctx1,
 						NULL, sizeof(*event));
 			isc_task_send(task, &ev);
 			return;
 		}
 
-		if(strcmp(buf, "query") == 0) {
+		if (strcmp(buf, "query") == 0) {
 			ev = isc_event_allocate(mctx, (void *)1, 1, sendquery,
 						NULL, sizeof(*event));
 			isc_task_send(task, &ev);
@@ -320,7 +320,7 @@ initctx2(isc_task_t *task, isc_event_t *event) {
 	rdataset = ISC_LIST_HEAD(question_name->list);
 	INSIST(rdataset != NULL);
 	qtype = rdataset->type;
-	if(qtype == dns_rdatatype_tkey) {
+	if (qtype == dns_rdatatype_tkey) {
 		printf("Received TKEY response from server\n");
 		printf("Context completed\n");
 	} else {
@@ -330,14 +330,14 @@ initctx2(isc_task_t *task, isc_event_t *event) {
 		tsigkey = NULL;
 	}
 
-	if(response)
+	if (response)
 		dns_message_destroy(&response);
 
 end:
-	if(query)
+	if (query)
 		dns_message_destroy(&query);
 
-	if(reqev->request)
+	if (reqev->request)
 		dns_request_destroy(&reqev->request);
 
 	isc_event_free(&event);
@@ -420,11 +420,11 @@ setup(void)
 	struct in_addr inaddr;
 	int c;
 
-	while (1) {
+	for (;;) {
 		printf("Server IP => ");
 		c = scanf("%s", serveraddress);
 
-		if(c == EOF || strcmp(serveraddress, "quit") == 0) {
+		if (c == EOF || strcmp(serveraddress, "quit") == 0) {
 			isc_app_shutdown();
 			return;
 		}
@@ -434,7 +434,7 @@ setup(void)
 			return;
 		}
 
-	};
+	}
 }
 
 int

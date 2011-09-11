@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.2 2011/02/16 03:47:04 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.3 2011/09/11 18:55:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdata.c,v 1.209 2011-01-13 04:59:25 tbox Exp */
+/* Id: rdata.c,v 1.213 2011-03-11 06:11:24 marka Exp */
 
 /*! \file */
 
@@ -125,6 +125,15 @@ txt_fromtext(isc_textregion_t *source, isc_buffer_t *target);
 
 static isc_result_t
 txt_fromwire(isc_buffer_t *source, isc_buffer_t *target);
+
+static isc_result_t
+multitxt_totext(isc_region_t *source, isc_buffer_t *target);
+
+static isc_result_t
+multitxt_fromtext(isc_textregion_t *source, isc_buffer_t *target);
+
+static isc_result_t
+multitxt_fromwire(isc_buffer_t *source, isc_buffer_t *target);
 
 static isc_boolean_t
 name_prefix(dns_name_t *name, dns_name_t *origin, dns_name_t *target);
@@ -710,6 +719,7 @@ rdata_totext(dns_rdata_t *rdata, dns_rdata_textctx_t *tctx,
 	if (use_default) {
 		strlcpy(buf, "\\# ", sizeof(buf));
 		result = str_totext(buf, target);
+		INSIST(result == ISC_R_SUCCESS);
 		dns_rdata_toregion(rdata, &sr);
 		INSIST(sr.length < 65536);
 		snprintf(buf, sizeof(buf), "%u", sr.length);
@@ -719,7 +729,13 @@ rdata_totext(dns_rdata_t *rdata, dns_rdata_textctx_t *tctx,
 				result = str_totext(" ( ", target);
 			else
 				result = str_totext(" ", target);
-			if (result == ISC_R_SUCCESS)
+
+			if (result != ISC_R_SUCCESS)
+				return (result);
+
+			if (tctx->width == 0) /* No splitting */
+				result = isc_hex_totext(&sr, 0, "", target);
+			else
 				result = isc_hex_totext(&sr, tctx->width - 2,
 							tctx->linebreak,
 							target);
@@ -752,7 +768,8 @@ dns_rdata_totext(dns_rdata_t *rdata, dns_name_t *origin, isc_buffer_t *target)
 isc_result_t
 dns_rdata_tofmttext(dns_rdata_t *rdata, dns_name_t *origin,
 		    unsigned int flags, unsigned int width,
-		    const char *linebreak, isc_buffer_t *target)
+		    unsigned int split_width, const char *linebreak,
+		    isc_buffer_t *target)
 {
 	dns_rdata_textctx_t tctx;
 
@@ -763,11 +780,16 @@ dns_rdata_tofmttext(dns_rdata_t *rdata, dns_name_t *origin,
 	 */
 	tctx.origin = origin;
 	tctx.flags = flags;
-	if ((flags & DNS_STYLEFLAG_MULTILINE) != 0) {
+	if (split_width == 0xffffffff)
 		tctx.width = width;
+	else
+		tctx.width = split_width;
+
+	if ((flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		tctx.linebreak = linebreak;
-	} else {
-		tctx.width = 60; /* Used for hex word length only. */
+	else {
+		if (split_width == 0xffffffff)
+			tctx.width = 60; /* Used for hex word length only. */
 		tctx.linebreak = " ";
 	}
 	return (rdata_totext(rdata, &tctx, target));
@@ -965,6 +987,9 @@ dns_rdatatype_format(dns_rdatatype_t rdtype,
 	isc_result_t result;
 	isc_buffer_t buf;
 
+	if (size == 0U)
+		return;
+
 	isc_buffer_init(&buf, array, size);
 	result = dns_rdatatype_totext(rdtype, &buf);
 	/*
@@ -976,10 +1001,8 @@ dns_rdatatype_format(dns_rdatatype_t rdtype,
 		else
 			result = ISC_R_NOSPACE;
 	}
-	if (result != ISC_R_SUCCESS) {
-		snprintf(array, size, "<unknown>");
-		array[size - 1] = '\0';
-	}
+	if (result != ISC_R_SUCCESS)
+		strlcpy(array, "<unknown>", size);
 }
 
 /*
@@ -1130,6 +1153,157 @@ txt_fromwire(isc_buffer_t *source, isc_buffer_t *target) {
 	memcpy(tregion.base, sregion.base, n);
 	isc_buffer_forward(source, n);
 	isc_buffer_add(target, n);
+	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
+multitxt_totext(isc_region_t *source, isc_buffer_t *target) {
+	unsigned int tl;
+	unsigned int n0, n;
+	unsigned char *sp;
+	char *tp;
+	isc_region_t region;
+
+	isc_buffer_availableregion(target, &region);
+	sp = source->base;
+	tp = (char *)region.base;
+	tl = region.length;
+
+	if (tl < 1)
+		return (ISC_R_NOSPACE);
+	*tp++ = '"';
+	tl--;
+	do {
+		n0 = n = *sp++;
+
+		REQUIRE(n0 + 1 <= source->length);
+
+		while (n--) {
+			if (*sp < 0x20 || *sp >= 0x7f) {
+				if (tl < 4)
+					return (ISC_R_NOSPACE);
+				*tp++ = 0x5c;
+				*tp++ = 0x30 + ((*sp / 100) % 10);
+				*tp++ = 0x30 + ((*sp / 10) % 10);
+				*tp++ = 0x30 + (*sp % 10);
+				sp++;
+				tl -= 4;
+				continue;
+			}
+			/* double quote, semi-colon, backslash */
+			if (*sp == 0x22 || *sp == 0x3b || *sp == 0x5c) {
+				if (tl < 2)
+					return (ISC_R_NOSPACE);
+				*tp++ = '\\';
+				tl--;
+			}
+			if (tl < 1)
+				return (ISC_R_NOSPACE);
+			*tp++ = *sp++;
+			tl--;
+		}
+		isc_region_consume(source, n0 + 1);
+	} while (source->length != 0);
+	if (tl < 1)
+		return (ISC_R_NOSPACE);
+	*tp++ = '"';
+	tl--;
+	isc_buffer_add(target, tp - (char *)region.base);
+	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
+multitxt_fromtext(isc_textregion_t *source, isc_buffer_t *target) {
+	isc_region_t tregion;
+	isc_boolean_t escape;
+	unsigned int n, nrem;
+	char *s;
+	unsigned char *t0, *t;
+	int d;
+	int c;
+
+	s = source->base;
+	n = source->length;
+	escape = ISC_FALSE;
+
+	do {
+		isc_buffer_availableregion(target, &tregion);
+		t0 = tregion.base;
+		nrem = tregion.length;
+		if (nrem < 1)
+			return (ISC_R_NOSPACE);
+		/* length byte */
+		t = t0;
+		nrem--;
+		t++;
+		/* 255 byte character-string slice */
+		if (nrem > 255)
+			nrem = 255;
+		while (n != 0) {
+			--n;
+			c = (*s++) & 0xff;
+			if (escape && (d = decvalue((char)c)) != -1) {
+				c = d;
+				if (n == 0)
+					return (DNS_R_SYNTAX);
+				n--;
+				if ((d = decvalue(*s++)) != -1)
+					c = c * 10 + d;
+				else
+					return (DNS_R_SYNTAX);
+				if (n == 0)
+					return (DNS_R_SYNTAX);
+				n--;
+				if ((d = decvalue(*s++)) != -1)
+					c = c * 10 + d;
+				else
+					return (DNS_R_SYNTAX);
+				if (c > 255)
+					return (DNS_R_SYNTAX);
+			} else if (!escape && c == '\\') {
+				escape = ISC_TRUE;
+				continue;
+			}
+			escape = ISC_FALSE;
+			*t++ = c;
+			nrem--;
+			if (nrem == 0)
+				break;
+		}
+		if (escape)
+			return (DNS_R_SYNTAX);
+		*t0 = t - t0 - 1;
+		isc_buffer_add(target, *t0 + 1);
+	} while (n != 0);
+	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
+multitxt_fromwire(isc_buffer_t *source, isc_buffer_t *target) {
+	unsigned int n;
+	isc_region_t sregion;
+	isc_region_t tregion;
+
+	isc_buffer_activeregion(source, &sregion);
+	if (sregion.length == 0)
+		return(ISC_R_UNEXPECTEDEND);
+	n = 256U;
+	do {
+		if (n != 256U)
+			return (DNS_R_SYNTAX);
+		n = *sregion.base + 1;
+		if (n > sregion.length)
+			return (ISC_R_UNEXPECTEDEND);
+
+		isc_buffer_availableregion(target, &tregion);
+		if (n > tregion.length)
+			return (ISC_R_NOSPACE);
+
+		memcpy(tregion.base, sregion.base, n);
+		isc_buffer_forward(source, n);
+		isc_buffer_add(target, n);
+		isc_buffer_activeregion(source, &sregion);
+	} while (sregion.length != 0);
 	return (ISC_R_SUCCESS);
 }
 

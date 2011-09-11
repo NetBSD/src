@@ -1,7 +1,7 @@
-/*	$NetBSD: types.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2011/09/11 18:55:39 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: types.h,v 1.143 2010-12-08 02:46:16 marka Exp */
+/* Id: types.h,v 1.145 2011-07-01 23:47:44 tbox Exp */
 
 #ifndef DNS_TYPES_H
 #define DNS_TYPES_H 1
@@ -333,6 +333,20 @@ typedef enum {
 	dns_severity_warn,
 	dns_severity_fail
 } dns_severity_t;
+
+/*%
+ * DNS Serial Number Update Method.
+ *
+ * \li	_increment:	Add one to the current serial, skipping 0.
+ * \li	_unixtime:	Set to the seconds since 00:00 Jan 1, 1970,
+ *			if possible.
+ * \li	_yyyymmvv:	Set to Year, Month, Version, if possible.
+ *			(Not yet implemented)
+ */
+typedef enum {
+	dns_updatemethod_increment = 0,
+	dns_updatemethod_unixtime
+} dns_updatemethod_t;
 
 /*
  * Functions.

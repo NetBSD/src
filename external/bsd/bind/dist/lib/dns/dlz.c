@@ -1,7 +1,7 @@
-/*	$NetBSD: dlz.c,v 1.2 2011/02/16 03:47:03 christos Exp $	*/
+/*	$NetBSD: dlz.c,v 1.3 2011/09/11 18:55:34 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2005, 2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -52,7 +52,7 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dlz.c,v 1.10 2010-12-20 23:47:20 tbox Exp */
+/* Id: dlz.c,v 1.12 2011-03-12 04:59:47 tbox Exp */
 
 /*! \file */
 
@@ -537,7 +537,6 @@ dns_dlz_writeablezone(dns_view_t *view, const char *zone_name) {
 	isc_buffer_t buffer;
 	dns_fixedname_t fixorigin;
 	dns_name_t *origin;
-	dns_rdataclass_t zclass;
 	dns_dlzdb_t *dlzdatabase;
 
 	REQUIRE(DNS_DLZ_VALID(view->dlzdatabase));
@@ -554,8 +553,6 @@ dns_dlz_writeablezone(dns_view_t *view, const char *zone_name) {
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 	origin = dns_fixedname_name(&fixorigin);
-
-	zclass = view->rdclass;
 
 	/* See if the zone already exists */
 	result = dns_view_findzone(view, origin, &dupzone);
@@ -594,8 +591,6 @@ dns_dlz_writeablezone(dns_view_t *view, const char *zone_name) {
 	 * Add the zone to its view in the new view list.
 	 */
 	result = dns_view_addzone(view, zone);
-
-	result = ISC_R_SUCCESS;
 
  cleanup:
 	if (zone != NULL)

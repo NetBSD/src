@@ -1,7 +1,7 @@
-/*	$NetBSD: soa_6.c,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: soa_6.c,v 1.3 2011/09/11 18:55:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: soa_6.c,v 1.64 2009-12-04 21:09:34 marka Exp */
+/* Id: soa_6.c,v 1.66 2011-03-05 23:52:31 tbox Exp */
 
 /* Reviewed: Thu Mar 16 15:18:32 PST 2000 by explorer */
 
@@ -104,7 +104,7 @@ totext_soa(ARGS_TOTEXT) {
 
 	multiline = ISC_TF((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0);
 	if (multiline)
-		comment = ISC_TF((tctx->flags & DNS_STYLEFLAG_COMMENT) != 0);
+		comment = ISC_TF((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0);
 	else
 		comment = ISC_FALSE;
 

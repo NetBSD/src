@@ -1,4 +1,4 @@
-/*	$NetBSD: view.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: view.h,v 1.3 2011/09/11 18:55:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: view.h,v 1.132 2011-01-13 01:59:28 marka Exp */
+/* Id: view.h,v 1.134 2011-08-02 20:36:13 each Exp */
 
 #ifndef DNS_VIEW_H
 #define DNS_VIEW_H 1
@@ -184,6 +184,7 @@ struct dns_view {
 	dns_viewlist_t *		viewlist;
 
 	dns_zone_t *			managed_keys;
+	dns_zone_t *			redirect;
 
 #ifdef BIND9
 	/* File in which to store configuration for newly added zones */
@@ -840,9 +841,31 @@ dns_view_flushcache2(dns_view_t *view, isc_boolean_t fixuponly);
  */
 
 isc_result_t
-dns_view_flushname(dns_view_t *view, dns_name_t *);
+dns_view_flushnode(dns_view_t *view, dns_name_t *name, isc_boolean_t tree);
 /*%<
- * Flush the given name from the view's cache (and ADB).
+ * Flush the given name from the view's cache (and optionally ADB/badcache).
+ *
+ * If 'tree' is true, flush 'name' and all names below it
+ * from the cache, but do not flush ADB.
+ *
+ * If 'tree' is false, flush 'name' frmo both the cache and ADB,
+ * but do not touch any other nodes.
+ *
+ * Requires:
+ *\li	'view' is valid.
+ *\li	'name' is valid.
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ *	other returns are failures.
+ */
+
+isc_result_t
+dns_view_flushname(dns_view_t *view, dns_name_t *name);
+/*%<
+ * Flush the given name from the view's cache, ADB and badcache.
+ * Equivalent to dns_view_flushnode(view, name, ISC_FALSE).
+ *
  *
  * Requires:
  *\li	'view' is valid.
@@ -857,7 +880,6 @@ isc_result_t
 dns_view_adddelegationonly(dns_view_t *view, dns_name_t *name);
 /*%<
  * Add the given name to the delegation only table.
- *
  *
  * Requires:
  *\li	'view' is valid.

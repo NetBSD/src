@@ -1,7 +1,7 @@
-/*	$NetBSD: time.c,v 1.3 2011/06/20 09:11:16 mrg Exp $	*/
+/*	$NetBSD: time.c,v 1.4 2011/09/11 18:55:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.c,v 1.56 2008-02-15 23:46:51 tbox Exp */
+/* Id: time.c,v 1.58 2011-03-12 04:59:49 tbox Exp */
 
 /*! \file */
 
@@ -321,7 +321,7 @@ isc_time_microdiff(const isc_time_t *t1, const isc_time_t *t2) {
 	/*
 	 * Convert to microseconds.
 	 */
-	i3 = (i1 - i2) / NS_PER_US;
+	i3 /= NS_PER_US;
 
 	return (i3);
 }

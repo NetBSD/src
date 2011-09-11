@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.3 2011/07/05 21:59:18 spz Exp $	*/
+/*	$NetBSD: update.c,v 1.4 2011/09/11 18:55:28 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: update.c,v 1.186.16.1.2.1 2011-06-02 23:47:28 tbox Exp */
+/* Id: update.c,v 1.195 2011-07-01 02:25:47 marka Exp */
 
 #include <config.h>
 
@@ -49,6 +49,7 @@
 #include <dns/soa.h>
 #include <dns/ssu.h>
 #include <dns/tsig.h>
+#include <dns/update.h>
 #include <dns/view.h>
 #include <dns/zone.h>
 #include <dns/zt.h>
@@ -1427,8 +1428,8 @@ get_current_rr(dns_message_t *msg, dns_section_t section,
 	 */
 
 static isc_result_t
-increment_soa_serial(dns_db_t *db, dns_dbversion_t *ver,
-		     dns_diff_t *diff, isc_mem_t *mctx)
+update_soa_serial(dns_db_t *db, dns_dbversion_t *ver, dns_diff_t *diff,
+		  isc_mem_t *mctx, dns_updatemethod_t method)
 {
 	dns_difftuple_t *deltuple = NULL;
 	dns_difftuple_t *addtuple = NULL;
@@ -1440,12 +1441,7 @@ increment_soa_serial(dns_db_t *db, dns_dbversion_t *ver,
 	addtuple->op = DNS_DIFFOP_ADD;
 
 	serial = dns_soa_getserial(&addtuple->rdata);
-
-	/* RFC1982 */
-	serial = (serial + 1) & 0xFFFFFFFF;
-	if (serial == 0)
-		serial = 1;
-
+	serial = dns_update_soaserial(serial, method);
 	dns_soa_setserial(serial, &addtuple->rdata);
 	CHECK(do_one_tuple(&deltuple, db, ver, diff));
 	CHECK(do_one_tuple(&addtuple, db, ver, diff));
@@ -1694,7 +1690,7 @@ next_active(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 {
 	isc_result_t result;
 	dns_dbiterator_t *dbit = NULL;
-	isc_boolean_t has_nsec;
+	isc_boolean_t has_nsec = ISC_FALSE;
 	unsigned int wraps = 0;
 	isc_boolean_t secure = dns_db_issecure(db);
 
@@ -2397,7 +2393,7 @@ update_signatures(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 								   name, diff));
 			}
 			CHECK(add_exposed_sigs(client, zone, db, newver, name,
-					       cut, diff, zone_keys, nkeys,
+					       cut, &sig_diff, zone_keys, nkeys,
 					       inception, expire, check_ksk,
 					       keyset_kskonly));
 		}
@@ -2556,7 +2552,7 @@ update_signatures(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 						   privatetype, &nsec_diff));
 		} else {
 			CHECK(add_exposed_sigs(client, zone, db, newver, name,
-					       cut, diff, zone_keys, nkeys,
+					       cut, &sig_diff, zone_keys, nkeys,
 					       inception, expire, check_ksk,
 					       keyset_kskonly));
 			CHECK(dns_nsec3_addnsec3sx(db, newver, name, nsecttl,
@@ -3070,8 +3066,19 @@ check_dnssec(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 	}
 
 	/* Check existing DB for NSEC-only DNSKEY */
-	if (!nseconly)
-		CHECK(dns_nsec_nseconly(db, ver, &nseconly));
+	if (!nseconly) {
+		result = dns_nsec_nseconly(db, ver, &nseconly);
+
+		/*
+		 * An NSEC3PARAM update can proceed without a DNSKEY (it
+		 * will trigger a delayed change), so we can ignore
+		 * ISC_R_NOTFOUND here.
+		 */
+		if (result == ISC_R_NOTFOUND)
+			result = ISC_R_SUCCESS;
+
+		CHECK(result);
+	}
 
 	/* Check existing DB for NSEC3 */
 	if (!nsec3)
@@ -3242,9 +3249,11 @@ add_nsec3param_records(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 			ttl_good = ISC_TRUE;
 		}
 		if (tuple->op == DNS_DIFFOP_ADD) {
+			isc_boolean_t nseconly = ISC_FALSE;
+
 			/*
 			 * Look for any deletes which match this ADD ignoring
-			 * OPTOUT.  We don't need to explictly remove them as
+			 * flags.  We don't need to explictly remove them as
 			 * they will be removed a side effect of processing
 			 * the add.
 			 */
@@ -3266,12 +3275,28 @@ add_nsec3param_records(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 				ISC_LIST_APPEND(diff->tuples, next, link);
 				next = ISC_LIST_HEAD(temp_diff.tuples);
 			}
+
 			/*
-			 * See if we already have a CREATE request in progress.
+			 * Create a private-type record to signal that
+			 * we want a delayed NSEC3 chain add/delete
 			 */
 			dns_nsec3param_toprivate(&tuple->rdata, &rdata,
 						 privatetype, buf, sizeof(buf));
 			buf[2] |= DNS_NSEC3FLAG_CREATE;
+
+			/*
+			 * If the zone is not currently capable of
+			 * supporting an NSEC3 chain, then we set the
+			 * INITIAL flag to indicate that these parameters
+			 * are to be used later.
+			 */
+			result = dns_nsec_nseconly(db, ver, &nseconly);
+			if (result == ISC_R_NOTFOUND || nseconly)
+				buf[2] |= DNS_NSEC3FLAG_INITIAL;
+
+			/*
+			 * See if this CREATE request already exists.
+			 */
 			CHECK(rr_exists(db, ver, name, &rdata, &flag));
 
 			if (!flag) {
@@ -3383,7 +3408,7 @@ rollback_private(dns_db_t *db, dns_rdatatype_t privatetype,
 
 		/*
 		 * Allow records which indicate that a zone has been
-		 * signed with a DNSKEY to be be removed.
+		 * signed with a DNSKEY to be removed.
 		 */
 		if (tuple->op == DNS_DIFFOP_DEL &&
 		    tuple->rdata.length == 5 &&
@@ -3736,7 +3761,6 @@ update_action(isc_task_t *task, isc_event_t *event) {
 	 * Check Requestor's Permissions.  It seems a bit silly to do this
 	 * only after prerequisite testing, but that is what RFC2136 says.
 	 */
-	result = ISC_R_SUCCESS;
 	if (ssutable == NULL)
 		CHECK(checkupdateacl(client, dns_zone_getupdateacl(zone),
 				     "update", zonename, ISC_FALSE, ISC_FALSE));
@@ -4161,7 +4185,8 @@ update_action(isc_task_t *task, isc_event_t *event) {
 		 * changed as a result of an update operation.
 		 */
 		if (! soa_serial_changed) {
-			CHECK(increment_soa_serial(db, ver, &diff, mctx));
+			CHECK(update_soa_serial(db, ver, &diff, mctx,
+				       dns_zone_getserialupdatemethod(zone)));
 		}
 
 		CHECK(check_mx(client, zone, db, ver, &diff));
@@ -4195,7 +4220,7 @@ update_action(isc_task_t *task, isc_event_t *event) {
 
 		CHECK(add_nsec3param_records(client, zone, db, ver, &diff));
 
-		if (!has_dnskey) {
+		if (had_dnskey && !has_dnskey) {
 			/*
 			 * We are transitioning from secure to insecure.
 			 * Cause all NSEC3 chains to be deleted.  When the
