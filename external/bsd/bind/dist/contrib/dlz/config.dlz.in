@@ -29,7 +29,7 @@ dlzdir='${DLZ_DRIVER_DIR}'
 #   LIBS is any necessary library definitions
 #
 AC_DEFUN(DLZ_ADD_DRIVER, [
-	USE_DLZ="$USE_DLZ -DDLZ_$1"
+	CONTRIB_DLZ="$CONTRIB_DLZ -DDLZ_$1"
 	for i in $2
 	do
 		DLZ_DRIVER_SRCS="$DLZ_DRIVER_SRCS $dlzdir/$i.c"
@@ -339,7 +339,7 @@ case "$use_dlz_filesystem" in
 		;;
 	*)
 		DLZ_ADD_DRIVER(FILESYSTEM, dlz_filesystem_driver)
-		DLZ_SYSTEM_TEST=dlz
+		DLZ_SYSTEM_TEST=filesystem
 		AC_MSG_RESULT(yes)
 		;;
 esac
@@ -456,38 +456,16 @@ case "$use_dlz_stub" in
 		;;
 esac
 
-#
-# Was --with-dlz-dlopen specified?
-#
-
-AC_MSG_CHECKING(for dlopen DLZ driver)
-AC_ARG_WITH(dlz_dlopen,
-[  --with-dlz-dlopen[=PATH]   Build with dlopen DLZ driver [yes|no].
-                               (Required to use dlopen driver with DLZ)],
-    use_dlz_dlopen="$withval", use_dlz_dlopen="no")
-
-case "$use_dlz_dlopen" in
-	no)
-		AC_MSG_RESULT(no)
-		;;
-	*)
-		AC_CHECK_LIB(dl, dlclose)
-		AC_CHECK_FUNCS(dlopen dlclose dlsym)
-		DLZ_ADD_DRIVER(DLOPEN, dlz_dlopen_driver)
-
-		AC_MSG_RESULT(yes)
-		;;
-esac
-
-
 # Add any additional DLZ drivers here.
 
 #
 # Finally, some generic stuff that applies to all drivers, assuming
-# we're compiling DLZ at all.
+# we're compiling contrib DLZ drivers at all.
 #
-if test -n "$USE_DLZ"
+if test -n "$CONTRIB_DLZ"
 then
+        CONTRIB_DLZ="-DCONTRIB_DLZ $CONTRIB_DLZ"
+
 	#
 	# Where to find DLZ driver header files.
 	#

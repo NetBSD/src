@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: example.db.in,v 1.24.162.2.2.1 2011-06-02 23:47:30 tbox Exp
+; Id: example.db.in,v 1.30 2011-03-05 06:35:41 marka Exp
 
 $TTL 300	; 5 minutes
 @			IN SOA	mname1. . (
@@ -116,3 +116,21 @@ ns.auto-nsec		A	10.53.0.3
 
 auto-nsec3		NS	ns.auto-nsec3
 ns.auto-nsec3		A	10.53.0.3
+
+
+below-cname		CNAME	some.where.else.
+
+insecure.below-cname	NS	ns.insecure.below-cname
+ns.insecure.below-cname	A	10.53.0.3
+
+secure.below-cname	NS	ns.secure.below-cname
+ns.secure.below-cname	A	10.53.0.3
+
+ttlpatch		NS	ns.ttlpatch
+ns.ttlpatch		A	10.53.0.3
+
+split-dnssec		NS	ns.split-dnssec
+ns.split-dnssec		A	10.53.0.3
+
+split-smart		NS	ns.split-smart
+ns.split-smart		A	10.53.0.3

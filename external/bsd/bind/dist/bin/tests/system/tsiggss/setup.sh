@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,9 +14,17 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.3 2010-12-20 23:47:20 tbox Exp
+# Id: setup.sh,v 1.5 2011-03-21 23:47:21 tbox Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-rm -f ns1/*.jnl 
+RANDFILE="random.data"
+
+
+rm -f ns1/*.jnl ns1/K*.key ns1/K*.private ns1/_default.tsigkeys
+
+../../../tools/genrandom 400 $RANDFILE
+
+key=`$KEYGEN -Cq -K ns1 -a DSA -b 512 -r $RANDFILE -n HOST -T KEY key.example.nil.`
+cat ns1/example.nil.db.in ns1/${key}.key > ns1/example.nil.db

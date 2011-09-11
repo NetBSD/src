@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.35 2011-01-13 04:59:24 tbox Exp
+# Id: Makefile.in,v 1.37 2011-03-30 15:48:41 smann Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -21,7 +21,7 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_MAKE_INCLUDES@
 
-SUBDIRS =	filter-aaaa lwresd rpz tkey
+SUBDIRS =	dlzexternal filter-aaaa lwresd rpz tkey tsiggss
 TARGETS =
 
 @BIND9_MAKE_RULES@
