@@ -1,0 +1,11 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = atf
+
+tp: atf-c
+tp: atf-c++
+tp: atf-sh
+tp: test-programs
+tp: atf-config
+tp: atf-report
+tp: atf-run
