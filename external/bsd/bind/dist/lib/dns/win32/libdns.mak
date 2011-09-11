@@ -195,6 +195,7 @@ CLEAN :
 	-@erase "$(INTDIR)\tkey.obj"
 	-@erase "$(INTDIR)\tsig.obj"
 	-@erase "$(INTDIR)\ttl.obj"
+	-@erase "$(INTDIR)\update.obj"
 	-@erase "$(INTDIR)\validator.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\version.obj"
@@ -319,6 +320,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\tkey.obj" \
 	"$(INTDIR)\tsig.obj" \
 	"$(INTDIR)\ttl.obj" \
+	"$(INTDIR)\update.obj" \
 	"$(INTDIR)\validator.obj" \
 	"$(INTDIR)\version.obj" \
 	"$(INTDIR)\view.obj" \
@@ -525,6 +527,8 @@ CLEAN :
 	-@erase "$(INTDIR)\tsig.sbr"
 	-@erase "$(INTDIR)\ttl.obj"
 	-@erase "$(INTDIR)\ttl.sbr"
+	-@erase "$(INTDIR)\update.obj"
+	-@erase "$(INTDIR)\update.sbr"
 	-@erase "$(INTDIR)\validator.obj"
 	-@erase "$(INTDIR)\validator.sbr"
 	-@erase "$(INTDIR)\vc60.idb"
@@ -655,6 +659,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\tkey.sbr" \
 	"$(INTDIR)\tsig.sbr" \
 	"$(INTDIR)\ttl.sbr" \
+	"$(INTDIR)\update.sbr" \
 	"$(INTDIR)\validator.sbr" \
 	"$(INTDIR)\version.sbr" \
 	"$(INTDIR)\view.sbr" \
@@ -750,6 +755,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\tkey.obj" \
 	"$(INTDIR)\tsig.obj" \
 	"$(INTDIR)\ttl.obj" \
+	"$(INTDIR)\update.obj" \
 	"$(INTDIR)\validator.obj" \
 	"$(INTDIR)\version.obj" \
 	"$(INTDIR)\view.obj" \
@@ -1925,6 +1931,24 @@ SOURCE=..\ttl.c
 
 
 "$(INTDIR)\ttl.obj"	"$(INTDIR)\ttl.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\update.c
+
+!IF  "$(CFG)" == "libdns - Win32 Release"
+
+
+"$(INTDIR)\update.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - Win32 Debug"
+
+
+"$(INTDIR)\update.obj"	"$(INTDIR)\update.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

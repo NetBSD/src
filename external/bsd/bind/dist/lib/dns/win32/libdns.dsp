@@ -402,6 +402,10 @@ SOURCE=..\include\dns\types.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\dns\update.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\dns\validator.h
 # End Source File
 # Begin Source File
@@ -687,6 +691,10 @@ SOURCE=..\tsig.c
 # Begin Source File
 
 SOURCE=..\ttl.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\update.c
 # End Source File
 # Begin Source File
 
