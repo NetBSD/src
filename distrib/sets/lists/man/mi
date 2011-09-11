@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1339 2011/09/06 21:30:12 riz Exp $
+# $NetBSD: mi,v 1.1340 2011/09/11 19:10:57 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -46,6 +46,7 @@
 ./usr/share/man/cat1/amq.0			man-obsolete		obsolete
 ./usr/share/man/cat1/apply.0			man-util-catman		.cat
 ./usr/share/man/cat1/apropos.0			man-man-catman		.cat
+./usr/share/man/cat1/arpaname.0			man-bind-catman		.cat
 ./usr/share/man/cat1/at.0			man-cron-catman		.cat
 ./usr/share/man/cat1/atari/edahdi.0		man-sysutil-catman	.cat
 ./usr/share/man/cat1/atari/msconfig.0		man-sysutil-catman	.cat
@@ -2517,6 +2518,7 @@
 ./usr/share/man/cat8/named-checkconf.0		man-bind-catman		.cat
 ./usr/share/man/cat8/named-checkzone.0		man-bind-catman		.cat
 ./usr/share/man/cat8/named-compilezone.0	man-bind-catman		.cat
+./usr/share/man/cat8/named-journalprint.0	man-bind-catman		.cat
 ./usr/share/man/cat8/named-xfer.0		man-obsolete		obsolete
 ./usr/share/man/cat8/named.0			man-bind-catman		.cat
 ./usr/share/man/cat8/named.reload.0		man-obsolete		obsolete
@@ -2554,6 +2556,7 @@
 ./usr/share/man/cat8/npf.conf.0			man-obsolete		obsolete
 ./usr/share/man/cat8/npfctl.0			man-npf-catman		.cat,npf
 ./usr/share/man/cat8/nqmgr.0			man-obsolete		obsolete
+./usr/share/man/cat8/nsec3hash.0		man-bind-catman		.cat
 ./usr/share/man/cat8/nslookup.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/nsupdate.0			man-obsolete		obsolete
 ./usr/share/man/cat8/ntalkd.0			man-netutil-catman	.cat
@@ -2948,6 +2951,7 @@
 ./usr/share/man/html1/altqstat.html		man-router-htmlman	html
 ./usr/share/man/html1/apply.html		man-util-htmlman	html
 ./usr/share/man/html1/apropos.html		man-man-htmlman		html
+./usr/share/man/html1/arpaname.html		man-bind-htmlman	html
 ./usr/share/man/html1/at.html			man-cron-htmlman	html
 ./usr/share/man/html1/atari/edahdi.html		man-sysutil-htmlman	html
 ./usr/share/man/html1/atari/msconfig.html	man-sysutil-htmlman	html
@@ -5127,6 +5131,7 @@
 ./usr/share/man/html8/named-checkconf.html	man-bind-htmlman	html
 ./usr/share/man/html8/named-checkzone.html	man-bind-htmlman	html
 ./usr/share/man/html8/named-compilezone.html	man-bind-htmlman	html
+./usr/share/man/html8/named-journalprint.html	man-bind-htmlman	html
 ./usr/share/man/html8/named.html		man-bind-htmlman	html
 ./usr/share/man/html8/ncdcs.html		man-sysutil-htmlman	binutils,html
 ./usr/share/man/html8/ndbootd.html		man-bootserver-htmlman	html
@@ -5149,6 +5154,7 @@
 ./usr/share/man/html8/nologin.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/npf.conf.html		man-obsolete		obsolete
 ./usr/share/man/html8/npfctl.html		man-npf-htmlman		html,npf
+./usr/share/man/html8/nsec3hash.html		man-bind-htmlman	html
 ./usr/share/man/html8/nslookup.html		man-netutil-htmlman	html
 ./usr/share/man/html8/nsupdate.html		man-obsolete		obsolete
 ./usr/share/man/html8/ntalkd.html		man-netutil-htmlman	html
@@ -5463,6 +5469,7 @@
 ./usr/share/man/man1/amq.1			man-obsolete		obsolete
 ./usr/share/man/man1/apply.1			man-util-man		.man
 ./usr/share/man/man1/apropos.1			man-man-man		.man
+./usr/share/man/man1/arpaname.1			man-bind-man		.man
 ./usr/share/man/man1/at.1			man-cron-man		.man
 ./usr/share/man/man1/atari/edahdi.1		man-sysutil-man		.man
 ./usr/share/man/man1/atari/msconfig.1		man-sysutil-man		.man
@@ -7934,6 +7941,7 @@
 ./usr/share/man/man8/named-checkconf.8		man-bind-man		.man
 ./usr/share/man/man8/named-checkzone.8		man-bind-man		.man
 ./usr/share/man/man8/named-compilezone.8	man-bind-man		.man
+./usr/share/man/man8/named-journalprint.8	man-bind-man		.man
 ./usr/share/man/man8/named-xfer.8		man-obsolete		obsolete
 ./usr/share/man/man8/named.8			man-bind-man		.man
 ./usr/share/man/man8/named.reload.8		man-obsolete		obsolete
@@ -7971,6 +7979,7 @@
 ./usr/share/man/man8/npf.conf.8			man-obsolete		obsolete
 ./usr/share/man/man8/npfctl.8			man-npf-man		.man,npf
 ./usr/share/man/man8/nqmgr.8			man-obsolete		obsolete
+./usr/share/man/man8/nsec3hash.8		man-bind-man		.man
 ./usr/share/man/man8/nslookup.8			man-netutil-man		.man
 ./usr/share/man/man8/nsupdate.8			man-obsolete		obsolete
 ./usr/share/man/man8/ntalkd.8			man-netutil-man		.man

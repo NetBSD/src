@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.955 2011/09/11 16:19:41 apb Exp $
+# $NetBSD: mi,v 1.956 2011/09/11 19:10:56 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -367,6 +367,7 @@
 ./usr/bin/Mail					base-mail-bin
 ./usr/bin/apply					base-util-bin
 ./usr/bin/apropos				base-man-bin
+./usr/bin/arpaname				base-bind-bin
 ./usr/bin/at					base-cron-bin
 ./usr/bin/atf-check				base-obsolete		obsolete
 ./usr/bin/atf-config				base-atf-bin		atf
@@ -1308,6 +1309,7 @@
 ./usr/sbin/named-checkconf			base-bind-bin
 ./usr/sbin/named-checkzone			base-bind-bin
 ./usr/sbin/named-compilezone			base-bind-bin
+./usr/sbin/named-journalprint			base-bind-bin
 ./usr/sbin/named.reload				base-obsolete		obsolete
 ./usr/sbin/named.restart			base-obsolete		obsolete
 ./usr/sbin/ncdcs				base-sysutil-root	binutils
@@ -1318,6 +1320,7 @@
 ./usr/sbin/nfsd					base-nfsserver-bin
 ./usr/sbin/nfsiod				base-obsolete		obsolete
 ./usr/sbin/npfctl				base-npf-bin		npf
+./usr/sbin/nsec3hash				base-bind-bin
 ./usr/sbin/nslookup				base-obsolete		obsolete
 ./usr/sbin/nsquery				base-obsolete		obsolete
 ./usr/sbin/nstest				base-obsolete		obsolete
