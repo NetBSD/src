@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.32.162.3.2.1 2011-06-02 23:47:33 tbox Exp
+# Id: sign.sh,v 1.42 2011-05-23 20:10:02 each Exp
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -315,3 +315,88 @@ kskname=`$KEYGEN -q -3 -r $RANDFILE -fk $zone`
 zskname=`$KEYGEN -q -3 -r $RANDFILE $zone`
 cat $infile $kskname.key $zskname.key >$zonefile
 $SIGNER -P -3 - -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+
+#
+# Secure below cname test zone.
+#
+zone=secure.below-cname.example.
+infile=secure.below-cname.example.db.in
+zonefile=secure.below-cname.example.db
+keyname=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+cat $infile $keyname.key >$zonefile
+$SIGNER -P -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+
+#
+# Patched TTL test zone.
+#
+zone=ttlpatch.example.
+infile=ttlpatch.example.db.in
+zonefile=ttlpatch.example.db
+signedfile=ttlpatch.example.db.signed
+patchedfile=ttlpatch.example.db.patched
+
+keyname=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 768 -n zone $zone`
+cat $infile $keyname.key >$zonefile
+
+$SIGNER -P -r $RANDFILE -f $signedfile -o $zone $zonefile > /dev/null 2>&1
+$CHECKZONE -D -s full $zone $signedfile 2> /dev/null | \
+    awk '{$2 = "3600"; print}' > $patchedfile
+
+#
+# Seperate DNSSEC records.
+#
+zone=split-dnssec.example.
+infile=split-dnssec.example.db.in
+zonefile=split-dnssec.example.db
+signedfile=split-dnssec.example.db.signed
+
+keyname=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 768 -n zone $zone`
+cat $infile $keyname.key >$zonefile
+echo '$INCLUDE "'"$signedfile"'"' >> $zonefile
+: > $signedfile
+$SIGNER -P -r $RANDFILE -D -o $zone $zonefile > /dev/null 2>&1
+
+#
+# Seperate DNSSEC records smart signing.
+#
+zone=split-smart.example.
+infile=split-smart.example.db.in
+zonefile=split-smart.example.db
+signedfile=split-smart.example.db.signed
+
+keyname=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 768 -n zone $zone`
+cp $infile $zonefile
+echo '$INCLUDE "'"$signedfile"'"' >> $zonefile
+: > $signedfile
+$SIGNER -P -S -r $RANDFILE -D -o $zone $zonefile > /dev/null 2>&1
+
+# 
+# Zone with signatures about to expire, but no private key to replace them
+#
+zone="expiring.example."
+infile="expiring.example.db.in"
+zonefile="expiring.example.db"
+signedfile="expiring.example.db.signed"
+kskname=`$KEYGEN -q -r $RANDFILE $zone`
+zskname=`$KEYGEN -q -r $RANDFILE -f KSK $zone`
+cp $infile $zonefile
+$SIGNER -S -r $RANDFILE -e now+1mi -o $zone $zonefile > /dev/null 2>&1
+rm -f ${zskname}.private ${kskname}.private
+
+#
+# Zone with signatures about to expire, and dynamic, but configured
+# not to resign with 'auto-resign no;'
+#
+zone="nosign.example."
+infile="nosign.example.db.in"
+zonefile="nosign.example.db"
+signedfile="nosign.example.db.signed"
+kskname=`$KEYGEN -q -r $RANDFILE $zone`
+zskname=`$KEYGEN -q -r $RANDFILE -f KSK $zone`
+cp $infile $zonefile
+$SIGNER -S -r $RANDFILE -e now+1mi -o $zone $zonefile > /dev/null 2>&1
+# preserve a normalized copy of the NS RRSIG for comparison later
+$CHECKZONE -D nosign.example nosign.example.db.signed 2>&- | \
+        awk '$4 == "RRSIG" && $5 == "NS" {$2 = ""; print}' | \
+        sed 's/[ 	][ 	]*/ /g'> ../nosign.before
+
