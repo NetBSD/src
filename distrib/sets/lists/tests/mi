@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.381 2011/09/11 09:02:45 jruoho Exp $
+# $NetBSD: mi,v 1.382 2011/09/11 10:32:23 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -460,6 +460,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtod.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtol.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtox.debug		tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_system.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_memchr.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_memcpy.debug		tests-lib-debug		debug,atf
@@ -2050,6 +2051,7 @@
 ./usr/tests/lib/libc/stdlib/t_strtod		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_strtol		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_strtox		tests-obsolete		obsolete
+./usr/tests/lib/libc/stdlib/t_system		tests-lib-tests		atf
 ./usr/tests/lib/libc/string			tests-lib-tests
 ./usr/tests/lib/libc/string/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_memchr		tests-lib-tests		atf
