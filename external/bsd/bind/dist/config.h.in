@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.in,v 1.143.8.1 2011-02-03 05:52:35 marka Exp */
+/* Id: config.h.in,v 1.147 2011-07-28 13:33:09 tbox Exp */
 
 /*! \file */
 
@@ -150,6 +150,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to enable the "filter-aaaa-on-v4" option. */
 #undef ALLOW_FILTER_AAAA_ON_V4
 
+/* define if ATF unit tests are to be built. */
+#undef ATF_TEST
+
 /* Define if recvmsg() does not meet all of the BSD socket API specifications.
    */
 #undef BROKEN_RECVMSG
@@ -240,9 +243,6 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `c_r' library (-lc_r). */
 #undef HAVE_LIBC_R
-
-/* Define to 1 if you have the `dl' library (-ldl). */
-#undef HAVE_LIBDL
 
 /* Define to 1 if you have the `nsl' library (-lnsl). */
 #undef HAVE_LIBNSL
@@ -352,6 +352,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define to 1 if you have the `usleep' function. */
+#undef HAVE_USLEEP
+
 /* return type of gai_strerror */
 #undef IRS_GAISTRERROR_RETURN_T
 
@@ -360,6 +363,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to the flags type used by getnameinfo(3). */
 #undef IRS_GETNAMEINFO_FLAGS_T
+
+/* Define to allow building of objects for dlopen(). */
+#undef ISC_DLZ_DLOPEN
 
 /* Defined if extern char *optarg is not declared. */
 #undef NEED_OPTARG
@@ -389,6 +395,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Sets which flag to pass to open/fcntl to make non-blocking
    (O_NDELAY/O_NONBLOCK). */
 #undef PORT_NONBLOCK
+
+/* The size of `void *', as computed by sizeof. */
+#undef SIZEOF_VOID_P
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

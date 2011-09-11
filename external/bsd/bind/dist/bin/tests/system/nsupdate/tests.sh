@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.32.24.1.2.1 2011-06-02 23:47:34 tbox Exp
+# Id: tests.sh,v 1.41 2011-07-01 02:25:47 marka Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -140,6 +140,103 @@ grep ns4.other.nil dig.out.ns1 > /dev/null 2>&1 || status=1
 grep ns5.other.nil dig.out.ns1 > /dev/null 2>&1 || status=1
 grep ns6.other.nil dig.out.ns1 > /dev/null 2>&1 || status=1
 
+ret=0
+echo "I:check SIG(0) key is accepted"
+key=`$KEYGEN -q -r random.data -a NSEC3RSASHA1 -b 512 -T KEY -n ENTITY xxx`
+echo "" | $NSUPDATE -k ${key}.private > /dev/null 2>&1 || ret=1
+if [ $ret -ne 0 ]; then
+    echo "I:failed"
+    status=1
+fi
+
+n=`expr $n + 1`
+ret=0
+echo "I:check TYPE=0 update is rejected by nsupdate ($n)"
+$NSUPDATE <<END > nsupdate.out 2>&1 && ret=1
+    server 10.53.0.1 5300
+    ttl 300
+    update add example.nil. in type0 ""
+    send
+END
+grep "unknown class/type" nsupdate.out > /dev/null 2>&1 ||
+ret=1
+if [ $ret -ne 0 ]; then
+    echo "I:failed"
+    status=1
+fi
+
+n=`expr $n + 1`
+ret=0
+echo "I:check TYPE=0 prerequisite is handled ($n)"
+$NSUPDATE -k ns1/ddns.key <<END > nsupdate.out 2>&1 || ret=1
+    server 10.53.0.1 5300
+    prereq nxrrset example.nil. type0
+    send
+END
+$DIG +tcp version.bind txt ch @10.53.0.1 -p 5300 > dig.out.ns1.$n
+grep "status: NOERROR" dig.out.ns1.$n > /dev/null || ret=1
+if [ $ret -ne 0 ]; then
+    echo "I:failed"
+    status=1
+fi
+
+n=`expr $n + 1`
+ret=0
+echo "I:check that TYPE=0 update is handled ($n)"
+echo "a0e4280000010000000100000000060001c00c000000fe000000000000" |
+$PERL ../packet.pl -a 10.53.0.1 -p 5300 -t tcp > /dev/null
+$DIG +tcp version.bind txt ch @10.53.0.1 -p 5300 > dig.out.ns1.$n
+grep "status: NOERROR" dig.out.ns1.$n > /dev/null || ret=1
+if test $ret -ne 0
+then
+	echo "I:failed"
+        status=1
+fi
+
+n=`expr $n + 1`
+echo "I:check that TYPE=0 additional data is handled ($n)"
+echo "a0e4280000010000000000010000060001c00c000000fe000000000000" |
+$PERL ../packet.pl -a 10.53.0.1 -p 5300 -t tcp > /dev/null
+$DIG +tcp version.bind txt ch @10.53.0.1 -p 5300 > dig.out.ns1.$n
+grep "status: NOERROR" dig.out.ns1.$n > /dev/null || ret=1
+if test $ret -ne 0
+then
+	echo "I:failed"
+        status=1
+fi
+
+n=`expr $n + 1`
+echo "I:check that update to undefined class is handled ($n)"
+echo "a0e4280000010001000000000000060101c00c000000fe000000000000" |
+$PERL ../packet.pl -a 10.53.0.1 -p 5300 -t tcp > /dev/null
+$DIG +tcp version.bind txt ch @10.53.0.1 -p 5300 > dig.out.ns1.$n
+grep "status: NOERROR" dig.out.ns1.$n > /dev/null || ret=1
+if test $ret -ne 0
+then
+	echo "I:failed"
+        status=1
+fi
+
+n=`expr $n + 1`
+echo "I:check that unixtime serial number is correctly generated ($n)"
+oldserial=`$DIG +short unixtime.nil. soa @10.53.0.1 -p 5300 | awk '{print $3}'` || ret=1
+$NSUPDATE <<END > /dev/null 2>&1 || ret=1
+    server 10.53.0.1 5300
+    ttl 600
+    update add new.unixtime.nil in a 1.2.3.4
+    send
+END
+now=`$PERL -e 'print time()."\n";'`
+sleep 1
+serial=`$DIG +short unixtime.nil. soa @10.53.0.1 -p 5300 | awk '{print $3}'` || ret=1
+[ "$oldserial" -ne "$serial" ] || ret=1
+# allow up to 2 seconds difference between the serial
+# number and the unix epoch date but no more
+$PERL -e 'exit 1 if abs($ARGV[1] - $ARGV[0]) > 2;' $now $serial || ret=1
+if [ $ret -ne 0 ]; then
+    echo "I:failed"
+    status=1
+fi
 
 if $PERL -e 'use Net::DNS;' 2>/dev/null
 then
@@ -346,10 +443,22 @@ $DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd dnskey.test. \
 	@10.53.0.3 -p 5300 any > dig.out.ns3.$n
 
 grep "600.*DNSKEY" dig.out.ns3.$n > /dev/null || ret=1
-grep TYPE65534 dig.out.ns3.$n > dev/null && ret=1
+grep TYPE65534 dig.out.ns3.$n > /dev/null && ret=1
 if test $ret -ne 0
 then
 echo "I:failed"; status=1
+fi
+
+n=`expr $n + 1`
+ret=0
+echo "I:check notify with TSIG worked ($n)"
+# if the alternate view received a notify--meaning, the notify was
+# validly signed by "altkey"--then the zonefile update.alt.bk will
+# will have been created.
+[ -f ns2/update.alt.bk ] || ret=1
+if [ $ret -ne 0 ]; then
+    echo "I:failed"
+    status=1
 fi
 
 echo "I:exit status: $status"

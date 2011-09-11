@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dig.docbook,v 1.47 2010-03-04 23:50:34 tbox Exp -->
+<!-- Id: dig.docbook,v 1.49 2011-03-05 23:52:29 tbox Exp -->
 <refentry id="man.dig">
 
   <refentryinfo>
@@ -45,6 +45,7 @@
       <year>2008</year>
       <year>2009</year>
       <year>2010</year>
+      <year>2011</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -587,8 +588,35 @@
           <listitem>
             <para>
               Toggle the display of comment lines in the output.  The default
-              is to
-              print comments.
+              is to print comments.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]rrcomments</option></term>
+          <listitem>
+            <para>
+              Toggle the display of per-record comments in the output (for
+              example, human-readable key information about DNSKEY records).
+              The default is not to print record comments unless multiline
+              mode is active.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+split=W</option></term>
+          <listitem>
+            <para>
+              Split long hex- or base64-formatted fields in resource
+              records into chunks of <parameter>W</parameter> characters
+              (where <parameter>W</parameter> is rounded up to the nearest
+              multiple of 4).
+              <parameter>+nosplit</parameter> or
+              <parameter>+split=0</parameter> causes fields not to be
+              split at all.  The default is 56 characters, or 44 characters
+              when multiline mode is active.
             </para>
           </listitem>
         </varlistentry>

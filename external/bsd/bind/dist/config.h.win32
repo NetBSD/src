@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.win32,v 1.26 2011-01-13 08:50:28 tbox Exp */
+/* Id: config.h.win32,v 1.27 2011-03-10 04:36:13 each Exp */
 
 /*
  * win32 configuration file
@@ -125,6 +125,13 @@
 
 /* Define if you have DH_generate_parameters(). */
 #define HAVE_DH_GENERATE_PARAMETERS
+
+/*
+ * Define to 1 if you want to use the DLZ "dlopen" driver
+ * (which has the same name on windows even though it uses
+ * LoadLibrary() instead of dlopen()).
+ */
+#define ISC_DLZ_DLOPEN 1
 
 #define WANT_IPV6
 

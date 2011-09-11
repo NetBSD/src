@@ -1,4 +1,4 @@
-/*	$NetBSD: builtin.c,v 1.1.1.4 2011/02/15 19:30:02 christos Exp $	*/
+/*	$NetBSD: builtin.c,v 1.1.1.5 2011/09/11 17:12:04 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: builtin.c,v 1.20 2011-01-07 23:47:07 tbox Exp */
+/* Id: builtin.c,v 1.21 2011-03-07 15:29:32 fdupont Exp */
 
 /*! \file
  * \brief
@@ -304,6 +304,7 @@ do_authors_lookup(dns_sdblookup_t *lookup) {
 		"Mark Andrews",
 		"James Brister",
 		"Ben Cottrell",
+		"Francis Dupont",
 		"Michael Graff",
 		"Andreas Gustafsson",
 		"Bob Halley",

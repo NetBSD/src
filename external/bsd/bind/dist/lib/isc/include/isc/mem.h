@@ -1,7 +1,7 @@
-/*	$NetBSD: mem.h,v 1.1.1.5 2011/02/15 19:38:21 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.1.1.6 2011/09/11 17:19:32 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mem.h,v 1.89 2010-08-11 22:54:58 jinmei Exp */
+/* Id: mem.h,v 1.91 2011-08-09 23:46:39 tbox Exp */
 
 #ifndef ISC_MEM_H
 #define ISC_MEM_H 1
@@ -336,7 +336,7 @@ isc_mem_createx2(size_t max_size, size_t target_size,
  * ISC_MEMFLAG_INTERNAL is not set, 'target_size' is ignored.
  *
  * 'max_size' is also used to size the statistics arrays and the array
- * used to record active memory when ISC_MEM_DEBUGRECORD is set.  Settin
+ * used to record active memory when ISC_MEM_DEBUGRECORD is set.  Setting
  * 'max_size' too low can have detrimental effects on performance.
  *
  * A memory context created using isc_mem_createx() will obtain
