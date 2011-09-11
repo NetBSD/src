@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.16 2011/08/27 22:38:48 joerg Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.17 2011/09/11 14:54:49 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.16 2011/08/27 22:38:48 joerg Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.17 2011/09/11 14:54:49 jdc Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -266,7 +266,7 @@ cpu_list(char **argv)
 		    ((time_t)cs.cs_lastmodhi << 32);
 		ts = asctime(localtime(&lastmod));
 		ts[strlen(ts) - 1] = '\0';
-		printf("%-4d %-4x %-12s %-10s %s %s\n", i, cs.cs_id, state,
+		printf("%-4d %-4x %-12s %-10s %s %s\n", i, cs.cs_hwid, state,
 		   intr, ts, ibuf);
 	}
 }

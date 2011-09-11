@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuio.h,v 1.4 2009/04/19 14:11:37 ad Exp $	*/
+/*	$NetBSD: cpuio.h,v 1.5 2011/09/11 14:54:49 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
@@ -53,7 +53,8 @@ typedef struct cpustate {
 	char		cs_name[16];	/* reserved */
 	int32_t		cs_lastmodhi;	/* time of last state change */
 	uint32_t	cs_intrcnt;	/* count of interrupt handlers + 1 */
-	uint32_t	cs_reserved[2];	/* reserved */
+	uint32_t	cs_hwid;	/* hardware id */
+	uint32_t	cs_reserved;	/* reserved */
 } cpustate_t;
 
 #define	IOC_CPU_SETSTATE	_IOW('c', 0, cpustate_t)
