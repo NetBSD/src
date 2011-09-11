@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.189 2011/09/07 17:54:11 christos Exp $
+# $NetBSD: shl.mi,v 1.190 2011/09/11 19:10:57 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -240,7 +240,7 @@
 ./usr/libdata/debug/usr/lib/libasn1.so.9.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libbfd.so.11.0.debug	comp-sys-debug	binutils,debug
-./usr/libdata/debug/usr/lib/libbind9.so.5.3.debug	comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/libbind9.so.5.6.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug		comp-sys-debug	debug
@@ -253,7 +253,7 @@
 ./usr/libdata/debug/usr/lib/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug
 ./usr/libdata/debug/usr/lib/libdm.so.0.0.debug 		comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libdns.so.5.5.debug 	comp-bind-debug debug
+./usr/libdata/debug/usr/lib/libdns.so.5.6.debug 	comp-bind-debug debug
 ./usr/libdata/debug/usr/lib/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug
 ./usr/libdata/debug/usr/lib/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug
 ./usr/libdata/debug/usr/lib/libdwarf.so.0.0.debug	comp-sys-debug	debug
@@ -274,8 +274,8 @@
 ./usr/libdata/debug/usr/lib/libintl.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libipsec.so.3.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/libisc.so.5.4.debug		comp-bind-debug	debug
-./usr/libdata/debug/usr/lib/libisccc.so.5.3.debug	comp-bind-debug	debug
-./usr/libdata/debug/usr/lib/libisccfg.so.5.3.debug	comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/libisccc.so.5.6.debug	comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/libisccfg.so.5.6.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug
 ./usr/libdata/debug/usr/lib/libisns.so.0.0.debug	comp-isns-debug	debug
 ./usr/libdata/debug/usr/lib/libkadm5clnt.so.13.0.debug	comp-krb5-debug	kerberos,debug
@@ -288,7 +288,7 @@
 ./usr/libdata/debug/usr/lib/libldap.so.4.2.debug	comp-ldap-debug	ldap,debug
 ./usr/libdata/debug/usr/lib/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug
 ./usr/libdata/debug/usr/lib/liblua.so.1.0.debug		comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/liblwres.so.5.3.debug	comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/liblwres.so.5.6.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/liblzf.so.0.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/liblzma.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libm.so.0.10.debug		comp-sys-debug	debug
