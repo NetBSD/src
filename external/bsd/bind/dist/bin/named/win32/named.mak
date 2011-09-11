@@ -129,6 +129,7 @@ CLEAN :
 	-@erase "$(INTDIR)\config.obj"
 	-@erase "$(INTDIR)\control.obj"
 	-@erase "$(INTDIR)\controlconf.obj"
+	-@erase "$(INTDIR)\dlz_dlopen_driver.obj"
 	-@erase "$(INTDIR)\interfacemgr.obj"
 	-@erase "$(INTDIR)\listenlist.obj"
 	-@erase "$(INTDIR)\log.obj"
@@ -174,6 +175,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\config.obj" \
 	"$(INTDIR)\control.obj" \
 	"$(INTDIR)\controlconf.obj" \
+	"$(INTDIR)\dlz_dlopen_driver.obj" \
 	"$(INTDIR)\interfacemgr.obj" \
 	"$(INTDIR)\listenlist.obj" \
 	"$(INTDIR)\log.obj" \
@@ -247,6 +249,8 @@ CLEAN :
 	-@erase "$(INTDIR)\control.sbr"
 	-@erase "$(INTDIR)\controlconf.obj"
 	-@erase "$(INTDIR)\controlconf.sbr"
+	-@erase "$(INTDIR)\dlz_dlopen_driver.obj"
+	-@erase "$(INTDIR)\dlz_dlopen_driver.sbr"
 	-@erase "$(INTDIR)\interfacemgr.obj"
 	-@erase "$(INTDIR)\interfacemgr.sbr"
 	-@erase "$(INTDIR)\listenlist.obj"
@@ -319,6 +323,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\config.sbr" \
 	"$(INTDIR)\control.sbr" \
 	"$(INTDIR)\controlconf.sbr" \
+	"$(INTDIR)\dlz_dlopen_driver.sbr" \
 	"$(INTDIR)\interfacemgr.sbr" \
 	"$(INTDIR)\listenlist.sbr" \
 	"$(INTDIR)\log.sbr" \
@@ -359,6 +364,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\config.obj" \
 	"$(INTDIR)\control.obj" \
 	"$(INTDIR)\controlconf.obj" \
+	"$(INTDIR)\dlz_dlopen_driver.obj" \
 	"$(INTDIR)\interfacemgr.obj" \
 	"$(INTDIR)\listenlist.obj" \
 	"$(INTDIR)\log.obj" \
@@ -528,6 +534,22 @@ SOURCE=..\controlconf.c
 
 "$(INTDIR)\controlconf.obj"	"$(INTDIR)\controlconf.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=.\dlz_dlopen_driver.c
+
+!IF  "$(CFG)" == "named - Win32 Release"
+
+
+"$(INTDIR)\dlz_dlopen_driver.obj" : $(SOURCE) "$(INTDIR)"
+
+
+!ELSEIF  "$(CFG)" == "named - Win32 Debug"
+
+
+"$(INTDIR)\dlz_dlopen_driver.obj"	"$(INTDIR)\dlz_dlopen_driver.sbr" : $(SOURCE) "$(INTDIR)"
 
 
 !ENDIF 

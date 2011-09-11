@@ -1,0 +1,9 @@
+These scripts generate a named.conf file with an arbitrary number of
+small zones, for testing startup performance.
+
+To generate a test server with 1000 zones, run:
+
+   $ sh setup.sh 1000 > named.conf
+
+Zones are generated with random names, and all of them load from the same
+file: smallzone.db.
