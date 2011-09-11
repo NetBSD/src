@@ -1,4 +1,4 @@
-.\" $NetBSD: traceroute.8,v 1.28 2006/02/17 21:31:18 rpaulo Exp $
+.\" $NetBSD: traceroute.8,v 1.29 2011/09/11 01:06:26 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -15,9 +15,9 @@
 .\" IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
 .\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.\"	Header: traceroute.8,v 1.11 97/04/22 13:45:13 leres Exp
+.\"	Id: traceroute.8,v 1.19 2000/09/21 08:44:19 leres Exp
 .\"
-.TH TRACEROUTE 8 "17 February 2006"
+.TH TRACEROUTE 8 "21 September 2000"
 .UC 6
 .SH NAME
 traceroute \- print the route packets take to network host
@@ -62,6 +62,10 @@ max_ttl
 ] [
 .B \-w
 .I waittime
+] [
+.B \-z
+.I pausemsecs
+ ]
 ] [
 .B \-A
 .I as_server
@@ -206,14 +210,20 @@ Set the time (in seconds) to wait for a response to a probe (default 5
 sec.).
 .TP
 .B \-x
-Toggle checksums. Normally, this prevents traceroute from calculating
-checksums. In some cases, the operating system can overwrite parts of
+Toggle ip checksums. Normally, this prevents traceroute from calculating
+ip checksums. In some cases, the operating system can overwrite parts of
 the outgoing packet but not recalculate the checksum (so in some cases
 the default is to not calculate checksums and using
 .B \-x
 causes them to be calculated). Note that checksums are usually required
 for the last hop when using ICMP ECHO probes
 .RB ( \-I ).
+So they are always calculated when using ICMP.
+.TP
+.B \-z
+Set the time (in milliseconds) to pause between probes (default 0).
+Some systems such as Solaris and routers such as Ciscos rate limit
+icmp messages. A good value to use with this this is 500 (e.g. 1/2 second).
 .PP
 This program attempts to trace the route an IP packet would follow to some
 internet host by launching UDP probe
@@ -349,16 +359,20 @@ Other possible annotations after the time are
 .BR !N ,
 or
 .B !P
-(got a host, network or protocol unreachable, respectively),
+(host, network or protocol unreachable),
 .B !S
-or
-.B !F
-(source route failed or fragmentation needed \- neither of these should
-ever occur and the associated gateway is busted if you see one),
+(source route failed),
+.B !F\-<pmtu>
+(fragmentation needed \- the RFC1191 Path MTU Discovery value is displayed),
 .B !X
-(communication administratively prohibited), or
+(communication administratively prohibited),
+.B !V
+(host precedence violation),
+.B !C
+(precedence cutoff in effect), or
 .B !\*[Lt]N\*[Gt]
-(ICMP unreachable code N).
+(ICMP unreachable code \*[Lt]num\*[Gt]).
+These are defined by RFC1812 (which supersedes RFC1716).
 If almost all the probes result in some kind of unreachable, traceroute
 will give up and exit.
 
@@ -395,7 +409,7 @@ C. Philip Wood, Tim Seaver and Ken Adelman.
 The current version is available via anonymous ftp:
 .LP
 .RS
-.I ftp://ftp.ee.lbl.gov/traceroute.tar.Z
+.I ftp://ftp.ee.lbl.gov/traceroute.tar.gz
 .RE
 .SH BUGS
 Please send bug reports to traceroute@ee.lbl.gov.
