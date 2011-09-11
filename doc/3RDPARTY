@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.868 2011/09/10 21:40:43 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.869 2011/09/11 01:07:56 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1075,7 +1075,7 @@ License:	BSD (2-clause)
 Notes:
 
 Package:	traceroute
-Version:	1.4a5
+Version:	1.4a12
 Current Vers:	1.4a12
 Maintainer:	traceroute@ee.lbl.gov
 Archive Site:	ftp://ftp.ee.lbl.gov/
@@ -1084,6 +1084,7 @@ Mailing List:
 Responsible:
 License:	BSD (4-clause)
 Notes:
+Added changes from a5 -> a12 manually.
 
 Package:	tz
 Version:	tzcode2011i / tzdata2011i
