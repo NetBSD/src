@@ -1,7 +1,7 @@
-/*	$NetBSD: print.c,v 1.2 2011/02/16 03:47:18 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.3 2011/09/11 18:55:43 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: print.c,v 1.10 2007-06-19 23:47:22 tbox Exp */
+/* Id: print.c,v 1.12 2011-03-12 04:59:49 tbox Exp */
 
 #include <config.h>
 
@@ -117,6 +117,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 		width = precision = 0;
 		head = "";
 		length = pad = zeropad = 0;
+		POST(length);
 
 		do {
 			if (*format == '#') {

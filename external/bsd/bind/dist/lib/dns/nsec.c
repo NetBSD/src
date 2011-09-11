@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec.c,v 1.2 2011/02/16 03:47:04 christos Exp $	*/
+/*	$NetBSD: nsec.c,v 1.3 2011/09/11 18:55:35 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec.c,v 1.13 2009-01-06 23:47:57 tbox Exp */
+/* Id: nsec.c,v 1.16 2011-06-10 01:51:09 each Exp */
 
 /*! \file */
 
@@ -184,7 +184,7 @@ dns_nsec_build(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node,
 				    0, NULL);
 	if (result == DNS_R_UNCHANGED)
 		result = ISC_R_SUCCESS;
-	RETERR(result);
+
  failure:
 	if (dns_rdataset_isassociated(&rdataset))
 		dns_rdataset_disassociate(&rdataset);
@@ -247,10 +247,8 @@ dns_nsec_nseconly(dns_db_t *db, dns_dbversion_t *version,
 				     0, 0, &rdataset, NULL);
 	dns_db_detachnode(db, &node);
 
-	if (result == ISC_R_NOTFOUND) {
+	if (result == ISC_R_NOTFOUND)
 		*answer = ISC_FALSE;
-		return (ISC_R_SUCCESS);
-	}
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	for (result = dns_rdataset_first(&rdataset);

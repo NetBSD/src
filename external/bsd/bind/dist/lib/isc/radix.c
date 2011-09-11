@@ -1,7 +1,7 @@
-/*	$NetBSD: radix.c,v 1.2 2011/02/16 03:47:11 christos Exp $	*/
+/*	$NetBSD: radix.c,v 1.3 2011/09/11 18:55:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: radix.c,v 1.23 2009-01-18 23:48:14 tbox Exp */
+/* Id: radix.c,v 1.25 2011-03-12 04:59:48 tbox Exp */
 
 /*
  * This source was adapted from MRT's RCS Ids:
@@ -277,7 +277,7 @@ isc_radix_search(isc_radix_tree_t *radix, isc_radix_node_t **target,
 	if (node && node->prefix)
 		stack[cnt++] = node;
 
-	while (--cnt >= 0) {
+	while (cnt-- > 0) {
 		node = stack[cnt];
 
 		if (_comp_with_mask(isc_prefix_tochar(node->prefix),

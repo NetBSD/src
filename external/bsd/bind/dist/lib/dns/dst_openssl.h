@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_openssl.h,v 1.2 2011/02/16 03:47:03 christos Exp $	*/
+/*	$NetBSD: dst_openssl.h,v 1.3 2011/09/11 18:55:35 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_openssl.h,v 1.9 2009-10-06 04:40:14 tbox Exp */
+/* Id: dst_openssl.h,v 1.11 2011-03-12 04:59:48 tbox Exp */
 
 #ifndef DST_OPENSSL_H
 #define DST_OPENSSL_H 1
@@ -25,13 +25,28 @@
 #include <isc/lang.h>
 #include <isc/result.h>
 
+#include <openssl/err.h>
+#include <openssl/rand.h>
+#include <openssl/evp.h>
+#include <openssl/conf.h>
+#include <openssl/crypto.h>
+
+#if !defined(OPENSSL_NO_ENGINE) && defined(CRYPTO_LOCK_ENGINE) && \
+    (OPENSSL_VERSION_NUMBER >= 0x0090707f)
+#define USE_ENGINE 1
+#endif
+
 ISC_LANG_BEGINDECLS
 
 isc_result_t
 dst__openssl_toresult(isc_result_t fallback);
 
+#ifdef USE_ENGINE
 ENGINE *
 dst__openssl_getengine(const char *engine);
+#else
+#define dst__openssl_getengine(x) NULL
+#endif
 
 ISC_LANG_ENDDECLS
 

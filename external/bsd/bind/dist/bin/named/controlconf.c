@@ -1,7 +1,7 @@
-/*	$NetBSD: controlconf.c,v 1.2 2011/02/16 03:46:46 christos Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.3 2011/09/11 18:55:27 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: controlconf.c,v 1.60 2008-07-23 23:27:54 marka Exp */
+/* Id: controlconf.c,v 1.62 2011-03-12 04:59:46 tbox Exp */
 
 /*! \file */
 
@@ -861,7 +861,7 @@ get_rndckey(isc_mem_t *mctx, controlkeylist_t *keyids) {
 		cfg_obj_log(key, ns_g_lctx, ISC_LOG_WARNING,
 			    "secret for key '%s' on command channel: %s",
 			    keyid->keyname, isc_result_totext(result));
-		CHECK(result);
+		goto cleanup;
 	}
 
 	keyid->secret.length = isc_buffer_usedlength(&b);

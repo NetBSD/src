@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.2 2011/02/16 03:47:17 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.3 2011/09/11 18:55:43 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namedconf.c,v 1.131.8.1 2011-02-03 05:50:08 marka Exp */
+/* Id: namedconf.c,v 1.139 2011-07-01 02:25:48 marka Exp */
 
 /*! \file */
 
@@ -230,9 +230,8 @@ static cfg_type_t cfg_type_namesockaddrkeylist = {
 };
 
 /*%
- * A list of socket addresses with an optional default port,
- * as used in the also-notify option.  E.g.,
- * "port 1234 { 10.0.0.1; 1::2 port 69; }"
+ * A list of socket addresses with an optional default port, as used
+ * in the lwresd 'listen-on' option.  E.g., "{ 10.0.0.1; 1::2 port 69; }"
  */
 static cfg_tuplefielddef_t portiplist_fields[] = {
 	{ "port", &cfg_type_optional_port, 0 },
@@ -240,8 +239,8 @@ static cfg_tuplefielddef_t portiplist_fields[] = {
 	{ NULL, NULL, 0 }
 };
 static cfg_type_t cfg_type_portiplist = {
-	"portiplist", cfg_parse_tuple, cfg_print_tuple, cfg_doc_tuple, &cfg_rep_tuple,
-	portiplist_fields
+	"portiplist", cfg_parse_tuple, cfg_print_tuple, cfg_doc_tuple,
+	&cfg_rep_tuple, portiplist_fields
 };
 
 /*%
@@ -544,11 +543,22 @@ static cfg_type_t cfg_type_bracketed_sockaddrlist = {
 	&cfg_rep_list, &cfg_type_sockaddr
 };
 
-static const char *autodnssec_enums[] = { "allow", "maintain", "create",
-					  "off", NULL };
+static const char *autodnssec_enums[] = { "allow", "maintain", "off", NULL };
 static cfg_type_t cfg_type_autodnssec = {
 	"autodnssec", cfg_parse_enum, cfg_print_ustring, cfg_doc_enum,
 	&cfg_rep_string, &autodnssec_enums
+};
+
+static const char *dnssecupdatemode_enums[] = { "maintain", "no-resign", NULL };
+static cfg_type_t cfg_type_dnssecupdatemode = {
+	"dnssecupdatemode", cfg_parse_enum, cfg_print_ustring, cfg_doc_enum,
+	&cfg_rep_string, &dnssecupdatemode_enums
+};
+
+static const char *updatemethods_enums[] = { "increment", "unixtime", NULL };
+static cfg_type_t cfg_type_updatemethod = {
+	"updatemethod", cfg_parse_enum, cfg_print_ustring, cfg_doc_enum,
+	&cfg_rep_string, &updatemethods_enums
 };
 
 static cfg_type_t cfg_type_rrsetorder = {
@@ -596,7 +606,7 @@ static cfg_type_t cfg_type_forwardtype = {
 
 static const char *zonetype_enums[] = {
 	"master", "slave", "stub", "static-stub", "hint", "forward",
-	"delegation-only", NULL };
+	"delegation-only", "redirect", NULL };
 static cfg_type_t cfg_type_zonetype = {
 	"zonetype", cfg_parse_enum, cfg_print_ustring, cfg_doc_enum,
 	&cfg_rep_string, &zonetype_enums
@@ -1133,6 +1143,24 @@ static cfg_type_t cfg_type_rpz = {
  * dnssec-lookaside
  */
 
+static void
+print_lookaside(cfg_printer_t *pctx, const cfg_obj_t *obj)
+{
+	const cfg_obj_t *domain = obj->value.tuple[0];
+
+	if (domain->value.string.length == 4 &&
+	    strncmp(domain->value.string.base, "auto", 4) == 0)
+		cfg_print_cstr(pctx, "auto");
+	else
+		cfg_print_tuple(pctx, obj);
+}
+
+static void
+doc_lookaside(cfg_printer_t *pctx, const cfg_type_t *type) {
+	UNUSED(type);
+	cfg_print_cstr(pctx, "( <string> trust-anchor <string> | auto )");
+}
+
 static keyword_type_t trustanchor_kw = { "trust-anchor", &cfg_type_astring };
 
 static cfg_type_t cfg_type_optional_trustanchor = {
@@ -1147,7 +1175,7 @@ static cfg_tuplefielddef_t lookaside_fields[] = {
 };
 
 static cfg_type_t cfg_type_lookaside = {
-	"lookaside", cfg_parse_tuple, cfg_print_tuple, cfg_doc_tuple,
+	"lookaside", cfg_parse_tuple, print_lookaside, doc_lookaside,
 	&cfg_rep_tuple, lookaside_fields
 };
 
@@ -1331,7 +1359,7 @@ zone_clauses[] = {
 	{ "allow-transfer", &cfg_type_bracketed_aml, 0 },
 	{ "allow-update", &cfg_type_bracketed_aml, 0 },
 	{ "allow-update-forwarding", &cfg_type_bracketed_aml, 0 },
-	{ "also-notify", &cfg_type_portiplist, 0 },
+	{ "also-notify", &cfg_type_namesockaddrkeylist, 0 },
 	{ "alt-transfer-source", &cfg_type_sockaddr4wild, 0 },
 	{ "alt-transfer-source-v6", &cfg_type_sockaddr6wild, 0 },
 	{ "check-dup-records", &cfg_type_checkmode, 0 },
@@ -1343,7 +1371,9 @@ zone_clauses[] = {
 	{ "check-wildcard", &cfg_type_boolean, 0 },
 	{ "dialup", &cfg_type_dialuptype, 0 },
 	{ "dnssec-dnskey-kskonly", &cfg_type_boolean, 0 },
+	{ "dnssec-loadkeys-interval", &cfg_type_uint32, 0 },
 	{ "dnssec-secure-to-insecure", &cfg_type_boolean, 0 },
+	{ "dnssec-update-mode", &cfg_type_dnssecupdatemode, 0 },
 	{ "forward", &cfg_type_forwardtype, 0 },
 	{ "forwarders", &cfg_type_portiplist, 0 },
 	{ "key-directory", &cfg_type_qstring, 0 },
@@ -1366,6 +1396,7 @@ zone_clauses[] = {
 	{ "notify-source-v6", &cfg_type_sockaddr6wild, 0 },
 	{ "notify-to-soa", &cfg_type_boolean, 0 },
 	{ "nsec3-test-zone", &cfg_type_boolean, CFG_CLAUSEFLAG_TESTONLY },
+	{ "serial-update-method", &cfg_type_updatemethod, 0 },
 	{ "sig-signing-nodes", &cfg_type_uint32, 0 },
 	{ "sig-signing-signatures", &cfg_type_uint32, 0 },
 	{ "sig-signing-type", &cfg_type_uint32, 0 },
@@ -2237,7 +2268,8 @@ static cfg_type_t cfg_type_controls_sockaddr = {
  * statement, which takes a single key with or without braces and semicolon.
  */
 static isc_result_t
-parse_server_key_kludge(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
+parse_server_key_kludge(cfg_parser_t *pctx, const cfg_type_t *type,
+			cfg_obj_t **ret)
 {
 	isc_result_t result;
 	isc_boolean_t braces = ISC_FALSE;
@@ -2247,7 +2279,7 @@ parse_server_key_kludge(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **
 	CHECK(cfg_peektoken(pctx, 0));
 	if (pctx->token.type == isc_tokentype_special &&
 	    pctx->token.value.as_char == '{') {
-		result = cfg_gettoken(pctx, 0);
+		CHECK(cfg_gettoken(pctx, 0));
 		braces = ISC_TRUE;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.2 2011/02/16 03:47:17 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.3 2011/09/11 18:55:43 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: parser.c,v 1.139 2011-01-04 23:47:14 tbox Exp */
+/* Id: parser.c,v 1.141 2011-03-11 06:11:27 marka Exp */
 
 /*! \file */
 
@@ -1906,6 +1906,7 @@ cfg_doc_netaddr(cfg_printer_t *pctx, const cfg_type_t *type) {
 			cfg_print_chars(pctx, " | ", 3);
 		cfg_print_chars(pctx, "*", 1);
 		n++;
+		POST(n);
 	}
 	if (*flagp != CFG_ADDR_V4OK && *flagp != CFG_ADDR_V6OK)
 		cfg_print_chars(pctx, " )", 2);
@@ -1945,7 +1946,7 @@ cfg_parse_netprefix(cfg_parser_t *pctx, const cfg_type_t *type,
 	cfg_obj_t *obj = NULL;
 	isc_result_t result;
 	isc_netaddr_t netaddr;
-	unsigned int addrlen, prefixlen;
+	unsigned int addrlen = 0, prefixlen;
 	UNUSED(type);
 
 	CHECK(cfg_parse_rawaddr(pctx, CFG_ADDR_V4OK | CFG_ADDR_V4PREFIXOK |
@@ -1958,7 +1959,6 @@ cfg_parse_netprefix(cfg_parser_t *pctx, const cfg_type_t *type,
 		addrlen = 128;
 		break;
 	default:
-		addrlen = 0;
 		INSIST(0);
 		break;
 	}
@@ -2008,8 +2008,12 @@ cfg_obj_isnetprefix(const cfg_obj_t *obj) {
 
 void
 cfg_obj_asnetprefix(const cfg_obj_t *obj, isc_netaddr_t *netaddr,
-		    unsigned int *prefixlen) {
+		    unsigned int *prefixlen)
+{
 	REQUIRE(obj != NULL && obj->type->rep == &cfg_rep_netprefix);
+	REQUIRE(netaddr != NULL);
+	REQUIRE(prefixlen != NULL);
+
 	*netaddr = obj->value.netprefix.address;
 	*prefixlen = obj->value.netprefix.prefixlen;
 }
@@ -2093,6 +2097,7 @@ cfg_doc_sockaddr(cfg_printer_t *pctx, const cfg_type_t *type) {
 			cfg_print_chars(pctx, " | ", 3);
 		cfg_print_chars(pctx, "*", 1);
 		n++;
+		POST(n);
 	}
 	cfg_print_chars(pctx, " ) ", 3);
 	if (*flagp & CFG_ADDR_WILDOK) {
