@@ -140,4 +140,4 @@
          DNSKEY and RRSIG Resource Records for DNSSEC
 5933:	Use of GOST Signature Algorithms in DNSKEY
          and RRSIG Resource Records for DNSSEC
-
+6303:	Locally Served DNS Zones

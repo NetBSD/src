@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: keygen.sh,v 1.8 2010-12-15 18:44:37 each Exp
+# Id: keygen.sh,v 1.13 2011-07-08 01:43:26 each Exp
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -71,6 +71,19 @@ infile="${zonefile}.in"
 cat $infile dsset-*.${zone}. > $zonefile
 ksk=`$KEYGEN -q -3 -r $RANDFILE -fk $zone`
 $KEYGEN -q -3 -r $RANDFILE $zone > /dev/null
+$DSFROMKEY $ksk.key > dsset-${zone}.
+
+#
+# An NSEC3 zone, with NSEC3 parameters set prior to signing
+#
+zone=autonsec3.example
+zonefile="${zone}.db"
+infile="${zonefile}.in"
+cat $infile > $zonefile
+ksk=`$KEYGEN -G -q -3 -r $RANDFILE -fk $zone`
+echo $ksk > ../autoksk.key
+zsk=`$KEYGEN -G -q -3 -r $RANDFILE $zone`
+echo $zsk > ../autozsk.key
 $DSFROMKEY $ksk.key > dsset-${zone}.
 
 #
@@ -168,7 +181,7 @@ $SIGNER -PS -s now-1y -e now-6mo -o $zone -f $zonefile $infile > /dev/null 2>&1
 zone=nsec3-to-nsec.example
 zonefile="${zone}.db"
 infile="${zonefile}.in"
-cp $infile $zonefile
+#cp $infile $zonefile
 ksk=`$KEYGEN -q -a RSASHA512 -b 2048 -r $RANDFILE -fk $zone`
 $KEYGEN -q -a RSASHA512 -b 1024 -r $RANDFILE $zone > /dev/null
 $SIGNER -S -3 beef -A -o $zone -f $zonefile $infile > /dev/null 2>&1
@@ -205,3 +218,70 @@ zonefile="${zone}.db"
 $KEYGEN -3 -q -r $RANDFILE -fk $zone > /dev/null
 $KEYGEN -3 -q -r $RANDFILE $zone > /dev/null
 $SIGNER -S -3 beef -o $zone -f $zonefile $infile > /dev/null 2>&1
+
+#
+# Key TTL tests.
+#
+
+# no default key TTL; DNSKEY should get SOA TTL
+zone=ttl1.example
+zonefile="${zone}.db"
+infile="${zonefile}.in"
+$KEYGEN -3 -q -r $RANDFILE -fk $zone > /dev/null
+$KEYGEN -3 -q -r $RANDFILE $zone > /dev/null
+cp $infile $zonefile
+
+# default key TTL should be used
+zone=ttl2.example 
+zonefile="${zone}.db"
+$KEYGEN -3 -q -r $RANDFILE -fk -L 60 $zone > /dev/null
+$KEYGEN -3 -q -r $RANDFILE -L 60 $zone > /dev/null
+cp $infile $zonefile
+
+# mismatched key TTLs, should use shortest
+zone=ttl3.example
+zonefile="${zone}.db"
+$KEYGEN -3 -q -r $RANDFILE -fk -L 30 $zone > /dev/null
+$KEYGEN -3 -q -r $RANDFILE -L 60 $zone > /dev/null
+cp $infile $zonefile
+
+# existing DNSKEY RRset, should retain TTL
+zone=ttl4.example
+zonefile="${zone}.db"
+$KEYGEN -3 -q -r $RANDFILE -L 30 -fk $zone > /dev/null
+cat ${infile} K${zone}.+*.key > $zonefile
+$KEYGEN -3 -q -r $RANDFILE -L 180 $zone > /dev/null
+
+#
+# A zone with a DNSKEY RRset that is published before it's activated
+#
+zone=delay.example
+zonefile="${zone}.db"
+ksk=`$KEYGEN -G -q -3 -r $RANDFILE -fk $zone`
+echo $ksk > ../delayksk.key
+zsk=`$KEYGEN -G -q -3 -r $RANDFILE $zone`
+echo $zsk > ../delayzsk.key
+
+#
+# A zone with signatures that are already expired, and the private ZSK
+# is missing.
+#
+zone=nozsk.example
+zonefile="${zone}.db"
+$KEYGEN -q -3 -r $RANDFILE -fk $zone > /dev/null
+zsk=`$KEYGEN -q -3 -r $RANDFILE $zone`
+$SIGNER -S -P -s now-1mo -e now-1mi -o $zone -f $zonefile ${zonefile}.in > /dev/null 2>&1
+echo $zsk > ../missingzsk.key
+rm -f ${zsk}.private
+
+#
+# A zone with signatures that are already expired, and the private ZSK
+# is inactive.
+#
+zone=inaczsk.example
+zonefile="${zone}.db"
+$KEYGEN -q -3 -r $RANDFILE -fk $zone > /dev/null
+zsk=`$KEYGEN -q -3 -r $RANDFILE $zone`
+$SIGNER -S -P -s now-1mo -e now-1mi -o $zone -f $zonefile ${zonefile}.in > /dev/null 2>&1
+echo $zsk > ../inactivezsk.key
+$SETTIME -I now $zsk > /dev/null

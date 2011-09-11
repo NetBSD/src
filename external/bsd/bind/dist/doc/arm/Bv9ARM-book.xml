@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- File: Id: Bv9ARM-book.xml,v 1.478.8.2.2.1 2011-06-09 03:17:11 marka Exp -->
+<!-- File: Id: Bv9ARM-book.xml,v 1.500 2011-08-03 01:19:10 marka Exp -->
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
   <title>BIND 9 Administrator Reference Manual</title>
 
@@ -70,7 +70,7 @@
       </para>
 
       <para>
-        This version of the manual corresponds to BIND version 9.7.
+        This version of the manual corresponds to BIND version 9.9.
       </para>
 
     </sect1>
@@ -1188,11 +1188,11 @@ zone "eng.example.com" {
                       </para>
                       <para>
                         This command requires that the
-                        <command>auto-dnssec</command> zone option to be set
-                        to <literal>allow</literal>,
-                        <literal>maintain</literal>, or
-                        <literal>create</literal>,  and also requires
-                        the zone to be configured to allow dynamic DNS.
+                        <command>auto-dnssec</command> zone option be set
+                        to <literal>allow</literal> or
+                        <literal>maintain</literal>,
+                        and also requires the zone to be configured to
+                        allow dynamic DNS.
                         See <xref linkend="dynamic_update_policies"/> for
                         more details.
                       </para>
@@ -1217,10 +1217,10 @@ zone "eng.example.com" {
                       </para>
                       <para>
                         This command requires that the
-                        <command>auto-dnssec</command> zone option to
-                        be set to <literal>maintain</literal> or
-                        <literal>create</literal>, and also requires
-                        the zone to be configured to allow dynamic DNS.
+                        <command>auto-dnssec</command> zone option
+                        be set to <literal>maintain</literal>,
+                        and also requires the zone to be configured to
+                        allow dynamic DNS.
                         See <xref linkend="dynamic_update_policies"/> for
                         more details.
                       </para>
@@ -1235,15 +1235,12 @@ zone "eng.example.com" {
                     <listitem>
                       <para>
                         Suspend updates to a dynamic zone.  If no zone is
-                        specified,
-                        then all zones are suspended.  This allows manual
-                        edits to be made to a zone normally updated by dynamic
-                        update.  It
-                        also causes changes in the journal file to be synced
-                        into the master
-                        and the journal file to be removed.  All dynamic
-                        update attempts will
-                        be refused while the zone is frozen.
+                        specified, then all zones are suspended.  This allows
+                        manual edits to be made to a zone normally updated by
+                        dynamic update.  It also causes changes in the
+                        journal file to be synced into the master file.
+                        All dynamic update attempts will be refused while
+                        the zone is frozen.
                       </para>
                     </listitem>
                   </varlistentry>
@@ -1255,15 +1252,34 @@ zone "eng.example.com" {
            <optional><replaceable>view</replaceable></optional></optional></optional></userinput></term>
                     <listitem>
                       <para>
-                        Enable updates to a frozen dynamic zone.  If no zone
-                        is
-                        specified, then all frozen zones are enabled.  This
-                        causes
-                        the server to reload the zone from disk, and
-                        re-enables dynamic updates
-                        after the load has completed.  After a zone is thawed,
-                        dynamic updates
-                        will no longer be refused.
+                        Enable updates to a frozen dynamic zone.  If no
+                        zone is specified, then all frozen zones are
+                        enabled.  This causes the server to reload the zone
+                        from disk, and re-enables dynamic updates after the
+                        load has completed.  After a zone is thawed,
+                        dynamic updates will no longer be refused.  If
+                        the zone has changed and the
+                        <command>ixfr-from-differences</command> option is
+                        in use, then the journal file will be updated to
+                        reflect changes in the zone.  Otherwise, if the
+                        zone has changed, any existing journal file will be
+                        removed.
+                      </para>
+                    </listitem>
+                  </varlistentry>
+
+                  <varlistentry>
+                    <term><userinput>sync
+                        <optional>-clean</optional>
+                        <optional><replaceable>zone</replaceable>
+       <optional><replaceable>class</replaceable>
+           <optional><replaceable>view</replaceable></optional></optional></optional></userinput></term>
+                    <listitem>
+                      <para>
+                        Sync changes in the journal file for a dynamic zone
+                        to the master file.  If the "-clean" option is
+                        specified, the journal file is also removed.  If
+                        no zone is specified, then all zones are synced.
                       </para>
                     </listitem>
                   </varlistentry>
@@ -1415,10 +1431,29 @@ zone "eng.example.com" {
                   </varlistentry>
 
                   <varlistentry>
-                    <term><userinput>flushname</userinput> <replaceable>name</replaceable></term>
+                    <term><userinput>flushname</userinput>
+                       <replaceable>name</replaceable>
+                       <optional><replaceable>view</replaceable></optional>
+                       </term>
                     <listitem>
                       <para>
-                        Flushes the given name from the server's cache.
+                        Flushes the given name from the server's DNS cache,
+                        and from the server's nameserver address database
+                        if applicable.
+                      </para>
+                    </listitem>
+                  </varlistentry>
+
+                  <varlistentry>
+                    <term><userinput>flushtree</userinput>
+                       <replaceable>name</replaceable>
+                       <optional><replaceable>view</replaceable></optional>
+                       </term>
+                    <listitem>
+                      <para>
+                        Flushes the given name, and all of its subdomains,
+                        from the server's DNS cache.  (The server's
+                        nameserver address database is not affected.)
                       </para>
                     </listitem>
                   </varlistentry>
@@ -3606,7 +3641,9 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
               <entry colname="2">
                 <para>
                   defines a named masters list for
-                  inclusion in stub and slave zone masters clauses.
+                  inclusion in stub and slave zones'
+                  <command>masters</command> or 
+                  <command>also-notify</command> lists.
                 </para>
               </entry>
             </row>
@@ -4965,7 +5002,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
           Usage</title>
         <para><command>masters</command>
 	  lists allow for a common set of masters to be easily used by
-          multiple stub and slave zones.
+          multiple stub and slave zones in their <command>masters</command>
+          or <command>also-notify</command> lists.
         </para>
       </sect2>
 
@@ -5049,7 +5087,9 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> allow-update { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-update-forwarding { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> update-check-ksk <replaceable>yes_or_no</replaceable>; </optional>
+    <optional> dnssec-update-mode ( <replaceable>maintain</replaceable> | <replaceable>no-resign</replaceable> ); </optional>
     <optional> dnssec-dnskey-kskonly <replaceable>yes_or_no</replaceable>; </optional>
+    <optional> dnssec-loadkeys-interval <replaceable>number</replaceable>; </optional>
     <optional> dnssec-secure-to-insecure <replaceable>yes_or_no</replaceable> ;</optional>
     <optional> try-tcp-refresh <replaceable>yes_or_no</replaceable>; </optional>
     <optional> allow-v6-synthesis { <replaceable>address_match_list</replaceable> }; </optional>
@@ -5095,8 +5135,9 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> notify-source (<replaceable>ip4_addr</replaceable> | <constant>*</constant>) <optional>port <replaceable>ip_port</replaceable></optional> ; </optional>
     <optional> notify-source-v6 (<replaceable>ip6_addr</replaceable> | <constant>*</constant>) <optional>port <replaceable>ip_port</replaceable></optional> ; </optional>
     <optional> notify-to-soa <replaceable>yes_or_no</replaceable> ; </optional>
-    <optional> also-notify { <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ;
-                  <optional> <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ; ... </optional> }; </optional>
+    <optional> also-notify { <replaceable>ip_addr</replaceable>
+                    <optional>port <replaceable>ip_port</replaceable></optional> <optional>key <replaceable>keyname</replaceable></optional> ;
+                    <optional> <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> <optional>key <replaceable>keyname</replaceable></optional> ; ... </optional> }; </optional>
     <optional> max-ixfr-log-size <replaceable>number</replaceable>; </optional>
     <optional> max-journal-size <replaceable>size_spec</replaceable>; </optional>
     <optional> coresize <replaceable>size_spec</replaceable> ; </optional>
@@ -5791,12 +5832,15 @@ options {
 		<userinput>any;</userinput>.
 	      </para>
 	      <para>
-		Each <command>dns64</command> supports an optional
-		<command>exclude</command> ACL that selects which
-		IPv6 addresses will be ignored for the purposes
-		of determining whether dns64 is to be applied.
-                Any non-matching address will prevent further
-		DNS64 processing from occurring for this client.
+		Normally, DNS64 won't apply to a domain name that
+		owns one or more AAAA records; these records will
+		simply be returned.  The optional
+		<command>exclude</command> ACL allows specification
+		of a list of IPv6 addresses that will be ignored
+		if they appear in a domain name's AAAA records, and
+		DNS64 will be applied to any A records the domain
+		name owns.  If not defined, <command>exclude</command>
+		defaults to none.
 	      </para>
 	      <para>
 		A optional <command>suffix</command> can also
@@ -5805,6 +5849,21 @@ options {
 		set to <userinput>::</userinput>.  The bits
 		matching the prefix and mapped IPv4 address
 		must be zero.
+	      </para>
+	      <para>
+		If <command>recursive-only</command> is set to
+		<command>yes</command> the DNS64 synthesis will
+		only happen for recursive queries.  The default
+		is <command>no</command>.
+	      </para>
+	      <para>
+		If <command>break-dnssec</command> is set to
+		<command>yes</command> the DNS64 synthesis will
+		happen even if the result, if validated, would
+		cause a DNSSEC validation failure.  If this option
+		is set to <command>no</command> (the default), the DO
+		is set on the incoming query, and there are RRSIGs on
+		the applicable records, then synthesis will not happen.
 	      </para>
 <programlisting>
 	acl rfc1918 { 10/8; 192.168/16; 172.16/12; };
@@ -5818,6 +5877,41 @@ options {
 </programlisting>
             </listitem>
 	  </varlistentry>
+
+	  <varlistentry>
+	    <term><command>dnssec-update-mode</command></term>
+	    <listitem>
+	        <para>
+                  If this option is set to its default value of
+                  <literal>maintain</literal> in a zone of type
+                  <literal>master</literal> which is DNSSEC-signed
+                  and configured to allow dynamic updates (see
+                  <xref linkend="dynamic_update_policies"/>), and
+                  if <command>named</command> has access to the
+                  private signing key(s) for the zone, then
+                  <command>named</command> will automatically sign all new
+                  or changed records and maintain signatures for the zone
+                  by regenerating RRSIG records whenever they approach
+                  their expiration date.
+		</para>
+		<para>
+                  If the option is changed to <literal>no-resign</literal>,
+                  then <command>named</command> will sign all new or
+                  changed records, but scheduled maintenance of
+                  signatures is disabled.
+                </para>
+                <para>
+                  With either of these settings, <command>named</command>
+                  will reject updates to a DNSSEC-signed zone when the
+                  signing keys are inactive or unavailable to
+                  <command>named</command>.  (A planned third option,
+                  <literal>external</literal>, will disable all automatic
+                  signing and allow DNSSEC data to be submitted into a zone
+                  via dyanmic update; this is not yet implemented.)
+		</para>
+	    </listitem>
+	  </varlistentry>
+
 
         </variablelist>
 
@@ -6857,6 +6951,26 @@ options {
 	    </varlistentry>
 
 	    <varlistentry>
+	      <term><command>dnssec-loadkeys-interval</command></term>
+	      <listitem>
+	        <para>
+                  When a zone is configured with <command>auto-dnssec
+                  maintain;</command> its key repository must be checked
+                  periodically to see if any new keys have been added
+                  or any existing keys' timing metadata has been updated
+                  (see <xref linkend="man.dnssec-keygen"/> and
+                  <xref linkend="man.dnssec-settime"/>).  The
+                  <command>dnssec-loadkeys-interval</command> option
+                  sets the frequency of autoatic repository checks, in
+                  minutes.  The default is <literal>60</literal> (1 hour),
+                  the minimum is <literal>1</literal> (1 minute), and the
+                  maximum is <literal>1440</literal> (24 hours); any higher
+                  value is silently reduced.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
 	      <term><command>try-tcp-refresh</command></term>
 	      <listitem>
 	        <para>
@@ -7505,6 +7619,13 @@ avoid-v6-udp-ports {};
                   <command>also-notify</command> address to send
                   the notify messages to a port other than the
                   default of 53.
+                  An optional TSIG key can also be specified with each
+                  address to cause the notify messages to be signed; this
+                  can be useful when sending notifies to multiple views.
+                  In place of explicit addresses, one or more named
+                  <command>masters</command> lists can be used.
+                </para>
+                <para>
                   If an <command>also-notify</command> list
                   is given in a <command>zone</command> statement,
                   it will override
@@ -7570,22 +7691,27 @@ avoid-v6-udp-ports {};
 
             <varlistentry>
               <term><command>serial-query-rate</command></term>
-              <listitem>
-                <para>
-                  Slave servers will periodically query master servers
-                  to find out if zone serial numbers have changed. Each such
-                  query uses
-                  a minute amount of the slave server's network bandwidth.  To
-                  limit the
-                  amount of bandwidth used, BIND 9 limits the rate at which
-                  queries are
-                  sent.  The value of the <command>serial-query-rate</command> option,
-                  an integer, is the maximum number of queries sent per
-                  second.
-                  The default is 20.
-                </para>
-              </listitem>
-            </varlistentry>
+	      <listitem>
+		<para>
+		  Slave servers will periodically query master
+		  servers to find out if zone serial numbers have
+		  changed. Each such query uses a minute amount of
+		  the slave server's network bandwidth.  To limit
+		  the amount of bandwidth used, BIND 9 limits the
+		  rate at which queries are sent.  The value of the
+		  <command>serial-query-rate</command> option, an
+		  integer, is the maximum number of queries sent
+		  per second.  The default is 20.
+		</para>
+		<para>
+		  In addition to controlling the rate SOA refresh
+		  queries are issued at
+		  <command>serial-query-rate</command> also controls
+		  the rate at which NOTIFY messages are sent from
+		  both master and slave zones.
+		</para>
+	      </listitem>
+	    </varlistentry>
 
             <varlistentry>
               <term><command>serial-queries</command></term>
@@ -8618,7 +8744,7 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                 <para>
 		  Sets the advertised EDNS UDP buffer size in bytes
                   to control the size of packets received.
-                  Valid values are 1024 to 4096 (values outside this range
+                  Valid values are 512 to 4096 (values outside this range
 		  will be silently adjusted).  The default value
 		  is 4096.  The usual reason for setting
 		  <command>edns-udp-size</command> to a non-default
@@ -8731,6 +8857,10 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                   The delay, in seconds, between sending sets of notify
                   messages for a zone.  The default is five (5) seconds.
                 </para>
+                <para>
+		  The overall rate that NOTIFY messages are sent for all
+		  zones is controlled by <command>serial-query-rate</command>.
+		</para>
               </listitem>
             </varlistentry>
 	  </variablelist>
@@ -8839,7 +8969,6 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 	  <para>
 	    The current list of empty zones is:
 	    <itemizedlist>
-<!-- XXX: The RFC1918 addresses are #defined out in sources currently.
 	      <listitem>10.IN-ADDR.ARPA</listitem>
 	      <listitem>16.172.IN-ADDR.ARPA</listitem>
 	      <listitem>17.172.IN-ADDR.ARPA</listitem>
@@ -8858,7 +8987,6 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 	      <listitem>30.172.IN-ADDR.ARPA</listitem>
 	      <listitem>31.172.IN-ADDR.ARPA</listitem>
 	      <listitem>168.192.IN-ADDR.ARPA</listitem>
-XXX: end of RFC1918 addresses #defined out -->
 	      <listitem>0.IN-ADDR.ARPA</listitem>
 	      <listitem>127.IN-ADDR.ARPA</listitem>
 	      <listitem>254.169.IN-ADDR.ARPA</listitem>
@@ -9986,8 +10114,9 @@ view "external" {
     <optional> min-retry-time <replaceable>number</replaceable> ; </optional>
     <optional> max-retry-time <replaceable>number</replaceable> ; </optional>
     <optional> key-directory <replaceable>path_name</replaceable>; </optional>
-    <optional> auto-dnssec <constant>allow</constant>|<constant>maintain</constant>|<constant>create</constant>|<constant>off</constant>; </optional>
+    <optional> auto-dnssec <constant>allow</constant>|<constant>maintain</constant>|<constant>off</constant>; </optional>
     <optional> zero-no-soa-ttl <replaceable>yes_or_no</replaceable> ; </optional>
+    <optional> serial-update-method <constant>increment</constant>|<constant>unixtime</constant>; </optional>
 };
 
 zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replaceable></optional> {
@@ -9998,11 +10127,14 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
     <optional> allow-transfer { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-update-forwarding { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> update-check-ksk <replaceable>yes_or_no</replaceable>; </optional>
+    <optional> dnssec-update-mode ( <replaceable>maintain</replaceable> | <replaceable>no-resign</replaceable> ); </optional>
     <optional> dnssec-dnskey-kskonly <replaceable>yes_or_no</replaceable>; </optional>
+    <optional> dnssec-loadkeys-interval <replaceable>number</replaceable>; </optional>
     <optional> dnssec-secure-to-insecure <replaceable>yes_or_no</replaceable> ; </optional>
     <optional> try-tcp-refresh <replaceable>yes_or_no</replaceable>; </optional>
-    <optional> also-notify { <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ;
-                  <optional> <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ; ... </optional> }; </optional>
+    <optional> also-notify <optional>port <replaceable>ip_port</replaceable></optional> { ( <replaceable>masters_list</replaceable> | <replaceable>ip_addr</replaceable>
+                              <optional>port <replaceable>ip_port</replaceable></optional>
+                              <optional>key <replaceable>key</replaceable></optional> ) ; <optional>...</optional> }; </optional>
     <optional> check-names (<constant>warn</constant>|<constant>fail</constant>|<constant>ignore</constant>) ; </optional>
     <optional> dialup <replaceable>dialup_option</replaceable> ; </optional>
     <optional> file <replaceable>string</replaceable> ; </optional>
@@ -10098,6 +10230,13 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
     <optional> forward (<constant>only</constant>|<constant>first</constant>) ; </optional>
     <optional> forwarders { <optional> <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ; ... </optional> }; </optional>
     <optional> delegation-only <replaceable>yes_or_no</replaceable> ; </optional>
+};
+
+zone <replaceable>"."</replaceable> <optional><replaceable>class</replaceable></optional> {
+    type redirect;
+    file <replaceable>string</replaceable> ;
+    <optional> masterfile-format (<constant>text</constant>|<constant>raw</constant>) ; </optional>
+    <optional> allow-query { <replaceable>address_match_list</replaceable> }; </optional>
 };
 
 zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replaceable></optional> {
@@ -10343,6 +10482,26 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
                   <row rowsep="0">
                     <entry colname="1">
                       <para>
+                        <varname>redirect</varname>
+                      </para>
+                    </entry>
+                    <entry colname="2">
+                      <para>
+			Provides a source of answers when the normal resolution
+			returns NXDOMAIN.  Only one redirect zone is supported
+			per view.  <command>allow-query</command> can be used
+			to restrict which clients see these answers.
+                      </para>
+                      <para>
+			If the client has requested DNSSEC records (DO=1) and
+			the NXDOMAIN response is signed then no substitution
+			will occur.
+                      </para>
+                    </entry>
+                  </row>
+                  <row rowsep="0">
+                    <entry colname="1">
+                      <para>
                         <varname>delegation-only</varname>
                       </para>
                     </entry>
@@ -10486,6 +10645,9 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
                     with each <command>also-notify</command>
                     address to send the notify
                     messages to a port other than the default of 53.
+                    A TSIG key may also be specified to cause the
+                    <literal>NOTIFY</literal> to be signed by the
+                    given key.
                     <command>also-notify</command> is not
                     meaningful for stub zones.
                     The default is the empty list.
@@ -10564,6 +10726,16 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
                   <para>
                     See the description of
                     <command>update-check-ksk</command> in <xref linkend="boolean_options"/>.
+                  </para>
+                </listitem>
+              </varlistentry>
+
+	      <varlistentry>
+	        <term><command>dnssec-update-mode</command></term>
+                <listitem>
+                  <para>
+                    See the description of
+                    <command>dnssec-update-mode</command> in <xref linkend="options"/>.
                   </para>
                 </listitem>
               </varlistentry>
@@ -11043,7 +11215,7 @@ example.com. NS ns2.example.net.
                   <para>
                     Zones configured for dynamic DNS may also use this
                     option to allow varying levels of automatic DNSSEC key
-                    management. There are four possible settings:
+                    management. There are three possible settings:
                   </para>
                   <para>
                     <command>auto-dnssec allow;</command> permits
@@ -11067,17 +11239,40 @@ example.com. NS ns2.example.net.
                     <command>named</command> to load keys from the key
                     repository and schedule key maintenance events to occur
                     in the future, but it does not sign the full zone
-                    immediately.
-                  </para>
-                  <para>
-                    <command>auto-dnssec create;</command> includes the
-                    above, but also allows <command>named</command>
-                    to create new keys in the key repository when needed.
-                    (NOTE: This option is not yet implemented; the syntax is
-                    being reserved for future use.)
+                    immediately.  Note: once keys have been loaded for a
+                    zone the first time, the repository will be searched
+                    for changes periodically, regardless of whether
+                    <command>rndc loadkeys</command> is used.  The recheck
+                    interval is defined by
+                    <command>dnssec-loadkeys-interval</command>.)
                   </para>
                   <para>
                     The default setting is <command>auto-dnssec off</command>.
+                  </para>
+                </listitem>
+              </varlistentry>
+
+              <varlistentry>
+                <term><command>serial-update-method</command></term>
+                <listitem>
+                  <para>
+                    Zones configured for dynamic DNS may use this
+                    option to set the update method that will be used for
+                    the zone serial number in the SOA record.
+                  </para>
+                  <para>
+                    With the default setting of
+                    <command>serial-update-method increment;</command>, the
+                    SOA serial number will be incremented by one each time
+                    the zone is updated.
+                  </para>
+                  <para>
+                    When set to 
+                    <command>serial-update-method unixtime;</command>, the
+                    SOA serial number will be set to the number of seconds
+                    since the UNIX epoch, unless the serial number is
+                    already greater than or equal to that value, in which
+                    case it is simply incremented by one.
                   </para>
                 </listitem>
               </varlistentry>
@@ -11220,7 +11415,13 @@ example.com. NS ns2.example.net.
 	      The <replaceable>identity</replaceable> field must
 	      contain a fully-qualified domain name.
 	    </para>
-
+	    <para>
+	      For nametypes <varname>krb5-self</varname>,
+	      <varname>ms-self</varname>, <varname>krb5-subdomain</varname>,
+              and <varname>ms-subdomain</varname> the
+	      <replaceable>identity</replaceable> field specifies
+	      the Windows or Kerberos realm of the machine belongs to.
+	    </para>
             <para>
               The <replaceable>nametype</replaceable> field has 13
               values:
@@ -11349,6 +11550,70 @@ example.com. NS ns2.example.net.
 			This rule is similar to <varname>self</varname>
 			except that only subdomains of
 			<varname>self</varname> can be updated.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para>
+			<varname>ms-self</varname>
+		      </para>
+		    </entry> <entry colname="2">
+		      <para>
+			This rule takes a Windows machine principal
+			(machine$@REALM) for machine in REALM and
+			and converts it machine.realm allowing the machine 
+                        to update machine.realm.  The REALM to be matched
+			is specified in the <replacable>identity</replacable>
+			field.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para>
+			<varname>ms-subdomain</varname>
+		      </para>
+		    </entry> <entry colname="2">
+		      <para>
+			This rule takes a Windows machine principal 
+			(machine$@REALM) for machine in REALM and
+			converts it to machine.realm allowing the machine
+			to update subdomains of machine.realm.  The REALM
+			to be matched is specified in the
+			<replacable>identity</replacable> field.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para>
+			<varname>krb5-self</varname>
+		      </para>
+		    </entry> <entry colname="2">
+		      <para>
+			This rule takes a Kerberos machine principal
+			(host/machine@REALM) for machine in REALM and
+			and converts it machine.realm allowing the machine 
+                        to update machine.realm.  The REALM to be matched
+			is specified in the <replacable>identity</replacable>
+			field.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para>
+			<varname>krb5-subdomain</varname>
+		      </para>
+		    </entry> <entry colname="2">
+		      <para>
+			This rule takes a Kerberos machine principal 
+			(host/machine@REALM) for machine in REALM and
+			converts it to machine.realm allowing the machine
+			to update subdomains of machine.realm.  The REALM
+			to be matched is specified in the
+			<replacable>identity</replacable> field.
 		      </para>
 		    </entry>
 		  </row>
