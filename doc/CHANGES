@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1605 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1606 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1118,3 +1118,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	wpa: New wpa_supplicant and hostapd 0.7.3 [christos 20110910]
 	yacc(1): Import byacc-20110908 [christos 20110910]
 	traceroute(8): Updated to 1.4a12 [christos 20110910]
+	bind: Update to 9.9.0a1 [christos 20110911]
