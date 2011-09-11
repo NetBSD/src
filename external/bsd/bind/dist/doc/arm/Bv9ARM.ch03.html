@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- Id: Bv9ARM.ch03.html,v 1.83 2011-01-21 01:14:13 tbox Exp -->
+<!-- Id: Bv9ARM.ch03.html,v 1.87 2011-08-04 01:14:42 tbox Exp -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -54,7 +54,7 @@
 <dt><span class="sect1"><a href="Bv9ARM.ch03.html#id2568364">Name Server Operations</a></span></dt>
 <dd><dl>
 <dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2568370">Tools for Use With the Name Server Daemon</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2570385">Signals</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2570370">Signals</a></span></dt>
 </dl></dd>
 </dl>
 </div>
@@ -490,11 +490,11 @@ zone "eng.example.com" {
                       </p>
 <p>
                         This command requires that the
-                        <span><strong class="command">auto-dnssec</strong></span> zone option to be set
-                        to <code class="literal">allow</code>,
-                        <code class="literal">maintain</code>, or
-                        <code class="literal">create</code>,  and also requires
-                        the zone to be configured to allow dynamic DNS.
+                        <span><strong class="command">auto-dnssec</strong></span> zone option be set
+                        to <code class="literal">allow</code> or
+                        <code class="literal">maintain</code>,
+                        and also requires the zone to be configured to
+                        allow dynamic DNS.
                         See <a href="Bv9ARM.ch06.html#dynamic_update_policies" title="Dynamic Update Policies">the section called &#8220;Dynamic Update Policies&#8221;</a> for
                         more details.
                       </p>
@@ -518,10 +518,10 @@ zone "eng.example.com" {
                       </p>
 <p>
                         This command requires that the
-                        <span><strong class="command">auto-dnssec</strong></span> zone option to
-                        be set to <code class="literal">maintain</code> or
-                        <code class="literal">create</code>, and also requires
-                        the zone to be configured to allow dynamic DNS.
+                        <span><strong class="command">auto-dnssec</strong></span> zone option
+                        be set to <code class="literal">maintain</code>,
+                        and also requires the zone to be configured to
+                        allow dynamic DNS.
                         See <a href="Bv9ARM.ch06.html#dynamic_update_policies" title="Dynamic Update Policies">the section called &#8220;Dynamic Update Policies&#8221;</a> for
                         more details.
                       </p>
@@ -532,30 +532,41 @@ zone "eng.example.com" {
            [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>]</span>]</code></strong></span></dt>
 <dd><p>
                         Suspend updates to a dynamic zone.  If no zone is
-                        specified,
-                        then all zones are suspended.  This allows manual
-                        edits to be made to a zone normally updated by dynamic
-                        update.  It
-                        also causes changes in the journal file to be synced
-                        into the master
-                        and the journal file to be removed.  All dynamic
-                        update attempts will
-                        be refused while the zone is frozen.
+                        specified, then all zones are suspended.  This allows
+                        manual edits to be made to a zone normally updated by
+                        dynamic update.  It also causes changes in the
+                        journal file to be synced into the master file.
+                        All dynamic update attempts will be refused while
+                        the zone is frozen.
                       </p></dd>
 <dt><span class="term"><strong class="userinput"><code>thaw
                         [<span class="optional"><em class="replaceable"><code>zone</code></em>
        [<span class="optional"><em class="replaceable"><code>class</code></em>
            [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>]</span>]</code></strong></span></dt>
 <dd><p>
-                        Enable updates to a frozen dynamic zone.  If no zone
-                        is
-                        specified, then all frozen zones are enabled.  This
-                        causes
-                        the server to reload the zone from disk, and
-                        re-enables dynamic updates
-                        after the load has completed.  After a zone is thawed,
-                        dynamic updates
-                        will no longer be refused.
+                        Enable updates to a frozen dynamic zone.  If no
+                        zone is specified, then all frozen zones are
+                        enabled.  This causes the server to reload the zone
+                        from disk, and re-enables dynamic updates after the
+                        load has completed.  After a zone is thawed,
+                        dynamic updates will no longer be refused.  If
+                        the zone has changed and the
+                        <span><strong class="command">ixfr-from-differences</strong></span> option is
+                        in use, then the journal file will be updated to
+                        reflect changes in the zone.  Otherwise, if the
+                        zone has changed, any existing journal file will be
+                        removed.
+                      </p></dd>
+<dt><span class="term"><strong class="userinput"><code>sync
+                        [<span class="optional">-clean</span>]
+                        [<span class="optional"><em class="replaceable"><code>zone</code></em>
+       [<span class="optional"><em class="replaceable"><code>class</code></em>
+           [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>]</span>]</code></strong></span></dt>
+<dd><p>
+                        Sync changes in the journal file for a dynamic zone
+                        to the master file.  If the "-clean" option is
+                        specified, the journal file is also removed.  If
+                        no zone is specified, then all zones are synced.
                       </p></dd>
 <dt><span class="term"><strong class="userinput"><code>notify <em class="replaceable"><code>zone</code></em>
                         [<span class="optional"><em class="replaceable"><code>class</code></em>
@@ -643,9 +654,23 @@ zone "eng.example.com" {
 <dd><p>
                         Flushes the server's cache.
                       </p></dd>
-<dt><span class="term"><strong class="userinput"><code>flushname</code></strong> <em class="replaceable"><code>name</code></em></span></dt>
+<dt><span class="term"><strong class="userinput"><code>flushname</code></strong>
+                       <em class="replaceable"><code>name</code></em>
+                       [<span class="optional"><em class="replaceable"><code>view</code></em></span>]
+                       </span></dt>
 <dd><p>
-                        Flushes the given name from the server's cache.
+                        Flushes the given name from the server's DNS cache,
+                        and from the server's nameserver address database
+                        if applicable.
+                      </p></dd>
+<dt><span class="term"><strong class="userinput"><code>flushtree</code></strong>
+                       <em class="replaceable"><code>name</code></em>
+                       [<span class="optional"><em class="replaceable"><code>view</code></em></span>]
+                       </span></dt>
+<dd><p>
+                        Flushes the given name, and all of its subdomains,
+                        from the server's DNS cache.  (The server's
+                        nameserver address database is not affected.)
                       </p></dd>
 <dt><span class="term"><strong class="userinput"><code>status</code></strong></span></dt>
 <dd><p>
@@ -873,7 +898,7 @@ controls {
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2570385"></a>Signals</h3></div></div></div>
+<a name="id2570370"></a>Signals</h3></div></div></div>
 <p>
           Certain UNIX signals cause the name server to take specific
           actions, as described in the following table.  These signals can
