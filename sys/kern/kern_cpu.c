@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.50 2011/08/07 21:38:32 rmind Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.51 2011/09/11 14:54:49 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.50 2011/08/07 21:38:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.51 2011/09/11 14:54:49 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,6 +226,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		cs->cs_lastmodhi = (int32_t)
 		    (ci->ci_schedstate.spc_lastmod >> 32);
 		cs->cs_intrcnt = cpu_intr_count(ci) + 1;
+		cs->cs_hwid = ci->ci_cpuid;
 		break;
 
 	case IOC_CPU_MAPID:
