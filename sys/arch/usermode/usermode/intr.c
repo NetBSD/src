@@ -1,4 +1,4 @@
-/* $NetBSD: intr.c,v 1.4 2011/09/08 11:13:03 jmcneill Exp $ */
+/* $NetBSD: intr.c,v 1.5 2011/09/12 12:24:34 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,20 +27,62 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4 2011/09/08 11:13:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5 2011/09/12 12:24:34 reinoud Exp $");
 
 #include <sys/types.h>
 
 #include <machine/intr.h>
 #include <machine/thunk.h>
 
-/* #define INTR_USE_SIGPROCMASK */
+//#define INTR_USE_SIGPROCMASK
+
+#define MAX_QUEUED_EVENTS 64
 
 static int usermode_x = IPL_NONE;
 
 #ifdef INTR_USE_SIGPROCMASK
 static bool block_sigalrm = false;
 #endif
+
+
+struct spl_intr_event {
+	void (*func)(void *);
+	void *arg;
+};
+
+struct spl_intr_event spl_intrs[IPL_HIGH+1][MAX_QUEUED_EVENTS];
+int spl_intr_wr[IPL_HIGH+1];
+int spl_intr_rd[IPL_HIGH+1];
+
+void
+splinit(void)
+{
+	int i;
+	for (i = 0; i <= IPL_HIGH; i++) {
+		spl_intr_rd[i] = 1;
+		spl_intr_wr[i] = 1;
+	}
+}
+
+void
+spl_intr(int x, void (*func)(void *), void *arg)
+{
+	struct spl_intr_event *spli;
+
+	if (x >= usermode_x) {
+		func(arg);
+		return;
+	}
+
+	//printf("\nX : %d\n", x);
+	spli = &spl_intrs[x][spl_intr_wr[x]];
+	spli->func = func;
+	spli->arg = arg;
+
+	spl_intr_wr[x] = (spl_intr_wr[x] + 1) % MAX_QUEUED_EVENTS;
+	if (spl_intr_wr[x] == spl_intr_rd[x])
+		panic("%s: spl list %d full!\n", __func__, x);
+}
 
 int
 splraise(int x)
@@ -64,8 +106,24 @@ splraise(int x)
 void
 spllower(int x)
 {
-	if (usermode_x > x)
+	struct spl_intr_event *spli;
+	int y;
+
+	/* `eat' interrupts that came by until we got back to x */
+	if (usermode_x > x) {
+		for (y = usermode_x; y >= x; y--) {
+			while (spl_intr_rd[y] != spl_intr_wr[y]) {
+				// printf("spl y %d firing\n", y);
+				spli = &spl_intrs[y][spl_intr_rd[y]];
+				if (!spli->func)
+					panic("%s: spli->func is NULL for ipl %d, rd %d, wr %d\n",
+						__func__, y, spl_intr_rd[y], spl_intr_wr[y]);
+				spli->func(spli->arg);
+				spl_intr_rd[y] = (spl_intr_rd[y] + 1) % MAX_QUEUED_EVENTS;
+			}
+		}
 		usermode_x = x;
+	}
 
 #ifdef INTR_USE_SIGPROCMASK
 	if (x < IPL_SCHED && block_sigalrm) {
