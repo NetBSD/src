@@ -1,4 +1,4 @@
-/* $NetBSD: t_ldexp.c,v 1.1 2011/09/12 15:27:40 jruoho Exp $ */
+/* $NetBSD: t_ldexp.c,v 1.2 2011/09/12 15:47:14 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ldexp.c,v 1.1 2011/09/12 15:27:40 jruoho Exp $");
+__RCSID("$NetBSD: t_ldexp.c,v 1.2 2011/09/12 15:47:14 jruoho Exp $");
 
 #include <math.h>
 #include <limits.h>
@@ -52,6 +52,8 @@ ATF_TC_BODY(ldexp_nan, tc)
 	const double x = 0.0L / 0.0L;
 	double y;
 	size_t i;
+
+	ATF_REQUIRE(isnan(x) != 0);
 
 	for (i = 0; i < __arraycount(exps); i++) {
 		y = ldexp(x, exps[i]);
@@ -98,10 +100,16 @@ ATF_TC_HEAD(ldexp_zero_neg, tc)
 ATF_TC_BODY(ldexp_zero_neg, tc)
 {
 	const double x = -0.0L;
+	double y;
 	size_t i;
 
-	for (i = 0; i < __arraycount(exps); i++)
-		ATF_CHECK(ldexp(x, exps[i]) == x);
+	ATF_REQUIRE(signbit(x) != 0);
+
+	for (i = 0; i < __arraycount(exps); i++) {
+		y = ldexp(x, exps[i]);
+		ATF_CHECK(x == y);
+		ATF_CHECK(signbit(y) != 0);
+	}
 }
 
 ATF_TC(ldexp_zero_pos);
@@ -113,10 +121,16 @@ ATF_TC_HEAD(ldexp_zero_pos, tc)
 ATF_TC_BODY(ldexp_zero_pos, tc)
 {
 	const double x = 0.0L;
+	double y;
 	size_t i;
 
-	for (i = 0; i < __arraycount(exps); i++)
-		ATF_CHECK(ldexp(x, exps[i]) == x);
+	ATF_REQUIRE(signbit(x) == 0);
+
+	for (i = 0; i < __arraycount(exps); i++) {
+		y = ldexp(x, exps[i]);
+		ATF_CHECK(x == y);
+		ATF_CHECK(signbit(y) == 0);
+	}
 }
 
 ATF_TC(ldexpf_nan);
@@ -130,6 +144,8 @@ ATF_TC_BODY(ldexpf_nan, tc)
 	const float x = 0.0L / 0.0L;
 	float y;
 	size_t i;
+
+	ATF_REQUIRE(isnan(x) != 0);
 
 	for (i = 0; i < __arraycount(exps); i++) {
 		y = ldexpf(x, exps[i]);
@@ -180,10 +196,16 @@ ATF_TC_HEAD(ldexpf_zero_neg, tc)
 ATF_TC_BODY(ldexpf_zero_neg, tc)
 {
 	const float x = -0.0L;
+	float y;
 	size_t i;
 
-	for (i = 0; i < __arraycount(exps); i++)
-		ATF_CHECK(ldexpf(x, exps[i]) == x);
+	ATF_REQUIRE(signbit(x) != 0);
+
+	for (i = 0; i < __arraycount(exps); i++) {
+		y = ldexpf(x, exps[i]);
+		ATF_CHECK(x == y);
+		ATF_CHECK(signbit(y) != 0);
+	}
 }
 
 ATF_TC(ldexpf_zero_pos);
@@ -195,10 +217,16 @@ ATF_TC_HEAD(ldexpf_zero_pos, tc)
 ATF_TC_BODY(ldexpf_zero_pos, tc)
 {
 	const float x = 0.0L;
+	float y;
 	size_t i;
 
-	for (i = 0; i < __arraycount(exps); i++)
-		ATF_CHECK(ldexpf(x, exps[i]) == x);
+	ATF_REQUIRE(signbit(x) == 0);
+
+	for (i = 0; i < __arraycount(exps); i++) {
+		y = ldexpf(x, exps[i]);
+		ATF_CHECK(x == y);
+		ATF_CHECK(signbit(y) == 0);
+	}
 }
 
 ATF_TP_ADD_TCS(tp)
