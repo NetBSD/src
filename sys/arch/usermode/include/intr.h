@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3 2011/09/04 21:08:18 jmcneill Exp $ */
+/* $NetBSD: intr.h,v 1.4 2011/09/12 12:24:34 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,8 +31,10 @@
 
 #include <machine/intrdefs.h>
 
+void	splinit(void);
 int	splraise(int);
 void	spllower(int);
+void	spl_intr(int x, void (*func)(void *), void *arg);
 
 #define	spl0()		spllower(IPL_NONE)
 #define splx(x)		spllower(x)

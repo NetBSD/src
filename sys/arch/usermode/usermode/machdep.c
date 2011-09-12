@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.29 2011/09/09 20:06:04 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.30 2011/09/12 12:24:34 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -32,7 +32,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2011/09/09 20:06:04 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2011/09/12 12:24:34 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,6 +113,7 @@ main(int argc, char *argv[])
 	urkelvisor_init();
 #endif
 
+	splinit();
 	splraise(IPL_HIGH);
 
 	kernmain();
