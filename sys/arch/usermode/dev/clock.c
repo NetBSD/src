@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.16 2011/09/08 12:10:13 jmcneill Exp $ */
+/* $NetBSD: clock.c,v 1.17 2011/09/12 12:25:45 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2011/09/08 12:10:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2011/09/12 12:25:45 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -111,7 +111,7 @@ clock_attach(device_t parent, device_t self, void *opaque)
 	memset(&sa, 0, sizeof(sa));
 	sigfillset(&sa.sa_mask);
 	sa.sa_handler = clock_signal;
-	sa.sa_flags = SA_ONSTACK;
+	sa.sa_flags = 0; // SA_ONSTACK;
 	if (thunk_sigaction(SIGALRM, &sa, NULL) == -1)
 		panic("couldn't register SIGALRM handler : %d",
 		    thunk_geterrno());
@@ -131,7 +131,8 @@ clock_signal(int sig)
 
 	curcpu()->ci_idepth++;
 
-	hardclock(&cf);
+	spl_intr(IPL_SOFTCLOCK, (void (*)(void *)) hardclock, &cf);
+	// hardclock(&cf);
 
 	curcpu()->ci_idepth--;
 }
