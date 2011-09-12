@@ -1,4 +1,4 @@
-/* $NetBSD: t_ldexp.c,v 1.3 2011/09/12 16:28:37 jruoho Exp $ */
+/* $NetBSD: t_ldexp.c,v 1.4 2011/09/12 17:46:39 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ldexp.c,v 1.3 2011/09/12 16:28:37 jruoho Exp $");
+__RCSID("$NetBSD: t_ldexp.c,v 1.4 2011/09/12 17:46:39 jruoho Exp $");
 
 #include <math.h>
 #include <limits.h>
@@ -44,7 +44,7 @@ static const int exps[] = { 0, 1, -1, 100, -100 };
 ATF_TC(ldexp_nan);
 ATF_TC_HEAD(ldexp_nan, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test NaN with ldexp(3)");
+	atf_tc_set_md_var(tc, "descr", "Test ldexp(NaN) == NaN");
 }
 
 ATF_TC_BODY(ldexp_nan, tc)
@@ -66,7 +66,7 @@ ATF_TC_BODY(ldexp_nan, tc)
 ATF_TC(ldexp_inf_neg);
 ATF_TC_HEAD(ldexp_inf_neg, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test -Inf with ldexp(3)");
+	atf_tc_set_md_var(tc, "descr", "Test ldexp(-Inf) == -Inf");
 }
 
 ATF_TC_BODY(ldexp_inf_neg, tc)
@@ -83,7 +83,7 @@ ATF_TC_BODY(ldexp_inf_neg, tc)
 ATF_TC(ldexp_inf_pos);
 ATF_TC_HEAD(ldexp_inf_pos, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test +Inf with ldexp(3)");
+	atf_tc_set_md_var(tc, "descr", "Test ldexp(+Inf) == +Inf");
 }
 
 ATF_TC_BODY(ldexp_inf_pos, tc)
@@ -100,7 +100,7 @@ ATF_TC_BODY(ldexp_inf_pos, tc)
 ATF_TC(ldexp_zero_neg);
 ATF_TC_HEAD(ldexp_zero_neg, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test -0.0 with ldexp(3)");
+	atf_tc_set_md_var(tc, "descr", "Test ldexp(-0.0) == -0.0");
 }
 
 ATF_TC_BODY(ldexp_zero_neg, tc)
@@ -123,7 +123,7 @@ ATF_TC_BODY(ldexp_zero_neg, tc)
 ATF_TC(ldexp_zero_pos);
 ATF_TC_HEAD(ldexp_zero_pos, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test +0.0 with ldexp(3)");
+	atf_tc_set_md_var(tc, "descr", "Test ldexp(+0.0) == +0.0");
 }
 
 ATF_TC_BODY(ldexp_zero_pos, tc)
@@ -146,7 +146,7 @@ ATF_TC_BODY(ldexp_zero_pos, tc)
 ATF_TC(ldexpf_nan);
 ATF_TC_HEAD(ldexpf_nan, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test NaN with ldexpf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test ldexpf(NaN) == NaN");
 }
 
 ATF_TC_BODY(ldexpf_nan, tc)
@@ -172,7 +172,7 @@ ATF_TC_BODY(ldexpf_nan, tc)
 ATF_TC(ldexpf_inf_neg);
 ATF_TC_HEAD(ldexpf_inf_neg, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test -Inf with ldexpf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test ldexpf(-Inf) == -Inf");
 }
 
 ATF_TC_BODY(ldexpf_inf_neg, tc)
@@ -189,7 +189,7 @@ ATF_TC_BODY(ldexpf_inf_neg, tc)
 ATF_TC(ldexpf_inf_pos);
 ATF_TC_HEAD(ldexpf_inf_pos, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test +Inf with ldexpf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test ldexpf(+Inf) == +Inf");
 }
 
 ATF_TC_BODY(ldexpf_inf_pos, tc)
@@ -206,7 +206,7 @@ ATF_TC_BODY(ldexpf_inf_pos, tc)
 ATF_TC(ldexpf_zero_neg);
 ATF_TC_HEAD(ldexpf_zero_neg, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test -0.0 with ldexpf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test ldexpf(-0.0) == -0.0");
 }
 
 ATF_TC_BODY(ldexpf_zero_neg, tc)
@@ -229,7 +229,7 @@ ATF_TC_BODY(ldexpf_zero_neg, tc)
 ATF_TC(ldexpf_zero_pos);
 ATF_TC_HEAD(ldexpf_zero_pos, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test +0.0 with ldexpf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test ldexpf(+0.0) == +0.0");
 }
 
 ATF_TC_BODY(ldexpf_zero_pos, tc)
