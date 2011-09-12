@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_private.h,v 1.19 2010/09/26 22:28:05 jym Exp $	*/
+/*	$NetBSD: kvm_private.h,v 1.20 2011/09/12 21:11:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,6 +90,7 @@ struct __kvm {
 	size_t fdalign;
 	uint8_t *iobuf;
 	size_t iobufsz;
+	char kernelname[MAXPATHLEN];
 };
 
 /* Levels of aliveness */
