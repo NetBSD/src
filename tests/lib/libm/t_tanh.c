@@ -1,4 +1,4 @@
-/* $NetBSD: t_tanh.c,v 1.3 2011/04/26 20:20:16 martin Exp $ */
+/* $NetBSD: t_tanh.c,v 1.4 2011/09/12 16:00:56 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,43 +29,179 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_tanh.c,v 1.3 2011/04/26 20:20:16 martin Exp $");
-
-#include <math.h>
+__RCSID("$NetBSD: t_tanh.c,v 1.4 2011/09/12 16:00:56 jruoho Exp $");
 
 #include <atf-c.h>
+#include <math.h>
 
-ATF_TC(tanh_sign);
-ATF_TC_HEAD(tanh_sign, tc)
+/*
+ * tanh(3)
+ */
+ATF_TC(tanh_nan);
+ATF_TC_HEAD(tanh_nan, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test signs in tanh(3) and tanhf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test NaN with tanh(3)");
 }
 
-ATF_TC_BODY(tanh_sign, tc)
+ATF_TC_BODY(tanh_nan, tc)
 {
-	double d;
-	float f;
+	const double x = 0.0L / 0.0L;
 
-	d = 0.0;
-	f = 0.0;
+	ATF_CHECK(isnan(x) != 0);
+	ATF_CHECK(isnan(tanh(x)) != 0);
+}
 
-#ifndef __vax__
-	/*
-	 * PR lib/44057.
-	 */
-	d = tanh(-0.0);
-	f = tanhf(-0.0);
+ATF_TC(tanh_inf_neg);
+ATF_TC_HEAD(tanh_inf_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test -Inf with tanh(3)");
+}
 
-	ATF_REQUIRE_MSG(signbit(d) != 0,
+ATF_TC_BODY(tanh_inf_neg, tc)
+{
+	const double x = -1.0L / 0.0L;
+
+	ATF_CHECK(tanh(x) == -1.0);
+}
+
+ATF_TC(tanh_inf_pos);
+ATF_TC_HEAD(tanh_inf_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test +Inf with tanh(3)");
+}
+
+ATF_TC_BODY(tanh_inf_pos, tc)
+{
+	const double x = 1.0L / 0.0L;
+
+	ATF_CHECK(tanh(x) == 1.0);
+}
+
+ATF_TC(tanh_zero_neg);
+ATF_TC_HEAD(tanh_zero_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test -0.0 with tanh(3)");
+}
+
+ATF_TC_BODY(tanh_zero_neg, tc)
+{
+	const double x = -0.0L;
+	double y = tanh(x);
+
+	ATF_CHECK(x == y);
+	ATF_CHECK(signbit(x) != 0);
+
+	ATF_REQUIRE_MSG(signbit(y) != 0,
 	    "compiler bug, waiting for newer gcc import, see PR lib/44057");
-	ATF_REQUIRE_MSG(signbit(f) != 0,
+}
+
+ATF_TC(tanh_zero_pos);
+ATF_TC_HEAD(tanh_zero_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test +0.0 with tanh(3)");
+}
+
+ATF_TC_BODY(tanh_zero_pos, tc)
+{
+	const double x = 0.0L;
+	double y = tanh(x);
+
+	ATF_CHECK(x == y);
+	ATF_CHECK(signbit(x) == 0);
+	ATF_CHECK(signbit(y) == 0);
+}
+
+/*
+ * tanhf(3)
+ */
+ATF_TC(tanhf_nan);
+ATF_TC_HEAD(tanhf_nan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test NaN with tanhf(3)");
+}
+
+ATF_TC_BODY(tanhf_nan, tc)
+{
+	const float x = 0.0L / 0.0L;
+
+	ATF_CHECK(isnan(x) != 0);
+	ATF_CHECK(isnan(tanhf(x)) != 0);
+}
+
+ATF_TC(tanhf_inf_neg);
+ATF_TC_HEAD(tanhf_inf_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test -Inf with tanhf(3)");
+}
+
+ATF_TC_BODY(tanhf_inf_neg, tc)
+{
+	const float x = -1.0L / 0.0L;
+
+	ATF_CHECK(tanhf(x) == -1.0);
+}
+
+ATF_TC(tanhf_inf_pos);
+ATF_TC_HEAD(tanhf_inf_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test +Inf with tanhf(3)");
+}
+
+ATF_TC_BODY(tanhf_inf_pos, tc)
+{
+	const float x = 1.0L / 0.0L;
+
+	ATF_CHECK(tanhf(x) == 1.0);
+}
+
+ATF_TC(tanhf_zero_neg);
+ATF_TC_HEAD(tanhf_zero_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test -0.0 with tanhf(3)");
+}
+
+ATF_TC_BODY(tanhf_zero_neg, tc)
+{
+	const float x = -0.0L;
+	float y = tanh(x);
+
+	ATF_CHECK(x == y);
+	ATF_CHECK(signbit(x) != 0);
+
+	ATF_REQUIRE_MSG(signbit(y) != 0,
 	    "compiler bug, waiting for newer gcc import, see PR lib/44057");
-#endif
+}
+
+ATF_TC(tanhf_zero_pos);
+ATF_TC_HEAD(tanhf_zero_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test +0.0 with tanhf(3)");
+}
+
+ATF_TC_BODY(tanhf_zero_pos, tc)
+{
+	const float x = 0.0L;
+	float y = tanhf(x);
+
+	ATF_CHECK(x == y);
+	ATF_CHECK(signbit(x) == 0);
+	ATF_CHECK(signbit(y) == 0);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, tanh_sign);
+
+	ATF_TP_ADD_TC(tp, tanh_nan);
+	ATF_TP_ADD_TC(tp, tanh_inf_neg);
+	ATF_TP_ADD_TC(tp, tanh_inf_pos);
+	ATF_TP_ADD_TC(tp, tanh_zero_neg);
+	ATF_TP_ADD_TC(tp, tanh_zero_pos);
+
+	ATF_TP_ADD_TC(tp, tanhf_nan);
+	ATF_TP_ADD_TC(tp, tanhf_inf_neg);
+	ATF_TP_ADD_TC(tp, tanhf_inf_pos);
+	ATF_TP_ADD_TC(tp, tanhf_zero_neg);
+	ATF_TP_ADD_TC(tp, tanhf_zero_pos);
 
 	return atf_no_error();
 }
