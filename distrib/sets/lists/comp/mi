@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1672 2011/09/12 09:57:42 njoly Exp $
+#	$NetBSD: mi,v 1.1673 2011/09/12 21:13:31 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7534,6 +7534,7 @@
 ./usr/share/man/cat3/kvm_getenvv2.0		comp-c-catman		.cat
 ./usr/share/man/cat3/kvm_geterr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/kvm_getfiles.0		comp-c-catman		.cat
+./usr/share/man/cat3/kvm_getkernelname.0	comp-c-catman		.cat
 ./usr/share/man/cat3/kvm_getloadavg.0		comp-c-catman		.cat
 ./usr/share/man/cat3/kvm_getlwps.0		comp-c-catman		.cat
 ./usr/share/man/cat3/kvm_getproc2.0		comp-c-catman		.cat
@@ -13674,6 +13675,7 @@
 ./usr/share/man/html3/kvm_getenvv2.html		comp-c-htmlman		html
 ./usr/share/man/html3/kvm_geterr.html		comp-c-htmlman		html
 ./usr/share/man/html3/kvm_getfiles.html		comp-c-htmlman		html
+./usr/share/man/html3/kvm_getkernelname.html	comp-c-htmlman		html
 ./usr/share/man/html3/kvm_getloadavg.html	comp-c-htmlman		html
 ./usr/share/man/html3/kvm_getlwps.html		comp-c-htmlman		html
 ./usr/share/man/html3/kvm_getproc2.html		comp-c-htmlman		html
@@ -19772,6 +19774,7 @@
 ./usr/share/man/man3/kvm_getenvv2.3		comp-c-man		.man
 ./usr/share/man/man3/kvm_geterr.3		comp-c-man		.man
 ./usr/share/man/man3/kvm_getfiles.3		comp-c-man		.man
+./usr/share/man/man3/kvm_getkernelname.3	comp-c-man		.man
 ./usr/share/man/man3/kvm_getloadavg.3		comp-c-man		.man
 ./usr/share/man/man3/kvm_getlwps.3		comp-c-man		.man
 ./usr/share/man/man3/kvm_getproc2.3		comp-c-man		.man
