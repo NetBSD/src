@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fopen.c,v 1.1 2011/09/11 07:31:20 jruoho Exp $ */
+/*	$NetBSD: t_fopen.c,v 1.2 2011/09/12 04:23:29 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fopen.c,v 1.1 2011/09/11 07:31:20 jruoho Exp $");
+__RCSID("$NetBSD: t_fopen.c,v 1.2 2011/09/12 04:23:29 jruoho Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -41,6 +41,39 @@ __RCSID("$NetBSD: t_fopen.c,v 1.1 2011/09/11 07:31:20 jruoho Exp $");
 #include <unistd.h>
 
 static const char *path = "fopen";
+
+ATF_TC_WITH_CLEANUP(fdopen_close);
+ATF_TC_HEAD(fdopen_close, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "See that descriptors are closed");
+}
+
+ATF_TC_BODY(fdopen_close, tc)
+{
+	FILE *f;
+	int fd;
+
+	/*
+	 * Check that the file descriptor
+	 * used to fdopen(3) a stream is
+	 * closed once the stream is closed.
+	 */
+	fd = open(path, O_RDWR | O_CREAT);
+
+	ATF_REQUIRE(fd >= 0);
+
+	f = fdopen(fd, "w+");
+
+	ATF_REQUIRE(f != NULL);
+	ATF_REQUIRE(fclose(f) == 0);
+	ATF_REQUIRE(close(fd) == -1);
+	ATF_REQUIRE(unlink(path) == 0);
+}
+
+ATF_TC_CLEANUP(fdopen_close, tc)
+{
+	(void)unlink(path);
+}
 
 ATF_TC_WITH_CLEANUP(fdopen_err);
 ATF_TC_HEAD(fdopen_err, tc)
@@ -104,10 +137,7 @@ ATF_TC_BODY(fdopen_seek, tc)
 	ATF_REQUIRE(f != NULL);
 	ATF_REQUIRE(ftell(f) == 3);
 	ATF_REQUIRE(fclose(f) == 0);
-
-	(void)fclose(f);
-	(void)close(fd);
-	(void)unlink(path);
+	ATF_REQUIRE(unlink(path) == 0);
 }
 
 ATF_TC_CLEANUP(fdopen_seek, tc)
@@ -192,10 +222,12 @@ ATF_TC_BODY(fopen_append, tc)
 	ATF_REQUIRE(fclose(f) == 0);
 
 	f = fopen(path, "a");
+
 	ATF_REQUIRE(fwrite("garbage", 1, 7, f) == 7);
 	ATF_REQUIRE(fclose(f) == 0);
 
 	f = fopen(path, "r");
+
 	ATF_REQUIRE(fread(buf, 1, sizeof(buf), f) == 14);
 	ATF_REQUIRE(strncmp(buf, "garbagegarbage", 14) == 0);
 
@@ -351,7 +383,7 @@ ATF_TC_HEAD(freopen_std, tc)
 
 ATF_TC_BODY(freopen_std, tc)
 {
-	FILE *std[3] = { stdin, stdout, stderr };
+	FILE *std[2] = { stdin, stdout };
 	char buf[15];
 	size_t i;
 	FILE *f;
@@ -395,6 +427,7 @@ ATF_TC_CLEANUP(freopen_std, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, fdopen_close);
 	ATF_TP_ADD_TC(tp, fdopen_err);
 	ATF_TP_ADD_TC(tp, fdopen_seek);
 	ATF_TP_ADD_TC(tp, fopen_append);
