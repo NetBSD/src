@@ -1,4 +1,4 @@
-/* $NetBSD: t_scalbn.c,v 1.3 2011/09/12 16:28:37 jruoho Exp $ */
+/* $NetBSD: t_scalbn.c,v 1.4 2011/09/12 17:45:51 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_scalbn.c,v 1.3 2011/09/12 16:28:37 jruoho Exp $");
+__RCSID("$NetBSD: t_scalbn.c,v 1.4 2011/09/12 17:45:51 jruoho Exp $");
 
 #include <math.h>
 #include <limits.h>
@@ -44,7 +44,7 @@ static const int exps[] = { 0, 1, -1, 100, -100 };
 ATF_TC(scalbn_nan);
 ATF_TC_HEAD(scalbn_nan, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test NaN with scalbn(3)");
+	atf_tc_set_md_var(tc, "descr", "Test scalbn(NaN) == NaN");
 }
 
 ATF_TC_BODY(scalbn_nan, tc)
@@ -66,7 +66,7 @@ ATF_TC_BODY(scalbn_nan, tc)
 ATF_TC(scalbn_inf_neg);
 ATF_TC_HEAD(scalbn_inf_neg, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test -Inf with scalbn(3)");
+	atf_tc_set_md_var(tc, "descr", "Test scalbn(-Inf) == -Inf");
 }
 
 ATF_TC_BODY(scalbn_inf_neg, tc)
@@ -83,7 +83,7 @@ ATF_TC_BODY(scalbn_inf_neg, tc)
 ATF_TC(scalbn_inf_pos);
 ATF_TC_HEAD(scalbn_inf_pos, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test +Inf with scalbn(3)");
+	atf_tc_set_md_var(tc, "descr", "Test scalbn(+Inf) == +Inf");
 }
 
 ATF_TC_BODY(scalbn_inf_pos, tc)
@@ -100,7 +100,7 @@ ATF_TC_BODY(scalbn_inf_pos, tc)
 ATF_TC(scalbn_zero_neg);
 ATF_TC_HEAD(scalbn_zero_neg, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test -0.0 with scalbn(3)");
+	atf_tc_set_md_var(tc, "descr", "Test scalbn(-0.0) == -0.0");
 }
 
 ATF_TC_BODY(scalbn_zero_neg, tc)
@@ -123,7 +123,7 @@ ATF_TC_BODY(scalbn_zero_neg, tc)
 ATF_TC(scalbn_zero_pos);
 ATF_TC_HEAD(scalbn_zero_pos, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test +0.0 with scalbn(3)");
+	atf_tc_set_md_var(tc, "descr", "Test scalbn(+0.0) == +0.0");
 }
 
 ATF_TC_BODY(scalbn_zero_pos, tc)
@@ -149,7 +149,7 @@ ATF_TC_BODY(scalbn_zero_pos, tc)
 ATF_TC(scalbnf_nan);
 ATF_TC_HEAD(scalbnf_nan, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test NaN with scalbnf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test scalbnf(NaN) == NaN");
 }
 
 ATF_TC_BODY(scalbnf_nan, tc)
@@ -171,7 +171,7 @@ ATF_TC_BODY(scalbnf_nan, tc)
 ATF_TC(scalbnf_inf_neg);
 ATF_TC_HEAD(scalbnf_inf_neg, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test -Inf with scalbnf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test scalbnf(-Inf) == -Inf");
 }
 
 ATF_TC_BODY(scalbnf_inf_neg, tc)
@@ -188,7 +188,7 @@ ATF_TC_BODY(scalbnf_inf_neg, tc)
 ATF_TC(scalbnf_inf_pos);
 ATF_TC_HEAD(scalbnf_inf_pos, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test +Inf with scalbnf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test scalbnf(+Inf) == +Inf");
 }
 
 ATF_TC_BODY(scalbnf_inf_pos, tc)
@@ -205,7 +205,7 @@ ATF_TC_BODY(scalbnf_inf_pos, tc)
 ATF_TC(scalbnf_zero_neg);
 ATF_TC_HEAD(scalbnf_zero_neg, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test -0.0 with scalbnf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test scalbnf(-0.0) == -0.0");
 }
 
 ATF_TC_BODY(scalbnf_zero_neg, tc)
@@ -228,7 +228,7 @@ ATF_TC_BODY(scalbnf_zero_neg, tc)
 ATF_TC(scalbnf_zero_pos);
 ATF_TC_HEAD(scalbnf_zero_pos, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test +0.0 with scalbnf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test scalbnf(+0.0) == +0.0");
 }
 
 ATF_TC_BODY(scalbnf_zero_pos, tc)
@@ -254,7 +254,7 @@ ATF_TC_BODY(scalbnf_zero_pos, tc)
 ATF_TC(scalbnl_nan);
 ATF_TC_HEAD(scalbnl_nan, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test NaN with scalbnl(3)");
+	atf_tc_set_md_var(tc, "descr", "Test scalbnl(NaN) == NaN");
 }
 
 ATF_TC_BODY(scalbnl_nan, tc)
@@ -280,7 +280,7 @@ ATF_TC_BODY(scalbnl_nan, tc)
 ATF_TC(scalbnl_inf_neg);
 ATF_TC_HEAD(scalbnl_inf_neg, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test -Inf with scalbnl(3)");
+	atf_tc_set_md_var(tc, "descr", "Test scalbnl(-Inf) == -Inf");
 }
 
 ATF_TC_BODY(scalbnl_inf_neg, tc)
@@ -301,7 +301,7 @@ ATF_TC_BODY(scalbnl_inf_neg, tc)
 ATF_TC(scalbnl_inf_pos);
 ATF_TC_HEAD(scalbnl_inf_pos, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test +Inf with scalbnl(3)");
+	atf_tc_set_md_var(tc, "descr", "Test scalbnl(+Inf) == +Inf");
 }
 
 ATF_TC_BODY(scalbnl_inf_pos, tc)
@@ -322,7 +322,7 @@ ATF_TC_BODY(scalbnl_inf_pos, tc)
 ATF_TC(scalbnl_zero_neg);
 ATF_TC_HEAD(scalbnl_zero_neg, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test -0.0 with scalbnl(3)");
+	atf_tc_set_md_var(tc, "descr", "Test scalbnl(-0.0) == -0.0");
 }
 
 ATF_TC_BODY(scalbnl_zero_neg, tc)
@@ -349,7 +349,7 @@ ATF_TC_BODY(scalbnl_zero_neg, tc)
 ATF_TC(scalbnl_zero_pos);
 ATF_TC_HEAD(scalbnl_zero_pos, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test +0.0 with scalbnl(3)");
+	atf_tc_set_md_var(tc, "descr", "Test scalbnl(+0.0) == +0.0");
 }
 
 ATF_TC_BODY(scalbnl_zero_pos, tc)

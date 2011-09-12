@@ -1,4 +1,4 @@
-/* $NetBSD: t_tanh.c,v 1.5 2011/09/12 16:28:37 jruoho Exp $ */
+/* $NetBSD: t_tanh.c,v 1.6 2011/09/12 17:45:51 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_tanh.c,v 1.5 2011/09/12 16:28:37 jruoho Exp $");
+__RCSID("$NetBSD: t_tanh.c,v 1.6 2011/09/12 17:45:51 jruoho Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: t_tanh.c,v 1.5 2011/09/12 16:28:37 jruoho Exp $");
 ATF_TC(tanh_nan);
 ATF_TC_HEAD(tanh_nan, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test NaN with tanh(3)");
+	atf_tc_set_md_var(tc, "descr", "Test tanh(NaN) == NaN");
 }
 
 ATF_TC_BODY(tanh_nan, tc)
@@ -56,7 +56,7 @@ ATF_TC_BODY(tanh_nan, tc)
 ATF_TC(tanh_inf_neg);
 ATF_TC_HEAD(tanh_inf_neg, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test -Inf with tanh(3)");
+	atf_tc_set_md_var(tc, "descr", "Test tanh(-Inf) == -1.0");
 }
 
 ATF_TC_BODY(tanh_inf_neg, tc)
@@ -71,7 +71,7 @@ ATF_TC_BODY(tanh_inf_neg, tc)
 ATF_TC(tanh_inf_pos);
 ATF_TC_HEAD(tanh_inf_pos, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test +Inf with tanh(3)");
+	atf_tc_set_md_var(tc, "descr", "Test tanh(+Inf) == +1.0");
 }
 
 ATF_TC_BODY(tanh_inf_pos, tc)
@@ -86,7 +86,7 @@ ATF_TC_BODY(tanh_inf_pos, tc)
 ATF_TC(tanh_zero_neg);
 ATF_TC_HEAD(tanh_zero_neg, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test -0.0 with tanh(3)");
+	atf_tc_set_md_var(tc, "descr", "Test tanh(-0.0) == -0.0");
 }
 
 ATF_TC_BODY(tanh_zero_neg, tc)
@@ -106,7 +106,7 @@ ATF_TC_BODY(tanh_zero_neg, tc)
 ATF_TC(tanh_zero_pos);
 ATF_TC_HEAD(tanh_zero_pos, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test +0.0 with tanh(3)");
+	atf_tc_set_md_var(tc, "descr", "Test tanh(+0.0) == +0.0");
 }
 
 ATF_TC_BODY(tanh_zero_pos, tc)
@@ -127,7 +127,7 @@ ATF_TC_BODY(tanh_zero_pos, tc)
 ATF_TC(tanhf_nan);
 ATF_TC_HEAD(tanhf_nan, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test NaN with tanhf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test tanhf(NaN) == NaN");
 }
 
 ATF_TC_BODY(tanhf_nan, tc)
@@ -143,7 +143,7 @@ ATF_TC_BODY(tanhf_nan, tc)
 ATF_TC(tanhf_inf_neg);
 ATF_TC_HEAD(tanhf_inf_neg, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test -Inf with tanhf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test tanhf(-Inf) == -1.0");
 }
 
 ATF_TC_BODY(tanhf_inf_neg, tc)
@@ -158,7 +158,7 @@ ATF_TC_BODY(tanhf_inf_neg, tc)
 ATF_TC(tanhf_inf_pos);
 ATF_TC_HEAD(tanhf_inf_pos, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test +Inf with tanhf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test tanhf(+Inf) == +1.0");
 }
 
 ATF_TC_BODY(tanhf_inf_pos, tc)
@@ -173,7 +173,7 @@ ATF_TC_BODY(tanhf_inf_pos, tc)
 ATF_TC(tanhf_zero_neg);
 ATF_TC_HEAD(tanhf_zero_neg, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test -0.0 with tanhf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test tanhf(-0.0) == -0.0");
 }
 
 ATF_TC_BODY(tanhf_zero_neg, tc)
@@ -193,7 +193,7 @@ ATF_TC_BODY(tanhf_zero_neg, tc)
 ATF_TC(tanhf_zero_pos);
 ATF_TC_HEAD(tanhf_zero_pos, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test +0.0 with tanhf(3)");
+	atf_tc_set_md_var(tc, "descr", "Test tanhf(+0.0) == +0.0");
 }
 
 ATF_TC_BODY(tanhf_zero_pos, tc)
