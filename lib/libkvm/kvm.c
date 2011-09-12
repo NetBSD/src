@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.97 2010/11/26 22:01:53 dholland Exp $	*/
+/*	$NetBSD: kvm.c,v 1.98 2011/09/12 21:11:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.97 2010/11/26 22:01:53 dholland Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.98 2011/09/12 21:11:32 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,6 +88,12 @@ char *
 kvm_geterr(kvm_t *kd)
 {
 	return (kd->errbuf);
+}
+
+const char *
+kvm_getkernelname(kvm_t *kd)
+{
+	return kd->kernelname;
 }
 
 /*
@@ -336,7 +342,9 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 			_kvm_syserr(kd, kd->program, "%s", uf);
 			goto failed;
 		}
+		strlcpy(kd->kernelname, uf, sizeof(kd->kernelname));
 	} else {
+		strlcpy(kd->kernelname, _PATH_KSYMS, sizeof(kd->kernelname));
 		/*
 		 * We're here because /dev/ksyms was opened
 		 * successfully.  However, we don't want to keep it
