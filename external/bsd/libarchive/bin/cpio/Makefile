@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2011/09/08 22:05:00 christos Exp $
+# $NetBSD: Makefile,v 1.5 2011/09/12 12:11:53 christos Exp $
 
 PROG=	cpio
 SRCS=	cmdline.c cpio.c
@@ -14,6 +14,6 @@ cpio.1: ${LIBARCHIVEDIR}/cpio/bsdcpio.1
 
 SYMLINKS+=${BINDIR}/cpio /usr/bin/cpio
 
-COPTS.cpio.c += -Wformat-nonliteral
+COPTS.cpio.c += -Wnoformat-nonliteral
 
 .include <bsd.prog.mk>
