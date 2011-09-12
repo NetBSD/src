@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2008/10/25 22:27:39 apb Exp $
+#	$NetBSD: Makefile,v 1.7 2011/09/12 13:38:42 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ afterinstall:
 	${FCCACHE} -fv ${DESTDIR}${X11FONTDIR}
 .if ${MKUNPRIVED} != "no"
 	cd ${DESTDIR} \
-	&& find ./${X11FONTDIR} -name fonts.cache-1 \
+	&& find .${X11FONTDIR} -name fonts.cache-1 \
 	    | ${TOOL_SED} -e \
 		's/$$/ type=file mode=0444 uname=${BINOWN} gname=${BINGRP}/' \
 	    | ${METALOG.add}
