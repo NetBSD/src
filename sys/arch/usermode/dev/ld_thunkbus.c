@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.12 2011/09/05 18:17:08 jmcneill Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.13 2011/09/12 12:25:45 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.12 2011/09/05 18:17:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.13 2011/09/12 12:25:45 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.12 2011/09/05 18:17:08 jmcneill Ex
 
 #include <machine/mainbus.h>
 #include <machine/thunk.h>
+#include <machine/intr.h>
 
 static int	ld_thunkbus_match(device_t, cfdata_t, void *);
 static void	ld_thunkbus_attach(device_t, device_t, void *);
@@ -152,7 +153,8 @@ ld_thunkbus_sig(int sig, siginfo_t *info, void *ctx)
 			tt = info->si_value.sival_ptr;
 		if (tt) {
 			sc = tt->tt_sc;
-			softint_schedule(sc->sc_ih);
+			spl_intr(IPL_BIO, softint_schedule, sc->sc_ih);
+			// softint_schedule(sc->sc_ih);
 		}
 	}
 
