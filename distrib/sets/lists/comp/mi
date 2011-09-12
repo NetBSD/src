@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1670 2011/09/07 20:26:14 riz Exp $
+#	$NetBSD: mi,v 1.1671 2011/09/12 09:13:28 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4136,9 +4136,9 @@
 ./usr/libdata/debug/usr/sbin/mscdlabel.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mtrace.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mtree.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/named-checkconf.debug	comp-debugd-bin		debug
-./usr/libdata/debug/usr/sbin/named-checkzone.debug	comp-debugd-bin		debug
-./usr/libdata/debug/usr/sbin/named.debug	comp-debugd-bin		debug
+./usr/libdata/debug/usr/sbin/named-checkconf.debug	comp-bind-bin		debug
+./usr/libdata/debug/usr/sbin/named-checkzone.debug	comp-bind-bin		debug
+./usr/libdata/debug/usr/sbin/named.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/ncdcs.debug	comp-sysutil-root	binutils,debug
 ./usr/libdata/debug/usr/sbin/ndbootd.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/ndp.debug		comp-netutil-debug	inet6,debug
@@ -4196,7 +4196,7 @@
 ./usr/libdata/debug/usr/sbin/rip6query.debug	comp-netutil-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/rmt.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/rndc-confgen.debug	comp-obsolete		obsolete
-./usr/libdata/debug/usr/sbin/rndc.debug		comp-debugd-bin		debug
+./usr/libdata/debug/usr/sbin/rndc.debug		comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/route6d.debug	comp-router-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/rpc.bootparamd.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/rpc.lockd.debug	comp-nfsserver-debug	debug
