@@ -1,4 +1,4 @@
-/* $NetBSD: t_ceil.c,v 1.4 2011/07/04 22:33:29 mrg Exp $ */
+/* $NetBSD: t_ceil.c,v 1.5 2011/09/12 16:48:48 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,18 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ceil.c,v 1.4 2011/07/04 22:33:29 mrg Exp $");
-
-#include <math.h>
-#include <limits.h>
+__RCSID("$NetBSD: t_ceil.c,v 1.5 2011/09/12 16:48:48 jruoho Exp $");
 
 #include <atf-c.h>
-
-ATF_TC(ceil);
-ATF_TC_HEAD(ceil, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "A basic test of ceil(3)");
-}
+#include <math.h>
+#include <limits.h>
+#include <stdio.h>
 
 #ifdef __vax__
 #define SMALL_NUM	1.0e-38
@@ -48,25 +42,73 @@ ATF_TC_HEAD(ceil, tc)
 #define SMALL_NUM	1.0e-40
 #endif
 
-ATF_TC_BODY(ceil, tc)
+ATF_TC(ceil_basic);
+ATF_TC_HEAD(ceil_basic, tc)
 {
-	const int n = 10240;
-	double x, y;
-	int i;
+	atf_tc_set_md_var(tc, "descr", "A basic test of ceil(3)");
+}
 
-	for (i = 0; i < n; i++) {
+ATF_TC_BODY(ceil_basic, tc)
+{
+	const double x = 0.999999999999999;
+	const double y = 0.000000000000001;
 
-		x = i + 0.999999999;
-		y = i + 0.000000001;
+	ATF_CHECK(fabs(ceil(x) - 1) < SMALL_NUM);
+	ATF_CHECK(fabs(ceil(y) - 1) < SMALL_NUM);
+}
 
-		ATF_REQUIRE(fabs(ceil(x) - (double)(i + 1)) < SMALL_NUM);
-		ATF_REQUIRE(fabs(ceil(x) - (double)(i + 1)) < SMALL_NUM);
-	}
+ATF_TC(ceilf_basic);
+ATF_TC_HEAD(ceilf_basic, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A basic test of ceilf(3)");
+}
+
+ATF_TC_BODY(ceilf_basic, tc)
+{
+	const float x = 0.9999999;
+	const float y = 0.0000001;
+
+	ATF_CHECK(fabsf(ceilf(x) - 1) < SMALL_NUM);
+	ATF_CHECK(fabsf(ceilf(y) - 1) < SMALL_NUM);
+}
+
+ATF_TC(floor_basic);
+ATF_TC_HEAD(floor_basic, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A basic test of floor(3)");
+}
+
+ATF_TC_BODY(floor_basic, tc)
+{
+	const double x = 0.999999999999999;
+	const double y = 0.000000000000001;
+
+	ATF_CHECK(floor(x) < SMALL_NUM);
+	ATF_CHECK(floor(y) < SMALL_NUM);
+}
+
+ATF_TC(floorf_basic);
+ATF_TC_HEAD(floorf_basic, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A basic test of floorf(3)");
+}
+
+ATF_TC_BODY(floorf_basic, tc)
+{
+	const float x = 0.9999999;
+	const float y = 0.0000001;
+
+	ATF_CHECK(floorf(x) < SMALL_NUM);
+	ATF_CHECK(floorf(y) < SMALL_NUM);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, ceil);
+
+	ATF_TP_ADD_TC(tp, ceil_basic);
+	ATF_TP_ADD_TC(tp, ceilf_basic);
+	ATF_TP_ADD_TC(tp, floorf_basic);
+	ATF_TP_ADD_TC(tp, floorf_basic);
 
 	return atf_no_error();
 }
