@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.52 2011/09/11 19:10:56 christos Exp $
+# $NetBSD: ad.mips64el,v 1.53 2011/09/12 00:45:26 christos Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -1275,7 +1275,7 @@
 ./usr/libdata/debug/usr/lib/64/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/64/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libipsec.so.3.0.debug	comp-net-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libisc.so.5.4.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libisc.so.5.6.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libisccc.so.5.6.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libisccfg.so.5.6.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
@@ -1424,7 +1424,7 @@
 ./usr/libdata/debug/usr/lib/o32/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libipsec.so.3.0.debug	comp-net-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libisc.so.5.4.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libisc.so.5.6.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libisccc.so.5.6.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libisccfg.so.5.6.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
