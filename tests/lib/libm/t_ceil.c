@@ -1,4 +1,4 @@
-/* $NetBSD: t_ceil.c,v 1.5 2011/09/12 16:48:48 jruoho Exp $ */
+/* $NetBSD: t_ceil.c,v 1.6 2011/09/12 17:15:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ceil.c,v 1.5 2011/09/12 16:48:48 jruoho Exp $");
+__RCSID("$NetBSD: t_ceil.c,v 1.6 2011/09/12 17:15:54 jruoho Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -107,7 +107,7 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, ceil_basic);
 	ATF_TP_ADD_TC(tp, ceilf_basic);
-	ATF_TP_ADD_TC(tp, floorf_basic);
+	ATF_TP_ADD_TC(tp, floor_basic);
 	ATF_TP_ADD_TC(tp, floorf_basic);
 
 	return atf_no_error();
