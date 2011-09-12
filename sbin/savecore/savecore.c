@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.82 2011/08/29 14:30:38 joerg Exp $	*/
+/*	$NetBSD: savecore.c,v 1.83 2011/09/12 21:22:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.82 2011/08/29 14:30:38 joerg Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.83 2011/09/12 21:22:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: savecore.c,v 1.82 2011/08/29 14:30:38 joerg Exp $");
 #include <unistd.h>
 #include <util.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <kvm.h>
 
 extern FILE *zopen(const char *fname, const char *mode);
@@ -141,7 +142,7 @@ static int	dumpsize;			/* amount of memory dumped */
 static off_t dumpbytes;			/* in bytes */
 
 static const char	*kernel;		/* name of used kernel */
-static char	*dirname;			/* directory to save dumps in */
+static const char	*dirname;		/* directory to save dumps in */
 static char	*ddname;			/* name of dump device */
 static dev_t	dumpdev;			/* dump device */
 static dev_t	dumpcdev = NODEV;		/* dump device (char equivalent) */
@@ -167,7 +168,7 @@ static void	Lseek(int, off_t, int);
 static int	Open(const char *, int rw);
 static char	*rawname(char *s);
 static void	save_core(void);
-__dead static void	usage(void);
+__dead static void	usage(const char *fmt, ...) __printflike(1, 2);
 
 int
 main(int argc, char *argv[])
@@ -175,7 +176,6 @@ main(int argc, char *argv[])
 	int ch, level, testonly;
 	char *ep;
 
-	dirname = NULL;
 	kernel = NULL;
 	level = 1;		/* default to fastest gzip compression */
 	testonly = 0;
@@ -206,25 +206,22 @@ main(int argc, char *argv[])
 			break;
 		case 'Z':
 			level = (int)strtol(optarg, &ep, 10);
-			if (level < 0 || level > 9) {
-				(void)syslog(LOG_ERR, "invalid compression %s",
-				    optarg);
-				usage();
-			}
+			if (level < 0 || level > 9)
+				usage("Invalid compression `%s'", optarg);
 			break;
 		case '?':
 		default:
-			usage();
+			usage("Unknown flag `%c'", ch);
 		}
 	argc -= optind;
 	argv += optind;
 
-	if (argc != ((clear || testonly) ? 0 : 1))
-		usage();
+	if (argc != 0)
+		dirname = argv[0];
+	else
+		dirname = "/var/crash";
 
 	gzmode[1] = level + '0';
-	if (!clear)
-		dirname = argv[0];
 
 	(void)time(&now);
 	kmem_setup();
@@ -297,8 +294,7 @@ kmem_setup(void)
 	}
 
 	if (KREAD(kd_kern, current_nl[X_DUMPDEV].n_value, &dumpdev) != 0) {
-		if (verbose)
-		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_kern));
+		syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_kern));
 		exit(1);
 	}
 	if (dumpdev == NODEV) {
@@ -309,8 +305,7 @@ kmem_setup(void)
 	    long l_dumplo;
 
 	    if (KREAD(kd_kern, current_nl[X_DUMPLO].n_value, &l_dumplo) != 0) {
-		    if (verbose)
-			syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_kern));
+		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_kern));
 		    exit(1);
 	    }
 	    if (l_dumplo == -1) {
@@ -324,8 +319,7 @@ kmem_setup(void)
 		(void)printf("dumplo = %lld (%ld * %ld)\n",
 		    (long long)dumplo, (long)(dumplo / DEV_BSIZE), (long)DEV_BSIZE);
 	if (KREAD(kd_kern, current_nl[X_DUMPMAG].n_value, &dumpmag) != 0) {
-		if (verbose)
-		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_kern));
+		syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_kern));
 		exit(1);
 	}
 
@@ -336,9 +330,8 @@ kmem_setup(void)
 	if (current_nl[X_DUMPCDEV].n_value != 0) {
 		if (KREAD(kd_kern, current_nl[X_DUMPCDEV].n_value,
 		    &dumpcdev) != 0) {
-			if (verbose)
-				syslog(LOG_WARNING, "kvm_read: %s",
-			            kvm_geterr(kd_kern));
+			syslog(LOG_WARNING, "kvm_read: %s",
+			    kvm_geterr(kd_kern));
 			exit(1);
 		}
 		ddname = find_dev(dumpcdev, S_IFCHR);
@@ -405,47 +398,40 @@ check_kmem(void)
 	if (strcmp(vers, core_vers) != 0)
 		syslog(LOG_WARNING,
 		    "warning: %s version mismatch:\n\t%s\nand\t%s\n",
-		    kernel, vers, core_vers);
+		    kvm_getkernelname(kd_dump), vers, core_vers);
 
 	panicstart = panicend = 0;
 	if (KREAD(kd_dump, dump_nl[X_PANICSTART].n_value, &panicstart) != 0) {
-		if (verbose)
-		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+		syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
 		goto nomsguf;
 	}
 	if (KREAD(kd_dump, dump_nl[X_PANICEND].n_value, &panicend) != 0) {
-		if (verbose)
-		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+		syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
 		goto nomsguf;
 	}
 	if (panicstart != 0 && panicend != 0) {
 		if (KREAD(kd_dump, dump_nl[X_MSGBUF].n_value, &bufp)) {
-			if (verbose)
-				syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+			syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
 			goto nomsguf;
 		}
 		if (kvm_read(kd_dump, (long)bufp, &msgbuf,
 		    offsetof(struct kern_msgbuf, msg_bufc)) !=
 		    offsetof(struct kern_msgbuf, msg_bufc)) {
-			if (verbose)
-				syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+			syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
 			goto nomsguf;
 		}
 		if (msgbuf.msg_magic != MSG_MAGIC) {
-			if (verbose)
-				syslog(LOG_WARNING, "msgbuf magic incorrect");
+			syslog(LOG_WARNING, "msgbuf magic incorrect");
 			goto nomsguf;
 		}
 		bufdata = malloc(msgbuf.msg_bufs);
 		if (bufdata == NULL) {
-			if (verbose)
-				syslog(LOG_WARNING, "couldn't allocate space for msgbuf data");
+			syslog(LOG_WARNING, "couldn't allocate space for msgbuf data");
 			goto nomsguf;
 		}
 		if (kvm_read(kd_dump, (long)&bufp->msg_bufc, bufdata,
 		    msgbuf.msg_bufs) != msgbuf.msg_bufs) {
-			if (verbose)
-				syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+			syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
 			free(bufdata);
 			goto nomsguf;
 		}
@@ -468,8 +454,7 @@ check_kmem(void)
 	}
 nomsguf:
 	if (KREAD(kd_dump, dump_nl[X_PANICSTR].n_value, &panicstr) != 0) {
-		if (verbose)
-		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+		syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
 		return;
 	}
 	if (panicstr) {
@@ -477,9 +462,8 @@ nomsguf:
 		panicloc = panicstr;
 		do {
 			if (KREAD(kd_dump, panicloc, cp) != 0) {
-				if (verbose)
-				    syslog(LOG_WARNING, "kvm_read: %s",
-					kvm_geterr(kd_dump));
+				syslog(LOG_WARNING, "kvm_read: %s",
+				    kvm_geterr(kd_dump));
 				break;
 			}
 			panicloc++;
@@ -494,15 +478,13 @@ dump_exists(void)
 	u_int32_t newdumpmag;
 
 	if (KREAD(kd_dump, dump_nl[X_DUMPMAG].n_value, &newdumpmag) != 0) {
-		if (verbose)
-		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+		syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
 		return (0);
 	}
 
 	/* Read the dump size. */
 	if (KREAD(kd_dump, dump_nl[X_DUMPSIZE].n_value, &dumpsize) != 0) {
-		if (verbose)
-		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+		syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
 		return (0);
 	}
 	dumpbytes = (off_t)dumpsize * getpagesize();
@@ -514,9 +496,8 @@ dump_exists(void)
 	 */
 	if (newdumpmag != dumpmag) {
 		if (verbose)
-			syslog(LOG_WARNING,
-			    "magic number mismatch (0x%x != 0x%x)",
-			    newdumpmag, dumpmag);
+			syslog(LOG_WARNING, "magic number mismatch "
+			    "(0x%x != 0x%x)", newdumpmag, dumpmag);
 		syslog(LOG_WARNING, "no core dump");
 		return (0);
 	}
@@ -565,9 +546,7 @@ ksymsget(u_long addr, void *ptr, size_t size)
 {
 
 	if ((size_t)kvm_read(kd_dump, addr, ptr, size) != size) {
-		if (verbose)
-			syslog(LOG_WARNING, "kvm_read: %s",
-			    kvm_geterr(kd_dump));
+		syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
 		return 1;
 	}
 	return 0;
@@ -880,21 +859,20 @@ get_crashtime(void)
 
 	if (KREAD(kd_dump, dump_nl[X_TIME_SECOND].n_value, &dumptime) != 0) {
 		if (KREAD(kd_dump, dump_nl[X_TIME].n_value, &dtime) != 0) {
-			if (verbose)
-				syslog(LOG_WARNING, "kvm_read: %s (and _time_second is not defined also)", kvm_geterr(kd_dump));
+			syslog(LOG_WARNING, "kvm_read: %s (and _time_second "
+			    "is not defined also)", kvm_geterr(kd_dump));
 			return (0);
 		}
 		dumptime = dtime.tv_sec;
 	}
 	if (dumptime == 0) {
-		if (verbose)
-			syslog(LOG_ERR, "dump time is zero");
+		syslog(LOG_WARNING, "dump time is zero");
 		return (0);
 	}
-	(void)printf("savecore: system went down at %s", ctime(&dumptime));
+	syslog(LOG_INFO, "system went down at %s", ctime(&dumptime));
 #define	LEEWAY	(60 * SECSPERDAY)
 	if (dumptime < now - LEEWAY || dumptime > now + LEEWAY) {
-		(void)printf("dump time is unreasonable\n");
+		syslog(LOG_WARNING, "dump time is unreasonable");
 		return (0);
 	}
 	return (1);
@@ -981,9 +959,14 @@ Create(char *file, int mode)
 }
 
 static void
-usage(void)
+usage(const char *fmt, ...)
 {
+	va_list ap;
+	va_start(ap, fmt);
+	(void)vsyslog(LOG_ERR, fmt, ap);
+	va_end(ap);
 	(void)syslog(LOG_ERR,
-	    "usage: savecore [-cfnvz] [-N system] [-Z level] directory");
+	    "Usage: %s [-cfnvz] [-N system] [-Z level] [directory]",
+	    getprogname());
 	exit(1);
 }
