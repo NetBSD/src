@@ -1,4 +1,4 @@
-/* $NetBSD: intr.c,v 1.5 2011/09/12 12:24:34 reinoud Exp $ */
+/* $NetBSD: intr.c,v 1.6 2011/09/13 10:38:04 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5 2011/09/12 12:24:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6 2011/09/13 10:38:04 reinoud Exp $");
 
 #include <sys/types.h>
 
@@ -111,6 +111,7 @@ spllower(int x)
 
 	/* `eat' interrupts that came by until we got back to x */
 	if (usermode_x > x) {
+restart:
 		for (y = usermode_x; y >= x; y--) {
 			while (spl_intr_rd[y] != spl_intr_wr[y]) {
 				// printf("spl y %d firing\n", y);
@@ -120,6 +121,7 @@ spllower(int x)
 						__func__, y, spl_intr_rd[y], spl_intr_wr[y]);
 				spli->func(spli->arg);
 				spl_intr_rd[y] = (spl_intr_rd[y] + 1) % MAX_QUEUED_EVENTS;
+				goto restart;
 			}
 		}
 		usermode_x = x;
