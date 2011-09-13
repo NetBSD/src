@@ -1,4 +1,4 @@
-/* $NetBSD: t_log.c,v 1.3 2011/09/12 18:07:29 jruoho Exp $ */
+/* $NetBSD: t_log.c,v 1.4 2011/09/13 04:24:30 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_log.c,v 1.3 2011/09/12 18:07:29 jruoho Exp $");
+__RCSID("$NetBSD: t_log.c,v 1.4 2011/09/13 04:24:30 jruoho Exp $");
 
 #include <atf-c.h>
 #include <stdio.h>
@@ -262,7 +262,10 @@ ATF_TC_BODY(log1p_inf_neg, tc)
 	const double x = -1.0L / 0.0L;
 	const double y = log1p(x);
 
-	ATF_CHECK(isnan(y) != 0);
+	if (isnan(y) == 0) {
+		atf_tc_expect_fail("PR lib/45362");
+		atf_tc_fail("log1p(-Inf) != NaN");
+	}
 #endif
 }
 
@@ -292,7 +295,10 @@ ATF_TC_BODY(log1p_one_neg, tc)
 #ifndef __vax__
 	const double x = log1p(-1.0);
 
-	ATF_CHECK(x == -HUGE_VAL);
+	if (x != -HUGE_VAL) {
+		atf_tc_expect_fail("PR lib/45362");
+		atf_tc_fail("log1p(-1.0) != -HUGE_VAL");
+	}
 #endif
 }
 
@@ -357,7 +363,10 @@ ATF_TC_BODY(log1pf_inf_neg, tc)
 	const float x = -1.0L / 0.0L;
 	const float y = log1pf(x);
 
-	ATF_CHECK(isnan(y) != 0);
+	if (isnan(y) == 0) {
+		atf_tc_expect_fail("PR lib/45362");
+		atf_tc_fail("log1pf(-Inf) != NaN");
+	}
 #endif
 }
 
@@ -387,7 +396,10 @@ ATF_TC_BODY(log1pf_one_neg, tc)
 #ifndef __vax__
 	const float x = log1pf(-1.0);
 
-	ATF_CHECK(x == -HUGE_VALF);
+	if (x != -HUGE_VALF) {
+		atf_tc_expect_fail("PR lib/45362");
+		atf_tc_fail("log1pf(-1.0) != -HUGE_VALF");
+	}
 #endif
 }
 
