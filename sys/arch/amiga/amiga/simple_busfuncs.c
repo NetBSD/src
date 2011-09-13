@@ -1,4 +1,4 @@
-/* $NetBSD: simple_busfuncs.c,v 1.8 2011/08/04 17:48:50 rkujawa Exp $ */
+/* $NetBSD: simple_busfuncs.c,v 1.9 2011/09/13 19:21:20 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simple_busfuncs.c,v 1.8 2011/08/04 17:48:50 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simple_busfuncs.c,v 1.9 2011/09/13 19:21:20 christos Exp $");
 
 /*
  * Do NOT use this standalone.
@@ -559,58 +559,53 @@ oabs(bscr4_)(handlefrom, from, handleto, to, count)
 
 const struct amiga_bus_space_methods oabs(amiga_bus_stride_) = {
 
-	oabs(bsm_),
-	oabs(bsms_),
-	oabs(bsu_),
-	0,
-	0,
+	.bsm =		oabs(bsm_),
+	.bsms =		oabs(bsms_),
+	.bsu =		oabs(bsu_),
+	.bsa =		NULL,
+	.bsf =		NULL,
 
-	oabs(bsr1_),
-	oabs(bsw1_),
-	oabs(bsrm1_),
-	oabs(bswm1_),
-	oabs(bsrr1_),
-	oabs(bswr1_),
-	oabs(bssr1_),
-	oabs(bscr1_),
+	.bsr1 =	oabs(bsr1_),
+	.bsw1 =		oabs(bsw1_),
+	.bsrm1 =	oabs(bsrm1_),
+	.bswm1 =	oabs(bswm1_),
+	.bsrr1 =	oabs(bsrr1_),
+	.bswr1 =	oabs(bswr1_),
+	.bssr1 =	oabs(bssr1_),
+	.bscr1 =	oabs(bscr1_),
 
 #ifdef AMIGA_SIMPLE_BUS_WORD_METHODS
-	oabs(bsr2_),
-	oabs(bsw2_),
-	oabs(bsr2_),
-	oabs(bsw2_),
-	oabs(bsrm2_),
-	oabs(bswm2_),
-	oabs(bsrm2_),
-	oabs(bswm2_),
-	oabs(bsrr2_),
-	oabs(bswr2_),
-	oabs(bsrr2_),
-	oabs(bswr2_),
-	oabs(bssr2_),
-	oabs(bscr2_),
-#else /* AMIGA_SIMPLE_BUS_WORD_METHODS */
-	0,
+	.bsr2 =		oabs(bsr2_),
+	.bsw2 =		oabs(bsw2_),
+	.bsrs2 =	oabs(bsr2_),
+	.bsws2 =	oabs(bsw2_),
+	.bsrm2 =	oabs(bsrm2_),
+	.bswm2 =	oabs(bswm2_),
+	.bsrms2 =	oabs(bsrm2_),
+	.bswms2 =	oabs(bswm2_),
+	.bsrr2 =	oabs(bsrr2_),
+	.bswr2 =	oabs(bswr2_),
+	.bsrrs2 =	oabs(bsrr2_),
+	.bswrs2 =	oabs(bswr2_),
+	.bssr2 =	oabs(bssr2_),
+	.bscr2 =	oabs(bscr2_),
 #endif /* AMIGA_SIMPLE_BUS_WORD_METHODS */
 
 #ifdef AMIGA_SIMPLE_BUS_LONGWORD_METHODS
-	oabs(bsr4_),
-	oabs(bsw4_),
-	oabs(bsr4_),
-	oabs(bsw4_),
-	oabs(bsrm4_),
-	oabs(bswm4_),
-	oabs(bsrm4_),
-	oabs(bswm4_),
-	oabs(bsrr4_),
-	oabs(bswr4_),
-	oabs(bsrr4_),
-	oabs(bswr4_),
-	oabs(bssr4_),
-	oabs(bscr4_)
-#else /* AMIGA_SIMPLE_BUS_LONGWORD_METHODS */
-	0
+	.bsr4 =		oabs(bsr4_),
+	.bsw4 =		oabs(bsw4_),
+	.bsrs4 =	oabs(bsr4_),
+	.bsws4 =	oabs(bsw4_),
+	.bsrm4 =	oabs(bsrm4_),
+	.bswm4 =	oabs(bswm4_),
+	.bsrms4 =	oabs(bsrm4_),
+	.bswms4 =	oabs(bswm4_),
+	.bsrr4 =	oabs(bsrr4_),
+	.bswr4 =	oabs(bswr4_),
+	.bsrrs4 =	oabs(bsrr4_),
+	.bsrws4 =	oabs(bswr4_),
+	.bssr4 =	oabs(bssr4_),
+	.bscr4 =	oabs(bscr4_)
 #endif /* AMIGA_SIMPLE_BUS_LONGWORD_METHODS */
-
 };
 #endif
