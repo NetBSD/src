@@ -27,9 +27,9 @@
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
 .\" $FreeBSD: src/lib/msun/man/exp.3,v 1.24 2008/01/18 21:43:00 das Exp $
-.\"	$NetBSD: exp.3,v 1.26 2010/05/03 05:35:58 jruoho Exp $
+.\"	$NetBSD: exp.3,v 1.27 2011/09/13 05:26:47 jruoho Exp $
 .\"
-.Dd May 3, 2010
+.Dd September 13, 2011
 .Dt EXP 3
 .Os
 .Sh NAME
@@ -41,17 +41,9 @@
 .\" .Nm exp2l ,
 .Nm expm1 ,
 .Nm expm1f ,
-.Nm log ,
-.Nm logf ,
-.Nm log2 ,
-.Nm log2f ,
-.Nm log10 ,
-.Nm log10f ,
-.Nm log1p ,
-.Nm log1pf ,
 .Nm pow ,
 .Nm powf
-.Nd exponential, logarithm, power functions
+.Nd exponential and power functions
 .Sh LIBRARY
 .Lb libm
 .Sh SYNOPSIS
@@ -70,22 +62,6 @@
 .Fn expm1 "double x"
 .Ft float
 .Fn expm1f "float x"
-.Ft double
-.Fn log "double x"
-.Ft float
-.Fn logf "float x"
-.Ft double
-.Fn log2 "double x"
-.Ft float
-.Fn log2f "float x"
-.Ft double
-.Fn log10 "double x"
-.Ft float
-.Fn log10f "float x"
-.Ft double
-.Fn log1p "double x"
-.Ft float
-.Fn log1pf "float x"
 .Ft double
 .Fn pow "double x" "double y"
 .Ft float
@@ -116,31 +92,6 @@ and the
 .Fn expm1f
 functions computes the value exp(x)\-1 accurately even for tiny argument
 .Fa x .
-.Pp
-The
-.Fn log
-function computes the value of the natural logarithm of argument
-.Fa x .
-.Pp
-The
-.Fn log10
-function computes the value of the logarithm of argument
-.Fa x
-to base 10.
-.Pp
-The
-.Fn log1p
-function computes
-the value of log(1+x) accurately even for tiny argument
-.Fa x .
-.Pp
-The
-.Fn log2
-and the
-.Fn log2f
-functions compute the value of the logarithm of argument
-.Fa x
-to base 2.
 .Pp
 The
 .Fn pow
@@ -180,41 +131,15 @@ is set to
 and on the
 .Tn VAX
 generate a reserved operand fault.
-On a
-.Tn VAX ,
-.Va errno
-is set to
-.Er EDOM
-and the reserved operand is returned
-by log unless
-.Fa x
-\*[Gt] 0, by
-.Fn log1p
-unless
-.Fa x
-\*[Gt] \-1.
 .Sh ERRORS
 The values of
 .Fn exp x ,
 .Fn expm1 x ,
-.Fn exp2 x ,
-.Fn log x ,
 and
-.Fn log1p x ,
+.Fn exp2 x ,
 are exact provided that they are representable.
 Otherwise the error in these functions is generally below one
 .Em ulp .
-The values of
-.Fn log10 x
-are within about 2
-.Em ulps ;
-an
-.Em ulp
-is one
-.Em Unit
-in the
-.Em Last
-.Em Place .
 The error in
 .Fn pow x y
 is below about 2
@@ -248,36 +173,6 @@ is exact until it is bigger than 2**56 on a
 .Tn IEEE
 754.
 .Sh NOTES
-The functions 
-.Fn exp x\ \-\ 1
-and
-.Fn log 1\ \+\ x
-are called
-.Fn expm1 x
-and 
-.Fn logp1 x
-in
-.Tn BASIC
-on the Hewlett\-Packard
-.Tn HP Ns \-71B
-and
-.Tn APPLE
-Macintosh,
-.Tn EXP1
-and
-.Tn LN1
-in Pascal,
-.Fn exp1 x
-and
-.Fn log1 x
-in C
-on
-.Tn APPLE
-Macintoshes, where they have been provided to make
-sure financial calculations of ((1+x)**n\-1)/x, namely
-expm1(n*log1p(x))/x, will be accurate when x is tiny.
-They also provide accurate inverse hyperbolic functions.
-.Pp
 The function
 .Fn pow x 0
 returns x**0 = 1 for all x including x = 0,
@@ -340,9 +235,7 @@ and infinite x, i.e., independently of x.
 .Xr math 3
 .Sh STANDARDS
 The
-.Fn exp ,
-.Fn log ,
-.Fn log10
+.Fn exp
 and
 .Fn pow
 functions conform to
@@ -353,33 +246,19 @@ The
 .Fn expf ,
 .Fn expm1 ,
 .Fn expm1f ,
-.Fn log1p ,
-.Fn log1pf ,
-.Fn log2 ,
-.Fn log2f ,
-.Fn log10f ,
-.Fn logf ,
 and
 .Fn powf
 functions conform to
 .St -isoC-99 .
 .Sh HISTORY
 A
-.Fn exp ,
-.Fn log
+.Fn exp
 and
 .Fn pow
 functions
 appeared in
 .At v6 .
-A
-.Fn log10
-function
-appeared in
-.At v7 .
 The
-.Fn log1p
-and
 .Fn expm1
-functions appeared in
+function appeared in
 .Bx 4.3 .
