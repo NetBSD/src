@@ -1,4 +1,4 @@
-/* $NetBSD: t_ldexp.c,v 1.4 2011/09/12 17:46:39 jruoho Exp $ */
+/* $NetBSD: t_ldexp.c,v 1.5 2011/09/13 07:03:36 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ldexp.c,v 1.4 2011/09/12 17:46:39 jruoho Exp $");
+__RCSID("$NetBSD: t_ldexp.c,v 1.5 2011/09/13 07:03:36 jruoho Exp $");
 
 #include <math.h>
 #include <limits.h>
@@ -41,6 +41,27 @@ static const int exps[] = { 0, 1, -1, 100, -100 };
 /*
  * ldexp(3)
  */
+ATF_TC(ldexp_exp2);
+ATF_TC_HEAD(ldexp_exp2, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ldexp(x, n) == x * exp2(n)");
+}
+
+ATF_TC_BODY(ldexp_exp2, tc)
+{
+#ifndef __vax__
+	const double n[] = { 1, 2, 3, 25, 50, 100, 123, 321, 500 };
+	const double x = 12.1288221;
+	double y;
+	size_t i;
+
+	for (i = 0; i < __arraycount(n); i++) {
+		y = ldexp(x, n[i]);
+		ATF_CHECK(x * exp2(n[i]));
+	}
+#endif
+}
+
 ATF_TC(ldexp_nan);
 ATF_TC_HEAD(ldexp_nan, tc)
 {
@@ -139,6 +160,27 @@ ATF_TC_BODY(ldexp_zero_pos, tc)
 		y = ldexp(x, exps[i]);
 		ATF_CHECK(x == y);
 		ATF_CHECK(signbit(y) == 0);
+	}
+#endif
+}
+
+ATF_TC(ldexpf_exp2f);
+ATF_TC_HEAD(ldexpf_exp2f, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ldexpf(x, n) == x * exp2f(n)");
+}
+
+ATF_TC_BODY(ldexpf_exp2f, tc)
+{
+#ifndef __vax__
+	const float n[] = { 1, 2, 3, 25, 50, 100, 123, 321, 500 };
+	const float x = 12.1288221;
+	float y;
+	size_t i;
+
+	for (i = 0; i < __arraycount(n); i++) {
+		y = ldexpf(x, n[i]);
+		ATF_CHECK(x * exp2f(n[i]));
 	}
 #endif
 }
@@ -252,12 +294,14 @@ ATF_TC_BODY(ldexpf_zero_pos, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, ldexp_exp2);
 	ATF_TP_ADD_TC(tp, ldexp_nan);
 	ATF_TP_ADD_TC(tp, ldexp_inf_neg);
 	ATF_TP_ADD_TC(tp, ldexp_inf_pos);
 	ATF_TP_ADD_TC(tp, ldexp_zero_neg);
 	ATF_TP_ADD_TC(tp, ldexp_zero_pos);
 
+	ATF_TP_ADD_TC(tp, ldexpf_exp2f);
 	ATF_TP_ADD_TC(tp, ldexpf_nan);
 	ATF_TP_ADD_TC(tp, ldexpf_inf_neg);
 	ATF_TP_ADD_TC(tp, ldexpf_inf_pos);
