@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbr.8,v 1.4 2011/04/25 22:26:29 wiz Exp $
+.\"	$NetBSD: mbr.8,v 1.5 2011/09/13 10:33:11 wiz Exp $
 .Dd January 20, 2008
 .Dt MBR 8 i386
 .Os
@@ -36,7 +36,7 @@ boot from, and hard disks to boot from.
 The choices and default settings can be configured through
 .Xr fdisk 8 .
 .It Sy Extended Bootselector Pa /usr/mdec/mbr_ext
-The Extended Bootselecting MBR additionally allows
+The extended bootselecting MBR additionally allows
 .Nx
 to be loaded from an Extended partition.
 It only supports systems whose BIOS supports the extensions to
@@ -49,7 +49,7 @@ It assumes that the BIOS has initialized the baud rate.
 .It Sy Serial Bootselector Pa /usr/mdec/mbr_com0_9600
 This has the same features as
 .Pa mbr_com0 .
-Additionally it initializes the serial port to 9600 baud.
+Additionally, it initializes the serial port to 9600 baud.
 .El
 .Pp
 The rest of this manual page will discuss the bootselecting versions of
