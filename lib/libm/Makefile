@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.118 2011/08/06 11:01:12 jruoho Exp $
+#  $NetBSD: Makefile,v 1.119 2011/09/13 05:26:47 jruoho Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -210,7 +210,7 @@ MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 \
 	ceil.3 copysign.3 cos.3 cosh.3 \
 	erf.3 exp.3 \
 	fabs.3 finite.3 fmod.3 frexp.3 hypot.3 \
-	ieee_test.3 ilogb.3 isinff.3 j0.3 ldexp.3 lgamma.3 lrint.3 \
+	ieee_test.3 ilogb.3 isinff.3 j0.3 ldexp.3 lgamma.3 log.3 lrint.3 \
 	math.3 modf.3 nextafter.3 \
 	remainder.3 rint.3 round.3 \
 	scalbn.3 sin.3 sinh.3 sqrt.3 \
@@ -246,11 +246,14 @@ MLINKS+=cosh.3 coshf.3
 MLINKS+=erf.3 erff.3 erf.3 erfc.3 erf.3 erfcf.3
 MLINKS+=exp.3 expf.3 exp.3 expm1.3 exp.3 expm1f.3 			\
 	exp.3 exp2.3 exp.3 exp2f.3 					\
-	exp.3 log.3 exp.3 logf.3 					\
-	exp.3 log10.3 exp.3 log10f.3 					\
-	exp.3 log1p.3 exp.3 log1pf.3 					\
-	exp.3 pow.3 exp.3 powf.3 					\
-	exp.3 log2.3 exp.3 log2f.3
+	exp.3 pow.3 exp.3 powf.3
+MLINKS+=log.3 logf.3 \
+	log.3 log10.3 \
+	log.3 log10f.3 \
+	log.3 log1p.3 \
+	log.3 log1pf.3 \
+	log.3 log2.3 \
+	log.3 log2f.3
 MLINKS+=fabs.3 fabsf.3
 MLINKS+=finite.3 finitef.3
 MLINKS+=fmod.3 fmodf.3
