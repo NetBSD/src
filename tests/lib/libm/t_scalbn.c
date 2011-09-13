@@ -1,4 +1,4 @@
-/* $NetBSD: t_scalbn.c,v 1.4 2011/09/12 17:45:51 jruoho Exp $ */
+/* $NetBSD: t_scalbn.c,v 1.5 2011/09/13 04:24:30 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_scalbn.c,v 1.4 2011/09/12 17:45:51 jruoho Exp $");
+__RCSID("$NetBSD: t_scalbn.c,v 1.5 2011/09/13 04:24:30 jruoho Exp $");
 
 #include <math.h>
 #include <limits.h>
@@ -267,7 +267,10 @@ ATF_TC_BODY(scalbnl_nan, tc)
 	long double y;
 	size_t i;
 
-	ATF_REQUIRE(isnan(x) != 0);
+	if (isnan(x) == 0) {
+		atf_tc_expect_fail("PR lib/45362");
+		atf_tc_fail("(0.0L / 0.0L) != NaN");
+	}
 
 	for (i = 0; i < __arraycount(exps); i++) {
 		y = scalbnl(x, exps[i]);
