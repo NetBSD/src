@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.59 2011/09/09 12:41:12 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.60 2011/09/13 10:38:48 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2011/09/09 12:41:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2011/09/13 10:38:48 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -234,10 +234,11 @@ pmap_bootstrap(void)
 #endif
 
 	/* protect the current kernel section */
-	/* XXX kernel stack? */
+#if 0
 	err = thunk_mprotect((void *) kmem_k_start, kmem_k_end - kmem_k_start,
 		THUNK_PROT_READ | THUNK_PROT_EXEC);
 	assert(err == 0);
+#endif
 
 	/* set up pv_table; bootstrap problem! */
 	fpos = 0;
@@ -809,19 +810,61 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 void
 pmap_remove_all(pmap_t pmap)
 {
-aprint_debug("pmap_remove_all() called\n");
+	/* just a hint that all the entries are to be removed */
+	aprint_debug("pmap_remove_all() dummy called\n");
+
+	/* we dont do anything with the kernel pmap */
+	if (pmap == pmap_kernel())
+		return;
+
+	pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
+	thunk_munmap((void *) VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
+#if 0
+	/* remove all cached info from the pages */
+	thunk_msync(VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS,
+		THUNK_MS_SYNC | THUNK_MS_INVALIDATE);
+#endif
 }
 
 void
 pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
-aprint_debug("pmap_protect not implemented sva %p, eva %p, prot %d\n", (void *) sva, (void *) eva, prot);
+	struct pv_entry *pv;
+	intptr_t slpn, elpn, lpn;
+	int s;
+
+	if (prot == VM_PROT_NONE) {
+		pmap_remove(pmap, sva, eva);
+		return;
+	}
+	if (prot & VM_PROT_WRITE)
+		return; /* apparently we're meant to */
+	if (pmap == pmap_kernel())
+		return; /* can't restrict kernel w/o unmapping. */
+
+	slpn = atop(sva - VM_MIN_ADDRESS);	/* V->L */
+ 	elpn = atop(eva - VM_MIN_ADDRESS);	/* V->L */
+
+	aprint_debug("pmap_protect() called from "
+		"lpn %"PRIdPTR" to lpn %"PRIdPTR"\n", slpn, elpn);
+
+	s = splvm();
+	for (lpn = slpn; lpn < elpn; lpn++) {
+		pv = pmap->pm_entries[lpn];
+		if (pv != NULL) {
+			pv->pv_prot &= prot;
+			pv_update(pv);
+			if (pv->pv_pmap->pm_flags & PM_ACTIVE)
+				pmap_page_activate(pv);
+		}
+	}
+	splx(s);
 }
 
 void
 pmap_unwire(pmap_t pmap, vaddr_t va)
 {
-aprint_debug("pmap_unwire called not implemented\n'");
+printf("pmap_unwire called not implemented\n'");
 }
 
 bool
@@ -867,7 +910,7 @@ void
 pmap_copy(pmap_t dst_map, pmap_t src_map, vaddr_t dst_addr, vsize_t len,
     vaddr_t src_addr)
 {
-aprint_debug("pmap_copy not implemented\n");
+	printf("pmap_copy not implemented\n");
 }
 
 void
