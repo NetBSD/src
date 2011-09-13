@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.50 2011/09/01 15:10:31 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.51 2011/09/13 17:58:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.50 2011/09/01 15:10:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.51 2011/09/13 17:58:42 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -783,7 +783,9 @@ pci_chipset_tag_create(pci_chipset_tag_t opc, const uint64_t present,
 		nbits = bits & (bits - 1);
 		bit = nbits ^ bits;
 		if ((fp = bit_to_function_pointer(ov, bit)) == NULL) {
+#ifdef DEBUG
 			printf("%s: missing bit %" PRIx64 "\n", __func__, bit);
+#endif
 			goto einval;
 		}
 	}
