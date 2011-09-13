@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.83 2011/09/12 21:22:07 christos Exp $	*/
+/*	$NetBSD: savecore.c,v 1.84 2011/09/13 19:55:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.83 2011/09/12 21:22:07 christos Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.84 2011/09/13 19:55:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,6 +210,7 @@ main(int argc, char *argv[])
 				usage("Invalid compression `%s'", optarg);
 			break;
 		case '?':
+			usage("Missing argument for flag `%c'", optopt);
 		default:
 			usage("Unknown flag `%c'", ch);
 		}
