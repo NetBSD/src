@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_ranges.c,v 1.1 2011/08/29 22:46:04 dyoung Exp $	*/
+/*	$NetBSD: pci_ranges.c,v 1.2 2011/09/13 18:09:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.1 2011/08/29 22:46:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.2 2011/09/13 18:09:52 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,7 +120,6 @@ struct range_infer_ctx {
 	bus_addr_t		ric_io_top;
 };
 
-#if 1
 static bool
 io_range_extend(struct range_infer_ctx *ric, const pci_alloc_t *pal)
 {
@@ -371,7 +370,6 @@ io_range_infer(pci_chipset_tag_t pc, pcitag_t tag, void *ctx)
 		    bus, dev, fun);
 	}
 }
-#endif
 
 static bool
 mmio_range_extend(struct range_infer_ctx *ric, const pci_alloc_t *pal)
