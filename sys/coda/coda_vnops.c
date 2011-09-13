@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.80 2011/06/12 03:35:51 rmind Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.81 2011/09/13 19:34:27 gdt Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.80 2011/06/12 03:35:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.81 2011/09/13 19:34:27 gdt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -854,7 +854,7 @@ coda_inactive(void *v)
 
     if (IS_UNMOUNTING(cp)) {
 	/* XXX Do we need to VOP_CLOSE container vnodes? */
-	if (vp->v_usecount > 0)
+	if (vp->v_usecount > 1)
 	    printf("coda_inactive: IS_UNMOUNTING %p usecount %d\n",
 		   vp, vp->v_usecount);
 	if (cp->c_ovp != NULL)
@@ -862,7 +862,7 @@ coda_inactive(void *v)
 	VOP_UNLOCK(vp);
     } else {
         /* Sanity checks that perhaps should be panic. */
-	if (vp->v_usecount) {
+	if (vp->v_usecount > 1) {
 	    printf("coda_inactive: %p usecount %d\n", vp, vp->v_usecount);
 	}
 	if (cp->c_ovp != NULL) {
