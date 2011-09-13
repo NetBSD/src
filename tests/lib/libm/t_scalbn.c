@@ -1,4 +1,4 @@
-/* $NetBSD: t_scalbn.c,v 1.5 2011/09/13 04:24:30 jruoho Exp $ */
+/* $NetBSD: t_scalbn.c,v 1.6 2011/09/13 06:50:41 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_scalbn.c,v 1.5 2011/09/13 04:24:30 jruoho Exp $");
+__RCSID("$NetBSD: t_scalbn.c,v 1.6 2011/09/13 06:50:41 jruoho Exp $");
 
 #include <math.h>
 #include <limits.h>
@@ -94,6 +94,28 @@ ATF_TC_BODY(scalbn_inf_pos, tc)
 
 	for (i = 0; i < __arraycount(exps); i++)
 		ATF_CHECK(scalbn(x, exps[i]) == x);
+#endif
+}
+
+ATF_TC(scalbn_ldexp);
+ATF_TC_HEAD(scalbn_ldexp, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test scalbn(x) == ldexp(x)");
+}
+
+ATF_TC_BODY(scalbn_ldexp, tc)
+{
+#ifndef __vax__
+#if FLT_RADIX == 2
+	const double x = 2.91288191221812821;
+	double y;
+	size_t i;
+
+	for (i = 0; i < __arraycount(exps); i++) {
+		y = scalbn(x, exps[i]);
+		ATF_CHECK(y == ldexp(x, exps[i]));
+	}
+#endif
 #endif
 }
 
@@ -199,6 +221,28 @@ ATF_TC_BODY(scalbnf_inf_pos, tc)
 
 	for (i = 0; i < __arraycount(exps); i++)
 		ATF_CHECK(scalbnf(x, exps[i]) == x);
+#endif
+}
+
+ATF_TC(scalbnf_ldexp);
+ATF_TC_HEAD(scalbnf_ldexp, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test scalbnf(x) == ldexpf(x)");
+}
+
+ATF_TC_BODY(scalbnf_ldexp, tc)
+{
+#ifndef __vax__
+#if FLT_RADIX == 2
+	const float x = 2.91288191221812821;
+	float y;
+	size_t i;
+
+	for (i = 0; i < __arraycount(exps); i++) {
+		y = scalbnf(x, exps[i]);
+		ATF_CHECK(y == ldexpf(x, exps[i]));
+	}
+#endif
 #endif
 }
 
@@ -382,18 +426,21 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, scalbn_nan);
 	ATF_TP_ADD_TC(tp, scalbn_inf_neg);
 	ATF_TP_ADD_TC(tp, scalbn_inf_pos);
+	ATF_TP_ADD_TC(tp, scalbn_ldexp);
 	ATF_TP_ADD_TC(tp, scalbn_zero_neg);
 	ATF_TP_ADD_TC(tp, scalbn_zero_pos);
 
 	ATF_TP_ADD_TC(tp, scalbnf_nan);
 	ATF_TP_ADD_TC(tp, scalbnf_inf_neg);
 	ATF_TP_ADD_TC(tp, scalbnf_inf_pos);
+	ATF_TP_ADD_TC(tp, scalbnf_ldexp);
 	ATF_TP_ADD_TC(tp, scalbnf_zero_neg);
 	ATF_TP_ADD_TC(tp, scalbnf_zero_pos);
 
 	ATF_TP_ADD_TC(tp, scalbnl_nan);
 	ATF_TP_ADD_TC(tp, scalbnl_inf_neg);
 	ATF_TP_ADD_TC(tp, scalbnl_inf_pos);
+/*	ATF_TP_ADD_TC(tp, scalbnl_ldexp);	*/
 	ATF_TP_ADD_TC(tp, scalbnl_zero_neg);
 	ATF_TP_ADD_TC(tp, scalbnl_zero_pos);
 
