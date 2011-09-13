@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz.c,v 1.3 2011/09/11 18:55:37 christos Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.4 2011/09/13 19:35:12 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2005-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -472,13 +472,16 @@ static isc_result_t
 createnode(dns_sdlz_db_t *sdlz, dns_sdlznode_t **nodep) {
 	dns_sdlznode_t *node;
 	isc_result_t result;
+	void *sdlzv, *tdlzv;
 
 	node = isc_mem_get(sdlz->common.mctx, sizeof(dns_sdlznode_t));
 	if (node == NULL)
 		return (ISC_R_NOMEMORY);
 
 	node->sdlz = NULL;
-	attach((dns_db_t *)sdlz, (dns_db_t **)&node->sdlz);
+	sdlzv = sdlz;
+	tdlzv = &node->sdlz;
+	attach(sdlzv, tdlzv);
 	ISC_LIST_INIT(node->lists);
 	ISC_LIST_INIT(node->buffers);
 	ISC_LINK_INIT(node, link);
