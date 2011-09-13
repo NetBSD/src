@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.59 2011/09/01 15:10:31 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.60 2011/09/13 17:59:46 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.59 2011/09/01 15:10:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.60 2011/09/13 17:59:46 dyoung Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -1588,9 +1588,9 @@ bit_to_function_pointer(const struct bus_dma_overrides *ov, uint64_t bit)
 }
 
 void
-bus_dma_tag_destroy(bus_dma_tag_t bst)
+bus_dma_tag_destroy(bus_dma_tag_t bdt)
 {
-	kmem_free(bst, sizeof(struct x86_bus_dma_tag));
+	kmem_free(bdt, sizeof(struct x86_bus_dma_tag));
 }
 
 int
