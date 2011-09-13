@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.25 2011/09/06 01:20:18 jmcneill Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.26 2011/09/13 19:10:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.25 2011/09/06 01:20:18 jmcneill Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.26 2011/09/13 19:10:18 christos Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -776,7 +776,7 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 				return EINVAL;
 			idat = INTARG;
 			l = FROM_OSSVOL( idat       & 0xff);
-			r = FROM_OSSVOL((idat >> 8) & 0xff);
+			r = FROM_OSSVOL(((u_int)idat >> 8) & 0xff);
 			mc.dev = di->devmap[n];
 			mc.type = AUDIO_MIXER_VALUE;
 			if (di->stereomask & (1<<n)) {
