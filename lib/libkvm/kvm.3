@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm.3,v 1.12 2011/09/12 21:11:32 christos Exp $
+.\"	$NetBSD: kvm.3,v 1.13 2011/09/13 08:53:15 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,6 +57,11 @@ be gathered.
 .Pp
 .Fn kvm_open
 is first called to obtain a descriptor for all subsequent calls.
+.Sh FILES
+.Bl -tag -width /dev/mem -compact
+.It Pa /dev/mem
+interface to physical memory
+.El
 .Sh COMPATIBILITY
 The kvm interface was first introduced in SunOS.
 A considerable number of programs have been developed that use this
@@ -89,11 +94,6 @@ interface includes a routine,
 .Xr kvm_geterr 3 ,
 to return (not print out) the error message corresponding to the most
 recent error condition on the given descriptor.
-.Sh FILES
-.Bl -tag -width /dev/mem -compact
-.It Pa /dev/mem
-interface to physical memory
-.El
 .Sh SEE ALSO
 .Xr kvm_close 3 ,
 .Xr kvm_getargv 3 ,
