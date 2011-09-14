@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.5 2011/01/09 14:49:40 kardel Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.6 2011/09/14 16:18:29 christos Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -1782,7 +1782,10 @@ create_sockets(
 	create_wildcards(port);
 
 	update_interfaces(port, NULL, NULL);
-	
+
+	if (sys_bclient)
+		io_setbclient();
+
 	/*
 	 * Now that we have opened all the sockets, turn off the reuse
 	 * flag for security.
