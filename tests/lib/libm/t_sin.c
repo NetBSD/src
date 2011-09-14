@@ -1,4 +1,4 @@
-/* $NetBSD: t_sin.c,v 1.2 2011/09/14 06:50:43 jruoho Exp $ */
+/* $NetBSD: t_sin.c,v 1.3 2011/09/14 13:29:58 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -206,7 +206,10 @@ ATF_TC_BODY(sinf_inf_neg, tc)
 #ifndef __vax__
 	const float x = -1.0L / 0.0L;
 
-	ATF_CHECK(isnan(sinf(x)) != 0);
+	if (isnan(sinf(x)) == 0) {
+		atf_tc_expect_fail("PR lib/45362");
+		atf_tc_fail("sinf(-Inf) != NaN");
+	}
 #endif
 }
 
@@ -221,7 +224,10 @@ ATF_TC_BODY(sinf_inf_pos, tc)
 #ifndef __vax__
 	const float x = 1.0L / 0.0L;
 
-	ATF_CHECK(isnan(sinf(x)) != 0);
+	if (isnan(sinf(x)) == 0) {
+		atf_tc_expect_fail("PR lib/45362");
+		atf_tc_fail("sinf(+Inf) != NaN");
+	}
 #endif
 }
 
