@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fopen.c,v 1.2 2011/09/12 04:23:29 jruoho Exp $ */
+/*	$NetBSD: t_fopen.c,v 1.3 2011/09/14 14:34:37 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fopen.c,v 1.2 2011/09/12 04:23:29 jruoho Exp $");
+__RCSID("$NetBSD: t_fopen.c,v 1.3 2011/09/14 14:34:37 martin Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -312,7 +312,7 @@ ATF_TC_HEAD(fopen_regular, tc)
 ATF_TC_BODY(fopen_regular, tc)
 {
 	static const char *mode[] = { "rf", "r+f", "wf", "w+f", "af", "a+f" };
-	static const char *devs[] = { _PATH_DEVNULL, _PATH_TTY };
+	static const char *devs[] = { _PATH_DEVNULL };
 
 	size_t i, j;
 	FILE *f;
