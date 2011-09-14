@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.36 2011/09/09 20:04:43 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.37 2011/09/14 18:26:24 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,11 +28,12 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.36 2011/09/09 20:04:43 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.37 2011/09/14 18:26:24 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <machine/vmparam.h>
 
 #include <aio.h>
 #include <assert.h>
@@ -522,3 +523,10 @@ thunk_getenv(const char *name)
 {
 	return getenv(name);
 }
+
+vaddr_t
+thunk_get_vm_min_address(void)
+{
+	return VM_MIN_ADDRESS;
+}
+
