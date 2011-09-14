@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sun3.c,v 1.14 2010/09/20 23:23:16 jym Exp $	*/
+/*	$NetBSD: kvm_sun3.c,v 1.15 2011/09/14 12:37:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sun3.c,v 1.14 2010/09/20 23:23:16 jym Exp $");
+__RCSID("$NetBSD: kvm_sun3.c,v 1.15 2011/09/14 12:37:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: kvm_sun3.c,v 1.14 2010/09/20 23:23:16 jym Exp $");
  * Note: This file has to build on ALL m68k machines,
  * so do NOT include any <machine / *.h> files here.
  */
-
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/kcore.h>
 
