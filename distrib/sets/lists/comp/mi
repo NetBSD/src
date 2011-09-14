@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1673 2011/09/12 21:13:31 christos Exp $
+#	$NetBSD: mi,v 1.1674 2011/09/14 23:37:32 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6777,7 +6777,9 @@
 ./usr/share/man/cat3/has_il.0			comp-c-catman		.cat
 ./usr/share/man/cat3/hash.0			comp-c-catman		.cat
 ./usr/share/man/cat3/hcreate.0			comp-c-catman		.cat
+./usr/share/man/cat3/hcreate_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/hdestroy.0			comp-c-catman		.cat
+./usr/share/man/cat3/hdestroy_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/heapsort.0			comp-c-catman		.cat
 ./usr/share/man/cat3/herror.0			comp-c-catman		.cat
 ./usr/share/man/cat3/hesiod.0			comp-c-catman		hesiod,.cat
@@ -6807,6 +6809,7 @@
 ./usr/share/man/cat3/hosts_access.0		comp-c-catman		.cat
 ./usr/share/man/cat3/hosts_ctl.0		comp-c-catman		.cat
 ./usr/share/man/cat3/hsearch.0			comp-c-catman		.cat
+./usr/share/man/cat3/hsearch_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/hstrerror.0		comp-c-catman		.cat
 ./usr/share/man/cat3/htonl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/htons.0			comp-c-catman		.cat
@@ -12938,7 +12941,9 @@
 ./usr/share/man/html3/has_il.html		comp-c-htmlman		html
 ./usr/share/man/html3/hash.html			comp-c-htmlman		html
 ./usr/share/man/html3/hcreate.html		comp-c-htmlman		html
+./usr/share/man/html3/hcreate_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/hdestroy.html		comp-c-htmlman		html
+./usr/share/man/html3/hdestroy_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/heapsort.html		comp-c-htmlman		html
 ./usr/share/man/html3/herror.html		comp-c-htmlman		html
 ./usr/share/man/html3/hesiod.html		comp-c-htmlman		hesiod,html
@@ -12967,6 +12972,7 @@
 ./usr/share/man/html3/hosts_access.html		comp-c-htmlman		html
 ./usr/share/man/html3/hosts_ctl.html		comp-c-htmlman		html
 ./usr/share/man/html3/hsearch.html		comp-c-htmlman		html
+./usr/share/man/html3/hsearch_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/hstrerror.html		comp-c-htmlman		html
 ./usr/share/man/html3/htonl.html		comp-c-htmlman		html
 ./usr/share/man/html3/htons.html		comp-c-htmlman		html
@@ -19017,7 +19023,9 @@
 ./usr/share/man/man3/has_il.3			comp-c-man		.man
 ./usr/share/man/man3/hash.3			comp-c-man		.man
 ./usr/share/man/man3/hcreate.3			comp-c-man		.man
+./usr/share/man/man3/hcreate_r.3		comp-c-man		.man
 ./usr/share/man/man3/hdestroy.3			comp-c-man		.man
+./usr/share/man/man3/hdestroy_r.3		comp-c-man		.man
 ./usr/share/man/man3/heapsort.3			comp-c-man		.man
 ./usr/share/man/man3/herror.3			comp-c-man		.man
 ./usr/share/man/man3/hesiod.3			comp-c-man		hesiod,.man
@@ -19047,6 +19055,7 @@
 ./usr/share/man/man3/hosts_access.3		comp-c-man		.man
 ./usr/share/man/man3/hosts_ctl.3		comp-c-man		.man
 ./usr/share/man/man3/hsearch.3			comp-c-man		.man
+./usr/share/man/man3/hsearch_r.3		comp-c-man		.man
 ./usr/share/man/man3/hstrerror.3		comp-c-man		.man
 ./usr/share/man/man3/htonl.3			comp-c-man		.man
 ./usr/share/man/man3/htons.3			comp-c-man		.man
