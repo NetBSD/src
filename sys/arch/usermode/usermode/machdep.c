@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.30 2011/09/12 12:24:34 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.31 2011/09/14 18:28:36 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -32,7 +32,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2011/09/12 12:24:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2011/09/14 18:28:36 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,9 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2011/09/12 12:24:34 reinoud Exp $")
 
 char machine[] = "usermode";
 char machine_arch[] = "usermode";
-
-/* XXX */
-int	physmem = MEMSIZE * 1024 / PAGE_SIZE;
 
 static char **saved_argv;
 char *usermode_root_image_path = NULL;

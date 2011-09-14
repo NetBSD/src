@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.60 2011/09/13 10:38:48 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.61 2011/09/14 18:28:36 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2011/09/13 10:38:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 2011/09/14 18:28:36 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -58,9 +58,6 @@ struct pv_entry {
 #define PV_MODIFIED	0x02
 };
 
-
-/* this is a guesstimate of 16KB/process on amd64, or around 680+ mappings */
-#define PM_MIN_NENTRIES ((int) (16*1024 / sizeof(pv_entry)))
 struct pmap {
 	int	pm_count;
 	int	pm_flags;
@@ -100,90 +97,82 @@ static void	pmap_deferred_init(void);
 
 extern void	setup_signal_handlers(void);
 
-/* exposed to signal handler */
+/* exposed (to signal handler f.e.) */
 vaddr_t kmem_k_start, kmem_k_end;
 vaddr_t kmem_ext_start, kmem_ext_end;
 vaddr_t kmem_user_start, kmem_user_end;
 vaddr_t kmem_ext_cur_start, kmem_ext_cur_end;
 
+/* amount of physical memory */
+int	physmem; 
+
 #define SPARSE_MEMFILE
+
+static uint8_t mem_kvm[KVMSIZE + 2*PAGE_SIZE];
 
 void
 pmap_bootstrap(void)
 {
 	struct pmap *pmap;
-	ssize_t fpos, file_len;
-	ssize_t pv_fpos, pm_fpos;
-	ssize_t wlen;
-	ssize_t kmem_len, user_len, barrier_len, uvm_len;
-	ssize_t pv_table_size;
+	paddr_t totmem_len;
+	paddr_t fpos, file_len;
+	paddr_t pv_fpos, pm_fpos;
+	paddr_t wlen;
+	paddr_t user_len, barrier_len;
+	paddr_t pv_table_size;
 	vaddr_t free_start, free_end;
 	vaddr_t mpos;
 	paddr_t pa;
 	vaddr_t va;
 	uintptr_t pg;
 	void *addr;
-	int err;
 
-	extern void _init(void);	/* start of kernel               */
+	extern void _start(void);	/* start of kernel		 */
 	extern int etext;		/* end of the kernel             */
 	extern int edata;		/* end of the init. data segment */
 	extern int end;			/* end of bss                    */
+	vaddr_t vm_min_addr;
 
-	aprint_debug("Information retrieved from elf image\n");
-	aprint_debug("start kernel        at %p\n", _init);
+	vm_min_addr = thunk_get_vm_min_address();
+	vm_min_addr = vm_min_addr < PAGE_SIZE ? PAGE_SIZE : vm_min_addr;
+
+	aprint_debug("Information retrieved from system and elf image\n");
+	aprint_debug("min VM address      at %p\n", (void *) vm_min_addr);
+	aprint_debug("start kernel        at %p\n", _start);
 	aprint_debug("  end kernel        at %p\n", &etext);
 	aprint_debug("  end of init. data at %p\n", &edata);
 	aprint_debug("1st end of data     at %p\n", &end);
 	aprint_debug("CUR end data        at %p\n", thunk_sbrk(0));
 
-	/* calculate memory lengths */
-	kmem_len    = (physmem/2) * PAGE_SIZE;
-	user_len    = MEMSIZE * 1024;
-	barrier_len = 2 * 1024 * 1024;
-
 	/* calculate kernel section (R-X) */
-	kmem_k_start = (vaddr_t) PAGE_SIZE * (atop(_init)   );
+	kmem_k_start = (vaddr_t) PAGE_SIZE * (atop(_start)    );
 	kmem_k_end   = (vaddr_t) PAGE_SIZE * (atop(&etext) + 1);
 
-	/* claim memory with 2 pages more */
-	uvm_len = kmem_len + barrier_len + user_len + barrier_len + 2*PAGE_SIZE;
-	err = thunk_posix_memalign(&mem_uvm, PAGE_SIZE, uvm_len);
-	if (err)
-		panic("pmap_bootstrap: couldn't allocate uvm memory");
-	/* make page aligned */
-	mpos = round_page((vaddr_t) mem_uvm);// + PAGE_SIZE;
-	if (!((void *) mpos >= mem_uvm))
-		panic("pmap_bootstrap: mpos miscalculation");
+	/* calculate total available memory space */
+	totmem_len  = (vaddr_t) mem_kvm + KVMSIZE;
 
-	/* low barrier (---) */
-	mpos += barrier_len;
+	/* calculate the number of available pages */
+	physmem     = totmem_len / PAGE_SIZE;
+
+	/* calculate memory lengths */
+	barrier_len = 2 * 1024 * 1024;
+	user_len    = kmem_k_start - barrier_len;
+
+	/* devide memory */
+	mem_uvm = (void *) vm_min_addr;
+	mpos = vm_min_addr;
 
 	/* claim an area for userland (---/R--/RW-/RWX) */
 	kmem_user_start = mpos;
 	mpos += user_len;
 	kmem_user_end   = mpos;
-	/* TODO make a better user space size estimate */
-
-	/* upper barrier (---) */
-	mpos += barrier_len;
 
 	/* calculate KVM section (RW-) */
-	kmem_ext_start = mpos;
-	mpos += kmem_len;
+	kmem_ext_start = round_page((vaddr_t) mem_kvm);
+	mpos += KVMSIZE;
 	kmem_ext_end   = mpos;
 
-#if 1
-	/* protect complete UVM area (---) */
-	addr = thunk_mmap((void*) mem_uvm,
-		uvm_len,
-		THUNK_PROT_NONE,
-		THUNK_MAP_ANON | THUNK_MAP_FIXED | THUNK_MAP_PRIVATE,
-		-1, 0);
-	if (addr != (void *) mem_uvm)
-		panic("pmap_bootstrap: uvm space protection barrier failed (%p)\n", (void *)addr);
-#endif
-
+	/* print summary */
 	aprint_debug("\nMemory summary\n");
 	aprint_debug("\tkmem_k_start\t%p\n",    (void *) kmem_k_start);
 	aprint_debug("\tkmem_k_end\t%p\n",      (void *) kmem_k_end);
@@ -191,7 +180,34 @@ pmap_bootstrap(void)
 	aprint_debug("\tkmem_ext_end\t%p\n",    (void *) kmem_ext_end);
 	aprint_debug("\tkmem_user_start\t%p\n", (void *) kmem_user_start);
 	aprint_debug("\tkmem_user_end\t%p\n",   (void *) kmem_user_end);
+
+	aprint_debug("\ttotmem_len\t%10d\n", (int) totmem_len);
+	aprint_debug("\tkvmsize\t\t%10d\n", (int) KVMSIZE);
+	aprint_debug("\tuser_len\t%10d\n", (int) user_len);
+
 	aprint_debug("\n\n");
+
+#if 1
+	/* protect user memory UVM area (---) */
+	addr = thunk_mmap((void*) mem_uvm,
+		kmem_user_end - vm_min_addr,
+		THUNK_PROT_NONE,
+		THUNK_MAP_ANON | THUNK_MAP_FIXED | THUNK_MAP_PRIVATE,
+		-1, 0);
+	if (addr != (void *) mem_uvm)
+		panic("pmap_bootstrap: userland uvm space protection "
+			"failed (%p)\n", (void *)addr);
+
+	/* protect user memory UVM area (---) */
+	addr = thunk_mmap((void*) kmem_ext_start,
+		KVMSIZE,
+		THUNK_PROT_NONE,
+		THUNK_MAP_ANON | THUNK_MAP_FIXED | THUNK_MAP_PRIVATE,
+		-1, 0);
+	if (addr != (void *) kmem_ext_start)
+		panic("pmap_bootstrap: kvm uvm space protection "
+			"failed (%p)\n", (void *)addr);
+#endif
 
 	aprint_debug("Creating memory mapped backend\n");
 
@@ -205,7 +221,7 @@ pmap_bootstrap(void)
 		panic("pmap_bootstrap: can't unlink %s", mem_name);
 
 	/* file_len is the backing store length, nothing to do with placement */
-	file_len = 1024 * MEMSIZE;
+	file_len = totmem_len;
 
 #ifdef SPARSE_MEMFILE
 	{
@@ -235,6 +251,7 @@ pmap_bootstrap(void)
 
 	/* protect the current kernel section */
 #if 0
+	int err;
 	err = thunk_mprotect((void *) kmem_k_start, kmem_k_end - kmem_k_start,
 		THUNK_PROT_READ | THUNK_PROT_EXEC);
 	assert(err == 0);
