@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.45 2011/09/10 10:37:06 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.46 2011/09/14 18:30:13 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.45 2011/09/10 10:37:06 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.46 2011/09/14 18:30:13 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -318,9 +318,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* copy the PCB and its switchframes from parent */
 	memcpy(pcb2, pcb1, sizeof(struct pcb));
 
-	stacksize = PAGE_SIZE;
-	stack_ucp          = malloc(PAGE_SIZE, M_TEMP, M_NOWAIT);
-	stack_syscall_ucp  = malloc(PAGE_SIZE, M_TEMP, M_NOWAIT);
+	stacksize = 4*PAGE_SIZE;
+	stack_ucp          = malloc(stacksize, M_TEMP, M_NOWAIT);
+	stack_syscall_ucp  = malloc(stacksize, M_TEMP, M_NOWAIT);
 	pcb2->pcb_needfree = true;
 
 	if (thunk_getcontext(&pcb2->pcb_ucp))
