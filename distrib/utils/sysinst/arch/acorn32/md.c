@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.27 2011/04/04 08:30:15 mbalmer Exp $ */
+/*	$NetBSD: md.c,v 1.28 2011/09/14 12:35:19 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -96,7 +96,7 @@ md_get_info(void)
 	if (lseek(fd, (off_t)FILECORE_BOOT_SECTOR * DEV_BSIZE, SEEK_SET) < 0
 	    || read(fd, bb, sizeof(bb)) - sizeof(bb) != 0) {
 		endwin();
-		fprintf(stderr, msg_string(MSG_badreadbb));
+		fprintf(stderr, "%s", msg_string(MSG_badreadbb));
 		close(fd);
 		exit(1);
 	}
@@ -129,7 +129,8 @@ md_get_info(void)
 			if (lseek(fd, (off_t)offset * DEV_BSIZE, SEEK_SET) < 0
 			    || read(fd, bb, sizeof(bb)) - sizeof(bb) != 0) {
 				endwin();
-				fprintf(stderr, msg_string(MSG_badreadriscix));
+				fprintf(stderr, "%s",
+				    msg_string(MSG_badreadriscix));
 				close(fd);
 				exit(1);
 			}
@@ -151,7 +152,8 @@ md_get_info(void)
 				 * leave this disc alone.
 				 */
 				endwin();
-				fprintf(stderr, msg_string(MSG_notnetbsdriscix));
+				fprintf(stderr, "%s",
+				    msg_string(MSG_notnetbsdriscix));
 				close(fd);
 				exit(1);
 			}
@@ -164,7 +166,7 @@ md_get_info(void)
 			 * the filecore boot block first with dd.
 			 */
 			endwin();
-			fprintf(stderr, msg_string(MSG_notnetbsd));
+			fprintf(stderr, "%s", msg_string(MSG_notnetbsd));
 			close(fd);
 			exit(1);
 		}
