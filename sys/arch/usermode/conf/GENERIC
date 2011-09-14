@@ -1,15 +1,15 @@
-# $NetBSD: GENERIC,v 1.15 2011/08/31 12:42:41 reinoud Exp $
+# $NetBSD: GENERIC,v 1.16 2011/09/14 18:28:36 reinoud Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.15 $"
+#ident 		"GENERIC-$Revision: 1.16 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
 
-#options 	MEMSIZE=65536	# amount of memory to allocate (in KB)
-options 	MEMSIZE=131072	# amount of memory to use for userland (in KB)
+options		TEXTADDR=0x60000000	# 1.5 Gb?
+options		KVMSIZE =0x10000000
 
 options 	RTC_OFFSET=0
 options 	KTRACE
@@ -22,10 +22,10 @@ options 	SYSVSHM
 options 	DEBUG
 options 	DIAGNOSTIC
 options		LOCKDEBUG
-options 	DEBUG_EXEC
-#options		CPU_DEBUG
-#options		UVMHIST
-#options		UVMHIST_PRINT
+#options 	DEBUG_EXEC
+#options	CPU_DEBUG
+#options	UVMHIST
+#options	UVMHIST_PRINT
 
 options 	COMPAT_BSDPTY
 options 	COMPAT_50
@@ -47,6 +47,10 @@ cpu0		at mainbus?
 clock0		at mainbus?
 ttycons0	at mainbus?
 ld0		at mainbus?
+
+#options		SDL
+#genfb0		at thunkbus?
+#wsdisplay0	at genfb?
 
 pseudo-device	loop
 
