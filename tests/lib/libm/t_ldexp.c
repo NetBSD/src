@@ -1,4 +1,4 @@
-/* $NetBSD: t_ldexp.c,v 1.6 2011/09/14 06:50:43 jruoho Exp $ */
+/* $NetBSD: t_ldexp.c,v 1.7 2011/09/14 13:47:40 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ldexp.c,v 1.6 2011/09/14 06:50:43 jruoho Exp $");
+__RCSID("$NetBSD: t_ldexp.c,v 1.7 2011/09/14 13:47:40 jruoho Exp $");
 
 #include <math.h>
 #include <limits.h>
@@ -57,7 +57,7 @@ ATF_TC_BODY(ldexp_exp2, tc)
 
 	for (i = 0; i < __arraycount(n); i++) {
 		y = ldexp(x, n[i]);
-		ATF_CHECK(x * exp2(n[i]));
+		ATF_CHECK(y == x * exp2(n[i]));
 	}
 #endif
 }
@@ -184,7 +184,7 @@ ATF_TC_BODY(ldexpf_exp2f, tc)
 
 	for (i = 0; i < __arraycount(n); i++) {
 		y = ldexpf(x, n[i]);
-		ATF_CHECK(x * exp2f(n[i]));
+		ATF_CHECK(y == x * exp2f(n[i]));
 	}
 #endif
 }
