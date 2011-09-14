@@ -1,4 +1,4 @@
-/* $NetBSD: simple_busfuncs.c,v 1.9 2011/09/13 19:21:20 christos Exp $ */
+/* $NetBSD: simple_busfuncs.c,v 1.10 2011/09/14 09:19:09 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simple_busfuncs.c,v 1.9 2011/09/13 19:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simple_busfuncs.c,v 1.10 2011/09/14 09:19:09 rkujawa Exp $");
 
 /*
  * Do NOT use this standalone.
@@ -45,6 +45,7 @@ Error AMIGA_SIMPLE_BUS_STRIDE not defined in __FILE__, line __LINE__ .
 #endif
 
 #include <sys/bus.h>
+#include <sys/null.h>
 
 #define MKN2(x,y) __CONCAT(x, y)
 #define MKN1(x,y) MKN2(x, y)
@@ -603,7 +604,7 @@ const struct amiga_bus_space_methods oabs(amiga_bus_stride_) = {
 	.bsrr4 =	oabs(bsrr4_),
 	.bswr4 =	oabs(bswr4_),
 	.bsrrs4 =	oabs(bsrr4_),
-	.bsrws4 =	oabs(bswr4_),
+	.bswrs4 =	oabs(bswr4_),
 	.bssr4 =	oabs(bssr4_),
 	.bscr4 =	oabs(bscr4_)
 #endif /* AMIGA_SIMPLE_BUS_LONGWORD_METHODS */
