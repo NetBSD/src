@@ -1,4 +1,4 @@
-/* $NetBSD: t_tan.c,v 1.1 2011/09/14 05:18:19 jruoho Exp $ */
+/* $NetBSD: t_tan.c,v 1.2 2011/09/14 06:50:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ ATF_TC_BODY(tanf_angles, tc)
 		x = angles[i].x;
 		y = angles[i].y;
 
-		if (fabs(tanf(x) - y) > eps)
+		if (fabsf(tanf(x) - y) > eps)
 			atf_tc_fail_nonfatal("tanf(%d deg) != %0.01f",
 			    angles[i].angle, angles[i].y);
 	}
