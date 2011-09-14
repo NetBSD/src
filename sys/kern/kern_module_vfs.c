@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.11 2011/08/06 08:11:09 mbalmer Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.12 2011/09/14 12:30:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.11 2011/08/06 08:11:09 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.12 2011/09/14 12:30:20 christos Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -95,13 +95,8 @@ module_load_vfs(const char *name, int flags, bool autoload,
 	}
 	if (error != 0) {
 		PNBUF_PUT(path);
-		if (autoload) {
-			module_print("Cannot load kernel object `%s'"
-			    " error=%d", name, error);
-		} else {
-			module_error("Cannot load kernel object `%s'"
-			    " error=%d", name, error);
-		}
+		module_print("Cannot %sload kernel object `%s'"
+		    " error=%d", autoload ? "auto" : "", name, error);
 		return error;
 	}
 
@@ -120,6 +115,7 @@ module_load_vfs(const char *name, int flags, bool autoload,
 			if (noload != NULL && prop_bool_true(noload)) {
 				module_error("autoloading is disallowed for %s",
 				    path);
+				prop_object_release(moduledict);
 				error = EPERM;
 				goto fail;
 			}
@@ -148,7 +144,7 @@ module_load_vfs(const char *name, int flags, bool autoload,
  */
 static int
 module_load_plist_vfs(const char *modpath, const bool nochroot,
-		       prop_dictionary_t *filedictp)
+    prop_dictionary_t *filedictp)
 {
 	struct pathbuf *pb;
 	struct nameidata nd;
