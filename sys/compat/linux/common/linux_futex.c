@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.26 2010/07/07 01:30:35 chs Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.27 2011/09/14 12:28:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.26 2010/07/07 01:30:35 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.27 2011/09/14 12:28:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.26 2010/07/07 01:30:35 chs Exp $")
 #include <sys/queue.h>
 #include <sys/condvar.h>
 #include <sys/mutex.h>
-#include <sys/once.h>
 #include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/atomic.h>
@@ -92,14 +91,18 @@ int debug_futex = 1;
 #define FUTEXPRINTF(a)
 #endif
 
-static ONCE_DECL(futex_once);
-
-static int
-futex_init(void)
+void
+linux_futex_init(void)
 {
-	FUTEXPRINTF(("futex_init: initializing futex\n"));
+	FUTEXPRINTF(("%s: initializing futex\n", __func__));
 	mutex_init(&futex_lock, MUTEX_DEFAULT, IPL_NONE);
-	return 0;
+}
+
+void
+linux_futex_fini(void)
+{
+	FUTEXPRINTF(("%s: destroying futex\n", __func__));
+	mutex_destroy(&futex_lock);
 }
 
 static struct waiting_proc *futex_wp_alloc(void);
@@ -157,8 +160,6 @@ linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t
 	struct futex *f2;
 	struct waiting_proc *wp;
 	int op_ret;
-
-	RUN_ONCE(&futex_once, futex_init);
 
 	/*
 	 * Our implementation provides only private futexes. Most of the apps
