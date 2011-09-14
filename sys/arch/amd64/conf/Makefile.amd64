@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.38 2011/08/02 17:22:51 joerg Exp $
+#	$NetBSD: Makefile.amd64,v 1.39 2011/09/14 14:59:29 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -107,13 +107,13 @@ netbsd32_sigcode.o: assym.h
 
 %RULES
 
-## Include rules for ACPI wakecode
-.include "$S/arch/x86/acpi/Makefile.wakecode.inc"
-
 ##
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+## Include rules for ACPI wakecode
+.include "$S/arch/x86/acpi/Makefile.wakecode.inc"
 
 ##
 ## (10) Appending make options.
