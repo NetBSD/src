@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.249 2011/09/09 18:48:34 apb Exp $
+#	$NetBSD: build.sh,v 1.250 2011/09/14 17:35:44 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -746,7 +746,7 @@ _x_:
 EOF
 }
 
-# nobomb_getmakevar --
+# bomb_getmakevar --
 # Given the name of a make variable in $1, print make's idea of the
 # value of that variable, or bomb if there's an error.
 #
@@ -756,7 +756,7 @@ bomb_getmakevar()
 	nobomb_getmakevar "$1" || bomb "bomb_getmakevar $1: ${make} failed"
 }
 
-# nobomb_getmakevar --
+# getmakevar --
 # Given the name of a make variable in $1, print make's idea of the
 # value of that variable, or print a literal '$' followed by the
 # variable name if ${make} is not executable.  This is intended for use in
@@ -1222,8 +1222,9 @@ sanitycheck()
 #   a copy of ${toolprefix}make (this should work for everybody who
 #   doesn't override TOOLDIR via /etc/mk.conf);
 # * Failing that, search for ${toolprefix}make, nbmake, bmake, or make,
-#   in the PATH (this might accidentally find a non-NetBSD version of
-#   make, which will lead to failure in the next step);
+#   in the PATH (this might accidentally find a version of make that
+#   does not understand the syntax used by NetBSD make, and that will
+#   lead to failure in the next step);
 # * If a copy of make was found above, try to use it with
 #   nobomb_getmakevar to find the correct value for TOOLDIR, and believe the
 #   result only if it's a directory that already exists;
@@ -1300,7 +1301,8 @@ print_tooldir_make()
 	#
 	if [ -x "${possible_make}" ]; then
 		possible_TOOLDIR="$(
-			make="${possible_make}" nobomb_getmakevar TOOLDIR
+			make="${possible_make}" \
+			nobomb_getmakevar TOOLDIR 2>/dev/null
 			)"
 		if [ $? = 0 ] && [ -n "${possible_TOOLDIR}" ] \
 		    && [ -d "${possible_TOOLDIR}" ];
@@ -1630,7 +1632,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.249 2011/09/09 18:48:34 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.250 2011/09/14 17:35:44 apb Exp $
 # with these arguments: ${_args}
 #
 
