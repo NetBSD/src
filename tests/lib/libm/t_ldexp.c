@@ -1,4 +1,4 @@
-/* $NetBSD: t_ldexp.c,v 1.5 2011/09/13 07:03:36 jruoho Exp $ */
+/* $NetBSD: t_ldexp.c,v 1.6 2011/09/14 06:50:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ldexp.c,v 1.5 2011/09/13 07:03:36 jruoho Exp $");
+__RCSID("$NetBSD: t_ldexp.c,v 1.6 2011/09/14 06:50:43 jruoho Exp $");
 
 #include <math.h>
 #include <limits.h>
@@ -164,6 +164,10 @@ ATF_TC_BODY(ldexp_zero_pos, tc)
 #endif
 }
 
+/*
+ * ldexpf(3)
+ */
+
 ATF_TC(ldexpf_exp2f);
 ATF_TC_HEAD(ldexpf_exp2f, tc)
 {
@@ -206,10 +210,6 @@ ATF_TC_BODY(ldexpf_nan, tc)
 	}
 #endif
 }
-
-/*
- * ldexpf(3)
- */
 
 ATF_TC(ldexpf_inf_neg);
 ATF_TC_HEAD(ldexpf_inf_neg, tc)
