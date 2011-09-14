@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.61 2011/09/14 18:28:36 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.62 2011/09/14 19:45:27 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 2011/09/14 18:28:36 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62 2011/09/14 19:45:27 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -769,7 +769,7 @@ pv_release(pmap_t pmap, uintptr_t ppn, uintptr_t lpn)
 	 * to the header.  Otherwise we must search the list for
 	 * the entry.  In either case we free the now unused entry.
 	 */
-	if (pmap == pv->pv_pmap && lpn == pv->pv_lpn) {
+	if ((pmap == pv->pv_pmap) && (lpn == pv->pv_lpn)) {
 		npv = pv->pv_next;
 		if (npv) {
 			/* Pull up first entry from chain. */
@@ -973,7 +973,7 @@ pmap_deactivate(struct lwp *l)
 
 	active_pmap = NULL;
 	pmap->pm_flags &=~ PM_ACTIVE;
-	for (i = 0; i < 1024; i++) {
+	for (i = 0; i < pm_nentries; i++) {
 		if (pmap->pm_entries[i] != NULL) {
 			pmap_page_deactivate(pmap->pm_entries[i]);
 //			MEMC_WRITE(pmap->pm_entries[i]->pv_deactivate);
