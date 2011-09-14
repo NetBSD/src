@@ -994,7 +994,7 @@ tune-gcd-p: gcd.c
 	$(CCAS) $(COMPILE_FLAGS) tmp-$*.s -o $@
 	$(RM_TMP) tmp-$*.s
 .S.lo:
-	$(LIBTOOL) --mode=compile --tag=CC $(top_srcdir)/mpn/cpp-ccas --cpp="$(CPP) $(PREPROCESS_FLAGS)" $(CCAS) $(COMPILE_FLAGS) `test -f '$<' || echo '$(srcdir)/'`$<
+	$(LIBTOOL) --mode=compile --tag=CC $(SHELL) $(top_srcdir)/mpn/cpp-ccas --cpp="$(CPP) $(PREPROCESS_FLAGS)" $(CCAS) $(COMPILE_FLAGS) `test -f '$<' || echo '$(srcdir)/'`$<
 
 # .asm assembler, preprocessed with m4.
 #
@@ -1022,7 +1022,7 @@ tune-gcd-p: gcd.c
 	$(CCAS) $(COMPILE_FLAGS) tmp-$*.s -o $@
 	$(RM_TMP) tmp-$*.s
 .asm.lo:
-	$(LIBTOOL) --mode=compile --tag=CC $(top_srcdir)/mpn/m4-ccas --m4="$(M4)" $(CCAS) $(COMPILE_FLAGS) `test -f '$<' || echo '$(srcdir)/'`$<
+	$(LIBTOOL) --mode=compile --tag=CC $(SHELL) $(top_srcdir)/mpn/m4-ccas --m4="$(M4)" $(CCAS) $(COMPILE_FLAGS) `test -f '$<' || echo '$(srcdir)/'`$<
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
