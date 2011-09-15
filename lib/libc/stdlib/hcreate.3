@@ -1,4 +1,4 @@
-.\" 	$NetBSD: hcreate.3,v 1.9 2011/09/14 23:33:51 christos Exp $
+.\" 	$NetBSD: hcreate.3,v 1.10 2011/09/15 09:14:54 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,8 +60,8 @@ The
 .Fn hcreate_r ,
 .Fn hdestroy ,
 .Fn hdestroy_r
-and
 .Fn hsearch ,
+and
 .Fn hsearch_r
 functions manage hash search tables.
 .Pp
@@ -170,8 +170,8 @@ The
 .Fn hdestroy_r ,
 and
 .Fn hsearch_r
-are re-entrant versions of the above functions that can operate on a table
-supplied by the user.
+functions are re-entrant versions of the above functions that can
+operate on a table supplied by the user.
 The
 .Fn hsearch_r
 function returns
@@ -192,7 +192,7 @@ If successful, the
 .Fn hcreate
 and
 .Fn hcreate_r
-function return a non-zero value.
+functions return a non-zero value.
 Otherwise, a value of
 .Dv 0
 is returned and
@@ -229,7 +229,7 @@ function returns
 .Dv 1
 unless the table is full, when it returns
 .Dv 0 .
-If the
+If
 .Fn hsearch
 returns
 .Dv 0
@@ -254,10 +254,11 @@ The
 and
 .Fn hsearch_r
 functions will also fail if the action is
-.Dv SEARCH and the element is not found:
+.Dv SEARCH
+and the element is not found:
 .Bl -tag -width Er
 .It Bq Er ESRCH
-The 
+The
 .Fa item
 given is not found.
 .El
@@ -287,15 +288,15 @@ The
 .Fn hdestroy_r
 and
 .Fn hsearch_r
-are
+functions are
 .Tn GNU
 extensions.
 .Sh CAVEATS
 At least the following limitations can be mentioned:
 .Bl -bullet
 .It
-The original, non-
-.Tn GNU
+The original,
+.Pf non- Tn GNU
 interface permits the use of only one hash table at a time.
 .It
 Individual hash table entries can be added, but not deleted.
