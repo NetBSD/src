@@ -1,4 +1,4 @@
-/*	$NetBSD: stvii.c,v 1.2 2011/09/07 13:37:49 macallan Exp $	*/
+/*	$NetBSD: stvii.c,v 1.3 2011/09/15 19:29:23 macallan Exp $	*/
 
 /*-
  * Copyright (C) 2011 Michael Lorenz.
@@ -30,7 +30,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stvii.c,v 1.2 2011/09/07 13:37:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stvii.c,v 1.3 2011/09/15 19:29:23 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ struct stvii_softc {
 	i2c_tag_t sc_i2c;
 	int sc_address, sc_version;
 	int sc_sleep;
+	int sc_flags, sc_charge;
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor[BAT_NSENSORS];
 	struct sysmon_pswitch sc_sm_acpower;
@@ -106,6 +107,8 @@ static int stvii_match(device_t, cfdata_t, void *);
 static void stvii_writereg(struct stvii_softc *, int, uint8_t);
 static int stvii_readreg(struct stvii_softc *, int);
 static void stvii_worker(void *);
+static void stvii_setup_envsys(struct stvii_softc *);
+static void stvii_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 CFATTACH_DECL_NEW(stvii, sizeof(struct stvii_softc),
     stvii_match, stvii_attach, NULL, NULL);
@@ -181,6 +184,7 @@ stvii_attach(device_t parent, device_t self, void *aux)
 	if (sysmon_pswitch_register(&sc->sc_sm_powerbutton) != 0)
 		printf("%s: unable to register power button with sysmon\n",
 		    device_xname(sc->sc_dev));
+	stvii_setup_envsys(sc);
 }
 
 static void
@@ -222,11 +226,13 @@ stvii_readreg(struct stvii_softc *sc, int reg)
 static int
 stvii_battery_level(struct stvii_softc *sc)
 {
-	int bl, bh;
+	int bl, bh, ret;
 
 	bl = stvii_readreg(sc, ST7_BATTERY_L);
 	bh = stvii_readreg(sc, ST7_BATTERY_H);
-	return (bl & 3) | (bh << 2);	
+	ret = (bl & 3) | (bh << 2);
+	ret = ((ret * 10000) / 1024) * 1000;
+	return ret;
 }
 
 static void
@@ -274,6 +280,7 @@ stvii_worker(void *cookie)
 			}
 			status = st;
 		}
+		sc->sc_flags = status;
 		if (0) {
 			bl = stvii_battery_level(sc);
 			if (bl != battery_level) {
@@ -282,5 +289,83 @@ stvii_worker(void *cookie)
 			}
 		}
 		tsleep(&sc->sc_sleep, 0, "stvii", hz / 2);
+	}
+}
+
+#define INITDATA(index, unit, string)					\
+	sc->sc_sensor[index].units = unit;     				\
+	sc->sc_sensor[index].state = ENVSYS_SINVALID;			\
+	snprintf(sc->sc_sensor[index].desc,				\
+	    sizeof(sc->sc_sensor[index].desc), "%s", string);
+
+static void
+stvii_setup_envsys(struct stvii_softc *sc)
+{
+	int i;
+
+	sc->sc_sme = sysmon_envsys_create();
+
+	INITDATA(BAT_AC_PRESENT, ENVSYS_INDICATOR, "AC present");
+	INITDATA(BAT_BATTERY_PRESENT, ENVSYS_INDICATOR, "Battery present");
+	INITDATA(BAT_CHARGING, ENVSYS_BATTERY_CHARGE, "Battery charging");
+	INITDATA(BAT_CHARGE, ENVSYS_SVOLTS_DC, "Battery voltage");
+	INITDATA(BAT_MAX_CHARGE, ENVSYS_SVOLTS_DC, "Battery design cap");
+#undef INITDATA
+
+	for (i = 0; i < BAT_NSENSORS; i++) {
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+						&sc->sc_sensor[i])) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			return;
+		}
+	}
+
+	sc->sc_sme->sme_name = device_xname(sc->sc_dev);
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = stvii_refresh;
+
+	if (sysmon_envsys_register(sc->sc_sme)) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to register with sysmon\n");
+		sysmon_envsys_destroy(sc->sc_sme);
+	}
+}
+
+static void
+stvii_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	struct stvii_softc *sc = sme->sme_cookie;
+	int which = edata->sensor, ctl, bat;
+
+	edata->state = ENVSYS_SINVALID;
+	switch (which) {
+	case BAT_AC_PRESENT:
+		edata->value_cur = (sc->sc_flags & STS_AC_AVAILABLE);
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BAT_BATTERY_PRESENT:
+		edata->value_cur = (sc->sc_flags & STS_BATTERY_PRESENT);
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BAT_CHARGE:
+		if (sc->sc_flags & STS_BATTERY_PRESENT) {
+			bat = stvii_battery_level(sc);
+			edata->value_cur = bat;
+			edata->state = ENVSYS_SVALID;
+		}
+		break;
+	case BAT_MAX_CHARGE:
+		if (sc->sc_flags & STS_BATTERY_PRESENT) {
+			edata->value_cur = 8300000;
+			/*edata->state = ENVSYS_SVALID;*/
+		}
+		break;
+	case BAT_CHARGING:
+		ctl = stvii_readreg(sc, ST7_CONTROL);
+		if (ctl != -1) {
+			edata->value_cur = ctl & STC_CHARGE_ENABLE;
+		}
+		edata->state = ENVSYS_SVALID;
+		break;
 	}
 }
