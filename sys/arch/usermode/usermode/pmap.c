@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.64 2011/09/15 14:45:22 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.65 2011/09/15 14:55:23 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2011/09/15 14:45:22 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 2011/09/15 14:55:23 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -724,7 +724,7 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 	pv->pv_lpn    = lpn;
 	pv->pv_prot   = prot;
 	pv->pv_vflags = 0;
-	pv->pv_next   = NULL;
+	/* pv->pv_next   = NULL; */	/* might confuse linked list? */
 	if (flags & PMAP_WIRED)
 		pv->pv_vflags |= PV_WIRED;
 
@@ -747,6 +747,10 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 		pmap->pm_stats.wired_count++;
 
 	splx(s);
+
+	/* activate page directly when on active pmap */
+	if (pmap->pm_flags & PM_ACTIVE)
+		pmap_page_activate(pv);
 
 	return 0;
 }
