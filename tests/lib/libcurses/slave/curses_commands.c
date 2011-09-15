@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.5 2011/08/29 12:46:03 christos Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.6 2011/09/15 11:46:19 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -209,13 +209,13 @@ cmd_attr_set(int nargs, char **args)
 
 	if (sscanf(args[0], "%d", &attrib) == 0) {
 		report_count(1);
-	report_error("BAD ARGUMENT");
+		report_error("BAD ARGUMENT");
 		return;
 	}
 
 	if (sscanf(args[1], "%hd", &pair) == 0) {
 		report_count(1);
-	report_error("BAD ARGUMENT");
+		report_error("BAD ARGUMENT");
 		return;
 	}
 
@@ -525,7 +525,7 @@ cmd_inch(int nargs, char **args)
 
 
 	report_count(1);
-	report_int(inch());
+	report_byte(inch());
 }
 
 
@@ -563,7 +563,7 @@ cmd_inchstr(int nargs, char **args)
 {
 	chtype string[256];
 
-	if (check_arg_count(nargs, 1) == 1)
+	if (check_arg_count(nargs, 0) == 1)
 		return;
 
 	/* XXX call2 */
@@ -596,7 +596,7 @@ cmd_innstr(int nargs, char **args)
 
 	/* XXX call2 */
 	report_count(2);
-	report_return(innstr(string, limit));
+	report_int(innstr(string, limit));
 	report_status(string);
 	free(string);
 }
@@ -648,7 +648,7 @@ cmd_instr(int nargs, char **args)
 {
 	char string[256];
 
-	if (check_arg_count(nargs, 1) == 1)
+	if (check_arg_count(nargs, 0) == 1)
 		return;
 
 	/* XXX call2 */
@@ -882,6 +882,7 @@ void
 cmd_mvaddch(int nargs, char **args)
 {
 	int y, x;
+	chtype *ch;
 
 	if (check_arg_count(nargs, 3) == 1)
 		return;
@@ -898,8 +899,9 @@ cmd_mvaddch(int nargs, char **args)
 		return;
 	}
 
+	ch = (chtype *) args[2];
 	report_count(1);
-	report_return(mvaddch(y, x, args[2][0]));
+	report_return(mvaddch(y, x, ch[0]));
 }
 
 
@@ -1791,7 +1793,7 @@ cmd_beep(int nargs, char **args)
 		return;
 
 	report_count(1);
-	report_int(beep());
+	report_return(beep());
 }
 
 
@@ -2179,14 +2181,14 @@ cmd_erasechar(int nargs, char **args)
 		return;
 
 	report_count(1);
-	report_return(erasechar());
+	report_int(erasechar());
 }
 
 
 void
 cmd_flash(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 1) == 0)
+	if (check_arg_count(nargs, 0) == 1)
 		return;
 
 	report_count(1);
@@ -2280,7 +2282,7 @@ cmd_getbkgd(int nargs, char **args)
 	}
 
 	report_count(1);
-	report_int(getbkgd(win));
+	report_byte(getbkgd(win));
 }
 
 
@@ -2319,6 +2321,28 @@ cmd_getcurx(int nargs, char **args)
 
 	report_count(1);
 	report_int(getcurx(win));
+}
+
+
+void
+cmd_getyx(int nargs, char **args)
+{
+	WINDOW *win;
+	int y, x;
+
+	if (check_arg_count(nargs, 1) == 1)
+		return;
+
+	if (sscanf(args[0], "%p", &win) == 0) {
+		report_count(1);
+		report_error("BAD ARGUMENT");
+		return;
+	}
+
+	getyx(win, y, x);
+	report_count(2);
+	report_int(y);
+	report_int(x);
 }
 
 
@@ -2437,6 +2461,28 @@ cmd_getparx(int nargs, char **args)
 
 
 void
+cmd_getparyx(int nargs, char **args)
+{
+	WINDOW *win;
+	int y, x;
+
+	if (check_arg_count(nargs, 1) == 1)
+		return;
+
+	if (sscanf(args[0], "%p", &win) == 0) {
+		report_count(1);
+		report_error("BAD ARGUMENT");
+		return;
+	}
+
+	report_count(2);
+	getparyx(win, y, x);
+	report_int(y);
+	report_int(x);
+}
+
+
+void
 cmd_gettmode(int nargs, char **args)
 {
 	if (check_arg_count(nargs, 0) == 1)
@@ -2522,16 +2568,13 @@ cmd_has_il(int nargs, char **args)
 void
 cmd_hline(int nargs, char **args)
 {
-	int ch, count;
+	int count;
+	chtype *ch;
 
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%d", &ch) == 0) {
-		report_count(1);
-		report_error("BAD ARGUMENT");
-		return;
-	}
+	ch = (chtype *) args[0];
 
 	if (sscanf(args[1], "%d", &count) == 0) {
 		report_count(1);
@@ -2540,7 +2583,7 @@ cmd_hline(int nargs, char **args)
 	}
 
 	report_count(1);
-	report_return(hline(ch, count));
+	report_return(hline(ch[0], count));
 }
 
 
@@ -2811,7 +2854,7 @@ cmd_keypad(int nargs, char **args)
 void
 cmd_keyname(int nargs, char **args)
 {
-	int key;
+	unsigned int key;
 
 	if (check_arg_count(nargs, 1) == 1)
 		return;
@@ -3529,13 +3572,13 @@ cmd_newwin(int nargs, char **args)
 		return;
 	}
 
-	if (sscanf(args[0], "%d", &begin_y) == 0) {
+	if (sscanf(args[2], "%d", &begin_y) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
 	}
 
-	if (sscanf(args[1], "%d", &begin_x) == 0) {
+	if (sscanf(args[3], "%d", &begin_x) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -4485,7 +4528,7 @@ void
 cmd_waddch(int nargs, char **args)
 {
 	WINDOW *win;
-	int ch;
+	chtype *ch;
 
 	if (check_arg_count(nargs, 2) == 1)
 		return;
@@ -4496,14 +4539,10 @@ cmd_waddch(int nargs, char **args)
 		return;
 	}
 
-	if (sscanf(args[1], "%d", &ch) == 0) {
-		report_count(1);
-		report_error("BAD ARGUMENT");
-		return;
-	}
+	ch = (chtype *) args[1];
 
 	report_count(1);
-	report_return(waddch(win, ch));
+	report_return(waddch(win, ch[0]));
 }
 
 
@@ -5990,7 +6029,8 @@ void
 cmd_wchgat(int nargs, char **args)
 {
 	WINDOW *win;
-	int n, attr, colour;
+	int n, attr;
+	short colour;
 
 	if (check_arg_count(nargs, 4) == 1)
 		return;
@@ -6013,7 +6053,7 @@ cmd_wchgat(int nargs, char **args)
 		return;
 	}
 
-	if (sscanf(args[3], "%d", &colour) == 0) {
+	if (sscanf(args[3], "%hd", &colour) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -6027,12 +6067,10 @@ cmd_wchgat(int nargs, char **args)
 void
 cmd_mvchgat(int nargs, char **args)
 {
-	if (check_arg_count(nargs, 5) == 1)
-		return;
+	int y, x, n, attr;
+	short colour;
 
-	int y, x, n, attr, colour;
-
-	if (check_arg_count(nargs, 3) == 1)
+	if (check_arg_count(nargs, 6) == 1)
 		return;
 
 	if (sscanf(args[0], "%d", &y) == 0) {
@@ -6059,7 +6097,7 @@ cmd_mvchgat(int nargs, char **args)
 		return;
 	}
 
-	if (sscanf(args[4], "%d", &colour) == 0) {
+	if (sscanf(args[4], "%hd", &colour) == 0) {
 		report_count(1);
 		report_error("BAD ARGUMENT");
 		return;
@@ -6916,7 +6954,7 @@ cmd_key_name(int nargs, char **args)
 
 	if (sscanf(args[0], "%d", &w) == 0) {
 		report_count(1);
-	report_error("BAD ARGUMENT");
+		report_error("BAD ARGUMENT");
 		return;
 	}
 
