@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.68 2011/09/15 15:20:17 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.69 2011/09/15 15:24:39 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2011/09/15 15:20:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2011/09/15 15:24:39 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -940,7 +940,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	dprintf_debug("pmap_kenter_pa : v %p, p %p, prot %d, flags %d\n",
 		(void *) va, (void *) pa, (int) prot, (int) flags);
-	pmap_do_enter(pmap_kernel(),  va, pa, prot, prot | PMAP_WIRED, 1);
+	pmap_do_enter(pmap_kernel(), va, pa, prot, prot | PMAP_WIRED, 1);
 }
 
 void
@@ -953,7 +953,7 @@ void
 pmap_copy(pmap_t dst_map, pmap_t src_map, vaddr_t dst_addr, vsize_t len,
     vaddr_t src_addr)
 {
-	printf("pmap_copy not implemented\n");
+	dprintf_debug("pmap_copy (dummy)\n");
 }
 
 void
