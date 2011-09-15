@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.11 2011/09/15 11:53:12 blymn Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.12 2011/09/15 16:25:17 christos Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -1117,8 +1117,8 @@ validate(int i, void *data)
 		if ((byte_response->return_type == ret_byte) ||
 		    (byte_response->return_type == ret_err) ||
 		    (byte_response->return_type == ret_ok))
-			err(1, "validate: expecting type %s, received type %s"
-			    " at line %d of file %s",
+			err(1, "%s: expecting type %s, received type %s"
+			    " at line %zu of file %s", __func__,
 			    returns_enum_names[command.returns[i].return_type],
 			    returns_enum_names[byte_response->return_type],
 			    line, cur_file);
@@ -1182,7 +1182,7 @@ validate_reference(int i, void *data)
 
 	if (verbose) {
 		fprintf(stderr,
-		    "validate_reference: return type of %s, value %s \n",
+		    "%s: return type of %s, value %s \n", __func__,
 		    returns_enum_names[varp->type],
 		    (const char *)varp->value);
 	}
