@@ -1,4 +1,4 @@
-/*	$NetBSD: command_table.h,v 1.2 2011/04/11 09:02:02 blymn Exp $	*/
+/*	$NetBSD: command_table.h,v 1.3 2011/09/15 11:46:19 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -143,12 +143,14 @@ struct command_def commands[] = {
 	{"getbkgd", cmd_getbkgd},
 	{"getcury", cmd_getcury},
 	{"getcurx", cmd_getcurx},
+	{"getyx", cmd_getyx},
 	{"getbegy", cmd_getbegy},
 	{"getbegx", cmd_getbegx},
 	{"getmaxy", cmd_getmaxy},
 	{"getmaxx", cmd_getmaxx},
 	{"getpary", cmd_getpary},
 	{"getparx", cmd_getparx},
+	{"getparyx", cmd_getparyx},
 	{"gettmode", cmd_gettmode},
 	{"getwin", cmd_getwin},
 	{"halfdelay", cmd_halfdelay},
