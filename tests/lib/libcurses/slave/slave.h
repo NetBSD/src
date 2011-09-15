@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.h,v 1.2 2011/06/11 18:03:18 christos Exp $	*/
+/*	$NetBSD: slave.h,v 1.3 2011/09/15 11:46:19 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -40,6 +40,7 @@ void command_execute(char *, int, char **);
 void report_count(int);
 void report_error(const char *);
 void report_int(int);
+void report_byte(chtype);
 void report_return(int);
 void report_nstr(chtype *);
 void report_status(const char *);
