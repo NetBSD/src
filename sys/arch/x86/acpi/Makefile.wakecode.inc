@@ -1,9 +1,8 @@
-# $NetBSD: Makefile.wakecode.inc,v 1.7 2011/09/14 14:58:43 christos Exp $
+# $NetBSD: Makefile.wakecode.inc,v 1.8 2011/09/15 12:32:30 christos Exp $
 # FreeBSD: src/sys/i386/acpica/Makefile,v 1.3 2002/05/01 21:54:07 peter Exp
 
 ACPI_WAKECODE_S=	${S}/arch/${MACHINE}/acpi/acpi_wakecode.S
 ACPI_GENWAKECODE=	${S}/arch/x86/acpi/genwakecode.sh
-ACPI_WAKEUP_C=		${S}/arch/x86/acpi/acpi_wakeup.c
 ACPI_GENCMD=		AWK=${TOOL_AWK:Q} \
 			HEXDUMP=${TOOL_HEXDUMP:Q} \
 			SED=${TOOL_SED:Q} \
@@ -21,4 +20,4 @@ acpi_wakecode.h: ${ACPI_WAKECODE_S} ${ACPI_GENWAKECODE}
 	${ACPI_GENCMD} ${ACPI_GENWAKECODE} > acpi_wakecode.h
 	rm -f acpi_wakecode.bin acpi_wakecode.o acpi_wakecode.bin.map
 
-acpi_wakeup.o acpu_wakeup.d: acpi_wakecode.h
+acpi_wakeup.o acpi_wakeup.d: acpi_wakecode.h
