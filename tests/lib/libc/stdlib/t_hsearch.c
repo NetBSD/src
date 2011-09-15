@@ -1,4 +1,4 @@
-/* $NetBSD: t_hsearch.c,v 1.2 2011/07/07 11:12:18 jruoho Exp $ */
+/* $NetBSD: t_hsearch.c,v 1.3 2011/09/15 14:51:06 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_hsearch.c,v 1.2 2011/07/07 11:12:18 jruoho Exp $");
+__RCSID("$NetBSD: t_hsearch.c,v 1.3 2011/09/15 14:51:06 christos Exp $");
 
 #include <errno.h>
 #include <search.h>
@@ -233,6 +233,164 @@ ATF_TC_BODY(hsearch_two, tc)
 	hdestroy();
 }
 
+ATF_TC(hsearch_r_basic);
+ATF_TC_HEAD(hsearch_r_basic, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks basic insertions and searching");
+}
+
+ATF_TC_BODY(hsearch_r_basic, tc)
+{
+	ENTRY e, *ep;
+	char ch[2];
+	int i;
+	struct hsearch_data t;
+
+	REQUIRE_ERRNO(hcreate_r(16, &t) != 0);
+
+	/* ch[1] should be constant from here on down. */
+	ch[1] = '\0';
+
+	/* Basic insertions.  Check enough that there'll be collisions. */
+	for (i = 0; i < 26; i++) {
+		ch[0] = 'a' + i;
+		e.key = strdup(ch);	/* ptr to provided key is kept! */
+		ATF_REQUIRE(e.key != NULL);
+		e.data = (void *)(long)i;
+
+		ATF_REQUIRE(hsearch_r(e, ENTER, &ep, &t) == 1);
+		ATF_REQUIRE(ep != NULL);
+		ATF_REQUIRE_STREQ(ep->key, ch);
+		ATF_REQUIRE_EQ((long)ep->data, i);
+	}
+
+	/* e.key should be constant from here on down. */
+	e.key = ch;
+
+	/* Basic lookups. */
+	for (i = 0; i < 26; i++) {
+		ch[0] = 'a' + i;
+
+		ATF_REQUIRE(hsearch_r(e, FIND, &ep, &t) == 1);
+		ATF_REQUIRE(ep != NULL);
+		ATF_REQUIRE_STREQ(ep->key, ch);
+		ATF_REQUIRE_EQ((long)ep->data, i);
+	}
+
+	hdestroy_r(&t);
+}
+
+ATF_TC(hsearch_r_duplicate);
+ATF_TC_HEAD(hsearch_r_duplicate, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks that inserting duplicate "
+	    "doesn't overwrite existing data");
+}
+
+ATF_TC_BODY(hsearch_r_duplicate, tc)
+{
+	ENTRY e, *ep;
+	struct hsearch_data t;
+
+	REQUIRE_ERRNO(hcreate_r(16, &t));
+
+	e.key = strdup("a");
+	ATF_REQUIRE(e.key != NULL);
+	e.data = (void *)(long) 0;
+
+	ATF_REQUIRE(hsearch_r(e, ENTER, &ep, &t) == 1);
+	ATF_REQUIRE(ep != NULL);
+	ATF_REQUIRE_STREQ(ep->key, "a");
+	ATF_REQUIRE_EQ((long)ep->data, 0);
+
+	e.data = (void *)(long)12345;
+
+	ATF_REQUIRE(hsearch_r(e, ENTER, &ep, &t) == 1);
+	ATF_REQUIRE(hsearch_r(e, FIND, &ep, &t) == 1);
+
+	ATF_REQUIRE(ep != NULL);
+	ATF_REQUIRE_STREQ(ep->key, "a");
+	ATF_REQUIRE_EQ((long)ep->data, 0);
+
+	hdestroy_r(&t);
+}
+
+ATF_TC(hsearch_r_nonexistent);
+ATF_TC_HEAD(hsearch_r_nonexistent, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks searching for non-existent entry");
+}
+
+ATF_TC_BODY(hsearch_r_nonexistent, tc)
+{
+	ENTRY e, *ep;
+	struct hsearch_data t;
+
+	REQUIRE_ERRNO(hcreate_r(16, &t));
+
+	e.key = strdup("A");
+	ATF_REQUIRE(hsearch_r(e, FIND, &ep, &t) == 1);
+	ATF_REQUIRE_EQ(ep, NULL);
+
+	hdestroy_r(&t);
+}
+
+ATF_TC(hsearch_r_two);
+ATF_TC_HEAD(hsearch_r_two, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks that searching doesn't overwrite previous search results");
+}
+
+ATF_TC_BODY(hsearch_r_two, tc)
+{
+	ENTRY e, *ep, *ep2;
+	char *sa, *sb;
+	struct hsearch_data t;
+
+	ATF_REQUIRE((sa = strdup("a")) != NULL);
+	ATF_REQUIRE((sb = strdup("b")) != NULL);
+
+	REQUIRE_ERRNO(hcreate_r(16, &t));
+
+	e.key = sa;
+	e.data = (void*)(long)0;
+
+	ATF_REQUIRE(hsearch_r(e, ENTER, &ep, &t) == 1);
+	ATF_REQUIRE(ep != NULL);
+	ATF_REQUIRE_STREQ(ep->key, "a");
+	ATF_REQUIRE_EQ((long)ep->data, 0);
+
+	e.key = sb;
+	e.data = (void*)(long)1;
+
+	ATF_REQUIRE(hsearch_r(e, ENTER, &ep, &t) == 1);
+	ATF_REQUIRE(ep != NULL);
+	ATF_REQUIRE_STREQ(ep->key, "b");
+	ATF_REQUIRE_EQ((long)ep->data, 1);
+
+	e.key = sa;
+	ATF_REQUIRE(hsearch_r(e, FIND, &ep, &t) == 1);
+
+	e.key = sb;
+	ATF_REQUIRE(hsearch_r(e, FIND, &ep2, &t) == 1);
+
+	ATF_REQUIRE(ep != NULL);
+	ATF_REQUIRE_STREQ(ep->key, "a");
+	ATF_REQUIRE_EQ((long)ep->data, 0);
+
+	ATF_REQUIRE(ep2 != NULL);
+	ATF_REQUIRE_STREQ(ep2->key, "b");
+	ATF_REQUIRE_EQ((long)ep2->data, 1);
+
+	hdestroy_r(&t);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -240,6 +398,11 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, hsearch_duplicate);
 	ATF_TP_ADD_TC(tp, hsearch_nonexistent);
 	ATF_TP_ADD_TC(tp, hsearch_two);
+
+	ATF_TP_ADD_TC(tp, hsearch_r_basic);
+	ATF_TP_ADD_TC(tp, hsearch_r_duplicate);
+	ATF_TP_ADD_TC(tp, hsearch_r_nonexistent);
+	ATF_TP_ADD_TC(tp, hsearch_r_two);
 
 	return atf_no_error();
 }
