@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.39 2011/09/10 10:29:39 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.40 2011/09/15 12:25:25 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.39 2011/09/10 10:29:39 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40 2011/09/15 12:25:25 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -179,7 +179,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		/* can pmap handle it? on its own? (r/m) */
 		rv = 0;
 		if (!pmap_fault(vm_map->pmap, va, &atype)) {
-			aprint_debug("pmap fault couldn't handle it! : "
+			dprintf_debug("pmap fault couldn't handle it! : "
 				"derived atype %d\n", atype);
 
 			/* extra debug for now */
@@ -202,7 +202,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	old_va = va;
 
 		if (rv) {
-			aprint_debug("uvm_fault returned error %d\n", rv);
+			dprintf_debug("uvm_fault returned error %d\n", rv);
 
 			/* something got wrong */
 			if (kmem) {
