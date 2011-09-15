@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.69 2011/09/15 15:24:39 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.70 2011/09/15 15:34:19 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2011/09/15 15:24:39 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2011/09/15 15:34:19 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -1021,13 +1021,24 @@ pmap_zero_page(paddr_t pa)
 	memset(blob, 0, PAGE_SIZE);
 	num = thunk_pwrite(mem_fh, blob, PAGE_SIZE, pa);
 	if (num != PAGE_SIZE)
-		panic("pmap_zero_page couldn't write out\n");
+		panic("%s: couldn't write out\n", __func__);
 }
 
+/* XXX braindead copy page implementation but it works for now */
 void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
-dprintf_debug("pmap_copy_page not implemented\n");
+	char blob[PAGE_SIZE];
+	int num;
+
+	dprintf_debug("pmap_copy_page: pa src %p, pa dst %p\n",
+		(void *) src, (void *) dst);
+	num = thunk_pread(mem_fh, blob, PAGE_SIZE, src);
+	if (num != PAGE_SIZE)
+		panic("%s: can't read in src\n", __func__);
+	num = thunk_pwrite(mem_fh, blob, PAGE_SIZE, dst);
+	if (num != PAGE_SIZE)
+		panic("%s: couldn't write out dst\n", __func__);
 }
 
 /* change access permissions on a given physical page */
