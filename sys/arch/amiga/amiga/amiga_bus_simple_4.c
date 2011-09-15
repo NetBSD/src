@@ -1,4 +1,4 @@
-/* $NetBSD: amiga_bus_simple_4.c,v 1.6 2010/02/03 13:56:53 phx Exp $ */
+/* $NetBSD: amiga_bus_simple_4.c,v 1.7 2011/09/15 12:50:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_4.c,v 1.6 2010/02/03 13:56:53 phx Exp $");
+__KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_4.c,v 1.7 2011/09/15 12:50:00 christos Exp $");
 
 #define AMIGA_SIMPLE_BUS_STRIDE 4		/* 1 byte per long */
 #define AMIGA_SIMPLE_BUS_WORD_METHODS
@@ -49,7 +49,7 @@ bswm(oabs(bswm2_swap_), u_int16_t);
 
 void
 oabs(bsrm2_swap_)(bus_space_handle_t handle, bus_size_t offset,
-	 	  u_int16_t *pointer, bus_size_t count)
+		  u_int16_t *pointer, bus_size_t count)
 {
 	volatile u_int16_t *p;
 
@@ -80,33 +80,33 @@ oabs(bswm2_swap_)(bus_space_handle_t handle, bus_size_t offset,
 
 const struct amiga_bus_space_methods amiga_bus_stride_4swap = {
 
-        oabs(bsm_),
-        oabs(bsms_),
-        oabs(bsu_),
-        0,
-        0,
+	.bsm =		oabs(bsm_),
+	.bsms =		oabs(bsms_),
+	.bsu =		oabs(bsu_),
+	.bsa =		NULL,
+	.bsf =		NULL,
 
-        oabs(bsr1_),
-        oabs(bsw1_),
-        oabs(bsrm1_),
-        oabs(bswm1_),
-        oabs(bsrr1_),
-        oabs(bswr1_),
-        oabs(bssr1_),
-        oabs(bscr1_),
+	.bsr1 =		oabs(bsr1_),
+	.bsw1 =		oabs(bsw1_),
+	.bsrm1 =	oabs(bsrm1_),
+	.bswm1 =	oabs(bswm1_),
+	.bsrr1 =	oabs(bsrr1_),
+	.bswr1 =	oabs(bswr1_),
+	.bsrr1 =	oabs(bssr1_),
+	.bscr1 =	oabs(bscr1_),
 
-        oabs(bsr2_),		/* XXX swap? */
-        oabs(bsw2_),		/* XXX swap? */
-        oabs(bsr2_),
-        oabs(bsw2_),
-        oabs(bsrm2_swap_),
-        oabs(bswm2_swap_),
-        oabs(bsrm2_),
-        oabs(bswm2_),
-        oabs(bsrr2_),		/* XXX swap? */
-        oabs(bswr2_),		/* XXX swap? */
-        oabs(bsrr2_),
-        oabs(bswr2_),
-        oabs(bssr2_),		/* XXX swap? */
-        oabs(bscr2_)		/* XXX swap? */
+	.bsr2 =		oabs(bsr2_),		/* XXX swap? */
+	.bsw2 =		oabs(bsw2_),		/* XXX swap? */
+	.bsrs2 =	oabs(bsr2_),
+	.bsws2 =	oabs(bsw2_),
+	.bsrm2 =	oabs(bsrm2_swap_),
+	.bswm2 =	oabs(bswm2_swap_),
+	.bsrms2 =	oabs(bsrm2_),
+	.bswms2 =	oabs(bswm2_),
+	.bsrr2 =	oabs(bsrr2_),		/* XXX swap? */
+	.bswr2 =	oabs(bswr2_),		/* XXX swap? */
+	.bsrrs2 =	oabs(bsrr2_),
+	.bswrs2 =	oabs(bswr2_),
+	.bssr2 =	oabs(bssr2_),		/* XXX swap? */
+	.bscr2 =	oabs(bscr2_)		/* XXX swap? */
 };
