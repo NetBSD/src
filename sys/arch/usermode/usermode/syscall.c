@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.9 2011/09/09 12:44:27 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.10 2011/09/15 12:26:51 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2011/09/09 12:44:27 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10 2011/09/15 12:26:51 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,7 +64,7 @@ child_return(void *arg)
 	/* XXX? */
 //	frame->registers[0] = 0;
 
-	printf("child return! lwp %p\n", l);
+	aprint_debug("child return! lwp %p\n", l);
 	userret(l);
 	ktrsysret(SYS_fork, 0, 0);
 }
@@ -101,31 +101,47 @@ syscall(void)
 	error = md_syscall_getargs(l, ucp, nargs, argsize, args);
 
 #if 0
-	printf("syscall no. %d, ", code);
-	printf("nargs %d, argsize %d =>  ", nargs, argsize);
+	aprint_debug("syscall no. %d, ", code);
+	aprint_debug("nargs %d, argsize %d =>  ", nargs, argsize);
+	dprintf_debug("syscall no. %d, ", code);
+	dprintf_debug("nargs %d, argsize %d =>  ", nargs, argsize);
+#endif
+	if ((code == 4)) {
+		dprintf_debug("[us] %s", (char *) args[1]);
+		printf("[us] %s", (char *) args[1]);
+	}
+
+	if (code == 5)
+		aprint_debug("open('%s', %d,...) => ", (char *) (args[0]),
+			(int) (args[1]));
+#if 0
 
 	if (code == 3)
-		printf("read(%d, %p, %d) => ", (int) args[0],
+		aprint_debug("read(%d, %p, %d) => ", (int) args[0],
 			(void *) args[1], (int) args[2]);
+#if 0
 	if (code == 4)
-		printf("write(%d, %p ('%s'), %d) => ",
+		aprint_debug("write(%d, %p ('%s'), %d) => ",
 			(int) args[0], (void *) args[1],
 			(char *) args[1], (int) args[2]);
 	if (code == 5)
-		printf("open('%s', %d,...) => ", (char *) (args[0]),
+		aprint_debug("open('%s', %d,...) => ", (char *) (args[0]),
 			(int) (args[1]));
+#endif
 	if (code == 440)
-		printf("stat(%d, %p) => ", (uint32_t) args[0],
+		aprint_debug("stat(%d, %p) => ", (uint32_t) args[0],
 			(void *) args[1]);
 #endif
 
 	if (!error) 
 		error = (*callp->sy_call)(l, args, rval);
 
+	if (code == 5)
+		aprint_debug("%s\n", error ? "error":"OK");
 #if 0
 	if (code ==3)
-		printf("{'%s'} => ", (char *) args[1]);
-	printf("error = %d, rval[0] = 0x%"PRIx32", retval[1] = 0x%"PRIx32"\n",
+		aprint_debug("{'%s'} => ", (char *) args[1]);
+	aprint_debug("error = %d, rval[0] = 0x%"PRIx32", retval[1] = 0x%"PRIx32"\n",
 		error, (uint) (rval[0]), (uint) (rval[1]));
 #endif
 
@@ -143,7 +159,7 @@ syscall(void)
 		break;
 	}
 
-//	printf("end of syscall : return to userland\n");
+//	aprint_debug("end of syscall : return to userland\n");
 	userret(l);
 }
 
