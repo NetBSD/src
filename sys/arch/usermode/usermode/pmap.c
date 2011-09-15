@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.63 2011/09/15 12:25:25 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.64 2011/09/15 14:45:22 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63 2011/09/15 12:25:25 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2011/09/15 14:45:22 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -465,7 +465,7 @@ pv_get(pmap_t pmap, uintptr_t ppn, uintptr_t lpn)
 	}
 	/* If this mapping exists already, use that. */
 	for (pv = pv; pv != NULL; pv = pv->pv_next) {
-		if (pv->pv_pmap == pmap && pv->pv_lpn == lpn) {
+		if ((pv->pv_pmap == pmap) && (pv->pv_lpn == lpn)) {
 			return pv;
 		}
 	}
@@ -676,7 +676,11 @@ pmap_update_page(uintptr_t ppn)
 			ppn, pv->pv_pmap);
 		if (pv->pv_pmap != NULL) {
 			pv_update(pv);
-			pmap_page_activate(pv);
+			if (pv->pv_pmap->pm_flags & PM_ACTIVE)
+				pmap_page_activate(pv);
+			else
+				pmap_page_deactivate(pv)
+			;
 		}
 	}
 }
