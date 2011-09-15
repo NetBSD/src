@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp_data.c,v 1.2 2011/07/07 10:44:50 plunky Exp $	*/
+/*	$NetBSD: sdp_data.c,v 1.3 2011/09/15 17:51:57 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp_data.c,v 1.2 2011/07/07 10:44:50 plunky Exp $");
+__RCSID("$NetBSD: sdp_data.c,v 1.3 2011/09/15 17:51:57 plunky Exp $");
 
 #include <sdp.h>
 #include <stdarg.h>
@@ -345,10 +345,10 @@ _sdp_put(int indent, const char *type, const char *fmt, ...)
 }
 
 static void
-_sdp_putstr(int indent, int style, const char *type,
-    const uint8_t *str, size_t len)
+_sdp_putstr(int indent, const char *type, const uint8_t *str, size_t len)
 {
 	char buf[50], *dst = buf;
+	int style;
 
 	indent = printf("%*s%s(%zu)", indent, "", type, len);
 	indent = 18 - indent;
@@ -357,7 +357,7 @@ _sdp_putstr(int indent, int style, const char *type,
 
 	printf("%*s", indent, "");
 
-	style |= VIS_NL;
+	style = VIS_CSTYLE | VIS_NL;
 	buf[0] = '\0';
 
 	while (len > 0 && (dst + 5) < (buf + sizeof(buf))) {
@@ -540,7 +540,7 @@ _sdp_data_print(const uint8_t *next, const uint8_t *end, int indent)
 			if (next + len > end)
 				return false;
 
-			_sdp_putstr(indent, VIS_CSTYLE, "str8", next, len);
+			_sdp_putstr(indent, "str8", next, len);
 			next += len;
 			break;
 
@@ -554,7 +554,7 @@ _sdp_data_print(const uint8_t *next, const uint8_t *end, int indent)
 			if (next + len > end)
 				return false;
 
-			_sdp_putstr(indent, VIS_HTTPSTYLE, "url8", next, len);
+			_sdp_putstr(indent, "url8", next, len);
 			next += len;
 			break;
 
@@ -568,7 +568,7 @@ _sdp_data_print(const uint8_t *next, const uint8_t *end, int indent)
 			if (next + len > end)
 				return false;
 
-			_sdp_putstr(indent, VIS_CSTYLE, "str16", next, len);
+			_sdp_putstr(indent, "str16", next, len);
 			next += len;
 			break;
 
@@ -582,7 +582,7 @@ _sdp_data_print(const uint8_t *next, const uint8_t *end, int indent)
 			if (next + len > end)
 				return false;
 
-			_sdp_putstr(indent, VIS_HTTPSTYLE, "url16", next, len);
+			_sdp_putstr(indent, "url16", next, len);
 			next += len;
 			break;
 
@@ -596,7 +596,7 @@ _sdp_data_print(const uint8_t *next, const uint8_t *end, int indent)
 			if (next + len > end)
 				return false;
 
-			_sdp_putstr(indent, VIS_CSTYLE, "str32", next, len);
+			_sdp_putstr(indent, "str32", next, len);
 			next += len;
 			break;
 
@@ -610,7 +610,7 @@ _sdp_data_print(const uint8_t *next, const uint8_t *end, int indent)
 			if (next + len > end)
 				return false;
 
-			_sdp_putstr(indent, VIS_HTTPSTYLE, "url32", next, len);
+			_sdp_putstr(indent, "url32", next, len);
 			next += len;
 			break;
 
