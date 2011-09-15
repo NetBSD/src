@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.65 2011/09/15 14:55:23 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.66 2011/09/15 15:02:35 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 2011/09/15 14:55:23 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 2011/09/15 15:02:35 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -789,7 +789,7 @@ pv_release(pmap_t pmap, uintptr_t ppn, uintptr_t lpn)
 		}
 	} else {
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
-			if (pmap == npv->pv_pmap && lpn == npv->pv_lpn)
+			if ((pmap == npv->pv_pmap) && (lpn == npv->pv_lpn))
 				break;
 			pv = npv;
 		}
@@ -842,8 +842,11 @@ pmap_remove_all(pmap_t pmap)
 	if (pmap == pmap_kernel())
 		return;
 
+#if 0
+	/* remove all mappings in one-go; not needed */
 	pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
 	thunk_munmap((void *) VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
+#endif
 #if 0
 	/* remove all cached info from the pages */
 	thunk_msync(VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS,
