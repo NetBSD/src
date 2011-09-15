@@ -1,4 +1,4 @@
-/*	$NetBSD: mvwin.c,v 1.15 2003/08/07 16:44:22 agc Exp $	*/
+/*	$NetBSD: mvwin.c,v 1.16 2011/09/15 11:58:05 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mvwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: mvwin.c,v 1.15 2003/08/07 16:44:22 agc Exp $");
+__RCSID("$NetBSD: mvwin.c,v 1.16 2011/09/15 11:58:05 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -43,14 +43,16 @@ __RCSID("$NetBSD: mvwin.c,v 1.15 2003/08/07 16:44:22 agc Exp $");
 
 /*
  * mvderwin --
- *      Move a derived window.
+ *      Move a derived window.  This does not change the physical screen
+ * coordinates of the subwin, rather maps the characters in the subwin
+ * sized part of the parent window starting at dy, dx into the subwin.
  *
  */
 int
 mvderwin(WINDOW *win, int dy, int dx)
 {
 	WINDOW *parent;
-	int x, y;
+	int ox, oy, i;
 
 	if (win == NULL)
 		return ERR;
@@ -60,9 +62,25 @@ mvderwin(WINDOW *win, int dy, int dx)
 	if (parent == NULL)
 		return ERR;
 
-	x = parent->begx + dx;
-	y = parent->begy + dy;
-	return mvwin(win, y, x);
+	if (((win->maxx + dx) > parent->maxx) ||
+	    ((win->maxy + dy) > parent->maxy))
+		return ERR;
+
+	ox = win->begx;
+	oy = win->begy;
+
+	win->begx = parent->begx + dx;
+	win->begy = parent->begy + dy;
+
+	__set_subwin(parent, win);
+
+	win->begx = ox;
+	win->begy = oy;
+
+	for (i = 0; i < win->maxy; i++)
+                win->alines[i]->flags = __ISDIRTY;
+
+	return OK;
 }
 
 /*
