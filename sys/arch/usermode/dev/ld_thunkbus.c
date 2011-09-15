@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.14 2011/09/13 10:40:26 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.15 2011/09/15 19:32:28 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.14 2011/09/13 10:40:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.15 2011/09/15 19:32:28 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -68,6 +68,7 @@ struct ld_thunkbus_softc {
 	void		*sc_ih;
 
 	struct ld_thunkbus_transfer sc_tt;
+	bool		busy;
 };
 
 CFATTACH_DECL_NEW(ld_thunkbus, sizeof(struct ld_thunkbus_softc),
@@ -128,6 +129,8 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 	if (thunk_sigaction(SIGIO, &sa, NULL) == -1)
 		panic("couldn't register SIGIO handler: %d", thunk_geterrno());
 
+	sc->busy = false;
+
 	ldattach(ld);
 }
 
@@ -145,6 +148,7 @@ ld_thunkbus_sig(int sig, siginfo_t *info, void *ctx)
 		if (tt) {
 			sc = tt->tt_sc;
 			spl_intr(IPL_BIO, softint_schedule, sc->sc_ih);
+			// spl_intr(IPL_BIO, ld_thunkbus_complete, sc);
 			// softint_schedule(sc->sc_ih);
 		}
 	}
@@ -159,6 +163,9 @@ ld_thunkbus_complete(void *arg)
 	struct ld_thunkbus_transfer *tt = &sc->sc_tt;
 	struct buf *bp = tt->tt_bp;
 
+	if (!sc->busy)
+		panic("%s: but not busy?\n", __func__);
+
 	if (thunk_aio_error(&tt->tt_aio) == 0 &&
 	    thunk_aio_return(&tt->tt_aio) != -1) {
 		bp->b_resid = 0;
@@ -167,10 +174,11 @@ ld_thunkbus_complete(void *arg)
 		bp->b_resid = bp->b_bcount;
 	}
 
-//printf("\tfin\n");
+	dprintf_debug("\tfin\n");
 	if (bp->b_error)
-		printf("error!\n");
+		dprintf_debug("error!\n");
 
+	sc->busy = false;
 	lddone(&sc->sc_ld, bp);
 }
 
@@ -200,6 +208,10 @@ ld_thunkbus_ldstart(struct ld_softc *ld, struct buf *bp)
 	    (long long)bp->b_rawblkno,
 	    (long long)bp->b_bcount);
 #endif
+	if (sc->busy)
+		panic("%s: reentry", __func__);
+	sc->busy = true;
+
 	if (bp->b_flags & B_READ)
 		error = thunk_aio_read(&tt->tt_aio);
 	else
