@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.7 2011/06/17 16:59:51 christos Exp $	*/
+/*	$NetBSD: director.c,v 1.8 2011/09/15 11:53:12 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -236,6 +236,8 @@ main(int argc, char *argv[])
 	term_attr.c_cflag = TTYDEF_CFLAG;
 	term_attr.c_lflag = TTYDEF_LFLAG;
 	cfsetspeed(&term_attr, TTYDEF_SPEED);
+	term_attr.c_cc[VERASE] = '\b';
+	term_attr.c_cc[VKILL] = '\025'; /* ^U */
 
 	if ((slave_pid = forkpty(&master, NULL, &term_attr, NULL)) < 0)
 		err(1, "Fork of pty for slave failed\n");

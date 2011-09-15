@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.10 2011/09/08 10:56:49 blymn Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.11 2011/09/15 11:53:12 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -30,6 +30,7 @@
  *
  */
 #include <assert.h>
+#include <curses.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <err.h>
@@ -147,10 +148,8 @@ static char	*get_numeric_var(const char *);
 static void	perform_delay(struct timespec *);
 
 static const char *input_functions[] = {
-	"inch", "getch", "getnstr", "getstr", "innstr", "instr", "mvgetnstr",
-	"mvgetstr", "mvinchstr", "mvinchnstr", "mvgetnstr", "mvgetstr",
-	"mvinchstr", "mvinchnstr", "winch", "wgetch", "wgetnstr", "wgetstr",
-	"winchnstr", "winchstr", "winnstr", "winstr"
+	"getch", "getnstr", "getstr", "mvgetnstr", "mvgetstr", "mvgetnstr",
+	"mvgetstr", "wgetch", "wgetnstr", "wgetstr"
 };
 
 static const unsigned ninput_functions =
@@ -939,7 +938,7 @@ do_function_call(size_t nresults)
 		input_str = NULL;
 	}
 
-	if (verbose && 0) {
+	if (verbose) {
 		fds[0].fd = slvpipe[READ_PIPE];
 		fds[0].events = POLLIN;
 
@@ -1114,8 +1113,18 @@ validate(int i, void *data)
 	byte_response = data;
 	if ((command.returns[i].return_type != ret_byte) &&
 	    (command.returns[i].return_type != ret_err) &&
-	    (command.returns[i].return_type != ret_ok))
+	    (command.returns[i].return_type != ret_ok)) {
+		if ((byte_response->return_type == ret_byte) ||
+		    (byte_response->return_type == ret_err) ||
+		    (byte_response->return_type == ret_ok))
+			err(1, "validate: expecting type %s, received type %s"
+			    " at line %d of file %s",
+			    returns_enum_names[command.returns[i].return_type],
+			    returns_enum_names[byte_response->return_type],
+			    line, cur_file);
+
 		response = byte_response->return_value;
+	}
 
 	switch (command.returns[i].return_type) {
 	case ret_err:
@@ -1247,11 +1256,30 @@ validate_return(const char *expected, const char *value, int check)
 static void
 validate_byte(returns_t *expected, returns_t *value, int check)
 {
+	char *ch;
+	size_t i;
+
+	if (verbose) {
+		ch = value->return_value;
+		fprintf(stderr, "checking returned byte stream: ");
+		for (i = 0; i < value->return_len; i++)
+			fprintf(stderr, "%s0x%x", (i != 0)? ", " : "", ch[i]);
+		fprintf(stderr, "\n");
+
+		fprintf(stderr, "%s byte stream: ",
+			(check == 0)? "matches" : "does not match");
+		ch = (char *) expected->return_value;
+		for (i = 0; i < expected->return_len; i++)
+			fprintf(stderr, "%s0x%x", (i != 0)? ", " : "", ch[i]);
+		fprintf(stderr, "\n");
+	}
+
 	/*
 	 * No chance of a match if lengths differ...
 	 */
 	if ((check == 0) && (expected->return_len != value->return_len))
-	    errx(1, "Byte validation failed, length mismatch");
+	    errx(1, "Byte validation failed, length mismatch, expected %zu,"
+		"received %zu", expected->return_len, value->return_len);
 
 	/*
 	 * If check is 0 then we want to throw an error IFF the byte streams
