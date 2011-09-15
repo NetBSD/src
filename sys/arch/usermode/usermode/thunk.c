@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.37 2011/09/14 18:26:24 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.38 2011/09/15 12:23:51 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,11 +28,12 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.37 2011/09/14 18:26:24 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.38 2011/09/15 12:23:51 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/reboot.h>
 #include <machine/vmparam.h>
 
 #include <aio.h>
@@ -58,6 +59,20 @@ __RCSID("$NetBSD: thunk.c,v 1.37 2011/09/14 18:26:24 reinoud Exp $");
 #ifndef MAP_ANON
 #define MAP_ANON MAP_ANONYMOUS
 #endif
+
+extern int boothowto;
+
+void
+dprintf_debug(const char *fmt, ...)
+{
+        if (boothowto & AB_DEBUG) {
+                va_list ap;
+
+                va_start(ap, fmt);
+                vdprintf(2, fmt, ap);
+                va_end(ap);
+        }
+}
 
 static void
 thunk_to_timeval(const struct thunk_timeval *ttv, struct timeval *tv)
