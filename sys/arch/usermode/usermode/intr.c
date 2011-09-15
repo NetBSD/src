@@ -1,4 +1,4 @@
-/* $NetBSD: intr.c,v 1.6 2011/09/13 10:38:04 reinoud Exp $ */
+/* $NetBSD: intr.c,v 1.7 2011/09/15 12:25:25 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6 2011/09/13 10:38:04 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7 2011/09/15 12:25:25 reinoud Exp $");
 
 #include <sys/types.h>
 
@@ -74,7 +74,7 @@ spl_intr(int x, void (*func)(void *), void *arg)
 		return;
 	}
 
-	//printf("\nX : %d\n", x);
+	dprintf_debug("spl_intr: queue %d when %d\n", x, usermode_x);
 	spli = &spl_intrs[x][spl_intr_wr[x]];
 	spli->func = func;
 	spli->arg = arg;
@@ -111,17 +111,17 @@ spllower(int x)
 
 	/* `eat' interrupts that came by until we got back to x */
 	if (usermode_x > x) {
-restart:
+//restart:
 		for (y = usermode_x; y >= x; y--) {
 			while (spl_intr_rd[y] != spl_intr_wr[y]) {
-				// printf("spl y %d firing\n", y);
+				dprintf_debug("spl y %d firing\n", y);
 				spli = &spl_intrs[y][spl_intr_rd[y]];
 				if (!spli->func)
 					panic("%s: spli->func is NULL for ipl %d, rd %d, wr %d\n",
 						__func__, y, spl_intr_rd[y], spl_intr_wr[y]);
 				spli->func(spli->arg);
 				spl_intr_rd[y] = (spl_intr_rd[y] + 1) % MAX_QUEUED_EVENTS;
-				goto restart;
+//				goto restart;
 			}
 		}
 		usermode_x = x;
