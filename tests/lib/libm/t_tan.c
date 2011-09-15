@@ -1,4 +1,4 @@
-/* $NetBSD: t_tan.c,v 1.3 2011/09/14 13:29:58 jruoho Exp $ */
+/* $NetBSD: t_tan.c,v 1.4 2011/09/15 11:05:50 he Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -161,6 +161,7 @@ ATF_TC_HEAD(tanf_angles, tc)
 
 ATF_TC_BODY(tanf_angles, tc)
 {
+#ifndef __vax__
 	const float eps = 1.0e-6;
 	float x, y;
 	size_t i;
@@ -174,6 +175,7 @@ ATF_TC_BODY(tanf_angles, tc)
 			atf_tc_fail_nonfatal("tanf(%d deg) != %0.01f",
 			    angles[i].angle, angles[i].y);
 	}
+#endif
 }
 
 ATF_TC(tanf_nan);
