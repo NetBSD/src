@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_psshfs.8,v 1.24 2010/02/03 17:16:29 pooka Exp $
+.\"	$NetBSD: mount_psshfs.8,v 1.25 2011/09/15 11:52:09 wiz Exp $
 .\"
 .\" Copyright (c) 2007-2009 Antti Kantee.  All rights reserved.
 .\"
@@ -129,7 +129,7 @@ the server.
 This option is used to adjust the timeout period to
 .Ar timeout
 seconds.
-A value 0 means the cache is never valid and \-1 means it is
+A value of 0 means the cache is never valid; \-1 means it is
 valid indefinitely.
 It is possible to force a re-read regardless of timeout status by sending
 .Dv SIGHUP
