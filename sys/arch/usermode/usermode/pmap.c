@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.70 2011/09/15 15:34:19 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.71 2011/09/15 17:44:13 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2011/09/15 15:34:19 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2011/09/15 17:44:13 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -603,8 +603,9 @@ pmap_page_activate(struct pv_entry *pv)
 	addr = thunk_mmap((void *) va, PAGE_SIZE, pv->pv_mmap_ppl,
 		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
 		mem_fh, pa);
-	dprintf_debug("page_activate: (va %p, pa %p, ppl %d) -> %p\n",
-		(void *) va, (void *) pa, pv->pv_mmap_ppl, (void *) addr);
+	dprintf_debug("page_activate: (va %p, pa %p, prot %d, ppl %d) -> %p\n",
+		(void *) va, (void *) pa, pv->pv_prot, pv->pv_mmap_ppl,
+		(void *) addr);
 	if (addr != (void *) va)
 		panic("pmap_page_activate: mmap failed (expected %p got %p): %d",
 		    (void *)va, addr, thunk_geterrno());
@@ -1009,36 +1010,51 @@ pmap_deactivate(struct lwp *l)
 //	cpu_cache_flush();
 }
 
-/* XXX braindead zero_page implementation but it works for now */
 void
 pmap_zero_page(paddr_t pa)
 {
-	char blob[PAGE_SIZE];
-	int num;
+	char *blob;
 
 	dprintf_debug("pmap_zero_page: pa %p\n", (void *) pa);
 
+	blob = thunk_mmap(NULL, PAGE_SIZE,
+		THUNK_PROT_READ | THUNK_PROT_WRITE,
+		THUNK_MAP_FILE | THUNK_MAP_SHARED,
+		mem_fh, pa);
+	if (!blob)
+		panic("%s: couldn't get mapping", __func__);
+
 	memset(blob, 0, PAGE_SIZE);
-	num = thunk_pwrite(mem_fh, blob, PAGE_SIZE, pa);
-	if (num != PAGE_SIZE)
-		panic("%s: couldn't write out\n", __func__);
+
+	thunk_munmap(blob, PAGE_SIZE);
 }
 
-/* XXX braindead copy page implementation but it works for now */
 void
-pmap_copy_page(paddr_t src, paddr_t dst)
+pmap_copy_page(paddr_t src_pa, paddr_t dst_pa)
 {
-	char blob[PAGE_SIZE];
-	int num;
+	char *sblob, *dblob;
 
 	dprintf_debug("pmap_copy_page: pa src %p, pa dst %p\n",
-		(void *) src, (void *) dst);
-	num = thunk_pread(mem_fh, blob, PAGE_SIZE, src);
-	if (num != PAGE_SIZE)
-		panic("%s: can't read in src\n", __func__);
-	num = thunk_pwrite(mem_fh, blob, PAGE_SIZE, dst);
-	if (num != PAGE_SIZE)
-		panic("%s: couldn't write out dst\n", __func__);
+		(void *) src_pa, (void *) dst_pa);
+
+	sblob = thunk_mmap(NULL, PAGE_SIZE,
+		THUNK_PROT_READ,
+		THUNK_MAP_FILE | THUNK_MAP_SHARED,
+		mem_fh, src_pa);
+	if (!sblob)
+		panic("%s: couldn't get src mapping", __func__);
+
+	dblob = thunk_mmap(NULL, PAGE_SIZE,
+		THUNK_PROT_WRITE,
+		THUNK_MAP_FILE | THUNK_MAP_SHARED,
+		mem_fh, dst_pa);
+	if (!dblob)
+		panic("%s: couldn't get dst mapping", __func__);
+
+	memcpy(dblob, sblob, PAGE_SIZE);
+
+	thunk_munmap(sblob, PAGE_SIZE);
+	thunk_munmap(dblob, PAGE_SIZE);
 }
 
 /* change access permissions on a given physical page */
@@ -1054,7 +1070,7 @@ pmap_page_protect(struct vm_page *page, vm_prot_t prot)
 	if (prot == VM_PROT_NONE) {
 		/* visit all mappings */
 		npv = pv = &pv_table[ppn];
-		while (pv != NULL && pv->pv_pmap != NULL) {
+		while ((pv != NULL) && (pv->pv_pmap != NULL)) {
 			/* skip unmanaged entries */
 			if (pv->pv_vflags & PV_UNMANAGED) {
 				pv = pv->pv_next;
