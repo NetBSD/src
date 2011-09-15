@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.67 2011/09/15 15:08:51 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.68 2011/09/15 15:20:17 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 2011/09/15 15:08:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2011/09/15 15:20:17 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -911,23 +911,23 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 }
 
 bool
-pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
+pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *ppa)
 {
 	struct pv_entry *pv;
+	intptr_t lpn;
 
-	/* TODO protect against roque values */
 	dprintf_debug("pmap_extract: extracting va %p\n", (void *) va);
 #ifdef DIAGNOSTIC
 	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_ADDRESS))
 		panic("pmap_extract: invalid va isued\n");
 #endif
-	pv = pmap->pm_entries[atop(va - VM_MIN_ADDRESS)]; /* V->L */
+	lpn = atop(va - VM_MIN_ADDRESS);	/* V->L */
+	pv = pmap->pm_entries[lpn];
 
 	if (pv == NULL)
 		return false;
-
-	if (pap)
-		*pap = ptoa(pv->pv_ppn);
+	if (ppa)
+		*ppa = ptoa(pv->pv_ppn);
 	return true;
 }
 
