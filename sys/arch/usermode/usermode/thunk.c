@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.38 2011/09/15 12:23:51 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.39 2011/09/15 20:25:23 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.38 2011/09/15 12:23:51 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.39 2011/09/15 20:25:23 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -69,7 +69,7 @@ dprintf_debug(const char *fmt, ...)
                 va_list ap;
 
                 va_start(ap, fmt);
-                vdprintf(2, fmt, ap);
+                vfprintf(stderr, fmt, ap);
                 va_end(ap);
         }
 }
