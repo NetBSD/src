@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.3 2011/06/11 18:03:18 christos Exp $	*/
+/*	$NetBSD: commands.c,v 1.4 2011/09/15 11:46:19 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -76,7 +76,10 @@ report_ptr(void *ptr)
 {
 	char *string;
 
-	asprintf(&string, "%p", ptr);
+	if (ptr == NULL)
+		asprintf(&string, "NULL");
+	else
+		asprintf(&string, "%p", ptr);
 	report_status(string);
 	free(string);
 }
@@ -181,6 +184,19 @@ report_message(int type, const char *status)
  * Report a string of chtype back to the director via the command pipe.
  */
 void
+report_byte(chtype c)
+{
+	chtype string[2];
+
+	string[0] = c;
+	string[1] = A_NORMAL | '\0';
+	report_nstr(string);
+}
+
+/*
+ * Report a string of chtype back to the director via the command pipe.
+ */
+void
 report_nstr(chtype *string)
 {
 	int len, type;
@@ -192,6 +208,9 @@ report_nstr(chtype *string)
 	while ((*p++ & __CHARTEXT) != 0) {
 		len++;
 	}
+
+	len++; /* add in the termination chtype */
+	len *= sizeof(chtype);
 
 	type = ret_byte;
 	if (write(slvpipe[WRITE_PIPE], &type, sizeof(int)) < 0)

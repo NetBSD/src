@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.h,v 1.2 2011/04/11 09:02:02 blymn Exp $	*/
+/*	$NetBSD: curses_commands.h,v 1.3 2011/09/15 11:46:19 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -148,12 +148,14 @@ void cmd_getattrs(int, char **);
 void cmd_getbkgd(int, char **);
 void cmd_getcury(int, char **);
 void cmd_getcurx(int, char **);
+void cmd_getyx(int, char **);
 void cmd_getbegy(int, char **);
 void cmd_getbegx(int, char **);
 void cmd_getmaxy(int, char **);
 void cmd_getmaxx(int, char **);
 void cmd_getpary(int, char **);
 void cmd_getparx(int, char **);
+void cmd_getparyx(int, char **);
 void cmd_gettmode(int, char **);
 void cmd_getwin(int, char **);
 void cmd_halfdelay(int, char **);
