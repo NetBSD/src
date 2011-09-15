@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.66 2011/09/15 15:02:35 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.67 2011/09/15 15:08:51 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 2011/09/15 15:02:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 2011/09/15 15:08:51 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -892,7 +892,22 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 void
 pmap_unwire(pmap_t pmap, vaddr_t va)
 {
-printf("pmap_unwire called not implemented\n'");
+	struct pv_entry *pv;
+	intptr_t lpn;
+
+	dprintf_debug("pmap_unwire called\n'");
+	if (pmap == NULL)
+		return;
+
+	lpn = atop(va - VM_MIN_ADDRESS);	/* V->L */
+	pv = pmap->pm_entries[lpn];
+	if (pv == NULL)
+		return;
+	/* but is it wired? */
+	if ((pv->pv_vflags & PV_WIRED) == 0)
+		return;
+	pmap->pm_stats.wired_count--;
+	pv->pv_vflags &= ~PV_WIRED;
 }
 
 bool
