@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.33 2011/09/14 18:26:24 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.34 2011/09/15 12:23:51 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -68,6 +68,8 @@ struct thunk_termios {
 #define THUNK_PROT_EXEC		0x04
 
 struct aiocb;
+
+void	dprintf_debug(const char *fmt, ...) __attribute__((__format__(__printf__, 1, 2)));
 
 int	thunk_setitimer(int, const struct thunk_itimerval *, struct thunk_itimerval *);
 int	thunk_gettimeofday(struct thunk_timeval *, void *);
