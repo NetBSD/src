@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.18 2011/08/20 09:18:47 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.19 2011/09/15 17:52:53 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.18 2011/08/20 09:18:47 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.19 2011/09/15 17:52:53 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -64,7 +64,7 @@ typedef struct {
 } language_t;
 
 static const char *string_uuid(uuid_t *);
-static const char *string_vis(int, const char *, size_t);
+static const char *string_vis(const char *, size_t);
 
 static void print_hexdump(const char *, const uint8_t *, size_t);
 static bool print_attribute(uint16_t, sdp_data_t *, attr_t *, size_t);
@@ -553,13 +553,14 @@ string_uuid(uuid_t *uuid)
 }
 
 static const char *
-string_vis(int style, const char *src, size_t len)
+string_vis(const char *src, size_t len)
 {
 	static char buf[50];
 	char *dst = buf;
+	int style;
 
 	buf[0] = '\0';
-	style |= VIS_NL;
+	style = VIS_CSTYLE | VIS_NL;
 	while (len > 0 && (dst + 5) < (buf + sizeof(buf))) {
 		dst = vis(dst, src[0], style, (len > 1 ? src[1] : 0));
 		src++;
@@ -776,7 +777,7 @@ print_string(sdp_data_t *data)
 	if (!sdp_get_str(data, &str, &len))
 		return;
 
-	printf("\"%s\"\n", string_vis(VIS_CSTYLE, str, len));
+	printf("\"%s\"\n", string_vis(str, len));
 }
 
 static void
@@ -799,7 +800,7 @@ print_string_list(sdp_data_t *data)
 			len -= l + 1;
 			ep++;
 		}
-		printf("    %s\n", string_vis(VIS_CSTYLE, str, l));
+		printf("    %s\n", string_vis(str, l));
 		str = ep;
 	}
 }
@@ -813,7 +814,7 @@ print_url(sdp_data_t *data)
 	if (!sdp_get_url(data, &url, &len))
 		return;
 
-	printf("\"%s\"\n", string_vis(VIS_HTTPSTYLE, url, len));
+	printf("\"%s\"\n", string_vis(url, len));
 }
 
 static void
@@ -1608,7 +1609,7 @@ print_1284id(sdp_data_t *data)
 		}
 
 		l = (size_t)(ep - str + 1);
-		printf("    %s\n", string_vis(VIS_CSTYLE, str, l));
+		printf("    %s\n", string_vis(str, l));
 		str += l;
 		len -= l;
 	}
