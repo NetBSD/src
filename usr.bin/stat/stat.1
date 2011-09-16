@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.1,v 1.32 2011/09/16 13:33:13 wiz Exp $
+.\"	$NetBSD: stat.1,v 1.33 2011/09/16 14:32:53 apb Exp $
 .\"
 .\" Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -479,7 +479,7 @@ This example produces output very similar to that from
 .Xr find 1
 displays the time in a different format, and
 .Xr find 1
-adds at least one space after the comma in
+sometimes adds one or more spaces after the comma in
 .Dq Ar major , Ns Ar minor
 for device nodes):
 .Bd -literal -offset indent
@@ -501,7 +501,7 @@ adds at least one space after the comma in
 .Dq Ar major , Ns Ar minor
 for device nodes):
 .Bd -literal -offset indent
-\*[Gt] stat -f "%-11Sp %l %Su  %Sg  %5Z %Sm %N%SY" /tmp/bar
+\*[Gt] stat -f "%-11Sp %l %Su  %Sg  %Z %Sm %N%SY" /tmp/bar
 -rw-r--r--  1 root  wheel  0 Jul  8 10:26:03 2004 /tmp/bar
 
 \*[Gt] ls -lTd /tmp/bar
