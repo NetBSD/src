@@ -1,5 +1,5 @@
 #
-# $File: Makefile.am,v 1.66 2011/05/10 17:01:57 christos Exp $
+# $File: Makefile.am,v 1.73 2011/09/08 21:58:42 christos Exp $
 #
 MAGIC_FRAGMENT_BASE = magdir
 MAGIC_DIR = $(top_srcdir)/magic
@@ -76,6 +76,7 @@ $(MAGIC_FRAGMENT_DIR)/fortran \
 $(MAGIC_FRAGMENT_DIR)/frame \
 $(MAGIC_FRAGMENT_DIR)/freebsd \
 $(MAGIC_FRAGMENT_DIR)/fsav \
+$(MAGIC_FRAGMENT_DIR)/fusecompress \
 $(MAGIC_FRAGMENT_DIR)/games \
 $(MAGIC_FRAGMENT_DIR)/gcc \
 $(MAGIC_FRAGMENT_DIR)/geo \
@@ -118,6 +119,7 @@ $(MAGIC_FRAGMENT_DIR)/macintosh \
 $(MAGIC_FRAGMENT_DIR)/magic \
 $(MAGIC_FRAGMENT_DIR)/mail.news \
 $(MAGIC_FRAGMENT_DIR)/maple \
+$(MAGIC_FRAGMENT_DIR)/marc21 \
 $(MAGIC_FRAGMENT_DIR)/mathcad \
 $(MAGIC_FRAGMENT_DIR)/mathematica \
 $(MAGIC_FRAGMENT_DIR)/matroska \
@@ -191,6 +193,7 @@ $(MAGIC_FRAGMENT_DIR)/sinclair \
 $(MAGIC_FRAGMENT_DIR)/sisu \
 $(MAGIC_FRAGMENT_DIR)/sketch \
 $(MAGIC_FRAGMENT_DIR)/smalltalk \
+$(MAGIC_FRAGMENT_DIR)/smile \
 $(MAGIC_FRAGMENT_DIR)/sniffer \
 $(MAGIC_FRAGMENT_DIR)/softquad \
 $(MAGIC_FRAGMENT_DIR)/spec \
@@ -242,7 +245,7 @@ MAGIC = magic.mgc
 CLEANFILES = ${MAGIC} $(MAGIC_FRAGMENT_DIR)/Localstuff
 
 # FIXME: Build file natively as well so that it can be used to compile
-# the target's magic file
+# the target's magic file; for now we bail if the local version does not match
 if IS_CROSS_COMPILE
 FILE_COMPILE = file
 FILE_COMPILE_DEP =
@@ -254,5 +257,16 @@ endif
 ${MAGIC}: $(EXTRA_DIST) $(FILE_COMPILE_DEP)
 	@rm -fr magic
 	@mkdir magic && cp -p $(EXTRA_DIST) magic
+	@(if expr "${FILE_COMPILE}" : '.*/.*' > /dev/null; then \
+	    echo "Using ${FILE_COMPILE} to generate ${MAGIC}" > /dev/null; \
+	  else \
+	    v=$$(file --version | sed -e s/file-// -e q); \
+	    if [ "$$v" != "${PACKAGE_VERSION}" ]; then \
+		echo "Cannot use the installed version of file ($$v) to"; \
+		echo "cross-compile file ${PACKAGE_VERSION}"; \
+		echo "Please install file ${PACKAGE_VERSION} locally first"; \
+		exit 1; \
+	    fi; \
+	  fi)
 	$(FILE_COMPILE) -C -m magic
 	@rm -fr magic
