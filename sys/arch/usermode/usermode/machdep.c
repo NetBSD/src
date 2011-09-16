@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.31 2011/09/14 18:28:36 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.32 2011/09/16 16:26:19 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -32,7 +32,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2011/09/14 18:28:36 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2011/09/16 16:26:19 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -144,6 +144,7 @@ consinit(void)
 void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
+	panic("%s not implemented", __func__);
 }
 
 int
@@ -241,12 +242,12 @@ md_syscall_getargs(lwp_t *l, ucontext_t *ucp, int nargs, int argsize,
 	ret = copyin(sp + 1, args, argsize);
 
 #if 0
-	int i;
 	for (i = 0; i < nargs+4; i++)
 		printf("stack[%02d] = %"PRIx32"\n", i, (uint) sp[i]);
-
-	for (i = 0; i < nargs; i++)
-		printf("arg[%02d] = %"PRIx32"\n", i, (uint) args[i]);
+#endif
+#if 0
+	for (int i = 0; i < nargs; i++)
+		printf("arg[%02d] = %"PRIx32", ", i, (uint) args[i]);
 	printf("\n");
 #endif
 
