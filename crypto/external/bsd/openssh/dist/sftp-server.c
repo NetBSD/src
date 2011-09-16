@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-server.c,v 1.6 2011/09/07 17:49:19 christos Exp $	*/
+/*	$NetBSD: sftp-server.c,v 1.7 2011/09/16 15:36:18 joerg Exp $	*/
 /* $OpenBSD: sftp-server.c,v 1.94 2011/06/17 21:46:16 djm Exp $ */
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-server.c,v 1.6 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: sftp-server.c,v 1.7 2011/09/16 15:36:18 joerg Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -1359,7 +1359,7 @@ sftp_server_cleanup_exit(int i)
 	_exit(i);
 }
 
-static void
+__dead static void
 sftp_server_usage(void)
 {
 	extern char *__progname;

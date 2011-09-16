@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.7 2011/09/07 17:49:19 christos Exp $	*/
+/*	$NetBSD: sshd.c,v 1.8 2011/09/16 15:36:18 joerg Exp $	*/
 /* $OpenBSD: sshd.c,v 1.385 2011/06/23 09:34:13 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.7 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.8 2011/09/16 15:36:18 joerg Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -296,7 +296,7 @@ sighup_handler(int sig)
  * Called from the main program after receiving SIGHUP.
  * Restarts the server.
  */
-static void
+__dead static void
 sighup_restart(void)
 {
 	logit("Received SIGHUP; restarting.");
@@ -344,7 +344,7 @@ main_sigchld_handler(int sig)
  * Signal handler for the alarm after the login grace period has expired.
  */
 /*ARGSUSED*/
-static void
+__dead static void
 grace_alarm_handler(int sig)
 {
 	if (use_privsep && pmonitor != NULL && pmonitor->m_pid > 0)
@@ -877,7 +877,7 @@ drop_connection(int startups)
 	return (r < p) ? 1 : 0;
 }
 
-static void
+__dead static void
 usage(void)
 {
 	fprintf(stderr, "%s, %s\n",
