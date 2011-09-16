@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.29 2009/11/22 19:09:16 mbalmer Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.30 2011/09/16 01:03:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.29 2009/11/22 19:09:16 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.30 2011/09/16 01:03:52 christos Exp $");
 
 #include <sys/param.h>
 
@@ -81,8 +81,6 @@ static void	sched_precalcts(void);
 void
 sched_rqinit(void)
 {
-	struct cpu_info *ci = curcpu();
-
 	if (hz < 100) {
 		panic("sched_rqinit: value of HZ is too low\n");
 	}
@@ -93,8 +91,11 @@ sched_rqinit(void)
 	rt_ts = mstohz(100);			/* ~100 ms */
 	sched_precalcts();
 
+#ifdef notdef
+	/* Need to set the name etc. This does not belong here */
 	/* Attach the primary CPU here */
-	sched_cpuattach(ci);
+	sched_cpuattach(curcpu());
+#endif
 
 	sched_lwp_fork(NULL, &lwp0);
 	sched_newts(&lwp0);
