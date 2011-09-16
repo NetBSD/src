@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.92 2011/07/01 02:46:15 joerg Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.93 2011/09/16 16:13:17 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.92 2011/07/01 02:46:15 joerg Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.93 2011/09/16 16:13:17 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -1633,7 +1633,7 @@ yylex(void)
 			c = cmdp[cpos];
 			cmdp[cpos] = '\0';
 			yylval.u.i = atoi(cp);
-			yylval.u.ll = STRTOLL(cp, (char **)NULL, 10);
+			yylval.u.ll = STRTOLL(cp, NULL, 10);
 			cmdp[cpos] = c;
 			return (NUMBER);
 		}
