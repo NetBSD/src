@@ -378,8 +378,8 @@ gen_retblk(v)
 	return b;
 }
 
-static inline void
-syntax()
+__dead static inline void
+syntax(void)
 {
 	bpf_error("syntax error in filter expression");
 }

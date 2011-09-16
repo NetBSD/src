@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.1.1.1 2009/11/02 10:01:01 plunky Exp $	*/
+/*	$NetBSD: log.h,v 1.2 2011/09/16 16:09:03 joerg Exp $	*/
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -34,9 +34,9 @@
 #define EV_CHECK_FMT(a,b)
 #endif
 
-void event_err(int eval, const char *fmt, ...) EV_CHECK_FMT(2,3);
+__dead void event_err(int eval, const char *fmt, ...) EV_CHECK_FMT(2,3);
 void event_warn(const char *fmt, ...) EV_CHECK_FMT(1,2);
-void event_errx(int eval, const char *fmt, ...) EV_CHECK_FMT(2,3);
+__dead void event_errx(int eval, const char *fmt, ...) EV_CHECK_FMT(2,3);
 void event_warnx(const char *fmt, ...) EV_CHECK_FMT(1,2);
 void event_msgx(const char *fmt, ...) EV_CHECK_FMT(1,2);
 void _event_debugx(const char *fmt, ...) EV_CHECK_FMT(1,2);
