@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.9 2011/01/29 17:35:24 matt Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.10 2011/09/16 01:03:02 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.9 2011/01/29 17:35:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.10 2011/09/16 01:03:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -137,14 +137,14 @@ evcnt_attach_static(struct evcnt *ev)
 
 	len = strlen(ev->ev_group);
 #ifdef DIAGNOSTIC
-	if (len >= EVCNT_STRING_MAX)		/* ..._MAX includes NUL */
+	if (len == 0 || len >= EVCNT_STRING_MAX) /* ..._MAX includes NUL */
 		panic("evcnt_attach_static: group length (%s)", ev->ev_group);
 #endif
 	ev->ev_grouplen = len;
 
 	len = strlen(ev->ev_name);
 #ifdef DIAGNOSTIC
-	if (len >= EVCNT_STRING_MAX)		/* ..._MAX includes NUL */
+	if (len == 0 || len >= EVCNT_STRING_MAX) /* ..._MAX includes NUL */
 		panic("evcnt_attach_static: name length (%s)", ev->ev_name);
 #endif
 	ev->ev_namelen = len;
