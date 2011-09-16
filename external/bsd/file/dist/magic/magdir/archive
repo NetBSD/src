@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# $File: archive,v 1.63 2011/04/23 15:02:48 christos Exp $
+# $File: archive,v 1.68 2011/09/07 15:47:51 christos Exp $
 # archive:  file(1) magic for archive formats (see also "msdos" for self-
 #           extracting compressed archives)
 #
@@ -654,12 +654,6 @@
 >>>>78	string	-template		Template
 !:mime	application/vnd.oasis.opendocument.image-template
 
-# StarView Metafile
-# From Pierre Ducroquet <pinaraf@pinaraf.info>
-0	string	VCLMTF	StarView MetaFile
->6	beshort	x	\b, version %d
->8	belong	x	\b, size %d
-
 #  EPUB (OEBPS) books using OCF (OEBPS Container Format)
 #    From: Adam Buchbinder <adam.buchbinder@gmail.com>
 #    http://www.idpf.org/ocf/ocf1.0/download/ocf10.htm, section 4.
@@ -692,8 +686,15 @@
 >>4	byte		0x09		\b, at least v0.9 to extract
 >>4	byte		0x0a		\b, at least v1.0 to extract
 >>4	byte		0x0b		\b, at least v1.1 to extract
->>0x161	string		WINZIP		\b, WinZIP self-extracting
 >>4	byte		0x14		\b, at least v2.0 to extract
+>>4	byte		0x2d		\b, at least v3.0 to extract
+>>0x161	string		WINZIP		\b, WinZIP self-extracting
+
+# StarView Metafile
+# From Pierre Ducroquet <pinaraf@pinaraf.info>
+0	string	VCLMTF	StarView MetaFile
+>6	beshort	x	\b, version %d
+>8	belong	x	\b, size %d
 
 # Zoo archiver
 20	lelong		0xfdc4a7dc	Zoo archive data
@@ -889,3 +890,13 @@
 # ZPAQ: http://mattmahoney.net/dc/zpaq.html
 0	string	zPQ	ZPAQ stream
 >3	byte	x	\b, level %d
+
+# BBeB ebook, unencrypted (LRF format)
+# URL: http://www.sven.de/librie/Librie/LrfFormat
+# From: Adam Buchbinder <adam.buchbinder@gmail.com>
+0	string	L\0R\0F\0\0\0	BBeB ebook data, unencrypted
+>8	beshort	x		\b, version %d
+>36	byte	1		\b, front-to-back
+>36	byte	16		\b, back-to-front
+>42	beshort	x		\b, (%dx,
+>44	beshort	x		%d)

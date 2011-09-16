@@ -1,6 +1,6 @@
-.\"	$NetBSD: libmagic.3,v 1.6 2011/05/13 01:52:13 christos Exp $
+.\"	$NetBSD: libmagic.3,v 1.7 2011/09/16 21:06:25 christos Exp $
 .\"
-.\" $File: libmagic.man,v 1.23 2011/01/14 21:59:17 rrt Exp $
+.\" $File: libmagic.man,v 1.24 2011/05/13 22:11:44 christos Exp $
 .\"
 .\" Copyright (c) Christos Zoulas 2003.
 .\" All Rights Reserved.
@@ -175,7 +175,9 @@ The
 .Fn magic_descriptor
 function returns a textual description of the contents of the
 .Ar fd
-argument, or NULL if an error occurred.
+argument, or
+.Dv NULL
+if an error occurred.
 .Pp
 The
 .Fn magic_buffer
