@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.328 2011/08/27 18:11:48 reinoud Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.329 2011/09/16 21:02:28 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.328 2011/08/27 18:11:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.329 2011/09/16 21:02:28 reinoud Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -374,8 +374,9 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 			/* Seems ok: check that entry point is not too high */
 			if (epp->ep_entry > epp->ep_vm_maxaddr) {
 #ifdef DIAGNOSTIC
-				printf("%s: rejecting due to "
-					"too high entry address\n", __func__);
+				printf("%s: rejecting %p due to "
+					"too high entry address\n",
+					 __func__, (void *) epp->ep_entry);
 #endif
 				error = ENOEXEC;
 				break;
@@ -383,8 +384,9 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 			/* Seems ok: check that entry point is not too low */
 			if (epp->ep_entry < epp->ep_vm_minaddr) {
 #ifdef DIAGNOSTIC
-				printf("%s: rejecting due to "
-					"too low entry address\n", __func__);
+				printf("%s: rejecting %p due to "
+					"too low entry address\n",
+					 __func__, (void *) epp->ep_entry);
 #endif
 				error = ENOEXEC;
 				break;
