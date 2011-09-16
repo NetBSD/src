@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.60 2010/12/18 23:09:48 christos Exp $	*/
+/*	$NetBSD: sort.c,v 1.61 2011/09/16 15:39:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
  The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
-__RCSID("$NetBSD: sort.c,v 1.60 2010/12/18 23:09:48 christos Exp $");
+__RCSID("$NetBSD: sort.c,v 1.61 2011/09/16 15:39:29 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -111,9 +111,7 @@ const char *tmpdir;	/* where temporary files should be put */
 
 static void cleanup(void);
 static void onsignal(int);
-static void usage(const char *);
-
-int main(int argc, char **argv);
+__dead static void usage(const char *);
 
 int
 main(int argc, char *argv[])

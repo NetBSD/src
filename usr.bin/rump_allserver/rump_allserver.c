@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.21 2011/02/22 15:51:59 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.22 2011/09/16 15:39:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.21 2011/02/22 15:51:59 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.22 2011/09/16 15:39:28 joerg Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: rump_allserver.c,v 1.21 2011/02/22 15:51:59 pooka Exp $");
 #include <unistd.h>
 #include <util.h>
 
-static void
+__dead static void
 usage(void)
 {
 
@@ -58,7 +58,7 @@ usage(void)
 	exit(1);
 }
 
-static void
+__dead static void
 die(int sflag, int error, const char *reason)
 {
 

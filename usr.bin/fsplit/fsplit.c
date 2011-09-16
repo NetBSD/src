@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.27 2009/07/13 19:05:40 roy Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.28 2011/09/16 15:39:26 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ static char x[] = "zzz000.f";
 static char mainp[] = "main000.f";
 static char blkp[] = "blkdta000.f";
 
-static void badparms(void);
+__dead static void badparms(void);
 static const char *functs(const char *);
 static int get_line(void);
 static void get_name(char *, int);

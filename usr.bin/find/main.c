@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2010/12/28 15:28:31 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2011/09/16 15:39:25 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -39,7 +39,7 @@ static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
 __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.29 2010/12/28 15:28:31 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 2011/09/16 15:39:25 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,8 +69,7 @@ int issort;			/* sort directory entries */
 int isxargs;			/* don't permit xargs delimiting chars */
 int regcomp_flags = REG_BASIC;	/* regex compilation flags */
 
-int main(int, char **);
-static void usage(void);
+__dead static void usage(void);
 
 int
 main(int argc, char *argv[])
