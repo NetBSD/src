@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.35 2011/06/12 03:35:53 rmind Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.36 2011/09/16 18:43:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.35 2011/06/12 03:35:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.36 2011/09/16 18:43:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -733,7 +733,6 @@ ptyfs_open(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 
-	ptyfs->ptyfs_flag |= PTYFS_CHANGE|PTYFS_ACCESS;
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
 	case PTYFSptc:
