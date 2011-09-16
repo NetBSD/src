@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.35 2010/09/08 13:58:46 christos Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.36 2011/09/16 15:39:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.35 2010/09/08 13:58:46 christos Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.36 2011/09/16 15:39:27 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: yp_passwd.c,v 1.35 2010/09/08 13:58:46 christos Exp $");
 static uid_t uid;
 static char *domain;
 
-static void
+__dead static void
 pwerror(const char *name, int show_err, int eval)
 {
 

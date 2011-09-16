@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.131 2010/01/12 06:50:04 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.132 2011/09/16 15:39:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.131 2010/01/12 06:50:04 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.132 2011/09/16 15:39:26 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ static struct types {
 static sigjmp_buf	 jabort;
 
 static int	confirm(const char *, const char *);
-static void	mintr(int);
+__dead static void	mintr(int);
 static void	mabort(const char *);
 static void	set_type(const char *);
 

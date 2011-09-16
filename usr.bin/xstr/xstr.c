@@ -1,4 +1,4 @@
-/*	$NetBSD: xstr.c,v 1.24 2009/11/17 18:31:13 drochner Exp $	*/
+/*	$NetBSD: xstr.c,v 1.25 2011/09/16 15:39:31 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: xstr.c,v 1.24 2009/11/17 18:31:13 drochner Exp $");
+__RCSID("$NetBSD: xstr.c,v 1.25 2011/09/16 15:39:31 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: xstr.c,v 1.24 2009/11/17 18:31:13 drochner Exp $");
  */
 
 static off_t	hashit(const char *, int);
-static void	onintr(int);
+__dead static void	onintr(int);
 static off_t	yankstr(char **);
 static int	octdigit(char);
 static void	inithash(void);
@@ -75,7 +75,7 @@ static void	xsdotc(void);
 static char	lastchr(const char *);
 static int	istail(const char *, const char *);
 static void	process(const char *);
-static void	usage(void);
+__dead static void	usage(void);
 
 static off_t	tellpt;
 static off_t	mesgpt;
@@ -95,8 +95,6 @@ static struct	hash {
 	struct	hash *hnext;
 	short	hnew;
 } bucket[BUCKETS];
-
-int	main(int, char *[]);
 
 int
 main(int argc, char *argv[])

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.71 2011/02/04 14:31:23 martin Exp $	*/
+/*	$NetBSD: if.c,v 1.72 2011/09/16 15:39:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.71 2011/02/04 14:31:23 martin Exp $");
+__RCSID("$NetBSD: if.c,v 1.72 2011/09/16 15:39:27 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -637,7 +637,7 @@ iftot_print_sum(struct iftot *cur, struct iftot *old)
 		printf(" %5llu", (unsigned long long)(cur->ift_dr - old->ift_dr));
 }
 
-static void
+__dead static void
 sidewaysintpr_sysctl(unsigned interval)
 {
 	sigset_t emptyset;

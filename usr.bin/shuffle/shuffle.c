@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.20 2009/04/13 07:31:36 lukem Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.21 2011/09/16 15:39:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.20 2009/04/13 07:31:36 lukem Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.21 2011/09/16 15:39:29 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -48,11 +48,9 @@ __RCSID("$NetBSD: shuffle.c,v 1.20 2009/04/13 07:31:36 lukem Exp $");
 #include <util.h>
 
 static size_t *get_shuffle(size_t);
-static void usage(void);
+__dead static void usage(void);
 static void get_lines(const char *, char ***, size_t *);
 static size_t get_number(const char *, int);
-
-int main(int, char *[]);
 
 /*
  * get_shuffle --
