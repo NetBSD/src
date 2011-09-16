@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.23 2011/09/04 13:25:22 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.24 2011/09/16 16:05:59 joerg Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
-__RCSID("$NetBSD: zdump.c,v 1.23 2011/09/04 13:25:22 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.24 2011/09/16 16:05:59 joerg Exp $");
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -244,7 +244,7 @@ const char * const	zone;
 	warned = TRUE;
 }
 
-static void
+__dead static void
 usage(FILE *stream, int status)
 {
 	(void) fprintf(stream,

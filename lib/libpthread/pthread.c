@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.123 2011/03/30 00:03:26 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.124 2011/09/16 16:05:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.123 2011/03/30 00:03:26 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.124 2011/09/16 16:05:59 joerg Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -457,7 +457,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 }
 
 
-static void
+__dead static void
 pthread__create_tramp(void *cookie)
 {
 	pthread_t self;

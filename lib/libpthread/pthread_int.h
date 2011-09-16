@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.79 2011/08/05 03:55:31 lukem Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.80 2011/09/16 16:05:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -300,12 +300,12 @@ pthread__id(vaddr_t sp) {
         } while (/*CONSTCOND*/0)
 
 void	pthread__destroy_tsd(pthread_t) PTHREAD_HIDE;
-void	pthread__assertfunc(const char *, int, const char *, const char *)
+__dead void	pthread__assertfunc(const char *, int, const char *, const char *)
 			    PTHREAD_HIDE;
 void	pthread__errorfunc(const char *, int, const char *, const char *)
 			   PTHREAD_HIDE;
 char	*pthread__getenv(const char *) PTHREAD_HIDE;
-void	pthread__cancelled(void) PTHREAD_HIDE;
+__dead void	pthread__cancelled(void) PTHREAD_HIDE;
 void	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *) PTHREAD_HIDE;
 int	pthread__checkpri(int) PTHREAD_HIDE;
 
