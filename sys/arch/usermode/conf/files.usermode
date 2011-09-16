@@ -1,4 +1,4 @@
-# $NetBSD: files.usermode,v 1.10 2011/09/04 21:08:18 jmcneill Exp $
+# $NetBSD: files.usermode,v 1.11 2011/09/16 11:28:36 jmcneill Exp $
 
 maxpartitions 8
 maxusers 8 16 64
@@ -7,6 +7,7 @@ defparam opt_memsize.h				MEMSIZE
 defflag opt_sdl.h				SDL
 defflag opt_cpu.h				CPU_DEBUG
 defparam opt_cpu.h				CPU_HOST
+defparam opt_misc.h				TEXTADDR
 defflag opt_urkelvisor.h			URKELVISOR
 
 define	thunkbus { }
