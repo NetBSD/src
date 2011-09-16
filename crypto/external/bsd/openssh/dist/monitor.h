@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.h,v 1.3 2011/09/07 17:49:19 christos Exp $	*/
+/*	$NetBSD: monitor.h,v 1.4 2011/09/16 15:36:18 joerg Exp $	*/
 /* $OpenBSD: monitor.h,v 1.16 2011/06/17 21:44:31 djm Exp $ */
 
 /*
@@ -88,7 +88,7 @@ void monitor_sync(struct monitor *);
 
 struct Authctxt;
 void monitor_child_preauth(struct Authctxt *, struct monitor *);
-void monitor_child_postauth(struct monitor *);
+__dead void monitor_child_postauth(struct monitor *);
 
 struct mon_table;
 int monitor_read(struct monitor*, struct mon_table *, struct mon_table **);

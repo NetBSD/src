@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp.c,v 1.7 2011/07/25 03:03:11 christos Exp $	*/
+/*	$NetBSD: sftp.c,v 1.8 2011/09/16 15:36:18 joerg Exp $	*/
 /* $OpenBSD: sftp.c,v 1.132 2010/12/04 00:18:01 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.7 2011/07/25 03:03:11 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.8 2011/09/16 15:36:18 joerg Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
@@ -182,7 +182,7 @@ static const struct CMD cmds[] = {
 int interactive_loop(struct sftp_conn *, const char *file1, const char *file2);
 
 /* ARGSUSED */
-static void
+__dead static void
 killchild(int signo)
 {
 	if (sshpid > 1) {
@@ -2039,7 +2039,7 @@ connect_to_server(const char *path, char **args, int *in, int *out)
 	close(c_out);
 }
 
-static void
+__dead static void
 usage(void)
 {
 	extern char *__progname;

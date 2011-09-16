@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.8 2011/09/07 17:49:19 christos Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.9 2011/09/16 15:36:18 joerg Exp $	*/
 /* $OpenBSD: ssh-agent.c,v 1.172 2011/06/03 01:37:40 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.8 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.9 2011/09/16 15:36:18 joerg Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -1066,7 +1066,7 @@ cleanup_exit(int i)
 }
 
 /*ARGSUSED*/
-static void
+__dead static void
 cleanup_handler(int sig)
 {
 	cleanup_socket();
@@ -1090,7 +1090,7 @@ check_parent_exists(void)
 	}
 }
 
-static void
+__dead static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [options] [command [arg ...]]\n",
