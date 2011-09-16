@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.40 2011/08/27 15:45:52 joerg Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.41 2011/09/16 16:13:17 plunky Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.40 2011/08/27 15:45:52 joerg Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.41 2011/09/16 16:13:17 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -365,7 +365,7 @@ doit(int f, struct sockaddr_storage *fromp)
 			    "Connection received using IP options (ignored):%s",
 			    lbuf);
 			if (setsockopt(0, ipproto, IP_OPTIONS,
-			    (char *)NULL, optsize) != 0) {
+			    NULL, optsize) != 0) {
 				syslog(LOG_ERR,
 				    "setsockopt IP_OPTIONS NULL: %m");
 				exit(1);
