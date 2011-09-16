@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.1,v 1.31 2011/09/16 11:06:27 apb Exp $
+.\"	$NetBSD: stat.1,v 1.32 2011/09/16 13:33:13 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -435,7 +435,7 @@ is given.
 The target of a symbolic link.
 .It Cm Z
 Expands to
-.Dq Ar major Ns , Ns Ar minor
+.Dq Ar major , Ns Ar minor
 from the rdev field for character or block
 special devices and gives size output for all others.
 .El
@@ -480,7 +480,7 @@ This example produces output very similar to that from
 displays the time in a different format, and
 .Xr find 1
 adds at least one space after the comma in
-.Dq Ar major Ns , Ns Ar minor
+.Dq Ar major , Ns Ar minor
 for device nodes):
 .Bd -literal -offset indent
 \*[Gt] stat -f "%7i %6b %-11Sp %3l %-17Su %-17Sg %9Z %Sm %N%SY" /tmp/bar
@@ -498,7 +498,7 @@ adjusts the column spacing differently when listing multiple files,
 and
 .Xr ls 1
 adds at least one space after the comma in
-.Dq Ar major Ns , Ns Ar minor
+.Dq Ar major , Ns Ar minor
 for device nodes):
 .Bd -literal -offset indent
 \*[Gt] stat -f "%-11Sp %l %Su  %Sg  %5Z %Sm %N%SY" /tmp/bar
