@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.62 2010/12/25 04:57:07 dholland Exp $	*/
+/*	$NetBSD: nonints.h,v 1.63 2011/09/16 15:38:04 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@ void Punt(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2),__noreturn__));
 void DieHorribly(void) __attribute__((__noreturn__));
 int PrintAddr(void *, void *);
-void Finish(int);
+void Finish(int) __dead;
 int eunlink(const char *);
 void execError(const char *, const char *);
 char *getTmpdir(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.83 2010/11/25 21:31:09 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.84 2011/09/16 15:38:04 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.83 2010/11/25 21:31:09 christos Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.84 2011/09/16 15:38:04 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.83 2010/11/25 21:31:09 christos Exp $");
+__RCSID("$NetBSD: make.c,v 1.84 2011/09/16 15:38:04 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -139,7 +139,7 @@ static int MakeCheckOrder(void *, void *);
 static int MakeBuildChild(void *, void *);
 static int MakeBuildParent(void *, void *);
 
-static void
+__dead static void
 make_abort(GNode *gn, int line)
 {
     static int two = 2;
