@@ -1,4 +1,4 @@
-/*	$NetBSD: devpubd.c,v 1.1 2011/08/29 11:38:48 mrg Exp $	*/
+/*	$NetBSD: devpubd.c,v 1.2 2011/09/16 15:42:56 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
 Jared D. McNeill <jmcneill@invisible.ca>. All rights reserved.");
-__RCSID("$NetBSD: devpubd.c,v 1.1 2011/08/29 11:38:48 mrg Exp $");
+__RCSID("$NetBSD: devpubd.c,v 1.2 2011/09/16 15:42:56 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -55,12 +55,12 @@ __RCSID("$NetBSD: devpubd.c,v 1.1 2011/08/29 11:38:48 mrg Exp $");
 #include <unistd.h>
 
 static int drvctl_fd = -1;
-static const char *devpubd_script = DEVPUBD_RUN_HOOKS;
+static const char devpubd_script[] = DEVPUBD_RUN_HOOKS;
 
 #define	DEVPUBD_ATTACH_EVENT	"device-attach"
 #define	DEVPUBD_DETACH_EVENT	"device-detach"
 
-static void
+__dead static void
 devpubd_exec(const char *path, const char *event, const char *device)
 {
 	int error;
@@ -107,7 +107,7 @@ devpubd_eventhandler(const char *event, const char *device)
 	}
 }
 
-static void
+__dead static void
 devpubd_eventloop(void)
 {
 	const char *event, *device;
@@ -195,7 +195,7 @@ done:
 	return;
 }
 
-static void
+__dead static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-f]\n", getprogname());
