@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.34 2011/02/04 19:42:12 pooka Exp $	*/
+/*	$NetBSD: args.c,v 1.35 2011/09/16 16:06:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.34 2011/02/04 19:42:12 pooka Exp $");
+__RCSID("$NetBSD: args.c,v 1.35 2011/09/16 16:06:23 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,9 @@ static int	c_conv(const void *, const void *);
 #endif
 static void	f_bs(char *);
 static void	f_cbs(char *);
+#ifdef	NO_CONV
+__dead
+#endif
 static void	f_conv(char *);
 static void	f_count(char *);
 static void	f_files(char *);

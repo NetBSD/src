@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.19 2011/08/29 14:51:18 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.20 2011/09/16 16:06:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,8 +37,17 @@
 
 #include <sys/cdefs.h>
 
+#ifdef NO_CONV
+__dead void block(void);
+__dead void block_close(void);
+__dead void unblock(void);
+__dead void unblock_close(void);
+#else
 void block(void);
 void block_close(void);
+void unblock(void);
+void unblock_close(void);
+#endif
 void dd_out(int);
 void def(void);
 void def_close(void);
