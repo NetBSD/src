@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.4 2011/06/23 16:12:36 riz Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.5 2011/09/16 21:06:26 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: apprentice.c,v 1.169 2011/05/10 17:08:13 christos Exp $")
+FILE_RCSID("@(#)$File: apprentice.c,v 1.170 2011/06/10 09:23:28 christos Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.4 2011/06/23 16:12:36 riz Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.5 2011/09/16 21:06:26 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -1457,8 +1457,8 @@ parse(struct magic_set *ms, struct magic_entry **mentryp, uint32_t *nmentryp,
 						goto bad;
 					m->str_flags |= PSTRING_LENGTH_INCLUDES_ITSELF;
 					break;
-				bad:
 				default:
+				bad:
 					if (ms->flags & MAGIC_CHECK)
 						file_magwarn(ms,
 						    "string extension `%c' "
@@ -2091,7 +2091,7 @@ out:
 	*p = '\0';
 	m->vallen = CAST(unsigned char, (p - origp));
 	if (m->type == FILE_PSTRING)
-		m->vallen += file_pstring_length_size(m);
+		m->vallen += (unsigned char)file_pstring_length_size(m);
 	return s;
 }
 
