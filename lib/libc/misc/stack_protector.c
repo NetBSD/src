@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_protector.c,v 1.5 2010/12/07 20:10:53 joerg Exp $	*/
+/*	$NetBSD: stack_protector.c,v 1.6 2011/09/16 16:05:59 joerg Exp $	*/
 /*	$OpenBSD: stack_protector.c,v 1.10 2006/03/31 05:34:44 deraadt Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stack_protector.c,v 1.5 2010/12/07 20:10:53 joerg Exp $");
+__RCSID("$NetBSD: stack_protector.c,v 1.6 2011/09/16 16:05:59 joerg Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -50,7 +50,7 @@ void xprintf(const char *fmt, ...);
 
 long __stack_chk_guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static void __fail(const char *) __attribute__((__noreturn__));
-void __stack_chk_fail_local(void);
+__dead void __stack_chk_fail_local(void);
 void __guard_setup(void);
 
 void
