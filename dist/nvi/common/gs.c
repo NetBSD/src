@@ -1,4 +1,4 @@
-/*	$NetBSD: gs.c,v 1.1.1.2 2008/05/18 14:29:45 aymeric Exp $ */
+/*	$NetBSD: gs.c,v 1.2 2011/09/16 16:13:41 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000
@@ -23,7 +23,7 @@
 #include "../common/common.h"
 #include "../perl_api/extern.h"
 
-static void	   perr __P((char *, char *));
+__dead static void	   perr __P((char *, char *));
 
 /*
  * gs_init --

@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_main.c,v 1.3 2009/10/20 16:17:07 tnn Exp $ */
+/*	$NetBSD: cl_main.c,v 1.4 2011/09/16 16:13:41 joerg Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -41,7 +41,7 @@ static void	   cl_func_std __P((WIN *));
 static void	   cl_end __P((CL_PRIVATE *));
 #endif
 static CL_PRIVATE *cl_init __P((WIN *));
-static void	   perr __P((const char *, const char *));
+__dead static void	   perr __P((const char *, const char *));
 static int	   setsig __P((int, struct sigaction *, void (*)(int)));
 static void	   sig_end __P((GS *));
 static void	   term_init __P((const char *, const char *));
