@@ -1,4 +1,4 @@
-/* $NetBSD: t_ldexp.c,v 1.7 2011/09/14 13:47:40 jruoho Exp $ */
+/* $NetBSD: t_ldexp.c,v 1.8 2011/09/16 04:54:46 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ldexp.c,v 1.7 2011/09/14 13:47:40 jruoho Exp $");
+__RCSID("$NetBSD: t_ldexp.c,v 1.8 2011/09/16 04:54:46 jruoho Exp $");
 
 #include <math.h>
 #include <limits.h>
@@ -51,13 +51,19 @@ ATF_TC_BODY(ldexp_exp2, tc)
 {
 #ifndef __vax__
 	const double n[] = { 1, 2, 3, 25, 50, 100, 123, 321, 500 };
-	const double x = 12.1288221;
+	const double eps = 1.0e-40;
+	const double x = 12.0;
 	double y;
 	size_t i;
 
 	for (i = 0; i < __arraycount(n); i++) {
+
 		y = ldexp(x, n[i]);
-		ATF_CHECK(y == x * exp2(n[i]));
+
+		if (fabs(y - (x * exp2(n[i]))) > eps) {
+			atf_tc_fail_nonfatal("ldexp(%0.01f, %0.01f) "
+			    "!= %0.01f * exp2(%0.01f)", x, n[i], x, n[i]);
+		}
 	}
 #endif
 }
@@ -178,13 +184,19 @@ ATF_TC_BODY(ldexpf_exp2f, tc)
 {
 #ifndef __vax__
 	const float n[] = { 1, 2, 3, 25, 50, 100, 123, 321, 500 };
-	const float x = 12.1288221;
+	const float eps = 1.0e-9;
+	const float x = 12;
 	float y;
 	size_t i;
 
 	for (i = 0; i < __arraycount(n); i++) {
+
 		y = ldexpf(x, n[i]);
-		ATF_CHECK(y == x * exp2f(n[i]));
+
+		if (fabsf(y - (x * exp2f(n[i]))) > eps) {
+			atf_tc_fail_nonfatal("ldexpf(%0.01f, %0.01f) "
+			    "!= %0.01f * exp2f(%0.01f)", x, n[i], x, n[i]);
+		}
 	}
 #endif
 }
