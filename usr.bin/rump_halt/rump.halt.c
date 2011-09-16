@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.halt.c,v 1.2 2011/01/22 13:43:07 pooka Exp $	*/
+/*	$NetBSD: rump.halt.c,v 1.3 2011/09/16 15:39:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump.halt.c,v 1.2 2011/01/22 13:43:07 pooka Exp $");
+__RCSID("$NetBSD: rump.halt.c,v 1.3 2011/09/16 15:39:28 joerg Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: rump.halt.c,v 1.2 2011/01/22 13:43:07 pooka Exp $");
 
 #define ARGFLAGS "dhn"
 
-static void
+__dead static void
 usage(void)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.28 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.29 2011/09/16 15:39:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.28 2009/04/10 13:08:25 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.29 2011/09/16 15:39:27 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,7 +269,7 @@ shextract(char *line, int ntype)
 }
 
 /*ARGSUSED*/
-static void
+__dead static void
 tty_sigint(int signo __unused)
 {
 

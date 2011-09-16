@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.33 2011/05/24 12:42:25 joerg Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.34 2011/09/16 15:39:28 joerg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -137,7 +137,7 @@ static void	get_inet_address(struct sockaddr_in *, const char *);
 #endif
 
 static bool_t	reply_proc(void *, struct netbuf *, struct netconfig *);
-static void	brdcst(int, char **);
+__dead static void	brdcst(int, char **);
 static void	addrping(const char *, const char *, int, char **);
 static void	progping(const char *, int, char **);
 static CLIENT	*clnt_addr_create(const char *, const struct netconfig *,

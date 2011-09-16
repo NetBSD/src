@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.74 2009/04/14 07:37:31 lukem Exp $	*/
+/*	$NetBSD: w.c,v 1.75 2011/09/16 15:39:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.74 2009/04/14 07:37:31 lukem Exp $");
+__RCSID("$NetBSD: w.c,v 1.75 2011/09/16 15:39:30 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,9 +124,7 @@ static void	pr_header(time_t *, int);
 static int	ttystat(const char *, struct stat *);
 static void	process(struct entry *);
 #endif
-static void	usage(int);
-
-int	main(int, char **);
+__dead static void	usage(int);
 
 int
 main(int argc, char **argv)

@@ -1,4 +1,4 @@
-/*	$NetBSD: unifdef.c,v 1.19 2011/01/20 15:24:24 ginsbach Exp $	*/
+/*	$NetBSD: unifdef.c,v 1.20 2011/09/16 15:39:30 joerg Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -77,7 +77,7 @@ static const char copyright[] =
 #endif
 #ifdef __IDSTRING
 __IDSTRING(Berkeley, "@(#)unifdef.c	8.1 (Berkeley) 6/6/93");
-__IDSTRING(NetBSD, "$NetBSD: unifdef.c,v 1.19 2011/01/20 15:24:24 ginsbach Exp $");
+__IDSTRING(NetBSD, "$NetBSD: unifdef.c,v 1.20 2011/09/16 15:39:30 joerg Exp $");
 __IDSTRING(dotat, "$dotat: things/unifdef.c,v 1.161 2003/07/01 15:32:48 fanf2 Exp $");
 #endif
 #endif /* not lint */
@@ -242,8 +242,8 @@ static int              exitstat;		/* program exit status */
 
 static void             addsym(bool, bool, char *);
 static void             debug(const char *, ...);
-static void             done(void);
-static void             error(const char *);
+__dead static void      done(void);
+__dead static void      error(const char *);
 static int              findsym(const char *);
 static void             flushline(bool);
 static Linetype         get_line(void);
@@ -252,12 +252,12 @@ static void             ignoreoff(void);
 static void             ignoreon(void);
 static void             keywordedit(const char *);
 static void             nest(void);
-static void             process(void);
+__dead static void      process(void);
 static const char      *skipcomment(const char *);
 static const char      *skipsym(const char *);
 static void             state(Ifstate);
 static int              strlcmp(const char *, const char *, size_t);
-static void             usage(void);
+__dead static void      usage(void);
 
 #define endsym(c) (!isalpha((unsigned char)c) && !isdigit((unsigned char)c) && c != '_')
 
@@ -409,11 +409,11 @@ usage(void)
 typedef void state_fn(void);
 
 /* report an error */
-static void Eelif (void) { error("Inappropriate #elif"); }
-static void Eelse (void) { error("Inappropriate #else"); }
-static void Eendif(void) { error("Inappropriate #endif"); }
-static void Eeof  (void) { error("Premature EOF"); }
-static void Eioccc(void) { error("Obfuscated preprocessor control line"); }
+__dead static void Eelif (void) { error("Inappropriate #elif"); }
+__dead static void Eelse (void) { error("Inappropriate #else"); }
+__dead static void Eendif(void) { error("Inappropriate #endif"); }
+__dead static void Eeof  (void) { error("Premature EOF"); }
+__dead static void Eioccc(void) { error("Obfuscated preprocessor control line"); }
 /* plain line handling */
 static void print (void) { flushline(true); }
 static void drop  (void) { flushline(false); }

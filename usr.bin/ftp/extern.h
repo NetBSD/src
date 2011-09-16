@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.78 2010/03/04 21:40:53 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.79 2011/09/16 15:39:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -94,9 +94,6 @@ struct tm;
 struct addrinfo;
 
 void	abort_remote(FILE *);
-void	abort_squared(int);
-void	abortpt(int);
-void	abortxfer(int);
 void	account(int, char **);
 void	ai_unmapped(struct addrinfo *);
 int	another(int *, char ***, const char *);
@@ -145,7 +142,7 @@ void	help(int, char **);
 char   *hookup(const char *, const char *);
 void	idlecmd(int, char **);
 int	initconn(void);
-void	intr(int);
+__dead void	intr(int);
 int	isipv6addr(const char *);
 void	list_vertical(StringList *);
 void	lcd(int, char **);
@@ -169,7 +166,7 @@ void	page(int, char **);
 const char *parse_rfc2616time(struct tm *, const char *);
 int	parserate(int, char **, int);
 char   *prompt(void);
-void	proxabort(int);
+__dead void	proxabort(int);
 void	proxtrans(const char *, const char *, const char *);
 void	psabort(int);
 void	pswitch(int);
@@ -241,7 +238,6 @@ int	togglevar(int, char **, int *, const char *);
 void	unsetoption(int, char **);
 void	updatelocalcwd(void);
 void	updateremotecwd(void);
-void	usage(void);
 void	user(int, char **);
 int	ftp_connect(int, const struct sockaddr *, socklen_t);
 int	ftp_listen(int, int);
