@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3 2009/08/06 16:57:20 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.4 2011/09/16 16:41:20 joerg Exp $
 
 DIST=	${NETBSDSRCDIR}/external/bsd/pkg_install/dist
 
@@ -10,3 +10,4 @@ CPPFLAGS+=-DHAVE_CONFIG_H -DNETBSD -DHAVE_SSL
 CPPFLAGS+=-DSYSCONFDIR='"/etc"'
 
 WARNS=	4
+CWARNFLAGS+=	-Wno-missing-noreturn
