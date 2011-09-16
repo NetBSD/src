@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.40 2011/09/15 12:25:25 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.41 2011/09/16 16:29:11 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40 2011/09/15 12:25:25 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.41 2011/09/16 16:29:11 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,7 +82,7 @@ setup_signal_handlers(void)
 	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
 	sa.sa_sigaction = mem_access_handler;
 	thunk_sigemptyset(&sa.sa_mask);
-	thunk_sigaddset(&sa.sa_mask, SIGALRM);
+//	thunk_sigaddset(&sa.sa_mask, SIGALRM);
 	if (thunk_sigaction(SIGSEGV, &sa, NULL) == -1)
 		panic("couldn't register SIGSEGV handler : %d",
 		    thunk_geterrno());
@@ -92,7 +92,7 @@ setup_signal_handlers(void)
 	sa.sa_flags = SA_RESTART | SA_SIGINFO;
 	sa.sa_sigaction = illegal_instruction_handler;
 	thunk_sigemptyset(&sa.sa_mask);
-	thunk_sigaddset(&sa.sa_mask, SIGALRM);
+//	thunk_sigaddset(&sa.sa_mask, SIGALRM);
 	if (thunk_sigaction(SIGILL, &sa, NULL) == -1)
 		panic("couldn't register SIGILL handler : %d", thunk_geterrno());
 
@@ -118,7 +118,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 
 	recurse++;
 	if (recurse > 1)
-		printf("%s: enter trap recursion level %d\n", __func__, recurse);
+		dprintf_debug("%s: enter trap recursion level %d\n", __func__, recurse);
 	if ((info->si_signo == SIGSEGV) || (info->si_signo == SIGBUS)) {
 		l = curlwp;
 		p = l->l_proc;
@@ -129,29 +129,29 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		lwp_errno = pcb->pcb_errno = thunk_geterrno();
 #if 0
 		va = (vaddr_t) info->si_addr;
-		printf("mem trap lwp = %p pid = %d lid = %d, va = %p\n",
+		dprintf_debug("mem trap lwp = %p pid = %d lid = %d, va = %p\n",
 		    curlwp,
 		    curlwp->l_proc->p_pid,
 		    curlwp->l_lid,
 		    (void *) va);
 #endif
 #if 0
-		printf("SIGSEGV or SIGBUS!\n");
-		printf("\tsi_signo = %d\n", info->si_signo);
-		printf("\tsi_errno = %d\n", info->si_errno);
-		printf("\tsi_code  = %d\n", info->si_code);
+		dprintf_debug("SIGSEGV or SIGBUS!\n");
+		dprintf_debug("\tsi_signo = %d\n", info->si_signo);
+		dprintf_debug("\tsi_errno = %d\n", info->si_errno);
+		dprintf_debug("\tsi_code  = %d\n", info->si_code);
 		if (info->si_code == SEGV_MAPERR)
-			printf("\t\tSEGV_MAPERR\n");
+			dprintf_debug("\t\tSEGV_MAPERR\n");
 		if (info->si_code == SEGV_ACCERR)
-			printf("\t\tSEGV_ACCERR\n");
+			dprintf_debug("\t\tSEGV_ACCERR\n");
 		if (info->si_code == BUS_ADRALN)
-			printf("\t\tBUS_ADRALN\n");
+			dprintf_debug("\t\tBUS_ADRALN\n");
 		if (info->si_code == BUS_ADRERR)
-			printf("\t\tBUS_ADRERR\n");
+			dprintf_debug("\t\tBUS_ADRERR\n");
 		if (info->si_code == BUS_OBJERR)
-			printf("\t\tBUS_OBJERR\n");
-		printf("\tsi_addr = %p\n", info->si_addr);
-		printf("\tsi_trap = %d\n", info->si_trap);
+			dprintf_debug("\t\tBUS_OBJERR\n");
+		dprintf_debug("\tsi_addr = %p\n", info->si_addr);
+		dprintf_debug("\tsi_trap = %d\n", info->si_trap);
 #endif
 
 		if (info->si_code == SI_NOINFO)
@@ -226,7 +226,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		pcb->pcb_errno = lwp_errno;
 	}
 	if (recurse > 1)
-		printf("%s: leaving trap recursion level %d\n", __func__, recurse);
+		dprintf_debug("%s: leaving trap recursion level %d\n", __func__, recurse);
 	recurse--;
 }
 
@@ -248,7 +248,7 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 
 #if 0
 		va = (vaddr_t) info->si_addr;
-		printf("illegal instruction trap lwp = %p pid = %d lid = %d, va = %p\n",
+		printf("\nillegal instruction trap lwp = %p pid = %d lid = %d, va = %p\n",
 		    curlwp,
 		    curlwp->l_proc->p_pid,
 		    curlwp->l_lid,
