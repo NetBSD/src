@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.80 2011/07/17 10:22:07 njoly Exp $	*/
+/*	$NetBSD: main.c,v 1.81 2011/09/16 15:39:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.80 2011/07/17 10:22:07 njoly Exp $");
+__RCSID("$NetBSD: main.c,v 1.81 2011/09/16 15:39:27 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -344,7 +344,7 @@ const struct softintrq {
 int main __P((int, char *[]));
 static void printproto __P((struct protox *, const char *));
 static void print_softintrq __P((void));
-static void usage __P((void));
+__dead static void usage(void);
 static struct protox *name2protox __P((const char *));
 static struct protox *knownname __P((const char *));
 static void prepare(const char *, const char *, struct protox *tp);

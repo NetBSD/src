@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.h,v 1.11 2011/08/30 21:14:06 joerg Exp $	*/
+/*	$NetBSD: faithd.h,v 1.12 2011/09/16 15:39:37 joerg Exp $	*/
 /*	$KAME: faithd.h,v 1.9 2002/05/09 09:41:24 itojun Exp $	*/
 
 /*
@@ -34,7 +34,7 @@ extern char logname[];
 extern int dflag;
 
 extern void tcp_relay(int, int, const char *) __dead;
-extern void ftp_relay(int, int);
+extern void ftp_relay(int, int) __dead;
 extern int ftp_active(int, int, int *, int *);
 extern int ftp_passive(int, int, int *, int *);
 extern void exit_success(const char *, ...) __dead __printflike(1, 2);

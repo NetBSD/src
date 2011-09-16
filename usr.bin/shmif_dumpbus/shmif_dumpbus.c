@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.7 2011/03/14 11:13:22 pooka Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.8 2011/09/16 15:39:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -49,7 +49,7 @@
 
 #include "shmifvar.h"
 
-static void
+__dead static void
 usage(void)
 {
 

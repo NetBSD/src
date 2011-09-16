@@ -1,4 +1,4 @@
-/* $NetBSD: tabs.c,v 1.3 2010/02/03 15:34:46 roy Exp $ */
+/* $NetBSD: tabs.c,v 1.4 2011/09/16 15:39:29 joerg Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2008 \
 The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: tabs.c,v 1.3 2010/02/03 15:34:46 roy Exp $");
+__RCSID("$NetBSD: tabs.c,v 1.4 2011/09/16 15:39:29 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -67,7 +67,7 @@ static const struct tabspec tabspecs[] = {
 };
 static const size_t ntabspecs = sizeof(tabspecs) / sizeof(tabspecs[0]);
 
-static void
+__dead static void
 usage(void)
 {
 	fprintf(stderr,

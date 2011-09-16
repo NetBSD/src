@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.43 2009/04/10 13:08:24 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.44 2011/09/16 15:39:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.43 2009/04/10 13:08:24 christos Exp $");
+__RCSID("$NetBSD: collect.c,v 1.44 2011/09/16 15:39:27 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -325,7 +325,7 @@ coll_int(int signo)
 }
 
 /*ARGSUSED*/
-static void
+__dead static void
 coll_hup(int signo __unused)
 {
 

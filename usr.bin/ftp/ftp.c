@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.161 2011/08/14 12:58:15 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.162 2011/09/16 15:39:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.161 2011/08/14 12:58:15 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.162 2011/09/16 15:39:26 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,6 +131,7 @@ int	ptflag = 0;
 char	pasv[BUFSIZ];	/* passive port for proxy data connection */
 
 static int empty(FILE *, FILE *, int);
+__dead static void abort_squared(int);
 
 struct sockinet {
 	union sockunion {
@@ -537,7 +538,7 @@ empty(FILE *ecin, FILE *din, int sec)
 
 sigjmp_buf	xferabort;
 
-void
+__dead static void
 abortxfer(int notused)
 {
 	char msgbuf[100];
@@ -1819,7 +1820,7 @@ pswitch(int flag)
 	}
 }
 
-void
+__dead static void
 abortpt(int notused)
 {
 
@@ -2031,7 +2032,7 @@ gunique(const char *local)
  *	too impatient to wait or there's another problem then ftp really
  *	needs to get back to a known state.
  */
-void
+static void
 abort_squared(int dummy)
 {
 	char msgbuf[100];

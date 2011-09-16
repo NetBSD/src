@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2011/03/14 23:02:16 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2011/09/16 15:39:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -48,7 +48,7 @@
 
 struct interface *ifaces;
 
-static void
+__dead static void
 usage(void)
 {
 

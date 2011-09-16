@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.44 2011/02/05 15:22:17 yamt Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.45 2011/09/16 15:39:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.44 2011/02/05 15:22:17 yamt Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.45 2011/09/16 15:39:26 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,11 +66,10 @@ __RCSID("$NetBSD: ktrace.c,v 1.44 2011/02/05 15:22:17 yamt Exp $");
 #include "setemul.h"
 #endif
 
-int	main(int, char *[]);
 static int rpid(char *);
-static void usage(void);
+__dead static void usage(void);
 static int do_ktrace(const char *, int, int, int, int, int);
-static void no_ktrace(int);
+__dead static void no_ktrace(int);
 static void fset(int fd, int flag);
 static void fclear(int fd, int flag);
 

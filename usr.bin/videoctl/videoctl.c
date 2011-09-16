@@ -1,4 +1,4 @@
-/* $NetBSD: videoctl.c,v 1.1 2010/12/26 10:37:15 jmcneill Exp $ */
+/* $NetBSD: videoctl.c,v 1.2 2011/09/16 15:39:30 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2010\
  Jared D. McNeill <jmcneill@invisible.ca>. All rights reserved.");
-__RCSID("$NetBSD: videoctl.c,v 1.1 2010/12/26 10:37:15 jmcneill Exp $");
+__RCSID("$NetBSD: videoctl.c,v 1.2 2011/09/16 15:39:30 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: videoctl.c,v 1.1 2010/12/26 10:37:15 jmcneill Exp $");
 #include <unistd.h>
 #include <util.h>
 
-static void		usage(void);
+__dead static void	usage(void);
 static void		video_print(const char *);
 static void		video_print_all(void);
 static bool		video_print_caps(const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pwhash.c,v 1.14 2006/03/05 08:50:58 christos Exp $	*/
+/*	$NetBSD: pwhash.c,v 1.15 2011/09/16 15:39:28 joerg Exp $	*/
 /*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pwhash.c,v 1.14 2006/03/05 08:50:58 christos Exp $");
+__RCSID("$NetBSD: pwhash.c,v 1.15 2011/09/16 15:39:28 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: pwhash.c,v 1.14 2006/03/05 08:50:58 christos Exp $");
 #define DO_BLF     3
 #define DO_SHA1	   4
 
-static void
+__dead static void
 usage(void)
 {
 

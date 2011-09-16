@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.16 2011/04/04 08:30:12 mbalmer Exp $
+/*	$NetBSD: aout2elf.c,v 1.17 2011/09/16 15:42:28 joerg Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -192,7 +192,7 @@ endloop:
 	return n;
 }
 
-static void
+__dead static void
 abort_libupdate(void)
 {
 	msg_display(MSG_aoutfail);

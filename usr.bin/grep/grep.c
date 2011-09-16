@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.9 2011/04/18 23:22:42 joerg Exp $	*/
+/*	$NetBSD: grep.c,v 1.10 2011/09/16 15:39:26 joerg Exp $	*/
 /* 	$FreeBSD: head/usr.bin/grep/grep.c 211519 2010-08-19 22:55:17Z delphij $	*/
 /*	$OpenBSD: grep.c,v 1.42 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grep.c,v 1.9 2011/04/18 23:22:42 joerg Exp $");
+__RCSID("$NetBSD: grep.c,v 1.10 2011/09/16 15:39:26 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -157,7 +157,7 @@ extern char	*__progname;
 /*
  * Prints usage information and returns 2.
  */
-static void
+__dead static void
 usage(void)
 {
 	fprintf(stderr, getstr(4), __progname);

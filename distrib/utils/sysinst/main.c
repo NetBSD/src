@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.60 2011/05/30 14:20:48 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.61 2011/09/16 15:42:28 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,8 +53,8 @@
 
 int main(int, char **);
 static void select_language(void);
-static void usage(void);
-static void miscsighandler(int);
+__dead static void usage(void);
+__dead static void miscsighandler(int);
 static void ttysighandler(int);
 static void cleanup(void);
 static void process_f_flag(char *);

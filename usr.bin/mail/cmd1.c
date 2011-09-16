@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.30 2009/04/10 13:08:24 christos Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.31 2011/09/16 15:39:27 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.30 2009/04/10 13:08:24 christos Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.31 2011/09/16 15:39:27 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -300,7 +300,7 @@ type1_core(struct message *mp, void *v)
 static jmp_buf	pipestop;
 
 /*ARGSUSED*/
-static void
+__dead static void
 cmd1_brokpipe(int signo __unused)
 {
 

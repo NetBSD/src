@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.18 2010/07/17 10:51:03 tron Exp $ */
+/*	$NetBSD: progress.c,v 1.19 2011/09/16 15:39:28 joerg Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.18 2010/07/17 10:51:03 tron Exp $");
+__RCSID("$NetBSD: progress.c,v 1.19 2011/09/16 15:39:28 joerg Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -64,8 +64,7 @@ __RCSID("$NetBSD: progress.c,v 1.18 2010/07/17 10:51:03 tron Exp $");
 #include "progressbar.h"
 
 static void broken_pipe(int unused);
-static void usage(void);
-int main(int, char *[]);
+__dead static void usage(void);
 
 static void
 broken_pipe(int unused)

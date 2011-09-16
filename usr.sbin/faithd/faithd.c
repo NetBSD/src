@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.34 2011/08/30 21:14:06 joerg Exp $	*/
+/*	$NetBSD: faithd.c,v 1.35 2011/09/16 15:39:37 joerg Exp $	*/
 /*	$KAME: faithd.c,v 1.62 2003/08/19 21:20:33 itojun Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ static char *configfile = NULL;
 static int inetd_main(int, char **);
 static int daemon_main(int, char **);
 static void play_service(int) __dead;
-static void play_child(int, struct sockaddr *);
+static void play_child(int, struct sockaddr *) __dead;
 static int faith_prefix(struct sockaddr *);
 static int map6to4(struct sockaddr_in6 *, struct sockaddr_in *);
 static void sig_child(int);
