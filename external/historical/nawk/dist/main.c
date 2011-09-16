@@ -71,7 +71,7 @@ setfs(char *p)
 	return NULL;
 }
 
-static void fpecatch(int n
+__dead static void fpecatch(int n
 #ifdef SA_SIGINFO
 	, siginfo_t *si, void *uc
 #endif
