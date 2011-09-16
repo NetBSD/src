@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.15 2011/09/15 19:32:28 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.16 2011/09/16 16:30:51 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.15 2011/09/15 19:32:28 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.16 2011/09/16 16:30:51 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -122,10 +122,10 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_ih = softint_establish(SOFTINT_BIO,
 	    ld_thunkbus_complete, sc);
 
-	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART | SA_SIGINFO;
 	sa.sa_sigaction = ld_thunkbus_sig;
-	thunk_sigaddset(&sa.sa_mask, SIGALRM);
+	thunk_sigemptyset(&sa.sa_mask);
+//	thunk_sigaddset(&sa.sa_mask, SIGALRM);
 	if (thunk_sigaction(SIGIO, &sa, NULL) == -1)
 		panic("couldn't register SIGIO handler: %d", thunk_geterrno());
 
