@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.315 2011/09/04 23:03:00 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.316 2011/09/16 22:07:17 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.315 2011/09/04 23:03:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.316 2011/09/16 22:07:17 reinoud Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -296,7 +296,7 @@ sigactsunshare(struct proc *p)
 
 	ps = pool_cache_get(sigacts_cache, PR_WAITOK);
 	mutex_init(&ps->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
-	memset(ps->sa_sigdesc, 0, sizeof(ps->sa_sigdesc));
+	memcpy(ps->sa_sigdesc, oldps->sa_sigdesc, sizeof(ps->sa_sigdesc));
 	ps->sa_refcnt = 1;
 
 	p->p_sigacts = ps;
