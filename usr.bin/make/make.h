@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.86 2011/05/04 20:38:32 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.87 2011/09/16 15:38:04 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,6 +109,10 @@
 #else
 #define __unused        /* delete */
 #endif
+#endif
+
+#if !defined(__dead)
+#define __dead
 #endif
 
 #include "sprite.h"
