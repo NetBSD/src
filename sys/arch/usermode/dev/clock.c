@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.18 2011/09/13 10:42:34 reinoud Exp $ */
+/* $NetBSD: clock.c,v 1.19 2011/09/16 16:24:01 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2011/09/13 10:42:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19 2011/09/16 16:24:01 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -100,9 +100,9 @@ clock_attach(device_t parent, device_t self, void *opaque)
 	todr_attach(&sc->sc_todr);
 
 	memset(&sa, 0, sizeof(sa));
-	sigfillset(&sa.sa_mask);
+	thunk_sigemptyset(&sa.sa_mask);
 	sa.sa_handler = clock_signal;
-	sa.sa_flags = 0;
+	sa.sa_flags = SA_RESTART | SA_SIGINFO;
 	if (thunk_sigaction(SIGALRM, &sa, NULL) == -1)
 		panic("couldn't register SIGALRM handler : %d",
 		    thunk_geterrno());
