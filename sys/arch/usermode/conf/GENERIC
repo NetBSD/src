@@ -1,15 +1,15 @@
-# $NetBSD: GENERIC,v 1.18 2011/09/16 11:05:42 reinoud Exp $
+# $NetBSD: GENERIC,v 1.19 2011/09/16 16:29:47 reinoud Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.18 $"
+#ident 		"GENERIC-$Revision: 1.19 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
 
-options		TEXTADDR=0x10000000	# 1.5 Gb?
-options		KVMSIZE=0x008000000
+options		TEXTADDR=0x0f000000	# 1.5 Gb?
+options		KVMSIZE=0x003000000
 
 options 	RTC_OFFSET=0
 options 	KTRACE
