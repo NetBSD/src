@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.71 2011/09/15 17:44:13 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.72 2011/09/16 16:27:39 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2011/09/15 17:44:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 2011/09/16 16:27:39 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -105,6 +105,7 @@ vaddr_t kmem_ext_cur_start, kmem_ext_cur_end;
 
 /* amount of physical memory */
 int	physmem; 
+int	num_pv_entries = 0;
 
 #define SPARSE_MEMFILE
 
@@ -173,19 +174,19 @@ pmap_bootstrap(void)
 	kmem_ext_end   = mpos;
 
 	/* print summary */
-	dprintf_debug("\nMemory summary\n");
-	dprintf_debug("\tkmem_k_start\t%p\n",    (void *) kmem_k_start);
-	dprintf_debug("\tkmem_k_end\t%p\n",      (void *) kmem_k_end);
-	dprintf_debug("\tkmem_ext_start\t%p\n",  (void *) kmem_ext_start);
-	dprintf_debug("\tkmem_ext_end\t%p\n",    (void *) kmem_ext_end);
-	dprintf_debug("\tkmem_user_start\t%p\n", (void *) kmem_user_start);
-	dprintf_debug("\tkmem_user_end\t%p\n",   (void *) kmem_user_end);
+	aprint_verbose("\nMemory summary\n");
+	aprint_verbose("\tkmem_k_start\t%p\n",    (void *) kmem_k_start);
+	aprint_verbose("\tkmem_k_end\t%p\n",      (void *) kmem_k_end);
+	aprint_verbose("\tkmem_ext_start\t%p\n",  (void *) kmem_ext_start);
+	aprint_verbose("\tkmem_ext_end\t%p\n",    (void *) kmem_ext_end);
+	aprint_verbose("\tkmem_user_start\t%p\n", (void *) kmem_user_start);
+	aprint_verbose("\tkmem_user_end\t%p\n",   (void *) kmem_user_end);
 
-	dprintf_debug("\ttotmem_len\t%10d\n", (int) totmem_len);
-	dprintf_debug("\tkvmsize\t\t%10d\n", (int) KVMSIZE);
-	dprintf_debug("\tuser_len\t%10d\n", (int) user_len);
+	aprint_verbose("\ttotmem_len\t%10d\n", (int) totmem_len);
+	aprint_verbose("\tkvmsize\t\t%10d\n", (int) KVMSIZE);
+	aprint_verbose("\tuser_len\t%10d\n", (int) user_len);
 
-	dprintf_debug("\n\n");
+	aprint_verbose("\n\n");
 
 #if 1
 	/* protect user memory UVM area (---) */
@@ -340,10 +341,10 @@ pmap_bootstrap(void)
 	    atop(free_end), 
 	    VM_FREELIST_DEFAULT);
 
-	dprintf_debug("leaving pmap_bootstrap:\n");
-	dprintf_debug("\t%"PRIu64" MB of physical pages left\n",
+	aprint_verbose("leaving pmap_bootstrap:\n");
+	aprint_verbose("\t%"PRIu64" MB of physical pages left\n",
 		(uint64_t) (free_end - (free_start + fpos))/1024/1024);
-	dprintf_debug("\t%"PRIu64" MB of kmem left\n",
+	aprint_verbose("\t%"PRIu64" MB of kmem left\n",
 		(uint64_t) (kmem_ext_end - kmem_ext_cur_end)/1024/1024);
 
 	setup_signal_handlers();
@@ -443,12 +444,14 @@ pmap_wired_count(pmap_t pmap)
 static struct pv_entry *
 pv_alloc(void)
 {
+	num_pv_entries++;
 	return malloc(sizeof(struct pv_entry), M_VMPMAP, M_NOWAIT | M_ZERO);
 }
 
 static void
 pv_free(struct pv_entry *pv)
 {
+	num_pv_entries--;
 	free(pv, M_VMPMAP);
 }
 
@@ -1017,6 +1020,9 @@ pmap_zero_page(paddr_t pa)
 
 	dprintf_debug("pmap_zero_page: pa %p\n", (void *) pa);
 
+	if (pa & (PAGE_SIZE-1))
+		panic("%s: unaligned address passed : %p\n", __func__, (void *) pa);
+
 	blob = thunk_mmap(NULL, PAGE_SIZE,
 		THUNK_PROT_READ | THUNK_PROT_WRITE,
 		THUNK_MAP_FILE | THUNK_MAP_SHARED,
@@ -1033,6 +1039,11 @@ void
 pmap_copy_page(paddr_t src_pa, paddr_t dst_pa)
 {
 	char *sblob, *dblob;
+
+	if (src_pa & (PAGE_SIZE-1))
+		panic("%s: unaligned address passed : %p\n", __func__, (void *) src_pa);
+	if (dst_pa & (PAGE_SIZE-1))
+		panic("%s: unaligned address passed : %p\n", __func__, (void *) dst_pa);
 
 	dprintf_debug("pmap_copy_page: pa src %p, pa dst %p\n",
 		(void *) src_pa, (void *) dst_pa);
