@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.39 2010/01/12 14:45:31 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.40 2011/09/16 15:39:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.39 2010/01/12 14:45:31 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.40 2011/09/16 15:39:27 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -337,7 +337,7 @@ comment_char(char *line)
 static jmp_buf	pipestop;
 
 /*ARGSUSED*/
-static void
+__dead static void
 lex_brokpipe(int signo)
 {
 
@@ -785,7 +785,7 @@ out:
  * Close all open files except 0, 1, 2, and the temporary.
  * Also, unstack all source files.
  */
-static void
+__dead static void
 lex_intr(int signo)
 {
 
@@ -811,7 +811,7 @@ lex_intr(int signo)
  * Branch here on hangup signal and simulate "exit".
  */
 /*ARGSUSED*/
-static void
+__dead static void
 lex_hangup(int s __unused)
 {
 

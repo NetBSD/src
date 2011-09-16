@@ -1,4 +1,4 @@
-/*	$NetBSD: uuidgen.c,v 1.3 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: uuidgen.c,v 1.4 2011/09/16 15:39:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: uuidgen.c,v 1.3 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: uuidgen.c,v 1.4 2011/09/16 15:39:30 joerg Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: uuidgen.c,v 1.3 2008/04/28 20:24:15 martin Exp $");
 #include <unistd.h>
 #include <uuid.h>
 
-static void
+__dead static void
 usage(void)
 {
 

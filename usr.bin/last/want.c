@@ -1,4 +1,4 @@
-/*	$NetBSD: want.c,v 1.13 2009/04/12 13:07:21 lukem Exp $	*/
+/*	$NetBSD: want.c,v 1.14 2011/09/16 15:39:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -63,7 +63,7 @@ gethost(struct utmp *ut, const char *host, int numeric)
  * wtmp --
  *	read through the wtmp file
  */
-void
+static void
 wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 {
 	struct utmp	*bp;		/* current structure */

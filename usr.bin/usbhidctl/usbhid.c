@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.35 2009/04/14 06:14:10 lukem Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.36 2011/09/16 15:39:30 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhid.c,v 1.35 2009/04/14 06:14:10 lukem Exp $");
+__RCSID("$NetBSD: usbhid.c,v 1.36 2011/09/16 15:39:30 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: usbhid.c,v 1.35 2009/04/14 06:14:10 lukem Exp $");
  * Zero if not in a verbose mode.  Greater levels of verbosity
  * are indicated by values larger than one.
  */
-unsigned int verbose;
+static unsigned int verbose;
 
 /* Parser tokens */
 #define DELIM_USAGE '.'
@@ -621,7 +621,7 @@ varop_report(struct hid_item *item, struct Susbvar *var,
 	return 0;
 }
 
-static void
+__dead static void
 devloop(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize)
 {
 	u_char *dbuf;
@@ -798,7 +798,7 @@ devshow(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize,
 	}
 }
 
-static void
+__dead static void
 usage(void)
 {
 	const char *progname = getprogname();
