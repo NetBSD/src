@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.7 2011/09/07 17:49:19 christos Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.8 2011/09/16 15:36:18 joerg Exp $	*/
 /* $OpenBSD: ssh-keygen.c,v 1.210 2011/04/18 00:46:05 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.7 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.8 2011/09/16 15:36:18 joerg Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -254,7 +254,7 @@ load_identity(char *filename)
 #define SSH_COM_PRIVATE_BEGIN		"---- BEGIN SSH2 ENCRYPTED PRIVATE KEY ----"
 #define	SSH_COM_PRIVATE_KEY_MAGIC	0x3f6ff9eb
 
-static void
+__dead static void
 do_convert_to_ssh2(struct passwd *pw, Key *k)
 {
 	u_int len;
@@ -280,7 +280,7 @@ do_convert_to_ssh2(struct passwd *pw, Key *k)
 	exit(0);
 }
 
-static void
+__dead static void
 do_convert_to_pkcs8(Key *k)
 {
 	switch (key_type_plain(k->type)) {
@@ -302,7 +302,7 @@ do_convert_to_pkcs8(Key *k)
 	exit(0);
 }
 
-static void
+__dead static void
 do_convert_to_pem(Key *k)
 {
 	switch (key_type_plain(k->type)) {
@@ -323,7 +323,7 @@ do_convert_to_pem(Key *k)
 	exit(0);
 }
 
-static void
+__dead static void
 do_convert_to(struct passwd *pw)
 {
 	Key *k;
@@ -622,7 +622,7 @@ do_convert_from_pem(Key **k, int *private)
 	fatal("%s: unrecognised raw private key format", __func__);
 }
 
-static void
+__dead static void
 do_convert_from(struct passwd *pw)
 {
 	Key *k = NULL;
@@ -680,7 +680,7 @@ do_convert_from(struct passwd *pw)
 	exit(0);
 }
 
-static void
+__dead static void
 do_print_public(struct passwd *pw)
 {
 	Key *prv;
@@ -704,7 +704,7 @@ do_print_public(struct passwd *pw)
 	exit(0);
 }
 
-static void
+__dead static void
 do_download(struct passwd *pw)
 {
 #ifdef ENABLE_PKCS11
@@ -728,7 +728,7 @@ do_download(struct passwd *pw)
 #endif /* ENABLE_PKCS11 */
 }
 
-static void
+__dead static void
 do_fingerprint(struct passwd *pw)
 {
 	FILE *f;
@@ -956,7 +956,7 @@ printhost(FILE *f, const char *name, Key *public, int ca, int hash)
 	}
 }
 
-static void
+__dead static void
 do_known_hosts(struct passwd *pw, const char *name)
 {
 	FILE *in, *out = stdout;
@@ -1164,7 +1164,7 @@ do_known_hosts(struct passwd *pw, const char *name)
  * Perform changing a passphrase.  The argument is the passwd structure
  * for the current user.
  */
-static void
+__dead static void
 do_change_passphrase(struct passwd *pw)
 {
 	char *comment;
@@ -1278,7 +1278,7 @@ do_print_resource_record(struct passwd *pw, const char *fname,
 /*
  * Change the comment of a private key file.
  */
-static void
+__dead static void
 do_change_comment(struct passwd *pw)
 {
 	char new_comment[1024], *comment, *passphrase;
@@ -1490,7 +1490,7 @@ load_pkcs11_key(char *path)
 #endif /* ENABLE_PKCS11 */
 }
 
-static void
+__dead static void
 do_ca_sign(struct passwd *pw, int argc, char **argv)
 {
 	int i, fd;
@@ -1790,7 +1790,7 @@ show_options(const Buffer *optbuf, int v00, int in_critical)
 	buffer_free(&options);
 }
 
-static void
+__dead static void
 do_show_cert(struct passwd *pw)
 {
 	Key *key;
@@ -1853,7 +1853,7 @@ do_show_cert(struct passwd *pw)
 	exit(0);
 }
 
-static void
+__dead static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [options]\n", __progname);
