@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.23 2011/09/16 11:05:42 reinoud Exp $
+# $NetBSD: Makefile.usermode,v 1.24 2011/09/16 11:28:36 jmcneill Exp $
 
 OPT_CPU_HOST=			%CPU_HOST%
 .if !empty(OPT_CPU_HOST)
@@ -76,8 +76,7 @@ MD_CFILES+=	${USERMODE}/usermode/thunk_sdl.c
 ##
 ## (5) link settings
 ##
-# XXX fixme: TEXTADDR is not imported yet??
-TEXTADDR?=	  0x10000000
+TEXTADDR?=	  %TEXTADDR%
 
 LINKFLAGS_NORMAL=	-X
 KERN_LDSCRIPT?=	kern.ldscript
