@@ -1,4 +1,4 @@
-/* $NetBSD: intr.c,v 1.7 2011/09/15 12:25:25 reinoud Exp $ */
+/* $NetBSD: intr.c,v 1.8 2011/09/16 16:25:44 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7 2011/09/15 12:25:25 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8 2011/09/16 16:25:44 reinoud Exp $");
 
 #include <sys/types.h>
 
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7 2011/09/15 12:25:25 reinoud Exp $");
 
 //#define INTR_USE_SIGPROCMASK
 
-#define MAX_QUEUED_EVENTS 64
+#define MAX_QUEUED_EVENTS 128
 
 static int usermode_x = IPL_NONE;
 
