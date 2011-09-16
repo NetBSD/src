@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.3 2011/05/13 01:52:13 christos Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.4 2011/09/16 21:06:27 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: softmagic.c,v 1.144 2011/01/07 23:22:28 rrt Exp $")
+FILE_RCSID("@(#)$File: softmagic.c,v 1.145 2011/05/13 22:15:40 christos Exp $")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.3 2011/05/13 01:52:13 christos Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.4 2011/09/16 21:06:27 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -918,7 +918,7 @@ mcopy(struct magic_set *ms, union VALUETYPE *p, int type, int indir,
 	if (indir == 0) {
 		switch (type) {
 		case FILE_SEARCH:
-			ms->search.s = CAST(const char *, s) + offset;
+			ms->search.s = RCAST(const char *, s) + offset;
 			ms->search.s_len = nbytes - offset;
 			ms->search.offset = offset;
 			return 0;
@@ -936,8 +936,8 @@ mcopy(struct magic_set *ms, union VALUETYPE *p, int type, int indir,
 				ms->search.s = NULL;
 				return 0;
 			}
-			buf = CAST(const char *, s) + offset;
-			end = last = CAST(const char *, s) + nbytes;
+			buf = RCAST(const char *, s) + offset;
+			end = last = RCAST(const char *, s) + nbytes;
 			/* mget() guarantees buf <= last */
 			for (lines = linecnt, b = buf; lines && b < end &&
 			     ((b = CAST(const char *,
@@ -950,7 +950,7 @@ mcopy(struct magic_set *ms, union VALUETYPE *p, int type, int indir,
 					b++;
 			}
 			if (lines)
-				last = CAST(const char *, s) + nbytes;
+				last = RCAST(const char *, s) + nbytes;
 
 			ms->search.s = buf;
 			ms->search.s_len = last - buf;

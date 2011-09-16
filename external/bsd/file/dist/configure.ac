@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(file, 5.07, christos@astron.com)
+AC_INIT(file, 5.09, christos@astron.com)
 AM_INIT_AUTOMAKE()
 AM_MAINTAINER_MODE(disable)
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
@@ -101,7 +101,7 @@ AC_TYPE_MBSTATE_T
 
 AC_STRUCT_OPTION_GETOPT_H
 
-AC_CHECK_TYPES([uint8_t, uint16_t, uint32_t, int32_t, uint64_t, int64_t])
+AC_CHECK_TYPES([pid_t, uint8_t, uint16_t, uint32_t, int32_t, uint64_t, int64_t])
 AC_CHECK_SIZEOF(long long)
 AH_BOTTOM([
 #ifndef HAVE_UINT8_T
@@ -143,14 +143,14 @@ else
    WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith \
        -Wmissing-declarations -Wredundant-decls -Wnested-externs \
        -Wsign-compare -Wreturn-type -Wswitch -Wshadow \
-       -Wcast-qual -Wwrite-strings -Wextra -Wunused-parameter"
+       -Wcast-qual -Wwrite-strings -Wextra -Wunused-parameter -Wformat=2"
 fi], [
 if test "$GCC" = yes; then
    AC_MSG_RESULT(yes)
    WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith \
        -Wmissing-declarations -Wredundant-decls -Wnested-externs \
        -Wsign-compare -Wreturn-type -Wswitch -Wshadow \
-       -Wcast-qual -Wwrite-strings -Wextra -Wunused-parameter"
+       -Wcast-qual -Wwrite-strings -Wextra -Wunused-parameter -Wformat=2"
 else
    WARNINGS=
    AC_MSG_RESULT(no)
