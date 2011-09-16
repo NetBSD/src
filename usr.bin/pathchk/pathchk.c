@@ -1,4 +1,4 @@
-/*	$NetBSD: pathchk.c,v 1.1 2003/04/15 19:46:40 jdolecek Exp $	*/
+/*	$NetBSD: pathchk.c,v 1.2 2011/09/16 15:39:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pathchk.c,v 1.1 2003/04/15 19:46:40 jdolecek Exp $");
+__RCSID("$NetBSD: pathchk.c,v 1.2 2011/09/16 15:39:28 joerg Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: pathchk.c,v 1.1 2003/04/15 19:46:40 jdolecek Exp $");
 
 static int check(const char *);
 static int portable(const char *);
-static void usage(void);
+__dead static void usage(void);
 
 static int pflag;			/* Perform portability checks */
 

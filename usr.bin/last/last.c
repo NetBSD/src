@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.34 2010/06/05 03:24:01 dholland Exp $	*/
+/*	$NetBSD: last.c,v 1.35 2011/09/16 15:39:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.34 2010/06/05 03:24:01 dholland Exp $");
+__RCSID("$NetBSD: last.c,v 1.35 2011/09/16 15:39:27 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -113,8 +113,6 @@ static long	maxrec;			/* records to display */
 static int	fulltime = 0;		/* Display seconds? */
 static int	xflag;			/* Assume file is wtmpx format */
 
-int	 main(int, char *[]);
-
 static void	 addarg(int, const char *);
 static TTY	*addtty(const char *);
 static void	 hostconv(char *);
@@ -126,7 +124,7 @@ static void	 wtmpx(const char *, int, int, int, int);
 static void	 wtmp(const char *, int, int, int, int);
 #endif
 static char	*fmttime(time_t, int);
-static void	 usage(void);
+__dead static void	 usage(void);
 
 static
 void usage(void)

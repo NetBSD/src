@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.118 2011/08/14 12:58:15 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.119 2011/09/16 15:39:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.118 2011/08/14 12:58:15 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.119 2011/09/16 15:39:26 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,8 +129,8 @@ __RCSID("$NetBSD: main.c,v 1.118 2011/08/14 12:58:15 christos Exp $");
 #define	NO_PROXY	"no_proxy"	/* env var with list of non-proxied
 					 * hosts, comma or space separated */
 
+__dead static void	usage(void);
 static void	setupoption(const char *, const char *, const char *);
-int		main(int, char *[]);
 
 int
 main(int volatile argc, char **volatile argv)

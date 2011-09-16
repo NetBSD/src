@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.31 2009/04/12 10:51:38 lukem Exp $");
+__RCSID("$NetBSD: id.c,v 1.32 2011/09/16 15:39:26 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: id.c,v 1.31 2009/04/12 10:51:38 lukem Exp $");
 static void current(void);
 static void pretty(struct passwd *);
 static void group(struct passwd *, int);
-static void usage(void);
+__dead static void usage(void);
 static void user(struct passwd *);
 static struct passwd *who(char *);
 

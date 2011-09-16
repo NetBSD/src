@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.c,v 1.17 2004/11/01 21:52:07 dsl Exp $	*/
+/*	$NetBSD: skey.c,v 1.18 2011/09/16 15:39:29 joerg Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.c)
@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: skey.c,v 1.17 2004/11/01 21:52:07 dsl Exp $");
+__RCSID("$NetBSD: skey.c,v 1.18 2011/09/16 15:39:29 joerg Exp $");
 #endif
 
 #include <ctype.h>
@@ -35,11 +35,10 @@ __RCSID("$NetBSD: skey.c,v 1.17 2004/11/01 21:52:07 dsl Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int	main(int, char **);
-void    usage(char *);
+__dead static void    usage(char *);
 
 int
-main(int	argc, char **argv)
+main(int argc, char **argv)
 {
 	int     n, cnt, i, pass = 0, hexmode = 0;
 	char    passwd[SKEY_MAX_PW_LEN+1], key[SKEY_BINKEY_SIZE];
@@ -150,7 +149,7 @@ main(int	argc, char **argv)
 	exit(0);
 }
 
-void
+static void
 usage(char *s)
 {
 

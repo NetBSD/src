@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.25 2009/04/13 11:17:06 lukem Exp $	*/
+/*	$NetBSD: split.c,v 1.26 2011/09/16 15:39:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.25 2009/04/13 11:17:06 lukem Exp $");
+__RCSID("$NetBSD: split.c,v 1.26 2011/09/16 15:39:29 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,11 +60,10 @@ static int ifd = STDIN_FILENO, ofd = -1; /* Input/output file descriptors. */
 static char *fname;		/* File name prefix. */
 static size_t sfxlen = 2;		/* suffix length. */
 
-int  main(int, char **);
 static void newfile(void);
-static void split1(off_t, int);
-static void split2(off_t);
-static void split3(off_t);
+static void split1(off_t, int) __dead;
+static void split2(off_t) __dead;
+static void split3(off_t) __dead;
 static void usage(void) __dead;
 static size_t bigwrite(int, void const *, size_t);
 
