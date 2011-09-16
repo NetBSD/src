@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.5 2011/07/25 03:03:11 christos Exp $	*/
+/*	$NetBSD: scp.c,v 1.6 2011/09/16 15:36:18 joerg Exp $	*/
 /* $OpenBSD: scp.c,v 1.170 2010/12/09 14:13:33 jmc Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -73,7 +73,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.5 2011/07/25 03:03:11 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.6 2011/09/16 15:36:18 joerg Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/poll.h>
@@ -144,7 +144,7 @@ const char *ssh_program = _PATH_SSH_PROGRAM;
 /* This is used to store the pid of ssh_program */
 pid_t do_cmd_pid = -1;
 
-static void
+__dead static void
 killchild(int signo)
 {
 	if (do_cmd_pid > 1) {
@@ -338,7 +338,7 @@ typedef struct {
 } BUF;
 
 BUF *allocbuf(BUF *, int, int);
-void lostconn(int);
+__dead static void lostconn(int);
 int okname(char *);
 void run_err(const char *,...);
 void verifydir(char *);
@@ -355,9 +355,9 @@ int response(void);
 void rsource(char *, struct stat *);
 void sink(int, char *[]);
 void source(int, char *[]);
-void tolocal(int, char *[]);
-void toremote(char *, int, char *[]);
-void usage(void);
+static void tolocal(int, char *[]);
+static void toremote(char *, int, char *[]);
+__dead static void usage(void);
 
 int
 main(int argc, char **argv)
@@ -539,7 +539,7 @@ scpio(void *_cnt, size_t s)
 	return 0;
 }
 
-void
+static void
 toremote(char *targ, int argc, char **argv)
 {
 	char *bp, *host, *src, *suser, *thost, *tuser, *arg;
@@ -656,7 +656,7 @@ toremote(char *targ, int argc, char **argv)
 	xfree(arg);
 }
 
-void
+static void
 tolocal(int argc, char **argv)
 {
 	char *bp, *host, *src, *suser;
@@ -1296,7 +1296,7 @@ allocbuf(BUF *bp, int fd, int blksize)
 	return (bp);
 }
 
-void
+static void
 lostconn(int signo)
 {
 	if (!iamremote)

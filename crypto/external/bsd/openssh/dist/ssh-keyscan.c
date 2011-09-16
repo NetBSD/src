@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.6 2011/09/07 17:49:19 christos Exp $	*/
+/*	$NetBSD: ssh-keyscan.c,v 1.7 2011/09/16 15:36:18 joerg Exp $	*/
 /* $OpenBSD: ssh-keyscan.c,v 1.85 2011/03/15 10:36:02 okan Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
@@ -9,7 +9,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.6 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.7 2011/09/16 15:36:18 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -573,7 +573,7 @@ do_host(char *host)
 	}
 }
 
-void
+__dead void
 fatal(const char *fmt,...)
 {
 	va_list args;
@@ -587,7 +587,7 @@ fatal(const char *fmt,...)
 		exit(255);
 }
 
-static void
+__dead static void
 usage(void)
 {
 	fprintf(stderr,

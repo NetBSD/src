@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.7 2011/07/25 03:03:11 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.8 2011/09/16 15:36:18 joerg Exp $	*/
 /* $OpenBSD: session.c,v 1.258 2010/11/25 04:10:09 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.7 2011/07/25 03:03:11 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.8 2011/09/16 15:36:18 joerg Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -108,7 +108,7 @@ int	do_exec_pty(Session *, const char *);
 int	do_exec_no_pty(Session *, const char *);
 int	do_exec(Session *, const char *);
 void	do_login(Session *, const char *);
-void	do_child(Session *, const char *);
+__dead void	do_child(Session *, const char *);
 void	do_motd(void);
 int	check_quietlogin(Session *, const char *);
 
@@ -1469,7 +1469,7 @@ do_setusercontext(struct passwd *pw)
 		fatal("Failed to set uids to %u.", (u_int) pw->pw_uid);
 }
 
-static void
+__dead static void
 do_pwchange(Session *s)
 {
 	fflush(NULL);
@@ -1486,7 +1486,7 @@ do_pwchange(Session *s)
 	exit(1);
 }
 
-static void
+__dead static void
 launch_login(struct passwd *pw, const char *hostname)
 {
 	/* Launch login(1). */
@@ -1555,7 +1555,6 @@ do_child(Session *s, const char *command)
 		do_setusercontext(pw);
 		child_close_fds();
 		do_pwchange(s);
-		exit(1);
 	}
 
 	/* login(1) is only called if we execute the login shell */
