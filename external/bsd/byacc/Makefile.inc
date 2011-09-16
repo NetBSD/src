@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2009/10/29 00:56:35 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2011/09/16 16:41:20 joerg Exp $
 
 WARNS=4
 
@@ -9,5 +9,6 @@ BINDIR?= /usr/bin
 IDIST=	${NETBSDSRCDIR}/external/bsd/byacc/dist
 
 CPPFLAGS+= -DHAVE_CONFIG_H -I${.CURDIR}/../include -I${IDIST}
+CWARNFLAGS+=	-Wno-missing-noreturn
 
 .PATH: ${IDIST}

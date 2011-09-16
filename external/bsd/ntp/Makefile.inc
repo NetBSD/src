@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.8 2011/09/16 16:29:12 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2011/09/16 16:41:20 joerg Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
 
 USE_FORT?= yes	# network client/server
 
+CWARNFLAGS+=	-Wno-missing-noreturn
 CWARNFLAGS.clang+=	-Wno-unneeded-internal-declaration \
 			-Wno-format-security \
 			-Wno-parentheses -Wno-constant-logical-operand

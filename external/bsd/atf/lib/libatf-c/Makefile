@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2011/06/14 15:27:11 jmmv Exp $
+# $NetBSD: Makefile,v 1.13 2011/09/16 16:41:20 joerg Exp $
 
 NOLINT=		# defined
 
@@ -6,6 +6,8 @@ NOLINT=		# defined
 
 LIB=		atf-c
 NOPIC=		# defined; interface is still too unstable
+
+CWARNFLAGS+=	-Wno-missing-noreturn
 
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}
