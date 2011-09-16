@@ -46,7 +46,7 @@ extern	void	freetr(Node *);
 extern	int	hexstr(const uschar **);
 extern	int	quoted(const uschar **);
 extern	char	*cclenter(const char *);
-extern	void	overflo(const char *);
+extern	void	overflo(const char *) __dead;
 extern	void	cfoll(fa *, Node *);
 extern	int	first(Node *);
 extern	void	follow(Node *);
@@ -137,7 +137,7 @@ extern	void	bracecheck(void);
 extern	void	bcheck2(int, int, int);
 extern	void	SYNTAX(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-extern	void	FATAL(const char *, ...)
+extern	void	FATAL(const char *, ...) __dead
     __attribute__((__format__(__printf__, 1, 2)));
 extern	void	WARNING(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));

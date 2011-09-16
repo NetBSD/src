@@ -159,7 +159,7 @@ int n_errors = 0;
 
 static struct qual qerr = { Q_UNDEF, Q_UNDEF, Q_UNDEF, Q_UNDEF };
 
-static void
+__dead static void
 yyerror(const char *msg)
 {
 	++n_errors;
