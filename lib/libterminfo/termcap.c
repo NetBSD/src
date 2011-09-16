@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.14 2011/03/18 10:42:54 roy Exp $ */
+/* $NetBSD: termcap.c,v 1.15 2011/09/16 18:51:44 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.14 2011/03/18 10:42:54 roy Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.15 2011/09/16 18:51:44 christos Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -74,13 +74,12 @@ tgetent(__unused char *bp, const char *name)
 }
 
 int
-tgetflag(const char *id)
+tgetflag(const char *id2)
 {
 	uint32_t ind;
 	size_t i;
 	TERMUSERDEF *ud;
-
-	_DIAGASSERT(id != NULL);
+	const char id[] = { id2[0], id2[1], '\0' };
 
 	if (cur_term == NULL)
 		return 0;
@@ -99,14 +98,13 @@ tgetflag(const char *id)
 }
 
 int
-tgetnum(const char *id)
+tgetnum(const char *id2)
 {
 	uint32_t ind;
 	size_t i;
 	TERMUSERDEF *ud;
 	const TENTRY *te;
-
-	_DIAGASSERT(id != NULL);
+	const char id[] = { id2[0], id2[1], '\0' };
 
 	if (cur_term == NULL)
 		return -1;
@@ -132,14 +130,13 @@ tgetnum(const char *id)
 }
 
 char *
-tgetstr(const char *id, char **area)
+tgetstr(const char *id2, char **area)
 {
 	uint32_t ind;
 	size_t i;
 	TERMUSERDEF *ud;
 	const char *str;
-
-	_DIAGASSERT(id != NULL);
+	const char id[] = { id2[0], id2[1], '\0' };
 
 	if (cur_term == NULL)
 		return NULL;
