@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.27 2011/01/04 23:46:34 wiz Exp $	*/
+/*	$NetBSD: symtab.c,v 1.28 2011/09/16 16:13:18 plunky Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.27 2011/01/04 23:46:34 wiz Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.28 2011/09/16 16:13:18 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -549,7 +549,7 @@ initsymtable(const char *filename)
 		entrytblsize = maxino / HASHFACTOR;
 		entry = (struct entry **)
 			calloc((unsigned)entrytblsize, sizeof(struct entry *));
-		if (entry == (struct entry **)NULL)
+		if (entry == NULL)
 			panic("no memory for entry table\n");
 		ep = addentry(".", ROOTINO, NODE);
 		ep->e_flags |= NEW;

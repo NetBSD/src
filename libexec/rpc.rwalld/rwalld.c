@@ -1,4 +1,4 @@
-/* $NetBSD: rwalld.c,v 1.22 2011/08/30 17:06:20 plunky Exp $ */
+/* $NetBSD: rwalld.c,v 1.23 2011/09/16 16:13:17 plunky Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rwalld.c,v 1.22 2011/08/30 17:06:20 plunky Exp $");
+__RCSID("$NetBSD: rwalld.c,v 1.23 2011/09/16 16:13:17 plunky Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
@@ -157,7 +157,7 @@ wallprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
-		(void)svc_sendreply(transp, (xdrproc_t)xdr_void, (char *)NULL);
+		(void)svc_sendreply(transp, (xdrproc_t)xdr_void, NULL);
 		goto leave;
 
 	case WALLPROC_WALL:

@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.29 2011/08/30 17:06:20 plunky Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.30 2011/09/16 16:13:17 plunky Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.29 2011/08/30 17:06:20 plunky Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.30 2011/09/16 16:13:17 plunky Exp $");
 #endif
 
 #include <sys/param.h>
@@ -126,7 +126,7 @@ rquota_service(struct svc_req *request, SVCXPRT *transp)
 {
 	switch (request->rq_proc) {
 	case NULLPROC:
-		(void)svc_sendreply(transp, (xdrproc_t)xdr_void, (char *)NULL);
+		(void)svc_sendreply(transp, (xdrproc_t)xdr_void, NULL);
 		break;
 
 	case RQUOTAPROC_GETQUOTA:
@@ -147,7 +147,7 @@ ext_rquota_service(struct svc_req *request, SVCXPRT *transp)
 {
 	switch (request->rq_proc) {
 	case NULLPROC:
-		(void)svc_sendreply(transp, (xdrproc_t)xdr_void, (char *)NULL);
+		(void)svc_sendreply(transp, (xdrproc_t)xdr_void, NULL);
 		break;
 
 	case RQUOTAPROC_GETQUOTA:

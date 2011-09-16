@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_4.c,v 1.1 2010/07/26 15:53:00 pooka Exp $	*/
+/*	$NetBSD: rpcb_svc_4.c,v 1.2 2011/09/16 16:13:18 plunky Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -91,8 +91,7 @@ rpcb_service_4(struct svc_req *rqstp, SVCXPRT *transp)
 			fprintf(stderr, "RPCBPROC_NULL\n");
 #endif
 		check_access(transp, rqstp->rq_proc, NULL, RPCBVERS4);
-		(void) svc_sendreply(transp, (xdrproc_t) xdr_void,
-					(char *)NULL);
+		(void) svc_sendreply(transp, (xdrproc_t) xdr_void, NULL);
 		return;
 
 	case RPCBPROC_SET:

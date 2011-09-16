@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.45 2011/08/30 17:06:20 plunky Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.46 2011/09/16 16:13:17 plunky Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
 static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rstat_proc.c,v 1.45 2011/08/30 17:06:20 plunky Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.46 2011/09/16 16:13:17 plunky Exp $");
 #endif
 #endif
 
@@ -378,7 +378,7 @@ rstat_service(struct svc_req *rqstp, SVCXPRT *transp)
 
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
-		(void)svc_sendreply(transp, (xdrproc_t)xdr_void, (char *)NULL);
+		(void)svc_sendreply(transp, (xdrproc_t)xdr_void, NULL);
 		goto leave;
 
 	case RSTATPROC_STATS:

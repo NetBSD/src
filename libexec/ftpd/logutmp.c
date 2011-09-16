@@ -1,4 +1,4 @@
-/*	$NetBSD: logutmp.c,v 1.11 2008/06/09 01:00:23 lukem Exp $	*/
+/*	$NetBSD: logutmp.c,v 1.12 2011/09/16 16:13:17 plunky Exp $	*/
 
 /*
  * Portions Copyright (c) 1988, 1993
@@ -56,7 +56,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: logutmp.c,v 1.11 2008/06/09 01:00:23 lukem Exp $");
+__RCSID("$NetBSD: logutmp.c,v 1.12 2011/09/16 16:13:17 plunky Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -98,7 +98,7 @@ ftpd_login(const struct utmp *ut)
 	 */
 	if (topslot < 0) {
 		topslot = 0;
-		while (getttyent() != (struct ttyent *)NULL)
+		while (getttyent() != NULL)
 			topslot++;
 	}
 	if ((topslot < 0) || ((fd < 0)

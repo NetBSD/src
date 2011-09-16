@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2011/01/08 18:10:31 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2011/09/16 16:13:18 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -192,20 +192,20 @@ regress(FILE *in)
 					options('c', f[1]) &~ REG_EXTENDED);
 	}
 
-	ne = regerror(REG_BADPAT, (regex_t *)NULL, erbuf, sizeof(erbuf));
+	ne = regerror(REG_BADPAT, NULL, erbuf, sizeof(erbuf));
 	if (strcmp(erbuf, badpat) != 0 || ne != strlen(badpat)+1) {
 		fprintf(stderr, "end: regerror() test gave `%s' not `%s'\n",
 							erbuf, badpat);
 		status = 1;
 	}
-	ne = regerror(REG_BADPAT, (regex_t *)NULL, erbuf, (size_t)SHORT);
+	ne = regerror(REG_BADPAT, NULL, erbuf, (size_t)SHORT);
 	if (strncmp(erbuf, badpat, SHORT-1) != 0 || erbuf[SHORT-1] != '\0' ||
 						ne != strlen(badpat)+1) {
 		fprintf(stderr, "end: regerror() short test gave `%s' not `%.*s'\n",
 						erbuf, SHORT-1, badpat);
 		status = 1;
 	}
-	ne = regerror(REG_ITOA|REG_BADPAT, (regex_t *)NULL, erbuf, sizeof(erbuf));
+	ne = regerror(REG_ITOA|REG_BADPAT, NULL, erbuf, sizeof(erbuf));
 	if (strcmp(erbuf, bpname) != 0 || ne != strlen(bpname)+1) {
 		fprintf(stderr, "end: regerror() ITOA test gave `%s' not `%s'\n",
 						erbuf, bpname);
@@ -501,7 +501,7 @@ eprint(int err)
 	static char epbuf[100];
 	size_t len;
 
-	len = regerror(REG_ITOA|err, (regex_t *)NULL, epbuf, sizeof(epbuf));
+	len = regerror(REG_ITOA|err, NULL, epbuf, sizeof(epbuf));
 	assert(len <= sizeof(epbuf));
 	return(epbuf);
 }

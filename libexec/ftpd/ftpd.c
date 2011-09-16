@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.196 2011/09/04 23:16:41 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.197 2011/09/16 16:13:17 plunky Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.196 2011/09/04 23:16:41 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.197 2011/09/16 16:13:17 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -2547,7 +2547,7 @@ statcmd(void)
 	int ispassive, af;
 	off_t otbi, otbo, otb;
 
-	a = p = (unsigned char *)NULL;
+	a = p = NULL;
 
 	reply(-211, "%s FTP server status:", hostname);
 	reply(0, "Version: %s", EMPTYSTR(version) ? "<suppressed>" : version);

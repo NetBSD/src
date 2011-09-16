@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.77 2011/08/31 22:27:26 christos Exp $	*/
+/*	$NetBSD: ping6.c,v 1.78 2011/09/16 16:13:18 plunky Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.77 2011/08/31 22:27:26 christos Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.78 2011/09/16 16:13:18 plunky Exp $");
 #endif
 #endif
 
@@ -401,7 +401,7 @@ main(int argc, char *argv[])
 				errx(1, "Must be superuser to flood ping");
 			}
 			options |= F_FLOOD;
-			setbuf(stdout, (char *)NULL);
+			setbuf(stdout, NULL);
 			break;
 		case 'g':
 			gateway = optarg;
