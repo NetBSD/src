@@ -1,4 +1,4 @@
-/*	$NetBSD: elfclass.h,v 1.1.1.2 2011/05/12 20:46:54 christos Exp $	*/
+/*	$NetBSD: elfclass.h,v 1.1.1.3 2011/09/16 20:37:39 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2008.
@@ -61,8 +61,7 @@
 		    (off_t)elf_getu(swap, elfhdr.e_shoff),
 		    elf_getu16(swap, elfhdr.e_shnum),
 		    (size_t)elf_getu16(swap, elfhdr.e_shentsize),
-		    &flags,
-		    elf_getu16(swap, elfhdr.e_machine)) == -1)
+		    fsize, &flags, elf_getu16(swap, elfhdr.e_machine)) == -1)
 			return -1;
 		break;
 
