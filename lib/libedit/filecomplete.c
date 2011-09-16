@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.30 2011/08/16 16:25:15 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.31 2011/09/16 16:13:16 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.30 2011/08/16 16:25:15 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.31 2011/09/16 16:13:16 plunky Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -333,7 +333,7 @@ completion_matches(const char *text, char *(*genfunc)(const char *, int))
 	match_list[0] = retstr;
 
 	/* add NULL as last pointer to the array */
-	match_list[matches + 1] = (char *) NULL;
+	match_list[matches + 1] = NULL;
 
 	return match_list;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.49 2008/02/16 17:58:01 matt Exp $	*/
+/*	$NetBSD: tape.c,v 1.50 2011/09/16 16:13:17 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.49 2008/02/16 17:58:01 matt Exp $");
+__RCSID("$NetBSD: tape.c,v 1.50 2011/09/16 16:13:17 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -383,7 +383,7 @@ trewind(int eject)
 		}
 		(void) close(slaves[f].fd);
 	}
-	while (wait((int *)NULL) >= 0)	/* wait for any signals from slaves */
+	while (wait(NULL) >= 0)	/* wait for any signals from slaves */
 		/* void */;
 
 	if (pipeout)
