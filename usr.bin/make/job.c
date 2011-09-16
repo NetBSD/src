@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.159 2011/08/28 03:54:07 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.160 2011/09/16 15:38:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.159 2011/08/28 03:54:07 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.160 2011/09/16 15:38:03 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.159 2011/08/28 03:54:07 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.160 2011/09/16 15:38:03 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -352,7 +352,7 @@ static int JobStart(GNode *, int);
 static char *JobOutput(Job *, char *, char *, int);
 static void JobDoOutput(Job *, Boolean);
 static Shell *JobMatchShell(const char *);
-static void JobInterrupt(int, int);
+static void JobInterrupt(int, int) __dead;
 static void JobRestartJobs(void);
 static void JobTokenAdd(void);
 static void JobSigLock(sigset_t *);
@@ -523,14 +523,14 @@ JobContinueSig(int signo __unused)
  *
  *-----------------------------------------------------------------------
  */
-static void
+__dead static void
 JobPassSig_int(int signo)
 {
     /* Run .INTERRUPT target then exit */
     JobInterrupt(TRUE, signo);
 }
 
-static void
+__dead static void
 JobPassSig_term(int signo)
 {
     /* Dont run .INTERRUPT target then exit */
