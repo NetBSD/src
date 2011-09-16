@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.27 2009/10/19 18:41:08 bouyer Exp $	*/
+/*	$NetBSD: setup.c,v 1.28 2011/09/16 16:13:18 plunky Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.27 2009/10/19 18:41:08 bouyer Exp $");
+__RCSID("$NetBSD: setup.c,v 1.28 2011/09/16 16:13:18 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ setup(const char *dev)
 	asblk.b_un.b_buf = malloc(SBSIZE);
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL)
 		errexit("cannot allocate space for superblock");
-	if ((lp = getdisklabel((char *)NULL, fsreadfd)) != NULL)
+	if ((lp = getdisklabel(NULL, fsreadfd)) != NULL)
 		dev_bsize = secsize = lp->d_secsize;
 	else
 		dev_bsize = secsize = DEV_BSIZE;

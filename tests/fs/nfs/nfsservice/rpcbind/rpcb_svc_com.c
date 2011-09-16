@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.1 2010/07/26 15:53:00 pooka Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.2 2011/09/16 16:13:18 plunky Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -174,7 +174,7 @@ map_set(RPCB *regp, char *owner)
 	 * add to the end of the list
 	 */
 	rbl = (rpcblist_ptr) malloc((u_int)sizeof (RPCBLIST));
-	if (rbl == (rpcblist_ptr)NULL) {
+	if (rbl == NULL) {
 		return (FALSE);
 	}
 	a = &(rbl->rpcb_map);
@@ -193,7 +193,7 @@ map_set(RPCB *regp, char *owner)
 		free((void *)rbl);
 		return (FALSE);
 	}
-	rbl->rpcb_next = (rpcblist_ptr)NULL;
+	rbl->rpcb_next = NULL;
 	if (list_rbl == NULL) {
 		list_rbl = rbl;
 	} else {
@@ -597,7 +597,7 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 	char *buf_alloc = NULL, *outbufp;
 	char *outbuf_alloc = NULL;
 	char buf[RPC_BUF_MAX], outbuf[RPC_BUF_MAX];
-	struct netbuf *na = (struct netbuf *) NULL;
+	struct netbuf *na = NULL;
 	struct rpc_msg call_msg;
 	int outlen;
 	u_int sendsz;
@@ -684,7 +684,7 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 	rpcbs_rmtcall(versnum - 2, reply_type, a.rmt_prog, a.rmt_vers,
 			a.rmt_proc, transp->xp_netid, rbl);
 
-	if (rbl == (rpcblist_ptr)NULL) {
+	if (rbl == NULL) {
 #ifdef RPCBIND_DEBUG
 		if (debugging)
 			fprintf(stderr, "not found\n");
@@ -717,7 +717,7 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 	if (reply_type == RPCBPROC_INDIRECT) {
 		uaddr = mergeaddr(transp, transp->xp_netid,
 			rbl->rpcb_map.r_addr, NULL);
-		if ((uaddr == (char *) NULL) || uaddr[0] == '\0') {
+		if (uaddr == NULL || uaddr[0] == '\0') {
 			svcerr_noprog(transp);
 			if (uaddr != NULL) {
 				free((void *) uaddr);
@@ -729,7 +729,7 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 		}
 	}
 	nconf = rpcbind_get_conf(transp->xp_netid);
-	if (nconf == (struct netconfig *)NULL) {
+	if (nconf == NULL) {
 		if (reply_type == RPCBPROC_INDIRECT)
 			svcerr_systemerr(transp);
 		if (debugging)

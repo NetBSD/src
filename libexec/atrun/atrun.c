@@ -1,4 +1,4 @@
-/*	$NetBSD: atrun.c,v 1.20 2011/08/01 12:28:54 mbalmer Exp $	*/
+/*	$NetBSD: atrun.c,v 1.21 2011/09/16 16:13:17 plunky Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -59,7 +59,7 @@
 #if 0
 static char rcsid[] = "$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $";
 #else
-__RCSID("$NetBSD: atrun.c,v 1.20 2011/08/01 12:28:54 mbalmer Exp $");
+__RCSID("$NetBSD: atrun.c,v 1.21 2011/09/16 16:13:17 plunky Exp $");
 #endif
 
 static int debug = 0;
@@ -327,7 +327,7 @@ run_file(const char *filename, uid_t uid, gid_t gid)
 	/* We're the parent.  Let's wait. */
 	(void)close(fd_in);
 	(void)close(fd_out);
-	(void)waitpid(pid, (int *)NULL, 0);
+	(void)waitpid(pid, NULL, 0);
 
 	/*
 	 * Send mail.  Unlink the output file first, so it is deleted
