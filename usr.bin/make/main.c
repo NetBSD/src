@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.197 2011/05/04 20:38:31 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.198 2011/09/16 15:38:04 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.197 2011/05/04 20:38:31 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.198 2011/09/16 15:38:04 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.197 2011/05/04 20:38:31 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.198 2011/09/16 15:38:04 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -178,7 +178,7 @@ static const char *	tracefile;
 static char *		Check_Cwd_av(int, char **, int);
 static void		MainParseArgs(int, char **);
 static int		ReadMakefile(const void *, const void *);
-static void		usage(void);
+static void		usage(void) __dead;
 
 static Boolean		ignorePWD;	/* if we use -C, PWD is meaningless */
 static char objdir[MAXPATHLEN + 1];	/* where we chdir'ed to */

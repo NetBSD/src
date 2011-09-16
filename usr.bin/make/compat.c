@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.83 2011/08/14 13:06:09 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.84 2011/09/16 15:38:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.83 2011/08/14 13:06:09 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.84 2011/09/16 15:38:03 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.83 2011/08/14 13:06:09 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.84 2011/09/16 15:38:03 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -121,7 +121,7 @@ static char 	    meta[256];
 
 static GNode	    *curTarg = NULL;
 static GNode	    *ENDNode;
-static void CompatInterrupt(int);
+static void CompatInterrupt(int) __dead;
 
 static void
 Compat_Init(void)
