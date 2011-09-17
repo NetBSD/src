@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.26 2009/01/11 02:46:27 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.27 2011/09/17 01:52:29 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.26 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.27 2011/09/17 01:52:29 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -247,9 +247,15 @@ pututxline(const struct utmpx *utx)
 	if (utx == NULL)
 		return NULL;
 
-	if (strcmp(_PATH_UTMPX, utfile) == 0)
-		if ((fp != NULL && readonly) || (fp == NULL && geteuid() != 0))
-			return utmp_update(utx);
+	if (strcmp(_PATH_UTMPX, utfile) == 0) {
+		if (geteuid() == 0) {
+			if (fp != NULL && readonly)
+				endutxent();
+		} else {
+			if (fp == NULL || readonly)
+				return utmp_update(utx);
+		}
+	}
 
 
 	(void)memcpy(&temp, utx, sizeof(temp));
