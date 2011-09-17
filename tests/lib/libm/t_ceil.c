@@ -1,4 +1,4 @@
-/* $NetBSD: t_ceil.c,v 1.6 2011/09/12 17:15:54 jruoho Exp $ */
+/* $NetBSD: t_ceil.c,v 1.7 2011/09/17 12:12:19 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ceil.c,v 1.6 2011/09/12 17:15:54 jruoho Exp $");
+__RCSID("$NetBSD: t_ceil.c,v 1.7 2011/09/17 12:12:19 jruoho Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -42,6 +42,9 @@ __RCSID("$NetBSD: t_ceil.c,v 1.6 2011/09/12 17:15:54 jruoho Exp $");
 #define SMALL_NUM	1.0e-40
 #endif
 
+/*
+ * ceil(3)
+ */
 ATF_TC(ceil_basic);
 ATF_TC_HEAD(ceil_basic, tc)
 {
@@ -57,6 +60,92 @@ ATF_TC_BODY(ceil_basic, tc)
 	ATF_CHECK(fabs(ceil(y) - 1) < SMALL_NUM);
 }
 
+ATF_TC(ceil_nan);
+ATF_TC_HEAD(ceil_nan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ceil(NaN) == NaN");
+}
+
+ATF_TC_BODY(ceil_nan, tc)
+{
+#ifndef __vax__
+	const double x = 0.0L / 0.0L;
+
+	ATF_CHECK(isnan(ceil(x)) != 0);
+#endif
+}
+
+ATF_TC(ceil_inf_neg);
+ATF_TC_HEAD(ceil_inf_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ceil(-Inf) == -Inf");
+}
+
+ATF_TC_BODY(ceil_inf_neg, tc)
+{
+#ifndef __vax__
+	const double x = -1.0L / 0.0L;
+	double y = ceil(x);
+
+	if (isinf(y) == 0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("ceil(-Inf) != -Inf");
+#endif
+}
+
+ATF_TC(ceil_inf_pos);
+ATF_TC_HEAD(ceil_inf_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ceil(+Inf) == +Inf");
+}
+
+ATF_TC_BODY(ceil_inf_pos, tc)
+{
+#ifndef __vax__
+	const double x = 1.0L / 0.0L;
+	double y = ceil(x);
+
+	if (isinf(y) == 0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("ceil(+Inf) != +Inf");
+#endif
+}
+
+ATF_TC(ceil_zero_neg);
+ATF_TC_HEAD(ceil_zero_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ceil(-0.0) == -0.0");
+}
+
+ATF_TC_BODY(ceil_zero_neg, tc)
+{
+#ifndef __vax__
+	const double x = -0.0L;
+	double y = ceil(x);
+
+	if (fabs(y) > 0.0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("ceil(-0.0) != -0.0");
+#endif
+}
+
+ATF_TC(ceil_zero_pos);
+ATF_TC_HEAD(ceil_zero_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ceil(+0.0) == +0.0");
+}
+
+ATF_TC_BODY(ceil_zero_pos, tc)
+{
+#ifndef __vax__
+	const double x = 0.0L;
+	double y = ceil(x);
+
+	if (fabs(y) > 0.0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("ceil(+0.0) != +0.0");
+#endif
+}
+
+/*
+ * ceilf(3)
+ */
 ATF_TC(ceilf_basic);
 ATF_TC_HEAD(ceilf_basic, tc)
 {
@@ -72,6 +161,92 @@ ATF_TC_BODY(ceilf_basic, tc)
 	ATF_CHECK(fabsf(ceilf(y) - 1) < SMALL_NUM);
 }
 
+ATF_TC(ceilf_nan);
+ATF_TC_HEAD(ceilf_nan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ceilf(NaN) == NaN");
+}
+
+ATF_TC_BODY(ceilf_nan, tc)
+{
+#ifndef __vax__
+	const float x = 0.0L / 0.0L;
+
+	ATF_CHECK(isnan(ceilf(x)) != 0);
+#endif
+}
+
+ATF_TC(ceilf_inf_neg);
+ATF_TC_HEAD(ceilf_inf_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ceilf(-Inf) == -Inf");
+}
+
+ATF_TC_BODY(ceilf_inf_neg, tc)
+{
+#ifndef __vax__
+	const float x = -1.0L / 0.0L;
+	float y = ceilf(x);
+
+	if (isinf(y) == 0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("ceilf(-Inf) != -Inf");
+#endif
+}
+
+ATF_TC(ceilf_inf_pos);
+ATF_TC_HEAD(ceilf_inf_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ceilf(+Inf) == +Inf");
+}
+
+ATF_TC_BODY(ceilf_inf_pos, tc)
+{
+#ifndef __vax__
+	const float x = 1.0L / 0.0L;
+	float y = ceilf(x);
+
+	if (isinf(y) == 0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("ceilf(+Inf) != +Inf");
+#endif
+}
+
+ATF_TC(ceilf_zero_neg);
+ATF_TC_HEAD(ceilf_zero_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ceilf(-0.0) == -0.0");
+}
+
+ATF_TC_BODY(ceilf_zero_neg, tc)
+{
+#ifndef __vax__
+	const float x = -0.0L;
+	float y = ceilf(x);
+
+	if (fabsf(y) > 0.0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("ceilf(-0.0) != -0.0");
+#endif
+}
+
+ATF_TC(ceilf_zero_pos);
+ATF_TC_HEAD(ceilf_zero_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ceilf(+0.0) == +0.0");
+}
+
+ATF_TC_BODY(ceilf_zero_pos, tc)
+{
+#ifndef __vax__
+	const float x = 0.0L;
+	float y = ceilf(x);
+
+	if (fabsf(y) > 0.0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("ceilf(+0.0) != +0.0");
+#endif
+}
+
+/*
+ * floor(3)
+ */
 ATF_TC(floor_basic);
 ATF_TC_HEAD(floor_basic, tc)
 {
@@ -87,6 +262,92 @@ ATF_TC_BODY(floor_basic, tc)
 	ATF_CHECK(floor(y) < SMALL_NUM);
 }
 
+ATF_TC(floor_nan);
+ATF_TC_HEAD(floor_nan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test floor(NaN) == NaN");
+}
+
+ATF_TC_BODY(floor_nan, tc)
+{
+#ifndef __vax__
+	const double x = 0.0L / 0.0L;
+
+	ATF_CHECK(isnan(floor(x)) != 0);
+#endif
+}
+
+ATF_TC(floor_inf_neg);
+ATF_TC_HEAD(floor_inf_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test floor(-Inf) == -Inf");
+}
+
+ATF_TC_BODY(floor_inf_neg, tc)
+{
+#ifndef __vax__
+	const double x = -1.0L / 0.0L;
+	double y = floor(x);
+
+	if (isinf(y) == 0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("floor(-Inf) != -Inf");
+#endif
+}
+
+ATF_TC(floor_inf_pos);
+ATF_TC_HEAD(floor_inf_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test floor(+Inf) == +Inf");
+}
+
+ATF_TC_BODY(floor_inf_pos, tc)
+{
+#ifndef __vax__
+	const double x = 1.0L / 0.0L;
+	double y = floor(x);
+
+	if (isinf(y) == 0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("floor(+Inf) != +Inf");
+#endif
+}
+
+ATF_TC(floor_zero_neg);
+ATF_TC_HEAD(floor_zero_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test floor(-0.0) == -0.0");
+}
+
+ATF_TC_BODY(floor_zero_neg, tc)
+{
+#ifndef __vax__
+	const double x = -0.0L;
+	double y = floor(x);
+
+	if (fabs(y) > 0.0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("floor(-0.0) != -0.0");
+#endif
+}
+
+ATF_TC(floor_zero_pos);
+ATF_TC_HEAD(floor_zero_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test floor(+0.0) == +0.0");
+}
+
+ATF_TC_BODY(floor_zero_pos, tc)
+{
+#ifndef __vax__
+	const double x = 0.0L;
+	double y = floor(x);
+
+	if (fabs(y) > 0.0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("floor(+0.0) != +0.0");
+#endif
+}
+
+/*
+ * floorf(3)
+ */
 ATF_TC(floorf_basic);
 ATF_TC_HEAD(floorf_basic, tc)
 {
@@ -102,13 +363,119 @@ ATF_TC_BODY(floorf_basic, tc)
 	ATF_CHECK(floorf(y) < SMALL_NUM);
 }
 
+ATF_TC(floorf_nan);
+ATF_TC_HEAD(floorf_nan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test floorf(NaN) == NaN");
+}
+
+ATF_TC_BODY(floorf_nan, tc)
+{
+#ifndef __vax__
+	const float x = 0.0L / 0.0L;
+
+	ATF_CHECK(isnan(floorf(x)) != 0);
+#endif
+}
+
+ATF_TC(floorf_inf_neg);
+ATF_TC_HEAD(floorf_inf_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test floorf(-Inf) == -Inf");
+}
+
+ATF_TC_BODY(floorf_inf_neg, tc)
+{
+#ifndef __vax__
+	const float x = -1.0L / 0.0L;
+	float y = floorf(x);
+
+	if (isinf(y) == 0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("floorf(-Inf) != -Inf");
+#endif
+}
+
+ATF_TC(floorf_inf_pos);
+ATF_TC_HEAD(floorf_inf_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test floorf(+Inf) == +Inf");
+}
+
+ATF_TC_BODY(floorf_inf_pos, tc)
+{
+#ifndef __vax__
+	const float x = 1.0L / 0.0L;
+	float y = floorf(x);
+
+	if (isinf(y) == 0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("floorf(+Inf) != +Inf");
+#endif
+}
+
+ATF_TC(floorf_zero_neg);
+ATF_TC_HEAD(floorf_zero_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test floorf(-0.0) == -0.0");
+}
+
+ATF_TC_BODY(floorf_zero_neg, tc)
+{
+#ifndef __vax__
+	const float x = -0.0L;
+	float y = floorf(x);
+
+	if (fabsf(y) > 0.0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("floorf(-0.0) != -0.0");
+#endif
+}
+
+ATF_TC(floorf_zero_pos);
+ATF_TC_HEAD(floorf_zero_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test floorf(+0.0) == +0.0");
+}
+
+ATF_TC_BODY(floorf_zero_pos, tc)
+{
+#ifndef __vax__
+	const float x = 0.0L;
+	float y = floorf(x);
+
+	if (fabsf(y) > 0.0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("floorf(+0.0) != +0.0");
+#endif
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, ceil_basic);
+	ATF_TP_ADD_TC(tp, ceil_nan);
+	ATF_TP_ADD_TC(tp, ceil_inf_neg);
+	ATF_TP_ADD_TC(tp, ceil_inf_pos);
+	ATF_TP_ADD_TC(tp, ceil_zero_neg);
+	ATF_TP_ADD_TC(tp, ceil_zero_pos);
+
 	ATF_TP_ADD_TC(tp, ceilf_basic);
+	ATF_TP_ADD_TC(tp, ceilf_nan);
+	ATF_TP_ADD_TC(tp, ceilf_inf_neg);
+	ATF_TP_ADD_TC(tp, ceilf_inf_pos);
+	ATF_TP_ADD_TC(tp, ceilf_zero_neg);
+	ATF_TP_ADD_TC(tp, ceilf_zero_pos);
+
 	ATF_TP_ADD_TC(tp, floor_basic);
+	ATF_TP_ADD_TC(tp, floor_nan);
+	ATF_TP_ADD_TC(tp, floor_inf_neg);
+	ATF_TP_ADD_TC(tp, floor_inf_pos);
+	ATF_TP_ADD_TC(tp, floor_zero_neg);
+	ATF_TP_ADD_TC(tp, floor_zero_pos);
+
 	ATF_TP_ADD_TC(tp, floorf_basic);
+	ATF_TP_ADD_TC(tp, floorf_nan);
+	ATF_TP_ADD_TC(tp, floorf_inf_neg);
+	ATF_TP_ADD_TC(tp, floorf_inf_pos);
+	ATF_TP_ADD_TC(tp, floorf_zero_neg);
+	ATF_TP_ADD_TC(tp, floorf_zero_pos);
 
 	return atf_no_error();
 }
