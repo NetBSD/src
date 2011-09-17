@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.387 2011/09/17 12:00:50 jruoho Exp $
+# $NetBSD: mi,v 1.388 2011/09/17 18:08:36 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -546,6 +546,9 @@
 ./usr/libdata/debug/usr/tests/lib/libevent				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libevent/h_event.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm					tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libm/t_acos.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libm/t_asin.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libm/t_atan.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_ceil.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_cos.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_erf.debug			tests-lib-debug		debug,atf
@@ -2257,6 +2260,9 @@
 ./usr/tests/lib/libevent/t_event		tests-lib-tests		atf
 ./usr/tests/lib/libm				tests-lib-tests		atf
 ./usr/tests/lib/libm/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libm/t_acos			tests-lib-tests		atf
+./usr/tests/lib/libm/t_asin			tests-lib-tests		atf
+./usr/tests/lib/libm/t_atan			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_ceil			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_cos			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_erf			tests-lib-tests		atf
