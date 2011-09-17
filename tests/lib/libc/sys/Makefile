@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2011/09/17 18:52:21 jruoho Exp $
+# $NetBSD: Makefile,v 1.9 2011/09/17 18:53:31 jruoho Exp $
 
 MKMAN=	no
 
@@ -32,7 +32,6 @@ TESTS_C+=		t_mprotect
 TESTS_C+=		t_msync
 TESTS_C+=		t_nanosleep
 TESTS_C+=		t_poll
-TESTS_C+=		t_ptrace
 TESTS_C+=		t_revoke
 TESTS_C+=		t_select
 TESTS_C+=		t_setrlimit
