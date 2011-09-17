@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77.2.12 2011/08/27 15:37:30 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77.2.13 2011/09/17 10:59:58 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.12 2011/08/27 15:37:30 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.13 2011/09/17 10:59:58 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4434,10 +4434,10 @@ pmap_unmap_all_apdp_pdes(void)
  * handle them correctly during save/restore, leading to incorrect page
  * tracking and pinning during restore.
  * For save/restore to succeed, two functions are introduced:
- * - pmap_map_shadow_entries(), used by resume code to set the last entry
- *   of PDIR_SLOT_PTE so that it points to the correct L2 shadow page
- * - pmap_unmap_shadow_entries(), used by suspend code to clear all
- *   PDIR_SLOT_PTE entries pointing to L2 shadow entries
+ * - pmap_map_recursive_entries(), used by resume code to set the recursive
+ *   mapping entries to their correct value
+ * - pmap_unmap_recursive_entries(), used by suspend code to clear all
+ *   PDIR_SLOT_PTE entries
  */
 void
 pmap_map_recursive_entries(void)
