@@ -1,4 +1,4 @@
-/*	$NetBSD: readcdf.c,v 1.4 2011/09/16 21:06:27 christos Exp $	*/
+/*	$NetBSD: readcdf.c,v 1.5 2011/09/17 10:46:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -31,7 +31,7 @@
 #if 0
 FILE_RCSID("@(#)$File: readcdf.c,v 1.26 2011/08/26 13:38:28 christos Exp $")
 #else
-__RCSID("$NetBSD: readcdf.c,v 1.4 2011/09/16 21:06:27 christos Exp $");
+__RCSID("$NetBSD: readcdf.c,v 1.5 2011/09/17 10:46:52 joerg Exp $");
 #endif
 #endif
 
@@ -43,6 +43,10 @@ __RCSID("$NetBSD: readcdf.c,v 1.4 2011/09/16 21:06:27 christos Exp $");
 
 #include "cdf.h"
 #include "magic.h"
+
+#ifndef __arraycount
+#define __arraycount(a) (sizeof(a) / sizeof(a[0]))
+#endif
 
 #define NOTMIME(ms) (((ms)->flags & MAGIC_MIME) == 0)
 
