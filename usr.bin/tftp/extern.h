@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 2006/07/21 17:49:00 jmcneill Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 2011/09/17 15:15:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -47,5 +47,5 @@ extern	uint16_t	mcport;
 extern	ushort	mcmasterslave;
 extern  struct	sockaddr_storage peeraddr; /* filled in by main */
 
-void	recvfile __P((int, char *, char *));
-void	sendfile __P((int, char *, char *));
+void	recvfile(int, const char *, const char *);
+void	sendfile(int, const char *, const char *);
