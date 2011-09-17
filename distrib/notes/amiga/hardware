@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.47 2011/08/04 20:24:36 rkujawa Exp $
+.\"	$NetBSD: hardware,v 1.48 2011/09/17 17:06:47 rkujawa Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -59,6 +59,8 @@ Blizzard 2060, CyberSCSI Mk I and II
 .It
 PCI bridges
 .(bullet -compact
+Prometheus PCI bridge
+.It
 Phase5 PCI bridge: CyberVision PPC, BlizzardVision PPC
 .bullet)
 .It
