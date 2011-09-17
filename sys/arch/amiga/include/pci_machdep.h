@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1 2011/08/04 17:48:51 rkujawa Exp $ */
+/*	$NetBSD: pci_machdep.h,v 1.2 2011/09/17 16:55:34 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -66,6 +66,9 @@ struct amiga_pci_chipset {
 			    int);
 	void		(*pc_conf_write)(pci_chipset_tag_t, pcitag_t, int, 
 			    pcireg_t);
+	int		(*pc_conf_hook)(pci_chipset_tag_t, int, int, int, 
+			    pcireg_t);
+	void		*pc_intr_v;
 	int		(*pc_intr_map)(const struct pci_attach_args *, 
 			    pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(pci_chipset_tag_t, 
@@ -75,8 +78,6 @@ struct amiga_pci_chipset {
 	void		(*pc_intr_disestablish)(pci_chipset_tag_t, void *);
 	void		(*pc_conf_interrupt)(pci_chipset_tag_t, int, int, int,
 			    int, int *);
-	int		(*pc_conf_hook)(pci_chipset_tag_t, int, int, int, 
-			    pcireg_t);
 
 	bus_space_tag_t pci_conf_iot;
 	bus_space_handle_t pci_conf_ioh;

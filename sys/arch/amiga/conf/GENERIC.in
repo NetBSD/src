@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.82 2011/08/04 17:48:51 rkujawa Exp $
+# $NetBSD: GENERIC.in,v 1.83 2011/09/17 16:55:34 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -57,7 +57,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.82 $"
+#ident 		"GENERIC-$Revision: 1.83 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -575,6 +575,10 @@ options		PCIVERBOSE              # verbose PCI device autoconfig messages
 #options	PCI_CONFIG_DUMP
 p5pb0		at zbus0                # Phase5 PCI bridge (CVPPC/BVPPC)
 pci*		at p5pb0
+mppb*           at zbus0                # Matay Prometheus Zorro-PCI bridge
+pci*            at mppb?
+
+ne*             at pci?                 # NE2000 Ethernet
 
 # Bluetooth Controller and Device support
 # tested only with btuart on an A1200
