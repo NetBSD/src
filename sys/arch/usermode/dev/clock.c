@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.19 2011/09/16 16:24:01 reinoud Exp $ */
+/* $NetBSD: clock.c,v 1.20 2011/09/17 21:38:15 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19 2011/09/16 16:24:01 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.20 2011/09/17 21:38:15 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19 2011/09/16 16:24:01 reinoud Exp $");
 static int	clock_match(device_t, cfdata_t, void *);
 static void	clock_attach(device_t, device_t, void *);
 
-static void	clock_signal(int sig);
+static void	clock_signal(int sig, siginfo_t *info, void *ctx);
 static unsigned int clock_getcounter(struct timecounter *);
 
 static int	clock_todr_gettime(struct todr_chip_handle *, struct timeval *);
@@ -101,8 +101,8 @@ clock_attach(device_t parent, device_t self, void *opaque)
 
 	memset(&sa, 0, sizeof(sa));
 	thunk_sigemptyset(&sa.sa_mask);
-	sa.sa_handler = clock_signal;
-	sa.sa_flags = SA_RESTART | SA_SIGINFO;
+	sa.sa_sigaction = clock_signal;
+	sa.sa_flags = SA_SIGINFO;
 	if (thunk_sigaction(SIGALRM, &sa, NULL) == -1)
 		panic("couldn't register SIGALRM handler : %d",
 		    thunk_geterrno());
@@ -116,7 +116,7 @@ clock_attach(device_t parent, device_t self, void *opaque)
 }
 
 static void
-clock_signal(int sig)
+clock_signal(int sig, siginfo_t *info, void *ctx)
 {
 	struct clockframe cf;
 
