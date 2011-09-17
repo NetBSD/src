@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.31 2011/09/16 15:39:30 joerg Exp $	*/
+/*	$NetBSD: tftp.c,v 1.32 2011/09/17 15:15:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.31 2011/09/16 15:39:30 joerg Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.32 2011/09/17 15:15:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,10 +218,7 @@ tftp_igmp_leave(int fd)
  * Send the requested file.
  */
 void
-sendfile(fd, name, mode)
-	int fd;
-	char *name;
-	char *mode;
+sendfile(int fd, const char *name, const char *mode)
 {
 	struct tftphdr *ap;	   /* data and ack packets */
 	struct tftphdr *dp;
@@ -370,10 +367,7 @@ abort:
  * Receive a file.
  */
 void
-recvfile(fd, name, mode)
-	int fd;
-	char *name;
-	char *mode;
+recvfile(int fd, const char *name, const char *mode)
 {
 	struct tftphdr *ap;
 	struct tftphdr *dp;
