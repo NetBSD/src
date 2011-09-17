@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.196.2.2 2011/07/17 15:36:03 riz Exp $
+#	$NetBSD: Makefile.inc,v 1.196.2.3 2011/09/17 18:47:42 bouyer Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -89,7 +89,7 @@ ASM=	access.S acct.S \
 		_ksem_post.S _ksem_trywait.S _ksem_unlink.S _ksem_wait.S \
 		_ksem_open.S \
 	lchflags.S lchmod.S lchown.S lfs_bmapv.S lfs_markv.S lfs_segclean.S \
-		lfs_segwait.S link.S listen.S __lstat30.S lutimes.S \
+		lfs_segwait.S link.S linkat.S listen.S __lstat30.S lutimes.S \
 		_lwp_create.S _lwp_exit.S _lwp_kill.S _lwp_park.S \
 		_lwp_self.S _lwp_wait.S _lwp_unpark.S _lwp_unpark_all.S \
 		_lwp_suspend.S _lwp_continue.S _lwp_wakeup.S _lwp_detach.S \
@@ -267,6 +267,7 @@ MLINKS+=intro.2 errno.2
 MLINKS+=kqueue.2 kevent.2
 MLINKS+=ktrace.2 fktrace.2
 MLINKS+=lseek.2 seek.2
+MLINKS+=link.2 linkat.2
 MLINKS+=_lwp_suspend.2 _lwp_continue.2
 MLINKS+=_lwp_getprivate.2 _lwp_setprivate.2
 MLINKS+=madvise.2 posix_madvise.2

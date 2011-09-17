@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.h,v 1.20 2008/10/16 20:12:23 wrstuden Exp $ */
+/* $NetBSD: rump_syscalls.h,v 1.20.4.1 2011/09/17 18:47:47 bouyer Exp $ */
 
 /*
  * System call protos in rump namespace.
@@ -44,3 +44,4 @@ int rump_sys_lchflags(const char *, u_long, int *);
 int rump_sys___stat30(const char *, struct stat *, int *);
 int rump_sys___lstat30(const char *, struct stat *, int *);
 int rump_sys___socket30(int, int, int, int *);
+int rump_sys_linkat(int, const char *, int, const char *, int, int *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.28 2008/08/27 08:53:55 christos Exp $	*/
+/*	$NetBSD: limits.h,v 1.28.4.1 2011/09/17 18:47:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -107,6 +107,15 @@
 #endif /* _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
+
+/*    
+ * X/Open Extended API set 2 (a.k.a. C063)
+ * This hides unimplemented functions from GNU configure until
+ * we are done implementing them.
+ */
+#if !defined(_INCOMPLETE_XOPEN_C063)
+#define __stub_linkat
+#endif
 
 #include <machine/limits.h>
 #include <sys/syslimits.h>

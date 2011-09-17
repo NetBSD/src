@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.211 2008/10/16 19:30:49 pooka Exp $
+	$NetBSD: syscalls.master,v 1.211.4.1 2011/09/17 18:47:46 bouyer Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -841,3 +841,59 @@
 			    id_t second_id, psetid_t psid, psetid_t *opsid); }
 416	STD 		{ int sys___posix_fadvise50(int fd, int pad, \
 			    off_t offset, off_t len, int advice); }
+417	UNIMPL
+418	UNIMPL
+419	UNIMPL
+420	UNIMPL
+421	UNIMPL
+422	UNIMPL
+423	UNIMPL
+424	UNIMPL
+425	UNIMPL
+426	UNIMPL
+427	UNIMPL
+428	UNIMPL
+429	UNIMPL
+430	UNIMPL
+431	UNIMPL
+432	UNIMPL
+433	UNIMPL
+434	UNIMPL
+435	UNIMPL
+436	UNIMPL
+437	UNIMPL
+438	UNIMPL
+439	UNIMPL
+440	UNIMPL
+441	UNIMPL
+442	UNIMPL
+443	UNIMPL
+444	UNIMPL
+445	UNIMPL
+446	UNIMPL
+447	UNIMPL
+448	UNIMPL
+449	UNIMPL
+450	UNIMPL
+451	UNIMPL
+452	UNIMPL
+453	UNIMPL
+454	UNIMPL
+455	UNIMPL
+456	UNIMPL
+457     STD  RUMP       { int sys_linkat(int fd1, const char *name1, \
+			    int fd2, const char *name2, int flags); }
+458	UNIMPL		renameat
+459	UNIMPL		mkfifoat
+460	UNIMPL		mknodat
+461	UNIMPL		mkdirat
+462	UNIMPL		faccessat
+463	UNIMPL		fchmodat
+464	UNIMPL		fchownat
+465	UNIMPL		fexecve
+466	UNIMPL		fstatat
+467	UNIMPL		utimensat
+468	UNIMPL		openat
+469	UNIMPL		readlinkat
+470	UNIMPL		symlinkat
+471	UNIMPL		unlinkat

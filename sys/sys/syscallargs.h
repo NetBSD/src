@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.199 2008/10/16 20:12:23 wrstuden Exp $ */
+/* $NetBSD: syscallargs.h,v 1.199.4.1 2011/09/17 18:47:47 bouyer Exp $ */
 
 /*
  * System call argument lists.
@@ -2288,6 +2288,15 @@ struct sys___posix_fadvise50_args {
 };
 check_syscall_args(sys___posix_fadvise50)
 
+struct sys_linkat_args {
+	syscallarg(int) fd1;
+	syscallarg(const char *) name1;
+	syscallarg(int) fd2;
+	syscallarg(const char *) name2;
+	syscallarg(int) flags;
+};
+check_syscall_args(sys_linkat)
+
 /*
  * System call prototypes.
  */
@@ -3072,5 +3081,7 @@ int	sys_pset_assign(struct lwp *, const struct sys_pset_assign_args *, register_
 int	sys__pset_bind(struct lwp *, const struct sys__pset_bind_args *, register_t *);
 
 int	sys___posix_fadvise50(struct lwp *, const struct sys___posix_fadvise50_args *, register_t *);
+
+int	sys_linkat(struct lwp *, const struct sys_linkat_args *, register_t *);
 
 #endif /* _SYS_SYSCALLARGS_H_ */

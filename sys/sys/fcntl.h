@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.34.64.1 2009/03/18 05:33:23 snj Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.34.64.2 2011/09/17 18:47:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -270,6 +270,15 @@ struct flock {
 #define	POSIX_FADV_WILLNEED	3	/* be needed in near future */
 #define	POSIX_FADV_DONTNEED	4	/* not be needed in near future */
 #define	POSIX_FADV_NOREUSE	5	/* be accessed once */
+
+/*
+ * Constants for X/Open Extended API set 2 (a.k.a. C063)
+ */
+#if defined(_INCOMPLETE_XOPEN_C063) || defined(_KERNEL)
+#define AT_FDCWD		-100	/* Use cwd for relative link target */
+#define AT_SYMLINK_FOLLOW	0x400	/* Follow symlinks */
+#endif
+
 
 #ifndef _KERNEL
 #include <sys/cdefs.h>

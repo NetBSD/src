@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.118.4.1 2009/01/16 01:04:29 snj Exp $	*/
+/*	$NetBSD: unistd.h,v 1.118.4.2 2011/09/17 18:47:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -282,6 +282,12 @@ ssize_t	 pread(int, void *, size_t, off_t);
 ssize_t	 pwrite(int, const void *, size_t, off_t);
 #endif
 
+/* 
+ * X/Open Extended API set 2 (a.k.a. C063)
+ */
+#if defined(_INCOMPLETE_XOPEN_C063)
+int     linkat(int, const char *, int, const char *, int);
+#endif
 
 /*
  * Implementation-defined extensions

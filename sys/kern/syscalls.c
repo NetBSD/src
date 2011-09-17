@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.220 2008/10/16 20:12:23 wrstuden Exp $ */
+/* $NetBSD: syscalls.c,v 1.220.4.1 2011/09/17 18:47:46 bouyer Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.220 2008/10/16 20:12:23 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.220.4.1 2011/09/17 18:47:46 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -543,4 +543,59 @@ const char *const syscallnames[] = {
 	/* 414 */	"pset_assign",
 	/* 415 */	"_pset_bind",
 	/* 416 */	"__posix_fadvise50",
+	/* 417 */	"#417 (unimplemented)",
+	/* 418 */	"#418 (unimplemented)",
+	/* 419 */	"#419 (unimplemented)",
+	/* 420 */	"#420 (unimplemented)",
+	/* 421 */	"#421 (unimplemented)",
+	/* 422 */	"#422 (unimplemented)",
+	/* 423 */	"#423 (unimplemented)",
+	/* 424 */	"#424 (unimplemented)",
+	/* 425 */	"#425 (unimplemented)",
+	/* 426 */	"#426 (unimplemented)",
+	/* 427 */	"#427 (unimplemented)",
+	/* 428 */	"#428 (unimplemented)",
+	/* 429 */	"#429 (unimplemented)",
+	/* 430 */	"#430 (unimplemented)",
+	/* 431 */	"#431 (unimplemented)",
+	/* 432 */	"#432 (unimplemented)",
+	/* 433 */	"#433 (unimplemented)",
+	/* 434 */	"#434 (unimplemented)",
+	/* 435 */	"#435 (unimplemented)",
+	/* 436 */	"#436 (unimplemented)",
+	/* 437 */	"#437 (unimplemented)",
+	/* 438 */	"#438 (unimplemented)",
+	/* 439 */	"#439 (unimplemented)",
+	/* 440 */	"#440 (unimplemented)",
+	/* 441 */	"#441 (unimplemented)",
+	/* 442 */	"#442 (unimplemented)",
+	/* 443 */	"#443 (unimplemented)",
+	/* 444 */	"#444 (unimplemented)",
+	/* 445 */	"#445 (unimplemented)",
+	/* 446 */	"#446 (unimplemented)",
+	/* 447 */	"#447 (unimplemented)",
+	/* 448 */	"#448 (unimplemented)",
+	/* 449 */	"#449 (unimplemented)",
+	/* 450 */	"#450 (unimplemented)",
+	/* 451 */	"#451 (unimplemented)",
+	/* 452 */	"#452 (unimplemented)",
+	/* 453 */	"#453 (unimplemented)",
+	/* 454 */	"#454 (unimplemented)",
+	/* 455 */	"#455 (unimplemented)",
+	/* 456 */	"#456 (unimplemented)",
+	/* 457 */	"linkat",
+	/* 458 */	"#458 (unimplemented renameat)",
+	/* 459 */	"#459 (unimplemented mkfifoat)",
+	/* 460 */	"#460 (unimplemented mknodat)",
+	/* 461 */	"#461 (unimplemented mkdirat)",
+	/* 462 */	"#462 (unimplemented faccessat)",
+	/* 463 */	"#463 (unimplemented fchmodat)",
+	/* 464 */	"#464 (unimplemented fchownat)",
+	/* 465 */	"#465 (unimplemented fexecve)",
+	/* 466 */	"#466 (unimplemented fstatat)",
+	/* 467 */	"#467 (unimplemented utimensat)",
+	/* 468 */	"#468 (unimplemented openat)",
+	/* 469 */	"#469 (unimplemented readlinkat)",
+	/* 470 */	"#470 (unimplemented symlinkat)",
+	/* 471 */	"#471 (unimplemented unlinkat)",
 };
