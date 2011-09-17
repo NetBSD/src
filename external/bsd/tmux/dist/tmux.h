@@ -1,4 +1,4 @@
-/* $Id: tmux.h,v 1.2 2011/08/19 09:06:05 christos Exp $ */
+/* $Id: tmux.h,v 1.3 2011/09/17 01:50:08 christos Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -789,6 +789,7 @@ struct window_mode {
 };
 
 /* Child window structure. */
+struct window_utmp;
 struct window_pane {
 	u_int		 id;
 
@@ -831,6 +832,8 @@ struct window_pane {
 
 	const struct window_mode *mode;
 	void		*modedata;
+
+	struct window_utmp *utmp;
 
 	TAILQ_ENTRY(window_pane) entry;
 	RB_ENTRY(window_pane) tree_entry;
@@ -2066,5 +2069,9 @@ int printflike2	 xasprintf(char **, const char *, ...);
 int		 xvasprintf(char **, const char *, va_list);
 int printflike3	 xsnprintf(char *, size_t, const char *, ...);
 int		 xvsnprintf(char *, size_t, const char *, va_list);
+
+/* utmp.c */
+struct window_utmp *utmp_create(const char *);
+void		 utmp_destroy(struct window_utmp *);
 
 #endif /* TMUX_H */
