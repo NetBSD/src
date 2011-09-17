@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpsubs.h,v 1.5 2006/01/31 17:36:56 christos Exp $	*/
+/*	$NetBSD: tftpsubs.h,v 1.6 2011/09/17 15:15:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -35,12 +35,12 @@
  * Prototypes for read-ahead/write-behind subroutines for tftp user and
  * server.
  */
-struct tftphdr *r_init __P((void));
-void	read_ahead __P((FILE *, size_t, int));
-int	readit __P((FILE *, struct tftphdr **, size_t, int));
+struct tftphdr *r_init(void);
+void	read_ahead(FILE *, size_t, int);
+int	readit(FILE *, struct tftphdr **, size_t, int);
 
-int	synchnet __P((int, size_t));
+int	synchnet(int, size_t);
 
-struct tftphdr *w_init __P((void));
-int	write_behind __P((FILE *, int));
-int	writeit __P((FILE *, struct tftphdr **, int, int));
+struct tftphdr *w_init(void);
+int	write_behind(FILE *, int);
+int	writeit(FILE *, struct tftphdr **, int, int);
