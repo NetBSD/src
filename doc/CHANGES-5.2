@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.102 2011/08/22 17:48:28 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.103 2011/09/17 18:58:20 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5538,4 +5538,93 @@ xsrc/xfree/xc/lib/font/fontfile/decompress.c			1.2
 
 	Address CVE-2011-2895, buffer overflow in decompression.
 	[joerg, ticket #1661]
+
+distrib/sets/lists/comp/mi			1.1659 via patch
+include/limits.h				1.30 via patch
+include/unistd.h				1.127 via patch
+lib/libc/sys/Makefile.inc			1.208 via patch
+lib/libc/sys/link.2				1.25 via patch
+sys/kern/init_sysent.c				1.257 via patch
+sys/kern/syscalls.c				1.248 via patch
+sys/kern/syscalls.master			1.251 via patch
+sys/kern/vfs_syscalls.c				1.433 via patch
+sys/rump/include/rump/rump_syscalls.h		1.52 via patch
+sys/rump/include/rump/rumpvnode_if.h		1.12 via patch
+sys/rump/librump/rumpkern/rump_syscalls.c	1.74 via patch
+sys/rump/librump/rumpvfs/rumpvnode_if.c		1.11 via patch
+sys/sys/fcntl.h					1.40, 1.41 via patch
+sys/sys/stat.h					1.61 via patch
+sys/sys/syscall.h				1.244 via patch
+sys/sys/syscallargs.h				1.227 via patch
+sys/sys/vnode_if.h				1.83 via patch
+
+	First stage of support for Extended API set 2. Most of the think is
+	unimplemented, except enough of linkat(2) to hardlink to a symlink.
+
+	Everything new in headers is guarded #ifdef _INCOMPLETE_XOPEN_C063
+	since some software (e.g.: xcvs in our own tree) will assume they
+	can use openat(2) when AT_FDCWD is defined. _INCOMPLETE_XOPEN_C063
+	will go away once support will be completed.
+
+	improve comment about AT_* defines: they are not only used by linkat(2)
+
+	Add macros to hide OpenGroup extened API set 2 from GNU configure. This
+	is a temporary  workaround until the implementation is completed.
+	[manu, ticket #1658]
+
+lib/librmt/rmtlib.c				1.23, 1.24
+
+	Improve isrmt() check: it cannot be a rmt fd if there are no pipes
+	open for the fd.  Prevents collision with rumphijack.
+	Also, prevent potential hyperspace memory access.
+
+	PR/38413: Takahiro Kambe: mt(1) print some junk output when using
+	remote tape
+	Not all fields are valid in the ioctl to get tape info in the rmt
+	protocol.  Zero out the struct so that we don't print junk.
+	[dholland, ticket #1660]
+
+sys/ufs/ufs/ufs_extattr.c			1.35
+
+	Fix locking protocol to avoid a panic on extattrctl stop and on umount.
+	[manu, ticket #1664]
+
+sys/fs/puffs/puffs_node.c			1.20 via patch
+sys/fs/puffs/puffs_sys.h			1.78 via patch
+sys/fs/puffs/puffs_vnops.c			1.155 via patch
+
+	Add a mutex for operations that touch size
+	(setattr, getattr, write, fsync).
+
+	This is required to avoid data corruption bugs, where a getattr slices
+	itself within a setattr operation, and sets the size to the stall value
+	it got from the filesystem. That value is smaller than the one set by
+	setattr, and the call to uvm_vnp_setsize() trigged a spurious truncate.
+	The result is a chunk of zeroed data in the file.
+	[manu, ticket #1666]
+
+sys/fs/union/union_vfsops.c			1.64
+
+	Print the warning message on mount once.
+	Should fix PR #42795 (patch to make mounting union filesystems
+	less obnoxious)
+	[hannken, ticket #1667]
+
+external/ibm-public/postfix/dist/HISTORY			patch
+external/ibm-public/postfix/dist/README_FILES/MILTER_README	patch
+external/ibm-public/postfix/dist/html/MILTER_README.html	patch
+external/ibm-public/postfix/dist/proto/MILTER_README.html	patch
+external/ibm-public/postfix/dist/src/global/mail_version.h	patch
+external/ibm-public/postfix/dist/src/milter/milter8.c		patch
+external/ibm-public/postfix/dist/src/smtpd/smtpd_state.c	patch
+
+	Update Postfix to version 2.7.6. Changes since version 2.7.5:
+	- The Postfix Milter client logged a "milter miltername: malformed
+	  reply" error when a Milter sent an SMTP response without enhanced
+	  status code (i.e. "XXX Text" instead of "XXX X.X.X Text").
+	- The Postfix Milter client sent a random {client_connections} macro
+	  value when the remote SMTP client was not subject to any
+	  smtpd_client_* limit. As a workaround, it now sends a zero value
+	  instead.
+	[tron, ticket #1669]
 
