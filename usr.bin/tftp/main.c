@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2011/09/16 15:39:30 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2011/09/17 03:09:51 minskim Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 2011/09/16 15:39:30 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 2011/09/17 03:09:51 minskim Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,7 @@ void	settsize __P((int, char **));
 void	settimeoutopt __P((int, char **));
 void	status __P((int, char **));
 char	*tail __P((char *));
+int	main __P((int, char *[]));
 __dead static void	intr __P((int));
 const	struct cmd *getcmd __P((char *));
 
