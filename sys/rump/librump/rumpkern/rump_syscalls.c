@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.20 2008/10/16 20:12:23 wrstuden Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.20.4.1 2011/09/17 18:47:47 bouyer Exp $ */
 
 /*
  * System call marshalling for rump.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.20 2008/10/16 20:12:23 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.20.4.1 2011/09/17 18:47:47 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -638,3 +638,22 @@ rump_sys___socket30(int domain, int type, int protocol, int *error)
 	return retval;
 }
 __weak_alias(sys___socket30,rump_enosys);
+
+int
+rump_sys_linkat(int fd1, const char * name1, int fd2, const char * name2, int flags, int *error)
+{
+	register_t retval = 0;
+	struct sys_linkat_args arg;
+
+	SPARG(&arg, fd1) = fd1;
+	SPARG(&arg, name1) = name1;
+	SPARG(&arg, fd2) = fd2;
+	SPARG(&arg, name2) = name2;
+	SPARG(&arg, flags) = flags;
+
+	*error = sys_linkat(curlwp, &arg, &retval);
+	if (*error)
+		retval = -1;
+	return retval;
+}
+__weak_alias(sys_linkat,rump_enosys);

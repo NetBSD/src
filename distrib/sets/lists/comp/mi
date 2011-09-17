@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1201.2.16 2011/07/17 15:36:00 riz Exp $
+#	$NetBSD: mi,v 1.1201.2.17 2011/09/17 18:47:43 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3874,6 +3874,7 @@
 ./usr/share/man/cat2/lfs_segclean.0		comp-c-catman		.cat
 ./usr/share/man/cat2/lfs_segwait.0		comp-c-catman		.cat
 ./usr/share/man/cat2/link.0			comp-c-catman		.cat
+./usr/share/man/cat2/linkat.0			comp-c-catman		.cat
 ./usr/share/man/cat2/listen.0			comp-c-catman		.cat
 ./usr/share/man/cat2/lseek.0			comp-c-catman		.cat
 ./usr/share/man/cat2/lstat.0			comp-c-catman		.cat
@@ -9284,6 +9285,7 @@
 ./usr/share/man/html2/lfs_segclean.html		comp-c-htmlman		html
 ./usr/share/man/html2/lfs_segwait.html		comp-c-htmlman		html
 ./usr/share/man/html2/link.html			comp-c-htmlman		html
+./usr/share/man/html2/linkat.html		comp-c-htmlman		html
 ./usr/share/man/html2/listen.html		comp-c-htmlman		html
 ./usr/share/man/html2/lseek.html		comp-c-htmlman		html
 ./usr/share/man/html2/lstat.html		comp-c-htmlman		html
@@ -14472,6 +14474,7 @@
 ./usr/share/man/man2/lfs_segclean.2		comp-c-man		.man
 ./usr/share/man/man2/lfs_segwait.2		comp-c-man		.man
 ./usr/share/man/man2/link.2			comp-c-man		.man
+./usr/share/man/man2/linkat.2			comp-c-man		.man
 ./usr/share/man/man2/listen.2			comp-c-man		.man
 ./usr/share/man/man2/lseek.2			comp-c-man		.man
 ./usr/share/man/man2/lstat.2			comp-c-man		.man

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.376.4.6 2011/03/20 21:19:57 bouyer Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.376.4.7 2011/09/17 18:47:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376.4.6 2011/03/20 21:19:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376.4.7 2011/09/17 18:47:46 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376.4.6 2011/03/20 21:19:57 bouye
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -1997,26 +1998,28 @@ sys_mkfifo(struct lwp *l, const struct sys_mkfifo_args *uap, register_t *retval)
 
 /*
  * Make a hard file link.
+ * The flag argument can be 
  */
 /* ARGSUSED */
-int
-sys_link(struct lwp *l, const struct sys_link_args *uap, register_t *retval)
+static int
+do_sys_link(struct lwp *l, const char *path, const char *link,
+	    int follow, register_t *retval)
 {
-	/* {
-		syscallarg(const char *) path;
-		syscallarg(const char *) link;
-	} */
 	struct vnode *vp;
 	struct nameidata nd;
+	int namei_flags;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
+	if (follow)
+		namei_flags = FOLLOW | TRYEMULROOT;
+	else
+		namei_flags = TRYEMULROOT;
+
+	NDINIT(&nd, LOOKUP, namei_flags, UIO_USERSPACE, path);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, link));
+	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, UIO_USERSPACE, link);
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	if (nd.ni_vp) {
@@ -2034,6 +2037,45 @@ out:
 	vrele(vp);
 	return (error);
 }
+
+int
+sys_link(struct lwp *l, const struct sys_link_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(const char *) path;
+		syscallarg(const char *) link;
+	} */
+	const char *path = SCARG(uap, path);
+	const char *link = SCARG(uap, link);
+
+	return do_sys_link(l, path, link, 1, retval);
+}
+
+int
+sys_linkat(struct lwp *l, const struct sys_linkat_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd1;
+		syscallarg(const char *) name1;
+		syscallarg(int) fd2;
+		syscallarg(const char *) name2;
+		syscallarg(int) flags;
+	} */
+	const char *name1 = SCARG(uap, name1);
+	const char *name2 = SCARG(uap, name2);
+	int follow;
+
+	/*
+	 * Specified fd1 and fd2 are not yet implemented
+	 */
+	if ((SCARG(uap, fd1) != AT_FDCWD) || (SCARG(uap, fd2) != AT_FDCWD))
+		return ENOSYS;
+
+	follow = SCARG(uap, flags) & AT_SYMLINK_FOLLOW;
+	
+	return do_sys_link(l, name1, name2, follow, retval);
+}
+
 
 /*
  * Make a symbolic link.

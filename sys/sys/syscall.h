@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.217 2008/10/16 20:12:23 wrstuden Exp $ */
+/* $NetBSD: syscall.h,v 1.217.4.1 2011/09/17 18:47:47 bouyer Exp $ */
 
 /*
  * System call numbers.
@@ -1209,6 +1209,9 @@
 /* syscall: "__posix_fadvise50" ret: "int" args: "int" "int" "off_t" "off_t" "int" */
 #define	SYS___posix_fadvise50	416
 
-#define	SYS_MAXSYSCALL	417
+/* syscall: "linkat" ret: "int" args: "int" "const char *" "int" "const char *" "int" */
+#define	SYS_linkat	457
+
+#define	SYS_MAXSYSCALL	472
 #define	SYS_NSYSENT	512
 #endif /* _SYS_SYSCALL_H_ */
