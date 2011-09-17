@@ -1,4 +1,4 @@
-/*	$NetBSD: t_timer_create.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $ */
+/*	$NetBSD: t_timer_create.c,v 1.2 2011/09/17 18:52:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,78 +26,116 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <atf-c.h>
 #include <errno.h>
-#include <pthread.h>
+#include <stdio.h>
 #include <signal.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 
-#include <atf-c.h>
-
-#include "../../../h_macros.h"
-
-static void	timer_signal_create(clockid_t, int);
-static void	timer_signal_handler(int, siginfo_t *, void *);
-static int	timer_wait(time_t);
-
-#if 0
-/*
- * XXX: SIGEV_THREAD is not yet supported.
- */
-static void	timer_thread_create(clockid_t);
-static void	timer_thread_handler(sigval_t);
-#endif
-
 static timer_t t;
-static bool error;
-static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+static bool fail = true;
 
-ATF_TC(timer_create_bogus);
-ATF_TC_HEAD(timer_create_bogus, tc)
+static void	timer_signal_handler(int, siginfo_t *, void *);
+static void	timer_signal_create(clockid_t);
+
+static void
+timer_signal_handler(int signo, siginfo_t *si, void *osi)
 {
+	timer_t *tp;
 
-	/* Cf. PR lib/42434. */
-	atf_tc_set_md_var(tc, "descr",
-	    "Checks timer_create(2)'s error checking");
+	tp = si->si_value.sival_ptr;
+
+	if (*tp == t && signo == SIGALRM)
+		fail = false;
+
+	(void)fprintf(stderr, "%s: %s\n", __func__, strsignal(signo));
 }
 
-ATF_TC_BODY(timer_create_bogus, tc)
+static void
+timer_signal_create(clockid_t cid)
 {
+	struct itimerspec tim;
+	struct sigaction act;
 	struct sigevent evt;
-
-	(void)memset(&evt, 0, sizeof(struct sigevent));
-
-	evt.sigev_signo = -1;
-	evt.sigev_notify = SIGEV_SIGNAL;
-
-	if (timer_create(CLOCK_REALTIME, &evt, &t) == 0)
-		goto fail;
-
-	evt.sigev_signo = SIGUSR1;
-	evt.sigev_notify = SIGEV_THREAD + 100;
-
-	if (timer_create(CLOCK_REALTIME, &evt, &t) == 0)
-		goto fail;
-
-	evt.sigev_signo = SIGUSR1;
-	evt.sigev_value.sival_int = 0;
-	evt.sigev_notify = SIGEV_SIGNAL;
-
-	if (timer_create(CLOCK_REALTIME + 100, &evt, &t) == 0)
-		goto fail;
+	sigset_t set;
 
 	t = 0;
+	fail = true;
 
-	return;
+	(void)memset(&evt, 0, sizeof(struct sigevent));
+	(void)memset(&act, 0, sizeof(struct sigaction));
+	(void)memset(&tim, 0, sizeof(struct itimerspec));
 
-fail:
-	atf_tc_fail("timer_create() successful with bogus values");
+	/*
+	 * Set handler.
+	 */
+	act.sa_flags = SA_SIGINFO;
+	act.sa_sigaction = timer_signal_handler;
+
+	ATF_REQUIRE(sigemptyset(&set) == 0);
+	ATF_REQUIRE(sigemptyset(&act.sa_mask) == 0);
+
+	/*
+	 * Block SIGALRM while configuring the timer.
+	 */
+	ATF_REQUIRE(sigaction(SIGALRM, &act, NULL) == 0);
+	ATF_REQUIRE(sigaddset(&set, SIGALRM) == 0);
+	ATF_REQUIRE(sigprocmask(SIG_SETMASK, &set, NULL) == 0);
+
+	/*
+	 * Create the timer (SIGEV_SIGNAL).
+	 */
+	evt.sigev_signo = SIGALRM;
+	evt.sigev_value.sival_ptr = &t;
+	evt.sigev_notify = SIGEV_SIGNAL;
+
+	ATF_REQUIRE(timer_create(cid, &evt, &t) == 0);
+
+	/*
+	 * Start the timer. After this, unblock the signal.
+	 */
+	tim.it_value.tv_sec = 1;
+	tim.it_value.tv_nsec = 0;
+
+	ATF_REQUIRE(timer_settime(t, 0, &tim, NULL) == 0);
+
+	(void)sigprocmask(SIG_UNBLOCK, &set, NULL);
+	(void)sleep(2);
+
+	if (fail != false)
+		atf_tc_fail("timer failed to fire");
 }
 
-ATF_TC(timer_create_signal_realtime);
-ATF_TC_HEAD(timer_create_signal_realtime, tc)
+ATF_TC(timer_create_err);
+ATF_TC_HEAD(timer_create_err, tc)
+{
+	/* Cf. PR lib/42434. */
+	atf_tc_set_md_var(tc, "descr", "Check errors from timer_create(2)");
+}
+
+ATF_TC_BODY(timer_create_err, tc)
+{
+	struct sigevent ev;
+
+	(void)memset(&ev, 0, sizeof(struct sigevent));
+
+	errno = 0;
+	ev.sigev_signo = -1;
+	ev.sigev_notify = SIGEV_SIGNAL;
+
+	ATF_REQUIRE_ERRNO(EINVAL, timer_create(CLOCK_REALTIME, &ev, &t) == -1);
+
+	errno = 0;
+	ev.sigev_signo = SIGUSR1;
+	ev.sigev_notify = SIGEV_THREAD + 100;
+
+	ATF_REQUIRE_ERRNO(EINVAL, timer_create(CLOCK_REALTIME, &ev, &t) == -1);
+}
+
+ATF_TC(timer_create_real);
+ATF_TC_HEAD(timer_create_real, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr",
@@ -105,18 +143,13 @@ ATF_TC_HEAD(timer_create_signal_realtime, tc)
 	    "SIGEV_SIGNAL");
 }
 
-ATF_TC_BODY(timer_create_signal_realtime, tc)
+ATF_TC_BODY(timer_create_real, tc)
 {
-	int i, signals[6] = {
-		SIGALRM, SIGIO, SIGPROF, SIGUSR1, SIGUSR2, -1
-	};
-
-	for (i = 0; signals[i] > 0; i++)
-		timer_signal_create(CLOCK_REALTIME, signals[i]);
+	timer_signal_create(CLOCK_REALTIME);
 }
 
-ATF_TC(timer_create_signal_monotonic);
-ATF_TC_HEAD(timer_create_signal_monotonic, tc)
+ATF_TC(timer_create_mono);
+ATF_TC_HEAD(timer_create_mono, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr",
@@ -124,222 +157,17 @@ ATF_TC_HEAD(timer_create_signal_monotonic, tc)
 	    "SIGEV_SIGNAL");
 }
 
-ATF_TC_BODY(timer_create_signal_monotonic, tc)
+ATF_TC_BODY(timer_create_mono, tc)
 {
-	int i, signals[6] = {
-		SIGALRM, SIGIO, SIGPROF, SIGUSR1, SIGUSR2, -1
-	};
-
-	for (i = 0; signals[i] > 0; i++)
-		timer_signal_create(CLOCK_MONOTONIC, signals[i]);
+	timer_signal_create(CLOCK_MONOTONIC);
 }
-
-static void
-timer_signal_create(clockid_t cid, int sig)
-{
-	struct itimerspec tim;
-	struct sigaction act;
-	struct sigevent evt;
-	const char *errstr;
-	sigset_t set;
-
-	error = true;
-
-	(void)memset(&evt, 0, sizeof(struct sigevent));
-	(void)memset(&act, 0, sizeof(struct sigaction));
-	(void)memset(&tim, 0, sizeof(struct itimerspec));
-
-	act.sa_flags = SA_SIGINFO;
-	act.sa_sigaction = timer_signal_handler;
-
-	(void)sigemptyset(&act.sa_mask);
-
-	if (sigaction(sig, &act, NULL) != 0) {
-		errstr = "sigaction()";
-		goto fail;
-	}
-
-	(void)sigemptyset(&set);
-	(void)sigaddset(&set, sig);
-
-	if (sigprocmask(SIG_SETMASK, &set, NULL) != 0) {
-		errstr = "sigprocmask()";
-		goto fail;
-	}
-
-	evt.sigev_signo = sig;
-	evt.sigev_value.sival_ptr = &t;
-	evt.sigev_notify = SIGEV_SIGNAL;
-
-	if (timer_create(cid, &evt, &t) != 0) {
-		errstr = "timer_create()";
-		goto fail;
-	}
-
-	tim.it_value.tv_sec = 0;
-	tim.it_value.tv_nsec = 1000 * 1000;
-
-	if (timer_settime(t, 0, &tim, NULL) != 0) {
-		errstr = "timer_settime()";
-		goto fail;
-	}
-
-	if (sigprocmask(SIG_UNBLOCK, &set, NULL) != 0) {
-		errstr = "sigprocmask()";
-		goto fail;
-	}
-
-	errno = timer_wait(1);
-
-	if (errno != 0) {
-		errstr = "timer_wait()";
-		goto fail;
-	}
-
-	return;
-
-fail:
-	atf_tc_fail_errno("%s failed (sig %d, clock %d)", errstr, sig, cid);
-}
-
-static void
-timer_signal_handler(int signo, siginfo_t *si, void *osi)
-{
-	timer_t *tp;
-
-	if (pthread_mutex_lock(&mtx) != 0)
-		return;
-
-	tp = si->si_value.sival_ptr;
-
-	if (*tp == t)
-		error = false;
-
-	(void)pthread_cond_signal(&cond);
-	(void)pthread_mutex_unlock(&mtx);
-	(void)signal(signo, SIG_IGN);
-}
-
-static int
-timer_wait(time_t wait)
-{
-	struct timespec ts;
-	int rv;
-
-	rv = pthread_mutex_lock(&mtx);
-
-	if (rv != 0)
-		return rv;
-
-	errno = 0;
-
-	if (clock_gettime(CLOCK_REALTIME, &ts) != 0) {
-
-		if (errno == 0)
-			errno = EFAULT;
-
-		return errno;
-	}
-
-	ts.tv_sec += wait;
-	rv = pthread_cond_timedwait(&cond, &mtx, &ts);
-
-	if (rv != 0)
-		return rv;
-
-	rv = pthread_mutex_unlock(&mtx);
-
-	if (rv != 0)
-		return rv;
-
-	if (error != false)
-		return EPROCUNAVAIL;
-
-	return timer_delete(t);
-}
-
-#if 0
-ATF_TC(timer_create_thread);
-ATF_TC_HEAD(timer_create_thread, tc)
-{
-
-	atf_tc_set_md_var(tc, "descr",
-	    "Checks timer_create(2) and sigevent(3), SIGEV_THREAD");
-}
-
-ATF_TC_BODY(timer_create_thread, tc)
-{
-	timer_thread_create(CLOCK_REALTIME);
-}
-
-static void
-timer_thread_create(clockid_t cid)
-{
-	struct itimerspec tim;
-	struct sigevent evt;
-	const char *errstr;
-
-	error = true;
-
-	(void)memset(&evt, 0, sizeof(struct sigevent));
-	(void)memset(&tim, 0, sizeof(struct itimerspec));
-
-	evt.sigev_notify = SIGEV_THREAD;
-	evt.sigev_value.sival_ptr = &t;
-	evt.sigev_notify_function = timer_thread_handler;
-	evt.sigev_notify_attributes = NULL;
-
-	if (timer_create(cid, &evt, &t) != 0) {
-		errstr = "timer_create()";
-		goto fail;
-	}
-
-	tim.it_value.tv_sec = 1;
-	tim.it_value.tv_nsec = 0;
-
-	if (timer_settime(t, 0, &tim, NULL) != 0) {
-		errstr = "timer_settime()";
-		goto fail;
-	}
-
-	errno = timer_wait(3);
-
-	if (errno != 0) {
-		errstr = "timer_wait()";
-		goto fail;
-	}
-
-	return;
-
-fail:
-	atf_tc_fail_errno("%s failed (clock %d)", errstr, cid);
-}
-
-static void
-timer_thread_handler(sigval_t sv)
-{
-	timer_t *tp;
-
-	if (pthread_mutex_lock(&mtx) != 0)
-		return;
-
-	tp = sv.sival_ptr;
-
-	if (*tp == t)
-		error = false;
-
-	(void)pthread_cond_signal(&cond);
-	(void)pthread_mutex_unlock(&mtx);
-}
-#endif
 
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, timer_create_bogus);
-	ATF_TP_ADD_TC(tp, timer_create_signal_realtime);
-	ATF_TP_ADD_TC(tp, timer_create_signal_monotonic);
-     /*	ATF_TP_ADD_TC(tp, timer_create_thread); */
+	ATF_TP_ADD_TC(tp, timer_create_err);
+	ATF_TP_ADD_TC(tp, timer_create_real);
+	ATF_TP_ADD_TC(tp, timer_create_mono);
 
 	return atf_no_error();
 }
