@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.21.14.3 2011/07/17 15:36:04 riz Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.21.14.4 2011/09/17 18:51:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.21.14.3 2011/07/17 15:36:04 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.21.14.4 2011/09/17 18:51:34 bouyer Exp $");
 
 #include "opt_ffs.h"
 
@@ -130,6 +130,7 @@ ufs_extattr_uepm_unlock(struct ufsmount *ump)
 	if (ump->um_extattr.uepm_lockcnt != 0) {
 		KASSERT(mutex_owned(&ump->um_extattr.uepm_lock));
 		ump->um_extattr.uepm_lockcnt--;
+		return;
 	}
 	mutex_exit(&ump->um_extattr.uepm_lock);
 }
