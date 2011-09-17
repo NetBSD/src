@@ -1,4 +1,4 @@
-/* $NetBSD: t_ldexp.c,v 1.8 2011/09/16 04:54:46 jruoho Exp $ */
+/* $NetBSD: t_ldexp.c,v 1.9 2011/09/17 06:21:19 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ldexp.c,v 1.8 2011/09/16 04:54:46 jruoho Exp $");
+__RCSID("$NetBSD: t_ldexp.c,v 1.9 2011/09/17 06:21:19 jruoho Exp $");
 
 #include <math.h>
 #include <limits.h>
@@ -50,7 +50,7 @@ ATF_TC_HEAD(ldexp_exp2, tc)
 ATF_TC_BODY(ldexp_exp2, tc)
 {
 #ifndef __vax__
-	const double n[] = { 1, 2, 3, 25, 50, 100, 123, 321, 500 };
+	const double n[] = { 1, 2, 3, 10, 50, 100 };
 	const double eps = 1.0e-40;
 	const double x = 12.0;
 	double y;
@@ -183,9 +183,9 @@ ATF_TC_HEAD(ldexpf_exp2f, tc)
 ATF_TC_BODY(ldexpf_exp2f, tc)
 {
 #ifndef __vax__
-	const float n[] = { 1, 2, 3, 25, 50, 100, 123, 321, 500 };
+	const float n[] = { 1, 2, 3, 10, 50, 100 };
 	const float eps = 1.0e-9;
-	const float x = 12;
+	const float x = 12.0;
 	float y;
 	size_t i;
 
