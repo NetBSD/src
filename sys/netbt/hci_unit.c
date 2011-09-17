@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_unit.c,v 1.12 2008/06/26 14:17:27 plunky Exp $	*/
+/*	$NetBSD: hci_unit.c,v 1.13 2011/09/17 08:23:37 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.12 2008/06/26 14:17:27 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.13 2011/09/17 08:23:37 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -266,7 +266,7 @@ hci_disable(struct hci_unit *unit)
 }
 
 struct hci_unit *
-hci_unit_lookup(bdaddr_t *addr)
+hci_unit_lookup(const bdaddr_t *addr)
 {
 	struct hci_unit *unit;
 
