@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp_update.c,v 1.10 2011/09/17 01:50:54 christos Exp $	 */
+/*	$NetBSD: utmp_update.c,v 1.11 2011/09/17 14:25:43 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: utmp_update.c,v 1.10 2011/09/17 01:50:54 christos Exp $");
+__RCSID("$NetBSD: utmp_update.c,v 1.11 2011/09/17 14:25:43 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: utmp_update.c,v 1.10 2011/09/17 01:50:54 christos Exp $");
 #include <errno.h>
 #include <syslog.h>
 
-static __dead void
+static __dead __printflike(2, 3) void
 logerr(int e, const char *fmt, ...)
 {
 	va_list sap, eap;
