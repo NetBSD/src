@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.229 2008/10/16 20:12:23 wrstuden Exp $ */
+/* $NetBSD: init_sysent.c,v 1.229.4.1 2011/09/17 18:47:45 bouyer Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.229 2008/10/16 20:12:23 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.229.4.1 2011/09/17 18:47:45 bouyer Exp $");
 
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
@@ -1088,115 +1088,115 @@ struct sysent sysent[] = {
 	{ ns(struct sys___posix_fadvise50_args), 0,
 	    (sy_call_t *)sys___posix_fadvise50 },/* 416 = __posix_fadvise50 */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 417 = filler */
+	    sys_nosys },			/* 417 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 418 = filler */
+	    sys_nosys },			/* 418 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 419 = filler */
+	    sys_nosys },			/* 419 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 420 = filler */
+	    sys_nosys },			/* 420 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 421 = filler */
+	    sys_nosys },			/* 421 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 422 = filler */
+	    sys_nosys },			/* 422 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 423 = filler */
+	    sys_nosys },			/* 423 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 424 = filler */
+	    sys_nosys },			/* 424 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 425 = filler */
+	    sys_nosys },			/* 425 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 426 = filler */
+	    sys_nosys },			/* 426 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 427 = filler */
+	    sys_nosys },			/* 427 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 428 = filler */
+	    sys_nosys },			/* 428 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 429 = filler */
+	    sys_nosys },			/* 429 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 430 = filler */
+	    sys_nosys },			/* 430 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 431 = filler */
+	    sys_nosys },			/* 431 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 432 = filler */
+	    sys_nosys },			/* 432 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 433 = filler */
+	    sys_nosys },			/* 433 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 434 = filler */
+	    sys_nosys },			/* 434 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 435 = filler */
+	    sys_nosys },			/* 435 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 436 = filler */
+	    sys_nosys },			/* 436 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 437 = filler */
+	    sys_nosys },			/* 437 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 438 = filler */
+	    sys_nosys },			/* 438 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 439 = filler */
+	    sys_nosys },			/* 439 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 440 = filler */
+	    sys_nosys },			/* 440 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 441 = filler */
+	    sys_nosys },			/* 441 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 442 = filler */
+	    sys_nosys },			/* 442 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 443 = filler */
+	    sys_nosys },			/* 443 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 444 = filler */
+	    sys_nosys },			/* 444 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 445 = filler */
+	    sys_nosys },			/* 445 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 446 = filler */
+	    sys_nosys },			/* 446 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 447 = filler */
+	    sys_nosys },			/* 447 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 448 = filler */
+	    sys_nosys },			/* 448 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 449 = filler */
+	    sys_nosys },			/* 449 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 450 = filler */
+	    sys_nosys },			/* 450 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 451 = filler */
+	    sys_nosys },			/* 451 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 452 = filler */
+	    sys_nosys },			/* 452 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 453 = filler */
+	    sys_nosys },			/* 453 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 454 = filler */
+	    sys_nosys },			/* 454 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 455 = filler */
+	    sys_nosys },			/* 455 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 456 = filler */
+	    sys_nosys },			/* 456 = unimplemented */
+	{ ns(struct sys_linkat_args), 0,
+	    (sy_call_t *)sys_linkat },		/* 457 = linkat */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 457 = filler */
+	    sys_nosys },			/* 458 = unimplemented renameat */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 458 = filler */
+	    sys_nosys },			/* 459 = unimplemented mkfifoat */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 459 = filler */
+	    sys_nosys },			/* 460 = unimplemented mknodat */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 460 = filler */
+	    sys_nosys },			/* 461 = unimplemented mkdirat */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 461 = filler */
+	    sys_nosys },			/* 462 = unimplemented faccessat */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 462 = filler */
+	    sys_nosys },			/* 463 = unimplemented fchmodat */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 463 = filler */
+	    sys_nosys },			/* 464 = unimplemented fchownat */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 464 = filler */
+	    sys_nosys },			/* 465 = unimplemented fexecve */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 465 = filler */
+	    sys_nosys },			/* 466 = unimplemented fstatat */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 466 = filler */
+	    sys_nosys },			/* 467 = unimplemented utimensat */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 467 = filler */
+	    sys_nosys },			/* 468 = unimplemented openat */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 468 = filler */
+	    sys_nosys },			/* 469 = unimplemented readlinkat */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 469 = filler */
+	    sys_nosys },			/* 470 = unimplemented symlinkat */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 470 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 471 = filler */
+	    sys_nosys },			/* 471 = unimplemented unlinkat */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 472 = filler */
 	{ 0, 0, 0,
