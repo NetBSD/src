@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2011/09/17 08:15:43 jruoho Exp $
+# $NetBSD: Makefile,v 1.11 2011/09/17 12:00:50 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ TESTSDIR=	${TESTSBASE}/lib/libm
 
 TESTS_C+=	t_ceil
 TESTS_C+=	t_cos
+TESTS_C+=	t_erf
 TESTS_C+=	t_infinity
 TESTS_C+=	t_ldexp
 TESTS_C+=	t_log
