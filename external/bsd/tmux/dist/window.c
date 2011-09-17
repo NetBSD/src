@@ -1,4 +1,4 @@
-/* $Id: window.c,v 1.3 2011/08/17 18:48:36 jmmv Exp $ */
+/* $Id: window.c,v 1.4 2011/09/17 01:50:09 christos Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -629,6 +629,7 @@ window_pane_destroy(struct window_pane *wp)
 		xfree(wp->shell);
 	if (wp->cmd != NULL)
 		xfree(wp->cmd);
+	utmp_destroy(wp->utmp);
 	xfree(wp);
 }
 
@@ -717,6 +718,8 @@ window_pane_spawn(struct window_pane *wp, const char *cmd, const char *shell,
 	wp->event = bufferevent_new(wp->fd,
 	    window_pane_read_callback, NULL, window_pane_error_callback, wp);
 	bufferevent_enable(wp->event, EV_READ|EV_WRITE);
+
+	wp->utmp = utmp_create(wp->tty);
 
 	return (0);
 }
