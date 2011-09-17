@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.1.1.2.2.5 2011/08/09 18:58:17 riz Exp $	*/
+/*	$NetBSD: milter8.c,v 1.1.1.2.2.6 2011/09/17 18:57:34 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -1254,11 +1254,13 @@ static const char *milter8_event(MILTER8 *milter, int event,
 				  MILTER8_DATA_BUFFER, milter->buf,
 				  MILTER8_DATA_END) != 0)
 		MILTER8_EVENT_BREAK(milter->def_reply);
+	    /* XXX Enforce this for each line of a multi-line reply. */
 	    if ((STR(milter->buf)[0] != '4' && STR(milter->buf)[0] != '5')
 		|| !ISDIGIT(STR(milter->buf)[1])
 		|| !ISDIGIT(STR(milter->buf)[2])
 		|| (STR(milter->buf)[3] != ' ' && STR(milter->buf)[3] != '-')
-		|| STR(milter->buf)[4] != STR(milter->buf)[0]) {
+		|| (ISDIGIT(STR(milter->buf)[4])
+		    && (STR(milter->buf)[4] != STR(milter->buf)[0]))) {
 		msg_warn("milter %s: malformed reply: %s",
 			 milter->m.name, STR(milter->buf));
 		milter8_conf_error(milter);
