@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2011/08/19 09:06:05 christos Exp $
+# $NetBSD: Makefile,v 1.9 2011/09/17 01:48:46 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -138,6 +138,7 @@ SRCS+=		window-copy.c
 SRCS+=		window.c
 SRCS+=		xmalloc.c
 SRCS+=		xterm-keys.c
+SRCS+=		utmp.c
 
 # Files in compat/
 #SRCS+=		forkpty-hpux.c
@@ -205,6 +206,8 @@ CPPFLAGS+=	-DHAVE___PROGNAME=1
 CPPFLAGS+=	-DHAVE_FCNTL_CLOSEM=1
 CPPFLAGS+=	-DHAVE_PROC_PID=1
 CPPFLAGS+=	-DHAVE_DIRFD=1
+CPPFLAGS+=	-DSUPPORT_UTMP
+CPPFLAGS+=	-DSUPPORT_UTMPX
 
 LDADD+=		-levent -lterminfo -lutil -lm
 DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
