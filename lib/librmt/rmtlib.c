@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.21 2006/03/19 23:05:50 christos Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.21.26.1 2011/09/17 18:50:46 bouyer Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rmtlib.c,v 1.21 2006/03/19 23:05:50 christos Exp $");
+__RCSID("$NetBSD: rmtlib.c,v 1.21.26.1 2011/09/17 18:50:46 bouyer Exp $");
 
 #define RMTIOCTL	1
 /* #define USE_REXEC	1 */	/* rexec code courtesy of Dan Kegel, srs!dan */
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: rmtlib.c,v 1.21 2006/03/19 23:05:50 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #ifdef USE_REXEC
 #include <netdb.h>
@@ -66,7 +67,7 @@ static	off_t	_rmt_lseek(int, off_t, int);
 static	int	_rmt_open(const char *, int, int);
 static	ssize_t	_rmt_read(int, void *, size_t);
 static	ssize_t	_rmt_write(int, const void *, size_t);
-static	int	command(int, char *);
+static	int	command(int, const char *);
 static	int	remdev(const char *);
 static	void	rmtabort(int);
 static	int	status(int);
@@ -102,10 +103,10 @@ rmtabort(int fildes)
  *	command --- attempt to perform a remote tape command
  */
 static int
-command(int fildes, char *buf)
+command(int fildes, const char *buf)
 {
 	size_t blen;
-	void (*pstat)(int);
+	sig_t pstat;
 
 	_DIAGASSERT(buf != NULL);
 
@@ -117,7 +118,7 @@ command(int fildes, char *buf)
 	pstat = signal(SIGPIPE, SIG_IGN);
 	if (write(WRITE(fildes), buf, blen) == blen) {
 		signal(SIGPIPE, pstat);
-		return (0);
+		return 0;
 	}
 
 /*
@@ -128,7 +129,7 @@ command(int fildes, char *buf)
 	rmtabort(fildes);
 
 	errno = EIO;
-	return (-1);
+	return -1;
 }
 
 
@@ -150,7 +151,7 @@ status(int fildes)
 		if (read(READ(fildes), cp, 1) != 1) {
 			rmtabort(fildes);
 			errno = EIO;
-			return (-1);
+			return -1;
 		}
 		if (*cp == '\n') {
 			*cp = 0;
@@ -161,7 +162,7 @@ status(int fildes)
 	if (i == BUFMAGIC) {
 		rmtabort(fildes);
 		errno = EIO;
-		return (-1);
+		return -1;
 	}
 
 /*
@@ -181,7 +182,7 @@ status(int fildes)
 		if (*cp == 'F')
 			rmtabort(fildes);
 
-		return (-1);
+		return -1;
 	}
 
 /*
@@ -191,10 +192,10 @@ status(int fildes)
 	if (*cp != 'A') {
 		rmtabort(fildes);
 		errno = EIO;
-		return (-1);
+		return -1;
 	}
 
-	return (atoi(cp + 1));
+	return atoi(cp + 1);
 }
 
 
@@ -224,14 +225,12 @@ _rmt_rexec(const char *host, const char *user)
 	/* user may be NULL */
 
 	rexecserv = getservbyname("exec", "tcp");
-	if (rexecserv == NULL) {
-		fprintf(stderr, "? exec/tcp: service not available.");
-		exit(1);
-	}
+	if (rexecserv == NULL)
+		errx(1, exec/tcp: service not available.");
 	if ((user != NULL) && *user == '\0')
 		user = NULL;
-	return (rexec(&host, rexecserv->s_port, user, NULL,
-	    "/etc/rmt", NULL));
+	return rexec(&host, rexecserv->s_port, user, NULL,
+	    "/etc/rmt", NULL);
 }
 #endif /* USE_REXEC */
 
@@ -251,12 +250,13 @@ static int
 /*ARGSUSED*/
 _rmt_open(const char *path, int oflag, int mode)
 {
-	int i, rc;
+	int i;
 	char buffer[BUFMAGIC];
 	char host[MAXHOSTLEN];
 	char device[BUFMAGIC];
 	char login[BUFMAGIC];
 	char *sys, *dev, *user;
+	char *rshpath, *rsh;
 
 	_DIAGASSERT(path != NULL);
 
@@ -274,7 +274,7 @@ _rmt_open(const char *path, int oflag, int mode)
 
 	if (i == MAXUNIT) {
 		errno = EMFILE;
-		return (-1);
+		return -1;
 	}
 
 /*
@@ -326,21 +326,20 @@ _rmt_open(const char *path, int oflag, int mode)
  */
 	READ(i) = WRITE(i) = _rmt_rexec(host, login);
 	if (READ(i) < 0)
-		return (-1);
+		return -1;
 #else
 /*
  *	setup the pipes for the 'rsh' command and fork
  */
 
 	if (pipe(Ptc[i]) == -1 || pipe(Ctp[i]) == -1)
-		return (-1);
+		return -1;
 
-	if ((rc = fork()) == -1)
-		return (-1);
+	switch (fork()) {
+	case -1:
+		return -1;
 
-	if (rc == 0) {
-		char	*rshpath, *rsh;
-
+	case 0:
 		close(0);
 		dup(Ptc[i][0]);
 		close(Ptc[i][0]); close(Ptc[i][1]);
@@ -358,19 +357,19 @@ _rmt_open(const char *path, int oflag, int mode)
 			rsh++;
 
 		if (*login) {
-			execl(rshpath, rsh, host, "-l", login,
-			    _PATH_RMT, NULL);
+			execl(rshpath, rsh, host, "-l", login, _PATH_RMT, NULL);
 		} else {
-			execl(rshpath, rsh, host,
-			    _PATH_RMT, NULL);
+			execl(rshpath, rsh, host, _PATH_RMT, NULL);
 		}
 
 /*
  *	bad problems if we get here
  */
 
-		perror("exec");
-		exit(1);
+		err(1, "Cannnot exec %s", rshpath);
+		/*FALLTHROUGH*/
+	default:
+		break;
 	}
 
 	close(Ptc[i][0]); close(Ctp[i][1]);
@@ -382,9 +381,9 @@ _rmt_open(const char *path, int oflag, int mode)
 
 	(void)snprintf(buffer, sizeof(buffer), "O%s\n%d\n", device, oflag);
 	if (command(i, buffer) == -1 || status(i) == -1)
-		return (-1);
+		return -1;
 
-	return (i);
+	return i;
 }
 
 
@@ -400,10 +399,10 @@ _rmt_close(int fildes)
 		rc = status(fildes);
 
 		rmtabort(fildes);
-		return (rc);
+		return rc;
 	}
 
-	return (-1);
+	return -1;
 }
 
 
@@ -421,18 +420,18 @@ _rmt_read(int fildes, void *buf, size_t nbyte)
 
 	_DIAGASSERT(buf != NULL);
 
-	(void)snprintf(buffer, sizeof buffer, "R%lu\n", (u_long)nbyte);
+	(void)snprintf(buffer, sizeof buffer, "R%zu\n", nbyte);
 	if (command(fildes, buffer) == -1 || (rv = status(fildes)) == -1)
-		return (-1);
+		return -1;
 
 	if (rv > nbyte)
-		rv = nbyte;
+		rv = (int)nbyte;
 
 	for (rc = rv, p = buf; rc > 0; rc -= nread, p += nread) {
 		if ((nread = read(READ(fildes), p, rc)) <= 0) {
 			rmtabort(fildes);
 			errno = EIO;
-			return (-1);
+			return -1;
 		}
 	}
 
@@ -447,24 +446,24 @@ static ssize_t
 _rmt_write(int fildes, const void *buf, size_t nbyte)
 {
 	char buffer[BUFMAGIC];
-	void (*pstat)(int);
+	sig_t pstat;
 
 	_DIAGASSERT(buf != NULL);
 
-	(void)snprintf(buffer, sizeof buffer, "W%lu\n", (u_long)nbyte);
+	(void)snprintf(buffer, sizeof buffer, "W%zu\n", nbyte);
 	if (command(fildes, buffer) == -1)
-		return (-1);
+		return -1;
 
 	pstat = signal(SIGPIPE, SIG_IGN);
 	if (write(WRITE(fildes), buf, nbyte) == nbyte) {
 		signal(SIGPIPE, pstat);
-		return (status(fildes));
+		return status(fildes);
 	}
 
 	signal(SIGPIPE, pstat);
 	rmtabort(fildes);
 	errno = EIO;
-	return (-1);
+	return -1;
 }
 
 
@@ -480,9 +479,9 @@ _rmt_lseek(int fildes, off_t offset, int whence)
 	(void)snprintf(buffer, sizeof buffer, "L%lld\n%d\n", (long long)offset,
 	    whence);
 	if (command(fildes, buffer) == -1)
-		return (-1);
+		return -1;
 
-	return (status(fildes));
+	return status(fildes);
 }
 
 
@@ -498,6 +497,7 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
 	size_t rc;
 	ssize_t cnt;
 	char buffer[BUFMAGIC], *p;
+	struct mtop *mtop = arg;
 
 	_DIAGASSERT(arg != NULL);
 
@@ -507,11 +507,10 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
 
 	if (op == MTIOCTOP) {
 		(void)snprintf(buffer, sizeof buffer, "I%d\n%d\n",
-		    ((struct mtop *)arg)->mt_op,
-		    ((struct mtop *)arg)->mt_count);
+		    mtop->mt_op, mtop->mt_count);
 		if (command(fildes, buffer) == -1)
-			return (-1);
-		return (status(fildes));
+			return -1;
+		return status(fildes);
 	}
 
 /*
@@ -520,7 +519,7 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
 
 	if (op != MTIOCGET) {
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
 
 /*
@@ -532,13 +531,14 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
  */
 
 	if (command(fildes, "S") == -1 || (rv = status(fildes)) == -1)
-		return (-1);
+		return -1;
 
+	memset(arg, 0, sizeof(struct mtget));
 	for (rc = rv, p = arg; rc > 0; rc -= cnt, p += cnt) {
 		if ((cnt = read(READ(fildes), p, rc)) <= 0) {
 			rmtabort(fildes);
 			errno = EIO;
-			return (-1);
+			return -1;
 		}
 	}
 
@@ -550,15 +550,15 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
  */
 
 	if (((struct mtget *)(void *)p)->mt_type < 256)
-		return (0);
+		return 0;
 
 	for (cnt = 0; cnt < rv; cnt += 2) {
 		c = p[cnt];
-		p[cnt] = p[cnt+1];
-		p[cnt+1] = c;
+		p[cnt] = p[cnt + 1];
+		p[cnt + 1] = c;
 	}
 
-	return (0);
+	return 0;
 }
 #endif /* RMTIOCTL */
 
@@ -614,10 +614,10 @@ remdev(const char *path)
 
 	if ((path = strchr(path, ':')) != NULL) {
 		if (strncmp(path + 1, "/dev/", 5) == 0) {
-			return (1);
+			return 1;
 		}
 	}
-	return (0);
+	return 0;
 }
 
 
@@ -641,9 +641,9 @@ rmtopen(const char *path, int oflag, ...)
 	if (remdev(path)) {
 		fd = _rmt_open(path, oflag, (int)mode);
 
-		return ((fd == -1) ? -1 : (fd + REM_BIAS));
+		return (fd == -1) ? -1 : (fd + REM_BIAS);
 	} else {
-		return (open(path, oflag, mode));
+		return open(path, oflag, mode);
 	}
 }
 
@@ -659,9 +659,9 @@ rmtaccess(const char *path, int amode)
 	_DIAGASSERT(path != NULL);
 
 	if (remdev(path)) {
-		return (0);		/* Let /etc/rmt find out */
+		return 0;		/* Let /etc/rmt find out */
 	} else {
-		return (access(path, amode));
+		return access(path, amode);
 	}
 }
 
@@ -672,8 +672,10 @@ rmtaccess(const char *path, int amode)
 int
 isrmt(int fd)
 {
+	int unbias = fd - REM_BIAS;
 
-	return (fd >= REM_BIAS);
+	return (fd >= REM_BIAS) && unbias < MAXUNIT &&
+	    (WRITE(unbias) != -1 || READ(unbias) != -1);
 }
 
 
@@ -687,9 +689,9 @@ rmtread(int fildes, void *buf, size_t nbyte)
 	_DIAGASSERT(buf != NULL);
 
 	if (isrmt(fildes)) {
-		return (_rmt_read(fildes - REM_BIAS, buf, nbyte));
+		return _rmt_read(fildes - REM_BIAS, buf, nbyte);
 	} else {
-		return (read(fildes, buf, nbyte));
+		return read(fildes, buf, nbyte);
 	}
 }
 
@@ -704,9 +706,9 @@ rmtwrite(int fildes, const void *buf, size_t nbyte)
 	_DIAGASSERT(buf != NULL);
 
 	if (isrmt(fildes)) {
-		return (_rmt_write(fildes - REM_BIAS, buf, nbyte));
+		return _rmt_write(fildes - REM_BIAS, buf, nbyte);
 	} else {
-		return (write(fildes, buf, nbyte));
+		return write(fildes, buf, nbyte);
 	}
 }
 
@@ -718,9 +720,9 @@ rmtlseek(int fildes, off_t offset, int whence)
 {
 
 	if (isrmt(fildes)) {
-		return (_rmt_lseek(fildes - REM_BIAS, offset, whence));
+		return _rmt_lseek(fildes - REM_BIAS, offset, whence);
 	} else {
-		return (lseek(fildes, offset, whence));
+		return lseek(fildes, offset, whence);
 	}
 }
 
@@ -733,9 +735,9 @@ rmtclose(int fildes)
 {
 
 	if (isrmt(fildes)) {
-		return (_rmt_close(fildes - REM_BIAS));
+		return _rmt_close(fildes - REM_BIAS);
 	} else {
-		return (close(fildes));
+		return close(fildes);
 	}
 }
 
@@ -746,24 +748,24 @@ rmtclose(int fildes)
 int
 rmtioctl(int fildes, unsigned long request, ...)
 {
-	char *arg;
+	void *arg;
 	va_list ap;
 	va_start(ap, request);
 
-	arg = va_arg(ap, char *);
+	arg = va_arg(ap, void *);
 	va_end(ap);
 
 	/* XXX: arg may be NULL ? */
 
 	if (isrmt(fildes)) {
 #ifdef RMTIOCTL
-		return (_rmt_ioctl(fildes - REM_BIAS, request, arg));
+		return _rmt_ioctl(fildes - REM_BIAS, request, arg);
 #else
 		errno = EOPNOTSUPP;
-		return (-1);		/* For now (fnf) */
+		return -1;		/* For now (fnf) */
 #endif
 	} else {
-		return (ioctl(fildes, request, arg));
+		return ioctl(fildes, request, arg);
 	}
 }
 
@@ -778,9 +780,9 @@ rmtdup(int fildes)
 
 	if (isrmt(fildes)) {
 		errno = EOPNOTSUPP;
-		return (-1);		/* For now (fnf) */
+		return -1;		/* For now (fnf) */
 	} else {
-		return (dup(fildes));
+		return dup(fildes);
 	}
 }
 
@@ -796,9 +798,9 @@ rmtfstat(int fildes, struct stat *buf)
 
 	if (isrmt(fildes)) {
 		errno = EOPNOTSUPP;
-		return (-1);		/* For now (fnf) */
+		return -1;		/* For now (fnf) */
 	} else {
-		return (fstat(fildes, buf));
+		return fstat(fildes, buf);
 	}
 }
 
@@ -815,9 +817,9 @@ rmtstat(const char *path, struct stat *buf)
 
 	if (remdev(path)) {
 		errno = EOPNOTSUPP;
-		return (-1);		/* For now (fnf) */
+		return -1;		/* For now (fnf) */
 	} else {
-		return (stat(path, buf));
+		return stat(path, buf);
 	}
 }
 
@@ -832,9 +834,9 @@ rmtcreat(const char *path, mode_t mode)
 	_DIAGASSERT(path != NULL);
 
 	if (remdev(path)) {
-		return (rmtopen(path, 1 | O_CREAT, mode));
+		return rmtopen(path, O_WRONLY | O_CREAT, mode);
 	} else {
-		return (creat(path, mode));
+		return open(path, O_CREAT | O_TRUNC | O_WRONLY, mode);
 	}
 }
 
@@ -856,9 +858,9 @@ rmtfcntl(int fd, int cmd, ...)
 
 	if (isrmt(fd)) {
 		errno = EOPNOTSUPP;
-		return (-1);
+		return -1;
 	} else {
-		return (fcntl(fd, cmd, arg));
+		return fcntl(fd, cmd, arg);
 	}
 }
 
@@ -871,9 +873,9 @@ rmtisatty(int fd)
 {
 
 	if (isrmt(fd))
-		return (0);
+		return 0;
 	else
-		return (isatty(fd));
+		return isatty(fd);
 }
 
 
@@ -889,8 +891,8 @@ rmtlstat(const char *path, struct stat *buf)
 
 	if (remdev(path)) {
 		errno = EOPNOTSUPP;
-		return (-1);		/* For now (fnf) */
+		return -1;		/* For now (fnf) */
 	} else {
-		return (lstat(path, buf));
+		return lstat(path, buf);
 	}
 }
