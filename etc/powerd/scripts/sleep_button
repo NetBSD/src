@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: sleep_button,v 1.8 2011/05/27 09:28:42 plunky Exp $
+#	$NetBSD: sleep_button,v 1.9 2011/09/17 14:44:18 jym Exp $
 #
 # Generic script for sleep button events.
 #
@@ -17,8 +17,10 @@ pressed)
 	/etc/rc.d/network stop
 	/etc/rc.d/wpa_supplicant stop
 
-	if /sbin/sysctl hw.acpi.sleep.state >/dev/null 2>&1; then
+	if /sbin/sysctl -q hw.acpi.sleep.state; then
 		/sbin/sysctl -w hw.acpi.sleep.state=3
+	elif /sbin/sysctl -q machdep.xen.suspend; then
+		/sbin/sysctl -w machdep.xen.suspend=1
 	else
 		sleep 1
 		if /etc/rc.d/apmd onestatus >/dev/null ; then
