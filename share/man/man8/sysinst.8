@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst.8,v 1.3 2011/09/08 19:55:52 wiz Exp $
+.\"	$NetBSD: sysinst.8,v 1.4 2011/09/18 01:21:34 christos Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 8, 2011
+.Dd September 17, 2011
 .Dt SYSINST 8
 .Os
 .Sh NAME
@@ -49,28 +49,28 @@ is usually not present on a
 .Nx
 system that has been fully installed.
 .Sh OPTIONS
-.Bl -tag
+.Bl -tag -width rrrreleasename
 .It Fl D
 Switch on debugging.
+.It Fl r Ar releasename
+Set the releasename if it is different to the one compiled.
+Currently unused.
 .It Fl f Ar deffile
 Set a file for definitions other than the defaults.
 See
 .Sx DEFINITION FILE
 for its format.
-.It Fl r Ar releasename
-Set the releasename if it is different to the one compiled.
-Currently unused.
 .El
 .Sh DEFINITION FILE
-The definition file is used to set several other names and directories to search
-for.
+The definition file is used to set several other names and directories
+to search for.
 You can specify any of the options in the file.
-They are stored as
+They are stored as:
 .Dl option = value
 pairs.
 In this description, REL and MACH are the release and architecture
 respectively, determined by the image sysinst is used on.
-.Bl -column -offset indent ".Sy option name" ".Sy default value" ".Sy description"
+.Bl -column "targetroot mount" "pub/NetBSD/NetBSD-REL"
 .It Sy "option name" Ta Sy "default value" Ta Sy "description"
 .It release Ta REL Ta Release name (also set by Fl r Ar releasename ) .
 .It machine Ta MACH Ta Machine architecture
@@ -79,16 +79,16 @@ respectively, determined by the image sysinst is used on.
 .It ftp host Ta "ftp.NetBSD.org" Ta ftp host for fetching files
 .It ftp dir Ta "pub/NetBSD/NetBSD-REL" Ta ftp directory for fetching files
 .It ftp prefix Ta "/MACH/binary/sets" Ta directory to look for sets.
-Not that
-this is used for all kinds of fetching (CDs, local FS, ...), not only ftp.
+Note that this is used for all kinds of fetching (CDs, local FS, ...),
+not only ftp.
 .It ftp user Ta "ftp" Ta ftp user for connecting
-.It ftp pass Ta "" Ta ftp password
-.It ftp proxy Ta "" Ta ftp proxy
-.It nfs host Ta "" Ta nfs host for fetching via nfs
+.It ftp pass Ta "-" Ta ftp password
+.It ftp proxy Ta "-" Ta ftp proxy
+.It nfs host Ta "-" Ta nfs host for fetching via nfs
 .It nfs dir Ta "/bsd/release" Ta nfs directory for fetching files
 .It cd dev Ta "cd0a" Ta name of the CD device for fetching files
 .It fd dev Ta "/dev/fd0a" Ta name of floppy for fetching files
-.It local dev Ta "" Ta Other device to be mounted for fetching files
+.It local dev Ta "-" Ta Other device to be mounted for fetching files
 .It local fs Ta "ffs" Ta FS-type for local dev
 .It local dir Ta "release" Ta Directory to look for in the mounted local fs
 .It targetroot mount Ta "/targetroot" Ta Directory to mount target root dir to
@@ -99,9 +99,10 @@ this is used for all kinds of fetching (CDs, local FS, ...), not only ftp.
 .Xr release 7 ,
 .Xr afterboot 8 ,
 .Xr boot 8 ,
-.Xr diskless 8 ,
+.Xr diskless 8
+.Pp
 .Em \*[Lt]machine\*[Gt] Ns Pa /INSTALL.*
-files on CD-ROM installation media,
+files on CD-ROM installation media
 .Pa .../NetBSD- Ns Em \*[Lt]rel\*[Gt] Ns Pa / Ns Em \*[Lt]machine\*[Gt] Ns Pa /INSTALL.*
 files in
 .Nx
