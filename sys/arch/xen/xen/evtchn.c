@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.47.6.4 2011/08/17 09:40:40 cherry Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.47.6.5 2011/09/18 18:46:40 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.47.6.4 2011/08/17 09:40:40 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.47.6.5 2011/09/18 18:46:40 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -237,8 +237,13 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	ci->ci_data.cpu_nintr++;
 	evtsource[evtch]->ev_evcnt.ev_count++;
 	ilevel = ci->ci_ilevel;
-	if (evtsource[evtch]->ev_maxlevel <= ilevel ||
-	    evtsource[evtch]->ev_cpu != ci /* XXX: get stats */) {
+
+	if (evtsource[evtch]->ev_cpu != ci /* XXX: get stats */) {
+		hypervisor_send_event(evtsource[evtch]->ev_cpu, evtch);
+		return 0;
+	}
+
+	if (evtsource[evtch]->ev_maxlevel <= ilevel) {
 #ifdef IRQ_DEBUG
 		if (evtch == IRQ_DEBUG)
 		    printf("evtsource[%d]->ev_maxlevel %d <= ilevel %d\n",
@@ -248,14 +253,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 					evtsource[evtch]->ev_imask,
 					evtch >> LONG_SHIFT,
 					evtch & LONG_MASK);
-
-		if (evtsource[evtch]->ev_cpu != ci) { 
-			/* facilitate spllower() on remote cpu */
-			struct cpu_info *rci = evtsource[evtch]->ev_cpu;
-			if (xen_send_ipi(rci, XEN_IPI_KICK) != 0) {
-				panic("xen_send_ipi(%s, XEN_IPI_KICK) failed\n", cpu_name(rci));
-			}
-		}
 
 		/* leave masked */				     
 		return 0;

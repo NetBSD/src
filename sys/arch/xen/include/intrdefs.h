@@ -1,4 +1,4 @@
-/* $NetBSD: intrdefs.h,v 1.9.34.2 2011/06/03 13:27:40 cherry Exp $ */
+/* $NetBSD: intrdefs.h,v 1.9.34.3 2011/09/18 18:46:40 cherry Exp $ */
 
 /* This file co-exists, and is included via machine/intrdefs.h */
 
@@ -11,7 +11,8 @@
 #define XEN_IPI_SYNCH_FPU	0x00000002
 #define XEN_IPI_DDB		0x00000004
 #define XEN_IPI_XCALL		0x00000008
+#define XEN_IPI_HVCB		0x00000010
 
-#define XEN_NIPIS 4 /* IPI_KICK doesn't have a handler */
+#define XEN_NIPIS 5 /* IPI_KICK doesn't have a handler */
 
 #endif /* _XEN_INTRDEFS_H_ */
