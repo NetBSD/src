@@ -1,4 +1,4 @@
-/* $NetBSD: t_log.c,v 1.4 2011/09/13 04:24:30 jruoho Exp $ */
+/* $NetBSD: t_log.c,v 1.5 2011/09/18 04:49:11 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_log.c,v 1.4 2011/09/13 04:24:30 jruoho Exp $");
+__RCSID("$NetBSD: t_log.c,v 1.5 2011/09/18 04:49:11 jruoho Exp $");
 
 #include <atf-c.h>
 #include <stdio.h>
@@ -38,6 +38,17 @@ __RCSID("$NetBSD: t_log.c,v 1.4 2011/09/13 04:24:30 jruoho Exp $");
 /*
  * log10(3)
  */
+ATF_TC(log10_base);
+ATF_TC_HEAD(log10_base, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test log10(10) == 1");
+}
+
+ATF_TC_BODY(log10_base, tc)
+{
+	ATF_CHECK(log10(10.0) == 1.0);
+}
+
 ATF_TC(log10_nan);
 ATF_TC_HEAD(log10_nan, tc)
 {
@@ -136,6 +147,17 @@ ATF_TC_BODY(log10_zero_pos, tc)
 /*
  * log10f(3)
  */
+ATF_TC(log10f_base);
+ATF_TC_HEAD(log10f_base, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test log10f(10) == 1");
+}
+
+ATF_TC_BODY(log10f_base, tc)
+{
+	ATF_CHECK(log10f(10.0) == 1.0);
+}
+
 ATF_TC(log10f_nan);
 ATF_TC_HEAD(log10f_nan, tc)
 {
@@ -436,6 +458,17 @@ ATF_TC_BODY(log1pf_zero_pos, tc)
 /*
  * log2(3)
  */
+ATF_TC(log2_base);
+ATF_TC_HEAD(log2_base, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test log2(2) == 1");
+}
+
+ATF_TC_BODY(log2_base, tc)
+{
+	ATF_CHECK(log2(2.0) == 1.0);
+}
+
 ATF_TC(log2_nan);
 ATF_TC_HEAD(log2_nan, tc)
 {
@@ -534,6 +567,17 @@ ATF_TC_BODY(log2_zero_pos, tc)
 /*
  * log2f(3)
  */
+ATF_TC(log2f_base);
+ATF_TC_HEAD(log2f_base, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test log2f(2) == 1");
+}
+
+ATF_TC_BODY(log2f_base, tc)
+{
+	ATF_CHECK(log2f(2.0) == 1.0);
+}
+
 ATF_TC(log2f_nan);
 ATF_TC_HEAD(log2f_nan, tc)
 {
@@ -632,6 +676,20 @@ ATF_TC_BODY(log2f_zero_pos, tc)
 /*
  * log(3)
  */
+ATF_TC(log_base);
+ATF_TC_HEAD(log_base, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test log(e) == 1");
+}
+
+ATF_TC_BODY(log_base, tc)
+{
+	const double eps = 1.0e-40;
+
+	if (fabs(log(M_E) - 1.0) > eps)
+		atf_tc_fail_nonfatal("log(e) != 1");
+}
+
 ATF_TC(log_nan);
 ATF_TC_HEAD(log_nan, tc)
 {
@@ -727,10 +785,23 @@ ATF_TC_BODY(log_zero_pos, tc)
 #endif
 }
 
-
 /*
  * logf(3)
  */
+ATF_TC(logf_base);
+ATF_TC_HEAD(logf_base, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test logf(e) == 1");
+}
+
+ATF_TC_BODY(logf_base, tc)
+{
+	const float eps = 1.0e-7;
+
+	if (fabsf(logf(M_E) - 1.0) > eps)
+		atf_tc_fail_nonfatal("logf(e) != 1");
+}
+
 ATF_TC(logf_nan);
 ATF_TC_HEAD(logf_nan, tc)
 {
@@ -829,6 +900,7 @@ ATF_TC_BODY(logf_zero_pos, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, log10_base);
 	ATF_TP_ADD_TC(tp, log10_nan);
 	ATF_TP_ADD_TC(tp, log10_inf_neg);
 	ATF_TP_ADD_TC(tp, log10_inf_pos);
@@ -836,6 +908,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, log10_zero_neg);
 	ATF_TP_ADD_TC(tp, log10_zero_pos);
 
+	ATF_TP_ADD_TC(tp, log10f_base);
 	ATF_TP_ADD_TC(tp, log10f_nan);
 	ATF_TP_ADD_TC(tp, log10f_inf_neg);
 	ATF_TP_ADD_TC(tp, log10f_inf_pos);
@@ -857,6 +930,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, log1pf_zero_neg);
 	ATF_TP_ADD_TC(tp, log1pf_zero_pos);
 
+	ATF_TP_ADD_TC(tp, log2_base);
 	ATF_TP_ADD_TC(tp, log2_nan);
 	ATF_TP_ADD_TC(tp, log2_inf_neg);
 	ATF_TP_ADD_TC(tp, log2_inf_pos);
@@ -864,6 +938,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, log2_zero_neg);
 	ATF_TP_ADD_TC(tp, log2_zero_pos);
 
+	ATF_TP_ADD_TC(tp, log2f_base);
 	ATF_TP_ADD_TC(tp, log2f_nan);
 	ATF_TP_ADD_TC(tp, log2f_inf_neg);
 	ATF_TP_ADD_TC(tp, log2f_inf_pos);
@@ -871,6 +946,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, log2f_zero_neg);
 	ATF_TP_ADD_TC(tp, log2f_zero_pos);
 
+	ATF_TP_ADD_TC(tp, log_base);
 	ATF_TP_ADD_TC(tp, log_nan);
 	ATF_TP_ADD_TC(tp, log_inf_neg);
 	ATF_TP_ADD_TC(tp, log_inf_pos);
@@ -878,6 +954,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, log_zero_neg);
 	ATF_TP_ADD_TC(tp, log_zero_pos);
 
+	ATF_TP_ADD_TC(tp, logf_base);
 	ATF_TP_ADD_TC(tp, logf_nan);
 	ATF_TP_ADD_TC(tp, logf_inf_neg);
 	ATF_TP_ADD_TC(tp, logf_inf_pos);
