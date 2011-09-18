@@ -1,4 +1,4 @@
-/* $NetBSD: t_acos.c,v 1.1 2011/09/17 18:08:35 jruoho Exp $ */
+/* $NetBSD: t_acos.c,v 1.2 2011/09/18 04:48:38 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -241,7 +241,7 @@ ATF_TC_BODY(acosf_cosf, tc)
 {
 #ifndef __vax__
 	const float x[] = { 0.0, 1.0, M_PI / 2, M_PI / 3, M_PI / 6 };
-	const float eps = 1.0e-15;
+	const float eps = 1.0e-5;
 	float y;
 	size_t i;
 
