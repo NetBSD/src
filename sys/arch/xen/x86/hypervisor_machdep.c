@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.14.2.4 2011/08/22 16:48:03 cherry Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.14.2.5 2011/09/18 18:46:40 cherry Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.14.2.4 2011/08/22 16:48:03 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.14.2.5 2011/09/18 18:46:40 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,6 +278,36 @@ do_hypervisor_callback(struct intrframe *regs)
 		    (uint)vci->evtchn_pending_sel,
 		    level, ci->ci_ilevel, ci->ci_ipending);
 #endif
+}
+
+void
+hypervisor_send_event(struct cpu_info *ci, unsigned int ev)
+{
+	KASSERT(ci != NULL);
+
+	volatile shared_info_t *s = HYPERVISOR_shared_info;
+	volatile struct vcpu_info *vci = ci->ci_vcpu;
+
+#ifdef PORT_DEBUG
+	if (ev == PORT_DEBUG)
+		printf("hypervisor_send_event %d\n", ev);
+#endif
+
+	xen_atomic_set_bit(&s->evtchn_pending[0], ev);
+	xen_atomic_set_bit(&vci->evtchn_pending_sel,
+			   ev >> LONG_SHIFT);
+
+	xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
+
+	xen_atomic_clear_bit(&s->evtchn_mask[0], ev);
+
+	if (__predict_true(ci == curcpu())) {
+		hypervisor_force_callback();
+	} else {
+		if (xen_send_ipi(ci, XEN_IPI_HVCB)) {
+			panic("xen_send_ipi(cpu%d, XEN_IPI_HVCB) failed\n", (int) ci->ci_cpuid);
+		}
+	}
 }
 
 void
