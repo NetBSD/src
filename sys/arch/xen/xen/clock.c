@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.54.6.3 2011/08/23 16:19:12 cherry Exp $	*/
+/*	$NetBSD: clock.c,v 1.54.6.4 2011/09/18 18:54:32 cherry Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.6.3 2011/08/23 16:19:12 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.6.4 2011/09/18 18:54:32 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -463,7 +463,7 @@ xen_initclocks(void)
 	get_time_values_from_xen(ci);
 	vcpu_system_time[ci->ci_cpuid] = shadow->system_time;
 	if (!tcdone) { /* Do this only once */
-		mutex_init(&tmutex, MUTEX_DEFAULT, IPL_HIGH);
+		mutex_init(&tmutex, MUTEX_DEFAULT, IPL_CLOCK);
 		tc_init(&xen_timecounter);
 	}
 	/* The splhigh requirements start here. */
@@ -537,19 +537,6 @@ setstatclockrate(int arg)
 void
 idle_block(void)
 {
-	int r;
-
-	/*
-	 * We set the timer to when we expect the next timer
-	 * interrupt.  We could set the timer to later if we could
-	 * easily find out when we will have more work (callouts) to
-	 * process from hardclock.
-	 */
-	r = 0; //HYPERVISOR_set_timer_op(vcpu_system_time[ci->ci_cpuid] + NS_PER_TICK);
-	if (r == 0) {
-		HYPERVISOR_yield();
-		__sti();
-	}
-	else
-		__sti();
+	HYPERVISOR_yield();
+	__sti();
 }
