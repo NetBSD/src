@@ -1,4 +1,4 @@
-.\"	$NetBSD: math.3,v 1.23 2011/09/17 13:28:51 wiz Exp $
+.\"	$NetBSD: math.3,v 1.24 2011/09/18 10:58:28 njoly Exp $
 .\"
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
@@ -54,10 +54,10 @@ Declarations for these functions may be obtained from the include file
 .It asinh	Xr asinh 3	inverse hyperbolic function	3
 .It atan	Xr atan 3	inverse trigonometric function	1
 .It atanh	Xr atanh 3	inverse hyperbolic function	3
-.It atan2	atan2.3	inverse trigonometric function	2
+.It atan2	Xr atan2 3	inverse trigonometric function	2
 .It cbrt	Xr sqrt 3	cube root	1
 .It ceil	Xr ceil 3	integer no less than	0
-.It copysign	Xr ieee 3	copy sign bit	0
+.It copysign	Xr copysign 3	copy sign bit	0
 .It cos	Xr cos 3	trigonometric function	1
 .It cosh	Xr cosh 3	hyperbolic function	3
 .It erf	Xr erf 3	error function	???
@@ -65,26 +65,26 @@ Declarations for these functions may be obtained from the include file
 .It exp	Xr exp 3	exponential	1
 .It expm1	Xr exp 3	exp(x)\-1	1
 .It fabs	Xr fabs 3	absolute value	0
-.It finite	Xr ieee 3	test for finity	0
+.It finite	Xr finite 3	test for finity	0
 .It floor	Xr floor 3	integer no greater than	0
 .It fmod	Xr fmod 3	remainder	???
 .It hypot	Xr hypot 3	Euclidean distance	1
-.It ilogb	Xr ieee 3	exponent extraction	0
+.It ilogb	Xr ilogb 3	exponent extraction	0
 .It isinf	Xr isinf 3	test for infinity	0
 .It isnan	Xr isnan 3	test for not-a-number	0
 .It j0	Xr j0 3	Bessel function	???
 .It j1	Xr j0 3	Bessel function	???
 .It jn	Xr j0 3	Bessel function	???
 .It lgamma	Xr lgamma 3	log gamma function	???
-.It log	Xr exp 3	natural logarithm	1
-.It log10	Xr exp 3	logarithm to base 10	3
-.It log1p	Xr exp 3	log(1+x)	1
+.It log	Xr log 3	natural logarithm	1
+.It log10	Xr log 3	logarithm to base 10	3
+.It log1p	Xr log 3	log(1+x)	1
 .It nan	Xr nan 3	return quiet \*(Na	0
-.It nextafter	Xr ieee 3	next representable number	0
-.It pow	Xr exp 3	exponential x**y	60\-500
-.It remainder	Xr ieee 3	remainder	0
+.It nextafter	Xr nextafter 3	next representable number	0
+.It pow	Xr pow 3	exponential x**y	60\-500
+.It remainder	Xr remainder 3	remainder	0
 .It rint	Xr rint 3	round to nearest integer	0
-.It scalbn	Xr ieee 3	exponent adjustment	0
+.It scalbn	Xr scalbn 3	exponent adjustment	0
 .It sin	Xr sin 3	trigonometric function	1
 .It sinh	Xr sinh 3	hyperbolic function	3
 .It sqrt	Xr sqrt 3	square root	1
