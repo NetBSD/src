@@ -1,4 +1,4 @@
-.\" $NetBSD: nextafter.3,v 1.3 2011/09/13 07:11:43 njoly Exp $
+.\" $NetBSD: nextafter.3,v 1.4 2011/09/18 05:33:14 jruoho Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 12, 2011
+.Dd September 18, 2011
 .Dt NEXTAFTER 3
 .Os
 .Sh NAME
@@ -124,25 +124,3 @@ value (if representable) is returned.
 .Sh STANDARDS
 The described functions conform to
 .St -isoC-99 .
-.\"
-.\" XXX: Verify this.
-.\"
-.\" The
-.\" .Fn nextafter
-.\" function is also recommended by
-.\" .St -ieee754
-.\"
-.\" .Sh HISTORY
-.\"
-.\" XXX: Fill this.
-.\" These functions first appeared in
-.\" .Bx 4.3 .
-.Sh BUGS
-Currently the
-.Vt float
-and
-.Vt long double
-variants of
-.Fn nexttoward
-are not supported in
-.Nx .
