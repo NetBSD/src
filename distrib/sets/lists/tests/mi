@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.388 2011/09/17 18:08:36 jruoho Exp $
+# $NetBSD: mi,v 1.389 2011/09/18 05:19:18 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -552,6 +552,7 @@
 ./usr/libdata/debug/usr/tests/lib/libm/t_ceil.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_cos.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_erf.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libm/t_exp.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_floor.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libm/t_infinity.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_ldexp.debug			tests-lib-debug		debug,atf
@@ -2266,6 +2267,7 @@
 ./usr/tests/lib/libm/t_ceil			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_cos			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_erf			tests-lib-tests		atf
+./usr/tests/lib/libm/t_exp			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_floor			tests-obsolete		obsolete
 ./usr/tests/lib/libm/t_infinity			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_ldexp			tests-lib-tests		atf
