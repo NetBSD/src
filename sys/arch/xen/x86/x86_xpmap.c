@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.26.2.9 2011/09/09 11:53:43 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.26.2.10 2011/09/18 16:48:23 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.9 2011/09/09 11:53:43 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.10 2011/09/18 16:48:23 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -168,26 +168,26 @@ static mmu_update_t xpq_queue_array[MAXCPUS][XPQUEUE_SIZE];
 static int xpq_idx_array[MAXCPUS];
 
 #ifdef MULTIPROCESSOR
-static struct simplelock xpq_lock = SIMPLELOCK_INITIALIZER;
+static struct simplelock xpq_lock[MAXCPUS];
 
 extern struct cpu_info * (*xpq_cpu)(void);
 
 void
 xpq_queue_lock(void)
 {
-	simple_lock(&xpq_lock);
+	simple_lock(&xpq_lock[xpq_cpu()->ci_cpuid]);
 }
 
 void
 xpq_queue_unlock(void)
 {
-	simple_unlock(&xpq_lock);
+	simple_unlock(&xpq_lock[xpq_cpu()->ci_cpuid]);
 }
 
 bool
 xpq_queue_locked(void)
 {
-	return simple_lock_held(&xpq_lock);
+	return simple_lock_held(&xpq_lock[xpq_cpu()->ci_cpuid]);
 }
 #endif /* MULTIPROCESSOR */
 
@@ -589,12 +589,15 @@ static const int l2_4_count = PTP_LEVELS - 1;
 vaddr_t
 xen_pmap_bootstrap(void)
 {
-	int count, oldcount;
+	int count, oldcount, i;
 	long mapsize;
 	vaddr_t bootstrap_tables, init_tables;
 
 	memset(xpq_idx_array, 0, sizeof xpq_idx_array);
-	
+	for (i = 0; i < MAXCPUS;i++) {
+		simple_lock_init(&xpq_lock[i]);
+	}
+
 	xpmap_phys_to_machine_mapping =
 	    (unsigned long *)xen_start_info.mfn_list;
 	init_tables = xen_start_info.pt_base;
