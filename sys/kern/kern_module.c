@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.81 2011/09/14 12:29:22 christos Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.82 2011/09/19 00:40:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.81 2011/09/14 12:29:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.82 2011/09/19 00:40:22 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -872,7 +872,7 @@ module_do_load(const char *name, bool isdep, int flags,
 			depth--;
 			return EPERM;
 		} else {
-			error = module_do_builtin(name, NULL, props);
+			error = module_do_builtin(name, modp, props);
 			depth--;
 			return error;
 		}
@@ -1169,6 +1169,7 @@ module_do_unload(const char *name, bool load_requires_force)
 	}
 	module_gen++;
 
+	module_print("unloaded module `%s'", name);
 	return 0;
 }
 
