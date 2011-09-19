@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.18 2011/07/17 20:54:34 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.19 2011/09/19 21:24:58 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@ extern char *__minbrk;
 int __getcwd(char *, size_t);
 int __getlogin(char *, size_t);
 int __setlogin(const char *);
-void _resumecontext(void);
+void _resumecontext(void) __dead;
 const char *__strerror(int , char *, size_t);
 const char *__strsignal(int , char *, size_t);
 char *__dtoa(double, int, int, int *, int *, char **);
