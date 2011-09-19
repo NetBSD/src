@@ -1,4 +1,4 @@
-/*	$NetBSD: t_round.c,v 1.2 2011/01/04 22:30:41 pgoyette Exp $	*/
+/* $NetBSD: t_fpsetround.c,v 1.1 2011/09/19 05:25:50 jruoho Exp $ */
 
 /*
  * Written by J.T. Conklin, Apr 18, 1995
@@ -15,16 +15,15 @@
 #include <ieeefp.h>
 #endif
 
-ATF_TC(fpround);
-
-ATF_TC_HEAD(fpround, tc)
+ATF_TC(fpsetround_basic);
+ATF_TC_HEAD(fpsetround_basic, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr",
 	    "Minimal testing of fpgetround(3) and fpsetround(3)");
 }
 
-ATF_TC_BODY(fpround, tc)
+ATF_TC_BODY(fpsetround_basic, tc)
 {
 
 #if defined(__mc68000__) || defined(__vax__)
@@ -72,7 +71,7 @@ ATF_TC_BODY(fpround, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, fpround);
+	ATF_TP_ADD_TC(tp, fpsetround_basic);
 
 	return atf_no_error();
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: t_subnormal.c,v 1.3 2011/04/07 18:14:09 jruoho Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.1 2011/09/19 05:25:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,30 +36,26 @@
 #if defined(__vax__)
 
 ATF_TC(no_test);
-
 ATF_TC_HEAD(no_test, tc)
 {
-
 	atf_tc_set_md_var(tc, "descr", "Dummy test");
 }
 
 ATF_TC_BODY(no_test,tc)
 {
-
 	atf_tc_skip("Test not available on this architecture");
 }
 
 #else /* defined(__vax__) */
 
-ATF_TC(test_float);
-
-ATF_TC_HEAD(test_float, tc)
+ATF_TC(fpclassify_float);
+ATF_TC_HEAD(fpclassify_float, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Test float operations");
 }
 
-ATF_TC_BODY(test_float, tc)
+ATF_TC_BODY(fpclassify_float, tc)
 {
 	float d0, d1, d2, f, ip;
 	int e, i;
@@ -96,15 +92,14 @@ ATF_TC_BODY(test_float, tc)
 	ATF_REQUIRE_EQ(f, 0);
 }
 
-ATF_TC(test_double);
-
-ATF_TC_HEAD(test_double, tc)
+ATF_TC(fpclassify_double);
+ATF_TC_HEAD(fpclassify_double, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Test double operations");
 }
 
-ATF_TC_BODY(test_double, tc)
+ATF_TC_BODY(fpclassify_double, tc)
 {
 	double d0, d1, d2, f, ip;
 	int e, i;
@@ -148,15 +143,14 @@ ATF_TC_BODY(test_double, tc)
 
 #ifdef TEST_LONG_DOUBLE
 
-ATF_TC(test_long_double);
-
-ATF_TC_HEAD(test_long_double, tc)
+ATF_TC(fpclassify_long_double);
+ATF_TC_HEAD(fpclassify_long_double, tc)
 {
 
-	atf_tc_set_md_var(tc, "descr", "Test long_double operations");
+	atf_tc_set_md_var(tc, "descr", "Test long double operations");
 }
 
-ATF_TC_BODY(test_long_double, tc)
+ATF_TC_BODY(fpclassify_long_double, tc)
 {
 	long double d0, d1, d2, f, ip;
 	int e, i;
@@ -201,10 +195,10 @@ ATF_TP_ADD_TCS(tp)
 #if defined(__vax__)
 	ATF_TP_ADD_TC(tp, no_test);
 #else
-	ATF_TP_ADD_TC(tp, test_float);
-	ATF_TP_ADD_TC(tp, test_double);
+	ATF_TP_ADD_TC(tp, fpclassify_float);
+	ATF_TP_ADD_TC(tp, fpclassify_double);
 #ifdef TEST_LONG_DOUBLE
-	ATF_TP_ADD_TC(tp, test_long_double);
+	ATF_TP_ADD_TC(tp, fpclassify_long_double);
 #endif /* TEST_LONG_DOUBLE */
 #endif
 
