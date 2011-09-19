@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.53 2011/09/12 00:45:25 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.54 2011/09/19 00:19:51 christos Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -1242,7 +1242,7 @@
 ./usr/libdata/debug/usr/lib/64/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libc.so.12.178.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libc.so.12.179.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libcom_err.so.6.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/64/libcom_err.so.7.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/64/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
@@ -1391,7 +1391,7 @@
 ./usr/libdata/debug/usr/lib/o32/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libc.so.12.178.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libc.so.12.179.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libcom_err.so.6.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/o32/libcom_err.so.7.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
