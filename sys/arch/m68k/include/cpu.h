@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2011/09/19 19:17:05 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -158,6 +158,9 @@
 
 #define	CACHE60_ON	(CACHE40_ON|IC60_CABC|IC60_EBC|DC60_ESB)
 #define	CACHE60_OFF	(CACHE40_OFF|IC60_CABC)
+
+#define CACHELINE_SIZE	16
+#define CACHELINE_MASK	(CACHELINE_SIZE - 1)
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/cpu_data.h>
