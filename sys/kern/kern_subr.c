@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.211 2011/08/31 23:42:46 jmcneill Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.212 2011/09/19 23:54:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.211 2011/08/31 23:42:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.212 2011/09/19 23:54:29 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -717,7 +717,9 @@ trace_enter(register_t code, const register_t *args, int narg)
 void
 trace_exit(register_t code, register_t rval[], int error)
 {
+#ifdef PTRACE
 	struct proc *p = curlwp->l_proc;
+#endif
 
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(code, error, rval);
