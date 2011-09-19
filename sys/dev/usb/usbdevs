@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.594 2011/09/03 16:19:47 mlelstv Exp $
+$NetBSD: usbdevs,v 1.595 2011/09/19 08:20:20 plunky Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1672,6 +1672,7 @@ product KEYSPAN UIA11		0x0202	UIA-11 remote control
 /* Kingston products */
 product KINGSTON XX1		0x0008	Ethernet Adapter
 product KINGSTON KNU101TX	0x000a	KNU101TX USB Ethernet
+product KINGSTON DT102_G2	0x1624	DT 102 G2
 product KINGSTON DT101_II	0x1625	DT 101 II
 product KINGSTON DTMINI10	0x162c	DT Mini 10
 product KINGSTON DT101_G2	0x1642	DT 101 G2
