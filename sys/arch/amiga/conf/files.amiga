@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.147 2011/09/17 16:55:34 rkujawa Exp $
+#	$NetBSD: files.amiga,v 1.148 2011/09/19 19:15:29 rkujawa Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -496,6 +496,7 @@ include "dev/bluetooth/files.bluetooth"
 # PCI bus
 file	arch/amiga/pci/p5pb.c		pci
 file	arch/amiga/pci/mppb.c		pci
+file	arch/amiga/pci/pci_machdep.c	pci
 
 device	p5pb: pcibus
 attach	p5pb at zbus
