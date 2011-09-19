@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.7 2011/03/27 01:01:07 jym Exp $
+.\" $NetBSD: gpt.8,v 1.8 2011/09/19 10:40:35 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd March 27, 2011
+.Dd September 19, 2011
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -259,6 +259,13 @@ option prevents migrating
 .Bx
 disk labels into GPT partitions by creating
 the GPT equivalent of a slice.
+.\" ==== recover ====
+.It Nm Ic recover Ar device ...
+The
+.Ic recover
+command tries to restore the GPT partition label from the backup
+near the end of the disk.
+It is very useful in case the primary label was deleted.
 .\" ==== remove ====
 .It Nm Ic remove Oo Fl a Oc Ar device ...
 .It Nm Ic remove Oo Fl b Ar number Oc Oo Fl i Ar index Oc \
