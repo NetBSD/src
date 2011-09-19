@@ -1,4 +1,4 @@
-/*	$NetBSD: t_except.c,v 1.7 2011/03/01 12:47:43 pooka Exp $	*/
+/*	$NetBSD: t_fpsetmask.c,v 1.1 2011/09/19 05:25:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 #if defined(__mc68000__) || defined(__vax__)
 
 ATF_TC(no_test);
-
 ATF_TC_HEAD(no_test, tc)
 {
 
@@ -58,7 +57,8 @@ ATF_TC_BODY(no_test, tc)
 const char *skip_mesg;
 const char *skip_arch;
 
-void sigfpe(int, siginfo_t *, void *);
+void		sigfpe(int, siginfo_t *, void *);
+
 volatile sig_atomic_t signal_caught;
 volatile int sicode;
 
@@ -201,7 +201,7 @@ static const struct ops long_double_ops[] = {
 static sigjmp_buf b;
 
 static void
-masked(const struct ops *test_ops)
+fpsetmask_masked(const struct ops *test_ops)
 {
 	struct sigaction sa;
 	fp_except ex1, ex2;
@@ -238,7 +238,7 @@ masked(const struct ops *test_ops)
 #define BARRIER() fpsetmask(0); f_x = f_one * f_one
 
 static void
-unmasked(const struct ops *test_ops)
+fpsetmask_unmasked(const struct ops *test_ops)
 {
 	struct sigaction sa;
 	int r;
@@ -303,12 +303,12 @@ sigfpe(int s, siginfo_t *si, void *c)
 		m(t##_ops);						\
 	}
 
-TEST(masked, float)
-TEST(masked, double)
-TEST(masked, long_double)
-TEST(unmasked, float)
-TEST(unmasked, double)
-TEST(unmasked, long_double)
+TEST(fpsetmask_masked, float)
+TEST(fpsetmask_masked, double)
+TEST(fpsetmask_masked, long_double)
+TEST(fpsetmask_unmasked, float)
+TEST(fpsetmask_unmasked, double)
+TEST(fpsetmask_unmasked, long_double)
 
 #endif /* defined(__mc68000__) || defined(__vax__) */
 
@@ -318,12 +318,12 @@ ATF_TP_ADD_TCS(tp)
 #if defined(__mc68000__) || defined(__vax__)
 	ATF_TP_ADD_TC(tp, no_test);
 #else
-	ATF_TP_ADD_TC(tp, masked_float);
-	ATF_TP_ADD_TC(tp, masked_double);
-	ATF_TP_ADD_TC(tp, masked_long_double);
-	ATF_TP_ADD_TC(tp, unmasked_float);
-	ATF_TP_ADD_TC(tp, unmasked_double);
-	ATF_TP_ADD_TC(tp, unmasked_long_double);
+	ATF_TP_ADD_TC(tp, fpsetmask_masked_float);
+	ATF_TP_ADD_TC(tp, fpsetmask_masked_double);
+	ATF_TP_ADD_TC(tp, fpsetmask_masked_long_double);
+	ATF_TP_ADD_TC(tp, fpsetmask_unmasked_float);
+	ATF_TP_ADD_TC(tp, fpsetmask_unmasked_double);
+	ATF_TP_ADD_TC(tp, fpsetmask_unmasked_long_double);
 #endif
 
 	return atf_no_error();
