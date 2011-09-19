@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.31 2010/11/12 13:18:58 uebayasi Exp $ */
+/* $NetBSD: bus_dma.c,v 1.32 2011/09/19 19:17:05 rkujawa Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.31 2010/11/12 13:18:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.32 2011/09/19 19:17:05 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,11 +424,6 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
  * Common function for DMA map synchronization.  May be called
  * by chipset-specific DMA map synchronization functions.
  */
-
-/* XXX these should be in <m68k/cpu.h> or <m68k/cacheops.h> */
-#define CACHELINE_SIZE	16
-#define CACHELINE_MASK	(CACHELINE_SIZE - 1)
-
 void
 _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
