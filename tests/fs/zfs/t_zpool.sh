@@ -1,4 +1,4 @@
-#	$NetBSD: t_zpool.sh,v 1.1 2011/03/10 20:02:27 pooka Exp $
+#	$NetBSD: t_zpool.sh,v 1.2 2011/09/19 06:38:02 jruoho Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,6 +42,8 @@ jippo on /jippo type zfs (local)
 
 create_body()
 {
+
+	atf_expect_fail "PR misc/44708"
 
 	atf_check -s exit:0 -o ignore -e ignore ${server} ${RUMP_SERVER}
 
