@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.88 2011/09/03 01:56:44 asau Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.89 2011/09/19 08:26:57 plunky Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.88 2011/09/03 01:56:44 asau Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.89 2011/09/19 08:26:57 plunky Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -283,6 +283,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DT101_G2 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DT102_G2 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
 	  0,
 	  PQUIRK_NODOORLOCK,
