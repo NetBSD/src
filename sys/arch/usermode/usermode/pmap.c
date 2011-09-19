@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.72 2011/09/16 16:27:39 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.73 2011/09/19 12:52:32 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 2011/09/16 16:27:39 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 2011/09/19 12:52:32 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -127,6 +127,7 @@ pmap_bootstrap(void)
 	vaddr_t va;
 	uintptr_t pg;
 	void *addr;
+	int err;
 
 	extern void _start(void);	/* start of kernel		 */
 	extern int etext;		/* end of the kernel             */
@@ -157,7 +158,7 @@ pmap_bootstrap(void)
 
 	/* calculate memory lengths */
 	barrier_len = 2 * 1024 * 1024;
-	user_len    = kmem_k_start - barrier_len;
+	user_len    = kmem_k_start - vm_min_addr - barrier_len;
 
 	/* devide memory */
 	mem_uvm = (void *) vm_min_addr;
@@ -188,27 +189,17 @@ pmap_bootstrap(void)
 
 	aprint_verbose("\n\n");
 
-#if 1
 	/* protect user memory UVM area (---) */
-	addr = thunk_mmap((void*) mem_uvm,
-		kmem_user_end - vm_min_addr,
-		THUNK_PROT_NONE,
-		THUNK_MAP_ANON | THUNK_MAP_FIXED | THUNK_MAP_PRIVATE,
-		-1, 0);
-	if (addr != (void *) mem_uvm)
+	err = thunk_munmap(mem_uvm, kmem_user_end - vm_min_addr);
+	if (err)
 		panic("pmap_bootstrap: userland uvm space protection "
-			"failed (%p)\n", (void *)addr);
+			"failed (%d)\n", thunk_geterrno());
 
-	/* protect user memory UVM area (---) */
-	addr = thunk_mmap((void*) kmem_ext_start,
-		KVMSIZE,
-		THUNK_PROT_NONE,
-		THUNK_MAP_ANON | THUNK_MAP_FIXED | THUNK_MAP_PRIVATE,
-		-1, 0);
-	if (addr != (void *) kmem_ext_start)
+	/* protect kvm UVM area (---) */
+	err = thunk_munmap((void *) kmem_ext_start, KVMSIZE);
+	if (err)
 		panic("pmap_bootstrap: kvm uvm space protection "
-			"failed (%p)\n", (void *)addr);
-#endif
+			"failed (%d)\n", thunk_geterrno());
 
 	dprintf_debug("Creating memory mapped backend\n");
 
@@ -1056,7 +1047,7 @@ pmap_copy_page(paddr_t src_pa, paddr_t dst_pa)
 		panic("%s: couldn't get src mapping", __func__);
 
 	dblob = thunk_mmap(NULL, PAGE_SIZE,
-		THUNK_PROT_WRITE,
+		THUNK_PROT_READ | THUNK_PROT_WRITE,
 		THUNK_MAP_FILE | THUNK_MAP_SHARED,
 		mem_fh, dst_pa);
 	if (!dblob)
