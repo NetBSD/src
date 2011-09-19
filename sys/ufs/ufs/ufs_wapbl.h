@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.6 2009/11/18 12:22:48 yamt Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.7 2011/09/19 11:18:01 gdt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -89,8 +89,6 @@
 #ifdef WAPBL_DEBUG_INODES
 #error Undefine WAPBL_DEBUG_INODES or update the code.  Have a nice day.
 #endif
-
-int	wapbl_ufs_rename(void *v);
 
 #ifdef WAPBL_DEBUG_INODES
 void	ufs_wapbl_verify_inodes(struct mount *, const char *);
