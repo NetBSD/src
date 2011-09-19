@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.4 2011/08/25 02:05:27 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.5 2011/09/19 00:23:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -145,7 +145,22 @@ struct amiga_bus_space_methods {
 	bssr(*bssr2, uint16_t);
 	bscr(*bscr2, uint16_t);
 
-	/* add 32bit methods here */
+	/* 32bit methods */
+
+	bsr(*bsr4, uint32_t);
+	bsw(*bsw4, uint32_t);
+	bsr(*bsrs4, uint32_t);
+	bsw(*bsws4, uint32_t);
+	bsrm(*bsrm4, uint32_t);
+	bswm(*bswm4, uint32_t);
+	bsrm(*bsrms4, uint32_t);
+	bswm(*bswms4, uint32_t);
+	bsrm(*bsrr4, uint32_t);
+	bswm(*bswr4, uint32_t);
+	bsrm(*bsrrs4, uint32_t);
+	bswm(*bswrs4, uint32_t);
+	bssr(*bssr4, uint32_t);
+	bscr(*bscr4, uint32_t);
 };
 
 #define BUS_SPACE_BARRIER_READ  0x01            /* force read barrier */
