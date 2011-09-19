@@ -1,4 +1,4 @@
-/*	$NetBSD: mppb.c,v 1.1 2011/09/17 16:55:34 rkujawa Exp $ */
+/*	$NetBSD: mppb.c,v 1.2 2011/09/19 19:15:29 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -73,22 +73,14 @@ static void	mppb_attach(struct device *, struct device *, void *);
 pcireg_t	mppb_pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		mppb_pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 int		mppb_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno); 
-int		mppb_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, 
-		    int func, pcireg_t id);
 void		mppb_pci_attach_hook (struct device *parent, 
 		    struct device *self, struct pcibus_attach_args *pba);
 pcitag_t	mppb_pci_make_tag(pci_chipset_tag_t pc, int bus, int device, 
 		    int function);
 void		mppb_pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, 
 		    int *bp, int *dp, int *fp);
-
-void *		mppb_pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t
-		    ih, int level, int (*ih_fun)(void *), void *ih_arg);
-void		mppb_pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie);
 int		mppb_pci_intr_map(const struct pci_attach_args *pa, 
 		    pci_intr_handle_t *ihp);
-const char *	mppb_pci_intr_string(pci_chipset_tag_t pc,
-		    pci_intr_handle_t ih);
 const struct evcnt * mppb_pci_intr_evcnt(pci_chipset_tag_t pc, 
 		    pci_intr_handle_t ih);
 
@@ -124,6 +116,7 @@ mppb_attach(device_t parent, device_t self, void *aux)
 	struct pcibus_attach_args pba;  
 	struct zbus_args *zap;
 	pci_chipset_tag_t pc;
+	struct extent *ioext, *memext;
 
 	zap = aux;
 	sc = device_private(self);
@@ -150,28 +143,40 @@ mppb_attach(device_t parent, device_t self, void *aux)
 	    (zap->pa) + MPPB_IO_BASE, sc->pci_io_area.base); 
 #endif 
 
-	sc->apc.pci_conf_iot = &(sc->pci_conf_area);
+	sc->apc.pci_conf_datat = &(sc->pci_conf_area);
 
-	if (bus_space_map(sc->apc.pci_conf_iot, 0, MPPB_CONF_SIZE, 0, 
-	    &sc->apc.pci_conf_ioh)) 
+	if (bus_space_map(sc->apc.pci_conf_datat, 0, MPPB_CONF_SIZE, 0, 
+	    &sc->apc.pci_conf_datah)) 
 		aprint_error_dev(self,
 		    "couldn't map PCI configuration data space\n");
 	
 	/* Initialize the PCI chipset tag. */
 	sc->apc.pc_conf_v = (void*) pc;
 	sc->apc.pc_bus_maxdevs = mppb_pci_bus_maxdevs;
-	sc->apc.pc_make_tag = mppb_pci_make_tag;
-	sc->apc.pc_decompose_tag = mppb_pci_decompose_tag;
+	sc->apc.pc_make_tag = amiga_pci_make_tag;
+	sc->apc.pc_decompose_tag = amiga_pci_decompose_tag;
 	sc->apc.pc_conf_read = mppb_pci_conf_read;
 	sc->apc.pc_conf_write = mppb_pci_conf_write;
 	sc->apc.pc_attach_hook = mppb_pci_attach_hook;
 
 	sc->apc.pc_intr_map = mppb_pci_intr_map;
-	sc->apc.pc_intr_string = mppb_pci_intr_string;
-	sc->apc.pc_intr_establish = mppb_pci_intr_establish;
-	sc->apc.pc_intr_disestablish = mppb_pci_intr_disestablish;
-	/* XXX: pc_conf_interrupt */
-        
+	sc->apc.pc_intr_string = amiga_pci_intr_string;
+	sc->apc.pc_intr_establish = amiga_pci_intr_establish;
+	sc->apc.pc_intr_disestablish = amiga_pci_intr_disestablish;
+
+	sc->apc.pc_conf_hook = amiga_pci_conf_hook;
+	sc->apc.pc_conf_interrupt = amiga_pci_conf_interrupt;
+
+	ioext = extent_create("mppbio",  MPPB_IO_BASE, 
+	    MPPB_IO_BASE + MPPB_IO_SIZE, M_DEVBUF, NULL, 0, EX_NOWAIT);
+	memext = extent_create("mppbmem",  MPPB_MEM_BASE, 
+	    MPPB_MEM_BASE + MPPB_MEM_SIZE, M_DEVBUF, NULL, 0, EX_NOWAIT);
+	
+	pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINE_SIZE);
+
+	extent_destroy(ioext);
+	extent_destroy(memext);
+
 	pba.pba_iot = &(sc->pci_io_area);
 	pba.pba_memt = &(sc->pci_mem_area);
 	pba.pba_dmat = NULL; 
@@ -192,12 +197,12 @@ mppb_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 	
-	data = bus_space_read_4(pc->pci_conf_iot, pc->pci_conf_ioh,
+	data = bus_space_read_4(pc->pci_conf_datat, pc->pci_conf_datah,
 	    (MPPB_CONF_STRIDE*dev) + reg);
 #ifdef MPPB_DEBUG
 	aprint_normal("mppb conf read va: %lx, bus: %d, dev: %d, "
 	    "func: %d, reg: %d -r-> data %x\n",
-	    pc->pci_conf_ioh, bus, dev, func, reg, data);
+	    pc->pci_conf_datah, bus, dev, func, reg, data);
 #endif
 	return data;
 }
@@ -209,12 +214,12 @@ mppb_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t val)
 	
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 	
-	bus_space_write_4(pc->pci_conf_iot, pc->pci_conf_ioh,
+	bus_space_write_4(pc->pci_conf_datat, pc->pci_conf_datah,
 	    (MPPB_CONF_STRIDE*dev) + reg, val);
 #ifdef MPPB_DEBUG
 	aprint_normal("mppb conf write va: %lx, bus: %d, dev: %d, "
 	    "func: %d, reg: %d -w-> data %x\n",
-	    pc->pci_conf_ioh, bus, dev, func, reg, val);
+	    pc->pci_conf_datah, bus, dev, func, reg, val);
 #endif
 	
 }
@@ -225,51 +230,10 @@ mppb_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 	return 4; /* Prometheus has 4 slots */
 }
 
-pcitag_t
-mppb_pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
-{
-	return (bus << 16) | (device << 11) | (function << 8);
-}
-
-void
-mppb_pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp,
-    int *dp, int *fp)
-{
-	if (bp != NULL)
-		*bp = (tag >> 16) & 0xff;
-	if (dp != NULL)
-		*dp = (tag >> 11) & 0x1f;
-	if (fp != NULL)
-		*fp = (tag >> 8) & 0x07;
-}
-
 void
 mppb_pci_attach_hook(struct device *parent, struct device *self,
     struct pcibus_attach_args *pba)
 {
-}
-
-void *
-mppb_pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level, 
-   int (*ih_fun)(void *), void *ih_arg)
-{
-	struct isr* pci_isr;
-	pci_isr = kmem_zalloc(sizeof(struct isr), KM_SLEEP);
-
-	/* TODO: check for bogus handle */
-
-	pci_isr->isr_intr = ih_fun;
-	pci_isr->isr_arg = ih_arg;
-	pci_isr->isr_ipl = MPPB_INT;
-	add_isr(pci_isr);
-	return pci_isr;	
-}
-
-void
-mppb_pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
-{
-	remove_isr(cookie);
-	kmem_free(cookie, sizeof(struct isr));
 }
 
 int
@@ -279,15 +243,6 @@ mppb_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	*ihp = MPPB_INT; 
 	return 0;
-}
-
-const char *
-mppb_pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih) 
-{
-	static char str[10];
-
-	sprintf(str, "INT%d", (int) ih);
-	return str;
 }
 
 const struct evcnt *

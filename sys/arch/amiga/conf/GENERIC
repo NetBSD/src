@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.271 2011/09/17 16:55:34 rkujawa Exp $
+# $NetBSD: GENERIC,v 1.272 2011/09/19 19:15:28 rkujawa Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.82 2011/08/04 17:48:51 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.83 2011/09/17 16:55:34 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.271 $"
+#ident 		"GENERIC-$Revision: 1.272 $"
 
 
 maxusers	8
@@ -466,6 +466,8 @@ uk*	at scsibus? target ? lun ?	# scsi unknown
 # PCI bus support
 options		PCIVERBOSE              # verbose PCI device autoconfig messages
 #options	PCI_CONFIG_DUMP
+options		PCI_NETBSD_CONFIGURE
+
 p5pb0		at zbus0                # Phase5 PCI bridge (CVPPC/BVPPC)
 pci*		at p5pb0
 mppb*           at zbus0                # Matay Prometheus Zorro-PCI bridge

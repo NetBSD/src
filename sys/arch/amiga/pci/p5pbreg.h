@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pbreg.h,v 1.1 2011/08/04 17:48:51 rkujawa Exp $ */
+/*	$NetBSD: p5pbreg.h,v 1.2 2011/09/19 19:15:29 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,9 +32,9 @@
 /*
  * Reverse engineered Phase5 PCI bridge memory map (firmware 44.71):
  * 
- * 0xFFFA0000 - (unknown)
+ * 0xFFFA0000 - PCI register space, 64KB
  * 0xFFFC0000 - PCI configuration mechanism #1 data, 128KB
- * 0xFFFE0000 - PCI configuration mechanism #1 address, 4KB
+ * 0xFFFE0000 - (unknown, maybe PCI configuration mechanism #1 address, 4KB)
  * 
  * 0xE0000000 - Permedia RAM on CVPPC/BVPPC (1st aperture), 8MB
  * 0xE0800000 - Permedia RAM on CVPPC/BVPPC (2nd aperture), 8MB
@@ -44,18 +44,22 @@
  * 
  * The bridge is probably capable of DMA and interrupts, but this would 
  * need further reverse engineering, and is not really needed to drive
- * the Permedia 2 chip.
+ * the Permedia 2 chip on CVPPC/BVPPC cards.
  */
 #ifndef _AMIGA_P5PBREG_H_
 
-#define P5BUS_PCI_CONF_BASE	0xFFFA0000
-#define P5BUS_PCI_CONF_SIZE	0x00041000
+#define P5BUS_PCI_CONF_BASE	0xFFFC0000
+#define P5BUS_PCI_CONF_SIZE	0x00021000
 
+/* XXX: This is OK for CVPPC/BVPPC only! */ 
 #define P5BUS_PCI_MEM_BASE	0xE0000000
 #define P5BUS_PCI_MEM_SIZE	0x01010000	/* actually 0x01020000 */
 
-#define OFF_PCI_CONF_DATA	0x00020000 
-#define OFF_PCI_CONF_ADDR	0x00040000
+#define P5BUS_PCI_IO_BASE	0xFFFA0000
+#define P5BUS_PCI_IO_SIZE	0x0000FFFF
+
+#define OFF_PCI_CONF_DATA	0x00000000 
+#define OFF_PCI_CONF_ADDR	0x00020000
 
 #define P5BUS_CONF_ENDIAN	0x0000          /* PCI_CONF_ADDR + offset */
 #define P5BUS_CONF_ENDIAN_BIG	0x02            /* to switch into BE mode */

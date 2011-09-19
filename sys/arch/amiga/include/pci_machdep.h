@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.2 2011/09/17 16:55:34 rkujawa Exp $ */
+/*	$NetBSD: pci_machdep.h,v 1.3 2011/09/19 19:15:29 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -79,8 +79,13 @@ struct amiga_pci_chipset {
 	void		(*pc_conf_interrupt)(pci_chipset_tag_t, int, int, int,
 			    int, int *);
 
-	bus_space_tag_t pci_conf_iot;
-	bus_space_handle_t pci_conf_ioh;
+	/* PCI configuration address register */
+	bus_space_tag_t pci_conf_addresst;
+	bus_space_handle_t pci_conf_addressh;
+
+	/* PCI configuration data register */
+	bus_space_tag_t pci_conf_datat;
+	bus_space_handle_t pci_conf_datah;
 };
 
 
@@ -109,5 +114,24 @@ struct amiga_pci_chipset {
 	(*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a))
 #define	pci_intr_disestablish(c, iv)					\
 	(*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
+#define	pci_conf_interrupt(c, b, d, f, s, i)				\
+	(*(c)->pc_conf_interrupt)((c), (b), (d), (f), (s), (i))
+#define	pci_conf_hook(c, b, d, f, i)				\
+	(*(c)->pc_conf_hook)((c), (b), (d), (f), (i))
 
 #endif
+
+pcitag_t	amiga_pci_make_tag(pci_chipset_tag_t pc, int bus, int device,
+		    int function);
+void		amiga_pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
+		    int *bp, int *dp, int *fp);
+void *		amiga_pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t
+		    ih, int level, int (*ih_fun)(void *), void *ih_arg);
+void		amiga_pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie);
+const char *	amiga_pci_intr_string(pci_chipset_tag_t pc,
+		    pci_intr_handle_t ih);
+int		amiga_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev,
+		    int func, pcireg_t id);
+void		amiga_pci_conf_interrupt(pci_chipset_tag_t pc, int bus, 
+		    int dev, int func, int swiz, int *iline);
+
