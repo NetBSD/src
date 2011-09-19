@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.60 2011/07/02 13:09:31 mrg Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.61 2011/09/19 10:03:32 gsutre Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.60 2011/07/02 13:09:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.61 2011/09/19 10:03:32 gsutre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,7 +442,7 @@ findroot(void)
 			len = strlen(cd->cf_name);
 
 			if (strncmp(cd->cf_name, biv->devname, len) == 0 &&
-			    biv->devname[len] - '0' == cd->cf_unit) {
+			    biv->devname[len] - '0' == device_unit(dv)) {
 				handle_wedges(dv, biv->devname[len + 1] - 'a');
 				break;
 			}
