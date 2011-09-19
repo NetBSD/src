@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pb.c,v 1.1 2011/08/04 17:48:51 rkujawa Exp $ */
+/*	$NetBSD: p5pb.c,v 1.2 2011/09/19 19:15:29 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ struct p5pb_softc {
 	device_t sc_dev;
 	struct bus_space_tag pci_conf_area;
 	struct bus_space_tag pci_mem_area;
+	struct bus_space_tag pci_io_area;
 	struct amiga_pci_chipset apc;	
 };
 
@@ -76,14 +77,19 @@ void		p5pb_set_props(struct p5pb_softc *sc);
 pcireg_t	p5pb_pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		p5pb_pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 int		p5pb_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno); 
-int		p5pb_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func, pcireg_t id);
-void		p5pb_pci_attach_hook (struct device *parent, struct device *self, struct pcibus_attach_args *pba);
-pcitag_t	p5pb_pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function);
-void		p5pb_pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp);
+int		p5pb_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, 
+		    int func, pcireg_t id);
+void		p5pb_pci_attach_hook (struct device *parent, 
+		    struct device *self, struct pcibus_attach_args *pba);
+pcitag_t	p5pb_pci_make_tag(pci_chipset_tag_t pc, int bus, int device, 
+		    int function);
+void		p5pb_pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, 
+		    int *bp, int *dp, int *fp);
+int		p5pb_pci_intr_map(const struct pci_attach_args *pa, 
+		    pci_intr_handle_t *ihp);
 
 CFATTACH_DECL_NEW(p5pb, sizeof(struct p5pb_softc),
     p5pb_match, p5pb_attach, NULL, NULL);
-
 
 static int p5pb_present = 0;
 
@@ -142,38 +148,54 @@ p5pb_attach(device_t parent, device_t self, void *aux)
 	    (void *) P5BUS_PCI_CONF_BASE, P5BUS_PCI_CONF_SIZE);
 	sc->pci_conf_area.absm = &amiga_bus_stride_1;
 
+	sc->pci_io_area.base = (bus_addr_t) zbusmap(
+	    (void *) P5BUS_PCI_IO_BASE, P5BUS_PCI_IO_SIZE);
+	sc->pci_io_area.absm = &amiga_bus_stride_1swap_abs;
+
 	sc->pci_mem_area.base = (bus_addr_t) zbusmap(
 	    (void *) P5BUS_PCI_MEM_BASE, P5BUS_PCI_MEM_SIZE);
 	sc->pci_mem_area.absm = &amiga_bus_stride_1swap_abs;
 	
 #ifdef P5PB_DEBUG
-	aprint_normal("p5pb mapped %x -> %x, %x -> %x\n",
+	aprint_normal("p5pb mapped %x -> %x, %x -> %x\n, %x -> %x\n",
 	    P5BUS_PCI_CONF_BASE, sc->pci_conf_area.base,
+	    P5BUS_PCI_IO_BASE, sc->pci_conf_area.base,
 	    P5BUS_PCI_MEM_BASE, sc->pci_mem_area.base ); 
 #endif 
 
-	sc->apc.pci_conf_iot = &(sc->pci_conf_area);
+	sc->apc.pci_conf_datat = &(sc->pci_conf_area);
+	sc->apc.pci_conf_addresst = &(sc->pci_conf_area);
 
-	if (bus_space_map(sc->apc.pci_conf_iot, OFF_PCI_CONF_DATA, 
-	    256, 0, &sc->apc.pci_conf_ioh)) 
+	if (bus_space_map(sc->apc.pci_conf_addresst, OFF_PCI_CONF_ADDR, 
+	    256, 0, &sc->apc.pci_conf_addressh)) 
 		aprint_error_dev(self,
-		    "couldn't map PCI configuration data space\n");
-	
+		    "couldn't map PCI configuration address register\n");
+
+	if (bus_space_map(sc->apc.pci_conf_datat, OFF_PCI_CONF_DATA, 
+	    256, 0, &sc->apc.pci_conf_datah)) 
+		aprint_error_dev(self,
+		    "couldn't map PCI configuration data register\n");
+
 	/* Initialize the PCI chipset tag. */
 	sc->apc.pc_conf_v = (void*) pc;
 	sc->apc.pc_bus_maxdevs = p5pb_pci_bus_maxdevs;
-	sc->apc.pc_make_tag = p5pb_pci_make_tag;
-	sc->apc.pc_decompose_tag = p5pb_pci_decompose_tag;
+	sc->apc.pc_make_tag = amiga_pci_make_tag;
+	sc->apc.pc_decompose_tag = amiga_pci_decompose_tag;
 	sc->apc.pc_conf_read = p5pb_pci_conf_read;
 	sc->apc.pc_conf_write = p5pb_pci_conf_write;
 	sc->apc.pc_attach_hook = p5pb_pci_attach_hook;
-        
-	pba.pba_iot = NULL;
+      
+	sc->apc.pc_intr_map = p5pb_pci_intr_map; 
+	sc->apc.pc_intr_string = amiga_pci_intr_string;	
+	sc->apc.pc_intr_establish = amiga_pci_intr_establish;
+	sc->apc.pc_intr_disestablish = amiga_pci_intr_disestablish;
+ 
+	pba.pba_iot = &(sc->pci_io_area);
 	pba.pba_memt = &(sc->pci_mem_area);
 	pba.pba_dmat = NULL; 
 	pba.pba_dmat64 = NULL;
 	pba.pba_pc = pc;
-	pba.pba_flags = PCI_FLAGS_MEM_OKAY;
+	pba.pba_flags = PCI_FLAGS_MEM_OKAY | PCI_FLAGS_IO_OKAY; 
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 
@@ -217,13 +239,13 @@ p5pb_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	uint32_t bus, dev, func;
 	
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
-	
-	data = bus_space_read_4(pc->pci_conf_iot, pc->pci_conf_ioh,
+
+	data = bus_space_read_4(pc->pci_conf_datat, pc->pci_conf_datah,
 	    (func<<5) + reg);
 #ifdef P5PB_DEBUG
 	aprint_normal("p5pb conf read va: %lx, bus: %d, dev: %d, "
 	    "func: %d, reg: %d -r-> data %x\n",
-	    pc->pci_conf_ioh, bus, dev, func, reg, data);
+	    pc->pci_conf_datah, bus, dev, func, reg, data);
 #endif
 	return data;
 }
@@ -235,12 +257,12 @@ p5pb_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t val)
 	
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 	
-	bus_space_write_4(pc->pci_conf_iot, pc->pci_conf_ioh,
+	bus_space_write_4(pc->pci_conf_datat, pc->pci_conf_datah,
 	    (func << 5) + reg, val);
 #ifdef P5PB_DEBUG
 	aprint_normal("p5pb conf write va: %lx, bus: %d, dev: %d, "
 	    "func: %d, reg: %d -w-> data %x\n",
-	    pc->pci_conf_ioh, bus, dev, func, reg, val);
+	    pc->pci_conf_datah, bus, dev, func, reg, val);
 #endif
 	
 }
@@ -248,8 +270,7 @@ p5pb_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t val)
 int
 p5pb_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno) 
 {
-
-	/* Allow only one device. Obvious in case of CVPPC/BVPPC. */
+	/* G-Rex has max 5 slots. CVPPC/BVPPC has only 1. */
 	return 1;
 }
 
@@ -277,5 +298,14 @@ void
 p5pb_pci_attach_hook(struct device *parent, struct device *self,
     struct pcibus_attach_args *pba)
 {
+}
+
+int
+p5pb_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	/* TODO: add sanity checking */
+
+	*ihp = 2; 
+	return 0;
 }
 
