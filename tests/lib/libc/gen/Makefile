@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.29 2011/09/19 05:25:50 jruoho Exp $
+# $NetBSD: Makefile,v 1.30 2011/09/19 05:40:38 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,6 @@ TESTS_C+=	t_getgrent
 TESTS_C+=	t_glob
 TESTS_C+=	t_humanize_number
 TESTS_C+=	t_isnan
-TESTS_C+=	t_ldexp
 TESTS_C+=	t_nice
 TESTS_C+=	t_pause
 TESTS_C+=	t_raise
@@ -31,7 +30,6 @@ TESTS_C+=	t_ttyname
 TESTS_C+=	t_vis
 
 LDADD.t_fpclassify+=	-lm
-LDADD.t_ldexp+=		-lm
 
 LDADD.t_nice+=		-lpthread
 LDADD.t_syslog+=	-lpthread
