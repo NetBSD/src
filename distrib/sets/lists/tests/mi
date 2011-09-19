@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.393 2011/09/19 11:57:11 njoly Exp $
+# $NetBSD: mi,v 1.394 2011/09/19 18:16:06 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1944,7 +1944,7 @@
 ./usr/tests/lib/libc/hash/h_hash		tests-lib-tests		atf
 ./usr/tests/lib/libc/hash/t_hash		tests-lib-tests		atf
 ./usr/tests/lib/libc/hash/t_sha2		tests-lib-tests		atf
-./usr/tests/lib/libc/ieeefp			tests-obsolete
+./usr/tests/lib/libc/ieeefp			tests-obsolete		obsolete
 ./usr/tests/lib/libc/ieeefp/Atffile		tests-obsolete		obsolete
 ./usr/tests/lib/libc/ieeefp/t_except		tests-obsolete		obsolete
 ./usr/tests/lib/libc/ieeefp/t_nan_inf		tests-obsolete		obsolete
