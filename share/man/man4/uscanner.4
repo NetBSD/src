@@ -1,4 +1,4 @@
-.\" $NetBSD: uscanner.4,v 1.11 2011/09/20 18:58:40 jym Exp $
+.\" $NetBSD: uscanner.4,v 1.12 2011/09/20 19:31:47 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,8 +41,8 @@ The
 driver provides minimal support for USB scanners.
 The driver recognizes a number of USB scanners, but to
 actually scan anything there needs to be software that knows
-about the particular scanner.  The SANE package provides
-support for some scanners.
+about the particular scanner.
+The SANE package provides support for some scanners.
 .Sh HARDWARE
 The
 .Nm
@@ -87,11 +87,11 @@ driver
 appeared in
 .Nx 1.6 .
 .Sh BUGS
-This driver should not really exist.  The scanners it recognizes
-can be accessed through the
+This driver should not really exist.
+The scanners it recognizes can be accessed through the
 .Xr ugen 4
-driver instead.  A proper scanner driver would provide a uniform
-interface to scanners instead of exposing the innards of the
-scanner.
+driver instead.
+A proper scanner driver would provide a uniform interface to scanners
+instead of exposing the innards of the scanner.
 The reason the driver exists is to have something that is compatible
 with the Linux driver.
