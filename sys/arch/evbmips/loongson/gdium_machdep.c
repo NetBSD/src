@@ -311,6 +311,8 @@ gdium_powerdown()
 {
 	REGVAL(BONITO_GPIODATA) |= 0x00000002;
 	REGVAL(BONITO_GPIOIE) &= ~0x00000002;
+	printf("Powering down...\n");
+	while(1) delay(1000);
 }
 
 void
