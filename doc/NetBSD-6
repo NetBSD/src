@@ -28,6 +28,7 @@ Will be in 6.0
 + support for resizing ffs - riz
 + production support for fss
 + Xen/SMP
++ Xen suspend/resume
 + automated test framework for testing releng autobuilds
 + full functionality for NPF - SMP-aware packet filter - rmind
 + fixed IPSEC NAT-T
@@ -39,7 +40,6 @@ Possibly in 6.0
 ---------------
 + mobile IPv6 - we have the mods, need application of same to the repo
 + kernel modules need work
-+ Xen suspend/resume - jym working on it
 + TNF funding for release engineering
 
 May not make 6.0
