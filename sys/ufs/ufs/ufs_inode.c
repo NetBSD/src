@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.87 2011/06/12 03:36:02 rmind Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.88 2011/09/20 14:01:33 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.87 2011/06/12 03:36:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.88 2011/09/20 14:01:33 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -269,16 +269,6 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	if (error) {
 		goto out;
 	}
-	mutex_enter(uobj->vmobjlock);
-	mutex_enter(&uvm_pageqlock);
-	for (i = 0; i < npages; i++) {
-		UVMHIST_LOG(ubchist, "got pgs[%d] %p", i, pgs[i],0,0);
-		KASSERT((pgs[i]->flags & PG_RELEASED) == 0);
-		pgs[i]->flags &= ~PG_CLEAN;
-		uvm_pageactivate(pgs[i]);
-	}
-	mutex_exit(&uvm_pageqlock);
-	mutex_exit(uobj->vmobjlock);
 
 	/*
 	 * now allocate the range.
@@ -288,27 +278,31 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	genfs_node_unlock(vp);
 
 	/*
-	 * clear PG_RDONLY on any pages we are holding
-	 * (since they now have backing store) and unbusy them.
+	 * if the allocation succeeded, clear PG_CLEAN on all the pages
+	 * and clear PG_RDONLY on any pages that are now fully backed
+	 * by disk blocks.  if the allocation failed, we do not invalidate
+	 * the pages since they might have already existed and been dirty,
+	 * in which case we need to keep them around.  if we created the pages,
+	 * they will be clean and read-only, and leaving such pages
+	 * in the cache won't cause any problems.
 	 */
 
 	GOP_SIZE(vp, off + len, &eob, 0);
 	mutex_enter(uobj->vmobjlock);
+	mutex_enter(&uvm_pageqlock);
 	for (i = 0; i < npages; i++) {
-		if (off <= pagestart + (i << PAGE_SHIFT) &&
-		    pagestart + ((i + 1) << PAGE_SHIFT) <= eob) {
-			pgs[i]->flags &= ~PG_RDONLY;
-		} else if (error) {
-			pgs[i]->flags |= PG_RELEASED;
+		KASSERT((pgs[i]->flags & PG_RELEASED) == 0);
+		if (!error) {
+			if (off <= pagestart + (i << PAGE_SHIFT) &&
+			    pagestart + ((i + 1) << PAGE_SHIFT) <= eob) {
+				pgs[i]->flags &= ~PG_RDONLY;
+			}
+			pgs[i]->flags &= ~PG_CLEAN;
 		}
+		uvm_pageactivate(pgs[i]);
 	}
-	if (error) {
-		mutex_enter(&uvm_pageqlock);
-		uvm_page_unbusy(pgs, npages);
-		mutex_exit(&uvm_pageqlock);
-	} else {
-		uvm_page_unbusy(pgs, npages);
-	}
+	mutex_exit(&uvm_pageqlock);
+	uvm_page_unbusy(pgs, npages);
 	mutex_exit(uobj->vmobjlock);
 
  out:
