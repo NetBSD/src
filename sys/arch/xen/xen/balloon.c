@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.10 2011/07/29 22:16:05 jym Exp $ */
+/* $NetBSD: balloon.c,v 1.11 2011/09/20 00:12:24 jym Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #define BALLOONDEBUG 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.10 2011/07/29 22:16:05 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.11 2011/09/20 00:12:24 jym Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>
@@ -245,6 +245,9 @@ balloon_xenbus_attach(device_t parent, device_t self, void *aux)
 		unregister_xenbus_watch(&balloon_xenbus_watch);
 		goto error;
 	}
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 

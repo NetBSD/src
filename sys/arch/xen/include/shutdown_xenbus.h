@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown_xenbus.h,v 1.3 2007/10/17 19:58:29 garbled Exp $	*/
+/*	$NetBSD: shutdown_xenbus.h,v 1.4 2011/09/20 00:12:24 jym Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -28,6 +28,9 @@
 
 #ifndef _XEN_SHUTDOWN_XENBUS_H_
 #define	_XEN_SHUTDOWN_XENBUS_H_
+
+/* Whether dom0 ordered a suspend (true) or not (false) */
+bool xen_suspend_allow;
 
 void shutdown_xenbus_setup(void);
 
