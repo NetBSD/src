@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.56 2011/08/13 12:37:30 cherry Exp $ */
+/* $NetBSD: hypervisor.c,v 1.57 2011/09/20 00:12:24 jym Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.56 2011/08/13 12:37:30 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.57 2011/09/20 00:12:24 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,6 +168,10 @@ int     isa_has_been_seen;
 struct  x86_isa_chipset x86_isa_chipset;
 #endif
 #endif
+
+/* power management, for save/restore */
+static bool hypervisor_suspend(device_t, const pmf_qual_t *);
+static bool hypervisor_resume(device_t, const pmf_qual_t *);
 
 /*
  * Probe for the hypervisor; always succeeds.
@@ -327,6 +331,30 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif /* DOM0OPS */
 
 	hypervisor_machdep_attach();
+
+	if (!pmf_device_register(self, hypervisor_suspend, hypervisor_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
+}
+
+static bool
+hypervisor_suspend(device_t dev, const pmf_qual_t *qual)
+{
+	events_suspend();
+	xengnt_suspend();
+	
+	return true;
+}
+
+static bool
+hypervisor_resume(device_t dev, const pmf_qual_t *qual)
+{
+	hypervisor_machdep_resume();
+
+	xengnt_resume();
+	events_resume();
+
+	return true;
 }
 
 static int

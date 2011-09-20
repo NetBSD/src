@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.41 2011/08/13 12:09:38 cherry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.42 2011/09/20 00:12:23 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -395,6 +395,12 @@ bool	sse2_idlezero_page(void *);
 
 
 #ifdef XEN
+
+void	pmap_unmap_all_apdp_pdes(void);
+#ifdef PAE
+void	pmap_map_recursive_entries(void);
+void	pmap_unmap_recursive_entries(void);
+#endif /* PAE */
 
 #include <sys/bitops.h>
 
