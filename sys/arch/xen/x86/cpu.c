@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.56.2.11 2011/09/09 11:53:43 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.56.2.12 2011/09/20 18:57:52 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.11 2011/09/09 11:53:43 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.12 2011/09/20 18:57:52 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1243,7 +1243,6 @@ cpu_load_pmap(struct pmap *pmap)
 	struct cpu_info *ci;
 
 	s = splvm(); /* just to be safe */
-	xpq_queue_lock();
 	ci = curcpu();
 	paddr_t l3_pd = xpmap_ptom_masked(ci->ci_pae_l3_pdirpa);
 	/* don't update the kernel L3 slot */
@@ -1251,7 +1250,6 @@ cpu_load_pmap(struct pmap *pmap)
 		xpq_queue_pte_update(l3_pd + i * sizeof(pd_entry_t),
 		    xpmap_ptom(pmap->pm_pdirpa[i]) | PG_V);
 	}
-	xpq_queue_unlock();
 	splx(s);
 	tlbflush();
 #else /* PAE */
@@ -1275,8 +1273,6 @@ cpu_load_pmap(struct pmap *pmap)
 	s = splvm();
 	new_pgd = pmap->pm_pdir;
 
-	xpq_queue_lock();
-
 	/* Copy user pmap L4 PDEs (in user addr. range) to per-cpu L4 */
 	for (i = 0; i < PDIR_SLOT_PTE; i++) {
 		xpq_queue_pte_update(l4_pd_ma + i * sizeof(pd_entry_t), new_pgd[i]);
@@ -1290,7 +1286,6 @@ cpu_load_pmap(struct pmap *pmap)
 		xpq_queue_pt_switch(l4_pd_ma);
 		ci->ci_xen_current_user_pgd = 0;
 	}
-	xpq_queue_unlock();
 
 	tlbflush();
 
@@ -1398,14 +1393,10 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	pmap_kenter_pa((vaddr_t)ci->ci_pae_l3_pdir, ci->ci_pae_l3_pdirpa,
 		VM_PROT_READ, 0);
 
-	xpq_queue_lock();
 	xpq_queue_pin_l3_table(xpmap_ptom_masked(ci->ci_pae_l3_pdirpa));
-	xpq_queue_unlock();
 
 #elif defined(__x86_64__)	
-	xpq_queue_lock();
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(ci->ci_kpm_pdirpa));
-	xpq_queue_unlock();
 #endif /* PAE */
 #endif /* defined(PAE) || defined(__x86_64__) */
 }

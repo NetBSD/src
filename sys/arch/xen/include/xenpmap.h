@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.27.2.4 2011/09/09 11:38:20 cherry Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.27.2.5 2011/09/20 18:57:52 cherry Exp $	*/
 
 /*
  *
@@ -42,16 +42,6 @@
 #endif
 
 #define	INVALID_P2M_ENTRY	(~0UL)
-
-#ifdef MULTIPROCESSOR
-void xpq_queue_lock(void);
-void xpq_queue_unlock(void);
-bool xpq_queue_locked(void);
-#else /* MULTIPROCESSOR */
-#define xpq_queue_lock() do {} while(0) /* nothing */
-#define xpq_queue_unlock() do {} while(0) /* nothing */
-#define xpq_queue_locked() (true) /* Always true for UP */
-#endif /* MULTIPROCESSOR */
 
 void xpq_queue_machphys_update(paddr_t, paddr_t);
 void xpq_queue_invlpg(vaddr_t);
