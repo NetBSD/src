@@ -1,4 +1,4 @@
-/*	$NetBSD: chroot.c,v 1.18 2011/08/28 08:32:47 mbalmer Exp $	*/
+/*	$NetBSD: chroot.c,v 1.19 2011/09/20 14:28:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,13 +39,12 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: chroot.c,v 1.18 2011/08/28 08:32:47 mbalmer Exp $");
+__RCSID("$NetBSD: chroot.c,v 1.19 2011/09/20 14:28:52 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 
-#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <grp.h>
@@ -53,10 +52,61 @@ __RCSID("$NetBSD: chroot.c,v 1.18 2011/08/28 08:32:47 mbalmer Exp $");
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <string.h>
 #include <unistd.h>
 
 static void	usage(void) __dead;
+
+static int
+getnum(const char *str, uintmax_t *num)
+{
+	char *ep;
+
+	errno = 0;
+
+	*num = strtoumax(str, &ep, 0);
+	if (str[0] == '\0' || *ep != '\0') {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (errno == ERANGE && *num == UINTMAX_MAX)
+		return -1;
+
+	return 0;
+}
+
+
+static gid_t
+getgroup(const char *group)
+{
+	uintmax_t	num;
+	struct group	*gp;
+
+	if ((gp = getgrnam(group)) != NULL)
+		return gp->gr_gid;
+
+	if (getnum(group, &num) == -1)
+	    errx(1, "no such group `%s'", group);
+
+	return (gid_t)num;
+}
+
+static uid_t
+getuser(const char *user)
+{
+	uintmax_t	num;
+	struct passwd	*pw;
+
+	if ((pw = getpwnam(user)) != NULL)
+		return pw->pw_uid;
+
+	if (getnum(user, &num) == -1)
+		errx(1, "no such user `%s'", user);
+
+	return (uid_t)num;
+}
 
 int
 main(int argc, char *argv[])
@@ -64,9 +114,7 @@ main(int argc, char *argv[])
 	char	*user;		/* user to switch to before running program */
 	char	*group;		/* group to switch to ... */
 	char	*grouplist;	/* group list to switch to ... */
-	struct group	*gp;
-	struct passwd	*pw;
-	char		*endp, *p;
+	char		*p;
 	const char	*shell;
 	gid_t		gid, gidlist[NGROUPS_MAX];
 	uid_t		uid;
@@ -74,8 +122,10 @@ main(int argc, char *argv[])
 
 	user = NULL;
 	group = NULL;
+	grouplist = NULL;
 	gid = 0;
 	uid = 0;
+	gids = 0;
 	while ((ch = getopt(argc, argv, "G:g:u:")) != -1) {
 		switch(ch) {
 		case 'u':
@@ -104,52 +154,22 @@ main(int argc, char *argv[])
 	if (argc < 1)
 		usage();
 
-	if (group != NULL) {
-		if (isdigit((unsigned char)*group)) {
-			gid = (gid_t)strtoul(group, &endp, 0);
-			if (*endp != '\0')
-				goto getgroup;
-		} else {
- getgroup:
-			if ((gp = getgrnam(group)) != NULL)
-				gid = gp->gr_gid;
-			else
-				errx(1, "no such group `%s'", group);
-		}
-	}
+	if (user != NULL)
+		uid = getuser(user);
 
-	for (gids = 0;
-	    (p = strsep(&grouplist, ",")) != NULL && gids < NGROUPS_MAX; ) {
-		if (*p == '\0')
-			continue;
+	if (group != NULL)
+		gid = getgroup(group);
 
-		if (isdigit((unsigned char)*p)) {
-			gidlist[gids] = (gid_t)strtoul(p, &endp, 0);
-			if (*endp != '\0')
-				goto getglist;
-		} else {
- getglist:
-			if ((gp = getgrnam(p)) != NULL)
-				gidlist[gids] = gp->gr_gid;
-			else
-				errx(1, "no such group `%s'", p);
-		}
-		gids++;
-	}
-	if (p != NULL && gids == NGROUPS_MAX)
-		errx(1, "too many supplementary groups provided");
+	if (grouplist != NULL) {
+		while ((p = strsep(&grouplist, ",")) != NULL) {
+			if (*p == '\0')
+				continue;
 
-	if (user != NULL) {
-		if (isdigit((unsigned char)*user)) {
-			uid = (uid_t)strtoul(user, &endp, 0);
-			if (*endp != '\0')
-				goto getuser;
-		} else {
- getuser:
-			if ((pw = getpwnam(user)) != NULL)
-				uid = pw->pw_uid;
-			else
-				errx(1, "no such user `%s'", user);
+			if (gids == NGROUPS_MAX)
+				errx(1,
+				    "too many supplementary groups provided");
+
+			gidlist[gids++] = getgroup(p);
 		}
 	}
 
@@ -179,7 +199,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: chroot [-G group,group,...] [-g group] "
-	    "[-u user] newroot [command]\n");
+	(void)fprintf(stderr, "Usage: %s [-G group,group,...] [-g group] "
+	    "[-u user] newroot [command]\n", getprogname());
 	exit(1);
 }
