@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.3 2011/09/06 06:27:14 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.4 2011/09/20 06:15:02 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.3 2011/09/06 06:27:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.4 2011/09/20 06:15:02 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,6 +368,18 @@ voyagerfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				vcons_redraw_screen(ms);
 			}
 		}
+		}
+		return 0;
+
+	case WSDISPLAYIO_GVIDEO:
+		*(int *)data = sc->sc_bl_on ? WSDISPLAYIO_VIDEO_ON :
+					      WSDISPLAYIO_VIDEO_OFF;
+		return 0;
+
+	case WSDISPLAYIO_SVIDEO: {
+			int new_bl = *(int *)data;
+
+			voyagerfb_switch_backlight(sc,  new_bl);
 		}
 		return 0;
 
