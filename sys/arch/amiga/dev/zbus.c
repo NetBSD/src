@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.65 2011/09/17 16:55:34 rkujawa Exp $ */
+/*	$NetBSD: zbus.c,v 1.66 2011/09/20 18:11:51 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.65 2011/09/17 16:55:34 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.66 2011/09/20 18:11:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -239,6 +239,7 @@ void zbusattach(device_t, device_t, void *);
 int zbusprint(void *, const char *);
 int zbusmatch(device_t, cfdata_t, void *);
 static const char *aconflookup(int, int);
+static void *zbusmap(void *, u_int);
 
 /*
  * given a manufacturer id and product id, find quirks
@@ -387,7 +388,7 @@ zbusprint(void *auxp, const char *pnp)
  * Zorro devices) to have enough kva-space available, so there is no extra
  * range check done here.
  */
-void *
+static void *
 zbusmap(void *pa, u_int size)
 {
 #if defined(__m68k__)
