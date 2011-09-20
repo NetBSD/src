@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.92 2010/03/22 18:58:31 joerg Exp $
+.\" $NetBSD: usb.4,v 1.93 2011/09/20 18:58:40 jym Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -554,11 +554,6 @@ which handles various minor tasks that are initiated from
 an interrupt context, but need to sleep, e.g., time-out
 abort of transfers.
 .Sh SEE ALSO
-The
-.Tn USB
-specifications can be found at:
-.D1 http://www.usb.org/developers/docs/
-.Pp
 .Xr usbhidaction 1 ,
 .Xr usbhidctl 1 ,
 .Xr cardbus 4 ,
@@ -570,6 +565,10 @@ specifications can be found at:
 .Xr slhci 4 ,
 .Xr uhci 4 ,
 .Xr usbdevs 8
+.Rs
+.%T Universal Serial Bus Specifications Documents
+.%U http://www.usb.org/developers/docs/
+.Re
 .Sh HISTORY
 The
 .Nm
