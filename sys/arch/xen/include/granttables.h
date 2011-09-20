@@ -1,4 +1,4 @@
-/* $NetBSD: granttables.h,v 1.7 2009/10/19 18:41:10 bouyer Exp $ */
+/* $NetBSD: granttables.h,v 1.8 2011/09/20 00:12:23 jym Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -29,6 +29,10 @@
 #include <xen/xen3-public/grant_table.h>
 
 void xengnt_init(void);
+
+/* suspend/resume grant table, for save/restore operations */
+bool xengnt_suspend(void);
+bool xengnt_resume(void);
 
 /*
  * grant access to a remote domain. Returns a handle on the allocated grant
