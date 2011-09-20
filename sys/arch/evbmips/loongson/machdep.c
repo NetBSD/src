@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2011/08/27 13:42:45 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2011/09/20 05:50:17 macallan Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2011/08/27 13:42:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2011/09/20 05:50:17 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -140,6 +140,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2011/08/27 13:42:45 bouyer Exp $");
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
+bus_space_tag_t comconsiot;
+bus_addr_t comconsaddr;
+int comconsrate = 0;
+#endif /* NCOM > 0 */
+
 #ifdef LOW_DEBUG
 #define DPRINTF(x) printf x
 #define DPPRINTF(x) pmon_printf x
@@ -147,11 +152,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2011/08/27 13:42:45 bouyer Exp $");
 #define DPRINTF(x)
 #define DPPRINTF(x)
 #endif
-
-bus_space_tag_t comconsiot;
-bus_addr_t comconsaddr;
-int comconsrate = 0;
-#endif /* NCOM > 0 */
 
 #include "sisfb.h"
 
