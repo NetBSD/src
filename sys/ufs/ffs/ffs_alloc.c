@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.128 2011/06/12 03:36:00 rmind Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.129 2011/09/20 14:01:32 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,11 +70,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.128 2011/06/12 03:36:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.129 2011/09/20 14:01:32 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
 #include "opt_quota.h"
+#include "opt_uvm_page_trkown.h"
 #endif
 
 #include <sys/param.h>
@@ -99,6 +100,10 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.128 2011/06/12 03:36:00 rmind Exp $"
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+
+#ifdef UVM_PAGE_TRKOWN
+#include <uvm/uvm.h>
+#endif
 
 static daddr_t ffs_alloccg(struct inode *, int, daddr_t, int, int);
 static daddr_t ffs_alloccgblk(struct inode *, struct buf *, daddr_t, int);
@@ -184,17 +189,36 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size, int flags,
 	KASSERT(mutex_owned(&ump->um_lock));
 
 #ifdef UVM_PAGE_TRKOWN
+
+	/*
+	 * Sanity-check that allocations within the file size
+	 * do not allow other threads to read the stale contents
+	 * of newly allocated blocks.
+	 * Usually pages will exist to cover the new allocation.
+	 * There is an optimization in ffs_write() where we skip
+	 * creating pages if several conditions are met:
+	 *  - the file must not be mapped (in any user address space).
+	 *  - the write must cover whole pages and whole blocks.
+	 * If those conditions are not met then pages must exist and
+	 * be locked by the current thread.
+	 */
+
 	if (ITOV(ip)->v_type == VREG &&
 	    lblktosize(fs, (voff_t)lbn) < round_page(ITOV(ip)->v_size)) {
 		struct vm_page *pg;
-		struct uvm_object *uobj = &ITOV(ip)->v_uobj;
+		struct vnode *vp = ITOV(ip);
+		struct uvm_object *uobj = &vp->v_uobj;
 		voff_t off = trunc_page(lblktosize(fs, lbn));
 		voff_t endoff = round_page(lblktosize(fs, lbn) + size);
 
 		mutex_enter(uobj->vmobjlock);
 		while (off < endoff) {
 			pg = uvm_pagelookup(uobj, off);
-			KASSERT(pg == NULL || pg->owner == curproc->p_pid);
+			KASSERT((pg == NULL && (vp->v_vflag & VV_MAPPED) == 0 &&
+				 (size & PAGE_MASK) == 0 && 
+				 blkoff(fs, size) == 0) ||
+				(pg != NULL && pg->owner == curproc->p_pid &&
+				 pg->lowner == curlwp->l_lid));
 			off += PAGE_SIZE;
 		}
 		mutex_exit(uobj->vmobjlock);
@@ -292,6 +316,18 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	KASSERT(mutex_owned(&ump->um_lock));
 
 #ifdef UVM_PAGE_TRKOWN
+
+	/*
+	 * Sanity-check that allocations within the file size
+	 * do not allow other threads to read the stale contents
+	 * of newly allocated blocks.
+	 * Unlike in ffs_alloc(), here pages must always exist
+	 * for such allocations, because only the last block of a file
+	 * can be a fragment and ffs_write() will reallocate the
+	 * fragment to the new size using ufs_balloc_range(),
+	 * which always creates pages to cover blocks it allocates.
+	 */
+
 	if (ITOV(ip)->v_type == VREG) {
 		struct vm_page *pg;
 		struct uvm_object *uobj = &ITOV(ip)->v_uobj;
@@ -301,8 +337,8 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		mutex_enter(uobj->vmobjlock);
 		while (off < endoff) {
 			pg = uvm_pagelookup(uobj, off);
-			KASSERT(pg == NULL || pg->owner == curproc->p_pid);
-			KASSERT((pg->flags & PG_CLEAN) == 0);
+			KASSERT(pg->owner == curproc->p_pid &&
+				pg->lowner == curlwp->l_lid);
 			off += PAGE_SIZE;
 		}
 		mutex_exit(uobj->vmobjlock);
