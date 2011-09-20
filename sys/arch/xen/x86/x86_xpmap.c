@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.26.2.10 2011/09/18 16:48:23 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.26.2.11 2011/09/20 18:57:53 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.10 2011/09/18 16:48:23 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.11 2011/09/20 18:57:53 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -153,9 +153,7 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 		pmap_pte_clearbits(ptp, PG_RW);
 	}
 	s = splvm();
-	xpq_queue_lock();
 	xpq_queue_set_ldt(base, entries);
-	xpq_queue_unlock();
 	splx(s);
 }
 
@@ -168,50 +166,34 @@ static mmu_update_t xpq_queue_array[MAXCPUS][XPQUEUE_SIZE];
 static int xpq_idx_array[MAXCPUS];
 
 #ifdef MULTIPROCESSOR
-static struct simplelock xpq_lock[MAXCPUS];
-
 extern struct cpu_info * (*xpq_cpu)(void);
-
-void
-xpq_queue_lock(void)
-{
-	simple_lock(&xpq_lock[xpq_cpu()->ci_cpuid]);
-}
-
-void
-xpq_queue_unlock(void)
-{
-	simple_unlock(&xpq_lock[xpq_cpu()->ci_cpuid]);
-}
-
-bool
-xpq_queue_locked(void)
-{
-	return simple_lock_held(&xpq_lock[xpq_cpu()->ci_cpuid]);
-}
 #endif /* MULTIPROCESSOR */
 
-/* Must be called with xpq_lock held */
 void
 xpq_flush_queue(void)
 {
-	int i, ok, ret;
+	int i, ok = 0, ret;
 
 	mmu_update_t *xpq_queue = xpq_queue_array[xpq_cpu()->ci_cpuid];
 	int xpq_idx = xpq_idx_array[xpq_cpu()->ci_cpuid];
-
-	KASSERT(xpq_queue_locked());
 
 	XENPRINTK2(("flush queue %p entries %d\n", xpq_queue, xpq_idx));
 	for (i = 0; i < xpq_idx; i++)
 		XENPRINTK2(("%d: 0x%08" PRIx64 " 0x%08" PRIx64 "\n", i,
 		    xpq_queue[i].ptr, xpq_queue[i].val));
-
+retry:
 	ret = HYPERVISOR_mmu_update_self(xpq_queue, xpq_idx, &ok);
 
 	if (xpq_idx != 0 && ret < 0) {
 		printf("xpq_flush_queue: %d entries (%d successful)\n",
 		    xpq_idx, ok);
+		if (ok != 0) {
+			xpq_queue += ok;
+			xpq_idx -= ok;
+			ok = 0;
+			goto retry;
+		}
+
 		for (i = 0; i < xpq_idx; i++)
 			printf("0x%016" PRIx64 ": 0x%016" PRIx64 "\n",
 			   xpq_queue[i].ptr, xpq_queue[i].val);
@@ -220,12 +202,9 @@ xpq_flush_queue(void)
 	xpq_idx_array[xpq_cpu()->ci_cpuid] = 0;
 }
 
-/* Must be called with xpq_lock held */
 static inline void
 xpq_increment_idx(void)
 {
-
-	KASSERT(xpq_queue_locked());
 
 	if (__predict_false(++xpq_idx_array[xpq_cpu()->ci_cpuid] == XPQUEUE_SIZE))
 		xpq_flush_queue();
@@ -239,7 +218,7 @@ xpq_queue_machphys_update(paddr_t ma, paddr_t pa)
 
 	XENPRINTK2(("xpq_queue_machphys_update ma=0x%" PRIx64 " pa=0x%" PRIx64
 	    "\n", (int64_t)ma, (int64_t)pa));
-	KASSERT(xpq_queue_locked());
+
 	xpq_queue[xpq_idx].ptr = ma | MMU_MACHPHYS_UPDATE;
 	xpq_queue[xpq_idx].val = (pa - XPMAP_OFFSET) >> PAGE_SHIFT;
 	xpq_increment_idx();
@@ -256,7 +235,6 @@ xpq_queue_pte_update(paddr_t ptr, pt_entry_t val)
 	int xpq_idx = xpq_idx_array[xpq_cpu()->ci_cpuid];
 
 	KASSERT((ptr & 3) == 0);
-	KASSERT(xpq_queue_locked());
 	xpq_queue[xpq_idx].ptr = (paddr_t)ptr | MMU_NORMAL_PT_UPDATE;
 	xpq_queue[xpq_idx].val = val;
 	xpq_increment_idx();
@@ -269,7 +247,6 @@ void
 xpq_queue_pt_switch(paddr_t pa)
 {
 	struct mmuext_op op;
-	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	XENPRINTK2(("xpq_queue_pt_switch: 0x%" PRIx64 " 0x%" PRIx64 "\n",
@@ -285,7 +262,6 @@ xpq_queue_pin_table(paddr_t pa, int lvl)
 {
 	struct mmuext_op op;
 
-	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	XENPRINTK2(("xpq_queue_pin_l%d_table: %#" PRIxPADDR "\n",
@@ -303,7 +279,6 @@ xpq_queue_unpin_table(paddr_t pa)
 {
 	struct mmuext_op op;
 
-	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	XENPRINTK2(("xpq_queue_unpin_table: %#" PRIxPADDR "\n", pa));
@@ -318,7 +293,6 @@ xpq_queue_set_ldt(vaddr_t va, uint32_t entries)
 {
 	struct mmuext_op op;
 
-	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	XENPRINTK2(("xpq_queue_set_ldt\n"));
@@ -335,7 +309,6 @@ xpq_queue_tlb_flush(void)
 {
 	struct mmuext_op op;
 
-	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	XENPRINTK2(("xpq_queue_tlb_flush\n"));
@@ -350,15 +323,12 @@ xpq_flush_cache(void)
 	struct mmuext_op op;
 	int s = splvm(), err;
 
-	xpq_queue_lock();
 	xpq_flush_queue();
-
 	XENPRINTK2(("xpq_queue_flush_cache\n"));
 	op.cmd = MMUEXT_FLUSH_CACHE;
 	if ((err = HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF)) < 0)
 		printf("errno == %d\n", err);
 		panic("xpq_flush_cache");
-	xpq_queue_unlock();
 	splx(s); /* XXX: removeme */
 }
 
@@ -366,7 +336,7 @@ void
 xpq_queue_invlpg(vaddr_t va)
 {
 	struct mmuext_op op;
-	KASSERT(xpq_queue_locked());
+
 	xpq_flush_queue();
 
 	XENPRINTK2(("xpq_queue_invlpg %#" PRIxVADDR "\n", va));
@@ -380,8 +350,6 @@ void
 xen_mcast_invlpg(vaddr_t va, uint32_t cpumask)
 {
 	mmuext_op_t op;
-
-	KASSERT(xpq_queue_locked());
 
 	/* Flush pending page updates */
 	xpq_flush_queue();
@@ -403,7 +371,6 @@ xen_bcast_invlpg(vaddr_t va)
 	mmuext_op_t op;
 
 	/* Flush pending page updates */
-	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	op.cmd = MMUEXT_INVLPG_ALL;
@@ -423,7 +390,6 @@ xen_mcast_tlbflush(uint32_t cpumask)
 	mmuext_op_t op;
 
 	/* Flush pending page updates */
-	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	op.cmd = MMUEXT_TLB_FLUSH_MULTI;
@@ -443,7 +409,6 @@ xen_bcast_tlbflush(void)
 	mmuext_op_t op;
 
 	/* Flush pending page updates */
-	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	op.cmd = MMUEXT_TLB_FLUSH_ALL;
@@ -462,7 +427,6 @@ xen_vcpu_mcast_invlpg(vaddr_t sva, vaddr_t eva, uint32_t cpumask)
 	KASSERT(eva > sva);
 
 	/* Flush pending page updates */
-	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	/* Align to nearest page boundary */
@@ -483,7 +447,6 @@ xen_vcpu_bcast_invlpg(vaddr_t sva, vaddr_t eva)
 	KASSERT(eva > sva);
 
 	/* Flush pending page updates */
-	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	/* Align to nearest page boundary */
@@ -503,7 +466,6 @@ xpq_update_foreign(paddr_t ptr, pt_entry_t val, int dom)
 	mmu_update_t op;
 	int ok;
 
-	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 
 	op.ptr = ptr;
@@ -589,14 +551,11 @@ static const int l2_4_count = PTP_LEVELS - 1;
 vaddr_t
 xen_pmap_bootstrap(void)
 {
-	int count, oldcount, i;
+	int count, oldcount;
 	long mapsize;
 	vaddr_t bootstrap_tables, init_tables;
 
 	memset(xpq_idx_array, 0, sizeof xpq_idx_array);
-	for (i = 0; i < MAXCPUS;i++) {
-		simple_lock_init(&xpq_lock[i]);
-	}
 
 	xpmap_phys_to_machine_mapping =
 	    (unsigned long *)xen_start_info.mfn_list;
@@ -690,9 +649,7 @@ bootstrap_again:
 	    (UPAGES + 1) * NBPG);
 
 	/* Finally, flush TLB. */
-	xpq_queue_lock();
 	xpq_queue_tlb_flush();
-	xpq_queue_unlock();
 
 	return (init_tables + ((count + l2_4_count) * PAGE_SIZE));
 }
@@ -713,8 +670,6 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	vaddr_t page, avail, text_end, map_end;
 	int i;
 	extern char __data_start;
-
-	xpq_queue_lock();
 
 	__PRINTK(("xen_bootstrap_tables(%#" PRIxVADDR ", %#" PRIxVADDR ","
 	    " %d, %d)\n",
@@ -1067,7 +1022,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 		pte++;
 	}
 	xpq_flush_queue();
-	xpq_queue_unlock();
+
 }
 
 
@@ -1098,7 +1053,6 @@ xen_set_user_pgd(paddr_t page)
 	struct mmuext_op op;
 	int s = splvm();
 
-	KASSERT(xpq_queue_locked());
 	xpq_flush_queue();
 	op.cmd = MMUEXT_NEW_USER_BASEPTR;
 	op.arg1.mfn = xpmap_phys_to_machine_mapping[page >> PAGE_SHIFT];

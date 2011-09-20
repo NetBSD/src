@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.3.2.4 2011/07/31 20:55:22 cherry Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.3.2.5 2011/09/20 18:57:52 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008-2011 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3.2.4 2011/07/31 20:55:22 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3.2.5 2011/09/20 18:57:52 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -268,7 +268,6 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 static inline void pmap_xen_tlbflush(pmap_tlb_packet_t *tp)
 {
 	struct cpu_info *self = curcpu();
-	xpq_queue_lock();
 	if (tp->tp_count == (uint16_t)-1) {
 		xen_mcast_tlbflush(tp->tp_cpumask &
 				   cpus_running &
@@ -286,7 +285,6 @@ static inline void pmap_xen_tlbflush(pmap_tlb_packet_t *tp)
 
 	/* Ack the request */
 	atomic_and_32(&pmap_tlb_mailbox.tm_pending, ~tp->tp_cpumask);
-	xpq_queue_unlock();
 }
 #else
 static inline void pmap_send_ipi(pmap_tlb_packet_t *tp)

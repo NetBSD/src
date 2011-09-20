@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.121.2.7 2011/09/09 11:38:20 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.121.2.8 2011/09/20 18:57:52 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121.2.7 2011/09/09 11:38:20 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121.2.8 2011/09/20 18:57:52 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1378,9 +1378,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	HYPERVISOR_update_va_mapping(xen_dummy_user_pgd + KERNBASE,
 	    pmap_pa2pte(xen_dummy_user_pgd) | PG_u | PG_V, UVMF_INVLPG);
 	/* Pin as L4 */
-	xpq_queue_lock();
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(xen_dummy_user_pgd));
-	xpq_queue_unlock();
 #endif /* __x86_64__ */
 	idt_vaddr = virtual_avail;                      /* don't need pte */
 	idt_paddr = avail_start;                        /* steal a page */
@@ -1495,7 +1493,6 @@ pmap_prealloc_lowmem_ptps(void)
 		if (newp < (NKL2_KIMG_ENTRIES * NBPD_L2))
 			HYPERVISOR_update_va_mapping (newp + KERNBASE,
 			    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
-		xpq_queue_lock();
 		/* Update the pmap_kernel() L4 shadow */
 		xpq_queue_pte_update (
 		    xpmap_ptom_masked(pdes_pa)
@@ -1508,7 +1505,6 @@ pmap_prealloc_lowmem_ptps(void)
 			    pl_i(0, PTP_LEVELS) *
 			    sizeof(pd_entry_t)),
 			pmap_kernel()->pm_pdir[pl_i(0, PTP_LEVELS)]);
-		xpq_queue_unlock();
 		pmap_pte_flush();
 
 		level--;
@@ -2094,21 +2090,16 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 			continue;
 #endif
 
-		xpq_queue_lock();
 #ifdef __x86_64__
 		xpq_queue_pin_l4_table(xpmap_ptom_masked(pdirpa));
 #else
 		xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
 #endif
-		xpq_queue_unlock();
-
 	}
 #ifdef PAE
 	object = ((vaddr_t)pdir) + PAGE_SIZE  * l2tol3(PDIR_SLOT_PTE);
 	(void)pmap_extract(pmap_kernel(), object, &pdirpa);
-	xpq_queue_lock();
 	xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
-	xpq_queue_unlock();
 #endif
 	splx(s);
 #endif /* XEN */
@@ -2134,18 +2125,14 @@ pmap_pdp_dtor(void *arg, void *v)
 		/* fetch the physical address of the page directory. */
 		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
 		/* unpin page table */
-		xpq_queue_lock();
 		xpq_queue_unpin_table(xpmap_ptom_masked(pdirpa));
-		xpq_queue_unlock();
 	}
 	object = (vaddr_t)v;
 	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
 		/* Set page RW again */
 		pte = kvtopte(object);
-		xpq_queue_lock();
 		xpq_queue_pte_update(xpmap_ptetomach(pte), *pte | PG_RW);
 		xpq_queue_invlpg((vaddr_t)object);
-		xpq_queue_unlock();
 	}
 	splx(s);
 #endif  /* XEN */
@@ -4152,7 +4139,6 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			pmap_get_physpage(va, &pa);
 			pte = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
 #ifdef XEN
-			xpq_queue_lock();
 			switch (level) {
 			case PTP_LEVELS: 
 #if defined(PAE) || defined(__x86_64__)
@@ -4181,7 +4167,6 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 					xpmap_ptetomach(&pdep[i]), 
 					pte);
 			}
-			xpq_queue_unlock();
 #else /* XEN */
 			pdep[i] = pte;
 #endif /* XEN */
@@ -4254,7 +4239,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		/* nothing, kernel entries are never entered in user pmap */
 #else /* __x86_64__ */
 		mutex_enter(&pmaps_lock);
-		xpq_queue_lock();
 		LIST_FOREACH(pm, &pmaps, pm_list) {
 			int pdkidx;
 			for (pdkidx =  PDIR_SLOT_KERN + old;
@@ -4267,7 +4251,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			}
 			xpq_flush_queue();
 		}
-		xpq_queue_unlock();
 		mutex_exit(&pmaps_lock);
 #endif /* __x86_64__ */
 #else /* XEN */
