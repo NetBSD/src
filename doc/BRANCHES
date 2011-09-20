@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.309 2011/06/12 03:50:42 rmind Exp $
+#	$NetBSD: BRANCHES,v 1.310 2011/09/20 00:29:57 jym Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -357,9 +357,9 @@ Notes:		This branch aims to cleanup the x86 interrupt routing code.
 
 Branch:		jym-xensuspend
 Description:	Implement xm save/restore/migrate for NetBSD domU
-Status:		Active
+Status:		Terminated
 Start Date:	2009-02-08
-End Date:
+End Date:	2011-09-20
 Base Tag:	jym-xensuspend-base
 Maintainer:	Jean-Yves Migeon <jym@NetBSD.org>
 Scope:		kernel
