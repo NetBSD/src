@@ -35,7 +35,14 @@
 #include <mips/bonito/bonitoreg.h>
 #include <mips/bonito/bonitovar.h>
 
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
+#include <dev/wsfont/wsfont.h>
+#include <dev/wscons/wsdisplay_vconsvar.h>
+
 int	gdium_revision = 0;
+static pcireg_t fb_addr = 0;
 
 void	gdium_attach_hook(device_t, device_t, struct pcibus_attach_args *);
 void	gdium_device_register(struct device *, void *);
@@ -76,6 +83,12 @@ const struct platform gdium_platform = {
 
 	.powerdown = gdium_powerdown,
 	.reset = gdium_reset
+};
+
+static struct vcons_screen gdium_console_screen;
+
+static struct wsscreen_descr gdium_stdscreen = {
+	.name = "std",
 };
 
 void
@@ -223,6 +236,7 @@ extern struct cfdriver sd_cd;
 void
 gdium_device_register(struct device *dev, void *aux)
 {
+	prop_dictionary_t dict;
 	static int gkey_chain_pos = 0;
 	static struct device *lastparent = NULL;
 
@@ -270,6 +284,21 @@ gdium_device_register(struct device *dev, void *aux)
 		break;
 	}
 
+	if (device_is_a(dev, "genfb") || device_is_a(dev, "voyagerfb")) {
+		dict = device_properties(dev);
+		/*
+		 * this is a hack
+		 * is_console needs to be checked against reality
+		 */
+		prop_dictionary_set_bool(dict, "is_console", 1);
+		prop_dictionary_set_uint32(dict, "width", 1024);
+		prop_dictionary_set_uint32(dict, "height", 600);
+		prop_dictionary_set_uint32(dict, "depth", 16);
+		prop_dictionary_set_uint32(dict, "linebytes", 2048);
+		if (fb_addr != 0)
+			prop_dictionary_set_uint32(dict, "address", fb_addr);
+	}
+
 	return;
 
 advance:
@@ -289,4 +318,61 @@ gdium_reset()
 {
 	REGVAL(BONITO_GPIODATA) &= ~0x00000002;
 	REGVAL(BONITO_GPIOIE) &= ~0x00000002;
+}
+
+/*
+ * Early console code
+ */
+
+int
+gdium_cnattach(bus_space_tag_t memt, bus_space_tag_t iot,
+    pci_chipset_tag_t pc, pcitag_t tag, pcireg_t id)
+{
+	struct rasops_info * const ri = &gdium_console_screen.scr_ri;
+	long defattr;
+	pcireg_t reg;
+
+
+	/* filter out unrecognized devices */
+	switch (id) {
+	default:
+		return ENODEV;
+	case PCI_ID_CODE(PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM502):
+		break;
+	}
+
+	wsfont_init();
+	
+	/* set up rasops */
+	ri->ri_width = 1024;
+	ri->ri_height = 600;
+	ri->ri_depth = 16;
+	ri->ri_stride = 0x800;
+
+	/* read the mapping register for the frame buffer */
+	reg = pci_conf_read(pc, tag, PCI_MAPREG_START);
+	fb_addr = reg;
+
+	ri->ri_bits = (char *)MIPS_PHYS_TO_KSEG1(BONITO_PCILO_BASE + reg);
+	ri->ri_flg = RI_CENTER | RI_NO_AUTO;
+
+	memset(ri->ri_bits, 0, 0x200000);
+
+	/* use as much of the screen as the font permits */
+	rasops_init(ri, 30, 80);
+
+	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
+	    ri->ri_width / ri->ri_font->fontwidth);
+
+	gdium_stdscreen.nrows = ri->ri_rows;
+	gdium_stdscreen.ncols = ri->ri_cols;
+	gdium_stdscreen.textops = &ri->ri_ops;
+	gdium_stdscreen.capabilities = ri->ri_caps;
+
+	ri->ri_ops.allocattr(ri, 0, ri->ri_rows - 1, 0, &defattr);
+
+	wsdisplay_preattach(&gdium_stdscreen, ri, 0, 0, defattr);
+	
+	return 0;
+
 }
