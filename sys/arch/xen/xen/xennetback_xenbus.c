@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.46.2.1 2011/08/21 11:24:10 cherry Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.46.2.2 2011/09/20 18:57:54 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.46.2.1 2011/08/21 11:24:10 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.46.2.2 2011/09/20 18:57:54 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -1077,9 +1077,7 @@ xennetback_ifsoftstart_transfer(void *arg)
 			 * we flush those first!
 			 */
 			int svm = splvm();
-			xpq_queue_lock();
 			xpq_flush_queue();
-			xpq_queue_unlock();
 			splx(svm);
 			mclp[-1].args[MULTI_UVMFLAGS_INDEX] =
 			    UVMF_TLB_FLUSH|UVMF_ALL;

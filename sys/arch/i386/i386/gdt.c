@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.50.10.2 2011/08/06 14:05:35 cherry Exp $	*/
+/*	$NetBSD: gdt.c,v 1.50.10.3 2011/09/20 18:57:51 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.50.10.2 2011/08/06 14:05:35 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.50.10.3 2011/09/20 18:57:51 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -214,11 +214,9 @@ gdt_init_cpu(struct cpu_info *ci)
 		    * properly yet, ie; curcpu() won't work at this
 		    * point and spl() will break.
 		    */
-		   xpq_queue_lock();
 		   xpq_queue_pte_update(xpmap_ptetomach(ptp),
 					*ptp & ~PG_RW);
 		   xpq_flush_queue();
-		   xpq_queue_unlock();
 		}
 	}
 
