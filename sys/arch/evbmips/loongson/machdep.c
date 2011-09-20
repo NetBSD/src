@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2011/09/20 05:50:17 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2011/09/20 05:51:34 macallan Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2011/09/20 05:50:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2011/09/20 05:51:34 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -513,6 +513,9 @@ mach_init(int32_t argc, int32_t argva, int32_t enva, int32_t callvec,
 			sisfb_cnattach(&bonito_memt, &bonito_iot, &bonito_pc, 
 			    pcitag, reg);
 #endif
+		if (cn_tab == &pmoncons)
+			gdium_cnattach(&bonito_memt, &bonito_iot, &bonito_pc, 
+			    pcitag, reg);
 	}
 	DPRINTF(("\n"));
 
