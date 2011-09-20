@@ -104,4 +104,7 @@ extern int comconsrate;
 extern phys_ram_seg_t mem_clusters[];
 extern int mem_cluster_cnt;
 
+int gdium_cnattach(bus_space_tag_t, bus_space_tag_t,
+    pci_chipset_tag_t, pcitag_t, pcireg_t);
+
 #endif /* _MACHINE_AUTOCONF_H_ */
