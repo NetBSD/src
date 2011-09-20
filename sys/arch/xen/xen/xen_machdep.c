@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.7 2009/10/23 02:32:34 snj Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.8 2011/09/20 00:12:24 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.7 2009/10/23 02:32:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.8 2011/09/20 00:12:24 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -63,12 +63,25 @@ __KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.7 2009/10/23 02:32:34 snj Exp $");
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/timetc.h>
+#include <sys/sysctl.h>
+#include <sys/pmf.h>
 
 #include <xen/hypervisor.h>
+#include <xen/shutdown_xenbus.h>
+
+#define DPRINTK(x) printk x
+#if 0
+#define DPRINTK(x)
+#endif
 
 u_int	tsc_get_timecount(struct timecounter *);
 
 uint64_t tsc_freq;	/* XXX */
+
+static int sysctl_xen_suspend(SYSCTLFN_ARGS);
+static void xen_suspend_domain(void);
+static void xen_prepare_suspend(void);
+static void xen_prepare_resume(void);
 
 void
 xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
@@ -203,4 +216,190 @@ tsc_get_timecount(struct timecounter *tc)
 {
 
 	panic("xen: tsc_get_timecount");
+}
+
+/*
+ * this function sets up the machdep.xen.suspend sysctl(7) that
+ * controls domain suspend/save.
+ */
+void
+sysctl_xen_suspend_setup(void)
+{
+	const struct sysctlnode *node = NULL;
+
+	/*
+	 * dom0 implements sleep support through ACPI. It should not call
+	 * this function to register a suspend interface.
+	 */
+	KASSERT(!(xendomain_is_dom0()));
+
+	sysctl_createv(NULL, 0, NULL, &node,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(NULL, 0, &node, &node,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "xen",
+	    SYSCTL_DESCR("Xen top level node"),
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(NULL, 0, &node, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "suspend",
+	    SYSCTL_DESCR("Suspend/save current Xen domain"),
+	    sysctl_xen_suspend, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+}
+
+static int
+sysctl_xen_suspend(SYSCTLFN_ARGS)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	/* only allow domain to suspend when dom0 instructed to do so */
+	if (xen_suspend_allow == false)
+		return EAGAIN;
+
+	xen_suspend_domain();
+
+	return 0;
+
+}
+
+/*
+ * Last operations before suspending domain
+ */
+static void
+xen_prepare_suspend(void)
+{
+	kpreempt_disable();
+
+	/*
+	 * Xen lazy evaluation of recursive mappings requires
+	 * to flush the APDP entries
+	 */
+	pmap_unmap_all_apdp_pdes();
+
+#ifdef PAE
+	pmap_unmap_recursive_entries();
+#endif
+
+	xen_suspendclocks();
+
+	/*
+	 * save/restore code does not translate these MFNs to their
+	 * associated PFNs, so we must do it
+	 */
+	xen_start_info.store_mfn = mfn_to_pfn(xen_start_info.store_mfn);
+	xen_start_info.console_mfn = mfn_to_pfn(xen_start_info.console_mfn);
+
+	DPRINTK(("suspending domain\n"));
+	aprint_verbose("suspending domain\n");
+
+	/* invalidate the shared_info page */
+	if (HYPERVISOR_update_va_mapping((vaddr_t)HYPERVISOR_shared_info,
+	    0, UVMF_INVLPG)) {
+		DPRINTK(("HYPERVISOR_shared_info page invalidation failed"));
+		HYPERVISOR_crash();
+	}
+
+}
+
+/*
+ * First operations before restoring domain context
+ */
+static void
+xen_prepare_resume(void)
+{
+	/* map the new shared_info page */
+	if (HYPERVISOR_update_va_mapping((vaddr_t)HYPERVISOR_shared_info,
+	    xen_start_info.shared_info | PG_RW | PG_V,
+	    UVMF_INVLPG)) {
+		DPRINTK(("could not map new shared info page"));
+		HYPERVISOR_crash();
+	}
+
+#ifdef PAE
+	pmap_map_recursive_entries();
+#endif
+
+	if (xen_start_info.nr_pages != physmem) {
+		/*
+		 * XXX JYM for now, we crash - fix it with memory
+		 * hotplug when supported
+		 */
+		DPRINTK(("xen_start_info.nr_pages != physmem"));
+		HYPERVISOR_crash();
+	}
+
+	DPRINTK(("preparing domain resume\n"));
+	aprint_verbose("preparing domain resume\n");
+
+	xen_suspend_allow = false;
+
+	xen_resumeclocks();
+
+	kpreempt_enable();
+
+}
+
+static void
+xen_suspend_domain(void)
+{
+	paddr_t mfn;
+	int s = splvm();
+
+	/*
+	 * console becomes unavailable when suspended, so
+	 * direct communications to domain are hampered from there on.
+	 * We can only rely on low level primitives like printk(), until
+	 * console is fully restored
+	 */
+	if (!pmf_system_suspend(PMF_Q_NONE)) {
+		DPRINTK(("devices suspend failed"));
+		HYPERVISOR_crash();
+	}
+
+	/*
+	 * obtain the MFN of the start_info page now, as we will not be
+	 * able to do it once pmap is locked
+	 */
+	pmap_extract_ma(pmap_kernel(), (vaddr_t)&xen_start_info, &mfn);
+	mfn >>= PAGE_SHIFT;
+
+	xen_prepare_suspend();
+
+	DPRINTK(("calling HYPERVISOR_suspend()\n"));
+	if (HYPERVISOR_suspend(mfn) != 0) {
+	/* XXX JYM: implement checkpoint/snapshot (ret == 1) */
+		DPRINTK(("HYPERVISOR_suspend() failed"));
+		HYPERVISOR_crash();
+	}
+
+	DPRINTK(("left HYPERVISOR_suspend()\n"));
+
+	xen_prepare_resume();
+
+	DPRINTK(("resuming devices\n"));
+	if (!pmf_system_resume(PMF_Q_NONE)) {
+		DPRINTK(("devices resume failed\n"));
+		HYPERVISOR_crash();
+	}
+
+	splx(s);
+
+	/* xencons is back online, we can print to console */
+	aprint_verbose("domain resumed\n");
+
 }

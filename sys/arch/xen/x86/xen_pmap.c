@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.4 2011/08/13 12:09:38 cherry Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.5 2011/09/20 00:12:24 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.4 2011/08/13 12:09:38 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.5 2011/09/20 00:12:24 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -185,7 +185,15 @@ pmap_unmap_apdp(void)
 	for (i = 0; i < PDP_SIZE; i++) {
 		pmap_pte_set(APDP_PDE+i, 0);
 #if defined (PAE)
-		/* clear shadow entries too */
+		/*
+		 * For PAE, there are two places where alternative recursive
+		 * mappings could be found with Xen:
+		 * - in the L2 shadow pages
+		 * - the "real" L2 kernel page (pmap_kl2pd), which is unique
+		 * and static.
+		 * We first clear the APDP for the current pmap. As L2 kernel
+		 * page is unique, we only need to do it once for all pmaps.
+		 */
 		pmap_pte_set(APDP_PDE_SHADOW+i, 0);
 #endif
 	}
@@ -411,7 +419,7 @@ pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	pd_entry_t pde;
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
- 
+
 	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 	if (!pmap_pdes_valid(va, pdes, &pde)) {
@@ -419,16 +427,16 @@ pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 		kpreempt_enable();
 		return false;
 	}
- 
+
 	pte = ptes[pl1_i(va)];
 	pmap_unmap_ptes(pmap, pmap2);
 	kpreempt_enable();
- 
+
 	if (__predict_true((pte & PG_V) != 0)) {
 		if (pap != NULL)
 			*pap = (pte & PG_FRAME) | (va & (NBPD_L1 - 1));
 		return true;
 	}
-				 
+
 	return false;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.53 2011/08/28 22:55:52 jym Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.54 2011/09/20 00:12:24 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.53 2011/08/28 22:55:52 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.54 2011/09/20 00:12:24 jym Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -180,9 +180,10 @@ void
 events_init(void)
 {
 	debug_port = bind_virq_to_evtch(VIRQ_DEBUG);
+
 	KASSERT(debug_port != -1);
 
-	aprint_verbose("debug virtual interrupt using event channel %d\n",
+	aprint_verbose("VIRQ_DEBUG interrupt using event channel %d\n",
 	    debug_port);
 	/*
 	 * Don't call event_set_handler(), we'll use a shortcut. Just set
@@ -194,6 +195,36 @@ events_init(void)
 
 	x86_enable_intr();		/* at long last... */
 }
+
+bool
+events_suspend(void)
+{
+	int evtch;
+
+	x86_disable_intr();
+
+	/* VIRQ_DEBUG is the last interrupt to remove */
+	evtch = unbind_virq_from_evtch(VIRQ_DEBUG);
+
+	KASSERT(evtch != -1);
+
+	hypervisor_mask_event(evtch);
+	/* Remove the non-NULL value set in events_init() */
+	evtsource[evtch] = NULL;
+	aprint_verbose("VIRQ_DEBUG interrupt disabled, "
+	    "event channel %d removed\n", evtch);
+
+	return true;
+}
+
+bool
+events_resume (void)
+{
+	events_init();
+
+	return true;
+}
+
 
 unsigned int
 evtchn_do_event(int evtch, struct intrframe *regs)
@@ -403,6 +434,7 @@ bind_virq_to_evtch(int virq)
 		virq_to_evtch[virq] = evtchn;
 	}
 
+	/* Increase ref counter */
 	evtch_bindcount[evtchn]++;
 
 	mutex_spin_exit(&evtchn_lock);
@@ -516,10 +548,8 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 		printf("pirq_establish: can't malloc handler info\n");
 		return NULL;
 	}
-	if (event_set_handler(evtch, pirq_interrupt, ih, level, evname) != 0) {
-		free(ih, M_DEVBUF);
-		return NULL;
-	}
+
+	event_set_handler(evtch, pirq_interrupt, ih, level, evname);
 	ih->pirq = pirq;
 	ih->evtch = evtch;
 	ih->func = func;

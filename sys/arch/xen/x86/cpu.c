@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.64 2011/08/16 02:59:16 dholland Exp $	*/
+/*	$NetBSD: cpu.c,v 1.65 2011/09/20 00:12:24 jym Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64 2011/08/16 02:59:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.65 2011/09/20 00:12:24 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -337,6 +337,9 @@ vcpu_attach(device_t parent, device_t self, void *aux)
 	KASSERT(vcaa->vcaa_caa.cpu_func == NULL);
 	vcaa->vcaa_caa.cpu_func = &mp_cpu_funcs;
 	cpu_attach_common(parent, self, &vcaa->vcaa_caa);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

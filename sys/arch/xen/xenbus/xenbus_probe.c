@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.33 2011/07/17 20:54:49 joerg Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.34 2011/09/20 00:12:25 jym Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.33 2011/07/17 20:54:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.34 2011/09/20 00:12:25 jym Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -62,6 +62,10 @@ extern struct semaphore xenwatch_mutex;
 static int  xenbus_match(device_t, cfdata_t, void *);
 static void xenbus_attach(device_t, device_t, void *);
 static int  xenbus_print(void *, const char *);
+
+/* power management, for save/restore */
+static bool xenbus_suspend(device_t, const pmf_qual_t *);
+static bool xenbus_resume(device_t, const pmf_qual_t *);
 
 /* routines gathering device information from XenStore */
 static int  read_otherend_details(struct xenbus_device *,
@@ -110,6 +114,50 @@ xenbus_attach(device_t parent, device_t self, void *aux)
 	if (err)
 		aprint_error_dev(xenbus_dev,
 				"kthread_create(xenbus_probe): %d\n", err);
+
+	if (!pmf_device_register(self, xenbus_suspend, xenbus_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static bool
+xenbus_suspend(device_t dev, const pmf_qual_t *qual)
+{
+	xs_suspend();
+	xb_suspend_comms(dev);
+
+	return true;
+}
+
+static bool
+xenbus_resume(device_t dev, const pmf_qual_t *qual)
+{
+	xb_init_comms(dev);
+	xs_resume();
+
+	return true;
+}
+
+/*
+ * Suspend a xenbus device
+ */
+bool
+xenbus_device_suspend(struct xenbus_device *dev) {
+
+	free_otherend_details(dev);
+	return true;
+}
+
+/*
+ * Resume a xenbus device
+ */
+bool
+xenbus_device_resume(struct xenbus_device *dev) {
+
+	if (dev->xbusd_type == XENBUS_FRONTEND_DEVICE) {
+		read_backend_details(dev);
+	}
+
+	return true;
 }
 
 void

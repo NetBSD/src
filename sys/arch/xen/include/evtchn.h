@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.19 2011/08/11 17:58:59 cherry Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.20 2011/09/20 00:12:23 jym Exp $	*/
 
 /*
  *
@@ -35,6 +35,9 @@ extern struct evtsource *evtsource[];
 
 void events_default_setup(void);
 void events_init(void);
+bool events_suspend(void);
+bool events_resume(void);
+
 unsigned int evtchn_do_event(int, struct intrframe *);
 void call_evtchn_do_event(int, struct intrframe *);
 void call_xenevt_event(int);
