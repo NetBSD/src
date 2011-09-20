@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1608 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1609 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1122,3 +1122,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	file: Update to 5.09 [christos 20110916]
 	mppb(4): Add driver for Prometheus Zorro III to PCI bridge.
 		[rkujawa 20110917]
+	xen: Provide experimental support for suspend/resume in
+		NetBSD domUs. [jym 20110920]
