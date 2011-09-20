@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.89 2011/09/19 08:26:57 plunky Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.90 2011/09/20 19:35:46 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.89 2011/09/19 08:26:57 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.90 2011/09/20 19:35:46 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -266,6 +266,19 @@ Static const struct umass_quirk umass_quirks[] = {
 
 	/* Meizu M6 doesn't like synchronize-cache, see PR 40442 */
 	{ { USB_VENDOR_MEIZU, USB_PRODUCT_MEIZU_M6_SL },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  0,
+	  PQUIRK_NOSYNCCACHE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/*
+	 * SanDisk Sansa Clip rejects cache sync in unconventional way.
+	 * However, unlike some other devices listed in this table,
+	 * this is does not cause the device firmware to stop responding.
+	 */
+	{ { USB_VENDOR_SANDISK, USB_PRODUCT_SANDISK_SANSA_CLIP },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
 	  0,
 	  PQUIRK_NOSYNCCACHE,
