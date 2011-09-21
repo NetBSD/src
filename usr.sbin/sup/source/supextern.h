@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.22 2009/10/17 22:26:13 christos Exp $	*/
+/*	$NetBSD: supextern.h,v 1.23 2011/09/21 19:32:59 christos Exp $	*/
 
 struct stat;
 
@@ -39,7 +39,7 @@ void encode(char *, char *, int);
 char *nxtarg(char **, const char *);
 
 /* path.c */
-void path(char *, char *, char *);
+void path(const char *, char *, char *);
 
 /* quit.c */
 void quit(int, const char *, ...)
