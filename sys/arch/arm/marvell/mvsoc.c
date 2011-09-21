@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.3 2011/07/30 04:34:17 jakllsch Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.4 2011/09/21 14:38:51 reinoud Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.3 2011/07/30 04:34:17 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.4 2011/09/21 14:38:51 reinoud Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -172,6 +172,7 @@ static struct {
 	{ KIRKWOOD(88F6180),	2, "88F6180",	"A0",	"Kirkwood" },
 	{ KIRKWOOD(88F6192),	0, "88F619x",	"Z0",	"Kirkwood" },
 	{ KIRKWOOD(88F6192),	2, "88F619x",	"A0",	"Kirkwood" },
+	{ KIRKWOOD(88F6192),	3, "88F619x",	"A1",	"Kirkwood" },
 	{ KIRKWOOD(88F6281),	0, "88F6281",	"Z0",	"Kirkwood" },
 	{ KIRKWOOD(88F6281),	2, "88F6281",	"A0",	"Kirkwood" },
 	{ KIRKWOOD(88F6281),	3, "88F6281",	"A1",	"Kirkwood" },
