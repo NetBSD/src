@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.39 2011/08/31 16:25:00 plunky Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.40 2011/09/21 19:34:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -140,6 +140,7 @@ static int deleteone(TREE *, void *);
 static int linkone(TREE *, void *);
 static int execone(TREE *, void *);
 static int finishone(TREE *, void *);
+static int canonicalize(const char *);
 
 
 /* The next two routines define the fsm to support multiple fileservers
@@ -493,6 +494,8 @@ listfiles(void)
 				*q = '\0';
 			if (strchr("#;:", *p))
 				continue;
+			if (canonicalize(p) != 0)
+				continue;
 			(void) Tinsert(&lastT, p, FALSE);
 		}
 		(void) fclose(f);
@@ -720,6 +723,8 @@ recvfiles(void)
 			goaway("Error sending compression check to server");
 		if (docompress)
 			vnotify("SUP Using compressed file transfer\n");
+		if (thisC->Cflags & CFCANONICALIZE)
+			vnotify("SUP Filename canonicalization is on\n");
 	}
 	recvmore = TRUE;
 	upgradeT = NULL;
@@ -942,10 +947,22 @@ recvreg(TREE * t, int new, struct stat * statp)
 	char dirpart[STRINGLENGTH], filepart[STRINGLENGTH];
 	char filename[STRINGLENGTH], buf[STRINGLENGTH];
 	struct timeval tbuf[2];
-	int x;
+	int x, noupdate = 0;
 	char *p;
 
-	if (t->Tflags & FUPDATE) {
+	switch (canonicalize(t->Tname)) {
+	case 0:	/* Ok no changes */
+		break;
+	case 1:
+		noupdate = 1;
+		break;
+	case -1:
+		notify("SUP: Can't create path for %s (%s)\n", t->Tname,
+		    strerror(errno));
+		return TRUE;
+	}
+		
+	if ((t->Tflags & FUPDATE) && !noupdate) {
 		if ((t->Tflags & FNOACCT) == 0) {
 			/* convert user and group names to local ids */
 			ugconvert(t->Tuser, t->Tgroup, &t->Tuid, &t->Tgid,
@@ -1113,6 +1130,62 @@ execone(TREE * t, void *v __unused)
 		thisC->Cnogood = TRUE;
 	}
 	return (SCMOK);
+}
+
+/*
+ * We know that since "to" is a pathname coming from the server, it must
+ * not contain any symbolic links after the root, because otherwise the
+ * server would send us only the symlink above it. So we hunt for the symlink
+ * above and if found we convert the symlink to a directory, prepare the
+ * path below the symlink, and keep 
+ */
+static int
+canonicalize(const char *to)
+{
+	char absto[STRINGLENGTH], cabsto[STRINGLENGTH * 4];
+	char dir[STRINGLENGTH], file[STRINGLENGTH];
+	char *a;
+	char *c;
+	size_t len;
+	struct stat st;
+	const char *pwd = thisC->Cprefix ? thisC->Cprefix : thisC->Cbase;
+
+	if ((thisC->Cflags & CFCANONICALIZE) == 0)
+		return 0;
+
+	path(to, dir, file);
+
+	len = strlen(pwd);
+	(void)snprintf(absto, sizeof(absto), "%s/%s", pwd, dir);
+
+	len++;
+	if (realpath(absto, cabsto) == NULL)
+		return -1;
+
+	a = absto + len;
+	c = cabsto + len;
+
+	while (*a && *c && *a == *c)
+		a++, c++;
+
+	if (*a == '\0' && *c == '\0')
+		return 0;
+
+	while (*a && *a != '/')
+		a++;
+
+	*a = '\0';
+	if (lstat(absto, &st) == -1 || !S_ISLNK(st.st_mode))
+		return -1;
+
+	if (unlink(absto) == -1)
+		return -1;
+
+	strcpy(c, a);
+	if (estabd(file, cabsto) == -1) {
+		return -1;
+	}
+	return 1;
 }
 
 /* from will be 0 if reading from network */
