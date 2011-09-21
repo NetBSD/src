@@ -1,19 +1,24 @@
-#	$NetBSD: Makefile,v 1.44 2011/07/10 15:28:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.45 2011/09/21 02:15:18 mrg Exp $
 
 .include <bsd.own.mk>
 
 GCC_LANGUAGES=c c++ objc
 MODULE=			gcc4
-.if ${HAVE_GCC} == 45
-MKNATIVE_TARGET=	gcc45
-GNUHOSTDIST=		${.CURDIR}/../../external/gpl3/gcc/dist
-.else
-MKNATIVE_TARGET=	gcc4
-.endif
+
 MKNATIVE_CONFIG_TARGET_LIBS= \
 	configure-target-libiberty \
 	configure-target-libstdc++-v3 \
 	configure-target-libobjc
+
+.if ${HAVE_GCC} == 45
+MKNATIVE_TARGET=	gcc45
+GNUHOSTDIST=		${.CURDIR}/../../external/gpl3/gcc/dist
+MKNATIVE_CONFIG_TARGET_LIBS+= \
+	configure-target-libgomp
+.else
+MKNATIVE_TARGET=	gcc4
+.endif
+
 BINENV=		/usr/bin/env -i
 
 VAX_CONFIGURE_ARGS=

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.62 2011/08/17 18:34:13 matt Exp $
+#	$NetBSD: mknative-gcc,v 1.63 2011/09/21 02:15:18 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -452,6 +452,20 @@ get_libdecnumber () {
 		<$_TMPDIR/libdecnumber/config.h
 }
 
+##### lib/libgomp #####
+
+get_libgomp () {
+	_subdir="$1"
+
+	mkdir -p $_OUTDIR/lib/$_subdir/arch/$MACHINE_ARCH
+	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/config.h \
+		<$_TMPDIR/$_PLATFORM/libgomp/config.h
+	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/libgomp_f.h \
+		<$_TMPDIR/$_PLATFORM/libgomp/libgomp_f.h
+	write_mk $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/libgomp.spec \
+		<$_TMPDIR/$_PLATFORM/libgomp/libgomp.spec
+}
+
 ##### gnu/lib/libobjc #####
 
 get_libobjc () {
@@ -700,6 +714,7 @@ gcc45)
 	get_libobjc libobjc
 	get_libstdcxx_v3 libstdc++-v3
 	get_libdecnumber libdecnumber
+	get_libgomp libgomp
 	exit 0
 	;;
 
