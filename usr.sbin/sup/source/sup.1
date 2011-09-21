@@ -1,4 +1,4 @@
-.\"	$NetBSD: sup.1,v 1.18 2009/11/02 00:29:04 joerg Exp $
+.\"	$NetBSD: sup.1,v 1.19 2011/09/21 19:34:54 christos Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -196,6 +196,16 @@ flag overrides and disables the
 flag and the
 .B backup
 supfile option.
+.TP
+.B -C
+The
+.B -C
+flag or the
+.B canonicalize
+supfile option, canonicalize all pathnames upon reception to make sure
+local changes from directories to symlinks and vice versa have not happened
+behind sup's back, and attempt to repair them. This option is expensive.
+.TP
 .TP
 .B -d
 Files that are no longer in the collection on the
@@ -861,6 +871,8 @@ This is a problem when a directory becomes a symlink to a hierarchy
 that contains the same names.
 Then sup will cross the symlink and start deleting files and directories
 from the destination.
-This is not easily fixed.
+This is avoided by using the
+.B canonicalize
+option, but it is expensive.
 Don't use sup with symlink/rsymlink and the delete
 option at the same time or *be careful*!

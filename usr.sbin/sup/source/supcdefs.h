@@ -1,4 +1,4 @@
-/*	$NetBSD: supcdefs.h,v 1.13 2002/11/30 03:10:58 lukem Exp $	*/
+/*	$NetBSD: supcdefs.h,v 1.14 2011/09/21 19:34:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -116,6 +116,7 @@ typedef struct collstruct COLLECTION;
 #define CFURELSUF	02000
 #define CFCOMPRESS	04000
 #define CFSILENT	10000
+#define CFCANONICALIZE	20000
 
 /*************************
  ***	M A C R O S    ***
