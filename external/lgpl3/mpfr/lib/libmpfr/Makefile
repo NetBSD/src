@@ -1,9 +1,14 @@
-#	$NetBSD: Makefile,v 1.8 2011/07/21 03:13:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2011/09/21 02:06:42 mrg Exp $
 
 .include <bsd.init.mk>
 
 # We don't install mpfr, just provide it for GCC.
-LIBISPRIVATE= yes
+LIBISPRIVATE?= yes
+
+.if ${LIBISPRIVATE} != "yes"
+INCS=         mpf2mpfr.h mpfr.h
+INCSDIR=      /usr/include
+.endif
 
 # XXX get_d.c triggers lint div zero errors (which is valid?)
 MKLINT=no

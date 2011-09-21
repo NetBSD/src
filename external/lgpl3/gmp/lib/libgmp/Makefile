@@ -1,9 +1,14 @@
-#	$NetBSD: Makefile,v 1.11 2011/08/09 13:01:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2011/09/21 02:06:42 mrg Exp $
 
 .include <bsd.init.mk>
 
 # We don't install gmp, just provide it for GCC.
-LIBISPRIVATE=	yes
+LIBISPRIVATE?=	yes
+
+.if ${LIBISPRIVATE} != "yes"
+INCS=         gmp.h
+INCSDIR=      /usr/include
+.endif
 
 DIST=${.CURDIR}/../../dist
 

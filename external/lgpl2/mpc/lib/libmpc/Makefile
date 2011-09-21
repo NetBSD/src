@@ -1,9 +1,14 @@
-#	$NetBSD: Makefile,v 1.4 2011/07/21 03:13:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/09/21 02:06:42 mrg Exp $
 
 .include <bsd.init.mk>
 
 # We don't install mpc, just provide it for GCC.
-LIBISPRIVATE= yes
+LIBISPRIVATE?= yes
+
+.if ${LIBISPRIVATE} != "yes"
+INCS=         mpc.h mpc-log.h
+INCSDIR=      /usr/include
+.endif
 
 LIB=	mpc
 
