@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.54 2011/09/20 00:12:24 jym Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.55 2011/09/21 15:26:47 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.54 2011/09/20 00:12:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.55 2011/09/21 15:26:47 cegger Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -179,6 +179,7 @@ events_default_setup(void)
 void
 events_init(void)
 {
+	mutex_init(&evtchn_lock, MUTEX_DEFAULT, IPL_NONE);
 	debug_port = bind_virq_to_evtch(VIRQ_DEBUG);
 
 	KASSERT(debug_port != -1);
