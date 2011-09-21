@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/09/20 02:28:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/09/21 02:12:00 mrg Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -33,12 +33,14 @@ SRCS= \
 	fortran.c \
 	affinity.c
 
+GOMP_MACHINE_ARCH?=	${MACHINE_ARCH}
+
 CPPFLAGS+= \
 	-DHAVE_CONFIG_H \
 	-I${DIST}/libgomp \
 	-I${DIST}/libgomp/config/posix \
 	-I${DIST}/libgcc \
-	-I${.CURDIR}/arch/${MACHINE_ARCH}
+	-I${.CURDIR}/arch/${GOMP_MACHINE_ARCH}
 CFLAGS+=-pthread
 
 # This is where GCC looks for it.
