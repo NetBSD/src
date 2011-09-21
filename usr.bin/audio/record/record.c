@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.51 2011/08/28 01:17:48 joerg Exp $	*/
+/*	$NetBSD: record.c,v 1.52 2011/09/21 14:32:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003, 2005, 2010 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.51 2011/08/28 01:17:48 joerg Exp $");
+__RCSID("$NetBSD: record.c,v 1.52 2011/09/21 14:32:14 christos Exp $");
 #endif
 
 
@@ -755,7 +755,7 @@ rewrite_header(void)
 	if (outfd == STDOUT_FILENO)
 		return;
 
-	if (lseek(outfd, SEEK_SET, 0) < 0)
+	if (lseek(outfd, (off_t)0, SEEK_SET) == (off_t)-1)
 		err(1, "could not seek to start of file for header rewrite");
 	write_header();
 }
