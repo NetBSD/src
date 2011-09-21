@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.31 2011/09/04 20:27:05 joerg Exp $	*/
+/*	$NetBSD: gencat.c,v 1.32 2011/09/21 14:33:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.31 2011/09/04 20:27:05 joerg Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.32 2011/09/21 14:33:35 christos Exp $");
 #endif
 
 /***********************************************************
@@ -186,7 +186,7 @@ main(int argc, char *argv[])
 			curfile = catfile;
 			updatecat = 1;
 			MCReadCat(ofd);
-			if (lseek(ofd, SEEK_SET, 0) < 0) {
+			if (lseek(ofd, (off_t)0, SEEK_SET) == (off_t)-1) {
 				err(1, "Unable to seek on %s", catfile);
 				/* NOTREACHED */
 			}
