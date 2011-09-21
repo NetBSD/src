@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.38 2011/07/17 20:54:41 joerg Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.39 2011/09/21 08:57:12 gsutre Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -389,12 +389,12 @@ check_label(struct biosdisk *d, daddr_t sector)
 	ingest_label(d, lp);
 
 #ifdef _STANDALONE
-	bi_disk.labelsector = d->boff + LABELSECTOR;
+	bi_disk.labelsector = sector + LABELSECTOR;
 	bi_disk.label.type = lp->d_type;
 	memcpy(bi_disk.label.packname, lp->d_packname, 16);
 	bi_disk.label.checksum = lp->d_checksum;
 
-	bi_wedge.matchblk = d->boff + LABELSECTOR;
+	bi_wedge.matchblk = sector + LABELSECTOR;
 	bi_wedge.matchnblks = 1;
 
 	md5(bi_wedge.matchhash, d->buf, d->ll.secsize);
