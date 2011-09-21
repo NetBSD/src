@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.155 2011/08/29 04:12:45 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.156 2011/09/21 15:36:33 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.155 2011/08/29 04:12:45 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.156 2011/09/21 15:36:33 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.155 2011/08/29 04:12:45 manu Exp $
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
+
+extern struct lwp *updateproc;
 
 int	puffs_vnop_lookup(void *);
 int	puffs_vnop_create(void *);
@@ -1357,7 +1359,21 @@ puffs_vnop_fsync(void *v)
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	int error, dofaf;
 
-	mutex_enter(&pn->pn_sizemtx);
+	/*
+	 * Make sure ioflush does not get stuck in low
+	 * memory conditions: it should not wait for the
+	 * mutex.
+	 */
+	if (curlwp == updateproc)
+		KASSERT((ap->a_flags & FSYNC_WAIT) == 0);
+
+	if (ap->a_flags & FSYNC_WAIT) {
+		mutex_enter(&pn->pn_sizemtx);
+	} else {
+		if (mutex_tryenter(&pn->pn_sizemtx) == 0)
+			return EDEADLK;
+	}
+
 	error = flushvncache(vp, ap->a_offlo, ap->a_offhi,
 	    (ap->a_flags & FSYNC_WAIT) == FSYNC_WAIT);
 	if (error)
@@ -2211,12 +2227,13 @@ puffs_vnop_strategy(void *v)
 	struct buf *bp;
 	size_t argsize;
 	size_t tomove, moved;
-	int error, dofaf, dobiodone;
+	int error, dofaf, cansleep, dobiodone;
 
 	pmp = MPTOPUFFSMP(vp->v_mount);
 	bp = ap->a_bp;
 	error = 0;
 	dofaf = 0;
+	cansleep = 0;
 	pn = VPTOPP(vp);
 	park_rw = NULL; /* explicit */
 	dobiodone = 1;
@@ -2264,8 +2281,9 @@ puffs_vnop_strategy(void *v)
 	/* allocate transport structure */
 	tomove = PUFFS_TOMOVE(bp->b_bcount, pmp);
 	argsize = sizeof(struct puffs_vnmsg_rw);
+	cansleep = (dofaf || (curlwp == updateproc)) ? 0 : 1; 
 	error = puffs_msgmem_alloc(argsize + tomove, &park_rw,
-	    (void *)&rw_msg, dofaf ? 0 : 1);
+	    (void *)&rw_msg, cansleep);
 	if (error)
 		goto out;
 	RWARGS(rw_msg, 0, tomove, bp->b_blkno << DEV_BSHIFT, FSCRED);
