@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.145 2011/08/08 19:10:33 dyoung Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.146 2011/09/21 18:10:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -378,6 +378,19 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	MT_FTABLE	5	/* fragment reassembly header */
 #define MT_CONTROL	6	/* extra-data protocol message */
 #define MT_OOBDATA	7	/* expedited data  */
+
+#ifdef MBUFTYPES
+static const char *mbuftypes[] = {
+	"mbfree",
+	"mbdata",
+	"mbheader",
+	"mbsoname",
+	"mbsopts",
+	"mbftable",
+	"mbcontrol",
+	"mboobdata",
+};
+#endif
 
 /* flags to m_get/MGET */
 #define	M_DONTWAIT	M_NOWAIT
