@@ -1,4 +1,4 @@
-.\"	$NetBSD: sup.1,v 1.19 2011/09/21 19:34:54 christos Exp $
+.\"	$NetBSD: sup.1,v 1.20 2011/09/21 20:12:11 wiz Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -54,7 +54,8 @@ sup \- software upgrade protocol
 .SH "DESCRIPTION"
 .I Sup
 is a program used for upgrading collections of files from other machines
-to your machine.  You execute
+to your machine.
+You execute
 .IR sup ,
 the
 .I client
@@ -66,22 +67,28 @@ The file server process cooperates with
 to determine which files of the collection need to be upgraded on
 your machine.
 
-Sup collections can have multiple releases. One use for such releases is
-to provide different versions of the same files. At CMU, for example,
+Sup collections can have multiple releases.
+One use for such releases is
+to provide different versions of the same files.
+At CMU, for example,
 system binaries have alpha, beta and default release corresponding to
-different staging levels of the software. We also use release names
+different staging levels of the software.
+We also use release names
 default and minimal to provide complete releases or subset releases.
 In both of these cases, it only makes sense to sup one release of the
-collections. Releases have also been used in private or external sups to
+collections.
+Releases have also been used in private or external sups to
 provide subsets of collections where it makes sense to pick up several
-of the releases. For example the Mach 3.0 kernel sources has a default
+of the releases.
+For example the Mach 3.0 kernel sources has a default
 release of machine independent sources and separate releases of
 machine dependent sources for each supported platform.
 
 In performing an upgrade, the file server constructs a list of
-files included in the specified release of the collection.  The list is sent to your machine,
-which determines which files are needed.  Those files are then sent
-from the file server.
+files included in the specified release of the collection.
+The list is sent to your machine,
+which determines which files are needed.
+Those files are then sent from the file server.
 It will be most useful to run
 .I sup
 as a daemon each night so you will continually have the latest version of the
@@ -89,15 +96,17 @@ files in the needed collections.
 
 The only required argument to
 .I sup
-is the name of a supfile.  It must either be given explicitly on the command
-line, or the
+is the name of a supfile.
+It must either be given explicitly on the command line, or the
 .B -s
-flag must be specified.  If the
+flag must be specified.
+If the
 .B -s
 flag is given, the system supfile will be used and a supfile command argument
-should not be specified.  The list of collections is optional and if specified
-will be the only collections upgraded.  The following flags affect all
-collections specified:
+should not be specified.
+The list of collections is optional and if specified
+will be the only collections upgraded.
+The following flags affect all collections specified:
 .TP
 .B -s
 As described above.
@@ -131,15 +140,18 @@ ports reserved for debugging purposes.
 .PP
 
 The remaining flags affect all collections unless an explicit list
-of collections are given with the flags.  Multiple flags may be
-specified together that affect the same collections.  For the sake
+of collections are given with the flags.
+Multiple flags may be
+specified together that affect the same collections.
+For the sake
 of convenience, any flags that always affect all collections can be
-specified with flags that affect only some collections.  For
-example,
+specified with flags that affect only some collections.
+For example,
 .B sup -sde=coll1,coll2
 would perform a system upgrade,
 and the first two collections would allow both file deletions and
-command executions.  Note that this is not the same command as
+command executions.
+Note that this is not the same command as
 .B sup -sde=coll1 coll2,
 which would perform a system upgrade of
 just the coll2 collection and would ignore the flags given for the
@@ -148,10 +160,12 @@ coll1 collection.
 .B -a
 All files in the collection will be copied from
 the repository, regardless of their status on the
-current machine.  Because of this, it is a very
+current machine.
+Because of this, it is a very
 expensive operation and should only be done for
 small collections if data corruption is suspected
-and been confirmed.  In most cases, the
+and been confirmed.
+In most cases, the
 .B -o
 flag should be sufficient.
 .TP
@@ -163,7 +177,8 @@ flag if given, or the
 supfile
 option is specified, the contents of regular files
 on the local system will be saved before they are
-overwritten with new data.  The file collection maintainer
+overwritten with new data.
+The file collection maintainer
 can designate specific files to be
 worthy of backing up whenever they are upgraded.
 However, such
@@ -204,7 +219,8 @@ flag or the
 .B canonicalize
 supfile option, canonicalize all pathnames upon reception to make sure
 local changes from directories to symlinks and vice versa have not happened
-behind sup's back, and attempt to repair them. This option is expensive.
+behind sup's back, and attempt to repair them.
+This option is expensive.
 .TP
 .TP
 .B -d
@@ -226,12 +242,12 @@ supfile option.
 .TP
 .B -e
 Sup will execute commands sent from the repository
-that should be run when a file is upgraded.  If
-the
+that should be run when a file is upgraded.
+If the
 .B -e
 flag is omitted, Sup will print a message
-that specifies the command to execute.  This may
-also be specified in a supfile with the
+that specifies the command to execute.
+This may also be specified in a supfile with the
 .B execute
 option.
 .TP
@@ -247,14 +263,15 @@ supfile option.
 .B -f
 A
 .I list-only
-upgrade will be performed.  Messages
-will be printed that indicate what would happen if
+upgrade will be performed.
+Messages will be printed that indicate what would happen if
 an actual upgrade were done.
 .TP
 .B -k
 .I Sup
 will check the modification times of
-files on the local disk before updating them.  Only files which are
+files on the local disk before updating them.
+Only files which are
 newer on the repository than on the local disk will be updated;
 files that are newer on the local disk will be kept as they are.
 This may also be specified in a supfile with the
@@ -274,10 +291,12 @@ supfile option.
 Normally,
 .I sup
 will not upgrade a collection if the
-repository is on the same machine.  This allows
+repository is on the same machine.
+This allows
 users to run upgrades on all machines without
 having to make special checks for the repository
-machine.  If the
+machine.
+If the
 .B -l
 flag is specified, collections
 will be upgraded even if the repository is local.
@@ -307,10 +326,12 @@ but send mail to the specified user.
 .I Sup
 will normally only upgrade files that have
 changed on the repository since the last time an
-upgrade was performed. That is, if the file in the
+upgrade was performed.
+That is, if the file in the
 repository is newer than the date stored in the
 .I when
-file on the client.  The
+file on the client.
+The
 .B -o
 flag, or the
 .B old
@@ -353,7 +374,8 @@ supfile option.
 Normally,
 .I sup
 will only print messages if there
-are problems.  This flag causes
+are problems.
+This flag causes
 .I sup
 to also print
 messages during normal progress showing what
@@ -410,7 +432,8 @@ from upgrading the same collection at the same time.
 This file contains a list of files and directories, one per line, that
 have been upgraded by
 .I sup
-in the past.  This information is used when the
+in the past.
+This information is used when the
 .B delete
 option, or the
 .B -d
@@ -431,10 +454,11 @@ The options are:
 .TP
 .BI release= releasename
 If a collection contains multiple releases, you need to specify which
-release you want. You can only specify one release per line, so
+release you want.
+You can only specify one release per line, so
 if you want multiple releases from the same collections, you will need
-to specify the collection more than once. In this case, you should use
-the
+to specify the collection more than once.
+In this case, you should use the
 .I use-rel-suffix
 option in the supfile
 to keep the last and when files for the two releases separate.
@@ -557,7 +581,8 @@ Causes the release name to be used as a suffix to the
 .I last
 and
 .I when
-files. This is necessary whenever you are supping more than one
+files.
+This is necessary whenever you are supping more than one
 release in the same collection.
 .DT
 .PP
@@ -610,10 +635,11 @@ listed.
 The name
 .B LOCAL
 can be used to grant access to all hosts on the local
-network. The host name may be a  numeric network address
-or a network name. If a crypt appears on the same line as
-the host name, that crypt will be used for that host. Otherwise,
-the crypt appearing in the
+network.
+The host name may be a  numeric network address or a network name.
+If a crypt appears on the same line as
+the host name, that crypt will be used for that host.
+Otherwise, the crypt appearing in the
 .I crypt
 file, if any will be used.
 .TP
@@ -634,8 +660,8 @@ This file describes the actual list of files to be included in this
 file collection, in a format described below.
 .TP
 .B releases
-This file describes any releases that the collection may have. Each
-line starts with the release name and then may specify any of the following
+This file describes any releases that the collection may have.
+Each line starts with the release name and then may specify any of the following
 files:
 .I prefix=\*[Lt]dirname\*[Gt]
 to use a different parent directory for the files in this release.
@@ -647,8 +673,10 @@ the scan files for the different releases separate.
 .I host=\*[Lt]hostfile\*[Gt]
 to allow different host restrictions for this release.
 .I next=\*[Lt]release\*[Gt]
-used to chain releases together. This has the effect of making one release
-be a combination of several other releases. If the same file appears in
+used to chain releases together.
+This has the effect of making one release
+be a combination of several other releases.
+If the same file appears in
 more than one chained release, the first one found will be used.
 If these files are not specified for a release the default names:
 prefix,list,scan and host will be used.
@@ -657,15 +685,17 @@ prefix,list,scan and host will be used.
 This file, created by
 .IR supscan ,
 is the list of filenames that correspond to the instructions in the
-list file.  The scan file is only used for frequently updated file
-collections; it makes the file server run much faster.  See
+list file.
+The scan file is only used for frequently updated file
+collections; it makes the file server run much faster.
+See
 .IR supservers (8)
 for more information.
 .TP
 .B lock
 As previously mentioned, this file is used to indicate that the
-collection should be locked while upgrades are in progress.  All
-file servers will try to get shared access to the lock file with
+collection should be locked while upgrades are in progress.
+All file servers will try to get shared access to the lock file with
 .IR flock (2).
 .TP
 .B logfile
@@ -678,7 +708,8 @@ the host requesting the upgrade.
 It should be noted that
 .I sup
 allows several different named collections to use the same base
-directory.  Separate encryption, remote host access, and file lists
+directory.
+Separate encryption, remote host access, and file lists
 are used for each collection, since these files reside in subdirectories
 .I \*[Lt]basedir\*[Gt]/sup/\*[Lt]coll.name\*[Gt].
 
@@ -694,7 +725,8 @@ The
 below (except \fIexec-command\fR)
 may all include wild-cards and meta-characters as used by
 .IR csh (1)
-including *, ?, [...], and {...}.  The commands are:
+including *, ?, [...], and {...}.
+The commands are:
 .TP
 \fBupgrade\fR \fIfilename\fR ...
 The specified file(s) (or directories) will be included in the list
@@ -720,8 +752,11 @@ except /usr/vision/exp (and its subdirectories and files).
 .TP
 \fBomitany\fR \fIpattern\fR ...
 The specified patterns are compared against the files in the upgrade
-list.  If a pattern matches, the file is omitted.  The omitany command
-currently supports all wild-card patterns except {...}.  Also, the
+list.
+If a pattern matches, the file is omitted.
+The omitany command
+currently supports all wild-card patterns except {...}.
+Also, the
 pattern must match the entire filename, so a leading */, or a trailing /*,
 may be necessary in the pattern.
 .TP
@@ -745,14 +780,15 @@ group, mode and modified time of a file.
 .TP
 \fBsymlink\fR \fIfilename\fR ...
 The specified file(s) are to be treated as symbolic links
-and will be transferred as such and not followed.  By default,
+and will be transferred as such and not followed.
+By default,
 .I sup
 will follow symbolic links.
 .TP
 \fBrsymlink\fR \fIdirname\fR ...
 All symbolic links in the specified directory and its
-subdirectories are to be treated as symbolic links. That
-is the links will be transferred and not the files to which
+subdirectories are to be treated as symbolic links.
+That is the links will be transferred and not the files to which
 they point.
 .TP
 \fBexecute\fR \fIexec-command\fR (\fIfilename\fR ...)
@@ -779,14 +815,16 @@ flag to allow the automatic execution of command files.
 \fBinclude\fR \fIlistfile\fR ...
 The specified
 .I listfiles
-will be read at this point.  This is useful
+will be read at this point.
+This is useful
 when one collection subsumes other collections; the larger collection
 can simply specify the listfiles for the smaller collections contained
 within it.
 .DT
 .PP
 The order in which the command lines appear in the list file does not
-matter.  Blank lines may appear freely in the list file.
+matter.
+Blank lines may appear freely in the list file.
 .SH "FILES"
 Files on the client machine for
 .IR sup :
@@ -825,7 +863,8 @@ collections
 .TP
 \*[Lt]\fIbase-directory\fR\*[Gt]\fB/sup/\fR\*[Lt]\fIcollection\fR\*[Gt]\fB/crypt
 data encryption key for a
-collection. the owner of this file is the
+collection.
+the owner of this file is the
 default account used when data encryption is specified
 .TP
 \*[Lt]\fIbase-directory\fR\*[Gt]\fB/sup/\fR\*[Lt]\fIcollection\fR\*[Gt]\fB/host
@@ -857,13 +896,11 @@ default base directory for a file collection
 .br
 \fIThe SUP Software Upgrade Protocol\fR, S. A. Shafer,
 CMU Computer Science Department, 1985.
-.SH "EXAMPLE"
-\*[Lt]example\*[Gt]
 .SH "BUGS"
 The encryption mechanism should be strengthened, although it's
 not trivial.
 .PP
-.I sup 
+.I sup
 can delete files it should not with the delete option.
 This is because in the delete pass, it tries to delete all files
 in the old list that don't exist in the new list.
