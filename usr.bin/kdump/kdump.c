@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.113 2011/09/02 20:11:42 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.114 2011/09/21 17:48:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.113 2011/09/02 20:11:42 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.114 2011/09/21 17:48:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: kdump.c,v 1.113 2011/09/02 20:11:42 christos Exp $");
 #include <sys/ktrace.h>
 #include <sys/ioctl.h>
 #include <sys/ptrace.h>
+#include <sys/socket.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -64,6 +65,7 @@ __RCSID("$NetBSD: kdump.c,v 1.113 2011/09/02 20:11:42 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <vis.h>
+#include <util.h>
 
 #include "ktrace.h"
 #include "setemul.h"
@@ -1011,23 +1013,86 @@ ktrcsw(struct ktr_csw *cs)
 }
 
 static void
+ktruser_msghdr(const char *name, const void *buf, size_t len)
+{
+	struct msghdr m;
+
+	if (len != sizeof(m))
+		warnx("%.*s: len %zu != %zu", KTR_USER_MAXIDLEN, name, len,
+		    sizeof(m));
+	memcpy(&m, buf, len);
+	printf("%.*s: [name=%p, namelen=%zu, iov=%p, iovlen=%zu, control=%p, "
+	    "controllen=%zu, flags=%x]\n", KTR_USER_MAXIDLEN, name,
+	    m.msg_name, (size_t)m.msg_namelen, m.msg_iov, (size_t)m.msg_iovlen,
+	    m.msg_control, (size_t)m.msg_controllen, m.msg_flags);
+}
+
+static void
+ktruser_soname(const char *name, const void *buf, size_t len)
+{
+	char fmt[512];
+	struct sockaddr_storage ss;
+
+	memset(&ss, 0, sizeof(ss));
+	memcpy(&ss, buf, len);
+	sockaddr_snprintf(fmt, sizeof(fmt), "%a", (struct sockaddr *)&ss);
+	printf("%.*s: [%s]\n", KTR_USER_MAXIDLEN, name, fmt);
+}
+
+static void
+ktruser_control(const char *name, const void *buf, size_t len)
+{
+	struct cmsghdr m;
+
+	if (len < sizeof(m))
+		warnx("%.*s: len %zu < %zu", KTR_USER_MAXIDLEN, name, len,
+		    sizeof(m));
+	memcpy(&m, buf, sizeof(m));
+	printf("%.*s: [len=%zu, level=%d, type=%d]\n", KTR_USER_MAXIDLEN, name,
+	    (size_t)m.cmsg_len, m.cmsg_level, m.cmsg_type);
+}
+
+static void
+ktruser_misc(const char *name, const void *buf, size_t len)
+{
+	size_t i;
+	const char *dta = buf;
+
+	printf("%.*s: %zu, ", KTR_USER_MAXIDLEN, name, len);
+	for (i = 0; i < len; i++)
+		printf("%02x", (unsigned int) dta[i]);
+	printf("\n");
+}
+
+static struct {
+	const char *name;
+	void (*func)(const char *, const void *, size_t);
+} nv[] = {
+	{ "msghdr", ktruser_msghdr },
+	{ "mbsoname", ktruser_soname },
+	{ "mbcontrol", ktruser_control },
+	{ NULL,	ktruser_misc },
+};
+
+static void
 ktruser(struct ktr_user *usr, int len)
 {
-	int i;
 	unsigned char *dta;
 
 	len -= sizeof(struct ktr_user);
-	printf("%.*s:", KTR_USER_MAXIDLEN, usr->ktr_id);
 	dta = (unsigned char *)(usr + 1);
 	if (word_size) {
+		printf("%.*s:", KTR_USER_MAXIDLEN, usr->ktr_id);
 		printf("\n");
 		hexdump_buf(dta, len, word_size);
 		return;
 	}
-	printf(" %d, ", len);
-	for (i = 0; i < len; i++)
-		printf("%02x", (unsigned int) dta[i]);
-	printf("\n");
+	for (size_t j = 0; j < __arraycount(nv); j++)
+		if (nv[j].name == NULL ||
+		    strncmp(nv[j].name, usr->ktr_id, KTR_USER_MAXIDLEN) == 0) {
+			(*nv[j].func)(usr->ktr_id, dta, len);
+			break;
+		}
 }
 
 static void
