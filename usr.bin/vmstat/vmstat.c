@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.183 2011/09/06 18:44:46 joerg Exp $ */
+/* $NetBSD: vmstat.c,v 1.184 2011/09/21 12:08:02 jym Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.183 2011/09/06 18:44:46 joerg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.184 2011/09/21 12:08:02 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -1486,8 +1486,7 @@ dopoolcache(int verbose)
 
 		cpuhit = 0;
 		cpumiss = 0;
-		for (i = 0; i < sizeof(pc->pc_cpus) / sizeof(pc->pc_cpus[0]);
-		    i++) {
+		for (i = 0; i < __arraycount(pc->pc_cpus); i++) {
 		    	if ((addr = pc->pc_cpus[i]) == NULL)
 		    		continue;
 			deref_kptr(addr, cc, sizeof(*cc),
