@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2005/12/29 16:01:30 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2011/09/21 16:13:51 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -6,7 +6,7 @@
 FLOPPYBASE=	boot
 FLOPPYSIZE=	1989	# 2D excluding cylinder 0 side 0
 FLOPPYFILES=	boot netbsd
-FLOPPYMAX=	2
+FLOPPYMAX=	3
 FLOPPYSUFFIX=	.fs
 
 FLOPPY_RELEASEDIR=	installation/floppy
