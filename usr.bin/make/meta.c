@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.23 2011/09/02 16:26:21 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.24 2011/09/21 14:30:47 christos Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -159,7 +159,7 @@ filemon_read(FILE *mfp, int fd)
 	return;
     }
     /* rewind */
-    lseek(fd, SEEK_SET, 0);
+    (void)lseek(fd, (off_t)0, SEEK_SET);
     if ((fp = fdopen(fd, "r")) == NULL)
 	err(1, "Could not read build monitor file '%d'", fd);
 
