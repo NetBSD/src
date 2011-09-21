@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/08/17 22:26:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/09/21 18:15:59 jakllsch Exp $
 
 PROG=		gptmbr.bin
 SRCS=		gptmbr.S
@@ -7,4 +7,4 @@ AFLAGS.gptmbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 .include <../Makefile.mbr>
 
-LOADADDR=	0
+LOADADDR=	0x600
