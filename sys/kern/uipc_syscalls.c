@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.146 2011/07/27 14:35:34 uebayasi Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.147 2011/09/21 18:10:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.146 2011/07/27 14:35:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.147 2011/09/21 18:10:25 christos Exp $");
 
 #include "opt_pipe.h"
 
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.146 2011/07/27 14:35:34 uebayasi
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/buf.h>
+#define MBUFTYPES
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
@@ -1224,7 +1225,7 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, int type)
 		(void) m_free(m);
 		return (error);
 	}
-	ktrkuser("sockargs", mtod(m, void *), buflen);
+	ktrkuser(mbuftypes[type], mtod(m, void *), buflen);
 	*mp = m;
 	if (type == MT_SONAME) {
 		sa = mtod(m, struct sockaddr *);
