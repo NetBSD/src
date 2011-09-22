@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2011/09/21 02:12:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/09/22 20:55:17 mrg Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
+
+# XXX
+NOLINT=	# defined
 
 .include <bsd.own.mk>
 DIST=	${NETBSDSRCDIR}/external/gpl3/gcc/dist
@@ -34,18 +37,15 @@ SRCS= \
 	affinity.c
 
 GOMP_MACHINE_ARCH?=	${MACHINE_ARCH}
+ARCHDIR=		${.CURDIR}/arch/${GOMP_MACHINE_ARCH}
 
 CPPFLAGS+= \
 	-DHAVE_CONFIG_H \
 	-I${DIST}/libgomp \
 	-I${DIST}/libgomp/config/posix \
 	-I${DIST}/libgcc \
-	-I${.CURDIR}/arch/${GOMP_MACHINE_ARCH}
+	-I${ARCHDIR}
 CFLAGS+=-pthread
-
-# This is where GCC looks for it.
-FILES=		libgomp.spec
-FILESDIR=	${LIBDIR}
 
 # libgomp.so.1.0 is in GCC 4.5.
 SHLIB_MAJOR=	1
@@ -53,6 +53,14 @@ SHLIB_MINOR=	0
 
 LDFLAGS+=	-Wl,--version-script,${DIST}/libgomp/libgomp.map
 
-.PATH:	${DIST}/libgomp ${DIST}/libgomp/config/posix
+.PATH:	${ARCHDIR} ${DIST}/libgomp ${DIST}/libgomp/config/posix
 
 .include <bsd.lib.mk>
+
+.if ${GOMP_MACHINE_ARCH} == ${MACHINE_ARCH}
+# This is where GCC looks for it.
+FILES=		libgomp.spec
+FILESDIR=	${LIBDIR}
+.endif
+
+.include <bsd.files.mk>
