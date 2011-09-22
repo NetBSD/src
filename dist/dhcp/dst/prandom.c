@@ -1,5 +1,5 @@
 #ifndef LINT
-static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/prandom.c,v 1.6 2010/01/26 19:11:00 drochner Exp $";
+static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/prandom.c,v 1.7 2011/09/22 12:38:33 christos Exp $";
 #endif
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -26,6 +26,7 @@ static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/prandom.c
 #include <fcntl.h>
 #include <time.h>
 #include <dirent.h>
+#include <err.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -454,6 +455,8 @@ do_hash(dst_work *work, prand_hash *hash, const u_char *input, unsigned size)
 	if (hash->step > 1) {	/* if using subset of input data */
 		tmp_size = size / hash->step + 2;
 		abuf = tp = malloc(tmp_size);
+		if (tp == NULL)
+			err(1, "malloc");
 		tmp = tp;
 		for (cnt = 0, i = hash->curr; i < size; i += hash->step, cnt++)
 			*(tp++) = input[i];
