@@ -1,4 +1,4 @@
-/*	$NetBSD: configfile.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
+/*	$NetBSD: configfile.c,v 1.3 2011/09/22 16:05:11 he Exp $	*/
 
 /*
  *  Id: f1650b45a91ec95af830ff76041cc4f0048e60f0
@@ -131,9 +131,9 @@ configFileLoad( char const* pzFile )
     pRes = optionLoadNested(pzText, pzFile, strlen(pzFile));
 
     if (pRes == NULL) {
-        int err = errno;
+        int e = errno;
         text_munmap( &cfgfile );
-        errno = err;
+        errno = e;
     } else
         text_munmap( &cfgfile );
 
@@ -376,7 +376,7 @@ optionNextValue(tOptionValue const * pOVList,tOptionValue const * pOldOV )
 {
     tArgList*     pAL;
     tOptionValue* pRes = NULL;
-    int           err  = EINVAL;
+    int           e  = EINVAL;
 
     if ((pOVList == NULL) || (pOVList->valType != OPARG_TYPE_HIERARCHY)) {
         errno = EINVAL;
@@ -391,18 +391,18 @@ optionNextValue(tOptionValue const * pOVList,tOptionValue const * pOldOV )
             tOptionValue* pNV = *(papNV++);
             if (pNV == pOldOV) {
                 if (ct == 0) {
-                    err = ENOENT;
+                    e = ENOENT;
 
                 } else {
-                    err  = 0;
+                    e  = 0;
                     pRes = (tOptionValue*)*papNV;
                 }
                 break;
             }
         }
     }
-    if (err != 0)
-        errno = err;
+    if (e != 0)
+        errno = e;
     return pRes;
 }
 

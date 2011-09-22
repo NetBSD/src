@@ -1,4 +1,4 @@
-/*	$NetBSD: pathfind.c,v 1.3 2011/09/22 12:40:48 christos Exp $	*/
+/*	$NetBSD: pathfind.c,v 1.4 2011/09/22 16:05:11 he Exp $	*/
 
 /*  -*- Mode: C -*-  */
 
@@ -13,6 +13,8 @@
  */
 
 /* Code: */
+
+#include <err.h>
 
 #include "compat.h"
 
