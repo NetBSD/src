@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.122 2011/08/10 11:39:45 cherry Exp $
+#	$NetBSD: files.xen,v 1.123 2011/09/22 23:02:34 jym Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -176,7 +176,7 @@ device xenbus {[id = -1]}
 attach xenbus at xendevbus
 file arch/xen/xenbus/xenbus_client.c xenbus needs-flag
 file arch/xen/xenbus/xenbus_comms.c xenbus needs-flag
-file arch/xen/xenbus/xenbus_dev.c xenbus & dom0ops needs-flag
+file arch/xen/xenbus/xenbus_dev.c xenbus needs-flag
 file arch/xen/xenbus/xenbus_probe.c xenbus needs-flag
 file arch/xen/xenbus/xenbus_xs.c xenbus needs-flag
 
