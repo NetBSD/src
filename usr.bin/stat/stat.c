@@ -1,7 +1,7 @@
-/*	$NetBSD: stat.c,v 1.35 2011/09/06 18:31:22 joerg Exp $ */
+/*	$NetBSD: stat.c,v 1.36 2011/09/22 20:23:56 apb Exp $ */
 
 /*
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.35 2011/09/06 18:31:22 joerg Exp $");
+__RCSID("$NetBSD: stat.c,v 1.36 2011/09/22 20:23:56 apb Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: stat.c,v 1.35 2011/09/06 18:31:22 joerg Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <vis.h>
 
 #if HAVE_STRUCT_STAT_ST_FLAGS
 #define DEF_F "%#Xf "
@@ -365,7 +366,12 @@ output(const struct stat *st, const char *file,
     const char *statfmt, int fn, int nonl, int quiet)
 {
 	int flags, size, prec, ofmt, hilo, what;
-	char buf[PATH_MAX + 4 + 1];
+	/*
+	 * buf size is enough for an item of length PATH_MAX,
+	 * multiplied by 4 for vis encoding, plus 4 for symlink
+	 * " -> " prefix, plus 1 for \0 terminator.
+	 */
+	char buf[PATH_MAX * 4 + 4 + 1];
 	const char *subfmt;
 	int nl, t, i;
 
@@ -436,6 +442,7 @@ output(const struct stat *st, const char *file,
 		 * the leading " -> " if STRING is explicitly specified.  The
 		 * sizerdev datum will generate rdev output for character or
 		 * block devices, and size output for all others.
+		 * For STRING output, the # format requests vis encoding.
 		 */
 		flags = 0;
 		do {
@@ -564,13 +571,18 @@ format1(const struct stat *st,
 	u_int64_t data;
 	char *stmp, lfmt[24], tmp[20];
 	const char *sdata;
-	char smode[12], sid[12], path[PATH_MAX + 4];
+	char smode[12], sid[12], path[PATH_MAX + 4], visbuf[PATH_MAX * 4 + 4];
 	struct passwd *pw;
 	struct group *gr;
 	struct tm *tm;
 	time_t secs;
 	long nsecs;
-	int l, small, formats, gottime, shift;
+	int l;
+	int formats;	/* bitmap of allowed formats for this datum */
+	int small;	/* true if datum is a small integer */
+	int gottime;	/* true if secs and nsecs are valid */
+	int shift;	/* powers of 2 to scale numbers before printing */
+	size_t prefixlen; /* length of constant prefix for string data */
 
 	formats = 0;
 	small = 0;
@@ -578,6 +590,7 @@ format1(const struct stat *st,
 	secs = 0;
 	nsecs = 0;
 	shift = 0;
+	prefixlen = 0;
 
 	/*
 	 * First, pick out the data and tweak it based on hilo or
@@ -814,6 +827,7 @@ format1(const struct stat *st,
 				path[0] = '\0';
 			}
 			sdata = path + (ofmt == FMTF_STRING ? 0 : 4);
+			prefixlen = (ofmt == FMTF_STRING ? 4 : 0);
 		}
 
 		formats = FMTF_STRING;
@@ -835,6 +849,7 @@ format1(const struct stat *st,
 			}
 			path[l + 4] = '\0';
 			sdata = path + (ofmt == FMTF_STRING ? 0 : 4);
+			prefixlen = (ofmt == FMTF_STRING ? 4 : 0);
 		}
 		else {
 			linkfail = 1;
@@ -976,6 +991,18 @@ format1(const struct stat *st,
 	 */
 	if (hilo != 0 || (ofmt & formats) == 0)
 		errx(1, "%.*s: bad format", (int)flen, fmt);
+
+	/*
+	 * FLAG_POUND with FMTF_STRING means use vis(3) encoding.
+	 * First prefixlen chars are not encoded.
+	 */
+	if ((flags & FLAG_POUND) != 0 && ofmt == FMTF_STRING) {
+		flags &= !FLAG_POUND;
+		strncpy(visbuf, sdata, prefixlen);
+		strnvis(visbuf + prefixlen, sizeof(visbuf) - prefixlen,
+		    sdata + prefixlen, VIS_WHITE | VIS_OCTAL | VIS_CSTYLE);
+		sdata = visbuf;
+	}
 
 	/*
 	 * Assemble the format string for passing to printf(3).
