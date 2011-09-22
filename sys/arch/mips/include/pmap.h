@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.60 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.61 2011/09/22 05:08:52 macallan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -311,6 +311,7 @@ struct vm_page *mips_pmap_alloc_poolpage(int);
 
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
 #define PGC_NOCACHE	0x4000000000000000ULL
+#define PGC_PREFETCH	0x2000000000000000ULL
 #endif
 
 #define	__HAVE_VM_PAGE_MD
