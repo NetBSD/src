@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.34 2011/09/20 00:12:25 jym Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.35 2011/09/22 23:02:35 jym Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.34 2011/09/20 00:12:25 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.35 2011/09/22 23:02:35 jym Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -627,14 +627,14 @@ xenbus_probe_init(void *unused)
 		
 		xen_start_info.store_evtchn = op.u.alloc_unbound.port;
 
-		/* And finally publish the above info in /kern/xen */
-		xenbus_kernfs_init();
-
 		DELAY(1000);
 #else /* DOM0OPS */
 		kthread_exit(0); /* can't get a working xenstore in this case */
 #endif /* DOM0OPS */
 	}
+
+	/* Publish xenbus and Xenstore info in /kern/xen */
+	xenbus_kernfs_init();
 
 	/* register event handler */
 	xb_init_comms(xenbus_dev);
