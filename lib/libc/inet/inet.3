@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet.3,v 1.1 2004/05/20 23:13:02 christos Exp $
+.\"	$NetBSD: inet.3,v 1.2 2011/09/22 18:21:58 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 30, 2003
+.Dd September 22, 2011
 .Dt INET 3
 .Os
 .Sh NAME
@@ -119,6 +119,11 @@ or some other binary form, in network byte order) to presentation format
 It returns NULL if a system error occurs (in which case,
 .Va errno
 will have been set), or it returns a pointer to the destination string.
+The
+.Ar size
+parameter is the size of the
+.Ar buf
+argument.
 .Pp
 The routine
 .Fn inet_ntoa
