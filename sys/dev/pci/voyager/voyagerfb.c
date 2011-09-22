@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.4 2011/09/20 06:15:02 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.5 2011/09/22 06:16:13 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.4 2011/09/20 06:15:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.5 2011/09/22 06:16:13 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,7 +424,7 @@ voyagerfb_mmap(void *v, void *vs, off_t offset, int prot)
 	/* 'regular' framebuffer mmap()ing */
 	if (offset < sc->sc_fbsize) {
 		pa = bus_space_mmap(sc->sc_memt, sc->sc_fb + offset, 0, prot,
-		    BUS_SPACE_MAP_LINEAR);
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 		return pa;
 	}
 
@@ -441,14 +441,13 @@ voyagerfb_mmap(void *v, void *vs, off_t offset, int prot)
 
 	if ((offset >= sc->sc_fb) && (offset < (sc->sc_fb + sc->sc_fbsize))) {
 		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
-		    BUS_SPACE_MAP_LINEAR);
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 		return pa;
 	}
 
 	if ((offset >= sc->sc_reg) && 
 	    (offset < (sc->sc_reg + sc->sc_regsize))) {
-		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
-		    BUS_SPACE_MAP_LINEAR);
+		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 0);
 		return pa;
 	}
 
