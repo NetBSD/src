@@ -1,4 +1,4 @@
-.\"	$NetBSD: math.3,v 1.24 2011/09/18 10:58:28 njoly Exp $
+.\"	$NetBSD: math.3,v 1.25 2011/09/22 18:14:09 njoly Exp $
 .\"
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
@@ -48,52 +48,52 @@ Declarations for these functions may be obtained from the include file
 .Ss List of Functions
 .Bl -column "copysignX" "gammaX3XX" "inverse trigonometric funcX"
 .It Sy Name Ta Sy Man page Ta Sy Description Ta Sy Error Bound Dv ( ULP Ns No s)
-.It acos	Xr acos 3	inverse trigonometric function	3
-.It acosh	Xr acosh 3	inverse hyperbolic function	3
-.It asin	Xr asin 3	inverse trigonometric function	3
-.It asinh	Xr asinh 3	inverse hyperbolic function	3
-.It atan	Xr atan 3	inverse trigonometric function	1
-.It atanh	Xr atanh 3	inverse hyperbolic function	3
-.It atan2	Xr atan2 3	inverse trigonometric function	2
-.It cbrt	Xr sqrt 3	cube root	1
-.It ceil	Xr ceil 3	integer no less than	0
-.It copysign	Xr copysign 3	copy sign bit	0
-.It cos	Xr cos 3	trigonometric function	1
-.It cosh	Xr cosh 3	hyperbolic function	3
-.It erf	Xr erf 3	error function	???
-.It erfc	Xr erf 3	complementary error function	???
-.It exp	Xr exp 3	exponential	1
-.It expm1	Xr exp 3	exp(x)\-1	1
-.It fabs	Xr fabs 3	absolute value	0
-.It finite	Xr finite 3	test for finity	0
-.It floor	Xr floor 3	integer no greater than	0
-.It fmod	Xr fmod 3	remainder	???
-.It hypot	Xr hypot 3	Euclidean distance	1
-.It ilogb	Xr ilogb 3	exponent extraction	0
-.It isinf	Xr isinf 3	test for infinity	0
-.It isnan	Xr isnan 3	test for not-a-number	0
-.It j0	Xr j0 3	Bessel function	???
-.It j1	Xr j0 3	Bessel function	???
-.It jn	Xr j0 3	Bessel function	???
-.It lgamma	Xr lgamma 3	log gamma function	???
-.It log	Xr log 3	natural logarithm	1
-.It log10	Xr log 3	logarithm to base 10	3
-.It log1p	Xr log 3	log(1+x)	1
-.It nan	Xr nan 3	return quiet \*(Na	0
-.It nextafter	Xr nextafter 3	next representable number	0
-.It pow	Xr pow 3	exponential x**y	60\-500
-.It remainder	Xr remainder 3	remainder	0
-.It rint	Xr rint 3	round to nearest integer	0
-.It scalbn	Xr scalbn 3	exponent adjustment	0
-.It sin	Xr sin 3	trigonometric function	1
-.It sinh	Xr sinh 3	hyperbolic function	3
-.It sqrt	Xr sqrt 3	square root	1
-.It tan	Xr tan 3	trigonometric function	3
-.It tanh	Xr tanh 3	hyperbolic function	3
-.It trunc	Xr trunc 3	nearest integral value	3
-.It y0	Xr j0 3	Bessel function	???
-.It y1	Xr j0 3	Bessel function	???
-.It yn	Xr j0 3	Bessel function	???
+.It acos Ta Xr acos 3 Ta inverse trigonometric function Ta 3
+.It acosh Ta Xr acosh 3 Ta inverse hyperbolic function Ta 3
+.It asin Ta Xr asin 3 Ta inverse trigonometric function Ta 3
+.It asinh Ta Xr asinh 3 Ta inverse hyperbolic function Ta 3
+.It atan Ta Xr atan 3 Ta inverse trigonometric function Ta 1
+.It atanh Ta Xr atanh 3 Ta inverse hyperbolic function Ta 3
+.It atan2 Ta Xr atan2 3 Ta inverse trigonometric function Ta 2
+.It cbrt Ta Xr sqrt 3 Ta cube root Ta 1
+.It ceil Ta Xr ceil 3 Ta integer no less than Ta 0
+.It copysign Ta Xr copysign 3 Ta copy sign bit Ta 0
+.It cos Ta Xr cos 3 Ta trigonometric function Ta 1
+.It cosh Ta Xr cosh 3 Ta hyperbolic function Ta 3
+.It erf Ta Xr erf 3 Ta error function Ta ???
+.It erfc Ta Xr erf 3 Ta complementary error function Ta ???
+.It exp Ta Xr exp 3 Ta exponential Ta 1
+.It expm1 Ta Xr exp 3 Ta exp(x)\-1 Ta 1
+.It fabs Ta Xr fabs 3 Ta absolute value Ta 0
+.It finite Ta Xr finite 3 Ta test for finity Ta 0
+.It floor Ta Xr floor 3 Ta integer no greater than Ta 0
+.It fmod Ta Xr fmod 3 Ta remainder Ta ???
+.It hypot Ta Xr hypot 3 Ta Euclidean distance Ta 1
+.It ilogb Ta Xr ilogb 3 Ta exponent extraction Ta 0
+.It isinf Ta Xr isinf 3 Ta test for infinity Ta 0
+.It isnan Ta Xr isnan 3 Ta test for not-a-number Ta 0
+.It j0 Ta Xr j0 3 Ta Bessel function Ta ???
+.It j1 Ta Xr j0 3 Ta Bessel function Ta ???
+.It jn Ta Xr j0 3 Ta Bessel function Ta ???
+.It lgamma Ta Xr lgamma 3 Ta log gamma function Ta ???
+.It log Ta Xr log 3 Ta natural logarithm Ta 1
+.It log10 Ta Xr log 3 Ta logarithm to base 10 Ta 3
+.It log1p Ta Xr log 3 Ta log(1+x) Ta 1
+.It nan Ta Xr nan 3 Ta return quiet \*(Na Ta 0
+.It nextafter Ta Xr nextafter 3 Ta next representable number Ta 0
+.It pow Ta Xr pow 3 Ta exponential x**y Ta 60\-500
+.It remainder Ta Xr remainder 3 Ta remainder Ta 0
+.It rint Ta Xr rint 3 Ta round to nearest integer Ta 0
+.It scalbn Ta Xr scalbn 3 Ta exponent adjustment Ta 0
+.It sin Ta Xr sin 3 Ta trigonometric function Ta 1
+.It sinh Ta Xr sinh 3 Ta hyperbolic function Ta 3
+.It sqrt Ta Xr sqrt 3 Ta square root Ta 1
+.It tan Ta Xr tan 3 Ta trigonometric function Ta 3
+.It tanh Ta Xr tanh 3 Ta hyperbolic function Ta 3
+.It trunc Ta Xr trunc 3 Ta nearest integral value Ta 3
+.It y0 Ta Xr j0 3 Ta Bessel function Ta ???
+.It y1 Ta Xr j0 3 Ta Bessel function Ta ???
+.It yn Ta Xr j0 3 Ta Bessel function Ta ???
 .El
 .Ss List of Defined Values
 .Bl -column "M_2_SQRTPIXX" "1.12837916709551257390XX" "2/sqrt(pi)XXX"
