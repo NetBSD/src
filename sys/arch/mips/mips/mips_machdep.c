@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.248 2011/08/27 16:54:14 bouyer Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.249 2011/09/22 05:08:52 macallan Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.248 2011/08/27 16:54:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.249 2011/09/22 05:08:52 macallan Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -719,7 +719,6 @@ mips3_vector_init(const struct splsw *splsw)
 
 	/* Cache error handler */
 	extern char mips3_cache[];
-
 	/*
 	 * Copy down exception vector code.
 	 */
@@ -1186,6 +1185,7 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 #endif
 		opts->mips3_pg_shift = MIPS3_DEFAULT_PG_SHIFT;
 
+	opts->mips3_cca_devmem = CCA_UNCACHED;
 	if (opts->mips_cpu_flags & CPU_MIPS_HAVE_SPECIAL_CCA) {
 		uint32_t cca;
 
@@ -1265,6 +1265,7 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 			mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
 			loongson2_vector_init(splsw);
 			mips_locoresw = loongson2_locoresw;
+			opts->mips3_cca_devmem = CCA_ACCEL;
 			break;
 		}
 #endif /* MIPS3_LOONGSON2 */
@@ -1273,6 +1274,7 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 		mips3_vector_init(splsw);
 		mips_locoresw = mips3_locoresw;
 		break;
+	
 #endif /* MIPS3 */
 #if defined(MIPS32)
 	case CPU_ARCH_MIPS32:

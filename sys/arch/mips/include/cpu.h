@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.105 2011/08/16 06:58:15 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.106 2011/09/22 05:08:52 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -258,6 +258,7 @@ struct mips_options {
 	bool mips_has_llsc;
 	u_int mips3_pg_shift;
 	u_int mips3_pg_cached;
+	u_int mips3_cca_devmem;
 #ifdef MIPS3_PLUS
 #ifdef _LP64
 	uint64_t mips3_xkphys_cached;

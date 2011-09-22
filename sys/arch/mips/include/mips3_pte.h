@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.27 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.28 2011/09/22 05:08:52 macallan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -88,7 +88,11 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
 #define	MIPS3_PG_TO_CCA(cca)	(((cca) >> 3) & 7)
 
 #define	MIPS3_XPHYS_UNCACHED	MIPS_PHYS_TO_XKPHYS(2, 0)
+#define	MIPS3_XPHYS_ACC		MIPS_PHYS_TO_XKPHYS(mips_options.mips3_cca_devmem, 0)
+
 #define	MIPS3_PG_UNCACHED	MIPS3_CCA_TO_PG(2)
+#define	MIPS3_PG_WT		MIPS3_CCA_TO_PG(5)
+#define	MIPS3_PG_ACC		MIPS3_CCA_TO_PG(mips_options.mips3_cca_devmem)
 #ifdef HPCMIPS_L1CACHE_DISABLE		/* MIPS3_L1CACHE_DISABLE */
 #define	MIPS3_DEFAULT_XKPHYS_CACHED	MIPS3_DEFAULT_XKPHYS_UNCACHED
 #define	MIPS3_PG_CACHED		MIPS3_PG_UNCACHED	/* XXX: brain damaged!!! */
@@ -108,11 +112,17 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
 /* Not wr-prot not clean not cached */
 #define	MIPS3_PG_RWNCPAGE	(MIPS3_PG_V | MIPS3_PG_D | MIPS3_PG_UNCACHED)
 
+/* Not wr-prot not clean not cached, accel */
+#define	MIPS3_PG_RWAPAGE	(MIPS3_PG_V | MIPS3_PG_D | MIPS3_PG_ACC)
+
 /* Not wr-prot but clean */
 #define	MIPS3_PG_CWPAGE	(MIPS3_PG_V | MIPS3_PG_CACHED)
 
 /* Not wr-prot but clean not cached*/
 #define	MIPS3_PG_CWNCPAGE	(MIPS3_PG_V | MIPS3_PG_UNCACHED)
+
+/* Not wr-prot but clean not cached, accel*/
+#define	MIPS3_PG_CWAPAGE	(MIPS3_PG_V | MIPS3_PG_ACC)
 
 #define	MIPS3_PG_IOPAGE(cca) \
 	(MIPS3_PG_G | MIPS3_PG_V | MIPS3_PG_D | MIPS3_CCA_TO_PG(cca))
