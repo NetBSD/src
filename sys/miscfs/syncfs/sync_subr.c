@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.45 2011/06/12 03:35:58 rmind Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.46 2011/09/22 21:58:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.45 2011/06/12 03:35:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.46 2011/09/22 21:58:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,8 @@ static kmutex_t		syncer_data_lock; /* short term lock on data structs */
 static int		syncer_delayno = 0;
 static long		syncer_last;
 static synclist_t *	syncer_workitem_pending;
+
+struct lwp *		updateproc;
 
 void
 vn_initialize_syncerd(void)
@@ -219,6 +221,8 @@ sched_sync(void *arg)
 	struct vnode *vp;
 	time_t starttime;
 	bool synced;
+
+	updateproc = curlwp;
 
 	for (;;) {
 		mutex_enter(&syncer_mutex);
