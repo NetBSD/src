@@ -1,4 +1,4 @@
-/*	$NetBSD: pathfind.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
+/*	$NetBSD: pathfind.c,v 1.3 2011/09/22 12:40:48 christos Exp $	*/
 
 /*  -*- Mode: C -*-  */
 
@@ -15,6 +15,7 @@
 /* Code: */
 
 #include "compat.h"
+
 #ifndef HAVE_PATHFIND
 #if defined(__windows__) && !defined(__CYGWIN__)
 char*
@@ -175,6 +176,8 @@ make_absolute( char const *string, char const *dot_path )
     } else {
         if (dot_path && dot_path[0]) {
             result = malloc( 2 + strlen( dot_path ) + strlen( string ) );
+	    if (result == NULL)
+		    err(1, "malloc");
             strcpy( result, dot_path );
             result_len = strlen( result );
             if (result[result_len - 1] != '/') {
@@ -183,6 +186,8 @@ make_absolute( char const *string, char const *dot_path )
             }
         } else {
             result = malloc( 3 + strlen( string ) );
+	    if (result == NULL)
+		    err(1, "malloc");
             result[0] = '.'; result[1] = '/'; result[2] = '\0';
             result_len = 2;
         }
