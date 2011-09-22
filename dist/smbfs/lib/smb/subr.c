@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: subr.c,v 1.6 2011/09/22 12:43:09 christos Exp $");
+__RCSID("$NetBSD: subr.c,v 1.7 2011/09/22 16:08:49 he Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -164,7 +164,7 @@ smb_printb(char *dest, int flags, const struct smb_bitname *bnp) {
 int
 smb_open_rcfile(void)
 {
-	char *home, *fn;
+	char *home;
 	int error;
 
 	home = getenv("HOME");
