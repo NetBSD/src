@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.15 2011/07/10 23:13:22 matt Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.16 2011/09/22 05:08:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.15 2011/07/10 23:13:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.16 2011/09/22 05:08:52 macallan Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -354,6 +354,8 @@ __BS(map)(void *v, bus_addr_t addr, bus_size_t size, int flags,
 #ifdef _LP64
 	if (flags & BUS_SPACE_MAP_CACHEABLE)
 		*hp = MIPS_PHYS_TO_XKPHYS_CACHED(addr);
+	else if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		*hp = MIPS_PHYS_TO_XKPHYS_ACC(addr);
 	else
 		*hp = MIPS_PHYS_TO_XKPHYS_UNCACHED(addr);
 #else
@@ -615,6 +617,7 @@ __BS(mmap)(void *v, bus_addr_t addr, off_t off, int prot, int flags)
 	/* Not supported for I/O space. */
 	return (-1);
 #elif defined(CHIP_MEM)
+	paddr_t ret;
 	struct mips_bus_space_translation mbst;
 	int error;
 
@@ -625,9 +628,13 @@ __BS(mmap)(void *v, bus_addr_t addr, off_t off, int prot, int flags)
 	    &mbst);
 	if (error)
 		return (-1);
-
-	return (mips_btop(mbst.mbst_sys_start +
-	    (addr - mbst.mbst_bus_start) + off));
+	ret = mbst.mbst_sys_start + (addr - mbst.mbst_bus_start) + off;
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE) {
+		printf("!");
+		ret |= PGC_PREFETCH;
+	}
+	
+	return (mips_btop(ret));
 #else
 # error must define one of CHIP_IO or CHIP_MEM
 #endif
