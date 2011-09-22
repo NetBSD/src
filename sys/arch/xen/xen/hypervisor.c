@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.57 2011/09/20 00:12:24 jym Exp $ */
+/* $NetBSD: hypervisor.c,v 1.58 2011/09/22 23:02:35 jym Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.57 2011/09/20 00:12:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.58 2011/09/22 23:02:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,11 +210,8 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif /* NPCI */
 	union hypervisor_attach_cookie hac;
 
-#ifdef DOM0OPS
-	if (xendomain_is_privileged()) {
-		xenkernfs_init();
-	}
-#endif
+	xenkernfs_init();
+
 	xen_version = HYPERVISOR_xen_version(XENVER_version, NULL);
 	aprint_normal(": Xen version %d.%d\n", (xen_version & 0xffff0000) >> 16,
 	       xen_version & 0x0000ffff);
@@ -367,8 +364,6 @@ hypervisor_print(void *aux, const char *parent)
 	return (UNCONF);
 }
 
-#if defined(DOM0OPS)
-
 #define DIR_MODE	(S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 
 kernfs_parentdir_t *kernxen_pkt;
@@ -383,4 +378,3 @@ xenkernfs_init(void)
 	kernfs_addentry(NULL, dkt);
 	kernxen_pkt = KERNFS_ENTOPARENTDIR(dkt);
 }
-#endif /* DOM0OPS */
