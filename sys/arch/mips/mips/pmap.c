@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.203 2011/09/21 16:37:54 macallan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.204 2011/09/22 05:08:52 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.203 2011/09/21 16:37:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.204 2011/09/22 05:08:52 macallan Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1374,6 +1374,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	struct vm_page *pg;
 	bool cached = true;
 	bool wired = (flags & PMAP_WIRED) != 0;
+#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
+	bool prefetch = false;
+#endif
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1415,6 +1418,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (pa & PGC_NOCACHE) {
 		cached = false;
 		pa &= ~PGC_NOCACHE;
+	}
+	if (pa & PGC_PREFETCH) {
+		prefetch = true;
+		pa &= ~PGC_PREFETCH;
 	}
 #endif
 	pg = PHYS_TO_VM_PAGE(pa);
@@ -1459,12 +1466,15 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 * then it must be device memory which may be volatile.
 		 */
 		if (MIPS_HAS_R4K_MMU) {
+#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
+			u_int cca = PMAP_CCA_FOR_PA(pa);
+			if (prefetch) cca = mips_options.mips3_cca_devmem;
+			npte = MIPS3_PG_IOPAGE(cca) &
+			    ~MIPS3_PG_G;
+#else
 			npte = MIPS3_PG_IOPAGE(PMAP_CCA_FOR_PA(pa)) &
 			    ~MIPS3_PG_G;
-			if ((prot & VM_PROT_WRITE) == 0) {
-				npte |= MIPS3_PG_RO;
-				npte &= ~MIPS3_PG_D;
-			}
+#endif
 		} else {
 			npte = (prot & VM_PROT_WRITE) ?
 			    (MIPS1_PG_D | MIPS1_PG_N) :
