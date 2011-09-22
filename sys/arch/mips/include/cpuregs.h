@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.86 2011/08/27 13:23:52 bouyer Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.87 2011/09/22 05:08:52 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -135,6 +135,8 @@
 #define	MIPS_XKPHYS_START	(0x2ULL << 62)
 #define	MIPS_PHYS_TO_XKPHYS_UNCACHED(x) \
 	(MIPS_XKPHYS_START | ((uint64_t)(CCA_UNCACHED) << 59) | (x))
+#define	MIPS_PHYS_TO_XKPHYS_ACC(x) \
+	(MIPS_XKPHYS_START | ((uint64_t)(mips_options.mips3_cca_devmem) << 59) | (x))
 #define	MIPS_PHYS_TO_XKPHYS_CACHED(x) \
 	(mips_options.mips3_xkphys_cached | (x))
 #define	MIPS_PHYS_TO_XKPHYS(cca,x) \
@@ -146,6 +148,7 @@
 
 #define	CCA_UNCACHED		2
 #define	CCA_CACHEABLE		3	/* cacheable non-coherent */
+#define	CCA_ACCEL		7	/* non-cached, write combining */
 
 /* CPU dependent mtc0 hazard hook */
 #if (MIPS32R2 + MIPS64R2) > 0
