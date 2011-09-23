@@ -1,4 +1,4 @@
-/*	$NetBSD: tolower.cpp,v 1.3 2008/04/28 20:23:21 martin Exp $	*/
+/*	$NetBSD: tolower.cpp,v 1.4 2011/09/23 16:00:15 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "stand.h"
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <libsa_string.h>
@@ -46,4 +47,3 @@ tolower(char c)
 }
 __END_DECLS
 LIBSA_NAMESPACE_END
-
