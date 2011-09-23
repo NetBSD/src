@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcmenu.rc,v 1.18 2010/04/06 16:20:28 nonaka Exp $	*/
+/*	$NetBSD: hpcmenu.rc,v 1.19 2011/09/23 16:02:08 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ WMain DIALOG DISCARDABLE 0, 0, 0, 0
 STYLE WS_CHILD
 {
 	// kernel directory
-	COMBOBOX	IDC_MAIN_DIR,			5,  5, 70, 120,
+	COMBOBOX	IDC_MAIN_DIR,			5,  5, 70, 80,
 		WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | WS_TABSTOP |
 		CBS_DROPDOWN | CBS_AUTOHSCROLL
 	// kernel file name
@@ -75,7 +75,7 @@ STYLE WS_CHILD
 		WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP |
 		ES_LEFT | ES_AUTOHSCROLL
 	// platform select
-	COMBOBOX	IDC_MAIN_PLATFORM,		5, 20, 110, 80,
+	COMBOBOX	IDC_MAIN_PLATFORM,		5, 20, 110, 64,
 		WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | WS_TABSTOP |
 		CBS_DROPDOWN | CBS_AUTOHSCROLL
 	// root file system select
