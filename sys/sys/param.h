@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.392 2011/07/11 08:27:39 hannken Exp $	*/
+/*	$NetBSD: param.h,v 1.393 2011/09/23 14:47:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -294,12 +294,6 @@
 
 #define	CMASK	022		/* default file mask: S_IWGRP|S_IWOTH */
 #define	NODEV	(dev_t)(-1)	/* non-existent device */
-
-#define	CBLOCK	64		/* Clist block size, must be a power of 2. */
-#define	CBQSIZE	(CBLOCK/NBBY)	/* Quote bytes/cblock - can do better. */
-				/* Data chars/clist. */
-#define	CBSIZE	(CBLOCK - (int)sizeof(struct cblock *) - CBQSIZE)
-#define	CROUND	(CBLOCK - 1)	/* Clist rounding. */
 
 /*
  * File system parameters and macros.
