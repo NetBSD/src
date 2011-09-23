@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2011/09/23 15:17:31 jruoho Exp $
+# $NetBSD: Makefile,v 1.7 2011/09/23 15:24:35 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -32,7 +32,8 @@ CPPFLAGS+=-I${EXTDIST}/include
 WARNS?=4
 
 MAN=libsaslc.3
-MLINKS+=libsaslc.3 saslc_alloc.3 \
+MLINKS+=libsaslc.3 saslc.d.3 \
+	libsaslc.3 saslc_alloc.3 \
 	libsaslc.3 saslc_end.3 \
 	libsaslc.3 saslc_init.3 \
 	libsaslc.3 saslc_sess_init.3 \

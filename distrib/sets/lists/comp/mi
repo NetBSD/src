@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1676 2011/09/23 15:17:31 jruoho Exp $
+#	$NetBSD: mi,v 1.1677 2011/09/23 15:24:35 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8594,6 +8594,7 @@
 ./usr/share/man/cat3/rumphijack.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rumpuser.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ruserok.0			comp-c-catman		.cat
+./usr/share/man/cat3/saslc.d.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/saslc_alloc.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/saslc_end.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/saslc_init.0		comp-c-catman		crypto,.cat
@@ -14727,6 +14728,7 @@
 ./usr/share/man/html3/rumphijack.html			comp-c-htmlman		html
 ./usr/share/man/html3/rumpuser.html		comp-c-htmlman		html
 ./usr/share/man/html3/ruserok.html		comp-c-htmlman		html
+./usr/share/man/html3/saslc.d.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/saslc_alloc.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/saslc_end.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/saslc_init.html		comp-c-htmlman		crypto,html
@@ -20866,6 +20868,7 @@
 ./usr/share/man/man3/rumphijack.3			comp-c-man		.man
 ./usr/share/man/man3/rumpuser.3			comp-c-man		.man
 ./usr/share/man/man3/ruserok.3			comp-c-man		.man
+./usr/share/man/man3/saslc.d.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/saslc_alloc.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/saslc_end.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/saslc_init.3		comp-c-man		crypto,.man
