@@ -1,4 +1,4 @@
-# $NetBSD: bsd.clean.mk,v 1.2 2011/09/10 19:25:10 apb Exp $
+# $NetBSD: bsd.clean.mk,v 1.3 2011/09/23 21:13:14 apb Exp $
 
 # <bsd.clean.mk>
 #
@@ -41,14 +41,16 @@ __docleandir:	.PHONY .MADE __cleanuse CLEANDIRFILES
 # both .OBJDIR and .SRCDIR.
 #
 __cleanuse: .USE
-	${"${.ALLSRC:@v@${${v}}@}" == "":?@true:${_MKMSG} \
+.if 0	# print "# clean CLEANFILES" for debugging
+	${"${.ALLSRC:@v@${${v}:M*}@}" == "":?@true:${_MKMSG} \
 		"clean" ${.ALLSRC} }
+.endif
 .for _d in ${"${.OBJDIR}" == "${.CURDIR}" \
 		:? ${.OBJDIR} \
 		:  ${.OBJDIR} ${.CURDIR} }
-	-${"${.ALLSRC:@v@${${v}}@}" == "":?@true: \
-	    (cd ${_d} && rm -f ${.ALLSRC:@v@${${v}}@}) }
-	@${"${.ALLSRC:@v@${${v}}@}" == "":?true: \
+	${"${.ALLSRC:@v@${${v}:M*}@}" == "":?@true: \
+	    (cd ${_d} && rm -f ${.ALLSRC:@v@${${v}}@} || true) }
+	@${"${.ALLSRC:@v@${${v}:M*}@}" == "":?true: \
 	    bad="\$(cd ${_d} && ls -d ${.ALLSRC:@v@${${v}}@} 2>/dev/null)"; \
 	    if test -n "\$bad"; then \
 	        echo "Failed to remove files from ${_d}:" ; \
