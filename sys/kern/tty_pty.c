@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.129 2011/07/26 13:14:18 yamt Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.130 2011/09/23 23:57:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.129 2011/07/26 13:14:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.130 2011/09/23 23:57:06 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -701,30 +701,30 @@ again:
 	if (pti->pt_flags & PF_REMOTE) {
 		if (tp->t_canq.c_cc)
 			goto block;
-		while (uio->uio_resid > 0 && tp->t_canq.c_cc < TTYHOG - 1) {
-			if (cc == 0) {
-				cc = min(uio->uio_resid, BUFSIZ);
-				cc = min(cc, TTYHOG - 1 - tp->t_canq.c_cc);
-				cp = locbuf;
-				mutex_spin_exit(&tty_lock);
-				error = uiomove((void *)cp, cc, uio);
-				if (error != 0)
-					return error;
-				mutex_spin_enter(&tty_lock);
-				/* check again for safety */
-				if (!ISSET(tp->t_state, TS_ISOPEN)) {
-					/*
-					 * adjust for data copied in but not
-					 * written
-					 */
-					uio->uio_resid += cc;
-					error = EIO;
-					goto out;
-				}
+		while (uio->uio_resid > 0 && tp->t_canq.c_cc < TTYHOG) {
+			cc = min(uio->uio_resid, BUFSIZ);
+			cc = min(cc, TTYHOG - tp->t_canq.c_cc);
+			cp = locbuf;
+			mutex_spin_exit(&tty_lock);
+			error = uiomove(cp, cc, uio);
+			if (error != 0)
+				return error;
+			mutex_spin_enter(&tty_lock);
+			/* check again for safety */
+			if (!ISSET(tp->t_state, TS_ISOPEN)) {
+				/*
+				 * adjust for data copied in but not
+				 * written
+				 */
+				uio->uio_resid += cc;
+				error = EIO;
+				goto out;
 			}
-			if (cc)
-				(void) b_to_q(cp, cc, &tp->t_canq);
-			cc = 0;
+			if (cc) {
+				cc = b_to_q(cp, cc, &tp->t_outq);
+				if (cc > 0)
+					goto block;
+			}
 		}
 		(void) putc(0, &tp->t_canq);
 		ttwakeup(tp);
@@ -733,29 +733,34 @@ again:
 		goto out;
 	}
 	while (uio->uio_resid > 0) {
-		if (cc == 0) {
-			cc = min(uio->uio_resid, BUFSIZ);
-			cp = locbuf;
-			mutex_spin_exit(&tty_lock);
-			error = uiomove((void *)cp, cc, uio);
-			if (error != 0)
-				return error;
-			mutex_spin_enter(&tty_lock);
-			/* check again for safety */
-			if (!ISSET(tp->t_state, TS_ISOPEN)) {
-				/* adjust for data copied in but not written */
-				uio->uio_resid += cc;
-				error = EIO;
-				goto out;
-			}
+		cc = min(uio->uio_resid, BUFSIZ);
+		cp = locbuf;
+		mutex_spin_exit(&tty_lock);
+		error = uiomove(cp, cc, uio);
+		if (error != 0)
+			return error;
+		mutex_spin_enter(&tty_lock);
+		/* check again for safety */
+		if (!ISSET(tp->t_state, TS_ISOPEN)) {
+			/* adjust for data copied in but not written */
+			uio->uio_resid += cc;
+			error = EIO;
+			goto out;
 		}
 		while (cc > 0) {
-			if ((tp->t_rawq.c_cc + tp->t_canq.c_cc) >= TTYHOG - 2 &&
-			   (tp->t_canq.c_cc > 0 || !ISSET(tp->t_lflag, ICANON))) {
+			int used = tp->t_rawq.c_cc + tp->t_canq.c_cc;
+			int canon = ISSET(tp->t_lflag, ICANON) ? 1 : 0;
+			/*
+			 * We need space for 2 characters if canonical
+			 * because we might need to print ^C
+			 */
+			if (used >= (TTYHOG - canon) &&
+			   (tp->t_canq.c_cc > 0 || !canon)) {
 				cv_broadcast(&tp->t_rawcv);
 				goto block;
 			}
-			/* XXX - should change l_rint to be called with lock
+			/*
+			 * XXX - should change l_rint to be called with lock
 			 *	 see also tty.c:ttyinput_wlock()
 			 */
 			mutex_spin_exit(&tty_lock);
@@ -764,7 +769,6 @@ again:
 			cnt++;
 			cc--;
 		}
-		cc = 0;
 	}
 	error = 0;
 	goto out;
