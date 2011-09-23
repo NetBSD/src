@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.121 2011/09/19 00:19:51 christos Exp $
+# $NetBSD: md.sparc64,v 1.122 2011/09/23 06:48:09 mrg Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -427,6 +427,11 @@
 ./usr/lib/sparc/libgnumalloc_g.a		-unknown-		compat,debuglib
 ./usr/lib/sparc/libgnumalloc_p.a		comp-c-proflib		compat,profile
 ./usr/lib/sparc/libgnumalloc_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libgomp.a			comp-c-lib		compat,gcc=45
+./usr/lib/sparc/libgomp.so			base-sys-shlib		compat,pic,gcc=45
+./usr/lib/sparc/libgomp.a			-unknown-		compat,debuglib,gcc=45
+./usr/lib/sparc/libgomp.a			comp-c-proflib		compat,profile,gcc=45
+./usr/lib/sparc/libgomp.a			comp-c-piclib		compat,pic,gcc=45
 ./usr/lib/sparc/libgssapi.a			comp-c-lib		compat,kerberos
 ./usr/lib/sparc/libgssapi.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/sparc/libgssapi_g.a			-unknown-		compat,debuglib,kerberos
@@ -895,6 +900,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libform.so.6.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libgcc_s.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libgnumalloc.so.1.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libgomp.so.1.0.debug		comp-compat-shlib	compat,pic,debug,gcc=45
 ./usr/libdata/debug/usr/lib/sparc/libgssapi.so.10.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/sparc/libgssapi.so.9.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/sparc/libhdb.so.13.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
