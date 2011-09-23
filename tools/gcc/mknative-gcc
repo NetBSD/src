@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.63 2011/09/21 02:15:18 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.64 2011/09/23 06:43:46 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -464,6 +464,8 @@ get_libgomp () {
 		<$_TMPDIR/$_PLATFORM/libgomp/libgomp_f.h
 	write_mk $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/libgomp.spec \
 		<$_TMPDIR/$_PLATFORM/libgomp/libgomp.spec
+	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/omp.h \
+		<$_TMPDIR/$_PLATFORM/libgomp/omp.h
 }
 
 ##### gnu/lib/libobjc #####
@@ -517,8 +519,6 @@ get_libstdcxx_v3 () {
 		<$_TMPDIR/$_PLATFORM/libstdc++-v3/config.h
 	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/gstdint.h \
 		<$_TMPDIR/$_PLATFORM/libstdc++-v3/include/gstdint.h
-	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/omp.h \
-		<$_TMPDIR/$_PLATFORM/libgomp/omp.h
 
 	{
 		# libsupc++
