@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.88 2011/07/26 13:14:17 yamt Exp $	*/
+/*	$NetBSD: tty.h,v 1.89 2011/09/23 15:29:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -165,10 +165,11 @@ struct tty {
 #define	TTYHOG	1024
 
 #ifdef _KERNEL
-#define	TTMAXHIWAT	roundup(2048, CBSIZE)
-#define	TTMINHIWAT	roundup(100, CBSIZE)
+#define	TTMAXHIWAT	roundup(2048, TTROUND)
+#define	TTMINHIWAT	roundup(100, TTROUND)
 #define	TTMAXLOWAT	256
 #define	TTMINLOWAT	32
+#define	TTROUND		64
 #endif /* _KERNEL */
 
 /* These flags are kept in t_state. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.246 2011/07/26 13:14:18 yamt Exp $	*/
+/*	$NetBSD: tty.c,v 1.247 2011/09/23 15:29:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.246 2011/07/26 13:14:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.247 2011/09/23 15:29:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2350,7 +2350,7 @@ ttsetwater(struct tty *tp)
 	tp->t_lowat = x = CLAMP(cps / 2, TTMAXLOWAT, TTMINLOWAT);
 	x += cps;
 	x = CLAMP(x, TTMAXHIWAT, TTMINHIWAT);
-	tp->t_hiwat = roundup(x, CBSIZE);
+	tp->t_hiwat = roundup(x, TTROUND);
 #undef	CLAMP
 }
 

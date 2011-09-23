@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.117 2010/04/05 07:22:23 joerg Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.118 2011/09/23 15:29:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.117 2010/04/05 07:22:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.118 2011/09/23 15:29:09 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -154,7 +154,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.117 2010/04/05 07:22:23 joerg Exp $");
 #if (SLMTU < 3)
 #error SLMTU way too small.
 #endif
-#define	SLIP_HIWAT	roundup(50,CBSIZE)
+#define	SLIP_HIWAT	roundup(50, TTROUND)
 #ifndef __NetBSD__					/* XXX - cgd */
 #define	CLISTRESERVE	1024	/* Can't let clists get too low */
 #endif	/* !__NetBSD__ */

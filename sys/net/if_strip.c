@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.95 2010/04/05 07:22:24 joerg Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.96 2011/09/23 15:29:09 christos Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.95 2010/04/05 07:22:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.96 2011/09/23 15:29:09 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -186,7 +186,7 @@ typedef char ttychar_t;
 #define STRIP_MTU_ONWIRE (SLMTU + 20 + STRIP_HDRLEN) /* (2*SLMTU+2 in sl.c */
 
 
-#define	SLIP_HIWAT	roundup(50,CBSIZE)
+#define	SLIP_HIWAT	roundup(50, TTROUND)
 
 /* This is a NetBSD-1.0 or later kernel. */
 #define CCOUNT(q)	((q)->c_cc)
