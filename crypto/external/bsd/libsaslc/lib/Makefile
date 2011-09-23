@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2011/08/25 15:30:54 joerg Exp $
+# $NetBSD: Makefile,v 1.6 2011/09/23 15:17:31 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -29,8 +29,22 @@ SRCS+= xsess.c
 COPTS.msg.c = -Wno-format-nonliteral
 
 CPPFLAGS+=-I${EXTDIST}/include
-MAN=libsaslc.3
 WARNS?=4
+
+MAN=libsaslc.3
+MLINKS+=libsaslc.3 saslc_alloc.3 \
+	libsaslc.3 saslc_end.3 \
+	libsaslc.3 saslc_init.3 \
+	libsaslc.3 saslc_sess_init.3 \
+	libsaslc.3 saslc_sess_end.3 \
+	libsaslc.3 saslc_sess_getprop.3 \
+	libsaslc.3 saslc_sess_setprop.3 \
+	libsaslc.3 saslc_sess_cont.3 \
+	libsaslc.3 saslc_sess_decode.3 \
+	libsaslc.3 saslc_sess_encode.3 \
+	libsaslc.3 saslc_sess_getmech.3 \
+	libsaslc.3 saslc_sess_strerror.3 \
+	libsaslc.3 saslc_strerror.3
 
 EXTDIST=${.CURDIR}/../dist
 
