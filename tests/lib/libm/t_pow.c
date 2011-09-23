@@ -1,4 +1,4 @@
-/* $NetBSD: t_pow.c,v 1.1 2011/09/17 08:15:43 jruoho Exp $ */
+/* $NetBSD: t_pow.c,v 1.2 2011/09/23 13:48:28 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pow.c,v 1.1 2011/09/17 08:15:43 jruoho Exp $");
+__RCSID("$NetBSD: t_pow.c,v 1.2 2011/09/23 13:48:28 jruoho Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -296,13 +296,29 @@ ATF_TC_BODY(pow_zero_x, tc)
 	 */
 	z = pow(+0.0, -4.0);
 
-	if (z != -HUGE_VAL)
-		atf_tc_fail_nonfatal("pow(+0.0, -4.0) != -HUGE_VAL");
+	if (z != HUGE_VAL) {
+		atf_tc_expect_fail("PR port-amd64/45391");
+		atf_tc_fail_nonfatal("pow(+0.0, -4.0) != HUGE_VAL");
+	}
 
 	z = pow(-0.0, -4.0);
 
+	if (z != HUGE_VAL) {
+		atf_tc_expect_fail("PR port-amd64/45391");
+		atf_tc_fail_nonfatal("pow(-0.0, -4.0) != HUGE_VAL");
+	}
+
+	z = pow(+0.0, -5.0);
+
+	if (z != HUGE_VAL) {
+		atf_tc_expect_fail("PR port-amd64/45391");
+		atf_tc_fail_nonfatal("pow(+0.0, -5.0) != HUGE_VAL");
+	}
+
+	z = pow(-0.0, -5.0);
+
 	if (z != -HUGE_VAL)
-		atf_tc_fail_nonfatal("pow(-0.0, -4.0) != -HUGE_VAL");
+		atf_tc_fail_nonfatal("pow(-0.0, -5.0) != -HUGE_VAL");
 #endif
 }
 
@@ -604,13 +620,29 @@ ATF_TC_BODY(powf_zero_x, tc)
 	 */
 	z = powf(+0.0, -4.0);
 
-	if (z != -HUGE_VAL)
-		atf_tc_fail_nonfatal("powf(+0.0, -4.0) != -HUGE_VAL");
+	if (z != HUGE_VALF) {
+		atf_tc_expect_fail("PR port-amd64/45391");
+		atf_tc_fail_nonfatal("powf(+0.0, -4.0) != HUGE_VALF");
+	}
 
 	z = powf(-0.0, -4.0);
 
-	if (z != -HUGE_VAL)
-		atf_tc_fail_nonfatal("powf(-0.0, -4.0) != -HUGE_VAL");
+	if (z != HUGE_VALF) {
+		atf_tc_expect_fail("PR port-amd64/45391");
+		atf_tc_fail_nonfatal("powf(-0.0, -4.0) != HUGE_VALF");
+	}
+
+	z = powf(+0.0, -5.0);
+
+	if (z != HUGE_VALF) {
+		atf_tc_expect_fail("PR port-amd64/45391");
+		atf_tc_fail_nonfatal("powf(+0.0, -5.0) != HUGE_VALF");
+	}
+
+	z = powf(-0.0, -5.0);
+
+	if (z != -HUGE_VALF)
+		atf_tc_fail_nonfatal("powf(-0.0, -5.0) != -HUGE_VALF");
 #endif
 }
 
