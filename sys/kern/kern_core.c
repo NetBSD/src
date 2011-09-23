@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.18 2011/04/29 22:57:54 rmind Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.19 2011/09/23 00:03:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.18 2011/04/29 22:57:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.19 2011/09/23 00:03:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -102,7 +102,7 @@ coredump(struct lwp *l, const char *pattern)
 	struct coredump_iostate	io;
 	struct plimit		*lim;
 	int			error, error1;
-	char			*name;
+	char			*name, *lastslash;
 
 	name = PNBUF_GET();
 
@@ -133,24 +133,6 @@ coredump(struct lwp *l, const char *pattern)
 	cred = p->p_cred;
 
 	/*
-	 * The core dump will go in the current working directory.  Make
-	 * sure that the directory is still there and that the mount flags
-	 * allow us to write core dumps there.
-	 *
-	 * XXX: this is partially bogus, it should be checking the directory
-	 * into which the file is actually written - which probably needs
-	 * a flag on namei()
-	 */
-	vp = p->p_cwdi->cwdi_cdir;
-	if (vp->v_mount == NULL ||
-	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0) {
-		error = EPERM;
-		mutex_exit(p->p_lock);
-		mutex_exit(proc_lock);
-		goto done;
-	}
-
-	/*
 	 * Make sure the process has not set-id, to prevent data leaks,
 	 * unless it was specifically requested to allow set-id coredumps.
 	 */
@@ -173,10 +155,52 @@ coredump(struct lwp *l, const char *pattern)
 	error = coredump_buildname(p, name, pattern, MAXPATHLEN);
 	mutex_exit(&lim->pl_lock);
 
+	/*
+	 * On a simple filename, see if the filesystem allow us to write
+	 * core dumps there.
+	 */
+	lastslash = strrchr(name, '/');
+	if (!lastslash) {
+		vp = p->p_cwdi->cwdi_cdir;
+		if (vp->v_mount == NULL ||
+		    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0)
+			error = EPERM;
+	}
+
 	mutex_exit(p->p_lock);
 	mutex_exit(proc_lock);
-	if (error) {
+	if (error)
 		goto done;
+
+	/*
+	 * On a complex filename, see if the filesystem allow us to write
+	 * core dumps there.
+	 *
+	 * XXX: We should have an API that avoids double lookups
+	 */
+	if (lastslash) {
+		char c[2];
+
+		if (lastslash - name >= MAXPATHLEN - 2) {
+			error = EPERM;
+			goto done;
+		}
+
+		c[0] = lastslash[1];
+		c[1] = lastslash[2];
+		lastslash[1] = '.';
+		lastslash[2] = '\0';
+		error = namei_simple_kernel(name, NSM_FOLLOW_NOEMULROOT, &vp);
+		if (error)
+			goto done;
+		if (vp->v_mount == NULL ||
+		    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0)
+			error = EPERM;
+		vrele(vp);
+		if (error)
+			goto done;
+		lastslash[1] = c[0];
+		lastslash[2] = c[1];
 	}
 
 	pb = pathbuf_create(name);
