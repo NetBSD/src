@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1674 2011/09/14 23:37:32 christos Exp $
+#	$NetBSD: mi,v 1.1675 2011/09/23 06:48:09 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1595,6 +1595,7 @@
 ./usr/include/g++/values.h			comp-obsolete		obsolete
 ./usr/include/g++/vector			comp-cxx-include	cxx
 ./usr/include/g++/vector.h			comp-obsolete		obsolete
+./usr/include/gcc-4.5/omp.h			comp-gcc-include	gcc=45
 ./usr/include/gelf.h				comp-c-include
 ./usr/include/getopt.h				comp-c-include
 ./usr/include/glob.h				comp-c-include
@@ -2820,6 +2821,10 @@
 ./usr/lib/libgnumalloc.a			comp-c-lib
 ./usr/lib/libgnumalloc_g.a			-unknown-		debuglib
 ./usr/lib/libgnumalloc_p.a			comp-c-proflib		profile
+./usr/lib/libgomp.a				comp-c-lib		gcc=45
+./usr/lib/libgomp.spec				comp-c-lib		gcc=45
+./usr/lib/libgomp_g.a				-unknown-		debuglib,gcc=45
+./usr/lib/libgomp_p.a				comp-c-proflib		profile,gcc=45
 ./usr/lib/libgssapi.a				comp-krb5-lib		kerberos
 ./usr/lib/libgssapi_g.a				-unknown-		debuglib,kerberos
 ./usr/lib/libgssapi_p.a				comp-krb5-proflib	profile,kerberos
