@@ -1,4 +1,4 @@
-/*	$NetBSD: winblk.c,v 1.6 2011/06/23 11:38:24 nonaka Exp $	*/
+/*	$NetBSD: winblk.c,v 1.7 2011/09/23 16:00:15 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -58,7 +58,7 @@
 #endif
 
 #define	islower(c)	('a' <= (c) && (c) <= 'z')
-#define	toupper(c)	(islower(c) ? ((c) - 'a' + 'A') : (c))
+#define	_toupper(c)	(islower(c) ? ((c) - 'a' + 'A') : (c))
 
 #define	BLKSZ	512
 
@@ -142,9 +142,9 @@ winblkopen(struct open_file *f, ...)
 		goto end;
 	}
 	wsprintf(wdevname, TEXT("%C%C%C%d:"),
-		toupper(devname[0]),
-		toupper(devname[1]),
-		toupper(devname[2]),
+		_toupper(devname[0]),
+		_toupper(devname[1]),
+		_toupper(devname[2]),
 		unit);
 	DEBUG_PRINTF((TEXT("winblk.open: block device name is '%s'\n"),
 		      wdevname));
