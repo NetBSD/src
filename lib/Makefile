@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.176 2011/08/26 21:22:10 dyoung Exp $
+#	$NetBSD: Makefile,v 1.177 2011/09/23 07:12:10 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -75,6 +75,7 @@ SUBDIR+=	../gnu/lib/libmalloc
 SUBDIR+=	../gnu/lib/libobjc4
 . else
 SUBDIR+=	../external/gpl3/gcc/lib/libobjc
+SUBDIR+=	../external/gpl3/gcc/lib/libgomp
 . endif
 . if ${HAVE_GCC} >= 45 && !defined(MLIBDIR)
 # Should probably move GMP, MPFR and MPC builds into the GCC >= 4.5
