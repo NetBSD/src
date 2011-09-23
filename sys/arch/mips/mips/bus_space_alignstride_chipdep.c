@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.17 2011/09/23 12:34:52 macallan Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.18 2011/09/23 12:42:15 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.17 2011/09/23 12:34:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.18 2011/09/23 12:42:15 macallan Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -629,10 +629,12 @@ __BS(mmap)(void *v, bus_addr_t addr, off_t off, int prot, int flags)
 	if (error)
 		return (-1);
 	ret = mbst.mbst_sys_start + (addr - mbst.mbst_bus_start) + off;
+#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
 	if (flags & BUS_SPACE_MAP_PREFETCHABLE) {
 		ret |= PGC_PREFETCH;
 	}
-	
+#endif	
+
 	return (mips_btop(ret));
 #else
 # error must define one of CHIP_IO or CHIP_MEM
