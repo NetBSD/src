@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1341 2011/09/17 17:06:47 rkujawa Exp $
+# $NetBSD: mi,v 1.1342 2011/09/23 14:45:06 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1109,7 +1109,7 @@
 ./usr/share/man/cat4/i386/elanpar.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/elanpex.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/elansc.0		man-sys-catman		.cat
-./usr/share/man/cat4/i386/fdc.0			man-sys-catman		.cat
+./usr/share/man/cat4/i386/fdc.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/gcscide.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/gcscpcib.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/geodecntr.0		man-sys-catman		.cat
@@ -1120,12 +1120,12 @@
 ./usr/share/man/cat4/i386/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/io.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/joy.0			man-obsolete		obsolete
-./usr/share/man/cat4/i386/kmem.0		man-sys-catman		.cat
+./usr/share/man/cat4/i386/kmem.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/le.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/lms.0			man-sys-catman		.cat
-./usr/share/man/cat4/i386/lpa.0			man-sys-catman		.cat
-./usr/share/man/cat4/i386/lpt.0			man-sys-catman		.cat
-./usr/share/man/cat4/i386/mem.0			man-sys-catman		.cat
+./usr/share/man/cat4/i386/lpa.0			man-obsolete		obsolete
+./usr/share/man/cat4/i386/lpt.0			man-obsolete		obsolete
+./usr/share/man/cat4/i386/mem.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/mms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/ndis.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/npx.0			man-sys-catman		.cat
@@ -1822,11 +1822,16 @@
 ./usr/share/man/cat4/x86/balloon.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/coretemp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/est.0			man-sys-catman		.cat
+./usr/share/man/cat4/x86/fdc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/fwhrng.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/hpet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/ichlpcib.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/ioapic.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/kmem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/lapic.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/lpa.0			man-sys-catman		.cat
+./usr/share/man/cat4/x86/lpt.0			man-sys-catman		.cat
+./usr/share/man/cat4/x86/mem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/odcm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/powernow.0		man-sys-catman		.cat
 ./usr/share/man/cat4/xbd.0			man-sys-catman		.cat
@@ -3922,7 +3927,7 @@
 ./usr/share/man/html4/i386/elanpar.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/elanpex.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/elansc.html		man-sys-htmlman		html
-./usr/share/man/html4/i386/fdc.html		man-sys-htmlman		html
+./usr/share/man/html4/i386/fdc.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/gcscide.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/gcscpcib.html	man-sys-htmlman		html
 ./usr/share/man/html4/i386/geodecntr.html	man-sys-htmlman		html
@@ -3931,11 +3936,11 @@
 ./usr/share/man/html4/i386/gscpcib.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/io.html		man-sys-htmlman		html
-./usr/share/man/html4/i386/kmem.html		man-sys-htmlman		html
+./usr/share/man/html4/i386/kmem.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/lms.html		man-sys-htmlman		html
-./usr/share/man/html4/i386/lpa.html		man-sys-htmlman		html
-./usr/share/man/html4/i386/lpt.html		man-sys-htmlman		html
-./usr/share/man/html4/i386/mem.html		man-sys-htmlman		html
+./usr/share/man/html4/i386/lpa.html		man-obsolete		obsolete
+./usr/share/man/html4/i386/lpt.html		man-obsolete		obsolete
+./usr/share/man/html4/i386/mem.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/mms.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/ndis.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/npx.html		man-sys-htmlman		html
@@ -4567,11 +4572,16 @@
 ./usr/share/man/html4/x86/balloon.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/coretemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/est.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/fdc.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/fwhrng.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/hpet.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/ichlpcib.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/ioapic.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/kmem.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/lapic.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/lpa.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/lpt.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/mem.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/odcm.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/powernow.html		man-sys-htmlman		html
 ./usr/share/man/html4/xbd.html			man-sys-htmlman		html
@@ -6534,7 +6544,7 @@
 ./usr/share/man/man4/i386/elanpar.4		man-sys-man		.man
 ./usr/share/man/man4/i386/elanpex.4		man-sys-man		.man
 ./usr/share/man/man4/i386/elansc.4		man-sys-man		.man
-./usr/share/man/man4/i386/fdc.4			man-sys-man		.man
+./usr/share/man/man4/i386/fdc.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/gcscide.4		man-sys-man		.man
 ./usr/share/man/man4/i386/gcscpcib.4		man-sys-man		.man
 ./usr/share/man/man4/i386/geodecntr.4		man-sys-man		.man
@@ -6545,12 +6555,12 @@
 ./usr/share/man/man4/i386/intro.4		man-sys-man		.man
 ./usr/share/man/man4/i386/io.4			man-sys-man		.man
 ./usr/share/man/man4/i386/joy.4			man-obsolete		obsolete
-./usr/share/man/man4/i386/kmem.4		man-sys-man		.man
+./usr/share/man/man4/i386/kmem.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/le.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/lms.4			man-sys-man		.man
-./usr/share/man/man4/i386/lpa.4			man-sys-man		.man
-./usr/share/man/man4/i386/lpt.4			man-sys-man		.man
-./usr/share/man/man4/i386/mem.4			man-sys-man		.man
+./usr/share/man/man4/i386/lpa.4			man-obsolete		obsolete
+./usr/share/man/man4/i386/lpt.4			man-obsolete		obsolete
+./usr/share/man/man4/i386/mem.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/mms.4			man-sys-man		.man
 ./usr/share/man/man4/i386/ndis.4		man-sys-man		.man
 ./usr/share/man/man4/i386/npx.4			man-sys-man		.man
@@ -7247,11 +7257,16 @@
 ./usr/share/man/man4/x86/balloon.4		man-sys-man		.man
 ./usr/share/man/man4/x86/coretemp.4		man-sys-man		.man
 ./usr/share/man/man4/x86/est.4			man-sys-man		.man
+./usr/share/man/man4/x86/fdc.4			man-sys-man		.man
 ./usr/share/man/man4/x86/fwhrng.4		man-sys-man		.man
 ./usr/share/man/man4/x86/hpet.4			man-sys-man		.man
 ./usr/share/man/man4/x86/ichlpcib.4		man-sys-man		.man
 ./usr/share/man/man4/x86/ioapic.4		man-sys-man		.man
+./usr/share/man/man4/x86/kmem.4			man-sys-man		.man
 ./usr/share/man/man4/x86/lapic.4		man-sys-man		.man
+./usr/share/man/man4/x86/lpa.4			man-sys-man		.man
+./usr/share/man/man4/x86/lpt.4			man-sys-man		.man
+./usr/share/man/man4/x86/mem.4			man-sys-man		.man
 ./usr/share/man/man4/x86/odcm.4			man-sys-man		.man
 ./usr/share/man/man4/x86/powernow.4		man-sys-man		.man
 ./usr/share/man/man4/xbd.4			man-sys-man		.man
