@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.5 2011/05/18 12:10:22 nonaka Exp $	*/
+/*	$NetBSD: scan.l,v 1.6 2011/09/23 14:14:38 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,6 +43,8 @@
 int	yyline;
 char	*getstr(char *);
 void	getcomment(void);
+int	yyparse(void);
+void	yyerror(const char *);
 %}
 
 %option	noyywrap
@@ -103,6 +105,7 @@ getcomment()
 	}
 }
 
+int
 read_def()
 {
 	yyline = 1;
