@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.16 2011/09/22 05:08:52 macallan Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.17 2011/09/23 12:34:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.16 2011/09/22 05:08:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.17 2011/09/23 12:34:52 macallan Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -630,7 +630,6 @@ __BS(mmap)(void *v, bus_addr_t addr, off_t off, int prot, int flags)
 		return (-1);
 	ret = mbst.mbst_sys_start + (addr - mbst.mbst_bus_start) + off;
 	if (flags & BUS_SPACE_MAP_PREFETCHABLE) {
-		printf("!");
 		ret |= PGC_PREFETCH;
 	}
 	
