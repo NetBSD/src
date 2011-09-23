@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.7 2007/11/27 11:37:27 pooka Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.7.28.1 2011/09/23 12:44:52 sborrill Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.7 2007/11/27 11:37:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.7.28.1 2011/09/23 12:44:52 sborrill Exp $");
 
 #include "opt_xen.h"
 
@@ -92,10 +92,13 @@ xenbus_kernfs_init()
 	    PRIVCMD_MODE);
 	kernfs_addentry(kernxen_pkt, dkt);
 
-	kfst = KERNFS_ALLOCTYPE(xsd_port_fileops);
-	KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
-	KERNFS_INITENTRY(dkt, DT_REG, "xsd_port", NULL, kfst, VREG, XSD_MODE);
-	kernfs_addentry(kernxen_pkt, dkt);
+	if (xendomain_is_dom0()) {
+		kfst = KERNFS_ALLOCTYPE(xsd_port_fileops);
+		KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
+		KERNFS_INITENTRY(dkt, DT_REG, "xsd_port", NULL,
+		    kfst, VREG, XSD_MODE);
+		kernfs_addentry(kernxen_pkt, dkt);
+	}
 }
 
 struct xenbus_dev_data {
