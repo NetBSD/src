@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_gen.h,v 1.4 2003/04/23 03:42:21 uwe Exp $	*/
+/*	$NetBSD: platid_gen.h,v 1.5 2011/09/23 14:14:38 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -47,3 +47,4 @@ node_t *new_node(int, int, const void *, const void *, node_t *);
 void *mem_alloc(int);
 void dump_node(char *, node_t *);
 char *touppers(char*);
+int read_def();

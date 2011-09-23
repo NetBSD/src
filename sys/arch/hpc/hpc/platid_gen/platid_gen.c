@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_gen.c,v 1.9 2009/03/18 10:22:28 cegger Exp $	*/
+/*	$NetBSD: platid_gen.c,v 1.10 2011/09/23 14:14:38 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platid_gen.c,v 1.9 2009/03/18 10:22:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platid_gen.c,v 1.10 2011/09/23 14:14:38 nonaka Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -259,6 +259,7 @@ gen_comment(FILE *fp)
 	fprintf(fp, " */\n");
 }
 
+int
 gen_name(char *buf, struct genctx_t ctx[], int nest, int name, char *punct,
     int ignr)
 {
