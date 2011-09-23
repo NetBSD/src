@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.103 2011/09/17 18:58:20 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.104 2011/09/23 12:45:14 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5627,4 +5627,14 @@ external/ibm-public/postfix/dist/src/smtpd/smtpd_state.c	patch
 	  smtpd_client_* limit. As a workaround, it now sends a zero value
 	  instead.
 	[tron, ticket #1669]
+
+sys/arch/xen/conf/files.xen			1.123 via patch
+sys/arch/xen/xen/hypervisor.c			1.58 via patch
+sys/arch/xen/xenbus/xenbus_dev.c		1.9
+sys/arch/xen/xenbus/xenbus_probe.c		1.35
+
+	Expose Xen kernfs entries inside a domU to make it possible to
+	use pkgsrc's sysutils/xentools inside a domU to query XenStore
+	entries (or even modify part of it if the domain has enough rights).
+	[jym, ticket #1672]
 
