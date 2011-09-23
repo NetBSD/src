@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.156 2011/09/21 15:36:33 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.157 2011/09/23 01:57:32 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.156 2011/09/21 15:36:33 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.157 2011/09/23 01:57:32 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.156 2011/09/21 15:36:33 manu Exp $
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
-
-extern struct lwp *updateproc;
 
 int	puffs_vnop_lookup(void *);
 int	puffs_vnop_create(void *);
@@ -1360,11 +1358,11 @@ puffs_vnop_fsync(void *v)
 	int error, dofaf;
 
 	/*
-	 * Make sure ioflush does not get stuck in low
-	 * memory conditions: it should not wait for the
-	 * mutex.
+	 * Make sure kernel threads such as ioflush do not get 
+	 * stuck in low memory conditions: they should not wait 
+	 * for the mutex.
 	 */
-	if (curlwp == updateproc)
+	if (curlwp->l_flag & LW_SYSTEM)
 		KASSERT((ap->a_flags & FSYNC_WAIT) == 0);
 
 	if (ap->a_flags & FSYNC_WAIT) {
@@ -2281,7 +2279,7 @@ puffs_vnop_strategy(void *v)
 	/* allocate transport structure */
 	tomove = PUFFS_TOMOVE(bp->b_bcount, pmp);
 	argsize = sizeof(struct puffs_vnmsg_rw);
-	cansleep = (dofaf || (curlwp == updateproc)) ? 0 : 1; 
+	cansleep = (dofaf || (curlwp->l_flag & LW_SYSTEM)) ? 0 : 1; 
 	error = puffs_msgmem_alloc(argsize + tomove, &park_rw,
 	    (void *)&rw_msg, cansleep);
 	if (error)
