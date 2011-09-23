@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.93 2011/09/22 17:27:50 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.94 2011/09/23 07:31:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.93 2011/09/22 17:27:50 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.94 2011/09/23 07:31:39 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1032,14 +1032,14 @@ socktrans(struct socket *sock, int i)
 	default:
 		/* print protocol number and socket address */
 		snprintf(fbuf, sizeof(fbuf), " %d %jx", proto.pr_protocol,
-		    (uintmax_t)sock);
+		    (uintmax_t)(uintptr_t)sock);
 		break;
 	}
 	if (fbuf[0] || lbuf[0])
 		printf(" %s%s%s", fbuf, (fbuf[0] && lbuf[0]) ? " <-> " : "",
 		    lbuf);
 	else if (so.so_pcb)
-		printf(" %jx", (uintmax_t)so.so_pcb);
+		printf(" %jx", (uintmax_t)(uintptr_t)so.so_pcb);
 	(void)printf("\n");
 	return;
 bad:
