@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.42.4.3 2009/10/04 00:02:00 snj Exp $ */
+/* $NetBSD: hypervisor.c,v 1.42.4.4 2011/09/23 12:44:51 sborrill Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.42.4.3 2009/10/04 00:02:00 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.42.4.4 2011/09/23 12:44:51 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,11 +240,8 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif /* NPCI */
 	union hypervisor_attach_cookie hac;
 
-#ifdef DOM0OPS
-	if (xendomain_is_privileged()) {
-		xenkernfs_init();
-	}
-#endif
+	xenkernfs_init();
+
 #ifdef XEN3
 	xen_version = HYPERVISOR_xen_version(XENVER_version, NULL);
 	aprint_normal(": Xen version %d.%d\n", (xen_version & 0xffff0000) >> 16,
@@ -408,8 +405,6 @@ hypervisor_print(void *aux, const char *parent)
 	return (UNCONF);
 }
 
-#if defined(DOM0OPS)
-
 #define DIR_MODE	(S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 
 kernfs_parentdir_t *kernxen_pkt;
@@ -424,7 +419,6 @@ xenkernfs_init(void)
 	kernfs_addentry(NULL, dkt);
 	kernxen_pkt = KERNFS_ENTOPARENTDIR(dkt);
 }
-#endif /* DOM0OPS */
 
 #ifndef XEN3
 /* handler for the shutdown messages */
