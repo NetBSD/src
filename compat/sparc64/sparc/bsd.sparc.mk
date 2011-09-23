@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sparc.mk,v 1.4 2011/07/21 03:13:31 mrg Exp $
+#	$NetBSD: bsd.sparc.mk,v 1.5 2011/09/23 06:44:37 mrg Exp $
 
 LD+=			-m elf32_sparc
 MLIBDIR=		sparc
@@ -10,5 +10,6 @@ BFD_MACHINE_ARCH=	${MLIBDIR}
 CSU_MACHINE_ARCH=	${MLIBDIR}
 CRYPTO_MACHINE_CPU=	${MLIBDIR}
 LDELFSO_MACHINE_CPU=	${MLIBDIR}
+GOMP_MACHINE_ARCH=	${MLIBDIR}
 
 .include "${.PARSEDIR}/../../m32.mk"
