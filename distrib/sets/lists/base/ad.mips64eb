@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.68 2011/09/19 00:19:50 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.69 2011/09/23 06:48:07 mrg Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -103,6 +103,8 @@
 ./usr/lib/64/libgmp.so.10.2			base-compat-shlib	obsolete
 ./usr/lib/64/libgnumalloc.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libgnumalloc.so.1.0		base-compat-shlib	compat,pic
+./usr/lib/64/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45,notyet
+./usr/lib/64/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45,notyet
 ./usr/lib/64/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libgssapi.so.10.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libhdb.so.14			base-compat-shlib	compat,pic,kerberos
@@ -389,6 +391,8 @@
 ./usr/lib/o32/libgmp.so.10.2			base-compat-shlib	obsolete
 ./usr/lib/o32/libgnumalloc.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libgnumalloc.so.1.0		base-compat-shlib	compat,pic
+./usr/lib/o32/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45
+./usr/lib/o32/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45
 ./usr/lib/o32/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libgssapi.so.10.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libhdb.so.14			base-compat-shlib	compat,pic,kerberos

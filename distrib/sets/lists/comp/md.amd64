@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.137 2011/09/19 00:19:51 christos Exp $
+# $NetBSD: md.amd64,v 1.138 2011/09/23 06:48:09 mrg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -568,6 +568,11 @@
 ./usr/lib/i386/libgnumalloc_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libgnumalloc_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libgnumalloc_pic.a		comp-c-piclib		compat,pic
+./usr/lib/i386/libgomp.a			comp-sys-shlib		compat,gcc=45
+./usr/lib/i386/libgomp.so			comp-sys-shlib		compat,pic,gcc=45
+./usr/lib/i386/libgomp_g.a			comp-c-proflib		compat,debuglib,gcc=45
+./usr/lib/i386/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
+./usr/lib/i386/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45
 ./usr/lib/i386/libgssapi.a			comp-c-lib		compat,kerberos
 ./usr/lib/i386/libgssapi.so			comp-sys-shlib		compat,pic,kerberos
 ./usr/lib/i386/libgssapi_g.a			comp-c-proflib		compat,debuglib,kerberos
@@ -1044,6 +1049,7 @@
 ./usr/libdata/debug/usr/lib/i386/libgcc_s.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libgmp.so.10.2.debug	comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/i386/libgnumalloc.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libgomp.so.1.0.debug	comp-compat-shlib	compat,pic,debug,gcc=45
 ./usr/libdata/debug/usr/lib/i386/libgssapi.so.10.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libgssapi.so.9.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libhdb.so.13.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete

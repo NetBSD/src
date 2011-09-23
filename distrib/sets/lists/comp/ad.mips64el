@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.54 2011/09/19 00:19:51 christos Exp $
+# $NetBSD: ad.mips64el,v 1.55 2011/09/23 06:48:09 mrg Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -295,6 +295,10 @@
 ./usr/lib/64/libgnumalloc.so			base-sys-shlib		compat,pic
 ./usr/lib/64/libgnumalloc_p.a			comp-c-proflib		compat,profile
 ./usr/lib/64/libgnumalloc_pic.a			comp-c-piclib		compat,pic
+./usr/lib/64/libgomp.a				comp-c-lib		compat,gcc=45,notyet
+./usr/lib/64/libgomp.so				base-sys-shlib		compat,pic,gcc=45,notyet
+./usr/lib/64/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45,notyet
+./usr/lib/64/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,notyet
 ./usr/lib/64/libgssapi.a			comp-c-lib		compat,kerberos
 ./usr/lib/64/libgssapi.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/64/libgssapi_p.a			comp-c-proflib		compat,profile,kerberos
@@ -868,6 +872,10 @@
 ./usr/lib/o32/libgnumalloc.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libgnumalloc_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/libgnumalloc_pic.a		comp-c-piclib		compat,pic
+./usr/lib/o32/libgomp.a				comp-c-lib		compat,gcc=45
+./usr/lib/o32/libgomp.so			base-sys-shlib		compat,pic,gcc=45
+./usr/lib/o32/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
+./usr/lib/o32/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45
 ./usr/lib/o32/libgssapi.a			comp-c-lib		compat,kerberos
 ./usr/lib/o32/libgssapi.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/o32/libgssapi_p.a			comp-c-proflib		compat,profile,kerberos
@@ -1265,6 +1273,7 @@
 ./usr/libdata/debug/usr/lib/64/libgcc_s.so.1.0.debug	comp-sys-debug	gcc,debug,compat
 ./usr/libdata/debug/usr/lib/64/libgmp.so.10.2.debug	comp-sys-debug	obsolete
 ./usr/libdata/debug/usr/lib/64/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libgomp.so.1.0.debug	comp-sys-debug	debug,compat,gcc=45,notyet
 ./usr/libdata/debug/usr/lib/64/libgssapi.so.10.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/64/libgssapi.so.9.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/64/libhdb.so.13.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
@@ -1412,8 +1421,9 @@
 ./usr/libdata/debug/usr/lib/o32/libform.so.6.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libgcc_s.so.1.0.debug	comp-sys-debug	gcc,debug,compat
-./usr/libdata/debug/usr/lib/o32/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libgmp.so.10.2.debug	comp-sys-debug	obsolete
+./usr/libdata/debug/usr/lib/o32/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libgomp.so.1.0.debug	comp-sys-debug	debug,compat,gcc=45
 ./usr/libdata/debug/usr/lib/o32/libgssapi.so.10.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/libgssapi.so.9.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/o32/libhdb.so.13.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug,obsolete

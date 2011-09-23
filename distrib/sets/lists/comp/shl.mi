@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.192 2011/09/19 00:19:51 christos Exp $
+# $NetBSD: shl.mi,v 1.193 2011/09/23 06:48:10 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -46,6 +46,7 @@
 ./usr/lib/libgmp.so.10.2			comp-c-shlib		obsolete
 ./usr/lib/libgmp_pic.a				comp-c-piclib		obsolete
 ./usr/lib/libgnumalloc_pic.a			comp-c-piclib
+./usr/lib/libgomp_pic.a				comp-c-piclib		gcc=45
 ./usr/lib/libgssapi_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libhdb_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libheimbase_pic.a			comp-c-piclib		kerberos
@@ -266,6 +267,7 @@
 ./usr/libdata/debug/usr/lib/libgcc_s.so.1.0.debug	comp-sys-debug	gcc,debug
 ./usr/libdata/debug/usr/lib/libgmp.so.10.2.debug	comp-c-shlib	obsolete
 ./usr/libdata/debug/usr/lib/libgnumalloc.so.1.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libgomp.so.1.0.debug	comp-sys-debug	gcc=45,debug
 ./usr/libdata/debug/usr/lib/libgssapi.so.10.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libhdb.so.14.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libheimbase.so.1.0.debug	comp-krb5-debug	kerberos,debug

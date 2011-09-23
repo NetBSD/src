@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/09/22 20:55:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/09/23 06:47:54 mrg Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -6,6 +6,9 @@
 NOLINT=	# defined
 
 .include <bsd.own.mk>
+
+.if !defined(NO_LIBGOMP)	# {
+
 DIST=	${NETBSDSRCDIR}/external/gpl3/gcc/dist
 
 LIB=	gomp
@@ -55,12 +58,15 @@ LDFLAGS+=	-Wl,--version-script,${DIST}/libgomp/libgomp.map
 
 .PATH:	${ARCHDIR} ${DIST}/libgomp ${DIST}/libgomp/config/posix
 
-.include <bsd.lib.mk>
-
 .if ${GOMP_MACHINE_ARCH} == ${MACHINE_ARCH}
 # This is where GCC looks for it.
 FILES=		libgomp.spec
 FILESDIR=	${LIBDIR}
+
+INCS=		omp.h
+INCSDIR=	/usr/include/gcc-4.5
 .endif
 
-.include <bsd.files.mk>
+.endif			# }
+
+.include <bsd.lib.mk>
