@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1675 2011/09/23 06:48:09 mrg Exp $
+#	$NetBSD: mi,v 1.1676 2011/09/23 15:17:31 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8594,6 +8594,19 @@
 ./usr/share/man/cat3/rumphijack.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rumpuser.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ruserok.0			comp-c-catman		.cat
+./usr/share/man/cat3/saslc_alloc.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/saslc_end.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/saslc_init.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/saslc_sess_init.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/saslc_sess_end.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/saslc_sess_getprop.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/saslc_sess_setprop.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/saslc_sess_cont.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/saslc_sess_decode.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/saslc_sess_encode.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/saslc_sess_getmech.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/saslc_sess_strerror.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/saslc_strerror.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/savetty.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scalb.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scalbf.0			comp-c-catman		.cat
@@ -14714,6 +14727,19 @@
 ./usr/share/man/html3/rumphijack.html			comp-c-htmlman		html
 ./usr/share/man/html3/rumpuser.html		comp-c-htmlman		html
 ./usr/share/man/html3/ruserok.html		comp-c-htmlman		html
+./usr/share/man/html3/saslc_alloc.html		comp-c-htmlman		crypto,html
+./usr/share/man/html3/saslc_end.html		comp-c-htmlman		crypto,html
+./usr/share/man/html3/saslc_init.html		comp-c-htmlman		crypto,html
+./usr/share/man/html3/saslc_sess_init.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/saslc_sess_end.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/saslc_sess_getprop.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/saslc_sess_setprop.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/saslc_sess_cont.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/saslc_sess_decode.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/saslc_sess_encode.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/saslc_sess_getmech.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/saslc_sess_strerror.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/saslc_strerror.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/savetty.html		comp-c-htmlman		html
 ./usr/share/man/html3/scalb.html		comp-c-htmlman		html
 ./usr/share/man/html3/scalbf.html		comp-c-htmlman		html
@@ -20840,6 +20866,19 @@
 ./usr/share/man/man3/rumphijack.3			comp-c-man		.man
 ./usr/share/man/man3/rumpuser.3			comp-c-man		.man
 ./usr/share/man/man3/ruserok.3			comp-c-man		.man
+./usr/share/man/man3/saslc_alloc.3		comp-c-man		crypto,.man
+./usr/share/man/man3/saslc_end.3		comp-c-man		crypto,.man
+./usr/share/man/man3/saslc_init.3		comp-c-man		crypto,.man
+./usr/share/man/man3/saslc_sess_init.3		comp-c-man		crypto,.man
+./usr/share/man/man3/saslc_sess_end.3		comp-c-man		crypto,.man
+./usr/share/man/man3/saslc_sess_getprop.3	comp-c-man		crypto,.man
+./usr/share/man/man3/saslc_sess_setprop.3	comp-c-man		crypto,.man
+./usr/share/man/man3/saslc_sess_cont.3		comp-c-man		crypto,.man
+./usr/share/man/man3/saslc_sess_decode.3	comp-c-man		crypto,.man
+./usr/share/man/man3/saslc_sess_encode.3	comp-c-man		crypto,.man
+./usr/share/man/man3/saslc_sess_getmech.3	comp-c-man		crypto,.man
+./usr/share/man/man3/saslc_sess_strerror.3	comp-c-man		crypto,.man
+./usr/share/man/man3/saslc_strerror.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/savetty.3			comp-c-man		.man
 ./usr/share/man/man3/scalb.3			comp-c-man		.man
 ./usr/share/man/man3/scalbf.3			comp-c-man		.man
