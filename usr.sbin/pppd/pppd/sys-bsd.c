@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.64 2011/07/24 01:35:15 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.65 2011/09/24 20:19:39 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.64 2011/07/24 01:35:15 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.65 2011/09/24 20:19:39 christos Exp $");
 #endif
 #endif
 
@@ -931,11 +931,20 @@ cif6addr(int unit, eui64_t our_eui64, eui64_t his_eui64)
 int
 get_pty(int *master_fdp, int *slave_fdp, char *slave_name, int uid)
 {
+#ifdef TIOCSQSIZE
+    int qsize = 32768;
+#endif
     struct termios tios;
 
     if (openpty(master_fdp, slave_fdp, slave_name, NULL, NULL) < 0)
 	return 0;
 
+#ifdef TIOCSQSIZE
+    if (ioctl(*master_fdp, TIOCSQSIZE, &qsize) == -1)
+	warn("%s: couldn't set master queue size: %m", __func__);
+    if (ioctl(*slave_fdp, TIOCSQSIZE, &qsize) == -1)
+	warn("%s: couldn't set slave queue size: %m", __func__);
+#endif
     fchown(*slave_fdp, uid, -1);
     fchmod(*slave_fdp, S_IRUSR | S_IWUSR);
     if (tcgetattr(*slave_fdp, &tios) == 0) {
