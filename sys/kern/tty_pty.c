@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.130 2011/09/23 23:57:06 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.131 2011/09/24 04:10:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.130 2011/09/23 23:57:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.131 2011/09/24 04:10:03 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -702,23 +702,25 @@ again:
 		if (tp->t_canq.c_cc)
 			goto block;
 		while (uio->uio_resid > 0 && tp->t_canq.c_cc < TTYHOG) {
-			cc = min(uio->uio_resid, BUFSIZ);
-			cc = min(cc, TTYHOG - tp->t_canq.c_cc);
-			cp = locbuf;
-			mutex_spin_exit(&tty_lock);
-			error = uiomove(cp, cc, uio);
-			if (error != 0)
-				return error;
-			mutex_spin_enter(&tty_lock);
-			/* check again for safety */
-			if (!ISSET(tp->t_state, TS_ISOPEN)) {
-				/*
-				 * adjust for data copied in but not
-				 * written
-				 */
-				uio->uio_resid += cc;
-				error = EIO;
-				goto out;
+			if (cc == 0) {
+				cc = min(uio->uio_resid, BUFSIZ);
+				cc = min(cc, TTYHOG - tp->t_canq.c_cc);
+				cp = locbuf;
+				mutex_spin_exit(&tty_lock);
+				error = uiomove(cp, cc, uio);
+				if (error != 0)
+					return error;
+				mutex_spin_enter(&tty_lock);
+				/* check again for safety */
+				if (!ISSET(tp->t_state, TS_ISOPEN)) {
+					/*
+					 * adjust for data copied in but not
+					 * written
+					 */
+					uio->uio_resid += cc;
+					error = EIO;
+					goto out;
+				}
 			}
 			if (cc) {
 				cc = b_to_q(cp, cc, &tp->t_outq);
@@ -733,19 +735,21 @@ again:
 		goto out;
 	}
 	while (uio->uio_resid > 0) {
-		cc = min(uio->uio_resid, BUFSIZ);
-		cp = locbuf;
-		mutex_spin_exit(&tty_lock);
-		error = uiomove(cp, cc, uio);
-		if (error != 0)
-			return error;
-		mutex_spin_enter(&tty_lock);
-		/* check again for safety */
-		if (!ISSET(tp->t_state, TS_ISOPEN)) {
-			/* adjust for data copied in but not written */
-			uio->uio_resid += cc;
-			error = EIO;
-			goto out;
+		if (cc == 0) {
+			cc = min(uio->uio_resid, BUFSIZ);
+			cp = locbuf;
+			mutex_spin_exit(&tty_lock);
+			error = uiomove(cp, cc, uio);
+			if (error != 0)
+				return error;
+			mutex_spin_enter(&tty_lock);
+			/* check again for safety */
+			if (!ISSET(tp->t_state, TS_ISOPEN)) {
+				/* adjust for data copied in but not written */
+				uio->uio_resid += cc;
+				error = EIO;
+				goto out;
+			}
 		}
 		while (cc > 0) {
 			int used = tp->t_rawq.c_cc + tp->t_canq.c_cc;
