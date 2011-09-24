@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc6056.h,v 1.1 2011/09/24 17:18:17 christos Exp $	*/
+/*	$NetBSD: rfc6056.h,v 1.2 2011/09/24 17:54:19 christos Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -30,6 +30,7 @@
 #ifndef _NETINET_RFC6056_H_
 #define _NETINET_RFC6056_H_
 
+#ifdef _KERNEL
 #include <sys/sysctl.h>
 
 int rfc6056_randport(uint16_t *, struct inpcb_hdr *, kauth_cred_t);
@@ -39,6 +40,7 @@ int sysctl_rfc6056_available(SYSCTLFN_ARGS);
 int rfc6056_algo_index_select(struct inpcb_hdr *, int);
 
 #define	RFC6056_MAXLEN       16
+#endif /* _KERNEL */
 
 /*
  * User-settable options (used with setsockopt).
