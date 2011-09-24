@@ -11158,6 +11158,9 @@ Process keywords according to @var{kflag}.  See
 @item -l
 Local; don't descend subdirectories.
 
+@item -p
+Show which C function each change is in.
+
 @item -R
 Examine directories recursively.  This option is on by default.
 

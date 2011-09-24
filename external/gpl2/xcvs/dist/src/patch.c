@@ -47,7 +47,7 @@ static int show_c_func = 0;
 
 static const char *const patch_usage[] =
 {
-    "Usage: %s %s [-flR] [-p] [-c|-u] [-s|-t] [-V %%d] [-k kopt]\n",
+    "Usage: %s %s [-flpR] [-c|-u] [-s|-t] [-V %%d] [-k kopt]\n",
     "    -r rev|-D date [-r rev2 | -D date2] modules...\n",
     "\t-f\tForce a head revision match if tag/date not found.\n",
     "\t-l\tLocal directory only, not recursive\n",
