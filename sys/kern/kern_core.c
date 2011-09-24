@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.19 2011/09/23 00:03:29 christos Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.20 2011/09/24 22:53:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.19 2011/09/23 00:03:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.20 2011/09/24 22:53:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -217,10 +217,16 @@ coredump(struct lwp *l, const char *pattern)
 	vp = nd.ni_vp;
 	pathbuf_destroy(pb);
 
-	/* Don't dump to non-regular files or files with links. */
+	/*
+	 * Don't dump to:
+	 * 	- non-regular files
+	 * 	- files with links
+	 * 	- files we don't own
+	 */
 	if (vp->v_type != VREG ||
-	    VOP_GETATTR(vp, &vattr, cred) || vattr.va_nlink != 1) {
-		error = EINVAL;
+	    VOP_GETATTR(vp, &vattr, cred) || vattr.va_nlink != 1 ||
+	    vattr.va_uid != kauth_cred_geteuid(cred)) {
+		error = EACCES;
 		goto out;
 	}
 	vattr_null(&vattr);
