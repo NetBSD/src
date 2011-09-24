@@ -18,7 +18,7 @@ Disassembly of section .text:
   2e:	65 f3 a5 [ 	]*rep movsl %gs:\(%esi\),%es:\(%edi\)
   31:	ec [ 	]*in     \(%dx\),%al
   32:	66 ef [ 	]*out    %ax,\(%dx\)
-  34:	67 d2 14 [ 	]*addr16 rclb %cl,\(%si\)
+  34:	67 d2 14[ 	]*rclb[ 	]+%cl,\(%si\)
   37:	0f 20 d0 [ 	]*mov    %cr2,%eax
   3a:	0f 72 d0 04 [ 	]*psrld  \$0x4,%mm0
   3e:	66 47 [ 	]*inc    %di

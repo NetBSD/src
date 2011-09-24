@@ -118,7 +118,7 @@ one_group_needed_ldc_pc:
 
 @ We will place the section zero at 0x0.
 
-	.section zero
+	.section zero, "x"
 
 one_group_needed_alu_sb:
 one_group_needed_ldr_sb:
@@ -128,7 +128,7 @@ one_group_needed_ldc_sb:
 
 @ We will place the section alpha at 0xeef0.
 
-	.section alpha
+	.section alpha, "x"
 
 two_groups_needed_alu_sb:
 two_groups_needed_ldr_sb:
@@ -142,7 +142,7 @@ two_groups_needed_ldc_pc:
 
 @ We will place the section beta at 0xffeef0.
 
-	.section beta
+	.section beta, "x"
 
 three_groups_needed_alu_sb:
 three_groups_needed_ldr_sb:

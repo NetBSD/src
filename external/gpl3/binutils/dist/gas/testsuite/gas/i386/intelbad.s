@@ -149,19 +149,24 @@ start:
 	mov	eax, [ah]
 	mov	eax, [ax]
 	mov	eax, [eax+bx]
-	mov	eax, offset [1*eax]
-	mov	eax, offset 1*eax
-	mov	eax, offset x[eax]		# ugly diag
-	mov	eax, offset [x][eax]		# ugly diag
-	mov	eax, flat x
-	mov	eax, flat [x]
-	mov	eax, es:eax
-
 	mov	eax, offset [eax]
 	mov	eax, offset eax
 	mov	eax, offset offset eax
-	mov	eax, es:ss:[eax]
-	mov	eax, es:[eax]+ss:[eax]
+	mov	eax, offset [1*eax]
+	mov	eax, offset 1*eax
+#XXX?	mov	eax, offset x[eax]
+#XXX?	mov	eax, offset [x][eax]
+	mov	eax, flat x
+	mov	eax, flat [x]
+	mov	eax, es:eax
+	mov	eax, eax[ebp]
+	movzx	eax, 1 ptr [eax]
+	movzx	eax, byte word ptr [eax]
+	movzx	eax, [byte ptr eax]
+	movzx	eax, byte [ptr [eax]]
+	movzx	eax, byte ptr [gs:eax]
+	movzx	eax, byte gs:ptr [eax]
+	movzx	eax, byte ptr 1
+#XXX?	movzx	eax, byte ptr [1]
 
 	mov	eax, 3:5
-	call	3:[5]

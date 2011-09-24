@@ -374,4 +374,4 @@ Disassembly of section .text:
 .*:	b9 bf 00 67 [ 	]*trte	%r6,%r7,0
 .*:	b9 bd a0 67 [ 	]*trtre	%r6,%r7,10
 .*:	b9 bd 00 67 [ 	]*trtre	%r6,%r7,0
-.*:	07 07 [ 	]*bcr	0,%r7
+.*:	07 07 [ 	]*nopr	%r7

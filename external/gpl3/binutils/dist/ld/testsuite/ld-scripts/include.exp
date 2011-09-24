@@ -1,5 +1,5 @@
 # Test for proper diagnosis of overflowed memory regions.
-# Copyright 2008 Free Software Foundation, Inc.
+# Copyright 2008, 2009 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -26,7 +26,7 @@ if [is_aout_format] {
 
 set old_ldflags $LDFLAGS
 if { [istarget spu*-*-*] } {
-    set LDFLAGS "$LDFLAGS --no-overlays"
+    set LDFLAGS "$LDFLAGS --local-store 0:0 --no-overlays"
 }
 
 set test_list [lsort [glob -nocomplain $srcdir/$subdir/include*.d]]
@@ -36,4 +36,5 @@ foreach test_file $test_list {
     verbose $test_name
     run_dump_test $test_name
 }
+
 set LDFLAGS $old_ldflags

@@ -14,7 +14,7 @@ Disassembly of section .text:
    8:	09 00 00 00 	muli R0,R0,#\$0
 0000000c <dbnz_>:
    c:	3d 00 00 00 	dbnz R0,c <dbnz_>
-[ 	]*c: R_MS1_PC16	dbnz
+[ 	]*c: R_MT_PC16	dbnz
 00000010 <fbcbincs>:
   10:	f0 00 00 00 	fbcbincs #\$0,#\$0,#\$0,#\$0,#\$0,#\$0,#\$0,#\$0,#\$0,#\$0
 00000014 <mfbcbincs>:

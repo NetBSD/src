@@ -1,6 +1,6 @@
 /* symbols.h -
    Copyright 1987, 1990, 1992, 1993, 1994, 1995, 1997, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -28,6 +28,7 @@ extern symbolS *symbol_rootP;	/* all the symbol nodes */
 extern symbolS *symbol_lastP;	/* last struct symbol we made, or NULL */
 
 extern symbolS abs_symbol;
+extern symbolS dot_symbol;
 
 extern int symbol_table_frozen;
 
@@ -60,6 +61,7 @@ symbolS *symbol_temp_make (void);
 symbolS *colon (const char *sym_name);
 void local_colon (int n);
 void symbol_begin (void);
+void dot_symbol_init (void);
 void symbol_print_statistics (FILE *);
 void symbol_table_insert (symbolS * symbolP);
 valueT resolve_symbol_value (symbolS *);
@@ -198,6 +200,7 @@ extern int symbol_constant_p (symbolS *);
 extern int symbol_shadow_p (symbolS *);
 extern asymbol *symbol_get_bfdsym (symbolS *);
 extern void symbol_set_bfdsym (symbolS *, asymbol *);
+extern int symbol_same_p (symbolS *, symbolS *);
 
 #ifdef OBJ_SYMFIELD_TYPE
 OBJ_SYMFIELD_TYPE *symbol_get_obj (symbolS *);

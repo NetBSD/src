@@ -2,6 +2,7 @@
 #name: MIPS MIPS64 MIPS-3D ASE instructions
 #source: mips64-mips3d.s
 #stderr: mips64-mips3d.l
+#as: -64
 
 # Check MIPS64 MIPS-3D ASE instruction assembly and disassembly
 # Same as mips64-mips3d.d, but does not need -mips3d assembler

@@ -6,4 +6,4 @@
 Disassembly of section .text:
 
 .* <foo>:
- .*:	.... .... 	blx	... <foo-0x.*>
+ .*:	.... .... 	bl.	... <foo-0x.*>

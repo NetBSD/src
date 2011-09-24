@@ -28,11 +28,11 @@
 .*:41: Error: opcode not supported on this processor.*
 .*:42: Error: opcode not supported on this processor.*
 .*:43: Error: opcode not supported on this processor.*
-.*:45: Error: expression out of range
-.*:46: Error: expression out of range
-.*:47: Error: register value used as expression
+.*:45: Error: illegal operands `dmfc2 \$2,0x10000'
+.*:46: Error: illegal operands `dmtc2 \$2,0x12345'
+.*:47: Error: illegal operands `dmfc2 \$9,\$12'
 .*:48: Error: illegal operands `dmfc2 \$4,\$15,4'
-.*:49: Error: register value used as expression
+.*:49: Error: illegal operands `dmtc2 \$16,\$8'
 .*:50: Error: illegal operands `dmtc2 \$22,\$7,\$4'
 .*:52: Error: Improper size \(32\)
 .*:54: Error: Improper position \(32\)

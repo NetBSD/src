@@ -28,7 +28,7 @@ proc iq2000_error_test { file testname {pattern ""} } {
 }
 
 if [istarget iq2000*-*-*] {
-    foreach file [glob -nocomplain -- $srcdir/$subdir/yield*.s] {
+    foreach file [lsort [glob -nocomplain -- $srcdir/$subdir/yield*.s]] {
 	set file [file tail $file]
 	iq2000_error_test $file \
 		"assembler emits yield instruction in delay slot error for $file" \

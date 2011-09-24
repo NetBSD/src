@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2003, 2005, 2007, 2008 Free Software Foundation, Inc.
+#   Copyright 2003, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -29,13 +29,14 @@ fragment <<EOF
 
 #define is_ppc_elf(bfd) \
   (bfd_get_flavour (bfd) == bfd_target_elf_flavour \
-   && elf_object_id (bfd) == PPC32_ELF_TDATA)
+   && elf_object_id (bfd) == PPC32_ELF_DATA)
 
 /* Whether to run tls optimization.  */
 static int notlsopt = 0;
+static int no_tls_get_addr_opt = 0;
 
 /* Whether to emit symbols for stubs.  */
-static int emit_stub_syms = 0;
+static int emit_stub_syms = -1;
 
 /* Chooses the correct place for .plt and .got.  */
 static enum ppc_elf_plt_type plt_style = PLT_UNSET;
@@ -54,7 +55,8 @@ ppc_after_open (void)
       lang_output_section_statement_type *plt_os[2];
       lang_output_section_statement_type *got_os[2];
 
-      emit_stub_syms |= link_info.emitrelocations;
+      if (emit_stub_syms < 0)
+	emit_stub_syms = link_info.emitrelocations || link_info.shared;
       new_plt = ppc_elf_select_plt_layout (link_info.output_bfd, &link_info,
 					   plt_style, emit_stub_syms);
       if (new_plt < 0)
@@ -103,7 +105,9 @@ ppc_before_allocation (void)
 {
   if (is_ppc_elf (link_info.output_bfd))
     {
-      if (ppc_elf_tls_setup (link_info.output_bfd, &link_info) && !notlsopt)
+      if (ppc_elf_tls_setup (link_info.output_bfd, &link_info,
+			     no_tls_get_addr_opt)
+	  && !notlsopt)
 	{
 	  if (!ppc_elf_tls_optimize (link_info.output_bfd, &link_info))
 	    {
@@ -112,7 +116,40 @@ ppc_before_allocation (void)
 	    }
 	}
     }
+
   gld${EMULATION_NAME}_before_allocation ();
+
+  /* Turn on relaxation if executable sections have addresses that
+     might make branches overflow.  */
+  if (RELAXATION_DISABLED_BY_DEFAULT)
+    {
+      bfd_vma low = (bfd_vma) -1;
+      bfd_vma high = 0;
+      asection *o;
+
+      /* Run lang_size_sections (if not already done).  */
+      if (expld.phase != lang_mark_phase_enum)
+	{
+	  expld.phase = lang_mark_phase_enum;
+	  expld.dataseg.phase = exp_dataseg_none;
+	  one_lang_size_sections_pass (NULL, FALSE);
+	  lang_reset_memory_regions ();
+	}
+
+      for (o = link_info.output_bfd->sections; o != NULL; o = o->next)
+	{
+	  if ((o->flags & (SEC_ALLOC | SEC_CODE)) != (SEC_ALLOC | SEC_CODE))
+	    continue;
+	  if (o->rawsize == 0)
+	    continue;
+	  if (low > o->vma)
+	    low = o->vma;
+	  if (high < o->vma + o->rawsize - 1)
+	    high = o->vma + o->rawsize - 1;
+	}
+      if (high > low && high - low > (1 << 25) - 1)
+	ENABLE_RELAXATION;
+    }
 }
 
 EOF
@@ -141,15 +178,19 @@ fi
 #
 PARSE_AND_LIST_PROLOGUE='
 #define OPTION_NO_TLS_OPT		301
-#define OPTION_NEW_PLT			302
-#define OPTION_OLD_PLT			303
-#define OPTION_OLD_GOT			304
-#define OPTION_STUBSYMS			305
+#define OPTION_NO_TLS_GET_ADDR_OPT	(OPTION_NO_TLS_OPT + 1)
+#define OPTION_NEW_PLT			(OPTION_NO_TLS_GET_ADDR_OPT + 1)
+#define OPTION_OLD_PLT			(OPTION_NEW_PLT + 1)
+#define OPTION_OLD_GOT			(OPTION_OLD_PLT + 1)
+#define OPTION_STUBSYMS			(OPTION_OLD_GOT + 1)
+#define OPTION_NO_STUBSYMS		(OPTION_STUBSYMS + 1)
 '
 
 PARSE_AND_LIST_LONGOPTS='
   { "emit-stub-syms", no_argument, NULL, OPTION_STUBSYMS },
+  { "no-emit-stub-syms", no_argument, NULL, OPTION_NO_STUBSYMS },
   { "no-tls-optimize", no_argument, NULL, OPTION_NO_TLS_OPT },
+  { "no-tls-get-addr-optimize", no_argument, NULL, OPTION_NO_TLS_GET_ADDR_OPT },
   { "secure-plt", no_argument, NULL, OPTION_NEW_PLT },
   { "bss-plt", no_argument, NULL, OPTION_OLD_PLT },
   { "sdata-got", no_argument, NULL, OPTION_OLD_GOT },
@@ -158,7 +199,9 @@ PARSE_AND_LIST_LONGOPTS='
 PARSE_AND_LIST_OPTIONS='
   fprintf (file, _("\
   --emit-stub-syms            Label linker stubs with a symbol.\n\
+  --no-emit-stub-syms         Don'\''t label linker stubs with a symbol.\n\
   --no-tls-optimize           Don'\''t try to optimize TLS accesses.\n\
+  --no-tls-get-addr-optimize  Don'\''t use a special __tls_get_addr call.\n\
   --secure-plt                Use new-style PLT if possible.\n\
   --bss-plt                   Force old-style BSS PLT.\n\
   --sdata-got                 Force GOT location just before .sdata.\n"
@@ -170,8 +213,16 @@ PARSE_AND_LIST_ARGS_CASES='
       emit_stub_syms = 1;
       break;
 
+    case OPTION_NO_STUBSYMS:
+      emit_stub_syms = 0;
+      break;
+
     case OPTION_NO_TLS_OPT:
       notlsopt = 1;
+      break;
+
+    case OPTION_NO_TLS_GET_ADDR_OPT:
+      no_tls_get_addr_opt = 1;
       break;
 
     case OPTION_NEW_PLT:

@@ -12,11 +12,6 @@ text_label:
 # bne is handled by the same code as beq.  Just sanity check.
 	bne	$4,0,text_label
 
-# Sanity check beql and bnel
-	.set	mips2
-	beql	$4,0,text_label
-	bnel	$4,0,text_label
-
 # Test that branches which overflow are converted to jumps.
 	.space	0x20000
 	b	text_label

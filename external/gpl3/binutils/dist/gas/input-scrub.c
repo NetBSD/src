@@ -1,6 +1,6 @@
 /* input_scrub.c - Break up input buffers into whole numbers of lines.
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   2000, 2001, 2003, 2006, 2007
+   2000, 2001, 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -99,10 +99,9 @@ int macro_nest;
 static char *physical_input_file;
 static char *logical_input_file;
 
-typedef unsigned int line_numberT;	/* 1-origin line number in a source file.  */
+/* 1-origin line number in a source file.  */
 /* A line ends in '\n' or eof.  */
-
-static line_numberT physical_input_line;
+static unsigned int physical_input_line;
 static int logical_input_line;
 
 /* Struct used to save the state of the input handler during include files */
@@ -114,7 +113,7 @@ struct input_save {
   unsigned int        buffer_length;
   char *              physical_input_file;
   char *              logical_input_file;
-  line_numberT        physical_input_line;
+  unsigned int        physical_input_line;
   int                 logical_input_line;
   int                 sb_index;
   sb                  from_sb;
@@ -165,7 +164,8 @@ input_scrub_push (char *saved_position)
   buffer_length = input_file_buffer_size ();
   sb_index = -1;
 
-  buffer_start = xmalloc ((BEFORE_SIZE + buffer_length + buffer_length + AFTER_SIZE));
+  buffer_start = (char *) xmalloc ((BEFORE_SIZE + buffer_length
+                                    + buffer_length + AFTER_SIZE));
   memcpy (buffer_start, BEFORE_STRING, (int) BEFORE_SIZE);
 
   return saved;
@@ -209,7 +209,8 @@ input_scrub_begin (void)
 
   buffer_length = input_file_buffer_size ();
 
-  buffer_start = xmalloc ((BEFORE_SIZE + buffer_length + buffer_length + AFTER_SIZE));
+  buffer_start = (char *) xmalloc ((BEFORE_SIZE + buffer_length
+                                    + buffer_length + AFTER_SIZE));
   memcpy (buffer_start, BEFORE_STRING, (int) BEFORE_SIZE);
 
   /* Line number things.  */
@@ -283,6 +284,12 @@ input_scrub_include_sb (sb *from, char *position, int is_expansion)
       sb_add_char (&from_sb, '\n');
     }
   sb_scrub_and_add_sb (&from_sb, from);
+
+  /* Make sure the parser looks at defined contents when it scans for
+     e.g. end-of-line at the end of a macro.  */
+  sb_add_char (&from_sb, 0);
+  from_sb.len--;
+
   sb_index = 1;
 
   /* These variables are reset by input_scrub_push.  Restore them
@@ -295,6 +302,8 @@ void
 input_scrub_close (void)
 {
   input_file_close ();
+  physical_input_line = 0;
+  logical_input_line = -1;
 }
 
 char *
@@ -335,8 +344,8 @@ input_scrub_next_buffer (char **bufp)
 
   if (partial_size)
     {
-      memcpy (buffer_start + BEFORE_SIZE, partial_where,
-	      (unsigned int) partial_size);
+      memmove (buffer_start + BEFORE_SIZE, partial_where,
+	       (unsigned int) partial_size);
       memcpy (buffer_start + BEFORE_SIZE, save_source, AFTER_SIZE);
     }
   limit = input_file_give_next_buffer (buffer_start
@@ -357,10 +366,10 @@ input_scrub_next_buffer (char **bufp)
 
 	  limoff = limit - buffer_start;
 	  buffer_length += input_file_buffer_size ();
-	  buffer_start = xrealloc (buffer_start,
-				   (BEFORE_SIZE
-				    + 2 * buffer_length
-				    + AFTER_SIZE));
+	  buffer_start = (char *) xrealloc (buffer_start,
+                                            (BEFORE_SIZE
+                                             + 2 * buffer_length
+                                             + AFTER_SIZE));
 	  *bufp = buffer_start + BEFORE_SIZE;
 	  limit = input_file_give_next_buffer (buffer_start + limoff);
 

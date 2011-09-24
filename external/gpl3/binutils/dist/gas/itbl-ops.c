@@ -1,6 +1,6 @@
 /* itbl-ops.c
-   Copyright 1997, 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007
-   Free Software Foundation, Inc.
+   Copyright 1997, 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007,
+   2009, 2010  Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -97,7 +97,7 @@
 
 #ifdef DEBUG
 #include <assert.h>
-#define ASSERT(x) assert(x)
+#define ASSERT(x) gas_assert (x)
 #define DBG(x) printf x
 #else
 #define ASSERT(x)
@@ -300,7 +300,10 @@ append_insns_as_macros (void)
 {
   struct ITBL_OPCODE_STRUCT *new_opcodes, *o;
   struct itbl_entry *e, **es;
-  int n, id, size, new_size, new_num_opcodes;
+  int n, size, new_size, new_num_opcodes;
+#ifdef USE_MACROS
+  int id;
+#endif
 
   if (!itbl_have_entries)
     return;
@@ -335,7 +338,9 @@ append_insns_as_macros (void)
   /* FIXME! some NUMOPCODES are calculated expressions.
 		These need to be changed before itbls can be supported.  */
 
+#ifdef USE_MACROS
   id = ITBL_NUM_MACROS;		/* begin the next macro id after the last */
+#endif
   o = &new_opcodes[ITBL_NUM_OPCODES];	/* append macro to opcodes list */
   for (n = e_p0; n < e_nprocs; n++)
     {
@@ -593,6 +598,7 @@ itbl_disassemble (char *s, unsigned long insn)
     {
       struct itbl_entry *r;
       unsigned long value;
+      char s_value[20];
 
       if (f == e->fields)	/* First operand is preceded by tab.  */
 	strcat (s, "\t");
@@ -611,14 +617,18 @@ itbl_disassemble (char *s, unsigned long insn)
 	  if (r)
 	    strcat (s, r->name);
 	  else
-	    sprintf (s, "%s$%lu", s, value);
+	    {
+	      sprintf (s_value, "$%lu", value);
+	      strcat (s, s_value);
+	    }
 	  break;
 	case e_addr:
 	  /* Use assembler's symbol table to find symbol.  */
 	  /* FIXME!! Do we need this?  If so, what about relocs??  */
 	  /* If not a symbol, fall through to IMMED.  */
 	case e_immed:
-	  sprintf (s, "%s0x%lx", s, value);
+	  sprintf (s_value, "0x%lx", value);
+	  strcat (s, s_value);
 	  break;
 	default:
 	  return 0;		/* error; invalid field spec */

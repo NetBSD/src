@@ -1,6 +1,6 @@
 # This shell script emits a C file. -*- C -*-
 #   Copyright 1991, 1993, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-#   2004, 2005, 2007, 2008
+#   2004, 2005, 2006, 2007, 2008, 2009
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -31,16 +31,17 @@ fragment <<EOF
 #include "elf/arm.h"
 
 static char *thumb_entry_symbol = NULL;
-static bfd *bfd_for_interwork;
 static int byteswap_code = 0;
 static int target1_is_rel = 0${TARGET1_IS_REL};
 static char *target2_type = "${TARGET2_TYPE}";
 static int fix_v4bx = 0;
 static int use_blx = 0;
 static bfd_arm_vfp11_fix vfp11_denorm_fix = BFD_ARM_VFP11_FIX_DEFAULT;
+static int fix_cortex_a8 = -1;
 static int no_enum_size_warning = 0;
 static int no_wchar_size_warning = 0;
 static int pic_veneer = 0;
+static int merge_exidx_entries = -1;
 
 static void
 gld${EMULATION_NAME}_before_parse (void)
@@ -53,76 +54,16 @@ gld${EMULATION_NAME}_before_parse (void)
 }
 
 static void
-arm_elf_after_open (void)
-{
-  if (strstr (bfd_get_target (link_info.output_bfd), "arm") == NULL)
-    {
-      /* The arm backend needs special fields in the output hash structure.
-	 These will only be created if the output format is an arm format,
-	 hence we do not support linking and changing output formats at the
-	 same time.  Use a link followed by objcopy to change output formats.  */
-      einfo ("%F%X%P: error: cannot change output format whilst linking ARM binaries\n");
-      return;
-    }
-
-  {
-    LANG_FOR_EACH_INPUT_STATEMENT (is)
-      {
-	bfd_elf32_arm_add_glue_sections_to_bfd (is->the_bfd, & link_info);
-      }
-  }
-
-  /* Call the standard elf routine.  */
-  gld${EMULATION_NAME}_after_open ();
-}
-
-static void
-arm_elf_set_bfd_for_interworking (lang_statement_union_type *statement)
-{
-  if (statement->header.type == lang_input_section_enum)
-    {
-      asection *i = statement->input_section.section;
-
-      if (!((lang_input_statement_type *) i->owner->usrdata)->just_syms_flag
-	  && (i->flags & SEC_EXCLUDE) == 0)
-	{
-	  asection *output_section = i->output_section;
-
-	  ASSERT (output_section->owner == link_info.output_bfd);
-
-	  /* Don't attach the interworking stubs to a dynamic object, to
-	     an empty section, etc.  */
-	  if ((output_section->flags & SEC_HAS_CONTENTS) != 0
-	      && (i->flags & SEC_NEVER_LOAD) == 0
-	      && ! (i->owner->flags & DYNAMIC))
-	    bfd_for_interwork = i->owner;
-	}
-    }
-}
-
-static void
 arm_elf_before_allocation (void)
 {
-  if (link_info.input_bfds != NULL)
-    {
-      /* The interworking bfd must be the last one in the link.  */
-      bfd_for_interwork = NULL;
-
-      lang_for_each_statement (arm_elf_set_bfd_for_interworking);
-
-      /* If bfd_for_interwork is NULL, then there are no loadable sections
-	 with real contents to be linked, so we are not going to have to
-	 create any interworking stubs, so it is OK not to call
-	 bfd_elf32_arm_get_bfd_for_interworking.  */
-      if (bfd_for_interwork != NULL)
-	bfd_elf32_arm_get_bfd_for_interworking (bfd_for_interwork, &link_info);
-    }
-
   bfd_elf32_arm_set_byteswap_code (&link_info, byteswap_code);
 
   /* Choose type of VFP11 erratum fix, or warn if specified fix is unnecessary
      due to architecture version.  */
   bfd_elf32_arm_set_vfp11_fix (link_info.output_bfd, &link_info);
+
+  /* Auto-select Cortex-A8 erratum fix if it wasn't explicitly specified.  */
+  bfd_elf32_arm_set_cortex_a8_fix (link_info.output_bfd, &link_info);
 
   /* We should be able to set the size of the interworking stub section.  We
      can't do it until later if we have dynamic sections, though.  */
@@ -140,29 +81,13 @@ arm_elf_before_allocation (void)
 	    /* xgettext:c-format */
 	    einfo (_("Errors encountered processing file %s"), is->filename);
 	}
+
+      /* We have seen it all.  Allocate it, and carry on.  */
+      bfd_elf32_arm_allocate_interworking_sections (& link_info);
     }
 
   /* Call the standard elf routine.  */
   gld${EMULATION_NAME}_before_allocation ();
-
-  /* We have seen it all. Allocate it, and carry on.  */
-  bfd_elf32_arm_allocate_interworking_sections (& link_info);
-}
-
-static void
-arm_elf_after_allocation (void)
-{
-  /* Call the standard elf routine.  */
-  after_allocation_default ();
-
-  {
-    LANG_FOR_EACH_INPUT_STATEMENT (is)
-      {
-        /* Figure out where VFP11 erratum veneers (and the labels returning
-           from same) have been placed.  */
-        bfd_elf32_arm_vfp11_fix_veneer_locations (is->the_bfd, &link_info);
-      }
-  }
 }
 
 /* Fake input file for stubs.  */
@@ -223,9 +148,9 @@ hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
 	  if (l->input_section.section == info->input_section)
 	    {
 	      /* We've found our section.  Insert the stub immediately
-		 before its associated input section.  */
-	      *lp = info->add.head;
-	      *(info->add.tail) = l;
+		 after its associated input section.  */
+	      *(info->add.tail) = l->header.next;
+	      l->header.next = info->add.head;
 	      return TRUE;
 	    }
 	  break;
@@ -254,7 +179,7 @@ hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
 /* Call-back for elf32_arm_size_stubs.  */
 
 /* Create a new stub section, and arrange for it to be linked
-   immediately before INPUT_SECTION.  */
+   immediately after INPUT_SECTION.  */
 
 static asection *
 elf32_arm_add_stub_section (const char *stub_sec_name,
@@ -322,10 +247,80 @@ build_section_lists (lang_statement_union_type *statement)
     }
 }
 
-static void
-gld${EMULATION_NAME}_finish (void)
+static int
+compare_output_sec_vma (const void *a, const void *b)
 {
-  struct bfd_link_hash_entry * h;
+  asection *asec = *(asection **) a, *bsec = *(asection **) b;
+  asection *aout = asec->output_section, *bout = bsec->output_section;
+  bfd_vma avma, bvma;
+  
+  /* If there's no output section for some reason, compare equal.  */
+  if (!aout || !bout)
+    return 0;
+  
+  avma = aout->vma + asec->output_offset;
+  bvma = bout->vma + bsec->output_offset;
+  
+  if (avma > bvma)
+    return 1;
+  else if (avma < bvma)
+    return -1;
+  
+  return 0;
+}
+
+static void
+gld${EMULATION_NAME}_after_allocation (void)
+{
+  if (!link_info.relocatable)
+    {
+      /* Build a sorted list of input text sections, then use that to process
+	 the unwind table index.  */
+      unsigned int list_size = 10;
+      asection **sec_list = (asection **)
+          xmalloc (list_size * sizeof (asection *));
+      unsigned int sec_count = 0;
+
+      LANG_FOR_EACH_INPUT_STATEMENT (is)
+	{
+	  bfd *abfd = is->the_bfd;
+	  asection *sec;
+	  
+	  if ((abfd->flags & (EXEC_P | DYNAMIC)) != 0)
+	    continue;
+	  
+	  for (sec = abfd->sections; sec != NULL; sec = sec->next)
+	    {
+	      asection *out_sec = sec->output_section;
+
+	      if (out_sec
+		  && elf_section_data (sec)
+		  && elf_section_type (sec) == SHT_PROGBITS
+		  && (elf_section_flags (sec) & SHF_EXECINSTR) != 0
+		  && (sec->flags & SEC_EXCLUDE) == 0
+		  && sec->sec_info_type != ELF_INFO_TYPE_JUST_SYMS
+		  && out_sec != bfd_abs_section_ptr)
+		{
+		  if (sec_count == list_size)
+		    {
+		      list_size *= 2;
+		      sec_list = (asection **) 
+                          xrealloc (sec_list, list_size * sizeof (asection *));
+		    }
+
+		  sec_list[sec_count++] = sec;
+		}
+	    }
+	}
+	
+      qsort (sec_list, sec_count, sizeof (asection *), &compare_output_sec_vma);
+      
+      if (elf32_arm_fix_exidx_coverage (sec_list, sec_count, &link_info,
+					   merge_exidx_entries))
+	need_laying_out = 1;
+      
+      free (sec_list);
+    }
 
   /* bfd_elf32_discard_info just plays with debugging sections,
      ie. doesn't affect any code, so we can delay resizing the
@@ -366,6 +361,21 @@ gld${EMULATION_NAME}_finish (void)
 
   if (need_laying_out != -1)
     gld${EMULATION_NAME}_map_segments (need_laying_out);
+}
+
+static void
+gld${EMULATION_NAME}_finish (void)
+{
+  struct bfd_link_hash_entry * h;
+
+  {
+    LANG_FOR_EACH_INPUT_STATEMENT (is)
+      {
+        /* Figure out where VFP11 erratum veneers (and the labels returning
+           from same) have been placed.  */
+        bfd_elf32_arm_vfp11_fix_veneer_locations (is->the_bfd, &link_info);
+      }
+  }
 
   if (! link_info.relocatable)
     {
@@ -439,12 +449,22 @@ gld${EMULATION_NAME}_finish (void)
 static void
 arm_elf_create_output_section_statements (void)
 {
+  if (strstr (bfd_get_target (link_info.output_bfd), "arm") == NULL)
+    {
+      /* The arm backend needs special fields in the output hash structure.
+	 These will only be created if the output format is an arm format,
+	 hence we do not support linking and changing output formats at the
+	 same time.  Use a link followed by objcopy to change output formats.  */
+      einfo ("%F%X%P: error: Cannot change output format whilst linking ARM binaries.\n");
+      return;
+    }
+
   bfd_elf32_arm_set_target_relocs (link_info.output_bfd, &link_info,
 				   target1_is_rel,
 				   target2_type, fix_v4bx, use_blx,
 				   vfp11_denorm_fix, no_enum_size_warning,
 				   no_wchar_size_warning,
-				   pic_veneer);
+				   pic_veneer, fix_cortex_a8);
 
   stub_file = lang_add_input_file ("linker stubs",
  				   lang_input_file_is_fake_enum,
@@ -461,6 +481,10 @@ arm_elf_create_output_section_statements (void)
  
   stub_file->the_bfd->flags |= BFD_LINKER_CREATED;
   ldlang_add_file (stub_file);
+
+  /* Also use the stub file for stubs placed in a single output section.  */
+  bfd_elf32_arm_add_glue_sections_to_bfd (stub_file->the_bfd, &link_info);
+  bfd_elf32_arm_get_bfd_for_interworking (stub_file->the_bfd, &link_info);
 }
 
 /* Avoid processing the fake stub_file in vercheck, stat_needed and
@@ -502,6 +526,9 @@ PARSE_AND_LIST_PROLOGUE='
 #define OPTION_FIX_V4BX_INTERWORKING	311
 #define OPTION_STUBGROUP_SIZE           312
 #define OPTION_NO_WCHAR_SIZE_WARNING	313
+#define OPTION_FIX_CORTEX_A8		314
+#define OPTION_NO_FIX_CORTEX_A8		315
+#define OPTION_NO_MERGE_EXIDX_ENTRIES   316
 '
 
 PARSE_AND_LIST_SHORTOPTS=p
@@ -521,19 +548,22 @@ PARSE_AND_LIST_LONGOPTS='
   { "pic-veneer", no_argument, NULL, OPTION_PIC_VENEER},
   { "stub-group-size", required_argument, NULL, OPTION_STUBGROUP_SIZE },
   { "no-wchar-size-warning", no_argument, NULL, OPTION_NO_WCHAR_SIZE_WARNING},
+  { "fix-cortex-a8", no_argument, NULL, OPTION_FIX_CORTEX_A8 },
+  { "no-fix-cortex-a8", no_argument, NULL, OPTION_NO_FIX_CORTEX_A8 },
+  { "no-merge-exidx-entries", no_argument, NULL, OPTION_NO_MERGE_EXIDX_ENTRIES },
 '
 
 PARSE_AND_LIST_OPTIONS='
   fprintf (file, _("  --thumb-entry=<sym>         Set the entry point to be Thumb symbol <sym>\n"));
-  fprintf (file, _("  --be8                       Oputput BE8 format image\n"));
-  fprintf (file, _("  --target1=rel               Interpret R_ARM_TARGET1 as R_ARM_REL32\n"));
-  fprintf (file, _("  --target1=abs               Interpret R_ARM_TARGET1 as R_ARM_ABS32\n"));
+  fprintf (file, _("  --be8                       Output BE8 format image\n"));
+  fprintf (file, _("  --target1-rel               Interpret R_ARM_TARGET1 as R_ARM_REL32\n"));
+  fprintf (file, _("  --target1-abs               Interpret R_ARM_TARGET1 as R_ARM_ABS32\n"));
   fprintf (file, _("  --target2=<type>            Specify definition of R_ARM_TARGET2\n"));
   fprintf (file, _("  --fix-v4bx                  Rewrite BX rn as MOV pc, rn for ARMv4\n"));
   fprintf (file, _("  --fix-v4bx-interworking     Rewrite BX rn branch to ARMv4 interworking veneer\n"));
   fprintf (file, _("  --use-blx                   Enable use of BLX instructions\n"));
   fprintf (file, _("  --vfp11-denorm-fix          Specify how to fix VFP11 denorm erratum\n"));
-  fprintf (file, _("  --no-enum-size-warning      Don'\''t warn about objects with incompatible"
+  fprintf (file, _("  --no-enum-size-warning      Don'\''t warn about objects with incompatible\n"
 		   "                                enum sizes\n"));
   fprintf (file, _("  --no-wchar-size-warning     Don'\''t warn about objects with incompatible"
 		   "                                wchar_t sizes\n"));
@@ -541,12 +571,15 @@ PARSE_AND_LIST_OPTIONS='
   fprintf (file, _("\
    --stub-group-size=N   Maximum size of a group of input sections that can be\n\
                            handled by one stub section.  A negative value\n\
-                           locates all stubs before their branches (with a\n\
+                           locates all stubs after their branches (with a\n\
                            group size of -N), while a positive value allows\n\
                            two groups of input sections, one before, and one\n\
                            after each stub section.  Values of +/-1 indicate\n\
                            the linker should choose suitable defaults.\n"
  		   ));
+  fprintf (file, _("  --[no-]fix-cortex-a8        Disable/enable Cortex-A8 Thumb-2 branch erratum fix\n"));
+  fprintf (file, _("  --no-merge-exidx-entries    Disable merging exidx entries\n"));
+ 
 '
 
 PARSE_AND_LIST_ARGS_CASES='
@@ -618,13 +651,24 @@ PARSE_AND_LIST_ARGS_CASES='
 	  einfo (_("%P%F: invalid number `%s'\''\n"), optarg);
       }
       break;
+
+    case OPTION_FIX_CORTEX_A8:
+      fix_cortex_a8 = 1;
+      break;
+
+    case OPTION_NO_FIX_CORTEX_A8:
+      fix_cortex_a8 = 0;
+      break;
+
+   case OPTION_NO_MERGE_EXIDX_ENTRIES:
+      merge_exidx_entries = 0;
+
 '
 
-# We have our own after_open and before_allocation functions, but they call
+# We have our own before_allocation etc. functions, but they call
 # the standard routines, so give them a different name.
-LDEMUL_AFTER_OPEN=arm_elf_after_open
 LDEMUL_BEFORE_ALLOCATION=arm_elf_before_allocation
-LDEMUL_AFTER_ALLOCATION=arm_elf_after_allocation
+LDEMUL_AFTER_ALLOCATION=gld${EMULATION_NAME}_after_allocation
 LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=arm_elf_create_output_section_statements
 
 # Replace the elf before_parse function with our own.

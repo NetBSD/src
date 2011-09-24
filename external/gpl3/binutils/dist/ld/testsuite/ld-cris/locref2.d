@@ -11,7 +11,7 @@
 
 SYMBOL TABLE:
 #...
-0+82088 l     O \.got	0+ \.hidden _GLOBAL_OFFSET_TABLE_
+0+82088 l     O \.got	0+ _GLOBAL_OFFSET_TABLE_
 0+  w      \*UND\*	0+ expfn
 0+  w      \*UND\*	0+ expobj
 #...

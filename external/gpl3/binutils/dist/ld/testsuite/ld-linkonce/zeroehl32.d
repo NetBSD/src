@@ -2,7 +2,7 @@
 #source: y.s
 #ld: -Ttext 0xa00 -T zeroeh.ld
 #objdump: -s
-#target: cris-*-elf cris-*-linux* i?86-*-elf i?86-*-linux*
+#target: cris-*-elf cris-*-linux* i?86-*-elf i?86-*-linux* i?86-*-gnu*
 
 # The word at address 201c, for the linkonce-excluded section, must be zero.
 

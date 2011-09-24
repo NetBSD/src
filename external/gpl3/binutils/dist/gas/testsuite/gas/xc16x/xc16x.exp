@@ -18,7 +18,7 @@ proc do_xc16x_add {} {
 	    -re " +\[0-9\]+ 0008 06F0D204\[^\n\]*\n"  { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000c 02F0EDFF\[^\n\]*\n"  { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0010 04F0EDFF\[^\n\]*\n"  { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof				    { break }
 	}
     }
@@ -48,7 +48,7 @@ proc do_xc16x_addb {} {
 	    -re " +\[0-9\]+ 0008 07F03300\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000c 03F08723\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0010 05F08723\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -78,7 +78,7 @@ proc do_xc16x_addc {} {
 	    -re " +\[0-9\]+ 000a 16F05634\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000e 12F08723\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0012 14F08723\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -107,7 +107,7 @@ proc do_xc16x_addcb {} {
 	    -re " +\[0-9\]+ 0006 17F00200\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000a 17F02300\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000e 15F08723\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -137,7 +137,7 @@ proc do_xc16x_sub {} {
 	    -re " +\[0-9\]+ 0008 26F04376\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000c 22F04376\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0010 24F04376\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -167,7 +167,7 @@ proc do_xc16x_subb {} {
 	    -re " +\[0-9\]+ 0008 27F04300\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000c 23F04376\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0010 25F04376\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -197,7 +197,7 @@ proc do_xc16x_subc {} {
 	    -re " +\[0-9\]+ 0008 36F04300\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000c 32F04376\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0010 34F04376\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -227,7 +227,7 @@ proc do_xc16x_subcb {} {
 	    -re " +\[0-9\]+ 0008 37F04300\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000c 33F04376\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0010 35F04376\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -257,7 +257,7 @@ proc do_xc16x_and {} {
 	    -re " +\[0-9\]+ 0008 66F0BEFC\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000c 62F03002\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0010 64F02003\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -287,7 +287,7 @@ proc do_xc16x_andb {} {
 	    -re " +\[0-9\]+ 0008 67F0BE00\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000c 63F03002\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0010 65F02003\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -317,7 +317,7 @@ proc do_xc16x_or {} {
 	    -re " +\[0-9\]+ 0008 76F03402\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000c 72F03645\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0010 74F03645\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -347,7 +347,7 @@ proc do_xc16x_xor {} {
 	    -re " +\[0-9\]+ 0008 56F03402\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000c 52F03402\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0010 54F03402\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -377,7 +377,7 @@ proc do_xc16x_xorb {} {
 	    -re " +\[0-9\]+ 0008 57F03400\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000c 53F00324\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0010 55F00324\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -417,7 +417,7 @@ proc do_xc16x_mov {} {
 	    -re " +\[0-9\]+ 0024 9400CBFF\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0028 F2F0CBFF\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 002c F6F0CBFF\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -456,7 +456,7 @@ proc do_xc16x_movb {} {
 	    -re " +\[0-9\]+ 0028 B4033412\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 002c F3F01200\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0030 F7F01200\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -482,7 +482,7 @@ proc do_xc16x_movbs {} {
 	    -re " +\[0-9\]+ 0000 D020\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0002 D2F0FF00\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0006 D5F0CBFF\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -508,7 +508,7 @@ proc do_xc16x_movbz {} {
 	    -re " +\[0-9\]+ 0000 C002\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0002 C2F0DD23\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0006 C5F02300\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -533,7 +533,7 @@ proc do_xc16x_pushpop {} {
 	expect {
 	    -re " +\[0-9\]+ 0000 FCF0\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0002 ECF0\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -557,16 +557,16 @@ proc do_xc16x_shlrol {} {
     while 1 {
 	expect {
 	    -re " +\[0-9\]+ 0000 4C01\[^\n\]*\n"   { set x [expr $x+1] }
-	    -re " +\[0-9\]+ 0002 5C00\[^\n\]*\n"   { set x [expr $x+1] }
+	    -re " +\[0-9\]+ 0002 5C40\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0004 6C01\[^\n\]*\n"   { set x [expr $x+1] }
-	    -re " +\[0-9\]+ 0006 7C00\[^\n\]*\n"   { set x [expr $x+1] }
+	    -re " +\[0-9\]+ 0006 7C40\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0008 0C01\[^\n\]*\n"   { set x [expr $x+1] }
-	    -re " +\[0-9\]+ 000a 1C00\[^\n\]*\n"   { set x [expr $x+1] }
+	    -re " +\[0-9\]+ 000a 1C40\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000c 2C01\[^\n\]*\n"   { set x [expr $x+1] }
-	    -re " +\[0-9\]+ 000e 3C00\[^\n\]*\n"   { set x [expr $x+1] }
+	    -re " +\[0-9\]+ 000e 3C40\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0010 AC01\[^\n\]*\n"   { set x [expr $x+1] }
-	    -re " +\[0-9\]+ 0012 BC00\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    -re " +\[0-9\]+ 0012 BC40\[^\n\]*\n"   { set x [expr $x+1] }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -591,7 +591,7 @@ proc do_xc16x_neg {} {
 	expect {
 	    -re " +\[0-9\]+ 0000 8100\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0002 A100\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -615,7 +615,7 @@ proc do_xc16x_mul {} {
 	expect {
 	    -re " +\[0-9\]+ 0000 0B01\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0002 1B01\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -642,7 +642,7 @@ proc do_xc16x_div {} {
 	    -re " +\[0-9\]+ 0002 6B00\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0004 7B00\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0006 5B00\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -684,7 +684,7 @@ proc do_xc16x_jmpa {} {
 	    -re " +\[0-9\]+ 0040 EAD0AAAA\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0044 EAA0AAAA\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0048 EA10AAAA\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -726,7 +726,7 @@ proc do_xc16x_jmpi {} {
 	    -re " +\[0-9\]+ 0020 9CD7\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0022 9CA7\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0024 9C17\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -770,7 +770,7 @@ proc do_xc16x_jmpr {} {
 	    -re " +\[0-9\]+ 0022 ADEE\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0024 1DED\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0026 CDEC\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -801,7 +801,7 @@ proc do_xc16x_syscontrol1 {} {
 	    -re " +\[0-9\]+ 0012 A55AA5A5\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0016 857A8585\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 001a B54AB5B5\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -840,7 +840,7 @@ proc do_xc16x_syscontrol2 {} {
 	    -re " +\[0-9\]+ 001e D7300100\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0022 DCB5\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0024 D7B00100\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -865,7 +865,7 @@ proc do_xc16x_cpl {} {
 	expect {
 	    -re " +\[0-9\]+ 0000 9100\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0002 B100\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -894,7 +894,7 @@ proc do_xc16x_cmp {} {
 	    -re " +\[0-9\]+ 0006 4803\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0008 46F03402\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000c 42F05234\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -923,7 +923,7 @@ proc do_xc16x_cmpb {} {
 	    -re " +\[0-9\]+ 0006 4903\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0008 47F02200\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000c 43F03402\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -958,7 +958,7 @@ proc do_xc16x_cmpi {} {
 	    -re " +\[0-9\]+ 001e 90F0\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0020 96F0CBFC\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0024 92F0CBFF\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -1000,7 +1000,7 @@ proc do_xc16x_calli {} {
 	    -re " +\[0-9\]+ 0020 ABD1\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0022 AB11\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0024 ABC1\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -1043,7 +1043,7 @@ proc do_xc16x_calla {} {
     	    -re " +\[0-9\]+ 0044 CAA0AAAA\[^\n\]*\n"   { set x [expr $x+1] }
     	    -re " +\[0-9\]+ 0048 CA10AAAA\[^\n\]*\n"   { set x [expr $x+1] }
     	    -re " +\[0-9\]+ 004c CAC0AAAA\[^\n\]*\n"   { set x [expr $x+1] }
-    	    timeout 				{ perror "timeout\n; break }
+    	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -1075,7 +1075,7 @@ proc do_xc16x_bit {} {
 	    -re " +\[0-9\]+ 0010 5AF0F021\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0014 7AF0F021\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0018 2AF0F021\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -1100,7 +1100,7 @@ proc do_xc16x_bfldl {} {
 	expect {
 	    -re " +\[0-9\]+ 0000 0AF0870E\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0004 1AF00EFF\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -1127,7 +1127,7 @@ proc do_xc16x_ret {} {
 	    -re " +\[0-9\]+ 0002 FB88\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0004 DB00\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0006 EBF5\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -1151,7 +1151,7 @@ proc do_xc16x_trap {} {
     while 1 {
 	expect {
 	    -re " +\[0-9\]+ 0000 9B04\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -1181,7 +1181,7 @@ proc do_xc16x_orb {} {
 	    -re " +\[0-9\]+ 0008 77F02300\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 000c 73F03402\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0010 75F03402\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -1206,7 +1206,7 @@ proc do_xc16x_prior {} {
     while 1 {
 	expect {
 	    -re " +\[0-9\]+ 0000 2B01\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -1231,7 +1231,7 @@ proc do_xc16x_nop {} {
 	expect {
 	    -re " +\[0-9\]+ 0000 CC00\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0002 CC00\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }
@@ -1257,7 +1257,7 @@ proc do_xc16x_scxt {} {
 	expect {
 	    -re " +\[0-9\]+ 0000 C6F0FFFF\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0004 D6F0FFFF\[^\n\]*\n"   { set x [expr $x+1] }
-	    timeout 				{ perror "timeout\n; break }
+	    timeout 				{ perror "timeout\n"; break }
 	    eof					{ break }
 	}
     }

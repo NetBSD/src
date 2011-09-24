@@ -395,6 +395,8 @@ _start:
 	palignr $100,(%rcx),%xmm6
 	pblendw $100,%xmm4,%xmm6
 	pblendw $100,(%rcx),%xmm6
+	pclmulqdq $100,%xmm4,%xmm6
+	pclmulqdq $100,(%rcx),%xmm6
 	shufpd $100,%xmm4,%xmm6
 	shufpd $100,(%rcx),%xmm6
 	shufps $100,%xmm4,%xmm6
@@ -702,4 +704,708 @@ _start:
 
 # Tests for op imm8, xmm, regl
 	pextrw $100,%xmm4,%ecx
+
+
+	.intel_syntax noprefix
+# Tests for op mem64
+	ldmxcsr DWORD PTR [rcx]
+	stmxcsr DWORD PTR [rcx]
+
+# Tests for op xmm/mem128, xmm
+	cvtdq2ps xmm6,xmm4
+	cvtdq2ps xmm4,XMMWORD PTR [rcx]
+	cvtpd2dq xmm6,xmm4
+	cvtpd2dq xmm4,XMMWORD PTR [rcx]
+	cvtpd2ps xmm6,xmm4
+	cvtpd2ps xmm4,XMMWORD PTR [rcx]
+	cvtps2dq xmm6,xmm4
+	cvtps2dq xmm4,XMMWORD PTR [rcx]
+	cvttpd2dq xmm6,xmm4
+	cvttpd2dq xmm4,XMMWORD PTR [rcx]
+	cvttps2dq xmm6,xmm4
+	cvttps2dq xmm4,XMMWORD PTR [rcx]
+	movapd xmm6,xmm4
+	movapd xmm4,XMMWORD PTR [rcx]
+	movaps xmm6,xmm4
+	movaps xmm4,XMMWORD PTR [rcx]
+	movdqa xmm6,xmm4
+	movdqa xmm4,XMMWORD PTR [rcx]
+	movdqu xmm6,xmm4
+	movdqu xmm4,XMMWORD PTR [rcx]
+	movshdup xmm6,xmm4
+	movshdup xmm4,XMMWORD PTR [rcx]
+	movsldup xmm6,xmm4
+	movsldup xmm4,XMMWORD PTR [rcx]
+	movupd xmm6,xmm4
+	movupd xmm4,XMMWORD PTR [rcx]
+	movups xmm6,xmm4
+	movups xmm4,XMMWORD PTR [rcx]
+	pabsb xmm6,xmm4
+	pabsb xmm4,XMMWORD PTR [rcx]
+	pabsw xmm6,xmm4
+	pabsw xmm4,XMMWORD PTR [rcx]
+	pabsd xmm6,xmm4
+	pabsd xmm4,XMMWORD PTR [rcx]
+	phminposuw xmm6,xmm4
+	phminposuw xmm4,XMMWORD PTR [rcx]
+	ptest xmm6,xmm4
+	ptest xmm4,XMMWORD PTR [rcx]
+	rcpps xmm6,xmm4
+	rcpps xmm4,XMMWORD PTR [rcx]
+	rsqrtps xmm6,xmm4
+	rsqrtps xmm4,XMMWORD PTR [rcx]
+	sqrtpd xmm6,xmm4
+	sqrtpd xmm4,XMMWORD PTR [rcx]
+	sqrtps xmm6,xmm4
+	sqrtps xmm4,XMMWORD PTR [rcx]
+	aesimc xmm6,xmm4
+	aesimc xmm4,XMMWORD PTR [rcx]
+
+# Tests for op xmm, xmm/mem128
+	movapd xmm6,xmm4
+	movapd XMMWORD PTR [rcx],xmm4
+	movaps xmm6,xmm4
+	movaps XMMWORD PTR [rcx],xmm4
+	movdqa xmm6,xmm4
+	movdqa XMMWORD PTR [rcx],xmm4
+	movdqu xmm6,xmm4
+	movdqu XMMWORD PTR [rcx],xmm4
+	movupd xmm6,xmm4
+	movupd XMMWORD PTR [rcx],xmm4
+	movups xmm6,xmm4
+	movups XMMWORD PTR [rcx],xmm4
+
+# Tests for op mem128, xmm
+	lddqu xmm4,XMMWORD PTR [rcx]
+	movntdqa xmm4,XMMWORD PTR [rcx]
+
+# Tests for op xmm, mem128
+	movntdq XMMWORD PTR [rcx],xmm4
+	movntpd XMMWORD PTR [rcx],xmm4
+	movntps XMMWORD PTR [rcx],xmm4
+
+# Tests for op xmm/mem128, xmm[, xmm]
+	addpd xmm6,xmm4
+	addpd xmm6,XMMWORD PTR [rcx]
+	addps xmm6,xmm4
+	addps xmm6,XMMWORD PTR [rcx]
+	addsubpd xmm6,xmm4
+	addsubpd xmm6,XMMWORD PTR [rcx]
+	addsubps xmm6,xmm4
+	addsubps xmm6,XMMWORD PTR [rcx]
+	andnpd xmm6,xmm4
+	andnpd xmm6,XMMWORD PTR [rcx]
+	andnps xmm6,xmm4
+	andnps xmm6,XMMWORD PTR [rcx]
+	andpd xmm6,xmm4
+	andpd xmm6,XMMWORD PTR [rcx]
+	andps xmm6,xmm4
+	andps xmm6,XMMWORD PTR [rcx]
+	divpd xmm6,xmm4
+	divpd xmm6,XMMWORD PTR [rcx]
+	divps xmm6,xmm4
+	divps xmm6,XMMWORD PTR [rcx]
+	haddpd xmm6,xmm4
+	haddpd xmm6,XMMWORD PTR [rcx]
+	haddps xmm6,xmm4
+	haddps xmm6,XMMWORD PTR [rcx]
+	hsubpd xmm6,xmm4
+	hsubpd xmm6,XMMWORD PTR [rcx]
+	hsubps xmm6,xmm4
+	hsubps xmm6,XMMWORD PTR [rcx]
+	maxpd xmm6,xmm4
+	maxpd xmm6,XMMWORD PTR [rcx]
+	maxps xmm6,xmm4
+	maxps xmm6,XMMWORD PTR [rcx]
+	minpd xmm6,xmm4
+	minpd xmm6,XMMWORD PTR [rcx]
+	minps xmm6,xmm4
+	minps xmm6,XMMWORD PTR [rcx]
+	mulpd xmm6,xmm4
+	mulpd xmm6,XMMWORD PTR [rcx]
+	mulps xmm6,xmm4
+	mulps xmm6,XMMWORD PTR [rcx]
+	orpd xmm6,xmm4
+	orpd xmm6,XMMWORD PTR [rcx]
+	orps xmm6,xmm4
+	orps xmm6,XMMWORD PTR [rcx]
+	packsswb xmm6,xmm4
+	packsswb xmm6,XMMWORD PTR [rcx]
+	packssdw xmm6,xmm4
+	packssdw xmm6,XMMWORD PTR [rcx]
+	packuswb xmm6,xmm4
+	packuswb xmm6,XMMWORD PTR [rcx]
+	packusdw xmm6,xmm4
+	packusdw xmm6,XMMWORD PTR [rcx]
+	paddb xmm6,xmm4
+	paddb xmm6,XMMWORD PTR [rcx]
+	paddw xmm6,xmm4
+	paddw xmm6,XMMWORD PTR [rcx]
+	paddd xmm6,xmm4
+	paddd xmm6,XMMWORD PTR [rcx]
+	paddq xmm6,xmm4
+	paddq xmm6,XMMWORD PTR [rcx]
+	paddsb xmm6,xmm4
+	paddsb xmm6,XMMWORD PTR [rcx]
+	paddsw xmm6,xmm4
+	paddsw xmm6,XMMWORD PTR [rcx]
+	paddusb xmm6,xmm4
+	paddusb xmm6,XMMWORD PTR [rcx]
+	paddusw xmm6,xmm4
+	paddusw xmm6,XMMWORD PTR [rcx]
+	pand xmm6,xmm4
+	pand xmm6,XMMWORD PTR [rcx]
+	pandn xmm6,xmm4
+	pandn xmm6,XMMWORD PTR [rcx]
+	pavgb xmm6,xmm4
+	pavgb xmm6,XMMWORD PTR [rcx]
+	pavgw xmm6,xmm4
+	pavgw xmm6,XMMWORD PTR [rcx]
+	pclmullqlqdq xmm6,xmm4
+	pclmullqlqdq xmm6,XMMWORD PTR [rcx]
+	pclmulhqlqdq xmm6,xmm4
+	pclmulhqlqdq xmm6,XMMWORD PTR [rcx]
+	pclmullqhqdq xmm6,xmm4
+	pclmullqhqdq xmm6,XMMWORD PTR [rcx]
+	pclmulhqhqdq xmm6,xmm4
+	pclmulhqhqdq xmm6,XMMWORD PTR [rcx]
+	pcmpeqb xmm6,xmm4
+	pcmpeqb xmm6,XMMWORD PTR [rcx]
+	pcmpeqw xmm6,xmm4
+	pcmpeqw xmm6,XMMWORD PTR [rcx]
+	pcmpeqd xmm6,xmm4
+	pcmpeqd xmm6,XMMWORD PTR [rcx]
+	pcmpeqq xmm6,xmm4
+	pcmpeqq xmm6,XMMWORD PTR [rcx]
+	pcmpgtb xmm6,xmm4
+	pcmpgtb xmm6,XMMWORD PTR [rcx]
+	pcmpgtw xmm6,xmm4
+	pcmpgtw xmm6,XMMWORD PTR [rcx]
+	pcmpgtd xmm6,xmm4
+	pcmpgtd xmm6,XMMWORD PTR [rcx]
+	pcmpgtq xmm6,xmm4
+	pcmpgtq xmm6,XMMWORD PTR [rcx]
+	phaddw xmm6,xmm4
+	phaddw xmm6,XMMWORD PTR [rcx]
+	phaddd xmm6,xmm4
+	phaddd xmm6,XMMWORD PTR [rcx]
+	phaddsw xmm6,xmm4
+	phaddsw xmm6,XMMWORD PTR [rcx]
+	phsubw xmm6,xmm4
+	phsubw xmm6,XMMWORD PTR [rcx]
+	phsubd xmm6,xmm4
+	phsubd xmm6,XMMWORD PTR [rcx]
+	phsubsw xmm6,xmm4
+	phsubsw xmm6,XMMWORD PTR [rcx]
+	pmaddwd xmm6,xmm4
+	pmaddwd xmm6,XMMWORD PTR [rcx]
+	pmaddubsw xmm6,xmm4
+	pmaddubsw xmm6,XMMWORD PTR [rcx]
+	pmaxsb xmm6,xmm4
+	pmaxsb xmm6,XMMWORD PTR [rcx]
+	pmaxsw xmm6,xmm4
+	pmaxsw xmm6,XMMWORD PTR [rcx]
+	pmaxsd xmm6,xmm4
+	pmaxsd xmm6,XMMWORD PTR [rcx]
+	pmaxub xmm6,xmm4
+	pmaxub xmm6,XMMWORD PTR [rcx]
+	pmaxuw xmm6,xmm4
+	pmaxuw xmm6,XMMWORD PTR [rcx]
+	pmaxud xmm6,xmm4
+	pmaxud xmm6,XMMWORD PTR [rcx]
+	pminsb xmm6,xmm4
+	pminsb xmm6,XMMWORD PTR [rcx]
+	pminsw xmm6,xmm4
+	pminsw xmm6,XMMWORD PTR [rcx]
+	pminsd xmm6,xmm4
+	pminsd xmm6,XMMWORD PTR [rcx]
+	pminub xmm6,xmm4
+	pminub xmm6,XMMWORD PTR [rcx]
+	pminuw xmm6,xmm4
+	pminuw xmm6,XMMWORD PTR [rcx]
+	pminud xmm6,xmm4
+	pminud xmm6,XMMWORD PTR [rcx]
+	pmulhuw xmm6,xmm4
+	pmulhuw xmm6,XMMWORD PTR [rcx]
+	pmulhrsw xmm6,xmm4
+	pmulhrsw xmm6,XMMWORD PTR [rcx]
+	pmulhw xmm6,xmm4
+	pmulhw xmm6,XMMWORD PTR [rcx]
+	pmullw xmm6,xmm4
+	pmullw xmm6,XMMWORD PTR [rcx]
+	pmulld xmm6,xmm4
+	pmulld xmm6,XMMWORD PTR [rcx]
+	pmuludq xmm6,xmm4
+	pmuludq xmm6,XMMWORD PTR [rcx]
+	pmuldq xmm6,xmm4
+	pmuldq xmm6,XMMWORD PTR [rcx]
+	por xmm6,xmm4
+	por xmm6,XMMWORD PTR [rcx]
+	psadbw xmm6,xmm4
+	psadbw xmm6,XMMWORD PTR [rcx]
+	pshufb xmm6,xmm4
+	pshufb xmm6,XMMWORD PTR [rcx]
+	psignb xmm6,xmm4
+	psignb xmm6,XMMWORD PTR [rcx]
+	psignw xmm6,xmm4
+	psignw xmm6,XMMWORD PTR [rcx]
+	psignd xmm6,xmm4
+	psignd xmm6,XMMWORD PTR [rcx]
+	psllw xmm6,xmm4
+	psllw xmm6,XMMWORD PTR [rcx]
+	pslld xmm6,xmm4
+	pslld xmm6,XMMWORD PTR [rcx]
+	psllq xmm6,xmm4
+	psllq xmm6,XMMWORD PTR [rcx]
+	psraw xmm6,xmm4
+	psraw xmm6,XMMWORD PTR [rcx]
+	psrad xmm6,xmm4
+	psrad xmm6,XMMWORD PTR [rcx]
+	psrlw xmm6,xmm4
+	psrlw xmm6,XMMWORD PTR [rcx]
+	psrld xmm6,xmm4
+	psrld xmm6,XMMWORD PTR [rcx]
+	psrlq xmm6,xmm4
+	psrlq xmm6,XMMWORD PTR [rcx]
+	psubb xmm6,xmm4
+	psubb xmm6,XMMWORD PTR [rcx]
+	psubw xmm6,xmm4
+	psubw xmm6,XMMWORD PTR [rcx]
+	psubd xmm6,xmm4
+	psubd xmm6,XMMWORD PTR [rcx]
+	psubq xmm6,xmm4
+	psubq xmm6,XMMWORD PTR [rcx]
+	psubsb xmm6,xmm4
+	psubsb xmm6,XMMWORD PTR [rcx]
+	psubsw xmm6,xmm4
+	psubsw xmm6,XMMWORD PTR [rcx]
+	psubusb xmm6,xmm4
+	psubusb xmm6,XMMWORD PTR [rcx]
+	psubusw xmm6,xmm4
+	psubusw xmm6,XMMWORD PTR [rcx]
+	punpckhbw xmm6,xmm4
+	punpckhbw xmm6,XMMWORD PTR [rcx]
+	punpckhwd xmm6,xmm4
+	punpckhwd xmm6,XMMWORD PTR [rcx]
+	punpckhdq xmm6,xmm4
+	punpckhdq xmm6,XMMWORD PTR [rcx]
+	punpckhqdq xmm6,xmm4
+	punpckhqdq xmm6,XMMWORD PTR [rcx]
+	punpcklbw xmm6,xmm4
+	punpcklbw xmm6,XMMWORD PTR [rcx]
+	punpcklwd xmm6,xmm4
+	punpcklwd xmm6,XMMWORD PTR [rcx]
+	punpckldq xmm6,xmm4
+	punpckldq xmm6,XMMWORD PTR [rcx]
+	punpcklqdq xmm6,xmm4
+	punpcklqdq xmm6,XMMWORD PTR [rcx]
+	pxor xmm6,xmm4
+	pxor xmm6,XMMWORD PTR [rcx]
+	subpd xmm6,xmm4
+	subpd xmm6,XMMWORD PTR [rcx]
+	subps xmm6,xmm4
+	subps xmm6,XMMWORD PTR [rcx]
+	unpckhpd xmm6,xmm4
+	unpckhpd xmm6,XMMWORD PTR [rcx]
+	unpckhps xmm6,xmm4
+	unpckhps xmm6,XMMWORD PTR [rcx]
+	unpcklpd xmm6,xmm4
+	unpcklpd xmm6,XMMWORD PTR [rcx]
+	unpcklps xmm6,xmm4
+	unpcklps xmm6,XMMWORD PTR [rcx]
+	xorpd xmm6,xmm4
+	xorpd xmm6,XMMWORD PTR [rcx]
+	xorps xmm6,xmm4
+	xorps xmm6,XMMWORD PTR [rcx]
+	aesenc xmm6,xmm4
+	aesenc xmm6,XMMWORD PTR [rcx]
+	aesenclast xmm6,xmm4
+	aesenclast xmm6,XMMWORD PTR [rcx]
+	aesdec xmm6,xmm4
+	aesdec xmm6,XMMWORD PTR [rcx]
+	aesdeclast xmm6,xmm4
+	aesdeclast xmm6,XMMWORD PTR [rcx]
+	cmpeqpd xmm6,xmm4
+	cmpeqpd xmm6,XMMWORD PTR [rcx]
+	cmpeqps xmm6,xmm4
+	cmpeqps xmm6,XMMWORD PTR [rcx]
+	cmpltpd xmm6,xmm4
+	cmpltpd xmm6,XMMWORD PTR [rcx]
+	cmpltps xmm6,xmm4
+	cmpltps xmm6,XMMWORD PTR [rcx]
+	cmplepd xmm6,xmm4
+	cmplepd xmm6,XMMWORD PTR [rcx]
+	cmpleps xmm6,xmm4
+	cmpleps xmm6,XMMWORD PTR [rcx]
+	cmpunordpd xmm6,xmm4
+	cmpunordpd xmm6,XMMWORD PTR [rcx]
+	cmpunordps xmm6,xmm4
+	cmpunordps xmm6,XMMWORD PTR [rcx]
+	cmpneqpd xmm6,xmm4
+	cmpneqpd xmm6,XMMWORD PTR [rcx]
+	cmpneqps xmm6,xmm4
+	cmpneqps xmm6,XMMWORD PTR [rcx]
+	cmpnltpd xmm6,xmm4
+	cmpnltpd xmm6,XMMWORD PTR [rcx]
+	cmpnltps xmm6,xmm4
+	cmpnltps xmm6,XMMWORD PTR [rcx]
+	cmpnlepd xmm6,xmm4
+	cmpnlepd xmm6,XMMWORD PTR [rcx]
+	cmpnleps xmm6,xmm4
+	cmpnleps xmm6,XMMWORD PTR [rcx]
+	cmpordpd xmm6,xmm4
+	cmpordpd xmm6,XMMWORD PTR [rcx]
+	cmpordps xmm6,xmm4
+	cmpordps xmm6,XMMWORD PTR [rcx]
+
+# Tests for op imm8, xmm/mem128, xmm
+	aeskeygenassist xmm6,xmm4,100
+	aeskeygenassist xmm6,XMMWORD PTR [rcx],100
+	pcmpestri xmm6,xmm4,100
+	pcmpestri xmm6,XMMWORD PTR [rcx],100
+	pcmpestrm xmm6,xmm4,100
+	pcmpestrm xmm6,XMMWORD PTR [rcx],100
+	pcmpistri xmm6,xmm4,100
+	pcmpistri xmm6,XMMWORD PTR [rcx],100
+	pcmpistrm xmm6,xmm4,100
+	pcmpistrm xmm6,XMMWORD PTR [rcx],100
+	pshufd xmm6,xmm4,100
+	pshufd xmm6,XMMWORD PTR [rcx],100
+	pshufhw xmm6,xmm4,100
+	pshufhw xmm6,XMMWORD PTR [rcx],100
+	pshuflw xmm6,xmm4,100
+	pshuflw xmm6,XMMWORD PTR [rcx],100
+	roundpd xmm6,xmm4,100
+	roundpd xmm6,XMMWORD PTR [rcx],100
+	roundps xmm6,xmm4,100
+	roundps xmm6,XMMWORD PTR [rcx],100
+
+# Tests for op imm8, xmm/mem128, xmm[, xmm]
+	blendpd xmm6,xmm4,100
+	blendpd xmm6,XMMWORD PTR [rcx],100
+	blendps xmm6,xmm4,100
+	blendps xmm6,XMMWORD PTR [rcx],100
+	cmppd xmm6,xmm4,100
+	cmppd xmm6,XMMWORD PTR [rcx],100
+	cmpps xmm6,xmm4,100
+	cmpps xmm6,XMMWORD PTR [rcx],100
+	dppd xmm6,xmm4,100
+	dppd xmm6,XMMWORD PTR [rcx],100
+	dpps xmm6,xmm4,100
+	dpps xmm6,XMMWORD PTR [rcx],100
+	mpsadbw xmm6,xmm4,100
+	mpsadbw xmm6,XMMWORD PTR [rcx],100
+	palignr xmm6,xmm4,100
+	palignr xmm6,XMMWORD PTR [rcx],100
+	pblendw xmm6,xmm4,100
+	pblendw xmm6,XMMWORD PTR [rcx],100
+	pclmulqdq xmm6,xmm4,100
+	pclmulqdq xmm6,XMMWORD PTR [rcx],100
+	shufpd xmm6,xmm4,100
+	shufpd xmm6,XMMWORD PTR [rcx],100
+	shufps xmm6,xmm4,100
+	shufps xmm6,XMMWORD PTR [rcx],100
+
+# Tests for op xmm0, xmm/mem128, xmm[, xmm]
+	blendvpd xmm6,xmm4,xmm0
+	blendvpd xmm6,XMMWORD PTR [rcx],xmm0
+	blendvpd xmm6,xmm4
+	blendvpd xmm6,XMMWORD PTR [rcx]
+	blendvps xmm6,xmm4,xmm0
+	blendvps xmm6,XMMWORD PTR [rcx],xmm0
+	blendvps xmm6,xmm4
+	blendvps xmm6,XMMWORD PTR [rcx]
+	pblendvb xmm6,xmm4,xmm0
+	pblendvb xmm6,XMMWORD PTR [rcx],xmm0
+	pblendvb xmm6,xmm4
+	pblendvb xmm6,XMMWORD PTR [rcx]
+
+# Tests for op xmm/mem64, xmm
+	comisd xmm6,xmm4
+	comisd xmm4,QWORD PTR [rcx]
+	cvtdq2pd xmm6,xmm4
+	cvtdq2pd xmm4,QWORD PTR [rcx]
+	cvtps2pd xmm6,xmm4
+	cvtps2pd xmm4,QWORD PTR [rcx]
+	movddup xmm6,xmm4
+	movddup xmm4,QWORD PTR [rcx]
+	pmovsxbw xmm6,xmm4
+	pmovsxbw xmm4,QWORD PTR [rcx]
+	pmovsxwd xmm6,xmm4
+	pmovsxwd xmm4,QWORD PTR [rcx]
+	pmovsxdq xmm6,xmm4
+	pmovsxdq xmm4,QWORD PTR [rcx]
+	pmovzxbw xmm6,xmm4
+	pmovzxbw xmm4,QWORD PTR [rcx]
+	pmovzxwd xmm6,xmm4
+	pmovzxwd xmm4,QWORD PTR [rcx]
+	pmovzxdq xmm6,xmm4
+	pmovzxdq xmm4,QWORD PTR [rcx]
+	ucomisd xmm6,xmm4
+	ucomisd xmm4,QWORD PTR [rcx]
+
+# Tests for op mem64, xmm
+	movsd xmm4,QWORD PTR [rcx]
+
+# Tests for op xmm, mem64
+	movlpd QWORD PTR [rcx],xmm4
+	movlps QWORD PTR [rcx],xmm4
+	movhpd QWORD PTR [rcx],xmm4
+	movhps QWORD PTR [rcx],xmm4
+	movsd QWORD PTR [rcx],xmm4
+
+# Tests for op xmm, regq/mem64
+# Tests for op regq/mem64, xmm
+	movd rcx,xmm4
+	movd xmm4,rcx
+	movq rcx,xmm4
+	movq xmm4,rcx
+	movq QWORD PTR [rcx],xmm4
+	movq xmm4,QWORD PTR [rcx]
+
+# Tests for op xmm/mem64, regl
+	cvtsd2si ecx,xmm4
+	cvtsd2si ecx,QWORD PTR [rcx]
+	cvttsd2si ecx,xmm4
+	cvttsd2si ecx,QWORD PTR [rcx]
+
+# Tests for op xmm/mem64, regq
+	cvtsd2si rcx,xmm4
+	cvtsd2si rcx,QWORD PTR [rcx]
+	cvttsd2si rcx,xmm4
+	cvttsd2si rcx,QWORD PTR [rcx]
+
+# Tests for op regq/mem64, xmm[, xmm]
+	cvtsi2sdq xmm4,rcx
+	cvtsi2sdq xmm4,QWORD PTR [rcx]
+	cvtsi2ssq xmm4,rcx
+	cvtsi2ssq xmm4,QWORD PTR [rcx]
+
+# Tests for op imm8, regq/mem64, xmm[, xmm]
+	pinsrq xmm4,rcx,100
+	pinsrq xmm4,QWORD PTR [rcx],100
+
+# Testsf for op imm8, xmm, regq/mem64
+	pextrq rcx,xmm4,100
+	pextrq QWORD PTR [rcx],xmm4,100
+
+# Tests for op mem64, xmm[, xmm]
+	movlpd xmm4,QWORD PTR [rcx]
+	movlps xmm4,QWORD PTR [rcx]
+	movhpd xmm4,QWORD PTR [rcx]
+	movhps xmm4,QWORD PTR [rcx]
+
+# Tests for op imm8, xmm/mem64, xmm[, xmm]
+	cmpsd xmm6,xmm4,100
+	cmpsd xmm6,QWORD PTR [rcx],100
+	roundsd xmm6,xmm4,100
+	roundsd xmm6,QWORD PTR [rcx],100
+
+# Tests for op xmm/mem64, xmm[, xmm]
+	addsd xmm6,xmm4
+	addsd xmm6,QWORD PTR [rcx]
+	cvtsd2ss xmm6,xmm4
+	cvtsd2ss xmm6,QWORD PTR [rcx]
+	divsd xmm6,xmm4
+	divsd xmm6,QWORD PTR [rcx]
+	maxsd xmm6,xmm4
+	maxsd xmm6,QWORD PTR [rcx]
+	minsd xmm6,xmm4
+	minsd xmm6,QWORD PTR [rcx]
+	mulsd xmm6,xmm4
+	mulsd xmm6,QWORD PTR [rcx]
+	sqrtsd xmm6,xmm4
+	sqrtsd xmm6,QWORD PTR [rcx]
+	subsd xmm6,xmm4
+	subsd xmm6,QWORD PTR [rcx]
+	cmpeqsd xmm6,xmm4
+	cmpeqsd xmm6,QWORD PTR [rcx]
+	cmpltsd xmm6,xmm4
+	cmpltsd xmm6,QWORD PTR [rcx]
+	cmplesd xmm6,xmm4
+	cmplesd xmm6,QWORD PTR [rcx]
+	cmpunordsd xmm6,xmm4
+	cmpunordsd xmm6,QWORD PTR [rcx]
+	cmpneqsd xmm6,xmm4
+	cmpneqsd xmm6,QWORD PTR [rcx]
+	cmpnltsd xmm6,xmm4
+	cmpnltsd xmm6,QWORD PTR [rcx]
+	cmpnlesd xmm6,xmm4
+	cmpnlesd xmm6,QWORD PTR [rcx]
+	cmpordsd xmm6,xmm4
+	cmpordsd xmm6,QWORD PTR [rcx]
+
+# Tests for op xmm/mem32, xmm[, xmm]
+	addss xmm6,xmm4
+	addss xmm6,DWORD PTR [rcx]
+	cvtss2sd xmm6,xmm4
+	cvtss2sd xmm6,DWORD PTR [rcx]
+	divss xmm6,xmm4
+	divss xmm6,DWORD PTR [rcx]
+	maxss xmm6,xmm4
+	maxss xmm6,DWORD PTR [rcx]
+	minss xmm6,xmm4
+	minss xmm6,DWORD PTR [rcx]
+	mulss xmm6,xmm4
+	mulss xmm6,DWORD PTR [rcx]
+	rcpss xmm6,xmm4
+	rcpss xmm6,DWORD PTR [rcx]
+	rsqrtss xmm6,xmm4
+	rsqrtss xmm6,DWORD PTR [rcx]
+	sqrtss xmm6,xmm4
+	sqrtss xmm6,DWORD PTR [rcx]
+	subss xmm6,xmm4
+	subss xmm6,DWORD PTR [rcx]
+	cmpeqss xmm6,xmm4
+	cmpeqss xmm6,DWORD PTR [rcx]
+	cmpltss xmm6,xmm4
+	cmpltss xmm6,DWORD PTR [rcx]
+	cmpless xmm6,xmm4
+	cmpless xmm6,DWORD PTR [rcx]
+	cmpunordss xmm6,xmm4
+	cmpunordss xmm6,DWORD PTR [rcx]
+	cmpneqss xmm6,xmm4
+	cmpneqss xmm6,DWORD PTR [rcx]
+	cmpnltss xmm6,xmm4
+	cmpnltss xmm6,DWORD PTR [rcx]
+	cmpnless xmm6,xmm4
+	cmpnless xmm6,DWORD PTR [rcx]
+	cmpordss xmm6,xmm4
+	cmpordss xmm6,DWORD PTR [rcx]
+
+# Tests for op xmm/mem32, xmm
+	comiss xmm6,xmm4
+	comiss xmm4,DWORD PTR [rcx]
+	pmovsxbd xmm6,xmm4
+	pmovsxbd xmm4,DWORD PTR [rcx]
+	pmovsxwq xmm6,xmm4
+	pmovsxwq xmm4,DWORD PTR [rcx]
+	pmovzxbd xmm6,xmm4
+	pmovzxbd xmm4,DWORD PTR [rcx]
+	pmovzxwq xmm6,xmm4
+	pmovzxwq xmm4,DWORD PTR [rcx]
+	ucomiss xmm6,xmm4
+	ucomiss xmm4,DWORD PTR [rcx]
+
+# Tests for op mem32, xmm
+	movss xmm4,DWORD PTR [rcx]
+
+# Tests for op xmm, mem32
+	movss DWORD PTR [rcx],xmm4
+
+# Tests for op xmm, regl/mem32
+# Tests for op regl/mem32, xmm
+	movd ecx,xmm4
+	movd DWORD PTR [rcx],xmm4
+	movd xmm4,ecx
+	movd xmm4,DWORD PTR [rcx]
+
+# Tests for op xmm/mem32, regl
+	cvtss2si ecx,xmm4
+	cvtss2si ecx,DWORD PTR [rcx]
+	cvttss2si ecx,xmm4
+	cvttss2si ecx,DWORD PTR [rcx]
+
+# Tests for op xmm/mem32, regq
+	cvtss2si rcx,xmm4
+	cvtss2si rcx,DWORD PTR [rcx]
+	cvttss2si rcx,xmm4
+	cvttss2si rcx,DWORD PTR [rcx]
+
+# Tests for op xmm, regq
+	movmskpd rcx,xmm4
+	movmskps rcx,xmm4
+	pmovmskb rcx,xmm4
+
+# Tests for op imm8, xmm, regq/mem32
+	extractps rcx,xmm4,100
+	extractps DWORD PTR [rcx],xmm4,100
+# Tests for op imm8, xmm, regl/mem32
+	pextrd ecx,xmm4,100
+	pextrd DWORD PTR [rcx],xmm4,100
+	extractps ecx,xmm4,100
+	extractps DWORD PTR [rcx],xmm4,100
+
+# Tests for op regl/mem32, xmm[, xmm]
+	cvtsi2sd xmm4,ecx
+	cvtsi2sd xmm4,DWORD PTR [rcx]
+	cvtsi2ss xmm4,ecx
+	cvtsi2ss xmm4,DWORD PTR [rcx]
+
+# Tests for op imm8, xmm/mem32, xmm[, xmm]
+	cmpss xmm6,xmm4,100
+	cmpss xmm6,DWORD PTR [rcx],100
+	insertps xmm6,xmm4,100
+	insertps xmm6,DWORD PTR [rcx],100
+	roundss xmm6,xmm4,100
+	roundss xmm6,DWORD PTR [rcx],100
+
+# Tests for op xmm/m16, xmm
+	pmovsxbq xmm6,xmm4
+	pmovsxbq xmm4,WORD PTR [rcx]
+	pmovzxbq xmm6,xmm4
+	pmovzxbq xmm4,WORD PTR [rcx]
+
+# Tests for op imm8, xmm, regl/mem16
+	pextrw ecx,xmm4,100
+	pextrw WORD PTR [rcx],xmm4,100
+
+# Tests for op imm8, xmm, regq/mem16
+	pextrw rcx,xmm4,100
+	pextrw WORD PTR [rcx],xmm4,100
+
+# Tests for op imm8, regl/mem16, xmm[, xmm]
+	pinsrw xmm4,ecx,100
+	pinsrw xmm4,WORD PTR [rcx],100
+
+
+	pinsrw xmm4,rcx,100
+	pinsrw xmm4,WORD PTR [rcx],100
+
+# Tests for op imm8, xmm, regl/mem8
+	pextrb ecx,xmm4,100
+	pextrb BYTE PTR [rcx],xmm4,100
+
+# Tests for op imm8, regl/mem8, xmm[, xmm]
+	pinsrb xmm4,ecx,100
+	pinsrb xmm4,BYTE PTR [rcx],100
+
+# Tests for op imm8, xmm, regq
+	pextrw rcx,xmm4,100
+# Tests for op imm8, xmm, regq/mem8
+	pextrb rcx,xmm4,100
+	pextrb BYTE PTR [rcx],xmm4,100
+
+# Tests for op imm8, regl/mem8, xmm[, xmm]
+	pinsrb xmm4,ecx,100
+	pinsrb xmm4,BYTE PTR [rcx],100
+
+# Tests for op xmm, xmm
+	maskmovdqu xmm6,xmm4
+	movq xmm6,xmm4
+
+# Tests for op xmm, regl
+	movmskpd ecx,xmm4
+	movmskps ecx,xmm4
+	pmovmskb ecx,xmm4
+# Tests for op xmm, xmm[, xmm]
+	movhlps xmm6,xmm4
+	movlhps xmm6,xmm4
+	movsd xmm6,xmm4
+	movss xmm6,xmm4
+
+# Tests for op imm8, xmm[, xmm]
+	pslld xmm4,100
+	pslldq xmm4,100
+	psllq xmm4,100
+	psllw xmm4,100
+	psrad xmm4,100
+	psraw xmm4,100
+	psrld xmm4,100
+	psrldq xmm4,100
+	psrlq xmm4,100
+	psrlw xmm4,100
+
+# Tests for op imm8, xmm, regl
+	pextrw ecx,xmm4,100
 

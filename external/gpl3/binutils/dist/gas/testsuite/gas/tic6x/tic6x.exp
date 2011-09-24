@@ -1,0 +1,3 @@
+if { [istarget tic6x-*-*] } {
+    run_dump_tests [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
+}
