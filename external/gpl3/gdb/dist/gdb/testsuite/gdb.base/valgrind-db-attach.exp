@@ -1,0 +1,85 @@
+# Copyright 2009, 2011 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set test valgrind-db-attach
+set srcfile $test.c
+set executable $test
+set binfile ${objdir}/${subdir}/${executable}
+if {[build_executable $test.exp $executable $srcfile {debug}] == -1} {
+    return -1
+}
+
+gdb_exit
+
+# remote_spawn breaks the command on each whitespace despite possible quoting.
+# Use backslash-escaped whitespace there instead:
+
+set db_command "--db-command=$GDB $INTERNAL_GDBFLAGS $GDBFLAGS [host_info gdb_opts] %f %p"
+regsub -all " " $db_command "\\ " db_command
+
+set test "spawn valgrind"
+set cmd "valgrind --db-attach=yes $db_command $binfile"
+set res [remote_spawn host $cmd];
+if { $res < 0 || $res == "" } {
+    verbose -log "Spawning $cmd failed."
+    unsupported $test
+    return -1
+}
+pass $test
+# Declare GDB now as running.
+set gdb_spawn_id -1
+
+set test "valgrind started"
+# The trailing '.' differs for different memcheck versions.
+gdb_test_multiple "" $test {
+    -re "Memcheck, a memory error detector\\.?\r\n" {
+	pass $test
+    }
+    -re "valgrind: failed to start tool 'memcheck' for platform '.*': No such file or directory" {
+	unsupported $test
+	return -1
+    }
+    -re "valgrind: wrong ELF executable class" {
+	unsupported $test
+	return -1
+    }
+    -re "command not found" {
+	# The spawn succeeded, but then valgrind was not found - e.g. if
+	# we spawned SSH to a remote system.
+	unsupported $test
+	return -1
+    }
+}
+
+set double_free [gdb_get_line_number "double-free"]
+
+set test "attach to debugger"
+gdb_test_multiple "" $test {
+    -re "Invalid free\\(\\) / delete / delete\\\[\\\]\r\n.*: main \\(${srcfile}:$double_free\\)\r\n.*---- Attach to debugger \\? --- \[^\r\n\]* ---- " {
+	send_gdb "y\r"
+    }
+    -re "---- Attach to debugger \\? --- \[^\r\n\]* ---- " {
+	send_gdb "n\r"
+	exp_continue
+    }
+}
+
+gdb_test "" ".*" "eat first prompt"
+
+# Initialization from default_gdb_start.
+gdb_test_no_output "set height 0"
+gdb_test_no_output "set width 0"
+
+gdb_test "bt" "in main \\(.*\\) at .*${srcfile}:$double_free"
