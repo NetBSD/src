@@ -1,4 +1,4 @@
-.\"     $NetBSD: rfc6056.7,v 1.1 2011/09/24 17:04:38 christos Exp $
+.\"     $NetBSD: rfc6056.7,v 1.2 2011/09/24 18:47:59 wiz Exp $
 .\"
 .\" Copyright (c) 2011
 .\"     The NetBSD Foundation.  All rights reserved.
@@ -36,16 +36,16 @@
 .Nd port randomization algorithms
 .Sh DESCRIPTION
 The
-.Xr rfc6056 7
+.Nm
 algorithms are used in order to randomize the port allocation of outgoing UDP
 packets, in order to provide protection from a series of
 .Dq blind
 attacks based on the
 attacker's ability to guess the sequence of ephemeral ports associated
-with outgoing packets. For more information consult RFC 6056.
+with outgoing packets.
+For more information consult RFC 6056.
 .Pp
 The individual algorithms are described below:
-.Pp
 .Ss The RFC 6056 algorithms
 .Li The following algorithms are available:
 .Bl -tag -width "random_start"
@@ -57,8 +57,8 @@ port selection algorithm, which starts from
 and proceeds decreasingly through the available ephemeral ports.
 .It Sy random_start
 Select ports randomly from the available ephemeral ports.
-In case a collision with a local port is  detected the
-algorithm  proceeds decreasingly through the sequence of ephemeral
+In case a collision with a local port is detected, the
+algorithm proceeds decreasingly through the sequence of ephemeral
 ports until a free port is found.
 Note that the random port selection algorithms are not guaranteed to find
 a free port.
@@ -80,7 +80,7 @@ call, performed either explicitly or up calling
 .It Sy doublehash
 Select ports using a
 .Xr md5 3
-hash of the local address, foreign address and foreign port coupled with a
+hash of the local address, foreign address, and foreign port coupled with a
 .Xr md5 3
 hash of the same components obtained using a separate table that is
 associated with a subset of all outgoing connections.
@@ -98,7 +98,6 @@ port randomization algorithm:
 .It net.inet6.udp6.rfc6056.available Ta string  Ta no
 .It net.inet6.udp6.rfc6056.selected  Ta string  Ta yes
 .El
-.Pp
 .Sh SOCKET OPTIONS
 The socket option
 .Dv UDP_RFC6056ALGO
