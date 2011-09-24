@@ -683,7 +683,7 @@ Eh_frame::read_cie(Sized_relobj<size, big_endian>* object,
 		   section_size_type symbol_names_size,
 		   const unsigned char* pcontents,
 		   const unsigned char* pcie,
-		   const unsigned char *pcieend,
+		   const unsigned char* pcieend,
 		   Track_relocs<size, big_endian>* relocs,
 		   Offsets_to_cie* cies,
 		   New_cies* new_cies)
@@ -936,7 +936,7 @@ Eh_frame::read_fde(Sized_relobj<size, big_endian>* object,
 		   const unsigned char* pcontents,
 		   unsigned int offset,
 		   const unsigned char* pfde,
-		   const unsigned char *pfdeend,
+		   const unsigned char* pfdeend,
 		   Track_relocs<size, big_endian>* relocs,
 		   Offsets_to_cie* cies)
 {

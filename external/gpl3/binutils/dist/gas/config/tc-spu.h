@@ -1,6 +1,6 @@
 /* spu.h -- Assembler for spu
 
-   Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+   Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -50,7 +50,8 @@ struct tc_fix_info {
 #define tc_fix_adjustable(FIXP) \
   (!(S_IS_FUNCTION ((FIXP)->fx_addsy)			\
      || (FIXP)->fx_r_type == BFD_RELOC_SPU_PPU32	\
-     || (FIXP)->fx_r_type == BFD_RELOC_SPU_PPU64))
+     || (FIXP)->fx_r_type == BFD_RELOC_SPU_PPU64	\
+     || (FIXP)->fx_r_type == BFD_RELOC_SPU_ADD_PIC))
 
 /* Keep relocs on calls.  Branches to function symbols are tail or
    sibling calls.  */
@@ -63,6 +64,7 @@ struct tc_fix_info {
        && S_IS_FUNCTION ((FIXP)->fx_addsy))		\
    || (FIXP)->fx_r_type == BFD_RELOC_SPU_PPU32		\
    || (FIXP)->fx_r_type == BFD_RELOC_SPU_PPU64		\
+   || (FIXP)->fx_r_type == BFD_RELOC_SPU_ADD_PIC	\
    || generic_force_reloc (FIXP))
 
 /* Values passed to md_apply_fix don't include symbol values.  */

@@ -49,7 +49,7 @@ Disassembly of section .text:
 0[0-9a-f]+ <[^>]+> f39a6156 	vsra\.u16	q3, q3, #6
 0[0-9a-f]+ <[^>]+> f39a8358 	vrsra\.u16	q4, q4, #6
 0[0-9a-f]+ <[^>]+> f3954554 	vsli\.16	q2, q2, #5
-0[0-9a-f]+ <[^>]+> f3bff69f 	vqshlu\.s64	d15, d15, #63
+0[0-9a-f]+ <[^>]+> f3bff69f 	vqshlu\.s64	d15, d15, #63.*
 0[0-9a-f]+ <[^>]+> f2b55306 	vext\.8	d5, d5, d6, #3
 0[0-9a-f]+ <[^>]+> f3042746 	vabd\.u8	q1, q2, q3
 0[0-9a-f]+ <[^>]+> f262c0c6 	vhadd\.s32	q14, q9, q3
@@ -91,5 +91,6 @@ Disassembly of section .text:
 0[0-9a-f]+ <[^>]+> f39a6152 	vsra\.u16	q3, q1, #6
 0[0-9a-f]+ <[^>]+> f3dae358 	vrsra\.u16	q15, q4, #6
 0[0-9a-f]+ <[^>]+> f3954556 	vsli\.16	q2, q3, #5
-0[0-9a-f]+ <[^>]+> f3bff6b7 	vqshlu\.s64	d15, d23, #63
+0[0-9a-f]+ <[^>]+> f3bff6b7 	vqshlu\.s64	d15, d23, #63.*
 0[0-9a-f]+ <[^>]+> f2b25386 	vext\.8	d5, d18, d6, #3
+0[0-9a-f]+ <[^>]+> f3020d54 	vmul\.f32	q0, q1, q2

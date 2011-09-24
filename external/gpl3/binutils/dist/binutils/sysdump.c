@@ -1,5 +1,5 @@
 /* Sysroff object format dumper.
-   Copyright 1994, 1995, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007
+   Copyright 1994, 1995, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007, 2009
    Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
@@ -211,9 +211,9 @@ getBITS (unsigned char *ptr, int *idx, int size, int max)
 }
 
 static void
-itheader (char *name, int code)
+itheader (char *name, int icode)
 {
-  printf ("\n%s 0x%02x\n", name, code);
+  printf ("\n%s 0x%02x\n", name, icode);
 }
 
 static int indent;
@@ -529,8 +529,7 @@ tab (int i, char *s)
   if (s)
     {
       p ();
-      printf (s);
-      printf ("\n");
+      puts (s);
     }
 }
 
@@ -642,16 +641,16 @@ module (void)
 char *program_name;
 
 static void
-show_usage (FILE *file, int status)
+show_usage (FILE *ffile, int status)
 {
-  fprintf (file, _("Usage: %s [option(s)] in-file\n"), program_name);
-  fprintf (file, _("Print a human readable interpretation of a SYSROFF object file\n"));
-  fprintf (file, _(" The options are:\n\
+  fprintf (ffile, _("Usage: %s [option(s)] in-file\n"), program_name);
+  fprintf (ffile, _("Print a human readable interpretation of a SYSROFF object file\n"));
+  fprintf (ffile, _(" The options are:\n\
   -h --help        Display this information\n\
   -v --version     Print the program's version number\n"));
 
   if (REPORT_BUGS_TO[0] && status == 0)
-    fprintf (file, _("Report bugs to %s\n"), REPORT_BUGS_TO);
+    fprintf (ffile, _("Report bugs to %s\n"), REPORT_BUGS_TO);
   exit (status);
 }
 
@@ -659,7 +658,7 @@ int
 main (int ac, char **av)
 {
   char *input_file = NULL;
-  int opt;
+  int option;
   static struct option long_options[] =
   {
     {"help", no_argument, 0, 'h'},
@@ -681,9 +680,9 @@ main (int ac, char **av)
 
   expandargv (&ac, &av);
 
-  while ((opt = getopt_long (ac, av, "HhVv", long_options, (int *) NULL)) != EOF)
+  while ((option = getopt_long (ac, av, "HhVv", long_options, (int *) NULL)) != EOF)
     {
-      switch (opt)
+      switch (option)
 	{
 	case 'H':
 	case 'h':

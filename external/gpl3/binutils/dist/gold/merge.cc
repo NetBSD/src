@@ -1,6 +1,6 @@
 // merge.cc -- handle section merging for gold
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -26,6 +26,7 @@
 #include <algorithm>
 
 #include "merge.h"
+#include "compressed_output.h"
 
 namespace gold
 {
@@ -144,7 +145,7 @@ bool
 Object_merge_map::get_output_offset(const Merge_map* merge_map,
 				    unsigned int shndx,
 				    section_offset_type input_offset,
-				    section_offset_type *output_offset)
+				    section_offset_type* output_offset)
 {
   Input_merge_map* map = this->get_input_merge_map(shndx);
   if (map == NULL
@@ -203,6 +204,12 @@ Object_merge_map::initialize_input_to_output_map(
 {
   Input_merge_map* map = this->get_input_merge_map(shndx);
   gold_assert(map != NULL);
+
+  gold_assert(initialize_map->empty());
+  // We know how many entries we are going to add.
+  // reserve_unordered_map takes an expected count of buckets, not a
+  // count of elements, so double it to try to reduce collisions.
+  reserve_unordered_map(initialize_map, map->entries.size() * 2);
 
   for (Input_merge_map::Entries::const_iterator p = map->entries.begin();
        p != map->entries.end();
@@ -298,6 +305,26 @@ Output_merge_base::do_is_merge_section_for(const Relobj* object,
   return this->merge_map_.is_merge_section_for(object, shndx);
 }
 
+// Record a merged input section for script processing.
+
+void
+Output_merge_base::record_input_section(Relobj* relobj, unsigned int shndx)
+{
+  gold_assert(this->keeps_input_sections_ && relobj != NULL);
+  // If this is the first input section, record it.  We need do this because
+  // this->input_sections_ is unordered.
+  if (this->first_relobj_ == NULL)
+    {
+      this->first_relobj_ = relobj;
+      this->first_shndx_ = shndx;
+    }
+
+  std::pair<Input_sections::iterator, bool> result =
+    this->input_sections_.insert(Section_id(relobj, shndx));
+  // We should insert a merge section once only.
+  gold_assert(result.second);
+}
+
 // Class Output_merge_data.
 
 // Compute the hash code for a fixed-size constant.
@@ -378,12 +405,29 @@ bool
 Output_merge_data::do_add_input_section(Relobj* object, unsigned int shndx)
 {
   section_size_type len;
+  section_size_type uncompressed_size = 0;
+  unsigned char* uncompressed_data = NULL;
   const unsigned char* p = object->section_contents(shndx, &len, false);
+
+  if (object->section_is_compressed(shndx, &uncompressed_size))
+    {
+      uncompressed_data = new unsigned char[uncompressed_size];
+      if (!decompress_input_section(p, len, uncompressed_data,
+				    uncompressed_size))
+	object->error(_("could not decompress section %s"),
+		      object->section_name(shndx).c_str());
+      p = uncompressed_data;
+      len = uncompressed_size;
+    }
 
   section_size_type entsize = convert_to_section_size_type(this->entsize());
 
   if (len % entsize != 0)
-    return false;
+    {
+      if (uncompressed_data != NULL)
+	delete[] uncompressed_data;
+      return false;
+    }
 
   this->input_count_ += len / entsize;
 
@@ -408,6 +452,13 @@ Output_merge_data::do_add_input_section(Relobj* object, unsigned int shndx)
       this->add_mapping(object, shndx, i, entsize, k);
     }
 
+  // For script processing, we keep the input sections.
+  if (this->keeps_input_sections())
+    record_input_section(object, shndx);
+
+  if (uncompressed_data != NULL)
+    delete[] uncompressed_data;
+
   return true;
 }
 
@@ -419,7 +470,10 @@ Output_merge_data::set_final_data_size()
 {
   // Release the memory we don't need.
   this->p_ = static_cast<unsigned char*>(realloc(this->p_, this->len_));
-  gold_assert(this->p_ != NULL);
+  // An Output_merge_data object may be empty and realloc is allowed
+  // to return a NULL pointer in this case.  An Output_merge_data is empty
+  // if all its input sections have sizes that are not multiples of entsize.
+  gold_assert(this->p_ != NULL || this->len_ == 0);
   this->set_data_size(this->len_);
 }
 
@@ -462,49 +516,97 @@ Output_merge_string<Char_type>::do_add_input_section(Relobj* object,
 						     unsigned int shndx)
 {
   section_size_type len;
+  section_size_type uncompressed_size = 0;
+  unsigned char* uncompressed_data = NULL;
   const unsigned char* pdata = object->section_contents(shndx, &len, false);
 
+  if (object->section_is_compressed(shndx, &uncompressed_size))
+    {
+      uncompressed_data = new unsigned char[uncompressed_size];
+      if (!decompress_input_section(pdata, len, uncompressed_data,
+				    uncompressed_size))
+	object->error(_("could not decompress section %s"),
+		      object->section_name(shndx).c_str());
+      pdata = uncompressed_data;
+      len = uncompressed_size;
+    }
+
   const Char_type* p = reinterpret_cast<const Char_type*>(pdata);
-  const Char_type* pend = p + len;
+  const Char_type* pend = p + len / sizeof(Char_type);
+  const Char_type* pend0 = pend;
 
   if (len % sizeof(Char_type) != 0)
     {
       object->error(_("mergeable string section length not multiple of "
 		      "character size"));
+      if (uncompressed_data != NULL)
+	delete[] uncompressed_data;
       return false;
     }
 
+  if (pend[-1] != 0)
+    {
+      gold_warning(_("%s: last entry in mergeable string section '%s' "
+		     "not null terminated"),
+		   object->name().c_str(),
+		   object->section_name(shndx).c_str());
+      // Find the end of the last NULL-terminated string in the buffer.
+      while (pend0 > p && pend0[-1] != 0)
+	--pend0;
+    }
+
+  Merged_strings_list* merged_strings_list =
+      new Merged_strings_list(object, shndx);
+  this->merged_strings_lists_.push_back(merged_strings_list);
+  Merged_strings& merged_strings = merged_strings_list->merged_strings;
+
+  // Count the number of strings in the section and size the list.
   size_t count = 0;
+  for (const Char_type* pt = p; pt < pend0; pt += string_length(pt) + 1)
+    ++count;
+  if (pend0 < pend)
+    ++count;
+  merged_strings.reserve(count + 1);
 
   // The index I is in bytes, not characters.
   section_size_type i = 0;
-  while (i < len)
+  while (p < pend0)
     {
-      const Char_type* pl;
-      for (pl = p; *pl != 0; ++pl)
-	{
-	  if (pl >= pend)
-	    {
-	      object->error(_("entry in mergeable string section "
-			      "not null terminated"));
-	      break;
-	    }
-	}
+      size_t len = string_length(p);
 
       Stringpool::Key key;
-      const Char_type* str = this->stringpool_.add_with_length(p, pl - p, true,
-							       &key);
+      this->stringpool_.add_with_length(p, len, true, &key);
 
-      section_size_type bytelen_with_null = ((pl - p) + 1) * sizeof(Char_type);
-      this->merged_strings_.push_back(Merged_string(object, shndx, i, str,
-						    bytelen_with_null, key));
+      merged_strings.push_back(Merged_string(i, key));
 
-      p = pl + 1;
-      i += bytelen_with_null;
-      ++count;
+      p += len + 1;
+      i += (len + 1) * sizeof(Char_type);
+    }
+  if (p < pend)
+    {
+      size_t len = pend - p;
+
+      Stringpool::Key key;
+      this->stringpool_.add_with_length(p, len, true, &key);
+
+      merged_strings.push_back(Merged_string(i, key));
+
+      i += (len + 1) * sizeof(Char_type);
     }
 
+  // Record the last offset in the input section so that we can
+  // compute the length of the last string.
+  merged_strings.push_back(Merged_string(i, 0));
+
   this->input_count_ += count;
+  this->input_size_ += len;
+
+  // For script processing, we keep the input sections.
+  if (this->keeps_input_sections())
+    record_input_section(object, shndx);
+
+  if (uncompressed_data != NULL)
+    delete[] uncompressed_data;
 
   return true;
 }
@@ -518,20 +620,34 @@ Output_merge_string<Char_type>::finalize_merged_data()
 {
   this->stringpool_.set_string_offsets();
 
-  for (typename Merged_strings::const_iterator p =
-	 this->merged_strings_.begin();
-       p != this->merged_strings_.end();
-       ++p)
+  for (typename Merged_strings_lists::const_iterator l =
+	 this->merged_strings_lists_.begin();
+       l != this->merged_strings_lists_.end();
+       ++l)
     {
-      section_offset_type offset =
-	this->stringpool_.get_offset_from_key(p->stringpool_key);
-      this->add_mapping(p->object, p->shndx, p->offset, p->length, offset);
+      section_offset_type last_input_offset = 0;
+      section_offset_type last_output_offset = 0;
+      for (typename Merged_strings::const_iterator p =
+	     (*l)->merged_strings.begin();
+	   p != (*l)->merged_strings.end();
+	   ++p)
+	{
+	  section_size_type length = p->offset - last_input_offset;
+	  if (length > 0)
+	    this->add_mapping((*l)->object, (*l)->shndx, last_input_offset,
+	    		      length, last_output_offset);
+	  last_input_offset = p->offset;
+	  if (p->stringpool_key != 0)
+	    last_output_offset =
+	        this->stringpool_.get_offset_from_key(p->stringpool_key);
+	}
+      delete *l;
     }
 
   // Save some memory.  This also ensures that this function will work
   // if called twice, as may happen if Layout::set_segment_offsets
   // finds a better alignment.
-  this->merged_strings_.clear();
+  this->merged_strings_lists_.clear();
 
   return this->stringpool_.get_strtab_size();
 }
@@ -602,7 +718,9 @@ Output_merge_string<Char_type>::do_print_merge_stats(const char* section_name)
 {
   char buf[200];
   snprintf(buf, sizeof buf, "%s merged %s", section_name, this->string_name());
-  fprintf(stderr, _("%s: %s input: %zu\n"),
+  fprintf(stderr, _("%s: %s input bytes: %zu\n"),
+	  program_name, buf, this->input_size_);
+  fprintf(stderr, _("%s: %s input strings: %zu\n"),
 	  program_name, buf, this->input_count_);
   this->stringpool_.print_stats(buf);
 }

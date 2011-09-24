@@ -26,8 +26,5 @@ label:
 	smc 0xec31
 	smcne 0x13ce
 
-	# Add three nop instructions to ensure that the 
-	# output is 32-byte aligned as required for arm-aout.
-	nop
-	nop
-	nop
+	# Ensure output is 32-byte aligned as required for arm-aout.
+	.p2align 5

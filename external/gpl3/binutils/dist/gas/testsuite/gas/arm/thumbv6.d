@@ -17,7 +17,7 @@ Disassembly of section .text:
 0+012 <[^>]*> b251 *	sxtb	r1, r2
 0+014 <[^>]*> b2a3 *	uxth	r3, r4
 0+016 <[^>]*> b2f5 *	uxtb	r5, r6
-0+018 <[^>]*> 46c0 *	nop[ 	]+\(mov r8, r8\)
-0+01a <[^>]*> 46c0 *	nop[ 	]+\(mov r8, r8\)
-0+01c <[^>]*> 46c0 *	nop[ 	]+\(mov r8, r8\)
-0+01e <[^>]*> 46c0 *	nop[ 	]+\(mov r8, r8\)
+0+018 <[^>]*> 46c0 *	nop[ 	]+; \(mov r8, r8\)
+0+01a <[^>]*> 46c0 *	nop[ 	]+; \(mov r8, r8\)
+0+01c <[^>]*> 46c0 *	nop[ 	]+; \(mov r8, r8\)
+0+01e <[^>]*> 46c0 *	nop[ 	]+; \(mov r8, r8\)

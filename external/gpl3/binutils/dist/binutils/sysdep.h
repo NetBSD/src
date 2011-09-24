@@ -1,6 +1,6 @@
 /* sysdep.h -- handle host dependencies for binutils
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2005, 2006, 2007, 2008
+   2001, 2002, 2003, 2005, 2006, 2007, 2008, 2009
    Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
@@ -22,7 +22,7 @@
 #ifndef _BIN_SYSDEP_H
 #define _BIN_SYSDEP_H
 
-#include "config.h"
+#include "alloca-conf.h"
 #include "ansidecl.h"
 #include <stdio.h>
 #include <sys/types.h>
@@ -123,23 +123,6 @@ extern int vsnprintf(char *, size_t, const char *, va_list);
 #define SEEK_END 2
 #endif
 
-#if defined(__GNUC__) && !defined(C_ALLOCA)
-# undef alloca
-# define alloca __builtin_alloca
-#else
-# if defined(HAVE_ALLOCA_H) && !defined(C_ALLOCA)
-#  include <alloca.h>
-# else
-#  ifndef alloca /* predefined by HP cc +Olibcalls */
-#   if !defined (__STDC__) && !defined (__hpux)
-char *alloca ();
-#   else
-void *alloca ();
-#   endif /* __STDC__, __hpux */
-#  endif /* alloca */
-# endif /* HAVE_ALLOCA_H */
-#endif
-
 #ifdef HAVE_LOCALE_H
 # ifndef ENABLE_NLS
    /* The Solaris version of locale.h always includes libintl.h.  If we have
@@ -173,5 +156,24 @@ void *alloca ();
 
 /* Used by ar.c and objcopy.c.  */
 #define BUFSIZE 8192
+
+/* For PATH_MAX.  */
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+
+#ifndef PATH_MAX
+/* For MAXPATHLEN.  */
+# ifdef HAVE_SYS_PARAM_H
+#  include <sys/param.h>
+# endif
+# ifndef PATH_MAX
+#  ifdef MAXPATHLEN
+#   define PATH_MAX MAXPATHLEN
+#  else
+#   define PATH_MAX 1024
+#  endif
+# endif
+#endif
 
 #endif /* _BIN_SYSDEP_H */

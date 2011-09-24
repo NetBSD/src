@@ -56,7 +56,7 @@ Disassembly of section .text:
   84:	00 c6 02 b2 	R1.H = LSHIFT R2.H BY R0.L;
   88:	00 c6 08 90 	R0.L = LSHIFT R0.H BY R1.L;
   8c:	00 c6 16 8e 	R7.L = LSHIFT R6.L BY R2.L;
-  90:	02 c6 1c 8a 	R5 = SHIFT R4 BY R3.L;
+  90:	02 c6 1c 8a 	R5 = LSHIFT R4 BY R3.L;
   94:	03 c6 30 40 	A0 = LSHIFT A0 BY R6.L;
   98:	03 c6 28 50 	A1 = LSHIFT A1 BY R5.L;
 

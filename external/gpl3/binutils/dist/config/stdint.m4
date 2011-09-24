@@ -1,3 +1,17 @@
+AC_DEFUN([GCC_STDINT_TYPES],
+[AC_REQUIRE([AC_TYPE_INT8_T])
+AC_REQUIRE([AC_TYPE_INT16_T])
+AC_REQUIRE([AC_TYPE_INT32_T])
+AC_REQUIRE([AC_TYPE_INT64_T])
+AC_REQUIRE([AC_TYPE_INTMAX_T])
+AC_REQUIRE([AC_TYPE_INTPTR_T])
+AC_REQUIRE([AC_TYPE_UINT8_T])
+AC_REQUIRE([AC_TYPE_UINT16_T])
+AC_REQUIRE([AC_TYPE_UINT32_T])
+AC_REQUIRE([AC_TYPE_UINT64_T])
+AC_REQUIRE([AC_TYPE_UINTMAX_T])
+AC_REQUIRE([AC_TYPE_UINTPTR_T])])
+
 dnl @synopsis GCC_HEADER_STDINT [( HEADER-TO-GENERATE [, HEADERS-TO-CHECK])]
 dnl
 dnl the "ISO C9X: 7.18 Integer types <stdint.h>" section requires the
@@ -132,7 +146,7 @@ if test $acx_cv_header_stdint = stddef.h; then
   AC_MSG_CHECKING(for type equivalent to int8_t)
   case "$ac_cv_sizeof_char" in
     1) acx_cv_type_int8_t=char ;;
-    *) AC_MSG_ERROR(no 8-bit type, please report a bug)
+    *) AC_MSG_ERROR([no 8-bit type, please report a bug])
   esac
   AC_MSG_RESULT($acx_cv_type_int8_t)
 
@@ -140,7 +154,7 @@ if test $acx_cv_header_stdint = stddef.h; then
   case "$ac_cv_sizeof_int:$ac_cv_sizeof_short" in
     2:*) acx_cv_type_int16_t=int ;;
     *:2) acx_cv_type_int16_t=short ;;
-    *) AC_MSG_ERROR(no 16-bit type, please report a bug)
+    *) AC_MSG_ERROR([no 16-bit type, please report a bug])
   esac
   AC_MSG_RESULT($acx_cv_type_int16_t)
 
@@ -148,7 +162,7 @@ if test $acx_cv_header_stdint = stddef.h; then
   case "$ac_cv_sizeof_int:$ac_cv_sizeof_long" in
     4:*) acx_cv_type_int32_t=int ;;
     *:4) acx_cv_type_int32_t=long ;;
-    *) AC_MSG_ERROR(no 32-bit type, please report a bug)
+    *) AC_MSG_ERROR([no 32-bit type, please report a bug])
   esac
   AC_MSG_RESULT($acx_cv_type_int32_t)
 fi
@@ -171,7 +185,7 @@ if test "$ac_cv_type_uintptr_t" != yes; then
     2) acx_cv_type_intptr_t=int16_t ;;
     4) acx_cv_type_intptr_t=int32_t ;;
     8) acx_cv_type_intptr_t=int64_t ;;
-    *) AC_MSG_ERROR(no equivalent for intptr_t, please report a bug)
+    *) AC_MSG_ERROR([no equivalent for intptr_t, please report a bug])
   esac
   AC_MSG_RESULT($acx_cv_type_intptr_t)
 fi
@@ -220,7 +234,9 @@ if test "$acx_cv_header_stdint" = stddef.h; then
     #define _UINT8_T
     #ifndef __uint8_t_defined
     #define __uint8_t_defined
+    #ifndef uint8_t
     typedef unsigned $acx_cv_type_int8_t uint8_t;
+    #endif
     #endif
     #endif
 
@@ -228,7 +244,9 @@ if test "$acx_cv_header_stdint" = stddef.h; then
     #define _UINT16_T
     #ifndef __uint16_t_defined
     #define __uint16_t_defined
+    #ifndef uint16_t
     typedef unsigned $acx_cv_type_int16_t uint16_t;
+    #endif
     #endif
     #endif
 
@@ -236,7 +254,9 @@ if test "$acx_cv_header_stdint" = stddef.h; then
     #define _UINT32_T
     #ifndef __uint32_t_defined
     #define __uint32_t_defined
+    #ifndef uint32_t
     typedef unsigned $acx_cv_type_int32_t uint32_t;
+    #endif
     #endif
     #endif
 
@@ -244,7 +264,9 @@ if test "$acx_cv_header_stdint" = stddef.h; then
     #define _INT8_T
     #ifndef __int8_t_defined
     #define __int8_t_defined
+    #ifndef int8_t
     typedef $acx_cv_type_int8_t int8_t;
+    #endif
     #endif
     #endif
 
@@ -252,7 +274,9 @@ if test "$acx_cv_header_stdint" = stddef.h; then
     #define _INT16_T
     #ifndef __int16_t_defined
     #define __int16_t_defined
+    #ifndef int16_t
     typedef $acx_cv_type_int16_t int16_t;
+    #endif
     #endif
     #endif
 
@@ -260,7 +284,9 @@ if test "$acx_cv_header_stdint" = stddef.h; then
     #define _INT32_T
     #ifndef __int32_t_defined
     #define __int32_t_defined
+    #ifndef int32_t
     typedef $acx_cv_type_int32_t int32_t;
+    #endif
     #endif
     #endif
 EOF
@@ -282,7 +308,9 @@ elif test "$ac_cv_type_u_int32_t" = yes; then
     #define _UINT8_T
     #ifndef __uint8_t_defined
     #define __uint8_t_defined
+    #ifndef uint8_t
     typedef u_int8_t uint8_t;
+    #endif
     #endif
     #endif
 
@@ -290,7 +318,9 @@ elif test "$ac_cv_type_u_int32_t" = yes; then
     #define _UINT16_T
     #ifndef __uint16_t_defined
     #define __uint16_t_defined
+    #ifndef uint16_t
     typedef u_int16_t uint16_t;
+    #endif
     #endif
     #endif
 
@@ -298,7 +328,9 @@ elif test "$ac_cv_type_u_int32_t" = yes; then
     #define _UINT32_T
     #ifndef __uint32_t_defined
     #define __uint32_t_defined
+    #ifndef uint32_t
     typedef u_int32_t uint32_t;
+    #endif
     #endif
     #endif
 EOF
@@ -350,7 +382,9 @@ elif test "$ac_cv_type_u_int64_t" = yes; then
     #define _UINT64_T
     #ifndef __uint64_t_defined
     #define __uint64_t_defined
+    #ifndef uint64_t
     typedef u_int64_t uint64_t;
+    #endif
     #endif
     #endif
 EOF
@@ -360,13 +394,17 @@ elif test -n "$acx_cv_type_int64_t"; then
     /* architecture has a 64-bit type, $acx_cv_type_int64_t */
     #ifndef _INT64_T
     #define _INT64_T
+    #ifndef int64_t
     typedef $acx_cv_type_int64_t int64_t;
+    #endif
     #endif
     #ifndef _UINT64_T
     #define _UINT64_T
     #ifndef __uint64_t_defined
     #define __uint64_t_defined
+    #ifndef uint64_t
     typedef unsigned $acx_cv_type_int64_t uint64_t;
+    #endif
     #endif
     #endif
 EOF
@@ -378,12 +416,16 @@ else
     #ifndef _INT64_T
     #define _INT64_T
     #ifndef __int64_t_defined
+    #ifndef int64_t
     typedef long long int64_t;
+    #endif
     #endif
     #endif
     #ifndef _UINT64_T
     #define _UINT64_T
+    #ifndef uint64_t
     typedef unsigned long long uint64_t;
+    #endif
     #endif
 
     #elif defined __GNUC__ && defined (__STDC__) && __STDC__-0
@@ -396,11 +438,15 @@ else
 
     # ifndef _INT64_T
     # define _INT64_T
+    # ifndef int64_t
     __extension__ typedef long long int64_t;
+    # endif
     # endif
     # ifndef _UINT64_T
     # define _UINT64_T
+    # ifndef uint64_t
     __extension__ typedef unsigned long long uint64_t;
+    # endif
     # endif
 
     #elif !defined __STRICT_ANSI__
@@ -408,11 +454,15 @@ else
 
     #  ifndef _INT64_T
     #  define _INT64_T
+    #  ifndef int64_t
     typedef __int64 int64_t;
+    #  endif
     #  endif
     #  ifndef _UINT64_T
     #  define _UINT64_T
+    #  ifndef uint64_t
     typedef unsigned __int64 uint64_t;
+    #  endif
     #  endif
     # endif /* compiler */
 
@@ -426,10 +476,14 @@ if test "$ac_cv_type_uintptr_t" != yes; then
 
     /* Define intptr_t based on sizeof(void*) = $ac_cv_sizeof_void_p */
     #ifndef __uintptr_t_defined
+    #ifndef uintptr_t
     typedef u$acx_cv_type_intptr_t uintptr_t;
     #endif
+    #endif
     #ifndef __intptr_t_defined
+    #ifndef intptr_t
     typedef $acx_cv_type_intptr_t  intptr_t;
+    #endif
     #endif
 EOF
 fi
@@ -482,15 +536,19 @@ if test "$ac_cv_type_uintmax_t" != yes; then
   sed 's/^ *//' >> tmp-stdint.h <<EOF
 
     /* Define intmax based on what we found */
+    #ifndef intmax_t
     #ifdef _INT64_T
     typedef int64_t       intmax_t;
     #else
     typedef long          intmax_t;
     #endif
+    #endif
+    #ifndef uintmax_t
     #ifdef _UINT64_T
     typedef uint64_t      uintmax_t;
     #else
     typedef unsigned long uintmax_t;
+    #endif
     #endif
 EOF
 fi

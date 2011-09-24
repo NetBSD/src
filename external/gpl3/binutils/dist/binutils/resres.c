@@ -1,5 +1,5 @@
 /* resres.c: read_res_file and write_res_file implementation for windres.
-   Copyright 1998, 1999, 2001, 2002, 2007, 2008
+   Copyright 1998, 1999, 2001, 2002, 2005, 2007, 2008
    Free Software Foundation, Inc.
    Written by Anders Norlander <anorland@hem2.passagen.se>.
    Rewritten by Kai Tietz, Onevision.
@@ -647,7 +647,7 @@ res_add_resource (rc_res_resource *r, const rc_res_id *type, const rc_res_id *id
    and modified to add an existing resource.
  */
 static void
-res_append_resource (rc_res_directory **resources, rc_res_resource *resource,
+res_append_resource (rc_res_directory **res_dirs, rc_res_resource *resource,
 		     int cids, const rc_res_id *ids, int dupok)
 {
   rc_res_entry *re = NULL;
@@ -658,7 +658,7 @@ res_append_resource (rc_res_directory **resources, rc_res_resource *resource,
     {
       rc_res_entry **pp;
 
-      if (*resources == NULL)
+      if (*res_dirs == NULL)
 	{
 	  static unsigned long timeval;
 
@@ -667,16 +667,16 @@ res_append_resource (rc_res_directory **resources, rc_res_resource *resource,
 	  if (timeval == 0)
 	    timeval = time (NULL);
 
-	  *resources = ((rc_res_directory *)
+	  *res_dirs = ((rc_res_directory *)
 			res_alloc (sizeof (rc_res_directory)));
-	  (*resources)->characteristics = 0;
-	  (*resources)->time = timeval;
-	  (*resources)->major = 0;
-	  (*resources)->minor = 0;
-	  (*resources)->entries = NULL;
+	  (*res_dirs)->characteristics = 0;
+	  (*res_dirs)->time = timeval;
+	  (*res_dirs)->major = 0;
+	  (*res_dirs)->minor = 0;
+	  (*res_dirs)->entries = NULL;
 	}
 
-      for (pp = &(*resources)->entries; *pp != NULL; pp = &(*pp)->next)
+      for (pp = &(*res_dirs)->entries; *pp != NULL; pp = &(*pp)->next)
 	if (res_id_cmp ((*pp)->id, ids[i]) == 0)
 	  break;
 
@@ -711,7 +711,7 @@ res_append_resource (rc_res_directory **resources, rc_res_resource *resource,
 	      xexit (1);
 	    }
 
-	  resources = &re->u.dir;
+	  res_dirs = &re->u.dir;
 	}
     }
 

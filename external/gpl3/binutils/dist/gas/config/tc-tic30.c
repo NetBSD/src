@@ -1,5 +1,5 @@
 /* tc-c30.c -- Assembly code for the Texas Instruments TMS320C30
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2006, 2007
+   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2009
    Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
@@ -117,7 +117,7 @@ md_begin (void)
   op_hash = hash_new ();
 
   {
-    const template *current_optab = tic30_optab;
+    const insn_template *current_optab = tic30_optab;
 
     for (; current_optab < tic30_optab_end; current_optab++)
       {
@@ -257,11 +257,11 @@ typedef struct
   } immediate;
 } operand;
 
-template *opcode;
+insn_template *opcode;
 
 struct tic30_insn
 {
-  template *tm;			/* Template of current instruction.  */
+  insn_template *tm;		/* Template of current instruction.  */
   unsigned opcode;		/* Final opcode.  */
   unsigned int operands;	/* Number of given operands.  */
   /* Type of operand given in instruction.  */
@@ -327,19 +327,19 @@ tic30_find_parallel_insn (char *current_line, char *next_line)
 
   {
     int i;
-    char *opcode, *operands, *line;
+    char *op, *operands, *line;
 
     for (i = 0; i < 2; i++)
       {
 	if (i == 0)
 	  {
-	    opcode = &first_opcode[0];
+	    op = &first_opcode[0];
 	    operands = &first_operands[0];
 	    line = current_line;
 	  }
 	else
 	  {
-	    opcode = &second_opcode[0];
+	    op = &second_opcode[0];
 	    operands = &second_operands[0];
 	    line = next_line;
 	  }
@@ -353,14 +353,14 @@ tic30_find_parallel_insn (char *current_line, char *next_line)
 	    {
 	      if (is_opcode_char (c) && search_status == NONE)
 		{
-		  opcode[char_ptr++] = TOLOWER (c);
+		  op[char_ptr++] = TOLOWER (c);
 		  search_status = START_OPCODE;
 		}
 	      else if (is_opcode_char (c) && search_status == START_OPCODE)
-		opcode[char_ptr++] = TOLOWER (c);
+		op[char_ptr++] = TOLOWER (c);
 	      else if (!is_opcode_char (c) && search_status == START_OPCODE)
 		{
-		  opcode[char_ptr] = '\0';
+		  op[char_ptr] = '\0';
 		  char_ptr = 0;
 		  search_status = END_OPCODE;
 		}
@@ -480,12 +480,12 @@ tic30_operand (char *token)
 		 it from the buffer so it can pass through hash_find().  */
 	      if (found_ar)
 		{
-		  as_bad ("More than one AR register found in indirect reference");
+		  as_bad (_("More than one AR register found in indirect reference"));
 		  return NULL;
 		}
 	      if (*(token + count + 1) < '0' || *(token + count + 1) > '7')
 		{
-		  as_bad ("Illegal AR register in indirect reference");
+		  as_bad (_("Illegal AR register in indirect reference"));
 		  return NULL;
 		}
 	      ar_number = *(token + count + 1) - '0';
@@ -505,7 +505,7 @@ tic30_operand (char *token)
 
 		  if (found_disp)
 		    {
-		      as_bad ("More than one displacement found in indirect reference");
+		      as_bad (_("More than one displacement found in indirect reference"));
 		      return NULL;
 		    }
 		  count++;
@@ -513,7 +513,7 @@ tic30_operand (char *token)
 		    {
 		      if (!is_digit_char (*(token + count)))
 			{
-			  as_bad ("Invalid displacement in indirect reference");
+			  as_bad (_("Invalid displacement in indirect reference"));
 			  return NULL;
 			}
 		      disp[disp_posn++] = *(token + (count++));
@@ -530,7 +530,7 @@ tic30_operand (char *token)
       ind_buffer[buffer_posn] = '\0';
       if (!found_ar)
 	{
-	  as_bad ("AR register not found in indirect reference");
+	  as_bad (_("AR register not found in indirect reference"));
 	  return NULL;
 	}
 
@@ -546,19 +546,19 @@ tic30_operand (char *token)
 	  else if ((ind_addr_op->displacement == DISP_REQUIRED) && !found_disp)
 	    {
 	      /* Maybe an implied displacement of 1 again.  */
-	      as_bad ("required displacement wasn't given in indirect reference");
+	      as_bad (_("required displacement wasn't given in indirect reference"));
 	      return 0;
 	    }
 	}
       else
 	{
-	  as_bad ("illegal indirect reference");
+	  as_bad (_("illegal indirect reference"));
 	  return NULL;
 	}
 
       if (found_disp && (disp_number < 0 || disp_number > 255))
 	{
-	  as_bad ("displacement must be an unsigned 8-bit number");
+	  as_bad (_("displacement must be an unsigned 8-bit number"));
 	  return NULL;
 	}
 
@@ -620,8 +620,6 @@ tic30_operand (char *token)
 	    }
 	  else
 	    {
-	      unsigned count;
-
 	      debug ("Found a number or displacement\n");
 	      for (count = 0; count < strlen (token); count++)
 		if (*(token + count) == '.')
@@ -746,7 +744,7 @@ tic30_parallel_insn (char *token)
 	    if (!is_space_char (*current_posn)
 		&& *current_posn != PARALLEL_SEPARATOR)
 	      {
-		as_bad ("Invalid character %s before %s operand",
+		as_bad (_("Invalid character %s before %s operand"),
 			output_invalid (*current_posn),
 			ordinal_names[insn.operands]);
 		return 1;
@@ -765,7 +763,7 @@ tic30_parallel_insn (char *token)
 	      {
 		if (paren_not_balanced)
 		  {
-		    as_bad ("Unbalanced parenthesis in %s operand.",
+		    as_bad (_("Unbalanced parenthesis in %s operand."),
 			    ordinal_names[insn.operands]);
 		    return 1;
 		  }
@@ -781,7 +779,7 @@ tic30_parallel_insn (char *token)
 	    else if (!is_operand_char (*current_posn)
 		     && !is_space_char (*current_posn))
 	      {
-		as_bad ("Invalid character %s in %s operand",
+		as_bad (_("Invalid character %s in %s operand"),
 			output_invalid (*current_posn),
 			ordinal_names[insn.operands]);
 		return 1;
@@ -800,7 +798,7 @@ tic30_parallel_insn (char *token)
 	    p_insn.operands[found_separator]++;
 	    if (p_insn.operands[found_separator] > MAX_OPERANDS)
 	      {
-		as_bad ("Spurious operands; (%d operands/instruction max)",
+		as_bad (_("Spurious operands; (%d operands/instruction max)"),
 			MAX_OPERANDS);
 		return 1;
 	      }
@@ -818,12 +816,12 @@ tic30_parallel_insn (char *token)
 	  {
 	    if (expecting_operand)
 	      {
-		as_bad ("Expecting operand after ','; got nothing");
+		as_bad (_("Expecting operand after ','; got nothing"));
 		return 1;
 	      }
 	    if (*current_posn == ',')
 	      {
-		as_bad ("Expecting operand before ','; got nothing");
+		as_bad (_("Expecting operand before ','; got nothing"));
 		return 1;
 	      }
 	  }
@@ -834,7 +832,7 @@ tic30_parallel_insn (char *token)
 	    if (*++current_posn == END_OF_INSN)
 	      {
 		/* Just skip it, if it's \n complain.  */
-		as_bad ("Expecting operand after ','; got nothing");
+		as_bad (_("Expecting operand after ','; got nothing"));
 		return 1;
 	      }
 	    expecting_operand = 1;
@@ -861,13 +859,13 @@ tic30_parallel_insn (char *token)
 
   if (p_insn.operands[0] != p_insn.tm->operands_1)
     {
-      as_bad ("incorrect number of operands given in the first instruction");
+      as_bad (_("incorrect number of operands given in the first instruction"));
       return 1;
     }
 
   if (p_insn.operands[1] != p_insn.tm->operands_2)
     {
-      as_bad ("incorrect number of operands given in the second instruction");
+      as_bad (_("incorrect number of operands given in the second instruction"));
       return 1;
     }
 
@@ -888,7 +886,7 @@ tic30_parallel_insn (char *token)
 	    if ((p_insn.operand_type[count][i]->op_type &
 		 p_insn.tm->operand_types[count][i]) == 0)
 	      {
-		as_bad ("%s instruction, operand %d doesn't match",
+		as_bad (_("%s instruction, operand %d doesn't match"),
 			ordinal_names[count], i + 1);
 		return 1;
 	      }
@@ -912,28 +910,28 @@ tic30_parallel_insn (char *token)
 	/* Check for the multiply instructions.  */
 	if (num_rn != 2)
 	  {
-	    as_bad ("incorrect format for multiply parallel instruction");
+	    as_bad (_("incorrect format for multiply parallel instruction"));
 	    return 1;
 	  }
 
 	if (num_ind != 2)
 	  {
 	    /* Shouldn't get here.  */
-	    as_bad ("incorrect format for multiply parallel instruction");
+	    as_bad (_("incorrect format for multiply parallel instruction"));
 	    return 1;
 	  }
 
 	if ((p_insn.operand_type[0][2]->reg.opcode != 0x00)
 	    && (p_insn.operand_type[0][2]->reg.opcode != 0x01))
 	  {
-	    as_bad ("destination for multiply can only be R0 or R1");
+	    as_bad (_("destination for multiply can only be R0 or R1"));
 	    return 1;
 	  }
 
 	if ((p_insn.operand_type[1][2]->reg.opcode != 0x02)
 	    && (p_insn.operand_type[1][2]->reg.opcode != 0x03))
 	  {
-	    as_bad ("destination for add/subtract can only be R2 or R3");
+	    as_bad (_("destination for add/subtract can only be R2 or R3"));
 	    return 1;
 	  }
 
@@ -1000,7 +998,7 @@ tic30_parallel_insn (char *token)
       p_insn.opcode |= (p_insn.operand_type[1][1]->reg.opcode << 19);
       p_insn.opcode |= (p_insn.operand_type[0][1]->reg.opcode << 22);
       if (p_insn.operand_type[1][1]->reg.opcode == p_insn.operand_type[0][1]->reg.opcode)
-	as_warn ("loading the same register in parallel operation");
+	as_warn (_("loading the same register in parallel operation"));
       break;
 
     case OO_4op3:
@@ -1307,42 +1305,42 @@ md_atof (int what_statement_type,
 	}
       if (prec == 2)
 	{
-	  long exp, mant;
+	  long expon, mantis;
 
 	  if (tmsfloat == 0x80000000)
 	    value = 0x8000;
 	  else
 	    {
 	      value = 0;
-	      exp = (tmsfloat & 0xFF000000);
-	      exp >>= 24;
-	      mant = tmsfloat & 0x007FFFFF;
+	      expon = (tmsfloat & 0xFF000000);
+	      expon >>= 24;
+	      mantis = tmsfloat & 0x007FFFFF;
 	      if (tmsfloat & 0x00800000)
 		{
-		  mant |= 0xFF000000;
-		  mant += 0x00000800;
-		  mant >>= 12;
-		  mant |= 0x00000800;
-		  mant &= 0x0FFF;
-		  if (exp > 7)
+		  mantis |= 0xFF000000;
+		  mantis += 0x00000800;
+		  mantis >>= 12;
+		  mantis |= 0x00000800;
+		  mantis &= 0x0FFF;
+		  if (expon > 7)
 		    value = 0x7800;
 		}
 	      else
 		{
-		  mant |= 0x00800000;
-		  mant += 0x00000800;
-		  exp += (mant >> 24);
-		  mant >>= 12;
-		  mant &= 0x07FF;
-		  if (exp > 7)
+		  mantis |= 0x00800000;
+		  mantis += 0x00000800;
+		  expon += (mantis >> 24);
+		  mantis >>= 12;
+		  mantis &= 0x07FF;
+		  if (expon > 7)
 		    value = 0x77FF;
 		}
-	      if (exp < -8)
+	      if (expon < -8)
 		value = 0x8000;
 	      if (value == 0)
 		{
-		  mant = (exp << 12) | mant;
-		  value = mant & 0xFFFF;
+		  mantis = (expon << 12) | mantis;
+		  value = mantis & 0xFFFF;
 		}
 	    }
 	}
@@ -1381,14 +1379,14 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixP)
       MAP (2, 1, BFD_RELOC_16_PCREL);
       MAP (4, 0, BFD_RELOC_32);
     default:
-      as_bad ("Can not do %d byte %srelocation", fixP->fx_size,
-	      fixP->fx_pcrel ? "pc-relative " : "");
+      as_bad (_("Can not do %d byte %srelocation"), fixP->fx_size,
+	      fixP->fx_pcrel ? _("pc-relative ") : "");
     }
 #undef MAP
 #undef F
 
   rel = xmalloc (sizeof (* rel));
-  assert (rel != 0);
+  gas_assert (rel != 0);
   rel->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
   *rel->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
   rel->address = fixP->fx_frag->fr_address + fixP->fx_where;
@@ -1416,7 +1414,7 @@ md_operand (expressionS *expressionP ATTRIBUTE_UNUSED)
 void
 md_assemble (char *line)
 {
-  template *opcode;
+  insn_template *op;
   char *current_posn;
   char *token_start;
   char save_char;
@@ -1443,7 +1441,7 @@ md_assemble (char *line)
 
   if (!is_opcode_char (*current_posn))
     {
-      as_bad ("Invalid character %s in opcode",
+      as_bad (_("Invalid character %s in opcode"),
 	      output_invalid (*current_posn));
       return;
     }
@@ -1464,16 +1462,16 @@ md_assemble (char *line)
     /* Find instruction.  */
     save_char = *current_posn;
     *current_posn = '\0';
-    opcode = (template *) hash_find (op_hash, token_start);
-    if (opcode)
+    op = (insn_template *) hash_find (op_hash, token_start);
+    if (op)
       {
-	debug ("Found instruction %s\n", opcode->name);
-	insn.tm = opcode;
+	debug ("Found instruction %s\n", op->name);
+	insn.tm = op;
       }
     else
       {
 	debug ("Didn't find insn\n");
-	as_bad ("Unknown TMS320C30 instruction: %s", token_start);
+	as_bad (_("Unknown TMS320C30 instruction: %s"), token_start);
 	return;
       }
     *current_posn = save_char;
@@ -1493,7 +1491,7 @@ md_assemble (char *line)
 	    {
 	      if (!is_space_char (*current_posn))
 		{
-		  as_bad ("Invalid character %s before %s operand",
+		  as_bad (_("Invalid character %s before %s operand"),
 			  output_invalid (*current_posn),
 			  ordinal_names[insn.operands]);
 		  return;
@@ -1508,7 +1506,7 @@ md_assemble (char *line)
 		{
 		  if (paren_not_balanced)
 		    {
-		      as_bad ("Unbalanced parenthesis in %s operand.",
+		      as_bad (_("Unbalanced parenthesis in %s operand."),
 			      ordinal_names[insn.operands]);
 		      return;
 		    }
@@ -1518,7 +1516,7 @@ md_assemble (char *line)
 	      else if (!is_operand_char (*current_posn)
 		       && !is_space_char (*current_posn))
 		{
-		  as_bad ("Invalid character %s in %s operand",
+		  as_bad (_("Invalid character %s in %s operand"),
 			  output_invalid (*current_posn),
 			  ordinal_names[insn.operands]);
 		  return;
@@ -1535,7 +1533,7 @@ md_assemble (char *line)
 	      this_operand = insn.operands++;
 	      if (insn.operands > MAX_OPERANDS)
 		{
-		  as_bad ("Spurious operands; (%d operands/instruction max)",
+		  as_bad (_("Spurious operands; (%d operands/instruction max)"),
 			  MAX_OPERANDS);
 		  return;
 		}
@@ -1552,12 +1550,12 @@ md_assemble (char *line)
 	    {
 	      if (expecting_operand)
 		{
-		  as_bad ("Expecting operand after ','; got nothing");
+		  as_bad (_("Expecting operand after ','; got nothing"));
 		  return;
 		}
 	      if (*current_posn == ',')
 		{
-		  as_bad ("Expecting operand before ','; got nothing");
+		  as_bad (_("Expecting operand before ','; got nothing"));
 		  return;
 		}
 	    }
@@ -1568,7 +1566,7 @@ md_assemble (char *line)
 	      if (*++current_posn == END_OF_INSN)
 		{
 		  /* Just skip it, if it's \n complain.  */
-		  as_bad ("Expecting operand after ','; got nothing");
+		  as_bad (_("Expecting operand after ','; got nothing"));
 		  return;
 		}
 	      expecting_operand = 1;
@@ -1593,7 +1591,7 @@ md_assemble (char *line)
 	  numops--;
       if (insn.operands != numops)
 	{
-	  as_bad ("Incorrect number of operands given");
+	  as_bad (_("Incorrect number of operands given"));
 	  return;
 	}
     }
@@ -1626,7 +1624,7 @@ md_assemble (char *line)
 	}
       else
 	{
-	  as_bad ("The %s operand doesn't match", ordinal_names[count]);
+	  as_bad (_("The %s operand doesn't match"), ordinal_names[count]);
 	  return;
 	}
     }
@@ -1651,7 +1649,7 @@ md_assemble (char *line)
 	  else
 	    {
 	      /* Shouldn't make it to this stage.  */
-	      as_bad ("Incompatible first and second operands in instruction");
+	      as_bad (_("Incompatible first and second operands in instruction"));
 	      return;
 	    }
 	  break;
@@ -1663,7 +1661,7 @@ md_assemble (char *line)
 	  else
 	    {
 	      /* Shouldn't make it to this stage.  */
-	      as_bad ("Incompatible first and second operands in instruction");
+	      as_bad (_("Incompatible first and second operands in instruction"));
 	      return;
 	    }
 	  break;
@@ -1777,7 +1775,7 @@ md_assemble (char *line)
 
 		      if (md_atof ('f', p + 2, & size) != 0)
 			{
-			  as_bad ("invalid short form floating point immediate operand");
+			  as_bad (_("invalid short form floating point immediate operand"));
 			  return;
 			}
 
@@ -1787,9 +1785,9 @@ md_assemble (char *line)
 		    case Imm_UInt:
 		      debug ("Unsigned int first operand\n");
 		      if (insn.operand_type[0]->immediate.decimal_found)
-			as_warn ("rounding down first operand float to unsigned int");
+			as_warn (_("rounding down first operand float to unsigned int"));
 		      if (insn.operand_type[0]->immediate.u_number > 0xFFFF)
-			as_warn ("only lower 16-bits of first operand are used");
+			as_warn (_("only lower 16-bits of first operand are used"));
 		      insn.opcode |=
 			(insn.operand_type[0]->immediate.u_number & 0x0000FFFFL);
 		      md_number_to_chars (p, (valueT) insn.opcode, INSN_SIZE);
@@ -1799,12 +1797,12 @@ md_assemble (char *line)
 		      debug ("Int first operand\n");
 
 		      if (insn.operand_type[0]->immediate.decimal_found)
-			as_warn ("rounding down first operand float to signed int");
+			as_warn (_("rounding down first operand float to signed int"));
 
 		      if (insn.operand_type[0]->immediate.s_number < -32768 ||
 			  insn.operand_type[0]->immediate.s_number > 32767)
 			{
-			  as_bad ("first operand is too large for 16-bit signed int");
+			  as_bad (_("first operand is too large for 16-bit signed int"));
 			  return;
 			}
 		      insn.opcode |=
@@ -1869,13 +1867,13 @@ md_assemble (char *line)
 		{
 		  if (insn.operand_type[0]->immediate.decimal_found)
 		    {
-		      as_bad ("first operand is floating point");
+		      as_bad (_("first operand is floating point"));
 		      return;
 		    }
 		  if (insn.operand_type[0]->immediate.s_number < -32768 ||
 		      insn.operand_type[0]->immediate.s_number > 32767)
 		    {
-		      as_bad ("first operand is too large for 16-bit signed int");
+		      as_bad (_("first operand is too large for 16-bit signed int"));
 		      return;
 		    }
 		  insn.opcode |= (insn.operand_type[1]->immediate.s_number);
@@ -1900,7 +1898,7 @@ md_assemble (char *line)
 	  else
 	    {
 	      /* Shouldn't get here.  */
-	      as_bad ("interrupt vector for trap instruction out of range");
+	      as_bad (_("interrupt vector for trap instruction out of range"));
 	      return;
 	    }
 	  md_number_to_chars (p, (valueT) insn.opcode, INSN_SIZE);
@@ -1945,7 +1943,7 @@ md_assemble (char *line)
 		  /* Immediate addressing uses upper 8 bits of address.  */
 		  if (insn.operand_type[0]->immediate.u_number > 0x00FFFFFF)
 		    {
-		      as_bad ("LDP instruction needs a 24-bit operand");
+		      as_bad (_("LDP instruction needs a 24-bit operand"));
 		      return;
 		    }
 		  insn.opcode |=
@@ -1969,7 +1967,7 @@ md_assemble (char *line)
 	  if (insn.operand_type[0]->immediate.resolved == 1)
 	    {
 	      if (insn.operand_type[0]->immediate.u_number > 0x00FFFFFF)
-		as_warn ("first operand is too large for a 24-bit displacement");
+		as_warn (_("first operand is too large for a 24-bit displacement"));
 	      insn.opcode |=
 		(insn.operand_type[0]->immediate.u_number & 0x00FFFFFF);
 	      md_number_to_chars (p, (valueT) insn.opcode, INSN_SIZE);
@@ -2003,4 +2001,3 @@ md_assemble (char *line)
   debug ("Final opcode: %08X\n", insn.opcode);
   debug ("\n");
 }
-

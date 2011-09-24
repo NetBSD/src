@@ -295,3 +295,5 @@
         vmov.f32 q0, -0.484375
         vmov.f32 q0, -0.96875
         vmov.f32 q0, -1.9375
+
+	vmov.i64 d9, #0xffffffffffffffff

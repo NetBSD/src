@@ -1,6 +1,6 @@
 %{ /* defparse.y - parser for .def files */
 
-/* Copyright 1995, 1997, 1998, 1999, 2001, 2004, 2007
+/* Copyright 1995, 1997, 1998, 1999, 2001, 2004, 2005, 2007
    Free Software Foundation, Inc.
    
    This file is part of GNU Binutils.
@@ -35,11 +35,12 @@
 %token SECTIONS EXPORTS IMPORTS VERSIONK BASE CONSTANT
 %token READ WRITE EXECUTE SHARED NONSHARED NONAME PRIVATE
 %token SINGLE MULTIPLE INITINSTANCE INITGLOBAL TERMINSTANCE TERMGLOBAL
+%token EQUAL
 %token <id> ID
 %token <number> NUMBER
 %type  <number> opt_base opt_ordinal opt_NONAME opt_CONSTANT opt_DATA opt_PRIVATE
 %type  <number> attr attr_list opt_number
-%type  <id> opt_name opt_equal_name 
+%type  <id> opt_name opt_equal_name opt_import_name
 
 %%
 
@@ -70,7 +71,8 @@ explist:
 
 expline:
 		ID opt_equal_name opt_ordinal opt_NONAME opt_CONSTANT opt_DATA opt_PRIVATE
-			{ def_exports ($1, $2, $3, $4, $5, $6, $7);}
+		opt_import_name
+			{ def_exports ($1, $2, $3, $4, $5, $6, $7, $8);}
 	;
 implist:	
 		implist impline
@@ -78,14 +80,22 @@ implist:
 	;
 
 impline:
-               ID '=' ID '.' ID '.' ID     { def_import ($1,$3,$5,$7, 0); }
-       |       ID '=' ID '.' ID '.' NUMBER { def_import ($1,$3,$5, 0,$7); }
-       |       ID '=' ID '.' ID            { def_import ($1,$3, 0,$5, 0); }
-       |       ID '=' ID '.' NUMBER        { def_import ($1,$3, 0, 0,$5); }
-       |       ID '.' ID '.' ID            { def_import ( 0,$1,$3,$5, 0); }
-       |       ID '.' ID '.' NUMBER        { def_import ( 0,$1,$3, 0,$5); }
-       |       ID '.' ID                   { def_import ( 0,$1, 0,$3, 0); }
-       |       ID '.' NUMBER               { def_import ( 0,$1, 0, 0,$3); }
+               ID '=' ID '.' ID '.' ID opt_import_name
+		 { def_import ($1,$3,$5,$7, 0, $8); }
+       |       ID '=' ID '.' ID '.' NUMBER opt_import_name
+		 { def_import ($1,$3,$5, 0,$7, $8); }
+       |       ID '=' ID '.' ID opt_import_name
+		 { def_import ($1,$3, 0,$5, 0, $6); }
+       |       ID '=' ID '.' NUMBER opt_import_name
+		 { def_import ($1,$3, 0, 0,$5, $6); }
+       |       ID '.' ID '.' ID opt_import_name
+		 { def_import ( 0,$1,$3,$5, 0, $6); }
+       |       ID '.' ID '.' NUMBER opt_import_name
+		 { def_import ( 0,$1,$3, 0,$5, $6); }
+       |       ID '.' ID opt_import_name
+		 { def_import ( 0,$1, 0,$3, 0, $4); }
+       |       ID '.' NUMBER opt_import_name
+		 { def_import ( 0,$1, 0, 0,$3, $4); }
 ;
 
 seclist:
@@ -153,6 +163,11 @@ opt_name: ID		{ $$ =$1; }
 opt_ordinal: 
 	  '@' NUMBER     { $$=$2;}
 	|                { $$=-1;}
+	;
+
+opt_import_name:
+	  EQUAL ID	{ $$ = $2; }
+	|		{ $$ = 0; }
 	;
 
 opt_equal_name:

@@ -1,6 +1,6 @@
 // readsyms.h -- read input file symbols for gold   -*- C++ -*-
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -35,6 +35,7 @@ class Input_objects;
 class Symbol_table;
 class Input_group;
 class Archive;
+class Finish_group;
 
 // This Task is responsible for reading the symbols from an input
 // file.  This also includes reading the relocations so that we can
@@ -54,18 +55,31 @@ class Read_symbols : public Task
   // one has completed; it will be NULL for the first task.
   // NEXT_BLOCKER is used to block the next input file from adding
   // symbols.
-  Read_symbols(const General_options& options, Input_objects* input_objects,
-	       Symbol_table* symtab, Layout* layout, Dirsearch* dirpath,
+  Read_symbols(Input_objects* input_objects, Symbol_table* symtab,
+	       Layout* layout, Dirsearch* dirpath, int dirindex,
 	       Mapfile* mapfile, const Input_argument* input_argument,
-	       Input_group* input_group, Task_token* this_blocker,
-	       Task_token* next_blocker)
-    : options_(options), input_objects_(input_objects), symtab_(symtab),
-      layout_(layout), dirpath_(dirpath), mapfile_(mapfile),
+	       Input_group* input_group, Archive_member* member,
+               Task_token* this_blocker, Task_token* next_blocker)
+    : input_objects_(input_objects), symtab_(symtab), layout_(layout),
+      dirpath_(dirpath), dirindex_(dirindex), mapfile_(mapfile),
       input_argument_(input_argument), input_group_(input_group),
-      this_blocker_(this_blocker), next_blocker_(next_blocker)
+      member_(member), this_blocker_(this_blocker),
+      next_blocker_(next_blocker)
   { }
 
   ~Read_symbols();
+
+  // If appropriate, issue a warning about skipping an incompatible
+  // object.
+  static void
+  incompatible_warning(const Input_argument*, const Input_file*);
+
+  // Requeue a Read_symbols task to search for the next object with
+  // the same name.
+  static void
+  requeue(Workqueue*, Input_objects*, Symbol_table*, Layout*, Dirsearch*,
+	  int dirindex, Mapfile*, const Input_argument*, Input_group*,
+	  Task_token* next_blocker);
 
   // The standard Task methods.
 
@@ -86,18 +100,27 @@ class Read_symbols : public Task
   void
   do_group(Workqueue*);
 
+  // Handle --start-lib ... --end-lib
+  bool
+  do_lib_group(Workqueue*);
+
+  // Handle --whole-archive --start-lib ... --end-lib --no-whole-archive
+  bool
+  do_whole_lib_group(Workqueue*);
+
   // Open and identify the file.
   bool
   do_read_symbols(Workqueue*);
 
-  const General_options& options_;
   Input_objects* input_objects_;
   Symbol_table* symtab_;
   Layout* layout_;
   Dirsearch* dirpath_;
+  int dirindex_;
   Mapfile* mapfile_;
   const Input_argument* input_argument_;
   Input_group* input_group_;
+  Archive_member* member_;
   Task_token* this_blocker_;
   Task_token* next_blocker_;
 };
@@ -113,10 +136,14 @@ class Add_symbols : public Task
   // one for the previous input file.  NEXT_BLOCKER is used to prevent
   // the next task from running.
   Add_symbols(Input_objects* input_objects, Symbol_table* symtab,
-	      Layout* layout, Object* object,
+	      Layout* layout, Dirsearch* dirpath, int dirindex,
+	      Mapfile* mapfile, const Input_argument* input_argument,
+	      Object* object,
 	      Read_symbols_data* sd, Task_token* this_blocker,
 	      Task_token* next_blocker)
     : input_objects_(input_objects), symtab_(symtab), layout_(layout),
+      dirpath_(dirpath), dirindex_(dirindex), mapfile_(mapfile),
+      input_argument_(input_argument),
       object_(object), sd_(sd), this_blocker_(this_blocker),
       next_blocker_(next_blocker)
   { }
@@ -142,6 +169,10 @@ private:
   Input_objects* input_objects_;
   Symbol_table* symtab_;
   Layout* layout_;
+  Dirsearch* dirpath_;
+  int dirindex_;
+  Mapfile* mapfile_;
+  const Input_argument* input_argument_;
   Object* object_;
   Read_symbols_data* sd_;
   Task_token* this_blocker_;
@@ -159,6 +190,8 @@ class Input_group
   Input_group()
     : archives_()
   { }
+
+  ~Input_group();
 
   // Add an archive to the group.
   void
@@ -179,6 +212,43 @@ class Input_group
   Archives archives_;
 };
 
+// This class starts the handling of a group.  It exists only to pick
+// up the number of undefined symbols at that point, so that we only
+// run back through the group if we saw a new undefined symbol.
+
+class Start_group : public Task
+{
+ public:
+  Start_group(Symbol_table* symtab, Finish_group* finish_group,
+	      Task_token* this_blocker, Task_token* next_blocker)
+    : symtab_(symtab), finish_group_(finish_group),
+      this_blocker_(this_blocker), next_blocker_(next_blocker)
+  { }
+
+  ~Start_group();
+
+  // The standard Task methods.
+
+  Task_token*
+  is_runnable();
+
+  void
+  locks(Task_locker*);
+
+  void
+  run(Workqueue*);
+
+  std::string
+  get_name() const
+  { return "Start_group"; }
+
+ private:
+  Symbol_table* symtab_;
+  Finish_group* finish_group_;
+  Task_token* this_blocker_;
+  Task_token* next_blocker_;
+};
+
 // This class is used to finish up handling a group.  It is just a
 // closure.
 
@@ -187,15 +257,27 @@ class Finish_group : public Task
  public:
   Finish_group(Input_objects* input_objects, Symbol_table* symtab,
 	       Layout* layout, Mapfile* mapfile, Input_group* input_group,
-	       int saw_undefined, Task_token* this_blocker,
 	       Task_token* next_blocker)
     : input_objects_(input_objects), symtab_(symtab),
       layout_(layout), mapfile_(mapfile), input_group_(input_group),
-      saw_undefined_(saw_undefined), this_blocker_(this_blocker),
-      next_blocker_(next_blocker)
+      saw_undefined_(0), this_blocker_(NULL), next_blocker_(next_blocker)
   { }
 
   ~Finish_group();
+
+  // Set the number of undefined symbols when we start processing the
+  // group.  This is called by the Start_group task.
+  void
+  set_saw_undefined(size_t saw_undefined)
+  { this->saw_undefined_ = saw_undefined; }
+
+  // Set the blocker to use for this task.
+  void
+  set_blocker(Task_token* this_blocker)
+  {
+    gold_assert(this->this_blocker_ == NULL);
+    this->this_blocker_ = this_blocker;
+  }
 
   // The standard Task methods.
 
@@ -218,7 +300,7 @@ class Finish_group : public Task
   Layout* layout_;
   Mapfile* mapfile_;
   Input_group* input_group_;
-  int saw_undefined_;
+  size_t saw_undefined_;
   Task_token* this_blocker_;
   Task_token* next_blocker_;
 };
@@ -230,13 +312,12 @@ class Finish_group : public Task
 class Read_script : public Task
 {
  public:
-  Read_script(const General_options& options, Symbol_table* symtab,
-	      Layout* layout, Dirsearch* dirpath, Input_objects* input_objects,
-	      Mapfile* mapfile, Input_group* input_group,
-	      const Input_argument* input_argument,
+  Read_script(Symbol_table* symtab, Layout* layout, Dirsearch* dirpath,
+	      int dirindex, Input_objects* input_objects, Mapfile* mapfile,
+	      Input_group* input_group, const Input_argument* input_argument,
 	      Input_file* input_file, Task_token* this_blocker,
 	      Task_token* next_blocker)
-    : options_(options), symtab_(symtab), layout_(layout), dirpath_(dirpath),
+    : symtab_(symtab), layout_(layout), dirpath_(dirpath), dirindex_(dirindex),
       input_objects_(input_objects), mapfile_(mapfile),
       input_group_(input_group), input_argument_(input_argument),
       input_file_(input_file), this_blocker_(this_blocker),
@@ -260,10 +341,10 @@ class Read_script : public Task
   get_name() const;
 
  private:
-  const General_options& options_;
   Symbol_table* symtab_;
   Layout* layout_;
   Dirsearch* dirpath_;
+  int dirindex_;
   Input_objects* input_objects_;
   Mapfile* mapfile_;
   Input_group* input_group_;

@@ -1,6 +1,6 @@
 // weak_undef_file1.cc -- test handling of weak undefined symbols for gold
 
-// Copyright 2008 Free Software Foundation, Inc.
+// Copyright 2008, 2010 Free Software Foundation, Inc.
 // Written by Cary Coutant <ccoutant@google.com>.
 
 // This file is part of gold.
@@ -33,12 +33,18 @@
 // so that we can detect whether the symbol was left for runtime
 // resolution.
 
-
 #include <cstdio>
 
 #include "weak_undef.h"
 
 int is_such_symbol_ = 1;
+
+// We also define a symbol that is not defined by the alternate
+// library.  The main program contains a weak reference to this
+// symbol, and tests that the reference remains weak even after
+// the definition was found at link time.
+
+int link_time_only = 1;
 
 extern int v2 __attribute__ ((weak));
 

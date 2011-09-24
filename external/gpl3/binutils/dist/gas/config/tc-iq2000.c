@@ -1,5 +1,5 @@
 /* tc-iq2000.c -- Assembler for the Sitera IQ2000.
-   Copyright (C) 2003, 2004, 2005, 2006, 2007
+   Copyright (C) 2003, 2004, 2005, 2006, 2007, 2009, 2010
    Free Software Foundation. Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -534,7 +534,7 @@ iq2000_record_hi16 (int    reloc_type,
 {
   struct iq2000_hi_fixup * hi_fixup;
 
-  assert (reloc_type == BFD_RELOC_HI16);
+  gas_assert (reloc_type == BFD_RELOC_HI16);
 
   hi_fixup = xmalloc (sizeof * hi_fixup);
   hi_fixup->fixp = fixP;
@@ -587,7 +587,7 @@ iq2000_frob_file (void)
       segment_info_type * seginfo;
       int                 pass;
 
-      assert (FX_OPINFO_R_TYPE (l->fixp) == BFD_RELOC_HI16
+      gas_assert (FX_OPINFO_R_TYPE (l->fixp) == BFD_RELOC_HI16
 	      || FX_OPINFO_R_TYPE (l->fixp) == BFD_RELOC_LO16);
 
       /* Check quickly whether the next fixup happens to be a matching low.  */
@@ -627,7 +627,7 @@ iq2000_frob_file (void)
 		  for (pf = &seginfo->fix_root;
 		       * pf != l->fixp;
 		       pf = & (* pf)->fx_next)
-		    assert (* pf != NULL);
+		    gas_assert (* pf != NULL);
 
 		  * pf = l->fixp->fx_next;
 
@@ -837,7 +837,7 @@ s_iq2000_end (int x ATTRIBUTE_UNUSED)
 
   if (p != NULL)
     {
-      assert (S_GET_NAME (p));
+      gas_assert (S_GET_NAME (p));
       if (strcmp (S_GET_NAME (p), S_GET_NAME (cur_proc_ptr->isym)))
 	as_warn (_(".end symbol does not match .ent symbol."));
     }
@@ -909,7 +909,6 @@ get_number (void)
 static void
 s_iq2000_ent (int aent)
 {
-  int number = 0;
   symbolS *symbolP;
   int maybe_text;
 
@@ -918,7 +917,7 @@ s_iq2000_ent (int aent)
     input_line_pointer++;
   SKIP_WHITESPACE ();
   if (ISDIGIT (*input_line_pointer) || *input_line_pointer == '-')
-    number = get_number ();
+    get_number ();
 
   if ((bfd_get_section_flags (stdoutput, now_seg) & SEC_CODE) != 0)
     maybe_text = 1;

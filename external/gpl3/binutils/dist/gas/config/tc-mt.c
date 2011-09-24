@@ -1,5 +1,5 @@
 /* tc-mt.c -- Assembler for the Morpho Technologies mt .
-   Copyright (C) 2005, 2006, 2007 Free Software Foundation.
+   Copyright (C) 2005, 2006, 2007, 2010 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -294,6 +294,7 @@ md_assemble (char * str)
 
   last_insn_had_delay_slot =
     CGEN_INSN_ATTR_VALUE (insn.insn, CGEN_INSN_DELAY_SLOT);
+  (void) last_insn_had_delay_slot;
 
   last_insn_has_load_delay =
     CGEN_INSN_ATTR_VALUE (insn.insn, CGEN_INSN_LOAD_DELAY);
@@ -458,8 +459,6 @@ mt_apply_fix (fixS *fixP, valueT *valueP, segT seg)
 bfd_boolean
 mt_fix_adjustable (fixS * fixP)
 {
-  bfd_reloc_code_real_type reloc_type;
-
   if ((int) fixP->fx_r_type >= (int) BFD_RELOC_UNUSED)
     {
       const CGEN_INSN *insn = NULL;
@@ -467,10 +466,8 @@ mt_fix_adjustable (fixS * fixP)
       const CGEN_OPERAND *operand;
 
       operand = cgen_operand_lookup_by_num(gas_cgen_cpu_desc, opindex);
-      reloc_type = md_cgen_lookup_reloc (insn, operand, fixP);
+      md_cgen_lookup_reloc (insn, operand, fixP);
     }
-  else
-    reloc_type = fixP->fx_r_type;
 
   if (fixP->fx_addsy == NULL)
     return TRUE;
