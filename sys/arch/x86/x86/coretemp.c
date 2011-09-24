@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.26 2011/06/20 15:01:30 pgoyette Exp $ */
+/* $NetBSD: coretemp.c,v 1.27 2011/09/24 10:52:56 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.26 2011/06/20 15:01:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.27 2011/09/24 10:52:56 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -289,7 +289,6 @@ coretemp_tjmax(device_t self)
 		}
 	}
 
-#if 0
 	/*
 	 * Attempt to get Tj(max) from IA32_TEMPERATURE_TARGET,
 	 * but only consider the interval [70, 100] C as valid.
@@ -297,7 +296,9 @@ coretemp_tjmax(device_t self)
 	 */
 	if (model == 0x0E && extmodel != 0) {
 
-		msr = rdmsr(MSR_TEMPERATURE_TARGET);
+		if (rdmsr_safe(MSR_TEMPERATURE_TARGET, &msr) == EFAULT)
+			return;
+
 		msr = __SHIFTOUT(msr, MSR_TEMP_TARGET_READOUT);
 
 		if (msr >= 70 && msr <= 100) {
@@ -305,7 +306,6 @@ coretemp_tjmax(device_t self)
 			return;
 		}
 	}
-#endif
 }
 
 static void
