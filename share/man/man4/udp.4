@@ -1,4 +1,4 @@
-.\"	$NetBSD: udp.4,v 1.10 2003/08/07 10:31:04 agc Exp $
+.\"	$NetBSD: udp.4,v 1.11 2011/09/24 18:27:10 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)udp.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 5, 1993
+.Dd September 24, 2011
 .Dt UDP 4
 .Os
 .Sh NAME
@@ -94,6 +94,56 @@ network supports this) by using a reserved
 this address
 is network interface dependent.
 .Pp
+There are two
+.Tn UDP-level
+.Xr setsockopt 2 Ns / Ns Xr getsockopt 2
+options.
+.Dv UDP_OPTIONS
+may be used to change the default behavior of the socket.
+For example:
+.Bd -literal
+setsockopt(s, IPPROTO_UDP, UDP_OPTIONS, NULL, 0);
+.Ed
+.Pp
+The
+.Dv UDP_ENCAP
+option can be used to encapsulate
+.Tn ESP
+packets in
+.Tn UDP .
+There are two valid enapsulation options:
+.Tn UDP_ENCAP_ESPINUDP_NON_IKE
+from draft-ietf-ipsec-nat-t-ike-00/01 and
+.Tn UDP_ENCAP_ESPINUDP
+from draft-ietf-ipsec-udp-encaps-06
+defined in
+.In netinet/udp.h .
+.Pp
+The
+.Dv UDP_RFC6056ALGO
+can be used to randomize the port selection.
+Valid algorithms are described in
+.Xr rfc6056 7
+and their respective constants are in
+.In netinet/rfc6056.h .
+For example,
+.Bd -literal
+int algo = RFC6056_ALGO_RANDOM_PICK;       /* see \*[Lt]netinet/rfc6056.h\*[Gt] */
+setsockopt(s, IPPROTO_UDP, UDP_RFC6056ALGO, \*[Am]algo, sizeof(algo));
+.Ed
+.Pp
+The port selection can be also controlled at a global level for all
+.Tn UDP
+or
+.Tn UDP6
+sockets using the following
+.Xr sysctl 7
+variables:
+.Dv netinet.udp.rfc6056.selected
+and
+.Dv netinet6.udp6.rfc6056.selected
+respectively.
+.Pp
 Options at the
 .Tn IP
 transport level may be used with
@@ -133,7 +183,9 @@ for which no network interface exists.
 .Xr inet6 4 ,
 .Xr intro 4 ,
 .Xr ip 4 ,
-.Xr ip6 4
+.Xr ip6 4 ,
+.Xr rfc6056 7 ,
+.Xr sysctl 7
 .Rs
 .%R RFC
 .%N 768
