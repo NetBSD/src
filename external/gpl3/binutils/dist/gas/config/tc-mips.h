@@ -1,6 +1,6 @@
 /* tc-mips.h -- header file for tc-mips.c.
    Copyright 1993, 1994, 1995, 1996, 1997, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007  Free Software Foundation, Inc.
+   2005, 2006, 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
    Contributed by the OSF and Ralph Campbell.
    Written by Keith Knowles and Ralph Campbell, working independently.
    Modified for ECOFF support by Ian Lance Taylor of Cygnus Support.
@@ -59,7 +59,7 @@ extern char mips_nop_opcode (void);
 extern void mips_handle_align (struct frag *);
 #define HANDLE_ALIGN(fragp)  mips_handle_align (fragp)
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE  (1 + 2)
+#define MAX_MEM_FOR_RS_ALIGN_CODE  (3 + 4)
 
 struct insn_label_list;
 struct mips_segment_info {
@@ -108,6 +108,9 @@ extern int mips_parse_long_option (const char *);
 
 #define tc_frob_label(sym) mips_define_label (sym)
 extern void mips_define_label (symbolS *);
+
+#define tc_new_dot_label(sym) mips_record_label (sym)
+extern void mips_record_label (symbolS *);
 
 #define tc_frob_file_before_adjust() mips_frob_file_before_adjust ()
 extern void mips_frob_file_before_adjust (void);
@@ -162,9 +165,13 @@ extern void mips_emit_delays (void);
 extern void mips_enable_auto_align (void);
 #define md_elf_section_change_hook()	mips_enable_auto_align()
 
+#ifdef TE_IRIX
 enum dwarf2_format;
 extern enum dwarf2_format mips_dwarf2_format (asection *);
-#define DWARF2_FORMAT(SEC) mips_dwarf2_format (SEC)
+# define DWARF2_FORMAT(SEC) mips_dwarf2_format (SEC)
+#else
+/* Use GAS' defaults.  */
+#endif
 
 extern int mips_dwarf2_addr_size (void);
 #define DWARF2_ADDR_SIZE(bfd) mips_dwarf2_addr_size ()

@@ -1,6 +1,6 @@
 // output.h -- manage the output file for gold   -*- C++ -*-
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -38,6 +38,7 @@ class General_options;
 class Object;
 class Symbol;
 class Output_file;
+class Output_merge_base;
 class Output_section;
 class Relocatable_relocs;
 class Target;
@@ -54,8 +55,8 @@ class Output_data
   explicit Output_data()
     : address_(0), data_size_(0), offset_(-1),
       is_address_valid_(false), is_data_size_valid_(false),
-      is_offset_valid_(false),
-      dynamic_reloc_count_(0)
+      is_offset_valid_(false), is_data_size_fixed_(false),
+      has_dynamic_reloc_(false)
   { }
 
   virtual
@@ -80,6 +81,11 @@ class Output_data
     return this->data_size_;
   }
 
+  // Return true if data size is fixed.
+  bool
+  is_data_size_fixed() const
+  { return this->is_data_size_fixed_; }
+  
   // Return the file offset.  This is only valid after
   // Layout::finalize is finished.  For some non-allocated sections,
   // it may not be valid until near the end of the link.
@@ -97,9 +103,16 @@ class Output_data
   {
     this->is_address_valid_ = false;
     this->is_offset_valid_ = false;
-    this->is_data_size_valid_ = false;
+    if (!this->is_data_size_fixed_)
+      this->is_data_size_valid_ = false;
     this->do_reset_address_and_file_offset();
   }
+
+  // Return true if address and file offset already have reset values. In
+  // other words, calling reset_address_and_file_offset will not change them.
+  bool
+  address_and_file_offset_have_reset_values() const
+  { return this->do_address_and_file_offset_have_reset_values(); }
 
   // Return the required alignment.
   uint64_t
@@ -135,6 +148,10 @@ class Output_data
   // Return the output section that this goes in, if there is one.
   Output_section*
   output_section()
+  { return this->do_output_section(); }
+
+  const Output_section*
+  output_section() const
   { return this->do_output_section(); }
 
   // Return the output section index, if there is an output section.
@@ -216,15 +233,15 @@ class Output_data
   is_layout_complete()
   { return Output_data::allocated_sizes_are_fixed; }
 
-  // Count the number of dynamic relocations applied to this section.
+  // Note that a dynamic reloc has been applied to this data.
   void
   add_dynamic_reloc()
-  { ++this->dynamic_reloc_count_; }
+  { this->has_dynamic_reloc_ = true; }
 
-  // Return the number of dynamic relocations applied to this section.
-  unsigned int
-  dynamic_reloc_count() const
-  { return this->dynamic_reloc_count_; }
+  // Return whether a dynamic reloc has been applied.
+  bool
+  has_dynamic_reloc() const
+  { return this->has_dynamic_reloc_; }
 
   // Whether the address is valid.
   bool
@@ -289,6 +306,10 @@ class Output_data
   do_output_section()
   { return NULL; }
 
+  virtual const Output_section*
+  do_output_section() const
+  { return NULL; }
+
   // Return the output section index, if there is an output section.
   virtual unsigned int
   do_out_shndx() const
@@ -311,6 +332,14 @@ class Output_data
   do_reset_address_and_file_offset()
   { }
 
+  // Return true if address and file offset already have reset values. In
+  // other words, calling reset_address_and_file_offset will not change them.
+  // A child class overriding do_reset_address_and_file_offset may need to
+  // also override this.
+  virtual bool
+  do_address_and_file_offset_have_reset_values() const
+  { return !this->is_address_valid_ && !this->is_offset_valid_; }
+
   // Set the TLS offset.  Called only for SHT_TLS sections.
   virtual void
   do_set_tls_offset(uint64_t)
@@ -330,13 +359,30 @@ class Output_data
 
   // Functions that child classes may call.
 
+  // Reset the address.  The Output_section class needs this when an
+  // SHF_ALLOC input section is added to an output section which was
+  // formerly not SHF_ALLOC.
+  void
+  mark_address_invalid()
+  { this->is_address_valid_ = false; }
+
   // Set the size of the data.
   void
   set_data_size(off_t data_size)
   {
-    gold_assert(!this->is_data_size_valid_);
+    gold_assert(!this->is_data_size_valid_
+		&& !this->is_data_size_fixed_);
     this->data_size_ = data_size;
     this->is_data_size_valid_ = true;
+  }
+
+  // Fix the data size.  Once it is fixed, it cannot be changed
+  // and the data size remains always valid. 
+  void
+  fix_data_size()
+  {
+    gold_assert(this->is_data_size_valid_);
+    this->is_data_size_fixed_ = true;
   }
 
   // Get the current data size--this is for the convenience of
@@ -378,13 +424,15 @@ class Output_data
   // File offset of contents in output file.
   off_t offset_;
   // Whether address_ is valid.
-  bool is_address_valid_;
+  bool is_address_valid_ : 1;
   // Whether data_size_ is valid.
-  bool is_data_size_valid_;
+  bool is_data_size_valid_ : 1;
   // Whether offset_ is valid.
-  bool is_offset_valid_;
-  // Count of dynamic relocations applied to this section.
-  unsigned int dynamic_reloc_count_;
+  bool is_offset_valid_ : 1;
+  // Whether data size is fixed.
+  bool is_data_size_fixed_ : 1;
+  // Whether any dynamic relocs have been applied to this section.
+  bool has_dynamic_reloc_ : 1;
 };
 
 // Output the section headers.
@@ -414,11 +462,20 @@ class Output_section_headers : public Output_data
   do_print_to_mapfile(Mapfile* mapfile) const
   { mapfile->print_output_data(this, _("** section headers")); }
 
+  // Set final data size.
+  void
+  set_final_data_size()
+  { this->set_data_size(this->do_size()); }
+
  private:
   // Write the data to the file with the right size and endianness.
   template<int size, bool big_endian>
   void
   do_sized_write(Output_file*);
+
+  // Compute data size.
+  off_t
+  do_size() const;
 
   const Layout* layout_;
   const Layout::Segment_list* segment_list_;
@@ -450,11 +507,20 @@ class Output_segment_headers : public Output_data
   do_print_to_mapfile(Mapfile* mapfile) const
   { mapfile->print_output_data(this, _("** segment headers")); }
 
+  // Set final data size.
+  void
+  set_final_data_size()
+  { this->set_data_size(this->do_size()); }
+
  private:
   // Write the data to the file with the right size and endianness.
   template<int size, bool big_endian>
   void
   do_sized_write(Output_file*);
+
+  // Compute the current size.
+  off_t
+  do_size() const;
 
   const Layout::Segment_list& segment_list_;
 };
@@ -489,6 +555,11 @@ class Output_file_header : public Output_data
   do_print_to_mapfile(Mapfile* mapfile) const
   { mapfile->print_output_data(this, _("** file header")); }
 
+  // Set final data size.
+  void
+  set_final_data_size(void)
+  { this->set_data_size(this->do_size()); }
+
  private:
   // Write the data to the file with the right size and endianness.
   template<int size, bool big_endian>
@@ -499,6 +570,10 @@ class Output_file_header : public Output_data
   template<int size>
   typename elfcpp::Elf_types<size>::Elf_Addr
   entry();
+
+  // Compute the current data size.
+  off_t
+  do_size() const;
 
   const Target* target_;
   const Symbol_table* symtab_;
@@ -516,15 +591,24 @@ class Output_file_header : public Output_data
 class Output_section_data : public Output_data
 {
  public:
-  Output_section_data(off_t data_size, uint64_t addralign)
+  Output_section_data(off_t data_size, uint64_t addralign,
+		      bool is_data_size_fixed)
     : Output_data(), output_section_(NULL), addralign_(addralign)
-  { this->set_data_size(data_size); }
+  {
+    this->set_data_size(data_size);
+    if (is_data_size_fixed)
+      this->fix_data_size();
+  }
 
   Output_section_data(uint64_t addralign)
     : Output_data(), output_section_(NULL), addralign_(addralign)
   { }
 
   // Return the output section.
+  Output_section*
+  output_section()
+  { return this->output_section_; }
+
   const Output_section*
   output_section() const
   { return this->output_section_; }
@@ -548,7 +632,7 @@ class Output_section_data : public Output_data
   bool
   output_offset(const Relobj* object, unsigned int shndx,
 		section_offset_type offset,
-		section_offset_type *poutput) const
+		section_offset_type* poutput) const
   { return this->do_output_offset(object, shndx, offset, poutput); }
 
   // Return whether this is the merge section for the input section
@@ -618,6 +702,10 @@ class Output_section_data : public Output_data
   do_output_section()
   { return this->output_section_; }
 
+  const Output_section*
+  do_output_section() const
+  { return this->output_section_; }
+
   // Return the section index of the output section.
   unsigned int
   do_out_shndx() const;
@@ -668,15 +756,15 @@ class Output_data_const : public Output_section_data
 {
  public:
   Output_data_const(const std::string& data, uint64_t addralign)
-    : Output_section_data(data.size(), addralign), data_(data)
+    : Output_section_data(data.size(), addralign, true), data_(data)
   { }
 
   Output_data_const(const char* p, off_t len, uint64_t addralign)
-    : Output_section_data(len, addralign), data_(p, len)
+    : Output_section_data(len, addralign, true), data_(p, len)
   { }
 
   Output_data_const(const unsigned char* p, off_t len, uint64_t addralign)
-    : Output_section_data(len, addralign),
+    : Output_section_data(len, addralign, true),
       data_(reinterpret_cast<const char*>(p), len)
   { }
 
@@ -707,7 +795,7 @@ class Output_data_const_buffer : public Output_section_data
  public:
   Output_data_const_buffer(const unsigned char* p, off_t len,
 			   uint64_t addralign, const char* map_name)
-    : Output_section_data(len, addralign),
+    : Output_section_data(len, addralign, true),
       p_(p), map_name_(map_name)
   { }
 
@@ -742,7 +830,7 @@ class Output_data_fixed_space : public Output_section_data
  public:
   Output_data_fixed_space(off_t data_size, uint64_t addralign,
 			  const char* map_name)
-    : Output_section_data(data_size, addralign),
+    : Output_section_data(data_size, addralign, true),
       map_name_(map_name)
   { }
 
@@ -805,7 +893,7 @@ class Output_data_zero_fill : public Output_section_data
 {
  public:
   Output_data_zero_fill(off_t data_size, uint64_t addralign)
-    : Output_section_data(data_size, addralign)
+    : Output_section_data(data_size, addralign, true)
   { }
 
  protected:
@@ -874,6 +962,8 @@ class Output_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
   typedef typename elfcpp::Elf_types<size>::Elf_Addr Address;
   typedef typename elfcpp::Elf_types<size>::Elf_Addr Addend;
 
+  static const Address invalid_address = static_cast<Address>(0) - 1;
+
   // An uninitialized entry.  We need this because we want to put
   // instances of this class into an STL container.
   Output_reloc()
@@ -888,23 +978,24 @@ class Output_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
   // A reloc against a global symbol.
 
   Output_reloc(Symbol* gsym, unsigned int type, Output_data* od,
-	       Address address, bool is_relative);
+	       Address address, bool is_relative, bool is_symbolless);
 
   Output_reloc(Symbol* gsym, unsigned int type,
                Sized_relobj<size, big_endian>* relobj,
-	       unsigned int shndx, Address address, bool is_relative);
+	       unsigned int shndx, Address address, bool is_relative,
+	       bool is_symbolless);
 
   // A reloc against a local symbol or local section symbol.
 
   Output_reloc(Sized_relobj<size, big_endian>* relobj,
 	       unsigned int local_sym_index, unsigned int type,
 	       Output_data* od, Address address, bool is_relative,
-               bool is_section_symbol);
+               bool is_symbolless, bool is_section_symbol);
 
   Output_reloc(Sized_relobj<size, big_endian>* relobj,
 	       unsigned int local_sym_index, unsigned int type,
 	       unsigned int shndx, Address address, bool is_relative,
-               bool is_section_symbol);
+               bool is_symbolless, bool is_section_symbol);
 
   // A reloc against the STT_SECTION symbol of an output section.
 
@@ -915,10 +1006,39 @@ class Output_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
                Sized_relobj<size, big_endian>* relobj,
 	       unsigned int shndx, Address address);
 
-  // Return TRUE if this is a RELATIVE relocation.
+  // An absolute relocation with no symbol.
+
+  Output_reloc(unsigned int type, Output_data* od, Address address);
+
+  Output_reloc(unsigned int type, Sized_relobj<size, big_endian>* relobj,
+	       unsigned int shndx, Address address);
+
+  // A target specific relocation.  The target will be called to get
+  // the symbol index, passing ARG.  The type and offset will be set
+  // as for other relocation types.
+
+  Output_reloc(unsigned int type, void* arg, Output_data* od,
+	       Address address);
+
+  Output_reloc(unsigned int type, void* arg,
+	       Sized_relobj<size, big_endian>* relobj,
+	       unsigned int shndx, Address address);
+
+  // Return the reloc type.
+  unsigned int
+  type() const
+  { return this->type_; }
+
+  // Return whether this is a RELATIVE relocation.
   bool
   is_relative() const
   { return this->is_relative_; }
+
+  // Return whether this is a relocation which should not use
+  // a symbol, but which obtains its addend from a symbol.
+  bool
+  is_symbolless() const
+  { return this->is_symbolless_; }
 
   // Return whether this is against a local section symbol.
   bool
@@ -927,7 +1047,22 @@ class Output_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
     return (this->local_sym_index_ != GSYM_CODE
             && this->local_sym_index_ != SECTION_CODE
             && this->local_sym_index_ != INVALID_CODE
+	    && this->local_sym_index_ != TARGET_CODE
             && this->is_section_symbol_);
+  }
+
+  // Return whether this is a target specific relocation.
+  bool
+  is_target_specific() const
+  { return this->local_sym_index_ == TARGET_CODE; }
+
+  // Return the argument to pass to the target for a target specific
+  // relocation.
+  void*
+  target_arg() const
+  {
+    gold_assert(this->local_sym_index_ == TARGET_CODE);
+    return this->u1_.arg;
   }
 
   // For a local section symbol, return the offset of the input
@@ -982,8 +1117,10 @@ class Output_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
     GSYM_CODE = -1U,
     // Output section.
     SECTION_CODE = -2U,
+    // Target specific.
+    TARGET_CODE = -3U,
     // Invalid uninitialized entry.
-    INVALID_CODE = -3U
+    INVALID_CODE = -4U
   };
 
   union
@@ -1001,6 +1138,9 @@ class Output_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
     // For a relocation against an output section
     // (this->local_sym_index_ == SECTION_CODE), the output section.
     Output_section* os;
+    // For a target specific relocation, an argument to pass to the
+    // target.
+    void* arg;
   } u1_;
   union
   {
@@ -1015,16 +1155,20 @@ class Output_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
   // The address offset within the input section or the Output_data.
   Address address_;
   // This is GSYM_CODE for a global symbol, or SECTION_CODE for a
-  // relocation against an output section, or INVALID_CODE for an
-  // uninitialized value.  Otherwise, for a local symbol
-  // (this->is_section_symbol_ is false), the local symbol index.  For
-  // a local section symbol (this->is_section_symbol_ is true), the
-  // section index in the input file.
+  // relocation against an output section, or TARGET_CODE for a target
+  // specific relocation, or INVALID_CODE for an uninitialized value.
+  // Otherwise, for a local symbol (this->is_section_symbol_ is
+  // false), the local symbol index.  For a local section symbol
+  // (this->is_section_symbol_ is true), the section index in the
+  // input file.
   unsigned int local_sym_index_;
   // The reloc type--a processor specific code.
-  unsigned int type_ : 30;
+  unsigned int type_ : 29;
   // True if the relocation is a RELATIVE relocation.
   bool is_relative_ : 1;
+  // True if the relocation is one which should not use
+  // a symbol, but which obtains its addend from a symbol.
+  bool is_symbolless_ : 1;
   // True if the relocation is against a section symbol.
   bool is_section_symbol_ : 1;
   // If the reloc address is an input section in an object, the
@@ -1051,15 +1195,18 @@ class Output_reloc<elfcpp::SHT_RELA, dynamic, size, big_endian>
   // A reloc against a global symbol.
 
   Output_reloc(Symbol* gsym, unsigned int type, Output_data* od,
-	       Address address, Addend addend, bool is_relative)
-    : rel_(gsym, type, od, address, is_relative), addend_(addend)
+	       Address address, Addend addend, bool is_relative,
+	       bool is_symbolless)
+    : rel_(gsym, type, od, address, is_relative, is_symbolless),
+      addend_(addend)
   { }
 
   Output_reloc(Symbol* gsym, unsigned int type,
                Sized_relobj<size, big_endian>* relobj,
 	       unsigned int shndx, Address address, Addend addend,
-	       bool is_relative)
-    : rel_(gsym, type, relobj, shndx, address, is_relative), addend_(addend)
+	       bool is_relative, bool is_symbolless)
+    : rel_(gsym, type, relobj, shndx, address, is_relative,
+	   is_symbolless), addend_(addend)
   { }
 
   // A reloc against a local symbol.
@@ -1067,18 +1214,20 @@ class Output_reloc<elfcpp::SHT_RELA, dynamic, size, big_endian>
   Output_reloc(Sized_relobj<size, big_endian>* relobj,
 	       unsigned int local_sym_index, unsigned int type,
 	       Output_data* od, Address address,
-	       Addend addend, bool is_relative, bool is_section_symbol)
+	       Addend addend, bool is_relative,
+	       bool is_symbolless, bool is_section_symbol)
     : rel_(relobj, local_sym_index, type, od, address, is_relative,
-           is_section_symbol),
+           is_symbolless, is_section_symbol),
       addend_(addend)
   { }
 
   Output_reloc(Sized_relobj<size, big_endian>* relobj,
 	       unsigned int local_sym_index, unsigned int type,
 	       unsigned int shndx, Address address,
-	       Addend addend, bool is_relative, bool is_section_symbol)
+	       Addend addend, bool is_relative,
+	       bool is_symbolless, bool is_section_symbol)
     : rel_(relobj, local_sym_index, type, shndx, address, is_relative,
-           is_section_symbol),
+           is_symbolless, is_section_symbol),
       addend_(addend)
   { }
 
@@ -1094,6 +1243,44 @@ class Output_reloc<elfcpp::SHT_RELA, dynamic, size, big_endian>
 	       unsigned int shndx, Address address, Addend addend)
     : rel_(os, type, relobj, shndx, address), addend_(addend)
   { }
+
+  // An absolute relocation with no symbol.
+
+  Output_reloc(unsigned int type, Output_data* od, Address address,
+	       Addend addend)
+    : rel_(type, od, address), addend_(addend)
+  { }
+
+  Output_reloc(unsigned int type, Sized_relobj<size, big_endian>* relobj,
+	       unsigned int shndx, Address address, Addend addend)
+    : rel_(type, relobj, shndx, address), addend_(addend)
+  { }
+
+  // A target specific relocation.  The target will be called to get
+  // the symbol index and the addend, passing ARG.  The type and
+  // offset will be set as for other relocation types.
+
+  Output_reloc(unsigned int type, void* arg, Output_data* od,
+	       Address address, Addend addend)
+    : rel_(type, arg, od, address), addend_(addend)
+  { }
+
+  Output_reloc(unsigned int type, void* arg,
+	       Sized_relobj<size, big_endian>* relobj,
+	       unsigned int shndx, Address address, Addend addend)
+    : rel_(type, arg, relobj, shndx, address), addend_(addend)
+  { }
+
+  // Return whether this is a RELATIVE relocation.
+  bool
+  is_relative() const
+  { return this->rel_.is_relative(); }
+
+  // Return whether this is a relocation which should not use
+  // a symbol, but which obtains its addend from a symbol.
+  bool
+  is_symbolless() const
+  { return this->rel_.is_symbolless(); }
 
   // Write the reloc entry to an output view.
   void
@@ -1121,6 +1308,43 @@ class Output_reloc<elfcpp::SHT_RELA, dynamic, size, big_endian>
   Addend addend_;
 };
 
+// Output_data_reloc_generic is a non-template base class for
+// Output_data_reloc_base.  This gives the generic code a way to hold
+// a pointer to a reloc section.
+
+class Output_data_reloc_generic : public Output_section_data_build
+{
+ public:
+  Output_data_reloc_generic(int size, bool sort_relocs)
+    : Output_section_data_build(Output_data::default_alignment_for_size(size)),
+      relative_reloc_count_(0), sort_relocs_(sort_relocs)
+  { }
+
+  // Return the number of relative relocs in this section.
+  size_t
+  relative_reloc_count() const
+  { return this->relative_reloc_count_; }
+
+  // Whether we should sort the relocs.
+  bool
+  sort_relocs() const
+  { return this->sort_relocs_; }
+
+ protected:
+  // Note that we've added another relative reloc.
+  void
+  bump_relative_reloc_count()
+  { ++this->relative_reloc_count_; }
+
+ private:
+  // The number of relative relocs added to this section.  This is to
+  // support DT_RELCOUNT.
+  size_t relative_reloc_count_;
+  // Whether to sort the relocations when writing them out, to make
+  // the dynamic linker more efficient.
+  bool sort_relocs_;
+};
+
 // Output_data_reloc is used to manage a section containing relocs.
 // SH_TYPE is either elfcpp::SHT_REL or elfcpp::SHT_RELA.  DYNAMIC
 // indicates whether this is a dynamic relocation or a normal
@@ -1129,7 +1353,7 @@ class Output_reloc<elfcpp::SHT_RELA, dynamic, size, big_endian>
 // the reloc type.
 
 template<int sh_type, bool dynamic, int size, bool big_endian>
-class Output_data_reloc_base : public Output_section_data_build
+class Output_data_reloc_base : public Output_data_reloc_generic
 {
  public:
   typedef Output_reloc<sh_type, dynamic, size, big_endian> Output_reloc_type;
@@ -1139,8 +1363,7 @@ class Output_data_reloc_base : public Output_section_data_build
 
   // Construct the section.
   Output_data_reloc_base(bool sort_relocs)
-    : Output_section_data_build(Output_data::default_alignment_for_size(size)),
-      sort_relocs_(sort_relocs)
+    : Output_data_reloc_generic(size, sort_relocs)
   { }
 
  protected:
@@ -1150,7 +1373,7 @@ class Output_data_reloc_base : public Output_section_data_build
 
   // Set the entry size and the link.
   void
-  do_adjust_output_section(Output_section *os);
+  do_adjust_output_section(Output_section* os);
 
   // Write to a map file.
   void
@@ -1164,11 +1387,13 @@ class Output_data_reloc_base : public Output_section_data_build
 
   // Add a relocation entry.
   void
-  add(Output_data *od, const Output_reloc_type& reloc)
+  add(Output_data* od, const Output_reloc_type& reloc)
   {
     this->relocs_.push_back(reloc);
     this->set_current_data_size(this->relocs_.size() * reloc_size);
     od->add_dynamic_reloc();
+    if (reloc.is_relative())
+      this->bump_relative_reloc_count();
   }
 
  private:
@@ -1184,9 +1409,6 @@ class Output_data_reloc_base : public Output_section_data_build
 
   // The relocations in this section.
   Relocs relocs_;
-  // Whether to sort the relocations when writing them out, to make
-  // the dynamic linker more efficient.
-  bool sort_relocs_;
 };
 
 // The class which callers actually create.
@@ -1216,14 +1438,14 @@ class Output_data_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
 
   void
   add_global(Symbol* gsym, unsigned int type, Output_data* od, Address address)
-  { this->add(od, Output_reloc_type(gsym, type, od, address, false)); }
+  { this->add(od, Output_reloc_type(gsym, type, od, address, false, false)); }
 
   void
   add_global(Symbol* gsym, unsigned int type, Output_data* od,
              Sized_relobj<size, big_endian>* relobj,
 	     unsigned int shndx, Address address)
   { this->add(od, Output_reloc_type(gsym, type, relobj, shndx, address,
-                                    false)); }
+                                    false, false)); }
 
   // These are to simplify the Copy_relocs class.
 
@@ -1250,7 +1472,7 @@ class Output_data_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
   void
   add_global_relative(Symbol* gsym, unsigned int type, Output_data* od,
                       Address address)
-  { this->add(od, Output_reloc_type(gsym, type, od, address, true)); }
+  { this->add(od, Output_reloc_type(gsym, type, od, address, true, true)); }
 
   void
   add_global_relative(Symbol* gsym, unsigned int type, Output_data* od,
@@ -1258,7 +1480,25 @@ class Output_data_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
                       unsigned int shndx, Address address)
   {
     this->add(od, Output_reloc_type(gsym, type, relobj, shndx, address,
-                                    true));
+                                    true, true));
+  }
+
+  // Add a global relocation which does not use a symbol for the relocation,
+  // but which gets its addend from a symbol.
+
+  void
+  add_symbolless_global_addend(Symbol* gsym, unsigned int type,
+			       Output_data* od, Address address)
+  { this->add(od, Output_reloc_type(gsym, type, od, address, false, true)); }
+
+  void
+  add_symbolless_global_addend(Symbol* gsym, unsigned int type,
+			       Output_data* od,
+			       Sized_relobj<size, big_endian>* relobj,
+			       unsigned int shndx, Address address)
+  {
+    this->add(od, Output_reloc_type(gsym, type, relobj, shndx, address,
+                                    false, true));
   }
 
   // Add a reloc against a local symbol.
@@ -1269,7 +1509,7 @@ class Output_data_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
 	    Output_data* od, Address address)
   {
     this->add(od, Output_reloc_type(relobj, local_sym_index, type, od,
-                                    address, false, false));
+                                    address, false, false, false));
   }
 
   void
@@ -1278,7 +1518,7 @@ class Output_data_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
 	    Output_data* od, unsigned int shndx, Address address)
   {
     this->add(od, Output_reloc_type(relobj, local_sym_index, type, shndx,
-				    address, false, false));
+				    address, false, false, false));
   }
 
   // Add a RELATIVE reloc against a local symbol.
@@ -1289,7 +1529,7 @@ class Output_data_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
 	             Output_data* od, Address address)
   {
     this->add(od, Output_reloc_type(relobj, local_sym_index, type, od,
-                                    address, true, false));
+                                    address, true, true, false));
   }
 
   void
@@ -1298,7 +1538,29 @@ class Output_data_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
 	             Output_data* od, unsigned int shndx, Address address)
   {
     this->add(od, Output_reloc_type(relobj, local_sym_index, type, shndx,
-				    address, true, false));
+				    address, true, true, false));
+  }
+
+  // Add a local relocation which does not use a symbol for the relocation,
+  // but which gets its addend from a symbol.
+
+  void
+  add_symbolless_local_addend(Sized_relobj<size, big_endian>* relobj,
+			      unsigned int local_sym_index, unsigned int type,
+			      Output_data* od, Address address)
+  {
+    this->add(od, Output_reloc_type(relobj, local_sym_index, type, od,
+                                    address, false, true, false));
+  }
+
+  void
+  add_symbolless_local_addend(Sized_relobj<size, big_endian>* relobj,
+			      unsigned int local_sym_index, unsigned int type,
+			      Output_data* od, unsigned int shndx,
+			      Address address)
+  {
+    this->add(od, Output_reloc_type(relobj, local_sym_index, type, shndx,
+				    address, false, true, false));
   }
 
   // Add a reloc against a local section symbol.  This will be
@@ -1311,7 +1573,7 @@ class Output_data_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
                     Output_data* od, Address address)
   {
     this->add(od, Output_reloc_type(relobj, input_shndx, type, od,
-                                    address, false, true));
+                                    address, false, false, true));
   }
 
   void
@@ -1320,7 +1582,7 @@ class Output_data_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
                     Output_data* od, unsigned int shndx, Address address)
   {
     this->add(od, Output_reloc_type(relobj, input_shndx, type, shndx,
-                                    address, false, true));
+                                    address, false, false, true));
   }
 
   // A reloc against the STT_SECTION symbol of an output section.
@@ -1337,6 +1599,32 @@ class Output_data_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
 		     Sized_relobj<size, big_endian>* relobj,
                      unsigned int shndx, Address address)
   { this->add(od, Output_reloc_type(os, type, relobj, shndx, address)); }
+
+  // Add an absolute relocation.
+
+  void
+  add_absolute(unsigned int type, Output_data* od, Address address)
+  { this->add(od, Output_reloc_type(type, od, address)); }
+
+  void
+  add_absolute(unsigned int type, Output_data* od,
+	       Sized_relobj<size, big_endian>* relobj,
+	       unsigned int shndx, Address address)
+  { this->add(od, Output_reloc_type(type, relobj, shndx, address)); }
+
+  // Add a target specific relocation.  A target which calls this must
+  // define the reloc_symbol_index and reloc_addend virtual functions.
+
+  void
+  add_target_specific(unsigned int type, void* arg, Output_data* od,
+		      Address address)
+  { this->add(od, Output_reloc_type(type, arg, od, address)); }
+
+  void
+  add_target_specific(unsigned int type, void* arg, Output_data* od,
+		      Sized_relobj<size, big_endian>* relobj,
+		      unsigned int shndx, Address address)
+  { this->add(od, Output_reloc_type(type, arg, relobj, shndx, address)); }
 };
 
 // The SHT_RELA version of Output_data_reloc.
@@ -1364,7 +1652,7 @@ class Output_data_reloc<elfcpp::SHT_RELA, dynamic, size, big_endian>
   add_global(Symbol* gsym, unsigned int type, Output_data* od,
 	     Address address, Addend addend)
   { this->add(od, Output_reloc_type(gsym, type, od, address, addend,
-                                    false)); }
+                                    false, false)); }
 
   void
   add_global(Symbol* gsym, unsigned int type, Output_data* od,
@@ -1372,7 +1660,7 @@ class Output_data_reloc<elfcpp::SHT_RELA, dynamic, size, big_endian>
 	     unsigned int shndx, Address address,
 	     Addend addend)
   { this->add(od, Output_reloc_type(gsym, type, relobj, shndx, address,
-                                    addend, false)); }
+                                    addend, false, false)); }
 
   // Add a RELATIVE reloc against a global symbol.  The final output
   // relocation will not reference the symbol, but we must keep the symbol
@@ -1382,14 +1670,32 @@ class Output_data_reloc<elfcpp::SHT_RELA, dynamic, size, big_endian>
   void
   add_global_relative(Symbol* gsym, unsigned int type, Output_data* od,
 	              Address address, Addend addend)
-  { this->add(od, Output_reloc_type(gsym, type, od, address, addend, true)); }
+  { this->add(od, Output_reloc_type(gsym, type, od, address, addend, true,
+				    true)); }
 
   void
   add_global_relative(Symbol* gsym, unsigned int type, Output_data* od,
                       Sized_relobj<size, big_endian>* relobj,
                       unsigned int shndx, Address address, Addend addend)
   { this->add(od, Output_reloc_type(gsym, type, relobj, shndx, address,
-                                    addend, true)); }
+                                    addend, true, true)); }
+
+  // Add a global relocation which does not use a symbol for the relocation,
+  // but which gets its addend from a symbol.
+
+  void
+  add_symbolless_global_addend(Symbol* gsym, unsigned int type, Output_data* od,
+			       Address address, Addend addend)
+  { this->add(od, Output_reloc_type(gsym, type, od, address, addend,
+				    false, true)); }
+
+  void
+  add_symbolless_global_addend(Symbol* gsym, unsigned int type,
+			       Output_data* od,
+			       Sized_relobj<size, big_endian>* relobj,
+			       unsigned int shndx, Address address, Addend addend)
+  { this->add(od, Output_reloc_type(gsym, type, relobj, shndx, address,
+                                    addend, false, true)); }
 
   // Add a reloc against a local symbol.
 
@@ -1399,7 +1705,7 @@ class Output_data_reloc<elfcpp::SHT_RELA, dynamic, size, big_endian>
 	    Output_data* od, Address address, Addend addend)
   {
     this->add(od, Output_reloc_type(relobj, local_sym_index, type, od, address,
-				    addend, false, false));
+				    addend, false, false, false));
   }
 
   void
@@ -1409,7 +1715,7 @@ class Output_data_reloc<elfcpp::SHT_RELA, dynamic, size, big_endian>
 	    Addend addend)
   {
     this->add(od, Output_reloc_type(relobj, local_sym_index, type, shndx,
-                                    address, addend, false, false));
+                                    address, addend, false, false, false));
   }
 
   // Add a RELATIVE reloc against a local symbol.
@@ -1420,7 +1726,7 @@ class Output_data_reloc<elfcpp::SHT_RELA, dynamic, size, big_endian>
 	             Output_data* od, Address address, Addend addend)
   {
     this->add(od, Output_reloc_type(relobj, local_sym_index, type, od, address,
-				    addend, true, false));
+				    addend, true, true, false));
   }
 
   void
@@ -1430,7 +1736,29 @@ class Output_data_reloc<elfcpp::SHT_RELA, dynamic, size, big_endian>
 	             Addend addend)
   {
     this->add(od, Output_reloc_type(relobj, local_sym_index, type, shndx,
-                                    address, addend, true, false));
+                                    address, addend, true, true, false));
+  }
+
+  // Add a local relocation which does not use a symbol for the relocation,
+  // but which gets it's addend from a symbol.
+
+  void
+  add_symbolless_local_addend(Sized_relobj<size, big_endian>* relobj,
+			      unsigned int local_sym_index, unsigned int type,
+			      Output_data* od, Address address, Addend addend)
+  {
+    this->add(od, Output_reloc_type(relobj, local_sym_index, type, od, address,
+				    addend, false, true, false));
+  }
+
+  void
+  add_symbolless_local_addend(Sized_relobj<size, big_endian>* relobj,
+			      unsigned int local_sym_index, unsigned int type,
+			      Output_data* od, unsigned int shndx,
+			      Address address, Addend addend)
+  {
+    this->add(od, Output_reloc_type(relobj, local_sym_index, type, shndx,
+                                    address, addend, false, true, false));
   }
 
   // Add a reloc against a local section symbol.  This will be
@@ -1443,7 +1771,7 @@ class Output_data_reloc<elfcpp::SHT_RELA, dynamic, size, big_endian>
                     Output_data* od, Address address, Addend addend)
   {
     this->add(od, Output_reloc_type(relobj, input_shndx, type, od, address,
-				    addend, false, true));
+				    addend, false, false, true));
   }
 
   void
@@ -1453,7 +1781,7 @@ class Output_data_reloc<elfcpp::SHT_RELA, dynamic, size, big_endian>
 	             Addend addend)
   {
     this->add(od, Output_reloc_type(relobj, input_shndx, type, shndx,
-                                    address, addend, false, true));
+                                    address, addend, false, false, true));
   }
 
   // A reloc against the STT_SECTION symbol of an output section.
@@ -1461,14 +1789,44 @@ class Output_data_reloc<elfcpp::SHT_RELA, dynamic, size, big_endian>
   void
   add_output_section(Output_section* os, unsigned int type, Output_data* od,
 		     Address address, Addend addend)
-  { this->add(os, Output_reloc_type(os, type, od, address, addend)); }
+  { this->add(od, Output_reloc_type(os, type, od, address, addend)); }
 
   void
-  add_output_section(Output_section* os, unsigned int type,
+  add_output_section(Output_section* os, unsigned int type, Output_data* od,
                      Sized_relobj<size, big_endian>* relobj,
 		     unsigned int shndx, Address address, Addend addend)
-  { this->add(os, Output_reloc_type(os, type, relobj, shndx, address,
+  { this->add(od, Output_reloc_type(os, type, relobj, shndx, address,
                                     addend)); }
+
+  // Add an absolute relocation.
+
+  void
+  add_absolute(unsigned int type, Output_data* od, Address address,
+	       Addend addend)
+  { this->add(od, Output_reloc_type(type, od, address, addend)); }
+
+  void
+  add_absolute(unsigned int type, Output_data* od,
+	       Sized_relobj<size, big_endian>* relobj,
+	       unsigned int shndx, Address address, Addend addend)
+  { this->add(od, Output_reloc_type(type, relobj, shndx, address, addend)); }
+
+  // Add a target specific relocation.  A target which calls this must
+  // define the reloc_symbol_index and reloc_addend virtual functions.
+
+  void
+  add_target_specific(unsigned int type, void* arg, Output_data* od,
+		      Address address, Addend addend)
+  { this->add(od, Output_reloc_type(type, arg, od, address, addend)); }
+
+  void
+  add_target_specific(unsigned int type, void* arg, Output_data* od,
+		      Sized_relobj<size, big_endian>* relobj,
+		      unsigned int shndx, Address address, Addend addend)
+  {
+    this->add(od, Output_reloc_type(type, arg, relobj, shndx, address,
+				    addend));
+  }
 };
 
 // Output_relocatable_relocs represents a relocation section in a
@@ -1522,6 +1880,11 @@ class Output_data_group : public Output_section_data
   do_print_to_mapfile(Mapfile* mapfile) const
   { mapfile->print_output_data(this, _("** group")); }
 
+  // Set final data size.
+  void
+  set_final_data_size()
+  { this->set_data_size((this->input_shndxes_.size() + 1) * 4); }
+
  private:
   // The input object.
   Sized_relobj<size, big_endian>* relobj_;
@@ -1554,6 +1917,11 @@ class Output_data_got : public Output_section_data_build
   bool
   add_global(Symbol* gsym, unsigned int got_type);
 
+  // Like add_global, but use the PLT offset of the global symbol if
+  // it has one.
+  bool
+  add_global_plt(Symbol* gsym, unsigned int got_type);
+
   // Add an entry for a global symbol to the GOT, and add a dynamic
   // relocation of type R_TYPE for the GOT entry.
   void
@@ -1582,6 +1950,12 @@ class Output_data_got : public Output_section_data_build
   bool
   add_local(Sized_relobj<size, big_endian>* object, unsigned int sym_index,
             unsigned int got_type);
+
+  // Like add_local, but use the PLT offset of the local symbol if it
+  // has one.
+  bool
+  add_local_plt(Sized_relobj<size, big_endian>* object, unsigned int sym_index,
+		unsigned int got_type);
 
   // Add an entry for a local symbol to the GOT, and add a dynamic
   // relocation of type R_TYPE for the GOT entry.
@@ -1636,28 +2010,29 @@ class Output_data_got : public Output_section_data_build
    public:
     // Create a zero entry.
     Got_entry()
-      : local_sym_index_(CONSTANT_CODE)
+      : local_sym_index_(CONSTANT_CODE), use_plt_offset_(false)
     { this->u_.constant = 0; }
 
     // Create a global symbol entry.
-    explicit Got_entry(Symbol* gsym)
-      : local_sym_index_(GSYM_CODE)
+    Got_entry(Symbol* gsym, bool use_plt_offset)
+      : local_sym_index_(GSYM_CODE), use_plt_offset_(use_plt_offset)
     { this->u_.gsym = gsym; }
 
     // Create a local symbol entry.
     Got_entry(Sized_relobj<size, big_endian>* object,
-              unsigned int local_sym_index)
-      : local_sym_index_(local_sym_index)
+              unsigned int local_sym_index, bool use_plt_offset)
+      : local_sym_index_(local_sym_index), use_plt_offset_(use_plt_offset)
     {
       gold_assert(local_sym_index != GSYM_CODE
-		  && local_sym_index != CONSTANT_CODE);
+		  && local_sym_index != CONSTANT_CODE
+		  && local_sym_index == this->local_sym_index_);
       this->u_.object = object;
     }
 
     // Create a constant entry.  The constant is a host value--it will
     // be swapped, if necessary, when it is written out.
     explicit Got_entry(Valtype constant)
-      : local_sym_index_(CONSTANT_CODE)
+      : local_sym_index_(CONSTANT_CODE), use_plt_offset_(false)
     { this->u_.constant = constant; }
 
     // Write the GOT entry to an output view.
@@ -1667,8 +2042,8 @@ class Output_data_got : public Output_section_data_build
    private:
     enum
     {
-      GSYM_CODE = -1U,
-      CONSTANT_CODE = -2U
+      GSYM_CODE = 0x7fffffff,
+      CONSTANT_CODE = 0x7ffffffe
     };
 
     union
@@ -1682,7 +2057,9 @@ class Output_data_got : public Output_section_data_build
     } u_;
     // For a local symbol, the local symbol index.  This is GSYM_CODE
     // for a global symbol, or CONSTANT_CODE for a constant.
-    unsigned int local_sym_index_;
+    unsigned int local_sym_index_ : 31;
+    // Whether to use the PLT offset of the symbol if it has one.
+    bool use_plt_offset_ : 1;
   };
 
   typedef std::vector<Got_entry> Got_entries;
@@ -1739,6 +2116,12 @@ class Output_data_dynamic : public Output_section_data
   add_section_size(elfcpp::DT tag, const Output_data* od)
   { this->add_entry(Dynamic_entry(tag, od, true)); }
 
+  // Add a new dynamic entry with the total size of two output datas.
+  void
+  add_section_size(elfcpp::DT tag, const Output_data* od,
+		   const Output_data* od2)
+  { this->add_entry(Dynamic_entry(tag, od, od2)); }
+
   // Add a new dynamic entry with the address of a symbol.
   void
   add_symbol(elfcpp::DT tag, const Symbol* sym)
@@ -1787,7 +2170,19 @@ class Output_data_dynamic : public Output_section_data
 	offset_(section_size
 		? DYNAMIC_SECTION_SIZE
 		: DYNAMIC_SECTION_ADDRESS)
-    { this->u_.od = od; }
+    {
+      this->u_.od = od;
+      this->od2 = NULL;
+    }
+
+    // Create an entry with the size of two sections.
+    Dynamic_entry(elfcpp::DT tag, const Output_data* od, const Output_data* od2)
+      : tag_(tag),
+	offset_(DYNAMIC_SECTION_SIZE)
+    {
+      this->u_.od = od;
+      this->od2 = od2;
+    }
 
     // Create an entry with the address of a section plus a constant offset.
     Dynamic_entry(elfcpp::DT tag, const Output_data* od, unsigned int offset)
@@ -1804,6 +2199,11 @@ class Output_data_dynamic : public Output_section_data
     Dynamic_entry(elfcpp::DT tag, const char* str)
       : tag_(tag), offset_(DYNAMIC_STRING)
     { this->u_.str = str; }
+
+    // Return the tag of this entry.
+    elfcpp::DT
+    tag() const
+    { return this->tag_; }
 
     // Write the dynamic entry to an output view.
     template<int size, bool big_endian>
@@ -1838,6 +2238,8 @@ class Output_data_dynamic : public Output_section_data
       // For DYNAMIC_STRING.
       const char* str;
     } u_;
+    // For DYNAMIC_SYMBOL with two sections.
+    const Output_data* od2;
     // The dynamic tag.
     elfcpp::DT tag_;
     // The type of entry (Classification) or offset within a section.
@@ -1871,7 +2273,7 @@ class Output_symtab_xindex : public Output_section_data
 {
  public:
   Output_symtab_xindex(size_t symcount)
-    : Output_section_data(symcount * 4, 4),
+    : Output_section_data(symcount * 4, 4, true),
       entries_()
   { }
 
@@ -1903,6 +2305,215 @@ class Output_symtab_xindex : public Output_section_data
   Xindex_entries entries_;
 };
 
+// A relaxed input section.
+class Output_relaxed_input_section : public Output_section_data_build
+{
+ public:
+  // We would like to call relobj->section_addralign(shndx) to get the
+  // alignment but we do not want the constructor to fail.  So callers
+  // are repsonsible for ensuring that.
+  Output_relaxed_input_section(Relobj* relobj, unsigned int shndx,
+			       uint64_t addralign)
+    : Output_section_data_build(addralign), relobj_(relobj), shndx_(shndx)
+  { }
+ 
+  // Return the Relobj of this relaxed input section.
+  Relobj*
+  relobj() const
+  { return this->relobj_; }
+ 
+  // Return the section index of this relaxed input section.
+  unsigned int
+  shndx() const
+  { return this->shndx_; }
+
+ private:
+  Relobj* relobj_;
+  unsigned int shndx_;
+};
+
+// This class describes properties of merge data sections.  It is used
+// as a key type for maps.
+class Merge_section_properties
+{
+ public:
+  Merge_section_properties(bool is_string, uint64_t entsize,
+			     uint64_t addralign)
+    : is_string_(is_string), entsize_(entsize), addralign_(addralign)
+  { }
+
+  // Whether this equals to another Merge_section_properties MSP.
+  bool
+  eq(const Merge_section_properties& msp) const
+  {
+    return ((this->is_string_ == msp.is_string_)
+	    && (this->entsize_ == msp.entsize_)
+	    && (this->addralign_ == msp.addralign_));
+  }
+
+  // Compute a hash value for this using 64-bit FNV-1a hash.
+  size_t
+  hash_value() const
+  {
+    uint64_t h = 14695981039346656037ULL;	// FNV offset basis.
+    uint64_t prime = 1099511628211ULL;
+    h = (h ^ static_cast<uint64_t>(this->is_string_)) * prime;
+    h = (h ^ static_cast<uint64_t>(this->entsize_)) * prime;
+    h = (h ^ static_cast<uint64_t>(this->addralign_)) * prime;
+    return h;
+  }
+    
+  // Functors for associative containers.
+  struct equal_to
+  {
+    bool
+    operator()(const Merge_section_properties& msp1,
+	       const Merge_section_properties& msp2) const
+    { return msp1.eq(msp2); }
+  };
+
+  struct hash
+  {
+    size_t
+    operator()(const Merge_section_properties& msp) const
+    { return msp.hash_value(); }
+  };
+
+ private:
+  // Whether this merge data section is for strings.
+  bool is_string_;
+  // Entsize of this merge data section.
+  uint64_t entsize_;
+  // Address alignment.
+  uint64_t addralign_;
+};
+
+// This class is used to speed up look up of special input sections in an
+// Output_section.
+
+class Output_section_lookup_maps
+{
+ public:
+  Output_section_lookup_maps()
+    : is_valid_(true), merge_sections_by_properties_(),
+      merge_sections_by_id_(), relaxed_input_sections_by_id_()
+  { }
+
+  // Whether the maps are valid.
+  bool
+  is_valid() const
+  { return this->is_valid_; }
+
+  // Invalidate the maps.
+  void
+  invalidate()
+  { this->is_valid_ = false; }
+
+  // Clear the maps.
+  void
+  clear()
+  {
+    this->merge_sections_by_properties_.clear();
+    this->merge_sections_by_id_.clear();
+    this->relaxed_input_sections_by_id_.clear();
+    // A cleared map is valid.
+    this->is_valid_ = true;
+  }
+  
+  // Find a merge section by merge section properties.  Return NULL if none
+  // is found.
+  Output_merge_base*
+  find_merge_section(const Merge_section_properties& msp) const
+  {
+    gold_assert(this->is_valid_);
+    Merge_sections_by_properties::const_iterator p =
+      this->merge_sections_by_properties_.find(msp);
+    return p != this->merge_sections_by_properties_.end() ? p->second : NULL;
+  }
+
+  // Find a merge section by section ID of a merge input section.  Return NULL
+  // if none is found.
+  Output_merge_base*
+  find_merge_section(const Object* object, unsigned int shndx) const
+  {
+    gold_assert(this->is_valid_);
+    Merge_sections_by_id::const_iterator p =
+      this->merge_sections_by_id_.find(Const_section_id(object, shndx));
+    return p != this->merge_sections_by_id_.end() ? p->second : NULL;
+  }
+
+  // Add a merge section pointed by POMB with properties MSP.
+  void
+  add_merge_section(const Merge_section_properties& msp,
+		    Output_merge_base* pomb)
+  {
+    std::pair<Merge_section_properties, Output_merge_base*> value(msp, pomb);
+    std::pair<Merge_sections_by_properties::iterator, bool> result =
+      this->merge_sections_by_properties_.insert(value);
+    gold_assert(result.second);
+  }
+  
+  // Add a mapping from a merged input section in OBJECT with index SHNDX
+  // to a merge output section pointed by POMB.
+  void
+  add_merge_input_section(const Object* object, unsigned int shndx,
+			  Output_merge_base* pomb)
+  {
+    Const_section_id csid(object, shndx);
+    std::pair<Const_section_id, Output_merge_base*> value(csid, pomb);
+    std::pair<Merge_sections_by_id::iterator, bool> result =
+      this->merge_sections_by_id_.insert(value);
+    gold_assert(result.second);
+  }
+
+  // Find a relaxed input section of OBJECT with index SHNDX.
+  Output_relaxed_input_section*
+  find_relaxed_input_section(const Object* object, unsigned int shndx) const
+  {
+    gold_assert(this->is_valid_);
+    Relaxed_input_sections_by_id::const_iterator p =
+      this->relaxed_input_sections_by_id_.find(Const_section_id(object, shndx));
+    return p != this->relaxed_input_sections_by_id_.end() ? p->second : NULL;
+  }
+
+  // Add a relaxed input section pointed by POMB and whose original input
+  // section is in OBJECT with index SHNDX.
+  void
+  add_relaxed_input_section(const Relobj* relobj, unsigned int shndx,
+			    Output_relaxed_input_section* poris)
+  {
+    Const_section_id csid(relobj, shndx);
+    std::pair<Const_section_id, Output_relaxed_input_section*>
+      value(csid, poris);
+    std::pair<Relaxed_input_sections_by_id::iterator, bool> result =
+      this->relaxed_input_sections_by_id_.insert(value);
+    gold_assert(result.second);
+  }
+
+ private:
+  typedef Unordered_map<Const_section_id, Output_merge_base*,
+			Const_section_id_hash>
+    Merge_sections_by_id;
+
+  typedef Unordered_map<Merge_section_properties, Output_merge_base*,
+			Merge_section_properties::hash,
+			Merge_section_properties::equal_to>
+    Merge_sections_by_properties;
+
+  typedef Unordered_map<Const_section_id, Output_relaxed_input_section*,
+			Const_section_id_hash>
+    Relaxed_input_sections_by_id;
+
+  // Whether this is valid
+  bool is_valid_;
+  // Merge sections by merge section properties.
+  Merge_sections_by_properties merge_sections_by_properties_;
+  // Merge sections by section IDs.
+  Merge_sections_by_id merge_sections_by_id_;
+  // Relaxed sections by section IDs.
+  Relaxed_input_sections_by_id relaxed_input_sections_by_id_;
+};
+
 // An output section.  We don't expect to have too many output
 // sections, so we don't bother to do a template on the size.
 
@@ -1915,21 +2526,28 @@ class Output_section : public Output_data
 
   // Add a new input section SHNDX, named NAME, with header SHDR, from
   // object OBJECT.  RELOC_SHNDX is the index of a relocation section
-  // which applies to this section, or 0 if none, or -1U if more than
+  // which applies to this section, or 0 if none, or -1 if more than
   // one.  HAVE_SECTIONS_SCRIPT is true if we have a SECTIONS clause
   // in a linker script; in that case we need to keep track of input
   // sections associated with an output section.  Return the offset
   // within the output section.
   template<int size, bool big_endian>
   off_t
-  add_input_section(Sized_relobj<size, big_endian>* object, unsigned int shndx,
-		    const char *name,
+  add_input_section(Layout* layout, Sized_relobj<size, big_endian>* object,
+                    unsigned int shndx, const char* name,
 		    const elfcpp::Shdr<size, big_endian>& shdr,
 		    unsigned int reloc_shndx, bool have_sections_script);
 
   // Add generated data POSD to this output section.
   void
   add_output_section_data(Output_section_data* posd);
+
+  // Add a relaxed input section PORIS called NAME to this output section
+  // with LAYOUT.
+  void
+  add_relaxed_input_section(Layout* layout,
+			    Output_relaxed_input_section* poris,
+			    const std::string& name);
 
   // Return the section name.
   const char*
@@ -1946,22 +2564,9 @@ class Output_section : public Output_data
   flags() const
   { return this->flags_; }
 
-  // Set the section flags.  This may only be used with the Layout
-  // code when it is prepared to move the section to a different
-  // segment.
-  void
-  set_flags(elfcpp::Elf_Xword flags)
-  { this->flags_ = flags; }
-
   // Update the output section flags based on input section flags.
   void
-  update_flags_for_input_section(elfcpp::Elf_Xword flags)
-  {
-    this->flags_ |= (flags
-		     & (elfcpp::SHF_WRITE
-			| elfcpp::SHF_ALLOC
-			| elfcpp::SHF_EXECINSTR));
-  }
+  update_flags_for_input_section(elfcpp::Elf_Xword flags);
 
   // Return the entsize field.
   uint64_t
@@ -2152,6 +2757,18 @@ class Output_section : public Output_data
   set_may_sort_attached_input_sections()
   { this->may_sort_attached_input_sections_ = true; }
 
+   // Returns true if input sections must be sorted according to the
+  // order in which their name appear in the --section-ordering-file.
+  bool
+  input_section_order_specified()
+  { return this->input_section_order_specified_; }
+
+  // Record that input sections must be sorted as some of their names
+  // match the patterns specified through --section-ordering-file.
+  void
+  set_input_section_order_specified()
+  { this->input_section_order_specified_ = true; }
+
   // Return whether the input sections attached to this output section
   // require sorting.  This is used to handle constructor priorities
   // compatibly with GNU ld.
@@ -2164,6 +2781,17 @@ class Output_section : public Output_data
   void
   set_must_sort_attached_input_sections()
   { this->must_sort_attached_input_sections_ = true; }
+
+  // Get the order in which this section appears in the PT_LOAD output
+  // segment.
+  Output_section_order
+  order() const
+  { return this->order_; }
+
+  // Set the order for this section.
+  void
+  set_order(Output_section_order order)
+  { this->order_ = order; }
 
   // Return whether this section holds relro data--data which has
   // dynamic relocations but which may be marked read-only after the
@@ -2182,16 +2810,32 @@ class Output_section : public Output_data
   clear_is_relro()
   { this->is_relro_ = false; }
 
-  // True if this section holds relro local data--relro data for which
-  // the dynamic relocations are all RELATIVE relocations.
+  // True if this is a small section: a section which holds small
+  // variables.
   bool
-  is_relro_local() const
-  { return this->is_relro_local_; }
+  is_small_section() const
+  { return this->is_small_section_; }
 
-  // Record that this section holds relro local data.
+  // Record that this is a small section.
   void
-  set_is_relro_local()
-  { this->is_relro_local_ = true; }
+  set_is_small_section()
+  { this->is_small_section_ = true; }
+
+  // True if this is a large section: a section which holds large
+  // variables.
+  bool
+  is_large_section() const
+  { return this->is_large_section_; }
+
+  // Record that this is a large section.
+  void
+  set_is_large_section()
+  { this->is_large_section_ = true; }
+
+  // True if this is a large data (not BSS) section.
+  bool
+  is_large_data_section()
+  { return this->is_large_section_ && this->type_ != elfcpp::SHT_NOBITS; }
 
   // Return whether this section should be written after all the input
   // sections are complete.
@@ -2258,12 +2902,14 @@ class Output_section : public Output_data
   output_address(const Relobj* object, unsigned int shndx,
 		 off_t offset) const;
 
-  // Return the output address of the start of the merged section for
-  // input section SHNDX in object OBJECT.  This is not necessarily
-  // the offset corresponding to input offset 0 in the section, since
-  // the section may be mapped arbitrarily.
-  uint64_t
-  starting_output_address(const Relobj* object, unsigned int shndx) const;
+  // Look for the merged section for input section SHNDX in object
+  // OBJECT.  If found, return true, and set *ADDR to the address of
+  // the start of the merged section.  This is not necessary the
+  // output offset corresponding to input offset 0 in the section,
+  // since the section may be mapped arbitrarily.
+  bool
+  find_starting_output_address(const Relobj* object, unsigned int shndx,
+			       uint64_t* addr) const;
 
   // Record that this output section was found in the SECTIONS clause
   // of a linker script.
@@ -2285,6 +2931,313 @@ class Output_section : public Output_data
 
   // The next few calls are for linker script support.
 
+  // In some cases we need to keep a list of the input sections
+  // associated with this output section.  We only need the list if we
+  // might have to change the offsets of the input section within the
+  // output section after we add the input section.  The ordinary
+  // input sections will be written out when we process the object
+  // file, and as such we don't need to track them here.  We do need
+  // to track Output_section_data objects here.  We store instances of
+  // this structure in a std::vector, so it must be a POD.  There can
+  // be many instances of this structure, so we use a union to save
+  // some space.
+  class Input_section
+  {
+   public:
+    Input_section()
+      : shndx_(0), p2align_(0)
+    {
+      this->u1_.data_size = 0;
+      this->u2_.object = NULL;
+    }
+
+    // For an ordinary input section.
+    Input_section(Relobj* object, unsigned int shndx, off_t data_size,
+		  uint64_t addralign)
+      : shndx_(shndx),
+	p2align_(ffsll(static_cast<long long>(addralign))),
+	section_order_index_(0)
+    {
+      gold_assert(shndx != OUTPUT_SECTION_CODE
+		  && shndx != MERGE_DATA_SECTION_CODE
+		  && shndx != MERGE_STRING_SECTION_CODE
+		  && shndx != RELAXED_INPUT_SECTION_CODE);
+      this->u1_.data_size = data_size;
+      this->u2_.object = object;
+    }
+
+    // For a non-merge output section.
+    Input_section(Output_section_data* posd)
+      : shndx_(OUTPUT_SECTION_CODE), p2align_(0),
+	section_order_index_(0)
+    {
+      this->u1_.data_size = 0;
+      this->u2_.posd = posd;
+    }
+
+    // For a merge section.
+    Input_section(Output_section_data* posd, bool is_string, uint64_t entsize)
+      : shndx_(is_string
+	       ? MERGE_STRING_SECTION_CODE
+	       : MERGE_DATA_SECTION_CODE),
+	p2align_(0),
+	section_order_index_(0)
+    {
+      this->u1_.entsize = entsize;
+      this->u2_.posd = posd;
+    }
+
+    // For a relaxed input section.
+    Input_section(Output_relaxed_input_section* psection)
+      : shndx_(RELAXED_INPUT_SECTION_CODE), p2align_(0),
+	section_order_index_(0)
+    {
+      this->u1_.data_size = 0;
+      this->u2_.poris = psection;
+    }
+
+    unsigned int
+    section_order_index() const
+    {
+      return this->section_order_index_;
+    }
+
+    void
+    set_section_order_index(unsigned int number)
+    {
+      this->section_order_index_ = number;
+    }
+
+    // The required alignment.
+    uint64_t
+    addralign() const
+    {
+      if (this->p2align_ != 0)
+	return static_cast<uint64_t>(1) << (this->p2align_ - 1);
+      else if (!this->is_input_section())
+	return this->u2_.posd->addralign();
+      else
+	return 0;
+    }
+
+    // Set the required alignment, which must be either 0 or a power of 2.
+    // For input sections that are sub-classes of Output_section_data, a
+    // alignment of zero means asking the underlying object for alignment.
+    void
+    set_addralign(uint64_t addralign)
+    {
+      if (addralign == 0)
+	this->p2align_ = 0;
+      else
+	{
+	  gold_assert((addralign & (addralign - 1)) == 0);
+	  this->p2align_ = ffsll(static_cast<long long>(addralign));
+	}
+    }
+ 
+    // Return the required size.
+    off_t
+    data_size() const;
+
+    // Whether this is an input section.
+    bool
+    is_input_section() const
+    {
+      return (this->shndx_ != OUTPUT_SECTION_CODE
+	      && this->shndx_ != MERGE_DATA_SECTION_CODE
+	      && this->shndx_ != MERGE_STRING_SECTION_CODE
+	      && this->shndx_ != RELAXED_INPUT_SECTION_CODE);
+    }
+
+    // Return whether this is a merge section which matches the
+    // parameters.
+    bool
+    is_merge_section(bool is_string, uint64_t entsize,
+                     uint64_t addralign) const
+    {
+      return (this->shndx_ == (is_string
+			       ? MERGE_STRING_SECTION_CODE
+			       : MERGE_DATA_SECTION_CODE)
+	      && this->u1_.entsize == entsize
+              && this->addralign() == addralign);
+    }
+
+    // Return whether this is a merge section for some input section.
+    bool
+    is_merge_section() const
+    {
+      return (this->shndx_ == MERGE_DATA_SECTION_CODE
+	      || this->shndx_ == MERGE_STRING_SECTION_CODE);
+    }
+
+    // Return whether this is a relaxed input section.
+    bool
+    is_relaxed_input_section() const
+    { return this->shndx_ == RELAXED_INPUT_SECTION_CODE; }
+
+    // Return whether this is a generic Output_section_data.
+    bool
+    is_output_section_data() const
+    {
+      return this->shndx_ == OUTPUT_SECTION_CODE;
+    }
+
+    // Return the object for an input section.
+    Relobj*
+    relobj() const;
+
+    // Return the input section index for an input section.
+    unsigned int
+    shndx() const;
+
+    // For non-input-sections, return the associated Output_section_data
+    // object.
+    Output_section_data*
+    output_section_data() const
+    {
+      gold_assert(!this->is_input_section());
+      return this->u2_.posd;
+    }
+ 
+    // For a merge section, return the Output_merge_base pointer.
+    Output_merge_base*
+    output_merge_base() const
+    {
+      gold_assert(this->is_merge_section());
+      return this->u2_.pomb;
+    }
+
+    // Return the Output_relaxed_input_section object.
+    Output_relaxed_input_section*
+    relaxed_input_section() const
+    {
+      gold_assert(this->is_relaxed_input_section());
+      return this->u2_.poris;
+    }
+
+    // Set the output section.
+    void
+    set_output_section(Output_section* os)
+    {
+      gold_assert(!this->is_input_section());
+      Output_section_data* posd = 
+        this->is_relaxed_input_section() ? this->u2_.poris : this->u2_.posd;
+      posd->set_output_section(os);
+    }
+
+    // Set the address and file offset.  This is called during
+    // Layout::finalize.  SECTION_FILE_OFFSET is the file offset of
+    // the enclosing section.
+    void
+    set_address_and_file_offset(uint64_t address, off_t file_offset,
+				off_t section_file_offset);
+
+    // Reset the address and file offset.
+    void
+    reset_address_and_file_offset();
+
+    // Finalize the data size.
+    void
+    finalize_data_size();
+
+    // Add an input section, for SHF_MERGE sections.
+    bool
+    add_input_section(Relobj* object, unsigned int shndx)
+    {
+      gold_assert(this->shndx_ == MERGE_DATA_SECTION_CODE
+		  || this->shndx_ == MERGE_STRING_SECTION_CODE);
+      return this->u2_.posd->add_input_section(object, shndx);
+    }
+
+    // Given an input OBJECT, an input section index SHNDX within that
+    // object, and an OFFSET relative to the start of that input
+    // section, return whether or not the output offset is known.  If
+    // this function returns true, it sets *POUTPUT to the offset in
+    // the output section, relative to the start of the input section
+    // in the output section.  *POUTPUT may be different from OFFSET
+    // for a merged section.
+    bool
+    output_offset(const Relobj* object, unsigned int shndx,
+		  section_offset_type offset,
+		  section_offset_type* poutput) const;
+
+    // Return whether this is the merge section for the input section
+    // SHNDX in OBJECT.
+    bool
+    is_merge_section_for(const Relobj* object, unsigned int shndx) const;
+
+    // Write out the data.  This does nothing for an input section.
+    void
+    write(Output_file*);
+
+    // Write the data to a buffer.  This does nothing for an input
+    // section.
+    void
+    write_to_buffer(unsigned char*);
+
+    // Print to a map file.
+    void
+    print_to_mapfile(Mapfile*) const;
+
+    // Print statistics about merge sections to stderr.
+    void
+    print_merge_stats(const char* section_name)
+    {
+      if (this->shndx_ == MERGE_DATA_SECTION_CODE
+	  || this->shndx_ == MERGE_STRING_SECTION_CODE)
+	this->u2_.posd->print_merge_stats(section_name);
+    }
+
+   private:
+    // Code values which appear in shndx_.  If the value is not one of
+    // these codes, it is the input section index in the object file.
+    enum
+    {
+      // An Output_section_data.
+      OUTPUT_SECTION_CODE = -1U,
+      // An Output_section_data for an SHF_MERGE section with
+      // SHF_STRINGS not set.
+      MERGE_DATA_SECTION_CODE = -2U,
+      // An Output_section_data for an SHF_MERGE section with
+      // SHF_STRINGS set.
+      MERGE_STRING_SECTION_CODE = -3U,
+      // An Output_section_data for a relaxed input section.
+      RELAXED_INPUT_SECTION_CODE = -4U
+    };
+
+    // For an ordinary input section, this is the section index in the
+    // input file.  For an Output_section_data, this is
+    // OUTPUT_SECTION_CODE or MERGE_DATA_SECTION_CODE or
+    // MERGE_STRING_SECTION_CODE.
+    unsigned int shndx_;
+    // The required alignment, stored as a power of 2.
+    unsigned int p2align_;
+    union
+    {
+      // For an ordinary input section, the section size.
+      off_t data_size;
+      // For OUTPUT_SECTION_CODE or RELAXED_INPUT_SECTION_CODE, this is not
+      // used.  For MERGE_DATA_SECTION_CODE or MERGE_STRING_SECTION_CODE, the
+      // entity size.
+      uint64_t entsize;
+    } u1_;
+    union
+    {
+      // For an ordinary input section, the object which holds the
+      // input section.
+      Relobj* object;
+      // For OUTPUT_SECTION_CODE or MERGE_DATA_SECTION_CODE or
+      // MERGE_STRING_SECTION_CODE, the data.
+      Output_section_data* posd;
+      Output_merge_base* pomb;
+      // For RELAXED_INPUT_SECTION_CODE, the data.
+      Output_relaxed_input_section* poris;
+    } u2_;
+    // The line number of the pattern it matches in the --section-ordering-file
+    // file.  It is 0 if does not match any pattern.
+    unsigned int section_order_index_;
+  };
+
   // Store the list of input sections for this Output_section into the
   // list passed in.  This removes the input sections, leaving only
   // any Output_section_data elements.  This returns the size of those
@@ -2293,12 +3246,12 @@ class Output_section : public Output_data
   // any spaces between the remaining Output_section_data elements.
   uint64_t
   get_input_sections(uint64_t address, const std::string& fill,
-		     std::list<std::pair<Relobj*, unsigned int > >*);
+		     std::list<Input_section>*);
 
-  // Add an input section from a script.
+  // Add a script input section.  A script input section can either be
+  // a plain input section or a sub-class of Output_section_data.
   void
-  add_input_section_for_script(Relobj* object, unsigned int shndx,
-			       off_t data_size, uint64_t addralign);
+  add_script_input_section(const Input_section& input_section);
 
   // Set the current size of the output section.
   void
@@ -2312,6 +3265,54 @@ class Output_section : public Output_data
 
   // End of linker script support.
 
+  // Save states before doing section layout.
+  // This is used for relaxation.
+  void
+  save_states();
+
+  // Restore states prior to section layout.
+  void
+  restore_states();
+
+  // Discard states.
+  void
+  discard_states();
+
+  // Convert existing input sections to relaxed input sections.
+  void
+  convert_input_sections_to_relaxed_sections(
+      const std::vector<Output_relaxed_input_section*>& sections);
+
+  // Find a relaxed input section to an input section in OBJECT
+  // with index SHNDX.  Return NULL if none is found.
+  const Output_relaxed_input_section*
+  find_relaxed_input_section(const Relobj* object, unsigned int shndx) const;
+  
+  // Whether section offsets need adjustment due to relaxation.
+  bool
+  section_offsets_need_adjustment() const
+  { return this->section_offsets_need_adjustment_; }
+
+  // Set section_offsets_need_adjustment to be true.
+  void
+  set_section_offsets_need_adjustment()
+  { this->section_offsets_need_adjustment_ = true; }
+
+  // Adjust section offsets of input sections in this.  This is
+  // requires if relaxation caused some input sections to change sizes.
+  void
+  adjust_section_offsets();
+
+  // Whether this is a NOLOAD section.
+  bool
+  is_noload() const
+  { return this->is_noload_; }
+
+  // Set NOLOAD flag.
+  void
+  set_is_noload()
+  { this->is_noload_ = true; }
+
   // Print merge statistics to stderr.
   void
   print_merge_stats();
@@ -2320,6 +3321,10 @@ class Output_section : public Output_data
   // Return the output section--i.e., the object itself.
   Output_section*
   do_output_section()
+  { return this; }
+
+  const Output_section*
+  do_output_section() const
   { return this; }
 
   // Return the section index in the output file.
@@ -2348,6 +3353,11 @@ class Output_section : public Output_data
   // Reset the address and file offset.
   void
   do_reset_address_and_file_offset();
+
+  // Return true if address and file offset already have reset values. In
+  // other words, calling reset_address_and_file_offset will not change them.
+  bool
+  do_address_and_file_offset_have_reset_values() const;
 
   // Write the data to the file.  For a typical Output_section, this
   // does nothing: the data is written out by calling Object::Relocate
@@ -2422,232 +3432,132 @@ class Output_section : public Output_data
   void
   write_to_postprocessing_buffer();
 
+  typedef std::vector<Input_section> Input_section_list;
+
+  // Allow a child class to access the input sections.
+  const Input_section_list&
+  input_sections() const
+  { return this->input_sections_; }
+
+  // Whether this always keeps an input section list
+  bool
+  always_keeps_input_sections() const
+  { return this->always_keeps_input_sections_; }
+
+  // Always keep an input section list.
+  void
+  set_always_keeps_input_sections()
+  {
+    gold_assert(this->current_data_size_for_child() == 0);
+    this->always_keeps_input_sections_ = true;
+  }
+
  private:
-  // In some cases we need to keep a list of the input sections
-  // associated with this output section.  We only need the list if we
-  // might have to change the offsets of the input section within the
-  // output section after we add the input section.  The ordinary
-  // input sections will be written out when we process the object
-  // file, and as such we don't need to track them here.  We do need
-  // to track Output_section_data objects here.  We store instances of
-  // this structure in a std::vector, so it must be a POD.  There can
-  // be many instances of this structure, so we use a union to save
-  // some space.
-  class Input_section
+  // We only save enough information to undo the effects of section layout.
+  class Checkpoint_output_section
   {
    public:
-    Input_section()
-      : shndx_(0), p2align_(0)
-    {
-      this->u1_.data_size = 0;
-      this->u2_.object = NULL;
-    }
+    Checkpoint_output_section(uint64_t addralign, elfcpp::Elf_Xword flags,
+			      const Input_section_list& input_sections,
+			      off_t first_input_offset,
+			      bool attached_input_sections_are_sorted)
+      : addralign_(addralign), flags_(flags),
+	input_sections_(input_sections),
+	input_sections_size_(input_sections_.size()),
+	input_sections_copy_(), first_input_offset_(first_input_offset),
+	attached_input_sections_are_sorted_(attached_input_sections_are_sorted)
+    { }
 
-    // For an ordinary input section.
-    Input_section(Relobj* object, unsigned int shndx, off_t data_size,
-		  uint64_t addralign)
-      : shndx_(shndx),
-	p2align_(ffsll(static_cast<long long>(addralign)))
-    {
-      gold_assert(shndx != OUTPUT_SECTION_CODE
-		  && shndx != MERGE_DATA_SECTION_CODE
-		  && shndx != MERGE_STRING_SECTION_CODE);
-      this->u1_.data_size = data_size;
-      this->u2_.object = object;
-    }
+    virtual
+    ~Checkpoint_output_section()
+    { }
 
-    // For a non-merge output section.
-    Input_section(Output_section_data* posd)
-      : shndx_(OUTPUT_SECTION_CODE), p2align_(0)
-    {
-      this->u1_.data_size = 0;
-      this->u2_.posd = posd;
-    }
-
-    // For a merge section.
-    Input_section(Output_section_data* posd, bool is_string, uint64_t entsize)
-      : shndx_(is_string
-	       ? MERGE_STRING_SECTION_CODE
-	       : MERGE_DATA_SECTION_CODE),
-	p2align_(0)
-    {
-      this->u1_.entsize = entsize;
-      this->u2_.posd = posd;
-    }
-
-    // The required alignment.
+    // Return the address alignment.
     uint64_t
     addralign() const
-    {
-      if (!this->is_input_section())
-	return this->u2_.posd->addralign();
-      return (this->p2align_ == 0
-	      ? 0
-	      : static_cast<uint64_t>(1) << (this->p2align_ - 1));
-    }
+    { return this->addralign_; }
 
-    // Return the required size.
+    // Return the section flags.
+    elfcpp::Elf_Xword
+    flags() const
+    { return this->flags_; }
+
+    // Return a reference to the input section list copy.
+    Input_section_list*
+    input_sections()
+    { return &this->input_sections_copy_; }
+
+    // Return the size of input_sections at the time when checkpoint is
+    // taken.
+    size_t
+    input_sections_size() const
+    { return this->input_sections_size_; }
+
+    // Whether input sections are copied.
+    bool
+    input_sections_saved() const
+    { return this->input_sections_copy_.size() == this->input_sections_size_; }
+
     off_t
-    data_size() const;
+    first_input_offset() const
+    { return this->first_input_offset_; }
 
-    // Whether this is an input section.
     bool
-    is_input_section() const
+    attached_input_sections_are_sorted() const
+    { return this->attached_input_sections_are_sorted_; }
+
+    // Save input sections.
+    void
+    save_input_sections()
     {
-      return (this->shndx_ != OUTPUT_SECTION_CODE
-	      && this->shndx_ != MERGE_DATA_SECTION_CODE
-	      && this->shndx_ != MERGE_STRING_SECTION_CODE);
-    }
-
-    // Return whether this is a merge section which matches the
-    // parameters.
-    bool
-    is_merge_section(bool is_string, uint64_t entsize,
-                     uint64_t addralign) const
-    {
-      return (this->shndx_ == (is_string
-			       ? MERGE_STRING_SECTION_CODE
-			       : MERGE_DATA_SECTION_CODE)
-	      && this->u1_.entsize == entsize
-              && this->addralign() == addralign);
-    }
-
-    // Return the object for an input section.
-    Relobj*
-    relobj() const
-    {
-      gold_assert(this->is_input_section());
-      return this->u2_.object;
-    }
-
-    // Return the input section index for an input section.
-    unsigned int
-    shndx() const
-    {
-      gold_assert(this->is_input_section());
-      return this->shndx_;
-    }
-
-    // Set the output section.
-    void
-    set_output_section(Output_section* os)
-    {
-      gold_assert(!this->is_input_section());
-      this->u2_.posd->set_output_section(os);
-    }
-
-    // Set the address and file offset.  This is called during
-    // Layout::finalize.  SECTION_FILE_OFFSET is the file offset of
-    // the enclosing section.
-    void
-    set_address_and_file_offset(uint64_t address, off_t file_offset,
-				off_t section_file_offset);
-
-    // Reset the address and file offset.
-    void
-    reset_address_and_file_offset();
-
-    // Finalize the data size.
-    void
-    finalize_data_size();
-
-    // Add an input section, for SHF_MERGE sections.
-    bool
-    add_input_section(Relobj* object, unsigned int shndx)
-    {
-      gold_assert(this->shndx_ == MERGE_DATA_SECTION_CODE
-		  || this->shndx_ == MERGE_STRING_SECTION_CODE);
-      return this->u2_.posd->add_input_section(object, shndx);
-    }
-
-    // Given an input OBJECT, an input section index SHNDX within that
-    // object, and an OFFSET relative to the start of that input
-    // section, return whether or not the output offset is known.  If
-    // this function returns true, it sets *POUTPUT to the offset in
-    // the output section, relative to the start of the input section
-    // in the output section.  *POUTPUT may be different from OFFSET
-    // for a merged section.
-    bool
-    output_offset(const Relobj* object, unsigned int shndx,
-		  section_offset_type offset,
-		  section_offset_type *poutput) const;
-
-    // Return whether this is the merge section for the input section
-    // SHNDX in OBJECT.
-    bool
-    is_merge_section_for(const Relobj* object, unsigned int shndx) const;
-
-    // Write out the data.  This does nothing for an input section.
-    void
-    write(Output_file*);
-
-    // Write the data to a buffer.  This does nothing for an input
-    // section.
-    void
-    write_to_buffer(unsigned char*);
-
-    // Print to a map file.
-    void
-    print_to_mapfile(Mapfile*) const;
-
-    // Print statistics about merge sections to stderr.
-    void
-    print_merge_stats(const char* section_name)
-    {
-      if (this->shndx_ == MERGE_DATA_SECTION_CODE
-	  || this->shndx_ == MERGE_STRING_SECTION_CODE)
-	this->u2_.posd->print_merge_stats(section_name);
+      this->input_sections_copy_.reserve(this->input_sections_size_);
+      this->input_sections_copy_.clear();
+      Input_section_list::const_iterator p = this->input_sections_.begin();
+      gold_assert(this->input_sections_size_ >= this->input_sections_.size());
+      for(size_t i = 0; i < this->input_sections_size_ ; i++, ++p)
+	this->input_sections_copy_.push_back(*p);
     }
 
    private:
-    // Code values which appear in shndx_.  If the value is not one of
-    // these codes, it is the input section index in the object file.
-    enum
-    {
-      // An Output_section_data.
-      OUTPUT_SECTION_CODE = -1U,
-      // An Output_section_data for an SHF_MERGE section with
-      // SHF_STRINGS not set.
-      MERGE_DATA_SECTION_CODE = -2U,
-      // An Output_section_data for an SHF_MERGE section with
-      // SHF_STRINGS set.
-      MERGE_STRING_SECTION_CODE = -3U
-    };
-
-    // For an ordinary input section, this is the section index in the
-    // input file.  For an Output_section_data, this is
-    // OUTPUT_SECTION_CODE or MERGE_DATA_SECTION_CODE or
-    // MERGE_STRING_SECTION_CODE.
-    unsigned int shndx_;
-    // The required alignment, stored as a power of 2.
-    unsigned int p2align_;
-    union
-    {
-      // For an ordinary input section, the section size.
-      off_t data_size;
-      // For OUTPUT_SECTION_CODE, this is not used.  For
-      // MERGE_DATA_SECTION_CODE or MERGE_STRING_SECTION_CODE, the
-      // entity size.
-      uint64_t entsize;
-    } u1_;
-    union
-    {
-      // For an ordinary input section, the object which holds the
-      // input section.
-      Relobj* object;
-      // For OUTPUT_SECTION_CODE or MERGE_DATA_SECTION_CODE or
-      // MERGE_STRING_SECTION_CODE, the data.
-      Output_section_data* posd;
-    } u2_;
+    // The section alignment.
+    uint64_t addralign_;
+    // The section flags.
+    elfcpp::Elf_Xword flags_;
+    // Reference to the input sections to be checkpointed.
+    const Input_section_list& input_sections_;
+    // Size of the checkpointed portion of input_sections_;
+    size_t input_sections_size_;
+    // Copy of input sections.
+    Input_section_list input_sections_copy_;
+    // The offset of the first entry in input_sections_.
+    off_t first_input_offset_;
+    // True if the input sections attached to this output section have
+    // already been sorted.
+    bool attached_input_sections_are_sorted_;
   };
-
-  typedef std::vector<Input_section> Input_section_list;
 
   // This class is used to sort the input sections.
   class Input_section_sort_entry;
 
-  // This is the sort comparison function.
+  // This is the sort comparison function for ctors and dtors.
   struct Input_section_sort_compare
+  {
+    bool
+    operator()(const Input_section_sort_entry&,
+	       const Input_section_sort_entry&) const;
+  };
+
+  // This is the sort comparison function for .init_array and .fini_array.
+  struct Input_section_sort_init_fini_compare
+  {
+    bool
+    operator()(const Input_section_sort_entry&,
+	       const Input_section_sort_entry&) const;
+  };
+
+  // This is the sort comparison function when a section order is specified
+  // from an input file.
+  struct Input_section_sort_section_order_index_compare
   {
     bool
     operator()(const Input_section_sort_entry&,
@@ -2686,15 +3596,22 @@ class Output_section : public Output_data
 
   typedef std::vector<Fill> Fill_list;
 
+  // Map used during relaxation of existing sections.  This map
+  // a section id an input section list index.  We assume that
+  // Input_section_list is a vector.
+  typedef Unordered_map<Section_id, size_t, Section_id_hash> Relaxation_map;
+
   // Add a new output section by Input_section.
   void
   add_output_section_data(Input_section*);
 
   // Add an SHF_MERGE input section.  Returns true if the section was
-  // handled.
+  // handled.  If KEEPS_INPUT_SECTIONS is true, the output merge section
+  // stores information about the merged input sections.
   bool
   add_merge_input_section(Relobj* object, unsigned int shndx, uint64_t flags,
-			  uint64_t entsize, uint64_t addralign);
+			  uint64_t entsize, uint64_t addralign,
+			  bool keeps_input_sections);
 
   // Add an output SHF_MERGE section POSD to this output section.
   // IS_STRING indicates whether it is a SHF_STRINGS section, and
@@ -2707,6 +3624,29 @@ class Output_section : public Output_data
   // Sort the attached input sections.
   void
   sort_attached_input_sections();
+
+  // Find the merge section into which an input section with index SHNDX in
+  // OBJECT has been added.  Return NULL if none found.
+  Output_section_data*
+  find_merge_section(const Relobj* object, unsigned int shndx) const;
+
+  // Build a relaxation map.
+  void
+  build_relaxation_map(
+      const Input_section_list& input_sections,
+      size_t limit,
+      Relaxation_map* map) const;
+
+  // Convert input sections in an input section list into relaxed sections.
+  void
+  convert_input_sections_in_list_to_relaxed_sections(
+      const std::vector<Output_relaxed_input_section*>& relaxed_sections,
+      const Relaxation_map& map,
+      Input_section_list* input_sections);
+
+  // Build the lookup maps for merge and relaxed input sections.
+  void
+  build_lookup_maps() const;
 
   // Most of these fields are only valid after layout.
 
@@ -2738,6 +3678,8 @@ class Output_section : public Output_data
   const elfcpp::Elf_Word type_;
   // The section flags.
   elfcpp::Elf_Xword flags_;
+  // The order of this section in the output segment.
+  Output_section_order order_;
   // The section index.
   unsigned int out_shndx_;
   // If there is a STT_SECTION for this output section in the normal
@@ -2791,6 +3733,9 @@ class Output_section : public Output_data
   // section, false if it means the symbol index of the corresponding
   // section symbol.
   bool info_uses_section_index_ : 1;
+  // True if input sections attached to this output section have to be
+  // sorted according to a specified order.
+  bool input_section_order_specified_ : 1;
   // True if the input sections attached to this output section may
   // need sorting.
   bool may_sort_attached_input_sections_ : 1;
@@ -2802,16 +3747,38 @@ class Output_section : public Output_data
   bool attached_input_sections_are_sorted_ : 1;
   // True if this section holds relro data.
   bool is_relro_ : 1;
-  // True if this section holds relro local data.
-  bool is_relro_local_ : 1;
+  // True if this is a small section.
+  bool is_small_section_ : 1;
+  // True if this is a large section.
+  bool is_large_section_ : 1;
+  // Whether code-fills are generated at write.
+  bool generate_code_fills_at_write_ : 1;
+  // Whether the entry size field should be zero.
+  bool is_entsize_zero_ : 1;
+  // Whether section offsets need adjustment due to relaxation.
+  bool section_offsets_need_adjustment_ : 1;
+  // Whether this is a NOLOAD section.
+  bool is_noload_ : 1;
+  // Whether this always keeps input section.
+  bool always_keeps_input_sections_ : 1;
   // For SHT_TLS sections, the offset of this section relative to the base
   // of the TLS segment.
   uint64_t tls_offset_;
+  // Saved checkpoint.
+  Checkpoint_output_section* checkpoint_;
+  // Fast lookup maps for merged and relaxed input sections.
+  Output_section_lookup_maps* lookup_maps_;
 };
 
 // An output segment.  PT_LOAD segments are built from collections of
 // output sections.  Other segments typically point within PT_LOAD
 // segments, and are built directly as needed.
+//
+// NOTE: We want to use the copy constructor for this class.  During
+// relaxation, we may try built the segments multiple times.  We do
+// that by copying the original segment list before lay-out, doing
+// a trial lay-out and roll-back to the saved copied if we need to
+// to the lay-out again.
 
 class Output_segment
 {
@@ -2854,33 +3821,51 @@ class Output_segment
   offset() const
   { return this->offset_; }
 
+  // Whether this is a segment created to hold large data sections.
+  bool
+  is_large_data_segment() const
+  { return this->is_large_data_segment_; }
+
+  // Record that this is a segment created to hold large data
+  // sections.
+  void
+  set_is_large_data_segment()
+  { this->is_large_data_segment_ = true; }
+
   // Return the maximum alignment of the Output_data.
   uint64_t
   maximum_alignment();
 
-  // Add an Output_section to this segment.
+  // Add the Output_section OS to this PT_LOAD segment.  SEG_FLAGS is
+  // the segment flags to use.
   void
-  add_output_section(Output_section* os, elfcpp::Elf_Word seg_flags);
+  add_output_section_to_load(Layout* layout, Output_section* os,
+			     elfcpp::Elf_Word seg_flags);
+
+  // Add the Output_section OS to this non-PT_LOAD segment.  SEG_FLAGS
+  // is the segment flags to use.
+  void
+  add_output_section_to_nonload(Output_section* os,
+				elfcpp::Elf_Word seg_flags);
 
   // Remove an Output_section from this segment.  It is an error if it
   // is not present.
   void
   remove_output_section(Output_section* os);
 
-  // Add an Output_data (which is not an Output_section) to the start
-  // of this segment.
+  // Add an Output_data (which need not be an Output_section) to the
+  // start of this segment.
   void
   add_initial_output_data(Output_data*);
 
   // Return true if this segment has any sections which hold actual
   // data, rather than being a BSS section.
   bool
-  has_any_data_sections() const
-  { return !this->output_data_.empty(); }
+  has_any_data_sections() const;
 
-  // Return the number of dynamic relocations applied to this segment.
-  unsigned int
-  dynamic_reloc_count() const;
+  // Whether this segment has a dynamic relocs.
+  bool
+  has_dynamic_reloc() const;
 
   // Return the address of the first section.
   uint64_t
@@ -2900,6 +3885,17 @@ class Output_segment
     this->are_addresses_set_ = true;
   }
 
+  // Update the flags for the flags of an output section added to this
+  // segment.
+  void
+  update_flags_for_output_section(elfcpp::Elf_Xword flags)
+  {
+    // The ELF ABI specifies that a PT_TLS segment should always have
+    // PF_R as the flags.
+    if (this->type() != elfcpp::PT_TLS)
+      this->flags_ |= flags;
+  }
+
   // Set the segment flags.  This is only used if we have a PHDRS
   // clause which explicitly specifies the flags.
   void
@@ -2914,19 +3910,23 @@ class Output_segment
   // address of the immediately following segment.  Update *POFF and
   // *PSHNDX.  This should only be called for a PT_LOAD segment.
   uint64_t
-  set_section_addresses(const Layout*, bool reset, uint64_t addr, off_t* poff,
-			unsigned int* pshndx);
+  set_section_addresses(const Layout*, bool reset, uint64_t addr,
+			unsigned int* increase_relro, bool* has_relro,
+			off_t* poff, unsigned int* pshndx);
 
   // Set the minimum alignment of this segment.  This may be adjusted
   // upward based on the section alignments.
   void
   set_minimum_p_align(uint64_t align)
-  { this->min_p_align_ = align; }
+  {
+    if (align > this->min_p_align_)
+      this->min_p_align_ = align;
+  }
 
   // Set the offset of this segment based on the section.  This should
   // only be called for a non-PT_LOAD segment.
   void
-  set_offset();
+  set_offset(unsigned int increase);
 
   // Set the TLS offsets of the sections contained in the PT_TLS segment.
   void
@@ -2958,10 +3958,7 @@ class Output_segment
   print_sections_to_mapfile(Mapfile*) const;
 
  private:
-  Output_segment(const Output_segment&);
-  Output_segment& operator=(const Output_segment&);
-
-  typedef std::list<Output_data*> Output_data_list;
+  typedef std::vector<Output_data*> Output_data_list;
 
   // Find the maximum alignment in an Output_data_list.
   static uint64_t
@@ -2975,15 +3972,15 @@ class Output_segment
   uint64_t
   set_section_list_addresses(const Layout*, bool reset, Output_data_list*,
                              uint64_t addr, off_t* poff, unsigned int* pshndx,
-                             bool* in_tls, bool* in_relro);
+                             bool* in_tls);
 
   // Return the number of Output_sections in an Output_data_list.
   unsigned int
   output_section_count_list(const Output_data_list*) const;
 
-  // Return the number of dynamic relocs in an Output_data_list.
-  unsigned int
-  dynamic_reloc_count_list(const Output_data_list*) const;
+  // Return whether an Output_data_list has a dynamic reloc.
+  bool
+  has_dynamic_reloc_list(const Output_data_list*) const;
 
   // Find the section with the lowest load address in an
   // Output_data_list.
@@ -2991,6 +3988,12 @@ class Output_segment
   lowest_load_address_in_list(const Output_data_list* pdl,
 			      Output_section** found,
 			      uint64_t* found_lma) const;
+
+  // Find the first and last entries by address.
+  void
+  find_first_and_last_list(const Output_data_list* pdl,
+			   const Output_data** pfirst,
+			   const Output_data** plast) const;
 
   // Write the section headers in the list into V.
   template<int size, bool big_endian>
@@ -3003,10 +4006,11 @@ class Output_segment
   void
   print_section_list_to_mapfile(Mapfile*, const Output_data_list*) const;
 
-  // The list of output data with contents attached to this segment.
-  Output_data_list output_data_;
-  // The list of output data without contents attached to this segment.
-  Output_data_list output_bss_;
+  // NOTE: We want to use the copy constructor.  Currently, shallow copy
+  // works for us so we do not need to write our own copy constructor.
+  
+  // The list of output data attached to this segment.
+  Output_data_list output_lists_[ORDER_MAX];
   // The segment virtual address.
   uint64_t vaddr_;
   // The segment physical address.
@@ -3036,6 +4040,8 @@ class Output_segment
   bool is_max_align_known_ : 1;
   // Whether vaddr and paddr were set by a linker script.
   bool are_addresses_set_ : 1;
+  // Whether this segment holds large data sections.
+  bool is_large_data_segment_ : 1;
 };
 
 // This class represents the output file.
@@ -3051,18 +4057,36 @@ class Output_file
   set_is_temporary()
   { this->is_temporary_ = true; }
 
+  // Try to open an existing file. Returns false if the file doesn't
+  // exist, has a size of 0 or can't be mmaped.  This method is
+  // thread-unsafe.
+  bool
+  open_for_modification();
+
   // Open the output file.  FILE_SIZE is the final size of the file.
+  // If the file already exists, it is deleted/truncated.  This method
+  // is thread-unsafe.
   void
   open(off_t file_size);
 
-  // Resize the output file.
+  // Resize the output file.  This method is thread-unsafe.
   void
   resize(off_t file_size);
 
   // Close the output file (flushing all buffered data) and make sure
-  // there are no errors.
+  // there are no errors.  This method is thread-unsafe.
   void
   close();
+
+  // Return the size of this file.
+  off_t
+  filesize()
+  { return this->file_size_; }
+
+  // Return the name of this file.
+  const char*
+  filename()
+  { return this->name_; }
 
   // We currently always use mmap which makes the view handling quite
   // simple.  In the future we may support other approaches.
@@ -3111,9 +4135,18 @@ class Output_file
   { }
 
  private:
-  // Map the file into memory and return a pointer to the map.
+  // Map the file into memory or, if that fails, allocate anonymous
+  // memory.
   void
   map();
+
+  // Allocate anonymous memory for the file.
+  bool
+  map_anonymous();
+
+  // Map the file into memory.
+  bool
+  map_no_anonymous();
 
   // Unmap the file from memory (and flush to disk buffers).
   void

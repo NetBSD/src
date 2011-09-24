@@ -38,8 +38,11 @@ if { ![istarget cris-*-*] && ![istarget crisv32-*-*]
 # The MN10300 port supports link time relaxation which in turn allows
 # for link time resolution of the differneces of two symbols which are
 # undefined at assembly time.  Hence this test will not pass for the
-# MN10300.
-if { ![istarget hppa*-*-*] && ![istarget mn10300-*-*] && ![istarget am3*-*-*] } then {
+# MN10300.  The same thing is true for the RX port as well.
+if { ![istarget hppa*-*-*]
+     && ![istarget rx-*-*]
+     && ![istarget mn10300-*-*]
+     && ![istarget am3*-*-*] } then {
     gas_test_error "diff1.s" "" "difference of two undefined symbols"
 }
 
@@ -59,24 +62,46 @@ case $target_triplet in {
 gas_test "eqv-ok.s" "" "" ".eqv support"
 gas_test_error "eqv-bad.s" "" ".eqv for symbol already set"
 
-gas_test "assign-ok.s" "" "" "== assignment support"
+if { ![istarget "bfin-*-*"] } then {
+    gas_test "assign-ok.s" "" "" "== assignment support"
+}
 gas_test_error "assign-bad.s" "" "== assignment for symbol already set"
 
 # .equ works differently on some targets.
 # linkrelax-ing prevents most forward references from working.
 case $target_triplet in {
+    { *c54x*-*-* } { }
     { cr16*-*-* } { }
     { crx*-*-* } { }
     { h8300*-*-* } { }
     { hppa*-*-* } { }
+    { mep-*-* } { }
     { mn10\[23\]00*-*-* } { }
-    { *c54x*-*-* } { }
     default {
 	# Some targets don't manage to resolve BFD_RELOC_8 for constants.
-	setup_xfail "alpha*-*-*" "avr-*-*" "*c30*-*-*" "*c4x*-*-*" \
+	setup_xfail "alpha*-*-*" "*c30*-*-*" "*c4x*-*-*" \
 	    "d\[13\]0v*-*-*" "i860-*-*" "mips*-*-*" "msp430-*-*" \
 	    "pdp11-*-*" "sparc*-*-*" "xtensa*-*-*"
 	run_dump_test forward
+    }
+}
+
+# aout relocs are often weird, so is mep and mips-ecoff. don't bother testing
+# som doesn't use a .text section
+# mmix doesn't like .L1:
+# ti addresses aren't octets.
+if { ![is_aout_format] } {
+    case $target_triplet in {
+	{ hppa-*-hpux* } { }
+	{ mep-*-* } { }
+	{ mips*-*-ecoff* } { }
+	{ mmix-*-* } { }
+	{ tic30*-*-* } { }
+	{ tic4x*-*-* } { }
+	{ tic54x*-*-* } { }
+	default {
+	    run_dump_test fwdexp
+	}
     }
 }
 
@@ -105,13 +130,15 @@ case $target_triplet in {
 	# This is usually revealed by the error message:
 	#  symbol `sym' required but not present
 	setup_xfail "*arm*-*-*aout*" "*arm*-*-*coff" \
-	    "*arm*-*-pe" "m68hc*-*-*" "maxq-*-*" \
-	    "vax*-*-*" "z8k-*-*"
+	    "*arm*-*-pe" "m68hc*-*-*" \
+	    "rx-*-*" "vax*-*-*" "z8k-*-*"
 	run_dump_test redef2
-	setup_xfail "*-*-aix*" "*-*-coff" "*-*-cygwin" "*-*-mingw*" "*-*-pe*" \
-	    "bfin-*-*" "hppa*-*-hpux*" \
-	    "m68hc*-*-*" "maxq-*-*" "or32-*-*" \
-	    "vax*-*-*" "z8k-*-*"
+	setup_xfail "*-*-aix*" "bfin-*-*" "hppa*-*-hpux*" \
+	    "i\[3-7\]86-*-*coff" "i\[3-7\]86-*-*pe" "i\[3-7\]86-*-go32*" \
+	    "i\[3-7\]86-*-cygwin*" "i\[3-7\]86-*-mingw*" \
+	    "x86_64-*-*coff" "x86_64-*-*pe" \
+	    "x86_64-*-cygwin*" "x86_64-*-mingw*" \
+	    "m68hc*-*-*" "or32-*-*" "rx-*-*" "vax*-*-*" "z8k-*-*"
 	run_dump_test redef3
 	gas_test_error "redef4.s" "" ".set for symbol already used as label"
 	gas_test_error "redef5.s" "" ".set for symbol already defined through .comm"
@@ -141,7 +168,13 @@ proc do_comment {} {
     if [all_ones $x1 $x2 $x3] then { pass $testname } else { fail $testname }
 }
 
-do_comment
+# m32c pads out sections, even empty ones.
+case $target_triplet in {
+    { m32c-*-* } { }
+    default {
+	do_comment
+    }
+}
 
 # This test checks the output of the -ag switch. It must detect at least
 # the name of the input file, output file, and options passed.
@@ -154,7 +187,7 @@ proc general_info_section {} {
     gas_start "comment.s" "-agn"
     while 1 {
 	expect {
-	    -re "^ \[^\n\]*\t: \-agn\[^\n\]*\n"                { set x1 1 }
+	    -re "^ \[^\n\]*\t: .*\-agn\[^\n\]*\n"                { set x1 1 }
 	    -re "^ \[^\n\]*\t: \[^\n\]*comment\.s\[^\n\]*\n"   { set x2 1 }
 	    -re "^ \[^\n\]*\t: a\.out\[^\n\]*\n"               { set x3 1 }
 	    -re "\[^\n\]*\n"     { }
@@ -291,6 +324,7 @@ case $target_triplet in {
     { hppa*-*-* } { }
     { *c4x*-*-* } { }
     { *c54x*-*-* } { }
+    { rx-*-* } { }
     default {
         test_cond
 	remote_download host "$srcdir/$subdir/incbin.dat"
@@ -304,13 +338,21 @@ if {  ([istarget "i*86-*-*pe*"] && ![istarget "i*86-*-openbsd*"]) \
   gas_test "fastcall.s" ""   "" "fastcall labels"
 }
 
-run_dump_test assign
+if { ![istarget "bfin-*-*"] } then {
+    run_dump_test assign
+}
 run_dump_test sleb128
 
 # .byte is 32 bits on tic4x, and .p2align isn't supported on tic54x
 # .space is different on hppa*-hpux.
-if { ![istarget "tic4x*-*-*"] && ![istarget "tic54x*-*-*"] && ![istarget "hppa*-*-hpux*"] } {
+# MeP put bytes into packets.
+if { ![istarget "tic4x*-*-*"] && ![istarget "tic54x*-*-*"] && ![istarget "hppa*-*-hpux*"] && ![istarget "mep*-*-*"] } {
     run_dump_test relax
+}
+
+# powerpc and s390 allow a string argument to .byte
+if { ![istarget "powerpc*-*-*"] && ![istarget "rs6000*-*-*"] && ![istarget "s390*-*-*"] } {
+    run_dump_test byte
 }
 
 # .quad is 16 bytes on i960.
@@ -318,6 +360,7 @@ if { ![istarget "i960-*-*"] } {
     run_dump_test quad
 }
 
+run_dump_test octa
 
 # .set works differently on some targets.
 case $target_triplet in {

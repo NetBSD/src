@@ -1,6 +1,6 @@
 /* tc-i386.h -- Header file for tc-i386.c
    Copyright 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -29,8 +29,9 @@ struct fix;
 
 #define TARGET_BYTES_BIG_ENDIAN	0
 
-#define TARGET_ARCH		bfd_arch_i386
+#define TARGET_ARCH		(i386_arch ())
 #define TARGET_MACH		(i386_mach ())
+extern enum bfd_architecture i386_arch (void);
 extern unsigned long i386_mach (void);
 
 #ifdef TE_FreeBSD
@@ -62,6 +63,11 @@ extern unsigned long i386_mach (void);
 #define ELF_TARGET_FORMAT	"elf32-i386-vxworks"
 #endif
 
+#ifdef TE_SOLARIS
+#define ELF_TARGET_FORMAT	"elf32-i386-sol2"
+#define ELF_TARGET_FORMAT64	"elf64-x86-64-sol2"
+#endif
+
 #ifndef ELF_TARGET_FORMAT
 #define ELF_TARGET_FORMAT	"elf32-i386"
 #endif
@@ -70,13 +76,18 @@ extern unsigned long i386_mach (void);
 #define ELF_TARGET_FORMAT64	"elf64-x86-64"
 #endif
 
+#ifndef ELF_TARGET_L1OM_FORMAT
+#define ELF_TARGET_L1OM_FORMAT	"elf64-l1om"
+#endif
+
 #if ((defined (OBJ_MAYBE_COFF) && defined (OBJ_MAYBE_AOUT)) \
-     || defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF))
+     || defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF) \
+     || defined (TE_PE) || defined (TE_PEP) || defined (OBJ_MACH_O))
 extern const char *i386_target_format (void);
 #define TARGET_FORMAT i386_target_format ()
 #else
-#ifdef OBJ_ELF
-#define TARGET_FORMAT		ELF_TARGET_FORMAT
+#ifdef TE_GO32
+#define TARGET_FORMAT		"coff-go32"
 #endif
 #ifdef OBJ_AOUT
 #define TARGET_FORMAT		AOUT_TARGET_FORMAT
@@ -90,6 +101,10 @@ extern void i386_elf_emit_arch_note (void);
 
 #define SUB_SEGMENT_ALIGN(SEG, FRCHAIN) 0
 
+/* '$' may be used as immediate prefix.  */
+#undef LOCAL_LABELS_DOLLAR
+#define LOCAL_LABELS_DOLLAR 0
+#undef LOCAL_LABELS_FB
 #define LOCAL_LABELS_FB 1
 
 extern const char extra_symbol_chars[];
@@ -139,19 +154,24 @@ extern int tc_i386_fix_adjustable (struct fix *);
 /* This expression evaluates to true if the relocation is for a local
    object for which we still want to do the relocation at runtime.
    False if we are willing to perform this relocation while building
-   the .o file.  GOTOFF does not need to be checked here because it is
-   not pcrel.  I am not sure if some of the others are ever used with
-   pcrel, but it is easier to be safe than sorry.  */
+   the .o file.  GOTOFF and GOT32 do not need to be checked here because 
+   they are not pcrel.  .*/
 
 #define TC_FORCE_RELOCATION_LOCAL(FIX)			\
   (!(FIX)->fx_pcrel					\
    || (FIX)->fx_r_type == BFD_RELOC_386_PLT32		\
-   || (FIX)->fx_r_type == BFD_RELOC_386_GOT32		\
    || (FIX)->fx_r_type == BFD_RELOC_386_GOTPC		\
+   || (FIX)->fx_r_type == BFD_RELOC_X86_64_GOTPCREL	\
    || TC_FORCE_RELOCATION (FIX))
 
 extern int i386_parse_name (char *, expressionS *, char *);
 #define md_parse_name(s, e, m, c) i386_parse_name (s, e, c)
+
+extern operatorT i386_operator (const char *name, unsigned int operands, char *);
+#define md_operator i386_operator
+
+extern int i386_need_index_operator (void);
+#define md_need_index_operator i386_need_index_operator
 
 #define md_register_arithmetic 0
 
@@ -187,6 +207,53 @@ void i386_print_statistics (FILE *);
 
 #define md_number_to_chars number_to_chars_littleendian
 
+enum processor_type
+{
+  PROCESSOR_UNKNOWN,
+  PROCESSOR_I386,
+  PROCESSOR_I486,
+  PROCESSOR_PENTIUM,
+  PROCESSOR_PENTIUMPRO,
+  PROCESSOR_PENTIUM4,
+  PROCESSOR_NOCONA,
+  PROCESSOR_CORE,
+  PROCESSOR_CORE2,
+  PROCESSOR_COREI7,
+  PROCESSOR_L1OM,
+  PROCESSOR_K6,
+  PROCESSOR_ATHLON,
+  PROCESSOR_K8,
+  PROCESSOR_GENERIC32,
+  PROCESSOR_GENERIC64,
+  PROCESSOR_AMDFAM10,
+  PROCESSOR_BDVER1
+};
+
+extern enum processor_type cpu_arch_tune;
+extern enum processor_type cpu_arch_isa;
+extern i386_cpu_flags cpu_arch_isa_flags;
+
+struct i386_tc_frag_data
+{
+  enum processor_type isa;
+  i386_cpu_flags isa_flags;
+  enum processor_type tune;
+};
+
+/* We need to emit the right NOP pattern in .align frags.  This is
+   done after the text-to-bits assembly pass, so we need to mark it with
+   the isa/tune settings at the time the .align was assembled.  */
+#define TC_FRAG_TYPE struct i386_tc_frag_data
+
+#define TC_FRAG_INIT(FRAGP)					\
+ do								\
+   {								\
+     (FRAGP)->tc_frag_data.isa = cpu_arch_isa;			\
+     (FRAGP)->tc_frag_data.isa_flags = cpu_arch_isa_flags;	\
+     (FRAGP)->tc_frag_data.tune = cpu_arch_tune;		\
+   }								\
+ while (0)
+
 #ifdef SCO_ELF
 #define tc_init_after_args() sco_id ()
 extern void sco_id (void);
@@ -218,8 +285,8 @@ extern void i386_solaris_fix_up_eh_frame (segT);
 #endif
 
 /* Support for SHF_X86_64_LARGE */
-extern int x86_64_section_word (char *, size_t);
-extern int x86_64_section_letter (int, char **);
+extern bfd_vma x86_64_section_word (char *, size_t);
+extern bfd_vma x86_64_section_letter (int, char **);
 #define md_elf_section_letter(LETTER, PTR_MSG)	x86_64_section_letter (LETTER, PTR_MSG)
 #define md_elf_section_word(STR, LEN)		x86_64_section_word (STR, LEN)
 
@@ -231,5 +298,8 @@ extern int x86_64_section_letter (int, char **);
 void tc_pe_dwarf2_emit_offset (symbolS *, unsigned int);
 
 #endif /* TE_PE */
+
+/* X_add_symbol:X_op_symbol (Intel mode only) */
+#define O_full_ptr O_md2
 
 #endif /* TC_I386 */

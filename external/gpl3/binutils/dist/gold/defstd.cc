@@ -1,6 +1,6 @@
 // defstd.cc -- define standard symbols for gold.
 
-// Copyright 2006, 2007 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -107,7 +107,19 @@ const Define_symbol_in_section in_section[] =
     0,				// nonvis
     true,			// offset_is_from_end
     true			// only_if_ref
-  }
+  },
+  {
+    "__stack",			// name
+    ".stack",			// output_section
+    0,				// value
+    0,				// size
+    elfcpp::STT_NOTYPE,		// type
+    elfcpp::STB_GLOBAL,		// binding
+    elfcpp::STV_DEFAULT,	// visibility
+    0,				// nonvis
+    false,			// offset_is_from_end
+    true			// only_if_ref
+  },
 };
 
 const int in_section_count = sizeof in_section / sizeof in_section[0];
@@ -238,7 +250,7 @@ const Define_symbol_in_segment in_segment[] =
     elfcpp::STV_DEFAULT,	// visibility
     0,				// nonvis
     Symbol::SEGMENT_END,	// offset_from_base
-    false			// only_if_ref
+    true			// only_if_ref
   }
 };
 

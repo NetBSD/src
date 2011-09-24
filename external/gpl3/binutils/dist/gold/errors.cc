@@ -1,6 +1,6 @@
 // errors.cc -- handle errors for gold
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -39,8 +39,8 @@ namespace gold
 const int Errors::max_undefined_error_report;
 
 Errors::Errors(const char* program_name)
-  : program_name_(program_name), lock_(NULL), error_count_(0),
-    warning_count_(0), undefined_symbols_()
+  : program_name_(program_name), lock_(NULL), initialize_lock_(&this->lock_),
+    error_count_(0), warning_count_(0), undefined_symbols_()
 {
 }
 
@@ -53,9 +53,7 @@ Errors::Errors(const char* program_name)
 bool
 Errors::initialize_lock()
 {
-  if (this->lock_ == NULL && parameters->options_valid())
-    this->lock_ = new Lock;
-  return this->lock_ != NULL;
+  return this->initialize_lock_.initialize();
 }
 
 // Increment a counter, holding the lock if available.
@@ -80,7 +78,7 @@ Errors::increment_counter(int *counter)
 void
 Errors::fatal(const char* format, va_list args)
 {
-  fprintf(stderr, "%s: ", this->program_name_);
+  fprintf(stderr, _("%s: fatal error: "), this->program_name_);
   vfprintf(stderr, format, args);
   fputc('\n', stderr);
   gold_exit(false);
@@ -91,7 +89,7 @@ Errors::fatal(const char* format, va_list args)
 void
 Errors::error(const char* format, va_list args)
 {
-  fprintf(stderr, "%s: ", this->program_name_);
+  fprintf(stderr, _("%s: error: "), this->program_name_);
   vfprintf(stderr, format, args);
   fputc('\n', stderr);
 
@@ -127,7 +125,7 @@ Errors::error_at_location(const Relocate_info<size, big_endian>* relinfo,
 			  size_t relnum, off_t reloffset,
 			  const char* format, va_list args)
 {
-  fprintf(stderr, "%s: %s: ", this->program_name_,
+  fprintf(stderr, _("%s: %s: error: "), this->program_name_,
 	  relinfo->location(relnum, reloffset).c_str());
   vfprintf(stderr, format, args);
   fputc('\n', stderr);
@@ -151,30 +149,40 @@ Errors::warning_at_location(const Relocate_info<size, big_endian>* relinfo,
   this->increment_counter(&this->warning_count_);
 }
 
-// Issue an undefined symbol error.
+// Issue an undefined symbol error with a caller-supplied location string.
 
-template<int size, bool big_endian>
 void
-Errors::undefined_symbol(const Symbol* sym,
-			 const Relocate_info<size, big_endian>* relinfo,
-			 size_t relnum, off_t reloffset)
+Errors::undefined_symbol(const Symbol* sym, const std::string& location)
 {
   bool initialized = this->initialize_lock();
   gold_assert(initialized);
+
+  const char* zmsg;
   {
     Hold_lock h(*this->lock_);
     if (++this->undefined_symbols_[sym] >= max_undefined_error_report)
       return;
-    ++this->error_count_;
+    if (parameters->options().warn_unresolved_symbols())
+      {
+	++this->warning_count_;
+	zmsg = _("warning");
+      }
+    else
+      {
+	++this->error_count_;
+	zmsg = _("error");
+      }
   }
+
   const char* const version = sym->version();
   if (version == NULL)
-    fprintf(stderr, _("%s: %s: undefined reference to '%s'\n"),
-	    this->program_name_, relinfo->location(relnum, reloffset).c_str(),
+    fprintf(stderr, _("%s: %s: %s: undefined reference to '%s'\n"),
+	    this->program_name_, location.c_str(), zmsg,
 	    sym->demangled_name().c_str());
   else
-    fprintf(stderr, _("%s: %s: undefined reference to '%s', version '%s'\n"),
-	    this->program_name_, relinfo->location(relnum, reloffset).c_str(),
+    fprintf(stderr,
+            _("%s: %s: %s: undefined reference to '%s', version '%s'\n"),
+	    this->program_name_, location.c_str(), zmsg,
 	    sym->demangled_name().c_str(), version);
 }
 
@@ -271,13 +279,22 @@ gold_warning_at_location(const Relocate_info<size, big_endian>* relinfo,
 
 // Report an undefined symbol.
 
+void
+gold_undefined_symbol(const Symbol* sym)
+{
+  parameters->errors()->undefined_symbol(sym, sym->object()->name().c_str());
+}
+
+// Report an undefined symbol at a reloc location
+
 template<int size, bool big_endian>
 void
-gold_undefined_symbol(const Symbol* sym,
+gold_undefined_symbol_at_location(const Symbol* sym,
 		      const Relocate_info<size, big_endian>* relinfo,
 		      size_t relnum, off_t reloffset)
 {
-  parameters->errors()->undefined_symbol(sym, relinfo, relnum, reloffset);
+  parameters->errors()->undefined_symbol(sym,
+                                         relinfo->location(relnum, reloffset));
 }
 
 #ifdef HAVE_TARGET_32_LITTLE
@@ -347,33 +364,37 @@ gold_warning_at_location<64, true>(const Relocate_info<64, true>* relinfo,
 #ifdef HAVE_TARGET_32_LITTLE
 template
 void
-gold_undefined_symbol<32, false>(const Symbol* sym,
-				 const Relocate_info<32, false>* relinfo,
-				 size_t relnum, off_t reloffset);
+gold_undefined_symbol_at_location<32, false>(
+    const Symbol* sym,
+    const Relocate_info<32, false>* relinfo,
+    size_t relnum, off_t reloffset);
 #endif
 
 #ifdef HAVE_TARGET_32_BIG
 template
 void
-gold_undefined_symbol<32, true>(const Symbol* sym,
-				const Relocate_info<32, true>* relinfo,
-				size_t relnum, off_t reloffset);
+gold_undefined_symbol_at_location<32, true>(
+    const Symbol* sym,
+    const Relocate_info<32, true>* relinfo,
+    size_t relnum, off_t reloffset);
 #endif
 
 #ifdef HAVE_TARGET_64_LITTLE
 template
 void
-gold_undefined_symbol<64, false>(const Symbol* sym,
-				 const Relocate_info<64, false>* relinfo,
-				 size_t relnum, off_t reloffset);
+gold_undefined_symbol_at_location<64, false>(
+    const Symbol* sym,
+    const Relocate_info<64, false>* relinfo,
+    size_t relnum, off_t reloffset);
 #endif
 
 #ifdef HAVE_TARGET_64_BIG
 template
 void
-gold_undefined_symbol<64, true>(const Symbol* sym,
-				const Relocate_info<64, true>* relinfo,
-				size_t relnum, off_t reloffset);
+gold_undefined_symbol_at_location<64, true>(
+    const Symbol* sym,
+    const Relocate_info<64, true>* relinfo,
+    size_t relnum, off_t reloffset);
 #endif
 
 } // End namespace gold.

@@ -47,9 +47,10 @@
 
 static void usage (FILE *, int) ATTRIBUTE_NORETURN;
 
-const char *whoami;
-const char *function_mapping_file;
-const char *a_out_name = A_OUTNAME;
+const char * whoami;
+const char * function_mapping_file;
+static const char * external_symbol_table;
+const char * a_out_name = A_OUTNAME;
 long hz = HZ_WRONG;
 
 /*
@@ -84,7 +85,6 @@ static char *default_excluded_list[] =
 {
   "_gprof_mcount", "mcount", "_mcount", "__mcount", "__mcount_internal",
   "__mcleanup",
-  "<locore>", "<hicore>",
   0
 };
 
@@ -99,6 +99,7 @@ static struct option long_options[] =
   {"line", no_argument, 0, 'l'},
   {"no-static", no_argument, 0, 'a'},
   {"ignore-non-functions", no_argument, 0, 'D'},
+  {"external-symbol-table", required_argument, 0, 'S'},
 
     /* output styles: */
 
@@ -156,7 +157,7 @@ static void
 usage (FILE *stream, int status)
 {
   fprintf (stream, _("\
-Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqQZ][name]] [-I dirs]\n\
+Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n\
 	[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n\
 	[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n\
 	[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n\
@@ -167,7 +168,7 @@ Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqQZ][name]] [-I dirs]\n\
 	[--no-static] [--print-path] [--separate-files]\n\
 	[--static-call-graph] [--sum] [--table-length=len] [--traditional]\n\
 	[--version] [--width=n] [--ignore-non-functions]\n\
-	[--demangle[=STYLE]] [--no-demangle] [@FILE]\n\
+	[--demangle[=STYLE]] [--no-demangle] [--external-symbol-table=name] [@FILE]\n\
 	[image-file] [profile-file...]\n"),
 	   whoami);
   if (REPORT_BUGS_TO[0] && status == 0)
@@ -200,7 +201,7 @@ main (int argc, char **argv)
   expandargv (&argc, &argv);
 
   while ((ch = getopt_long (argc, argv,
-	"aA::bBcC::d::De:E:f:F:hiI:J::k:lLm:n:N:O:p::P::q::Q::rR:st:Tvw:xyzZ::",
+	"aA::bBcC::d::De:E:f:F:hiI:J::k:lLm:n:N:O:p::P::q::Q::rR:sS:t:Tvw:xyzZ::",
 			    long_options, 0))
 	 != EOF)
     {
@@ -399,6 +400,10 @@ main (int argc, char **argv)
 	  output_style |= STYLE_SUMMARY_FILE;
 	  user_specified |= STYLE_SUMMARY_FILE;
 	  break;
+	case 'S':
+	  external_symbol_table = optarg;
+	  DBG (AOUTDEBUG, printf ("external-symbol-table: %s\n", optarg));
+	  break;
 	case 't':
 	  bb_table_length = atoi (optarg);
 	  if (bb_table_length < 0)
@@ -513,7 +518,9 @@ This program is free software.  This program has absolutely no warranty.\n"));
     core_get_text_space (core_bfd);
 
   /* Create symbols from core image.  */
-  if (line_granularity)
+  if (external_symbol_table)
+    core_create_syms_from (external_symbol_table);
+  else if (line_granularity)
     core_create_line_syms ();
   else
     core_create_function_syms ();

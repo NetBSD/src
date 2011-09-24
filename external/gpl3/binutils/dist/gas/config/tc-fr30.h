@@ -1,5 +1,5 @@
 /* tc-fr30.h -- Header file for tc-fr30.c.
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007
+   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007, 2009
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -59,12 +59,8 @@ extern const struct relax_type md_relax_table[];
 
 /* We need a special version of the TC_START_LABEL macro so that we
    allow the LDI:8, LDI:20, LDI:32 and delay slot instructions to be
-   parsed as such.  Note - in a HORRIBLE HACK, we make use of the
-   knowledge that this marco is only ever evaluated in one place
-   (read_a_source_file in read.c) where we can access the local
-   variable 's' - the start of the symbol that was terminated by
-   'character'.  Also we need to be able to change the contents of
+   parsed as such. We need to be able to change the contents of
    the local variable 'c' which is passed to this macro as 'character'.  */
-#define TC_START_LABEL(character, i_l_p)			\
+#define TC_START_LABEL(character, s, i_l_p)				\
   ((character) != ':' ? 0 : (character = fr30_is_colon_insn (s)) ? 0 : ((character = ':'), 1))
 extern char fr30_is_colon_insn (char *);

@@ -1,6 +1,6 @@
 /* obj-aout.h, a.out object file format for gas, the assembler.
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 2000,
-   2002, 2003, 2005, 2007 Free Software Foundation, Inc.
+   2002, 2003, 2005, 2007, 2009 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -53,7 +53,7 @@ typedef struct nlist obj_symbol_type;	/* Symbol table entry.  */
 #define S_GET_DESC(S) \
   (aout_symbol (symbol_get_bfdsym (S))->desc)
 
-asection *text_section, *data_section, *bss_section;
+extern asection *text_section, *data_section, *bss_section;
 
 #define obj_frob_symbol(S,PUNT)	obj_aout_frob_symbol (S, &PUNT)
 #define obj_frob_file_before_fix() obj_aout_frob_file_before_fix ()

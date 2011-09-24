@@ -140,3 +140,8 @@ l:
 	.syntax unified
 	add	r0, r1
 
+	@ Multiply
+	.syntax divided
+	mul	r0, r0, r8
+	mul	r0, r8, r0
+	mul	r8, r0, r0

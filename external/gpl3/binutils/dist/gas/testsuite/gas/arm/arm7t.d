@@ -8,7 +8,7 @@
 
 Disassembly of section .text:
 0+00 <[^>]*> e1d100b0 ?	ldrh	r0, \[r1\]
-0+04 <[^>]*> e1f100b0 ?	ldrh	r0, \[r1\]!
+0+04 <[^>]*> e1f100b0 ?	ldrh	r0, \[r1, #0\]!
 0+08 <[^>]*> e19100b2 ?	ldrh	r0, \[r1, r2\]
 0+0c <[^>]*> e1b100b2 ?	ldrh	r0, \[r1, r2\]!
 0+10 <[^>]*> e1d100bc ?	ldrh	r0, \[r1, #12\]
@@ -19,7 +19,7 @@ Disassembly of section .text:
 0+24 <[^>]*> e1df0bb4 ?	ldrh	r0, \[pc, #180\]	; 0+e0 <[^>]*>
 0+28 <[^>]*> e1df0abc ?	ldrh	r0, \[pc, #172\]	; 0+dc <[^>]*>
 0+2c <[^>]*> e1c100b0 ?	strh	r0, \[r1\]
-0+30 <[^>]*> e1e100b0 ?	strh	r0, \[r1\]!
+0+30 <[^>]*> e1e100b0 ?	strh	r0, \[r1, #0\]!
 0+34 <[^>]*> e18100b2 ?	strh	r0, \[r1, r2\]
 0+38 <[^>]*> e1a100b2 ?	strh	r0, \[r1, r2\]!
 0+3c <[^>]*> e1c100bc ?	strh	r0, \[r1, #12\]
@@ -28,7 +28,7 @@ Disassembly of section .text:
 0+48 <[^>]*> e08100b2 ?	strh	r0, \[r1\], r2
 0+4c <[^>]*> e1cf08b8 ?	strh	r0, \[pc, #136\]	; 0+dc <[^>]*>
 0+50 <[^>]*> e1d100d0 ?	ldrsb	r0, \[r1\]
-0+54 <[^>]*> e1f100d0 ?	ldrsb	r0, \[r1\]!
+0+54 <[^>]*> e1f100d0 ?	ldrsb	r0, \[r1, #0\]!
 0+58 <[^>]*> e19100d2 ?	ldrsb	r0, \[r1, r2\]
 0+5c <[^>]*> e1b100d2 ?	ldrsb	r0, \[r1, r2\]!
 0+60 <[^>]*> e1d100dc ?	ldrsb	r0, \[r1, #12\]
@@ -38,7 +38,7 @@ Disassembly of section .text:
 0+70 <[^>]*> e3a000de ?	mov	r0, #222	; 0xde
 0+74 <[^>]*> e1df06d0 ?	ldrsb	r0, \[pc, #96\]	; 0+dc <[^>]*>
 0+78 <[^>]*> e1d100f0 ?	ldrsh	r0, \[r1\]
-0+7c <[^>]*> e1f100f0 ?	ldrsh	r0, \[r1\]!
+0+7c <[^>]*> e1f100f0 ?	ldrsh	r0, \[r1, #0\]!
 0+80 <[^>]*> e19100f2 ?	ldrsh	r0, \[r1, r2\]
 0+84 <[^>]*> e1b100f2 ?	ldrsh	r0, \[r1, r2\]!
 0+88 <[^>]*> e1d100fc ?	ldrsh	r0, \[r1, #12\]
@@ -66,5 +66,5 @@ Disassembly of section .text:
 [		]*dc:.*fred
 0+e0 <[^>]*> 0000c0de ?	.*
 0+e4 <[^>]*> 0000dead ?	.*
-0+e8 <[^>]*> e1a00000 ?	nop[ 	]+\(mov r0,r0\)
-0+ec <[^>]*> e1a00000 ?	nop[ 	]+\(mov r0,r0\)
+0+e8 <[^>]*> e1a00000 ?	nop[ 	]+; \(mov r0, r0\)
+0+ec <[^>]*> e1a00000 ?	nop[ 	]+; \(mov r0, r0\)

@@ -147,3 +147,9 @@ extern long md_pcrel_from_section (struct fix *, segT);
 
 /* This target is buggy, and sets fix size too large.  */
 #define TC_FX_SIZE_SLACK(FIX) 2
+
+/* AVR instructions are 2 or 4 bytes long.  */
+#define DWARF2_LINE_MIN_INSN_LENGTH 	2
+
+/* 32 bits pseudo-addresses are used on AVR.  */
+#define DWARF2_ADDR_SIZE(bfd) 4

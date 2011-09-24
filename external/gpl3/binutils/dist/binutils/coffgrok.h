@@ -1,5 +1,5 @@
 /* coffgrok.h
-   Copyright 2001, 2002, 2003, 2007 Free Software Foundation, Inc.
+   Copyright 2001, 2002, 2003, 2005, 2007 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 

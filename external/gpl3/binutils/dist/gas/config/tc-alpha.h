@@ -1,6 +1,6 @@
 /* This file is tc-alpha.h
    Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
-   2005, 2006, 2007
+   2005, 2006, 2007, 2009
    Free Software Foundation, Inc.
    Written by Ken Raeburn <raeburn@cygnus.com>.
 
@@ -69,9 +69,9 @@ extern valueT alpha_gp_value;
 #define md_operand(x)
 
 #ifdef OBJ_EVAX
+#define TC_VALIDATE_FIX_SUB(FIX, SEG) 1
 
-/* This field keeps the symbols position in the link section.  */
-#define OBJ_SYMFIELD_TYPE valueT
+#define tc_canonicalize_symbol_name evax_shorten_name
 
 #define TC_CONS_FIX_NEW(FRAG,OFF,LEN,EXP) \
       fix_new_exp (FRAG, OFF, (int)LEN, EXP, 0, \
@@ -81,7 +81,9 @@ extern valueT alpha_gp_value;
 	: BFD_RELOC_ALPHA_LINKAGE);
 #endif
 
-#ifndef VMS
+#ifdef OBJ_EVAX
+#define TC_IMPLICIT_LCOMM_ALIGNMENT(SIZE, P2VAR) (P2VAR) = 3
+#else
 #define TC_IMPLICIT_LCOMM_ALIGNMENT(size, align) \
   do							\
     {							\
@@ -121,9 +123,9 @@ extern void alpha_frob_file_before_adjust (void);
 
 #ifdef OBJ_ELF
 #define md_elf_section_letter		alpha_elf_section_letter
-extern int alpha_elf_section_letter (int, char **);
+extern bfd_vma alpha_elf_section_letter (int, char **);
 #define md_elf_section_flags		alpha_elf_section_flags
-extern flagword alpha_elf_section_flags (flagword, int, int);
+extern flagword alpha_elf_section_flags (flagword, bfd_vma, int);
 #endif
 
 /* Whether to add support for explicit !relocation_op!sequence_number.  At the
@@ -133,12 +135,14 @@ extern flagword alpha_elf_section_flags (flagword, int, int);
 #define RELOC_OP_P
 #endif
 
+#ifndef OBJ_EVAX
 /* Before the relocations are written, reorder them, so that user
    supplied !lituse relocations follow the appropriate !literal
    relocations.  Also convert the gas-internal relocations to the
    appropriate linker relocations.  */
 #define tc_frob_file_before_fix() alpha_before_fix ()
 extern void alpha_before_fix (void);
+#endif
 
 #ifdef OBJ_ELF
 #define md_end  alpha_elf_md_end

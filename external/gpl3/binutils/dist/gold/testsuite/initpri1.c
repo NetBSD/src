@@ -1,6 +1,6 @@
 /* initpri1.c -- test constructor priorities.
 
-   Copyright 2007, 2008 Free Software Foundation, Inc.
+   Copyright 2007, 2008, 2009 Free Software Foundation, Inc.
    Copied from the gcc testsuite, where the test was contributed by
    Mark Mitchell <mark@codesourcery.com>.
 
@@ -19,20 +19,22 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
-   MA 02110-1301, USA.
+   MA 02110-1301, USA.  */
 
-   This is a test of a common symbol in the main program and a
-   versioned symbol in a shared library.  The common symbol in the
-   main program should override the shared library symbol.  */
+/* This tests that the linker handles constructor and destructor
+   priorities correctly.  */
 
 #include <stdlib.h>
+
+/* Constructor priorities in attributes were added in gcc 4.3.  */
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)
 
 int i;
 int j;
 
-void c1() __attribute__((constructor (500)));
-void c2() __attribute__((constructor (700)));
-void c3() __attribute__((constructor (600)));
+void c1(void) __attribute__((constructor (500)));
+void c2(void) __attribute__((constructor (700)));
+void c3(void) __attribute__((constructor (600)));
 
 void c1() {
   if (i++ != 0)
@@ -49,9 +51,9 @@ void c3() {
     abort ();
 }
 
-void d1() __attribute__((destructor (500)));
-void d2() __attribute__((destructor (700)));
-void d3() __attribute__((destructor (600)));
+void d1(void) __attribute__((destructor (500)));
+void d2(void) __attribute__((destructor (700)));
+void d3(void) __attribute__((destructor (600)));
 
 void d1() {
   if (--i != 0)
@@ -70,7 +72,7 @@ void d3() {
     abort ();
 }
 
-void cd4() __attribute__((constructor (800), destructor (800)));
+void cd4(void) __attribute__((constructor (800), destructor (800)));
 
 void cd4() {
   if (i != 3)
@@ -78,7 +80,7 @@ void cd4() {
   ++j;
 }
 
-void cd5() __attribute__((constructor, destructor));
+void cd5(void) __attribute__((constructor, destructor));
 
 void cd5() {
   if (i != 3)
@@ -86,10 +88,18 @@ void cd5() {
   ++j;
 }
 
-int main () {
+int main (void) {
   if (i != 3)
     return 1;
   if (j != 2)
     abort ();
   return 0;
 }
+
+#else /* !(__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)) */
+
+int main (void) {
+  exit (0);
+}
+
+#endif /* !(__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)) */

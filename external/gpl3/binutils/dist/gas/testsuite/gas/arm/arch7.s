@@ -77,3 +77,5 @@ label2:
 	msr	basepri_max, r0
 	msr	faultmask, r0
 	msr	control, r0
+	mrs	r0, xpsr
+	msr	xpsr, r0

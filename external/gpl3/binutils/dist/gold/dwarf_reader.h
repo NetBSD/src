@@ -1,6 +1,6 @@
 // dwarf_reader.h -- parse dwarf2/3 debug information for gold  -*- C++ -*-
 
-// Copyright 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2007, 2008, 2009 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -37,12 +37,6 @@ namespace gold
 template<int size, bool big_endian>
 class Track_relocs;
 struct LineStateMachine;
-
-uint64_t
-read_unsigned_LEB_128(const unsigned char* buffer, size_t* len);
-
-int64_t
-read_signed_LEB_128(const unsigned char* buffer, size_t* len);
 
 // We can't do better than to keep the offsets in a sorted vector.
 // Here, offset is the key, and file_num/line_num is the value.
@@ -105,7 +99,7 @@ class Sized_dwarf_line_info : public Dwarf_line_info
   // Initializes a .debug_line reader for a given object file.
   // If SHNDX is specified and non-negative, only read the debug
   // information that pertains to the specified section.
-  Sized_dwarf_line_info(Object* object, off_t read_shndx = -1U);
+  Sized_dwarf_line_info(Object* object, unsigned int read_shndx = -1U);
 
  private:
   std::string
@@ -115,7 +109,7 @@ class Sized_dwarf_line_info : public Dwarf_line_info
   // If SHNDX is non-negative, only store debug information that
   // pertains to the specified section.
   void
-  read_line_mappings(Object*, off_t shndx);
+  read_line_mappings(Object*, unsigned int shndx);
 
   // Reads the relocation section associated with .debug_line and
   // stores relocation information in reloc_map_.
@@ -140,7 +134,7 @@ class Sized_dwarf_line_info : public Dwarf_line_info
   // discard all line information that doesn't pertain to the given
   // section.
   const unsigned char*
-  read_lines(const unsigned char* lineptr, off_t shndx);
+  read_lines(const unsigned char* lineptr, unsigned int shndx);
 
   // Process a single line info opcode at START using the state
   // machine at LSM.  Return true if we should define a line using the
