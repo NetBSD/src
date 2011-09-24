@@ -1,7 +1,7 @@
 # name: rgn-over1
 # source: rgn-over.s
 # ld: -T rgn-over1.t -Map tmpdir/rgn-over1.map
-# error: \A[^ \n]*?ld[^:\n]*?: [^\n]*?section \.text will not fit in region r1\n[^ \n]*?ld[^:\n]*?: region r1 overflowed by 16 bytes\Z
+# error: \A[^ \n]*?ld[^:\n]*?: [^\n]*?section \`.text' will not fit in region `r1'\n[^ \n]*?ld[^:\n]*?: region `r1' overflowed by 16 bytes\Z
 
 Discarded input sections
 #...

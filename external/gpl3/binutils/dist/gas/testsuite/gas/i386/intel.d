@@ -142,7 +142,7 @@ Disassembly of section .text:
 [ 	]*[a-f0-9]+:	8d 90 90 90 90 90 [ 	]*lea    -0x6f6f6f70\(%eax\),%edx
 [ 	]*[a-f0-9]+:	8e 90 90 90 90 90 [ 	]*mov    -0x6f6f6f70\(%eax\),%ss
 [ 	]*[a-f0-9]+:	8f 80 90 90 90 90 [ 	]*popl   -0x6f6f6f70\(%eax\)
-[ 	]*[a-f0-9]+:	90 [ 	]*nop    
+[ 	]*[a-f0-9]+:	90 [ 	]*nop
 [ 	]*[a-f0-9]+:	91 [ 	]*xchg   %eax,%ecx
 [ 	]*[a-f0-9]+:	92 [ 	]*xchg   %eax,%edx
 [ 	]*[a-f0-9]+:	93 [ 	]*xchg   %eax,%ebx
@@ -257,7 +257,7 @@ Disassembly of section .text:
 [ 	]*[a-f0-9]+:	0f 06 [ 	]*clts   
 [ 	]*[a-f0-9]+:	0f 08 [ 	]*invd   
 [ 	]*[a-f0-9]+:	0f 09 [ 	]*wbinvd 
-[ 	]*[a-f0-9]+:	0f 0b [ 	]*ud2a   
+[ 	]*[a-f0-9]+:	0f 0b [ 	]*ud2    
 [ 	]*[a-f0-9]+:	0f 20 d0 [ 	]*mov    %cr2,%eax
 [ 	]*[a-f0-9]+:	0f 21 d0 [ 	]*mov    %db2,%eax
 [ 	]*[a-f0-9]+:	0f 22 d0 [ 	]*mov    %eax,%cr2
@@ -360,7 +360,7 @@ Disassembly of section .text:
 [ 	]*[a-f0-9]+:	0f b5 90 90 90 90 90 [ 	]*lgs    -0x6f6f6f70\(%eax\),%edx
 [ 	]*[a-f0-9]+:	0f b6 90 90 90 90 90 [ 	]*movzbl -0x6f6f6f70\(%eax\),%edx
 [ 	]*[a-f0-9]+:	0f b7 90 90 90 90 90 [ 	]*movzwl -0x6f6f6f70\(%eax\),%edx
-[ 	]*[a-f0-9]+:	0f b9 [ 	]*ud2b   
+[ 	]*[a-f0-9]+:	0f b9 [ 	]*ud1    
 [ 	]*[a-f0-9]+:	0f bb 90 90 90 90 90 [ 	]*btc    %edx,-0x6f6f6f70\(%eax\)
 [ 	]*[a-f0-9]+:	0f bc 90 90 90 90 90 [ 	]*bsf    -0x6f6f6f70\(%eax\),%edx
 [ 	]*[a-f0-9]+:	0f bd 90 90 90 90 90 [ 	]*bsr    -0x6f6f6f70\(%eax\),%edx
@@ -694,4 +694,8 @@ Disassembly of section .text:
 [ 	]*[a-f0-9]+:	de e3                	fsubp  %st,%st\(3\)
 [ 	]*[a-f0-9]+:	de 3b                	fidivr \(%ebx\)
 [ 	]*[a-f0-9]+:	da 3b                	fidivrl \(%ebx\)
+[ 	]*[a-f0-9]+:	0f 4a 90 90 90 90 90 	cmovp  -0x6f6f6f70\(%eax\),%edx
+[ 	]*[a-f0-9]+:	0f 4b 90 90 90 90 90 	cmovnp -0x6f6f6f70\(%eax\),%edx
+[ 	]*[a-f0-9]+:	66 0f 4a 90 90 90 90 90 	cmovp  -0x6f6f6f70\(%eax\),%dx
+[ 	]*[a-f0-9]+:	66 0f 4b 90 90 90 90 90 	cmovnp -0x6f6f6f70\(%eax\),%dx
 #pass

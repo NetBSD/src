@@ -1,4 +1,4 @@
-	TFLAG_C = 1
+	TFLAG_C == 1
 
 	.macro	check
 	.if	(0 & TFLAG_C)

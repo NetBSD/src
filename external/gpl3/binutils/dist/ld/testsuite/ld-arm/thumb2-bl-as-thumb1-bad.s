@@ -12,7 +12,7 @@
 _start:
 	bl bar
 
-@ We will place the section .foo at 0x40100c.
+@ We will place the section .foo at 0x100100c.
 
 	.section .foo, "xa"
 	.thumb_func

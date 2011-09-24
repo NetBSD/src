@@ -47,7 +47,7 @@ fi
 cat <<EOF
 ${LIB_SEARCH_DIRS}
 
-ENTRY(_mainCRTStartup)
+${RELOCATING+ENTRY (_mainCRTStartup)}
 
 SECTIONS
 {
@@ -56,6 +56,7 @@ SECTIONS
     ${RELOCATING+ *(.init)}
     *(.text)
     ${R_TEXT}
+    ${RELOCATING+ *(.text.*)}
     *(.glue_7t)
     *(.glue_7)
     ${CONSTRUCTING+ ___CTOR_LIST__ = .; __CTOR_LIST__ = . ; 

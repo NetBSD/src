@@ -1,3 +1,41 @@
+2010-09-06  Pedro Alves  <pedro@codesourcery.com>
+
+	* signals.def: Replace all ANY uses by SET with specific numbers.
+	* signals.h (ANY): Remove.
+
+2010-07-31  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* signals.h (enum target_signal): Move the content to signals.def.
+	Include it.
+	* signals.def: New file.
+
+2010-06-24  Kevin Buettner  <kevinb@redhat.com>
+
+	* sim-rx.h (sim_rx_regnum): Add sim_rx_acc_regnum.  Adjust
+	register order.
+
+2010-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* callback.h: Strip PARAMS from prototypes.
+	* remote-sim.h: Likewise.
+
+2010-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* remote-sim.h (sim_write): Add const to buf arg.
+
+2009-11-24  DJ Delorie  <dj@redhat.com>
+
+	* sim-rx.h: New.
+
+2009-05-18  Jon Beniston <jon@beniston.com>
+
+        * sim-lm32.h: New file.
+
+2009-01-07  Hans-Peter Nilsson  <hp@axis.com>
+
+	* callback.h (struct host_callback_struct): Mark member error as
+	pointing to a noreturn function.
+
 2008-02-12  M Ranga Swami Reddy <MR.Swami.Reddy@nsc.com>
 
 	* sim-cr16.h: New file.

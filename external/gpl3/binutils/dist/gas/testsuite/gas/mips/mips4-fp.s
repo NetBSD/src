@@ -3,9 +3,7 @@
 text_label:	
 	bc1f	text_label
 	bc1f	$fcc1,text_label
-	bc1fl	$fcc1,text_label
 	bc1t	$fcc1,text_label
-	bc1tl	$fcc2,text_label
 	c.f.d	$f4,$f6
 	c.f.d	$fcc1,$f4,$f6
 	ldxc1	$f2,$4($5)

@@ -29,9 +29,6 @@ Disassembly of section .text:
 .*:	eb 96 5f ff 00 3e [ 	]*cdsg	%r9,%r6,4095\(%r5\)
 .*:	b3 a4 00 96 [ 	]*cegbr	%f9,%r6
 .*:	b3 c4 00 96 [ 	]*cegr	%f9,%r6
-.*:	b3 b9 90 65 [	 ]*cfdr	%r6,9,%f5
-.*:	b3 b8 90 65 [	 ]*cfer	%r6,9,%f5
-.*:	b3 ba 90 65 [	 ]*cfxr	%r6,9,%f5
 .*:	e3 95 af ff 00 20 [ 	]*cg	%r9,4095\(%r5,%r10\)
 .*:	b3 a9 f0 65 [ 	]*cgdbr	%r6,15,%f5
 .*:	b3 c9 f0 65 [ 	]*cgdr	%r6,15,%f5
@@ -149,4 +146,4 @@ Disassembly of section .text:
 .*:	eb 96 5f ff 00 0f [ 	]*tracg	%r9,%r6,4095\(%r5\)
 .*:	e3 95 af ff 00 82 [ 	]*xg	%r9,4095\(%r5,%r10\)
 .*:	b9 82 00 96 [ 	]*xgr	%r9,%r6
-.*:	07 07 [	 ]*bcr	0,%r7
+.*:	07 07 [	 ]*nopr	%r7

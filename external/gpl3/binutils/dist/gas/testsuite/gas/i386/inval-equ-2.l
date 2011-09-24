@@ -1,7 +1,7 @@
 .*: Assembler messages:
-.*:8: Error: .*
-.*:8: Error: .*
-.*:8: Error: .*
+.*: Error: .*
+.*: Error: .*
+.*: Error: .*
 GAS LISTING .*
 
 

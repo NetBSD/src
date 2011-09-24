@@ -238,11 +238,6 @@
 2003-12-03  Alexandre Oliva  <aoliva@redhat.com>
 
 	* config/tc-sh.c: Add support for sh4a and no-fpu variants.
-	* testsuite/gas/sh/basic.exp: Call tests for sh4a.
-	* testsuite/gas/sh/{err-sh4a-fp.s, err-sh4a.s,
-	err-sh4al-dsp.s, sh4a-dsp.d, sh4a-dsp.s, sh4a-fp.d,
-	sh4a-fp.s, sh4a.d, sh4a.s, sh4al-dsp.d, sh4al-dsp.s:
-	New files, tests for sh4a and related variants.
 
 2003-12-05  Michael Snyder  <msnyder@redhat.com>
 
@@ -2013,8 +2008,6 @@
 	(dot_cfi): Ditto.
 	(cfi_get_label): Add 'simple' modifier to .cfi_startproc.
 	(dot_cfi_endproc): Reuse already emitted CIEs.
-	* testsuite/gas/cfi/cfi-i386.d: New pattern.
-	* testsuite/gas/cfi/cfi-x86-64.d: Ditto.
 
 2003-05-20  Nick Clifton  <nickc@redhat.com>
 
@@ -3106,7 +3099,6 @@
 	* config/tc-w65.h: Likewise.
 	* config/tc-z8k.c: Likewise.
 	* config/tc-z8k.h: Likewise.
-	* testsuite/gas/h8300/cmpsi2.s: Likewise.
 
 2002-12-16  Alan Modra  <amodra@bigpond.net.au>
 

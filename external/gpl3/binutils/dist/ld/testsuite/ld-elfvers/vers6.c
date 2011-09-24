@@ -3,6 +3,7 @@
  * that we always get the right one.
  */
 #include <stdio.h>
+#include "vers.h"
 
 extern int foo_1();
 extern int foo_2();
@@ -19,7 +20,7 @@ main()
   return 0;
 }
 
-__asm__(".symver foo_1,show_foo@");
-__asm__(".symver foo_2,show_foo@VERS_1.1");
-__asm__(".symver foo_3,show_foo@VERS_1.2");
-__asm__(".symver foo_4,show_foo@VERS_2.0");
+SYMVER(foo_1, show_foo@);
+SYMVER(foo_2, show_foo@VERS_1.1);
+SYMVER(foo_3, show_foo@VERS_1.2);
+SYMVER(foo_4, show_foo@VERS_2.0);

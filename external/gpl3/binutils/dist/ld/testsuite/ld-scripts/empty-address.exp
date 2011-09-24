@@ -1,6 +1,6 @@
 # Make sure that "dot" is updated for empty sections if their addresses
 # are set.
-#   Copyright 2006, 2007
+#   Copyright 2006, 2007, 2009
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -19,6 +19,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
 # MA 02110-1301, USA.
+
+if [istarget "x86_64-*-mingw*"] then {
+  set LDFLAGS "$LDFLAGS --image-base 0"
+}
 
 run_dump_test empty-address-1
 run_dump_test empty-address-2a

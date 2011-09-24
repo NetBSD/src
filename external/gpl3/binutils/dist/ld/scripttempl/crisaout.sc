@@ -1,7 +1,7 @@
 cat <<EOF
 OUTPUT_FORMAT("a.out-cris")
 OUTPUT_ARCH(cris)
-ENTRY(__start)
+${RELOCATING+ENTRY (__start)}
 SECTIONS
 {
   .text ${RELOCATING+ ${TEXT_START_ADDR}}:

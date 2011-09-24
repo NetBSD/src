@@ -1,12 +1,13 @@
 /* pe.h  -  PE COFF header information 
 
-   Copyright 1999, 2000, 2001, 2003, 2004, 2006 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2003, 2004, 2005, 2006, 2007, 2009, 2010
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
+   the Free Software Foundation; either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -37,6 +38,17 @@
 #define IMAGE_FILE_DLL                       0x2000
 #define IMAGE_FILE_UP_SYSTEM_ONLY            0x4000
 #define IMAGE_FILE_BYTES_REVERSED_HI         0x8000
+
+/* DllCharacteristics flag bits.  The inconsistent naming may seem
+   odd, but that is how they are defined in the PE specification.  */
+#define IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE          0x0040
+#define IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY       0x0080
+#define IMAGE_DLL_CHARACTERISTICS_NX_COMPAT             0x0100
+#define IMAGE_DLLCHARACTERISTICS_NO_ISOLATION           0x0200
+#define IMAGE_DLLCHARACTERISTICS_NO_SEH                 0x0400
+#define IMAGE_DLLCHARACTERISTICS_NO_BIND                0x0800
+#define IMAGE_DLLCHARACTERISTICS_WDM_DRIVER             0x2000
+#define IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE  0x8000
 
 /* Additional flags to be set for section headers to allow the NT loader to
    read and write to the section data (to replace the addresses of data in
@@ -150,7 +162,7 @@
 #define IMAGE_SUBSYSTEM_EFI_APPLICATION		10
 #define IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER	11
 #define IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER	12
-#define IMAGE_SUBSYSTEM_EFI_ROM			13
+#define IMAGE_SUBSYSTEM_SAL_RUNTIME_DRIVER	13
 #define IMAGE_SUBSYSTEM_XBOX			14
   
 /* Magic values that are true for all dos/nt implementations.  */
@@ -346,5 +358,155 @@ typedef struct
 #define IMAGE_WEAK_EXTERN_SEARCH_NOLIBRARY	1
 #define IMAGE_WEAK_EXTERN_SEARCH_LIBRARY	2
 #define IMAGE_WEAK_EXTERN_SEARCH_ALIAS		3
+
+/* .pdata/.xdata defines and structures for x64 PE+ for exception handling.  */
+
+/* .pdata in exception directory.  */
+
+struct pex64_runtime_function
+{
+  bfd_vma rva_BeginAddress;
+  bfd_vma rva_EndAddress;
+  bfd_vma rva_UnwindData;
+  unsigned int isChained : 1;
+};
+
+struct external_pex64_runtime_function
+{
+  bfd_byte rva_BeginAddress[4];
+  bfd_byte rva_EndAddress[4];
+  bfd_byte rva_UnwindData[4];
+};
+
+/* If the lowest significant bit is set for rva_UnwindData RVA, it
+   means that the unified RVA points to another pex64_runtime_function
+   that this entry shares the unwind_info block with.  */
+#define PEX64_IS_RUNTIME_FUNCTION_CHAINED(PTR_RTF) \
+  (((PTR_RTF)->rva_UnwindData & 1) != 0)
+#define PEX64_GET_UNWINDDATA_UNIFIED_RVA(PTR_RTF) \
+  ((PTR_RTF)->rva_UnwindData & ~1)
+
+/* The unwind codes.  */
+#define UWOP_PUSH_NONVOL      0
+#define UWOP_ALLOC_LARGE      1
+#define UWOP_ALLOC_SMALL      2
+#define UWOP_SET_FPREG	      3
+#define UWOP_SAVE_NONVOL      4
+#define UWOP_SAVE_NONVOL_FAR  5
+#define UWOP_SAVE_XMM	      6
+#define UWOP_SAVE_XMM_FAR     7
+#define UWOP_SAVE_XMM128      8
+#define UWOP_SAVE_XMM128_FAR  9
+#define UWOP_PUSH_MACHFRAME   10
+
+struct pex64_unwind_code
+{
+  bfd_vma prologue_offset;
+  /* Contains Frame offset, or frame allocation size.  */
+  bfd_vma frame_addr;
+  unsigned int uwop_code : 4;
+  /* xmm, mm, or standard register from 0 - 15.  */
+  unsigned int reg : 4;
+  /* Used for UWOP_PUSH_MACHFRAME to indicate optional errorcode stack
+     argument.  */
+  unsigned int has_errorcode : 1;
+};
+
+struct external_pex64_unwind_code
+{
+  bfd_byte dta[2];
+};
+
+#define PEX64_UNWCODE_CODE(VAL)	((VAL) & 0xf)
+#define PEX64_UNWCODE_INFO(VAL) (((VAL) >> 4) & 0xf)
+
+/* The unwind info.  */
+#define UNW_FLAG_NHANDLER     0
+#define UNW_FLAG_EHANDLER     1
+#define UNW_FLAG_UHANDLER     2
+#define UNW_FLAG_FHANDLER     3
+#define UNW_FLAG_CHAININFO    4
+
+#define UNW_FLAG_MASK	      0x1f
+
+struct pex64_unwind_info
+{
+  bfd_vma SizeOfBlock;
+  bfd_byte Version; /* Values from 0 up to 7 are possible.  */
+  bfd_byte Flags; /* Values from 0 up to 31 are possible.  */
+  bfd_vma SizeOfPrologue;
+  bfd_vma CountOfCodes; /* Amount of pex64_unwind_code elements.  */
+  /* 0 = CFA, 1..15 are index of integer registers.  */
+  unsigned int FrameRegister : 4;
+  bfd_vma FrameOffset;
+  bfd_vma sizeofUnwindCodes;
+  bfd_byte *rawUnwindCodes;
+  /* Valid for UNW_FLAG_EHANDLER and UNW_FLAG_UHANDLER.  */
+  bfd_vma CountOfScopes;
+  bfd_byte *rawScopeEntries;
+  bfd_vma rva_ExceptionHandler; /* UNW_EHANDLER.  */
+  bfd_vma rva_TerminationHandler; /* UNW_FLAG_UHANDLER.  */
+  bfd_vma rva_FrameHandler; /* UNW_FLAG_FHANDLER.  */
+  bfd_vma FrameHandlerArgument; /* UNW_FLAG_FHANDLER.  */
+  bfd_vma rva_FunctionEntry; /* UNW_FLAG_CHAININFO.  */
+};
+
+struct external_pex64_unwind_info
+{
+  bfd_byte Version_Flags;
+  bfd_byte SizeOfPrologue;
+  bfd_byte CountOfCodes;
+  bfd_byte FrameRegisterOffset;
+  /* external_pex64_unwind_code array.  */
+  /* bfd_byte handler[4];  */
+  /* Optional language specific data.  */
+};
+
+struct external_pex64_scope
+{
+  bfd_vma Count;
+};
+
+struct pex64_scope
+{
+  bfd_byte Count[4];
+};
+
+struct pex64_scope_entry
+{
+  bfd_vma rva_BeginAddress;
+  bfd_vma rva_EndAddress;
+  bfd_vma rva_HandlerAddress;
+  bfd_vma rva_JumpAddress;
+};
+#define PEX64_SCOPE_ENTRY_SIZE	16
+
+struct external_pex64_scope_entry
+{
+  bfd_byte rva_BeginAddress[4];
+  bfd_byte rva_EndAddress[4];
+  bfd_byte rva_HandlerAddress[4];
+  bfd_byte rva_JumpAddress[4];
+};
+
+#define PEX64_UWI_VERSION(VAL)	((VAL) & 7)
+#define PEX64_UWI_FLAGS(VAL)	(((VAL) >> 3) & 0x1f)
+#define PEX64_UWI_FRAMEREG(VAL)	((VAL) & 0xf)
+#define PEX64_UWI_FRAMEOFF(VAL)	(((VAL) >> 4) & 0xf)
+#define PEX64_UWI_SIZEOF_UWCODE_ARRAY(VAL) \
+  ((((VAL) + 1) & ~1) * 2)
+
+#define PEX64_OFFSET_TO_UNWIND_CODE 0x4
+
+#define PEX64_OFFSET_TO_HANDLER_RVA (COUNTOFUNWINDCODES) \
+  (PEX64_OFFSET_TO_UNWIND_CODE + \
+   PEX64_UWI_SIZEOF_UWCODE_ARRAY(COUNTOFUNWINDCODES))
+
+#define PEX64_OFFSET_TO_SCOPE_COUNT(COUNTOFUNWINDCODES) \
+  (PEX64_OFFSET_TO_HANDLER_RVA(COUNTOFUNWINDCODES) + 4)
+
+#define PEX64_SCOPE_ENTRY(COUNTOFUNWINDCODES, IDX) \
+  (PEX64_OFFSET_TO_SCOPE_COUNT(COUNTOFUNWINDCODES) + \
+   PEX64_SCOPE_ENTRY_SIZE * (IDX))
 
 #endif /* _PE_H */

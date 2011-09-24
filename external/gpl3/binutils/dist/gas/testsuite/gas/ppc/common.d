@@ -13,10 +13,10 @@ Disassembly of section \.text:
    8:	7d cd 78 78 	andc    r13,r14,r15
    c:	7e 30 90 79 	andc.   r16,r17,r18
   10:	48 00 00 02 	ba      0 <start>
-  14:	40 01 00 00 	bdnzf-  gt,14 <start\+0x14>
-  18:	40 85 00 02 	blea-   cr1,0 <start>
-  1c:	40 43 00 01 	bdzfl-  so,1c <start\+0x1c>
-  20:	41 47 00 03 	bdztla- 4\*cr1\+so,0 <start>
+  14:	40 01 00 00 	bdnzf-  1,14 <start\+0x14>
+  18:	40 85 00 02 	blea-   1,0 <start>
+  1c:	40 43 00 01 	bdzfl-  3,1c <start\+0x1c>
+  20:	41 47 00 03 	bdztla- 7,0 <start>
   24:	4e 80 04 20 	bctr
   28:	4e 80 04 21 	bctrl
   2c:	42 40 00 02 	bdza-   0 <start>
@@ -24,62 +24,62 @@ Disassembly of section \.text:
   34:	42 40 00 03 	bdzla-  0 <start>
   38:	42 40 00 01 	bdzl-   38 <start\+0x38>
   3c:	41 82 00 00 	beq-    3c <start\+0x3c>
-  40:	41 8a 00 02 	beqa-   cr2,0 <start>
-  44:	41 86 00 01 	beql-   cr1,44 <start\+0x44>
-  48:	41 8e 00 03 	beqla-  cr3,0 <start>
+  40:	41 8a 00 02 	beqa-   2,0 <start>
+  44:	41 86 00 01 	beql-   1,44 <start\+0x44>
+  48:	41 8e 00 03 	beqla-  3,0 <start>
   4c:	40 80 00 00 	bge-    4c <start\+0x4c>
-  50:	40 90 00 02 	bgea-   cr4,0 <start>
-  54:	40 88 00 01 	bgel-   cr2,54 <start\+0x54>
-  58:	40 98 00 03 	bgela-  cr6,0 <start>
-  5c:	41 91 00 00 	bgt-    cr4,5c <start\+0x5c>
-  60:	41 99 00 02 	bgta-   cr6,0 <start>
-  64:	41 95 00 01 	bgtl-   cr5,64 <start\+0x64>
-  68:	41 9d 00 03 	bgtla-  cr7,0 <start>
+  50:	40 90 00 02 	bgea-   4,0 <start>
+  54:	40 88 00 01 	bgel-   2,54 <start\+0x54>
+  58:	40 98 00 03 	bgela-  6,0 <start>
+  5c:	41 91 00 00 	bgt-    4,5c <start\+0x5c>
+  60:	41 99 00 02 	bgta-   6,0 <start>
+  64:	41 95 00 01 	bgtl-   5,64 <start\+0x64>
+  68:	41 9d 00 03 	bgtla-  7,0 <start>
   6c:	48 00 00 00 	b       6c <start\+0x6c>
   70:	48 00 00 03 	bla     0 <start>
   74:	40 81 00 00 	ble-    74 <start\+0x74>
-  78:	40 91 00 02 	blea-   cr4,0 <start>
-  7c:	40 89 00 01 	blel-   cr2,7c <start\+0x7c>
-  80:	40 99 00 03 	blela-  cr6,0 <start>
+  78:	40 91 00 02 	blea-   4,0 <start>
+  7c:	40 89 00 01 	blel-   2,7c <start\+0x7c>
+  80:	40 99 00 03 	blela-  6,0 <start>
   84:	48 00 00 01 	bl      84 <start\+0x84>
   88:	41 80 00 00 	blt-    88 <start\+0x88>
-  8c:	41 88 00 02 	blta-   cr2,0 <start>
-  90:	41 84 00 01 	bltl-   cr1,90 <start\+0x90>
-  94:	41 8c 00 03 	bltla-  cr3,0 <start>
+  8c:	41 88 00 02 	blta-   2,0 <start>
+  90:	41 84 00 01 	bltl-   1,90 <start\+0x90>
+  94:	41 8c 00 03 	bltla-  3,0 <start>
   98:	40 82 00 00 	bne-    98 <start\+0x98>
-  9c:	40 8a 00 02 	bnea-   cr2,0 <start>
-  a0:	40 86 00 01 	bnel-   cr1,a0 <start\+0xa0>
-  a4:	40 8e 00 03 	bnela-  cr3,0 <start>
-  a8:	40 85 00 00 	ble-    cr1,a8 <start\+0xa8>
-  ac:	40 95 00 02 	blea-   cr5,0 <start>
-  b0:	40 8d 00 01 	blel-   cr3,b0 <start\+0xb0>
-  b4:	40 9d 00 03 	blela-  cr7,0 <start>
-  b8:	40 84 00 00 	bge-    cr1,b8 <start\+0xb8>
-  bc:	40 94 00 02 	bgea-   cr5,0 <start>
-  c0:	40 8c 00 01 	bgel-   cr3,c0 <start\+0xc0>
-  c4:	40 9c 00 03 	bgela-  cr7,0 <start>
-  c8:	40 93 00 00 	bns-    cr4,c8 <start\+0xc8>
-  cc:	40 9b 00 02 	bnsa-   cr6,0 <start>
-  d0:	40 97 00 01 	bnsl-   cr5,d0 <start\+0xd0>
-  d4:	40 9f 00 03 	bnsla-  cr7,0 <start>
-  d8:	41 93 00 00 	bso-    cr4,d8 <start\+0xd8>
-  dc:	41 9b 00 02 	bsoa-   cr6,0 <start>
-  e0:	41 97 00 01 	bsol-   cr5,e0 <start\+0xe0>
-  e4:	41 9f 00 03 	bsola-  cr7,0 <start>
-  e8:	4c 85 32 02 	crand   4\*cr1\+lt,4\*cr1\+gt,4\*cr1\+eq
-  ec:	4c 64 29 02 	crandc  so,4\*cr1\+lt,4\*cr1\+gt
-  f0:	4c e0 0a 42 	creqv   4\*cr1\+so,lt,gt
-  f4:	4c 22 19 c2 	crnand  gt,eq,so
-  f8:	4c 01 10 42 	crnor   lt,gt,eq
-  fc:	4c a6 3b 82 	cror    4\*cr1\+gt,4\*cr1\+eq,4\*cr1\+so
- 100:	4c 43 23 42 	crorc   eq,so,4\*cr1\+lt
- 104:	4c c7 01 82 	crxor   4\*cr1\+eq,4\*cr1\+so,lt
+  9c:	40 8a 00 02 	bnea-   2,0 <start>
+  a0:	40 86 00 01 	bnel-   1,a0 <start\+0xa0>
+  a4:	40 8e 00 03 	bnela-  3,0 <start>
+  a8:	40 85 00 00 	ble-    1,a8 <start\+0xa8>
+  ac:	40 95 00 02 	blea-   5,0 <start>
+  b0:	40 8d 00 01 	blel-   3,b0 <start\+0xb0>
+  b4:	40 9d 00 03 	blela-  7,0 <start>
+  b8:	40 84 00 00 	bge-    1,b8 <start\+0xb8>
+  bc:	40 94 00 02 	bgea-   5,0 <start>
+  c0:	40 8c 00 01 	bgel-   3,c0 <start\+0xc0>
+  c4:	40 9c 00 03 	bgela-  7,0 <start>
+  c8:	40 93 00 00 	bns-    4,c8 <start\+0xc8>
+  cc:	40 9b 00 02 	bnsa-   6,0 <start>
+  d0:	40 97 00 01 	bnsl-   5,d0 <start\+0xd0>
+  d4:	40 9f 00 03 	bnsla-  7,0 <start>
+  d8:	41 93 00 00 	bso-    4,d8 <start\+0xd8>
+  dc:	41 9b 00 02 	bsoa-   6,0 <start>
+  e0:	41 97 00 01 	bsol-   5,e0 <start\+0xe0>
+  e4:	41 9f 00 03 	bsola-  7,0 <start>
+  e8:	4c 85 32 02 	crand   4,5,6
+  ec:	4c 64 29 02 	crandc  3,4,5
+  f0:	4c e0 0a 42 	creqv   7,0,1
+  f4:	4c 22 19 c2 	crnand  1,2,3
+  f8:	4c 01 10 42 	crnor   0,1,2
+  fc:	4c a6 3b 82 	cror    5,6,7
+ 100:	4c 43 23 42 	crorc   2,3,4
+ 104:	4c c7 01 82 	crxor   6,7,0
  108:	7d 6a 62 39 	eqv.    r10,r11,r12
  10c:	7d 6a 62 38 	eqv     r10,r11,r12
  110:	fe a0 fa 11 	fabs.   f21,f31
  114:	fe a0 fa 10 	fabs    f21,f31
- 118:	fd 8a 58 40 	fcmpo   cr3,f10,f11
- 11c:	fd 84 28 00 	fcmpu   cr3,f4,f5
+ 118:	fd 8a 58 40 	fcmpo   3,f10,f11
+ 11c:	fd 84 28 00 	fcmpu   3,f4,f5
  120:	fc 60 20 91 	fmr.    f3,f4
  124:	fc 60 20 90 	fmr     f3,f4
  128:	fe 80 f1 11 	fnabs.  f20,f30
@@ -109,9 +109,9 @@ Disassembly of section \.text:
  188:	a5 c1 00 02 	lhzu    r14,2\(r1\)
  18c:	7e 96 c2 6e 	lhzux   r20,r22,r24
  190:	7e f8 ca 2e 	lhzx    r23,r24,r25
- 194:	4c 04 00 00 	mcrf    cr0,cr1
- 198:	fd 90 00 80 	mcrfs   cr3,cr4
- 19c:	7d 80 04 00 	mcrxr   cr3
+ 194:	4c 04 00 00 	mcrf    0,1
+ 198:	fd 90 00 80 	mcrfs   3,4
+ 19c:	7d 80 04 00 	mcrxr   3
  1a0:	7c 60 00 26 	mfcr    r3
  1a4:	7c 69 02 a6 	mfctr   r3
  1a8:	7c b3 02 a6 	mfdar   r5
@@ -136,10 +136,10 @@ Disassembly of section \.text:
  1f4:	7e b3 03 a6 	mtdar   r21
  1f8:	7f 16 03 a6 	mtdec   r24
  1fc:	7e 92 03 a6 	mtdsisr r20
- 200:	fc 60 00 8d 	mtfsb0. so
- 204:	fc 60 00 8c 	mtfsb0  so
- 208:	fc 60 00 4d 	mtfsb1. so
- 20c:	fc 60 00 4c 	mtfsb1  so
+ 200:	fc 60 00 8d 	mtfsb0. 3
+ 204:	fc 60 00 8c 	mtfsb0  3
+ 208:	fc 60 00 4d 	mtfsb1. 3
+ 20c:	fc 60 00 4c 	mtfsb1  3
  210:	fc 0c 55 8e 	mtfsf   6,f10
  214:	fc 0c 5d 8f 	mtfsf.  6,f11
  218:	ff 00 01 0c 	mtfsfi  6,0

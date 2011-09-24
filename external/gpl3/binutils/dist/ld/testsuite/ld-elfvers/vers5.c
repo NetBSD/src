@@ -2,6 +2,8 @@
  * Testcase to verify that foo@BAR and foo@@BAR are correctly detected
  * as a multiply defined symbol.
  */
+#include "vers.h"
+
 const char * bar1 = "asdf";
 const char * bar2 = "asdf";
 
@@ -39,10 +41,10 @@ new_foo()
 
 }
 
-__asm__(".symver original_foo,foo@");
-__asm__(".symver old_foo,foo@VERS_1.1");
-__asm__(".symver old_foo1,foo@VERS_1.2");
-__asm__(".symver new_foo,foo@@VERS_1.2");
+SYMVER(original_foo, foo@);
+SYMVER(old_foo, foo@VERS_1.1);
+SYMVER(old_foo1, foo@VERS_1.2);
+SYMVER(new_foo, foo@@VERS_1.2);
 
 int
 main ()

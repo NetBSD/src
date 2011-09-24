@@ -1,6 +1,6 @@
 # Test weak symbols.
 # By Ian Lance Taylor, Cygnus Solutions.
-#   Copyright 1999, 2000, 2002, 2004, 2006, 2007
+#   Copyright 1999, 2000, 2002, 2004, 2005, 2006, 2007, 2009
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -32,7 +32,7 @@ if {! [is_elf_format] && ! [is_pecoff_format]} {
 # Weak symbols are broken for non-i386 PE targets.
 if {! [istarget i?86-*-*]} {
     setup_xfail *-*-pe*
-    setup_xfail x86_64-*-mingw*
+    setup_xfail x86_64-*-pe*
 }
 
 # hppa64 and or32 are incredibly broken

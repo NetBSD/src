@@ -19,16 +19,9 @@ text_label:
 	bgt	$0,$5,text_label
 	bgt	$4,0,text_label
 
-# Sanity test bgel and bgtl
-	.set	mips2
-	bgel	$4,$5,text_label
-	bgtl	$4,$5,text_label
-
 # Branch to an external label.
 	bge	$4,$5,external_label
 	bgt	$4,$5,external_label
-	bgel	$4,$5,external_label
-	bgtl	$4,$5,external_label
 
 # Round to a 16 byte boundary, for ease in testing multiple targets.
 	nop

@@ -1,6 +1,6 @@
 /* This is the Assembler Pre-Processor
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2006, 2007
+   1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2008, 2009, 2010
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -258,7 +258,7 @@ app_push (void)
     saved->saved_input = NULL;
   else
     {
-      saved->saved_input = xmalloc (saved_input_len);
+      saved->saved_input = (char *) xmalloc (saved_input_len);
       memcpy (saved->saved_input, saved_input, saved_input_len);
       saved->saved_input_len = saved_input_len;
     }
@@ -294,7 +294,7 @@ app_pop (char *arg)
     saved_input = NULL;
   else
     {
-      assert (saved->saved_input_len <= (int) (sizeof input_buffer));
+      gas_assert (saved->saved_input_len <= (int) (sizeof input_buffer));
       memcpy (input_buffer, saved->saved_input, saved->saved_input_len);
       saved_input = input_buffer;
       saved_input_len = saved->saved_input_len;
@@ -384,11 +384,11 @@ do_scrub_chars (int (*get) (char *, int), char *tostart, int tolen)
 	 13: After seeing a vertical bar, looking for a second
 	     vertical bar as a parallel expression separator.
 #endif
-#ifdef TC_IA64
-	 14: After seeing a `(' at state 0, looking for a `)' as
-	     predicate.
-	 15: After seeing a `(' at state 1, looking for a `)' as
-	     predicate.
+#ifdef TC_PREDICATE_START_CHAR
+	 14: After seeing a predicate start character at state 0, looking
+	     for a predicate end character as predicate.
+	 15: After seeing a predicate start character at state 1, looking
+	     for a predicate end character as predicate.
 #endif
 #ifdef TC_Z80
 	 16: After seeing an 'a' or an 'A' at the start of a symbol
@@ -667,6 +667,16 @@ do_scrub_chars (int (*get) (char *, int), char *tostart, int tolen)
 	     line from just after the first white space.  */
 	  state = 1;
 	  PUT ('|');
+#ifdef TC_TIC6X
+	  /* "||^" is used for SPMASKed instructions.  */
+	  ch = GET ();
+	  if (ch == EOF)
+	    goto fromeof;
+	  else if (ch == '^')
+	    PUT ('^');
+	  else
+	    UNGET (ch);
+#endif
 	  continue;
 #endif
 #ifdef TC_Z80
@@ -702,8 +712,8 @@ do_scrub_chars (int (*get) (char *, int), char *tostart, int tolen)
       /* flushchar: */
       ch = GET ();
 
-#ifdef TC_IA64
-      if (ch == '(' && (state == 0 || state == 1))
+#ifdef TC_PREDICATE_START_CHAR
+      if (ch == TC_PREDICATE_START_CHAR && (state == 0 || state == 1))
 	{
 	  state += 14;
 	  PUT (ch);
@@ -711,7 +721,7 @@ do_scrub_chars (int (*get) (char *, int), char *tostart, int tolen)
 	}
       else if (state == 14 || state == 15)
 	{
-	  if (ch == ')')
+	  if (ch == TC_PREDICATE_END_CHAR)
 	    {
 	      state -= 14;
 	      PUT (ch);
@@ -905,7 +915,11 @@ do_scrub_chars (int (*get) (char *, int), char *tostart, int tolen)
 	      PUT (' ');
 	      break;
 	    case 3:
+#ifndef TC_KEEP_OPERAND_SPACES
+	      /* For TI C6X, we keep these spaces as they may separate
+		 functional unit specifiers from operands.  */
 	      if (scrub_m68k_mri)
+#endif
 		{
 		  /* In MRI mode, we keep these spaces.  */
 		  UNGET (ch);
@@ -915,7 +929,9 @@ do_scrub_chars (int (*get) (char *, int), char *tostart, int tolen)
 	      goto recycle;	/* Sp in operands */
 	    case 9:
 	    case 10:
+#ifndef TC_KEEP_OPERAND_SPACES
 	      if (scrub_m68k_mri)
+#endif
 		{
 		  /* In MRI mode, we keep these spaces.  */
 		  state = 3;

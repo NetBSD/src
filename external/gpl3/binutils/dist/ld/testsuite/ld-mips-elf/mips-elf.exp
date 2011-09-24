@@ -1,5 +1,6 @@
 # Expect script for MIPS ELF linker tests
-#   Copyright 2002, 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+#   Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008
+#   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -60,18 +61,21 @@ if { $linux_gnu } {
     run_ld_link_tests [list \
 	[list "Dummy shared library for MIPS16 PIC test 1" \
 	      "-shared -melf32btsmip" \
-	      "-EB -32" { mips16-pic-1-dummy.s } \
+	      "-EB -32 -mips1" \
+	      { mips16-pic-1-dummy.s } \
 	      {} \
 	      "mips16-pic-1-dummy.so"] \
 	[list "MIPS16 PIC test 1" \
 	      "-melf32btsmip -T mips16-pic-1.ld tmpdir/mips16-pic-1-dummy.so" \
-	      "-EB -32 -I $srcdir/$subdir" { mips16-pic-1a.s mips16-pic-1b.s } \
+	      "-EB -32 -mips1 -I $srcdir/$subdir" \
+	      { mips16-pic-1a.s mips16-pic-1b.s } \
 	      { { objdump { -dr -j.text } mips16-pic-1.dd }
 		{ readelf -A mips16-pic-1.gd } } \
 	      "mips16-pic-1"] \
 	[list "MIPS16 PIC test 2" \
 	      "-melf32btsmip -T mips16-pic-1.ld -shared" \
-	      "-EB -32 -I $srcdir/$subdir" { mips16-pic-2a.s mips16-pic-2b.s } \
+	      "-EB -32 -mips1 -I $srcdir/$subdir" \
+	      { mips16-pic-2a.s mips16-pic-2b.s } \
 	      { { objdump { -dr -j.text } mips16-pic-2.dd } \
 		{ readelf -A mips16-pic-2.gd } \
 	        { readelf --symbols mips16-pic-2.nd } \
@@ -80,21 +84,24 @@ if { $linux_gnu } {
 	     "mips16-pic-2"] \
 	[list "MIPS16 PIC test 3" \
 	      "-melf32btsmip -T mips16-pic-1.ld tmpdir/mips16-pic-1-dummy.so" \
-	      "-EB -32 -I $srcdir/$subdir" { mips16-pic-3a.s mips16-pic-3b.s } \
+	      "-EB -32 -mips1 -I $srcdir/$subdir" \
+	      { mips16-pic-3a.s mips16-pic-3b.s } \
 	      { { objdump -dr mips16-pic-3.dd } \
 		{ readelf --relocs mips16-pic-3.rd } \
 		{ readelf -A mips16-pic-3.gd } } \
 	      "mips16-pic-3"] \
 	[list "MIPS16 PIC test 4 (shared library)" \
 	      "-shared -melf32btsmip -T mips16-pic-1.ld --version-script mips16-pic-4.ver" \
-	      "-EB -32" { mips16-pic-4a.s mips16-pic-4b.s } \
+	      "-EB -32 -mips1" \
+	      { mips16-pic-4a.s mips16-pic-4b.s } \
 	      { { objdump -dr mips16-pic-4a.dd } \
 		{ readelf --symbols mips16-pic-4a.nd } \
 		{ readelf -A mips16-pic-4a.gd } } \
 	      "mips16-pic-4.so"] \
 	[list "MIPS16 PIC test 4 (executable)" \
 	      "-melf32btsmip -T mips16-pic-1.ld tmpdir/mips16-pic-4.so" \
-	      "-EB -32" { mips16-pic-4c.s } \
+	      "-EB -32 -mips1" \
+	      { mips16-pic-4c.s } \
 	      { { objdump -dr mips16-pic-4b.dd } } \
 	      "mips16-pic-4"]]
 }
@@ -286,6 +293,18 @@ if {$has_newabi} {
 }
 run_dump_test "reloc-4"
 run_dump_test "reloc-5"
+if { $has_newabi } {
+    run_ld_link_tests {
+	{"reloc test 6a" "-shared"
+	 "-n32" "reloc-6a.s"
+	 {}
+	 "reloc-6a.so"}
+	{"reloc test 6b" "tmpdir/reloc-6a.so"
+	 "-n32" "reloc-6b.s"
+	 {}
+	 "reloc-6b"}
+    }
+}
 
 if {$has_newabi && $linux_gnu} {
     run_dump_test "eh-frame1-n32"
@@ -297,12 +316,25 @@ if {$embedded_elf} {
     run_dump_test "eh-frame3"
     run_dump_test "eh-frame4"
 }
+if {$linux_gnu} {
+    set eh_frame5_test {
+	{"MIPS eh-frame 5"
+	 "-melf32btsmip -shared -Teh-frame5.ld"
+	 "-32 -EB"
+	 {eh-frame5.s}
+	 {{readelf {--relocs -wf} eh-frame5.d}}
+	 "eh-frame5.so"}
+    }
+    run_ld_link_tests $eh_frame5_test
+}
 
 run_dump_test "jaloverflow"
 run_dump_test "jaloverflow-2"
 if {$has_newabi} {
     run_dump_test "jalbal"
 }
+
+run_dump_test "mode-change-error-1"
 
 run_dump_test "mips16-hilo"
 if {$has_newabi} {
@@ -501,4 +533,12 @@ if { $linux_gnu } {
 	  {readelf --relocs got-vers-1.rd}}
 	 "got-vers-1.so"}
     }
+}
+
+run_dump_test "undefined"
+
+# Test the conversion from jr to b
+if { $linux_gnu } {
+    run_dump_test "jr-to-b-1"
+    run_dump_test "jr-to-b-2"
 }

@@ -29,4 +29,4 @@ Disassembly of section .text:
 [ 	]*52: R_390_PLT32DBL	foo\+0x2
 [ 	]*...
 [ 	]*56: R_390_PLT64	foo\+0x6
-  5e:	07 07 [ 	]*bcr	0,%r7
+  5e:	07 07 [ 	]*nopr	%r7

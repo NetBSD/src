@@ -1,7 +1,7 @@
 #source: loadaddr.s
 #ld: -T loadaddr3.t -z max-page-size=0x200000
 #objdump: -t
-#target: *-*-linux*
+#target: *-*-linux* *-*-gnu*
 
 #...
 0+0000100 l    d  .text	0+0000000 .text

@@ -27,7 +27,7 @@ if { [istarget m68*-*-*] || [istarget fido*-*-*] } then {
 
     # Reloc types etc. need changing for aout and coff to pass.
     setup_xfail "*-*"
-    clear_xfail "*-*-*elf*" "*-*-sysv4*" "*-*-rtems" "*-*-*gnu*" "*-*-psos*"
+    clear_xfail "*-*-*elf*" "*-*-sysv4*" "*-*-rtems*" "*-*-*linux*" "*-*-*gnu*" "*-*-psos*"
     run_dump_test pcrel
 
     # Since fido is basically CPU32, it does not support those
@@ -69,8 +69,12 @@ if { [istarget m68*-*-*] || [istarget fido*-*-*] } then {
     run_dump_test ctrl-1
     run_dump_test ctrl-2
 
-    if { [istarget *-*-netbsd] } then {
+    gas_test_error "p11673.s" "-march=isab" "movel immediate with offset unsupported on isab"
+
+    if { [istarget *-*-*aout] || [istarget *-*-netbsd] || [istarget *-*-openbsd*] } then {
       run_dump_test p3041
+      run_dump_test p3041data
+      run_dump_test p3041pcrel
     }
 
     set testname "68000 operands"
@@ -86,6 +90,12 @@ if { [istarget m68*-*-*] || [istarget fido*-*-*] } then {
 	    pass $testname
 	}
     }
+
+    if { [istarget m68k-*-linux*] } then {
+      run_dump_test tls-gd-3
+    }
+
+    run_dump_test pr11676
 }
 if [info exists errorInfo] then {
     unset errorInfo

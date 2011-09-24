@@ -22,9 +22,8 @@ Disassembly of section \.plt:
 00043040 <foo@plt>:
 .*:	3c0f0008 	lui	t7,0x8
 .*:	8df91008 	lw	t9,4104\(t7\)
-.*:	25f81008 	addiu	t8,t7,4104
 .*:	03200008 	jr	t9
-.*:	00000000 	nop
+.*:	25f81008 	addiu	t8,t7,4104
 
 Disassembly of section \.text:
 

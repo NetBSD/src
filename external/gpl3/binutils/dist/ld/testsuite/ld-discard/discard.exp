@@ -1,5 +1,5 @@
 # Expect script for ld discard tests
-#   Copyright 2001, 2002, 2007 Free Software Foundation, Inc.
+#   Copyright 2001, 2002, 2005, 2007, 2010 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -25,14 +25,14 @@
 # Test for ELF here, so we don't have to qualify on ELF specifically
 # in every .d-file.
 
-if { ![istarget *-*-linux*] \
-     && ![istarget *-*-gnu] \
-     && ![istarget hppa*64*-*-hpux*] \
+if { ![istarget *-*-linux*]
+     && ![istarget *-*-gnu*]
+     && ![istarget hppa*64*-*-hpux*]
      && ![istarget *-*-elf] } {
     return
 }
 
-if { [istarget *-*-linux*aout*] \
+if { [istarget *-*-linux*aout*]
      || [istarget *-*-linux*oldld*] } {
     return
 }
@@ -43,8 +43,5 @@ set test_list [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
 for { set i 0 } { $i < [llength $test_list] } { incr i } {
     # We need to strip the ".d", but can leave the dirname.
     verbose [file rootname [lindex $test_list $i]]
-    # These fail because they use the generic linker.
-    setup_xfail "arc-*" "d30v-*" "dlx-*" "i960-*" "m6812-*" "m68hc12-*"
-    setup_xfail "or32-*" "pj-*"
     run_dump_test [file rootname [lindex $test_list $i]]
 }

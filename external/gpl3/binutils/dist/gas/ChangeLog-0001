@@ -22,16 +22,6 @@
 	(sparc_cons_special_reloc): New variable.
 	(sparc_cons): New function.
 	(cons_fix_new_sparc): Use sparc_cons_special_reloc.
-	* testsuite/gas/sparc/pcrel.s: New test.
-	* testsuite/gas/sparc/pcrel.d: Expected output.
-	* testsuite/gas/sparc/pcrel64.s: New test.
-	* testsuite/gas/sparc/pcrel64.d: Expected output.
-	* testsuite/gas/sparc/plt.s: New test.
-	* testsuite/gas/sparc/plt.d: Expected output.
-	* testsuite/gas/sparc/plt64.s: New test.
-	* testsuite/gas/sparc/plt64.d: Expected output.
-	* testsuite/gas/sparc/sparc.exp: Add pcrel, pcrel64, plt and plt64
-	tests.
 
 2001-12-20  Thiemo Seufer <seufer@csv.ica.uni-stuttgart.de>
 	    Daniel Jacobowitz <drow@mvista.com>

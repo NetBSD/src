@@ -1,23 +1,23 @@
 
-relocs.x:     file format elf32-mep
+relocs.x:     file format elf32-mep-little
 
 Contents of section .text:
  1000 00000000 00000000 00000000 00000000  ................
  1010 00000000 00000000 00000000 00000000  ................
  1020 00000000 00000000 00000000 00000000  ................
- 1030 0000c53c 1012dee9 ffffe509 ffec0000  ...<............
- 1040 0000c53c efeedd49 ffdfe509 efd20000  ...<...I........
- 1050 0000c53c 202cdeb9 000fe509 07e9dc88  ...< ,..........
- 1060 0080d818 0002dfc8 7fffdf28 7fffdf78  ...........\(...x
- 1070 7fffdd98 0001da98 000fdbf8 0070da58  .............p.X
- 1080 0002d828 0000d848 0000d8d8 0010d898  ...\(...H........
- 1090 0010d808 0000d908 0000d908 0000d808  ................
- 10a0 0000d808 0000d908 0000d908 00000000  ................
- 10b0 00000000 0000d808 00000000 00000000  ................
+ 1030 00003cc5 1210e9de ffff09e5 ecff0000  ..<.............
+ 1040 00003cc5 eeef49dd dfff09e5 d2ef0000  ..<...I.........
+ 1050 00003cc5 2c20b9de 0f0009e5 e90788dc  ..<., ..........
+ 1060 800018d8 0200c8df ff7f28df ff7f78df  ..........\(...x.
+ 1070 ff7f98dd 010098da 0f00f8db 700058da  ............p.X.
+ 1080 020028d8 000048d8 0000d8d8 100098d8  ..\(...H.........
+ 1090 100008d8 000008d9 000008d9 000008d8  ................
+ 10a0 000008d8 000008d9 000008d9 00000000  ................
+ 10b0 00000000 000008d8 00000000 00000000  ................
 Contents of section .rostacktab:
- 10c0 001ffff0                             ....            
+ 10c0 f0ff1f00                             ....            
 Contents of section .data:
- 11c4 0000002a                             ...*            
+ 11c4 2a000000                             \*...            
 Disassembly of section .text:
 
 00001000 <junk1>:
@@ -54,44 +54,44 @@ Disassembly of section .text:
 0000102e <main>:
     102e:	00 00       	nop
     1030:	00 00       	nop
-    1032:	c5 3c 10 12 	lb \$5,4114\(\$3\)
-    1036:	de e9 ff ff 	bsr 1012 <&:s3:foo:s3:bar>
-    103a:	e5 09 ff ec 	repeat \$5,1012 <&:s3:foo:s3:bar>
+    1032:	3c c5 12 10 	lb \$5,4114\(\$3\)
+    1036:	e9 de ff ff 	bsr 1012 <foo>
+    103a:	09 e5 ec ff 	repeat \$5,1012 <foo>
     103e:	00 00       	nop
     1040:	00 00       	nop
-    1042:	c5 3c ef ee 	lb \$5,-4114\(\$3\)
-    1046:	dd 49 ff df 	bsr ffffefee <0-:s3:foo.*>
-    104a:	e5 09 ef d2 	repeat \$5,ffffefee <0-:s3:foo.*>
+    1042:	3c c5 ee ef 	lb \$5,-4114\(\$3\)
+    1046:	49 dd df ff 	bsr ffffefee <0-:s3:foo.*>
+    104a:	09 e5 d2 ef 	repeat \$5,ffffefee <0-:s3:foo.*>
     104e:	00 00       	nop
     1050:	00 00       	nop
-    1052:	c5 3c 20 2c 	lb \$5,8236\(\$3\)
-    1056:	de b9 00 0f 	bsr 202c <\+:s3:foo:s3:bar>
-    105a:	e5 09 07 e9 	repeat \$5,202c <\+:s3:foo:s3:bar>
-    105e:	dc 88 00 80 	jmp 8090 <<<:s3:foo:#0+03>
-    1062:	d8 18 00 02 	jmp 202 <>>:s3:foo:#0+03>
-    1066:	df c8 7f ff 	jmp 7ffff8 <&:-:s3:foo:s3:bar:#0+7fffff>
-    106a:	df 28 7f ff 	jmp 7fffe4 <&:-:s3:foo:s4:main:#0+7fffff>
-    106e:	df 78 7f ff 	jmp 7fffee <&:-:S5:.text:s3:foo:#0+7fffff>
-    1072:	dd 98 00 01 	jmp 1b2 <&:-:S5:.data:s3:foo:#0+7fffff>
-    1076:	da 98 00 0f 	jmp f52 <-:s3:foo:\+:s9:.text.end:0-:S5:.text>
-    107a:	db f8 00 70 	jmp 707e <\*:s3:foo:#0+07>
-    107e:	da 58 00 02 	jmp 24a <>>:s3:foo:#0+03\+0x48>
-    1082:	d8 28 00 00 	jmp 4 <__assert_based_size\+0x3>
-    1086:	d8 48 00 00 	jmp 8 <\^:s3:foo:s3:bar>
-    108a:	d8 d8 00 10 	jmp 101a <|:s3:foo:s3:bar>
-    108e:	d8 98 00 10 	jmp 1012 <&:s3:foo:s3:bar>
-    1092:	d8 08 00 00 	jmp 0 <<<:==:s3:foo:s3:bar:#0+05>
-    1096:	d9 08 00 00 	jmp 20 <<<:&&:s3:foo:s3:bar:#0+05>
-    109a:	d9 08 00 00 	jmp 20 <<<:&&:s3:foo:s3:bar:#0+05>
-    109e:	d8 08 00 00 	jmp 0 <<<:==:s3:foo:s3:bar:#0+05>
-    10a2:	d8 08 00 00 	jmp 0 <<<:==:s3:foo:s3:bar:#0+05>
-    10a6:	d9 08 00 00 	jmp 20 <<<:&&:s3:foo:s3:bar:#0+05>
-    10aa:	d9 08 00 00 	jmp 20 <<<:&&:s3:foo:s3:bar:#0+05>
+    1052:	3c c5 2c 20 	lb \$5,8236\(\$3\)
+    1056:	b9 de 0f 00 	bsr 202c <\+:s3:foo:s3:bar>
+    105a:	09 e5 e9 07 	repeat \$5,202c <\+:s3:foo:s3:bar>
+    105e:	88 dc 80 00 	jmp 8090 <<<:s3:foo:#0+03>
+    1062:	18 d8 02 00 	jmp 202 <>>:s3:foo:#0+03>
+    1066:	c8 df ff 7f 	jmp 7ffff8 <&:-:s3:foo:s3:bar:#0+7fffff>
+    106a:	28 df ff 7f 	jmp 7fffe4 <&:-:s3:foo:s4:main:#0+7fffff>
+    106e:	78 df ff 7f 	jmp 7fffee <&:-:S5:.text:s3:foo:#0+7fffff>
+    1072:	98 dd 01 00 	jmp 1b2 <&:-:S5:.data:s3:foo:#0+7fffff>
+    1076:	98 da 0f 00 	jmp f52 <-:s3:foo:\+:s9:.text.end:0-:S5:.text>
+    107a:	f8 db 70 00 	jmp 707e <\*:s3:foo:#0+07>
+    107e:	58 da 02 00 	jmp 24a <>>:s3:foo:#0+03\+0x48>
+    1082:	28 d8 00 00 	jmp 4 <__assert_based_size\+0x3>
+    1086:	48 d8 00 00 	jmp 8 <\^:s3:foo:s3:bar>
+    108a:	d8 d8 10 00 	jmp 101a <|:s3:foo:s3:bar>
+    108e:	98 d8 10 00 	jmp 1012 <foo>
+    1092:	08 d8 00 00 	jmp 0 <<<:==:s3:foo:s3:bar:#0+05>
+    1096:	08 d9 00 00 	jmp 20 <<<:&&:s3:foo:s3:bar:#0+05>
+    109a:	08 d9 00 00 	jmp 20 <<<:&&:s3:foo:s3:bar:#0+05>
+    109e:	08 d8 00 00 	jmp 0 <<<:==:s3:foo:s3:bar:#0+05>
+    10a2:	08 d8 00 00 	jmp 0 <<<:==:s3:foo:s3:bar:#0+05>
+    10a6:	08 d9 00 00 	jmp 20 <<<:&&:s3:foo:s3:bar:#0+05>
+    10aa:	08 d9 00 00 	jmp 20 <<<:&&:s3:foo:s3:bar:#0+05>
     10ae:	00 00       	nop
     10b0:	00 00       	nop
     10b2:	00 00       	nop
     10b4:	00 00       	nop
-    10b6:	d8 08 00 00 	jmp 0 <<<:==:s3:foo:s3:bar:#0+05>
+    10b6:	08 d8 00 00 	jmp 0 <<<:==:s3:foo:s3:bar:#0+05>
     10ba:	00 00       	nop
     10bc:	00 00       	nop
     10be:	00 00       	nop

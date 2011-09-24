@@ -1,5 +1,6 @@
 # Expect script for ld-i386 tests
-#   Copyright (C) 2002, 2005, 2006, 2007 Free Software Foundation
+#   Copyright (C) 2002, 2005, 2006, 2007, 2008, 2009, 2010
+#   Free Software Foundation
 #
 # This file is part of the GNU Binutils.
 #
@@ -49,8 +50,57 @@ if {[istarget "i?86-*-vxworks"]} {
     run_dump_test "vxworks1-static"
 }
 
+if [istarget "*-*-go32*"] {
+    run_ld_link_tests {{"go32 stub" "" "" {zero.s} {} "go32stub"}}
+
+    set src "tmpdir/go32stub"
+    set dest "tmpdir/go32stub-copy"
+
+    set test "go32 stub patch the source"
+    set fi [open $src r+]
+    fconfigure $fi -translation binary
+    if {[read $fi 2] != "MZ"} {
+	fail $test
+    } else {
+	pass $test
+	seek $fi 0x40
+	puts -nonewline $fi "objcopy-test-go32stub"
+    }
+    close $fi
+
+    set test "go32 stub objcopy"
+    set status [remote_exec build $OBJCOPY "$OBJCOPYFLAGS $src $dest"]
+    set exec_output [lindex $status 1]
+    set exec_output [prune_warnings $exec_output]
+    if [string match "" $exec_output] then {
+	pass $test
+    } else {
+	send_log "$exec_output\n"
+	verbose "$exec_output" 1
+	fail $test
+    }
+
+    # cmp would compare the whole files and some data after the initial exe
+    # stub could differ.
+    set test "go32 stub comparison after objcopy"
+    set fi [open $src]
+    fconfigure $fi -translation binary
+    set src_stub [read $fi 2048]
+    close $fi
+    set fi [open $dest]
+    fconfigure $fi -translation binary
+    set dest_stub [read $fi 2048]
+    close $fi
+    if {$src_stub == $dest_stub} {
+	pass $test
+    } else {
+	fail $test
+    }
+}
+
 if { !([istarget "i?86-*-elf*"]		
-       || ([istarget "i?86-*-linux*"]
+       || (([istarget "i?86-*-linux*"]
+	    || [istarget "i?86-*-gnu*"])
 	   && ![istarget "*-*-*aout*"]
 	   && ![istarget "*-*-*oldld*"])
        || [istarget "x86_64-*-linux*"]
@@ -128,6 +178,7 @@ run_dump_test "pcrel16"
 run_dump_test "pcrel16abs"
 run_dump_test "alloc"
 run_dump_test "warn1"
+run_dump_test "tlsgd2"
 run_dump_test "tlsie2"
 run_dump_test "tlsie3"
 run_dump_test "tlsie4"
@@ -138,3 +189,15 @@ run_dump_test "hidden3"
 run_dump_test "protected1"
 run_dump_test "protected2"
 run_dump_test "protected3"
+run_dump_test "tlspie1"
+run_dump_test "nogot1"
+run_dump_test "nogot2"
+run_dump_test "discarded1"
+
+if { !([istarget "i?86-*-linux*"]
+       || [istarget "i?86-*-gnu*"]
+       || [istarget "x86_64-*-linux*"]) } {
+    return
+}
+
+run_dump_test "compressed1"

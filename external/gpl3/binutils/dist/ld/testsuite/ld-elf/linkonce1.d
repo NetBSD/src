@@ -7,6 +7,6 @@
 
 RELOCATION RECORDS FOR \[.debug_frame\]:
 OFFSET[ 	]+TYPE[ 	]+VALUE[ 	]*
-.*(NONE|unused).*\*ABS\*
+.*(NONE|unused|UNUSED).*\*ABS\*
 
 #pass

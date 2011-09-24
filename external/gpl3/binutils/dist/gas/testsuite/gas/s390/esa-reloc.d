@@ -48,4 +48,4 @@ Disassembly of section .text:
 [ 	]*50: R_390_PLT16DBL	foo\+0x2
   52:	00 00 00 00 [ 	]*.long	0x00000000
 [ 	]*52: R_390_PLT32	foo\+0x4
-  56:	07 07 [ 	]*bcr	0,%r7
+  56:	07 07 [ 	]*nopr	%r7

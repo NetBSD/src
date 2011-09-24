@@ -1,12 +1,12 @@
 /* ARM ELF support for BFD.
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004
+   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2009, 2010
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
+   the Free Software Foundation; either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -41,9 +41,9 @@
 #define PT_ARM_EXIDX (PT_LOPROC + 1)
 
 /* Other constants defined in the ARM ELF spec. version B-01.  */
-#define EF_ARM_SYMSARESORTED 0x04	/* NB conflicts with EF_INTERWORK */
-#define EF_ARM_DYNSYMSUSESEGIDX 0x08	/* NB conflicts with EF_APCS26 */
-#define EF_ARM_MAPSYMSFIRST 0x10	/* NB conflicts with EF_APCS_FLOAT */
+#define EF_ARM_SYMSARESORTED 0x04	/* NB conflicts with EF_INTERWORK.  */
+#define EF_ARM_DYNSYMSUSESEGIDX 0x08	/* NB conflicts with EF_APCS26.  */
+#define EF_ARM_MAPSYMSFIRST 0x10	/* NB conflicts with EF_APCS_FLOAT.  */
 #define EF_ARM_EABIMASK      0xFF000000
 
 /* Constants defined in AAELF.  */
@@ -71,9 +71,11 @@
 #define STT_ARM_16BIT      STT_HIPROC   /* A Thumb label.  */
 
 /* Additional section types.  */
-#define SHT_ARM_EXIDX	   0x70000001	/* Section holds ARM unwind info.  */
-#define SHT_ARM_PREEMPTMAP 0x70000002	/* Section pre-emption details.  */
-#define SHT_ARM_ATTRIBUTES 0x70000003	/* Section holds attributes.  */
+#define SHT_ARM_EXIDX	       0x70000001	/* Section holds ARM unwind info.  */
+#define SHT_ARM_PREEMPTMAP     0x70000002	/* Section pre-emption details.  */
+#define SHT_ARM_ATTRIBUTES     0x70000003	/* Section holds attributes.  */
+#define SHT_ARM_DEBUGOVERLAY   0x70000004	/* Section holds overlay debug info.  */
+#define SHT_ARM_OVERLAYSECTION 0x70000005	/* Section holds GDB and overlay integration info.  */
 
 /* ARM-specific values for sh_flags.  */
 #define SHF_ENTRYSECT      0x10000000   /* Section contains an entry point.  */
@@ -85,17 +87,24 @@
 #define PF_ARM_ABS         0x40000000   /* Segment must be loaded at its base address.  */
 
 /* Values for the Tag_CPU_arch EABI attribute.  */
-#define TAG_CPU_ARCH_PRE_V4    0
-#define TAG_CPU_ARCH_V4                1
-#define TAG_CPU_ARCH_V4T       2
-#define TAG_CPU_ARCH_V5T       3
-#define TAG_CPU_ARCH_V5TE      4
-#define TAG_CPU_ARCH_V5TEJ     5
-#define TAG_CPU_ARCH_V6                6
-#define TAG_CPU_ARCH_V6KZ      7
-#define TAG_CPU_ARCH_V6T2      8
-#define TAG_CPU_ARCH_V6K       9
-#define TAG_CPU_ARCH_V7                10
+#define TAG_CPU_ARCH_PRE_V4	0
+#define TAG_CPU_ARCH_V4		1
+#define TAG_CPU_ARCH_V4T	2
+#define TAG_CPU_ARCH_V5T	3
+#define TAG_CPU_ARCH_V5TE	4
+#define TAG_CPU_ARCH_V5TEJ	5
+#define TAG_CPU_ARCH_V6		6
+#define TAG_CPU_ARCH_V6KZ	7
+#define TAG_CPU_ARCH_V6T2	8
+#define TAG_CPU_ARCH_V6K	9
+#define TAG_CPU_ARCH_V7		10
+#define TAG_CPU_ARCH_V6_M	11
+#define TAG_CPU_ARCH_V6S_M	12
+#define TAG_CPU_ARCH_V7E_M	13
+#define MAX_TAG_CPU_ARCH	13
+/* Pseudo-architecture to allow objects to be compatible with the subset of
+   armv4t and armv6-m.  This value should never be stored in object files.  */
+#define TAG_CPU_ARCH_V4T_PLUS_V6_M (MAX_TAG_CPU_ARCH + 1)
 
 /* Relocation types.  */
 
@@ -249,9 +258,9 @@ enum
   Tag_CPU_arch_profile,
   Tag_ARM_ISA_use,
   Tag_THUMB_ISA_use,
-  Tag_VFP_arch,
+  Tag_FP_arch,
   Tag_WMMX_arch,
-  Tag_NEON_arch,
+  Tag_Advanced_SIMD_arch,
   Tag_PCS_config,
   Tag_ABI_PCS_R9_use,
   Tag_ABI_PCS_RW_data,
@@ -263,15 +272,40 @@ enum
   Tag_ABI_FP_exceptions,
   Tag_ABI_FP_user_exceptions,
   Tag_ABI_FP_number_model,
-  Tag_ABI_align8_needed,
-  Tag_ABI_align8_preserved,
+  Tag_ABI_align_needed,
+  Tag_ABI_align_preserved,
   Tag_ABI_enum_size,
   Tag_ABI_HardFP_use,
   Tag_ABI_VFP_args,
   Tag_ABI_WMMX_args,
   Tag_ABI_optimization_goals,
   Tag_ABI_FP_optimization_goals,
-  /* 32 is generic.  */
+  /* 32 is generic (Tag_compatibility).  */
+  Tag_undefined33 = 33,
+  Tag_CPU_unaligned_access,
+  Tag_undefined35,
+  Tag_FP_HP_extension,
+  Tag_undefined37,
+  Tag_ABI_FP_16bit_format,
+  Tag_undefined39,
+  Tag_undefined40,
+  Tag_undefined41,
+  Tag_MPextension_use,
+  Tag_undefined_43,
+  Tag_DIV_use,
+  Tag_nodefaults = 64,
+  Tag_also_compatible_with,
+  Tag_T2EE_use,
+  Tag_conformance,
+  Tag_Virtualization_use,
+  Tag_undefined69,
+  Tag_MPextension_use_legacy,
+
+  /* The following tags are legacy names for other tags.  */
+  Tag_VFP_arch = Tag_FP_arch,
+  Tag_ABI_align8_needed = Tag_ABI_align_needed,
+  Tag_ABI_align8_preserved = Tag_ABI_align_preserved,
+  Tag_VFP_HP_extension = Tag_FP_HP_extension
 };
 
 #endif

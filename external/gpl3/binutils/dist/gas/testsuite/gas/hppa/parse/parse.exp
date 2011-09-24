@@ -1,4 +1,4 @@
-# Copyright (C) 1993, 1996, 1997, 1999, 2000, 2001, 2002, 2003, 2007
+# Copyright (C) 1993, 1996, 1997, 1999, 2000, 2001, 2002, 2003, 2005, 2007, 2009
 # Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -179,8 +179,6 @@ if [istarget hppa*-*-*] then {
     # Now check to make sure an invalid argument is flagged as an error.
     gas_test_error "align2.s" "" "Check for error on bogus argument to .align"
 
-    # GAS can't handle upper bound for a PA .block[z] directive
-    setup_xfail hppa*-*-*
     gas_test "block1.s" "" "" "Check min/max values for .block"
 
     # Now check for an invalid argument

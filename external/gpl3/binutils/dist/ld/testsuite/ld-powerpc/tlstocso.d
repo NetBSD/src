@@ -8,7 +8,7 @@
 
 Disassembly of section \.text:
 
-.* <\.__tls_get_addr>:
+.* <00000010\.plt_call\.__tls_get_addr(|_opt)\+0>:
 .*	f8 41 00 28 	std     r2,40\(r1\)
 .*	e9 62 80 70 	ld      r11,-32656\(r2\)
 .*	7d 69 03 a6 	mtctr   r11
@@ -18,16 +18,16 @@ Disassembly of section \.text:
 
 .* <_start>:
 .*	38 62 80 08 	addi    r3,r2,-32760
-.*	4b ff ff e5 	bl      .* <\.__tls_get_addr>
+.*	4b ff ff e5 	bl      .*
 .*	e8 41 00 28 	ld      r2,40\(r1\)
 .*	38 62 80 18 	addi    r3,r2,-32744
-.*	4b ff ff d9 	bl      .* <\.__tls_get_addr>
+.*	4b ff ff d9 	bl      .*
 .*	e8 41 00 28 	ld      r2,40\(r1\)
 .*	38 62 80 28 	addi    r3,r2,-32728
-.*	4b ff ff cd 	bl      .* <\.__tls_get_addr>
+.*	4b ff ff cd 	bl      .*
 .*	e8 41 00 28 	ld      r2,40\(r1\)
 .*	38 62 80 38 	addi    r3,r2,-32712
-.*	4b ff ff c1 	bl      .* <\.__tls_get_addr>
+.*	4b ff ff c1 	bl      .*
 .*	e8 41 00 28 	ld      r2,40\(r1\)
 .*	39 23 80 40 	addi    r9,r3,-32704
 .*	3d 23 00 00 	addis   r9,r3,0
@@ -41,6 +41,7 @@ Disassembly of section \.text:
 .*	99 49 00 00 	stb     r10,0\(r9\)
 .*	00 00 00 00 .*
 .*	00 01 02 18 .*
+.* <__glink_PLTresolve>:
 .*	7d 88 02 a6 	mflr    r12
 .*	42 9f 00 05 	bcl-    20,4\*cr7\+so,.*
 .*	7d 68 02 a6 	mflr    r11

@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses --show-raw-insn -mmips:sb1
 #name: SB-1 paired single extensions
-#as: -march=sb1
+#as: -march=sb1 -64
 
 .*: +file format .*mips.*
 

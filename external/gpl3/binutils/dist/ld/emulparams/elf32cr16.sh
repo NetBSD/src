@@ -4,3 +4,4 @@ OUTPUT_FORMAT="elf32-cr16"
 ARCH=cr16
 ENTRY=_start
 EXTRA_EM_FILE=cr16elf
+EMBEDDED=yes

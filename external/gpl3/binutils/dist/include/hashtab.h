@@ -1,5 +1,6 @@
 /* An expandable hash tables datatype.  
-   Copyright (C) 1999, 2000, 2002, 2003, 2004 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2000, 2002, 2003, 2004, 2005, 2009, 2010
+   Free Software Foundation, Inc.
    Contributed by Vladimir Makarov (vmakarov@cygnus.com).
 
 This program is free software; you can redistribute it and/or modify
@@ -96,8 +97,7 @@ typedef void (*htab_free_with_arg) (void *, void *);
    functions mentioned below.  The size of this structure is subject to
    change.  */
 
-struct htab GTY(())
-{
+struct GTY(()) htab {
   /* Pointer to hash function.  */
   htab_hash hash_f;
 
@@ -156,6 +156,9 @@ extern htab_t	htab_create_alloc_ex (size_t, htab_hash,
                                       htab_eq, htab_del,
                                       void *, htab_alloc_with_arg,
                                       htab_free_with_arg);
+
+extern htab_t  htab_create_typed_alloc (size_t, htab_hash, htab_eq, htab_del,
+					htab_alloc, htab_alloc, htab_free);
 
 /* Backward-compatibility functions.  */
 extern htab_t htab_create (size_t, htab_hash, htab_eq, htab_del);

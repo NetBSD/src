@@ -1,6 +1,7 @@
 #name: br-isaa.d
 #objdump: -dr
 #as: -march=isaa -pcrel
+#not-target: *-*-*aout m68k-*-netbsd m68k-*-openbsd*
 
 .*:     file format .*
 

@@ -1,0 +1,3 @@
+	max	#{imm},{reg}
+	max	{reg},{reg}
+	max	{memx},{reg}

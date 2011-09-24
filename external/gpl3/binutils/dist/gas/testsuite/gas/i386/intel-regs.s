@@ -11,12 +11,13 @@
 	mov	ax, r8d			; add	[bx+si], al
 	mov	ax, r8			; add	[bx+si], al
 	mov	ax, fs			; add	[bx+si], al
-#todo	mov	ax, st			; add	[bx+si], al
+	mov	ax, st			; add	[bx+si], al
 	mov	ax, cr0			; add	[bx+si], al
 	mov	ax, dr0			; add	[bx+si], al
 	mov	ax, tr0			; add	[bx+si], al
 	mov	ax, mm0			; add	[bx+si], al
 	mov	ax, xmm0		; add	[bx+si], al
+	mov	ax, ymm0		; add	[bx+si], al
 
 	.arch generic32
 	.code32
@@ -26,7 +27,7 @@
 	mov	eax, r8w
 	mov	eax, r8d
 	mov	eax, r8
-#todo	mov	eax, st
+	mov	eax, st
 	mov	eax, cr0
 	mov	eax, dr0
 	mov	eax, tr0
@@ -34,7 +35,7 @@
 	mov	eax, xmm0
 	mov	eax, ymm0
 
-#todo	.arch i387
+	.arch .387
 	ffree	st
 
 	.arch .mmx
@@ -52,3 +53,5 @@
 	mov	ax, r8w
 	mov	eax, r8d
 	mov	rax, r8
+ymm8:
+	jmp	ymm8

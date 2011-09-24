@@ -12,9 +12,9 @@ Disassembly of section .plt:
  .*:	e08fe00e 	add	lr, pc, lr
  .*:	e5bef008 	ldr	pc, \[lr, #8\]!
  .*:	.*
- .*:	e28fc6.* 	add	ip, pc, #.*	; 0x.*
+ .*:	e28fc6.* 	add	ip, pc, #.*
  .*:	e28cca.* 	add	ip, ip, #.*	; 0x.*
- .*:	e5bcf.* 	ldr	pc, \[ip, #.*\]!
+ .*:	e5bcf.* 	ldr	pc, \[ip, #.*\]!.*
 Disassembly of section .text:
 
 .* <lib_func1>:
@@ -23,16 +23,16 @@ Disassembly of section .text:
  .*:	ebfffff. 	bl	.* <lib_func1-0x..?>
  .*:	e89d6800 	ldm	sp, {fp, sp, lr}
  .*:	e12fff1e 	bx	lr
- .*:	e1a00000 	nop			\(mov r0,r0\)
- .*:	e1a00000 	nop			\(mov r0,r0\)
- .*:	e1a00000 	nop			\(mov r0,r0\)
+ .*:	e1a00000 	nop			; \(mov r0, r0\)
+ .*:	e1a00000 	nop			; \(mov r0, r0\)
+ .*:	e1a00000 	nop			; \(mov r0, r0\)
 
 .* <lib_func2>:
  .*:	4770      	bx	lr
- .*:	46c0      	nop			\(mov r8, r8\)
- .*:	46c0      	nop			\(mov r8, r8\)
- .*:	46c0      	nop			\(mov r8, r8\)
- .*:	46c0      	nop			\(mov r8, r8\)
- .*:	46c0      	nop			\(mov r8, r8\)
- .*:	46c0      	nop			\(mov r8, r8\)
- .*:	46c0      	nop			\(mov r8, r8\)
+ .*:	46c0      	nop			; \(mov r8, r8\)
+ .*:	46c0      	nop			; \(mov r8, r8\)
+ .*:	46c0      	nop			; \(mov r8, r8\)
+ .*:	46c0      	nop			; \(mov r8, r8\)
+ .*:	46c0      	nop			; \(mov r8, r8\)
+ .*:	46c0      	nop			; \(mov r8, r8\)
+ .*:	46c0      	nop			; \(mov r8, r8\)

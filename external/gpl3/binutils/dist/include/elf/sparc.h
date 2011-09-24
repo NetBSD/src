@@ -1,23 +1,24 @@
 /* SPARC ELF support for BFD.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2008
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2008, 2010
    Free Software Foundation, Inc.
    By Doug Evans, Cygnus Support, <dje@cygnus.com>.
 
-This file is part of BFD, the Binary File Descriptor library.
+   This file is part of BFD, the Binary File Descriptor library.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
+   MA 02110-1301, USA.  */
 
 #ifndef _ELF_SPARC_H
 #define _ELF_SPARC_H
@@ -45,12 +46,11 @@ Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA. 
 
 /* Section indices.  */
 
-#define SHN_BEFORE	SHN_LORESERVE		/* used with SHF_ORDERED */
-#define SHN_AFTER	(SHN_LORESERVE + 1)	/* used with SHF_ORDERED */
+#define SHN_BEFORE	SHN_LORESERVE		/* Used with SHF_ORDERED and...  */
+#define SHN_AFTER	(SHN_LORESERVE + 1)	/* SHF_LINK_ORDER section flags. */
 
 /* Section flags.  */
 
-#define SHF_EXCLUDE		0x80000000	/* exclude from linking */
 #define SHF_ORDERED		0x40000000	/* treat sh_link,sh_info specially */
 
 /* Symbol types.  */
@@ -164,6 +164,8 @@ START_RELOC_NUMBERS (elf_sparc_reloc_type)
   
   EMPTY_RELOC  (R_SPARC_max_std)
 
+  RELOC_NUMBER (R_SPARC_JMP_IREL, 248)
+  RELOC_NUMBER (R_SPARC_IRELATIVE, 249)
   RELOC_NUMBER (R_SPARC_GNU_VTINHERIT, 250)
   RELOC_NUMBER (R_SPARC_GNU_VTENTRY, 251)
   RELOC_NUMBER (R_SPARC_REV32, 252)

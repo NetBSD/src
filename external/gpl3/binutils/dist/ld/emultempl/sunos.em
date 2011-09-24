@@ -157,7 +157,7 @@ gld${EMULATION_NAME}_find_so (lang_input_statement_type *inp)
   struct stat st;
 
   if (! inp->search_dirs_flag
-      || ! inp->is_archive
+      || ! inp->maybe_archive
       || ! inp->dynamic)
     return;
 
@@ -365,6 +365,8 @@ static void
 gld${EMULATION_NAME}_after_open (void)
 {
   struct bfd_link_needed_list *needed, *l;
+
+  after_open_default ();
 
   /* We only need to worry about this when doing a final link.  */
   if (link_info.relocatable || link_info.shared)
@@ -889,7 +891,7 @@ gld${EMULATION_NAME}_count_need (lang_input_statement_type *inp)
     {
       ++need_entries;
       need_size += NEED_ENTRY_SIZE;
-      if (! inp->is_archive)
+      if (! inp->maybe_archive)
 	need_size += strlen (inp->filename) + 1;
       else
 	{
@@ -917,7 +919,7 @@ gld${EMULATION_NAME}_set_need (lang_input_statement_type *inp)
 	 referential locality.  */
       bfd_put_32 (link_info.output_bfd, need_pnames - need_contents,
 		  need_pinfo);
-      if (! inp->is_archive)
+      if (! inp->maybe_archive)
 	{
 	  bfd_put_32 (link_info.output_bfd, (bfd_vma) 0, need_pinfo + 4);
 	  bfd_put_16 (link_info.output_bfd, (bfd_vma) 0, need_pinfo + 8);

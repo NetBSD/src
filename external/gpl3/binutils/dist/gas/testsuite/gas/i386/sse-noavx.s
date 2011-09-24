@@ -11,9 +11,12 @@ _start:
  cvttps2pi	%xmm4,%mm3
  fisttp (%eax)
  fisttpll (%eax)
+ lfence
  maskmovq	%mm7,%mm0
+ mfence
  monitor
  movdq2q	%xmm0, %mm1
+ movnti %eax, (%eax)
  movntq		%mm2,(%eax)
  movq2dq	%mm0, %xmm1
  mwait

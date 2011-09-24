@@ -18,7 +18,7 @@ Idx Name          Size      VMA               LMA               File off  Algn
                   CONTENTS, ALLOC, LOAD
   4 anothersec    0+13  2000000000000008  2000000000000008  0+  2\*\*2
                   CONTENTS, ALLOC, LOAD, DATA
-  5 thirdsec      0+a  200000000000001c  200000000000001c  0+  2\*\*2
+  5 thirdsec      0+a  0+  0+  0+  2\*\*2
                   CONTENTS, READONLY
 Contents of section \.text:
  0000 e3fd0001                             .*
@@ -33,4 +33,4 @@ Contents of section anothersec:
  2000000000000008 0000000a 00000009 00000008 00000007  .*
  2000000000000018 252729                               .*
 Contents of section thirdsec:
- 200000000000001c 00030d41 000186a2 2628               .*
+ 0000 00030d41 000186a2 2628               .*

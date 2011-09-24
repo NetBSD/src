@@ -114,10 +114,10 @@ s5:
 	bt	.+6
 	bra	.+6
 	bsr	.+6
-	mov.l	@(4,pc),r0
+	mov.l	@(2,pc),r0
 	mov.l	@(4,r0),r0
 	mov.l	@(4,gbr),r0
-	mova	@(6,pc),r0
+	mova	@(8,pc),r0
 	mov.l	r0,@(4,r0)
 	mov.l	r0,@(4,gbr)
 

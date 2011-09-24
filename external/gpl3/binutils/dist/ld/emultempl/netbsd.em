@@ -29,6 +29,6 @@ static void
 gldnetbsd_before_parse (void)
 {
   gld${EMULATION_NAME}_before_parse ();
-  link_info.common_skip_ar_aymbols = bfd_link_common_skip_text;
+  link_info.common_skip_ar_symbols = bfd_link_common_skip_text;
 }
 EOF

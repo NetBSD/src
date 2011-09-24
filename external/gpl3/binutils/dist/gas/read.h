@@ -1,6 +1,6 @@
 /* read.h - of read.c
    Copyright 1986, 1990, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008
+   2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -127,6 +127,7 @@ extern void stabs_generate_asm_lineno (void);
 extern void stabs_generate_asm_func (const char *, const char *);
 extern void stabs_generate_asm_endfunc (const char *, const char *);
 extern void do_repeat (int,const char *,const char *);
+extern void do_repeat_with_expander (int, const char *, const char *, const char *);
 extern void end_repeat (int);
 extern void do_parse_cons_expression (expressionS *, int);
 
@@ -186,5 +187,5 @@ extern void stringer (int append_zero);
 extern void s_xstab (int what);
 extern void s_rva (int);
 extern void s_incbin (int);
-extern void s_vendor_attribute (int);
+extern int s_vendor_attribute (int);
 extern void s_weakref (int);

@@ -1,6 +1,6 @@
 # Test PROVIDE in a linker script.
 # By Nathan Sidwell, CodeSourcery LLC
-#   Copyright 2004, 2006, 2007
+#   Copyright 2004, 2005, 2006, 2007
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.

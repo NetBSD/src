@@ -15,7 +15,7 @@ SYMBOL TABLE:
 
 RELOCATION RECORDS FOR \[\.text\]:
 OFFSET           TYPE              VALUE 
-0+7 R_MMIX_REG_OR_BYTE  \.MMIX\.reg_contents
+0+7 R_MMIX_8          \.MMIX\.reg_contents
 0+f R_MMIX_REG        \.MMIX\.reg_contents
 0+15 R_MMIX_REG        \.MMIX\.reg_contents
 0+19 R_MMIX_REG        \.MMIX\.reg_contents

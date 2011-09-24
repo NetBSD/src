@@ -1,5 +1,5 @@
 # Expect script for ld-h8300 tests
-# Copyright 2002, 2003, 2004, 2007 Free Software Foundation, Inc.
+# Copyright 2002, 2003, 2004, 2005, 2007, 2010 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -29,7 +29,7 @@ if ![istarget h8300-*-*] {
 
 run_dump_test relax
 
-if {[istarget *-elf]} {
+if [is_elf_format] {
     run_dump_test relax-2
     run_dump_test relax-3
     run_dump_test relax-4

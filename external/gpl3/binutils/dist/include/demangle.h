@@ -1,6 +1,6 @@
 /* Defs for interface to demanglers.
    Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2001, 2002,
-   2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
    
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public License
@@ -160,6 +160,9 @@ java_demangle_v3_callback (const char *mangled,
 extern char*
 java_demangle_v3 (const char *mangled);
 
+char *
+ada_demangle (const char *mangled, int options);
+
 enum gnu_v3_ctor_kinds {
   gnu_v3_complete_object_ctor = 1,
   gnu_v3_base_object_ctor,
@@ -221,6 +224,8 @@ enum demangle_component_type
   /* A template parameter.  This holds a number, which is the template
      parameter index.  */
   DEMANGLE_COMPONENT_TEMPLATE_PARAM,
+  /* A function parameter.  This holds a number, which is the index.  */
+  DEMANGLE_COMPONENT_FUNCTION_PARAM,
   /* A constructor.  This holds a name and the kind of
      constructor.  */
   DEMANGLE_COMPONENT_CTOR,
@@ -319,6 +324,11 @@ enum demangle_component_type
      and the right subtree is the member type.  CV-qualifiers appear
      on the latter.  */
   DEMANGLE_COMPONENT_PTRMEM_TYPE,
+  /* A fixed-point type.  */
+  DEMANGLE_COMPONENT_FIXED_TYPE,
+  /* A vector type.  The left subtree is the number of elements,
+     the right subtree is the element type.  */
+  DEMANGLE_COMPONENT_VECTOR_TYPE,
   /* An argument list.  The left subtree is the current argument, and
      the right subtree is either NULL or another ARGLIST node.  */
   DEMANGLE_COMPONENT_ARGLIST,
@@ -370,7 +380,23 @@ enum demangle_component_type
      subtree is the first part and the right subtree the second.  */
   DEMANGLE_COMPONENT_COMPOUND_NAME,
   /* A name formed by a single character.  */
-  DEMANGLE_COMPONENT_CHARACTER
+  DEMANGLE_COMPONENT_CHARACTER,
+  /* A number.  */
+  DEMANGLE_COMPONENT_NUMBER,
+  /* A decltype type.  */
+  DEMANGLE_COMPONENT_DECLTYPE,
+  /* Global constructors keyed to name.  */
+  DEMANGLE_COMPONENT_GLOBAL_CONSTRUCTORS,
+  /* Global destructors keyed to name.  */
+  DEMANGLE_COMPONENT_GLOBAL_DESTRUCTORS,
+  /* A lambda closure type.  */
+  DEMANGLE_COMPONENT_LAMBDA,
+  /* A default argument scope.  */
+  DEMANGLE_COMPONENT_DEFAULT_ARG,
+  /* An unnamed type.  */
+  DEMANGLE_COMPONENT_UNNAMED_TYPE,
+  /* A pack expansion.  */
+  DEMANGLE_COMPONENT_PACK_EXPANSION
 };
 
 /* Types which are only used internally.  */
@@ -415,6 +441,17 @@ struct demangle_component
       struct demangle_component *name;
     } s_extended_operator;
 
+    /* For DEMANGLE_COMPONENT_FIXED_TYPE.  */
+    struct
+    {
+      /* The length, indicated by a C integer type name.  */
+      struct demangle_component *length;
+      /* _Accum or _Fract?  */
+      short accum;
+      /* Saturating or not?  */
+      short sat;
+    } s_fixed;
+
     /* For DEMANGLE_COMPONENT_CTOR.  */
     struct
     {
@@ -449,10 +486,10 @@ struct demangle_component
       int len;
     } s_string;
 
-    /* For DEMANGLE_COMPONENT_TEMPLATE_PARAM.  */
+    /* For DEMANGLE_COMPONENT_*_PARAM.  */
     struct
     {
-      /* Template parameter index.  */
+      /* Parameter index.  */
       long number;
     } s_number;
 
@@ -470,6 +507,14 @@ struct demangle_component
       /* Right subtree.  */
       struct demangle_component *right;
     } s_binary;
+
+    struct
+    {
+      /* subtree, same place as d_left.  */
+      struct demangle_component *sub;
+      /* integer.  */
+      int num;
+    } s_unary_num;
 
   } u;
 };

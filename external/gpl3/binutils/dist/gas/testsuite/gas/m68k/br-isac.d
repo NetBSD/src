@@ -1,6 +1,7 @@
 #name: br-isac.d
 #objdump: -dr
 #as: -march=isac -pcrel
+#not-target: *-*-*aout m68k-*-netbsd m68k-*-openbsd*
 
 .*:     file format .*
 
@@ -18,3 +19,4 @@ Disassembly of section .text:
   18:	61ff 0000 0000 	bsrl 1a <foo\+0x1a>
 			1a: R_68K_PC32	bar
   1e:	4e71           	nop
+  20:	40e7 46fc 04d2 	stldsr #1234

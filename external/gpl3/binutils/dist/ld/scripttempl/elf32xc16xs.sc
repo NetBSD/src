@@ -1,7 +1,7 @@
 cat <<EOF
 OUTPUT_FORMAT("${OUTPUT_FORMAT}")
 OUTPUT_ARCH(${ARCH})
-ENTRY("_start")
+${RELOCATING+ENTRY ("_start")}
 MEMORY
 {
 	vectarea : o =0xc00000, l = 0x0300 

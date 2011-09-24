@@ -1,7 +1,7 @@
 # Test SIZEOF in a linker script.
 # By Ian Lance Taylor, Cygnus Support
 # Based on a bug report from anders.blomdell@control.lth.se.
-#   Copyright 2001, 2007
+#   Copyright 2001, 2005, 2007
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.

@@ -1,7 +1,7 @@
 #name: PE-COFF SizeOfImage
 #ld: -T image_size.t
 #objdump: -p
-#target: i*86-*-mingw32
+#target: *-*-mingw32 *-*-cygwin
 
 .*:     file format .*
 #...

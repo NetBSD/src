@@ -76,8 +76,9 @@
 .*:79: Error: .*
 .*:80: Error: .*
 .*:91: Error: .*
-.*:92: Error: .*
+.*:92: (Warning|Error): .*
 .*:93: Error: .*
+#...
 .*:96: Error: .*
 .*:97: Error: .*
 .*:98: Error: .*
@@ -99,6 +100,7 @@
 .*:114: Error: .*
 .*:115: Error: .*
 .*:116: Error: .*
+#...
 .*:117: Error: .*
 .*:119: Error: .*
 .*:120: Error: .*
@@ -131,18 +133,22 @@
 .*:151: Error: .*
 .*:152: Error: .*
 .*:153: Error: .*
-#...
 .*:154: Error: .*
-#...
 .*:155: Error: .*
 .*:156: Error: .*
-.*:157: Error: .*
-.*:158: Error: .*
+#XXX? .*:157: Error: .*
+#XXX? .*:158: Error: .*
+.*:159: Error: .*
+#...
 .*:160: Error: .*
 .*:161: Error: .*
 .*:162: Error: .*
-.*:163: Warning: .*
-.*:164: Warning: .*
+.*:163: Error: .*
+.*:164: Error: .*
+.*:165: Error: .*
 .*:166: Error: .*
-.*:167: Warning: .*
+#...
 .*:167: Error: .*
+.*:168: Error: .*
+.*:169: Error: .*
+.*:172: Error: .*

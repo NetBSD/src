@@ -49,3 +49,8 @@ Disassembly of section \.text:
   9c:	10 a0 22 f7 	efdctsf r5,r4
   a0:	10 a0 22 f6 	efdctuf r5,r4
   a4:	10 a0 22 ef 	efdcfs  r5,r4
+  a8:	7c 20 06 ac 	mbar    1
+  ac:	7c 00 06 ac 	mbar    
+  b0:	7c 20 06 ac 	mbar    1
+  b4:	7c 00 04 ac 	msync
+  b8:	7c 00 04 ac 	msync

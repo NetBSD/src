@@ -1,5 +1,5 @@
 # Expect script for run_dump_test based ld-m68k tests.
-#   Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+#   Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -35,7 +35,7 @@ if { ![is_elf_format] || ![istarget m68k-*-*] } {
 
 set m68k_mergeok_tests {
     {"merge isa-a isa-a:nodiv" "-T merge.ld" ""
-	{isaa.s isaa-nodiv.s} {{objdump -p isaa.d}} "isaa"}
+	{isaa.s isaa-nodiv.s} {{objdump -p isaa.d}} "isaa-nodiv"}
     {"merge isa-a isa-b" "-T merge.ld" ""
 	{isaa.s isab.s} {{objdump -p isab.d}} "isab"}
     {"merge isa-a isa-aplus" "-T merge.ld" ""
@@ -65,4 +65,29 @@ foreach { id sources } { a { plt1.s } b { plt1-empty.s plt1.s } } {
 		 $sources [list [list objdump -dr plt1-$arch.d]] \
 		 plt1-${id}-${arch}.so]]
     }
+}
+
+if { [istarget m68k-*-linux*] } then {
+    run_dump_test "tls-gd-1"
+    run_dump_test "tls-gd-2"
+    run_dump_test "tls-gd-ie-1"
+    run_dump_test "tls-ie-1"
+    run_dump_test "tls-ld-1"
+    run_dump_test "tls-ld-2"
+
+    set m68k_tls_tests {
+	{"TLS definition"
+	    "-shared" "" {tls-def-1.s}
+	    {{nm -ngD tls-def-1.d}}
+	    "tls-def-1.so"}
+	{"TLS direct symbol use"
+	    "-shared tmpdir/tls-def-1.so" "" {tls-gd-1.s}
+	    {{nm -ngD tls-gd-1.d2} {readelf -d tls-gd-1.d3}}
+	    "tls-gd-1.so"}
+	{"TLS indirect symbol use"
+	    "tmpdir/tls-gd-1.so -rpath-link ./" "" {tls-main-1.s}
+	    {{readelf -d tls-main-1.d}}
+	    "tls-main-1"}}
+
+    run_ld_link_tests $m68k_tls_tests
 }

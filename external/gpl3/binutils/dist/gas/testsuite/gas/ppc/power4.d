@@ -63,9 +63,9 @@ Disassembly of section \.text:
  +34:	e0 80 00 00 	lq      r4,0\(0\)
 			36: R_PPC64_ADDR16_LO_DS	\.text
  +38:	e0 c3 00 00 	lq      r6,0\(r3\)
-			3a: R_PPC64_GOT16_DS	\.data
+			3a: R_PPC64_GOT16_DS	dsym0
  +3c:	e0 c3 00 00 	lq      r6,0\(r3\)
-			3e: R_PPC64_GOT16_LO_DS	\.data
+			3e: R_PPC64_GOT16_LO_DS	dsym0
  +40:	e0 c3 00 00 	lq      r6,0\(r3\)
 			42: R_PPC64_PLT16_LO_DS	\.data
  +44:	e0 c3 00 00 	lq      r6,0\(r3\)

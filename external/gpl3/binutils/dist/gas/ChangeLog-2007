@@ -1129,9 +1129,6 @@
 	(md_show_usage): Document -m750cl.
 	(md_assemble): Handle two delimiters in succession (eg. `),').
 	* doc/c-ppc.texi (PowerPC-Opts): Document -m750cl.
-	* testsuite/gas/ppc/ppc.exp: Run ppc70ps dump tests.
-	* testsuite/gas/ppc/ppc750ps.s: New file.
-	* testsuite/gas/ppc/ppc750ps.d: Likewise.
 
 2007-08-23  Ben Elliston  <bje@au.ibm.com>
 
@@ -2370,7 +2367,6 @@
 	* config/obj-elf.c: New file.
 	* config/tc-mep.c: New file.
 	* config/tc-mep.h: New file.
-	* testsuite/gas/mep: New testsuite with content.
 	* Makefile.in: Regenerate.
 	* configure: Regenerate.
 

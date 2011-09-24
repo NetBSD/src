@@ -12,7 +12,7 @@ Disassembly of section \.text:
 .*:	80 7f ff f0 	lwz     r3,-16\(r31\)
 .*:	7c 63 12 14 	add     r3,r3,r2
 .*:	38 7f ff f4 	addi    r3,r31,-12
-.*:	48 01 01 85 	bl      .*<__tls_get_addr@plt>
+.*:	48 01 01 85 	bl      .*<__tls_get_addr_opt@plt>
 .*:	3c 62 00 00 	addis   r3,r2,0
 .*:	38 63 90 1c 	addi    r3,r3,-28644
 .*:	3c 62 00 00 	addis   r3,r2,0
@@ -44,4 +44,4 @@ Disassembly of section \.got:
 .*:	4e 80 00 21 	blrl
 
 .* <_GLOBAL_OFFSET_TABLE_>:
-.*:	01 81 02 b4 00 00 00 00 00 00 00 00  .*
+.*:	01 81 02 b8 00 00 00 00 00 00 00 00  .*

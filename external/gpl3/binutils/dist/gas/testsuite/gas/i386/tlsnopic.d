@@ -21,11 +21,11 @@ Disassembly of section .text:
   2b:	81 e9 00 00 00 00 [ 	]*sub    \$0x0,%ecx
 [ 	]+2d: R_386_TLS_LE_32	baz
   31:	65 8b 0d 00 00 00 00 [ 	]*mov    %gs:0x0,%ecx
-  38:	90 [ 	]*nop    
-  39:	90 [ 	]*nop    
+  38:	90 [ 	]*nop
+  39:	90 [ 	]*nop
   3a:	8d 81 00 00 00 00 [ 	]*lea    0x0\(%ecx\),%eax
 [ 	]+3c: R_386_TLS_LE	var
-  40:	90 [ 	]*nop    
+  40:	90 [ 	]*nop
   41:	8d 91 00 00 00 00    	lea    0x0\(%ecx\),%edx
 [ 	]+43: R_386_TLS_LE	var2
   47:	a1 00 00 00 00 [ 	]*mov    0x0,%eax

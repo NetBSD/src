@@ -2,18 +2,23 @@
 
 Disassembly of section .text:
 
-00001000 <__bar_from_thumb>:
-    1000:	b540      	push	{r6, lr}
-    1002:	4e03      	ldr	r6, \[pc, #12\]	\(1010 <__bar_from_thumb\+0x10>\)
-    1004:	46fe      	mov	lr, pc
-    1006:	4730      	bx	r6
-    1008:	e8bd4040 	pop	{r6, lr}
-    100c:	e12fff1e 	bx	lr
-    1010:	02001014 	.word	0x02001014
-    1014:	00000000 	.word	0x00000000
+01c01010 <_start>:
+ 1c01010:	f300 f802 	bl	1f01018 <__bar_from_thumb>
+	\.\.\.
+ 1f01014:	f000 f806 	bl	1f01024 <__bar_from_thumb>
 
-00001018 <_start>:
-    1018:	f7ff fff2 	bl	1000 <__bar_from_thumb>
+01f01018 <__bar_from_thumb>:
+ 1f01018:	4778      	bx	pc
+ 1f0101a:	46c0      	nop			; \(mov r8, r8\)
+ 1f0101c:	e51ff004 	ldr	pc, \[pc, #-4\]	; 1f01020 <__bar_from_thumb\+0x8>
+ 1f01020:	02001014 	.word	0x02001014
+
+01f01024 <__bar_from_thumb>:
+ 1f01024:	4778      	bx	pc
+ 1f01026:	46c0      	nop			; \(mov r8, r8\)
+ 1f01028:	ea03fff9 	b	2001014 <bar>
+ 1f0102c:	00000000 	andeq	r0, r0, r0
+
 Disassembly of section .foo:
 
 02001014 <bar>:

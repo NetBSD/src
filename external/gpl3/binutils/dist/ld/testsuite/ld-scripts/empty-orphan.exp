@@ -1,6 +1,6 @@
 # Make sure orphan sections do not lead to huge output files.
 # By David Heine, Tensilica, Inc.
-#   Copyright 2005, 2006, 2007
+#   Copyright 2005, 2006, 2007, 2009
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -25,10 +25,13 @@ if ![is_elf_format] {
     return
 }
 
+set old_ldflags $LDFLAGS
 if { [istarget spu*-*-*] } {
-    set LDFLAGS "--local-store 0:0"
+    set LDFLAGS "$LDFLAGS --local-store 0:0"
 }
 
 set testname "empty-orphan"
 
 run_dump_test empty-orphan
+
+set LDFLAGS $old_ldflags

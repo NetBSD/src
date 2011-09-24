@@ -14,6 +14,10 @@
 	* gas/i386/rex.[sd]: New.
 	* gas/i386/i386.exp: Run new test.
 
+2005-12-12  Paul Brook  <paul@codesourcery.com>
+
+	* gas/arm/pic.d: Allow R_ARM_CALL relocations.
+
 2005-12-12  Nathan Sidwell  <nathan@codesourcery.com>
 
 	* gas/mt: Renamed from ms1 dir.  Update file names as needed.
@@ -742,8 +746,8 @@
 	* gas/ms1/msys.s: New.
 	* gas/ms1/relocs.d: New.
 	* gas/ms1/relocs.exp: New.
-	* testsuite/gas/ms1/relocs1.s: New.
-	* testsuite/gas/ms1/relocs2.s: New.
+	* gas/ms1/relocs1.s: New.
+	* gas/ms1/relocs2.s: New.
 
 2005-07-05  Jan Beulich  <jbeulich@novell.com>
 

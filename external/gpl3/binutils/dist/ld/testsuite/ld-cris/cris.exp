@@ -1,5 +1,5 @@
 # Expect script for ld-cris tests
-#   Copyright 2002, 2007 Free Software Foundation, Inc.
+#   Copyright 2002, 2005, 2007, 2009 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -31,13 +31,11 @@ set rd_test_list [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
 # DSO.  Copy the file from the run_dump_test "tmpdir/dump" to a unique
 # expected name.
 # FIXME: Add option "output: filename" to run_dump_test.
-# FIXME: Add option "ldtail: option" to run_dump_test, so we can link
-# libraries in the right order.
 foreach atest $rd_test_list {
     # We need to check against runtest_file_p too, or we'd mindlessly copy
     # the last tmpdir/dump in selective test-runs.
     if { [string match $srcdir/$subdir/*dso-*.d $atest] \
-	    && [runtest_file_p $runtests [file tail $atest]] } {
+	    && [runtest_file_p $runtests [file rootname $atest]] } {
 	verbose [file rootname $atest]
 	run_dump_test [file rootname $atest]
 	set cmd "cp tmpdir/dump tmpdir/[file rootname [file tail $atest]].so"

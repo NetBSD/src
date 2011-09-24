@@ -1,5 +1,6 @@
 # Expect script for various ARM ELF tests.
-#   Copyright 2002, 2003, 2004, 2007, 2008 Free Software Foundation, Inc.
+#   Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+#   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -57,7 +58,7 @@ if { ![is_elf_format] || ![istarget "arm*-*-*"] } {
     return
 }
 
-# List contains test-items with 3 items followed by 2 lists:
+# List contains test-items with 3 items followed by 2 lists and one more item:
 # 0:name 1:ld options 2:assembler options
 # 3:filenames of assembler files 4: action and options. 5: name of output file
 
@@ -68,7 +69,7 @@ if { ![is_elf_format] || ![istarget "arm*-*-*"] } {
 
 set armelftests {
     {"Group relocations" "-Ttext 0x8000 --section-start zero=0x0 --section-start alpha=0xeef0 --section-start beta=0xffeef0" "" {group-relocs.s}
-     {{objdump -Dr group-relocs.d}}
+     {{objdump -dr group-relocs.d}}
      "group-relocs"}
     {"Thumb-1 BL" "-Ttext 0x1000 --section-start .foo=0x401000" "" {thumb1-bl.s}
      {{objdump -dr thumb1-bl.d}}
@@ -161,6 +162,89 @@ set armelftests {
      "-EL --vfp11-denorm-fix=scalar -Ttext=0x8000" "-EL -mfpu=vfpxd" {vfp11-fix-none.s}
      {{objdump -dr vfp11-fix-none.d}}
      "vfp11-fix-none"}
+    {"Cortex-A8 erratum fix, b.w"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-fix-b.s}
+     {{objdump -dr cortex-a8-fix-b.d}}
+     "cortex-a8-fix-b"}
+    {"Cortex-A8 erratum fix, b.w to PLT"
+     "-EL -Tcortex-a8-fix-plt.ld --fix-cortex-a8 -shared" "-EL"
+     {cortex-a8-fix-b-plt.s}
+     {{objdump -dr cortex-a8-fix-b-plt.d}}
+     "cortex-a8-fix-b-plt"}
+    {"Cortex-A8 erratum fix, bl.w"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-fix-bl.s}
+     {{objdump -dr cortex-a8-fix-bl.d}}
+     "cortex-a8-fix-bl"}
+    {"Cortex-A8 erratum fix, bl.w to PLT"
+     "-EL -Tcortex-a8-fix-plt.ld --fix-cortex-a8 -shared" "-EL"
+     {cortex-a8-fix-bl-plt.s}
+     {{objdump -dr cortex-a8-fix-bl-plt.d}}
+     "cortex-a8-fix-bl-plt"}
+    {"Cortex-A8 erratum fix, bcc.w"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-fix-bcc.s}
+     {{objdump -dr cortex-a8-fix-bcc.d}}
+     "cortex-a8-fix-bcc"}
+    {"Cortex-A8 erratum fix, bcc.w to PLT"
+     "-EL -Tcortex-a8-fix-plt.ld --fix-cortex-a8 -shared" "-EL"
+     {cortex-a8-fix-bcc-plt.s}
+     {{objdump -dr cortex-a8-fix-bcc-plt.d}}
+     "cortex-a8-fix-bcc-plt"}
+    {"Cortex-A8 erratum fix, blx.w"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-fix-blx.s}
+     {{objdump -dr cortex-a8-fix-blx.d}}
+     "cortex-a8-fix-blx"}
+    {"Cortex-A8 erratum fix, blx.w to PLT"
+     "-EL -Tcortex-a8-fix-plt.ld --fix-cortex-a8 -shared" "-EL"
+     {cortex-a8-fix-blx-plt.s}
+     {{objdump -dr cortex-a8-fix-blx-plt.d}}
+     "cortex-a8-fix-blx-plt"}
+    {"Cortex-A8 erratum fix, relocate b.w to ARM"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-arm-target.s cortex-a8-fix-b-rel.s}
+     {{objdump -dr cortex-a8-fix-b-rel-arm.d}}
+     "cortex-a8-fix-b-rel-arm"}
+    {"Cortex-A8 erratum fix, relocate b.w to Thumb"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-thumb-target.s cortex-a8-fix-b-rel.s}
+     {{objdump -dr cortex-a8-fix-b-rel-thumb.d}}
+     "cortex-a8-fix-b-rel-thumb"}
+    {"Cortex-A8 erratum fix, relocate bl.w to ARM"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-arm-target.s cortex-a8-fix-bl-rel.s}
+     {{objdump -dr cortex-a8-fix-bl-rel-arm.d}}
+     "cortex-a8-fix-bl-rel-arm"}
+    {"Cortex-A8 erratum fix, relocate bl.w to Thumb"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-thumb-target.s cortex-a8-fix-bl-rel.s}
+     {{objdump -dr cortex-a8-fix-bl-rel-thumb.d}}
+     "cortex-a8-fix-bl-rel-thumb"}
+    {"Cortex-A8 erratum fix, relocate bl.w to PLT"
+     "-EL --section-start=.plt=0x8e00 -Ttext=0x8f00 --fix-cortex-a8 -shared"
+     "-EL" {cortex-a8-thumb-target.s cortex-a8-fix-bl-rel.s}
+     {{objdump -dr cortex-a8-fix-bl-rel-plt.d}}
+     "cortex-a8-fix-bl-rel-thumb"}
+    {"Cortex-A8 erratum fix, relocate b<cond>.w to Thumb"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-thumb-target.s cortex-a8-fix-bcc-rel.s}
+     {{objdump -dr cortex-a8-fix-bcc-rel-thumb.d}}
+     "cortex-a8-fix-bcc-rel-thumb"}
+    {"Cortex-A8 erratum fix, relocate blx.w to ARM"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-arm-target.s cortex-a8-fix-blx-rel.s}
+     {{objdump -dr cortex-a8-fix-blx-rel-arm.d}}
+     "cortex-a8-fix-blx-rel-arm"}
+    {"Cortex-A8 erratum fix, relocate blx.w to Thumb"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-thumb-target.s cortex-a8-fix-blx-rel.s}
+     {{objdump -dr cortex-a8-fix-blx-rel-thumb.d}}
+     "cortex-a8-fix-blx-rel-thumb"}
+    {"Cortex-A8 erratum fix, relocate bl.w and far call"
+     "-EL -Ttext=0x00 --fix-cortex-a8 --defsym far_fn1=0x80000000 --defsym far_fn2=0x80000004  --defsym far_fn=0x7fff0000 --defsym _start=0"
+     "-EL -mcpu=cortex-a8" {cortex-a8-far-1.s cortex-a8-far-2.s}
+     {{objdump -dr cortex-a8-far.d}}
+     "cortex-a8-far"}
+    {"Cortex-A8 erratum fix, headers"
+     "-EL --fix-cortex-a8 -T cortex-a8-fix-hdr.t"
+     "-EL -mcpu=cortex-a8" {cortex-a8-fix-hdr.s}
+     {{objdump -dr cortex-a8-fix-hdr.d}}
+     "cortex-a8-fix-hdr"}
+    {"Cortex-A8 erratum fix, blx.w and b<cond>.w together"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-fix-blx-bcond.s}
+     {{objdump -dr cortex-a8-fix-blx-bcond.d}}
+     "cortex-a8-fix-blx-bcond"}
     {"Unwinding and -gc-sections" "-gc-sections" "" {gc-unwind.s}
      {{objdump -sj.data gc-unwind.d}}
      "gc-unwind"}
@@ -174,9 +258,21 @@ set armelftests {
     {"jump19" "-static -T arm.ld" "" {jump19.s}
      {{objdump -dr jump19.d}}
      "jump19"}
+    {"script-type" "-static -T script-type.ld" "" {script-type.s}
+     {{readelf -s script-type.sym}}
+     "script-type"}
     {"callweak" "-static -T arm.ld" "" {callweak.s}
      {{objdump -dr callweak.d}}
      "callweak"}
+    {"callweak-2" "-static -T arm.ld" "" {callweak-2.s}
+     {{objdump -dr callweak-2.d}}
+     "callweak-2"}
+    {"Relocation boundaries" "-defsym x=0 -defsym y=0 -defsym _start=0" "" {reloc-boundaries.s}
+     {{objdump -s reloc-boundaries.d}}
+     "reloc-boundaries"}
+    {"Data only mapping symbols" "-T data-only-map.ld -Map map" "" {data-only-map.s}
+     {{objdump -dr data-only-map.d}}
+     "data-only-map"}
 }
 
 run_ld_link_tests $armelftests
@@ -185,15 +281,30 @@ run_dump_test "group-relocs-ldr-bad"
 run_dump_test "group-relocs-ldrs-bad"
 run_dump_test "group-relocs-ldc-bad"
 run_dump_test "thumb2-bl-undefweak"
+run_dump_test "thumb2-bl-undefweak1"
 run_dump_test "emit-relocs1"
+run_dump_test "movw-shared-1"
+run_dump_test "movw-shared-2"
+run_dump_test "movw-shared-3"
+run_dump_test "movw-shared-4"
 
 # Exclude non-ARM-EABI targets.
 
 if { ![istarget "arm*-*-*eabi"] } {
-    # Special variants of these tests, as no farcall stub is generated
-    # for a non-ARM-EABI target
-    run_dump_test "thumb2-bl-as-thumb1-bad-noeabi"
-    run_dump_test "thumb2-bl-bad-noeabi"
+    # Special variants of these tests, as a different farcall stub is
+    # generated for a non-ARM-EABI target: indeed in such a case,
+    # there are no attributes to indicate that blx can be used.
+
+    set arm_noeabi_tests {
+	{"Thumb-2-as-Thumb-1 BL" "-Ttext 0x1000 --section-start .foo=0x100100c" "" {thumb2-bl-as-thumb1-bad.s}
+	    {{objdump -d thumb2-bl-as-thumb1-bad-noeabi.d}}
+	    "thumb2-bl-as-thumb1-bad"}
+	{"Thumb-2 BL bad" "-Ttext 0x1000 --section-start .foo=0x100100c" "" {thumb2-bl-bad.s}
+	    {{objdump -d thumb2-bl-bad-noeabi.d}}
+	    "thumb2-bl-bad"}
+    }
+    run_ld_link_tests $arm_noeabi_tests
+
     return
 }
 
@@ -205,10 +316,45 @@ set armeabitests {
      {"EABI attribute merging 2" "-r" "" {attr-merge-2a.s attr-merge-2b.s}
       {{readelf -A attr-merge-2.attr}}
       "attr-merge-2"}
+     {"EABI attribute merging 3" "-r" "" {attr-merge-3a.s attr-merge-3b.s}
+      {{readelf -A attr-merge-3.attr}}
+      "attr-merge-3"}
+     {"EABI attribute merging 4" "-r" "" {attr-merge-4a.s attr-merge-4b.s}
+      {{readelf -A attr-merge-4.attr}}
+      "attr-merge-4"}
+     {"EABI attribute merging 5" "-r" "" {attr-merge-5.s attr-merge-5.s}
+      {{readelf -A attr-merge-5.attr}}
+      "attr-merge-5"}
+     {"EABI attribute merging 6" "-r" "" {attr-merge-6a.s attr-merge-6b.s}
+      {{readelf -A attr-merge-6.attr}}
+      "attr-merge-6"}
+     {"EABI attribute merging 6 reversed" "-r" "" {attr-merge-6b.s attr-merge-6a.s}
+      {{readelf -A attr-merge-6.attr}}
+      "attr-merge-6r"}
+     {"EABI attribute merging 7" "-r" "" {attr-merge-7a.s attr-merge-7b.s}
+      {{readelf -A attr-merge-7.attr}}
+      "attr-merge-7"}
+     {"EABI attribute arch merging 1" "-r" "" {arch-v6k.s arch-v6t2.s}
+      {{readelf -A attr-merge-arch-1.attr}}
+      "attr-merge-arch-1"}
+     {"EABI attribute arch merging 1 reversed" "-r" "" {arch-v6t2.s arch-v6k.s}
+      {{readelf -A attr-merge-arch-1.attr}}
+      "attr-merge-arch-1r"}
+     {"EABI attribute arch merging 2" "-r" "" {arch-v6k.s arch-v6.s}
+      {{readelf -A attr-merge-arch-2.attr}}
+      "attr-merge-arch-2"}
+     {"EABI attribute arch merging 2 reversed" "-r" "" {arch-v6.s arch-v6k.s}
+      {{readelf -A attr-merge-arch-2.attr}}
+      "attr-merge-arch-2r"}
      {"Thumb-2 BL" "-Ttext 0x1000 --section-start .foo=0x1001000" "" {thumb2-bl.s}
       {{objdump -dr thumb2-bl.d}}
       "thumb2-bl"}
-
+     {"Thumb-2 Interworked branch" "-T arm.ld" "" {thumb2-b-interwork.s}
+      {{objdump -dr thumb2-b-interwork.d}}
+      "thumb2-b-interwork"}
+    {"BL/BLX interworking" "-T arm.ld" "" {thumb2-bl-blx-interwork.s}
+     {{objdump -dr thumb2-bl-blx-interwork.d}}
+     "thumb2-bl-blx-interwork"}
     {"ARMv4 interworking" "-static -T arm.ld --fix-v4bx-interworking" "--fix-v4bx -meabi=4" {armv4-bx.s}
      {{objdump -d armv4-bx.d}}
      "armv4-bx"}
@@ -218,7 +364,7 @@ set armeabitests {
     {"MOVW/MOVT against shared libraries" "tmpdir/arm-lib.so" "" {arm-app-movw.s}
      {{objdump -Rw arm-app.r}}
      "arm-app-movw"}
-    {"Thumb-2-as-Thumb-1 BL" "-Ttext 0x1000 --section-start .foo=0x40100c" "" {thumb2-bl-as-thumb1-bad.s}
+    {"Thumb-2-as-Thumb-1 BL" "-Ttext 0x1000 --section-start .foo=0x100100c" "" {thumb2-bl-as-thumb1-bad.s}
      {{objdump -d thumb2-bl-as-thumb1-bad.d}}
      "thumb2-bl-as-thumb1-bad"}
     {"Thumb-2 BL" "-Ttext 0x1000 --section-start .foo=0x100100c" "" {thumb2-bl-bad.s}
@@ -232,8 +378,11 @@ set armeabitests {
      {{objdump -d farcall-arm-arm-pic-veneer.d}}
      "farcall-arm-arm-pic-veneer"}
     {"ARM-ARM farcall (BE8)" "-Ttext 0x1000 --section-start .foo=0x2001020 -EB --be8" "-EB" {farcall-arm-arm.s}
-     {{objdump -d farcall-arm-arm-be8.d}}
+     {{objdump -d farcall-arm-arm.d}}
      "farcall-arm-arm-be8"}
+    {"ARM-ARM farcall (BE)" "-Ttext 0x1000 --section-start .foo=0x2001020 -EB" "-EB" {farcall-arm-arm.s}
+     {{objdump -d farcall-arm-arm.d}}
+     "farcall-arm-arm-be"}
 
     {"ARM-Thumb farcall" "-Ttext 0x1000 --section-start .foo=0x2001014" "" {farcall-arm-thumb.s}
      {{objdump -d farcall-arm-thumb.d}}
@@ -251,25 +400,46 @@ set armeabitests {
     {"Thumb-Thumb farcall with BLX" "-Ttext 0x1000 --section-start .foo=0x2001014" "-march=armv5t" {farcall-thumb-thumb.s}
      {{objdump -d farcall-thumb-thumb-blx.d}}
      "farcall-thumb-thumb-blx"}
-    {"Thumb-Thumb farcall M profile" "-Ttext 0x1000 --section-start .foo=0x2001014" "-march=armv7m" {farcall-thumb-thumb.s}
+    {"Thumb-Thumb farcall M profile" "-Ttext 0x1000 --section-start .foo=0x2001014" "-march=armv7-m" {farcall-thumb-thumb.s}
      {{objdump -d farcall-thumb-thumb-m.d}}
      "farcall-thumb-thumb-m"}
+    {"Thumb-Thumb farcall v6-M" "-Ttext 0x1000 --section-start .foo=0x2001014" "-march=armv6-m" {farcall-thumb-thumb.s}
+     {{objdump -d farcall-thumb-thumb-m.d}}
+     "farcall-thumb-thumb-v6-m"}
+    {"Thumb-Thumb farcall" "-Ttext 0x1000 --section-start .foo=0x2001014" "-march=armv4t" {farcall-thumb-thumb.s}
+     {{objdump -d farcall-thumb-thumb.d}}
+     "farcall-thumb-thumb"}
     {"Thumb-Thumb farcall with BLX (PIC veneer)" "-Ttext 0x1000 --section-start .foo=0x2001014 --pic-veneer" "-march=armv5t" {farcall-thumb-thumb.s}
      {{objdump -d farcall-thumb-thumb-blx-pic-veneer.d}}
      "farcall-thumb-thumb-blx-pic-veneer"}
+    {"Thumb-Thumb farcall M profile (PIC veneer)" "-Ttext 0x1000 --section-start .foo=0x2001014 --pic-veneer" "-march=armv7-m" {farcall-thumb-thumb.s}
+     {{objdump -d farcall-thumb-thumb-m-pic-veneer.d}}
+     "farcall-thumb-thumb-m-pic-veneer"}
+    {"Thumb-Thumb farcall (PIC veneer)" "-Ttext 0x1000 --section-start .foo=0x2001014 --pic-veneer" "-march=armv4t" {farcall-thumb-thumb.s}
+     {{objdump -d farcall-thumb-thumb-pic-veneer.d}}
+     "farcall-thumb-thumb-pic-veneer"}
 
-    {"Thumb-ARM farcall" "-Ttext 0x1000 --section-start .foo=0x2001014" "-W" {farcall-thumb-arm.s}
+    {"Thumb-ARM farcall" "-Ttext 0x1c01010 --section-start .foo=0x2001014" "-W" {farcall-thumb-arm.s}
      {{objdump -d farcall-thumb-arm.d}}
      "farcall-thumb-arm"}
+    {"Thumb-ARM farcall (BE8)" "-Ttext 0x1c01010 --section-start .foo=0x2001014 -EB --be8" "-W -EB" {farcall-thumb-arm.s}
+     {{objdump -d farcall-thumb-arm.d}}
+     "farcall-thumb-arm-be8"}
+    {"Thumb-ARM farcall (BE)" "-Ttext 0x1c01010 --section-start .foo=0x2001014 -EB" "-W -EB" {farcall-thumb-arm.s}
+     {{objdump -d farcall-thumb-arm.d}}
+     "farcall-thumb-arm-be"}
     {"Thumb-ARM (short) call" "-Ttext 0x1000 --section-start .foo=0x0002014" "-W" {farcall-thumb-arm-short.s}
      {{objdump -d farcall-thumb-arm-short.d}}
      "farcall-thumb-arm-short"}
-    {"Thumb-ARM farcall with BLX" "-Ttext 0x1000 --section-start .foo=0x2001014" "-W -march=armv5t" {farcall-thumb-arm.s}
+    {"Thumb-ARM farcall with BLX" "-Ttext 0x1c01010 --section-start .foo=0x2001014" "-W -march=armv5t" {farcall-thumb-arm.s}
      {{objdump -d farcall-thumb-arm-blx.d}}
      "farcall-thumb-arm-blx"}
-    {"Thumb-ARM farcall with BLX (PIC veneer)" "-Ttext 0x1000 --section-start .foo=0x2001014 --pic-veneer" "-W -march=armv5t" {farcall-thumb-arm.s}
+    {"Thumb-ARM farcall with BLX (PIC veneer)" "-Ttext 0x1c01010 --section-start .foo=0x2001014 --pic-veneer" "-W -march=armv5t" {farcall-thumb-arm.s}
      {{objdump -d farcall-thumb-arm-blx-pic-veneer.d}}
      "farcall-thumb-arm-blx-pic-veneer"}
+    {"Thumb-ARM farcall (PIC veneer)" "-Ttext 0x1c01010 --section-start .foo=0x2001014 --pic-veneer" "-W" {farcall-thumb-arm.s}
+     {{objdump -d farcall-thumb-arm-pic-veneer.d}}
+     "farcall-thumb-arm-pic-veneer"}
 
     {"Multiple farcalls" "-Ttext 0x1000 --section-start .foo=0x2002020" "" {farcall-mix.s}
      {{objdump -d farcall-mix.d}}
@@ -284,6 +454,53 @@ set armeabitests {
     {"Group size=2" "-Ttext 0x1000 --section-start .foo=0x2003020 --stub-group-size=2" "" {farcall-group.s farcall-group2.s}
      {{objdump -d farcall-group-size2.d}}
      "farcall-group-size2"}
+    {"Group size limit" "-Ttext 0x1000 --section-start .far=0x2003020" "" {farcall-group3.s farcall-group4.s}
+     {{objdump -d farcall-group-limit.d}}
+     "farcall-group-limit"}
+
+    {"Mixed ARM/Thumb dynamic application with farcalls" "tmpdir/mixed-lib.so -T arm-dyn.ld --section-start .far_arm=0x2100000 --section-start .far_thumb=0x2200000" ""
+     {farcall-mixed-app.s}
+     {{objdump -fdw farcall-mixed-app.d} {objdump -Rw farcall-mixed-app.r}
+      {readelf -Ds farcall-mixed-app.sym}}
+     "farcall-mixed-app"}
+    {"Mixed ARM/Thumb arch5 dynamic application with farcalls" "tmpdir/mixed-lib.so -T arm-dyn.ld --use-blx --section-start .far_arm=0x2100000 --section-start .far_thumb=0x2200000" ""
+     {farcall-mixed-app.s}
+     {{objdump -fdw farcall-mixed-app-v5.d} {objdump -Rw farcall-mixed-app.r}
+      {readelf -Ds farcall-mixed-app.sym}}
+     "farcall-mixed-app-v5"}
+
+    {"Mixed ARM/Thumb shared library with long branches (v4t)" "-shared -T arm-lib.ld" "-march=armv4t"
+     {farcall-mixed-lib1.s farcall-mixed-lib2.s}
+     {{objdump -fdw farcall-mixed-lib-v4t.d}}
+     "farcall-mixed-lib.so"}
+
+    {"Mixed ARM/Thumb shared library with long branches (v5t)" "-shared -T arm-lib.ld" "-march=armv5t"
+     {farcall-mixed-lib1.s farcall-mixed-lib2.s}
+     {{objdump -fdw farcall-mixed-lib.d}}
+     "farcall-mixed-lib.so"}
+
+    {"Long branch with mixed text and data" "-T arm.ld" "" {farcall-data.s}
+     {{objdump -dr farcall-data.d}}
+     "farcall-data"}
+
+    {"R_ARM_THM_JUMP24 Relocation veneers: Short 1" 
+     "--section-start destsect=0x00009000 --section-start .text=0x8000" 
+     "-march=armv7-a -mthumb" 
+     {jump-reloc-veneers.s}
+     {{objdump -d jump-reloc-veneers-short1.d}}
+     "jump-reloc-veneers-short1"}
+    {"R_ARM_THM_JUMP24 Relocation veneers: Short 2" 
+     "--section-start destsect=0x00900000 --section-start .text=0x8000" 
+     "-march=armv7-a -mthumb" 
+     {jump-reloc-veneers.s}
+     {{objdump -d jump-reloc-veneers-short2.d}}
+     "jump-reloc-veneers-short2"}
+    {"R_ARM_THM_JUMP24 Relocation veneers: Long" 
+     "--section-start destsect=0x09000000 --section-start .text=0x8000" 
+     "-march=armv7-a -mthumb" 
+     {jump-reloc-veneers.s}
+     {{objdump -d jump-reloc-veneers-long.d}}
+     "jump-reloc-veneers-long"}
 }
 
 run_ld_link_tests $armeabitests
@@ -305,8 +522,26 @@ run_dump_test "attr-merge-wchar-24-nowarn"
 run_dump_test "attr-merge-wchar-40-nowarn"
 run_dump_test "attr-merge-wchar-42-nowarn"
 run_dump_test "attr-merge-wchar-44-nowarn"
-run_dump_test "farcall-thumb-thumb"
-run_dump_test "farcall-thumb-thumb-pic-veneer"
-run_dump_test "farcall-thumb-thumb-m-pic-veneer"
-run_dump_test "farcall-thumb-arm-pic-veneer"
 run_dump_test "farcall-section"
+run_dump_test "attr-merge-unknown-1"
+run_dump_test "attr-merge-unknown-2"
+run_dump_test "attr-merge-unknown-2r"
+run_dump_test "attr-merge-unknown-3"
+run_dump_test "unwind-1"
+run_dump_test "unwind-2"
+run_dump_test "unwind-3"
+run_dump_test "unwind-4"
+run_dump_test "unwind-5"
+run_dump_test "attr-merge-vfp-1"
+run_dump_test "attr-merge-vfp-1r"
+run_dump_test "attr-merge-vfp-2"
+run_dump_test "attr-merge-vfp-2r"
+run_dump_test "attr-merge-vfp-3"
+run_dump_test "attr-merge-vfp-3r"
+run_dump_test "attr-merge-vfp-4"
+run_dump_test "attr-merge-vfp-4r"
+run_dump_test "attr-merge-vfp-5"
+run_dump_test "attr-merge-vfp-5r"
+run_dump_test "attr-merge-vfp-6"
+run_dump_test "attr-merge-vfp-6r"
+run_dump_test "attr-merge-incompatible"

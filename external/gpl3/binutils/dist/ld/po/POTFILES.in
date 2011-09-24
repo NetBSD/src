@@ -14,6 +14,7 @@ ldfile.c
 ldfile.h
 ldlang.c
 ldlang.h
+ldlex-wrapper.c
 ldlex.h
 ldmain.c
 ldmain.h
@@ -30,3 +31,5 @@ pe-dll.c
 pe-dll.h
 pep-dll.c
 pep-dll.h
+plugin.c
+plugin.h

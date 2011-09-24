@@ -8,10 +8,10 @@ Disassembly of section \.plt:
 			80802: R_386_32	_GLOBAL_OFFSET_TABLE_
    80806:	ff 25 08 14 08 00    	jmp    \*0x81408
 			80808: R_386_32	_GLOBAL_OFFSET_TABLE_
-   8080c:	90                   	nop    
-   8080d:	90                   	nop    
-   8080e:	90                   	nop    
-   8080f:	90                   	nop    
+   8080c:	90                   	nop
+   8080d:	90                   	nop
+   8080e:	90                   	nop
+   8080f:	90                   	nop
 
 00080810 <sglobal@plt>:
    80810:	ff 25 0c 14 08 00    	jmp    \*0x8140c

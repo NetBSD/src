@@ -1,3 +1,33 @@
+2010-06-27  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	PR bootstrap/44621
+	* configure: Regenerate.
+
+2010-04-02  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* aclocal.m4: Regenerate.
+
+2009-10-15  Jim Blandy  <jimb@red-bean.com>
+
+	* libgnuintl.h (_INTL_MAY_RETURN_STRING_ARG, gettext, dgettext)
+	(dcgettext, ngettext, dngettext, dcngettext): Backport changes
+	from current gettext to provide GCC format_arg attributes.
+
+2009-08-24  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* configure.ac (AC_PREREQ): Bump to 2.64.
+
+2009-08-22  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* aclocal.m4: Regenerate.
+	* configure: Regenerate.
+	* config.h.in: Regenerate.
+
+2009-07-30  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* Makefile.in (aclocal_deps): New variable.
+	($(srcdir)/aclocal.m4): Use it, for portable makefile syntax.
+
 2008-06-17  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
 
 	* configure: Regenerate.

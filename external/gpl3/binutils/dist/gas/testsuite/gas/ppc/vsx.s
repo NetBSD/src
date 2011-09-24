@@ -1,18 +1,12 @@
 	.section	".text"
 start:
 	lxsdx      40,10,20
-	lxsdux     40,10,20
 	lxvd2x     40,10,20
-	lxvd2ux    40,10,20
 	lxvdsx     40,10,20
 	lxvw4x     40,10,20
-	lxvw4ux    40,10,20
 	stxsdx     40,10,20
-	stxsdux    40,10,20
 	stxvd2x    40,10,20
-	stxvd2ux   40,10,20
 	stxvw4x    40,10,20
-	stxvw4ux   40,10,20
 	xsabsdp    40,60
 	xsadddp    40,50,60
 	xscmpodp   1,50,60

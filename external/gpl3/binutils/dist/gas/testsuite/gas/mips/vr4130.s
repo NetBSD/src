@@ -16,8 +16,7 @@
 
 	# PART A
 	#
-	# Check that mfhis and mflos in .set noreorder blocks are not
-	# considered.
+	# Check that mfhis and mflos in .set noreorder blocks are considered.
 
 	.set	noreorder
 	mfhi	$2

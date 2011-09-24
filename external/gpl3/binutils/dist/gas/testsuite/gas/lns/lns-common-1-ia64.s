@@ -14,3 +14,5 @@
 	{ .mii; nop 0; nop 0; nop 0 ;; }
 	.loc 1 7 is_stmt 1
 	{ .mii; nop 0; nop 0; nop 0 ;; }
+	.loc 1 7 discriminator 1
+	{ .mii; nop 0; nop 0; nop 0 ;; }

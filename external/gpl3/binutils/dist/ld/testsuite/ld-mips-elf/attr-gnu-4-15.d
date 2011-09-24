@@ -8,4 +8,4 @@
 
 Attribute Section: gnu
 File Attributes
-  Tag_GNU_MIPS_ABI_FP: Hard float \(-mdouble-float\)
+  Tag_GNU_MIPS_ABI_FP: Hard float \(double precision\)

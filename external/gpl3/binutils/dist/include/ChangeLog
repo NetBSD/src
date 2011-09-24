@@ -1,6 +1,560 @@
-2008-08-25  Richard Henderson  <rth@redhat.com>
+2011-05-29  Alan Modra  <amodra@gmail.com>
+
+	Apply from mainline
+	2011-05-17  Alan Modra  <amodra@gmail.com>
+	PR ld/12760
+	* bfdlink.h (struct bfd_link_callbacks <notice>): Add "flags" and
+	"string" param.
+
+	2011-05-16  Alan Modra  <amodra@gmail.com>
+	* bfdlink.h (struct bfd_link_hash_entry): Remove u.undef.weak field.
+
+	2011-04-25  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	* bfdlink.h (ENUM_BITFIELD): Remove.
+	* ansidecl.h (ENUM_BITFIELD): New, from gcc/system.h.
+
+2011-04-27  Alan Modra  <amodra@gmail.com>
+
+	Backport from mainline.
+	2011-04-24  Alan Modra  <amodra@gmail.com>
+	PR ld/12365
+	PR ld/12696
+	* bfdlink.h (ENUM_BITFIELD): Define.
+	(struct bfd_link_hash_entry): Make "type" a bitfield.  Add "non_ir_ref".
+	(struct bfd_link_callbacks <notice>): Pass bfd_link_hash_entry pointer
+	rather than "name".
+
+	2011-04-20  Alan Modra  <amodra@gmail.com>
+	PR ld/12365
+	* bfdlink.h (struct bfd_link_callbacks): Modify multiple_definition
+	and multiple_common parameters to pass in a bfd_link_hash_entry
+	pointer rather than name,bfd etc. found in the hash entry.
+
+2010-11-25  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* opcode/s390.h (enum s390_opcode_cpu_val): Add S390_OPCODE_MAXCPU.
+
+2010-11-02  Ian Lance Taylor  <iant@google.com>
+
+	* simple-object.h: New file.
+
+2010-10-15  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	Sync LD plugin patch series (part 1/6) with src/include/.
+	* plugin-api.h (LDPT_GNU_LD_VERSION): New ld_plugin_tag enum member.
+
+2010-10-14  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	Apply LD plugin patch series (part 6/6).
+	* bfdlink.h (struct_bfd_link_callbacks): Document new argument
+	to add_archive_element callback used to return a replacement bfd which
+	is to be added to the hash table in place of the original element.
+
+2010-10-14  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	Apply LD plugin patch series (part 1/6).
+	* plugin-api.h (LDPT_GNU_LD_VERSION): New ld_plugin_tag enum member.
+
+2010-10-06  Andi Kleen <ak@linux.intel.com>
+
+	* libiberty.h (setproctitle): Add prototype.
+
+2010-09-29  Bernd Schmidt  <bernds@codesourcery.com>
+
+	* opcode/tic6x-control-registers.h (tscl): Now read_write.
+
+2010-09-27  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* opcode/s390.h: Add S390_OPCODE_Z196 to enum s390_opcode_cpu_val.
+
+2010-09-23  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* arm.h (ARM_EXT_V6Z): Remove.
+	(ARM_EXT_SEC): New define.
+	(ARM_AEXT_V6Z): Use Security Extensions.
+	(ARM_AEXT_V6ZK): Likeiwse.
+	(ARM_AEXT_V6ZT2): Likewise.
+	(ARM_AEXT_V6ZKT2): Likewise.
+	(ARM_AEXT_V7_ARM): Base v7 does not have Security Extensions.
+	(ARM_ARCH_V7A_SEC): New define.
+	(ARM_ARCH_V7A_MP): Rename...
+	(ARM_ARCH_V7A_MP_SEC): ...to this and add Security Extensions.
+
+2010-09-09  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf2.h (DW_OP_GNU_implicit_pointer): New.
+
+2010-07-06  Ken Werner  <ken.werner@de.ibm.com>
+
+	* floatformat.h (floatformat_ieee_half_big): Add declaration.
+	(floatformat_ieee_half_little): Likewise.
+
+2010-06-29  Alan Modra  <amodra@gmail.com>
+
+	* dis-asm.h: Remove references to maxq.
+
+2010-06-21  Rafael Espindola  <espindola@google.com>
+
+	* plugin-api.h (ld_plugin_set_extra_library_path): New.
+	(ld_plugin_tag): Add LDPT_SET_EXTRA_LIBRARY_PATH.
+	(ld_plugin_tv): Add tv_set_extra_library_path.
+
+2010-06-21  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf2.h (enum dwarf_type): Add DW_ATE_UTF.
+
+2010-06-18  Rafael Espindola  <espindola@google.com>
+
+	* plugin.h (ld_plugin_add_input_file, ld_plugin_add_input_library):
+	Make argument const.
+
+2010-06-08  Laurynas Biveinis  <laurynas.biveinis@gmail.com>
+
+	* splay-tree.h: Update copyright years.
+	(splay_tree_s): Document fields.
+	(splay_tree_new_typed_alloc): New.
+
+	* hashtab.h: Update copyright years.
+	(htab_create_typed_alloc): New.
+
+2010-06-10  Tristan Gingold  <gingold@adacore.com>
+
+	* dwarf2.h (enum dwarf_tag): Add DW_TAG_HP_Bliss_field and
+	DW_TAG_HP_Bliss_field_set.
+	(enum dwarf_attribute): Add DW_AT_HP_prologue, DW_AT_HP_epilogue,
+	DW_AT_HP_unit_name, DW_AT_HP_unit_size, DW_AT_HP_widened_byte_size,
+	DW_AT_HP_definition_points, DW_AT_HP_default_location and
+	DW_AT_HP_is_result_param.
+	(enum dwarf_type): Add DW_ATE_HP_VAX_float, DW_ATE_HP_VAX_float_d,
+	DW_ATE_HP_packed_decimal, DW_ATE_HP_zoned_decimal, DW_ATE_HP_edited,
+	DW_ATE_HP_signed_fixed, DW_ATE_HP_unsigned_fixed,
+	DW_ATE_HP_VAX_complex_float and DW_ATE_HP_VAX_complex_float_d.
+	(enum dwarf_line_number_x_ops): Add
+	DW_LNE_HP_source_file_correlation.
+	(enum dwarf_source_language): Add DW_LANG_HP_Bliss,
+	DW_LANG_HP_Basic91, DW_LANG_HP_Pascal91, DW_LANG_HP_IMacro,
+	DW_LANG_HP_Assembler.
+
+2010-06-01  Rafael Espindola  <espindola@google.com>
+
+	* plugin-api.h (ld_plugin_tag): Add LDPT_OUTPUT_NAME.
+
+2010-04-26  Pedro Alves  <pedro@codesourcery.com>
+
+	* filenames.h (PATH_SEPARATOR): Delete.
+
+2010-04-23  Pedro Alves  <pedro@codesourcery.com>
+
+	* filenames.h (IS_DIR_SEPARATOR_1): Rename from IS_DIR_SEPARATOR,
+	always define it independently of host, add `dos_based' parameter,
+	and handle it.
+	(PATH_SEPARATOR): Define.
+	(HAS_DRIVE_SPEC_1): Rename from HAS_DRIVE_SPEC, always define it
+	independently of host, add `dos_based' parameter, and handle it.
+	(IS_ABSOLUTE_PATH_1): Rename from IS_ABSOLUTE_PATH, always define
+	it independently of host, add `dos_based' parameter, and handle
+	it.
+	(IS_DOS_DIR_SEPARATOR, IS_DOS_ABSOLUTE_PATH)
+	(IS_UNIX_DIR_SEPARATOR, IS_UNIX_ABSOLUTE_PATH)
+	(HAS_DOS_DRIVE_SPEC): New.
+	(HAS_DRIVE_SPEC): Reimplement on top of HAS_DRIVE_SPEC_1.
+	(IS_DIR_SEPARATOR): Reimplement on top of IS_DIR_SEPARATOR_1.
+	(IS_ABSOLUTE_PATH): Reimplement on top of IS_ABSOLUTE_PATH_1.
+	* libiberty.h (dos_lbasename, unix_lbasename): Declare.
+
+2009-05-31  Ian Lance Taylor  <iant@google.com>
+
+	* ansidecl.h: Add extern "C" when compiling with C++.  Treat C++
+	the way we treat an ISO C compiler.  Don't define inline as a
+	macro when compiling with C++.
+	* dyn-string.h: Add header guard DYN_STRING_H.  Add extern "C"
+	when compiling with C++.
+	* fibheap.h: Add extern "C" when compiling with C++.
+
+2010-04-23  Pedro Alves  <pedro@codesourcery.com>
+
+	* filenames.h (IS_DIR_SEPARATOR_1): Rename from IS_DIR_SEPARATOR,
+	always define it independently of host, add `dos_based' parameter,
+	and handle it.
+	(HAS_DRIVE_SPEC_1): Rename from HAS_DRIVE_SPEC, always define it
+	independently of host, add `dos_based' parameter, and handle it.
+	(IS_ABSOLUTE_PATH_1): Rename from IS_ABSOLUTE_PATH, always define
+	it independently of host, add `dos_based' parameter, and handle
+	it.
+	(IS_DOS_DIR_SEPARATOR, IS_DOS_ABSOLUTE_PATH)
+	(IS_UNIX_DIR_SEPARATOR, IS_UNIX_ABSOLUTE_PATH)
+	(HAS_DOS_DRIVE_SPEC): New.
+	(HAS_DRIVE_SPEC): Reimplement on top of HAS_DRIVE_SPEC_1.
+	(IS_DIR_SEPARATOR): Reimplement on top of IS_DIR_SEPARATOR_1.
+	(IS_ABSOLUTE_PATH): Reimplement on top of IS_ABSOLUTE_PATH_1.
+	* libiberty.h (dos_lbasename, unix_lbasename): Declare.
+
+2010-04-20  Nick Clifton  <nickc@redhat.com>
+
+	* sha1.h: Update copyright notice to use GPLv3.
+
+2010-04-15  Nick Clifton  <nickc@redhat.com>
+
+	* bout.h: Update copyright notice to use GPLv3.
+	* hp-symtab.h: Likewise.
+	* oasys.h: Likewise.
+	* progress.h: Likewise.
+	* sha1.h: Likewise.
+	* xtensa-isa-internal.h: Likewise.
+	* xtensa-isa.h: Likewise.
+
+2010-04-14  Doug Evans  <dje@google.com>
+
+	* filenames.h (HAS_DRIVE_SPEC, STRIP_DRIVE_SPEC): New macros.
+
+2010-04-05  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf2.h (DWARF2_Internal_LineInfo): Add li_max_ops_per_insn
+	field.
+
+2010-03-25  Joseph Myers  <joseph@codesourcery.com>
+
+	* dis-asm.h (print_insn_tic6x): Declare.
+
+2010-03-23  Joseph Myers  <joseph@codesourcery.com>
+
+	* symcat.h (CONCAT5, CONCAT6, XCONCAT5, XCONCAT6): Define.
+
+2010-01-13  Joel Brobecker  <brobecker@adacore.com>
+
+	Add new DW_AT_use_GNAT_descriptive_type CU attribute.
+	* dwarf2.h (dwarf_attribute): Add DW_AT_use_GNAT_descriptive_type.
+
+2010-01-11  Tristan Gingold  <gingold@adacore.com>
+
+	* demangle.h (ada_demangle): Add prototype.
+
+2010-01-05  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR bootstrap/41771
+	* ansidecl.h: Fix inline test for C99 and Sun Studio cc.
+
+2009-12-29  Joel Brobecker  <brobecker@adacore.com>
+
+	* dwarf2.h (enum dwarf_attribute): Add DW_AT_GNAT_descriptive_type.
+
+2009-12-14  Doug Kwan  <dougkwan@google.com>
+
+	* bfdlink.h (struct bfd_link_callbacks): Rename function parameters
+	to avoid shadowed variable warnings.
+	* dis-asm.h (struct disassemble_info): Ditto.
+	(disassemble_init_for_target): Ditto.
+	(init_disassemble_info): Ditto.
+
+2009-12-03  David Daney  <ddaney@caviumnetworks.com>
+	    Adam Nemet  <adambnemet@gmail.com>
+
+	* elf/mips.h (E_MIPS_MACH_OCTEON2): New machine flag.
+
+2009-11-18  Alan Modra  <amodra@bigpond.net.au>
+
+	* alloca-conf.h: Clarify comment.
+
+2009-11-06  Jonas Maebe  <jonas.maebe@elis.ugent.be>
+
+	Add DWARF attribute value for the "Borland fastcall" calling
+	convention.
+	* elf/dwarf2.h: Add DW_CC_GNU_borland_fastcall_i386 constant.
+
+2009-10-23  Kai Tietz  <kai.tietz@onevision.com>
+
+	* splay-tree.h (libi_uhostptr_t): Add gcc specific
+	__extension__ for long long type case to silent cX9.
+	(libi_shostptr_t): Likewise.
+
+2009-10-19  Rafael Avila de Espindola  <espindola@google.com>
+
+	PR40790
+	* plugin-api.h: Don't include stdint.h unconditionally.
+
+2009-10-15  Jakub Jelinek  <jakub@redhat.com>
+
+	* include/dwarf2.h (DW_LANG_Python): Add comment that it is
+	a DWARF 4 addition.
+
+2009-10-14  Alan Modra  <amodra@bigpond.net.au>
+
+	* bfdlink.h (enum bfd_link_common_skip_ar_symbols): Rename from
+	bfd_link_common_skip_ar_aymbols.
+	(struct bfd_link_info): Here too.
+
+2009-10-09  Rafael Espindola  <espindola@google.com>
+
+	* plugin-api.h (ld_plugin_add_input_library): Change argument name to
+	libname.
+
+2008-10-03  Rafael Espindola  <espindola@google.com>
+
+	* plugin-api.h: New.
+	* lto-symtab.h: New.
+
+2009-10-05   Rafael Espindola  <espindola@google.com>
+
+	* plugin-api.h (ld_plugin_status): Add LDPS_BAD_HANDLE.
+	(ld_plugin_get_input_file): New.
+	(ld_plugin_release_input_file): New.
+	(ld_plugin_add_input_library): New.
+	(ld_plugin_message): Mark format const.
+	(ld_plugin_level): Add LDPT_GET_INPUT_FILE, LDPT_RELEASE_INPUT_FILE and
+	LDPT_ADD_INPUT_LIBRARY.
+	(ld_plugin_tv): Add tv_get_input_file, tv_release_input_file and
+	tv_add_input_library.
+
+2009-10-04  Jerry Quinn  <jlquinn@optonline.net>
+
+	* plugin-api.h: Fix compile.
+
+2009-09-29  Jason Merrill  <jason@redhat.com>
+
+	* demangle.h (enum demangle_component_type): Add
+	DEMANGLE_COMPONENT_LAMBDA, DEMANGLE_COMPONENT_DEFAULT_ARG,
+	DEMANGLE_COMPONENT_UNNAMED_TYPE.
+	(struct demangle_component): Add s_unary_num.
+
+2009-09-29  DJ Delorie  <dj@redhat.com>
+
+	* dis-asm.h: Add prototype for print_insn_rx.
+
+2009-09-25  Dodji Seketeli  <dodji@redhat.com>
+
+	* dwarf2.h (enum dwarf_tag): Rename DW_TAG_template_parameter_pack and
+	DW_TAG_formal_parameter_pack into DW_TAG_GNU_template_parameter_pack
+	and DW_TAG_formal_parameter_pack until DWARF 5 is out.
+
+2009-09-25  Cary Coutant  <ccoutant@google.com>
+
+	Add rest of new values from DWARF Version 4.
+	* dwarf2.h (DW_TAG_rvalue_reference_type, DW_TAG_template_alias):
+	New tags.
+	(DW_FORM_ref_sig8): New name for DW_FORM_sig8.
+	(DW_AT_main_subprogram, DW_AT_data_bit_offset, DW_AT_const_expr,
+	DW_AT_enum_class, DW_AT_linkage_name, DW_AT_GNU_guarded_by,
+	DW_AT_GNU_pt_guarded_by, DW_AT_GNU_guarded, DW_AT_GNU_pt_guarded,
+	DW_AT_GNU_locks_excluded, DW_AT_GNU_exclusive_locks_required,
+	DW_AT_GNU_shared_locks_required, DW_AT_GNU_odr_signature): New
+	attributes.
+	(DW_LANG_Python): New language.
+
+2009-09-24  Cary Coutant  <ccoutant@google.com>
+
+	* dwarf2.h (DW_TAG_rvalue_reference_type, DW_TAG_template_alias):
+	New tags.
+	(DW_FORM_ref_sig8): New name for DW_FORM_sig8.
+	(DW_AT_main_subprogram, DW_AT_data_bit_offset, DW_AT_const_expr,
+	DW_AT_enum_class, DW_AT_linkage_name, DW_AT_GNU_guarded_by,
+	DW_AT_GNU_pt_guarded_by, DW_AT_GNU_guarded, DW_AT_GNU_pt_guarded,
+	DW_AT_GNU_locks_excluded, DW_AT_GNU_exclusive_locks_required,
+	DW_AT_GNU_shared_locks_required, DW_AT_GNU_odr_signature): New
+	attributes.
+	(DW_LANG_Python): New language.
+
+2009-09-22  Dodji Seketeli  <dodji@redhat.com>
+
+	* dwarf2.h (enum dwarf_tag): Add
+	DW_TAG_template_parameter_pack and DW_TAG_formal_parameter_pack.
+
+2009-09-09  Martin Thuresson  <martin@mtme.org>
+
+	* bfdlink.h (struct bfd_link_hash_common_entry): Move to top
+	level.
+
+2009-09-04  Jie Zhang  <jie.zhang@analog.com>
+
+	* opcode/bfin.h (PseudoDbg_Assert): Add bits_grp and mask_grp.
+	(PseudoDbg_Assert_grp_bits, PseudoDbg_Assert_grp_mask): Define.
+	(PseudoDbg_Assert_dbgop_bits, PseudoDbg_Assert_dbgop_mask,
+	PseudoDbg_Assert_dontcare_bits, PseudoDbg_Assert_dontcare_mask):
+	Adjust accordingly.
+	(init_PseudoDbg_Assert): Add PseudoDbg_Assert_grp_bits and
+	PseudoDbg_Assert_grp_mask.
+
+2009-08-06  Michael Eager <eager@eagercon.com>
+
+	* dis-asm.h: Decl print_insn_microblaze().
+
+2009-07-24  Ian Lance Taylor  <iant@google.com>
+
+	* libiberty.h (crc32): Declare.
+
+2009-07-20  Cary Coutant  <ccoutant@google.com>
+	    Doug Evans  <dje@google.com>
+
+	Add some dwarf4 values.
+	* dwarf2.h (enum dwarf_tag): Add DW_TAG_type_unit.
+	(enum dwarf_form): Add DW_FORM_sec_offset, DW_FORM_exprloc,
+	DW_FORM_flag_present, DW_FORM_sig8.
+	(enum dwarf_attribute): Add DW_AT_signature.
+
+2009-07-17  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* demangle.h
+	(enum demangle_component_type <DEMANGLE_COMPONENT_GLOBAL_CONSTRUCTORS>)
+	(enum demangle_component_type <DEMANGLE_COMPONENT_GLOBAL_DESTRUCTORS>):
+	New.
+
+2009-07-10  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf2.h: New file, moved from elf/.
+
+2009-07-09  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf2.h (enum dwarf_location_atom): Add DW_OP_implicit_value
+	and DW_OP_stack_value.
+
+2009-07-09  Tom Tromey  <tromey@redhat.com>
+
+	* elf/dwarf2.h: Remove, renaming to...
+	* dwarf2.h: ... this.
+
+2009-06-29  Tom Tromey  <tromey@redhat.com>
+
+	* elf/dwarf2.h: New file.  Merged with gdb.
+
+2009-06-18  Nick Clifton  <nickc@redhat.com>
+
+	* dis-asm.h (USER_SPECIFIED_MACHINE_TYPE): New value for the flags
+	field of struct disassemble_info.
+
+2009-06-09  Ian Lance Taylor  <ian@airs.com>
+
+	* ansidecl.h (ATTRIBUTE_UNUSED_LABEL): Define for C++.
+
+2009-06-15  Nick Clifton  <nickc@redhat.com>
+
+	* dis-asm.h (DISASSEMBLE_DATA): New value for the flags field of
+	struct disassemble_info.
+
+2009-06-02  Ian Lance Taylor  <iant@google.com>
+
+	* ansidecl.h (EXPORTED_CONST): Define.
+
+2009-05-31  Ian Lance Taylor  <iant@google.com>
+
+	* ansidecl.h: Add extern "C" when compiling with C++.  Treat C++
+	the way we treat an ISO C compiler.  Don't define inline as a
+	macdro when compiling with C++.
+	* dyn-string.h: Add header guard DYN_STRING_H.  Add extern "C"
+	when compiling with C++.
+	* fibheap.h: Add extern "C" when compiling with C++.
+
+2009-05-25  Tristan Gingold  <gingold@adacore.com>
+
+	* fopen-vms.h (FOPEN_RB, FOPEN_WB, FOPEN_AB, FOPEN_RUB, FOPEN_WUB,
+	FOPEN_AUB): Use "rfm=udf,rat=none" attribute.
+
+2009-04-22  Taras Glek <tglek@mozilla.com>
+
+	* hashtab.h: Update GTY annotations to new syntax.
+	* splay-tree.h: Likewise.
+
+2009-04-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* bfdlink.h (bfd_link_info): Add warn_alternate_em.
+
+2009-03-18  Alan Modra  <amodra@bigpond.net.au>
+
+	* alloca-conf.h: Revise based on autoconf-2.61, autoconf-2.13
+	documentation.
+
+2009-03-17  Jason Merrill  <jason@redhat.com>
+
+	* demangle.h (enum demangle_component_type): Add
+	DEMANGLE_COMPONENT_FUNCTION_PARAM.
+
+2008-12-01  Cary Coutant  <ccoutant@google.com>
+
+	* plugin-api.h (LDPS_BAD_HANDLE): New constant.
+	(ld_plugin_get_input_file): New typedef.
+	(ld_plugin_release_input_file): New typedef.
+	(LDPT_GET_INPUT_FILE, LDPT_RELEASE_INPUT_FILE): New constants.
+	(struct ld_plugin_tv): Add two new fields.
+
+2008-12-23  Jon Beniston <jon@beniston.com>
+
+	* dis-asm.h: Add LM32 disassembler function prototype.
+
+2008-12-10  Jason Merrill  <jason@redhat.com>
+
+	* demangle.h (enum demangle_component_type): Add
+	DEMANGLE_COMPONENT_FIXED_TYPE.
+
+2008-12-01  Cary Coutant  <ccoutant@google.com>
+
+	* plugin-api.h (ld_plugin_message): Change format parameter to const.
+
+2008-12-01  Cary Coutant  <ccoutant@google.com>
+
+	* plugin-api.h: Fix syntax error when compiling with C++.
+
+2008-11-26  Alan Modra  <amodra@bigpond.net.au>
+
+	PR 7047
+	* bfdlink.h (struct bfd_elf_version_expr): Delete "symbol".
+	Add "literal".
+
+2008-11-21  Sterling Augustine  <sterling@tensilica.com>
+
+	* xtensa-isa-internal.h (XTENSA_STATE_IS_SHARED_OR): New flag.
+	* xtensa-isa.h (xtensa_state_is_shared_or): New prototype.
+
+2008-11-19  Bob Wilson  <bob.wilson@acm.org>
+
+	* xtensa-config.h (XCHAL_HAVE_MUL16, XCHAL_HAVE_MUL32, XCHAL_HAVE_DIV32)
+	(XCHAL_HAVE_MINMAX, XCHAL_HAVE_SEXT, XCHAL_HAVE_THREADPTR)
+	(XCHAL_HAVE_RELEASE_SYNC, XCHAL_HAVE_S32C1I): Change to 1.
+	(XCHAL_NUM_AREGS): Change to 32.
+	(XCHAL_ICACHE_SIZE, XCHAL_DCACHE_SIZE): Change to 16K.
+	(XCHAL_ICACHE_LINESIZE, XCHAL_DCACHE_LINESIZE): Change to 32.
+	(XCHAL_ICACHE_LINEWIDTH, XCHAL_DCACHE_LINEWIDTH): Change to 5.
+	(XCHAL_DCACHE_IS_WRITEBACK): Change to 1.
+	(XCHAL_DEBUGLEVEL): Change to 6.
+
+2008-11-14  Tristan Gingold  <gingold@adacore.com>
+
+	* fopen-vms.h (FOPEN_RB): Use a single string to match the
+	standard prototype.
+	(FOPEN_WB): Ditto.
+	(FOPEN_AB): Ditto.
+	(FOPEN_RUB): Ditto.
+	(FOPEN_WUB): Ditto.
+	(FOPEN_AUB): Ditto.
+
+2008-10-21  Alan Modra  <amodra@bigpond.net.au>
+
+	* obstack.h (obstack_finish <!__GNUC__>): Cast result to void *.
+
+2008-10-06  Jason Merrill  <jason@redhat.com>
+
+	* demangle.h (enum demangle_component_type): Add
+	DEMANGLE_COMPONENT_PACK_EXPANSION.
+
+2008-09-24  Richard Henderson  <rth@redhat.com>
 
 	* elf/dwarf2.h (DW_OP_GNU_encoded_addr): New.
+
+2008-09-22 Rafael Espindola  <espindola@google.com>
+
+	* plugin-api.h (ld_plugin_status): Remove comma from the last item.
+	Use C style comment.
+	(ld_plugin_api_version, ld_plugin_output_file_type,
+	ld_plugin_symbol_kind, ld_plugin_symbol_visibility,
+	ld_plugin_symbol_resolution, ld_plugin_level, ld_plugin_tag): Remove
+	comma from the last item.
+
+2008-09-18  Cary Coutant  <ccoutant@google.com>
+
+	Add plugin functionality for link-time optimization (LTO).
+	* plugin-api.h: New file.
+
+2008-09-09  Jason Merrill  <jason@redhat.com>
+
+	* demangle.h (enum demangle_component_type): Add
+	DEMANGLE_COMPONENT_DECLTYPE.
 
 2008-08-25  Alan Modra  <amodra@bigpond.net.au>
 
@@ -90,7 +644,7 @@
 
 	* xtensa-config.h (XCHAL_HAVE_THREADPTR): Redefine to zero.
 	(XCHAL_NUM_AREGS, XCHAL_MAX_INSTRUCTION_SIZE): New.
-	
+
 2008-01-26  David Daney  <ddaney@avtrex.com>
 
 	* demangle.h (demangle_component_type):  Add
@@ -119,10 +673,10 @@
 	* ternary.h: Remove.
 
 2007-07-18  Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* xtensa-config.h (XCHAL_HAVE_THREADPTR): New.
 	(XCHAL_HAVE_RELEASE_SYNC, XCHAL_HAVE_S32C1I): New.
-	
+
 2007-07-17  Nick Clifton  <nickc@redhat.com>
 
 	* COPYING3: New file.  Contains version 3 of the GNU General
@@ -185,9 +739,9 @@
 	override_segment_assignment field.
 
 2007-02-17  Mark Mitchell  <mark@codesourcery.com>
-	    Nathan Sidwell  <nathan@codesourcery.com>
-	    Vladimir Prus  <vladimir@codesourcery.com
-	    Joseph Myers  <joseph@codesourcery.com>
+            Nathan Sidwell  <nathan@codesourcery.com>
+            Vladimir Prus  <vladimir@codesourcery.com
+            Joseph Myers  <joseph@codesourcery.com>
 
 	* bin-bugs.h: Remove.
 
@@ -290,8 +844,8 @@
 	relax_pass.
 
 2006-02-17  Shrirang Khisti  <shrirangk@kpitcummins.com>
-	    Anil Paranjape   <anilp1@kpitcummins.com>
-	    Shilin Shakti    <shilins@kpitcummins.com>
+            Anil Paranjape   <anilp1@kpitcummins.com>
+            Shilin Shakti    <shilins@kpitcummins.com>
 
 	* dis-asm.h (print_insn_xc16c): New prototype.
 

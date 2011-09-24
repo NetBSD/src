@@ -1,6 +1,6 @@
 /* messages.c - error reporter -
    Copyright 1987, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 2000, 2001,
-   2003, 2004, 2005, 2006, 2007, 2008
+   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
    This file is part of GAS, the GNU Assembler.
 
@@ -113,7 +113,12 @@ as_show_where (void)
   as_where (&file, &line);
   identify (file);
   if (file)
-    fprintf (stderr, "%s:%u: ", file, line);
+    {
+      if (line != 0)
+	fprintf (stderr, "%s:%u: ", file, line);
+      else
+	fprintf (stderr, "%s: ", file);
+    }
 }
 
 /* Send to stderr a string as a warning, and locate warning
@@ -122,7 +127,6 @@ as_show_where (void)
    Please explain in string (which may have '\n's) what recovery was
    done.  */
 
-#ifdef USE_STDARG
 void
 as_tsktsk (const char *format, ...)
 {
@@ -134,21 +138,6 @@ as_tsktsk (const char *format, ...)
   va_end (args);
   (void) putc ('\n', stderr);
 }
-#else
-void
-as_tsktsk (format, va_alist)
-     const char *format;
-     va_dcl
-{
-  va_list args;
-
-  as_show_where ();
-  va_start (args);
-  vfprintf (stderr, format, args);
-  va_end (args);
-  (void) putc ('\n', stderr);
-}
-#endif /* not NO_STDARG */
 
 /* The common portion of as_warn and as_warn_where.  */
 
@@ -162,7 +151,12 @@ as_warn_internal (char *file, unsigned int line, char *buffer)
 
   identify (file);
   if (file)
-    fprintf (stderr, "%s:%u: ", file, line);
+    {
+      if (line != 0)
+	fprintf (stderr, "%s:%u: ", file, line);
+      else
+	fprintf (stderr, "%s: ", file);
+    }
   fprintf (stderr, _("Warning: "));
   fputs (buffer, stderr);
   (void) putc ('\n', stderr);
@@ -177,7 +171,6 @@ as_warn_internal (char *file, unsigned int line, char *buffer)
    Please explain in string (which may have '\n's) what recovery was
    done.  */
 
-#ifdef USE_STDARG
 void
 as_warn (const char *format, ...)
 {
@@ -192,30 +185,11 @@ as_warn (const char *format, ...)
       as_warn_internal ((char *) NULL, 0, buffer);
     }
 }
-#else
-void
-as_warn (format, va_alist)
-     const char *format;
-     va_dcl
-{
-  va_list args;
-  char buffer[2000];
-
-  if (!flag_no_warnings)
-    {
-      va_start (args);
-      vsnprintf (buffer, sizeof (buffer), format, args);
-      va_end (args);
-      as_warn_internal ((char *) NULL, 0, buffer);
-    }
-}
-#endif /* not NO_STDARG */
 
 /* Like as_bad but the file name and line number are passed in.
    Unfortunately, we have to repeat the function in order to handle
    the varargs correctly and portably.  */
 
-#ifdef USE_STDARG
 void
 as_warn_where (char *file, unsigned int line, const char *format, ...)
 {
@@ -230,26 +204,6 @@ as_warn_where (char *file, unsigned int line, const char *format, ...)
       as_warn_internal (file, line, buffer);
     }
 }
-#else
-void
-as_warn_where (file, line, format, va_alist)
-     char *file;
-     unsigned int line;
-     const char *format;
-     va_dcl
-{
-  va_list args;
-  char buffer[2000];
-
-  if (!flag_no_warnings)
-    {
-      va_start (args);
-      vsnprintf (buffer, sizeof (buffer), format, args);
-      va_end (args);
-      as_warn_internal (file, line, buffer);
-    }
-}
-#endif /* not NO_STDARG */
 
 /* The common portion of as_bad and as_bad_where.  */
 
@@ -263,7 +217,12 @@ as_bad_internal (char *file, unsigned int line, char *buffer)
 
   identify (file);
   if (file)
-    fprintf (stderr, "%s:%u: ", file, line);
+    {
+      if (line != 0)
+	fprintf (stderr, "%s:%u: ", file, line);
+      else
+	fprintf (stderr, "%s: ", file);
+    }
   fprintf (stderr, _("Error: "));
   fputs (buffer, stderr);
   (void) putc ('\n', stderr);
@@ -278,7 +237,6 @@ as_bad_internal (char *file, unsigned int line, char *buffer)
    Please explain in string (which may have '\n's) what recovery was
    done.  */
 
-#ifdef USE_STDARG
 void
 as_bad (const char *format, ...)
 {
@@ -292,28 +250,10 @@ as_bad (const char *format, ...)
   as_bad_internal ((char *) NULL, 0, buffer);
 }
 
-#else
-void
-as_bad (format, va_alist)
-     const char *format;
-     va_dcl
-{
-  va_list args;
-  char buffer[2000];
-
-  va_start (args);
-  vsnprintf (buffer, sizeof (buffer), format, args);
-  va_end (args);
-
-  as_bad_internal ((char *) NULL, 0, buffer);
-}
-#endif /* not NO_STDARG */
-
 /* Like as_bad but the file name and line number are passed in.
    Unfortunately, we have to repeat the function in order to handle
    the varargs correctly and portably.  */
 
-#ifdef USE_STDARG
 void
 as_bad_where (char *file, unsigned int line, const char *format, ...)
 {
@@ -327,31 +267,11 @@ as_bad_where (char *file, unsigned int line, const char *format, ...)
   as_bad_internal (file, line, buffer);
 }
 
-#else
-void
-as_bad_where (file, line, format, va_alist)
-     char *file;
-     unsigned int line;
-     const char *format;
-     va_dcl
-{
-  va_list args;
-  char buffer[2000];
-
-  va_start (args);
-  vsnprintf (buffer, sizeof (buffer), format, args);
-  va_end (args);
-
-  as_bad_internal (file, line, buffer);
-}
-#endif /* not NO_STDARG */
-
 /* Send to stderr a string as a fatal message, and print location of
    error in input file(s).
    Please only use this for when we DON'T have some recovery action.
    It xexit()s with a warning status.  */
 
-#ifdef USE_STDARG
 void
 as_fatal (const char *format, ...)
 {
@@ -369,23 +289,6 @@ as_fatal (const char *format, ...)
     unlink_if_ordinary (out_file_name);
   xexit (EXIT_FAILURE);
 }
-#else
-void
-as_fatal (format, va_alist)
-     char *format;
-     va_dcl
-{
-  va_list args;
-
-  as_show_where ();
-  va_start (args);
-  fprintf (stderr, _("Fatal error: "));
-  vfprintf (stderr, format, args);
-  (void) putc ('\n', stderr);
-  va_end (args);
-  xexit (EXIT_FAILURE);
-}
-#endif /* not NO_STDARG */
 
 /* Indicate assertion failure.
    Arguments: Filename, line number, optional function name.  */

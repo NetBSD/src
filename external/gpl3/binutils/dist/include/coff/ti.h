@@ -2,11 +2,12 @@
    customized in a target-specific file, and then this file included (see
    tic54x.h for an example).
    
-   Copyright 2000, 2001, 2002, 2003, 2008 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2005, 2008, 2009, 2010
+   Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
+   the Free Software Foundation; either version 3 of the License, or
    (at your option) any later version.
    
    This program is distributed in the hope that it will be useful,
@@ -16,7 +17,9 @@
    
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
+   MA 02110-1301, USA.  */
+
 #ifndef COFF_TI_H
 #define COFF_TI_H
 
@@ -102,19 +105,21 @@ struct external_filehdr
 #define COFF_ADJUST_FILEHDR_IN_POST(abfd, src, dst) \
   do									\
     {									\
-      ((struct internal_filehdr *)(dst))->f_target_id =			\
-	H_GET_16 (abfd, ((FILHDR *)(src))->f_target_id);		\
+      if (!COFF0_P (abfd))						\
+	((struct internal_filehdr *)(dst))->f_target_id =		\
+	  H_GET_16 (abfd, ((FILHDR *)(src))->f_target_id);		\
     }									\
   while (0)
 #endif
 
 #ifndef COFF_ADJUST_FILEHDR_OUT_POST
 #define COFF_ADJUST_FILEHDR_OUT_POST(abfd, src, dst) \
-  do									\
-    {									\
-      H_PUT_16 (abfd, ((struct internal_filehdr *)(src))->f_target_id,	\
-	       ((FILHDR *)(dst))->f_target_id);				\
-    }									\
+  do									 \
+    {									 \
+      if (!COFF0_P (abfd))						 \
+	H_PUT_16 (abfd, ((struct internal_filehdr *)(src))->f_target_id, \
+		 ((FILHDR *)(dst))->f_target_id);			 \
+    }									 \
   while (0)
 #endif
 
@@ -321,6 +326,15 @@ struct external_scnhdr {
     }									\
    while (0)
 
+/* The entire scnhdr may not be assigned.
+   Ensure that everything is initialized.  */
+#define COFF_ADJUST_SCNHDR_OUT_PRE(ABFD, INT, EXT)	\
+  do							\
+    {							\
+      memset((EXT), 0, sizeof (SCNHDR));		\
+    }							\
+  while (0)
+
 /* The line number and reloc overflow checking in coff_swap_scnhdr_out in
    coffswap.h doesn't use PUT_X for s_nlnno and s_nreloc.
    Due to different sized v0/v1/v2 section headers, we have to re-write these
@@ -464,10 +478,10 @@ union external_auxent {
 
 /* lnsz size is in bits in COFF file, in bytes in BFD */
 #define GET_LNSZ_SIZE(abfd, ext) \
- (H_GET_16 (abfd, ext->x_sym.x_misc.x_lnsz.x_size) / (class != C_FIELD ? 8 : 1))
+ (H_GET_16 (abfd, ext->x_sym.x_misc.x_lnsz.x_size) / (in_class != C_FIELD ? 8 : 1))
 
 #define PUT_LNSZ_SIZE(abfd, in, ext) \
-  H_PUT_16 (abfd, ((class != C_FIELD) ? (in) * 8 : (in)), \
+  H_PUT_16 (abfd, ((in_class != C_FIELD) ? (in) * 8 : (in)), \
 	   ext->x_sym.x_misc.x_lnsz.x_size)
  
 /* TI COFF stores offsets for MOS and MOU in bits; BFD expects bytes 

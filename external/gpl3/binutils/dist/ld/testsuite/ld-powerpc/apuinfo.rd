@@ -1,5 +1,6 @@
 #source: apuinfo1.s
 #source: apuinfo2.s
+#source: apuinfo-nul.s
 #as: -me500
 #readelf: -x2
 #target: powerpc-eabi*

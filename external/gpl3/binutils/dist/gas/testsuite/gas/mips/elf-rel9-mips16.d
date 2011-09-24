@@ -52,19 +52,19 @@ Disassembly of section \.text:
 			52: R_MIPS16_GOT16	\.data
   56:	f342 4c05 	addiu	\$4,4933
 			56: R_MIPS16_LO16	\.data
-  5a:	f018 9a80 	lw	\$4,-16384\(\$2\)
+  5a:	f000 9a80 	lw	\$4,0\(\$2\)
 			5a: R_MIPS16_GPREL	\.sdata
-  5e:	f018 9a84 	lw	\$4,-16380\(\$2\)
+  5e:	f000 9a84 	lw	\$4,4\(\$2\)
 			5e: R_MIPS16_GPREL	\.sdata
-  62:	f018 9a84 	lw	\$4,-16380\(\$2\)
+  62:	f000 9a84 	lw	\$4,4\(\$2\)
 			62: R_MIPS16_GPREL	\.sdata
-  66:	f018 9a88 	lw	\$4,-16376\(\$2\)
+  66:	f000 9a88 	lw	\$4,8\(\$2\)
 			66: R_MIPS16_GPREL	\.sdata
-  6a:	f018 9a8c 	lw	\$4,-16372\(\$2\)
+  6a:	f000 9a8c 	lw	\$4,12\(\$2\)
 			6a: R_MIPS16_GPREL	\.sdata
-  6e:	f018 9a94 	lw	\$4,-16364\(\$2\)
+  6e:	f000 9a94 	lw	\$4,20\(\$2\)
 			6e: R_MIPS16_GPREL	\.sdata
-  72:	f018 9a98 	lw	\$4,-16360\(\$2\)
+  72:	f000 9a98 	lw	\$4,24\(\$2\)
 			72: R_MIPS16_GPREL	\.sdata
   76:	6500      	nop
 #pass

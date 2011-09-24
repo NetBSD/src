@@ -1,5 +1,5 @@
 # Test that the linker can handle fastcall symbols correctly.
-# Copyright 2002, 2006, 2007 Free Software Foundation, Inc.
+# Copyright 2002, 2005, 2006, 2007 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #

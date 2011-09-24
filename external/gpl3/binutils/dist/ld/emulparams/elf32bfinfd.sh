@@ -14,9 +14,18 @@ OTHER_READONLY_SECTIONS="
     ${RELOCATING+__ROFIXUP_END__ = .;}
   }
 "
-# 0xff700000, 0xff800000, 0xff900000 and 0xffa00000 are also used in
-# Dynamic linker and linux kernel. They need to be keep synchronized.
+# 0xfeb00000, 0xfec00000, 0xff700000, 0xff800000, 0xff900000
+# 0xffa00000 are also used in Dynamic linker and linux kernel.
+# They need to be kept synchronized.
 OTHER_SECTIONS="
+  .l2.text 0xfeb00000	:
+  {
+    *(.l2.text)
+  }
+  .l2.data 0xfec00000	:
+  {
+    *(.l2.data)
+  }
   .l1.data 0xff700000	:
   {
     *(.l1.data)

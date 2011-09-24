@@ -29,7 +29,7 @@ proc iq2000_warning_test { file testname {warnpattern ""} } {
 }
 
 if [istarget iq2000*-*-*] {
-    foreach file [glob -nocomplain -- $srcdir/$subdir/hazard*.s] {
+    foreach file [lsort [glob -nocomplain -- $srcdir/$subdir/hazard*.s]] {
 	set file [file tail $file]
 	switch -- $file {
 	    "hazard0.s" {

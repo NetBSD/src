@@ -1,5 +1,5 @@
 # Expect script for various ELF tests.
-#   Copyright 2006, 2007 Free Software Foundation, Inc.
+#   Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -123,6 +123,37 @@ set build_tests {
   {"Build libdata1.so"
    "-shared" "-fPIC"
    {data1.c} {} "libdata1.so"}
+  {"Build libcomm1.o"
+   "-r -nostdlib" ""
+   {comm1.c} {} "libcomm1.o"}
+  {"Build libfunc1.so"
+   "-shared" "-fPIC"
+   {func1.c} {} "libfunc1.so"}
+  {"Build libpr9676-1.a"
+   "" "-fPIC"
+   {pr9676-1.c} {} "libpr9676-1.a"}
+  {"Build libpr9676-2.a"
+   "" "-fPIC"
+   {pr9676-2.c} {} "libpr9676-2.a"}
+  {"Build libpr9676-3.so"
+   "-shared" "-fPIC"
+   {pr9676-3.c} {} "libpr9676-3.so"}
+  {"Build libpr9676-4.so"
+   "-shared" "-fPIC"
+   {pr9676-4.c} {} "libpr9676-4.so"}
+  {"Build libpr9676-4a.so"
+   "-shared tmpdir/pr9676-4.o -Ltmpdir -lpr9676-3 -Wl,--start-group -lpr9676-1 -lpr9676-2 -Wl,--end-group"
+   "-fPIC"
+   {dummy.c} {{readelf {-s} pr9676.rd}} "libpr9676-4a.so"}
+  {"Build libpr9679.so"
+   "-shared" "-fPIC -O0"
+   {pr9679-1.c pr9679-2.c} {{readelf {-s} pr9679.rd}} "libpr9679.so"}
+  {"Build libpr11138-1.so"
+   "-shared -Wl,--version-script=pr11138-1.map" "-fPIC"
+   {pr11138-1.c} {} "libpr11138-1.so"}
+  {"Build libpr11138-2.o"
+   "-r -nostdlib" ""
+   {pr11138-2.c} {} "libpr11138-2.o"}
 }
 
 set run_tests {
@@ -235,6 +266,18 @@ set run_tests {
     {"Run with libdata1.so"
      "tmpdir/libdata1.so" ""
      {dynbss1.c} "dynbss1" "pass.out"}
+    {"Run with libfunc1.so comm1.o"
+     "tmpdir/libfunc1.so tmpdir/comm1.o" ""
+     {dummy.c} "comm1" "pass.out"}
+    {"Run with comm1.o libfunc1.so"
+     "tmpdir/comm1.o tmpdir/libfunc1.so" ""
+     {dummy.c} "comm1" "pass.out"}
+    {"Run with pr11138-2.c libpr11138-1.so"
+     "--version-script=pr11138-2.map tmpdir/pr11138-2.o tmpdir/libpr11138-1.so" ""
+     {dummy.c} "pr11138a" "pr11138.out"}
+    {"Run with libpr11138-1.so pr11138-2.c"
+     "--version-script=pr11138-2.map tmpdir/libpr11138-1.so tmpdir/pr11138-2.o" ""
+     {dummy.c} "pr11138b" "pr11138.out"}
 }
 
 run_cc_link_tests $build_tests
@@ -268,9 +311,10 @@ set run_cxx_tests {
     {"Run with libdl3a.so"
      "tmpdir/libdl3a.so" ""
      {dl3main.cc} "dl3a" "dl3a.out" "" "c++"}
-    {"Run with libdl3b.so"
-     "tmpdir/libdl3b.so" ""
-     {dl3main.cc} "dl3b" "dl3b.out" "" "c++"}
+# "-shared -Bsymbolic" only works with gcc 4.5.0 and newer.
+#    {"Run with libdl3b.so"
+#     "tmpdir/libdl3b.so" ""
+#     {dl3main.cc} "dl3b" "dl3b.out" "" "c++"}
     {"Run with libdl3c.so"
      "tmpdir/libdl3c.so" ""
      {dl3main.cc} "dl3c" "dl3a.out" "" "c++"}

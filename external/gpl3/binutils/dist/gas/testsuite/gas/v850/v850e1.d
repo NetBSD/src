@@ -23,8 +23,8 @@ Disassembly of section .text:
 0x0+30 e7 47 82 4a [ 	]*divhu	r7, r8, r9
 0x0+34 ea 5f c2 62 [ 	]*divu	r10, r11, r12
 0x0+38 e0 6f 44 73 [ 	]*hsw	r13, r14
-0x0+3c a1 17 0d 00 [ 	]*ld.bu	13\[r1\],r2
-0x0+40 e3 27 11 00 [ 	]*ld.hu	16\[sp\],gp
+0x0+3c a1 17 0d 00 [ 	]*ld.bu	13\[r1\], r2
+0x0+40 e3 27 11 00 [ 	]*ld.hu	16\[sp\], gp
 0x0+44 21 06 78 56 34 12 [ 	]*mov	0x12345678, r1
 0x0+4a e5 17 40 1a [ 	]*mul	5, r2, sp
 0x0+4e e1 17 20 1a [ 	]*mul	r1, r2, sp
@@ -35,8 +35,8 @@ Disassembly of section .text:
 0x0+62 a8 07 03 70 [ 	]*prepare	{r25 - r27}, 20, sp
 0x0+66 e1 4f e0 00 [ 	]*set1	r9, r1
 0x0+6a ea 47 00 02 [ 	]*sasf	nz, r8
-0x0+6e 60 20  [ 	]*sld.bu	0\[ep\],gp
-0x0+70 77 28  [ 	]*sld.hu	14\[ep\],r5
+0x0+6e 60 20  [ 	]*sld.bu	0\[ep\], gp
+0x0+70 77 28  [ 	]*sld.hu	14\[ep\], r5
 0x0+72 a1 00  [ 	]*sxb	r1
 0x0+74 e2 00  [ 	]*sxh	r2
 0x0+76 ff 07 e6 00 [ 	]*tst1	r0, lp

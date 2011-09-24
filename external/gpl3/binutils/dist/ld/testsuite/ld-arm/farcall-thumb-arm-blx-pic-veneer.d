@@ -2,14 +2,16 @@
 
 Disassembly of section .text:
 
-00001000 <__bar_from_thumb>:
-    1000:	e59fc000 	ldr	ip, \[pc, #0\]	; 1008 <__bar_from_thumb\+0x8>
-    1004:	e08ff00c 	add	pc, pc, ip
-    1008:	0200000c 	.word	0x0200000c
-    100c:	00000000 	.word	0x00000000
+01c01010 <_start>:
+ 1c01010:	f300 e802 	blx	1f01018 <__bar_from_thumb>
+	\.\.\.
+ 1f01014:	f0ff effe 	blx	2001014 <bar>
 
-00001010 <_start>:
-    1010:	f7ff eff6 	blx	1000 <__bar_from_thumb>
+01f01018 <__bar_from_thumb>:
+ 1f01018:	e59fc000 	ldr	ip, \[pc, #0\]	; 1f01020 <__bar_from_thumb\+0x8>
+ 1f0101c:	e08ff00c 	add	pc, pc, ip
+ 1f01020:	000ffff0 	.word	0x000ffff0
+ 1f01024:	00000000 	.word	0x00000000
 Disassembly of section .foo:
 
 02001014 <bar>:

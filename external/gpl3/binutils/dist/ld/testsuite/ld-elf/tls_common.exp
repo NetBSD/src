@@ -1,5 +1,5 @@
 # Expect script for .tls_common tests
-#   Copyright 2006, 2007 Free Software Foundation, Inc.
+#   Copyright 2006, 2007, 2010 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -23,8 +23,8 @@
 
 # Make sure that binutils can correctly handle ld output in ELF.
 
-# Run on Linux only.
-if { ![istarget *-*-linux*] } {
+if { ![istarget *-*-linux*]
+     && ![istarget *-*-gnu*] } {
     return
 }
 

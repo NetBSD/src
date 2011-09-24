@@ -1,5 +1,5 @@
 # Expect script for LD selective linking tests
-#   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2007
+#   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -60,7 +60,7 @@ set seltests {
 }
 
 set cflags "-w -O -ffunction-sections -fdata-sections"
-set cxxflags "-fvtable-gc -fno-exceptions -fno-rtti"
+set cxxflags "-fno-exceptions -fno-rtti"
 set ldflags "--gc-sections -Bstatic"
 
 if [istarget mips*-*] {
@@ -106,18 +106,18 @@ foreach testitem $seltests {
 
     # It's either C or C++ at the moment.
     if { $testtype == "C++" } {
-	set testflags "$cflags $cxxflags"
 	set compiler "$CXX"
-	if [string match "*gcc*" [lindex $CC 0]] {
-	    # Starting with 3.4.0, -fvtable-gc is no longer supported and thus
-	    # the functionality we try to test for cannot be expected to work.
-	    set version [remote_exec host "$CC -dumpversion"]
-	    set version [lindex $version 1]
-	    if [regexp "^(\[1-9\]\[0-9\]+|\[4-9\]|3.(\[1-9\]\[0-9\]+|\[4-9\]))\\." $version] {
-		setup_xfail {*-*-*}
-	    }
+	# Starting with 3.4.0, -fvtable-gc is no longer supported and thus
+	# the functionality we try to test for cannot be expected to work.
+	set version [remote_exec host "$CXX -dumpversion"]
+	set version [lindex $version 1]
+	if [regexp "^(\[1-9\]\[0-9\]+|\[4-9\]|3.(\[1-9\]\[0-9\]+|\[4-9\]))\\." $version] {
+	    set testflags "$cflags $cxxflags"
+	    setup_xfail {*-*-*}
+	} else {
+	    set testflags "$cflags $cxxflags -fvtable-gc"
 	}
-    } {
+    } else {
 	set testflags "$cflags"
 	set compiler "$CC"
     }

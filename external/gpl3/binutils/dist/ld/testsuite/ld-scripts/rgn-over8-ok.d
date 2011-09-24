@@ -2,6 +2,9 @@
 # source: rgn-over8.s
 # ld: -T rgn-over8.t
 # objdump: -w -h
+# xfail: rx-*-*
+#   FAILS on the RX because the linker has to set LMA == VMA for the
+#   Renesas loader.
 
 .*:     file format .*
 

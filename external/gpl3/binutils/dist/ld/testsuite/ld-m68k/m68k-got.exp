@@ -1,5 +1,5 @@
 # Expect script for run_dump_test based ld-m68k GOT tests.
-#   Copyright 008 Free Software Foundation, Inc.
+#   Copyright 2008, 2009 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -26,7 +26,7 @@ if { ![is_elf_format] || ![istarget m68k-*-*] } {
 # 1 - 1
 # 2 - 8189
 # 3 - 8190
-# 4 - 16384
+# 4 - 16382
 # 5 - 16385
 
 proc gen_got_test { testname } {
@@ -52,7 +52,7 @@ proc gen_got_test { testname } {
 	}
 	"got-14" {
 	    set start 1
-	    set count 16384
+	    set count 16382
 	    set xgot 0
 	}
 	"got-15" {
@@ -62,7 +62,7 @@ proc gen_got_test { testname } {
 	}
 	"got-34" {
 	    set start 8190
-	    set count 16384
+	    set count 16382
 	    set xgot 0
 	}
 	"got-35" {
@@ -164,7 +164,7 @@ proc got_test { testname } {
 	}
 	"got-negative-14-ok" {
 	    puts $ofd "#source: $objdir/tmpdir/got-14.s"
-	    set count 16384
+	    set count 16382
 	}
 	"got-negative-15-er" {
 	    puts $ofd "#source: $objdir/tmpdir/got-15.s"
@@ -175,7 +175,7 @@ proc got_test { testname } {
 	    puts $ofd "#source: $objdir/tmpdir/got-13.s"
 	    puts $ofd "#source: $objdir/tmpdir/got-14.s"
 	    puts $ofd "#source: $objdir/tmpdir/got-34.s"
-	    set count 16384
+	    set count 16382
 	}
 	"got-negative-12-13-14-35-er" {
 	    puts $ofd "#source: $objdir/tmpdir/got-12.s"
@@ -186,7 +186,7 @@ proc got_test { testname } {
 	}
 	"got-multigot-14-ok" {
 	    puts $ofd "#source: $objdir/tmpdir/got-14.s"
-	    set count 16384
+	    set count 16382
 	}
 	"got-multigot-15-er" {
 	    puts $ofd "#source: $objdir/tmpdir/got-15.s"
@@ -198,7 +198,7 @@ proc got_test { testname } {
 	    puts $ofd "#source: $objdir/tmpdir/got-14.s"
 	    puts $ofd "#source: $objdir/tmpdir/got-34.s"
 	    puts $ofd "#source: $objdir/tmpdir/got-35.s"
-	    set count 24580
+	    set count 24578
 	}
 	"got-xgot-15-ok" {
 	    puts $ofd "#source: $objdir/tmpdir/xgot-15.s"

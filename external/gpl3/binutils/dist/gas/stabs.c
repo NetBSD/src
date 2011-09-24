@@ -1,6 +1,6 @@
 /* Generic stabs parsing for gas.
    Copyright 1989, 1990, 1991, 1993, 1995, 1996, 1997, 1998, 2000, 2001
-   2002, 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2007, 2009  Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -498,7 +498,7 @@ stabs_generate_asm_file (void)
       char *dir2;
 
       dir = remap_debug_filename (getpwd ());
-      dir2 = alloca (strlen (dir) + 2);
+      dir2 = (char *) alloca (strlen (dir) + 2);
       sprintf (dir2, "%s%s", dir, "/");
       generate_asm_file (N_SO, dir2);
     }
@@ -517,7 +517,7 @@ generate_asm_file (int type, char *file)
   char sym[30];
   char *buf;
   char *tmp = file;
-  char *endp = file + strlen (file);
+  char *file_endp = file + strlen (file);
   char *bufp;
 
   if (last_file != NULL
@@ -536,11 +536,11 @@ generate_asm_file (int type, char *file)
   /* Allocate enough space for the file name (possibly extended with
      doubled up backslashes), the symbol name, and the other characters
      that make up a stabs file directive.  */
-  bufp = buf = xmalloc (2 * strlen (file) + strlen (sym) + 12);
+  bufp = buf = (char *) xmalloc (2 * strlen (file) + strlen (sym) + 12);
 
   *bufp++ = '"';
 
-  while (tmp < endp)
+  while (tmp < file_endp)
     {
       char *bslash = strchr (tmp, '\\');
       size_t len = (bslash) ? (size_t) (bslash - tmp + 1) : strlen (tmp);

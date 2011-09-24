@@ -5,3 +5,4 @@ foo:	nop
 	jbsr foo
 	jbsr bar
 	nop
+	stldsr	#1234

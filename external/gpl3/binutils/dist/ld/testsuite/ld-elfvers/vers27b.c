@@ -1,2 +1,3 @@
+#include "vers.h"
 void foo () {}
-asm (".hidden foo");
+asm (".hidden " SYMPFX(foo));

@@ -1,12 +1,12 @@
 /* Internal format of COFF object file data structures, for GNU BFD.
    This file is part of BFD, the Binary File Descriptor library.
    
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004. 2005, 2006, 2007
-   Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004. 2005, 2006, 2007, 2009,
+   2010  Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
+   the Free Software Foundation; either version 3 of the License, or
    (at your option) any later version.
    
    This program is distributed in the hope that it will be useful,
@@ -16,7 +16,8 @@
    
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
+   MA 02110-1301, USA.  */
 
 #ifndef GNU_COFF_INTERNAL_H
 #define GNU_COFF_INTERNAL_H 1
@@ -58,9 +59,18 @@ struct internal_extra_pe_filehdr
   bfd_vma  nt_signature;   	/* required NT signature, 0x4550 */ 
 };
 
+#define GO32_STUBSIZE 2048
+
 struct internal_filehdr
 {
   struct internal_extra_pe_filehdr pe;
+
+  /* coff-stgo32 EXE stub header before BFD tdata has been allocated.
+     Its data is kept in INTERNAL_FILEHDR.GO32STUB afterwards.
+     
+     F_GO32STUB is set iff go32stub contains a valid data.  Artifical headers
+     created in BFD have no pre-set go32stub.  */
+  char go32stub[GO32_STUBSIZE];
 
   /* Standard coff internal info.  */
   unsigned short f_magic;	/* magic number			*/
@@ -84,7 +94,8 @@ struct internal_filehdr
  	F_AR32W		file is 32-bit big-endian
  	F_DYNLOAD	rs/6000 aix: dynamically loadable w/imports & exports
  	F_SHROBJ	rs/6000 aix: file is a shared object
-        F_DLL           PE format DLL.  */
+	F_DLL           PE format DLL
+	F_GO32STUB      Field go32stub contains valid data.  */
 
 #define	F_RELFLG	(0x0001)
 #define	F_EXEC		(0x0002)
@@ -96,6 +107,7 @@ struct internal_filehdr
 #define	F_DYNLOAD	(0x1000)
 #define	F_SHROBJ	(0x2000)
 #define F_DLL           (0x2000)
+#define F_GO32STUB      (0x4000)
 
 /* Extra structure which is used in the optional header.  */
 typedef struct _IMAGE_DATA_DIRECTORY 
@@ -185,7 +197,7 @@ struct internal_extra_pe_aouthdr
      3 - WINDOWS_CUI runs in Windows char sub. (console app)
      5 - OS2_CUI runs in OS/2 character subsystem
      7 - POSIX_CUI runs in Posix character subsystem */
-  short   DllCharacteristics;	/* flags for DLL init, use 0 */
+  unsigned short DllCharacteristics; /* flags for DLL init  */
   bfd_vma SizeOfStackReserve;	/* amount of memory to reserve  */
   bfd_vma SizeOfStackCommit;	/* amount of memory initially committed for 
 				   initial thread's stack, default is 0x1000 */
@@ -273,12 +285,7 @@ struct internal_aouthdr
 #define C_LINE		104	/* line # reformatted as symbol table entry */
 #define C_ALIAS	 	105	/* duplicate tag		*/
 #define C_HIDDEN	106	/* ext symbol in dmert public lib */
-
-#if defined _AIX52 || defined AIX_WEAK_SUPPORT
-#define C_WEAKEXT	111	/* weak symbol -- AIX standard.  */
-#else
 #define C_WEAKEXT	127	/* weak symbol -- GNU extension.  */
-#endif
 
 /* New storage classes for TI COFF */
 #define C_UEXT		19	/* Tentative external definition */
@@ -311,6 +318,12 @@ struct internal_aouthdr
 #define C_HIDEXT        107	/* Un-named external symbol */
 #define C_BINCL         108	/* Marks beginning of include file */
 #define C_EINCL         109	/* Marks ending of include file */
+#define C_AIX_WEAKEXT   111	/* AIX definition of C_WEAKEXT.  */
+
+#if defined _AIX52 || defined AIX_WEAK_SUPPORT
+#undef C_WEAKEXT
+#define C_WEAKEXT       C_AIX_WEAKEXT
+#endif
 
  /* storage classes for stab symbols for RS/6000 */
 #define C_GSYM          (0x80)
@@ -335,6 +348,10 @@ struct internal_aouthdr
 #define C_THUMBLABEL    (128 + C_LABEL)		/* 134 */
 #define C_THUMBEXTFUNC  (C_THUMBEXT  + 20)	/* 150 */
 #define C_THUMBSTATFUNC (C_THUMBSTAT + 20)	/* 151 */
+
+/* True if XCOFF symbols of class CLASS have auxillary csect information.  */
+#define CSECT_SYM_P(CLASS) \
+  ((CLASS) == C_EXT || (CLASS) == C_AIX_WEAKEXT || (CLASS) == C_HIDEXT)
 
 /********************** SECTION HEADER **********************/
 

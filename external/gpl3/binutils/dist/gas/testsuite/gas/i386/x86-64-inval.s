@@ -63,6 +63,9 @@ movzxl (%rax),%rax
 movnti %ax, (%rax)
 movntiw %ax, (%rax)
 
+mov 0x80000000(%rax),%ebx
+mov 0x80000000,%ebx
+
 	.intel_syntax noprefix
 	cmpxchg16b dword ptr [rax] # Must be oword
 	movq xmm1, XMMWORD PTR [rsp]

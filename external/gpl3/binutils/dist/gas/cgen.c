@@ -1,6 +1,6 @@
 /* GAS interface for targets using CGEN: Cpu tools GENerator.
    Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007 Free Software Foundation, Inc.
+   2006, 2007, 2009, 2010 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -410,7 +410,7 @@ gas_cgen_parse_operand (cd, want, strP, opindex, opinfo, resultP, valueP)
 
 #ifdef TC_CGEN_PARSE_FIX_EXP
   opinfo_1 = TC_CGEN_PARSE_FIX_EXP (opinfo_1, & exp);
-#endif 
+#endif
 
   /* FIXME: Need to check `want'.  */
 
@@ -452,9 +452,10 @@ gas_cgen_parse_operand (cd, want, strP, opindex, opinfo, resultP, valueP)
 	  if (exp.X_op == O_symbol
 	      && reloc_type == BFD_RELOC_RELC
 	      && exp.X_add_symbol->sy_value.X_op == O_constant
-	      && exp.X_add_symbol->bsym->section != expr_section
-	      && exp.X_add_symbol->bsym->section != absolute_section
-	      && exp.X_add_symbol->bsym->section != undefined_section)
+	      && (!exp.X_add_symbol->bsym
+		  || (exp.X_add_symbol->bsym->section != expr_section
+		      && exp.X_add_symbol->bsym->section != absolute_section
+		      && exp.X_add_symbol->bsym->section != undefined_section)))
 	    {
 	      /* Local labels will have been (eagerly) turned into constants
 		 by now, due to the inappropriately deep insight of the
@@ -465,15 +466,15 @@ gas_cgen_parse_operand (cd, want, strP, opindex, opinfo, resultP, valueP)
 	      stmp = symbol_create (FAKE_LABEL_NAME, expr_section, 0,
 				    & zero_address_frag);
 	      symbol_set_value_expression (stmp, & exp);
-	    } 
-	  else 
+	    }
+	  else
 	    stmp = make_expr_symbol (& exp);
 
 	  /* If this is a pc-relative RELC operand, we
-	     need to subtract "." from the expression.  */	  
+	     need to subtract "." from the expression.  */
  	  if (reloc_type == BFD_RELOC_RELC
 	      && CGEN_OPERAND_ATTR_VALUE (operand, CGEN_OPERAND_PCREL_ADDR))
- 	    stmp = expr_build_binary (O_subtract, stmp, expr_build_dot ()); 
+ 	    stmp = expr_build_binary (O_subtract, stmp, expr_build_dot ());
 
 	  /* FIXME: this is not a perfect heuristic for figuring out
 	     whether an operand is signed: it only works when the operand
@@ -481,7 +482,7 @@ gas_cgen_parse_operand (cd, want, strP, opindex, opinfo, resultP, valueP)
 	     values will be signed relocs, but it's possible. */
 	  if (operand && (operand->hw_type == HW_H_SINT))
 	    signed_p = 1;
-	  
+
 	  if (stmp->bsym && (stmp->bsym->section == expr_section))
 	    {
 	      if (signed_p)
@@ -489,16 +490,16 @@ gas_cgen_parse_operand (cd, want, strP, opindex, opinfo, resultP, valueP)
 	      else
 		stmp->bsym->flags |= BSF_RELC;
 	    }
-	  
+
 	  /* Now package it all up for the fixup emitter.  */
 	  exp.X_op = O_symbol;
 	  exp.X_op_symbol = 0;
 	  exp.X_add_symbol = stmp;
 	  exp.X_add_number = 0;
-	      
+
 	  /* Re-init rightshift quantity, just in case.  */
 	  rightshift = operand->length;
-	  queue_fixup_recursively (opindex, opinfo_1, & exp,  
+	  queue_fixup_recursively (opindex, opinfo_1, & exp,
 				   (reloc_type == BFD_RELOC_RELC) ?
 				   & (operand->index_fields) : 0,
 				   signed_p, -1);
@@ -511,7 +512,7 @@ gas_cgen_parse_operand (cd, want, strP, opindex, opinfo, resultP, valueP)
       queue_fixup (opindex, opinfo_1, &exp);
       *valueP = 0;
       *resultP = CGEN_PARSE_OPERAND_RESULT_QUEUED;
-#endif      
+#endif
       break;
     }
 
@@ -709,9 +710,9 @@ queue_fixup_recursively (const int                      opindex,
   if (field && field->count)
     {
       int i;
-  
+
       for (i = 0; i < field->count; ++ i)
-	queue_fixup_recursively (opindex, opinfo, expP, 
+	queue_fixup_recursively (opindex, opinfo, expP,
 				 & (field->val.multi[i]), signed_p, i);
     }
   else
@@ -730,20 +731,20 @@ queue_fixup_recursively (const int                      opindex,
 	  /* Shift reloc value by number of bits remaining after this
 	     field.  */
 	  if (rightshift)
-	    new_exp = make_right_shifted_expr (expP, rightshift, signed_p);	  
+	    new_exp = make_right_shifted_expr (expP, rightshift, signed_p);
 	}
-      
+
       /* Truncate reloc values to length, *after* leftmost one.  */
       fixups[num_fixups].msb_field_p = (part_of_multi <= 0);
       fixups[num_fixups].field = (CGEN_MAYBE_MULTI_IFLD *) field;
-      
+
       queue_fixup (opindex, opinfo, new_exp);
     }
 }
 
 /* Encode the self-describing RELC reloc format's addend.  */
 
-static unsigned long 
+static unsigned long
 gas_cgen_encode_addend (const unsigned long start,    /* in bits */
 			const unsigned long len,      /* in bits */
 			const unsigned long oplen,    /* in bits */
@@ -773,7 +774,7 @@ gas_cgen_encode_addend (const unsigned long start,    /* in bits */
    parse. when these %operators are translated to expressions by the macro
    expander, the ambiguity returns. we attempt to disambiguate by field
    size.
-   
+
    Method: check to see if the expression's top node is an O_and operator,
    and the mask is larger than the operand length. This would be an
    overflow, so signal it by returning an error string. Any other case is
@@ -793,23 +794,23 @@ weak_operand_overflow_check (const expressionS *  exp,
   if (exp->X_op != O_bit_and)
     {
       /* Check for implicit overflow flag.  */
-      if (CGEN_OPERAND_ATTR_VALUE 
+      if (CGEN_OPERAND_ATTR_VALUE
 	  (operand, CGEN_OPERAND_RELOC_IMPLIES_OVERFLOW))
 	return _("a reloc on this operand implies an overflow");
       return NULL;
     }
-  
+
   mask = exp->X_add_number;
 
-  if (exp->X_add_symbol &&
-      exp->X_add_symbol->sy_value.X_op == O_constant)
+  if (exp->X_add_symbol
+      && exp->X_add_symbol->sy_value.X_op == O_constant)
     mask |= exp->X_add_symbol->sy_value.X_add_number;
 
-  if (exp->X_op_symbol &&
-      exp->X_op_symbol->sy_value.X_op == O_constant)
+  if (exp->X_op_symbol
+      && exp->X_op_symbol->sy_value.X_op == O_constant)
     mask |= exp->X_op_symbol->sy_value.X_add_number;
 
-  /* Want to know if mask covers more bits than opmask. 
+  /* Want to know if mask covers more bits than opmask.
      this is the same as asking if mask has any bits not in opmask,
      or whether (mask & ~opmask) is nonzero.  */
   if (mask && (mask & ~opmask))
@@ -821,9 +822,8 @@ weak_operand_overflow_check (const expressionS *  exp,
       return _("operand mask overflow");
     }
 
-  return NULL;  
+  return NULL;
 }
-
 
 static expressionS *
 make_right_shifted_expr (expressionS * exp,
@@ -833,15 +833,15 @@ make_right_shifted_expr (expressionS * exp,
   symbolS * stmp = 0;
   expressionS * new_exp;
 
-  stmp = expr_build_binary (O_right_shift, 
+  stmp = expr_build_binary (O_right_shift,
 			    make_expr_symbol (exp),
 			    expr_build_uconstant (amount));
-  
+
   if (signed_p)
     stmp->bsym->flags |= BSF_SRELC;
   else
     stmp->bsym->flags |= BSF_RELC;
-  
+
   /* Then wrap that in a "symbol expr" for good measure.  */
   new_exp = xmalloc (sizeof (expressionS));
   memset (new_exp, 0, sizeof (expressionS));
@@ -849,10 +849,12 @@ make_right_shifted_expr (expressionS * exp,
   new_exp->X_op_symbol = 0;
   new_exp->X_add_symbol = stmp;
   new_exp->X_add_number = 0;
-  
+
   return new_exp;
 }
+
 #endif
+
 /* Apply a fixup to the object code.  This is called for all the
    fixups we generated by the call to fix_new_exp, above.  In the call
    above we used a reloc code which was the largest legal reloc code
@@ -891,12 +893,13 @@ gas_cgen_md_apply_fix (fixP, valP, seg)
       bfd_reloc_code_real_type reloc_type;
       CGEN_FIELDS *fields = alloca (CGEN_CPU_SIZEOF_FIELDS (cd));
       const CGEN_INSN *insn = fixP->fx_cgen.insn;
+#ifdef OBJ_COMPLEX_RELC
       int start;
       int length;
       int signed_p = 0;
 
       if (fixP->fx_cgen.field)
-	{	      
+	{
 	  /* Use the twisty little pointer path
 	     back to the ifield if it exists.  */
 	  start = fixP->fx_cgen.field->val.leaf->start;
@@ -915,6 +918,7 @@ gas_cgen_md_apply_fix (fixP, valP, seg)
          values will be signed relocs, but it's possible. */
       if (operand && (operand->hw_type == HW_H_SINT))
         signed_p = 1;
+#endif
 
       /* If the reloc has been fully resolved finish the operand here.  */
       /* FIXME: This duplicates the capabilities of code in BFD.  */
@@ -963,9 +967,9 @@ gas_cgen_md_apply_fix (fixP, valP, seg)
 	  /* Change addend to "self-describing" form,
 	     for BFD to handle in the linker.  */
 	  value = gas_cgen_encode_addend (start, operand->length,
-					  length, fixP->fx_size, 
-					  cd->insn_chunk_bitsize / 8, 
-					  signed_p, 
+					  length, fixP->fx_size,
+					  cd->insn_chunk_bitsize / 8,
+					  signed_p,
 					  ! (fixP->fx_cgen.msb_field_p));
 	}
 #endif
@@ -1034,7 +1038,7 @@ gas_cgen_tc_gen_reloc (section, fixP)
       return NULL;
     }
 
-  assert (!fixP->fx_pcrel == !reloc->howto->pc_relative);
+  gas_assert (!fixP->fx_pcrel == !reloc->howto->pc_relative);
 
   reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
@@ -1061,4 +1065,3 @@ gas_cgen_begin ()
   else
     cgen_clear_signed_overflow_ok (gas_cgen_cpu_desc);
 }
-

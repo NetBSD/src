@@ -1,6 +1,6 @@
 /* frags.h - Header file for the frag concept.
    Copyright 1987, 1992, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2006, 2007, 2010 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -67,6 +67,10 @@ struct frag {
 #ifndef NO_LISTING
   struct list_info_struct *line;
 #endif
+
+  /* A serial number for a sequence of frags having at most one alignment
+     or org frag, and that at the tail of the sequence.  */
+  unsigned int region:16;
 
   /* Flipped each relax pass so we can easily determine whether
      fr_address has been adjusted.  */

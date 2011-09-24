@@ -16,6 +16,7 @@ Disassembly of section \.text:
 0+014 <[^>]*> 273900cc 	addiu	t9,t9,204
 			14: R_MIPS_LO16	\.text
 0+018 <[^>]*> 0320f809 	jalr	t9
+			18: R_MIPS_JALR	end
 0+01c <[^>]*> 00000000 	nop
 0+020 <[^>]*> 8fbc0008 	lw	gp,8\(sp\)
 0+024 <[^>]*> 00000000 	nop
@@ -35,6 +36,7 @@ Disassembly of section \.text:
 0+050 <[^>]*> 273900cc 	addiu	t9,t9,204
 			50: R_MIPS_LO16	\.text
 0+054 <[^>]*> 0320f809 	jalr	t9
+			54: R_MIPS_JALR	end
 0+058 <[^>]*> 00000000 	nop
 0+05c <[^>]*> 3c010001 	lui	at,0x1
 0+060 <[^>]*> 003d0821 	addu	at,at,sp
@@ -58,6 +60,7 @@ Disassembly of section \.text:
 0+09c <[^>]*> 273900cc 	addiu	t9,t9,204
 			9c: R_MIPS_LO16	\.text
 0+0a0 <[^>]*> 0320f809 	jalr	t9
+			a0: R_MIPS_JALR	end
 0+0a4 <[^>]*> 00000000 	nop
 0+0a8 <[^>]*> 3c010001 	lui	at,0x1
 0+0ac <[^>]*> 003d0821 	addu	at,at,sp

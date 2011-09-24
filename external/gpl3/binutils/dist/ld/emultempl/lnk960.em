@@ -265,7 +265,7 @@ struct ld_emulation_xfer_struct ld_lnk960_emulation =
   lnk960_syslib,
   lnk960_hll,
   lnk960_after_parse,
-  NULL,			/* after_open */
+  after_open_default,
   lnk960_after_allocation,
   lnk960_set_output_arch,
   lnk960_choose_target,

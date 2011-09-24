@@ -1,5 +1,5 @@
 # Expect script for various PIE tests.
-#   Copyright 2006, 2007 Free Software Foundation, Inc.
+#   Copyright 2006, 2007, 2009, 2010 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -22,14 +22,14 @@
 # This test can only be run if ld generates native executables.
 if ![isnative] then {return}
 
-# Run on Linux only.
-if { ![istarget *-*-linux*] } {
+if { ![istarget *-*-linux*]
+     && ![istarget *-*-gnu*] } {
     return
 }
 
 # Check if -pie is supported or not.
-send_log "$CC -pie $srcdir/$subdir/pie.c -o tmpdir/pie"
-catch "exec $CC -pie $srcdir/$subdir/pie.c -o tmpdir/pie" exec_output
+send_log "$CC -fpie -pie $srcdir/$subdir/pie.c -o tmpdir/pie"
+catch "exec $CC -fpie -pie $srcdir/$subdir/pie.c -o tmpdir/pie" exec_output
 send_log "$exec_output\n"
 if { ![string match "" $exec_output] } {
     return
@@ -41,3 +41,10 @@ set array_tests {
 }
 
 run_ld_link_exec_tests [] $array_tests
+
+set test_list [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
+foreach t $test_list {
+    # We need to strip the ".d", but can leave the dirname.
+    verbose [file rootname $t]
+    run_dump_test [file rootname $t]
+}

@@ -136,4 +136,10 @@ Disassembly of section .text:
 0+01f8 <[^>]*> 7d8b500a 	lwx	t2,t3\(t4\)
 0+01fc <[^>]*> 041cff80 	bposge32	00000000 <text_label>
 0+0200 <[^>]*> 00000000 	nop
+0+0204 <[^>]*> 716c1000 	madd	\$ac2,t3,t4
+0+0208 <[^>]*> 718d1801 	maddu	\$ac3,t4,t5
+0+020c <[^>]*> 71ae0004 	msub	t5,t6
+0+0210 <[^>]*> 71cf0805 	msubu	\$ac1,t6,t7
+0+0214 <[^>]*> 02b61818 	mult	\$ac3,s5,s6
+0+0218 <[^>]*> 02d70019 	multu	s6,s7
 	\.\.\.

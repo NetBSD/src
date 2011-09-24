@@ -61,9 +61,8 @@
 .*:62: Error: .*
 .*:63: Error: .*
 .*:64: Error: .*
+.*:66: Error: .*
 .*:67: Error: .*
-.*:68: Error: .*
-.*:69: Error: .*
 .*:70: Error: .*
 .*:71: Error: .*
 .*:72: Error: .*
@@ -95,6 +94,9 @@
 .*:98: Error: .*
 .*:99: Error: .*
 .*:100: Error: .*
+.*:101: Error: .*
+.*:102: Error: .*
+.*:103: Error: .*
 GAS LISTING .*
 
 
@@ -166,38 +168,41 @@ GAS LISTING .*
 [ 	]*63[ 	]+movnti %ax, \(%rax\)
 [ 	]*64[ 	]+movntiw %ax, \(%rax\)
 [ 	]*65[ 	]+
-[ 	]*66[ 	]+\.intel_syntax noprefix
-[ 	]*67[ 	]+cmpxchg16b dword ptr \[rax\] \# Must be oword
-[ 	]*68[ 	]+movq xmm1, XMMWORD PTR \[rsp\]
-[ 	]*69[ 	]+movq xmm1, DWORD PTR \[rsp\]
-[ 	]*70[ 	]+movq xmm1, WORD PTR \[rsp\]
-[ 	]*71[ 	]+movq xmm1, BYTE PTR \[rsp\]
-[ 	]*72[ 	]+movq XMMWORD PTR \[rsp\],xmm1
-[ 	]*73[ 	]+movq DWORD PTR \[rsp\],xmm1
-[ 	]*74[ 	]+movq WORD PTR \[rsp\],xmm1
-[ 	]*75[ 	]+movq BYTE PTR \[rsp\],xmm1
-[ 	]*76[ 	]+fnstsw eax
-[ 	]*77[ 	]+fnstsw al
-[ 	]*78[ 	]+fstsw eax
-[ 	]*79[ 	]+fstsw al
-[ 	]*80[ 	]+in rax,8
-[ 	]*81[ 	]+out 8,rax
-[ 	]*82[ 	]+movsx ax, \[rax\]
-[ 	]*83[ 	]+movsx eax, \[rax\]
-[ 	]*84[ 	]+movsx rax, \[rax\]
-[ 	]*85[ 	]+movzx ax, \[rax\]
-[ 	]*86[ 	]+movzx eax, \[rax\]
-[ 	]*87[ 	]+movzx rax, \[rax\]
-[ 	]*88[ 	]+movnti word ptr \[rax\], ax
-[ 	]*89[ 	]+calld eax	\# 32-bit data size not allowed
-[ 	]*90[ 	]+calld \[ax\]	\# 32-bit data size not allowed
-[ 	]*91[ 	]+calld \[eax\]	\# 32-bit data size not allowed
-[ 	]*92[ 	]+calld \[r8\]	\# 32-bit data size not allowed
-[ 	]*93[ 	]+calld \[rax\]	\# 32-bit data size not allowed
-[ 	]*94[ 	]+callq \[ax\]	\# no 16-bit addressing
-[ 	]*95[ 	]+jmpd eax	\# 32-bit data size not allowed
-[ 	]*96[ 	]+jmpd \[ax\]	\# 32-bit data size not allowed
-[ 	]*97[ 	]+jmpd \[eax\]	\# 32-bit data size not allowed
-[ 	]*98[ 	]+jmpd \[r8\]	\# 32-bit data size not allowed
-[ 	]*99[ 	]+jmpd \[rax\]	\# 32-bit data size not allowed
-[ 	]*100[ 	]+jmpq \[ax\]	\# no 16-bit addressing
+[ 	]*66[ 	]+mov 0x80000000\(%rax\),%ebx
+[ 	]*67[ 	]+mov 0x80000000,%ebx
+[ 	]*68[ 	]+
+[ 	]*69[ 	]+\.intel_syntax noprefix
+[ 	]*70[ 	]+cmpxchg16b dword ptr \[rax\] \# Must be oword
+[ 	]*71[ 	]+movq xmm1, XMMWORD PTR \[rsp\]
+[ 	]*72[ 	]+movq xmm1, DWORD PTR \[rsp\]
+[ 	]*73[ 	]+movq xmm1, WORD PTR \[rsp\]
+[ 	]*74[ 	]+movq xmm1, BYTE PTR \[rsp\]
+[ 	]*75[ 	]+movq XMMWORD PTR \[rsp\],xmm1
+[ 	]*76[ 	]+movq DWORD PTR \[rsp\],xmm1
+[ 	]*77[ 	]+movq WORD PTR \[rsp\],xmm1
+[ 	]*78[ 	]+movq BYTE PTR \[rsp\],xmm1
+[ 	]*79[ 	]+fnstsw eax
+[ 	]*80[ 	]+fnstsw al
+[ 	]*81[ 	]+fstsw eax
+[ 	]*82[ 	]+fstsw al
+[ 	]*83[ 	]+in rax,8
+[ 	]*84[ 	]+out 8,rax
+[ 	]*85[ 	]+movsx ax, \[rax\]
+[ 	]*86[ 	]+movsx eax, \[rax\]
+[ 	]*87[ 	]+movsx rax, \[rax\]
+[ 	]*88[ 	]+movzx ax, \[rax\]
+[ 	]*89[ 	]+movzx eax, \[rax\]
+[ 	]*90[ 	]+movzx rax, \[rax\]
+[ 	]*91[ 	]+movnti word ptr \[rax\], ax
+[ 	]*92[ 	]+calld eax	\# 32-bit data size not allowed
+[ 	]*93[ 	]+calld \[ax\]	\# 32-bit data size not allowed
+[ 	]*94[ 	]+calld \[eax\]	\# 32-bit data size not allowed
+[ 	]*95[ 	]+calld \[r8\]	\# 32-bit data size not allowed
+[ 	]*96[ 	]+calld \[rax\]	\# 32-bit data size not allowed
+[ 	]*97[ 	]+callq \[ax\]	\# no 16-bit addressing
+[ 	]*98[ 	]+jmpd eax	\# 32-bit data size not allowed
+[ 	]*99[ 	]+jmpd \[ax\]	\# 32-bit data size not allowed
+[ 	]*100[ 	]+jmpd \[eax\]	\# 32-bit data size not allowed
+[ 	]*101[ 	]+jmpd \[r8\]	\# 32-bit data size not allowed
+[ 	]*102[ 	]+jmpd \[rax\]	\# 32-bit data size not allowed
+[ 	]*103[ 	]+jmpq \[ax\]	\# no 16-bit addressing

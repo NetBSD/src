@@ -1,5 +1,5 @@
 /* dw2gencfi.h - Support for generating Dwarf2 CFI information.
-   Copyright 2003, 2007 Free Software Foundation, Inc.
+   Copyright 2003, 2004, 2005, 2007, 2009 Free Software Foundation, Inc.
    Contributed by Michal Ludvig <mludvig@suse.cz>
 
    This file is part of GAS, the GNU Assembler.
@@ -22,7 +22,7 @@
 #ifndef DW2GENCFI_H
 #define DW2GENCFI_H
 
-#include "elf/dwarf2.h"
+#include "dwarf2.h"
 
 struct symbol;
 

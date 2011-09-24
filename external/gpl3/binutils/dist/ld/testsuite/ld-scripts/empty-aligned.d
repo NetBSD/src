@@ -2,6 +2,7 @@
 #ld: -T empty-aligned.t
 #readelf: -l --wide
 #xfail: "hppa64-*-*"
+#notarget: frv-*-*linux*
 
 #...
 Program Headers:

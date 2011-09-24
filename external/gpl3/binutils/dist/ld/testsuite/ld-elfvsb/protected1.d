@@ -3,7 +3,7 @@
 #readelf: -s
 
 Symbol table '.symtab' contains .* entries:
-   Num:    Value[ 	]+Size Type    Bind   Vis      Ndx Name
+ +Num: +Value +Size Type +Bind +Vis +Ndx +Name
 #...
-[ 	]*[0-9]+: [0-9a-fA-F]*     0 NOTYPE  GLOBAL PROTECTED  UND protected
+ +[0-9]+: [0-9a-fA-F]* +0 +NOTYPE +GLOBAL +PROTECTED +UND protected
 #pass

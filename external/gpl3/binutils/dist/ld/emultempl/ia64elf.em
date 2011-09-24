@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2003, 2007 Free Software Foundation, Inc.
+#   Copyright 2003, 2005, 2006, 2007, 2009 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -35,6 +35,8 @@ gld${EMULATION_NAME}_after_parse (void)
 {
   link_info.relax_pass = 2;
   bfd_elf${ELFSIZE}_ia64_after_parse (itanium);
+
+  after_parse_default ();
 }
 
 EOF

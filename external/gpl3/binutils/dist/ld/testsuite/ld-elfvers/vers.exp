@@ -1,6 +1,6 @@
 # Expect script for ld-version tests
-#   Copyright 1997, 1998, 1999, 2001, 2002, 2003, 2004, 2005, 2007
-#   Free Software Foundation, Inc.
+#   Copyright 1997, 1998, 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
+#   2009, 2010 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -29,34 +29,34 @@ if ![isnative] then {return}
 # This test can only be run on a couple of ELF platforms.
 # Square bracket expressions seem to confuse istarget.
 # This is similar to the test that is used in ld-shared, BTW.
-if { ![istarget hppa*64*-*-hpux*] \
-     && ![istarget hppa*-*-linux*] \
-     && ![istarget i?86-*-sysv4*] \
-     && ![istarget i?86-*-unixware] \
-     && ![istarget i?86-*-elf*] \
-     && ![istarget i?86-*-linux*] \
-     && ![istarget ia64-*-elf*] \
-     && ![istarget ia64-*-linux*] \
-     && ![istarget m68k-*-linux*] \
-     && ![istarget mips*-*-irix5*] \
-     && ![istarget powerpc-*-elf*] \
-     && ![istarget powerpc-*-linux*] \
-     && ![istarget powerpc-*-sysv4*] \
-     && ![istarget sparc*-*-elf] \
-     && ![istarget sparc*-*-solaris2*] \
-     && ![istarget sparc*-*-linux*] \
-     && ![istarget arm*-*-linux*] \
-     && ![istarget mips*-*-linux*] \
-     && ![istarget alpha*-*-linux*] \
-     && ![istarget s390*-*-linux*] \
-     && ![istarget sh\[34\]*-*-linux*] \
+if { ![istarget hppa*64*-*-hpux*]
+     && ![istarget hppa*-*-linux*]
+     && ![istarget i?86-*-sysv4*]
+     && ![istarget i?86-*-unixware]
+     && ![istarget i?86-*-elf*]
+     && ![istarget i?86-*-linux*]
+     && ![istarget i?86-*-gnu*]
+     && ![istarget ia64-*-elf*]
+     && ![istarget ia64-*-linux*]
+     && ![istarget m68k-*-linux*]
+     && ![istarget mips*-*-irix5*]
+     && ![istarget powerpc*-*-elf*]
+     && ![istarget powerpc*-*-linux*]
+     && ![istarget powerpc*-*-sysv4*]
+     && ![istarget sparc*-*-elf]
+     && ![istarget sparc*-*-solaris2*]
+     && ![istarget sparc*-*-linux*]
+     && ![istarget arm*-*-linux*]
+     && ![istarget mips*-*-linux*]
+     && ![istarget alpha*-*-linux*]
+     && ![istarget s390*-*-linux*]
+     && ![istarget sh\[34\]*-*-linux*]
      && ![istarget x86_64-*-linux*] } {
     return
 }
 
-if { [istarget i?86-*-linux*aout*] \
-     || [istarget i?86-*-linux*oldld*] \
-     || [istarget m68k-*-linux*aout*] } {
+if { [istarget *-*-linux*aout*]
+     || [istarget *-*-linux*oldld*] } {
     return
 }
 
@@ -83,9 +83,9 @@ if [istarget mips*-*-*] {
     catch "exec $CC $picflag" exec_output
     send_log "$exec_output\n"
     verbose "--" "$exec_output"
-    if { [string match "*illegal option*" $exec_output] \
-	 || [string match "*option ignored*" $exec_output] \
-	 || [string match "*unrecognized option*" $exec_output] \
+    if { [string match "*illegal option*" $exec_output]
+	 || [string match "*option ignored*" $exec_output]
+	 || [string match "*unrecognized option*" $exec_output]
 	 || [string match "*passed to ld*" $exec_output] } {
 	if [istarget *-*-sunos4*] {
 	    set picflag "-pic"
@@ -97,6 +97,7 @@ if [istarget mips*-*-*] {
 
 case $target_triplet in {
     { ia64-*-* } { set as_options "-x" }
+    { sparc-*-* } { set as_options "-Av9a" }
     default { set as_options "" }
 }
 
@@ -802,7 +803,11 @@ build_exec "vers3" vers3.c vers3 "" vers1.so vers3.ver vers3.dsym ""
 setup_xfail "mips*-*-*"
 build_exec "vers4" vers4.c vers4 "" "" "" "" vers4.sym
 
-build_exec "vers4a" vers4.c vers4a "-export-dynamic" "" vers4a.ver vers4a.dsym vers4a.sym
+build_exec "vers4a" vers4.c vers4a "-Wl,-export-dynamic" "" vers4a.ver vers4a.dsym vers4a.sym
+
+# Verify that --no-export-dynamic undoes the effect of --export-dynamic.
+setup_xfail "mips*-*-*"
+build_exec "vers4b" vers4.c vers4b "-Wl,-export-dynamic -Wl,--no-export-dynamic" "" "" "" vers4.sym
 
 
 #
@@ -843,7 +848,7 @@ build_vers_lib_pic "vers8" vers1.c vers8 vers8.map "" vers8.ver vers1.dsym vers1
 # This test tries to make sure that version references to versioned symbols
 # don't collide with default definitions with the same symbol.
 #
-build_exec "vers9" vers9.c vers9 "-export-dynamic" "" vers9.ver vers9.dsym vers9.sym
+build_exec "vers9" vers9.c vers9 "-Wl,-export-dynamic" "" vers9.ver vers9.dsym vers9.sym
 
 
 #
@@ -995,5 +1000,3 @@ build_vers_lib_pic "vers31" vers31.c vers31 "" vers31.map vers31.ver vers31.dsym
 # Test #32 -- linker --defsym
 build_vers_lib_pic "vers32a" vers32a.c vers32a "" vers32.map vers32a.ver vers32a.dsym ""
 build_vers_lib_pic_flags "vers32b" vers32b.c vers32b "vers32a.so" vers32.map vers32b.ver vers32b.dsym "" "--defsym foo=0"
-build_vers_lib_pic_flags "vers32c" vers32a.c vers32c "vers32a.so" vers32.map vers32c.ver vers32c.dsym "" "--defsym foo=0"
-build_vers_lib_pic_flags "vers32d" vers32a.c vers32d "" vers32.map vers32d.ver vers32c.dsym "" "--defsym foo=0"

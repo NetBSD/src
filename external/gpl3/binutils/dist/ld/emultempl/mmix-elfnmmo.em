@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2001, 2002, 2003, 2004, 2007, 2008
+#   Copyright 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -42,7 +42,7 @@ mmix_before_allocation (void)
 
   /* Force -relax on (regardless of whether we're doing a relocatable
      link).  */
-  command_line.relax = TRUE;
+  ENABLE_RELAXATION;
 
   if (!_bfd_mmix_before_linker_allocation (link_info.output_bfd, &link_info))
     einfo ("%X%P: Internal problems setting up section %s",
@@ -56,10 +56,10 @@ mmix_before_allocation (void)
 static void
 mmix_after_allocation (void)
 {
-  asection *sec
-    = bfd_get_section_by_name (link_info.output_bfd,
-			       MMIX_REG_CONTENTS_SECTION_NAME);
+  asection *sec;
   bfd_signed_vma regvma;
+
+  gld${EMULATION_NAME}_after_allocation ();
 
   /* If there's no register section, we don't need to do anything.  On the
      other hand, if there's a non-standard linker-script without a mapping
@@ -72,6 +72,8 @@ mmix_after_allocation (void)
      that's expected when you play tricks with linker scripts.  The
      "NOCROSSREFS 2" test does not run the output so it does not matter
      there.  */
+  sec = bfd_get_section_by_name (link_info.output_bfd,
+				 MMIX_REG_CONTENTS_SECTION_NAME);
   if (sec == NULL)
     sec
       = bfd_get_section_by_name (link_info.output_bfd,

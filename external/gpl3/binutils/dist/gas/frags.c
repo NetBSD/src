@@ -1,6 +1,6 @@
 /* frags.c - manage frags -
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2003, 2004, 2005, 2006, 2007
+   1999, 2000, 2001, 2003, 2004, 2005, 2006, 2007, 2008, 2009
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -137,12 +137,12 @@ frag_new (int old_frags_var_max_size
   fragS *former_last_fragP;
   frchainS *frchP;
 
-  assert (frchain_now->frch_last == frag_now);
+  gas_assert (frchain_now->frch_last == frag_now);
 
   /* Fix up old frag's fr_fix.  */
   frag_now->fr_fix = frag_now_fix_octets () - old_frags_var_max_size;
   /* Make sure its type is valid.  */
-  assert (frag_now->fr_type != 0);
+  gas_assert (frag_now->fr_type != 0);
 
   /* This will align the obstack so the next struct we allocate on it
      will begin at a correct boundary.  */
@@ -150,8 +150,8 @@ frag_new (int old_frags_var_max_size
   frchP = frchain_now;
   know (frchP);
   former_last_fragP = frchP->frch_last;
-  assert (former_last_fragP != 0);
-  assert (former_last_fragP == frag_now);
+  gas_assert (former_last_fragP != 0);
+  gas_assert (former_last_fragP == frag_now);
   frag_now = frag_alloc (&frchP->frch_obstack);
 
   as_where (&frag_now->fr_file, &frag_now->fr_line);
@@ -170,7 +170,7 @@ frag_new (int old_frags_var_max_size
   }
 #endif
 
-  assert (frchain_now->frch_last == frag_now);
+  gas_assert (frchain_now->frch_last == frag_now);
 
   frag_now->fr_next = NULL;
 }

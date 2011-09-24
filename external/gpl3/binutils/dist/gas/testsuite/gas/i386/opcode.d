@@ -141,7 +141,7 @@ Disassembly of section .text:
  1bb:	8d 90 90 90 90 90 [ 	]*lea    -0x6f6f6f70\(%eax\),%edx
  1c1:	8e 90 90 90 90 90 [ 	]*mov    -0x6f6f6f70\(%eax\),%ss
  1c7:	8f 80 90 90 90 90 [ 	]*popl   -0x6f6f6f70\(%eax\)
- 1cd:	90 [ 	]*nop    
+ 1cd:	90 [ 	]*nop
  1ce:	91 [ 	]*xchg   %eax,%ecx
  1cf:	92 [ 	]*xchg   %eax,%edx
  1d0:	93 [ 	]*xchg   %eax,%ebx
@@ -254,7 +254,7 @@ Disassembly of section .text:
  327:	0f 06 [ 	]*clts   
  329:	0f 08 [ 	]*invd   
  32b:	0f 09 [ 	]*wbinvd 
- 32d:	0f 0b [ 	]*ud2a   
+ 32d:	0f 0b [ 	]*ud2    
  32f:	0f 20 d0 [ 	]*mov    %cr2,%eax
  332:	0f 21 d0 [ 	]*mov    %db2,%eax
  335:	0f 22 d0 [ 	]*mov    %eax,%cr2
@@ -357,7 +357,7 @@ Disassembly of section .text:
  57e:	0f b5 90 90 90 90 90 [ 	]*lgs    -0x6f6f6f70\(%eax\),%edx
  585:	0f b6 90 90 90 90 90 [ 	]*movzbl -0x6f6f6f70\(%eax\),%edx
  58c:	0f b7 90 90 90 90 90 [ 	]*movzwl -0x6f6f6f70\(%eax\),%edx
- 593:	0f b9 [ 	]*ud2b   
+ 593:	0f b9 [ 	]*ud1    
  595:	0f bb 90 90 90 90 90 [ 	]*btc    %edx,-0x6f6f6f70\(%eax\)
  59c:	0f bc 90 90 90 90 90 [ 	]*bsf    -0x6f6f6f70\(%eax\),%edx
  5a3:	0f bd 90 90 90 90 90 [ 	]*bsr    -0x6f6f6f70\(%eax\),%edx
@@ -587,4 +587,8 @@ Disassembly of section .text:
  9f5:	85 c3 [ 	]*test   %eax,%ebx
  9f7:	85 d8 [ 	]*test   %ebx,%eax
  9f9:	85 18 [ 	]*test   %ebx,\(%eax\)
+[ 	]*[a-f0-9]+:	0f 4a 90 90 90 90 90 	cmovp  -0x6f6f6f70\(%eax\),%edx
+[ 	]*[a-f0-9]+:	0f 4b 90 90 90 90 90 	cmovnp -0x6f6f6f70\(%eax\),%edx
+[ 	]*[a-f0-9]+:	66 0f 4a 90 90 90 90 90 	cmovp  -0x6f6f6f70\(%eax\),%dx
+[ 	]*[a-f0-9]+:	66 0f 4b 90 90 90 90 90 	cmovnp -0x6f6f6f70\(%eax\),%dx
 #pass

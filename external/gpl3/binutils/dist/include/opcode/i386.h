@@ -1,13 +1,13 @@
 /* opcode/i386.h -- Intel 80386 opcode macros
    Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007
+   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler, and GDB, the GNU Debugger.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
+   the Free Software Foundation; either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -17,7 +17,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
+   MA 02110-1301, USA.  */
 
 /* The SystemV/386 SVR3.2 assembler, and probably all AT&T derived
    ix86 Unix assemblers, generate floating point instructions with
@@ -34,6 +35,9 @@
    %st, and destination register is %st(i).
 
    The affected opcode map is dceX, dcfX, deeX, defX.  */
+
+#ifndef OPCODE_I386_H
+#define OPCODE_I386_H
 
 #ifndef SYSV386_COMPAT
 /* Set non-zero for broken, compatible instructions.  Set to zero for
@@ -56,6 +60,11 @@
 /* The opcode for the fwait instruction, which disassembler treats as a
    prefix when it can.  */
 #define FWAIT_OPCODE 0x9b
+
+/* Instruction prefixes.
+   NOTE: For certain SSE* instructions, 0x66,0xf2,0xf3 are treated as
+   part of the opcode.  Other prefixes may still appear between them
+   and the 0x0f part of the opcode.  */
 #define ADDR_PREFIX_OPCODE 0x67
 #define DATA_PREFIX_OPCODE 0x66
 #define LOCK_PREFIX_OPCODE 0xf0
@@ -72,8 +81,14 @@
 #define NOP_OPCODE (char) 0x90
 
 /* register numbers */
-#define EBP_REG_NUM 5
+#define EAX_REG_NUM 0
+#define ECX_REG_NUM 1
+#define EDX_REG_NUM 2
+#define EBX_REG_NUM 3
 #define ESP_REG_NUM 4
+#define EBP_REG_NUM 5
+#define ESI_REG_NUM 6
+#define EDI_REG_NUM 7
 
 /* modrm_byte.regmem for twobyte escape */
 #define ESCAPE_TO_TWO_BYTE_ADDRESSING ESP_REG_NUM
@@ -87,8 +102,21 @@
 #define REGMEM_FIELD_HAS_REG 0x3/* always = 0x3 */
 #define REGMEM_FIELD_HAS_MEM (~REGMEM_FIELD_HAS_REG)
 
+/* Extract fields from the mod/rm byte.  */
+#define MODRM_MOD_FIELD(modrm) (((modrm) >> 6) & 3)
+#define MODRM_REG_FIELD(modrm) (((modrm) >> 3) & 7)
+#define MODRM_RM_FIELD(modrm)  (((modrm) >> 0) & 7)
+
+/* Extract fields from the sib byte.  */
+#define SIB_SCALE_FIELD(sib) (((sib) >> 6) & 3)
+#define SIB_INDEX_FIELD(sib) (((sib) >> 3) & 7)
+#define SIB_BASE_FIELD(sib)  (((sib) >> 0) & 7)
+
 /* x86-64 extension prefix.  */
 #define REX_OPCODE	0x40
+
+/* Non-zero if OPCODE is the rex prefix.  */
+#define REX_PREFIX_P(opcode) (((opcode) & 0xf0) == REX_OPCODE)
 
 /* Indicates 64 bit operand size.  */
 #define REX_W	8
@@ -113,3 +141,5 @@
 
 /* max size of register name in insn mnemonics.  */
 #define MAX_REG_NAME_SIZE 8
+
+#endif /* OPCODE_I386_H */

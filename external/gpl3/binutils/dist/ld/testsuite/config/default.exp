@@ -1,5 +1,5 @@
 # Basic expect script for LD Regression Tests
-#   Copyright 1993, 1994, 1995, 1997, 1998, 1999, 2001, 2003, 2007
+#   Copyright 1993, 1994, 1995, 1997, 1998, 1999, 2001, 2003, 2005, 2007, 2009
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -115,9 +115,17 @@ proc get_link_files {varname} {
     global srcdir
     global CC
     if ![info exists $varname] {
-	set status [catch "exec sh -c \"host='$target_triplet' && CC='$CC' && . $srcdir/../configure.host && eval echo \\$$varname\"" result]
+	#configure.host returns variables that can be substituted into
+	#makefile rules, with embedded shell variable expansions.
+	#make wants $$shell_var, we want $shell_var ...
+	set cmd "host='$target_triplet' && . $srcdir/../configure.host && sed -e 's,\\\$\\\$,\$,g' <<EOF\n\$$varname\nEOF"
+	set status [catch "exec sh -c [list $cmd]" result]
+	if $status { error "Error getting native link files: $result" }
+	set cmd "CC='$CC' && eval echo \"$result\""
+	set status [catch "exec sh -c [list $cmd]" result]
 	if $status { error "Error getting native link files: $result" }
 	set $varname $result
+	send_log "$varname = $result\n"
     }
 }
 

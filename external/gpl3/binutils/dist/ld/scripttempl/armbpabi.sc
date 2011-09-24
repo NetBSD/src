@@ -30,7 +30,7 @@ INTERP=".interp       0 : { *(.interp) }"
 PLT=".plt          ${RELOCATING-0} : { *(.plt) }"
 RODATA=".rodata       ${RELOCATING-0} : { *(.rodata${RELOCATING+ .rodata.* .gnu.linkonce.r.*}) }"
 DATARELRO=".data.rel.ro : { *(.data.rel.ro.local) *(.data.rel.ro*) }"
-DISCARDED="/DISCARD/ : { *(.note.GNU-stack) *(.gnu_debuglink) }"
+DISCARDED="/DISCARD/ : { *(.note.GNU-stack) *(.gnu_debuglink)  *(.gnu.lto_*) }"
 if test -z "${NO_SMALL_DATA}"; then
   SBSS=".sbss         ${RELOCATING-0} :
   {
@@ -64,6 +64,24 @@ else
   NO_SMALL_DATA=" "
 fi
 test -n "$SEPARATE_GOTPLT" && SEPARATE_GOTPLT=" "
+INIT_ARRAY=".init_array   ${RELOCATING-0} :
+  {
+    /* SymbianOS uses this symbol.  */
+    ${RELOCATING+PROVIDE (SHT\$\$INIT_ARRAY\$\$Base = .);}
+    ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__init_array_start = .);}}
+    KEEP (*(SORT(.init_array.*)))
+    KEEP (*(.init_array))
+    ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__init_array_end = .);}}
+    /* SymbianOS uses this symbol.  */
+    ${RELOCATING+PROVIDE (SHT\$\$INIT_ARRAY\$\$Limit = .);}
+  }"
+FINI_ARRAY=".fini_array   ${RELOCATING-0} :
+  {
+    ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__fini_array_start = .);}}
+    KEEP (*(SORT(.fini_array.*)))
+    KEEP (*(.fini_array))
+    ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__fini_array_end = .);}}
+  }"
 CTOR=".ctors        ${CONSTRUCTING-0} : 
   {
     ${CONSTRUCTING+${CTOR_START}}
@@ -218,24 +236,8 @@ cat <<EOF
     KEEP (*(.preinit_array))
     ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__preinit_array_end = .);}}
   }
-  .init_array   ${RELOCATING-0} :
-  {
-    /* SymbianOS uses this symbol.  */
-    ${RELOCATING+PROVIDE (SHT\$\$INIT_ARRAY\$\$Base = .);}
-    ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__init_array_start = .);}}
-    KEEP (*(SORT(.init_array.*)))
-    KEEP (*(.init_array))
-    ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__init_array_end = .);}}
-    /* SymbianOS uses this symbol.  */
-    ${RELOCATING+PROVIDE (SHT\$\$INIT_ARRAY\$\$Limit = .);}
-  }
-  .fini_array   ${RELOCATING-0} :
-  {
-    ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__fini_array_start = .);}}
-    KEEP (*(.fini_array))
-    KEEP (*(SORT(.fini_array.*)))
-    ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__fini_array_end = .);}}
-  }
+  ${RELOCATING+${INIT_ARRAY}}
+  ${RELOCATING+${FINI_ARRAY}}
 
   ${OTHER_READONLY_SECTIONS}
   .eh_frame_hdr : { *(.eh_frame_hdr) }

@@ -1,23 +1,23 @@
 /* tic30.h -- Header file for TI TMS320C30 opcode table
-   Copyright 1998 Free Software Foundation, Inc.
+   Copyright 1998, 2005, 2009, 2010 Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
-This file is part of GDB, GAS, and the GNU binutils.
+   This file is part of GDB, GAS, and the GNU binutils.
 
-GDB, GAS, and the GNU binutils are free software; you can redistribute
-them and/or modify them under the terms of the GNU General Public
-License as published by the Free Software Foundation; either version
-1, or (at your option) any later version.
+   GDB, GAS, and the GNU binutils are free software; you can redistribute
+   them and/or modify them under the terms of the GNU General Public
+   License as published by the Free Software Foundation; either version 3,
+   or (at your option) any later version.
 
-GDB, GAS, and the GNU binutils are distributed in the hope that they
-will be useful, but WITHOUT ANY WARRANTY; without even the implied
-warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
-the GNU General Public License for more details.
+   GDB, GAS, and the GNU binutils are distributed in the hope that they
+   will be useful, but WITHOUT ANY WARRANTY; without even the implied
+   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+   the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this file; see the file COPYING.  If not, write to the Free
-Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
-02110-1301, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this file; see the file COPYING3.  If not, write to the Free
+   Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
+   02110-1301, USA.  */
 
 /* FIXME: The opcode table should be in opcodes/tic30-opc.c, not in a
    header file.  */
@@ -241,9 +241,9 @@ typedef struct _template
 #define Imm_SInt  2
 #define Imm_UInt  3
 }
-template;
+insn_template;
 
-static const template tic30_optab[] = {
+static const insn_template tic30_optab[] = {
   { "absf"   ,2,0x00000000,AddressMode, { GAddr1, Rn, 0 }, Imm_Float },
   { "absi"   ,2,0x00800000,AddressMode, { GAddr2, AllReg, 0 }, Imm_SInt },
   { "addc"   ,2,0x01000000,AddressMode, { GAddr2, AllReg, 0 }, Imm_SInt },
@@ -604,7 +604,7 @@ static const template tic30_optab[] = {
   { ""       ,0,0x00000000,0,           { 0, 0, 0 }, 0 }
 };
 
-static const template *const tic30_optab_end =
+static const insn_template *const tic30_optab_end =
   tic30_optab + sizeof(tic30_optab)/sizeof(tic30_optab[0]);
 
 typedef struct {

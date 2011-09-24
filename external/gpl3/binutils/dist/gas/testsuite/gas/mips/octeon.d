@@ -1,4 +1,4 @@
-#as: -march=octeon
+#as: -march=octeon -64
 #objdump: -M reg-names=numeric -dr
 #name: MIPS octeon instructions
 
@@ -46,7 +46,11 @@ Disassembly of section .text:
 .*:	41606000 	di
 .*:	41606020 	ei
 .*:	48230084 	dmfc2	\$3,0x84
+.*:	48260800 	dmfc2	\$6,0x800
+.*:	482c0001 	dmfc2	\$12,0x1
 .*:	48a84200 	dmtc2	\$8,0x4200
+.*:	48a72000 	dmtc2	\$7,0x2000
+.*:	48a20004 	dmtc2	\$2,0x4
 .*:	73400008 	mtm0	\$26
 .*:	7260000c 	mtm1	\$19
 .*:	7240000d 	mtm2	\$18

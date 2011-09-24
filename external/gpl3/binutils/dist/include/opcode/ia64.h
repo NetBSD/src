@@ -1,7 +1,23 @@
 /* ia64.h -- Header file for ia64 opcode table
-   Copyright (C) 1998, 1999, 2000, 2002, 2005, 2006
+   Copyright (C) 1998, 1999, 2000, 2002, 2005, 2006, 2010
    Free Software Foundation, Inc.
-   Contributed by David Mosberger-Tang <davidm@hpl.hp.com> */
+   Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
+
+   This file is part of BFD, the Binary File Descriptor library.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software Foundation,
+   Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 #ifndef opcode_ia64_h
 #define opcode_ia64_h
@@ -327,7 +343,7 @@ enum ia64_operand_class
 
 struct ia64_operand
 {
-  enum ia64_operand_class class;
+  enum ia64_operand_class op_class;
 
   /* Set VALUE as the operand bits for the operand of type SELF in the
      instruction pointed to by CODE.  If an error occurs, *CODE is not
@@ -381,14 +397,14 @@ extern struct ia64_opcode ia64_opcodes_f[];
 extern struct ia64_opcode ia64_opcodes_d[];
 
 
-extern struct ia64_opcode *ia64_find_opcode (const char *name);
-extern struct ia64_opcode *ia64_find_next_opcode (struct ia64_opcode *ent);
+extern struct ia64_opcode *ia64_find_opcode (const char *);
+extern struct ia64_opcode *ia64_find_next_opcode (struct ia64_opcode *);
 
-extern struct ia64_opcode *ia64_dis_opcode (ia64_insn insn,
-					    enum ia64_insn_type type);
+extern struct ia64_opcode *ia64_dis_opcode (ia64_insn,
+					    enum ia64_insn_type);
 
-extern void ia64_free_opcode (struct ia64_opcode *ent);
-extern const struct ia64_dependency *ia64_find_dependency (int index);
+extern void ia64_free_opcode (struct ia64_opcode *);
+extern const struct ia64_dependency *ia64_find_dependency (int);
 
 /* To avoid circular library dependencies, this array is implemented
    in bfd/cpu-ia64-opc.c: */

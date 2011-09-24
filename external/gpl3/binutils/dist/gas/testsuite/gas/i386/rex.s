@@ -10,6 +10,9 @@ _start:
 	rex/fxsave (%r8,%r8)
 	rex64/fxsave (%r8,%r8)
 
+	.byte 0x40
+	vmovapd (%rax),%xmm0
+
 # Test prefixes family.
 	rex
 	rex.B

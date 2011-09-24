@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2004, 2007
+#   Copyright 2004, 2005, 2007, 2009
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -27,9 +27,6 @@ fragment <<EOF
 
 #include "ldctor.h"
 
-/* Flag for the emulation-specific "--no-relax" option.  */
-static bfd_boolean disable_relaxation = FALSE;
-
 static void crxelf_after_parse (void);
 
 static void
@@ -45,6 +42,8 @@ crxelf_after_parse (void)
      meaninful in CRX embedded systems. Moreover, when magic_demand_paged
      is true the link sometimes fails.  */
   config.magic_demand_paged = FALSE;
+
+  after_parse_default ();
 }
 
 /* This is called after the sections have been attached to output
@@ -60,33 +59,11 @@ crxelf_before_allocation (void)
      specified.  This is done here instead of in the before_parse hook
      because there is a check in main() to prohibit use of --relax and
      -r together.  */
-
-  if (!disable_relaxation)
-    command_line.relax = TRUE;
+  if (RELAXATION_DISABLED_BY_DEFAULT)
+    ENABLE_RELAXATION;
 }
 
 EOF
-
-# Define some shell vars to insert bits of code into the standard elf
-# parse_args and list_options functions.
-#
-PARSE_AND_LIST_PROLOGUE='
-#define OPTION_NO_RELAX			301
-'
-
-PARSE_AND_LIST_LONGOPTS='
-  { "no-relax", no_argument, NULL, OPTION_NO_RELAX},
-'
-
-PARSE_AND_LIST_OPTIONS='
-  fprintf (file, _("  --no-relax                  Do not relax branches\n"));
-'
-
-PARSE_AND_LIST_ARGS_CASES='
-    case OPTION_NO_RELAX:
-      disable_relaxation = TRUE;
-      break;
-'
 
 # Put these extra crx-elf routines in ld_${EMULATION_NAME}_emulation
 #

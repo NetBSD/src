@@ -2,6 +2,7 @@
 # shlelf_vxworks.sh
 
 SCRIPT_NAME=elf
+NO_REL_RELOCS=yes
 BIG_OUTPUT_FORMAT="elf32-sh-vxworks"
 LITTLE_OUTPUT_FORMAT="elf32-shl-vxworks"
 OUTPUT_FORMAT="$BIG_OUTPUT_FORMAT"
