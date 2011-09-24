@@ -2,12 +2,12 @@
 
  .macro x.y.z val
   .align 4
-  .byte val, val
+  .byte val,val
  .endm
 
  .macro .xyz val
   .align 8
-  .byte val, val
+  .byte val,val
  .endm
 
  .macro .macro
@@ -21,8 +21,8 @@ labelZ:labelY : labelX :labelW: .xyz arg.1-arg.2
  .skip arg.1*arg.2
 label9:label8 : label7 :label6: .endm
 
-m 4, 2
+ m 4, 2
 
  .purgem .xyz, x.y.z
  .xyz 0
-x.y.z 0
+ x.y.z 0

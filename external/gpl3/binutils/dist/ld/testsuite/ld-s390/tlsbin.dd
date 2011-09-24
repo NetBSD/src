@@ -76,19 +76,19 @@ Disassembly of section .text:
   +[0-9a-f]+:	41 22 90 00       	la	%r2,0\(%r2,%r9\)
 # GD -> LE with global variable defined in executable
   +[0-9a-f]+:	58 20 d0 10       	l	%r2,16\(%r13\)
-  +[0-9a-f]+:	47 00 00 00       	bc	0,0
+  +[0-9a-f]+:	47 00 00 00       	nop	0
   +[0-9a-f]+:	41 22 90 00       	la	%r2,0\(%r2,%r9\)
 # GD -> LE with local variable defined in executable
   +[0-9a-f]+:	58 20 d0 14       	l	%r2,20\(%r13\)
-  +[0-9a-f]+:	47 00 00 00       	bc	0,0
+  +[0-9a-f]+:	47 00 00 00       	nop	0
   +[0-9a-f]+:	41 22 90 00       	la	%r2,0\(%r2,%r9\)
 # GD -> LE with hidden variable defined in executable
   +[0-9a-f]+:	58 20 d0 18       	l	%r2,24\(%r13\)
-  +[0-9a-f]+:	47 00 00 00       	bc	0,0
+  +[0-9a-f]+:	47 00 00 00       	nop	0
   +[0-9a-f]+:	41 22 90 00       	la	%r2,0\(%r2,%r9\)
 # LD -> LE
   +[0-9a-f]+:	58 20 d0 1c       	l	%r2,28\(%r13\)
-  +[0-9a-f]+:	47 00 00 00       	bc	0,0
+  +[0-9a-f]+:	47 00 00 00       	nop	0
   +[0-9a-f]+:	41 32 90 00       	la	%r3,0\(%r2,%r9\)
   +[0-9a-f]+:	58 40 d0 20       	l	%r4,32\(%r13\)
   +[0-9a-f]+:	41 54 30 00       	la	%r5,0\(%r4,%r3\)
@@ -96,7 +96,7 @@ Disassembly of section .text:
   +[0-9a-f]+:	41 54 30 00       	la	%r5,0\(%r4,%r3\)
 # LD -> LE against hidden variables
   +[0-9a-f]+:	58 20 d0 28       	l	%r2,40\(%r13\)
-  +[0-9a-f]+:	47 00 00 00       	bc	0,0
+  +[0-9a-f]+:	47 00 00 00       	nop	0
   +[0-9a-f]+:	41 32 90 00       	la	%r3,0\(%r2,%r9\)
   +[0-9a-f]+:	58 40 d0 2c       	l	%r4,44\(%r13\)
   +[0-9a-f]+:	41 54 30 00       	la	%r5,0\(%r4,%r3\)
@@ -109,17 +109,17 @@ Disassembly of section .text:
 # IE -> LE against global var defined in exec
   +[0-9a-f]+:	58 30 d0 38       	l	%r3,56\(%r13\)
   +[0-9a-f]+:	18 43             	lr	%r4,%r3
-  +[0-9a-f]+:	07 00             	bcr	0,%r0
+  +[0-9a-f]+:	07 00             	nopr	%r0
   +[0-9a-f]+:	41 54 90 00       	la	%r5,0\(%r4,%r9\)
 # IE -> LE against local var
   +[0-9a-f]+:	58 30 d0 3c       	l	%r3,60\(%r13\)
   +[0-9a-f]+:	18 43             	lr	%r4,%r3
-  +[0-9a-f]+:	07 00             	bcr	0,%r0
+  +[0-9a-f]+:	07 00             	nopr	%r0
   +[0-9a-f]+:	41 54 90 00       	la	%r5,0\(%r4,%r9\)
 # IE -> LE against hidden var
   +[0-9a-f]+:	58 30 d0 40       	l	%r3,64\(%r13\)
   +[0-9a-f]+:	18 43             	lr	%r4,%r3
-  +[0-9a-f]+:	07 00             	bcr	0,%r0
+  +[0-9a-f]+:	07 00             	nopr	%r0
   +[0-9a-f]+:	41 54 90 00       	la	%r5,0\(%r4,%r9\)
 # IE against global var with small got access (no optimization)
   +[0-9a-f]+:	58 30 c0 14       	l	%r3,20\(%r12\)
@@ -137,14 +137,14 @@ Disassembly of section .text:
 # function epilog
   +[0-9a-f]+:	98 6e f0 78       	lm	%r6,%r14,120\(%r15\)
   +[0-9a-f]+:	07 fe             	br	%r14
-  +[0-9a-f]+:	07 07             	bcr	0,%r7
-  +[0-9a-f]+:	07 07             	bcr	0,%r7
-  +[0-9a-f]+:	07 07             	bcr	0,%r7
-  +[0-9a-f]+:	07 07             	bcr	0,%r7
-  +[0-9a-f]+:	07 07             	bcr	0,%r7
-  +[0-9a-f]+:	07 07             	bcr	0,%r7
-  +[0-9a-f]+:	07 07             	bcr	0,%r7
-  +[0-9a-f]+:	07 07             	bcr	0,%r7
+  +[0-9a-f]+:	07 07             	nopr	%r7
+  +[0-9a-f]+:	07 07             	nopr	%r7
+  +[0-9a-f]+:	07 07             	nopr	%r7
+  +[0-9a-f]+:	07 07             	nopr	%r7
+  +[0-9a-f]+:	07 07             	nopr	%r7
+  +[0-9a-f]+:	07 07             	nopr	%r7
+  +[0-9a-f]+:	07 07             	nopr	%r7
+  +[0-9a-f]+:	07 07             	nopr	%r7
 
 0+[0-9a-f]+ <_start>:
 # function prolog
@@ -173,17 +173,17 @@ Disassembly of section .text:
 # IE -> LE against global var defined in exec
   +[0-9a-f]+:	58 30 d0 04       	l	%r3,4\(%r13\)
   +[0-9a-f]+:	18 43             	lr	%r4,%r3
-  +[0-9a-f]+:	07 00             	bcr	0,%r0
+  +[0-9a-f]+:	07 00             	nopr	%r0
   +[0-9a-f]+:	41 54 90 00       	la	%r5,0\(%r4,%r9\)
 # IE -> LE against local var
   +[0-9a-f]+:	58 30 d0 08       	l	%r3,8\(%r13\)
   +[0-9a-f]+:	18 43             	lr	%r4,%r3
-  +[0-9a-f]+:	07 00             	bcr	0,%r0
+  +[0-9a-f]+:	07 00             	nopr	%r0
   +[0-9a-f]+:	41 54 90 00       	la	%r5,0\(%r4,%r9\)
 # IE -> LE against hidden but not local var
   +[0-9a-f]+:	58 30 d0 0c       	l	%r3,12\(%r13\)
   +[0-9a-f]+:	18 43             	lr	%r4,%r3
-  +[0-9a-f]+:	07 00             	bcr	0,%r0
+  +[0-9a-f]+:	07 00             	nopr	%r0
   +[0-9a-f]+:	41 54 90 00       	la	%r5,0\(%r4,%r9\)
 # LE, global var defined in exec
   +[0-9a-f]+:	58 40 d0 10       	l	%r4,16\(%r13\)

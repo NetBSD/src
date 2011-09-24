@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+#   Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -31,21 +31,8 @@ gld${EMULATION_NAME}_map_segments (bfd_boolean need_layout)
 
   do
     {
-      if (need_layout)
-	{
-	  lang_reset_memory_regions ();
-
-	  /* Resize the sections.  */
-	  lang_size_sections (NULL, TRUE);
-
-	  /* Redo special stuff.  */
-	  ldemul_after_allocation ();
-
-	  /* Do the assignments again.  */
-	  lang_do_assignments ();
-
-	  need_layout = FALSE;
-	}
+      lang_relax_sections (need_layout);
+      need_layout = FALSE;
 
       if (link_info.output_bfd->xvec->flavour == bfd_target_elf_flavour
 	  && !link_info.relocatable)

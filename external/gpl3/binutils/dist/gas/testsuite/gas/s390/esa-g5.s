@@ -101,6 +101,9 @@ foo:
 	cfdbr	%r6,5,%f9
 	cfebr	%r6,5,%f9
 	cfxbr	%r6,5,%f9
+	cfdr	%r6,9,%f5
+	cfer	%r6,9,%f5
+	cfxr	%r6,9,%f5
 	ch	%r6,4095(%r5,%r10)
 	chi	%r6,-32767
 	cksm	%r6,%r9
@@ -382,6 +385,7 @@ foo:
 	sqdbr	%f6,%f9
 	sqdr	%f6,%f9
 	sqe	%f6,4095(%r5,%r10)
+	sqd	%f6,4095(%r5,%r10)
 	sqeb	%f6,4095(%r5,%r10)
 	sqebr	%f6,%f9
 	sqer	%f6,%f9
@@ -437,8 +441,8 @@ foo:
 	tcdb	%f6,4095(%r5,%r10)
 	tceb	%f6,4095(%r5,%r10)
 	tcxb	%f6,4095(%r5,%r10)
-	thder	%r6,%r9
-	thdr	%r6,%r9
+	thder	%f6,%f9
+	thdr	%f6,%f9
 	tm	4095(%r5),255
 	tmh	%r6,65535
 	tml	%r6,65535

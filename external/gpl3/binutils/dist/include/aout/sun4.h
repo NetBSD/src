@@ -1,10 +1,10 @@
 /* SPARC-specific values for a.out files 
 
-   Copyright 2001 Free Software Foundation, Inc.
+   Copyright 2001, 2009, 2010 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
+   the Free Software Foundation; either version 3 of the License, or
    (at your option) any later version.
    
    This program is distributed in the hope that it will be useful,
@@ -14,7 +14,8 @@
    
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
+   MA 02110-1301, USA.  */
 
 /* Some systems, e.g., AIX, may have defined this in header files already
    included.  */
@@ -42,6 +43,9 @@
    an address of zero if a_entry (!!!) is lower than the otherwise
    expected text address.  These kludges have gotta go!
    For linked files, should reflect reality if we know it.  */
+
+#define N_SHARED_LIB(x) ((x).a_entry < TEXT_START_ADDR \
+			 && (x).a_text >= EXEC_BYTES_SIZE)
 
 /* This differs from the version in aout64.h (which we override by defining
    it here) only for NMAGIC (we return TEXT_START_ADDR+EXEC_BYTES_SIZE;

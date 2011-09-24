@@ -423,4 +423,4 @@
 
         swapgs		              #  --  --	 -- --	 0F 01 f8
 
- .p2align 4,0
+	pushw $0x2222

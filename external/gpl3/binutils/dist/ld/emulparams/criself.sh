@@ -5,6 +5,7 @@ TEMPLATE_NAME=elf32
 
 # Symbols have underscore prepended.
 OUTPUT_FORMAT="elf32-us-cris"
+NO_REL_RELOCS=yes
 ARCH=cris
 MAXPAGESIZE=32
 ENTRY=__start

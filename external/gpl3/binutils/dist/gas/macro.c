@@ -30,21 +30,6 @@
 /* The routines in this file handle macro definition and expansion.
    They are called by gas.  */
 
-/* Internal functions.  */
-
-static int get_token (int, sb *, sb *);
-static int getstring (int, sb *, sb *);
-static int get_any_string (int, sb *, sb *);
-static formal_entry *new_formal (void);
-static void del_formal (formal_entry *);
-static int do_formals (macro_entry *, int, sb *);
-static int get_apost_token (int, sb *, sb *, int);
-static int sub_actual (int, sb *, sb *, struct hash_control *, int, sb *, int);
-static const char *macro_expand_body
-  (sb *, sb *, formal_entry *, struct hash_control *, const macro_entry *);
-static const char *macro_expand (int, sb *, macro_entry *, sb *);
-static void free_macro(macro_entry *);
-
 #define ISWHITE(x) ((x) == ' ' || (x) == '\t')
 
 #define ISSEP(x) \
@@ -90,14 +75,14 @@ static int macro_number;
 
 void
 macro_init (int alternate, int mri, int strip_at,
-	    int (*expr) (const char *, int, sb *, int *))
+	    int (*exp) (const char *, int, sb *, int *))
 {
   macro_hash = hash_new ();
   macro_defined = 0;
   macro_alternate = alternate;
   macro_mri = mri;
   macro_strip_at = strip_at;
-  macro_expr = expr;
+  macro_expr = exp;
 }
 
 /* Switch in and out of alternate mode on the fly.  */
@@ -146,6 +131,7 @@ buffer_and_nest (const char *from, const char *to, sb *ptr,
     {
       /* Try to find the first pseudo op on the line.  */
       int i = line_start;
+      bfd_boolean had_colon = FALSE;
 
       /* With normal syntax we can suck what we want till we get
 	 to the dot.  With the alternate, labels have to start in
@@ -169,19 +155,24 @@ buffer_and_nest (const char *from, const char *to, sb *ptr,
 	    i++;
 	  if (i < ptr->len && is_name_ender (ptr->ptr[i]))
 	    i++;
-	  if (LABELS_WITHOUT_COLONS)
-	    break;
 	  /* Skip whitespace.  */
 	  while (i < ptr->len && ISWHITE (ptr->ptr[i]))
 	    i++;
 	  /* Check for the colon.  */
 	  if (i >= ptr->len || ptr->ptr[i] != ':')
 	    {
+	      /* LABELS_WITHOUT_COLONS doesn't mean we cannot have a
+		 colon after a label.  If we do have a colon on the
+		 first label then handle more than one label on the
+		 line, assuming that each label has a colon.  */
+	      if (LABELS_WITHOUT_COLONS && !had_colon)
+		break;
 	      i = line_start;
 	      break;
 	    }
 	  i++;
 	  line_start = i;
+	  had_colon = TRUE;
 	}
 
       /* Skip trailing whitespace.  */
@@ -393,7 +384,7 @@ get_any_string (int idx, sb *in, sb *out)
 	}
       else
 	{
-	  char *br_buf = xmalloc(1);
+	  char *br_buf = (char *) xmalloc(1);
 	  char *in_br = br_buf;
 
 	  *in_br = '\0';
@@ -424,7 +415,7 @@ get_any_string (int idx, sb *in, sb *out)
 		    --in_br;
 		  else
 		    {
-		      br_buf = xmalloc(strlen(in_br) + 2);
+		      br_buf = (char *) xmalloc(strlen(in_br) + 2);
 		      strcpy(br_buf + 1, in_br);
 		      free(in_br);
 		      in_br = br_buf;
@@ -457,7 +448,7 @@ new_formal (void)
 {
   formal_entry *formal;
 
-  formal = xmalloc (sizeof (formal_entry));
+  formal = (formal_entry *) xmalloc (sizeof (formal_entry));
 
   sb_new (&formal->name);
   sb_new (&formal->def);
@@ -606,6 +597,26 @@ do_formals (macro_entry *macro, int idx, sb *in)
   return idx;
 }
 
+/* Free the memory allocated to a macro.  */
+
+static void
+free_macro (macro_entry *macro)
+{
+  formal_entry *formal;
+
+  for (formal = macro->formals; formal; )
+    {
+      formal_entry *f;
+
+      f = formal;
+      formal = formal->next;
+      del_formal (f);
+    }
+  hash_die (macro->formal_hash);
+  sb_kill (&macro->sub);
+  free (macro);
+}
+
 /* Define a new macro.  Returns NULL on success, otherwise returns an
    error message.  If NAMEP is not NULL, *NAMEP is set to the name of
    the macro which was defined.  */
@@ -737,6 +748,8 @@ sub_actual (int start, sb *in, sb *t, struct hash_control *formal_hash,
       /* Doing this permits people to use & in macro bodies.  */
       sb_add_char (out, '&');
       sb_add_sb (out, t);
+      if (src != start && in->ptr[src - 1] == '&')
+	sb_add_char (out, '&');
     }
   else if (copyifnotthere)
     {
@@ -777,9 +790,8 @@ macro_expand_body (sb *in, sb *out, formal_entry *formals,
 	    }
 	  else
 	    {
-	      /* FIXME: Why do we do this?  */
-	      /* At least in alternate mode this seems correct; without this
-	         one can't append a literal to a parameter.  */
+	      /* Permit macro parameter substition delineated with
+		 an '&' prefix and optional '&' suffix.  */
 	      src = sub_actual (src + 1, in, &t, formal_hash, '&', out, 0);
 	    }
 	}
@@ -857,7 +869,9 @@ macro_expand_body (sb *in, sb *out, formal_entry *formals,
 	  if (! macro
 	      || src + 5 >= in->len
 	      || strncasecmp (in->ptr + src, "LOCAL", 5) != 0
-	      || ! ISWHITE (in->ptr[src + 5]))
+	      || ! ISWHITE (in->ptr[src + 5])
+	      /* PR 11507: Skip keyword LOCAL if it is found inside a quoted string.  */
+	      || inquote)
 	    {
 	      sb_reset (&t);
 	      src = sub_actual (src, in, &t, formal_hash,
@@ -1059,9 +1073,13 @@ macro_expand (int idx, sb *in, macro_entry *m, sb *out)
 	  /* Lookup the formal in the macro's list.  */
 	  ptr = (formal_entry *) hash_find (m->formal_hash, sb_terminate (&t));
 	  if (!ptr)
-	    as_bad (_("Parameter named `%s' does not exist for macro `%s'"),
-		    t.ptr,
-		    m->name);
+	    {
+	      as_bad (_("Parameter named `%s' does not exist for macro `%s'"),
+		      t.ptr,
+		      m->name);
+	      sb_reset (&t);
+	      idx = get_any_string (idx + 1, in, &t);
+	    }
 	  else
 	    {
 	      /* Insert this value into the right place.  */
@@ -1193,7 +1211,7 @@ check_macro (const char *line, sb *expand,
 	     const char **error, macro_entry **info)
 {
   const char *s;
-  char *copy, *cs;
+  char *copy, *cls;
   macro_entry *macro;
   sb line_sb;
 
@@ -1210,8 +1228,8 @@ check_macro (const char *line, sb *expand,
   copy = (char *) alloca (s - line + 1);
   memcpy (copy, line, s - line);
   copy[s - line] = '\0';
-  for (cs = copy; *cs != '\0'; cs++)
-    *cs = TOLOWER (*cs);
+  for (cls = copy; *cls != '\0'; cls ++)
+    *cls = TOLOWER (*cls);
 
   macro = (macro_entry *) hash_find (macro_hash, copy);
 
@@ -1235,26 +1253,6 @@ check_macro (const char *line, sb *expand,
   return 1;
 }
 
-/* Free the memory allocated to a macro.  */
-
-static void
-free_macro(macro_entry *macro)
-{
-  formal_entry *formal;
-
-  for (formal = macro->formals; formal; )
-    {
-      formal_entry *f;
-
-      f = formal;
-      formal = formal->next;
-      del_formal (f);
-    }
-  hash_die (macro->formal_hash);
-  sb_kill (&macro->sub);
-  free (macro);
-}
-
 /* Delete a macro.  */
 
 void
@@ -1273,7 +1271,7 @@ delete_macro (const char *name)
   /* We can only ask hash_delete to free memory if we are deleting
      macros in reverse order to their definition.
      So just clear out the entry.  */
-  if ((macro = hash_find (macro_hash, copy)) != NULL)
+  if ((macro = (macro_entry *) hash_find (macro_hash, copy)) != NULL)
     {
       hash_jam (macro_hash, copy, NULL);
       free_macro (macro);

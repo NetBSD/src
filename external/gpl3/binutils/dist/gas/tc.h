@@ -1,7 +1,7 @@
 /* tc.h - target cpu dependent
 
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 2000, 2001, 2003,
-   2004, 2005, 2007
+   2004, 2005, 2006, 2007, 2008, 2009
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -31,7 +31,9 @@ int    md_parse_option (int, char *);
 void   md_show_usage (FILE *);
 void   md_assemble (char *);
 void   md_begin (void);
+#ifndef md_number_to_chars
 void   md_number_to_chars (char *, valueT, int);
+#endif
 void   md_apply_fix (fixS *, valueT *, segT);
 
 #ifndef WORKING_DOT_WORD
@@ -39,7 +41,7 @@ extern int md_short_jump_size;
 extern int md_long_jump_size;
 #endif
 
-#ifdef USE_UNIQUE
+#ifdef TE_PE
 /* The name of an external symbol which is
    used to make weak PE symbol names unique.  */
 extern const char * an_external_name;

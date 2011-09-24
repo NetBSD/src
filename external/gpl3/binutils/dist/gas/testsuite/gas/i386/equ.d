@@ -1,6 +1,5 @@
 #objdump: -drw
 #name: i386 equates
-#stderr: equ.e
 
 .*: +file format .*
 
@@ -23,4 +22,6 @@ Disassembly of section .text:
 [ 0-9a-f]+:[ 	0-9a-f]+mov[ 	]+%gs:\(%edx,%edx,8\),%edx
 [ 0-9a-f]+:[ 	0-9a-f]+fadd[ 	]+%st\(1\),%st
 [ 0-9a-f]+:[ 	0-9a-f]+fadd[ 	]+%st\(7\),%st
+[ 0-9a-f]+:[ 	0-9a-f]+mov[ 	]+0x4\(%edx\),%eax
+[ 0-9a-f]+:[ 	0-9a-f]+mov[ 	]+0x4\(%edx\),%eax
 #pass

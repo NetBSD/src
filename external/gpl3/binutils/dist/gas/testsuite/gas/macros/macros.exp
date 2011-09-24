@@ -61,11 +61,8 @@ run_list_test badarg ""
 case $target_triplet in {
     { *c54x*-*-* } { }
     { *c4x*-*-* } { }
-    { h8500-*-* } { }
-    { m68*-*-* } { }
-    { m88*-*-* } { }
     { mmix-* } { }
-    { z80-* } { }
+    { rx-*-* } { }
     default { run_list_test dot "-alm" }
 }
 run_list_test end ""

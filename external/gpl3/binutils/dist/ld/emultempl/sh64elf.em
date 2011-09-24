@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2000, 2001, 2002, 2003, 2004, 2007, 2008
+#   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -59,7 +59,7 @@ sh64_elf_${EMULATION_NAME}_before_allocation (void)
 
   if (cranges != NULL)
     {
-      if (command_line.relax)
+      if (RELAXATION_ENABLED)
 	{
 	  /* FIXME: Look through incoming sections with .cranges
 	     descriptors, build up some kind of descriptors that the
@@ -82,7 +82,7 @@ sh64_elf_${EMULATION_NAME}_before_allocation (void)
 	      }
 	  }
 
-	  command_line.relax = FALSE;
+	  DISABLE_RELAXATION;
 	}
 
       /* We wouldn't need to do anything when there's already a .cranges
@@ -91,13 +91,14 @@ sh64_elf_${EMULATION_NAME}_before_allocation (void)
 	 .cranges section.  */
     }
 
-  if (command_line.relax)
+  if (RELAXATION_ENABLED)
     {
       LANG_FOR_EACH_INPUT_STATEMENT (f)
 	{
 	  if (bfd_get_flavour (f->the_bfd) == bfd_target_elf_flavour)
 	    {
 	      asection *isec;
+
 	      for (isec = f->the_bfd->sections;
 		   isec != NULL;
 		   isec = isec->next)
@@ -107,7 +108,7 @@ sh64_elf_${EMULATION_NAME}_before_allocation (void)
 		    {
 		      einfo (_("%P: Sorry, turning off relaxing: SHmedia sections present.\n"));
 		      einfo ("  %I\n", f);
-		      command_line.relax = FALSE;
+		      DISABLE_RELAXATION;
 		      goto done_scanning_shmedia_sections;
 		    }
 		}
@@ -244,12 +245,12 @@ sh64_elf_${EMULATION_NAME}_after_allocation (void)
   bfd_vma cranges_growth = 0;
   asection *osec;
   bfd_byte *crangesp;
+  asection *cranges;
 
-  asection *cranges = bfd_get_section_by_name (link_info.output_bfd,
-					       SH64_CRANGES_SECTION_NAME);
+  gld${EMULATION_NAME}_after_allocation ();
 
-  /* If this ever starts doing something, we will pick it up.  */
-  after_allocation_default ();
+  cranges = bfd_get_section_by_name (link_info.output_bfd,
+				     SH64_CRANGES_SECTION_NAME);
 
   /* If there is no .cranges section, it is because it was seen earlier on
      that none was needed.  Otherwise it must have been created then, or
@@ -376,11 +377,6 @@ sh64_elf_${EMULATION_NAME}_after_allocation (void)
       }
     }
 
-  /* ldemul_after_allocation may be called twice.  First directly from
-     lang_process, and the second time when lang_process calls ldemul_finish,
-     which calls gld${EMULATION_NAME}_finish, e.g. gldshelf32_finish, which
-     is defined in emultempl/elf32.em and calls ldemul_after_allocation,
-     if bfd_elf_discard_info returned true.  */
   if (cranges->contents != NULL)
     free (cranges->contents);
 
@@ -560,3 +556,6 @@ sh64_elf_${EMULATION_NAME}_after_allocation (void)
   cranges->size = crangesp - cranges->contents;
   cranges->rawsize = cranges->size;
 }
+EOF
+
+

@@ -1,5 +1,5 @@
 /* sb.c - string buffer manipulation routines
-   Copyright 1994, 1995, 2000, 2003, 2006, 2007
+   Copyright 1994, 1995, 2000, 2003, 2005, 2006, 2007, 2009
    Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
@@ -59,7 +59,7 @@ sb_build (sb *ptr, int size)
   /* See if we can find one to allocate.  */
   sb_element *e;
 
-  assert (size < sb_max_power_two);
+  gas_assert (size < sb_max_power_two);
 
   e = free_list.size[size];
   if (!e)
