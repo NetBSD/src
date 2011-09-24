@@ -1,5 +1,5 @@
 /* BFD back end for Lynx core files
-   Copyright 1993, 1994, 1995, 2001, 2002, 2004, 2006, 2007
+   Copyright 1993, 1994, 1995, 2001, 2002, 2004, 2005, 2006, 2007
    Free Software Foundation, Inc.
    Written by Stu Grossman of Cygnus Support.
 
@@ -53,6 +53,7 @@ struct lynx_core_struct
 #define core_command(bfd) (core_hdr(bfd)->cmd)
 
 #define lynx_core_file_matches_executable_p generic_core_file_matches_executable_p
+#define lynx_core_file_pid _bfd_nocore_core_file_pid
 
 /* Handle Lynx core dump file.  */
 

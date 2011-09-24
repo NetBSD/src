@@ -1,6 +1,6 @@
 /* BFD back-end for raw ARM a.out binaries.
    Copyright 1994, 1995, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005,
-   2007 Free Software Foundation, Inc.
+   2007, 2009, 2010 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -102,7 +102,7 @@ MY (reloc_howto) (bfd *abfd,
   unsigned int r_length;
   unsigned int r_pcrel_done;
   unsigned int r_neg;
-  int index;
+  int howto_index;
 
   *r_pcrel = 0;
   if (bfd_header_big_endian (abfd))
@@ -127,11 +127,11 @@ MY (reloc_howto) (bfd *abfd,
       r_length     = ((rel->r_type[0] & RELOC_STD_BITS_LENGTH_LITTLE)
 		      >> RELOC_STD_BITS_LENGTH_SH_LITTLE);
     }
-  index = r_length + 4 * r_pcrel_done + 8 * r_neg;
-  if (index == 3)
+  howto_index = r_length + 4 * r_pcrel_done + 8 * r_neg;
+  if (howto_index == 3)
     *r_pcrel = 1;
 
-  return MY (howto_table) + index;
+  return MY (howto_table) + howto_index;
 }
 
 #define MY_reloc_howto(BFD, REL, IN, EX, PC) \
@@ -296,7 +296,7 @@ MY (bfd_reloc_type_lookup) (bfd *abfd,
 #define ASTD(i,j)       case i: return & MY (howto_table)[j]
 
   if (code == BFD_RELOC_CTOR)
-    switch (bfd_get_arch_info (abfd)->bits_per_address)
+    switch (bfd_arch_bits_per_address (abfd))
       {
       case 32:
         code = BFD_RELOC_32;

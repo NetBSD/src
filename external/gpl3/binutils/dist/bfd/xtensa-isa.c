@@ -1,5 +1,5 @@
 /* Configurable Xtensa ISA support.
-   Copyright 2003, 2004, 2005, 2007, 2008 Free Software Foundation, Inc.
+   Copyright 2003, 2004, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1028,15 +1028,14 @@ xtensa_operand_encode (xtensa_isa isa, xtensa_opcode opc, int opnd,
   uint32 test_val, orig_val;
 
   intop = get_operand (intisa, opc, opnd);
-  if (!intop) return -1;
+  if (!intop)
+    return -1;
 
   if (!intop->encode)
     {
       /* This is a default operand for a field.  How can we tell if the
 	 value fits in the field?  Write the value into the field,
 	 read it back, and then make sure we get the same value.  */
-
-      xtensa_isa_internal *intisa = (xtensa_isa_internal *) isa;
       static xtensa_insnbuf tmpbuf = 0;
       int slot_id;
 
@@ -1081,9 +1080,9 @@ xtensa_operand_encode (xtensa_isa isa, xtensa_opcode opc, int opnd,
      was successfully encoded is to decode it and check if it matches
      the original value.  */
   orig_val = *valp;
-  if ((*intop->encode) (valp) ||
-      (test_val = *valp, (*intop->decode) (&test_val)) ||
-      test_val != orig_val)
+  if ((*intop->encode) (valp)
+      || (test_val = *valp, (*intop->decode) (&test_val))
+      || test_val != orig_val)
     {
       xtisa_errno = xtensa_isa_bad_value;
       sprintf (xtisa_error_msg, "cannot encode operand value 0x%08x", *valp);
@@ -1521,6 +1520,17 @@ xtensa_state_is_exported (xtensa_isa isa, xtensa_state st)
   xtensa_isa_internal *intisa = (xtensa_isa_internal *) isa;
   CHECK_STATE (intisa, st, XTENSA_UNDEFINED);
   if ((intisa->states[st].flags & XTENSA_STATE_IS_EXPORTED) != 0)
+    return 1;
+  return 0;
+}
+
+
+int
+xtensa_state_is_shared_or (xtensa_isa isa, xtensa_state st)
+{
+  xtensa_isa_internal *intisa = (xtensa_isa_internal *) isa;
+  CHECK_STATE (intisa, st, XTENSA_UNDEFINED);
+  if ((intisa->states[st].flags & XTENSA_STATE_IS_SHARED_OR) != 0)
     return 1;
   return 0;
 }

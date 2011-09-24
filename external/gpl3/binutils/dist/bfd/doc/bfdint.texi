@@ -1,6 +1,6 @@
 \input texinfo
 @c Copyright 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998,
-@c 2000, 2001, 2002, 2003, 2004, 2006, 2007
+@c 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2009
 @c Free Software Foundation, Inc.
 @setfilename bfdint.info
 
@@ -17,7 +17,7 @@
 This file documents the internals of the BFD library.
 
 Copyright @copyright{} 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
-1996, 1998, 2000, 2001, 2002, 2003, 2004, 2006, 2007
+1996, 1998, 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2009
 Free Software Foundation, Inc.
 Contributed by Cygnus Support.
 
@@ -354,6 +354,8 @@ Motorola S-record format.
 Intel hex format.
 @item bfd_target_som_flavour
 SOM (used on HP/UX).
+@item bfd_target_verilog_flavour
+Verilog memory hex dump format.
 @item bfd_target_os9k_flavour
 os9000.
 @item bfd_target_versados_flavour

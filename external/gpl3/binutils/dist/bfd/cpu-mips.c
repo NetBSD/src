@@ -1,6 +1,6 @@
 /* bfd back-end for mips support
    Copyright 1990, 1991, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2001,
-   2002, 2003, 2004, 2007, 2008 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -80,6 +80,8 @@ enum
   I_mips9000,
   I_mips10000,
   I_mips12000,
+  I_mips14000,
+  I_mips16000,
   I_mips16,
   I_mips5,
   I_mipsisa32,
@@ -89,7 +91,8 @@ enum
   I_sb1,
   I_loongson_2e,
   I_loongson_2f,
-  I_mipsocteon
+  I_mipsocteon,
+  I_xlr
 };
 
 #define NN(index) (&arch_info_struct[(index) + 1])
@@ -116,6 +119,8 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (64, 64, bfd_mach_mips9000, "mips:9000",      FALSE, NN(I_mips9000)),
   N (64, 64, bfd_mach_mips10000,"mips:10000",     FALSE, NN(I_mips10000)),
   N (64, 64, bfd_mach_mips12000,"mips:12000",     FALSE, NN(I_mips12000)),
+  N (64, 64, bfd_mach_mips14000,"mips:14000",     FALSE, NN(I_mips14000)),
+  N (64, 64, bfd_mach_mips16000,"mips:16000",     FALSE, NN(I_mips16000)),
   N (64, 64, bfd_mach_mips16,   "mips:16",        FALSE, NN(I_mips16)),
   N (64, 64, bfd_mach_mips5,    "mips:mips5",     FALSE, NN(I_mips5)),
   N (32, 32, bfd_mach_mipsisa32,  "mips:isa32",   FALSE, NN(I_mipsisa32)),
@@ -125,7 +130,8 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (64, 64, bfd_mach_mips_sb1, "mips:sb1",       FALSE, NN(I_sb1)),
   N (64, 64, bfd_mach_mips_loongson_2e, "mips:loongson_2e",       FALSE, NN(I_loongson_2e)),
   N (64, 64, bfd_mach_mips_loongson_2f, "mips:loongson_2f",       FALSE, NN(I_loongson_2f)),
-  N (64, 64, bfd_mach_mips_octeon, "mips:octeon", FALSE, 0)
+  N (64, 64, bfd_mach_mips_octeon,"mips:octeon",  FALSE, NN(I_mipsocteon)),
+  N (64, 64, bfd_mach_mips_xlr, "mips:xlr",       FALSE, 0)
 };
 
 /* The default architecture is mips:3000, but with a machine number of

@@ -27,6 +27,7 @@ man_MANS = \
 	size.1 \
 	strings.1 \
 	strip.1 \
+	elfedit.1 \
 	windres.1 \
 	windmc.1 \
 	$(DEMANGLER_NAME).1
@@ -124,6 +125,13 @@ strip.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f strip.pod
 
+elfedit.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+	touch $@
+	-$(TEXI2POD) $(MANCONF) -Delfedit < $(binutils_TEXI) > elfedit.pod
+	-($(POD2MAN) elfedit.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+	rm -f elfedit.pod
+
 windres.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Dwindres < $(binutils_TEXI) > windres.pod
@@ -160,27 +168,6 @@ $(DEMANGLER_NAME).1: cxxfilt.man Makefile
 # We want install to imply install-info as per GNU standards, despite the
 # cygnus option.
 install-data-local: install-info
-
-html__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
-
-install-html: install-html-am
-
-install-html-am: $(HTMLS)
-	@$(NORMAL_INSTALL)
-	test -z "$(htmldir)" || $(mkdir_p) "$(DESTDIR)$(htmldir)"
-	@list='$(HTMLS)'; for p in $$list; do \
-	  if test -f "$$p" || test -d "$$p"; then d=""; else d="$(srcdir)/"; fi; \
-	  f=$(html__strip_dir) \
-	  if test -d "$$d$$p"; then \
-	    echo " $(mkdir_p) '$(DESTDIR)$(htmldir)/$$f'"; \
-	    $(mkdir_p) "$(DESTDIR)$(htmldir)/$$f" || exit 1; \
-	    echo " $(INSTALL_DATA) '$$d$$p'/* '$(DESTDIR)$(htmldir)/$$f'"; \
-	    $(INSTALL_DATA) "$$d$$p"/* "$(DESTDIR)$(htmldir)/$$f"; \
-	  else \
-	    echo " $(INSTALL_DATA) '$$d$$p' '$(DESTDIR)$(htmldir)/$$f'"; \
-	    $(INSTALL_DATA) "$$d$$p" "$(DESTDIR)$(htmldir)/$$f"; \
-	  fi; \
-	done
 
 MAINTAINERCLEANFILES = binutils.info
 
