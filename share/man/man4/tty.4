@@ -1,4 +1,4 @@
-.\"	$NetBSD: tty.4,v 1.27 2011/04/28 12:15:35 wiz Exp $
+.\"	$NetBSD: tty.4,v 1.28 2011/09/24 00:06:20 christos Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd October 7, 2006
+.Dd September 9, 2011
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -331,6 +331,16 @@ the
 structure pointed to by
 .Fa ws
 (see above).
+.It Dv TIOCGQSIZE Fa int *qsize
+Get the current size of the tty input and output queues.
+.It Dv TIOCSQSIZE Fa int *qsize
+Set the size of the tty input and output queues.
+Valid sizes are between
+.Dv 1024
+and
+.Dv 65536
+and input values are converted to a power of two.
+All pending input and output is dropped.
 .It Dv TIOCCONS Fa int *on
 If
 .Fa on
