@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.115 2011/08/31 18:31:03 plunky Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.116 2011/09/24 17:22:14 christos Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.115 2011/08/31 18:31:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.116 2011/09/24 17:22:14 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.115 2011/08/31 18:31:03 plunky Exp $")
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip6.h>
+#include <netinet/rfc6056.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/scope6_var.h>
@@ -176,6 +177,8 @@ in6_pcballoc(struct socket *so, void *v)
 	in6p->in6p_socket = so;
 	in6p->in6p_hops = -1;	/* use kernel default */
 	in6p->in6p_icmp6filt = NULL;
+	in6p->in6p_rfc6056algo = RFC6056_ALGO_DEFAULT;
+	in6p->in6p_bindportonsend = false;
 #if defined(IPSEC) || defined(FAST_IPSEC)
 	error = ipsec_init_pcbpolicy(so, &in6p->in6p_sp);
 	if (error != 0) {
@@ -547,6 +550,18 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 	}
 	in6p->in6p_faddr = sin6->sin6_addr;
 	in6p->in6p_fport = sin6->sin6_port;
+
+        /* Late bind, if needed */
+	if (in6p->in6p_bindportonsend) {
+               struct sockaddr_in6 lsin = *((const struct sockaddr_in6 *)
+		    in6p->in6p_socket->so_proto->pr_domain->dom_sa_any);
+		lsin.sin6_addr = in6p->in6p_laddr;
+		lsin.sin6_port = 0;
+
+               if ((error = in6_pcbbind_port(in6p, &lsin, l)) != 0)
+                       return error;
+	}
+	
 	in6_pcbstate(in6p, IN6P_CONNECTED);
 	in6p->in6p_flowinfo &= ~IPV6_FLOWLABEL_MASK;
 	if (ip6_auto_flowlabel)
