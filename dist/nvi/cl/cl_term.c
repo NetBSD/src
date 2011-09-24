@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_term.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: cl_term.c,v 1.3 2011/09/24 18:57:46 jdc Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -414,6 +414,7 @@ cl_ssize(SCR *sp, int sigwinch, size_t *rowp, size_t *colp, int *changedp)
 			*rowp = row;
 		if (colp != NULL)
 			*colp = col;
+		resizeterm(row, col);
 		return (0);
 	}
 
