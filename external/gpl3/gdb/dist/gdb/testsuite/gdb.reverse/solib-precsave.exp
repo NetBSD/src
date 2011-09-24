@@ -1,0 +1,141 @@
+# Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the GDB testsuite.  It tests precord debugging
+# with shared libraries and a logfile.
+
+# This test suitable only for process record-replay
+if ![target_info exists gdb,use_precord] {
+    return
+}
+
+set testfile "solib-reverse"
+set srcfile  ${testfile}.c
+set libfile  "shr2"
+set libsrc   ${libfile}.c
+set library  ${objdir}/${subdir}/${libfile}.sl
+set binfile  ${objdir}/${subdir}/${testfile}
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+if { [gdb_compile_shlib ${srcdir}/${subdir}/${libsrc} ${library} "debug"] != "" } {
+    untested "Could not compile shared library."
+    return -1
+}
+
+set exec_opts [list debug shlib=${library}]
+
+if { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable $exec_opts] != "" } {
+    untested "Could not compile $binfile."
+    return -1
+}
+     
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+
+runto main
+
+if [target_info exists gdb,use_precord] {
+    # Activate process record/replay
+    gdb_test_no_output "record" "Turn on process record"
+}
+
+set end_of_main [gdb_get_line_number "end of main" ]
+gdb_test "break $end_of_main" \
+    "Breakpoint $decimal at .*/$srcfile, line $end_of_main\." \
+    "BP at end of main"
+
+gdb_test "continue" "Breakpoint .* end of main .*" "run to end of main"
+
+gdb_test "record save solib.precsave" \
+    "Saved core file solib.precsave with execution log\."  \
+    "save process recfile"
+
+gdb_test "kill" "" "Kill process, prepare to debug log file" \
+    "Kill the program being debugged\\? \\(y or n\\) " "y"
+
+gdb_test "record restore solib.precsave" \
+    "Program terminated with signal .*" \
+    "reload core file"
+
+#
+# Test reverse-step over undebuggable solib functions.
+#
+
+# Run forward past some solib function calls.
+
+set end_part_one [gdb_get_line_number " end part one" "$srcfile"]
+set end_part_two [gdb_get_line_number " end part two" "$srcfile"]
+gdb_test "until $end_part_one" " end part one.*" "run until end part one"
+
+gdb_test "reverse-step" " sleep three .*" "reverse-step third sleep"
+gdb_test "reverse-step" " sleep two .*"   "reverse-step second sleep"
+gdb_test "reverse-step" " sleep one .*"   \
+		    "reverse-step first sleep, dynsym resolve"
+
+gdb_test "reverse-step" " printf three .*" "reverse-step third printf"
+gdb_test "reverse-step" " printf two .*"   "reverse-step second printf"
+gdb_test "reverse-step" " printf one .*"   \
+		    "reverse-step first printf, dynsym resolve"
+gdb_test "reverse-step" " generic statement.*" "reverse-step generic"
+
+
+#
+# Test reverse-next over undebuggable solib functions.
+#
+
+# Run forward again...
+
+gdb_test "until $end_part_one" " end part one.*" "forward to end part one"
+
+gdb_test "reverse-next" " sleep three .*" "reverse-next third sleep"
+gdb_test "reverse-next" " sleep two .*"   "reverse-next second sleep"
+gdb_test "reverse-next" " sleep one .*"   \
+		    "reverse-next first sleep, dynsym resolve"
+
+gdb_test "reverse-next" " printf three .*" "reverse-next third printf"
+gdb_test "reverse-next" " printf two .*"   "reverse-next second printf"
+gdb_test "reverse-next" " printf one .*"   \
+		    "reverse-next first printf, dynsym resolve"
+gdb_test "reverse-next" " generic statement.*" "reverse-next generic"
+
+
+#
+# Test reverse-step into debuggable solib function
+#
+
+gdb_test "reverse-step" "${libsrc}.*" "reverse-step into solib function one"
+gdb_test "reverse-step" "return 2.x.*" "reverse-step within solib function one"
+gdb_test "reverse-step" " middle part two.*" "reverse-step back to main one"
+
+gdb_test "reverse-step" "${libsrc}.*" "reverse-step into solib function two"
+gdb_test "reverse-step" "return 2.x.*" "reverse-step within solib function two"
+gdb_test "reverse-step" " begin part two.*" "reverse-step back to main two"
+
+#
+# Test reverse-next over debuggable solib function
+#
+
+gdb_test "until $end_part_two" " end part two.*" "run until end part two"
+
+gdb_test "reverse-next" " middle part two.*" "reverse-next over solib function one"
+gdb_test "reverse-next" " begin part two.*" "reverse-next over solib function two"
