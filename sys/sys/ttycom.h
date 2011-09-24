@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.18 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.19 2011/09/24 00:05:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -153,6 +153,8 @@ typedef char linedn_t[TTLINEDNAMELEN];
 #define TIOCGRANTPT 	 _IO('t', 71) 			/* grantpt(3) */
 #define TIOCPTSNAME 	 _IOR('t', 72, struct ptmget)	/* ptsname(3) */
 
+#define TIOCSQSIZE	 _IOW('t', 128, int)	/* set queue size */
+#define TIOCGQSIZE	 _IOR('t', 129, int)	/* get queue size */
 
 #define	TTYDISC		0		/* termios tty line discipline */
 #define	TABLDISC	3		/* tablet discipline */

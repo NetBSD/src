@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.39 2009/11/14 13:18:41 dsl Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.40 2011/09/24 00:05:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.39 2009/11/14 13:18:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.40 2011/09/24 00:05:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,7 @@ putc(int c, struct clist *clp)
 #if defined(DIAGNOSTIC) || 1
 			printf("putc: required clalloc\n");
 #endif
-			if (clalloc(clp, 1024, 1)) {
+			if (clalloc(clp, clp->c_cn, 1)) {
 out:
 				splx(s);
 				return -1;
@@ -352,7 +352,7 @@ b_to_q(const u_char *cp, int count, struct clist *clp)
 #if defined(DIAGNOSTIC) || 1
 			printf("b_to_q: required clalloc\n");
 #endif
-			if (clalloc(clp, 1024, 1))
+			if (clalloc(clp, clp->c_cn, 1))
 				goto out;
 		}
 		clp->c_cf = clp->c_cl = clp->c_cs;
