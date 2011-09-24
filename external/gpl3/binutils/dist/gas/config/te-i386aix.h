@@ -24,10 +24,6 @@
 
 #include "obj-format.h"
 
-/* Undefine REVERSE_SORT_RELOCS to keep the relocation entries sorted
-   in ascending vaddr.  */
-#undef REVERSE_SORT_RELOCS
-
 /* Define KEEP_RELOC_INFO so that the strip reloc info flag F_RELFLG is
    not used in the filehdr for COFF output.  */
 #define KEEP_RELOC_INFO

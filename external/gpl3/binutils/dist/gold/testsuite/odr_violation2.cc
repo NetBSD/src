@@ -12,3 +12,12 @@ class Ordering {
 void SortDescending(int array[], int size) {
   std::sort(array, array + size, Ordering());
 }
+
+// This is weak in odr_violation1.cc.
+extern "C" int OverriddenCFunction(int i) {
+  return i * i;
+}
+// This is inline in debug_msg.cc, which makes it a weak symbol too.
+int SometimesInlineFunction(int i) {
+  return i * i;
+}

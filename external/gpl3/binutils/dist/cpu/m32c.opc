@@ -1,6 +1,6 @@
 /* m32c opcode support.  -*- C -*-
 
-   Copyright 2005, 2007 Free Software Foundation, Inc.
+   Copyright 2005, 2007, 2009, 2010 Free Software Foundation, Inc.
 
    Contributed by Red Hat Inc; developed under contract from Renesas
 
@@ -40,8 +40,8 @@
 /* -- opc.h */
 
 /* Needed for RTL's 'ext' and 'trunc' operators.  */
-#include "cgen-types.h"
-#include "cgen-ops.h"
+#include "cgen/basic-modes.h"
+#include "cgen/basic-ops.h"
 
 /* We can't use the default hash size because many bits are used by
    operands.  */
@@ -156,27 +156,26 @@ parse_unsigned8 (CGEN_CPU_DESC cd, const char **strp,
 		 int opindex, unsigned long *valuep)
 {
   const char *errmsg = 0;
-  unsigned long value;
+  unsigned long value = 0;
   long have_zero = 0;
 
   if (strncasecmp (*strp, "%dsp8(", 6) == 0)
     {
       enum cgen_parse_operand_result result_type;
-      bfd_vma value;
-      const char *errmsg;
+      bfd_vma val;
 
       *strp += 6;
       errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_8,
-				   & result_type, & value);
+				   & result_type, & val);
       if (**strp != ')')
 	return _("missing `)'");
       (*strp) ++;
 
       if (errmsg == NULL
   	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
-	{
-	  return _("%dsp8() takes a symbolic address, not a number");
-	}
+	return _("%dsp8() takes a symbolic address, not a number");
+
+      value = val;
       *valuep = value;
       return errmsg;
     }
@@ -253,26 +252,25 @@ parse_signed8 (CGEN_CPU_DESC cd, const char **strp,
 	       int opindex, signed long *valuep)
 {
   const char *errmsg = 0;
-  signed long value;
+  signed long value = 0;
 
   if (strncasecmp (*strp, "%hi8(", 5) == 0)
     {
       enum cgen_parse_operand_result result_type;
-      bfd_vma value;
-      const char *errmsg;
+      bfd_vma val;
 
       *strp += 5;
       errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_M32C_HI8,
-				   & result_type, & value);
+				   & result_type, & val);
       if (**strp != ')')
 	return _("missing `)'");
       (*strp) ++;
 
       if (errmsg == NULL
   	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
-	{
-	  value >>= 16;
-	}
+	val >>= 16;
+
+      value = val;
       *valuep = value;
       return errmsg;
     }
@@ -294,27 +292,26 @@ parse_unsigned16 (CGEN_CPU_DESC cd, const char **strp,
 		 int opindex, unsigned long *valuep)
 {
   const char *errmsg = 0;
-  unsigned long value;
+  unsigned long value = 0;
   long have_zero = 0;
 
   if (strncasecmp (*strp, "%dsp16(", 7) == 0)
     {
       enum cgen_parse_operand_result result_type;
-      bfd_vma value;
-      const char *errmsg;
+      bfd_vma val;
 
       *strp += 7;
       errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_16,
-				   & result_type, & value);
+				   & result_type, & val);
       if (**strp != ')')
 	return _("missing `)'");
       (*strp) ++;
 
       if (errmsg == NULL
   	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
-	{
-	  return _("%dsp16() takes a symbolic address, not a number");
-	}
+	return _("%dsp16() takes a symbolic address, not a number");
+
+      value = val;
       *valuep = value;
       return errmsg;
     }
@@ -354,26 +351,25 @@ parse_signed16 (CGEN_CPU_DESC cd, const char **strp,
 	       int opindex, signed long *valuep)
 {
   const char *errmsg = 0;
-  signed long value;
+  signed long value = 0;
 
   if (strncasecmp (*strp, "%lo16(", 6) == 0)
     {
       enum cgen_parse_operand_result result_type;
-      bfd_vma value;
-      const char *errmsg;
+      bfd_vma val;
 
       *strp += 6;
       errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_LO16,
-				   & result_type, & value);
+				   & result_type, & val);
       if (**strp != ')')
 	return _("missing `)'");
       (*strp) ++;
 
       if (errmsg == NULL
   	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
-	{
-	  value &= 0xffff;
-	}
+	val &= 0xffff;
+
+      value = val;
       *valuep = value;
       return errmsg;
     }
@@ -381,21 +377,20 @@ parse_signed16 (CGEN_CPU_DESC cd, const char **strp,
   if (strncasecmp (*strp, "%hi16(", 6) == 0)
     {
       enum cgen_parse_operand_result result_type;
-      bfd_vma value;
-      const char *errmsg;
+      bfd_vma val;
 
       *strp += 6;
       errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_HI16,
-				   & result_type, & value);
+				   & result_type, & val);
       if (**strp != ')')
 	return _("missing `)'");
       (*strp) ++;
 
       if (errmsg == NULL
   	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
-	{
-	  value >>= 16;
-	}
+	val >>= 16;
+
+      value = val;
       *valuep = value;
       return errmsg;
     }
@@ -571,7 +566,7 @@ parse_lab_5_3 (CGEN_CPU_DESC cd,
   if (type_addr)
     *type_addr = op_res;
 
-  if (op_res == CGEN_PARSE_OPERAND_ADDRESS)
+  if (op_res == CGEN_PARSE_OPERAND_RESULT_QUEUED)
     {
       /* This is a hack; the field cannot handle near-zero signed
 	 offsets that CGEN wants to put in to indicate an "empty"
@@ -1121,7 +1116,7 @@ print_regset (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
   };
   disassemble_info *info = dis_info;
   int mask;
-  int index = 0;
+  int reg_index = 0;
   char* comma = "";
 
   if (push)
@@ -1135,7 +1130,7 @@ print_regset (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
       comma = ",";
     }
 
-  for (index = 1; index <= 7; ++index)
+  for (reg_index = 1; reg_index <= 7; ++reg_index)
     {
       if (push)
         mask >>= 1;
@@ -1145,7 +1140,7 @@ print_regset (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
       if (value & mask)
         {
           (*info->fprintf_func) (info->stream, "%s%s", comma,
-				 m16c_register_names [index]);
+				 m16c_register_names [reg_index]);
           comma = ",";
         }
     }

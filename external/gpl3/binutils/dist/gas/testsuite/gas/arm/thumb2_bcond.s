@@ -18,6 +18,8 @@ thumb2_bcond:
 	tbbgt [r4, r1]
 	it lt
 	svclt 0
+	it eq
+	ldreq pc, [r0]
 	itt le
 	bkpt #0
 	nople

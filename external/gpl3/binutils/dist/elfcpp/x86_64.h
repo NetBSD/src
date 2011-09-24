@@ -1,6 +1,6 @@
 // x86-64.h -- ELF definitions specific to EM_X86_64  -*- C++ -*-
 
-// Copyright 2006, 2007, Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2010 Free Software Foundation, Inc.
 // Written by Andrew Chatham.
 
 // This file is part of elfcpp.
@@ -90,9 +90,10 @@ enum
   R_X86_64_GOTPC32_TLSDESC = 34, // 32-bit PC relative to TLS descriptor in GOT
   R_X86_64_TLSDESC_CALL = 35,    // Relaxable call through TLS descriptor
   R_X86_64_TLSDESC = 36,         // 2 by 64-bit TLS descriptor
+  R_X86_64_IRELATIVE = 37,          // Adjust indirectly by program base
   // GNU vtable garbage collection extensions.
-  R_386_GNU_VTINHERIT = 250,
-  R_386_GNU_VTENTRY = 251
+  R_X86_64_GNU_VTINHERIT = 250,
+  R_X86_64_GNU_VTENTRY = 251
 };
 
 } // End namespace elfcpp.

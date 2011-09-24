@@ -1,6 +1,6 @@
 /* pread.c -- version of pread for gold.  */
 
-/* Copyright 2006, 2007 Free Software Foundation, Inc.
+/* Copyright 2006, 2007, 2009 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <iant@google.com>.
 
    This file is part of gold.
@@ -27,11 +27,14 @@
 
 #include "config.h"
 
+#include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+extern ssize_t pread (int, void *, size_t, off_t);
+
 ssize_t
-pread(int fd, void* buf, size_t count, off_t offset)
+pread (int fd, void *buf, size_t count, off_t offset)
 {
   if (lseek(fd, offset, SEEK_SET) != offset)
     return -1;

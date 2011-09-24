@@ -173,7 +173,7 @@ multiply_accumulate_data_reg:
 	r1 = (a1 += r2.h * r7.h) (iss2);
 	r3 = (A1 -= r0.l * R0.H);
 	R5 = (a1 -= R2.l * R7.h) (m, is);
-	r7 = (a1+=r1.h*r3.h);
+	r7 = (a1+=r1.h*r3.h) (IU);
 
 	.text
 	.global negate

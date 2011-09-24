@@ -1,6 +1,6 @@
 /* tc-i860.c -- Assembler for the Intel i860 architecture.
    Copyright 1989, 1992, 1993, 1994, 1995, 1998, 1999, 2000, 2001, 2002,
-   2003, 2006, 2007, 2008 Free Software Foundation, Inc.
+   2003, 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
 
    Brought back from the dead and completely reworked
    by Jason Eckhardt <jle@cygnus.com>.
@@ -261,7 +261,7 @@ md_assemble (char *str)
   int i;
   struct i860_it pseudo[3];
 
-  assert (str);
+  gas_assert (str);
   fc = 0;
 
   /* Assemble the instruction.  */
@@ -408,6 +408,7 @@ md_assemble (char *str)
 	as_warn (_("An instruction was expanded (%s)"), str);
     }
 
+  dwarf2_emit_insn (0);
   i = 0;
   do
     {
@@ -1489,4 +1490,3 @@ i860_check_label (symbolS *labelsym)
       input_line_pointer++;
     }
 }
-

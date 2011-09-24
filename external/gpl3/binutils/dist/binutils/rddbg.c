@@ -1,6 +1,6 @@
 /* rddbg.c -- Read debugging information into a generic form.
-   Copyright 1995, 1996, 1997, 2000, 2002, 2003, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 2000, 2002, 2003, 2005, 2007, 2008,
+   2010  Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -164,7 +164,7 @@ read_section_stabs_debugging_info (bfd *abfd, asymbol **syms, long symcount,
 	    {
 	      unsigned int strx;
 	      int type;
-	      int other;
+	      int other ATTRIBUTE_UNUSED;
 	      int desc;
 	      bfd_vma value;
 

@@ -1,6 +1,6 @@
 /* nlmconv.c -- NLM conversion program
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -476,23 +476,23 @@ main (int argc, char **argv)
 		    ++sym->name;
 		  else
 		    {
-		      char *new;
+		      char *new_name;
 
-		      new = xmalloc (strlen (bfd_asymbol_name (sym)) + 1);
-		      new[0] = outlead;
-		      strcpy (new + 1, bfd_asymbol_name (sym) + 1);
-		      sym->name = new;
+		      new_name = xmalloc (strlen (bfd_asymbol_name (sym)) + 1);
+		      new_name[0] = outlead;
+		      strcpy (new_name + 1, bfd_asymbol_name (sym) + 1);
+		      sym->name = new_name;
 		    }
 		}
 	    }
 	  else
 	    {
-	      char *new;
+	      char *new_name;
 
-	      new = xmalloc (strlen (bfd_asymbol_name (sym)) + 2);
-	      new[0] = outlead;
-	      strcpy (new + 1, bfd_asymbol_name (sym));
-	      sym->name = new;
+	      new_name = xmalloc (strlen (bfd_asymbol_name (sym)) + 2);
+	      new_name[0] = outlead;
+	      strcpy (new_name + 1, bfd_asymbol_name (sym));
+	      sym->name = new_name;
 	    }
 	}
 
@@ -2039,7 +2039,7 @@ powerpc_mangle_relocs (bfd *outbfd, asection *insec,
    file.  */
 
 static char *
-link_inputs (struct string_list *inputs, char *ld, char * map_file)
+link_inputs (struct string_list *inputs, char *ld, char * mfile)
 {
   size_t c;
   struct string_list *q;
@@ -2088,12 +2088,12 @@ link_inputs (struct string_list *inputs, char *ld, char * map_file)
   argv[3] = unlink_on_exit;
   /* If we have been given the name of a mapfile and that
      name is not 'stderr' then pass it on to the linker.  */
-  if (map_file
-      && * map_file
-      && strcmp (map_file, "stderr") == 0)
+  if (mfile
+      && * mfile
+      && strcmp (mfile, "stderr") == 0)
     {
       argv[4] = (char *) "-Map";
-      argv[5] = map_file;
+      argv[5] = mfile;
       i = 6;
     }
   else

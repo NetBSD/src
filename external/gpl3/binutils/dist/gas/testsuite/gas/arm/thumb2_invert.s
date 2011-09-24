@@ -12,3 +12,5 @@ thumb2_invert:
 	bic	r8, r2, #0x7fffffff
 	mov	r3, 0x7fffffff
 	mvn	r1, 0x7fffffff
+	orr	r6, r2, #0x7fffffff
+	orn	r8, r2, #0x7fffffff

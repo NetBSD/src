@@ -263,3 +263,4 @@ Disassembly of section .text:
 0[0-9a-f]+ <[^>]+> f3850f5f 	vmov\.f32	q0, #-0\.484375	; 0xbef80000
 0[0-9a-f]+ <[^>]+> f3860f5f 	vmov\.f32	q0, #-0\.96875	; 0xbf780000
 0[0-9a-f]+ <[^>]+> f3870f5f 	vmov\.f32	q0, #-1\.9375	; 0xbff80000
+0[0-9a-f]+ <[^>]+> f3879e3f 	vmov\.i64	d9, #0xffffffffffffffff

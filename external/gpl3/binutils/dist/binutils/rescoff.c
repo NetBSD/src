@@ -1,5 +1,5 @@
 /* rescoff.c -- read and write resources in Windows COFF files.
-   Copyright 1997, 1998, 1999, 2000, 2003, 2007, 2008
+   Copyright 1997, 1998, 1999, 2000, 2003, 2005, 2007, 2008
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.

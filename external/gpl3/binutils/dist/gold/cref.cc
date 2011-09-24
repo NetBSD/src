@@ -1,6 +1,6 @@
 // cref.cc -- cross reference for gold
 
-// Copyright 2008 Free Software Foundation, Inc.
+// Copyright 2008, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -31,6 +31,7 @@
 
 #include "object.h"
 #include "archive.h"
+#include "symtab.h"
 #include "cref.h"
 
 namespace gold
@@ -63,6 +64,10 @@ class Cref_inputs
   void
   print_symbol_counts(const Symbol_table*, FILE*) const;
 
+  // Print a cross reference tabl.e
+  void
+  print_cref(const Symbol_table*, FILE*) const;
+
  private:
   // A list of input objects.
   typedef std::vector<Object*> Objects;
@@ -82,6 +87,19 @@ class Cref_inputs
   // that archive.
   typedef std::map<std::string, Archive_info> Archives;
 
+  // For --cref, we build a cross reference table which maps from
+  // symbols to lists of objects.  The symbols are sorted
+  // alphabetically.
+
+  class Cref_table_compare
+  {
+  public:
+    bool
+    operator()(const Symbol*, const Symbol*) const;
+  };
+
+  typedef std::map<const Symbol*, Objects*, Cref_table_compare> Cref_table;
+
   // Report symbol counts for a list of Objects.
   void
   print_objects_symbol_counts(const Symbol_table*, FILE*, const Objects*) const;
@@ -89,6 +107,10 @@ class Cref_inputs
   // Report symbol counts for an object.
   void
   print_object_symbol_counts(const Symbol_table*, FILE*, const Object*) const;
+
+  // Gather cross reference information.
+  void
+  gather_cref(const Objects*, Cref_table*) const;
 
   // List of input objects.
   Objects objects_;
@@ -144,7 +166,7 @@ Cref_inputs::print_object_symbol_counts(const Symbol_table* symtab,
   fprintf(f, "symbols %s %zu %zu\n", object->name().c_str(), defined, used);
 }
 
-// Report symbol counts for a list of Inputs.
+// Report symbol counts for a list of inputs.
 
 void
 Cref_inputs::print_objects_symbol_counts(const Symbol_table* symtab,
@@ -186,6 +208,124 @@ Cref_inputs::print_symbol_counts(const Symbol_table* symtab, FILE* f) const
       fprintf(f, "archive %s %zu %zu\n", p->second.name.c_str(),
 	     p->second.member_count, p->second.objects->size());
       this->print_objects_symbol_counts(symtab, f, p->second.objects);
+    }
+}
+
+// Sort symbols for the cross reference table.
+
+bool
+Cref_inputs::Cref_table_compare::operator()(const Symbol* s1,
+					    const Symbol* s2) const
+{
+  int i = strcmp(s1->name(), s2->name());
+  if (i != 0)
+    return i < 0;
+
+  if (s1->version() == NULL)
+    {
+      if (s2->version() != NULL)
+	return true;
+    }
+  else if (s2->version() == NULL)
+    return false;
+  else
+    {
+      i = strcmp(s1->version(), s2->version());
+      if (i != 0)
+	return i < 0;
+    }
+
+  // We should never have two different symbols with the same name and
+  // version.
+  if (s1 == s2)
+    return false;
+  gold_unreachable();
+}
+
+// Gather cross reference information from a list of inputs.
+
+void
+Cref_inputs::gather_cref(const Objects* objects, Cref_table* table) const
+{
+  for (Objects::const_iterator po = objects->begin();
+       po != objects->end();
+       ++po)
+    {
+      const Object::Symbols* symbols = (*po)->get_global_symbols();
+      if (symbols == NULL)
+	continue;
+      for (Object::Symbols::const_iterator ps = symbols->begin();
+	   ps != symbols->end();
+	   ++ps)
+	{
+	  const Symbol* sym = *ps;
+	  if (sym == NULL)
+	    continue;
+	  Objects* const onull = NULL;
+	  std::pair<Cref_table::iterator, bool> ins =
+	    table->insert(std::make_pair(sym, onull));
+	  Cref_table::iterator pc = ins.first;
+	  if (ins.second)
+	    pc->second = new Objects();
+	  if (sym->source() == Symbol::FROM_OBJECT
+	      && sym->object() == *po
+	      && sym->is_defined())
+	    pc->second->insert(pc->second->begin(), *po);
+	  else
+	    pc->second->push_back(*po);
+	}
+    }
+}
+
+// The column where the file name starts in a cross reference table.
+
+static const size_t filecol = 50;
+
+// Print a cross reference table.
+
+void
+Cref_inputs::print_cref(const Symbol_table*, FILE* f) const
+{
+  Cref_table table;
+  this->gather_cref(&this->objects_, &table);
+  for (Archives::const_iterator p = this->archives_.begin();
+       p != this->archives_.end();
+       ++p)
+    this->gather_cref(p->second.objects, &table);
+
+  for (Cref_table::const_iterator pc = table.begin();
+       pc != table.end();
+       ++pc)
+    {
+      // If all the objects are dynamic, skip this symbol.
+      const Symbol* sym = pc->first;
+      const Objects* objects = pc->second;
+      Objects::const_iterator po;
+      for (po = objects->begin(); po != objects->end(); ++po)
+	if (!(*po)->is_dynamic())
+	  break;
+      if (po == objects->end())
+	continue;
+
+      std::string s = sym->demangled_name();
+      if (sym->version() != NULL)
+	{
+	  s += '@';
+	  if (sym->is_default())
+	    s += '@';
+	  s += sym->version();
+	}
+
+      fputs(s.c_str(), f);
+
+      size_t len = s.length();
+
+      for (po = objects->begin(); po != objects->end(); ++po)
+	{
+	  int n = len < filecol ? filecol - len : 1;
+	  fprintf(f, "%*c%s\n", n, ' ', (*po)->name().c_str());
+	  len = 0;
+	}
     }
 }
 
@@ -248,6 +388,20 @@ Cref::print_symbol_counts(const Symbol_table* symtab) const
       if (f != NULL)
 	this->inputs_->print_symbol_counts(symtab, f);
     }
+}
+
+// Print a cross reference table.
+
+void
+Cref::print_cref(const Symbol_table* symtab, FILE* f) const
+{
+  fprintf(f, _("\nCross Reference Table\n\n"));
+  const char* msg = _("Symbol");
+  int len = filecol - strlen(msg);
+  fprintf(f, "%s%*c%s\n", msg, len, ' ', _("File"));
+
+  if (parameters->options().cref() && this->inputs_ != NULL)
+    this->inputs_->print_cref(symtab, f);
 }
 
 } // End namespace gold.

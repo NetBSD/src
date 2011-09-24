@@ -95,3 +95,6 @@
 	vsli.16 q2,q3,#5
 	vqshlu.s64 d15,d23,#63
 	vext.8 d5,d18,d6,#3
+
+@ PR 11136 - this used to crash the assembler.
+	vmul.f32   q0,q1,q2

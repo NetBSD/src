@@ -2,7 +2,6 @@
 .*:7: Warning: .*
 .*:7: Warning: .*
 .*:10: Warning: .*
-.*:13: Warning: .*
 .*:16: Warning: .*
 .*:18: Warning: .*
 .*:20: Warning: .*

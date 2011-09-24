@@ -20,13 +20,14 @@ AC_CONFIG_HEADERS([gconfig.h:gconfig.in])
 AC_PROG_CC
 AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
+ACX_LARGEFILE
 AC_PROG_INSTALL
 
 LT_INIT
 
 AC_CHECK_FUNCS(setmode)
 
-ALL_LINGUAS="fr tr sv es id da pt_BR de vi rw ga ms fi nl"
+ALL_LINGUAS="fr tr sv es id da pt_BR de vi rw ga ms fi nl bg"
 ZW_GNU_GETTEXT_SISTER_DIR
 AM_PO_SUBDIRS
 
@@ -51,10 +52,11 @@ AC_SEARCH_LIBS(fabs, m)
 
 AM_BINUTILS_WARNINGS
 
-dnl Required by html and install-html
+dnl Required by html, pdf, install-pdf and install-html
 AC_SUBST(datarootdir)
 AC_SUBST(docdir)
 AC_SUBST(htmldir)
+AC_SUBST(pdfdir)
 
 AC_CONFIG_FILES([Makefile po/Makefile.in:po/Make-in])
 AC_OUTPUT

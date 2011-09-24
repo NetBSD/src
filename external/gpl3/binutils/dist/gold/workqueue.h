@@ -152,7 +152,7 @@ class Task_function : public Task
   Task_function(Task_function_runner* runner, Task_token* blocker,
 		const char* name)
     : runner_(runner), blocker_(blocker), name_(name)
-  { }
+  { gold_assert(blocker != NULL); }
 
   ~Task_function()
   {
@@ -226,6 +226,12 @@ class Workqueue
   // have running.
   void
   set_thread_count(int);
+
+  // Add a new blocker to an existing Task_token. This must be done
+  // with the workqueue lock held.  This should not be done routinely,
+  // only in special circumstances.
+  void
+  add_blocker(Task_token*);
 
  private:
   // This class can not be copied.

@@ -46,4 +46,12 @@ if ![info exists READELFFLAGS] then {
     set READELFFLAGS {}
 }
 
+if ![info exists ADDR2LINE] then {
+    set ADDR2LINE [findfile $base_dir/../../binutils/addr2line]
+}
+
+if ![info exists ADDR2LINEFLAGS] then {
+    set ADDR2LINEFLAGS {}
+}
+
 gas_init

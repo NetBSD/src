@@ -1,6 +1,6 @@
 // i386.h -- ELF definitions specific to EM_386  -*- C++ -*-
 
-// Copyright 2006, 2007, Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of elfcpp.
@@ -85,6 +85,7 @@ enum
   R_386_TLS_DESC_CALL = 40, // Marker of call through TLS desc for relaxation
   R_386_TLS_DESC = 41,      // TLS descriptor containing pointer to code and
                             // to argument, returning TLS offset for symbol
+  R_386_IRELATIVE = 42,     // Adjust indirectly by program base
   // Used by Intel.
   R_386_USED_BY_INTEL_200 = 200,
   // GNU vtable garbage collection extensions.
