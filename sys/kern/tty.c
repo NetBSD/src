@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.247 2011/09/23 15:29:08 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.248 2011/09/24 00:05:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.247 2011/09/23 15:29:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.248 2011/09/24 00:05:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.247 2011/09/23 15:29:08 christos Exp $");
 #include <sys/intr.h>
 #include <sys/ioctl_compat.h>
 #include <sys/module.h>
+#include <sys/bitops.h>
 
 static int	ttnread(struct tty *);
 static void	ttyblock(struct tty *);
@@ -207,12 +208,77 @@ uint64_t tk_rawcc;
 
 static kauth_listener_t tty_listener;
 
-static struct sysctllog *kern_tkstat_sysctllog;
+#define	TTY_MINQSIZE	0x00400
+#define	TTY_MAXQSIZE	0x10000
+int tty_qsize = TTY_MINQSIZE;
+
+static int
+tty_get_qsize(int *qsize, int newsize)
+{
+	newsize = 1 << ilog2(newsize);	/* Make it a power of two */ 
+
+	if (newsize < TTY_MINQSIZE || newsize > TTY_MAXQSIZE)
+		return EINVAL;
+
+	*qsize = newsize;
+	return 0;
+}
 
 static void
-sysctl_kern_tkstat_setup(void)
+tty_set_qsize(struct tty *tp, int newsize)
 {
+	struct clist rawq, canq, outq;
+	struct clist orawq, ocanq, ooutq;
 
+	clalloc(&rawq, newsize, 1);
+	clalloc(&canq, newsize, 1);
+	clalloc(&outq, newsize, 0);
+
+	mutex_spin_enter(&tty_lock);
+
+	orawq = tp->t_rawq;
+	ocanq = tp->t_canq;
+	ooutq = tp->t_outq;
+
+	tp->t_qsize = newsize;
+	tp->t_rawq = rawq;
+	tp->t_canq = canq;
+	tp->t_outq = outq;
+
+	ttsetwater(tp);
+
+	mutex_spin_exit(&tty_lock);
+
+	clfree(&orawq);
+	clfree(&ocanq);
+	clfree(&ooutq);
+}
+
+static int
+sysctl_kern_tty_qsize(SYSCTLFN_ARGS)
+{
+	int newsize;
+	int error;
+	struct sysctlnode node;
+	node = *rnode;
+	node.sysctl_data = &newsize;
+
+	newsize = tty_qsize;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+
+	return tty_get_qsize(&tty_qsize, newsize);
+}
+
+static void
+sysctl_kern_tty_setup(void)
+{
+	const struct sysctlnode *rnode, *cnode;
+	struct sysctllog *kern_tkstat_sysctllog, *kern_tty_sysctllog;
+
+	kern_tkstat_sysctllog = NULL;
 	sysctl_createv(&kern_tkstat_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
@@ -250,6 +316,19 @@ sysctl_kern_tkstat_setup(void)
 		       SYSCTL_DESCR("Number of raw tty input characters"),
 		       NULL, 0, &tk_rawcc, 0,
 		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_RAWCC, CTL_EOL);
+
+	kern_tty_sysctllog = NULL;
+	sysctl_createv(&kern_tty_sysctllog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "tty", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(&kern_tty_sysctllog, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "qsize",
+		       SYSCTL_DESCR("TTY input and output queue size"),
+		       sysctl_kern_tty_qsize, 0, &tty_qsize, 0,
+		       CTL_CREATE, CTL_EOL);
 }
 
 int
@@ -319,6 +398,8 @@ ttylopen(dev_t device, struct tty *tp)
 		tp->t_flags = 0;
 	}
 	mutex_spin_exit(&tty_lock);
+	if (tp->t_qsize != tty_qsize)
+		tty_set_qsize(tp, tty_qsize);
 	return (0);
 }
 
@@ -856,6 +937,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 	case  TIOCSTAT:
 	case  TIOCSTI:
 	case  TIOCSWINSZ:
+	case  TIOCSQSIZE:
 	case  TIOCLBIC:
 	case  TIOCLBIS:
 	case  TIOCLSET:
@@ -973,6 +1055,9 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	case TIOCGWINSZ:		/* get window size */
 		*(struct winsize *)data = tp->t_winsize;
+		break;
+	case TIOCGQSIZE:
+		*(int *)data = tp->t_qsize;
 		break;
 	case FIOGETOWN:
 		mutex_enter(proc_lock);
@@ -1262,6 +1347,11 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 		mutex_spin_exit(&tty_lock);
 		break;
+	case TIOCSQSIZE:
+		if ((error = tty_get_qsize(&s, *(int *)data)) == 0 &&
+		    s != tp->t_qsize)
+			tty_set_qsize(tp, s);
+		return error;
 	default:
 		/* We may have to load the compat module for this. */
 		for (;;) {
@@ -2694,15 +2784,15 @@ tty_alloc(void)
 	tp = kmem_zalloc(sizeof(*tp), KM_SLEEP);
 	callout_init(&tp->t_rstrt_ch, 0);
 	callout_setfunc(&tp->t_rstrt_ch, ttrstrt, tp);
-	/* XXX: default to 1024 chars for now */
-	clalloc(&tp->t_rawq, 1024, 1);
+	tp->t_qsize = tty_qsize;
+	clalloc(&tp->t_rawq, tp->t_qsize, 1);
 	cv_init(&tp->t_rawcv, "ttyraw");
 	cv_init(&tp->t_rawcvf, "ttyrawf");
-	clalloc(&tp->t_canq, 1024, 1);
+	clalloc(&tp->t_canq, tp->t_qsize, 1);
 	cv_init(&tp->t_cancv, "ttycan");
 	cv_init(&tp->t_cancvf, "ttycanf");
 	/* output queue doesn't need quoting */
-	clalloc(&tp->t_outq, 1024, 0);
+	clalloc(&tp->t_outq, tp->t_qsize, 0);
 	cv_init(&tp->t_outcv, "ttyout");
 	cv_init(&tp->t_outcvf, "ttyoutf");
 	/* Set default line discipline. */
@@ -2817,7 +2907,7 @@ tty_init(void)
 	tty_listener = kauth_listen_scope(KAUTH_SCOPE_DEVICE,
 	    tty_listener_cb, NULL);
 
-	sysctl_kern_tkstat_setup();
+	sysctl_kern_tty_setup();
 }
 
 /*
