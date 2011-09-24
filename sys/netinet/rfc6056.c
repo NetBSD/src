@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc6056.c,v 1.1 2011/09/24 17:18:17 christos Exp $	*/
+/*	$NetBSD: rfc6056.c,v 1.2 2011/09/24 18:32:23 christos Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.1 2011/09/24 17:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.2 2011/09/24 18:32:23 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -71,8 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.1 2011/09/24 17:18:17 christos Exp $")
 #define NRANGES 2
 #define RFC6056_LOWPORT 0
 #define RFC6056_HIGHPORT 1
-
-#define RFC6056_DEBUG 1
 
 #if RFC6056_DEBUG
 static bool rfc6056_debug = true;
