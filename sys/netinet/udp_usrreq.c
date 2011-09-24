@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.182 2011/07/17 20:54:53 joerg Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.183 2011/09/24 17:18:17 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.182 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.183 2011/09/24 17:18:17 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.182 2011/07/17 20:54:53 joerg Exp $
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <netinet/udp_private.h>
+#include <netinet/rfc6056.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -1085,6 +1086,15 @@ udp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 				break;
 			}
 			break;
+		
+		case UDP_RFC6056ALGO:
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				break;
+
+			error = rfc6056_algo_index_select(
+			    (struct inpcb_hdr *)inp, optval);
+			break;
 
 		default:
 			error = ENOPROTOOPT;
@@ -1374,7 +1384,8 @@ sysctl_net_inet_udp_stats(SYSCTLFN_ARGS)
 static void
 sysctl_net_inet_udp_setup(struct sysctllog **clog)
 {
-
+	const struct sysctlnode *rfc6056_node;
+	
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
@@ -1434,6 +1445,25 @@ sysctl_net_inet_udp_setup(struct sysctllog **clog)
 		       sysctl_net_inet_udp_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS,
 		       CTL_EOL);
+	/* RFC6056 subtree */
+	sysctl_createv(clog, 0, NULL, &rfc6056_node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "rfc6056",
+		       SYSCTL_DESCR("RFC 6056"),
+	    	       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_UDP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rfc6056_node, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "available",
+		       SYSCTL_DESCR("RFC 6056 available algorithms"),
+		       sysctl_rfc6056_available, 0, NULL, RFC6056_MAXLEN,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rfc6056_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "selected",
+		       SYSCTL_DESCR("RFC 6056 selected algorithm"),
+		       sysctl_rfc6056_selected, 0, NULL, RFC6056_MAXLEN,
+		       CTL_CREATE, CTL_EOL);
 }
 #endif
 
