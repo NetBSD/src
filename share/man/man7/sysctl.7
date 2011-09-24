@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.66 2011/09/24 00:08:05 christos Exp $
+.\"	$NetBSD: sysctl.7,v 1.67 2011/09/24 17:08:16 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 9, 2011
+.Dd September 24, 2011
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1258,6 +1258,8 @@ The currently defined protocols and names are:
 .It udp	checksum	integer	yes
 .It udp	do_loopback_cksum	integer	yes
 .It udp	recvspace	integer	yes
+.It udp	rfc6056.selected	string	yes
+.It udp	rfc6056.available	string	yes
 .It udp	sendspace	integer	yes
 .El
 .Pp
@@ -1537,10 +1539,14 @@ It has no effect unless tcp.abc.enable is set to 1.
 If set to 1, UDP checksums are being computed.
 Received non-zero UDP checksums are always checked.
 Disabling UDP checksums is strongly discouraged.
-.It Li udp.sendspace
-The default UDP send buffer size.
 .It Li udp.recvspace
 The default UDP receive buffer size.
+.It Li udp.rfc6056.available
+The available RFC 6056 port randomization algorithms.
+.It Li udp.rfc6056.selected
+The currently selected RFC 6056 port randomization algorithm.
+.It Li udp.sendspace
+The default UDP send buffer size.
 .El
 .Pp
 For variables net.*.ipsec, please refer to
@@ -1591,6 +1597,8 @@ The currently defined protocols and names are:
 .It ip6	v6only	integer	yes
 .It udp6	do_loopback_cksum	integer	yes
 .It udp6	recvspace	integer	yes
+.It udp6	rfc6056.selected	string	yes
+.It udp6	rfc6056.available	string	yes
 .It udp6	sendspace	integer	yes
 .El
 .Pp
@@ -1798,6 +1806,10 @@ ICMPv6 redirect.
 Perform UDP checksum on loopback.
 .It Li udp6.recvspace
 Default UDP receive buffer size.
+.It Li udp6.rfc6056.available
+The available RFC 6056 port randomization algorithms for IPv6.
+.It Li udp6.rfc6056.selected
+The currently selected RFC 6056 port randomization algorithm for IPv6.
 .It Li udp6.sendspace
 Default UDP send buffer size.
 .El
