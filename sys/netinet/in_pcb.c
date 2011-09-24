@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.138 2011/05/03 18:28:45 dyoung Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.139 2011/09/24 17:18:17 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.138 2011/05/03 18:28:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.139 2011/09/24 17:18:17 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.138 2011/05/03 18:28:45 dyoung Exp $");
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+#include <netinet/rfc6056.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -202,11 +203,13 @@ in_pcballoc(struct socket *so, void *v)
 	splx(s);
 	if (inp == NULL)
 		return (ENOBUFS);
-	memset((void *)inp, 0, sizeof(*inp));
+	memset(inp, 0, sizeof(*inp));
 	inp->inp_af = AF_INET;
 	inp->inp_table = table;
 	inp->inp_socket = so;
 	inp->inp_errormtu = -1;
+	inp->inp_rfc6056algo = RFC6056_ALGO_DEFAULT;
+	inp->inp_bindportonsend = false;
 #if defined(IPSEC) || defined(FAST_IPSEC)
 	error = ipsec_init_pcbpolicy(so, &inp->inp_sp);
 	if (error != 0) {
@@ -232,8 +235,6 @@ in_pcbsetport(struct sockaddr_in *sin, struct inpcb *inp, kauth_cred_t cred)
 {
 	struct inpcbtable *table = inp->inp_table;
 	struct socket *so = inp->inp_socket;
-	int	   cnt;
-	u_int16_t  mymin, mymax;
 	u_int16_t *lastport;
 	u_int16_t lport = 0;
 	enum kauth_network_req req;
@@ -246,14 +247,10 @@ in_pcbsetport(struct sockaddr_in *sin, struct inpcb *inp, kauth_cred_t cred)
 		req = KAUTH_REQ_NETWORK_BIND_PORT;
 #endif
 
-		mymin = lowportmin;
-		mymax = lowportmax;
 		lastport = &table->inpt_lastlow;
 	} else {
 		req = KAUTH_REQ_NETWORK_BIND_PORT;
 
-		mymin = anonportmin;
-		mymax = anonportmax;
 		lastport = &table->inpt_lastport;
 	}
 
@@ -263,38 +260,13 @@ in_pcbsetport(struct sockaddr_in *sin, struct inpcb *inp, kauth_cred_t cred)
 	if (error)
 		return (EACCES);
 
-	if (mymin > mymax) {	/* sanity check */
-		u_int16_t swp;
+       /*
+        * Use RFC6056 randomized port selection
+        */
+	error = rfc6056_randport(&lport, &inp->inp_head, cred);
+	if (error)
+		return error;
 
-		swp = mymin;
-		mymin = mymax;
-		mymax = swp;
-	}
-
-	lport = *lastport - 1;
-	for (cnt = mymax - mymin + 1; cnt; cnt--, lport--) {
-		vestigial_inpcb_t vestigial;
-
-		if (lport < mymin || lport > mymax)
-			lport = mymax;
-		if (!in_pcblookup_port(table, sin->sin_addr, htons(lport), 1,
-		                       &vestigial) && !vestigial.valid) {
-			/* We have a free port, check with the secmodel(s). */
-			sin->sin_port = lport;
-			error = kauth_authorize_network(cred,
-			    KAUTH_NETWORK_BIND, req, so, sin, NULL);
-			if (error) {
-				/* Secmodel says no. Keep looking. */
-				continue;
-			}
-
-			goto found;
-		}
-	}
-
-	return (EAGAIN);
-
- found:
 	inp->inp_flags |= INP_ANONPORT;
 	*lastport = lport;
 	lport = htons(lport);
@@ -569,6 +541,18 @@ in_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 	}
 	inp->inp_faddr = sin->sin_addr;
 	inp->inp_fport = sin->sin_port;
+
+        /* Late bind, if needed */
+	if (inp->inp_bindportonsend) {
+               struct sockaddr_in lsin = *((const struct sockaddr_in *)
+		    inp->inp_socket->so_proto->pr_domain->dom_sa_any);
+		lsin.sin_addr = inp->inp_laddr;
+		lsin.sin_port = 0;
+
+               if ((error = in_pcbbind_port(inp, &lsin, l->l_cred)) != 0)
+                       return error;
+	}
+
 	in_pcbstate(inp, INP_CONNECTED);
 #if defined(IPSEC) || defined(FAST_IPSEC)
 	if (inp->inp_socket->so_type == SOCK_STREAM)
