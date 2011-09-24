@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.35 2011/05/03 18:28:45 dyoung Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.36 2011/09/24 17:22:14 christos Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -78,14 +78,15 @@ struct icmp6_filter;
 
 struct	in6pcb {
 	struct inpcb_hdr in6p_head;
-#define in6p_hash	in6p_head.inph_hash
-#define in6p_queue	in6p_head.inph_queue
-#define in6p_af		in6p_head.inph_af
-#define in6p_ppcb	in6p_head.inph_ppcb
-#define in6p_state	in6p_head.inph_state
-#define in6p_socket	in6p_head.inph_socket
-#define in6p_table	in6p_head.inph_table
-#define in6p_sp		in6p_head.inph_sp
+#define in6p_hash	 in6p_head.inph_hash
+#define in6p_queue	 in6p_head.inph_queue
+#define in6p_af		 in6p_head.inph_af
+#define in6p_ppcb	 in6p_head.inph_ppcb
+#define in6p_state	 in6p_head.inph_state
+#define in6p_rfc6056algo in6p_head.inph_rfc6056algo
+#define in6p_socket	 in6p_head.inph_socket
+#define in6p_table	 in6p_head.inph_table
+#define in6p_sp		 in6p_head.inph_sp
 	struct	route in6p_route;	/* placeholder for routing entry */
 	u_int16_t in6p_fport;		/* foreign port */
 	u_int16_t in6p_lport;		/* local port */
@@ -98,6 +99,7 @@ struct	in6pcb {
 	struct	ip6_moptions *in6p_moptions; /* IP6 multicast options */
 	struct icmp6_filter *in6p_icmp6filt;
 	int	in6p_cksum;		/* IPV6_CHECKSUM setsockopt */
+	bool    in6p_bindportonsend;
 };
 
 #define in6p_faddr	in6p_ip6.ip6_dst

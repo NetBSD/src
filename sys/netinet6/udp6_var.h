@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_var.h,v 1.23 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: udp6_var.h,v 1.24 2011/09/24 17:22:14 christos Exp $	*/
 /*	$KAME: udp6_var.h,v 1.11 2000/06/05 00:14:31 itojun Exp $	*/
 
 /*
@@ -84,11 +84,12 @@
 /*
  * Names for UDP6 sysctl objects
  */
-#define UDP6CTL_SENDSPACE	1	/* default send buffer */
-#define UDP6CTL_RECVSPACE	2	/* default recv buffer */
+#define	UDP6CTL_SENDSPACE	1	/* default send buffer */
+#define	UDP6CTL_RECVSPACE	2	/* default recv buffer */
 #define	UDP6CTL_LOOPBACKCKSUM	3	/* do UDP checksum on loopback? */
-#define UDP6CTL_STATS		4	/* udp6 statistics */
-#define UDP6CTL_MAXID		5
+#define	UDP6CTL_STATS		4	/* udp6 statistics */
+#define	UDP6CTL_RFC6056		5	/* RFC 6056 algorithm selection */
+#define	UDP6CTL_MAXID		6
 
 #define UDP6CTL_NAMES { \
 	{ 0, 0 }, \
@@ -100,14 +101,14 @@
 
 #ifdef _KERNEL
 void	*udp6_ctlinput(int, const struct sockaddr *, void *);
+int	udp6_ctloutput(int, struct socket *, struct sockopt *);
 void	udp6_init(void);
 int	udp6_input(struct mbuf **, int *, int);
 int	udp6_output(struct in6pcb *, struct mbuf *, struct mbuf *,
-	struct mbuf *, struct lwp *);
+    struct mbuf *, struct lwp *);
 int	udp6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-int	udp6_usrreq(struct socket *,
-			 int, struct mbuf *, struct mbuf *, struct mbuf *,
-			 struct lwp *);
+int	udp6_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
+    struct mbuf *, struct lwp *);
 
 void	udp6_statinc(u_int);
 #endif /* _KERNEL */
