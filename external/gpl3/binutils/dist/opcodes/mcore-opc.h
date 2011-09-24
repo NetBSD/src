@@ -1,5 +1,5 @@
 /* Assembler instructions for Motorola's Mcore processor
-   Copyright 1999, 2000, 2002, 2007 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2002, 2005, 2007 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 

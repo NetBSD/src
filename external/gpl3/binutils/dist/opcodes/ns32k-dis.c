@@ -1,6 +1,6 @@
 /* Print National Semiconductor 32000 instructions.
-   Copyright 1986, 1988, 1991, 1992, 1994, 1998, 2001, 2002, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright 1986, 1988, 1991, 1992, 1994, 1998, 2001, 2002, 2005, 2007,
+   2009  Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -466,7 +466,6 @@ print_insn_arg (int d,
   int Ivalue;
   int addr_mode;
   int disp1, disp2;
-  int index;
   int size;
 
   switch (d)
@@ -616,17 +615,17 @@ print_insn_arg (int d,
 	case 0x1d:
 	case 0x1e:
 	case 0x1f:
-	  /* Scaled index basemode[R0 -- R7:B,W,D,Q].  */
-	  index = bit_extract (buffer, index_offset - 8, 3);
-	  print_insn_arg (d, index_offset, aoffsetp, buffer, addr,
-			  result, 0);
 	  {
+	    int bit_index;
 	    static const char *ind = "bwdq";
 	    char *off;
-
+	    
+	    /* Scaled index basemode[R0 -- R7:B,W,D,Q].  */
+	    bit_index = bit_extract (buffer, index_offset - 8, 3);
+	    print_insn_arg (d, index_offset, aoffsetp, buffer, addr,
+			    result, 0);
 	    off = result + strlen (result);
-	    sprintf (off, "[r%d:%c]", index,
-		     ind[addr_mode & 3]);
+	    sprintf (off, "[r%d:%c]", bit_index, ind[addr_mode & 3]);
 	  }
 	  break;
 	}

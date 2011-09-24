@@ -1,5 +1,6 @@
 /* ia64-dis.c -- Disassemble ia64 instructions
-   Copyright 1998, 1999, 2000, 2002, 2007 Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2002, 2005, 2007, 2008, 2009
+   Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of the GNU opcodes library.
@@ -68,7 +69,7 @@ unit_to_type (ia64_insn opcode, enum ia64_unit unit)
 int
 print_insn_ia64 (bfd_vma memaddr, struct disassemble_info *info)
 {
-  ia64_insn t0, t1, slot[3], template, s_bit, insn;
+  ia64_insn t0, t1, slot[3], template_val, s_bit, insn;
   int slotnum, j, status, need_comma, retval, slot_multiplier;
   const struct ia64_operand *odesc;
   const struct ia64_opcode *idesc;
@@ -100,20 +101,20 @@ print_insn_ia64 (bfd_vma memaddr, struct disassemble_info *info)
   t0 = bfd_getl64 (bundle);
   t1 = bfd_getl64 (bundle + 8);
   s_bit = t0 & 1;
-  template = (t0 >> 1) & 0xf;
+  template_val = (t0 >> 1) & 0xf;
   slot[0] = (t0 >>  5) & 0x1ffffffffffLL;
   slot[1] = ((t0 >> 46) & 0x3ffff) | ((t1 & 0x7fffff) << 18);
   slot[2] = (t1 >> 23) & 0x1ffffffffffLL;
 
-  tname = ia64_templ_desc[template].name;
+  tname = ia64_templ_desc[template_val].name;
   if (slotnum == 0)
     (*info->fprintf_func) (info->stream, "[%s] ", tname);
   else
     (*info->fprintf_func) (info->stream, "      ");
 
-  unit = ia64_templ_desc[template].exec_unit[slotnum];
+  unit = ia64_templ_desc[template_val].exec_unit[slotnum];
 
-  if (template == 2 && slotnum == 1)
+  if (template_val == 2 && slotnum == 1)
     {
       /* skip L slot in MLI template: */
       slotnum = 2;
@@ -182,7 +183,7 @@ print_insn_ia64 (bfd_vma memaddr, struct disassemble_info *info)
 	    }
 	}
 
-	switch (odesc->class)
+	switch (odesc->op_class)
 	  {
 	  case IA64_OPND_CLASS_CST:
 	    (*info->fprintf_func) (info->stream, "%s", odesc->str);
@@ -303,7 +304,7 @@ print_insn_ia64 (bfd_vma memaddr, struct disassemble_info *info)
 	  need_comma = 0;
 	}
     }
-  if (slotnum + 1 == ia64_templ_desc[template].group_boundary 
+  if (slotnum + 1 == ia64_templ_desc[template_val].group_boundary 
       || ((slotnum == 2) && s_bit))
     (*info->fprintf_func) (info->stream, ";;");
 

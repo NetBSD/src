@@ -1,5 +1,6 @@
 /* Disassemble MSP430 instructions.
-   Copyright (C) 2002, 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002, 2004, 2005, 2007, 2009, 2010
+   Free Software Foundation, Inc.
    
    Contributed by Dmitry Diky <diwil@mail.ru>
         
@@ -546,14 +547,13 @@ msp430_branchinstr (disassemble_info *info,
 		    int *cycles)
 {
   int regs = 0, regd = 0;
-  int ad = 0, as = 0;
+  int as = 0;
   int cmd_len = 2;
   short dst = 0;
 
   regd = insn & 0x0f;
   regs = (insn & 0x0f00) >> 8;
   as = (insn & 0x0030) >> 4;
-  ad = (insn & 0x0080) >> 7;
 
   if (regd != 0)	/* Destination register is not a PC.  */
     return 0;
