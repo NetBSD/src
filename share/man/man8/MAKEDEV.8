@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.40 2011/09/06 10:27:07 apb Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.41 2011/09/24 08:39:39 njoly Exp $
 .\"
 .\" Copyright (c) 2001, 2003, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -310,8 +310,8 @@ IBM PS/2 ESDI disk devices, see
 . It Ar fd#
 ``floppy'' disk drives (3 1/2", 5 1/4"), see
 .Xr \&amiga/fdc 4 ,
-.Xr \&i386/fdc 4 ,
-.Xr \&sparc64/fdc 4
+.Xr \&sparc64/fdc 4 ,
+.Xr \&x86/fdc 4
 . It Ar fss#
 Files system snapshot devices, see
 .Xr \&fss 4
@@ -547,8 +547,8 @@ Archimedes parallel port
 Stock lp, see
 .Xr \&lpt 4 ,
 .Xr \&acorn32/lpt 4 ,
-.Xr \&i386/lpt 4 ,
-.Xr \&mvme68k/lpt 4
+.Xr \&mvme68k/lpt 4 ,
+.Xr \&x86/lpt 4
 . It Ar lpa#
 Interruptless lp
 . It Ar par#
