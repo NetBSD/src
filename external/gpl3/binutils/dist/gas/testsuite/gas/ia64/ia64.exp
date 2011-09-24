@@ -89,4 +89,9 @@ if [istarget "ia64-*"] then {
     run_dump_test "operand-or"
     run_list_test "hint.b-err" ""
     run_list_test "hint.b-warn" "-mhint.b=warning"
+
+    if [istarget "ia64-*-*vms*"] then {
+	run_dump_test "slotcount"
+    }
+
 }

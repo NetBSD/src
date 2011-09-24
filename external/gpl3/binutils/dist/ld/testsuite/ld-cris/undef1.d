@@ -9,5 +9,5 @@
 # symbol; no --export-dynamic is supposed to be needed.
 
 #...
-[0-9a-f]+ g    DF .text	00000000 dsofn
+[0-9a-f]+ g    DF .text	0+2 dsofn
 #pass

@@ -1,10 +1,10 @@
 /* coff information for Zilog Z80
-   Copyright 2005 Free Software Foundation, Inc.
+   Copyright 2005, 2010 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
+   the Free Software Foundation; either version 3 of the License, or
    (at your option) any later version.
    
    This program is distributed in the hope that it will be useful,
@@ -29,6 +29,15 @@
 
 /* Type of cpu is stored in flags.  */
 #define F_MACHMASK 0xF000
+
+/* Z80 COFF encodes the section alignment in the section header flags */
+#define COFF_ALIGN_IN_SECTION_HEADER 1
+#define COFF_ALIGN_IN_S_FLAGS 1
+#define F_ALGNMASK 0x0F00
+/* requires a power-of-two argument */
+#define COFF_ENCODE_ALIGNMENT(S,X) ((S).s_flags |= (((unsigned)(X)&0xF)<<8))
+/* result is a power of two */
+#define COFF_DECODE_ALIGNMENT(X) (((X)>>8)&0xF)
 
 #define	Z80MAGIC   0x805A
 

@@ -10,27 +10,27 @@ Disassembly of section .text:
 0+000 <[^>]*>:
    0:	3c041234 	lui	a0,0x1234
    4:	34845678 	ori	a0,a0,0x5678
-   8:	2784c000 	addiu	a0,gp,-16384
+   8:	27840000 	addiu	a0,gp,0
    c:	3c040000 	lui	a0,0x0
   10:	24840000 	addiu	a0,a0,0
   14:	3c040000 	lui	a0,0x0
   18:	2484015c 	addiu	a0,a0,348
   1c:	08000057 	j	15c <[^>]*>
   20:	0c000057 	jal	15c <[^>]*>
-  24:	8f84c000 	lw	a0,-16384\(gp\)
+  24:	8f840000 	lw	a0,0\(gp\)
   28:	3c040000 	lui	a0,0x0
   2c:	8c840000 	lw	a0,0\(a0\)
   30:	3c040000 	lui	a0,0x0
   34:	8c84015c 	lw	a0,348\(a0\)
-  38:	df84c000 	ld	a0,-16384\(gp\)
+  38:	df840000 	ld	a0,0\(gp\)
   3c:	3c040000 	lui	a0,0x0
   40:	dc840000 	ld	a0,0\(a0\)
   44:	3c040000 	lui	a0,0x0
   48:	dc84015c 	ld	a0,348\(a0\)
-  4c:	af84c000 	sw	a0,-16384\(gp\)
+  4c:	af840000 	sw	a0,0\(gp\)
   50:	3c010000 	lui	at,0x0
   54:	ac240000 	sw	a0,0\(at\)
-  58:	ff84c000 	sd	a0,-16384\(gp\)
+  58:	ff840000 	sd	a0,0\(gp\)
   5c:	3c010000 	lui	at,0x0
   60:	fc240000 	sd	a0,0\(at\)
   64:	3c010000 	lui	at,0x0
@@ -62,13 +62,13 @@ Disassembly of section .text:
   cc:	3c013ff0 	lui	at,0x3ff0
   d0:	44810800 	mtc1	at,\$f1
   d4:	44800000 	mtc1	zero,\$f0
-  d8:	d780c000 	ldc1	\$f0,-16384\(gp\)
+  d8:	d7800000 	ldc1	\$f0,0\(gp\)
   dc:	64a40064 	daddiu	a0,a1,100
   e0:	2c840001 	sltiu	a0,a0,1
   e4:	64a40064 	daddiu	a0,a1,100
   e8:	0004202b 	sltu	a0,zero,a0
   ec:	00a0202d 	move	a0,a1
-  f0:	2784c000 	addiu	a0,gp,-16384
+  f0:	27840000 	addiu	a0,gp,0
   f4:	3c040000 	lui	a0,0x0
   f8:	24840000 	addiu	a0,a0,0
   fc:	3c010000 	lui	at,0x0

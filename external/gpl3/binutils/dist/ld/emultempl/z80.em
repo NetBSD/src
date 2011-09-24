@@ -1,7 +1,7 @@
 # This shell script emits C code -*- C -*-
 # to keep track of the machine type of Z80 object files
 # It does some substitutions.
-#   Copyright 2007, 2008 Free Software Foundation, Inc.
+#   Copyright 2005, 2007, 2008 Free Software Foundation, Inc.
 # This file is part of the GNU Binutils.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -78,6 +78,8 @@ static void
 gldz80_after_open (void)
 {
   unsigned long mach_type;
+
+  after_open_default ();
 
   switch (result_mach_type)
     {

@@ -160,7 +160,7 @@ SECTIONS
   ${RELOCATING+${DTOR}}
   .jcr : { KEEP (*(.jcr)) } ${RELOCATING+> ROM}
   .eh_frame : { KEEP (*(.eh_frame)) } ${RELOCATING+> ROM}
-  .gcc_except_table : { *(.gcc_except_table) } ${RELOCATING+> ROM}
+  .gcc_except_table : { *(.gcc_except_table) *(.gcc_except_table.*) } ${RELOCATING+> ROM}
   .plt : { *(.plt) } ${RELOCATING+> ROM}
 
   .text    ${RELOCATING-0} :

@@ -98,6 +98,14 @@
 	* gas/z8k/ctrl-names.s: New file.
 	* gas/z8k/z8k.exp: Run new tests.
 
+2003-12-03  Alexandre Oliva  <aoliva@redhat.com>
+
+	* gas/sh/basic.exp: Call tests for sh4a.
+	* gas/sh/{err-sh4a-fp.s, err-sh4a.s,
+	err-sh4al-dsp.s, sh4a-dsp.d, sh4a-dsp.s, sh4a-fp.d,
+	sh4a-fp.s, sh4a.d, sh4a.s, sh4al-dsp.d, sh4al-dsp.s:
+	New files, tests for sh4a and related variants.
+
 2003-12-02  Kazuhiro Inaoka  <inaoka.kazuhiro@renesas.com>
 
 	* gas/m32r/m32r2.exp: New file for m32r2.
@@ -1411,6 +1419,10 @@
 	* gas/mips/rol64-hw.l: New file.
 	* gas/mips/mips.exp: Run rol-hw and rol64-hw tests.
 
+2002-12-16  Kazu Hirata  <kazu@cs.umass.edu>
+
+	* testsuite/gas/h8300/cmpsi2.s: Fix a comment typo.
+
 2002-12-12  Alexandre Oliva  <aoliva@redhat.com>
 
 	* gas/mips/beq.d: Comment out branches to undefined symbols,
@@ -2633,6 +2645,18 @@ Wed May 22 14:26:07 2002  J"orn Rennecke <joern.rennecke@superh.com>
 	* gas/mips/empic3_g2.d: Likewise.
 	* gas/mips/empic3_g2.s: Likewise.
 	* gas/mips/mips.exp: Run the new tests.
+
+2001-12-21  Jakub Jelinek  <jakub@redhat.com>
+
+	* gas/sparc/pcrel.s: New test.
+	* gas/sparc/pcrel.d: Expected output.
+	* gas/sparc/pcrel64.s: New test.
+	* gas/sparc/pcrel64.d: Expected output.
+	* gas/sparc/plt.s: New test.
+	* gas/sparc/plt.d: Expected output.
+	* gas/sparc/plt64.s: New test.
+	* gas/sparc/plt64.d: Expected output.
+	* gas/sparc/sparc.exp: Add pcrel, pcrel64, plt and plt64 tests.
 
 2001-12-21  Anders Norlander  <anorland@synergenix.se>
 

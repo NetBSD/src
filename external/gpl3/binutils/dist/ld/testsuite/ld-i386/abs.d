@@ -1,7 +1,8 @@
 #name: Absolute non-overflowing relocs
+#as: --32
 #source: abs.s
 #source: zero.s
-#ld:
+#ld: -melf_i386
 #objdump: -rs
 
 .*:     file format .*

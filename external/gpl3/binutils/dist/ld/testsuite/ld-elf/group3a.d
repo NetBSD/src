@@ -4,5 +4,5 @@
 #readelf: -s
 Symbol table '.symtab' contains .* entries:
 #...
-    .*: 0[0]*1000     0 OBJECT  GLOBAL HIDDEN    . foo
+.*: 0+1000 +0 +OBJECT +GLOBAL +HIDDEN +. foo
 #...

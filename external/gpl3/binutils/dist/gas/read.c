@@ -1,7 +1,7 @@
 /* read.c - read a source file -
    Copyright 1986, 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-   1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
-   Free Software Foundation, Inc.
+   1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+   2010, 2011  Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -42,7 +42,7 @@
 #include "dw2gencfi.h"
 
 #ifndef TC_START_LABEL
-#define TC_START_LABEL(x,y) (x == ':')
+#define TC_START_LABEL(x,y,z) (x == ':')
 #endif
 
 /* Set by the object-format or the target.  */
@@ -125,7 +125,8 @@ char lex_type[256] = {
 };
 
 /* In: a character.
-   Out: 1 if this character ends a line.  */
+   Out: 1 if this character ends a line.
+	2 if this character is a line separator.  */
 char is_end_of_line[256] = {
 #ifdef CR_EOL
   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0,	/* @abcdefghijklmno */
@@ -220,9 +221,9 @@ static void s_reloc (int);
 static int hex_float (int, char *);
 static segT get_known_segmented_expression (expressionS * expP);
 static void pobegin (void);
-static int get_line_sb (sb *);
+static int get_non_macro_line_sb (sb *);
 static void generate_file_debug (void);
-static char *_find_end_of_line (char *, int, int);
+static char *_find_end_of_line (char *, int, int, int);
 
 void
 read_begin (void)
@@ -239,7 +240,7 @@ read_begin (void)
 
   /* Use machine dependent syntax.  */
   for (p = line_separator_chars; *p; p++)
-    is_end_of_line[(unsigned char) *p] = 1;
+    is_end_of_line[(unsigned char) *p] = 2;
   /* Use more.  FIXME-SOMEDAY.  */
 
   if (flag_mri)
@@ -370,7 +371,7 @@ static const pseudo_typeS potable[] = {
   {"irpc", s_irp, 1},
   {"irepc", s_irp, 1},
   {"lcomm", s_lcomm, 0},
-  {"lflags", listing_flags, 0},	/* Listing flags.  */
+  {"lflags", s_ignore, 0},	/* Listing flags.  */
   {"linefile", s_app_line, 0},
   {"linkonce", s_linkonce, 0},
   {"list", listing_list, 1},	/* Turn listing on.  */
@@ -530,7 +531,7 @@ pobegin (void)
 #define HANDLE_CONDITIONAL_ASSEMBLY()					\
   if (ignore_input ())							\
     {									\
-      char *eol = find_end_of_line (input_line_pointer, flag_m68k_mri);	\
+      char *eol = find_end_of_line (input_line_pointer, flag_m68k_mri); \
       input_line_pointer = (input_line_pointer <= buffer_limit		\
 			    && eol >= buffer_limit)			\
 			   ? buffer_limit				\
@@ -588,9 +589,9 @@ try_macro (char term, const char *line)
 void
 read_a_source_file (char *name)
 {
-  register char c;
-  register char *s;		/* String of symbol, '\0' appended.  */
-  register int temp;
+  char c;
+  char *s;		/* String of symbol, '\0' appended.  */
+  int temp;
   pseudo_typeS *pop;
 
 #ifdef WARN_COMMENTS
@@ -619,19 +620,58 @@ read_a_source_file (char *name)
 #endif
       while (input_line_pointer < buffer_limit)
 	{
+	  bfd_boolean was_new_line;
 	  /* We have more of this buffer to parse.  */
 
 	  /* We now have input_line_pointer->1st char of next line.
 	     If input_line_pointer [-1] == '\n' then we just
 	     scanned another line: so bump line counters.  */
-	  if (is_end_of_line[(unsigned char) input_line_pointer[-1]])
+	  was_new_line = is_end_of_line[(unsigned char) input_line_pointer[-1]];
+	  if (was_new_line)
 	    {
+	      symbol_set_value_now (&dot_symbol);
 #ifdef md_start_line_hook
 	      md_start_line_hook ();
 #endif
 	      if (input_line_pointer[-1] == '\n')
 		bump_line_counters ();
+	    }
 
+#ifndef NO_LISTING
+	  /* If listing is on, and we are expanding a macro, then give
+	     the listing code the contents of the expanded line.  */
+	  if (listing)
+	    {
+	      if ((listing & LISTING_MACEXP) && macro_nest > 0)
+		{
+		  /* Find the end of the current expanded macro line.  */
+		  s = find_end_of_line (input_line_pointer, flag_m68k_mri);
+
+		  if (s != last_eol)
+		    {
+		      char *copy;
+		      int len;
+
+		      last_eol = s;
+		      /* Copy it for safe keeping.  Also give an indication of
+			 how much macro nesting is involved at this point.  */
+		      len = s - input_line_pointer;
+		      copy = (char *) xmalloc (len + macro_nest + 2);
+		      memset (copy, '>', macro_nest);
+		      copy[macro_nest] = ' ';
+		      memcpy (copy + macro_nest + 1, input_line_pointer, len);
+		      copy[macro_nest + 1 + len] = '\0';
+
+		      /* Install the line with the listing facility.  */
+		      listing_newline (copy);
+		    }
+		}
+	      else
+		listing_newline (NULL);
+	    }
+#endif
+	  if (was_new_line)
+	    {
 	      line_label = NULL;
 
 	      if (LABELS_WITHOUT_COLONS || flag_m68k_mri)
@@ -641,10 +681,8 @@ read_a_source_file (char *name)
 		  if (is_name_beginner (*input_line_pointer))
 		    {
 		      char *line_start = input_line_pointer;
-		      char c;
 		      int mri_line_macro;
 
-		      LISTING_NEWLINE ();
 		      HANDLE_CONDITIONAL_ASSEMBLY ();
 
 		      c = get_symbol_end ();
@@ -711,39 +749,6 @@ read_a_source_file (char *name)
 	    c = *input_line_pointer++;
 	  while (c == '\t' || c == ' ' || c == '\f');
 
-#ifndef NO_LISTING
-	  /* If listing is on, and we are expanding a macro, then give
-	     the listing code the contents of the expanded line.  */
-	  if (listing)
-	    {
-	      if ((listing & LISTING_MACEXP) && macro_nest > 0)
-		{
-		  char *copy;
-		  int len;
-
-		  /* Find the end of the current expanded macro line.  */
-		  s = find_end_of_line (input_line_pointer - 1, flag_m68k_mri);
-
-		  if (s != last_eol)
-		    {
-		      last_eol = s;
-		      /* Copy it for safe keeping.  Also give an indication of
-			 how much macro nesting is involved at this point.  */
-		      len = s - (input_line_pointer - 1);
-		      copy = (char *) xmalloc (len + macro_nest + 2);
-		      memset (copy, '>', macro_nest);
-		      copy[macro_nest] = ' ';
-		      memcpy (copy + macro_nest + 1, input_line_pointer - 1, len);
-		      copy[macro_nest + 1 + len] = '\0';
-
-		      /* Install the line with the listing facility.  */
-		      listing_newline (copy);
-		    }
-		}
-	      else
-		listing_newline (NULL);
-	    }
-#endif
 	  /* C is the 1st significant character.
 	     Input_line_pointer points after that character.  */
 	  if (is_name_beginner (c))
@@ -759,7 +764,7 @@ read_a_source_file (char *name)
 		 S points to the beginning of the symbol.
 		   [In case of pseudo-op, s->'.'.]
 		 Input_line_pointer->'\0' where c was.  */
-	      if (TC_START_LABEL (c, input_line_pointer))
+	      if (TC_START_LABEL (c, s, input_line_pointer))
 		{
 		  if (flag_m68k_mri)
 		    {
@@ -791,10 +796,10 @@ read_a_source_file (char *name)
 		  /* Input_line_pointer->after ':'.  */
 		  SKIP_WHITESPACE ();
 		}
-              else if (input_line_pointer[1] == '='
-		       && (c == '='
-			   || ((c == ' ' || c == '\t')
-			       && input_line_pointer[2] == '=')))
+              else if ((c == '=' && input_line_pointer[1] == '=')
+		       || ((c == ' ' || c == '\t')
+			   && input_line_pointer[1] == '='
+			   && input_line_pointer[2] == '='))
 		{
 		  equals (s, -1);
 		  demand_empty_rest_of_line ();
@@ -923,7 +928,7 @@ read_a_source_file (char *name)
 		      /* WARNING: c has char, which may be end-of-line.  */
 		      /* Also: input_line_pointer->`\0` where c was.  */
 		      *input_line_pointer = c;
-		      input_line_pointer = _find_end_of_line (input_line_pointer, flag_m68k_mri, 1);
+		      input_line_pointer = _find_end_of_line (input_line_pointer, flag_m68k_mri, 1, 0);
 		      c = *input_line_pointer;
 		      *input_line_pointer = '\0';
 
@@ -1033,7 +1038,7 @@ read_a_source_file (char *name)
 		     that goes with this #APP  There is one.  The specs
 		     guarantee it...  */
 		  tmp_len = buffer_limit - s;
-		  tmp_buf = xmalloc (tmp_len + 1);
+		  tmp_buf = (char *) xmalloc (tmp_len + 1);
 		  memcpy (tmp_buf, s, tmp_len);
 		  do
 		    {
@@ -1049,7 +1054,7 @@ read_a_source_file (char *name)
 		      else
 			num = buffer_limit - buffer;
 
-		      tmp_buf = xrealloc (tmp_buf, tmp_len + num);
+		      tmp_buf = (char *) xrealloc (tmp_buf, tmp_len + num);
 		      memcpy (tmp_buf + tmp_len, buffer, num);
 		      tmp_len += num;
 		    }
@@ -1086,7 +1091,7 @@ read_a_source_file (char *name)
 		      break;
 		    }
 
-		  new_buf = xrealloc (new_buf, new_length + 100);
+		  new_buf = (char *) xrealloc (new_buf, new_length + 100);
 		  new_tmp = new_buf + new_length;
 		  new_length += 100;
 		}
@@ -1119,13 +1124,10 @@ read_a_source_file (char *name)
 	  /* Report unknown char as error.  */
 	  demand_empty_rest_of_line ();
 	}
-
-#ifdef md_after_pass_hook
-      md_after_pass_hook ();
-#endif
     }
 
  quit:
+  symbol_set_value_now (&dot_symbol);
 
 #ifdef md_cleanup
   md_cleanup ();
@@ -1606,6 +1608,8 @@ s_mri_common (int small ATTRIBUTE_UNUSED)
 #ifdef S_SET_ALIGN
   if (align != 0)
     S_SET_ALIGN (sym, align);
+#else
+  (void) align;
 #endif
 
   if (line_label != NULL)
@@ -1637,7 +1641,7 @@ void
 s_data (int ignore ATTRIBUTE_UNUSED)
 {
   segT section;
-  register int temp;
+  int temp;
 
   temp = get_absolute_expression ();
   if (flag_readonly_data_in_text)
@@ -1679,7 +1683,7 @@ s_app_file_string (char *file, int appfile ATTRIBUTE_UNUSED)
 void
 s_app_file (int appfile)
 {
-  register char *s;
+  char *s;
   int length;
 
   /* Some assemblers tolerate immediately following '"'.  */
@@ -1913,11 +1917,15 @@ s_fill (int ignore ATTRIBUTE_UNUSED)
 {
   expressionS rep_exp;
   long size = 1;
-  register long fill = 0;
+  long fill = 0;
   char *p;
 
 #ifdef md_flush_pending_output
   md_flush_pending_output ();
+#endif
+
+#ifdef md_cons_align
+  md_cons_align (1);
 #endif
 
   get_known_segmented_expression (&rep_exp);
@@ -2060,8 +2068,9 @@ skip_past_char (char ** str, char c)
 }
 #define skip_past_comma(str) skip_past_char (str, ',')
 
-/* Parse an attribute directive for VENDOR.  */
-void
+/* Parse an attribute directive for VENDOR.
+   Returns the attribute number read, or zero on error.  */
+int
 s_vendor_attribute (int vendor)
 {
   expressionS exp;
@@ -2069,13 +2078,45 @@ s_vendor_attribute (int vendor)
   int tag;
   unsigned int i = 0;
   char *s = NULL;
-  char saved_char;
 
-  expression (& exp);
-  if (exp.X_op != O_constant)
-    goto bad;
+  /* Read the first number or name.  */
+  skip_whitespace (input_line_pointer);
+  s = input_line_pointer;
+  if (ISDIGIT (*input_line_pointer))
+    {
+      expression (& exp);
+      if (exp.X_op != O_constant)
+	goto bad;
+      tag = exp.X_add_number;
+    }
+  else
+    {
+      char *name;
 
-  tag = exp.X_add_number;
+      /* A name may contain '_', but no other punctuation.  */
+      for (; ISALNUM (*input_line_pointer) || *input_line_pointer == '_';
+	   ++input_line_pointer)
+	i++;
+      if (i == 0)
+	goto bad;
+
+      name = (char *) alloca (i + 1);
+      memcpy (name, s, i);
+      name[i] = '\0';
+
+#ifndef CONVERT_SYMBOLIC_ATTRIBUTE
+#define CONVERT_SYMBOLIC_ATTRIBUTE(a) -1
+#endif
+
+      tag = CONVERT_SYMBOLIC_ATTRIBUTE (name);
+      if (tag == -1)
+	{
+	  as_bad (_("Attribute name not recognised: %s"), name);
+	  ignore_rest_of_line ();
+	  return 0;
+	}
+    }
+
   type = _bfd_elf_obj_attrs_arg_type (stdoutput, vendor, tag);
 
   if (skip_past_comma (&input_line_pointer) == -1)
@@ -2087,41 +2128,31 @@ s_vendor_attribute (int vendor)
 	{
 	  as_bad (_("expected numeric constant"));
 	  ignore_rest_of_line ();
-	  return;
+	  return 0;
 	}
       i = exp.X_add_number;
     }
-  if (type == 3
+  if ((type & 3) == 3
       && skip_past_comma (&input_line_pointer) == -1)
     {
       as_bad (_("expected comma"));
       ignore_rest_of_line ();
-      return;
+      return 0;
     }
   if (type & 2)
     {
-      skip_whitespace(input_line_pointer);
+      int len;
+
+      skip_whitespace (input_line_pointer);
       if (*input_line_pointer != '"')
 	goto bad_string;
-      input_line_pointer++;
-      s = input_line_pointer;
-      while (*input_line_pointer && *input_line_pointer != '"')
-	input_line_pointer++;
-      if (*input_line_pointer != '"')
-	goto bad_string;
-      saved_char = *input_line_pointer;
-      *input_line_pointer = 0;
-    }
-  else
-    {
-      s = NULL;
-      saved_char = 0;
+      s = demand_copy_C_string (&len);
     }
 
-  switch (type)
+  switch (type & 3)
     {
     case 3:
-      bfd_elf_add_obj_attr_compat (stdoutput, vendor, i, s);
+      bfd_elf_add_obj_attr_int_string (stdoutput, vendor, tag, i, s);
       break;
     case 2:
       bfd_elf_add_obj_attr_string (stdoutput, vendor, tag, s);
@@ -2133,20 +2164,16 @@ s_vendor_attribute (int vendor)
       abort ();
     }
 
-  if (s)
-    {
-      *input_line_pointer = saved_char;
-      input_line_pointer++;
-    }
   demand_empty_rest_of_line ();
-  return;
+  return tag;
 bad_string:
   as_bad (_("bad string constant"));
   ignore_rest_of_line ();
-  return;
+  return 0;
 bad:
   as_bad (_("expected <tag> , <value>"));
   ignore_rest_of_line ();
+  return 0;
 }
 
 /* Parse a .gnu_attribute directive.  */
@@ -2178,7 +2205,7 @@ s_irp (int irpc)
 
   sb_new (&out);
 
-  err = expand_irp (irpc, 0, &s, &out, get_line_sb);
+  err = expand_irp (irpc, 0, &s, &out, get_non_macro_line_sb);
   if (err != NULL)
     as_bad_where (file, line, "%s", err);
 
@@ -2401,11 +2428,11 @@ s_lcomm_bytes (int needs_align)
 void
 s_lsym (int ignore ATTRIBUTE_UNUSED)
 {
-  register char *name;
-  register char c;
-  register char *p;
+  char *name;
+  char c;
+  char *p;
   expressionS exp;
-  register symbolS *symbolP;
+  symbolS *symbolP;
 
   /* We permit ANY defined expression: BSD4.2 demands constants.  */
   name = input_line_pointer;
@@ -2468,7 +2495,7 @@ s_lsym (int ignore ATTRIBUTE_UNUSED)
    or zero if there are no more lines.  */
 
 static int
-get_line_sb (sb *line)
+get_line_sb (sb *line, int in_macro)
 {
   char *eol;
 
@@ -2482,7 +2509,7 @@ get_line_sb (sb *line)
 	return 0;
     }
 
-  eol = find_end_of_line (input_line_pointer, flag_m68k_mri);
+  eol = _find_end_of_line (input_line_pointer, flag_m68k_mri, 0, in_macro);
   sb_add_buffer (line, input_line_pointer, eol - input_line_pointer);
   input_line_pointer = eol;
 
@@ -2492,6 +2519,18 @@ get_line_sb (sb *line)
      return the character skipped so that the caller can re-insert it if
      necessary.   */
   return *input_line_pointer++;
+}
+
+static int
+get_non_macro_line_sb (sb *line)
+{
+  return get_line_sb (line, 0);
+}
+
+static int
+get_macro_line_sb (sb *line)
+{
+  return get_line_sb (line, 1);
 }
 
 /* Define a macro.  This is an interface to macro.c.  */
@@ -2518,11 +2557,11 @@ s_macro (int ignore ATTRIBUTE_UNUSED)
 
       sb_new (&label);
       sb_add_string (&label, S_GET_NAME (line_label));
-      err = define_macro (0, &s, &label, get_line_sb, file, line, &name);
+      err = define_macro (0, &s, &label, get_macro_line_sb, file, line, &name);
       sb_kill (&label);
     }
   else
-    err = define_macro (0, &s, NULL, get_line_sb, file, line, &name);
+    err = define_macro (0, &s, NULL, get_macro_line_sb, file, line, &name);
   if (err != NULL)
     as_bad_where (file, line, err, name);
   else
@@ -2568,10 +2607,15 @@ s_mexit (int ignore ATTRIBUTE_UNUSED)
 void
 s_mri (int ignore ATTRIBUTE_UNUSED)
 {
-  int on, old_flag;
+  int on;
+#ifdef MRI_MODE_CHANGE
+  int old_flag;
+#endif
 
   on = get_absolute_expression ();
+#ifdef MRI_MODE_CHANGE
   old_flag = flag_mri;
+#endif
   if (on != 0)
     {
       flag_mri = 1;
@@ -2606,7 +2650,9 @@ s_mri (int ignore ATTRIBUTE_UNUSED)
 static void
 do_org (segT segment, expressionS *exp, int fill)
 {
-  if (segment != now_seg && segment != absolute_section)
+  if (segment != now_seg
+      && segment != absolute_section
+      && segment != expr_section)
     as_bad (_("invalid segment \"%s\""), segment_name (segment));
 
   if (now_seg == absolute_section)
@@ -2641,9 +2687,9 @@ do_org (segT segment, expressionS *exp, int fill)
 void
 s_org (int ignore ATTRIBUTE_UNUSED)
 {
-  register segT segment;
+  segT segment;
   expressionS exp;
-  register long temp_fill;
+  long temp_fill;
 
 #ifdef md_flush_pending_output
   md_flush_pending_output ();
@@ -2928,7 +2974,7 @@ do_repeat (int count, const char *start, const char *end)
   sb many;
 
   sb_new (&one);
-  if (!buffer_and_nest (start, end, &one, get_line_sb))
+  if (!buffer_and_nest (start, end, &one, get_non_macro_line_sb))
     {
       as_bad (_("%s without %s"), start, end);
       return;
@@ -2937,6 +2983,57 @@ do_repeat (int count, const char *start, const char *end)
   sb_new (&many);
   while (count-- > 0)
     sb_add_sb (&many, &one);
+
+  sb_kill (&one);
+
+  input_scrub_include_sb (&many, input_line_pointer, 1);
+  sb_kill (&many);
+  buffer_limit = input_scrub_next_buffer (&input_line_pointer);
+}
+
+/* Like do_repeat except that any text matching EXPANDER in the
+   block is replaced by the itteration count.  */
+
+void
+do_repeat_with_expander (int count,
+			 const char * start,
+			 const char * end,
+			 const char * expander)
+{
+  sb one;
+  sb many;
+
+  sb_new (&one);
+  if (!buffer_and_nest (start, end, &one, get_non_macro_line_sb))
+    {
+      as_bad (_("%s without %s"), start, end);
+      return;
+    }
+
+  sb_new (&many);
+
+  if (expander != NULL && strstr (one.ptr, expander) != NULL)
+    {
+      while (count -- > 0)
+	{
+	  int len;
+	  char * sub;
+	  sb processed;
+
+	  sb_new (& processed);
+	  sb_add_sb (& processed, & one);
+	  sub = strstr (processed.ptr, expander);
+	  len = sprintf (sub, "%d", count);
+	  gas_assert (len < 8);
+	  strcpy (sub + len, sub + 8);
+	  processed.len -= (8 - len);
+	  sb_add_sb (& many, & processed);
+	  sb_kill (& processed);
+	}
+    }
+  else
+    while (count-- > 0)
+      sb_add_sb (&many, &one);
 
   sb_kill (&one);
 
@@ -3088,6 +3185,10 @@ s_space (int mult)
   md_flush_pending_output ();
 #endif
 
+#ifdef md_cons_align
+  md_cons_align (1);
+#endif
+
   if (flag_mri)
     stop = mri_comment_field (&stopc);
 
@@ -3103,12 +3204,12 @@ s_space (int mult)
 	}
       else if (mri_common_symbol != NULL)
 	{
-	  valueT val;
+	  valueT mri_val;
 
-	  val = S_GET_VALUE (mri_common_symbol);
-	  if ((val & 1) != 0)
+	  mri_val = S_GET_VALUE (mri_common_symbol);
+	  if ((mri_val & 1) != 0)
 	    {
-	      S_SET_VALUE (mri_common_symbol, val + 1);
+	      S_SET_VALUE (mri_common_symbol, mri_val + 1);
 	      if (line_label != NULL)
 		{
 		  expressionS *symexp;
@@ -3259,6 +3360,10 @@ s_float_space (int float_type)
   char *stop = NULL;
   char stopc = 0;
 
+#ifdef md_cons_align
+  md_cons_align (1);
+#endif
+
   if (flag_mri)
     stop = mri_comment_field (&stopc);
 
@@ -3354,7 +3459,7 @@ s_struct (int ignore ATTRIBUTE_UNUSED)
 void
 s_text (int ignore ATTRIBUTE_UNUSED)
 {
-  register int temp;
+  int temp;
 
   temp = get_absolute_expression ();
   subseg_set (text_section, (subsegT) temp);
@@ -3445,7 +3550,7 @@ s_weakref (int ignore ATTRIBUTE_UNUSED)
 	{
 	  expressionS *expP = symbol_get_value_expression (symp);
 
-	  assert (expP->X_op == O_symbol
+	  gas_assert (expP->X_op == O_symbol
 		  && expP->X_add_number == 0);
 	  symp = expP->X_add_symbol;
 	}
@@ -3609,12 +3714,14 @@ pseudo_set (symbolS *symbolP)
       break;
 
     case O_register:
+#ifndef TC_GLOBAL_REGISTER_SYMBOL_OK
       if (S_IS_EXTERNAL (symbolP))
 	{
 	  as_bad ("can't equate global symbol `%s' with register name",
 		  S_GET_NAME (symbolP));
 	  return;
 	}
+#endif
       S_SET_SEGMENT (symbolP, reg_section);
       S_SET_VALUE (symbolP, (valueT) exp.X_add_number);
       set_zero_frag (symbolP);
@@ -3649,6 +3756,7 @@ pseudo_set (symbolS *symbolP)
 	}
       S_SET_SEGMENT (symbolP, undefined_section);
       symbol_set_value_expression (symbolP, &exp);
+      copy_symbol_attributes (symbolP, exp.X_add_symbol);
       set_zero_frag (symbolP);
       break;
 
@@ -3719,7 +3827,7 @@ do_parse_cons_expression (expressionS *exp,
    Clobbers input_line_pointer and checks end-of-line.  */
 
 static void
-cons_worker (register int nbytes,	/* 1=.byte, 2=.word, 4=.long.  */
+cons_worker (int nbytes,	/* 1=.byte, 2=.word, 4=.long.  */
 	     int rva)
 {
   int c;
@@ -3759,7 +3867,15 @@ cons_worker (register int nbytes,	/* 1=.byte, 2=.word, 4=.long.  */
 	parse_mri_cons (&exp, (unsigned int) nbytes);
       else
 #endif
-	TC_PARSE_CONS_EXPRESSION (&exp, (unsigned int) nbytes);
+        {
+	  if (*input_line_pointer == '"')
+	    {
+	      as_bad (_("unexpected `\"' in expression"));
+	      ignore_rest_of_line ();
+	      return;
+	    }
+	  TC_PARSE_CONS_EXPRESSION (&exp, (unsigned int) nbytes);
+	}
 
       if (rva)
 	{
@@ -3811,7 +3927,7 @@ s_reloc (int ignore ATTRIBUTE_UNUSED)
   int c;
   struct reloc_list *reloc;
 
-  reloc = xmalloc (sizeof (*reloc));
+  reloc = (struct reloc_list *) xmalloc (sizeof (*reloc));
 
   if (flag_mri)
     stop = mri_comment_field (&stopc);
@@ -3865,7 +3981,7 @@ s_reloc (int ignore ATTRIBUTE_UNUSED)
   if (*input_line_pointer == ',')
     {
       ++input_line_pointer;
-      expression_and_evaluate (&exp);
+      expression (&exp);
     }
   switch (exp.X_op)
     {
@@ -3913,13 +4029,16 @@ void
 emit_expr (expressionS *exp, unsigned int nbytes)
 {
   operatorT op;
-  register char *p;
+  char *p;
   valueT extra_digit = 0;
 
   /* Don't do anything if we are going to make another pass.  */
   if (need_pass_2)
     return;
 
+  /* Grow the current frag now so that dot_value does not get invalidated
+     if the frag were to fill up in the frag_more() call below.  */
+  frag_grow (nbytes);
   dot_value = frag_now_fix ();
 
 #ifndef NO_LISTING
@@ -4087,11 +4206,11 @@ emit_expr (expressionS *exp, unsigned int nbytes)
 
   if (op == O_constant)
     {
-      register valueT get;
-      register valueT use;
-      register valueT mask;
+      valueT get;
+      valueT use;
+      valueT mask;
       valueT hibit;
-      register valueT unmask;
+      valueT unmask;
 
       /* JF << of >= number of bits in the object is undefined.  In
 	 particular SPARC (Sun 4) has problems.  */
@@ -4144,14 +4263,31 @@ emit_expr (expressionS *exp, unsigned int nbytes)
       unsigned int size;
       LITTLENUM_TYPE *nums;
 
-      know (nbytes % CHARS_PER_LITTLENUM == 0);
-
       size = exp->X_add_number * CHARS_PER_LITTLENUM;
       if (nbytes < size)
 	{
-	  as_warn (_("bignum truncated to %d bytes"), nbytes);
+	  int i = nbytes / CHARS_PER_LITTLENUM;
+	  if (i != 0)
+	    {
+	      LITTLENUM_TYPE sign = 0;
+	      if ((generic_bignum[--i]
+		   & (1 << (LITTLENUM_NUMBER_OF_BITS - 1))) != 0)
+		sign = ~(LITTLENUM_TYPE) 0;
+	      while (++i < exp->X_add_number)
+		if (generic_bignum[i] != sign)
+		  break;
+	    }
+	  if (i < exp->X_add_number)
+	    as_warn (_("bignum truncated to %d bytes"), nbytes);
 	  size = nbytes;
 	}
+
+      if (nbytes == 1)
+	{
+	  md_number_to_chars (p, (valueT) generic_bignum[0], 1);
+	  return;
+	}
+      know (nbytes % CHARS_PER_LITTLENUM == 0);
 
       if (target_big_endian)
 	{
@@ -4215,6 +4351,9 @@ emit_expr_fix (expressionS *exp, unsigned int nbytes, fragS *frag, char *p)
 	break;
       case 2:
 	r = BFD_RELOC_16;
+	break;
+      case 3:
+	r = BFD_RELOC_24;
 	break;
       case 4:
 	r = BFD_RELOC_32;
@@ -4443,7 +4582,7 @@ parse_repeat_cons (exp, nbytes)
      unsigned int nbytes;
 {
   expressionS count;
-  register int i;
+  int i;
 
   expression (exp);
 
@@ -4578,11 +4717,11 @@ hex_float (int float_type, char *bytes)
 
 void
 float_cons (/* Clobbers input_line-pointer, checks end-of-line.  */
-	    register int float_type	/* 'f':.ffloat ... 'F':.float ...  */)
+	    int float_type	/* 'f':.ffloat ... 'F':.float ...  */)
 {
-  register char *p;
+  char *p;
   int length;			/* Number of chars in an object.  */
-  register char *err;		/* Error from scanning floating literal.  */
+  char *err;		/* Error from scanning floating literal.  */
   char temp[MAXIMUM_NUMBER_OF_CHARS_FOR_FLOAT];
 
   if (is_it_end_of_statement ())
@@ -4593,6 +4732,10 @@ float_cons (/* Clobbers input_line-pointer, checks end-of-line.  */
 
 #ifdef md_flush_pending_output
   md_flush_pending_output ();
+#endif
+
+#ifdef md_cons_align
+  md_cons_align (1);
 #endif
 
   do
@@ -4675,8 +4818,8 @@ float_cons (/* Clobbers input_line-pointer, checks end-of-line.  */
 static inline int
 sizeof_sleb128 (offsetT value)
 {
-  register int size = 0;
-  register unsigned byte;
+  int size = 0;
+  unsigned byte;
 
   do
     {
@@ -4696,12 +4839,10 @@ sizeof_sleb128 (offsetT value)
 static inline int
 sizeof_uleb128 (valueT value)
 {
-  register int size = 0;
-  register unsigned byte;
+  int size = 0;
 
   do
     {
-      byte = (value & 0x7f);
       value >>= 7;
       size += 1;
     }
@@ -4724,8 +4865,8 @@ sizeof_leb128 (valueT value, int sign)
 static inline int
 output_sleb128 (char *p, offsetT value)
 {
-  register char *orig = p;
-  register int more;
+  char *orig = p;
+  int more;
 
   do
     {
@@ -5033,10 +5174,16 @@ stringer (int bits_appendzero)
   const int bitsize = bits_appendzero & ~7;
   const int append_zero = bits_appendzero & 1;
   unsigned int c;
+#if !defined(NO_LISTING) && defined (OBJ_ELF)
   char *start;
+#endif
 
 #ifdef md_flush_pending_output
   md_flush_pending_output ();
+#endif
+
+#ifdef md_cons_align
+  md_cons_align (1);
 #endif
 
   /* The following awkward logic is to parse ZERO or more strings,
@@ -5069,7 +5216,9 @@ stringer (int bits_appendzero)
 	{
 	case '\"':
 	  ++input_line_pointer;	/*->1st char of string.  */
+#if !defined(NO_LISTING) && defined (OBJ_ELF)
 	  start = input_line_pointer;
+#endif
 
 	  while (is_a_char (c = next_char_of_string ()))
 	    stringer_append_char (c, bitsize);
@@ -5079,8 +5228,7 @@ stringer (int bits_appendzero)
 
 	  know (input_line_pointer[-1] == '\"');
 
-#ifndef NO_LISTING
-#ifdef OBJ_ELF
+#if !defined(NO_LISTING) && defined (OBJ_ELF)
 	  /* In ELF, when gcc is emitting DWARF 1 debugging output, it
 	     will emit .string with a filename in the .debug section
 	     after a sequence of constants.  See the comment in
@@ -5096,7 +5244,6 @@ stringer (int bits_appendzero)
 	      listing_source_file (start);
 	      input_line_pointer[-1] = c;
 	    }
-#endif
 #endif
 
 	  break;
@@ -5128,7 +5275,7 @@ stringer (int bits_appendzero)
 unsigned int
 next_char_of_string (void)
 {
-  register unsigned int c;
+  unsigned int c;
 
   c = *input_line_pointer++ & CHAR_MASK;
   switch (c)
@@ -5248,9 +5395,9 @@ next_char_of_string (void)
 }
 
 static segT
-get_segmented_expression (register expressionS *expP)
+get_segmented_expression (expressionS *expP)
 {
-  register segT retval;
+  segT retval;
 
   retval = expression (expP);
   if (expP->X_op == O_illegal
@@ -5266,11 +5413,11 @@ get_segmented_expression (register expressionS *expP)
 }
 
 static segT
-get_known_segmented_expression (register expressionS *expP)
+get_known_segmented_expression (expressionS *expP)
 {
-  register segT retval;
+  segT retval = get_segmented_expression (expP);
 
-  if ((retval = get_segmented_expression (expP)) == undefined_section)
+  if (retval == undefined_section)
     {
       /* There is no easy way to extract the undefined symbol from the
 	 expression.  */
@@ -5284,8 +5431,7 @@ get_known_segmented_expression (register expressionS *expP)
       expP->X_op = O_constant;
       expP->X_add_number = 0;
     }
-  know (retval == absolute_section || SEG_NORMAL (retval));
-  return (retval);
+  return retval;
 }
 
 char				/* Return terminator.  */
@@ -5302,11 +5448,11 @@ get_absolute_expression_and_terminator (long *val_pointer /* Return value of exp
 char *
 demand_copy_C_string (int *len_pointer)
 {
-  register char *s;
+  char *s;
 
   if ((s = demand_copy_string (len_pointer)) != 0)
     {
-      register int len;
+      int len;
 
       for (len = *len_pointer; len > 0; len--)
 	{
@@ -5329,8 +5475,8 @@ demand_copy_C_string (int *len_pointer)
 char *
 demand_copy_string (int *lenP)
 {
-  register unsigned int c;
-  register int len;
+  unsigned int c;
+  int len;
   char *retval;
 
   len = 0;
@@ -5347,7 +5493,7 @@ demand_copy_string (int *lenP)
       /* JF this next line is so demand_copy_C_string will return a
 	 null terminated string.  */
       obstack_1grow (&notes, '\0');
-      retval = obstack_finish (&notes);
+      retval = (char *) obstack_finish (&notes);
     }
   else
     {
@@ -5417,6 +5563,10 @@ s_incbin (int x ATTRIBUTE_UNUSED)
   md_flush_pending_output ();
 #endif
 
+#ifdef md_cons_align
+  md_cons_align (1);
+#endif
+
   SKIP_WHITESPACE ();
   filename = demand_copy_string (& len);
   if (filename == NULL)
@@ -5452,7 +5602,7 @@ s_incbin (int x ATTRIBUTE_UNUSED)
     {
       int i;
 
-      path = xmalloc ((unsigned long) len + include_dir_maxlen + 5);
+      path = (char *) xmalloc ((unsigned long) len + include_dir_maxlen + 5);
 
       for (i = 0; i < include_dir_count; i++)
 	{
@@ -5522,7 +5672,7 @@ s_include (int arg ATTRIBUTE_UNUSED)
 {
   char *filename;
   int i;
-  FILE *try;
+  FILE *try_file;
   char *path;
 
   if (!flag_m68k_mri)
@@ -5549,22 +5699,23 @@ s_include (int arg ATTRIBUTE_UNUSED)
 	}
 
       obstack_1grow (&notes, '\0');
-      filename = obstack_finish (&notes);
+      filename = (char *) obstack_finish (&notes);
       while (!is_end_of_line[(unsigned char) *input_line_pointer])
 	++input_line_pointer;
     }
 
   demand_empty_rest_of_line ();
-  path = xmalloc ((unsigned long) i + include_dir_maxlen + 5 /* slop */ );
+  path = (char *) xmalloc ((unsigned long) i
+                           + include_dir_maxlen + 5 /* slop */ );
 
   for (i = 0; i < include_dir_count; i++)
     {
       strcpy (path, include_dirs[i]);
       strcat (path, "/");
       strcat (path, filename);
-      if (0 != (try = fopen (path, FOPEN_RT)))
+      if (0 != (try_file = fopen (path, FOPEN_RT)))
 	{
-	  fclose (try);
+	  fclose (try_file);
 	  goto gotit;
 	}
     }
@@ -5780,7 +5931,8 @@ input_scrub_insert_file (char *path)
 #endif
 
 static char *
-_find_end_of_line (char *s, int mri_string, int insn ATTRIBUTE_UNUSED)
+_find_end_of_line (char *s, int mri_string, int insn ATTRIBUTE_UNUSED,
+		   int in_macro)
 {
   char inquote = '\0';
   int inescape = 0;
@@ -5791,6 +5943,13 @@ _find_end_of_line (char *s, int mri_string, int insn ATTRIBUTE_UNUSED)
 #ifdef TC_EOL_IN_INSN
 	 || (insn && TC_EOL_IN_INSN (s))
 #endif
+	 /* PR 6926:  When we are parsing the body of a macro the sequence
+	    \@ is special - it refers to the invocation count.  If the @
+	    character happens to be registered as a line-separator character
+	    by the target, then the is_end_of_line[] test above will have
+	    returned true, but we need to ignore the line separating
+	    semantics in this particular case.  */
+	 || (in_macro && inescape && *s == '@')
 	)
     {
       if (mri_string && *s == '\'')
@@ -5818,5 +5977,5 @@ _find_end_of_line (char *s, int mri_string, int insn ATTRIBUTE_UNUSED)
 char *
 find_end_of_line (char *s, int mri_string)
 {
-  return _find_end_of_line (s, mri_string, 0);
+  return _find_end_of_line (s, mri_string, 0, 0);
 }

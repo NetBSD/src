@@ -16,15 +16,15 @@ Relocation section '\.rela\.debug_line' at offset .* contains 1 entries:
 
 #...
  Line Number Statements:
-  Extended opcode 2: set Address to 0x0
+  Extended opcode 2: set Address to 0x1
   Copy
-  Special opcode .*: advance Address by 2 to 0x2 and Line by 1 to 2
-  Special opcode .*: advance Address by 2 to 0x4 and Line by 1 to 3
-  Special opcode .*: advance Address by 4 to 0x8 and Line by 1 to 4
-  Special opcode .*: advance Address by 2 to 0xa and Line by 1 to 5
-  Special opcode .*: advance Address by 4 to 0xe and Line by 1 to 6
-  Special opcode .*: advance Address by 4 to 0x12 and Line by 1 to 7
-  Advance PC by 2286 to 0x900
-  Special opcode .*: advance Address by 0 to 0x900 and Line by 1 to 8
-  Advance PC by 15 to 0x90f
+  Special opcode .*: advance Address by 2 to 0x3 and Line by 1 to 2
+  Special opcode .*: advance Address by 2 to 0x5 and Line by 1 to 3
+  Special opcode .*: advance Address by 4 to 0x9 and Line by 1 to 4
+  Special opcode .*: advance Address by 2 to 0xb and Line by 1 to 5
+  Special opcode .*: advance Address by 4 to 0xf and Line by 1 to 6
+  Special opcode .*: advance Address by 4 to 0x13 and Line by 1 to 7
+  Advance PC by 2286 to 0x901
+  Special opcode .*: advance Address by 0 to 0x901 and Line by 1 to 8
+  Advance PC by 15 to 0x910
   Extended opcode 1: End of Sequence

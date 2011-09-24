@@ -2,12 +2,15 @@
 
 Disassembly of section .text:
 
-00001000 <__bar_from_thumb>:
-    1000:	4778      	bx	pc
-    1002:	46c0      	nop			\(mov r8, r8\)
-    1004:	ea000402 	b	2014 <bar>
-00001008 <_start>:
-    1008:	f7ff fffa 	bl	1000 <__bar_from_thumb>
+00001000 <_start>:
+    1000:	f000 f802 	bl	1008 <__bar_from_thumb>
+    1004:	0000      	movs	r0, r0
+	\.\.\.
+
+00001008 <__bar_from_thumb>:
+    1008:	4778      	bx	pc
+    100a:	46c0      	nop			; \(mov r8, r8\)
+    100c:	ea000400 	b	2014 <bar>
 Disassembly of section .foo:
 
 00002014 <bar>:

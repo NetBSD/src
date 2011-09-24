@@ -1,5 +1,5 @@
 #name: mcf-wdebug
-#objdump: -d
+#objdump: --architecture=m68k:5200 -d
 #as: -m5208
 
 .*:     file format .*

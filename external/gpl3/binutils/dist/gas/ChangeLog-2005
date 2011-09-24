@@ -134,8 +134,6 @@
 	BFD_RELOC_ARM_PCREL_JUMP.
 	(tc_gen_reloc): Handle BFD_RELOC_ARM_PCREL_CALL and
 	BFD_RELOC_ARM_PCREL_JUMP.
-	gas/testsuite/
-	* gas/arm/pic.d: Allow R_ARM_CALL relocations.
 
 2005-12-12  Nathan Sidwell  <nathan@codesourcery.com>
 
@@ -1721,33 +1719,6 @@
 
 	* config/tc-ms1.c: New.
 	* config/tc-ms1.h: New.
-	* testsuite/gas/ms1/allinsn.d: New.
-	* testsuite/gas/ms1/allinsn.s: New.
-	* testsuite/gas/ms1/badinsn.s: New.
-	* testsuite/gas/ms1/badinsn1.s: New.
-	* testsuite/gas/ms1/badoffsethigh.s: New.
-	* testsuite/gas/ms1/badoffsetlow.s: New.
-	* testsuite/gas/ms1/badorder.s: New.
-	* testsuite/gas/ms1/badreg.s: New.
-	* testsuite/gas/ms1/badsignedimmhigh.s: New.
-	* testsuite/gas/ms1/badsignedimmlow.s: New.
-	* testsuite/gas/ms1/badsyntax.s: New.
-	* testsuite/gas/ms1/badsyntax1.s: New.
-	* testsuite/gas/ms1/badunsignedimmhigh.s: New.
-	* testsuite/gas/ms1/badunsignedimmlow.s: New.
-	* testsuite/gas/ms1/errors.exp: New.
-	* testsuite/gas/ms1/ldst.s: New.
-	* testsuite/gas/ms1/misc.d: New.
-	* testsuite/gas/ms1/misc.s: New.
-	* testsuite/gas/ms1/ms1-16-003.d: New.
-	* testsuite/gas/ms1/ms1-16-003.s: New.
-	* testsuite/gas/ms1/ms1.exp: New.
-	* testsuite/gas/ms1/msys.d: New.
-	* testsuite/gas/ms1/msys.s: New.
-	* testsuite/gas/ms1/relocs.d: New.
-	* testsuite/gas/ms1/relocs.exp: New.
-	* testsuite/gas/ms1/relocs1.s: New.
-	* testsuite/gas/ms1/relocs2.s: New.
 
 2005-07-05  Jan Beulich  <jbeulich@novell.com>
 

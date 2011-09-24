@@ -585,5 +585,7 @@ foo:
  test   %ebx,%eax
  test   (%eax),%ebx
 
-# Force a good alignment.
- .p2align 4,0
+ cmovpe  0x90909090(%eax),%edx
+ cmovpo 0x90909090(%eax),%edx
+ cmovpe  0x90909090(%eax),%dx
+ cmovpo 0x90909090(%eax),%dx

@@ -17,7 +17,7 @@ Relocation section '\.rel\.dyn' .*:
 0003008b  [0-9a-f]+ R_MIPS_REL32      00000000   foo
 000300d0  [0-9a-f]+ R_MIPS_REL32      00000000   foo
 0003010e  [0-9a-f]+ R_MIPS_REL32      00000000   foo
-The section \.eh_frame contains:
+Contents of the \.eh_frame section:
 
 00000000 00000010 00000000 CIE
   Version:               1
@@ -25,7 +25,7 @@ The section \.eh_frame contains:
   Code alignment factor: 1
   Data alignment factor: 4
   Return address column: 31
-  Augmentation data:     10
+  Augmentation data:     1b
 
   DW_CFA_advance_loc: 0 to 00000000
   DW_CFA_advance_loc: 0 to 00000000
@@ -65,7 +65,7 @@ The section \.eh_frame contains:
   Code alignment factor: 1
   Data alignment factor: 4
   Return address column: 31
-  Augmentation data:     10 00 00 00 00 00
+  Augmentation data:     1b 00 00 00 00 00
 
   DW_CFA_advance_loc: 0 to 00000000
   DW_CFA_advance_loc: 0 to 00000000
@@ -108,7 +108,7 @@ The section \.eh_frame contains:
   Code alignment factor: 1
   Data alignment factor: 4
   Return address column: 31
-  Augmentation data:     00 00 00 00 00 10
+  Augmentation data:     00 00 00 00 00 1b
 
   DW_CFA_advance_loc: 0 to 00000000
 

@@ -27,21 +27,20 @@ Disassembly of section \.plt:
 0+430a0 <extf4@plt>:
 .*:	3c0f0008 	lui	t3,0x8
 .*:	ddf91010 	ld	t9,4112\(t3\)
-.*:	25f81010 	addiu	t8,t3,4112
 .*:	03200008 	jr	t9
+.*:	25f81010 	addiu	t8,t3,4112
 
 0+430b0 <extf5@plt>:
 .*:	3c0f0008 	lui	t3,0x8
 .*:	ddf91018 	ld	t9,4120\(t3\)
-.*:	25f81018 	addiu	t8,t3,4120
 .*:	03200008 	jr	t9
+.*:	25f81018 	addiu	t8,t3,4120
 
 0+430c0 <extf3@plt>:
 .*:	3c0f0008 	lui	t3,0x8
 .*:	ddf91020 	ld	t9,4128\(t3\)
-.*:	25f81020 	addiu	t8,t3,4128
 .*:	03200008 	jr	t9
-.*:	00000000 	nop
+.*:	25f81020 	addiu	t8,t3,4128
 
 Disassembly of section \.text:
 

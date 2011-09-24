@@ -2,8 +2,8 @@
 ;# that this version of fn has different code, as if compiled
 ;# with different optimization flags than the one in x.s (not
 ;# important for this test, though).  The reference from
-;# .eh_frame to the linkonce-excluded fn2 must be zero, or g++
-;# EH will not work.
+;# .gcc_except_table to the linkonce-excluded fn2 must be zero,
+;# or g++ EH will not work.
 
  .section .gnu.linkonce.t.fn2,"ax",@progbits
  .weak fn2
@@ -23,7 +23,7 @@ L:e:
 L:f:
  .size fn,L:f-L:e
 
- .section .eh_frame,"aw",@progbits
+ .section .gcc_except_table,"aw",@progbits
  .long 7
  .long L:c
  .long L:d-L:c

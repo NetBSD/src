@@ -3,6 +3,8 @@
  * a bunch of definitions of the same symbol, and we can theoretically
  * then link applications against varying sets of these.
  */
+#include "vers.h"
+
 const char * show_bar1 = "asdf";
 const char * show_bar2 = "asdf";
 
@@ -47,10 +49,10 @@ hide_new_foo()
 
 }
 
-__asm__(".symver hide_original_foo,show_foo@");
-__asm__(".symver hide_old_foo,show_foo@VERS_1.1");
-__asm__(".symver hide_old_foo1,show_foo@VERS_1.2");
-__asm__(".symver hide_new_foo,show_foo@@VERS_2.0");
+SYMVER(hide_original_foo, show_foo@);
+SYMVER(hide_old_foo, show_foo@VERS_1.1);
+SYMVER(hide_old_foo1, show_foo@VERS_1.2);
+SYMVER(hide_new_foo, show_foo@@VERS_2.0);
 
 
 
@@ -63,7 +65,7 @@ hide_new_bogus_foo()
 	return 1000+bar();
 
 }
-__asm__(".symver hide_new_bogus_foo,show_foo@VERS_2.2");
+SYMVER(hide_new_bogus_foo, show_foo@VERS_2.2);
 #endif
 
 
@@ -81,8 +83,8 @@ xyzzz()
   bar33();
 }
 
-__asm__(".symver new2_foo,fooVERS_2.0");
-__asm__(".symver bar33,bar@@VERS_2.0");
+SYMVER(new2_foo, fooVERS_2.0);
+SYMVER(bar33, bar@@VERS_2.0);
 #endif
 
 #ifdef DO_TEST12
@@ -97,5 +99,5 @@ xyzzz()
   bar33();
 }
 
-__asm__(".symver bar33,bar@@VERS_2.0");
+SYMVER(bar33, bar@@VERS_2.0);
 #endif

@@ -5,7 +5,7 @@ FINI='.fini : { *(.fini) }'
 cat <<EOF
 OUTPUT_FORMAT("${OUTPUT_FORMAT}")
 OUTPUT_ARCH(${ARCH})
-ENTRY(__start)
+${RELOCATING+ENTRY (__start)}
 ${RELOCATING+${LIB_SEARCH_DIRS}}
 
 SECTIONS 				

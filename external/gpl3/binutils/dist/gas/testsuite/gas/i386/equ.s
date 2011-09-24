@@ -27,7 +27,7 @@ _start:
  .equ r, -2
  .equ s, -2
 	mov	eax, r
-	mov	eax, [r]
+	mov	eax, FLAT:[r]
  .equ r, xtrn
 	mov	eax, offset r
 	mov	eax, [r]
@@ -39,6 +39,9 @@ _start:
 	fadd	x
  .equ x, st(7)
 	fadd	x
+ .equ r, edx + 4
+	mov	eax, [r]
+	mov	eax, [r]
 
  .if s <> gs
  .err

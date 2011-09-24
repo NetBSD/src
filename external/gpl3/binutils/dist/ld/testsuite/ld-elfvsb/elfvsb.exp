@@ -1,5 +1,6 @@
 # Expect script for ld-visibility tests
-#   Copyright 2000, 2001, 2002, 2003, 2004, 2007 Free Software Foundation, Inc.
+#   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2010
+#   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -29,6 +30,7 @@
 if { ![istarget hppa*64*-*-hpux*] \
      && ![istarget hppa*-*-linux*] \
      && ![istarget i?86-*-linux*] \
+     && ![istarget i?86-*-gnu*] \
      && ![istarget ia64-*-linux*] \
      && ![istarget m68k-*-linux*] \
      && ![istarget mips*-*-linux*] \
@@ -59,6 +61,7 @@ if ![isnative] then {return}
 
 set tmpdir tmpdir
 set SHCFLAG ""
+set shared_needs_pic "no"
 
 if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
 
@@ -90,9 +93,31 @@ if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
     close $file
 }
 
+if [istarget arm*-*-linux*] {
+    # On ARM section anchors can change the symbol pre-emptability for
+    # non-PIC shared libraries, causing these tests to fail.  Turn section 
+    # anchors off.
+    set SHCFLAG "-fno-section-anchors"
+
+    # On targets that have MOVW the compiler will emit relocations which 
+    # the linker doesn't support when compiling -shared without -fpic.  The
+    # test to find out whether we want to XFAIL the non-PIC tests requires 
+    # a compile - so we pre-calculate it here.  We also note that this can
+    # only affect arm*-*-*eabi targets as the old ABI doesn't support v7.
+    if [istarget arm*-*-*eabi] {
+	set file [open $tmpdir/movw-detect.c w]
+	puts $file "void foo(void) { __asm (\"movw r0, #0\"); }"
+	close $file
+	if [run_host_cmd_yesno "$CC" "$CFLAGS -c $tmpdir/movw-detect.c -o $tmpdir/movw-detect.o"] {
+	    set shared_needs_pic "yes"
+	}
+    }
+}
+
 set support_protected "no"
 
-if [istarget *-*-linux*] {
+if { [istarget *-*-linux*]
+     || [istarget *-*-gnu*] } {
     if [ld_compile "$CC -g $CFLAGS -DPROTECTED_CHECK" $srcdir/$subdir/main.c $tmpdir/main.o] {
       if [ld_simple_link $CC $tmpdir/main "$tmpdir/main.o"] {
 	catch "exec $tmpdir/main" support_protected
@@ -200,6 +225,7 @@ proc visibility_run {visibility} {
     global picflag
     global target_triplet
     global support_protected
+    global shared_needs_pic
 
     if [ string match $visibility "hidden" ] {
 	set VSBCFLAG "-DHIDDEN_TEST"
@@ -223,6 +249,14 @@ proc visibility_run {visibility} {
 	set VSBCFLAG ""
     }}}}}}}}}
 
+    if { [istarget powerpc*-*-linux*] } {
+	# Testing non-PIC libraries is a waste of effort on any target.
+	# If you don't pass -fpic or -fPIC to gcc, gcc will assume quite
+	# reasonably that you are not compiling for a shared library.
+	# It can then make optimisations that result in shared library
+	# functions and variables not being overridable.  Newer versions
+	# of gcc are more likely to do this.
+    } else {
     # Compile the main program.
     if ![ld_compile "$CC -g $CFLAGS $SHCFLAG $VSBCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] {
 	unresolved "visibility ($visibility) (non PIC)"
@@ -272,6 +306,9 @@ proc visibility_run {visibility} {
 	    if { ![istarget hppa*64*-*-linux*] } {
 		setup_xfail "hppa*-*-linux*"
 	    }
+	    if [ string match $shared_needs_pic "yes" ] {
+		setup_xfail "arm*-*-linux*"
+	    }
 
 	    visibility_test $visibility vnp "visibility ($visibility) (non PIC)" mainnp.o sh1np.o sh2np.o elfvsb
 
@@ -310,6 +347,9 @@ proc visibility_run {visibility} {
 	    if { ![istarget hppa*64*-*-linux*] } {
 		setup_xfail "hppa*-*-linux*"
 	    }
+	    if [ string match $shared_needs_pic "yes" ] {
+		setup_xfail "arm*-*-linux*"
+	    }
 
 	    visibility_test $visibility vnp "visibility ($visibility) (non PIC, load offset)" \
 		mainnp.o sh1np.o sh2np.o elfvsb \
@@ -337,8 +377,11 @@ proc visibility_run {visibility} {
 		visibility_test $visibility vp "visibility ($visibility)" mainnp.o sh1p.o sh2p.o elfvsb
 	    } }
 	}
-    }
+    }}
 
+    if { [istarget powerpc*-*-linux*] } {
+	# Don't bother.
+    } else {
     # Now do the same tests again, but this time compile main.c PIC.
     if ![ld_compile "$CC -g $CFLAGS $SHCFLAG $VSBCFLAG -DSHARED $picflag" $srcdir/$subdir/main.c $tmpdir/mainp.o] {
 	unresolved "visibility ($visibility) (PIC main, non PIC so)"
@@ -376,6 +419,9 @@ proc visibility_run {visibility} {
 		if { ![istarget hppa*64*-*-linux*] } {
 		    setup_xfail "hppa*-*-linux*"
 		}
+		if [ string match $shared_needs_pic "yes" ] {
+		    setup_xfail "arm*-*-linux*"
+		}
 
 		visibility_test $visibility vmpnp "visibility ($visibility) (PIC main, non PIC so)" mainp.o sh1np.o sh2np.o elfvsb
 	    }
@@ -398,7 +444,7 @@ proc visibility_run {visibility} {
 	} else {
 	    unresolved "visibility ($visibility) (PIC main)"
 	}
-    }
+    }}
 }
 
 if [istarget mips*-*-*] {

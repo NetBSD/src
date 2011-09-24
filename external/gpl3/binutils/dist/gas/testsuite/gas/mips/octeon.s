@@ -47,7 +47,11 @@ foo:
         di
         ei
         dmfc2   $3,0x84
+        dmfc2   $6,0x800
+        dmfc2   $12,0x1
         dmtc2   $8,0x4200
+        dmtc2   $7,0x2000
+        dmtc2   $2,0x4
 
         mtm0    $26
         mtm1    $19

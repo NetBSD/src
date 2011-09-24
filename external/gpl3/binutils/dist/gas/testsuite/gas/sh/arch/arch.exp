@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2005, 2007
+# Copyright (C) 2004, 2005, 2007, 2008
 # Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -224,7 +224,7 @@ set insncount 0
 # Pull the architecture inheritance macros out of sh-opc.h
 # Pull all the insns out of the sh-opc.h file.
 send_log "Reading sh-opc.h\n"
-send_log "--------------------------------------------------------\n"
+send_log "========================================================\n"
 spawn -noecho cat "$srcdir/../../opcodes/sh-opc.h"   ;# -open doesn't seem to be reliable
 expect {
     -re {#define\s+arch_([^ ]*)_up\s*\(([^)]*)\)} {

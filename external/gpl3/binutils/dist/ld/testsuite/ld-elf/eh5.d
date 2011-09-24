@@ -4,9 +4,9 @@
 #ld:
 #readelf: -wf
 #target: cfi
-#notarget: alpha*
+#notarget: alpha* hppa64*
 
-The section .eh_frame contains:
+Contents of the .eh_frame section:
 
 00000000 0000001[04] 00000000 CIE
   Version:               1
@@ -14,7 +14,7 @@ The section .eh_frame contains:
   Code alignment factor: .*
   Data alignment factor: .*
   Return address column: .*
-  Augmentation data:     1b
+  Augmentation data:     (0b|1b)
 
   DW_CFA_nop
   DW_CFA_nop
@@ -33,7 +33,7 @@ The section .eh_frame contains:
   Code alignment factor: .*
   Data alignment factor: .*
   Return address column: .*
-  Augmentation data:     03 .. .. .. .. 1b
+  Augmentation data:     03 .. .. .. .. (0b|1b)
 
   DW_CFA_nop
 
@@ -57,7 +57,7 @@ The section .eh_frame contains:
   Code alignment factor: .*
   Data alignment factor: .*
   Return address column: .*
-  Augmentation data:     03 .. .. .. .. 0c 1b
+  Augmentation data:     03 .. .. .. .. 0c (0b|1b)
 
   DW_CFA_nop
   DW_CFA_nop
@@ -78,7 +78,7 @@ The section .eh_frame contains:
   Code alignment factor: .*
   Data alignment factor: .*
   Return address column: .*
-  Augmentation data:     1b
+  Augmentation data:     (0b|1b)
 
   DW_CFA_def_cfa: r0( \([er]ax\)|) ofs 16
 #...
@@ -93,7 +93,7 @@ The section .eh_frame contains:
   Code alignment factor: .*
   Data alignment factor: .*
   Return address column: .*
-  Augmentation data:     03 .. .. .. .. 1b
+  Augmentation data:     03 .. .. .. .. (0b|1b)
 
   DW_CFA_nop
 
@@ -115,7 +115,7 @@ The section .eh_frame contains:
   Code alignment factor: .*
   Data alignment factor: .*
   Return address column: .*
-  Augmentation data:     03 .. .. .. .. 0c 1b
+  Augmentation data:     03 .. .. .. .. 0c (0b|1b)
 
   DW_CFA_nop
   DW_CFA_nop
@@ -136,8 +136,8 @@ The section .eh_frame contains:
   DW_CFA_nop
   DW_CFA_nop
   DW_CFA_nop
-
-000001(70|88) 00000014 000001(48|5c) FDE cie=000000(2c|30) pc=.*
+#...
+000001(70|88) 00000014 00000(01c|148|15c) FDE cie=00000(02c|030|170) pc=.*
   DW_CFA_advance_loc: 4 to .*
   DW_CFA_def_cfa: r0( \([er]ax\)|) ofs 16
   DW_CFA_nop
@@ -150,8 +150,8 @@ The section .eh_frame contains:
   DW_CFA_nop
   DW_CFA_nop
   DW_CFA_nop
-
-000001(a0|b8) 0000001c 000001(30|44) FDE cie=0000007[48] pc=.*
+#...
+000001(a0|b8|d4) 0000001c 00000(020|130|144) FDE cie=00000(074|078|1b8) pc=.*
   Augmentation data:     (ef be ad de 00 00 00 00|00 00 00 00 de ad be ef)
 
   DW_CFA_advance_loc: 4 to .*

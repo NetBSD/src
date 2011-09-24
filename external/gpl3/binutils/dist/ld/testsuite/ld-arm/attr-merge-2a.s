@@ -7,4 +7,5 @@
 	.eabi_attribute 25, 1
 	.eabi_attribute 26, 1
 	.eabi_attribute 30, 6
+	.eabi_attribute Tag_DIV_use, 1
 	.file	"attr-merge-2a.s"

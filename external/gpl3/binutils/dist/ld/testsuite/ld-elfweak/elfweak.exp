@@ -1,5 +1,6 @@
 # Expect script for ld-weak tests
-#   Copyright 2001, 2002, 2003, 2004, 2007 Free Software Foundation, Inc.
+#   Copyright 2001, 2002, 2003, 2004, 2005, 2007, 2010
+#   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -28,32 +29,32 @@ if ![isnative] then {return}
 # This test can only be run on a couple of ELF platforms.
 # Square bracket expressions seem to confuse istarget.
 # This is similar to the test that is used in ld-shared, BTW.
-if {    ![istarget alpha*-*-linux*] \
-     && ![istarget arm*-*-linux*] \
-     && ![istarget hppa*64*-*-hpux*] \
-     && ![istarget hppa*-*-linux*] \
-     && ![istarget i?86-*-sysv4*] \
-     && ![istarget i?86-*-unixware] \
-     && ![istarget i?86-*-elf*] \
-     && ![istarget i?86-*-linux*] \
-     && ![istarget ia64-*-elf*] \
-     && ![istarget ia64-*-linux*] \
-     && ![istarget m68k-*-linux*] \
-     && ![istarget mips*-*-irix5*] \
-     && ![istarget mips*-*-linux*] \
-     && ![istarget powerpc-*-elf*] \
-     && ![istarget powerpc-*-linux*] \
-     && ![istarget powerpc-*-sysv4*] \
-     && ![istarget sh\[34\]*-*-linux*] \
-     && ![istarget sparc*-*-elf] \
-     && ![istarget sparc*-*-solaris2*] \
+if {    ![istarget alpha*-*-linux*]
+     && ![istarget arm*-*-linux*]
+     && ![istarget hppa*64*-*-hpux*]
+     && ![istarget hppa*-*-linux*]
+     && ![istarget i?86-*-sysv4*]
+     && ![istarget i?86-*-unixware]
+     && ![istarget i?86-*-elf*]
+     && ![istarget i?86-*-linux*]
+     && ![istarget i?86-*-gnu*]
+     && ![istarget ia64-*-elf*]
+     && ![istarget ia64-*-linux*]
+     && ![istarget m68k-*-linux*]
+     && ![istarget mips*-*-irix5*]
+     && ![istarget mips*-*-linux*]
+     && ![istarget powerpc*-*-elf*]
+     && ![istarget powerpc*-*-linux*]
+     && ![istarget powerpc*-*-sysv4*]
+     && ![istarget sh\[34\]*-*-linux*]
+     && ![istarget sparc*-*-elf]
+     && ![istarget sparc*-*-solaris2*]
      && ![istarget sparc*-*-linux*] } {
     return
 }
 
-if { [istarget i?86-*-linux*aout*] \
-     || [istarget i?86-*-linux*oldld*] \
-     || [istarget m68k-*-linux*aout*] } {
+if { [istarget *-*-linux*aout*]
+     || [istarget *-*-linux*oldld*] } {
     return
 }
 
@@ -66,6 +67,18 @@ set tmpdir tmpdir
 set DOBJDUMP_FLAGS --dynamic-syms
 set SOBJDUMP_FLAGS --syms
 set shared --shared
+
+
+# <http://www.gnu.org/software/hurd/open_issues/binutils.html#weak>
+proc setup_xfail_gnu_hurd {} {
+    global target_triplet
+    # Be cautious to not XFAIL for *-*-linux-gnu*, *-*-kfreebsd-gnu*, etc.
+    switch -regexp $target_triplet {
+	^\[^-\]*-\[^-\]*-gnu.*$ {
+	    setup_xfail "*-*-*"
+	}
+    }
+}
 
 #
 # objdump_symstuff
@@ -290,7 +303,7 @@ proc build_lib {test libname objs dynsymexp} {
 	return
     }
 
-    if {![string match "" $dynsymexp] \
+    if {![string match "" $dynsymexp]
 	&& ![objdump_dynsymstuff $objdump $tmpdir/$libname.so $srcdir/$subdir/$dynsymexp]} {
 	fail $test
 	return
@@ -368,9 +381,9 @@ if [istarget mips*-*-*] {
     catch "exec $CC $picflag" exec_output
     send_log "$exec_output\n"
     verbose "--" "$exec_output"
-    if { [string match "*illegal option*" $exec_output] \
-	 || [string match "*option ignored*" $exec_output] \
-	 || [string match "*unrecognized option*" $exec_output] \
+    if { [string match "*illegal option*" $exec_output]
+	 || [string match "*option ignored*" $exec_output]
+	 || [string match "*unrecognized option*" $exec_output]
 	 || [string match "*passed to ld*" $exec_output] } {
 	if [istarget *-*-sunos4*] {
 	    set picflag "-pic"
@@ -452,7 +465,9 @@ build_lib "ELF DSO weak func first DSO" libfoo "foo.o libbar.so" dsow.dsym
 build_lib "ELF DSO weak func last DSO" libfoo "libbar.so foo.o" dsow.dsym
 build_exec "ELF weak func first" foo "main.o bar.o" "" strong "" strong.sym
 build_exec "ELF weak func last" foo "bar.o main.o" "" strong "" strong.sym
+setup_xfail_gnu_hurd
 build_exec "ELF weak func first DSO" foo "main.o libbar.so" "-Wl,-rpath,." weak weak.dsym ""
+setup_xfail_gnu_hurd
 build_exec "ELF weak func last DSO" foo "libbar.so main.o" "-Wl,-rpath,." weak weak.dsym ""
 
 build_lib "ELF DSO weak data first" libfoo "bar1a.o foo1a.o" dsodata.dsym
@@ -465,9 +480,13 @@ build_exec "ELF weak data first" foo "main1.o bar1a.o foo1a.o" "" strongdata "" 
 build_exec "ELF weak data last" foo "foo1a.o main1.o bar1a.o" "" strongdata "" strongdata.sym
 build_exec "ELF weak data first common" foo "main1.o bar1a.o foo1b.o" "" strongdata "" strongcomm.sym
 build_exec "ELF weak data last common" foo "foo1b.o main1.o bar1a.o" "" strongdata "" strongcomm.sym
+setup_xfail_gnu_hurd
 build_exec "ELF weak data first DSO" foo "main1.o libbar1a.so libfoo1a.so" "-Wl,-rpath,." weakdata weakdata.dsym ""
+setup_xfail_gnu_hurd
 build_exec "ELF weak data last DSO" foo "libfoo1a.so main1.o libbar1a.so" "-Wl,-rpath,." weakdata weakdata.dsym ""
+setup_xfail_gnu_hurd
 build_exec "ELF weak data first DSO common" foo "main1.o libbar1a.so libfoo1b.so" "-Wl,-rpath,." weakdata weakdata.dsym ""
+setup_xfail_gnu_hurd
 build_exec "ELF weak data last DSO common" foo "libfoo1b.so main1.o libbar1a.so" "-Wl,-rpath,." weakdata weakdata.dsym ""
 
 if ![ld_compile "$CC $CFLAGS $picflag" $srcdir/$subdir/size_foo.c $tmpdir/size_foo.o] {
