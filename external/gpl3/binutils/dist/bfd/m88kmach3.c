@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola m88k a.out (Mach 3) binaries.
-   Copyright 1990, 1991, 1993, 1994, 1995, 2001, 2003, 2007
+   Copyright 1990, 1991, 1993, 1994, 1995, 2001, 2003, 2005, 2007, 2009
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -23,7 +23,6 @@
 #define SEGMENT_SIZE	0x20000
 #define TEXT_START_ADDR	0
 #define N_HEADER_IN_TEXT(x)	1 		/* (N_MAGIG(x) == ZMAGIC) */
-#define N_SHARED_LIB(x) 0
 
 #define N_TXTSIZE(x)	((x).a_text)
 

@@ -1,6 +1,6 @@
 /* BFD back-end for i386 a.out binaries under LynxOS.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2001, 2002,
-   2003, 2007 Free Software Foundation, Inc.
+   2003, 2005, 2007, 2009, 2010 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -18,8 +18,6 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
-
-#define N_SHARED_LIB(x) 0
 
 #define TEXT_START_ADDR 0
 #define TARGET_PAGE_SIZE 4096
@@ -138,7 +136,6 @@ NAME(lynx,swap_std_reloc_out) (abfd, g, natptr)
   unsigned int r_length;
   int r_pcrel;
   int r_baserel, r_jmptable, r_relative;
-  unsigned int r_addend;
   asection *output_section = sym->section->output_section;
 
   PUT_WORD (abfd, g->address, natptr->r_address);
@@ -149,8 +146,6 @@ NAME(lynx,swap_std_reloc_out) (abfd, g, natptr)
   r_baserel = 0;
   r_jmptable = 0;
   r_relative = 0;
-
-  r_addend = g->addend + (*(g->sym_ptr_ptr))->section->output_section->vma;
 
   /* name was clobbered by aout_write_syms to be symbol index */
 
@@ -375,7 +370,6 @@ NAME(lynx,swap_std_reloc_in) (abfd, bytes, cache_ptr, symbols, symcount)
   int r_extern;
   unsigned int r_length;
   int r_pcrel;
-  int r_baserel, r_jmptable, r_relative;
   struct aoutdata *su = &(abfd->tdata.aout_data->a);
 
   cache_ptr->address = H_GET_32 (abfd, bytes->r_address);
@@ -383,9 +377,6 @@ NAME(lynx,swap_std_reloc_in) (abfd, bytes, cache_ptr, symbols, symcount)
   r_index = bytes->r_index[1];
   r_extern = (0 != (bytes->r_index[0] & RELOC_STD_BITS_EXTERN_BIG));
   r_pcrel = (0 != (bytes->r_index[0] & RELOC_STD_BITS_PCREL_BIG));
-  r_baserel = (0 != (bytes->r_index[0] & RELOC_STD_BITS_BASEREL_BIG));
-  r_jmptable = (0 != (bytes->r_index[0] & RELOC_STD_BITS_JMPTABLE_BIG));
-  r_relative = (0 != (bytes->r_index[0] & RELOC_STD_BITS_RELATIVE_BIG));
   r_length = (bytes->r_index[0] & RELOC_STD_BITS_LENGTH_BIG)
     >> RELOC_STD_BITS_LENGTH_SH_BIG;
 

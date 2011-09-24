@@ -1,6 +1,6 @@
 /* 8 and 16 bit COFF relocation functions, for BFD.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 2000, 2001,
-   2002, 2003, 2004, 2007 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -156,6 +156,10 @@ bfd_coff_reloc16_relax_section (abfd, input_section, link_info, again)
   long reloc_size = bfd_get_reloc_upper_bound (input_bfd, input_section);
   arelent **reloc_vector = NULL;
   long reloc_count;
+
+  if (link_info->relocatable)
+    (*link_info->callbacks->einfo)
+      (_("%P%F: --relax and -r may not be used together\n"));
 
   /* We only do global relaxation once.  It is not safe to do it multiple
      times (see discussion of the "shrinks" array below).  */

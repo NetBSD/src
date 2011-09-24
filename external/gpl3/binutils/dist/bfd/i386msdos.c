@@ -1,6 +1,6 @@
 /* BFD back-end for MS-DOS executables.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2006, 2007, 2009 Free Software Foundation, Inc.
    Written by Bryan Ford of the University of Utah.
 
    Contributed by the Center for Software Science at the
@@ -148,10 +148,13 @@ msdos_set_section_contents (bfd *abfd,
 #define msdos_bfd_discard_group bfd_generic_discard_group
 #define msdos_section_already_linked \
   _bfd_generic_section_already_linked
+#define msdos_bfd_define_common_symbol bfd_generic_define_common_symbol
 #define msdos_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define msdos_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
 #define msdos_bfd_link_add_symbols _bfd_generic_link_add_symbols
 #define msdos_bfd_link_just_syms _bfd_generic_link_just_syms
+#define msdos_bfd_copy_link_hash_symbol_type \
+  _bfd_generic_copy_link_hash_symbol_type
 #define msdos_bfd_final_link _bfd_generic_final_link
 #define msdos_bfd_link_split_section _bfd_generic_link_split_section
 #define msdos_set_arch_mach _bfd_generic_set_arch_mach

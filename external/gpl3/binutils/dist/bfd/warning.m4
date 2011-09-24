@@ -2,6 +2,7 @@ dnl Common configure.in fragment
 
 AC_DEFUN([AM_BINUTILS_WARNINGS],[
 GCC_WARN_CFLAGS="-W -Wall -Wstrict-prototypes -Wmissing-prototypes"
+AC_EGREP_CPP([^[0-3]$],[__GNUC__],,GCC_WARN_CFLAGS="$GCC_WARN_CFLAGS -Wshadow")
 
 AC_ARG_ENABLE(werror,
   [  --enable-werror         treat compile warnings as errors],
@@ -11,7 +12,7 @@ AC_ARG_ENABLE(werror,
      *) AC_MSG_ERROR(bad value ${enableval} for --enable-werror) ;;
    esac])
 
-# Enable -Wno-format by default when using gcc on mingw
+# Disable -Wformat by default when using gcc on mingw
 case "${host}" in
   *-*-mingw32*)
     if test "${GCC}" = yes -a -z "${ERROR_ON_WARNING}" ; then
