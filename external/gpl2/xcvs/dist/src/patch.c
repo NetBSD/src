@@ -43,16 +43,18 @@ static char *tmpfile1 = NULL;
 static char *tmpfile2 = NULL;
 static char *tmpfile3 = NULL;
 static int unidiff = 0;
+static int show_c_func = 0;
 
 static const char *const patch_usage[] =
 {
-    "Usage: %s %s [-flR] [-c|-u] [-s|-t] [-V %%d] [-k kopt]\n",
+    "Usage: %s %s [-flR] [-p] [-c|-u] [-s|-t] [-V %%d] [-k kopt]\n",
     "    -r rev|-D date [-r rev2 | -D date2] modules...\n",
     "\t-f\tForce a head revision match if tag/date not found.\n",
     "\t-l\tLocal directory only, not recursive\n",
     "\t-R\tProcess directories recursively.\n",
     "\t-c\tContext diffs (default)\n",
     "\t-u\tUnidiff format.\n",
+    "\t-p\tShow which C function each change is in.\n",	/* --show-c-function */
     "\t-s\tShort patch - one liner per file.\n",
     "\t-t\tTop two diffs - last change made to the file.\n",
     "\t-V vers\tUse RCS Version \"vers\" for keyword expansion.\n",
@@ -78,7 +80,7 @@ patch (int argc, char **argv)
 	usage (patch_usage);
 
     getoptreset ();
-    while ((c = getopt (argc, argv, "+V:k:cuftsQqlRD:r:")) != -1)
+    while ((c = getopt (argc, argv, "+V:k:cuftsQqlRD:r:p")) != -1)
     {
 	switch (c)
 	{
@@ -154,6 +156,9 @@ patch (int argc, char **argv)
 	    case 'c':			/* Context diff */
 		unidiff = 0;
 		break;
+	    case 'p':
+		show_c_func = 1;
+		break;
 	    case '?':
 	    default:
 		usage (patch_usage);
@@ -202,6 +207,8 @@ patch (int argc, char **argv)
 	    send_arg("-s");
 	if (unidiff)
 	    send_arg("-u");
+	if (show_c_func)
+	    send_arg("-p");
 
 	if (rev1)
 	    option_with_arg ("-r", rev1);
@@ -571,6 +578,8 @@ patch_fileproc (void *callerdat, struct file_info *finfo)
 
     if (unidiff) run_add_arg_p (&dargc, &darg_allocated, &dargv, "-u");
     else run_add_arg_p (&dargc, &darg_allocated, &dargv, "-c");
+    if (show_c_func)
+        run_add_arg_p (&dargc, &darg_allocated, &dargv, "-p");
     switch (diff_exec (tmpfile1, tmpfile2, NULL, NULL, dargc, dargv,
 		       tmpfile3))
     {
