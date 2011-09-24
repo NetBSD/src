@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1609 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1610 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1124,3 +1124,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[rkujawa 20110917]
 	xen: Provide experimental support for suspend/resume in
 		NetBSD domUs. [jym 20110920]
+	tty: Provide a sysctl and ioctl to dynamically change the tty buffer
+		sizes [christos 20110923]
+	udp(4): Commit Vlad Balan's Google SoC project. This implements
+		RFC6056 port selection algorithms. The selection can
+		be done at the global level via sysctl(7), or at the socket
+		level via setsockopt(2) [christos 20110923]
