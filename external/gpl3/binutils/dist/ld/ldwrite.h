@@ -1,5 +1,5 @@
 /* ldwrite.h -
-   Copyright 1991, 1992, 1993, 2003, 2007 Free Software Foundation, Inc.
+   Copyright 1991, 1992, 1993, 2003, 2005, 2007 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 

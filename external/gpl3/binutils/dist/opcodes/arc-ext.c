@@ -1,5 +1,5 @@
 /* ARC target-dependent stuff. Extension structure access functions
-   Copyright 1995, 1997, 2000, 2001, 2004, 2005, 2007
+   Copyright 1995, 1997, 2000, 2001, 2004, 2005, 2007, 2009
    Free Software Foundation, Inc.
 
    This file is part of libopcodes.
@@ -148,8 +148,8 @@ cleanup_ext_map(void)
 int
 arcExtMap_add(void *base, unsigned long length)
 {
-  unsigned char *block = base;
-  unsigned char *p = block;
+  unsigned char *block = (unsigned char *) base;
+  unsigned char *p = (unsigned char *) block;
 
   /* Clean up and reset everything if needed.  */
   cleanup_ext_map();

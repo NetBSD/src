@@ -1,5 +1,5 @@
 /* Disassembler code for CR16.
-   Copyright 2007, 2008 Free Software Foundation, Inc.
+   Copyright 2007, 2008, 2009  Free Software Foundation, Inc.
    Contributed by M R Swami Reddy (MR.Swami.Reddy@nsc.com).
 
    This file is part of GAS, GDB and the GNU binutils.
@@ -162,9 +162,9 @@ getargtype (operand_type op)
    string. This routine is used when disassembling the 'CC' instruction.  */
 
 static char *
-getccstring (unsigned cc)
+getccstring (unsigned cc_insn)
 {
-  return (char *) cr16_b_cond_tab[cc];
+  return (char *) cr16_b_cond_tab[cc_insn];
 }
 
 
@@ -187,12 +187,12 @@ getcinvstring (const char *str)
    This routine is used when disassembling the 'excp' instruction.  */
 
 static char *
-gettrapstring (unsigned int index)
+gettrapstring (unsigned int trap_index)
 {
   const trap_entry *trap;
 
   for (trap = cr16_traps; trap < cr16_traps + NUMTRAPS; trap++)
-    if (trap->entry == index)
+    if (trap->entry == trap_index)
       return trap->name;
 
   return ILLEGAL;
@@ -203,12 +203,12 @@ gettrapstring (unsigned int index)
 static char *
 getregname (reg r)
 {
-  const reg_entry *reg = cr16_regtab + r;
+  const reg_entry * regentry = cr16_regtab + r;
 
-  if (reg->type != CR16_R_REGTYPE)
+  if (regentry->type != CR16_R_REGTYPE)
     return ILLEGAL;
 
-  return reg->name;
+  return regentry->name;
 }
 
 /* Given a register pair enum value, retrieve its name.  */
@@ -216,12 +216,12 @@ getregname (reg r)
 static char *
 getregpname (reg r)
 {
-  const reg_entry *reg = cr16_regptab + r;
+  const reg_entry * regentry = cr16_regptab + r;
 
-  if (reg->type != CR16_RP_REGTYPE)
+  if (regentry->type != CR16_RP_REGTYPE)
     return ILLEGAL;
 
-  return reg->name;
+  return regentry->name;
 }
 
 /* Given a index register pair enum value, retrieve its name.  */
@@ -229,7 +229,7 @@ getregpname (reg r)
 static char *
 getidxregpname (reg r)
 {
-  const reg_entry *reg;
+  const reg_entry * regentry;
 
   switch (r)
    {
@@ -245,23 +245,23 @@ getidxregpname (reg r)
      break;
    }
 
-  reg = cr16_regptab + r;
+  regentry = cr16_regptab + r;
 
-  if (reg->type != CR16_RP_REGTYPE)
+  if (regentry->type != CR16_RP_REGTYPE)
     return ILLEGAL;
 
-  return reg->name;
+  return regentry->name;
 }
 
 /* Getting a processor register name.  */
 
 static char *
-getprocregname (int index)
+getprocregname (int reg_index)
 {
   const reg_entry *r;
 
   for (r = cr16_pregtab; r < cr16_pregtab + NUMPREGS; r++)
-    if (r->image == index)
+    if (r->image == reg_index)
       return r->name;
 
   return "ILLEGAL REGISTER";
@@ -270,12 +270,12 @@ getprocregname (int index)
 /* Getting a processor register name - 32 bit size.  */
 
 static char *
-getprocpregname (int index)
+getprocpregname (int reg_index)
 {
   const reg_entry *r;
 
   for (r = cr16_pregptab; r < cr16_pregptab + NUMPREGPS; r++)
-    if (r->image == index)
+    if (r->image == reg_index)
       return r->name;
 
   return "ILLEGAL REGISTER";
@@ -322,7 +322,7 @@ match_opcode (void)
 {
   unsigned long mask;
   /* The instruction 'constant' opcode doewsn't exceed 32 bits.  */
-  unsigned long doubleWord = words[1] + (words[0] << 16);
+  unsigned long doubleWord = (words[1] + (words[0] << 16)) & 0xffffffff;
 
   /* Start searching from end of instruction table.  */
   instruction = &cr16_instruction[NUMOPCODES - 2];
@@ -331,6 +331,10 @@ match_opcode (void)
   while (instruction >= cr16_instruction)
     {
       mask = build_mask ();
+      /* Adjust mask for bcond with 32-bit size instruction */
+      if ((IS_INSN_MNEMONIC("b") && instruction->size == 2))
+        mask = 0xff0f0000;
+
       if ((doubleWord & mask) == BIN (instruction->match,
                                       instruction->match_bits))
         return 1;
@@ -674,7 +678,9 @@ print_arg (argument *a, bfd_vma memaddr, struct disassemble_info *info)
       if ((!IS_INSN_TYPE (CSTBIT_INS)) && (!IS_INSN_TYPE (LD_STOR_INS)))
 	(sign_flag) ? func (stream, "%s", "*-"): func (stream, "%s","*+");
 
-      func (stream, "%s", "0x");
+      /* PR 10173: Avoid printing the 0x prefix twice.  */
+      if (info->num_symbols > 0)
+	func (stream, "%s", "0x");
       number = ((relative ? memaddr : 0) +
 		(sign_flag ? ((- a->constant) & 0xffffffe) : a->constant));
 
@@ -691,7 +697,7 @@ print_arg (argument *a, bfd_vma memaddr, struct disassemble_info *info)
 /* Print all the arguments of CURRINSN instruction.  */
 
 static void
-print_arguments (ins *currInsn, bfd_vma memaddr, struct disassemble_info *info)
+print_arguments (ins *currentInsn, bfd_vma memaddr, struct disassemble_info *info)
 {
   int i;
 
@@ -699,13 +705,13 @@ print_arguments (ins *currInsn, bfd_vma memaddr, struct disassemble_info *info)
   if ((IS_INSN_MNEMONIC ("pop")
        || (IS_INSN_MNEMONIC ("popret")
 	   || (IS_INSN_MNEMONIC ("push"))))
-      && currInsn->nargs == 1)
+      && currentInsn->nargs == 1)
     {
       info->fprintf_func (info->stream, "RA");
       return;
     }
 
-  for (i = 0; i < currInsn->nargs; i++)
+  for (i = 0; i < currentInsn->nargs; i++)
     {
       processing_argument_number = i;
 
@@ -719,9 +725,9 @@ print_arguments (ins *currInsn, bfd_vma memaddr, struct disassemble_info *info)
       if ((INST_HAS_REG_LIST) && (i == 2))
         info->fprintf_func (info->stream, "RA");
       else
-        print_arg (&currInsn->arg[i], memaddr, info);
+        print_arg (&currentInsn->arg[i], memaddr, info);
 
-      if ((i != currInsn->nargs - 1) && (!IS_INSN_MNEMONIC ("b")))
+      if ((i != currentInsn->nargs - 1) && (!IS_INSN_MNEMONIC ("b")))
         info->fprintf_func (info->stream, ",");
     }
 }
