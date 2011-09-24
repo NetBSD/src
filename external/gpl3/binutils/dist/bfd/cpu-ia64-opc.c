@@ -1,4 +1,4 @@
-/* Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007
+/* Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2009
    Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
@@ -81,19 +81,19 @@ ext_reg (const struct ia64_operand *self, ia64_insn code, ia64_insn *valuep)
 static const char*
 ins_immu (const struct ia64_operand *self, ia64_insn value, ia64_insn *code)
 {
-  ia64_insn new = 0;
+  ia64_insn new_insn = 0;
   int i;
 
   for (i = 0; i < NELEMS (self->field) && self->field[i].bits; ++i)
     {
-      new |= ((value & ((((ia64_insn) 1) << self->field[i].bits) - 1))
-	      << self->field[i].shift);
+      new_insn |= ((value & ((((ia64_insn) 1) << self->field[i].bits) - 1))
+                 << self->field[i].shift);
       value >>= self->field[i].bits;
     }
   if (value)
     return "integer operand out of range";
 
-  *code |= new;
+  *code |= new_insn;
   return 0;
 }
 
@@ -163,22 +163,22 @@ ins_imms_scaled (const struct ia64_operand *self, ia64_insn value,
 		 ia64_insn *code, int scale)
 {
   BFD_HOST_64_BIT svalue = value, sign_bit = 0;
-  ia64_insn new = 0;
+  ia64_insn new_insn = 0;
   int i;
 
   svalue >>= scale;
 
   for (i = 0; i < NELEMS (self->field) && self->field[i].bits; ++i)
     {
-      new |= ((svalue & ((((ia64_insn) 1) << self->field[i].bits) - 1))
-	      << self->field[i].shift);
+      new_insn |= ((svalue & ((((ia64_insn) 1) << self->field[i].bits) - 1))
+                 << self->field[i].shift);
       sign_bit = (svalue >> (self->field[i].bits - 1)) & 1;
       svalue >>= self->field[i].bits;
     }
   if ((!sign_bit && svalue != 0) || (sign_bit && svalue != -1))
     return "integer operand out of range";
 
-  *code |= new;
+  *code |= new_insn;
   return 0;
 }
 

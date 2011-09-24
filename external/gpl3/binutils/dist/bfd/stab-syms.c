@@ -1,5 +1,5 @@
 /* Table of stab names for the BFD library.
-   Copyright 1990, 1991, 1992, 1994, 1995, 1996, 2000, 2007
+   Copyright 1990, 1991, 1992, 1994, 1995, 1996, 2000, 2005, 2007
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 

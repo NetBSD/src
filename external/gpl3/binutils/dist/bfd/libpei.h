@@ -1,6 +1,6 @@
 /* Support for the generic parts of PE/PEI; common header information.
    Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005,
-   2006, 2007, 2008   Free Software Foundation, Inc.
+   2006, 2007, 2008, 2009  Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -300,46 +300,6 @@
 #define _bfd_XXi_swap_sym_out				_bfd_pei_swap_sym_out
 
 #endif /* !COFF_WITH_pep */
-
-/* Returns true if the target is a PE executable target.  */
-#define bfd_target_pei_p(xvec)					\
-  (CONST_STRNEQ ((xvec)->name, "pei-"))
-
-/* Return the arch string of a PE executable target.  */
-#define bfd_target_pei_arch(xvec)				\
-  ((xvec)->name + sizeof ("pei-") - 1)
-
-/* Returns true if the target is an EFI application target.  */
-#define bfd_target_efi_app_p(xvec)				\
-   (CONST_STRNEQ ((xvec)->name, "efi-app-"))
-
-/* Return the arch string of an EFI application target.  */
-#define bfd_target_efi_app_arch(xvec)				\
-  ((xvec)->name + sizeof ("efi-app-") - 1)
-
-/* Returns true if the target is an EFI Boot Service driver target.  */
-#define bfd_target_efi_bsdrv_p(xvec)				\
-   (CONST_STRNEQ ((xvec)->name, "efi-bsdrv-"))
-
-/* Return the arch string of an EFI Boot Service driver target.  */
-#define bfd_target_efi_bsdrv_arch(xvec)				\
-  ((xvec)->name + sizeof ("efi-bsdrv-") - 1)
-
-/* Returns true if the target is an EFI runtime driver target.  */
-#define bfd_target_efi_rtdrv_p(xvec)				\
-   (CONST_STRNEQ ((xvec)->name, "efi-rtdrv-"))
-
-/* Return the arch string of an EFI runtime driver target.  */
-#define bfd_target_efi_rtdrv_arch(xvec)				\
-  ((xvec)->name + sizeof ("efi-rtdrv-") - 1)
-
-/* Macro: Returns true if the bfd is a PE executable as opposed to a
-   PE object file.  */
-#define bfd_pe_executable_p(abfd)			\
-  (   bfd_target_pei_p ((abfd)->xvec)			\
-   || bfd_target_efi_app_p ((abfd)->xvec)		\
-   || bfd_target_efi_bsdrv_p ((abfd)->xvec)		\
-   || bfd_target_efi_rtdrv_p ((abfd)->xvec))
 
 /* These functions are architecture dependent, and are in peicode.h:
    coff_swap_reloc_in

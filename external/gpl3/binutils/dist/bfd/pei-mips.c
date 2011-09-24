@@ -1,5 +1,6 @@
 /* BFD back-end for MIPS PE IMAGE COFF files.
-   Copyright 1995, 2000, 2001, 2002, 2007 Free Software Foundation, Inc.
+   Copyright 1995, 2000, 2001, 2002, 2005, 2007, 2009
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,7 +26,8 @@
 #define TARGET_NAME "pei-mips"
 #define COFF_IMAGE_WITH_PE
 #define PCRELOFFSET TRUE
-#define COFF_LONG_SECTION_NAMES
+/* Long section names not allowed in executable images, only object files.  */
+#define COFF_LONG_SECTION_NAMES 0
 
 #include "pe-mips.c"
 

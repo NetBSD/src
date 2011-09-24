@@ -1,6 +1,6 @@
 /* Motorola 68HC11/HC12-specific support for 32-bit ELF
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
+   2009, 2010  Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -20,6 +20,7 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#include "alloca-conf.h"
 #include "sysdep.h"
 #include "bfd.h"
 #include "bfdlink.h"
@@ -73,7 +74,8 @@ m68hc11_elf_hash_table_create (bfd *abfd)
   memset (ret, 0, amt);
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      _bfd_elf_link_hash_newfunc,
-				      sizeof (struct elf_link_hash_entry)))
+				      sizeof (struct elf_link_hash_entry),
+				      M68HC11_ELF_DATA))
     {
       free (ret);
       return NULL;
@@ -94,7 +96,7 @@ m68hc11_elf_hash_table_create (bfd *abfd)
   ret->stub_bfd = NULL;
   ret->stub_section = 0;
   ret->add_stub_section = NULL;
-  ret->sym_sec.abfd = NULL;
+  ret->sym_cache.abfd = NULL;
 
   return ret;
 }
@@ -231,6 +233,8 @@ elf32_m68hc11_setup_section_lists (bfd *output_bfd, struct bfd_link_info *info)
   struct m68hc11_elf_link_hash_table *htab;
 
   htab = m68hc11_elf_hash_table (info);
+  if (htab == NULL)
+    return -1;
 
   if (bfd_get_flavour (info->output_bfd) != bfd_target_elf_flavour)
     return 0;
@@ -319,8 +323,10 @@ elf32_m68hc11_size_stubs (bfd *output_bfd, bfd *stub_bfd,
   unsigned int bfd_indx, bfd_count;
   bfd_size_type amt;
   asection *stub_sec;
-
   struct m68hc11_elf_link_hash_table *htab = m68hc11_elf_hash_table (info);
+
+  if (htab == NULL)
+    return FALSE;
 
   /* Stash our params away.  */
   htab->stub_bfd = stub_bfd;
@@ -330,9 +336,7 @@ elf32_m68hc11_size_stubs (bfd *output_bfd, bfd *stub_bfd,
   for (input_bfd = info->input_bfds, bfd_count = 0;
        input_bfd != NULL;
        input_bfd = input_bfd->link_next)
-    {
-      bfd_count += 1;
-    }
+    bfd_count += 1;
 
   /* We want to read in symbol extension records only once.  To do this
      we need to read in the local symbols in parallel and save them for
@@ -378,7 +382,6 @@ elf32_m68hc11_size_stubs (bfd *output_bfd, bfd *stub_bfd,
        input_bfd = input_bfd->link_next, bfd_indx++)
     {
       Elf_Internal_Shdr *symtab_hdr;
-      Elf_Internal_Sym *local_syms;
       struct elf_link_hash_entry ** sym_hashes;
 
       sym_hashes = elf_sym_hashes (input_bfd);
@@ -567,6 +570,8 @@ m68hc11_elf_export_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
 
   info = (struct bfd_link_info *) in_arg;
   htab = m68hc11_elf_hash_table (info);
+  if (htab == NULL)
+    return FALSE;
 
   /* Massage our args to the form they really have.  */
   stub_entry = (struct elf32_m68hc11_stub_hash_entry *) gen_entry;
@@ -628,6 +633,8 @@ elf32_m68hc11_build_stubs (bfd *abfd, struct bfd_link_info *info)
 
   m68hc11_elf_get_bank_parameters (info);
   htab = m68hc11_elf_hash_table (info);
+  if (htab == NULL)
+    return FALSE;
 
   for (stub_sec = htab->stub_bfd->sections;
        stub_sec != NULL;
@@ -677,8 +684,13 @@ m68hc11_elf_get_bank_parameters (struct bfd_link_info *info)
   unsigned i;
   struct m68hc11_page_info *pinfo;
   struct bfd_link_hash_entry *h;
+  struct m68hc11_elf_link_hash_table *htab;
 
-  pinfo = &m68hc11_elf_hash_table (info)->pinfo;
+  htab = m68hc11_elf_hash_table (info);
+  if (htab == NULL)
+    return;
+
+  pinfo = & htab->pinfo;
   if (pinfo->bank_param_initialized)
     return;
 
@@ -891,16 +903,22 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
   const char *name = NULL;
   struct m68hc11_page_info *pinfo;
   const struct elf_backend_data * const ebd = get_elf_backend_data (input_bfd);
+  struct m68hc11_elf_link_hash_table *htab;
 
   symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
 
+  htab = m68hc11_elf_hash_table (info);
+  if (htab == NULL)
+    return FALSE;
+
   /* Get memory bank parameters.  */
   m68hc11_elf_get_bank_parameters (info);
-  pinfo = &m68hc11_elf_hash_table (info)->pinfo;
 
+  pinfo = & htab->pinfo;
   rel = relocs;
   relend = relocs + input_section->reloc_count;
+
   for (; rel < relend; rel++)
     {
       int r_type;
@@ -917,7 +935,6 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
       bfd_vma insn_page;
       bfd_boolean is_far = FALSE;
       struct elf_link_hash_entry *h;
-      const char* stub_name = 0;
 
       r_symndx = ELF32_R_SYM (rel->r_info);
       r_type = ELF32_R_TYPE (rel->r_info);
@@ -940,10 +957,6 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 			+ sec->output_offset
 			+ sym->st_value);
 	  is_far = (sym && (sym->st_other & STO_M68HC12_FAR));
-	  if (is_far)
-	    stub_name = (bfd_elf_string_from_elf_section
-			 (input_bfd, symtab_hdr->sh_link,
-			  sym->st_name));
 	}
       else
 	{
@@ -955,19 +968,11 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 				   warned);
 
 	  is_far = (h && (h->other & STO_M68HC12_FAR));
-	  stub_name = h->root.root.string;
 	}
 
       if (sec != NULL && elf_discarded_section (sec))
-	{
-	  /* For relocs against symbols from removed linkonce sections,
-	     or sections discarded by a linker script, we just want the
-	     section contents zeroed.  Avoid any special processing.  */
-	  _bfd_clear_contents (howto, input_bfd, contents + rel->r_offset);
-	  rel->r_info = 0;
-	  rel->r_addend = 0;
-	  continue;
-	}
+	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
+					 rel, relend, howto, contents);
 
       if (info->relocatable)
 	{
@@ -993,9 +998,7 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
       if (is_far && ELF32_R_TYPE (rel->r_info) == R_M68HC11_16)
 	{
 	  struct elf32_m68hc11_stub_hash_entry* stub;
-	  struct m68hc11_elf_link_hash_table *htab;
 
-	  htab = m68hc11_elf_hash_table (info);
 	  stub = m68hc12_stub_hash_lookup (htab->stub_hash_table,
 					   name, FALSE, FALSE);
 	  if (stub)
@@ -1320,15 +1323,22 @@ void
 elf32_m68hc11_post_process_headers (bfd *abfd, struct bfd_link_info *link_info)
 {
   struct m68hc11_scan_param param;
+  struct m68hc11_elf_link_hash_table *htab;
 
-  if (link_info == 0)
+  if (link_info == NULL)
+    return;
+
+  htab = m68hc11_elf_hash_table (link_info);
+  if (htab == NULL)
     return;
 
   m68hc11_elf_get_bank_parameters (link_info);
 
   param.use_memory_banks = FALSE;
-  param.pinfo = &m68hc11_elf_hash_table (link_info)->pinfo;
+  param.pinfo = & htab->pinfo;
+
   bfd_map_over_sections (abfd, scan_sections_for_abi, &param);
+
   if (param.use_memory_banks)
     {
       Elf_Internal_Ehdr * i_ehdrp;
@@ -1337,4 +1347,3 @@ elf32_m68hc11_post_process_headers (bfd *abfd, struct bfd_link_info *link_info)
       i_ehdrp->e_flags |= E_M68HC12_BANKS;
     }
 }
-

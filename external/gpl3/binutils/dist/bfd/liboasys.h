@@ -1,5 +1,5 @@
 /* BFD internal declarations for Oasys file format handling.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1997, 2002, 2007
+   Copyright 1990, 1991, 1992, 1993, 1994, 1997, 2002, 2005, 2007
    Free Software Foundation, Inc.
    Scrawled by Steve Chamberlain of Cygnus Support.
 

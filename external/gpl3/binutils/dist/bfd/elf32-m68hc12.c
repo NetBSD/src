@@ -564,6 +564,7 @@ static const struct bfd_elf_special_section elf32_m68hc12_special_sections[] =
 };
 
 #define ELF_ARCH		bfd_arch_m68hc12
+#define ELF_TARGET_ID		M68HC11_ELF_DATA
 #define ELF_MACHINE_CODE	EM_68HC12
 #define ELF_MAXPAGESIZE		0x1000
 

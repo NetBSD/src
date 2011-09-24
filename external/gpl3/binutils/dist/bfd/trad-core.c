@@ -71,6 +71,7 @@ const bfd_target *trad_unix_core_file_p PARAMS ((bfd *abfd));
 char * trad_unix_core_file_failing_command PARAMS ((bfd *abfd));
 int trad_unix_core_file_failing_signal PARAMS ((bfd *abfd));
 #define trad_unix_core_file_matches_executable_p generic_core_file_matches_executable_p
+#define trad_unix_core_file_pid _bfd_nocore_core_file_pid
 static void swap_abort PARAMS ((void));
 
 /* Handle 4.2-style (and perhaps also sysV-style) core dump file.  */

@@ -1,6 +1,6 @@
 /* BFD back-end for Intel i860 COFF files.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2007, 2008  Free Software Foundation, Inc.
+   2003, 2004, 2005, 2007, 2008, 2010, 2011  Free Software Foundation, Inc.
    Created mostly by substituting "860" for "386" in coff-i386.c
    Harry Dolan <dolan@ssd.intel.com>, October 1995
 
@@ -144,7 +144,7 @@ coff_i860_reloc_nyi (bfd *abfd ATTRIBUTE_UNUSED,
 		     char **error_message ATTRIBUTE_UNUSED)
 {
   reloc_howto_type *howto = reloc_entry->howto;
-  fprintf (stderr, _("Relocation `%s' not yet implemented\n"), howto->name);
+  (*_bfd_error_handler) (_("relocation `%s' not yet implemented"), howto->name);
   return bfd_reloc_notsupported;
 }
 
@@ -629,6 +629,7 @@ i860_reloc_processing (arelent *cache_ptr, struct internal_reloc *dst,
 
       /* Calculate any reloc addend by looking at the symbol.  */
       CALC_ADDEND (abfd, ptr, (*dst), cache_ptr);
+      (void) ptr;
 
       cache_ptr->address -= asect->vma;
 

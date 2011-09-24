@@ -1,5 +1,5 @@
 /* BFD back-end for we32k COFF files.
-   Copyright 1992, 1993, 1994, 1999, 2000, 2002, 2003, 2007, 2008
+   Copyright 1992, 1993, 1994, 1999, 2000, 2002, 2003, 2005, 2007, 2008
    Free Software Foundation, Inc.
    Contributed by Brendan Kehoe (brendan@cs.widener.edu).
 
