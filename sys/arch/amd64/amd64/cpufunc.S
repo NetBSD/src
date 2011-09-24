@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.20 2011/09/24 10:32:52 jym Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.21 2011/09/24 21:24:52 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -252,7 +252,7 @@ NENTRY(msr_onfault)
 	movq	L_PCB(%r8), %r8
 	movq	$0, PCB_ONFAULT(%r8)
 	movl	$EFAULT, %eax
-        ret
+	ret
 
 #ifndef XEN
 ENTRY(wbinvd)
