@@ -1,5 +1,5 @@
 /* macro.h - header file for macro support for gas
-   Copyright 1994, 1995, 1996, 1997, 1998, 2000, 2002, 2003, 2004, 2006,
+   Copyright 1994, 1995, 1996, 1997, 1998, 2000, 2002, 2003, 2004, 2005, 2006,
    2007 Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
@@ -34,6 +34,13 @@
    name and its default value.  Each time the macro is expanded, the
    formals get the actual values attached to them.  */
 
+enum formal_type
+  {
+    FORMAL_OPTIONAL,
+    FORMAL_REQUIRED,
+    FORMAL_VARARG
+  };
+
 /* Describe the formal arguments to a macro.  */
 
 typedef struct formal_struct {
@@ -42,12 +49,7 @@ typedef struct formal_struct {
   sb def;			/* The default value.  */
   sb actual;			/* The actual argument (changed on each expansion).  */
   int index;			/* The index of the formal 0..formal_count - 1.  */
-  enum formal_type
-    {
-      FORMAL_OPTIONAL,
-      FORMAL_REQUIRED,
-      FORMAL_VARARG
-    } type;			/* The kind of the formal.  */
+  enum formal_type type;	/* The kind of the formal.  */
 } formal_entry;
 
 /* Other values found in the index field of a formal_entry.  */

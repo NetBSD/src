@@ -62,6 +62,8 @@ gld${EMULATION_NAME}_after_open (void)
 {
   bfd *abfd;
 
+  after_open_default ();
+
   if (! command_line.embedded_relocs
       || link_info.relocatable)
     return;

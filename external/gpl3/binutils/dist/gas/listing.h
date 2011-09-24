@@ -1,6 +1,6 @@
 /* This file is listing.h
    Copyright 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1995, 1997, 1998,
-   2003, 2007, 2008 Free Software Foundation, Inc.
+   2003, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -45,7 +45,6 @@
 void listing_eject (int);
 void listing_error (const char *message);
 void listing_file (const char *name);
-void listing_flags (int);
 void listing_list (int on);
 void listing_newline (char *ps);
 void listing_prev_line (void);

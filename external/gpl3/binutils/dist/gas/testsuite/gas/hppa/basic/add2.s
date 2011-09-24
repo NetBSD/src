@@ -90,3 +90,7 @@
 	add,tsv,dc,*vnz  %r4,%r5,%r6
 	add,tsv,dc,*nsv  %r4,%r5,%r6
 	add,tsv,dc,*ev  %r4,%r5,%r6
+
+	;; PR gas/11395: Check for the correct assembly
+	;; of an unconditional 32-bit add instruction.
+	add %r1,%r1,%r1

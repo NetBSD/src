@@ -6,7 +6,7 @@
 cat <<EOF
 OUTPUT_ARCH(${ARCH})
 ${RELOCATING+${LIB_SEARCH_DIRS}}
-ENTRY(__start)
+${RELOCATING+ENTRY (__start)}
 SECTIONS
 {
   .pad 0 : { *(.pad) }

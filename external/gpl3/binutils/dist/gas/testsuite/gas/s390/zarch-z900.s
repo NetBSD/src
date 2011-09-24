@@ -23,9 +23,6 @@ foo:
 	cdsg	%r9,%r6,4095(%r5)
 	cegbr	%f9,%r6
 	cegr	%f9,%r6
-	cfdr	%r6,9,%f5
-	cfer	%r6,9,%f5
-	cfxr	%r6,9,%f5
 	cg	%r9,4095(%r5,%r10)
 	cgdbr	%r6,15,%f5
 	cgdr	%r6,15,%f5

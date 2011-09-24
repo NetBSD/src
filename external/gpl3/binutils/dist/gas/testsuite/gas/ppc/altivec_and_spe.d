@@ -1,5 +1,5 @@
 #as: -maltivec -mspe -mppc64 
-#objdump: -d -Mppc64
+#objdump: -d -Maltivec -Mppc64
 #name: Check that ISA extensions can be specified before CPU selection
 
 .*: +file format elf.*-powerpc.*

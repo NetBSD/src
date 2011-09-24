@@ -1,14 +1,14 @@
 /* Internal format of XCOFF object file data structures for BFD.
 
-   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005
-   Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005,
+   2009, 2010  Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
+   the Free Software Foundation; either version 3 of the License, or
    (at your option) any later version.
    
    This program is distributed in the hope that it will be useful,
@@ -18,7 +18,8 @@
    
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
+   MA 02110-1301, USA.  */
 
 #ifndef _INTERNAL_XCOFF_H
 #define _INTERNAL_XCOFF_H
@@ -214,6 +215,8 @@ struct internal_ldsym
 #define L_ENTRY (0x20)
 /* Exported symbol.  */
 #define L_EXPORT (0x10)
+/* Weak symbol.  */
+#define L_WEAK (0x08)
 
 /* The ldrel structure.  This is used to represent a reloc in the
    .loader section.  */
@@ -291,11 +294,12 @@ struct xcoff_link_hash_entry
 #define XCOFF_LDREL            0x00000008
 /* Symbol is the entry point.  */
 #define XCOFF_ENTRY            0x00000010
-/* Symbol is called; this is, it appears in a R_BR reloc.  */
+/* Symbol is for a function and is the target of a relocation.
+   The relocation may or may not be a branch-type relocation.  */
 #define XCOFF_CALLED           0x00000020
 /* Symbol needs the TOC entry filled in.  */
 #define XCOFF_SET_TOC          0x00000040
-/* Symbol is explicitly imported.  */
+/* Symbol is implicitly or explicitly imported.  */
 #define XCOFF_IMPORT           0x00000080
 /* Symbol is explicitly exported.  */
 #define XCOFF_EXPORT           0x00000100
@@ -315,6 +319,10 @@ struct xcoff_link_hash_entry
 #define XCOFF_SYSCALL32        0x00008000
 /* Symbol is an imported 64 bit syscall.  */
 #define XCOFF_SYSCALL64        0x00010000 
+/* Symbol was not explicitly defined by the time it was marked.  */
+#define XCOFF_WAS_UNDEFINED    0x00020000
+/* We have assigned an output XCOFF entry to this symbol.  */
+#define XCOFF_ALLOCATED	       0x00040000
 
 /* The XCOFF linker hash table.  */
 
@@ -326,64 +334,9 @@ struct xcoff_link_hash_entry
 #define XCOFF_SPECIAL_SECTION_END        4
 #define XCOFF_SPECIAL_SECTION_END2       5
 
-struct xcoff_link_hash_table
-{
-  struct bfd_link_hash_table root;
-
-  /* The .debug string hash table.  We need to compute this while
-     reading the input files, so that we know how large the .debug
-     section will be before we assign section positions.  */
-  struct bfd_strtab_hash *debug_strtab;
-
-  /* The .debug section we will use for the final output.  */
-  asection *debug_section;
-
-  /* The .loader section we will use for the final output.  */
-  asection *loader_section;
-
-  /* A count of non TOC relative relocs which will need to be
-     allocated in the .loader section.  */
-  size_t ldrel_count;
-
-  /* The .loader section header.  */
-  struct internal_ldhdr ldhdr;
-
-  /* The .gl section we use to hold global linkage code.  */
-  asection *linkage_section;
-
-  /* The .tc section we use to hold toc entries we build for global
-     linkage code.  */
-  asection *toc_section;
-
-  /* The .ds section we use to hold function descriptors which we
-     create for exported symbols.  */
-  asection *descriptor_section;
-
-  /* The list of import files.  */
-  struct xcoff_import_file *imports;
-
-  /* Required alignment of sections within the output file.  */
-  unsigned long file_align;
-
-  /* Whether the .text section must be read-only.  */
-  bfd_boolean textro;
-
-  /* Whether garbage collection was done.  */
-  bfd_boolean gc;
-
-  /* A linked list of symbols for which we have size information.  */
-  struct xcoff_link_size_list
-  {
-    struct xcoff_link_size_list *next;
-    struct xcoff_link_hash_entry *h;
-    bfd_size_type size;
-  } 
-  *size_list;
-
-  /* Magic sections: _text, _etext, _data, _edata, _end, end. */
-  asection *special_sections[XCOFF_NUMBER_OF_SPECIAL_SECTIONS];
-};
-
+/* These flags indicate which of -bexpall and -bexpfull are in effect.  */
+#define XCOFF_EXPALL 1
+#define XCOFF_EXPFULL 2
 
 /* This structure is used to pass information through
    xcoff_link_hash_traverse.  */
@@ -399,8 +352,8 @@ struct xcoff_loader_info
   /* Link information structure.  */
   struct bfd_link_info *info;
 
-  /* Whether all defined symbols should be exported.  */
-  bfd_boolean export_defineds;
+  /* A mask of XCOFF_EXPALL and XCOFF_EXPFULL flags.  */
+  unsigned int auto_export_flags;
 
   /* Number of ldsym structures.  */
   size_t ldsym_count;
@@ -635,5 +588,9 @@ struct xcoff_ar_hdr_big
   ((struct xcoff_ar_hdr *) arch_eltdata (bfd)->arch_header)
 #define arch_xhdr_big(bfd) \
   ((struct xcoff_ar_hdr_big *) arch_eltdata (bfd)->arch_header)
+
+/* True if symbols of class CLASS are external.  */
+#define EXTERN_SYM_P(CLASS) \
+  ((CLASS) == C_EXT || (CLASS) == C_AIX_WEAKEXT)
 
 #endif /* _INTERNAL_XCOFF_H */

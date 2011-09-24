@@ -54,3 +54,6 @@ _start:
 	inl	$xtrn, %eax
 
 	.equiv late, 8
+
+	movabs	$0x80000001, %rax
+	movabsq	$0x80000001, %rax

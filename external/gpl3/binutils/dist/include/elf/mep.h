@@ -1,11 +1,12 @@
 /* Toshiba MeP ELF support for BFD.
-   Copyright (C) 2001, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2001, 2004, 2005, 2007, 2009, 2010
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
+   the Free Software Foundation; either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -14,8 +15,8 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation, Inc.,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, write to the Free Software Foundation,
+   Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 #ifndef _ELF_MEP_H
 #define _ELF_MEP_H
@@ -73,12 +74,22 @@ END_RELOC_NUMBERS(R_MEP_max)
 #define EF_MEP_CPU_C2   	0x01000000	/* MEP c2 */
 #define EF_MEP_CPU_C3   	0x02000000	/* MEP c3 */
 #define EF_MEP_CPU_C4   	0x04000000	/* MEP c4 */
+/* 5..7 are reseved */
+#define EF_MEP_CPU_C5   	0x08000000	/* MEP c5 */
 #define EF_MEP_CPU_H1   	0x10000000	/* MEP h1 */
+
+#define EF_MEP_COP_MASK		0x00ff0000
+#define EF_MEP_COP_NONE		0x00000000
+#define EF_MEP_COP_AVC		0x00010000
+#define EF_MEP_COP_AVC2		0x00020000
+#define EF_MEP_COP_FMAX		0x00030000
+/* 4..5 are reserved.  */
+#define EF_MEP_COP_IVC2		0x00060000
 
 #define EF_MEP_LIBRARY		0x00000100	/* Built as a library */
 
 #define EF_MEP_INDEX_MASK       0x000000ff      /* Configuration index */
 
-#define EF_MEP_ALL_FLAGS	0xff0001ff
+#define EF_MEP_ALL_FLAGS	0xffff01ff
 
 #endif /* _ELF_MEP_H */

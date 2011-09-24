@@ -1,16 +1,16 @@
 MACHINE=
 SCRIPT_NAME=elf
 TEMPLATE_NAME=elf32
+EXTRA_EM_FILE=scoreelf
 OUTPUT_FORMAT="elf32-bigscore"
 BIG_OUTPUT_FORMAT="elf32-bigscore"
 LITTLE_OUTPUT_FORMAT="elf32-littlescore"
+NO_RELA_RELOCS=yes
 GROUP="-lm -lc -lglsim -lgcc -lstdc++"
 
 TEXT_START_ADDR=0x00000000
-case ${LD_FLAG} in
-    n|N)	TEXT_START_ADDR=0x0400000 ;;
-esac
 MAXPAGESIZE=256
+NONPAGED_TEXT_START_ADDR=0x0400000
 SHLIB_TEXT_START_ADDR=0x5ffe0000
 OTHER_GOT_SYMBOLS='
   _gp = ALIGN(16) + 0x3ff0;
@@ -26,7 +26,15 @@ OTHER_BSS_SYMBOLS='
 # This sets the stack to the top of the simulator memory (2^19 bytes).
 STACK_ADDR=0x8000000
 
-ARCH=score
+SCORE_NAME=${EMULATION_NAME}
+if [ "${SCORE_NAME}" = "score3_elf" ] ; then
+ARCH=score3
+fi
+
+if [ "${SCORE_NAME}" = "score7_elf" ] ; then
+ARCH=score7
+fi
+
 MACHINE=
 ENTRY=_start
 EMBEDDED=yes

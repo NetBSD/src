@@ -12,7 +12,7 @@ MEMORY
 	/*PAGE 1 : */ data (W) : ORIGIN = 0x01000080, LENGTH = 0xFF80
 }
 
-ENTRY(${ENTRY})
+${RELOCATING+ENTRY (${ENTRY})}
 
 SECTIONS 				
 { 					

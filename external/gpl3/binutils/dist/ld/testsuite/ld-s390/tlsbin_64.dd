@@ -160,16 +160,16 @@ Disassembly of section .text:
 # function epilog
  +[0-9a-f]+:	eb 6e f0 d0 00 04 	lmg	%r6,%r14,208\(%r15\)
  +[0-9a-f]+:	07 fe             	br	%r14
- +[0-9a-f]+:	07 07             	bcr	0,%r7
- +[0-9a-f]+:	07 07             	bcr	0,%r7
- +[0-9a-f]+:	07 07             	bcr	0,%r7
- +[0-9a-f]+:	07 07             	bcr	0,%r7
- +[0-9a-f]+:	07 07             	bcr	0,%r7
- +[0-9a-f]+:	07 07             	bcr	0,%r7
- +[0-9a-f]+:	07 07             	bcr	0,%r7
- +[0-9a-f]+:	07 07             	bcr	0,%r7
- +[0-9a-f]+:	07 07             	bcr	0,%r7
- +[0-9a-f]+:	07 07             	bcr	0,%r7
+ +[0-9a-f]+:	07 07             	nopr	%r7
+ +[0-9a-f]+:	07 07             	nopr	%r7
+ +[0-9a-f]+:	07 07             	nopr	%r7
+ +[0-9a-f]+:	07 07             	nopr	%r7
+ +[0-9a-f]+:	07 07             	nopr	%r7
+ +[0-9a-f]+:	07 07             	nopr	%r7
+ +[0-9a-f]+:	07 07             	nopr	%r7
+ +[0-9a-f]+:	07 07             	nopr	%r7
+ +[0-9a-f]+:	07 07             	nopr	%r7
+ +[0-9a-f]+:	07 07             	nopr	%r7
 
 0+[0-9a-f]+ <_start>:
 # function prolog
@@ -220,4 +220,4 @@ Disassembly of section .text:
 # function epilog
  +[0-9a-f]+:	eb 6e f0 d0 00 04 	lmg	%r6,%r14,208\(%r15\)
  +[0-9a-f]+:	07 fe             	br	%r14
- +[0-9a-f]+:	07 07             	bcr	0,%r7
+ +[0-9a-f]+:	07 07             	nopr	%r7

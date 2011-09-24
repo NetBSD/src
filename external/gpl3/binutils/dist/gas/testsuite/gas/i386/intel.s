@@ -145,16 +145,16 @@ foo:
  xchg   edi, eax
  cwde
  cdq
- call   0x9090,0x90909090
+ call   0x9090:0x90909090
  fwait
  pushf
  popf
  sahf
  lahf
- mov    al, [0x90909090]
- mov    eax, [0x90909090]
- mov    [0x90909090], al
- mov    [0x90909090], eax
+ mov    al, FLAT:[0x90909090]
+ mov    eax, FLAT:[0x90909090]
+ mov    FLAT:[0x90909090], al
+ mov    FLAT:[0x90909090], eax
  movs   byte ptr es:[edi], byte ptr ds:[esi]
  movs   dword ptr es:[edi], dword ptr ds:[esi]
  cmps   byte ptr ds:[esi], byte ptr es:[edi]
@@ -226,7 +226,7 @@ foo:
  out    0x90, eax
  call   .+5+0x90909090
  jmp    .+5+0x90909090
- jmp    0x9090,0x90909090
+ jmp    0x9090:0x90909090
  jmp    .+2-0x70
  in     al, dx
  in     eax, dx
@@ -488,11 +488,11 @@ foo:
  xchg   di, ax
  cbw
  cwd
- callw  0x9090,0x9090
+ callw  0x9090:0x9090
  pushfw
  popfw
- mov    ax, [0x90909090]
- mov    [0x90909090], ax
+ mov    ax, FLAT:[0x90909090]
+ mov    FLAT:[0x90909090], ax
  movs   word ptr es:[edi], word ptr ds:[esi]
  cmps   word ptr ds:[esi], word ptr es:[edi]
  test   ax, 0x9090
@@ -525,7 +525,7 @@ foo:
  in     ax, 0x90
  out    0x90, ax
  callw  .+3+0x9090
- jmpw   0x9090,0x9090
+ jmpw   0x9090:0x9090
  in     ax, dx
  out    dx, ax
  not    word ptr 0x90909090[eax]
@@ -599,7 +599,7 @@ rot5:
  mov	eax, [ebx*2]
  adc    BYTE PTR [eax*4+0x90909090], dl
  das
- jmp    0x9090,0x90909090
+ jmp    0x9090:0x90909090
  movs   WORD PTR es:[edi], WORD PTR ds:[esi]
  jo     .+2-0x70
 
@@ -617,7 +617,7 @@ rot5:
  mov	ax,  word ptr [ebx+2*eax+(2*(4095+1)*2)]
  jmp 	eax
  jmp	[eax]
- jmp	[bar]
+ jmp	FLAT:[bar]
  jmp	bar
 
 	# Check arithmetic operators
@@ -693,3 +693,8 @@ fsubrp st,st(3)
 
 fidivr  word ptr [ebx]
 fidivr  dword ptr [ebx]
+
+ cmovpe  edx, 0x90909090[eax]
+ cmovpo edx, 0x90909090[eax]
+ cmovpe  dx, 0x90909090[eax]
+ cmovpo dx, 0x90909090[eax]

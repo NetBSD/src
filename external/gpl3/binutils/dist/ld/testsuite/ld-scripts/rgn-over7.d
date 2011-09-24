@@ -1,7 +1,7 @@
 # name: rgn-over7
 # source: rgn-over.s
 # ld: -T rgn-over7.t -Map tmpdir/rgn-over7.map
-# error: \A[^ \n]*?ld[^:\n]*?: [^\n]*?section \.text will not fit in region r1\n[^ \n]*?ld[^:\n]*?: section \.data \[0+1008 -> 0+1013\] overlaps section \.text \[0+1000 -> 0+100b\]\n[^ \n]*?ld[^:\n]*?: region r1 overflowed by 4 bytes\Z
+# error: \A[^ \n]*?ld[^:\n]*?: [^\n]*?section `\.text' will not fit in region `r1'\n[^ \n]*?ld[^:\n]*?: section \.data loaded at \[0+1008,0+1013\] overlaps section \.text loaded at \[0+1000,0+100b\]\n[^ \n]*?ld[^:\n]*?: region `r1' overflowed by 4 bytes\Z
 
 Discarded input sections
 #...

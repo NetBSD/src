@@ -1,7 +1,6 @@
 #source: empty2.s
 #ld:
 #readelf: -s
-#xfail: "d30v-*-*" "dlx-*-*" "hppa*-*-*" "i960-*-*" "or32-*-*" "pj-*-*"
 
 #...
 [ 	]+[0-9]+:[ 	]+0+[ 	]+0[ 	]+FILE[	 ]+LOCAL[ 	]+DEFAULT[ 	]+ABS empty2.s

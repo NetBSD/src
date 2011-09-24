@@ -1,4 +1,5 @@
 	.syntax unified
+	.arch armv6
 	.weak bar
 	.section .far, "ax", %progbits
 	.global	_start

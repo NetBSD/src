@@ -1,29 +1,33 @@
 /* Header file for targets using CGEN: Cpu tools GENerator.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005
-Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2009, 2010
+   Free Software Foundation, Inc.
 
-This file is part of GDB, the GNU debugger, and the GNU Binutils.
+   This file is part of GDB, the GNU debugger, and the GNU Binutils.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
+   You should have received a copy of the GNU General Public License along
+   with this program; if not, write to the Free Software Foundation, Inc.,
+   51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-#ifndef CGEN_H
-#define CGEN_H
+#ifndef OPCODE_CGEN_H
+#define OPCODE_CGEN_H
 
 #include "symcat.h"
-#include "cgen-bitset.h"
+#include "cgen/bitset.h"
+
+/* ??? IWBN to replace bfd in the name.  */
+#include "bfd_stdint.h"
+
 /* ??? This file requires bfd.h but only to get bfd_vma.
    Seems like an awful lot to require just to get such a fundamental type.
    Perhaps the definition of bfd_vma can be moved outside of bfd.h.
@@ -65,6 +69,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
    when an array of characters the value is in target byte order.  */
 
 typedef unsigned int CGEN_INSN_INT;
+typedef int64_t CGEN_INSN_LGSINT; /* large/long SINT */
+typedef uint64_t CGEN_INSN_LGUINT; /* large/long UINT */
+
 #if CGEN_INT_INSN_P
 typedef CGEN_INSN_INT CGEN_INSN_BYTES;
 typedef CGEN_INSN_INT *CGEN_INSN_BYTES_PTR;
@@ -122,7 +129,7 @@ typedef union
 typedef struct
 {
   /* Boolean attributes.  */
-  unsigned int bool;
+  unsigned int bool_;
   /* Non-boolean integer attributes.  */
   CGEN_ATTR_VALUE_TYPE nonbool[1];
 } CGEN_ATTR;
@@ -133,12 +140,12 @@ typedef struct
    in one host int).  */
 
 #define CGEN_ATTR_TYPE(n) \
-struct { unsigned int bool; \
+struct { unsigned int bool_; \
 	 CGEN_ATTR_VALUE_TYPE nonbool[(n) ? (n) : 1]; }
 
 /* Return the boolean attributes.  */
 
-#define CGEN_ATTR_BOOLS(a) ((a)->bool)
+#define CGEN_ATTR_BOOLS(a) ((a)->bool_)
 
 /* Non-boolean attribute numbers are offset by this much.  */
 
@@ -975,7 +982,7 @@ typedef CGEN_ATTR_TYPE (CGEN_INSN_NBOOL_ATTRS) CGEN_INSN_ATTR_TYPE;
 typedef enum cgen_insn_attr {
   CGEN_INSN_ALIAS = 0
 } CGEN_INSN_ATTR;
-#define CGEN_ATTR_CGEN_INSN_ALIAS_VALUE(attrs) ((attrs)->bool & (1 << CGEN_INSN_ALIAS))
+#define CGEN_ATTR_CGEN_INSN_ALIAS_VALUE(attrs) ((attrs)->bool_ & (1 << CGEN_INSN_ALIAS))
 #endif
 
 /* This struct defines each entry in the instruction table.  */
@@ -1470,4 +1477,4 @@ extern void cgen_clear_signed_overflow_ok (CGEN_CPU_DESC);
 /* Will an error message be generated if a signed field in an instruction overflows ? */
 extern unsigned int cgen_signed_overflow_ok_p (CGEN_CPU_DESC);
 
-#endif /* CGEN_H */
+#endif /* OPCODE_CGEN_H */

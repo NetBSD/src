@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright 2002, 2003, 2004, 2005, 2007, 2008
+# Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
 # Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -47,6 +47,7 @@ static int dotsyms = 1;
 
 /* Whether to run tls optimization.  */
 static int no_tls_opt = 0;
+static int no_tls_get_addr_opt = 0;
 
 /* Whether to run opd optimization.  */
 static int no_opd_opt = 0;
@@ -57,8 +58,11 @@ static int no_toc_opt = 0;
 /* Whether to allow multiple toc sections.  */
 static int no_multi_toc = 0;
 
+/* Whether to sort input toc and got sections.  */
+static int no_toc_sort = 0;
+
 /* Whether to emit symbols for stubs.  */
-static int emit_stub_syms = 0;
+static int emit_stub_syms = -1;
 
 static asection *toc_section = 0;
 
@@ -73,7 +77,7 @@ static void
 ppc_create_output_section_statements (void)
 {
   if (!(bfd_get_flavour (link_info.output_bfd) == bfd_target_elf_flavour
-	&& elf_object_id (link_info.output_bfd) == PPC64_ELF_TDATA))
+	&& elf_object_id (link_info.output_bfd) == PPC64_ELF_DATA))
     return;
 
   link_info.wrap_char = '.';
@@ -96,36 +100,182 @@ ppc_create_output_section_statements (void)
   ppc64_elf_init_stub_bfd (stub_file->the_bfd, &link_info);
 }
 
+/* Move the input section statement at *U which happens to be on LIST
+   to be just before *TO.  */
+
+static void
+move_input_section (lang_statement_list_type *list,
+		    lang_statement_union_type **u,
+		    lang_statement_union_type **to)
+{
+  lang_statement_union_type *s = *u;
+  asection *i = s->input_section.section;
+  asection *p, *n;
+
+  /* Snip the input section from the statement list.  If it was the
+     last statement, fix the list tail pointer.  */
+  *u = s->header.next;
+  if (*u == NULL)
+    list->tail = u;
+  /* Add it back in the new position.  */
+  s->header.next = *to;
+  *to = s;
+  if (list->tail == to)
+    list->tail = &s->header.next;
+
+  /* Trim I off the bfd map_head/map_tail doubly linked lists.  */
+  n = i->map_head.s;
+  p = i->map_tail.s;
+  (p != NULL ? p : i->output_section)->map_head.s = n;
+  (n != NULL ? n : i->output_section)->map_tail.s = p;
+
+  /* Add I back on in its new position.  */
+  if (s->header.next->header.type == lang_input_section_enum)
+    {
+      n = s->header.next->input_section.section;
+      p = n->map_tail.s;
+    }
+  else
+    {
+      /* If the next statement is not an input section statement then
+	 TO must point at the previous input section statement
+	 header.next field.  */
+      lang_input_section_type *prev = (lang_input_section_type *)
+	((char *) to - offsetof (lang_statement_union_type, header.next));
+
+      ASSERT (prev->header.type == lang_input_section_enum);
+      p = prev->section;
+      n = p->map_head.s;
+    }
+  i->map_head.s = n;
+  i->map_tail.s = p;
+  (p != NULL ? p : i->output_section)->map_head.s = i;
+  (n != NULL ? n : i->output_section)->map_tail.s = i;
+}
+
+/* Sort input section statements in the linker script tree rooted at
+   LIST so that those whose owning bfd happens to have a section
+   called .init or .fini are placed first.  Place any TOC sections
+   referenced by small TOC relocs next, with TOC sections referenced
+   only by bigtoc relocs last.  */
+
+static void
+sort_toc_sections (lang_statement_list_type *list,
+		   lang_statement_union_type **ini,
+		   lang_statement_union_type **small)
+{
+  lang_statement_union_type *s, **u;
+  asection *i;
+
+  u = &list->head;
+  while ((s = *u) != NULL)
+    {
+      switch (s->header.type)
+	{
+	case lang_wild_statement_enum:
+	  sort_toc_sections (&s->wild_statement.children, ini, small);
+	  break;
+
+	case lang_group_statement_enum:
+	  sort_toc_sections (&s->group_statement.children, ini, small);
+	  break;
+
+	case lang_input_section_enum:
+	  i = s->input_section.section;
+	  /* Leave the stub_file .got where it is.  We put the .got
+	     header there.  */
+	  if (i->owner == stub_file->the_bfd)
+	    break;
+	  if (bfd_get_section_by_name (i->owner, ".init") != NULL
+	      || bfd_get_section_by_name (i->owner, ".fini") != NULL)
+	    {
+	      if (ini != NULL && *ini != s)
+		{
+		  move_input_section (list, u, ini);
+		  if (small == ini)
+		    small = &s->header.next;
+		  ini = &s->header.next;
+		  continue;
+		}
+	      if (small == ini)
+		small = &s->header.next;
+	      ini = &s->header.next;
+	      break;
+	    }
+	  else if (ini == NULL)
+	    ini = u;
+
+	  if (ppc64_elf_has_small_toc_reloc (i))
+	    {
+	      if (small != NULL && *small != s)
+		{
+		  move_input_section (list, u, small);
+		  small = &s->header.next;
+		  continue;
+		}
+	      small = &s->header.next;
+	    }
+	  else if (small == NULL)
+	    small = u;
+	  break;
+
+	default:
+	  break;
+	}
+      u = &s->header.next;
+    }
+}
+
+static void
+prelim_size_sections (void)
+{
+  if (expld.phase != lang_mark_phase_enum)
+    {
+      expld.phase = lang_mark_phase_enum;
+      expld.dataseg.phase = exp_dataseg_none;
+      one_lang_size_sections_pass (NULL, FALSE);
+      /* We must not cache anything from the preliminary sizing.  */
+      lang_reset_memory_regions ();
+    }
+}
+
 static void
 ppc_before_allocation (void)
 {
   if (stub_file != NULL)
     {
       if (!no_opd_opt
-	  && !ppc64_elf_edit_opd (link_info.output_bfd, &link_info,
-				  non_overlapping_opd))
+	  && !ppc64_elf_edit_opd (&link_info, non_overlapping_opd))
 	einfo ("%X%P: can not edit %s %E\n", "opd");
 
-      if (ppc64_elf_tls_setup (link_info.output_bfd, &link_info)
+      if (ppc64_elf_tls_setup (&link_info, no_tls_get_addr_opt, &no_multi_toc)
 	  && !no_tls_opt)
 	{
 	  /* Size the sections.  This is premature, but we want to know the
 	     TLS segment layout so that certain optimizations can be done.  */
-	  expld.phase = lang_mark_phase_enum;
-	  expld.dataseg.phase = exp_dataseg_none;
-	  one_lang_size_sections_pass (NULL, TRUE);
+	  prelim_size_sections ();
 
-	  if (!ppc64_elf_tls_optimize (link_info.output_bfd, &link_info))
+	  if (!ppc64_elf_tls_optimize (&link_info))
 	    einfo ("%X%P: TLS problem %E\n");
-
-	  /* We must not cache anything from the preliminary sizing.  */
-	  lang_reset_memory_regions ();
 	}
 
       if (!no_toc_opt
-	  && !link_info.relocatable
-	  && !ppc64_elf_edit_toc (link_info.output_bfd, &link_info))
-	einfo ("%X%P: can not edit %s %E\n", "toc");
+	  && !link_info.relocatable)
+	{
+	  prelim_size_sections ();
+
+	  if (!ppc64_elf_edit_toc (&link_info))
+	    einfo ("%X%P: can not edit %s %E\n", "toc");
+	}
+
+      if (!no_toc_sort)
+	{
+	  lang_output_section_statement_type *toc_os;
+
+	  toc_os = lang_output_section_find (".got");
+	  if (toc_os != NULL)
+	    sort_toc_sections (&toc_os->children, NULL, NULL);
+	}
     }
 
   gld${EMULATION_NAME}_before_allocation ();
@@ -258,18 +408,12 @@ ppc_layout_sections_again (void)
      to recalculate all the section offsets.  This may mean we need to
      add even more stubs.  */
   gld${EMULATION_NAME}_map_segments (TRUE);
-  need_laying_out = -1;
-}
 
-
-/* Call the back-end function to set TOC base after we have placed all
-   the sections.  */
-static void
-gld${EMULATION_NAME}_after_allocation (void)
-{
   if (!link_info.relocatable)
     _bfd_set_gp_value (link_info.output_bfd,
 		       ppc64_elf_toc (link_info.output_bfd));
+
+  need_laying_out = -1;
 }
 
 
@@ -283,7 +427,10 @@ build_toc_list (lang_statement_union_type *statement)
       if (!((lang_input_statement_type *) i->owner->usrdata)->just_syms_flag
 	  && (i->flags & SEC_EXCLUDE) == 0
 	  && i->output_section == toc_section)
-	ppc64_elf_next_toc_section (&link_info, i);
+	{
+	  if (!ppc64_elf_next_toc_section (&link_info, i))
+	    einfo ("%X%P: linker script separates .got and .toc\n");
+	}
     }
 }
 
@@ -307,18 +454,13 @@ build_section_lists (lang_statement_union_type *statement)
 }
 
 
-/* Final emulation specific call.  */
-
+/* Call the back-end function to set TOC base after we have placed all
+   the sections.  */
 static void
-gld${EMULATION_NAME}_finish (void)
+gld${EMULATION_NAME}_after_allocation (void)
 {
-  /* e_entry on PowerPC64 points to the function descriptor for
-     _start.  If _start is missing, default to the first function
-     descriptor in the .opd section.  */
-  entry_section = ".opd";
-
-  /* bfd_elf_discard_info just plays with debugging sections,
-     ie. doesn't affect any code, so we can delay resizing the
+  /* bfd_elf_discard_info just plays with data and debugging sections,
+     ie. doesn't affect code size, so we can delay resizing the
      sections.  It's likely we'll resize everything in the process of
      adding stubs.  */
   if (bfd_elf_discard_info (link_info.output_bfd, &link_info))
@@ -328,33 +470,61 @@ gld${EMULATION_NAME}_finish (void)
      stubs.  */
   if (stub_file != NULL && !link_info.relocatable)
     {
-      int ret = ppc64_elf_setup_section_lists (link_info.output_bfd,
-					       &link_info,
-					       no_multi_toc);
+      int ret = ppc64_elf_setup_section_lists (&link_info,
+					       &ppc_add_stub_section,
+					       &ppc_layout_sections_again);
       if (ret < 0)
 	einfo ("%X%P: can not size stub section: %E\n");
       else if (ret > 0)
 	{
-	  toc_section = bfd_get_section_by_name (link_info.output_bfd, ".got");
-	  if (toc_section != NULL)
+	  ppc64_elf_start_multitoc_partition (&link_info);
+
+	  if (!no_multi_toc)
+	    {
+	      toc_section = bfd_get_section_by_name (link_info.output_bfd,
+						     ".got");
+	      if (toc_section != NULL)
+		lang_for_each_statement (build_toc_list);
+	    }
+
+	  if (ppc64_elf_layout_multitoc (&link_info)
+	      && !no_multi_toc
+	      && toc_section != NULL)
 	    lang_for_each_statement (build_toc_list);
 
-	  ppc64_elf_reinit_toc (link_info.output_bfd, &link_info);
+	  ppc64_elf_finish_multitoc_partition (&link_info);
 
 	  lang_for_each_statement (build_section_lists);
 
+	  if (!ppc64_elf_check_init_fini (&link_info))
+	    einfo ("%P: .init/.fini fragments use differing TOC pointers\n");
+
 	  /* Call into the BFD backend to do the real work.  */
-	  if (!ppc64_elf_size_stubs (link_info.output_bfd,
-				     &link_info,
-				     group_size,
-				     &ppc_add_stub_section,
-				     &ppc_layout_sections_again))
+	  if (!ppc64_elf_size_stubs (&link_info, group_size))
 	    einfo ("%X%P: can not size stub section: %E\n");
 	}
     }
 
   if (need_laying_out != -1)
-    gld${EMULATION_NAME}_map_segments (need_laying_out);
+    {
+      gld${EMULATION_NAME}_map_segments (need_laying_out);
+
+      if (!link_info.relocatable)
+	_bfd_set_gp_value (link_info.output_bfd,
+			   ppc64_elf_toc (link_info.output_bfd));
+    }
+}
+
+
+/* Final emulation specific call.  */
+
+static void
+gld${EMULATION_NAME}_finish (void)
+{
+  /* e_entry on PowerPC64 points to the function descriptor for
+     _start.  If _start is missing, default to the first function
+     descriptor in the .opd section.  */
+  entry_section = ".opd";
 
   if (link_info.relocatable)
     {
@@ -369,11 +539,13 @@ gld${EMULATION_NAME}_finish (void)
       char *msg = NULL;
       char *line, *endline;
 
-      emit_stub_syms |= link_info.emitrelocations;
+      if (emit_stub_syms < 0)
+	emit_stub_syms = 1;
       if (!ppc64_elf_build_stubs (emit_stub_syms, &link_info,
 				  config.stats ? &msg : NULL))
 	einfo ("%X%P: can not build stubs: %E\n");
 
+      fflush (stdout);
       for (line = msg; line != NULL; line = endline)
 	{
 	  endline = strchr (line, '\n');
@@ -381,6 +553,7 @@ gld${EMULATION_NAME}_finish (void)
 	    *endline++ = '\0';
 	  fprintf (stderr, "%s: %s\n", program_name, line);
 	}
+      fflush (stderr);
       if (msg != NULL)
 	free (msg);
     }
@@ -416,29 +589,19 @@ gld${EMULATION_NAME}_new_vers_pattern (struct bfd_elf_version_expr *entry)
   char *dot_pat;
 
   if (!dotsyms
-      || (entry->pattern != NULL
-	  && (entry->pattern[0] == '*' || entry->pattern[0] == '.')))
+      || entry->pattern[0] == '.'
+      || (!entry->literal && entry->pattern[0] == '*'))
     return entry;
 
   dot_entry = xmalloc (sizeof *dot_entry);
   *dot_entry = *entry;
   dot_entry->next = entry;
-  if (entry->pattern != NULL)
-    {
-      len = strlen (entry->pattern) + 2;
-      dot_pat = xmalloc (len);
-      dot_pat[0] = '.';
-      memcpy (dot_pat + 1, entry->pattern, len - 1);
-      dot_entry->pattern = dot_pat;
-    }
-  if (entry->symbol != NULL)
-    {
-      len = strlen (entry->symbol) + 2;
-      dot_pat = xmalloc (len);
-      dot_pat[0] = '.';
-      memcpy (dot_pat + 1, entry->symbol, len - 1);
-      dot_entry->symbol = dot_pat;
-    }
+  len = strlen (entry->pattern) + 2;
+  dot_pat = xmalloc (len);
+  dot_pat[0] = '.';
+  memcpy (dot_pat + 1, entry->pattern, len - 1);
+  dot_entry->pattern = dot_pat;
+  dot_entry->script = 1;
   return dot_entry;
 }
 
@@ -489,24 +652,30 @@ fi
 PARSE_AND_LIST_PROLOGUE='
 #define OPTION_STUBGROUP_SIZE		301
 #define OPTION_STUBSYMS			(OPTION_STUBGROUP_SIZE + 1)
-#define OPTION_DOTSYMS			(OPTION_STUBSYMS + 1)
+#define OPTION_NO_STUBSYMS		(OPTION_STUBSYMS + 1)
+#define OPTION_DOTSYMS			(OPTION_NO_STUBSYMS + 1)
 #define OPTION_NO_DOTSYMS		(OPTION_DOTSYMS + 1)
 #define OPTION_NO_TLS_OPT		(OPTION_NO_DOTSYMS + 1)
-#define OPTION_NO_OPD_OPT		(OPTION_NO_TLS_OPT + 1)
+#define OPTION_NO_TLS_GET_ADDR_OPT	(OPTION_NO_TLS_OPT + 1)
+#define OPTION_NO_OPD_OPT		(OPTION_NO_TLS_GET_ADDR_OPT + 1)
 #define OPTION_NO_TOC_OPT		(OPTION_NO_OPD_OPT + 1)
 #define OPTION_NO_MULTI_TOC		(OPTION_NO_TOC_OPT + 1)
-#define OPTION_NON_OVERLAPPING_OPD	(OPTION_NO_MULTI_TOC + 1)
+#define OPTION_NO_TOC_SORT		(OPTION_NO_MULTI_TOC + 1)
+#define OPTION_NON_OVERLAPPING_OPD	(OPTION_NO_TOC_SORT + 1)
 '
 
 PARSE_AND_LIST_LONGOPTS='
   { "stub-group-size", required_argument, NULL, OPTION_STUBGROUP_SIZE },
   { "emit-stub-syms", no_argument, NULL, OPTION_STUBSYMS },
+  { "no-emit-stub-syms", no_argument, NULL, OPTION_NO_STUBSYMS },
   { "dotsyms", no_argument, NULL, OPTION_DOTSYMS },
   { "no-dotsyms", no_argument, NULL, OPTION_NO_DOTSYMS },
   { "no-tls-optimize", no_argument, NULL, OPTION_NO_TLS_OPT },
+  { "no-tls-get-addr-optimize", no_argument, NULL, OPTION_NO_TLS_GET_ADDR_OPT },
   { "no-opd-optimize", no_argument, NULL, OPTION_NO_OPD_OPT },
   { "no-toc-optimize", no_argument, NULL, OPTION_NO_TOC_OPT },
   { "no-multi-toc", no_argument, NULL, OPTION_NO_MULTI_TOC },
+  { "no-toc-sort", no_argument, NULL, OPTION_NO_TOC_SORT },
   { "non-overlapping-opd", no_argument, NULL, OPTION_NON_OVERLAPPING_OPD },
 '
 
@@ -525,6 +694,9 @@ PARSE_AND_LIST_OPTIONS='
   --emit-stub-syms            Label linker stubs with a symbol.\n"
 		   ));
   fprintf (file, _("\
+  --no-emit-stub-syms         Don'\''t label linker stubs with a symbol.\n"
+		   ));
+  fprintf (file, _("\
   --dotsyms                   For every version pattern \"foo\" in a version\n\
                                 script, add \".foo\" so that function code\n\
                                 symbols are treated the same as function\n\
@@ -537,6 +709,9 @@ PARSE_AND_LIST_OPTIONS='
   --no-tls-optimize           Don'\''t try to optimize TLS accesses.\n"
 		   ));
   fprintf (file, _("\
+  --no-tls-get-addr-optimize  Don'\''t use a special __tls_get_addr call.\n"
+		   ));
+  fprintf (file, _("\
   --no-opd-optimize           Don'\''t optimize the OPD section.\n"
 		   ));
   fprintf (file, _("\
@@ -544,6 +719,9 @@ PARSE_AND_LIST_OPTIONS='
 		   ));
   fprintf (file, _("\
   --no-multi-toc              Disallow automatic multiple toc sections.\n"
+		   ));
+  fprintf (file, _("\
+  --no-toc-sort               Don'\''t sort TOC and GOT sections.\n"
 		   ));
   fprintf (file, _("\
   --non-overlapping-opd       Canonicalize .opd, so that there are no\n\
@@ -565,6 +743,10 @@ PARSE_AND_LIST_ARGS_CASES='
       emit_stub_syms = 1;
       break;
 
+    case OPTION_NO_STUBSYMS:
+      emit_stub_syms = 0;
+      break;
+
     case OPTION_DOTSYMS:
       dotsyms = 1;
       break;
@@ -577,6 +759,10 @@ PARSE_AND_LIST_ARGS_CASES='
       no_tls_opt = 1;
       break;
 
+    case OPTION_NO_TLS_GET_ADDR_OPT:
+      no_tls_get_addr_opt = 1;
+      break;
+
     case OPTION_NO_OPD_OPT:
       no_opd_opt = 1;
       break;
@@ -587,6 +773,10 @@ PARSE_AND_LIST_ARGS_CASES='
 
     case OPTION_NO_MULTI_TOC:
       no_multi_toc = 1;
+      break;
+
+    case OPTION_NO_TOC_SORT:
+      no_toc_sort = 1;
       break;
 
     case OPTION_NON_OVERLAPPING_OPD:

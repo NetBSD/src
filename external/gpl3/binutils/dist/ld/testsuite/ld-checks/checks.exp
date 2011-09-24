@@ -1,5 +1,5 @@
 # Expect script for LD section checks tests
-#   Copyright 1999, 2001, 2003, 2007 Free Software Foundation, Inc.
+#   Copyright 1999, 2001, 2003, 2005, 2007, 2009 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -26,16 +26,17 @@ proc section_check {} {
     global ld
     global srcdir
     global subdir
-    
+
     # The usage of .lcomm in asm.s is incompatible with ia64 and ppc coff.
     if { [istarget ia64-*-*]
-	 || [istarget powerpc*-*-aix*] || [istarget powerpc-*-beos*]
+	 || [istarget powerpc*-*-aix*]
+	 || [istarget powerpc-*-beos*]
 	 || [istarget rs6000-*-*] } {
 	return
     }
     set test "check sections 1"
-    
-    set ldflags "--check-sections"
+
+    set ldflags "--check-sections -e foo"
 
     if { ![ld_assemble $as $srcdir/$subdir/asm.s tmpdir/asm.o]} {
 	unresolved $test
@@ -55,15 +56,15 @@ proc section_check {} {
     set ldflags "--check-sections -T $srcdir/$subdir/script -e foo"
 
     # Perform the equivalent of invoking ld_simple_link
-    # except that we need to massage the output futher.
-    
+    # except that we need to massage the output further.
+
     set exec_output [run_host_cmd "$ld" "-o tmpdir/asm.x $ldflags tmpdir/asm.o"]
     set exec_output [prune_warnings $exec_output]
 
     # Make sure that we got some output from the linker
     if [string match "" $exec_output] then {
 	fail $test
-    } 
+    }
 
     # Now remove our expected error message
     regsub -all ".*: section .data .* overlaps section .text .*" $exec_output "" exec_output
@@ -78,5 +79,3 @@ proc section_check {} {
 }
 
 section_check
-
-

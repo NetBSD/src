@@ -1,4 +1,4 @@
-# Copyright (C) 1993, 1996, 1997, 1999, 2002, 2007
+# Copyright (C) 1993, 1996, 1997, 1999, 2002, 2005, 2007
 # Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -674,6 +674,7 @@ proc do_add2 {} {
 	    -re "^ +\[0-9\]+ 0134 08A4BF26\[^\n\]*\n"	{ set x [expr $x+1] }
 	    -re "^ +\[0-9\]+ 0138 08A4DF26\[^\n\]*\n"	{ set x [expr $x+1] }
 	    -re "^ +\[0-9\]+ 013c 08A4FF26\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0140 08210601\[^\n\]*\n"	{ set x [expr $x+1] }
 	    -re "\[^\n\]*\n"				{ }
 	    timeout				{ perror "timeout\n"; break }
 	    eof					{ break }
@@ -685,7 +686,7 @@ proc do_add2 {} {
     gas_finish
 
     # Did we find what we were looking for?  If not, flunk it.
-    if [expr $x==80] then { pass $testname } else { fail $testname }
+    if [expr $x==81] then { pass $testname } else { fail $testname }
 }
 
 proc do_sh1add {} {
