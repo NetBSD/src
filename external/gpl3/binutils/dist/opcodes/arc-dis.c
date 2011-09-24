@@ -1,5 +1,5 @@
 /* Instruction printing code for the ARC.
-   Copyright 1994, 1995, 1997, 1998, 2000, 2001, 2002, 2005, 2007
+   Copyright 1994, 1995, 1997, 1998, 2000, 2001, 2002, 2005, 2007, 2009, 2010
    Free Software Foundation, Inc.
    Contributed by Doug Evans (dje@cygnus.com).
 
@@ -238,7 +238,6 @@ arc_sprintf (struct arcDisState *state, char *buf, const char *format, ...)
   char *bp;
   const char *p;
   int size, leading_zero, regMap[2];
-  long auxNum;
   va_list ap;
 
   va_start (ap, format);
@@ -246,7 +245,6 @@ arc_sprintf (struct arcDisState *state, char *buf, const char *format, ...)
   bp = buf;
   *bp = 0;
   p = format;
-  auxNum = -1;
   regMap[0] = 0;
   regMap[1] = 0;
 
@@ -1170,7 +1168,6 @@ decodeInstr (bfd_vma            address, /* Address of this instruction.  */
   struct arcDisState s;		/* ARC Disassembler state.  */
   void *stream = info->stream; 	/* Output stream.  */
   fprintf_ftype func = info->fprintf_func;
-  int bytes;
 
   memset (&s, 0, sizeof(struct arcDisState));
 
@@ -1201,7 +1198,7 @@ decodeInstr (bfd_vma            address, /* Address of this instruction.  */
   s.instName = _instName;
 
   /* Disassemble.  */
-  bytes = dsmOneArcInst (address, (void *)& s);
+  dsmOneArcInst (address, & s);
 
   /* Display the disassembly instruction.  */
   (*func) (stream, "%08lx ", s.words[0]);
@@ -1228,6 +1225,6 @@ disassembler_ftype
 arc_get_disassembler (void *ptr)
 {
   if (ptr)
-    build_ARC_extmap (ptr);
+    build_ARC_extmap ((struct bfd *) ptr);
   return decodeInstr;
 }

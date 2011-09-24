@@ -1,5 +1,6 @@
 /* deffile.h - header for .DEF file parser
-   Copyright 1998, 1999, 2000, 2002, 2003, 2007 Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2002, 2003, 2005, 2006, 2007, 2009
+   Free Software Foundation, Inc.
    Written by DJ Delorie dj@cygnus.com
 
    This file is part of the GNU Binutils.
@@ -34,6 +35,7 @@ typedef struct def_file_section {
 typedef struct def_file_export {
   char *name;			/* always set */
   char *internal_name;		/* always set, may == name */
+  char *its_name;		/* optional export table name refered to. */
   int ordinal;			/* -1 if not specified */
   int hint;
   char flag_private, flag_constant, flag_noname, flag_data, flag_forward;
@@ -49,9 +51,16 @@ typedef struct def_file_import {
   char *internal_name;		/* always set */
   def_file_module *module;	/* always set */
   char *name;			/* may be NULL; either this or ordinal will be set */
+  char *its_name;		/* optional import table name refered to. */
   int ordinal;			/* may be -1 */
   int data;			/* = 1 if data */
 } def_file_import;
+
+typedef struct def_file_aligncomm {
+  struct def_file_aligncomm *next;	/* Chain pointer.  */
+  char *symbol_name;		/* Name of common symbol.  */
+  unsigned int alignment;	/* log-2 alignment.        */
+} def_file_aligncomm;
 
 typedef struct def_file {
   /* From the NAME or LIBRARY command.  */
@@ -83,6 +92,10 @@ typedef struct def_file {
 
   /* From the VERSION command, -1 if not specified.  */
   int version_major, version_minor;
+
+  /* Only expected from .drectve sections, not .DEF files.  */
+  def_file_aligncomm *aligncomms;
+
 } def_file;
 
 extern def_file *def_file_empty (void);
@@ -91,9 +104,11 @@ extern def_file *def_file_empty (void);
 extern def_file *def_file_parse (const char *, def_file *);
 extern void def_file_free (def_file *);
 extern def_file_export *def_file_add_export (def_file *, const char *,
-					     const char *, int);
+					     const char *, int,
+					     const char *);
 extern def_file_import *def_file_add_import (def_file *, const char *,
-					     const char *, int, const char *);
+					     const char *, int, const char *,
+					     const char *);
 extern void def_file_add_directive (def_file *, const char *, int);
 extern def_file_module *def_get_module (def_file *, const char *);
 #ifdef DEF_FILE_PRINT

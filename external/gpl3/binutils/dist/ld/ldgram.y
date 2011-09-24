@@ -1,6 +1,7 @@
 /* A YACC grammar to parse a superset of the AT&T linker scripting language.
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
+   Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
    This file is part of the GNU Binutils.
@@ -131,6 +132,8 @@ static int error_index;
 %token SEGMENT_START
 %token INCLUDE
 %token MEMORY
+%token REGION_ALIAS
+%token LD_FEATURE
 %token NOLOAD DSECT COPY INFO OVERLAY
 %token DEFINED TARGET_K SEARCH_DIR MAP ENTRY
 %token <integer> NEXT
@@ -173,7 +176,7 @@ defsym_expr:
 		NAME '=' exp
 		{
 		  ldlex_popstate();
-		  lang_add_assignment(exp_assop($3,$2,$4));
+		  lang_add_assignment (exp_defsym ($2, $4));
 		}
 	;
 
@@ -285,11 +288,11 @@ extern_name_list:
 
 extern_name_list_body:
 	  NAME
-			{ ldlang_add_undef ($1); }
+			{ ldlang_add_undef ($1, FALSE); }
 	| extern_name_list_body NAME
-			{ ldlang_add_undef ($2); }
+			{ ldlang_add_undef ($2, FALSE); }
 	| extern_name_list_body ',' NAME
-			{ ldlang_add_undef ($3); }
+			{ ldlang_add_undef ($3, FALSE); }
 	;
 
 script_file:
@@ -352,6 +355,10 @@ ifile_p1:
 		{ lang_add_insert ($3, 0); }
 	|	INSERT_K BEFORE NAME
 		{ lang_add_insert ($3, 1); }
+	|	REGION_ALIAS '(' NAME ',' NAME ')'
+		{ lang_memory_region_alias ($3, $5); }
+	|	LD_FEATURE '(' NAME ')'
+		{ lang_ld_feature ($3); }
 	;
 
 input_list:
@@ -374,17 +381,17 @@ input_list:
 		{ lang_add_input_file($2,lang_input_file_is_l_enum,
 				 (char *)NULL); }
 	|	AS_NEEDED '('
-		  { $<integer>$ = as_needed; as_needed = TRUE; }
+		  { $<integer>$ = add_DT_NEEDED_for_regular; add_DT_NEEDED_for_regular = TRUE; }
 		     input_list ')'
-		  { as_needed = $<integer>3; }
+		  { add_DT_NEEDED_for_regular = $<integer>3; }
 	|	input_list ',' AS_NEEDED '('
-		  { $<integer>$ = as_needed; as_needed = TRUE; }
+		  { $<integer>$ = add_DT_NEEDED_for_regular; add_DT_NEEDED_for_regular = TRUE; }
 		     input_list ')'
-		  { as_needed = $<integer>5; }
+		  { add_DT_NEEDED_for_regular = $<integer>5; }
 	|	input_list AS_NEEDED '('
-		  { $<integer>$ = as_needed; as_needed = TRUE; }
+		  { $<integer>$ = add_DT_NEEDED_for_regular; add_DT_NEEDED_for_regular = TRUE; }
 		     input_list ')'
-		  { as_needed = $<integer>4; }
+		  { add_DT_NEEDED_for_regular = $<integer>4; }
 	;
 
 sections:
@@ -646,15 +653,15 @@ end:	';' | ','
 assignment:
 		NAME '=' mustbe_exp
 		{
-		  lang_add_assignment (exp_assop ($2, $1, $3));
+		  lang_add_assignment (exp_assign ($1, $3));
 		}
 	|	NAME assign_op mustbe_exp
 		{
-		  lang_add_assignment (exp_assop ('=', $1,
-						  exp_binop ($2,
-							     exp_nameop (NAME,
-									 $1),
-							     $3)));
+		  lang_add_assignment (exp_assign ($1,
+						   exp_binop ($2,
+							      exp_nameop (NAME,
+									  $1),
+							      $3)));
 		}
 	|	PROVIDE '(' NAME '=' mustbe_exp ')'
 		{
@@ -972,7 +979,7 @@ section:	NAME 		{ ldlex_expression(); }
 		opt_exp_with_type
 		{
 		  ldlex_popstate ();
-		  lang_add_assignment (exp_assop ('=', ".", $3));
+		  lang_add_assignment (exp_assign (".", $3));
 		}
 		'{' sec_or_group_p1 '}'
 	|	INCLUDE filename

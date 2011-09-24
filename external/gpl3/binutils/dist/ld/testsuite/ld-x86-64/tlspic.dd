@@ -17,10 +17,10 @@ Disassembly of section .text:
  +1006:	90[ 	]+nop *
  +1007:	90[ 	]+nop *
 #  GD
- +1008:	66 48 8d 3d 80 03 20[ 	]+lea    0x200380\(%rip\),%rdi +# 201390 <.*>
+ +1008:	66 48 8d 3d 80 03 20[ 	]+data32 lea 0x200380\(%rip\),%rdi +# 201390 <.*>
  +100f:	00 *
 #				-> R_X86_64_DTPMOD64	sg1
- +1010:	66 66 48 e8 [0-9a-f 	]+callq  [0-9a-f]+ <.*>
+ +1010:	66 66 48 e8 [0-9a-f 	]+data32 data32 callq [0-9a-f]+ <.*>
 #				-> R_X86_64_JUMP_SLOT	__tls_get_addr
  +1017:	[0-9a-f 	]+
  +1018:	90[ 	]+nop *
@@ -37,10 +37,10 @@ Disassembly of section .text:
  +102e:	90[ 	]+nop *
  +102f:	90[ 	]+nop *
 #  GD against local variable
- +1030:	66 48 8d 3d 08 03 20[ 	]+lea    0x200308\(%rip\),%rdi +# 201340 <.*>
+ +1030:	66 48 8d 3d 08 03 20[ 	]+data32 lea 0x200308\(%rip\),%rdi +# 201340 <.*>
  +1037:	00 *
 #				-> R_X86_64_DTPMOD64	[0 0x2000000000000000]
- +1038:	66 66 48 e8 [0-9a-f 	]+callq  [0-9a-f]+ <.*>
+ +1038:	66 66 48 e8 [0-9a-f 	]+data32 data32 callq [0-9a-f]+ <.*>
 #				-> R_X86_64_JUMP_SLOT	__tls_get_addr
  +103f:	[0-9a-f 	]+
  +1040:	90[ 	]+nop *
@@ -57,10 +57,10 @@ Disassembly of section .text:
  +1056:	90[ 	]+nop *
  +1057:	90[ 	]+nop *
 #  GD against hidden and local variable
- +1058:	66 48 8d 3d 58 03 20[ 	]+lea    0x200358\(%rip\),%rdi +# 2013b8 <.*>
+ +1058:	66 48 8d 3d 58 03 20[ 	]+data32 lea 0x200358\(%rip\),%rdi +# 2013b8 <.*>
  +105f:	00 *
 #				-> R_X86_64_DTPMOD64	[0 0x4000000000000000]
- +1060:	66 66 48 e8 [0-9a-f 	]+callq  [0-9a-f]+ <.*>
+ +1060:	66 66 48 e8 [0-9a-f 	]+data32 data32 callq [0-9a-f]+ <.*>
 #				-> R_X86_64_JUMP_SLOT	__tls_get_addr
  +1067:	[0-9a-f 	]+
  +1068:	90[ 	]+nop *
@@ -77,10 +77,10 @@ Disassembly of section .text:
  +107e:	90[ 	]+nop *
  +107f:	90[ 	]+nop *
 #  GD against hidden but not local variable
- +1080:	66 48 8d 3d e8 02 20[ 	]+lea    0x2002e8\(%rip\),%rdi +# 201370 <.*>
+ +1080:	66 48 8d 3d e8 02 20[ 	]+data32 lea 0x2002e8\(%rip\),%rdi +# 201370 <.*>
  +1087:	00 *
 #				-> R_X86_64_DTPMOD64	[0 0x6000000000000000]
- +1088:	66 66 48 e8 [0-9a-f 	]+callq  [0-9a-f]+ <.*>
+ +1088:	66 66 48 e8 [0-9a-f 	]+data32 data32 callq [0-9a-f]+ <.*>
 #				-> R_X86_64_JUMP_SLOT	__tls_get_addr
  +108f:	[0-9a-f 	]+
  +1090:	90[ 	]+nop *

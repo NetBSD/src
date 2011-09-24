@@ -34,7 +34,7 @@
 static int
 lookup_opcode (struct d30v_insn *insn, long num, int is_long)
 {
-  int i = 0, index;
+  int i = 0, op_index;
   struct d30v_format *f;
   struct d30v_opcode *op = (struct d30v_opcode *) d30v_opcode_table;
   int op1 = (num >> 25) & 0x7;
@@ -56,11 +56,11 @@ lookup_opcode (struct d30v_insn *insn, long num, int is_long)
   while (op->op1 == op1 && op->op2 == op2)
     {
       /* Scan through all the formats for the opcode.  */
-      index = op->format[i++];
+      op_index = op->format[i++];
       do
 	{
-	  f = (struct d30v_format *) &d30v_format_table[index];
-	  while (f->form == index)
+	  f = (struct d30v_format *) &d30v_format_table[op_index];
+	  while (f->form == op_index)
 	    {
 	      if ((!is_long || f->form >= LONG) && (f->modifier == mod))
 		{
@@ -72,7 +72,7 @@ lookup_opcode (struct d30v_insn *insn, long num, int is_long)
 	  if (insn->form)
 	    break;
 	}
-      while ((index = op->format[i++]) != 0);
+      while ((op_index = op->format[i++]) != 0);
       if (insn->form)
 	break;
       op++;
