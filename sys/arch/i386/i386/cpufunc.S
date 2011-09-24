@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.16 2011/09/24 10:32:52 jym Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.17 2011/09/24 21:24:52 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.16 2011/09/24 10:32:52 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.17 2011/09/24 21:24:52 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -165,11 +165,11 @@ ENTRY(rdmsr_safe)
  * MSR operations fault handler
  */
 NENTRY(msr_onfault)
-       	movl	CPUVAR(CURLWP), %ecx
+	movl	CPUVAR(CURLWP), %ecx
 	movl	L_PCB(%ecx), %ecx
 	movl	$0, PCB_ONFAULT(%ecx)
 	movl	$EFAULT, %eax
-        ret
+	ret
 
 END(rdmsr_safe)
 
