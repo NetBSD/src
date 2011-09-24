@@ -1,0 +1,50 @@
+# Copyright 2010, 2011 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if { [skip_cplus_tests] } { continue }
+
+set testfile static-print-quit
+set srcfile ${testfile}.cc
+set executable $testfile.o
+set objfile ${objdir}/${subdir}/${executable}
+
+if { [gdb_compile $srcdir/$subdir/$srcfile $objfile object {debug c++}] != ""} {
+    untested ${testfile}.exp
+    return -1
+}
+
+clean_restart $executable
+
+gdb_test_no_output "set width 80"
+gdb_test_no_output "set height 2"
+
+set test "print c"
+gdb_test_multiple $test $test {
+    -re " = \{loooooooooooooooooooooooooooooooooooooooooooooong = 0, static field = \{\r\n---Type <return> to continue, or q <return> to quit---$" {
+	pass $test
+    }
+    -re " to quit---$" {
+	fail $test
+	return -1
+    }
+}
+
+gdb_test "q" ".*"
+
+# Now the obstack is uninitialized.  Excercise it.
+
+gdb_test_no_output "set pagination off"
+gdb_test "print c" ".*" "first print"
+gdb_test "print c" ".*" "second print"

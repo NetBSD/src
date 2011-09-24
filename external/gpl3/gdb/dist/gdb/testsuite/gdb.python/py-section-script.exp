@@ -1,0 +1,69 @@
+# Copyright (C) 2010, 2011 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the GDB testsuite.  It tests automagic loading of
+# scripts specified in the .debug_gdb_scripts section.
+
+# This test can only be run on targets which support ELF and use gas.
+# For now pick a sampling of likely targets.
+if {![istarget *-*-linux*]
+    && ![istarget *-*-gnu*]
+    && ![istarget *-*-elf*]
+    && ![istarget *-*-openbsd*]
+    && ![istarget arm*-*-eabi*]
+    && ![istarget arm*-*-symbianelf*]
+    && ![istarget powerpc-*-eabi*]} {
+    verbose "Skipping py-section-script.exp because of lack of support."
+    return
+}
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set testfile "py-section-script"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+    untested "Couldn't compile ${srcfile}"
+    return -1
+}
+
+# Start with a fresh gdb.
+gdb_exit
+gdb_start
+
+# Skip all tests if Python scripting is not enabled.
+if { [skip_python_tests] } { continue }
+
+# Make this available to gdb before the program starts, it is
+# automagically loaded by gdb.
+set remote_python_file [remote_download host ${srcdir}/${subdir}/${testfile}.py]
+
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if ![runto_main] {
+    perror "couldn't run to main"
+    return
+}
+
+gdb_test "b [gdb_get_line_number {break to inspect} ${testfile}.c ]" \
+    ".*Breakpoint.*"
+gdb_test "continue" ".*Breakpoint.*"
+
+gdb_test "print ss" " = a=<1> b=<2>"
+
+remote_file host delete ${remote_python_file}

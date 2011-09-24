@@ -1,0 +1,51 @@
+# Copyright 2008, 2011 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set testfile converts
+set srcfile ${testfile}.cc
+if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug c++}] } {
+     return -1
+}
+
+############################################
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint main"
+    continue
+}
+
+gdb_breakpoint [gdb_get_line_number "end of main"]
+gdb_continue_to_breakpoint "end of main"
+
+gdb_test "p foo0_1 (ta)"   "= 1"              "typedef to another typedef"
+gdb_test "p foo0_2 (ta)"   "= 2"              "typedef to typedef of a typedef"
+gdb_test "p foo0_3 (bppp)" "Cannot resolve.*" \
+ "Pointer-to-pointer-to-pointer derived to Pointer-to-pointer-to-pointer base."
+
+gdb_test "p foo1_1 (a)"  "= 11"             "pointer to pointer"
+gdb_test "p foo1_2 (a)"  "= 12"             "pointer to array"
+gdb_test "p foo1_3 (a)"  "Cannot resolve.*" "pointer to pointer of wrong type"
+gdb_test "p foo1_3 (bp)" "Cannot resolve.*" "pointer to pointer of wrong type"
+gdb_test "p foo1_4 (bp)" "= 14"             "pointer to ancestor pointer"
+gdb_test "p foo1_5 (bp)" "= 15"             "pointer to void pointer"
+gdb_test "p foo1_6 (bp)" "Cannot resolve.*"     "pointer to void pointer pointer"
+gdb_test "p foo1_7 (bp)" "= 17"                 "pointer to boolean"
+gdb_test "p foo1_8 (bp)" "Using non-standard.*" "pointer to long int"
+
+gdb_test "p foo1_5 (b)" "= 15"             "pointer pointer to void pointer"
+gdb_test "p foo2_1 (b)" "= 21"             "pointer pointer to pointer pointer"
+gdb_test "p foo2_2 (b)" "Cannot resolve.*" "pointer pointer to array of arrays"
+gdb_test "p foo2_3 (b)" "= 23"             "pointer pointer to array of pointers"
+gdb_test "p foo2_4 (b)" "Cannot resolve.*" "pointer pointer to array of wrong pointers"
