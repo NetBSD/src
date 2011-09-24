@@ -1,5 +1,5 @@
 /* BFD back-end for ARM PECOFF files.
-   Copyright 1995, 1996, 1999, 2000, 2001, 2002, 2007
+   Copyright 1995, 1996, 1999, 2000, 2001, 2002, 2005, 2006, 2007
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.

@@ -1,5 +1,5 @@
 /* VxWorks support for ELF
-   Copyright 2005, 2007 Free Software Foundation, Inc.
+   Copyright 2005, 2006, 2007, 2009 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -127,7 +127,7 @@ elf_vxworks_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info,
 }
 
 /* Tweak magic VxWorks symbols as they are written to the output file.  */
-bfd_boolean
+int
 elf_vxworks_link_output_symbol_hook (struct bfd_link_info *info
 				       ATTRIBUTE_UNUSED,
 				     const char *name,
@@ -141,7 +141,7 @@ elf_vxworks_link_output_symbol_hook (struct bfd_link_info *info
       && elf_vxworks_gott_symbol_p (h->root.u.undef.abfd, name))
     sym->st_info = ELF_ST_INFO (STB_GLOBAL, ELF_ST_TYPE (sym->st_info));
 
-  return TRUE;
+  return 1;
 }
 
 /* Copy relocations into the output file.  Fixes up relocations against PLT

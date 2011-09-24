@@ -1,5 +1,5 @@
 /* BFD back-end for CISCO crash dumps.
-   Copyright 1994, 1997, 1999, 2000, 2001, 2002, 2004, 2006, 2007
+   Copyright 1994, 1997, 1999, 2000, 2001, 2002, 2004, 2005, 2006, 2007, 2010
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -77,6 +77,7 @@ static const bfd_target *cisco_core_file_p PARAMS ((bfd *));
 char *cisco_core_file_failing_command PARAMS ((bfd *));
 int cisco_core_file_failing_signal PARAMS ((bfd *));
 #define cisco_core_file_matches_executable_p generic_core_file_matches_executable_p
+#define cisco_core_file_pid _bfd_nocore_core_file_pid
 
 /* Examine the file for a crash info struct at the offset given by
    CRASH_INFO_LOC.  */

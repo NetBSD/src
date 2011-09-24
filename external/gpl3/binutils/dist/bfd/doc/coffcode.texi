@@ -76,6 +76,65 @@ manipulate the i960 relocs.  This code is not in
 @file{coffcode.h} because it would not be used by any other
 target.
 
+@subsubsection Coff long section names
+In the standard Coff object format, section names are limited to
+the eight bytes available in the @code{s_name} field of the
+@code{SCNHDR} section header structure.  The format requires the
+field to be NUL-padded, but not necessarily NUL-terminated, so
+the longest section names permitted are a full eight characters.
+
+The Microsoft PE variants of the Coff object file format add
+an extension to support the use of long section names.  This
+extension is defined in section 4 of the Microsoft PE/COFF 
+specification (rev 8.1).  If a section name is too long to fit
+into the section header's @code{s_name} field, it is instead
+placed into the string table, and the @code{s_name} field is
+filled with a slash ("/") followed by the ASCII decimal 
+representation of the offset of the full name relative to the
+string table base.
+
+Note that this implies that the extension can only be used in object
+files, as executables do not contain a string table.  The standard
+specifies that long section names from objects emitted into executable
+images are to be truncated.
+
+However, as a GNU extension, BFD can generate executable images
+that contain a string table and long section names.  This
+would appear to be technically valid, as the standard only says
+that Coff debugging information is deprecated, not forbidden,
+and in practice it works, although some tools that parse PE files
+expecting the MS standard format may become confused; @file{PEview} is
+one known example.
+
+The functionality is supported in BFD by code implemented under 
+the control of the macro @code{COFF_LONG_SECTION_NAMES}.  If not
+defined, the format does not support long section names in any way.
+If defined, it is used to initialise a flag, 
+@code{_bfd_coff_long_section_names}, and a hook function pointer, 
+@code{_bfd_coff_set_long_section_names}, in the Coff backend data
+structure.  The flag controls the generation of long section names
+in output BFDs at runtime; if it is false, as it will be by default
+when generating an executable image, long section names are truncated;
+if true, the long section names extension is employed.  The hook
+points to a function that allows the value of the flag to be altered
+at runtime, on formats that support long section names at all; on
+other formats it points to a stub that returns an error indication.
+With input BFDs, the flag is set according to whether any long section
+names are detected while reading the section headers.  For a completely
+new BFD, the flag is set to the default for the target format.  This
+information can be used by a client of the BFD library when deciding
+what output format to generate, and means that a BFD that is opened
+for read and subsequently converted to a writeable BFD and modified
+in-place will retain whatever format it had on input.
+
+If @code{COFF_LONG_SECTION_NAMES} is simply defined (blank), or is
+defined to the value "1", then long section names are enabled by
+default; if it is defined to the value zero, they are disabled by
+default (but still accepted in input BFDs).  The header @file{coffcode.h}
+defines a macro, @code{COFF_DEFAULT_LONG_SECTION_NAMES}, which is
+used in the backends to initialise the backend data structure fields
+appropriately; see the comments for further detail.
+
 @subsubsection Bit twiddling
 Each flavour of coff supported in BFD has its own header file
 describing the external layout of the structures. There is also
@@ -326,7 +385,11 @@ typedef struct
   unsigned int _bfd_linesz;
   unsigned int _bfd_filnmlen;
   bfd_boolean _bfd_coff_long_filenames;
+
   bfd_boolean _bfd_coff_long_section_names;
+  bfd_boolean (*_bfd_coff_set_long_section_names)
+    (bfd *, int);
+  
   unsigned int _bfd_coff_default_section_alignment_power;
   bfd_boolean _bfd_coff_force_symnames_in_strings;
   unsigned int _bfd_coff_debug_string_prefix_length;
@@ -463,6 +526,8 @@ typedef struct
   (coff_backend_info (abfd)->_bfd_coff_long_filenames)
 #define bfd_coff_long_section_names(abfd) \
   (coff_backend_info (abfd)->_bfd_coff_long_section_names)
+#define bfd_coff_set_long_section_names(abfd, enable) \
+  ((coff_backend_info (abfd)->_bfd_coff_set_long_section_names) (abfd, enable))
 #define bfd_coff_default_section_alignment_power(abfd) \
   (coff_backend_info (abfd)->_bfd_coff_default_section_alignment_power)
 #define bfd_coff_swap_filehdr_in(abfd, i,o) \
@@ -553,6 +618,10 @@ typedef struct
 #define bfd_coff_print_pdata(a,p) \
   ((coff_backend_info (a)->_bfd_coff_print_pdata) (a, p))
 
+/* Macro: Returns true if the bfd is a PE executable as opposed to a
+   PE object file.  */
+#define bfd_pei_p(abfd) \
+  (CONST_STRNEQ ((abfd)->xvec->name, "pei-"))
 @end example
 @subsubsection Writing relocations
 To write relocations, the back end steps though the

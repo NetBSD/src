@@ -1,5 +1,6 @@
 /* alphavms.h -- BFD definitions for an openVMS host
-   Copyright 1996, 2000, 2001, 2007 Free Software Foundation, Inc.
+   Copyright 1996, 2000, 2001, 2005, 2007, 2008, 2009
+   Free Software Foundation, Inc.
    Written by Klaus Kämpf (kkaempf@progis.de)
    of proGIS Softwareentwicklung, Aachen, Germany
 
@@ -34,6 +35,7 @@
 #include <time.h>
 
 #include "bfd.h"
+#include "filenames.h"
 
 #ifndef BFD_HOST_64_BIT
 /* Make the basic types 64-bit quantities on the host.
@@ -66,4 +68,14 @@ typedef BFD_HOST_64_BIT int64_type;
 #define O_ACCMODE (O_RDONLY | O_WRONLY | O_RDWR)
 #endif
 
-extern int getpagesize PARAMS ((void));
+extern int getpagesize (void);
+extern char *stpcpy (char *, const char *);
+
+/* No intl.  */
+#define gettext(Msgid) (Msgid)
+#define dgettext(Domainname, Msgid) (Msgid)
+#define dcgettext(Domainname, Msgid, Category) (Msgid)
+#define textdomain(Domainname) while (0) /* nothing */
+#define bindtextdomain(Domainname, Dirname) while (0) /* nothing */
+#define _(String) (String)
+#define N_(String) (String)

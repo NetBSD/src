@@ -1,5 +1,5 @@
 /* BFD back-end for Apple M68K COFF A/UX 3.x files.
-   Copyright 1996, 1997, 2000, 2002, 2007, 2008
+   Copyright 1996, 1997, 2000, 2002, 2005, 2007, 2008
    Free Software Foundation, Inc.
    Written by Richard Henderson <rth@tamu.edu>.
 
@@ -105,7 +105,8 @@ coff_m68k_aux_link_add_one_symbol (info, abfd, name, flags, section, value,
 	  && (bfd_hash_lookup (info->notice_hash, name, FALSE, FALSE)
 	      != (struct bfd_hash_entry *) NULL))
 	{
-	  if (! (*info->callbacks->notice) (info, name, abfd, section, value))
+	  if (! (*info->callbacks->notice) (info, h, abfd, section, value,
+					    flags, string))
 	    return FALSE;
 	}
 

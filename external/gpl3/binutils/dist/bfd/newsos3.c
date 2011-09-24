@@ -1,5 +1,5 @@
 /* BFD back-end for NewsOS3 (Sony, 68k) binaries.
-   Copyright 1990, 1991, 1994, 1995, 2000, 2001, 2003, 2007
+   Copyright 1990, 1991, 1994, 1995, 2000, 2001, 2003, 2005, 2007, 2009
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -29,7 +29,6 @@
 #define MY(OP) CONCAT2 (newsos3_,OP)
 #define TARGETNAME "a.out-newsos3"
 #define ENTRY_CAN_BE_ZERO
-#define N_SHARED_LIB(x) 0 /* Avoids warning when compiled with -Wall.  */
 #define DEFAULT_ARCH bfd_arch_m68k
 #define TARGET_IS_BIG_ENDIAN_P
 #define N_HEADER_IN_TEXT(x) 0

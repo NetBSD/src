@@ -1,5 +1,5 @@
 #
-# Makefile for bfd library under openVMS (Alpha and Vax)
+# Makefile for bfd library under openVMS 
 #
 # For use with gnu-make for vms
 #
@@ -7,69 +7,49 @@
 #
 #
 
-CC=cc
-
+ifeq ($(ARCH),IA64)
+HOSTFILE=alphavms.h
+OBJS:=cpu-ia64.obj,elf64-ia64.obj,\
+  vms-misc.obj,vms-lib.obj,elf-strtab.obj,corefile.obj,stabs.obj,\
+  merge.obj,elf-eh-frame.obj,elflink.obj,elf-attrs.obj,dwarf1.obj,elf64.obj
+DEFS=SELECT_VECS="&bfd_elf64_ia64_vms_vec",SELECT_ARCHITECTURES="&bfd_ia64_arch"
+endif
 ifeq ($(ARCH),ALPHA)
 HOSTFILE=alphavms.h
-TARGETOBJS = cpu-alpha.obj
-else
+OBJS:=vms-alpha.obj,vms-lib.obj,vms-misc.obj,cpu-alpha.obj
+DEFS=SELECT_VECS="&vms_alpha_vec",SELECT_ARCHITECTURES="&bfd_alpha_arch"
+endif
+ifeq ($(ARCH),VAX)
 HOSTFILE=vaxvms.h
-TARGETOBJS = cpu-vax.obj
+OBJS:=vms.obj,vms-hdr.obj,vms-gsd.obj,vms-tir.obj,vms-misc.obj,cpu-vax.obj
+DEFS=SELECT_VECS="&vms_vax_vec",SELECT_ARCHITECTURES="&bfd_vax_arch"
 endif
 
-
-OBJS=archive.obj,archures.obj,bfd.obj,cache.obj,coffgen.obj,corefile.obj,\
-  format.obj,init.obj,libbfd.obj,opncls.obj,reloc.obj,section.obj,syms.obj,\
-  targets.obj,hash.obj,linker.obj,elf.obj,srec.obj,binary.obj,tekhex.obj,\
-  ihex.obj,stab-syms.obj,vms.obj,vms-hdr.obj,vms-gsd.obj,vms-tir.obj,\
-  vms-misc.obj,$(TARGETOBJS)
+OBJS:=$(OBJS),archive.obj,archive64.obj,archures.obj,bfd.obj,bfdio.obj,\
+  binary.obj,cache.obj,coffgen.obj,compress.obj,corefile.obj,dwarf2.obj,\
+  elf.obj,format.obj,hash.obj,ihex.obj,init.obj,libbfd.obj,linker.obj,\
+  opncls.obj,reloc.obj,section.obj,simple.obj,srec.obj,stab-syms.obj,\
+  syms.obj,targets.obj,tekhex.obj,verilog.obj
 
 ifeq ($(CC),gcc)
-ifeq ($(ARCH),ALPHA)
-DEFS=/define=(SELECT_VECS="&vms_alpha_vec",SELECT_ARCHITECTURES="&bfd_alpha_arch",\
-"HAVE_vms_alpha_vec=1")
-else
-DEFS=/define=(SELECT_VECS="&vms_vax_vec",SELECT_ARCHITECTURES="&bfd_vax_arch",\
-"HAVE_vms_vax_vec=1","VMS_DEBUG")
-endif
 CFLAGS=/include=([],[-.include])$(DEFS)
 else
-ifeq ($(ARCH),ALPHA)
-DEFS=/define=(SELECT_VECS="&vms_alpha_vec",SELECT_ARCHITECTURES="&bfd_alpha_arch",\
-"HAVE_vms_alpha_vec=1","unlink=remove","const=","VMS_DEBUG",)
-else
-DEFS=/define=(SELECT_VECS="&vms_vax_vec",SELECT_ARCHITECTURES="&bfd_vax_arch",\
-"HAVE_vms_vax_vec=1","unlink=remove","const=","VMS_DEBUG")
-endif
-CFLAGS=/noopt/debug/include=([],[-.include])$(DEFS)/warnings=disable=(missingreturn,implicitfunc,longextern)
+OPT=/noopt/debug
+CFLAGS=/name=(as_is,shortened)/include=([],"../include")\
+ /define=("unlink=remove",DEBUGDIR="""GNU$$DEBUGDIR:""",$(DEFS))\
+ /warns=(infor=(missingreturn,badansialias))$(OPT)
 endif
 
-
-libbfd.olb: sysdep.h bfd.h $(OBJS)
+libbfd.olb: $(OBJS)
 	purge
 	lib/create libbfd $(OBJS)
 
-sysdep.h: [.hosts]$(HOSTFILE) config.h
-	$(CP) $< $@
-
-bfd.h: bfd-in2.h
-	$$ @configure
-
 targmatch.h: bfd.h
 config.h: bfd.h
-
-vms.c: vms.h
-vms-mhd.c: vms.h
-vms-gsd.c: vms.h
-vms-tir.c: vms.h
 vms-misc.c: vms.h
 targets.c: targmatch.h
 
 clean:
 	$$ purge
 	$(RM) libbfd.olb;
-	$(RM) sysdep.h;
-	$(RM) bfd.h;
-	$(RM) targmatch.h;
-	$(RM) config.h;
 	$(RM) *.obj;

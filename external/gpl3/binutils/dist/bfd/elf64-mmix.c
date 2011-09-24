@@ -1,5 +1,5 @@
 /* MMIX-specific support for 64-bit ELF.
-   Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007
+   Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
    Free Software Foundation, Inc.
    Contributed by Hans-Peter Nilsson <hp@bitrange.com>
 
@@ -159,7 +159,7 @@ struct bpo_greg_section_info
     struct bpo_reloc_request *reloc_request;
   };
 
-static bfd_boolean mmix_elf_link_output_symbol_hook
+static int mmix_elf_link_output_symbol_hook
   PARAMS ((struct bfd_link_info *, const char *, Elf_Internal_Sym *,
 	   asection *, struct elf_link_hash_entry *));
 
@@ -1267,7 +1267,6 @@ mmix_elf_reloc (abfd, reloc_entry, symbol, data, input_section,
   asection *reloc_target_output_section;
   bfd_reloc_status_type flag = bfd_reloc_ok;
   bfd_vma output_base = 0;
-  bfd_vma addr;
 
   r = bfd_elf_generic_reloc (abfd, reloc_entry, symbol, data,
 			     input_section, output_bfd, error_message);
@@ -1306,9 +1305,6 @@ mmix_elf_reloc (abfd, reloc_entry, symbol, data, input_section,
 
   relocation += output_base + symbol->section->output_offset;
 
-  /* Get position of relocation.  */
-  addr = (reloc_entry->address + input_section->output_section->vma
-	  + input_section->output_offset);
   if (output_bfd != (bfd *) NULL)
     {
       /* Add in supplied addend.  */
@@ -1412,15 +1408,8 @@ mmix_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	}
 
       if (sec != NULL && elf_discarded_section (sec))
-	{
-	  /* For relocs against symbols from removed linkonce sections,
-	     or sections discarded by a linker script, we just want the
-	     section contents zeroed.  Avoid any special processing.  */
-	  _bfd_clear_contents (howto, input_bfd, contents + rel->r_offset);
-	  rel->r_info = 0;
-	  rel->r_addend = 0;
-	  continue;
-	}
+	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
+					 rel, relend, howto, contents);
 
       if (info->relocatable)
 	{
@@ -2082,7 +2071,7 @@ _bfd_mmix_check_all_relocs (abfd, info)
    the register section, and scale them down to correspond to the register
    number.  */
 
-static bfd_boolean
+static int
 mmix_elf_link_output_symbol_hook (info, name, sym, input_sec, h)
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
      const char *name ATTRIBUTE_UNUSED;
@@ -2099,7 +2088,7 @@ mmix_elf_link_output_symbol_hook (info, name, sym, input_sec, h)
       sym->st_shndx = SHN_REGISTER;
     }
 
-  return TRUE;
+  return 1;
 }
 
 /* We fake a register section that holds values that are register numbers.
@@ -2557,7 +2546,7 @@ mmix_dump_bpo_gregs (link_info, pf)
    when the last such reloc is done, an index-array is sorted according to
    the values and iterated over to produce register numbers (indexed by 0
    from the first allocated register number) and offsets for use in real
-   relocation.
+   relocation.  (N.B.: Relocatable runs are handled, not just punted.)
 
    PUSHJ stub accounting is also done here.
 
@@ -2581,7 +2570,6 @@ mmix_elf_relax_section (abfd, sec, link_info, again)
      spot a missing actual initialization.  */
   size_t bpono = (size_t) -1;
   size_t pjsno = 0;
-  bfd *bpo_greg_owner;
   Elf_Internal_Sym *isymbuf = NULL;
   bfd_size_type size = sec->rawsize ? sec->rawsize : sec->size;
 
@@ -2603,8 +2591,6 @@ mmix_elf_relax_section (abfd, sec, link_info, again)
     return TRUE;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-
-  bpo_greg_owner = (bfd *) link_info->base_file;
 
   if (bpodata != NULL)
     {

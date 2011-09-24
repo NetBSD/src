@@ -1,5 +1,5 @@
 /* BFD back-end for NetBSD/m68k a.out-ish binaries.
-   Copyright 1990, 1991, 1992, 1995, 1998, 2001, 2003, 2007
+   Copyright 1990, 1991, 1992, 1995, 1998, 2001, 2003, 2005, 2007
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.

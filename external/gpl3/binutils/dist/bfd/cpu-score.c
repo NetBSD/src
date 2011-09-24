@@ -1,8 +1,9 @@
 /* BFD support for the score processor
-   Copyright 2006, 2007 Free Software Foundation, Inc.   
+   Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
    Contributed by
+   Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
-   Pei-Lin Tsai (pltsai@sunplus.com)  
+   Pei-Lin Tsai (pltsai@sunplus.com)
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -21,32 +22,47 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#include "sysdep.h"
 #include "bfd.h"
+#include "sysdep.h"
 #include "libbfd.h"
 
-const bfd_arch_info_type
-bfd_score_arch =
+/* This routine is provided two arch_infos and works out which Score
+   machine which would be compatible with both and returns a pointer
+   to its info structure.  */
+
+static const bfd_arch_info_type *
+compatible (const bfd_arch_info_type * a, const bfd_arch_info_type * b)
 {
-  32,				/* There's 32 bits_per_word.  */
-  32,				/* There's 32 bits_per_address.  */
-  8,				/* There's 8 bits_per_byte.  */
-  bfd_arch_score,		/* One of enum bfd_architecture, defined
-				   in archures.c and provided in
-				   generated header files.  */
-  0,				/* Only 1 machine, but #255 for
-				   historical reasons.  */
-  "score",			/* The arch_name.  */
-  "score",			/* The printable name is the same.  */
-  4,				/* Section alignment power; each section
-				   is aligned to (only) 2^4 bytes.  */
-  TRUE,				/* This is the default "machine", since
-				   there's only one.  */
-  bfd_default_compatible,	/* A default function for testing
-				   "machine" compatibility of two
-				   bfd_arch_info_type.  */
-  bfd_default_scan,		/* Check if an bfd_arch_info_type is a
-				   match.  */
-  NULL				/* Pointer to next bfd_arch_info_type in
-				   the same family.  */
+  /* If a & b are for different architectures we can do nothing.  */
+  if (a->arch != b->arch)
+    return NULL;
+
+  if (a->mach != b->mach)
+    return NULL;
+
+  return a;
+}
+
+#define N(addr_bits, machine, print, default, next)		\
+{								\
+  32,				/* 16 bits in a word.  */	\
+  32,				/* Bits in an address.  */	\
+  8,				/* 8 bits in a byte.  */	\
+  bfd_arch_score,						\
+  machine,			/* Machine number.  */		\
+  "score",			/* Architecture name.   */	\
+  print,			/* Printable name.  */		\
+  4,				/* Section align power.  */	\
+  default,			/* The default machine.  */	\
+  compatible,							\
+  bfd_default_scan,						\
+  next								\
+}
+
+static const bfd_arch_info_type arch_info_struct[] =
+{
+  N (16, bfd_mach_score3, "score3", FALSE, NULL),
 };
+
+const bfd_arch_info_type bfd_score_arch =
+  N (16, bfd_mach_score7, "score7", TRUE, & arch_info_struct[0]);

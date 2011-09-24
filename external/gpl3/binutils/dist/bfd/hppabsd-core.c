@@ -59,6 +59,7 @@ static char *hppabsd_core_core_file_failing_command
 static int hppabsd_core_core_file_failing_signal
   PARAMS ((bfd *));
 #define hppabsd_core_core_file_matches_executable_p generic_core_file_matches_executable_p
+#define hppabsd_core_core_file_pid _bfd_nocore_core_file_pid
 static void swap_abort
   PARAMS ((void));
 

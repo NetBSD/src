@@ -1,6 +1,6 @@
 /* BFD backend for MIPS BSD (a.out) binaries.
    Copyright 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2007 Free Software Foundation, Inc.
+   2005, 2007, 2009 Free Software Foundation, Inc.
    Written by Ralph Campbell.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -23,7 +23,6 @@
 
 /* #define ENTRY_CAN_BE_ZERO */
 #define N_HEADER_IN_TEXT(x) 1
-#define N_SHARED_LIB(x) 0
 #define N_TXTADDR(x) \
     (N_MAGIC(x) != ZMAGIC ? (x).a_entry :	/* object file or NMAGIC */\
 	    TEXT_START_ADDR + EXEC_BYTES_SIZE	/* no padding */\

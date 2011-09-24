@@ -1,5 +1,5 @@
 /* BFD support for the ARC processor
-   Copyright 1994, 1995, 1997, 2001, 2002, 2007
+   Copyright 1994, 1995, 1997, 2001, 2002, 2005, 2007
    Free Software Foundation, Inc.
    Contributed by Doug Evans (dje@cygnus.com).
 

@@ -1,5 +1,5 @@
 /* BFD PowerPC CPU definition
-   Copyright 1994, 1995, 1996, 2000, 2001, 2002, 2003, 2007, 2008
+   Copyright 1994, 1995, 1996, 2000, 2001, 2002, 2003, 2005, 2007, 2008, 2010
    Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor, Cygnus Support.
 
@@ -299,6 +299,20 @@ const bfd_arch_info_type bfd_powerpc_archs[] =
     &bfd_powerpc_archs[15]
   },
   {
+    64, /* 64 bits in a word */
+    64, /* 64 bits in an address */
+    8,  /* 8 bits in a byte */
+    bfd_arch_powerpc,
+    bfd_mach_ppc_e500mc64,
+    "powerpc",
+    "powerpc:e500mc64",
+    3,
+    FALSE, /* not the default */
+    powerpc_compatible,
+    bfd_default_scan,
+    &bfd_powerpc_archs[16]
+  },
+  {
     32,       /* 32 bits in a word */
     32,       /* 32 bits in an address */
     8,        /* 8 bits in a byte */
@@ -310,7 +324,7 @@ const bfd_arch_info_type bfd_powerpc_archs[] =
     FALSE, /* not the default */
     powerpc_compatible,
     bfd_default_scan,
-    &bfd_powerpc_archs[16]
+    &bfd_powerpc_archs[17]
   },
   {
     32, /* 32 bits in a word */
@@ -320,6 +334,20 @@ const bfd_arch_info_type bfd_powerpc_archs[] =
     bfd_mach_ppc_750,
     "powerpc",
     "powerpc:750",
+    3,
+    FALSE, /* not the default */
+    powerpc_compatible,
+    bfd_default_scan,
+    &bfd_powerpc_archs[18]
+  },
+  {
+    32, /* 32 bits in a word */
+    32, /* 32 bits in an address */
+    8,  /* 8 bits in a byte */
+    bfd_arch_powerpc,
+    bfd_mach_ppc_titan,
+    "powerpc",
+    "powerpc:titan",
     3,
     FALSE, /* not the default */
     powerpc_compatible,
