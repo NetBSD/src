@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.36 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.37 2011/09/24 17:18:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -75,7 +75,8 @@ struct	udpiphdr {
 #define	UDPCTL_RECVSPACE	3	/* default recv buffer */
 #define	UDPCTL_LOOPBACKCKSUM	4	/* do UDP checksum on loopback */
 #define	UDPCTL_STATS		5	/* UDP statistics */
-#define	UDPCTL_MAXID		6
+#define	UDPCTL_RFC6056          6       /* RFC 6056 algorithm selection */
+#define	UDPCTL_MAXID		7
 
 #define UDPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -84,6 +85,7 @@ struct	udpiphdr {
 	{ "recvspace", CTLTYPE_INT }, \
 	{ "do_loopback_cksum", CTLTYPE_INT }, \
 	{ "stats", CTLTYPE_STRUCT }, \
+	{ "rfc6056", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
