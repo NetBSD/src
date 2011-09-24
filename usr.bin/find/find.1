@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.70 2010/09/09 11:42:13 wiz Exp $
+.\"	$NetBSD: find.1,v 1.71 2011/09/24 13:45:43 apb Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd November 6, 2009
+.Dd September 24, 2011
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -179,6 +179,18 @@ directory specified.
 Does not list mount points to other file systems.
 .El
 .Sh PRIMARIES
+All primaries which take a numeric argument of
+.Ar n
+allow the number to be preceded by a plus sign
+.Pq Dq \&+
+or a minus sign
+.Pq Dq \- .
+A preceding plus sign means
+.Dq more than Ar n ,
+a preceding minus sign means
+.Dq less than Ar n ,
+and neither means
+.Dq exactly Ar n .
 .Bl -tag -width Ds -compact
 .It Ic -amin Ar n
 True if the difference between the file last access time and the time
@@ -237,77 +249,106 @@ This can also be invoked as
 .It Ic -empty
 True if the current file or directory is empty.
 .Pp
-.It Ic -exec Ar utility Oo argument ... Oc No ;
-.It Ic -exec Ar utility Oo argument ... Oc No {} +
+.It Ic -exec Ar utility Oo argument ... Oc Ic \&;
+.It Ic -exec Ar utility Oo argument ... Oc Ic {} Ic \&+
 Execute the specified
 .Ar utility
 with the specified arguments.
-The list of arguments is terminated by
-.Dq Li \&;
-or
-.Dq Li \&+ .
+.Pp
+The list of arguments for
 .Ar utility
-will be executed from the directory from which
+is terminated by a lone semicolon
+.Dq Ic \&;
+or plus
+.Dq Ic \&+
+character as a separate parameter.
+The command specified by
+.Ar utility
+will be executed with its current working directory being the directory
+from which
 .Nm
 was executed.
 .Pp
-If terminated by a semicolon
-.Pq Dq \&; ,
-the
+If the list of arguments is terminated by a semicolon
+.Pq Dq Ic \&; ,
+then the
 .Ar utility
-is invoked once per path.
-If the string
-.Dq {}
-appears anywhere in the utility name or the arguments,
-it is replaced by the pathname of the current file.
+is invoked once per pathname.
+If
+the string
+.Dq Ic {}
+appears anywhere in the utility name or the arguments
+then it is replaced by the pathname of the current file
+(but it need not appear, in which case the pathname
+will not be passed to the
+.Ar utility ) .
+The semicolon-terminated form of the
+.Ic -exec
+primary returns true if and only if the
+.Ar utility
+exits with a zero exit status.
+Note that the semicolon will have to be escaped on the shell command line
+in order to be passed as a parameter.
 .Pp
-If terminated by a plus sign
-.Pq Dq \&+ ,
-the pathnames for which the
-primary is evaluated are aggregated into sets, and
+If the list of arguments is terminated by a plus sign
+.Pq Dq Ic \&+ ,
+then the pathnames for which the primary is evaluated are aggregated
+into sets, and
 .Ar utility
 will be invoked once per set, similar to
 .Xr xargs 1 .
-If any invocation exits with non-zero exit status, then
+In this case the parameter
+.Dq Ic {}
+must appear as the last item in the argument list, just before the
+.Dq Ic \&+
+parameter.
+Each set is limited to no more than 5,000 pathnames,
+and is also limited such that the total number of bytes in the argument
+list does not exceed
+.Dv ARG_MAX .
+The plus-terminated form of the
+.Ic -exec
+primary always returns true.
+If the plus-terminated form of the
+.Ic -exec
+primary results in any invocation of the
+.Ar utility
+exiting with non-zero exit status, then
 .Nm
-will eventually do so as well, but this does not cause
+will eventually exit with non-zero status as well,
+but this does not cause
 .Nm
 to exit early.
-The string
-.Dq {}
-must appear, and must appear last.
-Each set is limited to no more than 5,000 pathnames,
-and is also limited such that the invocation of
-.Ar utility
-does not exceed
-.Dv ARG_MAX .
 .Pp
-.It Ic -execdir Ar utility Oo argument ... Oc No ;
+.It Ic -execdir Ar utility Oo argument ... Oc Ic \&;
 The
 .Ic -execdir
 primary is similar to the semicolon-terminated
-.Pq Dq \&;
+.Pq Dq Ic \&;
 variant of the
 .Ic -exec
 primary, with the exception that
 .Ar utility
 will be executed from the directory that holds
 the current file.
-The filename substituted for the string
-.Dq {}
-is not qualified.
+Only the base filename is substituted for the string
+.Dq Ic {} .
 Set aggregation
-.Pq Do \&+ Dc termination
+.Pq Do Ic \&+ Dc termination
 is not supported.
 .Pp
-.It Ic -exit Op Ar n
+.It Ic -exit Op Ar status
 This primary causes
 .Nm
-to stop traversing the file system and exit immediately if a
-previous condition was met.
-If no value is specified, the exit value will be 0, else
-.Ar n .
-Note that other primaries will be evaluated and acted upon before exiting.
+to stop traversing the file system and exit immediately,
+with the specified numeric exit status.
+If the
+.Ar status
+value is not specified, then
+.Nm
+will exit with status zero.
+Note that any preceding primaries will be evaluated and acted upon
+before exiting.
 .Pp
 .It Ic -false
 This primary always evaluates to false.
@@ -323,7 +364,7 @@ operator, for example).
 If
 .Ar flags
 are preceded by a dash
-.Pq Dq - ,
+.Pq Dq Ic \- ,
 this primary evaluates to true
 if at least all of the bits in
 .Ar flags
@@ -448,7 +489,7 @@ was started, rounded up to the next full 24-hour period, is
 .Ar n
 24-hour periods.
 .Pp
-.It Ic -ok Ar utility Oo argument ... Oc No ;
+.It Ic -ok Ar utility Oo argument ... Oc Ic ;
 The
 .Ic -ok
 primary is similar to the semicolon-terminated
@@ -462,7 +503,7 @@ a message to the terminal and reading a response.
 If the response is other than
 .Dq y ,
 the command is not executed and the
-.Ar -ok
+.Ic -ok
 primary evaluates to false.
 Set aggregation
 .Pq Do \&+ Dc termination
@@ -539,13 +580,13 @@ If the mode is octal, only bits 07777
 of the file's mode bits participate
 in the comparison.
 If the mode is preceded by a dash
-.Pq Dq - ,
+.Pq Dq Ic \- ,
 this primary evaluates to true
 if at least all of the bits in the mode are set in the file's mode bits.
 If the mode is not preceded by a dash, this primary evaluates to true if
 the bits in the mode exactly match the file's mode bits.
 Note, the first character of a symbolic mode may not be a dash
-.Pq Dq - .
+.Pq Dq Ic \- .
 .Pp
 .It Ic -print
 This primary always evaluates to true.
@@ -567,7 +608,7 @@ is specified, the given expression shall be effectively replaced by
 .It Ic -print0
 This primary always evaluates to true.
 It prints the pathname of the current file to standard output, followed
-by a null character.
+by a NUL character.
 .Pp
 .It Ic -printx
 This primary always evaluates to true.
@@ -603,7 +644,7 @@ True if the file's size, rounded up, in 512-byte blocks is
 If
 .Ar n
 is followed by a
-.Dq c ,
+.Dq Ic c ,
 then the primary is true if the file's size is
 .Ar n
 bytes.
@@ -649,18 +690,6 @@ device ID (st_dev, see
 .Xr stat 2
 S5.6.2 [POSIX.1]).
 .El
-.Pp
-All primaries which take a numeric argument allow the number to be
-preceded by a plus sign
-.Pq Dq +
-or a minus sign
-.Pq Dq \- .
-A preceding plus sign means
-.Dq more than n ,
-a preceding minus sign means
-.Dq less than n ,
-and neither means
-.Dq exactly n .
 .Sh OPERATORS
 The primaries may be combined using the following operators.
 The operators are listed in order of decreasing precedence.
@@ -709,39 +738,51 @@ The
 utility normally exits 0 on success, and exits with 1 under certain
 internal error conditions.
 If any invocations of
-.Dq Ic -exec Ar ... No +
+.Dq Ic -exec Ar ... Ic \&+
 primaries return non-zero exit-status, then
 .Nm
 will do so as well.
 .Sh EXAMPLES
 The following examples are shown as given to the shell:
 .Bl -tag -width findx
-.It Li "find  /  \e!  -name  \*q*.c\*q  -print"
+.It Li "find  /  \e!  -name  \*q*.c\*q  \-print"
 Print out a list of all the files whose names do not end in
 .Dq \&.c .
-.It Li "find  /  -newer  ttt  -user  wnj  -print"
+.It Li "find  /  \-newer  ttt  \-user  wnj  \-print"
 Print out a list of all the files owned by user
 .Dq wnj
 that are newer than the file
 .Dq ttt .
-.It Li "find  /  \e!  \e(  -newer  ttt  -user  wnj  \e)  -print"
+.It Li "find  .  \-type  f  \-mmin  \-30  \-print  \-or  \-mindepth  1  \-prune"
+Print out a list of all the files in the current directory that are
+newer than 30 minutes.
+.It Li "find  .  \-type  f  \-atime  +10  \-mindepth  2  \-print"
+Print out a list of all the files in any sub-directories that have not
+been accessed in the past ten days.
+.It Li "find  .  \-mtime  +90  \-exec  rm  \-i  {}  +  \-or  \-mindepth  1  \-prune"
+Interactively remove all of the files in the current directory that have
+not been modified in 90 days.
+.It Li "find  .  \-type  f  \-mtime  +90  \-ok  mv  {}  {}.old  \e;"
+Interactively rename all of the files in the current directory and all
+sub-directories that have not been modified in 90 days.
+.It Li "find  /  \e!  \e(  \-newer  ttt  \-user  wnj  \e)  \-print"
 Print out a list of all the files which are not both newer than
 .Dq ttt
 and owned by
 .Dq wnj .
-.It Li "find  /  \e(  -newer  ttt  -or  -user wnj  \e)  -print"
+.It Li "find  /  \e(  \-newer  ttt  \-or  \-user  wnj  \e)  \-print"
 Print out a list of all the files that are either owned by
 .Dq wnj
 or that are newer than
 .Dq ttt .
-.It Li "find  /  \e(  -newer  ttt  -or  -user wnj  \e)  -exit 1"
+.It Li "find  /  \e(  \-newer  ttt  \-or  \-user  wnj  \e)  \-exit  1"
 Return immediately with a value of 1 if any files are found that are either
 owned by
 .Dq wnj
 or that are newer than
 .Dq ttt ,
 but do not print them.
-.It Li "find  /  \e(  -newer  ttt  -or  -user wnj  \e)  -ls -exit 1"
+.It Li "find  /  \e(  \-newer  ttt  \-or  \-user  wnj  \e)  \-ls  \-exit  1"
 Same as above, but list the first file matching the criteria before exiting
 with a value of 1.
 .El
@@ -797,41 +838,51 @@ Historically, the
 and
 .Fl x
 options were implemented using the primaries
-.Dq -depth ,
-.Dq -follow ,
+.Dq Ic -depth ,
+.Dq Ic -follow ,
 and
-.Dq -xdev .
-These primaries always evaluated to true.
-As they were really global variables that took effect before the traversal
-began, some legal expressions could have unexpected results.
-An example is the expression
-.Dq -print -o -depth .
-As -print always evaluates to true, the standard order of evaluation
-implies that -depth would never be evaluated.
-This is not the case.
+.Dq Ic -xdev .
+These primaries always evaluated to true, and always
+took effect when the
+.Ar expression
+was parsed, before the file system traversal began.
+As a result, some legal expressions could be confusing.
+For example, in the expression
+.Dq Ic -print Ic -or Ic -depth ,
+.Ic -print
+always evaluates to true, so the standard meaning of
+.Ic -or
+implies that
+.Ic -depth
+would never be evaluated, but that is not what happens;
+in fact,
+.Ic -depth
+takes effect immediately, without testing whether
+.Ic -print
+returns true or false.
 .Pp
-The operator
-.Dq -or
+Historically, the operator
+.Dq Ic -or
 was implemented as
-.Dq -o ,
+.Dq Ic -o ,
 and the operator
-.Dq -and
+.Dq Ic -and
 was implemented as
-.Dq -a .
+.Dq Ic -a .
 .Pp
 Historic implementations of the
-.Ic -exec
+.Dq Ic -exec
 and
-.Ic -ok
+.Dq Ic -ok
 primaries did not replace the string
-.Dq {}
+.Dq Ic {}
 in the utility name or the
-utility arguments if it had preceding or following non-whitespace characters.
+utility arguments if it did not appear as a separate argument.
 This version replaces it no matter where in the utility name or arguments
 it appears.
 .Pp
 Support for
-.Dq Ic -exec Ar ... No +
+.Dq Ic -exec Ar ... Ic \&+
 is consistent with
 .Em IEEE PASC Interpretation 1003.2 #210 ,
 though the feature originated in
