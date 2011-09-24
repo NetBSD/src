@@ -1,5 +1,5 @@
 /* tc-frv.c -- Assembler for the Fujitsu FRV.
-   Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008
+   Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
    Free Software Foundation. Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -28,6 +28,7 @@
 #include "libbfd.h"
 #include "elf/common.h"
 #include "elf/frv.h"
+#include "dwarf2dbg.h"
 
 /* Structure to hold all of the different components describing
    an individual instruction.  */
@@ -896,9 +897,7 @@ workaround_top:
 
   if (vliw1->insn_count == 2)
     {
-      struct vliw_insn_list *this_insn;
- 
-      /* check vliw1 for a label. */
+      /* Check vliw1 for a label. */
       for (this_insn = vliw1->insn_list; this_insn; this_insn = this_insn->next)
 	{
 	  if (this_insn->type == VLIW_LABEL_TYPE)
@@ -1040,9 +1039,9 @@ fr550_check_insn_acc_range (frv_insn *insn, int low, int hi)
 }
 
 static int
-fr550_check_acc_range (FRV_VLIW *vliw, frv_insn *insn)
+fr550_check_acc_range (FRV_VLIW *vlw, frv_insn *insn)
 {
-  switch ((*vliw->current_vliw)[vliw->next_slot - 1])
+  switch ((*vlw->current_vliw)[vlw->next_slot - 1])
     {
     case UNIT_FM0:
     case UNIT_FM2:
@@ -1107,7 +1106,7 @@ md_assemble (char *str)
   
   if (!insn.insn)
     {
-      as_bad (errmsg);
+      as_bad ("%s", errmsg);
       return;
     }
   
@@ -1801,6 +1800,7 @@ frv_frob_label (symbolS *this_label)
 {
   struct vliw_insn_list *vliw_insn_list_entry;
 
+  dwarf2_emit_label (this_label);
   if (frv_mach != bfd_mach_frvtomcat)
     return;
 

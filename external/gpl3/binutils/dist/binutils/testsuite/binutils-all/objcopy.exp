@@ -1,5 +1,5 @@
 #   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-#   2004, 2006, 2007
+#   2004, 2006, 2007, 2009, 2010
 #   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -79,7 +79,7 @@ proc objcopy_test {testname srcfile} {
 	# files in the first place, and may order things a little
 	# differently. Those systems should use setup_xfail here.
 
-	setup_xfail "h8300-*-rtems*" "h8300-*-coff"
+	setup_xfail "h8300-*-coff"
 	setup_xfail "h8500-*-rtems*" "h8500-*-coff"
 	setup_xfail "hppa*-*-*"
 	setup_xfail "i960-*"
@@ -142,6 +142,43 @@ if ![string match "" $got] then {
             fail "objcopy --reverse-bytes"
         }
     }
+}
+
+# Test interleaved copy of multiple byte width
+
+set sequence_file sequence_file
+set file [open ${sequence_file} w]
+puts ${file} "12345678"
+close ${file}
+
+if [is_remote host] {
+    remote_upload host ${sequence_file} tmpdir/sequence_file
+    set sequence_file tmpdir/sequence_file
+}
+
+set got [binutils_run $OBJCOPY "-I binary -i 4 -b 0 --interleave-width 2 ${sequence_file} ${copyfile}"]
+
+if ![string match "" $got] then {
+    fail "objcopy -i --interleave-width"
+} else {
+    if [is_remote host] {
+	remote_upload host ${copyfile} tmpdir/interleave_output
+	set interleave_output tmpdir/interleave_output
+    } else {
+	set interleave_output ${copyfile}
+    }
+
+    set file [open ${interleave_output} r]
+    gets $file line
+    send_log "$line\n"
+    verbose $line
+
+    if ![string match "1256" $line] then {
+	fail "objcopy -i --interleave-width"
+    }
+    pass "objcopy -i --interleave-width"
+
+    close $file
 }
 
 # Test generating S records.
@@ -501,7 +538,8 @@ proc copy_setup { } {
 	set add_libs ""
     }
 
-    if { [istarget *-*-linux*] } {
+    if { [istarget *-*-linux*]
+	 || [istarget *-*-gnu*] } {
 	foreach i $gcc_gas_flag {
 	    set flags "additional_flags=$i $flags"
 	}
@@ -583,7 +621,8 @@ proc copy_executable { prog flags test1 test2 } {
 	setup_xfail "arm*-*-pe"
 	setup_xfail "thumb*-*-coff"
 	setup_xfail "thumb*-*-pe"
-	setup_xfail "x86_64-*-mingw*"
+	setup_xfail "*-*-mingw*"
+	setup_xfail "*-*-cygwin*"
     
 	fail $test1
     }
@@ -611,6 +650,7 @@ proc strip_executable { prog flags test } {
     global NMFLAGS
     global host_triplet
 
+    remote_file build delete tmpdir/striprog
     remote_download build tmpdir/copyprog tmpdir/striprog
     if [is_remote host] {
 	set copyfile [remote_download host tmpdir/striprog]
@@ -653,6 +693,7 @@ proc strip_executable_with_saving_a_symbol { prog flags test } {
     global NMFLAGS
     global host_triplet
 
+    remote_file build delete tmpdir/striprog
     remote_download build tmpdir/copyprog tmpdir/striprog
     if [is_remote host] {
 	set copyfile [remote_download host tmpdir/striprog]
@@ -704,6 +745,7 @@ proc keep_debug_symbols_and_test_copy { prog1 flags1 test1 prog2 flags2 test2 } 
     global NM
     global NMFLAGS
 
+    remote_file build delete tmpdir/striprog
     remote_download build tmpdir/copyprog tmpdir/striprog
     if [is_remote host] {
 	set copyfile [remote_download host tmpdir/striprog]
@@ -827,16 +869,32 @@ if { ([istarget "ia64-*-elf*"]
 if [is_elf_format] {
     objcopy_test "ELF unknown section type" unknown.s
     objcopy_test_readelf "ELF group" group.s
+    objcopy_test_readelf "ELF group" group-2.s
+    objcopy_test_readelf "ELF group" group-3.s
+    objcopy_test_readelf "ELF group" group-4.s
+    run_dump_test "group-5"
     run_dump_test "copy-1"
+    run_dump_test "note-1"
 }
 
 run_dump_test "copy-2"
 run_dump_test "copy-3"
+run_dump_test "copy-4"
 
 if [is_elf_format] {
     run_dump_test "strip-1"
     run_dump_test "strip-2"
     run_dump_test "strip-3"
+    run_dump_test "strip-4"
+    run_dump_test "strip-5"
+    run_dump_test "strip-6"
+    run_dump_test "strip-7"
+    run_dump_test "strip-8"
+    run_dump_test "strip-9"
+    if { ![istarget "*-*-hpux*"]
+	 && ![istarget "msp*-*-*"] } {
+	run_dump_test "strip-10"
+    }
 
     if { [istarget "i*86-*"] || [istarget "x86_64-*-*"] } {
 	# Check to make sure we don't strip a symbol named in relocations.
@@ -858,5 +916,13 @@ if [is_elf_format] {
     }
 
     run_dump_test "localize-hidden-1"
+    run_dump_test "testranges"
+    run_dump_test "testranges-ia64"
+
+    run_dump_test "add-section"
+    run_dump_test "add-empty-section"
+
+    run_dump_test "exclude-1a"
+    run_dump_test "exclude-1b"
 }
 run_dump_test "localize-hidden-2"

@@ -61,6 +61,18 @@ typedef Expression* Expression_ptr;
 typedef void* Expression_ptr;
 #endif
 
+/* Script_section type.  */
+enum Script_section_type
+{
+  /* No section type.  */
+  SCRIPT_SECTION_TYPE_NONE,
+  SCRIPT_SECTION_TYPE_NOLOAD,
+  SCRIPT_SECTION_TYPE_DSECT,
+  SCRIPT_SECTION_TYPE_COPY,
+  SCRIPT_SECTION_TYPE_INFO,
+  SCRIPT_SECTION_TYPE_OVERLAY
+};
+
 /* A constraint for whether to use a particular output section
    definition.  */
 
@@ -83,6 +95,8 @@ struct Parser_output_section_header
 {
   /* The address.  This may be NULL.  */
   Expression_ptr address;
+  /* Section type.  May be NULL string.  */ 
+  enum Script_section_type section_type;
   /* The load address, from the AT specifier.  This may be NULL.  */
   Expression_ptr load_address;
   /* The alignment, from the ALIGN specifier.  This may be NULL.  */
@@ -211,10 +225,21 @@ yylex(YYSTYPE*, void* closure);
 extern void
 yyerror(void* closure, const char*);
 
+/* Called by the bison parser to add an external symbol (a symbol in
+   an EXTERN declaration) to the link.  */
+
+extern void
+script_add_extern(void* closure, const char*, size_t);
+
 /* Called by the bison parser to add a file to the link.  */
 
 extern void
 script_add_file(void* closure, const char*, size_t);
+
+/* Called by the bison parser to add a library to the link.  */
+
+extern void
+script_add_library(void* closure, const char*, size_t);
 
 /* Called by the bison parser to start and stop a group.  */
 
@@ -245,6 +270,17 @@ script_set_common_allocation(void* closure, int);
 extern void
 script_parse_option(void* closure, const char*, size_t);
 
+/* Called by the bison parser to handle OUTPUT_FORMAT.  This return 0
+   if the parse should be aborted.  */
+
+extern int
+script_check_output_format(void* closure, const char*, size_t,
+			   const char*, size_t, const char*, size_t);
+
+/* Called by the bison parser to handle TARGET.  */
+extern void
+script_set_target(void* closure, const char*, size_t);
+
 /* Called by the bison parser to handle SEARCH_DIR.  */
 
 extern void
@@ -266,6 +302,14 @@ script_push_lex_into_version_mode(void* closure);
 
 extern void
 script_pop_lex_mode(void* closure);
+
+/* Called by the bison parser to get the value of a symbol.  This is
+   called for a reference to a symbol, but is not called for something
+   like "sym += 10".  Uses of the special symbol "." can just call
+   script_exp_string.  */
+
+extern Expression_ptr
+script_symbol(void* closure, const char*, size_t);
 
 /* Called by the bison parser to set a symbol to a value.  PROVIDE is
    non-zero if the symbol should be provided--only defined if there is
@@ -372,6 +416,26 @@ script_data_segment_align(void* closure);
 extern void
 script_data_segment_relro_end(void* closure);
 
+/* Record the fact that a SEGMENT_START expression is seen.  */
+
+extern void
+script_saw_segment_start_expression(void* closure);
+
+/* Called by the bison parser for MEMORY regions.  */
+
+extern void
+script_add_memory(void*, const char*, size_t, unsigned int,
+		  Expression_ptr, Expression_ptr);
+
+extern unsigned int
+script_parse_memory_attr(void*, const char*, size_t, int);
+
+extern void
+script_set_section_region(void*, const char*, size_t, int);
+
+extern void
+script_include_directive(void *, const char*, size_t);
+  
 /* Called by the bison parser for expressions.  */
 
 extern Expression_ptr
@@ -439,9 +503,9 @@ script_exp_function_addr(const char*, size_t);
 extern Expression_ptr
 script_exp_function_loadaddr(const char*, size_t);
 extern Expression_ptr
-script_exp_function_origin(const char*, size_t);
+script_exp_function_origin(void*, const char*, size_t);
 extern Expression_ptr
-script_exp_function_length(const char*, size_t);
+script_exp_function_length(void*, const char*, size_t);
 extern Expression_ptr
 script_exp_function_constant(const char*, size_t);
 extern Expression_ptr
@@ -463,27 +527,27 @@ extern void
 script_register_vers_node(void* closure,
 			  const char* tag,
 			  int taglen,
-			  struct Version_tree *,
-			  struct Version_dependency_list *);
+			  struct Version_tree*,
+			  struct Version_dependency_list*);
 
-extern struct Version_dependency_list *
+extern struct Version_dependency_list*
 script_add_vers_depend(void* closure,
-		       struct Version_dependency_list *existing_dependencies,
-		       const char *depend_to_add, int deplen);
+		       struct Version_dependency_list* existing_dependencies,
+		       const char* depend_to_add, int deplen);
 
-extern struct Version_expression_list *
+extern struct Version_expression_list*
 script_new_vers_pattern(void* closure,
-			struct Version_expression_list *,
-			const char *, int, int);
+			struct Version_expression_list*,
+			const char*, int, int);
 
-extern struct Version_expression_list *
-script_merge_expressions(struct Version_expression_list *a,
-                         struct Version_expression_list *b);
+extern struct Version_expression_list*
+script_merge_expressions(struct Version_expression_list* a,
+                         struct Version_expression_list* b);
 
-extern struct Version_tree *
+extern struct Version_tree*
 script_new_vers_node(void* closure,
-		     struct Version_expression_list *global,
-		     struct Version_expression_list *local);
+		     struct Version_expression_list* global,
+		     struct Version_expression_list* local);
 
 extern void
 version_script_push_lang(void* closure, const char* lang, int langlen);

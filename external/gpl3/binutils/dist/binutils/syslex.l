@@ -1,3 +1,5 @@
+%option noinput nounput
+
 %{
 /* Copyright 2001, 2003, 2005, 2007 Free Software Foundation, Inc.
 

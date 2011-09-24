@@ -1,6 +1,6 @@
 /* This file is tc-m68k.h
    Copyright 1987, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-   1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007
+   1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -178,3 +178,13 @@ extern int tc_m68k_regname_to_dw2regnum (char *regname);
 
 #define tc_cfi_frame_initial_instructions tc_m68k_frame_initial_instructions
 extern void tc_m68k_frame_initial_instructions (void);
+
+#ifdef TE_UCLINUX
+/* elf2flt does not honor PT_LOAD's from the executable.
+   .text and .eh_frame sections will not end up in the same segment and so
+   we cannot use PC-relative encoding for CFI.  */
+# define CFI_DIFF_EXPR_OK 0
+
+/* However, follow compiler's guidance when it specifies encoding for LSDA.  */
+# define CFI_DIFF_LSDA_OK 1
+#endif

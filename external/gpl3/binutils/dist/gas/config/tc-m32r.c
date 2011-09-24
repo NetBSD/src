@@ -1,6 +1,6 @@
 /* tc-m32r.c -- Assembler for the Renesas M32R.
    Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007 Free Software Foundation, Inc.
+   2006, 2007, 2009 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -570,7 +570,7 @@ debug_sym (int ignore ATTRIBUTE_UNUSED)
   char delim;
   char *end_name;
   symbolS *symbolP;
-  sym_linkS *link;
+  sym_linkS *lnk;
 
   name = input_line_pointer;
   delim = get_symbol_end ();
@@ -589,10 +589,10 @@ debug_sym (int ignore ATTRIBUTE_UNUSED)
 
   else
     {
-      link = (sym_linkS *) xmalloc (sizeof (sym_linkS));
-      link->symbol = symbolP;
-      link->next = debug_sym_link;
-      debug_sym_link = link;
+      lnk = (sym_linkS *) xmalloc (sizeof (sym_linkS));
+      lnk->symbol = symbolP;
+      lnk->next = debug_sym_link;
+      debug_sym_link = lnk;
       symbol_get_obj (symbolP)->local = 1;
     }
 
@@ -920,7 +920,7 @@ assemble_two_insns (char *str1, char *str2, int parallel_p)
   if (! (first.insn = m32r_cgen_assemble_insn
 	 (gas_cgen_cpu_desc, str1, & first.fields, first.buffer, & errmsg)))
     {
-      as_bad (errmsg);
+      as_bad ("%s", errmsg);
       return;
     }
 
@@ -1034,7 +1034,7 @@ assemble_two_insns (char *str1, char *str2, int parallel_p)
   if (! (second.insn = m32r_cgen_assemble_insn
 	 (gas_cgen_cpu_desc, str1, & second.fields, second.buffer, & errmsg)))
     {
-      as_bad (errmsg);
+      as_bad ("%s", errmsg);
       return;
     }
 
@@ -1225,7 +1225,7 @@ md_assemble (char *str)
 
   if (!insn.insn)
     {
-      as_bad (errmsg);
+      as_bad ("%s", errmsg);
       return;
     }
 
@@ -1809,8 +1809,8 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
     {
       fixS *fixP;
 
-      assert (fragP->fr_subtype != 1);
-      assert (fragP->fr_cgen.insn != 0);
+      gas_assert (fragP->fr_subtype != 1);
+      gas_assert (fragP->fr_cgen.insn != 0);
 
       fixP = gas_cgen_record_fixup (fragP,
 				    /* Offset of branch insn in frag.  */
@@ -1900,7 +1900,7 @@ m32r_record_hi16 (int reloc_type,
 {
   struct m32r_hi_fixup *hi_fixup;
 
-  assert (reloc_type == BFD_RELOC_M32R_HI16_SLO
+  gas_assert (reloc_type == BFD_RELOC_M32R_HI16_SLO
 	  || reloc_type == BFD_RELOC_M32R_HI16_ULO);
 
   hi_fixup = xmalloc (sizeof (* hi_fixup));
@@ -2008,7 +2008,7 @@ m32r_frob_file (void)
       segment_info_type *seginfo;
       int pass;
 
-      assert (FX_OPINFO_R_TYPE (l->fixp) == BFD_RELOC_M32R_HI16_SLO
+      gas_assert (FX_OPINFO_R_TYPE (l->fixp) == BFD_RELOC_M32R_HI16_SLO
 	      || FX_OPINFO_R_TYPE (l->fixp) == BFD_RELOC_M32R_HI16_ULO);
 
       /* Check quickly whether the next fixup happens to be a matching low.  */
@@ -2049,7 +2049,7 @@ m32r_frob_file (void)
 		  for (pf = &seginfo->fix_root;
 		       *pf != l->fixp;
 		       pf = & (*pf)->fx_next)
-		    assert (*pf != NULL);
+		    gas_assert (*pf != NULL);
 
 		  *pf = l->fixp->fx_next;
 

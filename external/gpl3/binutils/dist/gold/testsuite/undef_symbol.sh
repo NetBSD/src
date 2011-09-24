@@ -40,6 +40,6 @@ check()
     fi
 }
 
-check "undef_symbol.so: undefined reference to 'a'"
+check "undef_symbol.so: error: undefined reference to 'a'"
 
 exit 0

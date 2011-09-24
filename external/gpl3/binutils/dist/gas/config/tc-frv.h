@@ -1,5 +1,6 @@
 /* tc-frv.h -- Header file for tc-frv.c.
-   Copyright 2002, 2004, 2005, 2007, 2008 Free Software Foundation, Inc.
+   Copyright 2002, 2004, 2005, 2007, 2008, 2009
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -46,6 +47,7 @@ extern void frv_tomcat_workaround (void);
 #define md_cleanup frv_tomcat_workaround
 
 #define md_number_to_chars frv_md_number_to_chars
+extern void frv_md_number_to_chars (char *, valueT, int);
 
 extern long frv_relax_frag (fragS *, long);
 #define md_relax_frag(segment, fragP, stretch) frv_relax_frag(fragP, stretch)

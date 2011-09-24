@@ -1,6 +1,6 @@
 ; Fujitsu FRV opcode support, for GNU Binutils.  -*- Scheme -*-
 ;
-; Copyright 2000, 2001, 2003, 2004, 2007 Free Software Foundation, Inc.
+; Copyright 2000, 2001, 2003, 2004, 2007, 2009 Free Software Foundation, Inc.
 ;
 ; Contributed by Red Hat Inc; developed under contract from Fujitsu.
 ;
@@ -7050,7 +7050,7 @@
        (.splice (UNIT FMALL) (FR500-MAJOR F-1) (.unsplice attr))
        (.str name "$pack $" src ",$" targ)
        (+ pack targ op (rs-null) ope src)
-       (set targ (conv mode src))
+       (set targ (conv mode FPCONV-DEFAULT src))
        ((fr500 (unit u-float-convert)) (fr550 (unit u-float-convert)))
   )
 )
@@ -7076,9 +7076,9 @@
        (.str name "$pack $" src ",$" targ)
        (+ pack targ op (rs-null) ope src)
        (sequence ()
-		 (set targ (conv mode src))
+		 (set targ (conv mode FPCONV-DEFAULT src))
 		 (set (nextreg targ_hw targ 1)
-		      (conv mode (nextreg src_hw src 1))))
+		      (conv mode FPCONV-DEFAULT (nextreg src_hw src 1))))
        ((fr500 (unit u-float-dual-convert)))
   )
 )
@@ -7095,10 +7095,10 @@
        (+ pack targ op (rs-null) ope src)
        (sequence ()
 		 (c-call VOID "@cpu@_set_ne_index" (index-of targ))
-		 (set targ (conv mode src))
+		 (set targ (conv mode FPCONV-DEFAULT src))
 		 (c-call VOID "@cpu@_set_ne_index" (add (index-of targ) 1))
 		 (set (nextreg targ_hw targ 1)
-		      (conv mode (nextreg src_hw src 1))))
+		      (conv mode FPCONV-DEFAULT (nextreg src_hw src 1))))
        ((fr500 (unit u-float-dual-convert)))
   )
 )
@@ -7114,7 +7114,7 @@
        (.str name "$pack $" src ",$" targ ",$CCi,$cond")
        (+ pack targ op (rs-null) CCi cond ope src)
        (if (eq CCi (or cond 2))
-	   (set targ (conv mode src)))
+	   (set targ (conv mode FPCONV-DEFAULT src)))
        ((fr500 (unit u-float-convert)) (fr550 (unit u-float-convert)))
   )
 )
@@ -7131,7 +7131,7 @@
        (+ pack targ op (rs-null) ope src)
        (sequence ()
 		 (c-call VOID "@cpu@_set_ne_index" (index-of targ))
-		 (set targ (conv mode src)))
+		 (set targ (conv mode FPCONV-DEFAULT src)))
        ((fr500 (unit u-float-convert)) (fr550 (unit u-float-convert)))
   )
 )
@@ -7626,11 +7626,15 @@
 
 (define-pmacro (float-parallel-mul-add-double-semantics add_sub arg1 arg2 targ)
   (sequence ()
-	    (set targ (ftrunc SF (mul DF (fext DF arg1) (fext DF arg2))))
+	    (set targ (ftrunc SF FPCONV-DEFAULT
+			      (mul DF
+				   (fext DF FPCONV-DEFAULT arg1)
+				   (fext DF FPCONV-DEFAULT arg2))))
 	    (set (nextreg h-fr targ 1)
-		 (ftrunc SF (add_sub DF
-				     (fext DF (nextreg h-fr arg1 1))
-				     (fext DF (nextreg h-fr arg2 1))))))
+		 (ftrunc SF FPCONV-DEFAULT
+			 (add_sub DF
+				  (fext DF FPCONV-DEFAULT (nextreg h-fr arg1 1))
+				  (fext DF FPCONV-DEFAULT (nextreg h-fr arg2 1))))))
 )
 
 (define-pmacro (float-parallel-mul-add-double
@@ -8229,18 +8233,28 @@
 	       (set FRintk (c-raw-call SI "frv_ref_SI" FRintk))
 	       (set arghi (halfword hi FRintj 0))
 	       (set arglo (halfword lo FRintj 0))
-	       (saturate-v (abs arghi) 32767 -32768 (msr-sie-fri-hi)
+	       ; We extend the argument before the abs operation so we can
+	       ; notice -32768 overflowing as 32768.
+	       (saturate-v (abs (ext DI arghi)) 32767 -32768 (msr-sie-fri-hi)
 			   (halfword hi FRintk 0))
-	       (saturate-v (abs arglo) 32767 -32768 (msr-sie-fri-lo)
+	       (saturate-v (abs (ext DI arglo)) 32767 -32768 (msr-sie-fri-lo)
 			   (halfword lo FRintk 0)))
      ((fr400 (unit u-media-1)) (fr450 (unit u-media-1))
       (fr550 (unit u-media)))
 )
 
+; How to extend from a mode to get the intended signedness.
+(define-pmacro (DI-ext-HI x) (ext DI x))
+(define-pmacro (DI-ext-UHI x) (zext DI x))
+(define-pmacro (DI-ext-DI x) x)
+
 (define-pmacro (media-arith-sat-semantics
 		operation arg1 arg2 res mode max min sie)
   (sequence ((DI tmp))
-	    (set tmp (operation arg1 arg2))
+	    ; Make sure we saturate at max/min against a value that is
+	    ; sign- or zero-extended appropriately from "mode".
+	    (set tmp (operation DI
+		      ((.sym DI-ext- mode) arg1) ((.sym DI-ext- mode) arg2)))
 	    (saturate-v tmp max min sie res))
 )
 

@@ -18,8 +18,10 @@ Disassembly of section .text:
 0+01a <[^>]+> e8d4 f001 	tbbgt	\[r4, r1\]
 0+01e <[^>]+> bfb8      	it	lt
 0+020 <[^>]+> df00      	svclt	0
-0+022 <[^>]+> bfdc      	itt	le
-0+024 <[^>]+> be00      	bkpt	0x0000
-0+026 <[^>]+> bf00      	nople
-0+028 <[^>]+> bf00      	nop
-0+02a <[^>]+> bf00      	nop
+0+022 <[^>]+> bf08      	it	eq
+0+024 <[^>]+> f8d0 f000 	ldreq.w	pc, \[r0\]
+0+028 <[^>]+> bfdc      	itt	le
+0+02a <[^>]+> be00      	bkpt	0x0000
+0+02c <[^>]+> bf00      	nople
+0+02e <[^>]+> bf00      	nop
+#...

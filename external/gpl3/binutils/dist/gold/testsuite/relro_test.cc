@@ -40,10 +40,10 @@ int i1 = 1;
 static int i2 = 2;
 
 // P1 is a global relro variable.
-int* const p1 = &i1;
+int* const p1 __attribute__ ((aligned(64))) = &i1;
 
 // P2 is a local relro variable.
-int* const p2 = &i2;
+int* const p2 __attribute__ ((aligned(64))) = &i2;
 
 // Test symbol addresses.
 

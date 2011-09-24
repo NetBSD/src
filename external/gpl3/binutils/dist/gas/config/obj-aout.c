@@ -1,6 +1,7 @@
 /* a.out object file format
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   2001, 2002, 2003, 2004, 2005, 2007, 2009, 2010
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -31,12 +32,10 @@ obj_aout_frob_symbol (symbolS *sym, int *punt ATTRIBUTE_UNUSED)
 {
   flagword flags;
   asection *sec;
-  int desc, type, other;
+  int type;
 
   flags = symbol_get_bfdsym (sym)->flags;
-  desc = aout_symbol (symbol_get_bfdsym (sym))->desc;
   type = aout_symbol (symbol_get_bfdsym (sym))->type;
-  other = aout_symbol (symbol_get_bfdsym (sym))->other;
   sec = S_GET_SEGMENT (sym);
 
   /* Only frob simple symbols this way right now.  */
@@ -132,7 +131,7 @@ obj_aout_frob_file_before_fix (void)
     x = bfd_set_section_contents (stdoutput, data_section, &b, (file_ptr) 0,
 				  (bfd_size_type) 1);
 
-  assert (x);
+  gas_assert (x);
 }
 
 static void
@@ -310,7 +309,9 @@ const struct format_ops aout_format_ops =
   aout_pop_insert,
   0,	/* ecoff_set_ext.  */
   0,	/* read_begin_hook.  */
-  0 	/* symbol_new_hook.  */
+  0,	/* symbol_new_hook.  */
+  0,	/* symbol_clone_hook.  */
+  0	/* adjust_symtab.  */
 };
 
 const pseudo_typeS aout_pseudo_table[] =

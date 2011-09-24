@@ -10,3 +10,8 @@ class Ordering {
 void SortAscending(int array[], int size) {
   std::sort(array, array + size, Ordering());
 }
+
+extern "C" int OverriddenCFunction(int i) __attribute__ ((weak));
+extern "C" int OverriddenCFunction(int i) {
+  return i;
+}

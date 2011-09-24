@@ -1,6 +1,7 @@
 /* tc-h8300.c -- Assemble code for the Renesas H8/300
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -138,6 +139,48 @@ pint (int arg ATTRIBUTE_UNUSED)
   cons (Hmode ? 4 : 2);
 }
 
+/* Like obj_elf_section, but issues a warning for new
+   sections which do not have an attribute specification.  */
+
+static void
+h8300_elf_section (int push)
+{
+  static const char * known_data_sections [] = { ".rodata", ".tdata", ".tbss" };
+  static const char * known_data_prefixes [] = { ".debug", ".zdebug", ".gnu.warning" };
+  char * saved_ilp = input_line_pointer;
+  char * name;
+
+  name = obj_elf_section_name ();
+  if (name == NULL)
+    return;
+
+  if (* input_line_pointer != ','
+      && bfd_get_section_by_name (stdoutput, name) == NULL)
+    {
+      signed int i;
+
+      /* Ignore this warning for well known data sections.  */
+      for (i = ARRAY_SIZE (known_data_sections); i--;)
+	if (strcmp (name, known_data_sections[i]) == 0)
+	  break;
+
+      if (i < 0)
+	for (i = ARRAY_SIZE (known_data_prefixes); i--;)
+	  if (strncmp (name, known_data_prefixes[i],
+		       strlen (known_data_prefixes[i])) == 0)
+	    break;
+
+      if (i < 0)
+	as_warn (_("new section '%s' defined without attributes - this might cause problems"), name);
+    }
+
+  /* FIXME: We ought to free the memory allocated by obj_elf_section_name()
+     for 'name', but we do not know if it was taken from the obstack, via
+     demand_copy_C_string(), or xmalloc()ed.  */
+  input_line_pointer = saved_ilp;
+  obj_elf_section (push);
+}
+
 /* This table describes all the machine specific pseudo-ops the assembler
    has to support.  The fields are:
    pseudo-op name without dot
@@ -164,6 +207,14 @@ const pseudo_typeS md_pseudo_table[] =
   {"import",  s_ignore, 0},
   {"page",    listing_eject, 0},
   {"program", s_ignore, 0},
+
+#ifdef OBJ_ELF
+  {"section",   h8300_elf_section, 0},
+  {"section.s", h8300_elf_section, 0},
+  {"sect",      h8300_elf_section, 0},
+  {"sect.s",    h8300_elf_section, 0},
+#endif
+
   {0, 0, 0}
 };
 
@@ -299,7 +350,7 @@ struct h8_op
 static void clever_message (const struct h8_instruction *, struct h8_op *);
 static void fix_operand_size (struct h8_op *, int);
 static void build_bytes (const struct h8_instruction *, struct h8_op *);
-static void do_a_fix_imm (int, int, struct h8_op *, int);
+static void do_a_fix_imm (int, int, struct h8_op *, int, const struct h8_instruction *);
 static void check_operand (struct h8_op *, unsigned int, char *);
 static const struct h8_instruction * get_specific (const struct h8_instruction *, struct h8_op *, int) ;
 static char *get_operands (unsigned, char *, struct h8_op *);
@@ -623,7 +674,7 @@ get_operand (char **ptr, struct h8_op *op, int direction)
 	      op->mode = (op->mode & ~SIZE) | L_8;
 	      break;
 	    default:
-	      as_warn ("invalid suffix after register.");
+	      as_warn (_("invalid suffix after register."));
 	      break;
 	    }
 	  src += 2;
@@ -1273,7 +1324,7 @@ check_operand (struct h8_op *operand, unsigned int width, char *string)
      (may relax into an 8bit absolute address).  */
 
 static void
-do_a_fix_imm (int offset, int nibble, struct h8_op *operand, int relaxmode)
+do_a_fix_imm (int offset, int nibble, struct h8_op *operand, int relaxmode, const struct h8_instruction *this_try)
 {
   int idx;
   int size;
@@ -1313,6 +1364,17 @@ do_a_fix_imm (int offset, int nibble, struct h8_op *operand, int relaxmode)
 	  check_operand (operand, 0xffff, t);
 	  bytes[0] |= operand->exp.X_add_number >> 8;
 	  bytes[1] |= operand->exp.X_add_number >> 0;
+#ifdef OBJ_ELF
+	  /* MOVA needs both relocs to relax the second operand properly.  */
+	  if (relaxmode != 0
+	      && (OP_KIND(this_try->opcode->how) == O_MOVAB
+		  || OP_KIND(this_try->opcode->how) == O_MOVAW
+		  || OP_KIND(this_try->opcode->how) == O_MOVAL))
+	    {
+	      idx = BFD_RELOC_16;
+	      fix_new_exp (frag_now, offset, 2, &operand->exp, 0, idx);
+	    }
+#endif
 	  break;
 	case L_24:
 	  check_operand (operand, 0xffffff, t);
@@ -1576,12 +1638,14 @@ build_bytes (const struct h8_instruction *this_try, struct h8_op *operand)
 
       if (x_mode == IMM || x_mode == DISP)
 	do_a_fix_imm (output - frag_now->fr_literal + op_at[i] / 2,
-		      op_at[i] & 1, operand + i, (x & MEMRELAX) != 0);
+		      op_at[i] & 1, operand + i, (x & MEMRELAX) != 0,
+		      this_try);
 
       else if (x_mode == ABS)
 	do_a_fix_imm (output - frag_now->fr_literal + op_at[i] / 2,
 		      op_at[i] & 1, operand + i,
-		      (x & MEMRELAX) ? movb + 1 : 0);
+		      (x & MEMRELAX) ? movb + 1 : 0,
+		      this_try);
 
       else if (x_mode == PCREL)
 	{
@@ -2125,9 +2189,11 @@ md_number_to_chars (char *ptr, valueT use, int nbytes)
 }
 
 long
-md_pcrel_from (fixS *fixP ATTRIBUTE_UNUSED)
+md_pcrel_from (fixS *fixp)
 {
-  abort ();
+  as_bad_where (fixp->fx_file, fixp->fx_line,
+		_("Unexpected reference to a symbol in a non-code section"));
+  return 0;
 }
 
 arelent *

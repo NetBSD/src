@@ -29,23 +29,25 @@
 #include "sym_ids.h"
 #include "corefile.h"
 
-static struct sym_id
+struct match
+  {
+    int prev_index;	/* Index of prev match.  */
+    Sym *prev_match;	/* Previous match.  */
+    Sym *first_match;	/* Chain of all matches.  */
+    Sym sym;
+  };
+
+struct sym_id
   {
     struct sym_id *next;
     char *spec;			/* Parsing modifies this.  */
     Table_Id which_table;
     bfd_boolean has_right;
 
-    struct match
-      {
-	int prev_index;		/* Index of prev match.  */
-	Sym *prev_match;	/* Previous match.  */
-	Sym *first_match;	/* Chain of all matches.  */
-	Sym sym;
-      }
-    left, right;
-  }
- *id_list;
+    struct match left, right;
+  };
+
+static struct sym_id  *id_list;
 
 static void parse_spec
   (char *, Sym *);

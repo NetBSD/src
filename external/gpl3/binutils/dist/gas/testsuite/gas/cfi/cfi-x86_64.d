@@ -1,6 +1,7 @@
-#readelf: -wf
+#objdump: -Wf
 #name: CFI on x86-64
-The section .eh_frame contains:
+#...
+Contents of the .eh_frame section:
 
 00000000 00000014 00000000 CIE
   Version:               1
@@ -94,7 +95,7 @@ The section .eh_frame contains:
   DW_CFA_undefined: r16 \(rip\)
   DW_CFA_nop
 
-000000e8 000000cc 00000018 FDE cie=000000d4 pc=00000058..00000097
+000000e8 000000c[8c] 00000018 FDE cie=000000d4 pc=00000058..00000097
   DW_CFA_advance_loc: 1 to 00000059
   DW_CFA_undefined: r0 \(rax\)
   DW_CFA_advance_loc: 1 to 0000005a
@@ -220,8 +221,4 @@ The section .eh_frame contains:
   DW_CFA_advance_loc: 1 to 00000096
   DW_CFA_undefined: r48 \(mm7\)
   DW_CFA_nop
-  DW_CFA_nop
-  DW_CFA_nop
-  DW_CFA_nop
-  DW_CFA_nop
-
+#pass
