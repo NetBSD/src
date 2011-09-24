@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1342 2011/09/23 14:45:06 jruoho Exp $
+# $NetBSD: mi,v 1.1343 2011/09/24 17:09:29 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2075,6 +2075,7 @@
 ./usr/share/man/cat7/pkgsrc.0			man-reference-catman	.cat
 ./usr/share/man/cat7/re_format.0		man-reference-catman	.cat
 ./usr/share/man/cat7/release.0			man-reference-catman	.cat
+./usr/share/man/cat7/rfc6056.0			man-reference-catman	.cat
 ./usr/share/man/cat7/rump_sp.0			man-reference-catman	.cat
 ./usr/share/man/cat7/script.0			man-reference-catman	.cat
 ./usr/share/man/cat7/security.0			man-reference-catman	.cat
@@ -4802,6 +4803,7 @@
 ./usr/share/man/html7/pkgsrc.html		man-reference-htmlman	html
 ./usr/share/man/html7/re_format.html		man-reference-htmlman	html
 ./usr/share/man/html7/release.html		man-reference-htmlman	html
+./usr/share/man/html7/rfc6056.html		man-reference-htmlman	html
 ./usr/share/man/html7/rump_sp.html		man-reference-htmlman	html
 ./usr/share/man/html7/script.html		man-reference-htmlman	html
 ./usr/share/man/html7/security.html		man-reference-htmlman	html
@@ -7509,6 +7511,7 @@
 ./usr/share/man/man7/pkgsrc.7			man-reference-man	.man
 ./usr/share/man/man7/re_format.7		man-reference-man	.man
 ./usr/share/man/man7/release.7			man-reference-man	.man
+./usr/share/man/man7/rfc6056.7			man-reference-man	.man
 ./usr/share/man/man7/rump_sp.7		man-reference-man	.man
 ./usr/share/man/man7/script.7			man-reference-man	.man
 ./usr/share/man/man7/security.7			man-reference-man	.man
