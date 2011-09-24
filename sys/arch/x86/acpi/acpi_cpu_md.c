@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.66 2011/09/24 11:17:25 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.67 2011/09/24 19:41:40 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.66 2011/09/24 11:17:25 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.67 2011/09/24 19:41:40 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -106,6 +106,7 @@ static char	  native_idle_text[16];
 void		(*native_idle)(void) = NULL;
 
 static int	 acpicpu_md_quirk_piix4(const struct pci_attach_args *);
+static void	 acpicpu_md_quirk_amd(struct acpicpu_pstate *, uint32_t);
 static void	 acpicpu_md_pstate_hwf_reset(void *, void *);
 static int	 acpicpu_md_pstate_fidvid_get(struct acpicpu_softc *,
                                               uint32_t *);
@@ -332,6 +333,55 @@ acpicpu_md_quirk_piix4(const struct pci_attach_args *pa)
 		return 1;
 
 	return 0;
+}
+
+static void
+acpicpu_md_quirk_amd(struct acpicpu_pstate *ps, uint32_t i)
+{
+	struct cpu_info *ci = &cpu_info_primary;
+	uint32_t family, fid, freq, did, zeta;
+	uint64_t val;
+
+	if (i > 7 || cpu_vendor != CPUVENDOR_AMD)
+		return;
+
+	family = CPUID2FAMILY(ci->ci_signature);
+
+	if (family == 0xf)
+		family += CPUID2EXTFAMILY(ci->ci_signature);
+
+	switch (family) {
+
+	case 0x10:
+		zeta = 0x10;
+		break;
+
+	case 0x11:
+		zeta = 0x08;
+		break;
+
+	default:
+		return;
+	}
+
+	/*
+	 * The following eight P-state control MSRs define
+	 * the static per-core values; the MSB indicates
+	 * whether the state is enabled, and the first eight
+	 * bits define the frequency divisor and multiplier.
+	 */
+	val = rdmsr(MSR_10H_CONFIG + i);
+
+	if ((val & __BIT(63)) == 0)
+		return;
+
+	fid = __SHIFTOUT(val, __BITS(0, 5));
+	did = __SHIFTOUT(val, __BITS(6, 8));
+
+	freq = 100 * (fid + zeta) >> did;
+
+	if (freq != 0 && ps->ps_freq != freq)
+		ps->ps_freq = freq;
 }
 
 void
@@ -595,6 +645,13 @@ acpicpu_md_pstate_init(struct acpicpu_softc *sc)
 
 		if (msr.ps_control_mask != 0)
 			ps->ps_control_mask = msr.ps_control_mask;
+
+		/*
+		 * Some AMD systems may round the frequencies
+		 * reported in the tables. Try to fix these.
+		 */
+		if (cpu_vendor == CPUVENDOR_AMD)
+			acpicpu_md_quirk_amd(ps, i);
 
 		i++;
 	}
