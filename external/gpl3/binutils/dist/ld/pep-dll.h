@@ -1,5 +1,5 @@
 /* pep-dll.h: Header file for routines used to build Windows DLLs.
-   Copyright 2006, 2007 Free Software Foundation, Inc.
+   Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
    Written by Kai Tietz, OneVision Software GmbH&CoKg.
 
    This file is part of the GNU Binutils.
@@ -29,17 +29,23 @@
 
 extern def_file * pep_def_file;
 extern int pep_dll_export_everything;
+extern int pep_dll_exclude_all_symbols;
 extern int pep_dll_do_default_excludes;
 extern int pep_dll_kill_ats;
 extern int pep_dll_stdcall_aliases;
 extern int pep_dll_warn_dup_exports;
 extern int pep_dll_compat_implib;
 extern int pep_dll_extra_pe_debug;
+extern int pep_use_nul_prefixed_import_tables;
+extern int pep_use_coff_long_section_names;
+extern int pep_leading_underscore;
+
+typedef enum { EXCLUDESYMS, EXCLUDELIBS, EXCLUDEFORIMPLIB } exclude_type;
 
 extern void pep_dll_id_target  (const char *);
-extern void pep_dll_add_excludes  (const char *, const int);
+extern void pep_dll_add_excludes  (const char *, const exclude_type);
 extern void pep_dll_generate_def_file  (const char *);
-extern void pep_dll_generate_implib  (def_file *, const char *);
+extern void pep_dll_generate_implib  (def_file *, const char *, struct bfd_link_info *);
 extern void pep_process_import_defs  (bfd *, struct bfd_link_info *);
 extern bfd_boolean pep_implied_import_dll  (const char *);
 extern void pep_dll_build_sections  (bfd *, struct bfd_link_info *);
@@ -48,7 +54,8 @@ extern void pep_dll_fill_sections  (bfd *, struct bfd_link_info *);
 extern void pep_exe_fill_sections  (bfd *, struct bfd_link_info *);
 extern void pep_walk_relocs_of_symbol
   (struct bfd_link_info *, const char *, int (*) (arelent *, asection *));
-extern void pep_create_import_fixup  (arelent * rel, asection *, int);
+extern void pep_create_import_fixup  (arelent * rel, asection *, bfd_vma);
 extern bfd_boolean pep_bfd_is_dll  (bfd *);
+extern void pep_output_file_set_long_section_names (bfd *);
 
 #endif /* PEP_DLL_H */

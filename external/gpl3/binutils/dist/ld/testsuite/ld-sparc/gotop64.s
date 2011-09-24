@@ -3,6 +3,9 @@
 	.globl	sym
 sym:	.word	0x12345678
 
+local_sym:
+	.word	0xdeadbeef
+
 	.text
 	.align	4096
 .LLGETPC0:
@@ -23,6 +26,12 @@ foo:
 	xor	%l1, %gdop_lox10(sym), %l1
 	nop
 	ldx	[%l7 + %l1], %i0, %gdop(sym)
+	nop
+	sethi	%gdop_hix22(local_sym), %l1
+	nop
+	xor	%l1, %gdop_lox10(local_sym), %l1
+	nop
+	ldx	[%l7 + %l1], %i0, %gdop(local_sym)
 	nop
 	ret
 	restore

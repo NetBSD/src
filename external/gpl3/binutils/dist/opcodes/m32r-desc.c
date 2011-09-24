@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2007 Free Software Foundation, Inc.
+Copyright 1996-2010 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -105,7 +105,6 @@ const CGEN_ATTR_TABLE m32r_cgen_operand_attr_table[] =
   { "RELAX", &bool_attr[0], &bool_attr[0] },
   { "SEM-ONLY", &bool_attr[0], &bool_attr[0] },
   { "RELOC", &bool_attr[0], &bool_attr[0] },
-  { "HASH-PREFIX", &bool_attr[0], &bool_attr[0] },
   { 0, 0, 0 }
 };
 
@@ -227,11 +226,7 @@ CGEN_KEYWORD m32r_cgen_opval_h_accums =
 
 /* The hardware table.  */
 
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define A(a) (1 << CGEN_HW_##a)
-#else
-#define A(a) (1 << CGEN_HW_/**/a)
-#endif
 
 const CGEN_HW_ENTRY m32r_cgen_hw_table[] =
 {
@@ -261,11 +256,7 @@ const CGEN_HW_ENTRY m32r_cgen_hw_table[] =
 
 /* The instruction field table.  */
 
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define A(a) (1 << CGEN_IFLD_##a)
-#else
-#define A(a) (1 << CGEN_IFLD_/**/a)
-#endif
 
 const CGEN_IFLD m32r_cgen_ifld_table[] =
 {
@@ -314,16 +305,8 @@ const CGEN_IFLD m32r_cgen_ifld_table[] =
 
 /* The operand table.  */
 
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define A(a) (1 << CGEN_OPERAND_##a)
-#else
-#define A(a) (1 << CGEN_OPERAND_/**/a)
-#endif
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define OPERAND(op) M32R_OPERAND_##op
-#else
-#define OPERAND(op) M32R_OPERAND_/**/op
-#endif
 
 const CGEN_OPERAND m32r_cgen_operand_table[] =
 {
@@ -358,35 +341,35 @@ const CGEN_OPERAND m32r_cgen_operand_table[] =
 /* simm8: 8 bit signed immediate */
   { "simm8", M32R_OPERAND_SIMM8, HW_H_SINT, 8, 8,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_SIMM8] } }, 
-    { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
+    { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* simm16: 16 bit signed immediate */
   { "simm16", M32R_OPERAND_SIMM16, HW_H_SINT, 16, 16,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_SIMM16] } }, 
-    { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
+    { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* uimm3: 3 bit unsigned number */
   { "uimm3", M32R_OPERAND_UIMM3, HW_H_UINT, 5, 3,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM3] } }, 
-    { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
+    { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* uimm4: 4 bit trap number */
   { "uimm4", M32R_OPERAND_UIMM4, HW_H_UINT, 12, 4,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM4] } }, 
-    { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
+    { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* uimm5: 5 bit shift count */
   { "uimm5", M32R_OPERAND_UIMM5, HW_H_UINT, 11, 5,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM5] } }, 
-    { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
+    { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* uimm8: 8 bit unsigned immediate */
   { "uimm8", M32R_OPERAND_UIMM8, HW_H_UINT, 8, 8,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM8] } }, 
-    { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
+    { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* uimm16: 16 bit unsigned immediate */
   { "uimm16", M32R_OPERAND_UIMM16, HW_H_UINT, 16, 16,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM16] } }, 
-    { 0|A(HASH_PREFIX), { { { (1<<MACH_BASE), 0 } } } }  },
+    { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* imm1: 1 bit immediate */
   { "imm1", M32R_OPERAND_IMM1, HW_H_UINT, 15, 1,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_IMM1] } }, 
-    { 0|A(HASH_PREFIX), { { { (1<<MACH_M32RX)|(1<<MACH_M32R2), 0 } } } }  },
+    { 0, { { { (1<<MACH_M32RX)|(1<<MACH_M32R2), 0 } } } }  },
 /* accd: accumulator destination register */
   { "accd", M32R_OPERAND_ACCD, HW_H_ACCUMS, 4, 2,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_ACCD] } }, 
@@ -418,7 +401,7 @@ const CGEN_OPERAND m32r_cgen_operand_table[] =
 /* uimm24: 24 bit address */
   { "uimm24", M32R_OPERAND_UIMM24, HW_H_ADDR, 8, 24,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM24] } }, 
-    { 0|A(HASH_PREFIX)|A(RELOC)|A(ABS_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
+    { 0|A(RELOC)|A(ABS_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* disp8: 8 bit displacement */
   { "disp8", M32R_OPERAND_DISP8, HW_H_IADDR, 8, 8,
     { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_DISP8] } }, 
@@ -451,11 +434,7 @@ const CGEN_OPERAND m32r_cgen_operand_table[] =
 /* The instruction table.  */
 
 #define OP(field) CGEN_SYNTAX_MAKE_FIELD (OPERAND (field))
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define A(a) (1 << CGEN_INSN_##a)
-#else
-#define A(a) (1 << CGEN_INSN_/**/a)
-#endif
 
 static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 {
@@ -1410,11 +1389,7 @@ m32r_cgen_rebuild_tables (CGEN_CPU_TABLE *cd)
    CGEN_CPU_OPEN_END:     terminates arguments
 
    ??? Simultaneous multiple isas might not make sense, but it's not (yet)
-   precluded.
-
-   ??? We only support ISO C stdargs here, not K&R.
-   Laziness, plus experiment to see if anything requires K&R - eventually
-   K&R will no longer be supported - e.g. GDB is currently trying this.  */
+   precluded.  */
 
 CGEN_CPU_DESC
 m32r_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)

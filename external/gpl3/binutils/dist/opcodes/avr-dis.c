@@ -1,5 +1,5 @@
 /* Disassemble AVR instructions.
-   Copyright 1999, 2000, 2002, 2004, 2005, 2006, 2007
+   Copyright 1999, 2000, 2002, 2004, 2005, 2006, 2007, 2008
    Free Software Foundation, Inc.
 
    Contributed by Denis Chertykov <denisc@overta.ru>
@@ -109,7 +109,7 @@ avr_operand (unsigned int insn, unsigned int insn2, unsigned int pc, int constra
 	    case 0x100e: xyz = "-X"; break;
 	    default: xyz = "??"; ok = 0;
 	  }
-	sprintf (buf, xyz);
+	strcpy (buf, xyz);
 
 	if (AVR_UNDEF_P (insn))
 	  sprintf (comment, _("undefined"));
@@ -149,7 +149,7 @@ avr_operand (unsigned int insn, unsigned int insn2, unsigned int pc, int constra
 	 value of the address only once, but this would mean recoding
 	 objdump_print_address() which would affect many targets.  */
       sprintf (buf, "%#lx", (unsigned long) *sym_addr);      
-      sprintf (comment, comment_start);
+      strcpy (comment, comment_start);
       break;
       
     case 'L':
@@ -158,7 +158,7 @@ avr_operand (unsigned int insn, unsigned int insn2, unsigned int pc, int constra
 	sprintf (buf, ".%+-8d", rel_addr);
         *sym = 1;
         *sym_addr = pc + 2 + rel_addr;
-	sprintf (comment, comment_start);
+	strcpy (comment, comment_start);
       }
       break;
 
@@ -169,7 +169,7 @@ avr_operand (unsigned int insn, unsigned int insn2, unsigned int pc, int constra
 	sprintf (buf, ".%+-8d", rel_addr);
         *sym = 1;
         *sym_addr = pc + 2 + rel_addr;
-	sprintf (comment, comment_start);
+	strcpy (comment, comment_start);
       }
       break;
 

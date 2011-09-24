@@ -3,8 +3,8 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN: Cpu tools GENerator.
    - the resultant file is machine generated, cgen-ibld.in isn't
 
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2005, 2006, 2007
-   Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2005, 2006, 2007,
+   2008, 2010  Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -33,6 +33,7 @@
 #include "symcat.h"
 #include "frv-desc.h"
 #include "frv-opc.h"
+#include "cgen/basic-modes.h"
 #include "opintl.h"
 #include "safe-ctype.h"
 
@@ -137,7 +138,7 @@ insert_normal (CGEN_CPU_DESC cd,
   if (length == 0)
     return NULL;
 
-  if (word_length > 32)
+  if (word_length > 8 * sizeof (CGEN_INSN_INT))
     abort ();
 
   /* For architectures with insns smaller than the base-insn-bitsize,
@@ -441,7 +442,7 @@ extract_normal (CGEN_CPU_DESC cd,
       return 1;
     }
 
-  if (word_length > 32)
+  if (word_length > 8 * sizeof (CGEN_INSN_INT))
     abort ();
 
   /* For architectures with insns smaller than the insn-base-bitsize,
@@ -468,7 +469,7 @@ extract_normal (CGEN_CPU_DESC cd,
     {
       unsigned char *bufp = ex_info->insn_bytes + word_offset / 8;
 
-      if (word_length > 32)
+      if (word_length > 8 * sizeof (CGEN_INSN_INT))
 	abort ();
 
       if (fill_cache (cd, ex_info, word_offset / 8, word_length / 8, pc) == 0)
@@ -755,15 +756,15 @@ frv_cgen_insert_operand (CGEN_CPU_DESC cd,
     case FRV_OPERAND_LABEL16 :
       {
         long value = fields->f_label16;
-        value = ((int) (((value) - (pc))) >> (2));
+        value = ((SI) (((value) - (pc))) >> (2));
         errmsg = insert_normal (cd, value, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_PCREL_ADDR), 0, 15, 16, 32, total_length, buffer);
       }
       break;
     case FRV_OPERAND_LABEL24 :
       {
 {
-  FLD (f_labelH6) = ((int) (((FLD (f_label24)) - (pc))) >> (20));
-  FLD (f_labelL18) = ((((unsigned int) (((FLD (f_label24)) - (pc))) >> (2))) & (262143));
+  FLD (f_labelH6) = ((SI) (((FLD (f_label24)) - (pc))) >> (20));
+  FLD (f_labelL18) = ((((UINT) (((FLD (f_label24)) - (pc))) >> (2))) & (262143));
 }
         errmsg = insert_normal (cd, fields->f_labelH6, 0|(1<<CGEN_IFLD_SIGNED), 0, 30, 6, 32, total_length, buffer);
         if (errmsg)
@@ -809,7 +810,7 @@ frv_cgen_insert_operand (CGEN_CPU_DESC cd,
     case FRV_OPERAND_SPR :
       {
 {
-  FLD (f_spr_h) = ((unsigned int) (FLD (f_spr)) >> (6));
+  FLD (f_spr_h) = ((UINT) (FLD (f_spr)) >> (6));
   FLD (f_spr_l) = ((FLD (f_spr)) & (63));
 }
         errmsg = insert_normal (cd, fields->f_spr_h, 0, 0, 30, 6, 32, total_length, buffer);
@@ -823,7 +824,7 @@ frv_cgen_insert_operand (CGEN_CPU_DESC cd,
     case FRV_OPERAND_U12 :
       {
 {
-  FLD (f_u12_h) = ((int) (FLD (f_u12)) >> (6));
+  FLD (f_u12_h) = ((SI) (FLD (f_u12)) >> (6));
   FLD (f_u12_l) = ((FLD (f_u12)) & (63));
 }
         errmsg = insert_normal (cd, fields->f_u12_h, 0|(1<<CGEN_IFLD_SIGNED), 0, 17, 6, 32, total_length, buffer);
