@@ -1,0 +1,2 @@
+# Host: NetBSD/hppa
+NATDEPFILES= fork-child.o inf-ptrace.o nbsd-nat.o hppanbsd-nat.o
