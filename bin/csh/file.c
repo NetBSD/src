@@ -1,4 +1,4 @@
-/* $NetBSD: file.c,v 1.28 2009/02/14 07:12:29 lukem Exp $ */
+/* $NetBSD: file.c,v 1.29 2011/09/24 14:44:11 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: file.c,v 1.28 2009/02/14 07:12:29 lukem Exp $");
+__RCSID("$NetBSD: file.c,v 1.29 2011/09/24 14:44:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,10 +161,10 @@ static int
 pushback(Char *string)
 {
     struct termios tty, tty_normal;
-    char buf[TTYHOG], svchars[TTYHOG];
+    char buf[64], svchars[sizeof(buf)];
     sigset_t nsigset, osigset;
     Char *p;
-    int bufidx, i, len_str, nbuf, nsv, onsv, retrycnt;
+    size_t bufidx, i, len_str, nbuf, nsv, onsv, retrycnt;
     char c;
 
     nsv = 0;
@@ -195,7 +195,7 @@ pushback(Char *string)
 
 	if (ioctl(SHOUT, FIONREAD, (ioctl_t) &nbuf) ||
 	    nbuf <= len_str + nsv ||	/* The string fit. */
-	    nbuf > TTYHOG)		/* For future binary compatibility
+	    nbuf > sizeof(buf))		/* For future binary compatibility
 					   (and safety). */
 	    break;
 
@@ -205,7 +205,7 @@ pushback(Char *string)
 	 */
 
 	/* This read() should be in noncanonical mode. */
-	if (read(SHOUT, &buf, nbuf) != nbuf)
+	if (read(SHOUT, &buf, nbuf) != (ssize_t)nbuf)
 	    continue;		/* hangup? */
 
 	onsv = nsv;
