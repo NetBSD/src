@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.64 2011/07/13 07:34:55 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.65 2011/09/24 10:59:02 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.64 2011/07/13 07:34:55 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.65 2011/09/24 10:59:02 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -336,7 +336,8 @@ acpicpu_md_quirk_c1e(void)
 	const uint64_t c1e = MSR_CMPHALT_SMI | MSR_CMPHALT_C1E;
 	uint64_t val;
 
-	val = rdmsr(MSR_CMPHALT);
+	if (__predict_false(rdmsr_safe(MSR_CMPHALT, &val) == EFAULT))
+		return;
 
 	if ((val & c1e) != 0)
 		wrmsr(MSR_CMPHALT, val & ~c1e);
