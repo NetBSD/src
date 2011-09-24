@@ -4,4 +4,4 @@
 bar:
 	ptabs	r18, tr0
 	blink	tr0, r63
-	.Lfe_bar: .size bar,.Lfe_bar-X
+.Lfe_bar: .size bar,.Lfe_bar-bar

@@ -1,5 +1,5 @@
 /* Create and destroy argument vectors (argv's)
-   Copyright (C) 1992, 2001 Free Software Foundation, Inc.
+   Copyright (C) 1992, 2001, 2010 Free Software Foundation, Inc.
    Written by Fred Fish @ Cygnus Support
 
 This file is part of the libiberty library.
@@ -119,6 +119,24 @@ void freeargv (char **vector)
     }
 }
 
+static void
+consume_whitespace (const char **input)
+{
+  while (ISSPACE (**input))
+    {
+      (*input)++;
+    }
+}
+
+static int
+only_whitespace (const char* input)
+{
+  while (*input != EOS && ISSPACE (*input))
+    input++;
+
+  return (*input == EOS);
+}
+
 /*
 
 @deftypefn Extension char** buildargv (char *@var{sp})
@@ -179,10 +197,8 @@ char **buildargv (const char *input)
       do
 	{
 	  /* Pick off argv[argc] */
-	  while (ISBLANK (*input))
-	    {
-	      input++;
-	    }
+	  consume_whitespace (&input);
+
 	  if ((maxargc == 0) || (argc >= (maxargc - 1)))
 	    {
 	      /* argv needs initialization, or expansion */
@@ -278,10 +294,7 @@ char **buildargv (const char *input)
 	  argc++;
 	  argv[argc] = NULL;
 
-	  while (ISSPACE (*input))
-	    {
-	      input++;
-	    }
+	  consume_whitespace (&input);
 	}
       while (*input != EOS);
     }
@@ -373,6 +386,9 @@ expandargv (int *argcp, char ***argvp)
   int i = 0;
   /* Non-zero if ***argvp has been dynamically allocated.  */
   int argv_dynamic = 0;
+  /* Limit the number of response files that we parse in order
+     to prevent infinite recursion.  */
+  unsigned int iteration_limit = 2000;
   /* Loop over the arguments, handling response files.  We always skip
      ARGVP[0], as that is the name of the program being run.  */
   while (++i < *argcp)
@@ -399,6 +415,12 @@ expandargv (int *argcp, char ***argvp)
       filename = (*argvp)[i];
       if (filename[0] != '@')
 	continue;
+      /* If we have iterated too many times then stop.  */
+      if (-- iteration_limit == 0)
+	{
+	  fprintf (stderr, "%s: error: too many @-files encountered\n", (*argvp)[0]);
+	  xexit (1);
+	}
       /* Read the contents of the file.  */
       f = fopen (++filename, "r");
       if (!f)
@@ -420,8 +442,17 @@ expandargv (int *argcp, char ***argvp)
 	goto error;
       /* Add a NUL terminator.  */
       buffer[len] = '\0';
-      /* Parse the string.  */
-      file_argv = buildargv (buffer);
+      /* If the file is empty or contains only whitespace, buildargv would
+	 return a single empty argument.  In this context we want no arguments,
+	 instead.  */
+      if (only_whitespace (buffer))
+	{
+	  file_argv = (char **) xmalloc (sizeof (char *));
+	  file_argv[0] = NULL;
+	}
+      else
+	/* Parse the string.  */
+	file_argv = buildargv (buffer);
       /* If *ARGVP is not already dynamically allocated, copy it.  */
       if (!argv_dynamic)
 	{
@@ -434,7 +465,7 @@ expandargv (int *argcp, char ***argvp)
 	}
       /* Count the number of arguments.  */
       file_argc = 0;
-      while (file_argv[file_argc] && *file_argv[file_argc])
+      while (file_argv[file_argc])
 	++file_argc;
       /* Now, insert FILE_ARGV into ARGV.  The "+1" below handles the
 	 NULL terminator at the end of ARGV.  */ 
