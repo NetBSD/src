@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.19 2011/06/12 03:35:37 rmind Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.20 2011/09/24 10:32:52 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 /*
  * Functions to provide access to i386-specific instructions.
  */
+
+#include <sys/errno.h>
 
 #include <machine/asm.h>
 #include <machine/frameasm.h>
@@ -220,6 +222,37 @@ ENTRY(wrmsr_locked)
 	movl	$OPTERON_MSR_PASSCODE, %edi
 	wrmsr
 	ret
+
+/*
+ * Support for reading MSRs in the safe manner (returns EFAULT on fault)
+ */
+/* int rdmsr_safe(u_int msr, uint64_t *data) */
+ENTRY(rdmsr_safe)
+	movq	CPUVAR(CURLWP), %r8
+	movq	L_PCB(%r8), %r8
+	movq	$_C_LABEL(msr_onfault), PCB_ONFAULT(%r8)
+
+	movl	%edi, %ecx /* u_int msr */
+	rdmsr			/* Read MSR pointed by %ecx. Returns
+				   hi byte in edx, lo in %eax */
+	salq	$32, %rdx	/* sign-shift %rdx left */
+	movl	%eax, %eax	/* zero-extend %eax -> %rax */
+	orq	%rdx, %rax
+	movq	%rax, (%rsi)  /* *data */
+	xorq	%rax, %rax    /* "no error" */
+
+	movq	%rax, PCB_ONFAULT(%r8)
+	ret
+
+/*
+ * MSR operations fault handler
+ */
+NENTRY(msr_onfault)
+	movq	CPUVAR(CURLWP), %r8
+	movq	L_PCB(%r8), %r8
+	movq	$0, PCB_ONFAULT(%r8)
+	movl	$EFAULT, %eax
+        ret
 
 #ifndef XEN
 ENTRY(wbinvd)
