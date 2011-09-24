@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2011/03/31 19:40:54 dyoung Exp $
+#	$NetBSD: Makefile,v 1.13 2011/09/24 21:11:23 christos Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net ${.CURDIR}/../../../../compat/common
@@ -7,7 +7,7 @@ LIB=	rumpnet_net
 
 # iffy stuff
 SRCS=	if.c if_loop.c route.c rtbl.c rtsock.c rtsock_50.c raw_usrreq.c	\
-	raw_cb.c if_media.c link_proto.c net_stats.c if_ethersubr.c
+	raw_cb.c if_media.c link_proto.c net_stats.c if_ethersubr.c rfc6056.c
 SRCS+=	if_43.c uipc_syscalls_50.c
 SRCS+=	component.c
 
