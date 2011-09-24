@@ -1,5 +1,5 @@
 /* BFD library support routines for the Z800n architecture.
-   Copyright 1992, 1993, 1994, 2000, 2001, 2002, 2003, 2007
+   Copyright 1992, 1993, 1994, 2000, 2001, 2002, 2003, 2005, 2007
    Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 

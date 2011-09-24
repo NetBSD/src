@@ -1,5 +1,5 @@
 /* BFD back-end for i386 a.out binaries under BSD.
-   Copyright 1990, 1991, 1992, 1993, 1994, 2001, 2007
+   Copyright 1990, 1991, 1992, 1993, 1994, 2001, 2005, 2007, 2009
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -30,7 +30,6 @@
 
 /* ZMAGIC files start at address 0.  This does not apply to QMAGIC.  */
 #define TEXT_START_ADDR 0
-#define N_SHARED_LIB(x) 0
 
 #define	TARGET_PAGE_SIZE	4096
 #define	SEGMENT_SIZE	TARGET_PAGE_SIZE

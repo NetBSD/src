@@ -1,5 +1,5 @@
 /* Infineon XC16X-specific support for 16-bit ELF.
-   Copyright 2006, 2007  Free Software Foundation, Inc.
+   Copyright 2006, 2007, 2009, 2010  Free Software Foundation, Inc.
    Contributed by KPIT Cummins Infosystems 
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -24,7 +24,7 @@
 #include "libbfd.h"
 #include "elf-bfd.h"
 #include "elf/xc16x.h"
-#include "elf/dwarf2.h"
+#include "dwarf2.h"
 #include "libiberty.h"
 
 static reloc_howto_type xc16x_elf_howto_table [] =
@@ -358,7 +358,6 @@ elf32_xc16x_relocate_section (bfd *output_bfd,
       asection *sec;
       struct elf_link_hash_entry *h;
       bfd_vma relocation;
-      bfd_reloc_status_type r;
 
       /* This is a final link.  */
       r_symndx = ELF32_R_SYM (rel->r_info);
@@ -386,23 +385,21 @@ elf32_xc16x_relocate_section (bfd *output_bfd,
 	{
 	  /* For relocs against symbols from removed linkonce sections,
 	     or sections discarded by a linker script, we just want the
-	     section contents zeroed.  Avoid any special processing.  */
+	     section contents cleared.  Avoid any special processing.  */
 	  reloc_howto_type *howto;
 	  howto = xc16x_reloc_type_lookup (input_bfd, r_type);
-	  _bfd_clear_contents (howto, input_bfd, contents + rel->r_offset);
-	  rel->r_info = 0;
-	  rel->r_addend = 0;
-	  continue;
+	  RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
+					   rel, relend, howto, contents);
 	}
 
       if (info->relocatable)
 	continue;
 
-      r = elf32_xc16x_final_link_relocate (r_type, input_bfd, output_bfd,
-					   input_section,
-					   contents, rel->r_offset,
-					   relocation, rel->r_addend,
-					   info, sec, h == NULL);
+      elf32_xc16x_final_link_relocate (r_type, input_bfd, output_bfd,
+				       input_section,
+				       contents, rel->r_offset,
+				       relocation, rel->r_addend,
+				       info, sec, h == NULL);
     }
 
   return TRUE;

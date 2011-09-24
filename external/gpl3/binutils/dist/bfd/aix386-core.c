@@ -2,7 +2,7 @@
    This was based on trad-core.c, which was written by John Gilmore of
         Cygnus Support.
    Copyright 1988, 1989, 1991, 1992, 1993, 1994, 1996, 1998, 1999, 2000,
-   2001, 2002, 2004, 2006, 2007
+   2001, 2002, 2004, 2005, 2006, 2007
    Free Software Foundation, Inc.
    Written by Minh Tran-Le <TRANLE@INTELLICORP.COM>.
    Converted to back end form by Ian Lance Taylor <ian@cygnus.com>.
@@ -210,6 +210,8 @@ aix386_core_file_failing_signal (abfd)
 }
 
 #define aix386_core_file_matches_executable_p generic_core_file_matches_executable_p
+
+#define aix386_core_file_pid _bfd_nocore_core_file_pid
 
 /* If somebody calls any byte-swapping routines, shoot them.  */
 
