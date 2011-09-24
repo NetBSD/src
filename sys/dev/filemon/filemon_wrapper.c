@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.2 2011/03/13 21:26:31 sjg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.3 2011/09/24 18:08:15 sjg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -164,6 +164,17 @@ filemon_wrapper_open(struct lwp * l, struct sys_open_args * uap,
 			error = copyinstr(SCARG(uap, path), filemon->fm_fname1,
 			    sizeof(filemon->fm_fname1), &done);
 			if (error == 0) {
+				if (SCARG(uap, flags) & O_RDWR) {
+					/* we want a separate R record */
+					len = snprintf(filemon->fm_msgbufr,
+						sizeof(filemon->fm_msgbufr),
+						"R %d %s\n",
+						curproc->p_pid,
+						filemon->fm_fname1);
+
+					filemon_output(filemon,
+						filemon->fm_msgbufr, len);
+				}			
 				len = snprintf(filemon->fm_msgbufr,
 				    sizeof(filemon->fm_msgbufr),
 				    "%c %d %s\n",
