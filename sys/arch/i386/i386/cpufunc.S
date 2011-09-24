@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.15 2011/03/18 15:32:02 joerg Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.16 2011/09/24 10:32:52 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -35,8 +35,10 @@
  * These are shared with NetBSD/xen.
  */
 
+#include <sys/errno.h>
+
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.15 2011/03/18 15:32:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.16 2011/09/24 10:32:52 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -136,6 +138,40 @@ ENTRY(wrmsr_locked)
 	popl	%edi
 	ret
 END(wrmsr_locked)
+
+/*
+ * Support for reading MSRs in the safe manner (returns EFAULT on fault)
+ */
+/* int rdmsr_safe(u_int msr, uint64_t *data) */
+ENTRY(rdmsr_safe)
+	movl	CPUVAR(CURLWP), %ecx
+	movl	L_PCB(%ecx), %ecx
+	movl	$_C_LABEL(msr_onfault), PCB_ONFAULT(%ecx)
+
+	movl	4(%esp), %ecx /* u_int msr */
+	rdmsr
+	movl	8(%esp), %ecx /* *data */
+	movl	%eax, (%ecx)  /* low-order bits */
+	movl	%edx, 4(%ecx) /* high-order bits */
+	xorl	%eax, %eax    /* "no error" */
+
+	movl	CPUVAR(CURLWP), %ecx
+	movl	L_PCB(%ecx), %ecx
+	movl	%eax, PCB_ONFAULT(%ecx)
+
+	ret
+
+/*
+ * MSR operations fault handler
+ */
+NENTRY(msr_onfault)
+       	movl	CPUVAR(CURLWP), %ecx
+	movl	L_PCB(%ecx), %ecx
+	movl	$0, PCB_ONFAULT(%ecx)
+	movl	$EFAULT, %eax
+        ret
+
+END(rdmsr_safe)
 
 ENTRY(cpu_counter)
 	rdtsc
