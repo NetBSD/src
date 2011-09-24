@@ -1,0 +1,39 @@
+2010-04-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_write): Add const to buffer arg.
+
+2010-01-09  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* configure: Regenerate.
+
+2009-08-22  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* config.in: Regenerate.
+	* configure: Likewise.
+
+	* configure: Regenerate.
+
+2008-07-11  Hans-Peter Nilsson  <hp@axis.com>
+
+	* configure: Regenerate to track ../common/common.m4 changes.
+	* config.in: Ditto.
+
+	* interp.c (hash): Remove incorrect prototype.
+
+2008-06-06  Vladimir Prus  <vladimir@codesourcery.com>
+            Daniel Jacobowitz  <dan@codesourcery.com>
+            Joseph Myers  <joseph@codesourcery.com>
+
+	* configure: Regenerate.
+
+2008-05-02  M Ranga Swami Reddy <MR.Swami.Reddy@nsc.com>
+
+	* interp.c: Update the machine code decode algorithm using hash table.
+	* Makefile.in, cr16_sim.h, gencode.c and  simops.c: Update for typos
+	and coding standards.
+
+2008-02-12  M Ranga Swami Reddy <MR.Swami.Reddy@nsc.com>
+
+	* ChangeLog, Makefile.in, configure, configure.in, cr16_sim.h, 
+	gencode.c, interp.c, simops.c, endian.c: Created.
+

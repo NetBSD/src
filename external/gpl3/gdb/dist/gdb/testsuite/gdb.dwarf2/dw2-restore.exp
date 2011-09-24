@@ -1,0 +1,37 @@
+# Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test handling of DW_CFA_restore_state.
+
+# This test can only be run on x86_64 targets.
+if {![istarget x86_64-*]} {
+    return 0  
+}
+set testfile "dw2-restore"
+set srcfile ${testfile}.S
+set binfile ${objdir}/${subdir}/${testfile}.x
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
+       [list {additional_flags=-nostdlib}]] != "" } {
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+gdb_test "run" ".*"
+gdb_test "where" ".*$hex in foo ().+$hex in _start ().*"

@@ -1,0 +1,48 @@
+# Copyright 2004, 2005, 2007, 2008, 2009, 2010, 2011
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# interp.exp   Test interpreter-exec command
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+gdb_start
+
+# Do not use gdb_test for this test, since it has two prompts.
+set cmd "interpreter-exec mi \"-var-update *\""
+gdb_test_multiple $cmd $cmd {
+    -re "\\^done,changelist=\\\[\\\]\r\n$gdb_prompt " {
+	pass "$cmd"
+	gdb_expect 1 {
+	    -re "\r\n$gdb_prompt $" { }
+	}
+    }
+}
+gdb_test "interpreter-exec console \"show version\"" "GNU gdb .*"
+
+# Regression test for crash when an exception occurs in mi_parse.
+gdb_test_multiple "interpreter-exec mi \"-break-insert --thread a\"" \
+    "regression test for mi_parse crash" {
+	-re ".error,msg=.Invalid value for the '--thread' option.\r\n$gdb_prompt " {
+	    pass "$cmd"
+	    gdb_expect 1 {
+		-re "\r\n$gdb_prompt $" { }
+	    }
+	}
+    }
+
+gdb_exit

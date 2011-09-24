@@ -1,0 +1,12 @@
+# Host: Intel x86 running DJGPP
+
+# We include several header files from config/djgpp
+MH_CFLAGS= -I$(srcdir)/config/djgpp
+
+NATDEPFILES= go32-nat.o i386-nat.o
+
+HOST_IPC=
+CC= gcc
+XM_CLIBS= -ldbg
+
+

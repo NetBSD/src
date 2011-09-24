@@ -1,0 +1,70 @@
+# Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the GDB testsuite.  It tests the mechanism
+# exposing values to Python.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set testfile "py-template"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
+	  {debug c++}] != "" } {
+    untested "Couldn't compile ${srcfile}"
+    return -1
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+# Skip all tests if Python scripting is not enabled.
+if { [skip_python_tests] } { continue }
+
+proc test_template_arg {type} {
+    global testfile srcdir subdir srcfile binfile
+    if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
+		executable \
+	  	[list debug c++ additional_flags="-DTYPE=$type"]] != "" } {
+	untested $type
+	return -1
+    }
+    gdb_load ${binfile}
+    if ![runto_main ] then {
+	perror "couldn't run to breakpoint"
+	return
+    }
+    # There is no executable code in main(), so we are where we want to be
+    gdb_test "print foo" ".*"
+    gdb_test_no_output "python foo = gdb.history(0)"
+
+    # Replace '*' with '\*' in regex.
+    regsub -all {\*} $type {\*} t
+    gdb_test "python print foo.type.template_argument(0)" $t $type
+}
+
+test_template_arg "const int"
+test_template_arg "volatile int"
+test_template_arg "const int &"
+test_template_arg "volatile int &"
+test_template_arg "volatile int * const"
+test_template_arg "volatile int * const *"
+test_template_arg "const int * volatile"
+test_template_arg "const int * volatile * const * volatile *"
